@@ -237,6 +237,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "restaurante_id",
     "creado_en"
   ],
+  "pedidos_prueba": [
+    "id",
+    "restaurante_id",
+    "creado_por",
+    "estado",
+    "lineas_json",
+    "subtotal",
+    "moneda",
+    "tiempo_prep_min",
+    "creado_en",
+    "aceptado_en",
+    "listo_en",
+    "terminado_en"
+  ],
   "regalos_config": [
     "restaurante_id",
     "cumpleanos",

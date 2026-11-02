@@ -891,6 +891,16 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Otro repartidor ya tomó este pedido.', 'Another driver already took this order.'],
   ['Primero completa los datos de tu restaurante.', 'First complete your restaurant’s details.'],
+  // C-PEDIDO-PRUEBA (BRE-4)
+  [
+    'Ya tienes un pedido de prueba abierto. Termínalo o recházalo antes de pedir otro.',
+    'You already have an open test order. Finish or reject it before sending another.',
+  ],
+  [
+    'Agrega al menos un plato disponible a tu menú para enviarte un pedido de prueba.',
+    'Add at least one available item to your menu to send yourself a test order.',
+  ],
+  ['Solo se terminan pedidos de prueba.', 'Only test orders can be finished.'],
   [
     'Primero conecta tu cuenta bancaria en «Billetera».',
     'First connect your bank account in “Wallet.”',

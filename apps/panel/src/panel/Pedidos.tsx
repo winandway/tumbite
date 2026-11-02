@@ -37,6 +37,8 @@ const leerImprimir = () => {
 type Pedido = {
   id: string;
   estado: string;
+  /** C-PEDIDO-PRUEBA: pedido ficticio para practicar (sin cobro ni repartidor). */
+  prueba?: boolean;
   /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC) o null. */
   programadoPara?: string | null;
   entrega?: 'puerta' | 'mano' | 'recoger';
@@ -82,6 +84,13 @@ const T = {
     tabletaAyuda: 'Pantalla completa y siempre encendida, con la alarma.',
     salirTableta: 'Salir del modo tableta',
     vacio: 'Sin pedidos por ahora.',
+    pruebaBoton: 'Enviar un pedido de prueba',
+    pruebaAyuda:
+      'Te llega un pedido ficticio con platos de tu menú para practicar: aceptar, imprimir y marcar listo. No se cobra, no sale repartidor y no cuenta en tus ventas.',
+    pruebaInsignia: 'PRUEBA',
+    pruebaListo:
+      'Así se ve un pedido listo. En uno real, aquí llega el repartidor a recogerlo; en la prueba no sale nadie.',
+    pruebaTerminar: 'Terminar la prueba',
     aceptar: 'Aceptar',
     imprimir: 'Imprimir comanda',
     imprimirAlAceptar: 'Imprimir la comanda al aceptar',
@@ -145,6 +154,13 @@ const T = {
     tabletaAyuda: 'Full screen and always on, with the alarm.',
     salirTableta: 'Exit tablet mode',
     vacio: 'No orders right now.',
+    pruebaBoton: 'Send a test order',
+    pruebaAyuda:
+      'You get a pretend order with items from your menu to practice: accept, print, and mark ready. Nothing is charged, no driver is sent, and it doesn’t count in your sales.',
+    pruebaInsignia: 'TEST',
+    pruebaListo:
+      'This is what a ready order looks like. On a real one, the driver comes to pick it up here; on a test order nobody is sent.',
+    pruebaTerminar: 'Finish the test',
     aceptar: 'Accept',
     imprimir: 'Print ticket',
     imprimirAlAceptar: 'Print the ticket when accepting',
@@ -336,6 +352,18 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
           />{' '}
           {t.imprimirAlAceptar}
         </label>
+        <button
+          type="button"
+          className="boton secundario"
+          title={t.pruebaAyuda}
+          data-testid="pedido-prueba"
+          disabled={pedidos.some(
+            (p) => p.prueba && ['pagado', 'aceptado', 'listo'].includes(p.estado),
+          )}
+          onClick={() => void accion('/datos/restaurante/pedido-prueba')}
+        >
+          {t.pruebaBoton}
+        </button>
         {tableta.activo ? (
           <button type="button" className="boton secundario" onClick={() => void tableta.salir()}>
             {t.salirTableta}
@@ -419,7 +447,11 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
           >
             <div className="lista-texto">
               <strong>
-                #{p.id.slice(0, 4).toUpperCase()} · {t.estados[p.estado] ?? p.estado} ·{' '}
+                {p.prueba ? (
+                  <span className="insignia insignia-programado">{t.pruebaInsignia}</span>
+                ) : null}{' '}
+                #{(p.prueba ? p.id.slice(7, 11) : p.id.slice(0, 4)).toUpperCase()} ·{' '}
+                {t.estados[p.estado] ?? p.estado} ·{' '}
                 {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
               </strong>
               {p.programadoPara && !['entregado', 'cancelado'].includes(p.estado) ? (
@@ -514,12 +546,16 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   <figcaption>{t.qrAyuda}</figcaption>
                 </figure>
               )}
+              {p.prueba && p.estado === 'listo' ? (
+                <span className="ok">{t.pruebaListo}</span>
+              ) : null}
               {p.estado === 'listo' && p.repartidor?.verificado && !p.fotoRecogida && (
                 <span className="repartidor-linea">{t.verificado}</span>
               )}
-              {p.estado === 'listo' && !p.fotoRecogida && !p.repartidor?.verificado && (
-                <span className="suave">{t.esperandoFoto}</span>
-              )}
+              {p.estado === 'listo' &&
+                !p.prueba &&
+                !p.fotoRecogida &&
+                !p.repartidor?.verificado && <span className="suave">{t.esperandoFoto}</span>}
               {p.estado === 'listo' && p.fotoRecogida && (
                 <figure className="foto-recogida">
                   <img
@@ -645,7 +681,16 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.listo}
                 </button>
               )}
-              {p.estado === 'aceptado' && !p.repartidor && (
+              {p.prueba && p.estado === 'listo' ? (
+                <button
+                  type="button"
+                  className="boton exito"
+                  onClick={() => void accion(`/datos/restaurante/pedidos/${p.id}/terminar-prueba`)}
+                >
+                  {t.pruebaTerminar}
+                </button>
+              ) : null}
+              {p.estado === 'aceptado' && !p.repartidor && !p.prueba && (
                 <button
                   type="button"
                   className="boton secundario"
@@ -679,6 +724,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                 { texto: t.reportar, alTocar: () => setReportando(p.id) },
                 ...((p.estado === 'pagado' || p.estado === 'aceptado') &&
                 !p.repartidor &&
+                !p.prueba &&
                 puedeMarcarFalta(p.ajuste, p.lineas)
                   ? [
                       {
@@ -693,7 +739,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                         texto: t.rechazar,
                         peligro: true,
                         alTocar: () => {
-                          if (window.confirm(t.confirmar))
+                          if (p.prueba || window.confirm(t.confirmar))
                             void accion(`/datos/restaurante/pedidos/${p.id}/rechazar`);
                         },
                       },

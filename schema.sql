@@ -311,6 +311,25 @@ CREATE TABLE IF NOT EXISTS calificaciones_etiquetas (
 CREATE INDEX IF NOT EXISTS calificaciones_etiquetas_repartidor ON calificaciones_etiquetas(repartidor_id, tipo);
 CREATE INDEX IF NOT EXISTS calificaciones_etiquetas_restaurante ON calificaciones_etiquetas(restaurante_id, tipo);
 
+-- C-PEDIDO-PRUEBA (BRE-4, 2 nov 2026), como «Create test order» de DoorDash Merchant: pedido
+-- ficticio para practicar. Tabla aparte A PROPÓSITO: nunca entra en pedidos, la conciliación, los
+-- informes, el embudo ni el despacho. Sin cobro, sin repartidor y sin cliente.
+CREATE TABLE IF NOT EXISTS pedidos_prueba (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  creado_por TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('pagado', 'aceptado', 'listo', 'terminado', 'cancelado')),
+  lineas_json TEXT NOT NULL,
+  subtotal INTEGER NOT NULL,
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  tiempo_prep_min INTEGER,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  aceptado_en TEXT,
+  listo_en TEXT,
+  terminado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS pedidos_prueba_restaurante ON pedidos_prueba(restaurante_id, estado);
+
 CREATE TABLE IF NOT EXISTS regalos_config (
   restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
   cumpleanos INTEGER NOT NULL DEFAULT 1,

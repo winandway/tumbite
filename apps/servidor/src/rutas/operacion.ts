@@ -62,6 +62,7 @@ import { kycAprobado } from './kyc';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { nuevoId } from '../cripto';
+import { avanzarPrueba, crearPedidoPrueba, esPedidoPrueba, pedidosPrueba } from '../pedidoPrueba';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
@@ -454,10 +455,31 @@ operacion.get('/restaurante/pedidos', async (c) => {
     )
     .bind(rid)
     .all<FilaPedido>();
+  // C-PEDIDO-PRUEBA: los de prueba van arriba, marcados; salen de su propia tabla.
+  const prueba = await pedidosPrueba(base(c), rid);
   return c.json({
-    pedidos: results.map((f) => ({ ...aPedido(f), repartidor: repartidorParaRestaurante(f) })),
+    pedidos: [
+      ...prueba,
+      ...results.map((f) => ({ ...aPedido(f), repartidor: repartidorParaRestaurante(f) })),
+    ],
     ...(await cocinaDe(base(c), rid)),
   });
+});
+
+/** C-PEDIDO-PRUEBA: «Enviar un pedido de prueba» (panel y app del restaurante). */
+operacion.post('/restaurante/pedido-prueba', async (c) => {
+  const rid = await miRestauranteId(c);
+  const u = exigir(c, 'restaurante');
+  return c.json({ pedido: await crearPedidoPrueba(base(c), rid, u.id) });
+});
+
+operacion.post('/restaurante/pedidos/:id/terminar-prueba', async (c) => {
+  const rid = await miRestauranteId(c);
+  const id = c.req.param('id');
+  if (!esPedidoPrueba(id))
+    throw new ErrorDatos('Solo se terminan pedidos de prueba.', undefined, 409);
+  await avanzarPrueba(base(c), rid, id, 'terminar');
+  return c.json({ ok: true });
 });
 
 /**
@@ -593,12 +615,20 @@ export async function marcarListo(env: Env, db: D1Database, pedidoId: string, ri
 operacion.post('/restaurante/pedidos/:id/aceptar', async (c) => {
   const rid = await miRestauranteId(c);
   const { minutos } = await leerCuerpo(c, z.object({ minutos: z.number().int().min(5).max(120) }));
+  if (esPedidoPrueba(c.req.param('id'))) {
+    await avanzarPrueba(base(c), rid, c.req.param('id'), 'aceptar', minutos);
+    return c.json({ ok: true });
+  }
   await aceptarPedido(c.env, base(c), c.req.param('id'), rid, minutos);
   return c.json({ ok: true });
 });
 
 operacion.post('/restaurante/pedidos/:id/listo', async (c) => {
   const rid = await miRestauranteId(c);
+  if (esPedidoPrueba(c.req.param('id'))) {
+    await avanzarPrueba(base(c), rid, c.req.param('id'), 'listo');
+    return c.json({ ok: true });
+  }
   await marcarListo(c.env, base(c), c.req.param('id'), rid);
   return c.json({ ok: true });
 });
@@ -758,6 +788,11 @@ operacion.patch('/restaurante/pedidos/:id/tiempo', async (c) => {
 /** Rechazar un pedido pagado: se cancela y se le devuelve TODO el dinero al cliente. */
 operacion.post('/restaurante/pedidos/:id/rechazar', async (c) => {
   const rid = await miRestauranteId(c);
+  // C-PEDIDO-PRUEBA: rechazar uno de prueba no pasa por Stripe ni avisa a nadie.
+  if (esPedidoPrueba(c.req.param('id'))) {
+    await avanzarPrueba(base(c), rid, c.req.param('id'), 'rechazar');
+    return c.json({ ok: true });
+  }
   const ok = await cancelarConReembolso(c.env, base(c), c.req.param('id'), {
     desde: ['pagado', 'aceptado'],
     actorId: rid,

@@ -22,9 +22,20 @@ Una pieza (`packages/compartido/src/etiquetasCalificacion.ts`) con los códigos 
 
 ## 3. Comparación y decisión — BRE-4
 
-Ver la sección del pedido de prueba más abajo (se completa con BRE-4).
+| Pieza                   | DoorDash Merchant              | Divoox antes | Divoox ahora                                                   |
+| ----------------------- | ------------------------------ | ------------ | -------------------------------------------------------------- |
+| Pedido de prueba        | «Create test order» en Ajustes | No           | «Enviar un pedido de prueba» en Pedidos (panel) e Inicio (app) |
+| Contenido               | Artículos del menú al azar     | —            | Uno o dos platos disponibles del menú, al azar                 |
+| Repartidor / cliente    | No se manda / no se contacta   | —            | Ninguno; sin avisos al cliente                                 |
+| Cobro, informes, embudo | [NV]                           | —            | Fuera por construcción: tabla aparte `pedidos_prueba`          |
 
-## 4. Pruebas de aceptación (BRE-3)
+Decisión [INF]: la fila pedía «marca de prueba en el pedido». Se eligió una tabla aparte en vez de una columna en `pedidos` porque más de cuarenta archivos del servidor leen `pedidos` (conciliación, informes, embudo, despacho, Manager, rewards, demanda, anuncios…) y cada consulta nueva habría tenido que recordar el filtro. Con la tabla aparte, ninguna puede contarlo aunque se olvide. La lista del restaurante y sus botones (aceptar, listo, rechazar, terminar) reconocen el prefijo `prueba-` del identificador. Uno abierto a la vez.
+
+## 4. Pruebas de aceptación
+
+- `apps/servidor/src/pedidoPrueba.test.ts` (BRE-4): suena, se acepta, se marca listo y se termina; no hay filas en pedidos, ofertas, movimientos ni liquidaciones; la conciliación cuadra y el embudo no cambia; se rechaza sin Stripe; sin platos lo dice; otro restaurante no lo toca; uno abierto a la vez; el panel y la app tienen el botón y «Terminar la prueba».
+
+### BRE-3
 
 - `apps/servidor/src/elogiosMotivos.test.ts`: elogios con 5, motivos con 3 o menos, el repartidor nunca ve los motivos, calificar otra vez reemplaza y sin repartidor no se guardan los suyos.
 - `packages/compartido/src/etiquetasCalificacion.test.ts`: reglas de la pieza y que cliente, Driver, restaurante y panel la usan.

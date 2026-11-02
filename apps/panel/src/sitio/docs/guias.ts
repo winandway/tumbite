@@ -1391,6 +1391,30 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'test-order',
+        titulo: 'Enviarte un pedido de prueba',
+        resumen:
+          'Antes de abrir, mándate un pedido de prueba: suena con la alarma como uno real y practicas aceptar, imprimir y marcar listo. No se cobra, no sale repartidor y no cuenta en tus ventas.',
+        capturas: [],
+        preguntas: [
+          '¿Cómo pruebo que me llegan los pedidos?',
+          '¿Cómo practico con mi equipo antes de abrir?',
+          '¿El pedido de prueba se cobra o cuenta en mis ventas?',
+        ],
+        pasos: [
+          'En el panel, entra a Pedidos y toca «Enviar un pedido de prueba». En la app del restaurante, el botón está en Inicio, debajo de los pedidos nuevos.',
+          'Te llega un pedido marcado «PRUEBA» con uno o dos platos de tu menú, con la alarma de siempre.',
+          'Acéptalo con el tiempo de preparación, imprime la comanda si usas impresora y toca «¡Listo!».',
+          'Toca «Terminar la prueba». Listo: ya sabes cómo se ve un pedido de principio a fin.',
+        ],
+        explicacion: [
+          'El pedido de prueba es igual a uno real en tu pantalla, pero nadie lo pagó: no se cobra a nadie, no sale ningún repartidor y no aparece en tus ventas, tus informes ni tus pagos.',
+          'Necesitas al menos un plato disponible en tu menú, porque el pedido se arma con tus platos.',
+          'Puedes tener uno abierto a la vez. Si quieres empezar de nuevo, recházalo desde los tres puntos y envía otro.',
+          'Sirve también para enseñarle a tu equipo cómo se atiende un pedido sin miedo a equivocarse.',
+        ],
+      },
+      {
         id: 'sponsored-listings',
         titulo: 'Anuncios: sal primero y paga solo por pedido',
         resumen:
@@ -5559,6 +5583,30 @@ const en: SeccionDocs[] = [
           'Panel menu → Reviews, or in the restaurant app: More → Reviews.',
           'In the restaurant app, the More tab opens your restaurant details, earnings, team and account settings (password, sign out and delete account) right inside the app.',
           'Tap “Reply” on the review (or type your reply in the app) and publish.',
+        ],
+      },
+      {
+        id: 'test-order',
+        titulo: 'Send yourself a test order',
+        resumen:
+          'Before you open, send yourself a test order: it rings the alarm like a real one and you practice accepting, printing, and marking it ready. Nothing is charged, no driver is sent, and it doesn’t count in your sales.',
+        capturas: [],
+        preguntas: [
+          'How do I check that orders reach me?',
+          'How do I practice with my team before opening?',
+          'Is the test order charged or counted in my sales?',
+        ],
+        pasos: [
+          'In the dashboard, go to Orders and tap “Send a test order.” In the restaurant app, the button is on Home, below new orders.',
+          'An order marked “TEST” arrives with one or two items from your menu, with the usual alarm.',
+          'Accept it with a prep time, print the ticket if you use a printer, and tap “Ready!”',
+          'Tap “Finish the test.” Done: now you know what an order looks like from start to finish.',
+        ],
+        explicacion: [
+          'The test order looks just like a real one on your screen, but nobody paid for it: no one is charged, no driver is sent, and it doesn’t show up in your sales, reports, or payouts.',
+          'You need at least one available item on your menu, because the order is built from your items.',
+          'You can have one open at a time. To start over, reject it from the three dots and send another.',
+          'It’s also a great way to train your team on how to handle an order without fear of mistakes.',
         ],
       },
       {

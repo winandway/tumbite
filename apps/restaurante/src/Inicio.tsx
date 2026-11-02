@@ -69,6 +69,8 @@ import {
 } from './piezas/ui';
 
 type Pedido = {
+  /** C-PEDIDO-PRUEBA: pedido ficticio para practicar (sin cobro ni repartidor). */
+  prueba?: boolean;
   /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC) o null. */
   programadoPara?: string | null;
   id: string;
@@ -152,6 +154,13 @@ const T = {
     abrir: 'Abrir',
     pausar: 'Pausar',
     vacio: 'Sin pedidos por ahora. La alarma sonará cuando entre uno.',
+    pruebaBoton: 'Enviar un pedido de prueba',
+    pruebaAyuda:
+      'Te llega un pedido ficticio con platos de tu menú para practicar. No se cobra, no sale repartidor y no cuenta en tus ventas.',
+    pruebaInsignia: 'PRUEBA',
+    pruebaListo:
+      'Así se ve un pedido listo. En uno real, aquí llega el repartidor a recogerlo; en la prueba no sale nadie.',
+    pruebaTerminar: 'Terminar la prueba',
     notas: 'Notas',
     alergias: 'ALERGIA',
     pedido: 'Pedido',
@@ -209,6 +218,13 @@ const T = {
     abrir: 'Open',
     pausar: 'Pause',
     vacio: 'No orders right now. The alarm will ring when one comes in.',
+    pruebaBoton: 'Send a test order',
+    pruebaAyuda:
+      'You get a pretend order with items from your menu to practice. Nothing is charged, no driver is sent, and it doesn’t count in your sales.',
+    pruebaInsignia: 'TEST',
+    pruebaListo:
+      'This is what a ready order looks like. On a real one, the driver comes to pick it up here; on a test order nobody is sent.',
+    pruebaTerminar: 'Finish the test',
     notas: 'Notes',
     alergias: 'ALLERGY',
     pedido: 'Order',
@@ -419,7 +435,7 @@ export function Inicio() {
 
   async function rechazar(p: Pedido) {
     setMenuDe(null);
-    if (await confirmar(t.confirmarRechazo, t.si, t.no))
+    if (p.prueba || (await confirmar(t.confirmarRechazo, t.si, t.no)))
       await accion(`/datos/restaurante/pedidos/${p.id}/rechazar`);
   }
 
@@ -433,7 +449,11 @@ export function Inicio() {
   }
 
   // ---------- Ayudas de presentación (los datos y las acciones son los de siempre) ----------
-  const numero = (p: Pedido) => `#${p.id.slice(0, 4).toUpperCase()}`;
+  // C-PEDIDO-PRUEBA: el de prueba se ve marcado en todas partes.
+  const numero = (p: Pedido) =>
+    p.prueba
+      ? `${t.pruebaInsignia} · #${p.id.slice(7, 11).toUpperCase()}`
+      : `#${p.id.slice(0, 4).toUpperCase()}`;
   const fotoDe = (p: Pedido) => {
     const id = p.lineas[0]?.platoId;
     return urlFoto(platos.find((x) => x.id === id)?.imagen ?? null);
@@ -567,6 +587,7 @@ export function Inicio() {
       ) : null}
       {(p.estado === 'pagado' || p.estado === 'aceptado') &&
       !p.repartidor &&
+      !p.prueba &&
       puedeMarcarFalta(p.ajuste, p.lineas) ? (
         <View style={{ marginTop: 10 }}>
           <Pressable
@@ -903,6 +924,19 @@ export function Inicio() {
           <Text>{t.vacio}</Text>
         </Tarjeta>
       ) : null}
+      {/* C-PEDIDO-PRUEBA: como «Create test order» de DoorDash, para practicar sin cobrar. */}
+      {pedidos.some(
+        (p) => p.prueba && ['pagado', 'aceptado', 'listo'].includes(p.estado),
+      ) ? null : (
+        <Tarjeta>
+          <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.pruebaAyuda}</Text>
+          <BotonGrande
+            texto={t.pruebaBoton}
+            tipo="claro"
+            alTocar={() => void accion('/datos/restaurante/pedido-prueba')}
+          />
+        </Tarjeta>
+      )}
       {/* En la tableta, los avisos y la cocina ocupada van en la columna derecha. */}
       {ancha ? null : avisosRest}
     </View>
@@ -1065,7 +1099,7 @@ export function Inicio() {
         {p.estado === 'pagado' ? <Tarjeta>{aceptarBloque(p)}</Tarjeta> : null}
         {p.estado === 'aceptado' ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            {!p.repartidor ? (
+            {!p.repartidor && !p.prueba ? (
               <BotonGrande
                 texto={t.masTiempo}
                 tipo="borde"
@@ -1142,10 +1176,20 @@ export function Inicio() {
             />
           </Tarjeta>
         ) : null}
-        {p.estado === 'listo' && p.entrega !== 'recoger' && !p.fotoRecogida ? (
+        {p.estado === 'listo' && p.entrega !== 'recoger' && !p.fotoRecogida && !p.prueba ? (
           <Text style={{ color: '#5E5E5E', textAlign: 'center', marginBottom: 8 }}>
             {t.esperandoFoto}
           </Text>
+        ) : null}
+        {p.prueba && p.estado === 'listo' ? (
+          <Tarjeta>
+            <Text style={{ color: C.secundario, marginBottom: 10 }}>{t.pruebaListo}</Text>
+            <BotonGrande
+              texto={t.pruebaTerminar}
+              tipo="verde"
+              alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/terminar-prueba`)}
+            />
+          </Tarjeta>
         ) : null}
         {p.estado === 'en_camino' ? (
           <Text
