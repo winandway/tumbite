@@ -105,7 +105,6 @@ describe('Docs públicos', () => {
     // Las únicas que esperan su foto real: se toman del sitio de pruebas al publicar (FILA, BRE-3b, BRE-4b, BRE-5b y BRE-6b).
     const ESPERAN = new Set([
       'ordering/compliments-and-reasons',
-      'restaurants/test-order',
       'restaurants/promotions',
       'drivers/destination-mode',
     ]);

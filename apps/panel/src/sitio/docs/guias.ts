@@ -1395,7 +1395,23 @@ const es: SeccionDocs[] = [
         titulo: 'Enviarte un pedido de prueba',
         resumen:
           'Antes de abrir, mándate un pedido de prueba: suena con la alarma como uno real y practicas aceptar, imprimir y marcar listo. No se cobra, no sale repartidor y no cuenta en tus ventas.',
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/restaurante-pedido-prueba-boton-es.webp',
+            alt: 'La pantalla Pedidos del panel del restaurante con el botón «Enviar un pedido de prueba» arriba.',
+            pie: 'En Pedidos, arriba, está el botón para enviarte la prueba.',
+          },
+          {
+            src: '/docs/restaurante-pedido-prueba-nuevo-es.webp',
+            alt: 'Un pedido marcado «PRUEBA» con dos platos del menú y los botones para aceptarlo con su tiempo.',
+            pie: 'Te llega marcado «PRUEBA», con platos de tu menú: lo aceptas como uno real.',
+          },
+          {
+            src: '/docs/restaurante-pedido-prueba-listo-es.webp',
+            alt: 'El pedido de prueba listo, con «Imprimir comanda» y el botón verde «Terminar la prueba».',
+            pie: 'Listo: lo terminas con «Terminar la prueba». No sale repartidor.',
+          },
+        ],
         preguntas: [
           '¿Cómo pruebo que me llegan los pedidos?',
           '¿Cómo practico con mi equipo antes de abrir?',
@@ -1410,7 +1426,8 @@ const es: SeccionDocs[] = [
         explicacion: [
           'El pedido de prueba es igual a uno real en tu pantalla, pero nadie lo pagó: no se cobra a nadie, no sale ningún repartidor y no aparece en tus ventas, tus informes ni tus pagos.',
           'Necesitas al menos un plato disponible en tu menú, porque el pedido se arma con tus platos.',
-          'Puedes tener uno abierto a la vez. Si quieres empezar de nuevo, recházalo desde los tres puntos y envía otro.',
+          'Puedes tener uno abierto a la vez y hasta diez por día. Si quieres empezar de nuevo, recházalo desde los tres puntos y envía otro.',
+          'El pedido de prueba no lleva el código QR de recogida ni la opción de reportar un problema, porque ningún repartidor ni nuestro equipo lo atienden.',
           'Sirve también para enseñarle a tu equipo cómo se atiende un pedido sin miedo a equivocarse.',
         ],
       },
@@ -5639,7 +5656,23 @@ const en: SeccionDocs[] = [
         titulo: 'Send yourself a test order',
         resumen:
           'Before you open, send yourself a test order: it rings the alarm like a real one and you practice accepting, printing, and marking it ready. Nothing is charged, no driver is sent, and it doesn’t count in your sales.',
-        capturas: [],
+        capturas: [
+          {
+            src: '/docs/restaurante-pedido-prueba-boton-en.webp',
+            alt: 'The restaurant dashboard Orders screen with the “Send a test order” button at the top.',
+            pie: 'On Orders, the button to send yourself a test is at the top.',
+          },
+          {
+            src: '/docs/restaurante-pedido-prueba-nuevo-en.webp',
+            alt: 'An order marked “TEST” with two menu items and the buttons to accept it with a prep time.',
+            pie: 'It arrives marked “TEST,” with items from your menu: accept it like a real one.',
+          },
+          {
+            src: '/docs/restaurante-pedido-prueba-listo-en.webp',
+            alt: 'The ready test order, with “Print ticket” and the green “Finish the test” button.',
+            pie: 'Ready: wrap it up with “Finish the test.” No driver is sent.',
+          },
+        ],
         preguntas: [
           'How do I check that orders reach me?',
           'How do I practice with my team before opening?',
@@ -5654,7 +5687,8 @@ const en: SeccionDocs[] = [
         explicacion: [
           'The test order looks just like a real one on your screen, but nobody paid for it: no one is charged, no driver is sent, and it doesn’t show up in your sales, reports, or payouts.',
           'You need at least one available item on your menu, because the order is built from your items.',
-          'You can have one open at a time. To start over, reject it from the three dots and send another.',
+          'You can have one open at a time and up to ten a day. To start over, reject it from the three dots and send another.',
+          'A test order has no pickup QR code and no “Report a problem” option, because no driver or support agent handles it.',
           'It’s also a great way to train your team on how to handle an order without fear of mistakes.',
         ],
       },
