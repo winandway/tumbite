@@ -68,3 +68,4 @@ export * from './chatMensajes';
 export * from './correosSoporte';
 export * from './plus';
 export * from './saldoRegalo';
+export * from './tituloCaso';

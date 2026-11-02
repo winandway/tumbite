@@ -2342,3 +2342,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía (visto por Richard en el iPhone):** desde Mi cuenta → un pedido, la flecha de volver mandaba al inicio y sacaba a la persona de Mi cuenta. En «Mis pedidos», el botón «Ver pedido y recibo» salía como un óvalo deformado y «Repetir pedido» partía el texto en dos líneas; todo rojo, blanco y negro.
 - **Arreglo:** `app/order/[id].tsx` vuelve con `router.back()` (al inicio solo con un pedido recién hecho o sin historial). `app/orders.tsx`: tarjeta con miniatura del local (`restauranteImagen` en `/datos/mis-pedidos`), fecha y artículos, estado en etiqueta de color (verde entregado, azul en curso, gris cancelado) y botones compactos de una línea: «Ver recibo» y «Pedir otra vez» en verde, o «Seguir mi pedido» si va en curso.
 - **Prueba:** `packages/compartido/src/volverAlOrigen.test.ts` (comprobada en rojo).
+
+## Repaso de pantallas del 1 nov (UX-3 y UX-4, primera tanda, todos los países)
+
+- Barra de abajo de la app del cliente: íconos en un solo color, rojo la pestaña elegida y gris las demás (antes «Inicio» quedaba azul siempre).
+- Buscador en la web sin el recuadro azul del navegador dentro de la cajita.
+- Carrito vacío con mensaje y botón «Buscar comida», como los grandes.
+- Títulos fijos de los casos de ayuda traducidos al idioma de la app (`packages/compartido/src/tituloCaso.ts`, prueba `tituloCaso.test.ts`).
+- Para repetir el repaso: `node scripts/docs/repaso-pantallas.mjs <carpeta>` (sitio de pruebas, los dos idiomas, avisa palabras del otro idioma).

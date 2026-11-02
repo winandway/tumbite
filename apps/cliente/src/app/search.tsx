@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  FlatList,
+  Image,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
@@ -121,7 +130,11 @@ export default function Buscar() {
             accessibilityLabel={t.buscarTitulo}
             placeholderTextColor="#8A8A8A"
             returnKeyType="search"
-            style={{ flex: 1, paddingVertical: 11, fontSize: 15, color: C.secundario }}
+            style={[
+              { flex: 1, paddingVertical: 11, fontSize: 15, color: C.secundario },
+              // En la web, sin el recuadro azul del navegador dentro de la cajita redonda.
+              Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null,
+            ]}
           />
           {q ? (
             <Pressable onPress={() => setQ('')} accessibilityRole="button" accessibilityLabel="×">

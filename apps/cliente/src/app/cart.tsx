@@ -544,8 +544,20 @@ export default function PantallaCarrito() {
 
   if (!d) {
     return marco(
-      <Tarjeta>
-        <Text>{t.vacio}</Text>
+      // Carrito vacío como los grandes: un mensaje claro y el botón para ir a buscar comida.
+      <Tarjeta style={{ alignItems: 'center', paddingVertical: 28, gap: 8 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario }}>{t.vacio}</Text>
+        <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>
+          {idioma === 'en'
+            ? 'Add something from a restaurant or store and it shows up here.'
+            : 'Agrega algo de un restaurante o una tienda y aparece aquí.'}
+        </Text>
+        <View style={{ alignSelf: 'stretch', marginTop: 8 }}>
+          <Boton
+            texto={idioma === 'en' ? 'Find food' : 'Buscar comida'}
+            alTocar={() => router.replace('/restaurants')}
+          />
+        </View>
       </Tarjeta>,
     );
   }

@@ -54,7 +54,9 @@ export function BarraInferior({
             <View>
               <Image
                 source={ICONO_NAV.get(p) ?? IMG.nav.inicio}
-                style={{ width: 34, height: 34, opacity: esta ? 1 : 0.7 }}
+                // Un solo color por estado, como las barras de los grandes: la elegida en el color de
+                // la marca y las demás en gris (antes «Inicio» quedaba azul aunque no estuviera elegida).
+                style={{ width: 30, height: 30, tintColor: esta ? C.primario : '#8A8F98' }}
                 resizeMode="contain"
                 accessibilityIgnoresInvertColors
               />

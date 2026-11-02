@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
+import { ErrorApi, enIdioma, tituloCaso, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { useSesion } from './sesion';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -93,7 +93,7 @@ export function MisCasos({ elegirCapturas }: { elegirCapturas?: ElegirCapturas }
             style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#EEE' }}
           >
             <Text style={{ fontWeight: '700', color: C.secundario }}>
-              {t.caso} {c.numero} · {c.asunto}
+              {t.caso} {c.numero} · {tituloCaso(c.asunto, idioma)}
             </Text>
             <Text style={{ color: c.estado === 'respondido' ? C.exito : '#5E5E5E' }}>
               {t.estados[c.estado] ?? c.estado}
@@ -189,7 +189,7 @@ function ChatCaso({
       style={{ gap: 6, borderTopWidth: 1, borderTopColor: '#EEE', paddingTop: 8 }}
     >
       <Text style={{ fontWeight: '700', color: C.secundario }}>
-        {t.caso} {caso.numero} · {caso.asunto}
+        {t.caso} {caso.numero} · {tituloCaso(caso.asunto, idioma)}
       </Text>
       {mensajes.map((m, i) => (
         <View

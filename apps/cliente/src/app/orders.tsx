@@ -214,6 +214,7 @@ export default function Pedidos() {
                       borderRadius: 999,
                       backgroundColor: '#1F5F8B',
                       alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                   >
                     <Text style={{ fontWeight: '700', color: '#fff' }} numberOfLines={1}>
@@ -232,6 +233,7 @@ export default function Pedidos() {
                         borderWidth: 1,
                         borderColor: '#D6D6D6',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         backgroundColor: '#fff',
                       }}
                     >
@@ -249,6 +251,7 @@ export default function Pedidos() {
                         borderRadius: 999,
                         backgroundColor: C.exito,
                         alignItems: 'center',
+                        justifyContent: 'center',
                         opacity: repitiendo === p.id ? 0.7 : 1,
                       }}
                     >
