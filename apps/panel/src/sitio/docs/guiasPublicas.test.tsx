@@ -103,7 +103,7 @@ describe('Docs públicos', () => {
 
   it('ninguna guía sin captura (regla de Richard, 1 nov 2026), en los dos idiomas', () => {
     // Las únicas que esperan su foto real: se toman del sitio de pruebas al publicar (FILA, BRE-3b, BRE-4b, BRE-5b y BRE-6b).
-    const ESPERAN = new Set(['restaurants/promotions', 'drivers/destination-mode']);
+    const ESPERAN = new Set<string>([]);
     for (const i of ['es', 'en'] as const)
       for (const s of DOCS[i])
         for (const g of s.guias)

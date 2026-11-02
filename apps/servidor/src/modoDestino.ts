@@ -102,6 +102,28 @@ modoDestino.put('/repartidor/destino', async (c) => {
   );
   const db = base(c);
   const dia = await hoyDe(db, u.id);
+  const agotado = () =>
+    new ErrorDatos(
+      'Ya usaste el modo destino dos veces hoy. Vuelve a estar disponible mañana.',
+      undefined,
+      409,
+    );
+  const hoy = await db
+    .prepare('SELECT usos FROM usos_modo_destino WHERE repartidor_id = ? AND dia = ?')
+    .bind(u.id, dia)
+    .first<{ usos: number }>();
+  if (Number(hoy?.usos ?? 0) >= USOS_DESTINO_DIA) throw agotado();
+  // BRE-R2: primero se guarda el destino (apagado); el uso se cuenta solo después de guardarlo,
+  // así un fallo al guardar no le gasta uno de sus dos usos del día.
+  await db
+    .prepare(
+      `INSERT INTO modo_destino (repartidor_id, direccion, lat, lng, activo, encendido_en, apagado_en, motivo)
+       VALUES (?, ?, ?, ?, 0, datetime('now'), datetime('now'), NULL)
+       ON CONFLICT(repartidor_id) DO UPDATE SET direccion = excluded.direccion, lat = excluded.lat,
+         lng = excluded.lng`,
+    )
+    .bind(u.id, d.direccion, d.lat, d.lng)
+    .run();
   // Cuenta el uso solo si quedan (un solo paso: dos toques a la vez no pasan de dos).
   const r = await db
     .prepare(
@@ -110,20 +132,12 @@ modoDestino.put('/repartidor/destino', async (c) => {
     )
     .bind(u.id, dia, USOS_DESTINO_DIA)
     .run();
-  if (!r.meta.changes)
-    throw new ErrorDatos(
-      'Ya usaste el modo destino dos veces hoy. Vuelve a estar disponible mañana.',
-      undefined,
-      409,
-    );
+  if (!r.meta.changes) throw agotado();
   await db
     .prepare(
-      `INSERT INTO modo_destino (repartidor_id, direccion, lat, lng, activo, encendido_en, apagado_en, motivo)
-       VALUES (?, ?, ?, ?, 1, datetime('now'), NULL, NULL)
-       ON CONFLICT(repartidor_id) DO UPDATE SET direccion = excluded.direccion, lat = excluded.lat,
-         lng = excluded.lng, activo = 1, encendido_en = datetime('now'), apagado_en = NULL, motivo = NULL`,
+      "UPDATE modo_destino SET activo = 1, encendido_en = datetime('now'), apagado_en = NULL, motivo = NULL WHERE repartidor_id = ?",
     )
-    .bind(u.id, d.direccion, d.lat, d.lng)
+    .bind(u.id)
     .run();
   return c.json(await resumen(db, u.id));
 });

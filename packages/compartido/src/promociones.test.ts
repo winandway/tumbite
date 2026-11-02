@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { calcularPedido } from './bolsillos';
 import { PLANES } from './catalogo';
-import { calcularConPromocion, descuentoPromocion, insigniaPromocion } from './promociones';
+import {
+  basePromocion,
+  calcularConPromocion,
+  descuentoPromocion,
+  insigniaPromocion,
+  mejorPromocion,
+} from './promociones';
 
 /**
  * C-PROMO-RESTAURANTE (BRE-5): la promoción del restaurante sale de SU pago. Divoox no pone dinero,
@@ -107,5 +113,38 @@ describe('promociones del restaurante (C-PROMO-RESTAURANTE)', () => {
     expect(
       insigniaPromocion({ tipo: 'gasta_ahorra', valor: 500, minimoSubtotal: 2500 }, 'USD', 'en'),
     ).toMatch(/^Spend .*, save/);
+  });
+});
+
+describe('BRE-R2: la base de la promoción', () => {
+  const pct = {
+    id: 'p',
+    tipo: 'porcentaje' as const,
+    valor: 1000,
+    minimoSubtotal: 2500,
+    topeCentavos: 0,
+  };
+  it('el porcentaje y el mínimo cuentan sin el plato que regala el restaurante', () => {
+    // 30 de comida con 10 regalados: 20 que paga el cliente, no llega al mínimo de 25.
+    expect(calcularConPromocion({ ...base, regalo: 1000 }, pct).descuentoRestaurante).toBe(0);
+    expect(calcularConPromocion({ ...base, regalo: 400 }, pct).descuentoRestaurante).toBe(260);
+    expect(mejorPromocion([pct], { subtotal: 3000, envio: 399 }, { regalo: 1000 })).toBeNull();
+  });
+  it('el envío ya cubierto no lo paga otra vez «envío gratis»; en un recálculo se ignora el mínimo', () => {
+    const envio = {
+      id: 'e',
+      tipo: 'envio_gratis' as const,
+      valor: 0,
+      minimoSubtotal: 0,
+      topeCentavos: 0,
+    };
+    const d = calcularPedido(base);
+    expect(calcularConPromocion(base, envio, { envioCubierto: d.envio }).descuentoRestaurante).toBe(
+      0,
+    );
+    expect(basePromocion(d, 0, d.envio + 50)).toEqual({ subtotal: d.subtotal, envio: 0 });
+    const chico = { ...base, lineas: [{ precioCentavos: 2000, cantidad: 1 }] };
+    expect(calcularConPromocion(chico, pct).descuentoRestaurante).toBe(0);
+    expect(calcularConPromocion(chico, pct, { sinMinimo: true }).descuentoRestaurante).toBe(200);
   });
 });

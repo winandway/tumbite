@@ -1,6 +1,7 @@
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
-import { PLAZAS_XL, distanciaKm } from '@tumbite/compartido';
+import { PLAZAS_XL, acercaAlDestino, distanciaKm } from '@tumbite/compartido';
+import { destinosActivos } from './modoDestino';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 import { soltarCobroViaje } from './viajesCobro';
 
@@ -158,7 +159,15 @@ export async function cambiarEstadoViaje(
   return Boolean(r.meta.changes);
 }
 
-type Candidato = { conductorId: string; vehiculoId: string; km: number; puntos: number };
+type Candidato = {
+  conductorId: string;
+  vehiculoId: string;
+  km: number;
+  puntos: number;
+  /** Última ubicación guardada (para el modo destino). */
+  lat: number;
+  lng: number;
+};
 
 /**
  * Conductores a quienes ofrecer una operación, del más cercano al más lejano. Primero pregunta al
@@ -204,7 +213,14 @@ export async function candidatosParaOperacion(
       .filter((c) => porId.has(c.c) && c.km <= KM_MAXIMO_OFERTA)
       .map((c) => {
         const f = porId.get(c.c)!;
-        return { conductorId: c.c, vehiculoId: f.vehiculo_id, km: c.km, puntos: f.puntos };
+        return {
+          conductorId: c.c,
+          vehiculoId: f.vehiculo_id,
+          km: c.km,
+          puntos: f.puntos,
+          lat: Number(f.lat),
+          lng: Number(f.lng),
+        };
       });
     // El tiempo real solo ve a quien tiene la app abierta; si no ve a nadie elegible, respaldo.
     if (lista.length) return { candidatos: lista, fuente: 'tiempo_real' };
@@ -215,6 +231,8 @@ export async function candidatosParaOperacion(
       vehiculoId: r.vehiculo_id,
       km: distanciaKm({ lat: r.lat, lng: r.lng }, { lat: op.lat, lng: op.lng }),
       puntos: r.puntos,
+      lat: Number(r.lat),
+      lng: Number(r.lng),
     }))
     .filter((c) => c.km <= KM_MAXIMO_OFERTA)
     .sort((a, b) => a.km - b.km || b.puntos - a.puntos);
@@ -317,7 +335,7 @@ export async function repartirOperaciones(
       );
   const { results: buscando } = await db
     .prepare(
-      `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, q.total, q.moneda, z.pais
+      `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais
          FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -332,12 +350,17 @@ export async function repartirOperaciones(
       zona_id: string;
       origen_lat: number;
       origen_lng: number;
+      destino_lat: number | null;
+      destino_lng: number | null;
       total: number | null;
       moneda: string | null;
       pais: string | null;
     }>();
   let ofrecidas = 0;
   const yaOfrecidos = new Set<string>();
+  // C-MODO-DESTINO (BRE-R2): el modo destino vale para todos los servicios, no solo comida: quien
+  // lo tiene encendido solo recibe viajes y envíos cuyo destino lo acerca al suyo.
+  const destinos = buscando.length ? await destinosActivos(db) : new Map();
   for (const op of buscando) {
     const { candidatos, fuente } = await candidatosParaOperacion(
       env,
@@ -351,7 +374,16 @@ export async function repartirOperaciones(
       },
       hacer,
     );
-    const elegido = candidatos.find((c) => !yaOfrecidos.has(c.conductorId));
+    const elegido = candidatos.find((c) => {
+      if (yaOfrecidos.has(c.conductorId)) return false;
+      const destino = destinos.get(c.conductorId);
+      if (!destino) return true;
+      return (
+        op.destino_lat != null &&
+        op.destino_lng != null &&
+        acercaAlDestino(c, { lat: Number(op.destino_lat), lng: Number(op.destino_lng) }, destino)
+      );
+    });
     if (!elegido) continue;
     // La condición repite la regla de «libre» en la MISMA sentencia: si entre la consulta y aquí
     // el conductor tomó otra cosa, la oferta no se crea.

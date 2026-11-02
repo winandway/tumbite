@@ -33,7 +33,9 @@ export function diaLocal(fecha: Date, zonaHoraria: string): string {
       month: '2-digit',
       day: '2-digit',
     }).format(fecha);
-  } catch {
+  } catch (e) {
+    // BRE-R2: una zona horaria mal escrita no tumba el contador, pero queda anotada.
+    console.error('modo destino: zona horaria no válida, se usa la fecha UTC', zonaHoraria, e);
     return fecha.toISOString().slice(0, 10);
   }
 }

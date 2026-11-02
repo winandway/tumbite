@@ -1467,7 +1467,14 @@ const es: SeccionDocs[] = [
         titulo: 'Promociones que creas y pagas tú',
         resumen:
           'Arma tu propia promoción —un porcentaje de descuento, envío gratis o «gasta X y ahorra Y»— con fechas y tope de pedidos. Sale con su insignia en la app del cliente, se aplica sola y la pagas tú con lo que te toca de cada pedido.',
-        capturas: [],
+        // MAQUETA fiel (BRE-R2): reemplazar por la captura real del panel en BRE-5b.
+        capturas: [
+          {
+            src: '/docs/maqueta-restaurante-promociones-es.webp',
+            alt: 'La pantalla Promociones del panel del restaurante: el formulario «Nueva promoción» con 20 % de descuento y tope de 5 dólares, y la lista «Tus promociones» con pedidos y lo que costó cada una.',
+            pie: 'Creas tu promoción a la izquierda y ves cómo le va a cada una a la derecha.',
+          },
+        ],
         preguntas: [
           '¿Cómo creo una promoción para mi restaurante?',
           '¿Quién paga el descuento de mi promoción?',
@@ -2410,7 +2417,19 @@ const es: SeccionDocs[] = [
         titulo: 'Modo destino: pedidos de camino a casa',
         resumen:
           'Pon tu destino —tu casa, por ejemplo— y Divoox Driver solo te ofrece pedidos cuya entrega te acerca. Lo puedes usar dos veces al día y se apaga solo cuando llegas.',
-        capturas: [],
+        // MAQUETA fiel (BRE-R2): reemplazar por la captura real de Divoox Driver en BRE-6b.
+        capturas: [
+          {
+            src: '/docs/maqueta-driver-modo-destino-es.webp',
+            alt: 'La tarjeta «Modo destino» en Inicio de Divoox Driver, con la casilla «Tu destino», los usos que quedan hoy y el botón «Ir hacia allá».',
+            pie: 'Escribe tu destino, elígelo de la lista y toca «Ir hacia allá».',
+          },
+          {
+            src: '/docs/maqueta-driver-modo-destino-encendido-es.webp',
+            alt: 'La tarjeta «Modo destino» encendida: «Solo pedidos hacia» la dirección elegida, un uso restante y el botón «Apagar».',
+            pie: 'Encendido, solo te llegan pedidos hacia tu destino. Lo apagas cuando quieras.',
+          },
+        ],
         preguntas: [
           '¿Cómo recibo pedidos de camino a mi casa?',
           '¿Cuántas veces al día puedo usar el modo destino?',
@@ -5764,7 +5783,14 @@ const en: SeccionDocs[] = [
         titulo: 'Promotions you create and fund',
         resumen:
           'Set up your own promotion —a percentage off, free delivery, or “spend X, save Y”— with dates and an order limit. It shows with its badge in the customer app, applies automatically, and you fund it from what you earn on each order.',
-        capturas: [],
+        // MOCKUP (BRE-R2): replace with the real dashboard capture in BRE-5b.
+        capturas: [
+          {
+            src: '/docs/maqueta-restaurante-promociones-en.webp',
+            alt: 'The restaurant dashboard Promotions screen: the “New promotion” form with 20% off capped at $5, and the “Your promotions” list with orders and what each one cost.',
+            pie: 'Create your promotion on the left and see how each one is doing on the right.',
+          },
+        ],
         preguntas: [
           'How do I create a promotion for my restaurant?',
           'Who pays for my promotion’s discount?',
@@ -6697,7 +6723,19 @@ const en: SeccionDocs[] = [
         titulo: 'Destination mode: orders on your way home',
         resumen:
           'Set your destination —home, for example— and Divoox Driver only offers you orders whose drop-off takes you closer. You can use it twice a day, and it turns off on its own when you arrive.',
-        capturas: [],
+        // MOCKUP (BRE-R2): replace with the real Divoox Driver capture in BRE-6b.
+        capturas: [
+          {
+            src: '/docs/maqueta-driver-modo-destino-en.webp',
+            alt: 'The “Destination mode” card on the Divoox Driver Home screen, with the “Your destination” field, the uses left today and the “Head there” button.',
+            pie: 'Type your destination, pick it from the list and tap “Head there.”',
+          },
+          {
+            src: '/docs/maqueta-driver-modo-destino-encendido-en.webp',
+            alt: 'The “Destination mode” card turned on: “Only orders toward” the chosen address, one use left and the “Turn off” button.',
+            pie: 'When it’s on, you only get orders toward your destination. Turn it off anytime.',
+          },
+        ],
         preguntas: [
           'How do I get orders on my way home?',
           'How many times a day can I use destination mode?',

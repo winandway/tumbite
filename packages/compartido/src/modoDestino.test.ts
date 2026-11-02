@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { acercaAlDestino, diaLocal, llegoAlDestino } from './modoDestino';
 
 /** C-MODO-DESTINO (BRE-6): solo ofertas que lo acercan a su destino; se apaga al llegar. */
@@ -22,5 +22,16 @@ describe('modo destino (C-MODO-DESTINO)', () => {
     expect(diaLocal(tarde, 'America/New_York')).toBe('2026-11-02');
     expect(diaLocal(tarde, 'UTC')).toBe('2026-11-03');
     expect(diaLocal(tarde, 'No/Existe')).toBe('2026-11-03');
+  });
+
+  it('BRE-R2: la zona mala queda anotada en el registro, no se calla', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    diaLocal(new Date('2026-11-03T03:30:00Z'), 'No/Existe');
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('modo destino'),
+      'No/Existe',
+      expect.anything(),
+    );
+    error.mockRestore();
   });
 });
