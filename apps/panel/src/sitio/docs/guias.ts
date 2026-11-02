@@ -294,8 +294,8 @@ const es: SeccionDocs[] = [
           'En la pestaña Pedidos ves cada pedido con su estado y total, abres el recibo completo y vuelves a pedir lo mismo con un toque.',
         explicacion: [
           'La pestaña Pedidos (abajo, la segunda) lista todos tus pedidos, del más reciente al más viejo, con la fecha, el estado y el total. Los que van en curso dicen «En curso».',
-          '«Ver pedido y recibo» abre el pedido con el desglose: comida, envío, servicio, impuesto (si aplica en tu ciudad), propina y total, además del seguimiento y la calificación.',
-          '«Repetir pedido» arma otra vez tu carrito con los mismos platos o productos, cantidades y opciones, con el precio de hoy. Si alguno ya no está disponible, te decimos cuál y ponemos los que sí.',
+          'Cada pedido muestra la foto del local, la fecha, cuántos artículos llevó y su estado con color: verde si se entregó, azul si va en curso y gris si se canceló. «Ver recibo» abre el pedido con el desglose: comida, envío, servicio, impuesto (si aplica en tu ciudad), propina y total, además del seguimiento y la calificación.',
+          '«Pedir otra vez» arma otra vez tu carrito con los mismos platos o productos, cantidades y opciones, con el precio de hoy. Si alguno ya no está disponible, te decimos cuál y ponemos los que sí.',
           'También sirve con las tiendas (mercado, farmacia y más): se repite incluso lo que elegiste hacer si falta un producto.',
           'Al terminar un pedido, en su pantalla aparece «Pedir otra vez» con el mismo efecto. Y en el inicio, la fila «Pedir otra vez» muestra los últimos comercios donde recibiste un pedido: un toque y está en tu carrito.',
           'Si tenías otro carrito a medias, primero te preguntamos si lo cambiamos.',
@@ -324,7 +324,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Toca Pedidos en la barra de abajo.',
-          'Toca «Ver pedido y recibo» o «Repetir pedido».',
+          'Toca «Ver recibo» o «Pedir otra vez». Si el pedido va en curso, toca «Seguir mi pedido».',
           'Si repites, revisa el carrito y paga como siempre.',
         ],
       },
@@ -4223,8 +4223,8 @@ const en: SeccionDocs[] = [
           'In the Orders tab you see each order with its status and total, open the full receipt and order the same again with one tap.',
         explicacion: [
           'The Orders tab (bottom bar, second one) lists all your orders, newest first, with date, status and total. The ones in progress say “In progress”.',
-          '“See order and receipt” opens the order with the breakdown: food, delivery, service, tax (where it applies in your city), tip and total, plus tracking and rating.',
-          '“Reorder” builds your cart again with the same items, quantities and options, at today’s prices. If any is no longer available, we tell you which one and add the rest.',
+          'Each order shows the store’s photo, the date, how many items it had and its status in color: green if delivered, blue if in progress and gray if canceled. “View receipt” opens the order with the breakdown: food, delivery, service, tax (where it applies in your city), tip and total, plus tracking and rating.',
+          '“Order again” builds your cart again with the same items, quantities and options, at today’s prices. If any is no longer available, we tell you which one and add the rest.',
           'It works with stores too (grocery, pharmacy and more), including what you chose to do if an item is missing.',
           'When an order is finished, its screen shows “Order again”, which does the same. On the home screen, the “Order again” row shows the last places you got an order from: one tap and it’s in your cart.',
           'If you had another cart half done, we ask before replacing it.',
@@ -4253,7 +4253,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'Tap Orders in the bottom bar.',
-          'Tap “See order and receipt” or “Reorder”.',
+          'Tap “View receipt” or “Order again.” If the order is in progress, tap “Track my order.”',
           'If you reorder, review the cart and pay as usual.',
         ],
       },

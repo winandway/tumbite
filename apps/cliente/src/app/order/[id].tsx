@@ -585,12 +585,15 @@ export default function SeguirPedido() {
       p.estado)
     : '';
   const irInicio = () => router.replace('/');
+  // C-VOLVER-AL-ORIGEN: la flecha vuelve a donde estaba la persona (Mi cuenta, Mis pedidos…). Solo
+  // un pedido recién hecho (o un enlace abierto de afuera) vuelve al inicio, como en DoorDash.
+  const volver = () => (!nuevo && router.canGoBack() ? router.back() : irInicio());
   const marco = (cuerpo: React.ReactNode, conEncabezado = true) => (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
       {conEncabezado ? (
         <Encabezado
           titulo={t.titulo}
-          alVolver={irInicio}
+          alVolver={volver}
           etiquetaVolver={t.volver}
           derecha={
             <Text

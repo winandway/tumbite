@@ -2336,3 +2336,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** el título del caso («Pedido de ayuda», «Reporte de un problema») salía en el idioma guardado en la cuenta, no en el de la app: una persona que usaba la app en español veía «Help request». Lo destapó la captura de Docs.
 - **Arreglo:** `POST /datos/quejas` usa la cabecera `x-idioma` de la app y, si no viene, el idioma de la cuenta. El gerente de correo responde en ese idioma.
 - **Prueba:** `tickets.test.ts` → «C-CASO-EN-SU-IDIOMA» (comprobada en rojo).
+
+## C-VOLVER-AL-ORIGEN y C-MIS-PEDIDOS-MINIATURA — la flecha vuelve a donde se estaba y «Mis pedidos» con miniatura y colores (1 nov 2026, todos los países)
+
+- **Qué se rompía (visto por Richard en el iPhone):** desde Mi cuenta → un pedido, la flecha de volver mandaba al inicio y sacaba a la persona de Mi cuenta. En «Mis pedidos», el botón «Ver pedido y recibo» salía como un óvalo deformado y «Repetir pedido» partía el texto en dos líneas; todo rojo, blanco y negro.
+- **Arreglo:** `app/order/[id].tsx` vuelve con `router.back()` (al inicio solo con un pedido recién hecho o sin historial). `app/orders.tsx`: tarjeta con miniatura del local (`restauranteImagen` en `/datos/mis-pedidos`), fecha y artículos, estado en etiqueta de color (verde entregado, azul en curso, gris cancelado) y botones compactos de una línea: «Ver recibo» y «Pedir otra vez» en verde, o «Seguir mi pedido» si va en curso.
+- **Prueba:** `packages/compartido/src/volverAlOrigen.test.ts` (comprobada en rojo).

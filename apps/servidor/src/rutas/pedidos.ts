@@ -355,6 +355,10 @@ export function aPedido(f: FilaPedido) {
     estado: String(f.estado),
     restauranteId: String(f.restaurante_id),
     restauranteNombre: f.restaurante_nombre == null ? undefined : String(f.restaurante_nombre),
+    // C-MIS-PEDIDOS-MINIATURA: la foto y la categoría del local para la miniatura de la lista.
+    restauranteImagen: f.restaurante_imagen == null ? undefined : String(f.restaurante_imagen),
+    restauranteCategoria:
+      f.restaurante_categoria == null ? undefined : String(f.restaurante_categoria),
     lineas: JSON.parse(String(f.lineas_json)) as {
       platoId: string;
       nombreEs: string;
@@ -1307,7 +1311,7 @@ pedidos.get('/mis-pedidos', async (c) => {
   const u = exigir(c, 'cliente');
   const { results } = await base(c)
     .prepare(
-      `SELECT p.*, r.nombre AS restaurante_nombre FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.*, r.nombre AS restaurante_nombre, r.imagen AS restaurante_imagen, r.categoria AS restaurante_categoria FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.cliente_id = ? AND p.estado != 'pago_pendiente' ORDER BY p.creado_en DESC LIMIT 50`,
     )
     .bind(u.id)

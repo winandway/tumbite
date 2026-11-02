@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, type OpcionElegida, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, C, e, useSesion } from '@tumbite/movil';
+import { C, e, urlFoto, useSesion } from '@tumbite/movil';
+import { fotoDeRelleno } from '../inicio/recursos';
 import { usePedirOtraVez } from '../pedirOtraVez';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
@@ -14,8 +15,10 @@ const T = {
     volver: 'Volver',
     vacio:
       'Todavía no has pedido nada. Cuando pidas, aquí verás tu historial, el recibo y el botón para repetir.',
-    ver: 'Ver pedido y recibo',
-    repetir: 'Repetir pedido',
+    ver: 'Ver recibo',
+    repetir: 'Pedir otra vez',
+    seguir: 'Seguir mi pedido',
+    articulos: (n: number) => (n === 1 ? '1 artículo' : `${n} artículos`),
     repitiendo: 'Armando tu carrito…',
     enCurso: 'En curso',
     estados: {
@@ -32,8 +35,10 @@ const T = {
     volver: 'Back',
     vacio:
       'You haven’t ordered yet. Once you do, you’ll see your history, the receipt and the reorder button here.',
-    ver: 'See order and receipt',
-    repetir: 'Reorder',
+    ver: 'View receipt',
+    repetir: 'Order again',
+    seguir: 'Track my order',
+    articulos: (n: number) => (n === 1 ? '1 item' : `${n} items`),
     repitiendo: 'Building your cart…',
     enCurso: 'In progress',
     estados: {
@@ -52,6 +57,8 @@ type Pedido = {
   estado: string;
   restauranteId: string;
   restauranteNombre?: string;
+  restauranteImagen?: string;
+  restauranteCategoria?: string;
   total: number;
   moneda?: string;
   creadoEn: string;
@@ -138,67 +145,123 @@ export default function Pedidos() {
           </Text>
         ) : null}
         {pedidos?.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
-        {pedidos?.map((p) => (
-          <Tarjeta key={p.id} style={{ marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}
-                  numberOfLines={1}
-                >
-                  {p.restauranteNombre}
-                </Text>
-                <Text style={{ color: '#5E5E5E', marginTop: 2 }}>
-                  {fecha(p.creadoEn)} ·{' '}
-                  <Text
-                    style={
-                      p.estado === 'entregado'
-                        ? { color: C.exito, fontWeight: '700' }
-                        : vivo(p)
-                          ? { color: C.primario, fontWeight: '700' }
-                          : undefined
-                    }
-                  >
-                    {t.estados[p.estado] ?? p.estado}
-                  </Text>
-                </Text>
-              </View>
-              <Text style={{ fontWeight: '700', color: C.secundario }}>
-                {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
-              </Text>
-            </View>
-            <Text style={{ color: '#5E5E5E', marginTop: 6 }} numberOfLines={2}>
-              {p.lineas.map((l) => `${l.cantidad} × ${nombre(l)}`).join(' · ')}
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+        {pedidos?.map((p, i) => {
+          // C-MIS-PEDIDOS-MINIATURA (1 nov 2026, pedido de Richard): como la lista de pedidos de los
+          // grandes: miniatura del local, estado con color (verde = entregado) y botones compactos.
+          const estado =
+            p.estado === 'entregado'
+              ? { fondo: '#E6F4EC', texto: C.exito }
+              : p.estado === 'cancelado'
+                ? { fondo: '#F1F1F2', texto: '#5E5E5E' }
+                : { fondo: '#E7F0F7', texto: '#1F5F8B' };
+          const articulos = p.lineas.reduce((n, l) => n + l.cantidad, 0);
+          const foto = urlFoto(p.restauranteImagen ?? null);
+          return (
+            <Tarjeta key={p.id} style={{ marginBottom: 12, padding: 12 }}>
               <Pressable
                 onPress={() => router.push(`/order/${p.id}`)}
                 accessibilityRole="link"
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: '#2a2a2a',
-                  alignItems: 'center',
-                }}
+                accessibilityLabel={`${p.restauranteNombre ?? ''} · ${t.estados[p.estado] ?? p.estado}`}
+                style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}
               >
-                <Text style={{ fontWeight: '700', color: C.secundario }}>
-                  {vivo(p) ? t.enCurso : t.ver}
-                </Text>
-              </Pressable>
-              {!vivo(p) ? (
-                <View style={{ flex: 1 }}>
-                  <Boton
-                    texto={repitiendo === p.id ? t.repitiendo : t.repetir}
-                    alTocar={() => void repetir(p)}
-                    cargando={repitiendo === p.id}
-                  />
+                <Image
+                  source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '', i)}
+                  style={{ width: 64, height: 64, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+                  accessibilityIgnoresInvertColors
+                />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                    <Text
+                      style={{ flex: 1, fontWeight: '700', fontSize: 16, color: C.secundario }}
+                      numberOfLines={1}
+                    >
+                      {p.restauranteNombre}
+                    </Text>
+                    <Text style={{ fontWeight: '700', color: C.secundario }}>
+                      {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
+                    </Text>
+                  </View>
+                  <Text style={{ color: '#5E5E5E', marginTop: 2, fontSize: 13 }} numberOfLines={1}>
+                    {fecha(p.creadoEn)} · {t.articulos(articulos)}
+                  </Text>
+                  <View
+                    style={{
+                      alignSelf: 'flex-start',
+                      marginTop: 6,
+                      backgroundColor: estado.fondo,
+                      borderRadius: 999,
+                      paddingHorizontal: 10,
+                      paddingVertical: 2,
+                    }}
+                  >
+                    <Text style={{ color: estado.texto, fontWeight: '700', fontSize: 12 }}>
+                      {t.estados[p.estado] ?? p.estado}
+                    </Text>
+                  </View>
                 </View>
-              ) : null}
-            </View>
-          </Tarjeta>
-        ))}
+              </Pressable>
+              <Text style={{ color: '#5E5E5E', marginTop: 10, fontSize: 13 }} numberOfLines={1}>
+                {p.lineas.map((l) => `${l.cantidad} × ${nombre(l)}`).join(' · ')}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                {vivo(p) ? (
+                  <Pressable
+                    onPress={() => router.push(`/order/${p.id}`)}
+                    accessibilityRole="button"
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      borderRadius: 999,
+                      backgroundColor: '#1F5F8B',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={{ fontWeight: '700', color: '#fff' }} numberOfLines={1}>
+                      {t.seguir}
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <>
+                    <Pressable
+                      onPress={() => router.push(`/order/${p.id}`)}
+                      accessibilityRole="link"
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 999,
+                        borderWidth: 1,
+                        borderColor: '#D6D6D6',
+                        alignItems: 'center',
+                        backgroundColor: '#fff',
+                      }}
+                    >
+                      <Text style={{ fontWeight: '700', color: C.secundario }} numberOfLines={1}>
+                        {t.ver}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => void repetir(p)}
+                      disabled={repitiendo === p.id}
+                      accessibilityRole="button"
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 999,
+                        backgroundColor: C.exito,
+                        alignItems: 'center',
+                        opacity: repitiendo === p.id ? 0.7 : 1,
+                      }}
+                    >
+                      <Text style={{ fontWeight: '700', color: '#fff' }} numberOfLines={1}>
+                        {repitiendo === p.id ? t.repitiendo : t.repetir}
+                      </Text>
+                    </Pressable>
+                  </>
+                )}
+              </View>
+            </Tarjeta>
+          );
+        })}
       </ScrollView>
       <BarraInferior idioma={idioma} activa="pedidos" alTocar={pestana} />
     </SafeAreaView>

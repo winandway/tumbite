@@ -243,6 +243,12 @@ try {
       await ctx.close();
     }
 
+    if (toca('pedidos')) {
+      const { ctx, p } = await celular(cliente, '/app/orders');
+      await foto(p, 'cliente-mis-pedidos');
+      await ctx.close();
+    }
+
     if (toca('restaurante')) {
       const ctx = await navegador.newContext({
         viewport: { width: 1366, height: 860 },
