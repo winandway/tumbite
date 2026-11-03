@@ -151,6 +151,63 @@ describe('recorrido y conciliación en staging', () => {
     expect((await pedir('confirmar-pago', { pedidoId: 'x' })).estado).toBe(409);
     expect((await pedir('conciliacion')).estado).toBe(409);
   });
+  it('NXT-2: con «pedidos» revisa esos y cada devolución es UN reembolso exacto en Stripe', async () => {
+    let reembolsos: { amount: number; status: string }[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      const u = new URL(url);
+      if (u.pathname === '/v1/refunds') return Response.json({ data: reembolsos });
+      if (u.pathname.startsWith('/v1/payment_intents/'))
+        return Response.json({ status: 'succeeded', amount_received: 20000 });
+      return Response.json({ data: [] });
+    });
+    try {
+      const { m, pedir } = preparar({ STRIPE_SECRET_KEY: 'sk_test_x' });
+      await m.DB.prepare('PRAGMA foreign_keys = OFF').run();
+      await m.DB.prepare(
+        `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
+           propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, stripe_sesion, stripe_pago, entregado_en)
+         VALUES ('zz-dual', 'c', 'r', 'entregado', '[]', 20000, 0, 0, 0, 0, 20000, 0, 0, 0, 0, 0, 'basico', 'x', 'pi_dual', 'pi_dual', datetime('now'))`,
+      ).run();
+      await m.DB.prepare(
+        "INSERT INTO cobros (pedido_id, capturado_en, capturado) VALUES ('zz-dual', datetime('now'), 20000)",
+      ).run();
+      await m.DB.prepare(
+        "INSERT INTO devoluciones (id, pedido_id, monto) VALUES ('d1', 'zz-dual', 15000)",
+      ).run();
+      const caso = async () =>
+        (
+          (await pedir('conciliacion', { pedidos: ['zz-dual'] })).datos.casos as {
+            nombre: string;
+            ok: boolean;
+            detalle: string;
+          }[]
+        ).find((x) => x.nombre.startsWith('cada cobro'))!;
+      // Stripe devolvió dos veces (una aprobación ejecutada dos veces): rojo.
+      reembolsos = [
+        { amount: 15000, status: 'succeeded' },
+        { amount: 15000, status: 'succeeded' },
+      ];
+      const doble = await caso();
+      expect(doble.ok).toBe(false);
+      expect(doble.detalle).toContain('zz-dual: base devolvió 15000 en 1, Stripe 30000 en 2');
+      expect(doble.nombre).toContain('(1 pedidos)');
+      // Exactamente uno por el monto: verde.
+      reembolsos = [{ amount: 15000, status: 'succeeded' }];
+      expect((await caso()).ok).toBe(true);
+      // Un pedido que no existe no pasa en silencio.
+      const falta = (
+        (await pedir('conciliacion', { pedidos: ['zz-dual', 'zz-no'] })).datos.casos as {
+          nombre: string;
+          ok: boolean;
+          detalle: string;
+        }[]
+      ).find((x) => x.nombre.startsWith('cada cobro'))!;
+      expect(falta.ok).toBe(false);
+      expect(falta.detalle).toContain('de 2 pedidos pedidos se encontraron 1');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
   it('en tumbite.com tampoco existen', async () => {
     const { pedir } = preparar();
     expect((await pedir('sql', { sql: 'SELECT 1' }, 'https://tumbite.com')).estado).toBe(404);

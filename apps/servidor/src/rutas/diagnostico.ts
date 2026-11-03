@@ -1236,6 +1236,12 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
   const db = base(c);
   const stripe = crearStripe(llave)!;
   const casos: Caso[] = [];
+  // NXT-2/NXT-3: con «pedidos» se revisan ESOS (el día del sitio de pruebas pasa de 40 pedidos y
+  // los de la corrida podían quedar fuera de la muestra sin que nadie lo notara).
+  const { pedidos: elegidos } = await leerCuerpo(
+    c,
+    z.object({ pedidos: z.array(z.string().min(1).max(64)).max(20).optional() }),
+  );
   const hoy = new Date().toISOString().slice(0, 10);
   const libro = await conciliar(db, hoy);
   // No queda guardada: la del día la hace el reloj mañana, completa.
@@ -1245,21 +1251,32 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
     ok: libro.cuadra,
     detalle: JSON.stringify(libro.detalle),
   });
-  const { results } = await db
-    .prepare(
-      `SELECT p.id, p.stripe_sesion AS pi, p.estado, c.capturado, c.capturado_en, c.cancelado_en
-         FROM pedidos p JOIN cobros c ON c.pedido_id = p.id
-        WHERE p.creado_en >= ? AND p.stripe_sesion LIKE 'pi_%' ORDER BY p.creado_en LIMIT 40`,
-    )
-    .bind(`${hoy} 00:00:00`)
-    .all<{
-      id: string;
-      pi: string;
-      estado: string;
-      capturado: number | null;
-      capturado_en: string | null;
-      cancelado_en: string | null;
-    }>();
+  const sel = `SELECT p.id, p.stripe_sesion AS pi, p.estado, c.capturado, c.capturado_en, c.cancelado_en,
+       (SELECT COALESCE(SUM(dv.monto), 0) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS devuelto,
+       (SELECT COUNT(*) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS ndev
+         FROM pedidos p JOIN cobros c ON c.pedido_id = p.id`;
+  const { results } = await (
+    elegidos?.length
+      ? db
+          .prepare(
+            `${sel} WHERE p.stripe_sesion LIKE 'pi_%' AND p.id IN (${elegidos.map(() => '?').join(', ')})`,
+          )
+          .bind(...elegidos)
+      : db
+          .prepare(
+            `${sel} WHERE p.creado_en >= ? AND p.stripe_sesion LIKE 'pi_%' ORDER BY p.creado_en DESC LIMIT 40`,
+          )
+          .bind(`${hoy} 00:00:00`)
+  ).all<{
+    devuelto: number;
+    ndev: number;
+    id: string;
+    pi: string;
+    estado: string;
+    capturado: number | null;
+    capturado_en: string | null;
+    cancelado_en: string | null;
+  }>();
   const difs: string[] = [];
   for (const f of results) {
     const pi = await stripe.get<{
@@ -1280,7 +1297,25 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
         difs.push(`${f.id}: cancelado y capturado sin reembolso en Stripe`);
     }
     if (f.estado === 'entregado' && !f.capturado_en) difs.push(`${f.id}: entregado sin captura`);
+    // Devoluciones a mano (C-CONTROL-DUAL): cada fila de `devoluciones` es UN reembolso en Stripe
+    // por el monto exacto; ni uno de más (una aprobación ejecutada dos veces) ni de menos.
+    if (Number(f.ndev) > 0) {
+      const rf = await stripe.get<{ data?: { amount: number; status: string }[] }>('/refunds', {
+        payment_intent: f.pi,
+        limit: 20,
+      });
+      const buenos = (rf.data ?? []).filter(
+        (x) => x.status === 'succeeded' || x.status === 'pending',
+      );
+      const suma = buenos.reduce((a, x) => a + x.amount, 0);
+      if (buenos.length !== Number(f.ndev) || suma !== Number(f.devuelto))
+        difs.push(
+          `${f.id}: base devolvió ${f.devuelto} en ${f.ndev}, Stripe ${suma} en ${buenos.length} reembolsos`,
+        );
+    }
   }
+  if (elegidos?.length && results.length !== elegidos.length)
+    difs.push(`de ${elegidos.length} pedidos pedidos se encontraron ${results.length} con cobro`);
   casos.push({
     nombre: `cada cobro de hoy coincide con Stripe (${results.length} pedidos)`,
     ok: difs.length === 0,
