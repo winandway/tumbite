@@ -1893,7 +1893,7 @@ const es: SeccionDocs[] = [
           'Si eres restaurante o repartidor en Estados Unidos, tus pagos los hace Stripe Connect, la plataforma de pagos de muchas apps grandes. Conectas tu cuenta bancaria una sola vez y Stripe te deposita.',
         explicacion: [
           'Quién te paga: Stripe Connect. Divoox anota en tu saldo cada venta o cada entrega con su propina, y Stripe envía ese dinero a tu banco. Tus datos bancarios los escribes en Stripe: Divoox nunca los ve.',
-          'Cómo conectas tu banco: repartidores, en Divoox Driver → «Mi billetera» → «Conectar mi cuenta bancaria»; restaurantes, en el panel → «Beneficios». Stripe te pide tus datos y los de tu cuenta, y verifica tu identidad. Se hace una sola vez.',
+          'Cómo conectas tu banco: repartidores, en Divoox Driver → «Mi billetera» → «Conectar mi cuenta bancaria»; restaurantes, en el panel → «Beneficios». El formulario seguro de Stripe se abre dentro de Divoox, sin salir a otra página: te pide tus datos y los de tu cuenta, y verifica tu identidad. Se hace una sola vez.',
           'Qué cuenta sirve: una cuenta bancaria de Estados Unidos, corriente o de ahorros, a tu nombre. Si eres un restaurante, la cuenta de tu negocio, a nombre de la empresa que registraste.',
           'Cuándo te llega: el primer pago suele tardar entre 7 y 14 días desde tu primer cobro, porque Stripe revisa la cuenta nueva. Después, cada retiro llega normalmente en 2 o 3 días hábiles. Tu banco puede tardar un poco más en mostrarlo.',
           'Si un pago no llega o el banco lo rechaza, la app te avisa y te dice qué corregir (ver «Si un abono a tu banco falla»). Si algo no cuadra, escríbenos desde «Tengo un problema» y te responde una persona.',
@@ -2510,7 +2510,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'En «Beneficios» ves el día de hoy: pedidos entregados, ventas, regalos, comisión y, en verde, lo que te toca.',
-          'La primera vez, toca «Conectar mi cuenta bancaria»: Stripe te pide tus datos una sola vez, en su página segura.',
+          'La primera vez, toca «Conectar mi cuenta bancaria»: se abre ahí mismo, dentro de Divoox, el formulario seguro de Stripe: escribes tus datos una sola vez y Divoox nunca los ve.',
           'Tu saldo disponible se acumula con cada pedido entregado y abajo ves cada venta con su número de pedido. Retira cuando quieras, desde un dólar.',
           'Tu plan (Inicial, Crece o Élite) define la comisión. Puedes pedir cambio de plan escribiéndonos.',
           'En «Comparado con otras apps» ves, con tus ventas reales de los últimos 30 días, cuánto te queda con Divoox y cuánto te quedaría con DoorDash o Uber Eats en el plan equivalente.',
@@ -6351,7 +6351,7 @@ const en: SeccionDocs[] = [
           'If you’re a restaurant or a driver in the United States, your payouts are made by Stripe Connect, the payments platform behind many large apps. You connect your bank account once and Stripe deposits to it.',
         explicacion: [
           'Who pays you: Stripe Connect. Divoox records every sale or every delivery with its tip in your balance, and Stripe sends that money to your bank. You enter your bank details at Stripe: Divoox never sees them.',
-          'How you connect your bank: drivers, in Divoox Driver → “My wallet” → “Connect my bank account”; restaurants, in the panel → “Earnings.” Stripe asks for your details and your account’s, and verifies your identity. You do it only once.',
+          'How you connect your bank: drivers, in Divoox Driver → “My wallet” → “Connect my bank account”; restaurants, in the panel → “Earnings.” Stripe’s secure form opens inside Divoox, without leaving for another page: it asks for your details and your account’s, and verifies your identity. You do it only once.',
           'Which account works: a U.S. bank account, checking or savings, in your name. If you’re a restaurant, your business account, in the name of the company you registered.',
           'When it arrives: your first payout usually takes 7 to 14 days from your first charge, because Stripe reviews new accounts. After that, each withdrawal normally arrives in 2 to 3 business days. Your bank may take a little longer to show it.',
           'If a payout doesn’t arrive or the bank rejects it, the app tells you and what to fix (see “If a payout to your bank fails”). If something doesn’t add up, write to us from “I have a problem” and a person replies.',
@@ -6967,7 +6967,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'In “Earnings” you see today: delivered orders, sales, gifts, commission, and, in green, your payout.',
-          'The first time, tap “Connect my bank account”: Stripe asks for your details once, on its secure page.',
+          'The first time, tap “Connect my bank account”: Stripe’s secure form opens right there, inside Divoox: you enter your details once and Divoox never sees them.',
           'Your available balance grows with every delivered order, and below you see each sale with its order number. Cash out anytime, from one dollar.',
           'Your plan (Starter, Growth, or Elite) sets the commission. Ask us to change plans anytime.',
           'In “Compared with other apps” you see, with your real sales from the last 30 days, what you keep with Divoox and what you’d keep with DoorDash or Uber Eats on the equivalent plan.',

@@ -909,6 +909,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Los pagos todavía no están activados. Te avisamos muy pronto.',
     'Payments aren’t turned on yet. We’ll let you know very soon.',
   ],
+  [
+    'El alta dentro de Divoox no está lista; usa la página de Stripe.',
+    'Setup inside Divoox isn’t ready; use Stripe’s page.',
+  ],
   ['No encontrado.', 'Not found.'],
   ['No llegó ninguna foto.', 'No photo was received.'],
   [

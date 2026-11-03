@@ -44,6 +44,7 @@ describe('servidor', () => {
     expect(scripts).toEqual([
       "'self'",
       'https://js.stripe.com',
+      'https://connect-js.stripe.com',
       'https://challenges.cloudflare.com',
       'https://static.cloudflareinsights.com',
     ]);

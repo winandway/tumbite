@@ -2809,3 +2809,18 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Regla (`apps/servidor/src/fotoLimpia.ts`):** PNG y WebP se recorren bloque a bloque y su estructura TIENE que cuadrar; si no (bloque que se sale del archivo, PNG sin IEND, largo RIFF menor que 4, mayor que el archivo o menor que la suma de sus bloques, WebP sin bloques), la foto se RECHAZA con el 415 de «La foto llegó dañada». Nunca se devuelve el original ni se guarda mordida. Lo pegado después del fin real (IEND, largo RIFF, EOI) se corta. Las fotos sanas salen idénticas (el mismo objeto).
 - **Pruebas (comprobadas en rojo el 3 nov):** `fotoLimpia.test.ts` («WebP con un largo RIFF imposible…», «PNG sin IEND da el 415…»); la sonda del revisor (`sig6yr.test.ts`, 18 casos) da 415 o la imagen cortada sin «PixelFone» en todos. Las fotos de prueba del servidor (`pruebas/ayuda.ts` y las pruebas de subidas) pasaron a ser archivos que cuadran.
 - **Qué NO tocar:** no volver a «copiar lo que queda» de un archivo que no cuadra.
+
+## C-ALTA-COBROS-DENTRO — alta de cobros dentro de Divoox (SIG-5, 3 nov 2026) — EE. UU.
+
+- **Qué era:** el restaurante y el repartidor salían de Divoox a la página de Stripe para conectar su banco.
+- **Cómo funciona ahora:**
+  - `POST /datos/billetera/sesion` (apps/servidor/src/rutas/dinero.ts) crea la sesión de Stripe Connect (`/v1/account_sessions` con `account_onboarding` y `external_account_collection`) sobre la misma cuenta Express de siempre (`cuentaDeCobros`, una sola por persona).
+  - El panel (`apps/panel/src/panel/AltaCobros.tsx`) muestra el componente con los colores de Divoox y lo carga solo cuando hace falta.
+  - Driver abre «Beneficios» del panel dentro de la app, con el puente de sesión (`abrirPanel` a `/panel/earnings`). La app del restaurante ya lo hacía.
+- **Respaldo:** sin llave publicable (respuesta 422) o si el componente no carga, se abre la página de Stripe (`/billetera/conectar`).
+- **Política de seguridad:** permite `https://connect-js.stripe.com` en `script-src` y `frame-src` (apps/servidor/src/seguridad.ts y app.test.ts).
+- **Paquetes:** `@stripe/connect-js` 3.4.6 y `@stripe/react-connect-js` 3.4.4, versiones fijas.
+- **Pruebas:** apps/servidor/src/rutas/billeteraAlta.test.ts y apps/panel/src/panel/AltaCobros.test.tsx, las dos en rojo sin el arreglo.
+- **No tocar:**
+  - los datos bancarios nunca pasan por nuestro servidor;
+  - no quitar el respaldo a la página de Stripe.

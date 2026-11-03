@@ -79,6 +79,7 @@ import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
 import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
   abrirPagina,
+  abrirPanel,
   Boton,
   C,
   ChatPedido,
@@ -91,6 +92,7 @@ import {
   e,
   useSesion,
   useToqueAviso,
+  URL_SERVIDOR,
 } from '@tumbite/movil';
 
 /** Pregunta sí/no al repartidor (en el celular con la ventana del sistema; en la web con la del navegador). */
@@ -1097,8 +1099,8 @@ export function Inicio() {
 
   async function banco() {
     try {
-      const r = await api.pedir<{ url: string }>('POST', '/datos/billetera/conectar', {});
-      abrirPagina(r.url);
+      // C-ALTA-COBROS-DENTRO: el alta se hace dentro de Divoox, en el panel con la sesión iniciada.
+      await abrirPanel(api, URL_SERVIDOR, '/panel/earnings');
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }

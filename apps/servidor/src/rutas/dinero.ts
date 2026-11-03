@@ -133,10 +133,12 @@ function exigirStripe(c: Ctx) {
   return s;
 }
 
-/** Abre (o continúa) el alta en Stripe. Los datos bancarios se escriben en la página de Stripe, nunca aquí. */
-dinero.post('/billetera/conectar', async (c) => {
-  const u = exigir(c, 'restaurante', 'repartidor');
-  const stripe = exigirStripe(c);
+/** La cuenta de Stripe Connect de la persona; la crea la primera vez (una sola por persona). */
+async function cuentaDeCobros(
+  c: Ctx,
+  u: { id: string; correo: string; rol: string },
+  stripe: NonNullable<ReturnType<typeof crearStripe>>,
+): Promise<string> {
   const db = base(c);
   let fila = await db
     .prepare('SELECT stripe_cuenta FROM cuentas_stripe WHERE usuario_id = ?')
@@ -161,9 +163,46 @@ dinero.post('/billetera/conectar', async (c) => {
       .run();
     fila = { stripe_cuenta: cuenta.id };
   }
+  return fila.stripe_cuenta;
+}
+
+/**
+ * C-ALTA-COBROS-DENTRO (SIG-5): sesión del componente de alta de Stripe Connect, que el panel
+ * muestra dentro de Divoox con nuestros colores. Los datos bancarios los recibe Stripe en su
+ * componente, nunca nuestro servidor. Sin llave publicable responde 422 y la pantalla usa la
+ * página de Stripe (`/billetera/conectar`).
+ */
+dinero.post('/billetera/sesion', async (c) => {
+  const u = exigir(c, 'restaurante', 'repartidor');
+  const stripe = exigirStripe(c);
+  const clavePublica = c.env.STRIPE_PUBLISHABLE_KEY;
+  if (!clavePublica)
+    throw new ErrorDatos(
+      'El alta dentro de Divoox no está lista; usa la página de Stripe.',
+      undefined,
+      422,
+    );
+  const cuenta = await cuentaDeCobros(c, u, stripe);
+  const sesion = await stripe.post<{ client_secret: string }>('/account_sessions', {
+    account: cuenta,
+    components: {
+      account_onboarding: {
+        enabled: true,
+        features: { external_account_collection: true },
+      },
+    },
+  });
+  return c.json({ clientSecret: sesion.client_secret, clavePublica });
+});
+
+/** Respaldo: abre (o continúa) el alta en la página de Stripe. Los datos bancarios nunca pasan por aquí. */
+dinero.post('/billetera/conectar', async (c) => {
+  const u = exigir(c, 'restaurante', 'repartidor');
+  const stripe = exigirStripe(c);
+  const cuenta = await cuentaDeCobros(c, u, stripe);
   const sitio = c.env.SITIO_URL ?? 'https://divoox.com';
   const enlace = await stripe.post<{ url: string }>('/account_links', {
-    account: fila.stripe_cuenta,
+    account: cuenta,
     type: 'account_onboarding',
     refresh_url: `${sitio}/wallet/connect`,
     return_url: `${sitio}/wallet/ready`,

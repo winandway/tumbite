@@ -113,6 +113,9 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
     if (ruta === '/panel/team') return <Equipo idioma={idioma} />;
     if (ruta === '/panel/orders') return <Pedidos idioma={idioma} />;
   }
+  // C-ALTA-COBROS-DENTRO: Driver abre aquí sus cobros (puente con sesión ya iniciada).
+  if (usuario.rol === 'repartidor' && ruta === '/panel/earnings')
+    return <Billetera usuario={usuario} idioma={idioma} />;
   if (usuario.rol === 'admin') {
     if (ruta === '/panel/restaurants') return <AdminRestaurantes idioma={idioma} />;
     if (ruta === '/panel/money') return <AdminDinero usuario={usuario} idioma={idioma} />;
