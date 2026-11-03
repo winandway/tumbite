@@ -22,7 +22,7 @@ Hello, and thank you for the review. Divoox is our own product, and we would lik
 
 **4. Beta testing.** Every build is tested by our team on our staging environment and on TestFlight (11 builds of this app so far), with test restaurants, drivers and customers, plus an automated end-to-end test of a full order in both languages on every release. Feedback applied: the home screen hid the service choices, so services now come first and only those that work in the customer's city are shown; a restaurant reported that legal pages took them out of the app, so they now open inside it.
 
-**5. Standalone or suite.** Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps, the standard structure of delivery marketplaces: Divoox for customers, Divoox Driver for drivers and Divoox Restaurants for restaurants. Divoox is the only one where people order; a customer cannot accept deliveries or sell food. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
+**5. Standalone or suite.** Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps because a delivery marketplace has three people with three different jobs, the same structure as DoorDash, Dasher and DoorDash Merchant: Divoox for customers who order, Divoox Driver for drivers who deliver, and Divoox Restaurants for restaurants that prepare the orders. Divoox is the only one where people order; a customer cannot accept deliveries or sell food. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
 
 **6. Could it be part of another app?** No. Customers, drivers and restaurants use their own app at the same time on different phones for the same order, with different accounts and permissions; merging them would force customers to install driver and restaurant tools. None of our other apps does delivery, rides or restaurant orders.
 
@@ -32,7 +32,7 @@ Hello, and thank you for the review. Divoox is our own product, and we would lik
 
 **9. Built for a client?** No. Divoox is owned and operated by Windoce LLC, the account holder. The concept, brand, content and service are ours, and we run the backend, the restaurant and driver agreements and customer support ourselves.
 
-Thank you. We're happy to provide a demo video or test accounts for the customer, driver and restaurant apps if useful.
+Thank you. We're happy to provide a demo video and test accounts for the customer, driver and restaurant apps, and we would welcome a phone call with App Review to walk through how the three apps work together on one order.
 
 ---
 
@@ -48,7 +48,7 @@ Hello, and thank you for the review. Divoox Driver is our own product, and we wo
 
 **4. Beta testing.** Every build is tested by our team on staging and TestFlight (7 builds of this app so far) with test drivers, including real routes, plus an automated end-to-end test of a full delivery on every release. Feedback applied: drivers left the app to connect their bank, so bank setup now happens inside it; a driver with an open package route did not understand why food offers stopped, so the app now explains it.
 
-**5. Standalone or suite.** Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps, the standard structure of delivery marketplaces: Divoox for customers, Divoox Driver for drivers and Divoox Restaurants for restaurants. Divoox Driver is only for drivers; it has no ordering or restaurant features. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
+**5. Standalone or suite.** Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps because a delivery marketplace has three people with three different jobs, the same structure as DoorDash, Dasher and DoorDash Merchant: Divoox for customers who order, Divoox Driver for drivers who deliver, and Divoox Restaurants for restaurants that prepare the orders. Divoox Driver is only for drivers; it has no ordering or restaurant features. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
 
 **6. Could it be part of another app?** No. Drivers need background location, offer alerts and earnings tools that customers and restaurants must not have, and the three apps are used at the same time by different people for the same order. None of our other apps does delivery, rides or restaurant orders.
 
@@ -74,7 +74,7 @@ Hello, and thank you for the review. Divoox Restaurants is our own product, and 
 
 **4. Beta testing.** Every build is tested by our team on staging and TestFlight (2 builds of this app so far) with test restaurants, plus an automated end-to-end test where a restaurant receives, prepares and hands over a full order on every release. Feedback applied: legal pages took the restaurant out of the app, so they now open inside it; bank setup now happens inside the app.
 
-**5. Standalone or suite.** Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps, the standard structure of delivery marketplaces: Divoox for customers, Divoox Driver for drivers and Divoox Restaurants for restaurants. Divoox Restaurants is only for restaurants; it has no ordering or delivery features. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
+**5. Standalone or suite.** Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps because a delivery marketplace has three people with three different jobs, the same structure as DoorDash, Dasher and DoorDash Merchant: Divoox for customers who order, Divoox Driver for drivers who deliver, and Divoox Restaurants for restaurants that prepare the orders. Divoox Restaurants is only for restaurants; it has no ordering or delivery features. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
 
 **6. Could it be part of another app?** No. Restaurant staff use it all day at the counter; it needs order alerts and menu tools that customers and drivers must not have. None of our other apps does delivery, rides or restaurant orders.
 

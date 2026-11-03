@@ -155,3 +155,44 @@ Cuando se autorice responder, se hace así en cada una de las tres apps:
 - No subas compilaciones nuevas mientras se espera la respuesta.
 
 **Cómo se sabe que salió bien:** tu mensaje aparece en «Mensajes», debajo del de Apple. La respuesta del revisor llega por correo a go@windoce.com y aparece en esa misma página.
+
+## 6. Preparación final (3 nov 2026, plan aprobado por Richard: Divoox primero, las tres apps el mismo día)
+
+Nada de esto sale hacia Apple hasta el último «sí» de Richard, con los videos ya grabados. No se sube ninguna compilación a revisión.
+
+### 6.1 Cuentas de prueba (una por app, las que ya están cargadas en App Store Connect)
+
+| App         | Cuenta                          | Qué ve hoy en producción (leído el 3 nov, sin entrar)                                                                                                                                                                        |
+| ----------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Divoox      | revisor.cliente@windoce.com     | En Miami, un solo restaurante: el de la cuenta de revisión. En Novi (Michigan), cuatro restaurantes con «(prueba)».                                                                                                          |
+| Driver      | revisor.driver@windoce.com      | Perfil «Soporte Revisor Driver», verificado.                                                                                                                                                                                 |
+| Restaurants | revisor.restaurante@windoce.com | «Divoox Review Kitchen (Soporte)»: descripción «Restaurante de prueba para los revisores» / «Test restaurant for the app store reviewers», teléfono +1 305 000 0000, sin foto, cerrado, un solo plato con un error («Papá»). |
+
+Cambios en la base de producción (los hace la IA solo con el «sí» de Richard escrito en la sesión de Divoox):
+
+1. **Pausar** los cuatro restaurantes de prueba de Novi (Burger Town Center, Pizzería Novi, Tacos Twelve Oaks y Café Fountain Walk). Solo pausar: `estado = 'pausado'`, `abierto = 0`; no se borra nada. **Cómo se reactivan:** superadmin → Restaurantes → cada uno → «Reactivar» (o `estado = 'aprobado'` y `abierto = 1` en esos cuatro id: 8c5f8a00…, 6902e5b5…, 43bf58d8…, 87052162…).
+2. **Dejar limpio el restaurante de la cuenta de revisión:** nombre «Divoox Review Kitchen», descripción sin «prueba» («Pizzas, salads and drinks, made to order in downtown Miami.» / «Pizzas, ensaladas y bebidas, hechas al momento en el centro de Miami.»), abierto todos los días de 7 am a 11 pm, foto de portada, y un menú de seis platos con foto y descripción correcta en los dos idiomas, sin el plato con error.
+
+**La comprobación entrando con cada cuenta la hace Richard** (la IA no escribe contraseñas en producción): abrir cada app de TestFlight (cliente 25, Driver 21, Restaurants) y entrar con su cuenta; las contraseñas están en las notas para el revisor de cada app y en el archivo privado de revisores. Debe verse: el cliente encuentra «Divoox Review Kitchen» abierto en Miami; Driver entra y puede conectarse; Restaurants ve su panel y su menú de seis platos.
+
+### 6.2 Notas para el revisor (texto nuevo, se carga junto con la respuesta)
+
+Se mantiene lo de hoy (propósito, cómo usarla, cuentas, servicios externos, contenido) y cambian tres párrafos:
+
+- **Arriba, nuevo:** «ONE MARKETPLACE, THREE APPS: Divoox, Divoox Driver and Divoox Restaurants are the three sides of one delivery marketplace owned and operated by Windoce LLC, like DoorDash, Dasher and DoorDash Merchant. Each app is for a different person with a different job and different permissions. To see one order end to end: sign in to Divoox with the customer demo account, use a Miami address (for example 1 SE 3rd Ave, Miami, FL 33131), order from Divoox Review Kitchen; the order arrives in Divoox Restaurants (restaurant demo account) and the driver demo account receives the delivery offer in Divoox Driver.»
+- **SCREEN RECORDING, corregido** (el de hoy dice «starting from launch», y no era así): «Attached: one screen recording per app, recorded on a physical iPhone running the latest iOS. Each starts on the Home Screen, opens the app, creates a new account, shows the main flow, and deletes the account.»
+- **Contacto:** se queda Pedro Llerena (nombre legal de Richard, que es el que va en Apple), go@windoce.com y el teléfono ya cargado.
+
+### 6.3 La respuesta final
+
+En RESPUESTA-APPLE-4.3 (esta carpeta): la línea común de la cuenta, «tres personas con tres trabajos, como DoorDash, Dasher y DoorDash Merchant», y la de Divoox (cliente) pide una llamada con Apple. Largo: cliente 3866, Driver 3361 y Restaurants 3183 caracteres (límite 4000).
+
+### 6.4 El guion final de los videos
+
+El de la sección 3 de este tutorial. Se graba después de los cambios de 6.1, con las compilaciones de TestFlight (cliente 25, Driver 21).
+
+### 6.5 Orden del día del envío (cuando Richard tenga los videos y dé el último «sí»)
+
+1. La IA sube los tres videos como adjunto (y quita los viejos), y carga las notas de 6.2 en las tres apps.
+2. Richard (o la IA, con su «sí») responde en cada envío con su texto de RESPUESTA-APPLE-4.3.
+3. No se toca «Volver a enviar a revisión de apps» ni «Cancelar envío».
