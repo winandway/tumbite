@@ -2824,3 +2824,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **No tocar:**
   - los datos bancarios nunca pasan por nuestro servidor;
   - no quitar el respaldo a la página de Stripe.
+- **Lo que se rompió el 3 nov (SIG-5b, main sin publicar unas tres horas):**
+  - Síntoma: el recorrido fallaba en «la cuenta del banco del repartidor quedó creada» (e2e/recorrido/recorrido.spec.ts).
+  - Causa 1: el panel no tiene menú para el repartidor y caía en «solo para el equipo» antes de llegar a `/panel/earnings`.
+  - Causa 2: en la web, `abrirPanel` (packages/movil/src/PaginaEnApp.tsx) se saltaba el puente de sesión.
+  - Arreglo, en b06a4d008:
+    - rama propia para el repartidor en `PanelApp.tsx`;
+    - el puente también en la web;
+    - el recorrido toca «Conectar mi cuenta bancaria» dentro de «Beneficios».
+  - Prueba: la tercera de AltaCobros.test.tsx, en rojo sin el arreglo.
