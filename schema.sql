@@ -3368,7 +3368,7 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
 -- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
 CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
-  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral')),
   objeto TEXT NOT NULL,
   monto INTEGER NOT NULL,
   moneda TEXT NOT NULL,
@@ -3386,6 +3386,19 @@ CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   CHECK (revisado_por IS NULL OR revisado_por <> pedido_por OR estado = 'rechazada')
 );
 CREATE INDEX IF NOT EXISTS aprobaciones_dinero_estado ON aprobaciones_dinero(estado, creado_en);
+-- C-CONTROL-DUAL (SIG-4x, 3 nov 2026): lo movido a mano SIN segunda firma (bajo el límite), para
+-- sumar lo de la misma persona y lo del mismo objeto en 24 h: fraccionar no salta el control.
+CREATE TABLE IF NOT EXISTS dinero_manual (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL,
+  objeto TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS dinero_manual_usuario ON dinero_manual(usuario_id, moneda, creado_en);
+CREATE INDEX IF NOT EXISTS dinero_manual_objeto ON dinero_manual(objeto, moneda, creado_en);
 -- C-FOTOS-SIN-METADATOS (SIG-6, 2 nov 2026): la ubicación que traía DENTRO una foto de prueba
 -- (entrega, recogida, Flex) antes de quitarle los datos ocultos. La foto guardada ya no la lleva.
 CREATE TABLE IF NOT EXISTS fotos_gps (
