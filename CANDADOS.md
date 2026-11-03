@@ -2848,3 +2848,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo el 3 nov):** `apps/servidor/src/conciliacionExcepciones.test.ts` (con la lógica vieja, «solo la última», fallan 3 de 5) y `apps/panel/src/panel/ExcepcionesConciliacion.test.tsx`. Cobertura exigida al 90 % para `conciliacion.ts` y `rutas/excepcionesConciliacion.ts` en `vitest.config.mts`.
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/conciliacionExcepciones.test.ts apps/panel/src/panel/ExcepcionesConciliacion.test.tsx`; en vivo, `/datos/salud` → `dinero: ok` en los dos sitios.
 - **Qué NO tocar:** no volver a mirar solo la última conciliación; no excusar sin motivo ni contraseña; no escribir ni borrar filas de `conciliaciones` para que el canario pase.
+
+## C-SQL-LOCAL-OCUPADA (3 nov 2026). Todos los países.
+
+- **Qué fallaba:** la verificación de main del 3 nov (corrida 41621404862) cayó por azar en `e2e/recorrido/envios.spec.ts`: la prueba lee la base local con `wrangler d1 execute --local` mientras el servidor de pruebas escribe en el mismo archivo SQLite. Con la base tomada, wrangler NO dice «locked»: responde «Failed to get session commit token: internal error» y sale con error. Cada prueba tenía su propia copia de la consulta, sin reintento (o con uno ciego) y tirando la salida de error.
+- **Qué se hizo:** una sola pieza, `e2e/recorrido/sqlLocal.ts` (`sqlLocal` filas, `sqlLocalTexto` texto), usada por recorrido, envios, carro, recogerCompleto, calificacion, notaPlato, tiendas e internacional. Reintenta SOLO la base ocupada (`SQLITE_BUSY`, «database is locked», «session commit token») hasta 8 veces con espera creciente; cualquier otro error sale enseguida con su mensaje.
+- **Comprobado en rojo el 3 nov:** con el archivo bloqueado a propósito (`BEGIN EXCLUSIVE` con sqlite3 por 3 s) la consulta fallaba al primer intento; con el patrón, espera y responde (2,6 s). Envios, calificacion y notaPlato pasan en local.
+- **Qué NO tocar:** ninguna prueba vuelve a llamar a wrangler local por su cuenta; no ampliar el reintento a cualquier error (escondería fallos de verdad).

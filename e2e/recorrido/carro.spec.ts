@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
+import { sqlLocal } from './sqlLocal';
 
 /**
  * C-CARRO-PRUEBAS (30 oct 2026): un viaje en Carro de punta a punta en las apps web. En Carro el Driver
@@ -17,27 +17,7 @@ const DATOS = STAGING
     });
 test.skip(STAGING, 'solo en esta computadora');
 
-const sql = (comando: string): Record<string, unknown>[] => {
-  const salida = execFileSync(
-    'npx',
-    [
-      'wrangler',
-      'd1',
-      'execute',
-      'tumbite-local',
-      '--local',
-      '--persist-to',
-      '.recorrido/estado',
-      '-c',
-      '.recorrido/wrangler.jsonc',
-      '--json',
-      '--command',
-      comando,
-    ],
-    { cwd: RAIZ, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
-  );
-  return (JSON.parse(salida) as { results: Record<string, unknown>[] }[])[0]?.results ?? [];
-};
+const sql = sqlLocal;
 
 // SIG-8: la prueba quita los requisitos de Carro para habilitar al conductor sin documentos reales;
 // se devuelven los de fábrica (schema.sql) antes de encenderlo y al terminar. Sin esto, una segunda

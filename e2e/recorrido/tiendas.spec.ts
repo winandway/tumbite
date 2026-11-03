@@ -1,8 +1,8 @@
 import { createHmac } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
+import { sqlLocalTexto } from './sqlLocal';
 
 /**
  * C-TIENDAS-COMPRA en el navegador (28 oct 2026): un supermercado sube su planilla, el cliente
@@ -57,24 +57,7 @@ for (const idioma of ['es', 'en'] as const) {
     let ip = 0;
     const desde = () => ({ 'cf-connecting-ip': `10.77.${Math.floor(++ip / 250)}.${ip % 250}` });
     const hdr = (t: string) => ({ authorization: `Bearer ${t}`, 'x-idioma': idioma, ...desde() });
-    const sql = (comando: string) =>
-      execFileSync(
-        'npx',
-        [
-          'wrangler',
-          'd1',
-          'execute',
-          'tumbite-local',
-          '--local',
-          '--persist-to',
-          '.recorrido/estado',
-          '-c',
-          '.recorrido/wrangler.jsonc',
-          '--command',
-          comando,
-        ],
-        { cwd: RAIZ, stdio: 'ignore' },
-      );
+    const sql = (comando: string) => sqlLocalTexto(comando);
     const foto = async (pg: import('./fixtures').Page, nombre: string) => {
       if (!CAPTURAS) return;
       mkdirSync(SALIDA, { recursive: true });

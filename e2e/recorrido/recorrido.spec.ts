@@ -4,6 +4,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type BrowserContext, type Locator, type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
+import { sqlLocal } from './sqlLocal';
 
 /**
  * El recorrido completo de Divoox en el navegador, como lo haría la gente: el restaurante se
@@ -238,25 +239,7 @@ for (const idioma of ['en', 'es'] as const) {
         );
         return (JSON.parse(r) as { results: Record<string, unknown>[] }).results;
       }
-      const salida = execFileSync(
-        'npx',
-        [
-          'wrangler',
-          'd1',
-          'execute',
-          'tumbite-local',
-          '--local',
-          '--persist-to',
-          '.recorrido/estado',
-          '-c',
-          '.recorrido/wrangler.jsonc',
-          '--json',
-          '--command',
-          comando,
-        ],
-        { cwd: RAIZ, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
-      );
-      return (JSON.parse(salida) as { results: Record<string, unknown>[] }[])[0]?.results ?? [];
+      return sqlLocal(comando);
     };
     /** Un aviso de Stripe firmado como el de verdad (el pago aprobado, la cuenta del banco lista). */
     const avisoStripe = async (tipo: string, objeto: Record<string, unknown>) => {

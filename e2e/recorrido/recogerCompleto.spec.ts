@@ -1,9 +1,9 @@
-import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type Locator, type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
+import { sqlLocal } from './sqlLocal';
 
 /**
  * BRE-7 (2 nov 2026): «Recoger en el local» de punta a punta, como el «Pickup» de DoorDash, Uber
@@ -57,27 +57,7 @@ const PROPIOS = {
   },
 } as const;
 
-const sql = (comando: string): Record<string, unknown>[] => {
-  const salida = execFileSync(
-    'npx',
-    [
-      'wrangler',
-      'd1',
-      'execute',
-      'tumbite-local',
-      '--local',
-      '--persist-to',
-      '.recorrido/estado',
-      '-c',
-      '.recorrido/wrangler.jsonc',
-      '--json',
-      '--command',
-      comando,
-    ],
-    { cwd: RAIZ, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
-  );
-  return (JSON.parse(salida) as { results: Record<string, unknown>[] }[])[0]?.results ?? [];
-};
+const sql = sqlLocal;
 
 for (const idioma of ['en', 'es'] as const)
   test(`recoger en el local de punta a punta (${idioma})`, async ({ browser, request }) => {

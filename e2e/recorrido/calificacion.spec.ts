@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
+import { sqlLocalTexto } from './sqlLocal';
 
 /**
  * C-CALIFICACION-PUBLICA (30 oct 2026): el cliente ve las estrellas del restaurante (promedio y
@@ -17,24 +17,7 @@ const DATOS = STAGING
     });
 test.skip(STAGING, 'solo en esta computadora');
 
-const sql = (comando: string) =>
-  execFileSync(
-    'npx',
-    [
-      'wrangler',
-      'd1',
-      'execute',
-      'tumbite-local',
-      '--local',
-      '--persist-to',
-      '.recorrido/estado',
-      '-c',
-      '.recorrido/wrangler.jsonc',
-      '--command',
-      comando,
-    ],
-    { cwd: RAIZ, encoding: 'utf8' },
-  );
+const sql = sqlLocalTexto;
 
 for (const idioma of ['es', 'en'] as const)
   test(`el cliente ve las estrellas y las reseñas del restaurante (${idioma})`, async ({

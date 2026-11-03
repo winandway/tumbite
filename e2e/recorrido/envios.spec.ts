@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
+import { sqlLocal } from './sqlLocal';
 
 /**
  * C-ENVIOS (30 oct 2026): un envío de persona a persona de punta a punta en las apps web, como Uber
@@ -18,27 +18,7 @@ const DATOS = STAGING
     });
 test.skip(STAGING, 'solo en esta computadora');
 
-const sql = (comando: string): Record<string, unknown>[] => {
-  const salida = execFileSync(
-    'npx',
-    [
-      'wrangler',
-      'd1',
-      'execute',
-      'tumbite-local',
-      '--local',
-      '--persist-to',
-      '.recorrido/estado',
-      '-c',
-      '.recorrido/wrangler.jsonc',
-      '--json',
-      '--command',
-      comando,
-    ],
-    { cwd: RAIZ, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
-  );
-  return (JSON.parse(salida) as { results: Record<string, unknown>[] }[])[0]?.results ?? [];
-};
+const sql = sqlLocal;
 
 // Al terminar, envios queda como estaba (apagado): los demás recorridos esperan verlo «en construcción».
 test.afterAll(() => {

@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
+import { sqlLocalTexto } from './sqlLocal';
 
 /**
  * C-NOTA-PLATO (30 oct 2026): el cliente escribe «sin cebolla» en el plato (instrucciones especiales,
@@ -17,24 +17,7 @@ const DATOS = STAGING
     });
 test.skip(STAGING, 'solo en esta computadora');
 
-const sql = (comando: string) =>
-  execFileSync(
-    'npx',
-    [
-      'wrangler',
-      'd1',
-      'execute',
-      'tumbite-local',
-      '--local',
-      '--persist-to',
-      '.recorrido/estado',
-      '-c',
-      '.recorrido/wrangler.jsonc',
-      '--command',
-      comando,
-    ],
-    { cwd: RAIZ, encoding: 'utf8' },
-  );
+const sql = sqlLocalTexto;
 
 test('el cliente escribe una nota en el plato y la ve en el carrito', async ({
   browser,

@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type Page, devices, expect, test } from './fixtures';
 import { TEXTOS } from './textos';
+import { sqlLocalTexto } from './sqlLocal';
 
 /**
  * C-RECORRIDO-INTERNACIONAL (19 oct 2026): el cobro en mano en PESOS y en BOLÍVARES, de punta a
@@ -65,23 +66,7 @@ function hacerAdminEnStaging(correo: string) {
 }
 /** En esta computadora, una segunda cuenta del equipo se vuelve admin en la base local (SIG-4x). */
 function hacerAdminLocal(correo: string) {
-  execFileSync(
-    'npx',
-    [
-      'wrangler',
-      'd1',
-      'execute',
-      'tumbite-local',
-      '--local',
-      '--persist-to',
-      '.recorrido/estado',
-      '-c',
-      '.recorrido/wrangler.jsonc',
-      '--command',
-      `UPDATE usuarios SET rol = 'admin' WHERE correo = '${correo}'`,
-    ],
-    { cwd: RAIZ, stdio: 'ignore' },
-  );
+  sqlLocalTexto(`UPDATE usuarios SET rol = 'admin' WHERE correo = '${correo}'`);
 }
 const CAPTURAS = join(RAIZ, '.recorrido', 'capturas-internacional');
 
