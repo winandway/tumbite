@@ -1229,6 +1229,17 @@ operacion.get('/repartidor/estado', async (c) => {
       undefined,
     activo: activo ? conDatosRestaurante(activo) : null,
     agrupados: await agrupadosDe(db, u.id, activo),
+    // C-OCUPADO-VISIBLE (BRF-1): si una ruta Flex o un viaje lo ocupa, no le llegan pedidos de
+    // comida (C-FLEX-OCUPACION); la app lo dice en vez de «Buscando pedidos cerca de ti…».
+    ocupadoEn:
+      (
+        await db
+          .prepare(
+            "SELECT tipo FROM conductor_ocupacion WHERE conductor_id = ? AND tipo <> 'comida'",
+          )
+          .bind(u.id)
+          .first<{ tipo: 'ruta_flex' | 'operacion' }>()
+      )?.tipo ?? null,
   });
 });
 

@@ -181,6 +181,8 @@ type Estado = {
   selfieControlFalta?: 'frente' | 'giro' | null;
   /** Otros pedidos del mismo restaurante que lleva en este viaje. */
   agrupados?: Pedido[];
+  /** C-OCUPADO-VISIBLE (BRF-1): una ruta Flex o un viaje lo ocupa; no le llegan pedidos de comida. */
+  ocupadoEn?: 'ruta_flex' | 'operacion' | null;
 };
 type Billetera = DatosBilletera;
 
@@ -215,6 +217,10 @@ const T = {
     buscandoAyuda:
       'Es más probable que recibas ofertas en las zonas en rojo del mapa, sobre todo a la hora del almuerzo y de la cena.',
     rutaEnCurso: 'Tienes una ruta de paquetes en curso',
+    ocupadoRuta:
+      'Mientras tengas la ruta de paquetes no te llegan pedidos de comida. Termínala para volver a recibirlos.',
+    ocupadoViaje:
+      'Mientras tengas un viaje en curso no te llegan pedidos de comida. Termínalo para volver a recibirlos.',
     rutaPorAceptar: 'Tienes una ruta de paquetes por aceptar',
     rutaParadas: (n: number) => `${n} ${n === 1 ? 'parada' : 'paradas'}`,
     continuarRuta: 'Continuar ruta',
@@ -345,6 +351,10 @@ const T = {
     buscandoAyuda:
       'You’re more likely to get offers in the red areas on the map, especially around lunch and dinner.',
     rutaEnCurso: 'You have a package route in progress',
+    ocupadoRuta:
+      'While you have a package route, you won’t get food orders. Finish it to start getting them again.',
+    ocupadoViaje:
+      'While you have a trip in progress, you won’t get food orders. Finish it to start getting them again.',
     rutaPorAceptar: 'You have a package route to accept',
     rutaParadas: (n: number) => `${n} ${n === 1 ? 'stop' : 'stops'}`,
     continuarRuta: 'Continue route',
@@ -2583,7 +2593,14 @@ export function Inicio() {
             </Text>
           </Pressable>
         ) : null}
-        {estado?.conectado && !(rutaFlex && rutaFlex.estado === 'en_curso') ? (
+        {estado?.conectado && estado.ocupadoEn ? (
+          // C-OCUPADO-VISIBLE (BRF-1): ocupado en una ruta o un viaje, nunca «Buscando pedidos».
+          <View style={e.tarjeta} testID="ocupado-en-otra">
+            <Text style={{ color: '#5E5E5E' }}>
+              {estado.ocupadoEn === 'ruta_flex' ? t.ocupadoRuta : t.ocupadoViaje}
+            </Text>
+          </View>
+        ) : estado?.conectado && !(rutaFlex && rutaFlex.estado === 'en_curso') ? (
           // Como «Buscando ofertas… zonas populares» de DoorDash: dónde y cuándo hay más ofertas.
           <View style={e.tarjeta}>
             <Text style={{ fontWeight: '800' }}>
