@@ -82,7 +82,22 @@ export function ElegirDireccion({
             accessibilityLabel={t.cerrar}
             hitSlop={10}
           >
-            <Text style={{ fontSize: 22, color: C.secundario }}>✕</Text>
+            {/* La X con dos líneas (sin emojis en el producto, C-SIN-EMOJIS). */}
+            <View style={{ width: 22, height: 22, alignItems: 'center', justifyContent: 'center' }}>
+              {[45, -45].map((g) => (
+                <View
+                  key={g}
+                  style={{
+                    position: 'absolute',
+                    width: 20,
+                    height: 2,
+                    borderRadius: 1,
+                    backgroundColor: C.secundario,
+                    transform: [{ rotate: `${g}deg` }],
+                  }}
+                />
+              ))}
+            </View>
           </Pressable>
         </View>
         <ScrollView
