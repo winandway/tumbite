@@ -1306,6 +1306,7 @@ operacion.post('/repartidor/conectar', async (c) => {
   }
   // C-DESPACHO-CATALOGO (NXT-6): en una zona con el despacho por catálogo encendido, se dice al
   // conectarse por qué no le llegarían pedidos de Comida (como DoorDash: sin activar, no se reparte).
+  let sinComida: string | null = null;
   if (d.conectado) {
     const z = await db
       .prepare(
@@ -1313,7 +1314,7 @@ operacion.post('/repartidor/conectar', async (c) => {
       )
       .bind(u.id)
       .first<{ zona_id: string }>();
-    if (z) await frenoAlConectar(db, u.id, z.zona_id);
+    if (z) sinComida = await frenoAlConectar(db, u.id, z.zona_id);
   }
   // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): si cambiaron, se aceptan antes.
   if (d.conectado && (await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo))))
@@ -1406,7 +1407,12 @@ operacion.post('/repartidor/conectar', async (c) => {
     await evaluarDestacado(db, u.id).catch((e: unknown) =>
       console.error('destacado: no se pudo revisar', e),
     );
-  return c.json({ conectado: d.conectado, cobertura: aqui.estado });
+  // NXT-6x: conectado para otros servicios, pero sin Comida: el porqué, para avisarle.
+  return c.json({
+    conectado: d.conectado,
+    cobertura: aqui.estado,
+    ...(sinComida ? { sinComida } : {}),
+  });
 });
 
 operacion.post('/repartidor/ubicacion', async (c) => {
@@ -1658,24 +1664,49 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
         .sort((a, b) => compararLibres(a, b, prioridadNivel));
     // Camino rápido: solo la celda del restaurante y sus 8 vecinas (índice zona + celda).
     // Si ahí no hay nadie libre, se busca en toda la zona. Nunca se cruza de zona.
-    let candidatos = p.geohash
-      ? ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash)))
-      : [];
-    if (!candidatos.length) candidatos = ordenar(await libresEn(db, p.zona_id, null));
-    // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de efectivo.
-    candidatos = await conSaldoParaDirecto(db, p.id, candidatos);
-    // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
-    // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
-    if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
-    // C-DESPACHO-CATALOGO (NXT-6): con el interruptor de la zona encendido, solo quien está
-    // activado para Comida con su vehículo y sus papeles según el catálogo. Apagado: igual que antes.
-    if (candidatos.length && zonasCatalogo.has(String(p.zona_id)))
-      candidatos = await filtrarPorCatalogo(
-        db,
-        candidatos,
-        vistos.size >= RECHAZOS_PARA_ABRIR ? 20 : 1,
-        memoCatalogo,
-      );
+    let candidatos: (Libre & { km: number })[];
+    if (!zonasCatalogo.has(String(p.zona_id))) {
+      candidatos = p.geohash
+        ? ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash)))
+        : [];
+      if (!candidatos.length) candidatos = ordenar(await libresEn(db, p.zona_id, null));
+      // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de efectivo.
+      candidatos = await conSaldoParaDirecto(db, p.id, candidatos);
+      // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
+      // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
+      if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
+    } else {
+      // C-DESPACHO-CATALOGO (NXT-6, NXT-6x): con el interruptor de la zona encendido, solo quien
+      // está activado para Comida según el catálogo, revisado EN CADA ETAPA antes de decidir si se
+      // amplía la búsqueda (un no habilitado en la celda no tapa a un habilitado en la zona), junto
+      // con el saldo del cobro directo; para en cuanto junta los que hacen falta.
+      const cuantos = vistos.size >= RECHAZOS_PARA_ABRIR ? 20 : 1;
+      const saldo = async (d: { id: string }) => (await puedeTomarDirecto(db, p.id, d.id)).ok;
+      candidatos = p.geohash
+        ? await filtrarPorCatalogo(
+            db,
+            ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash))),
+            cuantos,
+            memoCatalogo,
+            saldo,
+          )
+        : [];
+      if (!candidatos.length)
+        candidatos = await filtrarPorCatalogo(
+          db,
+          ordenar(await libresEn(db, p.zona_id, null)),
+          cuantos,
+          memoCatalogo,
+          saldo,
+        );
+      if (!candidatos.length)
+        candidatos = await filtrarPorCatalogo(
+          db,
+          ordenar(await agrupablesPara(db, p.id)),
+          cuantos,
+          memoCatalogo,
+        );
+    }
     if (!candidatos.length) continue;
     // C-PAGO-PICO: en una celda con demanda alta, la primera oferta lleva el pago pico (si está
     // encendido y queda presupuesto hoy). Se guarda como bono del pedido y se cobra al entregar.

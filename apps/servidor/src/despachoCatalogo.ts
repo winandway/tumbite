@@ -57,13 +57,15 @@ export async function motivoServicio(
 
 /**
  * Deja solo a los habilitados, en el MISMO orden, y para en cuanto junta `cuantos` (no se revisa a
- * toda la zona por un pedido). `memo` guarda la respuesta de cada repartidor durante una vuelta.
+ * toda la zona por un pedido). `memo` guarda la respuesta de cada repartidor durante una vuelta;
+ * `ademas` es otra condición de la misma etapa (el saldo del cobro directo).
  */
 export async function filtrarPorCatalogo<T extends { id: string }>(
   db: D1Database,
   candidatos: T[],
   cuantos: number,
   memo: Map<string, boolean>,
+  ademas?: (c: T) => Promise<boolean>,
 ): Promise<T[]> {
   const fuera: T[] = [];
   for (const c of candidatos) {
@@ -73,16 +75,28 @@ export async function filtrarPorCatalogo<T extends { id: string }>(
       ok = (await motivoServicio(db, c.id)) === 'habilitado';
       memo.set(c.id, ok);
     }
-    if (ok) fuera.push(c);
+    if (ok && (!ademas || (await ademas(c)))) fuera.push(c);
   }
   return fuera;
 }
 
-/** Al conectarse en una zona con el interruptor encendido: el porqué, en palabras, si no puede. */
-export async function frenoAlConectar(db: D1Database, conductorId: string, zonaId: string) {
-  if (!(await zonasDespachoCatalogo(db)).has(zonaId)) return;
+/**
+ * Al conectarse en una zona con el interruptor encendido (NXT-6x). Como DoorDash y Uber, se conecta
+ * con los servicios que SÍ tiene: si no puede Comida pero sí otro servicio de la zona (Envíos, Moto,
+ * o apagó Comida a propósito), entra igual y se le devuelve el motivo de Comida para avisarle. Solo
+ * se frena (409 con el porqué) cuando no puede repartir NINGÚN servicio.
+ */
+export async function frenoAlConectar(
+  db: D1Database,
+  conductorId: string,
+  zonaId: string,
+): Promise<MotivoSinComida | null> {
+  if (!(await zonasDespachoCatalogo(db)).has(zonaId)) return null;
   const motivo = await motivoServicio(db, conductorId);
-  if (motivo === 'habilitado') return;
+  if (motivo === 'habilitado') return null;
+  const { servicios } = await estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER);
+  const otro = servicios.some((s) => s.servicioId !== 'comida' && s.puedeActivar && s.preferencia);
+  if (otro) return motivo;
   throw errorSinComida(motivo);
 }
 

@@ -2855,7 +2855,7 @@ const es: SeccionDocs[] = [
           'Para recibir pedidos de Comida, tu cuenta tiene que estar activada para Comida y, si repartes en carro o moto, con tu vehículo aprobado y tu licencia y seguro al día. Si algo falta, la app te lo dice al conectarte.',
         explicacion: [
           'Como en las grandes apps de reparto, cada pedido de Comida se ofrece solo a repartidores activados para Comida. Si repartes a pie o en bicicleta, con tu cuenta verificada basta. Si repartes en carro o en moto, además tu vehículo tiene que estar aprobado y tu licencia y tu seguro, revisados y vigentes.',
-          'Si algo falta (una activación en revisión, un papel por aprobar, un vehículo sin aprobar o tu cuenta en pausa), al tocar «Conectarme» la app te dice exactamente qué es y dónde arreglarlo. Mientras tanto no te llegan ofertas de Comida, para que nunca aceptes un pedido que luego no podrías llevar.',
+          'Si algo falta (una activación en revisión, un papel por aprobar, un vehículo sin aprobar o tu cuenta en pausa), no te llegan ofertas de Comida, para que nunca aceptes un pedido que luego no podrías llevar. Si no puedes repartir ningún servicio, al tocar «Conectarme» la app te dice exactamente qué falta y dónde arreglarlo. Si repartes otros servicios, como Envíos, te conectas igual y te siguen llegando esos pedidos.',
           'Divoox lo va encendiendo ciudad por ciudad. Donde todavía no está encendido, el reparto sigue igual que siempre.',
         ],
         capturas: [
@@ -7345,7 +7345,7 @@ const en: SeccionDocs[] = [
           'To get Food orders, your account has to be activated for Food and, if you deliver by car or motorcycle, have an approved vehicle and a current license and insurance. If something is missing, the app tells you when you go online.',
         explicacion: [
           'Like the big delivery apps, every Food order is offered only to drivers activated for Food. If you deliver on foot or by bike, a verified account is enough. If you deliver by car or motorcycle, your vehicle also has to be approved and your license and insurance reviewed and current.',
-          'If something is missing (an activation under review, a document pending approval, a vehicle not yet approved, or a paused account), when you tap “Go online” the app tells you exactly what it is and where to fix it. Until then you don’t get Food offers, so you never accept an order you couldn’t deliver.',
+          'If something is missing (an activation under review, a document pending approval, a vehicle not yet approved, or a paused account), you don’t get Food offers, so you never accept an order you couldn’t deliver. If you can’t deliver any service, when you tap “Go online” the app tells you exactly what’s missing and where to fix it. If you deliver other services, like Delivery, you still go online and keep getting those orders.',
           'Divoox turns this on city by city. Where it isn’t on yet, dispatch works as always.',
         ],
         capturas: [

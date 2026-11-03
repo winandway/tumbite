@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
+import { conductorDeMoto } from './pruebas/conductorMoto';
 
 /**
  * C-DESPACHO-CATALOGO (NXT-6): el reparto de Comida lee el catálogo de habilitaciones, con un
@@ -190,5 +191,90 @@ describe('C-DESPACHO-CATALOGO · Comida lee el catálogo de habilitaciones', () 
       "SELECT actor_id FROM auditoria_admin WHERE accion = 'despacho_catalogo.cambiar'",
     ).first<{ actor_id: string }>();
     expect(a?.actor_id).toBe(admin.id);
+  });
+
+  it('NXT-6x: un no habilitado en la celda del restaurante no tapa a un habilitado del resto de la zona', async () => {
+    const { m, q, pedidoListo, repartidor, ofertas, encender } = await escenario();
+    await encender(true);
+    const cerca = await repartidor('Rep Suspendido', 25.771);
+    const lejos = await repartidor('Rep Habilitado', 25.85);
+    await q(
+      "INSERT INTO habilitaciones (conductor_id, servicio_id, estado) VALUES (?, 'comida', 'suspendida')",
+      cerca.id,
+    );
+    // El suspendido está en la MISMA celda del restaurante (la búsqueda rápida lo encuentra primero).
+    await q(
+      'UPDATE repartidores SET geohash = (SELECT geohash FROM restaurantes LIMIT 1) WHERE usuario_id = ?',
+      cerca.id,
+    );
+    expect(
+      (await m.DB.prepare('SELECT geohash FROM restaurantes LIMIT 1').first<{ geohash: string }>())
+        ?.geohash,
+    ).toBeTruthy();
+    const id = await pedidoListo();
+    expect(await ofertas(cerca.token)).toHaveLength(0);
+    expect((await ofertas(lejos.token))[0]?.id).toBe(id);
+  });
+
+  it('NXT-6x: el agrupable (ya lleva otro pedido del mismo restaurante) solo recibe el segundo si está habilitado', async () => {
+    for (const habilitado of [false, true]) {
+      const { q, pedidoListo, repartidor, ofertas, encender } = await escenario();
+      await encender(true);
+      const rep = await repartidor('Rep Agrupa', 25.771);
+      if (!habilitado)
+        await q(
+          "INSERT INTO habilitaciones (conductor_id, servicio_id, estado) VALUES (?, 'comida', 'suspendida')",
+          rep.id,
+        );
+      const primero = await pedidoListo();
+      await q("UPDATE ofertas SET estado = 'vencida' WHERE pedido_id = ?", primero);
+      await q('UPDATE pedidos SET repartidor_id = ? WHERE id = ?', rep.id, primero);
+      const segundo = await pedidoListo();
+      const lista = (await ofertas(rep.token)).map((o) => o.id);
+      expect(lista.includes(segundo), `habilitado=${habilitado}`).toBe(habilitado);
+    }
+  });
+});
+
+describe('NXT-6x · conectarse con los servicios que sí tiene', () => {
+  it('sin Comida pero con Envíos habilitado se conecta y se le dice por qué no le llega Comida', async () => {
+    const m = mundo({}, { host: 'staging.tumbite.com' });
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    for (const ruta of [
+      '/datos/admin/servicios/envios',
+      '/datos/admin/servicios/envios/zonas/US-FL-MIAMI',
+    ])
+      await m.llamar('PUT', ruta, { estado: 'disponible' }, admin.token);
+    await m.llamar(
+      'PUT',
+      '/datos/admin/despacho-catalogo/US-FL-MIAMI',
+      { activo: true },
+      admin.token,
+    );
+    const cond = await conductorDeMoto(m, { lat: 25.7617, lng: -80.1918 }, 'US-FL-MIAMI', 'envios');
+    // Envíos en moto pide licencia de moto y seguro (C-REQUISITOS-VEHICULO): aprobados.
+    for (const [veh, req] of [
+      ['', 'licencia_moto'],
+      [cond.vehiculo, 'seguro_vehiculo'],
+    ])
+      await m.DB.prepare(
+        "INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, aprobado_por) VALUES (?, ?, ?, 'aprobado', 'revision_manual', ?)",
+      )
+        .bind(cond.id, veh, req, admin.id)
+        .run();
+    // Apagó Comida en sus servicios a propósito.
+    await m.DB.prepare(
+      "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'comida', 0)",
+    )
+      .bind(cond.id)
+      .run();
+    const r = await m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.7617, lng: -80.1918 },
+      cond.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(r.datos.sinComida).toBeTruthy();
   });
 });
