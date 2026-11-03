@@ -10,7 +10,10 @@ import { jpegConGps } from '../pruebas/fotoConGps';
 const ORIGEN = { lat: 25.7617, lng: -80.1918, direccion: 'Punto de recogida' };
 const DESTINO = { lat: 25.79, lng: -80.13, direccion: 'Dirección de entrega' };
 const TARIFA = { base: 200, porKm: 90, porMinuto: 10, minimo: 600, valorMaximo: 10_000 };
-const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+const PNG = new Uint8Array([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42,
+  0x60, 0x82,
+]);
 const PAQUETE = {
   descripcion: 'Una caja con documentos',
   valorDeclarado: 5_000,

@@ -208,61 +208,54 @@ function limpiarJpeg(b: Uint8Array): FotoLimpia {
 }
 
 const PNG_FUERA = new Set(['eXIf', 'tEXt', 'zTXt', 'iTXt', 'tIME']);
+/**
+ * SIG-6z: PNG y WebP se recorren bloque a bloque y su estructura tiene que cuadrar. Si no cuadra
+ * (un bloque que se sale del archivo, un PNG sin IEND, un largo RIFF imposible o que no coincide
+ * con sus bloques), la foto se RECHAZA con el 415 de «foto dañada»: nunca se devuelve el original
+ * ni se guarda mordida. Lo pegado después del fin real de la imagen (IEND, largo RIFF) se corta.
+ */
 function limpiarPng(b: Uint8Array): FotoLimpia {
   const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
   const partes: Uint8Array[] = [b.subarray(0, 8)];
   let gps: GpsFoto | null = null;
   let quitados = 0;
   let i = 8;
-  while (i < b.length) {
+  for (;;) {
+    if (i + 12 > b.length) throw ROTA();
     const tipo = ascii(b, i + 4, 4);
-    const fin = i + 12 + (i + 4 <= b.length ? v.getUint32(i) : 0);
-    if (i + 12 > b.length || fin > b.length) {
-      // Archivo cortado: lo que queda se copia si es imagen; un bloque oculto se descarta.
-      if (PNG_FUERA.has(tipo)) quitados++;
-      else partes.push(b.subarray(i));
-      break;
-    }
-    const largo = fin - i - 12;
+    const largo = v.getUint32(i);
+    const fin = i + 12 + largo;
+    if (fin > b.length) throw ROTA();
     if (PNG_FUERA.has(tipo)) {
       if (tipo === 'eXIf') gps ??= leerTiff(b.subarray(i + 8, i + 8 + largo)).gps;
       quitados++;
     } else partes.push(b.subarray(i, fin));
     i = fin;
     if (tipo === 'IEND') {
-      // SIG-6y: lo pegado después del fin de la imagen (otra imagen, un video) no se guarda.
+      // Lo pegado después del fin de la imagen (otra imagen, un video) no se guarda.
       if (i < b.length) quitados++;
-      break;
+      return { bytes: quitados ? unir(partes) : b, gps, quitados };
     }
   }
-  return { bytes: quitados ? unir(partes) : b, gps, quitados };
 }
 
 function limpiarWebp(b: Uint8Array): FotoLimpia {
+  if (b.length < 12) throw ROTA();
+  const riff = new DataView(b.buffer, b.byteOffset + 4, 4).getUint32(0, true);
+  // El largo RIFF cuenta desde «WEBP»: menos de 4 o más que el archivo es imposible.
+  if (riff < 4 || 8 + riff > b.length) throw ROTA();
+  const finRiff = 8 + riff;
   const partes: Uint8Array[] = [];
   let gps: GpsFoto | null = null;
-  let quitados = 0;
+  let quitados = finRiff < b.length ? 1 : 0;
   let i = 12;
-  // SIG-6y: la imagen termina donde dice su largo RIFF; lo pegado detrás no se guarda. Un largo
-  // imposible (más que el archivo) vale como «hasta el final», como un archivo cortado.
-  const riff = b.length >= 8 ? new DataView(b.buffer, b.byteOffset + 4, 4).getUint32(0, true) : 0;
-  const finRiff = riff >= 4 && 8 + riff <= b.length ? 8 + riff : b.length;
-  if (finRiff < b.length) quitados++;
   while (i < finRiff) {
-    if (i + 8 > finRiff) {
-      partes.push(b.slice(i, finRiff));
-      break;
-    }
+    if (i + 8 > finRiff) throw ROTA();
     const tipo = ascii(b, i, 4);
     const largo = new DataView(b.buffer, b.byteOffset + i + 4, 4).getUint32(0, true);
+    // Cada bloque va con su relleno a par; el último puede venir sin él.
     const fin = i + 8 + largo + (largo % 2);
-    if (i + 8 + largo > finRiff) {
-      // Último trozo cortado: si es imagen se copia tal cual (no es dato oculto); si es EXIF o
-      // XMP, se descarta. Nunca se deja pasar un dato oculto.
-      if (tipo !== 'EXIF' && tipo !== 'XMP ') partes.push(b.slice(i, finRiff));
-      else quitados++;
-      break;
-    }
+    if (i + 8 + largo > finRiff) throw ROTA();
     if (tipo === 'EXIF' || tipo === 'XMP ') {
       if (tipo === 'EXIF') {
         const d = b.subarray(i + 8, i + 8 + largo);
@@ -277,6 +270,7 @@ function limpiarWebp(b: Uint8Array): FotoLimpia {
     }
     i = fin;
   }
+  if (!partes.length) throw ROTA();
   if (!quitados) return { bytes: b, gps, quitados };
   const cuerpo = unir(partes);
   const cab = new Uint8Array(12);

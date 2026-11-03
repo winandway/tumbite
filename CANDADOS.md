@@ -2802,3 +2802,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** `e2e/recorrido/recorrido.spec.ts` cancela al empezar también los pedidos sin repartidor de los restaurantes de prueba `@prueba.invalid`. Nunca toca pedidos de personas reales.
 - **Cómo se comprueba:** la corrida de `pruebas-rama` tiene que pasar «recorrido completo de un pedido (en)».
 - **Qué NO tocar:** la limpieza solo mira cuentas de prueba (`@recorrido.test`, `@prueba.invalid`).
+
+## C-FOTOS-SIN-METADATOS · foto que no cuadra = 415 (SIG-6z, 3 nov 2026). Todos los países.
+
+- **Qué se rompía:** un WebP con largo RIFF imposible (mayor que el archivo o menor que 4) se devolvía ORIGINAL con lo pegado detrás (con su GPS); un PNG sin IEND copiaba el resto como «bloque cortado»; un largo RIFF menor que sus bloques guardaba en silencio una imagen mordida.
+- **Regla (`apps/servidor/src/fotoLimpia.ts`):** PNG y WebP se recorren bloque a bloque y su estructura TIENE que cuadrar; si no (bloque que se sale del archivo, PNG sin IEND, largo RIFF menor que 4, mayor que el archivo o menor que la suma de sus bloques, WebP sin bloques), la foto se RECHAZA con el 415 de «La foto llegó dañada». Nunca se devuelve el original ni se guarda mordida. Lo pegado después del fin real (IEND, largo RIFF, EOI) se corta. Las fotos sanas salen idénticas (el mismo objeto).
+- **Pruebas (comprobadas en rojo el 3 nov):** `fotoLimpia.test.ts` («WebP con un largo RIFF imposible…», «PNG sin IEND da el 415…»); la sonda del revisor (`sig6yr.test.ts`, 18 casos) da 415 o la imagen cortada sin «PixelFone» en todos. Las fotos de prueba del servidor (`pruebas/ayuda.ts` y las pruebas de subidas) pasaron a ser archivos que cuadran.
+- **Qué NO tocar:** no volver a «copiar lo que queda» de un archivo que no cuadra.

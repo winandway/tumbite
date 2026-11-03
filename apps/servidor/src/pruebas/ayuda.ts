@@ -2,9 +2,11 @@ import { app } from '../app';
 import { crearBasePruebas } from './d1';
 import { crearAlmacenPruebas } from './r2';
 
-/** Cabecera mínima de un WebP de verdad: sirve como «foto» en las pruebas. */
+/** Un WebP mínimo que cuadra (largo RIFF 16 = «WEBP» + un bloque VP8 de 4 bytes): sirve como
+ * «foto» en las pruebas. SIG-6z: una foto cuya estructura no cuadra se rechaza con el 415. */
 export const FOTO_PRUEBA = new Uint8Array([
-  0x52, 0x49, 0x46, 0x46, 0x10, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20, 1, 2, 3, 4,
+  0x52, 0x49, 0x46, 0x46, 0x10, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20, 4, 0, 0, 0,
+  1, 2, 3, 4,
 ]);
 
 /** Ayudas para las pruebas del servidor: una base nueva y llamadas con IP distinta cada vez. */

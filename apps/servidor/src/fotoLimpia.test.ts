@@ -226,4 +226,46 @@ describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
     expect(contiene(r.bytes, 'PixelFone')).toBe(false);
     expect(r.bytes.length).toBe(8 + cuerpo.length);
   });
+
+  // SIG-6z (revisión): un archivo cuya estructura no cuadra se RECHAZA con el 415 de «foto
+  // dañada»: nunca se devuelve el original ni se guarda mordido. Las fotos sanas siguen idénticas.
+  it('WebP con un largo RIFF imposible (mayor que el archivo, menor que 4 o menor que sus bloques) da el 415', () => {
+    const vp8 = [...txt('VP8 '), 4, 0, 0, 0, 1, 2, 3, 4];
+    const cuerpo = [...txt('WEBP'), ...vp8];
+    const le = (n: number) => [n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff, (n >>> 24) & 0xff];
+    const webp = (riff: number, extra: number[] = [...jpegConGps(1)]) =>
+      new Uint8Array([...txt('RIFF'), ...le(riff), ...cuerpo, ...extra]);
+    for (const riff of [cuerpo.length + 1000, 0xffffffff, 0, 3, 4, 6, 13])
+      expect(() => limpiarFoto(webp(riff), 'image/webp'), `RIFF ${riff}`).toThrow(/dañada/);
+    expect(() => limpiarFoto(webp(9, []), 'image/webp')).toThrow(/dañada/);
+    expect(() => limpiarFoto(new Uint8Array([...txt('RIFF'), 1]), 'image/webp')).toThrow(/dañada/);
+    // La sana queda idéntica (el mismo objeto).
+    const sana = webp(cuerpo.length, []);
+    expect(limpiarFoto(sana, 'image/webp').bytes).toBe(sana);
+  });
+
+  it('PNG sin IEND da el 415 (aunque traiga algo pegado detrás)', () => {
+    const sinIend = new Uint8Array([
+      ...[0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10],
+      ...be32(1),
+      ...txt('IDAT'),
+      7,
+      0,
+      0,
+      0,
+      0,
+      ...jpegConGps(1),
+    ]);
+    expect(() => limpiarFoto(sinIend, 'image/png')).toThrow(/dañada/);
+    const sano = new Uint8Array([
+      ...[0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10],
+      ...be32(0),
+      ...txt('IEND'),
+      0,
+      0,
+      0,
+      0,
+    ]);
+    expect(limpiarFoto(sano, 'image/png').bytes).toBe(sano);
+  });
 });
