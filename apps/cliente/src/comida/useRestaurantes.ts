@@ -52,6 +52,27 @@ async function gpsReciente(): Promise<Punto | null> {
 }
 
 /**
+ * POR-1 (2 nov 2026): la dirección de entrega que la persona eligió a mano en el inicio («Entregar
+ * en ▾»). Mientras exista, manda sobre el GPS (como DoorDash: la dirección elegida no se cambia
+ * sola). Se guarda en el teléfono con su texto, para mostrarla arriba al volver.
+ */
+const LLAVE_DIRECCION = 'tumbite.direccionEntrega';
+export type DireccionEntrega = { texto: string; punto: Punto };
+
+async function direccionGuardada(): Promise<DireccionEntrega | null> {
+  try {
+    const v = JSON.parse(
+      (await almacenTelefono.leer(LLAVE_DIRECCION)) ?? 'null',
+    ) as DireccionEntrega | null;
+    return v && v.texto && Number.isFinite(v.punto?.lat) && Number.isFinite(v.punto?.lng)
+      ? v
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * C-TIENDAS-VITRINA: los puntos de búsqueda para las tiendas, por separado para no frenar la lista
  * (C-UBICACION-NO-FRENA): primero el guardado, enseguida; después el GPS del momento.
  */
@@ -64,6 +85,8 @@ export function useRestaurantes(api: Api, deUrl: Punto | null) {
   }, [api]);
   const estado = useSyncExternalStore(lista.suscribir, lista.estado);
   const [elegido, setElegido] = useState<Punto | null>(null);
+  const [direccion, setDireccion] = useState<DireccionEntrega | null>(null);
+  const aMano = useRef(false);
   const punto = deUrl ?? elegido;
   const vivo = useRef(true);
 
@@ -75,12 +98,16 @@ export function useRestaurantes(api: Api, deUrl: Punto | null) {
         await guardarUbicacion(deUrl);
         return lista.cargar(deUrl);
       }
-      const guardado = await ubicacionGuardada();
+      const elegida = await direccionGuardada();
+      aMano.current = Boolean(elegida);
+      if (elegida && vivo.current) setDireccion(elegida);
+      const guardado = elegida?.punto ?? (await ubicacionGuardada());
       if (guardado && vivo.current) setElegido(guardado);
       const primera = lista.cargar(guardado);
       const gps = await gpsReciente();
       await primera;
-      if (!gps || !vivo.current) return;
+      // Con una dirección elegida a mano, el GPS no la reemplaza.
+      if (!gps || !vivo.current || aMano.current) return;
       setElegido(gps);
       await guardarUbicacion(gps);
       await lista.cargar(gps);
@@ -98,7 +125,7 @@ export function useRestaurantes(api: Api, deUrl: Punto | null) {
   useEffect(() => {
     if (deUrl) return;
     const sub = AppState.addEventListener('change', (e) => {
-      if (e !== 'active') return;
+      if (e !== 'active' || aMano.current) return;
       ultimoGps = null;
       void gpsReciente().then(async (gps) => {
         if (!gps || !vivo.current) return;
@@ -111,5 +138,40 @@ export function useRestaurantes(api: Api, deUrl: Punto | null) {
   }, [deUrl]);
 
   const reintentar = useCallback(() => lista.cargar(punto, { forzar: true }), [punto]);
-  return useMemo(() => ({ ...estado, punto, reintentar }), [estado, punto, reintentar]);
+  /**
+   * POR-1: «Entregar en ▾». Con una dirección, la lista se ordena desde ahí y queda guardada; con
+   * null se vuelve a la ubicación actual (GPS).
+   */
+  const elegirDireccion = useCallback(async (d: DireccionEntrega | null) => {
+    if (d) {
+      aMano.current = true;
+      setDireccion(d);
+      setElegido(d.punto);
+      try {
+        await almacenTelefono.guardar(LLAVE_DIRECCION, JSON.stringify(d));
+      } catch (e) {
+        console.warn('dirección de entrega: no se pudo guardar', e);
+      }
+      await guardarUbicacion(d.punto);
+      await lista.cargar(d.punto);
+      return;
+    }
+    aMano.current = false;
+    setDireccion(null);
+    try {
+      await almacenTelefono.borrar(LLAVE_DIRECCION);
+    } catch (e) {
+      console.warn('dirección de entrega: no se pudo borrar', e);
+    }
+    ultimoGps = null;
+    const gps = await gpsReciente();
+    if (!gps || !vivo.current) return;
+    setElegido(gps);
+    await guardarUbicacion(gps);
+    await lista.cargar(gps);
+  }, []);
+  return useMemo(
+    () => ({ ...estado, punto, reintentar, direccion, elegirDireccion }),
+    [estado, punto, reintentar, direccion, elegirDireccion],
+  );
 }

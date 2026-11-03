@@ -5,117 +5,102 @@ import { IMG } from './recursos';
 import { textosInicio } from './textos';
 
 /**
- * Cabecera del inicio: logotipo, hamburguesa decorativa, campana, cupón y el selector de idioma
- * de siempre (estilo Amazon). Debajo, el saludo con el nombre real del cliente.
+ * POR-1 (2 nov 2026): cabecera del inicio como DoorDash y Uber Eats. A la izquierda «Entregar en»
+ * con la dirección actual y su flechita (abre el cambio de dirección); a la derecha la campana real
+ * y el selector de idioma estilo Amazon, en chico y sobre fondo blanco.
  */
 export function Cabecera({
-  nombre,
   idioma,
   cambiarIdioma,
+  direccion,
+  alDireccion,
   alCampana,
-  alCupon,
   pendientes = 0,
 }: {
-  nombre: string;
   idioma: Idioma;
   cambiarIdioma: (i: Idioma) => void;
+  /** Texto de la dirección de entrega (o «Ubicación actual» / «Elige tu dirección»). */
+  direccion: string;
+  alDireccion: () => void;
   alCampana: () => void;
-  alCupon: () => void;
   /** Avisos que pasan ahora (pedidos en curso): punto rojo sobre la campana. */
   pendientes?: number;
 }) {
   const t = textosInicio(idioma);
-  // Los íconos vienen ya con su círculo blanco y su sombra, recortados de la pantalla aprobada.
-  const redondo = (imagen: number, etiqueta: string, alTocar: () => void, punto = 0) => (
-    <Pressable
-      onPress={alTocar}
-      accessibilityRole="button"
-      accessibilityLabel={etiqueta}
-      hitSlop={6}
-      // Máscara redonda: el recorte es cuadrado y trae un pedacito del fondo en las esquinas.
-      style={{ width: 46, height: 46 }}
-    >
-      <Image
-        source={imagen}
-        style={{ width: 46, height: 46, borderRadius: 23 }}
-        resizeMode="cover"
-        accessibilityIgnoresInvertColors
-      />
-      {punto > 0 ? (
-        <View
-          testID="campana-punto"
-          style={{
-            position: 'absolute',
-            top: 4,
-            right: 4,
-            minWidth: 16,
-            height: 16,
-            borderRadius: 8,
-            paddingHorizontal: 4,
-            backgroundColor: C.primario,
-            borderWidth: 2,
-            borderColor: '#F3F6FB',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{punto}</Text>
-        </View>
-      ) : null}
-    </Pressable>
-  );
   return (
     <View
       style={{
-        backgroundColor: '#F3F6FB',
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: 16,
-        paddingTop: 8,
-        paddingBottom: 12,
+        paddingTop: 6,
+        paddingBottom: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Image
-          source={IMG.logo}
-          style={{ width: 150, height: 41 }}
-          resizeMode="contain"
-          accessibilityLabel="Divoox"
-        />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {redondo(
-            IMG.iconoCampana,
-            pendientes ? `${t.campana} (${pendientes})` : t.campana,
-            alCampana,
-            pendientes,
-          )}
-          {redondo(IMG.iconoCupon, t.cupon, alCupon)}
-          <View style={{ backgroundColor: C.primario, borderRadius: 999, paddingHorizontal: 2 }}>
-            <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
-          </View>
+      <Pressable
+        onPress={alDireccion}
+        accessibilityRole="button"
+        accessibilityLabel={`${t.cambiarDireccion}: ${direccion}`}
+        testID="inicio-direccion"
+        hitSlop={6}
+        style={{ flex: 1 }}
+      >
+        <Text style={{ fontSize: 12, color: '#666B73', fontWeight: '600' }}>{t.entregarEn}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text
+            style={{ fontSize: 16, fontWeight: '700', color: C.secundario, flexShrink: 1 }}
+            numberOfLines={1}
+          >
+            {direccion}
+          </Text>
+          <Text style={{ fontSize: 12, color: C.secundario }}>▾</Text>
         </View>
-      </View>
-      <View
+      </Pressable>
+      <Pressable
+        onPress={alCampana}
+        accessibilityRole="button"
+        accessibilityLabel={pendientes ? `${t.campana} (${pendientes})` : t.campana}
+        hitSlop={6}
         style={{
-          flexDirection: 'row',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          marginTop: 6,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: '#F2F3F5',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Text
-          style={{
-            fontSize: 30,
-            fontWeight: '700',
-            color: C.secundario,
-            flex: 1,
-            paddingBottom: 8,
-          }}
-          numberOfLines={2}
-        >
-          {t.hola}, {nombre}!
-        </Text>
-        {/* Sin foto al lado, como DoorDash: el nombre se ve entero. La hamburguesa se quitó porque la
-            marca va con pizzas; la pizza recortada la prepara marketing (PENDIENTES). */}
-      </View>
+        <Image
+          source={IMG.iconoCampana}
+          style={{ width: 40, height: 40, borderRadius: 20 }}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
+        {pendientes > 0 ? (
+          <View
+            testID="campana-punto"
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              minWidth: 16,
+              height: 16,
+              borderRadius: 8,
+              paddingHorizontal: 4,
+              backgroundColor: C.primario,
+              borderWidth: 2,
+              borderColor: '#fff',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{pendientes}</Text>
+          </View>
+        ) : null}
+      </Pressable>
+      <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
     </View>
   );
 }

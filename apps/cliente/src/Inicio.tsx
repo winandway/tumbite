@@ -1,9 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import {
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { type ServicioCatalogo, enIdioma, recomendarRestaurantes } from '@tumbite/compartido';
-import { Boton, MenuCuenta, TEXTOS_MOVIL, e, useSesion } from '@tumbite/movil';
+import {
+  type Restaurante,
+  type ServicioCatalogo,
+  enIdioma,
+  recomendarRestaurantes,
+} from '@tumbite/compartido';
+import { C, useSesion } from '@tumbite/movil';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
 import { useRestaurantes } from './comida/useRestaurantes';
@@ -13,32 +25,43 @@ import { AvisoPago } from './inicio/AvisoPago';
 import { BarraInferior, type Pestana } from './inicio/BarraInferior';
 import { Buscador } from './inicio/Buscador';
 import { Cabecera } from './inicio/Cabecera';
-import { ModalMuyPronto } from './inicio/ModalMuyPronto';
+import { Categorias } from './inicio/Categorias';
+import { ElegirDireccion } from './inicio/ElegirDireccion';
+import { Filtros, type FiltrosInicio } from './inicio/Filtros';
 import { Ofertas, type PromoReal } from './inicio/Ofertas';
-import { Restaurantes } from './inicio/Restaurantes';
+import { FilaRestaurantes, ListaRestaurantes } from './inicio/Restaurantes';
 import { Servicios } from './inicio/Servicios';
 import { useServicios } from './inicio/useServicios';
 import { useAvisos } from './inicio/useAvisos';
+import { useFavoritos } from './inicio/useFavoritos';
 import { RegalosEnMarcha } from './inicio/RegalosEnMarcha';
 import { textosInicio } from './inicio/textos';
 import { PedirOtraVezInicio } from './inicio/PedirOtraVezInicio';
 
+/** Cuántos restaurantes salen por tanda en «Todos los restaurantes». */
+const TANDA = 25;
+const ANCHO_PORTADA = 640;
+
 /**
- * Inicio del cliente con el diseño aprobado (14 oct 2026): cabecera con logotipo y hamburguesa,
- * saludo, buscador, ocho servicios en el orden de Richard con su estado real, aviso de pago solo si hay un carrito
- * sin pagar, regalos reales en marcha (o las ofertas de muestra si no hay), restaurantes cercanos
- * y barra inferior. Buscador y campana abren sus pantallas reales (/search, /notifications).
- * Los datos son reales: restaurantes, carrito y sesión. Nada falso se puede comprar.
+ * POR-1 (2 nov 2026): la portada del cliente como DoorDash y Uber Eats, en UN solo scroll:
+ * «Entregar en ▾» con la dirección, campana e idioma; buscador y filtros (quedan pegados arriba al
+ * bajar); servicios disponibles en chips (lo que viene vive en «Más»); banner de cupones reales;
+ * categorías reales en círculos; «Más rápidos cerca de ti»; y «Todos los restaurantes» en lista
+ * vertical, por tandas. Sin «Cerrar sesión» aquí: vive en Mi cuenta. Todos los datos son reales.
  */
 export function Inicio() {
-  const { api, idioma, usuario, salir, cambiarIdioma } = useSesion();
+  const { api, idioma, usuario, cambiarIdioma } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
   const ti = textosInicio(idioma);
-  const tm = enIdioma(TEXTOS_MOVIL, idioma);
-  const { carrito, cantidadTotal } = useCarrito();
-  const [soloAbiertos, setSoloAbiertos] = useState(false);
-  const [pronto, setPronto] = useState(false);
-  // Promociones reales destacadas (cupones del superadmin): si hay, reemplazan las de muestra.
+  const { carrito, cantidadTotal, marcarRecoger } = useCarrito();
+  const [filtros, setFiltros] = useState<FiltrosInicio>({
+    recoger: false,
+    ofertas: false,
+    abiertos: false,
+  });
+  const [cuantos, setCuantos] = useState(TANDA);
+  const [cambiandoDireccion, setCambiandoDireccion] = useState(false);
+  // Promociones reales destacadas (cupones del superadmin) para el banner.
   const [promos, setPromos] = useState<PromoReal[]>([]);
   useEffect(() => {
     let vivo = true;
@@ -47,12 +70,12 @@ export function Inicio() {
       .then((r) => {
         if (vivo) setPromos(r.cupones);
       })
-      .catch(() => undefined);
+      .catch((e: unknown) => console.warn('inicio: no se pudieron cargar los cupones', e));
     return () => {
       vivo = false;
     };
   }, [api]);
-  // La portada de tumbite.com puede mandar la ubicación por la dirección (?lat=&lng=).
+  // La portada de divoox.com puede mandar la ubicación por la dirección (?lat=&lng=).
   const params = useLocalSearchParams<{ lat?: string; lng?: string }>();
   const deUrl = useMemo(
     () =>
@@ -67,11 +90,29 @@ export function Inicio() {
   const lista =
     catalogo.estado === 'cargando' && !catalogo.restaurantes.length ? null : catalogo.restaurantes;
   const punto = catalogo.punto;
+  const favoritos = useFavoritos(api, Boolean(usuario));
 
-  // «Solo abiertos» filtra la lista real del inicio; la búsqueda vive en su propia pantalla.
-  const filtrados = useMemo(
-    () => (lista ?? []).filter((r) => !soloAbiertos || (r.abiertoAhora ?? r.abierto)),
-    [lista, soloAbiertos],
+  // Filtros rápidos (Entrega/Recoger, Ofertas, Abiertos) sobre la lista real.
+  const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
+  const filtrados = useMemo(() => {
+    const l = (lista ?? []).filter(
+      (r) => (!filtros.abiertos || abierto(r)) && (!filtros.ofertas || Boolean(r.promocion)),
+    );
+    // En «Recoger», lo más cerca primero (como Uber Eats).
+    return filtros.recoger
+      ? [...l].sort((a, b) => (a.distanciaKm ?? 1e9) - (b.distanciaKm ?? 1e9))
+      : l;
+  }, [lista, filtros]);
+  // «Más rápidos cerca de ti»: abiertos, por tiempo de preparación más el camino.
+  const masRapidos = useMemo(
+    () =>
+      filtrados
+        .filter(abierto)
+        .map((r) => ({ r, min: r.tiempoPrepMin + (r.distanciaKm ?? 3) * 3 }))
+        .sort((a, b) => a.min - b.min)
+        .slice(0, 8)
+        .map((x) => x.r),
+    [filtrados],
   );
 
   // C-TE-PUEDE-GUSTAR: lo que ya pidió decide qué tipo de comida recomendar.
@@ -112,93 +153,156 @@ export function Inicio() {
     if (p === 'pedidos') return router.push('/orders');
     router.push('/account');
   };
+  const abrirRestaurante = (r: Restaurante) => {
+    recordarAnuncio(api, r);
+    marcarRecoger(filtros.recoger);
+    router.push(`/restaurant/${r.id}`);
+  };
+  // La dirección de arriba: la elegida a mano (primera parte), o la ubicación actual.
+  const direccion = catalogo.direccion
+    ? (catalogo.direccion.texto.split(',')[0] ?? catalogo.direccion.texto)
+    : punto
+      ? ti.ubicacionActual
+      : ti.elegirDireccion;
+  // Carga al bajar: cerca del final se suma otra tanda de restaurantes.
+  const alBajar = (ev: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = ev.nativeEvent;
+    if (
+      filtrados.length > cuantos &&
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 800
+    )
+      setCuantos((c) => c + TANDA);
+  };
+  const ancho = { width: '100%', maxWidth: ANCHO_PORTADA, alignSelf: 'center' } as const;
 
   return (
-    <SafeAreaView
-      style={[e.fondo, { backgroundColor: '#F3F6FB' }]}
-      edges={['top', 'left', 'right']}
-    >
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
-        <Cabecera
-          nombre={usuario?.nombre.split(' ')[0] ?? ''}
-          idioma={idioma}
-          cambiarIdioma={cambiarIdioma}
-          alCampana={() => router.push('/notifications')}
-          alCupon={() => router.push('/notifications?tab=regalos')}
-          pendientes={avisos?.pendientes ?? 0}
-        />
-        <Buscador
-          idioma={idioma}
-          alTocar={() => router.push('/search')}
-          soloAbiertos={soloAbiertos}
-          alternarAbiertos={() => setSoloAbiertos((v) => !v)}
-        />
-        <Servicios idioma={idioma} catalogo={servicios?.servicios ?? null} alTocar={servicio} />
-        <AvisoPago
-          idioma={idioma}
-          centavos={carritoCentavos}
-          moneda={carrito.moneda ?? 'USD'}
-          alPagar={() => router.push('/cart')}
-        />
-        {regalos.length ? (
-          <RegalosEnMarcha
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top', 'left', 'right']}>
+      <Cabecera
+        idioma={idioma}
+        cambiarIdioma={cambiarIdioma}
+        direccion={direccion}
+        alDireccion={() => setCambiandoDireccion(true)}
+        alCampana={() => router.push('/notifications')}
+        pendientes={avisos?.pendientes ?? 0}
+      />
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: cantidadTotal > 0 ? 96 : 28 }}
+        keyboardShouldPersistTaps="handled"
+        stickyHeaderIndices={[0]}
+        onScroll={alBajar}
+        scrollEventThrottle={200}
+        testID="portada-cliente"
+      >
+        {/* Pegado arriba al bajar: el buscador y los filtros, como DoorDash. */}
+        <View
+          style={{
+            backgroundColor: '#FFFFFF',
+            paddingTop: 6,
+            borderBottomWidth: 1,
+            borderBottomColor: '#ECEDEF',
+          }}
+        >
+          <View style={ancho}>
+            <Buscador idioma={idioma} alTocar={() => router.push('/search')} />
+            <Filtros idioma={idioma} valor={filtros} cambiar={setFiltros} />
+          </View>
+        </View>
+        <View style={[ancho, { paddingTop: 12 }]}>
+          <Servicios idioma={idioma} catalogo={servicios?.servicios ?? null} alTocar={servicio} />
+          <AvisoPago
             idioma={idioma}
-            regalos={regalos}
-            alVer={() => router.push('/notifications?tab=regalos')}
+            centavos={carritoCentavos}
+            moneda={carrito.moneda ?? 'USD'}
+            alPagar={() => router.push('/cart')}
           />
-        ) : (
-          // Ofertas de muestra solo mientras la persona no tenga regalos reales en marcha.
           <Ofertas
             idioma={idioma}
-            alTocarEjemplo={() => setPronto(true)}
             reales={promos}
             alTocarReal={() => router.push('/restaurants')}
+            alCupon={() => router.push('/notifications?tab=regalos')}
           />
-        )}
-        {!punto && (
-          <Text style={{ color: '#5E5E5E', marginHorizontal: 16, marginTop: 14 }}>
-            {ti.sinUbicacion}
-          </Text>
-        )}
-        <PedirOtraVezInicio idioma={idioma} />
-        {recomendados.length ? (
-          <Restaurantes
+          {regalos.length ? (
+            <RegalosEnMarcha
+              idioma={idioma}
+              regalos={regalos}
+              alVer={() => router.push('/notifications?tab=regalos')}
+            />
+          ) : null}
+          {!punto && (
+            <Text style={{ color: '#666B73', marginHorizontal: 16, marginTop: 14 }}>
+              {ti.sinUbicacion}
+            </Text>
+          )}
+          <PedirOtraVezInicio idioma={idioma} />
+          <Categorias
+            idioma={idioma}
+            lista={lista ?? []}
+            alTocar={(c) => router.push({ pathname: '/restaurants', params: { categoria: c } })}
+          />
+          <FilaRestaurantes
+            idioma={idioma}
+            lista={masRapidos}
+            titulo={ti.masRapidos}
+            testID="mas-rapidos"
+            favoritos={favoritos}
+            alTocar={abrirRestaurante}
+          />
+          <FilaRestaurantes
             idioma={idioma}
             lista={recomendados}
-            cargando={false}
             titulo={idioma === 'en' ? 'You might like' : 'Te puede gustar'}
             testID="te-puede-gustar"
-            alTocar={(r) => {
-              recordarAnuncio(api, r);
-              router.push(`/restaurant/${r.id}`);
-            }}
-            alTocarEjemplo={() => setPronto(true)}
+            favoritos={favoritos}
+            alTocar={abrirRestaurante}
           />
-        ) : null}
-        <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
-        <Restaurantes
-          idioma={idioma}
-          lista={filtrados}
-          cargando={lista === null}
-          alTocar={(r) => {
-            recordarAnuncio(api, r);
-            router.push(`/restaurant/${r.id}`);
-          }}
-          alTocarEjemplo={() => setPronto(true)}
-        />
-        <View style={{ marginHorizontal: 16, marginTop: 8 }}>
-          {cantidadTotal > 0 && (
-            <Boton
-              texto={`${t.verCarrito} (${cantidadTotal})`}
-              alTocar={() => router.push('/cart')}
-            />
-          )}
-          <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
-          <MenuCuenta />
+          <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
+          <ListaRestaurantes
+            idioma={idioma}
+            lista={filtrados}
+            cuantos={cuantos}
+            verMas={() => setCuantos((c) => c + TANDA)}
+            cargando={lista === null}
+            favoritos={favoritos}
+            alTocar={abrirRestaurante}
+            vacio={lista?.length ? ti.sinFiltro : undefined}
+          />
         </View>
       </ScrollView>
+      {cantidadTotal > 0 ? (
+        // El carrito flota sobre la barra de abajo, como en los grandes.
+        <Pressable
+          onPress={() => router.push('/cart')}
+          accessibilityRole="button"
+          accessibilityLabel={`${t.verCarrito} (${cantidadTotal})`}
+          style={{
+            position: 'absolute',
+            left: 16,
+            right: 16,
+            bottom: 86,
+            backgroundColor: C.primario,
+            borderRadius: 999,
+            paddingVertical: 14,
+            alignItems: 'center',
+            shadowColor: '#101010',
+            shadowOpacity: 0.18,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 6,
+          }}
+        >
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+            {`${t.verCarrito} (${cantidadTotal})`}
+          </Text>
+        </Pressable>
+      ) : null}
       <BarraInferior idioma={idioma} activa="inicio" alTocar={pestana} />
-      <ModalMuyPronto visible={pronto} cerrar={() => setPronto(false)} idioma={idioma} />
+      <ElegirDireccion
+        visible={cambiandoDireccion}
+        idioma={idioma}
+        cerca={punto}
+        cerrar={() => setCambiandoDireccion(false)}
+        elegir={(d) => void catalogo.elegirDireccion(d)}
+      />
     </SafeAreaView>
   );
 }

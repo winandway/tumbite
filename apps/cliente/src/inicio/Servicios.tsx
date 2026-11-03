@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, Text } from 'react-native';
 import { type Idioma, ORDEN_SERVICIOS, type ServicioCatalogo } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { ICONO_SERVICIO, IMG } from './recursos';
@@ -7,10 +7,11 @@ import { textosInicio } from './textos';
 export type Servicio = keyof typeof IMG.servicios;
 
 /**
- * Cuadrícula de servicios, como la de los grandes: cuatro por fila, ícono grande y nombre. El
- * orden lo fija ORDEN_SERVICIOS (Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores, Más) y
- * el estado lo dice el servidor: lo que no está disponible lleva una etiqueta discreta («Pronto»)
- * y abre su pantalla con la franja de «en construcción», nunca una ventana encima.
+ * POR-1 (2 nov 2026): servicios en una fila de chips que se desliza a lo ancho, como Uber Eats.
+ * El orden lo fija ORDEN_SERVICIOS y el estado lo dice el servidor (GET /datos/servicios): en la
+ * portada solo salen los que están disponibles en la ciudad, más «Más» al final. Los que vienen
+ * NO llevan «Pronto» aquí: viven dentro de «Más», con su franja de estado (C-EXPLORAR).
+ * Comida sale siempre (es la puerta de entrada; si no está, abre su pantalla con la franja).
  */
 export function Servicios({
   idioma,
@@ -23,107 +24,71 @@ export function Servicios({
 }) {
   const t = textosInicio(idioma);
   const nombres = new Map(Object.entries(t.servicios) as [Servicio, string][]);
-  // Sin catálogo todavía, los ocho conocidos sin estado (cada pantalla vuelve a preguntar).
-  const lista: ServicioCatalogo[] =
-    catalogo ??
-    ORDEN_SERVICIOS.map((id, i) => ({
-      id,
-      nombre: nombres.get(id) ?? id,
-      descripcion: '',
-      icono: `servicio-${id}`,
-      orden: i,
-      estado: 'proximamente',
-      accion: 'muy_pronto',
-    }));
-  // Como en la pantalla aprobada: cuatro losetas por fila, el ícono 3D grande llenando la loseta
-  // y el nombre adentro, todo dentro de un panel claro redondeado.
-  const ancho = useWindowDimensions().width;
-  const loseta = Math.floor((ancho - 32 - 16 - 3 * 8) / 4);
-  // Los íconos ya vienen recortados al borde: ocupan tres cuartos de la loseta, como en la maqueta.
-  const icono = Math.round(loseta * 0.74);
+  const sinEstado = (id: string, i: number): ServicioCatalogo => ({
+    id,
+    nombre: nombres.get(id as Servicio) ?? id,
+    descripcion: '',
+    icono: `servicio-${id}`,
+    orden: i,
+    estado: 'proximamente',
+    accion: 'muy_pronto',
+  });
+  const todos: ServicioCatalogo[] = catalogo ?? ORDEN_SERVICIOS.map(sinEstado);
+  const visibles = [
+    todos.find((s) => s.id === 'comida') ?? sinEstado('comida', 0),
+    ...todos.filter((s) => s.id !== 'comida' && s.id !== 'mas' && s.accion === 'abrir'),
+    todos.find((s) => s.id === 'mas') ?? sinEstado('mas', ORDEN_SERVICIOS.length),
+  ];
   return (
-    <View
-      style={{
-        marginHorizontal: 16,
-        marginTop: 16,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 24,
-        padding: 8,
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        shadowColor: '#101010',
-        shadowOpacity: 0.06,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 3 },
-        elevation: 2,
-      }}
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4, gap: 10 }}
+      testID="servicios-inicio"
     >
-      {lista.map((s) => {
+      {visibles.map((s) => {
         // El nombre de la app manda si lo conoce (es/en ya resueltos); si no, el del servidor.
         const nombre = nombres.get(s.id as Servicio) ?? s.nombre;
-        const etiqueta = catalogo ? t.etiquetaServicio[s.accion] : '';
         return (
           <Pressable
             key={s.id}
             onPress={() => alTocar(s)}
             accessibilityRole="button"
-            accessibilityLabel={etiqueta ? `${nombre} (${etiqueta})` : nombre}
+            accessibilityLabel={nombre}
             testID={`servicio-${s.id}`}
             style={({ pressed }) => ({
-              width: loseta,
-              height: Math.round(loseta * 1.05),
-              borderRadius: 18,
-              backgroundColor: '#F4F7FB',
+              flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'flex-end',
-              paddingBottom: 8,
+              gap: 8,
+              paddingLeft: 6,
+              paddingRight: 14,
+              height: 44,
+              borderRadius: 999,
+              backgroundColor: '#FFFFFF',
+              borderWidth: 1,
+              borderColor: '#E3E5E8',
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            {etiqueta ? (
-              <View
-                style={{
-                  position: 'absolute',
-                  top: 6,
-                  right: 6,
-                  zIndex: 1,
-                  elevation: 3,
-                  backgroundColor: '#E9ECF1',
-                  borderRadius: 999,
-                  paddingHorizontal: 6,
-                  paddingVertical: 1,
-                }}
-              >
-                <Text
-                  maxFontSizeMultiplier={1.2}
-                  numberOfLines={1}
-                  style={{ fontSize: 9, fontWeight: '600', color: '#5E5E5E' }}
-                >
-                  {etiqueta}
-                </Text>
-              </View>
-            ) : null}
             <Image
               source={ICONO_SERVICIO.get(s.id as Servicio) ?? IMG.servicios.mas}
-              style={{ width: icono, height: icono, marginBottom: 2 }}
+              style={{ width: 32, height: 32, borderRadius: 16 }}
               resizeMode="contain"
               accessibilityIgnoresInvertColors
             />
-            {/* C-MOSAICO-UNA-LINEA (31 oct 2026, visto en el iPhone de Richard con letra grande): el nombre
-                del servicio va en una sola línea y se achica si no cabe; nunca «Deliverie-s». */}
+            {/* C-MOSAICO-UNA-LINEA: el nombre en una sola línea, también con la letra grande. */}
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
-              minimumFontScale={0.7}
+              minimumFontScale={0.8}
               maxFontSizeMultiplier={1.3}
-              style={{ fontWeight: '600', fontSize: 14, color: C.secundario }}
+              style={{ fontWeight: '700', fontSize: 14, color: C.secundario }}
             >
               {nombre}
             </Text>
           </Pressable>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }

@@ -12,9 +12,12 @@ const TITULO = { es: 'Cambiar idioma', en: 'Change language' } as const;
 export function SelectorIdioma({
   idioma,
   cambiar,
+  sobreClaro = false,
 }: {
   idioma: Idioma;
   cambiar: (i: Idioma) => void;
+  /** Sobre una cabecera blanca (inicio del cliente, POR-1): letras negras y borde gris al abrir. */
+  sobreClaro?: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
   const actual = IDIOMAS.find((i) => i.codigo === idioma) ?? IDIOMAS[0];
@@ -36,12 +39,14 @@ export function SelectorIdioma({
           paddingVertical: 6,
           borderRadius: 6,
           borderWidth: 1,
-          borderColor: abierto ? '#fff' : 'transparent',
+          borderColor: abierto ? (sobreClaro ? '#d5d9d9' : '#fff') : 'transparent',
         }}
       >
         <Text style={{ fontSize: 18 }}>{actual.bandera}</Text>
-        <Text style={{ color: '#fff', fontWeight: '700' }}>{actual.codigo.toUpperCase()}</Text>
-        <Text style={{ color: '#fff', fontSize: 11 }}>▾</Text>
+        <Text style={{ color: sobreClaro ? '#101010' : '#fff', fontWeight: '700' }}>
+          {actual.codigo.toUpperCase()}
+        </Text>
+        <Text style={{ color: sobreClaro ? '#101010' : '#fff', fontSize: 11 }}>▾</Text>
       </Pressable>
       <Modal
         visible={abierto}

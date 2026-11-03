@@ -6,7 +6,9 @@ import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
 import {
   Boton,
   C,
+  MenuCuenta,
   MisCasos,
+  TEXTOS_MOVIL,
   selectorDeCapturas,
   ReportarProblema,
   URL_SERVIDOR,
@@ -88,7 +90,8 @@ type Tarjeta = { id: string; marca: string; ultimos4: string; vence: string };
 
 /** «Mi cuenta» del cliente: historial, tarjetas guardadas, datos y ayuda. */
 export default function MiCuenta() {
-  const { api, idioma, usuario } = useSesion();
+  const { api, idioma, usuario, salir } = useSesion();
+  const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const pestana = (p: Pestana) => {
     if (p === 'inicio') return router.replace('/');
     if (p === 'pedidos') return router.push('/orders');
@@ -333,6 +336,13 @@ export default function MiCuenta() {
         <ReportarProblema />
         {/* C-AYUDA-EN-LA-APP: los casos y su chat con Soporte, sin salir a la web. */}
         <MisCasos elegirCapturas={selectorDeCapturas(ImagePicker.launchImageLibraryAsync)} />
+
+        {/* POR-1 (2 nov 2026): «Cerrar sesión» vive aquí, no en la portada (como los grandes).
+            Los tres puntos guardan las guías, el soporte y borrar la cuenta. */}
+        <View style={{ marginTop: 20, gap: 8 }}>
+          <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
+          <MenuCuenta />
+        </View>
       </ScrollView>
       <BarraInferior idioma={idioma} activa="cuenta" alTocar={pestana} />
     </SafeAreaView>

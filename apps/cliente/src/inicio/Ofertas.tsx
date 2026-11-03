@@ -1,29 +1,10 @@
-import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { type Idioma, formatearMonto } from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
 
-const Etiqueta = ({ texto }: { texto: string }) => (
-  <View
-    style={{
-      position: 'absolute',
-      top: 8,
-      left: 8,
-      backgroundColor: 'rgba(25,25,25,0.75)',
-      borderRadius: 999,
-      paddingHorizontal: 8,
-      paddingVertical: 2,
-    }}
-  >
-    <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{texto}</Text>
-  </View>
-);
-
-/**
- * Ofertas del día. Mientras los restaurantes no carguen promociones reales, se muestran las de
- * muestra del diseño (marcadas «Ejemplo»); tocarlas abre «Muy pronto». Nunca se cobran.
- */
+/** Cupón destacado de verdad (del superadmin), tal como lo manda GET /datos/cupones/destacados. */
 export type PromoReal = {
   codigo: string;
   tipo: 'monto' | 'porcentaje' | 'envio_gratis';
@@ -36,94 +17,35 @@ export type PromoReal = {
   moneda?: string;
 };
 
+/**
+ * POR-1 (2 nov 2026): «Ofertas del día» como banner que se desliza, igual que el carrusel de
+ * promociones de DoorDash y Uber Eats. Solo cupones reales: si no hay ninguno, no se muestra nada
+ * (ya no hay ofertas de muestra en la portada).
+ */
 export function Ofertas({
   idioma,
-  alTocarEjemplo,
   reales,
   alTocarReal,
+  alCupon,
 }: {
   idioma: Idioma;
-  alTocarEjemplo: () => void;
-  /** Cupones destacados de verdad (del superadmin). Si hay, se muestran ellos y no los de muestra. */
-  reales?: PromoReal[];
-  alTocarReal?: (codigo: string) => void;
+  reales: PromoReal[];
+  alTocarReal: (codigo: string) => void;
+  alCupon: () => void;
 }) {
   const t = textosInicio(idioma);
-  // Anchos en números: en la web, el ancho en porcentaje no sirve para calcular la foto.
-  const anchoCombo = Math.round((useWindowDimensions().width - 32 - 10) * 0.46);
-  if (reales?.length) {
-    const texto = (p: PromoReal) =>
-      p.tipo === 'envio_gratis'
-        ? idioma === 'en'
-          ? 'Free delivery'
-          : 'Envío gratis'
-        : p.tipo === 'porcentaje'
-          ? `−${p.valor / 100}%`
-          : `−${formatearMonto(p.valor, p.moneda ?? 'USD', idioma)}`;
-    return (
-      <View style={{ marginTop: 18 }} testID="promos-reales">
-        <Text
-          style={{ fontSize: 22, fontWeight: '700', color: C.secundario, marginHorizontal: 16 }}
-        >
-          {t.ofertas}
-        </Text>
-        <View style={{ marginHorizontal: 16, marginTop: 10, gap: 10 }}>
-          {reales.map((p) => (
-            <Pressable
-              key={p.codigo}
-              onPress={() => alTocarReal?.(p.codigo)}
-              accessibilityRole="button"
-              accessibilityLabel={`${p.codigo}: ${idioma === 'en' ? p.descripcionEn || p.descripcionEs : p.descripcionEs}`}
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: 18,
-                padding: 12,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-                borderWidth: 1,
-                borderColor: '#2a2a2a',
-              }}
-            >
-              <View
-                style={{
-                  backgroundColor: C.primario,
-                  borderRadius: 12,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{texto(p)}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '700', color: C.secundario }} numberOfLines={2}>
-                  {idioma === 'en' ? p.descripcionEn || p.descripcionEs : p.descripcionEs}
-                </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
-                  {idioma === 'en' ? 'Code' : 'Código'}:{' '}
-                  <Text style={{ fontWeight: '700' }}>{p.codigo}</Text>
-                  {p.minimoSubtotal > 0
-                    ? ` · ${idioma === 'en' ? 'min.' : 'mín.'} ${formatearMonto(p.minimoSubtotal, p.moneda ?? 'USD', idioma)}`
-                    : ''}
-                </Text>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    );
-  }
-  const tarjeta = {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    shadowColor: '#101010',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  } as const;
+  const ancho = Math.min(useWindowDimensions().width, 640) - 32 - (reales.length > 1 ? 28 : 0);
+  if (!reales.length) return null;
+  const grande = (p: PromoReal) =>
+    p.tipo === 'envio_gratis'
+      ? t.envioGratis
+      : p.tipo === 'porcentaje'
+        ? `−${p.valor / 100}%`
+        : `−${formatearMonto(p.valor, p.moneda ?? 'USD', idioma)}`;
+  const descripcion = (p: PromoReal) =>
+    idioma === 'en' ? p.descripcionEn || p.descripcionEs : p.descripcionEs;
   return (
-    <View style={{ marginTop: 18 }}>
+    <View style={{ marginTop: 18 }} testID="promos-reales">
       <View
         style={{
           flexDirection: 'row',
@@ -132,82 +54,68 @@ export function Ofertas({
           marginHorizontal: 16,
         }}
       >
-        <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>{t.ofertas}</Text>
-        <Pressable
-          onPress={alTocarEjemplo}
-          accessibilityRole="button"
-          accessibilityLabel={t.verTodas}
-        >
-          <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.verTodas} ›</Text>
+        <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario }}>{t.ofertas}</Text>
+        <Pressable onPress={alCupon} accessibilityRole="link" hitSlop={8}>
+          <Text style={{ color: '#666B73', fontWeight: '600' }}>{t.verTodas} ›</Text>
         </Pressable>
       </View>
-      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 10, gap: 10 }}>
-        <View style={{ flex: 1, gap: 10 }}>
-          {t.relleno.ofertas.map((o, i) => (
-            <Pressable
-              key={o.nombre}
-              onPress={alTocarEjemplo}
-              accessibilityRole="button"
-              accessibilityLabel={`${t.ejemplo}: ${o.nombre}`}
-              style={[tarjeta, { flexDirection: 'row', alignItems: 'center', padding: 8, gap: 10 }]}
-            >
-              <View>
-                <Image
-                  source={IMG.relleno.ofertas.at(i)}
-                  style={{ width: 78, height: 70, borderRadius: 12 }}
-                  accessibilityIgnoresInvertColors
-                />
-                <Etiqueta texto={t.ejemplo} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: '700', color: C.secundario }} numberOfLines={2}>
-                  {o.nombre}
-                </Text>
-                <Text style={{ fontSize: 20, fontWeight: '700', color: C.primario }}>
-                  {formatearMonto(o.precio, 'USD', idioma)}
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text
-                    style={{ color: '#8A8A8A', textDecorationLine: 'line-through', fontSize: 12 }}
-                  >
-                    {formatearMonto(o.antes, 'USD', idioma)}
-                  </Text>
-                  <View
-                    style={{
-                      backgroundColor: '#FFE27A',
-                      borderRadius: 999,
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                    }}
-                  >
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: C.secundario }}>
-                      {o.descuento}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-        <Pressable
-          onPress={alTocarEjemplo}
-          accessibilityRole="button"
-          accessibilityLabel={`${t.ejemplo}: ${t.relleno.combo.titulo}`}
-          style={[tarjeta, { width: anchoCombo, overflow: 'hidden', justifyContent: 'center' }]}
-        >
-          <Image
-            source={IMG.relleno.combo}
-            style={{
-              width: anchoCombo,
-              height: Math.round((anchoCombo * 708) / 754),
-              borderRadius: 18,
-            }}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-          />
-          <Etiqueta texto={t.ejemplo} />
-        </Pressable>
-      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={ancho + 12}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 12 }}
+      >
+        {reales.map((p) => (
+          <Pressable
+            key={p.codigo}
+            onPress={() => alTocarReal(p.codigo)}
+            accessibilityRole="button"
+            accessibilityLabel={`${p.codigo}: ${descripcion(p)}`}
+            style={({ pressed }) => ({
+              width: ancho,
+              height: 120,
+              borderRadius: 16,
+              backgroundColor: '#FFFFFF',
+              borderWidth: 1,
+              borderColor: '#E3E5E8',
+              flexDirection: 'row',
+              overflow: 'hidden',
+              shadowColor: '#101010',
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 2,
+              opacity: pressed ? 0.85 : 1,
+            })}
+          >
+            <View style={{ flex: 1, padding: 14, justifyContent: 'center' }}>
+              <Text style={{ fontSize: 24, fontWeight: '700', color: C.primario }}>
+                {grande(p)}
+              </Text>
+              <Text
+                style={{ fontWeight: '700', color: C.secundario, marginTop: 2 }}
+                numberOfLines={2}
+              >
+                {descripcion(p)}
+              </Text>
+              <Text style={{ color: '#666B73', fontSize: 12, marginTop: 4 }} numberOfLines={1}>
+                {idioma === 'en' ? 'Code' : 'Código'}:{' '}
+                <Text style={{ fontWeight: '700', color: C.secundario }}>{p.codigo}</Text>
+                {p.minimoSubtotal > 0
+                  ? ` · ${idioma === 'en' ? 'min.' : 'mín.'} ${formatearMonto(p.minimoSubtotal, p.moneda ?? 'USD', idioma)}`
+                  : ''}
+              </Text>
+            </View>
+            <Image
+              source={IMG.relleno.pizza}
+              style={{ width: Math.round(ancho * 0.34), height: 120 }}
+              resizeMode="cover"
+              accessibilityIgnoresInvertColors
+            />
+          </Pressable>
+        ))}
+      </ScrollView>
     </View>
   );
 }

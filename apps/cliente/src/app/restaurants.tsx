@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { recordarAnuncio } from '../comida/anuncioTocado';
 import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
   type Restaurante,
   filtrarRestaurantes,
@@ -30,7 +30,9 @@ export default function Restaurantes() {
   const { api, idioma } = useSesion();
   const t = textosComida(idioma);
   const [busqueda, setBusqueda] = useState('');
-  const [categoria, setCategoria] = useState<string | null>(null);
+  // POR-1: las categorías en círculos del inicio llegan ya elegidas (?categoria=).
+  const { categoria: deInicio } = useLocalSearchParams<{ categoria?: string }>();
+  const [categoria, setCategoria] = useState<string | null>(deInicio ? String(deInicio) : null);
   const [soloAbiertos, setSoloAbiertos] = useState(false);
   const [orden, setOrden] = useState<'cerca' | 'rapido' | 'calificados' | null>(null);
   // C-ORDENAR-COMIDA: filtros rápidos «Menos de 30 min» y «4,5 o más», como Uber Eats.

@@ -5,74 +5,38 @@ import { textosInicio } from './textos';
 
 /**
  * Barra de búsqueda del inicio (como en los grandes): al tocarla se abre la pantalla de búsqueda
- * real (restaurantes y platos del servidor). El botón de la derecha alterna «solo abiertos».
+ * real (restaurantes y platos del servidor). Los filtros rápidos van debajo, en su propia fila
+ * (POR-1, 2 nov 2026), y los dos quedan pegados arriba al bajar.
  */
-export function Buscador({
-  idioma,
-  alTocar,
-  soloAbiertos,
-  alternarAbiertos,
-}: {
-  idioma: Idioma;
-  alTocar: () => void;
-  soloAbiertos: boolean;
-  alternarAbiertos: () => void;
-}) {
+export function Buscador({ idioma, alTocar }: { idioma: Idioma; alTocar: () => void }) {
   const t = textosInicio(idioma);
   return (
-    <View
+    <Pressable
+      onPress={alTocar}
+      accessibilityRole="search"
+      accessibilityLabel={t.buscarInicio}
+      testID="abrir-busqueda"
       style={{
         marginHorizontal: 16,
-        marginTop: -6,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: '#F2F3F5',
         borderRadius: 999,
         paddingHorizontal: 14,
-        height: 50,
-        shadowColor: '#101010',
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 3 },
-        elevation: 3,
+        height: 46,
       }}
     >
       <Image
         source={IMG.iconoLupa}
-        style={{ width: 20, height: 22 }}
+        style={{ width: 18, height: 20 }}
         resizeMode="contain"
         accessibilityIgnoresInvertColors
       />
-      <Pressable
-        onPress={alTocar}
-        accessibilityRole="search"
-        accessibilityLabel={t.buscar}
-        testID="abrir-busqueda"
-        style={{ flex: 1, marginLeft: 10, height: 50, justifyContent: 'center' }}
-      >
-        <Text style={{ fontSize: 16, color: '#8A8A8A' }} numberOfLines={1}>
-          {t.buscar}
+      <View style={{ flex: 1, marginLeft: 10 }}>
+        <Text style={{ fontSize: 15, color: '#666B73' }} numberOfLines={1}>
+          {t.buscarInicio}
         </Text>
-      </Pressable>
-      <Pressable
-        onPress={alternarAbiertos}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: soloAbiertos }}
-        accessibilityLabel={t.soloAbiertos}
-        hitSlop={8}
-        style={{
-          padding: 6,
-          borderRadius: 10,
-          backgroundColor: soloAbiertos ? '#FFE9E4' : 'transparent',
-        }}
-      >
-        <Image
-          source={IMG.iconoFiltros}
-          style={{ width: 20, height: 20 }}
-          resizeMode="contain"
-          accessibilityIgnoresInvertColors
-        />
-      </Pressable>
-    </View>
+      </View>
+    </Pressable>
   );
 }

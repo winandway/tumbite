@@ -622,6 +622,22 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
     await foto(cli, 'cliente-inicio');
+    // POR-1 (2 nov 2026): portada como los grandes. «Entregar en ▾» abre la casilla de dirección
+    // de siempre (con sugerencias), y al bajar el buscador y los filtros quedan pegados arriba.
+    await cli.getByTestId('inicio-direccion').click();
+    await expect(cli.getByTestId('inicio-direccion-casilla')).toBeVisible({ timeout: 10_000 });
+    // La hoja sube deslizándose: la foto, cuando ya terminó de subir.
+    await cli.waitForTimeout(CAPTURAS ? 800 : 0);
+    await foto(cli, 'cliente-inicio-direccion');
+    await cli.getByRole('button', { name: idioma === 'en' ? 'Close' : 'Cerrar' }).click();
+    await expect(cli.getByTestId('inicio-direccion-casilla')).toBeHidden({ timeout: 10_000 });
+    if (CAPTURAS) {
+      await cli.getByTestId('lista-restaurantes').scrollIntoViewIfNeeded();
+      await expect(cli.getByTestId('abrir-busqueda')).toBeInViewport();
+      await cli.waitForTimeout(500);
+      await foto(cli, 'cliente-inicio-lista');
+      await cli.getByTestId('portada-cliente').evaluate((d) => d.scrollTo(0, 0));
+    }
     // Inicio «como los grandes» (18 oct): un servicio que viene abre su pantalla con la franja de
     // «en construcción» (nunca una ventana encima), el buscador es real y la campana también.
     // Carro: sigue bloqueado en todas partes (Moto ya se enciende en pruebas, C-MOTO-SOLO-PRUEBAS).
@@ -636,10 +652,15 @@ for (const idioma of ['en', 'es'] as const) {
     );
     const porVenir = noListos.find((s) => s.id === 'carro') ?? noListos[0];
     if (porVenir || !STAGING) {
-      await cli.getByTestId(`servicio-${porVenir?.id ?? 'carro'}`).click();
-      await expect(cli.getByTestId('franja-estado')).toBeVisible({ timeout: 20_000 });
+      // POR-1 (2 nov 2026): en la portada solo salen los servicios disponibles; los que vienen
+      // viven dentro de «Más», sin «Pronto» encima de cada uno.
+      await expect(cli.getByTestId(`servicio-${porVenir?.id ?? 'carro'}`)).toHaveCount(0);
+      await cli.getByTestId('servicio-mas').click();
+      await cli.getByTestId(`explorar-${porVenir?.id ?? 'carro'}`).click();
+      // La pantalla de «Más» queda debajo en la pila, con su propia franja: manda la de arriba.
+      await expect(cli.getByTestId('franja-estado').last()).toBeVisible({ timeout: 20_000 });
       await expect(
-        cli.getByText(/Estamos construyendo este servicio|We’re building this service/),
+        cli.getByText(/Estamos construyendo este servicio|We’re building this service/).last(),
       ).toBeVisible();
       await foto(cli, 'cliente-servicio');
     }

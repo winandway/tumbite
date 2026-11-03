@@ -12,271 +12,293 @@ import { router } from 'expo-router';
 import { C, urlFoto } from '@tumbite/movil';
 import { IMG, fotoDeRelleno } from './recursos';
 import { textosInicio } from './textos';
+import { distanciaTexto } from '../textos';
 import { Calificacion } from '../comida/Calificacion';
 
-const tarjeta = {
-  backgroundColor: '#fff',
-  borderRadius: 18,
-  overflow: 'hidden',
-  shadowColor: '#101010',
-  shadowOpacity: 0.08,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 2,
-} as const;
+/** Ancho máximo de la portada en pantallas grandes (tableta, web): como la lista de Comida. */
+const ANCHO_PORTADA = 640;
 
-const Corazon = ({ alTocar, etiqueta }: { alTocar: () => void; etiqueta: string }) => (
-  <Pressable
-    onPress={alTocar}
-    accessibilityRole="button"
-    accessibilityLabel={etiqueta}
-    hitSlop={6}
-    style={{
-      position: 'absolute',
-      top: 8,
-      right: 8,
-      width: 30,
-      height: 30,
-      borderRadius: 15,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }}
-  >
-    <Image
-      source={IMG.iconoCorazon}
-      style={{ width: 16, height: 16 }}
-      resizeMode="contain"
-      accessibilityIgnoresInvertColors
-    />
-  </Pressable>
-);
+export type Favoritos = { ids: Set<string>; alternar: (id: string) => void };
 
-const Tiempo = ({ texto }: { texto: string }) => (
+const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
+
+/**
+ * Envío estimado con la tarifa base de EE. UU. Fuera del dólar no se estima (C-MONEDA-RECORRIDO:
+ * nunca se muestran cifras en dólares como si fueran pesos); el carrito trae las del país.
+ */
+const envioDe = (r: Restaurante, idioma: Idioma) =>
+  (r.moneda ?? 'USD') === 'USD'
+    ? formatearMonto(calcularEnvio(CONFIG_DINERO_INICIAL, r.distanciaKm ?? null), 'USD', idioma)
+    : null;
+
+/**
+ * POR-1 (2 nov 2026): la tarjeta de restaurante de la portada, como DoorDash y Uber Eats: foto
+ * grande, corazón real (Favoritos), nombre, nota o «Nuevo», categoría, distancia, tiempo y envío.
+ * La misma pieza sirve para la fila deslizable y para la lista vertical.
+ */
+function TarjetaRestaurante({
+  r,
+  i,
+  ancho,
+  idioma,
+  favoritos,
+  alTocar,
+}: {
+  r: Restaurante;
+  i: number;
+  ancho: number;
+  idioma: Idioma;
+  favoritos: Favoritos;
+  alTocar: (r: Restaurante) => void;
+}) {
+  const t = textosInicio(idioma);
+  const fav = favoritos.ids.has(r.id);
+  const envio = envioDe(r, idioma);
+  const detalle = [
+    r.categoria,
+    r.distanciaKm != null ? distanciaTexto(r.distanciaKm, idioma, r.pais) : null,
+    `${r.tiempoPrepMin + 10}-${r.tiempoPrepMin + 20} ${t.min}`,
+  ].filter(Boolean);
+  return (
+    <Pressable
+      onPress={() => alTocar(r)}
+      accessibilityRole="button"
+      accessibilityLabel={r.nombre}
+      style={({ pressed }) => ({
+        width: ancho,
+        opacity: !abierto(r) ? 0.6 : pressed ? 0.85 : 1,
+      })}
+    >
+      <View>
+        <Image
+          source={
+            urlFoto(r.imagen)
+              ? { uri: urlFoto(r.imagen) ?? undefined }
+              : fotoDeRelleno(r.categoria, i)
+          }
+          style={{
+            width: ancho,
+            height: Math.round(ancho * 0.5),
+            borderRadius: 14,
+            backgroundColor: '#F2F3F5',
+          }}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
+        <Pressable
+          onPress={() => favoritos.alternar(r.id)}
+          accessibilityRole="button"
+          accessibilityLabel={`${fav ? t.quitarFavorito : t.guardarFavorito}: ${r.nombre}`}
+          accessibilityState={{ selected: fav }}
+          hitSlop={8}
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            width: 34,
+            height: 34,
+            borderRadius: 17,
+            backgroundColor: '#fff',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Image
+            source={IMG.iconoCorazon}
+            style={{ width: 17, height: 17, tintColor: fav ? C.primario : '#101010' }}
+            resizeMode="contain"
+            accessibilityIgnoresInvertColors
+          />
+        </Pressable>
+        {r.promocion ? (
+          // C-PROMO-RESTAURANTE: la insignia de la promoción que paga el restaurante, en verde.
+          <View
+            style={{
+              position: 'absolute',
+              left: 10,
+              top: 10,
+              backgroundColor: C.exito,
+              borderRadius: 6,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+            }}
+          >
+            <Text testID="promocion" style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>
+              {insigniaPromocion(r.promocion, r.moneda ?? 'USD', idioma)}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={{ paddingTop: 8, gap: 2 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Text
+            style={{ fontWeight: '700', fontSize: 16, color: C.secundario, flex: 1 }}
+            numberOfLines={1}
+          >
+            {r.nombre}
+          </Text>
+          <Calificacion c={r.calificacion} idioma={idioma} />
+        </View>
+        <Text style={{ fontSize: 13, color: '#666B73' }} numberOfLines={1}>
+          {detalle.join(' · ')}
+        </Text>
+        <Text style={{ fontSize: 13, color: '#666B73' }} numberOfLines={1}>
+          {abierto(r) ? (
+            envio ? (
+              t.envioDe.replace('{monto}', envio)
+            ) : (
+              <Text style={{ color: C.exito, fontWeight: '700' }}>{t.abierto}</Text>
+            )
+          ) : (
+            <Text style={{ color: '#8a0014', fontWeight: '700' }}>
+              {textoNoDisponible(r, idioma) ?? t.cerrado}
+            </Text>
+          )}
+        </Text>
+        {r.patrocinado ? (
+          // C-ANUNCIOS: como «Sponsored» de DoorDash, discreto y debajo del nombre.
+          <Text testID="patrocinado" style={{ fontSize: 11, color: '#666B73' }}>
+            {idioma === 'en' ? 'Sponsored' : 'Patrocinado'}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
+const Titulo = ({ texto, verTodos }: { texto: string; verTodos?: string }) => (
   <View
     style={{
-      position: 'absolute',
-      left: 10,
-      bottom: 10,
-      backgroundColor: C.primario,
-      borderRadius: 999,
-      paddingHorizontal: 10,
-      paddingVertical: 3,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginHorizontal: 16,
     }}
   >
-    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{texto}</Text>
+    <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario }}>{texto}</Text>
+    {verTodos ? (
+      <Text
+        style={{ color: '#666B73', fontWeight: '600' }}
+        onPress={() => router.push('/restaurants')}
+        accessibilityRole="link"
+      >
+        {verTodos} ›
+      </Text>
+    ) : null}
   </View>
 );
 
 /**
- * Restaurantes cerca de ti, en tarjetas horizontales: foto real (o de muestra por categoría),
- * tiempo estimado, envío calculado con la regla real y si está abierto. Sin restaurantes reales
- * se muestran tres de muestra marcados «Ejemplo».
+ * Fila que se desliza a lo ancho con tarjetas anchas («Más rápidos cerca de ti», «Te puede
+ * gustar»), como los carruseles de DoorDash y Uber Eats: se ve una tarjeta y el borde de la otra.
  */
-export function Restaurantes({
+export function FilaRestaurantes({
   idioma,
   lista,
-  alTocar,
-  alTocarEjemplo,
-  cargando,
   titulo,
-  testID = 'lista-restaurantes',
+  testID,
+  favoritos,
+  alTocar,
 }: {
   idioma: Idioma;
   lista: Restaurante[];
+  titulo: string;
+  testID: string;
+  favoritos: Favoritos;
   alTocar: (r: Restaurante) => void;
-  alTocarEjemplo: () => void;
-  cargando: boolean;
-  /** C-TE-PUEDE-GUSTAR: la misma fila con otro título (sin «Ver todos»). */
-  titulo?: string;
-  testID?: string;
 }) {
   const t = textosInicio(idioma);
-  // Tres tarjetas a la vista, como en la pantalla aprobada.
-  const ANCHO = Math.floor((useWindowDimensions().width - 32 - 20) / 3);
-  // Envío estimado con la tarifa base de EE. UU. Fuera del dólar no se estima (C-MONEDA-RECORRIDO:
-  // nunca se muestran cifras en dólares como si fueran pesos); el carrito trae las del país.
-  const envioDe = (r: Restaurante) =>
-    (r.moneda ?? 'USD') === 'USD'
-      ? formatearMonto(calcularEnvio(CONFIG_DINERO_INICIAL, r.distanciaKm ?? null), 'USD', idioma)
-      : null;
-  const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
+  const ancho = Math.round((Math.min(useWindowDimensions().width, ANCHO_PORTADA) - 32) * 0.78);
+  if (!lista.length) return null;
   return (
     <View style={{ marginTop: 20 }} testID={testID}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginHorizontal: 16,
-        }}
-      >
-        <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>
-          {titulo ?? t.cerca}
-        </Text>
-        {!titulo && lista.length > 3 ? (
-          <Text
-            style={{ color: '#5E5E5E', fontWeight: '600' }}
-            onPress={() => router.push('/restaurants')}
-            accessibilityRole="link"
-          >
-            {t.verTodos} ›
-          </Text>
-        ) : null}
-      </View>
+      <Titulo texto={titulo} verTodos={lista.length > 3 ? t.verTodos : undefined} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}
+        snapToInterval={ancho + 14}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, gap: 14 }}
       >
         {lista.map((r, i) => (
-          <Pressable
+          <TarjetaRestaurante
             key={r.id}
-            onPress={() => alTocar(r)}
-            accessibilityRole="button"
-            accessibilityLabel={r.nombre}
-            style={({ pressed }) => [
-              tarjeta,
-              !abierto(r) && { opacity: 0.6 },
-              pressed && { opacity: 0.8 },
-            ]}
-          >
-            <View>
-              <Image
-                source={
-                  urlFoto(r.imagen)
-                    ? { uri: urlFoto(r.imagen) ?? undefined }
-                    : fotoDeRelleno(r.categoria, i)
-                }
-                style={{
-                  width: ANCHO,
-                  height: Math.round(ANCHO * 0.72),
-                  backgroundColor: '#f1f1f1',
-                }}
-                accessibilityIgnoresInvertColors
-              />
-              <Tiempo texto={`${r.tiempoPrepMin + 10}-${r.tiempoPrepMin + 20} ${t.min}`} />
-              <Corazon alTocar={alTocarEjemplo} etiqueta={t.nav.favoritos} />
-            </View>
-            <View style={{ padding: 10 }}>
-              <Text
-                style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}
-                numberOfLines={1}
-              >
-                {r.nombre}
-              </Text>
-              {r.promocion ? (
-                // C-PROMO-RESTAURANTE: la insignia de la promoción que paga el restaurante.
-                <Text
-                  testID="promocion"
-                  style={{ fontSize: 12, color: C.exito, fontWeight: '700' }}
-                >
-                  {insigniaPromocion(r.promocion, r.moneda ?? 'USD', idioma)}
-                </Text>
-              ) : null}
-              {r.patrocinado ? (
-                // C-ANUNCIOS: como «Sponsored» de DoorDash, discreto y debajo del nombre.
-                <Text testID="patrocinado" style={{ fontSize: 11, color: '#5E5E5E' }}>
-                  {idioma === 'en' ? 'Sponsored' : 'Patrocinado'}
-                </Text>
-              ) : null}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: 4,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: abierto(r) ? '#0d7a3a' : '#8a0014',
-                    fontWeight: '700',
-                  }}
-                  numberOfLines={1}
-                >
-                  {abierto(r) ? t.abierto : (textoNoDisponible(r, idioma) ?? t.cerrado)}
-                </Text>
-                {envioDe(r) ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Image
-                      source={IMG.iconoEnvio}
-                      style={{ width: 16, height: 13 }}
-                      resizeMode="contain"
-                      accessibilityIgnoresInvertColors
-                    />
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: C.secundario }}>
-                      {envioDe(r)}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                <Calificacion c={r.calificacion} idioma={idioma} />
-                <Text style={{ fontSize: 12, color: '#5E5E5E', flexShrink: 1 }} numberOfLines={1}>
-                  · {r.categoria}
-                </Text>
-              </View>
-            </View>
-          </Pressable>
+            r={r}
+            i={i}
+            ancho={ancho}
+            idioma={idioma}
+            favoritos={favoritos}
+            alTocar={alTocar}
+          />
         ))}
-        {!cargando && lista.length === 0
-          ? t.relleno.restaurantes.map((r, i) => (
-              <Pressable
-                key={r.nombre}
-                onPress={alTocarEjemplo}
-                accessibilityRole="button"
-                accessibilityLabel={`${t.ejemplo}: ${r.nombre}`}
-                style={[tarjeta, { width: ANCHO }]}
-              >
-                <View>
-                  <Image
-                    source={IMG.relleno.restaurantes.at(i)}
-                    style={{ width: ANCHO, height: Math.round(ANCHO * 0.72) }}
-                    accessibilityIgnoresInvertColors
-                  />
-                  <Tiempo texto={r.tiempo} />
-                  <Corazon alTocar={alTocarEjemplo} etiqueta={t.nav.favoritos} />
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      backgroundColor: 'rgba(25,25,25,0.75)',
-                      borderRadius: 999,
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>
-                      {t.ejemplo}
-                    </Text>
-                  </View>
-                </View>
-                <View style={{ padding: 10 }}>
-                  <Text style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}>
-                    {r.nombre}
-                  </Text>
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}
-                  >
-                    <Image
-                      source={IMG.iconoEnvio}
-                      style={{ width: 16, height: 13 }}
-                      resizeMode="contain"
-                      accessibilityIgnoresInvertColors
-                    />
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: C.secundario }}>
-                      {/* Ejemplo de muestra (Miami): en dólares. */}
-                      {formatearMonto(r.envio, 'USD', idioma)}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            ))
-          : null}
       </ScrollView>
+    </View>
+  );
+}
+
+/**
+ * «Todos los restaurantes»: lista VERTICAL con foto grande, como el final de la portada de
+ * DoorDash y Uber Eats. Va dentro del scroll único del inicio; se muestran por tandas y la
+ * siguiente tanda sale sola al llegar abajo (o con «Ver más restaurantes»).
+ */
+export function ListaRestaurantes({
+  idioma,
+  lista,
+  cuantos,
+  verMas,
+  cargando,
+  favoritos,
+  alTocar,
+  vacio,
+}: {
+  idioma: Idioma;
+  lista: Restaurante[];
+  cuantos: number;
+  verMas: () => void;
+  cargando: boolean;
+  favoritos: Favoritos;
+  alTocar: (r: Restaurante) => void;
+  /** Texto cuando los filtros dejan la lista vacía (sin filtros, lo dice EstadoCatalogo). */
+  vacio?: string;
+}) {
+  const t = textosInicio(idioma);
+  const ancho = Math.min(useWindowDimensions().width, ANCHO_PORTADA) - 32;
+  const vistos = lista.slice(0, cuantos);
+  return (
+    <View style={{ marginTop: 22 }} testID="lista-restaurantes">
+      <Titulo texto={t.todos} />
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 22 }}>
+        {vistos.map((r, i) => (
+          <TarjetaRestaurante
+            key={r.id}
+            r={r}
+            i={i}
+            ancho={ancho}
+            idioma={idioma}
+            favoritos={favoritos}
+            alTocar={alTocar}
+          />
+        ))}
+        {!cargando && !lista.length && vacio ? (
+          <Text style={{ color: '#666B73' }}>{vacio}</Text>
+        ) : null}
+        {lista.length > cuantos ? (
+          <Pressable
+            onPress={verMas}
+            accessibilityRole="button"
+            style={{
+              alignItems: 'center',
+              paddingVertical: 12,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: '#E3E5E8',
+              backgroundColor: '#fff',
+            }}
+          >
+            <Text style={{ fontWeight: '700', color: C.secundario }}>{t.verMas}</Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }

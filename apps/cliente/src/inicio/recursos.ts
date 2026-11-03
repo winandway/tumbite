@@ -16,7 +16,8 @@ import navInicio from '../../assets/inicio/nav-inicio.png';
 import navPedidos from '../../assets/inicio/nav-pedidos.png';
 import navFavoritos from '../../assets/inicio/nav-favoritos.png';
 import navCuenta from '../../assets/inicio/nav-cuenta.png';
-import servicioComida from '../../assets/inicio/servicio-comida.png';
+// POR-1: Comida va con pizza, nunca con hamburguesa (regla de marca de Divoox).
+import servicioComida from '../../assets/inicio/servicio-comida-pizza.png';
 import servicioMercado from '../../assets/inicio/servicio-mercado.png';
 import servicioEnvios from '../../assets/inicio/servicio-envios.png';
 import servicioFarmacia from '../../assets/inicio/servicio-farmacia.png';
@@ -54,6 +55,7 @@ export const IMG = {
   },
   relleno: {
     combo: rellenoCombo,
+    pizza: rellenoRestPizza,
     ofertas: [rellenoOfertaHamburguesa, rellenoOfertaSushi],
     restaurantes: [rellenoRestHamburguesas, rellenoRestSushi, rellenoRestPizza],
   },
