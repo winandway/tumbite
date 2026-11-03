@@ -256,11 +256,18 @@ export async function calcularSinPlato(
   // producto que faltaba (si no, unas papas se pesarían y cobrarían como bananas).
   const sinPeso = (l: Linea): Linea =>
     Object.fromEntries(Object.entries(l).filter(([k]) => !CAMPOS_PESO.has(k))) as Linea;
+  // ETP-4x: la línea reemplazada ya no lleva preferencia de reemplazo (si no, apuntaría a sí
+  // misma): si también falta, se devuelve («reembolsar»).
+  const sinPreferencia = (l: Linea): Linea => {
+    const { reemplazo: _r, ...resto } = l as Linea & { reemplazo?: unknown };
+    void _r;
+    return ('sustitucion' in l ? { ...resto, sustitucion: 'reembolsar' } : resto) as Linea;
+  };
   const nuevas = reemplazo
     ? lineas.map((l) =>
         l.platoId === platoId
           ? {
-              ...sinPeso(l),
+              ...sinPeso(sinPreferencia(l)),
               platoId: reemplazo.platoId,
               nombreEs: reemplazo.nombreEs,
               nombreEn: reemplazo.nombreEn,
@@ -1572,23 +1579,39 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
   const lineas: Awaited<ReturnType<typeof lineasDeRestaurante>> = [];
   const faltan: { nombreEs: string; nombreEn: string }[] = [];
   for (const v of viejas) {
-    try {
-      const pedida = {
-        platoId: v.platoId,
-        cantidad: v.cantidad,
-        opciones: (v.opciones ?? []).map((o) => o.id),
-        sustitucion: v.sustitucion,
-        ...(v.reemplazo ? { reemplazoId: v.reemplazo.platoId } : {}),
-        nota: v.nota,
-      };
-      const [l] = esTienda
-        ? await lineasDeTienda(c, rest, [pedida])
-        : await lineasDeRestaurante(db, rest, [pedida]);
-      if (l) lineas.push(l);
-    } catch (e) {
-      if (!(e instanceof ErrorDatos)) throw e;
-      faltan.push({ nombreEs: v.nombreEs, nombreEn: v.nombreEn });
+    // ETP-4x: un reemplazo que apunta al mismo producto (pedidos de antes del arreglo) no cuenta.
+    const conReemplazo =
+      v.sustitucion === 'especifico' && v.reemplazo && v.reemplazo.platoId !== v.platoId;
+    const base = {
+      platoId: v.platoId,
+      cantidad: v.cantidad,
+      opciones: (v.opciones ?? []).map((o) => o.id),
+      nota: v.nota,
+    };
+    const intentos = [
+      ...(conReemplazo
+        ? [{ ...base, sustitucion: v.sustitucion, reemplazoId: v.reemplazo!.platoId }]
+        : []),
+      // Sin el reemplazo (agotado o inválido), el producto vuelve con la opción de siempre.
+      {
+        ...base,
+        sustitucion: v.sustitucion === 'especifico' ? undefined : v.sustitucion,
+      },
+    ];
+    let hecha = false;
+    for (const pedida of intentos) {
+      try {
+        const [l] = esTienda
+          ? await lineasDeTienda(c, rest, [pedida])
+          : await lineasDeRestaurante(db, rest, [pedida]);
+        if (l) lineas.push(l);
+        hecha = true;
+        break;
+      } catch (e) {
+        if (!(e instanceof ErrorDatos)) throw e;
+      }
     }
+    if (!hecha) faltan.push({ nombreEs: v.nombreEs, nombreEn: v.nombreEn });
   }
   // Fotos de los platos (las de las tiendas ya vienen en la línea).
   const sinFoto = lineas.filter((l) => !('imagen' in l)).map((l) => l.platoId);

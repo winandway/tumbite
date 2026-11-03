@@ -430,6 +430,89 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     expect(despues!.total).toBeLessThanOrEqual(fila!.total);
   });
 
+  it('ETP-4x: si el reemplazo ya aplicado también falta, se devuelve; y «Pedir otra vez» trae lo que sí hay', async () => {
+    stripeFalso();
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const pedir = async () => {
+      const r = await m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: tid,
+          lineas: [
+            {
+              platoId: id('Spring water'),
+              cantidad: 1,
+              sustitucion: 'especifico',
+              reemplazoId: id('Orange juice'),
+            },
+            { platoId: id('Bananas'), cantidad: 1 },
+          ],
+          propinaCentavos: 0,
+          direccion: '200 Calle Prueba, Miami',
+          lat: 25.78,
+          lng: -80.2,
+        },
+        cliente.token,
+      );
+      const pid = r.datos.pedidoId as string;
+      await m.DB.prepare(
+        "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+      )
+        .bind(pid)
+        .run();
+      return pid;
+    };
+    const falta = (pid: string, plato: string) =>
+      m.llamar('POST', `/datos/restaurante/pedidos/${pid}/falta`, { platoId: plato }, dueno.token);
+    const pid = await pedir();
+    expect((await falta(pid, id('Spring water'))).datos.resuelto).toBe(true);
+    const linea = (
+      JSON.parse(
+        (await m.DB.prepare('SELECT lineas_json FROM pedidos WHERE id = ?').bind(pid).first<{
+          lineas_json: string;
+        }>())!.lineas_json,
+      ) as Record<string, unknown>[]
+    ).find((l) => l.platoId === id('Orange juice'))!;
+    // La línea reemplazada ya no apunta a ningún reemplazo: si falta, se devuelve.
+    expect(linea.reemplazo).toBeUndefined();
+    expect(linea.sustitucion).toBe('reembolsar');
+    const b = await falta(pid, id('Orange juice'));
+    expect(b.estado).toBe(200);
+    expect(b.datos.devolucion).toBeGreaterThan(0);
+    const aj = await m.DB.prepare(
+      'SELECT plato_id, reemplazo_id FROM ajustes_pedido WHERE pedido_id = ?',
+    )
+      .bind(pid)
+      .first();
+    expect(aj).toEqual({ plato_id: id('Orange juice'), reemplazo_id: null });
+
+    // «Pedir otra vez» de un pedido con el reemplazo aplicado: la línea vuelve (no sale en «faltan»).
+    const pid2 = await pedir();
+    await falta(pid2, id('Spring water'));
+    const otra = await m.llamar('GET', `/datos/pedidos/${pid2}/repetir`, undefined, cliente.token);
+    expect(otra.estado).toBe(200);
+    expect(otra.datos.faltan).toEqual([]);
+    // Con el reemplazo elegido agotado, el producto original vuelve al carrito sin reemplazo.
+    const pid3 = await pedir();
+    await m.DB.prepare('UPDATE catalogo_ofertas SET disponible = 0 WHERE producto_id = ?')
+      .bind(id('Orange juice'))
+      .run();
+    const r3 = await m.llamar('GET', `/datos/pedidos/${pid3}/repetir`, undefined, cliente.token);
+    expect(r3.datos.faltan).toEqual([]);
+    const agua = (r3.datos.lineas as Record<string, unknown>[]).find(
+      (l) => l.platoId === id('Spring water'),
+    )!;
+    expect(agua.reemplazo).toBeUndefined();
+    expect(agua.sustitucion).toBe('reembolsar');
+  });
+
   it('C-TIENDAS-REEMPLAZO-ELEGIDO (ETP-4): si el reemplazo elegido tampoco está, se devuelve el dinero', async () => {
     stripeFalso();
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);

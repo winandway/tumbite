@@ -739,7 +739,12 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
   // ETP-4 (C-TIENDAS-REEMPLAZO-ELEGIDO): el reemplazo que eligió el cliente va primero, si hoy
   // está; si tampoco está, se devuelve el dinero (no se cambia por otro que no eligió).
   let elegido = false;
-  if (esTienda && linea.sustitucion === 'especifico' && linea.reemplazo) {
+  if (
+    esTienda &&
+    linea.sustitucion === 'especifico' &&
+    linea.reemplazo &&
+    linea.reemplazo.platoId !== platoId
+  ) {
     const [l] = await lineasDeTienda(c, { id: rid, tipo_comercio: f.tipo_comercio }, [
       { platoId: linea.reemplazo.platoId, cantidad: 1 },
     ]).catch(() => [undefined]);
