@@ -3,6 +3,7 @@ import { rewardsSombra } from './rewards/rutas';
 import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { finanzasAdmin } from './finanzas/rutasAdmin';
+import { controlDual } from './finanzas/controlDual';
 import { saludBilleteras } from './finanzas/reloj';
 import { blindarStripeEnPruebas, entornoDe, problemasDeEntorno } from './entorno';
 import { saludRetiros } from './retiros';
@@ -510,6 +511,7 @@ app.route('/', media);
 app.route('/datos', respaldo);
 app.route('/datos/v1/flex', flex);
 app.route('/datos', finanzasAdmin);
+app.route('/datos', controlDual);
 // Divoox Rewards · Fase 2: lectura del modo sombra (solo admin y solo en pruebas).
 app.route('/datos', rewardsSombra);
 

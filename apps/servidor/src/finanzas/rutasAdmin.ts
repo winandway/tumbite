@@ -12,14 +12,13 @@ import { verificarClave } from '../cripto';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { hacerOPedirAprobacion } from './controlDual';
 import {
-  ajusteManual,
   esquemaConfigRecargas,
   guardarConfigRecargas,
   leerConfigRecargas,
   movimientosEmpresa,
   empresaFinanciera,
-  reembolsarRecarga,
   saldoEmpresa,
 } from './billetera';
 import {
@@ -357,14 +356,17 @@ finanzasAdmin.post('/admin/finanzas/empresas/:eid/ajuste', async (c) => {
       clave: z.string().min(1).max(200),
     }),
   );
-  const u = await reforzado(c, d.clave);
-  return c.json({
-    saldo: await ajusteManual(base(c), {
-      empresaId: c.req.param('eid'),
-      monto: d.monto,
-      motivo: d.motivo,
-      actorId: u.id,
-    }),
+  await reforzado(c, d.clave);
+  // C-CONTROL-DUAL: por encima del umbral lo aprueba otra persona del equipo.
+  const empresaId = c.req.param('eid');
+  if (!Number.isSafeInteger(d.monto) || d.monto === 0)
+    throw new ErrorDatos('El monto no es válido.', 'monto', 400);
+  return hacerOPedirAprobacion(c, {
+    tipo: 'ajuste_billetera',
+    objeto: empresaId,
+    monto: d.monto,
+    motivo: d.motivo,
+    datos: { empresaId, monto: d.monto, motivo: d.motivo },
   });
 });
 
@@ -377,15 +379,15 @@ finanzasAdmin.post('/admin/finanzas/recargas/:rid/reembolsar', async (c) => {
       clave: z.string().min(1).max(200),
     }),
   );
-  const u = await reforzado(c, d.clave);
-  return c.json(
-    await reembolsarRecarga(c.env, base(c), {
-      recargaId: c.req.param('rid'),
-      monto: d.monto,
-      motivo: d.motivo,
-      actorId: u.id,
-    }),
-  );
+  await reforzado(c, d.clave);
+  const recargaId = c.req.param('rid');
+  return hacerOPedirAprobacion(c, {
+    tipo: 'reembolso_recarga',
+    objeto: recargaId,
+    monto: d.monto,
+    motivo: d.motivo,
+    datos: { recargaId, monto: d.monto, motivo: d.motivo },
+  });
 });
 
 finanzasAdmin.get('/admin/finanzas/conciliacion', async (c) => {

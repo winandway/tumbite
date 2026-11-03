@@ -11,6 +11,7 @@ import {
 import { Enlace } from '../Enlace';
 import { Campo, CampoClave } from './CampoClave';
 import { pedir } from './api';
+import { textoPendiente } from './SuperAprobaciones';
 
 /**
  * Divoox · Fase 4: SUPERADMIN financiero de Flex (C-FIN-SUPERADMIN). Políticas de comisión
@@ -1204,20 +1205,20 @@ function EmpresaFinanzas({ base, idioma, id }: { base: string; idioma: 'es' | 'e
     const negativo = v.monto.trim().startsWith('-');
     const monto = textoAMonto(v.monto.replace('-', ''), d!.empresa.moneda) * (negativo ? -1 : 1);
     try {
-      if (v.recarga)
-        await pedir('POST', `/datos/admin/finanzas/recargas/${v.recarga}/reembolsar`, {
-          monto: textoAMonto(v.reembolso, d!.empresa.moneda),
-          motivo: v.motivo,
-          clave: v.clave,
-        });
-      else
-        await pedir('POST', `/datos/admin/finanzas/empresas/${id}/ajuste`, {
-          monto,
-          motivo: v.motivo,
-          clave: v.clave,
-        });
+      const r = v.recarga
+        ? await pedir('POST', `/datos/admin/finanzas/recargas/${v.recarga}/reembolsar`, {
+            monto: textoAMonto(v.reembolso, d!.empresa.moneda),
+            motivo: v.motivo,
+            clave: v.clave,
+          })
+        : await pedir('POST', `/datos/admin/finanzas/empresas/${id}/ajuste`, {
+            monto,
+            motivo: v.motivo,
+            clave: v.clave,
+          });
       await b.limpiar();
-      setOk(t.guardado);
+      // C-CONTROL-DUAL: por encima del límite queda esperando la firma de otra persona.
+      setOk(textoPendiente(r, idioma) ?? t.guardado);
       cargar();
     } catch (x) {
       setError(mensaje(x));

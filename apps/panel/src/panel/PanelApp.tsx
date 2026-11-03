@@ -48,6 +48,7 @@ import { AyudaBurbuja } from './AyudaBurbuja';
 import { ir } from '../ruta';
 import { SuperFinanzas } from './SuperFinanzas';
 import { SuperEquipo } from './SuperEquipo';
+import { SuperAprobaciones } from './SuperAprobaciones';
 import { SuperPiloto } from './SuperPiloto';
 import { SuperRewards } from './SuperRewards';
 import { SuperInformes } from './SuperInformes';
@@ -74,6 +75,7 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
     return <SuperBandeja base={base} idioma={idioma} clave={decodeURIComponent(caso[1])} />;
   if (sub === '/rides') return <SuperViajes base={base} idioma={idioma} />;
   if (sub === '/team') return <SuperEquipo idioma={idioma} miId={usuario.id} />;
+  if (sub === '/approvals') return <SuperAprobaciones idioma={idioma} miId={usuario.id} />;
   if (sub === '/pilot') return <SuperPiloto idioma={idioma} />;
   if (sub === '/rewards') return <SuperRewards idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;

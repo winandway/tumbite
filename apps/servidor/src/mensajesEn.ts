@@ -663,6 +663,25 @@ export const MENSAJES_EN = new Map<string, string>([
     'You can’t change your own profile. Ask another Full account.',
   ],
   ['Esa cuenta no es del equipo.', 'That account isn’t on the team.'],
+  // C-CONTROL-DUAL (SIG-4): la segunda firma del dinero hecho a mano.
+  ['Esa solicitud ya la revisó otra persona.', 'Someone else already reviewed that request.'],
+  [
+    'Solo una cuenta con perfil Total o Finanzas aprueba dinero.',
+    'Only a Full or Finance profile account can approve money.',
+  ],
+  [
+    'No puedes aprobar lo que tú pediste. Lo aprueba otra persona del equipo.',
+    'You can’t approve your own request. Another team member approves it.',
+  ],
+  [
+    'Solo una cuenta con perfil Total o Finanzas rechaza dinero.',
+    'Only a Full or Finance profile account can reject money.',
+  ],
+  [
+    'Solo una cuenta con perfil Total cambia el límite del control dual.',
+    'Only a Full profile account can change the dual-control limit.',
+  ],
+  ['Esa solicitud no existe.', 'That request doesn’t exist.'],
   ['Elige la fecha inicial y la final.', 'Pick the start and end dates.'],
   ['Esa persona no es del equipo.', 'That person isn’t on the team.'],
   ['Ponle un título.', 'Give it a title.'],
@@ -1080,7 +1099,6 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Este pedido ya no se puede seguir en vivo.', 'This order can no longer be tracked live.'],
   ['Solo con Stripe en modo prueba.', 'Only with Stripe in test mode.'],
   ['Esa área no existe.', 'That area doesn’t exist.'],
-  ['Esa solicitud no existe.', 'That request doesn’t exist.'],
   ['Esa solicitud ya tiene su franquicia.', 'That request already has its franchise.'],
   [
     'Solo se asignan áreas de la ciudad de la franquicia.',

@@ -1,5 +1,6 @@
 import { rutaSinIds } from '../errores';
-import { devolverParcial, guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
+import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
+import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -1125,7 +1126,7 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
  * quién paga cada tipo de queja es decisión de Richard (docs/DECISIONES-RICHARD-FASE-2.md).
  */
 superadmin.post('/admin/pedidos/:id/devolver', async (c) => {
-  const u = exigir(c, 'admin');
+  exigir(c, 'admin');
   const d = await leerCuerpo(
     c,
     z.object({
@@ -1134,14 +1135,15 @@ superadmin.post('/admin/pedidos/:id/devolver', async (c) => {
       cargarA: z.enum(['tumbite', 'restaurante', 'repartidor']).default('tumbite'),
     }),
   );
-  const r = await devolverParcial(c.env, base(c), {
-    pedidoId: c.req.param('id'),
+  // C-CONTROL-DUAL: por encima del umbral lo aprueba otra persona del equipo.
+  const pedidoId = c.req.param('id');
+  return hacerOPedirAprobacion(c, {
+    tipo: 'devolucion_pedido',
+    objeto: pedidoId,
     monto: d.montoCentavos,
     motivo: d.motivo,
-    cargarA: d.cargarA,
-    actorId: u.id,
+    datos: { pedidoId, monto: d.montoCentavos, motivo: d.motivo, cargarA: d.cargarA },
   });
-  return c.json({ ok: true, ...r });
 });
 
 /** Reembolso automático por artículo faltante (queja guiada): interruptor y tope (decisión de Richard). */

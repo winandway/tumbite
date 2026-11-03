@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto, textoAMonto } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
+import { textoPendiente } from './SuperAprobaciones';
 import { LuzSemaforo } from './LuzSemaforo';
 import { SelectorCiudad } from './SuperFichas';
 
@@ -229,8 +230,12 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
     if (motivo.trim().length < 3) return;
     setError('');
     try {
-      await pedir('POST', `/datos/admin/pedidos/${id}/devolver`, { montoCentavos: monto, motivo });
-      setAviso(t.devueltoOk);
+      const r = await pedir('POST', `/datos/admin/pedidos/${id}/devolver`, {
+        montoCentavos: monto,
+        motivo,
+      });
+      // C-CONTROL-DUAL: por encima del límite queda esperando la firma de otra persona.
+      setAviso(textoPendiente(r, idioma) ?? t.devueltoOk);
       await cargar();
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : String(e));

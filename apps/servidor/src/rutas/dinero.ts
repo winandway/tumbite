@@ -5,7 +5,8 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
-import { liquidacionesParaRevisar, liquidar, liquidarDesdeAviso } from '../liquidaciones';
+import { liquidacionesParaRevisar, liquidar } from '../liquidaciones';
+import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const dinero = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -281,24 +282,15 @@ dinero.post('/admin/liquidaciones/:id/reintentar', async (c) => {
 
 dinero.post('/admin/liquidaciones/:id/confirmar', async (c) => {
   exigir(c, 'admin');
-  const db = base(c);
   const id = c.req.param('id');
-  const f = await db
-    .prepare('SELECT pi, monto, estado FROM liquidaciones WHERE pedido_id = ?')
-    .bind(id)
-    .first<{ pi: string | null; monto: number; estado: string }>();
-  if (!f) throw new ErrorDatos('Esa liquidación no existe o ya se cobró.', undefined, 404);
-  if (f.estado === 'capturada') return c.json({ estado: 'capturada' });
-  const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
-  if (!stripe || !f.pi)
-    throw new ErrorDatos('Stripe no muestra ese cobro como capturado.', undefined, 409);
-  const pi = await stripe
-    .get<{ status?: string; amount_received?: number }>(`/payment_intents/${f.pi}`)
-    .catch(() => null);
-  if (pi?.status !== 'succeeded')
-    throw new ErrorDatos('Stripe no muestra ese cobro como capturado.', undefined, 409);
-  await liquidarDesdeAviso(db, id, Number(pi.amount_received ?? f.monto));
-  return c.json({ estado: 'capturada' });
+  // C-CONTROL-DUAL: confirmar a mano un cobro grande lo aprueba otra persona del equipo.
+  return hacerOPedirAprobacion(c, {
+    tipo: 'confirmar_liquidacion',
+    objeto: id,
+    monto: 0,
+    motivo: 'Confirmar a mano un cobro en revisión',
+    datos: { pedidoId: id },
+  });
 });
 
 /** Abonos que el banco rechazó (payout.failed): la lista y el «ya lo resolví» del equipo. */

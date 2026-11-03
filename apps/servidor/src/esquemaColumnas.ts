@@ -2185,5 +2185,22 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "margen",
     "pesado_en",
     "creado_en"
+  ],
+  "aprobaciones_dinero": [
+    "id",
+    "tipo",
+    "objeto",
+    "monto",
+    "moneda",
+    "motivo",
+    "datos",
+    "pedido_por",
+    "estado",
+    "revisado_por",
+    "revisado_en",
+    "nota",
+    "resultado",
+    "error",
+    "creado_en"
   ]
 };

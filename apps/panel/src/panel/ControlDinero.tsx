@@ -7,6 +7,7 @@ import {
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
+import { textoPendiente } from './SuperAprobaciones';
 import { Resumen1099 } from './Resumen1099';
 import { pedir } from './api';
 import { type TarifasPais, type TopesPais, TarifasTopesPais } from './TarifasTopesPais';
@@ -411,6 +412,8 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
   const [base, setBase] = useState('');
   const [resultado, setResultado] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
+  // C-CONTROL-DUAL: el aviso de que un movimiento quedó esperando la segunda firma.
+  const [avisoDual, setAvisoDual] = useState('');
 
   const cargar = useCallback(async () => {
     const [r, l, a, c, d, k, q] = await Promise.all([
@@ -556,11 +559,14 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                           className="enlace"
                           onClick={() =>
                             void hacer(async () => {
-                              const r = await pedir<{ estado: string }>(
+                              const r = await pedir<{ estado?: string }>(
                                 'POST',
                                 `/datos/admin/liquidaciones/${l.pedidoId}/confirmar`,
                               );
-                              setResultado((x) => ({ ...x, [l.pedidoId]: r.estado }));
+                              setResultado((x) => ({
+                                ...x,
+                                [l.pedidoId]: textoPendiente(r, idioma) ?? r.estado ?? '',
+                              }));
                             })
                           }
                         >
@@ -799,16 +805,22 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                         className="enlace"
                         onClick={() =>
                           void hacer(async () => {
-                            await pedir('POST', `/datos/admin/puntos-venta/${p.id}/fondo`, {
-                              monto: Math.round(
-                                Number(f.monto.replace(',', '.')) * (p.moneda === 'COP' ? 1 : 100),
-                              ),
-                              comprobante: f.comprobante,
-                            });
+                            const r = await pedir(
+                              'POST',
+                              `/datos/admin/puntos-venta/${p.id}/fondo`,
+                              {
+                                monto: Math.round(
+                                  Number(f.monto.replace(',', '.')) *
+                                    (p.moneda === 'COP' ? 1 : 100),
+                                ),
+                                comprobante: f.comprobante,
+                              },
+                            );
                             setFondoPunto({
                               ...fondoPunto,
                               [p.id]: { monto: '', comprobante: '' },
                             });
+                            setAvisoDual(textoPendiente(r, idioma) ?? '');
                             setRecargaPuntos((n) => n + 1);
                           })
                         }
@@ -1254,6 +1266,7 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
         </div>
       ) : null}
       <Resumen1099 idioma={idioma} />
+      {avisoDual && <p role="status">{avisoDual}</p>}
       {error && (
         <p className="error-general" role="alert">
           {error}

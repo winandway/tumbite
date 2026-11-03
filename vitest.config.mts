@@ -87,6 +87,8 @@ export default defineConfig({
             'rutas/promociones.ts',
             // C-DESCUENTOS-RECALCULO (BRE-5c): cupón, Plus y regalo en los recálculos del pedido.
             'descuentosPedido.ts',
+            // C-CONTROL-DUAL (SIG-4): el dinero hecho a mano con segunda firma.
+            'finanzas/controlDual.ts',
             // C-ENVIO-UNA-VEZ (BRE-R3): crear el pedido y validar cupones (el envío una sola vez).
             'rutas/pedidos.ts',
             'rutas/cupones.ts',

@@ -22,6 +22,7 @@ import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { crearStripe } from '../stripe';
+import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import {
   esquemaConfigPais,
   guardarConfigPais,
@@ -43,7 +44,6 @@ import {
   canjearCodigo,
   crearRecargaStripe,
   emitirCodigo,
-  fondearPunto,
 } from '../internacional/recargas';
 
 /**
@@ -131,18 +131,20 @@ internacional.get('/admin/puntos-venta', async (c) => {
 });
 
 internacional.post('/admin/puntos-venta/:id/fondo', async (c) => {
-  const u = exigir(c, 'admin');
+  exigir(c, 'admin');
   const d = await leerCuerpo(
     c,
     z.object({ monto: z.number().int().min(1), comprobante: z.string().trim().min(3).max(120) }),
   );
-  const fondo = await fondearPunto(base(c), {
-    puntoId: c.req.param('id'),
+  // C-CONTROL-DUAL: por encima del umbral lo aprueba otra persona del equipo.
+  const puntoId = c.req.param('id');
+  return hacerOPedirAprobacion(c, {
+    tipo: 'fondo_punto',
+    objeto: puntoId,
     monto: d.monto,
-    comprobante: d.comprobante,
-    autorId: u.id,
+    motivo: `Comprobante ${d.comprobante}`,
+    datos: { puntoId, monto: d.monto, comprobante: d.comprobante },
   });
-  return c.json({ fondo });
 });
 
 internacional.get('/admin/libro/pedido/:id', async (c) => {

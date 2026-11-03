@@ -136,3 +136,9 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 - Mientras tanto: no anunciar retiros. **Sin bandera los retiros nacen apagados**; la app dice «en pausa».
 - S11 (retiro en modo prueba de Stripe) está programada y corre sola desde GitHub en cuanto el sitio de pruebas tenga llaves de modo prueba cargadas en su panel.
 - Anulación de pedidos (15 oct): si se pierde la respuesta de Stripe, se consulta a Stripe antes de revivir el pedido (C-ANULACION-VERIFICADA). Probado con Stripe simulado.
+
+## 🟡 Control dual del dinero a mano (SIG-4, 2 nov 2026): probado con Stripe simulado, SIN probar en real
+
+- Las devoluciones, los reembolsos de recargas, los ajustes de billetera de Flex, los fondos de puntos de venta y los cobros confirmados a mano por encima del umbral de su moneda (unos 100 dólares; se cambia en «Para aprobar») quedan pendientes en `aprobaciones_dinero` y no tocan Stripe ni el libro hasta que OTRA cuenta Total o Finanzas los aprueba con su contraseña (candado C-CONTROL-DUAL).
+- Bajo el umbral, el circuito es el mismo de siempre. Al aprobar se ejecuta exactamente la misma pieza (`ejecutarDual`).
+- Falta: una devolución grande en modo prueba de Stripe en el sitio de pruebas con dos cuentas del equipo (una pide, otra aprueba) y ver el reembolso en el panel de Stripe de prueba.
