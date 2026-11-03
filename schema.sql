@@ -3386,3 +3386,11 @@ CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   CHECK (revisado_por IS NULL OR revisado_por <> pedido_por OR estado = 'rechazada')
 );
 CREATE INDEX IF NOT EXISTS aprobaciones_dinero_estado ON aprobaciones_dinero(estado, creado_en);
+-- C-FOTOS-SIN-METADATOS (SIG-6, 2 nov 2026): la ubicación que traía DENTRO una foto de prueba
+-- (entrega, recogida, Flex) antes de quitarle los datos ocultos. La foto guardada ya no la lleva.
+CREATE TABLE IF NOT EXISTS fotos_gps (
+  clave TEXT PRIMARY KEY,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -2202,5 +2202,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "resultado",
     "error",
     "creado_en"
+  ],
+  "fotos_gps": [
+    "clave",
+    "lat",
+    "lng",
+    "creada_en"
   ]
 };

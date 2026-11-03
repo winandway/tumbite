@@ -1,3 +1,4 @@
+import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import {
   avisarYaLlega,
   avisarDestinatarios,
@@ -662,9 +663,10 @@ flexConductor.post('/conductor/rutas/:rutaId/paradas/:paradaId/prueba', async (c
     async () => {
       const id = nuevoIdFlex();
       const clave = `flex/${r.empresa_id}/${r.id}/${p.id}/${tipo}-${id}`;
-      await c.env.BUCKET!.put(clave, bytes, {
-        httpMetadata: { contentType: mime, cacheControl: 'private, no-store' },
+      const { gps } = await guardarFoto(c.env.BUCKET!, clave, bytes, mime, {
+        cacheControl: 'private, no-store',
       });
+      if (gps) await anotarGpsFoto(db, clave, gps);
       await db
         .prepare(
           'INSERT INTO flex_pruebas (id, empresa_id, ruta_id, parada_id, conductor_id, tipo, clave, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',

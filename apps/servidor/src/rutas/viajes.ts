@@ -1,3 +1,4 @@
+import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -571,9 +572,7 @@ viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
       503,
     );
   const clave = `envios/${id}/recogida-${nuevoId()}`;
-  await c.env.BUCKET.put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
-  });
+  await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
   await db
     .prepare('UPDATE envios_persona SET foto_recogida = ? WHERE operacion_id = ?')
     .bind(clave, id)

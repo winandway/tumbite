@@ -1,3 +1,4 @@
+import { guardarFoto } from '../fotoLimpia';
 import { correosEquipo } from '../avisosEquipo';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -210,8 +211,10 @@ kyc.post('/kyc/selfie-control', async (c) => {
   if (pose === 'giro' && !sc.clave)
     throw new ErrorDatos('Primero toma la foto de frente.', 'foto', 409);
   const clave = pose === 'giro' ? `${sc.clave}-giro` : `kyc/${u.id}/control-${sc.id}`;
-  await almacen(c.env).put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
+  // Identidad: es evidencia que se revisa; conserva el original (carpeta privada kyc/).
+  await guardarFoto(almacen(c.env), clave, bytes, tipo, {
+    cacheControl: 'private, no-store',
+    conservarOriginal: 'evidencia',
   });
   if (pose === 'frente') {
     await db.prepare('UPDATE selfies_control SET clave = ? WHERE id = ?').bind(clave, sc.id).run();
@@ -254,8 +257,10 @@ kyc.post('/kyc/foto/:pieza', async (c) => {
   if (estado?.estado === 'aprobado')
     throw new ErrorDatos('Tu verificación ya está aprobada.', undefined, 409);
   const clave = `kyc/${u.id}/${pieza}-${nuevoId()}`;
-  await almacen(c.env).put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
+  // Identidad: es evidencia que se revisa; conserva el original (carpeta privada kyc/).
+  await guardarFoto(almacen(c.env), clave, bytes, tipo, {
+    cacheControl: 'private, no-store',
+    conservarOriginal: 'evidencia',
   });
   // Coordenadas del celular al tomar la foto del local (para comparar con la dirección).
   const lat = Number(c.req.query('lat'));

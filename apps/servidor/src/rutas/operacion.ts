@@ -1,3 +1,4 @@
+import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
 import { evaluarDestacado } from './repartidorGrandes';
@@ -2048,9 +2049,11 @@ async function guardarEvidencia(
   nota = '',
 ) {
   const clave = `evidencias/${pedidoId}/${tipo}-${nuevoId()}`;
-  await foto.bucket.put(clave, foto.bytes, {
-    httpMetadata: { contentType: foto.tipo, cacheControl: 'private, no-store' },
+  // C-FOTOS-SIN-METADATOS: la foto se guarda limpia; el GPS que traía queda aparte como prueba.
+  const { gps } = await guardarFoto(foto.bucket, clave, foto.bytes, foto.tipo, {
+    cacheControl: 'private, no-store',
   });
+  if (gps) await anotarGpsFoto(db, clave, gps);
   await db
     .prepare(
       `INSERT OR REPLACE INTO evidencias (pedido_id, tipo, clave, lat, lng, distancia_m, modo, nota, creada_en, confirmada_en)
@@ -2152,8 +2155,8 @@ operacion.post('/repartidor/pedidos/:id/foto-ticket', async (c) => {
     );
   const foto = await leerFoto(c);
   const clave = `evidencias/${id}/ticket-${nuevoId()}`;
-  await foto.bucket.put(clave, foto.bytes, {
-    httpMetadata: { contentType: foto.tipo, cacheControl: 'private, no-store' },
+  await guardarFoto(foto.bucket, clave, foto.bytes, foto.tipo, {
+    cacheControl: 'private, no-store',
   });
   const anterior = await db
     .prepare('SELECT ticket_clave FROM pagos_local WHERE pedido_id = ?')
@@ -3158,9 +3161,7 @@ operacion.post('/pedidos/:id/mensajes/foto', async (c) => {
       503,
     );
   const clave = `chat/${p.id}/${nuevoId()}`;
-  await c.env.BUCKET.put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
-  });
+  await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
   await db
     .prepare(
       "INSERT INTO mensajes_pedido (pedido_id, de_usuario_id, texto, foto_clave) VALUES (?, ?, '', ?)",

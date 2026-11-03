@@ -1,3 +1,4 @@
+import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { esConductorOcupado } from '../operaciones';
 import { z } from 'zod';
@@ -574,7 +575,8 @@ servicios.post('/conductor/vehiculos/:id/documentos', async (c) => {
   const id = nuevoId();
   // Privado: no hay ruta pública que lo sirva; solo el panel de administración lo abre.
   const clave = `vehiculos/${u.id}/${v.id}/${id}.${tipo[1]}`;
-  await c.env.BUCKET.put(clave, bytes, { httpMetadata: { contentType: tipo[0] } });
+  // Documento del vehículo: es evidencia que se revisa; conserva el original (carpeta privada).
+  await guardarFoto(c.env.BUCKET, clave, bytes, tipo[0], { conservarOriginal: 'evidencia' });
   await db
     .prepare(
       'INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, vence_en) VALUES (?, ?, ?, ?, ?)',

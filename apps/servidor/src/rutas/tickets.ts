@@ -1,3 +1,4 @@
+import { guardarFoto } from '../fotoLimpia';
 import { topesDeZona } from '../internacional/tarifas';
 import { devolverParcial, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
@@ -248,9 +249,7 @@ tickets.post('/tickets/:codigo/adjuntos', limiteIntentos(20, 60_000), async (c) 
   if (!tipo) throw new ErrorDatos('Adjunta una imagen JPG, PNG, WebP o HEIC.', 'adjunto', 415);
   const id = nuevoId();
   const clave = `casos/${t.id}/${id}`;
-  await c.env.BUCKET.put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
-  });
+  await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
   const nombre =
     (c.req.query('nombre') ?? 'captura').replace(/[^\w.\- ]/g, '').slice(0, 80) || 'captura';
   await db
@@ -673,9 +672,7 @@ tickets.post('/quejas/:id/foto', limiteIntentos(10, 60_000), async (c) => {
   const tipo = tipoReal(bytes);
   if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
   const clave = `quejas/${t.id}/${nuevoId()}`;
-  await c.env.BUCKET.put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
-  });
+  await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
   const datos = { ...(JSON.parse(t.datos_json || '{}') as Record<string, unknown>), foto: clave };
   await db
     .prepare('UPDATE tickets SET datos_json = ? WHERE id = ?')

@@ -1,3 +1,4 @@
+import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { esDeNoche } from '@tumbite/compartido';
@@ -133,9 +134,7 @@ ajustesViaje.post('/conductor/selfie-casco', async (c) => {
     );
   const id = nuevoId();
   const clave = `casco/${u.id}/${id}`;
-  await c.env.BUCKET.put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'private, no-store' },
-  });
+  await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
   await base(c)
     .prepare('INSERT INTO selfies_casco (id, usuario_id, clave) VALUES (?, ?, ?)')
     .bind(id, u.id, clave)

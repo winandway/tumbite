@@ -1,3 +1,4 @@
+import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -58,8 +59,8 @@ fotos.post('/mi-restaurante/fotos', async (c) => {
   if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
 
   const clave = `fotos/${rest.id}/${nuevoId()}.${EXTENSION.get(tipo) ?? 'bin'}`;
-  await almacen(c.env).put(clave, bytes, {
-    httpMetadata: { contentType: tipo, cacheControl: 'public, max-age=31536000, immutable' },
+  await guardarFoto(almacen(c.env), clave, bytes, tipo, {
+    cacheControl: 'public, max-age=31536000, immutable',
   });
   return c.json({ url: `/media/${clave}` }, 201);
 });

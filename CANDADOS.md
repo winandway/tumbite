@@ -2732,3 +2732,18 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo el 2 nov):** `apps/servidor/src/finanzas/controlDual.test.ts` (con `pasaUmbral` devolviendo siempre falso fallan 6 de 7) y `apps/panel/src/panel/SuperAprobaciones.test.tsx`. Cobertura de `finanzas/controlDual.ts` exigida al 90 % en `vitest.config.mts`. La conciliación sigue en `ok` después de aprobar.
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/finanzas/controlDual.test.ts apps/panel/src/panel/SuperAprobaciones.test.tsx`.
 - **Qué NO tocar:** ninguna ruta de dinero a mano llama directo a `devolverParcial`, `reembolsarRecarga`, `ajusteManual`, `fondearPunto` o `confirmarLiquidacion`: siempre por `hacerOPedirAprobacion`. No quitar el reclamo atómico ni el CHECK de la tabla.
+
+## C-FOTOS-SIN-METADATOS (SIG-6, 2 nov 2026). Todos los países.
+
+- **Qué faltaba:** las fotos se guardaban tal como las mandaba el celular, con la ubicación exacta (GPS), el modelo del teléfono, la hora y a veces el nombre del dueño dentro (EXIF y XMP). Las fotos de platos son públicas: cualquiera podía sacar de ahí dónde estaba el teléfono.
+- **Referencia:** Cloudflare Images y las redes grandes quitan esos datos al publicar [DOC].
+- **Qué se hizo:** `apps/servidor/src/fotoLimpia.ts`, una sola pieza. `guardarFoto(bucket, clave, bytes, tipo, op)` limpia y guarda; TODAS las subidas pasan por ahí (`rutas/fotos.ts`, `operacion.ts` (evidencias, ticket, chat), `viajes.ts`, `ajustesViaje.ts`, `tickets.ts` (capturas y quejas), `flex/conductor.ts`, `kyc.ts`, `servicios.ts`).
+  - JPEG: fuera APP1 (EXIF/XMP), APP3–APP13, APP15 y comentarios; quedan JFIF, ICC (APP2) y Adobe (APP14); la orientación vuelve en un EXIF mínimo con SOLO ese dato (si no, las fotos se ven giradas). PNG: fuera eXIf, tEXt, zTXt, iTXt, tIME. WebP: fuera EXIF y XMP, marcas de VP8X apagadas y tamaño RIFF recalculado.
+  - Sin nada que quitar, los bytes quedan idénticos. Un archivo cortado: lo que queda se copia si es imagen y se descarta si es un bloque oculto. Estructura rota (sin marcas JPEG) → 415 «La foto llegó dañada…».
+  - El GPS que traía la foto se lee antes de quitarlo: en las evidencias de recogida/entrega y en las pruebas de Flex se guarda aparte en `fotos_gps` (clave, lat, lng).
+  - Los documentos de identidad (`kyc/`) y de vehículos conservan el original (`conservarOriginal: 'evidencia'`): son la evidencia que se revisa y viven en carpetas privadas. HEIC y PDF pasan sin cambio (deuda vigilada: HEIC solo llega a capturas privadas de los casos de ayuda).
+  - El tamaño máximo con mensaje claro ya estaba en cada ruta (3 MB fotos, 5 MB documentos, 10 MB capturas). Guía de Docs `pickup-and-delivery-photos` es/en con un párrafo nuevo.
+- **Commit:** el de SIG-6 (ver `git log --grep SIG-6`).
+- **Pruebas (comprobadas en rojo el 2 nov):** `apps/servidor/src/fotoLimpia.test.ts` arma JPEG, PNG y WebP con un EXIF que trae GPS de Miami y el modelo «PixelFone»; guardando sin limpiar fallan 3 de 5 (la foto pública del plato y la de entrega salen con los datos). Cobertura exigida al 90 % de líneas en `vitest.config.mts`.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/fotoLimpia.test.ts`.
+- **Qué NO tocar:** ninguna ruta llama `BUCKET.put` directo con una foto (salvo `respaldo.ts`, que guarda JSON). No quitar el EXIF mínimo de orientación.
