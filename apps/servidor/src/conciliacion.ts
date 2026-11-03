@@ -151,11 +151,77 @@ export async function conciliarAyer(env: Env, db: D1Database): Promise<Conciliac
   return r;
 }
 
-/** La última conciliación, para el canario de salud. */
+/** La última conciliación (la pieza «dinero» del canario ya no la usa sola: ver saludDinero). */
 export async function ultimaConciliacion(db: D1Database) {
   return db
     .prepare('SELECT dia, cuadra FROM conciliaciones ORDER BY dia DESC LIMIT 1')
     .first<{ dia: string; cuadra: number }>();
+}
+
+/**
+ * C-DINERO-30-DIAS (NXT-1, 3 nov 2026): cuántos días mira el canario. Antes solo miraba la última
+ * conciliación y un día que no cuadró desaparecía al día siguiente.
+ */
+export const DIAS_VIGILADOS = 30;
+
+export type DiaSinCuadrar = {
+  dia: string;
+  pedidos: number;
+  vendido: number;
+  capturado: number;
+  detalle: Record<string, unknown>;
+  excusado: boolean;
+  motivo: string | null;
+  excusadoPor: string | null;
+  excusadoPorNombre: string | null;
+  excusadoEn: string | null;
+};
+
+/**
+ * Los días de los últimos 30 que no cuadraron, cada uno con su excepción si la tiene. Una excepción
+ * vale solo para las cifras que se excusaron (pedidos, vendido y detalle iguales): si el día se
+ * vuelve a calcular con otra diferencia, vuelve el rojo hasta que alguien la excuse.
+ */
+export async function diasSinCuadrar(db: D1Database): Promise<DiaSinCuadrar[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT c.dia, c.pedidos, c.vendido, c.capturado, c.detalle,
+              e.motivo, e.creado_por, e.creado_por_nombre, e.creado_en AS excusado_en
+         FROM conciliaciones c
+         LEFT JOIN conciliacion_excepciones e
+           ON e.dia = c.dia AND e.pedidos = c.pedidos AND e.vendido = c.vendido AND e.detalle = c.detalle
+        WHERE c.cuadra = 0 AND c.dia >= date('now', ?)
+        ORDER BY c.dia DESC LIMIT 100`,
+    )
+    .bind(`-${DIAS_VIGILADOS} days`)
+    .all<Record<string, unknown>>();
+  return results.map((r) => ({
+    dia: String(r.dia),
+    pedidos: n(r.pedidos),
+    vendido: n(r.vendido),
+    capturado: n(r.capturado),
+    detalle: leerDetalle(r.detalle),
+    excusado: r.motivo != null,
+    motivo: r.motivo == null ? null : String(r.motivo),
+    excusadoPor: r.creado_por == null ? null : String(r.creado_por),
+    excusadoPorNombre: r.creado_por_nombre == null ? null : String(r.creado_por_nombre),
+    excusadoEn: r.excusado_en == null ? null : String(r.excusado_en),
+  }));
+}
+
+function leerDetalle(v: unknown): Record<string, unknown> {
+  try {
+    return JSON.parse(String(v ?? '{}')) as Record<string, unknown>;
+  } catch {
+    return { crudo: String(v) };
+  }
+}
+
+/** Pieza «dinero» del canario: rojo si algún día de los últimos 30 no cuadra y no tiene excepción. */
+export async function saludDinero(db: D1Database): Promise<'ok' | 'error' | 'pendiente'> {
+  if (!(await ultimaConciliacion(db))) return 'pendiente';
+  const dias = await diasSinCuadrar(db);
+  return dias.some((d) => !d.excusado) ? 'error' : 'ok';
 }
 
 /**

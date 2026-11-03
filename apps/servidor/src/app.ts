@@ -88,7 +88,8 @@ import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 import { smsConfigurado, ultimoErrorSms } from './sms';
-import { ultimaConciliacion } from './conciliacion';
+import { saludDinero } from './conciliacion';
+import { excepcionesConciliacion } from './rutas/excepcionesConciliacion';
 import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } from './respaldo';
 import { VERSION_SERVIDOR } from './version';
 import { saludTransiciones } from './esquemaPedidos';
@@ -247,10 +248,12 @@ app.get('/datos/salud', async (c) => {
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
-  if (c.env.DB) {
-    const ult = await ultimaConciliacion(c.env.DB).catch(() => null);
-    piezas.dinero = !ult ? 'pendiente' : Number(ult.cuadra) === 1 ? 'ok' : 'error';
-  }
+  // C-DINERO-30-DIAS (NXT-1): los últimos 30 días, no solo la última conciliación.
+  if (c.env.DB)
+    piezas.dinero = await saludDinero(c.env.DB).catch((e: unknown) => {
+      console.error('salud: dinero', e);
+      return 'error' as const;
+    });
   // Fase 0: retiros sin doble pago (disparadores puestos, conciliación al día, nada en revisión).
   if (c.env.DB)
     piezas.retiros = await saludRetiros(c.env, c.env.DB).catch((e: unknown) => {
@@ -521,6 +524,7 @@ app.route('/datos', respaldo);
 app.route('/datos/v1/flex', flex);
 app.route('/datos', finanzasAdmin);
 app.route('/datos', controlDual);
+app.route('/datos', excepcionesConciliacion);
 // Divoox Rewards · Fase 2: lectura del modo sombra (solo admin y solo en pruebas).
 app.route('/datos', rewardsSombra);
 

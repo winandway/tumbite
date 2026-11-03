@@ -2833,3 +2833,18 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
     - el puente también en la web;
     - el recorrido toca «Conectar mi cuenta bancaria» dentro de «Beneficios».
   - Prueba: la tercera de AltaCobros.test.tsx, en rojo sin el arreglo.
+
+## C-DINERO-30-DIAS (NXT-1, 3 nov 2026). Todos los países.
+
+- **Qué se rompía:** la pieza «dinero» de `/datos/salud` solo miraba la ÚLTIMA conciliación (`ORDER BY dia DESC LIMIT 1`). Un día que no cuadraba desaparecía del canario al día siguiente, aunque la diferencia siguiera ahí (pasó con la del 15 oct).
+- **Qué se hizo:**
+  - `apps/servidor/src/conciliacion.ts`: `diasSinCuadrar` (los días de los últimos `DIAS_VIGILADOS` = 30 con `cuadra = 0`, cada uno con su excepción) y `saludDinero` (sin conciliaciones = pendiente; algún día sin cuadrar y sin excepción = error; si no, ok). `app.ts` usa `saludDinero` en la pieza «dinero».
+  - Tabla propia `conciliacion_excepciones` (schema.sql): motivo (10 letras o más), quién (`creado_por`, `creado_por_nombre`), cuándo, y las cifras que se excusaron (`pedidos`, `vendido`, `detalle`). La excepción solo vale para ESAS cifras: si el día se recalcula con otra diferencia, vuelve el rojo hasta excusarla aparte. Nunca se borra y la fila de `conciliaciones` no se toca.
+  - `apps/servidor/src/rutas/excepcionesConciliacion.ts`: `GET /datos/admin/conciliacion/excepciones` (la bandeja) y `POST` con `{dia, motivo, clave}`: solo perfil Total o Finanzas, con su contraseña; un día que cuadra o ya excusado responde 409. La acción queda además en `acciones_equipo`. `GET /datos/admin/conciliacion` dice `excusado` por fila.
+  - Panel: `ExcepcionesConciliacion.tsx` dentro del Control de dinero del superadmin, es/en, con borrador (la contraseña no se guarda) y lo escrito se queda si falla.
+  - **La diferencia conocida del 15 oct de producción** (compra de prueba de 7,18 USD, autorizada por Richard el 16 oct, ver `docs/EVALUACION-BLOQUEO-CONCILIACION.md`) se excusa sola desde schema.sql, solo si las cifras son exactamente 1 pedido y 718 centavos. Sin eso, el canario de producción se habría puesto en rojo al publicar. Producción no tenía ningún otro día sin cuadrar (consulta de solo lectura del 3 nov).
+  - Los 10 pedidos de prueba de Novi del 11 y 12 oct no tienen fila de conciliación (empezó el 13): no ponen el canario en rojo. Si alguien recalcula esos días, aparecen en la bandeja para excusarlos con motivo.
+  - La conciliación de billeteras de Flex (`finanzas/reloj.ts`) no tenía el mismo hueco: revisa las invariantes de TODO el libro en cada vuelta, así que una diferencia vieja sigue saliendo.
+- **Pruebas (comprobadas en rojo el 3 nov):** `apps/servidor/src/conciliacionExcepciones.test.ts` (con la lógica vieja, «solo la última», fallan 3 de 5) y `apps/panel/src/panel/ExcepcionesConciliacion.test.tsx`. Cobertura exigida al 90 % para `conciliacion.ts` y `rutas/excepcionesConciliacion.ts` en `vitest.config.mts`.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/conciliacionExcepciones.test.ts apps/panel/src/panel/ExcepcionesConciliacion.test.tsx`; en vivo, `/datos/salud` → `dinero: ok` en los dos sitios.
+- **Qué NO tocar:** no volver a mirar solo la última conciliación; no excusar sin motivo ni contraseña; no escribir ni borrar filas de `conciliaciones` para que el canario pase.

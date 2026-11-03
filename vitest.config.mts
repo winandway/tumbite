@@ -91,6 +91,9 @@ export default defineConfig({
             'finanzas/controlDual.ts',
             // SIG-4x: la tabla de la segunda firma rehecha con los tipos nuevos.
             'esquemaDinero.ts',
+            // C-DINERO-30-DIAS (NXT-1): el canario de dinero y las excepciones de la conciliación.
+            'conciliacion.ts',
+            'rutas/excepcionesConciliacion.ts',
             // C-FOTOS-SIN-METADATOS (SIG-6): datos personales de las fotos.
             'fotoLimpia.ts',
             // C-ENVIO-UNA-VEZ (BRE-R3): crear el pedido y validar cupones (el envío una sola vez).

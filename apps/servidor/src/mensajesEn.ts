@@ -694,6 +694,18 @@ export const MENSAJES_EN = new Map<string, string>([
     'Raising the dual-control limit is approved by another Full profile account.',
   ],
   ['Esa solicitud no existe.', 'That request doesn’t exist.'],
+  // C-DINERO-30-DIAS (NXT-1): excusar un día de la conciliación.
+  [
+    'Solo una cuenta con perfil Total o Finanzas excusa un día de la conciliación.',
+    'Only a Full or Finance profile account can excuse a reconciliation day.',
+  ],
+  ['Ese día no tiene conciliación.', 'That day has no reconciliation.'],
+  ['Ese día cuadra: no hay nada que excusar.', 'That day balances: there’s nothing to excuse.'],
+  [
+    'Ese día ya tiene su excepción con estas cifras.',
+    'That day already has an exception for these figures.',
+  ],
+  ['Escribe el motivo (al menos 10 letras).', 'Write the reason (at least 10 characters).'],
   ['Elige la fecha inicial y la final.', 'Pick the start and end dates.'],
   ['Esa persona no es del equipo.', 'That person isn’t on the team.'],
   ['Ponle un título.', 'Give it a title.'],

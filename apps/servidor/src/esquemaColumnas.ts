@@ -2217,5 +2217,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "lat",
     "lng",
     "creada_en"
+  ],
+  "conciliacion_excepciones": [
+    "id",
+    "dia",
+    "pedidos",
+    "vendido",
+    "detalle",
+    "motivo",
+    "creado_por",
+    "creado_por_nombre",
+    "creado_en"
   ]
 };

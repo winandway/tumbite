@@ -883,7 +883,11 @@ superadmin.get('/admin/conciliacion', async (c) => {
   const dia = c.req.query('dia');
   if (dia && /^\d{4}-\d{2}-\d{2}$/.test(dia)) await conciliar(db, dia);
   const { results } = await db
-    .prepare('SELECT * FROM conciliaciones ORDER BY dia DESC LIMIT 14')
+    .prepare(
+      `SELECT c.*, EXISTS (SELECT 1 FROM conciliacion_excepciones e WHERE e.dia = c.dia AND e.pedidos = c.pedidos
+         AND e.vendido = c.vendido AND e.detalle = c.detalle) AS excusado
+       FROM conciliaciones c ORDER BY c.dia DESC LIMIT 14`,
+    )
     .all<Record<string, unknown>>();
   return c.json({
     conciliaciones: results.map((r) => ({
@@ -895,6 +899,8 @@ superadmin.get('/admin/conciliacion', async (c) => {
       abonado: Number(r.abonado),
       retirado: Number(r.retirado),
       cuadra: Number(r.cuadra) === 1,
+      // C-DINERO-30-DIAS (NXT-1): el día no cuadra pero tiene su excepción con motivo.
+      excusado: Number(r.excusado) === 1,
       detalle: JSON.parse(String(r.detalle ?? '{}')) as Record<string, unknown>,
     })),
   });

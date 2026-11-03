@@ -9,6 +9,7 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { textoPendiente } from './SuperAprobaciones';
 import { Resumen1099 } from './Resumen1099';
+import { ExcepcionesConciliacion } from './ExcepcionesConciliacion';
 import { pedir } from './api';
 import { type TarifasPais, type TopesPais, TarifasTopesPais } from './TarifasTopesPais';
 
@@ -123,6 +124,7 @@ const T = {
     noCuadra: 'NO cuadra',
     detalle: 'Ver detalle',
     sinConciliar: 'Todavía no hay conciliaciones.',
+    excusado: 'excusado con motivo',
     cargando: 'Cargando…',
   },
   en: {
@@ -233,6 +235,7 @@ const T = {
     noCuadra: 'NOT balanced',
     detalle: 'See detail',
     sinConciliar: 'No reconciliations yet.',
+    excusado: 'excused with a reason',
     cargando: 'Loading…',
   },
 };
@@ -319,6 +322,7 @@ type Conciliacion = {
   abonado: number;
   retirado: number;
   cuadra: boolean;
+  excusado?: boolean;
   detalle: Record<string, unknown>;
 };
 
@@ -1254,6 +1258,9 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                     <strong className={c.cuadra ? 'ok' : 'error-general'}>
                       {c.cuadra ? t.cuadra : t.noCuadra}
                     </strong>
+                    {!c.cuadra && c.excusado ? (
+                      <span className="suave"> · {t.excusado}</span>
+                    ) : null}
                     <details>
                       <summary className="suave">{t.detalle}</summary>
                       <pre className="suave">{JSON.stringify(c.detalle, null, 1)}</pre>
@@ -1265,6 +1272,7 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
           </table>
         </div>
       ) : null}
+      <ExcepcionesConciliacion idioma={idioma} />
       <Resumen1099 idioma={idioma} />
       {avisoDual && <p role="status">{avisoDual}</p>}
       {error && (
