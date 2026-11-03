@@ -3354,3 +3354,13 @@ CREATE TABLE IF NOT EXISTS pedidos_saldo_regalo (
   centavos INTEGER NOT NULL CHECK (centavos > 0)
 );
 CREATE INDEX IF NOT EXISTS pedidos_saldo_regalo_usuario ON pedidos_saldo_regalo(usuario_id);
+-- C-TIENDAS-PESO-REAL (SIG-3, 2 nov 2026): lo que se autorizó en la tarjeta cuando el pedido lleva
+-- productos por peso (el total estimado más un margen del 15 % de los pesables). El peso real que
+-- escribe la tienda puede subir el total hasta aquí, nunca más; al entregar se captura el total real.
+CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  autorizado INTEGER NOT NULL CHECK (autorizado >= 0),
+  margen INTEGER NOT NULL CHECK (margen >= 0),
+  pesado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
