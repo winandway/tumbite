@@ -109,6 +109,7 @@ type Pedido = {
     precioCentavos?: number;
     opciones?: OpcionElegida[];
     sustitucion?: string;
+    reemplazo?: { nombreEs?: string; nombreEn?: string } | null;
     pesable?: boolean;
     unidadPeso?: string | null;
     pesoEstimado?: number | null;

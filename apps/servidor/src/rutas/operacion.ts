@@ -684,6 +684,7 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
       nombreEs: string;
       nombreEn: string;
       sustitucion?: string;
+      reemplazo?: { platoId: string };
     }[]
   ).find((l) => l.platoId === platoId);
   if (!linea) throw new ErrorDatos('Ese plato no está en este pedido.', 'platoId', 404);
@@ -735,6 +736,24 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
       imagen: pl.imagen,
     });
   }
+  // ETP-4 (C-TIENDAS-REEMPLAZO-ELEGIDO): el reemplazo que eligió el cliente va primero, si hoy
+  // está; si tampoco está, se devuelve el dinero (no se cambia por otro que no eligió).
+  let elegido = false;
+  if (esTienda && linea.sustitucion === 'especifico' && linea.reemplazo) {
+    const [l] = await lineasDeTienda(c, { id: rid, tipo_comercio: f.tipo_comercio }, [
+      { platoId: linea.reemplazo.platoId, cantidad: 1 },
+    ]).catch(() => [undefined]);
+    if (l) {
+      propuestas.unshift({
+        platoId: l.platoId,
+        nombreEs: l.nombreEs,
+        nombreEn: l.nombreEn,
+        precioCentavos: l.precioCentavos,
+        imagen: l.imagen ? String(l.imagen) : null,
+      });
+      elegido = true;
+    }
+  }
   await db
     .prepare(
       `INSERT INTO ajustes_pedido (pedido_id, plato_id, nombre_es, nombre_en, devolucion, propuestas_json) VALUES (?, ?, ?, ?, ?, ?)
@@ -751,14 +770,18 @@ operacion.post('/restaurante/pedidos/:id/falta', async (c) => {
   // parecido» (si la tienda lo marca, tampoco tenía uno parecido) se devuelven en el acto; solo
   // «avísame» espera su decisión, como un restaurante.
   // «Uno parecido» con un reemplazo propuesto: va el primero, como el «Best match» de Instacart.
-  if (esTienda && linea.sustitucion === 'similar' && propuestas[0]) {
+  if (
+    esTienda &&
+    ((linea.sustitucion === 'similar' && propuestas[0]) ||
+      (linea.sustitucion === 'especifico' && elegido))
+  ) {
     const r = await aplicarAjuste(
       c.env,
       db,
       id,
       'reemplazar',
       exigir(c, 'restaurante').id,
-      propuestas[0].platoId,
+      propuestas[0]!.platoId,
     );
     return c.json({ ok: true, devolucion: r.devolucion, resuelto: true, cancelado: r.cancelado });
   }

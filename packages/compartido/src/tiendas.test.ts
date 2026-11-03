@@ -78,6 +78,17 @@ describe('C-TIENDAS-COMPRA · nota de sustitución para la tienda', () => {
     expect(notaSustitucion({ sustitucion: 'reembolsar' }, 'en')).toBe('If out: refund it');
     expect(notaSustitucion({}, 'es')).toBe('');
   });
+
+  it('ETP-4: el reemplazo que eligió el cliente sale con su nombre, en los dos idiomas', () => {
+    const l = {
+      sustitucion: 'especifico',
+      reemplazo: { nombreEs: 'Jugo de naranja', nombreEn: 'Orange juice' },
+    };
+    expect(notaSustitucion(l, 'es')).toBe('Si no hay: Jugo de naranja (lo eligió el cliente)');
+    expect(notaSustitucion(l, 'en')).toBe('If out: Orange juice (chosen by the customer)');
+    // Sin el reemplazo guardado no inventa uno.
+    expect(notaSustitucion({ sustitucion: 'especifico' }, 'es')).toBe('');
+  });
 });
 
 describe('C-TIENDAS-FALTANTES · otro faltante', () => {

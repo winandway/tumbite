@@ -673,10 +673,31 @@ tiendas.get('/tiendas-buscar', async (c) => {
 export async function lineasDeTienda(
   c: Parameters<typeof base>[0],
   rest: Record<string, unknown>,
-  pedidas: { platoId: string; cantidad: number; sustitucion?: Sustitucion; nota?: string }[],
+  pedidas: {
+    platoId: string;
+    cantidad: number;
+    sustitucion?: Sustitucion;
+    reemplazoId?: string;
+    nota?: string;
+  }[],
 ) {
   await exigirServicio(c, servicioDe(String(rest.tipo_comercio)));
-  const ids = [...new Set(pedidas.map((l) => l.platoId))];
+  // ETP-4 (C-TIENDAS-REEMPLAZO-ELEGIDO): «especifico» exige el producto elegido, distinto del que
+  // pide; tiene que ser de esta tienda y estar disponible hoy (se busca junto con los demás).
+  for (const l of pedidas)
+    if (l.sustitucion === 'especifico' && (!l.reemplazoId || l.reemplazoId === l.platoId))
+      throw new ErrorDatos(
+        'Elige el producto que quieres si este no está (otro distinto).',
+        'lineas',
+        400,
+      );
+  const ids = [
+    ...new Set(
+      pedidas.flatMap((l) =>
+        l.sustitucion === 'especifico' && l.reemplazoId ? [l.platoId, l.reemplazoId] : [l.platoId],
+      ),
+    ),
+  ];
   const { results } = await base(c)
     .prepare(
       `SELECT p.*, o.precio, o.precio_oferta FROM catalogo_productos p
@@ -696,6 +717,14 @@ export async function lineasDeTienda(
         409,
       );
     const precio = Number(f.precio_oferta ?? f.precio);
+    const r =
+      l.sustitucion === 'especifico' && l.reemplazoId ? porId.get(l.reemplazoId) : undefined;
+    if (l.sustitucion === 'especifico' && !r)
+      throw new ErrorDatos(
+        'El reemplazo que elegiste ya no está disponible. Elige otro o cambia qué hacer si falta.',
+        'lineas',
+        409,
+      );
     return {
       platoId: l.platoId,
       nombreEs: String(f.nombre_es || f.nombre_en),
@@ -710,6 +739,20 @@ export async function lineasDeTienda(
       requiereEdad: f.restriccion === 'alcohol' || f.restriccion === 'tobacco',
       ...(f.restriccion === 'alcohol' ? { alcohol: true } : {}),
       sustitucion: l.sustitucion ?? 'reembolsar',
+      ...(r
+        ? {
+            reemplazo: {
+              platoId: String(r.id),
+              nombreEs: String(r.nombre_es || r.nombre_en),
+              nombreEn: String(r.nombre_en || r.nombre_es),
+              precioCentavos: precioEstimado(
+                Number(r.precio_oferta ?? r.precio),
+                String(r.vendido_por),
+                r.peso_promedio as number | null,
+              ),
+            },
+          }
+        : {}),
       ...conNotaPlato(l.nota),
       // C-TIENDAS-PESO-REAL: el precio por peso y el peso promedio quedan congelados en la línea,
       // para cobrar el peso real que escriba la tienda aunque el catálogo cambie después.

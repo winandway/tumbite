@@ -28,6 +28,7 @@ type Respuesta = {
     opciones?: OpcionElegida[];
     imagen?: string | null;
     sustitucion?: Sustitucion;
+    reemplazo?: { platoId: string; nombreEs: string; nombreEn: string };
     pesable?: boolean;
     requiereEdad?: boolean;
   }[];

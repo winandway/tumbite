@@ -30,6 +30,8 @@ export type LineaCarrito = {
   imagen?: string | null;
   /** C-TIENDAS-COMPRA: en una tienda, qué hacer si falta (lo decide el cliente; por defecto, reembolsar). */
   sustitucion?: Sustitucion;
+  /** ETP-4: el producto de la misma tienda que el cliente eligió si este falta («especifico»). */
+  reemplazo?: { platoId: string; nombreEs: string; nombreEn: string };
   /** Producto que se vende al peso: el precio es estimado y se ajusta al pesarlo. */
   pesable?: boolean;
   /** C-EDAD-EN-MANO: alcohol o tabaco: se entrega en mano y se pide identificación. */
@@ -82,7 +84,11 @@ type Ctx = {
     nota?: string,
   ) => 'ok' | 'otro-restaurante';
   cambiarCantidad: (clave: string, cantidad: number) => void;
-  cambiarSustitucion: (clave: string, s: Sustitucion) => void;
+  cambiarSustitucion: (
+    clave: string,
+    s: Sustitucion,
+    reemplazo?: { platoId: string; nombreEs: string; nombreEn: string },
+  ) => void;
   vaciar: () => void;
   /** C-RECOGER-MAPA: el cliente eligió el local desde «Recoger»: el carrito arranca en recoger. */
   recoger: boolean;
@@ -186,16 +192,25 @@ export function CarritoProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const cambiarSustitucion = useCallback((clave: string, sustitucion: Sustitucion) => {
-    setCarrito((c) => ({
-      ...c,
-      lineas: c.lineas.map((l) =>
-        (l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [], l.nota)) === clave
-          ? { ...l, sustitucion }
-          : l,
-      ),
-    }));
-  }, []);
+  const cambiarSustitucion = useCallback(
+    (
+      clave: string,
+      sustitucion: Sustitucion,
+      reemplazo?: { platoId: string; nombreEs: string; nombreEn: string },
+    ) => {
+      setCarrito((c) => ({
+        ...c,
+        lineas: c.lineas.map((l) => {
+          if ((l.clave ?? claveDeLinea(l.platoId, l.opciones ?? [], l.nota)) !== clave) return l;
+          // ETP-4: el reemplazo elegido solo vive con «especifico»; se conserva al reabrir.
+          const { reemplazo: viejo, ...resto } = l;
+          const r = sustitucion === 'especifico' ? (reemplazo ?? viejo) : undefined;
+          return { ...resto, sustitucion, ...(r ? { reemplazo: r } : {}) };
+        }),
+      }));
+    },
+    [],
+  );
 
   const vaciar = useCallback(() => setCarrito(VACIO), []);
   const [recoger, marcarRecoger] = useState(false);

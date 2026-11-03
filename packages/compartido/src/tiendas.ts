@@ -398,7 +398,9 @@ export const precioEstimado = (precio: number, vendidoPor: string, pesoPromedio:
   vendidoPor === 'weight' && pesoPromedio ? Math.round(precio * pesoPromedio) : precio;
 
 /** Qué hacer si falta un artículo (lo elige el cliente por artículo, como DoorDash y Uber Eats). */
-export const SUSTITUCIONES = ['reembolsar', 'similar', 'contactar'] as const;
+// ETP-4 (C-TIENDAS-REEMPLAZO-ELEGIDO): «especifico» = el cliente eligió en el carrito el producto que
+// quiere si falta («Choose a specific replacement» de Instacart y DoorDash) [DOC].
+export const SUSTITUCIONES = ['reembolsar', 'similar', 'contactar', 'especifico'] as const;
 export type Sustitucion = (typeof SUSTITUCIONES)[number];
 
 /**
@@ -406,7 +408,23 @@ export type Sustitucion = (typeof SUSTITUCIONES)[number];
  * «Uno parecido» se entrega sin cobrar de más (el precio cobrado no cambia); «reembolsar» se hace
  * con «falta un producto» y «avísame» por el chat del pedido. Vacío si la línea no es de tienda.
  */
-export function notaSustitucion(l: { sustitucion?: string | null }, idioma: 'es' | 'en'): string {
+export function notaSustitucion(
+  l: {
+    sustitucion?: string | null;
+    reemplazo?: { nombreEs?: string; nombreEn?: string } | null;
+  },
+  idioma: 'es' | 'en',
+): string {
+  // ETP-4: el reemplazo que eligió el cliente va primero, con su nombre.
+  if (l.sustitucion === 'especifico' && l.reemplazo) {
+    const nombre =
+      idioma === 'en'
+        ? l.reemplazo.nombreEn || l.reemplazo.nombreEs
+        : l.reemplazo.nombreEs || l.reemplazo.nombreEn;
+    return idioma === 'en'
+      ? `If out: ${nombre} (chosen by the customer)`
+      : `Si no hay: ${nombre} (lo eligió el cliente)`;
+  }
   const textos = new Map<string, [string, string]>([
     ['reembolsar', ['Si no hay: reembolsar', 'If out: refund it']],
     [

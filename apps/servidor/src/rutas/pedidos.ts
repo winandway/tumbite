@@ -90,6 +90,8 @@ const esquemaNuevoPedido = z.object({
         opciones: z.array(z.string().min(1)).max(40).default([]),
         // C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto (como Instacart y DoorDash).
         sustitucion: z.enum(SUSTITUCIONES).optional(),
+        // ETP-4: el producto de la misma tienda que eligió como reemplazo («especifico»).
+        reemplazoId: z.string().min(1).max(64).optional(),
         // C-NOTA-PLATO: «sin cebolla», «bien cocido» (instrucciones especiales de Uber Eats y DoorDash).
         nota: z.string().max(NOTA_PLATO_MAX).optional(),
       }),
@@ -1565,6 +1567,7 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
   const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
   const viejas = lineasDe(f) as (ReturnType<typeof lineasDe>[number] & {
     sustitucion?: Sustitucion;
+    reemplazo?: { platoId: string };
   })[];
   const lineas: Awaited<ReturnType<typeof lineasDeRestaurante>> = [];
   const faltan: { nombreEs: string; nombreEn: string }[] = [];
@@ -1575,6 +1578,7 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
         cantidad: v.cantidad,
         opciones: (v.opciones ?? []).map((o) => o.id),
         sustitucion: v.sustitucion,
+        ...(v.reemplazo ? { reemplazoId: v.reemplazo.platoId } : {}),
         nota: v.nota,
       };
       const [l] = esTienda

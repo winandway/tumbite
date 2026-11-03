@@ -464,6 +464,14 @@ export const MENSAJES_EN = new Map<string, string>([
   ['No pudimos hacer la devolución en este momento.', 'We couldn’t process the refund right now.'],
   ['Stripe no confirmó la devolución.', 'Stripe didn’t confirm the refund.'],
   [
+    'Elige el producto que quieres si este no está (otro distinto).',
+    'Choose the product you want if this one is out (a different one).',
+  ],
+  [
+    'El reemplazo que elegiste ya no está disponible. Elige otro o cambia qué hacer si falta.',
+    'The replacement you chose is no longer available. Choose another one or change what to do if it’s out.',
+  ],
+  [
     'Este pedido ya salió o ya cambió de estado: no se puede quitar un plato.',
     'This order already went out or changed status: an item can’t be removed.',
   ],

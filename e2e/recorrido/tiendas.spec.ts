@@ -163,6 +163,30 @@ for (const idioma of ['es', 'en'] as const) {
       .getByRole('radio', { name: `${siNoHay} ${parecido}` })
       .first()
       .click();
+    // ETP-4 (C-TIENDAS-REEMPLAZO-ELEGIDO): para la cerveza elige un reemplazo concreto de la tienda.
+    const elegirUno = idioma === 'en' ? 'Choose one' : 'Elegir uno';
+    await cli
+      .getByRole('radio', { name: `${siNoHay} ${elegirUno}` })
+      .nth(2)
+      .click();
+    await cli
+      .getByLabel(
+        idioma === 'en'
+          ? 'Search this store for the one you want'
+          : 'Busca en esta tienda el que quieres',
+      )
+      .fill(idioma === 'en' ? 'Avoc' : 'Aguac');
+    await cli
+      .getByRole('button', {
+        name: `${idioma === 'en' ? 'Choose' : 'Elegir'} ${nombre('Aguacates', 'Avocados')}`,
+      })
+      .click();
+    const elegido = cli.getByText(
+      idioma === 'en' ? 'If it’s out, we’ll bring: Avocados' : 'Si no hay, te llevamos: Aguacates',
+    );
+    await expect(elegido).toBeVisible();
+    await elegido.scrollIntoViewIfNeeded();
+    await foto(cli, 'cliente-reemplazo');
     await cli.getByRole('radio', { name: idioma === 'en' ? 'Hand it to me' : 'En mano' }).click();
     // La foto del carrito: arriba, con los productos y qué hacer si falta cada uno.
     await cli.getByText('Mercado Ejemplo').first().scrollIntoViewIfNeeded();
@@ -241,6 +265,14 @@ for (const idioma of ['es', 'en'] as const) {
     ).toBeVisible({ timeout: 30_000 });
     await expect(
       panel.getByText(idioma === 'en' ? 'If out: refund it' : 'Si no hay: reembolsar').first(),
+    ).toBeVisible();
+    // ETP-4: la tienda ve primero el reemplazo que eligió el cliente.
+    await expect(
+      panel.getByText(
+        idioma === 'en'
+          ? 'If out: Avocados (chosen by the customer)'
+          : 'Si no hay: Aguacates (lo eligió el cliente)',
+      ),
     ).toBeVisible();
     await foto(panel, 'panel-pedido');
 

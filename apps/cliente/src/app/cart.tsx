@@ -40,6 +40,7 @@ import {
 import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { textosTiendas } from '../tiendas/textos';
+import { ElegirReemplazo } from '../tiendas/ElegirReemplazo';
 import { SUSTITUCIONES, margenPesables } from '@tumbite/compartido';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
@@ -530,6 +531,17 @@ export default function PantallaCarrito() {
     )
       return setError(t.regaloFalta);
     if (programado && !franjaElegida) return setError(te.elegirFranja);
+    // ETP-4: «Elegir uno» sin elegir el reemplazo no se manda (el servidor lo rechazaría).
+    const sinReemplazo = carrito.esTienda
+      ? carrito.lineas.find((l) => l.sustitucion === 'especifico' && !l.reemplazo)
+      : undefined;
+    if (sinReemplazo)
+      return setError(
+        tt.faltaReemplazo.replace(
+          '{nombre}',
+          idioma === 'en' ? sinReemplazo.nombreEn || sinReemplazo.nombreEs : sinReemplazo.nombreEs,
+        ),
+      );
     setError('');
     setPagando(true);
     try {
@@ -540,6 +552,9 @@ export default function PantallaCarrito() {
           cantidad: l.cantidad,
           opciones: (l.opciones ?? []).map((o) => o.id),
           ...(carrito.esTienda ? { sustitucion: l.sustitucion ?? 'reembolsar' } : {}),
+          ...(carrito.esTienda && l.sustitucion === 'especifico' && l.reemplazo
+            ? { reemplazoId: l.reemplazo.platoId }
+            : {}),
           ...(l.nota ? { nota: l.nota } : {}),
         })),
         propinaCentavos: propina,
@@ -785,6 +800,15 @@ export default function PantallaCarrito() {
                     );
                   })}
                 </View>
+                {l.sustitucion === 'especifico' && carrito.restauranteId ? (
+                  <ElegirReemplazo
+                    tiendaId={carrito.restauranteId}
+                    platoId={l.platoId}
+                    elegido={l.reemplazo}
+                    idioma={idioma}
+                    elegir={(r) => cambiarSustitucion(l.clave ?? l.platoId, 'especifico', r)}
+                  />
+                ) : null}
               </View>
             ) : null}
           </Tarjeta>

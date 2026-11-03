@@ -17,6 +17,7 @@ export type PedidoComanda = {
     cantidad: number;
     opciones?: OpcionElegida[];
     sustitucion?: string;
+    reemplazo?: { nombreEs?: string; nombreEn?: string } | null;
   }[];
 };
 
