@@ -133,6 +133,15 @@ export function Acceso({
     );
   return marco(
     <>
+      {/* Con portada propia (Driver), el título de «Crear cuenta» o «Entrar» va aquí. */}
+      {portada && rolRegistro ? (
+        <Text
+          accessibilityRole="header"
+          style={{ fontWeight: '700', fontSize: 26, color: C.secundario, marginBottom: 4 }}
+        >
+          {registro ? t.crearCuenta : t.entrar}
+        </Text>
+      ) : null}
       {rolRegistro ? (
         // Que se sepa siempre qué cuenta se crea o se usa: de cliente o de repartidor.
         <Text

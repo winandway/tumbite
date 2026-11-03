@@ -31,3 +31,16 @@ describe('C-ICONOS-POR-APP', () => {
     expect(fondoAndroid(app)).toBe(color);
   });
 });
+
+describe('C-ICONOS-POR-APP: la primera pantalla de Driver no es la del cliente', () => {
+  it('Driver entra con su propia portada azul que dice para quién es', () => {
+    const entrada = readFileSync(raiz('apps/repartidor/src/app/index.tsx'), 'utf8');
+    expect(entrada).toMatch(/<Acceso rolRegistro="repartidor" portada=\{<Portada \/>\} \/>/);
+    expect(entrada).toContain('C.logistica');
+    expect(entrada).toMatch(/For drivers/);
+    // Con portada, el formulario sigue diciendo si es «Crear cuenta» o «Entrar».
+    expect(readFileSync(raiz('packages/movil/src/Acceso.tsx'), 'utf8')).toMatch(
+      /portada && rolRegistro \?/,
+    );
+  });
+});
