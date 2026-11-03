@@ -848,6 +848,14 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Ese ticket no existe.', 'That ticket doesn’t exist.'],
   ['Esta conversación no existe.', 'This conversation doesn’t exist.'],
   ['Esta oferta ya no está disponible.', 'This offer is no longer available.'],
+  // C-ENTREGA-PRACTICA
+  ['Esta entrega no es para tu cuenta.', 'This delivery isn’t for your account.'],
+  ['Esta entrega no está contigo.', 'This delivery isn’t with you.'],
+  ['Primero recoge el pedido en el restaurante.', 'Pick up the order at the restaurant first.'],
+  [
+    'En una entrega de práctica no hay a quién llamar.',
+    'There’s no one to call on a practice delivery.',
+  ],
   ['Esta página no existe.', 'This page doesn’t exist.'],
   ['Esta dirección no existe.', 'This address doesn’t exist.'],
   [

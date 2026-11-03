@@ -251,6 +251,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "listo_en",
     "terminado_en"
   ],
+  "entregas_practica": [
+    "pedido_prueba_id",
+    "repartidor_id",
+    "estado",
+    "llego_restaurante",
+    "verificado",
+    "creado_en",
+    "recogido_en",
+    "entregado_en"
+  ],
   "regalos_config": [
     "restaurante_id",
     "cumpleanos",

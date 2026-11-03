@@ -32,7 +32,8 @@ import { cuentas } from './rutas/cuentas';
 import { catalogo } from './rutas/catalogo';
 import { dinero } from './rutas/dinero';
 import { pedidos } from './rutas/pedidos';
-import { operacion } from './rutas/operacion';
+import { esRevisor, operacion } from './rutas/operacion';
+import { rutasPractica } from './entregaPractica';
 import { regalos } from './rutas/regalos';
 import { zonas } from './rutas/zonas';
 import { espera } from './rutas/espera';
@@ -470,6 +471,8 @@ app.notFound(async (c) => {
 });
 
 app.route('/datos/cuentas', cuentas);
+// C-ENTREGA-PRACTICA: antes que las de verdad; solo atiende los pedidos «prueba-…».
+app.route('/datos', rutasPractica(esRevisor));
 app.route('/datos', gerente);
 app.route('/datos', catalogo);
 app.route('/datos', dinero);

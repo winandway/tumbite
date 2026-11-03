@@ -74,6 +74,7 @@ import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { nuevoId } from '../cripto';
 import { avanzarPrueba, crearPedidoPrueba, esPedidoPrueba, pedidosPrueba } from '../pedidoPrueba';
+import { ofertasPractica, practicaActiva } from '../entregaPractica';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
@@ -1271,7 +1272,8 @@ operacion.get('/repartidor/estado', async (c) => {
     reputacion:
       (await reputacionVisible({ ...c.env, ENTORNO_RELOJ: entornoDe(c.req.url) }, db, u.id)) ??
       undefined,
-    activo: activo ? conDatosRestaurante(activo) : null,
+    // C-ENTREGA-PRACTICA: sin entrega real, la de práctica de la cuenta de revisión (o null).
+    activo: activo ? conDatosRestaurante(activo) : await practicaActiva(db, u.id),
     agrupados: await agrupadosDe(db, u.id, activo),
     // C-OCUPADO-VISIBLE (BRF-1): si una ruta Flex o un viaje lo ocupa, no le llegan pedidos de
     // comida (C-FLEX-OCUPACION); la app lo dice en vez de «Buscando pedidos cerca de ti…».
@@ -1951,37 +1953,42 @@ operacion.get('/repartidor/ofertas', async (c) => {
     ficha.lat != null && ficha.lng != null
       ? { lat: Number(ficha.lat), lng: Number(ficha.lng) }
       : null;
+  // C-ENTREGA-PRACTICA: a una cuenta de revisión sin ofertas reales le llega la de práctica.
+  const practica = results.length ? [] : await ofertasPractica(c, esRevisor, SEGUNDOS_OFERTA);
   return c.json({
-    ofertas: results.map((f) => {
-      const base = conDatosRestaurante(f);
-      const rest =
-        base.restaurante.lat != null && base.restaurante.lng != null
-          ? { lat: base.restaurante.lat, lng: base.restaurante.lng }
-          : null;
-      const alLocal = yo && rest ? Math.round(distanciaKm(yo, rest) * 10) / 10 : null;
-      const total =
-        alLocal != null && base.distanciaKm != null
-          ? Math.round((alLocal + base.distanciaKm) * 10) / 10
-          : null;
-      const viajeAlLocal = alLocal != null ? minutosDeViaje(alLocal) : 0;
-      // Si la comida tarda más que el viaje al local, esa espera también cuenta.
-      const espera = Math.max(0, (base.minutosParaListo ?? 0) - viajeAlLocal);
-      const articulos = base.lineas.reduce((n, l) => n + Number(l.cantidad ?? 1), 0);
-      return {
-        ...base,
-        distanciaAlLocalKm: alLocal,
-        distanciaTotalKm: total,
-        minutosEstimados: total != null ? minutosDeViaje(total) + espera : null,
-        articulos,
-        ofertaEn: String(f.oferta_en),
-        segundos: SEGUNDOS_OFERTA,
-        // Cobro en mano (como DiDi y Rappi en efectivo): lo que el repartidor adelanta en el local
-        // con su dinero, para que decida ANTES de aceptar.
-        adelantoLocal: esDirecto(String(f.metodo_pago ?? 'tarjeta'))
-          ? Number(f.pago_restaurante)
-          : 0,
-      };
-    }),
+    ofertas: [
+      ...results.map((f) => {
+        const base = conDatosRestaurante(f);
+        const rest =
+          base.restaurante.lat != null && base.restaurante.lng != null
+            ? { lat: base.restaurante.lat, lng: base.restaurante.lng }
+            : null;
+        const alLocal = yo && rest ? Math.round(distanciaKm(yo, rest) * 10) / 10 : null;
+        const total =
+          alLocal != null && base.distanciaKm != null
+            ? Math.round((alLocal + base.distanciaKm) * 10) / 10
+            : null;
+        const viajeAlLocal = alLocal != null ? minutosDeViaje(alLocal) : 0;
+        // Si la comida tarda más que el viaje al local, esa espera también cuenta.
+        const espera = Math.max(0, (base.minutosParaListo ?? 0) - viajeAlLocal);
+        const articulos = base.lineas.reduce((n, l) => n + Number(l.cantidad ?? 1), 0);
+        return {
+          ...base,
+          distanciaAlLocalKm: alLocal,
+          distanciaTotalKm: total,
+          minutosEstimados: total != null ? minutosDeViaje(total) + espera : null,
+          articulos,
+          ofertaEn: String(f.oferta_en),
+          segundos: SEGUNDOS_OFERTA,
+          // Cobro en mano (como DiDi y Rappi en efectivo): lo que el repartidor adelanta en el local
+          // con su dinero, para que decida ANTES de aceptar.
+          adelantoLocal: esDirecto(String(f.metodo_pago ?? 'tarjeta'))
+            ? Number(f.pago_restaurante)
+            : 0,
+        };
+      }),
+      ...practica,
+    ],
   });
 });
 
@@ -2183,7 +2190,7 @@ const lejos = (metros: number | null) => metros != null && metros > RADIO_LLEGAD
  * Las cuentas de los revisores de las tiendas prueban desde otra ciudad: sin regla de distancia.
  * Vienen de la variable CORREOS_REVISOR o de la tabla «revisores» (el botón del superadmin).
  */
-async function esRevisor(c: Ctx, correo: string): Promise<boolean> {
+export async function esRevisor(c: Ctx, correo: string): Promise<boolean> {
   // Solo con el correo confirmado (C-FRANQUICIA-CORREO-CONFIRMADO): las cuentas que crea el
   // superadmin para los revisores nacen confirmadas; una cuenta registrada con un correo de la
   // lista, sin confirmarlo, no se salta la regla de distancia.

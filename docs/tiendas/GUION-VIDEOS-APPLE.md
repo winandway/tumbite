@@ -10,7 +10,7 @@ Producción cobra con Stripe en vivo, y la tarjeta de prueba no funciona ahí. P
 
 1. **Restaurants: «Send a test order»**, igual que el «Create test order» de DoorDash Merchant (candado C-PEDIDO-PRUEBA, en producción desde el 2 nov). Llega un pedido de mentira con platos del menú, con su alarma y la insignia «TEST». El restaurante lo acepta, lo marca listo y lo termina con «Finish the test». No se cobra nada, no se manda repartidor y no cuenta en las ventas. Vive en su propia tabla, fuera de la conciliación y de los pagos.
 2. **Cliente: se llega hasta la hoja de pago y se cierra sin pagar.** Así lo dicen las notas para el revisor desde el 31 oct: «Paying is optional for review: everything up to the payment sheet can be reviewed without a charge». Las compras son bienes físicos y servicios entregados en persona, por eso van con Stripe y no con las compras dentro de la app de Apple.
-3. **Driver: sin oferta real en el video.** Una oferta solo existe cuando hay un pedido pagado en la zona. El video muestra conectarse, el mapa con las zonas, las ganancias y la billetera, y las notas lo explican. Si Gerencia quiere que el video muestre una oferta, el camino como los grandes es una «entrega de práctica» del repartidor, con su propia tabla, sin dinero, igual que el pedido de prueba del restaurante. Es una función nueva: se haría con su ficha REA y su candado, solo si Gerencia lo ordena.
+3. **Driver: entrega de práctica** (C-ENTREGA-PRACTICA, ordenada por Gerencia el 3 nov). El «Send a test order» de la cuenta de revisión del restaurante, una vez aceptado, le llega como oferta SOLO a la cuenta de revisión del repartidor, con $0.00 y la nota «Practice delivery: nothing is charged or paid». Se acepta, se recoge y se entrega igual que una de verdad, sin cobro, sin pago y fuera del dinero.
 
 ## Video 1: Divoox (clientes), ícono rojo
 
@@ -32,8 +32,9 @@ Producción cobra con Stripe en vivo, y la tarjeta de prueba no funciona ahí. P
 2. **«New here? Create your account»** → nombre, correo nuevo, celular y clave → aceptar los términos → **«Create account»** → mostrar el primer paso del alta (vehículo y documentos), sin datos reales.
 3. **«Profile»** → **«Sign out»** → **«Sign in»** con la cuenta de revisión del repartidor.
 4. Aceptar los permisos de ubicación cuando la app los explique → tocar **«Offline · Tap to become available»** → queda «Online: receiving orders» y se ve el mapa.
-5. Pestaña **«Earnings»** (Today, Week, Month) → la billetera: **«See my wallet and activity»**.
-6. **«Profile»** → **«Sign out»** → entrar con la cuenta nueva del paso 2 → **«⋮»** junto a «Your account» → **«Delete account»** → escribir **DELETE** → **«Delete my account»**.
+5. **La entrega de práctica:** en la Mac, con el panel del restaurante de revisión abierto, tocar **«Send a test order»** y **«Accept order»**. En el iPhone llega la oferta con $0.00 → **«Accept»** → **«Take a photo of the order»** (recoger) → sale en camino → **«Take the delivery photo»** (entregar). En la práctica no hace falta estar en el restaurante ni en la puerta. Si el restaurante todavía no marcó **«Mark as ready»**, se marca en la Mac.
+6. Pestaña **«Earnings»** (Today, Week, Month) → la billetera: **«See my wallet and activity»**.
+7. **«Profile»** → **«Sign out»** → entrar con la cuenta nueva del paso 2 → **«⋮»** junto a «Your account» → **«Delete account»** → escribir **DELETE** → **«Delete my account»**.
 
 ## Video 3: Divoox Restaurants (restaurantes), ícono negro
 
