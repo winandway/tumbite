@@ -1,5 +1,6 @@
 import type { Env } from './env';
 import { anotarEvento } from './manager';
+import { reembolsoConfirmado } from './reembolsoStripe';
 import { crearStripe } from './stripe';
 import { ErrorDatos } from './validar';
 
@@ -52,14 +53,17 @@ export async function devolverParcial(
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) throw new ErrorDatos('Stripe no está configurado.', undefined, 409);
   const devId = crypto.randomUUID();
-  const reembolso = await stripe.post<{ id: string }>(
-    '/refunds',
+  // C-DEVOLUCION-SIN-ID: la clave y los datos del reintento son idénticos (nada al azar en el
+  // cuerpo), así Stripe devuelve el mismo reembolso y nunca dos. Sin su id no se escribe nada.
+  const clave = `devolucion-${p.pedidoId}-${Number(f.n) + 1}`;
+  const reembolsoId = await reembolsoConfirmado(
+    stripe,
     {
       payment_intent: String(f.stripe_pago),
       amount: p.monto,
-      metadata: { pedido_id: p.pedidoId, devolucion: devId },
+      metadata: { pedido_id: p.pedidoId, devolucion: clave },
     },
-    `devolucion-${p.pedidoId}-${Number(f.n) + 1}`,
+    clave,
   );
   const cargado =
     p.cargarA === 'restaurante'
@@ -72,7 +76,7 @@ export async function devolverParcial(
       .prepare(
         'INSERT INTO devoluciones (id, pedido_id, monto, motivo, cargar_a, actor_id, stripe_reembolso) VALUES (?, ?, ?, ?, ?, ?, ?)',
       )
-      .bind(devId, p.pedidoId, p.monto, p.motivo, p.cargarA, p.actorId, reembolso.id),
+      .bind(devId, p.pedidoId, p.monto, p.motivo, p.cargarA, p.actorId, reembolsoId),
     ...(cargado
       ? [
           db
@@ -94,7 +98,7 @@ export async function devolverParcial(
     'devolucion_parcial',
     `${p.monto} · ${p.cargarA} · ${p.motivo}`,
   );
-  return { devolucionId: devId, reembolso: reembolso.id };
+  return { devolucionId: devId, reembolso: reembolsoId };
 }
 
 export type ConfigQuejas = { reembolsoAuto: boolean; topeCentavos: number };

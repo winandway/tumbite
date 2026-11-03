@@ -591,6 +591,57 @@ describe('C-FIN-RESERVAS y C-FIN-COMISION · reservas y comisiones en las rutas'
 });
 
 describe('C-FIN-REEMBOLSOS y C-FIN-DISPUTAS · reversiones sin saldos negativos', () => {
+  it('LAN-1 · C-DEVOLUCION-SIN-ID: Stripe sin id, con error o sin respuesta → 503, ni auditoría ni descuento; el reintento da un solo reembolso', async () => {
+    const { m, admin, e } = await escenario();
+    const r = await recargar(m, e, 5000);
+    await confirmarPago(m, r.pi);
+    const simulado = globalThis.fetch;
+    const hechos = new Map<string, string>();
+    let modo: 'sinId' | 'error' | 'perdida' | 'ok' = 'sinId';
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (new URL(url).pathname !== '/v1/refunds') return simulado(url, init);
+      if (modo === 'error') return Response.json({ error: { message: 'x' } }, { status: 500 });
+      const clave = new Headers(init?.headers).get('idempotency-key') ?? '';
+      if (!hechos.has(clave)) hechos.set(clave, `re_lan1_${hechos.size + 1}`);
+      if (modo === 'perdida') throw new TypeError('fetch failed');
+      return Response.json(modo === 'sinId' ? {} : { id: hechos.get(clave) });
+    });
+    const pedir = () =>
+      llamar(
+        m,
+        'POST',
+        `/datos/admin/finanzas/recargas/${r.recargaId}/reembolsar`,
+        { monto: 2000, motivo: 'pedido por la empresa', clave: 'clave-segura-1' },
+        admin.token,
+      );
+    const auditoria = async () =>
+      (await m.DB.prepare(
+        "SELECT COUNT(*) AS n FROM finanzas_auditoria WHERE accion = 'recarga.reembolso_pedido'",
+      ).first<{ n: number }>())!.n;
+    for (const x of ['sinId', 'error', 'perdida'] as const) {
+      modo = x;
+      const f = await pedir();
+      expect(f.estado, x).toBe(503);
+      expect(f.datos.error).toMatch(
+        /Stripe no confirmó la devolución|Stripe didn’t confirm the refund/,
+      );
+      expect(await auditoria()).toBe(0);
+      expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 5000 });
+    }
+    modo = 'ok';
+    expect((await pedir()).estado).toBe(200);
+    expect(hechos.size).toBe(1);
+    expect(await auditoria()).toBe(1);
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 3000, deuda: 0 });
+    // El aviso de Stripe del mismo reembolso no descuenta otra vez.
+    await aviso(m, 'charge.refunded', {
+      id: 'ch_l1',
+      payment_intent: r.pi.id,
+      amount_refunded: 2000,
+    });
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 3000, deuda: 0 });
+  });
+
   it('reembolso desde el superadmin (con contraseña) y su aviso posterior no descuentan dos veces', async () => {
     const { m, admin, e } = await escenario();
     const r = await recargar(m, e, 5000);

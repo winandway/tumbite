@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { CUENTA_TUMBITE, sentenciaLibro } from '../internacional/libro';
 import { notificar } from '../notificaciones';
+import { reembolsoConfirmado } from '../reembolsoStripe';
 import { type Stripe, crearStripe } from '../stripe';
 import { ErrorDatos } from '../validar';
 import { ahoraSql, sentenciaAuditoriaFin } from './politicas';
@@ -559,8 +560,10 @@ export async function reembolsarRecarga(
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) throw new ErrorDatos('Los pagos no están configurados todavía.', undefined, 503);
   const total = r.reembolsado + p.monto;
-  await stripe.post(
-    '/refunds',
+  // C-DEVOLUCION-SIN-ID: sin el id del reembolso no se audita ni se descuenta nada; el reintento
+  // (misma clave, mismos datos) da el mismo reembolso, y si ya se hizo, el aviso lo descuenta.
+  await reembolsoConfirmado(
+    stripe,
     {
       payment_intent: r.stripe_pi,
       amount: p.monto,

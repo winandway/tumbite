@@ -463,6 +463,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Este pedido ya no se puede cancelar.', 'This order can no longer be canceled.'],
   ['No pudimos hacer la devolución en este momento.', 'We couldn’t process the refund right now.'],
   ['Stripe no confirmó la devolución.', 'Stripe didn’t confirm the refund.'],
+  // C-DEVOLUCION-SIN-ID
+  [
+    'Stripe no confirmó la devolución. Intenta otra vez: el reintento nunca devuelve dos veces.',
+    'Stripe didn’t confirm the refund. Try again: retrying never refunds twice.',
+  ],
+  [
+    'Stripe no aceptó la devolución. Revisa el monto y el cobro en Stripe.',
+    'Stripe didn’t accept the refund. Check the amount and the charge in Stripe.',
+  ],
   [
     'Elige el producto que quieres si este no está (otro distinto).',
     'Choose the product you want if this one is out (a different one).',
