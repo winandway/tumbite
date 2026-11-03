@@ -102,12 +102,34 @@ describe('Docs públicos', () => {
   });
 
   it('ninguna guía sin captura (regla de Richard, 1 nov 2026), en los dos idiomas', () => {
-    // Las únicas que esperan su foto real: se toman del sitio de pruebas al publicar (FILA, BRE-3b, BRE-4b, BRE-5b y BRE-6b).
+    // Ninguna espera su foto: BRE-3b a BRE-6b y CON-6 ya tienen las reales del sitio de pruebas (2 nov 2026).
     const ESPERAN = new Set<string>([]);
     for (const i of ['es', 'en'] as const)
       for (const s of DOCS[i])
         for (const g of s.guias)
           if (!ESPERAN.has(`${s.id}/${g.id}`))
             expect(g.capturas?.length ?? 0, `${i} ${s.id}/${g.id}`).toBeGreaterThan(0);
+  });
+
+  it('ninguna guía muestra una maqueta: solo capturas reales de la app (C-DOCS-SIN-MAQUETAS)', () => {
+    // Las maquetas de promociones y modo destino (BRE-R2) se cambiaron por las reales en BRE-5b y BRE-6b.
+    for (const i of ['es', 'en'] as const)
+      for (const s of DOCS[i])
+        for (const g of s.guias)
+          for (const c of g.capturas ?? [])
+            expect(c.src, `${i} ${s.id}/${g.id}`).not.toMatch(/maqueta/);
+  });
+
+  it('promociones y modo destino llevan sus capturas reales (BRE-5b, BRE-6b)', () => {
+    for (const i of ['es', 'en'] as const) {
+      const de = (id: string) =>
+        (DOCS[i].flatMap((s) => s.guias).find((x) => x.id === id)?.capturas ?? []).map(
+          (c) => c.src,
+        );
+      for (const n of ['restaurante-promociones', 'cliente-promo-lista', 'cliente-promo-carrito'])
+        expect(de('promotions')).toContain(`/docs/${n}-${i}.webp`);
+      for (const n of ['driver-modo-destino', 'driver-modo-destino-encendido'])
+        expect(de('destination-mode')).toContain(`/docs/${n}-${i}.webp`);
+    }
   });
 });

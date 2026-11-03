@@ -827,6 +827,11 @@ const es: SeccionDocs[] = [
             alt: 'El buscador de la app de Divoox con el filtro «Vegetariano» elegido y los platos vegetarianos que encontró.',
             pie: 'Con un filtro elegido, solo ves los platos que lo cumplen.',
           },
+          {
+            src: '/docs/cliente-promo-ficha-es.webp',
+            alt: 'El menú de un restaurante con las calorías junto al precio de cada plato, por ejemplo «$12.00 · 820 cal».',
+            pie: 'Si el restaurante las puso, ves las calorías junto al precio.',
+          },
         ],
         preguntas: [
           '¿Cómo encuentro platos veganos en Divoox?',
@@ -1345,6 +1350,11 @@ const es: SeccionDocs[] = [
             alt: 'Pedido entregado con la calificación de la comida y del repartidor con estrellas.',
             pie: 'Al llegar, calificas la comida y al repartidor por separado.',
           },
+          {
+            src: '/docs/cliente-gusto-plato-es.webp',
+            alt: 'Calificar el pedido entregado: cinco estrellas a la comida, los elogios para el restaurante y «¿Qué tal cada plato?» con «Me gustó» marcado en el plato.',
+            pie: 'Marca «Me gustó» o «No me gustó» en cada plato que pediste.',
+          },
         ],
         preguntas: [
           '¿Cómo califico la comida y al repartidor?',
@@ -1456,6 +1466,16 @@ const es: SeccionDocs[] = [
             alt: 'El pedido de prueba listo, con «Imprimir comanda» y el botón verde «Terminar la prueba».',
             pie: 'Listo: lo terminas con «Terminar la prueba». No sale repartidor.',
           },
+          {
+            src: '/docs/restaurante-app-prueba-nuevo-es.webp',
+            alt: 'El pedido de prueba en Inicio de la app del restaurante: «PRUEBA» con sus platos, el tiempo de preparación y «Aceptar pedido · 20 min».',
+            pie: 'En la app del restaurante, el pedido de prueba llega a Inicio como uno real.',
+          },
+          {
+            src: '/docs/restaurante-app-prueba-listo-es.webp',
+            alt: 'El pedido de prueba listo en la app: los pasos en verde hasta «Listo» y el botón verde «Terminar la prueba».',
+            pie: 'En la app también lo terminas con «Terminar la prueba».',
+          },
         ],
         preguntas: [
           '¿Cómo pruebo que me llegan los pedidos?',
@@ -1481,12 +1501,31 @@ const es: SeccionDocs[] = [
         titulo: 'Promociones que creas y pagas tú',
         resumen:
           'Arma tu propia promoción —un porcentaje de descuento, envío gratis o «gasta X y ahorra Y»— con fechas y tope de pedidos. Sale con su insignia en la app del cliente, se aplica sola y la pagas tú con lo que te toca de cada pedido.',
-        // MAQUETA fiel (BRE-R2): reemplazar por la captura real del panel en BRE-5b.
         capturas: [
           {
-            src: '/docs/maqueta-restaurante-promociones-es.webp',
-            alt: 'La pantalla Promociones del panel del restaurante: el formulario «Nueva promoción» con 20 % de descuento y tope de 5 dólares, y la lista «Tus promociones» con pedidos y lo que costó cada una.',
-            pie: 'Creas tu promoción a la izquierda y ves cómo le va a cada una a la derecha.',
+            src: '/docs/restaurante-promociones-es.webp',
+            alt: 'La pantalla Promociones del panel del restaurante: el formulario «Nueva promoción» con 20 % de descuento y un máximo de 5 dólares por pedido, y abajo «Tus promociones» con los pedidos y lo que te costó cada una.',
+            pie: 'En el panel creas tu promoción y abajo ves cómo le va a cada una.',
+          },
+          {
+            src: '/docs/restaurante-app-promociones-es.webp',
+            alt: 'Promociones en la app del restaurante: el tipo (porcentaje, envío gratis o gasta y ahorra), el descuento, el pedido mínimo, el máximo de pedidos y las fechas.',
+            pie: 'También la creas desde la app del restaurante: Más → Promociones.',
+          },
+          {
+            src: '/docs/cliente-promo-lista-es.webp',
+            alt: 'La lista de restaurantes de la app del cliente con la insignia verde «20 % de descuento» debajo del nombre del restaurante.',
+            pie: 'Tus clientes ven la insignia en la lista de restaurantes,',
+          },
+          {
+            src: '/docs/cliente-promo-ficha-es.webp',
+            alt: 'La página del restaurante en la app del cliente con la insignia «20 % de descuento» arriba del menú.',
+            pie: 'en tu página,',
+          },
+          {
+            src: '/docs/cliente-promo-carrito-es.webp',
+            alt: 'El resumen del carrito: comida 20 dólares, «20 % de descuento» menos 4 dólares, envío, tarifa de servicio, propina y total.',
+            pie: 'y en el carrito, donde el descuento se resta solo.',
           },
         ],
         preguntas: [
@@ -2340,6 +2379,11 @@ const es: SeccionDocs[] = [
             alt: 'Tablero del restaurante en Divoox con pedidos esperando, ventas de 7 y 30 días, lo que recibe, ticket promedio, platos más vendidos, tiempo real de cocina y calificación.',
             pie: 'Tu tablero al entrar al panel: lo importante del negocio en una sola pantalla.',
           },
+          {
+            src: '/docs/restaurante-planilla-pedidos-es.webp',
+            alt: '«Descargar tus pedidos» al final del tablero del panel: las fechas desde y hasta y el botón «Descargar planilla».',
+            pie: 'Eliges las fechas y te llevas la planilla para Excel, Numbers o Google Sheets.',
+          },
         ],
         preguntas: ['¿Dónde veo cuánto vendí hoy?'],
         pasos: [
@@ -2431,16 +2475,15 @@ const es: SeccionDocs[] = [
         titulo: 'Modo destino: pedidos de camino a casa',
         resumen:
           'Pon tu destino —tu casa, por ejemplo— y Divoox Driver solo te ofrece pedidos cuya entrega te acerca. Lo puedes usar dos veces al día y se apaga solo cuando llegas.',
-        // MAQUETA fiel (BRE-R2): reemplazar por la captura real de Divoox Driver en BRE-6b.
         capturas: [
           {
-            src: '/docs/maqueta-driver-modo-destino-es.webp',
-            alt: 'La tarjeta «Modo destino» en Inicio de Divoox Driver, con la casilla «Tu destino», los usos que quedan hoy y el botón «Ir hacia allá».',
+            src: '/docs/driver-modo-destino-es.webp',
+            alt: 'Inicio de Divoox Driver con la tarjeta «Modo destino» debajo del mapa: la casilla «Tu destino», el botón «Ir hacia allá» y «Te quedan 2 usos hoy».',
             pie: 'Escribe tu destino, elígelo de la lista y toca «Ir hacia allá».',
           },
           {
-            src: '/docs/maqueta-driver-modo-destino-encendido-es.webp',
-            alt: 'La tarjeta «Modo destino» encendida: «Solo pedidos hacia» la dirección elegida, un uso restante y el botón «Apagar».',
+            src: '/docs/driver-modo-destino-encendido-es.webp',
+            alt: 'La tarjeta «Modo destino» encendida: «Solo pedidos hacia» la dirección elegida, el botón «Apagar» y «Te queda 1 uso hoy».',
             pie: 'Encendido, solo te llegan pedidos hacia tu destino. Lo apagas cuando quieras.',
           },
         ],
@@ -2832,6 +2875,11 @@ const es: SeccionDocs[] = [
             alt: 'Pestaña Ganancias de la app de repartidores con el total del periodo separado en pago base, bonos y propinas, y un pedido con su desglose abierto.',
             pie: 'Cada pedido con su pago base, su bono y su propina.',
           },
+          {
+            src: '/docs/driver-ganancias-planilla-es.webp',
+            alt: 'Ganancias en Divoox Driver: pago base, propinas y total del periodo, el botón «Exportar en planilla (CSV)» y cada entrega con «Ver desglose».',
+            pie: '«Exportar en planilla (CSV)» manda tus entregas a tu correo, tus notas o tus archivos.',
+          },
         ],
         preguntas: [
           '¿Cómo se calcula lo que gano por pedido?',
@@ -3189,6 +3237,11 @@ const es: SeccionDocs[] = [
             src: '/docs/driver-seguridad-es.webp',
             alt: 'La pantalla «Seguridad» de Divoox Driver con el botón de emergencia, compartir el recorrido y reportar un incidente.',
             pie: 'Desde «Seguridad» pides ayuda, compartes tu recorrido o reportas un incidente.',
+          },
+          {
+            src: '/docs/driver-seguridad-auditiva-es.webp',
+            alt: 'Seguridad en Divoox Driver: el botón de emergencia y el interruptor «Tengo sordera o dificultad auditiva», con lo que cambia al encenderlo.',
+            pie: 'Enciéndelo y el cliente y el restaurante sabrán que deben escribirte por el chat.',
           },
         ],
         preguntas: ['¿Qué hago si tengo una emergencia repartiendo?', '¿Cómo comparto dónde voy?'],
@@ -5165,6 +5218,11 @@ const en: SeccionDocs[] = [
             alt: 'The Divoox app search with the “Vegetarian” filter on and the vegetarian dishes it found.',
             pie: 'With a filter on, you only see the dishes that match it.',
           },
+          {
+            src: '/docs/cliente-promo-ficha-en.webp',
+            alt: 'A restaurant menu with calories next to each dish’s price, for example “$12.00 · 820 cal.”',
+            pie: 'If the restaurant added them, you see calories next to the price.',
+          },
         ],
         preguntas: [
           'How do I find vegan dishes on Divoox?',
@@ -5675,6 +5733,11 @@ const en: SeccionDocs[] = [
             alt: 'Delivered order with star ratings for the food and the driver.',
             pie: 'When it arrives, you rate the food and the driver separately.',
           },
+          {
+            src: '/docs/cliente-gusto-plato-en.webp',
+            alt: 'Rating a delivered order: five stars for the food, compliments for the restaurant, and “How was each item?” with “Liked it” marked on the item.',
+            pie: 'Mark “Liked it” or “Didn’t like it” on each item you ordered.',
+          },
         ],
         preguntas: [
           'How do I rate the food and the driver?',
@@ -5786,6 +5849,16 @@ const en: SeccionDocs[] = [
             alt: 'The ready test order, with “Print ticket” and the green “Finish the test” button.',
             pie: 'Ready: wrap it up with “Finish the test.” No driver is sent.',
           },
+          {
+            src: '/docs/restaurante-app-prueba-nuevo-en.webp',
+            alt: 'The test order on Home in the restaurant app: “TEST” with its items, the prep time, and “Accept order · 20 min.”',
+            pie: 'In the restaurant app, the test order lands on Home just like a real one.',
+          },
+          {
+            src: '/docs/restaurante-app-prueba-listo-en.webp',
+            alt: 'The ready test order in the app: the steps in green up to “Ready” and the green “Finish the test” button.',
+            pie: 'In the app, you also wrap it up with “Finish the test.”',
+          },
         ],
         preguntas: [
           'How do I check that orders reach me?',
@@ -5814,9 +5887,29 @@ const en: SeccionDocs[] = [
         // MOCKUP (BRE-R2): replace with the real dashboard capture in BRE-5b.
         capturas: [
           {
-            src: '/docs/maqueta-restaurante-promociones-en.webp',
-            alt: 'The restaurant dashboard Promotions screen: the “New promotion” form with 20% off capped at $5, and the “Your promotions” list with orders and what each one cost.',
-            pie: 'Create your promotion on the left and see how each one is doing on the right.',
+            src: '/docs/restaurante-promociones-en.webp',
+            alt: 'The Promotions screen in the restaurant dashboard: the “New promotion” form with 20% off and a 5-dollar maximum per order, and below, “Your promotions” with the orders and what each one cost you.',
+            pie: 'Create your promotion in the dashboard and see how each one is doing below.',
+          },
+          {
+            src: '/docs/restaurante-app-promociones-en.webp',
+            alt: 'Promotions in the restaurant app: the type (percentage off, free delivery, or spend and save), the discount, the minimum order, the maximum orders, and the dates.',
+            pie: 'You can also create it from the restaurant app: More → Promotions.',
+          },
+          {
+            src: '/docs/cliente-promo-lista-en.webp',
+            alt: 'The restaurant list in the customer app with the green “20% off” badge under the restaurant’s name.',
+            pie: 'Your customers see the badge in the restaurant list,',
+          },
+          {
+            src: '/docs/cliente-promo-ficha-en.webp',
+            alt: 'The restaurant page in the customer app with the “20% off” badge above the menu.',
+            pie: 'on your page,',
+          },
+          {
+            src: '/docs/cliente-promo-carrito-en.webp',
+            alt: 'The cart summary: food 20 dollars, “20% off” minus 4 dollars, delivery, service fee, tip, and total.',
+            pie: 'and in the cart, where the discount comes off automatically.',
           },
         ],
         preguntas: [
@@ -6661,6 +6754,11 @@ const en: SeccionDocs[] = [
             alt: 'Divoox restaurant dashboard showing orders waiting, 7- and 30-day sales, payout, average order, best sellers, real kitchen time, and rating.',
             pie: 'Your dashboard when you sign in: the essentials of your business on one screen.',
           },
+          {
+            src: '/docs/restaurante-planilla-pedidos-en.webp',
+            alt: '“Download your orders” at the bottom of the dashboard: the start and end dates and the “Download spreadsheet” button.',
+            pie: 'Pick the dates and take the spreadsheet to Excel, Numbers, or Google Sheets.',
+          },
         ],
         preguntas: ['Where can I see how much I sold today?'],
         pasos: [
@@ -6754,13 +6852,13 @@ const en: SeccionDocs[] = [
         // MOCKUP (BRE-R2): replace with the real Divoox Driver capture in BRE-6b.
         capturas: [
           {
-            src: '/docs/maqueta-driver-modo-destino-en.webp',
-            alt: 'The “Destination mode” card on the Divoox Driver Home screen, with the “Your destination” field, the uses left today and the “Head there” button.',
-            pie: 'Type your destination, pick it from the list and tap “Head there.”',
+            src: '/docs/driver-modo-destino-en.webp',
+            alt: 'Divoox Driver Home with the “Destination mode” card under the map: the “Your destination” box, the “Head there” button, and “2 uses left today.”',
+            pie: 'Type your destination, pick it from the list, and tap “Head there.”',
           },
           {
-            src: '/docs/maqueta-driver-modo-destino-encendido-en.webp',
-            alt: 'The “Destination mode” card turned on: “Only orders toward” the chosen address, one use left and the “Turn off” button.',
+            src: '/docs/driver-modo-destino-encendido-en.webp',
+            alt: 'The “Destination mode” card turned on: “Only orders toward” the chosen address, the “Turn off” button, and “1 use left today.”',
             pie: 'When it’s on, you only get orders toward your destination. Turn it off anytime.',
           },
         ],
@@ -7147,6 +7245,11 @@ const en: SeccionDocs[] = [
             alt: 'Earnings tab in the driver app with the period total split into base pay, bonuses, and tips, and an order with its breakdown open.',
             pie: 'Every order with its base pay, bonus, and tip.',
           },
+          {
+            src: '/docs/driver-ganancias-planilla-en.webp',
+            alt: 'Earnings in Divoox Driver: base pay, tips, and the period total, the “Export as a spreadsheet (CSV)” button, and each delivery with “See breakdown.”',
+            pie: '“Export as a spreadsheet (CSV)” sends your deliveries to your email, notes, or files.',
+          },
         ],
         preguntas: [
           'How is my pay per order calculated?',
@@ -7500,6 +7603,11 @@ const en: SeccionDocs[] = [
             src: '/docs/driver-seguridad-en.webp',
             alt: 'The “Safety” screen in Divoox Driver with the emergency button, share my trip, and report an incident.',
             pie: 'From “Safety” you get help, share your trip, or report an incident.',
+          },
+          {
+            src: '/docs/driver-seguridad-auditiva-en.webp',
+            alt: 'Safety in Divoox Driver: the emergency button and the “I’m deaf or hard of hearing” switch, with what changes when you turn it on.',
+            pie: 'Turn it on and customers and restaurants will know to text you in the chat.',
           },
         ],
         preguntas: ['What do I do in an emergency while delivering?', 'How do I share where I am?'],
