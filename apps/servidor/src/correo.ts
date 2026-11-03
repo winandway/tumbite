@@ -1,4 +1,4 @@
-import { MARCA } from '@tumbite/compartido';
+import { CORREOS_SOPORTE, MARCA } from '@tumbite/compartido';
 import type { Env } from './env';
 
 /**
@@ -124,7 +124,9 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
     subject: correo.asunto,
     text: correo.texto,
     html: correo.html ?? aHtml(correo.texto, correo.idioma, correo.imagen),
-    ...(correo.responderA ? { reply_to: { address: correo.responderA } } : {}),
+    // C-CORREO-RESPONDER-A: divoox.com no recibe correo (sin MX); las respuestas van al buzón
+    // de soporte que sí recibe, salvo que el correo pida otro.
+    reply_to: { address: correo.responderA ?? CORREOS_SOPORTE.divoox },
   };
   let res: Response;
   try {

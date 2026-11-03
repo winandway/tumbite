@@ -2656,3 +2656,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba (comprobada en rojo):** `apps/servidor/src/rutas/ocupadoEnRuta.test.ts`: sin la lectura de `conductor_ocupacion` falla («expected null to be 'ruta_flex'»).
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/rutas/ocupadoEnRuta.test.ts`. En pruebas: si una oferta no le llega al repartidor demo, mirar primero `GET /datos/v1/flex/conductor/rutas` con su sesión (una ruta en `asignada`, `aceptada`, `en_carga` o `en_curso` lo ocupa).
 - **Qué NO tocar:** la fila de `conductor_ocupacion` sigue siendo la única verdad de «ocupado» para el reparto y para la app; no se calcula aparte en la app.
+
+## C-CORREO-RESPONDER-A (2 nov 2026). Todos los países.
+
+- **Qué se rompía:** divoox.com no tiene registro MX; las respuestas de un cliente a support@divoox.com (avisos «Te respondimos tu caso») no llegaban a nadie (Gmail: 4.4.1, se agota el tiempo).
+- **Arreglo:** `enviarCorreo` (apps/servidor/src/correo.ts) pone siempre `reply_to` = `CORREOS_SOPORTE.divoox` (soporte+divoox@windoce.com), salvo que el correo pida otro con `responderA`.
+- **Candado:** apps/servidor/src/correoResponderA.test.ts (rojo sin el arreglo).
+- **Falta (cuenta del dominio):** activar la recepción de correo de divoox.com (enrutamiento al buzón de soporte) para que también lleguen los correos escritos a mano a support@divoox.com.
