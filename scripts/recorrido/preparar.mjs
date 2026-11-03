@@ -84,6 +84,9 @@ writeFileSync(
     'SELFIE_CONTROL_SIEMPRE=1',
     // Tiendas: encendidas en el servidor local para probar la compra con el Stripe simulado.
     'TIENDAS_LOCAL=1',
+    // SIG-8 (C-SERVICIOS-RECORRIDO-LOCAL): el servidor local declara los servicios en prueba como el
+    // sitio de pruebas; si no, cada arranque nuevo apagaba Carro en medio de su prueba.
+    'SERVICIOS_PRUEBA_LOCAL=1',
     // El recorrido corre a cualquier hora: no lo frena la hora legal del alcohol (C-ALCOHOL-HORARIO).
     'ALCOHOL_SIN_HORARIO=1',
     // Flex · Fase 5: con el secreto del reloj, el enlace «confirma dónde recibes» es estable.

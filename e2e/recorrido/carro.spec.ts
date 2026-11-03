@@ -39,9 +39,18 @@ const sql = (comando: string): Record<string, unknown>[] => {
   return (JSON.parse(salida) as { results: Record<string, unknown>[] }[])[0]?.results ?? [];
 };
 
+// SIG-8: la prueba quita los requisitos de Carro para habilitar al conductor sin documentos reales;
+// se devuelven los de fábrica (schema.sql) antes de encenderlo y al terminar. Sin esto, una segunda
+// corrida contra la misma base no podía encenderlo (la base exige el piso de pasajeros).
+const REQUISITOS_CARRO = `INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) VALUES
+  ('carro', 'identidad', 1), ('carro', 'antecedentes_pasajeros', 1), ('carro', 'historial_manejo', 1),
+  ('carro', 'licencia', 1), ('carro', 'edad_minima_21', 1), ('carro', 'seguro_pasajeros', 1),
+  ('carro', 'inspeccion_vehiculo', 1)`;
+
 // Al terminar, carro queda como estaba (apagado): los demás recorridos esperan verlo «en construcción».
 test.afterAll(() => {
   if (STAGING) return;
+  sql(REQUISITOS_CARRO);
   sql(`UPDATE servicios_zona SET estado = 'proximamente' WHERE servicio_id = 'carro'`);
   sql(`UPDATE servicios SET estado = 'proximamente' WHERE id = 'carro'`);
   sql(`DELETE FROM servicios_implementados WHERE servicio_id = 'carro'`);
@@ -70,6 +79,7 @@ test('un viaje en Carro de punta a punta: código sin casco (es)', async ({ brow
   const h = (t: string) => ({ authorization: `Bearer ${t}` });
   const admin = await cuenta('admin', 'Soporte Carro');
   sql(`UPDATE usuarios SET rol = 'admin' WHERE id = '${admin.usuario.id}'`);
+  sql(REQUISITOS_CARRO);
   sql(`INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('carro', 1)`);
   sql(`UPDATE servicios SET estado = 'disponible' WHERE id = 'carro'`);
   sql(

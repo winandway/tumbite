@@ -22,7 +22,12 @@ import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
 import { cabecerasSeguridad, limiteIntentos, limiteIntentosPersistente } from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
-import { asegurarEsquema, columnasFaltantes, ultimoErrorEsquema } from './esquema';
+import {
+  asegurarEsquema,
+  columnasFaltantes,
+  entornoDeServicios,
+  ultimoErrorEsquema,
+} from './esquema';
 import { cuentas } from './rutas/cuentas';
 import { catalogo } from './rutas/catalogo';
 import { dinero } from './rutas/dinero';
@@ -192,7 +197,11 @@ app.use('/datos/*', (c, next) =>
     : versionMinimaApp(c, next),
 );
 app.use('/datos/*', async (c, next) => {
-  if (c.env.DB) await asegurarEsquema(c.env.DB, entornoDe(c.req.url));
+  if (c.env.DB)
+    await asegurarEsquema(
+      c.env.DB,
+      entornoDeServicios(entornoDe(c.req.url), c.env.SERVICIOS_PRUEBA_LOCAL),
+    );
   await next();
 });
 app.use('/datos/*', cargarSesion);

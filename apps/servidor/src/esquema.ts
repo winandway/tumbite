@@ -301,6 +301,19 @@ export function serviciosImplementados(entorno: Entorno | null): Map<string, num
     : SERVICIOS_IMPLEMENTADOS;
 }
 
+/**
+ * C-SERVICIOS-RECORRIDO-LOCAL (SIG-8): el servidor LOCAL del recorrido (localhost con
+ * SERVICIOS_PRUEBA_LOCAL=1) declara los servicios en prueba igual que el sitio de pruebas. Sin esto,
+ * cada arranque nuevo del servidor local suspendía Carro, Moto y Envíos aunque una prueba los acabara
+ * de encender («servicio no disponible en tu ciudad»). En un sitio publicado no cambia nada.
+ */
+export function entornoDeServicios(
+  entorno: Entorno | null,
+  pruebaLocal: string | undefined,
+): Entorno | null {
+  return entorno === 'local' && pruebaLocal === '1' ? 'pruebas' : entorno;
+}
+
 async function sincronizarServicios(db: D1Database, entorno: Entorno | null): Promise<void> {
   const hay = await db
     .prepare(
