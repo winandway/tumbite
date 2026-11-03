@@ -40,6 +40,7 @@ import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { kycAprobado } from './kyc';
 import { limitesDelDia } from './operacion';
+import { exigirFotoPropia } from '../fotoPropia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { avisoRestauranteNuevoAlAdmin, correoEstadoRestaurante } from '../avisos';
 import { minutosPausa } from '../pausa';
@@ -702,6 +703,8 @@ catalogo.put('/mi-restaurante', async (c) => {
   const db = base(c);
   const actual = await miRestaurante(db, u.id);
   if (actual) await exigirRolRestaurante(db, u.id, 'dueno');
+  // NXT-8x: la portada tiene que ser una foto que subió ESTE restaurante.
+  exigirFotoPropia(d.imagen, actual ? String(actual.id) : null);
   // Zona y celda del mapa salen de la ubicación del restaurante.
   const zona = d.lat != null && d.lng != null ? await zonaPara(db, d.lat, d.lng, false) : null;
   const zonaId = zona?.id ?? (actual?.zona_id as string | undefined) ?? ZONA_INICIAL;
@@ -829,6 +832,7 @@ async function exigirRolRestaurante(
 catalogo.post('/mi-restaurante/platos', async (c) => {
   const rid = await exigirMiRestaurante(c, 'manager');
   const d = await leerCuerpo(c, esquemaPlato);
+  exigirFotoPropia(d.imagen, rid);
   const id = nuevoId();
   await base(c)
     .prepare(
@@ -979,6 +983,7 @@ catalogo.post('/admin/restaurantes/:id/platos/importar', async (c) => {
 catalogo.put('/mi-restaurante/platos/:id', async (c) => {
   const rid = await exigirMiRestaurante(c, 'manager');
   const d = await leerCuerpo(c, esquemaPlato);
+  exigirFotoPropia(d.imagen, rid);
   const r = await base(c)
     .prepare(
       'UPDATE platos SET nombre_es=?, nombre_en=?, descripcion_es=?, descripcion_en=?, categoria=?, categoria_en=?, precio_centavos=?, disponible=?, imagen=?, requiere_edad=?, etiquetas=?, calorias=? WHERE id=? AND restaurante_id=? AND eliminado=0',

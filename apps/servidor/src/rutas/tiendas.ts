@@ -24,6 +24,7 @@ import { nuevoId } from '../cripto';
 import type { Env } from '../env';
 import { paisDeZona } from '../internacional/paises';
 import { type Variables, base } from '../sesion';
+import { exigirFotoPropia } from '../fotoPropia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { exigirMiRestaurante } from './catalogo';
 
@@ -201,10 +202,10 @@ type EntradaProducto = z.infer<typeof esquemaProducto>;
 const FOTO_PROPIA = /^\/media\/fotos\/([a-z0-9-]{1,64})\/[a-z0-9-]{1,64}\.(webp|jpg|png)$/;
 
 function revisar(d: EntradaProducto, comercioId?: string) {
-  // La foto subida tiene que ser de ESTA tienda: nadie usa la de otro comercio.
-  const propia = FOTO_PROPIA.exec(d.imagen);
-  if (propia && comercioId !== undefined && propia[1] !== comercioId)
-    throw new ErrorDatos('Esa foto no es de tu tienda. Súbela otra vez.', 'imagen', 422);
+  // La foto subida tiene que ser de ESTA tienda: nadie usa la de otro comercio (misma pieza que
+  // platos y portadas, C-TIENDAS-FOTO-PROPIA).
+  if (comercioId !== undefined)
+    exigirFotoPropia(d.imagen, comercioId, 'Esa foto no es de tu tienda. Súbela otra vez.');
   if (!d.nombreEs && !d.nombreEn) throw new ErrorDatos('Falta el nombre del producto.', 'nombreEs');
   if (RESTRICCIONES_BLOQUEADAS.includes(d.restriccion))
     throw new ErrorDatos(

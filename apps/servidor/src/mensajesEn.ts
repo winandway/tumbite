@@ -56,6 +56,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Adjunta una imagen JPG, PNG o WebP.', 'Attach a JPG, PNG or WebP image.'],
   ['Ese tamaño de foto no existe.', 'That photo size doesn’t exist.'],
   [
+    'Esa foto no es de tu negocio. Súbela otra vez.',
+    'That photo isn’t from your business. Upload it again.',
+  ],
+  [
     'Esa foto no es de tu tienda. Súbela otra vez.',
     'That photo isn’t from your store. Upload it again.',
   ],

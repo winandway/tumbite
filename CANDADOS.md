@@ -2951,3 +2951,15 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué faltaba (lo encontró el revisor):** (1) la verificación de identidad del panel no tenía prueba: volver a `accept="image/*"` o al `String(x)` del navegador dejaba todo en verde; (2) la prueba de las galerías no exigía calidad menor que 1 (en Android, con calidad 1 expo-image-picker copia el HEIC crudo).
 - **Qué se hizo:** `apps/panel/src/panel/VerificacionPanel.test.tsx` (es y en: la entrada acepta solo JPEG, PNG y WebP; un archivo que el navegador no abre y un `.HEIC` dan el aviso claro, nunca el texto del navegador, y no se sube nada). `apps/servidor/src/heicApps.test.ts` exige `quality: 0.x` en cada `launchImageLibraryAsync` (las que pasan por `selectorDeCapturas` lo toman de `elegirCapturas.ts`, que también se revisa).
 - **Comprobado en rojo el 3 nov:** con `accept="image/*"` caen las 2 del panel; con `String(x)` caen las 2; con `quality: 1` en la queja del cliente, en el plato del restaurante o en el selector de capturas, cae la de las galerías.
+
+## C-FOTOS-LIVIANAS · candado de la limpieza en los tamaños chicos (NXT-7x, 3 nov 2026). Todos los países.
+
+- **Qué faltaba (lo encontró el revisor):** el camino que guarda la tarjeta y la miniatura (`?de=…&tam=…` en `apps/servidor/src/rutas/fotos.ts`) no tenía prueba de C-FOTOS-SIN-METADATOS: cambiando `guardarFoto` por un `put` directo todo seguía en verde.
+- **Qué se hizo:** prueba «NXT-7x» en `rutas/fotos.test.ts`: se sube como miniatura y como tarjeta un WebP con bloques EXIF (GPS de Miami, modelo «PixelFone») y XMP, y `/media` tiene que entregarlo sin ellos. Comprobada en rojo el 3 nov con el `put` directo.
+
+## C-TIENDAS-FOTO-PROPIA para todos (NXT-8x, 3 nov 2026). Todos los países.
+
+- **Qué faltaba (lo encontró el revisor):** la regla «nadie usa la foto de otro comercio» vivía solo en los productos; un restaurante podía guardar en un plato o en su portada la foto que subió otro.
+- **Qué se hizo:** una sola pieza, `exigirFotoPropia` (`apps/servidor/src/fotoPropia.ts`), en crear y editar plato y en guardar el restaurante (`rutas/catalogo.ts`) y en los productos (`rutas/tiendas.ts`): 422 `campo: 'imagen'` con aviso es/en. Una cuenta sin restaurante tampoco estrena el suyo con la foto de otro.
+- **Pruebas (comprobadas en rojo el 3 nov con `catalogo.ts` anterior):** `apps/servidor/src/fotoPropia.test.ts`; las de productos siguen en `rutas/tiendas.test.ts`.
+- **Qué NO tocar:** toda ruta nueva que guarde una foto de un negocio pasa por `exigirFotoPropia`.
