@@ -11,12 +11,23 @@ if (!/staging\.tumbite\.com|tumbite-pruebas/.test(base)) {
   console.error('Solo se corre contra el sitio de pruebas.');
   process.exit(1);
 }
+// Un corte de red antes de la respuesta (ECONNRESET, pasa en GitHub) se reintenta hasta tres veces,
+// salvo en la carrera de S5, donde reintentar cambiaría lo que se mide: ahí el corte cuenta como error.
+const llamar = async (ruta, cuerpo, intento = 1) => {
+  try {
+    return await fetch(`${base}/datos/interno/diagnostico/${ruta}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-reloj-secreto': secreto },
+      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+    });
+  } catch (e) {
+    if (ruta === 's5/aceptar' || intento >= 3) throw e;
+    await new Promise((listo) => setTimeout(listo, 2000 * intento));
+    return llamar(ruta, cuerpo, intento + 1);
+  }
+};
 const pedir = async (ruta, cuerpo) => {
-  const r = await fetch(`${base}/datos/interno/diagnostico/${ruta}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-reloj-secreto': secreto },
-    body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
-  });
+  const r = await llamar(ruta, cuerpo);
   const datos = await r.json().catch(() => ({}));
   if (!r.ok) return { prueba: ruta, ok: false, error: `${r.status} ${JSON.stringify(datos)}` };
   return datos;
