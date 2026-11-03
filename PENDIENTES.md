@@ -2,6 +2,7 @@
 
 ## En cola (pedido por Richard el 23 oct 2026)
 
+- [ ] 👤 **Apple rechazó las tres apps de iPhone por «spam» (4.3 y 4.2.6), 3 nov 11:58:** Richard confirma que Divoox es producto propio de Windoce LLC y da el «sí» para mandar la respuesta escrita en docs/tiendas/RESPUESTA-APPLE-4.3-2026-11-03.md en cada envío (no se reenvían las apps). Todos los países.
 - [ ] 👤 **GitHub sin sesión en la computadora (2 nov, 12:40):** el token venció y `git push` y `gh` fallan; 18 cambios esperan subir (Equipo, red de seguridad, todo dentro de la app, referidos, arreglo de la publicación 299). Richard aprueba UNA vez el código que la IA le da en el chat (github.com/login/device). Todos los países.
 - [x] (23 oct, publicado con C-DOMINIO-DIVOOX; falta que Richard reenvíe el mapa 👤) **divoox.com en Google Search Console (Richard ya verificó el dominio):** quitar o redirigir los mapas del sitio viejos del dueño anterior (`/sitemap_index.xml` de 2024 y `http://www.divoox.com/sitemap.xml` de 2018), servir el nuestro en `https://divoox.com/sitemap.xml`, y que las direcciones canónicas apunten a divoox.com. Al terminar, avisarle a Richard para que vuelva a enviar el mapa del sitio.
 - [x] (23 oct, rama fase-divoox-fotos) **Portada más profesional:** menos rojo y más blanco y negro, con balance. Un banner delgado animado hecho con código, como un juego: pasa de derecha a izquierda una moto con su caja o un carro, con el anuncio y el logo de Divoox que se mueve. Va después de terminar la identidad visual.
