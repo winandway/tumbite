@@ -168,11 +168,15 @@ describe('recorrido y conciliación en staging', () => {
       propina?: { centavos: number; stripe: number; estado?: string; abonado: number };
       /** LAN-2x: la autorización vieja que se reemplazó al cambiar la dirección y su estado. */
       reautorizado?: { estado: string };
+      /** LAN-2z: varias autorizaciones reemplazadas, cada una con su estado en Stripe. */
+      reautorizados?: { viejo: string; estado: string }[];
     } = {},
   ) {
     vi.stubGlobal('fetch', async (url: string) => {
       const u = new URL(url);
       if (u.pathname === '/v1/refunds') return Response.json({ data: reembolsos });
+      const otra = op.reautorizados?.find((x) => u.pathname === `/v1/payment_intents/${x.viejo}`);
+      if (otra) return Response.json({ id: otra.viejo, status: otra.estado });
       if (u.pathname === '/v1/payment_intents/pi_viejo')
         return Response.json({ id: 'pi_viejo', status: op.reautorizado?.estado ?? 'canceled' });
       if (u.pathname === '/v1/payment_intents/pi_prop')
@@ -208,6 +212,15 @@ describe('recorrido y conciliación en staging', () => {
           "INSERT INTO devoluciones_ajuste (id, pedido_id, plato_id, monto, stripe_reembolso, clave) VALUES (?, 'zz-dual', 'pl', ?, ?, ?)",
         )
           .bind(`a-${re}`, monto, re, `ajuste-zz-dual-${re}`)
+          .run();
+      for (const [i, x] of (op.reautorizados ?? []).entries())
+        await m.DB.prepare(
+          "INSERT INTO bitacora_pedidos (pedido_id, evento, detalle) VALUES ('zz-dual', ?, ?)",
+        )
+          .bind(
+            `cobro_reautorizado:${x.viejo}`,
+            `${x.viejo}>${op.reautorizados![i + 1]?.viejo ?? 'pi_dual'}`,
+          )
           .run();
       if (op.reautorizado)
         await m.DB.prepare(
@@ -387,6 +400,29 @@ describe('recorrido y conciliación en staging', () => {
     const suelta = (await conciliarCon([], { reautorizado: { estado: 'requires_capture' } })).caso;
     expect(suelta.ok).toBe(false);
     expect(suelta.detalle).toContain('autorización vieja pi_viejo sin anular');
+  });
+
+  it('LAN-2z: con dos cambios seguidos, la conciliación revisa CADA autorización reemplazada', async () => {
+    expect(
+      (
+        await conciliarCon([], {
+          reautorizados: [
+            { viejo: 'pi_a', estado: 'canceled' },
+            { viejo: 'pi_b', estado: 'canceled' },
+          ],
+        })
+      ).caso.ok,
+    ).toBe(true);
+    const medio = (
+      await conciliarCon([], {
+        reautorizados: [
+          { viejo: 'pi_a', estado: 'canceled' },
+          { viejo: 'pi_b', estado: 'requires_capture' },
+        ],
+      })
+    ).caso;
+    expect(medio.ok).toBe(false);
+    expect(medio.detalle).toContain('autorización vieja pi_b sin anular');
   });
 
   it('NXT-2: un pedido pedido que no existe no pasa en silencio', async () => {

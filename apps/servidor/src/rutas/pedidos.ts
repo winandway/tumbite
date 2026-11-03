@@ -1981,7 +1981,9 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   // pedido apuntando a una autorización anulada). Queda anotada para que la conciliación compruebe
   // en Stripe que quedó anulada; si no se pudo, se ve en los errores del servidor.
   if (intentoNuevo) {
-    await anotarEvento(db, id, 'cobro_reautorizado', `${intento}>${intentoNuevo}`);
+    // LAN-2z: un registro por autorización reemplazada (la bitácora admite un evento por pedido y
+    // nombre): con dos cambios seguidos, la conciliación revisa en Stripe las DOS anuladas.
+    await anotarEvento(db, id, `cobro_reautorizado:${intento}`, `${intento}>${intentoNuevo}`);
     await stripeCobro
       ?.post(`/payment_intents/${intento}/cancel`, {}, `anula-${intento}`)
       .catch((e: unknown) =>

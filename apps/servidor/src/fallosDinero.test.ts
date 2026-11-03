@@ -354,11 +354,59 @@ describe('LAN-2 · C-DIRECCION-REAUTORIZA: cambio de dirección con la tarjeta y
     ).first<{ mensaje: string }>();
     expect(err?.mensaje).toContain('pi_sesion');
     const ev = await m.DB.prepare(
-      "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'cobro_reautorizado'",
+      "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento LIKE 'cobro_reautorizado%'",
     )
       .bind(id)
       .first<{ detalle: string }>();
     expect(ev?.detalle).toBe('pi_sesion>pi_nuevo');
+  });
+
+  it('LAN-2z: dos cambios seguidos que suben el total dejan anotada CADA autorización reemplazada', async () => {
+    // Stripe: cada reautorización devuelve un intento nuevo; el último vigente es el que se lee.
+    let n = 0;
+    const { m, cliente, pedir } = await escenario((url, init) => {
+      const metodo = init?.method ?? 'GET';
+      const leer = /\/payment_intents\/(pi_[a-z0-9]+)$/.exec(url);
+      if (leer && metodo === 'POST')
+        return Response.json({ error: { message: 'status of requires_capture' } }, { status: 400 });
+      if (leer && metodo === 'GET')
+        return Response.json({
+          id: leer[1],
+          status: 'requires_capture',
+          payment_method: 'pm_guardada',
+          customer: 'cus_1',
+        });
+      if (
+        /\/payment_intents$/.test(url) &&
+        metodo === 'POST' &&
+        String(init?.body).includes('off_session=true')
+      )
+        return Response.json({ id: `pi_reaut${++n}`, status: 'requires_capture' });
+      if (/\/cancel$/.test(url)) return Response.json({ status: 'canceled' });
+      return null;
+    });
+    const p = await pedir({ entrega: 'puerta' });
+    const id = p.datos.pedidoId as string;
+    await pagar(m, id);
+    const cambiar = (lat: number) =>
+      m.llamar(
+        'PATCH',
+        `/datos/pedidos/${id}/direccion`,
+        { direccion: `900 Calle ${lat}`, lat, lng: -80.195, aceptarTotal: true },
+        cliente.token,
+      );
+    const r1 = await cambiar(25.815);
+    expect(r1.estado).toBe(200);
+    const r2 = await cambiar(25.84);
+    expect(r2.estado).toBe(200);
+    expect(r2.datos.total, 'el total sube las dos veces').toBeGreaterThan(r1.datos.total);
+    expect((await fila(m, id))!.stripe_pago).toBe('pi_reaut2');
+    const { results } = await m.DB.prepare(
+      "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento LIKE 'cobro_reautorizado%' ORDER BY id",
+    )
+      .bind(id)
+      .all<{ detalle: string }>();
+    expect(results.map((r) => r.detalle)).toEqual(['pi_sesion>pi_reaut1', 'pi_reaut1>pi_reaut2']);
   });
 
   it('si el envío baja, no hace falta tocar Stripe: se capturará el total menor', async () => {

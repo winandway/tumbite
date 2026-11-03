@@ -1301,7 +1301,9 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
     // estar ANULADA en Stripe (si no, el cliente tiene dos retenciones).
     const { results: reaut } = await db
       .prepare(
-        "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'cobro_reautorizado'",
+        // LAN-2z: «cobro_reautorizado:<vieja>» (uno por autorización reemplazada) y el nombre
+        // anterior sin id, de los pedidos de antes del arreglo.
+        "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND (evento = 'cobro_reautorizado' OR evento LIKE 'cobro_reautorizado:%')",
       )
       .bind(f.id)
       .all<{ detalle: string }>();
