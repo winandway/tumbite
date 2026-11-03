@@ -301,11 +301,7 @@ describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
 
   it('HEIC sin datos ocultos sale idéntico; uno que no cuadra o con datos en otro archivo da el 415 claro', () => {
     const ftyp = caja('ftyp', [...txt('heic'), 0, 0, 0, 0]);
-    const sinOcultos = new Uint8Array([
-      ...ftyp,
-      ...caja('meta', caja('hdlr', [0, 0, 0, 0, ...txt('pict')], 0), 0),
-      ...caja('mdat', [1, 2, 3]),
-    ]);
+    const sinOcultos = heicConGps({ limpio: true });
     expect(limpiarFoto(sinOcultos, 'image/heic').bytes).toBe(sinOcultos);
     expect(() => limpiarFoto(heicConGps({ refExterna: true }), 'image/heic')).toThrow(/JPG/);
     const malos: [string, Uint8Array][] = [
@@ -348,5 +344,96 @@ describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
     const guardado = await bucket.get('casos/x/1');
     const bytes = new Uint8Array(await guardado!.arrayBuffer());
     expect(contiene(bytes, 'PixelFone')).toBe(false);
+  });
+
+  describe('NXT-4x · HEIC con lista blanca: lo que no es imagen sale en ceros o da el 415', () => {
+    const sinRastro = (b: Uint8Array) => {
+      for (const x of ['PixelFone', 'xmpmeta', 'GPSLatitude', 'LATITUD-OCULTA'])
+        expect(contiene(b, x), x).toBe(false);
+    };
+    const pegado = [...txt('LATITUD-OCULTA '), ...jpegConGps()];
+    const cajasArriba = (b: Uint8Array) => {
+      const v = new DataView(b.buffer, b.byteOffset);
+      const l: { tipo: string; ini: number; largo: number }[] = [];
+      for (let i = 0; i + 8 <= b.length;) {
+        const n = v.getUint32(i);
+        l.push({ tipo: String.fromCharCode(...b.subarray(i + 4, i + 8)), ini: i, largo: n });
+        if (n < 8) break;
+        i += n;
+      }
+      return l;
+    };
+
+    it('(1) cajas free/skip, un segundo mdat, mdat hasta el final y bytes de mdat sin ítem: en ceros, la imagen igual', () => {
+      const h = heicConGps();
+      const mdat = cajasArriba(h).at(-1)!;
+      const hasta0 = new Uint8Array([...h, ...pegado]);
+      hasta0.set([0, 0, 0, 0], mdat.ini);
+      const agrandado = new Uint8Array([...h, ...pegado]);
+      agrandado.set(be32(mdat.largo + pegado.length), mdat.ini);
+      const casos: [string, Uint8Array][] = [
+        ['free al final', new Uint8Array([...h, ...caja('free', pegado)])],
+        ['skip al final', new Uint8Array([...h, ...caja('skip', pegado)])],
+        ['segundo mdat', new Uint8Array([...h, ...caja('mdat', pegado)])],
+        ['mdat hasta el final', hasta0],
+        ['mdat agrandado', agrandado],
+      ];
+      for (const [nombre, b] of casos) {
+        const r = limpiarFoto(b, 'image/heic');
+        sinRastro(r.bytes);
+        expect(r.bytes.length, nombre).toBe(b.length);
+        expect(contiene(r.bytes, String.fromCharCode(0x12, 0x34, 0x56, 0x78, 0x9a)), nombre).toBe(
+          true,
+        );
+      }
+    });
+
+    it('(2) dentro de meta, iprp o ipco solo cajas conocidas: xml, uuid, free o una propiedad rara dan el 415', () => {
+      const oculto = txt('<x:xmpmeta>LATITUD-OCULTA</x:xmpmeta>');
+      for (const extraMeta of [
+        caja('xml ', oculto, 0),
+        caja('uuid', [...Array(16).fill(7), ...oculto]),
+        caja('free', oculto),
+        caja('grpl', oculto),
+      ])
+        expect(() => limpiarFoto(heicConGps({ extraMeta }), 'image/heic')).toThrow(/JPG/);
+      expect(() =>
+        limpiarFoto(heicConGps({ extraIpco: caja('udes', oculto, 0) }), 'image/heic'),
+      ).toThrow(/JPG/);
+      // Una caja de arriba que no está en la lista (una secuencia, un uuid) tampoco pasa.
+      for (const tipo of ['uuid', 'moov', 'udta'])
+        expect(
+          () => limpiarFoto(new Uint8Array([...heicConGps(), ...caja(tipo, oculto)]), 'image/heic'),
+          tipo,
+        ).toThrow(/JPG/);
+    });
+
+    it('(2b) los nombres de los ítems y del hdlr se borran', () => {
+      const h = heicConGps({ limpio: true });
+      const conNombre = new Uint8Array(h);
+      const hdlrNombre = String.fromCharCode(...h).indexOf('pict') + 4 + 12;
+      conNombre[hdlrNombre] = 0x41; // «A» en el nombre del hdlr
+      conNombre[hdlrNombre + 1] = 0x00;
+      const r = limpiarFoto(conNombre, 'image/heic');
+      expect(r.bytes[hdlrNombre]).toBe(0);
+    });
+
+    it('(3) iloc v0 y v2, infe v3 e iinf v1: se limpian igual', () => {
+      for (const op of [
+        { ilocVer: 0 as const },
+        { ilocVer: 2 as const },
+        { infeVer: 3 as const },
+        { iinfVer: 1 as const },
+        { ilocVer: 2 as const, infeVer: 3 as const, iinfVer: 1 as const, exifEnIdat: true },
+      ]) {
+        const r = limpiarFoto(heicConGps(op), 'image/heic');
+        sinRastro(r.bytes);
+        expect(r.gps?.lat, JSON.stringify(op)).toBeCloseTo(25.775, 3);
+      }
+    });
+
+    it('(3b) un Exif declarado sin su lugar en iloc da el 415 (no se sabe dónde vive)', () => {
+      expect(() => limpiarFoto(heicConGps({ exifSinIloc: true }), 'image/heic')).toThrow(/JPG/);
+    });
   });
 });

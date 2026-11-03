@@ -292,15 +292,44 @@ export const HEIC_SIN_LIMPIAR = () =>
   );
 
 /**
- * NXT-4 · HEIC/HEIF (ISO/IEC 23008-12, sobre el formato de cajas ISO BMFF). El iPhone guarda la
- * ubicación, el modelo y la hora en un «ítem» Exif y el XMP en un ítem «mime»; la caja `iinf` dice
- * qué ítems hay y la caja `iloc` dónde están sus bytes (en `mdat` o en `idat`). Aquí se buscan esos
- * ítems y sus bytes se BORRAN en el lugar (se llenan de ceros): la estructura queda igual, la
- * imagen y sus miniaturas no se tocan y los visores ignoran un Exif vacío. Se lee el GPS antes.
- * Todo lo que no cuadre (cajas que se salen del archivo, un ítem con sus datos en otro archivo,
- * versiones que no conocemos, una secuencia con `moov`) se rechaza con HEIC_SIN_LIMPIAR.
+ * NXT-4 y NXT-4x · HEIC/HEIF (ISO/IEC 23008-12, sobre las cajas de ISO BMFF). El iPhone guarda la
+ * ubicación, el modelo y la hora en un «ítem» Exif y el XMP en un ítem «mime»; `iinf` dice qué
+ * ítems hay e `iloc` dónde están sus bytes (en `mdat` o en `idat`).
+ *
+ * Regla de LISTA BLANCA (NXT-4x, lo devolvió el revisor): de todo el archivo solo sobrevive lo que
+ * la imagen necesita. Los bytes que no son de un ítem de imagen se llenan de ceros en una COPIA: los
+ * ítems Exif/XMP/uri, las cajas `free`/`skip`, todo lo de `mdat` (también un segundo `mdat` o uno
+ * «hasta el final») e `idat` que ningún ítem de imagen usa, los nombres de los ítems y del `hdlr`.
+ * Dentro de `meta`, de `iprp` y de `ipco` solo se aceptan las cajas conocidas, y las que solo llevan
+ * números tienen que medir justo lo que deben. Lo demás (y todo lo que no cuadre) da HEIC_SIN_LIMPIAR.
+ * La estructura y el largo no cambian, así los desplazamientos de `iloc` siguen valiendo.
  */
 const HEIF_ARRIBA = new Set(['ftyp', 'meta', 'mdat', 'free', 'skip']);
+const HEIF_META = new Set(['hdlr', 'pitm', 'iinf', 'iloc', 'iref', 'iprp', 'idat', 'dinf']);
+const HEIF_PROPIEDADES = new Set([
+  'hvcC',
+  'av1C',
+  'lhvC',
+  'ispe',
+  'colr',
+  'pixi',
+  'irot',
+  'imir',
+  'clap',
+  'auxC',
+  'clli',
+  'mdcv',
+  'cclv',
+  'amve',
+  'pasp',
+  'rloc',
+  'lsel',
+  'a1op',
+  'a1lx',
+  'oinf',
+  'tols',
+  'jpgC',
+]);
 const HEIF_OCULTOS = new Set(['Exif', 'mime', 'uri ']);
 type Caja = { tipo: string; ini: number; datos: number; fin: number };
 
@@ -327,71 +356,131 @@ function cajas(b: Uint8Array, ini: number, fin: number): Caja[] {
   return lista;
 }
 
+/** Fin del texto que empieza en `i` (sin contar el cero); sin cero antes de `fin`, no cuadra. */
+function finTexto(b: Uint8Array, i: number, fin: number) {
+  let j = i;
+  while (j < fin && b.at(j) !== 0) j++;
+  if (j >= fin) throw HEIC_SIN_LIMPIAR();
+  return j;
+}
+
 function limpiarHeif(b: Uint8Array): FotoLimpia {
   const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const no = (cond: boolean) => {
+    if (cond) throw HEIC_SIN_LIMPIAR();
+  };
+  const u16 = (o: number) => v.getUint16(o);
+  const u32 = (o: number) => v.getUint32(o);
   const arriba = cajas(b, 0, b.length);
-  if (arriba[0]?.tipo !== 'ftyp') throw HEIC_SIN_LIMPIAR();
-  if (arriba.some((c) => !HEIF_ARRIBA.has(c.tipo))) throw HEIC_SIN_LIMPIAR();
+  no(arriba[0]?.tipo !== 'ftyp');
+  no(arriba.some((c) => !HEIF_ARRIBA.has(c.tipo)));
   const metas = arriba.filter((c) => c.tipo === 'meta');
-  if (metas.length !== 1) throw HEIC_SIN_LIMPIAR();
+  no(metas.length !== 1);
   const meta = metas[0]!;
   const dentro = cajas(b, meta.datos + 4, meta.fin);
+  no(dentro.some((c) => !HEIF_META.has(c.tipo)));
   const una = (tipo: string) => {
     const l = dentro.filter((c) => c.tipo === tipo);
-    if (l.length > 1) throw HEIC_SIN_LIMPIAR();
+    no(l.length > 1);
     return l[0];
   };
-  const iinf = una('iinf');
-  const iloc = una('iloc');
-  const idat = una('idat');
-  if (!iinf) return { bytes: b, gps: null, quitados: 0 };
+  const [hdlr, pitm, iinf, iloc, iref, iprp, idat, dinf] = [...HEIF_META].map(una);
+  no(!hdlr || !iinf || !iloc);
 
-  // Qué ítems son datos ocultos (Exif, XMP u otro texto «mime», un enlace «uri »).
+  // Lo que se va a llenar de ceros (todo se aplica al final, sobre una copia).
+  const ceros: [number, number][] = [];
+  // hdlr: versión, pre_defined, tipo y 12 reservados; el nombre que sigue se borra.
+  no(hdlr!.datos + 24 > hdlr!.fin);
+  ceros.push([hdlr!.datos + 24, hdlr!.fin]);
+  // pitm y dinf: solo números (dinf: una referencia «este mismo archivo», sin dirección).
+  if (pitm) no(pitm.fin - pitm.datos !== ((b[pitm.datos] ?? 0) === 0 ? 6 : 8));
+  if (dinf) {
+    const dref = cajas(b, dinf.datos, dinf.fin);
+    no(dref.length !== 1 || dref[0]!.tipo !== 'dref');
+    const entradas = cajas(b, dref[0]!.datos + 8, dref[0]!.fin);
+    no(u32(dref[0]!.datos + 4) !== entradas.length);
+    for (const e of entradas)
+      no(e.tipo !== 'url ' || e.fin - e.datos !== 4 || ((b[e.datos + 3] ?? 0) & 1) !== 1);
+  }
+  // iref: cada referencia mide justo lo que dicen sus números.
+  if (iref) {
+    const t = (b[iref.datos] ?? 0) === 0 ? 2 : 4;
+    for (const r of cajas(b, iref.datos + 4, iref.fin)) {
+      no(r.datos + t + 2 > r.fin);
+      no(r.fin - r.datos !== t + 2 + u16(r.datos + t) * t);
+    }
+  }
+  // iprp: solo ipco (propiedades conocidas) e ipma (que mide justo lo que dice).
+  if (iprp)
+    for (const c of cajas(b, iprp.datos, iprp.fin)) {
+      if (c.tipo === 'ipco') {
+        no(cajas(b, c.datos, c.fin).some((x) => !HEIF_PROPIEDADES.has(x.tipo)));
+      } else if (c.tipo === 'ipma') {
+        const ver = b[c.datos] ?? 0;
+        const largo = ((b[c.datos + 3] ?? 0) & 1) === 1 ? 2 : 1;
+        let q = c.datos + 4;
+        no(q + 4 > c.fin);
+        const n = u32(q);
+        q += 4;
+        for (let k = 0; k < n; k++) {
+          q += ver < 1 ? 2 : 4;
+          no(q + 1 > c.fin);
+          q += 1 + (b.at(q) ?? 0) * largo;
+          no(q > c.fin);
+        }
+        no(q !== c.fin);
+      } else no(true);
+    }
+
+  // Qué ítems hay; los nombres se borran; los ocultos se marcan.
   const ocultos = new Map<number, string>();
-  const verInf = b[iinf.datos] ?? 0;
-  const primeraInfe = iinf.datos + 4 + (verInf === 0 ? 2 : 4);
-  if (primeraInfe > iinf.fin) throw HEIC_SIN_LIMPIAR();
-  for (const e of cajas(b, primeraInfe, iinf.fin)) {
-    if (e.tipo !== 'infe') continue;
+  const verInf = b[iinf!.datos] ?? 0;
+  const primeraInfe = iinf!.datos + 4 + (verInf === 0 ? 2 : 4);
+  no(primeraInfe > iinf!.fin);
+  const infes = cajas(b, primeraInfe, iinf!.fin);
+  no(infes.length !== (verInf === 0 ? u16(iinf!.datos + 4) : u32(iinf!.datos + 4)));
+  for (const e of infes) {
+    no(e.tipo !== 'infe');
     const ver = b[e.datos] ?? 0;
-    if (ver < 2 || ver > 3) throw HEIC_SIN_LIMPIAR();
+    no(ver < 2 || ver > 3);
     const p = e.datos + 4;
-    if (p + (ver === 2 ? 8 : 10) > e.fin) throw HEIC_SIN_LIMPIAR();
-    const id = ver === 2 ? v.getUint16(p) : v.getUint32(p);
+    no(p + (ver === 2 ? 8 : 10) > e.fin);
+    const id = ver === 2 ? u16(p) : u32(p);
     const tipo = ascii(b, p + (ver === 2 ? 4 : 6), 4);
+    const nombre = p + (ver === 2 ? 8 : 10);
+    // El nombre y lo que venga detrás (tipo de contenido, codificación) no hacen falta.
+    finTexto(b, nombre, e.fin);
+    ceros.push([nombre, e.fin]);
     if (HEIF_OCULTOS.has(tipo)) ocultos.set(id, tipo);
   }
-  if (!ocultos.size) return { bytes: b, gps: null, quitados: 0 };
-  if (!iloc) throw HEIC_SIN_LIMPIAR();
 
-  // Dónde están sus bytes (iloc, versiones 0, 1 y 2).
-  const ver = b[iloc.datos] ?? 0;
-  if (ver > 2) throw HEIC_SIN_LIMPIAR();
-  let p = iloc.datos + 4;
-  const fuera = (n: number) => {
-    if (p + n > iloc.fin) throw HEIC_SIN_LIMPIAR();
-  };
+  // Dónde están los bytes de cada ítem (iloc, versiones 0, 1 y 2).
+  const ver = b[iloc!.datos] ?? 0;
+  no(ver > 2);
+  let p = iloc!.datos + 4;
   const leer = (n: number) => {
-    fuera(n);
+    no(p + n > iloc!.fin);
     let x = 0;
     if (n === 8) {
-      if (v.getUint32(p) !== 0) throw HEIC_SIN_LIMPIAR();
-      x = v.getUint32(p + 4);
-    } else if (n === 4) x = v.getUint32(p);
-    else if (n === 2) x = v.getUint16(p);
-    else if (n !== 0) throw HEIC_SIN_LIMPIAR();
+      no(u32(p) !== 0);
+      x = u32(p + 4);
+    } else if (n === 4) x = u32(p);
+    else if (n === 2) x = u16(p);
+    else no(n !== 0);
     p += n;
     return x;
   };
-  fuera(2);
+  no(p + 2 > iloc!.fin);
   const t1 = b.at(p) ?? 0;
   const t2 = b.at(p + 1) ?? 0;
   p += 2;
   const [tOff, tLar, tBase] = [t1 >> 4, t1 & 15, t2 >> 4];
   const tIdx = ver === 0 ? 0 : t2 & 15;
   const cuantos = leer(ver < 2 ? 2 : 4);
-  const salida = b.slice();
-  const borrados = new Set<number>();
+  const mdats = arriba.filter((c) => c.tipo === 'mdat');
+  const guardar: [number, number][] = [];
+  const borrar: [number, number][] = [];
+  const conIloc = new Set<number>();
   let gps: GpsFoto | null = null;
   for (let k = 0; k < cuantos; k++) {
     const id = leer(ver < 2 ? 2 : 4);
@@ -402,34 +491,62 @@ function limpiarHeif(b: Uint8Array): FotoLimpia {
     const tramos: [number, number][] = [];
     for (let e = 0; e < extensiones; e++) {
       leer(tIdx);
-      tramos.push([leer(tOff), leer(tLar)]);
+      const off = leer(tOff);
+      const lar = leer(tLar);
+      // Los datos tienen que estar en ESTE archivo (mdat o idat) y con su largo dicho.
+      no(refDatos !== 0 || metodo > 1 || (metodo === 1 && !idat) || lar === 0);
+      const ini = (metodo === 1 ? idat!.datos : 0) + baseOff + off;
+      const caja = metodo === 1 ? [idat!] : mdats;
+      no(!caja.some((c) => ini >= c.datos && ini + lar <= c.fin));
+      tramos.push([ini, ini + lar]);
     }
-    if (!ocultos.has(id)) continue;
-    // Los datos tienen que estar en ESTE archivo (mdat o idat) y con su largo dicho.
-    if (refDatos !== 0 || metodo > 1 || (metodo === 1 && !idat)) throw HEIC_SIN_LIMPIAR();
-    const origen = metodo === 1 ? idat!.datos : 0;
-    const limite = metodo === 1 ? idat!.fin : b.length;
-    const trozos: Uint8Array[] = [];
-    for (const [off, lar] of tramos) {
-      const ini = origen + baseOff + off;
-      if (lar === 0 || ini + lar > limite) throw HEIC_SIN_LIMPIAR();
-      trozos.push(b.subarray(ini, ini + lar));
-      salida.fill(0, ini, ini + lar);
+    conIloc.add(id);
+    if (!ocultos.has(id)) {
+      guardar.push(...tramos);
+      continue;
     }
-    if (ocultos.get(id) === 'Exif' && trozos.length) {
+    borrar.push(...tramos);
+    if (ocultos.get(id) === 'Exif' && tramos.length) {
       // Ítem Exif: 4 bytes con el desplazamiento hasta la cabecera TIFF, después el EXIF.
-      const d = unir(trozos);
+      const d = unir(tramos.map(([a, z]) => b.subarray(a, z)));
       if (d.length >= 4) {
         const salto = new DataView(d.buffer, d.byteOffset, d.byteLength).getUint32(0);
         const tiff = d.subarray(Math.min(d.length, 4 + salto));
         gps ??= leerTiff(ascii(tiff, 0, 6) === 'Exif\0\0' ? tiff.subarray(6) : tiff).gps;
       }
     }
-    borrados.add(id);
   }
+  no(p !== iloc!.fin);
   // Un ítem oculto sin dónde están sus datos: no sabemos dónde vive, no se guarda.
-  for (const id of ocultos.keys()) if (!borrados.has(id)) throw HEIC_SIN_LIMPIAR();
-  return { bytes: salida, gps, quitados: borrados.size };
+  for (const id of ocultos.keys()) no(!conIloc.has(id));
+
+  // free/skip: fuera todo su contenido. mdat e idat: fuera lo que no es de un ítem de imagen.
+  for (const c of arriba) if (c.tipo === 'free' || c.tipo === 'skip') ceros.push([c.datos, c.fin]);
+  for (const c of [...mdats, ...(idat ? [idat] : [])]) {
+    const dentroDe = guardar
+      .filter(([a, z]) => a >= c.datos && z <= c.fin)
+      .sort((x, y) => x[0] - y[0]);
+    let desde = c.datos;
+    for (const [a, z] of dentroDe) {
+      if (a > desde) ceros.push([desde, a]);
+      desde = Math.max(desde, z);
+    }
+    if (desde < c.fin) ceros.push([desde, c.fin]);
+  }
+  // Los ocultos van al final: ganan aunque un ítem de imagen diga que comparte sus bytes.
+  ceros.push(...borrar);
+
+  const salida = b.slice();
+  let cambios = 0;
+  for (const [a, z] of ceros) {
+    const tramo = salida.subarray(a, z);
+    if (tramo.some((x) => x !== 0)) {
+      cambios++;
+      tramo.fill(0);
+    }
+  }
+  if (!cambios) return { bytes: b, gps, quitados: 0 };
+  return { bytes: salida, gps, quitados: Math.max(1, ocultos.size) };
 }
 
 /**
