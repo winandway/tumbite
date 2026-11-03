@@ -45,6 +45,7 @@ export function BotonGrande({
   etiqueta,
   desactivado = false,
   flex,
+  testID,
 }: {
   texto: string;
   alTocar: () => void;
@@ -52,6 +53,7 @@ export function BotonGrande({
   etiqueta?: string;
   desactivado?: boolean;
   flex?: number;
+  testID?: string;
 }) {
   const fondo = desactivado
     ? '#CCCCCC'
@@ -65,6 +67,7 @@ export function BotonGrande({
   const color = tipo === 'claro' ? C.secundario : tipo === 'borde' ? C.primario : '#fff';
   return (
     <Pressable
+      testID={testID}
       onPress={alTocar}
       disabled={desactivado}
       accessibilityRole="button"

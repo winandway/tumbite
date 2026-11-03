@@ -17,6 +17,7 @@ import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-au
 import sonidoAlarma from '../assets/sonidos/alarma.wav';
 import { useKeepAwake } from 'expo-keep-awake';
 import { FaltaTienda } from './FaltaTienda';
+import { imprimirComanda, useComandaAlAceptar } from './comanda';
 import { PesoReal } from './PesoReal';
 import {
   ErrorApi,
@@ -177,6 +178,10 @@ const T = {
     sugerido: 'sugerido',
     cocina: 'Cocina ocupada',
     cocinaAyuda: 'Suma minutos al tiempo sugerido de los pedidos nuevos.',
+    imprimir: 'Imprimir comanda',
+    imprimirAlAceptar: 'Imprimir la comanda al aceptar',
+    imprimirAyuda:
+      'Cada pedido que aceptes (también los que se aceptan solos) sale por la impresora de este equipo. Se guarda en este equipo.',
     aceptarSolo: 'Aceptar pedidos automáticamente',
     aceptarSoloAyuda:
       'Los pedidos nuevos se aceptan solos con el tiempo sugerido y el repartidor sale enseguida. Igual suena la alarma.',
@@ -241,6 +246,10 @@ const T = {
     sugerido: 'suggested',
     cocina: 'Busy kitchen',
     cocinaAyuda: 'Adds minutes to the suggested time for new orders.',
+    imprimir: 'Print ticket',
+    imprimirAlAceptar: 'Print the ticket when accepting',
+    imprimirAyuda:
+      'Every order you accept (including the ones accepted automatically) prints on this device’s printer. Saved on this device.',
     aceptarSolo: 'Accept orders automatically',
     aceptarSoloAyuda:
       'New orders are accepted with the suggested time and a driver is sent right away. The alarm still rings.',
@@ -356,6 +365,15 @@ export function Inicio() {
   const [error, setError] = useState('');
   const [menuDe, setMenuDe] = useState<string | null>(null);
   const [pinLocal, setPinLocal] = useState('');
+  // C-COMANDA-APP: imprimir la comanda al aceptar (preferencia de este equipo).
+  const [comandaAlAceptar, setComandaAlAceptar] = useComandaAlAceptar();
+  const imprimir = useCallback(
+    (p: Pedido) =>
+      imprimirComanda(p, rest?.nombre ?? '', idioma === 'en' ? 'en' : 'es').catch((x: unknown) =>
+        setError(x instanceof Error ? x.message : String(x)),
+      ),
+    [rest?.nombre, idioma],
+  );
   const [edadLocal, setEdadLocal] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -419,6 +437,24 @@ export function Inicio() {
       if (!hayNuevos) void alarma.seekTo(0).then(() => alarma.play());
     }
   }, [pedidos, hayNuevos, alarma]);
+
+  // Cada pedido se imprime UNA vez, la primera vez que se ve aceptado (a mano o solo). Los que ya
+  // estaban aceptados al abrir la app no se vuelven a imprimir.
+  const aceptadosVistos = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (rest === undefined) return;
+    const aceptados = pedidos.filter((p) => p.estado === 'aceptado').map((p) => p.id);
+    if (!aceptadosVistos.current) {
+      aceptadosVistos.current = new Set(aceptados);
+      return;
+    }
+    for (const id of aceptados) {
+      if (aceptadosVistos.current.has(id)) continue;
+      aceptadosVistos.current.add(id);
+      const p = pedidos.find((x) => x.id === id);
+      if (p && comandaAlAceptar) void imprimir(p);
+    }
+  }, [pedidos, rest, comandaAlAceptar, imprimir]);
 
   async function accion(ruta: string, cuerpo: unknown = {}) {
     setError('');
@@ -908,6 +944,23 @@ export function Inicio() {
           </View>
         </Tarjeta>
       ) : null}
+      {rest ? (
+        <Tarjeta>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '800' }}>{t.imprimirAlAceptar}</Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.imprimirAyuda}</Text>
+            </View>
+            <Switch
+              testID="comanda-al-aceptar"
+              accessibilityLabel={t.imprimirAlAceptar}
+              value={comandaAlAceptar}
+              trackColor={{ true: C.exito, false: '#d0d0d0' }}
+              onValueChange={setComandaAlAceptar}
+            />
+          </View>
+        </Tarjeta>
+      ) : null}
     </>
   );
 
@@ -1132,6 +1185,14 @@ export function Inicio() {
           </Tarjeta>
         ) : null}
         <Tarjeta>{cuerpoPedido(p)}</Tarjeta>
+        {p.estado === 'aceptado' || p.estado === 'listo' ? (
+          <BotonGrande
+            testID="imprimir-comanda"
+            texto={t.imprimir}
+            tipo="claro"
+            alTocar={() => void imprimir(p)}
+          />
+        ) : null}
         {p.estado === 'pagado' ? <Tarjeta>{aceptarBloque(p)}</Tarjeta> : null}
         {p.estado === 'aceptado' ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>

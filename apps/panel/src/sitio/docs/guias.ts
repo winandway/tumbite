@@ -2405,10 +2405,13 @@ const es: SeccionDocs[] = [
         id: 'print-tickets',
         titulo: 'Imprimir la comanda',
         resumen:
-          'Imprime cada pedido para la cocina, a mano o solo al aceptarlo, con cualquier impresora de tickets conectada a tu computadora o tableta.',
+          'Imprime cada pedido para la cocina, a mano o solo al aceptarlo, desde el panel o desde la app Divoox Restaurants en tu celular o tableta, con la impresora de tickets que ya usas.',
         explicacion: [
           'En Pedidos, cada pedido aceptado o listo tiene el botón «Imprimir comanda».',
           'Si marcas «Imprimir la comanda al aceptar», cada vez que aceptes un pedido se abre la impresión sola. La preferencia queda guardada en ese equipo.',
+          'En la app Divoox Restaurants (celular o tableta) es igual: en Inicio enciende «Imprimir la comanda al aceptar» y, dentro de cada pedido aceptado o listo, toca «Imprimir comanda». Se imprime con la impresión del propio equipo: AirPrint en el iPhone y el iPad, y el servicio de impresión en Android, con la impresora que tengas emparejada.',
+          'Con el interruptor encendido también salen solos los pedidos que se aceptan automáticamente.',
+          'Para probarlo sin un cliente, toca «Enviar un pedido de prueba» en Inicio y acéptalo: la comanda sale igual que con un pedido real.',
           'La comanda trae el número del pedido, si es a domicilio o para recoger, si es programado, los platos con sus opciones y las notas. No trae la dirección ni el dinero del cliente.',
           'Sale en el ancho de 80 mm de las impresoras térmicas; también se puede imprimir en una hoja normal.',
         ],
@@ -2418,11 +2421,31 @@ const es: SeccionDocs[] = [
             alt: 'La pantalla de pedidos del panel del restaurante en Divoox, con la casilla «Imprimir la comanda al aceptar» arriba.',
             pie: 'Arriba de tus pedidos está «Imprimir la comanda al aceptar».',
           },
+          {
+            src: '/docs/comanda-app-interruptor-es.webp',
+            alt: 'La app Divoox Restaurants en el celular, en Inicio, con el interruptor «Imprimir la comanda al aceptar» encendido.',
+            pie: 'En la app, el interruptor está en Inicio y queda guardado en ese equipo.',
+          },
+          {
+            src: '/docs/comanda-app-boton-es.webp',
+            alt: 'Un pedido aceptado en la app Divoox Restaurants con el botón «Imprimir comanda».',
+            pie: 'Dentro del pedido aceptado o listo, «Imprimir comanda» la vuelve a imprimir.',
+          },
+          {
+            src: '/docs/comanda-app-ticket-es.webp',
+            alt: 'La comanda de 80 mm con el número del pedido, el modo de entrega y los platos, sin dinero ni dirección.',
+            pie: 'Así sale la comanda: número, modo, platos con sus opciones y notas.',
+          },
         ],
-        preguntas: ['¿Cómo imprimo los pedidos para la cocina?', '¿Puedo imprimir al aceptar?'],
+        preguntas: [
+          '¿Cómo imprimo los pedidos para la cocina?',
+          '¿Puedo imprimir al aceptar?',
+          '¿Puedo imprimir desde la app del celular o la tableta?',
+        ],
         pasos: [
-          'Abre Pedidos.',
-          'Marca «Imprimir la comanda al aceptar» o toca «Imprimir comanda».',
+          'Abre Pedidos en el panel, o Inicio en la app Divoox Restaurants.',
+          'Enciende «Imprimir la comanda al aceptar» o toca «Imprimir comanda» en un pedido aceptado.',
+          'Elige tu impresora en la ventana de impresión del equipo.',
         ],
       },
       {
@@ -6958,10 +6981,13 @@ const en: SeccionDocs[] = [
         id: 'print-tickets',
         titulo: 'Print kitchen tickets',
         resumen:
-          'Print each order for the kitchen, by hand or automatically when you accept it, with any receipt printer connected to your computer or tablet.',
+          'Print each order for the kitchen, by hand or automatically when you accept it, from the panel or from the Divoox Restaurants app on your phone or tablet, with the receipt printer you already use.',
         explicacion: [
           'In Orders, every accepted or ready order has a “Print ticket” button.',
           'If you check “Print the ticket when accepting”, printing opens every time you accept an order. The setting is saved on that device.',
+          'The Divoox Restaurants app (phone or tablet) works the same way: on Home, turn on “Print the ticket when accepting” and, inside any accepted or ready order, tap “Print ticket”. It prints with the device’s own printing: AirPrint on iPhone and iPad, and the print service on Android, with the printer you have paired.',
+          'With the switch on, orders accepted automatically print too.',
+          'To try it without a customer, tap “Send a test order” on Home and accept it: the ticket prints just like a real order.',
           'The ticket shows the order number, whether it’s delivery or pickup, whether it’s scheduled, the items with their options and the notes. It doesn’t show the customer’s address or money.',
           'It prints at the 80 mm width of thermal printers; it can also be printed on a regular page.',
         ],
@@ -6971,9 +6997,32 @@ const en: SeccionDocs[] = [
             alt: 'The Orders screen in the Divoox restaurant panel, with the “Print the ticket when accepting” checkbox at the top.',
             pie: '“Print the ticket when accepting” is at the top of your orders.',
           },
+          {
+            src: '/docs/comanda-app-interruptor-en.webp',
+            alt: 'The Divoox Restaurants app on a phone, on Home, with the “Print the ticket when accepting” switch turned on.',
+            pie: 'In the app, the switch is on Home and is saved on that device.',
+          },
+          {
+            src: '/docs/comanda-app-boton-en.webp',
+            alt: 'An accepted order in the Divoox Restaurants app with the “Print ticket” button.',
+            pie: 'Inside an accepted or ready order, “Print ticket” prints it again.',
+          },
+          {
+            src: '/docs/comanda-app-ticket-en.webp',
+            alt: 'The 80 mm kitchen ticket with the order number, delivery mode and items, without money or address.',
+            pie: 'This is the ticket: number, mode, items with their options and notes.',
+          },
         ],
-        preguntas: ['How do I print orders for the kitchen?', 'Can I print when accepting?'],
-        pasos: ['Open Orders.', 'Check “Print the ticket when accepting” or tap “Print ticket”.'],
+        preguntas: [
+          'How do I print orders for the kitchen?',
+          'Can I print when accepting?',
+          'Can I print from the phone or tablet app?',
+        ],
+        pasos: [
+          'Open Orders in the panel, or Home in the Divoox Restaurants app.',
+          'Turn on “Print the ticket when accepting” or tap “Print ticket” on an accepted order.',
+          'Choose your printer in the device’s print window.',
+        ],
       },
       {
         id: 'pos-integration',
