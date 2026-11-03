@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-03T00:03:26.331Z",
+  "actualizado": "2026-11-03T06:09:29.301Z",
   "version": "7b9a5ca",
-  "ahora": "Compilando las tres apps para TestFlight con todo lo publicado hoy.",
+  "ahora": "Portada del cliente: estudio con REA de las súper apps y maqueta nueva con los servicios arriba",
   "proximo": [
     {
       "quien": "richard",
@@ -20,6 +20,13 @@
     }
   ],
   "esperando": [
+    {
+      "id": "aprobar-portada-p2",
+      "prioridad": "alta",
+      "titulo": "Mirar la maqueta nueva de la portada (servicios arriba, como Rappi y Grab) y decir si se construye así",
+      "para": "Probar el cobro con dinero real: una compra, otra cancelada y una devolución parcial.",
+      "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
+    },
     {
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
@@ -296,6 +303,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-03",
+      "titulo": "Todo lo del día, publicado en divoox.com",
+      "texto": "Portada del cliente: Richard rechazó la de ayer porque escondía los servicios. Estudio con REA de Uber, Rappi, Grab y DiDi, y maqueta nueva."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Todo lo del día, publicado en divoox.com",
