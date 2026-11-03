@@ -43,6 +43,7 @@ import {
   categoriaEnHorario,
   conNotaPlato,
   margenPesables,
+  type LineaPesable,
 } from '@tumbite/compartido';
 import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
@@ -230,6 +231,16 @@ export async function recalcularLineas(
   return descuentos;
 }
 
+/** Lo propio de un producto por peso: el reemplazo no lo hereda (SIG-3x). */
+const CAMPOS_PESO = new Set<keyof LineaPesable | string>([
+  'pesable',
+  'precioPorPeso',
+  'pesoEstimado',
+  'pesoReal',
+  'precioEstimadoCentavos',
+  'unidadPeso',
+]);
+
 /** Lo que se le devolvería al cliente si se quita ese plato (el resto del pedido se recalcula). */
 export async function calcularSinPlato(
   db: D1Database,
@@ -239,11 +250,15 @@ export async function calcularSinPlato(
 ) {
   const lineas = JSON.parse(String(f.lineas_json)) as Linea[];
   // C-TIENDAS-REEMPLAZOS: con reemplazo, la línea cambia de producto y se queda con el menor precio.
+  // C-TIENDAS-PESO-REAL (SIG-3x): el reemplazo NO hereda el peso ni el precio por kilo del
+  // producto que faltaba (si no, unas papas se pesarían y cobrarían como bananas).
+  const sinPeso = (l: Linea): Linea =>
+    Object.fromEntries(Object.entries(l).filter(([k]) => !CAMPOS_PESO.has(k))) as Linea;
   const nuevas = reemplazo
     ? lineas.map((l) =>
         l.platoId === platoId
           ? {
-              ...l,
+              ...sinPeso(l),
               platoId: reemplazo.platoId,
               nombreEs: reemplazo.nombreEs,
               nombreEn: reemplazo.nombreEn,
@@ -1748,11 +1763,15 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
         .first<{ margen: number }>()
     )?.margen ?? 0,
   );
+  // SIG-3x: lo autorizado en la base solo se mueve si Stripe aceptó el monto nuevo; si no, sigue
+  // siendo lo que Stripe tiene retenido (el techo real de lo que se puede capturar).
+  let stripeActualizado = false;
   if (nuevoTotal !== Number(f.total) && intento.startsWith('pi_')) {
     const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
     if (stripe) {
       try {
         await stripe.post(`/payment_intents/${intento}`, { amount: nuevoTotal + margenPeso });
+        stripeActualizado = true;
       } catch (e) {
         console.error('cambio de dirección: Stripe no aceptó el nuevo monto', id, e);
         throw new ErrorDatos(
@@ -1786,9 +1805,13 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
     .run();
   await db.batch([
     ...guardarDescuentos(db, id, descuentos),
-    db
-      .prepare('UPDATE autorizaciones_pedido SET autorizado = ? + margen WHERE pedido_id = ?')
-      .bind(nuevoTotal, id),
+    ...(stripeActualizado
+      ? [
+          db
+            .prepare('UPDATE autorizaciones_pedido SET autorizado = ? + margen WHERE pedido_id = ?')
+            .bind(nuevoTotal, id),
+        ]
+      : []),
   ]);
   // C-PROMO-RESTAURANTE: con «envío gratis», lo que paga el restaurante sigue al envío nuevo.
   if (promo)

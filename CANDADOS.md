@@ -2717,6 +2717,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo el 2 nov):** `pesables.test.ts`, `rutas/tiendasPeso.test.ts`, `panel/PedidosPeso.test.tsx`, `pesoRealApps.test.ts` fallan sin el código; con el PaymentIntent por el total sin margen, el circuito falla; sin el tope, fallan tope y circuito. Recorrido: `e2e/recorrido/tiendas.spec.ts`.
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/rutas/tiendasPeso.test.ts packages/compartido/src/pesables.test.ts` y `npm run recorrido` (tiendas). Estado del circuito real en VERIFICAR-PAGOS.md (en rojo hasta la compra con la 4242 en staging).
 - **Qué NO tocar:** nunca capturar más que `autorizaciones_pedido.autorizado`; el techo del recálculo es lo autorizado (lo que sobre lo absorbe Divoox, nunca el cliente); no quitar el margen del PaymentIntent ni del aviso de Stripe (si no cuadran, el pedido no pasa a pagado).
+- **Arreglos de la revisión (SIG-3x, 2 nov 2026), cada uno con su prueba en rojo en `rutas/tiendasPeso.test.ts` («arreglos de la revisión»):**
+  1. **El reemplazo heredaba el peso.** `calcularSinPlato` copiaba `pesable`, `precioPorPeso`, `pesoEstimado`, `pesoReal`, `precioEstimadoCentavos` y `unidadPeso` del producto que faltaba: unas papas se pesaban y cobraban por kilo como bananas. Ahora el reemplazo los quita (`CAMPOS_PESO` en `rutas/pedidos.ts`) y pesarlo responde 422.
+  2. **El cambio de dirección movía lo autorizado sin Stripe.** `autorizado = total nuevo + margen` se escribía aunque Stripe no se hubiera tocado (mismo total). Ahora solo se actualiza si Stripe aceptó el monto nuevo (`stripeActualizado`): lo autorizado en la base es siempre lo que Stripe tiene retenido. No afectaba a Comida (sin pesables no hay fila en `autorizaciones_pedido`) y Tiendas está apagado en producción.
+  3. **El mismo producto en dos líneas.** `POST …/pesos` acepta `linea` (la posición); sin ella y con dos líneas iguales responde 409. El panel (`Pedidos.tsx`) y la app del restaurante (`Inicio.tsx`) mandan la posición y usan llaves por línea.
+  - **Qué NO tocar:** no volver a actualizar `autorizaciones_pedido.autorizado` sin la confirmación de Stripe; el reemplazo nunca copia los campos de peso.
 
 ## C-CONTROL-DUAL (SIG-4, 2 nov 2026). Todos los países.
 

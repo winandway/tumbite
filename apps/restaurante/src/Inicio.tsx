@@ -545,10 +545,12 @@ export function Inicio() {
             </Text>
           ))}
           {/* C-TIENDAS-PESO-REAL: la tienda escribe el peso real de lo que se vende por peso. */}
+          {/* SIG-3x: por línea (el mismo producto puede ir en dos líneas con notas distintas). */}
           {p.lineas
-            .filter((l) => l.pesable)
-            .map((l) => (
-              <View key={`peso-${l.platoId}`}>
+            .map((l, i) => ({ l, i }))
+            .filter(({ l }) => l.pesable)
+            .map(({ l, i }) => (
+              <View key={`peso-${i}-${l.platoId}`}>
                 <Text
                   style={{ fontSize: 13, fontWeight: '700', color: C.secundario, marginTop: 6 }}
                 >
@@ -560,7 +562,7 @@ export function Inicio() {
                   editable={['pagado', 'aceptado'].includes(p.estado)}
                   guardar={(peso) =>
                     void accion(`/datos/restaurante/pedidos/${p.id}/pesos`, {
-                      pesos: [{ platoId: l.platoId, peso }],
+                      pesos: [{ platoId: l.platoId, linea: i, peso }],
                     })
                   }
                 />

@@ -61,7 +61,7 @@ describe('peso real de lo que se vende por peso (C-TIENDAS-PESO-REAL)', () => {
     await waitFor(() =>
       expect(enviados).toContainEqual({
         url: expect.stringContaining('/datos/restaurante/pedidos/p-1/pesos'),
-        cuerpo: { pesos: [{ platoId: 'guineo', peso: 6.5 }] },
+        cuerpo: { pesos: [{ platoId: 'guineo', linea: 0, peso: 6.5 }] },
       }),
     );
   });

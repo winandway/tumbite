@@ -28,6 +28,8 @@ describe('peso real en las apps (C-TIENDAS-PESO-REAL)', () => {
     const inicio = leer('restaurante', 'src', 'Inicio.tsx');
     expect(inicio).toMatch(/<PesoReal/);
     expect(inicio).toMatch(/\/datos\/restaurante\/pedidos\/\$\{p\.id\}\/pesos/);
+    // SIG-3x: se pesa por línea (el mismo producto puede ir en dos líneas).
+    expect(inicio).toMatch(/platoId: l\.platoId, linea: i, peso/);
     expect(inicio).toMatch(/editable=\{\['pagado', 'aceptado'\]\.includes\(p\.estado\)\}/);
   });
 });

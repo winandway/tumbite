@@ -13,6 +13,7 @@ const HOJA = [
   'sku,name,brand,category_1,price,sale_price,available,restriction,sold_by,average_weight',
   'B1,Spring water,Brand Sample,Drinks,1.25,,yes,,,',
   'B2,Bananas,Brand Sample,Produce,0.70,,yes,,weight,2',
+  'B3,Chips,Brand Sample,Snacks,1.00,,yes,,,',
 ].join('\n');
 
 async function firmar(cuerpo: string) {
@@ -91,14 +92,14 @@ async function escena() {
     nombre: string;
   }[];
   const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
-  const pedir = () =>
+  const pedir = (sustitucion?: string) =>
     m.llamar(
       'POST',
       '/datos/pedidos',
       {
         restauranteId: tid,
         lineas: [
-          { platoId: id('Bananas'), cantidad: 3 },
+          { platoId: id('Bananas'), cantidad: 3, ...(sustitucion ? { sustitucion } : {}) },
           { platoId: id('Spring water'), cantidad: 1 },
         ],
         propinaCentavos: 200,
@@ -331,5 +332,116 @@ describe('C-TIENDAS-PESO-REAL · cobro por el peso real', () => {
     expect(x.estado).toBe(409);
     expect(x.datos.error).toMatch(/solo para pedidos de tiendas/);
     expect((await e.pesar('no-existe', [{ platoId: 'a', peso: 1 }])).estado).toBe(404);
+  });
+});
+
+/** SIG-3x: los tres arreglos de la revisión de SIG-3, cada uno comprobado en rojo. */
+describe('C-TIENDAS-PESO-REAL · arreglos de la revisión (SIG-3x)', () => {
+  it('(1) el reemplazo de un pesable por un producto normal no hereda el peso ni el precio por kilo', async () => {
+    const e = await escena();
+    const p = await e.pedir('similar');
+    const pid = p.datos.pedidoId as string;
+    await e.aviso(pid, p.datos.autorizado as number);
+    const falta = await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${pid}/falta`,
+      { platoId: e.id('Bananas'), propuestas: [e.id('Chips')] },
+      e.dueno.token,
+    );
+    expect(falta.estado).toBe(200);
+    // Con «similar», la propuesta de la tienda se aplica sola (el cliente no tiene que decidir).
+    expect(falta.datos.reemplazo ?? falta.datos).toBeTruthy();
+    const chips = () =>
+      e
+        .fila(pid)
+        .then((f) =>
+          (JSON.parse(f!.lineas_json) as Record<string, unknown>[]).find(
+            (l) => l.platoId === e.id('Chips'),
+          )!,
+        );
+    const antes = await chips();
+    expect(antes.pesable).toBeUndefined();
+    expect(antes.precioPorPeso).toBeUndefined();
+    expect(antes.pesoEstimado).toBeUndefined();
+    // Las papas no se pesan: la tienda no puede cobrarlas por kilo.
+    const r = await e.pesar(pid, [{ platoId: e.id('Chips'), peso: 4.9 }]);
+    expect(r.estado).toBe(422);
+    const despues = await chips();
+    expect(Number(despues.precioCentavos) * Number(despues.cantidad)).toBeLessThanOrEqual(300);
+    e.cuadra((await e.fila(pid))!);
+  });
+
+  it('(2) cambiar la dirección sin que Stripe cambie no mueve lo autorizado', async () => {
+    const e = await escena();
+    const p = await e.pedir();
+    const pid = p.datos.pedidoId as string;
+    await e.aviso(pid, p.datos.autorizado as number);
+    expect((await e.pesar(pid, [{ platoId: e.id('Bananas'), peso: 6.8 }])).estado).toBe(200);
+    const mud = await e.m.llamar(
+      'PATCH',
+      `/datos/pedidos/${pid}/direccion`,
+      { direccion: '201 Calle Prueba, Miami', lat: 25.78, lng: -80.2, aceptarTotal: true },
+      e.cliente.token,
+    );
+    expect(mud.estado).toBe(200);
+    expect(e.montos.actualizado).toEqual([]);
+    const a = await e.m.DB.prepare(
+      'SELECT autorizado FROM autorizaciones_pedido WHERE pedido_id = ?',
+    )
+      .bind(pid)
+      .first<{ autorizado: number }>();
+    // Lo autorizado en la base es lo que Stripe tiene retenido: ese es el techo real.
+    expect(a?.autorizado).toBe(e.pi.amount);
+    const f = (await e.fila(pid))!;
+    expect(f.total).toBeLessThanOrEqual(e.pi.amount);
+  });
+
+  it('(3) el mismo producto en dos líneas se pesa línea por línea', async () => {
+    const e = await escena();
+    const p = await e.m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: e.tid,
+        lineas: [
+          { platoId: e.id('Bananas'), cantidad: 1, nota: 'Maduras' },
+          { platoId: e.id('Bananas'), cantidad: 1, nota: 'Verdes' },
+          { platoId: e.id('Spring water'), cantidad: 1 },
+        ],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      e.cliente.token,
+    );
+    expect(p.estado).toBe(201);
+    const pid = p.datos.pedidoId as string;
+    await e.aviso(pid, p.datos.autorizado as number);
+    // Sin decir cuál línea, no se adivina.
+    const ambigua = await e.pesar(pid, [{ platoId: e.id('Bananas'), peso: 2 }]);
+    expect(ambigua.estado).toBe(409);
+    const segunda = await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${pid}/pesos`,
+      { pesos: [{ platoId: e.id('Bananas'), linea: 1, peso: 2.1 }] },
+      e.dueno.token,
+    );
+    expect(segunda.estado).toBe(200);
+    const lineas = JSON.parse((await e.fila(pid))!.lineas_json) as { pesoReal?: number }[];
+    expect(lineas[0]!.pesoReal).toBeUndefined();
+    expect(lineas[1]!.pesoReal).toBe(2.1);
+    // Una línea que no es de ese producto: no.
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/restaurante/pedidos/${pid}/pesos`,
+          { pesos: [{ platoId: e.id('Bananas'), linea: 2, peso: 1 }] },
+          e.dueno.token,
+        )
+      ).estado,
+    ).toBe(404);
+    e.cuadra((await e.fila(pid))!);
   });
 });

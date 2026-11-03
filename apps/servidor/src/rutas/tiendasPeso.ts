@@ -33,7 +33,12 @@ tiendasPeso.post('/restaurante/pedidos/:id/pesos', async (c) => {
     z.object({
       pesos: z
         .array(
-          z.object({ platoId: z.string().min(1).max(64), peso: z.number().positive().max(10_000) }),
+          z.object({
+            platoId: z.string().min(1).max(64),
+            // SIG-3x: la posición de la línea, para cuando el mismo producto va en dos líneas.
+            linea: z.number().int().min(0).max(199).optional(),
+            peso: z.number().positive().max(10_000),
+          }),
         )
         .min(1)
         .max(50),
@@ -65,9 +70,18 @@ tiendasPeso.post('/restaurante/pedidos/:id/pesos', async (c) => {
       409,
     );
   let lineas = lineasDe(f) as (ReturnType<typeof lineasDe>[number] & LineaPesable)[];
-  for (const { platoId, peso } of pesos) {
-    const linea = lineas.find((l) => l.platoId === platoId);
-    if (!linea) throw new ErrorDatos('Ese producto no está en este pedido.', 'platoId', 404);
+  for (const { platoId, linea: posicion, peso } of pesos) {
+    const iguales = lineas.flatMap((l, i) => (l.platoId === platoId ? [i] : []));
+    if (posicion === undefined && iguales.length > 1)
+      throw new ErrorDatos(
+        'Ese producto va en varias líneas del pedido: pesa cada línea por separado.',
+        'linea',
+        409,
+      );
+    const indice = posicion ?? iguales[0];
+    const linea = indice === undefined ? undefined : lineas.at(indice);
+    if (!linea || linea.platoId !== platoId)
+      throw new ErrorDatos('Ese producto no está en este pedido.', 'platoId', 404);
     const r2 = aplicarPesoReal(linea, peso);
     if (!r2.ok) {
       if (r2.motivo === 'tope')
@@ -82,7 +96,7 @@ tiendasPeso.post('/restaurante/pedidos/:id/pesos', async (c) => {
         422,
       );
     }
-    lineas = lineas.map((l) => (l === linea ? r2.linea : l));
+    lineas = lineas.map((l, i) => (i === indice ? r2.linea : l));
   }
   // Nunca más de lo autorizado; sin autorización guardada (pedidos viejos), nunca más del total.
   const autorizado = Number(f.autorizado ?? f.total);

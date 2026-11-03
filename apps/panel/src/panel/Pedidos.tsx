@@ -488,8 +488,8 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.sinConfirmar}
                 </span>
               )}
-              {p.lineas.map((l) => (
-                <span key={l.platoId}>
+              {p.lineas.map((l, i) => (
+                <span key={`${i}-${l.platoId}`}>
                   {l.cantidad} × {textoLinea(l, idioma)}
                   {/* C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto. */}
                   {notaSustitucion(l, idioma) ? (
@@ -512,11 +512,11 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                               inputMode="decimal"
                               min="0"
                               step="0.001"
-                              value={pesos[`${p.id}:${l.platoId}`] ?? ''}
+                              value={pesos[`${p.id}:${i}`] ?? ''}
                               onChange={(ev) =>
                                 setPesos((x) => ({
                                   ...x,
-                                  [`${p.id}:${l.platoId}`]: ev.target.value,
+                                  [`${p.id}:${i}`]: ev.target.value,
                                 }))
                               }
                             />
@@ -524,13 +524,14 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                           <button
                             type="button"
                             className="boton secundario"
-                            disabled={!(Number(pesos[`${p.id}:${l.platoId}`]) > 0)}
+                            disabled={!(Number(pesos[`${p.id}:${i}`]) > 0)}
                             onClick={() =>
                               void accion(`/datos/restaurante/pedidos/${p.id}/pesos`, {
                                 pesos: [
                                   {
                                     platoId: l.platoId,
-                                    peso: Number(pesos[`${p.id}:${l.platoId}`]),
+                                    linea: i,
+                                    peso: Number(pesos[`${p.id}:${i}`]),
                                   },
                                 ],
                               })

@@ -667,6 +667,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'La foto llegó dañada y no se pudo abrir. Tómala otra vez y vuelve a intentar.',
     'The photo arrived damaged and couldn’t be opened. Take it again and try once more.',
   ],
+  [
+    'Ese producto va en varias líneas del pedido: pesa cada línea por separado.',
+    'That item is on several lines of the order: weigh each line separately.',
+  ],
   // C-CONTROL-DUAL (SIG-4): la segunda firma del dinero hecho a mano.
   ['Esa solicitud ya la revisó otra persona.', 'Someone else already reviewed that request.'],
   [
