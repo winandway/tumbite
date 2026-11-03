@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { app } from '../app';
 import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
 import { crearAlmacenPruebas } from '../pruebas/r2';
+import { tiffConGps } from '../pruebas/fotoConGps';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 
 // Cabecera mínima de un WebP de verdad: RIFF....WEBP
@@ -112,7 +113,7 @@ describe('fotos de restaurantes y platos', () => {
 });
 
 /** Un WebP con cabecera VP8X que dice sus medidas, del largo pedido (relleno en un bloque VP8). */
-function webpDe(ancho: number, alto: number, largo = 64) {
+function webpDe(ancho: number, alto: number, largo = 64, extra: number[] = []) {
   const le24 = (n: number) => [n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff];
   const le32 = (n: number) => [...le24(n), (n >>> 24) & 0xff];
   const relleno = Math.max(4, largo - 38);
@@ -129,6 +130,7 @@ function webpDe(ancho: number, alto: number, largo = 64) {
     ...[0x56, 0x50, 0x38, 0x20],
     ...le32(relleno),
     ...Array.from({ length: relleno + (relleno % 2) }, () => 7),
+    ...extra,
   ];
   return new Uint8Array([0x52, 0x49, 0x46, 0x46, ...le32(cuerpo.length), ...cuerpo]);
 }
@@ -206,5 +208,30 @@ describe('NXT-7 · C-FOTOS-LIVIANAS: tres tamaños en WebP', () => {
     const { id } = await conFoto();
     const m2 = await conFoto();
     expect((await m2.subirTam(webpDe(200, 150, 500), 'miniatura', id)).estado).toBe(404);
+  });
+
+  it('NXT-7x: la tarjeta y la miniatura también pasan por la limpieza (sin GPS ni modelo del teléfono)', async () => {
+    const { m, subirTam } = await conFoto();
+    const tiff = tiffConGps();
+    const le32 = (n: number) => [n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff, (n >>> 24) & 0xff];
+    const exif = [
+      ...[0x45, 0x58, 0x49, 0x46],
+      ...le32(tiff.length),
+      ...tiff,
+      ...(tiff.length % 2 ? [0] : []),
+    ];
+    const xmp = [...'XMP '].map((c) => c.charCodeAt(0));
+    const texto = [...'<x:xmpmeta>GPS</x:xmpmeta>'].map((c) => c.charCodeAt(0));
+    const bloqueXmp = [...xmp, ...le32(texto.length), ...texto];
+    for (const tam of ['miniatura', 'tarjeta']) {
+      const conGps = webpDe(200, 150, 500, [...exif, ...bloqueXmp]);
+      expect(String.fromCharCode(...conGps)).toContain('PixelFone');
+      const r = await subirTam(conGps, tam);
+      expect(r.estado, tam).toBe(201);
+      const servida = new Uint8Array(await (await m.ver(r.datos.url!)).arrayBuffer());
+      const textoServido = String.fromCharCode(...servida);
+      expect(textoServido, tam).not.toContain('PixelFone');
+      expect(textoServido, tam).not.toContain('xmpmeta');
+    }
   });
 });
