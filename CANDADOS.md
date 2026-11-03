@@ -2663,3 +2663,43 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `enviarCorreo` (apps/servidor/src/correo.ts) pone siempre `reply_to` = `CORREOS_SOPORTE.divoox` (soporte+divoox@windoce.com), salvo que el correo pida otro con `responderA`.
 - **Candado:** apps/servidor/src/correoResponderA.test.ts (rojo sin el arreglo).
 - **Falta (cuenta del dominio):** activar la recepción de correo de divoox.com (enrutamiento al buzón de soporte) para que también lleguen los correos escritos a mano a support@divoox.com.
+
+## C-PROMO-DIA-LOCAL (BRF-2, 2 nov 2026). Todos los países.
+
+- **Qué se rompía y cómo se veía:** al crear una promoción nueva (panel del restaurante y app del restaurante), las fechas que vienen puestas («Empieza» y «Termina») salían con un día de más por la noche: en Miami, después de las 7 u 8 de la noche, «Empieza» ya decía mañana, y la promoción no arrancaba hoy si el dueño no lo notaba.
+- **Causa real:** `hoy()` y `enUnMes()` se calculaban con `new Date().toISOString().slice(0, 10)`, que da el día de Londres (UTC), no el de quien está mirando.
+- **Arreglo:** pieza única `diaDeHoyLocal(ms, zona?)` en `packages/compartido/src/horarios.ts` (día AAAA-MM-DD en la zona del celular o la computadora, con `fechaLocal`; si el aparato no dice su zona, UTC). La usan `apps/panel/src/panel/Promociones.tsx` y `apps/restaurante/src/Promociones.tsx`.
+- **Commit:** fc543e102.
+- **Prueba (comprobada en rojo el 2 nov, revirtiendo el arreglo en una copia aparte):** `packages/compartido/src/horarios.test.ts`, «BRF-2: el día de hoy en la hora de quien lo ve» (01:30 UTC del 3 nov es todavía 2 nov en Nueva York).
+- **Cómo se comprueba:** `npx vitest run packages/compartido/src/horarios.test.ts`. En pantalla: abrir «Nueva promoción» de noche en Miami; «Empieza» dice el día de hoy.
+- **Qué NO tocar:** nunca volver a `toISOString().slice(0, 10)` para un día que ve una persona; toda fecha de calendario de pantalla pasa por `diaDeHoyLocal` o `fechaLocal`.
+
+## C-PROMO-USOS-PAGADOS (BRF-3, 2 nov 2026). Todos los países.
+
+- **Qué se rompía y cómo se veía:** en «Promociones» del restaurante, la columna de usos contaba también pedidos que el cliente nunca pagó (estado `pago_pendiente`): el restaurante veía «1 uso» de una promoción sin que hubiera entrado ninguna venta.
+- **Causa real:** `resumenPromociones` (apps/servidor/src/promociones.ts) usaba la misma cuenta `USOS` del tope (todo lo que no está cancelado) para mostrar los usos.
+- **Arreglo:** dos cuentas. `USOS` (no cancelados, incluye los que esperan el pago) sigue mandando para el tope y para «disponible», así dos clientes no se llevan el último uso; `USOS_PAGADOS` (sin `cancelado` ni `pago_pendiente`) es la que ve el restaurante. Si el pago no llega, el pedido abandonado se cancela solo y libera el uso (C-ABANDONADOS).
+- **Commit:** 3077e4418.
+- **Prueba (comprobada en rojo el 2 nov, revirtiendo el arreglo en una copia aparte):** `apps/servidor/src/promocionesRestaurante.test.ts`, «BRF-3: un pedido sin pagar no aparece como uso…» (pedido con descuento sin pagar → `usos: 0`).
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/promocionesRestaurante.test.ts`.
+- **Qué NO tocar:** el tope de usos sigue contando los `pago_pendiente`; no unificar las dos cuentas.
+
+## C-PRUEBA-SIN-CODIGO (BRF-4, 2 nov 2026). Todos los países.
+
+- **Qué se rompía y cómo se veía:** en la app del restaurante, el pedido de prueba (C-PEDIDO-PRUEBA) marcado «listo» decía debajo de «Listo para recoger» la ayuda del código QR («muestra el código al repartidor»), aunque el de prueba no tiene QR ni repartidor.
+- **Causa real:** en `apps/restaurante/src/Inicio.tsx` la línea de ayuda solo miraba `p.entrega !== 'recoger'`, no `p.prueba` (el QR de debajo ya lo miraba desde BRE-R).
+- **Arreglo:** la condición es `p.entrega !== 'recoger' && !p.prueba`.
+- **Commit:** 5e2706d7e.
+- **Prueba (agregada el 2 nov, comprobada en rojo revirtiendo el arreglo en una copia aparte):** `apps/servidor/src/restauranteInicioBrf4.test.ts`, «BRF-4…» (mira el código de la app: la ayuda del QR exige `!p.prueba`).
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/restauranteInicioBrf4.test.ts`. En pantalla: «Enviar un pedido de prueba», aceptarlo, marcarlo listo: solo sale «Así se ve un pedido listo…» y «Terminar la prueba».
+- **Qué NO tocar:** todo lo de recogida (QR, foto de recogida, repartidor) se apaga con `p.prueba`; no se le agrega un código de mentira al de prueba.
+
+## C-INICIO-COLUMNAS (BRF-4b, 2 nov 2026). Todos los países.
+
+- **Qué se rompía y cómo se veía:** en el celular (y en la app web del restaurante a ancho de celular), con un pedido en cocina, el título «En cocina y por salir» se dibujaba encima de las tarjetas del inicio («Cocina ocupada» y los contadores).
+- **Causa real:** las dos columnas del inicio (`columnaNuevos` y `columnaCocina`) llevaban `flex: 1` siempre. En la tableta van lado a lado y está bien; en el celular van una debajo de otra dentro del scroll, y en la web `flex: 1` les aplasta la altura y se enciman.
+- **Arreglo:** `const columna = ancha ? { flex: 1 } : null;` (ancha = 768 px o más) y las dos columnas usan `style={columna}`.
+- **Commit:** 531f4c61a.
+- **Pruebas (comprobadas en rojo el 2 nov):** `apps/servidor/src/restauranteInicioBrf4.test.ts`, «BRF-4b…» (agregada el 2 nov; con `flex: 1` fijo falla), y en el recorrido del sitio de pruebas (`e2e/recorrido/recorrido.spec.ts`) el título de la cocina tiene que quedar DEBAJO de «Cocina ocupada»; captura `restapp-inicio-cocina-es/en`.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/restauranteInicioBrf4.test.ts` y `npm run recorrido`.
+- **Qué NO tocar:** no volver a poner `flex: 1` fijo en columnas que en el celular van apiladas dentro de un ScrollView.
