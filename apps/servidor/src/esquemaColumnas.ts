@@ -715,6 +715,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "vehiculo_tipo",
     "requisito"
   ],
+  "despacho_catalogo_zonas": [
+    "zona_id",
+    "activo",
+    "actualizado_por",
+    "actualizado_en"
+  ],
   "servicio_vehiculos": [
     "servicio_id",
     "vehiculo_tipo",

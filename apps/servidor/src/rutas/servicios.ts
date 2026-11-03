@@ -227,7 +227,7 @@ type EstadoConductor = {
   motivo: string;
 };
 
-async function estadoDelConductor(
+export async function estadoDelConductor(
   db: Db,
   conductorId: string,
   ingles: boolean,
@@ -857,6 +857,63 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
     .first();
   await auditar(db, admin.id, 'servicio.zona', `servicio:${id}:${zona}`, antes, despues);
   return c.json({ zona: despues });
+});
+
+// C-DESPACHO-CATALOGO (NXT-6): el interruptor por zona del reparto de Comida por catálogo.
+servicios.get('/admin/despacho-catalogo', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      `SELECT z.id, z.nombre, COALESCE(d.activo, 0) AS activo, d.actualizado_en
+         FROM zonas z LEFT JOIN despacho_catalogo_zonas d ON d.zona_id = z.id
+        WHERE z.activa = 1 ORDER BY z.nombre`,
+    )
+    .all<{ id: string; nombre: string; activo: number; actualizado_en: string | null }>();
+  return c.json({
+    zonas: results.map((r) => ({
+      id: r.id,
+      nombre: r.nombre,
+      activo: Number(r.activo) === 1,
+      actualizadoEn: r.actualizado_en,
+    })),
+  });
+});
+
+servicios.put('/admin/despacho-catalogo/:zona', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const zona = c.req.param('zona');
+  const { activo } = await leerCuerpo(c, z.object({ activo: z.boolean() }));
+  if (!(await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(zona).first()))
+    throw new ErrorDatos('Esa zona no existe.', undefined, 404);
+  // Encenderlo donde Comida no está disponible dejaría la zona sin repartidores.
+  if (activo && (await estadoServicioEnZona(db, 'comida', zona)) !== 'disponible')
+    throw new ErrorDatos(
+      'Comida no está disponible en esa zona: enciéndela antes de usar el catálogo para repartir.',
+      'activo',
+      409,
+    );
+  const antes = await db
+    .prepare('SELECT activo FROM despacho_catalogo_zonas WHERE zona_id = ?')
+    .bind(zona)
+    .first<{ activo: number }>();
+  await db
+    .prepare(
+      `INSERT INTO despacho_catalogo_zonas (zona_id, activo, actualizado_por) VALUES (?, ?, ?)
+       ON CONFLICT(zona_id) DO UPDATE SET activo = excluded.activo,
+         actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now')`,
+    )
+    .bind(zona, activo ? 1 : 0, admin.id)
+    .run();
+  await auditar(
+    db,
+    admin.id,
+    'despacho_catalogo.cambiar',
+    `zona:${zona}`,
+    { activo: Number(antes?.activo ?? 0) === 1 },
+    { activo },
+  );
+  return c.json({ zonaId: zona, activo });
 });
 
 servicios.get('/admin/vehiculos', async (c) => {

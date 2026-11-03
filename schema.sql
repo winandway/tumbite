@@ -1022,6 +1022,15 @@ CREATE TABLE IF NOT EXISTS servicio_vehiculo_requisitos (
   PRIMARY KEY (servicio_id, vehiculo_tipo, requisito)
 );
 
+-- C-DESPACHO-CATALOGO (NXT-6, 3 nov 2026): interruptor por zona para que el reparto de Comida lea
+-- el catálogo de habilitaciones. Nace APAGADO (sin fila = apagado).
+CREATE TABLE IF NOT EXISTS despacho_catalogo_zonas (
+  zona_id TEXT PRIMARY KEY REFERENCES zonas(id),
+  activo INTEGER NOT NULL DEFAULT 0 CHECK (activo IN (0, 1)),
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS servicio_vehiculos (
   servicio_id TEXT NOT NULL REFERENCES servicios(id),
   vehiculo_tipo TEXT NOT NULL CHECK (vehiculo_tipo IN ('carro', 'moto', 'scooter', 'bicicleta', 'a_pie')),

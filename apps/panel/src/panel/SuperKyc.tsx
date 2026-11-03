@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
+import { DespachoCatalogo } from './DespachoCatalogo';
 import { InterruptoresRepartidor } from './InterruptoresRepartidor';
 import { pedir } from './api';
 
@@ -158,6 +159,7 @@ export function SuperKyc({
     <section className="super">
       <h1>{t.titulo}</h1>
       <InterruptoresRepartidor idioma={idioma} />
+      <DespachoCatalogo idioma={idioma} />
       <div className="super-filtros" role="tablist">
         {(
           [

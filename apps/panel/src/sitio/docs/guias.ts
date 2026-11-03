@@ -2849,6 +2849,39 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'food-activation',
+        titulo: 'Activado para repartir Comida: vehículo y papeles',
+        resumen:
+          'Para recibir pedidos de Comida, tu cuenta tiene que estar activada para Comida y, si repartes en carro o moto, con tu vehículo aprobado y tu licencia y seguro al día. Si algo falta, la app te lo dice al conectarte.',
+        explicacion: [
+          'Como en las grandes apps de reparto, cada pedido de Comida se ofrece solo a repartidores activados para Comida. Si repartes a pie o en bicicleta, con tu cuenta verificada basta. Si repartes en carro o en moto, además tu vehículo tiene que estar aprobado y tu licencia y tu seguro, revisados y vigentes.',
+          'Si algo falta (una activación en revisión, un papel por aprobar, un vehículo sin aprobar o tu cuenta en pausa), al tocar «Conectarme» la app te dice exactamente qué es y dónde arreglarlo. Mientras tanto no te llegan ofertas de Comida, para que nunca aceptes un pedido que luego no podrías llevar.',
+          'Divoox lo va encendiendo ciudad por ciudad. Donde todavía no está encendido, el reparto sigue igual que siempre.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-conectado-es.webp',
+            alt: 'Inicio de la app de repartidores conectada, esperando ofertas de pedidos.',
+            pie: 'Con todo en regla, te conectas y empiezan a llegar ofertas de Comida.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-verificacion-es.webp',
+            alt: 'Pantalla «Verifica tu identidad» de la app de repartidores, en «Mis datos y vehículo».',
+            pie: 'Tus papeles y tu vehículo se revisan en «Mis datos y vehículo».',
+          },
+        ],
+        preguntas: [
+          '¿Por qué no me llegan pedidos de Comida?',
+          '¿Qué necesito para repartir en carro o en moto?',
+        ],
+        pasos: [
+          'Abre la app de repartidores y toca «Conectarme».',
+          'Si la app te dice que falta algo, entra al menú, a «Mis datos y vehículo», y completa lo que te pide: tu verificación, tu vehículo, tu licencia o tu seguro.',
+          'Cuando el equipo lo apruebe, vuelve a conectarte: las ofertas de Comida te llegan como siempre.',
+          'Si tu cuenta está en pausa, escríbenos desde Ayuda y lo revisamos contigo.',
+        ],
+      },
+      {
         id: 'offers',
         titulo: 'Las ofertas: cuánto ganas antes de aceptar',
         resumen: 'Ves el pago, la distancia y dónde recoger. Rechazar no te castiga.',
@@ -7303,6 +7336,39 @@ const en: SeccionDocs[] = [
           'Take the photo of the front and the back (a passport only needs the front). Make sure the details are readable, with no glare.',
           'Take the photo of your face: straight on, in good light, no cap or sunglasses.',
           'Tap “Send for review.” We email you when it’s approved, or tell you which photo to retake.',
+        ],
+      },
+      {
+        id: 'food-activation',
+        titulo: 'Activated for Food: vehicle and documents',
+        resumen:
+          'To get Food orders, your account has to be activated for Food and, if you deliver by car or motorcycle, have an approved vehicle and a current license and insurance. If something is missing, the app tells you when you go online.',
+        explicacion: [
+          'Like the big delivery apps, every Food order is offered only to drivers activated for Food. If you deliver on foot or by bike, a verified account is enough. If you deliver by car or motorcycle, your vehicle also has to be approved and your license and insurance reviewed and current.',
+          'If something is missing (an activation under review, a document pending approval, a vehicle not yet approved, or a paused account), when you tap “Go online” the app tells you exactly what it is and where to fix it. Until then you don’t get Food offers, so you never accept an order you couldn’t deliver.',
+          'Divoox turns this on city by city. Where it isn’t on yet, dispatch works as always.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-repartidor-conectado-en.webp',
+            alt: 'Home screen of the driver app while online, waiting for order offers.',
+            pie: 'With everything in order, you go online and Food offers start coming in.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-verificacion-en.webp',
+            alt: '“Verify your identity” screen in the driver app, under “My details and vehicle.”',
+            pie: 'Your documents and vehicle are reviewed under “My details and vehicle.”',
+          },
+        ],
+        preguntas: [
+          'Why am I not getting Food orders?',
+          'What do I need to deliver by car or motorcycle?',
+        ],
+        pasos: [
+          'Open the driver app and tap “Go online.”',
+          'If the app says something is missing, open the menu, go to “My details and vehicle,” and complete what it asks for: your verification, your vehicle, your license, or your insurance.',
+          'Once our team approves it, go online again: Food offers come in as usual.',
+          'If your account is paused, write to us from Help and we’ll review it with you.',
         ],
       },
       {

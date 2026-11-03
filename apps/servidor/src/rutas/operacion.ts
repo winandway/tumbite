@@ -62,6 +62,7 @@ import {
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
+import { filtrarPorCatalogo, frenoAlConectar, zonasDespachoCatalogo } from '../despachoCatalogo';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { nuevoId } from '../cripto';
@@ -1303,6 +1304,17 @@ operacion.post('/repartidor/conectar', async (c) => {
     });
     if (falta) throw new ErrorDatos(TEXTO_PAPEL.get(falta) ?? '', 'papeles', 409);
   }
+  // C-DESPACHO-CATALOGO (NXT-6): en una zona con el despacho por catálogo encendido, se dice al
+  // conectarse por qué no le llegarían pedidos de Comida (como DoorDash: sin activar, no se reparte).
+  if (d.conectado) {
+    const z = await db
+      .prepare(
+        "SELECT COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI') AS zona_id FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?",
+      )
+      .bind(u.id)
+      .first<{ zona_id: string }>();
+    if (z) await frenoAlConectar(db, u.id, z.zona_id);
+  }
   // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): si cambiaron, se aceptan antes.
   if (d.conectado && (await terminosPorAceptar(db, u.id, await esRevisor(c, u.correo))))
     throw new ErrorDatos(
@@ -1608,6 +1620,8 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
   const destinos = await destinosActivos(db);
   const prioridadNivel = (await leerAjustes(db)).prioridadDespacho;
   const ocupados = new Set<string>();
+  const zonasCatalogo = await zonasDespachoCatalogo(db);
+  const memoCatalogo = new Map<string, boolean>();
   for (const p of pendientes) {
     const { results: yaVistos } = await db
       .prepare('SELECT repartidor_id FROM ofertas WHERE pedido_id = ?')
@@ -1653,6 +1667,15 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
     // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
     if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
+    // C-DESPACHO-CATALOGO (NXT-6): con el interruptor de la zona encendido, solo quien está
+    // activado para Comida con su vehículo y sus papeles según el catálogo. Apagado: igual que antes.
+    if (candidatos.length && zonasCatalogo.has(String(p.zona_id)))
+      candidatos = await filtrarPorCatalogo(
+        db,
+        candidatos,
+        vistos.size >= RECHAZOS_PARA_ABRIR ? 20 : 1,
+        memoCatalogo,
+      );
     if (!candidatos.length) continue;
     // C-PAGO-PICO: en una celda con demanda alta, la primera oferta lleva el pago pico (si está
     // encendido y queda presupuesto hoy). Se guarda como bono del pedido y se cobra al entregar.

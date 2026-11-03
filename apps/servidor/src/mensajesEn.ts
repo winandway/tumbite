@@ -56,6 +56,38 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Adjunta una imagen JPG, PNG, WebP o HEIC.', 'Attach a JPG, PNG, WebP or HEIC image.'],
   ['Sube una foto en JPG, PNG, WebP o HEIC.', 'Upload a JPG, PNG, WebP or HEIC photo.'],
   [
+    'Tu activación para repartir Comida está en revisión. Te avisamos cuando esté lista.',
+    'Your activation to deliver Food is under review. We’ll let you know when it’s ready.',
+  ],
+  [
+    'Para repartir Comida te faltan papeles por aprobar (identidad, licencia o seguro). Revísalos en «Mis datos y vehículo».',
+    'To deliver Food you still have documents pending approval (ID, license or insurance). Check them in “My details and vehicle.”',
+  ],
+  [
+    'Tu vehículo todavía no está aprobado para repartir Comida. Revísalo en «Mis datos y vehículo».',
+    'Your vehicle isn’t approved to deliver Food yet. Check it in “My details and vehicle.”',
+  ],
+  [
+    'Tienes Comida apagado en tus servicios. Enciéndelo para recibir pedidos.',
+    'Food is turned off in your services. Turn it on to receive orders.',
+  ],
+  [
+    'Tu cuenta está en pausa para repartir Comida. Escríbenos desde Ayuda y lo revisamos.',
+    'Your account is paused for Food deliveries. Write to us from Help and we’ll review it.',
+  ],
+  [
+    'Comida no está disponible en tu zona en este momento.',
+    'Food isn’t available in your area right now.',
+  ],
+  [
+    'Tu cuenta todavía no está activada para repartir Comida. Escríbenos desde Ayuda y la revisamos.',
+    'Your account isn’t activated to deliver Food yet. Write to us from Help and we’ll review it.',
+  ],
+  [
+    'Comida no está disponible en esa zona: enciéndela antes de usar el catálogo para repartir.',
+    'Food isn’t available in that area: turn it on before using the catalog for dispatch.',
+  ],
+  [
     'No pudimos abrir esta foto HEIC del iPhone. Mándala en JPG (en el iPhone: Ajustes → Cámara → Formatos → Más compatible) o haz una captura de pantalla y vuelve a intentar.',
     'We couldn’t open this iPhone HEIC photo. Send it as JPG (on the iPhone: Settings → Camera → Formats → Most Compatible) or take a screenshot and try again.',
   ],
