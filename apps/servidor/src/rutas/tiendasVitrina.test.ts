@@ -418,6 +418,69 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     ]);
   });
 
+  it('C-DEVOLUCIONES-AJUSTE (ETP-2): si Stripe no confirma el reembolso (sin id), ni fila ni pedido cambian', async () => {
+    vi.stubGlobal('fetch', async (url: string) =>
+      url.includes('/refunds')
+        ? new Response('{}', { status: 200 })
+        : /\/(payment_intents|customers|customer_sessions)/.test(url)
+          ? new Response(JSON.stringify({ id: 'pi_test_1', client_secret: 'pi_test_1_secret_x' }), {
+              status: 200,
+            })
+          : new Response('{}', { status: 404 }),
+    );
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: tid,
+        lineas: [
+          { platoId: id('Spring water'), cantidad: 2, sustitucion: 'reembolsar' },
+          { platoId: id('Orange juice'), cantidad: 1, sustitucion: 'reembolsar' },
+        ],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    const pid = r.datos.pedidoId as string;
+    await m.DB.batch([
+      m.DB.prepare(
+        "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+      ).bind(pid),
+      m.DB.prepare(
+        "INSERT OR REPLACE INTO cobros (pedido_id, capturado_en, capturado) VALUES (?, datetime('now'), 1)",
+      ).bind(pid),
+    ]);
+    const antes = await m.DB.prepare('SELECT total, lineas_json FROM pedidos WHERE id = ?')
+      .bind(pid)
+      .first();
+    const a = await m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${pid}/falta`,
+      { platoId: id('Spring water') },
+      dueno.token,
+    );
+    expect(a.estado).toBe(503);
+    expect(
+      await m.DB.prepare('SELECT total, lineas_json FROM pedidos WHERE id = ?').bind(pid).first(),
+    ).toEqual(antes);
+    const filas = await m.DB.prepare(
+      'SELECT COUNT(*) AS n FROM devoluciones_ajuste WHERE pedido_id = ?',
+    )
+      .bind(pid)
+      .first<{ n: number }>();
+    expect(Number(filas?.n)).toBe(0);
+  });
+
   // C-TIENDAS-REEMPLAZOS (29 oct 2026), como Instacart: la tienda propone hasta tres reemplazos de su
   // catálogo; el cliente elige uno con un toque. Nunca se cobra más que el original.
   it('C-TIENDAS-REEMPLAZOS: la tienda propone, el cliente elige y nunca paga de más', async () => {
