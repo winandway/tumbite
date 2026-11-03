@@ -114,6 +114,7 @@ import {
   formatearMonto,
   platosDelPedido,
   etiquetasValidas,
+  nombreCorto,
   rendimientoRestaurante,
 } from '@tumbite/compartido';
 
@@ -457,10 +458,11 @@ operacion.get('/restaurante/pedidos', async (c) => {
   await anotarSenal(base(c), rid);
   const { results } = await base(c)
     .prepare(
-      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, ur.nombre AS repartidor_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en, r.lat AS rest_lat, r.lng AS rest_lng,
+      `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, ur.nombre AS repartidor_nombre, uc.nombre AS cliente_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en, r.lat AS rest_lat, r.lng AS rest_lng,
         (SELECT a.auditiva FROM accesibilidad_repartidor a WHERE a.usuario_id = p.repartidor_id) AS rep_auditiva
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-      LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
+      LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN usuarios uc ON uc.id = p.cliente_id
+      LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
       WHERE p.restaurante_id = ? AND (p.estado IN ('pagado','aceptado','listo','en_camino')
       OR (p.estado IN ('entregado','cancelado') AND p.creado_en > datetime('now','-1 day'))) ORDER BY p.creado_en DESC`,
     )
@@ -471,7 +473,12 @@ operacion.get('/restaurante/pedidos', async (c) => {
   return c.json({
     pedidos: [
       ...prueba,
-      ...results.map((f) => ({ ...aPedido(f), repartidor: repartidorParaRestaurante(f) })),
+      ...results.map((f) => ({
+        ...aPedido(f),
+        repartidor: repartidorParaRestaurante(f),
+        // LAN-3y: para la comanda, solo el nombre y la inicial (como DoorDash y Uber Eats).
+        clienteCorto: nombreCorto(f.cliente_nombre == null ? '' : String(f.cliente_nombre)),
+      })),
     ],
     ...(await cocinaDe(base(c), rid)),
   });

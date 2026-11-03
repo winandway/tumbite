@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ANCHO_COMANDA_PUNTOS, htmlComanda } from './comanda';
+import { ANCHO_COMANDA_PUNTOS, htmlComanda, nombreCorto } from './comanda';
 
 /**
  * LAN-3 · C-COMANDA-APP: la comanda es UNA pieza compartida (panel y app del restaurante), en
@@ -58,6 +58,34 @@ describe('C-COMANDA-APP · la comanda compartida', () => {
     expect(
       htmlComanda({ id: 'prueba-a5cc1234', prueba: true, notas: '', lineas: [] }, '', 'es'),
     ).toContain('PRUEBA · #A5CC');
+  });
+  it('LAN-3y: lleva el nombre corto del cliente (nombre e inicial), nunca el apellido completo', () => {
+    expect(nombreCorto('Ana García López')).toBe('Ana G.');
+    expect(nombreCorto('  ana   garcía ')).toBe('Ana G.');
+    expect(nombreCorto('Ana')).toBe('Ana');
+    expect(nombreCorto('')).toBe('');
+    expect(nombreCorto(null)).toBe('');
+    for (const idioma of ['es', 'en'] as const) {
+      const h = htmlComanda(
+        { id: 'abcd1234', notas: '', clienteCorto: 'Ana García López', lineas: [] },
+        '',
+        idioma,
+      );
+      expect(h).toContain('Ana G.');
+      expect(h).not.toMatch(/García|López/);
+    }
+  });
+  it('LAN-3y: la nota de cada plato sale en la comanda (escapada)', () => {
+    const h = htmlComanda(
+      {
+        id: 'abcd1234',
+        notas: '',
+        lineas: [{ nombreEs: 'Pizza', nombreEn: 'Pizza', cantidad: 1, nota: 'sin <cebolla>' }],
+      },
+      '',
+      'es',
+    );
+    expect(h).toContain('Pizza · Nota: sin &lt;cebolla&gt;');
   });
   it('80 mm en puntos para la impresión del sistema', () => {
     expect(ANCHO_COMANDA_PUNTOS).toBe(227);
