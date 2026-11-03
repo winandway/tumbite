@@ -1083,7 +1083,8 @@ export function Inicio() {
               <Text style={{ color: C.exito, fontWeight: '800', fontSize: 17 }}>
                 {p.entrega === 'recoger' ? t.recoge : tr.listoParaRecoger}
               </Text>
-              {p.entrega !== 'recoger' ? (
+              {/* BRF-4: el de prueba no lleva QR ni repartidor: no se habla de un código. */}
+              {p.entrega !== 'recoger' && !p.prueba ? (
                 <Text style={{ color: '#3E5E4A', marginTop: 2 }}>
                   {p.repartidor?.verificado ? t.verificado : t.qrAyuda}
                 </Text>
