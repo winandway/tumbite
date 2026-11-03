@@ -50,9 +50,18 @@ describe('las apps mandan JPEG, no HEIC (NXT-4y)', () => {
         for (const m of s.matchAll(/launchImageLibraryAsync/g)) {
           if (f.endsWith('elegirCapturas.ts')) continue;
           galerias++;
-          expect(s.slice(m.index, m.index + 400), `${f}`).toMatch(
+          const llamada = s.slice(m.index, m.index + 400);
+          expect(llamada, `${f}`).toMatch(
             /UIImagePickerPreferredAssetRepresentationMode\.Compatible/,
           );
+          // NXT-4w: en Android, con calidad 1 la galería copia el HEIC crudo; menor que 1, JPEG.
+          // Las que pasan por selectorDeCapturas toman la calidad de ahí (se mira aparte).
+          if (
+            !/selectorDeCapturas\(\s*$/.test(
+              s.slice(Math.max(0, m.index - 80), m.index).replace(/ImagePicker\.$/, ''),
+            )
+          )
+            expect(llamada, `${f} calidad`).toMatch(/quality: 0\.\d/);
         }
         for (const m of s.matchAll(/launchCameraAsync\(/g)) {
           camaras++;
@@ -61,6 +70,11 @@ describe('las apps mandan JPEG, no HEIC (NXT-4y)', () => {
         }
       }
     expect(galerias).toBeGreaterThanOrEqual(5);
+    const selector = readFileSync(
+      join(raiz, 'packages', 'movil', 'src', 'elegirCapturas.ts'),
+      'utf8',
+    );
+    expect(selector).toMatch(/quality: 0\.\d/);
     expect(camaras).toBeGreaterThanOrEqual(5);
   });
 });
