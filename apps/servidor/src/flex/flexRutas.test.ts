@@ -685,7 +685,9 @@ describe('Flex · prueba de entrega (C-FLEX-ENTREGA)', () => {
     const guardado = await m.DB.prepare('SELECT pin_hash FROM flex_pines WHERE envio_id = ?')
       .bind(p1.envioId)
       .first<{ pin_hash: string }>();
-    expect(guardado!.pin_hash).not.toContain(pin);
+    // Una huella hexadecimal puede traer los cuatro dígitos por azar: se comprueba que es una huella, no el PIN.
+    expect(guardado!.pin_hash).not.toBe(pin);
+    expect(guardado!.pin_hash).toMatch(/^[0-9a-f]{64}$/);
     const foto = (await subir(m, `${C}/paradas/${p1.id}/prueba`, cond.token)).datos.pruebaId;
     const malo = pin === '0000' ? '1111' : '0000';
     const mal = await llamar(
