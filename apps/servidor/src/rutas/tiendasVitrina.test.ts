@@ -606,7 +606,8 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     // Sin ninguno de los dos, «faltan».
     await disponible('Orange juice', false);
     r = await repetir(pid);
-    expect(r.faltan).toHaveLength(1);
+    // LAN-5: «faltan» nombra lo que el cliente pidió, no el reemplazo.
+    expect(r.faltan).toEqual([{ nombreEs: 'Spring water', nombreEn: 'Spring water' }]);
     await disponible('Spring water', true);
     await disponible('Orange juice', true);
 

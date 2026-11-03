@@ -274,6 +274,10 @@ export async function calcularSinPlato(
                 platoId: l.platoId,
                 nombreEs: l.nombreEs,
                 nombreEn: l.nombreEn,
+                // LAN-5: con sus opciones, para que vuelva al carrito como lo pidió.
+                ...((l as { opciones?: unknown[] }).opciones?.length
+                  ? { opciones: (l as { opciones?: unknown[] }).opciones }
+                  : {}),
                 ...('sustitucion' in l
                   ? { sustitucion: (l as { sustitucion?: string }).sustitucion }
                   : {}),
@@ -1587,17 +1591,24 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
   const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
   type Preferencia = { sustitucion?: Sustitucion; reemplazo?: { platoId: string } };
   const viejas = lineasDe(f) as (ReturnType<typeof lineasDe>[number] &
-    Preferencia & { original?: Preferencia & { platoId: string } })[];
+    Preferencia & {
+      original?: Preferencia & {
+        platoId: string;
+        nombreEs?: string;
+        nombreEn?: string;
+        opciones?: { id: string }[];
+      };
+    })[];
   const lineas: Awaited<ReturnType<typeof lineasDeRestaurante>> = [];
   const faltan: { nombreEs: string; nombreEn: string }[] = [];
   for (const v of viejas) {
-    const base = {
+    const deLinea = (opciones: { id: string }[] | undefined) => ({
       cantidad: v.cantidad,
-      opciones: (v.opciones ?? []).map((o) => o.id),
+      opciones: (opciones ?? []).map((o) => o.id),
       nota: v.nota,
-    };
+    });
     /** El producto con su preferencia; sin el reemplazo elegido (agotado o inválido), la de siempre. */
-    const con = (platoId: string, p: Preferencia) => {
+    const con = (platoId: string, p: Preferencia, base = deLinea(v.opciones)) => {
       // ETP-4x: un reemplazo que apunta al mismo producto (pedidos de antes del arreglo) no cuenta.
       const valido =
         p.sustitucion === 'especifico' && p.reemplazo && p.reemplazo.platoId !== platoId;
@@ -1615,7 +1626,7 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
     // ETP-4y: si la línea viene de un reemplazo, primero el producto que se pidió (con lo que el
     // cliente eligió), después el reemplazo que llegó; si ninguno está, «faltan».
     const intentos = [
-      ...(v.original ? con(v.original.platoId, v.original) : []),
+      ...(v.original ? con(v.original.platoId, v.original, deLinea(v.original.opciones)) : []),
       ...con(v.platoId, v),
     ];
     let hecha = false;
@@ -1631,7 +1642,12 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
         if (!(e instanceof ErrorDatos)) throw e;
       }
     }
-    if (!hecha) faltan.push({ nombreEs: v.nombreEs, nombreEn: v.nombreEn });
+    // LAN-5: lo que falta es lo que el cliente pidió (el original), no el reemplazo que llegó.
+    if (!hecha)
+      faltan.push({
+        nombreEs: v.original?.nombreEs ?? v.nombreEs,
+        nombreEn: v.original?.nombreEn ?? v.nombreEn,
+      });
   }
   // Fotos de los platos (las de las tiendas ya vienen en la línea).
   const sinFoto = lineas.filter((l) => !('imagen' in l)).map((l) => l.platoId);
