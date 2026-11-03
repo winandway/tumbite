@@ -1,3 +1,6 @@
+2026-11-02 · desarrollador · SIG-4 control dual del dinero a mano (bandeja «Para aprobar», umbral por moneda, segunda firma Total/Finanzas) · ok · b6093adc3
+2026-11-02 · desarrollador · SIG-6 fotos sin EXIF/XMP antes de cada subida, GPS de entrega aparte en fotos_gps · ok · 127948541
+2026-11-02 · desarrollador · SIG-3x arreglos de la revisión del peso real (reemplazo sin peso, autorizado solo con Stripe, pesar por línea) · ok · cc658015e
 2026-11-02 · revisor-calidad · SIG-3r: revisión del cobro por peso real (3a86c0f8b). Reparto cuadra con cupón, propina y plato agotado; tope y peso inválido con candado en rojo; solo la tienda dueña pesa; Tiendas apagado en producción; textos es/en; servidor y compartido en verde (1599 pruebas). Dos fallos de dinero: el reemplazo hereda el precio por kilo del producto que faltaba y el cambio de dirección sube «autorizado» sin tocar Stripe · DEVUELTO (SIG-3x) · 3a86c0f8b
 2026-11-03 · guardia-produccion · SIG-2 reloj atrasado: revisado workflow y canario (reloj=ok a las 02:29 UTC; causa: GitHub espacia los cron, huecos de 6 a 7 h) · ok, sin acción ni commit
 
