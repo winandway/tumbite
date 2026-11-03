@@ -1,3 +1,4 @@
+2026-11-03 · desarrollador · publicación a main de SIG-3b a SIG-9 (la punta con [skip ci] del revisor no dispara la verificación de main; este commit la dispara) · en curso
 2026-11-03 · revisor-calidad · SIG-6zr revisión de SIG-6z: WebP con RIFF imposible o menor y PNG sin IEND dan el 415; 91 fotos reales pasan con los mismos píxeles y sin nada pegado detrás; pruebas nuevas en rojo sin el arreglo; servidor 1142 en verde · ok, VISTO BUENO · 2f29bb8de
 2026-11-03 · desarrollador · SIG-6z foto que no cuadra (PNG sin IEND, largo RIFF imposible) = 415, nunca el original · ok · ver git log SIG-6z
 2026-11-03 · revisor-calidad · SIG-6yr revisión de SIG-6y (PNG en IEND, WebP en largo RIFF): IEND y RIFF exacto se cortan bien; WebP con RIFF mayor que el archivo o menor que 4 y PNG sin IEND dejan pasar el JPEG con GPS; RIFF menor guarda imagen rota sin error · falló, DEVUELTO, arreglos en SIG-6z · 80e0fb70e
