@@ -195,6 +195,80 @@ describe('C-DESPACHO-CATALOGO · Comida lee el catálogo de habilitaciones', () 
     expect(a?.actor_id).toBe(admin.id);
   });
 
+  it('ETP-5: las consultas de una vuelta no crecen con los candidatos (un lote por vuelta, el mismo resultado)', async () => {
+    const { m, q, pedidoListo, repartidor, ofertas, encender } = await escenario();
+    await encender(true);
+    const { repartirOfertas } = await import('./rutas/operacion');
+    /** Una vuelta del reparto contando cuántas consultas prepara. */
+    const vuelta = async () => {
+      let n = 0;
+      const db = new Proxy(m.DB, {
+        get(t, k) {
+          const v = Reflect.get(t, k) as unknown;
+          if (k === 'prepare')
+            return (sql: string) => {
+              n++;
+              return t.prepare(sql);
+            };
+          return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(t) : v;
+        },
+      });
+      await repartirOfertas(db);
+      await q("UPDATE ofertas SET estado = 'vencida' WHERE estado = 'ofrecida'");
+      await q('DELETE FROM ofertas');
+      return n;
+    };
+    const suspender = async (nombre: string, lat: number) => {
+      const r = await repartidor(nombre, lat);
+      await q(
+        "INSERT INTO habilitaciones (conductor_id, servicio_id, estado) VALUES (?, 'comida', 'suspendida')",
+        r.id,
+      );
+    };
+    const lejos = await repartidor('Rep Legado Lejos', 25.86);
+    await suspender('Rep S1', 25.771);
+    await suspender('Rep S2', 25.772);
+    const id = await pedidoListo();
+    await q('DELETE FROM ofertas');
+    const conDos = await vuelta();
+    for (let i = 0; i < 10; i++) await suspender(`Rep S${i + 3}`, 25.773 + i / 10000);
+    const conDoce = await vuelta();
+    expect(conDoce).toBe(conDos);
+    // Y el resultado es el mismo: los suspendidos no reciben nada, el habilitado de lejos sí.
+    expect((await ofertas(lejos.token))[0]?.id).toBe(id);
+  });
+
+  it('ETP-5: en lotes de más de 30 cada repartidor tiene su motivo, igual que uno por uno', async () => {
+    const { m, q, repartidor, admin } = await escenario();
+    const { motivosServicio } = await import('./despachoCatalogo');
+    const { estadoDelConductor } = await import('./rutas/servicios');
+    const ids: string[] = [];
+    for (let i = 0; i < 33; i++) ids.push((await repartidor(`Rep L${i}`, 25.771)).id);
+    await q(
+      "INSERT INTO habilitaciones (conductor_id, servicio_id, estado) VALUES (?, 'comida', 'suspendida')",
+      ids[0],
+    );
+    await q(
+      "INSERT INTO conductor_bloqueos (id, conductor_id, servicio_id, motivo, creado_por) VALUES ('b-l', ?, NULL, 'revisión', ?)",
+      ids[31],
+      admin.id,
+    );
+    await q(
+      "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'comida', 0)",
+      ids[32],
+    );
+    const motivos = await motivosServicio(m.DB, [...ids, 'no-existe']);
+    expect(motivos.get(ids[0]!)).toBe('sin_habilitacion');
+    expect(motivos.get(ids[31]!)).toBe('bloqueado');
+    expect(motivos.get(ids[32]!)).toBe('preferencia_apagada');
+    expect(motivos.get(ids[5]!)).toBe('habilitado');
+    expect(motivos.has('no-existe')).toBe(true);
+    // La misma regla que ve el conductor en su app.
+    const uno = await estadoDelConductor(m.DB, ids[0]!, false, Number.MAX_SAFE_INTEGER);
+    expect(uno.servicios.find((x) => x.servicioId === 'comida')?.motivo).toBe('sin_habilitacion');
+    expect(await motivosServicio(m.DB, [])).toEqual(new Map());
+  });
+
   it('NXT-6x: un no habilitado en la celda del restaurante no tapa a un habilitado del resto de la zona', async () => {
     const { m, q, pedidoListo, repartidor, ofertas, encender } = await escenario();
     await encender(true);

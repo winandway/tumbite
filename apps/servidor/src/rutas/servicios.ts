@@ -82,7 +82,7 @@ async function auditar(
     .run();
 }
 
-type Servicio = {
+export type Servicio = {
   id: string;
   tipo_operacion: string;
   nombre_es: string;
@@ -102,7 +102,7 @@ type Servicio = {
   piloto: number;
 };
 
-async function catalogo(db: Db, zonaId: string | null): Promise<Servicio[]> {
+export async function catalogo(db: Db, zonaId: string | null): Promise<Servicio[]> {
   const { results } = await db
     .prepare(
       `SELECT s.*, sz.estado AS zona_estado, sz.activo_desde, sz.activo_hasta,
@@ -215,7 +215,7 @@ servicios.get('/servicios', async (c) => {
 
 // ---------------------------------------------------------------- conductor
 
-type EstadoConductor = {
+export type EstadoConductor = {
   servicioId: string;
   nombre: string;
   estadoServicio: string;
@@ -226,6 +226,73 @@ type EstadoConductor = {
   puedeActivar: boolean;
   motivo: string;
 };
+
+/**
+ * La regla de un servicio para un conductor, sin consultas (ETP-5): la usan `estadoDelConductor`
+ * (uno a uno, lo que ve el conductor) y el despacho por lotes (`motivosServicio`). Una sola regla.
+ */
+export function evaluarServicio(e: {
+  s: Servicio;
+  ahora: string;
+  habilitacion: { estado: string; vence_en: string | null } | undefined;
+  preferencia: boolean | undefined;
+  vehiculo: { tipo: string; estado: string } | null;
+  tiposCompatibles: string[];
+  requisitosFaltantes: string[];
+  versionDriver: number;
+  ingles: boolean;
+}): EstadoConductor {
+  const { s, ahora, vehiculo, requisitosFaltantes } = e;
+  const estadoServicio = estadoEfectivo(s, ahora);
+  const h = e.habilitacion;
+  // Comida, compatibilidad: quien ya reparte hoy no tiene fila y sigue habilitado («legado»).
+  let habilitacion = h?.estado ?? (s.id === 'comida' ? 'aprobada' : 'sin_solicitar');
+  if (habilitacion === 'aprobada' && h?.vence_en && h.vence_en <= ahora) habilitacion = 'vencida';
+  const vehiculoCompatible =
+    s.id === 'comida' && !vehiculo
+      ? true // Comida hoy no exige vehículo registrado en esta tabla
+      : Boolean(
+          vehiculo && vehiculo.estado === 'aprobado' && e.tiposCompatibles.includes(vehiculo.tipo),
+        );
+  const versionOk = e.versionDriver >= versionNum(s.version_min_driver);
+  const puedeActivar =
+    estadoServicio === 'disponible' &&
+    habilitacion === 'aprobada' &&
+    vehiculoCompatible &&
+    requisitosFaltantes.length === 0 &&
+    versionOk;
+  const motivo =
+    estadoServicio === 'proximamente'
+      ? 'proximamente'
+      : estadoServicio === 'suspendido'
+        ? 'en_pausa'
+        : estadoServicio === 'no_disponible_zona'
+          ? 'no_disponible_zona'
+          : !versionOk
+            ? 'actualizar_app'
+            : habilitacion === 'pendiente'
+              ? 'pendiente_aprobacion'
+              : habilitacion !== 'aprobada'
+                ? 'sin_habilitacion'
+                : requisitosFaltantes.length
+                  ? 'requisitos_faltantes'
+                  : !vehiculoCompatible
+                    ? 'vehiculo_incompatible'
+                    : 'habilitado';
+  return {
+    servicioId: s.id,
+    nombre: e.ingles ? s.nombre_en : s.nombre_es,
+    estadoServicio,
+    habilitacion,
+    vehiculoCompatible,
+    requisitosFaltantes,
+    preferencia: (e.preferencia ?? s.id === 'comida') && puedeActivar,
+    puedeActivar,
+    motivo,
+  };
+}
+
+export const ahoraServicios = () => ahoraSql();
 
 export async function estadoDelConductor(
   db: Db,
@@ -296,61 +363,23 @@ export async function estadoDelConductor(
   const hab = new Map(habs.results.map((h) => [h.servicio_id, h]));
   const pref = new Map(prefs.results.map((p) => [p.servicio_id, p.activa === 1]));
   const ahora = ahoraSql();
-  const serviciosConductor = lista.map((s): EstadoConductor => {
-    const estadoServicio = estadoEfectivo(s, ahora);
-    const h = hab.get(s.id);
-    // Comida, compatibilidad: quien ya reparte hoy no tiene fila y sigue habilitado («legado»).
-    let habilitacion = h?.estado ?? (s.id === 'comida' ? 'aprobada' : 'sin_solicitar');
-    if (habilitacion === 'aprobada' && h?.vence_en && h.vence_en <= ahora) habilitacion = 'vencida';
-    const tipos = compat.results.filter((x) => x.servicio_id === s.id);
-    const vehiculoCompatible =
-      s.id === 'comida' && !vehiculo
-        ? true // Comida hoy no exige vehículo registrado en esta tabla
-        : Boolean(
-            vehiculo &&
-            vehiculo.estado === 'aprobado' &&
-            tipos.some((t) => t.vehiculo_tipo === vehiculo.tipo),
-          );
-    const requisitosFaltantes = faltan.results
-      .filter((f) => f.servicio_id === s.id)
-      .map((f) => f.requisito);
-    const versionOk = versionDriver >= versionNum(s.version_min_driver);
-    const puedeActivar =
-      estadoServicio === 'disponible' &&
-      habilitacion === 'aprobada' &&
-      vehiculoCompatible &&
-      requisitosFaltantes.length === 0 &&
-      versionOk;
-    const motivo =
-      estadoServicio === 'proximamente'
-        ? 'proximamente'
-        : estadoServicio === 'suspendido'
-          ? 'en_pausa'
-          : estadoServicio === 'no_disponible_zona'
-            ? 'no_disponible_zona'
-            : !versionOk
-              ? 'actualizar_app'
-              : habilitacion === 'pendiente'
-                ? 'pendiente_aprobacion'
-                : habilitacion !== 'aprobada'
-                  ? 'sin_habilitacion'
-                  : requisitosFaltantes.length
-                    ? 'requisitos_faltantes'
-                    : !vehiculoCompatible
-                      ? 'vehiculo_incompatible'
-                      : 'habilitado';
-    return {
-      servicioId: s.id,
-      nombre: ingles ? s.nombre_en : s.nombre_es,
-      estadoServicio,
-      habilitacion,
-      vehiculoCompatible,
-      requisitosFaltantes,
-      preferencia: (pref.get(s.id) ?? s.id === 'comida') && puedeActivar,
-      puedeActivar,
-      motivo,
-    };
-  });
+  const serviciosConductor = lista.map((s) =>
+    evaluarServicio({
+      s,
+      ahora,
+      habilitacion: hab.get(s.id),
+      preferencia: pref.get(s.id),
+      vehiculo,
+      tiposCompatibles: compat.results
+        .filter((x) => x.servicio_id === s.id)
+        .map((x) => x.vehiculo_tipo),
+      requisitosFaltantes: faltan.results
+        .filter((f) => f.servicio_id === s.id)
+        .map((f) => f.requisito),
+      versionDriver,
+      ingles,
+    }),
+  );
   return { vehiculoActivo: vehiculo ?? null, servicios: serviciosConductor };
 }
 
