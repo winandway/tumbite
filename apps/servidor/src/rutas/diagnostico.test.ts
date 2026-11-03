@@ -160,11 +160,22 @@ describe('recorrido y conciliación en staging', () => {
   };
   async function conciliarCon(
     reembolsos: Reembolso[],
-    op: { devoluciones?: [string, number][]; ajustes?: [string, number][]; estado?: string } = {},
+    op: {
+      devoluciones?: [string, number][];
+      ajustes?: [string, number][];
+      estado?: string;
+      /** LAN-2: propina después de entregar (lo guardado, lo que tiene Stripe y lo abonado). */
+      propina?: { centavos: number; stripe: number; estado?: string; abonado: number };
+    } = {},
   ) {
     vi.stubGlobal('fetch', async (url: string) => {
       const u = new URL(url);
       if (u.pathname === '/v1/refunds') return Response.json({ data: reembolsos });
+      if (u.pathname === '/v1/payment_intents/pi_prop')
+        return Response.json({
+          status: op.propina?.estado ?? 'succeeded',
+          amount_received: op.propina?.stripe ?? 0,
+        });
       if (u.pathname.startsWith('/v1/payment_intents/'))
         return Response.json({ status: 'succeeded', amount_received: 20000 });
       return Response.json({ data: [] });
@@ -194,6 +205,18 @@ describe('recorrido y conciliación en staging', () => {
         )
           .bind(`a-${re}`, monto, re, `ajuste-zz-dual-${re}`)
           .run();
+      if (op.propina) {
+        await m.DB.prepare(
+          "INSERT INTO propinas_extra (pedido_id, centavos, stripe_pago) VALUES ('zz-dual', ?, 'pi_prop')",
+        )
+          .bind(op.propina.centavos)
+          .run();
+        await m.DB.prepare(
+          "INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto, referencia) VALUES ('mv-prop', 'rep', 'zz-dual', ?, 'ajuste', 'propina-extra-zz-dual')",
+        )
+          .bind(op.propina.abonado)
+          .run();
+      }
       const casos = (await pedir('conciliacion', { pedidos: ['zz-dual'] })).datos.casos as {
         nombre: string;
         ok: boolean;
@@ -327,6 +350,28 @@ describe('recorrido y conciliación en staging', () => {
     const sinReembolso = (await conciliarCon([], { ajustes: [['re_a', 1200]] })).caso;
     expect(sinReembolso.ok).toBe(false);
     expect(sinReembolso.detalle).toContain('devolución por plato agotado re_a de 1200');
+  });
+
+  it('LAN-2: la propina después de entregar cuadra con su cobro aparte en Stripe y con lo abonado al repartidor', async () => {
+    expect(
+      (await conciliarCon([], { propina: { centavos: 300, stripe: 300, abonado: 300 } })).caso.ok,
+    ).toBe(true);
+    const otroMonto = (
+      await conciliarCon([], { propina: { centavos: 300, stripe: 500, abonado: 300 } })
+    ).caso;
+    expect(otroMonto.ok).toBe(false);
+    expect(otroMonto.detalle).toContain('propina después de entregar de 300');
+    const sinCobrar = (
+      await conciliarCon([], {
+        propina: { centavos: 300, stripe: 0, estado: 'requires_payment_method', abonado: 300 },
+      })
+    ).caso;
+    expect(sinCobrar.ok).toBe(false);
+    const abonoDistinto = (
+      await conciliarCon([], { propina: { centavos: 300, stripe: 300, abonado: 200 } })
+    ).caso;
+    expect(abonoDistinto.ok).toBe(false);
+    expect(abonoDistinto.detalle).toContain('abonado al repartidor 200');
   });
 
   it('NXT-2: un pedido pedido que no existe no pasa en silencio', async () => {

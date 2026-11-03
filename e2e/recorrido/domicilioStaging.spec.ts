@@ -13,7 +13,9 @@ import { esperarVentanaLibre, registrarPausado } from './registroPausado';
  *     plato agotado antes de salir; los descuentos se conservan en el recálculo y se captura el
  *     total del recibo (C-PROMO-RESTAURANTE, C-DESCUENTOS-RECALCULO).
  * En los dos, la conciliación de esos pedidos compara la captura con Stripe y el libro del día
- * cuadra. Los puntos internos de pago solo aceptan llaves sk_test_: nunca dinero real. El
+ * cuadra. LAN-2 (EE. UU.): (c) propina después de entregar cobrada aparte con la tarjeta guardada y
+ * abonada al repartidor; (d) cambio de dirección que sube el envío con el cobro ya autorizado: lo
+ * capturado es el total nuevo. Los puntos internos de pago solo aceptan llaves sk_test_: nunca dinero real. El
  * repartidor es de la corrida (en Miami, sin rutas ni modo destino que lo dejen fuera del reparto,
  * ver C-OCUPADO-VISIBLE) y se desconecta al terminar. Imprime «NXT-3a …» y «NXT-3b …» con el pedido
  * y las cifras para VERIFICAR-PAGOS.md.
@@ -151,7 +153,12 @@ async function pagar(x: Ctx, pedidoId: string) {
 }
 
 /** Oferta, aceptar, código del comercio, foto de la bolsa, GPS en la puerta y foto de la entrega. */
-async function repartir(x: Ctx, pedidoId: string, rep: { token: string }) {
+async function repartir(
+  x: Ctx,
+  pedidoId: string,
+  rep: { token: string },
+  destino: { lat: number; lng: number } = CASA,
+) {
   const bolsa = readFileSync(join(__dirname, 'fotos', 'bolsa-entrega.jpg'));
   const subir = (ruta: string, donde: { lat: number; lng: number }) =>
     x.request.post(`${ruta}?lat=${donde.lat}&lng=${donde.lng}`, {
@@ -193,7 +200,7 @@ async function repartir(x: Ctx, pedidoId: string, rep: { token: string }) {
         for (let i = 0; i < 2; i++)
           await x.request.post('/datos/repartidor/ubicacion', {
             headers: x.con(rep.token),
-            data: { ...CASA, precision: 10 },
+            data: { ...destino, precision: 10 },
           });
         const e = (await (
           await x.request.get('/datos/repartidor/estado', { headers: x.con(rep.token) })
@@ -203,7 +210,7 @@ async function repartir(x: Ctx, pedidoId: string, rep: { token: string }) {
       { timeout: 90_000, intervals: [3_000], message: 'el GPS lo deja en la puerta' },
     )
     .toBe(true);
-  const entrega = await subir(`/datos/repartidor/pedidos/${pedidoId}/entregado`, CASA);
+  const entrega = await subir(`/datos/repartidor/pedidos/${pedidoId}/entregado`, destino);
   expect(entrega.status(), await entrega.text()).toBe(200);
 }
 
@@ -459,5 +466,168 @@ test('NXT-3b: promoción % del restaurante + cupón, quitando un plato agotado; 
     await x
       .sql(`UPDATE usuarios SET rol = 'cliente' WHERE id = '${equipo.usuario.id}'`)
       .catch(() => undefined);
+  }
+});
+
+test('LAN-2a: propina después de entregar, cobrada aparte con la tarjeta guardada; el repartidor la recibe', async ({
+  request,
+}) => {
+  test.setTimeout(360_000);
+  const x = await preparar(request);
+  const { dueno, rid } = await comercio(x, 'rest.propina', 'Cubana');
+  let rep: { token: string; usuario: { id: string } } | null = null;
+  try {
+    const r = await request.post('/datos/mi-restaurante/platos', {
+      headers: x.con(dueno.token),
+      data: { nombreEs: 'Arroz con pollo', nombreEn: 'Chicken and rice', precioCentavos: 1500 },
+    });
+    expect(r.ok(), await r.text()).toBe(true);
+    const arroz = ((await r.json()) as { plato: { id: string } }).plato.id;
+    await abrir(x, dueno.token);
+    rep = await repartidor(x);
+    const cliente = await x.cuenta('cliente.propina', 'cliente');
+    const pedir = await request.post('/datos/pedidos', {
+      headers: x.con(cliente.token),
+      data: {
+        restauranteId: rid,
+        lineas: [{ platoId: arroz, cantidad: 1 }],
+        propinaCentavos: 200,
+        entrega: 'puerta',
+        direccion: '400 Calle de Ejemplo, Miami, FL',
+        ...CASA,
+      },
+    });
+    expect(pedir.status(), await pedir.text()).toBe(201);
+    const p = (await pedir.json()) as { pedidoId: string; desglose: { totalCliente: number } };
+    const autorizado = await pagar(x, p.pedidoId);
+    const aceptar = await request.post(`/datos/restaurante/pedidos/${p.pedidoId}/aceptar`, {
+      headers: x.con(dueno.token),
+      data: { minutos: 5 },
+    });
+    expect(aceptar.ok(), await aceptar.text()).toBe(true);
+    const listo = await request.post(`/datos/restaurante/pedidos/${p.pedidoId}/listo`, {
+      headers: x.con(dueno.token),
+      data: {},
+    });
+    expect(listo.ok(), await listo.text()).toBe(true);
+    await repartir(x, p.pedidoId, rep);
+    const fin = await cerrar(x, p.pedidoId);
+    // El cliente agrega 3,00 de propina después de recibirlo, SIN volver a escribir la tarjeta.
+    const propina = await request.post(`/datos/pedidos/${p.pedidoId}/propina`, {
+      headers: x.con(cliente.token),
+      data: { centavos: 300 },
+    });
+    expect(propina.status(), await propina.text()).toBe(200);
+    const extra = (
+      await x.sql(
+        `SELECT px.centavos, px.stripe_pago, (SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = '${rep.usuario.id}' AND m.referencia = 'propina-extra-' || px.pedido_id) AS abonado FROM propinas_extra px WHERE px.pedido_id = '${p.pedidoId}'`,
+      )
+    )[0]!;
+    expect(Number(extra.centavos)).toBe(300);
+    expect(String(extra.stripe_pago)).toMatch(/^pi_/);
+    expect(Number(extra.abonado), 'el repartidor recibe la propina entera').toBe(300);
+    // La segunda vez no cobra otra.
+    const otra = await request.post(`/datos/pedidos/${p.pedidoId}/propina`, {
+      headers: x.con(cliente.token),
+      data: { centavos: 300 },
+    });
+    expect(otra.status()).toBe(409);
+    // La conciliación de ese pedido, ahora con la propina: el cobro aparte coincide con Stripe.
+    const despues = await cerrar(x, p.pedidoId);
+    console.warn(
+      `LAN-2a pedido ${p.pedidoId}: total ${fin.total}, autorizado ${autorizado}, capturado ${fin.total}, entregado en la puerta; propina después 300 cobrada con la tarjeta guardada (${String(extra.stripe_pago)}) y abonada al repartidor 300; ${despues.resumen}`,
+    );
+    expect(despues.c.ok, JSON.stringify(despues.c.casos)).toBe(true);
+  } finally {
+    await request.patch('/datos/mi-restaurante/abierto', {
+      headers: x.con(dueno.token),
+      data: { abierto: false },
+    });
+    if (rep)
+      await request.post('/datos/repartidor/conectar', {
+        headers: x.con(rep.token),
+        data: { conectado: false },
+      });
+  }
+});
+
+test('LAN-2b: cambio de dirección que sube el envío con el cobro autorizado; se captura el total nuevo', async ({
+  request,
+}) => {
+  test.setTimeout(360_000);
+  const x = await preparar(request);
+  const { dueno, rid } = await comercio(x, 'rest.mudanza', 'Cubana');
+  let rep: { token: string } | null = null;
+  // Unos 6 km al norte del local: el envío pasa de la tarifa base a la de distancia.
+  const LEJOS = { lat: 25.829, lng: -80.1902 };
+  try {
+    const r = await request.post('/datos/mi-restaurante/platos', {
+      headers: x.con(dueno.token),
+      data: { nombreEs: 'Arroz con pollo', nombreEn: 'Chicken and rice', precioCentavos: 1500 },
+    });
+    expect(r.ok(), await r.text()).toBe(true);
+    const arroz = ((await r.json()) as { plato: { id: string } }).plato.id;
+    await abrir(x, dueno.token);
+    rep = await repartidor(x);
+    const cliente = await x.cuenta('cliente.mudanza', 'cliente');
+    const pedir = await request.post('/datos/pedidos', {
+      headers: x.con(cliente.token),
+      data: {
+        restauranteId: rid,
+        lineas: [{ platoId: arroz, cantidad: 1 }],
+        propinaCentavos: 200,
+        entrega: 'puerta',
+        direccion: '400 Calle de Ejemplo, Miami, FL',
+        ...CASA,
+      },
+    });
+    expect(pedir.status(), await pedir.text()).toBe(201);
+    const p = (await pedir.json()) as {
+      pedidoId: string;
+      desglose: { totalCliente: number; envio: number };
+    };
+    const autorizado = await pagar(x, p.pedidoId);
+    const aceptar = await request.post(`/datos/restaurante/pedidos/${p.pedidoId}/aceptar`, {
+      headers: x.con(dueno.token),
+      data: { minutos: 5 },
+    });
+    expect(aceptar.ok(), await aceptar.text()).toBe(true);
+    // Primero sin aceptar el total: el servidor dice cuánto cambia y no toca nada.
+    const aviso = await request.patch(`/datos/pedidos/${p.pedidoId}/direccion`, {
+      headers: x.con(cliente.token),
+      data: { direccion: '900 Calle de Ejemplo, Miami, FL', ...LEJOS },
+    });
+    expect(aviso.status(), await aviso.text()).toBe(409);
+    const cifras = (await aviso.json()) as { nuevoTotal: number; envio: number };
+    expect(cifras.nuevoTotal, 'el envío sube con la dirección nueva').toBeGreaterThan(
+      p.desglose.totalCliente,
+    );
+    const cambio = await request.patch(`/datos/pedidos/${p.pedidoId}/direccion`, {
+      headers: x.con(cliente.token),
+      data: { direccion: '900 Calle de Ejemplo, Miami, FL', ...LEJOS, aceptarTotal: true },
+    });
+    expect(cambio.status(), await cambio.text()).toBe(200);
+    const listo = await request.post(`/datos/restaurante/pedidos/${p.pedidoId}/listo`, {
+      headers: x.con(dueno.token),
+      data: {},
+    });
+    expect(listo.ok(), await listo.text()).toBe(true);
+    await repartir(x, p.pedidoId, rep, LEJOS);
+    const fin = await cerrar(x, p.pedidoId);
+    expect(fin.total, 'se captura el total nuevo').toBe(cifras.nuevoTotal);
+    console.warn(
+      `LAN-2b pedido ${p.pedidoId}: total al pedir ${p.desglose.totalCliente} (envío ${p.desglose.envio}), autorizado ${autorizado}; dirección cambiada antes de salir: total ${cifras.nuevoTotal} (envío ${cifras.envio}), capturado ${fin.total}, entregado en la puerta nueva; ${fin.resumen}`,
+    );
+    expect(fin.c.ok, JSON.stringify(fin.c.casos)).toBe(true);
+  } finally {
+    await request.patch('/datos/mi-restaurante/abierto', {
+      headers: x.con(dueno.token),
+      data: { abierto: false },
+    });
+    if (rep)
+      await request.post('/datos/repartidor/conectar', {
+        headers: x.con(rep.token),
+        data: { conectado: false },
+      });
   }
 });

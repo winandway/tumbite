@@ -1297,6 +1297,29 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
         difs.push(`${f.id}: cancelado y capturado sin reembolso en Stripe`);
     }
     if (f.estado === 'entregado' && !f.capturado_en) difs.push(`${f.id}: entregado sin captura`);
+    // LAN-2 · la propina después de entregar es un cobro APARTE: su intento tiene que estar cobrado
+    // en Stripe por el monto exacto, y el repartidor tiene que tener abonado ese mismo monto.
+    const extra = await db
+      .prepare(
+        `SELECT px.centavos, px.stripe_pago,
+           (SELECT COALESCE(SUM(m.monto), 0) FROM movimientos m WHERE m.referencia = 'propina-extra-' || px.pedido_id) AS abonado
+         FROM propinas_extra px WHERE px.pedido_id = ?`,
+      )
+      .bind(f.id)
+      .first<{ centavos: number; stripe_pago: string; abonado: number }>();
+    if (extra) {
+      const px = await stripe.get<{ status: string; amount_received: number }>(
+        `/payment_intents/${extra.stripe_pago}`,
+      );
+      if (px.status !== 'succeeded' || px.amount_received !== Number(extra.centavos))
+        difs.push(
+          `${f.id}: propina después de entregar de ${extra.centavos}; Stripe ${px.status} ${px.amount_received}`,
+        );
+      if (Number(extra.abonado) !== Number(extra.centavos))
+        difs.push(
+          `${f.id}: propina después de entregar de ${extra.centavos}, abonado al repartidor ${extra.abonado}`,
+        );
+    }
     // NXT-2x · todo reembolso de un pedido COBRADO tiene que estar explicado, aunque la base no
     // tenga ninguna devolución (una escritura que falló después de reembolsar, uno hecho a mano en
     // Stripe): por su id en `devoluciones.stripe_reembolso` (C-CONTROL-DUAL), por un plato agotado
