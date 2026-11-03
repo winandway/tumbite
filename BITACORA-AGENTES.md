@@ -1,3 +1,4 @@
+2026-11-03 · revisor-calidad · SIG-4yr revisión del apartado atómico del control dual (SIG-4y): una sola sentencia, 20 a la vez con idas intercaladas, fallo a mitad libera, sin huérfanos, conciliación cuadra · ok, VISTO BUENO · 8fb78a8fd
 2026-11-03 · desarrollador · SIG-4y apartado atómico del control dual (INSERT … SELECT condicional, prueba de 20 a la vez en rojo) · ok · 8fb78a8fd
 2026-11-03 · desarrollador · SIG-6x JPEG cortado en el fin de la imagen (MPF y foto en movimiento) y GPS de la foto del paquete de Envíos · ok · caa8387c3
 2026-11-03 · desarrollador · SIG-4x control dual: suma de 24 h por persona y objeto, subir el límite con otra Total, excedente devuelto con segunda firma, recorrido sin tocar el límite · ok · ae5d1ef74
