@@ -160,7 +160,7 @@ describe('recorrido y conciliación en staging', () => {
   };
   async function conciliarCon(
     reembolsos: Reembolso[],
-    op: { devoluciones?: [string, number][]; estado?: string } = {},
+    op: { devoluciones?: [string, number][]; ajustes?: [string, number][]; estado?: string } = {},
   ) {
     vi.stubGlobal('fetch', async (url: string) => {
       const u = new URL(url);
@@ -187,6 +187,12 @@ describe('recorrido y conciliación en staging', () => {
           "INSERT INTO devoluciones (id, pedido_id, monto, stripe_reembolso) VALUES (?, 'zz-dual', ?, ?)",
         )
           .bind(`d-${re}`, monto, re)
+          .run();
+      for (const [re, monto] of op.ajustes ?? [])
+        await m.DB.prepare(
+          "INSERT INTO devoluciones_ajuste (id, pedido_id, plato_id, monto, stripe_reembolso, clave) VALUES (?, 'zz-dual', 'pl', ?, ?, ?)",
+        )
+          .bind(`a-${re}`, monto, re, `ajuste-zz-dual-${re}`)
           .run();
       const casos = (await pedir('conciliacion', { pedidos: ['zz-dual'] })).datos.casos as {
         nombre: string;
@@ -272,13 +278,19 @@ describe('recorrido y conciliación en staging', () => {
 
   it('NXT-2x: el plato agotado después de cobrar y la cancelación de un pedido cancelado están explicados', async () => {
     expect(
-      (await conciliarCon([ok('re_a', 1200, { pedido_id: 'zz-dual', motivo: 'plato_agotado' })]))
-        .caso.ok,
+      (
+        await conciliarCon([ok('re_a', 1200, { pedido_id: 'zz-dual', motivo: 'plato_agotado' })], {
+          ajustes: [['re_a', 1200]],
+        })
+      ).caso.ok,
     ).toBe(true);
     // El de OTRO pedido con la misma marca no explica este.
     expect(
-      (await conciliarCon([ok('re_a', 1200, { pedido_id: 'otro', motivo: 'plato_agotado' })])).caso
-        .ok,
+      (
+        await conciliarCon([ok('re_a', 1200, { pedido_id: 'otro', motivo: 'plato_agotado' })], {
+          ajustes: [['re_a', 1200]],
+        })
+      ).caso.ok,
     ).toBe(false);
     expect(
       (await conciliarCon([ok('re_c', 20000, { pedido_id: 'zz-dual' })], { estado: 'cancelado' }))
@@ -286,6 +298,35 @@ describe('recorrido y conciliación en staging', () => {
     ).toBe(true);
     // Un reembolso «de cancelación» en un pedido entregado no se explica.
     expect((await conciliarCon([ok('re_c', 20000, { pedido_id: 'zz-dual' })])).caso.ok).toBe(false);
+  });
+
+  it('ETP-2: cada reembolso por plato agotado cuadra con su fila por id y por monto exacto', async () => {
+    const agotado = (id: string, monto: number) =>
+      ok(id, monto, { pedido_id: 'zz-dual', motivo: 'plato_agotado' });
+    // Dos faltantes, dos filas, dos reembolsos: cuadra.
+    expect(
+      (
+        await conciliarCon([agotado('re_a', 1200), agotado('re_b', 350)], {
+          ajustes: [
+            ['re_a', 1200],
+            ['re_b', 350],
+          ],
+        })
+      ).caso.ok,
+    ).toBe(true);
+    // Monto distinto: rojo.
+    const distinto = (await conciliarCon([agotado('re_a', 1500)], { ajustes: [['re_a', 1200]] }))
+      .caso;
+    expect(distinto.ok).toBe(false);
+    expect(distinto.detalle).toContain('reembolso re_a de 1500 por plato agotado');
+    // Sin su fila (la primera devolución que se perdía): rojo.
+    const sinFila = (await conciliarCon([agotado('re_a', 1200)])).caso;
+    expect(sinFila.ok).toBe(false);
+    expect(sinFila.detalle).toContain('reembolso re_a de 1200 por plato agotado');
+    // Una fila sin su reembolso en Stripe: rojo.
+    const sinReembolso = (await conciliarCon([], { ajustes: [['re_a', 1200]] })).caso;
+    expect(sinReembolso.ok).toBe(false);
+    expect(sinReembolso.detalle).toContain('devolución por plato agotado re_a de 1200');
   });
 
   it('NXT-2: un pedido pedido que no existe no pasa en silencio', async () => {

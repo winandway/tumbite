@@ -462,6 +462,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Este pedido ya cambió de estado.', 'This order already changed status.'],
   ['Este pedido ya no se puede cancelar.', 'This order can no longer be canceled.'],
   ['No pudimos hacer la devolución en este momento.', 'We couldn’t process the refund right now.'],
+  ['Stripe no confirmó la devolución.', 'Stripe didn’t confirm the refund.'],
   [
     'Este pedido ya salió o ya cambió de estado: no se puede quitar un plato.',
     'This order already went out or changed status: an item can’t be removed.',

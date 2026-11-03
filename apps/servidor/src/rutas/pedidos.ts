@@ -368,22 +368,34 @@ export async function aplicarAjuste(
     .bind(pedidoId)
     .first<{ capturado_en: string | null }>();
   // Con el cobro solo autorizado, no hay nada que devolver: al entregar se captura el total nuevo.
+  // C-DEVOLUCIONES-AJUSTE (ETP-2): el reembolso deja su fila en el MISMO lote que el recálculo.
+  const filaDevolucion: D1PreparedStatement[] = [];
   if (devolucion > 0 && f.stripe_pago && capturado?.capturado_en) {
     const stripe = crearStripe(env.STRIPE_SECRET_KEY);
     if (!stripe)
       throw new ErrorDatos('No pudimos hacer la devolución en este momento.', undefined, 503);
-    await stripe.post(
+    // Una devolución por producto: en una tienda puede faltar más de uno.
+    const clave = `ajuste-${pedidoId}-${String(f.aj_plato)}`;
+    const reembolso = await stripe.post<{ id?: string }>(
       '/refunds',
       {
         payment_intent: String(f.stripe_pago),
         amount: devolucion,
         metadata: { pedido_id: pedidoId, motivo: 'plato_agotado' },
       },
-      // Una devolución por producto: en una tienda puede faltar más de uno.
-      `ajuste-${pedidoId}-${String(f.aj_plato)}`,
+      clave,
+    );
+    if (!reembolso.id) throw new ErrorDatos('Stripe no confirmó la devolución.', undefined, 503);
+    filaDevolucion.push(
+      db
+        .prepare(
+          'INSERT OR IGNORE INTO devoluciones_ajuste (id, pedido_id, plato_id, monto, stripe_reembolso, clave) VALUES (?, ?, ?, ?, ?, ?)',
+        )
+        .bind(crypto.randomUUID(), pedidoId, String(f.aj_plato), devolucion, reembolso.id, clave),
     );
   }
   await db.batch([
+    ...filaDevolucion,
     ...sentenciasRecalculo(db, pedidoId, nuevas, descuentos!),
     db
       .prepare(

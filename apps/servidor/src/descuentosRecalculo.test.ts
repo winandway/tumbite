@@ -211,6 +211,54 @@ describe('los recálculos conservan los descuentos (C-DESCUENTOS-RECALCULO)', ()
     e.cuadra((await e.fila(pct))!);
   });
 
+  it('ETP-2 · Divoox Plus y plato agotado: la devolución es solo la del plato, Plus se recalcula (cierra el pendiente de C-PLUS)', async () => {
+    const e = await escena();
+    await e.m.DB.prepare("INSERT INTO config (clave, valor) VALUES ('plus', ?)")
+      .bind(JSON.stringify({ centavosMes: 999, minimoSubtotal: 1200, servicioDescuentoPct: 50 }))
+      .run();
+    await e.m.DB.prepare(
+      "INSERT INTO suscripciones_plus (usuario_id, stripe_suscripcion, estado, vence_en) VALUES (?, 'sub_x', 'activa', datetime('now', '+30 days'))",
+    )
+      .bind(e.cliente.id)
+      .run();
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    const antes = (await e.fila(id))!;
+    expect(antes.descuento).toBeGreaterThan(0);
+    await e.m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    const falta = await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/falta`,
+      { platoId: e.jugo },
+      e.dueno.token,
+    );
+    expect(falta.estado).toBe(200);
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/pedidos/${id}/ajuste`,
+          { decision: 'quitar' },
+          e.cliente.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const despues = (await e.fila(id))!;
+    const nuevo = (await e.pedir({ lineas: [{ platoId: e.arroz, cantidad: 2 }] })).datos.desglose;
+    expect(despues.descuento).toBe(nuevo.descuento);
+    expect(despues.total).toBe(nuevo.totalCliente);
+    expect(falta.datos.devolucion).toBe(antes.total - nuevo.totalCliente);
+    const plus = await e.m.DB.prepare('SELECT descuento FROM pedidos_plus WHERE pedido_id = ?')
+      .bind(id)
+      .first<{ descuento: number }>();
+    expect(plus?.descuento).toBe(despues.descuento);
+    e.cuadra(despues);
+  });
+
   it('Divoox Plus sigue quitando el envío nuevo y el saldo de regalo se conserva', async () => {
     const e = await escena();
     await e.m.DB.prepare("INSERT INTO config (clave, valor) VALUES ('plus', ?)")

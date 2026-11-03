@@ -337,6 +337,87 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     expect(ac.estado).toBe(409);
   });
 
+  it('C-DEVOLUCIONES-AJUSTE (ETP-2): dos faltantes con el cobro ya capturado dejan dos filas, cada una con su reembolso', async () => {
+    const reembolsos: { amount: number; clave: string }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (url.includes('/refunds')) {
+        const cuerpo = new URLSearchParams(String(init?.body ?? ''));
+        const clave = new Headers(init?.headers).get('Idempotency-Key') ?? '';
+        reembolsos.push({ amount: Number(cuerpo.get('amount')), clave });
+        return new Response(
+          JSON.stringify({ id: `re_${reembolsos.length}`, status: 'succeeded' }),
+          {
+            status: 200,
+          },
+        );
+      }
+      return /\/(payment_intents|customers|customer_sessions)/.test(url)
+        ? new Response(JSON.stringify({ id: 'pi_test_1', client_secret: 'pi_test_1_secret_x' }), {
+            status: 200,
+          })
+        : new Response('{}', { status: 404 });
+    });
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: tid,
+        lineas: [
+          { platoId: id('Spring water'), cantidad: 2, sustitucion: 'reembolsar' },
+          { platoId: id('Orange juice'), cantidad: 1, sustitucion: 'reembolsar' },
+          { platoId: id('Bananas'), cantidad: 1, sustitucion: 'reembolsar' },
+        ],
+        propinaCentavos: 0,
+        direccion: '200 Calle Prueba, Miami',
+        lat: 25.78,
+        lng: -80.2,
+      },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    const pid = r.datos.pedidoId as string;
+    await m.DB.batch([
+      m.DB.prepare(
+        "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+      ).bind(pid),
+      m.DB.prepare(
+        "INSERT OR REPLACE INTO cobros (pedido_id, capturado_en, capturado) VALUES (?, datetime('now'), 1)",
+      ).bind(pid),
+    ]);
+    const falta = (n: string) =>
+      m.llamar('POST', `/datos/restaurante/pedidos/${pid}/falta`, { platoId: id(n) }, dueno.token);
+    const a = await falta('Spring water');
+    const b = await falta('Orange juice');
+    expect(a.datos.resuelto && b.datos.resuelto).toBe(true);
+    expect(reembolsos.map((x) => x.amount)).toEqual([a.datos.devolucion, b.datos.devolucion]);
+    const { results } = await m.DB.prepare(
+      'SELECT plato_id, monto, stripe_reembolso, clave FROM devoluciones_ajuste WHERE pedido_id = ? ORDER BY creado_en, stripe_reembolso',
+    )
+      .bind(pid)
+      .all<{ plato_id: string; monto: number; stripe_reembolso: string; clave: string }>();
+    expect(results).toEqual([
+      {
+        plato_id: id('Spring water'),
+        monto: a.datos.devolucion,
+        stripe_reembolso: 're_1',
+        clave: reembolsos[0]!.clave,
+      },
+      {
+        plato_id: id('Orange juice'),
+        monto: b.datos.devolucion,
+        stripe_reembolso: 're_2',
+        clave: reembolsos[1]!.clave,
+      },
+    ]);
+  });
+
   // C-TIENDAS-REEMPLAZOS (29 oct 2026), como Instacart: la tienda propone hasta tres reemplazos de su
   // catálogo; el cliente elige uno con un toque. Nunca se cobra más que el original.
   it('C-TIENDAS-REEMPLAZOS: la tienda propone, el cliente elige y nunca paga de más', async () => {

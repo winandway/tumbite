@@ -1316,6 +1316,26 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
       const ids = new Set(devs.map((d) => d.stripe_reembolso).filter(Boolean));
       const porDevolucion = buenos.filter((x) => ids.has(x.id));
       const deEstePedido = (x: (typeof buenos)[number]) => x.metadata?.pedido_id === f.id;
+      // C-DEVOLUCIONES-AJUSTE (ETP-2): cada reembolso por plato agotado tiene SU fila en
+      // `devoluciones_ajuste`, con el mismo id y el monto exacto; y cada fila, su reembolso.
+      const { results: ajustes } = await db
+        .prepare('SELECT monto, stripe_reembolso FROM devoluciones_ajuste WHERE pedido_id = ?')
+        .bind(f.id)
+        .all<{ monto: number; stripe_reembolso: string }>();
+      const montoAjuste = new Map(ajustes.map((a) => [a.stripe_reembolso, Number(a.monto)]));
+      const agotados = buenos.filter(
+        (x) => !ids.has(x.id) && deEstePedido(x) && x.metadata?.motivo === 'plato_agotado',
+      );
+      for (const x of agotados)
+        if (montoAjuste.get(x.id) !== x.amount)
+          difs.push(
+            `${f.id}: reembolso ${x.id} de ${x.amount} por plato agotado; la base tiene ${montoAjuste.get(x.id) ?? 'ninguna fila'}`,
+          );
+      for (const a of ajustes)
+        if (!agotados.some((x) => x.id === a.stripe_reembolso))
+          difs.push(
+            `${f.id}: devolución por plato agotado ${a.stripe_reembolso} de ${a.monto} sin su reembolso en Stripe`,
+          );
       const sinExplicar = buenos.filter(
         (x) =>
           !ids.has(x.id) &&

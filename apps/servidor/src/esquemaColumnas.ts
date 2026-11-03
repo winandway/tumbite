@@ -462,6 +462,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "resuelto_en"
   ],
+  "devoluciones_ajuste": [
+    "id",
+    "pedido_id",
+    "plato_id",
+    "monto",
+    "stripe_reembolso",
+    "clave",
+    "creado_en"
+  ],
   "cobros": [
     "pedido_id",
     "autorizado_en",

@@ -619,6 +619,21 @@ CREATE TABLE IF NOT EXISTS ajustes_pedido (
   resuelto_en TEXT
 );
 
+-- C-DEVOLUCIONES-AJUSTE (ETP-2, 3 nov 2026): cada reembolso de Stripe por un plato o producto
+-- agotado deja SU fila, escrita en el mismo paso que el recálculo del pedido. `ajustes_pedido`
+-- guarda solo el último faltante (una fila por pedido); aquí quedan todos, con su monto exacto,
+-- para que la conciliación cruce cada reembolso `plato_agotado` de Stripe por id y por monto.
+CREATE TABLE IF NOT EXISTS devoluciones_ajuste (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  plato_id TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  stripe_reembolso TEXT NOT NULL,
+  clave TEXT NOT NULL UNIQUE,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS devoluciones_ajuste_pedido ON devoluciones_ajuste(pedido_id);
+
 -- El cobro de cada pedido: se AUTORIZA al pedir y se CAPTURA al entregar (por el total vigente).
 -- Cancelar antes de capturar anula la autorización: sin reembolso y sin comisión de Stripe.
 CREATE TABLE IF NOT EXISTS cobros (
