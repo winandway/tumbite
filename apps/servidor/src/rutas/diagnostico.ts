@@ -1297,6 +1297,21 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
         difs.push(`${f.id}: cancelado y capturado sin reembolso en Stripe`);
     }
     if (f.estado === 'entregado' && !f.capturado_en) difs.push(`${f.id}: entregado sin captura`);
+    // LAN-2x · si se cambió la dirección con la tarjeta retenida, la autorización vieja tiene que
+    // estar ANULADA en Stripe (si no, el cliente tiene dos retenciones).
+    const { results: reaut } = await db
+      .prepare(
+        "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'cobro_reautorizado'",
+      )
+      .bind(f.id)
+      .all<{ detalle: string }>();
+    for (const r of reaut) {
+      const viejo = String(r.detalle).split('>')[0] ?? '';
+      if (!viejo.startsWith('pi_')) continue;
+      const v = await stripe.get<{ status?: string }>(`/payment_intents/${viejo}`);
+      if (v.status !== 'canceled')
+        difs.push(`${f.id}: autorización vieja ${viejo} sin anular en Stripe (${v.status ?? '?'})`);
+    }
     // LAN-2 · la propina después de entregar es un cobro APARTE: su intento tiene que estar cobrado
     // en Stripe por el monto exacto, y el repartidor tiene que tener abonado ese mismo monto.
     const extra = await db

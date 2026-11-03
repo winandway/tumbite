@@ -277,6 +277,90 @@ describe('LAN-2 · C-DIRECCION-REAUTORIZA: cambio de dirección con la tarjeta y
     );
   });
 
+  it('LAN-2x: si otro cambio ganó la carrera, no se escribe nada y se anula la autorización nueva', async () => {
+    let carrera: (() => Promise<unknown>) | null = null;
+    const base = stripeRetenido({ status: 'requires_capture' });
+    const { m, cliente, pedir, llamadas } = await escenario((url, init) => {
+      if (/\/payment_intents$/.test(url) && String(init?.body).includes('off_session=true'))
+        void carrera?.();
+      return base(url, init);
+    });
+    const p = await pedir({ entrega: 'puerta' });
+    const id = p.datos.pedidoId as string;
+    await pagar(m, id);
+    // Mientras se autoriza, otro cambio ya dejó el pedido con OTRA autorización.
+    carrera = () =>
+      m.DB.prepare("UPDATE pedidos SET stripe_pago = 'pi_otro' WHERE id = ?").bind(id).run();
+    llamadas.length = 0;
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/pedidos/${id}/direccion`,
+      { direccion: '900 Calle Lejos', lat: 25.9, lng: -80.3, aceptarTotal: true },
+      cliente.token,
+    );
+    expect(r.estado).toBe(409);
+    expect(await fila(m, id)).toMatchObject({
+      direccion: '300 Calle Prueba',
+      total: p.datos.desglose.totalCliente,
+      stripe_pago: 'pi_otro',
+    });
+    expect(llamadas.some((l) => /\/payment_intents\/pi_nuevo\/cancel$/.test(l.url))).toBe(true);
+    expect(llamadas.some((l) => /\/payment_intents\/pi_sesion\/cancel$/.test(l.url))).toBe(false);
+  });
+
+  it('LAN-2x: cada intento usa su propia clave (un error guardado no se repite 24 h)', async () => {
+    const claves: string[] = [];
+    const base = stripeRetenido({ status: 'requires_action' });
+    const { m, cliente, pedir } = await escenario((url, init) => {
+      if (/\/payment_intents$/.test(url) && String(init?.body).includes('off_session=true'))
+        claves.push(new Headers(init?.headers).get('idempotency-key') ?? '');
+      return base(url, init);
+    });
+    const p = await pedir({ entrega: 'puerta' });
+    const id = p.datos.pedidoId as string;
+    await pagar(m, id);
+    const cambiar = () =>
+      m.llamar(
+        'PATCH',
+        `/datos/pedidos/${id}/direccion`,
+        { direccion: '900 Calle Lejos', lat: 25.9, lng: -80.3, aceptarTotal: true },
+        cliente.token,
+      );
+    expect((await cambiar()).estado).toBe(409);
+    expect((await cambiar()).estado).toBe(409);
+    expect(claves).toHaveLength(2);
+    expect(claves[0]).not.toBe(claves[1]);
+  });
+
+  it('LAN-2x: si no se pudo anular la autorización vieja, queda a la vista y anotada para la conciliación', async () => {
+    const base = stripeRetenido({ status: 'requires_capture' });
+    const { m, cliente, pedir } = await escenario((url, init) =>
+      /\/payment_intents\/pi_sesion\/cancel$/.test(url)
+        ? Response.json({ error: { message: 'api_error' } }, { status: 500 })
+        : base(url, init),
+    );
+    const p = await pedir({ entrega: 'puerta' });
+    const id = p.datos.pedidoId as string;
+    await pagar(m, id);
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/pedidos/${id}/direccion`,
+      { direccion: '900 Calle Lejos', lat: 25.9, lng: -80.3, aceptarTotal: true },
+      cliente.token,
+    );
+    expect(r.estado).toBe(200);
+    const err = await m.DB.prepare(
+      "SELECT mensaje FROM errores_servidor WHERE mensaje LIKE 'No se pudo anular la autorización vieja%'",
+    ).first<{ mensaje: string }>();
+    expect(err?.mensaje).toContain('pi_sesion');
+    const ev = await m.DB.prepare(
+      "SELECT detalle FROM bitacora_pedidos WHERE pedido_id = ? AND evento = 'cobro_reautorizado'",
+    )
+      .bind(id)
+      .first<{ detalle: string }>();
+    expect(ev?.detalle).toBe('pi_sesion>pi_nuevo');
+  });
+
   it('si el envío baja, no hace falta tocar Stripe: se capturará el total menor', async () => {
     const { m, cliente, pedir, llamadas } = await escenario(
       stripeRetenido({ status: 'requires_capture' }),

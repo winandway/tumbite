@@ -60,7 +60,8 @@ import {
   formatearMonto,
 } from '@tumbite/compartido';
 import { type Variables, base, exigir } from '../sesion';
-import { crearStripe, firmaValida } from '../stripe';
+import { ErrorStripe, crearStripe, firmaValida } from '../stripe';
+import { guardarError } from '../errores';
 import { autorizacionViaje } from '../viajesCobro';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -1901,10 +1902,16 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
               description: 'Divoox · cambio de dirección',
               metadata: { pedido_id: id, reautoriza: intento },
             },
-            `reautoriza-${id}-${monto}`,
+            // LAN-2x: una clave por intento. Stripe guarda 24 h la primera respuesta de una clave
+            // (también un error o un «requires_action»): con una clave fija, «intenta de nuevo»
+            // repetiría el mismo fallo. Es la lección de las capturas (liquidaciones.ts).
+            `reautoriza-${id}-${monto}-${crypto.randomUUID().slice(0, 8)}`,
           );
         } catch (e) {
           console.error('cambio de dirección: la tarjeta no autorizó el total nuevo', id, e);
+          // Sin respuesta no se sabe si Stripe retuvo: queda a la vista del equipo (vence a los 7 días).
+          if (!(e instanceof ErrorStripe))
+            await guardarError(db, 'PATCH', `/pedidos/${id}/direccion`, e).catch(() => undefined);
           throw noSePudo();
         }
         if (nuevo.status !== 'requires_capture' || !nuevo.id) {
@@ -1920,9 +1927,14 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       }
     }
   }
-  await db
+  // LAN-2x: dirección, total y autorización en UNA sola sentencia. Con reautorización, solo si el
+  // pedido sigue apuntando a la autorización que se reemplazó: si otro cambio ganó la carrera, esta
+  // no escribe nada, se anula la autorización nueva y se responde 409.
+  const escrito = await db
     .prepare(
-      'UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, descuento = ?, pago_repartidor = ?, complemento = ?, ganancia = ?, pago_restaurante = ? WHERE id = ?',
+      `UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, descuento = ?, pago_repartidor = ?, complemento = ?, ganancia = ?, pago_restaurante = ?,
+         stripe_pago = COALESCE(?, stripe_pago), stripe_sesion = COALESCE(?, stripe_sesion)
+       WHERE id = ? AND (? IS NULL OR stripe_pago = ?)`,
     )
     .bind(
       d.direccion,
@@ -1938,18 +1950,25 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       desglose.complementoRepartidor,
       desglose.gananciaPlataforma,
       desglose.pagoRestaurante,
+      intentoNuevo,
+      intentoNuevo,
       id,
+      intentoNuevo ? intento : null,
+      intento,
     )
     .run();
+  const stripeCobro = crearStripe(c.env.STRIPE_SECRET_KEY);
+  if (!escrito.meta.changes) {
+    if (intentoNuevo)
+      await stripeCobro
+        ?.post(`/payment_intents/${intentoNuevo}/cancel`, {}, `anula-${intentoNuevo}`)
+        .catch((e: unknown) =>
+          guardarError(db, 'PATCH', `/pedidos/${id}/direccion`, e).catch(() => undefined),
+        );
+    throw noSePudo();
+  }
   await db.batch([
     ...guardarDescuentos(db, id, descuentos),
-    ...(intentoNuevo
-      ? [
-          db
-            .prepare('UPDATE pedidos SET stripe_pago = ?, stripe_sesion = ? WHERE id = ?')
-            .bind(intentoNuevo, intentoNuevo, id),
-        ]
-      : []),
     ...(stripeActualizado
       ? [
           db
@@ -1959,14 +1978,21 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       : []),
   ]);
   // La autorización vieja se suelta DESPUÉS de que el pedido ya apunta a la nueva (nunca queda un
-  // pedido apuntando a una autorización anulada).
+  // pedido apuntando a una autorización anulada). Queda anotada para que la conciliación compruebe
+  // en Stripe que quedó anulada; si no se pudo, se ve en los errores del servidor.
   if (intentoNuevo) {
-    const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
-    await stripe
+    await anotarEvento(db, id, 'cobro_reautorizado', `${intento}>${intentoNuevo}`);
+    await stripeCobro
       ?.post(`/payment_intents/${intento}/cancel`, {}, `anula-${intento}`)
       .catch((e: unknown) =>
-        // Si no se pudo, vence sola a los 7 días; queda escrito para soltarla antes a mano.
-        console.error('cambio de dirección: no se pudo anular la autorización vieja', id, e),
+        guardarError(
+          db,
+          'PATCH',
+          `/pedidos/${id}/direccion`,
+          new Error(
+            `No se pudo anular la autorización vieja ${intento} del pedido ${id} (vence sola a los 7 días): ${e instanceof Error ? e.message : String(e)}`,
+          ),
+        ).catch(() => undefined),
       );
   }
   // C-PROMO-RESTAURANTE: con «envío gratis», lo que paga el restaurante sigue al envío nuevo.

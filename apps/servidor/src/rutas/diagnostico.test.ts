@@ -166,11 +166,15 @@ describe('recorrido y conciliación en staging', () => {
       estado?: string;
       /** LAN-2: propina después de entregar (lo guardado, lo que tiene Stripe y lo abonado). */
       propina?: { centavos: number; stripe: number; estado?: string; abonado: number };
+      /** LAN-2x: la autorización vieja que se reemplazó al cambiar la dirección y su estado. */
+      reautorizado?: { estado: string };
     } = {},
   ) {
     vi.stubGlobal('fetch', async (url: string) => {
       const u = new URL(url);
       if (u.pathname === '/v1/refunds') return Response.json({ data: reembolsos });
+      if (u.pathname === '/v1/payment_intents/pi_viejo')
+        return Response.json({ id: 'pi_viejo', status: op.reautorizado?.estado ?? 'canceled' });
       if (u.pathname === '/v1/payment_intents/pi_prop')
         return Response.json({
           status: op.propina?.estado ?? 'succeeded',
@@ -205,6 +209,10 @@ describe('recorrido y conciliación en staging', () => {
         )
           .bind(`a-${re}`, monto, re, `ajuste-zz-dual-${re}`)
           .run();
+      if (op.reautorizado)
+        await m.DB.prepare(
+          "INSERT INTO bitacora_pedidos (pedido_id, evento, detalle) VALUES ('zz-dual', 'cobro_reautorizado', 'pi_viejo>pi_dual')",
+        ).run();
       if (op.propina) {
         await m.DB.prepare(
           "INSERT INTO propinas_extra (pedido_id, centavos, stripe_pago) VALUES ('zz-dual', ?, 'pi_prop')",
@@ -372,6 +380,13 @@ describe('recorrido y conciliación en staging', () => {
     ).caso;
     expect(abonoDistinto.ok).toBe(false);
     expect(abonoDistinto.detalle).toContain('abonado al repartidor 200');
+  });
+
+  it('LAN-2x: la autorización vieja de un cambio de dirección tiene que estar anulada en Stripe', async () => {
+    expect((await conciliarCon([], { reautorizado: { estado: 'canceled' } })).caso.ok).toBe(true);
+    const suelta = (await conciliarCon([], { reautorizado: { estado: 'requires_capture' } })).caso;
+    expect(suelta.ok).toBe(false);
+    expect(suelta.detalle).toContain('autorización vieja pi_viejo sin anular');
   });
 
   it('NXT-2: un pedido pedido que no existe no pasa en silencio', async () => {
