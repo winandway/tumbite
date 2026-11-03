@@ -1682,12 +1682,22 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     // Si ahí no hay nadie libre, se busca en toda la zona. Nunca se cruza de zona.
     let candidatos: (Libre & { km: number })[];
     if (!zonasCatalogo.has(String(p.zona_id))) {
+      // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de
+      // efectivo, revisado EN CADA ETAPA antes de ampliar (C-DESPACHO-SALDO-ETAPAS, ETP-1): un libre
+      // sin saldo en la celda del restaurante no tapa a uno con saldo en el resto de la zona.
       candidatos = p.geohash
-        ? ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash)))
+        ? await conSaldoParaDirecto(
+            db,
+            p.id,
+            ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash))),
+          )
         : [];
-      if (!candidatos.length) candidatos = ordenar(await libresEn(db, p.zona_id, null));
-      // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de efectivo.
-      candidatos = await conSaldoParaDirecto(db, p.id, candidatos);
+      if (!candidatos.length)
+        candidatos = await conSaldoParaDirecto(
+          db,
+          p.id,
+          ordenar(await libresEn(db, p.zona_id, null)),
+        );
       // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
       // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
       if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));

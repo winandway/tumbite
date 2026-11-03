@@ -685,6 +685,33 @@ describe('NXT-6y · con el despacho por catálogo encendido, el saldo del cobro 
   });
 });
 
+describe('ETP-1 · con el despacho por catálogo APAGADO, el saldo se revisa en cada etapa (C-DESPACHO-SALDO-ETAPAS)', () => {
+  it('un libre sin saldo en la celda del restaurante no tapa a uno con saldo en el resto de la zona', async () => {
+    const e = await escenario();
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    // En la celda del restaurante: libre pero sin saldo para la comisión del efectivo.
+    const sinSaldo = await e.repartidor('Rafa Sin Saldo');
+    // Fuera de las nueve celdas vecinas (unos 12 km al norte), en la misma zona y con saldo.
+    const lejos = await e.m.cuenta('repartidor', 'Lola Con Saldo');
+    await e.recargar(lejos, 1000);
+    await e.m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.88, lng: -80.19 },
+      lejos.token,
+    );
+    expect(await e.ofertasDe(sinSaldo)).toHaveLength(0);
+    expect((await e.ofertasDe(lejos)).map((o) => o.id)).toEqual([id]);
+  });
+});
+
 describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)', () => {
   /** Pedido directo aceptado por el restaurante y por un repartidor con saldo, ya listo para recoger. */
   async function hastaListo(e: Awaited<ReturnType<typeof escenario>>, extra = {}) {

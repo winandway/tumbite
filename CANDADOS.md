@@ -2963,3 +2963,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** una sola pieza, `exigirFotoPropia` (`apps/servidor/src/fotoPropia.ts`), en crear y editar plato y en guardar el restaurante (`rutas/catalogo.ts`) y en los productos (`rutas/tiendas.ts`): 422 `campo: 'imagen'` con aviso es/en. Una cuenta sin restaurante tampoco estrena el suyo con la foto de otro.
 - **Pruebas (comprobadas en rojo el 3 nov con `catalogo.ts` anterior):** `apps/servidor/src/fotoPropia.test.ts`; las de productos siguen en `rutas/tiendas.test.ts`.
 - **Qué NO tocar:** toda ruta nueva que guarde una foto de un negocio pasa por `exigirFotoPropia`.
+
+## C-DESPACHO-SALDO-ETAPAS (ETP-1, 3 nov 2026). Venezuela y Colombia (cobro directo); el resto no cambia.
+
+- **Qué se rompía:** con el interruptor del catálogo APAGADO (producción hoy), `repartirOfertas` (`apps/servidor/src/rutas/operacion.ts`) aplicaba `conSaldoParaDirecto` DESPUÉS de decidir si ampliaba la búsqueda: si en la celda del restaurante había repartidores libres pero ninguno con saldo para la comisión del cobro directo, la lista quedaba en cero, se saltaba la zona y se iba directo a los agrupables. Un pedido en efectivo se quedaba sin oferta con repartidores con saldo libres en la zona.
+- **Qué se hizo:** el saldo se revisa EN CADA ETAPA antes de ampliar (celda y vecinas → zona → agrupables), igual que la rama encendida. Los agrupables siguen como antes.
+- **Prueba (comprobada en rojo el 3 nov con el código anterior):** `apps/servidor/src/internacional.test.ts`, «ETP-1 · un libre sin saldo en la celda del restaurante no tapa a uno con saldo en el resto de la zona».
+- **Qué NO tocar:** no volver a filtrar el saldo al final de las etapas.
