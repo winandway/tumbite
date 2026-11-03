@@ -131,3 +131,18 @@ export function categoriaEnHorario(
     ahora,
   );
 }
+
+/**
+ * BRF-2: el día (AAAA-MM-DD) de un instante en la zona de quien lo ve (por defecto, la del
+ * celular o la computadora). `toISOString` da el día de Londres: en Miami, después de las 7 u 8
+ * de la noche, ya sería «mañana».
+ */
+export function diaDeHoyLocal(ms: number, zona?: string): string {
+  let z = zona;
+  try {
+    z ??= Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    z = 'UTC';
+  }
+  return fechaLocal(z ?? 'UTC', new Date(ms));
+}

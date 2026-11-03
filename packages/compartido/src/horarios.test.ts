@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  diaDeHoyLocal,
   abiertoPorHorario,
   esHora,
   proximaApertura,
@@ -72,5 +73,14 @@ describe('restaurante que no recibe (C-NO-RECIBE-AHORA)', () => {
   it('cerrado a mano o sin horario: el «Cerrado» de siempre', () => {
     expect(textoNoDisponible({ abierto: false, horarios: todoElDia }, 'es', manana)).toBeNull();
     expect(textoNoDisponible({ abierto: true, horarios: [] }, 'es', manana)).toBeNull();
+  });
+});
+
+describe('BRF-2: el día de hoy en la hora de quien lo ve', () => {
+  it('a las 9:30 de la noche en Miami sigue siendo el mismo día (no el de Londres)', () => {
+    expect(diaDeHoyLocal(Date.parse('2026-11-03T01:30:00Z'), 'America/New_York')).toBe(
+      '2026-11-02',
+    );
+    expect(diaDeHoyLocal(Date.parse('2026-11-03T01:30:00Z'), 'UTC')).toBe('2026-11-03');
   });
 });

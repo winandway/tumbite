@@ -9,6 +9,7 @@ import {
   insigniaPromocion,
   textoAMonto,
   useBorrador,
+  diaDeHoyLocal,
 } from '@tumbite/compartido';
 import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
@@ -86,7 +87,8 @@ type Promo = {
 };
 type Resumen = { disponible: boolean; moneda: string; promociones: Promo[] };
 
-const dia = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+// BRF-2: el día en la hora de quien lo ve, no el de Londres.
+const dia = (ms: number) => diaDeHoyLocal(ms);
 const hoy = () => dia(Date.now());
 const enUnMes = () => dia(Date.now() + 30 * 86_400_000);
 const nombreTipo = (t: Record<TipoPromocion, string>, k: TipoPromocion) =>

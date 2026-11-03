@@ -10,6 +10,7 @@ import {
   insigniaPromocion,
   textoAMonto,
   useBorrador,
+  diaDeHoyLocal,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
@@ -102,8 +103,9 @@ type Resumen = { disponible: boolean; moneda: string; promociones: Promo[] };
 
 const nombreTipo = (t: Record<TipoPromocion, string>, k: TipoPromocion) =>
   k === 'porcentaje' ? t.porcentaje : k === 'envio_gratis' ? t.envio_gratis : t.gasta_ahorra;
-const hoy = () => new Date().toISOString().slice(0, 10);
-const enUnMes = () => new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+// BRF-2: el día en la hora de quien lo ve, no el de Londres.
+const hoy = () => diaDeHoyLocal(Date.now());
+const enUnMes = () => diaDeHoyLocal(Date.now() + 30 * 86_400_000);
 
 export function Promociones({ usuario, idioma }: { usuario: { id: string }; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
