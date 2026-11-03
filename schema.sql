@@ -3407,3 +3407,31 @@ CREATE TABLE IF NOT EXISTS fotos_gps (
   lng REAL NOT NULL,
   creada_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-DINERO-30-DIAS (NXT-1, 3 nov 2026): la pieza «dinero» del canario mira los últimos 30 días. Un
+-- día que no cuadró solo deja de ponerla en rojo con una excepción aquí: motivo, quién y cuándo, y
+-- las cifras que se excusaron (si el día se recalcula con otra diferencia, vuelve el rojo). La
+-- excusa la da una cuenta Total o Finanzas con su contraseña. Nunca se borra ni se toca la fila de
+-- `conciliaciones`.
+CREATE TABLE IF NOT EXISTS conciliacion_excepciones (
+  id TEXT PRIMARY KEY,
+  dia TEXT NOT NULL,
+  pedidos INTEGER NOT NULL,
+  vendido INTEGER NOT NULL,
+  detalle TEXT NOT NULL,
+  motivo TEXT NOT NULL CHECK (length(motivo) >= 10),
+  creado_por TEXT NOT NULL,
+  creado_por_nombre TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (dia, pedidos, vendido, detalle)
+);
+CREATE INDEX IF NOT EXISTS conciliacion_excepciones_dia ON conciliacion_excepciones(dia);
+-- La única diferencia conocida de producción, autorizada por Richard el 16 oct 2026 (ver
+-- docs/EVALUACION-BLOQUEO-CONCILIACION.md y scripts/produccion/verificar-publicacion.mjs): la compra
+-- de prueba de 7,18 USD marcada como entregada a mano el 15 oct. Solo si las cifras son EXACTAMENTE
+-- esas (1 pedido, 718 centavos); cualquier otra diferencia ese día sigue en rojo.
+INSERT OR IGNORE INTO conciliacion_excepciones (id, dia, pedidos, vendido, detalle, motivo, creado_por, creado_por_nombre)
+  SELECT 'nxt1-2026-10-15', dia, pedidos, vendido, detalle,
+    'Compra de prueba de 7,18 USD del 12 oct, marcada como entregada a mano el 15 oct, autorizada por Richard el 16 oct 2026 (EVALUACION-BLOQUEO-CONCILIACION).',
+    'equipo', 'Soporte Divoox (NXT-1)'
+  FROM conciliaciones
+  WHERE dia = '2026-10-15' AND pedidos = 1 AND vendido = 718 AND cuadra = 0;
