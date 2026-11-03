@@ -29,10 +29,16 @@ export function crearInfoVersion(
   return { version: versionLimpia(version), commit: commitCorto(sha) };
 }
 
-const PALABRA = { es: 'Versión', en: 'Version' } as const;
-
-/** «Versión 0.1.0 · a74309f» / «Version 0.1.0 · a74309f». */
-export function textoVersion(info: InfoVersion, idioma: Idioma, compilacion?: string): string {
-  const extra = compilacion && /^\d{1,9}$/.test(compilacion) ? ` (${compilacion})` : '';
-  return `${PALABRA[idioma === 'en' ? 'en' : 'es']} ${info.version}${extra} · ${info.commit}`;
+/** «Versión 0.1.0 (compilación 12) · a74309f» / «Version 0.1.0 (build 12) · a74309f». */
+export function textoVersion(
+  info: InfoVersion,
+  idioma: Idioma,
+  compilacion?: string | null,
+): string {
+  const en = idioma === 'en';
+  const extra =
+    compilacion && /^\d{1,9}$/.test(compilacion)
+      ? ` (${en ? 'build' : 'compilación'} ${compilacion})`
+      : '';
+  return `${en ? 'Version' : 'Versión'} ${info.version}${extra} · ${info.commit}`;
 }

@@ -84,6 +84,7 @@ import {
   ChatPedido,
   MenuCuenta,
   OpcionesCuenta,
+  VersionInstalada,
   MisCasos,
   selectorDeCapturas,
   ReportarProblema,
@@ -1764,6 +1765,8 @@ export function Inicio() {
         />
         {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista. */}
         <OpcionesCuenta />
+        {/* C-VERSION-VISIBLE: versión y compilación instaladas, para soporte. */}
+        <VersionInstalada />
       </View>,
     );
   }

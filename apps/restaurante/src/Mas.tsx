@@ -1,10 +1,10 @@
 import { Pressable, Text, View } from 'react-native';
-import { type OpcionMas, opcionesMasRestaurante, textoVersion } from '@tumbite/compartido';
+import { type OpcionMas, opcionesMasRestaurante } from '@tumbite/compartido';
 import {
   C,
   OpcionesCuenta,
   URL_SERVIDOR,
-  VERSION_APP,
+  VersionInstalada,
   useSesion,
   useSoporte,
   abrirPanel,
@@ -78,12 +78,8 @@ export function Mas({
       ))}
       {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app. */}
       <OpcionesCuenta />
-      <Text
-        testID="version-app"
-        style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: '#9a9a9a' }}
-      >
-        {textoVersion(VERSION_APP, idioma)}
-      </Text>
+      {/* C-VERSION-VISIBLE: versión y compilación instaladas, para soporte. */}
+      <VersionInstalada />
     </View>
   );
 }

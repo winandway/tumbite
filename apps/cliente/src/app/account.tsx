@@ -16,6 +16,7 @@ import {
   urlFoto,
   useSesion,
   abrirPanel,
+  VersionInstalada,
 } from '@tumbite/movil';
 import { fotoDeRelleno } from '../inicio/recursos';
 import { ScrollView } from 'react-native';
@@ -343,6 +344,8 @@ export default function MiCuenta() {
           <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
           <MenuCuenta />
         </View>
+        {/* C-VERSION-VISIBLE: versión y compilación instaladas, para soporte. */}
+        <VersionInstalada />
       </ScrollView>
       <BarraInferior idioma={idioma} activa="cuenta" alTocar={pestana} />
     </SafeAreaView>

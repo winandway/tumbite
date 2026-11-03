@@ -17,7 +17,9 @@ describe('versión del artefacto (C-VERSION-DEL-ARTEFACTO)', () => {
   it('el texto sale en los dos idiomas, con la compilación de la tienda si la hay', () => {
     const v = crearInfoVersion('0.1.0', 'a74309f9');
     expect(textoVersion(v, 'es')).toBe('Versión 0.1.0 · a74309f');
-    expect(textoVersion(v, 'en', '12')).toBe('Version 0.1.0 (12) · a74309f');
+    expect(textoVersion(v, 'en', '12')).toBe('Version 0.1.0 (build 12) · a74309f');
+    // SIG-7: como Uber y DoorDash en Ajustes → Acerca de, la compilación de la tienda con su nombre.
+    expect(textoVersion(v, 'es', '12')).toBe('Versión 0.1.0 (compilación 12) · a74309f');
     expect(textoVersion(v, 'en', 'x; y')).toBe('Version 0.1.0 · a74309f');
   });
 });
