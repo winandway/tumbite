@@ -3364,3 +3364,33 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
   pesado_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-CONTROL-DUAL (SIG-4, 2 nov 2026): el dinero hecho a mano por encima del umbral de su moneda queda
+-- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
+CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion')),
+  objeto TEXT NOT NULL,
+  monto INTEGER NOT NULL,
+  moneda TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  datos TEXT NOT NULL,
+  pedido_por TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL DEFAULT 'pendiente'
+    CHECK (estado IN ('pendiente', 'ejecutando', 'aprobada', 'rechazada', 'fallida')),
+  revisado_por TEXT REFERENCES usuarios(id),
+  revisado_en TEXT,
+  nota TEXT,
+  resultado TEXT,
+  error TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (revisado_por IS NULL OR revisado_por <> pedido_por OR estado = 'rechazada')
+);
+CREATE INDEX IF NOT EXISTS aprobaciones_dinero_estado ON aprobaciones_dinero(estado, creado_en);
+-- C-FOTOS-SIN-METADATOS (SIG-6, 2 nov 2026): la ubicación que traía DENTRO una foto de prueba
+-- (entrega, recogida, Flex) antes de quitarle los datos ocultos. La foto guardada ya no la lleva.
+CREATE TABLE IF NOT EXISTS fotos_gps (
+  clave TEXT PRIMARY KEY,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  creada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
