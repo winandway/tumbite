@@ -229,7 +229,11 @@ function limpiarPng(b: Uint8Array): FotoLimpia {
       quitados++;
     } else partes.push(b.subarray(i, fin));
     i = fin;
-    if (tipo === 'IEND') break;
+    if (tipo === 'IEND') {
+      // SIG-6y: lo pegado después del fin de la imagen (otra imagen, un video) no se guarda.
+      if (i < b.length) quitados++;
+      break;
+    }
   }
   return { bytes: quitados ? unir(partes) : b, gps, quitados };
 }
@@ -239,18 +243,23 @@ function limpiarWebp(b: Uint8Array): FotoLimpia {
   let gps: GpsFoto | null = null;
   let quitados = 0;
   let i = 12;
-  while (i < b.length) {
-    if (i + 8 > b.length) {
-      partes.push(b.slice(i));
+  // SIG-6y: la imagen termina donde dice su largo RIFF; lo pegado detrás no se guarda. Un largo
+  // imposible (más que el archivo) vale como «hasta el final», como un archivo cortado.
+  const riff = b.length >= 8 ? new DataView(b.buffer, b.byteOffset + 4, 4).getUint32(0, true) : 0;
+  const finRiff = riff >= 4 && 8 + riff <= b.length ? 8 + riff : b.length;
+  if (finRiff < b.length) quitados++;
+  while (i < finRiff) {
+    if (i + 8 > finRiff) {
+      partes.push(b.slice(i, finRiff));
       break;
     }
     const tipo = ascii(b, i, 4);
     const largo = new DataView(b.buffer, b.byteOffset + i + 4, 4).getUint32(0, true);
     const fin = i + 8 + largo + (largo % 2);
-    if (i + 8 + largo > b.length) {
+    if (i + 8 + largo > finRiff) {
       // Último trozo cortado: si es imagen se copia tal cual (no es dato oculto); si es EXIF o
       // XMP, se descarta. Nunca se deja pasar un dato oculto.
-      if (tipo !== 'EXIF' && tipo !== 'XMP ') partes.push(b.slice(i));
+      if (tipo !== 'EXIF' && tipo !== 'XMP ') partes.push(b.slice(i, finRiff));
       else quitados++;
       break;
     }
@@ -261,7 +270,7 @@ function limpiarWebp(b: Uint8Array): FotoLimpia {
       }
       quitados++;
     } else {
-      const trozo = b.slice(i, Math.min(fin, b.length));
+      const trozo = b.slice(i, Math.min(fin, finRiff));
       // VP8X: apagar las marcas de «trae EXIF» (0x08) y «trae XMP» (0x04).
       if (tipo === 'VP8X' && trozo.length > 8) trozo[8] = (trozo[8] ?? 0) & ~0x0c;
       partes.push(trozo);

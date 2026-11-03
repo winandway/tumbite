@@ -192,4 +192,38 @@ describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
     expect(r.bytes.filter((x, k) => x === 0xff && r.bytes[k + 1] === 0xc4).length).toBe(1);
     expect(s).toContain(String.fromCharCode(0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56));
   });
+
+  // SIG-6y (revisión): el mismo agujero en PNG y WebP. Se corta en el fin real de la imagen.
+  it('PNG: lo pegado después de IEND no pasa, aunque no haya bloques ocultos', () => {
+    const cola = [...jpegConGps(1)];
+    const png = new Uint8Array([
+      ...[0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10],
+      ...be32(0),
+      ...txt('IEND'),
+      0,
+      0,
+      0,
+      0,
+      ...cola,
+    ]);
+    const r = limpiarFoto(png, 'image/png');
+    expect(contiene(r.bytes, 'PixelFone')).toBe(false);
+    expect(r.bytes.length).toBe(20);
+  });
+
+  it('WebP: lo pegado después del largo RIFF no pasa', () => {
+    const cuerpo = [...txt('WEBP'), ...txt('VP8 '), 4, 0, 0, 0, 1, 2, 3, 4];
+    const webp = new Uint8Array([
+      ...txt('RIFF'),
+      cuerpo.length & 0xff,
+      0,
+      0,
+      0,
+      ...cuerpo,
+      ...jpegConGps(1),
+    ]);
+    const r = limpiarFoto(webp, 'image/webp');
+    expect(contiene(r.bytes, 'PixelFone')).toBe(false);
+    expect(r.bytes.length).toBe(8 + cuerpo.length);
+  });
 });

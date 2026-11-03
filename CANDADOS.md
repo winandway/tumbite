@@ -2787,3 +2787,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## C-CONTROL-DUAL · apartado atómico (SIG-4y, 3 nov 2026). Todos los países.
 
 - **SIG-4y (3 nov 2026), lo devolvió el revisor sobre ae5d1ef74:** con varios ajustes a la vez, todos leían «cero acumulado» y pasaban sin segunda firma (11 de 20 en la prueba con lecturas cruzadas). Ahora la suma y el apartado son UNA sola orden: `apartarManual` (`controlDual.ts`) hace `INSERT … SELECT … WHERE suma_persona + monto <= límite AND suma_objeto + monto <= límite` (atómico en SQLite/D1) ANTES de mover el dinero; si el movimiento falla, el apartado se borra. Prueba en `controlDualRevision.test.ts` («veinte ajustes A LA VEZ», con una pausa en cada lectura para que las peticiones se crucen como en D1: en rojo con el código anterior, 11 pasaban) y «si el movimiento falla, lo apartado se devuelve». **Qué NO tocar:** no volver a leer la suma y anotar después en dos pasos.
+
+## C-FOTOS-SIN-METADATOS · PNG y WebP (SIG-6y, 3 nov 2026). Todos los países.
+
+- **Qué se rompía:** el mismo agujero de SIG-6x en los otros formatos: un PNG sin bloques ocultos se devolvía ORIGINAL aunque llevara algo pegado después de IEND, y un WebP se recorría hasta el final del archivo sin mirar su largo RIFF; una foto con otra imagen (con su EXIF y GPS) pegada detrás pasaba entera.
+- **Qué se hizo (`apps/servidor/src/fotoLimpia.ts`):** `limpiarPng` corta en IEND y cuenta lo de detrás como quitado; `limpiarWebp` recorre solo hasta 8 + largo RIFF (un largo imposible vale como «hasta el final») y lo de detrás se corta; si se cortó algo, el largo RIFF se reescribe.
+- **Pruebas (comprobadas en rojo el 3 nov):** `fotoLimpia.test.ts` («PNG: lo pegado después de IEND no pasa…», «WebP: lo pegado después del largo RIFF no pasa»). Las reproducciones del revisor (`sig6xr.test.ts`, `sig6xr2.test.ts`) pasan.
+- **Qué NO tocar:** los tres formatos se cortan en el fin real de la imagen (EOI, IEND, largo RIFF), siempre.
