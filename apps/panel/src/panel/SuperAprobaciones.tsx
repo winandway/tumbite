@@ -42,7 +42,7 @@ const T = {
       'No hay otra cuenta con perfil Total o Finanzas: nadie más puede aprobar lo que tú pidas. Asigna ese perfil a otra persona en «Equipo interno».',
     limites: 'Límite por moneda',
     limitesAyuda:
-      'Por encima de este monto, el movimiento a mano espera la segunda firma. En cero, todo la pide. Solo una cuenta Total lo cambia.',
+      'Por encima de este monto, el movimiento a mano espera la segunda firma; se suma lo que la misma persona movió en 24 horas. En cero, todo la pide. Bajarlo es inmediato; subirlo lo aprueba otra cuenta Total.',
     guardar: 'Guardar límites',
     guardado: 'Límites guardados.',
     recientes: 'Últimas revisadas',
@@ -58,6 +58,8 @@ const T = {
       ajuste_billetera: 'Ajuste de billetera',
       fondo_punto: 'Fondo de un punto de venta',
       confirmar_liquidacion: 'Cobro confirmado a mano',
+      excedente_devuelto: 'Excedente devuelto por el repartidor',
+      umbral: 'Subir el límite del control dual',
     },
   },
   en: {
@@ -82,7 +84,7 @@ const T = {
       'There’s no other account with a Full or Finance profile: nobody else can approve what you request. Give that profile to someone else in «Internal team».',
     limites: 'Limit per currency',
     limitesAyuda:
-      'Above this amount, a manual money movement waits for the second signature. At zero, everything needs it. Only a Full account can change it.',
+      'Above this amount, a manual money movement waits for the second signature; what the same person moved in 24 hours adds up. At zero, everything needs it. Lowering it is immediate; raising it is approved by another Full account.',
     guardar: 'Save limits',
     guardado: 'Limits saved.',
     recientes: 'Recently reviewed',
@@ -98,17 +100,28 @@ const T = {
       ajuste_billetera: 'Wallet adjustment',
       fondo_punto: 'Sales point funding',
       confirmar_liquidacion: 'Charge confirmed by hand',
+      excedente_devuelto: 'Overpayment returned by the driver',
+      umbral: 'Raise the dual-control limit',
     },
   },
 };
 
 /** Lo que responde el servidor cuando el movimiento quedó esperando la segunda firma (202). */
-export type RespuestaPendiente = { pendiente?: boolean; aprobadores?: number };
+export type RespuestaPendiente = {
+  pendiente?: boolean;
+  aprobadores?: number;
+  aprobacion?: { tipo?: string };
+};
 
 /** Aviso en el idioma de la pantalla; `null` si el movimiento se hizo de una. */
 export function textoPendiente(r: unknown, idioma: Idioma): string | null {
   const p = (r ?? {}) as RespuestaPendiente;
   if (!p.pendiente) return null;
+  // SIG-4x: subir un límite lo aprueba otra cuenta Total; mientras tanto sigue el de antes.
+  if (p.aprobacion?.tipo === 'umbral')
+    return idioma === 'en'
+      ? 'Raising the limit is approved by another Full account: it’s waiting in «Approvals». Until then, the previous limit stays.'
+      : 'Subir el límite lo aprueba otra cuenta con perfil Total: quedó esperando en «Para aprobar». Mientras tanto sigue el límite de antes.';
   const sinOtra = !p.aprobadores;
   if (idioma === 'en')
     return sinOtra
@@ -169,12 +182,12 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
     new Map(Object.entries(limites)).get(moneda) ??
     montoATexto(new Map(Object.entries(d.umbrales)).get(moneda) ?? 0, moneda);
 
-  async function hacer(fn: () => Promise<void>, exito: string) {
+  async function hacer(fn: () => Promise<string | void>, exito: string) {
     setError('');
     setOk('');
     try {
-      await fn();
-      setOk(exito);
+      const otro = await fn();
+      setOk(otro || exito);
       cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -200,8 +213,10 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
       const umbrales = Object.fromEntries(
         Object.keys(d.umbrales).map((m) => [m, textoAMonto(limite(m), m)]),
       );
-      await pedir('PUT', '/datos/admin/aprobaciones-dinero/umbrales', { umbrales });
+      const r = await pedir('PUT', '/datos/admin/aprobaciones-dinero/umbrales', { umbrales });
       await b.limpiar();
+      // SIG-4x: si alguno sube, queda esperando la firma de otra cuenta Total (202).
+      return textoPendiente(r, idioma) ?? undefined;
     }, t.guardado);
   };
 

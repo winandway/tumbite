@@ -89,6 +89,8 @@ export default defineConfig({
             'descuentosPedido.ts',
             // C-CONTROL-DUAL (SIG-4): el dinero hecho a mano con segunda firma.
             'finanzas/controlDual.ts',
+            // SIG-4x: la tabla de la segunda firma rehecha con los tipos nuevos.
+            'esquemaDinero.ts',
             // C-FOTOS-SIN-METADATOS (SIG-6): datos personales de las fotos.
             'fotoLimpia.ts',
             // C-ENVIO-UNA-VEZ (BRE-R3): crear el pedido y validar cupones (el envío una sola vez).

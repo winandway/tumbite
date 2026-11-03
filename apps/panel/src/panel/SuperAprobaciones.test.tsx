@@ -110,4 +110,9 @@ describe('C-CONTROL-DUAL en el panel', () => {
     expect(textoPendiente({ pendiente: true, aprobadores: 1 }, 'en')).toMatch(/Approvals/);
     expect(textoPendiente({ pendiente: true }, 'en')).toMatch(/no other/);
   });
+  it('subir un límite dice que lo aprueba otra cuenta Total (SIG-4x)', () => {
+    const r = { pendiente: true, aprobadores: 1, aprobacion: { tipo: 'umbral' } };
+    expect(textoPendiente(r, 'es')).toMatch(/otra cuenta con perfil Total.*límite de antes/);
+    expect(textoPendiente(r, 'en')).toMatch(/another Full account.*previous limit/);
+  });
 });

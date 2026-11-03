@@ -246,7 +246,21 @@ internacional.post('/admin/bandeja-dinero/:clave/acciones', async (c) => {
       idempotencia: z.string().min(8).max(80),
     }),
   );
-  return c.json(await accionCaso(base(c), { clave: c.req.param('clave'), ...d, autorId: u.id }));
+  const clave = c.req.param('clave');
+  // SIG-4x (C-CONTROL-DUAL): «excedente devuelto» escribe en el libro del repartidor; es dinero a
+  // mano y por encima del límite lo aprueba otra persona del equipo.
+  if (d.accion === 'excedente_devuelto') {
+    if (d.nota.trim().length < 5)
+      throw new ErrorDatos('Escribe qué pasó y con qué evidencia.', 'nota', 422);
+    return hacerOPedirAprobacion(c, {
+      tipo: 'excedente_devuelto',
+      objeto: clave,
+      monto: 0,
+      motivo: d.nota,
+      datos: { clave, nota: d.nota, idempotencia: d.idempotencia },
+    });
+  }
+  return c.json(await accionCaso(base(c), { clave, ...d, autorId: u.id }));
 });
 
 /** Soporte anula un código perdido, robado o vendido por error (también de un punto desactivado). */

@@ -393,7 +393,7 @@ export async function listarCasos(
 }
 
 /** Un caso por su clave (cualquier estado), sin recorrer la bandeja entera. */
-async function casoPorClave(db: D1Database, clave: string): Promise<Caso | null> {
+export async function casoPorClave(db: D1Database, clave: string): Promise<Caso | null> {
   const tipo = clave.slice(0, clave.indexOf(':'));
   const f = FUENTES.find((x) => x.tipo === tipo);
   if (!f) return null;

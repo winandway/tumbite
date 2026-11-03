@@ -28,6 +28,9 @@ export const TIPOS_DUAL = [
   'ajuste_billetera',
   'fondo_punto',
   'confirmar_liquidacion',
+  // SIG-4x: «excedente devuelto» de la bandeja de casos (libro del repartidor) y subir un límite.
+  'excedente_devuelto',
+  'umbral',
 ] as const;
 export type TipoDual = (typeof TIPOS_DUAL)[number];
 
@@ -158,7 +161,34 @@ export async function ejecutarDual(
       };
     case 'confirmar_liquidacion':
       return confirmarLiquidacion(env, db, texto(d, 'pedidoId'));
+    case 'excedente_devuelto': {
+      const { accionCaso } = await import('../internacional/bandeja');
+      return accionCaso(db, {
+        clave: texto(d, 'clave'),
+        accion: 'excedente_devuelto',
+        nota: texto(d, 'nota'),
+        idempotencia: texto(d, 'idempotencia'),
+        autorId: actorId,
+      });
+    }
+    case 'umbral': {
+      const pedidos = z
+        .record(z.string(), z.number().int().min(0))
+        .parse(new Map(Object.entries(d)).get('umbrales') ?? {});
+      return { umbrales: await guardarUmbrales(db, pedidos) };
+    }
   }
+}
+
+async function guardarUmbrales(db: D1Database, cambios: Record<string, number>) {
+  const nuevos = { ...(await leerUmbrales(db)), ...cambios };
+  await db
+    .prepare(
+      "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+    )
+    .bind(CLAVE_CONFIG, JSON.stringify(nuevos))
+    .run();
+  return nuevos;
 }
 
 /** Moneda (y, para un cobro, el monto) del objeto. `null` = no existe: lo dirá la ejecución. */
@@ -170,6 +200,13 @@ async function monedaYMonto(
 ): Promise<{ moneda: string; monto: number } | null> {
   const una = async (sql: string) =>
     db.prepare(sql).bind(objeto).first<{ moneda: string | null; monto?: number }>();
+  if (tipo === 'excedente_devuelto') {
+    // Lo que el repartidor todavía debe devolver: eso es lo que mueve la acción en su libro.
+    const { casoPorClave } = await import('../internacional/bandeja');
+    const caso = await casoPorClave(db, objeto);
+    if (!caso) return null;
+    return { moneda: caso.moneda || 'USD', monto: Number(caso.montos.porDevolver ?? 0) };
+  }
   const f =
     tipo === 'devolucion_pedido'
       ? await una('SELECT moneda FROM pedidos WHERE id = ?')
@@ -205,8 +242,46 @@ export async function hacerOPedirAprobacion(c: Ctx, s: Solicitud) {
   const u = exigir(c, 'admin');
   const db = base(c);
   const mm = await monedaYMonto(db, s.tipo, s.objeto, s.monto);
-  if (!mm || !pasaUmbral(await leerUmbrales(db), mm.moneda, mm.monto))
-    return c.json(await ejecutarDual(c.env, db, s.tipo, s.datos, u.id));
+  if (!mm) return c.json(await ejecutarDual(c.env, db, s.tipo, s.datos, u.id));
+  // SIG-4x: fraccionar no salta el control. Se suma lo que esta persona movió a mano en esta moneda
+  // en las últimas 24 h, y lo movido sobre el mismo objeto (por cualquiera), como el límite
+  // acumulado de los bancos. Lo aprobado con segunda firma no cuenta: ya lo revisó otra persona.
+  const acumulado = await acumuladoDe(db, u.id, s.objeto, mm.moneda);
+  if (!pasaUmbral(await leerUmbrales(db), mm.moneda, acumulado + Math.abs(mm.monto))) {
+    const r = await ejecutarDual(c.env, db, s.tipo, s.datos, u.id);
+    await db
+      .prepare(
+        'INSERT INTO dinero_manual (id, usuario_id, tipo, objeto, moneda, monto) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+      .bind(crypto.randomUUID(), u.id, s.tipo, s.objeto, mm.moneda, Math.abs(mm.monto))
+      .run();
+    return c.json(r);
+  }
+  return pedirAprobacion(c, u.id, s, mm);
+}
+
+/** Lo movido a mano sin segunda firma en 24 h: el mayor entre lo de la persona y lo del objeto. */
+async function acumuladoDe(db: D1Database, usuarioId: string, objeto: string, moneda: string) {
+  const f = await db
+    .prepare(
+      `SELECT
+         (SELECT COALESCE(SUM(monto), 0) FROM dinero_manual WHERE usuario_id = ?1 AND moneda = ?3 AND creado_en >= datetime('now', '-24 hours')) AS persona,
+         (SELECT COALESCE(SUM(monto), 0) FROM dinero_manual WHERE objeto = ?2 AND moneda = ?3 AND creado_en >= datetime('now', '-24 hours')) AS objeto`,
+    )
+    .bind(usuarioId, objeto, moneda)
+    .first<{ persona: number; objeto: number }>();
+  return Math.max(Number(f?.persona ?? 0), Number(f?.objeto ?? 0));
+}
+
+/** Deja la solicitud pendiente (sin duplicarla) y responde 202 con el aviso en palabras. */
+async function pedirAprobacion(
+  c: Ctx,
+  usuarioId: string,
+  s: Solicitud,
+  mm: { moneda: string; monto: number },
+) {
+  const u = { id: usuarioId };
+  const db = base(c);
   const ya = await db
     .prepare(
       "SELECT id FROM aprobaciones_dinero WHERE tipo = ? AND objeto = ? AND monto = ? AND pedido_por = ? AND estado = 'pendiente'",
@@ -237,9 +312,12 @@ export async function hacerOPedirAprobacion(c: Ctx, s: Solicitud) {
       pendiente: true,
       aprobacion: { id, tipo: s.tipo, monto: mm.monto, moneda: mm.moneda },
       aprobadores,
-      mensaje: aprobadores
-        ? 'Este monto pasa el límite del control dual: quedó esperando que otra persona del equipo (Total o Finanzas) lo apruebe en «Para aprobar».'
-        : 'Este monto pasa el límite del control dual y no hay otra cuenta con perfil Total o Finanzas que lo pueda aprobar. Quedó guardado en «Para aprobar»: asigna ese perfil a otra persona en «Equipo interno».',
+      mensaje:
+        s.tipo === 'umbral'
+          ? 'Subir el límite del control dual lo aprueba otra cuenta con perfil Total: quedó esperando en «Para aprobar». Mientras tanto sigue el límite de antes.'
+          : aprobadores
+            ? 'Este monto pasa el límite del control dual: quedó esperando que otra persona del equipo (Total o Finanzas) lo apruebe en «Para aprobar».'
+            : 'Este monto pasa el límite del control dual y no hay otra cuenta con perfil Total o Finanzas que lo pueda aprobar. Quedó guardado en «Para aprobar»: asigna ese perfil a otra persona en «Equipo interno».',
     },
     202,
   );
@@ -310,6 +388,12 @@ controlDual.post('/admin/aprobaciones-dinero/:id/aprobar', async (c) => {
   if (!PERFILES_APRUEBAN.has(perfil))
     throw new ErrorDatos(
       'Solo una cuenta con perfil Total o Finanzas aprueba dinero.',
+      undefined,
+      403,
+    );
+  if (fila.tipo === 'umbral' && perfil !== 'total')
+    throw new ErrorDatos(
+      'Subir el límite del control dual lo aprueba otra cuenta con perfil Total.',
       undefined,
       403,
     );
@@ -394,12 +478,27 @@ controlDual.put('/admin/aprobaciones-dinero/umbrales', async (c) => {
       ),
     }),
   );
-  const nuevos = { ...(await leerUmbrales(db)), ...umbrales };
-  await db
-    .prepare(
-      "INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
-    )
-    .bind(CLAVE_CONFIG, JSON.stringify(nuevos))
-    .run();
-  return c.json({ umbrales: nuevos });
+  // SIG-4x: bajar un límite (más control) se hace de una; SUBIRLO lo aprueba otra cuenta Total,
+  // así una sola persona no puede subirlo, mover sola y bajarlo otra vez.
+  const actuales = new Map(Object.entries(await leerUmbrales(db)));
+  const entradas = Object.entries(umbrales);
+  const suben = entradas.filter(([m, v]) => v > (actuales.get(m) ?? 0));
+  const bajan = entradas.filter(([m, v]) => v <= (actuales.get(m) ?? 0));
+  const nuevos = bajan.length
+    ? await guardarUmbrales(db, Object.fromEntries(bajan))
+    : await leerUmbrales(db);
+  if (!suben.length) return c.json({ umbrales: nuevos });
+  const [moneda, monto] = suben[0] as [string, number];
+  return pedirAprobacion(
+    c,
+    u.id,
+    {
+      tipo: 'umbral',
+      objeto: `umbrales:${suben.map(([m]) => m).join(',')}`,
+      monto,
+      motivo: `Subir el límite: ${suben.map(([m, v]) => `${m} ${v}`).join(', ')}`,
+      datos: { umbrales: Object.fromEntries(suben) },
+    },
+    { moneda, monto },
+  );
 });

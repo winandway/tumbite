@@ -689,6 +689,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Solo una cuenta con perfil Total cambia el límite del control dual.',
     'Only a Full profile account can change the dual-control limit.',
   ],
+  [
+    'Subir el límite del control dual lo aprueba otra cuenta con perfil Total.',
+    'Raising the dual-control limit is approved by another Full profile account.',
+  ],
   ['Esa solicitud no existe.', 'That request doesn’t exist.'],
   ['Elige la fecha inicial y la final.', 'Pick the start and end dates.'],
   ['Esa persona no es del equipo.', 'That person isn’t on the team.'],

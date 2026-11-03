@@ -63,6 +63,26 @@ function hacerAdminEnStaging(correo: string) {
     { encoding: 'utf8' },
   );
 }
+/** En esta computadora, una segunda cuenta del equipo se vuelve admin en la base local (SIG-4x). */
+function hacerAdminLocal(correo: string) {
+  execFileSync(
+    'npx',
+    [
+      'wrangler',
+      'd1',
+      'execute',
+      'tumbite-local',
+      '--local',
+      '--persist-to',
+      '.recorrido/estado',
+      '-c',
+      '.recorrido/wrangler.jsonc',
+      '--command',
+      `UPDATE usuarios SET rol = 'admin' WHERE correo = '${correo}'`,
+    ],
+    { cwd: RAIZ, stdio: 'ignore' },
+  );
+}
 const CAPTURAS = join(RAIZ, '.recorrido', 'capturas-internacional');
 
 const PAISES = [
@@ -362,29 +382,26 @@ for (const P of PAISES) {
           data: { nombre: `Punto ${id.slice(-4)}`, pais: P.pais, usuarioId: puntoDueno.usuario.id },
         })
       ).json()) as { punto: { id: string } };
-      // C-CONTROL-DUAL: un fondo grande pide una segunda firma. La corrida tiene una sola cuenta del
-      // equipo: sube el límite de esa moneda un momento y lo deja como estaba al terminar.
-      const umbrales = (
-        (await (
-          await request.get('/datos/admin/aprobaciones-dinero', { headers: hdr(admin) })
-        ).json()) as { umbrales: Record<string, number> }
-      ).umbrales;
-      limpiezas.push({
-        que: 'límite del control dual',
-        hacer: () =>
-          request.put('/datos/admin/aprobaciones-dinero/umbrales', {
-            headers: hdr(admin),
-            data: { umbrales },
-          }),
-      });
-      await request.put('/datos/admin/aprobaciones-dinero/umbrales', {
-        headers: hdr(admin),
-        data: { umbrales: { [P.moneda]: 100_000 * k } },
-      });
-      const fondo = await request.post(`/datos/admin/puntos-venta/${punto.punto.id}/fondo`, {
+      // C-CONTROL-DUAL: un fondo grande pide una segunda firma. SIG-4x: la corrida NO sube el límite
+      // (era una configuración compartida del sitio mientras corren otras pruebas): una segunda
+      // cuenta del equipo, de esta corrida, lo aprueba con su contraseña, como en la operación real.
+      const segunda = await cuenta('equipo2', 'cliente');
+      const correoSegunda = correo('equipo2');
+      if (STAGING) hacerAdminEnStaging(correoSegunda);
+      else hacerAdminLocal(correoSegunda);
+      const pideFondo = await request.post(`/datos/admin/puntos-venta/${punto.punto.id}/fondo`, {
         headers: hdr(admin),
         data: { monto: 100_000 * k, comprobante: `prueba-${id}` },
       });
+      expect(pideFondo.status(), await pideFondo.text()).toBe(202);
+      const aprobacion = ((await pideFondo.json()) as { aprobacion: { id: string } }).aprobacion;
+      const fondo = await request.post(
+        `/datos/admin/aprobaciones-dinero/${aprobacion.id}/aprobar`,
+        {
+          headers: hdr(segunda.token),
+          data: { clave },
+        },
+      );
       expect(fondo.status(), await fondo.text()).toBe(200);
       const codigo = (await (
         await request.post('/datos/punto-venta/codigos', {

@@ -2203,6 +2203,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "error",
     "creado_en"
   ],
+  "dinero_manual": [
+    "id",
+    "usuario_id",
+    "tipo",
+    "objeto",
+    "moneda",
+    "monto",
+    "creado_en"
+  ],
   "fotos_gps": [
     "clave",
     "lat",

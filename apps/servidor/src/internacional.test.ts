@@ -19,6 +19,14 @@ async function escenario(config: Record<string, unknown> = {}) {
   const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' });
   const dueno = await m.cuenta('restaurante');
   const admin = await m.cuenta('admin');
+  // C-CONTROL-DUAL (SIG-4x): estas pruebas son del cobro en mano, no de la segunda firma (esa tiene
+  // las suyas). Con el límite de fábrica, los fondos de la preparación sumarían en las 24 h de la
+  // misma cuenta y lo siguiente pediría aprobación: la base de ESTA prueba lleva un límite alto.
+  await m.DB.prepare(
+    "INSERT OR REPLACE INTO config (clave, valor) VALUES ('control_dual_umbrales', ?)",
+  )
+    .bind(JSON.stringify({ USD: 100_000_000 }))
+    .run();
   const cliente = await m.cuenta('cliente', 'Ana Cliente');
   const r = await m.llamar('PUT', '/datos/mi-restaurante', RESTAURANTE_BASE, dueno.token);
   const rid = r.datos.restaurante.id as string;

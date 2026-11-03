@@ -4,6 +4,7 @@ import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
+import { rehacerAprobacionesDinero } from './esquemaDinero';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -465,6 +466,8 @@ async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
   // Flex · Fase 2: rehacer rutas_flex y conductor_ocupacion si vienen de antes (sin perder filas);
   // suelta sus disparadores y vistas, que asegurarFase3 vuelve a crear justo después.
   await rehacerFlex(db);
+  // C-CONTROL-DUAL (SIG-4x): los tipos nuevos de la segunda firma (excedente devuelto, límite).
+  await rehacerAprobacionesDinero(db);
   await asegurarFase3(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);
