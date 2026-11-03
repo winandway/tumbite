@@ -29,7 +29,8 @@ export async function abrirPanel(
   servidor: string,
   ruta: string,
 ): Promise<void> {
-  if (Platform.OS === 'web') return void Linking.openURL(`${servidor}${ruta}`);
+  // En la web también va el código: la sesión de la app vive en el navegador, no en la cookie del
+  // panel, y sin él el panel pedía entrar otra vez (C-ALTA-COBROS-DENTRO, SIG-5b).
   try {
     const r = await api.pedir<{ url: string }>('POST', '/datos/cuentas/puente', { a: ruta });
     abrirPagina(r.url);

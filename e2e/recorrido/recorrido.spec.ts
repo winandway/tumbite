@@ -1578,11 +1578,29 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(rep.getByTestId('ganancias-desglose')).toBeVisible({ timeout: 20_000 });
     await foto(rep, 'repartidor-ganancias');
     await foto(rep, 'repartidor-billetera');
-    const [stripePagina] = await Promise.all([
+    // C-ALTA-COBROS-DENTRO (SIG-5): Driver abre «Beneficios» del panel con la sesión iniciada y
+    // ahí se conecta el banco con el formulario de Stripe (o, sin él, la página de Stripe).
+    const [beneficios] = await Promise.all([
       repCtx.waitForEvent('page'),
       rep.getByText(L.conectarBanco).filter({ visible: true }).click(),
     ]);
-    await stripePagina.close(); // la página de Stripe (simulada) no se carga en la prueba
+    await beneficios.waitForLoadState('domcontentloaded');
+    expect(beneficios.url(), 'Driver abre «Beneficios» de Divoox, no la página de Stripe').toMatch(
+      /\/panel\/earnings|\/cuentas\/puente/,
+    );
+    await beneficios
+      .getByRole('button', { name: /Connect my bank account|Conectar mi cuenta bancaria/ })
+      .click();
+    await expect
+      .poll(
+        () =>
+          sql(
+            `SELECT c.stripe_cuenta AS id FROM cuentas_stripe c JOIN usuarios u ON u.id = c.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
+          ).length,
+        { timeout: 30_000 },
+      )
+      .toBe(1);
+    await beneficios.close();
     const cuenta = sql(
       `SELECT c.stripe_cuenta AS id FROM cuentas_stripe c JOIN usuarios u ON u.id = c.usuario_id WHERE u.correo = '${correo('repartidor')}'`,
     )[0]?.id;

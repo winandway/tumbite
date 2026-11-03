@@ -80,3 +80,23 @@ describe('C-ALTA-COBROS-DENTRO: alta de cobros en el panel', () => {
     );
   });
 });
+
+describe('C-ALTA-COBROS-DENTRO (SIG-5b): Driver abre «Beneficios» en el panel', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el repartidor ve su billetera con «Conectar mi cuenta bancaria», no «solo para el equipo»', async () => {
+    localStorage.setItem('tumbite.idioma', 'es');
+    servidor({ estado: 200, cuerpo: { clientSecret: 's', clavePublica: 'pk' } });
+    const fetchBase = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) =>
+      String(url).endsWith('/datos/cuentas/yo')
+        ? new Response(JSON.stringify({ usuario }), { status: 200 })
+        : fetchBase(url, init),
+    );
+    const { PanelApp } = await import('./PanelApp');
+    render(<PanelApp ruta="/panel/earnings" />);
+    expect(
+      await screen.findByRole('button', { name: /Conectar mi cuenta bancaria/i }),
+    ).toBeInTheDocument();
+  });
+});

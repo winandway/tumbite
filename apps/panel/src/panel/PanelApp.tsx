@@ -113,9 +113,6 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
     if (ruta === '/panel/team') return <Equipo idioma={idioma} />;
     if (ruta === '/panel/orders') return <Pedidos idioma={idioma} />;
   }
-  // C-ALTA-COBROS-DENTRO: Driver abre aquí sus cobros (puente con sesión ya iniciada).
-  if (usuario.rol === 'repartidor' && ruta === '/panel/earnings')
-    return <Billetera usuario={usuario} idioma={idioma} />;
   if (usuario.rol === 'admin') {
     if (ruta === '/panel/restaurants') return <AdminRestaurantes idioma={idioma} />;
     if (ruta === '/panel/money') return <AdminDinero usuario={usuario} idioma={idioma} />;
@@ -263,6 +260,11 @@ export function PanelApp({ ruta }: { ruta: string }) {
       ) : esFlex ? (
         <main className="contenido contenido-flex">
           <PanelEmpresa ruta={ruta} idioma={idioma} />
+        </main>
+      ) : usuario.rol === 'repartidor' && ruta === '/panel/earnings' ? (
+        // C-ALTA-COBROS-DENTRO: Driver abre aquí sus cobros (puente con la sesión ya iniciada).
+        <main className="contenido">
+          <Billetera usuario={usuario} idioma={idioma} />
         </main>
       ) : menu.length === 0 && ruta === '/panel/settings' ? (
         <main className="contenido">
