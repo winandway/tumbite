@@ -9,6 +9,11 @@ on:
     workflows: [verify]
     types: [completed]
     branches: [main]
+  # C-PUBLICAR-SE-RECUPERA (3 nov 2026): «pruebas-rama» comparte la fila «publicar» y GitHub deja
+  # UNA sola corrida esperando por fila: si entra otra, cancela la que esperaba (así se perdieron las
+  # dos de 7bc0bb9, a las 14:59 y 15:24). Por eso cada «pruebas-rama» que termina vuelve a llamar a
+  # este flujo a mano cuando producción quedó atrás, y se publica la última versión verificada de main.
+  workflow_dispatch:
 
 # Una publicación a la vez: si llegan dos juntas, la segunda espera (13 oct 2026 chocaron dos
 # y una falló al empujar la rama de pruebas).
@@ -25,16 +30,28 @@ jobs:
   # se publica si la versión verificada sigue siendo la última de main (la más nueva ya trae todo y
   # se publica cuando termine su verificación), y se baja EXACTAMENTE esa versión.
   revisar:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       ultima: ${{ steps.r.outputs.ultima }}
+      version: ${{ steps.r.outputs.version }}
     steps:
       - id: r
         env:
           VERSION: ${{ github.event.workflow_run.head_sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # A mano (C-PUBLICAR-SE-RECUPERA): la última versión de main con su verificación en verde,
+          # y solo si producción todavía no la sirve.
+          if [ -z "$VERSION" ]; then
+            VERSION=$(gh api "repos/${{ github.repository }}/actions/workflows/verify.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].head_sha')
+            if curl -fsS https://divoox.com/datos/version | grep -q "${VERSION:0:7}"; then
+              echo "ultima=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::producción ya sirve ${VERSION:0:7}; no hay nada que publicar."
+              exit 0
+            fi
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           PUNTA=$(gh api "repos/${{ github.repository }}/commits/main" --jq .sha)
           # Los cambios con [skip ci] no se verifican ni se publican solos: no cuentan como «más nuevos».
           NUEVOS=$(gh api "repos/${{ github.repository }}/compare/${VERSION}...main" \
@@ -48,17 +65,17 @@ jobs:
     if: ${{ needs.revisar.outputs.ultima == 'true' }}
     runs-on: ubuntu-latest
     env:
-      VERSION: ${{ github.event.workflow_run.head_sha }}
+      VERSION: ${{ needs.revisar.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ needs.revisar.outputs.version }}
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: npm }
       - run: npm ci
       - run: npm run build
         env:
-          GITHUB_SHA: ${{ github.event.workflow_run.head_sha }}
+          GITHUB_SHA: ${{ needs.revisar.outputs.version }}
       # C-ENTORNOS-SEPARADOS: un paquete por entorno, desde cero y con SU dirección, revisado
       # antes de publicar (sin direcciones cruzadas ni secretos). Nunca se copia uno al otro.
       - name: Paquete de PRUEBAS (revisado)

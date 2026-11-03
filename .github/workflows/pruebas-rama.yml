@@ -14,6 +14,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   pruebas:
@@ -102,3 +103,23 @@ jobs:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
         run: node scripts/staging/conciliar-staging.mjs
+
+  # C-PUBLICAR-SE-RECUPERA (3 nov 2026): esta corrida comparte la fila «publicar» y, al entrar, pudo
+  # cancelar una publicación de main que esperaba. Al terminar (pase o falle), si producción no sirve
+  # la última versión verificada de main, se vuelve a llamar a «publicar»; espera a que esta corrida
+  # suelte la fila y publica esa versión.
+  republicar:
+    needs: pruebas
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          V=$(gh api "repos/${{ github.repository }}/actions/workflows/verify.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].head_sha')
+          if curl -fsS https://divoox.com/datos/version | grep -q "${V:0:7}"; then
+            echo "producción ya sirve ${V:0:7}"
+          else
+            echo "::notice::producción no sirve ${V:0:7}; se vuelve a llamar a publicar."
+            gh workflow run publicar.yml --repo "${{ github.repository }}" --ref main
+          fi
