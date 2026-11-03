@@ -1,10 +1,7 @@
 {
-  "actualizado": "2026-11-02 17:45",
-  "version": "468eee7",
-  "ahora": {
-    "titulo": "Bloque nuevo: lo que los grandes tienen y nosotros no",
-    "detalle": "Hechos seis de siete: seguimiento honesto («Actualizado hace X s», señal perdida y llegada en rango), elogios y motivos al calificar, pedido de prueba para el restaurante, promociones que paga el restaurante (apagadas), modo destino en Driver y el recorrido de «Recoger en el local». Dos revisiones de calidad devolvieron arreglos y ya están hechos. Nada está subido todavía: GitHub sigue sin sesión."
-  },
+  "actualizado": "2026-11-03T00:03:26.331Z",
+  "version": "7b9a5ca",
+  "ahora": "Compilando las tres apps para TestFlight con todo lo publicado hoy.",
   "proximo": [
     {
       "quien": "richard",
@@ -23,13 +20,6 @@
     }
   ],
   "esperando": [
-    {
-      "id": "github-sesion",
-      "prioridad": "alta",
-      "titulo": "Volver a entrar a GitHub en la computadora",
-      "para": "La sesión de GitHub de la Mac se borró hacia el mediodía del 2 nov; sin ella nada se publica.",
-      "destraba": "Publicar las búsquedas recientes, la explicación de tarifas y todo lo que venga después."
-    },
     {
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
@@ -117,6 +107,13 @@
       "titulo": "Abogado: ley aplicable de los términos",
       "para": "Los términos dicen que rigen las leyes de Florida y los tribunales de Miami-Dade, y la empresa es de Delaware con oficinas en Michigan.",
       "destraba": "Corregir esa cláusula con el texto que diga el abogado."
+    },
+    {
+      "id": "contador-impuesto-promo",
+      "prioridad": "media",
+      "titulo": "Preguntarle al contador por el impuesto con promoción",
+      "para": "Saber si el impuesto va sobre el precio de la comida ya rebajado por la promoción que paga el restaurante.",
+      "destraba": "Ajustar la cuenta del impuesto en los pedidos con promoción."
     }
   ],
   "terceros": [
@@ -299,6 +296,16 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-02",
+      "titulo": "Todo lo del día, publicado en divoox.com",
+      "texto": "Con GitHub de vuelta salió a producción (versión 7b9a5ca, verificada en verde): seguimiento honesto con «Viene con retraso», elogios y motivos al calificar, pedido de prueba del restaurante con tope diario, promociones del restaurante (apagadas) con su tope de usos y fechas arreglados, modo destino del repartidor, recoger en el local de punta a punta sin textos de repartidor y con PIN siempre, y el cupón de envío gratis que ya no se descuenta dos veces con Plus."
+    },
+    {
+      "fecha": "2026-11-02",
+      "titulo": "72 cambios publicados en divoox.com",
+      "texto": "Volvió la sesión de GitHub y se publicó todo lo acumulado: pruebas y producción en la versión 7b9a5ca, prueba de humo en verde. Todos los países."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Seis funciones nuevas de los grandes, sin publicar",
