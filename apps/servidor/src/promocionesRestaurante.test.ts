@@ -344,4 +344,19 @@ describe('promociones del restaurante (C-PROMO-RESTAURANTE)', () => {
       venceEn: '2026-11-10',
     });
   });
+
+  it('BRF-3: un pedido sin pagar no aparece como uso en lo que ve el restaurante', async () => {
+    const e = await escena();
+    await e.encender(true);
+    await e.crear({ tipo: 'porcentaje', valor: 1000 });
+    const p = await e.pedir();
+    expect(p.datos.desglose.descuentoRestaurante).toBeGreaterThan(0);
+    const mias = await e.m.llamar(
+      'GET',
+      '/datos/mi-restaurante/promociones',
+      undefined,
+      e.dueno.token,
+    );
+    expect(mias.datos.promociones[0]).toMatchObject({ usos: 0 });
+  });
 });

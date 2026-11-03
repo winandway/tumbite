@@ -50,6 +50,13 @@ export const aPromocion = (f: FilaPromocion): PromocionRestaurante => ({
 /** Usos que cuentan: pedidos con la promoción que no se cancelaron. */
 const USOS = `(SELECT COUNT(*) FROM pedidos_promocion pp JOIN pedidos pe ON pe.id = pp.pedido_id
   WHERE pp.promocion_id = pr.id AND pe.estado != 'cancelado')`;
+/**
+ * BRF-3: los usos que ve el restaurante son los de pedidos pagados. Para el tope (USOS) también
+ * cuentan los que esperan el pago, así dos clientes no se llevan el último uso; si el pago no
+ * llega, el Manager cancela el pedido abandonado y el uso se libera solo (C-ABANDONADOS).
+ */
+const USOS_PAGADOS = `(SELECT COUNT(*) FROM pedidos_promocion pp JOIN pedidos pe ON pe.id = pp.pedido_id
+  WHERE pp.promocion_id = pr.id AND pe.estado NOT IN ('cancelado', 'pago_pendiente'))`;
 
 /** Las promociones vigentes ahora de estos restaurantes (vacío si están apagadas). */
 export async function promocionesVigentes(
@@ -124,14 +131,14 @@ export async function resumenPromociones(db: D1Database, restauranteId: string) 
   const zona = z?.zona_horaria || 'America/New_York';
   const { results } = await db
     .prepare(
-      `SELECT pr.*, ${USOS} AS usos,
+      `SELECT pr.*, ${USOS} AS usos_tope, ${USOS_PAGADOS} AS usos,
          COALESCE((SELECT SUM(pp.descuento) FROM pedidos_promocion pp JOIN pedidos pe ON pe.id = pp.pedido_id
            WHERE pp.promocion_id = pr.id AND pe.estado = 'entregado'), 0) AS costo
          FROM promociones_restaurante pr WHERE pr.restaurante_id = ?
          ORDER BY pr.activa DESC, pr.creado_en DESC LIMIT 50`,
     )
     .bind(restauranteId)
-    .all<FilaPromocion & { usos: number; costo: number }>();
+    .all<FilaPromocion & { usos: number; usos_tope: number; costo: number }>();
   return results.map((f) => ({
     ...aPromocion(f),
     usosMax: f.usos_max == null ? null : Number(f.usos_max),
@@ -143,7 +150,7 @@ export async function resumenPromociones(db: D1Database, restauranteId: string) 
       Number(f.activa) === 1 &&
       f.inicia_en <= ahoraSql() &&
       f.vence_en > ahoraSql() &&
-      (f.usos_max == null || Number(f.usos) < Number(f.usos_max)),
+      (f.usos_max == null || Number(f.usos_tope) < Number(f.usos_max)),
     usos: Number(f.usos),
     costoCentavos: Number(f.costo),
   }));
