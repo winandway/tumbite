@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { selectorDeCapturas } from '../../../packages/movil/src/elegirCapturas';
@@ -28,5 +28,39 @@ describe('las apps mandan JPEG, no HEIC (NXT-4y)', () => {
     expect(leer(...ruta)).toMatch(
       /selectorDeCapturas\(\s*ImagePicker\.launchImageLibraryAsync,\s*ImagePicker\.UIImagePickerPreferredAssetRepresentationMode\.Compatible,?\s*\)/,
     );
+  });
+  it('NXT-4z: TODA apertura de la galería de las tres apps pide el modo compatible, y la cámara entrega JPEG', () => {
+    const raiz = join(__dirname, '..', '..', '..');
+    const fuentes = (dir: string): string[] =>
+      readdirSync(dir).flatMap((n) => {
+        const r = join(dir, n);
+        if (statSync(r).isDirectory()) return n === 'node_modules' ? [] : fuentes(r);
+        return /\.tsx?$/.test(n) && !/\.test\./.test(n) ? [r] : [];
+      });
+    let galerias = 0;
+    let camaras = 0;
+    for (const app of [
+      'apps/cliente/src',
+      'apps/repartidor/src',
+      'apps/restaurante/src',
+      'packages/movil/src',
+    ])
+      for (const f of fuentes(join(raiz, app))) {
+        const s = readFileSync(f, 'utf8');
+        for (const m of s.matchAll(/launchImageLibraryAsync/g)) {
+          if (f.endsWith('elegirCapturas.ts')) continue;
+          galerias++;
+          expect(s.slice(m.index, m.index + 400), `${f}`).toMatch(
+            /UIImagePickerPreferredAssetRepresentationMode\.Compatible/,
+          );
+        }
+        for (const m of s.matchAll(/launchCameraAsync\(/g)) {
+          camaras++;
+          // Con calidad menor que 1 la foto de la cámara se guarda como JPEG.
+          expect(s.slice(m.index, m.index + 300), `${f}`).toMatch(/quality: 0\.\d/);
+        }
+      }
+    expect(galerias).toBeGreaterThanOrEqual(5);
+    expect(camaras).toBeGreaterThanOrEqual(5);
   });
 });

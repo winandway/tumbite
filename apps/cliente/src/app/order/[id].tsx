@@ -148,7 +148,13 @@ type Pedido = {
 
 /** C-AYUDA-PEDIDO: la foto del plato equivocado o dañado, de la galería (reducida para subir rápido). */
 async function elegirFotoQueja(): Promise<Blob | null> {
-  const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
+  // NXT-4z: en el iPhone, la versión «compatible» (JPEG): el servidor no guarda HEIC.
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    quality: 0.5,
+    preferredAssetRepresentationMode:
+      ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+  });
   const a = r.canceled ? null : r.assets[0];
   return a ? (await fetch(a.uri)).blob() : null;
 }

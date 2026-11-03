@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { api, pedir } from './api';
-import { reducirFoto } from './SubirFoto';
+import { mensajeDeFoto, reducirFoto } from './SubirFoto';
 
 const T = {
   es: {
@@ -110,7 +110,7 @@ export function VerificacionPanel({ idioma }: { idioma: Idioma }) {
       await api.subirFoto(await reducirFoto(archivo), `/datos/kyc/foto/${pieza}${q}`);
       cargar();
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      setError(mensajeDeFoto(x, idioma));
     } finally {
       setSubiendo('');
     }
@@ -177,7 +177,7 @@ export function VerificacionPanel({ idioma }: { idioma: Idioma }) {
                   id={`${id}-${pieza}`}
                   className="solo-lector"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   capture={camara}
                   disabled={subiendo !== ''}
                   aria-label={etiqueta}

@@ -336,6 +336,9 @@ function FormPlato({
     try {
       const r = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
+        // NXT-4z: en el iPhone, la versión «compatible» (JPEG): el servidor no guarda HEIC.
+        preferredAssetRepresentationMode:
+          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
         quality: 0.6,
         allowsEditing: true,
         aspect: [4, 3],

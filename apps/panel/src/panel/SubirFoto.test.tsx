@@ -52,4 +52,32 @@ describe('subir foto', () => {
     );
     expect(await screen.findByRole('alert')).toHaveTextContent('pesa demasiado');
   });
+
+  it('NXT-4z: si el navegador no puede abrir la foto (un HEIC del iPhone), sale el aviso en su idioma, no el error técnico', async () => {
+    const llamadas: unknown[] = [];
+    vi.stubGlobal('fetch', async () => {
+      llamadas.push(1);
+      return new Response(JSON.stringify({ url: URL_FOTO }), { status: 201 });
+    });
+    vi.stubGlobal('createImageBitmap', async () => {
+      throw new DOMException('The source image could not be decoded.', 'InvalidStateError');
+    });
+    render(<Prueba />);
+    await userEvent.upload(
+      screen.getByLabelText('Foto del plato'),
+      new File([new Uint8Array([0, 0, 0, 0x18])], 'IMG_0001.jpg', { type: 'image/jpeg' }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(/HEIC.*Más compatible/);
+    expect(screen.queryByText(/could not be decoded/)).toBeNull();
+    expect(llamadas).toHaveLength(0);
+  });
+
+  it('NXT-4z: un archivo .heic ni se intenta abrir; el aviso también existe en inglés', async () => {
+    const { mensajeDeFoto, FotoIlegible, reducirFoto } = await import('./SubirFoto');
+    await expect(
+      reducirFoto(new File([new Uint8Array([1])], 'IMG_0002.HEIC', { type: '' })),
+    ).rejects.toBeInstanceOf(FotoIlegible);
+    expect(mensajeDeFoto(new FotoIlegible(), 'en')).toMatch(/Most Compatible/);
+    expect(mensajeDeFoto(new Error('x'), 'es')).toBe('No se pudo subir la foto.');
+  });
 });

@@ -27,10 +27,36 @@ const T = {
 
 const LADO_MAX = 1200;
 
+/**
+ * NXT-4z: el navegador no pudo abrir la foto (casi siempre un HEIC del iPhone en Chrome o Firefox,
+ * o un archivo dañado). Se muestra el aviso en el idioma de la persona, nunca el texto del
+ * navegador; el servidor tampoco guarda HEIC.
+ */
+export class FotoIlegible extends Error {}
+export const AVISO_FOTO_ILEGIBLE = {
+  es: 'No pudimos abrir esa foto. Si es HEIC (el formato del iPhone), mándala en JPG: en el iPhone, Ajustes → Cámara → Formatos → Más compatible.',
+  en: 'We couldn’t open that photo. If it’s HEIC (the iPhone format), send it as JPG: on the iPhone, Settings → Camera → Formats → Most Compatible.',
+};
+const ES_HEIC = (a: File) => /^image\/hei[cf]/.test(a.type) || /\.hei[cf]$/i.test(a.name);
+
+/** El mensaje para la persona: el aviso de la foto ilegible, el del servidor o uno genérico. */
+export function mensajeDeFoto(x: unknown, idioma: Idioma): string {
+  if (x instanceof FotoIlegible)
+    return idioma === 'en' ? AVISO_FOTO_ILEGIBLE.en : AVISO_FOTO_ILEGIBLE.es;
+  if (x instanceof ErrorApi) return x.message;
+  return idioma === 'en' ? 'The photo couldn’t be uploaded.' : 'No se pudo subir la foto.';
+}
+
 /** Reduce la foto en el navegador (máx. 1200 px, WebP) antes de subirla. */
 export async function reducirFoto(archivo: File): Promise<Blob> {
+  if (ES_HEIC(archivo)) throw new FotoIlegible();
   if (typeof createImageBitmap !== 'function') return archivo;
-  const img = await createImageBitmap(archivo);
+  let img: ImageBitmap;
+  try {
+    img = await createImageBitmap(archivo);
+  } catch {
+    throw new FotoIlegible();
+  }
   const escala = Math.min(1, LADO_MAX / Math.max(img.width, img.height));
   const lienzo = document.createElement('canvas');
   lienzo.width = Math.round(img.width * escala);
@@ -73,7 +99,7 @@ export function SubirFoto({
       const { url } = await api.subirFoto(await reducirFoto(archivo));
       cambiar(url);
     } catch (x) {
-      setError(x instanceof ErrorApi ? x.message : String(x));
+      setError(mensajeDeFoto(x, idioma));
     } finally {
       setSubiendo(false);
     }
