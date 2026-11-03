@@ -19,7 +19,7 @@
     "viajes": "ok",
     "tiempoReal": "pendiente",
     "exclusividad": "ok",
-    "reloj": "atrasado",
+    "reloj": "ok",
     "transiciones": "ok",
     "libro": "ok",
     "disputas": "ok",
@@ -29,5 +29,5 @@
     "billeteras": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-03T09:25:42.841908+00:00"
+  "medido": "2026-11-03T13:30:46.620443+00:00"
 }
