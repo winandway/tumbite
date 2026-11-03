@@ -127,12 +127,14 @@ describe('puerta interna: firma', () => {
 
   it('un nonce repetido no repite efectos', async () => {
     const { m, firmado } = escenario();
-    const primera = await firmado('/datos/interno/reloj', { ventana: minutoActual() });
+    // El mismo cuerpo en las dos: si el minuto cambia entre llamadas, la firma repetida ya no cuadraría.
+    const ventana = minutoActual();
+    const primera = await firmado('/datos/interno/reloj', { ventana });
     expect(primera.estado).toBe(200);
     expect(primera.datos.yaHecho).toBeUndefined();
     const repetida = await firmado(
       '/datos/interno/reloj',
-      { ventana: minutoActual() },
+      { ventana },
       { cabeceras: primera.cabeceras },
     );
     // La frena el nonce, antes de mirar las tareas (si no, la respuesta traería la ventana).
