@@ -19,7 +19,8 @@ describe('C-COMANDA', () => {
     expect(h).toContain('RECOGE EN EL LOCAL');
     expect(h).toContain('2×');
     expect(h).toContain('Cubano');
-    expect(h).toContain('Sin cebolla &lt;por favor&gt;');
+    // LAN-3x: las indicaciones para el repartidor no van en la comanda.
+    expect(h).not.toContain('Sin cebolla');
     expect(h).toContain('size:80mm');
   });
 });

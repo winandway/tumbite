@@ -2412,7 +2412,7 @@ const es: SeccionDocs[] = [
           'En la app Divoox Restaurants (celular o tableta) es igual: en Inicio enciende «Imprimir la comanda al aceptar» y, dentro de cada pedido aceptado o listo, toca «Imprimir comanda». Se imprime con la impresión del propio equipo: AirPrint en el iPhone y el iPad, y el servicio de impresión en Android, con la impresora que tengas emparejada.',
           'Con el interruptor encendido también salen solos los pedidos que se aceptan automáticamente.',
           'Para probarlo sin un cliente, toca «Enviar un pedido de prueba» en Inicio y acéptalo: la comanda sale igual que con un pedido real.',
-          'La comanda trae el número del pedido, si es a domicilio o para recoger, si es programado, los platos con sus opciones y las notas. No trae la dirección ni el dinero del cliente.',
+          'La comanda trae el número del pedido, si es a domicilio o para recoger, si es programado, los platos con sus opciones y notas de cada plato, y las alergias. No trae la dirección, las indicaciones para el repartidor ni el dinero del cliente.',
           'Sale en el ancho de 80 mm de las impresoras térmicas; también se puede imprimir en una hoja normal.',
         ],
         capturas: [
@@ -2434,7 +2434,7 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/comanda-app-ticket-es.webp',
             alt: 'La comanda de 80 mm con el número del pedido, el modo de entrega y los platos, sin dinero ni dirección.',
-            pie: 'Así sale la comanda: número, modo, platos con sus opciones y notas.',
+            pie: 'Así sale la comanda: número, modo y platos con sus opciones; sin dirección, indicaciones de entrega ni dinero.',
           },
         ],
         preguntas: [
@@ -6988,7 +6988,7 @@ const en: SeccionDocs[] = [
           'The Divoox Restaurants app (phone or tablet) works the same way: on Home, turn on “Print the ticket when accepting” and, inside any accepted or ready order, tap “Print ticket”. It prints with the device’s own printing: AirPrint on iPhone and iPad, and the print service on Android, with the printer you have paired.',
           'With the switch on, orders accepted automatically print too.',
           'To try it without a customer, tap “Send a test order” on Home and accept it: the ticket prints just like a real order.',
-          'The ticket shows the order number, whether it’s delivery or pickup, whether it’s scheduled, the items with their options and the notes. It doesn’t show the customer’s address or money.',
+          'The ticket shows the order number, whether it’s delivery or pickup, whether it’s scheduled, the items with their options and item notes, and any allergies. It doesn’t show the customer’s address, the delivery instructions or money.',
           'It prints at the 80 mm width of thermal printers; it can also be printed on a regular page.',
         ],
         capturas: [
@@ -7010,7 +7010,7 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/comanda-app-ticket-en.webp',
             alt: 'The 80 mm kitchen ticket with the order number, delivery mode and items, without money or address.',
-            pie: 'This is the ticket: number, mode, items with their options and notes.',
+            pie: 'This is the ticket: number, mode and items with their options; no address, delivery instructions or money.',
           },
         ],
         preguntas: [

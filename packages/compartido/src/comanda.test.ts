@@ -38,7 +38,10 @@ describe('C-COMANDA-APP · la comanda compartida', () => {
     expect(h).toContain('2×');
     expect(h).toContain('Extra cheese');
     expect(h).toContain('ALLERGY: maní');
-    expect(h).toContain('Tocar el timbre &lt;2&gt;');
+    // LAN-3x: las notas del pedido son las indicaciones para el repartidor (portón, timbre): la
+    // comanda queda en la cocina y pegada a la bolsa, así que NO las lleva (DoorDash tampoco).
+    expect(h).not.toContain('Tocar el timbre');
+    expect(h).not.toMatch(/Notes|Notas/);
     expect(h).toContain('size:80mm');
     expect(h).not.toContain('300 Calle');
     expect(h).not.toMatch(/45[.,]99|\$/);

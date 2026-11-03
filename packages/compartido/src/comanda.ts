@@ -5,14 +5,18 @@ import { type OpcionElegida, textoLinea } from './catalogo';
  * como la impresora de DoorDash Merchant y Uber Eats Manager. UNA sola pieza para el panel web
  * (impresión del navegador) y la app del restaurante (impresión del sistema: AirPrint en iPhone,
  * servicio de impresión en Android). Formato de 80 mm, el de las impresoras térmicas de cocina.
- * Sin dinero del cliente ni su dirección: aunque el pedido los traiga, aquí no se leen.
+ * Sin dinero del cliente ni su dirección: aunque el pedido los traiga, aquí no se leen. Tampoco las
+ * notas del pedido (LAN-3x): son las indicaciones para el repartidor (portón, timbre, apartamento) y
+ * este papel queda en la cocina y pegado a la bolsa; DoorDash Merchant y Uber Eats Manager tampoco
+ * las imprimen. La nota de cada plato y las alergias sí van.
  */
 export type PedidoComanda = {
   id: string;
   /** C-PEDIDO-PRUEBA: el de práctica lleva su marca y el número que se ve en la pantalla. */
   prueba?: boolean;
   entrega?: 'puerta' | 'mano' | 'recoger';
-  notas: string;
+  /** Indicaciones para el repartidor: NO se imprimen (LAN-3x). */
+  notas?: string;
   alergias?: string;
   programadoPara?: string | null;
   lineas: {
@@ -74,6 +78,5 @@ td{padding:3px 0;vertical-align:top}.c{width:34px;font-weight:bold}.n{border-top
 </head><body><h1>${marca}#${numero}</h1>${restaurante ? `<div>${escapar(restaurante)}</div>` : ''}<div>${escapar(hora)}</div>
 <h2>${modo}${p.programadoPara ? (en ? ' · SCHEDULED' : ' · PROGRAMADO') : ''}</h2><table>${lineas}</table>
 ${p.alergias ? `<div class="n"><b>*** ${en ? 'ALLERGY' : 'ALERGIA'}: ${escapar(p.alergias)} ***</b></div>` : ''}
-${p.notas ? `<div class="n"><b>${en ? 'Notes' : 'Notas'}:</b> ${escapar(p.notas)}</div>` : ''}
 ${opciones.imprimirAlAbrir ? '<script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)}</script>' : ''}</body></html>`;
 }
