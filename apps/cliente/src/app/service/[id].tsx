@@ -9,7 +9,7 @@ import {
   SERVICIOS_TIENDA,
 } from '@tumbite/compartido';
 import { Boton, C, useSesion } from '@tumbite/movil';
-import { ANCHO_MAX, Encabezado, Tarjeta } from '../../comida/piezas';
+import { ANCHO_MAX, Encabezado } from '../../comida/piezas';
 import { textosComida } from '../../comida/textos';
 import { ICONO_SERVICIO, IMG, type Servicio } from '../../inicio/recursosServicio';
 import { textosInicio } from '../../inicio/textos';
@@ -21,7 +21,7 @@ import { textosTiendas } from '../../tiendas/textos';
  * Pantalla de un servicio (Moto, Carro, Envíos, Mercado, Farmacia, Licores, Más… y Comida si no
  * está disponible). Como en los grandes: cada servicio tiene su pantalla; si todavía no está
  * listo, una FRANJA discreta lo dice («Estamos construyendo este servicio»), no una ventana que
- * haya que cerrar. Lo que se muestra abajo es lo que va a poder hacer, marcado «Ejemplo».
+ * haya que cerrar. Sin listas de «Ejemplo» (C-SOLO-LO-TERMINADO, 3 nov).
  */
 export default function PantallaServicio() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -172,27 +172,6 @@ export default function PantallaServicio() {
                 exito
               />
             </View>
-          ) : null}
-          {accion !== 'abrir' ? (
-            <Tarjeta style={{ marginTop: 22 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
-                  {t.loQueViene}
-                </Text>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: '#8A8A8A' }}>
-                  {t.ejemplo}
-                </Text>
-              </View>
-              {(
-                new Map(Object.entries(t.detalleServicio)).get(id ?? '') ??
-                t.detalleServicio.mas ??
-                []
-              ).map((linea) => (
-                <Text key={linea} style={{ color: '#3A3A3A', fontSize: 15, marginTop: 8 }}>
-                  · {linea}
-                </Text>
-              ))}
-            </Tarjeta>
           ) : null}
         </ScrollView>
       )}

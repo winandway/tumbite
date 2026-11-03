@@ -80,6 +80,12 @@ for (const idioma of ['en', 'es'] as const)
     await expect(p.getByTestId('franja-estado')).toHaveCount(0);
     await expect(p.getByTestId('explorar-farmacia')).toHaveCount(0);
     await p.screenshot({ path: join(RAIZ, 'docs', 'capturas', `mas-servicios-${idioma}.png`) });
+    // Un servicio que todavía no abre no muestra listas de «Ejemplo» (C-SOLO-LO-TERMINADO).
+    await p.goto('/app/service/farmacia');
+    await expect(p.getByTestId('franja-estado')).toBeVisible({ timeout: 30_000 });
+    await expect(p.getByText(/^(Ejemplo|Sample)$/)).toHaveCount(0);
+    await p.goto('/app/service/mas');
+    await expect(p.getByTestId('pantalla-mas')).toBeVisible({ timeout: 30_000 });
     // Cada servicio lleva a su pantalla.
     await p.getByTestId('explorar-carro').click();
     await expect(p).toHaveURL(/service\/carro/);

@@ -80,28 +80,58 @@ Los tres videos (cliente, 53 segundos; Driver, 60; Restaurants, 64; grabados en 
 | «Account registration, login, and account deletion flows» | Se ve entrar a la cuenta. No se ve crear una cuenta. «Delete account» aparece como botón, pero no se usa.                                                                                                 |
 | (nada que confunda)                                       | Aparece el gestor de contraseñas con correos de otras empresas de Richard, un restaurante «(prueba)», ofertas «Sample» y, al final del de Restaurants, la pantalla de inicio con otras apps de la cuenta. |
 
-**Cómo tiene que ser el video nuevo (uno por app, en inglés, en el iPhone):**
+### Guion de los tres videos nuevos
 
-1. Empieza en la pantalla de inicio del iPhone y toca el ícono de la app.
-2. Crea una cuenta nueva con un correo nuevo (no la de revisión), sin el gestor de contraseñas a la vista.
-3. Hace el recorrido típico de esa app:
-   - **cliente:** elige dirección, abre Comida, un restaurante real (sin «prueba»), agrega platos, paga y ve el pedido en el mapa;
-   - **Driver:** se conecta, recibe la oferta, la acepta, recoge con foto y entrega;
-   - **Restaurants:** recibe el pedido con su alarma, lo acepta, lo marca listo y ve al repartidor que viene.
-4. Sale de la cuenta, vuelve a entrar y la borra con «Delete account» hasta el final.
-5. Sin notificaciones personales y sin otras apps a la vista. Activar «No molestar» antes de grabar.
+**Antes de grabar (los tres):**
+
+- iPhone con la última versión de iOS, en inglés, con «No molestar» activado y sin notificaciones a la vista.
+- La app en inglés (selector «EN» arriba).
+- **Gestor de contraseñas apagado para el video**: Ajustes → General → Autorrelleno y contraseñas → apagar «Autorrellenar contraseñas y llaves de acceso». Así no salta la ventanita con correos de otras empresas. Se vuelve a encender al terminar.
+- Un correo nuevo para cada cuenta que se crea en el video (no el de la cuenta de revisión, porque esa no se borra), y la contraseña escrita a mano.
+- Los tres videos se graban con la grabación de pantalla del iPhone (Centro de control → botón de grabar). Al terminar, el video se corta para que empiece en la pantalla de inicio del iPhone y no en el Centro de control.
+- Si los restaurantes de prueba siguen saliendo con «(prueba)», no se graba hasta que se arreglen (punto 4).
+
+**Video 1, Divoox (cliente), unos 2 minutos:**
+
+1. Pantalla de inicio del iPhone → tocar el ícono rojo de Divoox.
+2. «New here? Create your account» → nombre, el correo nuevo y una contraseña → crear la cuenta.
+3. Permitir la ubicación o escribir una dirección de entrega (se ve cómo sugiere direcciones reales).
+4. En la portada, tocar Comida → abrir un restaurante → agregar dos platos → ver el carrito con el envío, las tasas y el total.
+5. Pagar con la tarjeta de prueba o llegar hasta la hoja de pago y explicar en las notas que el pago es con Stripe. Si se paga, mostrar el pedido con sus pasos y el mapa.
+6. Mi cuenta → «Sign out» → volver a entrar con el mismo correo (se ve el inicio de sesión).
+7. Mi cuenta → los tres puntos → «Delete my account» → confirmar → se ve que la cuenta se borró y la app vuelve a la pantalla de entrar.
+
+**Video 2, Divoox Driver, unos 2 minutos:**
+
+1. Pantalla de inicio del iPhone → tocar el ícono negro de Divoox Driver.
+2. «New here? Create your account» → crear la cuenta de repartidor con el correo nuevo y mostrar el primer paso del alta (vehículo y documentos), sin datos personales reales.
+3. «Sign out» y entrar con la cuenta de revisión de repartidor (ya aprobada), para mostrar el trabajo de verdad: explicación de los permisos, «Go online», el mapa con las zonas, una oferta con el pago antes de aceptar, aceptar, recoger con foto y entregar.
+4. Ganancias y billetera en las pestañas de abajo, y el botón de seguridad.
+5. Salir, entrar con la cuenta nueva del paso 2 → Perfil → «Delete account» → confirmar → se ve que la cuenta se borró.
+
+**Video 3, Divoox Restaurants, unos 2 minutos:**
+
+1. Pantalla de inicio del iPhone → tocar el ícono blanco de Divoox Restaurants.
+2. Mostrar que los restaurantes se dan de alta en la web (el texto de la pantalla de entrar lo dice) y entrar con la cuenta de revisión del restaurante.
+3. Llega un pedido nuevo con su alarma (que alguien haga un pedido desde la app del cliente en otro teléfono) → aceptarlo → «Ready» → se ve al repartidor que viene.
+4. «My menu» → pausar un plato y volver a activarlo → Horario → Estadísticas → Ganancias.
+5. More → «Delete account» → mostrar la confirmación y cancelarla (la cuenta de revisión no se borra). En las notas se explica que la cuenta del restaurante se borra igual que en las otras apps.
+
+**Al terminar:** los tres videos se guardan con su nombre (video-apple-divoox, video-apple-driver, video-apple-restaurants) en la carpeta Divoox-privado, videos-apple. La IA los sube como adjunto de cada app solo cuando Gerencia y Richard den el «sí».
 
 ## 4. Qué arreglamos nosotros (y qué falta)
 
 Ya en vivo (no se ha subido a Apple, por la orden de no subir nada):
 
 - La portada del cliente ya no muestra ofertas «Sample» ni servicios «Pronto»: solo lo que funciona (C-SOLO-LO-TERMINADO, 3 nov).
+- La pantalla de un servicio que todavía no llega a tu ciudad ya no muestra la lista «Ejemplo» / «Sample» (3 nov, con su prueba en rojo).
+- La tarea de tiendas alcanzó a subir a TestFlight la compilación 25 del cliente y la 21 de Driver antes de la pausa: solo TestFlight, no revisión. Esas sirven para grabar los videos nuevos.
 - Las respuestas a las nueve preguntas están escritas, con la línea común de la cuenta y por debajo de 4000 caracteres: RESPUESTA-APPLE-4.3, en esta misma carpeta.
 
 Lo que queda para cuando Richard apruebe el estudio común (no se empieza antes):
 
 - Dar a cada app su propia cara desde la primera pantalla, con los colores oficiales de sus íconos: cliente en rojo, Driver en negro, Restaurants en blanco.
-- Quitar «(prueba)» y los restaurantes de prueba de lo que ve la cuenta del revisor en producción, y darle un restaurante con menú y fotos reales. Esto toca la base de producción y necesita el sí de Richard.
+- **Necesita el sí de Richard (base de producción):** en Novi, Michigan, producción muestra cuatro restaurantes de prueba con «(prueba)» en el nombre: Burger Town Center, Pizzería Novi, Tacos Twelve Oaks y Café Fountain Walk. La recomendación es pausarlos (no se borra nada) y que el revisor y el video usen el restaurante de la cuenta de revisión, con menú y fotos reales. En Miami solo aparece el restaurante de la cuenta de revisión.
 - Grabar los tres videos nuevos (punto 3) y cambiarlos en las notas para el revisor.
 - Mandar la respuesta en cada app. Es un mensaje en nombre de Windoce y lo autoriza Richard.
 
