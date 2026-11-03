@@ -10,17 +10,20 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { Campo, CampoClave } from './CampoClave';
 import { pedir } from './api';
+import { detalleEnPalabras } from './detalleConciliacion';
+import { textoPendiente } from './SuperAprobaciones';
 
 /**
  * C-DINERO-30-DIAS (NXT-1, 3 nov 2026): la bandeja de los días de los últimos 30 que no cuadraron.
- * Mientras uno siga sin excusar, el canario de dinero está en rojo. Se excusa con motivo y con la
- * contraseña de una cuenta Total o Finanzas; queda quién y cuándo, y la conciliación no se toca.
+ * Mientras uno siga sin excusar, el canario de dinero está en rojo. Una cuenta Total o Finanzas pide
+ * la excusa con motivo y contraseña y OTRA la aprueba en «Para aprobar» (ETP-3, control dual); queda
+ * quién la pidió, quién la aprobó y cuándo, y la conciliación no se toca.
  */
 const T = {
   es: {
     titulo: 'Días que no cuadraron (últimos 30)',
     ayuda:
-      'Mientras un día no cuadre y no tenga su excepción, el canario de dinero queda en rojo. Revisa el detalle y, si la diferencia está explicada (por ejemplo, una compra de prueba), excúsalo con el motivo. La conciliación de ese día no se cambia y la excepción queda con tu nombre.',
+      'Mientras un día no cuadre y no tenga su excepción, el canario de dinero queda en rojo. Revisa el detalle y, si la diferencia está explicada (por ejemplo, una compra de prueba), pide la excusa con el motivo. Otra cuenta Total o Finanzas la aprueba en «Para aprobar», como el control dual del dinero. La conciliación de ese día no se cambia.',
     vacio: 'Todos los días de los últimos 30 cuadran.',
     sinPerfil: 'Tu perfil no excusa días. Lo hace una cuenta con perfil Total o Finanzas.',
     pedidos: 'pedidos',
@@ -29,16 +32,18 @@ const T = {
     excusado: 'Excusado',
     por: 'por',
     motivo: 'Motivo (qué explica la diferencia)',
-    clave: 'Tu contraseña para excusar',
+    clave: 'Tu contraseña para pedir la excusa',
     ver: 'Ver la contraseña',
     ocultar: 'Ocultar la contraseña',
-    excusar: 'Excusar este día',
-    hecho: 'Listo: el día quedó excusado con tu nombre.',
+    excusar: 'Pedir la excusa de este día',
+    esperando: 'Esperando la segunda firma en «Para aprobar».',
+    esperandoMia: 'La pediste tú: la aprueba otra cuenta Total o Finanzas en «Para aprobar».',
+    aprobo: 'aprobó',
   },
   en: {
     titulo: 'Days that didn’t balance (last 30)',
     ayuda:
-      'While a day doesn’t balance and has no exception, the money health check stays red. Review the details and, if the difference is explained (for example, a test purchase), excuse it with the reason. That day’s reconciliation isn’t changed and the exception is recorded under your name.',
+      'While a day doesn’t balance and has no exception, the money health check stays red. Review the details and, if the difference is explained (for example, a test purchase), request the exception with the reason. Another Full or Finance account approves it in «Approvals», like the money dual control. That day’s reconciliation isn’t changed.',
     vacio: 'Every day in the last 30 balances.',
     sinPerfil: 'Your profile can’t excuse days. A Full or Finance profile account does it.',
     pedidos: 'orders',
@@ -47,11 +52,13 @@ const T = {
     excusado: 'Excused',
     por: 'by',
     motivo: 'Reason (what explains the difference)',
-    clave: 'Your password to excuse',
+    clave: 'Your password to request the exception',
     ver: 'Show password',
     ocultar: 'Hide password',
-    excusar: 'Excuse this day',
-    hecho: 'Done: the day is excused under your name.',
+    excusar: 'Request an exception for this day',
+    esperando: 'Waiting for the second signature in «Approvals».',
+    esperandoMia: 'You requested it: another Full or Finance account approves it in «Approvals».',
+    aprobo: 'approved',
   },
 };
 
@@ -64,6 +71,9 @@ type Dia = {
   motivo: string | null;
   excusadoPorNombre: string | null;
   excusadoEn: string | null;
+  aprobadoPorNombre?: string | null;
+  esperandoFirma?: boolean;
+  pedidoPorMi?: boolean;
 };
 
 export function ExcepcionesConciliacion({ idioma }: { idioma: Idioma }) {
@@ -91,13 +101,13 @@ export function ExcepcionesConciliacion({ idioma }: { idioma: Idioma }) {
     setError('');
     setOk('');
     try {
-      await pedir('POST', '/datos/admin/conciliacion/excepciones', {
+      const r = await pedir('POST', '/datos/admin/conciliacion/excepciones', {
         dia,
         motivo: b.valores.motivo,
         clave: b.valores.clave,
       });
       await b.limpiar();
-      setOk(t.hecho);
+      setOk(textoPendiente(r, idioma) ?? '');
       cargar();
     } catch (x) {
       // Lo escrito se queda en pantalla para reintentar.
@@ -105,7 +115,7 @@ export function ExcepcionesConciliacion({ idioma }: { idioma: Idioma }) {
     }
   }
 
-  const pendientes = d?.sinCuadrar.filter((x) => !x.excusado) ?? [];
+  const pendientes = d?.sinCuadrar.filter((x) => !x.excusado && !x.esperandoFirma) ?? [];
   return (
     <section aria-label={t.titulo}>
       <h2>{t.titulo}</h2>
@@ -149,13 +159,25 @@ export function ExcepcionesConciliacion({ idioma }: { idioma: Idioma }) {
               {formatearMonto(x.vendido, 'USD', idioma)} {t.vendido}
               <details>
                 <summary className="suave">{t.detalle}</summary>
-                <pre className="suave">{JSON.stringify(x.detalle, null, 1)}</pre>
+                {detalleEnPalabras(x.detalle, idioma).map((g) => (
+                  <div key={g.titulo} className="suave">
+                    <p>{g.titulo}</p>
+                    <ul>
+                      {g.lineas.map((l) => (
+                        <li key={l}>{l}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </details>
               {x.excusado ? (
                 <p className="suave">
-                  <strong className="ok">{t.excusado}</strong> {t.por} {x.excusadoPorNombre} ·{' '}
+                  <strong className="ok">{t.excusado}</strong> {t.por} {x.excusadoPorNombre}
+                  {x.aprobadoPorNombre ? ` · ${x.aprobadoPorNombre} ${t.aprobo}` : ''} ·{' '}
                   {x.excusadoEn} — {x.motivo}
                 </p>
+              ) : x.esperandoFirma ? (
+                <p className="aviso">{x.pedidoPorMi ? t.esperandoMia : t.esperando}</p>
               ) : d.puedoExcusar ? (
                 <button type="button" className="boton" onClick={() => void excusar(x.dia)}>
                   {t.excusar}

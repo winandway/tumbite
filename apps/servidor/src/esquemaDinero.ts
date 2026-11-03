@@ -4,7 +4,7 @@
  * bandeja de casos y subir un límite («umbral»). SQLite no cambia un CHECK: si la tabla es la vieja,
  * se rehace con los tipos nuevos sin perder filas (una sola vez; después ya no coincide).
  */
-const TIPOS_NUEVOS = "'excedente_devuelto', 'umbral'";
+const TIPOS_NUEVOS = "'excedente_devuelto', 'umbral', 'excusa_conciliacion'";
 
 export const APROBACIONES_DINERO_DDL = `CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
@@ -31,7 +31,8 @@ const COLUMNAS =
 
 /** ¿La tabla existe y todavía no acepta los tipos nuevos? */
 export function aprobacionesViejas(sql: string | null): boolean {
-  return Boolean(sql) && !String(sql).includes("'excedente_devuelto'");
+  // ETP-3 (3 nov 2026): también se rehace la de SIG-4x, que no acepta «excusa_conciliacion».
+  return Boolean(sql) && !String(sql).includes("'excusa_conciliacion'");
 }
 
 export async function rehacerAprobacionesDinero(db: D1Database): Promise<boolean> {

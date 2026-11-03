@@ -12,6 +12,7 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { Campo, CampoClave } from './CampoClave';
 import { pedir } from './api';
+import { detalleEnPalabras } from './detalleConciliacion';
 
 /**
  * C-CONTROL-DUAL (SIG-4, 2 nov 2026): la bandeja «Para aprobar». El dinero hecho a mano por encima
@@ -60,7 +61,10 @@ const T = {
       confirmar_liquidacion: 'Cobro confirmado a mano',
       excedente_devuelto: 'Excedente devuelto por el repartidor',
       umbral: 'Subir el límite del control dual',
+      excusa_conciliacion: 'Excusar un día de la conciliación',
     },
+    dia: 'Día',
+    vendido: 'vendido ese día',
   },
   en: {
     titulo: 'Approvals',
@@ -102,7 +106,10 @@ const T = {
       confirmar_liquidacion: 'Charge confirmed by hand',
       excedente_devuelto: 'Overpayment returned by the driver',
       umbral: 'Raise the dual-control limit',
+      excusa_conciliacion: 'Excuse a reconciliation day',
     },
+    dia: 'Day',
+    vendido: 'sold that day',
   },
 };
 
@@ -122,6 +129,11 @@ export function textoPendiente(r: unknown, idioma: Idioma): string | null {
     return idioma === 'en'
       ? 'Raising the limit is approved by another Full account: it’s waiting in «Approvals». Until then, the previous limit stays.'
       : 'Subir el límite lo aprueba otra cuenta con perfil Total: quedó esperando en «Para aprobar». Mientras tanto sigue el límite de antes.';
+  // ETP-3: excusar un día de la conciliación también lleva la segunda firma.
+  if (p.aprobacion?.tipo === 'excusa_conciliacion')
+    return idioma === 'en'
+      ? 'Requested: another Full or Finance account approves it in «Approvals». Until then, the money health check stays red.'
+      : 'Pedida: otra cuenta con perfil Total o Finanzas la aprueba en «Para aprobar». Mientras tanto el canario de dinero sigue en rojo.';
   const sinOtra = !p.aprobadores;
   if (idioma === 'en')
     return sinOtra
@@ -146,6 +158,8 @@ type Solicitud = {
   pedidoPorNombre: string | null;
   creadoEn: string;
   revisadoPorNombre: string | null;
+  /** Solo en «excusa_conciliacion»: el día y su detalle, para mostrarlo en palabras. */
+  datos?: string | null;
 };
 type Bandeja = {
   pendientes: Solicitud[];
@@ -255,6 +269,7 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
               return (
                 <li key={s.id} className="tarjeta-form">
                   <strong>{tipo(s)}</strong> · {formatearMonto(s.monto, s.moneda, idioma)}
+                  {s.tipo === 'excusa_conciliacion' ? ` ${t.vendido}` : ''}
                   <p className="suave">
                     {t.pidio}: {s.pedidoPorNombre ?? '—'} · {s.creadoEn}
                   </p>
@@ -262,6 +277,9 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
                     <p>
                       {t.motivo}: {s.motivo}
                     </p>
+                  )}
+                  {s.tipo === 'excusa_conciliacion' && (
+                    <DiaExcusa datos={s.datos} idioma={idioma} />
                   )}
                   <div className="fila-botones">
                     {mia ? (
@@ -338,5 +356,38 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
         </>
       )}
     </section>
+  );
+}
+
+/** ETP-3: el día que se pide excusar y su detalle en palabras (no el JSON crudo), es/en. */
+function DiaExcusa({ datos, idioma }: { datos?: string | null; idioma: Idioma }) {
+  const t = enIdioma(T, idioma);
+  const leer = (): { dia: string; detalle: unknown } => {
+    try {
+      const d = JSON.parse(datos ?? '{}') as { dia?: string; detalle?: string };
+      return { dia: String(d.dia ?? ''), detalle: JSON.parse(d.detalle ?? '{}') };
+    } catch {
+      return { dia: '', detalle: null };
+    }
+  };
+  const { dia, detalle } = leer();
+  return (
+    <div className="suave">
+      {dia && (
+        <p>
+          {t.dia}: <strong>{dia}</strong>
+        </p>
+      )}
+      {detalleEnPalabras(detalle, idioma).map((g) => (
+        <div key={g.titulo}>
+          <p>{g.titulo}</p>
+          <ul>
+            {g.lineas.map((l) => (
+              <li key={l}>{l}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }

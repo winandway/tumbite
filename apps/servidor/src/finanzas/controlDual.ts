@@ -31,6 +31,8 @@ export const TIPOS_DUAL = [
   // SIG-4x: «excedente devuelto» de la bandeja de casos (libro del repartidor) y subir un límite.
   'excedente_devuelto',
   'umbral',
+  // ETP-3: excusar un día de la conciliación que no cuadró (lo pide uno, lo aprueba otro).
+  'excusa_conciliacion',
 ] as const;
 export type TipoDual = (typeof TIPOS_DUAL)[number];
 
@@ -114,6 +116,7 @@ export async function ejecutarDual(
   tipo: TipoDual,
   d: Datos,
   actorId: string,
+  aprobadorId?: string,
 ): Promise<Datos> {
   // Importadas al usarse: así este módulo no entra en el ciclo de importaciones del dinero.
   const [{ devolverParcial }, { reembolsarRecarga, ajusteManual }, { fondearPunto }] =
@@ -170,6 +173,10 @@ export async function ejecutarDual(
         idempotencia: texto(d, 'idempotencia'),
         autorId: actorId,
       });
+    }
+    case 'excusa_conciliacion': {
+      const { excusarDia } = await import('../rutas/excepcionesConciliacion');
+      return excusarDia(db, d, actorId, aprobadorId);
     }
     case 'umbral': {
       const pedidos = z
@@ -290,7 +297,7 @@ export async function apartarManual(
 }
 
 /** Deja la solicitud pendiente (sin duplicarla) y responde 202 con el aviso en palabras. */
-async function pedirAprobacion(
+export async function pedirAprobacion(
   c: Ctx,
   usuarioId: string,
   s: Solicitud,
@@ -331,9 +338,11 @@ async function pedirAprobacion(
       mensaje:
         s.tipo === 'umbral'
           ? 'Subir el límite del control dual lo aprueba otra cuenta con perfil Total: quedó esperando en «Para aprobar». Mientras tanto sigue el límite de antes.'
-          : aprobadores
-            ? 'Este monto pasa el límite del control dual: quedó esperando que otra persona del equipo (Total o Finanzas) lo apruebe en «Para aprobar».'
-            : 'Este monto pasa el límite del control dual y no hay otra cuenta con perfil Total o Finanzas que lo pueda aprobar. Quedó guardado en «Para aprobar»: asigna ese perfil a otra persona en «Equipo interno».',
+          : s.tipo === 'excusa_conciliacion'
+            ? 'Excusar un día de la conciliación lo aprueba otra cuenta con perfil Total o Finanzas: quedó esperando en «Para aprobar». Mientras tanto el canario de dinero sigue en rojo.'
+            : aprobadores
+              ? 'Este monto pasa el límite del control dual: quedó esperando que otra persona del equipo (Total o Finanzas) lo apruebe en «Para aprobar».'
+              : 'Este monto pasa el límite del control dual y no hay otra cuenta con perfil Total o Finanzas que lo pueda aprobar. Quedó guardado en «Para aprobar»: asigna ese perfil a otra persona en «Equipo interno».',
     },
     202,
   );
@@ -357,6 +366,7 @@ controlDual.get('/admin/aprobaciones-dinero', async (c) => {
   const u = exigir(c, 'admin');
   const db = base(c);
   const sel = `SELECT a.id, a.tipo, a.objeto, a.monto, a.moneda, a.motivo, a.estado, a.nota, a.error,
+                      CASE WHEN a.tipo = 'excusa_conciliacion' THEN a.datos END AS datos,
                       a.pedido_por AS pedidoPor, pp.nombre AS pedidoPorNombre, a.creado_en AS creadoEn,
                       a.revisado_por AS revisadoPor, rv.nombre AS revisadoPorNombre, a.revisado_en AS revisadoEn
                  FROM aprobaciones_dinero a
@@ -436,6 +446,7 @@ controlDual.post('/admin/aprobaciones-dinero/:id/aprobar', async (c) => {
       fila.tipo,
       JSON.parse(fila.datos) as Datos,
       fila.pedido_por,
+      u.id,
     );
   } catch (e) {
     // Si el movimiento ya no se puede hacer (saldo, Stripe), queda «fallida» con el motivo visible.

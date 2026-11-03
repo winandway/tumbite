@@ -115,4 +115,32 @@ describe('C-CONTROL-DUAL en el panel', () => {
     expect(textoPendiente(r, 'es')).toMatch(/otra cuenta con perfil Total.*límite de antes/);
     expect(textoPendiente(r, 'en')).toMatch(/another Full account.*previous limit/);
   });
+
+  it('ETP-3: excusar un día de la conciliación se ve con su día y el detalle en palabras', async () => {
+    const excusa = {
+      ...PENDIENTE,
+      id: 'a9',
+      tipo: 'excusa_conciliacion',
+      objeto: 'conciliacion:2026-10-15',
+      monto: 718,
+      motivo: 'Compra de prueba documentada',
+      datos: JSON.stringify({
+        dia: '2026-10-15',
+        detalle: JSON.stringify({ restaurantesEsperado: 87, cuadraRestaurantes: 'NO' }),
+      }),
+    };
+    servidor({ pendientes: [excusa] });
+    const { container, unmount } = render(<SuperAprobaciones idioma="es" miId="yo" />);
+    expect(await screen.findByText('Excusar un día de la conciliación')).toBeTruthy();
+    expect(screen.getByText('2026-10-15')).toBeTruthy();
+    expect(screen.getByText('Pagos con tarjeta, en dólares')).toBeTruthy();
+    expect(container.textContent).not.toContain('restaurantesEsperado');
+    unmount();
+    render(<SuperAprobaciones idioma="en" miId="yo" />);
+    expect(await screen.findByText('Excuse a reconciliation day')).toBeTruthy();
+    expect(screen.getByText('Card payments, in US dollars')).toBeTruthy();
+    const r = { pendiente: true, aprobadores: 1, aprobacion: { tipo: 'excusa_conciliacion' } };
+    expect(textoPendiente(r, 'es')).toMatch(/canario de dinero sigue en rojo/);
+    expect(textoPendiente(r, 'en')).toMatch(/health check stays red/);
+  });
 });

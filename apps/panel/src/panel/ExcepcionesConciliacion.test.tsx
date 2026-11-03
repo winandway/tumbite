@@ -3,12 +3,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExcepcionesConciliacion } from './ExcepcionesConciliacion';
 
-// C-DINERO-30-DIAS (NXT-1) en el panel: la bandeja de los días que no cuadraron.
+// C-DINERO-30-DIAS (NXT-1) en el panel: la bandeja de los días que no cuadraron. ETP-3: la excusa
+// se pide y la aprueba otra cuenta; el detalle va en palabras, no en JSON.
 const DIA = {
   dia: '2026-10-15',
   pedidos: 1,
   vendido: 718,
-  detalle: { cuadraStripe: 'NO' },
+  detalle: { restaurantesEsperado: 87, cuadraStripe: 'NO', directos_VES: 2 },
   excusado: false,
   motivo: null,
   excusadoPorNombre: null,
@@ -23,7 +24,10 @@ function servidor(datos: Record<string, unknown>, falla = false) {
     if (metodo !== 'GET')
       return falla
         ? new Response(JSON.stringify({ error: 'La contraseña no es correcta.' }), { status: 403 })
-        : new Response(JSON.stringify({ ok: true }), { status: 200 });
+        : new Response(
+            JSON.stringify({ pendiente: true, aprobacion: { tipo: 'excusa_conciliacion' } }),
+            { status: 202 },
+          );
     return new Response(JSON.stringify(datos), { status: 200 });
   });
   return llamadas;
@@ -35,14 +39,14 @@ describe('C-DINERO-30-DIAS en el panel', () => {
     localStorage.clear();
   });
 
-  it('excusa un día con motivo y contraseña', async () => {
+  it('pide la excusa con motivo y contraseña, y dice que la aprueba otra cuenta', async () => {
     const llamadas = servidor({ sinCuadrar: [DIA], puedoExcusar: true });
     render(<ExcepcionesConciliacion idioma="es" />);
     await screen.findByText('2026-10-15');
     await userEvent.type(screen.getByLabelText(/Motivo/), 'Compra de prueba documentada');
-    await userEvent.type(screen.getByLabelText('Tu contraseña para excusar'), 'clave-1');
-    await userEvent.click(screen.getByRole('button', { name: 'Excusar este día' }));
-    await screen.findByText(/quedó excusado/);
+    await userEvent.type(screen.getByLabelText('Tu contraseña para pedir la excusa'), 'clave-1');
+    await userEvent.click(screen.getByRole('button', { name: 'Pedir la excusa de este día' }));
+    await screen.findByText(/otra cuenta con perfil Total o Finanzas la aprueba/);
     expect(llamadas.find((l) => l.metodo === 'POST')?.cuerpo).toEqual({
       dia: '2026-10-15',
       motivo: 'Compra de prueba documentada',
@@ -55,7 +59,9 @@ describe('C-DINERO-30-DIAS en el panel', () => {
     render(<ExcepcionesConciliacion idioma="en" />);
     await screen.findByText('2026-10-15');
     await userEvent.type(screen.getByLabelText(/Reason/), 'Documented test purchase');
-    await userEvent.click(screen.getByRole('button', { name: 'Excuse this day' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Request an exception for this day' }),
+    );
     await screen.findByRole('alert');
     expect(screen.getByLabelText(/Reason/)).toHaveValue('Documented test purchase');
   });
@@ -78,7 +84,39 @@ describe('C-DINERO-30-DIAS en el panel', () => {
     render(<ExcepcionesConciliacion idioma="es" />);
     await screen.findByText(/Tu perfil no excusa días/);
     expect(screen.getByText(/Soporte Finanzas/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Excusar este día' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Pedir la excusa de este día' })).toBeNull();
+  });
+
+  it('ETP-3: el detalle va en palabras y un día esperando la firma no se vuelve a pedir', async () => {
+    servidor({
+      sinCuadrar: [{ ...DIA, esperandoFirma: true, pedidoPorMi: true }],
+      puedoExcusar: true,
+    });
+    const { container } = render(<ExcepcionesConciliacion idioma="es" />);
+    await screen.findByText(/La pediste tú/);
+    expect(screen.getByText('Pagos con tarjeta, en dólares')).toBeTruthy();
+    expect(screen.getByText('Cobros directos en VES')).toBeTruthy();
+    expect(container.textContent).not.toContain('{');
+    expect(screen.queryByRole('button', { name: 'Pedir la excusa de este día' })).toBeNull();
+  });
+
+  it('ETP-3 en inglés: el detalle en palabras y quién aprobó', async () => {
+    servidor({
+      sinCuadrar: [
+        {
+          ...DIA,
+          excusado: true,
+          motivo: 'Documented test purchase',
+          excusadoPorNombre: 'Support Finance',
+          aprobadoPorNombre: 'Support Full',
+          excusadoEn: '2026-10-21 10:00:00',
+        },
+      ],
+      puedoExcusar: true,
+    });
+    render(<ExcepcionesConciliacion idioma="en" />);
+    await screen.findByText('Card payments, in US dollars');
+    expect(screen.getByText(/Support Full approved/)).toBeTruthy();
   });
 
   it('sin días por excusar lo dice', async () => {

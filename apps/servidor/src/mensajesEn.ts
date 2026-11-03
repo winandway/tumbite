@@ -753,6 +753,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Ese día ya tiene su excepción con estas cifras.',
     'That day already has an exception for these figures.',
   ],
+  [
+    'Las cifras de ese día cambiaron desde que se pidió la excusa. Pídela otra vez con las nuevas.',
+    'That day’s figures changed since the exception was requested. Request it again with the new ones.',
+  ],
   ['Escribe el motivo (al menos 10 letras).', 'Write the reason (at least 10 characters).'],
   ['Elige la fecha inicial y la final.', 'Pick the start and end dates.'],
   ['Esa persona no es del equipo.', 'That person isn’t on the team.'],

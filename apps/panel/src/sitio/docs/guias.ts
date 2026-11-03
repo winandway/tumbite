@@ -3133,6 +3133,7 @@ const es: SeccionDocs[] = [
           'Cuando ese movimiento pasa de un límite, no se hace al momento. Queda esperando en la bandeja «Para aprobar» del equipo, con el monto, el motivo y el nombre de quien lo pidió.',
           'Otra persona del equipo, con permiso de finanzas, lo revisa y lo aprueba con su contraseña, o lo rechaza con un motivo. Nadie puede aprobar lo que pidió. Así trabajan los bancos, y así evitamos errores y abusos con tu dinero.',
           'Mientras espera, no se mueve nada: tu saldo y tus cuentas siguen exactamente igual. Cada paso queda registrado: quién lo pidió, quién lo aprobó y cuándo.',
+          'Lo mismo vale para el control diario del dinero: cada día comparamos lo cobrado con lo pagado a restaurantes y repartidores. Si un día no cuadra y la diferencia tiene explicación (por ejemplo, una compra de prueba), darlo por explicado también lo pide una persona y lo aprueba otra. Mientras tanto, la alarma del dinero sigue encendida.',
         ],
         capturas: [
           {
@@ -7665,6 +7666,7 @@ const en: SeccionDocs[] = [
           'When that movement is above a limit, it doesn’t happen right away. It waits in the team’s «Approvals» inbox, with the amount, the reason and the name of whoever requested it.',
           'Another team member with finance permissions reviews it and approves it with their password, or rejects it with a reason. Nobody can approve their own request. That’s how banks work, and it’s how we prevent mistakes and abuse with your money.',
           'While it waits, nothing moves: your balance and your accounts stay exactly the same. Every step is recorded: who requested it, who approved it and when.',
+          'The same goes for our daily money check: every day we compare what was charged with what was paid to restaurants and drivers. If a day doesn’t balance and the difference has an explanation (for example, a test purchase), marking it as explained is also requested by one person and approved by another. Until then, the money alarm stays on.',
         ],
         capturas: [
           {

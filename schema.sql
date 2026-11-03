@@ -3392,7 +3392,7 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
 -- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
 CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
-  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion')),
   objeto TEXT NOT NULL,
   monto INTEGER NOT NULL,
   moneda TEXT NOT NULL,
@@ -3458,4 +3458,6 @@ INSERT OR IGNORE INTO conciliacion_excepciones (id, dia, pedidos, vendido, detal
     'Compra de prueba de 7,18 USD del 12 oct, marcada como entregada a mano el 15 oct, autorizada por Richard el 16 oct 2026 (EVALUACION-BLOQUEO-CONCILIACION).',
     'equipo', 'Soporte Divoox (NXT-1)'
   FROM conciliaciones
-  WHERE dia = '2026-10-15' AND pedidos = 1 AND vendido = 718 AND cuadra = 0;
+  WHERE dia = '2026-10-15' AND pedidos = 1 AND vendido = 718 AND cuadra = 0
+    -- ETP-3: y el detalle guardado EXACTO de ese día (leído de producción el 3 nov 2026).
+    AND detalle = '{"restaurantesEsperado":87,"restaurantesAbonado":0,"repartidoresEsperado":520,"repartidoresAbonado":0,"stripeEsperado":0,"stripeCapturado":0,"cuadraRestaurantes":"NO","cuadraRepartidores":"NO","cuadraStripe":"sí"}';

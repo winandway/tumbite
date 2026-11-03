@@ -223,7 +223,10 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
     ).run();
     await DB.exec('DROP TABLE aprobaciones_dinero');
     await DB.exec(
-      APROBACIONES_DINERO_DDL.replace(", 'excedente_devuelto', 'umbral'", '').replace(/\n/g, ' '),
+      APROBACIONES_DINERO_DDL.replace(
+        ", 'excedente_devuelto', 'umbral', 'excusa_conciliacion'",
+        '',
+      ).replace(/\n/g, ' '),
     );
     await DB.prepare(
       "INSERT INTO aprobaciones_dinero (id, tipo, objeto, monto, moneda, datos, pedido_por) VALUES ('a1', 'fondo_punto', 'p1', 5, 'USD', '{}', 'u1')",
@@ -232,6 +235,29 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
     await asegurarEsquema(DB);
     await DB.prepare(
       "INSERT INTO aprobaciones_dinero (id, tipo, objeto, monto, moneda, datos, pedido_por) VALUES ('a2', 'umbral', 'umbrales:USD', 5, 'USD', '{}', 'u1')",
+    ).run();
+    const n = await DB.prepare('SELECT COUNT(*) AS n FROM aprobaciones_dinero').first<{
+      n: number;
+    }>();
+    expect(Number(n?.n)).toBe(2);
+  });
+
+  it('ETP-3: la tabla de SIG-4x (sin «excusa_conciliacion») también se rehace sin perder filas', async () => {
+    const DB = crearBasePruebas();
+    await DB.prepare(
+      "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES ('u1', 'a@ejemplo.com', 'Soporte', 'admin', 'x')",
+    ).run();
+    await DB.exec('DROP TABLE aprobaciones_dinero');
+    await DB.exec(
+      APROBACIONES_DINERO_DDL.replace(", 'excusa_conciliacion'", '').replace(/\n/g, ' '),
+    );
+    await DB.prepare(
+      "INSERT INTO aprobaciones_dinero (id, tipo, objeto, monto, moneda, datos, pedido_por) VALUES ('a1', 'umbral', 'umbrales:USD', 5, 'USD', '{}', 'u1')",
+    ).run();
+    reiniciarEsquema();
+    await asegurarEsquema(DB);
+    await DB.prepare(
+      "INSERT INTO aprobaciones_dinero (id, tipo, objeto, monto, moneda, datos, pedido_por) VALUES ('a2', 'excusa_conciliacion', 'conciliacion:2026-10-15', 718, 'USD', '{}', 'u1')",
     ).run();
     const n = await DB.prepare('SELECT COUNT(*) AS n FROM aprobaciones_dinero').first<{
       n: number;

@@ -175,6 +175,8 @@ export type DiaSinCuadrar = {
   excusadoPor: string | null;
   excusadoPorNombre: string | null;
   excusadoEn: string | null;
+  /** ETP-3: la segunda firma (otra cuenta Total o Finanzas). Null en las excusas viejas. */
+  aprobadoPorNombre: string | null;
 };
 
 /**
@@ -186,7 +188,10 @@ export async function diasSinCuadrar(db: D1Database): Promise<DiaSinCuadrar[]> {
   const { results } = await db
     .prepare(
       `SELECT c.dia, c.pedidos, c.vendido, c.capturado, c.detalle,
-              e.motivo, e.creado_por, e.creado_por_nombre, e.creado_en AS excusado_en
+              e.motivo, e.creado_por, e.creado_por_nombre, e.creado_en AS excusado_en,
+              CASE WHEN e.id IS NOT NULL THEN (SELECT u.nombre FROM aprobaciones_dinero a JOIN usuarios u ON u.id = a.revisado_por
+                 WHERE a.tipo = 'excusa_conciliacion' AND a.objeto = 'conciliacion:' || c.dia AND a.estado = 'aprobada'
+                 ORDER BY a.revisado_en DESC LIMIT 1) END AS aprobado_por_nombre
          FROM conciliaciones c
          LEFT JOIN conciliacion_excepciones e
            ON e.dia = c.dia AND e.pedidos = c.pedidos AND e.vendido = c.vendido AND e.detalle = c.detalle
@@ -206,6 +211,7 @@ export async function diasSinCuadrar(db: D1Database): Promise<DiaSinCuadrar[]> {
     excusadoPor: r.creado_por == null ? null : String(r.creado_por),
     excusadoPorNombre: r.creado_por_nombre == null ? null : String(r.creado_por_nombre),
     excusadoEn: r.excusado_en == null ? null : String(r.excusado_en),
+    aprobadoPorNombre: r.aprobado_por_nombre == null ? null : String(r.aprobado_por_nombre),
   }));
 }
 
