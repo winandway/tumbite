@@ -925,27 +925,32 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'services',
-        titulo: 'Los servicios de Divoox: qué hay hoy y qué viene',
+        titulo: 'Los servicios de Divoox: cómo elegir qué necesitas',
         resumen:
-          'En el inicio ves ocho servicios en este orden: Comida, Moto, Carro, Envíos, Mercado, Farmacia, Licores y Más. Hoy funciona Comida; los demás tienen su pantalla y te dicen, con una franja discreta, que están en construcción. Mercado, Farmacia, Licores y Más ya están listos por dentro y se abren ciudad por ciudad: cuando lleguen a la tuya, verás las tiendas cercanas en esa misma pantalla.',
+          'Arriba del inicio ves los servicios que ya funcionan en tu ciudad, en una fila que se desliza. Comida está siempre. Si hay más de uno, al final aparece «Más», una pantalla con todos los servicios en cuadros grandes: tocas uno y entras a su propia pantalla.',
         explicacion: [
-          'Divoox nace como una app de reparto de comida y crece hacia una app de todo, como las grandes del mercado. Por eso los servicios ya están en el inicio, en el orden en que van a llegar.',
-          'Cada servicio tiene su propia pantalla. Si todavía no está listo, arriba ves una franja discreta: «Estamos construyendo este servicio. Pronto estará listo.» Nada de ventanas que tapen la pantalla. Debajo, una lista marcada «Ejemplo» de lo que vas a poder hacer.',
-          'En la loseta del inicio, una etiqueta pequeña dice «Pronto» cuando el servicio viene, «En pausa» si se detuvo un tiempo, o «Actualiza» si tu versión de la app es muy vieja para usarlo. Sin etiqueta, el servicio funciona.',
-          'Qué estado tiene cada servicio depende de tu ciudad: un servicio puede estar abierto en una y en construcción en otra. La app lo pregunta cada vez que entras.',
-          'Comida: pide a restaurantes de tu ciudad. Moto y Carro: viajes. Envíos: paquetes por la ciudad. Mercado y Farmacia: compras por encargo. Licores: solo para mayores de 21 años, con verificación de edad. Más: lo que venga después.',
+          'Divoox nace como una app de reparto de comida y crece hacia una app de todo, como las grandes del mercado. Elegir el servicio es lo primero que haces, justo debajo del buscador.',
+          'Solo ves lo que ya puedes usar. Un servicio aparece en tu inicio el día que abre en tu ciudad; antes de eso no ocupa espacio ni te hace perder un toque.',
+          'En «Más» te recibe el logo de Divoox con una bienvenida corta, y debajo los servicios en cuadros de dos en dos, cada uno con su dibujo, su nombre y una frase de lo que hace, agrupados en viajes, pedidos y envíos.',
+          'Cada servicio tiene su propia pantalla: Comida abre los restaurantes, Moto y Carro piden un viaje, Envíos manda o rastrea un paquete, y Mercado, Farmacia y Licores muestran las tiendas cercanas.',
+          'Qué servicios ves depende de tu ciudad: la app lo pregunta cada vez que entras, así que cuando llega uno nuevo aparece solo.',
           'Envíos tiene dos caminos, los dos en el color azul de logística: «De A a B», para mandar algo cerca hoy, y «Bloque de logística», para empresas que reparten muchos paquetes con Divoox Flex.',
         ],
         capturas: [
           {
-            src: '/docs/recorrido-cliente-servicio-es.webp',
-            alt: 'Pantalla del servicio Moto en la app del cliente: franja discreta «Estamos construyendo este servicio. Pronto estará listo.», el ícono grande, el nombre y una tarjeta de ejemplo con lo que se va a poder hacer.',
-            pie: 'Cada servicio tiene su pantalla; si viene en camino, una franja lo dice.',
+            src: '/docs/recorrido-cliente-mas-es.webp',
+            alt: 'Pantalla «Más» de la app del cliente: logo de Divoox, «Bienvenido a Divoox» y los servicios en cuadros grandes de dos en dos.',
+            pie: 'En «Más» están todos los servicios que ya funcionan en tu ciudad.',
+          },
+          {
+            src: '/docs/recorrido-cliente-inicio-es.webp',
+            alt: 'Inicio de la app del cliente con el logo de Divoox arriba, la dirección de entrega, el buscador y la fila de servicios.',
+            pie: 'Los servicios van arriba, debajo del buscador.',
           },
         ],
         preguntas: [
           '¿Qué servicios tiene Divoox?',
-          '¿Por qué un servicio dice «Pronto»?',
+          '¿Por qué no veo Moto o Mercado en mi inicio?',
           '¿Cuándo llega Moto o Mercado a mi ciudad?',
         ],
         pasos: [
@@ -5473,27 +5478,32 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'services',
-        titulo: 'Divoox services: what’s here today and what’s coming',
+        titulo: 'Divoox services: how to pick what you need',
         resumen:
-          'The home screen shows eight services in this order: Food, Moto, Car, Delivery, Grocery, Pharmacy, Liquor, and More. Food works today; the others have their own screen and tell you, with a discreet strip, that they’re under construction. Grocery, Pharmacy, Liquor and More are already built and open city by city: when they reach yours, you’ll see nearby stores on that same screen.',
+          'At the top of the home screen you see the services that already work in your city, in a row you can swipe. Food is always there. If there’s more than one, “More” shows up at the end: a screen with every service in large tiles. Tap one to open its own screen.',
         explicacion: [
-          'Divoox starts as a food delivery app and grows into an everything app, like the big players. That’s why the services are already on the home screen, in the order they’ll arrive.',
-          'Each service has its own screen. If it isn’t ready yet, a discreet strip at the top says: “We’re building this service. It will be ready soon.” No pop-ups covering the screen. Below, a list marked “Sample” of what you’ll be able to do.',
-          'On the home tile, a small label says “Soon” when the service is coming, “Paused” if it stopped for a while, or “Update” if your app version is too old to use it. No label means the service works.',
-          'Each service’s status depends on your city: a service can be open in one and under construction in another. The app checks every time you open it.',
-          'Food: order from restaurants in your city. Moto and Car: rides. Delivery: packages across town. Grocery and Pharmacy: shopping on request. Liquor: ages 21+ only, with age verification. More: whatever comes next.',
+          'Divoox starts as a food delivery app and grows into an everything app, like the big players. Picking a service is the first thing you do, right below the search bar.',
+          'You only see what you can use today. A service appears on your home screen the day it opens in your city; until then it takes no space and never costs you a tap.',
+          'In “More”, the Divoox logo greets you with a short welcome, and below it the services in tiles, two per row, each with its picture, its name and one line about what it does, grouped into rides, orders and delivery.',
+          'Each service has its own screen: Food opens the restaurants, Moto and Car request a ride, Delivery sends or tracks a package, and Grocery, Pharmacy and Liquor show nearby stores.',
+          'Which services you see depends on your city: the app checks every time you open it, so a new one shows up on its own.',
           'Delivery has two paths, both in the blue logistics color: “From A to B”, to send something nearby today, and “Logistics block”, for businesses that deliver many packages with Divoox Flex.',
         ],
         capturas: [
           {
-            src: '/docs/recorrido-cliente-servicio-en.webp',
-            alt: 'Moto service screen in the customer app: discreet strip “We’re building this service. It will be ready soon.”, the large icon, the name, and a sample card with what you’ll be able to do.',
-            pie: 'Every service has its screen; if it’s on the way, a strip says so.',
+            src: '/docs/recorrido-cliente-mas-en.webp',
+            alt: 'The “More” screen in the customer app: Divoox logo, “Welcome to Divoox” and the services in large tiles, two per row.',
+            pie: '“More” has every service that already works in your city.',
+          },
+          {
+            src: '/docs/recorrido-cliente-inicio-en.webp',
+            alt: 'Customer app home screen with the Divoox logo at the top, the delivery address, the search bar and the row of services.',
+            pie: 'Services sit at the top, below the search bar.',
           },
         ],
         preguntas: [
           'What services does Divoox have?',
-          'Why does a service say “Soon”?',
+          'Why don’t I see Moto or Grocery on my home screen?',
           'When does Moto or Grocery arrive in my city?',
         ],
         pasos: [

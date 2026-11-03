@@ -5,9 +5,9 @@ import { IMG } from './recursos';
 import { textosInicio } from './textos';
 
 /**
- * POR-1 (2 nov 2026): cabecera del inicio como DoorDash y Uber Eats. A la izquierda «Entregar en»
- * con la dirección actual y su flechita (abre el cambio de dirección); a la derecha la campana real
- * y el selector de idioma estilo Amazon, en chico y sobre fondo blanco.
+ * POR-1 (2 nov 2026): cabecera del inicio. Arriba el logo de Divoox en chico, la campana real y el
+ * selector de idioma estilo Amazon; debajo «Entregar en» con la dirección actual y su flechita
+ * (abre el cambio de dirección), como Rappi y DoorDash.
  */
 export function Cabecera({
   idioma,
@@ -29,23 +29,71 @@ export function Cabecera({
   const t = textosInicio(idioma);
   return (
     <View
-      style={{
-        backgroundColor: '#FFFFFF',
-        paddingHorizontal: 16,
-        paddingTop: 6,
-        paddingBottom: 4,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-      }}
+      style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4 }}
     >
+      {/* C-LOGO-PORTADA (3 nov 2026, Richard): el logo de Divoox arriba, en chico. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Image
+            source={IMG.logo}
+            style={{ width: 106, height: 26 }}
+            resizeMode="contain"
+            accessibilityRole="image"
+            accessibilityLabel="Divoox"
+            testID="inicio-logo"
+          />
+        </View>
+        <Pressable
+          onPress={alCampana}
+          accessibilityRole="button"
+          accessibilityLabel={pendientes ? `${t.campana} (${pendientes})` : t.campana}
+          hitSlop={6}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: '#F2F3F5',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Image
+            source={IMG.iconoCampana}
+            style={{ width: 40, height: 40, borderRadius: 20 }}
+            resizeMode="cover"
+            accessibilityIgnoresInvertColors
+          />
+          {pendientes > 0 ? (
+            <View
+              testID="campana-punto"
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                minWidth: 16,
+                height: 16,
+                borderRadius: 8,
+                paddingHorizontal: 4,
+                backgroundColor: C.primario,
+                borderWidth: 2,
+                borderColor: '#fff',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{pendientes}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+        <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
+      </View>
       <Pressable
         onPress={alDireccion}
         accessibilityRole="button"
         accessibilityLabel={`${t.cambiarDireccion}: ${direccion}`}
         testID="inicio-direccion"
         hitSlop={6}
-        style={{ flex: 1 }}
+        style={{ marginTop: 6 }}
       >
         <Text style={{ fontSize: 12, color: '#666B73', fontWeight: '600' }}>{t.entregarEn}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -58,49 +106,6 @@ export function Cabecera({
           <Text style={{ fontSize: 12, color: C.secundario }}>▾</Text>
         </View>
       </Pressable>
-      <Pressable
-        onPress={alCampana}
-        accessibilityRole="button"
-        accessibilityLabel={pendientes ? `${t.campana} (${pendientes})` : t.campana}
-        hitSlop={6}
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: '#F2F3F5',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Image
-          source={IMG.iconoCampana}
-          style={{ width: 40, height: 40, borderRadius: 20 }}
-          resizeMode="cover"
-          accessibilityIgnoresInvertColors
-        />
-        {pendientes > 0 ? (
-          <View
-            testID="campana-punto"
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              minWidth: 16,
-              height: 16,
-              borderRadius: 8,
-              paddingHorizontal: 4,
-              backgroundColor: C.primario,
-              borderWidth: 2,
-              borderColor: '#fff',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{pendientes}</Text>
-          </View>
-        ) : null}
-      </Pressable>
-      <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
     </View>
   );
 }

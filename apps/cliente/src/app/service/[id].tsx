@@ -7,7 +7,6 @@ import {
   type ServicioCatalogo,
   ORDEN_SERVICIOS,
   SERVICIOS_TIENDA,
-  agruparServicios,
 } from '@tumbite/compartido';
 import { Boton, C, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../../comida/piezas';
@@ -15,6 +14,7 @@ import { textosComida } from '../../comida/textos';
 import { ICONO_SERVICIO, IMG, type Servicio } from '../../inicio/recursosServicio';
 import { textosInicio } from '../../inicio/textos';
 import { FranjaEstado } from '../../inicio/FranjaEstado';
+import { PantallaMas } from '../../inicio/PantallaMas';
 import { textosTiendas } from '../../tiendas/textos';
 
 /**
@@ -29,7 +29,7 @@ export default function PantallaServicio() {
   const t = textosInicio(idioma);
   const tc = textosComida(idioma);
   const [s, setS] = useState<ServicioCatalogo | null>(null);
-  // C-EXPLORAR: en «Más», todos los servicios en grupos.
+  // C-EXPLORAR: «Más» necesita el catálogo entero.
   const [todos, setTodos] = useState<ServicioCatalogo[]>([]);
   useEffect(() => {
     let vivo = true;
@@ -56,188 +56,146 @@ export default function PantallaServicio() {
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         etiquetaVolver={tc.volver}
       />
-      <ScrollView
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: 32,
-          width: '100%',
-          maxWidth: ANCHO_MAX,
-          alignSelf: 'center',
-        }}
-      >
-        <FranjaEstado
-          texto={new Map(Object.entries(t.franja)).get(accion) ?? t.franja.muy_pronto ?? ''}
-          enProceso={accion !== 'abrir'}
-        />
-        <View style={{ alignItems: 'center', marginTop: 18 }}>
-          <Image
-            source={ICONO_SERVICIO.get(id as Servicio) ?? IMG.servicios.mas}
-            style={{ width: 140, height: 140 }}
-            resizeMode="contain"
-            accessibilityIgnoresInvertColors
-          />
-          <Text
-            accessibilityRole="header"
-            style={{ fontSize: 26, fontWeight: '700', color: C.secundario, marginTop: 8 }}
-          >
-            {nombre}
-          </Text>
-          {s?.descripcion ? (
-            <Text style={{ color: '#5E5E5E', fontSize: 15, textAlign: 'center', marginTop: 6 }}>
-              {s.descripcion}
-            </Text>
-          ) : null}
-        </View>
-        {accion === 'abrir' && id === 'comida' ? (
-          <View style={{ marginTop: 18 }}>
-            <Boton texto={t.abrirServicio} alTocar={abrir} />
-          </View>
-        ) : null}
-        {id === 'mas' && todos.length ? (
-          <View style={{ marginTop: 18, gap: 14 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario }}>
-              {t.todosLosServicios}
-            </Text>
-            {agruparServicios(todos).map((g) => (
-              <View key={g.id} style={{ gap: 8 }}>
-                <Text style={{ fontWeight: '700', color: '#5E5E5E' }}>
-                  {t.grupos[g.id] ?? g.id}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                  {g.servicios.map((x) => (
-                    <Pressable
-                      key={x.id}
-                      accessibilityRole="button"
-                      testID={`explorar-${x.id}`}
-                      onPress={() =>
-                        x.id === 'comida' && x.accion === 'abrir'
-                          ? router.push('/restaurants')
-                          : router.push({ pathname: '/service/[id]', params: { id: x.id } })
-                      }
-                      style={{
-                        width: 104,
-                        alignItems: 'center',
-                        padding: 10,
-                        borderRadius: 14,
-                        borderWidth: 1,
-                        borderColor: '#E3E3E3',
-                        backgroundColor: '#FFFFFF',
-                      }}
-                    >
-                      <Image
-                        source={ICONO_SERVICIO.get(x.id as Servicio) ?? IMG.servicios.mas}
-                        style={{ width: 56, height: 56 }}
-                        resizeMode="contain"
-                        accessibilityIgnoresInvertColors
-                      />
-                      <Text style={{ fontWeight: '700', color: C.secundario, marginTop: 4 }}>
-                        {(ORDEN_SERVICIOS as readonly string[]).includes(x.id)
-                          ? t.servicios[x.id as Servicio]
-                          : x.nombre}
-                      </Text>
-                      {t.etiquetaServicio[x.accion] ? (
-                        <Text style={{ fontSize: 11, color: '#8A8A8A', fontWeight: '700' }}>
-                          {t.etiquetaServicio[x.accion]}
-                        </Text>
-                      ) : null}
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : null}
-        {/* C-TIENDAS-VITRINA: Mercado, Farmacia, Licores y Más abren las tiendas cerca de ti. */}
-        {accion === 'abrir' && (SERVICIOS_TIENDA as readonly string[]).includes(id ?? '') ? (
-          <View style={{ marginTop: 18 }}>
-            <Boton
-              texto={textosTiendas(idioma).verTiendas}
-              alTocar={() => router.push({ pathname: '/stores', params: { servicio: id } })}
+      {/* C-SOLO-LO-TERMINADO: «Más» tiene su propia pantalla, con los servicios arriba. */}
+      {id === 'mas' ? (
+        <PantallaMas idioma={idioma} servicios={todos} />
+      ) : (
+        <ScrollView
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: 32,
+            width: '100%',
+            maxWidth: ANCHO_MAX,
+            alignSelf: 'center',
+          }}
+        >
+          {/* Un servicio que ya abre no lleva franja: solo lo que todavía no llega a tu ciudad. */}
+          {accion !== 'abrir' ? (
+            <FranjaEstado
+              texto={new Map(Object.entries(t.franja)).get(accion) ?? t.franja.muy_pronto ?? ''}
+              enProceso
             />
+          ) : null}
+          <View style={{ alignItems: 'center', marginTop: 18 }}>
+            <Image
+              source={ICONO_SERVICIO.get(id as Servicio) ?? IMG.servicios.mas}
+              style={{ width: 96, height: 96 }}
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
+            />
+            <Text
+              accessibilityRole="header"
+              style={{ fontSize: 26, fontWeight: '700', color: C.secundario, marginTop: 8 }}
+            >
+              {nombre}
+            </Text>
+            {s?.descripcion ? (
+              <Text style={{ color: '#5E5E5E', fontSize: 15, textAlign: 'center', marginTop: 6 }}>
+                {s.descripcion}
+              </Text>
+            ) : null}
           </View>
-        ) : null}
-        {/* C-ENVIOS-DOS-TIPOS (30 oct 2026): en Envíos se elige entre algo cerca (de A a B) y un
+          {accion === 'abrir' && id === 'comida' ? (
+            <View style={{ marginTop: 18 }}>
+              <Boton texto={t.abrirServicio} alTocar={abrir} />
+            </View>
+          ) : null}
+          {/* C-TIENDAS-VITRINA: Mercado, Farmacia, Licores y Más abren las tiendas cerca de ti. */}
+          {accion === 'abrir' && (SERVICIOS_TIENDA as readonly string[]).includes(id ?? '') ? (
+            <View style={{ marginTop: 18 }}>
+              <Boton
+                texto={textosTiendas(idioma).verTiendas}
+                alTocar={() => router.push({ pathname: '/stores', params: { servicio: id } })}
+              />
+            </View>
+          ) : null}
+          {/* C-ENVIOS-DOS-TIPOS (30 oct 2026): en Envíos se elige entre algo cerca (de A a B) y un
             bloque de logística para empresas (Divoox Flex), los dos en el color de logística. */}
-        {id === 'envios' ? (
-          <View style={{ marginTop: 18, gap: 10 }} testID="envios-tipos">
-            {[
-              {
-                titulo: t.envioAB,
-                ayuda: t.envioABAyuda,
-                ir: () => router.push({ pathname: '/ride', params: { servicio: 'envios' } }),
-                activo: accion === 'abrir',
-              },
-              {
-                // C-FLEX-RASTREAR: quien espera una caja la sigue con su número de seguimiento.
-                titulo: t.envioRastrear,
-                ayuda: t.envioRastrearAyuda,
-                ir: () => router.push('/packages'),
-                activo: true,
-              },
-              {
-                titulo: t.envioBloque,
-                ayuda: t.envioBloqueAyuda,
-                // C-BLOQUE-EN-LA-APP: se explica y se registra dentro de la app.
-                ir: () => router.push('/business'),
-                activo: true,
-              },
-            ].map((o) => (
-              <Pressable
-                key={o.titulo}
-                accessibilityRole="button"
-                accessibilityLabel={`${o.titulo}. ${o.ayuda}`}
-                disabled={!o.activo}
-                onPress={o.ir}
-                style={{
-                  backgroundColor: o.activo ? C.logistica : C.logisticaSuave,
-                  borderRadius: 12,
-                  padding: 16,
-                }}
-              >
-                <Text
+          {id === 'envios' ? (
+            <View style={{ marginTop: 18, gap: 10 }} testID="envios-tipos">
+              {[
+                {
+                  titulo: t.envioAB,
+                  ayuda: t.envioABAyuda,
+                  ir: () => router.push({ pathname: '/ride', params: { servicio: 'envios' } }),
+                  activo: accion === 'abrir',
+                },
+                {
+                  // C-FLEX-RASTREAR: quien espera una caja la sigue con su número de seguimiento.
+                  titulo: t.envioRastrear,
+                  ayuda: t.envioRastrearAyuda,
+                  ir: () => router.push('/packages'),
+                  activo: true,
+                },
+                {
+                  titulo: t.envioBloque,
+                  ayuda: t.envioBloqueAyuda,
+                  // C-BLOQUE-EN-LA-APP: se explica y se registra dentro de la app.
+                  ir: () => router.push('/business'),
+                  activo: true,
+                },
+              ].map((o) => (
+                <Pressable
+                  key={o.titulo}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${o.titulo}. ${o.ayuda}`}
+                  disabled={!o.activo}
+                  onPress={o.ir}
                   style={{
-                    color: o.activo ? '#FFFFFF' : C.logistica,
-                    fontWeight: '700',
-                    fontSize: 17,
+                    backgroundColor: o.activo ? C.logistica : C.logisticaSuave,
+                    borderRadius: 12,
+                    padding: 16,
                   }}
                 >
-                  {o.titulo}
+                  <Text
+                    style={{
+                      color: o.activo ? '#FFFFFF' : C.logistica,
+                      fontWeight: '700',
+                      fontSize: 17,
+                    }}
+                  >
+                    {o.titulo}
+                  </Text>
+                  <Text style={{ color: o.activo ? '#E7F1F8' : C.logistica, marginTop: 4 }}>
+                    {o.ayuda}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+          {/* Divoox Moto (M5): cuando el servicio está abierto en tu ciudad, se pide aquí. */}
+          {accion === 'abrir' && (id === 'moto' || id === 'carro') ? (
+            <View style={{ marginTop: 18 }}>
+              <Boton
+                texto={t.abrirServicio}
+                alTocar={() => router.push({ pathname: '/ride', params: { servicio: id } })}
+                exito
+              />
+            </View>
+          ) : null}
+          {accion !== 'abrir' ? (
+            <Tarjeta style={{ marginTop: 22 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
+                  {t.loQueViene}
                 </Text>
-                <Text style={{ color: o.activo ? '#E7F1F8' : C.logistica, marginTop: 4 }}>
-                  {o.ayuda}
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#8A8A8A' }}>
+                  {t.ejemplo}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-        {/* Divoox Moto (M5): cuando el servicio está abierto en tu ciudad, se pide aquí. */}
-        {accion === 'abrir' && (id === 'moto' || id === 'carro') ? (
-          <View style={{ marginTop: 18 }}>
-            <Boton
-              texto={t.abrirServicio}
-              alTocar={() => router.push({ pathname: '/ride', params: { servicio: id } })}
-              exito
-            />
-          </View>
-        ) : null}
-        <Tarjeta style={{ marginTop: 22 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
-              {t.loQueViene}
-            </Text>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#8A8A8A' }}>{t.ejemplo}</Text>
-          </View>
-          {(
-            new Map(Object.entries(t.detalleServicio)).get(id ?? '') ??
-            t.detalleServicio.mas ??
-            []
-          ).map((linea) => (
-            <Text key={linea} style={{ color: '#3A3A3A', fontSize: 15, marginTop: 8 }}>
-              · {linea}
-            </Text>
-          ))}
-        </Tarjeta>
-      </ScrollView>
+              </View>
+              {(
+                new Map(Object.entries(t.detalleServicio)).get(id ?? '') ??
+                t.detalleServicio.mas ??
+                []
+              ).map((linea) => (
+                <Text key={linea} style={{ color: '#3A3A3A', fontSize: 15, marginTop: 8 }}>
+                  · {linea}
+                </Text>
+              ))}
+            </Tarjeta>
+          ) : null}
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

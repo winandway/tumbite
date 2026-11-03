@@ -625,31 +625,29 @@ for (const idioma of ['en', 'es'] as const) {
       await foto(cli, 'cliente-inicio-lista');
       await cli.getByTestId('portada-cliente').evaluate((d) => d.scrollTo(0, 0));
     }
-    // Inicio «como los grandes» (18 oct): un servicio que viene abre su pantalla con la franja de
-    // «en construcción» (nunca una ventana encima), el buscador es real y la campana también.
-    // Carro: sigue bloqueado en todas partes (Moto ya se enciende en pruebas, C-MOTO-SOLO-PRUEBAS).
-    // En el sitio de pruebas pueden estar encendidos todos: se prueba con uno que siga por venir.
+    // C-LOGO-PORTADA (3 nov): el logo de Divoox arriba de la portada.
+    await expect(cli.getByTestId('inicio-logo')).toBeVisible();
+    // C-SOLO-LO-TERMINADO (3 nov, Richard): solo se ve lo que ya funciona; nada dice «Pronto».
     const servicios = (await (
       await request.get('/datos/servicios?lat=25.7617&lng=-80.1918')
     ).json()) as {
-      servicios: { id: string; estado: string }[];
+      servicios: { id: string; accion: string }[];
     };
-    const noListos = servicios.servicios.filter(
-      (s) => s.id !== 'comida' && s.estado !== 'disponible',
+    const porVenir = servicios.servicios.filter(
+      (s) => s.id !== 'comida' && s.id !== 'mas' && s.accion !== 'abrir',
     );
-    const porVenir = noListos.find((s) => s.id === 'carro') ?? noListos[0];
-    if (porVenir || !STAGING) {
-      // POR-1 (2 nov 2026): en la portada solo salen los servicios disponibles; los que vienen
-      // viven dentro de «Más», sin «Pronto» encima de cada uno.
-      await expect(cli.getByTestId(`servicio-${porVenir?.id ?? 'carro'}`)).toHaveCount(0);
+    for (const s of porVenir) await expect(cli.getByTestId(`servicio-${s.id}`)).toHaveCount(0);
+    await expect(cli.getByText(/^(Pronto|Soon)$/)).toHaveCount(0);
+    if (await cli.getByTestId('servicio-mas').count()) {
       await cli.getByTestId('servicio-mas').click();
-      await cli.getByTestId(`explorar-${porVenir?.id ?? 'carro'}`).click();
-      // La pantalla de «Más» queda debajo en la pila, con su propia franja: manda la de arriba.
-      await expect(cli.getByTestId('franja-estado').last()).toBeVisible({ timeout: 20_000 });
-      await expect(
-        cli.getByText(/Estamos construyendo este servicio|We’re building this service/).last(),
-      ).toBeVisible();
-      await foto(cli, 'cliente-servicio');
+      await expect(cli.getByTestId('pantalla-mas')).toBeVisible({ timeout: 20_000 });
+      await expect(cli.getByText(/Bienvenido a Divoox|Welcome to Divoox/)).toBeVisible();
+      await expect(cli.getByTestId('explorar-comida')).toBeVisible();
+      for (const s of porVenir) await expect(cli.getByTestId(`explorar-${s.id}`)).toHaveCount(0);
+      await expect(cli.getByText(/^(Pronto|Soon)$/)).toHaveCount(0);
+      await expect(cli.getByTestId('franja-estado')).toHaveCount(0);
+      await foto(cli, 'cliente-mas');
+      await cli.goto('/app/');
     }
     await cli.goto('/app/search');
     await cli.getByLabel(/^(Buscar|Search)$/).fill(idioma === 'en' ? 'margh' : 'margar');

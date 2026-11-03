@@ -2641,6 +2641,19 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/cliente/src/app/order/[id].tsx` (`recoge`, `estadosRecoger`, `pasosRecoger`, `listoEn`, `pediste.recoger`), `apps/cliente/src/app/cart.tsx` + `textos.ts` (`propinaRecoger`, `propinaNotaRecoger`, `notasRecoger`, propina en 0 % al elegir recoger), `apps/servidor/src/rutas/pedidos.ts` (la recogida crea PIN siempre).
 - **Candados:** `e2e/recorrido/recogerCompleto.spec.ts` (comprobado en rojo quitando el arreglo de la pantalla) y la prueba BRE-7b de `apps/servidor/src/rutas/cupones.test.ts`.
 
+## C-SOLO-LO-TERMINADO y C-LOGO-PORTADA (3 nov 2026, Richard). Todos los países.
+
+- **Qué se rompía y cómo se veía:** la portada del cliente no llevaba el logo de Divoox. «Más» abría con una franja «Estamos construyendo este servicio», un dibujo de cuatro cuadros de colores gigante y «Todo lo que viene en Divoox», y debajo los servicios con «Pronto», en cuadros angostos que partían las palabras («Mercad / o», «Farmaci / a»); Envíos quedaba fuera de la pantalla. Richard: «no es un MVP… ya no ponga pronto… vamos a mostrar lo que esté terminado».
+- **Qué se hizo (estándar: pestaña Services de Uber y «Todos los servicios» de Grab, estudio REA del 3 nov):**
+  - `serviciosTerminados` y `hayMasServicios` en `packages/compartido/src/servicios.ts`: Comida siempre y solo los servicios con `accion === 'abrir'`.
+  - `inicio/Servicios.tsx`: los chips usan `serviciosTerminados`; «Más» sale solo si hay algo más que Comida.
+  - `inicio/PantallaMas.tsx` (nueva; `app/service/[id].tsx` la usa para `mas`): logo, «Bienvenido a Divoox», una frase, y los servicios listos en una cuadrícula pareja de dos en dos (`width: '48%'`, sin estirar), con dibujo, nombre en una línea y su frase (`lemaServicio`).
+  - Pantalla de un servicio abierto: sin franja y sin la tarjeta «Lo que vas a poder hacer · Ejemplo»; ícono a 96.
+  - `inicio/Cabecera.tsx`: arriba el logo (`IMG.logo`, `testID="inicio-logo"`), la campana y el idioma; debajo «Entregar en».
+- **Candados:** `packages/compartido/src/servicios.test.ts` («solo lo terminado», en rojo sin las funciones); `e2e/recorrido/mas.spec.ts` (catálogo fijo con Farmacia por venir: no aparece, no hay «Pronto» ni franja); el recorrido comprueba el logo y que ningún servicio por venir sale en la portada ni en «Más».
+- **Cómo se comprueba:** `npx vitest run packages/compartido/src/servicios.test.ts` y `npm run recorrido -- e2e/recorrido/mas.spec.ts`; mirar `docs/capturas/mas-servicios-es.png` y `docs/capturas/recorrido/cliente-inicio-es.png`.
+- **Qué NO tocar:** no vuelven «Pronto», la franja de construcción ni los grupos que dejan un cuadro solo estirado; el logo no se quita de la portada.
+
 ## C-PORTADA-CLIENTE (POR-1, 2 nov 2026). Todos los países.
 
 - **Qué se rompía y cómo se veía:** la portada de la app del cliente no parecía de una app grande: ocho cuadros grandes de servicios con «Pronto» ocupaban media pantalla, el botón de idioma era una pastilla roja enorme, Comida salía con una hamburguesa, los restaurantes solo en un carrusel de tres, no había dirección arriba y la portada terminaba en «Cerrar sesión».

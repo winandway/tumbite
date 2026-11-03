@@ -69,3 +69,21 @@ export function agruparServicios<T extends { id: string; orden: number }>(
   const otros = ordenarServicios(lista.filter((s) => !usados.has(s.id)));
   return [...grupos, { id: 'otros', servicios: otros }].filter((g) => g.servicios.length);
 }
+
+/**
+ * C-SOLO-LO-TERMINADO (3 nov 2026, Richard: «no ponga pronto… vamos a mostrar lo que esté
+ * terminado»): la portada y «Más» enseñan solo lo que se puede usar ya. Comida va siempre (es la
+ * puerta de entrada); lo que viene no se muestra hasta que el servidor lo abra en la ciudad.
+ */
+export function serviciosTerminados<T extends { id: string; orden: number; accion: string }>(
+  lista: T[],
+): T[] {
+  return ordenarServicios(
+    lista.filter((s) => s.id === 'comida' || (s.id !== 'mas' && s.accion === 'abrir')),
+  );
+}
+
+/** «Más» solo tiene sentido si hay algo más que Comida para elegir. */
+export function hayMasServicios(lista: { id: string; orden: number; accion: string }[]): boolean {
+  return serviciosTerminados(lista).length > 1;
+}

@@ -1,5 +1,10 @@
 import { Image, Pressable, ScrollView, Text } from 'react-native';
-import { type Idioma, ORDEN_SERVICIOS, type ServicioCatalogo } from '@tumbite/compartido';
+import {
+  type Idioma,
+  type ServicioCatalogo,
+  hayMasServicios,
+  serviciosTerminados,
+} from '@tumbite/compartido';
 import { C } from '@tumbite/movil';
 import { ICONO_SERVICIO, IMG } from './recursos';
 import { textosInicio } from './textos';
@@ -9,8 +14,8 @@ export type Servicio = keyof typeof IMG.servicios;
 /**
  * POR-1 (2 nov 2026): servicios en una fila de chips que se desliza a lo ancho, como Uber Eats.
  * El orden lo fija ORDEN_SERVICIOS y el estado lo dice el servidor (GET /datos/servicios): en la
- * portada solo salen los que están disponibles en la ciudad, más «Más» al final. Los que vienen
- * NO llevan «Pronto» aquí: viven dentro de «Más», con su franja de estado (C-EXPLORAR).
+ * portada solo salen los que están disponibles en la ciudad, más «Más» al final. Lo que viene no
+ * se muestra en ninguna parte hasta que esté terminado (C-SOLO-LO-TERMINADO, 3 nov).
  * Comida sale siempre (es la puerta de entrada; si no está, abre su pantalla con la franja).
  */
 export function Servicios({
@@ -33,11 +38,12 @@ export function Servicios({
     estado: 'proximamente',
     accion: 'muy_pronto',
   });
-  const todos: ServicioCatalogo[] = catalogo ?? ORDEN_SERVICIOS.map(sinEstado);
+  // C-SOLO-LO-TERMINADO: solo lo que se puede usar ya; «Más» solo si hay algo más que Comida.
+  const todos: ServicioCatalogo[] = catalogo ?? [];
+  const listos = serviciosTerminados(todos);
   const visibles = [
-    todos.find((s) => s.id === 'comida') ?? sinEstado('comida', 0),
-    ...todos.filter((s) => s.id !== 'comida' && s.id !== 'mas' && s.accion === 'abrir'),
-    todos.find((s) => s.id === 'mas') ?? sinEstado('mas', ORDEN_SERVICIOS.length),
+    ...(listos.length ? listos : [sinEstado('comida', 0)]),
+    ...(hayMasServicios(todos) ? [todos.find((s) => s.id === 'mas') ?? sinEstado('mas', 99)] : []),
   ];
   return (
     <ScrollView

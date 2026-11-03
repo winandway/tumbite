@@ -3,6 +3,14 @@
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
 
+## NO ES UN MVP: SE TERMINA CADA PANTALLA Y SOLO SE MUESTRA LO TERMINADO (REGLA PRINCIPAL, Richard, 3 nov 2026)
+
+> Sus palabras: _«nosotros no estamos haciendo un MVP. Estamos haciendo la aplicación para terminarla y lanzarla e ir probándola en producción en vivo… todo detalle que haya, tenemos que acabarlo… ya no ponga pronto… vamos a mostrar lo que esté terminado»_.
+
+- Cada pantalla se entrega terminada y bonita: textos que caben (nada partido en dos renglones como «Mercad / o»), dibujos a su tamaño, nada que empuje lo importante hacia abajo.
+- **Prohibido «Pronto», «Muy pronto», «En construcción» y las listas de «Ejemplo» de lo que vendrá** en lo que ve el cliente, el restaurante o el repartidor. Lo que no está terminado no se muestra; aparece solo el día que funciona en esa ciudad (C-SOLO-LO-TERMINADO). Se exceptúa el aviso real de que una zona todavía no tiene cobertura.
+- Antes de rehacer una pantalla se mira con REA cómo la tienen los grandes y se copia su estándar.
+
 ## NINGUNA GUÍA DE DOCS SIN CAPTURAS (REGLA PRINCIPAL, Richard, 1 nov 2026)
 
 > Sus palabras: _«no poner ninguna explicación para los usuarios si no tiene una captura de pantalla… eso se vende por imágenes»_.

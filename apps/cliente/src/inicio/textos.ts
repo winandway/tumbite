@@ -45,6 +45,18 @@ const es = {
     string
   >,
   todosLosServicios: 'Todos los servicios',
+  // C-SOLO-LO-TERMINADO (3 nov 2026): la pantalla «Más», como la pestaña Services de Uber.
+  masBienvenida: 'Bienvenido a Divoox',
+  masAyuda: 'Todo lo que necesitas, en un solo lugar. Elige un servicio para empezar.',
+  lemaServicio: {
+    comida: 'Tus restaurantes favoritos',
+    moto: 'Llega rápido a donde vas',
+    carro: 'Viaja cómodo en carro',
+    envios: 'Manda y recibe paquetes',
+    mercado: 'El mercado a tu puerta',
+    farmacia: 'Lo de la farmacia, hoy',
+    licores: 'Para mayores de 21 años',
+  } as Record<string, string>,
   // Etiqueta discreta en la loseta del servicio, según lo que dice el servidor.
   etiquetaServicio: {
     abrir: '',
@@ -225,6 +237,17 @@ const en: typeof es = {
   entendido: 'Got it',
   grupos: { viajes: 'Rides', pedidos: 'Orders', envios: 'Delivery', otros: 'Other' },
   todosLosServicios: 'All services',
+  masBienvenida: 'Welcome to Divoox',
+  masAyuda: 'Everything you need, in one place. Pick a service to get started.',
+  lemaServicio: {
+    comida: 'Your favorite restaurants',
+    moto: 'Get there fast',
+    carro: 'Ride in comfort',
+    envios: 'Send and receive packages',
+    mercado: 'Groceries to your door',
+    farmacia: 'Pharmacy essentials, today',
+    licores: 'For ages 21 and up',
+  } as Record<string, string>,
   etiquetaServicio: {
     abrir: '',
     muy_pronto: 'Soon',
