@@ -19,11 +19,14 @@ describe('Docs', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Docs');
     const barra = screen.getByRole('navigation', { name: /Secciones de Docs|Docs sections/ });
     expect(barra).toBeInTheDocument();
-    await userEvent.click(
-      screen.getAllByRole('link', {
-        name: /Cómo hacer tu primer pedido|How to place your first order/,
-      })[0]!,
+    // ETP-3x: con todas las guías, `getAllByRole('link', { name })` calcula el nombre accesible de
+    // cada nodo de Docs y pasaba de 5 s con la máquina cargada (falló el pre-push). El enlace se
+    // busca por su texto dentro de la barra: el mismo clic, sin recorrer toda la página.
+    const enlace = [...barra.querySelectorAll('a')].find((a) =>
+      /Cómo hacer tu primer pedido|How to place your first order/.test(a.textContent ?? ''),
     );
+    expect(enlace).toBeTruthy();
+    await userEvent.click(enlace!);
     expect(window.location.pathname).toBe('/docs/ordering/first-order');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       /primer pedido|first order/,
