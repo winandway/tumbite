@@ -12,7 +12,8 @@ salida = {"ok": d.get("ok", False), "piezas": d.get("piezas", {}), "medido": dat
 open("progreso/salud.json", "w").write(json.dumps(salida, ensure_ascii=False, indent=2) + "\n")
 ' || echo "aviso: no se pudo leer el estado de Divoox; se publica sin foto nueva"
 git add progreso
-git diff --cached --quiet || git commit -q -m "chore(progreso): actualiza la página de progreso [skip ci]"
+# Solo la carpeta progreso: el índice lo comparten varias sesiones (C-PROGRESO-SOLO-LO-SUYO).
+git diff --cached --quiet -- progreso || git commit -q -m "chore(progreso): actualiza la página de progreso [skip ci]" -- progreso
 rama=$(git subtree split --prefix progreso HEAD 2>/dev/null | tr -d "\r" | tail -1 | grep -oE "[0-9a-f]{40}$")
 git push -f origin "${rama}:refs/heads/progreso-sitio"
 llave=$(cat ~/.config/tumbite/progreso-llave 2>/dev/null || true)
