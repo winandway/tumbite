@@ -1002,6 +1002,27 @@ for (const idioma of ['en', 'es'] as const) {
       await expect(cli.getByText(L.llamando, { exact: false })).toBeVisible({ timeout: 20_000 });
       await foto(cli, 'cliente-llamar');
     }
+    // BRE-2b (C-SEGUIMIENTO-HONESTO): si el repartidor deja de mandar su ubicación, el cliente lo
+    // ve dicho («Perdimos la señal…») en vez de un punto que parece en vivo. Solo en esta
+    // computadora: se envejece su última ubicación y después vuelve a estar al día.
+    if (!STAGING) {
+      const viejo = () =>
+        sql(
+          "UPDATE repartidores SET ubicacion_en = datetime('now','-3 minutes') WHERE usuario_id IN (SELECT repartidor_id FROM pedidos WHERE estado = 'en_camino')",
+        );
+      await expect(async () => {
+        viejo();
+        await cli.reload();
+        await expect(
+          cli.getByText(/We lost your driver|Perdimos la señal de tu repartidor/).first(),
+        ).toBeVisible({ timeout: 4_000 });
+      }).toPass({ timeout: 40_000 });
+      viejo();
+      await foto(cli, 'cliente-sin-senal');
+      sql(
+        "UPDATE repartidores SET ubicacion_en = datetime('now') WHERE usuario_id IN (SELECT repartidor_id FROM pedidos WHERE estado = 'en_camino')",
+      );
+    }
     const sellado = cli.getByLabel(
       /Your order left the restaurant|Tu pedido salió del restaurante/,
     );
