@@ -268,6 +268,19 @@ export async function calcularSinPlato(
         l.platoId === platoId
           ? {
               ...sinPeso(sinPreferencia(l)),
+              // ETP-4y: el producto que se pidió, con lo que el cliente eligió si faltaba, para
+              // «Pedir otra vez». Solo informativo: el cobro y el reparto salen del precio de la línea.
+              original: (l as Linea & { original?: unknown }).original ?? {
+                platoId: l.platoId,
+                nombreEs: l.nombreEs,
+                nombreEn: l.nombreEn,
+                ...('sustitucion' in l
+                  ? { sustitucion: (l as { sustitucion?: string }).sustitucion }
+                  : {}),
+                ...((l as { reemplazo?: unknown }).reemplazo
+                  ? { reemplazo: (l as { reemplazo?: unknown }).reemplazo }
+                  : {}),
+              },
               platoId: reemplazo.platoId,
               nombreEs: reemplazo.nombreEs,
               nombreEn: reemplazo.nombreEn,
@@ -1572,31 +1585,38 @@ pedidos.get('/pedidos/:id/repetir', async (c) => {
     .first<Record<string, unknown>>();
   if (!rest) throw new ErrorDatos('Este comercio ya no está disponible.', undefined, 404);
   const esTienda = String(rest.tipo_comercio ?? 'restaurante') !== 'restaurante';
-  const viejas = lineasDe(f) as (ReturnType<typeof lineasDe>[number] & {
-    sustitucion?: Sustitucion;
-    reemplazo?: { platoId: string };
-  })[];
+  type Preferencia = { sustitucion?: Sustitucion; reemplazo?: { platoId: string } };
+  const viejas = lineasDe(f) as (ReturnType<typeof lineasDe>[number] &
+    Preferencia & { original?: Preferencia & { platoId: string } })[];
   const lineas: Awaited<ReturnType<typeof lineasDeRestaurante>> = [];
   const faltan: { nombreEs: string; nombreEn: string }[] = [];
   for (const v of viejas) {
-    // ETP-4x: un reemplazo que apunta al mismo producto (pedidos de antes del arreglo) no cuenta.
-    const conReemplazo =
-      v.sustitucion === 'especifico' && v.reemplazo && v.reemplazo.platoId !== v.platoId;
     const base = {
-      platoId: v.platoId,
       cantidad: v.cantidad,
       opciones: (v.opciones ?? []).map((o) => o.id),
       nota: v.nota,
     };
+    /** El producto con su preferencia; sin el reemplazo elegido (agotado o inválido), la de siempre. */
+    const con = (platoId: string, p: Preferencia) => {
+      // ETP-4x: un reemplazo que apunta al mismo producto (pedidos de antes del arreglo) no cuenta.
+      const valido =
+        p.sustitucion === 'especifico' && p.reemplazo && p.reemplazo.platoId !== platoId;
+      return [
+        ...(valido
+          ? [{ ...base, platoId, sustitucion: p.sustitucion, reemplazoId: p.reemplazo!.platoId }]
+          : []),
+        {
+          ...base,
+          platoId,
+          sustitucion: p.sustitucion === 'especifico' ? undefined : p.sustitucion,
+        },
+      ];
+    };
+    // ETP-4y: si la línea viene de un reemplazo, primero el producto que se pidió (con lo que el
+    // cliente eligió), después el reemplazo que llegó; si ninguno está, «faltan».
     const intentos = [
-      ...(conReemplazo
-        ? [{ ...base, sustitucion: v.sustitucion, reemplazoId: v.reemplazo!.platoId }]
-        : []),
-      // Sin el reemplazo (agotado o inválido), el producto vuelve con la opción de siempre.
-      {
-        ...base,
-        sustitucion: v.sustitucion === 'especifico' ? undefined : v.sustitucion,
-      },
+      ...(v.original ? con(v.original.platoId, v.original) : []),
+      ...con(v.platoId, v),
     ];
     let hecha = false;
     for (const pedida of intentos) {

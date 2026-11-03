@@ -513,6 +513,137 @@ describe('C-TIENDAS-COMPRA · el cliente compra en una tienda', () => {
     expect(agua.sustitucion).toBe('reembolsar');
   });
 
+  it('ETP-4y: la línea reemplazada guarda el original; «Pedir otra vez» ofrece el original, luego el reemplazo, luego «faltan»; y un pedido viejo con el reemplazo igual al producto devuelve', async () => {
+    stripeFalso();
+    const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);
+    const cliente = await m.cuenta('cliente');
+    const prods = (await m.llamar('GET', `/datos/tiendas/${tid}/productos`)).datos.productos as {
+      id: string;
+      nombre: string;
+    }[];
+    const id = (n: string) => prods.find((p) => p.nombre === n)!.id;
+    const pagar = (pid: string) =>
+      m.DB.prepare(
+        "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_1' WHERE id = ?",
+      )
+        .bind(pid)
+        .run();
+    const pedir = async () => {
+      const r = await m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: tid,
+          lineas: [
+            {
+              platoId: id('Spring water'),
+              cantidad: 1,
+              sustitucion: 'especifico',
+              reemplazoId: id('Orange juice'),
+            },
+            { platoId: id('Bananas'), cantidad: 1 },
+          ],
+          propinaCentavos: 0,
+          direccion: '200 Calle Prueba, Miami',
+          lat: 25.78,
+          lng: -80.2,
+        },
+        cliente.token,
+      );
+      const pid = r.datos.pedidoId as string;
+      await pagar(pid);
+      return pid;
+    };
+    const falta = (pid: string, plato: string) =>
+      m.llamar('POST', `/datos/restaurante/pedidos/${pid}/falta`, { platoId: plato }, dueno.token);
+    const repetir = async (pid: string) =>
+      (await m.llamar('GET', `/datos/pedidos/${pid}/repetir`, undefined, cliente.token)).datos as {
+        lineas: Record<string, unknown>[];
+        faltan: unknown[];
+      };
+    const disponible = (n: string, si: boolean) =>
+      m.DB.prepare('UPDATE catalogo_ofertas SET disponible = ? WHERE producto_id = ?')
+        .bind(si ? 1 : 0, id(n))
+        .run();
+
+    // (1) Al reemplazar, la línea guarda el producto original con lo que el cliente había elegido.
+    const pid = await pedir();
+    const antes = await m.DB.prepare('SELECT total, pago_restaurante FROM pedidos WHERE id = ?')
+      .bind(pid)
+      .first<{ total: number; pago_restaurante: number }>();
+    await falta(pid, id('Spring water'));
+    const fila = await m.DB.prepare(
+      'SELECT lineas_json, total, pago_restaurante FROM pedidos WHERE id = ?',
+    )
+      .bind(pid)
+      .first<{ lineas_json: string; total: number; pago_restaurante: number }>();
+    const linea = (JSON.parse(fila!.lineas_json) as Record<string, unknown>[])[0]!;
+    expect(linea.platoId).toBe(id('Orange juice'));
+    expect(linea.original).toEqual({
+      platoId: id('Spring water'),
+      nombreEs: 'Spring water',
+      nombreEn: 'Spring water',
+      sustitucion: 'especifico',
+      reemplazo: expect.objectContaining({ platoId: id('Orange juice') }),
+    });
+    // Guardar el original no cambia el cobro ni el reparto (el reemplazo cuesta más: queda igual).
+    expect(fila!.total).toBe(antes!.total);
+    expect(fila!.pago_restaurante).toBe(antes!.pago_restaurante);
+
+    // (2) «Pedir otra vez»: primero el original, con su preferencia.
+    let r = await repetir(pid);
+    expect(r.faltan).toEqual([]);
+    expect(r.lineas[0]).toMatchObject({
+      platoId: id('Spring water'),
+      sustitucion: 'especifico',
+      reemplazo: expect.objectContaining({ platoId: id('Orange juice') }),
+    });
+    // Sin el original, el reemplazo.
+    await disponible('Spring water', false);
+    r = await repetir(pid);
+    expect(r.faltan).toEqual([]);
+    expect(r.lineas[0]).toMatchObject({ platoId: id('Orange juice') });
+    // Sin ninguno de los dos, «faltan».
+    await disponible('Orange juice', false);
+    r = await repetir(pid);
+    expect(r.faltan).toHaveLength(1);
+    await disponible('Spring water', true);
+    await disponible('Orange juice', true);
+
+    // (3) Un pedido viejo con el reemplazo igual al propio producto.
+    const viejo = await pedir();
+    const lj = (await m.DB.prepare('SELECT lineas_json FROM pedidos WHERE id = ?')
+      .bind(viejo)
+      .first<{ lineas_json: string }>())!.lineas_json;
+    const lineas = JSON.parse(lj) as Record<string, unknown>[];
+    lineas[0] = {
+      ...lineas[0],
+      reemplazo: {
+        platoId: id('Spring water'),
+        nombreEs: 'Spring water',
+        nombreEn: 'Spring water',
+      },
+    };
+    await m.DB.prepare('UPDATE pedidos SET lineas_json = ? WHERE id = ?')
+      .bind(JSON.stringify(lineas), viejo)
+      .run();
+    const v = await falta(viejo, id('Spring water'));
+    expect(v.estado).toBe(200);
+    expect(v.datos.devolucion).toBeGreaterThan(0);
+    const aj = await m.DB.prepare(
+      'SELECT reemplazo_id, propuestas_json FROM ajustes_pedido WHERE pedido_id = ?',
+    )
+      .bind(viejo)
+      .first<{ reemplazo_id: string | null; propuestas_json: string }>();
+    expect(aj?.reemplazo_id).toBeNull();
+    expect(aj?.propuestas_json).not.toContain(id('Spring water'));
+    const otro = await pedir();
+    await m.DB.prepare('UPDATE pedidos SET lineas_json = ? WHERE id = ?')
+      .bind(JSON.stringify(lineas), otro)
+      .run();
+    expect((await repetir(otro)).faltan).toEqual([]);
+  });
+
   it('C-TIENDAS-REEMPLAZO-ELEGIDO (ETP-4): si el reemplazo elegido tampoco está, se devuelve el dinero', async () => {
     stripeFalso();
     const { m, tid, dueno } = await escenario('staging.tumbite.com', STRIPE);

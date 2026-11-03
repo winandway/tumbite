@@ -3034,3 +3034,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** la línea reemplazada queda sin `reemplazo` y con «reembolsar» (cualquier reemplazo, también «uno parecido»); `/falta` nunca propone el mismo producto que falta (también para pedidos viejos con el reemplazo apuntando a sí mismo). `GET /pedidos/:id/repetir` prueba primero con el reemplazo elegido y, si no se puede, trae el producto con la opción de siempre.
 - **Prueba (comprobada en rojo el 3 nov con el código de ETP-4):** `rutas/tiendasVitrina.test.ts`, «ETP-4x: si el reemplazo ya aplicado también falta, se devuelve; y «Pedir otra vez» trae lo que sí hay».
 - **Qué NO tocar:** una línea ya reemplazada no vuelve a tener reemplazo; un faltante sobre ella siempre devuelve.
+
+## C-TIENDAS-REEMPLAZO-ELEGIDO · el original en la línea (ETP-4y, 3 nov 2026). Todos los países.
+
+- **Qué faltaba (lo encontró el revisor):** al reemplazar, la línea perdía qué producto se había pedido: «Pedir otra vez» volvía a pedir el reemplazo y no el original.
+- **Qué se hizo:** `calcularSinPlato` (`rutas/pedidos.ts`) guarda en la línea reemplazada `original` (id, nombres, sustitución y reemplazo elegidos), solo informativo: el cobro y el reparto salen del precio de la línea (la prueba lo comprueba con el total y el pago al restaurante). `GET /pedidos/:id/repetir` prueba en orden: el original con su preferencia, el original sin el reemplazo, el reemplazo que llegó, y si nada está, «faltan». Un pedido viejo con el reemplazo igual al propio producto: `/falta` devuelve sin proponerse a sí mismo y «Pedir otra vez» lo trae.
+- **Prueba (comprobada en rojo el 3 nov con el código de ETP-4x):** `rutas/tiendasVitrina.test.ts`, «ETP-4y: la línea reemplazada guarda el original…».
+- **Qué NO tocar:** `original` nunca entra en el cálculo del cobro; no se borra al volver a reemplazar (se conserva el primero).
