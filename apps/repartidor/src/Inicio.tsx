@@ -867,12 +867,14 @@ export function Inicio() {
       if (status !== 'granted') return setError(t.sinUbicacion);
       const p = await ubicacionConLimite();
       if (!p) return setError(t.ubicacionTarda);
-      const r = await api.pedir<{ conectado: boolean; cobertura?: string }>(
+      const r = await api.pedir<{ conectado: boolean; cobertura?: string; avisoComida?: string }>(
         'POST',
         '/datos/repartidor/conectar',
         { conectado: true, lat: p.coords.latitude, lng: p.coords.longitude },
       );
       if (r.cobertura && r.cobertura !== 'dentro') setAviso(tg.pausa.fueraZona);
+      // C-DESPACHO-CATALOGO (NXT-6y): conectado para otros servicios, pero sin Comida: el porqué.
+      else if (r.avisoComida) setAviso(r.avisoComida);
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : t.ubicacionTarda);

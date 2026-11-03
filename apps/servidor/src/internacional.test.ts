@@ -657,6 +657,34 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
   });
 });
 
+describe('NXT-6y · con el despacho por catálogo encendido, el saldo del cobro directo sigue mandando (C-DESPACHO-CATALOGO)', () => {
+  it('un repartidor habilitado sin saldo no recibe el pedido en efectivo; con saldo, sí', async () => {
+    const e = await escenario();
+    expect(
+      (
+        await e.m.llamar(
+          'PUT',
+          '/datos/admin/despacho-catalogo/US-FL-MIAMI',
+          { activo: true },
+          e.admin.token,
+        )
+      ).estado,
+    ).toBe(200);
+    const p = await e.pedir();
+    const id = p.datos.pedidoId as string;
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    const rep = await e.repartidor('Rafa Catálogo');
+    expect(await e.ofertasDe(rep)).toHaveLength(0);
+    await e.recargar(rep, 1000);
+    expect((await e.ofertasDe(rep)).map((o) => o.id)).toEqual([id]);
+  });
+});
+
 describe('pago de la comida en el local y casos límite (C-COBRO-DIRECTO-LOCAL)', () => {
   /** Pedido directo aceptado por el restaurante y por un repartidor con saldo, ya listo para recoger. */
   async function hastaListo(e: Awaited<ReturnType<typeof escenario>>, extra = {}) {

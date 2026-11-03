@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { conductorDeMoto } from './pruebas/conductorMoto';
@@ -237,7 +239,8 @@ describe('C-DESPACHO-CATALOGO · Comida lee el catálogo de habilitaciones', () 
 });
 
 describe('NXT-6x · conectarse con los servicios que sí tiene', () => {
-  it('sin Comida pero con Envíos habilitado se conecta y se le dice por qué no le llega Comida', async () => {
+  /** Un conductor con Envíos habilitado (moto, papeles aprobados) en una zona con el interruptor. */
+  async function conEnvios() {
     const m = mundo({}, { host: 'staging.tumbite.com' });
     const admin = await m.cuenta('admin', 'Soporte Divoox');
     for (const ruta of [
@@ -262,19 +265,58 @@ describe('NXT-6x · conectarse con los servicios que sí tiene', () => {
       )
         .bind(cond.id, veh, req, admin.id)
         .run();
+    const conectar = (idioma = 'es') =>
+      m.crudo('/datos/repartidor/conectar', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${cond.token}`,
+          'content-type': 'application/json',
+          'x-idioma': idioma,
+        },
+        body: JSON.stringify({ conectado: true, lat: 25.7617, lng: -80.1918 }),
+      });
+    return { m, admin, cond, conectar };
+  }
+
+  it('sin Comida pero con Envíos habilitado se conecta y se le dice por qué no le llega Comida, en su idioma', async () => {
+    const { m, cond, conectar } = await conEnvios();
     // Apagó Comida en sus servicios a propósito.
     await m.DB.prepare(
       "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'comida', 0)",
     )
       .bind(cond.id)
       .run();
-    const r = await m.llamar(
-      'POST',
-      '/datos/repartidor/conectar',
-      { conectado: true, lat: 25.7617, lng: -80.1918 },
-      cond.token,
+    const es = await conectar('es');
+    expect(es.status).toBe(200);
+    const d = (await es.json()) as { sinComida?: string; avisoComida?: string };
+    expect(d.sinComida).toBe('preferencia_apagada');
+    expect(d.avisoComida).toBe(
+      'Tienes Comida apagado en tus servicios. Enciéndelo para recibir pedidos.',
     );
-    expect(r.estado).toBe(200);
-    expect(r.datos.sinComida).toBeTruthy();
+    const en = (await (await conectar('en')).json()) as { avisoComida?: string };
+    expect(en.avisoComida).toBe(
+      'Food is turned off in your services. Turn it on to receive orders.',
+    );
+  });
+
+  it('NXT-6y: con un bloqueo GENERAL no se conecta aunque tenga Envíos habilitado (no puede ningún servicio)', async () => {
+    const { m, admin, cond, conectar } = await conEnvios();
+    await m.DB.prepare(
+      "INSERT INTO conductor_bloqueos (id, conductor_id, servicio_id, motivo, creado_por) VALUES ('bg1', ?, NULL, 'revisión', ?)",
+    )
+      .bind(cond.id, admin.id)
+      .run();
+    const r = await conectar();
+    expect(r.status).toBe(409);
+    expect(JSON.stringify(await r.json())).toMatch(/pausa/);
+  });
+
+  it('NXT-6y: la app del Driver muestra el aviso de Comida sin bloquear la conexión', () => {
+    const app = readFileSync(
+      join(__dirname, '..', '..', 'repartidor', 'src', 'Inicio.tsx'),
+      'utf8',
+    );
+    expect(app).toMatch(/avisoComida\?: string/);
+    expect(app).toMatch(/else if \(r\.avisoComida\) setAviso\(r\.avisoComida\)/);
   });
 });

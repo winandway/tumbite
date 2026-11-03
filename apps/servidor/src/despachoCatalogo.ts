@@ -94,9 +94,12 @@ export async function frenoAlConectar(
   if (!(await zonasDespachoCatalogo(db)).has(zonaId)) return null;
   const motivo = await motivoServicio(db, conductorId);
   if (motivo === 'habilitado') return null;
+  // NXT-6y: «otro servicio» cuenta solo si el catálogo lo deja de verdad, con la misma regla
+  // (bloqueos incluidos): un bloqueo general saca de todos los servicios.
   const { servicios } = await estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER);
-  const otro = servicios.some((s) => s.servicioId !== 'comida' && s.puedeActivar && s.preferencia);
-  if (otro) return motivo;
+  for (const s of servicios)
+    if (s.servicioId !== 'comida' && s.puedeActivar && s.preferencia)
+      if ((await motivoServicio(db, conductorId, s.servicioId)) === 'habilitado') return motivo;
   throw errorSinComida(motivo);
 }
 

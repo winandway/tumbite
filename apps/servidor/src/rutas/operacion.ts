@@ -62,7 +62,14 @@ import {
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
-import { filtrarPorCatalogo, frenoAlConectar, zonasDespachoCatalogo } from '../despachoCatalogo';
+import {
+  type MotivoSinComida,
+  errorSinComida,
+  filtrarPorCatalogo,
+  frenoAlConectar,
+  zonasDespachoCatalogo,
+} from '../despachoCatalogo';
+import { enIdiomaDePeticion, idiomaDeLaPeticion } from '../mensajesEn';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
 import { nuevoId } from '../cripto';
@@ -1306,7 +1313,7 @@ operacion.post('/repartidor/conectar', async (c) => {
   }
   // C-DESPACHO-CATALOGO (NXT-6): en una zona con el despacho por catálogo encendido, se dice al
   // conectarse por qué no le llegarían pedidos de Comida (como DoorDash: sin activar, no se reparte).
-  let sinComida: string | null = null;
+  let sinComida: MotivoSinComida | null = null;
   if (d.conectado) {
     const z = await db
       .prepare(
@@ -1411,7 +1418,16 @@ operacion.post('/repartidor/conectar', async (c) => {
   return c.json({
     conectado: d.conectado,
     cobertura: aqui.estado,
-    ...(sinComida ? { sinComida } : {}),
+    // NXT-6y: con el texto en su idioma, para que la app se lo diga sin bloquearlo.
+    ...(sinComida
+      ? {
+          sinComida,
+          avisoComida: enIdiomaDePeticion(
+            errorSinComida(sinComida).message,
+            idiomaDeLaPeticion((n) => c.req.header(n)),
+          ),
+        }
+      : {}),
   });
 });
 
