@@ -330,6 +330,21 @@ CREATE TABLE IF NOT EXISTS pedidos_prueba (
 );
 CREATE INDEX IF NOT EXISTS pedidos_prueba_restaurante ON pedidos_prueba(restaurante_id, estado);
 
+-- C-ENTREGA-PRACTICA (3 nov 2026): el pedido de prueba de una cuenta de revisión del restaurante
+-- le llega como oferta de práctica solo a las cuentas de revisión del repartidor. Su propia tabla,
+-- fuera de pedidos, ofertas y el libro: sin cobro ni pago al repartidor.
+CREATE TABLE IF NOT EXISTS entregas_practica (
+  pedido_prueba_id TEXT NOT NULL REFERENCES pedidos_prueba(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('aceptado', 'en_camino', 'entregado', 'rechazada', 'soltada')),
+  llego_restaurante INTEGER NOT NULL DEFAULT 0,
+  verificado INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  recogido_en TEXT,
+  entregado_en TEXT,
+  PRIMARY KEY (pedido_prueba_id, repartidor_id)
+);
+
 CREATE TABLE IF NOT EXISTS regalos_config (
   restaurante_id TEXT PRIMARY KEY REFERENCES restaurantes(id),
   cumpleanos INTEGER NOT NULL DEFAULT 1,
