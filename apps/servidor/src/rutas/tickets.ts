@@ -246,7 +246,7 @@ tickets.post('/tickets/:codigo/adjuntos', limiteIntentos(20, 60_000), async (c) 
   if (bytes.byteLength > MAX_ADJUNTO_BYTES)
     throw new ErrorDatos('La captura pesa demasiado. El máximo es 10 MB.', 'adjunto', 413);
   const tipo = tipoAdjunto(bytes);
-  if (!tipo) throw new ErrorDatos('Adjunta una imagen JPG, PNG, WebP o HEIC.', 'adjunto', 415);
+  if (!tipo) throw new ErrorDatos('Adjunta una imagen JPG, PNG o WebP.', 'adjunto', 415);
   const id = nuevoId();
   const clave = `casos/${t.id}/${id}`;
   await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });

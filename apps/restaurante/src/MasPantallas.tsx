@@ -584,7 +584,12 @@ function Configuracion({ t }: { t: Textos }) {
       </Tarjeta>
       {/* C-AYUDA-EN-LA-APP: pedir ayuda y seguir el caso sin salir de la app. */}
       <ReportarProblema />
-      <MisCasos elegirCapturas={selectorDeCapturas(ImagePicker.launchImageLibraryAsync)} />
+      <MisCasos
+        elegirCapturas={selectorDeCapturas(
+          ImagePicker.launchImageLibraryAsync,
+          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+        )}
+      />
       <OpcionesCuenta />
     </View>
   );

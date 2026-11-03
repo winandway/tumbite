@@ -1755,7 +1755,12 @@ export function Inicio() {
           {seccionPerfil === 'soporte' ? (
             <View style={{ paddingVertical: 8 }}>
               <ReportarProblema pedidoId={estado?.activo?.id} />
-              <MisCasos elegirCapturas={selectorDeCapturas(ImagePicker.launchImageLibraryAsync)} />
+              <MisCasos
+                elegirCapturas={selectorDeCapturas(
+                  ImagePicker.launchImageLibraryAsync,
+                  ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+                )}
+              />
               <MenuCuenta />
             </View>
           ) : null}

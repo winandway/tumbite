@@ -336,7 +336,12 @@ export default function MiCuenta() {
         <Text style={estilos.subtitulo}>{t.ayuda}</Text>
         <ReportarProblema />
         {/* C-AYUDA-EN-LA-APP: los casos y su chat con Soporte, sin salir a la web. */}
-        <MisCasos elegirCapturas={selectorDeCapturas(ImagePicker.launchImageLibraryAsync)} />
+        <MisCasos
+          elegirCapturas={selectorDeCapturas(
+            ImagePicker.launchImageLibraryAsync,
+            ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+          )}
+        />
 
         {/* POR-1 (2 nov 2026): «Cerrar sesión» vive aquí, no en la portada (como los grandes).
             Los tres puntos guardan las guías, el soporte y borrar la cuenta. */}

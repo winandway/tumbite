@@ -4486,7 +4486,7 @@ const es: SeccionDocs[] = [
           'Primero toma la captura en tu celular: en iPhone, botón lateral y subir volumen a la vez; en Android, encendido y bajar volumen a la vez. Queda en tu galería.',
           'Abre tu caso en «Mis casos de ayuda» (clientes: en tu cuenta; repartidores: en Soporte; restaurantes: en Configuración) y toca «Adjuntar captura». Elige hasta tres imágenes de tu galería.',
           'Antes de enviar ves la miniatura de cada una; si te equivocaste, toca «Quitar». Puedes escribir un mensaje o mandar solo las capturas.',
-          'Se aceptan JPG, PNG, WebP y HEIC (el formato del iPhone), hasta 10 MB cada una. Antes de guardarlas les quitamos los datos ocultos (la ubicación y el modelo del teléfono), también a las HEIC. Si una foto HEIC no se puede abrir, te lo decimos al momento: mándala en JPG (en el iPhone: Ajustes → Cámara → Formatos → Más compatible) o haz una captura de pantalla. Si la señal falla al subir, lo que escribiste y las capturas siguen en pantalla para volver a intentarlo.',
+          'Se aceptan JPG, PNG y WebP, hasta 10 MB cada una. Antes de guardarlas les quitamos los datos ocultos (la ubicación y el modelo del teléfono). Desde la app, el iPhone ya las manda en JPG. Las fotos HEIC (el formato del iPhone) no las guardamos porque llevan tu ubicación: si mandas una desde la web, te lo decimos al momento; mándala en JPG (en el iPhone: Ajustes → Cámara → Formatos → Más compatible) o haz una captura de pantalla. Si la señal falla al subir, lo que escribiste y las capturas siguen en pantalla para volver a intentarlo.',
         ],
         capturas: [
           {
@@ -8984,7 +8984,7 @@ const en: SeccionDocs[] = [
           'First take the screenshot on your phone: on iPhone, press the side button and volume up together; on Android, power and volume down together. It goes to your gallery.',
           'Open your case in “My help cases” (customers: in your account; drivers: in Support; restaurants: in Settings) and tap “Attach screenshot.” Pick up to three images from your gallery.',
           'Before sending you see a thumbnail of each one; if you picked the wrong one, tap “Remove.” You can write a message or send just the screenshots.',
-          'JPG, PNG, WebP and HEIC (the iPhone format) are accepted, up to 10 MB each. Before we store them we remove the hidden data (the location and the phone model), HEIC included. If a HEIC photo can’t be opened, we tell you right away: send it as JPG (on the iPhone: Settings → Camera → Formats → Most Compatible) or take a screenshot. If the signal drops while uploading, what you wrote and the screenshots stay on screen so you can try again.',
+          'JPG, PNG and WebP are accepted, up to 10 MB each. Before we store them we remove the hidden data (the location and the phone model). From the app, the iPhone already sends them as JPG. We don’t store HEIC photos (the iPhone format) because they carry your location: if you send one from the web, we tell you right away; send it as JPG (on the iPhone: Settings → Camera → Formats → Most Compatible) or take a screenshot. If the signal drops while uploading, what you wrote and the screenshots stay on screen so you can try again.',
         ],
         capturas: [
           {

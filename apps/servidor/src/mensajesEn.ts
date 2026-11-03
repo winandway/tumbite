@@ -53,8 +53,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'La captura pesa demasiado. El máximo es 10 MB.',
     'The screenshot is too large. The limit is 10 MB.',
   ],
-  ['Adjunta una imagen JPG, PNG, WebP o HEIC.', 'Attach a JPG, PNG, WebP or HEIC image.'],
-  ['Sube una foto en JPG, PNG, WebP o HEIC.', 'Upload a JPG, PNG, WebP or HEIC photo.'],
+  ['Adjunta una imagen JPG, PNG o WebP.', 'Attach a JPG, PNG or WebP image.'],
   [
     'Tu activación para repartir Comida está en revisión. Te avisamos cuando esté lista.',
     'Your activation to deliver Food is under review. We’ll let you know when it’s ready.',
@@ -88,8 +87,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Food isn’t available in that area: turn it on before using the catalog for dispatch.',
   ],
   [
-    'No pudimos abrir esta foto HEIC del iPhone. Mándala en JPG (en el iPhone: Ajustes → Cámara → Formatos → Más compatible) o haz una captura de pantalla y vuelve a intentar.',
-    'We couldn’t open this iPhone HEIC photo. Send it as JPG (on the iPhone: Settings → Camera → Formats → Most Compatible) or take a screenshot and try again.',
+    'Esta foto está en HEIC, el formato del iPhone, y no la guardamos porque lleva tu ubicación. Mándala en JPG (en el iPhone: Ajustes → Cámara → Formatos → Más compatible) o haz una captura de pantalla.',
+    'This photo is in HEIC, the iPhone format, and we don’t store it because it carries your location. Send it as JPG (on the iPhone: Settings → Camera → Formats → Most Compatible) or take a screenshot.',
   ],
   [
     'Una de las capturas ya no está. Vuelve a adjuntarla.',

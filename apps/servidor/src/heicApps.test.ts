@@ -1,0 +1,32 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { selectorDeCapturas } from '../../../packages/movil/src/elegirCapturas';
+
+/**
+ * NXT-4y (C-FOTOS-HEIC-LIMPIAS): el servidor no guarda HEIC; las tres apps piden a la galería del
+ * iPhone la versión «compatible» (JPEG) de las capturas de los casos de ayuda. Las apps no corren
+ * en vitest: el candado mira su código y prueba la pieza común.
+ */
+const leer = (...r: string[]) => readFileSync(join(__dirname, '..', '..', ...r), 'utf8');
+
+describe('las apps mandan JPEG, no HEIC (NXT-4y)', () => {
+  it('el selector pasa el modo compatible a la galería', async () => {
+    const pedidos: unknown[] = [];
+    const elegir = selectorDeCapturas(async (o) => {
+      pedidos.push(o);
+      return { canceled: false, assets: [{ uri: 'file://a.jpg' }] };
+    }, 'compatible');
+    expect(await elegir(3)).toEqual([{ uri: 'file://a.jpg', nombre: 'captura-1.jpg' }]);
+    expect(pedidos[0]).toMatchObject({ preferredAssetRepresentationMode: 'compatible' });
+  });
+  it.each([
+    ['cliente', 'src', 'app', 'account.tsx'],
+    ['repartidor', 'src', 'Inicio.tsx'],
+    ['restaurante', 'src', 'MasPantallas.tsx'],
+  ])('%s usa el modo compatible del iPhone', (...ruta) => {
+    expect(leer(...ruta)).toMatch(
+      /selectorDeCapturas\(\s*ImagePicker\.launchImageLibraryAsync,\s*ImagePicker\.UIImagePickerPreferredAssetRepresentationMode\.Compatible,?\s*\)/,
+    );
+  });
+});

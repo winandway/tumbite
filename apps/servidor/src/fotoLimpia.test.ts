@@ -278,162 +278,41 @@ describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
     expect(limpiarFoto(sano, 'image/png').bytes).toBe(sano);
   });
 
-  it('HEIC del iPhone (NXT-4): borra el Exif y el XMP, deja la imagen igual y lee el GPS', () => {
-    for (const op of [{}, { exifEnIdat: true }]) {
-      const original = heicConGps(op);
-      expect(contiene(original, 'PixelFone')).toBe(true);
-      expect(contiene(original, 'xmpmeta')).toBe(true);
-      const r = limpiarFoto(original, 'image/heic');
-      for (const oculto of ['PixelFone', 'xmpmeta', 'GPSLatitude'])
-        expect(contiene(r.bytes, oculto), `${oculto} ${JSON.stringify(op)}`).toBe(false);
-      expect(r.gps?.lat).toBeCloseTo(25.775, 3);
-      expect(r.gps?.lng).toBeCloseTo(-80.19, 3);
-      expect(r.quitados).toBe(2);
-      // La estructura no cambia: mismo largo, la imagen sigue en su lugar.
-      expect(r.bytes.length).toBe(original.length);
-      expect(contiene(r.bytes, String.fromCharCode(0x12, 0x34, 0x56, 0x78, 0x9a))).toBe(true);
-      // El original no se toca (la limpieza trabaja sobre una copia).
-      expect(contiene(original, 'PixelFone')).toBe(true);
-    }
-    // HEIF con el otro nombre de tipo.
-    expect(contiene(limpiarFoto(heicConGps(), 'image/heif').bytes, 'PixelFone')).toBe(false);
-  });
-
-  it('HEIC sin datos ocultos sale idéntico; uno que no cuadra o con datos en otro archivo da el 415 claro', () => {
-    const ftyp = caja('ftyp', [...txt('heic'), 0, 0, 0, 0]);
-    const sinOcultos = heicConGps({ limpio: true });
-    expect(limpiarFoto(sinOcultos, 'image/heic').bytes).toBe(sinOcultos);
-    expect(() => limpiarFoto(heicConGps({ refExterna: true }), 'image/heic')).toThrow(/JPG/);
-    const malos: [string, Uint8Array][] = [
-      ['vacío', new Uint8Array()],
-      ['solo ftyp cortado', new Uint8Array([0, 0, 0, 0x18, ...txt('ftypheic'), 0, 0])],
-      ['caja que se sale', new Uint8Array([...ftyp, ...be32(9999), ...txt('mdat'), 1])],
-      ['sin ftyp', new Uint8Array(caja('mdat', [1]))],
-      ['sin meta', new Uint8Array([...ftyp, ...caja('mdat', [1, 2, 3])])],
-      ['secuencia con moov', new Uint8Array([...ftyp, ...caja('moov', [1, 2])])],
-      ['dos meta', new Uint8Array([...ftyp, ...caja('meta', [], 0), ...caja('meta', [], 0)])],
-      ['basura detrás', new Uint8Array([...heicConGps(), 1, 2, 3])],
-      ['jpeg pegado detrás', new Uint8Array([...heicConGps(), ...jpegConGps()])],
-    ];
-    for (const [nombre, b] of malos)
-      expect(() => limpiarFoto(b, 'image/heic'), nombre).toThrow(/JPG/);
-    // Barrido: cortar el HEIC en cualquier punto nunca deja pasar el GPS.
-    const h = heicConGps();
-    for (let n = 1; n < h.length; n += 7) {
-      let salida: Uint8Array | null = null;
-      try {
-        salida = limpiarFoto(h.subarray(0, n), 'image/heic').bytes;
-      } catch (e) {
-        expect(String(e)).toMatch(/JPG/);
-      }
-      if (salida) expect(contiene(salida, 'PixelFone'), `corte ${n}`).toBe(false);
-    }
-  });
-
   it('una imagen de otro tipo nunca se guarda tal cual: 415; un PDF de evidencia pasa', () => {
     const gif = new Uint8Array([...txt('GIF89a'), ...tiffConGps()]);
-    expect(() => limpiarFoto(gif, 'image/gif')).toThrow(/HEIC/);
+    expect(() => limpiarFoto(gif, 'image/gif')).toThrow(/JPG, PNG o WebP/);
     const pdf = new Uint8Array(txt('%PDF-1.7'));
     expect(limpiarFoto(pdf, 'application/pdf').bytes).toBe(pdf);
   });
 
-  it('guardarFoto con un HEIC: en el almacén queda sin el GPS', async () => {
+  it('NXT-4y: todo HEIC/HEIF se rechaza con el 415 que pide JPG y no llega al almacén', async () => {
+    const variantes = [
+      heicConGps(),
+      heicConGps({ limpio: true }),
+      heicConGps({ exifEnIdat: true }),
+      heicConGps({ ilocVer: 0 }),
+      heicConGps({ ilocVer: 2, infeVer: 3, iinfVer: 1 }),
+      new Uint8Array([...heicConGps(), ...caja('free', [...jpegConGps()])]),
+      new Uint8Array([0, 0, 0, 0x18, ...txt('ftypheic'), 0, 0]),
+    ];
+    for (const tipo of ['image/heic', 'image/heif'])
+      for (const b of variantes) {
+        expect(() => limpiarFoto(b, tipo)).toThrow(/HEIC/);
+        try {
+          limpiarFoto(b, tipo);
+        } catch (e) {
+          expect((e as { estado?: number }).estado).toBe(415);
+        }
+      }
     const bucket = crearAlmacenPruebas().bucket as unknown as R2Bucket;
-    const { gps } = await guardarFoto(bucket, 'casos/x/1', heicConGps(), 'image/heic');
-    expect(gps?.lat).toBeCloseTo(25.775, 3);
-    const guardado = await bucket.get('casos/x/1');
-    const bytes = new Uint8Array(await guardado!.arrayBuffer());
-    expect(contiene(bytes, 'PixelFone')).toBe(false);
-  });
-
-  describe('NXT-4x · HEIC con lista blanca: lo que no es imagen sale en ceros o da el 415', () => {
-    const sinRastro = (b: Uint8Array) => {
-      for (const x of ['PixelFone', 'xmpmeta', 'GPSLatitude', 'LATITUD-OCULTA'])
-        expect(contiene(b, x), x).toBe(false);
-    };
-    const pegado = [...txt('LATITUD-OCULTA '), ...jpegConGps()];
-    const cajasArriba = (b: Uint8Array) => {
-      const v = new DataView(b.buffer, b.byteOffset);
-      const l: { tipo: string; ini: number; largo: number }[] = [];
-      for (let i = 0; i + 8 <= b.length;) {
-        const n = v.getUint32(i);
-        l.push({ tipo: String.fromCharCode(...b.subarray(i + 4, i + 8)), ini: i, largo: n });
-        if (n < 8) break;
-        i += n;
-      }
-      return l;
-    };
-
-    it('(1) cajas free/skip, un segundo mdat, mdat hasta el final y bytes de mdat sin ítem: en ceros, la imagen igual', () => {
-      const h = heicConGps();
-      const mdat = cajasArriba(h).at(-1)!;
-      const hasta0 = new Uint8Array([...h, ...pegado]);
-      hasta0.set([0, 0, 0, 0], mdat.ini);
-      const agrandado = new Uint8Array([...h, ...pegado]);
-      agrandado.set(be32(mdat.largo + pegado.length), mdat.ini);
-      const casos: [string, Uint8Array][] = [
-        ['free al final', new Uint8Array([...h, ...caja('free', pegado)])],
-        ['skip al final', new Uint8Array([...h, ...caja('skip', pegado)])],
-        ['segundo mdat', new Uint8Array([...h, ...caja('mdat', pegado)])],
-        ['mdat hasta el final', hasta0],
-        ['mdat agrandado', agrandado],
-      ];
-      for (const [nombre, b] of casos) {
-        const r = limpiarFoto(b, 'image/heic');
-        sinRastro(r.bytes);
-        expect(r.bytes.length, nombre).toBe(b.length);
-        expect(contiene(r.bytes, String.fromCharCode(0x12, 0x34, 0x56, 0x78, 0x9a)), nombre).toBe(
-          true,
-        );
-      }
+    await expect(guardarFoto(bucket, 'casos/x/1', heicConGps(), 'image/heic')).rejects.toThrow(
+      /JPG/,
+    );
+    expect(await bucket.get('casos/x/1')).toBeNull();
+    // Los documentos de evidencia (conservarOriginal) no pasan por aquí: siguen igual.
+    await guardarFoto(bucket, 'kyc/x/1', heicConGps(), 'image/heic', {
+      conservarOriginal: 'evidencia',
     });
-
-    it('(2) dentro de meta, iprp o ipco solo cajas conocidas: xml, uuid, free o una propiedad rara dan el 415', () => {
-      const oculto = txt('<x:xmpmeta>LATITUD-OCULTA</x:xmpmeta>');
-      for (const extraMeta of [
-        caja('xml ', oculto, 0),
-        caja('uuid', [...Array(16).fill(7), ...oculto]),
-        caja('free', oculto),
-        caja('grpl', oculto),
-      ])
-        expect(() => limpiarFoto(heicConGps({ extraMeta }), 'image/heic')).toThrow(/JPG/);
-      expect(() =>
-        limpiarFoto(heicConGps({ extraIpco: caja('udes', oculto, 0) }), 'image/heic'),
-      ).toThrow(/JPG/);
-      // Una caja de arriba que no está en la lista (una secuencia, un uuid) tampoco pasa.
-      for (const tipo of ['uuid', 'moov', 'udta'])
-        expect(
-          () => limpiarFoto(new Uint8Array([...heicConGps(), ...caja(tipo, oculto)]), 'image/heic'),
-          tipo,
-        ).toThrow(/JPG/);
-    });
-
-    it('(2b) los nombres de los ítems y del hdlr se borran', () => {
-      const h = heicConGps({ limpio: true });
-      const conNombre = new Uint8Array(h);
-      const hdlrNombre = String.fromCharCode(...h).indexOf('pict') + 4 + 12;
-      conNombre[hdlrNombre] = 0x41; // «A» en el nombre del hdlr
-      conNombre[hdlrNombre + 1] = 0x00;
-      const r = limpiarFoto(conNombre, 'image/heic');
-      expect(r.bytes[hdlrNombre]).toBe(0);
-    });
-
-    it('(3) iloc v0 y v2, infe v3 e iinf v1: se limpian igual', () => {
-      for (const op of [
-        { ilocVer: 0 as const },
-        { ilocVer: 2 as const },
-        { infeVer: 3 as const },
-        { iinfVer: 1 as const },
-        { ilocVer: 2 as const, infeVer: 3 as const, iinfVer: 1 as const, exifEnIdat: true },
-      ]) {
-        const r = limpiarFoto(heicConGps(op), 'image/heic');
-        sinRastro(r.bytes);
-        expect(r.gps?.lat, JSON.stringify(op)).toBeCloseTo(25.775, 3);
-      }
-    });
-
-    it('(3b) un Exif declarado sin su lugar en iloc da el 415 (no se sabe dónde vive)', () => {
-      expect(() => limpiarFoto(heicConGps({ exifSinIloc: true }), 'image/heic')).toThrow(/JPG/);
-    });
+    expect(await bucket.get('kyc/x/1')).not.toBeNull();
   });
 });
