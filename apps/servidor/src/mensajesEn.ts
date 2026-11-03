@@ -54,6 +54,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'The screenshot is too large. The limit is 10 MB.',
   ],
   ['Adjunta una imagen JPG, PNG, WebP o HEIC.', 'Attach a JPG, PNG, WebP or HEIC image.'],
+  ['Sube una foto en JPG, PNG, WebP o HEIC.', 'Upload a JPG, PNG, WebP or HEIC photo.'],
+  [
+    'No pudimos abrir esta foto HEIC del iPhone. Mándala en JPG (en el iPhone: Ajustes → Cámara → Formatos → Más compatible) o haz una captura de pantalla y vuelve a intentar.',
+    'We couldn’t open this iPhone HEIC photo. Send it as JPG (on the iPhone: Settings → Camera → Formats → Most Compatible) or take a screenshot and try again.',
+  ],
   [
     'Una de las capturas ya no está. Vuelve a adjuntarla.',
     'One of the screenshots is gone. Attach it again.',

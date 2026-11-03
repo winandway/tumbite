@@ -279,11 +279,170 @@ function limpiarWebp(b: Uint8Array): FotoLimpia {
   return { bytes: unir([cab, cuerpo]), gps, quitados };
 }
 
-/** Quita los datos ocultos de una foto JPEG, PNG o WebP. Otros tipos (PDF, HEIC) pasan igual. */
+/**
+ * NXT-4 (3 nov 2026): el HEIC del iPhone no se pudo limpiar y se rechaza con este mensaje claro
+ * (nunca se guarda el original con su GPS). El iPhone manda JPEG si en Ajustes → Cámara → Formatos
+ * se elige «Más compatible», y casi todas las apps lo convierten solas al compartir.
+ */
+export const HEIC_SIN_LIMPIAR = () =>
+  new ErrorDatos(
+    'No pudimos abrir esta foto HEIC del iPhone. Mándala en JPG (en el iPhone: Ajustes → Cámara → Formatos → Más compatible) o haz una captura de pantalla y vuelve a intentar.',
+    'foto',
+    415,
+  );
+
+/**
+ * NXT-4 · HEIC/HEIF (ISO/IEC 23008-12, sobre el formato de cajas ISO BMFF). El iPhone guarda la
+ * ubicación, el modelo y la hora en un «ítem» Exif y el XMP en un ítem «mime»; la caja `iinf` dice
+ * qué ítems hay y la caja `iloc` dónde están sus bytes (en `mdat` o en `idat`). Aquí se buscan esos
+ * ítems y sus bytes se BORRAN en el lugar (se llenan de ceros): la estructura queda igual, la
+ * imagen y sus miniaturas no se tocan y los visores ignoran un Exif vacío. Se lee el GPS antes.
+ * Todo lo que no cuadre (cajas que se salen del archivo, un ítem con sus datos en otro archivo,
+ * versiones que no conocemos, una secuencia con `moov`) se rechaza con HEIC_SIN_LIMPIAR.
+ */
+const HEIF_ARRIBA = new Set(['ftyp', 'meta', 'mdat', 'free', 'skip']);
+const HEIF_OCULTOS = new Set(['Exif', 'mime', 'uri ']);
+type Caja = { tipo: string; ini: number; datos: number; fin: number };
+
+function cajas(b: Uint8Array, ini: number, fin: number): Caja[] {
+  const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const lista: Caja[] = [];
+  let i = ini;
+  while (i < fin) {
+    if (i + 8 > fin) throw HEIC_SIN_LIMPIAR();
+    let largo = v.getUint32(i);
+    const tipo = ascii(b, i + 4, 4);
+    let datos = i + 8;
+    if (largo === 1) {
+      if (i + 16 > fin) throw HEIC_SIN_LIMPIAR();
+      const alto = v.getUint32(i + 8);
+      if (alto !== 0) throw HEIC_SIN_LIMPIAR();
+      largo = v.getUint32(i + 12);
+      datos = i + 16;
+    } else if (largo === 0) largo = fin - i;
+    if (largo < datos - i || i + largo > fin) throw HEIC_SIN_LIMPIAR();
+    lista.push({ tipo, ini: i, datos, fin: i + largo });
+    i += largo;
+  }
+  return lista;
+}
+
+function limpiarHeif(b: Uint8Array): FotoLimpia {
+  const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const arriba = cajas(b, 0, b.length);
+  if (arriba[0]?.tipo !== 'ftyp') throw HEIC_SIN_LIMPIAR();
+  if (arriba.some((c) => !HEIF_ARRIBA.has(c.tipo))) throw HEIC_SIN_LIMPIAR();
+  const metas = arriba.filter((c) => c.tipo === 'meta');
+  if (metas.length !== 1) throw HEIC_SIN_LIMPIAR();
+  const meta = metas[0]!;
+  const dentro = cajas(b, meta.datos + 4, meta.fin);
+  const una = (tipo: string) => {
+    const l = dentro.filter((c) => c.tipo === tipo);
+    if (l.length > 1) throw HEIC_SIN_LIMPIAR();
+    return l[0];
+  };
+  const iinf = una('iinf');
+  const iloc = una('iloc');
+  const idat = una('idat');
+  if (!iinf) return { bytes: b, gps: null, quitados: 0 };
+
+  // Qué ítems son datos ocultos (Exif, XMP u otro texto «mime», un enlace «uri »).
+  const ocultos = new Map<number, string>();
+  const verInf = b[iinf.datos] ?? 0;
+  const primeraInfe = iinf.datos + 4 + (verInf === 0 ? 2 : 4);
+  if (primeraInfe > iinf.fin) throw HEIC_SIN_LIMPIAR();
+  for (const e of cajas(b, primeraInfe, iinf.fin)) {
+    if (e.tipo !== 'infe') continue;
+    const ver = b[e.datos] ?? 0;
+    if (ver < 2 || ver > 3) throw HEIC_SIN_LIMPIAR();
+    const p = e.datos + 4;
+    if (p + (ver === 2 ? 8 : 10) > e.fin) throw HEIC_SIN_LIMPIAR();
+    const id = ver === 2 ? v.getUint16(p) : v.getUint32(p);
+    const tipo = ascii(b, p + (ver === 2 ? 4 : 6), 4);
+    if (HEIF_OCULTOS.has(tipo)) ocultos.set(id, tipo);
+  }
+  if (!ocultos.size) return { bytes: b, gps: null, quitados: 0 };
+  if (!iloc) throw HEIC_SIN_LIMPIAR();
+
+  // Dónde están sus bytes (iloc, versiones 0, 1 y 2).
+  const ver = b[iloc.datos] ?? 0;
+  if (ver > 2) throw HEIC_SIN_LIMPIAR();
+  let p = iloc.datos + 4;
+  const fuera = (n: number) => {
+    if (p + n > iloc.fin) throw HEIC_SIN_LIMPIAR();
+  };
+  const leer = (n: number) => {
+    fuera(n);
+    let x = 0;
+    if (n === 8) {
+      if (v.getUint32(p) !== 0) throw HEIC_SIN_LIMPIAR();
+      x = v.getUint32(p + 4);
+    } else if (n === 4) x = v.getUint32(p);
+    else if (n === 2) x = v.getUint16(p);
+    else if (n !== 0) throw HEIC_SIN_LIMPIAR();
+    p += n;
+    return x;
+  };
+  fuera(2);
+  const t1 = b.at(p) ?? 0;
+  const t2 = b.at(p + 1) ?? 0;
+  p += 2;
+  const [tOff, tLar, tBase] = [t1 >> 4, t1 & 15, t2 >> 4];
+  const tIdx = ver === 0 ? 0 : t2 & 15;
+  const cuantos = leer(ver < 2 ? 2 : 4);
+  const salida = b.slice();
+  const borrados = new Set<number>();
+  let gps: GpsFoto | null = null;
+  for (let k = 0; k < cuantos; k++) {
+    const id = leer(ver < 2 ? 2 : 4);
+    const metodo = ver === 0 ? 0 : leer(2) & 15;
+    const refDatos = leer(2);
+    const baseOff = leer(tBase);
+    const extensiones = leer(2);
+    const tramos: [number, number][] = [];
+    for (let e = 0; e < extensiones; e++) {
+      leer(tIdx);
+      tramos.push([leer(tOff), leer(tLar)]);
+    }
+    if (!ocultos.has(id)) continue;
+    // Los datos tienen que estar en ESTE archivo (mdat o idat) y con su largo dicho.
+    if (refDatos !== 0 || metodo > 1 || (metodo === 1 && !idat)) throw HEIC_SIN_LIMPIAR();
+    const origen = metodo === 1 ? idat!.datos : 0;
+    const limite = metodo === 1 ? idat!.fin : b.length;
+    const trozos: Uint8Array[] = [];
+    for (const [off, lar] of tramos) {
+      const ini = origen + baseOff + off;
+      if (lar === 0 || ini + lar > limite) throw HEIC_SIN_LIMPIAR();
+      trozos.push(b.subarray(ini, ini + lar));
+      salida.fill(0, ini, ini + lar);
+    }
+    if (ocultos.get(id) === 'Exif' && trozos.length) {
+      // Ítem Exif: 4 bytes con el desplazamiento hasta la cabecera TIFF, después el EXIF.
+      const d = unir(trozos);
+      if (d.length >= 4) {
+        const salto = new DataView(d.buffer, d.byteOffset, d.byteLength).getUint32(0);
+        const tiff = d.subarray(Math.min(d.length, 4 + salto));
+        gps ??= leerTiff(ascii(tiff, 0, 6) === 'Exif\0\0' ? tiff.subarray(6) : tiff).gps;
+      }
+    }
+    borrados.add(id);
+  }
+  // Un ítem oculto sin dónde están sus datos: no sabemos dónde vive, no se guarda.
+  for (const id of ocultos.keys()) if (!borrados.has(id)) throw HEIC_SIN_LIMPIAR();
+  return { bytes: salida, gps, quitados: borrados.size };
+}
+
+/**
+ * Quita los datos ocultos de una foto JPEG, PNG, WebP o HEIC/HEIF. Cualquier otra imagen se
+ * rechaza (nunca se guarda tal cual); lo que no es imagen (un PDF de evidencia) pasa igual.
+ */
 export function limpiarFoto(bytes: Uint8Array, tipo: string): FotoLimpia {
   if (tipo === 'image/jpeg') return limpiarJpeg(bytes);
   if (tipo === 'image/png') return limpiarPng(bytes);
   if (tipo === 'image/webp') return limpiarWebp(bytes);
+  if (tipo === 'image/heic' || tipo === 'image/heif') return limpiarHeif(bytes);
+  if (tipo.startsWith('image/'))
+    throw new ErrorDatos('Sube una foto en JPG, PNG, WebP o HEIC.', 'foto', 415);
   return { bytes, gps: null, quitados: 0 };
 }
 

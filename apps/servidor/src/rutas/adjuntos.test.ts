@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { crearAlmacenPruebas } from '../pruebas/r2';
+import { heicConGps } from '../pruebas/fotoConGps';
 import { crearTicket } from './tickets';
 
 /**
@@ -92,11 +93,23 @@ describe('capturas en los casos de ayuda', () => {
     expect(r.estado).toBe(400);
   });
 
-  it('acepta HEIC del iPhone', async () => {
-    const { subir } = await escenario();
-    const heic = new Uint8Array([
-      0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0, 0,
-    ]);
-    expect((await subir(heic, 'image/heic')).status).toBe(201);
+  it('acepta HEIC del iPhone y lo guarda sin su GPS ni el modelo (NXT-4)', async () => {
+    const { subir, m } = await escenario();
+    const r = await subir(heicConGps(), 'image/heic');
+    expect(r.status).toBe(201);
+    const id = ((await r.json()) as { adjunto: { id: string } }).adjunto.id;
+    const fila = await m.DB.prepare('SELECT clave FROM ticket_adjuntos WHERE id = ?')
+      .bind(id)
+      .first<{ clave: string }>();
+    const bucket = (m.extra as { BUCKET: R2Bucket }).BUCKET;
+    const guardado = new Uint8Array(await (await bucket.get(fila!.clave))!.arrayBuffer());
+    expect(String.fromCharCode(...guardado).includes('PixelFone')).toBe(false);
+    // Uno roto se rechaza con el mensaje claro que pide JPG.
+    const roto = await subir(
+      new Uint8Array([0, 0, 0, 0x18, ...heicConGps().slice(4, 14)]),
+      'image/heic',
+    );
+    expect(roto.status).toBe(415);
+    expect(JSON.stringify(await roto.json())).toMatch(/JPG/);
   });
 });

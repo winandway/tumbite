@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { crearAlmacenPruebas } from './pruebas/r2';
 import { anotarGpsFoto, guardarFoto, leerTiff, limpiarFoto } from './fotoLimpia';
-import { be16, be32, jpegConGps, segmento, tiffConGps, txt } from './pruebas/fotoConGps';
+import {
+  be16,
+  be32,
+  caja,
+  heicConGps,
+  jpegConGps,
+  segmento,
+  tiffConGps,
+  txt,
+} from './pruebas/fotoConGps';
 
 /**
  * C-FOTOS-SIN-METADATOS (SIG-6): ninguna foto llega al almacén con la ubicación ni los datos de la
@@ -267,5 +276,77 @@ describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
       0,
     ]);
     expect(limpiarFoto(sano, 'image/png').bytes).toBe(sano);
+  });
+
+  it('HEIC del iPhone (NXT-4): borra el Exif y el XMP, deja la imagen igual y lee el GPS', () => {
+    for (const op of [{}, { exifEnIdat: true }]) {
+      const original = heicConGps(op);
+      expect(contiene(original, 'PixelFone')).toBe(true);
+      expect(contiene(original, 'xmpmeta')).toBe(true);
+      const r = limpiarFoto(original, 'image/heic');
+      for (const oculto of ['PixelFone', 'xmpmeta', 'GPSLatitude'])
+        expect(contiene(r.bytes, oculto), `${oculto} ${JSON.stringify(op)}`).toBe(false);
+      expect(r.gps?.lat).toBeCloseTo(25.775, 3);
+      expect(r.gps?.lng).toBeCloseTo(-80.19, 3);
+      expect(r.quitados).toBe(2);
+      // La estructura no cambia: mismo largo, la imagen sigue en su lugar.
+      expect(r.bytes.length).toBe(original.length);
+      expect(contiene(r.bytes, String.fromCharCode(0x12, 0x34, 0x56, 0x78, 0x9a))).toBe(true);
+      // El original no se toca (la limpieza trabaja sobre una copia).
+      expect(contiene(original, 'PixelFone')).toBe(true);
+    }
+    // HEIF con el otro nombre de tipo.
+    expect(contiene(limpiarFoto(heicConGps(), 'image/heif').bytes, 'PixelFone')).toBe(false);
+  });
+
+  it('HEIC sin datos ocultos sale idéntico; uno que no cuadra o con datos en otro archivo da el 415 claro', () => {
+    const ftyp = caja('ftyp', [...txt('heic'), 0, 0, 0, 0]);
+    const sinOcultos = new Uint8Array([
+      ...ftyp,
+      ...caja('meta', caja('hdlr', [0, 0, 0, 0, ...txt('pict')], 0), 0),
+      ...caja('mdat', [1, 2, 3]),
+    ]);
+    expect(limpiarFoto(sinOcultos, 'image/heic').bytes).toBe(sinOcultos);
+    expect(() => limpiarFoto(heicConGps({ refExterna: true }), 'image/heic')).toThrow(/JPG/);
+    const malos: [string, Uint8Array][] = [
+      ['vacío', new Uint8Array()],
+      ['solo ftyp cortado', new Uint8Array([0, 0, 0, 0x18, ...txt('ftypheic'), 0, 0])],
+      ['caja que se sale', new Uint8Array([...ftyp, ...be32(9999), ...txt('mdat'), 1])],
+      ['sin ftyp', new Uint8Array(caja('mdat', [1]))],
+      ['sin meta', new Uint8Array([...ftyp, ...caja('mdat', [1, 2, 3])])],
+      ['secuencia con moov', new Uint8Array([...ftyp, ...caja('moov', [1, 2])])],
+      ['dos meta', new Uint8Array([...ftyp, ...caja('meta', [], 0), ...caja('meta', [], 0)])],
+      ['basura detrás', new Uint8Array([...heicConGps(), 1, 2, 3])],
+      ['jpeg pegado detrás', new Uint8Array([...heicConGps(), ...jpegConGps()])],
+    ];
+    for (const [nombre, b] of malos)
+      expect(() => limpiarFoto(b, 'image/heic'), nombre).toThrow(/JPG/);
+    // Barrido: cortar el HEIC en cualquier punto nunca deja pasar el GPS.
+    const h = heicConGps();
+    for (let n = 1; n < h.length; n += 7) {
+      let salida: Uint8Array | null = null;
+      try {
+        salida = limpiarFoto(h.subarray(0, n), 'image/heic').bytes;
+      } catch (e) {
+        expect(String(e)).toMatch(/JPG/);
+      }
+      if (salida) expect(contiene(salida, 'PixelFone'), `corte ${n}`).toBe(false);
+    }
+  });
+
+  it('una imagen de otro tipo nunca se guarda tal cual: 415; un PDF de evidencia pasa', () => {
+    const gif = new Uint8Array([...txt('GIF89a'), ...tiffConGps()]);
+    expect(() => limpiarFoto(gif, 'image/gif')).toThrow(/HEIC/);
+    const pdf = new Uint8Array(txt('%PDF-1.7'));
+    expect(limpiarFoto(pdf, 'application/pdf').bytes).toBe(pdf);
+  });
+
+  it('guardarFoto con un HEIC: en el almacén queda sin el GPS', async () => {
+    const bucket = crearAlmacenPruebas().bucket as unknown as R2Bucket;
+    const { gps } = await guardarFoto(bucket, 'casos/x/1', heicConGps(), 'image/heic');
+    expect(gps?.lat).toBeCloseTo(25.775, 3);
+    const guardado = await bucket.get('casos/x/1');
+    const bytes = new Uint8Array(await guardado!.arrayBuffer());
+    expect(contiene(bytes, 'PixelFone')).toBe(false);
   });
 });

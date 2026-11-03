@@ -72,3 +72,74 @@ export function jpegConGps(orientacion = 6) {
     0xd9,
   ]);
 }
+
+/** Una caja ISO BMFF (HEIF): largo, tipo y contenido. `ver` la vuelve «full box». */
+export const caja = (tipo: string, datos: number[], ver?: number) => {
+  const cuerpo = ver === undefined ? datos : [ver, 0, 0, 0, ...datos];
+  return [...be32(cuerpo.length + 8), ...txt(tipo), ...cuerpo];
+};
+
+/**
+ * NXT-4: un HEIC como el del iPhone (ftyp «heic», meta con iinf + iloc, mdat): un ítem de imagen
+ * hvc1, un ítem Exif con el GPS de Miami y el modelo «PixelFone», y un ítem XMP («mime»).
+ * `exifEnIdat` guarda el Exif dentro de la caja idat (método de construcción 1) en vez de mdat.
+ */
+export function heicConGps(op: { exifEnIdat?: boolean; refExterna?: boolean } = {}) {
+  const imagen = [0x12, 0x34, 0x56, 0x78, 0x9a];
+  const exif = [...be32(6), ...txt('Exif'), 0, 0, ...tiffConGps()];
+  const xmp = txt('<x:xmpmeta><exif:GPSLatitude>25,46.5N</exif:GPSLatitude></x:xmpmeta>');
+  const ftyp = caja('ftyp', [...txt('heic'), 0, 0, 0, 0, ...txt('mif1heic')]);
+  const infe = (id: number, tipo: string, extra: number[] = []) =>
+    caja('infe', [...be16(id), 0, 0, ...txt(tipo), 0, ...extra], 2);
+  const iinf = caja(
+    'iinf',
+    [
+      ...be16(3),
+      ...infe(1, 'hvc1'),
+      ...infe(2, 'Exif'),
+      ...infe(3, 'mime', [...txt('application/rdf+xml'), 0]),
+    ],
+    0,
+  );
+  const armarMeta = (base: number) => {
+    // iloc v1: offset 4 bytes, largo 4, base 0, índice 0.
+    const item = (id: number, metodo: number, off: number, lar: number, ref = 0) => [
+      ...be16(id),
+      ...be16(metodo),
+      ...be16(ref),
+      ...be16(1),
+      ...be32(off),
+      ...be32(lar),
+    ];
+    const enMdat = (n: number) => base + n;
+    const iloc = caja(
+      'iloc',
+      [
+        0x44,
+        0x00,
+        ...be16(3),
+        ...item(1, 0, enMdat(0), imagen.length),
+        ...(op.exifEnIdat
+          ? item(2, 1, 0, exif.length)
+          : item(2, 0, enMdat(imagen.length), exif.length, op.refExterna ? 1 : 0)),
+        ...item(3, 0, enMdat(imagen.length + (op.exifEnIdat ? 0 : exif.length)), xmp.length),
+      ],
+      1,
+    );
+    return caja(
+      'meta',
+      [
+        ...caja('hdlr', [0, 0, 0, 0, ...txt('pict'), ...Array(12).fill(0), 0], 0),
+        ...caja('pitm', be16(1), 0),
+        ...iinf,
+        ...iloc,
+        ...(op.exifEnIdat ? caja('idat', exif) : []),
+      ],
+      0,
+    );
+  };
+  const largoMeta = armarMeta(0).length;
+  const base = ftyp.length + largoMeta + 8;
+  const mdat = caja('mdat', [...imagen, ...(op.exifEnIdat ? [] : exif), ...xmp]);
+  return new Uint8Array([...ftyp, ...armarMeta(base), ...mdat]);
+}
