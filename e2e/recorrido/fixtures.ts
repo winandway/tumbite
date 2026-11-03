@@ -1,4 +1,10 @@
-import { type APIRequestContext, test as base } from '@playwright/test';
+import {
+  type APIRequestContext,
+  type Browser,
+  type BrowserContext,
+  type Page,
+  test as base,
+} from '@playwright/test';
 
 /**
  * C-RECORRIDO-REINTENTA-RED (22 oct 2026): en el sitio de pruebas, las llamadas a la API del
@@ -28,10 +34,50 @@ function conReintentos(request: APIRequestContext): APIRequestContext {
   });
 }
 
-export const test = base.extend({
+/**
+ * C-RECORRIDO-REINTENTA-RED (3 nov 2026, LAN-2): en la corrida 41705969872 el alojamiento del sitio
+ * de pruebas tardó 817 s en servir el HTML de /app/ (la respuesta llegó 200, pero colgada) y el
+ * recorrido se quedó esperando hasta el límite de 15 minutos. Una navegación que no carga en 60 s
+ * se repite (hasta 3 veces); un error de la app (4xx, 5xx o un texto que no aparece) no se esconde:
+ * se repite solo el tiempo agotado de la carga.
+ */
+const CARGA_MS = 60_000;
+function conNavegacionReintentada(p: Page): Page {
+  const ir = p.goto.bind(p);
+  p.goto = async (url, opciones = {}) => {
+    for (let intento = 1; ; intento++) {
+      try {
+        return await ir(url, { timeout: CARGA_MS, ...opciones });
+      } catch (e) {
+        const agotado = e instanceof Error && e.name === 'TimeoutError';
+        if (!agotado || intento >= REINTENTOS) throw e;
+        console.warn(`recorrido: ${url} no cargó en ${CARGA_MS / 1000} s; intento ${intento + 1}`);
+      }
+    }
+  };
+  return p;
+}
+function contextoReintentado(c: BrowserContext): BrowserContext {
+  const nueva = c.newPage.bind(c);
+  c.newPage = async () => conNavegacionReintentada(await nueva());
+  return c;
+}
+
+export const test = base.extend<object, { browser: Browser }>({
   request: async ({ request }, usar) => {
     await usar(conReintentos(request));
   },
+  page: async ({ page }, usar) => {
+    await usar(conNavegacionReintentada(page));
+  },
+  browser: [
+    async ({ browser }, usar) => {
+      const nuevo = browser.newContext.bind(browser);
+      browser.newContext = async (opciones) => contextoReintentado(await nuevo(opciones));
+      await usar(browser);
+    },
+    { scope: 'worker' },
+  ],
 });
 
 export { expect, devices, type BrowserContext, type Locator, type Page } from '@playwright/test';
