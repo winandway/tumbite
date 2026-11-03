@@ -2894,3 +2894,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo el 3 nov):** `despachoCatalogo.test.ts`: «un no habilitado en la celda… no tapa…» y «sin Comida pero con Envíos… se conecta» fallan con el código anterior; «el agrupable… solo si está habilitado» falla si se quita el filtro de la etapa de agrupables.
 - **Qué NO tocar:** no volver a filtrar al final; no frenar la conexión por Comida si hay otro servicio.
 - **Nota para el revisor:** con el interruptor APAGADO sigue igual que antes, también un detalle viejo: si en la celda hay repartidores pero ninguno con saldo para el cobro directo, se salta la zona y va a los agrupables. No se tocó (apagado = como antes); queda anotado.
+
+## C-VERSION-VISIBLE · capturas en Docs (NXT-5, 3 nov 2026). Todos los países.
+
+- **Qué faltaba:** la guía de soporte decía dónde está la versión, pero no la mostraba.
+- **Qué se hizo:** `e2e/recorrido/versionVisible.spec.ts` abre las tres apps (cliente en Mi cuenta, Driver en Perfil, restaurante en Más), en español e inglés, comprueba que se ve la línea «Versión … · commit» / «Version … · commit» (`version-app`) y, con `CAPTURAS=1` (`npm run recorrido:capturas`), guarda `docs/capturas/recorrido/version-{cliente,driver,restaurante-app}-{es,en}.png`; `a-docs.mjs` las pasa a `apps/panel/public/docs/recorrido-version-*.webp`. La guía `support` (es/en) las muestra con su pie.
+- **Cómo se comprueba:** `npx playwright test -c playwright.recorrido.config.ts e2e/recorrido/versionVisible.spec.ts` (después de `node scripts/recorrido/preparar.mjs`).
+- **Qué NO tocar:** la explicación de permisos del Driver sale un poco después de abrir; la prueba la cierra antes de la foto.

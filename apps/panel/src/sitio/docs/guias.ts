@@ -4529,6 +4529,21 @@ const es: SeccionDocs[] = [
             alt: 'Conversación privada de un reporte en Divoox: el mensaje del cliente y la respuesta del equipo de Divoox, con la casilla para responder.',
             pie: 'Tu caso tiene su propia página privada: ves la respuesta y contestas desde ahí.',
           },
+          {
+            src: '/docs/recorrido-version-cliente-es.webp',
+            alt: 'Final de «Mi cuenta» en la app de clientes de Divoox, con la línea gris «Versión … · commit» debajo de «Cerrar sesión».',
+            pie: 'Clientes: la versión está al final de «Mi cuenta».',
+          },
+          {
+            src: '/docs/recorrido-version-driver-es.webp',
+            alt: 'Final del «Perfil» en Divoox Driver, con la línea gris «Versión … · commit» debajo de «Tu cuenta».',
+            pie: 'Repartidores: al final de «Perfil».',
+          },
+          {
+            src: '/docs/recorrido-version-restaurante-app-es.webp',
+            alt: 'Final de «Más» en la app de restaurantes de Divoox, con la línea gris «Versión … · commit» debajo de «Cerrar sesión».',
+            pie: 'Restaurantes: al final de «Más».',
+          },
         ],
         preguntas: [
           '¿Cómo hablo con una persona de Divoox?',
@@ -9011,6 +9026,21 @@ const en: SeccionDocs[] = [
             src: '/docs/recorrido-cliente-ticket-en.webp',
             alt: 'Private conversation of a Divoox report: the customer’s message and the Divoox team’s reply, with the box to answer.',
             pie: 'Your case has its own private page: read our reply and answer right there.',
+          },
+          {
+            src: '/docs/recorrido-version-cliente-en.webp',
+            alt: 'Bottom of “My account” in the Divoox customer app, with the gray “Version … · commit” line below “Sign out.”',
+            pie: 'Customers: the version is at the bottom of “My account.”',
+          },
+          {
+            src: '/docs/recorrido-version-driver-en.webp',
+            alt: 'Bottom of “Profile” in Divoox Driver, with the gray “Version … · commit” line below “Your account.”',
+            pie: 'Drivers: at the bottom of “Profile.”',
+          },
+          {
+            src: '/docs/recorrido-version-restaurante-app-en.webp',
+            alt: 'Bottom of “More” in the Divoox restaurant app, with the gray “Version … · commit” line below “Sign out.”',
+            pie: 'Restaurants: at the bottom of “More.”',
           },
         ],
         preguntas: [
