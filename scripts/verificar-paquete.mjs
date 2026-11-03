@@ -3,6 +3,7 @@
 //   - referencias del sitio de pruebas en producción, o de producción como servidor en pruebas;
 //   - cualquier secreto dentro del paquete (llaves de Stripe, avisos, tokens de YaDominios…);
 //   - piezas que faltan (_worker.js, schema.sql, las tres apps, el panel).
+//   - una ruta con «@» (la plataforma la redirige con 307; C-RUTAS-SIN-ARROBA).
 //   - (con <commit>) una pieza que no lleve grabado el commit de ESTA publicación (C-VERSION-DEL-ARTEFACTO).
 // Uso: node scripts/verificar-paquete.mjs <carpeta> <pruebas|produccion> [commit]
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -18,6 +19,11 @@ const archivos = [];
 const recorrer = (d) => {
   for (const n of readdirSync(d)) {
     const r = join(d, n);
+    // C-RUTAS-SIN-ARROBA (LAN-6): la plataforma redirige con 307 toda ruta con «@».
+    if (n.includes('@'))
+      problemas.push(
+        `${relative(carpeta, r)}: lleva «@» en la ruta (corre scripts/sin-arroba.mjs)`,
+      );
     if (statSync(r).isDirectory()) recorrer(r);
     else if (/\.(js|mjs|html|json|txt|xml)$/.test(n)) archivos.push(r);
   }

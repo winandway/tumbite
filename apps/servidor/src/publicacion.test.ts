@@ -89,6 +89,46 @@ describe('C-VERSION-DEL-ARTEFACTO: todas las piezas llevan el commit de la publi
   });
 });
 
+describe('LAN-6 · C-RUTAS-SIN-ARROBA: ningún archivo publicado lleva «@» en su ruta', () => {
+  const FUENTE = 'assets/node_modules/@expo/vector-icons/Fonts/Ionicons.b4eb.ttf';
+  const conFuente = () => {
+    const d = paquete('pruebas', 'https://staging.tumbite.com');
+    for (const app of ['app', 'driver', 'restaurant']) {
+      mkdirSync(join(d, app, 'assets/node_modules/@expo/vector-icons/Fonts'), { recursive: true });
+      writeFileSync(join(d, app, FUENTE), 'ttf');
+      writeFileSync(join(d, app, 'assets/icono.c94f@4x.png'), 'png');
+      writeFileSync(
+        join(d, app, 'entry.js'),
+        `const u="https://staging.tumbite.com";const f="/${app}/${FUENTE}";const i="/${app}/assets/icono.c94f.png";`,
+      );
+    }
+    return d;
+  };
+  it('el revisor frena un paquete con «@» en una ruta (la plataforma lo redirige con 307)', () => {
+    expect(revisar(conFuente(), 'pruebas')).toBe(false);
+  });
+  it('sin-arroba renombra esos archivos, corrige las referencias y el paquete pasa', () => {
+    const d = conFuente();
+    for (const app of ['app', 'driver', 'restaurant'])
+      execFileSync('node', [join(RAIZ, 'scripts', 'sin-arroba.mjs'), join(d, app)], {
+        stdio: 'pipe',
+      });
+    expect(revisar(d, 'pruebas')).toBe(true);
+    const js = readFileSync(join(d, 'driver', 'entry.js'), 'utf8');
+    expect(js).not.toContain('@');
+    const nueva = /"\/driver\/(assets\/node_modules\/[^"]+\.ttf)"/.exec(js)![1]!;
+    expect(readFileSync(join(d, 'driver', nueva), 'utf8')).toBe('ttf');
+    // Las demás referencias no cambian.
+    expect(js).toContain('"/driver/assets/icono.c94f.png"');
+  });
+  it('el empaquetador lo corre en las tres apps antes de revisar', () => {
+    const guion = readFileSync(join(RAIZ, 'scripts', 'empaquetar.sh'), 'utf8');
+    for (const app of ['app', 'driver', 'restaurant'])
+      expect(guion).toContain(`node scripts/sin-arroba.mjs "$SALIDA/${app}"`);
+    expect(guion.indexOf('sin-arroba')).toBeLessThan(guion.indexOf('verificar-paquete'));
+  });
+});
+
 describe('perfiles de construcción del celular', () => {
   it('pruebas y simulador apuntan a pruebas; el resto, a producción', () => {
     for (const app of ['cliente', 'repartidor', 'restaurante']) {
