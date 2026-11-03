@@ -112,7 +112,7 @@ Los tres videos (cliente, 53 segundos; Driver, 60; Restaurants, 64; grabados en 
 **Video 3, Divoox Restaurants, unos 2 minutos:**
 
 1. Pantalla de inicio del iPhone → tocar el ícono blanco de Divoox Restaurants.
-2. Mostrar que los restaurantes se dan de alta en la web (el texto de la pantalla de entrar lo dice) y entrar con la cuenta de revisión del restaurante.
+2. Mostrar que los restaurantes se dan de alta en la web (el texto de la pantalla de entrar lo dice) y entrar con la cuenta de revisión del restaurante. Desde este momento el restaurante sale abierto para el cliente: sin la app de Restaurants abierta, el cliente lo ve cerrado.
 3. Llega un pedido nuevo con su alarma (que alguien haga un pedido desde la app del cliente en otro teléfono) → aceptarlo → «Ready» → se ve al repartidor que viene.
 4. «My menu» → pausar un plato y volver a activarlo → Horario → Estadísticas → Ganancias.
 5. More → «Delete account» → mostrar la confirmación y cancelarla (la cuenta de revisión no se borra). En las notas se explica que la cuenta del restaurante se borra igual que en las otras apps.
@@ -168,10 +168,14 @@ Nada de esto sale hacia Apple hasta el último «sí» de Richard, con los video
 | Driver      | revisor.driver@windoce.com      | Perfil «Soporte Revisor Driver», verificado.                                                                                                                                                                                 |
 | Restaurants | revisor.restaurante@windoce.com | «Divoox Review Kitchen (Soporte)»: descripción «Restaurante de prueba para los revisores» / «Test restaurant for the app store reviewers», teléfono +1 305 000 0000, sin foto, cerrado, un solo plato con un error («Papá»). |
 
-Cambios en la base de producción (los hace la IA solo con el «sí» de Richard escrito en la sesión de Divoox):
+**Hecho el 3 nov 2026, ~14:20 Miami, por orden de Gerencia (plan aprobado por Richard):** los cuatro de Novi quedaron pausados y el restaurante de revisión se llama «Divoox Review Kitchen», con descripción limpia, abierto, y el plato con la descripción corregida. Comprobado en vivo: en Novi el cliente ya solo ve «Restaurante el Beef USA»; en Miami, «Divoox Review Kitchen», sin «prueba», «Sample» ni «Ejemplo». Copia de las filas de antes en la carpeta privada Divoox-privado, estudios, apple-4.3-2026-11-03.
 
-1. **Pausar** los cuatro restaurantes de prueba de Novi (Burger Town Center, Pizzería Novi, Tacos Twelve Oaks y Café Fountain Walk). Solo pausar: `estado = 'pausado'`, `abierto = 0`; no se borra nada. **Cómo se reactivan:** superadmin → Restaurantes → cada uno → «Reactivar» (o `estado = 'aprobado'` y `abierto = 1` en esos cuatro id: 8c5f8a00…, 6902e5b5…, 43bf58d8…, 87052162…).
-2. **Dejar limpio el restaurante de la cuenta de revisión:** nombre «Divoox Review Kitchen», descripción sin «prueba» («Pizzas, salads and drinks, made to order in downtown Miami.» / «Pizzas, ensaladas y bebidas, hechas al momento en el centro de Miami.»), abierto todos los días de 7 am a 11 pm, foto de portada, y un menú de seis platos con foto y descripción correcta en los dos idiomas, sin el plato con error.
+**Ojo para el revisor y el video:** como en DoorDash, un restaurante solo recibe pedidos mientras su app o su panel está encendido (C-PAUSA-SIN-SENAL). Para que «Divoox Review Kitchen» salga abierto, la app Divoox Restaurants tiene que estar abierta con la cuenta de revisión. Va en las notas nuevas y en el guion.
+
+Lo que se hizo y lo que queda:
+
+1. ✅ **Pausar** los cuatro restaurantes de prueba de Novi (Burger Town Center, Pizzería Novi, Tacos Twelve Oaks y Café Fountain Walk). Solo pausar: `estado = 'pausado'`, `abierto = 0`; no se borra nada. **Cómo se reactivan:** superadmin → Restaurantes → cada uno → «Reactivar» (o `estado = 'aprobado'` y `abierto = 1` en esos cuatro id: 8c5f8a00…, 6902e5b5…, 43bf58d8…, 87052162…).
+2. ✅ (nombre, descripción, abierto y plato) / ⏳ (foto de portada y menú de seis platos con fotos: falta subir las fotos) **Dejar limpio el restaurante de la cuenta de revisión:** nombre «Divoox Review Kitchen», descripción sin «prueba» («Pizzas, salads and drinks, made to order in downtown Miami.» / «Pizzas, ensaladas y bebidas, hechas al momento en el centro de Miami.»), abierto todos los días de 7 am a 11 pm, foto de portada, y un menú de seis platos con foto y descripción correcta en los dos idiomas, sin el plato con error.
 
 **La comprobación entrando con cada cuenta la hace Richard** (la IA no escribe contraseñas en producción): abrir cada app de TestFlight (cliente 25, Driver 21, Restaurants) y entrar con su cuenta; las contraseñas están en las notas para el revisor de cada app y en el archivo privado de revisores. Debe verse: el cliente encuentra «Divoox Review Kitchen» abierto en Miami; Driver entra y puede conectarse; Restaurants ve su panel y su menú de seis platos.
 
@@ -179,7 +183,7 @@ Cambios en la base de producción (los hace la IA solo con el «sí» de Richard
 
 Se mantiene lo de hoy (propósito, cómo usarla, cuentas, servicios externos, contenido) y cambian tres párrafos:
 
-- **Arriba, nuevo:** «ONE MARKETPLACE, THREE APPS: Divoox, Divoox Driver and Divoox Restaurants are the three sides of one delivery marketplace owned and operated by Windoce LLC, like DoorDash, Dasher and DoorDash Merchant. Each app is for a different person with a different job and different permissions. To see one order end to end: sign in to Divoox with the customer demo account, use a Miami address (for example 1 SE 3rd Ave, Miami, FL 33131), order from Divoox Review Kitchen; the order arrives in Divoox Restaurants (restaurant demo account) and the driver demo account receives the delivery offer in Divoox Driver.»
+- **Arriba, nuevo:** «ONE MARKETPLACE, THREE APPS: Divoox, Divoox Driver and Divoox Restaurants are the three sides of one delivery marketplace owned and operated by Windoce LLC, like DoorDash, Dasher and DoorDash Merchant. Each app is for a different person with a different job and different permissions. A restaurant only receives orders while its app is open, as on DoorDash, so please keep Divoox Restaurants signed in with the restaurant demo account while testing. To see one order end to end: sign in to Divoox with the customer demo account, use a Miami address (for example 1 SE 3rd Ave, Miami, FL 33131), order from Divoox Review Kitchen; the order arrives in Divoox Restaurants (restaurant demo account) and the driver demo account receives the delivery offer in Divoox Driver.»
 - **SCREEN RECORDING, corregido** (el de hoy dice «starting from launch», y no era así): «Attached: one screen recording per app, recorded on a physical iPhone running the latest iOS. Each starts on the Home Screen, opens the app, creates a new account, shows the main flow, and deletes the account.»
 - **Contacto:** se queda Pedro Llerena (nombre legal de Richard, que es el que va en Apple), go@windoce.com y el teléfono ya cargado.
 
