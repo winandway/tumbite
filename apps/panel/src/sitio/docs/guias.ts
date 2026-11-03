@@ -2147,6 +2147,7 @@ const es: SeccionDocs[] = [
           'El código de barras se revisa con su dígito verificador, para que no se cuele un número mal escrito. Si cargas un producto uno por uno, escribe el código y toca «Rellenar con el código»: traemos el nombre, la marca, el tamaño y la foto desde Open Food Facts, una base de datos abierta de productos, y tú solo revisas el precio y guardas. Puedes vender por unidad o por peso, y marcar los productos con alcohol, tabaco o medicamentos de venta libre: Divoox revisa la edad al entregar. Los medicamentos con receta todavía no se pueden vender.',
           'Un producto nunca se borra: si se te acaba, lo marcas agotado por hoy y vuelve solo mañana, o lo reactivas cuando quieras.',
           'Tu catálogo todavía no se muestra al público. Lo cargas ahora y, el día que abramos las tiendas en tu ciudad, tus productos ya están ahí.',
+          'Cada producto puede llevar su foto: tócala en «Foto del producto» y súbela desde tu computadora o tu celular, o déjala que llegue sola con el código de barras. Antes de guardarla le quitamos los datos ocultos (la ubicación y el modelo del teléfono) y la dejamos liviana en tres tamaños, para que cargue rápido en la tienda. En el resumen ves cuántos productos están «Sin foto»: con cada foto que subes, baja. Desde la app de Divoox para tu negocio, en «Más» → «Productos», abres el mismo catálogo.',
         ],
         capturas: [
           {
@@ -2154,8 +2155,19 @@ const es: SeccionDocs[] = [
             alt: 'Pantalla Productos de una tienda en el panel de Divoox, con la vista previa de la planilla y la lista de productos.',
             pie: 'Revisas la planilla antes de guardar y ves cada error por fila.',
           },
+          {
+            src: '/docs/recorrido-web-tienda-foto-producto-es.webp',
+            alt: 'Formulario de un producto en el panel de una tienda, con la foto subida, el nombre, la categoría y el precio.',
+            pie: 'Subes la foto del producto ahí mismo, junto con su nombre y su precio.',
+          },
+          {
+            src: '/docs/recorrido-restapp-mas-productos-es.webp',
+            alt: 'Pestaña «Más» de la app de Divoox para negocios, con la opción «Productos» debajo de los datos de la tienda.',
+            pie: 'Desde el celular: «Más» → «Productos».',
+          },
         ],
         preguntas: [
+          '¿Cómo le pongo foto a un producto?',
           '¿Cómo subo los productos de mi supermercado o farmacia?',
           '¿Qué columnas lleva la planilla de productos?',
           '¿Qué pasa si vuelvo a subir la planilla?',
@@ -6671,6 +6683,7 @@ const en: SeccionDocs[] = [
           'Barcodes are checked with their check digit, so a mistyped number doesn’t slip through. When you add a product one at a time, type the barcode and tap “Fill in from the barcode”: we bring the name, brand, size and photo from Open Food Facts, an open product database, and you just check the price and save. You can sell by unit or by weight, and flag products with alcohol, tobacco or over-the-counter medicine: Divoox checks age at delivery. Prescription medicines can’t be sold yet.',
           'A product is never deleted: if you run out, mark it out of stock for today and it comes back on its own tomorrow, or reactivate it whenever you want.',
           'Your catalog isn’t shown to the public yet. Upload it now, and on the day we open stores in your city, your products are already there.',
+          'Each product can have its photo: tap “Product photo” and upload it from your computer or phone, or let it come in with the barcode. Before we store it we remove the hidden data (the location and the phone model) and keep it light in three sizes, so it loads fast in your store. The summary shows how many products are “Without photo”: it goes down with each photo you upload. In the Divoox app for your business, under “More” → “Products,” you open the same catalog.',
         ],
         capturas: [
           {
@@ -6678,8 +6691,19 @@ const en: SeccionDocs[] = [
             alt: 'A store’s Products screen in the Divoox dashboard, with the spreadsheet preview and the product list.',
             pie: 'Check the spreadsheet before saving and see each error by row.',
           },
+          {
+            src: '/docs/recorrido-web-tienda-foto-producto-en.webp',
+            alt: 'A product form in a store’s dashboard, with the uploaded photo, name, category, and price.',
+            pie: 'You upload the product photo right there, along with its name and price.',
+          },
+          {
+            src: '/docs/recorrido-restapp-mas-productos-en.webp',
+            alt: '“More” tab of the Divoox app for businesses, with the “Products” option below the store info.',
+            pie: 'From your phone: “More” → “Products.”',
+          },
         ],
         preguntas: [
+          'How do I add a photo to a product?',
           'How do I upload my grocery store or pharmacy products?',
           'Which columns does the product spreadsheet have?',
           'What happens if I upload the spreadsheet again?',

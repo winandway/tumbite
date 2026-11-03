@@ -28,6 +28,7 @@ const T = {
     local: 'Tu restaurante',
     ayudaGrupo: 'Ayuda',
     restaurante: ['Datos del restaurante', 'Nombre, dirección, fotos y cobros'],
+    productos: ['Productos', 'Tu catálogo, precios, existencias y fotos'],
     horario: ['Horario y cierres', 'Horas de cada día, festivos y vacaciones'],
     ganancias: ['Ganancias', 'Ventas, depósitos y tu cuenta para cobrar'],
     resenas: ['Reseñas', 'Lo que dicen tus clientes y tus respuestas'],
@@ -42,6 +43,7 @@ const T = {
     local: 'Your restaurant',
     ayudaGrupo: 'Help',
     restaurante: ['Store info', 'Name, address, photos and payouts'],
+    productos: ['Products', 'Your catalog, prices, stock and photos'],
     horario: ['Hours and closures', 'Hours for each day, holidays and time off'],
     ganancias: ['Earnings', 'Sales, payouts and your payout account'],
     resenas: ['Reviews', 'What your customers say and your replies'],
@@ -56,11 +58,13 @@ const T = {
 
 export function opcionesMasRestaurante(
   idioma: Idioma,
+  op: { tienda?: boolean } = {},
 ): { titulo: string; opciones: OpcionMas[] }[] {
   const t = idioma === 'en' ? T.en : T.es;
   const pre = idioma === 'en' ? '' : '/es';
   const textos = new Map<string, readonly [string, string]>([
     ['restaurante', t.restaurante],
+    ['productos', t.productos],
     ['horario', t.horario],
     ['ganancias', t.ganancias],
     ['resenas', t.resenas],
@@ -87,6 +91,9 @@ export function opcionesMasRestaurante(
       opciones: [
         // C-MAS-EN-LA-APP: se abren dentro de la app, como DoorDash Merchant.
         o('restaurante', undefined, 'restaurante'),
+        // NXT-8 · C-TIENDAS-FOTO-PROPIA: una tienda maneja su catálogo (con la foto de cada
+        // producto) en el panel, abierto dentro de la app con su sesión.
+        ...(op.tienda ? [o('productos', '/panel/products')] : []),
         o('horario', undefined, 'horario'),
         o('ganancias', undefined, 'ganancias'),
         o('resenas', undefined, 'resenas'),

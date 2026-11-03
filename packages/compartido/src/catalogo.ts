@@ -128,6 +128,8 @@ export type DatosPlato = z.input<typeof esquemaPlato>;
 export type Restaurante = {
   id: string;
   nombre: string;
+  /** C-TIENDAS (NXT-8): restaurante, mercado, farmacia, licores… (decide qué ve en «Más»). */
+  tipoComercio?: string;
   /** Horarios por día; sin turnos, manda solo el botón de abrir/pausar. */
   horarios?: { dia: number; abre: string; cierra: string }[];
   zonaHoraria?: string;

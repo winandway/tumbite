@@ -59,6 +59,7 @@ export function aRestaurante(f: FilaRest, minutosPausa = PAUSA_SIN_SENAL_MINUTOS
   return {
     id: String(f.id),
     nombre: String(f.nombre),
+    tipoComercio: String(f.tipo_comercio ?? 'restaurante'),
     horarios,
     zonaHoraria,
     // C-PAUSA-SIN-SENAL: abierto, en horario y con su app o panel escuchando pedidos.

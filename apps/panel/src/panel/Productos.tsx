@@ -13,6 +13,7 @@ import {
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { pedir } from './api';
+import { SubirFoto } from './SubirFoto';
 
 /**
  * Tiendas · Fase 1 en el panel (C-TIENDAS-CATALOGO): el comercio elige su tipo y sube su catálogo,
@@ -56,6 +57,7 @@ const T = {
     rellenado: 'Listo: revisa los datos y guarda. Datos de Open Food Facts.',
     noEncontrado: 'No encontramos ese código. Escribe los datos a mano.',
     nombre: 'Nombre del producto',
+    foto: 'Foto del producto',
     marca: 'Marca',
     categoria: 'Categoría',
     precio: 'Precio',
@@ -100,6 +102,7 @@ const T = {
     rellenado: 'Done: check the details and save. Data from Open Food Facts.',
     noEncontrado: 'We couldn’t find that barcode. Type the details in by hand.',
     nombre: 'Product name',
+    foto: 'Product photo',
     marca: 'Brand',
     categoria: 'Category',
     precio: 'Price',
@@ -469,9 +472,15 @@ export function Productos({ idioma }: { idioma: Idioma }) {
         >
           {t.rellenar}
         </button>
-        {v.imagen ? (
-          <img src={v.imagen} alt={v.nombre || t.nombre} className="foto-producto-previa" />
-        ) : null}
+        {/* NXT-8 · C-TIENDAS-FOTO-PROPIA: la foto se sube aquí (sin datos ocultos, en tres tamaños)
+            o la trae el código de barras. */}
+        <SubirFoto
+          etiqueta={t.foto}
+          valor={v.imagen}
+          cambiar={(url) => b.cambiar('imagen', url)}
+          idioma={idioma}
+          formato="cuadrado"
+        />
         <Campo
           etiqueta={t.nombre}
           valor={v.nombre}

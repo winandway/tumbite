@@ -44,4 +44,15 @@ describe('C-MAS-RESTAURANTE: la pestaña «Más» de la app del restaurante', ()
       '/es/docs',
     );
   });
+
+  it('NXT-8: una tienda ve «Productos» (su catálogo con fotos, en el panel dentro de la app); un restaurante no', () => {
+    const ids = (tienda: boolean) =>
+      opcionesMasRestaurante('es', { tienda }).flatMap((g) => g.opciones.map((o) => o.id));
+    expect(ids(false)).not.toContain('productos');
+    expect(ids(true).slice(0, 2)).toEqual(['restaurante', 'productos']);
+    const en = opcionesMasRestaurante('en', { tienda: true })
+      .flatMap((g) => g.opciones)
+      .find((o) => o.id === 'productos');
+    expect(en).toMatchObject({ titulo: 'Products', destino: '/panel/products' });
+  });
 });

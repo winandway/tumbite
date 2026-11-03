@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
+import { jpegConGps } from '../pruebas/fotoConGps';
 
 /**
  * C-TIENDAS-CATALOGO · todos los países: el comercio elige su tipo y sube su catálogo (planilla
@@ -168,5 +169,82 @@ describe('C-TIENDAS-CATALOGO · catálogo de tiendas', () => {
       },
     );
     expect(en.datos.errores[0].error).toMatch(/isn’t valid/);
+  });
+});
+
+describe('NXT-8 · C-TIENDAS-FOTO-PROPIA: la tienda sube la foto del producto', () => {
+  const subir = (m: ReturnType<typeof mundo>, token: string, bytes: Uint8Array) =>
+    m.crudo('/datos/mi-restaurante/fotos', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
+      body: bytes as BodyInit,
+    });
+
+  it('la foto se guarda sin datos ocultos, queda en el producto y el «sin foto» baja', async () => {
+    const m = mundo();
+    const d = await tienda(m);
+    const producto = {
+      sku: 'P1',
+      nombreEs: 'Café molido',
+      marca: 'Marca Ejemplo',
+      categoria1: 'Despensa',
+      precio: 899,
+    };
+    await m.llamar('PUT', '/datos/mi-restaurante/productos', producto, d.token);
+    const antes = await m.llamar('GET', '/datos/mi-restaurante/productos', undefined, d.token);
+    expect(antes.datos.totales.sinFoto).toBe(1);
+    const r = await subir(m, d.token, jpegConGps());
+    expect(r.status).toBe(201);
+    const { url } = (await r.json()) as { url: string };
+    const guardada = new Uint8Array(await (await m.crudo(url, {})).arrayBuffer());
+    expect(String.fromCharCode(...guardada).includes('PixelFone')).toBe(false);
+    const p = await m.llamar(
+      'PUT',
+      '/datos/mi-restaurante/productos',
+      { ...producto, imagen: url },
+      d.token,
+    );
+    expect(p.estado).toBe(200);
+    expect(p.datos.producto.imagen).toBe(url);
+    const despues = await m.llamar('GET', '/datos/mi-restaurante/productos', undefined, d.token);
+    expect(despues.datos.totales.sinFoto).toBe(0);
+  });
+
+  it('la foto de OTRA tienda o una ruta inventada no se aceptan; el manager sube y el staff no', async () => {
+    const m = mundo();
+    const d = await tienda(m);
+    const otra = await tienda(m);
+    const { url } = (await (await subir(m, otra.token, jpegConGps())).json()) as { url: string };
+    const base = { sku: 'P2', nombreEs: 'Arroz', categoria1: 'Despensa', precio: 300 };
+    const ajena = await m.llamar(
+      'PUT',
+      '/datos/mi-restaurante/productos',
+      { ...base, imagen: url },
+      d.token,
+    );
+    expect(ajena.estado).toBe(422);
+    expect(ajena.datos.campo).toBe('imagen');
+    for (const imagen of ['/media/fotos/../x.jpg', '/otra/cosa.jpg', 'http://sin-tls.test/x.jpg'])
+      expect(
+        (await m.llamar('PUT', '/datos/mi-restaurante/productos', { ...base, imagen }, d.token))
+          .estado,
+        imagen,
+      ).toBe(400);
+    const rid = (await m.DB.prepare('SELECT id FROM restaurantes WHERE dueno_id = ?')
+      .bind(d.id)
+      .first<{ id: string }>())!.id;
+    const manager = await m.cuenta('restaurante', 'Manager Tienda');
+    const staff = await m.cuenta('restaurante', 'Staff Tienda');
+    for (const [u, rol] of [
+      [manager, 'manager'],
+      [staff, 'staff'],
+    ] as const)
+      await m.DB.prepare(
+        'INSERT INTO miembros_restaurante (restaurante_id, usuario_id, rol) VALUES (?, ?, ?)',
+      )
+        .bind(rid, u.id, rol)
+        .run();
+    expect((await subir(m, manager.token, jpegConGps())).status).toBe(201);
+    expect((await subir(m, staff.token, jpegConGps())).status).toBe(403);
   });
 });

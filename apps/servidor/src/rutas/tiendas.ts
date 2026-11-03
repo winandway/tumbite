@@ -178,7 +178,11 @@ const esquemaProducto = z.object({
     .trim()
     .max(500)
     .default('')
-    .refine((x) => !x || /^https:\/\/\S+$/.test(x), 'La foto debe ser una dirección https://.'),
+    // NXT-8: una dirección https (Open Food Facts, la web de la marca) o la foto subida a Divoox.
+    .refine(
+      (x) => !x || /^https:\/\/\S+$/.test(x) || FOTO_PROPIA.test(x),
+      'La foto debe ser una dirección https://.',
+    ),
   descripcion: z.string().trim().max(1000).default(''),
   vendidoPor: z.enum(['each', 'weight']).default('each'),
   pesoPromedio: z.number().positive().nullable().optional(),
@@ -193,7 +197,14 @@ const esquemaProducto = z.object({
 });
 type EntradaProducto = z.infer<typeof esquemaProducto>;
 
-function revisar(d: EntradaProducto) {
+/** C-TIENDAS-FOTO-PROPIA (NXT-8): una foto subida a Divoox (`/media/fotos/<comercio>/<archivo>`). */
+const FOTO_PROPIA = /^\/media\/fotos\/([a-z0-9-]{1,64})\/[a-z0-9-]{1,64}\.(webp|jpg|png)$/;
+
+function revisar(d: EntradaProducto, comercioId?: string) {
+  // La foto subida tiene que ser de ESTA tienda: nadie usa la de otro comercio.
+  const propia = FOTO_PROPIA.exec(d.imagen);
+  if (propia && comercioId !== undefined && propia[1] !== comercioId)
+    throw new ErrorDatos('Esa foto no es de tu tienda. Súbela otra vez.', 'imagen', 422);
   if (!d.nombreEs && !d.nombreEn) throw new ErrorDatos('Falta el nombre del producto.', 'nombreEs');
   if (RESTRICCIONES_BLOQUEADAS.includes(d.restriccion))
     throw new ErrorDatos(
@@ -282,7 +293,7 @@ async function productoPorSku(db: D1Database, comercioId: string, sku: string) {
 tiendas.put('/mi-restaurante/productos', async (c) => {
   const t = await miComercio(c);
   const d = await leerCuerpo(c, esquemaProducto);
-  revisar(d);
+  revisar(d, t.id);
   await t.db.batch(sentenciasProducto(t.db, t.id, d, nuevoId()));
   return c.json({ producto: aProducto((await productoPorSku(t.db, t.id, d.sku)) ?? {}) });
 });

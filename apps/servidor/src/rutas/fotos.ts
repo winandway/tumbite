@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
+import { exigirMiRestaurante } from './catalogo';
 import { ErrorDatos } from '../validar';
 
 /**
@@ -46,11 +47,16 @@ function almacen(env: Env): R2Bucket {
 
 fotos.post('/mi-restaurante/fotos', async (c) => {
   const u = exigir(c, 'restaurante');
-  const rest = await base(c)
-    .prepare('SELECT id FROM restaurantes WHERE dueno_id = ?')
+  // NXT-8: el dueño o un manager del equipo (como en DoorDash Merchant, el manager edita el menú y
+  // los productos de la tienda); el staff no.
+  const tiene = await base(c)
+    .prepare(
+      'SELECT 1 FROM restaurantes WHERE dueno_id = ?1 OR id IN (SELECT restaurante_id FROM miembros_restaurante WHERE usuario_id = ?1)',
+    )
     .bind(u.id)
-    .first<{ id: string }>();
-  if (!rest) throw new ErrorDatos('Primero guarda los datos de tu restaurante.', undefined, 422);
+    .first();
+  if (!tiene) throw new ErrorDatos('Primero guarda los datos de tu restaurante.', undefined, 422);
+  const rest = { id: await exigirMiRestaurante(c, 'manager') };
 
   const largo = Number(c.req.header('content-length') ?? 0);
   if (largo > MAX_FOTO_BYTES)

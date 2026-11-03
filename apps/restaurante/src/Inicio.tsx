@@ -1281,7 +1281,11 @@ export function Inicio() {
     ) : pantallaMas ? (
       <PantallaMas pantalla={pantallaMas} alVolver={() => setPantallaMas(null)} />
     ) : (
-      <Mas titulo={tr.mas} abrirPantalla={setPantallaMas} />
+      <Mas
+        titulo={tr.mas}
+        abrirPantalla={setPantallaMas}
+        tienda={Boolean(rest?.tipoComercio && rest.tipoComercio !== 'restaurante')}
+      />
     );
 
   const cuerpo = detalle ? (

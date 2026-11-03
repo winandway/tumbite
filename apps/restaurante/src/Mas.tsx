@@ -18,8 +18,11 @@ import { Tarjeta } from './piezas/ui';
 export function Mas({
   titulo,
   abrirPantalla,
+  tienda = false,
 }: {
   titulo: string;
+  /** NXT-8: una tienda (mercado, farmacia, licores…) ve «Productos». */
+  tienda?: boolean;
   /** C-APP-RESTAURANTE-PAR: reseñas y horario se abren dentro de la app. */
   abrirPantalla: (p: NonNullable<OpcionMas['pantalla']>) => void;
 }) {
@@ -40,7 +43,7 @@ export function Mas({
       >
         {titulo}
       </Text>
-      {opcionesMasRestaurante(idioma).map((g) => (
+      {opcionesMasRestaurante(idioma, { tienda }).map((g) => (
         <View key={g.titulo} style={{ marginBottom: 6 }}>
           <Text style={{ fontWeight: '800', color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
             {g.titulo}

@@ -96,4 +96,53 @@ describe('Productos de la tienda', () => {
     const imp = llamadas.filter((l) => l.url.includes('/importar'));
     expect(imp.map((l) => (l.cuerpo as { confirmar: boolean }).confirmar)).toEqual([false, true]);
   });
+
+  it('NXT-8: sube la foto del producto desde el panel y se guarda con el producto', async () => {
+    const llamadas: { url: string; metodo: string; cuerpo: unknown }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const esJson = typeof init?.body === 'string';
+      llamadas.push({
+        url,
+        metodo: init?.method ?? 'GET',
+        cuerpo: esJson ? JSON.parse(String(init?.body)) : null,
+      });
+      if (url.includes('/mi-restaurante/fotos'))
+        return new Response(JSON.stringify({ url: '/media/fotos/t1/foto-1.webp' }), {
+          status: 201,
+        });
+      if (init?.method === 'PUT') return new Response(JSON.stringify({ producto: { id: 'p1' } }));
+      return new Response(
+        JSON.stringify({
+          tipo: 'mercado',
+          pais: 'VE',
+          moneda: 'USD',
+          productos: [],
+          hayMas: false,
+          pagina: 1,
+          totales: { productos: 0, disponibles: 0, sinFoto: 0 },
+          categorias: [],
+        }),
+      );
+    });
+    render(<Productos idioma="es" />);
+    await userEvent.upload(
+      await screen.findByLabelText('Foto del producto'),
+      new File([new Uint8Array([0xff, 0xd8, 0xff])], 'cafe.jpg', { type: 'image/jpeg' }),
+    );
+    expect(await screen.findByRole('img', { name: 'Foto del producto' })).toHaveAttribute(
+      'src',
+      '/media/fotos/t1/foto-1.webp',
+    );
+    await userEvent.type(screen.getByLabelText(/^SKU/), 'C1');
+    await userEvent.type(screen.getByLabelText('Nombre del producto'), 'Café molido');
+    await userEvent.type(screen.getAllByLabelText('Categoría').at(-1)!, 'Despensa');
+    await userEvent.type(screen.getByLabelText('Precio'), '8.99');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar el producto' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toMatchObject({
+        sku: 'C1',
+        imagen: '/media/fotos/t1/foto-1.webp',
+      }),
+    );
+  });
 });
