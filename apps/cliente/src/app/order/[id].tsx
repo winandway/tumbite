@@ -1006,7 +1006,12 @@ export default function SeguirPedido() {
               {estadoTexto}
             </Text>
             {p.estado !== 'cancelado' ? (
-              <View style={{ flexDirection: 'row', marginTop: 14 }} accessibilityRole="progressbar">
+              <View
+                style={{ flexDirection: 'row', marginTop: 14 }}
+                accessibilityRole="progressbar"
+                accessibilityLabel={estadoTexto}
+                aria-label={estadoTexto}
+              >
                 {(recoge ? t.pasosRecoger : tc.pasos).map((nombre, i) => (
                   <View key={nombre} style={{ flex: 1, alignItems: 'center' }}>
                     {i > 0 ? (

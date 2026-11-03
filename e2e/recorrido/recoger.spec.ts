@@ -84,7 +84,7 @@ for (const idioma of ['en', 'es'] as const)
     await expect(listo.first()).toBeVisible();
     // Lo más cerca primero: «Pizza Cerca» aparece antes que «Pizza Lejos».
     const nombres = await p
-      .getByRole('button', { name: /^Pizza (Cerca|Lejos)$/ })
+      .getByRole('button', { name: /^Pizza (Cerca|Lejos)\b/ })
       .allTextContents();
     expect(nombres.findIndex((x) => x.includes('Cerca'))).toBeLessThan(
       nombres.findIndex((x) => x.includes('Lejos')),

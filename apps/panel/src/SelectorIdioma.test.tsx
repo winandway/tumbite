@@ -7,7 +7,7 @@ describe('selector de idioma estilo Amazon', () => {
   it('botón con bandera y código; ventanita con opciones de círculo', async () => {
     const cambiar = vi.fn();
     render(<SelectorIdioma idioma="es" cambiar={cambiar} />);
-    const boton = screen.getByRole('button', { name: 'Cambiar idioma' });
+    const boton = screen.getByRole('button', { name: 'ES · Cambiar idioma' });
     expect(boton).toHaveTextContent('🇪🇸 ES');
     expect(boton).toHaveTextContent('▾');
     await userEvent.click(boton);
@@ -25,7 +25,7 @@ describe('selector de idioma estilo Amazon', () => {
 
   it('se cierra con Escape', async () => {
     render(<SelectorIdioma idioma="en" cambiar={() => {}} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Change language' }));
+    await userEvent.click(screen.getByRole('button', { name: /Change language/ }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();

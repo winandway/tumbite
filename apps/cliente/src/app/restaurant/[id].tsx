@@ -370,6 +370,7 @@ export default function MenuRestaurante() {
                   onPress={() => setPestana(k)}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: activa }}
+                  aria-selected={activa}
                   style={{
                     paddingVertical: 12,
                     marginRight: 24,
@@ -381,7 +382,7 @@ export default function MenuRestaurante() {
                     style={{
                       fontWeight: '700',
                       fontSize: 15,
-                      color: activa ? C.primario : '#5E5E5E',
+                      color: activa ? C.acento : '#5E5E5E',
                     }}
                   >
                     {k === 'menu' ? tc.menu : tc.informacion}
@@ -548,11 +549,10 @@ export default function MenuRestaurante() {
                           : 0;
                       const foto = urlFoto(p.imagen, 'miniatura');
                       return (
-                        <Pressable
+                        // C-ACCESIBILIDAD-WEB: la fila (abre el plato) y «+» van lado a lado, nunca
+                        // un botón dentro de otro; la fila se nombra con lo que se ve.
+                        <View
                           key={p.id}
-                          onPress={() => abrirDetalle(p)}
-                          accessibilityRole="button"
-                          accessibilityLabel={nombrePlato(p, idioma)}
                           style={{
                             flexDirection: 'row',
                             alignItems: 'center',
@@ -562,53 +562,65 @@ export default function MenuRestaurante() {
                             borderBottomColor: '#F2F2F2',
                           }}
                         >
-                          {foto ? (
-                            <Image
-                              source={{ uri: foto }}
-                              accessibilityIgnoresInvertColors
-                              style={{
-                                width: 84,
-                                height: 84,
-                                borderRadius: 14,
-                                backgroundColor: '#f1f1f1',
-                              }}
-                            />
-                          ) : null}
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
-                              {nombrePlato(p, idioma)}
-                            </Text>
-                            {p.id === numeroUno ? (
-                              <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
-                                {textoNumeroUno}
-                              </Text>
+                          <Pressable
+                            onPress={() => abrirDetalle(p)}
+                            accessibilityRole="button"
+                            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                          >
+                            {foto ? (
+                              <Image
+                                source={{ uri: foto }}
+                                accessibilityIgnoresInvertColors
+                                style={{
+                                  width: 84,
+                                  height: 84,
+                                  borderRadius: 14,
+                                  backgroundColor: '#f1f1f1',
+                                }}
+                              />
                             ) : null}
-                            {descripcion(p, idioma) ? (
-                              <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={2}>
-                                {descripcion(p, idioma)}
+                            <View style={{ flex: 1 }}>
+                              <Text
+                                style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}
+                              >
+                                {nombrePlato(p, idioma)}
                               </Text>
-                            ) : null}
-                            {p.etiquetas?.length ? (
-                              <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
-                                {p.etiquetas.map((m) => nombreEtiquetaDieta(m, idioma)).join(' · ')}
-                              </Text>
-                            ) : null}
-                            <Text style={{ marginTop: 4, fontWeight: '700', color: C.secundario }}>
-                              {formatearMonto(p.precioCentavos, moneda, idioma)}
-                              {p.calorias != null ? (
-                                // C-CALORIAS: como Uber Eats, «· 520 cal» junto al precio.
-                                <Text style={{ fontWeight: '400', color: '#5E5E5E' }}>
-                                  {` · ${p.calorias} cal`}
+                              {p.id === numeroUno ? (
+                                <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
+                                  {textoNumeroUno}
                                 </Text>
                               ) : null}
-                            </Text>
-                            {datos.gustoPlatos?.[p.id] ? (
-                              <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
-                                {idioma === 'en' ? 'Liked by ' : 'Le gustó al '}
-                                {textoGusto(datos.gustoPlatos[p.id]!, idioma)}
+                              {descripcion(p, idioma) ? (
+                                <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={2}>
+                                  {descripcion(p, idioma)}
+                                </Text>
+                              ) : null}
+                              {p.etiquetas?.length ? (
+                                <Text style={{ color: C.exito, fontSize: 12, fontWeight: '700' }}>
+                                  {p.etiquetas
+                                    .map((m) => nombreEtiquetaDieta(m, idioma))
+                                    .join(' · ')}
+                                </Text>
+                              ) : null}
+                              <Text
+                                style={{ marginTop: 4, fontWeight: '700', color: C.secundario }}
+                              >
+                                {formatearMonto(p.precioCentavos, moneda, idioma)}
+                                {p.calorias != null ? (
+                                  // C-CALORIAS: como Uber Eats, «· 520 cal» junto al precio.
+                                  <Text style={{ fontWeight: '400', color: '#5E5E5E' }}>
+                                    {` · ${p.calorias} cal`}
+                                  </Text>
+                                ) : null}
                               </Text>
-                            ) : null}
-                          </View>
+                              {datos.gustoPlatos?.[p.id] ? (
+                                <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
+                                  {idioma === 'en' ? 'Liked by ' : 'Le gustó al '}
+                                  {textoGusto(datos.gustoPlatos[p.id]!, idioma)}
+                                </Text>
+                              ) : null}
+                            </View>
+                          </Pressable>
                           <View style={{ alignItems: 'center', gap: 4 }}>
                             <BotonRedondo
                               texto="+"
@@ -629,7 +641,7 @@ export default function MenuRestaurante() {
                               </Text>
                             ) : null}
                           </View>
-                        </Pressable>
+                        </View>
                       );
                     })}
                 </View>

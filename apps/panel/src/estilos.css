@@ -1331,7 +1331,8 @@ html {
 }
 .ld-tachado {
   margin: 0 0 8px;
-  color: #8a8a8a;
+  /* C-ACCESIBILIDAD-WEB: contraste 4,5:1 sobre blanco (antes #8a8a8a, 3,5:1). */
+  color: #666b73;
   text-decoration: line-through;
   font-size: 0.9rem;
 }
@@ -2192,7 +2193,7 @@ button {
 .docs-buscador kbd {
   font: inherit;
   font-size: 0.75rem;
-  color: #777;
+  color: #5e5e5e;
   border: 1px solid #ddd;
   border-radius: 6px;
   padding: 2px 6px;
@@ -3844,10 +3845,11 @@ button {
   box-shadow: 0 4px 14px rgb(0 0 0 / 8%);
 }
 .ld-buscar {
-  background: var(--acento);
+  /* C-ACCESIBILIDAD-WEB: el rojo oscuro de la marca da 4,5:1 con el texto blanco. */
+  background: var(--primario);
 }
 .ld-buscar:hover {
-  background: var(--primario);
+  background: #9e0815;
 }
 .ld-ubicacion {
   background: #f1f1f1;

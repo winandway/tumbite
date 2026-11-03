@@ -45,7 +45,8 @@ export function SelectorIdioma({
         aria-haspopup="true"
         aria-expanded={abierto}
         aria-controls={id}
-        aria-label={TITULO[idioma === 'en' ? 'en' : 'es']}
+        // C-ACCESIBILIDAD-WEB: el nombre empieza por lo que se ve («EN»), como pide WCAG 2.5.3.
+        aria-label={`${actual.codigo.toUpperCase()} · ${TITULO[idioma === 'en' ? 'en' : 'es']}`}
         onClick={() => setAbierto((a) => !a)}
       >
         <span aria-hidden="true">{actual.bandera}</span> {actual.codigo.toUpperCase()}{' '}

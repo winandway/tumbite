@@ -777,6 +777,7 @@ export default function PantallaCarrito() {
                         onPress={() => cambiarSustitucion(l.clave ?? l.platoId, op)}
                         accessibilityRole="radio"
                         accessibilityState={{ checked: activo }}
+                        aria-checked={activo}
                         accessibilityLabel={`${tt.siNoHay} ${nombreSustitucion(op)}`}
                         style={{
                           paddingVertical: 6,
@@ -826,6 +827,7 @@ export default function PantallaCarrito() {
               onPress={() => b.cambiar('programado', modo === 'ahora' ? '' : 'elegir')}
               accessibilityRole="radio"
               accessibilityState={{ checked: activo }}
+              aria-checked={activo}
               accessibilityLabel={modo === 'ahora' ? te.ahora : te.programar}
               style={{
                 flex: 1,
@@ -836,7 +838,7 @@ export default function PantallaCarrito() {
                 backgroundColor: '#fff',
               }}
             >
-              <Text style={{ fontWeight: '700', color: activo ? C.primario : C.secundario }}>
+              <Text style={{ fontWeight: '700', color: activo ? C.acento : C.secundario }}>
                 {modo === 'ahora'
                   ? te.ahora
                   : franjaElegida
@@ -895,6 +897,7 @@ export default function PantallaCarrito() {
                       onPress={() => b.cambiar('programado', f.inicio)}
                       accessibilityRole="radio"
                       accessibilityState={{ checked: activa }}
+                      aria-checked={activa}
                       accessibilityLabel={idioma === 'en' ? f.en : f.es}
                       style={{
                         paddingVertical: 8,
@@ -933,6 +936,7 @@ export default function PantallaCarrito() {
               disabled={apagado}
               accessibilityRole="radio"
               accessibilityState={{ checked: activo, disabled: apagado }}
+              aria-checked={activo}
               accessibilityLabel={
                 modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta
               }
@@ -946,7 +950,7 @@ export default function PantallaCarrito() {
                 opacity: apagado ? 0.45 : 1,
               }}
             >
-              <Text style={{ fontWeight: '700', color: activo ? C.primario : C.secundario }}>
+              <Text style={{ fontWeight: '700', color: activo ? C.acento : C.secundario }}>
                 {modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta}
               </Text>
               <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
@@ -1026,6 +1030,7 @@ export default function PantallaCarrito() {
                     onPress={() => b.cambiar('metodoPago', valor)}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: activo }}
+                    aria-checked={activo}
                     accessibilityLabel={etiqueta}
                     style={{
                       padding: 12,
@@ -1035,7 +1040,7 @@ export default function PantallaCarrito() {
                       backgroundColor: '#fff',
                     }}
                   >
-                    <Text style={{ fontWeight: '700', color: activo ? C.primario : C.secundario }}>
+                    <Text style={{ fontWeight: '700', color: activo ? C.acento : C.secundario }}>
                       {etiqueta}
                     </Text>
                     <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>{ayuda}</Text>

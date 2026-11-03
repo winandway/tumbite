@@ -124,11 +124,18 @@ export function Pildora({
       accessibilityState={
         rol === 'button' ? { selected: activa } : { selected: activa, checked: activa }
       }
+      // C-ACCESIBILIDAD-WEB: en la web el estado viaja con aria-* (accessibilityState no llega).
+      {...(rol === 'radio' || rol === 'checkbox'
+        ? { 'aria-checked': activa }
+        : rol === 'tab'
+          ? { 'aria-selected': activa }
+          : { 'aria-pressed': activa })}
       style={{
         paddingHorizontal: 16,
         paddingVertical: 9,
         borderRadius: 999,
-        backgroundColor: activa ? C.primario : '#F2F3F5',
+        // El rojo oscuro de la marca: 4,5:1 con el texto blanco (el rojo principal da 4,3:1).
+        backgroundColor: activa ? C.acento : '#F2F3F5',
       }}
     >
       <Text style={{ color: activa ? '#fff' : C.secundario, fontWeight: '700', fontSize: 14 }}>

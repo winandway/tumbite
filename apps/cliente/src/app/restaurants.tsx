@@ -282,104 +282,111 @@ export default function Restaurantes() {
           ) : null
         }
         renderItem={({ item: r, index }) => (
-          <Pressable
-            onPress={() => {
-              recordarAnuncio(api, r);
-              abrirLocal(r.id);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={r.nombre}
-            style={({ pressed }) => [
-              {
-                flexDirection: 'row',
-                backgroundColor: '#fff',
-                borderRadius: 18,
-                padding: 10,
-                gap: 12,
-                marginBottom: 12,
-                opacity: pressed ? 0.85 : abierto(r) ? 1 : 0.65,
-              },
-              sombra,
-            ]}
-          >
-            <Image
-              source={
-                urlFoto(r.imagen, 'tarjeta')
-                  ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
-                  : fotoDeRelleno(r.categoria, index)
-              }
-              style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: '#f1f1f1' }}
-              accessibilityIgnoresInvertColors
-            />
-            <View style={{ flex: 1, justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
-                <Text
-                  style={{ flex: 1, fontWeight: '700', fontSize: 17, color: C.secundario }}
-                  numberOfLines={1}
-                >
-                  {r.nombre}
-                </Text>
-                {r.patrocinado ? (
-                  <Text testID="patrocinado" style={{ fontSize: 11, color: '#5E5E5E' }}>
-                    {idioma === 'en' ? 'Sponsored' : 'Patrocinado'}
+          // C-ACCESIBILIDAD-WEB: la tarjeta y el corazón van lado a lado (nunca un botón dentro de
+          // otro); la tarjeta se nombra con lo que se ve.
+          <View>
+            <Pressable
+              onPress={() => {
+                recordarAnuncio(api, r);
+                abrirLocal(r.id);
+              }}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                {
+                  flexDirection: 'row',
+                  backgroundColor: '#fff',
+                  borderRadius: 18,
+                  padding: 10,
+                  gap: 12,
+                  marginBottom: 12,
+                  opacity: pressed ? 0.85 : abierto(r) ? 1 : 0.65,
+                },
+                sombra,
+              ]}
+            >
+              <Image
+                source={
+                  urlFoto(r.imagen, 'tarjeta')
+                    ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
+                    : fotoDeRelleno(r.categoria, index)
+                }
+                style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+                accessibilityIgnoresInvertColors
+              />
+              <View style={{ flex: 1, justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                  <Text
+                    style={{ flex: 1, fontWeight: '700', fontSize: 17, color: C.secundario }}
+                    numberOfLines={1}
+                  >
+                    {r.nombre}
+                  </Text>
+                  {r.patrocinado ? (
+                    <Text testID="patrocinado" style={{ fontSize: 11, color: '#5E5E5E' }}>
+                      {idioma === 'en' ? 'Sponsored' : 'Patrocinado'}
+                    </Text>
+                  ) : null}
+                  {/* Lugar del corazón, que va encima de la tarjeta (fuera del botón). */}
+                  <View style={{ width: 20, height: 20 }} />
+                </View>
+                {r.promocion ? (
+                  // C-PROMO-RESTAURANTE: la insignia de la promoción que paga el restaurante.
+                  <Text
+                    testID="promocion"
+                    style={{ fontSize: 12, color: C.exito, fontWeight: '700' }}
+                  >
+                    {insigniaPromocion(r.promocion, r.moneda ?? 'USD', idioma)}
                   </Text>
                 ) : null}
-                <Pressable
-                  onPress={() => void alternarFavorito(r.id)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${favoritos.has(r.id) ? t.quitarFavorito : t.favorito}: ${r.nombre}`}
-                  accessibilityState={{ selected: favoritos.has(r.id) }}
-                  hitSlop={8}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Calificacion c={r.calificacion} idioma={idioma} />
+                  <Text style={{ color: '#5E5E5E', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>
+                    · {r.categoria}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    // El estado («No recibe pedidos ahora», «Abre mañana…») baja de línea en vez de cortarse.
+                    flexWrap: 'wrap',
+                    rowGap: 4,
+                  }}
                 >
-                  <Image
-                    source={IMG.iconoCorazon}
-                    style={{ width: 20, height: 20, opacity: favoritos.has(r.id) ? 1 : 0.35 }}
-                    tintColor={favoritos.has(r.id) ? C.primario : undefined}
-                    resizeMode="contain"
-                    accessibilityIgnoresInvertColors
+                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                    {r.distanciaKm != null
+                      ? `${distanciaTexto(r.distanciaKm, idioma, r.pais)} · `
+                      : ''}
+                    {recoger
+                      ? t.listoEn.replace('{n}', String(r.tiempoPrepMin))
+                      : `${r.tiempoPrepMin + 10}–${r.tiempoPrepMin + 20} min`}
+                  </Text>
+                  <Estado
+                    abierto={abierto(r)}
+                    texto={abierto(r) ? t.abierto : (textoNoDisponible(r, idioma) ?? t.cerrado)}
                   />
-                </Pressable>
+                </View>
               </View>
-              {r.promocion ? (
-                // C-PROMO-RESTAURANTE: la insignia de la promoción que paga el restaurante.
-                <Text
-                  testID="promocion"
-                  style={{ fontSize: 12, color: C.exito, fontWeight: '700' }}
-                >
-                  {insigniaPromocion(r.promocion, r.moneda ?? 'USD', idioma)}
-                </Text>
-              ) : null}
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Calificacion c={r.calificacion} idioma={idioma} />
-                <Text style={{ color: '#5E5E5E', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>
-                  · {r.categoria}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  // El estado («No recibe pedidos ahora», «Abre mañana…») baja de línea en vez de cortarse.
-                  flexWrap: 'wrap',
-                  rowGap: 4,
-                }}
-              >
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
-                  {r.distanciaKm != null
-                    ? `${distanciaTexto(r.distanciaKm, idioma, r.pais)} · `
-                    : ''}
-                  {recoger
-                    ? t.listoEn.replace('{n}', String(r.tiempoPrepMin))
-                    : `${r.tiempoPrepMin + 10}–${r.tiempoPrepMin + 20} min`}
-                </Text>
-                <Estado
-                  abierto={abierto(r)}
-                  texto={abierto(r) ? t.abierto : (textoNoDisponible(r, idioma) ?? t.cerrado)}
-                />
-              </View>
-            </View>
-          </Pressable>
+            </Pressable>
+            <Pressable
+              onPress={() => void alternarFavorito(r.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`${favoritos.has(r.id) ? t.quitarFavorito : t.favorito}: ${r.nombre}`}
+              accessibilityState={{ selected: favoritos.has(r.id) }}
+              aria-pressed={favoritos.has(r.id)}
+              hitSlop={8}
+              style={{ position: 'absolute', top: 10, right: 10 }}
+            >
+              <Image
+                source={IMG.iconoCorazon}
+                style={{ width: 20, height: 20, opacity: favoritos.has(r.id) ? 1 : 0.35 }}
+                tintColor={favoritos.has(r.id) ? C.primario : undefined}
+                resizeMode="contain"
+                accessibilityIgnoresInvertColors
+              />
+            </Pressable>
+          </View>
         )}
       />
       <BarraInferior idioma={idioma} activa="inicio" alTocar={pestana} />

@@ -48,7 +48,7 @@ export function BarraInferior({
             onPress={() => alTocar(p)}
             accessibilityRole="tab"
             accessibilityState={{ selected: esta }}
-            accessibilityLabel={nombrePestana(t.nav, p)}
+            aria-selected={esta}
             style={{ flex: 1, alignItems: 'center', paddingVertical: 4 }}
           >
             <View>
@@ -79,7 +79,8 @@ export function BarraInferior({
                 marginTop: 4,
                 fontSize: 12,
                 fontWeight: esta ? '800' : '600',
-                color: esta ? C.primario : '#5E5E5E',
+                // C-ACCESIBILIDAD-WEB: texto chico en el rojo oscuro de la marca (4,5:1).
+                color: esta ? C.acento : '#5E5E5E',
               }}
             >
               {nombrePestana(t.nav, p)}

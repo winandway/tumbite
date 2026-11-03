@@ -86,14 +86,18 @@ export function Pie({ idioma }: { idioma: Idioma }) {
             })}
           </div>
         ) : (
-          <ul className="pie-lugares" role="tabpanel">
-            {lista.map((l) => (
-              <li key={l.a} className={l.estado ?? undefined}>
-                <Enlace a={l.a}>{l.nombre}</Enlace>
-                {l.estado === 'activo' ? activo : l.estado === 'pronto' ? pronto : null}
-              </li>
-            ))}
-          </ul>
+          // C-ACCESIBILIDAD-WEB: el panel de la pestaña envuelve la lista (con role en la <ul>,
+          // los <li> quedaban fuera de una lista para los lectores de pantalla).
+          <div role="tabpanel">
+            <ul className="pie-lugares">
+              {lista.map((l) => (
+                <li key={l.a} className={l.estado ?? undefined}>
+                  <Enlace a={l.a}>{l.nombre}</Enlace>
+                  {l.estado === 'activo' ? activo : l.estado === 'pronto' ? pronto : null}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         {/* Para el SEO, las tres listas van completas en el HTML aunque solo una se vea. */}
         <nav className="pie-oculto" aria-label={t.cobertura}>
