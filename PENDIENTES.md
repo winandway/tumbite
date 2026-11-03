@@ -280,3 +280,5 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 Esperar la aprobación de Google de las tres apps (no depende de nosotros). Al aprobarse, revisar que en el celular aparezcan Mercado, Farmacia, Licores y Más como «muy pronto» y Moto apagado.
 
 - [ ] 👤 **Reloj de Cloudflare en producción (2 nov, 21:30):** GitHub deja huecos de 6 a 7 horas en el reloj de cada 5 minutos; mientras tanto se retrasan cobros al entregar, avisos del Manager y pedidos abandonados. Encenderlo es tu decisión (regla del proyecto). Con tu sí, la IA apunta el reloj ya probado en pruebas a producción. Todos los países.
+
+- 👤 (3 nov, SIG-5) En el tablero de Stripe (modo prueba y modo real), en el nombre público del negocio, poner «Divoox». Hoy el formulario de alta de cobros dice «Tumbite test uses Stripe…». Es un ajuste de la cuenta de Richard.

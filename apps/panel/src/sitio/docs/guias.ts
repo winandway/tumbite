@@ -2502,6 +2502,11 @@ const es: SeccionDocs[] = [
             alt: 'Pantalla «Beneficios» del panel de Divoox con el día de hoy: pedidos entregados, ventas, regalos, la comisión, lo que te toca en verde, el saldo disponible y cada venta con su número de pedido.',
             pie: '«Beneficios»: tu día, tu saldo y cada venta con su número de pedido.',
           },
+          {
+            src: '/docs/restaurante-cobros-formulario-es.webp',
+            alt: 'Formulario seguro de Stripe abierto dentro de «Beneficios» de Divoox, con el botón rojo «Añadir información» para conectar la cuenta bancaria.',
+            pie: 'Al tocar «Conectar mi cuenta bancaria», el formulario de Stripe se abre aquí mismo.',
+          },
         ],
         preguntas: [
           '¿Cuándo y cómo cobro?',
@@ -6958,6 +6963,11 @@ const en: SeccionDocs[] = [
             src: '/docs/recorrido-restaurante-beneficios-en.webp',
             alt: '“Earnings” screen in the Divoox dashboard with today: orders delivered, sales, gifts, commission, your payout in green, the available balance, and each sale with its order number.',
             pie: '“Earnings”: your day, your balance, and every sale with its order number.',
+          },
+          {
+            src: '/docs/restaurante-cobros-formulario-en.webp',
+            alt: 'Stripe’s secure form open inside Divoox “Earnings,” with the red “Add information” button to connect the bank account.',
+            pie: 'When you tap “Connect my bank account,” Stripe’s form opens right here.',
           },
         ],
         preguntas: [
