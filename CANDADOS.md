@@ -2641,6 +2641,15 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/cliente/src/app/order/[id].tsx` (`recoge`, `estadosRecoger`, `pasosRecoger`, `listoEn`, `pediste.recoger`), `apps/cliente/src/app/cart.tsx` + `textos.ts` (`propinaRecoger`, `propinaNotaRecoger`, `notasRecoger`, propina en 0 % al elegir recoger), `apps/servidor/src/rutas/pedidos.ts` (la recogida crea PIN siempre).
 - **Candados:** `e2e/recorrido/recogerCompleto.spec.ts` (comprobado en rojo quitando el arreglo de la pantalla) y la prueba BRE-7b de `apps/servidor/src/rutas/cupones.test.ts`.
 
+## C-PUBLICAR-SE-RECUPERA (3 nov 2026). Todos los países.
+
+- **Qué se rompía y cómo se veía:** producción se quedó más de una hora en be18d4f. Las dos publicaciones de 7bc0bb9 (14:56Z y 15:17Z) salieron «canceladas» sin correr ningún trabajo, con su verify en verde.
+- **Causa real:** `pruebas-rama.yml` y `publicar.yml` comparten la fila de concurrencia `publicar` (a propósito: las dos empujan `yapanel-pruebas`). GitHub deja UNA sola corrida esperando por fila; la que entra cancela a la que esperaba, aunque `cancel-in-progress` sea `false`. La publicación de 14:56 se canceló a las 14:59:36, dos segundos después de que entrara la `pruebas-rama` de c109f2d; la de 15:17 a las 15:24:27, uno después de la de da359b7.
+- **Arreglo:** `publicar.yml` acepta `workflow_dispatch`; llamado a mano, toma la última versión de main con su verify en verde (`actions/workflows/verify.yml/runs?branch=main&status=success`) y no hace nada si producción ya la sirve. `pruebas-rama.yml` tiene el trabajo `republicar` (`needs: pruebas`, `if: always()`, permiso `actions: write`): al terminar, si divoox.com no sirve esa versión, corre `gh workflow run publicar.yml`; la publicación espera a que la prueba suelte la fila. Si una prueba nueva la vuelve a cancelar, esa prueba la vuelve a llamar al terminar.
+- **Candado:** `apps/servidor/src/publicarSeRecupera.test.ts` (en rojo sin el trabajo `republicar`).
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/publicarSeRecupera.test.ts`; en Actions, después de una `pruebas-rama`, su trabajo `republicar` dice «producción ya sirve …» o lanza `publicar`.
+- **Qué NO tocar:** las dos siguen en la misma fila (separarlas haría que una rama pise el sitio de pruebas mientras `publicar` espera su semáforo); no se quita `republicar`.
+
 ## C-SOLO-LO-TERMINADO y C-LOGO-PORTADA (3 nov 2026, Richard). Todos los países.
 
 - **Qué se rompía y cómo se veía:** la portada del cliente no llevaba el logo de Divoox. «Más» abría con una franja «Estamos construyendo este servicio», un dibujo de cuatro cuadros de colores gigante y «Todo lo que viene en Divoox», y debajo los servicios con «Pronto», en cuadros angostos que partían las palabras («Mercad / o», «Farmaci / a»); Envíos quedaba fuera de la pantalla. Richard: «no es un MVP… ya no ponga pronto… vamos a mostrar lo que esté terminado».
