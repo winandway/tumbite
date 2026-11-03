@@ -247,7 +247,7 @@ export default function MiCuenta() {
               : p.estado === 'cancelado'
                 ? { fondo: '#F1F1F2', texto: '#5E5E5E' }
                 : { fondo: '#E7F0F7', texto: '#1F5F8B' };
-          const foto = urlFoto(p.restauranteImagen ?? null);
+          const foto = urlFoto(p.restauranteImagen ?? null, 'miniatura');
           return (
             <Pressable
               key={p.id}

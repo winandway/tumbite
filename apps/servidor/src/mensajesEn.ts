@@ -54,6 +54,9 @@ export const MENSAJES_EN = new Map<string, string>([
     'The screenshot is too large. The limit is 10 MB.',
   ],
   ['Adjunta una imagen JPG, PNG o WebP.', 'Attach a JPG, PNG or WebP image.'],
+  ['Ese tamaño de foto no existe.', 'That photo size doesn’t exist.'],
+  ['Primero sube la foto completa.', 'Upload the full photo first.'],
+  ['Ese tamaño de foto no cumple las medidas.', 'That photo size doesn’t meet the requirements.'],
   [
     'Tu activación para repartir Comida está en revisión. Te avisamos cuando esté lista.',
     'Your activation to deliver Food is under review. We’ll let you know when it’s ready.',

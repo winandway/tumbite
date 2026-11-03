@@ -321,8 +321,8 @@ export default function Buscar() {
             >
               <Image
                 source={
-                  urlFoto(r.imagen)
-                    ? { uri: urlFoto(r.imagen) ?? undefined }
+                  urlFoto(r.imagen, 'tarjeta')
+                    ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
                     : fotoDeRelleno(r.categoria, index)
                 }
                 style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#f1f1f1' }}
@@ -369,8 +369,8 @@ export default function Buscar() {
             >
               <Image
                 source={
-                  urlFoto(p.imagen)
-                    ? { uri: urlFoto(p.imagen) ?? undefined }
+                  urlFoto(p.imagen, 'miniatura')
+                    ? { uri: urlFoto(p.imagen, 'miniatura') ?? undefined }
                     : fotoDeRelleno('', index)
                 }
                 style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#f1f1f1' }}

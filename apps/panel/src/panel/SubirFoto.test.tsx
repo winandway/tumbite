@@ -80,4 +80,44 @@ describe('subir foto', () => {
     expect(mensajeDeFoto(new FotoIlegible(), 'en')).toMatch(/Most Compatible/);
     expect(mensajeDeFoto(new Error('x'), 'es')).toBe('No se pudo subir la foto.');
   });
+
+  it('NXT-7: convierte en el navegador a WebP en tres tamaños y sube la completa, la tarjeta y la miniatura', async () => {
+    const rutas: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => {
+      rutas.push(String(url));
+      return new Response(JSON.stringify({ url: URL_FOTO }), { status: 201 });
+    });
+    vi.stubGlobal('createImageBitmap', async () => ({ width: 4032, height: 3024 }));
+    const anchos: number[] = [];
+    const getContext = vi
+      .spyOn(HTMLCanvasElement.prototype, 'getContext')
+      .mockImplementation(() => ({ drawImage: () => undefined }) as never);
+    const toBlob = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(function (
+      this: HTMLCanvasElement,
+      ok: BlobCallback,
+      tipo?: string,
+    ) {
+      anchos.push(this.width);
+      ok(new Blob([new Uint8Array(10)], { type: tipo }));
+    });
+    try {
+      render(<Prueba />);
+      await userEvent.upload(
+        screen.getByLabelText('Foto del plato'),
+        new File([new Uint8Array([0xff, 0xd8, 0xff])], 'plato.jpg', { type: 'image/jpeg' }),
+      );
+      expect(await screen.findByRole('img', { name: 'Foto del plato' })).toHaveAttribute(
+        'src',
+        URL_FOTO,
+      );
+      await vi.waitFor(() => expect(rutas).toHaveLength(3));
+      expect(rutas[0]).toMatch(/\/datos\/mi-restaurante\/fotos$/);
+      expect(rutas[1]).toMatch(/\/datos\/mi-restaurante\/fotos\?de=abc&tam=tarjeta$/);
+      expect(rutas[2]).toMatch(/\/datos\/mi-restaurante\/fotos\?de=abc&tam=miniatura$/);
+      expect(anchos).toEqual([1400, 640, 200]);
+    } finally {
+      getContext.mockRestore();
+      toBlob.mockRestore();
+    }
+  });
 });

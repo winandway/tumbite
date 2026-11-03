@@ -462,7 +462,7 @@ export function Inicio() {
       : `#${p.id.slice(0, 4).toUpperCase()}`;
   const fotoDe = (p: Pedido) => {
     const id = p.lineas[0]?.platoId;
-    return urlFoto(platos.find((x) => x.id === id)?.imagen ?? null);
+    return urlFoto(platos.find((x) => x.id === id)?.imagen ?? null, 'miniatura');
   };
   const reloj = (seg: number) => {
     const s = Math.max(0, Math.floor(Math.abs(seg)));

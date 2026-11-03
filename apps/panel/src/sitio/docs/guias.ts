@@ -2214,6 +2214,15 @@ const es: SeccionDocs[] = [
             alt: 'Menú del restaurante en el panel con sus platos, categorías y precios.',
             pie: 'Tu menú en el panel, con cada plato, su categoría y su precio.',
           },
+          {
+            src: '/docs/recorrido-cliente-menu-es.webp',
+            alt: 'Menú de un restaurante en la app de clientes de Divoox, con la foto de cada plato.',
+            pie: 'Tus clientes ven la foto del tamaño justo: liviana en la lista, grande al abrir el plato.',
+          },
+        ],
+        explicacion: [
+          'Tus fotos cargan rápido aunque el cliente tenga poca señal. Al subir una foto, la convertimos en tu celular o en tu computadora, sin costo, a tres tamaños: una miniatura para las listas, una mediana para las tarjetas y una grande para cuando el cliente abre el plato. Cada pantalla pide el tamaño que necesita, como en las grandes apps de reparto.',
+          'Usa una foto clara, con buena luz y de al menos 1400 píxeles de ancho: es la medida que piden las grandes apps de reparto. Si la tomas con el iPhone, se manda sola en el formato compatible.',
         ],
         preguntas: ['¿Cómo agrego un plato al menú?', '¿Cómo cambio un precio o una foto?'],
         pasos: [
@@ -6729,6 +6738,15 @@ const en: SeccionDocs[] = [
             alt: 'The restaurant’s menu in the dashboard with its items, categories, and prices.',
             pie: 'Your menu in the dashboard, with each item, its category, and its price.',
           },
+          {
+            src: '/docs/recorrido-cliente-menu-en.webp',
+            alt: 'A restaurant’s menu in the Divoox customer app, with a photo of each item.',
+            pie: 'Customers see the right-size photo: light in the list, large when they open the item.',
+          },
+        ],
+        explicacion: [
+          'Your photos load fast even when the customer has a weak signal. When you upload a photo, we convert it on your phone or computer, at no cost, into three sizes: a thumbnail for lists, a medium one for cards, and a large one for when the customer opens the item. Each screen asks for the size it needs, like the big delivery apps.',
+          'Use a clear, well-lit photo at least 1,400 pixels wide: that’s the size the big delivery apps ask for. If you take it with an iPhone, it’s sent in the compatible format automatically.',
         ],
         preguntas: ['How do I add an item to my menu?', 'How do I change a price or a photo?'],
         pasos: [

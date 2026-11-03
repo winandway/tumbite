@@ -1,5 +1,12 @@
 import { useId, useRef, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Idioma,
+  TAMANOS_FOTO,
+  enIdioma,
+  idDeFoto,
+  medidasReducidas,
+} from '@tumbite/compartido';
 import { Icono } from '../sitio/Icono';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { api } from './api';
@@ -47,26 +54,60 @@ export function mensajeDeFoto(x: unknown, idioma: Idioma): string {
   return idioma === 'en' ? 'The photo couldn’t be uploaded.' : 'No se pudo subir la foto.';
 }
 
-/** Reduce la foto en el navegador (máx. 1200 px, WebP) antes de subirla. */
-export async function reducirFoto(archivo: File): Promise<Blob> {
+/** Abre la foto en el navegador; si no puede (HEIC en Chrome, archivo dañado), FotoIlegible. */
+async function abrirFoto(archivo: File): Promise<ImageBitmap | null> {
   if (ES_HEIC(archivo)) throw new FotoIlegible();
-  if (typeof createImageBitmap !== 'function') return archivo;
-  let img: ImageBitmap;
+  if (typeof createImageBitmap !== 'function') return null;
   try {
-    img = await createImageBitmap(archivo);
+    return await createImageBitmap(archivo);
   } catch {
     throw new FotoIlegible();
   }
-  const escala = Math.min(1, LADO_MAX / Math.max(img.width, img.height));
+}
+
+/** Dibuja la foto con su lado mayor en `lado` (sin agrandar) y la pasa a WebP en el navegador. */
+async function aWebp(img: ImageBitmap, lado: number, calidad: number): Promise<Blob | null> {
+  const { ancho, alto } = medidasReducidas(img.width, img.height, lado);
   const lienzo = document.createElement('canvas');
-  lienzo.width = Math.round(img.width * escala);
-  lienzo.height = Math.round(img.height * escala);
+  lienzo.width = ancho;
+  lienzo.height = alto;
   const ctx = lienzo.getContext('2d');
-  if (!ctx) return archivo;
-  ctx.drawImage(img, 0, 0, lienzo.width, lienzo.height);
-  const blob = await new Promise<Blob | null>((ok) => lienzo.toBlob(ok, 'image/webp', 0.82));
+  if (!ctx) return null;
+  ctx.drawImage(img, 0, 0, ancho, alto);
+  return new Promise<Blob | null>((ok) => lienzo.toBlob(ok, 'image/webp', calidad));
+}
+
+/** Reduce la foto en el navegador (máx. 1200 px, WebP) antes de subirla (verificación). */
+export async function reducirFoto(archivo: File): Promise<Blob> {
+  const img = await abrirFoto(archivo);
+  if (!img) return archivo;
   // Algunos navegadores viejos no saben hacer WebP y devuelven PNG: también sirve.
-  return blob ?? archivo;
+  return (await aWebp(img, LADO_MAX, 0.82)) ?? archivo;
+}
+
+/**
+ * C-FOTOS-LIVIANAS (NXT-7): la foto de un plato o del restaurante se convierte aquí, sin servicios
+ * de pago, a WebP en tres tamaños: primero se sube la completa (1400 px) y después la tarjeta
+ * (640) y la miniatura (200), que el servidor guarda junto a ella. Si un tamaño chico falla, la
+ * foto queda igual: el servidor entrega la completa en su lugar.
+ */
+export async function subirFotoLiviana(archivo: File): Promise<string> {
+  const img = await abrirFoto(archivo);
+  const completa = img
+    ? await aWebp(img, TAMANOS_FOTO.completa.lado, TAMANOS_FOTO.completa.calidad)
+    : null;
+  const { url } = await api.subirFoto(completa ?? archivo);
+  const id = idDeFoto(url);
+  if (img && id && completa?.type === 'image/webp')
+    for (const tam of ['tarjeta', 'miniatura'] as const) {
+      const regla = tam === 'tarjeta' ? TAMANOS_FOTO.tarjeta : TAMANOS_FOTO.miniatura;
+      const chica = await aWebp(img, regla.lado, regla.calidad);
+      if (chica?.type !== 'image/webp') continue;
+      await api
+        .subirFoto(chica, `/datos/mi-restaurante/fotos?de=${id}&tam=${tam}`)
+        .catch((e: unknown) => console.warn('foto: no se subió el tamaño', tam, e));
+    }
+  return url;
 }
 
 export function SubirFoto({
@@ -96,8 +137,7 @@ export function SubirFoto({
     if (!archivo.type.startsWith('image/')) return setError(t.noEsFoto);
     setSubiendo(true);
     try {
-      const { url } = await api.subirFoto(await reducirFoto(archivo));
-      cambiar(url);
+      cambiar(await subirFotoLiviana(archivo));
     } catch (x) {
       setError(mensajeDeFoto(x, idioma));
     } finally {

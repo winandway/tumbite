@@ -18,6 +18,7 @@ import {
   ETIQUETAS_DIETA,
   nombreEtiquetaDieta,
   leerEtiquetasDieta,
+  rutaFotoTamano,
 } from '@tumbite/compartido';
 import { Campo } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
@@ -810,7 +811,12 @@ export function Menu({ usuario, idioma }: { usuario: Usuario; idioma: Idioma }) 
           {platos.map((p) => (
             <li key={p.id} className={p.disponible ? '' : 'apagado'}>
               {p.imagen ? (
-                <img className="miniatura" src={p.imagen} alt="" loading="lazy" />
+                <img
+                  className="miniatura"
+                  src={rutaFotoTamano(p.imagen, 'miniatura')}
+                  alt=""
+                  loading="lazy"
+                />
               ) : (
                 <span className="miniatura miniatura-vacia" aria-hidden="true" />
               )}

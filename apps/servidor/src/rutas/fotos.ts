@@ -1,3 +1,4 @@
+import { SUFIJO_TAMANO, TAMANOS_FOTO, medidasWebp } from '@tumbite/compartido';
 import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import type { Env } from '../env';
@@ -7,7 +8,10 @@ import { ErrorDatos } from '../validar';
 
 /**
  * Fotos de restaurantes y platos. Se guardan en el almacén del sitio (env.BUCKET) y se sirven
- * desde /media/fotos/<restaurante>/<archivo>. El panel ya las manda reducidas (máx. 1200 px, WebP).
+ * desde /media/fotos/<restaurante>/<archivo>. El panel y la app del restaurante las mandan ya
+ * convertidas a WebP (C-FOTOS-LIVIANAS, NXT-7): primero la completa y después, con
+ * `?de=<id>&tam=tarjeta|miniatura`, sus tamaños chicos, que se guardan como `<id>-m.webp` y
+ * `<id>-s.webp`. Si un tamaño no existe (foto vieja), /media entrega la completa.
  */
 export const fotos = new Hono<{ Bindings: Env; Variables: Variables }>();
 export const media = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -58,6 +62,30 @@ fotos.post('/mi-restaurante/fotos', async (c) => {
   const tipo = tipoReal(bytes);
   if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
 
+  // NXT-7: un tamaño chico de una foto que ya subió este restaurante. Solo WebP, con su lado y su
+  // peso máximos (una miniatura que pesa como la completa no ahorra nada).
+  const de = c.req.query('de');
+  const tam = c.req.query('tam');
+  if (de !== undefined || tam !== undefined) {
+    if (!de || !NOMBRE_SEGURO.test(de) || (tam !== 'tarjeta' && tam !== 'miniatura'))
+      throw new ErrorDatos('Ese tamaño de foto no existe.', 'foto', 400);
+    if (!(await almacen(c.env).head(`fotos/${rest.id}/${de}.webp`)))
+      throw new ErrorDatos('Primero sube la foto completa.', 'foto', 404);
+    const medidas = tipo === 'image/webp' ? medidasWebp(bytes) : null;
+    const regla = tam === 'tarjeta' ? TAMANOS_FOTO.tarjeta : TAMANOS_FOTO.miniatura;
+    if (
+      !medidas ||
+      Math.max(medidas.ancho, medidas.alto) > regla.lado ||
+      bytes.byteLength > regla.maxBytes
+    )
+      throw new ErrorDatos('Ese tamaño de foto no cumple las medidas.', 'foto', 422);
+    const claveTam = `fotos/${rest.id}/${de}-${tam === 'tarjeta' ? SUFIJO_TAMANO.tarjeta : SUFIJO_TAMANO.miniatura}.webp`;
+    await guardarFoto(almacen(c.env), claveTam, bytes, tipo, {
+      cacheControl: 'public, max-age=31536000, immutable',
+    });
+    return c.json({ url: `/media/${claveTam}` }, 201);
+  }
+
   const clave = `fotos/${rest.id}/${nuevoId()}.${EXTENSION.get(tipo) ?? 'bin'}`;
   await guardarFoto(almacen(c.env), clave, bytes, tipo, {
     cacheControl: 'public, max-age=31536000, immutable',
@@ -72,13 +100,25 @@ media.get('/media/fotos/:restaurante/:archivo', async (c) => {
   const { restaurante, archivo } = c.req.param();
   if (!NOMBRE_SEGURO.test(restaurante) || !ARCHIVO_SEGURO.test(archivo))
     return c.text('No encontrado', 404);
-  const obj = await almacen(c.env).get(`fotos/${restaurante}/${archivo}`);
+  let obj = await almacen(c.env).get(`fotos/${restaurante}/${archivo}`);
+  // NXT-7: una foto vieja sin su tamaño chico entrega la completa (sin caché larga, por si se
+  // vuelve a subir con sus tamaños).
+  const tamano = /^([a-z0-9-]+)-(s|m)\.webp$/.exec(archivo);
+  let respaldo = false;
+  if (!obj && tamano) {
+    for (const ext of ['webp', 'jpg', 'png']) {
+      obj = await almacen(c.env).get(`fotos/${restaurante}/${tamano[1]}.${ext}`);
+      if (obj) break;
+    }
+    respaldo = Boolean(obj);
+  }
   if (!obj) return c.text('No encontrado', 404);
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
   headers.set('etag', obj.httpEtag);
   headers.set('x-content-type-options', 'nosniff');
-  if (!headers.has('cache-control'))
+  if (respaldo) headers.set('cache-control', 'public, max-age=300');
+  else if (!headers.has('cache-control'))
     headers.set('cache-control', 'public, max-age=31536000, immutable');
   return new Response(obj.body, { headers });
 });

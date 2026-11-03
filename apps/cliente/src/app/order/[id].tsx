@@ -1091,7 +1091,9 @@ export default function SeguirPedido() {
                     <Text style={{ fontWeight: '700', marginBottom: 4 }}>{t.reemplazos}</Text>
                     {p.ajuste.propuestas.map((x) => {
                       // La foto del producto propuesto (de la tienda o de Open Food Facts).
-                      const foto = x.imagen?.startsWith('https://') ? x.imagen : urlFoto(x.imagen);
+                      const foto = x.imagen?.startsWith('https://')
+                        ? x.imagen
+                        : urlFoto(x.imagen, 'miniatura');
                       return (
                         <View
                           key={x.platoId}

@@ -155,7 +155,7 @@ export default function Pedidos() {
                 ? { fondo: '#F1F1F2', texto: '#5E5E5E' }
                 : { fondo: '#E7F0F7', texto: '#1F5F8B' };
           const articulos = p.lineas.reduce((n, l) => n + l.cantidad, 0);
-          const foto = urlFoto(p.restauranteImagen ?? null);
+          const foto = urlFoto(p.restauranteImagen ?? null, 'miniatura');
           return (
             <Tarjeta key={p.id} style={{ marginBottom: 12, padding: 12 }}>
               <Pressable

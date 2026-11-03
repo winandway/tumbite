@@ -304,8 +304,8 @@ export default function Restaurantes() {
           >
             <Image
               source={
-                urlFoto(r.imagen)
-                  ? { uri: urlFoto(r.imagen) ?? undefined }
+                urlFoto(r.imagen, 'tarjeta')
+                  ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
                   : fotoDeRelleno(r.categoria, index)
               }
               style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: '#f1f1f1' }}

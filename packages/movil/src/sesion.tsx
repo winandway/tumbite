@@ -20,6 +20,8 @@ import {
   crearApi,
   elegirServidor,
   esIdioma,
+  rutaFotoTamano,
+  type TamanoFoto,
 } from '@tumbite/compartido';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
@@ -263,8 +265,15 @@ export function useSesion(): Sesion {
   return s;
 }
 
-/** Las fotos se guardan con su ruta («/media/fotos/…»); la app necesita la dirección completa. */
-export function urlFoto(ruta: string | null | undefined): string | null {
+/**
+ * Las fotos se guardan con su ruta («/media/fotos/…»); la app necesita la dirección completa.
+ * C-FOTOS-LIVIANAS (NXT-7): cada pantalla pide su tamaño (miniatura en las listas, tarjeta en las
+ * tarjetas, completa en la ficha); una foto vieja sin tamaños llega completa igual.
+ */
+export function urlFoto(
+  ruta: string | null | undefined,
+  tam: TamanoFoto = 'completa',
+): string | null {
   if (!ruta) return null;
-  return ruta.startsWith('/') ? `${URL_SERVIDOR}${ruta}` : null;
+  return ruta.startsWith('/') ? `${URL_SERVIDOR}${rutaFotoTamano(ruta, tam)}` : null;
 }

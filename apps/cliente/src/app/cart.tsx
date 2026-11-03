@@ -705,7 +705,7 @@ export default function PantallaCarrito() {
         {carrito.restauranteNombre}
       </Text>
       {carrito.lineas.map((l) => {
-        const foto = urlFoto(l.imagen);
+        const foto = urlFoto(l.imagen, 'miniatura');
         return (
           <Tarjeta key={l.clave ?? l.platoId} style={{ padding: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

@@ -83,3 +83,4 @@ export * from './etiquetasCalificacion';
 export * from './promociones';
 export * from './modoDestino';
 export * from './pesables';
+export * from './fotosLivianas';

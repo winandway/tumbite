@@ -72,8 +72,8 @@ function TarjetaRestaurante({
       <View>
         <Image
           source={
-            urlFoto(r.imagen)
-              ? { uri: urlFoto(r.imagen) ?? undefined }
+            urlFoto(r.imagen, 'tarjeta')
+              ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
               : fotoDeRelleno(r.categoria, i)
           }
           style={{

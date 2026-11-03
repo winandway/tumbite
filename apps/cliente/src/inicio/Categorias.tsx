@@ -51,7 +51,9 @@ export function Categorias({
           >
             <Image
               source={
-                urlFoto(r.imagen) ? { uri: urlFoto(r.imagen) ?? undefined } : fotoDeRelleno(c, i)
+                urlFoto(r.imagen, 'tarjeta')
+                  ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
+                  : fotoDeRelleno(c, i)
               }
               style={{
                 width: 64,

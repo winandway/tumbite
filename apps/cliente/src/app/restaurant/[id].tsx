@@ -469,7 +469,7 @@ export default function MenuRestaurante() {
                     contentContainerStyle={{ gap: 12, paddingBottom: 6 }}
                   >
                     {masPedidos.map((p, i) => {
-                      const foto = urlFoto(p.imagen);
+                      const foto = urlFoto(p.imagen, 'tarjeta');
                       return (
                         <Pressable
                           key={p.id}
@@ -546,7 +546,7 @@ export default function MenuRestaurante() {
                               .filter((l) => l.platoId === p.id)
                               .reduce((s, l) => s + l.cantidad, 0)
                           : 0;
-                      const foto = urlFoto(p.imagen);
+                      const foto = urlFoto(p.imagen, 'miniatura');
                       return (
                         <Pressable
                           key={p.id}

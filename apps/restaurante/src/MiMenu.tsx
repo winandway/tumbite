@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Platform, Pressable, Switch, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import {
   ErrorApi,
   type Plato,
@@ -26,6 +27,7 @@ import {
   e,
   urlFoto,
   useSesion,
+  subirFotoLivianaApp,
 } from '@tumbite/movil';
 import { IMG } from './piezas/recursos';
 import { EditorOpciones } from './EditorOpciones';
@@ -140,7 +142,7 @@ export function MiMenu({
       {error ? <Text style={e.error}>{error}</Text> : null}
       {platos.length === 0 ? <Text style={e.tarjeta}>{t.sinPlatos}</Text> : null}
       {visibles.map((p) => {
-        const foto = urlFoto(p.imagen);
+        const foto = urlFoto(p.imagen, 'miniatura');
         return (
           <Tarjeta
             key={p.id}
@@ -346,8 +348,8 @@ function FormPlato({
       const foto = r.canceled ? null : r.assets[0];
       if (!foto) return;
       setSubiendo(true);
-      const blob = await (await fetch(foto.uri)).blob();
-      const { url } = await api.subirFoto(blob);
+      // C-FOTOS-LIVIANAS (NXT-7): WebP en tres tamaños, convertido aquí en el teléfono.
+      const url = await subirFotoLivianaApp(api.subirFoto, foto, manipulateAsync, SaveFormat.WEBP);
       b.cambiar('imagen', url);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
