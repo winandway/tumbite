@@ -13,7 +13,11 @@ const requerir = createRequire(import.meta.url);
 const DATOS = join(dirname(requerir.resolve('@tesseract.js-data/eng/package.json')), '4.0.0');
 
 export async function leerTexto(foto: Buffer, soloMrz: boolean): Promise<string> {
-  const lector = await createWorker('eng', 1, { langPath: DATOS, gzip: true, cachePath: DATOS });
+  // C-OCR-SIN-CACHE (3 nov 2026): sin caché. Con `cachePath` en la carpeta del paquete, cada lector
+  // escribía allí `eng.traineddata` y los demás lo leían primero: dos pruebas a la vez leían un archivo
+  // a medio escribir y Tesseract fallaba con «initialization failed» (corrida 41624360597). Ahora
+  // cada lector lee el .gz del paquete y nunca escribe.
+  const lector = await createWorker('eng', 1, { langPath: DATOS, gzip: true, cacheMethod: 'none' });
   try {
     if (soloMrz)
       await lector.setParameters({

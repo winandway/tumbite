@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures';
+import { esperarVentanaLibre, registrarPausado } from './registroPausado';
 
 /**
  * C-CONTROL-DUAL (NXT-2) EN EL SITIO DE PRUEBAS, con Stripe en modo prueba de verdad: un pedido de
@@ -12,6 +13,11 @@ import { expect, test } from './fixtures';
  */
 const STAGING = Boolean(process.env.RECORRIDO_URL);
 test.skip(!STAGING, 'solo en el sitio de pruebas (Stripe en modo prueba de verdad)');
+// C-REGISTRO-PAUSADO: la prueba que sigue encuentra libre el límite de registros.
+test.afterAll(async () => {
+  test.setTimeout(90_000);
+  await esperarVentanaLibre();
+});
 if (STAGING && !/staging\.tumbite\.com|tumbite-pruebas/.test(process.env.RECORRIDO_URL ?? ''))
   throw new Error('Esta prueba solo corre contra el sitio de pruebas.');
 
@@ -33,14 +39,12 @@ test('control dual: una persona pide la devolución grande y otra la aprueba; St
   let n = 0;
   const cuenta = async (q: string, rol: 'cliente' | 'restaurante', nombre = `Prueba ${q}`) => {
     const correo = `${q}.${id}@recorrido.test`;
-    const r = await request.post('/datos/cuentas/registro', {
-      data: {
-        nombre,
-        correo,
-        clave,
-        rol,
-        telefono: `3${String(Date.now()).slice(-8)}${n++ % 10}`,
-      },
+    const r = await registrarPausado(request, {
+      nombre,
+      correo,
+      clave,
+      rol,
+      telefono: `3${String(Date.now()).slice(-8)}${n++ % 10}`,
     });
     expect(r.ok(), await r.text()).toBe(true);
     await sql(
