@@ -33,6 +33,7 @@ import {
   type ParaEtiqueta,
   tipoEtiquetas,
   tituloEtiquetas,
+  textoPesoReal,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -122,6 +123,10 @@ type Pedido = {
     precioCentavos: number;
     opciones?: OpcionElegida[];
     sustitucion?: string;
+    pesable?: boolean;
+    unidadPeso?: string | null;
+    pesoEstimado?: number | null;
+    pesoReal?: number;
   }[];
   repartidor?: {
     nombre: string;
@@ -878,6 +883,25 @@ export default function SeguirPedido() {
             {p.subtotal != null ? (
               <View style={{ marginTop: 10 }} testID="recibo">
                 <Text style={{ fontWeight: '700', color: C.secundario }}>{t.recibo}</Text>
+                {/* C-TIENDAS-PESO-REAL: lo pesado se cobra por su peso real, como en Instacart. */}
+                {p.lineas
+                  .filter((l) => l.pesoReal != null)
+                  .map((l) => (
+                    <View
+                      key={`peso-${l.platoId}`}
+                      style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}
+                      testID="peso-real"
+                    >
+                      <Text style={{ color: '#5E5E5E', flex: 1, fontSize: 13 }}>
+                        {idioma === 'en' ? l.nombreEn || l.nombreEs : l.nombreEs}
+                        {'\n'}
+                        {textoPesoReal(l, idioma === 'en' ? 'en' : 'es')}
+                      </Text>
+                      <Text style={{ color: C.secundario, fontSize: 13 }}>
+                        {formatearMonto(l.precioCentavos * l.cantidad, moneda, idioma)}
+                      </Text>
+                    </View>
+                  ))}
                 {(
                   [
                     [t.comida, p.subtotal],

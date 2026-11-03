@@ -2703,3 +2703,17 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo el 2 nov):** `apps/servidor/src/restauranteInicioBrf4.test.ts`, «BRF-4b…» (agregada el 2 nov; con `flex: 1` fijo falla), y en el recorrido del sitio de pruebas (`e2e/recorrido/recorrido.spec.ts`) el título de la cocina tiene que quedar DEBAJO de «Cocina ocupada»; captura `restapp-inicio-cocina-es/en`.
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/restauranteInicioBrf4.test.ts` y `npm run recorrido`.
 - **Qué NO tocar:** no volver a poner `flex: 1` fijo en columnas que en el celular van apiladas dentro de un ScrollView.
+
+## C-TIENDAS-PESO-REAL (SIG-3, 2 nov 2026). Todos los países (Tiendas apagado en producción).
+
+- **Qué faltaba y cómo se veía:** los productos por peso se cobraban al peso estimado (`peso_promedio`); si pesaban más, la tienda no podía cobrarlo y la diferencia solo se devolvía. La tienda no tenía dónde escribir el peso.
+- **Qué se hizo (como Instacart y DoorDash, ficha `docs/investigaciones-rea/2026-11-02-tiendas-peso-real.md`):**
+  - `packages/compartido/src/pesables.ts`: `margenPesables` (15 % de los pesables × max(1, total/subtotal), hacia arriba), `aplicarPesoReal` (importe = precio por peso × peso real, repartido por unidad con redondeo a favor del cliente; tope por línea = estimado × 1,15; siempre parte del estimado original), `textoPesoReal` es/en.
+  - `lineasDeTienda` congela en cada línea pesable `precioPorPeso` y `pesoEstimado`.
+  - Al pedir (`rutas/pedidos.ts`): fila en `autorizaciones_pedido` (autorizado, margen) y el PaymentIntent por `autorizado`; la respuesta trae `autorizado`. El aviso `amount_capturable_updated` compara con lo autorizado (COALESCE con el total si no hay fila). El cambio de dirección manda total nuevo + margen a Stripe y actualiza `autorizado`.
+  - `rutas/tiendasPeso.ts`: `POST /datos/restaurante/pedidos/:id/pesos` (solo tiendas, solo `pagado`/`aceptado`, no con un faltante pendiente). Recalcula con `recalcularLineas` (pieza sacada de `calcularSinPlato`) con techo = autorizado y guarda con `sentenciasRecalculo` (la misma de «falta un producto»).
+  - Pantallas: retención en el carrito del cliente, «Peso estimado → peso real» en el recibo, campo «Peso real» + «Guardar peso» en el panel (`Pedidos.tsx`) y en la app del restaurante (`PesoReal.tsx`). Guía de Docs `weighted-items` es/en con capturas reales del recorrido.
+- **Commit:** el de SIG-3 (ver `git log --grep SIG-3`).
+- **Pruebas (comprobadas en rojo el 2 nov):** `pesables.test.ts`, `rutas/tiendasPeso.test.ts`, `panel/PedidosPeso.test.tsx`, `pesoRealApps.test.ts` fallan sin el código; con el PaymentIntent por el total sin margen, el circuito falla; sin el tope, fallan tope y circuito. Recorrido: `e2e/recorrido/tiendas.spec.ts`.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/rutas/tiendasPeso.test.ts packages/compartido/src/pesables.test.ts` y `npm run recorrido` (tiendas). Estado del circuito real en VERIFICAR-PAGOS.md (en rojo hasta la compra con la 4242 en staging).
+- **Qué NO tocar:** nunca capturar más que `autorizaciones_pedido.autorizado`; el techo del recálculo es lo autorizado (lo que sobre lo absorbe Divoox, nunca el cliente); no quitar el margen del PaymentIntent ni del aviso de Stripe (si no cuadran, el pedido no pasa a pagado).

@@ -17,6 +17,7 @@ import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-au
 import sonidoAlarma from '../assets/sonidos/alarma.wav';
 import { useKeepAwake } from 'expo-keep-awake';
 import { FaltaTienda } from './FaltaTienda';
+import { PesoReal } from './PesoReal';
 import {
   ErrorApi,
   type Idioma,
@@ -108,6 +109,10 @@ type Pedido = {
     precioCentavos?: number;
     opciones?: OpcionElegida[];
     sustitucion?: string;
+    pesable?: boolean;
+    unidadPeso?: string | null;
+    pesoEstimado?: number | null;
+    pesoReal?: number;
   }[];
 };
 
@@ -539,6 +544,28 @@ export function Inicio() {
               ) : null}
             </Text>
           ))}
+          {/* C-TIENDAS-PESO-REAL: la tienda escribe el peso real de lo que se vende por peso. */}
+          {p.lineas
+            .filter((l) => l.pesable)
+            .map((l) => (
+              <View key={`peso-${l.platoId}`}>
+                <Text
+                  style={{ fontSize: 13, fontWeight: '700', color: C.secundario, marginTop: 6 }}
+                >
+                  {textoLinea(l, idioma)}
+                </Text>
+                <PesoReal
+                  idioma={idioma}
+                  linea={l}
+                  editable={['pagado', 'aceptado'].includes(p.estado)}
+                  guardar={(peso) =>
+                    void accion(`/datos/restaurante/pedidos/${p.id}/pesos`, {
+                      pesos: [{ platoId: l.platoId, peso }],
+                    })
+                  }
+                />
+              </View>
+            ))}
           {p.metodoPago && p.metodoPago !== 'tarjeta' ? (
             <>
               <Text style={{ marginTop: 6, color: C.primario, fontWeight: '800', fontSize: 13 }}>

@@ -2178,5 +2178,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "usuario_id",
     "centavos"
+  ],
+  "autorizaciones_pedido": [
+    "pedido_id",
+    "autorizado",
+    "margen",
+    "pesado_en",
+    "creado_en"
   ]
 };

@@ -6,7 +6,11 @@ import { exigirTopePiloto } from './piloto';
 import { correosEquipo } from '../avisosEquipo';
 import { ajustarReservaDirecta } from '../internacional/cobroDirecto';
 import { validarCupon } from './cupones';
-import { guardarDescuentos, recalcularConDescuentos } from '../descuentosPedido';
+import {
+  type DescuentosRecalculados,
+  guardarDescuentos,
+  recalcularConDescuentos,
+} from '../descuentosPedido';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
 import { acreditarRecargaStripe } from '../internacional/recargas';
 import {
@@ -38,6 +42,7 @@ import {
   gruposActivos,
   categoriaEnHorario,
   conNotaPlato,
+  margenPesables,
 } from '@tumbite/compartido';
 import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
@@ -181,33 +186,19 @@ type Linea = {
   cantidad: number;
 };
 
-/** Lo que se le devolvería al cliente si se quita ese plato (el resto del pedido se recalcula). */
-export async function calcularSinPlato(
+/**
+ * Recalcula un pedido ya creado con sus líneas nuevas: las tarifas, la promoción, el cupón, Plus y
+ * el saldo de regalo con que se cobró, sin pasar nunca de `totalMaximo` (lo que sobra lo absorbe
+ * Divoox, C-DESCUENTOS-RECALCULO). Lo usan «falta un producto» y el peso real (C-TIENDAS-PESO-REAL).
+ */
+export async function recalcularLineas(
   db: D1Database,
   f: FilaPedido,
-  platoId: string,
-  reemplazo?: Propuesta,
+  nuevas: Linea[],
+  totalMaximo: number,
 ) {
-  const lineas = JSON.parse(String(f.lineas_json)) as Linea[];
-  // C-TIENDAS-REEMPLAZOS: con reemplazo, la línea cambia de producto y se queda con el menor precio.
-  const nuevas = reemplazo
-    ? lineas.map((l) =>
-        l.platoId === platoId
-          ? {
-              ...l,
-              platoId: reemplazo.platoId,
-              nombreEs: reemplazo.nombreEs,
-              nombreEn: reemplazo.nombreEn,
-              precioCentavos: Math.min(l.precioCentavos, reemplazo.precioCentavos),
-              opciones: [],
-            }
-          : l,
-      )
-    : lineas.filter((l) => l.platoId !== platoId);
   // C-TARIFAS-PAIS: se recalcula con las tarifas que se aplicaron al pedido, no con las de hoy.
   const config = tarifasDelPedido(f) ?? (await leerConfigDinero(db));
-  if (!nuevas.length)
-    return { nuevas, desglose: null, descuentos: null, devolucion: Number(f.total) };
   const subtotal = nuevas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
   // C-FALLOS-DINERO (F8): un pedido para recoger se cobró sin envío; se recalcula igual.
   const recogida =
@@ -234,8 +225,37 @@ export async function calcularSinPlato(
       recogida,
     },
     await promocionDelPedido(db, String(f.id)),
-    Number(f.total),
+    totalMaximo,
   );
+  return descuentos;
+}
+
+/** Lo que se le devolvería al cliente si se quita ese plato (el resto del pedido se recalcula). */
+export async function calcularSinPlato(
+  db: D1Database,
+  f: FilaPedido,
+  platoId: string,
+  reemplazo?: Propuesta,
+) {
+  const lineas = JSON.parse(String(f.lineas_json)) as Linea[];
+  // C-TIENDAS-REEMPLAZOS: con reemplazo, la línea cambia de producto y se queda con el menor precio.
+  const nuevas = reemplazo
+    ? lineas.map((l) =>
+        l.platoId === platoId
+          ? {
+              ...l,
+              platoId: reemplazo.platoId,
+              nombreEs: reemplazo.nombreEs,
+              nombreEn: reemplazo.nombreEn,
+              precioCentavos: Math.min(l.precioCentavos, reemplazo.precioCentavos),
+              opciones: [],
+            }
+          : l,
+      )
+    : lineas.filter((l) => l.platoId !== platoId);
+  if (!nuevas.length)
+    return { nuevas, desglose: null, descuentos: null, devolucion: Number(f.total) };
+  const descuentos = await recalcularLineas(db, f, nuevas, Number(f.total));
   const desglose = descuentos.desglose;
   return {
     nuevas,
@@ -243,6 +263,43 @@ export async function calcularSinPlato(
     descuentos,
     devolucion: Math.max(0, Number(f.total) - desglose.totalCliente),
   };
+}
+
+/** Las sentencias que guardan un recálculo: el pedido, la promoción y los demás descuentos. */
+export function sentenciasRecalculo(
+  db: D1Database,
+  pedidoId: string,
+  nuevas: unknown[],
+  descuentos: DescuentosRecalculados,
+): D1PreparedStatement[] {
+  const desglose = descuentos.desglose;
+  return [
+    db
+      .prepare(
+        'UPDATE pedidos SET lineas_json = ?, subtotal = ?, envio = ?, servicio = ?, cargo_pequeno = ?, propina = ?, total = ?, descuento = ?, impuesto = ?, comision = ?, pago_restaurante = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
+      )
+      .bind(
+        JSON.stringify(nuevas),
+        desglose.subtotal,
+        desglose.envio,
+        desglose.servicio,
+        desglose.cargoPedidoPequeno,
+        desglose.propina,
+        desglose.totalCliente,
+        desglose.descuento,
+        desglose.impuesto,
+        desglose.comisionRestaurante,
+        desglose.pagoRestaurante,
+        desglose.pagoRepartidor,
+        desglose.complementoRepartidor,
+        desglose.gananciaPlataforma,
+        pedidoId,
+      ),
+    db
+      .prepare('UPDATE pedidos_promocion SET descuento = ? WHERE pedido_id = ?')
+      .bind(desglose.descuentoRestaurante, pedidoId),
+    ...guardarDescuentos(db, pedidoId, descuentos),
+  ];
 }
 
 /**
@@ -312,36 +369,12 @@ export async function aplicarAjuste(
     );
   }
   await db.batch([
-    db
-      .prepare(
-        'UPDATE pedidos SET lineas_json = ?, subtotal = ?, envio = ?, servicio = ?, cargo_pequeno = ?, propina = ?, total = ?, descuento = ?, impuesto = ?, comision = ?, pago_restaurante = ?, pago_repartidor = ?, complemento = ?, ganancia = ? WHERE id = ?',
-      )
-      .bind(
-        JSON.stringify(nuevas),
-        desglose.subtotal,
-        desglose.envio,
-        desglose.servicio,
-        desglose.cargoPedidoPequeno,
-        desglose.propina,
-        desglose.totalCliente,
-        desglose.descuento,
-        desglose.impuesto,
-        desglose.comisionRestaurante,
-        desglose.pagoRestaurante,
-        desglose.pagoRepartidor,
-        desglose.complementoRepartidor,
-        desglose.gananciaPlataforma,
-        pedidoId,
-      ),
+    ...sentenciasRecalculo(db, pedidoId, nuevas, descuentos!),
     db
       .prepare(
         "UPDATE ajustes_pedido SET estado = 'quitado', devolucion = ?, reemplazo_id = ?, resuelto_en = datetime('now') WHERE pedido_id = ?",
       )
       .bind(devolucion, reemplazo?.platoId ?? null, pedidoId),
-    db
-      .prepare('UPDATE pedidos_promocion SET descuento = ? WHERE pedido_id = ?')
-      .bind(desglose.descuentoRestaurante, pedidoId),
-    ...(descuentos ? guardarDescuentos(db, pedidoId, descuentos) : []),
   ]);
   await anotarEvento(
     db,
@@ -860,6 +893,15 @@ pedidos.post('/pedidos', async (c) => {
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);
+  // C-TIENDAS-PESO-REAL: con productos por peso se autoriza el total más un margen; el peso real
+  // que escriba la tienda puede subir el total hasta ahí y nunca más (Instacart y DoorDash).
+  const margen = esTienda ? margenPesables(lineas, desglose.totalCliente, desglose.subtotal) : 0;
+  const autorizado = desglose.totalCliente + margen;
+  if (margen > 0)
+    await db
+      .prepare('INSERT INTO autorizaciones_pedido (pedido_id, autorizado, margen) VALUES (?, ?, ?)')
+      .bind(id, autorizado, margen)
+      .run();
   // BRE-5d: el uso de la promoción se reserva antes que todo lo demás; si otro pedido gastó el
   // último, este no se cobra con un descuento que ya no existe y el cliente revisa el total.
   if (!(await anotarPromocion(db, id, String(rest.id), promo, desglose.descuentoRestaurante))) {
@@ -967,7 +1009,7 @@ pedidos.post('/pedidos', async (c) => {
   const intento = await stripe.post<{ id: string; client_secret: string }>(
     '/payment_intents',
     {
-      amount: desglose.totalCliente,
+      amount: autorizado,
       currency: 'usd',
       customer: clienteStripe,
       automatic_payment_methods: { enabled: true },
@@ -1005,6 +1047,8 @@ pedidos.post('/pedidos', async (c) => {
       // vieja de la caché) para pintar el formulario de tarjeta.
       clavePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
       desglose,
+      // C-TIENDAS-PESO-REAL: lo que queda retenido en la tarjeta (total + margen de los pesables).
+      autorizado,
     },
     201,
   );
@@ -1126,7 +1170,10 @@ pedidos.post('/stripe/aviso', async (c) => {
       const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
       const pedido = pedidoId
         ? await db
-            .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')
+            .prepare(
+              // C-TIENDAS-PESO-REAL: con pesables se autorizó el total más el margen.
+              'SELECT COALESCE((SELECT a.autorizado FROM autorizaciones_pedido a WHERE a.pedido_id = p.id), p.total) AS total, p.stripe_sesion, p.estado FROM pedidos p WHERE p.id = ?',
+            )
             .bind(pedidoId)
             .first<{ total: number; stripe_sesion: string; estado: string }>()
         : null;
@@ -1692,11 +1739,20 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   // tocar nada. C-FALLOS-DINERO (F7): antes del pago el intento vive en stripe_sesion; si Stripe
   // rechaza el nuevo monto, la dirección no cambia y se responde 409, nunca 500.
   const intento = String(f.stripe_pago ?? f.stripe_sesion ?? '');
+  // C-TIENDAS-PESO-REAL: el margen de los pesables sigue retenido encima del total nuevo.
+  const margenPeso = Number(
+    (
+      await db
+        .prepare('SELECT margen FROM autorizaciones_pedido WHERE pedido_id = ?')
+        .bind(id)
+        .first<{ margen: number }>()
+    )?.margen ?? 0,
+  );
   if (nuevoTotal !== Number(f.total) && intento.startsWith('pi_')) {
     const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
     if (stripe) {
       try {
-        await stripe.post(`/payment_intents/${intento}`, { amount: nuevoTotal });
+        await stripe.post(`/payment_intents/${intento}`, { amount: nuevoTotal + margenPeso });
       } catch (e) {
         console.error('cambio de dirección: Stripe no aceptó el nuevo monto', id, e);
         throw new ErrorDatos(
@@ -1728,7 +1784,12 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       id,
     )
     .run();
-  await db.batch(guardarDescuentos(db, id, descuentos));
+  await db.batch([
+    ...guardarDescuentos(db, id, descuentos),
+    db
+      .prepare('UPDATE autorizaciones_pedido SET autorizado = ? + margen WHERE pedido_id = ?')
+      .bind(nuevoTotal, id),
+  ]);
   // C-PROMO-RESTAURANTE: con «envío gratis», lo que paga el restaurante sigue al envío nuevo.
   if (promo)
     await db

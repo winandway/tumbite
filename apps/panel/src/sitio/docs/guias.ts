@@ -226,7 +226,7 @@ const es: SeccionDocs[] = [
           'Divoox no es solo comida. Toca Mercado, Farmacia, Licores o Más en el inicio y verás las tiendas cerca de tu dirección: primero las abiertas y las más cercanas, con cuántos productos tienen y cuánto tardan.',
           'Arriba hay un buscador que busca en todas las tiendas a la vez: escribes «leche» y ves en qué tienda está, a qué precio y a qué distancia. Tocas el resultado y entras a esa tienda.',
           'Dentro de la tienda, los productos están por pasillos (bebidas, lácteos, despensa…), como en el súper. Cada producto muestra su foto, su precio y, si está rebajado, el precio de antes tachado. Lo que está agotado no aparece.',
-          'Las frutas, verduras y carnes que se venden al peso muestran un precio estimado: la tienda lo pesa al preparar tu pedido. Si un producto tiene alcohol o tabaco, el pedido se entrega en mano, nunca en la puerta, y el repartidor te pide identificación: tienes que ser mayor de 21 años.',
+          'Las frutas, verduras y carnes que se venden al peso muestran un precio estimado: la tienda las pesa al preparar tu pedido y pagas el peso real (te contamos cómo en «Productos por peso: pagas el peso real»). Si un producto tiene alcohol o tabaco, el pedido se entrega en mano, nunca en la puerta, y el repartidor te pide identificación: tienes que ser mayor de 21 años.',
           'El alcohol solo se puede pedir en las horas que permite la ley de cada estado: en Florida, de 7:00 de la mañana a medianoche; en Michigan, de 7:00 de la mañana a 2:00 de la madrugada, y el domingo desde el mediodía. Fuera de esas horas, el producto dice desde qué hora está disponible y no se puede agregar; el resto de la tienda se compra como siempre. También puedes programar el pedido para más tarde.',
           'En el carrito eliges, producto por producto, qué hacer si la tienda no lo tiene: reembolsarlo, que te traigan uno parecido sin cobrarte de más, o que te pregunten por el chat del pedido. Si no eliges nada, se reembolsa.',
           'Si elegiste que te pregunten, y la tienda no tiene un producto, te puede proponer hasta tres reemplazos con su precio. Tocas el que quieras y listo, sin escribir en el chat. Si el reemplazo cuesta más, pagas lo mismo que el original; si cuesta menos, te devolvemos la diferencia. También puedes quitarlo o cancelar todo.',
@@ -256,6 +256,49 @@ const es: SeccionDocs[] = [
           'Toca el + de cada producto que quieras.',
           'Abre el carrito y elige qué hacer si falta cada producto.',
           'Paga como siempre y sigue tu pedido en «Pedidos».',
+        ],
+      },
+      {
+        id: 'weighted-items',
+        titulo: 'Productos por peso: pagas el peso real',
+        resumen:
+          'Las frutas, verduras y carnes se piden a un peso estimado y se cobran por lo que pesan de verdad, nunca más de un 15 % por encima.',
+        explicacion: [
+          'En el supermercado, los guineos, el aguacate o la carne no pesan siempre lo mismo. Por eso, en Divoox esos productos muestran un precio estimado: el peso promedio por el precio por libra o por kilo de la tienda.',
+          'Al pagar, en tu tarjeta se retiene un poco más que el total: el total estimado más un margen del 15 % de los productos por peso. Es una retención, no un cobro. El carrito te dice exactamente cuánto se retiene antes de pagar.',
+          'Mientras prepara tu pedido, la tienda pesa cada producto y escribe el peso real. El total se recalcula solo: si pesa menos, pagas menos; si pesa un poco más, pagas ese poco más, pero nunca pasa del 15 % sobre lo estimado. Si la tienda tiene más que eso, quita un poco o te lo marca como faltante.',
+          'Al entregar se cobra el total real y el resto de la retención se libera. En tu pedido, el recibo muestra cada producto con «Peso estimado → peso real» y lo que costó, para que veas de dónde sale cada centavo.',
+          'Así lo hacen los grandes del reparto de mercado: retienen un poco más al pedir y cobran solo lo que se entrega. Si pagas en efectivo o por transferencia al repartidor, la regla es la misma: pagas el total real que ves en tu pedido.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-cliente-retencion-es.webp',
+            alt: 'El carrito de una tienda en la app de Divoox, con el total y lo que se retiene en la tarjeta por los productos por peso.',
+            pie: 'Antes de pagar ves cuánto se retiene en tu tarjeta.',
+          },
+          {
+            src: '/docs/tiendas-panel-peso-es.webp',
+            alt: 'Un pedido de tienda en el panel de Divoox, con el campo «Peso real» y el botón «Guardar peso».',
+            pie: 'La tienda pesa el producto y escribe el peso real.',
+          },
+          {
+            src: '/docs/tiendas-cliente-peso-real-es.webp',
+            alt: 'El recibo de un pedido en la app de Divoox, con el peso estimado y el peso real de los guineos.',
+            pie: 'En tu recibo, el peso estimado y el real de cada producto.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué el precio de las frutas dice «estimado»?',
+          '¿Por qué me retienen más que el total en la tarjeta?',
+          '¿Cuánto más me pueden cobrar por el peso?',
+          '¿Dónde veo cuánto pesó lo que compré?',
+        ],
+        pasos: [
+          'Agrega los productos por peso: el precio que ves es el estimado.',
+          'En el carrito, mira cuánto se retiene en tu tarjeta y paga.',
+          'La tienda pesa cada producto al preparar tu pedido.',
+          'Al recibir, se cobra el peso real; el resto de la retención se libera.',
+          'Abre tu pedido para ver el peso estimado y el real en el recibo.',
         ],
       },
       {
@@ -2136,7 +2179,7 @@ const es: SeccionDocs[] = [
           '«Si no hay: reembolsar» quiere decir que lo quitas del pedido con «Falta un producto» y Divoox le devuelve al cliente lo que pagó por él en ese mismo momento, sin esperar su respuesta. «Uno parecido, sin cobrar de más» quiere decir que pongas uno similar del mismo precio o más barato: el cobro no cambia; si tampoco tienes uno parecido, márcalo como faltante y se devuelve igual, en el acto. «Preguntarle por el chat» quiere decir que le escribas por el chat del pedido: al marcarlo como faltante, el cliente decide en su app si lo quita o cancela.',
           'Pueden faltar varios productos en un mismo pedido: márcalos uno detrás de otro. Cada uno se resuelve antes de pasar al siguiente.',
           'Al marcar un producto que falta, puedes buscar en tu catálogo y proponer hasta tres reemplazos. Si el cliente pidió «uno parecido», va el primero que propongas, sin esperar. Si pidió que le preguntes, lo elige él con un toque en su app. Nunca paga más que el original.',
-          'Los productos que se venden al peso se cobran con un peso estimado. Si pesan menos, quita la diferencia; nunca se le cobra al cliente más de lo que aceptó.',
+          'Los productos que se venden al peso llevan un campo «Peso real». Pésalos al preparar, escribe el peso y toca «Guardar peso»: el cliente paga ese peso. Puede ser hasta un 15 % más de lo estimado; si pesa más, quita un poco o márcalo como faltante.',
           'Los productos con alcohol o tabaco salen marcados: ese pedido se entrega en mano y el repartidor pide identificación al entregar.',
         ],
         capturas: [
@@ -4634,7 +4677,7 @@ const en: SeccionDocs[] = [
           'Divoox isn’t just food. Tap Grocery, Pharmacy, Liquor or More on the home screen to see the stores near your address: open and closest first, with how many products they carry and how long they take.',
           'At the top there’s a search that looks in every store at once: type “milk” and see which store has it, at what price and how far away. Tap the result to go into that store.',
           'Inside the store, products are grouped by aisle (drinks, dairy, pantry…), just like at the supermarket. Each product shows its photo, its price and, when it’s on sale, the old price crossed out. Sold-out items don’t show up.',
-          'Fruit, vegetables and meat sold by weight show an estimated price: the store weighs them while preparing your order. If a product contains alcohol or tobacco, the order is handed to you, never left at the door, and the driver asks for ID: you must be 21 or older.',
+          'Fruit, vegetables and meat sold by weight show an estimated price: the store weighs them while preparing your order and you pay the actual weight (see “Items sold by weight: you pay the actual weight”). If a product contains alcohol or tobacco, the order is handed to you, never left at the door, and the driver asks for ID: you must be 21 or older.',
           'Alcohol can only be ordered during the hours each state’s law allows: in Florida, from 7:00 a.m. to midnight; in Michigan, from 7:00 a.m. to 2:00 a.m., and on Sundays from noon. Outside those hours, the product shows when it becomes available and can’t be added; the rest of the store works as usual. You can also schedule the order for later.',
           'In the cart you choose, item by item, what happens if the store doesn’t have it: refund it, get something similar at no extra charge, or have them ask you in the order chat. If you don’t choose, it’s refunded.',
           'If you chose to be asked and the store is out of an item, it can suggest up to three replacements with their price. Tap the one you want and you’re done, no chat needed. If the replacement costs more, you pay the same as the original; if it costs less, we refund the difference. You can also remove it or cancel everything.',
@@ -4664,6 +4707,49 @@ const en: SeccionDocs[] = [
           'Tap + on each product you want.',
           'Open the cart and choose what happens if each item is out.',
           'Pay as usual and follow your order in “Orders.”',
+        ],
+      },
+      {
+        id: 'weighted-items',
+        titulo: 'Items sold by weight: you pay the actual weight',
+        resumen:
+          'Fruit, vegetables and meat are ordered at an estimated weight and charged at what they actually weigh, never more than 15% over.',
+        explicacion: [
+          'At the grocery store, bananas, avocados or meat never weigh exactly the same. That’s why on Divoox these items show an estimated price: the average weight times the store’s price per pound or per kilo.',
+          'When you pay, we hold a little more than the total on your card: the estimated total plus a 15% margin on the items sold by weight. It’s a hold, not a charge. The cart shows exactly how much is held before you pay.',
+          'While preparing your order, the store weighs each item and enters the actual weight. The total updates on its own: if it weighs less, you pay less; if it weighs a bit more, you pay that bit more, but never more than 15% over the estimate. If the store has more than that, it takes some off or marks it as missing.',
+          'At delivery we charge the actual total and release the rest of the hold. In your order, the receipt shows each item with “Estimated weight → actual weight” and what it cost, so you can see where every cent comes from.',
+          'That’s how the big grocery delivery apps do it: hold a little more when you order and charge only what’s delivered. If you pay the driver in cash or by transfer, the rule is the same: you pay the actual total shown in your order.',
+        ],
+        capturas: [
+          {
+            src: '/docs/tiendas-cliente-retencion-en.webp',
+            alt: 'A store cart in the Divoox app, with the total and the amount held on the card for items sold by weight.',
+            pie: 'Before paying you see how much is held on your card.',
+          },
+          {
+            src: '/docs/tiendas-panel-peso-en.webp',
+            alt: 'A store order in the Divoox dashboard, with the “Actual weight” field and the “Save weight” button.',
+            pie: 'The store weighs the item and enters the actual weight.',
+          },
+          {
+            src: '/docs/tiendas-cliente-peso-real-en.webp',
+            alt: 'An order receipt in the Divoox app, with the estimated and actual weight of the bananas.',
+            pie: 'Your receipt shows the estimated and actual weight of each item.',
+          },
+        ],
+        preguntas: [
+          'Why does the price of fruit say “estimated”?',
+          'Why is more than the total held on my card?',
+          'How much more can I be charged for the weight?',
+          'Where do I see how much my items weighed?',
+        ],
+        pasos: [
+          'Add items sold by weight: the price you see is the estimate.',
+          'In the cart, check how much is held on your card and pay.',
+          'The store weighs each item while preparing your order.',
+          'At delivery, the actual weight is charged; the rest of the hold is released.',
+          'Open your order to see the estimated and actual weight on the receipt.',
         ],
       },
       {
@@ -6525,7 +6611,7 @@ const en: SeccionDocs[] = [
           '“If out: refund it” means you remove it with “An item is missing” and Divoox refunds the customer what they paid for it right away, without waiting for a reply. “Something similar, no extra charge” means you pack a similar item at the same price or less: the charge doesn’t change; if you don’t have anything similar either, mark it missing and it’s refunded right away too. “Ask the customer in the chat” means you message them in the order chat: when you mark it missing, the customer decides in their app whether to remove it or cancel.',
           'Several items can be out in the same order: mark them one after another. Each one is settled before the next.',
           'When you mark an item as missing, you can search your catalog and suggest up to three replacements. If the customer asked for “something similar,” the first one you suggest goes in right away. If they asked to be asked, they pick it with one tap in their app. They never pay more than the original.',
-          'Items sold by weight are charged at an estimated weight. If they weigh less, remove the difference; the customer is never charged more than they agreed to.',
+          'Items sold by weight have an “Actual weight” field. Weigh them while preparing, enter the weight and tap “Save weight”: the customer pays that weight. It can be up to 15% over the estimate; if it weighs more, take some off or mark it as missing.',
           'Items with alcohol or tobacco are marked: that order is handed over in person and the driver asks for ID at delivery.',
         ],
         capturas: [

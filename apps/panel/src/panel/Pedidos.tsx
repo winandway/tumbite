@@ -14,6 +14,7 @@ import {
   puedeMarcarFalta,
   textoFranja,
   textoLinea,
+  textoPesoReal,
   type OpcionElegida,
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
@@ -72,6 +73,10 @@ type Pedido = {
     cantidad: number;
     opciones?: OpcionElegida[];
     sustitucion?: string;
+    pesable?: boolean;
+    unidadPeso?: string | null;
+    pesoEstimado?: number | null;
+    pesoReal?: number;
   }[];
 };
 
@@ -91,6 +96,9 @@ const T = {
     pruebaListo:
       'Así se ve un pedido listo. En uno real, aquí llega el repartidor a recogerlo; en la prueba no sale nadie.',
     pruebaTerminar: 'Terminar la prueba',
+    pesoReal: 'Peso real',
+    guardarPeso: 'Guardar peso',
+    pesoAyuda: 'Pésalo y escribe el peso real: se cobra eso, hasta un 15 % más de lo estimado.',
     aceptar: 'Aceptar',
     imprimir: 'Imprimir comanda',
     imprimirAlAceptar: 'Imprimir la comanda al aceptar',
@@ -161,6 +169,10 @@ const T = {
     pruebaListo:
       'This is what a ready order looks like. On a real one, the driver comes to pick it up here; on a test order nobody is sent.',
     pruebaTerminar: 'Finish the test',
+    pesoReal: 'Actual weight',
+    guardarPeso: 'Save weight',
+    pesoAyuda:
+      'Weigh it and enter the actual weight: that’s what’s charged, up to 15% over the estimate.',
     aceptar: 'Accept',
     imprimir: 'Print ticket',
     imprimirAlAceptar: 'Print the ticket when accepting',
@@ -254,6 +266,8 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   const [pinLocal, setPinLocal] = useState<Record<string, string>>({});
   const [edadLocal, setEdadLocal] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
+  // C-TIENDAS-PESO-REAL: el peso escrito por producto, «pedido:producto» → texto.
+  const [pesos, setPesos] = useState<Record<string, string>>({});
   const [sonido, setSonido] = useState(false);
   // Los códigos QR de los pedidos listos (uno por pedido, dibujados una sola vez).
   const [qrs, setQrs] = useState<Record<string, string>>({});
@@ -480,6 +494,53 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {/* C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto. */}
                   {notaSustitucion(l, idioma) ? (
                     <em className="nota-sustitucion"> · {notaSustitucion(l, idioma)}</em>
+                  ) : null}
+                  {/* C-TIENDAS-PESO-REAL: la tienda escribe el peso real al preparar. */}
+                  {l.pesable && l.pesoEstimado ? (
+                    <span className="peso-real">
+                      {l.pesoReal != null ? (
+                        <em> · {textoPesoReal(l, idioma === 'en' ? 'en' : 'es')}</em>
+                      ) : (
+                        <em> · {t.pesoAyuda}</em>
+                      )}
+                      {['pagado', 'aceptado'].includes(p.estado) ? (
+                        <>
+                          <label>
+                            {t.pesoReal} ({l.unidadPeso ?? 'kg'})
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min="0"
+                              step="0.001"
+                              value={pesos[`${p.id}:${l.platoId}`] ?? ''}
+                              onChange={(ev) =>
+                                setPesos((x) => ({
+                                  ...x,
+                                  [`${p.id}:${l.platoId}`]: ev.target.value,
+                                }))
+                              }
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="boton secundario"
+                            disabled={!(Number(pesos[`${p.id}:${l.platoId}`]) > 0)}
+                            onClick={() =>
+                              void accion(`/datos/restaurante/pedidos/${p.id}/pesos`, {
+                                pesos: [
+                                  {
+                                    platoId: l.platoId,
+                                    peso: Number(pesos[`${p.id}:${l.platoId}`]),
+                                  },
+                                ],
+                              })
+                            }
+                          >
+                            {t.guardarPeso}
+                          </button>
+                        </>
+                      ) : null}
+                    </span>
                   ) : null}
                 </span>
               ))}

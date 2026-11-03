@@ -654,8 +654,8 @@ tiendas.get('/tiendas-buscar', async (c) => {
 
 /**
  * C-TIENDAS-COMPRA: las líneas de un pedido a una tienda, sacadas de SU catálogo y nunca de la app.
- * Precio de la oferta (o el rebajado), agotados fuera, pesables al peso estimado (el ajuste final es
- * el de «quitar o cambiar un producto» de siempre), alcohol y tabaco exigen edad al entregar, y cada
+ * Precio de la oferta (o el rebajado), agotados fuera, pesables al peso estimado (se cobran por el
+ * peso real que escribe la tienda al preparar, C-TIENDAS-PESO-REAL), alcohol y tabaco exigen edad al entregar, y cada
  * línea lleva lo que el cliente quiere si falta (por defecto, reembolsar).
  */
 export async function lineasDeTienda(
@@ -699,7 +699,16 @@ export async function lineasDeTienda(
       ...(f.restriccion === 'alcohol' ? { alcohol: true } : {}),
       sustitucion: l.sustitucion ?? 'reembolsar',
       ...conNotaPlato(l.nota),
-      ...(f.vendido_por === 'weight' ? { pesable: true, unidadPeso: f.unidad_peso } : {}),
+      // C-TIENDAS-PESO-REAL: el precio por peso y el peso promedio quedan congelados en la línea,
+      // para cobrar el peso real que escriba la tienda aunque el catálogo cambie después.
+      ...(f.vendido_por === 'weight'
+        ? {
+            pesable: true,
+            unidadPeso: f.unidad_peso,
+            precioPorPeso: precio,
+            pesoEstimado: (f.peso_promedio as number | null) ?? null,
+          }
+        : {}),
       imagen: f.imagen ?? null,
     };
   });

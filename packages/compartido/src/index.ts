@@ -82,3 +82,4 @@ export * from './seguimientoHonesto';
 export * from './etiquetasCalificacion';
 export * from './promociones';
 export * from './modoDestino';
+export * from './pesables';

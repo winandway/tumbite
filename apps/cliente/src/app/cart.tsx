@@ -40,7 +40,7 @@ import {
 import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { textosTiendas } from '../tiendas/textos';
-import { SUSTITUCIONES } from '@tumbite/compartido';
+import { SUSTITUCIONES, margenPesables } from '@tumbite/compartido';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
@@ -1316,6 +1316,21 @@ export default function PantallaCarrito() {
           <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
             {fila(t.total, d.totalCliente, true)}
           </View>
+          {/* C-TIENDAS-PESO-REAL: con productos por peso se retiene un poco más, como Instacart. */}
+          {carrito.esTienda &&
+          metodoPago === 'tarjeta' &&
+          margenPesables(carrito.lineas, d.totalCliente, d.subtotal) > 0 ? (
+            <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 6 }}>
+              {tt.retencion.replace(
+                '{monto}',
+                formatearMonto(
+                  d.totalCliente + margenPesables(carrito.lineas, d.totalCliente, d.subtotal),
+                  moneda,
+                  idioma,
+                ),
+              )}
+            </Text>
+          ) : null}
           <Pressable
             onPress={() => setVerTarifas(!verTarifas)}
             accessibilityRole="button"

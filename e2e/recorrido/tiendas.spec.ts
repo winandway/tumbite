@@ -184,6 +184,15 @@ for (const idioma of ['es', 'en'] as const) {
     // La foto del carrito: arriba, con los productos y qué hacer si falta cada uno.
     await cli.getByText('Mercado Ejemplo').first().scrollIntoViewIfNeeded();
     await foto(cli, 'cliente-carrito');
+    // C-TIENDAS-PESO-REAL: con guineos (por peso) el carrito dice cuánto se retiene en la tarjeta.
+    const retencion = cli.getByText(
+      idioma === 'en'
+        ? /We hold \$[\d.]+ on your card until delivery/
+        : /se retienen \$[\d.]+ en tu tarjeta/,
+    );
+    await expect(retencion).toBeVisible();
+    await retencion.scrollIntoViewIfNeeded();
+    await foto(cli, 'cliente-retencion');
     await cli
       .getByLabel(idioma === 'en' ? 'Street address' : 'Calle y número')
       .fill('200 S Biscayne Blvd, Apt 12');
@@ -201,7 +210,10 @@ for (const idioma of ['es', 'en'] as const) {
       pedidoId: string;
       clientSecret: string;
       desglose: { subtotal: number; totalCliente: number };
+      autorizado: number;
     };
+    // C-TIENDAS-PESO-REAL: se autoriza el total más el margen de los guineos (15 %, nunca menos).
+    expect(cobro.autorizado).toBeGreaterThan(cobro.desglose.totalCliente);
     // 3,99 rebajado + 0,69 × 2 lb estimadas + 1,80 = 7,17.
     expect(cobro.desglose.subtotal).toBe(717);
     // El banco autoriza la tarjeta: aviso firmado como el de Stripe (simulado, nunca dinero real).
@@ -211,7 +223,7 @@ for (const idioma of ['es', 'en'] as const) {
       data: {
         object: {
           id: cobro.clientSecret.split('_secret')[0],
-          amount_capturable: cobro.desglose.totalCliente,
+          amount_capturable: cobro.autorizado,
           metadata: { pedido_id: cobro.pedidoId },
         },
       },
@@ -248,6 +260,28 @@ for (const idioma of ['es', 'en'] as const) {
       panel.getByText(idioma === 'en' ? 'If out: refund it' : 'Si no hay: reembolsar').first(),
     ).toBeVisible();
     await foto(panel, 'panel-pedido');
+
+    // 3b. C-TIENDAS-PESO-REAL: la tienda pesa los guineos (2 lb estimadas, 2.2 reales) y el
+    // cliente lo ve en su recibo: «Peso estimado 2 lb → peso real 2.2 lb».
+    await panel
+      .getByRole('button', { name: idioma === 'en' ? /^Accept · / : /^Aceptar · / })
+      .first()
+      .click();
+    await panel.getByLabel(idioma === 'en' ? 'Actual weight (lb)' : 'Peso real (lb)').fill('2.2');
+    await panel
+      .getByRole('button', { name: idioma === 'en' ? 'Save weight' : 'Guardar peso' })
+      .click();
+    const textoPeso =
+      idioma === 'en'
+        ? 'Estimated weight 2 lb → actual weight 2.2 lb'
+        : 'Peso estimado 2 lb → peso real 2.2 lb';
+    await expect(panel.getByText(textoPeso)).toBeVisible({ timeout: 20_000 });
+    await foto(panel, 'panel-peso');
+    await cli.goto(`/app/order/${cobro.pedidoId}`);
+    const enRecibo = cli.getByTestId('peso-real');
+    await expect(enRecibo).toContainText(textoPeso, { timeout: 30_000 });
+    await enRecibo.scrollIntoViewIfNeeded();
+    await foto(cli, 'cliente-peso-real');
 
     // 4. Faltan los guineos: se quitan y se devuelve lo que costaron (el cobro nunca sube).
     const lineas = (

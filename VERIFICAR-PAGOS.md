@@ -96,6 +96,13 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 - **Cómo se repite:** `node scripts/staging/armar-tienda.mjs` (Miami) o `CIUDAD=novi …` (Michigan). La tienda tiene que tener su panel abierto (señal) para recibir pedidos.
 - **No abrir tiendas a clientes** sin la orden de Richard por país.
 
+### 🔴 Peso real de los pesables (2 nov 2026, SIG-3, C-TIENDAS-PESO-REAL): construido y probado con Stripe SIMULADO · SIN probar con la tarjeta de prueba en staging
+
+- **Qué cambia en el cobro:** con productos por peso, el PaymentIntent se AUTORIZA por el total estimado MÁS un margen (15 % de los pesables, escalado por total/subtotal), guardado en `autorizaciones_pedido`. El aviso firmado de Stripe (`amount_capturable_updated`) compara contra ese monto. La tienda escribe el peso real (`POST /datos/restaurante/pedidos/:id/pesos`) y el total se recalcula con techo en lo autorizado; al entregar se CAPTURA el total real (captura parcial; el resto se libera). Cambiar la dirección actualiza el PaymentIntent a total nuevo + margen.
+- **Probado (2 nov 2026), Stripe simulado:** `apps/servidor/src/rutas/tiendasPeso.test.ts` (autoriza total + margen; el aviso por el total solo NO pasa el pedido a pagado; peso de más → 409; captura = total real; `cobros.capturado` = total; reparto cuadra; conciliación vendido = capturado y «sí»), y el recorrido local en el navegador (`e2e/recorrido/tiendas.spec.ts`, es y en): retención visible en el carrito, peso escrito en el panel, «Peso estimado 2 lb → peso real 2.2 lb» en el recibo.
+- **SIN probar:** la compra con la tarjeta 4242 en staging (autorizar con margen en el Stripe de prueba real, pesar, entregar y ver la captura parcial en el tablero de Stripe). Hasta entonces no se da por probado. Nada con dinero real; en producción las tiendas siguen APAGADAS.
+- **Cómo se prueba en staging:** `node scripts/staging/armar-tienda.mjs`, comprar guineos con la 4242 desde la web de la app, en el panel de la tienda aceptar, escribir el peso y «Guardar peso», y entregar con el repartidor demo; en Stripe (modo prueba) el pago muestra «autorizado X, capturado Y» con Y = total del pedido.
+
 ## 🔴 Sin probar en real (14 oct 2026): devolución parcial por plato agotado
 
 - Qué es: cuando el restaurante marca un plato que no tiene y el cliente lo quita, Tumbite recalcula el pedido y le devuelve la diferencia con un reembolso parcial en Stripe (`POST /refunds` con `amount`), con clave de idempotencia `ajuste-<pedido>`.

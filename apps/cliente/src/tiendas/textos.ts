@@ -18,6 +18,8 @@ const ES = {
   sinResultados: 'No encontramos ese producto.',
   cargarMas: 'Ver más productos',
   porPeso: 'Precio estimado: se ajusta al pesarlo',
+  retencion:
+    'Hasta la entrega se retienen {monto} en tu tarjeta: los productos por peso se cobran por su peso real, nunca más de eso.',
   antes: 'Antes',
   enTienda: 'En {tienda}',
   otraTienda:
@@ -52,6 +54,8 @@ const EN: typeof ES = {
   sinResultados: 'We couldn’t find that product.',
   cargarMas: 'See more products',
   porPeso: 'Estimated price: adjusted when weighed',
+  retencion:
+    'We hold {monto} on your card until delivery: items sold by weight are charged at their actual weight, never more than that.',
   antes: 'Was',
   enTienda: 'At {tienda}',
   otraTienda:

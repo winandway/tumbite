@@ -640,6 +640,19 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe un correo válido.', 'Enter a valid email.'],
   ['Ese cliente no existe.', 'That customer doesn’t exist.'],
   ['Ese pedido no existe.', 'That order doesn’t exist.'],
+  // C-TIENDAS-PESO-REAL (SIG-3): el peso real de los pesables.
+  ['El peso real es solo para pedidos de tiendas.', 'The actual weight is only for store orders.'],
+  [
+    'Este pedido ya está listo o cambió de estado: el peso ya no se puede cambiar.',
+    'This order is already ready or changed status: the weight can’t be changed anymore.',
+  ],
+  [
+    'Espera a que el cliente decida sobre el producto que falta.',
+    'Wait for the customer to decide about the missing item.',
+  ],
+  ['Ese producto no está en este pedido.', 'That item isn’t in this order.'],
+  ['Escribe un peso válido.', 'Enter a valid weight.'],
+  ['Ese producto no se vende por peso.', 'That item isn’t sold by weight.'],
   ['Este comercio ya no está disponible.', 'This store is no longer available.'],
   [
     'Solo una cuenta con perfil Total cambia los perfiles.',
@@ -1603,6 +1616,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    /^Ese peso pasa del 15 % sobre lo que pidió el cliente \(máximo ([\d.]+ ?[a-zA-Z]*)\)\. Quita un poco o márcalo como faltante\.$/,
+    (m) =>
+      `That weight is more than 15% over what the customer ordered (up to ${m[1]}). Take some off or mark it as missing.`,
+  ],
   [
     /^A esta hora la ley no permite vender alcohol aquí\. Se puede pedir desde las (\d{1,2}:\d{2})\. Quita el alcohol del carrito o prográmalo para más tarde\.$/,
     (m) =>
