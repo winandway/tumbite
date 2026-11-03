@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-03T06:09:29.301Z",
+  "actualizado": "2026-11-03T09:25:41.180Z",
   "version": "7b9a5ca",
   "ahora": "Portada del cliente: estudio con REA de las súper apps y maqueta nueva con los servicios arriba",
   "proximo": [
@@ -303,6 +303,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-03",
+      "titulo": "Conectar el banco, ahora dentro de Divoox",
+      "texto": "Restaurantes y repartidores conectan su cuenta bancaria con el formulario seguro de Stripe sin salir de Divoox. Publicado en divoox.com y comprobado en vivo. EE. UU."
+    },
     {
       "fecha": "2026-11-03",
       "titulo": "Todo lo del día, publicado en divoox.com",
