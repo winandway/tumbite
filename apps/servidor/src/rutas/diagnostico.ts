@@ -1297,20 +1297,43 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
         difs.push(`${f.id}: cancelado y capturado sin reembolso en Stripe`);
     }
     if (f.estado === 'entregado' && !f.capturado_en) difs.push(`${f.id}: entregado sin captura`);
-    // Devoluciones a mano (C-CONTROL-DUAL): cada fila de `devoluciones` es UN reembolso en Stripe
-    // por el monto exacto; ni uno de más (una aprobación ejecutada dos veces) ni de menos.
-    if (Number(f.ndev) > 0) {
-      const rf = await stripe.get<{ data?: { amount: number; status: string }[] }>('/refunds', {
-        payment_intent: f.pi,
-        limit: 20,
-      });
+    // NXT-2x · todo reembolso de un pedido COBRADO tiene que estar explicado, aunque la base no
+    // tenga ninguna devolución (una escritura que falló después de reembolsar, uno hecho a mano en
+    // Stripe): por su id en `devoluciones.stripe_reembolso` (C-CONTROL-DUAL), por un plato agotado
+    // después de cobrar (metadata `motivo: plato_agotado` de este pedido) o por la cancelación de un
+    // pedido cancelado. Solo cuentan los que mueven dinero (succeeded o pending).
+    if (f.capturado_en) {
+      const rf = await stripe.get<{
+        data?: { id: string; amount: number; status: string; metadata?: Record<string, string> }[];
+      }>('/refunds', { payment_intent: f.pi, limit: 100 });
       const buenos = (rf.data ?? []).filter(
         (x) => x.status === 'succeeded' || x.status === 'pending',
       );
-      const suma = buenos.reduce((a, x) => a + x.amount, 0);
-      if (buenos.length !== Number(f.ndev) || suma !== Number(f.devuelto))
+      const { results: devs } = await db
+        .prepare('SELECT monto, stripe_reembolso FROM devoluciones WHERE pedido_id = ?')
+        .bind(f.id)
+        .all<{ monto: number; stripe_reembolso: string | null }>();
+      const ids = new Set(devs.map((d) => d.stripe_reembolso).filter(Boolean));
+      const porDevolucion = buenos.filter((x) => ids.has(x.id));
+      const deEstePedido = (x: (typeof buenos)[number]) => x.metadata?.pedido_id === f.id;
+      const sinExplicar = buenos.filter(
+        (x) =>
+          !ids.has(x.id) &&
+          !(deEstePedido(x) && x.metadata?.motivo === 'plato_agotado') &&
+          !(
+            f.estado === 'cancelado' &&
+            deEstePedido(x) &&
+            !x.metadata?.motivo &&
+            !x.metadata?.devolucion
+          ),
+      );
+      for (const x of sinExplicar)
+        difs.push(`${f.id}: reembolso ${x.id} de ${x.amount} en Stripe sin explicar en la base`);
+      // Cada fila de `devoluciones` es UN reembolso por el monto exacto; ni uno de más ni de menos.
+      const suma = porDevolucion.reduce((a, x) => a + x.amount, 0);
+      if (porDevolucion.length !== devs.length || suma !== Number(f.devuelto))
         difs.push(
-          `${f.id}: base devolvió ${f.devuelto} en ${f.ndev}, Stripe ${suma} en ${buenos.length} reembolsos`,
+          `${f.id}: base devolvió ${f.devuelto} en ${devs.length}, Stripe ${suma} en ${porDevolucion.length} reembolsos`,
         );
     }
   }

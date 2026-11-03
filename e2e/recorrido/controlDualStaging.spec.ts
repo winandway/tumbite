@@ -250,13 +250,37 @@ test('control dual: una persona pide la devolución grande y otra la aprueba; St
     );
     expect(c.ok, JSON.stringify(c.casos)).toBe(true);
   } finally {
-    // Nada de la corrida se queda abierto ni con permisos en el sitio de pruebas.
-    await request.patch('/datos/mi-restaurante/abierto', {
-      headers: con(dueno.token),
-      data: { abierto: false },
+    // Nada de la corrida se queda abierto ni con permisos en el sitio de pruebas. NXT-2x: si la
+    // limpieza falla NO se calla: se dice en la salida y la prueba cae (dos cuentas admin con una
+    // contraseña armada con la hora no pueden quedar vivas en el sitio de pruebas).
+    const fallos: string[] = [];
+    const paso = async (nombre: string, hacer: () => Promise<void>) => {
+      try {
+        await hacer();
+      } catch (e) {
+        fallos.push(`${nombre}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    };
+    await paso('cerrar el restaurante', async () => {
+      const r = await request.patch('/datos/mi-restaurante/abierto', {
+        headers: con(dueno.token),
+        data: { abierto: false },
+      });
+      if (!r.ok()) throw new Error(`${r.status()} ${await r.text()}`);
+      const [f] = await sql(`SELECT abierto FROM restaurantes WHERE id = '${rid}'`);
+      if (Number(f?.abierto) !== 0) throw new Error('sigue abierto');
     });
-    await sql(
-      `UPDATE usuarios SET rol = 'cliente' WHERE id IN ('${pide.usuario.id}', '${firma.usuario.id}')`,
-    ).catch(() => undefined);
+    await paso('quitar el permiso de equipo', async () => {
+      await sql(
+        `UPDATE usuarios SET rol = 'cliente' WHERE id IN ('${pide.usuario.id}', '${firma.usuario.id}')`,
+      );
+      const [f] = await sql(
+        `SELECT COUNT(*) AS n FROM usuarios WHERE rol <> 'cliente' AND id IN ('${pide.usuario.id}', '${firma.usuario.id}')`,
+      );
+      if (Number(f?.n) !== 0) throw new Error(`${String(f?.n)} cuentas siguen con permisos`);
+    });
+    if (fallos.length) console.error(`LIMPIEZA DEL CONTROL DUAL FALLÓ: ${fallos.join(' | ')}`);
+    // Suave: la prueba queda en rojo sin tapar el error de la corrida si ya había uno.
+    expect.soft(fallos, 'la limpieza del sitio de pruebas').toEqual([]);
   }
 });

@@ -151,8 +151,17 @@ describe('recorrido y conciliación en staging', () => {
     expect((await pedir('confirmar-pago', { pedidoId: 'x' })).estado).toBe(409);
     expect((await pedir('conciliacion')).estado).toBe(409);
   });
-  it('NXT-2: con «pedidos» revisa esos y cada devolución es UN reembolso exacto en Stripe', async () => {
-    let reembolsos: { amount: number; status: string }[] = [];
+  /** Un pedido cobrado de 200,00 con sus filas de devolución, y lo que dice Stripe de él. */
+  type Reembolso = {
+    id: string;
+    amount: number;
+    status: string;
+    metadata?: Record<string, string>;
+  };
+  async function conciliarCon(
+    reembolsos: Reembolso[],
+    op: { devoluciones?: [string, number][]; estado?: string } = {},
+  ) {
     vi.stubGlobal('fetch', async (url: string) => {
       const u = new URL(url);
       if (u.pathname === '/v1/refunds') return Response.json({ data: reembolsos });
@@ -166,44 +175,136 @@ describe('recorrido y conciliación en staging', () => {
       await m.DB.prepare(
         `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
            propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, stripe_sesion, stripe_pago, entregado_en)
-         VALUES ('zz-dual', 'c', 'r', 'entregado', '[]', 20000, 0, 0, 0, 0, 20000, 0, 0, 0, 0, 0, 'basico', 'x', 'pi_dual', 'pi_dual', datetime('now'))`,
-      ).run();
+         VALUES ('zz-dual', 'c', 'r', ?, '[]', 20000, 0, 0, 0, 0, 20000, 0, 0, 0, 0, 0, 'basico', 'x', 'pi_dual', 'pi_dual', datetime('now'))`,
+      )
+        .bind(op.estado ?? 'entregado')
+        .run();
       await m.DB.prepare(
         "INSERT INTO cobros (pedido_id, capturado_en, capturado) VALUES ('zz-dual', datetime('now'), 20000)",
       ).run();
-      await m.DB.prepare(
-        "INSERT INTO devoluciones (id, pedido_id, monto) VALUES ('d1', 'zz-dual', 15000)",
-      ).run();
-      const caso = async () =>
-        (
-          (await pedir('conciliacion', { pedidos: ['zz-dual'] })).datos.casos as {
-            nombre: string;
-            ok: boolean;
-            detalle: string;
-          }[]
-        ).find((x) => x.nombre.startsWith('cada cobro'))!;
-      // Stripe devolvió dos veces (una aprobación ejecutada dos veces): rojo.
-      reembolsos = [
-        { amount: 15000, status: 'succeeded' },
-        { amount: 15000, status: 'succeeded' },
-      ];
-      const doble = await caso();
-      expect(doble.ok).toBe(false);
-      expect(doble.detalle).toContain('zz-dual: base devolvió 15000 en 1, Stripe 30000 en 2');
-      expect(doble.nombre).toContain('(1 pedidos)');
-      // Exactamente uno por el monto: verde.
-      reembolsos = [{ amount: 15000, status: 'succeeded' }];
-      expect((await caso()).ok).toBe(true);
-      // Un pedido que no existe no pasa en silencio.
+      for (const [re, monto] of op.devoluciones ?? [])
+        await m.DB.prepare(
+          "INSERT INTO devoluciones (id, pedido_id, monto, stripe_reembolso) VALUES (?, 'zz-dual', ?, ?)",
+        )
+          .bind(`d-${re}`, monto, re)
+          .run();
+      const casos = (await pedir('conciliacion', { pedidos: ['zz-dual'] })).datos.casos as {
+        nombre: string;
+        ok: boolean;
+        detalle: string;
+      }[];
+      return { caso: casos.find((x) => x.nombre.startsWith('cada cobro'))!, pedir };
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  }
+  const ok = (id: string, amount: number, metadata?: Record<string, string>): Reembolso => ({
+    id,
+    amount,
+    status: 'succeeded',
+    ...(metadata ? { metadata } : {}),
+  });
+
+  it('NXT-2: cada devolución es UN reembolso exacto en Stripe (ni dos veces ni de menos)', async () => {
+    const doble = (
+      await conciliarCon([ok('re_1', 15000), ok('re_2', 15000)], {
+        devoluciones: [['re_1', 15000]],
+      })
+    ).caso;
+    expect(doble.ok).toBe(false);
+    expect(doble.detalle).toContain('reembolso re_2 de 15000 en Stripe sin explicar');
+    expect(doble.nombre).toContain('(1 pedidos)');
+    expect(
+      (await conciliarCon([ok('re_1', 15000)], { devoluciones: [['re_1', 15000]] })).caso.ok,
+    ).toBe(true);
+    // De menos: la base dice 150 y Stripe devolvió 100.
+    const menos = (await conciliarCon([ok('re_1', 10000)], { devoluciones: [['re_1', 15000]] }))
+      .caso;
+    expect(menos.ok).toBe(false);
+    expect(menos.detalle).toContain('base devolvió 15000 en 1, Stripe 10000 en 1 reembolsos');
+  });
+
+  it('NXT-2x: un reembolso en Stripe SIN fila de devolución sale en rojo', async () => {
+    const r = (await conciliarCon([ok('re_x', 15000)])).caso;
+    expect(r.ok).toBe(false);
+    expect(r.detalle).toContain('reembolso re_x de 15000 en Stripe sin explicar');
+  });
+
+  it('NXT-2x: dos reembolsos de 75 para una devolución de 150 salen en rojo', async () => {
+    const r = (
+      await conciliarCon([ok('re_1', 7500), ok('re_2', 7500)], { devoluciones: [['re_1', 15000]] })
+    ).caso;
+    expect(r.ok).toBe(false);
+  });
+
+  it('NXT-2x: dos devoluciones en la base y un solo reembolso por la misma suma salen en rojo', async () => {
+    const r = (
+      await conciliarCon([ok('re_1', 15000)], {
+        devoluciones: [
+          ['re_1', 7500],
+          ['re_2', 7500],
+        ],
+      })
+    ).caso;
+    expect(r.ok).toBe(false);
+    expect(r.detalle).toContain('base devolvió 15000 en 2, Stripe 15000 en 1 reembolsos');
+  });
+
+  it('NXT-2x: un reembolso fallido o cancelado no cuenta', async () => {
+    const fallido = { id: 're_f', amount: 15000, status: 'failed' };
+    const cancelado = { id: 're_c', amount: 15000, status: 'canceled' };
+    expect(
+      (
+        await conciliarCon([fallido, cancelado, ok('re_1', 15000)], {
+          devoluciones: [['re_1', 15000]],
+        })
+      ).caso.ok,
+    ).toBe(true);
+    // Solo el fallido: la devolución de la base no está en Stripe.
+    const r = (
+      await conciliarCon([{ ...fallido, id: 're_1' }], { devoluciones: [['re_1', 15000]] })
+    ).caso;
+    expect(r.ok).toBe(false);
+    expect(r.detalle).toContain('Stripe 0 en 0 reembolsos');
+    // Fallidos sin fila tampoco son alarma.
+    expect((await conciliarCon([fallido])).caso.ok).toBe(true);
+  });
+
+  it('NXT-2x: el plato agotado después de cobrar y la cancelación de un pedido cancelado están explicados', async () => {
+    expect(
+      (await conciliarCon([ok('re_a', 1200, { pedido_id: 'zz-dual', motivo: 'plato_agotado' })]))
+        .caso.ok,
+    ).toBe(true);
+    // El de OTRO pedido con la misma marca no explica este.
+    expect(
+      (await conciliarCon([ok('re_a', 1200, { pedido_id: 'otro', motivo: 'plato_agotado' })])).caso
+        .ok,
+    ).toBe(false);
+    expect(
+      (await conciliarCon([ok('re_c', 20000, { pedido_id: 'zz-dual' })], { estado: 'cancelado' }))
+        .caso.ok,
+    ).toBe(true);
+    // Un reembolso «de cancelación» en un pedido entregado no se explica.
+    expect((await conciliarCon([ok('re_c', 20000, { pedido_id: 'zz-dual' })])).caso.ok).toBe(false);
+  });
+
+  it('NXT-2: un pedido pedido que no existe no pasa en silencio', async () => {
+    vi.stubGlobal('fetch', async (url: string) =>
+      new URL(url).pathname.startsWith('/v1/payment_intents/')
+        ? Response.json({ status: 'succeeded', amount_received: 20000 })
+        : Response.json({ data: [] }),
+    );
+    try {
+      const { pedir } = preparar({ STRIPE_SECRET_KEY: 'sk_test_x' });
       const falta = (
-        (await pedir('conciliacion', { pedidos: ['zz-dual', 'zz-no'] })).datos.casos as {
+        (await pedir('conciliacion', { pedidos: ['zz-no'] })).datos.casos as {
           nombre: string;
           ok: boolean;
           detalle: string;
         }[]
       ).find((x) => x.nombre.startsWith('cada cobro'))!;
       expect(falta.ok).toBe(false);
-      expect(falta.detalle).toContain('de 2 pedidos pedidos se encontraron 1');
+      expect(falta.detalle).toContain('de 1 pedidos pedidos se encontraron 0');
     } finally {
       vi.unstubAllGlobals();
     }
