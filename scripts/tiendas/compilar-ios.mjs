@@ -44,7 +44,36 @@ for (const app of apps) {
   console.log(
     `\n── ${app}: ${soloEnviar ? 'enviando' : 'compilando para iPhone y enviando'} a App Store Connect…`,
   );
-  if (!soloEnviar)
+  // Apple rechaza (ITMS-90189) un número de compilación repetido: se envía SIEMPRE la compilación
+  // que se acaba de hacer, por su id, nunca «la última» (que puede ser una ya enviada).
+  let idCompilacion = null;
+  if (!soloEnviar && !local) {
+    const salida = execFileSync(
+      'npx',
+      [
+        'eas-cli',
+        'build',
+        '--platform',
+        'ios',
+        '--profile',
+        'production',
+        '--non-interactive',
+        '--wait',
+        '--json',
+      ],
+      {
+        cwd: join(process.cwd(), 'apps', app),
+        env,
+        stdio: ['ignore', 'pipe', 'inherit'],
+        encoding: 'utf8',
+      },
+    );
+    idCompilacion = JSON.parse(salida)[0]?.id ?? null;
+    if (!idCompilacion) {
+      console.error(`${app}: EAS no devolvió el id de la compilación; no se envía nada.`);
+      process.exit(1);
+    }
+  } else if (!soloEnviar)
     execFileSync(
       'npx',
       [
@@ -80,7 +109,11 @@ for (const app of apps) {
         'submit',
         '--platform',
         'ios',
-        ...(local ? ['--path', join(process.cwd(), 'apks-pruebas', `${app}.ipa`)] : ['--latest']),
+        ...(local
+          ? ['--path', join(process.cwd(), 'apks-pruebas', `${app}.ipa`)]
+          : idCompilacion
+            ? ['--id', idCompilacion]
+            : ['--latest']),
         '--profile',
         'production',
         '--non-interactive',
