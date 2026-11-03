@@ -362,10 +362,30 @@ for (const P of PAISES) {
           data: { nombre: `Punto ${id.slice(-4)}`, pais: P.pais, usuarioId: puntoDueno.usuario.id },
         })
       ).json()) as { punto: { id: string } };
-      await request.post(`/datos/admin/puntos-venta/${punto.punto.id}/fondo`, {
+      // C-CONTROL-DUAL: un fondo grande pide una segunda firma. La corrida tiene una sola cuenta del
+      // equipo: sube el límite de esa moneda un momento y lo deja como estaba al terminar.
+      const umbrales = (
+        (await (
+          await request.get('/datos/admin/aprobaciones-dinero', { headers: hdr(admin) })
+        ).json()) as { umbrales: Record<string, number> }
+      ).umbrales;
+      limpiezas.push({
+        que: 'límite del control dual',
+        hacer: () =>
+          request.put('/datos/admin/aprobaciones-dinero/umbrales', {
+            headers: hdr(admin),
+            data: { umbrales },
+          }),
+      });
+      await request.put('/datos/admin/aprobaciones-dinero/umbrales', {
+        headers: hdr(admin),
+        data: { umbrales: { [P.moneda]: 100_000 * k } },
+      });
+      const fondo = await request.post(`/datos/admin/puntos-venta/${punto.punto.id}/fondo`, {
         headers: hdr(admin),
         data: { monto: 100_000 * k, comprobante: `prueba-${id}` },
       });
+      expect(fondo.status(), await fondo.text()).toBe(200);
       const codigo = (await (
         await request.post('/datos/punto-venta/codigos', {
           headers: hdr(puntoDueno.token),
