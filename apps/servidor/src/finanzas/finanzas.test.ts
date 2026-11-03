@@ -599,6 +599,12 @@ describe('C-FIN-REEMBOLSOS y C-FIN-DISPUTAS · reversiones sin saldos negativos'
     const hechos = new Map<string, string>();
     let modo: 'sinId' | 'error' | 'perdida' | 'ok' = 'sinId';
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      // Stripe dice lo devuelto del cobro: 2000 por cada reembolso hecho.
+      if (new URL(url).pathname === `/v1/payment_intents/${r.pi.id}`)
+        return Response.json({
+          id: r.pi.id,
+          latest_charge: { id: 'ch_l1', amount_refunded: 2000 * hechos.size },
+        });
       if (new URL(url).pathname !== '/v1/refunds') return simulado(url, init);
       if (modo === 'error') return Response.json({ error: { message: 'x' } }, { status: 500 });
       const clave = new Headers(init?.headers).get('idempotency-key') ?? '';
@@ -640,6 +646,60 @@ describe('C-FIN-REEMBOLSOS y C-FIN-DISPUTAS · reversiones sin saldos negativos'
       amount_refunded: 2000,
     });
     expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 3000, deuda: 0 });
+  });
+
+  it('LAN-1x · C-DEVOLUCION-SIN-ID: respuesta perdida, el aviso llega antes del reintento y el reintento da UN solo reembolso', async () => {
+    const { m, admin, e } = await escenario();
+    const r = await recargar(m, e, 5000);
+    await confirmarPago(m, r.pi);
+    const simulado = globalThis.fetch;
+    // Stripe: un reembolso por clave; lo devuelto del cobro es la suma de los reembolsos hechos.
+    const hechos = new Map<string, { id: string; amount: number }>();
+    let perder = true;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const u = new URL(url);
+      if (u.pathname === '/v1/refunds' && init?.method === 'POST') {
+        const clave = new Headers(init?.headers).get('idempotency-key') ?? '';
+        const amount = Number(new URLSearchParams(String(init?.body ?? '')).get('amount'));
+        if (!hechos.has(clave)) hechos.set(clave, { id: `re_l1x_${hechos.size + 1}`, amount });
+        if (perder) throw new TypeError('fetch failed');
+        return Response.json({ id: hechos.get(clave)!.id, amount });
+      }
+      if (u.pathname === `/v1/payment_intents/${r.pi.id}` && (init?.method ?? 'GET') === 'GET')
+        return Response.json({
+          id: r.pi.id,
+          status: 'succeeded',
+          latest_charge: {
+            id: 'ch_l1x',
+            amount_refunded: [...hechos.values()].reduce((a, x) => a + x.amount, 0),
+          },
+        });
+      return simulado(url, init);
+    });
+    const pedir = () =>
+      llamar(
+        m,
+        'POST',
+        `/datos/admin/finanzas/recargas/${r.recargaId}/reembolsar`,
+        { monto: 2000, motivo: 'pedido por la empresa', clave: 'clave-segura-1' },
+        admin.token,
+      );
+    expect((await pedir()).estado).toBe(503);
+    // El aviso de Stripe del reembolso que sí se hizo llega antes del reintento.
+    await aviso(m, 'charge.refunded', {
+      id: 'ch_l1x',
+      payment_intent: r.pi.id,
+      amount_refunded: 2000,
+    });
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 3000 });
+    perder = false;
+    expect((await pedir()).estado).toBe(200);
+    expect(hechos.size, 'un solo reembolso en Stripe').toBe(1);
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 3000, deuda: 0 });
+    // Un segundo reembolso pedido a propósito sí es otro (otra clave).
+    expect((await pedir()).estado).toBe(200);
+    expect(hechos.size).toBe(2);
+    expect((await billetera(m, e)).saldo).toMatchObject({ disponible: 1000, deuda: 0 });
   });
 
   it('reembolso desde el superadmin (con contraseña) y su aviso posterior no descuentan dos veces', async () => {

@@ -559,17 +559,24 @@ export async function reembolsarRecarga(
     throw new ErrorDatos('La empresa no tiene ese saldo disponible para devolver.', 'monto', 409);
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) throw new ErrorDatos('Los pagos no están configurados todavía.', undefined, 503);
-  const total = r.reembolsado + p.monto;
-  // C-DEVOLUCION-SIN-ID: sin el id del reembolso no se audita ni se descuenta nada; el reintento
-  // (misma clave, mismos datos) da el mismo reembolso, y si ya se hizo, el aviso lo descuenta.
-  await reembolsoConfirmado(
+  // C-DEVOLUCION-SIN-ID (LAN-1x): la clave sale de cuántos reembolsos de esta recarga ya se
+  // CONFIRMARON (su auditoría se escribe solo con el id de Stripe), nunca de `reembolsado`, que el
+  // aviso `charge.refunded` mueve: si la respuesta se pierde y el aviso llega antes del reintento,
+  // el reintento repite la MISMA clave y Stripe devuelve el mismo reembolso, no uno nuevo.
+  const previos = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM finanzas_auditoria WHERE accion = 'recarga.reembolso_pedido' AND objeto = ?",
+    )
+    .bind(r.id)
+    .first<{ n: number }>();
+  const reembolsoId = await reembolsoConfirmado(
     stripe,
     {
       payment_intent: r.stripe_pi,
       amount: p.monto,
       metadata: { recarga_empresa_id: r.id, empresa_id: e.id },
     },
-    `reembolso-recarga-${r.id}-${total}`,
+    `reembolso-recarga-${r.id}-pedido-${Number(previos?.n ?? 0) + 1}`,
   );
   await db
     .prepare(
@@ -580,12 +587,33 @@ export async function reembolsarRecarga(
       'recarga.reembolso_pedido',
       r.id,
       e.id,
-      JSON.stringify({ monto: p.monto, motivo: p.motivo }),
+      JSON.stringify({ monto: p.monto, motivo: p.motivo, reembolso: reembolsoId }),
     )
     .run();
-  // El descuento lo hace el MISMO camino que el aviso (diferencia contra lo ya descontado).
-  await reembolsoDeRecarga(db, { payment_intent: r.stripe_pi, amount_refunded: total });
-  return { reembolsado: total };
+  // Lo devuelto en total lo dice Stripe (el cobro), no una suma local que el aviso ya pudo mover.
+  // El descuento lo hace el MISMO camino que el aviso (diferencia contra lo ya descontado). Si
+  // Stripe no responde aquí, lo descuenta el aviso `charge.refunded` cuando llegue.
+  const pi = await stripe
+    .get<{ latest_charge?: { amount_refunded?: number } | string | null }>(
+      `/payment_intents/${r.stripe_pi}`,
+      { expand: ['latest_charge'] },
+    )
+    .catch((x: unknown) => {
+      console.error('reembolso de recarga: no se pudo leer lo devuelto en Stripe', r.id, x);
+      return null;
+    });
+  const cargo = pi?.latest_charge;
+  const total =
+    cargo && typeof cargo === 'object' && typeof cargo.amount_refunded === 'number'
+      ? cargo.amount_refunded
+      : null;
+  if (total != null)
+    await reembolsoDeRecarga(db, { payment_intent: r.stripe_pi, amount_refunded: total });
+  const fresca = await db
+    .prepare('SELECT reembolsado FROM recargas_empresa WHERE id = ?')
+    .bind(r.id)
+    .first<{ reembolsado: number }>();
+  return { reembolsado: Number(fresca?.reembolsado ?? r.reembolsado), reembolso: reembolsoId };
 }
 
 /**
