@@ -91,7 +91,9 @@ describe('Divoox Flex · panel de empresas', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('lista mis empresas y crea una nueva con Idempotency-Key', async () => {
+  // TIPOS-1: escribe más de diez casillas letra por letra (≈1 s sola); con toda la verificación en
+  // paralelo pasaba de los 5 s por defecto y caía por azar. El tiempo es el del flujo, no un umbral.
+  it('lista mis empresas y crea una nueva con Idempotency-Key', { timeout: 20_000 }, async () => {
     const llamadas = servidor({
       '/datos/cuentas/yo': json({ usuario }),
       '/datos/mi-franquicia': json({ ruta: null }),
