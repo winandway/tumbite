@@ -39,7 +39,9 @@ describe('portada del cliente como los grandes', () => {
 
   it('en la portada solo salen los servicios disponibles y «Más»; nada de «Pronto»', () => {
     const servicios = leer(...CLIENTE, 'inicio', 'Servicios.tsx');
-    expect(servicios).toContain("s.accion === 'abrir'");
+    // POR-3 (C-SOLO-LO-TERMINADO): el filtro «solo lo que abre» vive en `serviciosTerminados`
+    // (compartido, con su prueba en servicios.test.ts); la portada tiene que usarlo.
+    expect(servicios).toContain('serviciosTerminados(');
     expect(servicios).not.toContain('etiquetaServicio');
     expect(servicios).toContain('horizontal');
   });
