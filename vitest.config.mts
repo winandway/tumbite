@@ -34,7 +34,7 @@ export default defineConfig({
       {
         test: {
           name: 'panel',
-          include: ['apps/panel/src/**/*.test.tsx'],
+          include: ['apps/panel/src/**/*.test.{ts,tsx}'],
           environment: 'jsdom',
           setupFiles: ['./vitest.setup.ts'],
         },
