@@ -295,8 +295,12 @@ for (const idioma of ['en', 'es'] as const) {
     // ofrecer al repartidor de este: se cierran antes de empezar. C-RECORRIDO-NO-PISA (31 oct 2026):
     // SOLO los de restaurantes del recorrido (@recorrido.test) y SOLO los repartidores de Miami, donde
     // corre; antes cancelaba los pedidos de cualquiera y cortó una prueba de Richard en Michigan.
+    // SIG-9 (3 nov 2026): también los pedidos de prueba que dejan las pruebas internas del sitio de
+    // pruebas (Fase 3, cuentas @prueba.invalid) cuando una corrida se corta antes de limpiar: uno
+    // «aceptado» en Miami, a 8 km, se le ofreció al repartidor del recorrido en inglés y «Llegué»
+    // decía «estás a 8286 m» (falló tres corridas seguidas). Nunca toca pedidos de personas reales.
     sql(
-      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL AND restaurante_id IN (SELECT r.id FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE u.correo LIKE '%@recorrido.test')",
+      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL AND restaurante_id IN (SELECT r.id FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE u.correo LIKE '%@recorrido.test' OR u.correo LIKE '%@prueba.invalid')",
     );
     // Y ningún repartidor de un recorrido anterior se queda conectado en Miami (se llevaría la oferta).
     sql("UPDATE repartidores SET conectado = 0 WHERE zona_id = 'US-FL-MIAMI'");

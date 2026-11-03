@@ -2794,3 +2794,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo (`apps/servidor/src/fotoLimpia.ts`):** `limpiarPng` corta en IEND y cuenta lo de detrás como quitado; `limpiarWebp` recorre solo hasta 8 + largo RIFF (un largo imposible vale como «hasta el final») y lo de detrás se corta; si se cortó algo, el largo RIFF se reescribe.
 - **Pruebas (comprobadas en rojo el 3 nov):** `fotoLimpia.test.ts` («PNG: lo pegado después de IEND no pasa…», «WebP: lo pegado después del largo RIFF no pasa»). Las reproducciones del revisor (`sig6xr.test.ts`, `sig6xr2.test.ts`) pasan.
 - **Qué NO tocar:** los tres formatos se cortan en el fin real de la imagen (EOI, IEND, largo RIFF), siempre.
+
+## C-RECORRIDO-NO-PISA · pedidos de las pruebas internas (SIG-9, 3 nov 2026). Todos los países.
+
+- **Qué se rompía:** en el sitio de pruebas, «recorrido completo de un pedido (en)» falló tres corridas seguidas (41574943163, 41576672796, 41581669386) en «Llegué al restaurante»: la app decía «You’re still 8286 m from the store».
+- **Causa real:** la prueba interna de la Fase 3 (`/datos/interno/diagnostico/f3/*`, cuentas `zz-f3…@prueba.invalid`) deja un pedido «aceptado» sin repartidor en Miami (25.7, −80.2) cuando su corrida se corta antes de `f3/cerrar`; estaba el `zz-f3q-c8d234c01b1d` del 3 nov 03:04. El repartidor recién conectado del recorrido en inglés recibía ESA oferta (a 8,3 km de su restaurante) en vez de la suya. La limpieza del arranque solo cancelaba los pedidos de restaurantes `@recorrido.test`.
+- **Qué se hizo:** `e2e/recorrido/recorrido.spec.ts` cancela al empezar también los pedidos sin repartidor de los restaurantes de prueba `@prueba.invalid`. Nunca toca pedidos de personas reales.
+- **Cómo se comprueba:** la corrida de `pruebas-rama` tiene que pasar «recorrido completo de un pedido (en)».
+- **Qué NO tocar:** la limpieza solo mira cuentas de prueba (`@recorrido.test`, `@prueba.invalid`).

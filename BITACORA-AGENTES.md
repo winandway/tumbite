@@ -1,3 +1,5 @@
+2026-11-03 · desarrollador · SIG-9 recorrido (en) en staging: el pedido abandonado de la prueba F3 se le ofrecía al repartidor; la limpieza del arranque lo cancela · ok (se confirma en pruebas-rama) · ver git log SIG-9
+2026-11-03 · desarrollador · SIG-6y PNG y WebP cortados en IEND y largo RIFF · ok · 80e0fb70e
 2026-11-03 · revisor-calidad · SIG-4yr revisión del apartado atómico del control dual (SIG-4y): una sola sentencia, 20 a la vez con idas intercaladas, fallo a mitad libera, sin huérfanos, conciliación cuadra · ok, VISTO BUENO · 8fb78a8fd
 2026-11-03 · desarrollador · SIG-4y apartado atómico del control dual (INSERT … SELECT condicional, prueba de 20 a la vez en rojo) · ok · 8fb78a8fd
 2026-11-03 · desarrollador · SIG-6x JPEG cortado en el fin de la imagen (MPF y foto en movimiento) y GPS de la foto del paquete de Envíos · ok · caa8387c3
