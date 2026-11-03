@@ -50,7 +50,11 @@ test.afterAll(() => {
 
 const ORIGEN = { lat: 25.7617, lng: -80.1918, direccion: '100 SE 2nd St, Miami' };
 const DESTINO = { lat: 25.79, lng: -80.13, direccion: '1000 Collins Ave, Miami Beach' };
-const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+// SIG-6z: un PNG que cuadra (firma + IEND); uno sin IEND se rechaza con el 415 de foto dañada.
+const PNG = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42,
+  0x60, 0x82,
+]);
 
 test('un envío de punta a punta: PIN para quien recibe, foto y entrega con el PIN (es)', async ({
   browser,
