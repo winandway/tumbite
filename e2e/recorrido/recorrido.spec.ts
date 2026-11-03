@@ -889,6 +889,21 @@ for (const idioma of ['en', 'es'] as const) {
     await rapp.getByRole('button', { name: `${L.aceptar} · 20` }).click();
     await expect(panel.getByRole('button', { name: L.listo })).toBeVisible({ timeout: 20_000 });
     await foto(panel, 'restaurante-pedido-aceptado');
+    // BRF-4b: en el inicio de la app del restaurante, el título de la cocina queda DEBAJO de la
+    // tarjeta de «Cocina ocupada», nunca encima (en la web las columnas se aplastaban).
+    await expect(async () => {
+      const titulo = await rapp
+        .getByText(/^(En cocina y por salir|In the kitchen and going out)/)
+        .first()
+        .boundingBox();
+      const tarjeta = await rapp
+        .getByText(/^(Cocina ocupada|Busy kitchen)$/)
+        .first()
+        .boundingBox();
+      expect(titulo && tarjeta).toBeTruthy();
+      expect(titulo!.y).toBeGreaterThanOrEqual(tarjeta!.y + tarjeta!.height);
+    }).toPass({ timeout: 20_000 });
+    await foto(rapp, 'restapp-inicio-cocina');
     await fotoRestApps('restapp-preparando');
     await expect(rapp.getByText(/Time elapsed|Tiempo transcurrido/)).toBeVisible();
     // Las otras pestañas de la app del restaurante: pedidos, mi menú y estadísticas.

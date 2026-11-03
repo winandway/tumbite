@@ -881,8 +881,11 @@ export function Inicio() {
     </>
   );
 
+  // BRF-4b: «flex: 1» solo en la tableta (columnas lado a lado). En el celular las columnas van una
+  // debajo de otra dentro del scroll, y con flex la web les aplasta la altura y se enciman.
+  const columna = ancha ? { flex: 1 } : null;
   const columnaNuevos = (
-    <View style={{ flex: 1 }}>
+    <View style={columna}>
       {tarjetaRestaurante}
       {contadores}
       {nuevos.length ? (
@@ -1000,7 +1003,7 @@ export function Inicio() {
   );
 
   const columnaCocina = enCocina.length ? (
-    <View style={{ flex: 1 }}>
+    <View style={columna}>
       <Text style={{ fontSize: 20, fontWeight: '800', color: C.secundario, marginVertical: 8 }}>
         {tr.enCocina} ({enCocina.length})
       </Text>
