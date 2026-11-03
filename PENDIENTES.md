@@ -212,7 +212,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 Autorizar el trabajador del reloj de producción (`docs/EVALUACION-RELOJ-CLOUDFLARE.md` §B).
 - [ ] Hito 1 del cliente: catálogo y sesión, dos correcciones independientes (`docs/PLAN-CATALOGO-Y-RELOJ.md`).
 - [ ] Validar el MVP de Comida.
-- [ ] Tarea aparte (aprobada en concepto): la salud no oculta discrepancias viejas; excepciones auditables en una tabla propia, sin tocar las conciliaciones. Incluye los 10 pedidos de prueba de Novi del 11 y 12 oct, que nunca se conciliaron.
+- [x] HECHO 3 nov (NXT-1, C-DINERO-30-DIAS) Tarea aparte (aprobada en concepto): la salud no oculta discrepancias viejas; excepciones auditables en una tabla propia, sin tocar las conciliaciones. Incluye los 10 pedidos de prueba de Novi del 11 y 12 oct, que nunca se conciliaron.
 
 ## Requisitos registrados para próximos hitos (16 oct 2026, Richard; NO implementar todavía)
 
