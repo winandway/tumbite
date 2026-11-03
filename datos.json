@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-03T09:25:41.180Z",
+  "actualizado": "2026-11-03T13:28:32.000Z",
   "version": "7b9a5ca",
   "ahora": "Portada del cliente: estudio con REA de las súper apps y maqueta nueva con los servicios arriba",
   "proximo": [
@@ -303,6 +303,21 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-03",
+      "titulo": "Fotos más livianas y más seguras",
+      "texto": "Las fotos de platos, restaurantes y productos se convierten en el celular o la computadora a tres tamaños, sin costo, y cargan rápido. Las fotos HEIC del iPhone ya no se guardan (llevan la ubicación): las apps mandan JPEG. Ningún negocio puede usar la foto de otro. Todos los países."
+    },
+    {
+      "fecha": "2026-11-03",
+      "titulo": "Tiendas: foto del producto desde el panel y la app",
+      "texto": "La tienda sube la foto de cada producto desde el panel o desde «Más» → «Productos» en la app. Tiendas sigue apagado en producción. Todos los países."
+    },
+    {
+      "fecha": "2026-11-03",
+      "titulo": "Reparto de Comida según la activación del repartidor",
+      "texto": "El reparto puede leer, zona por zona, si el repartidor está activado para Comida con su vehículo y sus papeles, como DoorDash y Uber. Nace apagado en todas las zonas. Todos los países."
+    },
     {
       "fecha": "2026-11-03",
       "titulo": "Conectar el banco, ahora dentro de Divoox",
