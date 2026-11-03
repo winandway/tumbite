@@ -3094,6 +3094,19 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
     expect(r1.estado).toBe(409);
     expect(r1.datos.campo).toBe('total');
     expect(r1.datos.nuevoTotal).toBeGreaterThan(antes.total);
+    // LAN-2: la tarjeta ya está autorizada; Stripe autoriza el total nuevo con la tarjeta guardada.
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (/\/payment_intents\/pi_1$/.test(url))
+        return Response.json({
+          id: 'pi_1',
+          status: 'requires_capture',
+          payment_method: 'pm_1',
+          customer: 'cus_1',
+        });
+      if (/\/payment_intents$/.test(url) && String(init?.body).includes('off_session=true'))
+        return Response.json({ id: 'pi_2', status: 'requires_capture' });
+      return Response.json({ id: 'x', status: 'canceled' });
+    });
     const r2 = await m.llamar(
       'PATCH',
       `/datos/pedidos/${id}/direccion`,

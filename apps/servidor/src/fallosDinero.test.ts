@@ -180,6 +180,132 @@ describe('F7: cambio de dirección y el cobro en Stripe (C-FALLOS-DINERO)', () =
   });
 });
 
+describe('LAN-2 · C-DIRECCION-REAUTORIZA: cambio de dirección con la tarjeta ya autorizada', () => {
+  /** Stripe como el de verdad: con la autorización retenida no deja cambiar el monto. */
+  const stripeRetenido =
+    (nuevo: { status: string }) =>
+    (url: string, init?: RequestInit): Response | null => {
+      const metodo = init?.method ?? 'GET';
+      if (/\/payment_intents\/pi_sesion$/.test(url) && metodo === 'POST')
+        return Response.json(
+          {
+            error: {
+              message:
+                "This PaymentIntent's amount could not be updated because it has a status of requires_capture.",
+            },
+          },
+          { status: 400 },
+        );
+      if (/\/payment_intents\/pi_sesion$/.test(url) && metodo === 'GET')
+        return Response.json({
+          id: 'pi_sesion',
+          status: 'requires_capture',
+          payment_method: 'pm_guardada',
+          customer: 'cus_1',
+        });
+      if (
+        /\/payment_intents$/.test(url) &&
+        metodo === 'POST' &&
+        String(init?.body).includes('off_session=true')
+      )
+        return Response.json({ id: 'pi_nuevo', ...nuevo });
+      if (/\/payment_intents\/pi_sesion\/cancel$/.test(url))
+        return Response.json({ id: 'pi_sesion', status: 'canceled' });
+      return null;
+    };
+  const pagar = (m: Awaited<ReturnType<typeof escenario>>['m'], id: string) =>
+    m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), stripe_pago = 'pi_sesion', stripe_sesion = 'pi_sesion' WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+  const fila = (m: Awaited<ReturnType<typeof escenario>>['m'], id: string) =>
+    m.DB.prepare('SELECT direccion, total, stripe_pago, stripe_sesion FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ direccion: string; total: number; stripe_pago: string; stripe_sesion: string }>();
+
+  it('si el envío sube, se autoriza el total nuevo con la tarjeta guardada y se anula la autorización vieja', async () => {
+    const { m, cliente, pedir, llamadas } = await escenario(
+      stripeRetenido({ status: 'requires_capture' }),
+    );
+    const p = await pedir({ entrega: 'puerta' });
+    const id = p.datos.pedidoId as string;
+    await pagar(m, id);
+    llamadas.length = 0;
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/pedidos/${id}/direccion`,
+      { direccion: '900 Calle Lejos', lat: 25.9, lng: -80.3, aceptarTotal: true },
+      cliente.token,
+    );
+    expect(r.estado, JSON.stringify(r.datos)).toBe(200);
+    const f = (await fila(m, id))!;
+    expect(f.total).toBeGreaterThan(p.datos.desglose.totalCliente);
+    expect(f).toMatchObject({ stripe_pago: 'pi_nuevo', stripe_sesion: 'pi_nuevo' });
+    const nueva = llamadas.find(
+      (l) =>
+        l.metodo === 'POST' && /\/payment_intents$/.test(l.url) && l.cuerpo.includes('off_session'),
+    )!;
+    expect(nueva.cuerpo).toContain(`amount=${f.total}`);
+    expect(nueva.cuerpo).toContain('payment_method=pm_guardada');
+    expect(nueva.cuerpo).toContain('capture_method=manual');
+    expect(llamadas.some((l) => /\/payment_intents\/pi_sesion\/cancel$/.test(l.url))).toBe(true);
+  });
+
+  it('si la tarjeta no autoriza el total nuevo, la dirección no cambia y la autorización vieja sigue', async () => {
+    const { m, cliente, pedir, llamadas } = await escenario(
+      stripeRetenido({ status: 'requires_action' }),
+    );
+    const p = await pedir({ entrega: 'puerta' });
+    const id = p.datos.pedidoId as string;
+    await pagar(m, id);
+    llamadas.length = 0;
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/pedidos/${id}/direccion`,
+      { direccion: '900 Calle Lejos', lat: 25.9, lng: -80.3, aceptarTotal: true },
+      cliente.token,
+    );
+    expect(r.estado).toBe(409);
+    expect(await fila(m, id)).toMatchObject({
+      direccion: '300 Calle Prueba',
+      total: p.datos.desglose.totalCliente,
+      stripe_pago: 'pi_sesion',
+    });
+    expect(llamadas.some((l) => /\/cancel$/.test(l.url) && l.url.includes('pi_sesion'))).toBe(
+      false,
+    );
+  });
+
+  it('si el envío baja, no hace falta tocar Stripe: se capturará el total menor', async () => {
+    const { m, cliente, pedir, llamadas } = await escenario(
+      stripeRetenido({ status: 'requires_capture' }),
+    );
+    const p = await pedir({
+      entrega: 'puerta',
+      direccion: '900 Calle Lejos',
+      lat: 25.9,
+      lng: -80.3,
+    });
+    const id = p.datos.pedidoId as string;
+    await pagar(m, id);
+    llamadas.length = 0;
+    const r = await m.llamar(
+      'PATCH',
+      `/datos/pedidos/${id}/direccion`,
+      { direccion: '300 Calle Prueba', lat: 25.775, lng: -80.195, aceptarTotal: true },
+      cliente.token,
+    );
+    expect(r.estado, JSON.stringify(r.datos)).toBe(200);
+    const f = (await fila(m, id))!;
+    expect(f.total).toBeLessThan(p.datos.desglose.totalCliente);
+    expect(f.stripe_pago).toBe('pi_sesion');
+    expect(llamadas.filter((l) => l.metodo === 'POST' && /payment_intents/.test(l.url))).toEqual(
+      [],
+    );
+  });
+});
+
 describe('F10: los avisos de las cuentas conectadas de Stripe llegan con su propio secreto (C-FALLOS-DINERO)', () => {
   const SECRETO = `whsec_${crypto.randomUUID()}`;
   const SECRETO_CONECTADAS = `whsec_${crypto.randomUUID()}`;

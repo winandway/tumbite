@@ -1841,19 +1841,82 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   // SIG-3x: lo autorizado en la base solo se mueve si Stripe aceptó el monto nuevo; si no, sigue
   // siendo lo que Stripe tiene retenido (el techo real de lo que se puede capturar).
   let stripeActualizado = false;
+  // LAN-2 (C-DIRECCION-REAUTORIZA): el intento que se cobra pasa a ser otro si hubo que reautorizar.
+  let intentoNuevo: string | null = null;
+  const noSePudo = () =>
+    new ErrorDatos(
+      'No pudimos actualizar el cobro con el nuevo total. La dirección no cambió; intenta de nuevo.',
+      'total',
+      409,
+    );
   if (nuevoTotal !== Number(f.total) && intento.startsWith('pi_')) {
     const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
-    if (stripe) {
+    const monto = nuevoTotal + margenPeso;
+    if (stripe && !f.stripe_pago) {
+      // Todavía sin pagar: el intento se puede cambiar de monto.
       try {
-        await stripe.post(`/payment_intents/${intento}`, { amount: nuevoTotal + margenPeso });
+        await stripe.post(`/payment_intents/${intento}`, { amount: monto });
         stripeActualizado = true;
       } catch (e) {
         console.error('cambio de dirección: Stripe no aceptó el nuevo monto', id, e);
-        throw new ErrorDatos(
-          'No pudimos actualizar el cobro con el nuevo total. La dirección no cambió; intenta de nuevo.',
-          'total',
-          409,
-        );
+        throw noSePudo();
+      }
+    } else if (stripe) {
+      // LAN-2 (comprobado con Stripe de prueba el 3 nov): con la tarjeta ya AUTORIZADA, Stripe no
+      // deja cambiar el monto («status of requires_capture»). Si el total baja, no se toca: al
+      // entregar se captura el total menor y el resto se libera. Si sube, se autoriza el total nuevo
+      // con la tarjeta guardada (sin pedirla otra vez) y solo entonces se anula la autorización
+      // vieja: el cliente nunca queda con dos retenciones ni el pedido sin autorización.
+      const retenido = Number(
+        (
+          await db
+            .prepare('SELECT autorizado FROM autorizaciones_pedido WHERE pedido_id = ?')
+            .bind(id)
+            .first<{ autorizado: number }>()
+        )?.autorizado ?? f.total,
+      );
+      if (monto > retenido) {
+        const viejo = await stripe
+          .get<{ status?: string; payment_method?: string | null; customer?: string | null }>(
+            `/payment_intents/${intento}`,
+          )
+          .catch((e: unknown) => {
+            console.error('cambio de dirección: no se pudo leer la autorización', id, e);
+            return null;
+          });
+        if (viejo?.status !== 'requires_capture' || !viejo.payment_method || !viejo.customer)
+          throw noSePudo();
+        let nuevo: { id?: string; status?: string };
+        try {
+          nuevo = await stripe.post<{ id?: string; status?: string }>(
+            '/payment_intents',
+            {
+              amount: monto,
+              currency: 'usd',
+              customer: viejo.customer,
+              payment_method: viejo.payment_method,
+              off_session: true,
+              confirm: true,
+              capture_method: 'manual',
+              description: 'Divoox · cambio de dirección',
+              metadata: { pedido_id: id, reautoriza: intento },
+            },
+            `reautoriza-${id}-${monto}`,
+          );
+        } catch (e) {
+          console.error('cambio de dirección: la tarjeta no autorizó el total nuevo', id, e);
+          throw noSePudo();
+        }
+        if (nuevo.status !== 'requires_capture' || !nuevo.id) {
+          console.error('cambio de dirección: autorización nueva sin retener', id, nuevo.status);
+          if (nuevo.id)
+            await stripe
+              .post(`/payment_intents/${nuevo.id}/cancel`, {}, `anula-${nuevo.id}`)
+              .catch((e: unknown) => console.error('cambio de dirección: anular la nueva', e));
+          throw noSePudo();
+        }
+        intentoNuevo = nuevo.id;
+        stripeActualizado = true;
       }
     }
   }
@@ -1880,6 +1943,13 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
     .run();
   await db.batch([
     ...guardarDescuentos(db, id, descuentos),
+    ...(intentoNuevo
+      ? [
+          db
+            .prepare('UPDATE pedidos SET stripe_pago = ?, stripe_sesion = ? WHERE id = ?')
+            .bind(intentoNuevo, intentoNuevo, id),
+        ]
+      : []),
     ...(stripeActualizado
       ? [
           db
@@ -1888,6 +1958,17 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
         ]
       : []),
   ]);
+  // La autorización vieja se suelta DESPUÉS de que el pedido ya apunta a la nueva (nunca queda un
+  // pedido apuntando a una autorización anulada).
+  if (intentoNuevo) {
+    const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
+    await stripe
+      ?.post(`/payment_intents/${intento}/cancel`, {}, `anula-${intento}`)
+      .catch((e: unknown) =>
+        // Si no se pudo, vence sola a los 7 días; queda escrito para soltarla antes a mano.
+        console.error('cambio de dirección: no se pudo anular la autorización vieja', id, e),
+      );
+  }
   // C-PROMO-RESTAURANTE: con «envío gratis», lo que paga el restaurante sigue al envío nuevo.
   if (promo)
     await db

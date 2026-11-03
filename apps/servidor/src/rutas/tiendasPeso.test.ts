@@ -40,6 +40,13 @@ async function escena() {
     const u = String(url);
     const metodo = String(init?.method ?? 'GET');
     const body = new URLSearchParams(String(init?.body ?? ''));
+    // LAN-2: como el Stripe de verdad, con la tarjeta retenida el monto no se cambia: se autoriza
+    // el total nuevo con la tarjeta guardada (otra autorización) y la vieja se anula.
+    if (u.endsWith('/payment_intents') && metodo === 'POST' && body.get('off_session') === 'true') {
+      pi.amount = Number(body.get('amount'));
+      montos.actualizado.push(pi.amount);
+      return new Response(JSON.stringify({ id: PI, status: 'requires_capture' }));
+    }
     if (u.endsWith('/payment_intents') && metodo === 'POST') {
       pi.amount = Number(body.get('amount'));
       montos.creado.push(pi.amount);
@@ -57,11 +64,16 @@ async function escena() {
       return new Response(JSON.stringify(pi));
     }
     if (u.endsWith(`/payment_intents/${PI}`) && metodo === 'POST') {
+      if (pi.status === 'requires_capture')
+        return new Response(JSON.stringify({ error: { message: 'status of requires_capture' } }), {
+          status: 400,
+        });
       pi.amount = Number(body.get('amount'));
       montos.actualizado.push(pi.amount);
       return new Response(JSON.stringify(pi));
     }
-    if (u.endsWith(`/payment_intents/${PI}`)) return new Response(JSON.stringify(pi));
+    if (u.endsWith(`/payment_intents/${PI}`))
+      return new Response(JSON.stringify({ ...pi, payment_method: 'pm_1', customer: 'cus_1' }));
     return new Response(JSON.stringify({ id: 'cus_1', client_secret: 'cuss_x' }));
   });
   const m = mundo(
