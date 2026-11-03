@@ -136,9 +136,37 @@ function limpiarJpeg(b: Uint8Array): FotoLimpia {
     while (b[i + 1] === 0xff) i++;
     const marca = b[i + 1];
     if (marca === undefined) return { bytes: quitados ? unir(partes) : b, gps, quitados };
-    if (marca === 0xda) {
-      partes.push(b.subarray(i));
+    if (marca === 0xd9) {
+      // SIG-6x: fin de la imagen. Lo que venga pegado detrás (la segunda imagen MPF de iPhone y
+      // Samsung, el video de una foto en movimiento de Pixel) trae su propio EXIF y su GPS: se corta.
+      partes.push(b.subarray(i, i + 2));
+      if (i + 2 < b.length) quitados++;
       return { bytes: quitados ? unir(partes) : b, gps, quitados };
+    }
+    if (marca === 0xda) {
+      // SIG-6x: el escaneo se copia con su cabecera y sus datos hasta el siguiente marcador de
+      // verdad (0xFF00 es un 0xFF de los datos; RST0–RST7 y el relleno 0xFFFF siguen dentro). Así
+      // los marcadores entre escaneos de un JPEG progresivo pasan por la misma limpieza.
+      const largoSos = ((b[i + 2] ?? 0) << 8) | (b[i + 3] ?? 0);
+      if (largoSos < 2) throw ROTA();
+      let j = i + 2 + largoSos;
+      while (j < b.length) {
+        if (b.at(j) !== 0xff) {
+          j++;
+          continue;
+        }
+        const sig = b.at(j + 1);
+        if (sig === undefined) break;
+        if (sig === 0x00 || sig === 0xff || (sig >= 0xd0 && sig <= 0xd7)) {
+          j += sig === 0xff ? 1 : 2;
+          continue;
+        }
+        break;
+      }
+      partes.push(b.subarray(i, Math.min(j, b.length)));
+      if (j >= b.length) return { bytes: quitados ? unir(partes) : b, gps, quitados };
+      i = j;
+      continue;
     }
     if ((marca >= 0xd0 && marca <= 0xd7) || marca === 0x01) {
       partes.push(b.subarray(i, i + 2));

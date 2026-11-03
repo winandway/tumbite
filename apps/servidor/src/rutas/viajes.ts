@@ -1,4 +1,4 @@
-import { guardarFoto } from '../fotoLimpia';
+import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -572,7 +572,12 @@ viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
       503,
     );
   const clave = `envios/${id}/recogida-${nuevoId()}`;
-  await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
+  // C-FOTOS-SIN-METADATOS (SIG-6x): la foto se guarda limpia; el GPS que traía queda aparte como
+  // prueba de dónde se recogió el paquete, igual que las evidencias de los pedidos.
+  const { gps } = await guardarFoto(c.env.BUCKET, clave, bytes, tipo, {
+    cacheControl: 'private, no-store',
+  });
+  if (gps) await anotarGpsFoto(db, clave, gps);
   await db
     .prepare('UPDATE envios_persona SET foto_recogida = ? WHERE operacion_id = ?')
     .bind(clave, id)

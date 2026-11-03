@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
+import { jpegConGps } from '../pruebas/fotoConGps';
 
 /**
  * C-ENVIOS (30 oct 2026), como Uber Courier: envíos de persona a persona sobre el motor de viajes.
@@ -101,6 +102,21 @@ describe('Divoox Envíos (C-ENVIOS)', () => {
       body: PNG as BodyInit,
     });
     expect(foto.status).toBe(201);
+    // SIG-6x (C-FOTOS-SIN-METADATOS): la foto del paquete con GPS se guarda limpia y su ubicación
+    // queda aparte como prueba, igual que las evidencias de los pedidos.
+    const conGps = await e.m.crudo(`/datos/conductor/operaciones/${id}/foto-paquete`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${cond.token}`, 'content-type': 'image/jpeg' },
+      body: jpegConGps(1) as BodyInit,
+    });
+    expect(conGps.status).toBe(201);
+    const gps = await e.m.DB.prepare(
+      'SELECT g.lat, g.lng FROM envios_persona p JOIN fotos_gps g ON g.clave = p.foto_recogida WHERE p.operacion_id = ?',
+    )
+      .bind(id)
+      .first<{ lat: number; lng: number }>();
+    expect(gps?.lat).toBeCloseTo(25.775, 3);
+    expect(gps?.lng).toBeCloseTo(-80.19, 3);
     expect(await cond.paso(id, 'iniciar', {})).toBe(200);
     // Con el PIN equivocado no se entrega; con el de quien recibe, sí.
     expect(await cond.paso(id, 'terminar', { pinEntrega: pin === '0000' ? '1111' : '0000' })).toBe(

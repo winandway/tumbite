@@ -2,82 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { crearAlmacenPruebas } from './pruebas/r2';
 import { anotarGpsFoto, guardarFoto, leerTiff, limpiarFoto } from './fotoLimpia';
+import { be16, be32, jpegConGps, segmento, tiffConGps, txt } from './pruebas/fotoConGps';
 
 /**
  * C-FOTOS-SIN-METADATOS (SIG-6): ninguna foto llega al almacén con la ubicación ni los datos de la
  * cámara. Se arman fotos de verdad (JPEG, PNG y WebP) con un EXIF que trae GPS de Miami
  * (25° 46' 30" N, 80° 11' 24" W), el modelo del teléfono, XMP y comentarios.
  */
-const be16 = (n: number) => [(n >> 8) & 0xff, n & 0xff];
-const be32 = (n: number) => [(n >>> 24) & 0xff, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
-const txt = (s: string) => [...s].map((c) => c.charCodeAt(0));
-
-/** TIFF big-endian: IFD0 con modelo «PixelFone», orientación y puntero al GPS. */
-function tiffConGps(orientacion = 6): number[] {
-  const t: number[] = [...txt('MM'), 0, 42, ...be32(8)];
-  // IFD0 en 8: 3 entradas → 2 + 36 + 4 = 42 → termina en 50.
-  const modeloEn = 50;
-  const gpsEn = modeloEn + 10;
-  t.push(...be16(3));
-  t.push(...be16(0x0110), ...be16(2), ...be32(10), ...be32(modeloEn)); // modelo
-  t.push(...be16(0x0112), ...be16(3), ...be32(1), ...be16(orientacion), 0, 0);
-  t.push(...be16(0x8825), ...be16(4), ...be32(1), ...be32(gpsEn));
-  t.push(...be32(0));
-  t.push(...txt('PixelFone'), 0);
-  // GPS IFD en 60: 4 entradas → 2 + 48 + 4 = 54 → racionales desde 114.
-  const lat = gpsEn + 54;
-  const lng = lat + 24;
-  t.push(...be16(4));
-  t.push(...be16(1), ...be16(2), ...be32(2), ...txt('N'), 0, 0, 0);
-  t.push(...be16(2), ...be16(5), ...be32(3), ...be32(lat));
-  t.push(...be16(3), ...be16(2), ...be32(2), ...txt('W'), 0, 0, 0);
-  t.push(...be16(4), ...be16(5), ...be32(3), ...be32(lng));
-  t.push(...be32(0));
-  for (const [a, b] of [
-    [25, 1],
-    [46, 1],
-    [30, 1],
-    [80, 1],
-    [11, 1],
-    [24, 1],
-  ])
-    t.push(...be32(a!), ...be32(b!));
-  return t;
-}
-const segmento = (marca: number, datos: number[]) => [
-  0xff,
-  marca,
-  ...be16(datos.length + 2),
-  ...datos,
-];
-
-function jpegConGps(orientacion = 6) {
-  return new Uint8Array([
-    0xff,
-    0xd8,
-    ...segmento(0xe0, [...txt('JFIF'), 0, 1, 1, 0, 0, 1, 0, 1, 0, 0]),
-    ...segmento(0xe1, [...txt('Exif'), 0, 0, ...tiffConGps(orientacion)]),
-    ...segmento(0xe1, [...txt('http://ns.adobe.com/xap/1.0/'), 0, ...txt('<x:xmpmeta GPS/>')]),
-    ...segmento(0xe2, [...txt('ICC_PROFILE'), 0, 1, 1, 9, 9]),
-    ...segmento(0xed, [...txt('Photoshop 3.0'), 0, 1, 2]),
-    ...segmento(0xfe, txt('Tomada en casa de Ana')),
-    ...segmento(0xdb, [0, ...Array.from({ length: 64 }, () => 1)]),
-    0xff,
-    0xda,
-    ...be16(8),
-    1,
-    1,
-    0,
-    0,
-    0x3f,
-    0,
-    0x12,
-    0x34,
-    0xff,
-    0xd9,
-  ]);
-}
-
 const contiene = (b: Uint8Array, s: string) => String.fromCharCode(...b).includes(s);
 
 describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
@@ -209,5 +140,56 @@ describe('C-FOTOS-SIN-METADATOS · fotos sin datos ocultos', () => {
     expect(
       leerTiff(publica.subarray(String.fromCharCode(...publica).indexOf('Exif') + 6)).gps,
     ).toBeNull();
+  });
+
+  // SIG-6x (revisión): lo que va pegado DESPUÉS de la primera imagen (la segunda imagen MPF de
+  // iPhone y Samsung, el video de las fotos en movimiento de Pixel) no puede pasar con su EXIF.
+  it('JPEG con una segunda imagen pegada al final: se corta en el fin de la primera', () => {
+    const primera = jpegConGps(1);
+    const r = limpiarFoto(new Uint8Array([...primera, ...jpegConGps(1)]), 'image/jpeg');
+    expect(contiene(r.bytes, 'PixelFone')).toBe(false);
+    expect(r.bytes.at(-2)).toBe(0xff);
+    expect(r.bytes.at(-1)).toBe(0xd9);
+    // La imagen sigue entera: lo mismo que limpiar la primera sola.
+    expect([...r.bytes]).toEqual([...limpiarFoto(primera, 'image/jpeg').bytes]);
+  });
+
+  it('JPEG con el video de una foto en movimiento pegado: el video (con su ubicación) no pasa', () => {
+    const video = [
+      ...be32(24),
+      ...txt('ftypmp42'),
+      0,
+      0,
+      0,
+      0,
+      ...txt('mp42isom'),
+      ...be32(30),
+      ...txt('©xyz'),
+      ...txt('+25.7750-080.1900/'),
+    ];
+    const r = limpiarFoto(new Uint8Array([...jpegConGps(1), ...video]), 'image/jpeg');
+    expect(contiene(r.bytes, '+25.7750')).toBe(false);
+  });
+
+  it('JPEG progresivo: los marcadores entre escaneos se recorren y el relleno 0xFF00 y RST no cortan', () => {
+    const progresivo = new Uint8Array([
+      0xff,
+      0xd8,
+      ...segmento(0xdb, [0, ...Array.from({ length: 64 }, () => 1)]),
+      ...[0xff, 0xda, ...be16(8), 1, 1, 0, 0, 0x3f, 0],
+      ...[0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56],
+      ...segmento(0xc4, [0x10, ...Array.from({ length: 16 }, () => 0)]),
+      ...segmento(0xfe, txt('comentario entre escaneos')),
+      ...[0xff, 0xda, ...be16(8), 1, 1, 0, 0, 0x3f, 0],
+      ...[0x78, 0xff, 0xff, 0xd9],
+      ...txt('PixelFone'),
+    ]);
+    const r = limpiarFoto(progresivo, 'image/jpeg');
+    const s = String.fromCharCode(...r.bytes);
+    expect(s).not.toContain('comentario entre escaneos');
+    expect(s).not.toContain('PixelFone');
+    expect([...r.bytes.subarray(-4)]).toEqual([0x78, 0xff, 0xff, 0xd9]);
+    expect(r.bytes.filter((x, k) => x === 0xff && r.bytes[k + 1] === 0xc4).length).toBe(1);
+    expect(s).toContain(String.fromCharCode(0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56));
   });
 });
