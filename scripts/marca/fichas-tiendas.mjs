@@ -1,8 +1,8 @@
 /* global document */
 // Capturas de las fichas de las tiendas con su frase arriba, como las de las apps grandes
 // (25 oct 2026). Toma las capturas reales de capturas-tiendas/ (npm run recorrido:tiendas) y
-// arma cada imagen al MISMO tamaño exacto de la tienda: fondo negro de Divoox, la frase en
-// blanco con una palabra en rojo y la pantalla real debajo, sin estirarla.
+// arma cada imagen al MISMO tamaño exacto de la tienda: el fondo del color de cada app, arriba
+// para quién es, la frase en blanco con una palabra resaltada y la pantalla real debajo, sin estirarla.
 // Salen en capturas-tiendas-con-titulo/ (misma estructura de carpetas).
 // Uso: node scripts/marca/fichas-tiendas.mjs
 import { chromium } from '@playwright/test';
@@ -36,6 +36,29 @@ const FRASES = {
   },
 };
 
+// C-ICONOS-POR-APP (3 nov 2026, lámina aprobada por Richard): cada app con su color y una etiqueta
+// de para quién es, para que las tres no se vean iguales en las tiendas (Apple 4.3).
+const TEMAS = {
+  'Divoox (cliente)': {
+    fondo: '#F20D20',
+    resalte: '#101010',
+    etiqueta: ['FOR CUSTOMERS', 'PARA CLIENTES'],
+    color: '#FFFFFF',
+  },
+  'Divoox Driver (repartidor)': {
+    fondo: '#1F4D69',
+    resalte: '#4AA5DC',
+    etiqueta: ['FOR DRIVERS', 'PARA REPARTIDORES'],
+    color: '#4AA5DC',
+  },
+  'Divoox Restaurants (restaurante)': {
+    fondo: '#101010',
+    resalte: '#F20D20',
+    etiqueta: ['FOR RESTAURANTS', 'PARA RESTAURANTES'],
+    color: '#F20D20',
+  },
+};
+
 // Ancho y alto de un PNG (vienen en la cabecera, bytes 16 a 23).
 const imageSize = (b) => ({ width: b.readUInt32BE(16), height: b.readUInt32BE(20) });
 
@@ -61,6 +84,8 @@ for (const ruta of archivos(ORIGEN).sort()) {
   const clave = [...lista.keys()].find((k) => nombre?.startsWith(k));
   if (!clave) continue;
   const [en, es] = lista.get(clave);
+  const tema = new Map(Object.entries(TEMAS)).get(app) ?? TEMAS['Divoox Restaurants (restaurante)'];
+  const etiqueta = tema.etiqueta[idioma === 'Español' ? 1 : 0];
   const { width: w, height: h } = imageSize(readFileSync(ruta));
   const tableta = formato === 'Tableta';
   const datos = `data:image/png;base64,${readFileSync(ruta).toString('base64')}`;
@@ -71,15 +96,16 @@ for (const ruta of archivos(ORIGEN).sort()) {
   await pagina.setContent(
     `<!doctype html><meta charset="utf-8"><style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
-html,body{margin:0;width:${w}px;height:${h}px;background:#101010;overflow:hidden}
+html,body{margin:0;width:${w}px;height:${h}px;background:${tema.fondo};overflow:hidden}
 .t{box-sizing:border-box;height:${h - alto}px;display:flex;align-items:center;justify-content:center;
   padding:0 ${Math.round(w * 0.07)}px;font-family:Poppins,sans-serif;font-weight:800;color:#fff;
-  font-size:${tituloPx}px;line-height:1.12;text-align:center}
-.t b{color:#F20D20}
+  font-size:${tituloPx}px;line-height:1.12;text-align:center;flex-direction:column;gap:${Math.round(tituloPx * 0.35)}px}
+.t i{font-style:normal;font-size:${Math.round(tituloPx * 0.42)}px;letter-spacing:.08em;color:${tema.color}}
+.t b{color:${tema.resalte}}
 .p{display:flex;justify-content:center}
 .p img{height:${alto}px;width:auto;border-radius:${Math.round(w * (tableta ? 0.018 : 0.05))}px ${Math.round(w * (tableta ? 0.018 : 0.05))}px 0 0;
   box-shadow:0 0 0 ${Math.round(w * 0.012)}px #2a2a2a}
-</style><div class="t"><span>${frase(idioma === 'Español' ? es : en)}</span></div><div class="p"><img src="${datos}"></div>`,
+</style><div class="t"><i>${etiqueta}</i><span>${frase(idioma === 'Español' ? es : en)}</span></div><div class="p"><img src="${datos}"></div>`,
     { waitUntil: 'networkidle' },
   );
   await pagina.evaluate(() => document.fonts.ready);

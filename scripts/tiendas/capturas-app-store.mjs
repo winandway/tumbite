@@ -63,7 +63,14 @@ for (const app of APPS) {
       .data;
     for (const [carpeta, tipo] of TIPOS) {
       if (carpeta === 'Tableta' && !app.tableta) continue;
-      const dir = join('capturas-tiendas', app.carpeta, 'Apple App Store', idioma, carpeta);
+      // C-ICONOS-POR-APP: las de la tienda llevan el color de su app y para quién es.
+      const dir = join(
+        'capturas-tiendas-con-titulo',
+        app.carpeta,
+        'Apple App Store',
+        idioma,
+        carpeta,
+      );
       if (!fs.existsSync(dir)) continue;
       const archivos = fs
         .readdirSync(dir)

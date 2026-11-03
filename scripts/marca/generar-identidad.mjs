@@ -104,8 +104,10 @@ await png(join(PUB, 'og.png'), {
 // 3. Apps: un ícono por app con las variantes oficiales del manual.
 const APPS = [
   { app: 'cliente', fondo: ROJO, iso: ISO_SOBRE_ROJO },
-  { app: 'repartidor', fondo: NEGRO, iso: ISO_OSCURO },
-  { app: 'restaurante', fondo: '#FFFFFF', iso: ISO_CLARO },
+  // C-ICONOS-POR-APP (3 nov 2026, lámina aprobada por Richard): cada app con su color, para que
+  // las tres no se vean iguales en las tiendas (Apple 4.3). Driver lleva el azul de logística.
+  { app: 'repartidor', fondo: '#1F4D69', iso: ISO_OSCURO },
+  { app: 'restaurante', fondo: NEGRO, iso: ISO_OSCURO },
 ];
 for (const { app, fondo, iso } of APPS) {
   const A = join(RAIZ, 'apps', app, 'assets');
