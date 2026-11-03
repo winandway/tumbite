@@ -56,6 +56,44 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
     expect(await saldo()).toBe(9_999);
   });
 
+  it('SIG-4y: veinte ajustes A LA VEZ tampoco pasan del límite (el apartado es atómico)', async () => {
+    const { m, saldo, ajuste } = await escenario();
+    // La base de pruebas contesta en orden: para que las peticiones se crucen como en D1, cada
+    // lectura espera un momento antes de responder (las demás peticiones avanzan mientras tanto).
+    const preparar = m.DB.prepare.bind(m.DB);
+    m.DB.prepare = ((sql: string) => {
+      const st = preparar(sql);
+      const bind = st.bind.bind(st);
+      const conPausa = (x: D1PreparedStatement) => {
+        const first = x.first.bind(x) as D1PreparedStatement['first'];
+        x.first = (async (...a: Parameters<D1PreparedStatement['first']>) => {
+          const r = await (first as (...b: unknown[]) => Promise<unknown>)(...a);
+          await new Promise((ok) => setTimeout(ok, 5));
+          return r;
+        }) as D1PreparedStatement['first'];
+        return x;
+      };
+      st.bind = (...v: unknown[]) => conPausa(bind(...v));
+      return conPausa(st);
+    }) as typeof m.DB.prepare;
+    const rs = await Promise.all(Array.from({ length: 20 }, () => ajuste(9_999)));
+    expect(rs.filter((r) => r.estado === 200)).toHaveLength(1);
+    expect(rs.filter((r) => r.estado === 202)).toHaveLength(19);
+    expect(await saldo()).toBe(9_999);
+  });
+
+  it('SIG-4y: si el movimiento falla, lo apartado se devuelve y no cuenta', async () => {
+    const { m, e, ajuste } = await escenario();
+    // Un ajuste negativo mayor que el saldo no se puede hacer: falla y no deja nada apartado.
+    const falla = await ajuste(-5_000);
+    expect(falla.estado).toBeGreaterThanOrEqual(400);
+    const apartado = await m.DB.prepare('SELECT COUNT(*) AS n FROM dinero_manual WHERE objeto = ?')
+      .bind(e.id)
+      .first<{ n: number }>();
+    expect(Number(apartado?.n)).toBe(0);
+    expect((await ajuste(9_999)).estado).toBe(200);
+  });
+
   it('el mismo objeto movido por dos personas también suma', async () => {
     const { m, ajuste } = await escenario();
     const otra = await m.cuenta('admin', 'Soporte Otra');

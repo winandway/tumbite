@@ -246,31 +246,47 @@ export async function hacerOPedirAprobacion(c: Ctx, s: Solicitud) {
   // SIG-4x: fraccionar no salta el control. Se suma lo que esta persona movió a mano en esta moneda
   // en las últimas 24 h, y lo movido sobre el mismo objeto (por cualquiera), como el límite
   // acumulado de los bancos. Lo aprobado con segunda firma no cuenta: ya lo revisó otra persona.
-  const acumulado = await acumuladoDe(db, u.id, s.objeto, mm.moneda);
-  if (!pasaUmbral(await leerUmbrales(db), mm.moneda, acumulado + Math.abs(mm.monto))) {
-    const r = await ejecutarDual(c.env, db, s.tipo, s.datos, u.id);
-    await db
-      .prepare(
-        'INSERT INTO dinero_manual (id, usuario_id, tipo, objeto, moneda, monto) VALUES (?, ?, ?, ?, ?, ?)',
-      )
-      .bind(crypto.randomUUID(), u.id, s.tipo, s.objeto, mm.moneda, Math.abs(mm.monto))
-      .run();
-    return c.json(r);
+  // SIG-4y: la suma y el apartado son UNA sola orden (INSERT … SELECT con la condición): dos
+  // pedidos a la vez no pueden leer los dos «cero acumulado»; si el movimiento falla, se devuelve.
+  const apartado = await apartarManual(db, u.id, s, mm, await leerUmbrales(db));
+  if (apartado) {
+    try {
+      return c.json(await ejecutarDual(c.env, db, s.tipo, s.datos, u.id));
+    } catch (e) {
+      await db.prepare('DELETE FROM dinero_manual WHERE id = ?').bind(apartado).run();
+      throw e;
+    }
   }
   return pedirAprobacion(c, u.id, s, mm);
 }
 
-/** Lo movido a mano sin segunda firma en 24 h: el mayor entre lo de la persona y lo del objeto. */
-async function acumuladoDe(db: D1Database, usuarioId: string, objeto: string, moneda: string) {
-  const f = await db
+/**
+ * Aparta el monto en `dinero_manual` SOLO si con él no se pasa el límite (lo de la persona y lo del
+ * objeto en 24 h, en esa moneda). Devuelve el id apartado, o null si hace falta la segunda firma.
+ */
+export async function apartarManual(
+  db: D1Database,
+  usuarioId: string,
+  s: Pick<Solicitud, 'tipo' | 'objeto'>,
+  mm: { moneda: string; monto: number },
+  umbrales: Record<string, number>,
+): Promise<string | null> {
+  const limite = new Map(Object.entries(umbrales)).get(mm.moneda) ?? 0;
+  const monto = Math.abs(mm.monto);
+  if (monto > limite) return null;
+  const id = crypto.randomUUID();
+  const r = await db
     .prepare(
-      `SELECT
-         (SELECT COALESCE(SUM(monto), 0) FROM dinero_manual WHERE usuario_id = ?1 AND moneda = ?3 AND creado_en >= datetime('now', '-24 hours')) AS persona,
-         (SELECT COALESCE(SUM(monto), 0) FROM dinero_manual WHERE objeto = ?2 AND moneda = ?3 AND creado_en >= datetime('now', '-24 hours')) AS objeto`,
+      `INSERT INTO dinero_manual (id, usuario_id, tipo, objeto, moneda, monto)
+       SELECT ?1, ?2, ?3, ?4, ?5, ?6
+        WHERE (SELECT COALESCE(SUM(monto), 0) FROM dinero_manual
+                WHERE usuario_id = ?2 AND moneda = ?5 AND creado_en >= datetime('now', '-24 hours')) + ?6 <= ?7
+          AND (SELECT COALESCE(SUM(monto), 0) FROM dinero_manual
+                WHERE objeto = ?4 AND moneda = ?5 AND creado_en >= datetime('now', '-24 hours')) + ?6 <= ?7`,
     )
-    .bind(usuarioId, objeto, moneda)
-    .first<{ persona: number; objeto: number }>();
-  return Math.max(Number(f?.persona ?? 0), Number(f?.objeto ?? 0));
+    .bind(id, usuarioId, s.tipo, s.objeto, mm.moneda, monto, limite)
+    .run();
+  return r.meta.changes ? id : null;
 }
 
 /** Deja la solicitud pendiente (sin duplicarla) y responde 202 con el aviso en palabras. */
