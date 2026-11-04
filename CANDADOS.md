@@ -2717,7 +2717,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa real (no es un fallo):** C-IDENTIDAD-UNICA trata «nombre+algo@dominio» (y los puntos en Gmail) como el mismo buzón, para que nadie abra varias cuentas con un solo correo y repita los regalos de bienvenida. Ya existía go+cliente1@windoce.com. Lo que estaba mal era el mensaje.
 - **Arreglo:** en `cuentas.post('/registro')`, si el correo es exactamente el mismo, el mensaje sigue igual; si es el mismo buzón escrito de otra forma, dice «Ya hay una cuenta con este mismo correo escrito de otra forma (por ejemplo, con un «+» o con puntos)…», en los dos idiomas.
 - **Prueba (comprobada en rojo):** apps/servidor/src/rutas/correoObligatorio.test.ts, «el correo repetido se explica».
-- **Qué NO tocar:** la regla de identidad única sigue igual.
+- **C-CORREO-EQUIPO (mismo día):** en el dominio propio (windoce.com, `DOMINIOS_EQUIPO` en packages/compartido/src/identidadUnica.ts) el «+algo» NO se quita: cada go+clienteN@windoce.com es una cuenta de prueba distinta del equipo. En los demás dominios la regla sigue igual. Prueba en rojo: packages/compartido/src/identidadUnica.test.ts, «correos de prueba del equipo».
+- **Qué NO tocar:** la regla de identidad única sigue igual para todos los demás dominios.
 
 ## C-CARRITO-INVITADO (4 nov 2026, Richard grabando el video para Apple). Todos los países.
 

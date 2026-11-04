@@ -4,6 +4,11 @@
  * o con el teléfono «(305) 555-0100» cuando ya existe «3055550100».
  */
 const GMAIL = new Set(['gmail.com', 'googlemail.com']);
+/**
+ * C-CORREO-EQUIPO (4 nov 2026): el dominio propio de la empresa. Ahí cada «+algo» es una cuenta de
+ * prueba distinta del equipo (videos para las tiendas, repasos), no alguien que repite regalos.
+ */
+const DOMINIOS_EQUIPO = new Set(['windoce.com']);
 
 export function correoCanonico(correo: string): string {
   const limpio = correo.trim().toLowerCase();
@@ -11,8 +16,8 @@ export function correoCanonico(correo: string): string {
   if (arroba < 1) return limpio;
   let local = limpio.slice(0, arroba);
   let dominio = limpio.slice(arroba + 1);
-  // «+algo» es un alias del mismo buzón en casi todos los proveedores.
-  local = local.split('+')[0] ?? local;
+  // «+algo» es un alias del mismo buzón en casi todos los proveedores (no en el dominio propio).
+  if (!DOMINIOS_EQUIPO.has(dominio)) local = local.split('+')[0] ?? local;
   if (GMAIL.has(dominio)) {
     // Gmail ignora los puntos del nombre.
     local = local.replace(/\./g, '');

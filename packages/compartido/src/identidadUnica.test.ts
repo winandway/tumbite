@@ -17,3 +17,14 @@ describe('identidad única (C-IDENTIDAD-UNICA)', () => {
     expect(telefonoCanonico(undefined)).toBeNull();
   });
 });
+
+describe('correos de prueba del equipo (C-CORREO-EQUIPO)', () => {
+  // 4 nov 2026, Richard grabando el video para Apple: go+cliente3…10@windoce.com chocaban todos con
+  // go+cliente1@windoce.com. En el dominio propio, cada «+algo» es una cuenta de prueba distinta.
+  it('en windoce.com el «+algo» no se quita; en los demás dominios sí', () => {
+    expect(correoCanonico('go+cliente10@windoce.com')).toBe('go+cliente10@windoce.com');
+    expect(correoCanonico('Go+Cliente1@Windoce.com')).toBe('go+cliente1@windoce.com');
+    expect(correoCanonico('juan.perez+2@gmail.com')).toBe('juanperez@gmail.com');
+    expect(correoCanonico('ana+uno@empresa.com')).toBe('ana@empresa.com');
+  });
+});
