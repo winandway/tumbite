@@ -2708,7 +2708,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompía:** divoox.com no tiene registro MX; las respuestas de un cliente a support@divoox.com (avisos «Te respondimos tu caso») no llegaban a nadie (Gmail: 4.4.1, se agota el tiempo).
 - **Arreglo:** `enviarCorreo` (apps/servidor/src/correo.ts) pone siempre `reply_to` = `CORREOS_SOPORTE.divoox` (soporte+divoox@windoce.com), salvo que el correo pida otro con `responderA`.
 - **Candado:** apps/servidor/src/correoResponderA.test.ts (rojo sin el arreglo).
-- **Falta (cuenta del dominio):** activar la recepción de correo de divoox.com (enrutamiento al buzón de soporte) para que también lleguen los correos escritos a mano a support@divoox.com.
+- **Regla (4 nov 2026, Gerencia con autorización de Richard): divoox.com NUNCA recibe correo.** No se le pone MX ni enrutamiento. Desde divoox.com solo se ENVÍAN avisos (no-reply, orders, sales y los demás remitentes de `REMITENTES`), siempre con «responder a» en windoce.com. Todo lo que tenga que recibir (contacto público, soporte, el user-agent que dejamos a terceros) va a windoce.com (`CORREOS_SOPORTE`).
+- **Candado C-CORREO-SIN-RECIBIR-DIVOOX:** apps/servidor/src/correoSinRecibirDivoox.test.ts. Se pone en rojo si en el código vivo (apps y packages, sin pruebas) aparece escrita una dirección de divoox.com distinta de no-reply, si un buzón de `CORREOS_SOPORTE` no es de windoce.com, o si un correo sale con «responder a» en divoox.com (`enviarCorreo` lo cambia por el buzón de soporte). Comprobado en rojo el 4 nov antes del arreglo (el user-agent de Open Food Facts en rutas/tiendas.ts decía soporte@divoox.com).
 
 ## C-PROMO-DIA-LOCAL (BRF-2, 2 nov 2026). Todos los países.
 

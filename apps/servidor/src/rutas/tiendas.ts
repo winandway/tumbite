@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
+  CORREOS_SOPORTE,
   RESTRICCIONES,
   RESTRICCIONES_BLOQUEADAS,
   alcoholPermitido,
@@ -786,7 +787,7 @@ tiendas.get('/mi-restaurante/productos/codigo/:codigo', async (c) => {
     r = await fetch(
       `https://world.openfoodfacts.org/api/v2/product/${codigo}.json?fields=product_name,product_name_es,product_name_en,brands,quantity,image_front_url`,
       {
-        headers: { 'user-agent': 'Divoox/1.0 (soporte@divoox.com)' },
+        headers: { 'user-agent': `Divoox/1.0 (${CORREOS_SOPORTE.divoox})` },
         signal: AbortSignal.timeout(8_000),
       },
     );

@@ -43,6 +43,14 @@ export function remitente(env: Pick<Env, 'SITIO_URL'>, de: Remitente) {
   return { ...r, address: r.address.replace(`@${DOMINIO_CORREO}`, `@${dominioCorreo(env)}`) };
 }
 
+/** Un «responder a» en divoox.com se perdería: se cambia por el buzón de soporte. */
+function responderA(pedido: string | undefined): string {
+  const limpio = pedido?.trim() ?? '';
+  const d = limpio.toLowerCase();
+  if (!d || d.endsWith('@divoox.com') || d.endsWith('.divoox.com')) return CORREOS_SOPORTE.divoox;
+  return limpio;
+}
+
 export type Correo = {
   de: Remitente;
   para: string;
@@ -124,9 +132,9 @@ export async function enviarCorreo(env: Env, correo: Correo): Promise<ResultadoC
     subject: correo.asunto,
     text: correo.texto,
     html: correo.html ?? aHtml(correo.texto, correo.idioma, correo.imagen),
-    // C-CORREO-RESPONDER-A: divoox.com no recibe correo (sin MX); las respuestas van al buzón
-    // de soporte que sí recibe, salvo que el correo pida otro.
-    reply_to: { address: correo.responderA ?? CORREOS_SOPORTE.divoox },
+    // C-CORREO-RESPONDER-A y C-CORREO-SIN-RECIBIR-DIVOOX: divoox.com nunca recibe correo (sin MX);
+    // las respuestas van al buzón de soporte que sí recibe, salvo que el correo pida otro que reciba.
+    reply_to: { address: responderA(correo.responderA) },
   };
   let res: Response;
   try {
