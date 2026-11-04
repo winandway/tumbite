@@ -38,9 +38,19 @@ describe('si Stripe no pinta el formulario, se ve el error', () => {
   });
 });
 
-describe('la app del cliente no funciona sin sesión (C-SESION-APP)', () => {
-  it('todas sus pantallas van dentro de ConSesion y la sesión revisa el papel', () => {
-    expect(leer('app/_layout.tsx')).toMatch(/<ConSesion[\s\S]*<Stack[\s\S]*<\/ConSesion>/);
+// C-SESION-APP, puesto al día el 4 nov 2026 con C-MIRAR-SIN-CUENTA (Apple 5.1.1 v): se mira sin cuenta;
+// todo lo que es de la cuenta (pagar, pedidos, Mi cuenta…) sigue sin funcionar sin sesión, pantalla por
+// pantalla con `conCuenta` (la lista completa la vigila cuentaEnLaApp.test.ts).
+describe('la app del cliente no funciona sin sesión en lo que es de la cuenta (C-SESION-APP)', () => {
+  it('pagar, los pedidos y Mi cuenta van dentro de ConSesion y la sesión revisa el papel', () => {
+    for (const pantalla of [
+      'app/cart.tsx',
+      'app/order/[id].tsx',
+      'app/orders.tsx',
+      'app/account.tsx',
+    ])
+      expect(leer(pantalla), pantalla).toMatch(/export default conCuenta\(/);
+    expect(leer('ConCuenta.tsx')).toMatch(/<ConSesion[\s\S]*<Pantalla[\s\S]*<\/ConSesion>/);
     const sesion = readFileSync(
       join(CLIENTE, '..', '..', '..', 'packages', 'movil', 'src', 'sesion.tsx'),
       'utf8',
