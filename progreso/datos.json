@@ -305,6 +305,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-03",
+      "titulo": "Comida lista para Miami: cobros y comanda",
+      "texto": "Devoluciones que cuadran con Stripe, cambio de dirección que vuelve a autorizar la tarjeta (probado con Stripe de prueba), comanda impresa desde la app del restaurante con el nombre corto del cliente, accesibilidad de la web y apps de iPhone en TestFlight. Todos los países."
+    },
+    {
+      "fecha": "2026-11-03",
       "titulo": "Portada con logo y «Más» terminada",
       "texto": "El logo de Divoox va arriba de la portada. «Más» muestra los servicios que ya funcionan en cuadros de dos en dos, sin «Pronto». Y la publicación se recupera sola si una prueba la cancela. En vivo en divoox.com. Todos los países."
     },
