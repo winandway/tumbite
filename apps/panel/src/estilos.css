@@ -5770,3 +5770,117 @@ body.modo-tableta .panel-contenido {
     display: none;
   }
 }
+
+/* C-DESFILE-FLOTA (4 nov 2026): desfile de vitrina de la flota, sin carretera. */
+.desfile {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+  background: #fff;
+  border-bottom: 1px solid #ecedef;
+}
+.desfile-piso {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 40px;
+  height: 2px;
+  background: #f20d20;
+}
+.desfile-auto {
+  --alto-desfile: 150px;
+  position: absolute;
+  left: 0;
+  bottom: 42px;
+  height: var(--alto-desfile);
+  width: calc(var(--alto-desfile) * var(--proporcion, 2));
+  transform: translateX(100vw);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+  will-change: transform;
+}
+.desfile-izq {
+  animation-name: desfile-izq;
+}
+.desfile-der {
+  animation-name: desfile-der;
+  transform: translateX(calc(-100% - 20px));
+}
+.desfile-auto img {
+  position: relative;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+/* El reflejo en el piso: la misma foto, de cabeza y muy suave, cortada por el borde. */
+.desfile-auto .desfile-reflejo {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 2px);
+  transform: scaleY(-1);
+  opacity: 0.1;
+}
+.desfile-sombra {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -6px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgb(16 16 16 / 28%);
+  filter: blur(6px);
+}
+/* Entra, se detiene en el centro como en una vitrina y sale. Ocupa 1/6 del ciclo. */
+@keyframes desfile-izq {
+  0% {
+    transform: translateX(100vw);
+  }
+  7% {
+    transform: translateX(calc(50vw - 50%));
+  }
+  10% {
+    transform: translateX(calc(50vw - 50%));
+  }
+  16.66%,
+  100% {
+    transform: translateX(calc(-100% - 20px));
+  }
+}
+@keyframes desfile-der {
+  0% {
+    transform: translateX(calc(-100% - 20px));
+  }
+  7% {
+    transform: translateX(calc(50vw - 50%));
+  }
+  10% {
+    transform: translateX(calc(50vw - 50%));
+  }
+  16.66%,
+  100% {
+    transform: translateX(100vw);
+  }
+}
+@media (max-width: 600px) {
+  .desfile {
+    height: 150px;
+  }
+  .desfile-piso {
+    bottom: 28px;
+  }
+  .desfile-auto {
+    --alto-desfile: 100px;
+    bottom: 30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desfile-auto {
+    animation: none;
+    display: none;
+  }
+  .desfile-auto[data-vehiculo='sedan'] {
+    display: block;
+    transform: translateX(calc(50vw - 50%));
+  }
+}

@@ -23,3 +23,19 @@ describe('la avenida del banner', () => {
     expect(container.querySelector('.ld-carretera-via .ld-carretera-lema')).toBeNull();
   });
 });
+
+describe('el desfile de la flota (C-DESFILE-FLOTA)', () => {
+  it('seis vehículos grandes, alternando el sentido, cada uno con su ancho y su foto', async () => {
+    const { DesfileFlota } = await import('./DesfileFlota');
+    const { container } = render(<DesfileFlota />);
+    const autos = [...container.querySelectorAll<HTMLElement>('.desfile-auto')];
+    expect(autos).toHaveLength(6);
+    autos.forEach((a, i) => {
+      expect(a.classList.contains(i % 2 ? 'desfile-der' : 'desfile-izq')).toBe(true);
+      // Con su ancho propio sale entero de la vista (antes se amontonaban en el borde).
+      expect(Number(a.style.getPropertyValue('--proporcion'))).toBeGreaterThan(1);
+      const src = a.querySelector('img')?.getAttribute('src') ?? '';
+      expect(existsSync(join(__dirname, '..', '..', 'public', src)), src).toBe(true);
+    });
+  });
+});
