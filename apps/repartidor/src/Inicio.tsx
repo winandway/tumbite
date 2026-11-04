@@ -1399,7 +1399,12 @@ export function Inicio() {
         activa={pestana}
         alTocar={(p) => setVista(p === 'ganancias' ? 'billetera' : p === 'perfil' ? 'datos' : p)}
       />
-      <Modal visible={escaneando} animationType="slide" onRequestClose={() => setEscaneando(false)}>
+      <Modal
+        presentationStyle="pageSheet"
+        visible={escaneando}
+        animationType="slide"
+        onRequestClose={() => setEscaneando(false)}
+      >
         <View style={{ flex: 1, backgroundColor: '#000' }}>
           <CameraView
             style={{ flex: 1 }}

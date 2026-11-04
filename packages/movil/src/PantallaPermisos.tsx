@@ -38,7 +38,12 @@ export function PantallaPermisos({
   // debajo del reloj en el iPhone).
   const bordes = useSafeAreaInsets();
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={alAceptar}>
+    <Modal
+      presentationStyle="pageSheet"
+      visible={visible}
+      animationType="slide"
+      onRequestClose={alAceptar}
+    >
       <View
         style={{
           flex: 1,

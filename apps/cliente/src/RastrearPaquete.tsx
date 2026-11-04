@@ -164,7 +164,12 @@ export function RastrearPaquete({
           </View>
         ) : null}
       </View>
-      <Modal visible={escaneando} animationType="slide" onRequestClose={() => setEscaneando(false)}>
+      <Modal
+        presentationStyle="pageSheet"
+        visible={escaneando}
+        animationType="slide"
+        onRequestClose={() => setEscaneando(false)}
+      >
         <View style={{ flex: 1, backgroundColor: '#101010' }}>
           <CameraView
             style={{ flex: 1 }}

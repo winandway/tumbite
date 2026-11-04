@@ -2641,6 +2641,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/cliente/src/app/order/[id].tsx` (`recoge`, `estadosRecoger`, `pasosRecoger`, `listoEn`, `pediste.recoger`), `apps/cliente/src/app/cart.tsx` + `textos.ts` (`propinaRecoger`, `propinaNotaRecoger`, `notasRecoger`, propina en 0 % al elegir recoger), `apps/servidor/src/rutas/pedidos.ts` (la recogida crea PIN siempre).
 - **Candados:** `e2e/recorrido/recogerCompleto.spec.ts` (comprobado en rojo quitando el arreglo de la pantalla) y la prueba BRE-7b de `apps/servidor/src/rutas/cupones.test.ts`.
 
+## C-HOJAS-AREA-SEGURA (3 nov 2026, lo vio Richard grabando para Apple). Todos los países.
+
+- **Qué se rompía y cómo se veía:** en la app del cliente de iPhone, en la hoja de detalle de un plato, el botón de volver quedaba debajo de la barra de estado (la hora y «◀ TestFlight») y no se podía tocar: había que cerrar la app. Apple rechaza eso por la pauta 2.1.
+- **Causa real:** las ventanas (`Modal`) de pantalla completa en iPhone empiezan detrás de la barra de estado. Había seis así: el detalle del plato (`app/restaurant/[id].tsx`), elegir la dirección (`inicio/ElegirDireccion.tsx`), el lector de códigos del paquete (`RastrearPaquete.tsx`), el lector del repartidor (`apps/repartidor/src/Inicio.tsx`), los dos lectores de Mi ruta (`flex/MiRuta.tsx`) y los permisos (`packages/movil/src/PantallaPermisos.tsx`).
+- **Qué se hizo:** las seis abren con `presentationStyle="pageSheet"`, la hoja de iOS de las apps de Apple. Empieza debajo de la barra de estado, se cierra deslizando hacia abajo y llama a `onRequestClose`. Las transparentes (avisos al centro, la oferta de abajo, el selector de idioma) no cambian.
+- **Candado:** `apps/servidor/src/hojasAreaSegura.test.ts` recorre todas las `<Modal` de las tres apps y del paquete compartido, y exige `pageSheet` en toda la que no sea transparente. Estuvo en rojo en las seis antes del arreglo.
+- **Qué NO tocar:** una ventana nueva de pantalla completa nace como hoja; nada se dibuja detrás de la barra de estado.
+
 ## C-REVISION-SIN-SENAL (3 nov 2026, meta urgente de Gerencia). Todos los países.
 
 - **Qué se rompía y cómo se veía:** en la app del cliente, «Divoox Review Kitchen» salía cerrado salvo que alguien tuviera abierta su app o su panel (C-PAUSA-SIN-SENAL, como el «Tablet Heartbeat» de DoorDash). Ni Richard al grabar ni el revisor de Apple lo tienen abierto.

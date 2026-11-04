@@ -677,7 +677,12 @@ export default function MenuRestaurante() {
         </View>
       ) : null}
 
-      <Modal visible={!!detalle} animationType="slide" onRequestClose={() => setEligiendo(null)}>
+      <Modal
+        presentationStyle="pageSheet"
+        visible={!!detalle}
+        animationType="slide"
+        onRequestClose={() => setEligiendo(null)}
+      >
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           {detalle ? (
             <>

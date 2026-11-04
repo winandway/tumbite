@@ -57,7 +57,12 @@ export function ElegirDireccion({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={cerrar}>
+    <Modal
+      presentationStyle="pageSheet"
+      visible={visible}
+      animationType="slide"
+      onRequestClose={cerrar}
+    >
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <View
           style={{

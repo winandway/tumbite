@@ -637,6 +637,7 @@ function MiRutaContenido({
 
   const escaner = (
     <Modal
+      presentationStyle="pageSheet"
       visible={escaneando !== null}
       animationType="slide"
       onRequestClose={() => setEscaneando(null)}
@@ -2160,6 +2161,7 @@ function DetalleParada({
             </>
           ) : null}
           <Modal
+            presentationStyle="pageSheet"
             visible={escaneandoParada}
             animationType="slide"
             onRequestClose={() => setEscaneandoParada(false)}
