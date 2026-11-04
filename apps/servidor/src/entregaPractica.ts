@@ -18,8 +18,15 @@ import { ErrorDatos } from './validar';
 type Ctx = Context<{ Bindings: Env; Variables: Variables }>;
 type EsRevisor = (c: Ctx, correo: string) => Promise<boolean>;
 
-/** Adónde «se entrega» la práctica: una dirección pública cerca del restaurante de revisión. */
-const DESTINO = { direccion: '200 S Biscayne Blvd, Miami, FL 33131', lat: 25.7726, lng: -80.1873 };
+/**
+ * Adónde «se entrega» la práctica: una dirección pública en la ciudad del restaurante de revisión.
+ * Las pruebas y la revisión se hacen en Novi, Michigan, donde vive y prueba Richard (3 nov 2026).
+ */
+const DESTINOS: Record<string, { direccion: string; lat: number; lng: number }> = {
+  'US-MI-NOVI': { direccion: '45175 W 10 Mile Rd, Novi, MI 48375', lat: 42.4712, lng: -83.4745 },
+  'US-FL-MIAMI': { direccion: '200 S Biscayne Blvd, Miami, FL 33131', lat: 25.7726, lng: -80.1873 },
+};
+const destinoDe = (zona: unknown) => DESTINOS[String(zona ?? '')] ?? DESTINOS['US-MI-NOVI']!;
 const NOTA = {
   es: 'Entrega de práctica: no se cobra ni se paga nada.',
   en: 'Practice delivery: nothing is charged or paid.',
@@ -45,6 +52,7 @@ function comoPedido(f: Fila) {
   const estado = enCamino ? 'en_camino' : f.estado === 'aceptado' ? 'aceptado' : 'listo';
   const restLat = f.rest_lat == null ? null : Number(f.rest_lat);
   const restLng = f.rest_lng == null ? null : Number(f.rest_lng);
+  const destino = destinoDe(f.zona_id);
   const base = aPedido({
     ...f,
     estado,
@@ -55,9 +63,9 @@ function comoPedido(f: Fila) {
     propina: 0,
     regalo: 0,
     total: f.subtotal,
-    direccion: DESTINO.direccion,
-    lat: DESTINO.lat,
-    lng: DESTINO.lng,
+    direccion: destino.direccion,
+    lat: destino.lat,
+    lng: destino.lng,
     notas: `${NOTA.en} / ${NOTA.es}`,
     pagado_en: f.creado_en,
     recogido_en: f.e_recogido ?? null,

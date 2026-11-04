@@ -18,8 +18,8 @@ Producción cobra con Stripe en vivo, y la tarjeta de prueba no funciona ahí. P
 
 1. Pantalla de inicio del iPhone → tocar el ícono rojo de **Divoox**.
 2. **«New here? Create your account»** → «Full name», «Email» (un correo nuevo), «Mobile phone», «Password» → marcar «I agree to the Terms of Service…» → **«Create account»**.
-3. Arriba, **«Deliver to»** → escribir 1 SE 3rd Ave, Miami, FL 33131 y elegir la sugerencia.
-4. Tocar **«Food»** → abrir **«Divoox Review Kitchen»** (tiene que estar abierta la app Restaurants con su cuenta; si no, sale cerrado).
+3. Arriba, **«Deliver to»** («Current location»): en Novi, con la ubicación de Richard, ya sale «Divoox Review Kitchen» (27500 Novi Rd, a unas 2 mi). Si no, en **«Delivery address»** escribir 27500 Novi Rd, Novi, MI 48377 y elegir la sugerencia.
+4. Tocar **«Food»** → abrir **«Divoox Review Kitchen»** (sale abierto aunque nadie tenga abierta la app Restaurants).
 5. Tocar **«+»** en dos platos → abrir el carrito → mostrar «Food», «Delivery», «Service fee», «Tip for your driver» y «Total» → **«Continue to payment»** → cerrar la hoja de pago sin pagar.
 6. Pestaña **«My account»** → **«Sign out»** → **«Sign in»** con el mismo correo.
 7. **«My account»** → **«⋮»** junto a «Your account» → **«Delete account»** → escribir **DELETE** → **«Delete my account»** → la app vuelve a la pantalla de entrar.
