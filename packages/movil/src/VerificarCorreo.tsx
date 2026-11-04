@@ -1,9 +1,10 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { enIdioma, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { AvisoBorrador } from './AvisoBorrador';
+import { ConfirmarBorrado } from './OpcionesCuenta';
 import { useSesion } from './sesion';
 import { Boton, C, Campo, CampoClave } from './ui';
 
@@ -23,6 +24,7 @@ const T = {
     guardar: 'Cambiar el correo y mandar el enlace',
     cancelar: 'Cancelar',
     salir: 'Cerrar sesión',
+    borrar: 'Borrar esta cuenta',
     sinConexion:
       'No pudimos comprobar tu correo. Revisa tu conexión; lo intentamos de nuevo solos.',
     verificado: 'Tu correo quedó verificado',
@@ -44,6 +46,7 @@ const T = {
     guardar: 'Change email and send the link',
     cancelar: 'Cancel',
     salir: 'Sign out',
+    borrar: 'Delete this account',
     sinConexion: 'We couldn’t check your email. Check your connection; we’ll keep trying.',
     verificado: 'Your email is verified',
     verificadoDetalle: 'You’re all set. Your account is active and you can start ordering.',
@@ -186,6 +189,7 @@ function ConfirmaTuCorreo({
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState<'' | 'reenviar' | 'mirar' | 'cambiar'>('');
   const [cambiando, setCambiando] = useState(false);
+  const [borrando, setBorrando] = useState(false);
   // NINGÚN FORMULARIO PIERDE LO ESCRITO: el correo nuevo se guarda solo; la contraseña nunca.
   const b = useBorrador({
     formulario: 'cambiar-correo-puerta',
@@ -314,6 +318,16 @@ function ConfirmaTuCorreo({
         <Boton texto={t.cambiar} secundario alTocar={() => setCambiando(true)} />
       )}
       <Boton texto={t.salir} secundario alTocar={() => void salir()} />
+      {/* C-BORRAR-EN-LA-APP: una cuenta sin confirmar también se puede borrar (Apple 5.1.1 v). */}
+      <Pressable
+        onPress={() => setBorrando(true)}
+        accessibilityRole="button"
+        style={{ alignSelf: 'center', padding: 10 }}
+        testID="puerta-borrar-cuenta"
+      >
+        <Text style={{ color: C.acento, fontWeight: '700' }}>{t.borrar}</Text>
+      </Pressable>
+      <ConfirmarBorrado visible={borrando} alCerrar={() => setBorrando(false)} />
     </ScrollView>
   );
 }

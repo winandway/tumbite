@@ -25,6 +25,8 @@ describe('cuenta del cliente dentro de la app', () => {
     expect(puerta).toMatch(/\/datos\/cuentas\/confirmar\/reenviar/);
     expect(puerta).toMatch(/AppState\.addEventListener\('change'/);
     expect(puerta).toMatch(/verificado/);
+    // Una cuenta sin confirmar también se puede borrar sin salir de la app.
+    expect(puerta).toMatch(/<ConfirmarBorrado/);
   });
 
   it('borrar la cuenta desde los tres puntos no saca de la app', () => {
