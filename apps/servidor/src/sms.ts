@@ -58,6 +58,14 @@ export function destinoPermitido(env: Env, para: string): boolean {
   return prefijos.some((p) => para.startsWith(p));
 }
 
+/** C-LLAMADAS-CON-LIMITE: Twilio que no contesta en 10 s cuenta como fallo; nunca cuelga la petición. */
+const TIEMPO_TWILIO_MS = 10_000;
+let tiempoTwilio = TIEMPO_TWILIO_MS;
+/** Solo para pruebas. */
+export function usarTiempoTwilio(ms: number | null) {
+  tiempoTwilio = ms ?? TIEMPO_TWILIO_MS;
+}
+
 async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<string, string>) {
   const cuerpo = new URLSearchParams(datos).toString();
   const c = credencialTwilio(env);
@@ -71,6 +79,7 @@ async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<str
         'content-type': 'application/x-www-form-urlencoded',
       },
       body: cuerpo,
+      signal: AbortSignal.timeout(tiempoTwilio),
     },
   );
   const r = (await res.json().catch(() => null)) as { sid?: string; message?: string } | null;

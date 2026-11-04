@@ -1294,6 +1294,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - Qué se rompía: en staging, dos recorridos de Comida quedaron colgados (uno 47 minutos en «no puedo confirmar», que manda un correo al equipo). El correo, los avisos de Expo y Stripe se llamaban sin límite de tiempo: si el servicio no contestaba, la petición de la persona tampoco.
 - Arreglo: `AbortSignal.timeout` en `correo.ts` (10 s, `TIEMPO_CORREO_MS`), `notificaciones.ts` (10 s) y `stripe.ts` (25 s; toda escritura a Stripe lleva clave de idempotencia, repetir es seguro). Los fallos ya se manejaban: ahora llegan a tiempo.
 - Candado: `correoLimite.test.ts`, comprobado en rojo quitando el límite (la prueba se queda colgada).
+- **Ampliado el 3 nov 2026:** Twilio (`sms.ts`, 10 s, `usarTiempoTwilio`) no tenía límite. El SMS de respaldo de «llegó a la puerta» sale dentro de la ubicación del repartidor: con Twilio lento, esa petición quedó colgada más de 30 s y el recorrido de staging cayó en el pedido en efectivo (no era LAN-2a). También llevan límite ahora Checkr (`antecedentes.ts`, 15 s), el DNS de las integraciones de Flex (5 s), Open Food Facts (`tiendas.ts`, 8 s) y Turnstile (`turnstile.ts`, 5 s; si no contesta se deja pasar, como antes). Candado: `smsLimite.test.ts`, comprobado en rojo sin el límite (la llamada se queda «colgado»).
 
 ## C-STRIPE-AVISO-PRINCIPAL · El aviso principal es el que recibe los pagos
 

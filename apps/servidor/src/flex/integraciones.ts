@@ -60,7 +60,7 @@ async function resolverDoH(nombre: string): Promise<string[]> {
   for (const tipo of ['A', 'AAAA']) {
     const r = await fetch(
       `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(nombre)}&type=${tipo}`,
-      { headers: { accept: 'application/dns-json' } },
+      { headers: { accept: 'application/dns-json' }, signal: AbortSignal.timeout(5_000) },
     );
     if (!r.ok) throw new Error(`dns ${r.status}`);
     const j = (await r.json()) as { Answer?: { type: number; data: string }[] };

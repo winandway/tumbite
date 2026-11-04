@@ -33,6 +33,8 @@ async function checkr<T>(env: Env, ruta: string, datos: Record<string, string>):
       'content-type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams(datos).toString(),
+    // C-LLAMADAS-CON-LIMITE
+    signal: AbortSignal.timeout(15_000),
   });
   const r = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
   if (!res.ok || !r) throw new Error(r?.error ?? `Checkr respondió ${res.status}`);

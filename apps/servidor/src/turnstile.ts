@@ -20,6 +20,8 @@ export async function pasaTurnstile(
     const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       body: cuerpo,
+      // C-LLAMADAS-CON-LIMITE: si Cloudflare no contesta, se deja pasar (como siempre), pero a tiempo.
+      signal: AbortSignal.timeout(5_000),
     });
     const datos = (await r.json()) as { success?: boolean };
     return datos.success === true;
