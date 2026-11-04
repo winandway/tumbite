@@ -95,6 +95,7 @@ try {
     '/calculator',
     '/franchise',
     '/flex',
+    '/download',
     '/track',
     '/privacy',
     '/terms',

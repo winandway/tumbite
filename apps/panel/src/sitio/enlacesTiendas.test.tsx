@@ -23,9 +23,10 @@ describe('enlaces a las apps en Google Play', () => {
     window.history.pushState(null, '', '/');
     render(<App />);
     const cabecera = screen.getByRole('banner');
+    // C-DESCARGAS: la cabecera lleva a la zona de descarga, donde cada quien elige su app.
     expect(within(cabecera).getByRole('link', { name: /Get the app/ })).toHaveAttribute(
       'href',
-      GOOGLE_PLAY.cliente,
+      '/download',
     );
     const pie = screen.getByRole('contentinfo');
     for (const url of Object.values(GOOGLE_PLAY))
@@ -39,5 +40,18 @@ describe('enlaces a las apps en Google Play', () => {
       expect(a.getAttribute('rel')).toContain('noopener');
     // Lo que no está terminado no se muestra: nada de «Coming soon» de las tiendas.
     expect(document.body.textContent).not.toMatch(/Coming soon to the App Store/);
+  });
+
+  it('la zona de descarga trae las tres apps, con su ícono, para qué es cada una y su botón', () => {
+    window.history.pushState(null, '', '/es/download');
+    render(<App />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Descarga las apps de Divoox',
+    );
+    for (const [app, url] of Object.entries(GOOGLE_PLAY)) {
+      const tarjeta = screen.getByTestId(`descarga-${app}`);
+      expect(tarjeta.querySelector(`a[href="${url}"]`), app).not.toBeNull();
+      expect(tarjeta.querySelector('img')?.getAttribute('src')).toBe(`/marca/app-${app}.webp`);
+    }
   });
 });

@@ -14,6 +14,7 @@ import { InvitacionConductor } from './sitio/InvitacionConductor';
 import { Seguimiento } from './sitio/Seguimiento';
 import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { Flex } from './sitio/Flex';
+import { Descargas } from './sitio/Descargas';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
@@ -167,6 +168,13 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <ViajeCompartido codigo={compartido[1]} idioma={idioma} />
+      </Sitio>
+    );
+  // C-DESCARGAS: la zona de descarga de las tres apps.
+  if (ruta === '/download')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <Descargas idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/flex')

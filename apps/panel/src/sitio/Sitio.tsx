@@ -5,7 +5,7 @@ import { Enlace } from '../Enlace';
 import { SelectorIdioma } from '../SelectorIdioma';
 import { TEXTOS_SITIO } from './textos';
 import { Pie } from './Pie';
-import { BotonGooglePlay, TEXTOS_TIENDAS } from './Tiendas';
+import { BotonDescargas } from './Tiendas';
 
 export function Sitio({
   idioma,
@@ -39,12 +39,8 @@ export function Sitio({
           <Enlace a="/docs">{t.menu.docs}</Enlace>
         </nav>
         <div className="cabecera-derecha">
-          {/* C-ENLACES-TIENDAS: la app del cliente a un toque, también desde la cabecera. */}
-          <BotonGooglePlay
-            app="cliente"
-            texto={enIdioma(TEXTOS_TIENDAS, idioma).app}
-            className="boton-tienda cabecera-tienda"
-          />
+          {/* C-DESCARGAS: la zona de descarga de las tres apps, desde cualquier página. */}
+          <BotonDescargas idioma={idioma} className="boton-tienda cabecera-tienda" />
           <Enlace a="/panel" className="boton-panel">
             {t.menu.panel}
           </Enlace>

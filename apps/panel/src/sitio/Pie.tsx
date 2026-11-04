@@ -155,6 +155,7 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <BotonGooglePlay app="cliente" texto="Divoox" className="pie-tienda" />
           <BotonGooglePlay app="driver" texto="Divoox Driver" className="pie-tienda" />
           <BotonGooglePlay app="restaurantes" texto="Divoox Restaurants" className="pie-tienda" />
+          <Enlace a="/download">{idioma === 'en' ? 'All the apps' : 'Todas las apps'}</Enlace>
           {/* Las apps también funcionan en el navegador. */}
           <a href="/app/">{t.appWeb}</a>
           <a href="/driver/">{t.repartidorWeb}</a>

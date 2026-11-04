@@ -395,6 +395,7 @@ const RUTAS_PUBLICAS = new Set([
   '/docs',
   '/flex',
   '/track',
+  '/download',
 ]);
 const esRutaPublica = (rutaConIdioma: string) => {
   // /es/... es la misma página pública en español (el inglés va sin prefijo).

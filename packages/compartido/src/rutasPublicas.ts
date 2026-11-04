@@ -15,6 +15,7 @@ export const PAGINAS = {
   calculator: '/calculator',
   franchise: '/franchise',
   flex: '/flex',
+  download: '/download',
   track: '/track',
   forgotPassword: '/forgot-password',
   confirmEmail: '/confirm-email',

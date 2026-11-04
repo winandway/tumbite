@@ -96,6 +96,8 @@ describe('pie de página y páginas por lugar', () => {
       '/flex',
       '/track',
       '/franchise',
+      // C-DESCARGAS (4 nov 2026): la zona de descarga de las tres apps.
+      '/download',
       '/docs',
       '/panel',
       '/app/',

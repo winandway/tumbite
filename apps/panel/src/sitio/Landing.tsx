@@ -5,7 +5,7 @@ import { useCiudadesEnVivo } from './ciudadesEnVivo';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { Icono, type NombreIcono } from './Icono';
-import { BotonGooglePlay, TEXTOS_TIENDAS } from './Tiendas';
+import { BotonDescargas, BotonGooglePlay, TEXTOS_TIENDAS } from './Tiendas';
 import { MapaCobertura } from './MapaCobertura';
 import { CONTACTO, TEXTOS_SITIO } from './textos';
 
@@ -144,7 +144,8 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             </a>
           </div>
           <div className="ld-tiendas">
-            <BotonGooglePlay app="cliente" texto={tt.cliente} />
+            {/* C-DESCARGAS: del banner principal a la zona de descarga, donde cada quien elige. */}
+            <BotonDescargas idioma={idioma} />
           </div>
         </div>
         <div className="ld-hero-apps">

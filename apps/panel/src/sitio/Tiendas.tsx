@@ -1,4 +1,5 @@
-import { type AppDivoox, GOOGLE_PLAY } from '@tumbite/compartido';
+import { type AppDivoox, GOOGLE_PLAY, type Idioma, enIdioma } from '@tumbite/compartido';
+import { Enlace } from '../Enlace';
 /** Logos de las tiendas en una sola tinta, como piden sus guías de marca. */
 export function LogoApple() {
   return (
@@ -47,14 +48,34 @@ export function BotonGooglePlay({
 export const TEXTOS_TIENDAS = {
   es: {
     app: 'Descarga la app',
+    zona: 'Descargas',
     cliente: 'Divoox en Google Play',
     driver: 'Divoox Driver en Google Play',
     restaurantes: 'Divoox Restaurants en Google Play',
   },
   en: {
     app: 'Get the app',
+    zona: 'Downloads',
     cliente: 'Get Divoox on Google Play',
     driver: 'Get Divoox Driver on Google Play',
     restaurantes: 'Get Divoox Restaurants on Google Play',
   },
 };
+
+/**
+ * C-DESCARGAS: el botón que lleva a la zona de descarga (/download), para que cada quien elija su
+ * app. Va en la cabecera y en la portada.
+ */
+export function BotonDescargas({
+  idioma,
+  className = 'boton-tienda',
+}: {
+  idioma: Idioma;
+  className?: string;
+}) {
+  return (
+    <Enlace a="/download" className={className}>
+      <LogoGooglePlay /> {enIdioma(TEXTOS_TIENDAS, idioma).app}
+    </Enlace>
+  );
+}
