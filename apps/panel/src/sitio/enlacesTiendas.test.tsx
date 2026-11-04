@@ -52,6 +52,11 @@ describe('enlaces a las apps en Google Play', () => {
       const tarjeta = screen.getByTestId(`descarga-${app}`);
       expect(tarjeta.querySelector(`a[href="${url}"]`), app).not.toBeNull();
       expect(tarjeta.querySelector('img')?.getAttribute('src')).toBe(`/marca/app-${app}.webp`);
+      // Android en verde (funciona) y iPhone en gris, sin enlace, hasta que Apple apruebe.
+      expect(tarjeta.querySelector('.descargas-android')?.getAttribute('href')).toBe(url);
+      const iphone = tarjeta.querySelector('.descargas-iphone');
+      expect(iphone?.getAttribute('aria-disabled')).toBe('true');
+      expect(iphone?.tagName).not.toBe('A');
     }
   });
 });

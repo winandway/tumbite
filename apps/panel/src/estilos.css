@@ -5612,3 +5612,44 @@ body.modo-tableta .panel-contenido {
     padding-top: 36px;
   }
 }
+.descargas-botones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: auto;
+  width: 100%;
+}
+.descargas-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 150px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: left;
+}
+.descargas-boton span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.descargas-boton strong {
+  font-size: 1rem;
+}
+.descargas-boton small {
+  font-size: 0.72rem;
+}
+.descargas-android {
+  background: #15803d;
+  color: #fff;
+}
+.descargas-android:hover {
+  background: #116b33;
+}
+.descargas-iphone {
+  background: #eeeff1;
+  color: #8a8f97;
+  cursor: default;
+}

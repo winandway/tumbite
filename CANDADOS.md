@@ -2721,7 +2721,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 ## C-DESCARGAS (4 nov 2026, Richard). Todos los países.
 
-- **Qué es:** la zona de descarga /download (y /es/download): las tres apps con su ícono real (apps/panel/public/marca/app-*.webp, sacados de los íconos de cada app), para qué es cada una y su botón de Google Play. «Get the app» / «Descarga la app» de la cabecera y el botón del banner principal llevan ahí; las secciones de la portada y el pie llevan directo a cada app, y el pie también a «Todas las apps». Está en `RUTAS_PUBLICAS` del servidor y en el prerender.
+- **Qué es:** la zona de descarga /download (y /es/download): las tres apps con su ícono real (apps/panel/public/marca/app-*.webp, sacados de los íconos de cada app), para qué es cada una, el botón de Android en verde (Google Play, funciona) y el de iPhone en gris y sin enlace («En revisión de Apple») hasta que Apple apruebe. «Get the app» / «Descarga la app» de la cabecera y el botón del banner principal llevan ahí; las secciones de la portada y el pie llevan directo a cada app, y el pie también a «Todas las apps». Está en `RUTAS_PUBLICAS` del servidor y en el prerender.
 - **Prueba:** apps/panel/src/sitio/enlacesTiendas.test.tsx («la zona de descarga trae las tres apps…») y C-PIE-ENLACES con /download.
 
 ## C-CORREO-VARIANTE (4 nov 2026, Richard grabando el video). Todos los países.

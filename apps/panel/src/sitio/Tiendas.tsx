@@ -79,3 +79,15 @@ export function BotonDescargas({
     </Enlace>
   );
 }
+
+/** Logo de Android (la cabeza del robot), en una sola tinta. */
+export function LogoAndroid() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+      <path
+        fill="currentColor"
+        d="M17.6 9.48l1.84-3.18a.38.38 0 1 0-.66-.38l-1.86 3.22a11.5 11.5 0 0 0-9.84 0L5.22 5.92a.38.38 0 1 0-.66.38L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"
+      />
+    </svg>
+  );
+}

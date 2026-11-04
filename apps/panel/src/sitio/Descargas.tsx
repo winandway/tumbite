@@ -1,5 +1,6 @@
 import { type AppDivoox, type Idioma, enIdioma } from '@tumbite/compartido';
-import { BotonGooglePlay } from './Tiendas';
+import { GOOGLE_PLAY } from '@tumbite/compartido';
+import { LogoAndroid, LogoApple } from './Tiendas';
 
 /**
  * C-DESCARGAS (4 nov 2026, Richard: «una zona de descarga con las 3 aplicaciones, un poquito de texto
@@ -14,6 +15,10 @@ const T = {
     intro:
       'Una app para cada persona del pedido. Son gratis y están en Google Play para Android. Elige la tuya y toca «Descargar».',
     descargar: 'Descargar en Google Play',
+    android: 'Android',
+    androidDetalle: 'Disponible en Google Play',
+    iphone: 'iPhone',
+    iphoneDetalle: 'En revisión de Apple',
     nota: 'En un teléfono Android, el botón abre Google Play y la instalas con un toque. Desde la computadora, Google Play te deja mandarla a tu teléfono.',
     apps: [
       {
@@ -45,6 +50,10 @@ const T = {
     intro:
       'One app for each person in the order. They’re free on Google Play for Android. Pick yours and tap “Download.”',
     descargar: 'Download on Google Play',
+    android: 'Android',
+    androidDetalle: 'Available on Google Play',
+    iphone: 'iPhone',
+    iphoneDetalle: 'In review by Apple',
     nota: 'On an Android phone, the button opens Google Play and you install it with one tap. From a computer, Google Play lets you send it to your phone.',
     apps: [
       {
@@ -77,6 +86,10 @@ const T = {
     titulo: string;
     intro: string;
     descargar: string;
+    android: string;
+    androidDetalle: string;
+    iphone: string;
+    iphoneDetalle: string;
     nota: string;
     apps: { app: AppDivoox; nombre: string; para: string; texto: string }[];
   }
@@ -104,7 +117,30 @@ export function Descargas({ idioma }: { idioma: Idioma }) {
             <h2>{a.nombre}</h2>
             <strong className="descargas-para">{a.para}</strong>
             <p>{a.texto}</p>
-            <BotonGooglePlay app={a.app} texto={t.descargar} />
+            <div className="descargas-botones">
+              {/* Android funciona: verde y con enlace. En un Android abre Google Play directo. */}
+              <a
+                className="descargas-boton descargas-android"
+                href={GOOGLE_PLAY[a.app]}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${t.descargar}: ${a.nombre}`}
+              >
+                <LogoAndroid />
+                <span>
+                  <strong>{t.android}</strong>
+                  <small>{t.androidDetalle}</small>
+                </span>
+              </a>
+              {/* iPhone todavía no: gris y sin enlace, hasta que Apple apruebe. */}
+              <span className="descargas-boton descargas-iphone" aria-disabled="true">
+                <LogoApple />
+                <span>
+                  <strong>{t.iphone}</strong>
+                  <small>{t.iphoneDetalle}</small>
+                </span>
+              </span>
+            </div>
           </li>
         ))}
       </ul>
