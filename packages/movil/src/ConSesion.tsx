@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Acceso } from './Acceso';
+import { PuertaCorreo } from './VerificarCorreo';
 import { useSesion } from './sesion';
 import { Boton, C } from './ui';
 import { TEXTOS_MOVIL } from './textos';
@@ -15,10 +16,13 @@ export function ConSesion({
   children,
   rolRegistro,
   pideCumple,
+  exigeCorreo,
 }: {
   children: ReactNode;
   rolRegistro?: 'cliente' | 'repartidor';
   pideCumple?: boolean;
+  /** C-CORREO-OBLIGATORIO: no deja entrar hasta confirmar el correo (app del cliente). */
+  exigeCorreo?: boolean;
 }) {
   const { cargando, usuario, sinConfirmar } = useSesion();
   if (cargando)
@@ -38,7 +42,8 @@ export function ConSesion({
   // ofrece reintentar (la sesión sigue guardada) o entrar con otra cuenta.
   if (!usuario && sinConfirmar) return <SesionSinConfirmar />;
   if (!usuario) return <Acceso rolRegistro={rolRegistro} pideCumple={pideCumple} />;
-  return <>{children}</>;
+  // La puerta se arma de nuevo con cada cuenta (key), para no heredar lo que vio la anterior.
+  return exigeCorreo ? <PuertaCorreo key={usuario.id}>{children}</PuertaCorreo> : <>{children}</>;
 }
 
 /**

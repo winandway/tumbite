@@ -11,6 +11,8 @@ const T = {
     listo: 'Tu correo quedó confirmado. Gracias.',
     sinToken: 'Este enlace está incompleto. Entra a tu cuenta y pide otro.',
     entrar: 'Ir a entrar',
+    app: 'Abrir la app de Divoox',
+    appDetalle: 'Vuelve a la app para empezar a pedir.',
   },
   en: {
     titulo: 'Confirm your email',
@@ -18,10 +20,18 @@ const T = {
     listo: 'Your email is confirmed. Thanks.',
     sinToken: 'This link is incomplete. Sign in and request a new one.',
     entrar: 'Go to sign in',
+    app: 'Open the Divoox app',
+    appDetalle: 'Go back to the app to start ordering.',
   },
 };
 
-/** Página del enlace del correo de bienvenida: confirma y listo. */
+/** C-CORREO-OBLIGATORIO: el enlace de la app del cliente (su «scheme» en apps/cliente/app.json). */
+export const ENLACE_APP_CLIENTE = 'tumbite-cliente://';
+
+/**
+ * Página del enlace del correo de bienvenida: confirma y listo. A una cuenta de cliente le ofrece
+ * volver a la app, que al abrirse ve el correo confirmado y la deja entrar.
+ */
 export function Confirmar({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const token = new URLSearchParams(window.location.search).get('token') ?? '';
@@ -29,12 +39,16 @@ export function Confirmar({ idioma }: { idioma: Idioma }) {
     token ? 'confirmando' : 'error',
   );
   const [error, setError] = useState(token ? '' : t.sinToken);
+  const [rol, setRol] = useState('');
 
   useEffect(() => {
     if (!token) return;
     api
-      .pedir('POST', '/datos/cuentas/confirmar', { token })
-      .then(() => setEstado('listo'))
+      .pedir<{ ok: true; rol?: string }>('POST', '/datos/cuentas/confirmar', { token })
+      .then((r) => {
+        setRol(r.rol ?? '');
+        setEstado('listo');
+      })
       .catch((x: unknown) => {
         setError(x instanceof ErrorApi ? x.message : String(x));
         setEstado('error');
@@ -51,9 +65,18 @@ export function Confirmar({ idioma }: { idioma: Idioma }) {
         <div className="ld-form ld-form-listo" role="status">
           <Icono nombre="listo" tamano={40} />
           <p>{t.listo}</p>
-          <button type="button" className="boton" onClick={() => ir('/panel')}>
-            {t.entrar}
-          </button>
+          {rol === 'cliente' ? (
+            <>
+              <p>{t.appDetalle}</p>
+              <a className="boton" href={ENLACE_APP_CLIENTE}>
+                {t.app}
+              </a>
+            </>
+          ) : (
+            <button type="button" className="boton" onClick={() => ir('/panel')}>
+              {t.entrar}
+            </button>
+          )}
         </div>
       )}
       {estado === 'error' && (

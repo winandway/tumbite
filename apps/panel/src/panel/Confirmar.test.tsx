@@ -32,4 +32,16 @@ describe('confirmar el correo', () => {
     render(<Confirmar idioma="es" />);
     expect(await screen.findByRole('alert')).toHaveTextContent('ya no sirve');
   });
+
+  // C-CORREO-OBLIGATORIO: la cuenta de cliente confirmada vuelve a la app con un toque.
+  it('a una cuenta de cliente le ofrece volver a la app', async () => {
+    window.history.pushState(null, '', '/confirm-email?token=enlace-de-prueba-de-la-pantalla');
+    vi.stubGlobal(
+      'fetch',
+      async () => new Response(JSON.stringify({ ok: true, rol: 'cliente' }), { status: 200 }),
+    );
+    render(<Confirmar idioma="en" />);
+    const volver = await screen.findByRole('link', { name: 'Open the Divoox app' });
+    expect(volver).toHaveAttribute('href', 'tumbite-cliente://');
+  });
 });

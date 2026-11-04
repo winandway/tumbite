@@ -4501,8 +4501,19 @@ const es: SeccionDocs[] = [
       {
         id: 'confirm-email',
         titulo: 'Confirmar tu correo',
-        resumen: 'Al registrarte te llega un enlace para confirmar que el correo es tuyo.',
+        resumen:
+          'Al crear tu cuenta en la app te llega un enlace. La app te deja entrar cuando confirmas que el correo es tuyo.',
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-confirma-correo-es.webp',
+            alt: 'Pantalla «Confirma tu correo» de la app de Divoox con la dirección a la que llegó el enlace y los botones «Ya lo confirmé», «Mandar el enlace otra vez» y «¿Correo equivocado? Cámbialo».',
+            pie: 'Justo después de crear la cuenta, la app te pide confirmar el correo.',
+          },
+          {
+            src: '/docs/recorrido-cliente-correo-verificado-es.webp',
+            alt: 'Pantalla «Tu correo quedó verificado» con una marca verde y el botón «Continuar».',
+            pie: 'Al tocar el enlace, la app se da cuenta sola y te deja entrar.',
+          },
           {
             src: '/docs/recorrido-restaurante-correo-es.webp',
             alt: 'Tarjeta «Correo» en la configuración de Divoox con el aviso «Tu correo todavía no está confirmado» y el enlace «Volver a mandar el enlace».',
@@ -4514,26 +4525,39 @@ const es: SeccionDocs[] = [
           'No me llegó el correo de confirmación, ¿qué hago?',
         ],
         pasos: [
-          'Después de crear tu cuenta, busca el correo «Confirma tu correo de Divoox».',
-          'Toca el enlace. Vence en dos días; si venció, entra a «Configuración» y toca «Volver a mandar el enlace».',
-          'Confirmar el correo no bloquea nada: puedes usar la app mientras tanto. Sirve para que te lleguen los recibos y para recuperar tu contraseña.',
+          'Al crear tu cuenta en la app de Divoox, verás «Confirma tu correo» con la dirección que escribiste. Busca en ese correo el mensaje «Confirma tu correo de Divoox» (mira también en spam).',
+          'Toca el enlace del correo en tu teléfono. En la página que se abre, toca «Abrir la app de Divoox».',
+          'La app se da cuenta sola, te dice «Tu correo quedó verificado» y, al tocar «Continuar», entras. Hasta entonces no se puede pedir: así cada cuenta es de una persona real y sus recibos le llegan.',
+          '¿Escribiste mal el correo? En la misma pantalla toca «¿Correo equivocado? Cámbialo», escribe el bueno y tu contraseña, y te mandamos el enlace ahí. El enlace vence en dos días; «Mandar el enlace otra vez» te manda uno nuevo.',
         ],
       },
       {
         id: 'delete',
         titulo: 'Borrar tu cuenta',
-        resumen: 'Desde el menú de la cuenta, en los tres puntos. Se borran tus datos personales.',
+        resumen:
+          'Desde los tres puntos de «Mi cuenta», sin salir de la app. Se borran tus datos personales.',
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-borrar-cuenta-es.webp',
+            alt: 'Ventana «Borrar la cuenta» dentro de la app de Divoox, con la palabra BORRAR escrita y el botón «Borrar mi cuenta».',
+            pie: 'Escribe BORRAR y toca «Borrar mi cuenta». Todo pasa dentro de la app.',
+          },
+          {
+            src: '/docs/recorrido-cliente-cuenta-borrada-es.webp',
+            alt: 'Aviso «Tu cuenta quedó borrada» con el botón «Entendido».',
+            pie: 'La app te confirma que la cuenta quedó borrada.',
+          },
           {
             src: '/docs/recorrido-web-borrar-cuenta-es.webp',
             alt: 'Página «Borrar tu cuenta de Divoox» con el botón «Borrar mi cuenta ahora» y la primera opción explicada.',
-            pie: 'La página para borrar tu cuenta, con o sin la app.',
+            pie: 'Sin la app, también puedes borrarla desde esta página.',
           },
         ],
         preguntas: ['¿Cómo borro mi cuenta?'],
         pasos: [
-          'Abre el menú de la cuenta (los tres puntos arriba a la derecha) y toca «Borrar mi cuenta». Te lleva a la página divoox.com/delete-account.',
-          'Toca «Borrar mi cuenta ahora», entra con tu cuenta, abre los tres puntos junto a Configuración, toca «Borrar mi cuenta» y escribe BORRAR.',
+          'En la app, ve a «Mi cuenta», abre los tres puntos y toca «Borrar mi cuenta».',
+          'Se abre una ventanita encima, sin salir de la app. Escribe BORRAR y toca «Borrar mi cuenta».',
+          'La app te dice «Tu cuenta quedó borrada». Al tocar «Entendido», vuelves a la pantalla de entrar.',
           'Se borran tu nombre, correo, teléfono, fecha de nacimiento, las direcciones de tus pedidos y el texto de tus calificaciones. Los importes de los pedidos quedan sin tu nombre, por obligaciones de impuestos. No se puede deshacer.',
           'Sin la app: escribe a soporte+divoox@windoce.com desde el correo de tu cuenta y la borramos en un máximo de 30 días.',
         ],
@@ -9064,8 +9088,19 @@ const en: SeccionDocs[] = [
       {
         id: 'confirm-email',
         titulo: 'Confirm your email',
-        resumen: 'When you sign up, you get a link to confirm the email is yours.',
+        resumen:
+          'When you create your account in the app, you get a link. The app lets you in once you confirm the email is yours.',
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-confirma-correo-en.webp',
+            alt: '“Confirm your email” screen in the Divoox app with the address the link was sent to and the buttons “I already confirmed it,” “Send the link again,” and “Wrong email? Change it.”',
+            pie: 'Right after you create your account, the app asks you to confirm your email.',
+          },
+          {
+            src: '/docs/recorrido-cliente-correo-verificado-en.webp',
+            alt: '“Your email is verified” screen with a green check mark and the “Continue” button.',
+            pie: 'Once you tap the link, the app notices on its own and lets you in.',
+          },
           {
             src: '/docs/recorrido-restaurante-correo-en.webp',
             alt: '“Email” card in Divoox settings with the notice “Your email isn’t confirmed yet” and the “Send the link again” link.',
@@ -9077,26 +9112,39 @@ const en: SeccionDocs[] = [
           'I didn’t get the confirmation email. What do I do?',
         ],
         pasos: [
-          'After creating your account, look for the email “Confirm your Divoox email.”',
-          'Tap the link. It expires in two days; if it did, go to “Settings” and tap “Send the link again.”',
-          'Confirming doesn’t block anything: you can use the app meanwhile. It makes sure receipts reach you and lets you recover your password.',
+          'When you create your account in the Divoox app, you’ll see “Confirm your email” with the address you typed. Look in that inbox for “Confirm your Divoox email” (check spam too).',
+          'Tap the link in the email on your phone. On the page that opens, tap “Open the Divoox app.”',
+          'The app notices on its own, tells you “Your email is verified,” and when you tap “Continue,” you’re in. Until then you can’t order: this way every account belongs to a real person and receipts reach them.',
+          'Typed the wrong email? On the same screen, tap “Wrong email? Change it,” enter the right one and your password, and we’ll send the link there. The link expires in two days; “Send the link again” sends a new one.',
         ],
       },
       {
         id: 'delete',
         titulo: 'Delete your account',
-        resumen: 'From the account menu, in the three dots. Your personal data is removed.',
+        resumen:
+          'From the three dots in “My account,” without leaving the app. Your personal data is removed.',
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-borrar-cuenta-en.webp',
+            alt: '“Delete account” window inside the Divoox app, with the word DELETE typed and the “Delete my account” button.',
+            pie: 'Type DELETE and tap “Delete my account.” Everything happens inside the app.',
+          },
+          {
+            src: '/docs/recorrido-cliente-cuenta-borrada-en.webp',
+            alt: '“Your account was deleted” notice with the “OK” button.',
+            pie: 'The app confirms your account was deleted.',
+          },
           {
             src: '/docs/recorrido-web-borrar-cuenta-en.webp',
             alt: '“Delete your Divoox account” page with the “Delete my account now” button and the first option explained.',
-            pie: 'The page to delete your account, with or without the app.',
+            pie: 'Without the app, you can also delete it from this page.',
           },
         ],
         preguntas: ['How do I delete my account?'],
         pasos: [
-          'Open the account menu (the three dots, top right) and tap “Delete my account.” It takes you to divoox.com/delete-account.',
-          'Tap “Delete my account now”, sign in, open the three dots next to Settings, tap “Delete my account,” and type DELETE.',
+          'In the app, go to “My account,” open the three dots, and tap “Delete my account.”',
+          'A small window opens on top, without leaving the app. Type DELETE and tap “Delete my account.”',
+          'The app tells you “Your account was deleted.” When you tap “OK,” you’re back at the sign-in screen.',
           'Your name, email, phone, birthday, order addresses, and rating comments are deleted. Order amounts remain without your name, for tax obligations. This can’t be undone.',
           'Without the app: email soporte+divoox@windoce.com from your account’s email and we’ll delete it within 30 days.',
         ],

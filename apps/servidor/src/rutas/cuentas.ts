@@ -1,4 +1,9 @@
-import { VERSION_TERMINOS, correoCanonico, telefonoCanonico } from '@tumbite/compartido';
+import {
+  VERSION_TERMINOS,
+  correoCanonico,
+  entornoDeHost,
+  telefonoCanonico,
+} from '@tumbite/compartido';
 import { Hono } from 'hono';
 import {
   PAGINAS,
@@ -22,7 +27,7 @@ import {
 } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
 import { limiteIntentos } from '../seguridad';
-import { enviarCorreo } from '../correo';
+import { enviarCorreo, esCorreoDePrueba } from '../correo';
 import { correoDeConfirmacion } from '../avisos';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
@@ -308,10 +313,10 @@ cuentas.post('/confirmar', async (c) => {
   const id = await sha256(d.token);
   const r = await db
     .prepare(
-      "SELECT usuario_id FROM confirmaciones WHERE id = ? AND usada_en IS NULL AND expira_en > datetime('now')",
+      "SELECT c.usuario_id, u.rol FROM confirmaciones c JOIN usuarios u ON u.id = c.usuario_id WHERE c.id = ? AND c.usada_en IS NULL AND c.expira_en > datetime('now')",
     )
     .bind(id)
-    .first<{ usuario_id: string }>();
+    .first<{ usuario_id: string; rol: Rol }>();
   if (!r)
     throw new ErrorDatos('Este enlace ya no sirve. Entra a tu cuenta y pide otro.', undefined, 410);
   await db.batch([
@@ -320,7 +325,8 @@ cuentas.post('/confirmar', async (c) => {
       .bind(r.usuario_id),
     db.prepare("UPDATE confirmaciones SET usada_en = datetime('now') WHERE id = ?").bind(id),
   ]);
-  return c.json({ ok: true });
+  // C-CORREO-OBLIGATORIO: con el rol, la página del enlace ofrece volver a la app del cliente.
+  return c.json({ ok: true, rol: r.rol });
 });
 
 /** Vuelve a mandar el enlace de confirmación a la cuenta que está entrando. */
@@ -561,9 +567,25 @@ cuentas.get('/perfil', async (c) => {
       fechaNacimiento: (f?.fecha_nacimiento as string | null) ?? null,
       idioma: f?.idioma === 'en' ? 'en' : 'es',
       correoConfirmado: Boolean(f?.correo_confirmado_en),
+      debeConfirmarCorreo: debeConfirmarCorreo(
+        c.req.url,
+        String(f?.correo ?? ''),
+        Boolean(f?.correo_confirmado_en),
+      ),
     },
   });
 });
+
+/**
+ * C-CORREO-OBLIGATORIO (4 nov 2026, Richard): la app del cliente no deja entrar sin el correo
+ * confirmado. Fuera de producción, las cuentas de dominios que no existen (las del recorrido, que no
+ * pueden recibir el enlace) no pasan por la puerta, salvo las «verificar.…», que la prueban.
+ */
+function debeConfirmarCorreo(url: string, correo: string, confirmado: boolean): boolean {
+  if (confirmado) return false;
+  if (entornoDeHost(new URL(url).host) === 'produccion') return true;
+  return !esCorreoDePrueba(correo) || correo.toLowerCase().startsWith('verificar.');
+}
 
 cuentas.patch('/yo', async (c) => {
   const u = exigir(c);

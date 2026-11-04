@@ -7,6 +7,7 @@ import { C } from './ui';
 import { useSoporte } from './soporte';
 import { TEXTOS_MOVIL } from './textos';
 import { VERSION_APP } from './version';
+import { ConfirmarBorrado } from './OpcionesCuenta';
 
 const T = {
   es: {
@@ -17,13 +18,14 @@ const T = {
   },
 };
 
-/** Menú de la cuenta (3 puntos): guías, soporte, términos y privacidad, Configuración, borrar la cuenta y la versión instalada. */
+/** Menú de la cuenta (3 puntos): guías, soporte, términos y privacidad, Configuración, borrar la cuenta (dentro de la app) y la versión instalada. */
 export function MenuCuenta() {
   const { api, idioma } = useSesion();
   const { whatsapp, abrirWhatsapp } = useSoporte(api);
   const t = enIdioma(T, idioma);
   const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const [abierto, setAbierto] = useState(false);
+  const [borrando, setBorrando] = useState(false);
 
   return (
     <View style={{ alignItems: 'flex-end' }}>
@@ -86,15 +88,16 @@ export function MenuCuenta() {
         </Pressable>
       )}
       {abierto && (
-        // Escondido en los tres puntos (regla de Richard). Lleva directo a la página que explica
-        // cómo borrar y qué se borra; ahí está el botón, con confirmación escrita (Apple 5.1.1 v).
+        // Escondido en los tres puntos (regla de Richard). C-BORRAR-EN-LA-APP: se borra aquí mismo,
+        // escribiendo DELETE, sin abrir la web (Apple 5.1.1 v).
         <Pressable
           onPress={() => {
             setAbierto(false);
-            abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion('/delete-account', idioma)}`);
+            setBorrando(true);
           }}
-          accessibilityRole="link"
+          accessibilityRole="button"
           style={{ padding: 10 }}
+          testID="menu-borrar-cuenta"
         >
           <Text style={{ fontWeight: '700', color: C.primario }}>{tm.borrarCuenta}</Text>
         </Pressable>
@@ -105,6 +108,7 @@ export function MenuCuenta() {
           {textoVersion(VERSION_APP, idioma)}
         </Text>
       )}
+      <ConfirmarBorrado visible={borrando} alCerrar={() => setBorrando(false)} />
     </View>
   );
 }

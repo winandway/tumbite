@@ -33,7 +33,7 @@ export default function Raiz() {
       <SesionProvider roles={['cliente']}>
         <CarritoProvider>
           <StatusBar style="light" />
-          <ConSesion rolRegistro="cliente" pideCumple>
+          <ConSesion rolRegistro="cliente" pideCumple exigeCorreo>
             <AbrirAvisos />
             <Stack screenOptions={{ headerShown: false }} />
           </ConSesion>
