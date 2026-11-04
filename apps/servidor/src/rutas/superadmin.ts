@@ -17,6 +17,7 @@ import { crearStripe } from '../stripe';
 import { pruebasDisputa } from '../disputas';
 import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
+import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 /**
@@ -1123,6 +1124,55 @@ superadmin.patch('/admin/usuarios/:id', async (c) => {
   ]);
   console.warn(`cuenta ${d.activo ? 'reactivada' : 'suspendida'} por soporte`, id, d.motivo);
   return c.json({ activo: d.activo });
+});
+
+/**
+ * C-BORRAR-DESDE-SUPERADMIN (4 nov 2026, Gerencia con autorización de Richard): soporte borra una
+ * cuenta (por ejemplo, creada con un correo equivocado) sin entrar con ella, con el MISMO borrado de la
+ * app (`borrarCuenta`). Pide escribir BORRAR y un motivo, y deja en auditoria_admin quién y cuándo
+ * (sin el correo completo: la cuenta ya no lo tiene). Las cuentas de revisión de las tiendas
+ * (revisor.*@windoce.com) no se borran por aquí.
+ */
+superadmin.post('/admin/usuarios/:id/borrar', async (c) => {
+  const admin = exigir(c, 'admin');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      confirmar: z.enum(['BORRAR', 'DELETE'], { error: 'Escribe BORRAR para confirmar.' }),
+      motivo: z.string().trim().min(5, { error: 'Escribe el motivo.' }).max(300),
+    }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const u = await db
+    .prepare(
+      "SELECT id, rol, correo, creado_en FROM usuarios WHERE id = ? AND activo = 1 AND rol IN ('cliente','repartidor','restaurante')",
+    )
+    .bind(id)
+    .first<{ id: string; rol: string; correo: string; creado_en: string }>();
+  if (!u) throw new ErrorDatos('Esa cuenta no existe o ya está borrada.', undefined, 404);
+  if (/^revisor[.+]/i.test(u.correo) && u.correo.toLowerCase().endsWith('@windoce.com'))
+    throw new ErrorDatos('Las cuentas de revisión de las tiendas no se borran.', undefined, 409);
+  await borrarCuenta(c.env, db, u);
+  const [local = '', dominio = ''] = u.correo.split('@');
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(
+      admin.id,
+      'cuenta_borrada',
+      `usuario:${u.id}`,
+      JSON.stringify({
+        rol: u.rol,
+        correo: `${local.slice(0, 2)}…@${dominio}`,
+        creadoEn: u.creado_en,
+        motivo: d.motivo,
+      }),
+      JSON.stringify({ borrada: true }),
+    )
+    .run();
+  return c.json({ ok: true });
 });
 
 /**

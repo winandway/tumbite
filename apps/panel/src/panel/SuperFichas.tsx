@@ -10,6 +10,7 @@ import {
 import { Enlace } from '../Enlace';
 import { ir } from '../ruta';
 import { pedir } from './api';
+import { MenuTresPuntos } from './MenuTresPuntos';
 
 /**
  * Superadmin a escala: ciudades → repartidores / clientes / restaurantes de cada ciudad, con
@@ -228,6 +229,13 @@ const T_SUSPENDER = {
     malaConducta: 'Cerrar por mala conducta',
     preguntaMala:
       'Motivo de la mala conducta. Su correo y su teléfono no podrán volver a registrarse, de ninguna forma:',
+    mas: 'Más acciones de la cuenta',
+    borrarCuenta: 'Borrar la cuenta',
+    confirmarBorrar:
+      'Se borran sus datos personales (igual que cuando la persona la borra desde la app) y no se puede deshacer. Escribe BORRAR para confirmar:',
+    motivoBorrar: 'Motivo del borrado (queda en el registro, con tu nombre y la hora):',
+    borrada: 'Cuenta borrada.',
+    palabra: 'BORRAR',
   },
   en: {
     suspender: 'Suspend account',
@@ -238,6 +246,13 @@ const T_SUSPENDER = {
     malaConducta: 'Close for misconduct',
     preguntaMala:
       'Reason for the misconduct. Their email and phone number won’t be able to sign up again, in any form:',
+    mas: 'More account actions',
+    borrarCuenta: 'Delete the account',
+    confirmarBorrar:
+      'Their personal data is deleted (the same as when the person deletes it from the app) and this can’t be undone. Type DELETE to confirm:',
+    motivoBorrar: 'Reason for the deletion (kept in the log, with your name and the time):',
+    borrada: 'Account deleted.',
+    palabra: 'DELETE',
   },
 };
 
@@ -255,6 +270,22 @@ function BotonSuspender({
 }) {
   const t = enIdioma(T_SUSPENDER, idioma);
   const [error, setError] = useState('');
+  const [borrada, setBorrada] = useState(false);
+  // C-BORRAR-DESDE-SUPERADMIN: el mismo borrado de la app, escondido en los tres puntos.
+  async function borrar() {
+    const palabra = (window.prompt(t.confirmarBorrar) ?? '').trim().toUpperCase();
+    if (palabra !== t.palabra) return;
+    const motivo = (window.prompt(t.motivoBorrar) ?? '').trim();
+    if (motivo.length < 5) return;
+    setError('');
+    try {
+      await pedir('POST', `/datos/admin/usuarios/${id}/borrar`, { confirmar: palabra, motivo });
+      setBorrada(true);
+      recargar();
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : String(e));
+    }
+  }
   async function cambiar(malaConducta = false) {
     let motivo = '';
     if (activo) {
@@ -287,6 +318,13 @@ function BotonSuspender({
             {t.malaConducta}
           </button>
         </>
+      ) : null}
+      {borrada ? <strong> {t.borrada}</strong> : null}
+      {activo && !borrada ? (
+        <MenuTresPuntos
+          etiqueta={t.mas}
+          opciones={[{ texto: t.borrarCuenta, peligro: true, alTocar: () => void borrar() }]}
+        />
       ) : null}
       {error ? (
         <span className="error-general" role="alert">
