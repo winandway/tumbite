@@ -3,7 +3,7 @@ import { VersionPublicada } from '../VersionPublicada';
 import { MARCA, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { Icono } from './Icono';
-import { LogoApple, LogoGooglePlay } from './Tiendas';
+import { BotonGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
@@ -150,14 +150,12 @@ export function Pie({ idioma }: { idioma: Idioma }) {
         </nav>
         <div className="pie-apps">
           <h3>{t.apps}</h3>
-          <span className="pie-tienda">
-            <LogoApple /> App Store
-          </span>
-          <span className="pie-tienda">
-            <LogoGooglePlay /> Google Play
-          </span>
-          <small>{t.tiendas}</small>
-          {/* Mientras llegan las tiendas, las apps ya funcionan en el navegador. */}
+          {/* C-ENLACES-TIENDAS: las tres apps, publicadas en Google Play (el logo dice la tienda). El App
+              Store, al aprobarse. */}
+          <BotonGooglePlay app="cliente" texto="Divoox" className="pie-tienda" />
+          <BotonGooglePlay app="driver" texto="Divoox Driver" className="pie-tienda" />
+          <BotonGooglePlay app="restaurantes" texto="Divoox Restaurants" className="pie-tienda" />
+          {/* Las apps también funcionan en el navegador. */}
           <a href="/app/">{t.appWeb}</a>
           <a href="/driver/">{t.repartidorWeb}</a>
         </div>

@@ -1,3 +1,4 @@
+import { type AppDivoox, GOOGLE_PLAY } from '@tumbite/compartido';
 /** Logos de las tiendas en una sola tinta, como piden sus guías de marca. */
 export function LogoApple() {
   return (
@@ -20,3 +21,40 @@ export function LogoGooglePlay() {
     </svg>
   );
 }
+
+/**
+ * C-ENLACES-TIENDAS: el botón «Get it on Google Play» de una de las tres apps. Se abre en una pestaña
+ * nueva. El texto de la app va en el nombre accesible para que se lea cuál es.
+ */
+export function BotonGooglePlay({
+  app,
+  texto,
+  className = 'boton-tienda',
+}: {
+  app: AppDivoox;
+  texto: string;
+  className?: string;
+}) {
+  return (
+    // «app» es una de las tres llaves fijas de GOOGLE_PLAY (tipo AppDivoox), no texto de fuera.
+    // eslint-disable-next-line security/detect-object-injection
+    <a className={className} href={GOOGLE_PLAY[app]} target="_blank" rel="noopener noreferrer">
+      <LogoGooglePlay /> {texto}
+    </a>
+  );
+}
+
+export const TEXTOS_TIENDAS = {
+  es: {
+    app: 'Descarga la app',
+    cliente: 'Divoox en Google Play',
+    driver: 'Divoox Driver en Google Play',
+    restaurantes: 'Divoox Restaurants en Google Play',
+  },
+  en: {
+    app: 'Get the app',
+    cliente: 'Get Divoox on Google Play',
+    driver: 'Get Divoox Driver on Google Play',
+    restaurantes: 'Get Divoox Restaurants on Google Play',
+  },
+};

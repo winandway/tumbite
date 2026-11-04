@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
+import { ErrorApi, type Idioma, enIdioma, GOOGLE_PLAY } from '@tumbite/compartido';
 import { api } from '../panel/api';
 
 /**
@@ -7,7 +7,7 @@ import { api } from '../panel/api';
  * le manda a su conductor. Dice quién lo invita y los tres pasos: instalar Divoox Driver, entrar con
  * el mismo celular o correo de la invitación y aceptarla en la app.
  */
-const ANDROID = 'https://play.google.com/store/apps/details?id=com.windoce.tumbite.driver';
+const ANDROID = GOOGLE_PLAY.driver;
 const IPHONE = 'https://apps.apple.com/app/id6829108327';
 
 const T = {

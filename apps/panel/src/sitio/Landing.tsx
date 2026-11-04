@@ -5,7 +5,7 @@ import { useCiudadesEnVivo } from './ciudadesEnVivo';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
 import { Icono, type NombreIcono } from './Icono';
-import { LogoApple, LogoGooglePlay } from './Tiendas';
+import { BotonGooglePlay, TEXTOS_TIENDAS } from './Tiendas';
 import { MapaCobertura } from './MapaCobertura';
 import { CONTACTO, TEXTOS_SITIO } from './textos';
 
@@ -97,6 +97,7 @@ const pantallasReales = (idioma: Idioma) => ({
 
 export function Landing({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma);
+  const tt = enIdioma(TEXTOS_TIENDAS, idioma);
   const estadoCiudad = useCiudadesEnVivo();
   const a = enIdioma(ALT, idioma);
   const app = pantallasReales(idioma);
@@ -143,13 +144,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
             </a>
           </div>
           <div className="ld-tiendas">
-            <span>
-              <LogoApple /> App Store
-            </span>
-            <span>
-              <LogoGooglePlay /> Google Play
-            </span>
-            <small>{t.hero.tiendas}</small>
+            <BotonGooglePlay app="cliente" texto={tt.cliente} />
           </div>
         </div>
         <div className="ld-hero-apps">
@@ -233,6 +228,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <a className="boton" href="/app/">
             {t.acciones.comensal.boton}
           </a>
+          <BotonGooglePlay app="cliente" texto={tt.cliente} />
         </div>
         <FormEspera tipo="comensal" idioma={idioma} titulo={t.comensales.form} />
       </section>
@@ -286,6 +282,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <a className="boton" href="/panel">
             {t.acciones.restaurante.boton}
           </a>
+          <BotonGooglePlay app="restaurantes" texto={tt.restaurantes} />
         </div>
         <div className="ld-accion" data-testid="accion-tienda">
           <h3>{t.acciones.tienda.titulo}</h3>
@@ -332,6 +329,7 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <a className="boton" href="/driver/">
             {t.acciones.repartidor.boton}
           </a>
+          <BotonGooglePlay app="driver" texto={tt.driver} />
         </div>
       </section>
 
