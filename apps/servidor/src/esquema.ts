@@ -172,6 +172,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // panel del restaurante preguntó por pedidos, y cuándo se le avisó de la pausa.
   ['restaurantes', 'senal_en', 'TEXT'],
   ['restaurantes', 'pausa_aviso_en', 'TEXT'],
+  // C-REVISION-SIN-SENAL (3 nov 2026): solo el restaurante de la cuenta de revisión de las tiendas
+  // sale abierto sin su app o su panel encendidos (el revisor de Apple no los tiene abiertos).
+  ['restaurantes', 'revision_sin_senal', 'INTEGER NOT NULL DEFAULT 0'],
   // Territorio (17 oct 2026, C-TERRITORIO): estado o provincia e idioma de cada ciudad, y el área
   // de cobertura (polígono) en la que cae cada restaurante, repartidor y pedido.
   ['zonas', 'region', "TEXT NOT NULL DEFAULT ''"],

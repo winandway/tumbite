@@ -69,7 +69,9 @@ export function aRestaurante(f: FilaRest, minutosPausa = PAUSA_SIN_SENAL_MINUTOS
       Number(f.abierto) === 1 &&
       !((f.cierres as string[] | undefined) ?? []).includes(fechaLocal(zonaHoraria)) &&
       abiertoPorHorario(horarios, zonaHoraria) &&
-      conSenal(f.senal_en as string | null, new Date(), minutosPausa),
+      // C-REVISION-SIN-SENAL: el restaurante de revisión de las tiendas no depende de la señal.
+      (Number(f.revision_sin_senal ?? 0) === 1 ||
+        conSenal(f.senal_en as string | null, new Date(), minutosPausa)),
     descripcionEs: String(f.descripcion_es ?? ''),
     descripcionEn: String(f.descripcion_en ?? ''),
     categoria: String(f.categoria ?? ''),

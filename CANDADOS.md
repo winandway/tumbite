@@ -2641,6 +2641,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/cliente/src/app/order/[id].tsx` (`recoge`, `estadosRecoger`, `pasosRecoger`, `listoEn`, `pediste.recoger`), `apps/cliente/src/app/cart.tsx` + `textos.ts` (`propinaRecoger`, `propinaNotaRecoger`, `notasRecoger`, propina en 0 % al elegir recoger), `apps/servidor/src/rutas/pedidos.ts` (la recogida crea PIN siempre).
 - **Candados:** `e2e/recorrido/recogerCompleto.spec.ts` (comprobado en rojo quitando el arreglo de la pantalla) y la prueba BRE-7b de `apps/servidor/src/rutas/cupones.test.ts`.
 
+## C-REVISION-SIN-SENAL (3 nov 2026, meta urgente de Gerencia). Todos los países.
+
+- **Qué se rompía y cómo se veía:** en la app del cliente, «Divoox Review Kitchen» salía cerrado salvo que alguien tuviera abierta su app o su panel (C-PAUSA-SIN-SENAL, como el «Tablet Heartbeat» de DoorDash). Ni Richard al grabar ni el revisor de Apple lo tienen abierto.
+- **Qué se hizo:** columna `restaurantes.revision_sin_senal` (en `COLUMNAS` de `esquema.ts`, se agrega sola al publicar), en 0 para todos. En 1 se exime de la señal en tres sitios: `aRestaurante` (`catalogo.ts`, el «abierto ahora» de la lista y la ficha), la creación del pedido (`pedidos.ts`) y el aviso de pausa del reloj (`pausa.ts`). Solo se pone en 1 en producción en el restaurante de la cuenta de revisión (d479c28e…), y sus horarios van de 00:00 a 23:59 todos los días mientras dure la revisión de Apple. Al aprobarse, se vuelve a 7:00–23:00. Para quitar la exención: `UPDATE restaurantes SET revision_sin_senal = 0 WHERE id = 'd479c28e-115d-44ac-b9bb-59d62f915c0c'`.
+- **Candado:** `apps/servidor/src/revisionSinSenal.test.ts`, en rojo sin el cambio de `catalogo.ts`. Comprueba que el de revisión, sin señal hace una hora, sale abierto en la ficha y en la lista, y que uno normal sin señal sigue cerrado.
+- **Qué NO tocar:** la marca nunca va en un restaurante real: sin su app abierta, los pedidos no le llegarían a nadie.
+
 ## C-ENTREGA-PRACTICA (3 nov 2026, ordenado por Gerencia para el video de Apple). Todos los países.
 
 - **Qué faltaba:** Apple pide ver «the typical user flow». Para Divoox Driver eso es recibir una oferta, aceptarla, recoger y entregar, y en producción no había cómo hacerlo sin un pedido pagado de verdad. Probar con tarjeta real está prohibido.

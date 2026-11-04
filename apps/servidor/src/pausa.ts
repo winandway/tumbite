@@ -47,6 +47,7 @@ export async function pausarSinSenal(env: Env, db: D1Database) {
             .prepare(
               `SELECT r.id, r.nombre, r.dueno_id, u.correo, u.idioma FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id
                WHERE r.estado = 'aprobado' AND r.abierto = 1 AND r.pausa_aviso_en IS NULL
+                 AND COALESCE(r.revision_sin_senal, 0) = 0
                  AND r.senal_en IS NOT NULL AND r.senal_en < datetime('now', ?)`,
             )
             .bind(limite)

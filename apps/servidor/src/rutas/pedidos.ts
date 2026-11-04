@@ -702,7 +702,11 @@ pedidos.post('/pedidos', async (c) => {
       409,
     );
   // C-PAUSA-SIN-SENAL: si su app o su panel no están escuchando, el pedido no le llegaría a nadie.
-  if (!programado && !conSenal(rest.senal_en as string | null, new Date(), await minutosPausa(db)))
+  if (
+    !programado &&
+    Number(rest.revision_sin_senal ?? 0) !== 1 &&
+    !conSenal(rest.senal_en as string | null, new Date(), await minutosPausa(db))
+  )
     throw new ErrorDatos(
       'El restaurante no está recibiendo pedidos en este momento. Intenta en unos minutos.',
       undefined,
