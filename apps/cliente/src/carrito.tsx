@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useMemo,
   useState,
   type ReactNode,
@@ -15,6 +16,7 @@ import {
   limpiarNotaPlato,
 } from '@tumbite/compartido';
 import { almacenTelefono, useSesion } from '@tumbite/movil';
+import { LLAVE_CARRITO_INVITADO, carritoAlEntrar, llaveCarrito } from './carritoGuardado';
 
 export type LineaCarrito = {
   /** Plato + opciones elegidas: el mismo plato con otras opciones es otra línea. */
@@ -99,24 +101,51 @@ type Ctx = {
 
 const Contexto = createContext<Ctx | null>(null);
 
-/** El carrito se guarda en el teléfono: si la app se cierra, el pedido sigue ahí. */
+/**
+ * Con cuenta, el carrito se guarda en el teléfono: si la app se cierra, el pedido sigue ahí. Sin
+ * cuenta (C-CARRITO-INVITADO) vive solo mientras la app está abierta, y al entrar o crear la cuenta
+ * lo elegido pasa a la cuenta.
+ */
 export function CarritoProvider({ children }: { children: ReactNode }) {
-  const { usuario } = useSesion();
-  const llave = `tumbite.carrito.${usuario?.id ?? 'anonimo'}`;
+  const { usuario, cargando } = useSesion();
+  const llave = llaveCarrito(usuario?.id);
   const [carrito, setCarrito] = useState<Carrito>(VACIO);
   // Para qué cuenta está cargado el carrito (si cambia la cuenta, se vuelve a leer).
-  const [cargadoPara, setCargadoPara] = useState<string | null>(null);
+  const [cargadoPara, setCargadoPara] = useState<string | null | undefined>(undefined);
   const cargado = cargadoPara === llave;
+  const actual = useRef(carrito);
+  useEffect(() => {
+    actual.current = carrito;
+  }, [carrito]);
 
   useEffect(() => {
+    if (cargando) return;
+    const deAntes = cargadoPara;
+    if (!llave) {
+      // Sin cuenta: nada guardado de otra vez. Lo que quedó de una versión anterior se borra.
+      Promise.resolve(almacenTelefono.borrar(LLAVE_CARRITO_INVITADO))
+        .catch((e) => console.warn('carrito: no se pudo borrar el del invitado', e))
+        .finally(() => {
+          // Al cerrar sesión, el carrito de la cuenta queda guardado en ella, no a la vista.
+          if (deAntes) setCarrito(VACIO);
+          setCargadoPara(null);
+        });
+      return;
+    }
+    const delInvitado = deAntes === null ? actual.current : null;
     Promise.resolve(almacenTelefono.leer(llave))
-      .then((g) => setCarrito(g ? { ...VACIO, ...(JSON.parse(g) as Carrito) } : VACIO))
+      .then((g) => {
+        const guardado = g ? { ...VACIO, ...(JSON.parse(g) as Carrito) } : null;
+        setCarrito(carritoAlEntrar(delInvitado, guardado, VACIO));
+      })
       .catch((e) => console.warn('carrito: no se pudo leer', e))
       .finally(() => setCargadoPara(llave));
-  }, [llave]);
+    // Solo cuando cambia la cuenta (o termina de cargar la sesión).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [llave, cargando]);
 
   useEffect(() => {
-    if (!cargado) return;
+    if (!cargado || !llave) return;
     const guardar = carrito.lineas.length
       ? almacenTelefono.guardar(llave, JSON.stringify(carrito))
       : almacenTelefono.borrar(llave);
