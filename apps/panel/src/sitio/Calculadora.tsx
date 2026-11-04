@@ -1,3 +1,4 @@
+import { DesfileFlota } from './DesfileFlota';
 import { useEffect, useState } from 'react';
 import {
   CONFIG_DINERO_INICIAL,
@@ -283,239 +284,246 @@ export function Calculadora({ idioma }: { idioma: Idioma }) {
   );
 
   return (
-    <main className="como calculadora">
-      <Enlace a="/" className="docs-volver">
-        {idioma === 'en' ? '← Back to home' : '← Volver al inicio'}
-      </Enlace>
-      <span className="ld-etiqueta">{t.etiqueta}</span>
-      <h1>{t.titulo}</h1>
-      <p className="ld-entrada">{t.intro}</p>
-      <p className="calc-aviso">{t.aviso}</p>
+    <>
+      {/* C-DESFILE-FLOTA: la flota de Divoox desfilando, de prueba en esta página. */}
+      <DesfileFlota />
+      <main className="como calculadora">
+        <Enlace a="/" className="docs-volver">
+          {idioma === 'en' ? '← Back to home' : '← Volver al inicio'}
+        </Enlace>
+        <span className="ld-etiqueta">{t.etiqueta}</span>
+        <h1>{t.titulo}</h1>
+        <p className="ld-entrada">{t.intro}</p>
+        <p className="calc-aviso">{t.aviso}</p>
 
-      <div className="calc-pestanas" role="tablist">
-        {PESTANAS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            role="tab"
-            aria-selected={pestana === p}
-            className={pestana === p ? 'activa' : undefined}
-            onClick={() => elegir(p)}
-          >
-            {nombrePestana(p)}
-          </button>
-        ))}
-      </div>
-
-      {b.recuperado && (
-        <p className="aviso-borrador">
-          {t.recuperado}{' '}
-          <button type="button" className="enlace" onClick={() => void b.empezarDeNuevo()}>
-            {t.empezar}
-          </button>
-        </p>
-      )}
-
-      <section className="calc-panel" role="tabpanel" aria-label={nombrePestana(pestana)}>
-        {pestana === 'restaurants' &&
-          (() => {
-            const c = compararRestaurante(aCentavos(v.ventasMes), plan, config);
-            const eq = planesEquivalentes(plan);
-            const ventasExtra = ciudad.pedidosPorRestauranteMes * aCentavos(v.ticket);
-            return (
-              <>
-                <div className="calc-campos">
-                  {campo('ventasMes', t.ventasMes)}
-                  <label className="campo">
-                    <span>{t.plan}</span>
-                    <select value={plan} onChange={(e) => b.cambiar('plan', e.target.value)}>
-                      {(['inicial', 'crece', 'elite'] as const).map((p) => (
-                        <option key={p} value={p}>
-                          {nombrePlan(p)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-                <h2>{t.teQueda}</h2>
-                <ul className="calc-lista">
-                  <li className="propio">
-                    <span>{t.conTumbite}</span>
-                    <strong>{$(c.tumbite)}</strong>
-                  </li>
-                  <li>
-                    <span>DoorDash {eq.doordash}</span>
-                    <strong>{$(c.doordash)}</strong>
-                  </li>
-                  <li>
-                    <span>Uber Eats {eq.ubereats}</span>
-                    <strong>{$(c.ubereats)}</strong>
-                  </li>
-                </ul>
-                <p className="calc-resultado">
-                  {t.masAlMes($(c.tumbite - c.doordash), $(c.tumbite - c.ubereats))}{' '}
-                  {t.masAlAno($((c.tumbite - c.doordash) * 12))}
-                </p>
-                <h2>{t.pedidosNuevos}</h2>
-                <p>{t.pedidosNuevosAyuda}</p>
-                <div className="calc-campos">
-                  {campo('poblacion', t.poblacion)}
-                  {campo('restaurantes', t.restaurantes)}
-                  {campo('cuota', t.cuota)}
-                  {campo('ticket', t.ticket)}
-                </div>
-                <p className="calc-resultado">
-                  {t.porRestaurante(n(ciudad.pedidosPorRestauranteMes))}.{' '}
-                  {t.ventasExtra($(ventasExtra))}
-                </p>
-              </>
-            );
-          })()}
-
-        {pestana === 'drivers' &&
-          (() => {
-            const r = proyectarRepartidor(
-              {
-                horasDia: num(v.horas),
-                diasSemana: num(v.dias),
-                entregasPorHora: num(v.ritmo),
-                propina: aCentavos(v.propina),
-                km: num(v.km),
-              },
-              config,
-            );
-            return (
-              <>
-                <div className="calc-campos">
-                  <label className="campo">
-                    <span>{t.ciudad}</span>
-                    <select value={v.ciudad} onChange={(e) => b.cambiar('ciudad', e.target.value)}>
-                      {CIUDADES.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                  </label>
-                  {campo('horas', t.horas)}
-                  {campo('dias', t.dias)}
-                  <label className="campo">
-                    <span>{t.ritmo}</span>
-                    <select value={v.ritmo} onChange={(e) => b.cambiar('ritmo', e.target.value)}>
-                      {['1', '2', '3'].map((x) => (
-                        <option key={x} value={x}>
-                          {new Map(Object.entries(t.ritmos)).get(x)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {campo('propina', t.propina)}
-                  {campo('km', t.km)}
-                </div>
-                <p className="ayuda">{t.ciudadAyuda}</p>
-                <p>{t.porEntrega($(r.porEntrega), $(r.sinPropina))}</p>
-                <ul className="calc-lista">
-                  <li>
-                    <span>{t.porDia}</span>
-                    <strong>{$(r.dia)}</strong>
-                  </li>
-                  <li>
-                    <span>{t.porSemana}</span>
-                    <strong>{$(r.semana)}</strong>
-                  </li>
-                  <li className="propio">
-                    <span>{t.porMes}</span>
-                    <strong>{$(r.mes)}</strong>
-                  </li>
-                </ul>
-                <p className="calc-resultado">{t.porHora($(r.porHora))}</p>
-              </>
-            );
-          })()}
-
-        {pestana === 'customers' &&
-          (() => {
-            const a = ahorroCliente(num(v.pedidosMes), aCentavos(v.ticket), config);
-            return (
-              <>
-                <div className="calc-campos">
-                  {campo('pedidosMes', t.pedidosMes)}
-                  {campo('ticket', t.ticket)}
-                </div>
-                <p>{t.servicio($(a.servicioTumbite), $(a.servicioOtra))}</p>
-                <ul className="calc-lista">
-                  <li>
-                    <span>{t.ahorrasMes}</span>
-                    <strong>{$(a.mes)}</strong>
-                  </li>
-                  <li className="propio">
-                    <span>{t.ahorrasAno}</span>
-                    <strong>{$(a.ano)}</strong>
-                  </li>
-                </ul>
-                <p className="ayuda">{t.clienteNota}</p>
-              </>
-            );
-          })()}
-
-        {pestana === 'franchises' && (
-          <>
-            <div className="calc-campos">
-              {campo('poblacion', t.poblacion)}
-              {campo('restaurantes', t.restaurantes)}
-              {campo('cuota', t.cuota)}
-            </div>
-            <ul className="calc-lista">
-              <li>
-                <span>{t.usuarios}</span>
-                <strong>{n(ciudad.usuariosApps)}</strong>
-              </li>
-              <li>
-                <span>{t.pedidosMercado}</span>
-                <strong>{n(ciudad.pedidosMercadoMes)}</strong>
-              </li>
-              <li>
-                <span>{t.pedidosTumbite}</span>
-                <strong>{n(ciudad.pedidosTumbiteMes)}</strong>
-              </li>
-              <li>
-                <span>{t.pedidosRest}</span>
-                <strong>{n(ciudad.pedidosPorRestauranteMes)}</strong>
-              </li>
-              <li>
-                <span>{t.ventasRest}</span>
-                <strong>{$(ciudad.ventasRestaurantesMes)}</strong>
-              </li>
-              <li>
-                <span>{t.pagoRep}</span>
-                <strong>{$(ciudad.pagoRepartidoresMes)}</strong>
-              </li>
-              <li>
-                <span>{t.repartidores}</span>
-                <strong>{n(ciudad.repartidoresNecesarios)}</strong>
-              </li>
-              <li className="propio">
-                <span>{t.plataforma}</span>
-                <strong>{$(ciudad.netoPlataformaMes)}</strong>
-              </li>
-            </ul>
-            <p className="ayuda">{t.franquiciaNota}</p>
-            <h2>{t.supuestos}</h2>
-            <div className="calc-campos">
-              {campo('usuariosPct', t.usuariosPct)}
-              {campo('pedidosUsuario', t.pedidosUsuario)}
-              {campo('ticket', t.ticket)}
-            </div>
-          </>
-        )}
-      </section>
-
-      <section className="calc-fuentes">
-        <h2>{t.fuentesTitulo}</h2>
-        <ul>
-          {t.fuentes.map((f) => (
-            <li key={f}>{f}</li>
+        <div className="calc-pestanas" role="tablist">
+          {PESTANAS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              role="tab"
+              aria-selected={pestana === p}
+              className={pestana === p ? 'activa' : undefined}
+              onClick={() => elegir(p)}
+            >
+              {nombrePestana(p)}
+            </button>
           ))}
-        </ul>
-      </section>
-    </main>
+        </div>
+
+        {b.recuperado && (
+          <p className="aviso-borrador">
+            {t.recuperado}{' '}
+            <button type="button" className="enlace" onClick={() => void b.empezarDeNuevo()}>
+              {t.empezar}
+            </button>
+          </p>
+        )}
+
+        <section className="calc-panel" role="tabpanel" aria-label={nombrePestana(pestana)}>
+          {pestana === 'restaurants' &&
+            (() => {
+              const c = compararRestaurante(aCentavos(v.ventasMes), plan, config);
+              const eq = planesEquivalentes(plan);
+              const ventasExtra = ciudad.pedidosPorRestauranteMes * aCentavos(v.ticket);
+              return (
+                <>
+                  <div className="calc-campos">
+                    {campo('ventasMes', t.ventasMes)}
+                    <label className="campo">
+                      <span>{t.plan}</span>
+                      <select value={plan} onChange={(e) => b.cambiar('plan', e.target.value)}>
+                        {(['inicial', 'crece', 'elite'] as const).map((p) => (
+                          <option key={p} value={p}>
+                            {nombrePlan(p)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <h2>{t.teQueda}</h2>
+                  <ul className="calc-lista">
+                    <li className="propio">
+                      <span>{t.conTumbite}</span>
+                      <strong>{$(c.tumbite)}</strong>
+                    </li>
+                    <li>
+                      <span>DoorDash {eq.doordash}</span>
+                      <strong>{$(c.doordash)}</strong>
+                    </li>
+                    <li>
+                      <span>Uber Eats {eq.ubereats}</span>
+                      <strong>{$(c.ubereats)}</strong>
+                    </li>
+                  </ul>
+                  <p className="calc-resultado">
+                    {t.masAlMes($(c.tumbite - c.doordash), $(c.tumbite - c.ubereats))}{' '}
+                    {t.masAlAno($((c.tumbite - c.doordash) * 12))}
+                  </p>
+                  <h2>{t.pedidosNuevos}</h2>
+                  <p>{t.pedidosNuevosAyuda}</p>
+                  <div className="calc-campos">
+                    {campo('poblacion', t.poblacion)}
+                    {campo('restaurantes', t.restaurantes)}
+                    {campo('cuota', t.cuota)}
+                    {campo('ticket', t.ticket)}
+                  </div>
+                  <p className="calc-resultado">
+                    {t.porRestaurante(n(ciudad.pedidosPorRestauranteMes))}.{' '}
+                    {t.ventasExtra($(ventasExtra))}
+                  </p>
+                </>
+              );
+            })()}
+
+          {pestana === 'drivers' &&
+            (() => {
+              const r = proyectarRepartidor(
+                {
+                  horasDia: num(v.horas),
+                  diasSemana: num(v.dias),
+                  entregasPorHora: num(v.ritmo),
+                  propina: aCentavos(v.propina),
+                  km: num(v.km),
+                },
+                config,
+              );
+              return (
+                <>
+                  <div className="calc-campos">
+                    <label className="campo">
+                      <span>{t.ciudad}</span>
+                      <select
+                        value={v.ciudad}
+                        onChange={(e) => b.cambiar('ciudad', e.target.value)}
+                      >
+                        {CIUDADES.map((c) => (
+                          <option key={c}>{c}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {campo('horas', t.horas)}
+                    {campo('dias', t.dias)}
+                    <label className="campo">
+                      <span>{t.ritmo}</span>
+                      <select value={v.ritmo} onChange={(e) => b.cambiar('ritmo', e.target.value)}>
+                        {['1', '2', '3'].map((x) => (
+                          <option key={x} value={x}>
+                            {new Map(Object.entries(t.ritmos)).get(x)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {campo('propina', t.propina)}
+                    {campo('km', t.km)}
+                  </div>
+                  <p className="ayuda">{t.ciudadAyuda}</p>
+                  <p>{t.porEntrega($(r.porEntrega), $(r.sinPropina))}</p>
+                  <ul className="calc-lista">
+                    <li>
+                      <span>{t.porDia}</span>
+                      <strong>{$(r.dia)}</strong>
+                    </li>
+                    <li>
+                      <span>{t.porSemana}</span>
+                      <strong>{$(r.semana)}</strong>
+                    </li>
+                    <li className="propio">
+                      <span>{t.porMes}</span>
+                      <strong>{$(r.mes)}</strong>
+                    </li>
+                  </ul>
+                  <p className="calc-resultado">{t.porHora($(r.porHora))}</p>
+                </>
+              );
+            })()}
+
+          {pestana === 'customers' &&
+            (() => {
+              const a = ahorroCliente(num(v.pedidosMes), aCentavos(v.ticket), config);
+              return (
+                <>
+                  <div className="calc-campos">
+                    {campo('pedidosMes', t.pedidosMes)}
+                    {campo('ticket', t.ticket)}
+                  </div>
+                  <p>{t.servicio($(a.servicioTumbite), $(a.servicioOtra))}</p>
+                  <ul className="calc-lista">
+                    <li>
+                      <span>{t.ahorrasMes}</span>
+                      <strong>{$(a.mes)}</strong>
+                    </li>
+                    <li className="propio">
+                      <span>{t.ahorrasAno}</span>
+                      <strong>{$(a.ano)}</strong>
+                    </li>
+                  </ul>
+                  <p className="ayuda">{t.clienteNota}</p>
+                </>
+              );
+            })()}
+
+          {pestana === 'franchises' && (
+            <>
+              <div className="calc-campos">
+                {campo('poblacion', t.poblacion)}
+                {campo('restaurantes', t.restaurantes)}
+                {campo('cuota', t.cuota)}
+              </div>
+              <ul className="calc-lista">
+                <li>
+                  <span>{t.usuarios}</span>
+                  <strong>{n(ciudad.usuariosApps)}</strong>
+                </li>
+                <li>
+                  <span>{t.pedidosMercado}</span>
+                  <strong>{n(ciudad.pedidosMercadoMes)}</strong>
+                </li>
+                <li>
+                  <span>{t.pedidosTumbite}</span>
+                  <strong>{n(ciudad.pedidosTumbiteMes)}</strong>
+                </li>
+                <li>
+                  <span>{t.pedidosRest}</span>
+                  <strong>{n(ciudad.pedidosPorRestauranteMes)}</strong>
+                </li>
+                <li>
+                  <span>{t.ventasRest}</span>
+                  <strong>{$(ciudad.ventasRestaurantesMes)}</strong>
+                </li>
+                <li>
+                  <span>{t.pagoRep}</span>
+                  <strong>{$(ciudad.pagoRepartidoresMes)}</strong>
+                </li>
+                <li>
+                  <span>{t.repartidores}</span>
+                  <strong>{n(ciudad.repartidoresNecesarios)}</strong>
+                </li>
+                <li className="propio">
+                  <span>{t.plataforma}</span>
+                  <strong>{$(ciudad.netoPlataformaMes)}</strong>
+                </li>
+              </ul>
+              <p className="ayuda">{t.franquiciaNota}</p>
+              <h2>{t.supuestos}</h2>
+              <div className="calc-campos">
+                {campo('usuariosPct', t.usuariosPct)}
+                {campo('pedidosUsuario', t.pedidosUsuario)}
+                {campo('ticket', t.ticket)}
+              </div>
+            </>
+          )}
+        </section>
+
+        <section className="calc-fuentes">
+          <h2>{t.fuentesTitulo}</h2>
+          <ul>
+            {t.fuentes.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        </section>
+      </main>
+    </>
   );
 }
