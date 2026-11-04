@@ -60,3 +60,25 @@ describe('el correo se confirma antes de entrar a la app', () => {
     expect(await debe(m, c.token)).toBe(false);
   });
 });
+
+describe('el correo repetido se explica (C-CORREO-VARIANTE)', () => {
+  it('el mismo buzón escrito con «+» dice que es una variante, no que falla la contraseña', async () => {
+    const m = mundo();
+    await registrar(m, 'ana+uno@correo-real.com');
+    const r = await m.llamar('POST', '/datos/cuentas/registro', {
+      nombre: 'Ana García',
+      correo: 'ana+dos@correo-real.com',
+      clave: 'clave-segura-1',
+      rol: 'cliente',
+    });
+    expect(r.estado).toBe(409);
+    expect(JSON.stringify(r.datos)).toMatch(/escrito de otra forma|written another way/);
+    const igual = await m.llamar('POST', '/datos/cuentas/registro', {
+      nombre: 'Ana García',
+      correo: 'ana+uno@correo-real.com',
+      clave: 'clave-segura-1',
+      rol: 'cliente',
+    });
+    expect(JSON.stringify(igual.datos)).toMatch(/Entra con tu contraseña|Sign in with your password/);
+  });
+});

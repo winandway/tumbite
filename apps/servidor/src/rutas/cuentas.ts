@@ -172,12 +172,16 @@ cuentas.post('/registro', async (c) => {
       403,
     );
   const existe = await db
-    .prepare('SELECT 1 FROM usuarios WHERE correo = ? OR correo_canonico = ?')
+    .prepare('SELECT correo FROM usuarios WHERE correo = ? OR correo_canonico = ?')
     .bind(d.correo, correoUnico)
-    .first();
+    .first<{ correo: string }>();
   if (existe)
     throw new ErrorDatos(
-      'Ya existe una cuenta con ese correo. Entra con tu contraseña.',
+      // C-CORREO-VARIANTE (4 nov 2026, Richard): «go+cliente6@…» choca con «go+cliente1@…» porque
+      // es el mismo buzón; el mensaje lo dice, en vez de hacer pensar que falla la contraseña.
+      existe.correo.toLowerCase() === d.correo.toLowerCase()
+        ? 'Ya existe una cuenta con ese correo. Entra con tu contraseña.'
+        : 'Ya hay una cuenta con este mismo correo escrito de otra forma (por ejemplo, con un «+» o con puntos). Entra con esa cuenta o usa otro correo.',
       'correo',
       409,
     );

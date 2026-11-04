@@ -704,6 +704,16 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe tu nombre.', 'Enter your name.'],
   ['Escribe un correo válido.', 'Enter a valid email.'],
   ['Ese cliente no existe.', 'That customer doesn’t exist.'],
+  ['Esa cuenta no existe o ya está borrada.', 'That account doesn’t exist or was already deleted.'],
+  [
+    'Las cuentas de revisión de las tiendas no se borran.',
+    'The app store review accounts can’t be deleted.',
+  ],
+  ['Escribe BORRAR para confirmar.', 'Type DELETE to confirm.'],
+  [
+    'Ya hay una cuenta con este mismo correo escrito de otra forma (por ejemplo, con un «+» o con puntos). Entra con esa cuenta o usa otro correo.',
+    'There’s already an account with this same email written another way (for example, with a “+” or with dots). Sign in with that account or use a different email.',
+  ],
   ['Ese pedido no existe.', 'That order doesn’t exist.'],
   // C-TIENDAS-PESO-REAL (SIG-3): el peso real de los pesables.
   ['El peso real es solo para pedidos de tiendas.', 'The actual weight is only for store orders.'],
