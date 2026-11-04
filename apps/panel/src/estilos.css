@@ -5653,3 +5653,120 @@ body.modo-tableta .panel-contenido {
   color: #8a8f97;
   cursor: default;
 }
+
+/* C-AVENIDA-DIVOOX (4 nov 2026): la flota real cruza la avenida en dos carriles. El texto queda
+   arriba de la vía; los vehículos nunca lo tapan. */
+.ld-carretera .ld-carretera-via {
+  height: 64px;
+  overflow: hidden;
+}
+.ld-carretera .ld-carretera-via::after {
+  top: 30px;
+  border-top: 2px dashed #8a8d93;
+  opacity: 0.8;
+}
+.ld-banner-arriba .ld-carretera {
+  height: 160px;
+}
+.ld-banner-arriba .ld-carretera-centro,
+.ld-carretera-centro {
+  inset: 0 0 66px;
+}
+.ld-auto {
+  position: absolute;
+  left: 100%;
+  display: block;
+  animation-name: ld-avenida-izq;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: left;
+}
+.ld-auto img {
+  display: block;
+  height: 100%;
+  width: auto;
+  filter: drop-shadow(0 3px 2px rgb(0 0 0 / 55%));
+  animation: ld-rebote 0.45s ease-in-out infinite alternate;
+}
+/* Carril de adelante: hacia la izquierda, más grandes. */
+.ld-auto-izq {
+  bottom: 2px;
+  height: calc(var(--alto, 1) * 34px);
+  z-index: 3;
+}
+/* Carril de atrás: hacia la derecha, más chicos y un poco más lejos. */
+.ld-auto-der {
+  bottom: 30px;
+  height: calc(var(--alto, 1) * 25px);
+  z-index: 2;
+  opacity: 0.93;
+  animation-name: ld-avenida-der;
+}
+@keyframes ld-avenida-izq {
+  from {
+    left: 100%;
+  }
+  to {
+    left: -130px;
+  }
+}
+@keyframes ld-avenida-der {
+  from {
+    left: -130px;
+  }
+  to {
+    left: 100%;
+  }
+}
+@keyframes ld-rebote {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1px);
+  }
+}
+@media (max-width: 600px) {
+  .ld-banner-arriba .ld-carretera {
+    height: 136px;
+  }
+  .ld-carretera .ld-carretera-via {
+    height: 52px;
+  }
+  .ld-carretera .ld-carretera-via::after {
+    top: 24px;
+  }
+  .ld-banner-arriba .ld-carretera-centro,
+  .ld-carretera-centro {
+    inset: 0 0 54px;
+  }
+  .ld-auto-izq {
+    height: calc(var(--alto, 1) * 26px);
+  }
+  .ld-auto-der {
+    bottom: 27px;
+    height: calc(var(--alto, 1) * 19px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-auto,
+  .ld-auto img {
+    animation: none;
+  }
+  .ld-auto[data-vehiculo='sedan'] {
+    left: 8%;
+  }
+  .ld-auto[data-vehiculo='moto'] {
+    left: 58%;
+  }
+  .ld-auto[data-vehiculo='compacto'] {
+    left: 30%;
+  }
+  .ld-auto[data-vehiculo='moto2'] {
+    left: 78%;
+  }
+  .ld-auto[data-vehiculo='camioneta'],
+  .ld-auto[data-vehiculo='robot'] {
+    display: none;
+  }
+}

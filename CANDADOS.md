@@ -2719,6 +2719,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba (comprobada en rojo: 504 ms con 12 consultas demoradas 40 ms, contra menos de 260):** apps/servidor/src/rutas/menuRapido.test.ts.
 - **Qué NO tocar:** no volver a encadenar consultas que no dependen entre sí en las rutas que ve el cliente.
 
+## C-AVENIDA-DIVOOX (4 nov 2026, Richard). Todos los países.
+
+- **Qué es:** el banner de arriba (BannerCarretera) con la flota real de Divoox (foto con fondo transparente que mandó Richard), recortada en seis vehículos en apps/panel/public/marca/vehiculos/<nombre>-izq.webp y -der.webp. Los de la derecha son la foto volteada con el logo vuelto a poner al derecho. Dos carriles: adelante sedán, moto y camioneta hacia la izquierda; atrás, más chicos, compacto, robot y moto hacia la derecha. En cada carril todos van a la misma velocidad y separados, para que nadie se monte sobre otro. El texto va arriba de la vía. Con «reducir movimiento» quedan quietos.
+- **Prueba:** apps/panel/src/sitio/BannerCarretera.test.tsx.
+
 ## C-DESCARGAS (4 nov 2026, Richard). Todos los países.
 
 - **Qué es:** la zona de descarga /download (y /es/download): las tres apps con su ícono real (apps/panel/public/marca/app-*.webp, sacados de los íconos de cada app), para qué es cada una, el botón de Android en verde (Google Play, funciona) y el de iPhone en gris y sin enlace («En revisión de Apple») hasta que Apple apruebe. «Get the app» / «Descarga la app» de la cabecera y el botón del banner principal llevan ahí; las secciones de la portada y el pie llevan directo a cada app, y el pie también a «Todas las apps». Está en `RUTAS_PUBLICAS` del servidor y en el prerender.
