@@ -20,6 +20,7 @@ import { EntrarInvitado } from './inicio/EntrarInvitado';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
 import { useRestaurantes } from './comida/useRestaurantes';
+import { adelantarFichas } from './comida/fichaRestaurante';
 import { recordarAnuncio } from './comida/anuncioTocado';
 import { EstadoCatalogo } from './comida/EstadoCatalogo';
 import { AvisoPago } from './inicio/AvisoPago';
@@ -115,6 +116,13 @@ export function Inicio() {
         .map((x) => x.r),
     [filtrados],
   );
+  // C-MENU-RAPIDO: los primeros que ve la persona ya quedan pedidos; al tocarlos abren al instante.
+  useEffect(() => {
+    adelantarFichas(
+      api,
+      [...masRapidos, ...filtrados.slice(0, 3)].map((r) => r.id),
+    );
+  }, [api, masRapidos, filtrados]);
 
   // C-TE-PUEDE-GUSTAR: lo que ya pidió decide qué tipo de comida recomendar.
   const [yaPedidos, setYaPedidos] = useState<Set<string>>(new Set());

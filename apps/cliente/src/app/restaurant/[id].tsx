@@ -48,6 +48,7 @@ import {
   sombra,
 } from '../../comida/piezas';
 import { textosComida } from '../../comida/textos';
+import { fichaGuardada, pedirFicha } from '../../comida/fichaRestaurante';
 import { Calificacion, ResenasRestaurante } from '../../comida/Calificacion';
 
 function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
@@ -85,7 +86,7 @@ export default function MenuRestaurante() {
     fueraDeHorario?: { categoria: string; abre: string; cierra: string }[];
     /** C-PROMO-RESTAURANTE: las promociones vigentes que paga el restaurante. */
     promociones?: PromocionRestaurante[];
-  } | null>(null);
+  } | null>(() => fichaGuardada(id));
   const [error, setError] = useState('');
   const [pestana, setPestana] = useState<'menu' | 'info'>('menu');
   const [categoria, setCategoria] = useState<string | null>(null);
@@ -99,8 +100,8 @@ export default function MenuRestaurante() {
   const moneda = datos?.restaurante.moneda ?? 'USD';
 
   useEffect(() => {
-    api
-      .pedir<{ restaurante: Restaurante; platos: Plato[] }>('GET', `/datos/restaurantes/${id}`)
+    // C-MENU-RAPIDO: si ya se pidió (desde la portada), sale al instante; si no, se pide ahora.
+    pedirFicha<NonNullable<typeof datos>>(api, String(id))
       .then(setDatos)
       .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
   }, [api, id]);
@@ -291,6 +292,8 @@ export default function MenuRestaurante() {
 
         <View style={{ paddingHorizontal: 16 }}>
           {error ? <Text style={[e.error, { marginTop: 12 }]}>{error}</Text> : null}
+          {/* C-MENU-RAPIDO: mientras llega el menú, renglones de espera (nunca la pantalla en blanco). */}
+          {!datos && !error ? <MenuEsperando /> : null}
           {/* C-PROMO-RESTAURANTE: la insignia de cada promoción vigente, como DoorDash. */}
           {(datos?.promociones ?? []).map((p) => (
             <Text
@@ -951,5 +954,29 @@ export default function MenuRestaurante() {
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
+  );
+}
+
+/** Renglones grises con la forma del menú mientras llega (como DoorDash y Uber Eats). */
+function MenuEsperando() {
+  return (
+    <View testID="menu-esperando" accessibilityLabel="…" style={{ gap: 14, paddingVertical: 12 }}>
+      {[0, 1, 2, 3].map((i) => (
+        <View key={i} style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 84, height: 84, borderRadius: 12, backgroundColor: '#EEEFF1' }} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <View
+              style={{ height: 16, width: '70%', borderRadius: 6, backgroundColor: '#EEEFF1' }}
+            />
+            <View
+              style={{ height: 12, width: '90%', borderRadius: 6, backgroundColor: '#F3F4F6' }}
+            />
+            <View
+              style={{ height: 14, width: '30%', borderRadius: 6, backgroundColor: '#EEEFF1' }}
+            />
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }

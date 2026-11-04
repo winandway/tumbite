@@ -374,38 +374,52 @@ catalogo.get('/restaurantes/:id', async (c) => {
     .bind(c.req.param('id'))
     .first<FilaRest>();
   if (!f) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
-  const { results } = await db
-    .prepare(
-      'SELECT * FROM platos WHERE restaurante_id = ? AND eliminado = 0 AND disponible = 1 ORDER BY categoria, orden, nombre_es',
-    )
-    .bind(f.id)
-    .all<FilaRest>();
-  const [conH] = await conHorarios(db, [f]);
-  const [restaurante] = await conCalificaciones(db, [aRestaurante(conH!, await minutosPausa(db))]);
-  // C-MENU-HORARIO: lo que está fuera de su franja no se muestra; la app dice cuándo vuelve.
-  const ventanas = await ventanasDe(db, String(f.id));
-  const zona = restaurante?.zonaHoraria ?? 'America/New_York';
+  // C-MENU-RAPIDO (4 nov 2026): lo que no depende entre sí va a la base a la vez (antes, ~12 viajes
+  // seguidos: 3 a 5 segundos en el celular). Tres tandas: el restaurante, todo lo suyo, y lo que
+  // necesita la zona horaria y la pausa.
+  const [platosFila, conHs, pausa, ventanas, entregadosR, votosR, promosMapa] = await Promise.all([
+    db
+      .prepare(
+        'SELECT * FROM platos WHERE restaurante_id = ? AND eliminado = 0 AND disponible = 1 ORDER BY categoria, orden, nombre_es',
+      )
+      .bind(f.id)
+      .all<FilaRest>(),
+    conHorarios(db, [f]),
+    minutosPausa(db),
+    // C-MENU-HORARIO: lo que está fuera de su franja no se muestra; la app dice cuándo vuelve.
+    ventanasDe(db, String(f.id)),
+    // C-MAS-PEDIDOS: los platos más pedidos de los últimos 30 días (solo los que hoy se pueden pedir).
+    db
+      .prepare(
+        "SELECT lineas_json FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND pagado_en >= datetime('now','-30 days')",
+      )
+      .bind(f.id)
+      .all<{ lineas_json: string }>(),
+    // C-GUSTO-PLATOS: «Le gustó al N %» por plato, con cinco votos o más.
+    db
+      .prepare(
+        'SELECT plato_id AS platoId, gusta FROM calificaciones_platos WHERE restaurante_id = ?',
+      )
+      .bind(f.id)
+      .all<{ platoId: string; gusta: number }>(),
+    // C-PROMO-RESTAURANTE: sus promociones vigentes (la app muestra la insignia y las aplica igual
+    // que el servidor al cobrar).
+    promocionesVigentes(db, [String(f.id)]),
+  ]);
+  const results = platosFila.results;
+  const entregados = entregadosR.results;
+  const votos = votosR.results;
+  const base_ = aRestaurante(conHs[0]!, pausa);
+  const zona = base_.zonaHoraria ?? 'America/New_York';
   const fueraDeHorario = ventanas.filter((v) => !categoriaEnHorario(v, zona));
   const fuera = new Set(fueraDeHorario.map((v) => v.categoria));
   const visibles = ordenarPlatos(f, results).filter((p) => !fuera.has(String(p.categoria ?? '')));
-  // C-MAS-PEDIDOS: los platos más pedidos de los últimos 30 días (solo los que hoy se pueden pedir).
-  const { results: entregados } = await db
-    .prepare(
-      "SELECT lineas_json FROM pedidos WHERE restaurante_id = ? AND estado = 'entregado' AND pagado_en >= datetime('now','-30 days')",
-    )
-    .bind(f.id)
-    .all<{ lineas_json: string }>();
-  // C-GUSTO-PLATOS: «Le gustó al N %» por plato, con cinco votos o más.
-  const { results: votos } = await db
-    .prepare(
-      'SELECT plato_id AS platoId, gusta FROM calificaciones_platos WHERE restaurante_id = ?',
-    )
-    .bind(f.id)
-    .all<{ platoId: string; gusta: number }>();
   const visiblesIds = new Set(visibles.map((p) => String(p.id)));
-  // C-PROMO-RESTAURANTE: sus promociones vigentes (la app muestra la insignia y las aplica igual
-  // que el servidor al cobrar).
-  const promociones = (await promocionesVigentes(db, [String(f.id)])).get(String(f.id)) ?? [];
+  const promociones = promosMapa.get(String(f.id)) ?? [];
+  const [[restaurante], platos] = await Promise.all([
+    conCalificaciones(db, [base_]),
+    platosConGrupos(db, visibles),
+  ]);
   return c.json({
     restaurante,
     promociones,
@@ -415,7 +429,7 @@ catalogo.get('/restaurantes/:id', async (c) => {
       entregados.map((x) => String(x.lineas_json ?? '[]')),
       new Set(visibles.map((p) => String(p.id))),
     ),
-    platos: await platosConGrupos(db, visibles),
+    platos,
   });
 });
 
