@@ -17,12 +17,15 @@ export function ConSesion({
   rolRegistro,
   pideCumple,
   exigeCorreo,
+  seguirMirando,
 }: {
   children: ReactNode;
   rolRegistro?: 'cliente' | 'repartidor';
   pideCumple?: boolean;
   /** C-CORREO-OBLIGATORIO: no deja entrar hasta confirmar el correo (app del cliente). */
   exigeCorreo?: boolean;
+  /** C-MIRAR-SIN-CUENTA: en la pantalla de entrar, volver a mirar sin cuenta. */
+  seguirMirando?: () => void;
 }) {
   const { cargando, usuario, sinConfirmar } = useSesion();
   if (cargando)
@@ -41,7 +44,10 @@ export function ConSesion({
   // C-SESION-CON-LIMITE: no se pudo confirmar la sesión guardada. Nada protegido se muestra; se
   // ofrece reintentar (la sesión sigue guardada) o entrar con otra cuenta.
   if (!usuario && sinConfirmar) return <SesionSinConfirmar />;
-  if (!usuario) return <Acceso rolRegistro={rolRegistro} pideCumple={pideCumple} />;
+  if (!usuario)
+    return (
+      <Acceso rolRegistro={rolRegistro} pideCumple={pideCumple} seguirMirando={seguirMirando} />
+    );
   // La puerta se arma de nuevo con cada cuenta (key), para no heredar lo que vio la anterior.
   return exigeCorreo ? <PuertaCorreo key={usuario.id}>{children}</PuertaCorreo> : <>{children}</>;
 }
@@ -54,7 +60,7 @@ export function ConSesion({
  */
 export const ESPERAS_REINTENTO_MS = [3000, 6000, 12000, 24000, 30000] as const;
 
-function SesionSinConfirmar() {
+export function SesionSinConfirmar() {
   const { idioma, reintentarSesion, usarOtraCuenta } = useSesion();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
   const intento = useRef(0);

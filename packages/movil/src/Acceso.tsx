@@ -28,6 +28,8 @@ export function Acceso({
   rolRegistro,
   pideCumple,
   portada,
+  modoInicial = 'entrar',
+  seguirMirando,
 }: {
   rolRegistro?: 'cliente' | 'repartidor';
   pideCumple?: boolean;
@@ -36,10 +38,14 @@ export function Acceso({
    * Sin ella, el acceso se ve como siempre en cliente y repartidor.
    */
   portada?: ReactNode;
+  /** Abre directo en «crear cuenta» (el enlace «¿Eres nuevo?» de la portada del cliente). */
+  modoInicial?: 'entrar' | 'registro';
+  /** C-MIRAR-SIN-CUENTA: en la app del cliente, volver a mirar sin cuenta. */
+  seguirMirando?: () => void;
 }) {
   const { api, idioma, alEntrar, rolesPermitidos, cambiarIdioma } = useSesion();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
-  const [modo, setModo] = useState<'entrar' | 'registro'>('entrar');
+  const [modo, setModo] = useState<'entrar' | 'registro'>(modoInicial);
   const b = useBorrador({
     formulario: `app-${modo}`,
     inicial: INICIAL,
@@ -285,6 +291,11 @@ export function Acceso({
       ) : (
         <Text style={[e.enlace, { textDecorationLine: 'none' }]}>{t.soloPanel}</Text>
       )}
+      {seguirMirando ? (
+        <Text style={e.enlace} onPress={seguirMirando} accessibilityRole="button">
+          {t.seguirMirando}
+        </Text>
+      ) : null}
     </>,
   );
 }

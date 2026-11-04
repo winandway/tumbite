@@ -10,6 +10,7 @@ import { PedirMoto } from '../viajes/PedirMoto';
 import { type PaqueteCliente, type ViajePasajero, ViajeEnCurso } from '../viajes/ViajeEnCurso';
 import { ContactosConfianza, PreguntaTodoBien } from '../viajes/Seguridad';
 import { TEXTOS_MOTO } from '../viajes/textos';
+import { conCuenta } from '../ConCuenta';
 
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
 
@@ -17,7 +18,7 @@ const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
  * Divoox Moto para el pasajero (M5). Si hay un viaje en curso se muestra ese (y se consulta cada
  * pocos segundos, como el seguimiento de Comida); si no, el formulario para pedir.
  */
-export default function PantallaMoto() {
+function PantallaMoto() {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
@@ -127,3 +128,5 @@ export default function PantallaMoto() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(PantallaMoto);

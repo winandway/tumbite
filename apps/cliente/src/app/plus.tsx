@@ -7,6 +7,7 @@ import { Boton, e, useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
+import { conCuenta } from '../ConCuenta';
 
 /**
  * C-PLUS (R-T3, como DashPass): suscribirse, ver hasta cuándo está vigente y cancelar. El cobro
@@ -64,7 +65,7 @@ export type EstadoPlus = {
   suscripcion: { estado: string; venceEn: string | null; cancelaAlFinal: boolean } | null;
 };
 
-export default function Plus() {
+function Plus() {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   const [estado, setEstado] = useState<EstadoPlus | null>(null);
@@ -216,3 +217,5 @@ export default function Plus() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(Plus);

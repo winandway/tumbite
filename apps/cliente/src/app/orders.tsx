@@ -8,6 +8,7 @@ import { fotoDeRelleno } from '../inicio/recursos';
 import { usePedirOtraVez } from '../pedirOtraVez';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
+import { conCuenta } from '../ConCuenta';
 
 const T = {
   es: {
@@ -72,7 +73,7 @@ type Pedido = {
 };
 
 /** Pestaña Pedidos (auditoría final, punto 12): historial con estado, recibo y «Repetir pedido», como en DoorDash. */
-export default function Pedidos() {
+function Pedidos() {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   const { pedirOtraVez } = usePedirOtraVez(idioma);
@@ -270,3 +271,5 @@ export default function Pedidos() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(Pedidos);

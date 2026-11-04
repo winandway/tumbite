@@ -27,7 +27,7 @@ import { Calificacion } from '../comida/Calificacion';
  * abiertos, más cerca, más rápido) y tarjetas con foto, tipo de comida, distancia, tiempo y estado. El corazón guarda el restaurante en Favoritos.
  */
 export default function Restaurantes() {
-  const { api, idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = textosComida(idioma);
   const [busqueda, setBusqueda] = useState('');
   // POR-1: las categorías en círculos del inicio llegan ya elegidas (?categoria=).
@@ -51,6 +51,7 @@ export default function Restaurantes() {
   // Favoritos reales (auditoría final, punto 13): los ids vienen del servidor; el corazón los alterna.
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
   useEffect(() => {
+    if (!usuario) return;
     let vivo = true;
     api
       .pedir<{ ids: string[] }>('GET', '/datos/favoritos')
@@ -61,8 +62,13 @@ export default function Restaurantes() {
     return () => {
       vivo = false;
     };
-  }, [api]);
+  }, [api, usuario]);
   async function alternarFavorito(id: string) {
+    // C-MIRAR-SIN-CUENTA: sin cuenta, el corazón lleva a entrar.
+    if (!usuario) {
+      router.push('/sign-in');
+      return;
+    }
     const era = favoritos.has(id);
     setFavoritos((f) => {
       const n = new Set(f);

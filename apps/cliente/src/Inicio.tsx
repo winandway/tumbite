@@ -15,7 +15,8 @@ import {
   enIdioma,
   recomendarRestaurantes,
 } from '@tumbite/compartido';
-import { C, useSesion } from '@tumbite/movil';
+import { AvisoCorreo, C, useSesion } from '@tumbite/movil';
+import { EntrarInvitado } from './inicio/EntrarInvitado';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
 import { useRestaurantes } from './comida/useRestaurantes';
@@ -208,6 +209,8 @@ export function Inicio() {
           </View>
         </View>
         <View style={[ancho, { paddingTop: 12 }]}>
+          {/* C-MIRAR-SIN-CUENTA y C-CORREO-OBLIGATORIO: entrar sin bloquear, o confirmar el correo. */}
+          {usuario ? <AvisoCorreo /> : <EntrarInvitado idioma={idioma} />}
           <Servicios idioma={idioma} catalogo={servicios?.servicios ?? null} alTocar={servicio} />
           <AvisoPago
             idioma={idioma}

@@ -4502,12 +4502,17 @@ const es: SeccionDocs[] = [
         id: 'confirm-email',
         titulo: 'Confirmar tu correo',
         resumen:
-          'Al crear tu cuenta en la app te llega un enlace. La app te deja entrar cuando confirmas que el correo es tuyo.',
+          'Puedes mirar restaurantes y menús sin cuenta. Al pagar te pedimos la cuenta con el correo confirmado: te llega un enlace y la app se da cuenta sola.',
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-aviso-correo-es.webp',
+            alt: 'Portada de la app de Divoox con el aviso «Confirma tu correo para poder pedir», la dirección a la que llegó el enlace y «Mandar el enlace otra vez».',
+            pie: 'Al crear tu cuenta, la portada te recuerda confirmar el correo. Mientras tanto puedes mirar.',
+          },
           {
             src: '/docs/recorrido-cliente-confirma-correo-es.webp',
             alt: 'Pantalla «Confirma tu correo» de la app de Divoox con la dirección a la que llegó el enlace y los botones «Ya lo confirmé», «Mandar el enlace otra vez» y «¿Correo equivocado? Cámbialo».',
-            pie: 'Justo después de crear la cuenta, la app te pide confirmar el correo.',
+            pie: 'Al ir a pagar, la app te pide confirmar el correo antes de seguir.',
           },
           {
             src: '/docs/recorrido-cliente-correo-verificado-es.webp',
@@ -4525,9 +4530,10 @@ const es: SeccionDocs[] = [
           'No me llegó el correo de confirmación, ¿qué hago?',
         ],
         pasos: [
-          'Al crear tu cuenta en la app de Divoox, verás «Confirma tu correo» con la dirección que escribiste. Busca en ese correo el mensaje «Confirma tu correo de Divoox» (mira también en spam).',
+          'Mira restaurantes y menús sin cuenta. Cuando vayas a pagar, entra o crea tu cuenta.',
+          'Al crear tu cuenta, la portada te avisa «Confirma tu correo para poder pedir» y, al ir a pagar, verás «Confirma tu correo» con la dirección que escribiste. Busca en ese correo el mensaje «Confirma tu correo de Divoox» (mira también en spam).',
           'Toca el enlace del correo en tu teléfono. En la página que se abre, toca «Abrir la app de Divoox».',
-          'La app se da cuenta sola, te dice «Tu correo quedó verificado» y, al tocar «Continuar», entras. Hasta entonces no se puede pedir: así cada cuenta es de una persona real y sus recibos le llegan.',
+          'La app se da cuenta sola, te dice «Tu correo quedó verificado» y, al tocar «Continuar», sigues con tu pedido. Hasta entonces no se puede pagar: así cada cuenta es de una persona real y sus recibos le llegan.',
           '¿Escribiste mal el correo? En la misma pantalla toca «¿Correo equivocado? Cámbialo», escribe el bueno y tu contraseña, y te mandamos el enlace ahí. El enlace vence en dos días; «Mandar el enlace otra vez» te manda uno nuevo.',
         ],
       },
@@ -9089,12 +9095,17 @@ const en: SeccionDocs[] = [
         id: 'confirm-email',
         titulo: 'Confirm your email',
         resumen:
-          'When you create your account in the app, you get a link. The app lets you in once you confirm the email is yours.',
+          'You can browse restaurants and menus without an account. At checkout we ask for your account with a confirmed email: you get a link and the app notices on its own.',
         capturas: [
+          {
+            src: '/docs/recorrido-cliente-aviso-correo-en.webp',
+            alt: 'Divoox app home screen with the notice “Confirm your email to order,” the address the link was sent to, and “Send the link again.”',
+            pie: 'After you create your account, the home screen reminds you to confirm your email. You can keep browsing meanwhile.',
+          },
           {
             src: '/docs/recorrido-cliente-confirma-correo-en.webp',
             alt: '“Confirm your email” screen in the Divoox app with the address the link was sent to and the buttons “I already confirmed it,” “Send the link again,” and “Wrong email? Change it.”',
-            pie: 'Right after you create your account, the app asks you to confirm your email.',
+            pie: 'At checkout, the app asks you to confirm your email before you continue.',
           },
           {
             src: '/docs/recorrido-cliente-correo-verificado-en.webp',
@@ -9112,9 +9123,10 @@ const en: SeccionDocs[] = [
           'I didn’t get the confirmation email. What do I do?',
         ],
         pasos: [
-          'When you create your account in the Divoox app, you’ll see “Confirm your email” with the address you typed. Look in that inbox for “Confirm your Divoox email” (check spam too).',
+          'Browse restaurants and menus without an account. When you’re ready to pay, sign in or create your account.',
+          'After you create your account, the home screen shows “Confirm your email to order,” and at checkout you’ll see “Confirm your email” with the address you typed. Look in that inbox for “Confirm your Divoox email” (check spam too).',
           'Tap the link in the email on your phone. On the page that opens, tap “Open the Divoox app.”',
-          'The app notices on its own, tells you “Your email is verified,” and when you tap “Continue,” you’re in. Until then you can’t order: this way every account belongs to a real person and receipts reach them.',
+          'The app notices on its own, tells you “Your email is verified,” and when you tap “Continue,” you go on with your order. Until then you can’t pay: this way every account belongs to a real person and receipts reach them.',
           'Typed the wrong email? On the same screen, tap “Wrong email? Change it,” enter the right one and your password, and we’ll send the link there. The link expires in two days; “Send the link again” sends a new one.',
         ],
       },

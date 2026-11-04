@@ -4,6 +4,8 @@
 # Release para el simulador firmada ad hoc (sin firma se rompe el llavero y no se puede entrar) e
 # instalación en el simulador encendido. No usa la cuenta de Apple ni toca las tiendas.
 # Uso: bash scripts/tiendas/simulador-ios.sh [cliente|repartidor|restaurante ...]
+# SIMULADOR_API=https://divoox.com apunta a producción (las capturas de la ficha de Apple, 4 nov 2026:
+# solo pantallas sin cuenta o con la cuenta de revisión, nada que escriba en producción).
 set -euo pipefail
 # CocoaPods falla con texto Unicode si la terminal no está en UTF-8.
 export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
@@ -11,22 +13,23 @@ cd "$(dirname "$0")/../.."
 RAIZ=$(pwd)
 SALIDA="$RAIZ/apks-pruebas/ios-simulador"
 mkdir -p "$SALIDA"
+API=${SIMULADOR_API:-https://staging.tumbite.com}
 APPS=("$@")
 [ ${#APPS[@]} -eq 0 ] && APPS=(cliente repartidor restaurante)
 SIM=$(xcrun simctl list devices booted | grep -m1 -oE '\([0-9A-F-]{36}\)' | tr -d '()')
 [ -n "$SIM" ] || { echo "No hay un simulador encendido."; exit 2; }
 
 for app in "${APPS[@]}"; do
-  echo "── $app: prebuild de iOS contra el sitio de pruebas"
+  echo "── $app: prebuild de iOS contra $API"
   cd "$RAIZ/apps/$app"
-  EXPO_PUBLIC_API_URL=https://staging.tumbite.com npx expo prebuild -p ios --clean --no-install >/dev/null
+  EXPO_PUBLIC_API_URL=$API npx expo prebuild -p ios --clean --no-install >/dev/null
   # El prebuild reescribe los comandos «ios»/«android» de package.json: se dejan como estaban.
   git checkout -- package.json
   (cd ios && pod install >/dev/null)
   WS=$(ls -d ios/*.xcworkspace | head -1)
   ESQUEMA=$(basename "$WS" .xcworkspace)
   echo "── $app: compilando $ESQUEMA para el simulador"
-  EXPO_PUBLIC_API_URL=https://staging.tumbite.com xcodebuild \
+  EXPO_PUBLIC_API_URL=$API xcodebuild \
     -workspace "$WS" -scheme "$ESQUEMA" -configuration Release -sdk iphonesimulator \
     -destination "id=$SIM" -derivedDataPath ios/build \
     CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=NO -quiet

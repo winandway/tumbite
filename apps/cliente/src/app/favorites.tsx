@@ -8,6 +8,7 @@ import { useRestaurantes } from '../comida/useRestaurantes';
 import { ANCHO_MAX, Encabezado, sombra } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 import { IMG, fotoDeRelleno } from '../inicio/recursos';
+import { conCuenta } from '../ConCuenta';
 
 const T = {
   es: {
@@ -29,7 +30,7 @@ const T = {
 };
 
 /** Pestaña Favoritos (auditoría final, punto 13): los restaurantes guardados con el corazón. */
-export default function Favoritos() {
+function Favoritos() {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   const catalogo = useRestaurantes(api, null);
@@ -148,3 +149,5 @@ export default function Favoritos() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(Favoritos);

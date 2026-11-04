@@ -49,6 +49,7 @@ import { ElegirEnMapa } from '../ElegirEnMapa';
 import { guardarUbicacion } from '../comida/useRestaurantes';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
+import { conCuenta } from '../ConCuenta';
 
 const TE = {
   es: {
@@ -146,7 +147,7 @@ const NOMBRE_REGALO = {
   },
 };
 
-export default function PantallaCarrito() {
+function PantallaCarrito() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
   const te = idioma === 'en' ? TE.en : TE.es;
@@ -1439,3 +1440,5 @@ export default function PantallaCarrito() {
     </>,
   );
 }
+
+export default conCuenta(PantallaCarrito);

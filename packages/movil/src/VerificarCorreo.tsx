@@ -331,3 +331,125 @@ function ConfirmaTuCorreo({
     </ScrollView>
   );
 }
+
+const TA = {
+  es: {
+    titulo: 'Confirma tu correo para poder pedir',
+    detalle: 'Te mandamos un enlace a',
+    abrelo: 'Ábrelo en este teléfono. Mientras tanto puedes mirar.',
+    reenviar: 'Mandar el enlace otra vez',
+    reenviado: 'Te lo mandamos otra vez.',
+    verificado: 'Tu correo quedó verificado. Ya puedes pedir.',
+  },
+  en: {
+    titulo: 'Confirm your email to order',
+    detalle: 'We sent a link to',
+    abrelo: 'Open it on this phone. You can keep browsing meanwhile.',
+    reenviar: 'Send the link again',
+    reenviado: 'We sent it again.',
+    verificado: 'Your email is verified. You can order now.',
+  },
+};
+
+/**
+ * C-CORREO-OBLIGATORIO (4 nov 2026): en la portada, quien entró sin confirmar su correo ve este aviso
+ * (no bloquea: se puede mirar). Se da cuenta sola cuando la persona toca el enlace y lo dice en verde.
+ * La puerta que bloquea (PuertaCorreo) está al ir a pagar.
+ */
+export function AvisoCorreo() {
+  const { api, idioma, usuario } = useSesion();
+  const t = enIdioma(TA, idioma);
+  const [estado, setEstado] = useState<'nada' | 'falta' | 'verificado'>('nada');
+  const [correo, setCorreo] = useState('');
+  const [reenviado, setReenviado] = useState(false);
+  const estadoRef = useRef(estado);
+  useEffect(() => {
+    estadoRef.current = estado;
+  }, [estado]);
+
+  const comprobar = useCallback(async () => {
+    if (!usuario) return;
+    try {
+      const r = await api.pedir<{ perfil: Perfil }>('GET', '/datos/cuentas/perfil');
+      setCorreo(r.perfil.correo);
+      const debe = r.perfil.debeConfirmarCorreo === true;
+      setEstado((e) => (debe ? 'falta' : e === 'falta' ? 'verificado' : e));
+    } catch {
+      // Sin conexión: el aviso se queda como estaba; la puerta de pagar vuelve a mirar.
+    }
+  }, [api, usuario]);
+
+  useEffect(() => {
+    if (!usuario) return;
+    const primero = setTimeout(() => void comprobar(), 0);
+    const reloj = setInterval(() => {
+      if (estadoRef.current === 'falta') void comprobar();
+    }, CADA_MS_COMPROBAR_CORREO);
+    const sub = AppState.addEventListener('change', (a) => {
+      if (a === 'active' && estadoRef.current === 'falta') void comprobar();
+    });
+    return () => {
+      clearTimeout(primero);
+      clearInterval(reloj);
+      sub.remove();
+    };
+  }, [comprobar, usuario]);
+
+  if (!usuario || estado === 'nada') return null;
+  if (estado === 'verificado')
+    return (
+      <View
+        testID="aviso-correo-verificado"
+        accessibilityRole="alert"
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          marginHorizontal: 16,
+          marginVertical: 8,
+          padding: 12,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: C.exito,
+          backgroundColor: '#fff',
+        }}
+      >
+        <Text style={{ color: C.exito, fontSize: 20, fontWeight: '700' }}>✓</Text>
+        <Text style={{ flex: 1, color: C.secundario, fontWeight: '700' }}>{t.verificado}</Text>
+      </View>
+    );
+  return (
+    <View
+      testID="aviso-correo"
+      style={{
+        marginHorizontal: 16,
+        marginVertical: 8,
+        padding: 14,
+        gap: 4,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#2a2a2a',
+        backgroundColor: '#fff',
+      }}
+    >
+      <Text style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ color: '#5E5E5E' }}>
+        {t.detalle} <Text style={{ fontWeight: '700' }}>{correo}</Text>. {t.abrelo}
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        hitSlop={8}
+        onPress={() => {
+          void api
+            .pedir('POST', '/datos/cuentas/confirmar/reenviar')
+            .then(() => setReenviado(true))
+            .catch(() => undefined);
+        }}
+      >
+        <Text style={{ color: C.primario, fontWeight: '700', marginTop: 4 }}>
+          {reenviado ? t.reenviado : t.reenviar}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}

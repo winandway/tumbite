@@ -15,6 +15,7 @@ import {
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
+import { conCuenta } from '../ConCuenta';
 
 /**
  * C-TARJETAS-REGALO (R-T4, como las tarjetas de regalo de DoorDash y Uber Eats): comprar una para
@@ -67,7 +68,7 @@ const T = {
 
 type Estado = { activas: boolean; minimo: number; maximo: number; saldo: number };
 
-export default function TarjetasRegalo() {
+function TarjetasRegalo() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(T, idioma);
   const [estado, setEstado] = useState<Estado | null>(null);
@@ -231,3 +232,5 @@ export default function TarjetasRegalo() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(TarjetasRegalo);

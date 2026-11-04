@@ -46,7 +46,7 @@ export default function Tienda() {
     q: qInicial,
     grupo,
   } = useLocalSearchParams<{ id: string; q?: string; grupo?: string }>();
-  const { api, idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = textosTiendas(idioma);
   const tc = textosComida(idioma);
   const { agregar, vaciar, cantidadTotal, carrito } = useCarrito();
@@ -113,6 +113,11 @@ export default function Tienda() {
 
   const [avisoGrupo, setAvisoGrupo] = useState('');
   async function crearGrupo() {
+    // C-MIRAR-SIN-CUENTA: el pedido en grupo es de la cuenta.
+    if (!usuario) {
+      router.push('/sign-in');
+      return;
+    }
     try {
       const r = await api.pedir<{ codigo: string }>('POST', '/datos/grupos', { restauranteId: id });
       router.push(`/group/${r.codigo}`);

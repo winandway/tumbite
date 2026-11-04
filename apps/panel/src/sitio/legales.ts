@@ -617,7 +617,8 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
         id: 'como',
         titulo: 'Opción 1: tú mismo, al instante',
         parrafos: [
-          'Toca el botón «Borrar mi cuenta ahora» de esta página (desde la app llegas aquí con el menú de los tres puntos → «Borrar mi cuenta»).',
+          'En la app de clientes: «Mi cuenta» → los tres puntos (debajo de «Cerrar sesión») → «Borrar mi cuenta» → escribe BORRAR → «Borrar mi cuenta». Todo pasa dentro de la app y te dice «Tu cuenta quedó borrada».',
+          'Sin la app: toca el botón «Borrar mi cuenta ahora» de esta página.',
           'Entra con el correo y la contraseña de tu cuenta. En Configuración, toca los tres puntos junto al título → «Borrar mi cuenta» y escribe BORRAR para confirmar.',
           'Si tienes un pedido en camino, espera a que termine: después ya puedes borrarla.',
         ],
@@ -654,7 +655,8 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
         id: 'how',
         titulo: 'Option 1: yourself, right away',
         parrafos: [
-          'Tap the “Delete my account now” button on this page (from the app you get here with the three-dot menu → “Delete my account”).',
+          'In the customer app: “My account” → the three dots (below “Sign out”) → “Delete my account” → type DELETE → “Delete my account.” It all happens inside the app, which tells you “Your account was deleted.”',
+          'Without the app: tap the “Delete my account now” button on this page.',
           'Sign in with your account’s email and password. In Settings, tap the three dots next to the title → “Delete my account” and type DELETE to confirm.',
           'If you have an order on its way, wait until it’s done: then you can delete it.',
         ],

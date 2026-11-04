@@ -12,6 +12,7 @@ import {
   useSesion,
 } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
+import { conCuenta } from '../ConCuenta';
 
 /**
  * C-REFERIDOS (CLI-7, como «Invita a un amigo» de DoorDash y Uber Eats): tu código para compartir,
@@ -63,7 +64,7 @@ type Estado = {
   yaUsoUnCodigo: boolean;
 };
 
-export default function InvitarAmigo() {
+function InvitarAmigo() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(T, idioma);
   const [estado, setEstado] = useState<Estado | null>(null);
@@ -179,3 +180,5 @@ export default function InvitarAmigo() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(InvitarAmigo);

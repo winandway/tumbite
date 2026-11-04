@@ -6,8 +6,10 @@ import { TEXTOS } from './textos';
 
 /**
  * C-CORREO-OBLIGATORIO y C-BORRAR-EN-LA-APP (4 nov 2026, Richard grabando el video para Apple):
- * 1) quien crea su cuenta en la app del cliente ve «Confirma tu correo» y no entra hasta confirmarlo;
- *    cuando toca el enlace, la app se da cuenta sola y dice «Tu correo quedó verificado»;
+ * 0) sin cuenta se mira la portada (C-MIRAR-SIN-CUENTA, Apple 5.1.1 v);
+ * 1) al crear la cuenta, la portada avisa que falta confirmar el correo; al ir a pagar, «Confirma tu
+ *    correo» no deja seguir; cuando toca el enlace, la app se da cuenta sola y dice «Tu correo quedó
+ *    verificado»;
  * 2) «Borrar mi cuenta» de los tres puntos se hace dentro de la app escribiendo DELETE / BORRAR, dice
  *    que quedó borrada y vuelve a la pantalla de entrar. Solo en esta computadora (la cuenta
  *    «verificar.» es la que pasa por la puerta fuera de producción).
@@ -43,7 +45,10 @@ for (const idioma of ['en', 'es'] as const)
     const ctx = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
     await ctx.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), idioma);
     const p = await ctx.newPage();
+    // 0. Sin cuenta se mira la portada (Apple 5.1.1 v); entrar está a mano, sin bloquear.
     await p.goto('/app/');
+    await expect(p.getByTestId('entrar-invitado')).toBeVisible({ timeout: 20_000 });
+    await foto(p, `cliente-portada-sin-cuenta-${idioma}`);
     await p.getByText(L.appCrear).click();
     await p.getByLabel(L.nombreCompleto).fill('Ana García');
     await p.getByLabel(L.correo).fill(correo);
@@ -51,7 +56,13 @@ for (const idioma of ['en', 'es'] as const)
     await p.getByRole('checkbox').click();
     await p.getByRole('button', { name: L.crearCuenta }).click();
 
-    // 1. No entra: le pide confirmar el correo, con la dirección a la vista.
+    // 1. Vuelve a la portada con el aviso de confirmar el correo (no bloquea mirar).
+    await expect(p.getByTestId('aviso-correo')).toBeVisible({ timeout: 20_000 });
+    await expect(p.getByTestId('aviso-correo')).toContainText(correo);
+    await foto(p, `cliente-aviso-correo-${idioma}`);
+
+    // 2. Al ir a pagar, la puerta: no se paga sin el correo confirmado.
+    await p.goto('/app/cart');
     await expect(p.getByTestId('confirma-tu-correo')).toBeVisible({ timeout: 20_000 });
     await expect(p.getByTestId('correo-a-confirmar')).toHaveText(correo);
     await foto(p, `cliente-confirma-correo-${idioma}`);
@@ -62,7 +73,7 @@ for (const idioma of ['en', 'es'] as const)
     await expect(p.getByRole('alert')).toBeVisible();
     await expect(p.getByTestId('confirma-tu-correo')).toBeVisible();
 
-    // 2. Toca el enlace del correo (aquí, la base marca el correo confirmado): la app se da cuenta sola.
+    // Toca el enlace del correo (aquí, la base marca el correo confirmado): la app se da cuenta sola.
     sqlLocal(
       `UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE correo = '${correo}'`,
     );

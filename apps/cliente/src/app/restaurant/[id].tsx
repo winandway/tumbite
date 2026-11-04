@@ -68,7 +68,7 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
 export default function MenuRestaurante() {
   // C-PEDIDO-GRUPO: con ?grupo=<código>, lo que se agrega va al pedido en grupo, no al carrito.
   const { id, grupo } = useLocalSearchParams<{ id: string; grupo?: string }>();
-  const { api, idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
   const tc = textosComida(idioma);
   const { agregar, vaciar, cantidadTotal, carrito } = useCarrito();
@@ -120,6 +120,11 @@ export default function MenuRestaurante() {
     }
   }
   async function crearGrupo() {
+    // C-MIRAR-SIN-CUENTA: el pedido en grupo es de la cuenta.
+    if (!usuario) {
+      router.push('/sign-in');
+      return;
+    }
     try {
       const r = await api.pedir<{ codigo: string }>('POST', '/datos/grupos', { restauranteId: id });
       router.push(`/group/${r.codigo}`);

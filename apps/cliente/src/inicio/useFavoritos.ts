@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { router } from 'expo-router';
 import type { Api } from '@tumbite/compartido';
 import type { Favoritos } from './Restaurantes';
 
@@ -31,6 +32,11 @@ export function useFavoritos(api: Api, conSesion: boolean): Favoritos {
     });
   const alternar = useCallback(
     (id: string) => {
+      // C-MIRAR-SIN-CUENTA: sin cuenta, el corazón lleva a entrar.
+      if (!conSesion) {
+        router.push('/sign-in');
+        return;
+      }
       const era = ids.has(id);
       cambiar(id, !era);
       api.pedir(era ? 'DELETE' : 'PUT', `/datos/favoritos/${id}`).catch((e: unknown) => {
@@ -38,7 +44,7 @@ export function useFavoritos(api: Api, conSesion: boolean): Favoritos {
         cambiar(id, era);
       });
     },
-    [api, ids],
+    [api, ids, conSesion],
   );
   return useMemo(() => ({ ids, alternar }), [ids, alternar]);
 }

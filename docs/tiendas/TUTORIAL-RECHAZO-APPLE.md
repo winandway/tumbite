@@ -177,9 +177,13 @@ Lo que se hizo y lo que queda:
 1. ✅ **Pausar** los cuatro restaurantes de prueba de Novi (Burger Town Center, Pizzería Novi, Tacos Twelve Oaks y Café Fountain Walk). Solo pausar: `estado = 'pausado'`, `abierto = 0`; no se borra nada. **Cómo se reactivan:** superadmin → Restaurantes → cada uno → «Reactivar» (o `estado = 'aprobado'` y `abierto = 1` en esos cuatro id: 8c5f8a00…, 6902e5b5…, 43bf58d8…, 87052162…).
 2. ✅ (nombre, descripción, abierto y plato) / ⏳ (foto de portada y menú de seis platos con fotos: falta subir las fotos) **Dejar limpio el restaurante de la cuenta de revisión:** nombre «Divoox Review Kitchen», descripción sin «prueba» («Pizzas, salads and drinks, made to order in downtown Miami.» / «Pizzas, ensaladas y bebidas, hechas al momento en el centro de Miami.»), abierto todos los días de 7 am a 11 pm, foto de portada, y un menú de seis platos con foto y descripción correcta en los dos idiomas, sin el plato con error.
 
+3. ✅ **4 nov 2026 (orden de Gerencia, dictamen previo del auditor):** se pausó también «Restaurante el Beef USA» (a8b18e82…, `estado = 'pausado'`; no se borró; se reactiva con `estado = 'aprobado'` o desde el superadmin). En Novi solo sale «Divoox Review Kitchen». Su teléfono de relleno («+1 305 000 0000») pasó al número de Divoox, +1 866 569 5258.
+
 **La comprobación entrando con cada cuenta la hace Richard** (la IA no escribe contraseñas en producción): abrir cada app de TestFlight (cliente 25, Driver 21, Restaurants) y entrar con su cuenta; las contraseñas están en las notas para el revisor de cada app y en el archivo privado de revisores. Debe verse: el cliente encuentra «Divoox Review Kitchen» abierto en Miami; Driver entra y puede conectarse; Restaurants ve su panel y su menú de seis platos.
 
 ### 6.2 Notas para el revisor (texto nuevo, se carga junto con la respuesta)
+
+> **4 nov 2026:** el texto completo y corregido de Divoox (cliente) está en NOTAS-REVISOR-DIVOOX (esta carpeta): Novi en vez de «any location», el correo confirmado, el camino exacto del borrado y el video. Lo de abajo queda como historia.
 
 Se mantiene lo de hoy (propósito, cómo usarla, cuentas, servicios externos, contenido) y cambian tres párrafos:
 

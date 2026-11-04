@@ -14,15 +14,18 @@ Producción cobra con Stripe en vivo, y la tarjeta de prueba no funciona ahí. P
 
 ## Video 1: Divoox (clientes), ícono rojo
 
-![Pasos del video del cliente](guion-video-cliente.png)
+> Rehecho el 4 nov 2026 con el dictamen previo del auditor de tiendas. Se graba con la **compilación 28** (mirar sin cuenta, la cuenta y el correo confirmado al pagar, y el borrado dentro de la app). Los botones son los de la 28, copiados de la prueba de punta a punta (e2e/recorrido/correoObligatorio.spec.ts).
 
-1. Pantalla de inicio del iPhone → tocar el ícono rojo de **Divoox**.
-2. **«New here? Create your account»** → «Full name», «Email» (un correo nuevo), «Mobile phone», «Password» → marcar «I agree to the Terms of Service…» → **«Create account»**.
-3. Arriba, **«Deliver to»** («Current location»): en Novi, con la ubicación de Richard, ya sale «Divoox Review Kitchen» (27500 Novi Rd, a unas 2 mi). Si no, en **«Delivery address»** escribir 27500 Novi Rd, Novi, MI 48377 y elegir la sugerencia.
-4. Tocar **«Food»** → abrir **«Divoox Review Kitchen»** (sale abierto aunque nadie tenga abierta la app Restaurants).
-5. Tocar **«+»** en dos platos → abrir el carrito → mostrar «Food», «Delivery», «Service fee», «Tip for your driver» y «Total» → **«Continue to payment»** → cerrar la hoja de pago sin pagar.
-6. Pestaña **«My account»** → **«Sign out»** → **«Sign in»** con el mismo correo.
-7. **«My account»** → **«⋮»** junto a «Your account» → **«Delete account»** → escribir **DELETE** → **«Delete my account»** → la app vuelve a la pantalla de entrar.
+**Antes de grabar:** un correo nuevo que nunca se usó, solo en la app Correo del iPhone y con el buzón vacío (que no salgan otras empresas). En «Create account» se usa un nombre y un teléfono que no son los de Richard: nombre **Alex Morgan**, celular **(313) 555-0142**. La dirección se escribe a mano: **27500 Novi Rd, Novi, MI 48377** (una dirección pública de Novi; nunca la casa de Richard ni «la ubicación de Richard»).
+
+1. Pantalla de inicio del iPhone → tocar el ícono rojo de **Divoox**. Se abre la portada **sin cuenta**, con la tarjeta **«Sign in to order»**.
+2. Arriba, **«Deliver to»** → escribir **27500 Novi Rd, Novi, MI 48377** → elegir la sugerencia.
+3. Tocar **«Food»** → abrir **«Divoox Review Kitchen»** → **«+»** en dos platos → **«View cart»**.
+4. El carrito pide la cuenta: **«New here? Create your account»** → «Full name», «Email» (el correo nuevo), «Mobile phone», «Password» → marcar «I agree to the Terms of Service…» → **«Create account»**.
+5. Sale **«Confirm your email»** con el correo escrito. Ir a la app Correo → abrir **«Confirm your Divoox email»** → **«Confirm my email»** → en la página, **«Open the Divoox app»** → la app muestra **«Your email is verified»** → **«Continue»**.
+6. Ya en el carrito: mostrar «Food», «Delivery», «Service fee», «Tip for your driver» y «Total» → **«Continue to payment»** → cerrar la hoja de pago sin pagar.
+7. Pestaña **«My account»** → **«Sign out»** → **«My account»** otra vez → **«Sign in»** con el mismo correo y la contraseña.
+8. **«My account»** → **«⋮»** (debajo de «Sign out») → **«Delete my account»** → en la ventana **«Delete account»** escribir **DELETE** → **«Delete my account»** → **«Your account was deleted»** → **«OK»** → la app queda en la pantalla de entrar.
 
 ## Video 2: Divoox Driver (repartidores), ícono azul
 

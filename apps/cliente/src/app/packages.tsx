@@ -9,6 +9,7 @@ import { textosComida } from '../comida/textos';
 import { ElegirEnMapa } from '../ElegirEnMapa';
 import type { Punto } from '../ubicacion';
 import { RastrearPaquete } from '../RastrearPaquete';
+import { conCuenta } from '../ConCuenta';
 
 const T = {
   es: {
@@ -116,7 +117,7 @@ type Direccion = {
  * tiene que estar en la app: así cada paquete que le mandan llega con su ubicación exacta. Aquí ve
  * lo que le envían y confirma el punto con una dirección guardada o con el pin en el mapa.
  */
-export default function MisPaquetes() {
+function MisPaquetes() {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   const tc = textosComida(idioma);
@@ -352,3 +353,5 @@ export default function MisPaquetes() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(MisPaquetes);

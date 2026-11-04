@@ -13,6 +13,7 @@ import {
 import { C, e, useSesion } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas';
+import { conCuenta } from '../../ConCuenta';
 
 /**
  * C-PEDIDO-GRUPO (29 oct 2026), como el «Group Order» de DoorDash: el enlace se comparte, cada
@@ -105,7 +106,7 @@ function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
   );
 }
 
-export default function PedidoEnGrupo() {
+function PedidoEnGrupo() {
   const { codigo } = useLocalSearchParams<{ codigo: string }>();
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
@@ -322,3 +323,5 @@ export default function PedidoEnGrupo() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(PedidoEnGrupo);

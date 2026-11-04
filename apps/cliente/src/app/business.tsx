@@ -25,6 +25,7 @@ import {
   useSesion,
 } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Pildora, Tarjeta } from '../comida/piezas';
+import { conCuenta } from '../ConCuenta';
 
 /**
  * C-BLOQUE-EN-LA-APP y C-EMPRESA-LEGAL (31 oct 2026, Richard en TestFlight; LG1): la empresa de
@@ -131,7 +132,7 @@ const INICIAL = {
 
 const clave = () => `empresa-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-export default function PantallaEmpresas() {
+function PantallaEmpresas() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(T, idioma);
   const [vista, setVista] = useState<'info' | 'registro' | 'panel'>('info');
@@ -440,3 +441,5 @@ export default function PantallaEmpresas() {
     </SafeAreaView>
   );
 }
+
+export default conCuenta(PantallaEmpresas);

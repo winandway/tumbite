@@ -23,6 +23,7 @@ import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
+import { conCuenta } from '../ConCuenta';
 
 const T = {
   es: {
@@ -90,7 +91,7 @@ type Pedido = {
 type Tarjeta = { id: string; marca: string; ultimos4: string; vence: string };
 
 /** «Mi cuenta» del cliente: historial, tarjetas guardadas, datos y ayuda. */
-export default function MiCuenta() {
+function MiCuenta() {
   const { api, idioma, usuario, salir } = useSesion();
   const tm = enIdioma(TEXTOS_MOVIL, idioma);
   const pestana = (p: Pestana) => {
@@ -366,3 +367,5 @@ const estilos = {
     marginBottom: 8,
   },
 };
+
+export default conCuenta(MiCuenta);

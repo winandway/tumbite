@@ -53,6 +53,7 @@ import { FotoRepartidor } from '../../FotoRepartidor';
 import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas';
 import { IMG_COMIDA } from '../../comida/recursos';
 import { textosComida } from '../../comida/textos';
+import { conCuenta } from '../../ConCuenta';
 
 type Pedido = {
   id: string;
@@ -521,7 +522,7 @@ const PASOS_DISENO = new Map<string, number>([
   ['entregado', 3],
 ]);
 
-export default function SeguirPedido() {
+function SeguirPedido() {
   const { id, nuevo } = useLocalSearchParams<{ id: string; nuevo?: string }>();
   const { api, idioma } = useSesion();
   const [reclamoCobro, setReclamoCobro] = useState('');
@@ -1678,3 +1679,5 @@ function Circulo({
     </Pressable>
   );
 }
+
+export default conCuenta(SeguirPedido);

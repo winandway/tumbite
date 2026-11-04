@@ -1,7 +1,7 @@
 import { type ErrorBoundaryProps, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ConSesion, SesionProvider, PantallaConFallo } from '@tumbite/movil';
+import { SesionProvider, PantallaConFallo } from '@tumbite/movil';
 import { AbrirAvisos } from '../AbrirAvisos';
 import { CarritoProvider } from '../carrito';
 
@@ -33,10 +33,9 @@ export default function Raiz() {
       <SesionProvider roles={['cliente']}>
         <CarritoProvider>
           <StatusBar style="light" />
-          <ConSesion rolRegistro="cliente" pideCumple exigeCorreo>
-            <AbrirAvisos />
-            <Stack screenOptions={{ headerShown: false }} />
-          </ConSesion>
+          {/* C-MIRAR-SIN-CUENTA: sin cuenta se mira; cada pantalla de la cuenta la pide (ConCuenta). */}
+          <AbrirAvisos />
+          <Stack screenOptions={{ headerShown: false }} />
         </CarritoProvider>
       </SesionProvider>
     </SafeAreaProvider>

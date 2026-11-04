@@ -1,9 +1,9 @@
 import { ActivityIndicator, View } from 'react-native';
-import { Acceso, C, useSesion } from '@tumbite/movil';
+import { C, SesionSinConfirmar, useSesion } from '@tumbite/movil';
 import { Inicio } from '../Inicio';
 
 export default function Entrada() {
-  const { cargando, usuario } = useSesion();
+  const { cargando, usuario, sinConfirmar } = useSesion();
   if (cargando) {
     return (
       <View
@@ -18,5 +18,8 @@ export default function Entrada() {
       </View>
     );
   }
-  return usuario ? <Inicio /> : <Acceso rolRegistro="cliente" pideCumple />;
+  // C-SESION-CON-LIMITE: con una sesión guardada que no se pudo confirmar, se reintenta (no se
+  // muestra como invitado a quien sí tiene cuenta). Sin sesión, se mira sin cuenta (C-MIRAR-SIN-CUENTA).
+  if (!usuario && sinConfirmar) return <SesionSinConfirmar />;
+  return <Inicio />;
 }

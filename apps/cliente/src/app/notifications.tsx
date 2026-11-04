@@ -10,13 +10,14 @@ import { useRestaurantes } from '../comida/useRestaurantes';
 import { type Aviso, useAvisos } from '../inicio/useAvisos';
 import { textosInicio } from '../inicio/textos';
 import { Pressable } from 'react-native';
+import { conCuenta } from '../ConCuenta';
 
 /**
  * La campana (como en los grandes): una lista de avisos reales, sin tabla nueva. Pedidos en
  * curso (tocar abre el seguimiento), regalos en marcha (pestaña «Regalos», la que abre el cupón) y
  * próximas aperturas en la ciudad. Nada inventado: si no hay nada, se dice.
  */
-export default function Avisos() {
+function Avisos() {
   const { api, idioma } = useSesion();
   const t = textosInicio(idioma);
   const tc = textosComida(idioma);
@@ -163,3 +164,5 @@ const Titulo = ({ texto, punto }: { texto: string; punto?: boolean }) => (
 const Texto = ({ texto }: { texto: string }) => (
   <Text style={{ color: '#3A3A3A', fontSize: 14, marginTop: 6 }}>{texto}</Text>
 );
+
+export default conCuenta(Avisos);
