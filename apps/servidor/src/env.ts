@@ -89,6 +89,11 @@ export const esquemaEnv = z.object({
   VERIFICADOR_CLAVE: z.string().min(32).optional(),
   /** «1» = apagar los retiros de inmediato, sin tocar la base (emergencia). Manda sobre la bandera. */
   RETIROS_APAGADOS: z.enum(['0', '1']).optional(),
+  /**
+   * C-CONNECT-APAGADO: «1» cuando Stripe Connect esté activado en la cuenta de Windoce. Sin ella, con
+   * la llave real no se crea ninguna cuenta conectada (Stripe lo marcó como sospechoso el 5 nov 2026).
+   */
+  STRIPE_CONNECT_ACTIVO: z.enum(['0', '1']).optional(),
   // Fase 2 · Tiempo real (docs/FASE-2-TIEMPO-REAL.md). Sin estas variables todo sigue como hoy:
   // las apps consultan al servidor y mandan la ubicación por la ruta actual.
   /** Llave con la que los Workers externos firman lo que mandan aquí (actual y anterior). */

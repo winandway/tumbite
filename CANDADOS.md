@@ -3210,3 +3210,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo (orden de Gerencia, 4 nov, 21:40 hora del Este):** un solo UPDATE en producción por la API de consultas, sin borrar nada: a los cuatro restaurantes pausados de Novi se les quitó « (prueba)» del nombre. Siguen en estado `pausado` y cerrados, y no aparecen en la lista pública. Ahora se llaman Pizzería Novi, Tacos Twelve Oaks, Burger Town Center y Café Fountain Walk.
 - **Revisado:** ningún plato, descripción, nota ni dirección de pedidos de las tres cuentas revisor.* dice prueba, test, sample, ejemplo o demo. El restaurante del revisor es Divoox Review Kitchen.
 - **No tocar:** antes de una revisión de Apple, comprobar con la misma búsqueda que no volvió ninguna de esas palabras en lo que ven las cuentas revisor.*.
+
+## C-CONNECT-APAGADO y C-STRIPE-SOLO-PRUEBA — no crear cuentas conectadas con la llave real hasta activar Connect (5 nov 2026) — EE. UU.
+
+- **Qué pasó:** Stripe pausó la creación de cuentas conectadas en la cuenta de Windoce por «actividad sospechosa» en `POST /v1/accounts`.
+- **Causa confirmada (registro `errores_servidor` de producción):** la billetera del panel (`AltaCobros.tsx`) pide `/datos/billetera/sesion` al abrirse y, si falla, `/datos/billetera/conectar`. Las dos llamaban a `cuentaDeCobros()`, que hace `POST /v1/accounts` con la llave REAL, con Connect sin activar. Hubo 17 intentos fallidos en `/datos/billetera/conectar`, del 27 oct 03:28 al 30 oct 22:02 (UTC). Todos devolvieron «temporarily restricted… suspicious activity». La prueba s11 del diagnóstico NO fue: ya se negaba con la llave real.
+- **Arreglo:** `exigirConnect()` en `apps/servidor/src/rutas/dinero.ts`. Con la llave real no se llama a Stripe hasta que la variable `STRIPE_CONNECT_ACTIVO=1` esté puesta en el sitio. Mientras tanto responde 409: «Los cobros a tu cuenta bancaria todavía no están activados. Tu saldo está a salvo…». Con `sk_test_` (sitio de pruebas) sigue igual.
+- **Candado de pruebas internas:** `connectApagado.test.ts` revisa que toda ruta de `diagnostico.ts` que use Stripe exija `startsWith('sk_test_')`. Las dos pruebas se comprobaron en rojo.
+- **Para encender Connect:** primero Richard activa Connect y confirma en el panel de Stripe. Después se pone `STRIPE_CONNECT_ACTIVO=1` en YaDominios Cloud y se republica. No antes.
