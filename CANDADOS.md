@@ -3203,3 +3203,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/panel/src/sitio/MapaCobertura.tsx` pregunta el estado público de cada ciudad (`useCiudadesEnVivo`, el interruptor del superadmin en `/datos/web/ciudades`). Solo dice «Live» la ciudad encendida; las demás dicen «Coming soon». Las zonas fuera de Florida (Novi, pruebas) no se dibujan en ese mapa.
 - **Prueba:** `apps/panel/src/sitio/MapaCobertura.test.tsx` (comprobada en rojo).
 - **No tocar:** el día del lanzamiento, Miami se enciende desde el superadmin (Ciudades de la web), no cambiando este código.
+
+## C-REVISOR-SIN-PRUEBA — lo que ven las cuentas del revisor no dice «prueba» (4 nov 2026) — EE. UU.
+
+- **Qué se vio:** la cuenta del revisor de Apple (cliente) tiene pedidos viejos cancelados de «Café Fountain Walk (prueba)», y también de «Pizzería Novi (prueba)» y «Tacos Twelve Oaks (prueba)». Apple rechaza el contenido temporal (2.1(a)).
+- **Qué se hizo (orden de Gerencia, 4 nov, 21:40 hora del Este):** un solo UPDATE en producción por la API de consultas, sin borrar nada: a los cuatro restaurantes pausados de Novi se les quitó « (prueba)» del nombre. Siguen en estado `pausado` y cerrados, y no aparecen en la lista pública. Ahora se llaman Pizzería Novi, Tacos Twelve Oaks, Burger Town Center y Café Fountain Walk.
+- **Revisado:** ningún plato, descripción, nota ni dirección de pedidos de las tres cuentas revisor.* dice prueba, test, sample, ejemplo o demo. El restaurante del revisor es Divoox Review Kitchen.
+- **No tocar:** antes de una revisión de Apple, comprobar con la misma búsqueda que no volvió ninguna de esas palabras en lo que ven las cuentas revisor.*.
