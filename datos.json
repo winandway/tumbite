@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-03T16:08:39.336Z",
+  "actualizado": "2026-11-05T02:03:27.102Z",
   "version": "7b9a5ca",
-  "ahora": "Portada del cliente: estudio con REA de las súper apps y maqueta nueva con los servicios arriba",
+  "ahora": "La app del cliente lista para responderle a Apple: compilación 30, notas, video y ficha cargados. Falta que Richard entre con la cuenta de prueba.",
   "proximo": [
     {
       "quien": "richard",
@@ -303,6 +303,16 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-04",
+      "titulo": "Apple: todo cargado para responder",
+      "texto": "La versión 1.0 de la app del cliente ya tiene la compilación 30, las notas nuevas, el video de quince megas y la ficha sin el enlace a la portada ni la palabra Miami. No se envió nada: falta que Richard entre con la cuenta de prueba. EE. UU."
+    },
+    {
+      "fecha": "2026-11-04",
+      "titulo": "El mapa de la portada dice la verdad",
+      "texto": "Miami ya no sale «en vivo» en el mapa: dice «muy pronto» hasta que se encienda el día del lanzamiento. En la misma publicación: el desfile de la flota en la portada, el menú del celular y la avenida en «Cómo funciona». En vivo en divoox.com. Todos los países."
+    },
     {
       "fecha": "2026-11-03",
       "titulo": "Portada con logo y «Más» terminada",
