@@ -12,7 +12,7 @@
 
 ## Texto para Divoox (app del cliente)
 
-> Corregido el 4 nov 2026 con el dictamen previo del auditor de tiendas (los seis arreglos de B2). **Antes de enviar:** poner en la pregunta 4 el número real de compilaciones de ese día (hoy, con la 28, son 28) y que Richard confirme la frase de la pregunta 2. Largo medido con `wc -m` sobre el bloque en inglés: debajo de 4000.
+> Corregido el 4 nov 2026 con el dictamen previo del auditor de tiendas (los seis arreglos de B2). **Antes de enviar:** el número de compilaciones de la pregunta 4 es el de hoy (30) y Richard confirma la frase de la pregunta 2. La compilación 30 queda adjunta a la versión 1.0 antes de responder. Largo medido con `wc -m` sobre el bloque en inglés: debajo de 4000.
 
 Hello, and thank you for the review. Divoox is our own product, and we would like to answer each question.
 
@@ -22,7 +22,7 @@ Hello, and thank you for the review. Divoox is our own product, and we would lik
 
 **3. The gap it addresses.** A delivery app that works fully in English and Spanish, with the full price (food, delivery, service fee and tip) shown before paying, restaurants that run their own promotions and see what they receive per order, and payment rules set per country as we expand.
 
-**4. Beta testing.** Every build is tested by our team on staging and TestFlight (28 builds of this app so far), plus an automated end-to-end test of a full order in both languages on every release. Feedback applied: customers can now browse restaurants and menus without an account; the account, with a confirmed email, is asked for at checkout; and account deletion now happens inside the app.
+**4. Beta testing.** Every build is tested by our team on staging and TestFlight (30 builds of this app so far), plus an automated end-to-end test of a full order in both languages on every release. Feedback applied: customers can now browse restaurants and menus without an account; the account, with a confirmed email, is asked for at checkout; and account deletion now happens inside the app.
 
 **5. Standalone or suite.** Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps because a delivery marketplace has three people with three different jobs, the same structure as DoorDash, Dasher and DoorDash Merchant: Divoox for customers who order, Divoox Driver for drivers who deliver, and Divoox Restaurants for restaurants that prepare the orders. Divoox is the only one where people order; a customer cannot accept deliveries or sell food. Each app has its own color and icon (customer red, driver blue, restaurant black). Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
 
@@ -33,6 +33,8 @@ Hello, and thank you for the review. Divoox is our own product, and we would lik
 **8. Shared code with third-party apps.** No. Divoox is not built on a white-label product, template or app generation service. Payments use Stripe through its standard SDK; maps on iPhone use Apple Maps, and address suggestions use Google Maps Platform.
 
 **9. Built for a client?** No. Divoox is owned and operated by Windoce LLC, the account holder. The concept, brand, content and service are ours, and we run the backend, the restaurant and driver agreements and customer support ourselves.
+
+Build 30 is now attached to version 1.0. It adds browsing without an account, email confirmation at checkout and account deletion inside the app. A new screen recording on a physical iPhone, starting from launch, is attached in App Review Information.
 
 Divoox Driver and Divoox Restaurants received the same message; we will follow up on each one separately.
 
