@@ -133,6 +133,22 @@ function exigirStripe(c: Ctx) {
   return s;
 }
 
+/**
+ * C-CONNECT-APAGADO (5 nov 2026): con la llave real, ninguna cuenta conectada se crea mientras
+ * Stripe Connect no esté activado en la cuenta de Windoce (variable STRIPE_CONNECT_ACTIVO=1). Antes
+ * la billetera lo intentaba cada vez que alguien la abría, fallaba, y Stripe lo vio como sospechoso.
+ * Con la llave de prueba (sk_test_) sigue funcionando para el sitio de pruebas. EE. UU.
+ */
+function exigirConnect(c: Ctx) {
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (llave.startsWith('sk_test_') || c.env.STRIPE_CONNECT_ACTIVO === '1') return;
+  throw new ErrorDatos(
+    'Los cobros a tu cuenta bancaria todavía no están activados. Tu saldo está a salvo y te avisamos en cuanto puedas conectar tu banco.',
+    undefined,
+    409,
+  );
+}
+
 /** La cuenta de Stripe Connect de la persona; la crea la primera vez (una sola por persona). */
 async function cuentaDeCobros(
   c: Ctx,
@@ -174,6 +190,7 @@ async function cuentaDeCobros(
  */
 dinero.post('/billetera/sesion', async (c) => {
   const u = exigir(c, 'restaurante', 'repartidor');
+  exigirConnect(c);
   const stripe = exigirStripe(c);
   const clavePublica = c.env.STRIPE_PUBLISHABLE_KEY;
   if (!clavePublica)
@@ -198,6 +215,7 @@ dinero.post('/billetera/sesion', async (c) => {
 /** Respaldo: abre (o continúa) el alta en la página de Stripe. Los datos bancarios nunca pasan por aquí. */
 dinero.post('/billetera/conectar', async (c) => {
   const u = exigir(c, 'restaurante', 'repartidor');
+  exigirConnect(c);
   const stripe = exigirStripe(c);
   const cuenta = await cuentaDeCobros(c, u, stripe);
   const sitio = c.env.SITIO_URL ?? 'https://divoox.com';

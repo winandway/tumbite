@@ -1005,6 +1005,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Los pagos no están disponibles ahora.', 'Payments aren’t available right now.'],
   [
+    'Los cobros a tu cuenta bancaria todavía no están activados. Tu saldo está a salvo y te avisamos en cuanto puedas conectar tu banco.',
+    'Payouts to your bank account aren’t active yet. Your balance is safe, and we’ll let you know as soon as you can connect your bank.',
+  ],
+  [
     'Los pagos todavía no están activados. Te avisamos muy pronto.',
     'Payments aren’t turned on yet. We’ll let you know very soon.',
   ],
