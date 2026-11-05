@@ -25,8 +25,12 @@ const T = {
   },
 };
 
-/** C-CORREO-OBLIGATORIO: el enlace de la app del cliente (su «scheme» en apps/cliente/app.json). */
-export const ENLACE_APP_CLIENTE = 'tumbite-cliente://';
+/**
+ * C-CORREO-OBLIGATORIO: el enlace de la app del cliente (su «scheme» en apps/cliente/app.json). Lleva al
+ * carrito, donde estaba la puerta del correo: ahí dice «Tu correo quedó verificado» y sigue el pedido
+ * (sin la ruta, la app volvía a la portada y no se veía; lo vio el auditor en el video del 4 nov).
+ */
+export const ENLACE_APP_CLIENTE = 'tumbite-cliente://cart';
 
 /**
  * Página del enlace del correo de bienvenida: confirma y listo. A una cuenta de cliente le ofrece
