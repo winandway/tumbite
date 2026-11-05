@@ -17,7 +17,7 @@ export function Sitio({
   children: ReactNode;
 }) {
   const t = enIdioma(TEXTOS_SITIO, idioma);
-  // C-MENU-MOVIL (4 nov 2026, Richard): en el celular el menú va en la hamburguesa (☰).
+  // C-MENU-MOVIL (4 nov 2026, Richard): en el celular el menú va en la hamburguesa (tres rayitas).
   const [menu, setMenu] = useState(false);
   useEffect(() => {
     if (!menu) return;

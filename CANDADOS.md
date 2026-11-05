@@ -2723,7 +2723,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ## C-DESFILE-FLOTA y C-MENU-MOVIL (4 nov 2026, Richard: «está genial, envíalo a producción»). Todos los países.
 
 - **Desfile:** DesfileFlota (apps/panel/src/sitio/DesfileFlota.tsx): la flota real pasa de a uno, grande (150 px; 100 en el celular), sobre una línea roja, alternando el sentido, se detiene en el centro y sale, con sombra y reflejo. Cada vehículo lleva su `--proporcion` (ancho/alto de su foto) para salir entero de la vista (sin ella se amontonaban en el borde). Va en la portada y en las páginas de ciudad, país y comida (`BannerArriba`, estilo por defecto) con «Muy pronto en …» arriba, y en la calculadora. La avenida negra (C-AVENIDA-DIVOOX) queda SOLO en «Cómo funciona» (`estilo="avenida"`).
-- **Menú del celular:** en pantallas de menos de 900 px el menú de la web va en la hamburguesa (☰) de la cabecera, con todas las secciones, «Panel» y «Descarga las apps». Se cierra al elegir o con Escape. En menos de 600 px, «Panel» sale de la cabecera y queda dentro del menú.
+- **Menú del celular:** en pantallas de menos de 900 px el menú de la web va en la hamburguesa (tres rayitas) de la cabecera, con todas las secciones, «Panel» y «Descarga las apps». Se cierra al elegir o con Escape. En menos de 600 px, «Panel» sale de la cabecera y queda dentro del menú.
 - **Pruebas:** apps/panel/src/sitio/menuMovil.test.tsx y BannerCarretera.test.tsx.
 
 ## C-AVENIDA-DIVOOX (4 nov 2026, Richard). Todos los países.
