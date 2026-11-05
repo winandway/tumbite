@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
-import { BannerCarretera } from './BannerCarretera';
+import { DesfileFlota } from './DesfileFlota';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
 import { Buscador } from './Buscador';
 import { FormEspera } from './FormEspera';
@@ -113,18 +113,17 @@ export function Landing({ idioma }: { idioma: Idioma }) {
     <main className="ld">
       {/* 1 · Portada estilo Uber Eats: titular, buscador de dirección y la app con pizzas */}
       {/* Banner animado arriba de todo (Richard, 23 oct): «muy pronto en Miami» va dentro. */}
-      <div className="ld-banner ld-banner-arriba">
-        <BannerCarretera
-          lema={
-            estadoCiudad({ slug: 'miami', estado: 'pronto' }) === 'activo'
-              ? idioma === 'en'
-                ? 'Now in Miami'
-                : 'Ya estamos en Miami'
-              : t.hero.etiqueta
-          }
-          servicios={a.servicios}
-        />
-      </div>
+      {/* C-DESFILE-FLOTA (4 nov): el desfile de la flota, con «muy pronto en Miami» arriba. */}
+      <DesfileFlota
+        lema={
+          estadoCiudad({ slug: 'miami', estado: 'pronto' }) === 'activo'
+            ? idioma === 'en'
+              ? 'Now in Miami'
+              : 'Ya estamos en Miami'
+            : t.hero.etiqueta
+        }
+        servicios={a.servicios}
+      />
       <section className="ld-hero">
         <div className="ld-hero-texto">
           <h1>{t.hero.titulo}</h1>

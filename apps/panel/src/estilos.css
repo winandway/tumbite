@@ -5884,3 +5884,106 @@ body.modo-tableta .panel-contenido {
     transform: translateX(calc(50vw - 50%));
   }
 }
+/* El desfile como banner de arriba: el lema arriba, la flota debajo, sin taparlo. */
+.desfile-con-lema {
+  height: 240px;
+}
+.desfile-lema {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 1;
+}
+.desfile-lema strong {
+  font-family: Poppins, sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #101010;
+}
+.desfile-lema span {
+  font-size: 0.8rem;
+  color: #666b73;
+}
+@media (max-width: 600px) {
+  .desfile-con-lema {
+    height: 180px;
+  }
+  .desfile-lema {
+    top: 10px;
+  }
+  .desfile-lema strong {
+    font-size: 0.8rem;
+  }
+}
+
+/* C-MENU-MOVIL (4 nov 2026): el menú de la web en el celular, detrás de la hamburguesa. */
+.cabecera {
+  position: relative;
+}
+.menu-hamburguesa {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 0 9px;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+.menu-hamburguesa span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: #101010;
+}
+.menu-movil {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px 16px;
+  background: #fff;
+  border-bottom: 1px solid #ecedef;
+  box-shadow: 0 12px 24px rgb(16 16 16 / 10%);
+}
+.menu-movil a {
+  padding: 14px 4px;
+  font-family: Poppins, sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #101010;
+  text-decoration: none;
+  border-bottom: 1px solid #f1f2f4;
+}
+.menu-movil a:last-child {
+  border-bottom: 0;
+  color: #f20d20;
+}
+@media (min-width: 900px) {
+  .menu-hamburguesa,
+  .menu-movil {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  /* En el celular, «Panel» va dentro de la hamburguesa para que la cabecera respire. */
+  .cabecera-derecha .boton-panel {
+    display: none;
+  }
+  .cabecera-derecha {
+    gap: 8px;
+  }
+}

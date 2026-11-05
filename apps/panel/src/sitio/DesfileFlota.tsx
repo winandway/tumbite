@@ -19,9 +19,20 @@ const ORDEN: { nombre: string; sentido: 'izq' | 'der'; proporcion: number }[] = 
 /** Segundos que tiene cada vehículo para pasar (entrar, detenerse y salir). */
 const TURNO_S = 5;
 
-export function DesfileFlota() {
+export function DesfileFlota({ lema, servicios }: { lema?: string; servicios?: string } = {}) {
   return (
-    <div className="desfile" aria-hidden="true">
+    <div
+      className={lema ? 'desfile desfile-con-lema' : 'desfile'}
+      role={lema ? 'img' : undefined}
+      aria-label={lema ? `${lema}. ${servicios ?? ''}` : undefined}
+      aria-hidden={lema ? undefined : true}
+    >
+      {lema ? (
+        <div className="desfile-lema" aria-hidden="true">
+          <strong>{lema}</strong>
+          {servicios ? <span>{servicios}</span> : null}
+        </div>
+      ) : null}
       <div className="desfile-piso" />
       {ORDEN.map((v, i) => (
         <div
