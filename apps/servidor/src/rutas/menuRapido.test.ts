@@ -64,6 +64,10 @@ describe('la ficha del restaurante responde rápido', () => {
     // Antes: más de diez tandas seguidas. Ahora: como mucho seis, aunque haya más consultas.
     expect(consultas).toBeGreaterThan(6);
     expect(tardo, `tardó ${tardo} ms con ${consultas} consultas`).toBeLessThan(DEMORA_MS * 6.5);
+    // Y la guarda el borde de la red un rato corto: las visitas siguientes ni llegan a la base.
+    expect(f.res.headers.get('cache-control')).toMatch(
+      /public.*s-maxage=30.*stale-while-revalidate/,
+    );
   });
 });
 

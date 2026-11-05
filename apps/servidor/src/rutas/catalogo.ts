@@ -420,6 +420,10 @@ catalogo.get('/restaurantes/:id', async (c) => {
     conCalificaciones(db, [base_]),
     platosConGrupos(db, visibles),
   ]);
+  // C-MENU-RAPIDO: la ficha es igual para todos (sin datos de la cuenta): el borde de la red la
+  // guarda 30 s y la sirve vieja hasta 2 min mientras la renueva. Lo que se cobra, el servidor lo
+  // vuelve a comprobar al pagar.
+  c.header('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=120');
   return c.json({
     restaurante,
     promociones,
