@@ -2717,6 +2717,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa real:** `GET /datos/restaurantes/:id` hacía ~12 consultas a la base una detrás de otra (0,6 a 1,8 s medidos en producción por 4 KB), y la app no mostraba nada mientras esperaba ni guardaba el menú.
 - **Arreglo:** servidor (apps/servidor/src/rutas/catalogo.ts): tres tandas con `Promise.all` (el restaurante; platos, horarios, pausa, franjas, más pedidos, votos y promociones; calificación y grupos de opciones). App: apps/cliente/src/comida/fichaRestaurante.ts guarda cada ficha en memoria (un minuto), la portada pide por adelantado las de los primeros restaurantes (`adelantarFichas`), la ficha sale al instante de lo guardado, y mientras llega muestra renglones grises (`MenuEsperando`), nunca la pantalla en blanco.
 - **Prueba (comprobada en rojo: 504 ms con 12 consultas demoradas 40 ms, contra menos de 260):** apps/servidor/src/rutas/menuRapido.test.ts.
+- **Memoria del borde (mismo día):** la ficha sale con `Cache-Control: public, max-age=0, s-maxage=30, stale-while-revalidate=120` (es igual para todos); la prueba lo exige.
 - **Qué NO tocar:** no volver a encadenar consultas que no dependen entre sí en las rutas que ve el cliente.
 
 ## C-AVENIDA-DIVOOX (4 nov 2026, Richard). Todos los países.
