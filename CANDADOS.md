@@ -2720,6 +2720,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Memoria del borde (mismo día):** la ficha sale con `Cache-Control: public, max-age=0, s-maxage=30, stale-while-revalidate=120` (es igual para todos); la prueba lo exige.
 - **Qué NO tocar:** no volver a encadenar consultas que no dependen entre sí en las rutas que ve el cliente.
 
+## C-DESFILE-FLOTA y C-MENU-MOVIL (4 nov 2026, Richard: «está genial, envíalo a producción»). Todos los países.
+
+- **Desfile:** DesfileFlota (apps/panel/src/sitio/DesfileFlota.tsx): la flota real pasa de a uno, grande (150 px; 100 en el celular), sobre una línea roja, alternando el sentido, se detiene en el centro y sale, con sombra y reflejo. Cada vehículo lleva su `--proporcion` (ancho/alto de su foto) para salir entero de la vista (sin ella se amontonaban en el borde). Va en la portada y en las páginas de ciudad, país y comida (`BannerArriba`, estilo por defecto) con «Muy pronto en …» arriba, y en la calculadora. La avenida negra (C-AVENIDA-DIVOOX) queda SOLO en «Cómo funciona» (`estilo="avenida"`).
+- **Menú del celular:** en pantallas de menos de 900 px el menú de la web va en la hamburguesa (☰) de la cabecera, con todas las secciones, «Panel» y «Descarga las apps». Se cierra al elegir o con Escape. En menos de 600 px, «Panel» sale de la cabecera y queda dentro del menú.
+- **Pruebas:** apps/panel/src/sitio/menuMovil.test.tsx y BannerCarretera.test.tsx.
+
 ## C-AVENIDA-DIVOOX (4 nov 2026, Richard). Todos los países.
 
 - **Qué es:** el banner de arriba (BannerCarretera) con la flota real de Divoox (foto con fondo transparente que mandó Richard), recortada en seis vehículos en apps/panel/public/marca/vehiculos/<nombre>-izq.webp y -der.webp. Los de la derecha son la foto volteada con el logo vuelto a poner al derecho. Dos carriles: adelante sedán, moto y camioneta hacia la izquierda; atrás, más chicos, compacto, robot y moto hacia la derecha. En cada carril todos van a la misma velocidad y separados, para que nadie se monte sobre otro. El texto va arriba de la vía. Con «reducir movimiento» quedan quietos.

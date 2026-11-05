@@ -7,10 +7,13 @@ export function Enlace({
   a,
   children,
   className,
+  onClick,
 }: {
   a: string;
   children: ReactNode;
   className?: string;
+  /** Además de navegar (por ejemplo, cerrar el menú del celular). */
+  onClick?: () => void;
 }) {
   // Dentro de la versión en español (/es/...), los enlaces internos se quedan en español.
   const destino =
@@ -20,6 +23,7 @@ export function Enlace({
       href={destino}
       className={className}
       onClick={(e) => {
+        onClick?.();
         if (e.metaKey || e.ctrlKey || e.shiftKey || a.startsWith('#')) return;
         e.preventDefault();
         ir(destino);

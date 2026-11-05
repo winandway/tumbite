@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
+import { DesfileFlota } from './DesfileFlota';
 
 /**
  * Banner animado de la portada (pedido de Richard, 23 oct 2026): una franja fina, como un juego,
@@ -15,10 +16,16 @@ export function BannerArriba({
   idioma,
   lugar = 'Miami',
   activo: activoDado,
+  estilo = 'desfile',
 }: {
   idioma: 'es' | 'en';
   lugar?: string;
   activo?: boolean;
+  /**
+   * C-DESFILE-FLOTA (4 nov 2026, Richard): la avenida negra queda solo en «Cómo funciona»; en el
+   * resto de las páginas va el desfile de la flota sobre la línea roja.
+   */
+  estilo?: 'avenida' | 'desfile';
 }) {
   const estadoCiudad = useCiudadesEnVivo();
   // Sin dato de la página, el banner dice el estado real de Miami (interruptor del superadmin).
@@ -30,12 +37,11 @@ export function BannerArriba({
     : idioma === 'en'
       ? `Coming soon to ${lugar}`
       : `Muy pronto en ${lugar}`;
+  const servicios = idioma === 'en' ? 'Food · Rides · Delivery' : 'Comida · Viajes · Envíos';
+  if (estilo === 'desfile') return <DesfileFlota lema={lema} servicios={servicios} />;
   return (
     <div className="ld-banner ld-banner-arriba">
-      <BannerCarretera
-        lema={lema}
-        servicios={idioma === 'en' ? 'Food · Rides · Delivery' : 'Comida · Viajes · Envíos'}
-      />
+      <BannerCarretera lema={lema} servicios={servicios} />
     </div>
   );
 }

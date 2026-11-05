@@ -358,7 +358,7 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
   ];
   return (
     <>
-      <BannerArriba idioma={idioma} />
+      <BannerArriba idioma={idioma} estilo="avenida" />
       <main className="como">
         <Enlace a="/" className="docs-volver">
           {idioma === 'en' ? '← Back to home' : '← Volver al inicio'}
