@@ -3195,3 +3195,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué pasó:** en la corrida 41705969872 del sitio de pruebas el alojamiento tardó 817 s en servir el HTML de `/app/` (200, pero colgado) y el recorrido en inglés llegó al límite de 15 minutos; el mismo código pasó en la corrida anterior. Fallo del alojamiento, no de la app.
 - **Qué se hizo:** `e2e/recorrido/fixtures.ts` envuelve `page.goto` de toda página (la del fixture y las de `browser.newContext().newPage()`): si la carga no termina en 60 s, se repite hasta 3 veces; cualquier otro error sale tal cual.
 - **Qué NO tocar:** solo se repite el tiempo agotado de la navegación; nunca una respuesta de error ni una espera de la app.
+
+## C-MAPA-VERDAD — el mapa de la portada no dice «Live» donde no hay restaurantes (4 nov 2026) — todos los países
+
+- **Qué se rompió:** la portada de divoox.com decía «Miami · Live» en el mapa de Florida, aunque en Miami no hay ni un restaurante. El auditor de tiendas lo marcó para Apple (regla 2.3: lo que se muestra tiene que ser verdad).
+- **Causa real:** el mapa pintaba como «Live» toda zona que devuelve `/datos/zonas`, y la zona de Miami existe en el servidor para la cobertura de la app.
+- **Arreglo:** `apps/panel/src/sitio/MapaCobertura.tsx` pregunta el estado público de cada ciudad (`useCiudadesEnVivo`, el interruptor del superadmin en `/datos/web/ciudades`). Solo dice «Live» la ciudad encendida; las demás dicen «Coming soon». Las zonas fuera de Florida (Novi, pruebas) no se dibujan en ese mapa.
+- **Prueba:** `apps/panel/src/sitio/MapaCobertura.test.tsx` (comprobada en rojo).
+- **No tocar:** el día del lanzamiento, Miami se enciende desde el superadmin (Ciudades de la web), no cambiando este código.

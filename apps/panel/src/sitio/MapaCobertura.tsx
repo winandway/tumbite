@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { TEXTOS_SITIO } from './textos';
+import { useCiudadesEnVivo } from './ciudadesEnVivo';
 
 type Zona = { id: string; nombre: string; lat: number; lng: number; radioKm: number };
 
@@ -45,12 +46,31 @@ const PROXIMAS = [
   { nombre: 'Ocala', lat: 29.1872, lng: -82.1401 },
 ];
 
-/** Florida dibujada a mano (contorno simplificado) con las zonas activas y las próximas. */
+/** Lo que entra en el dibujo de Florida (las zonas de pruebas de otros estados no van aquí). */
+const enFlorida = (z: Zona) => z.lat > 24.5 && z.lat < 31.2 && z.lng > -87.8 && z.lng < -79.8;
+const slugDe = (nombre: string) =>
+  nombre
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replaceAll(' ', '-');
+
+/**
+ * Florida dibujada a mano (contorno simplificado) con sus zonas y las próximas.
+ * C-MAPA-VERDAD (4 nov 2026): una zona del servidor no basta para decir «Live»: Miami tiene zona y
+ * cero restaurantes. Solo dice «Live» la ciudad que el superadmin encendió en la web; las demás,
+ * «Coming soon». Todos los países (el dibujo es de Florida).
+ */
 export function MapaCobertura({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(TEXTOS_SITIO, idioma).mapa;
-  const [zonas, setZonas] = useState<Zona[]>([
+  const estadoCiudad = useCiudadesEnVivo();
+  const [todas, setZonas] = useState<Zona[]>([
     { id: 'US-FL-MIAMI', nombre: 'Miami', lat: 25.7617, lng: -80.1918, radioKm: 40 },
   ]);
+  const zonas = todas.filter(enFlorida);
+  const enVivo = (z: Zona) =>
+    estadoCiudad({ slug: slugDe(z.nombre), estado: 'pronto' }) === 'activo';
 
   useEffect(() => {
     fetch('/datos/zonas')
@@ -81,15 +101,24 @@ export function MapaCobertura({ idioma }: { idioma: Idioma }) {
           </text>
         </g>
       ))}
-      {zonas.map((z) => (
-        <g key={z.id} transform={`translate(${x(z.lng)} ${y(z.lat)})`}>
-          <circle r="22" fill="#F20D20" opacity="0.18" className="pulso" />
-          <circle r="8" fill="#F20D20" />
-          <text x="-14" y="-14" fontSize="12" fontWeight="800" fill="#101010" textAnchor="end">
-            {z.nombre} · {t.activa}
-          </text>
-        </g>
-      ))}
+      {zonas.map((z) =>
+        enVivo(z) ? (
+          <g key={z.id} transform={`translate(${x(z.lng)} ${y(z.lat)})`}>
+            <circle r="22" fill="#F20D20" opacity="0.18" className="pulso" />
+            <circle r="8" fill="#F20D20" />
+            <text x="-14" y="-14" fontSize="12" fontWeight="800" fill="#101010" textAnchor="end">
+              {z.nombre} · {t.activa}
+            </text>
+          </g>
+        ) : (
+          <g key={z.id} transform={`translate(${x(z.lng)} ${y(z.lat)})`}>
+            <circle r="8" fill="#F20D20" opacity="0.5" />
+            <text x="-14" y="-14" fontSize="12" fontWeight="800" fill="#101010" textAnchor="end">
+              {z.nombre} · {t.proxima}
+            </text>
+          </g>
+        ),
+      )}
     </svg>
   );
 }
