@@ -42,6 +42,6 @@ describe('confirmar el correo', () => {
     );
     render(<Confirmar idioma="en" />);
     const volver = await screen.findByRole('link', { name: 'Open the Divoox app' });
-    expect(volver).toHaveAttribute('href', 'tumbite-cliente://');
+    expect(volver).toHaveAttribute('href', 'tumbite-cliente://cart');
   });
 });
