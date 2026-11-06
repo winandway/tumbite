@@ -204,3 +204,7 @@ El de la sección 3 de este tutorial. Se graba después de los cambios de 6.1, c
 1. La IA sube los tres videos como adjunto (y quita los viejos), y carga las notas de 6.2 en las tres apps.
 2. Richard (o la IA, con su «sí») responde en cada envío con su texto de RESPUESTA-APPLE-4.3.
 3. No se toca «Volver a enviar a revisión de apps» ni «Cancelar envío».
+
+### 6.6 Enviado (4 nov 2026, 23:53)
+
+Richard tocó «Responder» en el envío del cliente. El hilo tiene 3 mensajes y el nuestro es el último, con la compilación 30 adjunta. Constancia en la carpeta capturas, archivo 2026-11-04-respuesta-enviada-apple. Desde aquí no se toca la versión ni se reenvía nada hasta que Apple conteste; el gerente de correo avisa cuando llegue algo.
