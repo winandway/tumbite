@@ -520,3 +520,16 @@ describe('diagnóstico del reloj seguro', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('C-SIN-CARGA-NUBE', () => {
+  it('S3 (carga de 10.000 filas) no toca la base en el sitio de pruebas de la nube', async () => {
+    const { m, pedir } = preparar();
+    const r = await pedir('s3', undefined, 'https://staging.tumbite.com');
+    expect(r.estado).toBe(200);
+    expect(r.datos.omitida).toMatch(/solo en local/);
+    const t = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM sqlite_master WHERE name LIKE 'zz_s3_%'",
+    ).first<{ n: number }>();
+    expect(t?.n).toBe(0);
+  });
+});

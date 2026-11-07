@@ -3218,3 +3218,42 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `exigirConnect()` en `apps/servidor/src/rutas/dinero.ts`. Con la llave real no se llama a Stripe hasta que la variable `STRIPE_CONNECT_ACTIVO=1` esté puesta en el sitio. Mientras tanto responde 409: «Los cobros a tu cuenta bancaria todavía no están activados. Tu saldo está a salvo…». Con `sk_test_` (sitio de pruebas) sigue igual.
 - **Candado de pruebas internas:** `connectApagado.test.ts` revisa que toda ruta de `diagnostico.ts` que use Stripe exija `startsWith('sk_test_')`. Las dos pruebas se comprobaron en rojo.
 - **Para encender Connect:** primero Richard activa Connect y confirma en el panel de Stripe. Después se pone `STRIPE_CONNECT_ACTIVO=1` en YaDominios Cloud y se republica. No antes.
+
+## C-RELOJ-SOLO-FALLAS — el reloj guarda solo lo que falló (7 nov 2026, todos los países)
+
+- **Qué se rompía:** el parte de consumo de YaDominios del 6 nov (UTC) puso la base de pruebas en el 72 % de las escrituras de la cuenta: 152.794 filas escritas y 390,7 millones leídas. La que más escribía era `INSERT OR REPLACE INTO reloj_tareas`, con 62.424 filas.
+- **Causa real:** `anotarTareas` guardaba una fila por tarea en cada vuelta del reloj, también las buenas. Son unas 43 por minuto, y la tabla llegó a 212.667 filas. Cada minuto, la limpieza `DELETE FROM reloj_tareas WHERE creado_en < -7 días` recorría la tabla entera, porque solo hay índice para las fallidas. Además, `saludReloj` leía 261.202 filas por llamada: MAX sobre todo `tareas_programadas` más un EXISTS por fila, y un COUNT y un ORDER BY sin índice.
+- **Qué se hizo:**
+  - `anotarTareas` guarda SOLO las tareas fallidas. La vuelta buena ya queda en `tareas_programadas`.
+  - La limpieza borra por tandas de 5.000 las filas buenas que quedaron y las fallas de más de 7 días.
+  - `saludReloj` camina el índice de `empezada_en` desde la vuelta más nueva, con LIMIT 1 y una ventana de 25 horas.
+  - Medido contra la base de pruebas: la salud pasó de 261.202 a 392 filas leídas.
+- **Candado:** `apps/servidor/src/reloj.test.ts`.
+  - «anotarTareas no escribe nada si todas salieron bien…» se comprobó en rojo devolviendo el filtro a todas las tareas.
+  - «vueltas buenas no escriben… y la limpieza quita las filas buenas viejas».
+  - El diagnóstico de staging espera 1 fila, no 3.
+- **No tocar:** no volver a guardar las tareas buenas en `reloj_tareas`. No agregar a la salud consultas sin la ventana de `empezada_en`.
+
+## C-PRESUPUESTO-FILAS y C-SIN-CARGA-NUBE: orden de Gerencia del 7 nov 2026 (todos los países)
+
+- **Qué midió Gerencia** (API de métricas de Cloudflare, del 31 oct al 7 nov), en la base `site-tumbite-pruebas-db`:
+  1. Unas 5 millones de filas escritas por la prueba de carga S3. Usa tablas `zz_s3_*`, un INSERT … WITH RECURSIVE de 10.000 filas y un UPDATE de todas.
+  2. 484.000 filas del INSERT OR REPLACE de reloj_tareas.
+  3. 2.546 millones de filas leídas por la limpieza de reloj_tareas, que corría en cada vuelta.
+- **Qué se hizo:**
+  - **C-SIN-CARGA-NUBE:** `POST /datos/interno/diagnostico/s3` solo corre en localhost. En la nube responde «omitida» sin tocar la base. `scripts/staging/probar-staging.mjs`, que corre en cada publicación de rama, ya no la llama. Ninguna prueba de carga va contra una base de la nube.
+  - **Limpieza una vez al día:** la limpieza de `tareas_programadas`, `reloj_tareas` y `lotes_ubicacion` corre solo en la vuelta de las 04:00 UTC (`esVueltaDeLimpieza`).
+    - Las fallas viejas se borran con `ok = 0 AND creado_en < …`, por el índice parcial `reloj_tareas_fallidas(creado_en) WHERE ok = 0`.
+    - Las filas buenas que quedaron de antes se borran por tandas de 50.000.
+    - En cada minuto solo queda el borrado de `peticiones_internas`, que va por índice y lee 1 o 2 filas.
+  - **C-PRESUPUESTO-FILAS** (`apps/servidor/src/presupuestoFilas.ts`): el reloj corre sus tareas con la base envuelta, que suma las filas leídas y escritas que informa D1.
+    - El tope por vuelta es de 2.000 escritas y 250.000 leídas.
+    - Si se pasa, las tareas que faltan no corren. La vuelta queda con «presupuesto» fallida en reloj_tareas, y la salud del reloj lo ve.
+- **Pruebas** (comprobadas en rojo):
+  - `reloj.test.ts`, «C-PRESUPUESTO-FILAS…»: una tarea que escribe 3.000 filas frena a la siguiente.
+  - `reloj.test.ts`, «C-RELOJ-SOLO-FALLAS…»: la limpieza corre solo a las 04:00.
+  - `rutas/diagnostico.test.ts`, «C-SIN-CARGA-NUBE».
+- **No tocar:**
+  - No volver a llamar S3 ni ninguna carga masiva contra staging ni contra producción.
+  - No poner la limpieza otra vez en cada vuelta.
+  - No subir los topes sin medir antes.

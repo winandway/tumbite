@@ -38,9 +38,17 @@ export async function correrTareas(
   db: D1Database,
   tareas: readonly TareaReloj[],
   ahora: () => number = Date.now,
+  /** C-PRESUPUESTO-FILAS: si devuelve un motivo, las tareas que faltan no corren. */
+  alto: () => string | null = () => null,
 ): Promise<ResultadoVuelta> {
   const resultados: ResultadoTarea[] = [];
   for (const t of tareas) {
+    const motivo = alto();
+    if (motivo) {
+      console.error(`reloj: la tarea «${t.nombre}» no corrió: ${motivo}`);
+      resultados.push({ nombre: t.nombre, critica: t.critica, ok: false, ms: 0, error: motivo });
+      continue;
+    }
     const inicio = ahora();
     try {
       const datos = await t.correr(env, db);
@@ -63,15 +71,33 @@ export async function correrTareas(
       });
     }
   }
+  const motivoFinal = alto();
+  if (motivoFinal) {
+    console.error(`reloj: ${motivoFinal}`);
+    resultados.push({
+      nombre: 'presupuesto',
+      critica: false,
+      ok: false,
+      ms: 0,
+      error: motivoFinal,
+    });
+  }
   const fallidas = resultados.filter((r) => !r.ok).map((r) => r.nombre);
   return { estado: fallidas.length ? 'parcial' : 'ok', tareas: resultados, fallidas };
 }
 
-/** Guarda el resultado de cada tarea de la vuelta (una fila por tarea, en un solo lote). */
+/**
+ * Guarda SOLO las tareas que fallaron (C-RELOJ-SOLO-FALLAS). Antes se guardaba una fila por tarea
+ * en cada vuelta, también las buenas: unas 43 filas por minuto, 62.000 al día en el sitio de
+ * pruebas, y una tabla de 212.000 filas que la limpieza y la salud recorrían enteras (390 millones
+ * de lecturas el 6 nov). Una vuelta buena ya queda en tareas_programadas; aquí solo va lo que
+ * hay que mirar.
+ */
 export async function anotarTareas(db: D1Database, clave: string, r: ResultadoVuelta) {
-  if (!r.tareas.length) return;
+  const fallidas = r.tareas.filter((t) => !t.ok);
+  if (!fallidas.length) return;
   await db.batch(
-    r.tareas.map((t) =>
+    fallidas.map((t) =>
       db
         .prepare(
           'INSERT OR REPLACE INTO reloj_tareas (clave, tarea, critica, ok, ms, error) VALUES (?, ?, ?, ?, ?, ?)',
@@ -119,19 +145,25 @@ export async function saludReloj(
   );
   const f = await db
     .prepare(
+      // C-RELOJ-SOLO-FALLAS: cada subconsulta camina el índice de empezada_en desde la vuelta
+      // más nueva y se corta enseguida; nada recorre la tabla entera (antes, 261.000 lecturas
+      // por llamada a la salud).
       `SELECT
-         (SELECT MAX(t.terminada_en) FROM tareas_programadas t
-           WHERE t.tarea = 'reloj' AND t.terminada_en IS NOT NULL AND t.resultado NOT LIKE '% error'
-             AND NOT EXISTS (SELECT 1 FROM reloj_tareas r WHERE r.clave = t.clave AND r.ok = 0)) AS ultima_buena,
+         (SELECT t.terminada_en FROM tareas_programadas t
+           WHERE t.empezada_en > datetime('now', '-25 hours') AND t.tarea = 'reloj'
+             AND t.terminada_en IS NOT NULL AND t.resultado NOT LIKE '% error'
+             AND NOT EXISTS (SELECT 1 FROM reloj_tareas r WHERE r.clave = t.clave AND r.ok = 0)
+           ORDER BY t.empezada_en DESC LIMIT 1) AS ultima_buena,
          (SELECT COUNT(*) FROM tareas_programadas t
            WHERE t.tarea = 'reloj' AND t.empezada_en > datetime('now', ?1)
              AND (t.resultado LIKE '% error' OR EXISTS (SELECT 1 FROM reloj_tareas r WHERE r.clave = t.clave AND r.ok = 0))) AS fallidas,
          (SELECT COUNT(*) FROM reloj_tareas r
            WHERE r.clave = (SELECT t.clave FROM tareas_programadas t
-                             WHERE t.tarea = 'reloj' AND t.terminada_en IS NOT NULL
-                             ORDER BY t.terminada_en DESC LIMIT 1)
+                             WHERE t.empezada_en > datetime('now', '-25 hours') AND t.tarea = 'reloj'
+                               AND t.terminada_en IS NOT NULL
+                             ORDER BY t.empezada_en DESC LIMIT 1)
              AND r.critica = 1 AND r.ok = 0) AS criticas_ultima,
-         (SELECT COUNT(*) FROM tareas_programadas t WHERE t.tarea = 'reloj') AS vueltas`,
+         (SELECT COUNT(*) FROM (SELECT 1 FROM tareas_programadas t WHERE t.tarea = 'reloj' LIMIT 1)) AS vueltas`,
     )
     .bind(`-${VENTANA_FALLIDAS_MIN} minutes`)
     .first<{
