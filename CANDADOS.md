@@ -3257,3 +3257,19 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
   - No volver a llamar S3 ni ninguna carga masiva contra staging ni contra producción.
   - No poner la limpieza otra vez en cada vuelta.
   - No subir los topes sin medir antes.
+
+## C-RELOJ-PRUEBAS-PAUSA: el reloj del sitio de pruebas en pausa (7 nov 2026, todos los países)
+
+- **Por qué:** Richard puso Divoox en pausa, así que el sitio de pruebas no debe gastar nada. El reloj de pruebas corría unas 72 veces por hora. Lo llamaban GitHub cada 5 minutos y el reloj externo de Cloudflare (`tumbite-reloj`) cada minuto.
+- **Qué se hizo:**
+  - `RELOJ_PRUEBAS_EN_PAUSA = true` en `apps/servidor/src/reloj.ts`. Con eso, `/datos/reloj` y `/datos/interno/reloj` en el sitio de pruebas responden `{ ok: true, pausado: true }` sin tocar la base. La salud muestra el reloj «pendiente».
+  - El paso «Pruebas» de `.github/workflows/reloj.yml` quedó comentado.
+  - Producción no cambia.
+  - El lint de `presupuestoFilas.ts` (security/detect-object-injection) se arregló sin apagar la regla: `run` y `all` se llaman por su nombre.
+- **Para encenderlo al retomar:**
+  1. Poner `RELOJ_PRUEBAS_EN_PAUSA` en false.
+  2. Descomentar el paso «Pruebas» del reloj de GitHub.
+  3. Publicar.
+  4. Comprobar que la salud de pruebas diga reloj «ok» a los 5 minutos.
+- **Mientras dure la pausa:** las ofertas a repartidores que dependen del reloj NO se reparten solas en el sitio de pruebas.
+- **Prueba:** `reloj.test.ts`, «C-RELOJ-PRUEBAS-PAUSA». Se comprobó en rojo con el interruptor en false.

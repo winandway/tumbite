@@ -61,7 +61,7 @@ import { demanda } from './rutas/demanda';
 import { avisos } from './rutas/avisos';
 import { repartidorGrandes } from './rutas/repartidorGrandes';
 import { interno, saludTiempoReal } from './rutas/interno';
-import { saludReloj } from './reloj';
+import { relojEnPausa, saludReloj } from './reloj';
 import { alertarCanario } from './canario';
 import { versionMinimaApp } from './versionApp';
 import { saludDisputas } from './disputas';
@@ -287,7 +287,9 @@ app.get('/datos/salud', async (c) => {
       return 'error' as const;
     });
   // Reloj seguro: vueltas buenas a tiempo, sin rachas de errores ni tareas críticas fallidas.
-  if (c.env.DB)
+  // C-RELOJ-PRUEBAS-PAUSA: con el reloj de pruebas en pausa, su salud no se consulta.
+  if (relojEnPausa(c.req.url)) piezas.reloj = 'pendiente';
+  else if (c.env.DB)
     piezas.reloj = await saludReloj(c.env, c.env.DB).catch((e: unknown) => {
       console.error('salud: reloj', e);
       return 'error' as const;

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from './pruebas/ayuda';
 import { correrRelojUnaVez, TAREAS_RELOJ } from './rutas/operacion';
-import { type TareaReloj, anotarTareas, correrTareas, saludReloj } from './reloj';
+import { type TareaReloj, anotarTareas, correrTareas, relojEnPausa, saludReloj } from './reloj';
 
 /**
  * C-RELOJ-AISLADO (docs/EVALUACION-RELOJ-CLOUDFLARE.md): cada tarea del reloj corre aunque otra
@@ -366,5 +366,25 @@ describe('reloj · integración con la Fase 3', () => {
     );
     expect(lista).not.toMatch(/\.catch\(/);
     expect(fuente).not.toMatch(/repartirOperaciones\(env, db\)\.catch/);
+  });
+});
+
+describe('C-RELOJ-PRUEBAS-PAUSA', () => {
+  it('en pausa, el reloj del sitio de pruebas no toca la base; producción sigue igual', async () => {
+    const { app } = await import('./app');
+    const m = mundo({ RELOJ_SECRETO: 'reloj-secreto-de-prueba-0123456789' });
+    const llamar = (host: string) =>
+      app.request(
+        `https://${host}/datos/reloj`,
+        { method: 'POST', headers: { 'x-reloj-secreto': 'reloj-secreto-de-prueba-0123456789' } },
+        { DB: m.DB, RELOJ_SECRETO: 'reloj-secreto-de-prueba-0123456789' },
+      );
+    const r = await llamar('staging.tumbite.com');
+    expect(await r.json()).toEqual({ ok: true, pausado: true });
+    const n = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM tareas_programadas WHERE tarea = 'reloj'",
+    ).first<{ n: number }>();
+    expect(n?.n).toBe(0);
+    expect(relojEnPausa('https://divoox.com/datos/reloj')).toBe(false);
   });
 });

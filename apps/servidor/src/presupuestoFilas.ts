@@ -31,12 +31,16 @@ export function contarFilas(db: D1Database): { db: D1Database; cuenta: CuentaFil
     const p = new Proxy(s, {
       get(t, prop) {
         if (prop === 'bind') return (...a: unknown[]) => envolver(t.bind(...a));
-        if (prop === 'run' || prop === 'all')
-          return async (...a: unknown[]) => {
-            const r = (await (t[prop] as (...x: unknown[]) => Promise<{ meta?: Meta }>)(...a)) as {
-              meta?: Meta;
-            };
-            sumar(cuenta, r?.meta);
+        if (prop === 'run')
+          return async () => {
+            const r = await t.run();
+            sumar(cuenta, r?.meta as Meta);
+            return r;
+          };
+        if (prop === 'all')
+          return async () => {
+            const r = await t.all();
+            sumar(cuenta, r?.meta as Meta);
             return r;
           };
         const v = Reflect.get(t, prop, t) as unknown;

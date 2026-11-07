@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
+import { relojEnPausa } from '../reloj';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
 import { correrRelojUnaVez } from './operacion';
@@ -83,6 +84,8 @@ function validar<T>(esquema: z.ZodType<T>, datos: unknown): T {
 const ventanaMinuto = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
 
 interno.post('/interno/reloj', async (c) => {
+  // C-RELOJ-PRUEBAS-PAUSA: en pausa no se toca la base (ni siquiera para la firma).
+  if (relojEnPausa(c.req.url)) return c.json({ ok: true, pausado: true });
   const f = await exigirFirma(c);
   if (f.repetida) return c.json({ ok: true, yaHecho: true });
   const { ventana } = validar(z.object({ ventana: ventanaMinuto }), f.cuerpo);

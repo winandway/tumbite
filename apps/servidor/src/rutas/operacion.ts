@@ -26,7 +26,7 @@ import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorT
 import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
-import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
+import { type TareaReloj, anotarTareas, correrTareas, relojEnPausa } from '../reloj';
 import { PRESUPUESTO_VUELTA_RELOJ, contarFilas, pasoDelTope } from '../presupuestoFilas';
 import { volverPlatosAgotados } from './catalogo';
 import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra';
@@ -2619,6 +2619,7 @@ operacion.post('/reloj', async (c) => {
   const dado = c.req.header('x-reloj-secreto') ?? '';
   if (!secreto || dado.length !== secreto.length || !(await igualesSeguro(dado, secreto)))
     throw new ErrorDatos('No encontrado.', undefined, 404);
+  if (relojEnPausa(c.req.url)) return c.json({ ok: true, pausado: true });
   // Comparte el candado por minuto con el reloj nuevo (/datos/interno/reloj): si los dos llegan
   // en el mismo minuto, las tareas corren una sola vez (C-RELOJ-UNA-VEZ).
   return c.json(
