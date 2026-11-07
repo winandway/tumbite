@@ -1,4 +1,16 @@
+import { entornoDe } from './entorno';
 import type { Env } from './env';
+
+/**
+ * C-RELOJ-PRUEBAS-PAUSA (7 nov 2026, orden de Richard por Gerencia): mientras Divoox esté en
+ * pausa, el reloj del sitio de pruebas no hace NADA. No toca la base ni corre tareas, venga de
+ * GitHub o del reloj externo de Cloudflare. Producción no cambia.
+ * PARA ENCENDERLO AL RETOMAR: poner esto en false, volver a poner el paso «Pruebas» en
+ * .github/workflows/reloj.yml y publicar.
+ */
+export const RELOJ_PRUEBAS_EN_PAUSA = true;
+
+export const relojEnPausa = (url: string) => RELOJ_PRUEBAS_EN_PAUSA && entornoDe(url) === 'pruebas';
 
 /**
  * Reloj seguro (docs/EVALUACION-RELOJ-CLOUDFLARE.md, candado C-RELOJ-AISLADO).
