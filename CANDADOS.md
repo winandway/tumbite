@@ -3233,3 +3233,27 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
   - «vueltas buenas no escriben… y la limpieza quita las filas buenas viejas».
   - El diagnóstico de staging espera 1 fila, no 3.
 - **No tocar:** no volver a guardar las tareas buenas en `reloj_tareas`. No agregar a la salud consultas sin la ventana de `empezada_en`.
+
+## C-PRESUPUESTO-FILAS y C-SIN-CARGA-NUBE: orden de Gerencia del 7 nov 2026 (todos los países)
+
+- **Qué midió Gerencia** (API de métricas de Cloudflare, del 31 oct al 7 nov), en la base `site-tumbite-pruebas-db`:
+  1. Unas 5 millones de filas escritas por la prueba de carga S3. Usa tablas `zz_s3_*`, un INSERT … WITH RECURSIVE de 10.000 filas y un UPDATE de todas.
+  2. 484.000 filas del INSERT OR REPLACE de reloj_tareas.
+  3. 2.546 millones de filas leídas por la limpieza de reloj_tareas, que corría en cada vuelta.
+- **Qué se hizo:**
+  - **C-SIN-CARGA-NUBE:** `POST /datos/interno/diagnostico/s3` solo corre en localhost. En la nube responde «omitida» sin tocar la base. `scripts/staging/probar-staging.mjs`, que corre en cada publicación de rama, ya no la llama. Ninguna prueba de carga va contra una base de la nube.
+  - **Limpieza una vez al día:** la limpieza de `tareas_programadas`, `reloj_tareas` y `lotes_ubicacion` corre solo en la vuelta de las 04:00 UTC (`esVueltaDeLimpieza`).
+    - Las fallas viejas se borran con `ok = 0 AND creado_en < …`, por el índice parcial `reloj_tareas_fallidas(creado_en) WHERE ok = 0`.
+    - Las filas buenas que quedaron de antes se borran por tandas de 50.000.
+    - En cada minuto solo queda el borrado de `peticiones_internas`, que va por índice y lee 1 o 2 filas.
+  - **C-PRESUPUESTO-FILAS** (`apps/servidor/src/presupuestoFilas.ts`): el reloj corre sus tareas con la base envuelta, que suma las filas leídas y escritas que informa D1.
+    - El tope por vuelta es de 2.000 escritas y 250.000 leídas.
+    - Si se pasa, las tareas que faltan no corren. La vuelta queda con «presupuesto» fallida en reloj_tareas, y la salud del reloj lo ve.
+- **Pruebas** (comprobadas en rojo):
+  - `reloj.test.ts`, «C-PRESUPUESTO-FILAS…»: una tarea que escribe 3.000 filas frena a la siguiente.
+  - `reloj.test.ts`, «C-RELOJ-SOLO-FALLAS…»: la limpieza corre solo a las 04:00.
+  - `rutas/diagnostico.test.ts`, «C-SIN-CARGA-NUBE».
+- **No tocar:**
+  - No volver a llamar S3 ni ninguna carga masiva contra staging ni contra producción.
+  - No poner la limpieza otra vez en cada vuelta.
+  - No subir los topes sin medir antes.

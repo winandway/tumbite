@@ -180,6 +180,15 @@ diagnostico.post('/interno/diagnostico/s2', async (c) => {
 
 /** S3: UPDATE … FROM json_each con 10.000 muestras (lote de ubicaciones del diseño V1.2). */
 diagnostico.post('/interno/diagnostico/s3', async (c) => {
+  // C-SIN-CARGA-NUBE (7 nov 2026): esta prueba de carga escribe 10.000 filas y las actualiza
+  // todas. En la base de pruebas de la nube eran unos 5 millones de filas escritas por semana.
+  // Solo corre en la computadora (localhost); en la nube responde sin tocar la base.
+  if (new URL(c.req.url).hostname !== 'localhost')
+    return c.json({
+      prueba: 'S3',
+      ok: true,
+      omitida: 'prueba de carga: solo en local, nunca contra la base de la nube',
+    });
   const db = base(c);
   const t = `zz_s3_${sufijo()}`;
   await db.prepare(`CREATE TABLE ${t} (id TEXT PRIMARY KEY, lat REAL, t TEXT)`).run();

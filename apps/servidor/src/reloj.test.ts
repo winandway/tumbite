@@ -94,9 +94,41 @@ describe('reloj · cada tarea aislada', () => {
     await m.DB.prepare(
       "INSERT INTO reloj_tareas (clave, tarea, critica, ok) VALUES ('reloj:vieja', 'x', 0, 1), ('reloj:vieja', 'y', 1, 0)",
     ).run();
+    // La limpieza corre solo en la vuelta de las 04:00 UTC, una vez al día.
     await vueltaReal(m, '2026-10-16T12:30', tareas);
+    let n2 = await m.DB.prepare('SELECT COUNT(*) AS n FROM reloj_tareas').first<{ n: number }>();
+    expect(n2?.n).toBe(2);
+    await vueltaReal(m, '2026-10-17T04:00', tareas);
+    n2 = await m.DB.prepare('SELECT COUNT(*) AS n FROM reloj_tareas').first<{ n: number }>();
+    expect(n2?.n).toBe(1);
     const quedan = await m.DB.prepare('SELECT tarea FROM reloj_tareas').all<{ tarea: string }>();
     expect(quedan.results.map((x) => x.tarea)).toEqual(['y']);
+  });
+
+  it('C-PRESUPUESTO-FILAS: si una vuelta escribe de más, las tareas que faltan no corren y queda «presupuesto» fallida', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const cuenta = new Map<string, number>();
+    const derrochona: TareaReloj = {
+      nombre: 'derrochona',
+      critica: false,
+      correr: async (_env, db) => {
+        await db.prepare('CREATE TABLE IF NOT EXISTS zz_presupuesto (i INTEGER)').run();
+        await db
+          .prepare(
+            'INSERT INTO zz_presupuesto WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 3000) SELECT i FROM n',
+          )
+          .run();
+      },
+    };
+    const r = await vueltaReal(m, '2026-10-16T13:00', [derrochona, contadora('despues', cuenta)]);
+    expect(cuenta.get('despues')).toBeUndefined();
+    expect('fallidas' in r && r.fallidas).toEqual(['despues', 'presupuesto']);
+    const { results } = await m.DB.prepare(
+      "SELECT tarea, error FROM reloj_tareas WHERE clave = 'reloj:2026-10-16T13:00' ORDER BY tarea",
+    ).all<{ tarea: string; error: string }>();
+    expect(results.map((x) => x.tarea)).toEqual(['despues', 'presupuesto']);
+    expect(results[1]?.error).toMatch(/presupuesto: 300[0-9] filas escritas/);
   });
 
   it('las tareas reales de producción tienen nombre y las de dinero son críticas', () => {

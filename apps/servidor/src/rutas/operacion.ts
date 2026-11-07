@@ -27,6 +27,7 @@ import { paisDeZona } from '../internacional/paises';
 import { verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas } from '../reloj';
+import { PRESUPUESTO_VUELTA_RELOJ, contarFilas, pasoDelTope } from '../presupuestoFilas';
 import { volverPlatosAgotados } from './catalogo';
 import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra';
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
@@ -2631,6 +2632,9 @@ operacion.post('/reloj', async (c) => {
   );
 });
 
+/** La limpieza diaria corre en la vuelta de las 04:00 UTC (ventana «AAAA-MM-DDT04:00»). */
+export const esVueltaDeLimpieza = (ventana: string) => ventana.slice(11, 16) === '04:00';
+
 /**
  * Corre las tareas del reloj UNA vez por minuto, venga de donde venga (reloj actual de GitHub o
  * Worker externo). La fila de tareas_programadas se crea en una sola sentencia: el segundo que
@@ -2666,29 +2670,36 @@ export async function correrRelojUnaVez(
       .run();
     throw e;
   }
-  await db.batch([
-    db
-      .prepare(
-        "UPDATE tareas_programadas SET terminada_en = datetime('now'), resultado = ? WHERE clave = ?",
-      )
-      .bind(
-        `origen:${origen} ${resultado.vuelta.estado} ${JSON.stringify(resultado.resumen)}`.slice(
-          0,
-          2000,
-        ),
-        clave,
+  await db
+    .prepare(
+      "UPDATE tareas_programadas SET terminada_en = datetime('now'), resultado = ? WHERE clave = ?",
+    )
+    .bind(
+      `origen:${origen} ${resultado.vuelta.estado} ${JSON.stringify(resultado.resumen)}`.slice(
+        0,
+        2000,
       ),
-    db.prepare(
-      "DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')",
-    ),
-    db.prepare("DELETE FROM tareas_programadas WHERE empezada_en < datetime('now', '-7 days')"),
-    // C-RELOJ-SOLO-FALLAS: borra por tandas (las filas buenas que quedaron de antes y las fallas
-    // de más de 7 días). Con la tabla solo de fallas, esto lee unas pocas filas.
-    db.prepare(
-      "DELETE FROM reloj_tareas WHERE rowid IN (SELECT rowid FROM reloj_tareas WHERE ok = 1 OR creado_en < datetime('now', '-7 days') LIMIT 5000)",
-    ),
-    db.prepare("DELETE FROM lotes_ubicacion WHERE recibido_en < datetime('now', '-7 days')"),
-  ]);
+      clave,
+    )
+    .run();
+  await db
+    .prepare("DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')")
+    .run();
+  // C-RELOJ-SOLO-FALLAS: la limpieza grande corre UNA vez al día (la vuelta de las 04:00 UTC), no
+  // en cada minuto. Cada borrado va por índice: reloj_tareas solo guarda fallas y su índice
+  // parcial es de creado_en con ok = 0; las filas buenas que quedaron de antes se borran por tandas.
+  if (esVueltaDeLimpieza(ventana)) {
+    await db.batch([
+      db.prepare("DELETE FROM tareas_programadas WHERE empezada_en < datetime('now', '-7 days')"),
+      db.prepare(
+        "DELETE FROM reloj_tareas WHERE ok = 0 AND creado_en < datetime('now', '-7 days')",
+      ),
+      db.prepare(
+        'DELETE FROM reloj_tareas WHERE rowid IN (SELECT rowid FROM reloj_tareas WHERE ok = 1 LIMIT 50000)',
+      ),
+      db.prepare("DELETE FROM lotes_ubicacion WHERE recibido_en < datetime('now', '-7 days')"),
+    ]);
+  }
   return { ok: true as const, ...resultado.resumen, fallidas: resultado.vuelta.fallidas, ventana };
 }
 
@@ -2800,7 +2811,12 @@ export async function correrReloj(
   db: D1Database,
   tareas: readonly TareaReloj[] = TAREAS_RELOJ,
 ) {
-  const vuelta = await correrTareas(env, db, tareas);
+  // C-PRESUPUESTO-FILAS: las tareas usan la base envuelta que cuenta filas; si la vuelta pasa
+  // del tope, las que faltan no corren y la vuelta queda con «presupuesto» fallida.
+  const contada = contarFilas(db);
+  const vuelta = await correrTareas(env, contada.db, tareas, Date.now, () =>
+    pasoDelTope(contada.cuenta, PRESUPUESTO_VUELTA_RELOJ),
+  );
   const de = (n: string) => vuelta.tareas.find((t) => t.nombre === n);
   const resumen = {
     manager: de('manager')?.datos ?? null,

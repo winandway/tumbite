@@ -35,7 +35,7 @@ const pedir = async (ruta, cuerpo) => {
 
 const resultados = {};
 resultados.S2 = await pedir('s2');
-resultados.S3 = await pedir('s3');
+// S3 (carga de 10.000 filas) ya no corre contra la nube: solo en local (C-SIN-CARGA-NUBE).
 resultados.S4 = await pedir('s4');
 {
   const { tabla } = await pedir('s5/preparar');

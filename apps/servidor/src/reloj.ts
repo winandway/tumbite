@@ -38,9 +38,17 @@ export async function correrTareas(
   db: D1Database,
   tareas: readonly TareaReloj[],
   ahora: () => number = Date.now,
+  /** C-PRESUPUESTO-FILAS: si devuelve un motivo, las tareas que faltan no corren. */
+  alto: () => string | null = () => null,
 ): Promise<ResultadoVuelta> {
   const resultados: ResultadoTarea[] = [];
   for (const t of tareas) {
+    const motivo = alto();
+    if (motivo) {
+      console.error(`reloj: la tarea «${t.nombre}» no corrió: ${motivo}`);
+      resultados.push({ nombre: t.nombre, critica: t.critica, ok: false, ms: 0, error: motivo });
+      continue;
+    }
     const inicio = ahora();
     try {
       const datos = await t.correr(env, db);
@@ -62,6 +70,17 @@ export async function correrTareas(
         error: String((e as { message?: string })?.message ?? e).slice(0, 300),
       });
     }
+  }
+  const motivoFinal = alto();
+  if (motivoFinal) {
+    console.error(`reloj: ${motivoFinal}`);
+    resultados.push({
+      nombre: 'presupuesto',
+      critica: false,
+      ok: false,
+      ms: 0,
+      error: motivoFinal,
+    });
   }
   const fallidas = resultados.filter((r) => !r.ok).map((r) => r.nombre);
   return { estado: fallidas.length ? 'parcial' : 'ok', tareas: resultados, fallidas };
