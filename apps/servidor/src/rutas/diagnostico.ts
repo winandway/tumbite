@@ -1769,7 +1769,7 @@ diagnostico.post('/interno/diagnostico/reloj', async (c) => {
         (await leer('despues')) === 1 &&
         'fallidas' in r3 &&
         JSON.stringify(r3.fallidas) === '["falla"]' &&
-        filas.results.length === 3 &&
+        filas.results.length === 1 && // C-RELOJ-SOLO-FALLAS: solo se guarda la que falló
         filas.results.some((f) => f.tarea === 'falla' && f.ok === 0),
     });
     // 4. Respuesta perdida: el reloj reintenta la MISMA ventana y no se repite nada.

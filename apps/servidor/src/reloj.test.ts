@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from './pruebas/ayuda';
 import { correrRelojUnaVez, TAREAS_RELOJ } from './rutas/operacion';
-import { type TareaReloj, correrTareas, saludReloj } from './reloj';
+import { type TareaReloj, anotarTareas, correrTareas, saludReloj } from './reloj';
 
 /**
  * C-RELOJ-AISLADO (docs/EVALUACION-RELOJ-CLOUDFLARE.md): cada tarea del reloj corre aunque otra
@@ -53,17 +53,50 @@ describe('reloj · cada tarea aislada', () => {
     const { results } = await m.DB.prepare(
       "SELECT tarea, ok, error FROM reloj_tareas WHERE clave = 'reloj:2026-10-16T10:00' ORDER BY tarea",
     ).all<{ tarea: string; ok: number; error: string }>();
-    expect(results.map((x) => [x.tarea, x.ok])).toEqual([
-      ['manager', 0],
-      ['primera', 1],
-      ['ultima', 1],
-    ]);
+    // C-RELOJ-SOLO-FALLAS: solo queda la que falló; las buenas no se guardan.
+    expect(results.map((x) => [x.tarea, x.ok])).toEqual([['manager', 0]]);
     expect(results.find((x) => x.tarea === 'manager')?.error).toMatch(/falla de prueba/);
     const fila = await m.DB.prepare(
       "SELECT terminada_en, resultado FROM tareas_programadas WHERE clave = 'reloj:2026-10-16T10:00'",
     ).first<{ terminada_en: string | null; resultado: string }>();
     expect(fila?.terminada_en).not.toBeNull();
     expect(fila?.resultado).toMatch(/^origen:externo parcial /);
+  });
+
+  it('C-RELOJ-SOLO-FALLAS: anotarTareas no escribe nada si todas salieron bien, y solo la fallida si una falla', async () => {
+    const m = mundo();
+    const buena = { nombre: 'a', critica: true, ok: true, ms: 3 };
+    await anotarTareas(m.DB, 'reloj:x', {
+      estado: 'ok',
+      tareas: [buena, { ...buena, nombre: 'b' }],
+      fallidas: [],
+    });
+    let n = await m.DB.prepare('SELECT COUNT(*) AS n FROM reloj_tareas').first<{ n: number }>();
+    expect(n?.n).toBe(0);
+    await anotarTareas(m.DB, 'reloj:y', {
+      estado: 'parcial',
+      tareas: [buena, { nombre: 'c', critica: false, ok: false, ms: 1, error: 'x' }],
+      fallidas: ['c'],
+    });
+    n = await m.DB.prepare('SELECT COUNT(*) AS n FROM reloj_tareas').first<{ n: number }>();
+    expect(n?.n).toBe(1);
+  });
+
+  it('C-RELOJ-SOLO-FALLAS: vueltas buenas no escriben en reloj_tareas y la limpieza quita las filas buenas viejas', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const cuenta = new Map<string, number>();
+    const tareas = [contadora('a', cuenta), contadora('b', cuenta), contadora('c', cuenta)];
+    for (let i = 10; i < 20; i++) await vueltaReal(m, `2026-10-16T12:${i}`, tareas);
+    const n = await m.DB.prepare('SELECT COUNT(*) AS n FROM reloj_tareas').first<{ n: number }>();
+    expect(n?.n).toBe(0);
+    // Filas buenas que quedaron de antes del arreglo: la vuelta siguiente las borra.
+    await m.DB.prepare(
+      "INSERT INTO reloj_tareas (clave, tarea, critica, ok) VALUES ('reloj:vieja', 'x', 0, 1), ('reloj:vieja', 'y', 1, 0)",
+    ).run();
+    await vueltaReal(m, '2026-10-16T12:30', tareas);
+    const quedan = await m.DB.prepare('SELECT tarea FROM reloj_tareas').all<{ tarea: string }>();
+    expect(quedan.results.map((x) => x.tarea)).toEqual(['y']);
   });
 
   it('las tareas reales de producción tienen nombre y las de dinero son críticas', () => {

@@ -3218,3 +3218,18 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `exigirConnect()` en `apps/servidor/src/rutas/dinero.ts`. Con la llave real no se llama a Stripe hasta que la variable `STRIPE_CONNECT_ACTIVO=1` esté puesta en el sitio. Mientras tanto responde 409: «Los cobros a tu cuenta bancaria todavía no están activados. Tu saldo está a salvo…». Con `sk_test_` (sitio de pruebas) sigue igual.
 - **Candado de pruebas internas:** `connectApagado.test.ts` revisa que toda ruta de `diagnostico.ts` que use Stripe exija `startsWith('sk_test_')`. Las dos pruebas se comprobaron en rojo.
 - **Para encender Connect:** primero Richard activa Connect y confirma en el panel de Stripe. Después se pone `STRIPE_CONNECT_ACTIVO=1` en YaDominios Cloud y se republica. No antes.
+
+## C-RELOJ-SOLO-FALLAS — el reloj guarda solo lo que falló (7 nov 2026, todos los países)
+
+- **Qué se rompía:** el parte de consumo de YaDominios del 6 nov (UTC) puso la base de pruebas en el 72 % de las escrituras de la cuenta: 152.794 filas escritas y 390,7 millones leídas. La que más escribía era `INSERT OR REPLACE INTO reloj_tareas`, con 62.424 filas.
+- **Causa real:** `anotarTareas` guardaba una fila por tarea en cada vuelta del reloj, también las buenas. Son unas 43 por minuto, y la tabla llegó a 212.667 filas. Cada minuto, la limpieza `DELETE FROM reloj_tareas WHERE creado_en < -7 días` recorría la tabla entera, porque solo hay índice para las fallidas. Además, `saludReloj` leía 261.202 filas por llamada: MAX sobre todo `tareas_programadas` más un EXISTS por fila, y un COUNT y un ORDER BY sin índice.
+- **Qué se hizo:**
+  - `anotarTareas` guarda SOLO las tareas fallidas. La vuelta buena ya queda en `tareas_programadas`.
+  - La limpieza borra por tandas de 5.000 las filas buenas que quedaron y las fallas de más de 7 días.
+  - `saludReloj` camina el índice de `empezada_en` desde la vuelta más nueva, con LIMIT 1 y una ventana de 25 horas.
+  - Medido contra la base de pruebas: la salud pasó de 261.202 a 392 filas leídas.
+- **Candado:** `apps/servidor/src/reloj.test.ts`.
+  - «anotarTareas no escribe nada si todas salieron bien…» se comprobó en rojo devolviendo el filtro a todas las tareas.
+  - «vueltas buenas no escriben… y la limpieza quita las filas buenas viejas».
+  - El diagnóstico de staging espera 1 fila, no 3.
+- **No tocar:** no volver a guardar las tareas buenas en `reloj_tareas`. No agregar a la salud consultas sin la ventana de `empezada_en`.

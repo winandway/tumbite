@@ -2682,7 +2682,11 @@ export async function correrRelojUnaVez(
       "DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')",
     ),
     db.prepare("DELETE FROM tareas_programadas WHERE empezada_en < datetime('now', '-7 days')"),
-    db.prepare("DELETE FROM reloj_tareas WHERE creado_en < datetime('now', '-7 days')"),
+    // C-RELOJ-SOLO-FALLAS: borra por tandas (las filas buenas que quedaron de antes y las fallas
+    // de más de 7 días). Con la tabla solo de fallas, esto lee unas pocas filas.
+    db.prepare(
+      "DELETE FROM reloj_tareas WHERE rowid IN (SELECT rowid FROM reloj_tareas WHERE ok = 1 OR creado_en < datetime('now', '-7 days') LIMIT 5000)",
+    ),
     db.prepare("DELETE FROM lotes_ubicacion WHERE recibido_en < datetime('now', '-7 days')"),
   ]);
   return { ok: true as const, ...resultado.resumen, fallidas: resultado.vuelta.fallidas, ventana };
