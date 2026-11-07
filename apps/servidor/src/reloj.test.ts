@@ -372,12 +372,13 @@ describe('reloj · integración con la Fase 3', () => {
 describe('C-RELOJ-PRUEBAS-PAUSA', () => {
   it('en pausa, el reloj del sitio de pruebas no toca la base; producción sigue igual', async () => {
     const { app } = await import('./app');
-    const m = mundo({ RELOJ_SECRETO: 'reloj-secreto-de-prueba-0123456789' });
+    const sec = `reloj-${crypto.randomUUID()}`;
+    const m = mundo({ RELOJ_SECRETO: sec });
     const llamar = (host: string) =>
       app.request(
         `https://${host}/datos/reloj`,
-        { method: 'POST', headers: { 'x-reloj-secreto': 'reloj-secreto-de-prueba-0123456789' } },
-        { DB: m.DB, RELOJ_SECRETO: 'reloj-secreto-de-prueba-0123456789' },
+        { method: 'POST', headers: { 'x-reloj-secreto': sec } },
+        { DB: m.DB, RELOJ_SECRETO: sec },
       );
     const r = await llamar('staging.tumbite.com');
     expect(await r.json()).toEqual({ ok: true, pausado: true });
