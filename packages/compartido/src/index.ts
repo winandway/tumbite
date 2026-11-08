@@ -85,4 +85,5 @@ export * from './modoDestino';
 export * from './pesables';
 export * from './fotosLivianas';
 export * from './comanda';
+export * from './escpos';
 export * from './enlacesTiendas';

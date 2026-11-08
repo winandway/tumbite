@@ -16,6 +16,9 @@ import {
   textoLinea,
   textoPesoReal,
   type OpcionElegida,
+  ANCHOS_COMANDA,
+  type AnchoComanda,
+  escposPrueba,
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { ReportarPanel } from './ReportarPanel';
@@ -23,10 +26,20 @@ import { LuzSemaforo } from './LuzSemaforo';
 import QRCode from 'qrcode';
 import { pedir } from './api';
 import { useModoTableta } from './modoTableta';
-import { imprimirComanda } from './comanda';
+import { imprimirComanda, type ResultadoImpresion } from './comanda';
+import { useImpresora } from './impresora';
 
 /** C-COMANDA: la preferencia vive en este navegador (cada tableta o computadora decide). */
 const LLAVE_IMPRIMIR = 'divoox.imprimirAlAceptar';
+/** C-COMANDA-COMPLETA: el ancho del papel (58 u 80 mm) se guarda por restaurante en este navegador. */
+const llaveAncho = (rid: string) => `divoox.anchoComanda.${rid}`;
+const leerAncho = (rid: string): AnchoComanda => {
+  try {
+    return localStorage.getItem(llaveAncho(rid)) === '58' ? 58 : 80;
+  } catch {
+    return 80;
+  }
+};
 const leerImprimir = () => {
   try {
     return localStorage.getItem(LLAVE_IMPRIMIR) === '1';
@@ -72,6 +85,7 @@ type Pedido = {
     nombreEn: string;
     cantidad: number;
     opciones?: OpcionElegida[];
+    nota?: string | null;
     sustitucion?: string;
     reemplazo?: { nombreEs?: string; nombreEn?: string } | null;
     pesable?: boolean;
@@ -104,6 +118,20 @@ const T = {
     aceptar: 'Aceptar',
     imprimir: 'Imprimir comanda',
     imprimirAlAceptar: 'Imprimir la comanda al aceptar',
+    ancho: 'Ancho del papel',
+    conectarUsb: 'Conectar impresora (USB)',
+    conectarSerie: 'Conectar por puerto serie o Bluetooth',
+    conectada: 'Impresora conectada',
+    imprimirPrueba: 'Imprimir prueba',
+    desconectar: 'Desconectar',
+    sinSoporte:
+      'Este navegador no conecta la impresora directo: la comanda sale por la impresión del navegador. Para conectarla, usa Chrome o Edge en una computadora.',
+    errorConectar:
+      'No pudimos conectar la impresora. Revisa que esté encendida y enchufada, y vuelve a intentarlo.',
+    falloImpresora:
+      'La impresora conectada no respondió: abrimos la impresión del navegador para que la comanda no se pierda.',
+    ventanaBloqueada:
+      'El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes de este sitio.',
     recoge: 'El cliente lo recoge en el local (sin repartidor)',
     pinCliente: 'PIN del cliente (4 dígitos, está en su app)',
     mayorEdad: 'Revisé el documento: quien recibe es mayor de 21',
@@ -179,6 +207,19 @@ const T = {
     aceptar: 'Accept',
     imprimir: 'Print ticket',
     imprimirAlAceptar: 'Print the ticket when accepting',
+    ancho: 'Paper width',
+    conectarUsb: 'Connect printer (USB)',
+    conectarSerie: 'Connect by serial port or Bluetooth',
+    conectada: 'Printer connected',
+    imprimirPrueba: 'Print test',
+    desconectar: 'Disconnect',
+    sinSoporte:
+      'This browser can’t connect the printer directly: tickets print through the browser’s print window. To connect it, use Chrome or Edge on a computer.',
+    errorConectar:
+      'We couldn’t connect the printer. Make sure it’s on and plugged in, and try again.',
+    falloImpresora:
+      'The connected printer didn’t respond: we opened the browser’s print window so the ticket isn’t lost.',
+    ventanaBloqueada: 'The browser blocked the print window. Allow pop-ups for this site.',
     recoge: 'Customer picks up in store (no driver)',
     pinCliente: 'Customer PIN (4 digits, in their app)',
     mayorEdad: 'I checked the ID: the recipient is 21 or older',
@@ -268,11 +309,24 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   const [cocina, setCocina] = useState({ prepSugerida: 20, cocinaOcupada: 0 });
   // C-ACEPTAR-SOLO: null mientras carga (no se pinta un interruptor que no se sabe cómo está).
   const [aceptarSolo, setAceptarSolo] = useState<boolean | null>(null);
+  // C-COMANDA-COMPLETA: el nombre real del restaurante va arriba de la comanda (antes salía vacío).
+  const [restaurante, setRestaurante] = useState<{ id: string; nombre: string } | null>(null);
+  const [ancho, setAncho] = useState<AnchoComanda>(80);
   useEffect(() => {
-    pedir<{ restaurante: { aceptarSolo?: boolean } }>('GET', '/datos/mi-restaurante')
-      .then((r) => setAceptarSolo(Boolean(r.restaurante.aceptarSolo)))
+    pedir<{ restaurante: { id?: string; nombre?: string; aceptarSolo?: boolean } }>(
+      'GET',
+      '/datos/mi-restaurante',
+    )
+      .then((r) => {
+        setAceptarSolo(Boolean(r.restaurante.aceptarSolo));
+        const id = String(r.restaurante.id ?? '');
+        setRestaurante({ id, nombre: String(r.restaurante.nombre ?? '') });
+        if (id) setAncho(leerAncho(id));
+      })
       .catch(() => setAceptarSolo(null));
   }, []);
+  const impresora = useImpresora();
+  const [avisoImpresion, setAvisoImpresion] = useState('');
   const [pinLocal, setPinLocal] = useState<Record<string, string>>({});
   const [edadLocal, setEdadLocal] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
@@ -379,6 +433,32 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   }
 
   const [imprimirAlAceptar, setImprimirAlAceptar] = useState(leerImprimir);
+  const idiomaComanda = idioma === 'en' ? 'en' : 'es';
+  function imprimir(p: Pedido) {
+    void imprimirComanda(p, restaurante?.nombre ?? '', idiomaComanda, {
+      ancho,
+      impresora: impresora.conexion,
+    }).then((r: ResultadoImpresion) =>
+      setAvisoImpresion(
+        r === 'navegador-por-fallo'
+          ? t.falloImpresora
+          : r === 'bloqueada'
+            ? t.ventanaBloqueada
+            : '',
+      ),
+    );
+  }
+  async function conectar(tipo: 'usb' | 'serie') {
+    try {
+      await impresora.conectar(tipo);
+      setAvisoImpresion('');
+    } catch (e) {
+      // Cerrar la ventana del navegador sin elegir no es un error que haya que mostrar.
+      if (e instanceof Error && e.name === 'NotFoundError') return;
+      console.warn('impresora: no se pudo conectar', e);
+      setAvisoImpresion(t.errorConectar);
+    }
+  }
   async function accion(ruta: string, cuerpo: unknown = {}) {
     try {
       await pedir('POST', ruta, cuerpo);
@@ -445,6 +525,83 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
             <Icono nombre="alarma" tamano={18} /> {t.activar}
           </button>
         )}
+      </div>
+      <div className="fila-impresora" data-testid="impresora">
+        <label className="campo-check">
+          {t.ancho}{' '}
+          <select
+            aria-label={t.ancho}
+            value={ancho}
+            disabled={!restaurante}
+            onChange={(ev) => {
+              const a: AnchoComanda = ev.target.value === '58' ? 58 : 80;
+              setAncho(a);
+              try {
+                if (restaurante?.id) localStorage.setItem(llaveAncho(restaurante.id), String(a));
+              } catch {
+                /* sin almacén: vale mientras la página esté abierta */
+              }
+            }}
+          >
+            {ANCHOS_COMANDA.map((a) => (
+              <option key={a} value={a}>
+                {a} mm
+              </option>
+            ))}
+          </select>
+        </label>
+        {impresora.conexion ? (
+          <>
+            <span className="ok" role="status">
+              {t.conectada} · {impresora.conexion.nombre}
+            </span>
+            <button
+              type="button"
+              className="boton secundario"
+              onClick={() => {
+                const c = impresora.conexion;
+                if (!c) return;
+                c.enviar(escposPrueba(ancho, idiomaComanda)).catch((e: unknown) => {
+                  console.warn('impresora: falló la prueba', e);
+                  setAvisoImpresion(t.errorConectar);
+                });
+              }}
+            >
+              {t.imprimirPrueba}
+            </button>
+            <button
+              type="button"
+              className="boton secundario"
+              onClick={() => void impresora.desconectar()}
+            >
+              {t.desconectar}
+            </button>
+          </>
+        ) : impresora.soporte.usb || impresora.soporte.serie ? (
+          <>
+            {impresora.soporte.usb ? (
+              <button type="button" className="boton" onClick={() => void conectar('usb')}>
+                {t.conectarUsb}
+              </button>
+            ) : null}
+            {impresora.soporte.serie ? (
+              <button
+                type="button"
+                className="boton secundario"
+                onClick={() => void conectar('serie')}
+              >
+                {t.conectarSerie}
+              </button>
+            ) : null}
+          </>
+        ) : (
+          <span className="ayuda">{t.sinSoporte}</span>
+        )}
+        {avisoImpresion ? (
+          <span className="error" role="alert">
+            {avisoImpresion}
+          </span>
+        ) : null}
       </div>
       {bloqueado && (
         <button
@@ -766,8 +923,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                       type="button"
                       className={m === cocina.prepSugerida ? 'boton exito' : 'boton'}
                       onClick={() => {
-                        if (imprimirAlAceptar)
-                          imprimirComanda(p, '', idioma === 'en' ? 'en' : 'es');
+                        if (imprimirAlAceptar) imprimir(p);
                         void accion(`/datos/restaurante/pedidos/${p.id}/aceptar`, { minutos: m });
                       }}
                     >
@@ -777,11 +933,7 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   ),
                 )}
               {['aceptado', 'listo'].includes(p.estado) ? (
-                <button
-                  type="button"
-                  className="boton secundario"
-                  onClick={() => imprimirComanda(p, '', idioma === 'en' ? 'en' : 'es')}
-                >
+                <button type="button" className="boton secundario" onClick={() => imprimir(p)}>
                   {t.imprimir}
                 </button>
               ) : null}

@@ -57,7 +57,11 @@ describe('reemplazos al marcar un producto que falta (C-TIENDAS-REEMPLAZOS)', ()
     render(<Pedidos idioma="es" />);
     await userEvent.click(await screen.findByRole('button', { name: 'Más opciones' }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Falta un producto' }));
-    await userEvent.selectOptions(screen.getByRole('combobox'), 'jugo');
+    // C-COMANDA-COMPLETA: arriba también está «Ancho del papel»; el de lo que falta es el otro.
+    const falta = screen
+      .getAllByRole('combobox')
+      .find((s) => s.getAttribute('aria-label') !== 'Ancho del papel');
+    await userEvent.selectOptions(falta!, 'jugo');
     await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar un producto' }), 'agua');
     const agua = await screen.findByRole('checkbox', { name: 'Agua' });
     // Lo agotado no se ofrece.
