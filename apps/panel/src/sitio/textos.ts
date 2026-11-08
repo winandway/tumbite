@@ -50,6 +50,7 @@ const es = {
     pedir: 'Quiero pedir',
     restaurante: 'Tengo un restaurante',
     repartir: 'Quiero repartir',
+    publicos: ['Clientes', 'Restaurantes', 'Repartidores'],
     entradas: [
       [
         'Quiero pedir comida',
@@ -366,6 +367,7 @@ const en: Textos = {
     texto: 'Your favorite Miami restaurants, with drivers who truly earn.',
     pedir: 'I want to order',
     restaurante: 'I own a restaurant',
+    publicos: ['Customers', 'Restaurants', 'Drivers'],
     entradas: [
       ['I want to order food', 'Order from restaurants near you and track it live.', 'Order now'],
       [

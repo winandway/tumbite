@@ -3282,3 +3282,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **tumbite.com (producción):** sigue con lo de C-DOMINIO-DIVOOX: cada página lleva canónica a divoox.com y salta en el navegador (`dominio.js`); la API `/datos` sigue en tumbite.com porque las apps de las tiendas la llaman. La plataforma sirve las páginas fijas antes que el servidor, por eso no hay 301 de servidor en esas páginas.
 - **Cómo se comprueba:** `curl -s https://staging.tumbite.com/robots.txt` dice `Disallow: /` y la portada de pruebas trae `name="robots" content="noindex`.
 - **No tocar:** nunca correr sin-indexar sobre el paquete de producción.
+
+## C-ENTRADAS-CON-FOTO: las tres entradas de la portada llevan foto real, sin íconos rojos (8 nov 2026, Richard) — todos los países
+
+- **Qué pidió Richard:** los íconos rojos se leen como error o algo parado; las tres tarjetas («Quiero pedir comida», «Tengo un restaurante», «Quiero repartir») tenían que ser más atractivas.
+- **Qué se hizo:** cada tarjeta lleva foto arriba (`apps/panel/public/marca/entradas/comida.webp`, `restaurante.webp`, `repartir.webp`, recortadas de las fotos de marca ya aprobadas), una etiqueta blanca con el público (Clientes / Restaurantes / Repartidores) y el botón con flecha. Todos los íconos de la portada (`.ld-icono`) pasan a negro sobre gris claro.
+- **Candado:** `Landing.test.tsx` bloque C-ENTRADAS-CON-FOTO (comprobada en rojo): tres tarjetas, cada una con su foto y ninguna con `.ld-icono`.

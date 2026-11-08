@@ -170,15 +170,27 @@ export function Landing({ idioma }: { idioma: Idioma }) {
       <section className="ld-entradas" aria-label={t.hero.pedir}>
         {t.hero.entradas.map(([titulo, texto, boton], i) => {
           const destino = ['/app/', '/panel', '/driver/'].at(i) ?? '/';
-          const icono = (['pizza', 'chef', 'moto'] as const).at(i) ?? 'pizza';
+          // C-ENTRADAS-CON-FOTO (8 nov 2026): foto real arriba, sin íconos rojos.
+          const foto = ['comida', 'restaurante', 'repartir'].at(i) ?? 'comida';
           return (
             <a key={titulo} className="ld-entrada-tarjeta" href={destino}>
-              <span className="ld-icono">
-                <Icono nombre={icono} tamano={26} />
-              </span>
-              <strong>{titulo}</strong>
-              <p>{texto}</p>
-              <span className="boton">{boton}</span>
+              <div className="ld-entrada-foto">
+                <img
+                  src={`/marca/entradas/${foto}.webp`}
+                  alt=""
+                  width={960}
+                  height={540}
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                />
+                <span>{t.hero.publicos.at(i)}</span>
+              </div>
+              <div className="ld-entrada-cuerpo">
+                <strong>{titulo}</strong>
+                <p>{texto}</p>
+                <span className="boton">
+                  {boton} <span aria-hidden="true">→</span>
+                </span>
+              </div>
             </a>
           );
         })}

@@ -55,6 +55,27 @@ describe('sitio público', () => {
     localStorage.clear();
   });
 
+  it('C-ENTRADAS-CON-FOTO: las tres entradas llevan foto real y ningún ícono rojo (8 nov 2026)', () => {
+    window.history.pushState(null, '', '/');
+    localStorage.setItem('tumbite.idioma', 'es');
+    const { container } = render(<App />);
+    const tarjetas = container.querySelectorAll('.ld-entrada-tarjeta');
+    expect(tarjetas).toHaveLength(3);
+    const fotos = [...tarjetas].map((t) =>
+      t.querySelector('.ld-entrada-foto img')?.getAttribute('src'),
+    );
+    expect(fotos).toEqual([
+      '/marca/entradas/comida.webp',
+      '/marca/entradas/restaurante.webp',
+      '/marca/entradas/repartir.webp',
+    ]);
+    for (const t of tarjetas) expect(t.querySelector('.ld-icono')).toBeNull();
+    expect([...tarjetas].map((t) => t.querySelector('.ld-entrada-foto span')?.textContent)).toEqual(
+      ['Clientes', 'Restaurantes', 'Repartidores'],
+    );
+    localStorage.clear();
+  });
+
   it('navega a la política de privacidad sin recargar', async () => {
     window.history.pushState(null, '', '/');
     render(<App />);
