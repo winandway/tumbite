@@ -86,6 +86,7 @@ const T = {
     titulo: 'Pedidos',
     activar: 'Activar sonido de alarma',
     sonidoOk: 'Alarma activada',
+    bloqueado: 'El navegador silenció la alarma. Toca aquí para que suene con cada pedido nuevo.',
     tableta: 'Modo tableta',
     tabletaAyuda: 'Pantalla completa y siempre encendida, con la alarma.',
     salirTableta: 'Salir del modo tableta',
@@ -159,6 +160,7 @@ const T = {
     titulo: 'Orders',
     activar: 'Turn on alarm sound',
     sonidoOk: 'Alarm on',
+    bloqueado: 'Your browser muted the alarm. Tap here so it rings for every new order.',
     tableta: 'Tablet mode',
     tabletaAyuda: 'Full screen and always on, with the alarm.',
     salirTableta: 'Exit tablet mode',
@@ -231,6 +233,13 @@ const T = {
   },
 };
 
+/** La alarma de pedidos nuevos: suena en bucle hasta que se atienden (C-ALARMA-SIEMPRE). */
+function crearAlarma() {
+  const a = new Audio('/alarma.wav');
+  a.loop = true;
+  return a;
+}
+
 export function Pedidos({ idioma }: { idioma: Idioma }) {
   const [reportando, setReportando] = useState<string | null>(null);
   // «Me falta un plato»: el pedido donde se está eligiendo el plato.
@@ -269,7 +278,11 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   const [error, setError] = useState('');
   // C-TIENDAS-PESO-REAL: el peso escrito por producto, «pedido:producto» → texto.
   const [pesos, setPesos] = useState<Record<string, string>>({});
-  const [sonido, setSonido] = useState(false);
+  // C-ALARMA-SIEMPRE (8 nov 2026): la alarma nace encendida, como la tableta de DoorDash. Antes solo
+  // sonaba si alguien tocaba «Activar sonido» y el primer pedido de prueba de Richard no sonó.
+  const [sonido, setSonido] = useState(true);
+  // El navegador puede bloquear el sonido hasta que la persona toque la página: se avisa en grande.
+  const [bloqueado, setBloqueado] = useState(false);
   // Los códigos QR de los pedidos listos (uno por pedido, dibujados una sola vez).
   const [qrs, setQrs] = useState<Record<string, string>>({});
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -312,11 +325,33 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
   // Amarillo con alarma: la foto del repartidor lleva más de 2 minutos sin confirmar.
   const hayUrgente = pedidos.some((p) => fotoSinConfirmar(p));
   useEffect(() => {
+    if (!sonido) return;
+    audio.current ??= crearAlarma();
     const a = audio.current;
-    if (!a || !sonido) return;
-    if (hayNuevos || hayUrgente) void a.play().catch(() => undefined);
-    else a.pause();
+    if (hayNuevos || hayUrgente) {
+      Promise.resolve(a.play())
+        .then(() => setBloqueado(false))
+        .catch(() => setBloqueado(true));
+    } else a.pause();
   }, [hayNuevos, hayUrgente, sonido]);
+  // Cualquier toque en la página destraba el sonido bloqueado por el navegador.
+  useEffect(() => {
+    if (!bloqueado) return;
+    const destrabar = () => {
+      const a = audio.current;
+      if (a && (hayNuevos || hayUrgente))
+        Promise.resolve(a.play())
+          .then(() => setBloqueado(false))
+          .catch(() => undefined);
+      else setBloqueado(false);
+    };
+    window.addEventListener('pointerdown', destrabar);
+    window.addEventListener('keydown', destrabar);
+    return () => {
+      window.removeEventListener('pointerdown', destrabar);
+      window.removeEventListener('keydown', destrabar);
+    };
+  }, [bloqueado, hayNuevos, hayUrgente]);
   // Un sonido corto, una sola vez por pedido, cuando el repartidor está a 5 minutos y cuando llega.
   const avisados = useRef(new Set<string>());
   useEffect(() => {
@@ -333,10 +368,14 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
 
   function activarSonido() {
     // Los navegadores solo dejan sonar después de un toque de la persona.
-    const a = new Audio('/alarma.wav');
-    a.loop = true;
-    audio.current = a;
+    audio.current ??= crearAlarma();
+    const a = audio.current;
     setSonido(true);
+    if (hayNuevos || hayUrgente)
+      Promise.resolve(a.play())
+        .then(() => setBloqueado(false))
+        .catch(() => setBloqueado(true));
+    else setBloqueado(false);
   }
 
   const [imprimirAlAceptar, setImprimirAlAceptar] = useState(leerImprimir);
@@ -407,6 +446,16 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
           </button>
         )}
       </div>
+      {bloqueado && (
+        <button
+          type="button"
+          className="aviso-alarma"
+          data-testid="alarma-bloqueada"
+          onClick={activarSonido}
+        >
+          <Icono nombre="alarma" tamano={20} /> {t.bloqueado}
+        </button>
+      )}
       {error && <p className="error-general">{error}</p>}
       <div className="cocina" aria-label={t.cocina}>
         <strong>{t.cocina}</strong>

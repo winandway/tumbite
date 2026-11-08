@@ -6031,3 +6031,21 @@ body.modo-tableta .panel-contenido {
     gap: 8px;
   }
 }
+
+/* C-ALARMA-SIEMPRE: aviso grande cuando el navegador silenció la alarma de pedidos. */
+.aviso-alarma {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid #b7791f;
+  border-radius: 12px;
+  background: #fff7e0;
+  color: #101010;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}

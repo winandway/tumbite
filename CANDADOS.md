@@ -3288,3 +3288,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué pidió Richard:** los íconos rojos se leen como error o algo parado; las tres tarjetas («Quiero pedir comida», «Tengo un restaurante», «Quiero repartir») tenían que ser más atractivas.
 - **Qué se hizo:** cada tarjeta lleva foto arriba (`apps/panel/public/marca/entradas/comida.webp`, `restaurante.webp`, `repartir.webp`, recortadas de las fotos de marca ya aprobadas), una etiqueta blanca con el público (Clientes / Restaurantes / Repartidores) y el botón con flecha. Todos los íconos de la portada (`.ld-icono`) pasan a negro sobre gris claro.
 - **Candado:** `Landing.test.tsx` bloque C-ENTRADAS-CON-FOTO (comprobada en rojo): tres tarjetas, cada una con su foto y ninguna con `.ld-icono`.
+
+## C-ALARMA-SIEMPRE: la alarma de pedidos del panel del restaurante suena sola (8 nov 2026, Richard) — todos los países
+
+- **Qué se rompió:** el primer pedido de la prueba de las tres apps (E140, staging) entró pagado con el panel abierto y no sonó. A los 6 minutos el encargado automático lo canceló (regla `REGLAS.cancelar`).
+- **Causa real:** `Pedidos.tsx` arrancaba con la alarma apagada (`sonido = false`) y solo sonaba si alguien tocaba «Activar sonido de alarma».
+- **Qué se hizo:** la alarma nace encendida; con un pedido nuevo intenta sonar sola (entrar al panel ya cuenta como toque para el navegador). Si el navegador la bloquea, sale el aviso grande «El navegador silenció la alarma. Toca aquí…» y cualquier toque en la página la destraba.
+- **Candado:** `apps/panel/src/panel/PedidosAlarma.test.tsx` (comprobada en rojo con el código viejo).
+- **Cómo se comprueba:** en staging, panel del restaurante abierto, pedido nuevo → suena sin tocar nada.
