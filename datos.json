@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-03T16:08:39.336Z",
+  "actualizado": "2026-11-08T06:00:46.000Z",
   "version": "7b9a5ca",
-  "ahora": "Portada del cliente: estudio con REA de las súper apps y maqueta nueva con los servicios arriba",
+  "ahora": "Divoox retomado el 8 nov: bloque de lanzamiento cerrado y app del restaurante en TestFlight",
   "proximo": [
     {
       "quien": "richard",
@@ -303,6 +303,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-08",
+      "titulo": "Bloque de lanzamiento cerrado",
+      "texto": "Revisión aprobada del segundo cambio de dirección: cada autorización reemplazada queda vigilada y la conciliación exige que todas estén anuladas. La app del restaurante, con la comanda impresa y el nombre corto del cliente, quedó en TestFlight (compilación 17, lista en App Store Connect). Nada se mandó a revisión de Apple. EE. UU."
+    },
     {
       "fecha": "2026-11-03",
       "titulo": "Comida lista para Miami: cobros y comanda",
