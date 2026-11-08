@@ -99,6 +99,17 @@ describe('una sola dirección oficial', () => {
   });
 });
 
+describe('C-PRUEBAS-SIN-INDEXAR', () => {
+  it('el sitio de pruebas responde con X-Robots-Tag noindex', async () => {
+    const res = await app.request('https://staging.tumbite.com/datos/salud', {}, {});
+    expect(res.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+  });
+  it('producción NO lleva noindex', async () => {
+    const res = await app.request('https://divoox.com/datos/salud', {}, {});
+    expect(res.headers.get('x-robots-tag')).toBeNull();
+  });
+});
+
 describe('datos públicos', () => {
   it('el WhatsApp de soporte sale solo cuando la variable existe', async () => {
     const sin = await app.request('/datos/publico', {}, {});

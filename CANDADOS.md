@@ -3273,3 +3273,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
   4. Comprobar que la salud de pruebas diga reloj «ok» a los 5 minutos.
 - **Mientras dure la pausa:** las ofertas a repartidores que dependen del reloj NO se reparten solas en el sitio de pruebas.
 - **Prueba:** `reloj.test.ts`, «C-RELOJ-PRUEBAS-PAUSA». Se comprobó en rojo con el interruptor en false.
+
+## C-PRUEBAS-SIN-INDEXAR: el sitio de pruebas no sale en Google (8 nov 2026, Richard) — todos los países
+
+- **Qué pasaba:** staging.tumbite.com servía una copia entera de la web de Divoox (portada, Docs, llms.txt, mapa del sitio) con `robots.txt` abierto y sin noindex. Google podía indexarla como contenido duplicado de divoox.com.
+- **Qué se hizo:** `scripts/sin-indexar.mjs` corre SOLO al armar el paquete de pruebas (`scripts/empaquetar.sh pruebas`): `robots.txt` con `Disallow: /` y `<meta name="robots" content="noindex, nofollow">` en cada página. El servidor manda `X-Robots-Tag: noindex, nofollow` en todo lo que responde en pruebas (`app.ts`).
+- **Candado:** `scripts/verificar-paquete.mjs` rechaza un paquete de pruebas sin noindex o con robots abierto, y rechaza un paquete de PRODUCCIÓN con noindex o robots cerrado. Prueba `app.test.ts` bloque C-PRUEBAS-SIN-INDEXAR (comprobada en rojo).
+- **tumbite.com (producción):** sigue con lo de C-DOMINIO-DIVOOX: cada página lleva canónica a divoox.com y salta en el navegador (`dominio.js`); la API `/datos` sigue en tumbite.com porque las apps de las tiendas la llaman. La plataforma sirve las páginas fijas antes que el servidor, por eso no hay 301 de servidor en esas páginas.
+- **Cómo se comprueba:** `curl -s https://staging.tumbite.com/robots.txt` dice `Disallow: /` y la portada de pruebas trae `name="robots" content="noindex`.
+- **No tocar:** nunca correr sin-indexar sobre el paquete de producción.

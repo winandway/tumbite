@@ -29,6 +29,8 @@ node scripts/sin-arroba.mjs "$SALIDA/app"
 node scripts/sin-arroba.mjs "$SALIDA/driver"
 node scripts/sin-arroba.mjs "$SALIDA/restaurant"
 cp schema.sql "$SALIDA/"
+# C-PRUEBAS-SIN-INDEXAR: el sitio de pruebas no sale en Google (duplicaría divoox.com).
+if [ "$ENTORNO" = pruebas ]; then node scripts/sin-indexar.mjs "$SALIDA"; fi
 echo '{ "compatibility_date": "2026-09-01", "compatibility_flags": ["nodejs_compat"] }' >"$SALIDA/yadominios.json"
 echo "$ENTORNO" >"$SALIDA/.entorno"
 node scripts/verificar-paquete.mjs "$SALIDA" "$ENTORNO" "$COMMIT"

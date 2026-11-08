@@ -105,6 +105,11 @@ app.use('*', async (c, next) => {
   await next();
 });
 app.use('*', cabecerasSeguridad);
+// C-PRUEBAS-SIN-INDEXAR: nada del sitio de pruebas sale en los buscadores (duplicaría divoox.com).
+app.use('*', async (c, next) => {
+  await next();
+  if (entornoDe(c.req.url) === 'pruebas') c.res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+});
 // C-ENTORNOS-SEPARADOS: el sitio de pruebas nunca usa una llave real de Stripe.
 app.use('*', async (c, next) => {
   blindarStripeEnPruebas(new URL(c.req.url).host, c.env);

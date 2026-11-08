@@ -95,6 +95,19 @@ if (/^[0-9a-f]{7,40}$/i.test(commitPedido)) {
     if (!js.some(lleva)) problemas.push(`${app}: la app no lleva grabado el commit ${c}`);
   }
 }
+// C-PRUEBAS-SIN-INDEXAR: pruebas cerrado a los buscadores; producción NUNCA con noindex.
+const leer = (r) => (existsSync(join(carpeta, r)) ? readFileSync(join(carpeta, r), 'utf8') : '');
+const noindex = /<meta name="robots" content="noindex/;
+if (entorno === 'pruebas') {
+  if (!/Disallow: \/\s*$/m.test(leer('robots.txt')))
+    problemas.push('robots.txt: el sitio de pruebas debe cerrar todo (Disallow: /)');
+  if (!noindex.test(leer('index.html')))
+    problemas.push('index.html: el sitio de pruebas debe llevar noindex (scripts/sin-indexar.mjs)');
+} else if (noindex.test(leer('index.html')) || /Disallow: \/\s*$/m.test(leer('robots.txt'))) {
+  problemas.push(
+    'producción no puede llevar noindex ni cerrar robots.txt: Google dejaría de ver divoox.com',
+  );
+}
 if (
   existsSync(join(carpeta, '.entorno')) &&
   readFileSync(join(carpeta, '.entorno'), 'utf8').trim() !== entorno
