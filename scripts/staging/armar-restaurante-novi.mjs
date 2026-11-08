@@ -66,9 +66,10 @@ const datos = await api(
   '/datos/mi-restaurante',
   {
     nombre: 'Pizzería Demo Novi',
-    direccion: '43155 Main St, Novi, MI 48375',
-    lat: 42.4806,
-    lng: -83.4755,
+    // 8 nov 2026: a 1 km de la zona de pruebas de Richard, en un centro comercial con estacionamiento.
+    direccion: '31194 Novi Rd, Novi, MI 48377',
+    lat: 42.5253879,
+    lng: -83.4661666,
     categoria: 'Pizza',
     // Número ficticio (555): sin teléfono la lista de activación no deja abrir.
     telefono: '+12485550100',
