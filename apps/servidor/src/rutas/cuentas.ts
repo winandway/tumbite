@@ -250,6 +250,11 @@ cuentas.post('/entrar', async (c) => {
   if (!fila || !claveOk) {
     throw new ErrorDatos('El correo o la contraseña no coinciden.', undefined, 401);
   }
+  // C-REPARTIDOR-UN-TELEFONO (8 nov 2026, Richard): un repartidor trabaja en UN solo teléfono, como
+  // en Uber y DoorDash. Entrar en otro cierra la sesión del anterior: si no, los dos reciben las
+  // mismas ofertas. Restaurantes y empresas sí pueden tener varias pantallas abiertas.
+  if (fila.rol === 'repartidor')
+    await db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(fila.id).run();
   const token = await abrirSesion(db, fila.id);
   const usuario: Usuario = {
     id: fila.id,

@@ -62,6 +62,26 @@ describe('cuentas', () => {
     expect(despues.res.status).toBe(401);
   });
 
+  it('C-REPARTIDOR-UN-TELEFONO: el repartidor que entra en otro teléfono cierra el anterior; el cliente no', async () => {
+    const entrar = async (correo: string) =>
+      (await llamar('/datos/cuentas/entrar', { correo, clave: 'clave-segura-1' })).datos
+        .token as string;
+    await llamar('/datos/cuentas/registro', {
+      ...nueva,
+      correo: 'rep@correo.com',
+      rol: 'repartidor',
+    });
+    const tel1 = await entrar('rep@correo.com');
+    const tel2 = await entrar('rep@correo.com');
+    expect((await llamar('/datos/cuentas/yo', undefined, tel1)).res.status).toBe(401);
+    expect((await llamar('/datos/cuentas/yo', undefined, tel2)).res.status).toBe(200);
+    await llamar('/datos/cuentas/registro', nueva);
+    const c1 = await entrar('ana@correo.com');
+    const c2 = await entrar('ana@correo.com');
+    expect((await llamar('/datos/cuentas/yo', undefined, c1)).res.status).toBe(200);
+    expect((await llamar('/datos/cuentas/yo', undefined, c2)).res.status).toBe(200);
+  });
+
   it('no guarda la contraseña en claro', async () => {
     await llamar('/datos/cuentas/registro', nueva);
     const fila = await DB.prepare('SELECT clave_hash FROM usuarios').first<{

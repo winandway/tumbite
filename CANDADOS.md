@@ -3296,3 +3296,15 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** la alarma nace encendida; con un pedido nuevo intenta sonar sola (entrar al panel ya cuenta como toque para el navegador). Si el navegador la bloquea, sale el aviso grande «El navegador silenció la alarma. Toca aquí…» y cualquier toque en la página la destraba.
 - **Candado:** `apps/panel/src/panel/PedidosAlarma.test.tsx` (comprobada en rojo con el código viejo).
 - **Cómo se comprueba:** en staging, panel del restaurante abierto, pedido nuevo → suena sin tocar nada.
+
+## C-REPARTIDOR-UN-TELEFONO: un repartidor, un solo teléfono (8 nov 2026, Richard) — todos los países
+
+- **Qué se rompió:** en la prueba de las tres apps, Richard entró con la misma cuenta de repartidor en dos teléfonos y los dos recibieron la misma oferta.
+- **Qué se hizo:** `rutas/cuentas.ts` (`/entrar`): si la cuenta es de repartidor, al entrar se borran sus otras sesiones; el teléfono anterior recibe 401 y vuelve a la pantalla de entrar. Como Uber y DoorDash. Clientes, restaurantes y empresas siguen pudiendo tener varias pantallas.
+- **Candado:** `cuentas.test.ts` bloque C-REPARTIDOR-UN-TELEFONO (comprobada en rojo).
+
+## C-OFERTA-SUENA: la oferta al repartidor suena en la web (8 nov 2026, Richard) — todos los países
+
+- **Qué se rompió:** la oferta llegó a los teléfonos (versión web) sin sonar: solo vibraba, y Safari en el iPhone no vibra.
+- **Qué se hizo:** `apps/repartidor/src/sonidoOferta.ts`; `grandes/Oferta.tsx` y `viajes/OfertaViaje.tsx` lo llaman al mostrar la oferta. En las apps de las tiendas falta el sonido con la app abierta (va con la próxima compilación, que pide permiso a Gerencia).
+- **Candado:** `apps/servidor/src/repartidorWeb.test.ts` (comprobada en rojo).

@@ -4,6 +4,7 @@ import { type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { vibracionOferta } from '../grandes/accesibilidad';
 import { Boton, C } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
+import { sonarOferta } from '../sonidoOferta';
 
 /** Lo que manda GET /datos/conductor/operaciones/ofertas (C-OFERTA-COMPLETA). */
 export type OfertaViaje = {
@@ -45,6 +46,7 @@ export function OfertaViajeModal({
   useEffect(() => {
     // C-AUDITIVA-REPARTIDOR: más larga y repetida si el repartidor marcó dificultad auditiva.
     Vibration.vibrate(vibracionOferta());
+    sonarOferta();
     const reloj = setInterval(() => setAhora(Date.now()), 500);
     return () => {
       clearInterval(reloj);

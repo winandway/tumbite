@@ -21,4 +21,15 @@ describe('app del repartidor en la web', () => {
     expect(inicio).toMatch(/async function alternar\(\) \{[\s\S]*try \{[\s\S]*catch/);
     expect(inicio).toMatch(/setErrorCarga\(''\)/);
   });
+
+  it('C-OFERTA-SUENA: las dos pantallas de oferta suenan en la web (Safari no vibra)', () => {
+    const sonido = leer('repartidor', 'src', 'sonidoOferta.ts');
+    expect(sonido).toMatch(/Platform\.OS !== 'web'/);
+    expect(sonido).toMatch(/\/alarma\.wav/);
+    for (const r of [
+      ['grandes', 'Oferta.tsx'],
+      ['viajes', 'OfertaViaje.tsx'],
+    ])
+      expect(leer('repartidor', 'src', ...r)).toMatch(/^\s+sonarOferta\(\);/m);
+  });
 });
