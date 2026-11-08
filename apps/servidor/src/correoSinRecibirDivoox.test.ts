@@ -13,7 +13,18 @@ import { enviarCorreo, usarTransporteCorreo } from './correo';
  */
 const RAIZ = join(__dirname, '..', '..', '..');
 const CARPETAS = ['apps', 'packages'];
-const SALTAR = new Set(['node_modules', 'dist', 'build', 'ios', 'android', '.expo']);
+// Las carpetas de compilación (ignoradas por git) se saltan: un compilado viejo en una Mac no es código vivo.
+const SALTAR = new Set([
+  'node_modules',
+  'dist',
+  'dist-web',
+  '.dist-worker',
+  'build',
+  'coverage',
+  'ios',
+  'android',
+  '.expo',
+]);
 const EXTENSIONES = new Set(['.ts', '.tsx', '.js', '.mjs', '.json', '.html']);
 const DIRECCION = /[\w.%+-]+@[\w.-]+/g;
 const deDivoox = (d: string) => /(^|[.@])divoox\.com$/i.test(d.replace(/\.+$/, ''));
