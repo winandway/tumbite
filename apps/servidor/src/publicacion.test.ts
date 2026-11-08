@@ -24,6 +24,14 @@ function paquete(
     writeFileSync(join(d, app, 'entry.js'), `const u="${servidor}";const p="https://tumbite.com";`);
   }
   writeFileSync(join(d, '.entorno'), entorno);
+  // C-PRUEBAS-SIN-INDEXAR: el paquete de pruebas sale de empaquetar.sh ya cerrado a los buscadores.
+  if (entorno === 'pruebas') {
+    writeFileSync(
+      join(d, 'index.html'),
+      '<head><meta name="robots" content="noindex, nofollow" />',
+    );
+    writeFileSync(join(d, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
+  }
   for (const [n, t] of Object.entries(extra)) writeFileSync(join(d, n), t);
   return d;
 }
@@ -49,6 +57,16 @@ describe('revisor de paquetes antes de publicar', () => {
     expect(revisar(paquete('pruebas', 'https://tumbite.com'), 'pruebas')).toBe(false);
     expect(revisar(paquete('produccion', 'https://staging.tumbite.com'), 'produccion')).toBe(false);
     expect(revisar(paquete('pruebas', 'https://staging.tumbite.com'), 'produccion')).toBe(false);
+  });
+  it('C-PRUEBAS-SIN-INDEXAR: pruebas sin noindex no pasa; producción con noindex tampoco', () => {
+    const abierto = paquete('pruebas', 'https://staging.tumbite.com', {
+      'robots.txt': 'User-agent: *\nAllow: /\n',
+    });
+    expect(revisar(abierto, 'pruebas')).toBe(false);
+    const cerrado = paquete('produccion', 'https://tumbite.com', {
+      'index.html': '<meta name="robots" content="noindex, nofollow" />',
+    });
+    expect(revisar(cerrado, 'produccion')).toBe(false);
   });
   it('frena un secreto dentro del paquete', () => {
     const d = paquete('produccion', 'https://tumbite.com', {
