@@ -151,6 +151,7 @@
 - [Create your account · Divoox](https://divoox.com/docs/account/create-account): One account to order, one for your restaurant, and one to deliver. Each takes a minute.
 - [Forgot my password · Divoox](https://divoox.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
 - [Confirm your email · Divoox](https://divoox.com/docs/account/confirm-email): You can browse restaurants and menus without an account. At checkout we ask for your account with a confirmed email: you get a link and the app notices on 
+- [Text messages (SMS): how to opt in or out · Divoox](https://divoox.com/docs/account/text-messages): A separate, unchecked box when you create your account and in “My account.” You only get account and order texts if you check it yourself.
 - [Delete your account · Divoox](https://divoox.com/docs/account/delete): From the three dots in “My account,” without leaving the app. Your personal data is removed.
 - [How to send a screenshot to support · Divoox](https://divoox.com/docs/account/send-screenshot-to-support): In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.
 - [Help from a real person, with your own link · Divoox](https://divoox.com/docs/account/support): Report a problem from the app or write to us: every case gets its own private conversation, and we email you every time we reply.
@@ -220,6 +221,7 @@
 - [Driver Terms · Divoox](https://divoox.com/driver-terms): These terms add to the Terms of Service and apply to anyone delivering with Divoox Driver. By creating a driver account you accept them.
 - [Delete your Divoox account](https://divoox.com/delete-account): Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox for Restaurants), by Windoce, LLC. You don’t need the app installed.
 - [Support · Divoox](https://divoox.com/support): Last updated: October 18, 2026
+- [Text message (SMS) consent · Divoox](https://divoox.com/sms-consent): This page explains how Divoox collects consent to send text messages, which messages we send, and how to stop them at any time.
 - [Contact · Divoox](https://divoox.com/contact): Divoox is a delivery startup: food, stores and packages in one app.
 
 ## En español
