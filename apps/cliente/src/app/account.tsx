@@ -7,6 +7,7 @@ import {
   Boton,
   C,
   MenuCuenta,
+  PreferenciaSms,
   MisCasos,
   TEXTOS_MOVIL,
   selectorDeCapturas,
@@ -346,6 +347,10 @@ function MiCuenta() {
 
         {/* POR-1 (2 nov 2026): «Cerrar sesión» vive aquí, no en la portada (como los grandes).
             Los tres puntos guardan las guías, el soporte y borrar la cuenta. */}
+        {/* C-SMS-CONSENTIMIENTO: aceptar o retirar los SMS desde la cuenta. */}
+        <View style={{ marginTop: 20 }}>
+          <PreferenciaSms />
+        </View>
         <View style={{ marginTop: 20, gap: 8 }}>
           <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
           <MenuCuenta />

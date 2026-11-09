@@ -14,8 +14,9 @@ import { ir } from '../ruta';
 import { Campo, CampoClave } from './CampoClave';
 import { Turnstile, reiniciarTurnstile } from './Turnstile';
 import { TEXTOS_PANEL } from './textos';
+import { CasillaSms } from './CasillaSms';
 
-const INICIAL = { nombre: '', correo: '', telefono: '', clave: '' };
+const INICIAL = { nombre: '', correo: '', telefono: '', clave: '', sms: false };
 
 /**
  * Entrar y crear cuenta de restaurante o, desde el panel de empresas (C-FLEX-CUENTA-EMPRESA), de
@@ -84,6 +85,9 @@ export function Acceso({
               // La empresa de logística es una cuenta de cliente que crea su empresa en el panel.
               rol: empresa ? 'cliente' : 'restaurante',
               idioma,
+              // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar.
+              smsConsentimiento: v.sms,
+              canal: 'web',
             });
       await b.limpiar();
       alEntrar(r.usuario);
@@ -179,6 +183,9 @@ export function Acceso({
             </a>
             .
           </label>
+        )}
+        {modo === 'registro' && (
+          <CasillaSms idioma={idioma} marcada={v.sms} cambiar={(x) => b.cambiar('sms', x)} />
         )}
         <Turnstile sitio={turnstileSitio} idioma={idioma} />
         <button type="submit" className="boton ancho" disabled={enviando}>

@@ -86,6 +86,10 @@ describe('C-AVISOS-COMPLETOS · SMS y llamadas con Twilio simulado (COB-6)', () 
   it('SMS: sin Twilio, sin número o fuera de los países encendidos no sale; si Twilio falla, queda anotado', async () => {
     const m = mundo();
     const u = await m.cuenta('cliente');
+    // C-SMS-CONSENTIMIENTO: el titular marcó la casilla de SMS.
+    expect(
+      (await m.llamar('PUT', '/datos/cuentas/sms', { acepta: true, canal: 'app' }, u.token)).estado,
+    ).toBe(200);
     const sms = (e: Env, telefono: string | null) =>
       enviarSms(e, m.DB, {
         usuarioId: u.id,

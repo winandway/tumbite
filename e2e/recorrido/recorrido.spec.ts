@@ -299,7 +299,7 @@ for (const idioma of ['en', 'es'] as const) {
     await panel.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550100' : '3055550110'));
     await panel.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(panel, 'restaurante-registro');
-    await panel.getByRole('checkbox').check(); // acepta los términos
+    await panel.getByRole('checkbox').first().check(); // acepta los términos
     await panel.getByRole('button', { name: L.panelRegistrar }).click();
 
     await panel.getByRole('link', { name: L.miRestaurante, exact: true }).click();
@@ -543,7 +543,7 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550102' : '3055550112'));
     await rep.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await fotoAqui(rep, 'repartidor-registro');
-    await rep.getByRole('checkbox').click(); // acepta los términos
+    await rep.getByRole('checkbox').first().click(); // acepta los términos
     await rep.getByRole('button', { name: L.crearCuenta }).click();
     // C-PERMISOS-EXPLICADOS: tras registrarse, la app explica los permisos antes de pedirlos.
     await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
@@ -604,7 +604,7 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByLabel(L.cumple).fill(`1995-${hoy}`);
     await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
-    await cli.getByRole('checkbox').click(); // acepta los términos
+    await cli.getByRole('checkbox').first().click(); // acepta los términos
     await cli.getByRole('button', { name: L.crearCuenta }).click();
     await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);

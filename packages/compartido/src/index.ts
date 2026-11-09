@@ -87,3 +87,4 @@ export * from './fotosLivianas';
 export * from './comanda';
 export * from './escpos';
 export * from './enlacesTiendas';
+export * from './smsConsentimiento';

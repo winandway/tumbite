@@ -199,6 +199,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'telefono_canonico', 'TEXT'],
   // C-TELEFONO-VUELTA: cuándo confirmó su teléfono por SMS por última vez.
   ['usuarios', 'telefono_verificado_en', 'TEXT'],
+  // C-SMS-CONSENTIMIENTO (9 nov 2026): la casilla de SMS (fecha, versión del texto y canal).
+  ['usuarios', 'sms_consentido_en', 'TEXT'],
+  ['usuarios', 'sms_consentimiento_version', 'TEXT'],
+  ['usuarios', 'sms_consentimiento_canal', 'TEXT'],
   // C-GANAR-POR-TIEMPO: «oferta» (lo de siempre) o «tiempo».
   ['repartidores', 'modo_pago', "TEXT NOT NULL DEFAULT 'oferta'"],
 ];

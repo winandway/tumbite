@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { enIdioma } from '@tumbite/compartido';
 import { useSesion } from './sesion';
 import { Boton, C, e } from './ui';
+import { PreferenciaSms } from './CasillaSms';
 
 const T = {
   es: {
@@ -76,6 +77,8 @@ export function OpcionesCuenta() {
           <Text style={{ color: C.acento, fontWeight: '700' }}>{t.borrar}</Text>
         </Pressable>
       ) : null}
+      {/* C-SMS-CONSENTIMIENTO: aceptar o retirar los SMS desde la cuenta. */}
+      <PreferenciaSms />
       <Boton texto={t.salir} secundario alTocar={() => void salir()} />
       <ConfirmarBorrado visible={confirmando} alCerrar={() => setConfirmando(false)} />
     </View>

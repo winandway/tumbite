@@ -103,6 +103,7 @@ try {
     '/driver-terms',
     '/delete-account',
     '/support',
+    '/sms-consent',
     '/contact',
     '/docs',
     '/docs/how-to',
@@ -254,7 +255,7 @@ ${grupo('Guides (Docs)', (r) => r.startsWith('/docs'))}
 ${grupo('Countries', (r) => r.startsWith('/country/'))}
 ${grupo('Cities', (r) => r.startsWith('/city/'))}
 ${grupo('Food types', (r) => r.startsWith('/food/'))}
-${grupo('Legal and support', (r) => /^\/(privacy|terms|restaurant-terms|driver-terms|delete-account|support|contact)$/.test(r))}
+${grupo('Legal and support', (r) => /^\/(privacy|terms|restaurant-terms|driver-terms|delete-account|support|sms-consent|contact)$/.test(r))}
 ## En español
 
 Every page above also exists in Spanish under ${DOMINIO}/es (for example ${DOMINIO}/es/how-it-works).

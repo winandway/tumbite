@@ -90,7 +90,7 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta de restaurante' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Marca la casilla');
     expect(envios).toBe(0);
-    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getAllByRole('checkbox')[0]!);
     await userEvent.click(screen.getByRole('button', { name: 'Crear cuenta de restaurante' }));
     await waitFor(() => expect(envios).toBe(1));
   });

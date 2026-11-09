@@ -10,6 +10,7 @@ import {
 } from '@tumbite/compartido';
 import { Icono } from '../sitio/Icono';
 import { AvisoBorrador } from './AvisoBorrador';
+import { CasillaSms } from './CasillaSms';
 import { Campo, CampoClave } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { api, pedir } from './api';
@@ -92,6 +93,7 @@ type Perfil = {
   fechaNacimiento: string | null;
   idioma: Idioma;
   correoConfirmado: boolean;
+  smsConsentimiento?: boolean;
 };
 
 /**
@@ -114,7 +116,14 @@ export function Configuracion({
   const b = useBorrador({
     formulario: 'configuracion',
     cuenta: usuario.id,
-    inicial: { nombre: '', telefono: '', fecha: '', idioma: idioma as string, correoNuevo: '' },
+    inicial: {
+      nombre: '',
+      telefono: '',
+      fecha: '',
+      idioma: idioma as string,
+      correoNuevo: '',
+      sms: false,
+    },
     almacen: almacenNavegador,
   });
   const { cargarBase } = b;
@@ -135,6 +144,7 @@ export function Configuracion({
           fecha: r.perfil.fechaNacimiento ?? '',
           idioma: r.perfil.idioma,
           correoNuevo: '',
+          sms: Boolean(r.perfil.smsConsentimiento),
         });
       })
       .catch((e: unknown) => setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) }));
@@ -158,6 +168,11 @@ export function Configuracion({
         fechaNacimiento: v.fecha || null,
         idioma: v.idioma === 'en' ? 'en' : 'es',
       });
+      // C-SMS-CONSENTIMIENTO: la casilla de SMS se guarda aparte (fecha, versión y canal).
+      if (v.sms !== Boolean(perfil?.smsConsentimiento)) {
+        await pedir('PUT', '/datos/cuentas/sms', { acepta: v.sms, canal: 'web' });
+        setPerfil((p) => (p ? { ...p, smsConsentimiento: v.sms } : p));
+      }
       b.cargar({ ...v, correoNuevo: '' });
       alCambiar(r.usuario);
       setAviso({ donde: 'datos', texto: t.guardado });
@@ -257,6 +272,7 @@ export function Configuracion({
           autoComplete="tel"
           placeholder={t.telefono}
         />
+        <CasillaSms idioma={idioma} marcada={Boolean(v.sms)} cambiar={(x) => b.cambiar('sms', x)} />
         <Campo
           etiqueta={t.fecha}
           tipo="date"

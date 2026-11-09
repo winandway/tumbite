@@ -25,6 +25,9 @@ export const esquemaRegistro = z
     telefono: z.string().trim().max(30).optional(),
     fechaNacimiento: z.iso.date({ error: 'La fecha debe ser AAAA-MM-DD.' }).optional(),
     idioma: z.enum(['es', 'en']).default('en'),
+    // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar. No marcarla no impide registrarse.
+    smsConsentimiento: z.boolean().default(false),
+    canal: z.enum(['web', 'app']).optional(),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',

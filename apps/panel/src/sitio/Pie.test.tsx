@@ -90,6 +90,8 @@ describe('pie de página y páginas por lugar', () => {
       '/driver-terms',
       '/delete-account',
       '/support',
+      // C-SMS-CONSENTIMIENTO (9 nov 2026): cómo se aceptan los SMS.
+      '/sms-consent',
       '/contact',
       '/calculator',
       // Divoox Flex (28 oct 2026): la página del servicio y el rastreo por número de guía.

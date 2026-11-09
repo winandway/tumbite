@@ -323,7 +323,7 @@ for (const P of PAISES) {
       // Un teléfono por cuenta y por corrida (C-IDENTIDAD-UNICA).
       await rep.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}7`);
       await rep.getByLabel(L.clave, { exact: true }).fill(clave);
-      await rep.getByRole('checkbox').click(); // acepta los términos
+      await rep.getByRole('checkbox').first().click(); // acepta los términos
       await rep.getByRole('button', { name: L.crearCuenta }).click();
       await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
       const conectar = () =>
@@ -413,7 +413,7 @@ for (const P of PAISES) {
       await cli.getByLabel(L.correo).fill(correo('cliente'));
       await cli.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}8`);
       await cli.getByLabel(L.clave, { exact: true }).fill(clave);
-      await cli.getByRole('checkbox').click(); // acepta los términos
+      await cli.getByRole('checkbox').first().click(); // acepta los términos
       await cli.getByRole('button', { name: L.crearCuenta }).click();
       await expect(cli.getByText(nombreRest).first()).toBeVisible({ timeout: 30_000 });
       await cli.getByText(nombreRest).first().click();

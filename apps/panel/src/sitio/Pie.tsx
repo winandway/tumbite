@@ -170,6 +170,9 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <Enlace a="/driver-terms">{t.terminosRepartidores}</Enlace>
           <Enlace a="/delete-account">{t.borrarCuenta}</Enlace>
           <Enlace a="/support">{t.soporte}</Enlace>
+          <Enlace a="/sms-consent">
+            {idioma === 'en' ? 'Text messages (SMS)' : 'Mensajes de texto (SMS)'}
+          </Enlace>
         </nav>
         <p>
           © {new Date().getFullYear()} divoox.com | {t.derechos} {t.desarrollo}{' '}

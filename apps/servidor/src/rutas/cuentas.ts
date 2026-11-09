@@ -1,4 +1,6 @@
 import {
+  CANALES_CONSENTIMIENTO_SMS,
+  VERSION_CONSENTIMIENTO_SMS,
   VERSION_TERMINOS,
   correoCanonico,
   entornoDeHost,
@@ -31,6 +33,7 @@ import { enviarCorreo, esCorreoDePrueba } from '../correo';
 import { correoDeConfirmacion } from '../avisos';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { guardarConsentimientoSms } from '../sms';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
 const esquemaRecuperar = z.object({
@@ -227,6 +230,8 @@ cuentas.post('/registro', async (c) => {
     .prepare('INSERT OR IGNORE INTO terminos_aceptados (usuario_id, version) VALUES (?, ?)')
     .bind(id, VERSION_TERMINOS)
     .run();
+  // C-SMS-CONSENTIMIENTO: solo si marcó la casilla de SMS (aparte de los términos y sin marcar).
+  if (d.smsConsentimiento) await guardarConsentimientoSms(db, id, true, d.canal ?? 'web');
   const token = await abrirSesion(db, id);
   await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
@@ -503,7 +508,7 @@ cuentas.get('/perfil', async (c) => {
   const u = exigir(c);
   const f = await base(c)
     .prepare(
-      'SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en FROM usuarios WHERE id = ?',
+      'SELECT nombre, correo, telefono, fecha_nacimiento, idioma, correo_confirmado_en, sms_consentido_en FROM usuarios WHERE id = ?',
     )
     .bind(u.id)
     .first<Record<string, unknown>>();
@@ -515,6 +520,7 @@ cuentas.get('/perfil', async (c) => {
       fechaNacimiento: (f?.fecha_nacimiento as string | null) ?? null,
       idioma: f?.idioma === 'en' ? 'en' : 'es',
       correoConfirmado: Boolean(f?.correo_confirmado_en),
+      smsConsentimiento: Boolean(f?.sms_consentido_en),
       debeConfirmarCorreo: debeConfirmarCorreo(
         c.req.url,
         String(f?.correo ?? ''),
@@ -550,6 +556,21 @@ cuentas.patch('/yo', async (c) => {
     .bind(d.nombre, d.telefono || null, d.fechaNacimiento, d.idioma, u.id)
     .run();
   return c.json({ usuario: { ...u, nombre: d.nombre, idioma: d.idioma } });
+});
+
+/**
+ * C-SMS-CONSENTIMIENTO: aceptar o retirar los SMS desde la cuenta (la misma casilla, sin marcar
+ * por defecto). Retirar borra la fecha: desde ese momento el servidor no manda SMS a esa persona,
+ * salvo el código que pida ella misma en ese momento.
+ */
+cuentas.put('/sms', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(
+    c,
+    z.object({ acepta: z.boolean(), canal: z.enum(CANALES_CONSENTIMIENTO_SMS).default('web') }),
+  );
+  await guardarConsentimientoSms(base(c), u.id, d.acepta, d.canal);
+  return c.json({ smsConsentimiento: d.acepta, version: VERSION_CONSENTIMIENTO_SMS });
 });
 
 /** El idioma de los avisos sigue al de la app (C-REPARTIDOR-GRANDES): antes se quedaba el del registro. */

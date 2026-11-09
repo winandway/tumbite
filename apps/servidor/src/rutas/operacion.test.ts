@@ -2814,8 +2814,10 @@ describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto 
   });
 
   it('con Twilio: «en tu puerta» y «no te encuentran» también van por SMS al celular del cliente', async () => {
-    const { m, rep, id, telefonos } = await enCamino(TWILIO);
+    const { m, rep, id, cliente, telefonos } = await enCamino(TWILIO);
     await telefonos();
+    // C-SMS-CONSENTIMIENTO: sin la casilla de SMS marcada, al cliente no le sale ningún SMS.
+    await m.llamar('PUT', '/datos/cuentas/sms', { acepta: true, canal: 'app' }, cliente.token);
     const twilio = espiarTwilio();
     await m.envejecerGps(id);
     await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2 });

@@ -4552,6 +4552,30 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'text-messages',
+        titulo: 'Mensajes de texto (SMS): cómo aceptarlos o dejarlos',
+        resumen:
+          'Una casilla propia, sin marcar, al crear tu cuenta y en «Mi cuenta». Solo recibes SMS de tu cuenta y tus pedidos si la marcas tú.',
+        capturas: [
+          {
+            src: '/docs/sms-consentimiento-es.webp',
+            alt: 'Pantalla «Crear cuenta» de Divoox con la casilla de términos y, aparte y sin marcar, la casilla «Mensajes de texto (SMS)».',
+            pie: 'La casilla de mensajes de texto va aparte de la de términos y viene sin marcar.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo dejo de recibir mensajes de texto de Divoox?',
+          '¿Tengo que aceptar los SMS para pedir?',
+        ],
+        pasos: [
+          'Al crear tu cuenta verás dos casillas. La primera es para aceptar los Términos y la Política de privacidad. La segunda, «Mensajes de texto (SMS)», es aparte y viene sin marcar.',
+          'Si la marcas, Divoox te avisa por mensaje de texto de tu cuenta y tus pedidos: códigos de verificación, el estado del pedido y avisos de la entrega. No mandamos publicidad por SMS.',
+          'No es obligatoria: puedes crear tu cuenta y pedir sin marcarla. Igual te llegan los avisos dentro de la app.',
+          'Para cambiar de idea, ve a «Mi cuenta» y marca o desmarca la casilla de mensajes de texto. También puedes responder STOP a cualquier mensaje para darte de baja, START para volver y HELP para pedir ayuda.',
+          'La cantidad de mensajes depende de tus pedidos y pueden aplicar tarifas de mensajes y datos de tu operador. Más detalles en la página divoox.com/sms-consent.',
+        ],
+      },
+      {
         id: 'delete',
         titulo: 'Borrar tu cuenta',
         resumen:
@@ -9156,6 +9180,30 @@ const en: SeccionDocs[] = [
           'Tap the link in the email on your phone. On the page that opens, tap “Open the Divoox app.”',
           'The app notices on its own, tells you “Your email is verified,” and when you tap “Continue,” you go on with your order. Until then you can’t pay: this way every account belongs to a real person and receipts reach them.',
           'Typed the wrong email? On the same screen, tap “Wrong email? Change it,” enter the right one and your password, and we’ll send the link there. The link expires in two days; “Send the link again” sends a new one.',
+        ],
+      },
+      {
+        id: 'text-messages',
+        titulo: 'Text messages (SMS): how to opt in or out',
+        resumen:
+          'A separate, unchecked box when you create your account and in “My account.” You only get account and order texts if you check it yourself.',
+        capturas: [
+          {
+            src: '/docs/sms-consentimiento-en.webp',
+            alt: 'Divoox “Create account” screen with the terms checkbox and a separate, unchecked “Text messages (SMS)” checkbox.',
+            pie: 'The text message box is separate from the terms box and starts unchecked.',
+          },
+        ],
+        preguntas: [
+          'How do I stop text messages from Divoox?',
+          'Do I have to accept texts to order?',
+        ],
+        pasos: [
+          'When you create your account you’ll see two boxes. The first one accepts the Terms and the Privacy Policy. The second one, “Text messages (SMS),” is separate and starts unchecked.',
+          'If you check it, Divoox texts you about your account and orders: verification codes, order status, and delivery updates. We don’t send marketing by text.',
+          'It’s optional: you can create your account and order without checking it. You still get updates inside the app.',
+          'To change your mind, go to “My account” and check or uncheck the text message box. You can also reply STOP to any message to opt out, START to opt back in, and HELP for help.',
+          'Message frequency depends on your orders, and message and data rates from your carrier may apply. More details at divoox.com/sms-consent.',
         ],
       },
       {

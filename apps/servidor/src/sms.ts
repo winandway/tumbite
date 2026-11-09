@@ -1,3 +1,4 @@
+import { VERSION_CONSENTIMIENTO_SMS, type CanalConsentimientoSms } from '@tumbite/compartido';
 import type { Env } from './env';
 import { nuevoId } from './cripto';
 
@@ -87,6 +88,60 @@ async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<str
   return r.sid;
 }
 
+/**
+ * C-SMS-CONSENTIMIENTO (9 nov 2026, Twilio 30513). Quién puede recibir un SMS:
+ * - El titular de la cuenta (avisos del pedido, del viaje, etc.): SOLO si marcó la casilla de SMS
+ *   (usuarios.sms_consentido_en). Sin casilla marcada, no se le manda nada.
+ * - El código que la persona pide en ese momento (verificar su teléfono): sí, porque lo pide ella
+ *   misma para ese único mensaje (CTIA: mensaje único a pedido del usuario).
+ * - Terceros a los que el titular comparte algo a propósito (regalo, paquete, viaje compartido,
+ *   invitación de una empresa a su conductor o a quien recibe un paquete): mensaje único, iniciado
+ *   por quien da el número; no es la cuenta del titular la que recibe.
+ * - El equipo de Divoox (avisos internos «equipo_…»): son nuestro personal, no clientes.
+ * La baja (STOP/HELP/START) la maneja Twilio en el número gratuito por defecto: no hay webhook de
+ * entrada propio; Twilio bloquea el envío a quien respondió STOP (error 21610).
+ */
+export const SMS_PEDIDOS_POR_LA_PERSONA: ReadonlySet<string> = new Set(['codigo_telefono']);
+export const SMS_A_TERCEROS: ReadonlySet<string> = new Set([
+  'regalo_destinatario',
+  'envio_destinatario',
+  'viaje_compartido',
+  'flex_invitacion',
+  'flex_invitar_conductor',
+]);
+export const smsSinConsentimientoDelTitular = (tipo: string) =>
+  SMS_PEDIDOS_POR_LA_PERSONA.has(tipo) || SMS_A_TERCEROS.has(tipo) || tipo.startsWith('equipo_');
+
+/** Guarda (o retira) el consentimiento de SMS de una cuenta, con fecha, versión del texto y canal. */
+export async function guardarConsentimientoSms(
+  db: D1Database,
+  usuarioId: string,
+  acepta: boolean,
+  canal: CanalConsentimientoSms,
+) {
+  await db
+    .prepare(
+      acepta
+        ? "UPDATE usuarios SET sms_consentido_en = datetime('now'), sms_consentimiento_version = ?, sms_consentimiento_canal = ? WHERE id = ?"
+        : 'UPDATE usuarios SET sms_consentido_en = NULL, sms_consentimiento_version = ?, sms_consentimiento_canal = ? WHERE id = ?',
+    )
+    .bind(VERSION_CONSENTIMIENTO_SMS, canal, usuarioId)
+    .run();
+}
+
+/** ¿El titular aceptó los SMS? Ante cualquier duda (sin fila, error), no. */
+export async function aceptoSms(db: D1Database, usuarioId: string): Promise<boolean> {
+  const f = await db
+    .prepare('SELECT sms_consentido_en FROM usuarios WHERE id = ?')
+    .bind(usuarioId)
+    .first<{ sms_consentido_en: string | null }>()
+    .catch((e: unknown) => {
+      console.error('sms: no se pudo leer el consentimiento', String(e));
+      return null;
+    });
+  return Boolean(f?.sms_consentido_en);
+}
+
 /** Manda un SMS si Twilio está configurado y la persona tiene teléfono. Nunca frena la operación. */
 export async function enviarSms(
   env: Env,
@@ -102,6 +157,8 @@ export async function enviarSms(
   if (!smsConfigurado(env)) return false;
   const para = telefonoE164(a.telefono);
   if (!para || !destinoPermitido(env, para)) return false;
+  // C-SMS-CONSENTIMIENTO: sin la casilla marcada, al titular no se le manda nada que no pidió.
+  if (!smsSinConsentimientoDelTitular(a.tipo) && !(await aceptoSms(db, a.usuarioId))) return false;
   const id = nuevoId();
   try {
     await twilio(env, 'Messages', { To: para, From: env.TWILIO_FROM!, Body: a.texto });

@@ -23,3 +23,4 @@ export * from './elegirCapturas';
 export * from './PaginaEnApp';
 export * from './PantallaConFallo';
 export * from './fotoLiviana';
+export * from './CasillaSms';

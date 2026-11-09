@@ -235,6 +235,8 @@ for (const r of [
   '/driver-terms',
   '/delete-account',
   '/support',
+  '/sms-consent',
+  '/sms-consent/opt-in.png',
   '/sitemap.xml',
 ]) {
   const code = (await fetch(`${SITIO}${r}`)).status;

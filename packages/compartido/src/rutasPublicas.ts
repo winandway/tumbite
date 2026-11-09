@@ -11,6 +11,7 @@ export const PAGINAS = {
   driverTerms: '/driver-terms',
   deleteAccount: '/delete-account',
   support: '/support',
+  smsConsent: '/sms-consent',
   howItWorks: '/how-it-works',
   calculator: '/calculator',
   franchise: '/franchise',

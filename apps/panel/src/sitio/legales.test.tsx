@@ -40,14 +40,22 @@ describe('política de privacidad lista para las tiendas', () => {
 
 describe('mensajes de texto (verificación de Twilio y CTIA), C-SMS-LEGAL', () => {
   for (const idioma of ['es', 'en'] as const) {
-    const p = texto(PRIVACIDAD[idioma]);
-    it(`(${idioma}) dice cómo se aceptan, STOP/HELP, tarifas y que el número no se comparte`, () => {
-      expect(PRIVACIDAD[idioma].secciones.some((s) => s.id === 'sms')).toBe(true);
-      expect(p).toMatch(/STOP/);
-      expect(p).toMatch(/HELP/);
-      expect(p).toMatch(/tarifas de mensajes y datos|Message and data rates/);
-      expect(p).toMatch(/no se comparte|not be shared/);
-    });
+    // C-SMS-CONSENTIMIENTO (9 nov 2026, Twilio 30513): Privacidad Y Términos llevan la sección
+    // completa: casilla aparte y sin marcar, qué se envía, frecuencia, tarifas, STOP/HELP y que el
+    // número no se vende ni se comparte para publicidad.
+    for (const doc of [PRIVACIDAD, TERMINOS]) {
+      const p = texto(doc[idioma]);
+      it(`(${idioma}) ${doc[idioma].titulo}: cómo se aceptan, STOP/HELP, tarifas y que el número no se comparte`, () => {
+        expect(doc[idioma].secciones.some((s) => s.id === 'sms')).toBe(true);
+        expect(p).toMatch(/STOP/);
+        expect(p).toMatch(/HELP/);
+        expect(p).toMatch(/tarifas de mensajes y datos|Msg & data rates|Message and data rates/);
+        expect(p).toMatch(/sin marcar|unchecked by default/);
+        expect(p).toMatch(/no es una condición para comprar|not a condition of purchase/);
+        expect(p).toMatch(/no compartimos|ni compartimos|do not sell or share|do not share/i);
+        expect(p).toContain('sms-consent');
+      });
+    }
   }
 });
 

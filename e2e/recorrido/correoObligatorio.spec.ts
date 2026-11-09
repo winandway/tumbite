@@ -53,7 +53,7 @@ for (const idioma of ['en', 'es'] as const)
     await p.getByLabel(L.nombreCompleto).fill('Ana García');
     await p.getByLabel(L.correo).fill(correo);
     await p.getByLabel(L.clave, { exact: true }).fill(DATOS!.clave);
-    await p.getByRole('checkbox').click();
+    await p.getByRole('checkbox').first().click();
     await p.getByRole('button', { name: L.crearCuenta }).click();
 
     // 1. Vuelve a la portada con el aviso de confirmar el correo (no bloquea mirar).

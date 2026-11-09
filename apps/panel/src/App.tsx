@@ -25,6 +25,7 @@ import { Landing } from './sitio/Landing';
 import { PaginaContacto } from './sitio/Contacto';
 import { FormContacto } from './sitio/FormContacto';
 import { Legal } from './sitio/Legal';
+import { ConsentimientoSms } from './sitio/ConsentimientoSms';
 import {
   BORRAR_CUENTA,
   PRIVACIDAD,
@@ -211,6 +212,13 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Confirmar idioma={idioma} />
+      </Sitio>
+    );
+  // C-SMS-CONSENTIMIENTO: cómo se aceptan los SMS (Twilio pide esta página pública).
+  if (ruta === '/sms-consent')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <ConsentimientoSms idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/contact')

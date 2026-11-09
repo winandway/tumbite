@@ -14,11 +14,19 @@ import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
+import { CasillaSms } from './CasillaSms';
 import { Boton, C, Campo, CampoClave, Pantalla, e } from './ui';
 import { SelectorIdioma } from './SelectorIdioma';
 import { Turnstile, olvidarPaseTurnstile, useTurnstileSitio } from './Turnstile';
 
-const INICIAL = { nombre: '', correo: '', telefono: '', fechaNacimiento: '', clave: '' };
+const INICIAL = {
+  nombre: '',
+  correo: '',
+  telefono: '',
+  fechaNacimiento: '',
+  clave: '',
+  sms: false,
+};
 
 /**
  * Entrar y crear cuenta. Si `rolRegistro` no viene, la app solo deja entrar
@@ -61,7 +69,7 @@ export function Acceso({
   const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
   // El error de una casilla se va en cuanto la persona la corrige (antes quedaba en rojo aunque ya
   // estuviera bien escrita).
-  const cambiar = (campo: keyof typeof INICIAL, valor: string) => {
+  const cambiar = (campo: Exclude<keyof typeof INICIAL, 'sms'>, valor: string) => {
     b.cambiar(campo, valor);
     setError((e) => (e?.campo === campo ? null : e));
   };
@@ -90,6 +98,9 @@ export function Acceso({
               fechaNacimiento: v.fechaNacimiento || undefined,
               rol: rolRegistro,
               idioma,
+              // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar.
+              smsConsentimiento: v.sms,
+              canal: 'app',
             });
       if (!rolesPermitidos.includes(r.usuario.rol)) {
         setError({ mensaje: t.rolEquivocado });
@@ -262,6 +273,9 @@ export function Acceso({
             .
           </Text>
         </View>
+      ) : null}
+      {registro ? (
+        <CasillaSms idioma={idioma} marcada={v.sms} cambiar={(x) => b.cambiar('sms', x)} />
       ) : null}
       <Boton
         texto={enviando ? t.enviando : registro ? t.crearCuenta : t.entrar}

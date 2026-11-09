@@ -23,13 +23,18 @@ export type DocumentoLegal = {
 const FECHA = { es: 'Actualizado: 18 de octubre de 2026', en: 'Last updated: October 18, 2026' };
 const EMPRESA = 'Windoce, LLC';
 const SITIO = 'https://divoox.com';
+// C-SMS-CONSENTIMIENTO: Privacidad y Términos cambiaron el 9 nov 2026 (sección de SMS).
+const FECHA_SMS = {
+  es: 'Actualizado: 9 de noviembre de 2026',
+  en: 'Last updated: November 9, 2026',
+};
 
 // ─────────────────────────────── Privacidad ───────────────────────────────
 
 export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Política de privacidad',
-    actualizado: FECHA.es,
+    actualizado: FECHA_SMS.es,
     intro: `Esta política explica qué datos personales recoge Divoox, cómo los usa, con quién los comparte, cuánto tiempo los guarda y cómo puedes borrarlos. Aplica a la app Divoox (clientes), Divoox Driver (repartidores), Divoox para restaurantes, el panel web y ${SITIO}.`,
     secciones: [
       {
@@ -125,9 +130,10 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'sms',
         titulo: '12. Mensajes de texto (SMS)',
         parrafos: [
-          'Te enviamos mensajes de texto solo sobre tus pedidos y envíos: confirmación, el número de seguimiento, cuando el conductor va en camino o ya llega, y la entrega. Los aceptas al darnos tu número en la app o en el sitio, o cuando una empresa que usa Divoox para sus entregas nos da tu número para avisarte de tu paquete. No enviamos publicidad por mensaje de texto.',
-          `La cantidad de mensajes depende de tus pedidos. Pueden aplicar tarifas de mensajes y datos de tu operador. Responde STOP para dejar de recibirlos y HELP para pedir ayuda, o escríbenos a ${CONTACTO}.`,
-          'Tu número de celular y tu consentimiento para recibir mensajes no se comparten con terceros ni con afiliados para fines de publicidad. Solo lo usan los proveedores que envían el mensaje por nosotros.',
+          'Cómo se aceptan: al crear tu cuenta en las apps o en divoox.com, y en la configuración de tu cuenta, hay una casilla propia para los mensajes de texto. Viene sin marcar y va aparte de la aceptación de estos documentos. Solo te enviamos mensajes de texto de tu cuenta si la marcas tú, y guardamos la fecha, la versión del texto y si fue en la app o en la web. Marcarla no es una condición para comprar. Detalles y captura de la casilla en divoox.com/sms-consent.',
+          'Qué enviamos: solo mensajes de tu cuenta y tus pedidos, como códigos de verificación, el estado del pedido (confirmado, en camino, por llegar, entregado) y avisos de la entrega. El código de verificación que pides en la app te llega una vez, en ese momento, porque lo pediste tú. Si eres el destinatario de un regalo o de un paquete, o el contacto con quien alguien comparte un viaje, recibes un único mensaje con el enlace de seguimiento porque quien lo envía nos dio tu número para eso. No enviamos publicidad por mensaje de texto.',
+          `Frecuencia y tarifas: la cantidad de mensajes varía según tu actividad y tus pedidos. Pueden aplicar tarifas de mensajes y datos de tu operador. Responde STOP para dejar de recibirlos, START para volver a recibirlos y HELP para pedir ayuda; también puedes desmarcar la casilla en tu cuenta o escribirnos a ${CONTACTO}.`,
+          'No vendemos tu número de celular. No compartimos tu número de celular ni tu consentimiento para SMS con terceros ni con afiliados para sus fines de publicidad. Solo lo usa el proveedor que entrega el mensaje por nosotros.',
         ],
       },
       {
@@ -140,7 +146,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   },
   en: {
     titulo: 'Privacy Policy',
-    actualizado: FECHA.en,
+    actualizado: FECHA_SMS.en,
     intro: `This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Divoox app (customers), Divoox Driver, Divoox for Restaurants, the web dashboard, and ${SITIO}.`,
     secciones: [
       {
@@ -236,9 +242,10 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'sms',
         titulo: '12. Text messages (SMS)',
         parrafos: [
-          'We send text messages only about your orders and deliveries: confirmation, your tracking number, when the driver is on the way or arriving, and delivery. You opt in when you give us your phone number in the app or on the website, or when a business that uses Divoox for its deliveries gives us your number so we can update you about your package. We don’t send marketing by text message.',
-          `Message frequency varies with your orders. Message and data rates may apply. Reply STOP to opt out and HELP for help, or email ${CONTACTO}.`,
-          'Your mobile number and your SMS opt-in consent will not be shared with third parties or affiliates for marketing purposes. It is used only by the providers that deliver the message on our behalf.',
+          'How you opt in: when you create an account in the apps or on divoox.com, and in your account settings, there is a separate checkbox for text messages. It is unchecked by default and separate from accepting these documents. We only send account text messages if you check it yourself, and we store the date, the version of the consent text and whether you used the app or the website. Consent is not a condition of purchase. Details and a screenshot of the checkbox at divoox.com/sms-consent.',
+          'What we send: only account and order messages, such as verification codes, order status (confirmed, on the way, arriving, delivered) and delivery updates. A verification code you request in the app is sent once, at that moment, because you asked for it. If you are the recipient of a gift or a package, or the contact someone shares a ride with, you get a single message with the tracking link because the sender gave us your number for that purpose. We do not send marketing by text message.',
+          `Frequency and rates: message frequency varies with your activity and orders. Message and data rates may apply. Reply STOP to opt out, START to opt back in and HELP for help; you can also uncheck the box in your account or email ${CONTACTO}.`,
+          'We do not sell your mobile number. We do not share your mobile number or SMS consent with third parties or affiliates for their marketing purposes. It is used only by the provider that delivers the message on our behalf.',
         ],
       },
       {
@@ -256,7 +263,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
 export const TERMINOS: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Términos de uso',
-    actualizado: FECHA.es,
+    actualizado: FECHA_SMS.es,
     intro: `Estos términos son un acuerdo entre tú y ${EMPRESA} para usar Divoox. Al crear una cuenta o hacer un pedido los aceptas. Los restaurantes y los repartidores tienen además sus propios términos.`,
     secciones: [
       {
@@ -324,11 +331,20 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
           `Estos términos se rigen por las leyes del estado de Florida, Estados Unidos. Antes de cualquier reclamo formal, escríbenos a ${CONTACTO}: casi todo se resuelve hablando. Si no, los tribunales del condado de Miami-Dade, Florida, son los competentes.`,
         ],
       },
+      {
+        id: 'sms',
+        titulo: '11. Mensajes de texto (SMS)',
+        parrafos: [
+          'Divoox (Windoce, LLC) te envía mensajes de texto de tu cuenta y tus pedidos solo si marcas la casilla de mensajes de texto al crear tu cuenta o en la configuración de tu cuenta. La casilla viene sin marcar, va aparte de la aceptación de estos términos y marcarla no es una condición para comprar.',
+          'Los mensajes son de tu cuenta y tus pedidos: códigos de verificación, estado del pedido y avisos de la entrega. No enviamos publicidad por mensaje de texto. La cantidad varía según tu actividad. Pueden aplicar tarifas de mensajes y datos.',
+          `Responde STOP para dejar de recibirlos, START para volver a recibirlos y HELP para pedir ayuda, o escríbenos a ${CONTACTO}. Los operadores no son responsables de mensajes demorados o no entregados. No vendemos ni compartimos tu número de celular ni tu consentimiento para SMS con terceros para su publicidad. Más detalles en divoox.com/sms-consent y en la Política de privacidad.`,
+        ],
+      },
     ],
   },
   en: {
     titulo: 'Terms of Service',
-    actualizado: FECHA.en,
+    actualizado: FECHA_SMS.en,
     intro: `These terms are an agreement between you and ${EMPRESA} for using Divoox. By creating an account or placing an order you accept them. Restaurants and drivers also have their own terms.`,
     secciones: [
       {
@@ -394,6 +410,15 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
         titulo: '10. Governing law and contact',
         parrafos: [
           `These terms are governed by the laws of the State of Florida, United States. Before any formal claim, email us at ${CONTACTO}: almost everything gets solved by talking. Otherwise, the courts of Miami-Dade County, Florida, have jurisdiction.`,
+        ],
+      },
+      {
+        id: 'sms',
+        titulo: '11. Text messages (SMS)',
+        parrafos: [
+          'Divoox (Windoce, LLC) sends account and order text messages only if you check the text message box when you create your account or in your account settings. The box is unchecked by default, it is separate from accepting these terms, and consent is not a condition of purchase.',
+          'Messages are about your account and orders: verification codes, order status and delivery updates. We do not send marketing by text message. Message frequency varies with your activity. Msg & data rates may apply.',
+          `Reply STOP to opt out, START to opt back in and HELP for help, or email ${CONTACTO}. Carriers are not liable for delayed or undelivered messages. We do not sell or share your mobile number or SMS consent with third parties for their marketing purposes. More details at divoox.com/sms-consent and in our Privacy Policy.`,
         ],
       },
     ],

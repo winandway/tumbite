@@ -11,7 +11,7 @@ describe('C-FLEX-CUENTA-EMPRESA', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => vi.unstubAllGlobals());
 
-  async function registrar(tipo?: 'empresa') {
+  async function registrar(tipo?: 'empresa', conSms = false) {
     const cuerpos: Record<string, unknown>[] = [];
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
       if (String(url).includes('/registro')) {
@@ -28,7 +28,11 @@ describe('C-FLEX-CUENTA-EMPRESA', () => {
     await userEvent.type(screen.getByLabelText('Tu nombre'), 'Ana Prueba');
     await userEvent.type(screen.getByLabelText('Correo'), 'ana@ejemplo.com');
     await userEvent.type(screen.getByLabelText('Contraseña'), 'clave-segura-1');
-    await userEvent.click(screen.getByRole('checkbox'));
+    // La primera casilla es la de términos; la de SMS va aparte (C-SMS-CONSENTIMIENTO).
+    const [terminos, sms] = screen.getAllByRole('checkbox') as HTMLInputElement[];
+    expect(sms!.checked).toBe(false);
+    await userEvent.click(terminos!);
+    if (conSms) await userEvent.click(sms!);
     await userEvent.click(screen.getAllByRole('button', { name: /Crear/ }).at(-1)!);
     await waitFor(() => expect(cuerpos).toHaveLength(1));
     return cuerpos[0]!;
@@ -42,5 +46,24 @@ describe('C-FLEX-CUENTA-EMPRESA', () => {
 
   it('desde el panel de siempre sigue creando la de restaurante', async () => {
     expect((await registrar()).rol).toBe('restaurante');
+  });
+
+  // C-SMS-CONSENTIMIENTO (9 nov 2026, Twilio 30513): casilla propia, sin marcar, no obligatoria.
+  it('la casilla de SMS va aparte, sin marcar, y solo se acepta si la persona la marca', async () => {
+    const sin = await registrar();
+    expect(sin.smsConsentimiento).toBe(false);
+    const casilla = screen.getByTestId('casilla-sms');
+    expect(casilla.textContent).toMatch(/mensajes de texto/);
+    expect(casilla.textContent).toMatch(/STOP/);
+    expect(casilla.textContent).toMatch(/no es una condición para comprar/);
+    expect(casilla.querySelector('a[href="/es/privacy"]')).not.toBeNull();
+    expect(casilla.querySelector('a[href="/es/terms"]')).not.toBeNull();
+  });
+
+  it('marcada, el registro manda el consentimiento con el canal web', async () => {
+    localStorage.clear();
+    const con = await registrar(undefined, true);
+    expect(con.smsConsentimiento).toBe(true);
+    expect(con.canal).toBe('web');
   });
 });

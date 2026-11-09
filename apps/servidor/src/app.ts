@@ -398,6 +398,7 @@ const RUTAS_PUBLICAS = new Set([
   '/driver-terms',
   '/delete-account',
   '/support',
+  '/sms-consent',
   '/contact',
   '/docs',
   '/flex',

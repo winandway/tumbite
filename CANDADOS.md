@@ -2194,6 +2194,20 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `legales.test.tsx` → «mensajes de texto (verificación de Twilio y CTIA)». Comprobada en rojo.
 - **No tocar:** las cuatro piezas (opt-in, STOP, HELP, tarifas, no compartir) mientras haya un número verificado.
 
+## C-SMS-CONSENTIMIENTO — la casilla de SMS, aparte y sin marcar (9 nov 2026, todos los países)
+
+- **Qué se rompió:** Twilio rechazó la verificación del número gratuito con el error 30513: no había prueba del consentimiento para SMS. La política decía «los aceptas al darnos tu número», y eso no vale: CTIA y Twilio piden una casilla PROPIA, separada de los términos, sin marcar, que diga «text messages», qué mensajes, frecuencia, tarifas, STOP/HELP y que no es condición de compra, y la prueba como una imagen pública.
+- **Qué hay:**
+  - Texto y versión en una sola pieza: `packages/compartido/src/smsConsentimiento.ts` (`VERSION_CONSENTIMIENTO_SMS = 'sms-2026-11-09'`, `TEXTO_CONSENTIMIENTO_SMS` en inglés y español). Si cambia el texto, cambia la versión.
+  - Casilla única por plataforma: web `apps/panel/src/panel/CasillaSms.tsx` (registro de restaurantes y empresas en `Acceso.tsx`, y «Configuración» en `Configuracion.tsx`); apps `packages/movil/src/CasillaSms.tsx` (registro de cliente y repartidor en `Acceso.tsx`; `PreferenciaSms` en `OpcionesCuenta` —Driver y restaurante— y en «Mi cuenta» del cliente). Va en el borrador del formulario (`sms`).
+  - Servidor: `esquemaRegistro.smsConsentimiento` (zod, por defecto `false`) y `canal` web/app; `PUT /datos/cuentas/sms {acepta, canal}`; `GET /datos/cuentas/perfil` devuelve `smsConsentimiento`. Columnas `usuarios.sms_consentido_en`, `sms_consentimiento_version`, `sms_consentimiento_canal` en COLUMNAS de `esquema.ts` (no en schema.sql).
+  - `enviarSms` (`apps/servidor/src/sms.ts`) NO manda nada al titular sin `sms_consentido_en`. Excepciones escritas en `smsSinConsentimientoDelTitular`: el código que la persona pide en ese momento (`codigo_telefono`), los mensajes únicos a terceros que el titular comparte a propósito (regalo, paquete, viaje compartido, invitaciones de Flex) y los avisos internos del equipo (`equipo_…`).
+  - STOP/HELP/START: no hay webhook de entrada propio; en el número gratuito los maneja Twilio por defecto y bloquea el envío a quien respondió STOP. Desmarcar la casilla en la cuenta también da de baja.
+  - Página pública `/sms-consent` (y `/es/sms-consent`), en el mapa del sitio y en el pie, con la captura REAL del registro de la app del cliente: `https://divoox.com/sms-consent/opt-in.png` (la que se le da a Twilio) y `.webp`. Originales en `docs/capturas/sms-consentimiento-{en,es}.png`. Sección «Text messages (SMS)» con `id: 'sms'` en Privacidad (12) y Términos (11). Guía de Docs `account/text-messages`.
+- **Cómo se rehace la captura:** `URL_API=http://localhost:8799 npm run build:app-web`, servir `apps/cliente/dist-web` bajo `/app` y abrir `/app/sign-in?crear=1` a 430×932 con escala 2.
+- **Pruebas:** `apps/servidor/src/smsConsentimiento.test.ts` (sin marcar no guarda nada; marcada guarda fecha+versión+canal; sin consentimiento no sale SMS; el código pedido sí), comprobada en ROJO quitando el freno de `enviarSms` y el guardado del registro (2 fallan). `apps/panel/src/panel/Acceso.test.tsx` (casilla aparte y sin marcar), `apps/panel/src/sitio/ConsentimientoSms.test.tsx` (la página existe en los dos idiomas con la imagen y el texto exacto), `legales.test.tsx` (Privacidad y Términos).
+- **No tocar:** que la casilla arranque sin marcar, que vaya aparte de la de términos y que no sea obligatoria. No quitar el freno de `enviarSms`. No mover la imagen `/sms-consent/opt-in.png`: su dirección está en la verificación de Twilio.
+
 ## C-SMS-PAISES — los SMS y las llamadas automáticas solo salen a los países encendidos (31 oct 2026, EE. UU.)
 
 - **Por qué:** medido el 31 oct, un SMS a Venezuela cuesta 0,2257 dólares; a EE. UU., 0,0083. Richard decidió dejar Twilio para EE. UU. y buscar otro proveedor para Venezuela.
