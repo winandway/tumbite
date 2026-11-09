@@ -1469,8 +1469,28 @@ operacion.post('/repartidor/conectar', async (c) => {
   });
 });
 
+/**
+ * C-POSICION-SIN-REESCRIBIR (regla «cada escritura tiene presupuesto»): la ficha del repartidor
+ * solo se reescribe si se movió MOVIDO_MIN_M o si su última posición tiene más de
+ * REFRESCO_POSICION_S. El navegador ignora el «cada 10 s / 30 m» del GPS y mandaba cada lectura;
+ * cada UPDATE pesa cinco filas con sus índices. Todos los umbrales de «sin señal» son de minutos.
+ */
+export const MOVIDO_MIN_M = 25;
+export const REFRESCO_POSICION_S = 60;
+
+export function hayQueReescribirPosicion(
+  ficha: { lat?: unknown; lng?: unknown; ubicacion_en?: unknown },
+  d: { lat: number; lng: number },
+  ahora = Date.now(),
+): boolean {
+  if (ficha.lat == null || ficha.lng == null || !ficha.ubicacion_en) return true;
+  const en = Date.parse(`${String(ficha.ubicacion_en).replace(' ', 'T')}Z`);
+  if (!Number.isFinite(en) || ahora - en >= REFRESCO_POSICION_S * 1000) return true;
+  return metrosEntre({ lat: Number(ficha.lat), lng: Number(ficha.lng) }, d) >= MOVIDO_MIN_M;
+}
+
 operacion.post('/repartidor/ubicacion', async (c) => {
-  const { u, db } = await miFicha(c);
+  const { u, db, ficha } = await miFicha(c);
   const d = await leerCuerpo(c, puntoConPrecision);
   // G2: una ubicación que el propio celular marca como simulada no se guarda ni cuenta; queda
   // anotada en el pedido activo para que soporte la vea.
@@ -1498,20 +1518,22 @@ operacion.post('/repartidor/ubicacion', async (c) => {
       await anotarEvento(db, activo.id, 'gps_salto', `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`);
     return c.json({ ok: true, salto: true });
   }
-  const aqui = await cobertura(db, d.lat, d.lng);
-  await db
-    .prepare(
-      "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), area_id = COALESCE(?, area_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
-    )
-    .bind(
-      d.lat,
-      d.lng,
-      aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null,
-      aqui.area?.id ?? null,
-      geohash(d.lat, d.lng),
-      u.id,
-    )
-    .run();
+  if (hayQueReescribirPosicion(ficha, d)) {
+    const aqui = await cobertura(db, d.lat, d.lng);
+    await db
+      .prepare(
+        "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), area_id = COALESCE(?, area_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      )
+      .bind(
+        d.lat,
+        d.lng,
+        aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null,
+        aqui.area?.id ?? null,
+        geohash(d.lat, d.lng),
+        u.id,
+      )
+      .run();
+  }
   await registrarHitos(c.env, db, u.id, d, muestras).catch((e: unknown) =>
     console.error('hitos', e),
   );
