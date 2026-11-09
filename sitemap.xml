@@ -13,6 +13,7 @@
   <url><loc>https://divoox.com/driver-terms</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/delete-account</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/support</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/sms-consent</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/contact</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/docs</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/how-to</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
@@ -156,6 +157,7 @@
   <url><loc>https://divoox.com/docs/account/create-account</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/password</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/confirm-email</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/account/text-messages</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/delete</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/send-screenshot-to-support</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/account/support</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
@@ -220,6 +222,7 @@
   <url><loc>https://divoox.com/es/driver-terms</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/delete-account</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/support</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
+  <url><loc>https://divoox.com/es/sms-consent</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/contact</loc><lastmod>2026-11-09</lastmod><priority>0.3</priority></url>
   <url><loc>https://divoox.com/es/docs</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/how-to</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
@@ -363,6 +366,7 @@
   <url><loc>https://divoox.com/es/docs/account/create-account</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/password</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/confirm-email</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/account/text-messages</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/delete</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/send-screenshot-to-support</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/account/support</loc><lastmod>2026-11-09</lastmod><priority>0.7</priority></url>
