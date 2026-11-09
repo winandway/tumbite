@@ -413,7 +413,7 @@ for (const P of PAISES) {
       await cli.getByLabel(L.correo).fill(correo('cliente'));
       await cli.getByLabel(L.celular).fill(`3${String(Date.now()).slice(-8)}8`);
       await cli.getByLabel(L.clave, { exact: true }).fill(clave);
-      await cli.getByRole('checkbox').click(); // acepta los términos
+      await cli.getByRole('checkbox', { name: /Términos|Terms of Service/ }).click(); // acepta los términos
       await cli.getByRole('button', { name: L.crearCuenta }).click();
       await expect(cli.getByText(nombreRest).first()).toBeVisible({ timeout: 30_000 });
       await cli.getByText(nombreRest).first().click();

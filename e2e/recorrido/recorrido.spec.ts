@@ -604,7 +604,7 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByLabel(L.cumple).fill(`1995-${hoy}`);
     await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
-    await cli.getByRole('checkbox').click(); // acepta los términos
+    await cli.getByRole('checkbox', { name: /Términos|Terms of Service/ }).click(); // acepta los términos
     await cli.getByRole('button', { name: L.crearCuenta }).click();
     await expect(cli.getByText(restaurante).first()).toBeVisible({ timeout: 20_000 });
     await cli.waitForTimeout(CAPTURAS ? 1500 : 0);
