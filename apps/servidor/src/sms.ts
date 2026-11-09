@@ -1,4 +1,5 @@
 import type { Env } from './env';
+import { smsSinCasilla } from '@tumbite/compartido';
 import { nuevoId } from './cripto';
 
 /**
@@ -87,6 +88,20 @@ async function twilio(env: Env, recurso: 'Messages' | 'Calls', datos: Record<str
   return r.sid;
 }
 
+/**
+ * C-SMS-CONSENTIMIENTO (9 nov 2026): ¿este celular aceptó los SMS con su propia casilla? Twilio no
+ * acepta que el consentimiento salga de dar el número ni que lo dé otra persona (error 30513). Si la
+ * tabla no responde, cuenta como «no» (nunca se manda de más).
+ */
+export async function tieneConsentimientoSms(db: D1Database, telefono: string): Promise<boolean> {
+  const f = await db
+    .prepare('SELECT 1 AS si FROM consentimientos_sms WHERE telefono = ? AND revocado_en IS NULL')
+    .bind(telefono)
+    .first()
+    .catch(() => null);
+  return Boolean(f);
+}
+
 /** Manda un SMS si Twilio está configurado y la persona tiene teléfono. Nunca frena la operación. */
 export async function enviarSms(
   env: Env,
@@ -103,6 +118,16 @@ export async function enviarSms(
   const para = telefonoE164(a.telefono);
   if (!para || !destinoPermitido(env, para)) return false;
   const id = nuevoId();
+  if (!smsSinCasilla(a.tipo) && !(await tieneConsentimientoSms(db, para))) {
+    await db
+      .prepare(
+        "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado) VALUES (?, ?, ?, ?, 'sin_consentimiento')",
+      )
+      .bind(id, a.usuarioId, a.pedidoId, a.tipo)
+      .run()
+      .catch(() => undefined);
+    return false;
+  }
   try {
     await twilio(env, 'Messages', { To: para, From: env.TWILIO_FROM!, Body: a.texto });
     await db

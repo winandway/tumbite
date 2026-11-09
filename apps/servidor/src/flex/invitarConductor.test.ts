@@ -40,8 +40,9 @@ describe('invitar a un conductor de la empresa', () => {
     expect(inv.estado).toBe(201);
     const enlace = inv.datos.enlace as string;
     expect(enlace).toMatch(/^https:\/\/divoox\.test\/driver\/join\/[A-Za-z0-9_-]{20,}$/);
-    expect(sms.at(-1)).toContain(enlace);
-    expect(sms.at(-1)).toContain('Paquetes Sur');
+    // C-SMS-CONSENTIMIENTO: el conductor invitado no aceptó los SMS de Divoox: no se le manda SMS; la
+    // empresa le pasa el enlace (WhatsApp) y le llega el correo o el aviso si ya usa Driver.
+    expect(sms).toHaveLength(0);
     // La empresa la ve pendiente; todavía no hay conductor vinculado.
     const lista = await llamar(
       m,

@@ -68,6 +68,7 @@ export * from './horarioAlcohol';
 export * from './registroEmpresaFlex';
 export * from './chatMensajes';
 export * from './correosSoporte';
+export * from './consentimientoSms';
 export * from './plus';
 export * from './saldoRegalo';
 export * from './tituloCaso';

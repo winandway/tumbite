@@ -7,6 +7,7 @@ import {
   Boton,
   C,
   MenuCuenta,
+  MensajesDeTexto,
   MisCasos,
   TEXTOS_MOVIL,
   selectorDeCapturas,
@@ -237,6 +238,8 @@ function MiCuenta() {
           </Text>
           <Text style={{ fontWeight: '700' }}>›</Text>
         </Pressable>
+        {/* C-SMS-CONSENTIMIENTO: encender o apagar los SMS de pedidos y entregas. */}
+        <MensajesDeTexto />
 
         <Text style={estilos.subtitulo}>{t.pedidos}</Text>
         {pedidos?.length === 0 ? <Text style={e.tarjeta}>{t.sinPedidos}</Text> : null}

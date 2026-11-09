@@ -25,12 +25,16 @@ export const esquemaRegistro = z
     telefono: z.string().trim().max(30).optional(),
     fechaNacimiento: z.iso.date({ error: 'La fecha debe ser AAAA-MM-DD.' }).optional(),
     idioma: z.enum(['es', 'en']).default('en'),
+    /** C-SMS-CONSENTIMIENTO: la casilla aparte de los SMS (sin marcar de inicio). */
+    aceptaSms: z.boolean().optional(),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',
     path: ['nombre'],
   });
 export type DatosRegistro = z.input<typeof esquemaRegistro>;
+
+export const esquemaConsentimientoSms = z.object({ acepta: z.boolean() });
 
 export const esquemaEntrar = z.object({
   correo,

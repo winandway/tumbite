@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from './env';
-import { mundo } from './pruebas/ayuda';
+import { consentirSms, mundo } from './pruebas/ayuda';
 import {
   abrirPase,
   enviarSms,
@@ -95,6 +95,23 @@ describe('C-AVISOS-COMPLETOS · SMS y llamadas con Twilio simulado (COB-6)', () 
         texto: 'Hola',
       });
     const llamadas = twilioSimulado();
+    // C-SMS-CONSENTIMIENTO: sin la casilla marcada no sale, salvo el código que la persona pide.
+    expect(await sms(env(), '3055550100')).toBe(false);
+    expect(
+      await m.DB.prepare("SELECT estado FROM sms_enviados WHERE tipo = 'prueba'").first(),
+    ).toEqual({ estado: 'sin_consentimiento' });
+    expect(
+      await enviarSms(env(), m.DB, {
+        usuarioId: u.id,
+        pedidoId: null,
+        tipo: 'codigo_telefono',
+        telefono: '3055550177',
+        texto: 'Tu código',
+      }),
+    ).toBe(true);
+    llamadas.length = 0;
+    await consentirSms(m.DB, u.id, '+13055550100');
+    await consentirSms(m.DB, u.id, '+13055550101');
     expect(await sms(env({ TWILIO_FROM: '' }), '3055550100')).toBe(false);
     expect(await sms(env(), null)).toBe(false);
     expect(await sms(env(), '+584165550100')).toBe(false);

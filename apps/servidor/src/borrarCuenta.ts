@@ -51,6 +51,8 @@ export async function borrarCuenta(
       )
       .bind(u.id),
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
+    // C-SMS-CONSENTIMIENTO: el permiso de SMS se va con la cuenta.
+    db.prepare('DELETE FROM consentimientos_sms WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),

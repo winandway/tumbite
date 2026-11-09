@@ -21,6 +21,11 @@ export type DocumentoLegal = {
 };
 
 const FECHA = { es: 'Actualizado: 18 de octubre de 2026', en: 'Last updated: October 18, 2026' };
+// C-SMS-CONSENTIMIENTO: la privacidad cambió el 9 nov 2026 (sección 12, mensajes de texto).
+const FECHA_PRIVACIDAD = {
+  es: 'Actualizado: 9 de noviembre de 2026',
+  en: 'Last updated: November 9, 2026',
+};
 const EMPRESA = 'Windoce, LLC';
 const SITIO = 'https://divoox.com';
 
@@ -29,7 +34,7 @@ const SITIO = 'https://divoox.com';
 export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Política de privacidad',
-    actualizado: FECHA.es,
+    actualizado: FECHA_PRIVACIDAD.es,
     intro: `Esta política explica qué datos personales recoge Divoox, cómo los usa, con quién los comparte, cuánto tiempo los guarda y cómo puedes borrarlos. Aplica a la app Divoox (clientes), Divoox Driver (repartidores), Divoox para restaurantes, el panel web y ${SITIO}.`,
     secciones: [
       {
@@ -125,9 +130,10 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'sms',
         titulo: '12. Mensajes de texto (SMS)',
         parrafos: [
-          'Te enviamos mensajes de texto solo sobre tus pedidos y envíos: confirmación, el número de seguimiento, cuando el conductor va en camino o ya llega, y la entrega. Los aceptas al darnos tu número en la app o en el sitio, o cuando una empresa que usa Divoox para sus entregas nos da tu número para avisarte de tu paquete. No enviamos publicidad por mensaje de texto.',
-          `La cantidad de mensajes depende de tus pedidos. Pueden aplicar tarifas de mensajes y datos de tu operador. Responde STOP para dejar de recibirlos y HELP para pedir ayuda, o escríbenos a ${CONTACTO}.`,
-          'Tu número de celular y tu consentimiento para recibir mensajes no se comparten con terceros ni con afiliados para fines de publicidad. Solo lo usan los proveedores que envían el mensaje por nosotros.',
+          'Te enviamos mensajes de texto solo sobre tus pedidos y entregas, por ejemplo cuando tu repartidor está en tu puerta o no te encuentra. No enviamos publicidad por mensaje de texto.',
+          'Solo los recibes si los aceptas tú mismo marcando la casilla de mensajes de texto al crear tu cuenta o en «Tu cuenta» dentro de la app. Esa casilla viene sin marcar y es opcional: no hace falta para pedir. Darnos tu número no basta para recibirlos, y no aceptamos números ni consentimientos que nos den restaurantes, empresas u otras personas. Puedes apagarlos en cualquier momento en «Tu cuenta».',
+          `Normalmente son 1 o 2 mensajes por pedido. Pueden aplicar tarifas de mensajes y datos de tu operador. Responde STOP para dejar de recibirlos y HELP para pedir ayuda, o escríbenos a ${CONTACTO}.`,
+          'Tu número de celular y tu consentimiento para recibir mensajes no se comparten con terceros ni con afiliados para fines de publicidad. Solo los usan los proveedores que envían el mensaje por nosotros. Lo anterior incluye los datos de aceptación de mensajes de texto y el consentimiento: esa información no se comparte con ningún tercero.',
         ],
       },
       {
@@ -140,7 +146,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   },
   en: {
     titulo: 'Privacy Policy',
-    actualizado: FECHA.en,
+    actualizado: FECHA_PRIVACIDAD.en,
     intro: `This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Divoox app (customers), Divoox Driver, Divoox for Restaurants, the web dashboard, and ${SITIO}.`,
     secciones: [
       {
@@ -236,9 +242,10 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         id: 'sms',
         titulo: '12. Text messages (SMS)',
         parrafos: [
-          'We send text messages only about your orders and deliveries: confirmation, your tracking number, when the driver is on the way or arriving, and delivery. You opt in when you give us your phone number in the app or on the website, or when a business that uses Divoox for its deliveries gives us your number so we can update you about your package. We don’t send marketing by text message.',
-          `Message frequency varies with your orders. Message and data rates may apply. Reply STOP to opt out and HELP for help, or email ${CONTACTO}.`,
-          'Your mobile number and your SMS opt-in consent will not be shared with third parties or affiliates for marketing purposes. It is used only by the providers that deliver the message on our behalf.',
+          'We send text messages only about your orders and deliveries, for example when your driver is at your door or can’t find you. We don’t send marketing by text message.',
+          'You get them only if you opt in yourself by checking the text message box when you create your account or in “Your account” in the app. The box is unchecked and optional: it’s not required to order. Giving us your phone number alone does not opt you in, and we never accept phone numbers or SMS consent from restaurants, businesses or anyone else. You can turn them off at any time in “Your account”.',
+          `Usually 1–2 messages per order. Message and data rates may apply. Reply STOP to opt out and HELP for help, or email ${CONTACTO}.`,
+          'Your mobile number and your SMS opt-in consent will not be shared with third parties or affiliates for marketing purposes. They are used only by the providers that deliver the message on our behalf. The above excludes text messaging originator opt-in data and consent; this information will not be shared with any third parties.',
         ],
       },
       {

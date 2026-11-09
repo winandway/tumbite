@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
+import { RESTAURANTE_BASE, consentirSms, mundo } from './pruebas/ayuda';
 import { avisoDeRegalo } from './rutas/pedidos';
 
 /**
@@ -82,6 +82,12 @@ describe('regalar un pedido', () => {
     expect(visto.datos.pedido.notas).toBe('Portón azul · Regalo para Ana');
     expect(visto.datos.pedido.notas).not.toContain('555');
 
+    // C-SMS-CONSENTIMIENTO: quien recibe el regalo no marcó la casilla de SMS: no le sale nada y el
+    // cliente comparte el enlace desde su pedido.
+    expect(await avisoDeRegalo({ DB: m.DB, ...TWILIO } as never, m.DB, id)).toBe(false);
+    expect(sms).toHaveLength(0);
+    // Si ese celular sí aceptó los SMS de Divoox (tiene su cuenta), el aviso sale.
+    await consentirSms(m.DB, cliente.id, '+13055550123');
     expect(await avisoDeRegalo({ DB: m.DB, ...TWILIO } as never, m.DB, id)).toBe(true);
     expect(sms).toHaveLength(1);
     expect(sms[0]?.To).toBe('+13055550123');

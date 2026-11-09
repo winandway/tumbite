@@ -212,3 +212,12 @@ export async function llevarA(DB: D1Database, id: string, hacia: string, extra =
   }
   if (actual !== hacia) throw new Error(`llevarA: no se llegó a «${hacia}»`);
 }
+
+/** C-SMS-CONSENTIMIENTO: deja ese celular (+1…) con la casilla de SMS marcada, como al registrarse. */
+export async function consentirSms(DB: D1Database, usuarioId: string, telefono: string) {
+  await DB.prepare(
+    "INSERT OR REPLACE INTO consentimientos_sms (telefono, usuario_id, version, origen) VALUES (?, ?, 'prueba', 'registro')",
+  )
+    .bind(telefono, usuarioId)
+    .run();
+}

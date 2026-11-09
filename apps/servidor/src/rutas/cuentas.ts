@@ -1,4 +1,5 @@
 import {
+  VERSION_CONSENTIMIENTO_SMS,
   VERSION_TERMINOS,
   correoCanonico,
   entornoDeHost,
@@ -8,6 +9,7 @@ import { Hono } from 'hono';
 import {
   PAGINAS,
   enIdiomaDireccion,
+  esquemaConsentimientoSms,
   esquemaEntrar,
   esquemaRegistro,
   type Rol,
@@ -30,6 +32,7 @@ import { limiteIntentos } from '../seguridad';
 import { enviarCorreo, esCorreoDePrueba } from '../correo';
 import { correoDeConfirmacion } from '../avisos';
 import { borrarCuenta } from '../borrarCuenta';
+import { telefonoE164 } from '../sms';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
@@ -227,6 +230,8 @@ cuentas.post('/registro', async (c) => {
     .prepare('INSERT OR IGNORE INTO terminos_aceptados (usuario_id, version) VALUES (?, ?)')
     .bind(id, VERSION_TERMINOS)
     .run();
+  // C-SMS-CONSENTIMIENTO: solo si marcó la casilla de los SMS (aparte de los términos) y dio celular.
+  if (d.aceptaSms) await guardarConsentimientoSms(db, id, d.telefono, 'registro');
   const token = await abrirSesion(db, id);
   await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
@@ -496,6 +501,74 @@ cuentas.delete('/yo', async (c) => {
 });
 
 cuentas.get('/yo', (c) => c.json({ usuario: exigir(c) }));
+
+// ---------- Mensajes de texto (C-SMS-CONSENTIMIENTO, 9 nov 2026, EE. UU.) ----------
+
+/** Guarda (o renueva) el permiso de SMS de ese celular con la versión del texto que vio. */
+async function guardarConsentimientoSms(
+  db: D1Database,
+  usuarioId: string,
+  telefono: string | null | undefined,
+  origen: 'registro' | 'cuenta',
+): Promise<boolean> {
+  const para = telefonoE164(telefono);
+  if (!para) return false;
+  await db
+    .prepare(
+      `INSERT INTO consentimientos_sms (telefono, usuario_id, version, origen) VALUES (?, ?, ?, ?)
+       ON CONFLICT(telefono) DO UPDATE SET usuario_id = excluded.usuario_id, version = excluded.version,
+         origen = excluded.origen, aceptado_en = datetime('now'), revocado_en = NULL`,
+    )
+    .bind(para, usuarioId, VERSION_CONSENTIMIENTO_SMS, origen)
+    .run();
+  return true;
+}
+
+async function celularDe(db: D1Database, usuarioId: string): Promise<string | null> {
+  const f = await db
+    .prepare('SELECT telefono FROM usuarios WHERE id = ?')
+    .bind(usuarioId)
+    .first<{ telefono: string | null }>();
+  return telefonoE164(f?.telefono);
+}
+
+/** ¿Recibe SMS? Para el interruptor de «Tu cuenta». */
+cuentas.get('/sms', async (c) => {
+  const u = exigir(c);
+  const db = base(c);
+  const tel = await celularDe(db, u.id);
+  const f = tel
+    ? await db
+        .prepare(
+          'SELECT 1 AS si FROM consentimientos_sms WHERE telefono = ? AND usuario_id = ? AND revocado_en IS NULL',
+        )
+        .bind(tel, u.id)
+        .first()
+    : null;
+  return c.json({ tieneCelular: Boolean(tel), acepta: Boolean(f) });
+});
+
+/** Encender o apagar los SMS desde la cuenta. Apagar es igual que responder STOP. */
+cuentas.put('/sms', async (c) => {
+  const u = exigir(c);
+  const d = await leerCuerpo(c, esquemaConsentimientoSms);
+  const db = base(c);
+  const tel = await celularDe(db, u.id);
+  if (!tel)
+    throw new ErrorDatos(
+      'Agrega tu celular en tu cuenta para recibir mensajes de texto.',
+      'telefono',
+    );
+  if (d.acepta) await guardarConsentimientoSms(db, u.id, tel, 'cuenta');
+  else
+    await db
+      .prepare(
+        "UPDATE consentimientos_sms SET revocado_en = datetime('now') WHERE usuario_id = ? AND revocado_en IS NULL",
+      )
+      .bind(u.id)
+      .run();
+  return c.json({ tieneCelular: true, acepta: d.acepta });
+});
 
 // ---------- Configuración de la cuenta ----------
 

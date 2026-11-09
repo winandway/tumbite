@@ -17,6 +17,7 @@ export * from './CampoDireccion';
 export * from './version';
 export * from './PantallaPermisos';
 export * from './OpcionesCuenta';
+export * from './MensajesDeTexto';
 export * from './VerificarCorreo';
 export * from './MisCasos';
 export * from './elegirCapturas';

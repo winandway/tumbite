@@ -2193,6 +2193,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué hay:** sección 12 «Mensajes de texto (SMS)» con `id: 'sms'` en `PRIVACIDAD` (es y en) de `apps/panel/src/sitio/legales.ts`. Ancla pública: divoox.com/privacy#sms.
 - **Prueba:** `legales.test.tsx` → «mensajes de texto (verificación de Twilio y CTIA)». Comprobada en rojo.
 - **No tocar:** las cuatro piezas (opt-in, STOP, HELP, tarifas, no compartir) mientras haya un número verificado.
+- **9 nov 2026:** Twilio rechazó la verificación (código 30513, falta el opt-in). La sección 12 se reescribió: el consentimiento es solo la casilla propia del usuario (C-SMS-CONSENTIMIENTO), dar el número no es aceptar, nunca se acepta consentimiento de restaurantes, negocios ni terceros, y los datos del opt-in no se comparten con terceros. `FECHA_PRIVACIDAD` aparte.
 
 ## C-SMS-PAISES — los SMS y las llamadas automáticas solo salen a los países encendidos (31 oct 2026, EE. UU.)
 
@@ -3324,3 +3325,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas (comprobadas en rojo el 8 nov):** `packages/compartido/src/escpos.test.ts` (bytes de inicio y corte, mismos datos, renglones dentro de 32/48 columnas, página 850); `apps/panel/src/panel/comanda.test.tsx` (sin impresora → navegador con el ancho; con impresora → ESC/POS sin ventana; si falla → navegador; reconexión por puerto serie); `apps/panel/src/panel/PedidosComanda.test.tsx` (conectar USB, imprimir directo, «Imprimir prueba»).
 - **Cómo se comprueba a mano:** Chrome en computadora con una impresora térmica USB → Pedidos → «Conectar impresora (USB)» → elegirla → «Imprimir prueba» sale un ticket corto con el ancho; recargar la página y sigue «Impresora conectada».
 - **Qué NO tocar:** nunca quitar la caída a la impresión del navegador (una comanda no se pierde); la comanda ESC/POS y la HTML salen de `estructuraComanda`, nunca de dos armados distintos. En Windows, si el sistema ya tiene el controlador de la impresora, WebUSB puede no poder tomarla: ahí se usa el puerto serie o la impresión del navegador.
+
+## C-SMS-CONSENTIMIENTO: ningún SMS sale sin la casilla del usuario (9 nov 2026, Richard) — EE. UU.
+
+- **Por qué:** Twilio rechazó la verificación del número gratuito de Divoox (código 30513, falta el consentimiento). Exige una casilla aparte, sin marcar y opcional, con marca, frecuencia, tarifas, HELP y STOP, y que el consentimiento no venga de terceros.
+- **Qué hay:** tabla `consentimientos_sms` (un renglón por teléfono, `version`, `origen`, `revocado_en`). Texto y versión en `packages/compartido/src/consentimientoSms.ts` (`TEXTO_CONSENTIMIENTO_SMS`, `VERSION_CONSENTIMIENTO_SMS`). Casilla «casilla-sms» en el registro del cliente (`Acceso.tsx`, `aceptaSms` en `esquemaRegistro`) y en Tu cuenta (`MensajesDeTexto.tsx`, `GET/PUT /datos/cuentas/sms`). `enviarSms` (`sms.ts`) no manda nada a un teléfono sin consentimiento vigente: guarda el intento con estado `sin_consentimiento`. Únicas excepciones (`smsSinCasilla`): `codigo_telefono` (código que pide la propia persona) y los tipos `equipo_*` (avisos internos a administradores). Borrar la cuenta borra el consentimiento.
+- **Efecto:** regalos, invitaciones Flex y de conductores, destinatarios de paquetes y viaje compartido ya no mandan SMS si ese teléfono no aceptó. Los repartidores no tienen casilla. Los usuarios de antes no tienen consentimiento hasta que lo enciendan en su cuenta.
+- **Pruebas:** `apps/servidor/src/consentimientoSms.test.ts`, y los bloques de consentimiento en `smsTwilio.test.ts`, `operacion.test.ts` y `regalarPedido.test.ts`.
+- **Qué NO tocar:** la casilla nunca va marcada ni es obligatoria; nunca se da consentimiento por un tercero ni por dar el número; si cambia el texto, se sube `VERSION_CONSENTIMIENTO_SMS`.

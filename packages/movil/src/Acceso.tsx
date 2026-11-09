@@ -8,6 +8,7 @@ import {
   ErrorApi,
   enIdioma,
   enIdiomaDireccion,
+  TEXTO_CONSENTIMIENTO_SMS,
   useBorrador,
 } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
@@ -55,6 +56,8 @@ export function Acceso({
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // C-SMS-CONSENTIMIENTO (9 nov 2026): casilla APARTE para los SMS, sin marcar y opcional (Twilio).
+  const [aceptaSms, setAceptaSms] = useState(false);
   // Casilla de aceptación de los términos al crear la cuenta (pedido de Richard, 27 oct 2026).
   const [acepto, setAcepto] = useState(false);
   const v = b.valores;
@@ -90,6 +93,7 @@ export function Acceso({
               fechaNacimiento: v.fechaNacimiento || undefined,
               rol: rolRegistro,
               idioma,
+              aceptaSms: rolRegistro === 'cliente' && aceptaSms && Boolean(v.telefono),
             });
       if (!rolesPermitidos.includes(r.usuario.rol)) {
         setError({ mensaje: t.rolEquivocado });
@@ -189,6 +193,13 @@ export function Acceso({
           error={errorDe('telefono')}
         />
       )}
+      {registro && rolRegistro === 'cliente' ? (
+        <CasillaSms
+          marcada={aceptaSms}
+          alCambiar={setAceptaSms}
+          texto={enIdioma(TEXTO_CONSENTIMIENTO_SMS, idioma)}
+        />
+      ) : null}
       {registro && pideCumple && (
         <Campo
           etiqueta={t.cumple}
@@ -297,5 +308,49 @@ export function Acceso({
         </Text>
       ) : null}
     </>,
+  );
+}
+
+/**
+ * C-SMS-CONSENTIMIENTO (9 nov 2026, EE. UU.): la casilla de los mensajes de texto, separada de la de
+ * los términos, sin marcar de inicio y opcional. Lo que dice es exactamente lo que se guarda.
+ */
+export function CasillaSms({
+  marcada,
+  alCambiar,
+  texto,
+}: {
+  marcada: boolean;
+  alCambiar: (v: boolean) => void;
+  texto: string;
+}) {
+  return (
+    <Pressable
+      onPress={() => alCambiar(!marcada)}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: marcada }}
+      accessibilityLabel={texto}
+      testID="casilla-sms"
+      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 4,
+          borderWidth: 2,
+          borderColor: marcada ? C.primario : '#8A8A8A',
+          backgroundColor: marcada ? C.primario : '#FFFFFF',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 1,
+        }}
+      >
+        {marcada ? (
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>✓</Text>
+        ) : null}
+      </View>
+      <Text style={{ color: '#5E5E5E', fontSize: 13, flex: 1 }}>{texto}</Text>
+    </Pressable>
   );
 }

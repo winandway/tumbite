@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FOTO_PRUEBA, RESTAURANTE_BASE, llevarA, mundo } from '../pruebas/ayuda';
+import { FOTO_PRUEBA, RESTAURANTE_BASE, consentirSms, llevarA, mundo } from '../pruebas/ayuda';
 
 const SECRETO_AVISO = `whsec_${crypto.randomUUID()}`;
 
@@ -2813,9 +2813,26 @@ describe('avisos a 5 y 2 minutos, SMS de respaldo y llamadas con número oculto 
     expect((await m.llamar('POST', `/datos/pedidos/${id}/llamar`, {}, rep.token)).estado).toBe(409);
   });
 
-  it('con Twilio: «en tu puerta» y «no te encuentran» también van por SMS al celular del cliente', async () => {
+  it('C-SMS-CONSENTIMIENTO: sin la casilla de SMS marcada no sale ningún SMS, aunque haya celular', async () => {
     const { m, rep, id, telefonos } = await enCamino(TWILIO);
     await telefonos();
+    const twilio = espiarTwilio();
+    await m.envejecerGps(id);
+    await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2 });
+    await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2 });
+    expect(twilio.filter((x) => x.url.endsWith('/Messages.json'))).toHaveLength(0);
+    const filas = (
+      await m.DB.prepare('SELECT tipo, estado FROM sms_enviados WHERE pedido_id = ?')
+        .bind(id)
+        .all<{ tipo: string; estado: string }>()
+    ).results;
+    expect(filas).toEqual([{ tipo: 'llego', estado: 'sin_consentimiento' }]);
+  });
+
+  it('con Twilio: «en tu puerta» y «no te encuentran» también van por SMS al celular del cliente', async () => {
+    const { m, rep, id, cliente, telefonos } = await enCamino(TWILIO);
+    await telefonos();
+    await consentirSms(m.DB, cliente.id, '+13055551234');
     const twilio = espiarTwilio();
     await m.envejecerGps(id);
     await m.ubicar(rep.token, { lat: 25.7801, lng: -80.2 });

@@ -816,6 +816,19 @@ CREATE TABLE IF NOT EXISTS sms_enviados (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- C-SMS-CONSENTIMIENTO (9 nov 2026): quién aceptó los SMS con su propia casilla (Twilio, error 30513).
+-- Una fila por celular (formato +1…). Sin fila vigente no sale ningún SMS a ese número, salvo el código
+-- que la propia persona pide y los avisos al equipo. Tabla nueva: nace sola con IF NOT EXISTS.
+CREATE TABLE IF NOT EXISTS consentimientos_sms (
+  telefono TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  version TEXT NOT NULL,
+  origen TEXT NOT NULL,
+  aceptado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  revocado_en TEXT
+);
+CREATE INDEX IF NOT EXISTS consentimientos_sms_usuario ON consentimientos_sms(usuario_id);
+
 -- Llamadas con número oculto entre repartidor y cliente (Twilio puentea con el número de Tumbite).
 CREATE TABLE IF NOT EXISTS llamadas (
   id TEXT PRIMARY KEY,

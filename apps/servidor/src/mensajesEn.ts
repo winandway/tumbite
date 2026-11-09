@@ -960,6 +960,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Ese teléfono ya tiene una cuenta. Entra con ella o escríbenos a soporte.',
     'That phone number already has an account. Sign in with it or contact support.',
   ],
+  [
+    'Agrega tu celular en tu cuenta para recibir mensajes de texto.',
+    'Add your mobile number to your account to get text messages.',
+  ],
   ['Esa cuenta no tiene foto que liberar.', 'That account has no photo to release.'],
   [
     'No hay ninguna cuenta con ese correo. La persona tiene que registrarse primero en la app.',

@@ -599,6 +599,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "creado_en"
   ],
+  "consentimientos_sms": [
+    "telefono",
+    "usuario_id",
+    "version",
+    "origen",
+    "aceptado_en",
+    "revocado_en"
+  ],
   "llamadas": [
     "id",
     "pedido_id",

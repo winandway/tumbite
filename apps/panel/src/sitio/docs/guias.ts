@@ -319,7 +319,7 @@ const es: SeccionDocs[] = [
           'Te avisamos cuando el repartidor está a 5 minutos, cuando debes salir a recibir (si pediste en mano) y cuando está en tu puerta, también por SMS. Y puedes llamarlo con número oculto.',
         explicacion: [
           'Mientras tu pedido viene en camino, la app te avisa: «Llega en 5 minutos» cuando el repartidor está a unos 5 minutos; «Sal a recibir tu pedido» a 2 minutos si elegiste entrega en mano; «Casi llega» a una cuadra; y «Tu repartidor está en tu puerta» al llegar.',
-          'Los avisos de «en tu puerta» y «no te encuentran» también te llegan por mensaje de texto (SMS) al celular de tu cuenta, por si el celular está en silencio o sin datos.',
+          'Si aceptaste los mensajes de texto (la casilla del registro o «Tu cuenta»), los avisos de «en tu puerta» y «no te encuentran» también te llegan por SMS al celular de tu cuenta, por si el celular está en silencio o sin datos.',
           'Si necesitas hablar con el repartidor, toca «Llamar al repartidor (número oculto)»: te llamamos a ti primero y, al contestar, te conectamos con él. Ninguno de los dos ve el número del otro: los dos ven el número de Divoox. El repartidor puede llamarte igual.',
           'El chat del pedido sigue disponible para escribir sin llamar.',
         ],
@@ -4959,7 +4959,7 @@ const en: SeccionDocs[] = [
           'We let you know when the driver is 5 minutes away, when to come out (if you chose hand delivery) and when they’re at your door, also by SMS. And you can call them with a masked number.',
         explicacion: [
           'While your order is on the way, the app alerts you: “Arriving in 5 minutes” when the driver is about 5 minutes away; “Come out to meet your driver” at 2 minutes if you chose hand delivery; “Almost here” a block away; and “Your driver is at your door” on arrival.',
-          'The “at your door” and “can’t find you” alerts also reach you by text message (SMS) on your account’s mobile number, in case your phone is on silent or has no data.',
+          'If you opted in to text messages (the sign-up box or “Your account”), the “at your door” and “can’t find you” alerts also reach you by SMS on your account’s mobile number, in case your phone is on silent or has no data.',
           'If you need to talk to the driver, tap “Call the driver (masked number)”: we call you first and, when you answer, connect you with them. Neither of you sees the other’s number: you both see Divoox’s number. The driver can call you the same way.',
           'The order chat is still there to write without calling.',
         ],
