@@ -6049,3 +6049,26 @@ body.modo-tableta .panel-contenido {
   text-align: left;
   cursor: pointer;
 }
+
+/* C-CAMARA-EN-TODA-SUBIDA: ventanita de la cámara web (computadora). */
+.camara-ventana {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  width: min(420px, calc(100vw - 32px));
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  display: grid;
+  gap: 10px;
+}
+.camara-video {
+  width: 100%;
+  border-radius: 10px;
+  background: #101010;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}

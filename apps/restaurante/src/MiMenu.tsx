@@ -28,11 +28,24 @@ import {
   urlFoto,
   useSesion,
   subirFotoLivianaApp,
+  fotoConCamara,
 } from '@tumbite/movil';
 import { IMG } from './piezas/recursos';
 import { EditorOpciones } from './EditorOpciones';
 import { BotonGrande, Insignia, Pildora, Tarjeta } from './piezas/ui';
 import { textosRest } from './piezas/textos';
+
+/** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
+const CAMARA = {
+  pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
+  tomar: () =>
+    ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.6,
+      allowsEditing: true,
+      aspect: [4, 3],
+    }),
+};
 
 function confirmar(mensaje: string, si: string, no: string): Promise<boolean> {
   if (Platform.OS === 'web') return Promise.resolve(window.confirm(mensaje));
@@ -336,16 +349,19 @@ function FormPlato({
   async function elegirFoto() {
     setError('');
     try {
-      const r = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        // NXT-4z: en el iPhone, la versión «compatible» (JPEG): el servidor no guarda HEIC.
-        preferredAssetRepresentationMode:
-          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
-        quality: 0.6,
-        allowsEditing: true,
-        aspect: [4, 3],
+      // C-CAMARA-EN-TODA-SUBIDA: «Tomar foto» o «Subir desde archivos».
+      const foto = await fotoConCamara(idioma, CAMARA, async () => {
+        const r = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          // NXT-4z: en el iPhone, la versión «compatible» (JPEG): el servidor no guarda HEIC.
+          preferredAssetRepresentationMode:
+            ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+          quality: 0.6,
+          allowsEditing: true,
+          aspect: [4, 3],
+        });
+        return r.canceled ? null : (r.assets[0] ?? null);
       });
-      const foto = r.canceled ? null : r.assets[0];
       if (!foto) return;
       setSubiendo(true);
       // C-FOTOS-LIVIANAS (NXT-7): WebP en tres tamaños, convertido aquí en el teléfono.

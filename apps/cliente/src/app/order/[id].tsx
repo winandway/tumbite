@@ -45,6 +45,7 @@ import {
   e,
   urlFoto,
   useSesion,
+  fotoConCamara,
 } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { usePedirOtraVez } from '../../pedirOtraVez';
@@ -147,18 +148,29 @@ type Pedido = {
   } | null;
 };
 
-/** C-AYUDA-PEDIDO: la foto del plato equivocado o dañado, de la galería (reducida para subir rápido). */
-async function elegirFotoQueja(): Promise<Blob | null> {
-  // NXT-4z: en el iPhone, la versión «compatible» (JPEG): el servidor no guarda HEIC.
-  const r = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.5,
-    preferredAssetRepresentationMode:
-      ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+/** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
+const CAMARA = {
+  pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
+  tomar: () => ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 }),
+};
+
+/**
+ * C-AYUDA-PEDIDO: la foto del plato equivocado o dañado, tomada con la cámara o elegida de los
+ * archivos (reducida para subir rápido).
+ */
+const elegirFotoQueja = (idioma: 'es' | 'en') => async (): Promise<Blob | null> => {
+  const a = await fotoConCamara(idioma, CAMARA, async () => {
+    // NXT-4z: en el iPhone, la versión «compatible» (JPEG): el servidor no guarda HEIC.
+    const r = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.5,
+      preferredAssetRepresentationMode:
+        ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+    });
+    return r.canceled ? null : (r.assets[0] ?? null);
   });
-  const a = r.canceled ? null : r.assets[0];
   return a ? (await fetch(a.uri)).blob() : null;
-}
+};
 
 const T = {
   es: {
@@ -1514,7 +1526,7 @@ function SeguirPedido() {
         ) : null}
         {p.repartidor && ['aceptado', 'listo', 'en_camino'].includes(p.estado) ? (
           <View onLayout={(ev) => (posChat.current = ev.nativeEvent.layout.y)}>
-            <ChatPedido pedidoId={p.id} elegirFoto={elegirFotoQueja} />
+            <ChatPedido pedidoId={p.id} elegirFoto={elegirFotoQueja(idioma)} />
           </View>
         ) : null}
 
@@ -1640,7 +1652,11 @@ function SeguirPedido() {
           <BotonAncho texto={tc.volverInicio} alTocar={irInicio} secundario />
         ) : null}
         {/* Abre un ticket atado a este pedido (antes era un correo a una cuenta personal). */}
-        <ReportarProblema pedidoId={p.id} textoBoton={t.ayuda} elegirFoto={elegirFotoQueja} />
+        <ReportarProblema
+          pedidoId={p.id}
+          textoBoton={t.ayuda}
+          elegirFoto={elegirFotoQueja(idioma)}
+        />
       </>
     ) : null,
   );

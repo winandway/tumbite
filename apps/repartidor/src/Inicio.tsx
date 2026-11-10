@@ -95,7 +95,14 @@ import {
   useSesion,
   useToqueAviso,
   URL_SERVIDOR,
+  capturasConCamara,
 } from '@tumbite/movil';
+
+/** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
+const CAMARA = {
+  pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
+  tomar: () => ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.6 }),
+};
 
 /** Pregunta sí/no al repartidor (en el celular con la ventana del sistema; en la web con la del navegador). */
 function confirmar(texto: string): Promise<boolean> {
@@ -1766,9 +1773,13 @@ export function Inicio() {
             <View style={{ paddingVertical: 8 }}>
               <ReportarProblema pedidoId={estado?.activo?.id} />
               <MisCasos
-                elegirCapturas={selectorDeCapturas(
-                  ImagePicker.launchImageLibraryAsync,
-                  ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+                elegirCapturas={capturasConCamara(
+                  selectorDeCapturas(
+                    ImagePicker.launchImageLibraryAsync,
+                    ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+                  ),
+                  CAMARA,
+                  idioma,
                 )}
               />
               <MenuCuenta />

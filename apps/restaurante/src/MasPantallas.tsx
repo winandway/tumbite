@@ -24,8 +24,15 @@ import {
   e,
   useSesion,
   abrirPanel,
+  capturasConCamara,
 } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
+
+/** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
+const CAMARA = {
+  pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
+  tomar: () => ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.6 }),
+};
 
 /**
  * C-MAS-EN-LA-APP (31 oct 2026, visto por Richard grabando el video para Apple): «Mi restaurante»,
@@ -585,9 +592,13 @@ function Configuracion({ t }: { t: Textos }) {
       {/* C-AYUDA-EN-LA-APP: pedir ayuda y seguir el caso sin salir de la app. */}
       <ReportarProblema />
       <MisCasos
-        elegirCapturas={selectorDeCapturas(
-          ImagePicker.launchImageLibraryAsync,
-          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+        elegirCapturas={capturasConCamara(
+          selectorDeCapturas(
+            ImagePicker.launchImageLibraryAsync,
+            ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+          ),
+          CAMARA,
+          idioma,
         )}
       />
       <OpcionesCuenta />

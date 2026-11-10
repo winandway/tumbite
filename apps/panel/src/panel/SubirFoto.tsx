@@ -1,3 +1,4 @@
+import { BotonCamara } from './camara';
 import { useId, useRef, useState } from 'react';
 import {
   ErrorApi,
@@ -13,7 +14,7 @@ import { api } from './api';
 
 const T = {
   es: {
-    subir: 'Subir foto',
+    subir: 'Subir desde archivos',
     cambiar: 'Cambiar foto',
     quitar: 'Quitar foto',
     subiendo: 'Subiendo…',
@@ -22,7 +23,7 @@ const T = {
     ayuda: 'Una foto clara y con buena luz vende más. La reducimos sola para que cargue rápido.',
   },
   en: {
-    subir: 'Upload photo',
+    subir: 'Upload from files',
     cambiar: 'Change photo',
     quitar: 'Remove photo',
     subiendo: 'Uploading…',
@@ -132,7 +133,11 @@ export function SubirFoto({
   async function elegir(e: React.ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];
     e.target.value = '';
-    if (!archivo) return;
+    if (archivo) await recibir(archivo);
+  }
+
+  /** La foto llega de los archivos o de la cámara: misma validación y misma compresión. */
+  async function recibir(archivo: File) {
     setError('');
     if (!archivo.type.startsWith('image/')) return setError(t.noEsFoto);
     setSubiendo(true);
@@ -165,6 +170,13 @@ export function SubirFoto({
           <Icono nombre="subir" tamano={18} />
           {subiendo ? t.subiendo : valor ? t.cambiar : t.subir}
         </button>
+        {/* C-CAMARA-EN-TODA-SUBIDA: toda casilla de imagen ofrece «Tomar foto». */}
+        <BotonCamara
+          idioma={idioma}
+          alTomar={(archivo) => void recibir(archivo)}
+          alFallar={setError}
+          deshabilitado={subiendo}
+        />
         {valor && !subiendo && (
           <MenuTresPuntos
             etiqueta={t.opciones}

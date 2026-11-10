@@ -67,7 +67,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Divoox uses your photos so you can add a photo of each dish to your menu.",
-          "cameraPermission": false,
+          "cameraPermission": "Divoox uses the camera so you can take a photo of each dish for your menu.",
           "microphonePermission": false
         }
       ],

@@ -18,6 +18,7 @@ import {
   useSesion,
   abrirPanel,
   VersionInstalada,
+  capturasConCamara,
 } from '@tumbite/movil';
 import { fotoDeRelleno } from '../inicio/recursos';
 import { ScrollView } from 'react-native';
@@ -25,6 +26,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 import { conCuenta } from '../ConCuenta';
+
+/** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
+const CAMARA = {
+  pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
+  tomar: () => ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.6 }),
+};
 
 const T = {
   es: {
@@ -339,9 +346,13 @@ function MiCuenta() {
         <ReportarProblema />
         {/* C-AYUDA-EN-LA-APP: los casos y su chat con Soporte, sin salir a la web. */}
         <MisCasos
-          elegirCapturas={selectorDeCapturas(
-            ImagePicker.launchImageLibraryAsync,
-            ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+          elegirCapturas={capturasConCamara(
+            selectorDeCapturas(
+              ImagePicker.launchImageLibraryAsync,
+              ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+            ),
+            CAMARA,
+            idioma,
           )}
         />
 
