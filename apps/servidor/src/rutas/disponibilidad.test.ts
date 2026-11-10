@@ -35,6 +35,17 @@ describe('disponibilidad en el mundo', () => {
     expect(r.datos.paises.map((p: { codigo: string }) => p.codigo)).toEqual(['US']);
   });
 
+  it('una zona interna de pruebas no se anuncia al público, ni aquí ni en la cobertura', async () => {
+    const m = mundo();
+    await m.DB.prepare(
+      "INSERT INTO zonas (id, nombre, pais, moneda, lat, lng, radio_km, activa) VALUES ('US-MI-NOVI','Novi (pruebas)','US','USD',42.48,-83.47,40,1)",
+    ).run();
+    const d = await m.llamar('GET', '/datos/disponibilidad');
+    expect(d.datos.paises[0].ciudades).toEqual(['Miami']);
+    const c = await m.llamar('GET', '/datos/cobertura?lat=-33.45&lng=-70.67');
+    expect(c.datos.ciudadesActivas.map((z: { nombre: string }) => z.nombre)).toEqual(['Miami']);
+  });
+
   it('«Avísame cuando llegue» desde la app: con la sesión basta (sin escudo web) y guarda país y punto', async () => {
     const m = mundo();
     const cliente = await m.cuenta('cliente');

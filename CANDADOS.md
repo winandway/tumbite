@@ -3417,3 +3417,5 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Comanda e impresora (COMANDA-8N-r):** cada envío a la impresora se comprueba y tiene tiempo límite de 8 segundos (si no responde, la comanda cae a la impresión del navegador), y los acentos «sueltos» de un texto pegado salen como su letra. Límite: no se probó con una impresora física.
 - **Consentimiento de SMS (b099e59):** visto bueno; además, al cambiar el celular el permiso no pasa al número nuevo.
 - **Pruebas nuevas:** en `flota.test.ts`, `disponibilidad.test.ts`, `smsConsentimiento.test.ts`, `escpos.test.ts` y `comanda.test.tsx`.
+
+- **C-DISPONIBLE-MUNDO, ajuste del 10 nov tras verlo en vivo:** la zona interna «Novi (pruebas)» salía en la lista pública de ciudades (también en la frase «Ya estamos en» que ya existía). `/datos/disponibilidad` y `/datos/cobertura` ya no anuncian zonas cuyo nombre lleva «(pruebas)» o «(test)»; la zona sigue funcionando para el equipo. Prueba en `disponibilidad.test.ts`, comprobada en rojo. No se tocó ningún dato de producción.

@@ -161,6 +161,13 @@ zonas.patch('/admin/zonas/:id', async (c) => {
 // ───────────────────────── Cobertura pública (C-TERRITORIO) ─────────────────────────
 
 /**
+ * C-DISPONIBLE-MUNDO: una zona interna de pruebas (su nombre lleva «(pruebas)», como la de Novi
+ * donde prueba el equipo) sigue funcionando, pero no se le anuncia al público como ciudad abierta.
+ */
+const SIN_ZONAS_DE_PRUEBA =
+  "lower(nombre) NOT LIKE '%(pruebas)%' AND lower(nombre) NOT LIKE '%(test)%'";
+
+/**
  * ¿Llega Divoox a este punto? Si no, en qué ciudades sí estamos y qué áreas abren pronto.
  * La app y la web la piden con la dirección del cliente; la decisión siempre es del servidor.
  */
@@ -178,7 +185,9 @@ zonas.get('/cobertura', async (c) => {
     q.success ? q.data.lng : undefined,
   );
   const { results: activas } = await db
-    .prepare('SELECT id, nombre, pais FROM zonas WHERE activa = 1 ORDER BY nombre')
+    .prepare(
+      `SELECT id, nombre, pais FROM zonas WHERE activa = 1 AND ${SIN_ZONAS_DE_PRUEBA} ORDER BY nombre`,
+    )
     .all<{ id: string; nombre: string; pais: string }>();
   const { results: proximas } = await db
     .prepare(
@@ -206,7 +215,9 @@ zonas.get('/cobertura', async (c) => {
 zonas.get('/disponibilidad', async (c) => {
   const db = base(c);
   const { results: activas } = await db
-    .prepare('SELECT nombre, pais FROM zonas WHERE activa = 1 ORDER BY pais, nombre')
+    .prepare(
+      `SELECT nombre, pais FROM zonas WHERE activa = 1 AND ${SIN_ZONAS_DE_PRUEBA} ORDER BY pais, nombre`,
+    )
     .all<{ nombre: string; pais: string }>();
   const { results: proximas } = await db
     .prepare(
