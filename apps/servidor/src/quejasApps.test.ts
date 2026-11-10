@@ -8,7 +8,7 @@ const leer = (...r: string[]) => readFileSync(join(__dirname, '..', '..', '..', 
 describe('quejas desde las tres apps', () => {
   it('el cliente reporta desde su pedido (con el pedido atado) y ya no hay correo a una cuenta personal', () => {
     const pedido = leer('apps', 'cliente', 'src', 'app', 'order', '[id].tsx');
-    expect(pedido).toMatch(/<ReportarProblema pedidoId=\{p\.id\}/);
+    expect(pedido).toMatch(/<ReportarProblema\s+pedidoId=\{p\.id\}/);
     expect(pedido).not.toMatch(/mailto:/);
   });
   it('el repartidor reporta desde su pantalla y el restaurante desde los tres puntos del pedido', () => {

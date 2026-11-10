@@ -62,13 +62,17 @@ describe('permisos de las apps para las tiendas', () => {
     expect(e.android.blockedPermissions).toContain('android.permission.RECORD_AUDIO');
   });
 
-  it('el restaurante explica las fotos (para el menú) en los dos idiomas y no pide cámara', () => {
+  // C-CAMARA-EN-TODA-SUBIDA (regla global del 9 nov 2026): desde el 10 nov el restaurante sí usa la
+  // cámara, solo para tomar la foto de un plato, y lo explica en los dos idiomas. Sigue sin micrófono.
+  it('el restaurante explica las fotos y la cámara (para el menú) en los dos idiomas, sin micrófono', () => {
     const e = leer('restaurante', 'app.json').expo;
     expect(e.ios.infoPlist.NSPhotoLibraryUsageDescription).toMatch(/photo/);
-    expect(plugin(e, 'expo-image-picker')?.[1]).toMatchObject({
-      cameraPermission: false,
-      microphonePermission: false,
-    });
+    const fotos = plugin(e, 'expo-image-picker')?.[1] as Record<string, unknown>;
+    expect(fotos.microphonePermission).toBe(false);
+    expect(String(fotos.cameraPermission)).toMatch(/camera.*photo of each dish/);
+    expect(leer('restaurante', 'idiomas/es.json').ios.NSCameraUsageDescription).toMatch(
+      /cámara.*plato/,
+    );
     expect(e.locales).toEqual({ es: './idiomas/es.json' });
     expect(leer('restaurante', 'idiomas/es.json').ios.NSPhotoLibraryUsageDescription).toMatch(
       /fotos/,

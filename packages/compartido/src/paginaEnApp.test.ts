@@ -43,6 +43,8 @@ describe('las páginas legales se abren dentro de la app', () => {
       'packages/movil/src/PaginaEnApp.tsx',
       'packages/movil/src/soporte.ts',
       'apps/repartidor/src/flex/MiRuta.tsx',
+      // C-ELEGIR-MAPAS: la pieza única que abre la app de mapas elegida.
+      'apps/repartidor/src/comoLlegar.ts',
     ]);
     const malos = [
       'apps/cliente/src',

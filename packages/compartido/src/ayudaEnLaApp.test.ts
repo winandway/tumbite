@@ -26,7 +26,8 @@ describe('ayuda dentro de las tres apps', () => {
       ['apps', 'repartidor', 'src', 'Inicio.tsx'],
       ['apps', 'restaurante', 'src', 'MasPantallas.tsx'],
     ])
-      expect(leer(...ruta)).toContain('elegirCapturas={selectorDeCapturas(');
+      // C-CAMARA-EN-TODA-SUBIDA: el mismo selector, ahora envuelto para ofrecer «Tomar foto».
+      expect(leer(...ruta)).toMatch(/elegirCapturas=\{capturasConCamara\(\s*selectorDeCapturas\(/);
     const p = leer('packages', 'movil', 'src', 'MisCasos.tsx');
     expect(p).toContain('testID="capturas-elegidas"');
     expect(p).toContain('/adjuntos?nombre=');
