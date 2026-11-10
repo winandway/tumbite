@@ -22,12 +22,15 @@ export function formatearDolares(centavos: Centavos, idioma: 'es' | 'en' = 'en')
 export const DECIMALES_MONEDA = new Map<string, number>([
   ['USD', 2],
   ['COP', 0],
+  // C-PERFIL-CHILE: el peso chileno tampoco lleva decimales.
+  ['CLP', 0],
   ['VES', 2],
   ['MXN', 2],
 ]);
 const REGION_MONEDA = new Map<string, string>([
   ['USD', 'US'],
   ['COP', 'CO'],
+  ['CLP', 'CL'],
   ['VES', 'VE'],
   ['MXN', 'MX'],
 ]);

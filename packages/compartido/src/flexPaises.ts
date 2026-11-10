@@ -1,3 +1,4 @@
+import { rutValido } from './perfilChile';
 /**
  * Divoox Flex · CADA PAÍS ES SU PROPIO SISTEMA (regla de Richard, 28 oct 2026). Al crear la empresa
  * se elige el país y este perfil decide cómo funciona Flex allí: monedas, cómo pagan, qué se le pide
@@ -160,6 +161,8 @@ const FISCAL: Record<string, { nombre: string; ejemplo: string; patron: RegExp }
   VE: { nombre: 'RIF', ejemplo: 'J-12345678-9', patron: /^[JGVEPC]\d{9}$/ },
   CO: { nombre: 'NIT', ejemplo: '900123456-7', patron: /^\d{9,10}$/ },
   MX: { nombre: 'RFC', ejemplo: 'ABC123456XYZ', patron: /^[A-ZÑ&]{3,4}\d{6}[A-Z\d]{3}$/ },
+  // C-PERFIL-CHILE: el RUT se valida además con su dígito verificador (rutValido).
+  CL: { nombre: 'RUT', ejemplo: '12.345.678-5', patron: /^\d{7,8}[\dK]$/ },
 };
 
 export function numeroFiscalDe(pais: string): { nombre: string; ejemplo: string } {
@@ -171,5 +174,6 @@ export function numeroFiscalDe(pais: string): { nombre: string; ejemplo: string 
 export function numeroFiscalValido(pais: string, texto: string): boolean {
   const f = new Map(Object.entries(FISCAL)).get(pais.toUpperCase());
   const limpio = texto.replace(/[\s.-]/g, '').toUpperCase();
+  if (pais.toUpperCase() === 'CL') return Boolean(f?.patron.test(limpio)) && rutValido(limpio);
   return f ? f.patron.test(limpio) : limpio.length >= 5;
 }

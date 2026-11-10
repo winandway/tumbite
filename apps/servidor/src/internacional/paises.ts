@@ -14,6 +14,8 @@ export const MONEDA_POR_PAIS: Record<string, string> = {
   CO: 'COP',
   VE: 'VES',
   MX: 'MXN',
+  // C-PERFIL-CHILE: la moneda queda declarada; el país sigue apagado (sin tarifas ni topes).
+  CL: 'CLP',
 };
 
 export const esquemaConfigPais = z.object({
