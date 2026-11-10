@@ -97,9 +97,19 @@ for (const idioma of ['es', 'en'] as const)
     await panel.getByRole('button', { name: en ? 'Send invitation' : 'Enviar invitación' }).click();
     const cajaEnlace = panel.getByTestId('flota-enlace');
     await expect(cajaEnlace).toBeVisible();
+    const enlace = (await cajaEnlace.locator('code').innerText()).trim();
+    // En la foto, la dirección pública (en esta computadora el sitio vive en localhost).
+    await cajaEnlace
+      .locator('code')
+      .evaluate(
+        (el) =>
+          (el.textContent = (el.textContent ?? '').replace(
+            /^https?:\/\/[^/]+/,
+            'https://divoox.com',
+          )),
+      );
     await cajaEnlace.scrollIntoViewIfNeeded();
     await foto(panel, 'restaurante-flota-invitacion');
-    const enlace = (await cajaEnlace.locator('code').innerText()).trim();
     expect(enlace).toMatch(/\/driver\/fleet\//);
 
     // La página pública del enlace dice quién invita.
@@ -265,6 +275,14 @@ for (const idioma of ['es', 'en'] as const)
     await expect(avisame).toBeVisible({ timeout: 60_000 });
     await avisame.scrollIntoViewIfNeeded();
     await avisame.getByPlaceholder(en ? 'City, country' : 'Ciudad, país').fill('Santiago, Chile');
+    // En la foto, un correo neutro (el de la corrida lleva letras al azar).
+    await a
+      .getByTestId('avisame-correo')
+      .first()
+      .evaluate(
+        (el, [de, a2]) => (el.textContent = (el.textContent ?? '').replace(de!, a2!)),
+        [cliente.correo, en ? 'email@example.com' : 'correo@ejemplo.com'],
+      );
     await foto(a, 'cliente-avisame');
     await avisame
       .getByRole('button', { name: en ? 'Notify me when it arrives' : 'Avísame cuando llegue' })

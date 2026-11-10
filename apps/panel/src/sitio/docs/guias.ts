@@ -218,6 +218,38 @@ const es: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'where-divoox-works',
+        titulo: '¿Dónde funciona Divoox? Avísame cuando llegue',
+        resumen:
+          'Cualquier persona, en cualquier país, puede crear su cuenta. La app te dice en qué ciudades ya funciona Divoox y, si la tuya todavía no, te avisa por correo el día que llegue.',
+        explicacion: [
+          'Al crear la cuenta ves la lista de países y ciudades donde Divoox ya reparte. Tu cuenta sirve desde el primer día en cualquiera de ellas.',
+          'Cuando pones una dirección donde todavía no llegamos, la app te lo dice con claridad, te muestra dónde sí estamos y te ofrece «Avísame cuando llegue». Escribes tu ciudad y tu país y listo: el aviso va al correo de tu cuenta.',
+          'Cada aviso cuenta: abrimos primero en las ciudades donde más personas y más restaurantes nos lo piden.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-avisame-es.webp',
+            alt: 'App de Divoox con el aviso «Todavía no llegamos a tu zona», la ciudad donde ya funciona y el formulario «Avísame cuando llegue».',
+            pie: 'Si todavía no llegamos, te anotas ahí mismo con tu ciudad.',
+          },
+          {
+            src: '/docs/cliente-avisame-listo-es.webp',
+            alt: 'Confirmación en verde: «Listo. Te avisamos por correo cuando Divoox llegue a tu ciudad».',
+            pie: 'La confirmación queda en la misma pantalla.',
+          },
+        ],
+        preguntas: [
+          '¿En qué ciudades funciona Divoox?',
+          '¿Cómo me entero cuando Divoox llegue a mi ciudad?',
+        ],
+        pasos: [
+          'Abre Divoox y pon tu dirección.',
+          'Si ves «Todavía no llegamos a tu zona», escribe tu ciudad y tu país en «Avísame cuando llegue».',
+          'Toca el botón. Te escribimos al correo de tu cuenta el día que abramos.',
+        ],
+      },
+      {
         id: 'shop-stores',
         titulo: 'Compra en el supermercado, la farmacia o la licorería',
         resumen:
@@ -1486,6 +1518,76 @@ const es: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'cancel-ready-order',
+        titulo: 'Cancelar un pedido que ya está listo',
+        resumen:
+          'Un pedido listo ya tiene comida hecha y, a veces, un repartidor en camino. Por eso se cancela pidiéndoselo a soporte, con el motivo. Te decimos de antemano quién asume la comida.',
+        explicacion: [
+          'Mientras un pedido está nuevo o en preparación, lo puedes rechazar tú mismo desde los tres puntos. Cuando ya lo marcaste «Listo», la opción cambia a «Pedir cancelación a soporte»: así trabajan también las grandes apps de reparto, porque en ese momento ya hay comida preparada y un repartidor asignado.',
+          'Eliges el motivo de una lista corta: se agotó un producto, el local cerró, se preparó mal, el cliente llamó para cancelar, el repartidor no llegó después de 15 minutos, u otro. Debajo del motivo ves quién asume la comida preparada: si la causa es del restaurante, el restaurante no la cobra; si la causa es del cliente, del reparto o de Divoox, el restaurante la cobra.',
+          'Nuestro equipo revisa la solicitud en minutos. Si la aprueba, el pedido se cancela, el cliente recibe todo su dinero y al repartidor se le avisa en el momento. Si no la aprueba, el pedido sigue su curso y te llega el motivo. Mientras tanto ves «Cancelación pedida» en el pedido.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-cancelar-listo-menu-es.webp',
+            alt: 'Pedido listo en el panel del restaurante con el menú de tres puntos abierto y la opción «Pedir cancelación a soporte».',
+            pie: 'En un pedido listo, los tres puntos traen «Pedir cancelación a soporte».',
+          },
+          {
+            src: '/docs/restaurante-cancelar-listo-motivo-es.webp',
+            alt: 'Formulario «Pedir a soporte la cancelación» con el motivo elegido y, debajo, la explicación de quién asume la comida.',
+            pie: 'Eliges el motivo y ves quién asume la comida antes de enviar.',
+          },
+          {
+            src: '/docs/restaurante-cancelar-listo-enviada-es.webp',
+            alt: 'El pedido listo con el aviso «Cancelación pedida: soporte la está revisando».',
+            pie: 'El pedido sigue en curso mientras soporte revisa.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo cancelo un pedido que ya está listo?',
+          '¿Quién paga la comida si se cancela un pedido listo?',
+        ],
+        pasos: [
+          'En «Pedidos», busca el pedido listo y toca los tres puntos.',
+          'Toca «Pedir cancelación a soporte» y elige el motivo.',
+          'Lee quién asume la comida, agrega un detalle si hace falta y toca «Enviar a soporte».',
+          'Espera el aviso: si se aprueba, el pedido queda cancelado y el cliente recibe su dinero. En la app del restaurante se hace igual, desde los tres puntos del pedido.',
+        ],
+      },
+      {
+        id: 'bring-divoox-to-your-city',
+        titulo: 'Tu ciudad todavía no tiene Divoox: cómo pedir que llegue',
+        resumen:
+          'Puedes registrar tu restaurante desde cualquier país. Si Divoox todavía no reparte en tu ciudad, lo pides con un toque y abrimos primero donde más restaurantes nos lo piden.',
+        explicacion: [
+          'El registro no se limita por país: creas tu cuenta, cargas los datos de tu restaurante, tu menú y tus fotos, y todo queda listo para el día de la apertura.',
+          'Al crear la cuenta te decimos en qué ciudades ya funciona Divoox. Si la dirección de tu local queda fuera de esas ciudades, en «Mi restaurante» aparece la tarjeta «Quiero traer Divoox a mi ciudad». Escribes tu ciudad y tu país, la envías y nuestro equipo te escribe.',
+          'En esa misma pantalla, la foto de tu restaurante se sube desde tus archivos o se toma en el momento con «Tomar foto»: en el celular abre la cámara y en la computadora, la cámara web.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-traer-divoox-es.webp',
+            alt: 'Pantalla «Mi restaurante» con la tarjeta «Quiero traer Divoox a mi ciudad» y la casilla «Ciudad y país» llena.',
+            pie: 'Si tu ciudad todavía no tiene cobertura, la pides aquí mismo.',
+          },
+          {
+            src: '/docs/restaurante-tomar-foto-es.webp',
+            alt: 'Casilla de la foto del restaurante con dos botones: «Subir desde archivos» y «Tomar foto».',
+            pie: 'Toda casilla de foto trae «Subir desde archivos» y «Tomar foto».',
+          },
+        ],
+        preguntas: [
+          '¿Puedo registrar mi restaurante si Divoox no está en mi país?',
+          '¿Cómo pido que Divoox llegue a mi ciudad?',
+        ],
+        pasos: [
+          'Crea tu cuenta de restaurante y completa «Mi restaurante» con tu dirección.',
+          'Si aparece «Quiero traer Divoox a mi ciudad», escribe tu ciudad y tu país y envíala.',
+          'Sigue cargando tu menú y tus fotos: cuando abramos en tu ciudad, tu restaurante ya está listo.',
+        ],
+      },
+      {
         id: 'reviews-and-replies',
         titulo: 'Reseñas de tus clientes y cómo responder',
         resumen:
@@ -2258,7 +2360,7 @@ const es: SeccionDocs[] = [
           'En «Menú», toca «Agregar plato».',
           'Escribe el nombre y la descripción en español y en inglés. Tus clientes ven el idioma que eligieron.',
           'Pon la categoría en español y en inglés (por ejemplo «Entradas» y «Starters») para agrupar el menú, y el precio en la moneda de la ciudad de tu restaurante (en las ciudades donde Divoox opere; con pesos se escribe sin decimales: 12000 son doce mil pesos).',
-          'Sube la foto del plato. Si no tienes, puedes agregarla después: el plato se publica igual.',
+          'Sube la foto del plato desde tus archivos o tómala en el momento con «Tomar foto». Si no tienes, puedes agregarla después: el plato se publica igual.',
           'Guarda. Lo que escribas se guarda solo mientras lo escribes: si se te cierra la ventana, al volver sigue ahí.',
         ],
       },
@@ -2986,7 +3088,7 @@ const es: SeccionDocs[] = [
           'Cuando hay un pedido cerca, la app vibra y te muestra la oferta en pantalla completa: ganancia, distancia al local, viaje total, minutos y artículos.',
           'Tienes 45 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no te baja de nivel.',
           'Al aceptar, ve al restaurante. Toma la foto del pedido cerrado y espera que el restaurante la confirme en su pantalla. En la puerta del cliente, toma la foto de la entrega.',
-          'Toca «Cómo llegar» para abrir Google Maps o Apple Maps con la dirección ya puesta.',
+          'Toca «Cómo llegar» y elige tu app de mapas: Google Maps, Waze o, en el iPhone, Apple Maps. Se abre con la dirección ya puesta.',
           'La propina del cliente es tuya al 100 %: nunca se usa para completar tu pago.',
         ],
       },
@@ -4882,6 +4984,38 @@ const en: SeccionDocs[] = [
     icono: 'pizza',
     guias: [
       {
+        id: 'where-divoox-works',
+        titulo: 'Where does Divoox work? Notify me when it arrives',
+        resumen:
+          'Anyone, in any country, can create an account. The app tells you which cities Divoox already works in and, if yours isn’t one yet, emails you the day it arrives.',
+        explicacion: [
+          'When you create your account you see the list of countries and cities where Divoox already delivers. Your account works from day one in any of them.',
+          'When you enter an address we don’t reach yet, the app tells you clearly, shows you where we already are and offers “Notify me when it arrives.” You type your city and country and that’s it: the notice goes to your account’s email.',
+          'Every request counts: we open first in the cities where the most people and restaurants ask.',
+        ],
+        capturas: [
+          {
+            src: '/docs/cliente-avisame-en.webp',
+            alt: 'The Divoox app with the notice “We’re not in your area yet,” the city where it already works and the “Notify me when it arrives” form.',
+            pie: 'If we’re not there yet, you sign up right there with your city.',
+          },
+          {
+            src: '/docs/cliente-avisame-listo-en.webp',
+            alt: 'Green confirmation: “Done. We’ll email you when Divoox arrives in your city.”',
+            pie: 'The confirmation stays on the same screen.',
+          },
+        ],
+        preguntas: [
+          'Which cities does Divoox work in?',
+          'How do I find out when Divoox comes to my city?',
+        ],
+        pasos: [
+          'Open Divoox and enter your address.',
+          'If you see “We’re not in your area yet,” type your city and country under “Notify me when it arrives.”',
+          'Tap the button. We’ll write to your account’s email the day we open.',
+        ],
+      },
+      {
         id: 'shop-stores',
         titulo: 'Shop at the grocery store, pharmacy or liquor store',
         resumen:
@@ -6135,6 +6269,76 @@ const en: SeccionDocs[] = [
     icono: 'chef',
     guias: [
       {
+        id: 'cancel-ready-order',
+        titulo: 'Canceling an order that is already ready',
+        resumen:
+          'A ready order already has food made and, sometimes, a driver on the way. That’s why you cancel it by asking support, with the reason. We tell you up front who covers the food.',
+        explicacion: [
+          'While an order is new or being prepared, you can reject it yourself from the three dots. Once you mark it “Ready,” the option changes to “Ask support to cancel”: that’s how the big delivery apps work too, because by then there is prepared food and an assigned driver.',
+          'You pick the reason from a short list: an item ran out, the store closed, it was prepared wrong, the customer called to cancel, the driver never arrived after 15 minutes, or another. Under the reason you see who covers the prepared food: if the cause is the restaurant’s, the restaurant isn’t paid for it; if the cause is the customer’s, the delivery’s or Divoox’s, the restaurant is paid.',
+          'Our team reviews the request within minutes. If it’s approved, the order is canceled, the customer gets all their money back and the driver is told right away. If it isn’t, the order continues and you get the reason. Meanwhile you see “Cancellation requested” on the order.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-cancelar-listo-menu-en.webp',
+            alt: 'A ready order in the restaurant dashboard with the three-dot menu open and the option “Ask support to cancel.”',
+            pie: 'On a ready order, the three dots show “Ask support to cancel.”',
+          },
+          {
+            src: '/docs/restaurante-cancelar-listo-motivo-en.webp',
+            alt: 'The “Ask support to cancel” form with the reason chosen and, below it, the explanation of who covers the food.',
+            pie: 'You choose the reason and see who covers the food before sending.',
+          },
+          {
+            src: '/docs/restaurante-cancelar-listo-enviada-en.webp',
+            alt: 'The ready order with the notice “Cancellation requested: support is reviewing it.”',
+            pie: 'The order stays in progress while support reviews.',
+          },
+        ],
+        preguntas: [
+          'How do I cancel an order that is already ready?',
+          'Who pays for the food if a ready order is canceled?',
+        ],
+        pasos: [
+          'In “Orders,” find the ready order and tap the three dots.',
+          'Tap “Ask support to cancel” and choose the reason.',
+          'Read who covers the food, add a detail if needed and tap “Send to support.”',
+          'Wait for the notice: if approved, the order is canceled and the customer is refunded. It works the same in the restaurant app, from the order’s three dots.',
+        ],
+      },
+      {
+        id: 'bring-divoox-to-your-city',
+        titulo: 'Your city doesn’t have Divoox yet: how to ask for it',
+        resumen:
+          'You can register your restaurant from any country. If Divoox doesn’t deliver in your city yet, you ask with one tap and we open first where the most restaurants ask.',
+        explicacion: [
+          'Sign-up isn’t limited by country: you create your account, add your restaurant details, your menu and your photos, and everything is ready for opening day.',
+          'When you create the account we tell you which cities Divoox already works in. If your store’s address is outside those cities, the “Bring Divoox to my city” card appears in “My restaurant.” You type your city and country, send it and our team writes to you.',
+          'On that same screen, your restaurant photo can be uploaded from your files or taken on the spot with “Take photo”: on a phone it opens the camera and on a computer, the webcam.',
+        ],
+        capturas: [
+          {
+            src: '/docs/restaurante-traer-divoox-en.webp',
+            alt: 'The “My restaurant” screen with the “Bring Divoox to my city” card and the “City and country” field filled in.',
+            pie: 'If your city isn’t covered yet, you ask for it right here.',
+          },
+          {
+            src: '/docs/restaurante-tomar-foto-en.webp',
+            alt: 'The restaurant photo field with two buttons: “Upload from files” and “Take photo.”',
+            pie: 'Every photo field has “Upload from files” and “Take photo.”',
+          },
+        ],
+        preguntas: [
+          'Can I register my restaurant if Divoox isn’t in my country?',
+          'How do I ask for Divoox to come to my city?',
+        ],
+        pasos: [
+          'Create your restaurant account and complete “My restaurant” with your address.',
+          'If “Bring Divoox to my city” appears, type your city and country and send it.',
+          'Keep adding your menu and photos: when we open in your city, your restaurant is ready.',
+        ],
+      },
+      {
         id: 'reviews-and-replies',
         titulo: 'Your customers’ reviews and how to reply',
         resumen:
@@ -6903,7 +7107,7 @@ const en: SeccionDocs[] = [
           'In “Menu,” tap “Add item.”',
           'Write the name and description in English and Spanish. Customers see the language they chose.',
           'Set the category in English and Spanish (for example “Starters” and “Entradas”) to group the menu, and the price in the local currency of your restaurant’s city (in the cities where Divoox operates; currencies without cents, like pesos, are written as whole numbers: 12000 is twelve thousand pesos).',
-          'Upload the item photo. No photo yet? Add it later: the item is published either way.',
+          'Upload the item photo from your files or take it on the spot with “Take photo.” No photo yet? Add it later: the item is published either way.',
           'Save. What you type is saved as you go: if the window closes, it’s still there when you’re back.',
         ],
       },
@@ -7625,7 +7829,7 @@ const en: SeccionDocs[] = [
           'When there’s an order nearby, the app vibrates and shows you the offer full screen: earnings, distance to the store, total trip, minutes, and items.',
           'You have 45 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t lower your level.',
           'After accepting, head to the restaurant. Take a photo of the closed order and wait for the restaurant to confirm it on their screen. At the customer’s door, take the delivery photo.',
-          'Tap “Directions” to open Google Maps or Apple Maps with the address already set.',
+          'Tap “Directions” and pick your maps app: Google Maps, Waze or, on iPhone, Apple Maps. It opens with the address already set.',
           'The customer’s tip is 100% yours: it never tops up your pay.',
         ],
       },
