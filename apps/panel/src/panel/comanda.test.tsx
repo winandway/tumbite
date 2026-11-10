@@ -102,3 +102,11 @@ describe('C-IMPRESORA-NAVEGADOR', () => {
     expect(puerto.writable).not.toBeNull();
   });
 });
+
+describe('la impresora que no responde no cuelga la comanda (revisión del 10 nov)', () => {
+  it('un envío sin respuesta falla a tiempo, para caer a la impresión del navegador', async () => {
+    const { conLimite } = await import('./impresora');
+    await expect(conLimite(new Promise(() => {}), 20)).rejects.toThrow('impresora-sin-respuesta');
+    await expect(conLimite(Promise.resolve('ok'), 20)).resolves.toBe('ok');
+  });
+});

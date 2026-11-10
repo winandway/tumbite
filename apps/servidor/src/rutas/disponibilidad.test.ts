@@ -64,15 +64,23 @@ describe('disponibilidad en el mundo', () => {
       origen: 'app',
       ...SANTIAGO,
     };
+    const suyo = (await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(cliente.id)
+      .first<{
+        correo: string;
+      }>())!.correo;
     // Sin sesión y sin pase del escudo: no entra (como siempre en la web).
     expect((await conEscudo(cuerpo)).estado).toBe(403);
+    // Con sesión, pero para el correo de OTRA persona: tampoco (no se mandan correos a terceros).
+    expect((await conEscudo(cuerpo, cliente.token)).estado).toBe(403);
+    cuerpo.correo = suyo;
     const r = await conEscudo(cuerpo, cliente.token);
     expect(r.estado).toBe(201);
     expect(r.datos.zona).toBeNull();
     const fila = await m.DB.prepare(
       'SELECT pais, origen, lat, lng, ciudad FROM lista_espera WHERE correo = ?',
     )
-      .bind('camila@ejemplo.com')
+      .bind(suyo)
       .first();
     expect(fila).toEqual({
       pais: 'CL',

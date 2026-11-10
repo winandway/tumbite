@@ -149,6 +149,9 @@ describe('app del repartidor en versión web (/driver)', () => {
     expect(raizDeApp('/restaurant/pedido')).toBe('/restaurant/');
     // Las páginas legales con nombre parecido siguen siendo de la portada.
     expect(raizDeApp('/restaurant-terms')).toBe('/');
+    // C-ENLACE-INVITACION: los enlaces de invitación son páginas del sitio, no de la app Driver.
+    expect(raizDeApp('/driver/join/abc')).toBe('/');
+    expect(raizDeApp('/driver/fleet/abc')).toBe('/');
     expect(raizDeApp('/driver/billetera')).toBe('/driver/');
     expect(raizDeApp('/app/pedido/1')).toBe('/app/');
     expect(raizDeApp('/repartidores')).toBe('/');

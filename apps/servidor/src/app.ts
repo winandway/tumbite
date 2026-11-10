@@ -437,6 +437,9 @@ export function conCanonica(res: Response, href: string): Response {
  */
 /** A qué raíz cae una ruta de página que no existe como archivo. */
 export function raizDeApp(ruta: string): string {
+  // C-ENLACE-INVITACION: los enlaces con que una empresa (Flex) o un restaurante (flota propia)
+  // invitan a su repartidor son páginas del sitio; si caían en la app Driver salía «página no existe».
+  if (/^\/driver\/(join|fleet)\//.test(ruta)) return '/';
   for (const base of ['/app', '/driver', '/restaurant'])
     if (ruta === base || ruta.startsWith(`${base}/`)) return `${base}/`;
   return '/';

@@ -13,9 +13,13 @@ export const espera = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
   // C-DISPONIBLE-MUNDO: las apps no tienen el recuadro del escudo web; quien ya entró a su cuenta
-  // pasa con su sesión (el límite de intentos sigue delante).
+  // pasa con su sesión para anotar SU correo (el límite de intentos sigue delante).
+  const d = await leerCuerpo(c, esquemaEspera);
+  // Solo para anotarse a sí mismo: con otro correo, la sesión no reemplaza al escudo (si no, una
+  // cuenta podría mandar correos de bienvenida a terceros).
+  const sesion = c.get('usuario');
   const ok =
-    Boolean(c.get('usuario')) ||
+    (sesion != null && sesion.correo.toLowerCase() === d.correo) ||
     (await pasaTurnstile(
       c.env.TURNSTILE_SECRET_KEY,
       c.req.header('cf-turnstile-response'),
@@ -27,7 +31,6 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
       undefined,
       403,
     );
-  const d = await leerCuerpo(c, esquemaEspera);
   const db = base(c);
   // Zona por ubicación; si no la dio, por el nombre de la ciudad que escribió.
   const zona =

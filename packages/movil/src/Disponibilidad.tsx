@@ -28,10 +28,11 @@ const T = {
       '¿Tu ciudad no está? Crea tu cuenta igual: te avisamos apenas lleguemos y tu cuenta ya queda lista.',
     tituloCliente: 'Avísame cuando llegue',
     tituloRestaurante: 'Quiero traer Divoox a mi ciudad',
-    introCliente: 'Déjanos tu correo y tu ciudad. Te escribimos el día que Divoox llegue.',
+    introCliente: 'Dinos tu ciudad. Te escribimos el día que Divoox llegue.',
     introRestaurante:
       'Cuéntanos de tu restaurante y tu ciudad. Abrimos primero donde más restaurantes nos lo piden.',
     correo: 'Correo electrónico',
+    avisamosA: 'Te avisamos a {correo}.',
     ciudad: 'Ciudad y país',
     ciudadEjemplo: 'Ciudad, país',
     negocio: 'Nombre del restaurante',
@@ -49,10 +50,11 @@ const T = {
       'Don’t see your city? Create your account anyway: we’ll let you know the moment we arrive and your account will be ready.',
     tituloCliente: 'Notify me when it arrives',
     tituloRestaurante: 'Bring Divoox to my city',
-    introCliente: 'Leave your email and city. We’ll write to you the day Divoox arrives.',
+    introCliente: 'Tell us your city. We’ll write to you the day Divoox arrives.',
     introRestaurante:
       'Tell us about your restaurant and your city. We open first where the most restaurants ask.',
     correo: 'Email',
+    avisamosA: 'We’ll notify you at {correo}.',
     ciudad: 'City and country',
     ciudadEjemplo: 'City, country',
     negocio: 'Restaurant name',
@@ -145,7 +147,7 @@ export function AvisameCuandoLlegue({
       await api.pedir('POST', '/datos/lista-espera', {
         tipo,
         nombre: usuario?.nombre || v.correo.split('@')[0] || '',
-        correo: v.correo,
+        correo: usuario?.correo ?? v.correo,
         ciudad: v.ciudad,
         negocio: v.negocio,
         telefono: v.telefono,
@@ -205,15 +207,23 @@ export function AvisameCuandoLlegue({
           error={errorDe('negocio')}
         />
       ) : null}
-      <Campo
-        etiqueta={t.correo}
-        value={v.correo}
-        onChangeText={(x) => b.cambiar('correo', x)}
-        keyboardType="email-address"
-        autoComplete="email"
-        placeholder={correoEjemplo(idioma)}
-        error={errorDe('correo')}
-      />
+      {/* Con la cuenta abierta se avisa al correo de la cuenta (el servidor solo acepta ese sin
+          el escudo web). Sin cuenta, la persona escribe el suyo. */}
+      {usuario?.correo ? (
+        <Text style={[suave, { marginBottom: 8 }]} testID="avisame-correo">
+          {t.avisamosA.replace('{correo}', usuario.correo)}
+        </Text>
+      ) : (
+        <Campo
+          etiqueta={t.correo}
+          value={v.correo}
+          onChangeText={(x) => b.cambiar('correo', x)}
+          keyboardType="email-address"
+          autoComplete="email"
+          placeholder={correoEjemplo(idioma)}
+          error={errorDe('correo')}
+        />
+      )}
       <Campo
         etiqueta={t.ciudad}
         value={v.ciudad}

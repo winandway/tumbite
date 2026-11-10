@@ -1041,6 +1041,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Elige el motivo de la cancelación.', 'Choose the reason for the cancellation.'],
   ['Cuéntanos qué pasó.', 'Tell us what happened.'],
+  [
+    'Llegaste al máximo de invitaciones de hoy. Mañana puedes invitar a más repartidores.',
+    'You reached today’s invitation limit. You can invite more drivers tomorrow.',
+  ],
   ['No encontrado.', 'Not found.'],
   ['No llegó ninguna foto.', 'No photo was received.'],
   [

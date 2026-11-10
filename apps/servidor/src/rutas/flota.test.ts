@@ -126,6 +126,15 @@ describe('flota propia del restaurante (C-FLOTA-PROPIA)', () => {
     const ver = await prod.m.llamar('GET', '/datos/mi-restaurante/flota', undefined, r.dueno.token);
     expect(ver.datos).toMatchObject({ disponible: false, modo: 'divoox' });
 
+    // Tampoco se pueden mandar invitaciones donde todavía no está encendida.
+    const inv = await prod.m.llamar(
+      'POST',
+      '/datos/mi-restaurante/flota/invitaciones',
+      { nombre: 'Leo', correo: 'leo@ejemplo.com' },
+      r.dueno.token,
+    );
+    expect(inv.estado).toBe(409);
+
     const e = await escena();
     const r2 = await e.restaurante('Sabor Dos');
     expect((await e.propia(r2)).estado).toBe(200);
@@ -237,6 +246,26 @@ describe('flota propia del restaurante (C-FLOTA-PROPIA)', () => {
       r.dueno.token,
     );
     expect(pedidos.datos.sinRepartidor).toEqual([expect.objectContaining({ id })]);
+  });
+
+  it('invitar dos veces a la misma persona reemplaza la invitación: no se acumulan', async () => {
+    const e = await escena();
+    const r = await e.restaurante('Sabor Uno');
+    const invitar = () =>
+      e.m.llamar(
+        'POST',
+        '/datos/mi-restaurante/flota/invitaciones',
+        { nombre: 'Leo', correo: 'leo@ejemplo.com' },
+        r.dueno.token,
+      );
+    const primera = await invitar();
+    await invitar();
+    const ver = await e.m.llamar('GET', '/datos/mi-restaurante/flota', undefined, r.dueno.token);
+    expect(ver.datos.invitaciones).toHaveLength(1);
+    const viejo = String(primera.datos.enlace).split('/').pop();
+    expect((await e.m.llamar('GET', `/datos/flota/invitacion/${viejo}`)).datos.estado).toBe(
+      'cancelada',
+    );
   });
 
   it('con respaldo encendido, si la flota propia no puede, el pedido pasa a la red de Divoox', async () => {

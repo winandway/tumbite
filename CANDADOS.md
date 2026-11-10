@@ -3398,3 +3398,22 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas:** `apps/panel/src/panel/camara.test.tsx` (celular, computadora, sin permiso, y los dos candados que recorren el código: toda casilla web de imagen lleva `BotonCamara` o `capture`, y todo archivo de las apps que abre la galería usa `fotoConCamara` o `capturasConCamara`; el de las apps se vio en rojo con cinco archivos antes del arreglo) y `apps/servidor/src/camaraApps.test.ts` (la pieza de las apps).
 - **Qué NO tocar:** ninguna casilla de imagen nueva con un `<input type="file">` o un `launchImageLibraryAsync` sueltos: siempre con la pieza. El candado de fotos compatibles (`heicApps.test.ts`) sigue igual.
 - **Tiendas ([para: tiendas-lanzamientos] y auditor):** la app Restaurants pide ahora el permiso de cámara (antes lo tenía apagado). Entra con la próxima compilación; revisar la declaración de permisos y el texto antes de enviarla. En las apps el cambio llega con la próxima compilación (ninguna sin permiso de Gerencia); la web ya lo tiene al publicar.
+
+## C-ENLACE-INVITACION: el enlace de invitación de un repartidor abre su página, no la app Driver (10 nov 2026) — todos los países
+
+- **Qué se rompió y cómo se veía:** el enlace que una empresa de Flex le manda a su conductor (`/driver/join/<código>`) abría la app web Divoox Driver, que respondía «página no existe». Estaba así en producción (comprobado el 10 nov: la dirección devolvía la app Driver). Lo destapó el recorrido en el navegador del enlace nuevo de flota propia (`/driver/fleet/<código>`).
+- **Causa real:** `raizDeApp` (`apps/servidor/src/app.ts`) manda todo lo que empieza por `/driver/` a la app Driver; las dos páginas de invitación viven en el sitio.
+- **Arreglo:** `raizDeApp` devuelve la raíz del sitio para `/driver/join/…` y `/driver/fleet/…`.
+- **Prueba:** `apps/servidor/src/app.test.ts` (comprobada en rojo antes del arreglo) y el recorrido `e2e/recorrido/novedadesNov10.spec.ts`, que abre el enlace en el navegador.
+- **No tocar:** una página pública nueva bajo `/driver/`, `/app/` o `/restaurant/` necesita su excepción aquí y su paso en un recorrido; una prueba de componente sola no ve este fallo.
+
+## Revisión de calidad del 10 nov 2026 (una pasada por paquete): lo que se corrigió — todos los países
+
+- **Flota propia y cobro directo:** el despacho de flota propia ahora aplica el mismo filtro de saldo que la aceptación (`conSaldoParaDirecto`), para no ofrecer un pedido en efectivo que después no se puede aceptar. El reparto del dinero con flota propia sigue siendo decisión de Richard.
+- **Flota propia, invitaciones:** invitar exige que la flota esté disponible en ese entorno (409 en producción), hay un tope de 30 invitaciones por restaurante cada 24 horas, e invitar otra vez a la misma persona reemplaza la pendiente. Aceptar exige que siga pendiente. Deuda anotada: la coincidencia por celular no exige celular verificado (igual que en Flex).
+- **Cancelar un pedido listo:** al aprobar se avisa también al repartidor asignado (`avisarAlRepartidor`), y un índice único impide dos solicitudes pendientes del mismo pedido.
+- **Lista de espera:** la sesión reemplaza al escudo web solo para anotar el correo de la propia cuenta; en la app, con la cuenta abierta, el aviso va siempre al correo de la cuenta.
+- **Cámara web:** si se cierra la ventanita mientras el navegador pide el permiso, la cámara se apaga al llegar el permiso.
+- **Comanda e impresora (COMANDA-8N-r):** cada envío a la impresora se comprueba y tiene tiempo límite de 8 segundos (si no responde, la comanda cae a la impresión del navegador), y los acentos «sueltos» de un texto pegado salen como su letra. Límite: no se probó con una impresora física.
+- **Consentimiento de SMS (b099e59):** visto bueno; además, al cambiar el celular el permiso no pasa al número nuevo.
+- **Pruebas nuevas:** en `flota.test.ts`, `disponibilidad.test.ts`, `smsConsentimiento.test.ts`, `escpos.test.ts` y `comanda.test.tsx`.

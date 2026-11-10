@@ -9,7 +9,8 @@ import {
 import { nuevoId } from '../cripto';
 import type { Env } from '../env';
 import { anotarEvento, cancelarConReembolso } from '../manager';
-import { notificar } from '../notificaciones';
+import { AVISOS, notificar } from '../notificaciones';
+import { avisarAlRepartidor } from './operacion';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { crearTicket } from './tickets';
@@ -113,15 +114,25 @@ cancelaciones.post('/restaurante/pedidos/:id/pedir-cancelacion', async (c) => {
     pedidoId: id,
     zonaId: p.zona_id,
   });
-  await db.batch([
-    db
-      .prepare(
-        `INSERT INTO solicitudes_cancelacion (id, pedido_id, restaurante_id, pedida_por, motivo, detalle, paga_comida, ticket_id)
-         VALUES (?,?,?,?,?,?,?,?)`,
-      )
-      .bind(sid, id, p.rid, u.id, d.motivo, d.detalle, paga, caso.id),
-    db.prepare("UPDATE tickets SET prioridad = 'alta' WHERE id = ?").bind(caso.id),
-  ]);
+  // Dos toques seguidos: el índice único de «una pendiente por pedido» deja pasar solo uno.
+  try {
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO solicitudes_cancelacion (id, pedido_id, restaurante_id, pedida_por, motivo, detalle, paga_comida, ticket_id)
+           VALUES (?,?,?,?,?,?,?,?)`,
+        )
+        .bind(sid, id, p.rid, u.id, d.motivo, d.detalle, paga, caso.id),
+      db.prepare("UPDATE tickets SET prioridad = 'alta' WHERE id = ?").bind(caso.id),
+    ]);
+  } catch (e) {
+    if (!/UNIQUE/i.test(String(e))) throw e;
+    throw new ErrorDatos(
+      'Ya pediste la cancelación de este pedido. Soporte la está revisando.',
+      undefined,
+      409,
+    );
+  }
   await anotarEvento(db, id, 'cancelacion_pedida_por_restaurante', d.motivo);
   const f = await db
     .prepare('SELECT * FROM solicitudes_cancelacion WHERE id = ?')
@@ -198,6 +209,10 @@ cancelaciones.post('/admin/cancelaciones/:id/:decision', async (c) => {
         undefined,
         409,
       );
+    // El repartidor que ya iba hacia el local se entera en el momento (como al rechazar).
+    await avisarAlRepartidor(c.env, db, s.pedido_id, (i, f) =>
+      AVISOS.repCancelado(i, f.restaurante),
+    ).catch((e: unknown) => console.error('cancelaciones: no se pudo avisar al repartidor', e));
     await anotarEvento(
       db,
       s.pedido_id,

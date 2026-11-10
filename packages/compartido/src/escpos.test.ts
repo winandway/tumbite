@@ -41,6 +41,12 @@ describe('C-IMPRESORA-NAVEGADOR · ticket ESC/POS', () => {
       expect(t).toContain(s);
     expect(t).toContain('ALERGIA: man\xa1');
   });
+  it('un acento «suelto» (texto pegado) sale como su letra, no como «?»', () => {
+    const suelto = 'cafe\u0301 con pin\u0303a';
+    expect([...textoCp850(suelto)]).toEqual([...textoCp850('café con piña')]);
+    expect([...textoCp850(suelto)]).not.toContain(0x3f);
+  });
+
   it('corta las líneas al ancho: 32 columnas en 58 mm y 48 en 80 mm', () => {
     const largo = {
       id: 'abcd1234',

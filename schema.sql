@@ -3527,3 +3527,5 @@ CREATE TABLE IF NOT EXISTS solicitudes_cancelacion (
 );
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancelacion(pedido_id, estado);
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
+-- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
+CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';

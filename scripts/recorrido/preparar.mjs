@@ -88,6 +88,8 @@ writeFileSync(
     // sitio de pruebas; si no, cada arranque nuevo apagaba Carro en medio de su prueba.
     'SERVICIOS_PRUEBA_LOCAL=1',
     // El recorrido corre a cualquier hora: no lo frena la hora legal del alcohol (C-ALCOHOL-HORARIO).
+    // C-FLOTA-PROPIA: encendida en el servidor local, como en el sitio de pruebas.
+    'FLOTA_PROPIA=1',
     'ALCOHOL_SIN_HORARIO=1',
     // Flex · Fase 5: con el secreto del reloj, el enlace «confirma dónde recibes» es estable.
     `RELOJ_SECRETO=${randomBytes(24).toString('hex')}`,

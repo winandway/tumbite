@@ -70,7 +70,8 @@ const CP850 = new Map<string, number>([
 /** Texto a bytes de la página 850; lo que no existe se cambia por su letra sin tilde o «?». */
 export function textoCp850(texto: string): Uint8Array {
   const salida: number[] = [];
-  for (const ch of texto.replace(/[‘’]/g, "'").replace(/[“”]/g, '"')) {
+  // NFC primero: un acento «suelto» (e + tilde aparte, común al pegar texto) vuelve a ser una letra.
+  for (const ch of texto.normalize('NFC').replace(/[‘’]/g, "'").replace(/[“”]/g, '"')) {
     const cod = ch.charCodeAt(0);
     if (ch.length === 1 && cod >= 0x20 && cod < 0x7f) salida.push(cod);
     else if (ch === '\n') salida.push(0x0a);

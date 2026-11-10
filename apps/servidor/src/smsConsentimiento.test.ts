@@ -71,6 +71,33 @@ describe('C-SMS-CONSENTIMIENTO · la casilla de SMS', () => {
     expect(f?.canal).toBe('app');
   });
 
+  it('el permiso es para un número: al cambiar el celular, el permiso no pasa al nuevo', async () => {
+    const m = mundo();
+    const r = await m.llamar(
+      'POST',
+      '/datos/cuentas/registro',
+      registro({ smsConsentimiento: true, canal: 'app' }),
+    );
+    const id = r.datos.usuario.id as string;
+    // Guardar el perfil con el MISMO número conserva el permiso.
+    const igual = await m.llamar(
+      'PATCH',
+      '/datos/cuentas/yo',
+      { nombre: 'Persona cliente', telefono: '3055550142', idioma: 'es' },
+      r.datos.token,
+    );
+    expect(igual.estado).toBe(200);
+    expect((await consentimiento(m, id))?.en).toBeTruthy();
+    // Con otro número, el permiso se retira.
+    await m.llamar(
+      'PATCH',
+      '/datos/cuentas/yo',
+      { nombre: 'Persona cliente', telefono: '3055550199', idioma: 'es' },
+      r.datos.token,
+    );
+    expect((await consentimiento(m, id))?.en).toBeNull();
+  });
+
   it('la casilla se valida: un valor que no es sí/no se rechaza', async () => {
     const m = mundo();
     const r = await m.llamar(

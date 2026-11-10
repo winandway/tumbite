@@ -1764,10 +1764,17 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     // Camino rápido: solo la celda del restaurante y sus 8 vecinas (índice zona + celda).
     // Si ahí no hay nadie libre, se busca en toda la zona. Nunca se cruza de zona.
     let candidatos: (Libre & { km: number })[] = [];
-    // C-FLOTA-PROPIA: primero (o solo) a los repartidores del restaurante. El restaurante les paga
-    // él, así que aquí no se mira el saldo prepago ni la habilitación del catálogo.
+    // C-FLOTA-PROPIA: primero (o solo) a los repartidores del restaurante. No se mira la
+    // habilitación del catálogo (son del restaurante), pero sí el saldo del cobro directo, igual
+    // que al aceptar: nunca se ofrece un pedido que después no se va a poder aceptar. El reparto
+    // del dinero con flota propia lo decide Richard; hasta entonces vale la regla de siempre.
     const propia = p.flota_modo === 'propia';
-    if (propia) candidatos = ordenar(await libresEn(db, p.zona_id, null, p.restaurante_id));
+    if (propia)
+      candidatos = await conSaldoParaDirecto(
+        db,
+        p.id,
+        ordenar(await libresEn(db, p.zona_id, null, p.restaurante_id)),
+      );
     if (candidatos.length) {
       // Ya hay a quién ofrecerlo dentro de su flota.
     } else if (propia && Number(p.flota_respaldo) !== 1) {

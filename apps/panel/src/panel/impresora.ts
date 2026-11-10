@@ -93,10 +93,26 @@ async function abrirUsb(d: DispositivoUsb): Promise<ConexionImpresora> {
     nombre: d.productName || 'USB',
     enviar: async (b) => {
       // De a 4 KB: algunas impresoras baratas no aguantan un envío grande de una vez.
-      for (let i = 0; i < b.length; i += 4096) await d.transferOut(salida, b.slice(i, i + 4096));
+      // Cada envío se comprueba y lleva tiempo límite: si la impresora no responde o rechaza el
+      // envío, falla aquí y la comanda cae a la impresión del navegador (nunca se pierde).
+      for (let i = 0; i < b.length; i += 4096) {
+        const r = await conLimite(d.transferOut(salida, b.slice(i, i + 4096)));
+        if (r && typeof r === 'object' && 'status' in r && r.status !== 'ok')
+          throw new Error('envio-usb-rechazado');
+      }
     },
     cerrar: () => d.close(),
   };
+}
+
+/** Tiempo límite de un envío a la impresora: apagada o sin señal, no deja la comanda colgada. */
+export const LIMITE_IMPRESORA_MS = 8_000;
+export function conLimite<T>(envio: Promise<T>, ms = LIMITE_IMPRESORA_MS): Promise<T> {
+  let reloj: ReturnType<typeof setTimeout> | undefined;
+  const limite = new Promise<never>((_, falla) => {
+    reloj = setTimeout(() => falla(new Error('impresora-sin-respuesta')), ms);
+  });
+  return Promise.race([envio, limite]).finally(() => clearTimeout(reloj));
 }
 
 async function abrirSerie(p: PuertoSerie): Promise<ConexionImpresora> {
@@ -109,7 +125,7 @@ async function abrirSerie(p: PuertoSerie): Promise<ConexionImpresora> {
       if (!p.writable) throw new Error('puerto-cerrado');
       const w = p.writable.getWriter();
       try {
-        await w.write(b);
+        await conLimite(w.write(b));
       } finally {
         w.releaseLock();
       }

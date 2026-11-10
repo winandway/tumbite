@@ -549,9 +549,13 @@ cuentas.patch('/yo', async (c) => {
       'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',
       'nombre',
     );
+  // C-SMS-CONSENTIMIENTO: el permiso de SMS se dio para un número; si el número cambia, el permiso
+  // no pasa al nuevo (la persona vuelve a marcar la casilla si quiere).
   await base(c)
     .prepare(
-      'UPDATE usuarios SET nombre = ?, telefono = ?, fecha_nacimiento = ?, idioma = ? WHERE id = ?',
+      `UPDATE usuarios SET nombre = ?1, fecha_nacimiento = ?3, idioma = ?4,
+        sms_consentido_en = CASE WHEN COALESCE(telefono, '') = COALESCE(?2, '') THEN sms_consentido_en ELSE NULL END,
+        telefono = ?2 WHERE id = ?5`,
     )
     .bind(d.nombre, d.telefono || null, d.fechaNacimiento, d.idioma, u.id)
     .run();

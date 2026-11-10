@@ -72,7 +72,16 @@ export function BotonCamara({
   const [abierta, setAbierta] = useState(false);
   const [flujo, setFlujo] = useState<MediaStream | null>(null);
 
+  /** Hay un permiso de cámara en curso: si se cierra antes de que llegue, se apaga al llegar. */
+  const pidiendo = useRef(false);
+  useEffect(
+    () => () => {
+      pidiendo.current = false;
+    },
+    [],
+  );
   const cerrar = () => {
+    pidiendo.current = false;
     flujo?.getTracks().forEach((p) => p.stop());
     setFlujo(null);
     setAbierta(false);
@@ -91,9 +100,16 @@ export function BotonCamara({
     if (esTactil()) return entrada.current?.click();
     if (!navigator.mediaDevices?.getUserMedia) return alFallar(t.sinCamara);
     setAbierta(true);
+    pidiendo.current = true;
     try {
-      setFlujo(await navigator.mediaDevices.getUserMedia({ video: { facingMode: camara } }));
+      const nuevo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: camara } });
+      // Si cerró la ventanita (o salió de la pantalla) mientras el navegador pedía el permiso,
+      // la cámara se apaga aquí mismo: la luz nunca se queda encendida.
+      if (!pidiendo.current) return nuevo.getTracks().forEach((pista) => pista.stop());
+      pidiendo.current = false;
+      setFlujo(nuevo);
     } catch {
+      pidiendo.current = false;
       setAbierta(false);
       alFallar(t.sinCamara);
     }

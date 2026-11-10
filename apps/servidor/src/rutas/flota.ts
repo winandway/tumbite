@@ -21,6 +21,9 @@ import { exigirMiRestaurante } from './catalogo';
  */
 export const flota = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+/** Tope de invitaciones que un restaurante puede mandar en 24 horas. */
+const INVITACIONES_POR_DIA = 30;
+
 export const flotaPropiaDisponible = (c: Ctx): boolean =>
   entornoDe(c.req.url) === 'pruebas' || c.env.FLOTA_PROPIA === '1';
 
@@ -127,8 +130,27 @@ const esquemaInvitacion = z
 flota.post('/mi-restaurante/flota/invitaciones', async (c) => {
   const rid = await exigirMiRestaurante(c, 'manager');
   const u = exigir(c, 'restaurante');
+  if (!flotaPropiaDisponible(c))
+    throw new ErrorDatos(
+      'La flota propia todavía no está disponible en tu ciudad. Te avisamos apenas se pueda encender.',
+      undefined,
+      409,
+    );
   const d = await leerCuerpo(c, esquemaInvitacion);
   const db = base(c);
+  // Tope diario: nadie usa las invitaciones para mandar correos sin límite.
+  const hoy = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM invitaciones_flota WHERE restaurante_id = ? AND creado_en > datetime('now', '-1 day')",
+    )
+    .bind(rid)
+    .first<{ n: number }>();
+  if (Number(hoy?.n ?? 0) >= INVITACIONES_POR_DIA)
+    throw new ErrorDatos(
+      'Llegaste al máximo de invitaciones de hoy. Mañana puedes invitar a más repartidores.',
+      undefined,
+      429,
+    );
   const r = await db
     .prepare('SELECT nombre FROM restaurantes WHERE id = ?')
     .bind(rid)
@@ -137,13 +159,22 @@ flota.post('/mi-restaurante/flota/invitaciones', async (c) => {
   const id = nuevoId();
   const correo = d.correo ? correoCanonico(d.correo) : null;
   const telefono = telefonoCanonico(d.telefono);
-  await db
-    .prepare(
-      `INSERT INTO invitaciones_flota (id, restaurante_id, nombre, correo_canonico, telefono_canonico, token_hash, invitado_por)
-       VALUES (?,?,?,?,?,?,?)`,
-    )
-    .bind(id, rid, d.nombre, correo, telefono, await sha256(token), u.id)
-    .run();
+  // Volver a invitar a la misma persona reemplaza su invitación pendiente (no se acumulan).
+  await db.batch([
+    db
+      .prepare(
+        `UPDATE invitaciones_flota SET estado = 'cancelada', respondida_en = datetime('now')
+         WHERE restaurante_id = ?1 AND estado = 'pendiente'
+         AND ((?2 IS NOT NULL AND correo_canonico = ?2) OR (?3 IS NOT NULL AND telefono_canonico = ?3))`,
+      )
+      .bind(rid, correo, telefono),
+    db
+      .prepare(
+        `INSERT INTO invitaciones_flota (id, restaurante_id, nombre, correo_canonico, telefono_canonico, token_hash, invitado_por)
+         VALUES (?,?,?,?,?,?,?)`,
+      )
+      .bind(id, rid, d.nombre, correo, telefono, await sha256(token), u.id),
+  ]);
   const sitio = (c.env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
   const enlace = `${sitio}/driver/fleet/${token}`;
   const nombre = r?.nombre ?? 'Un restaurante';
@@ -284,7 +315,7 @@ async function entrar(db: D1Database, usuarioId: string, inv: FilaInvitacion) {
       .bind(inv.restaurante_id, usuarioId),
     db
       .prepare(
-        `UPDATE invitaciones_flota SET estado = 'aceptada', usuario_id = ?, respondida_en = datetime('now') WHERE id = ?`,
+        `UPDATE invitaciones_flota SET estado = 'aceptada', usuario_id = ?, respondida_en = datetime('now') WHERE id = ? AND estado = 'pendiente'`,
       )
       .bind(usuarioId, inv.id),
   ]);
