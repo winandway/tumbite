@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-08T06:00:46.000Z",
+  "actualizado": "2026-11-10T21:44:35.000Z",
   "version": "7b9a5ca",
-  "ahora": "Divoox retomado el 8 nov: bloque de lanzamiento cerrado y app del restaurante en TestFlight",
+  "ahora": "10 nov: se adelantó lo que no depende de nadie — Divoox dice dónde funciona y deja pedir tu ciudad, flota propia del restaurante (en pruebas), perfil de Chile, cancelar un pedido listo vía soporte, elegir app de mapas y «Tomar foto» en toda subida",
   "proximo": [
     {
       "quien": "richard",
@@ -20,6 +20,27 @@
     }
   ],
   "esperando": [
+    {
+      "id": "flota-propia-dinero",
+      "prioridad": "alta",
+      "titulo": "Decidir el dinero de la flota propia del restaurante",
+      "para": "Con sus propios repartidores, quién se queda el envío y la propina y qué comisión paga el restaurante (en DoorDash y Uber Eats se los queda el restaurante y la comisión baja).",
+      "destraba": "Encender «Mis repartidores» en producción, empezando por el restaurante de Chile con 14 repartidores."
+    },
+    {
+      "id": "chile-cuenta-de-cobro",
+      "prioridad": "media",
+      "titulo": "Abrir la cuenta de cobro de Chile",
+      "para": "Stripe no da cuentas a comercios chilenos: hace falta un procesador local (dLocal, Mercado Pago o Transbank) y la revisión de un contador y un abogado de Chile.",
+      "destraba": "Encender Chile: el perfil del país ya está en el código, apagado."
+    },
+    {
+      "id": "cancelar-listo-dinero",
+      "prioridad": "media",
+      "titulo": "Decidir quién paga la comida de un pedido listo que se cancela",
+      "para": "Hoy soporte aprueba y el cliente recibe todo su dinero; queda anotado quién asume la comida, pero todavía no mueve dinero.",
+      "destraba": "Pagarle la comida al restaurante cuando la causa no fue suya, como DoorDash."
+    },
     {
       "id": "aprobar-portada-p2",
       "prioridad": "alta",
@@ -304,6 +325,11 @@
   ],
   "bitacora": [
     {
+      "fecha": "2026-11-10",
+      "titulo": "Seis funciones adelantadas en un día",
+      "texto": "Divoox ya dice en qué países y ciudades funciona, y a quien todavía no le llega le ofrece «Avísame cuando llegue»; el restaurante de otra ciudad puede pedir «Quiero traer Divoox a mi ciudad» (el registro no se limita por país). Flota propia del restaurante: invita a sus repartidores y ellos reciben solo sus pedidos (encendida en el sitio de pruebas). Perfil de Chile en el código, apagado. Un pedido ya listo se cancela pidiéndolo a soporte, con motivo y con quién asume la comida. «Cómo llegar» deja elegir Google Maps, Waze o Apple Maps también en comida. Toda casilla de foto ofrece «Tomar foto». El revisor de calidad pasó por la comanda, el consentimiento de SMS y todo lo de hoy, y sus arreglos quedaron aplicados. De paso se arregló el enlace de invitación de conductores de Flex, que abría la app Driver en vez de su página. Nada se envió a Apple ni a Google. Todos los países; flota propia y Chile, en particular Chile."
+    },
+    {
       "fecha": "2026-11-08",
       "titulo": "Bloque de lanzamiento cerrado",
       "texto": "Revisión aprobada del segundo cambio de dirección: cada autorización reemplazada queda vigilada y la conciliación exige que todas estén anuladas. La app del restaurante, con la comanda impresa y el nombre corto del cliente, quedó en TestFlight (compilación 17, lista en App Store Connect). Nada se mandó a revisión de Apple. EE. UU."
@@ -551,6 +577,12 @@
     }
   ],
   "incidencias": [
+    {
+      "fecha": "2026-11-10",
+      "titulo": "El enlace de invitación de conductores de Flex abría la app Driver",
+      "estado": "resuelto",
+      "texto": "El enlace que una empresa le manda a su conductor caía en la app Driver y mostraba «página no existe». Se arregló de raíz, con su prueba, junto con el enlace nuevo de la flota del restaurante."
+    },
     {
       "fecha": "2026-11-02",
       "titulo": "Cupo diario de correos agotado por el sitio de pruebas",
