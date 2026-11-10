@@ -3508,3 +3508,22 @@ CREATE TABLE IF NOT EXISTS invitaciones_flota (
 );
 CREATE INDEX IF NOT EXISTS invitaciones_flota_restaurante ON invitaciones_flota(restaurante_id, estado);
 CREATE INDEX IF NOT EXISTS invitaciones_flota_correo ON invitaciones_flota(correo_canonico, estado);
+
+-- C-CANCELAR-LISTO (10 nov 2026): el restaurante pide a soporte cancelar un pedido ya listo.
+CREATE TABLE IF NOT EXISTS solicitudes_cancelacion (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  pedida_por TEXT REFERENCES usuarios(id),
+  motivo TEXT NOT NULL,
+  detalle TEXT NOT NULL DEFAULT '',
+  paga_comida TEXT NOT NULL DEFAULT 'por_definir' CHECK (paga_comida IN ('restaurante', 'cliente', 'divoox', 'por_definir')),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
+  ticket_id TEXT,
+  nota_soporte TEXT NOT NULL DEFAULT '',
+  resuelta_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT
+);
+CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancelacion(pedido_id, estado);
+CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);

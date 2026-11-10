@@ -2278,5 +2278,20 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "vence_en",
     "respondida_en"
+  ],
+  "solicitudes_cancelacion": [
+    "id",
+    "pedido_id",
+    "restaurante_id",
+    "pedida_por",
+    "motivo",
+    "detalle",
+    "paga_comida",
+    "estado",
+    "ticket_id",
+    "nota_soporte",
+    "resuelta_por",
+    "creado_en",
+    "resuelta_en"
   ]
 };

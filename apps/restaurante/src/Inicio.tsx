@@ -1,3 +1,4 @@
+import { PedirCancelacion } from './PedirCancelacion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import {
@@ -72,6 +73,8 @@ import {
 } from './piezas/ui';
 
 type Pedido = {
+  /** C-CANCELAR-LISTO: estado de la última solicitud de cancelación a soporte, si hubo. */
+  cancelacion?: 'pendiente' | 'aprobada' | 'rechazada' | null;
   /** C-PEDIDO-PRUEBA: pedido ficticio para practicar (sin cobro ni repartidor). */
   prueba?: boolean;
   /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC) o null. */
@@ -145,6 +148,8 @@ const T = {
     listo: '¡Listo!',
     minutos: 'min',
     rechazar: 'Rechazar pedido',
+    pedirCancelacion: 'Pedir cancelación a soporte',
+    cancelacionPendiente: 'Cancelación pedida: soporte la está revisando.',
     confirmarRechazo: '¿Rechazar este pedido? Se le devuelve todo el dinero al cliente.',
     si: 'Sí, rechazar',
     no: 'No',
@@ -213,6 +218,8 @@ const T = {
     listo: 'Ready!',
     minutos: 'min',
     rechazar: 'Reject order',
+    pedirCancelacion: 'Ask support to cancel',
+    cancelacionPendiente: 'Cancellation requested: support is reviewing it.',
     confirmarRechazo: 'Reject this order? The customer gets a full refund.',
     si: 'Yes, reject',
     no: 'No',
@@ -364,6 +371,8 @@ export function Inicio() {
   const [rest, setRest] = useState<Restaurante | null | undefined>(undefined);
   const [error, setError] = useState('');
   const [menuDe, setMenuDe] = useState<string | null>(null);
+  // C-CANCELAR-LISTO: el pedido listo cuya cancelación se está pidiendo a soporte.
+  const [cancelando, setCancelando] = useState<string | null>(null);
   const [pinLocal, setPinLocal] = useState('');
   // C-COMANDA-APP: imprimir la comanda al aceptar (preferencia de este equipo).
   const [comandaAlAceptar, setComandaAlAceptar] = useComandaAlAceptar();
@@ -724,7 +733,10 @@ export function Inicio() {
 
   /** Tres puntos con «Rechazar pedido», solo mientras se puede (como antes). */
   const tresPuntos = (p: Pedido) =>
-    p.estado === 'pagado' || p.estado === 'aceptado' ? (
+    p.estado === 'pagado' ||
+    p.estado === 'aceptado' ||
+    // C-CANCELAR-LISTO: ya listo, lo que se ofrece es pedirle la cancelación a soporte.
+    (p.estado === 'listo' && !p.prueba && p.cancelacion !== 'pendiente') ? (
       <View>
         <Pressable
           onPress={() => setMenuDe(menuDe === p.id ? null : p.id)}
@@ -737,7 +749,11 @@ export function Inicio() {
         </Pressable>
         {menuDe === p.id && (
           <Pressable
-            onPress={() => void rechazar(p)}
+            onPress={() => {
+              if (p.estado !== 'listo') return void rechazar(p);
+              setMenuDe(null);
+              setCancelando(p.id);
+            }}
             accessibilityRole="button"
             style={{
               position: 'absolute',
@@ -753,10 +769,19 @@ export function Inicio() {
               minWidth: 170,
             }}
           >
-            <Text style={{ color: '#B3261E', fontWeight: '700' }}>{t.rechazar}</Text>
+            <Text style={{ color: '#B3261E', fontWeight: '700' }}>
+              {p.estado === 'listo' ? t.pedirCancelacion : t.rechazar}
+            </Text>
           </Pressable>
         )}
       </View>
+    ) : p.estado === 'listo' && p.cancelacion === 'pendiente' ? (
+      <Text
+        testID="cancelacion-pendiente"
+        style={{ color: '#5E5E5E', fontSize: 12, maxWidth: 150, textAlign: 'right' }}
+      >
+        {t.cancelacionPendiente}
+      </Text>
     ) : null;
 
   /** Elegir el tiempo y aceptar: el sugerido viene marcado en verde. */
@@ -1377,6 +1402,14 @@ export function Inicio() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
+      {cancelando ? (
+        <PedirCancelacion
+          pedidoId={cancelando}
+          idioma={idioma}
+          alCerrar={() => setCancelando(null)}
+          alEnviar={() => void cargar()}
+        />
+      ) : null}
       {detalle ? (
         <CabeceraInterna
           titulo={`${tr.pedido} ${numero(detalle)}`}

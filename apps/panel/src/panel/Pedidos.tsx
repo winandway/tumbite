@@ -22,6 +22,7 @@ import {
 } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { ReportarPanel } from './ReportarPanel';
+import { PedirCancelacion } from './PedirCancelacion';
 import { LuzSemaforo } from './LuzSemaforo';
 import QRCode from 'qrcode';
 import { pedir } from './api';
@@ -51,6 +52,8 @@ const leerImprimir = () => {
 type Pedido = {
   id: string;
   estado: string;
+  /** C-CANCELAR-LISTO: estado de la última solicitud de cancelación a soporte, si hubo. */
+  cancelacion?: 'pendiente' | 'aprobada' | 'rechazada' | null;
   /** C-PEDIDO-PRUEBA: pedido ficticio para practicar (sin cobro ni repartidor). */
   prueba?: boolean;
   /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC) o null. */
@@ -147,6 +150,9 @@ const T = {
     listo: '¡Listo!',
     rechazar: 'Rechazar pedido',
     reportar: 'Reportar un problema',
+    pedirCancelacion: 'Pedir cancelación a soporte',
+    cancelacionPendiente: 'Cancelación pedida: soporte la está revisando.',
+    cancelacionRechazada: 'Soporte no aprobó la cancelación: el pedido sigue en curso.',
     confirmar: '¿Rechazar este pedido? Se le devuelve todo el dinero al cliente.',
     mas: 'Más opciones',
     notas: 'Notas',
@@ -235,6 +241,9 @@ const T = {
     listo: 'Ready!',
     rechazar: 'Reject order',
     reportar: 'Report a problem',
+    pedirCancelacion: 'Ask support to cancel',
+    cancelacionPendiente: 'Cancellation requested: support is reviewing it.',
+    cancelacionRechazada: 'Support didn’t approve the cancellation: the order stays in progress.',
     confirmar: 'Reject this order? The customer gets a full refund.',
     mas: 'More options',
     notas: 'Notes',
@@ -283,6 +292,8 @@ function crearAlarma() {
 
 export function Pedidos({ idioma }: { idioma: Idioma }) {
   const [reportando, setReportando] = useState<string | null>(null);
+  // C-CANCELAR-LISTO: el pedido listo cuya cancelación se está pidiendo a soporte.
+  const [cancelando, setCancelando] = useState<string | null>(null);
   // «Me falta un plato»: el pedido donde se está eligiendo el plato.
   const [faltando, setFaltando] = useState<string | null>(null);
   const [platoFalta, setPlatoFalta] = useState('');
@@ -999,6 +1010,16 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                       },
                     ]
                   : []),
+                // C-CANCELAR-LISTO: ya listo no se rechaza con un toque; se pide a soporte con motivo.
+                ...(p.estado === 'listo' && !p.prueba && p.cancelacion !== 'pendiente'
+                  ? [
+                      {
+                        texto: t.pedirCancelacion,
+                        peligro: true,
+                        alTocar: () => setCancelando(p.id),
+                      },
+                    ]
+                  : []),
                 ...(p.estado === 'pagado' || p.estado === 'aceptado'
                   ? [
                       {
@@ -1013,6 +1034,24 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   : []),
               ]}
             />
+            {p.estado === 'listo' && p.cancelacion === 'pendiente' ? (
+              <p className="suave" role="status" data-testid="cancelacion-pendiente">
+                {t.cancelacionPendiente}
+              </p>
+            ) : null}
+            {p.estado === 'listo' && p.cancelacion === 'rechazada' ? (
+              <p className="suave" role="status">
+                {t.cancelacionRechazada}
+              </p>
+            ) : null}
+            {cancelando === p.id && (
+              <PedirCancelacion
+                pedidoId={p.id}
+                idioma={idioma}
+                alCerrar={() => setCancelando(null)}
+                alEnviar={() => void cargar()}
+              />
+            )}
             {reportando === p.id && (
               <ReportarPanel pedidoId={p.id} idioma={idioma} alCerrar={() => setReportando(null)} />
             )}

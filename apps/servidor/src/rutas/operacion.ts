@@ -462,7 +462,8 @@ operacion.get('/restaurante/pedidos', async (c) => {
   const { results } = await base(c)
     .prepare(
       `SELECT p.*, ${CON_EVIDENCIAS}, ${CON_HITOS}, ${CON_AJUSTE}, ur.nombre AS repartidor_nombre, uc.nombre AS cliente_nombre, d.lat AS rep_lat, d.lng AS rep_lng, d.ubicacion_en AS rep_en, r.lat AS rest_lat, r.lng AS rest_lng,
-        (SELECT a.auditiva FROM accesibilidad_repartidor a WHERE a.usuario_id = p.repartidor_id) AS rep_auditiva
+        (SELECT a.auditiva FROM accesibilidad_repartidor a WHERE a.usuario_id = p.repartidor_id) AS rep_auditiva,
+        (SELECT s.estado FROM solicitudes_cancelacion s WHERE s.pedido_id = p.id ORDER BY s.creado_en DESC LIMIT 1) AS cancelacion_estado
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN usuarios uc ON uc.id = p.cliente_id
       LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
@@ -481,6 +482,8 @@ operacion.get('/restaurante/pedidos', async (c) => {
         repartidor: repartidorParaRestaurante(f),
         // LAN-3y: para la comanda, solo el nombre y la inicial (como DoorDash y Uber Eats).
         clienteCorto: nombreCorto(f.cliente_nombre == null ? '' : String(f.cliente_nombre)),
+        // C-CANCELAR-LISTO: si el restaurante ya pidió a soporte cancelarlo, y en qué quedó.
+        cancelacion: (f as { cancelacion_estado?: string | null }).cancelacion_estado ?? null,
       })),
     ],
     ...(await cocinaDe(base(c), rid)),

@@ -1,3 +1,4 @@
+import { SolicitudCancelacion } from './SolicitudCancelacion';
 import { useEffect, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto, textoAMonto } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
@@ -302,6 +303,8 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
             ))}
           </ul>
         </div>
+        {/* C-CANCELAR-LISTO: la cancelación que pidió el restaurante, para aprobar o rechazar. */}
+        <SolicitudCancelacion pedidoId={id} idioma={idioma} alResolver={() => void cargar()} />
         <div className="tarjeta-form">
           {p.estado === 'entregado' ? (
             <div className="super-acciones">

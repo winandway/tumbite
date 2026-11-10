@@ -1024,6 +1024,23 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esta invitación ya no está disponible.', 'This invitation is no longer available.'],
   ['Escribe el nombre del repartidor.', 'Enter the driver’s name.'],
   ['Escribe el correo o el celular del repartidor.', 'Enter the driver’s email or mobile number.'],
+  ['No encontramos ese pedido.', 'We couldn’t find that order.'],
+  [
+    'Solo se pide a soporte la cancelación de un pedido que ya está listo y todavía no salió.',
+    'You can only ask support to cancel an order that is ready and hasn’t left yet.',
+  ],
+  [
+    'Ya pediste la cancelación de este pedido. Soporte la está revisando.',
+    'You already asked to cancel this order. Support is reviewing it.',
+  ],
+  ['Esta solicitud ya fue resuelta.', 'This request was already resolved.'],
+  ['Elige quién asume la comida antes de aprobar.', 'Choose who covers the food before approving.'],
+  [
+    'Este pedido ya no está listo (salió o ya se canceló). Revisa el pedido.',
+    'This order is no longer ready (it left or was already canceled). Check the order.',
+  ],
+  ['Elige el motivo de la cancelación.', 'Choose the reason for the cancellation.'],
+  ['Cuéntanos qué pasó.', 'Tell us what happened.'],
   ['No encontrado.', 'Not found.'],
   ['No llegó ninguna foto.', 'No photo was received.'],
   [
