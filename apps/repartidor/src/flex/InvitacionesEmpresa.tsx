@@ -15,7 +15,7 @@ const T = {
     aceptar: 'Aceptar',
     rechazar: 'Ahora no',
     listo: (empresa: string) => `Listo: ya trabajas con ${empresa}.`,
-    tengoEnlace: '¿Una empresa te invitó? Pega su enlace',
+    tengoEnlace: '¿Una empresa o un restaurante te invitó? Pega su enlace',
     enlace: 'Enlace de la invitación',
     usarEnlace: 'Aceptar con este enlace',
   },
@@ -25,7 +25,7 @@ const T = {
     aceptar: 'Accept',
     rechazar: 'Not now',
     listo: (empresa: string) => `Done: you now work with ${empresa}.`,
-    tengoEnlace: 'Did a company invite you? Paste its link',
+    tengoEnlace: 'Did a company or a restaurant invite you? Paste its link',
     enlace: 'Invitation link',
     usarEnlace: 'Accept with this link',
   },
@@ -63,13 +63,23 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
   // acepta con el enlace que le mandó la empresa.
   async function aceptarConEnlace() {
     setError('');
+    // C-FLOTA-PROPIA: el mismo recuadro sirve para el enlace de un restaurante (/driver/fleet/…).
+    const deFlota = /\/driver\/fleet\/([A-Za-z0-9_-]{30,60})/.exec(enlace)?.[1];
     const token = /\/driver\/join\/([A-Za-z0-9_-]{30,60})/.exec(enlace)?.[1] ?? enlace.trim();
     try {
-      const r = await api.pedir<{ empresa: string }>(
-        'POST',
-        `/datos/v1/flex/conductor/invitacion-enlace/${encodeURIComponent(token)}/aceptar`,
-        {},
-      );
+      const r = deFlota
+        ? await api
+            .pedir<{ restaurante: string }>(
+              'POST',
+              `/datos/repartidor/flota/enlace/${encodeURIComponent(deFlota)}/aceptar`,
+              {},
+            )
+            .then((x) => ({ empresa: x.restaurante }))
+        : await api.pedir<{ empresa: string }>(
+            'POST',
+            `/datos/v1/flex/conductor/invitacion-enlace/${encodeURIComponent(token)}/aceptar`,
+            {},
+          );
       setEnlace('');
       setConEnlace(false);
       alAceptar(t.listo(r.empresa));

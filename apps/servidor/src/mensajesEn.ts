@@ -1017,6 +1017,13 @@ export const MENSAJES_EN = new Map<string, string>([
     'Setup inside Divoox isn’t ready; use Stripe’s page.',
   ],
   ['El país no es válido.', 'That country isn’t valid.'],
+  [
+    'La flota propia todavía no está disponible en tu ciudad. Te avisamos apenas se pueda encender.',
+    'Your own fleet isn’t available in your city yet. We’ll let you know as soon as it can be turned on.',
+  ],
+  ['Esta invitación ya no está disponible.', 'This invitation is no longer available.'],
+  ['Escribe el nombre del repartidor.', 'Enter the driver’s name.'],
+  ['Escribe el correo o el celular del repartidor.', 'Enter the driver’s email or mobile number.'],
   ['No encontrado.', 'Not found.'],
   ['No llegó ninguna foto.', 'No photo was received.'],
   [

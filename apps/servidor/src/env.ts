@@ -58,6 +58,8 @@ export const esquemaEnv = z.object({
   CORREOS_REVISOR: z.string().optional(),
   /** Dirección pública del sitio, para las vueltas desde Stripe. */
   SITIO_URL: z.url().optional(),
+  /** C-FLOTA-PROPIA: «1» enciende la flota propia fuera del sitio de pruebas (decisión de Richard). */
+  FLOTA_PROPIA: z.string().optional(),
   /** Twilio (SMS de respaldo y llamadas con número oculto). Sin esto, se apagan solos. */
   TWILIO_ACCOUNT_SID: z.string().startsWith('AC').optional(),
   TWILIO_AUTH_TOKEN: z.string().min(16).optional(),

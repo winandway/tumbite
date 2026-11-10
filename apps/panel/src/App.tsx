@@ -11,6 +11,7 @@ import { ViajeCompartido } from './sitio/ViajeCompartido';
 import { PedidoCompartido } from './sitio/PedidoCompartido';
 import { RecorridoCompartido } from './sitio/RecorridoCompartido';
 import { InvitacionConductor } from './sitio/InvitacionConductor';
+import { InvitacionFlota } from './sitio/InvitacionFlota';
 import { Seguimiento } from './sitio/Seguimiento';
 import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { Flex } from './sitio/Flex';
@@ -137,6 +138,14 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <InvitacionConductor token={invitacion[1]} idioma={idioma} />
+      </Sitio>
+    );
+  // C-FLOTA-PROPIA: el enlace con el que un restaurante invita a su repartidor.
+  const invitacionFlota = /^\/driver\/fleet\/([A-Za-z0-9_-]{30,60})$/.exec(ruta);
+  if (invitacionFlota?.[1])
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <InvitacionFlota token={invitacionFlota[1]} idioma={idioma} />
       </Sitio>
     );
   // Divoox Flex: rastreo público por número de guía (/track y /track/<código>).

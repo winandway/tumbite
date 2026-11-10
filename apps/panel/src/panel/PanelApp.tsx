@@ -1,3 +1,4 @@
+import { Flota } from './Flota';
 import { useEffect, useState } from 'react';
 import { VersionPublicada } from '../VersionPublicada';
 import {
@@ -111,6 +112,7 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
     if (ruta === '/panel/ads') return <Anuncios usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/promotions') return <Promociones usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/team') return <Equipo idioma={idioma} />;
+    if (ruta === '/panel/fleet') return <Flota idioma={idioma} />;
     if (ruta === '/panel/orders') return <Pedidos idioma={idioma} />;
   }
   if (usuario.rol === 'admin') {
@@ -171,6 +173,14 @@ export function PanelApp({ ruta }: { ruta: string }) {
         .then((r) => setMiFranquicia(r.ruta ? `/panel/${r.ruta}` : null))
         .catch(() => setMiFranquicia(null));
   }, [usuario]);
+  // C-FLOTA-PROPIA / C-SOLO-LO-TERMINADO: «Mis repartidores» solo aparece donde ya se puede usar.
+  const [flotaDisponible, setFlotaDisponible] = useState(false);
+  useEffect(() => {
+    if (usuario?.rol !== 'restaurante') return;
+    void pedir<{ disponible?: boolean }>('GET', '/datos/mi-restaurante/flota')
+      .then((r) => setFlotaDisponible(r?.disponible === true))
+      .catch(() => setFlotaDisponible(false));
+  }, [usuario]);
   // El admin siempre trabaja bajo su dirección secreta: /panel y las rutas viejas lo llevan ahí.
   useEffect(() => {
     if (!baseAdmin || baseAdmin === '/panel') return;
@@ -204,7 +214,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
     usuario?.rol === 'admin'
       ? Object.entries(t.menuAdmin)
       : usuario?.rol === 'restaurante'
-        ? Object.entries(t.menuRest)
+        ? Object.entries(t.menuRest).filter(([clave]) => clave !== 'fleet' || flotaDisponible)
         : [];
 
   return (

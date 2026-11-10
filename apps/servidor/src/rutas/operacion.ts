@@ -1,3 +1,4 @@
+import { flotasActivas } from './flota';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
@@ -1598,8 +1599,18 @@ async function conSaldoParaDirecto<T extends { id: string }>(
   return fuera;
 }
 
-async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null): Promise<Libre[]> {
-  const filtroCeldas = celdas ? `AND d.geohash IN (${celdas.map(() => '?').join(',')})` : '';
+async function libresEn(
+  db: D1Database,
+  zonaId: string,
+  celdas: string[] | null,
+  /** C-FLOTA-PROPIA: solo los repartidores propios de este restaurante (sin mirar zona ni celda). */
+  flotaDe?: string,
+): Promise<Libre[]> {
+  const filtroCeldas =
+    celdas && !flotaDe ? `AND d.geohash IN (${celdas.map(() => '?').join(',')})` : '';
+  const donde = flotaDe
+    ? `d.usuario_id IN (SELECT usuario_id FROM flota_restaurante WHERE restaurante_id = ? AND estado = 'activo')`
+    : 'd.zona_id = ?';
   const { results } = await db
     .prepare(
       `SELECT d.usuario_id AS id, d.lat, d.lng, d.puntos, d.destacado,
@@ -1609,14 +1620,14 @@ async function libresEn(db: D1Database, zonaId: string, celdas: string[] | null)
         EXISTS (SELECT 1 FROM turnos_repartidor t WHERE t.repartidor_id = d.usuario_id AND t.estado IN ('programado','activo')
           AND t.inicio <= datetime('now') AND t.fin > datetime('now')) AS en_turno
       FROM repartidores d
-      WHERE d.zona_id = ? AND d.conectado = 1 AND d.pausado = 0 ${filtroCeldas} AND d.lat IS NOT NULL
+      WHERE ${donde} AND d.conectado = 1 AND d.pausado = 0 ${filtroCeldas} AND d.lat IS NOT NULL
       AND d.ubicacion_en > datetime('now','-10 minutes')
       AND NOT EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = d.usuario_id AND p.estado IN ('aceptado','listo','en_camino'))
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')
       AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = d.usuario_id)
       AND NOT EXISTS (SELECT 1 FROM ofertas_operacion x WHERE x.conductor_id = d.usuario_id AND x.estado = 'ofrecida')`,
     )
-    .bind(zonaId, ...(celdas ?? []))
+    .bind(flotaDe ?? zonaId, ...(flotaDe ? [] : (celdas ?? [])))
     .all<Libre>();
   return results;
 }
@@ -1673,7 +1684,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
   const { results: pendientes } = await db
     .prepare(
       `SELECT p.id, p.zona_id, p.pago_repartidor, p.moneda, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash,
-        p.lat AS e_lat, p.lng AS e_lng,
+        p.lat AS e_lat, p.lng AS e_lng, p.restaurante_id, r.flota_modo, r.flota_respaldo, r.dueno_id, p.flota_aviso_en,
         CAST((julianday(p.programado_para) - julianday('now')) * 1440 AS INTEGER) AS min_franja
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
@@ -1696,8 +1707,15 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       e_lat: number | null;
       e_lng: number | null;
       min_franja: number | null;
+      restaurante_id: string;
+      flota_modo: string | null;
+      flota_respaldo: number | null;
+      dueno_id: string;
+      flota_aviso_en: string | null;
     }>();
   if (!pendientes.length) return;
+  // C-FLOTA-PROPIA: quién reparte solo para su restaurante.
+  const flotas = await flotasActivas(db);
   // C-MODO-DESTINO: quien tiene el modo encendido solo recibe entregas que lo acercan a su destino.
   const destinos = await destinosActivos(db);
   const prioridadNivel = (await leerAjustes(db)).prioridadDespacho;
@@ -1727,6 +1745,8 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
               : 0,
         }))
         .filter((d) => d.km <= 15 && debeOfrecer(faltan, d.km))
+        // C-FLOTA-PROPIA: un repartidor propio solo recibe los pedidos de su restaurante.
+        .filter((d) => (flotas.get(d.id) ?? p.restaurante_id) === p.restaurante_id)
         .filter((d) => {
           const destino = destinos.get(d.id);
           if (!destino) return true;
@@ -1740,8 +1760,31 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
         .sort((a, b) => compararLibres(a, b, prioridadNivel));
     // Camino rápido: solo la celda del restaurante y sus 8 vecinas (índice zona + celda).
     // Si ahí no hay nadie libre, se busca en toda la zona. Nunca se cruza de zona.
-    let candidatos: (Libre & { km: number })[];
-    if (!zonasCatalogo.has(String(p.zona_id))) {
+    let candidatos: (Libre & { km: number })[] = [];
+    // C-FLOTA-PROPIA: primero (o solo) a los repartidores del restaurante. El restaurante les paga
+    // él, así que aquí no se mira el saldo prepago ni la habilitación del catálogo.
+    const propia = p.flota_modo === 'propia';
+    if (propia) candidatos = ordenar(await libresEn(db, p.zona_id, null, p.restaurante_id));
+    if (candidatos.length) {
+      // Ya hay a quién ofrecerlo dentro de su flota.
+    } else if (propia && Number(p.flota_respaldo) !== 1) {
+      // Sin respaldo, nunca cae solo a la red: se le avisa al restaurante, una sola vez por pedido.
+      if (!p.flota_aviso_en) {
+        const r = await db
+          .prepare(
+            "UPDATE pedidos SET flota_aviso_en = datetime('now') WHERE id = ? AND flota_aviso_en IS NULL",
+          )
+          .bind(p.id)
+          .run();
+        if (env && r.meta.changes > 0)
+          await notificar(env, db, p.dueno_id, {
+            titulo: 'Ningún repartidor tuyo está libre',
+            cuerpo: `El pedido ${p.id.slice(0, 4).toUpperCase()} espera repartidor. Avísale a tu equipo o enciende el respaldo de Divoox.`,
+            datos: { tipo: 'flota_sin_repartidor', pedidoId: p.id },
+          }).catch((e: unknown) => console.error('flota: no se pudo avisar al restaurante', e));
+      }
+      continue;
+    } else if (!zonasCatalogo.has(String(p.zona_id))) {
       // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de
       // efectivo, revisado EN CADA ETAPA antes de ampliar (C-DESPACHO-SALDO-ETAPAS, ETP-1): un libre
       // sin saldo en la celda del restaurante no tapa a uno con saldo en el resto de la zona.

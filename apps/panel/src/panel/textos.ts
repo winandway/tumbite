@@ -51,6 +51,7 @@ const es = {
     ads: 'Anuncios',
     promotions: 'Promociones',
     team: 'Equipo',
+    fleet: 'Mis repartidores',
   },
   menuAdmin: {
     inicio: 'Resumen',
@@ -134,6 +135,7 @@ const en: T = {
     ads: 'Ads',
     promotions: 'Promotions',
     team: 'Team',
+    fleet: 'My drivers',
   },
   menuAdmin: {
     inicio: 'Overview',

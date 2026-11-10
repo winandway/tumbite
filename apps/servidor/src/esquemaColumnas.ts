@@ -2257,5 +2257,26 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_por",
     "creado_por_nombre",
     "creado_en"
+  ],
+  "flota_restaurante": [
+    "restaurante_id",
+    "usuario_id",
+    "estado",
+    "creado_en",
+    "retirado_en"
+  ],
+  "invitaciones_flota": [
+    "id",
+    "restaurante_id",
+    "nombre",
+    "correo_canonico",
+    "telefono_canonico",
+    "token_hash",
+    "estado",
+    "usuario_id",
+    "invitado_por",
+    "creado_en",
+    "vence_en",
+    "respondida_en"
   ]
 };

@@ -49,6 +49,7 @@ import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
+import { InvitacionesFlota } from './InvitacionesFlota';
 import { UnidadDistancia, useUnidadDistancia } from './piezas/UnidadDistancia';
 import { ModoPago } from './piezas/ModoPago';
 import { ModoDestino } from './piezas/ModoDestino';
@@ -1239,6 +1240,13 @@ export function Inicio() {
       ) : null}
       {/* C-MODO-DESTINO (BRE-6): solo pedidos que lo acercan a su destino, dos veces al día. */}
       <ModoDestino cerca={aqui} />
+      {/* C-FLOTA-PROPIA: el restaurante que lo invitó a su equipo, y para quién reparte. */}
+      <InvitacionesFlota
+        alAceptar={(texto) => {
+          setAviso(texto);
+          void cargar();
+        }}
+      />
       {/* C-FLEX-INVITAR-CONDUCTOR: la empresa que lo invitó, para aceptar ahí mismo. */}
       <InvitacionesEmpresa
         alAceptar={(texto) => {

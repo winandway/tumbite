@@ -12,6 +12,10 @@ import { rehacerAprobacionesDinero } from './esquemaDinero';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-FLOTA-PROPIA (10 nov 2026): el restaurante reparte con los suyos; respaldo con la red.
+  ['restaurantes', 'flota_modo', "TEXT NOT NULL DEFAULT 'divoox'"],
+  ['restaurantes', 'flota_respaldo', 'INTEGER NOT NULL DEFAULT 0'],
+  ['pedidos', 'flota_aviso_en', 'TEXT'],
   // C-DISPONIBLE-MUNDO (10 nov 2026): de qué país y de dónde llegó cada «Avísame cuando llegue».
   ['lista_espera', 'pais', "TEXT NOT NULL DEFAULT ''"],
   ['lista_espera', 'lat', 'REAL'],
