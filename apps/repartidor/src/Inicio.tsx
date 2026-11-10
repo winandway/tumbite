@@ -1,3 +1,4 @@
+import { comoLlegar } from './comoLlegar';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -476,20 +477,14 @@ const T = {
   },
 };
 
-function abrirMapa(lat: number | null, lng: number | null, direccion: string) {
-  const destino = lat != null && lng != null ? `${lat},${lng}` : encodeURIComponent(direccion);
-  const url =
-    Platform.OS === 'ios'
-      ? `http://maps.apple.com/?daddr=${destino}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destino}`;
-  void Linking.openURL(url);
-}
-
 export function Inicio() {
   // C-UNIDAD-ELEGIDA: millas o kilómetros, lo que el repartidor eligió (vale para toda la app).
   const unidadDistancia = useUnidadDistancia();
   useKeepAwake();
   const { api, idioma, cambiarIdioma: cambiarIdiomaSesion, usuario } = useSesion();
+  // C-ELEGIR-MAPAS: «Cómo llegar» deja elegir la app de mapas, igual que en Flex.
+  const abrirMapa = (lat: number | null, lng: number | null, direccion: string) =>
+    comoLlegar({ lat, lng, direccion }, idioma);
   // El idioma de los avisos al celular sigue al de la app (antes se quedaba el del registro).
   const cambiarIdioma = useCallback(
     (i: Idioma) => {

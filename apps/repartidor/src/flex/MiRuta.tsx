@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { comoLlegar } from '../comoLlegar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -192,27 +193,9 @@ async function ubicacion(): Promise<{ lat: number; lng: number } | null> {
   }
 }
 
+/** C-FLEX-MAPAS / C-ELEGIR-MAPAS: el repartidor elige su app de mapas (pieza única comoLlegar). */
 function navegar(lat: number | null, lng: number | null, direccion: string, t?: Textos) {
-  const destino = lat != null && lng != null ? `${lat},${lng}` : encodeURIComponent(direccion);
-  const apps = [
-    ...(Platform.OS === 'ios'
-      ? [{ text: 'Apple Maps', url: `http://maps.apple.com/?daddr=${destino}` }]
-      : []),
-    { text: 'Google Maps', url: `https://www.google.com/maps/dir/?api=1&destination=${destino}` },
-    {
-      text: 'Waze',
-      url: `https://waze.com/ul?${lat != null && lng != null ? `ll=${destino}` : `q=${destino}`}&navigate=yes`,
-    },
-  ];
-  // C-FLEX-MAPAS (como Amazon Flex): el repartidor elige su app de mapas. En la web, Google Maps.
-  if (!t || Platform.OS === 'web') {
-    void Linking.openURL(apps.find((a) => a.text === 'Google Maps')!.url);
-    return;
-  }
-  Alert.alert(t.elegirMapa, undefined, [
-    ...apps.map((a) => ({ text: a.text, onPress: () => void Linking.openURL(a.url) })),
-    { text: t.cancelar, style: 'cancel' as const },
-  ]);
+  comoLlegar({ lat, lng, direccion }, t ? { titulo: t.elegirMapa, cancelar: t.cancelar } : 'es');
 }
 
 const fecha = (f: string) => new Date(`${f.replace(' ', 'T')}${f.includes('Z') ? '' : 'Z'}`);

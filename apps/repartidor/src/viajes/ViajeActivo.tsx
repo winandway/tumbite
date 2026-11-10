@@ -1,5 +1,6 @@
+import { comoLlegar } from '../comoLlegar';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, Switch, Text, TextInput, View } from 'react-native';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
 import { Boton, C } from '@tumbite/movil';
@@ -46,15 +47,6 @@ export type ViajeConductor = {
 
 /** Una clave nueva por acción: el servidor no repite nada si la app reintenta. */
 const clave = () => `v${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
-
-function abrirMapa(lat: number, lng: number) {
-  const destino = `${lat},${lng}`;
-  void Linking.openURL(
-    Platform.OS === 'ios'
-      ? `http://maps.apple.com/?daddr=${destino}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${destino}`,
-  );
-}
 
 const reloj = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.max(0, s) % 60).padStart(2, '0')}`;
@@ -226,7 +218,11 @@ export function ViajeActivo({
         ) : null}
       </View>
       {viaje.estado !== 'conductor_llego' ? (
-        <Boton texto={t.navegar} alTocar={() => abrirMapa(punto.lat, punto.lng)} secundario />
+        <Boton
+          texto={t.navegar}
+          alTocar={() => comoLlegar({ lat: punto.lat, lng: punto.lng }, idioma)}
+          secundario
+        />
       ) : null}
 
       {viaje.estado === 'asignado' ? (
