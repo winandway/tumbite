@@ -392,6 +392,10 @@ CREATE TABLE IF NOT EXISTS lista_espera (
   vehiculo TEXT NOT NULL DEFAULT '',
   idioma TEXT NOT NULL DEFAULT 'es',
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  pais TEXT NOT NULL DEFAULT '',
+  lat REAL,
+  lng REAL,
+  origen TEXT NOT NULL DEFAULT 'web',
   UNIQUE (tipo, correo)
 );
 
@@ -3476,3 +3480,52 @@ INSERT OR IGNORE INTO conciliacion_excepciones (id, dia, pedidos, vendido, detal
   WHERE dia = '2026-10-15' AND pedidos = 1 AND vendido = 718 AND cuadra = 0
     -- ETP-3: y el detalle guardado EXACTO de ese día (leído de producción el 3 nov 2026).
     AND detalle = '{"restaurantesEsperado":87,"restaurantesAbonado":0,"repartidoresEsperado":520,"repartidoresAbonado":0,"stripeEsperado":0,"stripeCapturado":0,"cuadraRestaurantes":"NO","cuadraRepartidores":"NO","cuadraStripe":"sí"}';
+
+-- C-FLOTA-PROPIA (10 nov 2026): repartidores propios de un restaurante. Reciben solo sus pedidos.
+CREATE TABLE IF NOT EXISTS flota_restaurante (
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'retirado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  retirado_en TEXT,
+  PRIMARY KEY (restaurante_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS flota_restaurante_usuario ON flota_restaurante(usuario_id, estado);
+
+CREATE TABLE IF NOT EXISTS invitaciones_flota (
+  id TEXT PRIMARY KEY,
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  nombre TEXT NOT NULL,
+  correo_canonico TEXT,
+  telefono_canonico TEXT,
+  token_hash TEXT NOT NULL UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aceptada', 'rechazada', 'cancelada')),
+  usuario_id TEXT REFERENCES usuarios(id),
+  invitado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  vence_en TEXT NOT NULL DEFAULT (datetime('now', '+14 days')),
+  respondida_en TEXT
+);
+CREATE INDEX IF NOT EXISTS invitaciones_flota_restaurante ON invitaciones_flota(restaurante_id, estado);
+CREATE INDEX IF NOT EXISTS invitaciones_flota_correo ON invitaciones_flota(correo_canonico, estado);
+
+-- C-CANCELAR-LISTO (10 nov 2026): el restaurante pide a soporte cancelar un pedido ya listo.
+CREATE TABLE IF NOT EXISTS solicitudes_cancelacion (
+  id TEXT PRIMARY KEY,
+  pedido_id TEXT NOT NULL REFERENCES pedidos(id),
+  restaurante_id TEXT NOT NULL REFERENCES restaurantes(id),
+  pedida_por TEXT REFERENCES usuarios(id),
+  motivo TEXT NOT NULL,
+  detalle TEXT NOT NULL DEFAULT '',
+  paga_comida TEXT NOT NULL DEFAULT 'por_definir' CHECK (paga_comida IN ('restaurante', 'cliente', 'divoox', 'por_definir')),
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobada', 'rechazada')),
+  ticket_id TEXT,
+  nota_soporte TEXT NOT NULL DEFAULT '',
+  resuelta_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT
+);
+CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancelacion(pedido_id, estado);
+CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
+-- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
+CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';
