@@ -79,6 +79,8 @@ describe('el correo repetido se explica (C-CORREO-VARIANTE)', () => {
       clave: 'clave-segura-1',
       rol: 'cliente',
     });
-    expect(JSON.stringify(igual.datos)).toMatch(/Entra con tu contraseña|Sign in with your password/);
+    expect(JSON.stringify(igual.datos)).toMatch(
+      /Entra con tu contraseña|Sign in with your password/,
+    );
   });
 });

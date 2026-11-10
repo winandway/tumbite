@@ -8,6 +8,7 @@ import {
   poligonosSeSolapan,
   validarPoligono,
 } from '@tumbite/compartido';
+import { type Disponibilidad, nombrePais } from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
 import { cobertura, leerPoligono, recalcularAreasCiudad } from '../territorio';
 import type { Env } from '../env';
@@ -196,6 +197,37 @@ zonas.get('/cobertura', async (c) => {
     ciudadesActivas: activas,
     proximas,
   });
+});
+
+/**
+ * C-DISPONIBLE-MUNDO (todos los países): dónde ya funciona Divoox, por país, y qué abre pronto.
+ * La piden el registro y la pantalla de la dirección de las apps y la web. Solo lee.
+ */
+zonas.get('/disponibilidad', async (c) => {
+  const db = base(c);
+  const { results: activas } = await db
+    .prepare('SELECT nombre, pais FROM zonas WHERE activa = 1 ORDER BY pais, nombre')
+    .all<{ nombre: string; pais: string }>();
+  const { results: proximas } = await db
+    .prepare(
+      `SELECT DISTINCT z.nombre AS ciudad, z.pais, MIN(a.apertura_prevista) AS apertura
+       FROM areas a JOIN zonas z ON z.id = a.zona_id
+       WHERE a.estado = 'proximamente' AND z.activa = 0
+       GROUP BY z.id ORDER BY apertura IS NULL, apertura, z.nombre LIMIT 30`,
+    )
+    .all<{ ciudad: string; pais: string; apertura: string | null }>();
+  const porPais = new Map<string, string[]>();
+  for (const z of activas) porPais.set(z.pais, [...(porPais.get(z.pais) ?? []), z.nombre]);
+  const respuesta: Disponibilidad = {
+    paises: [...porPais].map(([codigo, ciudades]) => ({
+      codigo,
+      nombre: { es: nombrePais(codigo, 'es'), en: nombrePais(codigo, 'en') },
+      ciudades,
+    })),
+    proximas,
+  };
+  c.header('cache-control', 'public, max-age=300');
+  return c.json(respuesta);
 });
 
 // ───────────────────────── Áreas de cada ciudad (superadmin) ─────────────────────────

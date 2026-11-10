@@ -392,6 +392,10 @@ CREATE TABLE IF NOT EXISTS lista_espera (
   vehiculo TEXT NOT NULL DEFAULT '',
   idioma TEXT NOT NULL DEFAULT 'es',
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  pais TEXT NOT NULL DEFAULT '',
+  lat REAL,
+  lng REAL,
+  origen TEXT NOT NULL DEFAULT 'web',
   UNIQUE (tipo, correo)
 );
 

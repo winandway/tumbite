@@ -23,6 +23,14 @@ export const esquemaEspera = z
     idioma: z.enum(['es', 'en']).default('es'),
     lat: z.number().min(-90).max(90).nullable().default(null),
     lng: z.number().min(-180).max(180).nullable().default(null),
+    /** C-DISPONIBLE-MUNDO: país (dos letras) y desde dónde se anotó. Nunca limita quién se anota. */
+    pais: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .refine((x) => x === '' || /^[A-Z]{2}$/.test(x), { error: 'El país no es válido.' })
+      .default(''),
+    origen: z.enum(['web', 'app']).default('web'),
   })
   .refine((d) => d.tipo !== 'restaurante' || d.negocio.length >= 2, {
     error: 'Escribe el nombre de tu restaurante.',

@@ -12,6 +12,11 @@ import { rehacerAprobacionesDinero } from './esquemaDinero';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-DISPONIBLE-MUNDO (10 nov 2026): de qué país y de dónde llegó cada «Avísame cuando llegue».
+  ['lista_espera', 'pais', "TEXT NOT NULL DEFAULT ''"],
+  ['lista_espera', 'lat', 'REAL'],
+  ['lista_espera', 'lng', 'REAL'],
+  ['lista_espera', 'origen', "TEXT NOT NULL DEFAULT 'web'"],
   // C-CARRO-XL (30 oct 2026): carro grande (6 plazas o más).
   ['cotizaciones_viaje', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
   ['viajes', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],

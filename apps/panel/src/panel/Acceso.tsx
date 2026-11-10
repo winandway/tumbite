@@ -1,3 +1,4 @@
+import { DondeFuncionaWeb } from './TraerDivoox';
 import { useEffect, useState } from 'react';
 import {
   correoEjemplo,
@@ -115,6 +116,8 @@ export function Acceso({
           </button>
         </p>
       )}
+      {/* C-DISPONIBLE-MUNDO: al crear la cuenta se dice dónde ya funciona; nadie queda fuera. */}
+      {modo === 'registro' && <DondeFuncionaWeb idioma={idioma} />}
       <form onSubmit={enviar} noValidate>
         {modo === 'registro' && (
           <Campo

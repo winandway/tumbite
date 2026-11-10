@@ -298,7 +298,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "negocio",
     "vehiculo",
     "idioma",
-    "creado_en"
+    "creado_en",
+    "pais",
+    "lat",
+    "lng",
+    "origen"
   ],
   "tickets": [
     "id",

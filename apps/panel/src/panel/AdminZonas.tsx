@@ -6,6 +6,7 @@ import {
   almacenNavegador,
   enIdioma,
   useBorrador,
+  nombrePais,
 } from '@tumbite/compartido';
 import { AreasCiudad } from './AreasCiudad';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -34,6 +35,8 @@ type Persona = {
   ciudad: string;
   negocio: string;
   vehiculo: string;
+  pais?: string;
+  origen?: string;
   fecha: string;
 };
 
@@ -258,14 +261,16 @@ export function AdminEspera({ idioma }: { idioma: Idioma }) {
   const [datos, setDatos] = useState<{
     personas: Persona[];
     totales: Record<string, number>;
+    porPais?: Record<string, number>;
   } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    pedir<{ personas: Persona[]; totales: Record<string, number> }>(
-      'GET',
-      `/datos/admin/lista-espera${tipo ? `?tipo=${tipo}` : ''}`,
-    )
+    pedir<{
+      personas: Persona[];
+      totales: Record<string, number>;
+      porPais?: Record<string, number>;
+    }>('GET', `/datos/admin/lista-espera${tipo ? `?tipo=${tipo}` : ''}`)
       .then(setDatos)
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
   }, [tipo]);
@@ -295,6 +300,14 @@ export function AdminEspera({ idioma }: { idioma: Idioma }) {
           </button>
         ))}
       </div>
+      {/* C-DISPONIBLE-MUNDO: de qué países nos piden llegar. */}
+      {datos?.porPais && Object.keys(datos.porPais).length > 0 && (
+        <p className="suave" data-testid="espera-por-pais">
+          {Object.entries(datos.porPais)
+            .map(([codigo, n]) => `${nombrePais(codigo, idioma)}: ${n}`)
+            .join(' · ')}
+        </p>
+      )}
       {datos && datos.personas.length === 0 && <p>{t.vacio}</p>}
       <ul className="lista">
         {datos?.personas.map((p) => (
@@ -309,7 +322,9 @@ export function AdminEspera({ idioma }: { idioma: Idioma }) {
                 {p.telefono ? ` · ${p.telefono}` : ''}
               </span>
               <span>
-                {nombreTipo(p.tipo)} · {p.ciudad} · {p.zonaId ?? t.sinZona}
+                {nombreTipo(p.tipo)} · {p.ciudad}
+                {p.pais ? ` (${nombrePais(p.pais, idioma)})` : ''} · {p.zonaId ?? t.sinZona}
+                {p.origen === 'app' ? ' · app' : ''}
                 {p.vehiculo ? ` · ${p.vehiculo}` : ''}
               </span>
             </div>

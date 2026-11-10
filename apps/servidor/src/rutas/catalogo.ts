@@ -544,6 +544,16 @@ async function activacionDe(db: D1Database, f: FilaRest) {
   });
 }
 
+/** C-DISPONIBLE-MUNDO: ¿el local cae en una ciudad encendida? Solo informa; nunca bloquea. */
+async function coberturaDelLocal(
+  db: D1Database,
+  lat: number | null,
+  lng: number | null,
+): Promise<'dentro' | 'fuera' | 'sin_punto'> {
+  if (lat == null || lng == null) return 'sin_punto';
+  return (await zonaPara(db, lat, lng, true)) ? 'dentro' : 'fuera';
+}
+
 catalogo.get('/mi-restaurante', async (c) => {
   const u = exigir(c, 'restaurante');
   const db = base(c);
@@ -560,6 +570,7 @@ catalogo.get('/mi-restaurante', async (c) => {
     restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) },
     platos: await platosConGrupos(db, ordenarPlatos(f, results)),
     horariosCategoria: await ventanasDe(db, String(f.id)),
+    cobertura: await coberturaDelLocal(db, f.lat as number | null, f.lng as number | null),
   });
 });
 
@@ -770,8 +781,13 @@ catalogo.put('/mi-restaurante', async (c) => {
   }
   const f = (await miRestaurante(db, u.id)) as FilaRest;
   const [conH] = await conHorarios(db, [f]);
+  // C-DISPONIBLE-MUNDO: el registro nunca se limita por país; solo se le dice si su ciudad ya
+  // tiene cobertura, para ofrecerle «Quiero traer Divoox a mi ciudad».
   return c.json(
-    { restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) } },
+    {
+      restaurante: { ...aRestaurante(conH!), activacion: await activacionDe(db, f) },
+      cobertura: await coberturaDelLocal(db, d.lat, d.lng),
+    },
     actual ? 200 : 201,
   );
 });

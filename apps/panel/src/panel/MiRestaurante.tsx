@@ -11,6 +11,7 @@ import {
   textoActivacion,
 } from '@tumbite/compartido';
 import { CampoDireccion } from '../sitio/CampoDireccion';
+import { TraerDivoox } from './TraerDivoox';
 import { Campo } from './CampoClave';
 import { Horarios } from './Horarios';
 import { Cierres } from './Cierres';
@@ -112,12 +113,14 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
+  const [cobertura, setCobertura] = useState('');
   const { cargar, cargarBase } = b;
 
   useEffect(() => {
-    pedir<{ restaurante: Restaurante | null }>('GET', '/datos/mi-restaurante')
+    pedir<{ restaurante: Restaurante | null; cobertura?: string }>('GET', '/datos/mi-restaurante')
       .then((r) => {
         setRest(r.restaurante);
+        setCobertura(r.cobertura ?? '');
         if (r.restaurante) {
           const x = r.restaurante;
           cargarBase({
@@ -146,19 +149,24 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
     setError(null);
     setAviso('');
     try {
-      const r = await pedir<{ restaurante: Restaurante }>('PUT', '/datos/mi-restaurante', {
-        nombre: v.nombre,
-        categoria: v.categoria,
-        telefono: v.telefono,
-        direccion: v.direccion,
-        descripcionEs: v.descripcionEs,
-        descripcionEn: v.descripcionEn,
-        tiempoPrepMin: Number(v.tiempoPrepMin) || 20,
-        lat: v.lat === '' ? null : Number(v.lat),
-        lng: v.lng === '' ? null : Number(v.lng),
-        imagen: v.imagen || null,
-      });
+      const r = await pedir<{ restaurante: Restaurante; cobertura?: string }>(
+        'PUT',
+        '/datos/mi-restaurante',
+        {
+          nombre: v.nombre,
+          categoria: v.categoria,
+          telefono: v.telefono,
+          direccion: v.direccion,
+          descripcionEs: v.descripcionEs,
+          descripcionEn: v.descripcionEn,
+          tiempoPrepMin: Number(v.tiempoPrepMin) || 20,
+          lat: v.lat === '' ? null : Number(v.lat),
+          lng: v.lng === '' ? null : Number(v.lng),
+          imagen: v.imagen || null,
+        },
+      );
       setRest(r.restaurante);
+      setCobertura(r.cobertura ?? '');
       const x = r.restaurante;
       cargar({
         nombre: x.nombre,
@@ -331,6 +339,17 @@ export function MiRestaurante({ usuario, idioma }: { usuario: Usuario; idioma: I
           {t.guardar}
         </button>
       </form>
+      {rest && cobertura === 'fuera' ? (
+        <TraerDivoox
+          idioma={idioma}
+          cuenta={usuario.id}
+          nombre={usuario.nombre}
+          correo={usuario.correo}
+          negocio={rest.nombre}
+          telefono={rest.telefono}
+          punto={rest.lat != null && rest.lng != null ? { lat: rest.lat, lng: rest.lng } : null}
+        />
+      ) : null}
       {rest ? (
         <>
           <Horarios restaurante={rest} cuenta={usuario.id} idioma={idioma} alGuardar={setRest} />

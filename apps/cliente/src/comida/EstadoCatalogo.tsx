@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import type { EstadoLista, Idioma } from '@tumbite/compartido';
-import { Boton, e, useSesion } from '@tumbite/movil';
+import { AvisameCuandoLlegue, Boton, e, useSesion } from '@tumbite/movil';
 
 /** Lo que dice el servidor de una dirección fuera de cobertura (C-TERRITORIO). */
 type Cobertura = {
@@ -93,6 +93,8 @@ export function EstadoCatalogo({
     >
       <Text style={conReintentar ? e.error : { color: '#5E5E5E', fontSize: 15 }}>{mensaje}</Text>
       {fuera && cob ? <DetalleCobertura cob={cob} t={t} /> : null}
+      {/* C-DISPONIBLE-MUNDO: a quien todavía no le llega, se le ofrece anotarse aquí mismo. */}
+      {fuera ? <AvisameCuandoLlegue idioma={idioma} punto={catalogo.punto ?? null} /> : null}
       {conReintentar ? (
         <Boton texto={t.reintentar} alTocar={() => void catalogo.reintentar()} secundario />
       ) : null}

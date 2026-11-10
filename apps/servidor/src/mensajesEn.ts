@@ -1016,6 +1016,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'El alta dentro de Divoox no está lista; usa la página de Stripe.',
     'Setup inside Divoox isn’t ready; use Stripe’s page.',
   ],
+  ['El país no es válido.', 'That country isn’t valid.'],
   ['No encontrado.', 'Not found.'],
   ['No llegó ninguna foto.', 'No photo was received.'],
   [

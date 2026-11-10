@@ -24,3 +24,4 @@ export * from './PaginaEnApp';
 export * from './PantallaConFallo';
 export * from './fotoLiviana';
 export * from './CasillaSms';
+export * from './Disponibilidad';

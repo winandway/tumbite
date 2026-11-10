@@ -12,11 +12,15 @@ import { crearTicket } from './tickets';
 export const espera = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
-  const ok = await pasaTurnstile(
-    c.env.TURNSTILE_SECRET_KEY,
-    c.req.header('cf-turnstile-response'),
-    c.req.header('cf-connecting-ip'),
-  );
+  // C-DISPONIBLE-MUNDO: las apps no tienen el recuadro del escudo web; quien ya entró a su cuenta
+  // pasa con su sesión (el límite de intentos sigue delante).
+  const ok =
+    Boolean(c.get('usuario')) ||
+    (await pasaTurnstile(
+      c.env.TURNSTILE_SECRET_KEY,
+      c.req.header('cf-turnstile-response'),
+      c.req.header('cf-connecting-ip'),
+    ));
   if (!ok)
     throw new ErrorDatos(
       'No pudimos confirmar que eres una persona. Recarga la página e intenta de nuevo.',
@@ -32,13 +36,22 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
       .prepare('SELECT id, nombre FROM zonas WHERE lower(nombre) = lower(?)')
       .bind(d.ciudad)
       .first<{ id: string; nombre: string }>());
+  const paisZona = zona
+    ? await db
+        .prepare('SELECT pais FROM zonas WHERE id = ?')
+        .bind(zona.id)
+        .first<{ pais: string }>()
+    : null;
+  const pais = d.pais || paisZona?.pais || '';
   // Si ya estaba anotado, se actualizan sus datos en vez de dar error: lo importante es no perderlo.
   await db
     .prepare(
-      `INSERT INTO lista_espera (id, tipo, zona_id, nombre, correo, telefono, ciudad, codigo_postal, negocio, vehiculo, idioma)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)
+      `INSERT INTO lista_espera (id, tipo, zona_id, nombre, correo, telefono, ciudad, codigo_postal, negocio, vehiculo, idioma, pais, lat, lng, origen)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
        ON CONFLICT(tipo, correo) DO UPDATE SET nombre=excluded.nombre, telefono=excluded.telefono, ciudad=excluded.ciudad,
        codigo_postal=excluded.codigo_postal, negocio=excluded.negocio, vehiculo=excluded.vehiculo, idioma=excluded.idioma,
+       pais=CASE WHEN excluded.pais <> '' THEN excluded.pais ELSE lista_espera.pais END,
+       lat=COALESCE(excluded.lat, lista_espera.lat), lng=COALESCE(excluded.lng, lista_espera.lng), origen=excluded.origen,
        zona_id=COALESCE(excluded.zona_id, lista_espera.zona_id)`,
     )
     .bind(
@@ -53,6 +66,10 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
       d.negocio,
       d.vehiculo,
       d.idioma,
+      pais,
+      d.lat,
+      d.lng,
+      d.origen,
     )
     .run();
   // Cada anotación abre un ticket: la persona recibe su bienvenida con su enlace privado para
@@ -99,7 +116,7 @@ espera.get('/admin/lista-espera', async (c) => {
   const tipo = c.req.query('tipo');
   const { results } = await base(c)
     .prepare(
-      `SELECT id, tipo, zona_id AS zonaId, nombre, correo, telefono, ciudad, codigo_postal AS codigoPostal, negocio, vehiculo, idioma, creado_en AS fecha
+      `SELECT id, tipo, zona_id AS zonaId, nombre, correo, telefono, ciudad, codigo_postal AS codigoPostal, negocio, vehiculo, idioma, pais, origen, creado_en AS fecha
        FROM lista_espera ${tipo ? 'WHERE tipo = ?' : ''} ORDER BY creado_en DESC LIMIT 500`,
     )
     .bind(...(tipo ? [tipo] : []))
@@ -107,8 +124,15 @@ espera.get('/admin/lista-espera', async (c) => {
   const { results: totales } = await base(c)
     .prepare('SELECT tipo, COUNT(*) AS n FROM lista_espera GROUP BY tipo')
     .all<{ tipo: string; n: number }>();
+  // De qué países nos están pidiendo: decide a dónde se abre después.
+  const { results: paises } = await base(c)
+    .prepare(
+      "SELECT pais, COUNT(*) AS n FROM lista_espera WHERE pais <> '' GROUP BY pais ORDER BY n DESC",
+    )
+    .all<{ pais: string; n: number }>();
   return c.json({
     personas: results,
     totales: Object.fromEntries(totales.map((t) => [t.tipo, Number(t.n)])),
+    porPais: Object.fromEntries(paises.map((p) => [p.pais, Number(p.n)])),
   });
 });

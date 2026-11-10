@@ -14,6 +14,7 @@ import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
+import { DondeFunciona } from './Disponibilidad';
 import { CasillaSms } from './CasillaSms';
 import { Boton, C, Campo, CampoClave, Pantalla, e } from './ui';
 import { SelectorIdioma } from './SelectorIdioma';
@@ -169,6 +170,8 @@ export function Acceso({
         </Text>
       ) : null}
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
+      {/* C-DISPONIBLE-MUNDO: al crear la cuenta se dice dónde ya funciona; nadie queda fuera. */}
+      {registro ? <DondeFunciona idioma={idioma} conInvitacion /> : null}
       {registro && (
         <Campo
           etiqueta={t.nombre}
