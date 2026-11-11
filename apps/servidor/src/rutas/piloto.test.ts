@@ -245,8 +245,15 @@ describe('C-PILOTO-LIMITES: topes de dinero para los participantes', () => {
       { porPedidoCentavos: 10000, porDiaCentavos: 6000 },
       admin.token,
     );
+    // C-PENDIENTE-ABANDONADO: pedir de nuevo cierra el anterior sin pagar; el tope suma los pagados.
+    const pagar = () =>
+      m.DB.prepare(
+        "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now') WHERE estado = 'pago_pendiente'",
+      ).run();
     expect((await pedir(1)).estado).toBe(201);
+    await pagar();
     expect((await pedir(1)).estado).toBe(201);
+    await pagar();
     expect((await pedir(1)).estado).toBe(409);
   });
 });

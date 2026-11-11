@@ -656,6 +656,56 @@ export async function lineasDeRestaurante(
   });
 }
 
+/**
+ * C-PENDIENTE-ABANDONADO: al crear un pedido nuevo, los pedidos anteriores de ese cliente que se
+ * quedaron sin pagar se cierran con la misma pieza que cancela un pedido en pago pendiente (anula
+ * su PaymentIntent). Así no retienen el cupón ni el saldo de regalo hasta que el Manager los cierre
+ * a las 2 horas. Si Stripe dice que ese cobro ya se autorizó o no responde, no se toca (lo resuelve
+ * el aviso del pago o el Manager).
+ */
+async function cerrarPendientesSinPagar(env: Env, db: D1Database, clienteId: string) {
+  const { results } = await db
+    .prepare(
+      // Uno sin cobro de Stripe todavía puede estar creándose en otra petición: solo se cierra si
+      // lleva más de 2 minutos así (quedó huérfano).
+      `SELECT id, stripe_sesion FROM pedidos WHERE cliente_id = ? AND estado = 'pago_pendiente'
+        AND (stripe_sesion IS NOT NULL OR creado_en <= datetime('now', '-2 minutes')) LIMIT 10`,
+    )
+    .bind(clienteId)
+    .all<{ id: string; stripe_sesion: string | null }>();
+  for (const p of results) {
+    try {
+      if (p.stripe_sesion) {
+        const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+        if (!stripe) continue;
+        const real = await stripe
+          .get<{ status?: string }>(`/payment_intents/${p.stripe_sesion}`)
+          .then((r) => r.status ?? null)
+          .catch(() => null);
+        if (!real || !SIN_PAGAR_STRIPE.has(real)) continue;
+      }
+      const cerrado = await cancelarConReembolso(env, db, p.id, {
+        desde: ['pago_pendiente'],
+        actorId: clienteId,
+        clienteId,
+      });
+      if (cerrado) await anotarEvento(db, p.id, 'reemplazado_sin_pagar');
+    } catch (e) {
+      await guardarError(db, 'POST', `/pedidos:pendiente-sin-pagar:${p.id}`, e).catch(
+        () => undefined,
+      );
+    }
+  }
+}
+
+/** Estados de un PaymentIntent en los que todavía no se pagó nada (se puede anular sin más). */
+const SIN_PAGAR_STRIPE = new Set([
+  'requires_payment_method',
+  'requires_confirmation',
+  'requires_action',
+  'canceled',
+]);
+
 pedidos.post('/pedidos', async (c) => {
   const u = exigir(c, 'cliente');
   const d = await leerCuerpo(c, esquemaNuevoPedido);
@@ -820,6 +870,9 @@ pedidos.post('/pedidos', async (c) => {
   // C-ENVIO-UNA-VEZ (BRE-R3): si Plus ya deja el envío en cero, un cupón de envío gratis se rechaza
   // (antes los dos descontaban el mismo envío y Divoox quedaba en negativo).
   let cupon: { codigo: string; descuento: number; tipo: string } | null = null;
+  // C-PENDIENTE-ABANDONADO: antes de mirar el cupón y el saldo de regalo, el pedido anterior sin
+  // pagar de este cliente se cierra (el cliente está pidiendo de nuevo).
+  await cerrarPendientesSinPagar(c.env, db, u.id);
   if (d.cupon) {
     const v = await validarCupon(db, {
       codigo: d.cupon,
@@ -1550,7 +1603,10 @@ pedidos.get('/mis-pedidos', async (c) => {
   const { results } = await base(c)
     .prepare(
       `SELECT p.*, r.nombre AS restaurante_nombre, r.imagen AS restaurante_imagen, r.categoria AS restaurante_categoria FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-      WHERE p.cliente_id = ? AND p.estado != 'pago_pendiente' ORDER BY p.creado_en DESC LIMIT 50`,
+      WHERE p.cliente_id = ? AND p.estado != 'pago_pendiente'
+        -- C-PENDIENTE-ABANDONADO: el que se cerró porque pidió de nuevo sin pagarlo no es un pedido.
+        AND NOT EXISTS (SELECT 1 FROM bitacora_pedidos b WHERE b.pedido_id = p.id AND b.evento = 'reemplazado_sin_pagar')
+      ORDER BY p.creado_en DESC LIMIT 50`,
     )
     .bind(u.id)
     .all<FilaPedido>();

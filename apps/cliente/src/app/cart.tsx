@@ -618,6 +618,8 @@ function PantallaCarrito() {
       );
     setError('');
     setPagando(true);
+    // C-PENDIENTE-ABANDONADO: al pedir de nuevo, el servidor anula el cobro del pedido anterior.
+    setCobro(null);
     try {
       const r = await api.pedir<Cobro>('POST', '/datos/pedidos', {
         ...cuerpoPedido,

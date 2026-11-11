@@ -392,7 +392,9 @@ describe('pago dentro de la app (sin salto)', () => {
     await m.llamar('POST', '/datos/pedidos', pedidoBase, cliente.token);
     await m.llamar('POST', '/datos/pedidos', pedidoBase, cliente.token);
     expect(llamadas.filter((l) => l.url.endsWith('/customers'))).toHaveLength(1);
-    expect(llamadas.filter((l) => l.url.includes('/payment_intents'))).toHaveLength(2);
+    // Se crean dos cobros (el segundo pedido además consulta el del primero, sin pagar:
+    // C-PENDIENTE-ABANDONADO).
+    expect(llamadas.filter((l) => l.url.endsWith('/payment_intents'))).toHaveLength(2);
   });
 });
 

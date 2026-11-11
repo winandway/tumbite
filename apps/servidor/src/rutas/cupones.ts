@@ -73,7 +73,9 @@ export async function validarCupon(
     throw new ErrorDatos('Ya tienes el envío gratis con Divoox Plus.', 'cupon', 409);
   const usos = await db
     .prepare(
-      'SELECT (SELECT COUNT(*) FROM usos_cupon WHERE codigo = ?1) AS total, (SELECT COUNT(*) FROM usos_cupon WHERE codigo = ?1 AND usuario_id = ?2) AS mios',
+      // C-PENDIENTE-ABANDONADO: el uso de un pedido cancelado (o cerrado sin pagar) no cuenta.
+      `SELECT (SELECT COUNT(*) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = ?1 AND p.estado <> 'cancelado') AS total,
+        (SELECT COUNT(*) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = ?1 AND u.usuario_id = ?2 AND p.estado <> 'cancelado') AS mios`,
     )
     .bind(codigo, p.usuarioId)
     .first<{ total: number; mios: number }>();

@@ -163,6 +163,111 @@ describe('cupones reales (C-CUPONES-DIRECCIONES)', () => {
   });
 });
 
+describe('pedido sin pagar que queda atrás (C-PENDIENTE-ABANDONADO)', () => {
+  /** Stripe de mentira: cada pedido su propio cobro; se anotan las anulaciones. */
+  function stripeFalso() {
+    const anulados: string[] = [];
+    let n = 0;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      const anular = /\/payment_intents\/(pi_\d+)\/cancel/.exec(u);
+      if (anular) {
+        anulados.push(anular[1]!);
+        return new Response(JSON.stringify({ id: anular[1], status: 'canceled' }), { status: 200 });
+      }
+      const leer = /\/payment_intents\/(pi_\d+)$/.exec(u);
+      if (leer && (init?.method ?? 'GET') === 'GET')
+        return new Response(JSON.stringify({ id: leer[1], status: 'requires_payment_method' }), {
+          status: 200,
+        });
+      if (u.includes('/payment_intents')) {
+        n++;
+        return new Response(JSON.stringify({ id: `pi_${n}`, client_secret: `pi_${n}_s` }), {
+          status: 200,
+        });
+      }
+      return new Response(JSON.stringify({ id: 'x' }), { status: 200 });
+    });
+    return anulados;
+  }
+
+  it('al pedir de nuevo, el pedido viejo sin pagar se cierra, su cobro se anula y el cupón vuelve', async () => {
+    const e = await escenario();
+    await e.m.llamar(
+      'POST',
+      '/datos/admin/cupones',
+      { codigo: 'UNAVEZ', tipo: 'monto', valor: 200, usosPorCliente: 1 },
+      e.admin.token,
+    );
+    const anulados = stripeFalso();
+    const viejo = await e.pedir({ cupon: 'UNAVEZ' });
+    expect(viejo.estado).toBe(201);
+    // Cambia la dirección y vuelve a pedir con el mismo cupón: el viejo no lo retiene.
+    const nuevo = await e.pedir({ cupon: 'UNAVEZ', direccion: '400 Calle Nueva' });
+    expect(nuevo.estado).toBe(201);
+    expect(nuevo.datos.desglose.descuento).toBe(200);
+    const estadoViejo = await e.m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+      .bind(viejo.datos.pedidoId)
+      .first<{ estado: string }>();
+    expect(estadoViejo?.estado).toBe('cancelado');
+    expect(anulados).toEqual(['pi_1']);
+    // No aparece en el historial del cliente (nunca se pagó).
+    const mis = await e.m.llamar('GET', '/datos/mis-pedidos', undefined, e.cliente.token);
+    expect(mis.datos.pedidos.map((p: { id: string }) => p.id)).not.toContain(viejo.datos.pedidoId);
+  });
+
+  it('el cupón de un pedido cancelado vuelve a valer', async () => {
+    const e = await escenario();
+    await e.m.llamar(
+      'POST',
+      '/datos/admin/cupones',
+      { codigo: 'OTRAVEZ', tipo: 'monto', valor: 200, usosPorCliente: 1 },
+      e.admin.token,
+    );
+    stripeFalso();
+    const p = await e.pedir({ cupon: 'OTRAVEZ' });
+    expect(
+      (await e.m.llamar('POST', `/datos/pedidos/${p.datos.pedidoId}/cancelar`, {}, e.cliente.token))
+        .estado,
+    ).toBe(200);
+    const v = await e.m.llamar(
+      'POST',
+      '/datos/cupones/validar',
+      { codigo: 'OTRAVEZ', restauranteId: e.rid, subtotal: 3000, envio: 399 },
+      e.cliente.token,
+    );
+    expect(v.estado).toBe(200);
+  });
+
+  it('el carrito olvida el cobro viejo al crear el pedido de nuevo (su cobro queda anulado)', () => {
+    const cart = readFileSync(
+      join(__dirname, '..', '..', '..', 'cliente', 'src', 'app', 'cart.tsx'),
+      'utf8',
+    );
+    const i = cart.indexOf('setPagando(true);');
+    expect(i).toBeGreaterThan(0);
+    expect(cart.slice(i, i + 200)).toContain('setCobro(null);');
+  });
+
+  it('si Stripe dice que el cobro viejo ya se autorizó, no se toca', async () => {
+    const e = await escenario();
+    const anulados = stripeFalso();
+    const viejo = await e.pedir();
+    const original = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) =>
+      /\/payment_intents\/pi_1$/.test(String(url))
+        ? new Response(JSON.stringify({ id: 'pi_1', status: 'requires_capture' }), { status: 200 })
+        : original(url, init),
+    );
+    expect((await e.pedir({ direccion: '400 Calle Nueva' })).estado).toBe(201);
+    const estadoViejo = await e.m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+      .bind(viejo.datos.pedidoId)
+      .first<{ estado: string }>();
+    expect(estadoViejo?.estado).toBe('pago_pendiente');
+    expect(anulados).toEqual([]);
+  });
+});
+
 describe('direcciones guardadas (C-CUPONES-DIRECCIONES)', () => {
   it('guardar, listar por uso, actualizar la misma, borrar y el tope de diez', async () => {
     const e = await escenario();
