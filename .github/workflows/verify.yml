@@ -28,7 +28,7 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - run: npx playwright test
       # El recorrido completo en el navegador (restaurante, cliente, repartidor, pago simulado,
       # entrega y calificación, en inglés y en español). Si se rompe, no se publica.
