@@ -8,6 +8,7 @@ import {
   CONFIG_DINERO_INICIAL,
   ErrorApi,
   type ConfigDinero,
+  type Desglose,
   type PromocionRestaurante,
   calcularConPromocion,
   calcularPedido,
@@ -203,6 +204,8 @@ function PantallaCarrito() {
   const [cobroGuardado, setCobro] = useState<(Cobro & { total: number; huella: string }) | null>(
     null,
   );
+  // C-TOTAL-CORREGIDO: el desglose que mandó el servidor para estos datos (huella) tras un 409.
+  const [corregido, setCorregido] = useState<{ huella: string; desglose: Desglose } | null>(null);
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
@@ -574,7 +577,7 @@ function PantallaCarrito() {
     ...(franjaElegida ? { programadoPara: franjaElegida.inicio } : {}),
   };
   const huella = huellaPedido(cuerpoPedido);
-  const d =
+  const dLocal =
     conPlus && usoRegalo
       ? calcularConPromocion(
           {
@@ -586,6 +589,12 @@ function PantallaCarrito() {
           { envioCubierto },
         )
       : conPlus;
+  // C-TOTAL-CORREGIDO: si el servidor dijo «El total cambió» con estos mismos datos, se muestra y
+  // se paga su desglose (antes cada reintento mandaba el total viejo y daba el mismo 409).
+  const d =
+    dLocal && corregido && corregido.huella === huella
+      ? { ...dLocal, ...corregido.desglose }
+      : dLocal;
 
   async function pagar() {
     if (!d || !carrito.restauranteId) return;
@@ -639,6 +648,11 @@ function PantallaCarrito() {
       if (!r.clavePublica) throw new Error(t.pagoNoDisponible);
       setCobro({ ...r, total: r.desglose?.totalCliente ?? d.totalCliente, huella });
     } catch (x) {
+      const desgloseServidor =
+        x instanceof ErrorApi && x.campo === 'total'
+          ? (x.datos as { desglose?: Desglose } | undefined)?.desglose
+          : undefined;
+      if (desgloseServidor) setCorregido({ huella, desglose: desgloseServidor });
       setError(x instanceof Error ? x.message : String(x));
     } finally {
       setPagando(false);

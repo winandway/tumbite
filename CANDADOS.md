@@ -3490,3 +3490,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** el carrito arma una sola vez el cuerpo del pedido (`cuerpoPedido`, sin el total) y su huella (`huellaPedido` en `packages/compartido`, JSON con las claves ordenadas). El cobro se guarda con su huella y solo se reutiliza si la huella y el total son iguales; si algo cambió, vuelve «Continuar al pago» y se crea el pedido de nuevo (el viejo, sin pagar, lo cierra C-PENDIENTE-ABANDONADO).
 - **Prueba:** `packages/compartido/src/carritoMismosDatos.test.ts`, comprobada en rojo.
 - **No tocar:** todo dato nuevo que se mande al crear el pedido va dentro de `cuerpoPedido`, nunca agregado aparte en la llamada.
+
+### C-TOTAL-CORREGIDO: tras «El total cambió», el carrito muestra el total del servidor y deja pagar
+
+- **Qué pasaba:** si el total que calculaba la app no coincidía con el del servidor, `POST /datos/pedidos` respondía 409 «El total cambió» con `nuevoTotal` y `desglose`, pero la app no los usaba: cada reintento mandaba el mismo total y daba el mismo 409, sin salida para el cliente.
+- **Qué se hizo:** `cart.tsx` guarda el desglose del servidor junto a la huella de los datos (`corregido`). Mientras los datos sigan iguales, el carrito muestra ese desglose (el total corregido en la lista y en el botón) y lo manda como `totalEsperado`, así el siguiente toque paga. Si el cliente cambia algo, se vuelve a calcular en el celular. Mismo camino que ya usaba el cambio de dirección en `order/[id].tsx`.
+- **Prueba:** `packages/compartido/src/carritoTotalCorregido.test.ts`, comprobada en rojo.
+- **No tocar:** el servidor sigue sin cobrar si el total no coincide (C-FALLOS-DINERO F6); la app solo acepta el desglose que el servidor manda.
