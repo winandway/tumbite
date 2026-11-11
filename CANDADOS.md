@@ -3453,3 +3453,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas:** `operacion.test.ts`, las dos «C-REOFERTA-UNICO» (rechazo, vencimiento y soltar; y que con otro libre no vuelve a quien rechazó), comprobadas en rojo.
 - **Efecto aparte:** si se le vuelve a ofrecer, la fila nueva reemplaza la del rechazo (las cuentas de aceptación por día ven la última respuesta).
 - **No tocar:** no volver a excluir por cualquier fila de `ofertas` sin la segunda ronda; no quitar el `creada_en = datetime('now')` de `soltarPedido`.
+
+### C-ACEPTAR-DOBLE-TOQUE: el segundo toque en «Aceptar» no muestra error
+
+- **Qué pasaba:** al tocar dos veces «Aceptar» una oferta, el segundo toque encontraba la oferta ya `aceptada` y respondía 409 «Esta oferta ya no está disponible.»: el repartidor veía un error en rojo con el pedido ya en su mano.
+- **Qué se hizo:** en `/repartidor/ofertas/:id/aceptar`, antes de mirar la oferta, si el pedido ya es de ese repartidor (aceptado, listo o en camino) responde `{ ok: true }`.
+- **Prueba:** `operacion.test.ts` «C-ACEPTAR-DOBLE-TOQUE» (comprobada en rojo); también comprueba que otro repartidor sigue recibiendo 409.
+- **No tocar:** la comprobación «ya es suyo» va antes de la de la oferta.

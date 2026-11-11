@@ -356,6 +356,24 @@ describe('ciclo del pedido', () => {
     ).toHaveLength(1);
   });
 
+  it('C-ACEPTAR-DOBLE-TOQUE: el segundo toque en «Aceptar» de un pedido que ya es suyo responde ok', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    const rep = await repartidor('Doble Toque', 25.7702, -80.1902);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    const uno = await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    const dos = await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    expect(uno.estado).toBe(200);
+    expect(dos.estado).toBe(200);
+    expect(dos.datos).toEqual({ ok: true });
+    // Otro repartidor sigue sin poder aceptarlo.
+    const otro = await repartidor('Otro Toque', 25.7702, -80.1902);
+    expect(
+      (await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, otro.token)).estado,
+    ).toBe(409);
+  });
+
   it('a igual distancia gana el de nivel más alto', async () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const novato = await repartidor('Novato', 25.7701, -80.1901);

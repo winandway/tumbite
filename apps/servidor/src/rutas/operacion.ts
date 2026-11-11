@@ -2121,6 +2121,15 @@ export function tomarPedidoComida(
 operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
   const { u, db } = await miFicha(c);
   const id = c.req.param('id');
+  // C-ACEPTAR-DOBLE-TOQUE: si el pedido ya es suyo (segundo toque o reintento), responde ok antes
+  // de mirar la oferta, que ya quedó «aceptada».
+  const yaSuyo = await db
+    .prepare(
+      "SELECT 1 FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado IN ('aceptado','listo','en_camino')",
+    )
+    .bind(id, u.id)
+    .first();
+  if (yaSuyo) return c.json({ ok: true });
   const oferta = await db
     .prepare(
       "SELECT 1 FROM ofertas WHERE pedido_id = ? AND repartidor_id = ? AND estado = 'ofrecida'",
