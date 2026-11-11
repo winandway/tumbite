@@ -32,14 +32,14 @@ export async function googlePlay(paquete) {
   const auth = { authorization: `Bearer ${t.access_token}` };
 
   /** Llama a la API; `ruta` va después de applications/<paquete>. Falla con el mensaje de Google. */
-  const pedir = async (ruta, { metodo = 'POST', json, binario, subir = false } = {}) => {
+  const pedir = async (ruta, { metodo = 'POST', json, binario, subir = false, tipo } = {}) => {
     const url = `${BASE}${subir ? '/upload' : ''}/androidpublisher/v3/applications/${paquete}${ruta}${subir ? '?uploadType=media' : ''}`;
     const r = await fetch(url, {
       method: metodo,
       headers: {
         ...auth,
         ...(json ? { 'content-type': 'application/json' } : {}),
-        ...(binario ? { 'content-type': 'application/octet-stream' } : {}),
+        ...(binario ? { 'content-type': tipo ?? 'application/octet-stream' } : {}),
       },
       body: json ? JSON.stringify(json) : binario,
     });
