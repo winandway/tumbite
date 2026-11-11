@@ -24,7 +24,9 @@ const IDIOMAS = new Map([
 const pngs = (dir) =>
   existsSync(dir)
     ? readdirSync(dir)
-        .filter((n) => n.endsWith('.png'))
+        // La captura del retiro al banco no se sube mientras los retiros estén apagados (auditor
+        // de tiendas, 11 nov 2026): la ficha solo muestra lo que la app hace hoy.
+        .filter((n) => n.endsWith('.png') && !n.includes('retiro-al-banco'))
         .sort()
         .map((n) => join(dir, n))
     : [];
