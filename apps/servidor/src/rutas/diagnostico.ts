@@ -411,10 +411,22 @@ diagnostico.post('/interno/diagnostico/s11', async (c) => {
       `s11-cuenta-${corrida}`,
     );
     const cuenta = a.id;
-    const estado = await stripe.get<{
+    // C-S11-CUENTA-RECIEN-CREADA (11 nov 2026): Stripe a veces tarda unos segundos en dejar leer una
+    // cuenta conectada recién creada («does not have access to account…»). No es un fallo nuestro:
+    // se espera y se vuelve a leer, hasta cuatro veces, antes de darlo por error.
+    type EstadoCuenta = {
       capabilities?: { transfers?: string };
       requirements?: { currently_due?: string[] };
-    }>(`/accounts/${cuenta}`);
+    };
+    let estado: EstadoCuenta | null = null;
+    for (let intento = 1; !estado; intento++) {
+      try {
+        estado = await stripe.get<EstadoCuenta>(`/accounts/${cuenta}`);
+      } catch (e) {
+        if (intento >= 4 || !/does not have access to account/i.test(String(e))) throw e;
+        await new Promise((r) => setTimeout(r, 2000 * intento));
+      }
+    }
     casos.push({
       nombre: 'cuenta conectada de prueba con transferencias activas',
       ok: estado.capabilities?.transfers === 'active',

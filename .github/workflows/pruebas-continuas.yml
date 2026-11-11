@@ -35,6 +35,8 @@ jobs:
       - name: Retiros y cobros dentro del sitio de pruebas (S2–S12, L1)
         run: node scripts/staging/probar-staging.mjs
       - name: Circuito de dinero con Stripe en modo prueba
+        # Corre aunque el paso anterior haya fallado: cada pieza dice lo suyo.
+        if: ${{ !cancelled() }}
         env:
           RECORRIDO_URL: ${{ vars.URL_PRUEBAS }}
           RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}
