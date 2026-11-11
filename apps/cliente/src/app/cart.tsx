@@ -41,7 +41,7 @@ import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { textosTiendas } from '../tiendas/textos';
 import { ElegirReemplazo } from '../tiendas/ElegirReemplazo';
-import { SUSTITUCIONES, margenPesables } from '@tumbite/compartido';
+import { SUSTITUCIONES, huellaPedido, margenPesables } from '@tumbite/compartido';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
@@ -200,7 +200,9 @@ function PantallaCarrito() {
   const [regalos, setRegalos] = useState<Regalo[]>([]);
   const [regaloElegido, setRegaloElegido] = useState<Regalo['tipo'] | null>(null);
   // El pedido ya creado y esperando la tarjeta. El formulario de pago aparece aquí mismo.
-  const [cobroGuardado, setCobro] = useState<(Cobro & { total: number }) | null>(null);
+  const [cobroGuardado, setCobro] = useState<(Cobro & { total: number; huella: string }) | null>(
+    null,
+  );
   const b = useBorrador({
     formulario: 'entrega',
     cuenta: usuario?.id,
@@ -510,6 +512,68 @@ function PantallaCarrito() {
     conPlus && usarRegalo && saldoRegaloCli > 0 && moneda === 'USD' && regaloConTarjeta
       ? saldoAplicable(conPlus, saldoRegaloCli)
       : 0;
+  const conEdad = carrito.lineas.some((l) => l.requiereEdad);
+  const modoElegido = b.valores.entrega || 'puerta';
+  const modoActual = conEdad && modoElegido === 'puerta' ? 'mano' : modoElegido;
+  const directoPermitido =
+    modoActual !== 'recoger' && (pais?.efectivoActivo || pais?.transferenciaRepartidorActiva);
+  // C-TARIFAS-PAIS: la tarjeta solo cobra en dólares; en otra moneda no se ofrece.
+  const tarjetaPermitida = (pais?.moneda ?? 'USD') === 'USD';
+  const primeroDirecto = pais?.efectivoActivo ? 'efectivo' : 'transferencia_repartidor';
+  const metodoPago = (
+    directoPermitido
+      ? b.valores.metodoPago && (b.valores.metodoPago !== 'tarjeta' || tarjetaPermitida)
+        ? b.valores.metodoPago
+        : tarjetaPermitida
+          ? 'tarjeta'
+          : primeroDirecto
+      : 'tarjeta'
+  ) as 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
+
+  // C-COBRO-MISMOS-DATOS: el cuerpo del pedido tal como se manda (sin el total) y su huella. El
+  // cobro ya creado solo se reutiliza si TODOS estos datos siguen iguales.
+  const cuerpoPedido = {
+    restauranteId: carrito.restauranteId,
+    lineas: carrito.lineas.map((l) => ({
+      platoId: l.platoId,
+      cantidad: l.cantidad,
+      opciones: (l.opciones ?? []).map((o) => o.id),
+      ...(carrito.esTienda ? { sustitucion: l.sustitucion ?? 'reembolsar' } : {}),
+      ...(carrito.esTienda && l.sustitucion === 'especifico' && l.reemplazo
+        ? { reemplazoId: l.reemplazo.platoId }
+        : {}),
+      ...(l.nota ? { nota: l.nota } : {}),
+    })),
+    propinaCentavos: propina,
+    // C-ANUNCIOS: si entró tocando el anuncio de este restaurante (se cobra al restaurante, no al cliente).
+    anuncioId: anuncioPara(carrito.restauranteId),
+    usarSaldoRegalo: usoRegalo > 0,
+    direccion: b.valores.direccion,
+    apto: b.valores.apto,
+    notas: b.valores.notas,
+    alergias: b.valores.alergias,
+    paraOtro: comoRegalo
+      ? {
+          nombre: b.valores.paraNombre,
+          telefono: b.valores.paraTelefono,
+          mensaje: b.valores.paraMensaje,
+        }
+      : null,
+    entrega:
+      b.valores.entrega === 'recoger'
+        ? 'recoger'
+        : b.valores.entrega === 'mano'
+          ? 'mano'
+          : 'puerta',
+    pin: b.valores.pin !== 'no',
+    metodoPago,
+    cupon: cupon?.codigo,
+    lat: punto?.lat ?? null,
+    lng: punto?.lng ?? null,
+    regalo: regalo > 0 ? regaloElegido : null,
+    ...(franjaElegida ? { programadoPara: franjaElegida.inicio } : {}),
+  };
+  const huella = huellaPedido(cuerpoPedido);
   const d =
     conPlus && usoRegalo
       ? calcularConPromocion(
@@ -547,47 +611,9 @@ function PantallaCarrito() {
     setPagando(true);
     try {
       const r = await api.pedir<Cobro>('POST', '/datos/pedidos', {
-        restauranteId: carrito.restauranteId,
-        lineas: carrito.lineas.map((l) => ({
-          platoId: l.platoId,
-          cantidad: l.cantidad,
-          opciones: (l.opciones ?? []).map((o) => o.id),
-          ...(carrito.esTienda ? { sustitucion: l.sustitucion ?? 'reembolsar' } : {}),
-          ...(carrito.esTienda && l.sustitucion === 'especifico' && l.reemplazo
-            ? { reemplazoId: l.reemplazo.platoId }
-            : {}),
-          ...(l.nota ? { nota: l.nota } : {}),
-        })),
-        propinaCentavos: propina,
-        // C-ANUNCIOS: si entró tocando el anuncio de este restaurante (se cobra al restaurante, no al cliente).
-        anuncioId: anuncioPara(carrito.restauranteId),
-        usarSaldoRegalo: usoRegalo > 0,
+        ...cuerpoPedido,
         // El servidor compara este total con el suyo y no cobra si no coinciden.
         totalEsperado: d.totalCliente,
-        direccion: b.valores.direccion,
-        apto: b.valores.apto,
-        notas: b.valores.notas,
-        alergias: b.valores.alergias,
-        paraOtro: comoRegalo
-          ? {
-              nombre: b.valores.paraNombre,
-              telefono: b.valores.paraTelefono,
-              mensaje: b.valores.paraMensaje,
-            }
-          : null,
-        entrega:
-          b.valores.entrega === 'recoger'
-            ? 'recoger'
-            : b.valores.entrega === 'mano'
-              ? 'mano'
-              : 'puerta',
-        pin: b.valores.pin !== 'no',
-        metodoPago,
-        cupon: cupon?.codigo,
-        lat: punto?.lat ?? null,
-        lng: punto?.lng ?? null,
-        regalo: regalo > 0 ? regaloElegido : null,
-        ...(franjaElegida ? { programadoPara: franjaElegida.inicio } : {}),
       });
       // Guardar la dirección para la próxima (si lo pidió), sin frenar el pago si falla.
       if (b.valores.guardarDireccion === 'si' && b.valores.entrega !== 'recoger')
@@ -611,7 +637,7 @@ function PantallaCarrito() {
       }
       // La tarjeta se pide aquí mismo, sin salir de la app.
       if (!r.clavePublica) throw new Error(t.pagoNoDisponible);
-      setCobro({ ...r, total: r.desglose?.totalCliente ?? d.totalCliente });
+      setCobro({ ...r, total: r.desglose?.totalCliente ?? d.totalCliente, huella });
     } catch (x) {
       setError(x instanceof Error ? x.message : String(x));
     } finally {
@@ -619,8 +645,12 @@ function PantallaCarrito() {
     }
   }
 
-  // Si el total cambió después de crear el cobro, ese cobro ya no sirve: se crea otro.
-  const cobro = cobroGuardado && d && cobroGuardado.total === d.totalCliente ? cobroGuardado : null;
+  // Si el total o cualquier dato del pedido cambió después de crear el cobro, ese cobro ya no
+  // sirve: se crea el pedido de nuevo (C-COBRO-MISMOS-DATOS).
+  const cobro =
+    cobroGuardado && d && cobroGuardado.huella === huella && cobroGuardado.total === d.totalCliente
+      ? cobroGuardado
+      : null;
 
   const volver = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const marco = (cuerpo: React.ReactNode) => (
@@ -697,24 +727,6 @@ function PantallaCarrito() {
     </Text>
   );
   // C-EDAD-EN-MANO: con alcohol o tabaco no se deja en la puerta (el servidor también lo cambia).
-  const conEdad = carrito.lineas.some((l) => l.requiereEdad);
-  const modoElegido = b.valores.entrega || 'puerta';
-  const modoActual = conEdad && modoElegido === 'puerta' ? 'mano' : modoElegido;
-  const directoPermitido =
-    modoActual !== 'recoger' && (pais?.efectivoActivo || pais?.transferenciaRepartidorActiva);
-  // C-TARIFAS-PAIS: la tarjeta solo cobra en dólares; en otra moneda no se ofrece.
-  const tarjetaPermitida = (pais?.moneda ?? 'USD') === 'USD';
-  const primeroDirecto = pais?.efectivoActivo ? 'efectivo' : 'transferencia_repartidor';
-  const metodoPago = (
-    directoPermitido
-      ? b.valores.metodoPago && (b.valores.metodoPago !== 'tarjeta' || tarjetaPermitida)
-        ? b.valores.metodoPago
-        : tarjetaPermitida
-          ? 'tarjeta'
-          : primeroDirecto
-      : 'tarjeta'
-  ) as 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
-
   return marco(
     <>
       <Text style={{ fontWeight: '700', fontSize: 15, color: '#5E5E5E', marginBottom: 8 }}>

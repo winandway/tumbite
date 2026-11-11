@@ -17,6 +17,7 @@ export * from './competencia';
 export * from './calculadora';
 export * from './llegada';
 export * from './latidoUbicacion';
+export * from './huellaPedido';
 export * from './despacho';
 export * from './mostrador';
 export * from './horarios';

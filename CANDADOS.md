@@ -3482,3 +3482,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** `packages/compartido/src/latidoUbicacion.ts` (`LATIDO_UBICACION_MS` = 2 minutos, `tocaMandarUbicacion`). Con la app abierta, cada 2 minutos se manda la última lectura conocida. En segundo plano, Android recibe una lectura cada 15 s (`distanceInterval` 0) y la tarea solo la manda si se movió 25 m o pasaron 2 minutos. iOS no usa el tiempo en segundo plano: allí sigue con 30 m y el latido lo da la app abierta (límite conocido). El servidor ya escribe como mucho una vez por minuto si está quieto (C-POSICION-SIN-REESCRIBIR), así que el latido es como mucho una escritura cada 2 minutos.
 - **Prueba:** `packages/compartido/src/latidoUbicacion.test.ts`, comprobada en rojo.
 - **No tocar:** no volver a `distanceInterval: 30` en Android sin otro latido; no mandar el latido más seguido que cada 2 minutos.
+
+### C-COBRO-MISMOS-DATOS: el carrito no reutiliza un cobro creado con otros datos
+
+- **Qué pasaba:** tras «Continuar al pago» el pedido ya existe en el servidor. Si el cliente cambiaba la dirección, el apto, las notas, alergias, puerta o mano, el PIN o el regalo sin que cambiara el total, el carrito reutilizaba el cobro del pedido viejo y el pedido salía con los datos viejos.
+- **Causa:** el cobro guardado solo se comparaba por el total.
+- **Qué se hizo:** el carrito arma una sola vez el cuerpo del pedido (`cuerpoPedido`, sin el total) y su huella (`huellaPedido` en `packages/compartido`, JSON con las claves ordenadas). El cobro se guarda con su huella y solo se reutiliza si la huella y el total son iguales; si algo cambió, vuelve «Continuar al pago» y se crea el pedido de nuevo (el viejo, sin pagar, lo cierra C-PENDIENTE-ABANDONADO).
+- **Prueba:** `packages/compartido/src/carritoMismosDatos.test.ts`, comprobada en rojo.
+- **No tocar:** todo dato nuevo que se mande al crear el pedido va dentro de `cuerpoPedido`, nunca agregado aparte en la llamada.
