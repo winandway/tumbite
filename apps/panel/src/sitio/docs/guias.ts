@@ -560,6 +560,7 @@ const es: SeccionDocs[] = [
           'En el carrito, debajo de «Dirección», aparecen tus direcciones guardadas como botones (Casa, Trabajo…). Tocar una rellena la dirección, el pin del mapa, las instrucciones y cómo prefieres recibir.',
           'Para guardar una nueva, enciende «Guardar esta dirección para la próxima» antes de pagar y ponle un nombre. Las instrucciones que escribas en «Notas» (portón, piso, timbre) se guardan con ella.',
           'Puedes tener hasta diez. La misma dirección no se duplica: se actualiza.',
+          'Si cambias la dirección o las notas después de tocar «Continuar al pago», el botón vuelve a pedir «Continuar al pago»: tócalo otra vez para que el pedido salga a la dirección nueva.',
           'Si vives en un edificio, escribe el apartamento, el piso o el nombre de la torre en su casilla, «Apto, piso o edificio». El repartidor lo ve junto a la dirección y se guarda con ella.',
           'Mientras escribes una dirección nueva aparecen sugerencias de direcciones reales. Toca la tuya: así el pin del mapa cae justo en tu puerta y el repartidor llega sin perderse. Vale en el carrito, en tus direcciones guardadas y al cambiar la dirección de un pedido.',
         ],
@@ -704,6 +705,7 @@ const es: SeccionDocs[] = [
           'En el carrito, en «Cupón o código promocional», escribe el código y toca «Aplicar». Si vale, verás «Cupón aplicado» y el descuento en el desglose; si no, te decimos por qué (venció, es de otro restaurante, no llegas al mínimo, ya lo usaste).',
           'Hay cupones de monto fijo, de porcentaje sobre la comida y de envío gratis. Algunos son solo para tu primer pedido o para un restaurante.',
           'El descuento nunca sale del restaurante ni del repartidor: lo pone Divoox.',
+          'Si tocaste «Continuar al pago» y no pagaste, ese pedido no se queda con tu cupón: cuando vuelves a pedir, el pedido sin pagar se cierra y el cupón queda libre para el nuevo. Y si un pedido se cancela, el cupón te vuelve.',
         ],
         capturas: [
           {
@@ -1129,6 +1131,7 @@ const es: SeccionDocs[] = [
           '«Quitarlo y seguir»: se saca ese plato, el total se recalcula y te devolvemos la diferencia a tu tarjeta. El resto sigue como siempre.',
           '«Cancelar todo el pedido»: te devolvemos el total completo.',
           'Si no respondes en 5 minutos, quitamos el plato y te devolvemos su parte, para que el resto no se enfríe esperando.',
+          'Mientras decides, el restaurante no puede marcar tu pedido como listo: espera tu respuesta. Así el plato que falta no se prepara ni se entrega a medias.',
         ],
         capturas: [
           {
@@ -1155,10 +1158,10 @@ const es: SeccionDocs[] = [
         explicacion: [
           'En el carrito, antes de pagar, eliges «En la puerta» o «En mano».',
           'En la puerta: sin contacto. El repartidor lo deja y toma la foto de dónde quedó; tú la ves en tu pedido.',
-          'En mano: el repartidor te lo entrega a ti. Cuando esté en tu puerta te avisamos para que salgas. En ese caso no hace falta foto: la prueba es un PIN de 4 dígitos que aparece en tu pedido y que quien recibe le dice al repartidor. Sin el PIN correcto no se entrega.',
+          'En mano: el repartidor te lo entrega a ti. Cuando esté en tu puerta te avisamos para que salgas. En ese caso no hace falta foto: la prueba es un PIN de 4 dígitos que aparece en tu pedido y que quien recibe le dice al repartidor. Sin el PIN correcto no se entrega: el repartidor tampoco puede cambiar el PIN por una foto.',
           'El PIN es opcional: si va a recibir otra persona (un familiar, el portero) y no quieres pasarle el PIN, apágalo con el interruptor al pedir. Entonces se entrega en mano sin PIN.',
           'Si tu pedido lleva alcohol o tabaco, «En la puerta» sale apagado: se entrega en mano a un mayor de 21 años, que muestra su identificación.',
-          'Si no apareces, el repartidor te avisa y te escribe por el chat. A los 5 minutos puede dejarlo en un lugar seguro (con el portero, en la recepción) con una foto y una nota de dónde quedó, y tú lo ves en tu pedido.',
+          'Si no apareces, el repartidor te avisa y te escribe por el chat. A los 5 minutos puede dejarlo en un lugar seguro (con el portero, en la recepción) con una foto y una nota de dónde quedó, y tú lo ves en tu pedido. Si pediste el PIN, no se deja en un lugar seguro: el repartidor escribe a soporte y te ayudamos.',
         ],
         capturas: [
           {
@@ -1257,6 +1260,11 @@ const es: SeccionDocs[] = [
             pie: 'Antes de pagar ves el total exacto: comida, envío, servicio, propina y, cuando aplica en tu ciudad, el impuesto de ventas.',
           },
           {
+            src: '/docs/cliente-carrito-cambio-es.webp',
+            alt: 'Carrito después de cambiar las indicaciones para el repartidor: el botón vuelve a decir «Continuar al pago · $13.98».',
+            pie: 'Si cambias algo después de «Continuar al pago», el botón vuelve: tócalo para pedir con los datos nuevos.',
+          },
+          {
             src: '/docs/recorrido-cliente-pagado-es.webp',
             alt: 'Confirmación «¡Pedido realizado!» en la app de Divoox, con el número del pedido, el total y los botones «Ver seguimiento» y «Volver al inicio».',
             pie: 'Pagas y el pedido le llega al restaurante al instante.',
@@ -1277,6 +1285,8 @@ const es: SeccionDocs[] = [
           'Elige la propina. Va completa para tu repartidor; nunca se usa para completar su pago.',
           'Revisa el desglose: comida, envío, servicio y propina. Lo que ves es lo que pagas. Debajo del total, toca «¿Qué son estas tarifas?» y ves qué es cada cargo y cuánto puede ser: el envío según la distancia, la tarifa de servicio con su mínimo y su máximo, el cargo por pedido pequeño y la propina, que va entera para tu repartidor.',
           'Toca «Continuar al pago». El formulario de la tarjeta aparece ahí mismo, dentro de la app, protegido por Stripe. Al pagar ves «¡Pedido realizado!» con el número y el total; toca «Ver seguimiento» para seguirlo en vivo.',
+          'Si después de tocar «Continuar al pago» cambias algo (la dirección, el apartamento, las indicaciones, las alergias, «En la puerta» o «En mano», el PIN, el regalo o la propina), el botón vuelve a decir «Continuar al pago»: tócalo otra vez y el pedido sale con los datos nuevos, nunca con los viejos. Lo que dejaste sin pagar se cierra solo.',
+          'Si el total cambió mientras tanto (por ejemplo, el restaurante actualizó un precio), la app te avisa «El total cambió», te muestra el total corregido en el desglose y en el botón, y ya puedes pagar con ese total.',
         ],
       },
       {
@@ -1897,7 +1907,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Inicio: arriba ves tu restaurante y si está recibiendo pedidos (con el botón para pausar), y tres números: pedidos nuevos, en preparación y completados hoy. Cada pedido nuevo llega con alarma, un reloj de cuánto lleva esperando, lo que pidieron y el precio.',
           'Aceptar: elige el tiempo de preparación (el sugerido viene marcado en verde) y toca «Aceptar pedido». Si te falta un producto, tócalo en «¿Te falta un producto?» y le preguntamos al cliente qué prefiere.',
-          'En preparación: al abrir el pedido ves los pasos (confirmado, en preparación, listo, recogido), el tiempo que lleva y el que le queda. Con «+5 min» pides más tiempo y con «Marcar como listo» avisas que está para salir.',
+          'En preparación: al abrir el pedido ves los pasos (confirmado, en preparación, listo, recogido), el tiempo que lleva y el que le queda. Con «+5 min» pides más tiempo y con «Marcar como listo» avisas que está para salir. Si le avisaste al cliente que te falta un plato, «Marcar como listo» no aparece hasta que él decida.',
           'Listo para recoger: aparece el código grande con el número del pedido. El repartidor lo escanea desde su app, toma la foto de la bolsa y tú la ves en tu pantalla para confirmar que es tu pedido.',
           'Pedidos: los que están en curso y los de las últimas 24 horas, por grupos. Mi menú: tus platos con foto, precio y si están activos o agotados; con «Añadir» creas uno nuevo y desde los tres puntos lo editas, lo marcas agotado o lo eliminas. Estadísticas: ventas, pedidos, ticket promedio y lo que te queda, de hoy, la semana y el mes.',
           'En la tableta, los pedidos nuevos quedan a la izquierda y los que están en cocina a la derecha, con botones grandes para usar con las manos ocupadas.',
@@ -2169,7 +2179,8 @@ const es: SeccionDocs[] = [
           'Marca el plato que no tienes y el cliente decide en su app; y si vas atrasado, suma minutos antes de que salga el repartidor.',
         explicacion: [
           'En el pedido, abre los tres puntos y toca «Me falta un plato». Elige cuál y «Avisar al cliente». Al cliente le llega el aviso y decide: quitarlo (se le devuelve esa parte) o cancelar todo. Mientras decide, el pedido espera y el Manager no te cuenta ese tiempo.',
-          'Si el cliente lo quita, el pedido vuelve con el resto de los platos y lo aceptas como siempre. Si no responde en 5 minutos, se quita solo.',
+          'Mientras el cliente decide, el botón «¡Listo!» desaparece de ese pedido y en su lugar ves el aviso «Avisamos al cliente que no tienes… Esperando su respuesta (máximo 5 minutos)…». No se puede marcar como listo hasta que el cliente responda, para que no prepares ni entregues un pedido cuyo plato todavía está en discusión. Cuando responde, vuelve el botón. Pasa igual en el panel y en la app del restaurante.',
+          'Si el cliente lo quita, el pedido vuelve con el resto de los platos y lo aceptas (o lo marcas listo, si ya estaba aceptado) como siempre. Si no responde en 5 minutos, se quita solo.',
           'Si ya aceptaste y vas atrasado, toca «+5 min» mientras no haya salido un repartidor: así el repartidor llega a la hora correcta y el cliente ve la hora nueva. Cuando ya hay repartidor en camino, el tiempo no se cambia: avísale por la app.',
         ],
         capturas: [
@@ -2178,6 +2189,11 @@ const es: SeccionDocs[] = [
             alt: 'Panel del restaurante con «Me falta un plato»: la lista para elegir el plato y el botón «Avisar al cliente».',
             pie: 'Eliges el plato que falta y avisas al cliente con un toque.',
           },
+          {
+            src: '/docs/restaurante-listo-espera-es.webp',
+            alt: 'Pedido en preparación con el aviso «Avisamos al cliente que no tienes Limonada de coco. Esperando su respuesta» y sin el botón «¡Listo!».',
+            pie: 'Mientras el cliente decide, el pedido espera y no hay botón «¡Listo!».',
+          },
         ],
         preguntas: [
           '¿Qué hago si no tengo un plato de un pedido?',
@@ -2185,7 +2201,7 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Tres puntos del pedido → «Me falta un plato» → elige el plato → «Avisar al cliente».',
-          'Espera la respuesta (máximo 5 minutos) y acepta el pedido con el resto.',
+          'Espera la respuesta (máximo 5 minutos): mientras tanto no puedes marcarlo «Listo». Luego acepta o sigue con el resto.',
           'Si vas atrasado, «+5 min» antes de que salga el repartidor.',
         ],
       },
@@ -2470,7 +2486,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'En «Pedidos», toca «Activar alarma» una vez (el navegador pide permiso para el sonido).',
           'Cuando entra un pedido pagado, suena hasta que lo aceptes. Elige los minutos de preparación.',
-          'Prepara la comida y toca «Listo» cuando esté lista: en ese momento buscamos al repartidor más cercano.',
+          'Prepara la comida y toca «Listo» cuando esté lista: en ese momento buscamos al repartidor más cercano. Si marcaste «Me falta un plato», el botón «Listo» vuelve cuando el cliente responde.',
           'Cada pedido lleva su semáforo: verde va a tiempo, amarillo se está atrasando y rojo necesita atención ya. Al lado ves hace cuánto entró y por qué se atrasa.',
           'Si nadie acepta un pedido, te avisamos al celular al minuto y a los 3 minutos. A los 6 lo cancelamos y le devolvemos el dinero al cliente: es mejor un pedido cancelado a tiempo que un cliente esperando.',
           'Si no puedes atender un pedido, abre los tres puntos y elige «Rechazar pedido». El cliente recibe todo su dinero de vuelta.',
@@ -2801,6 +2817,7 @@ const es: SeccionDocs[] = [
           'La primera vez que te conectes, el celular te pedirá permitir la ubicación «Siempre» (iPhone) o «Todo el tiempo» (Android). Es solo mientras estás conectado: al desconectarte se apaga.',
           'En Android verás una notificación fija «Divoox está activo» mientras estés conectado: es la señal de que tu posición se sigue mandando.',
           'Si no das el permiso, la app sigue funcionando, pero solo manda tu posición con la pantalla abierta.',
+          'Aunque estés quieto (esperando en el restaurante o en tu casa), mientras estás conectado la app manda tu posición cada dos minutos. Así sigues recibiendo ofertas y no pierdes un pedido que ya aceptaste. En iPhone, mantén la app abierta mientras esperas ofertas.',
         ],
         capturas: [
           {
@@ -2913,6 +2930,7 @@ const es: SeccionDocs[] = [
           'Si el restaurante termina antes y toca «Listo», la oferta sale en ese momento.',
           'Al llegar, la pantalla del restaurante muestra un código QR junto al pedido. Lo escaneas desde tu app (o escribes las 4 letras o números) y la app confirma que es tu pedido.',
           'Después tomas la foto de la bolsa cerrada. Con el código verificado, el pedido sale en camino sin que el restaurante tenga que tocar nada. Si no pudiste escanear, el restaurante confirma viendo tu foto.',
+          'El código se lee una sola vez: si la cámara lo detecta dos veces seguidas, no ves ningún error y el pedido sigue su camino.',
           'Tu llegada al restaurante la marca tu ubicación: el restaurante ve en cuántos minutos llegas y, si tiene que esperar, cuánto; y si el que espera eres tú, también queda registrado.',
         ],
         capturas: [
@@ -2948,7 +2966,8 @@ const es: SeccionDocs[] = [
           'Ya recogido no se puede soltar: la comida es del cliente. Si hay un problema, repórtalo desde «Tengo un problema».',
           'Si tu celular se queda 10 minutos sin mandar ubicación antes de llegar al restaurante, el pedido se reasigna solo.',
           'En la puerta, si nadie sale: toca «El cliente no aparece». Le llega un aviso y puedes escribirle por el chat. Pasados 5 minutos, escribe dónde lo dejas, toma la foto y toca «Dejar en lugar seguro». Cobras igual.',
-          'Si el cliente pidió «en mano» y te lo recibe, toca «Entregado en mano»: no hace falta foto. Solo funciona estando en la puerta.',
+          'Si el cliente pidió «en mano» y te lo recibe, toca «Entregado en mano». Solo funciona estando en la puerta.',
+          'Si el pedido en mano lleva PIN, pídele el PIN de 4 dígitos a quien recibe y escríbelo: con PIN no se entrega con foto ni se deja en un lugar seguro, y la app te lo explica en esa pantalla. Si no aparece, escribe a soporte con «Ayuda con este pedido».',
         ],
         capturas: [
           {
@@ -2956,16 +2975,22 @@ const es: SeccionDocs[] = [
             alt: 'App del repartidor en la puerta: botones «Tomar foto de la entrega», «Entregado en mano» y «El cliente no aparece».',
             pie: 'En la puerta: foto, en mano, o avisar que el cliente no aparece.',
           },
+          {
+            src: '/docs/repartidor-pin-sin-foto-es.webp',
+            alt: 'Entrega en mano con PIN: el aviso «Este pedido se entrega en mano con el PIN del cliente: pídeselo y escríbelo. No se puede dejar con foto», la casilla del PIN y el botón «Entregado en mano».',
+            pie: 'Con PIN no hay foto: pides el PIN y lo escribes.',
+          },
         ],
         preguntas: [
           '¿Puedo rechazar un pedido que ya acepté?',
           '¿Qué hago si el cliente no sale?',
           '¿Tengo que tomar foto si se lo entrego en la mano?',
+          '¿Puedo entregar con foto un pedido en mano con PIN?',
         ],
         pasos: [
           'Antes de recoger: escribe el motivo y toca «Soltar el pedido».',
           'En la puerta sin respuesta: «El cliente no aparece», escríbele, espera 5 minutos.',
-          'Luego: nota de dónde lo dejas, foto y «Dejar en lugar seguro».',
+          'Luego: nota de dónde lo dejas, foto y «Dejar en lugar seguro» (solo si el pedido no lleva PIN).',
         ],
       },
       {
@@ -3082,6 +3107,8 @@ const es: SeccionDocs[] = [
         explicacion: [
           'La oferta ocupa toda la pantalla, como en las grandes apps de reparto: arriba la ganancia garantizada en grande (con la propina incluida y el bono si lo hay), y debajo cuatro datos para decidir de un vistazo: la distancia hasta el restaurante, el viaje total, los minutos aproximados y cuántos artículos lleva.',
           'Tienes 45 segundos y los ves correr en la pantalla; el celular vibra cuando llega la oferta. Si no respondes, la oferta pasa al siguiente repartidor y cuenta como rechazo en tu tasa de aceptación, pero no te baja de nivel.',
+          'Si rechazas una oferta o la dejas vencer y no hay otro repartidor libre cerca, la misma oferta puede volver a aparecerte poco después (alrededor de un minuto), para que el cliente no se quede esperando. Si hay otro repartidor disponible, la oferta pasa a él y no vuelve contigo.',
+          'Si tocas «Aceptar» dos veces seguidas no pasa nada: el pedido ya es tuyo y no ves ningún error.',
           'La ganancia que ves es la mínima garantizada: si el cliente agrega propina después de entregar, la ves sumada en Ganancias y te llega un aviso.',
         ],
         pasos: [
@@ -5319,6 +5346,7 @@ const en: SeccionDocs[] = [
           'In the cart, under “Address”, your saved addresses show as buttons (Home, Work…). Tapping one fills in the address, the map pin, the instructions and how you prefer to receive.',
           'To save a new one, turn on “Save this address for next time” before paying and give it a name. The instructions you write under “Notes” (gate, floor, doorbell) are saved with it.',
           'You can keep up to ten. The same address isn’t duplicated: it’s updated.',
+          'If you change the address or the notes after tapping “Continue to payment,” the button asks for “Continue to payment” again: tap it once more so the order goes to the new address.',
           'If you live in a building, write the apartment, floor or tower name in its own field, “Apt, suite or floor”. The driver sees it with the address and it’s saved with it.',
           'As you type a new address, real address suggestions appear. Tap yours: the map pin lands right at your door and the driver gets there without getting lost. It works in the cart, in your saved addresses and when you change an order’s address.',
         ],
@@ -5463,6 +5491,7 @@ const en: SeccionDocs[] = [
           'In the cart, under “Coupon or promo code”, enter the code and tap “Apply”. If it’s valid you’ll see “Coupon applied” and the discount in the breakdown; if not, we tell you why (expired, another restaurant, below the minimum, already used).',
           'There are fixed-amount coupons, percentage-off-food coupons and free-delivery coupons. Some are only for your first order or for one restaurant.',
           'The discount never comes out of the restaurant or the driver: Divoox covers it.',
+          'If you tapped “Continue to payment” and didn’t pay, that order doesn’t hold on to your coupon: when you order again, the unpaid order is closed and the coupon is free for the new one. And if an order is canceled, the coupon comes back to you.',
         ],
         capturas: [
           {
@@ -5888,6 +5917,7 @@ const en: SeccionDocs[] = [
           '“Remove it and continue”: that item is taken out, the total is recalculated and we refund the difference to your card. The rest continues as usual.',
           '“Cancel the whole order”: we refund the full total.',
           'If you don’t answer within 5 minutes, we remove the item and refund its part so the rest doesn’t sit around waiting.',
+          'While you decide, the restaurant can’t mark your order as ready: it waits for your answer. That way the missing item is never prepared or handed over half-done.',
         ],
         capturas: [
           {
@@ -5915,9 +5945,9 @@ const en: SeccionDocs[] = [
           'In the cart, before paying, choose “Leave at my door” or “Hand it to me.”',
           'At the door: contactless. The driver leaves it and photographs where it was left; you see the photo in your order.',
           'If your order has alcohol or tobacco, “Leave at my door” is turned off: it’s handed to someone 21 or older, who shows their ID.',
-          'In hand: the driver hands it to you. When they’re at your door we let you know so you can come out. No photo is needed in that case: the proof is a 4-digit PIN that shows in your order and that whoever receives tells the driver. Without the right PIN it isn’t handed over.',
+          'In hand: the driver hands it to you. When they’re at your door we let you know so you can come out. No photo is needed in that case: the proof is a 4-digit PIN that shows in your order and that whoever receives tells the driver. Without the right PIN it isn’t handed over, and the driver can’t swap the PIN for a photo.',
           'The PIN is optional: if someone else will receive it (a relative, the doorman) and you don’t want to pass the PIN along, turn it off with the switch when ordering. Then it’s handed over without a PIN.',
-          'If you don’t show up, the driver lets you know and messages you in the chat. After 5 minutes they can leave it in a safe spot (with the doorman, at reception) with a photo and a note of where it is, and you see it in your order.',
+          'If you don’t show up, the driver lets you know and messages you in the chat. After 5 minutes they can leave it in a safe spot (with the doorman, at reception) with a photo and a note of where it is, and you see it in your order. If you asked for the PIN, it isn’t left in a safe spot: the driver writes to support and we help you.',
         ],
         capturas: [
           {
@@ -6016,6 +6046,11 @@ const en: SeccionDocs[] = [
             pie: 'Before paying you see the exact total: food, delivery, service, tip and, where it applies in your city, sales tax.',
           },
           {
+            src: '/docs/cliente-carrito-cambio-en.webp',
+            alt: 'Cart after changing the notes for the driver: the button says “Continue to payment · $13.98” again.',
+            pie: 'If you change something after “Continue to payment,” the button comes back: tap it to order with the new details.',
+          },
+          {
             src: '/docs/recorrido-cliente-pagado-en.webp',
             alt: '“Order placed!” confirmation in the Divoox app, with the order number, the total, and the “Track order” and “Back to home” buttons.',
             pie: 'You pay and the order reaches the restaurant instantly.',
@@ -6036,6 +6071,8 @@ const en: SeccionDocs[] = [
           'Choose the tip. It goes entirely to your driver; it never tops up their pay.',
           'Review the breakdown: food, delivery, service, and tip. What you see is what you pay. Below the total, tap “What are these fees?” to see what each charge is and how much it can be: delivery by distance, the service fee with its minimum and maximum, the small order fee, and the tip, which goes entirely to your driver.',
           'Tap “Continue to payment.” The card form appears right there, inside the app, secured by Stripe. Once you pay, you see “Order placed!” with the number and the total; tap “Track order” to follow it live.',
+          'If you change something after tapping “Continue to payment” (the address, the apartment, the notes, allergies, “Leave at my door” or “Hand it to me,” the PIN, the gift or the tip), the button says “Continue to payment” again: tap it once more and the order goes out with the new details, never the old ones. Whatever you left unpaid is closed on its own.',
+          'If the total changed in the meantime (for example, the restaurant updated a price), the app tells you “The total changed,” shows the corrected total in the breakdown and on the button, and you can pay with that total.',
         ],
       },
       {
@@ -6643,7 +6680,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Home: at the top you see your restaurant and whether it’s taking orders (with the button to pause), plus three numbers: new orders, preparing, and completed today. Each new order arrives with an alarm, a timer showing how long it has been waiting, what was ordered, and the price.',
           'Accept: choose the prep time (the suggested one is marked in green) and tap “Accept order.” If you’re out of an item, tap it under “Out of an item?” and we ask the customer what they’d like to do.',
-          'Preparing: when you open the order you see the steps (confirmed, preparing, ready, picked up), the time elapsed, and the time left. Tap “+5 min” for more time and “Mark as ready” when it’s good to go.',
+          'Preparing: when you open the order you see the steps (confirmed, preparing, ready, picked up), the time elapsed, and the time left. Tap “+5 min” for more time and “Mark as ready” when it’s good to go. If you told the customer you’re out of an item, “Mark as ready” doesn’t show until they decide.',
           'Ready for pickup: a large code with the order number appears. The driver scans it from their app, takes a photo of the bag, and you see it on your screen to confirm it’s your order.',
           'Orders: the ones in progress and those from the last 24 hours, by group. My menu: your dishes with photo, price, and whether they’re active or sold out; tap “Add” to create one and use the three dots to edit, mark sold out, or delete. Stats: sales, orders, average ticket, and what you keep, for today, the week, and the month.',
           'On a tablet, new orders stay on the left and the ones in the kitchen on the right, with large buttons you can use with busy hands.',
@@ -6688,7 +6725,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Sign in to the restaurant app with the same email and password you use for the dashboard.',
           'When the alarm rings, review the order, choose the time, and tap “Accept order.”',
-          'When it’s ready, open the order and tap “Mark as ready.”',
+          'When it’s ready, open the order and tap “Mark as ready.” If you flagged a missing item, the button comes back once the customer answers.',
           'Show the code to the driver and confirm the photo of the bag.',
           'Use “Menu” to change prices or mark a dish sold out, and “Stats” to see your sales.',
         ],
@@ -6915,6 +6952,7 @@ const en: SeccionDocs[] = [
           'Flag the item you’re out of and the customer decides in their app; and if you’re running late, add minutes before the driver leaves.',
         explicacion: [
           'On the order, open the three dots and tap “I’m out of an item.” Pick which one and “Notify the customer.” The customer gets a notice and decides: remove it (that part is refunded) or cancel everything. While they decide, the order waits and the Manager doesn’t count that time against you.',
+          'While the customer decides, the “Ready!” button disappears from that order and you see the notice “We told the customer you’re out of …. Waiting for their answer (up to 5 minutes)…”. You can’t mark it ready until they answer, so you never prepare or hand off an order whose item is still being decided. When they answer, the button comes back. It works the same in the panel and in the restaurant app.',
           'If the customer removes it, the order comes back with the remaining items and you accept it as usual. If they don’t answer in 5 minutes, it’s removed automatically.',
           'If you already accepted and you’re running late, tap “+5 min” as long as no driver has left: the driver then arrives at the right time and the customer sees the new time. Once a driver is on the way, the time can’t change: let them know in the app.',
         ],
@@ -6924,6 +6962,11 @@ const en: SeccionDocs[] = [
             alt: 'Restaurant panel with “I’m out of an item”: the list to pick the item and the “Notify the customer” button.',
             pie: 'Pick the missing item and notify the customer with one tap.',
           },
+          {
+            src: '/docs/restaurante-listo-espera-en.webp',
+            alt: 'An order being prepared with the notice “We told the customer you’re out of Coconut lemonade. Waiting for their answer” and no “Ready!” button.',
+            pie: 'While the customer decides, the order waits and there is no “Ready!” button.',
+          },
         ],
         preguntas: [
           'What do I do if I’m out of an item on an order?',
@@ -6931,7 +6974,7 @@ const en: SeccionDocs[] = [
         ],
         pasos: [
           'Order’s three dots → “I’m out of an item” → pick the item → “Notify the customer.”',
-          'Wait for the answer (up to 5 minutes) and accept the order with the rest.',
+          'Wait for the answer (up to 5 minutes): you can’t mark it “Ready” in the meantime. Then accept it, or carry on, with the rest.',
           'Running late? “+5 min” before the driver leaves.',
         ],
       },
@@ -7547,6 +7590,7 @@ const en: SeccionDocs[] = [
           'The first time you go online, the phone asks you to allow location “Always” (iPhone) or “All the time” (Android). It’s only while you’re online: when you go offline it turns off.',
           'On Android you’ll see a fixed notification “Divoox is active” while you’re online: it’s the sign your position keeps being sent.',
           'If you don’t grant it, the app still works, but only sends your position with the screen open.',
+          'Even when you’re standing still (waiting at the restaurant or at home), while you’re online the app sends your position every two minutes. That way you keep receiving offers and don’t lose an order you already accepted. On iPhone, keep the app open while you wait for offers.',
         ],
         capturas: [
           {
@@ -7653,6 +7697,7 @@ const en: SeccionDocs[] = [
           'If the restaurant finishes early and taps “Ready,” the offer goes out right then.',
           'When you arrive, the restaurant’s screen shows a QR code next to the order. Scan it from your app (or type the 4 characters) and the app confirms it’s your order.',
           'Then photograph the closed bag. With the code verified, the order goes out without the restaurant touching anything. If you couldn’t scan, the restaurant confirms by looking at your photo.',
+          'The code is read only once: if the camera picks it up twice in a row, you see no error and the order carries on.',
           'Your arrival at the restaurant is set by your location: the restaurant sees how many minutes away you are and, if they keep you waiting, how long; if you’re the one who’s early, that’s recorded too.',
         ],
         capturas: [
@@ -7688,7 +7733,8 @@ const en: SeccionDocs[] = [
           'Once picked up it can’t be released: the food belongs to the customer. If there’s a problem, report it from “I have a problem.”',
           'If your phone goes 10 minutes without sending its location before you reach the restaurant, the order is reassigned automatically.',
           'At the door, if nobody comes out: tap “Customer isn’t here.” They get a notice and you can message them in the chat. After 5 minutes, write where you’re leaving it, take the photo and tap “Leave in a safe spot.” You get paid the same.',
-          'If the customer chose “hand it to me” and takes it from you, tap “Handed to the customer”: no photo needed. It only works at the door.',
+          'If the customer chose “hand it to me” and takes it from you, tap “Handed to the customer”. It only works at the door.',
+          'If the in-hand order has a PIN, ask whoever receives it for the 4-digit PIN and type it in: with a PIN the order isn’t delivered with a photo or left in a safe spot, and the app explains it on that screen. If they don’t show up, write to support with “Help with this order.”',
         ],
         capturas: [
           {
@@ -7696,16 +7742,22 @@ const en: SeccionDocs[] = [
             alt: 'Driver app at the door: “Take the delivery photo,” “Handed to the customer” and “Customer isn’t here” buttons.',
             pie: 'At the door: photo, in hand, or report the customer isn’t there.',
           },
+          {
+            src: '/docs/repartidor-pin-sin-foto-en.webp',
+            alt: 'In-hand delivery with a PIN: the notice “This order is handed over in person with the PIN: ask the customer for it and enter it. It can’t be left with a photo,” the PIN box and the “Handed to the customer” button.',
+            pie: 'With a PIN there is no photo: you ask for the PIN and type it in.',
+          },
         ],
         preguntas: [
           'Can I decline an order I already accepted?',
           'What do I do if the customer doesn’t come out?',
           'Do I need a photo if I hand it to them?',
+          'Can I deliver an in-hand order with a PIN using a photo?',
         ],
         pasos: [
           'Before pickup: write the reason and tap “Release the order.”',
           'At the door with no answer: “Customer isn’t here,” message them, wait 5 minutes.',
-          'Then: note where you leave it, photo and “Leave in a safe spot.”',
+          'Then: note where you leave it, photo and “Leave in a safe spot” (only if the order has no PIN).',
         ],
       },
       {
@@ -7823,6 +7875,8 @@ const en: SeccionDocs[] = [
         explicacion: [
           'The offer takes the whole screen, like in the big delivery apps: the guaranteed earnings big at the top (tip included, and the bonus if there is one), and below it four facts to decide at a glance: the distance to the restaurant, the total trip, the approximate minutes, and how many items it carries.',
           'You have 45 seconds and you see them counting down; the phone vibrates when the offer arrives. If you don’t answer, the offer goes to the next driver and counts as a decline in your acceptance rate, but it doesn’t lower your level.',
+          'If you decline an offer or let it expire and no other driver is free nearby, the same offer may come back to you shortly after (about a minute), so the customer isn’t left waiting. If another driver is available, the offer goes to them and doesn’t come back to you.',
+          'If you tap “Accept” twice in a row nothing bad happens: the order is already yours and you see no error.',
           'The earnings you see are the guaranteed minimum: if the customer adds a tip after delivery, you see it added under Earnings and you get a notification.',
         ],
         pasos: [
