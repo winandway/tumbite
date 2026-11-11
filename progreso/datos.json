@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-10T21:44:35.000Z",
+  "actualizado": "2026-11-11T00:48:14.000Z",
   "version": "7b9a5ca",
-  "ahora": "10 nov: se adelantó lo que no depende de nadie — Divoox dice dónde funciona y deja pedir tu ciudad, flota propia del restaurante (en pruebas), perfil de Chile, cancelar un pedido listo vía soporte, elegir app de mapas y «Tomar foto» en toda subida",
+  "ahora": "10 nov: el circuito de pagos de comida quedó probado de punta a punta en el sitio de pruebas con la tarjeta de prueba de Stripe — compra y cobro al entregar, rechazo del restaurante, cancelar un pedido listo vía soporte, reembolso parcial y reparto a restaurante y repartidor. Falta lo de dinero real y los retiros al banco",
   "proximo": [
     {
       "quien": "richard",
@@ -47,6 +47,13 @@
       "titulo": "Mirar la maqueta nueva de la portada (servicios arriba, como Rappi y Grab) y decir si se construye así",
       "para": "Probar el cobro con dinero real: una compra, otra cancelada y una devolución parcial.",
       "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
+    },
+    {
+      "id": "stripe-connect-y-retiros",
+      "prioridad": "alta",
+      "titulo": "Stripe: activar Connect, crear el aviso de cuentas conectadas y decir cuándo se encienden los retiros",
+      "para": "El saldo ya llega bien a la billetera del restaurante y del repartidor, pero sacarlo al banco no se pudo probar: eso se activa en tu cuenta de Stripe.",
+      "destraba": "Probar el alta de cobros y un retiro en modo prueba, que es lo único del circuito de pagos que quedó sin probar en el sitio de pruebas."
     },
     {
       "id": "compra-real-1-dolar",
@@ -165,7 +172,7 @@
       "avance": 90,
       "estado": "produccion",
       "paises": "EE. UU.",
-      "falta": "Compra real de 1 dólar, prueba en la calle y encender Miami en la web.",
+      "falta": "Compra real de 1 dólar, activar Stripe Connect y retiros, prueba en la calle y encender Miami en la web.",
       "quien": "Richard",
       "docs": ["first-order", "ordering", "track-order"]
     },
@@ -324,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-10",
+      "titulo": "Pagos de comida probados de punta a punta en pruebas",
+      "texto": "En el sitio de pruebas, con la tarjeta de prueba de Stripe, se recorrió dos veces el circuito completo: la tarjeta se autoriza al pedir y se cobra al entregar (28,98); si el restaurante rechaza el pedido, pagado o ya aceptado, la autorización se anula y no se cobra nada; un pedido ya listo se cancela pidiéndolo a soporte con motivo; una queja por un plato que faltó termina en un solo reembolso parcial (5,00); y el dinero se reparte bien: 18,50 al restaurante, 8,00 al repartidor y 2,48 a Divoox, con la conciliación contra Stripe cuadrando. No apareció ningún fallo de cobro. Sigue sin probar: todo con dinero real, y sacar el saldo al banco (retiros apagados y Stripe Connect sin activar)."
+    },
     {
       "fecha": "2026-11-10",
       "titulo": "Seis funciones adelantadas en un día",
