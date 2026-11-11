@@ -42,7 +42,7 @@ jobs:
           RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}
         # Un reintento: el alojamiento del sitio de pruebas corta conexiones de vez en cuando.
         run: |
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium || npx playwright install chromium
           npx playwright test -c playwright.recorrido-staging.config.ts --retries=1 \
             circuitoPagosStaging controlDualStaging domicilioStaging plusRegalo tiendasPesoStaging
       - name: Guardar el rastro si falló
