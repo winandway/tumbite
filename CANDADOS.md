@@ -3475,3 +3475,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** `sinFotoConPin` en `pin.ts`, llamada antes de leer la foto: si el pedido tiene PIN sin usar, 409 «Este pedido se entrega en mano con el PIN del cliente. Pídeselo y escríbelo para entregar.» (con su inglés). Si el PIN quedó bloqueado por intentos, responde el mismo mensaje de siempre («Demasiados intentos con el PIN… confirme desde su app o escribe a soporte»): la foto tampoco abre esa puerta. La app del repartidor esconde «foto de la entrega» y «dejar en lugar seguro» cuando `pinRequerido`, y explica por qué.
 - **Pruebas:** `operacion.test.ts` («PIN en mano…» y «C-PIN-SIN-FOTO: con el PIN bloqueado…») y `pinSinFotoApp.test.ts`, comprobadas en rojo.
 - **No tocar:** no quitar la llamada a `sinFotoConPin` del camino con foto.
+
+### C-LATIDO-UBICACION: conectado y quieto, el repartidor sigue mandando su posición
+
+- **Qué pasaba:** el GPS de la app (y la tarea de fondo) solo avisaba al moverse 30 m. Un repartidor conectado y quieto (esperando en el restaurante o en su casa) no mandaba nada; el servidor solo ofrece pedidos a quien tiene ubicación de los últimos 10 minutos y el Manager le quita un pedido aceptado a los 10 minutos sin ubicación.
+- **Qué se hizo:** `packages/compartido/src/latidoUbicacion.ts` (`LATIDO_UBICACION_MS` = 2 minutos, `tocaMandarUbicacion`). Con la app abierta, cada 2 minutos se manda la última lectura conocida. En segundo plano, Android recibe una lectura cada 15 s (`distanceInterval` 0) y la tarea solo la manda si se movió 25 m o pasaron 2 minutos. iOS no usa el tiempo en segundo plano: allí sigue con 30 m y el latido lo da la app abierta (límite conocido). El servidor ya escribe como mucho una vez por minuto si está quieto (C-POSICION-SIN-REESCRIBIR), así que el latido es como mucho una escritura cada 2 minutos.
+- **Prueba:** `packages/compartido/src/latidoUbicacion.test.ts`, comprobada en rojo.
+- **No tocar:** no volver a `distanceInterval: 30` en Android sin otro latido; no mandar el latido más seguido que cada 2 minutos.

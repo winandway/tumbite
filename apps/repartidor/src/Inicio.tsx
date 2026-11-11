@@ -38,6 +38,7 @@ import {
   crearCola,
   sePuedeReintentar,
   usaMillas,
+  LATIDO_UBICACION_MS,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -567,6 +568,8 @@ export function Inicio() {
   );
   const [pendientes, setPendientes] = useState<Pendiente[]>([]);
   const vigilante = useRef<Location.LocationSubscription | null>(null);
+  // C-LATIDO-UBICACION: la última lectura del GPS, para el latido de cada 2 minutos.
+  const ultimaLectura = useRef<Location.LocationObject | null>(null);
   // Dónde está ahora (para saber si ya llegó a la puerta y mostrar el botón de entregar).
   const [aqui, setAqui] = useState<{ lat: number; lng: number } | null>(null);
   const [aceptoTerminos, setAceptoTerminos] = useState(false);
@@ -723,7 +726,8 @@ export function Inicio() {
   // Al salir de la pantalla (cerrar sesión, cambiar de cuenta) el GPS de fondo se apaga.
   useEffect(() => () => void detenerUbicacionFondo(), []);
 
-  // Mientras está conectado, la ubicación se manda cada vez que se mueve (solo con la app abierta).
+  // Mientras está conectado, la ubicación se manda cada vez que se mueve (solo con la app abierta)
+  // y, quieto, cada 2 minutos (C-LATIDO-UBICACION).
   useEffect(() => {
     if (!estado?.conectado) {
       vigilante.current?.remove();
@@ -737,6 +741,7 @@ export function Inicio() {
     void Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, distanceInterval: 30, timeInterval: 10_000 },
       (p) => {
+        ultimaLectura.current = p;
         setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
         setPrecision(p.coords.accuracy ?? null);
         setGpsSimulado(p.mocked === true);
@@ -753,8 +758,27 @@ export function Inicio() {
       if (vivo) vigilante.current = s;
       else s.remove();
     });
+    // C-LATIDO-UBICACION: quieto, el GPS no avisa nada (solo cada 30 m). Cada 2 minutos se manda
+    // la última posición conocida para que el servidor lo siga contando como disponible y no le
+    // quite un pedido aceptado. El servidor escribe como mucho una vez por latido.
+    const latido = setInterval(() => {
+      void (async () => {
+        const p =
+          ultimaLectura.current ?? (await Location.getLastKnownPositionAsync().catch(() => null));
+        if (!vivo || !p) return;
+        await api
+          .pedir('POST', '/datos/repartidor/ubicacion', {
+            lat: p.coords.latitude,
+            lng: p.coords.longitude,
+            precision: p.coords.accuracy ?? null,
+            simulada: p.mocked === true,
+          })
+          .catch(() => undefined);
+      })();
+    }, LATIDO_UBICACION_MS);
     return () => {
       vivo = false;
+      clearInterval(latido);
       vigilante.current?.remove();
       vigilante.current = null;
     };
