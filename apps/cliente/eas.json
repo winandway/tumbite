@@ -53,6 +53,14 @@
         "EXPO_PUBLIC_APPLE_PAY_COMERCIO": "merchant.com.tumbite.cliente"
       },
       "node": "24.15.0"
+    },
+    "pruebas-tienda": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com",
+        "EXPO_PUBLIC_APPLE_PAY_COMERCIO": "merchant.com.tumbite.cliente"
+      },
+      "node": "24.15.0"
     }
   },
   "submit": {

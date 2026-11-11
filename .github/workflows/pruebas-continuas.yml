@@ -1,0 +1,55 @@
+name: pruebas-continuas
+# La máquina de pruebas (pedido de Richard, 11 nov 2026): cada tres horas, día y noche, recorre el
+# circuito de dinero en el SITIO DE PRUEBAS con Stripe en modo prueba (compra y cobro al entregar,
+# anulaciones, cancelar un pedido listo, reembolsos, billeteras, propina, cambio de dirección,
+# control dual, peso real, Plus y regalo, retiros en modo prueba) y concilia contra Stripe. No
+# publica nada: prueba lo que el sitio de pruebas ya sirve. Si algo falla, el trabajo queda en rojo
+# y GitHub avisa por correo a la cuenta del repositorio. Nunca toca producción ni dinero real.
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: pruebas-continuas
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  dinero:
+    if: ${{ vars.URL_PRUEBAS != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+      RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - name: Canario del sitio de pruebas
+        run: curl -fsS "$URL_PRUEBAS/datos/salud" | head -c 2000
+      - name: Retiros y cobros dentro del sitio de pruebas (S2–S12, L1)
+        run: node scripts/staging/probar-staging.mjs
+      - name: Circuito de dinero con Stripe en modo prueba
+        env:
+          RECORRIDO_URL: ${{ vars.URL_PRUEBAS }}
+          RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+        # Un reintento: el alojamiento del sitio de pruebas corta conexiones de vez en cuando.
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test -c playwright.recorrido-staging.config.ts --retries=1 \
+            circuitoPagosStaging controlDualStaging domicilioStaging plusRegalo tiendasPesoStaging
+      - name: Guardar el rastro si falló
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pruebas-continuas
+          path: test-results/
+          retention-days: 7
+      - name: Conciliación de saldos contra Stripe (modo prueba)
+        if: ${{ !cancelled() }}
+        run: node scripts/staging/conciliar-staging.mjs

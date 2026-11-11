@@ -24,6 +24,7 @@ import { esperarVentanaLibre } from './registroPausado';
  *     en Stripe por el valor del plato;
  * (e) el reparto: la venta en la billetera del restaurante, la entrega y la propina en la del
  *     repartidor, y la conciliación de esos pedidos contra Stripe y el libro del día.
+ * (d2) el reembolso AUTOMÁTICO de la queja, encendido solo durante ese paso y devuelto a como estaba.
  * Imprime una línea «A2-x …» por paso con el pedido y el identificador del pago para
  * VERIFICAR-PAGOS.md. Los puntos internos de pago solo aceptan llaves sk_test_: nunca dinero real.
  * No toca Stripe Connect ni los retiros (pendientes de Richard): solo lee si están activos.
@@ -40,7 +41,7 @@ if (STAGING && !/staging\.tumbite\.com|tumbite-pruebas/.test(process.env.RECORRI
 test('A2: compra, anulaciones, cancelar un pedido listo, reembolso parcial y reparto del dinero', async ({
   request,
 }) => {
-  test.setTimeout(540_000);
+  test.setTimeout(580_000);
   const x = await preparar(request);
   const { dueno, rid } = await comercio(x, 'rest.a2', 'Cubana');
   const equipo = await x.cuenta('soporte.a2', 'cliente', `Soporte A2 ${x.id.slice(-4)}`);
@@ -256,6 +257,54 @@ test('A2: compra, anulaciones, cancelar un pedido listo, reembolso parcial y rep
       `A2-d pedido ${a.pedidoId}: queja «artículo faltante» (caso ${q.ticketId}), propuesta ${dinero(q.propuesta)}; ${q.reembolso ? 'reembolso automático' : 'reembolso hecho por soporte'} de ${dinero(500)} a cargo de Divoox, UN reembolso en Stripe (${String(devs[0]?.stripe_reembolso)}); las billeteras no cambian; los cuatro pedidos contra Stripe: ${todo.resumen}`,
     );
     expect(todo.c.ok, JSON.stringify(todo.c.casos)).toBe(true);
+
+    // (d2) Reembolso AUTOMÁTICO de la queja: se enciende solo durante este paso (en el sitio de
+    // pruebas) y se deja como estaba. Un pedido nuevo, porque el automático es uno por pedido.
+    const a2 = await pedir(0);
+    await pagar(x, a2.pedidoId);
+    expect((await delRestaurante(a2.pedidoId, 'aceptar', { minutos: 5 })).ok()).toBe(true);
+    expect((await delRestaurante(a2.pedidoId, 'listo')).ok()).toBe(true);
+    await repartir(x, a2.pedidoId, rep);
+    const fin2 = await cerrar(x, a2.pedidoId);
+    const cfgAntes = (
+      (await (
+        await request.get('/datos/admin/quejas-config', { headers: x.con(equipo.token) })
+      ).json()) as { config: { reembolsoAuto: boolean; topeCentavos: number } }
+    ).config;
+    const ponerCfg = (config: { reembolsoAuto: boolean; topeCentavos: number }) =>
+      request.put('/datos/admin/quejas-config', { headers: x.con(equipo.token), data: config });
+    let auto: { propuesta: number; reembolso: number; ticketId: string };
+    try {
+      expect((await ponerCfg({ reembolsoAuto: true, topeCentavos: 1500 })).status()).toBe(200);
+      const queja2 = await request.post('/datos/quejas', {
+        headers: x.con(cliente.token),
+        data: {
+          tipo: 'queja',
+          pedidoId: a2.pedidoId,
+          texto: 'Prueba A2: el jugo no llegó (reembolso automático).',
+          motivo: 'articulo_faltante',
+          platoIds: [jugo],
+        },
+      });
+      expect(queja2.status(), await queja2.text()).toBe(201);
+      auto = (await queja2.json()) as typeof auto;
+    } finally {
+      expect((await ponerCfg(cfgAntes)).status(), 'la configuración vuelve a como estaba').toBe(
+        200,
+      );
+    }
+    expect(auto.reembolso, 'con el interruptor encendido se devuelve solo').toBe(500);
+    const devs2 = await x.sql(
+      `SELECT monto, cargar_a, actor_id, stripe_reembolso FROM devoluciones WHERE pedido_id = '${a2.pedidoId}'`,
+    );
+    expect(devs2).toHaveLength(1);
+    expect(Number(devs2[0]?.monto)).toBe(500);
+    expect(String(devs2[0]?.stripe_reembolso ?? '')).toMatch(/^re_/);
+    const conc2 = await conciliar([a2.pedidoId]);
+    console.warn(
+      `A2-d2 pedido ${a2.pedidoId} (${String((await fila(a2.pedidoId)).pi)}): capturado ${dinero(fin2.total)}; con el reembolso automático encendido solo para este paso (tope 15.00), la queja «artículo faltante» devolvió sola ${dinero(auto.reembolso)} (caso ${auto.ticketId}), UN reembolso en Stripe (${String(devs2[0]?.stripe_reembolso)}); la configuración quedó como estaba (automático ${String(cfgAntes.reembolsoAuto)}); ${conc2.resumen}`,
+    );
+    expect(conc2.c.ok, JSON.stringify(conc2.c.casos)).toBe(true);
   } finally {
     await request.patch('/datos/mi-restaurante/abierto', {
       headers: x.con(dueno.token),

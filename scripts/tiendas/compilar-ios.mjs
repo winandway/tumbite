@@ -5,8 +5,13 @@
 // de EAS (ya quedaron guardadas en Expo); desde ahora corre sin preguntas.
 // Uso: node scripts/tiendas/compilar-ios.mjs [--solo-enviar] [--local] [cliente|repartidor|restaurante ...]
 // --solo-enviar: no compila; envía a App Store Connect la última compilación ya terminada.
+// --pruebas (11 nov 2026, pedido de Richard para probar con sus iPhone): compila con el perfil
+// «pruebas-tienda», que habla con el SITIO DE PRUEBAS (Stripe en modo prueba, tarjeta 4242), y la
+// deja en TestFlight. Cada número de compilación de pruebas queda anotado en
+// ~/.config/tumbite/ios-compilaciones-de-pruebas y `enviar-revision-ios.mjs` se niega a mandar
+// una de esas a la revisión de la tienda (C-IOS-PRUEBAS-NO-A-REVISION).
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -14,6 +19,14 @@ const APPS = ['cliente', 'repartidor', 'restaurante'];
 const soloEnviar = process.argv.includes('--solo-enviar');
 // --local: compila en esta Mac (no gasta compilaciones de la nube de Expo) y envía ese archivo.
 const local = process.argv.includes('--local');
+const pruebas = process.argv.includes('--pruebas');
+const perfil = pruebas ? 'pruebas-tienda' : 'production';
+const archivo = (app) =>
+  join(process.cwd(), 'apks-pruebas', `${app}${pruebas ? '-pruebas' : ''}.ipa`);
+if (pruebas && !local) {
+  console.error('Las compilaciones de pruebas se hacen en esta Mac: agrega --local.');
+  process.exit(2);
+}
 const pedidas = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const apps = pedidas.length ? pedidas : APPS;
 const dir = join(homedir(), '.config', 'tumbite', 'apple-asc');
@@ -56,7 +69,7 @@ for (const app of apps) {
         '--platform',
         'ios',
         '--profile',
-        'production',
+        perfil,
         '--non-interactive',
         '--wait',
         '--json',
@@ -82,14 +95,33 @@ for (const app of apps) {
         '--platform',
         'ios',
         '--profile',
-        'production',
+        perfil,
         '--non-interactive',
-        ...(local
-          ? ['--local', '--output', join(process.cwd(), 'apks-pruebas', `${app}.ipa`)]
-          : ['--wait']),
+        ...(local ? ['--local', '--output', archivo(app)] : ['--wait']),
       ],
       { cwd: join(process.cwd(), 'apps', app), env, stdio: 'inherit' },
     );
+  if (pruebas) {
+    // El número de esta compilación queda anotado ANTES de enviarla: nunca irá a revisión.
+    const numero = execFileSync(
+      'sh',
+      [
+        '-c',
+        `unzip -p "${archivo(app)}" 'Payload/*.app/Info.plist' | plutil -extract CFBundleVersion raw -`,
+      ],
+      { encoding: 'utf8' },
+    ).trim();
+    if (!/^\d+$/.test(numero)) {
+      console.error(`${app}: no pude leer el número de la compilación de pruebas; no se envía.`);
+      process.exit(1);
+    }
+    appendFileSync(
+      join(homedir(), '.config', 'tumbite', 'ios-compilaciones-de-pruebas'),
+      `${app} ${numero}\n`,
+      { mode: 0o600 },
+    );
+    console.log(`${app}: compilación de PRUEBAS número ${numero} (sitio de pruebas).`);
+  }
   // Envío a TestFlight: la llave va en eas.json SOLO durante el envío y el archivo vuelve a quedar
   // exactamente como estaba (los identificadores de la llave nunca entran al repositorio).
   const ruta = join(process.cwd(), 'apps', app, 'eas.json');
@@ -110,7 +142,7 @@ for (const app of apps) {
         '--platform',
         'ios',
         ...(local
-          ? ['--path', join(process.cwd(), 'apks-pruebas', `${app}.ipa`)]
+          ? ['--path', archivo(app)]
           : idCompilacion
             ? ['--id', idCompilacion]
             : ['--latest']),

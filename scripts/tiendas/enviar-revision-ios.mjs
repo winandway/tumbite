@@ -2,7 +2,22 @@
 // compilación adjunta, crea la entrega de revisión en App Store Connect y la envía, con la llave de la
 // API guardada en ~/.config/tumbite/apple-asc. Una app sin compilación se salta y se dice.
 // Uso: node scripts/tiendas/enviar-revision-ios.mjs [cliente|repartidor|restaurante ...]
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { asc } from './asc.mjs';
+
+// C-IOS-PRUEBAS-NO-A-REVISION (11 nov 2026): las compilaciones hechas con `compilar-ios.mjs
+// --pruebas` hablan con el sitio de pruebas. Sus números quedan anotados y aquí se rechazan.
+const LISTA_PRUEBAS = join(homedir(), '.config', 'tumbite', 'ios-compilaciones-de-pruebas');
+const dePruebas = new Set(
+  existsSync(LISTA_PRUEBAS)
+    ? readFileSync(LISTA_PRUEBAS, 'utf8')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+    : [],
+);
 
 const APPS = { cliente: '6829108108', repartidor: '6829108327', restaurante: '6829108322' };
 const pedidas = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(APPS);
@@ -23,6 +38,12 @@ for (const nombre of pedidas) {
   if (!build) {
     console.log(`${nombre}: todavía no tiene compilación adjunta; se salta.`);
     continue;
+  }
+  if (dePruebas.has(`${nombre} ${build.attributes?.version}`)) {
+    console.error(
+      `PARADA: ${nombre} tiene adjunta la compilación ${build.attributes.version}, que es de PRUEBAS (habla con el sitio de pruebas). No se envía a revisión. Adjunta una compilación de producción.`,
+    );
+    process.exit(3);
   }
   // Una entrega abierta se reutiliza para no dejar borradores sueltos.
   const abiertas = (
