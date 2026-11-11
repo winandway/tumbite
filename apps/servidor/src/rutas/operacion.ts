@@ -124,6 +124,8 @@ import {
 export const operacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const SEGUNDOS_OFERTA = 45;
+/** C-REOFERTA-UNICO: segundos después de terminar su oferta antes de volver a ofrecérsela. */
+const RESPIRO_REOFERTA = 60;
 /** Probabilidad de pedir la selfie de control en cada conexión (como la identidad continua de los grandes). */
 const PROBABILIDAD_SELFIE = 0.2;
 /** Días sin conectarse a partir de los cuales la foto de control es obligatoria al volver. */
@@ -224,7 +226,10 @@ export async function soltarPedido(
       )
       .bind(pedidoId, repartidorId),
     db
-      .prepare("UPDATE ofertas SET estado = 'rechazada' WHERE pedido_id = ? AND repartidor_id = ?")
+      // C-REOFERTA-UNICO: el respiro para volver a ofrecérselo cuenta desde que lo soltó.
+      .prepare(
+        "UPDATE ofertas SET estado = 'rechazada', creada_en = datetime('now') WHERE pedido_id = ? AND repartidor_id = ?",
+      )
       .bind(pedidoId, repartidorId),
     db
       .prepare(
@@ -1735,12 +1740,21 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
   const ocupados = new Set<string>();
   const zonasCatalogo = await zonasDespachoCatalogo(db);
   const memoCatalogo = new Map<string, boolean>();
-  for (const p of pendientes) {
+  pedidos: for (const p of pendientes) {
+    // C-REOFERTA-UNICO: quien ya la vio (rechazó, la dejó vencer o la soltó) no la recibe otra
+    // vez mientras haya otro a quien ofrecerla; si no hay nadie más, vuelve a ser candidato pasado
+    // el respiro (con un solo repartidor el pedido no se queda «Buscando repartidor…» para siempre).
     const { results: yaVistos } = await db
-      .prepare('SELECT repartidor_id FROM ofertas WHERE pedido_id = ?')
-      .bind(p.id)
-      .all<{ repartidor_id: string }>();
+      .prepare(
+        "SELECT repartidor_id, creada_en > datetime('now', ?) AS reciente FROM ofertas WHERE pedido_id = ?",
+      )
+      .bind(`-${SEGUNDOS_OFERTA + RESPIRO_REOFERTA} seconds`, p.id)
+      .all<{ repartidor_id: string; reciente: number }>();
     const vistos = new Set(yaVistos.map((v) => v.repartidor_id));
+    const recientes = new Set(
+      yaVistos.filter((v) => Number(v.reciente) === 1).map((v) => v.repartidor_id),
+    );
+    let excluir = vistos;
     // Despacho con reloj: solo a quien llegaría cuando la comida esté lista (ni antes a esperar).
     // C-PEDIDO-PROGRAMADO: la comida debe estar lista 15 minutos antes de la franja, no antes.
     const faltan = Math.max(
@@ -1749,7 +1763,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     );
     const ordenar = (libres: Libre[]) =>
       libres
-        .filter((d) => !vistos.has(d.id) && !ocupados.has(d.id))
+        .filter((d) => !excluir.has(d.id) && !ocupados.has(d.id))
         .map((d) => ({
           ...d,
           km:
@@ -1774,87 +1788,91 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     // Camino rápido: solo la celda del restaurante y sus 8 vecinas (índice zona + celda).
     // Si ahí no hay nadie libre, se busca en toda la zona. Nunca se cruza de zona.
     let candidatos: (Libre & { km: number })[] = [];
-    // C-FLOTA-PROPIA: primero (o solo) a los repartidores del restaurante. No se mira la
-    // habilitación del catálogo (son del restaurante), pero sí el saldo del cobro directo, igual
-    // que al aceptar: nunca se ofrece un pedido que después no se va a poder aceptar. El reparto
-    // del dinero con flota propia lo decide Richard; hasta entonces vale la regla de siempre.
-    const propia = p.flota_modo === 'propia';
-    if (propia)
-      candidatos = await conSaldoParaDirecto(
-        db,
-        p.id,
-        ordenar(await libresEn(db, p.zona_id, null, p.restaurante_id)),
-      );
-    if (candidatos.length) {
-      // Ya hay a quién ofrecerlo dentro de su flota.
-    } else if (propia && Number(p.flota_respaldo) !== 1) {
-      // Sin respaldo, nunca cae solo a la red: se le avisa al restaurante, una sola vez por pedido.
-      if (!p.flota_aviso_en) {
-        const r = await db
-          .prepare(
-            "UPDATE pedidos SET flota_aviso_en = datetime('now') WHERE id = ? AND flota_aviso_en IS NULL",
-          )
-          .bind(p.id)
-          .run();
-        if (env && r.meta.changes > 0)
-          await notificar(env, db, p.dueno_id, {
-            titulo: 'Ningún repartidor tuyo está libre',
-            cuerpo: `El pedido ${p.id.slice(0, 4).toUpperCase()} espera repartidor. Avísale a tu equipo o enciende el respaldo de Divoox.`,
-            datos: { tipo: 'flota_sin_repartidor', pedidoId: p.id },
-          }).catch((e: unknown) => console.error('flota: no se pudo avisar al restaurante', e));
-      }
-      continue;
-    } else if (!zonasCatalogo.has(String(p.zona_id))) {
-      // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de
-      // efectivo, revisado EN CADA ETAPA antes de ampliar (C-DESPACHO-SALDO-ETAPAS, ETP-1): un libre
-      // sin saldo en la celda del restaurante no tapa a uno con saldo en el resto de la zona.
-      candidatos = p.geohash
-        ? await conSaldoParaDirecto(
-            db,
-            p.id,
-            ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash))),
-          )
-        : [];
-      if (!candidatos.length)
+    for (const ronda of recientes.size < vistos.size ? [vistos, recientes] : [vistos]) {
+      excluir = ronda;
+      // C-FLOTA-PROPIA: primero (o solo) a los repartidores del restaurante. No se mira la
+      // habilitación del catálogo (son del restaurante), pero sí el saldo del cobro directo, igual
+      // que al aceptar: nunca se ofrece un pedido que después no se va a poder aceptar. El reparto
+      // del dinero con flota propia lo decide Richard; hasta entonces vale la regla de siempre.
+      const propia = p.flota_modo === 'propia';
+      if (propia)
         candidatos = await conSaldoParaDirecto(
           db,
           p.id,
-          ordenar(await libresEn(db, p.zona_id, null)),
+          ordenar(await libresEn(db, p.zona_id, null, p.restaurante_id)),
         );
-      // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
-      // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
-      if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
-    } else {
-      // C-DESPACHO-CATALOGO (NXT-6, NXT-6x): con el interruptor de la zona encendido, solo quien
-      // está activado para Comida según el catálogo, revisado EN CADA ETAPA antes de decidir si se
-      // amplía la búsqueda (un no habilitado en la celda no tapa a un habilitado en la zona), junto
-      // con el saldo del cobro directo; para en cuanto junta los que hacen falta.
-      const cuantos = vistos.size >= RECHAZOS_PARA_ABRIR ? 20 : 1;
-      const saldo = async (d: { id: string }) => (await puedeTomarDirecto(db, p.id, d.id)).ok;
-      candidatos = p.geohash
-        ? await filtrarPorCatalogo(
+      if (candidatos.length) {
+        // Ya hay a quién ofrecerlo dentro de su flota.
+      } else if (propia && Number(p.flota_respaldo) !== 1) {
+        // Sin respaldo, nunca cae solo a la red: se le avisa al restaurante, una sola vez por pedido.
+        if (!p.flota_aviso_en) {
+          const r = await db
+            .prepare(
+              "UPDATE pedidos SET flota_aviso_en = datetime('now') WHERE id = ? AND flota_aviso_en IS NULL",
+            )
+            .bind(p.id)
+            .run();
+          if (env && r.meta.changes > 0)
+            await notificar(env, db, p.dueno_id, {
+              titulo: 'Ningún repartidor tuyo está libre',
+              cuerpo: `El pedido ${p.id.slice(0, 4).toUpperCase()} espera repartidor. Avísale a tu equipo o enciende el respaldo de Divoox.`,
+              datos: { tipo: 'flota_sin_repartidor', pedidoId: p.id },
+            }).catch((e: unknown) => console.error('flota: no se pudo avisar al restaurante', e));
+        }
+        continue pedidos;
+      } else if (!zonasCatalogo.has(String(p.zona_id))) {
+        // Fase 2 · cobro directo: solo a quien tiene saldo para la comisión y no pasó el tope de
+        // efectivo, revisado EN CADA ETAPA antes de ampliar (C-DESPACHO-SALDO-ETAPAS, ETP-1): un libre
+        // sin saldo en la celda del restaurante no tapa a uno con saldo en el resto de la zona.
+        candidatos = p.geohash
+          ? await conSaldoParaDirecto(
+              db,
+              p.id,
+              ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash))),
+            )
+          : [];
+        if (!candidatos.length)
+          candidatos = await conSaldoParaDirecto(
             db,
-            ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash))),
+            p.id,
+            ordenar(await libresEn(db, p.zona_id, null)),
+          );
+        // Agrupar: un repartidor que todavía no recogió otro pedido de este MISMO restaurante y cuya
+        // entrega queda cerca de esta (desvío menor a 5 minutos) se lo lleva en el mismo viaje.
+        if (!candidatos.length) candidatos = ordenar(await agrupablesPara(db, p.id));
+      } else {
+        // C-DESPACHO-CATALOGO (NXT-6, NXT-6x): con el interruptor de la zona encendido, solo quien
+        // está activado para Comida según el catálogo, revisado EN CADA ETAPA antes de decidir si se
+        // amplía la búsqueda (un no habilitado en la celda no tapa a un habilitado en la zona), junto
+        // con el saldo del cobro directo; para en cuanto junta los que hacen falta.
+        const cuantos = vistos.size >= RECHAZOS_PARA_ABRIR ? 20 : 1;
+        const saldo = async (d: { id: string }) => (await puedeTomarDirecto(db, p.id, d.id)).ok;
+        candidatos = p.geohash
+          ? await filtrarPorCatalogo(
+              db,
+              ordenar(await libresEn(db, p.zona_id, celdasVecinas(p.geohash))),
+              cuantos,
+              memoCatalogo,
+              saldo,
+            )
+          : [];
+        if (!candidatos.length)
+          candidatos = await filtrarPorCatalogo(
+            db,
+            ordenar(await libresEn(db, p.zona_id, null)),
             cuantos,
             memoCatalogo,
             saldo,
-          )
-        : [];
-      if (!candidatos.length)
-        candidatos = await filtrarPorCatalogo(
-          db,
-          ordenar(await libresEn(db, p.zona_id, null)),
-          cuantos,
-          memoCatalogo,
-          saldo,
-        );
-      if (!candidatos.length)
-        candidatos = await filtrarPorCatalogo(
-          db,
-          ordenar(await agrupablesPara(db, p.id)),
-          cuantos,
-          memoCatalogo,
-        );
+          );
+        if (!candidatos.length)
+          candidatos = await filtrarPorCatalogo(
+            db,
+            ordenar(await agrupablesPara(db, p.id)),
+            cuantos,
+            memoCatalogo,
+          );
+      }
+      if (candidatos.length) break;
     }
     if (!candidatos.length) continue;
     // C-PAGO-PICO: en una celda con demanda alta, la primera oferta lleva el pago pico (si está

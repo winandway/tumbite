@@ -3445,3 +3445,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** una sola guarda `sinAjustePendiente` en `operacion.ts`, usada por aceptar y por `marcarListo` (cubre app, panel y API de punto de venta): 409 «Espera a que el cliente decida sobre el plato que falta.» (en inglés ya traducido). La app del restaurante y el panel web esconden «Listo» mientras el ajuste está pendiente; el aviso de espera ya se ve en la tarjeta del pedido.
 - **Pruebas:** `operacion.test.ts` («C-LISTO-SIN-AJUSTE»), `apps/panel/src/panel/PedidosListoAjuste.test.tsx` y `listoSinAjusteApp.test.ts`, las tres comprobadas en rojo.
 - **No tocar:** no marcar «listo» por otro camino que no pase por `marcarListo`.
+
+### C-REOFERTA-UNICO: con un solo repartidor, la oferta vuelve a quien la rechazó o la dejó vencer
+
+- **Qué pasaba:** en `repartirOfertas` toda fila de `ofertas` del pedido sacaba para siempre a ese repartidor. Con un solo repartidor en la calle, un rechazo, una oferta vencida o un «soltar» dejaba el pedido en «Buscando repartidor…» sin fin.
+- **Qué se hizo:** primero se busca entre quienes no la han visto (como siempre). Si no hay nadie, una segunda ronda admite a quien la vio hace más de 45 + 60 segundos (`SEGUNDOS_OFERTA + RESPIRO_REOFERTA`, medido desde `creada_en`). `soltarPedido` pone `creada_en` en la hora del abandono, para que el respiro cuente desde ahí. Nunca hay dos ofertas vivas del mismo pedido al mismo repartidor: la fila es una sola por (pedido, repartidor) y `libresEn` ya excluye a quien tiene una oferta `ofrecida`. La oferta abierta con bono sigue contando a todos los que la vieron.
+- **Pruebas:** `operacion.test.ts`, las dos «C-REOFERTA-UNICO» (rechazo, vencimiento y soltar; y que con otro libre no vuelve a quien rechazó), comprobadas en rojo.
+- **Efecto aparte:** si se le vuelve a ofrecer, la fila nueva reemplaza la del rechazo (las cuentas de aceptación por día ven la última respuesta).
+- **No tocar:** no volver a excluir por cualquier fila de `ofertas` sin la segunda ronda; no quitar el `creada_en = datetime('now')` de `soltarPedido`.

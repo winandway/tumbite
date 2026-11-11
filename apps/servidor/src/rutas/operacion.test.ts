@@ -280,6 +280,82 @@ describe('ciclo del pedido', () => {
     ).toBe(409);
   });
 
+  it('C-REOFERTA-UNICO: con un solo repartidor, quien rechazó o dejó vencer vuelve a verla tras un respiro', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    const solo = await repartidor('Solo', 25.7702, -80.1902);
+    const ofertas = async () =>
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, solo.token)).datos.ofertas;
+    expect(await ofertas()).toHaveLength(1);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/rechazar`, {}, solo.token);
+    // Recién rechazada: respiro, no se le vuelve a ofrecer en seguida.
+    expect(await ofertas()).toHaveLength(0);
+    const atrasar = (seg: number) =>
+      m.DB.prepare(
+        `UPDATE ofertas SET creada_en = datetime('now', '-${seg} seconds') WHERE pedido_id = ?`,
+      )
+        .bind(id)
+        .run();
+    await atrasar(120);
+    expect((await ofertas()).map((o: { id: string }) => o.id)).toEqual([id]);
+    // Ahora la deja vencer (45 s): al vencer tampoco vuelve en seguida, sí pasado el respiro.
+    await atrasar(50);
+    expect(await ofertas()).toHaveLength(0);
+    await atrasar(120);
+    expect(await ofertas()).toHaveLength(1);
+    // Nunca dos ofertas vivas del mismo pedido al mismo repartidor.
+    const vivas = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM ofertas WHERE pedido_id = ? AND estado = 'ofrecida'",
+    )
+      .bind(id)
+      .first<{ n: number }>();
+    expect(vivas!.n).toBe(1);
+    expect(
+      (await m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, solo.token)).estado,
+    ).toBe(200);
+    // Lo suelta: el respiro cuenta desde ese momento (no desde la oferta vieja).
+    await m.DB.prepare(
+      "UPDATE ofertas SET creada_en = datetime('now', '-600 seconds') WHERE pedido_id = ?",
+    )
+      .bind(id)
+      .run();
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/soltar`,
+          { motivo: 'Se me pinchó la llanta' },
+          solo.token,
+        )
+      ).estado,
+    ).toBe(200);
+    expect(await ofertas()).toHaveLength(0);
+    await atrasar(120);
+    expect(await ofertas()).toHaveLength(1);
+  });
+
+  it('C-REOFERTA-UNICO: si hay otro libre, la oferta va al otro y no vuelve a quien rechazó', async () => {
+    const { m, dueno, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    const cerca = await repartidor('Cerca Uno', 25.7702, -80.1902);
+    await m.llamar('GET', '/datos/repartidor/ofertas', undefined, cerca.token);
+    await m.llamar('POST', `/datos/repartidor/ofertas/${id}/rechazar`, {}, cerca.token);
+    const otro = await repartidor('Otro Libre', 25.79, -80.21);
+    await m.DB.prepare(
+      "UPDATE ofertas SET creada_en = datetime('now', '-300 seconds') WHERE pedido_id = ?",
+    )
+      .bind(id)
+      .run();
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, cerca.token)).datos.ofertas,
+    ).toHaveLength(0);
+    expect(
+      (await m.llamar('GET', '/datos/repartidor/ofertas', undefined, otro.token)).datos.ofertas,
+    ).toHaveLength(1);
+  });
+
   it('a igual distancia gana el de nivel más alto', async () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const novato = await repartidor('Novato', 25.7701, -80.1901);
