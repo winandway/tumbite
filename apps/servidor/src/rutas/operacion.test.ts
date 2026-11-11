@@ -1437,6 +1437,26 @@ describe('algo agotado y ajustar el tiempo (C-AGOTADO)', () => {
     expect(acepta.datos).toEqual({ ok: true });
   });
 
+  it('C-LISTO-SIN-AJUSTE: con un plato agotado sin decidir, el restaurante no puede marcar «listo»', async () => {
+    const { m, dueno, cliente, id, platoId } = await conDosPlatos();
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    await m.llamar('POST', `/datos/restaurante/pedidos/${id}/falta`, { platoId }, dueno.token);
+    const listo = await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    expect(listo.estado).toBe(409);
+    expect(listo.datos.error).toBe('Wait for the customer to decide about the missing item.');
+    // El cliente todavía puede decidir, y después sí se marca listo.
+    const r = await m.llamar(
+      'POST',
+      `/datos/pedidos/${id}/ajuste`,
+      { decision: 'quitar' },
+      cliente.token,
+    );
+    expect(r.estado).toBe(200);
+    expect(
+      (await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token)).estado,
+    ).toBe(200);
+  });
+
   it('si el cliente no responde en 5 minutos, se quita solo; si cancela, se devuelve todo', async () => {
     const { m, dueno, cliente, id, platoId } = await conDosPlatos();
     await m.llamar('POST', `/datos/restaurante/pedidos/${id}/falta`, { platoId }, dueno.token);

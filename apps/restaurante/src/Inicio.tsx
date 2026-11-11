@@ -1236,12 +1236,16 @@ export function Inicio() {
                 }
               />
             ) : null}
-            <BotonGrande
-              texto={tr.marcarListo}
-              etiqueta={t.listo}
-              flex={2}
-              alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
-            />
+            {/* C-LISTO-SIN-AJUSTE: mientras el cliente decide el plato que falta, no hay «Listo»;
+                el aviso de la espera se ve arriba, en la tarjeta del pedido. */}
+            {p.ajuste?.estado !== 'pendiente' ? (
+              <BotonGrande
+                texto={tr.marcarListo}
+                etiqueta={t.listo}
+                flex={2}
+                alTocar={() => void accion(`/datos/restaurante/pedidos/${p.id}/listo`)}
+              />
+            ) : null}
           </View>
         ) : null}
         {p.estado === 'listo' && p.entrega === 'recoger' ? (

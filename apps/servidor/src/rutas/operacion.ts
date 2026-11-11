@@ -577,14 +577,12 @@ async function cambiarEstado(
   await anotar(db, id, a, rid);
 }
 
-/** Aceptar un pedido (panel, app y API de punto de venta usan esta misma pieza). */
-export async function aceptarPedido(
-  env: Env,
-  db: D1Database,
-  pedidoId: string,
-  rid: string,
-  minutos: number,
-) {
+/**
+ * Mientras el cliente decide sobre un plato agotado, el restaurante no puede aceptar ni marcar
+ * «listo»: después de «listo» el cliente ya no podría responder y el plato se cobraría
+ * (C-LISTO-SIN-AJUSTE).
+ */
+async function sinAjustePendiente(db: D1Database, pedidoId: string) {
   const pendiente = await db
     .prepare("SELECT 1 FROM ajustes_pedido WHERE pedido_id = ? AND estado = 'pendiente'")
     .bind(pedidoId)
@@ -595,6 +593,17 @@ export async function aceptarPedido(
       undefined,
       409,
     );
+}
+
+/** Aceptar un pedido (panel, app y API de punto de venta usan esta misma pieza). */
+export async function aceptarPedido(
+  env: Env,
+  db: D1Database,
+  pedidoId: string,
+  rid: string,
+  minutos: number,
+) {
+  await sinAjustePendiente(db, pedidoId);
   await cambiarEstado(
     db,
     pedidoId,
@@ -631,6 +640,7 @@ export async function aceptarSiEsAutomatico(env: Env, db: D1Database, pedidoId: 
 
 /** Marcar listo (panel, app y API de punto de venta). */
 export async function marcarListo(env: Env, db: D1Database, pedidoId: string, rid: string) {
+  await sinAjustePendiente(db, pedidoId);
   await cambiarEstado(db, pedidoId, rid, ['aceptado'], 'listo', ", listo_en = datetime('now')");
   await avisarAlCliente(env, db, pedidoId, (i, f) => AVISOS.listo(i, f.restaurante));
   await avisarAlRepartidor(env, db, pedidoId, (i, f) => AVISOS.repListo(i, f.restaurante));

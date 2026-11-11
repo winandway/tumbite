@@ -948,7 +948,8 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   {t.imprimir}
                 </button>
               ) : null}
-              {p.estado === 'aceptado' && (
+              {/* C-LISTO-SIN-AJUSTE: mientras el cliente decide el plato que falta, no hay «Listo». */}
+              {p.estado === 'aceptado' && p.ajuste?.estado !== 'pendiente' && (
                 <button
                   type="button"
                   className="boton"

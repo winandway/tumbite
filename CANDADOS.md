@@ -3435,3 +3435,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** las cuatro limpiezas llevan `WHERE conectado = 1 AND …`: solo se escribe lo que cambia.
 - **Prueba:** `packages/compartido/src/recorridoNoPisa.test.ts` (segundo bloque), comprobada en rojo quitando el filtro (4 fallos).
 - **No tocar:** no quitar `conectado = 1` de esas limpiezas ni agregar otras sin ese filtro.
+
+## Revisión para la prueba en la calle con tres celulares (11 nov 2026) — todos los países
+
+### C-LISTO-SIN-AJUSTE: «Listo» espera la respuesta del cliente sobre el plato que falta
+
+- **Qué pasaba:** el restaurante marcaba «Falta un plato» y, sin esperar al cliente, tocaba «Listo». Después `aplicarAjuste` solo acepta `pagado`/`aceptado`: el cliente ya no podía responder, el Manager fallaba en cada vuelta y el plato que faltaba se cobraba.
+- **Causa:** `marcarListo` no miraba `ajustes_pedido`; solo `aceptarPedido` lo hacía.
+- **Qué se hizo:** una sola guarda `sinAjustePendiente` en `operacion.ts`, usada por aceptar y por `marcarListo` (cubre app, panel y API de punto de venta): 409 «Espera a que el cliente decida sobre el plato que falta.» (en inglés ya traducido). La app del restaurante y el panel web esconden «Listo» mientras el ajuste está pendiente; el aviso de espera ya se ve en la tarjeta del pedido.
+- **Pruebas:** `operacion.test.ts` («C-LISTO-SIN-AJUSTE»), `apps/panel/src/panel/PedidosListoAjuste.test.tsx` y `listoSinAjusteApp.test.ts`, las tres comprobadas en rojo.
+- **No tocar:** no marcar «listo» por otro camino que no pase por `marcarListo`.
