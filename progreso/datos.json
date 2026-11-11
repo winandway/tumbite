@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-11T00:48:14.000Z",
+  "actualizado": "2026-11-11T15:45:42.000Z",
   "version": "7b9a5ca",
-  "ahora": "10 nov: el circuito de pagos de comida quedó probado de punta a punta en el sitio de pruebas con la tarjeta de prueba de Stripe — compra y cobro al entregar, rechazo del restaurante, cancelar un pedido listo vía soporte, reembolso parcial y reparto a restaurante y repartidor. Falta lo de dinero real y los retiros al banco",
+  "ahora": "11 nov: listas las apps de prueba para la prueba en la calle con tres celulares — iPhone por TestFlight (Divoox 32, Driver 24, Restaurants 18) y Android por descarga, todas contra el sitio de pruebas con la tarjeta 4242; nueve fallos del ciclo del pedido corregidos y una máquina que prueba los pagos sola cada tres horas",
   "proximo": [
     {
       "quien": "richard",
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-11",
+      "titulo": "Apps de prueba para iPhone y Android, nueve fallos corregidos y máquina de pruebas",
+      "texto": "Las tres apps de iPhone de prueba están en TestFlight (Divoox 32, Driver 24, Restaurants 18) y las tres de Android se descargan desde la página de apps; todas trabajan con el sitio de pruebas y la tarjeta 4242, nunca con dinero real. Una revisión del ciclo del pedido encontró nueve fallos y quedaron corregidos con su prueba: el restaurante ya no puede marcar listo mientras el cliente decide un plato agotado; con un solo repartidor la oferta rechazada o vencida le vuelve al minuto; el repartidor quieto sigue recibiendo ofertas; el pedido en mano con PIN no se entrega con foto; no salen errores falsos al tocar dos veces; el carrito no reutiliza un cobro con datos viejos, corrige el total y devuelve el cupón de un pedido sin pagar. Además, una máquina recorre sola el circuito de pagos en el sitio de pruebas cada tres horas, incluidos el retiro en modo prueba y el reembolso automático, y avisa por correo si algo falla."
+    },
     {
       "fecha": "2026-11-10",
       "titulo": "Pagos de comida probados de punta a punta en pruebas",
