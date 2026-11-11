@@ -22,12 +22,11 @@ describe('C-IOS-PRUEBAS-NO-A-REVISION', () => {
       );
     });
   }
-  it('la compilación de pruebas se anota antes de enviarse y solo se hace en esta Mac', () => {
+  it('la compilación de pruebas se anota antes de enviarse', () => {
     const guion = leer('scripts/tiendas/compilar-ios.mjs');
     expect(guion).toContain("pruebas ? 'pruebas-tienda' : 'production'");
     expect(guion).toContain('ios-compilaciones-de-pruebas');
     expect(guion.indexOf('ios-compilaciones-de-pruebas')).toBeLessThan(guion.indexOf("'submit',"));
-    expect(guion).toMatch(/pruebas && !local/);
   });
   it('el envío a revisión rechaza una compilación anotada como de pruebas', () => {
     const guion = leer('scripts/tiendas/enviar-revision-ios.mjs');

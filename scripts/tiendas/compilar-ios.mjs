@@ -23,10 +23,6 @@ const pruebas = process.argv.includes('--pruebas');
 const perfil = pruebas ? 'pruebas-tienda' : 'production';
 const archivo = (app) =>
   join(process.cwd(), 'apks-pruebas', `${app}${pruebas ? '-pruebas' : ''}.ipa`);
-if (pruebas && !local) {
-  console.error('Las compilaciones de pruebas se hacen en esta Mac: agrega --local.');
-  process.exit(2);
-}
 const pedidas = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const apps = pedidas.length ? pedidas : APPS;
 const dir = join(homedir(), '.config', 'tumbite', 'apple-asc');
@@ -60,6 +56,7 @@ for (const app of apps) {
   // Apple rechaza (ITMS-90189) un número de compilación repetido: se envía SIEMPRE la compilación
   // que se acaba de hacer, por su id, nunca «la última» (que puede ser una ya enviada).
   let idCompilacion = null;
+  let numeroNube = null;
   if (!soloEnviar && !local) {
     const salida = execFileSync(
       'npx',
@@ -81,7 +78,9 @@ for (const app of apps) {
         encoding: 'utf8',
       },
     );
-    idCompilacion = JSON.parse(salida)[0]?.id ?? null;
+    const hecha = JSON.parse(salida)[0];
+    idCompilacion = hecha?.id ?? null;
+    numeroNube = hecha?.appBuildVersion ?? null;
     if (!idCompilacion) {
       console.error(`${app}: EAS no devolvió el id de la compilación; no se envía nada.`);
       process.exit(1);
@@ -103,15 +102,18 @@ for (const app of apps) {
     );
   if (pruebas) {
     // El número de esta compilación queda anotado ANTES de enviarla: nunca irá a revisión.
-    const numero = execFileSync(
-      'sh',
-      [
-        '-c',
-        `unzip -p "${archivo(app)}" 'Payload/*.app/Info.plist' | plutil -extract CFBundleVersion raw -`,
-      ],
-      { encoding: 'utf8' },
-    ).trim();
-    if (!/^\d+$/.test(numero)) {
+    // En la nube, el número lo dice Expo; en esta Mac, se lee del archivo compilado.
+    const numero =
+      numeroNube ??
+      execFileSync(
+        'sh',
+        [
+          '-c',
+          `unzip -p "${archivo(app)}" 'Payload/*.app/Info.plist' | plutil -extract CFBundleVersion raw -`,
+        ],
+        { encoding: 'utf8' },
+      ).trim();
+    if (!/^\d+$/.test(String(numero))) {
       console.error(`${app}: no pude leer el número de la compilación de pruebas; no se envía.`);
       process.exit(1);
     }
