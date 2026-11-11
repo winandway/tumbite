@@ -37,3 +37,27 @@ export async function verificarPinEntrega(
     .bind(pedidoId)
     .run();
 }
+
+/**
+ * C-PIN-SIN-FOTO: un pedido pedido «en mano con PIN» no se entrega con la foto (en la puerta ni en
+ * lugar seguro) mientras el PIN no se haya usado. Si el PIN quedó bloqueado por intentos, sigue el
+ * camino de siempre: el cliente confirma o lo resuelve soporte.
+ */
+export async function sinFotoConPin(db: D1Database, pedidoId: string): Promise<void> {
+  const fila = await db
+    .prepare('SELECT intentos, usado_en FROM pines_entrega WHERE pedido_id = ?')
+    .bind(pedidoId)
+    .first<{ intentos: number | null; usado_en: string | null }>();
+  if (!fila || fila.usado_en) return;
+  if (Number(fila.intentos ?? 0) >= MAX_INTENTOS_PIN)
+    throw new ErrorDatos(
+      'Demasiados intentos con el PIN. Pídele al cliente que confirme la entrega desde su app o escribe a soporte.',
+      'pin',
+      409,
+    );
+  throw new ErrorDatos(
+    'Este pedido se entrega en mano con el PIN del cliente. Pídeselo y escríbelo para entregar.',
+    'pin',
+    409,
+  );
+}

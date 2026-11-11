@@ -632,6 +632,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'Demasiados intentos con el PIN. Pídele al cliente que confirme la entrega desde su app o escribe a soporte.',
     'Too many PIN attempts. Ask the customer to confirm the delivery from their app, or contact support.',
   ],
+  // C-PIN-SIN-FOTO
+  [
+    'Este pedido se entrega en mano con el PIN del cliente. Pídeselo y escríbelo para entregar.',
+    'This order is handed over in person with the customer’s PIN. Ask them for it and enter it to deliver.',
+  ],
   [
     'No pudimos actualizar el cobro con el nuevo total. La dirección no cambió; intenta de nuevo.',
     'We couldn’t update the charge to the new total. The address didn’t change; try again.',

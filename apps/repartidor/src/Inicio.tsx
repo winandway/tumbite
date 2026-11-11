@@ -302,6 +302,8 @@ const T = {
     sinCaras:
       'No le tomes foto a la cara de nadie. Deja la comida en la puerta o en las manos del cliente y toma la foto de lado: que se vean solo las manos, la comida y la entrada de la casa.',
     subiendo: 'Enviando la foto…',
+    conPinSinFoto:
+      'Este pedido se entrega en mano con el PIN del cliente: pídeselo y escríbelo. No se puede dejar con foto.',
     escanear: 'Escanear el código del restaurante',
     escribirCodigo: 'O escribe el número del pedido (4 letras o números)',
     verificar: 'Verificar',
@@ -436,6 +438,8 @@ const T = {
     sinCaras:
       'Never take a photo of anyone’s face. Leave the food at the door or in the customer’s hands and take the photo from the side: only the hands, the food, and the home’s entrance should show.',
     subiendo: 'Sending the photo…',
+    conPinSinFoto:
+      'This order is handed over in person with the PIN: ask the customer for it and enter it. It can’t be left with a photo.',
     escanear: 'Scan the restaurant’s code',
     escribirCodigo: 'Or type the order number (4 characters)',
     verificar: 'Verify',
@@ -2249,16 +2253,28 @@ export function Inicio() {
                             )}
                           </View>
                         ) : null}
-                        <Boton
-                          texto={subiendo ? t.subiendo : t.fotoEntrega}
-                          alTocar={() =>
-                            void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
-                          }
-                          cargando={subiendo}
-                          exito={!enMano}
-                          secundario={enMano}
-                        />
-                        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                        {/* C-PIN-SIN-FOTO: con PIN, la foto no salta el PIN; se entrega en mano. */}
+                        {!activo.pinRequerido ? (
+                          <>
+                            <Boton
+                              texto={subiendo ? t.subiendo : t.fotoEntrega}
+                              alTocar={() =>
+                                void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
+                              }
+                              cargando={subiendo}
+                              exito={!enMano}
+                              secundario={enMano}
+                            />
+                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                          </>
+                        ) : (
+                          <Text
+                            style={{ color: '#5E5E5E', fontSize: 12 }}
+                            testID="con-pin-sin-foto"
+                          >
+                            {t.conPinSinFoto}
+                          </Text>
+                        )}
                         {activo.pinRequerido ? (
                           <TextInput
                             value={pinEntrega}
@@ -2362,6 +2378,9 @@ export function Inicio() {
                             {t.esperando5} {Math.floor(faltanSeg / 60)}:
                             {String(faltanSeg % 60).padStart(2, '0')}
                           </Text>
+                        ) : activo.pinRequerido ? (
+                          // C-PIN-SIN-FOTO: con PIN no hay «lugar seguro»; si no aparece, soporte.
+                          <Text style={{ color: '#5E5E5E', marginTop: 6 }}>{t.conPinSinFoto}</Text>
                         ) : activo.metodoPago && activo.metodoPago !== 'tarjeta' ? (
                           // C-COBRO-DIRECTO: se cobra en mano; no hay «lugar seguro».
                           <Text

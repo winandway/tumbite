@@ -25,7 +25,7 @@ import { pagoPicoPara } from '../pagoPico';
 import { sentenciasCobroAnuncio } from '../anuncios';
 import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorTiempo';
 import { paisDeZona } from '../internacional/paises';
-import { verificarPinEntrega } from '../pin';
+import { sinFotoConPin, verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas, relojEnPausa } from '../reloj';
 import { PRESUPUESTO_VUELTA_RELOJ, contarFilas, pasoDelTope } from '../presupuestoFilas';
@@ -2548,6 +2548,7 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     .slice(0, 300);
   let foto: Awaited<ReturnType<typeof leerFoto>> | null = null;
   if (esFoto) {
+    await sinFotoConPin(db, id);
     foto = await leerFoto(c);
     donde = foto.donde;
     modo = modoPedido === 'seguro' ? 'seguro' : 'puerta';

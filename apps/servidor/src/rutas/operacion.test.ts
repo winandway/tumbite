@@ -1946,6 +1946,15 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
         )
       ).estado,
     ).toBe(409);
+    // C-PIN-SIN-FOTO: con el PIN vigente, la foto (en la puerta o en lugar seguro) no lo salta.
+    for (const ruta of ['entregado', 'entregado?modo=seguro&nota=Porche']) {
+      const conFoto = await e.m.foto(`/datos/repartidor/pedidos/${id}/${ruta}`, rep.token, enCasa);
+      expect(conFoto.estado).toBe(409);
+      expect(conFoto.datos.error).toBe(
+        'This order is handed over in person with the customer’s PIN. Ask them for it and enter it to deliver.',
+      );
+    }
+    expect(await estadoDe(e.m, id)).toBe('en_camino');
     expect(
       (
         await e.m.llamar(
@@ -1969,6 +1978,32 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
     ).datos.pedido;
     expect(seg2.pin).toBeNull();
     expect(seg2.pinRequerido).toBe(false);
+  });
+
+  it('C-PIN-SIN-FOTO: con el PIN bloqueado por intentos, la foto tampoco entrega (sigue el camino de soporte)', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e, 'mano', true);
+    const rep = await e.repartidor('Rep Bloqueo', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const enCasa = { lat: 25.7801, lng: -80.2001 };
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.DB.prepare('UPDATE pines_entrega SET intentos = 5 WHERE pedido_id = ?')
+      .bind(id)
+      .run();
+    const conFoto = await e.m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, enCasa);
+    expect(conFoto.estado).toBe(409);
+    expect(conFoto.datos.error).toMatch(/Too many|Demasiados/);
+    expect(await estadoDe(e.m, id)).toBe('en_camino');
   });
 });
 

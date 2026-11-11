@@ -3467,3 +3467,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** la app del repartidor tiene una guarda de un solo disparo (`qrLeido`), que se rearma al abrir el escáner. En el servidor, `/repartidor/pedidos/:id/verificar` acepta también un pedido suyo ya `en_camino`: con el código correcto responde `{ ok, correcto, salio: true }` sin escribir nada. Un código equivocado o un repartidor ajeno siguen con 409.
 - **Pruebas:** `operacion.test.ts` («los 4 caracteres del número también valen…», con la segunda lectura) y `qrUnaVezApp.test.ts`, comprobadas en rojo.
 - **No tocar:** no quitar la guarda ni el caso `en_camino` del verificador.
+
+### C-PIN-SIN-FOTO: un pedido «en mano con PIN» no se entrega con foto
+
+- **Qué pasaba:** la entrega con foto (`/repartidor/pedidos/:id/entregado` con imagen, en la puerta o en lugar seguro) no miraba `pines_entrega`, y la app ofrecía el botón de foto también en esos pedidos: el repartidor podía saltarse el PIN.
+- **Decisión previa revisada:** en este archivo no hay ninguna decisión escrita de usar la foto como respaldo del PIN (C-PIN dice que «entregado en mano lo exige»). Por eso se cerró.
+- **Qué se hizo:** `sinFotoConPin` en `pin.ts`, llamada antes de leer la foto: si el pedido tiene PIN sin usar, 409 «Este pedido se entrega en mano con el PIN del cliente. Pídeselo y escríbelo para entregar.» (con su inglés). Si el PIN quedó bloqueado por intentos, responde el mismo mensaje de siempre («Demasiados intentos con el PIN… confirme desde su app o escribe a soporte»): la foto tampoco abre esa puerta. La app del repartidor esconde «foto de la entrega» y «dejar en lugar seguro» cuando `pinRequerido`, y explica por qué.
+- **Pruebas:** `operacion.test.ts` («PIN en mano…» y «C-PIN-SIN-FOTO: con el PIN bloqueado…») y `pinSinFotoApp.test.ts`, comprobadas en rojo.
+- **No tocar:** no quitar la llamada a `sinFotoConPin` del camino con foto.
