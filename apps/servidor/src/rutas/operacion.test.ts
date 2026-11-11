@@ -1212,6 +1212,27 @@ describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que s
     expect(r.estado).toBe(200);
     expect(r.datos.salio).toBe(true);
     expect(await estado(m, id)).toBe('en_camino');
+    // C-QR-UNA-VEZ: la cámara puede leer el código dos veces; la segunda, ya en camino, es ok.
+    const otraVez = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/verificar`,
+      { codigo: id.slice(0, 4).toLowerCase() },
+      rep.token,
+    );
+    expect(otraVez.estado).toBe(200);
+    expect(otraVez.datos).toEqual({ ok: true, correcto: true, salio: true });
+    // Pero sigue siendo solo de este repartidor.
+    const ajeno = await m.cuenta('repartidor', 'Ajeno QR');
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/repartidor/pedidos/${id}/verificar`,
+          { codigo: id.slice(0, 4) },
+          ajeno.token,
+        )
+      ).estado,
+    ).toBe(409);
   });
 
   it('en mano: sin foto, pero solo en la puerta; queda anotado cómo se entregó', async () => {

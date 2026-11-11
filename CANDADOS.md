@@ -3460,3 +3460,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** en `/repartidor/ofertas/:id/aceptar`, antes de mirar la oferta, si el pedido ya es de ese repartidor (aceptado, listo o en camino) responde `{ ok: true }`.
 - **Prueba:** `operacion.test.ts` «C-ACEPTAR-DOBLE-TOQUE» (comprobada en rojo); también comprueba que otro repartidor sigue recibiendo 409.
 - **No tocar:** la comprobación «ya es suyo» va antes de la de la oferta.
+
+### C-QR-UNA-VEZ: el código QR del restaurante se lee una sola vez
+
+- **Qué pasaba:** la cámara dispara `onBarcodeScanned` varias veces seguidas. La primera lectura verificaba el código y, si la foto ya estaba, el pedido salía (`en_camino`); la segunda llamada a `/verificar` encontraba el pedido fuera de `listo/aceptado` y dejaba «Este pedido no está contigo.» en rojo después del éxito.
+- **Qué se hizo:** la app del repartidor tiene una guarda de un solo disparo (`qrLeido`), que se rearma al abrir el escáner. En el servidor, `/repartidor/pedidos/:id/verificar` acepta también un pedido suyo ya `en_camino`: con el código correcto responde `{ ok, correcto, salio: true }` sin escribir nada. Un código equivocado o un repartidor ajeno siguen con 409.
+- **Pruebas:** `operacion.test.ts` («los 4 caracteres del número también valen…», con la segunda lectura) y `qrUnaVezApp.test.ts`, comprobadas en rojo.
+- **No tocar:** no quitar la guarda ni el caso `en_camino` del verificador.

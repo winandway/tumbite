@@ -574,6 +574,8 @@ export function Inicio() {
   const [subiendo, setSubiendo] = useState(false);
   // Verificar el pedido en el restaurante (QR o número), soltarlo, y la entrega en la puerta.
   const [escaneando, setEscaneando] = useState(false);
+  // C-QR-UNA-VEZ: la cámara dispara la lectura varias veces seguidas; se verifica una sola.
+  const qrLeido = useRef(false);
   const [permisoCamara, pedirCamara] = useCameraPermissions();
   const [codigo, setCodigo] = useState('');
   const [motivo, setMotivo] = useState('');
@@ -905,6 +907,7 @@ export function Inicio() {
       const r = await pedirCamara();
       if (!r.granted) return setError(t.permisoCamara);
     }
+    qrLeido.current = false;
     setEscaneando(true);
   }
 
@@ -1421,6 +1424,8 @@ export function Inicio() {
             facing="back"
             barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
             onBarcodeScanned={({ data }) => {
+              if (qrLeido.current) return;
+              qrLeido.current = true;
               setEscaneando(false);
               void verificar(data);
             }}

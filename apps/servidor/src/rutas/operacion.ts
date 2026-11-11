@@ -2442,10 +2442,10 @@ operacion.post('/repartidor/pedidos/:id/verificar', async (c) => {
   const { codigo } = await leerCuerpo(c, z.object({ codigo: z.string().trim().min(1).max(80) }));
   const p = await db
     .prepare(
-      "SELECT id FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado IN ('listo','aceptado')",
+      "SELECT id, estado FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado IN ('listo','aceptado','en_camino')",
     )
     .bind(id, u.id)
-    .first<{ id: string }>();
+    .first<{ id: string; estado: string }>();
   if (!p) throw new ErrorDatos('Este pedido no está contigo.', undefined, 409);
   const limpio = codigo.replace(/^tumbite:pedido:/i, '').trim();
   const correcto = limpio === p.id || limpio.toUpperCase() === p.id.slice(0, 4).toUpperCase();
@@ -2455,6 +2455,8 @@ operacion.post('/repartidor/pedidos/:id/verificar', async (c) => {
       'codigo',
       409,
     );
+  // C-QR-UNA-VEZ: la cámara puede leer el código dos veces; si ya salió con él, es ok y no escribe.
+  if (p.estado === 'en_camino') return c.json({ ok: true, correcto: true, salio: true });
   await db
     .prepare("INSERT OR IGNORE INTO hitos_pedido (pedido_id, hito) VALUES (?, 'verificado')")
     .bind(id)
