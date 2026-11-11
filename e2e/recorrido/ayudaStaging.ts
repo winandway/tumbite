@@ -96,7 +96,7 @@ export async function repartidor(x: Ctx) {
   );
   // C-RECORRIDO-NO-PISA: ningún otro repartidor conectado en Miami se lleva la oferta.
   await x.sql(
-    `UPDATE repartidores SET conectado = 0 WHERE zona_id = 'US-FL-MIAMI' AND usuario_id <> '${rep.usuario.id}'`,
+    `UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = 'US-FL-MIAMI' AND usuario_id <> '${rep.usuario.id}'`,
   );
   const r = await x.request.post('/datos/repartidor/conectar', {
     headers: x.con(rep.token),

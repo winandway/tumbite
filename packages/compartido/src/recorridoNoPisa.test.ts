@@ -21,3 +21,18 @@ describe('el recorrido no pisa las pruebas de las personas', () => {
     });
   }
 });
+
+/**
+ * C-RECORRIDO-SOLO-CONECTADOS (11 nov 2026, parte de consumo): la limpieza del recorrido reescribía a
+ * TODOS los repartidores de Miami en cada vuelta aunque ya estuvieran desconectados (106.860 filas
+ * tocadas en un día en la base de pruebas). Solo se toca a los que están conectados.
+ */
+describe('la limpieza del recorrido solo escribe lo que cambia', () => {
+  for (const archivo of readdirSync(DIR).filter((a) => a.endsWith('.ts'))) {
+    it(archivo, () => {
+      const fuente = readFileSync(join(DIR, archivo), 'utf8');
+      for (const m of fuente.matchAll(/UPDATE repartidores SET conectado = 0 WHERE[^"`]*/g))
+        expect(m[0]).toContain('conectado = 1');
+    });
+  }
+});

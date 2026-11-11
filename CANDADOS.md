@@ -3427,3 +3427,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Resultado del 10 nov (corrida 42924950320, dos intentos):** la prueba pasó las dos veces; en el primer intento fallaron tres pruebas ajenas por cortes del alojamiento y el segundo pasó entero; cifras, pedidos y pagos en `VERIFICAR-PAGOS.md`. No apareció ningún fallo de cobro.
 - **Cómo se repite:** subir una rama `fase-*` (flujo `pruebas-rama`); el secreto de diagnóstico vive solo en GitHub, por eso no corre desde una computadora. Imprime una línea «A2-x» por paso.
 - **Qué NO tocar:** la prueba solo LEE si los retiros y la cuenta de cobros están activos; no debe activar Connect ni retiros. No usa las cuentas demo de Novi ni el pedido 407F.
+
+## C-RECORRIDO-SOLO-CONECTADOS: la limpieza del recorrido solo toca a los repartidores conectados (11 nov 2026, parte de consumo de YaDominios) — todos los países
+
+- **Qué se rompió:** el 10 nov la base de pruebas subió a 12.420 filas escritas; la consulta culpable fue `UPDATE repartidores SET conectado = 0 WHERE zona_id = 'US-FL-MIAMI' …`, con 106.860 filas tocadas.
+- **Causa real:** el recorrido automático (carpeta `e2e/recorrido`) desconecta a los repartidores de Miami antes de cada caso. La consulta reescribía a TODOS los repartidores de prueba acumulados en esa zona, aunque ya estuvieran desconectados, con sus índices.
+- **Arreglo:** las cuatro limpiezas llevan `WHERE conectado = 1 AND …`: solo se escribe lo que cambia.
+- **Prueba:** `packages/compartido/src/recorridoNoPisa.test.ts` (segundo bloque), comprobada en rojo quitando el filtro (4 fallos).
+- **No tocar:** no quitar `conectado = 1` de esas limpiezas ni agregar otras sin ese filtro.

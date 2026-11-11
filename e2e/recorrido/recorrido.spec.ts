@@ -286,7 +286,7 @@ for (const idioma of ['en', 'es'] as const) {
       "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL AND restaurante_id IN (SELECT r.id FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE u.correo LIKE '%@recorrido.test' OR u.correo LIKE '%@prueba.invalid')",
     );
     // Y ningún repartidor de un recorrido anterior se queda conectado en Miami (se llevaría la oferta).
-    sql("UPDATE repartidores SET conectado = 0 WHERE zona_id = 'US-FL-MIAMI'");
+    sql("UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = 'US-FL-MIAMI'");
 
     // 1. El restaurante se registra en el panel y arma su ficha.
     const panelCtx = await nuevoContexto('computadora');

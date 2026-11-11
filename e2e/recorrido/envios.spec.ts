@@ -89,7 +89,7 @@ test('un envío de punta a punta: PIN para quien recibe, foto y entrega con el P
   const c = cond.usuario.id;
   const v = `veh-envio-${id}`;
   // C-RECORRIDO-NO-PISA: solo Miami, donde corre; no desconecta a quien prueba en otra ciudad.
-  sql(`UPDATE repartidores SET conectado = 0 WHERE zona_id = 'US-FL-MIAMI'`);
+  sql(`UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = 'US-FL-MIAMI'`);
   sql(`DELETE FROM servicio_requisitos WHERE servicio_id = 'envios'`);
   sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${c}', 1, ${ORIGEN.lat}, ${ORIGEN.lng}, datetime('now'), 'US-FL-MIAMI')
        ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);
