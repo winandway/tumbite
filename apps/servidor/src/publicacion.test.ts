@@ -148,14 +148,16 @@ describe('LAN-6 · C-RUTAS-SIN-ARROBA: ningún archivo publicado lleva «@» en 
 });
 
 describe('perfiles de construcción del celular', () => {
-  it('pruebas y simulador apuntan a pruebas; el resto, a producción', () => {
+  // «pruebas-tienda» (11 nov 2026): iPhone de pruebas por TestFlight; nunca va a revisión
+  // (C-IOS-PRUEBAS-NO-A-REVISION, `iosPruebas.test.ts`).
+  it('pruebas, pruebas-tienda y simulador apuntan a pruebas; el resto, a producción', () => {
     for (const app of ['cliente', 'repartidor', 'restaurante']) {
       const eas = JSON.parse(readFileSync(join(RAIZ, 'apps', app, 'eas.json'), 'utf8')) as {
         build: Record<string, { env?: Record<string, string> }>;
       };
       for (const [perfil, c] of Object.entries(eas.build))
         expect(c.env?.EXPO_PUBLIC_API_URL, `${app}/${perfil}`).toBe(
-          perfil === 'pruebas' || perfil === 'simulador'
+          ['pruebas', 'pruebas-tienda', 'simulador'].includes(perfil)
             ? 'https://staging.tumbite.com'
             : 'https://divoox.com',
         );
