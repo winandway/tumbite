@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-11T15:45:42.000Z",
+  "actualizado": "2026-11-12T00:11:52.000Z",
   "version": "7b9a5ca",
-  "ahora": "11 nov: listas las apps de prueba para la prueba en la calle con tres celulares — iPhone por TestFlight (Divoox 32, Driver 24, Restaurants 18) y Android por descarga, todas contra el sitio de pruebas con la tarjeta 4242; nueve fallos del ciclo del pedido corregidos y una máquina que prueba los pagos sola cada tres horas",
+  "ahora": "11 nov: las tres apps de Android con los nueve fallos corregidos se enviaron a Google Play (Divoox 17, Driver 16, Restaurants 11) y esperan la revisión de Google; las fichas de Google ya llevan el ícono, el gráfico y las capturas de cada app con su color; las guías públicas en español e inglés quedaron al día con lo que cambió.",
   "proximo": [
     {
       "quien": "richard",
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-11",
+      "titulo": "Versión nueva en Google Play, fichas con el color de cada app y guías al día",
+      "texto": "Las tres apps de Android se enviaron a Google Play con los nueve fallos corregidos (Divoox 17, Driver 16, Restaurants 11); hasta que Google las apruebe, la tienda sigue mostrando la versión del 30 de octubre. Las fichas de Google ahora llevan el ícono, el gráfico destacado y las capturas con el color de cada app (cliente rojo, Driver azul, Restaurants negro) y para quién es. La ficha del Driver dejó de prometer retiros al banco mientras estén apagados, por dictamen del auditor de tiendas. Doce guías públicas, en español e inglés, se pusieron al día con tres capturas nuevas."
+    },
     {
       "fecha": "2026-11-11",
       "titulo": "Apps de prueba para iPhone y Android, nueve fallos corregidos y máquina de pruebas",
