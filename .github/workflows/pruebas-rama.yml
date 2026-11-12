@@ -72,6 +72,7 @@ jobs:
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/staging/probar-staging.mjs
       - name: Tiempo real en vivo (WebSocket, GPS, firmas, reconexión, lote y reloj externo)
         if: ${{ !cancelled() && vars.URL_PRUEBAS != '' && vars.TIEMPO_REAL_URL_PRUEBAS != '' }}
@@ -87,9 +88,17 @@ jobs:
         env:
           RECORRIDO_URL: ${{ vars.URL_PRUEBAS }}
           RECORRIDO_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           npx playwright install --with-deps chromium || npx playwright install chromium
           npx playwright test -c playwright.recorrido-staging.config.ts
+      - name: Filas que leyó y escribió esta vuelta (presupuesto)
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/cuenta-vuelta.mjs
       - name: Guardar capturas y rastro del recorrido si falló
         if: ${{ failure() }}
         uses: actions/upload-artifact@v4

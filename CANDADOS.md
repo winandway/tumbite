@@ -3519,3 +3519,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `scripts/marca/graficos-google-play.mjs` hace el gráfico destacado con el color y el «para quién es» de cada app; `scripts/tiendas/imagenes-google-play.mjs` sube ícono, gráfico y capturas a todas las fichas y NO sube la captura del retiro; `fichas-google-play.json` ya no promete retiros (y el guion de textos también pone al día las fichas es-ES y es-US).
 - **Cuándo se revierte:** el día que Richard encienda los retiros se devuelve la frase y la captura (quitar el filtro `retiro-al-banco`).
 - **Candados de revisión:** las tres apps están publicadas desde el 30 oct (comprobado en la página pública de Google Play); los candados viejos se movieron a `~/.config/tumbite/play-aprobadas/`. Cada subida vuelve a poner el suyo.
+
+## C-PRESUPUESTO-VUELTA-PRUEBAS (12 nov 2026, orden de Gerencia) — todos los países
+
+- **Qué pasó:** el sitio de pruebas escribió 49.598 filas el 11 nov. Ese día corrieron contra pruebas tres vueltas de la máquina «pruebas-continuas», dos recorridos completos de la rama `fase-calle-3cel` y cinco publicaciones. Ninguna de esas pruebas tenía tope de filas.
+- **Arreglo:** `apps/servidor/src/vueltaPruebas.ts`. Las pruebas automáticas contra el sitio de pruebas mandan la cabecera `x-vuelta-pruebas` (`continuas-<corrida>` o `rama-<corrida>`); el servidor cuenta las filas de cada petición y las suma en `vueltas_pruebas`. Pasado el tope de la vuelta o el tope diario, responde 429, la corrida queda en rojo y el canario `pruebasContinuas` sale en error. En producción la cabecera se ignora. La máquina pasó de cada tres horas a una vez al día.
+- **Cómo se mide:** el último paso de cada corrida imprime `FILAS-VUELTA` (`scripts/staging/cuenta-vuelta.mjs`, ruta `/datos/interno/diagnostico/vuelta`).
+- **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
+- **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.

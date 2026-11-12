@@ -13,6 +13,11 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: process.env.RECORRIDO_URL,
+    // C-PRESUPUESTO-VUELTA-PRUEBAS: cada corrida se identifica para que el servidor le cuente
+    // las filas y la frene si pasa del tope.
+    ...(process.env.VUELTA_PRUEBAS
+      ? { extraHTTPHeaders: { 'x-vuelta-pruebas': process.env.VUELTA_PRUEBAS } }
+      : {}),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

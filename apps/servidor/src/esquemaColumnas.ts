@@ -955,6 +955,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "error",
     "creado_en"
   ],
+  "vueltas_pruebas": [
+    "id",
+    "dia",
+    "leidas",
+    "escritas",
+    "peticiones",
+    "frenada",
+    "creada_en"
+  ],
   "peticiones_internas": [
     "nonce",
     "llave_id",

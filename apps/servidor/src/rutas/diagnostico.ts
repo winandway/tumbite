@@ -28,6 +28,7 @@ import { aceptarOperacion, liberarViaje } from '../operaciones';
 import { type TareaReloj } from '../reloj';
 import { vigilarPedidos } from '../manager';
 import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
+import { cuentaVuelta } from '../vueltaPruebas';
 
 /**
  * Diagnóstico del SITIO DE PRUEBAS (Fase 0, 15 oct 2026): las pruebas S2–S5, S7 y S11 de
@@ -1250,6 +1251,13 @@ diagnostico.post('/interno/diagnostico/pagar-tarjeta-regalo', async (c) => {
 
 /** Conciliación de saldos en pruebas: el libro del día cuadra por dentro, y cada cobro, captura y
  * devolución coincide con lo que Stripe (modo prueba) tiene registrado. También los retiros. */
+// C-PRESUPUESTO-VUELTA-PRUEBAS: cuántas filas lleva una vuelta de pruebas y cuántas van hoy.
+diagnostico.post('/interno/diagnostico/vuelta', async (c) => {
+  const { id } = (await c.req.json().catch(() => ({}))) as { id?: string };
+  if (!c.env.DB) throw new ErrorDatos('Sin base.', undefined, 503);
+  return c.json(await cuentaVuelta(c.env.DB, String(id ?? '')));
+});
+
 diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
   const llave = c.env.STRIPE_SECRET_KEY ?? '';
   if (!llave.startsWith('sk_test_'))

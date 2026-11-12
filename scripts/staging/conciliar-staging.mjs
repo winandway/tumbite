@@ -8,7 +8,11 @@ if (!base || !secreto || !/staging\.tumbite\.com|tumbite-pruebas/.test(base)) {
 }
 const r = await fetch(`${base}/datos/interno/diagnostico/conciliacion`, {
   method: 'POST',
-  headers: { 'content-type': 'application/json', 'x-reloj-secreto': secreto },
+  headers: {
+    'content-type': 'application/json',
+    'x-reloj-secreto': secreto,
+    ...(process.env.VUELTA_PRUEBAS ? { 'x-vuelta-pruebas': process.env.VUELTA_PRUEBAS } : {}),
+  },
   body: '{}',
 });
 const d = await r.json().catch(() => ({}));

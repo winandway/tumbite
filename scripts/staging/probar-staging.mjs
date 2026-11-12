@@ -17,7 +17,11 @@ const llamar = async (ruta, cuerpo, intento = 1) => {
   try {
     return await fetch(`${base}/datos/interno/diagnostico/${ruta}`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-reloj-secreto': secreto },
+      headers: {
+        'content-type': 'application/json',
+        'x-reloj-secreto': secreto,
+        ...(process.env.VUELTA_PRUEBAS ? { 'x-vuelta-pruebas': process.env.VUELTA_PRUEBAS } : {}),
+      },
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
     });
   } catch (e) {

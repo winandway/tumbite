@@ -1,3 +1,4 @@
+import { presupuestoVueltaPruebas, saludVueltasPruebas } from './vueltaPruebas';
 import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
 import { rewardsSombra } from './rewards/rutas';
 import { guardarError, saludErrores } from './errores';
@@ -107,6 +108,9 @@ app.use('*', async (c, next) => {
   await next();
 });
 app.use('*', cabecerasSeguridad);
+// C-PRESUPUESTO-VUELTA-PRUEBAS: las pruebas automáticas contra el sitio de pruebas tienen tope
+// de filas por vuelta y por día; en producción no hace nada.
+app.use('/datos/*', presupuestoVueltaPruebas);
 // C-PRUEBAS-SIN-INDEXAR: nada del sitio de pruebas sale en los buscadores (duplicaría divoox.com).
 app.use('*', async (c, next) => {
   await next();
@@ -299,6 +303,12 @@ app.get('/datos/salud', async (c) => {
   else if (c.env.DB)
     piezas.reloj = await saludReloj(c.env, c.env.DB).catch((e: unknown) => {
       console.error('salud: reloj', e);
+      return 'error' as const;
+    });
+  // C-PRESUPUESTO-VUELTA-PRUEBAS: hoy ninguna vuelta de pruebas se frenó ni se pasó el tope diario.
+  if (c.env.DB && entornoDe(c.req.url) !== 'produccion')
+    piezas.pruebasContinuas = await saludVueltasPruebas(c.env.DB).catch((e: unknown) => {
+      console.error('salud: vueltas de pruebas', e);
       return 'error' as const;
     });
   // C-TRANSICIONES-PEDIDO: el disparador que impide los saltos de estado de los pedidos existe.
