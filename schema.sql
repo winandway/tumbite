@@ -1598,6 +1598,18 @@ CREATE TABLE IF NOT EXISTS reloj_tareas (
 );
 CREATE INDEX IF NOT EXISTS reloj_tareas_fallidas ON reloj_tareas(creado_en) WHERE ok = 0;
 
+-- C-PRESUPUESTO-VUELTA-PRUEBAS (12 nov 2026): la cuenta de filas de cada vuelta de pruebas
+-- automáticas contra el sitio de pruebas. Sin índices de más: son pocas filas por día.
+CREATE TABLE IF NOT EXISTS vueltas_pruebas (
+  id TEXT PRIMARY KEY,
+  dia TEXT NOT NULL,
+  leidas INTEGER NOT NULL DEFAULT 0,
+  escritas INTEGER NOT NULL DEFAULT 0,
+  peticiones INTEGER NOT NULL DEFAULT 0,
+  frenada INTEGER NOT NULL DEFAULT 0,
+  creada_en TEXT NOT NULL
+);
+
 -- Cada llamada interna firmada se acepta una sola vez (protección contra repetición).
 CREATE TABLE IF NOT EXISTS peticiones_internas (
   nonce TEXT PRIMARY KEY CHECK (length(nonce) BETWEEN 16 AND 64),
