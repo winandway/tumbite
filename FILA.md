@@ -10,6 +10,15 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Simulador de compras y entregas (13 nov 2026, pedido de Richard; ficha docs/investigaciones-rea/2026-11-13-simulador-de-compras-y-entregas.md) — todos los países
+
+- [x] (SIM-1) Núcleo universal (`simulador/nucleo/`) y 18 escenarios de comida de Divoox por la API real, con su comprobación de dinero. `npm run simulador`. La primera corrida encontró dos fallos (doble toque del restaurante y foto de la bolsa repetida): arreglados (C-RESTAURANTE-DOBLE-TOQUE, C-FOTO-RECOGIDA-REPETIDA). 18 de 18 en verde en local (4.273 filas en total; el subconjunto diario, unas 780).
+- [x] (SIM-2) Flujo `simulador.yml`: el subconjunto «diario» contra el sitio de pruebas una vez al día (10:43 UTC) y a mano; mide las filas con `cuenta-vuelta.mjs`.
+- [x] (SIM-3) Modo ciudad (`npm run simulador:ciudad`) y pantalla en vivo «Ciudad de pruebas» en el superadmin (solo pruebas y local), con «Parar la sesión» (C-CIUDAD-PRUEBAS).
+- [ ] (SIM-4) Primera corrida del flujo `simulador` en el sitio de pruebas (libreto diario y una sesión de ciudad corta): anotar las filas de `FILA-VUELTA` y, si algo falla allá, arreglarlo. Necesita el push de esta rama (el secreto vive solo en GitHub).
+- [ ] (SIM-5) Capa «película»: el pedido feliz por las PANTALLAS de las tres apps web, reutilizando los pasos de `e2e/recorrido/recorrido.spec.ts` (sacarlos a funciones, sin copiar las 2.200 líneas) y una captura por paso de cada actor en el reporte del simulador.
+- [ ] (SIM-6) Capa nativa Android primero (Richard: Android obligatorio para repartidores y restaurantes): dos o tres recorridos críticos con Maestro local en el emulador, coordinados por el estado del servidor (ficha, punto 6).
+
 ## DoorDash Dasher al volver (capturas de Richard, 31 oct 2026; ficha docs/investigaciones-rea/2026-10-31-doordash-dasher-capturas.md)
 
 - [x] (D1) HECHO 31 oct (C-VUELTA-VERIFICA). Verificación obligatoria al volver: si el repartidor lleva 14 días o más sin conectarse, la foto de control se pide siempre (no al azar). Todos los países.
