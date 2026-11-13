@@ -1307,6 +1307,24 @@ BEGIN
 END;
 
 -- ----- Requisitos cumplidos (V1.1 punto 1) -----
+-- C-PAPELES-CONDUCTOR (13 nov 2026): papeles del CONDUCTOR (no del vehículo) que pide su país para
+-- llevar pasajeros (perfilPasajeros). En Venezuela los aprueba una persona del equipo y cumplen los
+-- requisitos de antecedentes e historial de manejo; en EE. UU. eso sigue siendo de Checkr.
+CREATE TABLE IF NOT EXISTS conductor_documentos (
+  id TEXT PRIMARY KEY,
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales')),
+  clave TEXT NOT NULL,
+  vence_en TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'reemplazado')),
+  motivo TEXT NOT NULL DEFAULT '',
+  revisado_por TEXT REFERENCES usuarios(id),
+  revisado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS conductor_documentos_conductor ON conductor_documentos(conductor_id, tipo, estado);
+CREATE INDEX IF NOT EXISTS conductor_documentos_revision ON conductor_documentos(estado, creado_en);
+
 CREATE TABLE IF NOT EXISTS cumplimientos (
   conductor_id TEXT NOT NULL REFERENCES usuarios(id),
   vehiculo_id TEXT NOT NULL DEFAULT '',

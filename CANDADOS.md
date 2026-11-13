@@ -3625,3 +3625,16 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Perfil del país:** `packages/compartido/src/perfilPasajeros.ts` es la única pieza que dice, por país, moneda de los viajes, métodos de pago, papeles del conductor y cómo se verifican los antecedentes.
 - **Prueba:** `apps/servidor/src/rutas/motoVenezuela.test.ts` («Caracas se abre con un paso del panel»), comprobada en rojo quitando la política en dólares.
 - **Qué NO tocar:** no cambiar la moneda de la ciudad a bolívares sin crear antes la tarifa en bolívares (la comisión en VES ya existe); no subir el porcentaje sin orden de Richard.
+
+## C-PAPELES-CONDUCTOR · Requisitos del conductor de pasajeros por país (13 nov 2026) — Venezuela y todos los países
+
+- **Qué faltaba:** los antecedentes y el historial de manejo de Moto solo los llenaba Checkr (EE. UU.) y el panel no podía aprobarlos; en Venezuela ningún conductor podía quedar habilitado. Además, la identidad aprobada en KYC no se anotaba como requisito cumplido (solo la migración M5 lo hacía).
+- **Qué se hizo:**
+  - Perfil del país (`perfilPasajeros`, `packages/compartido/src/perfilPasajeros.ts`): Venezuela verifica con documentos (licencia de moto y certificado de antecedentes penales), placa nacional, edad mínima 21 (igual que EE. UU. hasta que el abogado diga otra cosa). EE. UU. no cambia: Checkr.
+  - Tabla `conductor_documentos` y rutas en `apps/servidor/src/rutas/conductorPapeles.ts`: el conductor elige su ciudad (`PUT /datos/conductor/ciudad`), ve qué le pide su país (`GET /datos/conductor/papeles`) y sube cada papel (`POST /datos/conductor/papeles?tipo=…`). El equipo los ve en cola (`GET /datos/admin/papeles-conductor`), abre el archivo privado, y aprueba o rechaza con motivo (`PUT /datos/admin/papeles-conductor/:id`); en Venezuela al aprobar se cumplen `licencia_moto` + `historial_manejo` (licencia) y `antecedentes_pasajeros` + `antecedentes` (certificado), con fuente `documento_conductor` y quién aprobó. Vista del conductor para el panel: `GET /datos/admin/conductores/:id/pasajeros`.
+  - Los antecedentes siguen sin poder aprobarse «a mano» por `PUT /admin/cumplimientos` (solo con el papel revisado).
+  - La edad (`edad_minima_21`) se aprueba solo si la fecha de nacimiento cumple la edad mínima del país.
+  - Aprobar el KYC de un repartidor escribe el requisito `identidad` (fuente `kyc`; el disparador de la base exige la verificación real).
+  - Moto en Venezuela: la placa se guarda con el país como «estado» (placa nacional), así no se pide un estado que no existe.
+- **Prueba:** `apps/servidor/src/rutas/motoVenezuela.test.ts` («C-PAPELES-CONDUCTOR», 3): alta de punta a punta por la API hasta quedar habilitado; rechazo con motivo; en EE. UU. el papel no cumple antecedentes; la edad. Comprobada en rojo quitando el paso del papel al requisito y quitando la identidad del KYC.
+- **Qué NO tocar:** no abrir el aprobado manual de antecedentes por `PUT /admin/cumplimientos`; no bajar la edad mínima de un país sin fuente legal escrita.

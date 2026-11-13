@@ -12,7 +12,8 @@ import type { Entorno } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { exigirComisionEnMoneda } from '../finanzas/conductor';
-import { SERVICIOS_VIAJE } from '@tumbite/compartido';
+import { SERVICIOS_VIAJE, perfilPasajeros } from '@tumbite/compartido';
+import { paisDelConductor } from '../paisConductor';
 
 const SERVICIOS_VIAJE_SET = new Set<string>(SERVICIOS_VIAJE);
 
@@ -450,6 +451,14 @@ const datosVehiculo = z.object({
   plazas: z.number().int().min(1).max(8).nullable().optional(),
 });
 
+/**
+ * C-PAPELES-CONDUCTOR: donde la placa es nacional (Venezuela) no hay «estado que la emitió»: se
+ * guarda con el código del país, así la placa sigue siendo única y el envío no la pide.
+ */
+function conPlacaDelPais<T extends { placaEstado: string }>(d: T, donde: { pais: string }): T {
+  return perfilPasajeros(donde.pais).placaNacional ? { ...d, placaEstado: donde.pais } : d;
+}
+
 async function miVehiculo(db: Db, conductorId: string, id: string) {
   const v = await db
     .prepare('SELECT * FROM vehiculos WHERE id = ? AND conductor_id = ?')
@@ -492,7 +501,7 @@ servicios.get('/conductor/vehiculos', async (c) => {
 servicios.post('/conductor/vehiculos', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
-  const d = await leerCuerpo(c, datosVehiculo);
+  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), await paisDelConductor(db, u.id));
   const vivos = await db
     .prepare("SELECT COUNT(*) AS n FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado'")
     .bind(u.id)
@@ -532,7 +541,7 @@ servicios.put('/conductor/vehiculos/:id', async (c) => {
       undefined,
       409,
     );
-  const d = await leerCuerpo(c, datosVehiculo);
+  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), await paisDelConductor(db, u.id));
   await conRestricciones(
     db
       .prepare(
@@ -1279,6 +1288,29 @@ servicios.put('/admin/cumplimientos/:conductor/:requisito', async (c) => {
       undefined,
       409,
     );
+  // C-PAPELES-CONDUCTOR: la edad se aprueba solo si la fecha de nacimiento la cumple (piso del país).
+  if (def.verifica === 'edad' && d.estado === 'aprobado') {
+    const p = await db
+      .prepare('SELECT fecha_nacimiento FROM usuarios WHERE id = ?')
+      .bind(conductor)
+      .first<{ fecha_nacimiento: string | null }>();
+    const minima = perfilPasajeros((await paisDelConductor(db, conductor)).pais).edadMinima;
+    const nacio = p?.fecha_nacimiento ? new Date(`${p.fecha_nacimiento}T00:00:00Z`) : null;
+    const limite = new Date();
+    limite.setUTCFullYear(limite.getUTCFullYear() - minima);
+    if (!nacio || Number.isNaN(nacio.getTime()))
+      throw new ErrorDatos(
+        'Falta la fecha de nacimiento de esta persona para aprobar la edad.',
+        'edad',
+        422,
+      );
+    if (nacio > limite)
+      throw new ErrorDatos(
+        `Esta persona todavía no tiene ${minima} años: no se puede aprobar.`,
+        'edad',
+        409,
+      );
+  }
   const vehiculoId = def.nivel === 'vehiculo' ? (d.vehiculoId ?? '') : '';
   if (def.nivel === 'vehiculo') {
     const v = await db

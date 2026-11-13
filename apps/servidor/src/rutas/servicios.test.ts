@@ -438,6 +438,10 @@ describe('habilitaciones', () => {
         )
       ).estado,
     ).toBe(409);
+    // C-PAPELES-CONDUCTOR: la edad se aprueba con la fecha de nacimiento que la cumple.
+    await m.DB.prepare("UPDATE usuarios SET fecha_nacimiento = '1990-01-01' WHERE id = ?")
+      .bind(rep.id)
+      .run();
     for (const r of ['licencia_moto', 'edad_minima_21'])
       expect(
         (

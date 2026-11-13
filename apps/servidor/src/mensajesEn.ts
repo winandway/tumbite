@@ -1725,6 +1725,17 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-MOTO-VENEZUELA (13 nov 2026).
   ['Escribe la tarifa del servicio para esta ciudad.', 'Enter the service fare for this city.'],
   ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
+  // C-PAPELES-CONDUCTOR (13 nov 2026).
+  ['Esa ciudad no está disponible.', 'That city isn’t available.'],
+  ['No encontramos a esa persona.', 'We couldn’t find that person.'],
+  [
+    'Termina tu viaje en curso antes de cambiar de ciudad.',
+    'Finish your current ride before changing cities.',
+  ],
+  [
+    'Falta la fecha de nacimiento de esta persona para aprobar la edad.',
+    'This person’s date of birth is missing, so their age can’t be approved.',
+  ],
   ['Este enlace no existe.', 'This link doesn’t exist.'],
   ['Esa cotización no existe.', 'That quote doesn’t exist.'],
   [
@@ -1790,6 +1801,10 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    /^Esta persona todavía no tiene (\d+) años: no se puede aprobar\.$/,
+    (m) => `This person isn’t ${m[1]} yet, so this can’t be approved.`,
+  ],
   [
     // C-COMISION-MONEDA (13 nov 2026).
     /^En este país la comisión de los conductores está en ([A-Z, ]+) y esta ciudad cobra en ([A-Z]{3})\. Crea la política de comisión en [A-Z]{3} antes de activar el servicio\.$/,

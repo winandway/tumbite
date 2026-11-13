@@ -713,6 +713,20 @@ kyc.patch('/admin/kyc/:id', async (c) => {
     .bind(d.estado, d.motivo, admin.id, proxima, id)
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Esa verificación no está pendiente.', undefined, 409);
+  // C-IDENTIDAD-CUMPLIMIENTO (13 nov 2026): la identidad aprobada cuenta como requisito cumplido para
+  // los servicios que la piden (Moto, Envíos…). El disparador de la base vuelve a exigir la
+  // verificación real (documento, selfie y revisión de una persona admin).
+  if (u.rol === 'repartidor')
+    await db
+      .prepare(
+        `INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, fuente_id, vence_en, aprobado_por)
+         VALUES (?, '', 'identidad', ?, 'kyc', 'kyc:' || ?, datetime('now', '+365 days'), ?)
+         ON CONFLICT(conductor_id, vehiculo_id, requisito) DO UPDATE SET estado = excluded.estado, fuente = excluded.fuente,
+           fuente_id = excluded.fuente_id, vence_en = excluded.vence_en, aprobado_por = excluded.aprobado_por,
+           actualizado_en = datetime('now')`,
+      )
+      .bind(id, d.estado === 'aprobado' ? 'aprobado' : 'rechazado', id, admin.id)
+      .run();
   const en = u.idioma === 'en';
   await enviarCorreo(c.env, {
     de: 'soporte',
