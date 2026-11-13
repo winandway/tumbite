@@ -1,0 +1,75 @@
+# Plan para registrar la marca Divoox (Venezuela primero, Estados Unidos después)
+
+Investigado el 13 de noviembre de 2026 con fuentes oficiales y despachos de abogados (lista al final). Regla de Richard: no se arranca en un país sin la marca al menos presentada para registro ahí.
+
+## Estado
+
+Venezuela: sin presentar. Número de solicitud: pendiente.
+Estados Unidos: sin presentar. Número de solicitud: pendiente.
+
+## Lo más importante
+
+En Venezuela, Windoce LLC casi seguro no puede presentar la solicitud sola desde Estados Unidos. El sistema en línea de la oficina de marcas venezolana pide cédula o RIF, no deja pagar en línea a un titular de otro país y la planilla se entrega impresa en la taquilla de Caracas. Hace falta una persona allá con un poder firmado por Richard. No se encontró una frase oficial que lo diga con todas las letras; lo dicen los despachos de abogados y lo confirman esos tres hechos.
+
+En Estados Unidos sí se puede hacer solos, en línea, sin abogado, porque la empresa está domiciliada aquí.
+
+## Qué se registra
+
+Solo la palabra «Divoox» (marca denominativa). Protege el nombre en cualquier letra y con cualquier logo, cuesta menos y no queda vieja si el logo cambia. El logo se registra después, cuando haya presupuesto.
+
+Una sola clase: la treinta y nueve, transporte y reparto. Es la única que cubre a la vez el reparto de comida, el mototaxi y los paquetes. Queda sin cubrir por ahora el pedido en línea y la app como programa (clases nueve, treinta y cinco y cuarenta y dos); los grandes las tienen todas, se agregan después.
+
+## Si el nombre está libre
+
+No se encontró ninguna marca «Divoox» registrada en ninguna parte. Hay parecidas en Estados Unidos que hay que mirar una por una antes de pagar: Divoix, Dovox y Digivox. Divox está abandonada y era de papelería. Esto no es todavía una búsqueda oficial: las bases de datos oficiales no se pudieron consultar de forma automática. En Estados Unidos la búsqueda oficial es gratis y la hace la IA en el navegador antes de presentar. En Venezuela la búsqueda es un servicio pagado de la propia oficina.
+
+## Venezuela, paso a paso
+
+1. Conseguir a la persona en Venezuela: un agente de marcas o un abogado, o una persona de confianza si la oficina lo acepta (hay que preguntarlo). Pedirle precio cerrado por todo.
+2. Richard firma el poder ante notario en Michigan, se apostilla y se traduce con intérprete jurado en Venezuela.
+3. La persona pide la búsqueda fonética y espera el resultado, entre tres días y una semana.
+4. La persona presenta la planilla en la taquilla de Caracas. Ese día la marca queda «en proceso» y se cumple la regla. Se guarda el número de solicitud en este documento.
+5. Después vienen la publicación, treinta días hábiles para oposiciones, el examen y el pago del derecho de registro. El título puede tardar de seis meses a dos años.
+
+Costo en tasas oficiales: unos cuatrocientos diez dólares por la palabra en una clase (búsqueda, solicitud con publicación y derecho de registro). Las tasas están fijadas en petros y el cálculo en dólares viene de despachos de abogados, no de la oficina: se confirma el día de pagar. Aparte van los honorarios de la persona, la apostilla y la traducción, que no se pudieron averiguar.
+
+No se recomienda registrar la marca a nombre de una persona venezolana para cederla después: mientras tanto la marca es de esa persona.
+
+## Estados Unidos, paso a paso
+
+1. Richard crea su cuenta en la oficina de marcas y verifica su identidad con selfi y documento (unos quince minutos).
+2. La IA hace la búsqueda gratis y deja listos los textos de la clase treinta y nueve tomados del manual oficial (si se escribe texto libre cobran doscientos dólares más).
+3. Se presenta la palabra «Divoox», clase treinta y nueve, como «intención de uso»: se puede presentar ya, aunque el servicio no esté funcionando en Estados Unidos.
+4. Richard firma y paga.
+5. Cuando la app esté en uso aquí, se presenta la declaración de uso con una captura de la app.
+
+Costo: trescientos cincuenta dólares al presentar y ciento cincuenta después con la declaración de uso. Total, quinientos.
+
+## Un dato útil
+
+Venezuela no está en el sistema internacional de Madrid, así que no hay atajo: son dos solicitudes separadas. Sí está en el Convenio de París: si se presenta en un país, hay seis meses para presentar en el otro reclamando la primera fecha.
+
+## Qué hace cada quien
+
+Richard: conseguir a la persona en Venezuela, firmar el poder, verificar su identidad en Estados Unidos, firmar y pagar.
+La IA: la búsqueda en Estados Unidos, los textos de la clase en español y en inglés, el borrador del poder, el seguimiento y guardar los números de solicitud aquí.
+
+## Lo que no se pudo confirmar
+
+Si basta una persona que no sea abogada en Venezuela. El valor exacto de las tasas venezolanas en dólares hoy. Los honorarios, la apostilla y la traducción. Las clases de las tres marcas parecidas en Estados Unidos.
+
+## Fuentes (consultadas el 13 de noviembre de 2026)
+
+- Aviso oficial de tasas del SAPI: https://sapi.gob.ve/wp-content/uploads/2025/07/AVISO-OFICIAL-DIRECTOR-GENERAL-No-DG-14-2021-Actualizacion-de-las-Tasas-1.pdf
+- Guía oficial del SAPI: https://sapi.gob.ve/wp-content/uploads/2026/09/GUIA-DE-PROCESO-DE-REGISTRO-DE-MARCAS-Y-SIGNOS-DISTINTIVOS.pdf
+- Marcas en el SAPI: https://sapi.gob.ve/marcas/
+- Sistema en línea del SAPI: https://webpi.sapi.gob.ve/
+- Harris Sliwoski: https://harris-sliwoski.com/blog/registering-a-trademark-in-venezuela/
+- Cono Consultores: https://www.conoconsultores.com/blog/procedimiento-de-registro-de-marca-en-venezuela
+- Odreman y Asociados: https://odremanyasociados.com/guias-legales/registrar-una-marca-en-vzla/
+- Venezuela en WIPO Lex: https://www.wipo.int/wipolex/en/members/profile/VE
+- Tasas del USPTO: https://www.uspto.gov/trademarks/trademark-fee-information
+- Costo en el USPTO: https://www.uspto.gov/trademarks/basics/how-much-does-it-cost
+- Verificación de identidad del USPTO: https://www.uspto.gov/trademarks/apply/identity-verification
+- Requisitos de la solicitud base: https://www.uspto.gov/trademarks/apply/base-application-requirements
+- Búsqueda de marcas del USPTO: https://tmsearch.uspto.gov/
