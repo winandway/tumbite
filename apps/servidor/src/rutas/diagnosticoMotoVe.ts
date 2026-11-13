@@ -76,7 +76,8 @@ export function rutasMotoVenezuela(diagnostico: App) {
       db
         .prepare(
           `INSERT INTO repartidores (usuario_id, conectado, zona_id) VALUES (?, 0, 'US-FL-MIAMI')
-           ON CONFLICT(usuario_id) DO UPDATE SET conectado = 0, vehiculo_activo_id = NULL, zona_id = 'US-FL-MIAMI'`,
+           ON CONFLICT(usuario_id) DO UPDATE SET conectado = 0, vehiculo_activo_id = NULL, zona_id = 'US-FL-MIAMI',
+             ciudad_elegida_en = NULL`,
         )
         .bind(conductor),
       db

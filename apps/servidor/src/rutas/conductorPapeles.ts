@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { DOCUMENTOS_CONDUCTOR, perfilPasajeros } from '@tumbite/compartido';
+import { DOCUMENTOS_CONDUCTOR, perfilPasajeros, requisitosQueCumple } from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
 import type { Env } from '../env';
 import { guardarFoto } from '../fotoLimpia';
@@ -37,6 +37,9 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
   const db = base(c);
   const donde = await paisDelConductor(db, u.id);
   const perfil = perfilPasajeros(donde.pais);
+  const eleccion = await eleccionCiudad(db, u.id);
+  // C-CIUDAD-CONDUCTOR: ya elegida, solo se muestran las de su país.
+  const soloPais = eleccion?.ciudad_elegida_en ? eleccion.pais : null;
   const [{ results: docs }, { results: ciudades }] = await Promise.all([
     db
       .prepare(
@@ -47,13 +50,20 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
       .all<{ tipo: string }>(),
     db
       .prepare(
-        'SELECT id, nombre, pais FROM zonas WHERE activa = 1 ORDER BY pais, nombre LIMIT 100',
+        'SELECT id, nombre, pais FROM zonas WHERE activa = 1 AND (?1 IS NULL OR pais = ?1) ORDER BY pais, nombre LIMIT 100',
       )
+      .bind(soloPais)
       .all<{ id: string; nombre: string; pais: string }>(),
   ]);
   return c.json({
     ciudad: { id: donde.zona_id, nombre: donde.nombre, pais: donde.pais },
     ciudades,
+    cambioCiudad: {
+      elegida: Boolean(eleccion?.ciudad_elegida_en),
+      puedeCambiar: !eleccion?.ciudad_elegida_en || eleccion.puede === 1,
+      soloPais,
+      horas: HORAS_ENTRE_CAMBIOS_CIUDAD,
+    },
     perfil: {
       pais: perfil.pais,
       antecedentes: perfil.antecedentes,
@@ -65,30 +75,130 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
   });
 });
 
-/** El conductor elige su ciudad antes de conectarse (como al registrarse en Uber o inDrive). */
+/**
+ * C-CIUDAD-CONDUCTOR (13 nov 2026, como Uber y DoorDash: la ciudad se elige al registrarse y
+ * después solo se cambia dentro del mismo país; cambiar de país lo hace soporte):
+ * - la primera vez (todavía no eligió) puede elegir cualquier ciudad abierta;
+ * - después, solo una ciudad del MISMO país de su cuenta, una vez cada 24 horas;
+ * - nunca conectado ni con un viaje o pedido en curso (no cambia el despacho a mitad de algo);
+ * - el equipo la cambia a cualquiera desde el panel (`PUT /admin/conductores/:id/ciudad`).
+ */
+export const HORAS_ENTRE_CAMBIOS_CIUDAD = 24;
+
+type Eleccion = {
+  zona_id: string;
+  pais: string;
+  conectado: number;
+  ciudad_elegida_en: string | null;
+  puede: number;
+};
+async function eleccionCiudad(db: D1Database, conductorId: string): Promise<Eleccion | null> {
+  return db
+    .prepare(
+      `SELECT r.zona_id, z.pais, r.conectado, r.ciudad_elegida_en,
+              (r.ciudad_elegida_en IS NULL OR r.ciudad_elegida_en <= datetime('now', '-${HORAS_ENTRE_CAMBIOS_CIUDAD} hours')) AS puede
+         FROM repartidores r JOIN zonas z ON z.id = r.zona_id WHERE r.usuario_id = ?`,
+    )
+    .bind(conductorId)
+    .first<Eleccion>();
+}
+
 conductorPapeles.put('/conductor/ciudad', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
   const { zonaId } = await leerCuerpo(c, z.object({ zonaId: z.string().trim().min(5).max(40) }));
   const zona = await db
-    .prepare('SELECT id FROM zonas WHERE id = ? AND activa = 1')
+    .prepare('SELECT id, pais FROM zonas WHERE id = ? AND activa = 1')
     .bind(zonaId)
-    .first<{ id: string }>();
+    .first<{ id: string; pais: string }>();
   if (!zona) throw new ErrorDatos('Esa ciudad no está disponible.', 'zonaId', 404);
+  const ahora = await eleccionCiudad(db, u.id);
+  if (ahora?.zona_id === zona.id && ahora.ciudad_elegida_en) return c.json({ zonaId: zona.id });
+  if (ahora?.conectado === 1)
+    throw new ErrorDatos('Desconéctate antes de cambiar de ciudad.', undefined, 409);
   const ocupado = await db
     .prepare('SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?')
     .bind(u.id)
     .first();
   if (ocupado)
     throw new ErrorDatos('Termina tu viaje en curso antes de cambiar de ciudad.', undefined, 409);
+  if (ahora?.ciudad_elegida_en) {
+    if (zona.pais !== ahora.pais)
+      throw new ErrorDatos(
+        'Solo puedes elegir una ciudad de tu país. Para cambiar de país, escribe a soporte.',
+        'zonaId',
+        409,
+      );
+    if (ahora.puede !== 1)
+      throw new ErrorDatos(
+        'Ya cambiaste de ciudad hoy. Podrás cambiarla otra vez dentro de 24 horas.',
+        'zonaId',
+        429,
+      );
+  }
   await db.batch([
     db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(zona.id, u.id),
     db
       .prepare(
-        `INSERT INTO repartidores (usuario_id, zona_id) VALUES (?, ?)
-         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id`,
+        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en) VALUES (?, ?, datetime('now'))
+         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, ciudad_elegida_en = excluded.ciudad_elegida_en`,
       )
       .bind(u.id, zona.id),
+  ]);
+  return c.json({ zonaId: zona.id });
+});
+
+/** El equipo cambia la ciudad de un conductor (también de país), con motivo y en la auditoría. */
+conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      zonaId: z.string().trim().min(5).max(40),
+      motivo: z.string().trim().min(3).max(200),
+    }),
+  );
+  const [zona, persona] = await Promise.all([
+    db
+      .prepare('SELECT id FROM zonas WHERE id = ? AND activa = 1')
+      .bind(d.zonaId)
+      .first<{ id: string }>(),
+    db
+      .prepare("SELECT id FROM usuarios WHERE id = ? AND rol = 'repartidor'")
+      .bind(id)
+      .first<{ id: string }>(),
+  ]);
+  if (!persona) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
+  if (!zona) throw new ErrorDatos('Esa ciudad no está disponible.', 'zonaId', 404);
+  const ocupado = await db
+    .prepare('SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?')
+    .bind(id)
+    .first();
+  if (ocupado)
+    throw new ErrorDatos('Tiene un viaje en curso: cámbiala cuando termine.', undefined, 409);
+  const antes = await paisDelConductor(db, id);
+  await db.batch([
+    db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(zona.id, id),
+    db
+      .prepare(
+        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en) VALUES (?, ?, datetime('now'))
+         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, conectado = 0,
+           ciudad_elegida_en = excluded.ciudad_elegida_en`,
+      )
+      .bind(id, zona.id),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        admin.id,
+        'conductor.ciudad',
+        `conductor:${id}`,
+        JSON.stringify({ zonaId: antes.zona_id }),
+        JSON.stringify({ zonaId: zona.id, motivo: d.motivo }),
+      ),
   ]);
   return c.json({ zonaId: zona.id });
 });
@@ -239,10 +349,9 @@ conductorPapeles.put('/admin/papeles-conductor/:id', async (c) => {
   const donde = await paisDelConductor(db, doc.conductor_id);
   const perfil = perfilPasajeros(donde.pais);
   // Solo donde el país verifica con documentos el papel cumple requisitos de pasajeros.
+  // C-PAPELES-SOLO-PASAJEROS: solo los de pasajeros, salvo que el perfil diga otros explícito.
   const requisitos =
-    perfil.antecedentes === 'documentos'
-      ? (new Map(Object.entries(perfil.requisitosDeDocumento)).get(doc.tipo) ?? [])
-      : [];
+    perfil.antecedentes === 'documentos' ? requisitosQueCumple(perfil, doc.tipo) : [];
   await db.batch([
     db
       .prepare(

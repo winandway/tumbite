@@ -34,9 +34,31 @@ export type PerfilPasajeros = {
   placaNacional: boolean;
   /** Papeles del conductor que se piden en ese país. */
   documentosConductor: readonly DocumentoConductor[];
-  /** Qué requisitos cumple cada papel cuando el equipo lo aprueba. */
+  /** Qué requisitos DE PASAJEROS cumple cada papel cuando el equipo lo aprueba. */
   requisitosDeDocumento: Readonly<Partial<Record<DocumentoConductor, readonly string[]>>>;
+  /**
+   * C-PAPELES-SOLO-PASAJEROS: requisitos de OTROS servicios (Envíos, Mercado, Farmacia) que un papel
+   * también cumple. Vacío salvo que el país lo diga explícito: un certificado revisado para llevar
+   * pasajeros no reemplaza por sí solo la verificación de los demás servicios.
+   */
+  requisitosOtrosServicios?: Readonly<Partial<Record<DocumentoConductor, readonly string[]>>>;
 };
+
+/** Los requisitos que son de llevar pasajeros (los únicos que un papel cumple por defecto). */
+export const REQUISITOS_PASAJEROS: ReadonlySet<string> = new Set([
+  'licencia_moto',
+  'historial_manejo',
+  'antecedentes_pasajeros',
+]);
+
+/** Qué requisitos cumple un papel aprobado: los de pasajeros y, solo si el país lo dice, otros. */
+export function requisitosQueCumple(perfil: PerfilPasajeros, documento: string): string[] {
+  const de = (m: PerfilPasajeros['requisitosDeDocumento'] | undefined) => [
+    ...(new Map(Object.entries(m ?? {})).get(documento) ?? []),
+  ];
+  const pasajeros = de(perfil.requisitosDeDocumento).filter((r) => REQUISITOS_PASAJEROS.has(r));
+  return [...new Set([...pasajeros, ...de(perfil.requisitosOtrosServicios)])];
+}
 
 const EEUU: PerfilPasajeros = {
   pais: 'US',
@@ -65,8 +87,9 @@ const VENEZUELA: PerfilPasajeros = {
   documentosConductor: ['licencia_moto', 'antecedentes_penales'],
   requisitosDeDocumento: {
     licencia_moto: ['licencia_moto', 'historial_manejo'],
-    antecedentes_penales: ['antecedentes_pasajeros', 'antecedentes'],
+    antecedentes_penales: ['antecedentes_pasajeros'],
   },
+  requisitosOtrosServicios: {},
 };
 
 const PERFILES = new Map<string, PerfilPasajeros>([

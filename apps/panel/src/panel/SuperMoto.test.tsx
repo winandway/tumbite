@@ -269,4 +269,24 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     const alerta = await within(detalle).findByRole('alert');
     expect(within(alerta).getByText('Licencia de moto')).toBeTruthy();
   });
+
+  it('C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad del conductor con motivo', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    const fila = await screen.findByTestId('papel-doc1');
+    await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
+    const form = await screen.findByTestId('cambiar-ciudad-conductor');
+    await userEvent.type(within(form).getByLabelText('Código de la nueva ciudad'), 've-mcb-centro');
+    await userEvent.type(within(form).getByLabelText('Motivo del cambio'), 'Se mudó');
+    await userEvent.click(within(form).getByRole('button', { name: 'Cambiar la ciudad' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/admin/conductores/c1/ciudad'))).toEqual({
+        url: expect.stringContaining('/datos/admin/conductores/c1/ciudad'),
+        metodo: 'PUT',
+        cuerpo: { zonaId: 'VE-MCB-CENTRO', motivo: 'Se mudó' },
+      }),
+    );
+    expect(await screen.findByText('Ciudad cambiada.')).toBeTruthy();
+  });
 });

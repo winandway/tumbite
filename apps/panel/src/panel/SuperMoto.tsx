@@ -118,6 +118,14 @@ const T = {
     conductor: 'Conductor',
     cerrarConductor: 'Cerrar',
     ciudad: 'Ciudad',
+    cambiarCiudad: 'Cambiar la ciudad del conductor',
+    cambiarCiudadAyuda:
+      'El conductor puede cambiarla él mismo una vez cada 24 horas y dentro de su país. Aquí el equipo la cambia a cualquier ciudad (también de país); queda en la auditoría.',
+    nuevaCiudad: 'Código de la nueva ciudad',
+    motivoCiudad: 'Motivo del cambio',
+    motivoCiudadEjemplo: 'Por qué se cambia la ciudad',
+    cambiarCiudadBoton: 'Cambiar la ciudad',
+    ciudadCambiada: 'Ciudad cambiada.',
     nacimiento: 'Fecha de nacimiento',
     sinFecha: 'sin fecha',
     identidad: 'Identidad',
@@ -274,6 +282,14 @@ const T = {
     conductor: 'Driver',
     cerrarConductor: 'Close',
     ciudad: 'City',
+    cambiarCiudad: 'Change the driver’s city',
+    cambiarCiudadAyuda:
+      'Drivers can change it themselves once every 24 hours, within their country. Here the team can move them to any city (including another country); it’s logged in the audit trail.',
+    nuevaCiudad: 'New city code',
+    motivoCiudad: 'Reason for the change',
+    motivoCiudadEjemplo: 'Why the city is changing',
+    cambiarCiudadBoton: 'Change city',
+    ciudadCambiada: 'City changed.',
     nacimiento: 'Date of birth',
     sinFecha: 'no date',
     identidad: 'Identity',
@@ -1053,14 +1069,90 @@ type DetalleConductor = {
   }[];
 };
 
+/** C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad de un conductor (a cualquiera), con motivo. */
+function CambiarCiudad({
+  id,
+  idioma,
+  t,
+  alCambiar,
+}: {
+  id: string;
+  idioma: Idioma;
+  t: Textos;
+  alCambiar: (texto: string) => void;
+}) {
+  const b = useBorrador({
+    formulario: `moto-ciudad-conductor-${id}`,
+    cuenta: 'superadmin',
+    inicial: { zonaId: '', motivo: '' },
+    almacen: almacenNavegador,
+  });
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setEnviando(true);
+    try {
+      await pedir('PUT', `/datos/admin/conductores/${id}/ciudad`, {
+        zonaId: b.valores.zonaId.trim().toUpperCase(),
+        motivo: b.valores.motivo.trim(),
+      });
+      await b.limpiar();
+      alCambiar(t.ciudadCambiada);
+    } catch (x) {
+      setError(mensaje(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
+  return (
+    <form onSubmit={(e) => void enviar(e)} data-testid="cambiar-ciudad-conductor">
+      <h3>{t.cambiarCiudad}</h3>
+      <p className="pista">{t.cambiarCiudadAyuda}</p>
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
+      <label>
+        {t.nuevaCiudad}
+        <input
+          value={b.valores.zonaId}
+          onChange={(e) => b.cambiar('zonaId', e.target.value.toUpperCase())}
+          placeholder={t.codigoEjemplo}
+          autoComplete="off"
+          required
+        />
+      </label>
+      <label>
+        {t.motivoCiudad}
+        <input
+          value={b.valores.motivo}
+          onChange={(e) => b.cambiar('motivo', e.target.value)}
+          placeholder={t.motivoCiudadEjemplo}
+          required
+          minLength={3}
+        />
+      </label>
+      {error ? <p className="error">{error}</p> : null}
+      <button type="submit" className="boton" disabled={enviando}>
+        {t.cambiarCiudadBoton}
+      </button>
+    </form>
+  );
+}
+
 function Conductor({
   id,
   base,
+  idioma,
   t,
   alCerrar,
 }: {
   id: string;
   base: string;
+  idioma: Idioma;
   t: Textos;
   alCerrar: () => void;
 }) {
@@ -1155,6 +1247,15 @@ function Conductor({
               </li>
             ))}
           </ul>
+          <CambiarCiudad
+            id={id}
+            idioma={idioma}
+            t={t}
+            alCambiar={(texto) => {
+              setOk(texto);
+              cargar();
+            }}
+          />
           {moto ? (
             <>
               <h3>
@@ -1486,6 +1587,7 @@ export function SuperMoto({ base, idioma }: { base: string; idioma: Idioma }) {
           key={conductor}
           id={conductor}
           base={base}
+          idioma={idioma}
           t={t}
           alCerrar={() => setConductor(null)}
         />

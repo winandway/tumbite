@@ -369,11 +369,24 @@ export function ViajeActivo({
           style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12, gap: 8 }}
         >
           {pagoMovil ? (
-            <Text
-              style={{ fontWeight: '800', color: pagoMovil === 'recibido' ? C.exito : C.primario }}
-            >
-              {pagoMovil === 'recibido' ? t.pagoMovilRecibido : t.pagoMovilAviso}
-            </Text>
+            <>
+              <Text
+                style={{
+                  fontWeight: '800',
+                  color: pagoMovil === 'recibido' ? C.exito : C.primario,
+                }}
+              >
+                {pagoMovil === 'recibido' ? t.pagoMovilRecibido : t.pagoMovilAviso}
+              </Text>
+              {/* C-PAGO-MOVIL-CORREGIR: si marcó «no me llegó» por error, lo corrige una vez. */}
+              {pagoMovil === 'no_recibido' ? (
+                <Boton
+                  texto={t.pagoMovilCorregir}
+                  secundario
+                  alTocar={() => void confirmarPagoMovil(true)}
+                />
+              ) : null}
+            </>
           ) : (
             <>
               <Text style={{ color: C.secundario }}>
