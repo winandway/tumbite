@@ -112,12 +112,25 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
     recargasRecuperadas: recuperadas,
     reservasRecuperadas: huerfanas,
   };
-  await db
-    .prepare(
-      "INSERT INTO config (clave, valor) VALUES ('fin_conciliacion', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
-    )
-    .bind(JSON.stringify(resultado))
-    .run();
+  // C-RELOJ-OCIOSO-SIN-ESCRITURAS: el reloj corre cada minuto. Se guarda solo si el resultado
+  // cambió, o una vez por hora para que «cuando» siga diciendo que la conciliación está viva.
+  // Antes se reescribía en cada vuelta: 1.440 escrituras al día sin que cambiara nada.
+  const antes = await ultimaConciliacion(db).catch((e: unknown) => {
+    // Si no se puede leer, se vuelve a escribir: nunca se pierde un resultado.
+    console.error('finanzas: leer la última conciliación', e);
+    return null;
+  });
+  const sinHora = (r: Omit<typeof resultado, 'cuando'> & { cuando?: string }) =>
+    JSON.stringify({ ...r, cuando: undefined });
+  const igual = antes !== null && sinHora(antes) === sinHora(resultado);
+  const reciente = antes !== null && Date.now() - Date.parse(antes.cuando) < 3_600_000;
+  if (!igual || !reciente)
+    await db
+      .prepare(
+        "INSERT INTO config (clave, valor) VALUES ('fin_conciliacion', ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')",
+      )
+      .bind(JSON.stringify(resultado))
+      .run();
   if (!resultado.ok)
     for (const para of await correosEquipo(env, 'dinero'))
       await enviarCorreo(env, {

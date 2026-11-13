@@ -389,3 +389,41 @@ describe('C-RELOJ-PRUEBAS-PAUSA', () => {
     expect(relojEnPausa('https://divoox.com/datos/reloj')).toBe(false);
   });
 });
+
+describe('C-RELOJ-OCIOSO-SIN-ESCRITURAS', () => {
+  it('una vuelta del reloj real sin nada que hacer no escribe filas en sus tareas, y cuenta lo que lee y escribe', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const env = { ...(m.extra as object), ENTORNO_RELOJ: 'produccion' } as never;
+    // La primera vuelta puede dejar el estado inicial (por ejemplo, la primera conciliación).
+    await correrRelojUnaVez(env, m.DB, '2026-11-13T12:10', 'externo');
+    for (const v of ['2026-11-13T12:11', '2026-11-13T12:12', '2026-11-13T12:13']) {
+      const r = await correrRelojUnaVez(env, m.DB, v, 'externo');
+      expect('filas' in r && r.filas).toEqual({ leidas: expect.any(Number), escritas: 0 });
+    }
+  });
+
+  it('la conciliación de billeteras vuelve a escribir si cambia el resultado o pasó una hora', async () => {
+    const { conciliarFinanzas, ultimaConciliacion } = await import('./finanzas/reloj');
+    const m = mundo();
+    const env = m.extra as never;
+    await conciliarFinanzas(env, m.DB);
+    const primera = await ultimaConciliacion(m.DB);
+    await conciliarFinanzas(env, m.DB);
+    expect((await ultimaConciliacion(m.DB))?.cuando).toBe(primera?.cuando);
+    // Guardada hace más de una hora: se refresca aunque no haya cambiado nada.
+    const vieja = { ...primera, cuando: new Date(Date.now() - 2 * 3600_000).toISOString() };
+    await m.DB.prepare("UPDATE config SET valor = ? WHERE clave = 'fin_conciliacion'")
+      .bind(JSON.stringify(vieja))
+      .run();
+    await conciliarFinanzas(env, m.DB);
+    expect((await ultimaConciliacion(m.DB))?.cuando).not.toBe(vieja.cuando);
+    // Un problema nuevo se guarda al momento.
+    const conProblema = { ...primera, ok: false, problemas: [{ tipo: 'x', detalle: 'y' }] };
+    await m.DB.prepare("UPDATE config SET valor = ? WHERE clave = 'fin_conciliacion'")
+      .bind(JSON.stringify(conProblema))
+      .run();
+    await conciliarFinanzas(env, m.DB);
+    expect((await ultimaConciliacion(m.DB))?.ok).toBe(true);
+  });
+});

@@ -2975,6 +2975,9 @@ export async function correrReloj(
     conciliacionRetiros: de('conciliacion_retiros')?.datos ?? null,
     operaciones: de('operaciones')?.datos ?? null,
     tareas: Object.fromEntries(vuelta.tareas.map((t) => [t.nombre, t.ok ? 'ok' : 'error'])),
+    // C-RELOJ-OCIOSO-SIN-ESCRITURAS: lo que leyeron y escribieron las tareas en esta vuelta. Queda
+    // en tareas_programadas.resultado (la misma fila que ya se actualiza: no cuesta una escritura).
+    filas: { leidas: contada.cuenta.leidas, escritas: contada.cuenta.escritas },
     cuando: new Date().toISOString(),
   };
   return { vuelta, resumen };
