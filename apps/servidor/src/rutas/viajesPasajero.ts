@@ -31,6 +31,7 @@ import {
   exigirComisionEnMoneda,
 } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
+import { referenciaLocal } from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
 import { pinParaViajeNuevo } from './ajustesViaje';
@@ -433,7 +434,9 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     dePrueba: fila.de_prueba === 1,
     metodosPago: [...perfilPasajeros(zona.pais).metodosPago],
   };
-  return c.json({ cotizacion }, 201);
+  // C-BS-REFERENCIA: el equivalente en bolívares, solo informativo (null sin tasa vigente).
+  const referencia = await referenciaLocal(db, zona.pais, desglose.total, fila.moneda);
+  return c.json({ cotizacion: { ...cotizacion, referencia } }, 201);
 });
 
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
@@ -691,6 +694,7 @@ type FilaViajeCliente = {
   pm_titular: string | null;
   pm_identificador: string | null;
   pm_estado: string | null;
+  pais: string | null;
 };
 
 async function viajeDelCliente(
@@ -708,7 +712,7 @@ async function viajeDelCliente(
               u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
               h.marca, h.modelo, h.color, h.placa,
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
-              pm.estado AS pm_estado
+              pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
          LEFT JOIN usuarios u ON u.id = o.conductor_id
@@ -817,7 +821,9 @@ viajesPasajero.get('/viajes/actual', async (c) => {
     )
     .bind(u.id)
     .first<{ monto: number; moneda: string | null }>();
-  const viaje = f ? viajePublico(f) : null;
+  const viaje = f
+    ? { ...viajePublico(f), referencia: await referenciaLocal(db, f.pais, f.total, f.moneda) }
+    : null;
   return c.json({
     viaje,
     paquete: viaje ? await paqueteDe(db, viaje.id) : null,
@@ -840,7 +846,10 @@ viajesPasajero.get('/viajes/:id', async (c) => {
   const db = base(c);
   const f = await viajeDelCliente(db, u.id, c.req.param('id'));
   if (!f) throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
-  const viaje = viajePublico(f);
+  const viaje = {
+    ...viajePublico(f),
+    referencia: await referenciaLocal(db, f.pais, f.total, f.moneda),
+  };
   return c.json({
     viaje,
     paquete: await paqueteDe(db, viaje.id),

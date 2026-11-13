@@ -1733,6 +1733,37 @@ export const MENSAJES_EN = new Map<string, string>([
   ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
+  ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],
+  [
+    'El conductor de pruebas tiene un viaje abierto: ciérralo primero.',
+    'The test driver has an open ride: close it first.',
+  ],
+  ['Desconéctate antes de cambiar de ciudad.', 'Go offline before changing your city.'],
+  [
+    'En este país los viajes no necesitan tasa de referencia.',
+    'Rides in this country don’t need a reference rate.',
+  ],
+  ['El pago cambió. Actualiza la pantalla.', 'The payment changed. Refresh the screen.'],
+  [
+    'Solo puedes elegir una ciudad de tu país. Para cambiar de país, escribe a soporte.',
+    'You can only choose a city in your country. To change countries, contact support.',
+  ],
+  [
+    'Ya cambiaste de ciudad hoy. Podrás cambiarla otra vez dentro de 24 horas.',
+    'You already changed your city today. You can change it again in 24 hours.',
+  ],
+  [
+    'Tiene un viaje en curso: cámbiala cuando termine.',
+    'They have a ride in progress: change it once it ends.',
+  ],
+  [
+    'Ya confirmaste este pago. Si hay que cambiarlo, escribe a soporte desde Ayuda.',
+    'You already confirmed this payment. To change it, contact support from Help.',
+  ],
+  [
+    'No se pudo aprobar: a esta verificación le faltan el documento o la selfie. Pídele a la persona que vuelva a tomar las fotos.',
+    'It couldn’t be approved: this verification is missing the ID or the selfie. Ask the person to take the photos again.',
+  ],
   ['No encontramos a esa persona.', 'We couldn’t find that person.'],
   // C-RECARGAS-PREPAGO y C-PAGO-MOVIL-VIAJE (13 nov 2026).
   [

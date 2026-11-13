@@ -215,6 +215,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'sms_consentimiento_canal', 'TEXT'],
   // C-GANAR-POR-TIEMPO: «oferta» (lo de siempre) o «tiempo».
   ['repartidores', 'modo_pago', "TEXT NOT NULL DEFAULT 'oferta'"],
+  // C-CIUDAD-CONDUCTOR (13 nov 2026): cuándo eligió el conductor su ciudad por última vez (una vez
+  // cada 24 horas y dentro de su país; sin valor, todavía no la eligió).
+  ['repartidores', 'ciudad_elegida_en', 'TEXT'],
+  // C-PAGO-MOVIL-CORREGIR (13 nov 2026): el «no me llegó» corregido a «sí me llegó» (una sola vez).
+  ['viajes_pago_movil', 'corregido_en', 'TEXT'],
 ];
 
 /**

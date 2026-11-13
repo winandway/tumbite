@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
+import { referenciaLocal } from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { revisarSelfieCasco } from './ajustesViaje';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
@@ -147,6 +148,7 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               v.intentos_pin, v.pin_requerido, v.llego_en,
               CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS segundos_esperando,
               q.total, q.moneda, json_extract(q.tarifa_json, '$.esperaGratisS') AS espera_gratis_s,
+              (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               p.nombre AS pasajero,
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
               e.foto_recogida IS NOT NULL AS paquete_foto
@@ -162,6 +164,13 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
   return c.json({
     operacion: {
       ...f,
+      // C-BS-REFERENCIA: lo que cobra en mano, con su equivalente en bolívares (informativo).
+      referencia: await referenciaLocal(
+        base(c),
+        f.pais == null ? null : String(f.pais),
+        f.total == null ? null : Number(f.total),
+        f.moneda == null ? null : String(f.moneda),
+      ),
       pasajero: String(f.pasajero ?? '').split(' ')[0] ?? '',
       espera_gratis_s:
         f.espera_gratis_s == null ? ESPERA_GRATIS_S_POR_DEFECTO : Number(f.espera_gratis_s),
@@ -368,7 +377,17 @@ viajes.post(
       const totalFinal = await cerrarCuentaViaje(c, id, u.id);
       // C-VIAJE-TARJETA: con tarjeta, se cobra al terminar (nunca más de lo autorizado).
       if (totalFinal != null) await capturarCobroViaje(c.env, db, id, u.id, totalFinal);
-      return c.json({ ok: true, estado: paso.hacia, totalFinal });
+      // C-BS-REFERENCIA: en la pantalla de cobro, el equivalente en bolívares (solo informativo).
+      const donde = await db
+        .prepare(
+          `SELECT z.pais, q.moneda FROM operaciones o JOIN zonas z ON z.id = o.zona_id
+             JOIN viajes v ON v.operacion_id = o.id LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+            WHERE o.id = ?`,
+        )
+        .bind(id)
+        .first<{ pais: string; moneda: string | null }>();
+      const referencia = await referenciaLocal(db, donde?.pais, totalFinal, donde?.moneda);
+      return c.json({ ok: true, estado: paso.hacia, totalFinal, referencia });
     }
     if (nombre === 'no-se-presento') await devolverReservaViaje(db, id, u.id, 'no_se_presento');
     // M2: el pasajero que no se presentó debe el cargo de la tarifa copiada; en efectivo queda como
@@ -407,6 +426,9 @@ viajes.post(
  * bandeja de dinero para soporte. Es una confirmación MANUAL (nunca «verificado por el banco»). La
  * comisión sale igual del prepago al terminar, como en efectivo.
  */
+/** Minutos para corregir un «no me llegó» puesto por error (C-PAGO-MOVIL-CORREGIR). */
+export const MINUTOS_CORREGIR_PAGO_MOVIL = 30;
+
 viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
   const u = exigir(c, 'repartidor');
   const id = c.req.param('id');
@@ -447,10 +469,44 @@ viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
     .run();
   if (!r.meta.changes) {
     const ya = await db
-      .prepare('SELECT estado FROM viajes_pago_movil WHERE operacion_id = ?')
+      .prepare(
+        `SELECT estado, corregido_en,
+                creado_en > datetime('now', '-${MINUTOS_CORREGIR_PAGO_MOVIL} minutes') AS a_tiempo
+           FROM viajes_pago_movil WHERE operacion_id = ?`,
+      )
       .bind(id)
-      .first<{ estado: string }>();
-    return c.json({ estado: ya?.estado ?? null });
+      .first<{ estado: string; corregido_en: string | null; a_tiempo: number }>();
+    const pedido = d.recibido ? 'recibido' : 'no_recibido';
+    // Lo mismo otra vez (doble toque, respuesta perdida): no es un error.
+    if (!ya || ya.estado === pedido) return c.json({ estado: ya?.estado ?? null });
+    // C-PAGO-MOVIL-CORREGIR (como la transferencia de Comida): «no me llegó» por error se corrige
+    // a «sí me llegó» UNA vez y dentro de un plazo corto; el caso de soporte se cierra con nota.
+    // Después de eso, o en el otro sentido, lo cambia solo soporte.
+    if (!(ya.estado === 'no_recibido' && d.recibido && !ya.corregido_en && ya.a_tiempo === 1))
+      throw new ErrorDatos(
+        'Ya confirmaste este pago. Si hay que cambiarlo, escribe a soporte desde Ayuda.',
+        undefined,
+        409,
+      );
+    const nota = ` Nota: el conductor corrigió a «sí me llegó»${d.referencia ? ` (referencia ${d.referencia})` : ''}; el caso se cerró solo.`;
+    const [cambio] = await db.batch([
+      db
+        .prepare(
+          `UPDATE viajes_pago_movil SET estado = 'recibido', corregido_en = datetime('now'),
+             referencia = CASE WHEN ? != '' THEN ? ELSE referencia END
+           WHERE operacion_id = ? AND estado = 'no_recibido' AND corregido_en IS NULL`,
+        )
+        .bind(d.referencia, d.referencia, id),
+      db
+        .prepare(
+          `UPDATE incidencias_dinero SET estado = 'resuelta', resuelta_en = datetime('now'), detalle = detalle || ?
+           WHERE referencia = ? AND estado = 'abierta' AND changes() > 0`,
+        )
+        .bind(nota, `pago-movil-viaje:${id}`),
+    ]);
+    if (!cambio?.meta.changes)
+      throw new ErrorDatos('El pago cambió. Actualiza la pantalla.', undefined, 409);
+    return c.json({ estado: 'recibido', corregido: true });
   }
   if (!d.recibido)
     await abrirIncidencia(db, {

@@ -1,7 +1,14 @@
 import { comoLlegar } from '../comoLlegar';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, Switch, Text, TextInput, View } from 'react-native';
-import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Idioma,
+  type Referencia,
+  enIdioma,
+  formatearMonto,
+  textoReferencia,
+} from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
 import { Boton, C } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
@@ -43,6 +50,8 @@ export type ViajeConductor = {
   total: number | null;
   moneda: string | null;
   pasajero: string;
+  /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
+  referencia?: Referencia | null;
 };
 
 /** Una clave nueva por acción: el servidor no repite nada si la app reintenta. */
@@ -103,6 +112,7 @@ export function ViajeActivo({
   const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
   // M7: lo que cobra al terminar (precio fijo + espera + lo que el pasajero debía), del servidor.
   const [totalFinal, setTotalFinal] = useState<number | null>(null);
+  const [referenciaFinal, setReferenciaFinal] = useState<Referencia | null>(null);
   const [estrellas, setEstrellas] = useState(0);
   /** M8: el conductor califica al pasajero (una vez); después vuelve al inicio. */
   async function calificarYSalir() {
@@ -131,13 +141,14 @@ export function ViajeActivo({
       setEnviando(true);
       setError('');
       try {
-        const r = await api.pedir<{ totalFinal?: number | null }>(
+        const r = await api.pedir<{ totalFinal?: number | null; referencia?: Referencia | null }>(
           'POST',
           `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`,
           cuerpo,
           { cabeceras: { 'idempotency-key': clave() } },
         );
         if (r?.totalFinal != null) setTotalFinal(r.totalFinal);
+        if (r?.referencia) setReferenciaFinal(r.referencia);
         if (final) setCierre(final);
         else alCambiar();
       } catch (x) {
@@ -172,16 +183,23 @@ export function ViajeActivo({
           {cierre === 'terminado' ? t.terminado : t.noShow}
         </Text>
         {cierre === 'terminado' &&
-        viaje.metodo_pago === 'efectivo' &&
+        (viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
         (totalFinal ?? viaje.total) != null ? (
           <View
             testID="viaje-cobra-efectivo"
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
           >
-            <Text style={{ color: '#5E5E5E' }}>{t.cobra}</Text>
+            <Text style={{ color: '#5E5E5E' }}>
+              {viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
+            </Text>
             <Text style={{ fontSize: 34, fontWeight: '800', color: C.exito }}>
               {formatearMonto(totalFinal ?? viaje.total ?? 0, viaje.moneda ?? 'USD', idioma)}
             </Text>
+            {(referenciaFinal ?? viaje.referencia) ? (
+              <Text testID="viaje-cobra-bs" style={{ color: '#5E5E5E', fontWeight: '700' }}>
+                {textoReferencia(referenciaFinal ?? viaje.referencia, idioma)}
+              </Text>
+            ) : null}
           </View>
         ) : null}
         {cierre === 'terminado' ? (
@@ -230,6 +248,11 @@ export function ViajeActivo({
         {viaje.metodo_pago === 'efectivo' && viaje.total != null ? (
           <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
             {t.cobra}: {formatearMonto(viaje.total, viaje.moneda ?? 'USD', idioma)}
+          </Text>
+        ) : null}
+        {viaje.referencia ? (
+          <Text testID="viaje-bs" style={{ color: '#5E5E5E' }}>
+            {textoReferencia(viaje.referencia, idioma)}
           </Text>
         ) : null}
       </View>
@@ -369,11 +392,24 @@ export function ViajeActivo({
           style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12, gap: 8 }}
         >
           {pagoMovil ? (
-            <Text
-              style={{ fontWeight: '800', color: pagoMovil === 'recibido' ? C.exito : C.primario }}
-            >
-              {pagoMovil === 'recibido' ? t.pagoMovilRecibido : t.pagoMovilAviso}
-            </Text>
+            <>
+              <Text
+                style={{
+                  fontWeight: '800',
+                  color: pagoMovil === 'recibido' ? C.exito : C.primario,
+                }}
+              >
+                {pagoMovil === 'recibido' ? t.pagoMovilRecibido : t.pagoMovilAviso}
+              </Text>
+              {/* C-PAGO-MOVIL-CORREGIR: si marcó «no me llegó» por error, lo corrige una vez. */}
+              {pagoMovil === 'no_recibido' ? (
+                <Boton
+                  texto={t.pagoMovilCorregir}
+                  secundario
+                  alTocar={() => void confirmarPagoMovil(true)}
+                />
+              ) : null}
+            </>
           ) : (
             <>
               <Text style={{ color: C.secundario }}>
@@ -381,6 +417,7 @@ export function ViajeActivo({
                 {viaje.total != null
                   ? formatearMonto(viaje.total, viaje.moneda ?? 'USD', idioma)
                   : ''}
+                {viaje.referencia ? ` ${textoReferencia(viaje.referencia, idioma)}` : ''}
               </Text>
               <Boton
                 texto={t.pagoMovilSi}

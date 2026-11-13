@@ -212,6 +212,8 @@ export type CotizacionViaje = {
   dePrueba: boolean;
   /** C-PAGO-MOVIL-VIAJE: con qué se puede pagar en esa ciudad (perfil del país). */
   metodosPago?: ('efectivo' | 'tarjeta' | 'pago_movil')[];
+  /** C-BS-REFERENCIA: el equivalente en la moneda local (solo informativo; null sin tasa vigente). */
+  referencia?: import('./tasaReferencia').Referencia | null;
 };
 
 /**

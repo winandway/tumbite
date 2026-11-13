@@ -78,6 +78,21 @@ function servidor(
         ],
       });
     if (u.includes('/datos/admin/vehiculos?')) return responder({ vehiculos: [] });
+    if (metodo === 'GET' && u.endsWith('/datos/admin/tasas-referencia'))
+      return responder({
+        horasVigencia: 48,
+        tasas: [
+          {
+            pais: 'VE',
+            moneda: 'VES',
+            tasa: 36.5,
+            fecha: '2026-11-11',
+            puestaEn: '2026-11-11 10:00:00',
+            puestaPor: 'Soporte Divoox',
+            vigente: false,
+          },
+        ],
+      });
     if (metodo === 'PUT' && u.endsWith('/habilitaciones/c1/moto') && op.habilitar409)
       return responder(
         { error: 'Le faltan requisitos.', requisitosFaltantes: ['licencia_moto'] },
@@ -268,5 +283,44 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Moto' }));
     const alerta = await within(detalle).findByRole('alert');
     expect(within(alerta).getByText('Licencia de moto')).toBeTruthy();
+  });
+
+  it('C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad del conductor con motivo', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    const fila = await screen.findByTestId('papel-doc1');
+    await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
+    const form = await screen.findByTestId('cambiar-ciudad-conductor');
+    await userEvent.type(within(form).getByLabelText('Código de la nueva ciudad'), 've-mcb-centro');
+    await userEvent.type(within(form).getByLabelText('Motivo del cambio'), 'Se mudó');
+    await userEvent.click(within(form).getByRole('button', { name: 'Cambiar la ciudad' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/admin/conductores/c1/ciudad'))).toEqual({
+        url: expect.stringContaining('/datos/admin/conductores/c1/ciudad'),
+        metodo: 'PUT',
+        cuerpo: { zonaId: 'VE-MCB-CENTRO', motivo: 'Se mudó' },
+      }),
+    );
+    expect(await screen.findByText('Ciudad cambiada.')).toBeTruthy();
+  });
+
+  it('C-BS-REFERENCIA: la tasa vencida se dice así y guardar la de hoy manda el PUT', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    const caja = await screen.findByTestId('tasa-referencia');
+    expect(await within(caja).findByText('Vencida: ya no se muestra')).toBeTruthy();
+    await userEvent.type(
+      within(caja).getByLabelText('Tasa de hoy (bolívares por dólar)'),
+      '842,56',
+    );
+    await userEvent.click(within(caja).getByRole('button', { name: 'Guardar la tasa de hoy' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/tasas-referencia/VE'))?.cuerpo).toEqual({
+        tasa: 842.56,
+      }),
+    );
+    expect(await within(caja).findByText('Tasa guardada.')).toBeTruthy();
   });
 });

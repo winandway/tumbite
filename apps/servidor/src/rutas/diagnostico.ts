@@ -29,6 +29,7 @@ import { type TareaReloj } from '../reloj';
 import { vigilarPedidos } from '../manager';
 import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
 import { cuentaVuelta } from '../vueltaPruebas';
+import { rutasMotoVenezuela } from './diagnosticoMotoVe';
 
 /**
  * Diagnóstico del SITIO DE PRUEBAS (Fase 0, 15 oct 2026): las pruebas S2–S5, S7 y S11 de
@@ -2472,3 +2473,6 @@ diagnostico.post('/interno/diagnostico/moto/limpiar', async (c) => {
     .first<{ n: number }>();
   return c.json({ ok: Number(resto?.n) === 0 });
 });
+
+// Divoox Moto · Venezuela (C-MOTO-VE-PUNTA-A-PUNTA): cuentas fijas y conductor sin saldo.
+rutasMotoVenezuela(diagnostico);

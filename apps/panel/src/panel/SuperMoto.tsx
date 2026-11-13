@@ -118,6 +118,25 @@ const T = {
     conductor: 'Conductor',
     cerrarConductor: 'Cerrar',
     ciudad: 'Ciudad',
+    tasaTitulo: 'Tasa de referencia en bolívares',
+    tasaAyuda:
+      'Copia aquí la tasa oficial del BCV de hoy. Con ella, el pasajero y el conductor ven el equivalente en bolívares junto al precio en dólares. Es solo informativa: el viaje y la comisión siguen en dólares. Si pasan 48 horas sin actualizarla, el equivalente deja de mostrarse.',
+    tasaPorDolar: 'bolívares por dólar',
+    tasaDel: 'del',
+    tasaVigente: 'Vigente',
+    tasaVencida: 'Vencida: ya no se muestra',
+    tasaSinCargar: 'todavía no hay tasa',
+    tasaNueva: 'Tasa de hoy (bolívares por dólar)',
+    tasaGuardar: 'Guardar la tasa de hoy',
+    tasaGuardada: 'Tasa guardada.',
+    cambiarCiudad: 'Cambiar la ciudad del conductor',
+    cambiarCiudadAyuda:
+      'El conductor puede cambiarla él mismo una vez cada 24 horas y dentro de su país. Aquí el equipo la cambia a cualquier ciudad (también de país); queda en la auditoría.',
+    nuevaCiudad: 'Código de la nueva ciudad',
+    motivoCiudad: 'Motivo del cambio',
+    motivoCiudadEjemplo: 'Por qué se cambia la ciudad',
+    cambiarCiudadBoton: 'Cambiar la ciudad',
+    ciudadCambiada: 'Ciudad cambiada.',
     nacimiento: 'Fecha de nacimiento',
     sinFecha: 'sin fecha',
     identidad: 'Identidad',
@@ -274,6 +293,25 @@ const T = {
     conductor: 'Driver',
     cerrarConductor: 'Close',
     ciudad: 'City',
+    tasaTitulo: 'Bolívar reference rate',
+    tasaAyuda:
+      'Paste today’s official BCV rate here. Riders and drivers then see the bolívar equivalent next to the dollar price. It’s for reference only: the ride and the commission stay in dollars. If it isn’t updated for 48 hours, the equivalent stops showing.',
+    tasaPorDolar: 'bolívars per dollar',
+    tasaDel: 'from',
+    tasaVigente: 'Current',
+    tasaVencida: 'Expired: no longer shown',
+    tasaSinCargar: 'no rate yet',
+    tasaNueva: 'Today’s rate (bolívars per dollar)',
+    tasaGuardar: 'Save today’s rate',
+    tasaGuardada: 'Rate saved.',
+    cambiarCiudad: 'Change the driver’s city',
+    cambiarCiudadAyuda:
+      'Drivers can change it themselves once every 24 hours, within their country. Here the team can move them to any city (including another country); it’s logged in the audit trail.',
+    nuevaCiudad: 'New city code',
+    motivoCiudad: 'Reason for the change',
+    motivoCiudadEjemplo: 'Why the city is changing',
+    cambiarCiudadBoton: 'Change city',
+    ciudadCambiada: 'City changed.',
     nacimiento: 'Date of birth',
     sinFecha: 'no date',
     identidad: 'Identity',
@@ -1053,14 +1091,190 @@ type DetalleConductor = {
   }[];
 };
 
+// ---------------------------------------------------------------- tasa de referencia (bolívares)
+
+type FilaTasaRef = {
+  pais: string;
+  moneda: string;
+  tasa: number | null;
+  fecha: string | null;
+  puestaEn: string | null;
+  puestaPor: string | null;
+  vigente: boolean;
+};
+
+/**
+ * C-BS-REFERENCIA: el equipo escribe la tasa oficial del día (bolívares por dólar). Con ella, el
+ * pasajero y el conductor ven el equivalente en bolívares junto al precio en dólares. Solo
+ * informativa; con más de 48 horas no se muestra.
+ */
+function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
+  const b = useBorrador({
+    formulario: 'moto-tasa-referencia',
+    cuenta: 'superadmin',
+    inicial: { tasa: '' },
+    almacen: almacenNavegador,
+  });
+  const [filas, setFilas] = useState<FilaTasaRef[]>([]);
+  const [error, setError] = useState('');
+  const [ok, setOk] = useState('');
+  const cargar = useCallback(() => {
+    pedir<{ tasas: FilaTasaRef[] }>('GET', '/datos/admin/tasas-referencia')
+      .then((r) => setFilas(r.tasas))
+      .catch((x: unknown) => setError(mensaje(x)));
+  }, []);
+  useEffect(cargar, [cargar]);
+  async function guardar(e: React.FormEvent, pais: string) {
+    e.preventDefault();
+    setError('');
+    setOk('');
+    const tasa = Number(b.valores.tasa.replace(',', '.'));
+    if (!(tasa > 0)) {
+      setError(t.numeroInvalido);
+      return;
+    }
+    try {
+      await pedir('PUT', `/datos/admin/tasas-referencia/${pais}`, { tasa });
+      await b.limpiar();
+      setOk(t.tasaGuardada);
+      cargar();
+    } catch (x) {
+      setError(mensaje(x));
+    }
+  }
+  return (
+    <div className="tarjeta-form" data-testid="tasa-referencia">
+      <h2>{t.tasaTitulo}</h2>
+      <p className="pista">{t.tasaAyuda}</p>
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
+      {filas.map((f) => (
+        <form key={f.pais} onSubmit={(e) => void guardar(e, f.pais)}>
+          <p>
+            <strong>{f.pais}</strong> ·{' '}
+            {f.tasa != null ? (
+              <>
+                {f.tasa} {t.tasaPorDolar} · {t.tasaDel} {f.fecha} · {f.puestaPor ?? ''}{' '}
+                <span className={`insignia ${f.vigente ? 'insignia-aprobado' : ''}`}>
+                  {f.vigente ? t.tasaVigente : t.tasaVencida}
+                </span>
+              </>
+            ) : (
+              t.tasaSinCargar
+            )}
+          </p>
+          <label>
+            {t.tasaNueva}
+            <input
+              value={b.valores.tasa}
+              onChange={(e) => b.cambiar('tasa', e.target.value)}
+              placeholder="0,00"
+              inputMode="decimal"
+              required
+            />
+          </label>
+          <button type="submit" className="boton">
+            {t.tasaGuardar}
+          </button>
+        </form>
+      ))}
+      {error ? <p className="error">{error}</p> : null}
+      {ok ? (
+        <p className="texto-exito" role="status">
+          {ok}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad de un conductor (a cualquiera), con motivo. */
+function CambiarCiudad({
+  id,
+  idioma,
+  t,
+  alCambiar,
+}: {
+  id: string;
+  idioma: Idioma;
+  t: Textos;
+  alCambiar: (texto: string) => void;
+}) {
+  const b = useBorrador({
+    formulario: `moto-ciudad-conductor-${id}`,
+    cuenta: 'superadmin',
+    inicial: { zonaId: '', motivo: '' },
+    almacen: almacenNavegador,
+  });
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setEnviando(true);
+    try {
+      await pedir('PUT', `/datos/admin/conductores/${id}/ciudad`, {
+        zonaId: b.valores.zonaId.trim().toUpperCase(),
+        motivo: b.valores.motivo.trim(),
+      });
+      await b.limpiar();
+      alCambiar(t.ciudadCambiada);
+    } catch (x) {
+      setError(mensaje(x));
+    } finally {
+      setEnviando(false);
+    }
+  }
+  return (
+    <form onSubmit={(e) => void enviar(e)} data-testid="cambiar-ciudad-conductor">
+      <h3>{t.cambiarCiudad}</h3>
+      <p className="pista">{t.cambiarCiudadAyuda}</p>
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
+      <label>
+        {t.nuevaCiudad}
+        <input
+          value={b.valores.zonaId}
+          onChange={(e) => b.cambiar('zonaId', e.target.value.toUpperCase())}
+          placeholder={t.codigoEjemplo}
+          autoComplete="off"
+          required
+        />
+      </label>
+      <label>
+        {t.motivoCiudad}
+        <input
+          value={b.valores.motivo}
+          onChange={(e) => b.cambiar('motivo', e.target.value)}
+          placeholder={t.motivoCiudadEjemplo}
+          required
+          minLength={3}
+        />
+      </label>
+      {error ? <p className="error">{error}</p> : null}
+      <button type="submit" className="boton" disabled={enviando}>
+        {t.cambiarCiudadBoton}
+      </button>
+    </form>
+  );
+}
+
 function Conductor({
   id,
   base,
+  idioma,
   t,
   alCerrar,
 }: {
   id: string;
   base: string;
+  idioma: Idioma;
   t: Textos;
   alCerrar: () => void;
 }) {
@@ -1155,6 +1369,15 @@ function Conductor({
               </li>
             ))}
           </ul>
+          <CambiarCiudad
+            id={id}
+            idioma={idioma}
+            t={t}
+            alCambiar={(texto) => {
+              setOk(texto);
+              cargar();
+            }}
+          />
           {moto ? (
             <>
               <h3>
@@ -1481,11 +1704,13 @@ export function SuperMoto({ base, idioma }: { base: string; idioma: Idioma }) {
       <p className="pista">{t.intro}</p>
       <AbrirCiudad idioma={idioma} t={t} />
       <CompuertaPais idioma={idioma} t={t} />
+      <TasaReferencia idioma={idioma} t={t} />
       {conductor ? (
         <Conductor
           key={conductor}
           id={conductor}
           base={base}
+          idioma={idioma}
           t={t}
           alCerrar={() => setConductor(null)}
         />

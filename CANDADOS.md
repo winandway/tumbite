@@ -3677,3 +3677,52 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Panel (`apps/panel/src/panel/SuperMoto.tsx`, superadmin → «Moto · Abrir y aprobar», ruta `/moto`):** abrir Moto en una ciudad (botón «Usar Caracas de pruebas», tarifa de mercado de Venezuela de solo lectura), la compuerta de producción por país (solicitud de marca, confirmación y contraseña; cerrar dentro de los tres puntos), papeles de conductores por revisar (ver archivo, aprobar en verde, rechazar con motivo en los tres puntos), el conductor en detalle (lo que le falta en palabras; aprobar edad, casco y habilitar) y motos por revisar.
 - **Pruebas:** `SuperMoto.test.tsx` (7, tres comprobadas en rojo); las apps no corren en vitest: su lógica se prueba por la API en `motoVenezuela.test.ts` y la pieza de cámara en `camaraApps.test.ts`.
 - **Falta:** verlas en el simulador y con capturas reales (no se compilaron las apps; regla: nada de EAS sin permiso de Gerencia).
+
+## C-MOTO-VE-PUNTA-A-PUNTA · Guion y simulador de Moto en Venezuela (13 nov 2026) — Venezuela
+
+- **Qué es:** `scripts/staging/probar-moto-venezuela.mjs` corre en cada rama `fase-*` (paso de `pruebas-rama.yml`) contra el sitio de pruebas, y también contra local (`URL_PRUEBAS=http://localhost:<puerto>` con el secreto del reloj del servidor local). Por la API, como las apps: abre Caracas si no cotiza, alta del conductor (ciudad, moto, papeles, identidad), aprobación del equipo, recarga en dólares, viaje en efectivo con la comisión descontada del saldo, conductor sin saldo sin oferta, viaje por pago móvil con «sí me llegó». Manda `x-vuelta-pruebas` y se frena con el presupuesto (429 «presupuesto» corta la corrida).
+- **Cuentas fijas:** la puerta de diagnóstico (`apps/servidor/src/rutas/diagnosticoMotoVe.ts`): `moto-ve/armar` da pases de 30 minutos a `zz-mtve-c/k/s/a`; `moto-ve/reiniciar` deja el alta del conductor como nueva (moto vieja retirada, papeles reemplazados, requisitos y KYC borrados) pero **nunca** el saldo ni el libro (borrar dinero a mano descuadra la conciliación) y responde 409 si hay un viaje abierto; `moto-ve/sin-saldo` pone al conductor sin saldo aprobado y conectado en Caracas y desconecta a otros de esa ciudad; `moto-ve/limpiar` desconecta y borra sesiones. El guion cierra por la API cualquier viaje colgado antes de reiniciar.
+- **En local** Moto está cerrado como en producción: el guion y el simulador abren la compuerta de Venezuela en la base local (nunca en el sitio de pruebas).
+- **Simulador:** `simulador/divoox/moto.ts`, etiqueta `moto` («efectivo» y «sin saldo» también en `diario`).
+- **Prueba:** `diagnosticoMotoVe.test.ts` (3), en rojo quitando el borrado de requisitos. Guion verde dos veces seguidas en local (reutiliza cuentas); simulador `--etiqueta moto` 4/4.
+- **No tocar:** no borrar filas de `libro` ni de puntos de venta en la limpieza; no correr el reinicio con un viaje abierto (el disparador `no_se_cambia_vehiculo_en_operacion` lo frena).
+
+## C-KYC-ATOMICO · Aprobar la identidad no deja medio estado (13 nov 2026) — todos los países
+
+- **Qué se rompía:** `PATCH /admin/kyc/:id` aprobaba el KYC y después, fuera de transacción, escribía el requisito `identidad`; si el disparador `cumplimientos_identidad_exige_kyc` lo rechazaba, el KYC quedaba aprobado y la ruta daba 500.
+- **Arreglo:** la revisión y el requisito van en un solo `batch` (el requisito con `WHERE changes() > 0`). Si el disparador aborta, se deshace todo: el KYC sigue pendiente y la respuesta es 409 con el motivo.
+- **Prueba:** `motoVenezuelaRevision.test.ts` (C-KYC-ATOMICO), vista en rojo (500) antes del arreglo.
+
+## C-CIUDAD-CONDUCTOR · La ciudad del conductor como el mercado (13 nov 2026) — todos los países
+
+- **Regla:** la primera vez elige cualquier ciudad abierta; después solo una del mismo país, una vez cada 24 horas (`repartidores.ciudad_elegida_en`, columna en COLUMNAS), nunca conectado ni con viaje en curso. `GET /conductor/papeles` ya trae solo las ciudades de su país y `cambioCiudad`. El equipo la cambia a cualquiera con `PUT /admin/conductores/:id/ciudad` (motivo obligatorio, auditoría `conductor.ciudad`), desde el panel (detalle del conductor en «Moto · Abrir y aprobar»).
+- **Prueba:** `motoVenezuelaRevision.test.ts` (2) y `SuperMoto.test.tsx`, vistas en rojo.
+
+## C-PAGO-MOVIL-CORREGIR · «No me llegó» por error se corrige una vez (13 nov 2026) — Venezuela
+
+- **Regla:** de `no_recibido` a `recibido`, una sola vez y dentro de 30 minutos (`MINUTOS_CORREGIR_PAGO_MOVIL`, columna `viajes_pago_movil.corregido_en` en COLUMNAS); el caso `pago-movil-viaje:<id>` se cierra solo con nota en el mismo lote. Repetir lo mismo devuelve 200; cualquier otro cambio, 409 «escribe a soporte». Driver muestra «Me equivoqué: sí me llegó».
+- **Prueba:** `motoVenezuelaRevision.test.ts` (2), vistas en rojo.
+
+## C-PAPELES-SOLO-PASAJEROS · El papel venezolano cumple solo lo de pasajeros (13 nov 2026) — Venezuela y todos los países
+
+- **Regla:** `requisitosQueCumple` (`packages/compartido/src/perfilPasajeros.ts`) solo deja pasar `REQUISITOS_PASAJEROS` de `requisitosDeDocumento`; otros servicios solo si el perfil los pone en `requisitosOtrosServicios` (vacío en Venezuela). El certificado ya no cumple `antecedentes` de Envíos, Mercado y Farmacia.
+- **Prueba:** `motoVenezuelaRevision.test.ts` (2), vista en rojo.
+
+## C-ANTECEDENTES-POR-PAIS · Driver no ofrece el proveedor de antecedentes donde no se usa (13 nov 2026) — Venezuela
+
+- **Qué se vio:** al tomar las capturas, la sección «Documentos» de un conductor de Caracas ofrecía «Iniciar la verificación de antecedentes» con el proveedor de EE. UU.
+- **Arreglo:** `GET /datos/kyc` trae `antecedentesPorProveedor` según el perfil del país; Driver (`Verificacion.tsx`) esconde el bloque si es `false` (una app vieja sin el campo lo sigue mostrando).
+- **Prueba:** `motoVenezuelaRevision.test.ts` (C-ANTECEDENTES-POR-PAIS), vista en rojo.
+
+## C-BS-REFERENCIA · Bolívares de referencia con la tasa del equipo (13 nov 2026) — Venezuela
+
+- **Qué es:** como Ridery y Yummy, el precio de Moto va en dólares y al lado «≈ Bs. X (tasa del día D)». La tasa la escribe a mano el equipo (`PUT /datos/admin/tasas-referencia/VE`, panel «Moto · Abrir y aprobar»), en `tasas_cambio` con fuente `equipo`, `creado_por` y `creado_en`; sin proveedor externo ni tarea automática (la de Flex, fuente `bcv`, no se toca ni se usa aquí).
+- **Dónde se ve:** la cotización (`referencia`), el viaje del pasajero, el viaje del conductor (`/conductor/operaciones/actual`) y la respuesta de «terminar» (pantalla de cobro). Con más de 48 horas (`HORAS_VIGENCIA_TASA`), `referencia: null`: nunca un número viejo.
+- **Solo informativo:** el dinero sigue en dólares en centavos; la conversión es entera (`equivalenteLocal`, mitad hacia arriba) y no entra en la comisión. No es el diseño de cobrar en bolívares de `docs/DISENO-TASA-VES.md` (sigue sin construir).
+- **Prueba:** `tasasReferencia.test.ts` (3, vista en rojo), `tasaReferencia.test.ts` (compartido) y `SuperMoto.test.tsx`.
+
+## C-DOCS-MOTO · Guías de Moto publicadas con capturas reales (13 nov 2026) — Venezuela
+
+- **Capturas:** `node scripts/recorrido/capturas-moto-venezuela.mjs` contra el servidor local del recorrido (`node scripts/recorrido/preparar.mjs` y el servidor en 8790) toma 24 originales en `docs/capturas/recorrido/moto-ve-*.png` (Driver, cliente y panel, es/en). Las WebP de Docs están en `apps/panel/public/docs/recorrido-moto-ve-*.webp`. La del pasajero que pide se recorta por arriba (el aviso del borrador, porque en local no hay buscador de direcciones).
+- **Publicadas** (`GUIAS_MOTO` en `borradores/moto.ts`, sumadas en `guias.ts`): ride-moto, ride-moto-pago, drive-moto, drive-moto-alta, drive-moto-saldo. Dicen que Moto se abre ciudad por ciudad; sin «Pronto». Las de seguridad siguen en `BORRADORES_MOTO`.
+- **Prueba:** `guiasMoto.test.ts` (3): tres o más capturas que existen, la frase de disponibilidad, nada interno.

@@ -6,6 +6,7 @@ import {
   type Idioma,
   enIdioma,
   formatearMonto,
+  textoReferencia,
   textoAMonto,
   useBorrador,
 } from '@tumbite/compartido';
@@ -274,6 +275,11 @@ export function PedirMoto({
             <Text style={{ fontSize: 34, fontWeight: '700', color: C.secundario }}>
               {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
             </Text>
+            {cotizacion.referencia ? (
+              <Text testID="moto-precio-bs" style={{ color: '#5E5E5E', fontWeight: '700' }}>
+                {textoReferencia(cotizacion.referencia, idioma)}
+              </Text>
+            ) : null}
             <Text style={{ color: '#5E5E5E' }}>
               {distancia(cotizacion.distanciaM, idioma)} ·{' '}
               {Math.max(1, Math.round(cotizacion.duracionS / 60))} {t.min}

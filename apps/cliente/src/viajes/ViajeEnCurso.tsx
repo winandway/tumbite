@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Linking, Pressable, Share, Text, View } from 'react-native';
-import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Referencia,
+  enIdioma,
+  formatearMonto,
+  textoReferencia,
+} from '@tumbite/compartido';
 import { Boton, C, Campo, useSesion } from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
@@ -33,6 +39,8 @@ export type ViajePasajero = {
     datos: { banco: string | null; titular: string | null; identificador: string } | null;
     confirmado: 'recibido' | 'no_recibido' | null;
   } | null;
+  /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
+  referencia?: Referencia | null;
 };
 
 /** C-ENVIOS: lo que manda el servidor del paquete de un envío. */
@@ -263,6 +271,11 @@ export function ViajeEnCurso({
                   : t.pagaEfectivo
               : t.precioFijo}
             : {monto(viaje.total)}
+          </Text>
+        ) : null}
+        {viaje.referencia ? (
+          <Text testID="viaje-precio-bs" style={{ color: '#5E5E5E' }}>
+            {textoReferencia(viaje.referencia, idioma)}
           </Text>
         ) : null}
       </Tarjeta>

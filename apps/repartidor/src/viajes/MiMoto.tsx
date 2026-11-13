@@ -37,6 +37,12 @@ type Vehiculo = {
 type Papeles = {
   ciudad: { id: string; nombre: string; pais: string };
   ciudades: { id: string; nombre: string; pais: string }[];
+  cambioCiudad?: {
+    elegida: boolean;
+    puedeCambiar: boolean;
+    soloPais: string | null;
+    horas: number;
+  };
   perfil: {
     pais: string;
     antecedentes: string;
@@ -63,6 +69,8 @@ const T = {
       'Para llevar pasajeros en moto registra tu moto, sube tus papeles y espera la aprobación del equipo. Te avisamos en cuanto esté lista.',
     ciudad: 'Tu ciudad',
     cambiarCiudad: 'Cambiar de ciudad',
+    reglaCiudad:
+      'Puedes cambiarla una vez cada 24 horas, dentro de tu país y desconectado. Para cambiar de país, escribe a soporte.',
     moto: 'Tu moto',
     marca: 'Marca',
     modelo: 'Modelo',
@@ -131,6 +139,8 @@ const T = {
       'To give rides on your motorcycle, register it, upload your documents, and wait for our team to approve you. We’ll let you know as soon as you’re ready.',
     ciudad: 'Your city',
     cambiarCiudad: 'Change city',
+    reglaCiudad:
+      'You can change it once every 24 hours, within your country and while offline. To change countries, contact support.',
     moto: 'Your motorcycle',
     marca: 'Make',
     modelo: 'Model',
@@ -390,15 +400,20 @@ export function MiMoto() {
         <View style={e.tarjeta}>
           <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.ciudad}</Text>
           <Text style={{ fontWeight: '800', color: C.secundario }}>{papeles.ciudad.nombre}</Text>
-          <Pressable
-            onPress={() => setVerCiudades((x) => !x)}
-            accessibilityRole="button"
-            hitSlop={8}
-          >
-            <Text style={{ textDecorationLine: 'underline', color: C.secundario, marginTop: 4 }}>
-              {t.cambiarCiudad}
-            </Text>
-          </Pressable>
+          {papeles.cambioCiudad?.puedeCambiar !== false ? (
+            <Pressable
+              onPress={() => setVerCiudades((x) => !x)}
+              accessibilityRole="button"
+              hitSlop={8}
+            >
+              <Text style={{ textDecorationLine: 'underline', color: C.secundario, marginTop: 4 }}>
+                {t.cambiarCiudad}
+              </Text>
+            </Pressable>
+          ) : null}
+          {papeles.cambioCiudad?.elegida ? (
+            <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 4 }}>{t.reglaCiudad}</Text>
+          ) : null}
           {verCiudades
             ? papeles.ciudades.map((z) => (
                 <Pressable
