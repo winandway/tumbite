@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-13T19:40:00.000Z",
+  "actualizado": "2026-11-13T23:10:00.000Z",
   "version": "7b9a5ca",
-  "ahora": "13 nov: ya hay simulador de compras y entregas. Dieciocho casos de comida con cliente, restaurante y repartidor falsos, una ciudad virtual que compra y vende sola y una pantalla en vivo en el panel del sitio de pruebas. La primera corrida en el sitio de pruebas salió en verde. El reloj exacto de producción quedó encendido y en verde, Google aprobó las tres apps el 11 nov y las tres apps web ya se instalan desde el navegador del celular. En curso: bajar las lecturas de la base.",
+  "ahora": "13 nov: la ciudad de pruebas ya se enciende desde el panel y tiene modo juego: una persona pide desde la app real y restaurantes y repartidores robot atienden; probada con una partida completa en el sitio de pruebas. Divoox Moto quedó preparado para pruebas en Venezuela con saldo prepago, recargas, efectivo y pago móvil; en producción sigue apagado con llave. Regla nueva: ningún país se enciende sin la marca Divoox en proceso de registro.",
   "proximo": [
     {
       "quien": "richard",
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-13",
+      "titulo": "Modo juego de la ciudad de pruebas y Moto preparado para Venezuela",
+      "texto": "La ciudad de pruebas se enciende con un botón: tres restaurantes robot y cuatro motos robot atienden los pedidos que una persona hace desde la app real, pagando en efectivo de juego, con pantalla grande y reporte por jugador. Divoox Moto para Venezuela: precios en dólares como el mercado local, el conductor registra su moto y sus papeles, el equipo los aprueba, saldo prepago con aviso de cuántas carreras alcanza, recargas, efectivo y pago móvil. Revisado por calidad. En producción sigue apagado. Quedó escrito el plan para registrar la marca en Venezuela y en Estados Unidos."
+    },
     {
       "fecha": "2026-11-13",
       "titulo": "Divoox Flex se reconoce de un vistazo y la salida está a la vista",
