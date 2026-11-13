@@ -16,6 +16,7 @@ import { reiniciarLimiteClaves } from '../flex/autorizacion';
 import { TAREAS_RELOJ } from '../rutas/operacion';
 import { saldoLibro } from '../internacional/libro';
 import { cobrarComisionConductor, saldosConductor } from './conductor';
+import { usarTransporteCorreo } from '../correo';
 import { alertasSaldo, conciliarFinanzas, saludBilleteras } from './reloj';
 import { tipoMovimiento } from './billetera';
 import { recuperarCobrosHuerfanos } from './cobrosRuta';
@@ -1010,6 +1011,38 @@ describe('C-FIN-CONCILIACION · conciliación y recuperación', () => {
     expect(mal.problemas.map((p) => p.tipo)).toContain('movimiento_sin_recarga');
     const salud = await m.crudo('/datos/salud', { method: 'GET' });
     expect(((await salud.json()) as any).piezas.billeteras).toBe('error');
+  });
+
+  it('la conciliación en rojo avisa por correo al cambiar, no en cada vuelta del reloj', async () => {
+    const m = mundo();
+    const e = await empresa(m);
+    await m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('x2', ?, 'prepago', 'US', 'USD', 100, 'recarga_empresa', 'recarga_empresa:falsa:prepago')",
+    )
+      .bind(`empresa:${e.id}`)
+      .run();
+    // Un resultado guardado ilegible no frena la conciliación: se vuelve a escribir.
+    await m.DB.prepare(
+      "INSERT INTO config (clave, valor) VALUES ('fin_conciliacion', 'ilegible') ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+    ).run();
+    let correos = 0;
+    usarTransporteCorreo(async (_url, init) => {
+      if (String(init?.body ?? '').includes('Revisar billeteras de Flex')) correos++;
+      return new Response('{}', { status: 200 });
+    });
+    const env = {
+      DB: m.DB,
+      ...m.extra,
+      ...ENV,
+      ADMIN_CORREOS: 'dinero@ejemplo.com',
+      YAD_TOKEN: 'llave-de-prueba',
+    } as never;
+    expect((await conciliarFinanzas(env, m.DB)).ok).toBe(false);
+    expect(correos).toBe(1);
+    // La vuelta siguiente (un minuto después) encuentra lo mismo: no repite el correo.
+    expect((await conciliarFinanzas(env, m.DB)).ok).toBe(false);
+    expect(correos).toBe(1);
+    usarTransporteCorreo(null);
   });
 
   it('las tareas de dinero van en el reloj existente', () => {
