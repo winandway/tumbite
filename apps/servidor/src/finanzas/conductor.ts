@@ -6,6 +6,7 @@ import {
   sentenciaLibro,
 } from '../internacional/libro';
 import { saldoRetirable } from '../retiros';
+import { ErrorDatos } from '../validar';
 import { politicaVigente } from './politicas';
 
 /**
@@ -26,6 +27,51 @@ export type ContextoConductor = {
   ciudad?: string | null;
   moneda: string;
 };
+
+/** El servicio financiero de un viaje (el mismo que usan la oferta y el aceptar). */
+export const servicioFinancieroViaje = (servicioId: string): ServicioFinanciero =>
+  servicioId === 'carro' ? 'car' : 'ride';
+
+/**
+ * C-COMISION-MONEDA (13 nov 2026, Venezuela y todos): las monedas en que rige una política de
+ * prepago de conductores aprobada para ese servicio y ese país. Vacío = el país no cobra por
+ * prepago (EE. UU. sigue con Stripe Connect).
+ */
+export async function monedasConComision(
+  db: D1Database,
+  servicio: ServicioFinanciero,
+  pais: string,
+): Promise<string[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT DISTINCT upper(moneda) AS moneda FROM politicas_financieras
+        WHERE servicio = ? AND tipo_cuenta = 'conductor' AND modalidad = 'prepago' AND activa = 1
+          AND revision_legal_aprobada = 1 AND pais IN (?, '*')
+          AND (vigente_hasta IS NULL OR vigente_hasta > datetime('now'))`,
+    )
+    .bind(servicio, pais)
+    .all<{ moneda: string }>();
+  return results.map((r) => r.moneda);
+}
+
+/**
+ * La trampa de moneda: la política de comisión exige la MISMA moneda que el viaje. Si el país cobra
+ * por prepago pero no en la moneda de esta ciudad, ningún viaje cobraría comisión y nadie se
+ * enteraría. Por eso la tarifa o el encendido se rechazan con un mensaje claro.
+ */
+export async function exigirComisionEnMoneda(
+  db: D1Database,
+  servicioId: string,
+  zona: { pais: string; moneda: string },
+): Promise<void> {
+  const monedas = await monedasConComision(db, servicioFinancieroViaje(servicioId), zona.pais);
+  if (monedas.length && !monedas.includes(zona.moneda.toUpperCase()))
+    throw new ErrorDatos(
+      `En este país la comisión de los conductores está en ${monedas.join(', ')} y esta ciudad cobra en ${zona.moneda.toUpperCase()}. Crea la política de comisión en ${zona.moneda.toUpperCase()} antes de activar el servicio.`,
+      'moneda',
+      409,
+    );
+}
 
 /** Cuánto cobraría Divoox por una operación de `valor` (0 si no hay política que rija). */
 export async function comisionConductor(

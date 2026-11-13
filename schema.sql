@@ -1307,6 +1307,24 @@ BEGIN
 END;
 
 -- ----- Requisitos cumplidos (V1.1 punto 1) -----
+-- C-PAPELES-CONDUCTOR (13 nov 2026): papeles del CONDUCTOR (no del vehículo) que pide su país para
+-- llevar pasajeros (perfilPasajeros). En Venezuela los aprueba una persona del equipo y cumplen los
+-- requisitos de antecedentes e historial de manejo; en EE. UU. eso sigue siendo de Checkr.
+CREATE TABLE IF NOT EXISTS conductor_documentos (
+  id TEXT PRIMARY KEY,
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales')),
+  clave TEXT NOT NULL,
+  vence_en TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'reemplazado')),
+  motivo TEXT NOT NULL DEFAULT '',
+  revisado_por TEXT REFERENCES usuarios(id),
+  revisado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS conductor_documentos_conductor ON conductor_documentos(conductor_id, tipo, estado);
+CREATE INDEX IF NOT EXISTS conductor_documentos_revision ON conductor_documentos(estado, creado_en);
+
 CREATE TABLE IF NOT EXISTS cumplimientos (
   conductor_id TEXT NOT NULL REFERENCES usuarios(id),
   vehiculo_id TEXT NOT NULL DEFAULT '',
@@ -2305,6 +2323,13 @@ INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, 
   ('prepago-co-ride', 'Moto · conductores · CO', 'ride', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
   ('prepago-co-car', 'Carro · conductores · CO', 'car', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
   ('prepago-co-express', 'Envíos · conductores · CO', 'express', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS');
+-- C-MOTO-VENEZUELA (13 nov 2026): en Venezuela el precio de la moto se muestra y se cobra en dólares
+-- (Ridery, Yummy, Yango; docs/investigaciones-rea/2026-11-13-moto-venezuela-tarifas.md). La comisión
+-- del prepago tiene que estar en la MISMA moneda del viaje (C-COMISION-MONEDA): el mismo 10 % ya
+-- aprobado, ahora también en dólares. No cambia el porcentaje ni las políticas en bolívares.
+INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada, revision_legal_nota, motivo) VALUES
+  ('prepago-ve-ride-usd', 'Moto · conductores · VE · USD', 'ride', 'conductor', 'VE', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-11-13 00:00:00', 1, 'El mismo 10 % aprobado por Richard el 2 nov 2026 (C-PREPAGO-MERCADOS), en dólares porque el mercado venezolano cobra la moto en dólares.', 'C-MOTO-VENEZUELA'),
+  ('prepago-ve-car-usd', 'Carro · conductores · VE · USD', 'car', 'conductor', 'VE', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-11-13 00:00:00', 1, 'El mismo 10 % aprobado por Richard el 2 nov 2026 (C-PREPAGO-MERCADOS), en dólares porque el mercado venezolano cobra en dólares.', 'C-MOTO-VENEZUELA');
 
 -- Interruptor público de lanzamiento por ciudad (F17): la web dice «Ya estamos» o «Muy pronto»
 -- según esta tabla. Sin fila, manda la lista de la web (todas «muy pronto»).
@@ -2879,6 +2904,19 @@ CREATE INDEX IF NOT EXISTS cotizaciones_viaje_cliente ON cotizaciones_viaje(clie
 -- Divoox Moto · M2 (28 oct 2026): lo que el pasajero debe por cancelar tarde o no presentarse en un
 -- viaje en efectivo. No se puede cobrar en el momento: se suma a su siguiente viaje (como Namma
 -- Yatri). Una sola deuda por viaje y motivo.
+-- C-PAGO-MOVIL-VIAJE (13 nov 2026, Venezuela): el pasajero paga por pago móvil a la cuenta del
+-- conductor y el conductor confirma en su app si le llegó (confirmación MANUAL: nunca «verificado por
+-- el banco»). Si no le llegó, se abre un caso en la bandeja de dinero. La comisión sale igual del prepago.
+CREATE TABLE IF NOT EXISTS viajes_pago_movil (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('recibido', 'no_recibido')),
+  referencia TEXT NOT NULL DEFAULT '',
+  monto INTEGER,
+  moneda TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS deudas_pasajero (
   id TEXT PRIMARY KEY,
   cliente_id TEXT NOT NULL REFERENCES usuarios(id),

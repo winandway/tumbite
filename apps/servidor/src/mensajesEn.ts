@@ -1728,6 +1728,45 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your prepaid balance doesn’t cover the commission for this ride. Top up to accept it.',
   ],
   ['Este viaje ya terminó.', 'This ride has already ended.'],
+  // C-MOTO-VENEZUELA (13 nov 2026).
+  ['Escribe la tarifa del servicio para esta ciudad.', 'Enter the service fare for this city.'],
+  ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
+  // C-PAPELES-CONDUCTOR (13 nov 2026).
+  ['Esa ciudad no está disponible.', 'That city isn’t available.'],
+  ['No encontramos a esa persona.', 'We couldn’t find that person.'],
+  // C-RECARGAS-PREPAGO y C-PAGO-MOVIL-VIAJE (13 nov 2026).
+  [
+    'Ninguna ciudad de ese país cobra en esa moneda.',
+    'No city in that country charges in that currency.',
+  ],
+  ['Este viaje no es tuyo.', 'This ride isn’t yours.'],
+  // C-MOTO-POR-PAIS (13 nov 2026).
+  ['Este servicio no se puede abrir en ese país.', 'This service can’t be opened in that country.'],
+  [
+    'Escribe el número de la solicitud de registro de la marca Divoox en ese país.',
+    'Enter the Divoox trademark application number for that country.',
+  ],
+  [
+    'Confirma que lo legal y el seguro de pasajeros de ese país están listos.',
+    'Confirm that the legal work and rider insurance for that country are ready.',
+  ],
+  ['Este viaje no se paga por pago móvil.', 'This ride isn’t paid by mobile payment.'],
+  [
+    'Confirma el pago cuando el pasajero ya esté a bordo.',
+    'Confirm the payment once the rider is on board.',
+  ],
+  [
+    'Ese método de pago no está disponible en tu ciudad.',
+    'That payment method isn’t available in your city.',
+  ],
+  [
+    'Termina tu viaje en curso antes de cambiar de ciudad.',
+    'Finish your current ride before changing cities.',
+  ],
+  [
+    'Falta la fecha de nacimiento de esta persona para aprobar la edad.',
+    'This person’s date of birth is missing, so their age can’t be approved.',
+  ],
   ['Este enlace no existe.', 'This link doesn’t exist.'],
   ['Esa cotización no existe.', 'That quote doesn’t exist.'],
   [
@@ -1793,6 +1832,16 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    /^Esta persona todavía no tiene (\d+) años: no se puede aprobar\.$/,
+    (m) => `This person isn’t ${m[1]} yet, so this can’t be approved.`,
+  ],
+  [
+    // C-COMISION-MONEDA (13 nov 2026).
+    /^En este país la comisión de los conductores está en ([A-Z, ]+) y esta ciudad cobra en ([A-Z]{3})\. Crea la política de comisión en [A-Z]{3} antes de activar el servicio\.$/,
+    (m) =>
+      `In this country the driver commission is set in ${m[1]} and this city charges in ${m[2]}. Create the commission policy in ${m[2]} before turning on the service.`,
+  ],
   [
     /^Ese peso pasa del 15 % sobre lo que pidió el cliente \(máximo ([\d.]+ ?[a-zA-Z]*)\)\. Quita un poco o márcalo como faltante\.$/,
     (m) =>

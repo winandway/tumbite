@@ -149,6 +149,13 @@ const es = {
     canjear: 'Recargar con el código',
     canjeado: 'Recarga acreditada.',
     sinSaldo: 'Sin saldo no recibes pedidos en efectivo.',
+    // C-SALDO-CARRERAS (13 nov 2026): el aproximado se dice como aproximado.
+    carreras: (n: number) =>
+      n === 1 ? 'Te alcanza para más o menos 1 carrera.' : `Te alcanza para unas ${n} carreras.`,
+    carrerasAyuda: (comision: string) =>
+      `Calculado con la comisión de un viaje típico de 5 km (${comision}). Es un aproximado.`,
+    saldoBajo: 'Tu saldo se está acabando. Recarga para seguir recibiendo carreras.',
+    sinSaldoViajes: 'Sin saldo no recibes carreras. Recarga en un punto de venta autorizado.',
   },
   ayuda: {
     titulo: '¿Qué pasa?',
@@ -334,6 +341,12 @@ const en: T = {
     canjear: 'Top up with the code',
     canjeado: 'Top-up credited.',
     sinSaldo: 'Without balance you won’t get cash orders.',
+    carreras: (n: number) =>
+      n === 1 ? 'Enough for about 1 ride.' : `Enough for about ${n} rides.`,
+    carrerasAyuda: (comision: string) =>
+      `Based on the fee for a typical 5 km ride (${comision}). It’s an estimate.`,
+    saldoBajo: 'Your balance is running low. Top up to keep getting rides.',
+    sinSaldoViajes: 'Without balance you won’t get rides. Top up at an authorized sales point.',
   },
   ayuda: {
     titulo: 'What’s going on?',

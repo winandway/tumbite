@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { esConductorOcupado } from '../operaciones';
 import { z } from 'zod';
 import type { Env } from '../env';
-import { nuevoId } from '../cripto';
+import { nuevoId, verificarClave } from '../cripto';
 import { SERVICIOS_EN_PRUEBA, SERVICIOS_PILOTO, serviciosImplementados } from '../esquema';
 import { esParticipante } from './piloto';
 import { entornoDe } from '../entorno';
@@ -11,6 +11,19 @@ import { type Ctx, type Variables, base, exigir } from '../sesion';
 import type { Entorno } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
+import { exigirComisionEnMoneda } from '../finanzas/conductor';
+import { SERVICIOS_VIAJE, perfilPasajeros } from '@tumbite/compartido';
+import { paisDelConductor } from '../paisConductor';
+import {
+  PAISES_PASAJEROS_ABRIBLES,
+  abrible,
+  aperturaPais,
+  aperturasVigentes,
+  clavePasajerosPais,
+  paisAbiertoPara,
+} from '../pasajerosPais';
+
+const SERVICIOS_VIAJE_SET = new Set<string>(SERVICIOS_VIAJE);
 
 /**
  * Multiservicio, Fase 1 (15 oct 2026). Catálogo de servicios, vehículos, habilitaciones y
@@ -446,6 +459,14 @@ const datosVehiculo = z.object({
   plazas: z.number().int().min(1).max(8).nullable().optional(),
 });
 
+/**
+ * C-PAPELES-CONDUCTOR: donde la placa es nacional (Venezuela) no hay «estado que la emitió»: se
+ * guarda con el código del país, así la placa sigue siendo única y el envío no la pide.
+ */
+function conPlacaDelPais<T extends { placaEstado: string }>(d: T, donde: { pais: string }): T {
+  return perfilPasajeros(donde.pais).placaNacional ? { ...d, placaEstado: donde.pais } : d;
+}
+
 async function miVehiculo(db: Db, conductorId: string, id: string) {
   const v = await db
     .prepare('SELECT * FROM vehiculos WHERE id = ? AND conductor_id = ?')
@@ -488,7 +509,7 @@ servicios.get('/conductor/vehiculos', async (c) => {
 servicios.post('/conductor/vehiculos', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
-  const d = await leerCuerpo(c, datosVehiculo);
+  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), await paisDelConductor(db, u.id));
   const vivos = await db
     .prepare("SELECT COUNT(*) AS n FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado'")
     .bind(u.id)
@@ -528,7 +549,7 @@ servicios.put('/conductor/vehiculos/:id', async (c) => {
       undefined,
       409,
     );
-  const d = await leerCuerpo(c, datosVehiculo);
+  const d = conPlacaDelPais(await leerCuerpo(c, datosVehiculo), await paisDelConductor(db, u.id));
   await conRestricciones(
     db
       .prepare(
@@ -750,19 +771,41 @@ const VERSION = z
   .regex(/^\d+\.\d+\.\d+$/)
   .optional();
 
+/** Antes de escribir nada: ¿se puede encender este servicio en ese país? (lo usa «abrir ciudad»). */
+export async function exigirPuedeEncender(c: Ctx, id: string, pais: string | null = null) {
+  const s = await base(c)
+    .prepare('SELECT transporta_personas FROM servicios WHERE id = ?')
+    .bind(id)
+    .first<{ transporta_personas: number }>();
+  if (!s) throw new ErrorDatos('Ese servicio no existe.', undefined, 404);
+  await bloquearPasajeros(c, id, s.transporta_personas, 'disponible', pais);
+}
+
 /**
- * Fase 1: un servicio de pasajeros no se enciende (la fase 8 trae la doble aprobación y lo legal).
- * Única excepción (C-MOTO-SOLO-PRUEBAS): en el sitio de pruebas se enciende el que se está
- * construyendo (Moto), para probarlo de punta a punta. En producción, nunca.
+ * Un servicio de pasajeros no se enciende salvo en dos casos: en el sitio de pruebas el que se está
+ * construyendo (C-MOTO-SOLO-PRUEBAS), y en producción solo en un país que el superadmin abrió con la
+ * marca en registro (C-MOTO-POR-PAIS; hoy ninguno). `pais` null = el servicio en general: basta con
+ * que esté abierto en algún país.
  */
-function bloquearPasajeros(c: Ctx, id: string, transporta: number, estado: string | undefined) {
+async function bloquearPasajeros(
+  c: Ctx,
+  id: string,
+  transporta: number,
+  estado: string | undefined,
+  pais: string | null = null,
+) {
   if (entornoDe(c.req.url) === 'pruebas' && SERVICIOS_EN_PRUEBA.has(id)) return;
-  if (transporta === 1 && estado === 'disponible')
-    throw new ErrorDatos(
-      'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',
-      'estado',
-      409,
-    );
+  if (transporta !== 1 || estado !== 'disponible') return;
+  const db = base(c);
+  const abierto = pais
+    ? await paisAbiertoPara(db, id, pais)
+    : (await aperturasVigentes(db)).some(([s]) => s === id);
+  if (abierto) return;
+  throw new ErrorDatos(
+    'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',
+    'estado',
+    409,
+  );
 }
 
 servicios.get('/admin/servicios', async (c) => {
@@ -813,7 +856,7 @@ servicios.put('/admin/servicios/:id', async (c) => {
       versionMinDriver: VERSION,
     }),
   );
-  bloquearPasajeros(c, id, antes.transporta_personas, d.estado);
+  await bloquearPasajeros(c, id, antes.transporta_personas, d.estado);
   await conRestricciones(
     db
       .prepare(
@@ -845,15 +888,7 @@ servicios.put('/admin/servicios/:id', async (c) => {
 
 servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
   const admin = exigir(c, 'admin');
-  const db = base(c);
   const { id, zona } = c.req.param();
-  const s = await db
-    .prepare('SELECT transporta_personas FROM servicios WHERE id = ?')
-    .bind(id)
-    .first<{ transporta_personas: number }>();
-  if (!s) throw new ErrorDatos('Ese servicio no existe.', undefined, 404);
-  if (!(await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(zona).first()))
-    throw new ErrorDatos('Esa zona no existe.', undefined, 404);
   const d = await leerCuerpo(
     c,
     z.object({
@@ -863,7 +898,37 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
       motivo: z.string().trim().max(200).default(''),
     }),
   );
-  bloquearPasajeros(c, id, s.transporta_personas, d.estado);
+  return c.json({ zona: await cambiarServicioEnZona(c, admin.id, id, zona, d) });
+});
+
+/** Cambia el estado de un servicio en una zona con todas sus compuertas (panel y «abrir ciudad»). */
+export async function cambiarServicioEnZona(
+  c: Ctx,
+  adminId: string,
+  id: string,
+  zona: string,
+  d: {
+    estado: 'disponible' | 'proximamente' | 'suspendido' | 'no_disponible';
+    activoDesde?: string | null;
+    activoHasta?: string | null;
+    motivo: string;
+  },
+) {
+  const db = base(c);
+  const s = await db
+    .prepare('SELECT transporta_personas FROM servicios WHERE id = ?')
+    .bind(id)
+    .first<{ transporta_personas: number }>();
+  if (!s) throw new ErrorDatos('Ese servicio no existe.', undefined, 404);
+  const laZona = await db
+    .prepare('SELECT pais, moneda FROM zonas WHERE id = ?')
+    .bind(zona)
+    .first<{ pais: string; moneda: string }>();
+  if (!laZona) throw new ErrorDatos('Esa zona no existe.', undefined, 404);
+  await bloquearPasajeros(c, id, s.transporta_personas, d.estado, laZona.pais);
+  // C-COMISION-MONEDA: un viaje no se enciende en una ciudad cuya moneda la comisión no cubre.
+  if (d.estado === 'disponible' && SERVICIOS_VIAJE_SET.has(id))
+    await exigirComisionEnMoneda(db, id, laZona);
   const antes = await db
     .prepare('SELECT * FROM servicios_zona WHERE servicio_id = ? AND zona_id = ?')
     .bind(id, zona)
@@ -877,16 +942,52 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
            activo_hasta = excluded.activo_hasta, motivo = excluded.motivo, actualizado_por = excluded.actualizado_por,
            actualizado_en = datetime('now')`,
       )
-      .bind(id, zona, d.estado, d.activoDesde ?? null, d.activoHasta ?? null, d.motivo, admin.id)
+      .bind(id, zona, d.estado, d.activoDesde ?? null, d.activoHasta ?? null, d.motivo, adminId)
       .run(),
   );
   const despues = await db
     .prepare('SELECT * FROM servicios_zona WHERE servicio_id = ? AND zona_id = ?')
     .bind(id, zona)
     .first();
-  await auditar(db, admin.id, 'servicio.zona', `servicio:${id}:${zona}`, antes, despues);
-  return c.json({ zona: despues });
-});
+  await auditar(db, adminId, 'servicio.zona', `servicio:${id}:${zona}`, antes, despues);
+  return despues;
+}
+
+/**
+ * Encender un servicio de viajes en una zona, también el servicio en general si estaba apagado
+ * (el estado efectivo exige los dos). Devuelve el estado que queda en la zona.
+ */
+export async function encenderServicioEnZona(
+  c: Ctx,
+  adminId: string,
+  id: string,
+  zona: string,
+  motivo: string,
+): Promise<string> {
+  const db = base(c);
+  const s = await db
+    .prepare('SELECT estado, transporta_personas FROM servicios WHERE id = ?')
+    .bind(id)
+    .first<{ estado: string; transporta_personas: number }>();
+  if (!s) throw new ErrorDatos('Ese servicio no existe.', undefined, 404);
+  if (s.estado !== 'disponible') {
+    await bloquearPasajeros(c, id, s.transporta_personas, 'disponible');
+    await conRestricciones(
+      db
+        .prepare(
+          "UPDATE servicios SET estado = 'disponible', actualizado_en = datetime('now'), actualizado_por = ? WHERE id = ?",
+        )
+        .bind(adminId, id)
+        .run(),
+    );
+    await auditar(db, adminId, 'servicio.editar', `servicio:${id}`, s, { estado: 'disponible' });
+  }
+  const r = await cambiarServicioEnZona(c, adminId, id, zona, {
+    estado: 'disponible',
+    motivo: motivo.slice(0, 200),
+  });
+  return String((r as { estado?: string } | null)?.estado ?? 'disponible');
+}
 
 // C-DESPACHO-CATALOGO (NXT-6): el interruptor por zona del reparto de Comida por catálogo.
 servicios.get('/admin/despacho-catalogo', async (c) => {
@@ -1207,6 +1308,29 @@ servicios.put('/admin/cumplimientos/:conductor/:requisito', async (c) => {
       undefined,
       409,
     );
+  // C-PAPELES-CONDUCTOR: la edad se aprueba solo si la fecha de nacimiento la cumple (piso del país).
+  if (def.verifica === 'edad' && d.estado === 'aprobado') {
+    const p = await db
+      .prepare('SELECT fecha_nacimiento FROM usuarios WHERE id = ?')
+      .bind(conductor)
+      .first<{ fecha_nacimiento: string | null }>();
+    const minima = perfilPasajeros((await paisDelConductor(db, conductor)).pais).edadMinima;
+    const nacio = p?.fecha_nacimiento ? new Date(`${p.fecha_nacimiento}T00:00:00Z`) : null;
+    const limite = new Date();
+    limite.setUTCFullYear(limite.getUTCFullYear() - minima);
+    if (!nacio || Number.isNaN(nacio.getTime()))
+      throw new ErrorDatos(
+        'Falta la fecha de nacimiento de esta persona para aprobar la edad.',
+        'edad',
+        422,
+      );
+    if (nacio > limite)
+      throw new ErrorDatos(
+        `Esta persona todavía no tiene ${minima} años: no se puede aprobar.`,
+        'edad',
+        409,
+      );
+  }
   const vehiculoId = def.nivel === 'vehiculo' ? (d.vehiculoId ?? '') : '';
   if (def.nivel === 'vehiculo') {
     const v = await db
@@ -1253,6 +1377,129 @@ servicios.get('/admin/auditoria', async (c) => {
   return c.json({ auditoria: results });
 });
 
+// ---------------------------------------------------------------- C-MOTO-POR-PAIS
+
+/** Qué países se pueden abrir para pasajeros y cuáles están abiertos hoy (superadmin). */
+servicios.get('/admin/pasajeros-pais', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const lista = await Promise.all(
+    [...PAISES_PASAJEROS_ABRIBLES].flatMap(([servicio, paises]) =>
+      [...paises].map(async (pais) => ({
+        servicio,
+        pais,
+        apertura: await aperturaPais(db, pais),
+      })),
+    ),
+  );
+  return c.json({
+    paises: lista.map((x) => ({
+      servicio: x.servicio,
+      pais: x.pais,
+      abierto: x.apertura?.servicios.includes(x.servicio) ?? false,
+      solicitudMarca: x.apertura?.solicitudMarca ?? null,
+      abiertoEn: x.apertura?.abiertoEn ?? null,
+    })),
+  });
+});
+
+/**
+ * Abre o cierra un servicio de pasajeros en un país de producción. Abrir exige: que el código lo
+ * permita (Moto en Venezuela; EE. UU. y Colombia no), el número de la solicitud de registro de la
+ * marca Divoox en ese país y la confirmación escrita, además de la contraseña de quien lo hace.
+ */
+servicios.put('/admin/pasajeros-pais/:pais/:servicio', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const pais = c.req.param('pais').toUpperCase();
+  const servicio = c.req.param('servicio');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      abierto: z.boolean(),
+      solicitudMarca: z.string().trim().max(60).default(''),
+      confirmo: z.boolean().default(false),
+      clave: z.string().min(1, { error: 'Escribe tu contraseña.' }),
+      nota: z.string().trim().max(300).default(''),
+    }),
+  );
+  const f = await db
+    .prepare('SELECT clave_hash FROM usuarios WHERE id = ?')
+    .bind(admin.id)
+    .first<{ clave_hash: string }>();
+  if (!f || !(await verificarClave(d.clave, f.clave_hash)))
+    throw new ErrorDatos('La contraseña no es correcta.', 'clave', 403);
+  const antes = await aperturaPais(db, pais);
+  if (d.abierto) {
+    if (!abrible(servicio, pais))
+      throw new ErrorDatos('Este servicio no se puede abrir en ese país.', 'pais', 409);
+    if (d.solicitudMarca.length < 4)
+      throw new ErrorDatos(
+        'Escribe el número de la solicitud de registro de la marca Divoox en ese país.',
+        'solicitudMarca',
+        422,
+      );
+    if (!d.confirmo)
+      throw new ErrorDatos(
+        'Confirma que lo legal y el seguro de pasajeros de ese país están listos.',
+        'confirmo',
+        422,
+      );
+  }
+  const servicios_ = new Set(antes?.servicios ?? []);
+  if (d.abierto) servicios_.add(servicio);
+  else servicios_.delete(servicio);
+  const despues = {
+    servicios: [...servicios_],
+    solicitudMarca: d.abierto ? d.solicitudMarca : (antes?.solicitudMarca ?? '----'),
+    abiertoPor: admin.id,
+    abiertoEn: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    nota: d.nota,
+  };
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO config (clave, valor) VALUES (?, ?)
+         ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')`,
+      )
+      .bind(clavePasajerosPais(pais), JSON.stringify(despues)),
+    // Abrir declara el servicio como atendido por este código (los disparadores lo exigen); cerrarlo
+    // en el último país lo suspende en todas las ciudades de ese país.
+    ...(d.abierto
+      ? [
+          db
+            .prepare(
+              'INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES (?, 1)',
+            )
+            .bind(servicio),
+        ]
+      : [
+          db
+            .prepare(
+              `UPDATE servicios_zona SET estado = 'suspendido', motivo = 'país cerrado para pasajeros', actualizado_por = ?,
+                 actualizado_en = datetime('now')
+               WHERE servicio_id = ? AND estado = 'disponible' AND zona_id IN (SELECT id FROM zonas WHERE pais = ?)`,
+            )
+            .bind(admin.id, servicio, pais),
+        ]),
+  ]);
+  // Si ya no queda ningún país abierto para ese servicio, el servicio en general se suspende (en
+  // producción; en el sitio de pruebas manda C-MOTO-SOLO-PRUEBAS).
+  if (
+    !d.abierto &&
+    entornoDe(c.req.url) !== 'pruebas' &&
+    !(await aperturasVigentes(db)).some(([s]) => s === servicio)
+  )
+    await db
+      .prepare(
+        "UPDATE servicios SET estado = 'suspendido', actualizado_en = datetime('now') WHERE id = ? AND estado = 'disponible'",
+      )
+      .bind(servicio)
+      .run();
+  await auditar(db, admin.id, 'pasajeros.pais', `pais:${pais}:${servicio}`, antes, despues);
+  return c.json({ pais, servicio, abierto: d.abierto });
+});
+
 // ---------------------------------------------------------------- salud (canario)
 
 export const DISPARADORES_SERVICIOS = [
@@ -1275,21 +1522,35 @@ export async function saludServicios(
   db: D1Database,
   entorno: Entorno | null = null,
 ): Promise<'ok' | 'error'> {
-  // En pruebas, el servicio de pasajeros en construcción puede estar encendido; en producción no.
-  const permitidos = entorno === 'pruebas' ? [...SERVICIOS_EN_PRUEBA.keys()] : [];
-  const fuera = permitidos.length ? `AND s.id NOT IN (${permitidos.map(() => '?').join(',')})` : '';
-  const f = await db
-    .prepare(
-      `SELECT
-         (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_SERVICIOS.map(() => '?').join(',')})) AS disparadores,
-         (SELECT COUNT(*) FROM servicios s WHERE s.transporta_personas = 1 ${fuera} AND (s.estado = 'disponible'
-            OR EXISTS (SELECT 1 FROM servicios_zona z WHERE z.servicio_id = s.id AND z.estado = 'disponible'))) AS pasajeros,
-         (SELECT COUNT(*) FROM servicios s WHERE s.estado = 'disponible'
-            AND NOT EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = s.id)) AS sin_codigo`,
-    )
-    .bind(...DISPARADORES_SERVICIOS, ...permitidos)
-    .first<{ disparadores: number; pasajeros: number; sin_codigo: number }>();
+  // En pruebas, el servicio de pasajeros en construcción puede estar encendido. En producción, solo
+  // en las ciudades de un país abierto por el superadmin (C-MOTO-POR-PAIS; hoy ninguno).
+  const enPrueba = entorno === 'pruebas' ? new Set(SERVICIOS_EN_PRUEBA.keys()) : new Set<string>();
+  const abiertos = await aperturasVigentes(db);
+  const abiertoEn = (servicio: string, pais: string | null) =>
+    enPrueba.has(servicio) ||
+    abiertos.some(([s, p]) => s === servicio && (pais === null || p === pais));
+  const [f, { results: encendidos }] = await Promise.all([
+    db
+      .prepare(
+        `SELECT
+           (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_SERVICIOS.map(() => '?').join(',')})) AS disparadores,
+           (SELECT COUNT(*) FROM servicios s WHERE s.estado = 'disponible'
+              AND NOT EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = s.id)) AS sin_codigo`,
+      )
+      .bind(...DISPARADORES_SERVICIOS)
+      .first<{ disparadores: number; sin_codigo: number }>(),
+    db
+      .prepare(
+        `SELECT s.id AS servicio, NULL AS pais FROM servicios s WHERE s.transporta_personas = 1 AND s.estado = 'disponible'
+         UNION ALL
+         SELECT z.servicio_id, zz.pais FROM servicios_zona z JOIN servicios s ON s.id = z.servicio_id
+           JOIN zonas zz ON zz.id = z.zona_id
+          WHERE s.transporta_personas = 1 AND z.estado = 'disponible'`,
+      )
+      .all<{ servicio: string; pais: string | null }>(),
+  ]);
   if (Number(f?.disparadores) !== DISPARADORES_SERVICIOS.length) return 'error';
-  if (Number(f?.pasajeros) > 0 || Number(f?.sin_codigo) > 0) return 'error';
+  if (Number(f?.sin_codigo) > 0) return 'error';
+  if (encendidos.some((e) => !abiertoEn(e.servicio, e.pais))) return 'error';
   return 'ok';
 }

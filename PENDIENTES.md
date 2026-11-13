@@ -14,6 +14,16 @@
 
 👤 = depende de Richard. Ordenado por importancia.
 
+### Divoox Moto en Venezuela (13 nov 2026, rama `fase-moto-venezuela`) — Venezuela
+
+- [ ] 👤 **La ciudad real de Venezuela** donde arranca Moto (hoy se prueba en «Caracas (pruebas)»). Abrirla es un paso del panel: superadmin → «Moto · Abrir y aprobar».
+- [ ] 👤 **Abogado venezolano:** requisitos del INTT para transportar pasajeros en moto con app, edad mínima (hoy 21, igual que EE. UU.), seguro de pasajeros (hoy se pide la póliza RCV que cubra al pasajero) y si el registro de plataformas de reparto de agosto 2026 alcanza a las de pasajeros.
+- [ ] 👤 **Quién vende y recibe las recargas** del saldo de los mototaxistas en Venezuela (los puntos de venta autorizados y la comisión del punto). Mientras tanto el equipo de Divoox puede ser su propio punto de venta.
+- [ ] 👤 **Número de la solicitud de registro de la marca Divoox en Venezuela:** sin él la compuerta de producción no se abre (regla de Richard).
+- [ ] **Tasa BCV automática** para mostrar el precio en bolívares en el pago móvil (diseño en `docs/DISENO-TASA-VES.md`; hoy el pasajero hace la cuenta con la tasa del día).
+- [ ] **Capturas reales** de las pantallas nuevas de Moto (Driver, cliente y panel) en el sitio de pruebas para publicar las guías guardadas en `apps/panel/src/sitio/docs/borradores/moto.ts`.
+- [ ] **Escenario del simulador** de Moto en Venezuela (`simulador/divoox/`): hoy el circuito está probado por la API en `apps/servidor/src/rutas/motoVenezuela.test.ts`.
+
 - [ ] **Monetización prepago multiservicio** (requisito de Richard, 27 oct 2026, `docs/REQUISITO-MONETIZACION-PREPAGO-MULTISERVICIO.md`): unificar Food en cobro directo con la capa de políticas sin cambiar su resultado; política de cancelaciones por servicio; enchufar Express, Grocery y Flex conductor cuando existan.
 - [x] **Autorización comercial y legal por mercado** para el prepago de conductores: Richard dijo «Sí» el 2 nov 2026. Encendido en Venezuela y Colombia al 10 % en Moto, Carro y Envíos (C-PREPAGO-MERCADOS); EE. UU. sigue con Stripe.
 - [x] **Divoox Flex · Fase 3** (27 oct 2026, rama `fase-flex-3` sobre la 2, solo staging): ofertas que vencen solas en el reloj existente, avisos al celular a conductor y empresa, integraciones firmadas con anti-SSRF, orden sugerido, capacidad de vehículos, indicadores de operación, retención con simulación, escala medida (10/100/1000 empresas), protocolo de piloto y cuentas de revisores resueltas en el código. Informe: `docs/DIVOOX-FLEX-FASE-3-RESULTADOS.md`; piloto: `docs/DIVOOX-FLEX-PROTOCOLO-PILOTO.md`. 👤 Autorizar la Fase 4 (dinero).

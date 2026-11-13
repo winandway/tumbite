@@ -789,6 +789,18 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "motivo",
     "creado_en"
   ],
+  "conductor_documentos": [
+    "id",
+    "conductor_id",
+    "tipo",
+    "clave",
+    "vence_en",
+    "estado",
+    "motivo",
+    "revisado_por",
+    "revisado_en",
+    "creado_en"
+  ],
   "cumplimientos": [
     "conductor_id",
     "vehiculo_id",
@@ -1814,6 +1826,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "vence_en",
     "usada_en",
     "operacion_id",
+    "creado_en"
+  ],
+  "viajes_pago_movil": [
+    "operacion_id",
+    "conductor_id",
+    "estado",
+    "referencia",
+    "monto",
+    "moneda",
     "creado_en"
   ],
   "deudas_pasajero": [

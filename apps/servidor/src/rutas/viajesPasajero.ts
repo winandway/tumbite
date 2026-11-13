@@ -17,19 +17,27 @@ import {
   tarifaXl,
   estimarRuta,
   numeroEmergencia,
+  perfilPasajeros,
+  METODOS_PAGO_VIAJE,
+  TARIFA_MOTO_VENEZUELA,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
-import { devolverReservasViaje } from '../finanzas/conductor';
+import {
+  comisionConductor,
+  devolverReservasViaje,
+  exigirComisionEnMoneda,
+} from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
 import { pinParaViajeNuevo } from './ajustesViaje';
 import { revisarDesvio } from './seguridadViaje';
 import { enviarSms } from '../sms';
-import { estadoServicioEnZona } from './servicios';
+import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } from './servicios';
+import { leerConfigPais, MONEDA_POR_PAIS, paisIncompleto } from '../internacional/paises';
 import { zonaPara } from './zonas';
 
 /**
@@ -119,6 +127,34 @@ export async function tarifaActiva(
     .first<FilaTarifa>();
 }
 
+/** Un viaje «típico» de Moto para estimar la comisión: 5 km por calle (aproximado, se dice así). */
+export const KM_VIAJE_TIPICO = 5;
+
+/**
+ * C-SALDO-CARRERAS (13 nov 2026): la comisión de un viaje típico de Moto en la ciudad del conductor,
+ * con la tarifa vigente y la política que rija. 0 si no hay tarifa o no rige el prepago. No escribe nada.
+ */
+export async function comisionTipicaMoto(
+  db: D1Database,
+  zona: { id: string; pais: string; moneda: string },
+): Promise<number> {
+  const fila = await tarifaActiva(db, 'moto', zona.id);
+  if (!fila) return 0;
+  const t = filaATarifa(fila);
+  const total = cotizarViaje(t, {
+    distanciaM: KM_VIAJE_TIPICO * 1000,
+    duracionS: Math.round((KM_VIAJE_TIPICO / t.velocidadKmh) * 3600),
+  }).total;
+  const c = await comisionConductor(db, {
+    servicio: 'ride',
+    pais: zona.pais,
+    ciudad: zona.id,
+    moneda: zona.moneda,
+    valor: total,
+  });
+  return c?.monto ?? 0;
+}
+
 const sqlFecha = (d: Date) => d.toISOString().slice(0, 19).replace('T', ' ');
 
 // ---------------------------------------------------------------- superadmin
@@ -144,7 +180,6 @@ viajesPasajero.get('/admin/viajes/tarifas', async (c) => {
  */
 viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
   const admin = exigir(c, 'admin');
-  const db = base(c);
   const d = await leerCuerpo(
     c,
     z.object({
@@ -155,11 +190,29 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
       motivo: z.string().trim().min(3).max(200),
     }),
   );
+  const nueva = await guardarTarifaViaje(base(c), admin.id, d);
+  return c.json({ tarifa: nueva ? tarifaPublica(nueva) : null }, 201);
+});
+
+/** Una versión nueva de la tarifa de un servicio en una ciudad (la usan el panel y «abrir ciudad»). */
+export async function guardarTarifaViaje(
+  db: D1Database,
+  adminId: string,
+  d: {
+    servicio: (typeof SERVICIOS_VIAJE)[number];
+    zona: string;
+    tarifa: TarifaViaje;
+    dePrueba: boolean;
+    motivo: string;
+  },
+): Promise<FilaTarifa | null> {
   const zona = await db
-    .prepare('SELECT id, moneda FROM zonas WHERE id = ?')
+    .prepare('SELECT id, pais, moneda FROM zonas WHERE id = ?')
     .bind(d.zona)
-    .first<{ id: string; moneda: string }>();
+    .first<{ id: string; pais: string; moneda: string }>();
   if (!zona) throw new ErrorDatos('Esa ciudad no existe.', 'zona', 404);
+  // C-COMISION-MONEDA: una tarifa en una moneda sin política de comisión no se activa.
+  await exigirComisionEnMoneda(db, d.servicio, zona);
   const antes = await tarifaActiva(db, d.servicio, zona.id);
   const id = nuevoId();
   const t = d.tarifa;
@@ -198,7 +251,7 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         t.velocidadKmh,
         d.dePrueba ? 1 : 0,
         d.motivo,
-        admin.id,
+        adminId,
         t.xlPb ?? null,
         t.valorMaximo ?? null,
       ),
@@ -207,18 +260,99 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
       )
       .bind(
-        admin.id,
+        adminId,
         'viaje.tarifa',
         `tarifa:${d.servicio}:${zona.id}`,
         JSON.stringify(antes ?? null),
         JSON.stringify({ id, ...t, dePrueba: d.dePrueba, motivo: d.motivo }),
       ),
   ]);
-  const nueva = await db
-    .prepare('SELECT * FROM tarifas_viaje WHERE id = ?')
-    .bind(id)
-    .first<FilaTarifa>();
-  return c.json({ tarifa: nueva ? tarifaPublica(nueva) : null }, 201);
+  return db.prepare('SELECT * FROM tarifas_viaje WHERE id = ?').bind(id).first<FilaTarifa>();
+}
+
+/**
+ * C-MOTO-VENEZUELA: abrir un servicio de viajes en una ciudad es UN paso del panel (no código): crea
+ * o pone al día la ciudad, le pone la tarifa (la de mercado del país si no se escribe otra) y
+ * enciende el servicio en esa ciudad. Comida queda «próximamente» en una ciudad nueva cuyo país
+ * todavía no tiene tarifas de comida. En producción manda la compuerta del país (C-MOTO-POR-PAIS).
+ */
+viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      servicio: z.enum(SERVICIOS_VIAJE),
+      zona: z.object({
+        id: z
+          .string()
+          .trim()
+          .regex(/^[A-Z]{2}-[A-Z0-9]{2,3}-[A-Z0-9-]{2,30}$/, {
+            error: 'El código de la ciudad va como VE-CCS-CENTRO.',
+          }),
+        nombre: z.string().trim().min(2).max(60),
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        radioKm: z.number().min(1).max(100).default(25),
+        zonaHoraria: z.string().trim().min(3).max(60),
+        moneda: z.string().trim().length(3).toUpperCase().optional(),
+      }),
+      tarifa: esquemaTarifaViaje.optional(),
+      motivo: z.string().trim().min(3).max(200),
+    }),
+  );
+  const pais = d.zona.id.slice(0, 2);
+  const perfil = perfilPasajeros(pais);
+  const moneda =
+    d.zona.moneda ??
+    perfil.monedaViajes ??
+    new Map(Object.entries(MONEDA_POR_PAIS)).get(pais) ??
+    'USD';
+  const tarifa =
+    d.tarifa ?? (pais === 'VE' && d.servicio === 'moto' ? TARIFA_MOTO_VENEZUELA : null);
+  if (!tarifa)
+    throw new ErrorDatos('Escribe la tarifa del servicio para esta ciudad.', 'tarifa', 422);
+  // Antes de tocar nada: la compuerta del servicio y la comisión en la moneda de la ciudad.
+  await exigirPuedeEncender(c, d.servicio, pais);
+  await exigirComisionEnMoneda(db, d.servicio, { pais, moneda });
+  const existia = await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(d.zona.id).first();
+  await db
+    .prepare(
+      `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+       ON CONFLICT(id) DO UPDATE SET nombre = excluded.nombre, moneda = excluded.moneda, zona_horaria = excluded.zona_horaria,
+         lat = excluded.lat, lng = excluded.lng, radio_km = excluded.radio_km, activa = 1`,
+    )
+    .bind(
+      d.zona.id,
+      d.zona.nombre,
+      pais,
+      moneda,
+      d.zona.zonaHoraria,
+      d.zona.lat,
+      d.zona.lng,
+      d.zona.radioKm,
+    )
+    .run();
+  if (!existia && paisIncompleto(pais, await leerConfigPais(db, pais)))
+    await db
+      .prepare(
+        `UPDATE servicios_zona SET estado = 'proximamente', motivo = 'ciudad abierta solo para viajes', actualizado_por = ?,
+           actualizado_en = datetime('now') WHERE servicio_id = 'comida' AND zona_id = ?`,
+      )
+      .bind(admin.id, d.zona.id)
+      .run();
+  const fila = await guardarTarifaViaje(db, admin.id, {
+    servicio: d.servicio,
+    zona: d.zona.id,
+    tarifa,
+    dePrueba: true,
+    motivo: d.motivo,
+  });
+  const estado = await encenderServicioEnZona(c, admin.id, d.servicio, d.zona.id, d.motivo);
+  return c.json(
+    { zona: { id: d.zona.id, pais, moneda }, tarifa: fila ? tarifaPublica(fila) : null, estado },
+    201,
+  );
 });
 
 // ---------------------------------------------------------------- pasajero
@@ -297,6 +431,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     total: desglose.total,
     venceEn,
     dePrueba: fila.de_prueba === 1,
+    metodosPago: [...perfilPasajeros(zona.pais).metodosPago],
   };
   return c.json({ cotizacion }, 201);
 });
@@ -332,7 +467,8 @@ viajesPasajero.post('/viajes', async (c) => {
     z.object({
       cotizacionId: z.string().min(8).max(64),
       // C-VIAJE-TARJETA: con tarjeta se autoriza al pedir y se cobra al terminar.
-      metodoPago: z.enum(['efectivo', 'tarjeta']).default('efectivo'),
+      // C-PAGO-MOVIL-VIAJE: el pago móvil solo donde el perfil del país lo tiene (Venezuela).
+      metodoPago: z.enum(METODOS_PAGO_VIAJE).default('efectivo'),
       // C-ENVIOS: qué se envía y quién lo recibe (solo en Envíos).
       paquete: esquemaPaqueteEnvio.optional(),
     }),
@@ -358,6 +494,12 @@ viajesPasajero.post('/viajes', async (c) => {
   if (cot.usada_en && cot.operacion_id) return c.json({ viaje: { id: cot.operacion_id } });
   if (!cot.vigente)
     throw new ErrorDatos('El precio venció. Vuelve a cotizar el viaje.', 'cotizacionId', 409);
+  const paisViaje = await db
+    .prepare('SELECT pais FROM zonas WHERE id = ?')
+    .bind(cot.zona_id)
+    .first<{ pais: string }>();
+  if (!perfilPasajeros(paisViaje?.pais).metodosPago.includes(d.metodoPago))
+    throw new ErrorDatos('Ese método de pago no está disponible en tu ciudad.', 'metodoPago', 422);
   if (
     (await estadoServicioEnZona(db, cot.servicio_id, cot.zona_id, c.get('usuario')?.id ?? null)) !==
     'disponible'
@@ -545,6 +687,10 @@ type FilaViajeCliente = {
   modelo: string | null;
   color: string | null;
   placa: string | null;
+  pm_banco: string | null;
+  pm_titular: string | null;
+  pm_identificador: string | null;
+  pm_estado: string | null;
 };
 
 async function viajeDelCliente(
@@ -560,12 +706,20 @@ async function viajeDelCliente(
               CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
               q.total, q.moneda, q.tarifa_json,
               u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
-              h.marca, h.modelo, h.color, h.placa
+              h.marca, h.modelo, h.color, h.placa,
+              k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
+              pm.estado AS pm_estado
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
          LEFT JOIN usuarios u ON u.id = o.conductor_id
          LEFT JOIN repartidores d ON d.usuario_id = o.conductor_id
          LEFT JOIN vehiculos h ON h.id = o.vehiculo_id
+         -- C-PAGO-MOVIL-VIAJE: los datos de pago móvil del conductor (solo si el viaje se paga así).
+         LEFT JOIN cuentas_cobro k ON v.metodo_pago = 'pago_movil' AND k.id = (
+           SELECT c2.id FROM cuentas_cobro c2 JOIN zonas z2 ON z2.id = o.zona_id
+            WHERE c2.usuario_id = o.conductor_id AND c2.tipo = 'pago_movil' AND c2.pais = z2.pais
+              AND c2.activa = 1 ORDER BY c2.creado_en DESC LIMIT 1)
+         LEFT JOIN viajes_pago_movil pm ON pm.operacion_id = o.id
         WHERE o.cliente_id = ?1
           AND (?2 IS NULL AND o.tipo_operacion = ?3 AND o.estado_general IN ${ESTADOS_ACTIVOS} OR o.id = ?2)
         ORDER BY o.creado_en DESC LIMIT 1`,
@@ -609,6 +763,17 @@ function viajePublico(f: FilaViajeCliente) {
                 ? { lat: f.conductor_lat, lng: f.conductor_lng }
                 : null,
             vehiculo: { marca: f.marca, modelo: f.modelo, color: f.color, placa: f.placa },
+          }
+        : null,
+    // C-PAGO-MOVIL-VIAJE: a quién se le paga y si el conductor ya confirmó que le llegó.
+    pagoMovil:
+      f.metodo_pago === 'pago_movil'
+        ? {
+            datos:
+              (conConductor || f.estado === 'terminado') && f.pm_identificador
+                ? { banco: f.pm_banco, titular: f.pm_titular, identificador: f.pm_identificador }
+                : null,
+            confirmado: f.pm_estado,
           }
         : null,
     cancelacion:
@@ -889,10 +1054,23 @@ export async function saludViajes(db: D1Database): Promise<'ok' | 'error'> {
            WHERE o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
              AND o.actualizado_en < datetime('now', '-10 minutes')
            GROUP BY r.op, r.cuenta_id HAVING SUM(r.monto) != 0)) AS colgadas,
-         (SELECT COUNT(*) FROM deudas_pasajero WHERE estado = 'cobrada' AND cobrada_en IS NULL) AS huerfanas`,
+         (SELECT COUNT(*) FROM deudas_pasajero WHERE estado = 'cobrada' AND cobrada_en IS NULL) AS huerfanas,
+         -- C-COMISION-MONEDA: una tarifa activa en una moneda que la comisión del país no cubre.
+         (SELECT COUNT(*) FROM tarifas_viaje t JOIN zonas z ON z.id = t.zona_id
+           WHERE t.activa = 1 AND EXISTS (SELECT 1 FROM politicas_financieras p
+                   WHERE p.servicio = CASE t.servicio_id WHEN 'carro' THEN 'car' ELSE 'ride' END
+                     AND p.tipo_cuenta = 'conductor' AND p.modalidad = 'prepago' AND p.activa = 1
+                     AND p.revision_legal_aprobada = 1 AND p.pais IN (z.pais, '*'))
+             AND NOT EXISTS (SELECT 1 FROM politicas_financieras p
+                   WHERE p.servicio = CASE t.servicio_id WHEN 'carro' THEN 'car' ELSE 'ride' END
+                     AND p.tipo_cuenta = 'conductor' AND p.modalidad = 'prepago' AND p.activa = 1
+                     AND p.revision_legal_aprobada = 1 AND p.pais IN (z.pais, '*')
+                     AND upper(p.moneda) = upper(t.moneda))) AS sin_comision`,
     )
-    .first<{ colgadas: number; huerfanas: number }>();
-  return Number(f?.colgadas) === 0 && Number(f?.huerfanas) === 0 ? 'ok' : 'error';
+    .first<{ colgadas: number; huerfanas: number; sin_comision: number }>();
+  return Number(f?.colgadas) === 0 && Number(f?.huerfanas) === 0 && Number(f?.sin_comision) === 0
+    ? 'ok'
+    : 'error';
 }
 
 // ---------------------------------------------------------------- M8: calificación

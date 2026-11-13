@@ -6,6 +6,12 @@ import type { Guia } from '../guias';
  * se publican el día que Richard encienda Moto en un país, agregándolas a la sección que toque
  * («ordering» para el pasajero y «drivers» para el conductor). Para el público, en los dos idiomas,
  * sin nada interno. La prueba `borradores.test.ts` cuida que sigan completas y sin publicar.
+ *
+ * 13 nov 2026 (Moto en Venezuela): se agregaron el alta del conductor (moto y papeles) y el saldo
+ * con recargas, y el pago móvil del pasajero. FALTAN CAPTURAS REALES antes de publicar (regla: ninguna
+ * guía sin capturas): Driver «Divoox Moto» (ciudad, moto, papeles con su estado), Ganancias con «Te
+ * alcanza para unas N carreras», el viaje con «¿Te llegó el pago móvil?», y en la app del pasajero la
+ * elección de pago móvil y la tarjeta con los datos del conductor. Se toman en el sitio de pruebas.
  */
 export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
   es: {
@@ -38,9 +44,10 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         id: 'ride-moto-pago',
         titulo: 'Pagar, cancelar y dejar propina en Moto',
         resumen:
-          'Paga en efectivo o con tarjeta, cancela gratis al principio y deja propina cuando termine el viaje.',
+          'Paga en efectivo, con tarjeta o por pago móvil (según tu país), cancela gratis al principio y deja propina cuando termine el viaje.',
         explicacion: [
           'Con tarjeta, apartamos el precio al pedir y lo cobramos al terminar. En efectivo, le pagas al conductor al llegar.',
+          'Donde existe el pago móvil (por ejemplo, en Venezuela), cuando te asignan conductor ves sus datos de pago móvil en la app. Pagas el equivalente en bolívares a la tasa oficial del día y el conductor confirma en su app que le llegó.',
           'Cancelar es gratis mientras buscamos conductor y durante los primeros minutos después de que acepta. Después, la app te dice antes cuánto cuesta cancelar; ese cargo es para el conductor que fue a buscarte.',
           'Si el conductor espera más de lo incluido en el punto de recogida, se suma un pequeño cargo por minuto, como en los demás servicios de transporte.',
         ],
@@ -50,7 +57,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
           '¿Qué pasa si debo un cargo de un viaje en efectivo?',
         ],
         pasos: [
-          'Elige efectivo o tarjeta antes de pedir.',
+          'Elige cómo pagas antes de pedir: la app te muestra solo los métodos de tu ciudad.',
           'Para cancelar, toca «Cancelar viaje»: la app te dice si es gratis o cuánto cuesta.',
           'Al terminar, califica el viaje y, si pagaste con tarjeta, deja propina si quieres. Va entera al conductor.',
           'Si cancelaste tarde un viaje en efectivo, el cargo se suma a tu próximo viaje.',
@@ -105,6 +112,55 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         nota: 'En algunas ciudades te pedimos una selfie con el casco puesto antes de aceptar viajes. Vale 12 horas.',
       },
       {
+        id: 'drive-moto-alta',
+        titulo: 'Registrar tu moto y tus papeles para Divoox Moto',
+        resumen:
+          'Elige tu ciudad, registra tu moto, sube tus papeles con la cámara y sigue tu aprobación desde la app.',
+        explicacion: [
+          'Para llevar pasajeros en moto primero te conocemos: verificamos tu identidad, tu licencia, tus antecedentes y los papeles de tu moto. Así cuidamos al pasajero y a ti.',
+          'Lo que se pide depende de tu país. En Venezuela, por ejemplo, subes tu licencia para manejar moto y tu certificado de antecedentes penales, y nuestro equipo los revisa uno por uno.',
+          'Cada papel muestra su estado: sin subir, en revisión, aprobado o «hay que corregir» con el motivo. Cuando todo está aprobado, activas «Recibir viajes de Moto».',
+        ],
+        preguntas: [
+          '¿Qué papeles necesito para trabajar con Divoox Moto?',
+          '¿Cómo subo la foto de un documento?',
+          '¿Cuánto tarda la aprobación?',
+        ],
+        pasos: [
+          'En la app Divoox Driver, entra a Perfil y toca «Divoox Moto».',
+          'Revisa tu ciudad y cámbiala si hace falta.',
+          'Escribe la marca, el modelo, el año, el color y la placa de tu moto, y toca «Guardar mi moto».',
+          'Sube cada papel de la moto: toca «Subir» y elige «Tomar foto» o «Subir desde archivos».',
+          'Sube tus papeles de conductor y verifica tu identidad en «Documentos».',
+          'Toca «Enviar mi moto a revisión». Te avisamos cuando esté aprobada.',
+          'Cuando todo esté aprobado, toca «Usar esta moto para trabajar» y «Recibir viajes de Moto».',
+        ],
+        nota: 'Si un papel sale con «hay que corregir», lee el motivo y súbelo de nuevo: no hace falta empezar desde cero.',
+      },
+      {
+        id: 'drive-moto-saldo',
+        titulo: 'Tu saldo para comisiones y las recargas',
+        resumen:
+          'El pasajero te paga el viaje completo; la comisión de Divoox sale de tu saldo. Mira para cuántas carreras te alcanza y recarga en un punto autorizado.',
+        explicacion: [
+          'En los países donde trabajas con saldo, el pasajero te paga todo el viaje a ti, en efectivo o por pago móvil. Al terminar el viaje, la comisión de Divoox se descuenta de tu saldo.',
+          'Al aceptar un viaje apartamos su comisión; si el viaje no se hace, vuelve a tu saldo. Nunca se descuenta dos veces.',
+          'La app te dice para cuántas carreras te alcanza tu saldo, calculado con la comisión de un viaje típico. Es un aproximado. Cuando se está acabando, te avisamos; sin saldo no recibes carreras hasta que recargues.',
+        ],
+        preguntas: [
+          '¿Cómo recargo mi saldo?',
+          '¿Para cuántas carreras me alcanza?',
+          '¿Por qué no me llegan viajes?',
+        ],
+        pasos: [
+          'Compra una recarga en un punto de venta autorizado de Divoox. Te dan un código.',
+          'En la app, entra a Ganancias y busca «Saldo para comisiones».',
+          'Escribe el código y toca «Recargar con el código». El saldo aparece al momento.',
+          'Revisa la línea «Te alcanza para unas N carreras» y recarga antes de quedarte sin saldo.',
+        ],
+        nota: 'El saldo para comisiones no es una ganancia y no se retira: solo paga las comisiones de tus viajes.',
+      },
+      {
         id: 'drive-moto-seguridad',
         titulo: 'Descanso y seguridad del conductor',
         resumen:
@@ -151,9 +207,10 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         id: 'ride-moto-pago',
         titulo: 'Paying, canceling and tipping on Moto',
         resumen:
-          'Pay with cash or card, cancel for free at the start, and leave a tip when the ride ends.',
+          'Pay with cash, card, or mobile payment (depending on your country), cancel for free at the start, and leave a tip when the ride ends.',
         explicacion: [
           'With a card, we hold the price when you request and charge it when the ride ends. With cash, you pay the driver when you arrive.',
+          'Where mobile payment is available (for example, in Venezuela), once you get a driver you see their mobile payment details in the app. You pay the equivalent in bolívars at the official rate of the day, and the driver confirms in their app that it arrived.',
           'Canceling is free while we look for a driver and for the first few minutes after one accepts. After that, the app tells you upfront what canceling costs; that fee goes to the driver who came to pick you up.',
           'If the driver waits longer than the included time at pickup, a small per-minute fee is added, as with other ride services.',
         ],
@@ -163,7 +220,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
           'What happens if I owe a fee from a cash ride?',
         ],
         pasos: [
-          'Choose cash or card before you request.',
+          'Choose how you pay before you request: the app only shows the methods available in your city.',
           'To cancel, tap “Cancel ride”: the app tells you whether it’s free or what it costs.',
           'When the ride ends, rate it and, if you paid by card, leave a tip if you like. It all goes to the driver.',
           'If you canceled a cash ride late, the fee is added to your next ride.',
@@ -215,6 +272,55 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
           'If the rider cancels late or doesn’t show up, the fee is yours.',
         ],
         nota: 'In some cities we ask for a selfie with your helmet on before you accept rides. It’s valid for 12 hours.',
+      },
+      {
+        id: 'drive-moto-alta',
+        titulo: 'Register your motorcycle and documents for Divoox Moto',
+        resumen:
+          'Choose your city, register your motorcycle, upload your documents with your camera, and track your approval in the app.',
+        explicacion: [
+          'Before you give rides, we get to know you: we verify your identity, your license, your background, and your motorcycle’s documents. That keeps riders and you safe.',
+          'What we ask for depends on your country. In Venezuela, for example, you upload your motorcycle license and your criminal record certificate, and our team reviews each one.',
+          'Each document shows its status: not uploaded, under review, approved, or “needs a fix” with the reason. Once everything is approved, you turn on “Get Moto rides.”',
+        ],
+        preguntas: [
+          'What documents do I need to drive with Divoox Moto?',
+          'How do I upload a photo of a document?',
+          'How long does approval take?',
+        ],
+        pasos: [
+          'In the Divoox Driver app, go to Profile and tap “Divoox Moto.”',
+          'Check your city and change it if needed.',
+          'Enter your motorcycle’s make, model, year, color, and license plate, and tap “Save my motorcycle.”',
+          'Upload each motorcycle document: tap “Upload” and choose “Take photo” or “Upload from files.”',
+          'Upload your driver documents and verify your identity under “Documents.”',
+          'Tap “Send my motorcycle for review.” We’ll let you know when it’s approved.',
+          'Once everything is approved, tap “Use this motorcycle to work” and “Get Moto rides.”',
+        ],
+        nota: 'If a document says “needs a fix,” read the reason and upload it again: you don’t have to start over.',
+      },
+      {
+        id: 'drive-moto-saldo',
+        titulo: 'Your fee balance and top-ups',
+        resumen:
+          'The rider pays you the full fare; the Divoox fee comes out of your balance. See how many rides it covers and top up at an authorized sales point.',
+        explicacion: [
+          'In countries where you work with a balance, the rider pays you the whole fare, in cash or by mobile payment. When the ride ends, the Divoox fee is deducted from your balance.',
+          'When you accept a ride, we set its fee aside; if the ride doesn’t happen, it goes back to your balance. It’s never deducted twice.',
+          'The app tells you how many rides your balance covers, based on the fee for a typical ride. It’s an estimate. When it’s running low we let you know; with no balance you don’t get rides until you top up.',
+        ],
+        preguntas: [
+          'How do I top up my balance?',
+          'How many rides does my balance cover?',
+          'Why am I not getting rides?',
+        ],
+        pasos: [
+          'Buy a top-up at an authorized Divoox sales point. You get a code.',
+          'In the app, go to Earnings and find “Balance for fees.”',
+          'Enter the code and tap “Top up with the code.” The balance shows up right away.',
+          'Check the line “Enough for about N rides” and top up before you run out.',
+        ],
+        nota: 'Your fee balance isn’t earnings and can’t be withdrawn: it only pays the fees for your rides.',
       },
       {
         id: 'drive-moto-seguridad',

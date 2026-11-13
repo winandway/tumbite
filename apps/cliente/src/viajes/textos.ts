@@ -37,6 +37,13 @@ export const TEXTOS_MOTO = {
     propinaTitulo: '¿Le dejas propina a tu conductor? La recibe completa.',
     propinaGracias: 'Gracias. Tu conductor recibió',
     pagoTarjeta: 'Tarjeta',
+    pagoMovil: 'Pago móvil',
+    pagoMovilAyuda:
+      'Cuando te asignen conductor verás sus datos de pago móvil. Pagas el equivalente en bolívares a la tasa oficial del día y él confirma que le llegó.',
+    pagoMovilDatos: 'Paga por pago móvil a',
+    pagoMovilConfirmado: 'El conductor confirmó que recibió tu pago.',
+    pagoMovilNoLlego:
+      'El conductor dice que no le llegó el pago. Nuestro equipo lo revisa contigo.',
     tarjetaAyuda: 'Autorizamos el precio fijo y lo cobramos al terminar el viaje.',
     pagarViaje: 'Autorizar',
     cargandoTarjeta: 'Cargando el pago con tarjeta…',
@@ -121,6 +128,13 @@ export const TEXTOS_MOTO = {
     propinaTitulo: 'Tip your driver? It all goes to them.',
     propinaGracias: 'Thanks. Your driver received',
     pagoTarjeta: 'Card',
+    pagoMovil: 'Mobile payment',
+    pagoMovilAyuda:
+      'Once you get a driver, you’ll see their mobile payment details. Pay the equivalent in bolívars at the official rate of the day, and they confirm it arrived.',
+    pagoMovilDatos: 'Pay by mobile payment to',
+    pagoMovilConfirmado: 'Your driver confirmed they received your payment.',
+    pagoMovilNoLlego:
+      'Your driver says the payment didn’t arrive. Our team will sort it out with you.',
     tarjetaAyuda: 'We hold the fixed price and charge it when the ride ends.',
     pagarViaje: 'Authorize',
     cargandoTarjeta: 'Loading card payment…',

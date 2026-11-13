@@ -28,6 +28,11 @@ export type ViajePasajero = {
     };
   } | null;
   cancelacion: { cargo: number; gratisPorS: number | null } | null;
+  /** C-PAGO-MOVIL-VIAJE: a quién pagar y si el conductor ya confirmó que le llegó. */
+  pagoMovil?: {
+    datos: { banco: string | null; titular: string | null; identificador: string } | null;
+    confirmado: 'recibido' | 'no_recibido' | null;
+  } | null;
 };
 
 /** C-ENVIOS: lo que manda el servidor del paquete de un envío. */
@@ -219,6 +224,30 @@ export function ViajeEnCurso({
         </Tarjeta>
       ) : null}
 
+      {viaje.pagoMovil?.datos ? (
+        <Tarjeta>
+          <View testID="viaje-pago-movil" style={{ gap: 2 }}>
+            <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.pagoMovilDatos}</Text>
+            {viaje.pagoMovil.datos.banco ? (
+              <Text style={{ color: C.secundario }}>{viaje.pagoMovil.datos.banco}</Text>
+            ) : null}
+            {viaje.pagoMovil.datos.titular ? (
+              <Text style={{ color: C.secundario }}>{viaje.pagoMovil.datos.titular}</Text>
+            ) : null}
+            <Text selectable style={{ fontWeight: '700', color: C.secundario }}>
+              {viaje.pagoMovil.datos.identificador}
+            </Text>
+            {viaje.pagoMovil.confirmado === 'recibido' ? (
+              <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>{t.pagoMovilConfirmado}</Text>
+            ) : viaje.pagoMovil.confirmado === 'no_recibido' ? (
+              <Text style={{ color: C.primario }}>{t.pagoMovilNoLlego}</Text>
+            ) : (
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pagoMovilAyuda}</Text>
+            )}
+          </View>
+        </Tarjeta>
+      ) : null}
+
       <Tarjeta>
         <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
         <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.origen.direccion}</Text>
@@ -229,7 +258,9 @@ export function ViajeEnCurso({
             {viaje.estado === 'terminado'
               ? viaje.metodoPago === 'tarjeta'
                 ? t.pagadoTarjeta
-                : t.pagaEfectivo
+                : viaje.metodoPago === 'pago_movil'
+                  ? t.pagoMovil
+                  : t.pagaEfectivo
               : t.precioFijo}
             : {monto(viaje.total)}
           </Text>

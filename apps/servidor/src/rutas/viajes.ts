@@ -8,6 +8,7 @@ import { revisarSelfieCasco } from './ajustesViaje';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
 import { nuevoId } from '../cripto';
+import { abrirIncidencia } from '../internacional/bandeja';
 import { calificarViaje, esquemaCalificacionViaje, registrarEmergencia } from './viajesPasajero';
 import {
   cobrarReservaViaje,
@@ -399,6 +400,71 @@ viajes.post(
     return c.json({ ok: true, estado: paso.hacia });
   },
 );
+
+/**
+ * C-PAGO-MOVIL-VIAJE (13 nov 2026, Venezuela): el conductor confirma si le llegó el pago móvil del
+ * pasajero, como la transferencia verificada a mano de Comida. Si no le llegó, queda un caso en la
+ * bandeja de dinero para soporte. Es una confirmación MANUAL (nunca «verificado por el banco»). La
+ * comisión sale igual del prepago al terminar, como en efectivo.
+ */
+viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const id = c.req.param('id');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      recibido: z.boolean(),
+      referencia: z.string().trim().max(40).default(''),
+    }),
+  );
+  const db = base(c);
+  const f = await db
+    .prepare(
+      `SELECT v.estado, v.metodo_pago, q.total, q.moneda, z.pais FROM operaciones o
+         JOIN viajes v ON v.operacion_id = o.id JOIN zonas z ON z.id = o.zona_id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+        WHERE o.id = ? AND o.conductor_id = ?`,
+    )
+    .bind(id, u.id)
+    .first<{
+      estado: string;
+      metodo_pago: string;
+      total: number | null;
+      moneda: string | null;
+      pais: string;
+    }>();
+  if (!f) throw new ErrorDatos('Este viaje no es tuyo.', undefined, 404);
+  if (f.metodo_pago !== 'pago_movil')
+    throw new ErrorDatos('Este viaje no se paga por pago móvil.', undefined, 409);
+  if (!['en_curso', 'terminado'].includes(f.estado))
+    throw new ErrorDatos('Confirma el pago cuando el pasajero ya esté a bordo.', undefined, 409);
+  const r = await db
+    .prepare(
+      `INSERT OR IGNORE INTO viajes_pago_movil (operacion_id, conductor_id, estado, referencia, monto, moneda)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(id, u.id, d.recibido ? 'recibido' : 'no_recibido', d.referencia, f.total, f.moneda)
+    .run();
+  if (!r.meta.changes) {
+    const ya = await db
+      .prepare('SELECT estado FROM viajes_pago_movil WHERE operacion_id = ?')
+      .bind(id)
+      .first<{ estado: string }>();
+    return c.json({ estado: ya?.estado ?? null });
+  }
+  if (!d.recibido)
+    await abrirIncidencia(db, {
+      tipo: 'pago_movil_viaje',
+      referencia: `pago-movil-viaje:${id}`,
+      cuentaId: u.id,
+      pais: f.pais,
+      moneda: f.moneda,
+      esperado: f.total,
+      recibido: 0,
+      detalle: `El conductor dice que no le llegó el pago móvil del viaje ${id}.${d.referencia ? ` Referencia: ${d.referencia}.` : ''}`,
+    });
+  return c.json({ estado: d.recibido ? 'recibido' : 'no_recibido' });
+});
 
 /** M6: el conductor también tiene botón de emergencia durante su viaje. */
 viajes.post('/conductor/operaciones/:id/emergencia', async (c) => {

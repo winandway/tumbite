@@ -156,7 +156,12 @@ export function PedirMoto({
         '/datos/viajes',
         {
           cotizacionId: cotizacion.id,
-          metodoPago: tarjeta ? 'tarjeta' : 'efectivo',
+          // Un método recuperado del borrador que esta ciudad no tiene vuelve a efectivo.
+          metodoPago: (cotizacion.metodosPago ?? ['efectivo', 'tarjeta']).some(
+            (m) => m === v.metodo,
+          )
+            ? v.metodo
+            : 'efectivo',
           ...(servicio === 'envios'
             ? {
                 paquete: {
@@ -274,24 +279,28 @@ export function PedirMoto({
               {Math.max(1, Math.round(cotizacion.duracionS / 60))} {t.min}
             </Text>
             <View
-              style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}
+              style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}
               accessibilityRole="radiogroup"
             >
-              <Pildora
-                texto={t.pagoEfectivo}
-                activa={!tarjeta}
-                alTocar={() => cambiar('metodo', 'efectivo')}
-                rol="radio"
-              />
-              <Pildora
-                texto={t.pagoTarjeta}
-                activa={tarjeta}
-                alTocar={() => cambiar('metodo', 'tarjeta')}
-                rol="radio"
-              />
+              {/* C-PAGO-MOVIL-VIAJE: solo los métodos del país de la ciudad (Venezuela: pago móvil). */}
+              {(cotizacion.metodosPago ?? ['efectivo', 'tarjeta']).map((m) => (
+                <Pildora
+                  key={m}
+                  texto={
+                    m === 'tarjeta'
+                      ? t.pagoTarjeta
+                      : m === 'pago_movil'
+                        ? t.pagoMovil
+                        : t.pagoEfectivo
+                  }
+                  activa={v.metodo === m}
+                  alTocar={() => cambiar('metodo', m)}
+                  rol="radio"
+                />
+              ))}
             </View>
             <Text style={{ color: C.secundario, fontWeight: '700' }}>
-              {tarjeta ? t.tarjetaAyuda : t.efectivo}
+              {tarjeta ? t.tarjetaAyuda : v.metodo === 'pago_movil' ? t.pagoMovilAyuda : t.efectivo}
             </Text>
             {deudaPendiente ? (
               <Text style={{ color: '#5E5E5E' }}>

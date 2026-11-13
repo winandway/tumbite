@@ -55,6 +55,7 @@ import { SuperPiloto } from './SuperPiloto';
 import { SuperRewards } from './SuperRewards';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
+import { SuperMoto } from './SuperMoto';
 import { SuperCiudad } from './SuperCiudad';
 import { pedir } from './api';
 
@@ -82,6 +83,7 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (caso?.[1])
     return <SuperBandeja base={base} idioma={idioma} clave={decodeURIComponent(caso[1])} />;
   if (sub === '/rides') return <SuperViajes base={base} idioma={idioma} />;
+  if (sub === '/moto') return <SuperMoto base={base} idioma={idioma} />;
   if (sub === '/team') return <SuperEquipo idioma={idioma} miId={usuario.id} />;
   if (sub === '/approvals') return <SuperAprobaciones idioma={idioma} miId={usuario.id} />;
   if (sub === '/pilot') return <SuperPiloto idioma={idioma} />;

@@ -1,5 +1,6 @@
 import { CONFIG_DINERO_ANTERIOR, CONFIG_DINERO_INICIAL, type Entorno } from '@tumbite/compartido';
 import { COLUMNAS_DEL_ESQUEMA } from './esquemaColumnas';
+import { aperturasVigentes } from './pasajerosPais';
 import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
@@ -353,7 +354,14 @@ async function sincronizarServicios(db: D1Database, entorno: Entorno | null): Pr
     )
     .first();
   if (!hay) return;
-  const implementados = serviciosImplementados(entorno);
+  const implementados = new Map(serviciosImplementados(entorno));
+  // C-MOTO-POR-PAIS: en producción, un servicio de pasajeros abierto por el superadmin en un país
+  // (con la marca en registro) también lo atiende este código. Hoy no hay ninguno.
+  for (const [servicio] of await aperturasVigentes(db).catch((e: unknown) => {
+    console.error('esquema: no se pudieron leer las aperturas por país', e);
+    return [] as Array<[string, string]>;
+  }))
+    if (!implementados.has(servicio)) implementados.set(servicio, 1);
   const ids = [...implementados.keys()];
   const marcas = ids.map(() => '?').join(',');
   await db.batch([

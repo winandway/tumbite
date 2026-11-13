@@ -515,6 +515,12 @@ describe('M3 (C-OFERTA-COMPLETA): la oferta del conductor y el despacho sin espe
        VALUES ('pol-ride', 'ride', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', datetime('now', '-1 day'), 1)`,
     ).run();
     const cond = await conductorDeMoto(e.m, ORIGEN);
+    // C-SALDO-OFERTAS: donde rige el prepago, la oferta solo llega a quien tiene saldo para la comisión.
+    await e.m.DB.prepare(
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('rec-1', ?, 'prepago', 'US', 'USD', 10000, 'recarga', 'rec-1')",
+    )
+      .bind(cond.id)
+      .run();
     const { cot } = await pedir(e);
     const o = (await ofertas(e, cond.token)).datos.ofertas;
     expect(o[0].gananciaCentavos).toBe(cot.total - Math.round(cot.total / 10));

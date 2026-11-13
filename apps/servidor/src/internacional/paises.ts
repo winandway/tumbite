@@ -134,7 +134,25 @@ export async function guardarConfigPais(
     nueva.recargasPuntoVentaActivas ||
     nueva.recargasStripeActivas;
   const falta = paisIncompleto(pais, nueva);
-  if (enciende && falta)
+  // C-RECARGAS-PREPAGO (13 nov 2026): las recargas en puntos de venta solo pagan comisiones de
+  // conductores; donde rige el prepago aprobado se pueden encender sin las tarifas de comida.
+  const soloRecargas =
+    nueva.recargasPuntoVentaActivas &&
+    !nueva.efectivoActivo &&
+    !nueva.transferenciaRepartidorActiva &&
+    !nueva.recargasStripeActivas;
+  const conPrepago =
+    soloRecargas &&
+    Boolean(
+      await db
+        .prepare(
+          `SELECT 1 FROM politicas_financieras WHERE tipo_cuenta = 'conductor' AND modalidad = 'prepago'
+            AND activa = 1 AND revision_legal_aprobada = 1 AND pais = ? LIMIT 1`,
+        )
+        .bind(pais)
+        .first(),
+    );
+  if (enciende && falta && !conPrepago)
     throw new ErrorDatos(
       falta === 'tarifas'
         ? 'Este país no tiene tarifas escritas: no se puede encender ningún método de pago.'
