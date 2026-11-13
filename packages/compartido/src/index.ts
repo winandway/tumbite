@@ -94,3 +94,4 @@ export * from './comanda';
 export * from './escpos';
 export * from './enlacesTiendas';
 export * from './smsConsentimiento';
+export * from './perfilPasajeros';

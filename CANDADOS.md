@@ -3616,3 +3616,12 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Canario:** la pieza `viajes` de `/datos/salud` (`saludViajes`) cuenta las tarifas activas en una moneda que la comisión del país no cubre: si hay alguna, «error».
 - **Prueba:** `apps/servidor/src/rutas/comisionMoneda.test.ts` (3), comprobada en rojo quitando las dos llamadas y la cuenta del canario.
 - **Qué NO tocar:** no «arreglar» el canario relajando la comparación de moneda en `elegirPolitica`: la comisión se cobra en la moneda del viaje, nunca convertida.
+
+## C-MOTO-VENEZUELA · Caracas de pruebas, en dólares, abierta con un paso del panel (13 nov 2026) — Venezuela
+
+- **Qué es:** Moto se prueba en Venezuela con Caracas como ciudad de pruebas (`CIUDAD_PRUEBAS_VENEZUELA`). Como el mercado (Ridery, Yummy, Yango [OBS], ficha `docs/investigaciones-rea/2026-11-13-moto-venezuela-tarifas.md`), el viaje se cotiza y se cobra en dólares y se paga en efectivo o por pago móvil.
+- **Cómo:** `POST /datos/admin/viajes/ciudades` (superadmin) crea o pone al día la ciudad (moneda del perfil del país), le pone la tarifa (`TARIFA_MOTO_VENEZUELA` si no se escribe otra), enciende Moto ahí y deja Comida «próximamente» si el país no tiene tarifas de comida. Antes de escribir nada pasa por la compuerta del servicio (`exigirPuedeEncender`) y por C-COMISION-MONEDA. Otra ciudad = el mismo paso con otro código, nombre y centro: nada de código.
+- **Comisión:** `schema.sql` siembra `prepago-ve-ride-usd` y `prepago-ve-car-usd` (el mismo 10 % ya aprobado, en dólares). Las de bolívares no se tocan.
+- **Perfil del país:** `packages/compartido/src/perfilPasajeros.ts` es la única pieza que dice, por país, moneda de los viajes, métodos de pago, papeles del conductor y cómo se verifican los antecedentes.
+- **Prueba:** `apps/servidor/src/rutas/motoVenezuela.test.ts` («Caracas se abre con un paso del panel»), comprobada en rojo quitando la política en dólares.
+- **Qué NO tocar:** no cambiar la moneda de la ciudad a bolívares sin crear antes la tarifa en bolívares (la comisión en VES ya existe); no subir el porcentaje sin orden de Richard.

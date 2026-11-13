@@ -759,6 +759,16 @@ const VERSION = z
  * Única excepción (C-MOTO-SOLO-PRUEBAS): en el sitio de pruebas se enciende el que se está
  * construyendo (Moto), para probarlo de punta a punta. En producción, nunca.
  */
+/** Antes de escribir nada: ¿se puede encender este servicio aquí? (lo usa «abrir ciudad»). */
+export async function exigirPuedeEncender(c: Ctx, id: string) {
+  const s = await base(c)
+    .prepare('SELECT transporta_personas FROM servicios WHERE id = ?')
+    .bind(id)
+    .first<{ transporta_personas: number }>();
+  if (!s) throw new ErrorDatos('Ese servicio no existe.', undefined, 404);
+  bloquearPasajeros(c, id, s.transporta_personas, 'disponible');
+}
+
 function bloquearPasajeros(c: Ctx, id: string, transporta: number, estado: string | undefined) {
   if (entornoDe(c.req.url) === 'pruebas' && SERVICIOS_EN_PRUEBA.has(id)) return;
   if (transporta === 1 && estado === 'disponible')
@@ -849,8 +859,33 @@ servicios.put('/admin/servicios/:id', async (c) => {
 
 servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
   const admin = exigir(c, 'admin');
-  const db = base(c);
   const { id, zona } = c.req.param();
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      estado: z.enum(['disponible', 'proximamente', 'suspendido', 'no_disponible']),
+      activoDesde: FECHA,
+      activoHasta: FECHA,
+      motivo: z.string().trim().max(200).default(''),
+    }),
+  );
+  return c.json({ zona: await cambiarServicioEnZona(c, admin.id, id, zona, d) });
+});
+
+/** Cambia el estado de un servicio en una zona con todas sus compuertas (panel y «abrir ciudad»). */
+export async function cambiarServicioEnZona(
+  c: Ctx,
+  adminId: string,
+  id: string,
+  zona: string,
+  d: {
+    estado: 'disponible' | 'proximamente' | 'suspendido' | 'no_disponible';
+    activoDesde?: string | null;
+    activoHasta?: string | null;
+    motivo: string;
+  },
+) {
+  const db = base(c);
   const s = await db
     .prepare('SELECT transporta_personas FROM servicios WHERE id = ?')
     .bind(id)
@@ -861,15 +896,6 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
     .bind(zona)
     .first<{ pais: string; moneda: string }>();
   if (!laZona) throw new ErrorDatos('Esa zona no existe.', undefined, 404);
-  const d = await leerCuerpo(
-    c,
-    z.object({
-      estado: z.enum(['disponible', 'proximamente', 'suspendido', 'no_disponible']),
-      activoDesde: FECHA,
-      activoHasta: FECHA,
-      motivo: z.string().trim().max(200).default(''),
-    }),
-  );
   bloquearPasajeros(c, id, s.transporta_personas, d.estado);
   // C-COMISION-MONEDA: un viaje no se enciende en una ciudad cuya moneda la comisión no cubre.
   if (d.estado === 'disponible' && SERVICIOS_VIAJE_SET.has(id))
@@ -887,16 +913,52 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
            activo_hasta = excluded.activo_hasta, motivo = excluded.motivo, actualizado_por = excluded.actualizado_por,
            actualizado_en = datetime('now')`,
       )
-      .bind(id, zona, d.estado, d.activoDesde ?? null, d.activoHasta ?? null, d.motivo, admin.id)
+      .bind(id, zona, d.estado, d.activoDesde ?? null, d.activoHasta ?? null, d.motivo, adminId)
       .run(),
   );
   const despues = await db
     .prepare('SELECT * FROM servicios_zona WHERE servicio_id = ? AND zona_id = ?')
     .bind(id, zona)
     .first();
-  await auditar(db, admin.id, 'servicio.zona', `servicio:${id}:${zona}`, antes, despues);
-  return c.json({ zona: despues });
-});
+  await auditar(db, adminId, 'servicio.zona', `servicio:${id}:${zona}`, antes, despues);
+  return despues;
+}
+
+/**
+ * Encender un servicio de viajes en una zona, también el servicio en general si estaba apagado
+ * (el estado efectivo exige los dos). Devuelve el estado que queda en la zona.
+ */
+export async function encenderServicioEnZona(
+  c: Ctx,
+  adminId: string,
+  id: string,
+  zona: string,
+  motivo: string,
+): Promise<string> {
+  const db = base(c);
+  const s = await db
+    .prepare('SELECT estado, transporta_personas FROM servicios WHERE id = ?')
+    .bind(id)
+    .first<{ estado: string; transporta_personas: number }>();
+  if (!s) throw new ErrorDatos('Ese servicio no existe.', undefined, 404);
+  if (s.estado !== 'disponible') {
+    bloquearPasajeros(c, id, s.transporta_personas, 'disponible');
+    await conRestricciones(
+      db
+        .prepare(
+          "UPDATE servicios SET estado = 'disponible', actualizado_en = datetime('now'), actualizado_por = ? WHERE id = ?",
+        )
+        .bind(adminId, id)
+        .run(),
+    );
+    await auditar(db, adminId, 'servicio.editar', `servicio:${id}`, s, { estado: 'disponible' });
+  }
+  const r = await cambiarServicioEnZona(c, adminId, id, zona, {
+    estado: 'disponible',
+    motivo: motivo.slice(0, 200),
+  });
+  return String((r as { estado?: string } | null)?.estado ?? 'disponible');
+}
 
 // C-DESPACHO-CATALOGO (NXT-6): el interruptor por zona del reparto de Comida por catálogo.
 servicios.get('/admin/despacho-catalogo', async (c) => {

@@ -17,6 +17,8 @@ import {
   tarifaXl,
   estimarRuta,
   numeroEmergencia,
+  perfilPasajeros,
+  TARIFA_MOTO_VENEZUELA,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
@@ -29,7 +31,8 @@ import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro'
 import { pinParaViajeNuevo } from './ajustesViaje';
 import { revisarDesvio } from './seguridadViaje';
 import { enviarSms } from '../sms';
-import { estadoServicioEnZona } from './servicios';
+import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } from './servicios';
+import { leerConfigPais, MONEDA_POR_PAIS, paisIncompleto } from '../internacional/paises';
 import { zonaPara } from './zonas';
 
 /**
@@ -144,7 +147,6 @@ viajesPasajero.get('/admin/viajes/tarifas', async (c) => {
  */
 viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
   const admin = exigir(c, 'admin');
-  const db = base(c);
   const d = await leerCuerpo(
     c,
     z.object({
@@ -155,6 +157,22 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
       motivo: z.string().trim().min(3).max(200),
     }),
   );
+  const nueva = await guardarTarifaViaje(base(c), admin.id, d);
+  return c.json({ tarifa: nueva ? tarifaPublica(nueva) : null }, 201);
+});
+
+/** Una versión nueva de la tarifa de un servicio en una ciudad (la usan el panel y «abrir ciudad»). */
+export async function guardarTarifaViaje(
+  db: D1Database,
+  adminId: string,
+  d: {
+    servicio: (typeof SERVICIOS_VIAJE)[number];
+    zona: string;
+    tarifa: TarifaViaje;
+    dePrueba: boolean;
+    motivo: string;
+  },
+): Promise<FilaTarifa | null> {
   const zona = await db
     .prepare('SELECT id, pais, moneda FROM zonas WHERE id = ?')
     .bind(d.zona)
@@ -200,7 +218,7 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         t.velocidadKmh,
         d.dePrueba ? 1 : 0,
         d.motivo,
-        admin.id,
+        adminId,
         t.xlPb ?? null,
         t.valorMaximo ?? null,
       ),
@@ -209,18 +227,99 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
         'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
       )
       .bind(
-        admin.id,
+        adminId,
         'viaje.tarifa',
         `tarifa:${d.servicio}:${zona.id}`,
         JSON.stringify(antes ?? null),
         JSON.stringify({ id, ...t, dePrueba: d.dePrueba, motivo: d.motivo }),
       ),
   ]);
-  const nueva = await db
-    .prepare('SELECT * FROM tarifas_viaje WHERE id = ?')
-    .bind(id)
-    .first<FilaTarifa>();
-  return c.json({ tarifa: nueva ? tarifaPublica(nueva) : null }, 201);
+  return db.prepare('SELECT * FROM tarifas_viaje WHERE id = ?').bind(id).first<FilaTarifa>();
+}
+
+/**
+ * C-MOTO-VENEZUELA: abrir un servicio de viajes en una ciudad es UN paso del panel (no código): crea
+ * o pone al día la ciudad, le pone la tarifa (la de mercado del país si no se escribe otra) y
+ * enciende el servicio en esa ciudad. Comida queda «próximamente» en una ciudad nueva cuyo país
+ * todavía no tiene tarifas de comida. En producción manda la compuerta del país (C-MOTO-POR-PAIS).
+ */
+viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      servicio: z.enum(SERVICIOS_VIAJE),
+      zona: z.object({
+        id: z
+          .string()
+          .trim()
+          .regex(/^[A-Z]{2}-[A-Z0-9]{2,3}-[A-Z0-9-]{2,30}$/, {
+            error: 'El código de la ciudad va como VE-CCS-CENTRO.',
+          }),
+        nombre: z.string().trim().min(2).max(60),
+        lat: z.number().min(-90).max(90),
+        lng: z.number().min(-180).max(180),
+        radioKm: z.number().min(1).max(100).default(25),
+        zonaHoraria: z.string().trim().min(3).max(60),
+        moneda: z.string().trim().length(3).toUpperCase().optional(),
+      }),
+      tarifa: esquemaTarifaViaje.optional(),
+      motivo: z.string().trim().min(3).max(200),
+    }),
+  );
+  const pais = d.zona.id.slice(0, 2);
+  const perfil = perfilPasajeros(pais);
+  const moneda =
+    d.zona.moneda ??
+    perfil.monedaViajes ??
+    new Map(Object.entries(MONEDA_POR_PAIS)).get(pais) ??
+    'USD';
+  const tarifa =
+    d.tarifa ?? (pais === 'VE' && d.servicio === 'moto' ? TARIFA_MOTO_VENEZUELA : null);
+  if (!tarifa)
+    throw new ErrorDatos('Escribe la tarifa del servicio para esta ciudad.', 'tarifa', 422);
+  // Antes de tocar nada: la compuerta del servicio y la comisión en la moneda de la ciudad.
+  await exigirPuedeEncender(c, d.servicio);
+  await exigirComisionEnMoneda(db, d.servicio, { pais, moneda });
+  const existia = await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(d.zona.id).first();
+  await db
+    .prepare(
+      `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+       ON CONFLICT(id) DO UPDATE SET nombre = excluded.nombre, moneda = excluded.moneda, zona_horaria = excluded.zona_horaria,
+         lat = excluded.lat, lng = excluded.lng, radio_km = excluded.radio_km, activa = 1`,
+    )
+    .bind(
+      d.zona.id,
+      d.zona.nombre,
+      pais,
+      moneda,
+      d.zona.zonaHoraria,
+      d.zona.lat,
+      d.zona.lng,
+      d.zona.radioKm,
+    )
+    .run();
+  if (!existia && paisIncompleto(pais, await leerConfigPais(db, pais)))
+    await db
+      .prepare(
+        `UPDATE servicios_zona SET estado = 'proximamente', motivo = 'ciudad abierta solo para viajes', actualizado_por = ?,
+           actualizado_en = datetime('now') WHERE servicio_id = 'comida' AND zona_id = ?`,
+      )
+      .bind(admin.id, d.zona.id)
+      .run();
+  const fila = await guardarTarifaViaje(db, admin.id, {
+    servicio: d.servicio,
+    zona: d.zona.id,
+    tarifa,
+    dePrueba: true,
+    motivo: d.motivo,
+  });
+  const estado = await encenderServicioEnZona(c, admin.id, d.servicio, d.zona.id, d.motivo);
+  return c.json(
+    { zona: { id: d.zona.id, pais, moneda }, tarifa: fila ? tarifaPublica(fila) : null, estado },
+    201,
+  );
 });
 
 // ---------------------------------------------------------------- pasajero

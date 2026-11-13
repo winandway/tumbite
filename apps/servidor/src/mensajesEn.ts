@@ -1722,6 +1722,9 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your prepaid balance doesn’t cover the commission for this ride. Top up to accept it.',
   ],
   ['Este viaje ya terminó.', 'This ride has already ended.'],
+  // C-MOTO-VENEZUELA (13 nov 2026).
+  ['Escribe la tarifa del servicio para esta ciudad.', 'Enter the service fare for this city.'],
+  ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
   ['Este enlace no existe.', 'This link doesn’t exist.'],
   ['Esa cotización no existe.', 'That quote doesn’t exist.'],
   [

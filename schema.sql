@@ -2305,6 +2305,13 @@ INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, 
   ('prepago-co-ride', 'Moto · conductores · CO', 'ride', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
   ('prepago-co-car', 'Carro · conductores · CO', 'car', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS'),
   ('prepago-co-express', 'Envíos · conductores · CO', 'express', 'conductor', 'CO', 'prepago', 'COP', '{"tipo":"porcentaje","pb":1000}', '2026-11-02 00:00:00', 1, 'Permiso comercial y legal del prepago por país dado por Richard el 2 nov 2026. Comisión del 10 % como inDrive (9 % a 12 %); Ridery 25 %, Uber 10 % a 25 %. Fuentes en docs/investigaciones-rea/2026-11-02-comision-prepago-conductores.md.', 'C-PREPAGO-MERCADOS');
+-- C-MOTO-VENEZUELA (13 nov 2026): en Venezuela el precio de la moto se muestra y se cobra en dólares
+-- (Ridery, Yummy, Yango; docs/investigaciones-rea/2026-11-13-moto-venezuela-tarifas.md). La comisión
+-- del prepago tiene que estar en la MISMA moneda del viaje (C-COMISION-MONEDA): el mismo 10 % ya
+-- aprobado, ahora también en dólares. No cambia el porcentaje ni las políticas en bolívares.
+INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada, revision_legal_nota, motivo) VALUES
+  ('prepago-ve-ride-usd', 'Moto · conductores · VE · USD', 'ride', 'conductor', 'VE', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-11-13 00:00:00', 1, 'El mismo 10 % aprobado por Richard el 2 nov 2026 (C-PREPAGO-MERCADOS), en dólares porque el mercado venezolano cobra la moto en dólares.', 'C-MOTO-VENEZUELA'),
+  ('prepago-ve-car-usd', 'Carro · conductores · VE · USD', 'car', 'conductor', 'VE', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-11-13 00:00:00', 1, 'El mismo 10 % aprobado por Richard el 2 nov 2026 (C-PREPAGO-MERCADOS), en dólares porque el mercado venezolano cobra en dólares.', 'C-MOTO-VENEZUELA');
 
 -- Interruptor público de lanzamiento por ciudad (F17): la web dice «Ya estamos» o «Muy pronto»
 -- según esta tabla. Sin fila, manda la lista de la web (todas «muy pronto»).
