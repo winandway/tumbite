@@ -374,6 +374,31 @@ describe('ciclo del pedido', () => {
     ).toBe(409);
   });
 
+  it('C-RESTAURANTE-DOBLE-TOQUE: el segundo toque en «Aceptar» y en «Listo» del restaurante responde ok y no repite nada', async () => {
+    // Lo encontró el simulador de compras (13 nov 2026): la tableta lenta manda dos veces el toque.
+    const { m, dueno, pedidoPagado } = await escenario();
+    const id = await pedidoPagado();
+    const aceptar = () =>
+      m.llamar('POST', `/datos/restaurante/pedidos/${id}/aceptar`, { minutos: 5 }, dueno.token);
+    const listo = () => m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token);
+    expect((await aceptar()).estado).toBe(200);
+    const otraVez = await aceptar();
+    expect(otraVez.estado).toBe(200);
+    expect((await listo()).estado).toBe(200);
+    expect((await listo()).estado).toBe(200);
+    const anotados = await m.DB.prepare(
+      "SELECT estado, COUNT(*) AS n FROM historial_estados WHERE pedido_id = ? AND estado IN ('aceptado','listo') GROUP BY estado",
+    )
+      .bind(id)
+      .all<{ estado: string; n: number }>();
+    expect(Object.fromEntries(anotados.results.map((f) => [f.estado, f.n]))).toEqual({
+      aceptado: 1,
+      listo: 1,
+    });
+    // Lo que de verdad cambió sigue avisando: un pedido ya listo no se vuelve a aceptar.
+    expect((await aceptar()).estado).toBe(409);
+  });
+
   it('a igual distancia gana el de nivel más alto', async () => {
     const { m, dueno, pedidoPagado, repartidor } = await escenario();
     const novato = await repartidor('Novato', 25.7701, -80.1901);
@@ -1233,6 +1258,39 @@ describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que s
         )
       ).estado,
     ).toBe(409);
+  });
+
+  it('C-FOTO-RECOGIDA-REPETIDA: la foto de la bolsa mandada dos veces (a la vez o tras un corte) responde ok y sale una sola vez', async () => {
+    // Lo encontró el simulador de compras (13 nov 2026): con el código ya leído, la segunda foto
+    // respondía «Este pedido ya cambió de estado» (a la vez) o «todavía no marcó listo» (después).
+    const { m, rep, id } = await hastaListo();
+    const verificar = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/verificar`,
+      { codigo: id },
+      rep.token,
+    );
+    expect(verificar.estado).toBe(200);
+    const ruta = `/datos/repartidor/pedidos/${id}/foto-recogida`;
+    const donde = { lat: 25.7701, lng: -80.1901 };
+    const [a, b] = await Promise.all([
+      m.foto(ruta, rep.token, donde),
+      m.foto(ruta, rep.token, donde),
+    ]);
+    expect([a.estado, b.estado]).toEqual([200, 200]);
+    expect(await estado(m, id)).toBe('en_camino');
+    const otraVez = await m.foto(ruta, rep.token, donde);
+    expect(otraVez.estado).toBe(200);
+    expect(otraVez.datos.salio).toBe(true);
+    const enCamino = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM historial_estados WHERE pedido_id = ? AND estado = 'en_camino'",
+    )
+      .bind(id)
+      .first<{ n: number }>();
+    expect(enCamino?.n).toBe(1);
+    // Un repartidor ajeno sigue sin poder tocarlo.
+    const ajeno = await m.cuenta('repartidor', 'Ajeno Foto');
+    expect((await m.foto(ruta, ajeno.token, donde)).estado).toBe(409);
   });
 
   it('en mano: sin foto, pero solo en la puerta; queda anotado cómo se entregó', async () => {

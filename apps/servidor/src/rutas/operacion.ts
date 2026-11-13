@@ -262,8 +262,16 @@ async function salirEnCamino(env: Env, db: D1Database, id: string, actorId: stri
     )
     .bind(id)
     .run();
-  if (!r.meta.changes)
+  if (!r.meta.changes) {
+    // C-FOTO-RECOGIDA-REPETIDA (13 nov 2026, simulador de compras): la foto o el código llegaron dos
+    // veces a la vez y el otro ya lo hizo salir. Ya salió: no es un error ni se repite nada.
+    const ya = await db
+      .prepare("SELECT 1 FROM pedidos WHERE id = ? AND estado = 'en_camino'")
+      .bind(id)
+      .first();
+    if (ya) return;
     throw new ErrorDatos('Este pedido ya cambió de estado. Actualiza la pantalla.', undefined, 409);
+  }
   await anotar(db, id, 'en_camino', actorId);
   await db
     .prepare(
@@ -577,9 +585,20 @@ async function cambiarEstado(
     )
     .bind(a, ...valores, id, rid, ...desde)
     .run();
-  if (!r.meta.changes)
+  if (!r.meta.changes) {
+    // C-RESTAURANTE-DOBLE-TOQUE (13 nov 2026, lo encontró el simulador de compras): el segundo
+    // toque (o el reintento tras un corte) encuentra el pedido YA en el estado que pedía. No es un
+    // error: responde igual que el primero y no anota ni avisa otra vez. Cualquier otro estado
+    // sigue siendo 409.
+    const ya = await db
+      .prepare('SELECT 1 FROM pedidos WHERE id = ? AND restaurante_id = ? AND estado = ?')
+      .bind(id, rid, a)
+      .first();
+    if (ya) return false;
     throw new ErrorDatos('Este pedido ya cambió de estado. Actualiza la pantalla.', undefined, 409);
+  }
   await anotar(db, id, a, rid);
+  return true;
 }
 
 /**
@@ -609,7 +628,7 @@ export async function aceptarPedido(
   minutos: number,
 ) {
   await sinAjustePendiente(db, pedidoId);
-  await cambiarEstado(
+  const cambio = await cambiarEstado(
     db,
     pedidoId,
     rid,
@@ -618,6 +637,7 @@ export async function aceptarPedido(
     ", aceptado_en = datetime('now'), tiempo_prep_min = ?",
     [minutos],
   );
+  if (!cambio) return;
   await avisarAlCliente(env, db, pedidoId, (i, f) => AVISOS.pedidoAceptado(i, f.restaurante));
 }
 
@@ -646,7 +666,10 @@ export async function aceptarSiEsAutomatico(env: Env, db: D1Database, pedidoId: 
 /** Marcar listo (panel, app y API de punto de venta). */
 export async function marcarListo(env: Env, db: D1Database, pedidoId: string, rid: string) {
   await sinAjustePendiente(db, pedidoId);
-  await cambiarEstado(db, pedidoId, rid, ['aceptado'], 'listo', ", listo_en = datetime('now')");
+  if (
+    !(await cambiarEstado(db, pedidoId, rid, ['aceptado'], 'listo', ", listo_en = datetime('now')"))
+  )
+    return;
   await avisarAlCliente(env, db, pedidoId, (i, f) => AVISOS.listo(i, f.restaurante));
   await avisarAlRepartidor(env, db, pedidoId, (i, f) => AVISOS.repListo(i, f.restaurante));
 }
@@ -2341,8 +2364,17 @@ operacion.post('/repartidor/pedidos/:id/foto-recogida', async (c) => {
     )
     .bind(id, u.id)
     .first<{ lat: number | null; lng: number | null }>();
-  if (!p)
+  if (!p) {
+    // C-FOTO-RECOGIDA-REPETIDA: la app reintenta la foto (corte de red, doble toque) y el pedido
+    // ya salió con este repartidor: responde como la primera vez, sin escribir nada.
+    const salio = await db
+      .prepare("SELECT 1 FROM pedidos WHERE id = ? AND repartidor_id = ? AND estado = 'en_camino'")
+      .bind(id, u.id)
+      .first();
+    if (salio)
+      return c.json({ ok: true, salio: true, url: `/datos/pedidos/${id}/evidencia/recogida` });
     throw new ErrorDatos('El restaurante todavía no marcó el pedido como listo.', undefined, 409);
+  }
   // Cobro directo: sin el pago de la comida registrado (monto, ticket, método), no sale.
   await exigirPagoLocal(db, id);
   const foto = await leerFoto(c);

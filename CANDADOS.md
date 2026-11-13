@@ -3535,3 +3535,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo se comprueba:** `e2e/recorrido/instalable.spec.ts` (corre en cada verificación y contra el sitio de pruebas). Comprobado en rojo quitando el enlace del manifiesto de la app del cliente.
 - **Qué NO hay que tocar:** el orden `claro.mjs` → `instalable.mjs` en los tres guiones de `package.json`.
 - **Límites de la versión instalada desde la web en iPhone:** no recibe avisos al celular (hace falta construir los avisos web) y no manda la ubicación con la pantalla apagada; el código de recogida se escribe, no se escanea.
+
+## C-RESTAURANTE-DOBLE-TOQUE y C-FOTO-RECOGIDA-REPETIDA (13 nov 2026, los encontró el simulador de compras) — todos los países
+
+- **Qué pasaba:** el simulador de compras (`npm run simulador`, escenarios «Doble toque del restaurante…» y «Doble toque del repartidor…») mandó cada toque dos veces, como lo hace una tableta o un celular lento:
+  - el segundo «Aceptar» o «Listo» del restaurante respondía 409 «Este pedido ya cambió de estado. Actualiza la pantalla.» con el pedido ya aceptado o listo (error en rojo después del éxito, el mismo caso que C-ACEPTAR-DOBLE-TOQUE del repartidor);
+  - la foto de la bolsa mandada dos veces con el código ya leído: la segunda respondía 409 «Este pedido ya cambió de estado» (a la vez) o «El restaurante todavía no marcó el pedido como listo» (después de un corte), con el pedido ya en camino.
+- **Causa:** `cambiarEstado` y `salirEnCamino` (`apps/servidor/src/rutas/operacion.ts`) daban 409 cuando su `UPDATE … WHERE estado = …` no cambiaba nada, sin mirar si el pedido ya estaba justo en el estado pedido; `/repartidor/pedidos/:id/foto-recogida` solo aceptaba pedidos en `listo`.
+- **Qué se hizo:** si el `UPDATE` no cambió nada y el pedido YA está en el estado que se pedía (del mismo restaurante, o en camino con ese repartidor), se responde como la primera vez, sin anotar el estado otra vez y sin repetir avisos. Cualquier otro estado sigue en 409 (un pedido listo no se vuelve a aceptar; un repartidor ajeno no toca la foto).
+- **Pruebas** (comprobadas en rojo antes del arreglo): `operacion.test.ts` «C-RESTAURANTE-DOBLE-TOQUE» y «C-FOTO-RECOGIDA-REPETIDA»; y el simulador, que las encontró. `transicionesRutas.test.ts` («reintentos duplicados») se puso al día: el segundo toque responde 200 en vez de 409 y sigue sin cambiar nada ni tocar el dinero (historial con dos estados, ninguna anulación ni devolución).
+- **No tocar:** la comprobación «ya está en ese estado» va solo cuando el `UPDATE` no cambió nada; nunca convertir en éxito un estado distinto del pedido.

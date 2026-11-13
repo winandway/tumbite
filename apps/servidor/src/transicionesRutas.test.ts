@@ -140,13 +140,26 @@ describe('transiciones del pedido por las rutas reales (C-TRANSICIONES-PEDIDO)',
           dueno.token,
         )
       ).estado,
-    ).toBe(409);
+      // C-RESTAURANTE-DOBLE-TOQUE (13 nov 2026): el reintento de lo mismo responde como el primero
+      // (antes 409, un error en rojo con el pedido ya aceptado); sigue sin cambiar nada.
+    ).toBe(200);
     expect(await estado(id)).toBe('aceptado');
     expect(
       (await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token)).estado,
     ).toBe(200);
     expect(
       (await m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, dueno.token)).estado,
+    ).toBe(200);
+    // Lo que de verdad cambió sigue en 409: un pedido ya listo no se vuelve a aceptar.
+    expect(
+      (
+        await m.llamar(
+          'POST',
+          `/datos/restaurante/pedidos/${id}/aceptar`,
+          { minutos: 10 },
+          dueno.token,
+        )
+      ).estado,
     ).toBe(409);
     // Ya listo: rechazar no se puede (ni dos veces), y no se anula ni devuelve nada.
     const antes = veces(/\/(payment_intents\/[^/]+\/cancel|refunds)$/);
