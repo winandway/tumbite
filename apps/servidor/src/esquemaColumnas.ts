@@ -964,6 +964,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "frenada",
     "creada_en"
   ],
+  "vueltas_pruebas_rutas": [
+    "vuelta",
+    "ruta",
+    "leidas",
+    "escritas",
+    "veces"
+  ],
   "peticiones_internas": [
     "nonce",
     "llave_id",

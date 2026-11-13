@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { app } from './app';
 import { mundo } from './pruebas/ayuda';
-import { TOPE_DIA_PRUEBAS, TOPE_VUELTA_PRUEBAS, saludVueltasPruebas } from './vueltaPruebas';
+import {
+  TOPE_DIA_PRUEBAS,
+  TOPE_VUELTA_PRUEBAS,
+  cuentaVuelta,
+  saludVueltasPruebas,
+} from './vueltaPruebas';
 
 /**
  * C-PRESUPUESTO-VUELTA-PRUEBAS (12 nov 2026, todos los países): cada vuelta de pruebas
@@ -50,6 +55,16 @@ describe('C-PRESUPUESTO-VUELTA-PRUEBAS', () => {
     const f = await fila('continuas-1001-1');
     expect(f?.peticiones).toBe(1);
     expect(f?.escritas).toBeGreaterThan(0);
+  });
+
+  it('una petición liviana no deja su ruta; la cuenta de la vuelta trae la lista de pesadas', async () => {
+    const { m, registrar } = preparar();
+    await registrar('continuas-1009-1');
+    const n = (await m.DB.prepare('SELECT COUNT(*) AS n FROM vueltas_pruebas_rutas').first()) as {
+      n: number;
+    };
+    expect(n.n).toBe(0);
+    expect((await cuentaVuelta(m.DB, 'continuas-1009-1')).pesadas).toEqual([]);
   });
 
   it('sin la cabecera no se anota nada, y en producción la cabecera se ignora', async () => {

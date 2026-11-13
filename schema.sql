@@ -1610,6 +1610,16 @@ CREATE TABLE IF NOT EXISTS vueltas_pruebas (
   creada_en TEXT NOT NULL
 );
 
+-- C-LECTURAS-VUELTA: las peticiones pesadas de cada vuelta, por ruta (para bajar las lecturas).
+CREATE TABLE IF NOT EXISTS vueltas_pruebas_rutas (
+  vuelta TEXT NOT NULL,
+  ruta TEXT NOT NULL,
+  leidas INTEGER NOT NULL DEFAULT 0,
+  escritas INTEGER NOT NULL DEFAULT 0,
+  veces INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (vuelta, ruta)
+);
+
 -- Cada llamada interna firmada se acepta una sola vez (protección contra repetición).
 CREATE TABLE IF NOT EXISTS peticiones_internas (
   nonce TEXT PRIMARY KEY CHECK (length(nonce) BETWEEN 16 AND 64),

@@ -81,8 +81,29 @@ export const presupuestoVueltaPruebas: MiddlewareHandler<{ Bindings: Env }> = as
         .bind(id, dia, contada.cuenta.leidas, contada.cuenta.escritas, new Date().toISOString())
         .run()
         .catch((e: unknown) => console.error('vuelta de pruebas: no se pudo anotar la cuenta', e));
+    // C-LECTURAS-VUELTA: solo las peticiones pesadas dejan su ruta, para encontrar a la culpable
+    // sin gastar una fila por cada petición.
+    if (contada.cuenta.escritas > 0 && contada.cuenta.leidas >= LECTURAS_PESADAS)
+      await real
+        .prepare(
+          `INSERT INTO vueltas_pruebas_rutas (vuelta, ruta, leidas, escritas, veces)
+           VALUES (?, ?, ?, ?, 1)
+           ON CONFLICT(vuelta, ruta) DO UPDATE SET leidas = leidas + excluded.leidas,
+             escritas = escritas + excluded.escritas, veces = veces + 1`,
+        )
+        .bind(
+          id,
+          `${c.req.method} ${c.req.routePath}`.slice(0, 120),
+          contada.cuenta.leidas,
+          contada.cuenta.escritas,
+        )
+        .run()
+        .catch((e: unknown) => console.error('vuelta de pruebas: no se pudo anotar la ruta', e));
   }
 };
+
+/** Desde cuántas filas leídas una petición se anota con su ruta. */
+export const LECTURAS_PESADAS = 2_000;
 
 /** La cuenta de una vuelta y la del día (para el final de la corrida y para Gerencia). */
 export async function cuentaVuelta(db: D1Database, id: string) {
@@ -98,7 +119,18 @@ export async function cuentaVuelta(db: D1Database, id: string) {
     )
     .bind(hoy())
     .first()) as { vueltas: number; escritas: number } | null;
-  return { vuelta, hoy: dia, topes: { vuelta: topeDeVuelta(id), dia: TOPE_DIA_PRUEBAS } };
+  const pesadas = await db
+    .prepare(
+      'SELECT ruta, leidas, escritas, veces FROM vueltas_pruebas_rutas WHERE vuelta = ? ORDER BY leidas DESC LIMIT 12',
+    )
+    .bind(id)
+    .all();
+  return {
+    vuelta,
+    hoy: dia,
+    pesadas: pesadas.results,
+    topes: { vuelta: topeDeVuelta(id), dia: TOPE_DIA_PRUEBAS },
+  };
 }
 
 /** Canario: rojo si hoy se frenó una vuelta o el día pasó del tope. En producción no aplica. */
