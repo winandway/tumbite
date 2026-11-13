@@ -3571,3 +3571,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cuentas:** se reutilizan entre sesiones (correos fijos `ciudad.<rol><n>@simulador.test`, clave derivada del secreto); el menú no se duplica.
 - **Pruebas:** `ciudadPruebas.test.ts` (en producción no existe, comprobado en rojo quitando la guarda; sin secreto no escribe; sin ser admin no se mira; mirar escribe 0 filas; empezar, avanzar, parar y terminar), `SuperCiudad.test.tsx` (cifras, repartidores, fallos, «Parar» y la pantalla sin sesión en inglés) y `simulador/nucleo/nucleo.test.ts` (la sesión no pasa de la concurrencia y deja de empezar cuando se le pide).
 - **No tocar:** no quitar `soloPruebas` de ninguna de las tres rutas; no agregar a la pantalla consultas sin filtro por la sesión ni sin límite; no escribir nada en el GET.
+
+## C-FLEX-MARGEN (13 nov 2026, Richard) — todos los países
+
+- **Qué se veía:** en `/panel/business`, «Mis empresas» y «Crear empresa» de Divoox Flex salían pegadas al borde izquierdo, sin margen, con los títulos casi cortados.
+- **Causa:** `.contenido-flex` quita el relleno del contenedor porque la vista de una empresa trae su propio menú lateral; las páginas sin menú (lista, crear empresa, invitación) se quedaban sin ningún relleno.
+- **Arreglo:** `apps/panel/src/estilos.css`, regla `.contenido-flex > section.flex-panel` (centrada, ancho máximo 880, relleno 32/24 y 24/16 en celular).
+- **Cómo se comprueba:** `e2e/recorrido/flexMargen.spec.ts` (computadora y celular), comprobada en rojo quitando la regla. Capturas en `docs/capturas/recorrido/flex-margen-*.png`.

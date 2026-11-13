@@ -4233,6 +4233,20 @@ button {
   max-width: none;
   padding: 0;
 }
+/* C-FLEX-MARGEN (13 nov 2026): las páginas de Flex sin menú lateral (mis empresas, crear empresa,
+   invitación) quedaban pegadas al borde izquierdo porque el contenedor no tiene relleno. */
+.contenido-flex > section.flex-panel {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+@media (max-width: 720px) {
+  .contenido-flex > section.flex-panel {
+    padding: 24px 16px;
+  }
+}
 .flex-panel.super h1 {
   margin-top: 0;
 }
