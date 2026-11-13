@@ -18,6 +18,7 @@
 - [ ] (SIM-4) Primera corrida del flujo `simulador` en el sitio de pruebas (libreto diario y una sesión de ciudad corta): anotar las filas de `FILA-VUELTA` y, si algo falla allá, arreglarlo. Necesita el push de esta rama (el secreto vive solo en GitHub).
 - [ ] (SIM-5) Capa «película»: el pedido feliz por las PANTALLAS de las tres apps web, reutilizando los pasos de `e2e/recorrido/recorrido.spec.ts` (sacarlos a funciones, sin copiar las 2.200 líneas) y una captura por paso de cada actor en el reporte del simulador.
 - [ ] (SIM-6) Capa nativa Android primero (Richard: Android obligatorio para repartidores y restaurantes): dos o tres recorridos críticos con Maestro local en el emulador, coordinados por el estado del servidor (ficha, punto 6).
+- [ ] (SIM-7, idea de Richard, 13 nov) Ciudad de pruebas en modo juego: una persona (su hijo, el equipo) pide desde la app real del cliente en el sitio de pruebas y los restaurantes y repartidores son robots que aceptan, preparan y entregan; pantalla grande con el mapa de la ciudad y las motos moviéndose; pago con saldo de juego (sin tarjeta); reporte por jugador de lo que compró y de los fallos que encontró. Va después de SIM-5 y SIM-6. Todos los países.
 
 ## Lecturas de la base por petición (13 nov 2026, orden de Gerencia; regla «la nube no se come el dinero») — todos los países
 
