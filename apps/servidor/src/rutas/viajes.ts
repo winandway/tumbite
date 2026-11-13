@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
+import { referenciaLocal } from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { revisarSelfieCasco } from './ajustesViaje';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
@@ -147,6 +148,7 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               v.intentos_pin, v.pin_requerido, v.llego_en,
               CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS segundos_esperando,
               q.total, q.moneda, json_extract(q.tarifa_json, '$.esperaGratisS') AS espera_gratis_s,
+              (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               p.nombre AS pasajero,
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
               e.foto_recogida IS NOT NULL AS paquete_foto
@@ -162,6 +164,13 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
   return c.json({
     operacion: {
       ...f,
+      // C-BS-REFERENCIA: lo que cobra en mano, con su equivalente en bolívares (informativo).
+      referencia: await referenciaLocal(
+        base(c),
+        f.pais == null ? null : String(f.pais),
+        f.total == null ? null : Number(f.total),
+        f.moneda == null ? null : String(f.moneda),
+      ),
       pasajero: String(f.pasajero ?? '').split(' ')[0] ?? '',
       espera_gratis_s:
         f.espera_gratis_s == null ? ESPERA_GRATIS_S_POR_DEFECTO : Number(f.espera_gratis_s),
@@ -368,7 +377,17 @@ viajes.post(
       const totalFinal = await cerrarCuentaViaje(c, id, u.id);
       // C-VIAJE-TARJETA: con tarjeta, se cobra al terminar (nunca más de lo autorizado).
       if (totalFinal != null) await capturarCobroViaje(c.env, db, id, u.id, totalFinal);
-      return c.json({ ok: true, estado: paso.hacia, totalFinal });
+      // C-BS-REFERENCIA: en la pantalla de cobro, el equivalente en bolívares (solo informativo).
+      const donde = await db
+        .prepare(
+          `SELECT z.pais, q.moneda FROM operaciones o JOIN zonas z ON z.id = o.zona_id
+             JOIN viajes v ON v.operacion_id = o.id LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+            WHERE o.id = ?`,
+        )
+        .bind(id)
+        .first<{ pais: string; moneda: string | null }>();
+      const referencia = await referenciaLocal(db, donde?.pais, totalFinal, donde?.moneda);
+      return c.json({ ok: true, estado: paso.hacia, totalFinal, referencia });
     }
     if (nombre === 'no-se-presento') await devolverReservaViaje(db, id, u.id, 'no_se_presento');
     // M2: el pasajero que no se presentó debe el cargo de la tarifa copiada; en efectivo queda como

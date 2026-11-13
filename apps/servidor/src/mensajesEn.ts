@@ -1735,6 +1735,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
   ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],
   ['Desconéctate antes de cambiar de ciudad.', 'Go offline before changing your city.'],
+  [
+    'En este país los viajes no necesitan tasa de referencia.',
+    'Rides in this country don’t need a reference rate.',
+  ],
   ['El pago cambió. Actualiza la pantalla.', 'The payment changed. Refresh the screen.'],
   [
     'Solo puedes elegir una ciudad de tu país. Para cambiar de país, escribe a soporte.',

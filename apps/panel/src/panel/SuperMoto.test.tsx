@@ -78,6 +78,21 @@ function servidor(
         ],
       });
     if (u.includes('/datos/admin/vehiculos?')) return responder({ vehiculos: [] });
+    if (metodo === 'GET' && u.endsWith('/datos/admin/tasas-referencia'))
+      return responder({
+        horasVigencia: 48,
+        tasas: [
+          {
+            pais: 'VE',
+            moneda: 'VES',
+            tasa: 36.5,
+            fecha: '2026-11-11',
+            puestaEn: '2026-11-11 10:00:00',
+            puestaPor: 'Soporte Divoox',
+            vigente: false,
+          },
+        ],
+      });
     if (metodo === 'PUT' && u.endsWith('/habilitaciones/c1/moto') && op.habilitar409)
       return responder(
         { error: 'Le faltan requisitos.', requisitosFaltantes: ['licencia_moto'] },
@@ -288,5 +303,24 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
       }),
     );
     expect(await screen.findByText('Ciudad cambiada.')).toBeTruthy();
+  });
+
+  it('C-BS-REFERENCIA: la tasa vencida se dice así y guardar la de hoy manda el PUT', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    const caja = await screen.findByTestId('tasa-referencia');
+    expect(await within(caja).findByText('Vencida: ya no se muestra')).toBeTruthy();
+    await userEvent.type(
+      within(caja).getByLabelText('Tasa de hoy (bolívares por dólar)'),
+      '842,56',
+    );
+    await userEvent.click(within(caja).getByRole('button', { name: 'Guardar la tasa de hoy' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/tasas-referencia/VE'))?.cuerpo).toEqual({
+        tasa: 842.56,
+      }),
+    );
+    expect(await within(caja).findByText('Tasa guardada.')).toBeTruthy();
   });
 });
