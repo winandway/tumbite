@@ -123,6 +123,12 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 `GET /datos/salud` → `stripe` y `webhookStripe` dicen `ok` o `pendiente`; `base` dice `ok`/`error`.
 
+## 🔴 Divoox Moto en Venezuela (13 nov 2026): efectivo y pago móvil, con comisión del saldo prepago · construido, probado solo con pruebas automáticas y en el sitio de pruebas; nunca con dinero real ni en la calle
+
+- **Cómo cobra:** el viaje se cotiza en dólares (centavos); el pasajero le paga todo al conductor en efectivo o por pago móvil (confirmación MANUAL del conductor, nunca «del banco»); la comisión del 10 % se aparta del saldo prepago al aceptar y se cobra al terminar. Las recargas son códigos de un punto de venta.
+- **Probado:** `motoVenezuela.test.ts`, `motoVenezuelaRevision.test.ts` (corrección del «no me llegó»), `tasasReferencia.test.ts` (el equivalente en bolívares es solo informativo y no cambia la comisión), el guion `scripts/staging/probar-moto-venezuela.mjs` (en local dos veces en verde; en el sitio de pruebas en cada rama `fase-*`) y el simulador `--etiqueta moto`.
+- **Sin probar:** ningún viaje con dinero real, ningún pago móvil real, ninguna recarga real en un punto de venta, ningún teléfono en la calle. La compuerta de producción sigue cerrada. No lo anuncies a nadie.
+
 ## 🟢 Tiendas en el sitio de pruebas (29 oct 2026): PROBADO con Stripe de prueba de punta a punta · 🔴 sin probar con dinero real
 
 - **Qué es:** un pedido a una tienda (Mercado, Farmacia, Licores, Más) usa el MISMO circuito de cobro que comida: autoriza al pedir, cobra al entregar por el total vigente, «falta un producto» lo quita del total (C-TIENDAS-COMPRA, C-TIENDAS-FALTANTES).

@@ -12,19 +12,25 @@ Todo eso se probó con pruebas automáticas y en el sitio de pruebas, con Miami,
 
 En producción el código está publicado pero bloqueado con candado (C-MOTO-SOLO-PRUEBAS). Encenderlo no es un interruptor: es un cambio de código, y el candado dice que se hace solo con la orden de Richard. Esa orden ya llegó el 13 de noviembre para Venezuela.
 
-## Lo que falta, en orden
+## Qué quedó hecho después de la revisión (segunda vuelta del 13 de noviembre)
 
-1. Abrir Moto para Venezuela en el código, por país: que el candado deje pasar Venezuela y siga bloqueando los demás países.
-2. Crear la ciudad de Venezuela (hoy solo existe Miami en la base) con su moneda y su tarifa real copiada del mercado local. Ojo con una trampa encontrada: si la tarifa queda en dólares y la comisión está en bolívares, la comisión no se cobra y nadie avisa. Se arregla y se le pone candado.
-3. Requisitos del conductor para Venezuela. Hoy los antecedentes y el historial de manejo solo se llenan con un proveedor de Estados Unidos y el panel no puede aprobarlos a mano. Hace falta el camino venezolano: documentos subidos por el conductor y revisión manual del equipo.
-4. Pantallas que no existen: en la app del conductor, registrar su moto y subir sus papeles; en el panel, revisar motos y papeles, aprobar al conductor y encender el servicio por ciudad. Hoy eso solo existe por dentro.
-5. Recarga del saldo del conductor en Venezuela. Sin saldo no puede aceptar ningún viaje, así que sin recarga no hay servicio.
-6. Pago móvil en los viajes. Hoy el viaje solo acepta efectivo o tarjeta, y la tarjeta no sirve en Venezuela. Se construye como ya funciona en la comida: el pasajero paga por pago móvil y el conductor confirma que le llegó.
-7. Moneda: precio en dólares cobrado en bolívares con la tasa oficial, o precio directo en bolívares. Se decide como lo hace el mercado local después de estudiarlo.
-8. Distancia real por calles. Hoy se estima en línea recta por uno coma tres.
-9. Prueba de punta a punta en pantallas con las dos apps, y el simulador con viajes de moto.
-10. Prueba en la calle con teléfonos Android reales.
-11. Guías públicas de Moto con capturas reales, en español e inglés, y la web deja de decir «muy pronto» donde ya esté encendido.
+Ya están hechos, con pruebas, los puntos 1 a 7, 9 (salvo la calle) y 11 de la lista original: Moto se abre por país con la compuerta cerrada de fábrica, Caracas de pruebas existe en dólares con la tarifa del mercado, el conductor venezolano se registra con sus papeles y el equipo lo aprueba desde el panel, tiene saldo con recargas en un punto de venta, el pasajero paga en efectivo o por pago móvil, y la moneda se resolvió como el mercado: el precio va en dólares y al lado se ve su equivalente en bolívares.
+
+En esta segunda vuelta se hizo lo siguiente.
+
+Un guion de punta a punta corre en cada rama contra el sitio de pruebas y también contra esta computadora. Hace todo por la API, como las apps y el panel: abre Caracas si hace falta, el conductor se registra, el equipo lo aprueba, recarga tres dólares, el pasajero pide en efectivo, el conductor acepta, llega, arranca con el código y termina, y se comprueba que la comisión salió del saldo. Después comprueba que un conductor sin saldo no recibe la oferta, y repite el viaje por pago móvil con «sí me llegó». Usa cuentas fijas de prueba que se reutilizan: el saldo y el libro nunca se borran a mano.
+
+El simulador tiene tres escenarios nuevos de Moto en Venezuela: en efectivo, por pago móvil y el conductor sin saldo. Dos de ellos corren también en la vuelta diaria.
+
+Se arreglaron las cuatro observaciones del revisor, cada una con su prueba vista en rojo. Aprobar la identidad ya no puede dejar el registro a medias. El conductor elige su ciudad la primera vez y después solo puede cambiarla dentro de su país, una vez cada veinticuatro horas y desconectado; el equipo la cambia desde el panel con motivo. Si el conductor marcó por error que el pago móvil no le llegó, puede corregirlo una sola vez en treinta minutos y el caso de soporte se cierra solo con una nota. Y el certificado de antecedentes de Venezuela ya solo cumple los requisitos de pasajeros, no los de Envíos, Mercado o Farmacia.
+
+Los bolívares de referencia funcionan. El equipo escribe en el panel la tasa oficial del día, queda quién la puso y cuándo, y el pasajero y el conductor ven el equivalente en bolívares junto al precio en dólares en la cotización, en el viaje y en la pantalla de cobro. Si la tasa tiene más de cuarenta y ocho horas, el equivalente no se muestra. Es solo informativo: el dinero sigue en dólares y la comisión no cambia. No hay proveedor externo ni tarea automática.
+
+Se tomaron veinticuatro capturas reales, en español y en inglés, con las apps web y el servidor de esta computadora, y se publicaron cinco guías de Moto en Docs con tres capturas cada una: pedir una moto, pagar en Moto, conducir con Divoox Moto, registrar la moto y los papeles, y el saldo con las recargas. Dicen que Moto se abre ciudad por ciudad. Las dos guías de seguridad siguen guardadas porque todavía no tienen sus capturas. Al tomar las capturas apareció un fallo: la app del conductor le ofrecía a un venezolano el proveedor de antecedentes de Estados Unidos. Ya no lo hace.
+
+## Lo que queda
+
+Queda la distancia real por calles, que necesita decidir el proveedor y su costo. Queda la tarifa dinámica. Queda la prueba en la calle con teléfonos Android reales, que necesita compilar las apps, y eso solo se hace con el permiso de Gerencia. Quedan las capturas de las dos guías de seguridad. Y queda abrir la compuerta de producción, que depende de lo que sigue.
 
 ## Lo que depende solo de Richard
 

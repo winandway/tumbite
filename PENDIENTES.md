@@ -21,8 +21,10 @@
 - [ ] 👤 **Quién vende y recibe las recargas** del saldo de los mototaxistas en Venezuela (los puntos de venta autorizados y la comisión del punto). Mientras tanto el equipo de Divoox puede ser su propio punto de venta.
 - [ ] 👤 **Número de la solicitud de registro de la marca Divoox en Venezuela:** sin él la compuerta de producción no se abre (regla de Richard).
 - [ ] **Tasa BCV automática** para mostrar el precio en bolívares en el pago móvil (diseño en `docs/DISENO-TASA-VES.md`; hoy el pasajero hace la cuenta con la tasa del día).
-- [ ] **Capturas reales** de las pantallas nuevas de Moto (Driver, cliente y panel) en el sitio de pruebas para publicar las guías guardadas en `apps/panel/src/sitio/docs/borradores/moto.ts`.
-- [ ] **Escenario del simulador** de Moto en Venezuela (`simulador/divoox/`): hoy el circuito está probado por la API en `apps/servidor/src/rutas/motoVenezuela.test.ts`.
+- [x] **Capturas reales** de Moto (Driver, cliente y panel) tomadas el 13 nov en local y cinco guías publicadas en Docs (C-DOCS-MOTO). Faltan las de las guías de seguridad.
+- [x] **Escenarios del simulador** de Moto en Venezuela (`simulador/divoox/moto.ts`, etiqueta `moto`) y guion de punta a punta en cada rama (13 nov).
+- [ ] 👤 **Distancia real por calles** para cotizar Moto (hoy línea recta por 1,3): elegir el proveedor de rutas y aprobar su costo.
+- [ ] 👤 **Quién escribe cada día la tasa de referencia del BCV** en el panel (Moto · Abrir y aprobar). Sin tasa de menos de 48 horas, el equivalente en bolívares no se muestra.
 
 - [ ] **Monetización prepago multiservicio** (requisito de Richard, 27 oct 2026, `docs/REQUISITO-MONETIZACION-PREPAGO-MULTISERVICIO.md`): unificar Food en cobro directo con la capa de políticas sin cambiar su resultado; política de cancelaciones por servicio; enchufar Express, Grocery y Flex conductor cuando existan.
 - [x] **Autorización comercial y legal por mercado** para el prepago de conductores: Richard dijo «Sí» el 2 nov 2026. Encendido en Venezuela y Colombia al 10 % en Moto, Carro y Envíos (C-PREPAGO-MERCADOS); EE. UU. sigue con Stripe.
