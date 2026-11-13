@@ -63,3 +63,7 @@ cd /Users/windocellc/Divoox && npm run simulador:ciudad -- --pedidos 20 --minuto
 - **En vivo:** superadmin → «Ciudad de pruebas» (solo en el sitio de pruebas y en local; en producción no existe). Muestra pedidos por estado, clientes comprando, restaurantes vendiendo, repartidores en la zona (lista y mapa), ventas y los fallos de la sesión, y tiene el botón «Parar la sesión».
 - **Arrancar en el sitio de pruebas:** GitHub → Actions → «simulador» → Run workflow → modo «ciudad».
 - El reporte queda igual que el del libreto: un escenario por pedido, con su línea de tiempo.
+
+## Modo juego (sin GitHub, desde la pantalla)
+
+Superadmin → «Ciudad de pruebas» → «Encender la ciudad». Arma 3 restaurantes y 4 repartidores robot (cuentas fijas `juego.<rol><n>@simulador.test`) en Novi, Michigan (o en Miami si el sitio no tiene esa zona). Mientras la pantalla está abierta, cada 4 segundos manda un latido y los robots avanzan por la API real. Cualquier persona pide desde la app del cliente a un restaurante «del Robot» y paga con «Efectivo al recibir» (solo esos restaurantes, solo en pruebas y en local). «Pantalla grande» es el mapa para el televisor. Se apaga sola a los 60 minutos o a las 3.000 filas escritas. Detalle y topes: `CANDADOS.md`, C-CIUDAD-JUEGO.
