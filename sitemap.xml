@@ -63,6 +63,8 @@
   <url><loc>https://divoox.com/docs/ordering/restaurant-ratings</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/rate</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/compliments-and-reasons</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/ride-moto</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/ride-moto-pago</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/cancel-ready-order</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/bring-divoox-to-your-city</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
@@ -118,6 +120,9 @@
   <url><loc>https://divoox.com/docs/drivers/arrived-not-ready-and-help</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/levels</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/wallet</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/drive-moto</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/drive-moto-alta</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/drive-moto-saldo</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/trust</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/trust/two-person-approval</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/trust/no-signal-delivery</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
@@ -275,6 +280,8 @@
   <url><loc>https://divoox.com/es/docs/ordering/restaurant-ratings</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/rate</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/compliments-and-reasons</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/ride-moto</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/ride-moto-pago</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/cancel-ready-order</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/bring-divoox-to-your-city</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
@@ -330,6 +337,9 @@
   <url><loc>https://divoox.com/es/docs/drivers/arrived-not-ready-and-help</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/levels</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/wallet</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/drive-moto</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/drive-moto-alta</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/drive-moto-saldo</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/trust</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/trust/two-person-approval</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/trust/no-signal-delivery</loc><lastmod>2026-11-13</lastmod><priority>0.7</priority></url>
