@@ -3527,3 +3527,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo se mide:** el último paso de cada corrida imprime `FILAS-VUELTA` (`scripts/staging/cuenta-vuelta.mjs`, ruta `/datos/interno/diagnostico/vuelta`).
 - **Candado:** `vueltaPruebas.test.ts` (cinco pruebas; comprobado en rojo quitando la pieza del servidor).
 - **Qué NO tocar:** no subir los topes ni la frecuencia sin una medida nueva de `FILAS-VUELTA`. Lo que no cuenta: los avisos de Stripe y el reloj, que no llevan la cabecera.
+
+## C-APP-INSTALABLE (13 nov 2026, Richard) — todos los países
+
+- **Qué faltaba:** la versión web de las tres apps (`/app`, `/driver`, `/restaurant`) no se podía «Agregar a la pantalla de inicio» como aplicación: no tenía manifiesto ni ícono de Apple. Richard la quiere para quien tiene iPhone mientras Apple revisa y para arrancar en países donde casi nadie usa la tienda.
+- **Qué se hizo:** `apps/cliente/scripts/instalable.mjs` corre al final de `build:app-web`, `build:repartidor-web` y `build:restaurante-web`: escribe `manifest.json` (nombre de `app.json`, `display: standalone`, inicio y alcance en la base de la app, color de cada app), los íconos de 180, 192 y 512 desde `assets/icon.png` y enlaza todo en `index.html`. Sin trabajador de servicio a propósito: no guarda copias viejas de la app.
+- **Cómo se comprueba:** `e2e/recorrido/instalable.spec.ts` (corre en cada verificación y contra el sitio de pruebas). Comprobado en rojo quitando el enlace del manifiesto de la app del cliente.
+- **Qué NO hay que tocar:** el orden `claro.mjs` → `instalable.mjs` en los tres guiones de `package.json`.
+- **Límites de la versión instalada desde la web en iPhone:** no recibe avisos al celular (hace falta construir los avisos web) y no manda la ubicación con la pantalla apagada; el código de recogida se escribe, no se escanea.
