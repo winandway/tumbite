@@ -116,20 +116,32 @@ export async function comprobarDinero(
         );
       }
     }
-    // En la ciudad el libro se revisa una vez al final (la conciliación cuesta filas).
-    if (libro) await libroCuadra(ctx, id);
+    // C-LECTURAS-POR-PETICION (13 nov 2026): el libro se revisa UNA vez al final de la corrida, con
+    // todos sus pedidos (cada conciliación lee el día entero: 4.700 filas en el sitio de pruebas).
+    // En la ciudad, además, el cierre hace la suya.
+    if (libro) pedidosDelLibro.add(id);
   });
 }
+
+/** Los pedidos de la corrida cuyo libro se revisa junto, al final (`libroFinal`). */
+export const pedidosDelLibro = new Set<string>();
+
+/** Lo más que la conciliación revisa contra Stripe en una sola llamada. */
+const POR_LLAMADA = 20;
 
 /**
  * La conciliación del servidor: el libro del día cuadra por dentro y, en el sitio de pruebas, el
  * cobro de ESE pedido coincide con lo que Stripe (modo prueba) tiene registrado. En local el Stripe
  * es simulado: solo cuenta el libro.
  */
-export async function libroCuadra(ctx: Ctx, pedidoId: string): Promise<void> {
-  const r = await ctx.sistema.post('/datos/interno/diagnostico/conciliacion', {
-    pedidos: [pedidoId],
-  });
+export async function libroCuadra(ctx: Ctx, pedidos: string | string[]): Promise<void> {
+  const todos = typeof pedidos === 'string' ? [pedidos] : pedidos;
+  for (let i = 0; i < todos.length; i += POR_LLAMADA)
+    await libroDe(ctx, todos.slice(i, i + POR_LLAMADA));
+}
+
+async function libroDe(ctx: Ctx, pedidos: string[]): Promise<void> {
+  const r = await ctx.sistema.post('/datos/interno/diagnostico/conciliacion', { pedidos });
   ctx.e.comprobar(r.ok, 'la conciliación del servidor responde', r.texto);
   const c = r.datos as { casos: { nombre: string; ok: boolean; detalle?: string }[] };
   const libro = c.casos.find((x) => x.nombre.startsWith('el libro del día cuadra'));

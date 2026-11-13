@@ -15,7 +15,7 @@ import type { Env } from './env';
  * corrida queda en rojo en GitHub y el canario (`pruebasContinuas`) sale en error.
  *
  * En producción la cabecera se ignora: ahí no hay vueltas de prueba. Solo se guarda la cuenta de
- * una petición que escribió algo: mirar no escribe.
+ * una petición que escribió algo o que leyó mucho (LECTURAS_PESADAS): mirar poco no escribe.
  */
 export const TOPE_VUELTA_PRUEBAS = { escritas: 6_000 };
 /** El recorrido completo de una rama (`rama-…`) prueba todos los servicios: tope aparte. */
@@ -65,12 +65,15 @@ export const presupuestoVueltaPruebas: MiddlewareHandler<{ Bindings: Env }> = as
         .run();
     return c.json({ error: motivo }, 429);
   }
-  const contada = contarFilas(real);
+  const contada = contarFilas(real, { conFirst: true });
   c.env = { ...c.env, DB: contada.db };
   try {
     await next();
   } finally {
-    if (contada.cuenta.escritas > 0)
+    // C-LECTURAS-POR-PETICION: también se anota la petición que solo leyó, si leyó mucho (la que
+    // lee poco no gasta ni una fila en anotarse).
+    const pesada = contada.cuenta.leidas >= LECTURAS_PESADAS;
+    if (contada.cuenta.escritas > 0 || pesada)
       await real
         .prepare(
           `INSERT INTO vueltas_pruebas (id, dia, leidas, escritas, peticiones, creada_en)
@@ -83,7 +86,7 @@ export const presupuestoVueltaPruebas: MiddlewareHandler<{ Bindings: Env }> = as
         .catch((e: unknown) => console.error('vuelta de pruebas: no se pudo anotar la cuenta', e));
     // C-LECTURAS-VUELTA: solo las peticiones pesadas dejan su ruta, para encontrar a la culpable
     // sin gastar una fila por cada petición.
-    if (contada.cuenta.escritas > 0 && contada.cuenta.leidas >= LECTURAS_PESADAS)
+    if (pesada)
       await real
         .prepare(
           `INSERT INTO vueltas_pruebas_rutas (vuelta, ruta, leidas, escritas, veces)

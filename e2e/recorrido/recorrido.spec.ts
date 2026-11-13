@@ -283,7 +283,9 @@ for (const idioma of ['en', 'es'] as const) {
     // «aceptado» en Miami, a 8 km, se le ofreció al repartidor del recorrido en inglés y «Llegué»
     // decía «estás a 8286 m» (falló tres corridas seguidas). Nunca toca pedidos de personas reales.
     sql(
-      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL AND restaurante_id IN (SELECT r.id FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE u.correo LIKE '%@recorrido.test' OR u.correo LIKE '%@prueba.invalid')",
+      // C-LECTURAS-POR-PETICION: se parte de los pocos pedidos sin repartidor (índice) y se mira el
+      // dueño de cada uno; antes se recorrían todas las cuentas buscando el «%@recorrido.test».
+      "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE estado IN ('aceptado','listo') AND repartidor_id IS NULL AND EXISTS (SELECT 1 FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE r.id = pedidos.restaurante_id AND (u.correo LIKE '%@recorrido.test' OR u.correo LIKE '%@prueba.invalid'))",
     );
     // Y ningún repartidor de un recorrido anterior se queda conectado en Miami (se llevaría la oferta).
     sql("UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = 'US-FL-MIAMI'");

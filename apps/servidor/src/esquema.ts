@@ -216,6 +216,13 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'modo_pago', "TEXT NOT NULL DEFAULT 'oferta'"],
 ];
 
+/**
+ * Los últimos diez dígitos del teléfono guardado tal cual (cuentas de antes del teléfono único). La
+ * consulta del registro usa EXACTAMENTE esta expresión: así SQLite usa el índice que la guarda.
+ */
+export const TELEFONO_DIEZ =
+  "substr(replace(replace(replace(replace(replace(telefono, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), -10)";
+
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
 const INDICES = [
   // Flex · Fase 5: sobre columnas que llegan con COLUMNAS (en schema.sql romperían la publicación).
@@ -241,6 +248,14 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS restaurantes_area ON restaurantes(area_id)',
   'CREATE INDEX IF NOT EXISTS repartidores_area ON repartidores(area_id, conectado)',
   'CREATE INDEX IF NOT EXISTS pedidos_area_estado ON pedidos(area_id, estado, creado_en)',
+  // C-LECTURAS-POR-PETICION (13 nov 2026): el registro buscaba el correo y el teléfono únicos
+  // recorriendo TODAS las cuentas (5.600 filas con el volumen del sitio de pruebas, y crece con
+  // cada cliente). Una fila por cuenta nueva en cada índice; el registro pasa a leer unas pocas.
+  'CREATE INDEX IF NOT EXISTS usuarios_correo_canonico ON usuarios(correo_canonico)',
+  'CREATE INDEX IF NOT EXISTS usuarios_telefono_canonico ON usuarios(telefono_canonico)',
+  // Solo las cuentas viejas sin teléfono único (de antes del 29 oct): las nuevas no escriben aquí.
+  `CREATE INDEX IF NOT EXISTS usuarios_telefono_viejo ON usuarios(${TELEFONO_DIEZ})
+     WHERE telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != ''`,
 ];
 
 /**
@@ -447,7 +462,80 @@ async function asegurarFase3(db: D1Database): Promise<void> {
 let listo: Promise<void> | null = null;
 export let ultimoErrorEsquema: string | null = null;
 
+/**
+ * C-ARRANQUE-SIN-LECTURAS (13 nov 2026, regla global «la nube no se come el dinero»). Todos los
+ * países. Revisar la base entera (las columnas de las 230 tablas, los índices, los disparadores y los
+ * servicios) cuesta unas 3.200 filas leídas en D1, y corría en CADA arranque de un servidor: en el
+ * sitio de pruebas casi cada petición que escribía pagaba esas filas. Ahora, cuando la revisión sale
+ * completa (sin columnas faltantes), se guarda su huella en `config`; el arranque siguiente con el
+ * MISMO código, contra la misma base y en el mismo entorno lee esa fila y no repite nada. Un código
+ * nuevo (otra lista de columnas, índices, disparadores o migraciones) cambia la huella y la revisión
+ * completa vuelve a correr una vez.
+ */
+export const CLAVE_HUELLA_ESQUEMA = 'esquema_huella';
+
+function huellaDe(texto: string): string {
+  // cyrb53: corta, estable y sin depender de crypto (es una marca, no un secreto).
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < texto.length; i++) {
+    const ch = texto.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+/** La huella de todo lo que la migración deja puesto (el código mismo incluido). */
+export function huellaEsquema(entorno: Entorno | null): string {
+  return (
+    huellaDe(
+      JSON.stringify([
+        COLUMNAS,
+        INDICES,
+        ESQUEMA_FASE3,
+        ESQUEMA_PEDIDOS,
+        ESQUEMA_FLEX,
+        COLUMNAS_DEL_ESQUEMA,
+        CONFIG_DINERO_INICIAL,
+        [...serviciosImplementados(entorno)],
+        String(migrarCompleto),
+        String(rehacerFranquicias),
+        String(rehacerFlex),
+        String(rehacerAprobacionesDinero),
+        String(sincronizarServicios),
+        String(preciosDeFabrica),
+      ]),
+    ) + `:${entorno ?? 'local'}`
+  );
+}
+
 async function migrar(db: D1Database, entorno: Entorno | null): Promise<void> {
+  const huella = huellaEsquema(entorno);
+  const hecha = await db
+    .prepare('SELECT valor FROM config WHERE clave = ?')
+    .bind(CLAVE_HUELLA_ESQUEMA)
+    .first<{ valor: string }>()
+    .catch(() => null);
+  if (hecha?.valor === huella) {
+    columnasFaltantes = [];
+    return;
+  }
+  await migrarCompleto(db, entorno);
+  // Solo una revisión limpia deja su huella: si falta algo, el próximo arranque vuelve a mirar.
+  if (!columnasFaltantes.length)
+    await db
+      .prepare(
+        `INSERT INTO config (clave, valor) VALUES (?, ?)
+         ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = datetime('now')`,
+      )
+      .bind(CLAVE_HUELLA_ESQUEMA, huella)
+      .run();
+}
+
+async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<void> {
   await rehacerFranquicias(db);
   // C-ARRANQUE-RAPIDO: las columnas de TODAS las tablas de la lista en un solo lote (un viaje a la
   // base). Antes era una consulta por columna: 40 viajes seguidos en cada arranque, y la primera

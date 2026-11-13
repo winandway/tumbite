@@ -23,7 +23,16 @@ function sumar(cuenta: CuentaFilas, meta: Meta) {
   cuenta.escritas += Number(meta.rows_written ?? meta.changes ?? 0);
 }
 
-export function contarFilas(db: D1Database): { db: D1Database; cuenta: CuentaFilas } {
+/**
+ * `conFirst` (C-LECTURAS-POR-PETICION, solo la vuelta de pruebas): también cuenta las lecturas
+ * hechas con `first`, pidiéndolas con `all` (D1 lee lo mismo: `first` ejecuta la consulta entera y
+ * se queda con la primera fila, pero no informa las filas). El reloj no lo usa: su tope se fijó
+ * midiendo sin esas lecturas.
+ */
+export function contarFilas(
+  db: D1Database,
+  { conFirst = false }: { conFirst?: boolean } = {},
+): { db: D1Database; cuenta: CuentaFilas } {
   const cuenta: CuentaFilas = { leidas: 0, escritas: 0 };
   const reales = new WeakMap<object, D1PreparedStatement>();
 
@@ -42,6 +51,18 @@ export function contarFilas(db: D1Database): { db: D1Database; cuenta: CuentaFil
             const r = await t.all();
             sumar(cuenta, r?.meta as Meta);
             return r;
+          };
+        if (prop === 'first' && conFirst)
+          return async (columna?: string) => {
+            const r = await t.all<Record<string, unknown>>();
+            sumar(cuenta, r?.meta as Meta);
+            const fila = r?.results?.[0];
+            if (fila == null) return null;
+            if (columna === undefined) return fila;
+            const valores = new Map(Object.entries(fila));
+            if (!valores.has(columna))
+              throw new Error(`D1_COLUMN_NOTFOUND: Column not found (${columna})`);
+            return valores.get(columna);
           };
         const v = Reflect.get(t, prop, t) as unknown;
         return typeof v === 'function' ? (v as (...x: unknown[]) => unknown).bind(t) : v;

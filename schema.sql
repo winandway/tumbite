@@ -263,6 +263,10 @@ CREATE TABLE IF NOT EXISTS ofertas (
   PRIMARY KEY (pedido_id, repartidor_id)
 );
 CREATE INDEX IF NOT EXISTS ofertas_repartidor ON ofertas(repartidor_id, estado);
+-- C-LECTURAS-POR-PETICION (13 nov 2026): vencer las ofertas viejas corre en cada consulta de ofertas
+-- del repartidor y en cada vuelta del reloj; sin esto recorría TODAS las ofertas de la historia.
+-- Parcial: solo guarda las que siguen «ofrecida» (dos escrituras por oferta: al nacer y al cerrarse).
+CREATE INDEX IF NOT EXISTS ofertas_ofrecidas ON ofertas(creada_en) WHERE estado = 'ofrecida';
 
 -- Calificaciones: al restaurante y al repartidor por separado.
 CREATE TABLE IF NOT EXISTS calificaciones (

@@ -14,9 +14,15 @@ export const FOTO_PRUEBA = new Uint8Array([
  * `host` hace que las peticiones lleguen como si vinieran de ese dominio (por ejemplo, el sitio de
  * pruebas «staging.tumbite.com», donde Moto existe: C-MOTO-SOLO-PRUEBAS). Sin él, «localhost».
  */
-export function mundo(extraDado: Record<string, unknown> = {}, opciones: { host?: string } = {}) {
+export function mundo(
+  extraDado: Record<string, unknown> = {},
+  opciones: { host?: string; envolver?: (db: D1Database) => D1Database } = {},
+) {
   const origen = opciones.host ? `https://${opciones.host}` : '';
   const DB = crearBasePruebas();
+  // C-LECTURAS-POR-PETICION: el servidor puede recibir la base envuelta (para medir lo que lee);
+  // `DB` sigue siendo la cruda, para preparar la prueba sin contar.
+  const DBapp = opciones.envolver ? opciones.envolver(DB) : DB;
   // Almacén de fotos de mentira por defecto (las entregas llevan foto).
   // La selfie de control al azar se apaga en las pruebas (cada prueba la enciende si la necesita).
   const extra = { BUCKET: crearAlmacenPruebas().bucket, SELFIE_CONTROL_SIEMPRE: '0', ...extraDado };
@@ -41,7 +47,7 @@ export function mundo(extraDado: Record<string, unknown> = {}, opciones: { host?
     const res = await app.request(
       `${origen}${ruta}`,
       { method: metodo, headers, body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo) },
-      { DB, ...extra },
+      { DB: DBapp, ...extra },
     );
     const datos = (await res.json().catch(() => ({}))) as any;
     return { res, datos, estado: res.status };
@@ -71,7 +77,7 @@ export function mundo(extraDado: Record<string, unknown> = {}, opciones: { host?
   }
   /** Petición cruda (con cabeceras propias, p. ej. la firma de un aviso de Stripe). */
   const crudo = (ruta: string, init: RequestInit) =>
-    app.request(`${origen}${ruta}`, init, { DB, ...extra });
+    app.request(`${origen}${ruta}`, init, { DB: DBapp, ...extra });
   /** Sube una foto (bytes crudos) con la ubicación en la dirección, como lo hace la app. */
   async function foto(ruta: string, token: string, donde?: { lat: number; lng: number }) {
     ip++;
@@ -87,7 +93,7 @@ export function mundo(extraDado: Record<string, unknown> = {}, opciones: { host?
         },
         body: FOTO_PRUEBA as BodyInit,
       },
-      { DB, ...extra },
+      { DB: DBapp, ...extra },
     );
     return { res, datos: (await res.json().catch(() => ({}))) as any, estado: res.status };
   }

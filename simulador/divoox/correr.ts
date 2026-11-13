@@ -2,6 +2,7 @@ import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import {
+  type Escenario,
   contar,
   correrLibreto,
   escribirReporte,
@@ -12,6 +13,7 @@ import {
   veredicto,
 } from '../nucleo/index.ts';
 import { destinoDesdeEntorno, levantarServidorLocal } from './destino.ts';
+import { libroCuadra, pedidosDelLibro } from './dinero.ts';
 import { ESCENARIOS } from './escenarios.ts';
 import { type Ctx, cerrarEscenario, crearCtx } from './mundo.ts';
 
@@ -55,6 +57,20 @@ try {
     { solo: op.solo ?? null, etiqueta: op.etiqueta ?? null },
   );
   if (!escenarios.length) throw new Error('Ningún escenario coincide con el filtro.');
+  // C-LECTURAS-POR-PETICION (13 nov 2026): el libro del día se concilia UNA vez, al final, con los
+  // pedidos de todos los escenarios (antes una vez por escenario: cada una lee el día entero).
+  const libroFinal: Escenario<Ctx> = {
+    nombre: 'El libro del día cuadra (una vez, al final de la corrida)',
+    descripcion:
+      'La conciliación del servidor con todos los pedidos de la corrida: el libro del día cuadra por dentro y, en el sitio de pruebas, cada cobro coincide con Stripe (modo prueba).',
+    async correr(e, ctx) {
+      await e.paso('el libro del día cuadra', async () => {
+        if (pedidosDelLibro.size) await libroCuadra(ctx, [...pedidosDelLibro]);
+        else e.nota('ningún escenario dejó pedidos para conciliar');
+      });
+    },
+  };
+  escenarios.push(libroFinal);
   console.warn(
     `simulador: ${escenarios.length} escenarios contra ${d.base} (semilla ${semilla}, corrida ${corrida})`,
   );

@@ -16,11 +16,16 @@ export async function restauranteDe(
   db: D1Database,
   usuarioId: string,
 ): Promise<{ id: string; rol: 'dueno' | 'manager' | 'staff' } | null> {
+  // C-LECTURAS-POR-PETICION (13 nov 2026): el OR sobre la unión recorría TODOS los restaurantes en
+  // cada petición del panel del restaurante. Ahora son dos búsquedas por índice: primero como dueño,
+  // después como miembro del equipo (una persona está en un solo equipo).
   const r = await db
     .prepare(
-      `SELECT r.id, CASE WHEN r.dueno_id = ?1 THEN 'dueno' ELSE m.rol END AS rol
-         FROM restaurantes r LEFT JOIN miembros_restaurante m ON m.restaurante_id = r.id AND m.usuario_id = ?1
-        WHERE r.dueno_id = ?1 OR m.usuario_id = ?1 LIMIT 1`,
+      `SELECT id, 'dueno' AS rol FROM restaurantes WHERE dueno_id = ?1
+       UNION ALL
+       SELECT r.id, m.rol FROM miembros_restaurante m JOIN restaurantes r ON r.id = m.restaurante_id
+        WHERE m.usuario_id = ?1
+       LIMIT 1`,
     )
     .bind(usuarioId)
     .first<{ id: string; rol: 'dueno' | 'manager' | 'staff' }>();

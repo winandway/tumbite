@@ -57,6 +57,8 @@ describe('esquema de Flex, Fase 2 (C-FLEX-OCUPACION)', () => {
       m.DB.prepare(
         "INSERT INTO rutas_flex (id, empresa_id, nombre, estado) VALUES ('r1', 'e1', 'Lunes', 'lista'), ('r2', 'e1', 'Vieja', 'cancelada')",
       ),
+      // Una base vieja no tiene la huella del esquema de ESTE código (C-ARRANQUE-SIN-LECTURAS).
+      m.DB.prepare("DELETE FROM config WHERE clave = 'esquema_huella'"),
     ]);
     // La migración conserva las filas tal cual (después, el cuadre de la Fase 3 las ajusta a los pedidos reales).
     expect(await rehacerFlex(m.DB)).toEqual({ rutas: true, ocupacion: true });

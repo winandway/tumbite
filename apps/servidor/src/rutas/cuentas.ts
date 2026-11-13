@@ -34,6 +34,7 @@ import { correoDeConfirmacion } from '../avisos';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { guardarConsentimientoSms } from '../sms';
+import { TELEFONO_DIEZ } from '../esquema';
 
 const esquemaSemilla = z.object({ semilla: z.string().min(1).max(200) });
 const esquemaRecuperar = z.object({
@@ -190,13 +191,17 @@ cuentas.post('/registro', async (c) => {
     );
   // El mismo teléfono no abre dos cuentas del mismo tipo (un repartidor puede pedir como cliente).
   if (telUnico) {
+    // C-LECTURAS-POR-PETICION: dos búsquedas por índice en vez de un OR que recorría todas las
+    // cuentas del mismo rol (el teléfono único, y el escrito a mano de las cuentas viejas).
     const conTel = await db
       .prepare(
-        `SELECT 1 FROM usuarios WHERE rol = ? AND (telefono_canonico = ?
-           OR (telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != ''
-               AND substr(replace(replace(replace(replace(replace(telefono, ' ', ''), '-', ''), '(', ''), ')', ''), '+', ''), -10) = substr(?, -10)))`,
+        `SELECT 1 FROM usuarios WHERE telefono_canonico = ?2 AND rol = ?1
+         UNION ALL
+         SELECT 1 FROM usuarios WHERE ${TELEFONO_DIEZ} = substr(?2, -10)
+           AND telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != '' AND rol = ?1
+         LIMIT 1`,
       )
-      .bind(d.rol, telUnico, telUnico)
+      .bind(d.rol, telUnico)
       .first();
     if (conTel)
       throw new ErrorDatos(
