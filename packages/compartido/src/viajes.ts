@@ -210,6 +210,8 @@ export type CotizacionViaje = {
   venceEn: string;
   /** La tarifa es de prueba (sitio de pruebas): no es un precio comercial aprobado. */
   dePrueba: boolean;
+  /** C-PAGO-MOVIL-VIAJE: con qué se puede pagar en esa ciudad (perfil del país). */
+  metodosPago?: ('efectivo' | 'tarjeta' | 'pago_movil')[];
 };
 
 /**

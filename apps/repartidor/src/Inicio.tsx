@@ -49,6 +49,7 @@ import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
+import { MiMoto } from './viajes/MiMoto';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
 import { InvitacionesFlota } from './InvitacionesFlota';
@@ -546,9 +547,9 @@ export function Inicio() {
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
   const tg = textosGrandes(idioma);
   const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
-  const [seccionPerfil, setSeccionPerfil] = useState<'vehiculo' | 'documentos' | 'soporte' | null>(
-    null,
-  );
+  const [seccionPerfil, setSeccionPerfil] = useState<
+    'vehiculo' | 'documentos' | 'moto' | 'soporte' | null
+  >(null);
   const [mostrarChat, setMostrarChat] = useState(true);
   // Desde cuándo está conectado en esta sesión (el servidor no lo guarda).
   const [conectadoDesde, setConectadoDesde] = useState<number | null>(null);
@@ -992,6 +993,11 @@ export function Inicio() {
     efectivoActivo: boolean;
     transferenciaActiva: boolean;
     recargasPuntoVenta: boolean;
+    /** C-SALDO-CARRERAS: comisión de un viaje típico y carreras que alcanzan (aproximado). */
+    comisionTipica?: number;
+    carrerasAlcanzan?: number | null;
+    saldoBajo?: boolean;
+    sinSaldo?: boolean;
   } | null>(null);
   // Pedidos cobrados en mano de hoy: no pasan por la billetera de Stripe, así que «Hoy» los suma
   // desde Ganancias (C-MONEDA-RECORRIDO). Solo donde el país tiene el cobro en mano encendido.
@@ -1497,7 +1503,10 @@ export function Inicio() {
         {mensajes}
         <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{td.ganancias}</Text>
         {prepago &&
-        (prepago.efectivoActivo || prepago.transferenciaActiva || prepago.recargasPuntoVenta) ? (
+        (prepago.efectivoActivo ||
+          prepago.transferenciaActiva ||
+          prepago.recargasPuntoVenta ||
+          (prepago.comisionTipica ?? 0) > 0) ? (
           <View
             style={{
               borderWidth: 1,
@@ -1528,7 +1537,28 @@ export function Inicio() {
                 {formatearMonto(prepago.reservado, prepago.moneda, idioma)}
               </Text>
             </View>
-            {prepago.disponible <= 0 ? (
+            {prepago.carrerasAlcanzan != null && prepago.comisionTipica ? (
+              <View testID="carreras-alcanzan">
+                <Text
+                  style={{
+                    fontWeight: '800',
+                    color: prepago.saldoBajo ? C.primario : '#0D7A3A',
+                  }}
+                >
+                  {tg.prepago.carreras(prepago.carrerasAlcanzan)}
+                </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                  {tg.prepago.carrerasAyuda(
+                    formatearMonto(prepago.comisionTipica, prepago.moneda, idioma),
+                  )}
+                </Text>
+              </View>
+            ) : null}
+            {prepago.sinSaldo ? (
+              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoViajes}</Text>
+            ) : prepago.saldoBajo ? (
+              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.saldoBajo}</Text>
+            ) : prepago.disponible <= 0 ? (
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldo}</Text>
             ) : null}
             {prepago.recargasPuntoVenta ? (
@@ -1789,6 +1819,13 @@ export function Inicio() {
             seccionPerfil === 'documentos',
           )}
           {seccionPerfil === 'documentos' ? <Verificacion /> : null}
+          {fila(
+            td.miMoto,
+            () => setSeccionPerfil((x) => (x === 'moto' ? null : 'moto')),
+            seccionPerfil === 'moto',
+            td.miMotoDetalle,
+          )}
+          {seccionPerfil === 'moto' ? <MiMoto /> : null}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(

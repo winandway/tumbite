@@ -149,6 +149,22 @@ export function ViajeActivo({
     [api, viaje.id, alCambiar],
   );
 
+  // C-PAGO-MOVIL-VIAJE: lo que el conductor ya confirmó del pago móvil (en esta pantalla).
+  const [pagoMovil, setPagoMovil] = useState<'recibido' | 'no_recibido' | null>(null);
+  async function confirmarPagoMovil(recibido: boolean) {
+    setError('');
+    try {
+      const r = await api.pedir<{ estado: 'recibido' | 'no_recibido' | null }>(
+        'POST',
+        `/datos/conductor/operaciones/${viaje.id}/pago-movil`,
+        { recibido },
+      );
+      setPagoMovil(r.estado);
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
   if (cierre)
     return (
       <View testID="viaje-cerrado" style={{ padding: 20, gap: 14 }}>
@@ -345,6 +361,41 @@ export function ViajeActivo({
           />
           <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
         </>
+      ) : null}
+      {/* C-PAGO-MOVIL-VIAJE: confirmación MANUAL de que el pago móvil llegó (nunca «del banco»). */}
+      {viaje.estado === 'en_curso' && viaje.metodo_pago === 'pago_movil' ? (
+        <View
+          testID="viaje-pago-movil"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12, gap: 8 }}
+        >
+          {pagoMovil ? (
+            <Text
+              style={{ fontWeight: '800', color: pagoMovil === 'recibido' ? C.exito : C.primario }}
+            >
+              {pagoMovil === 'recibido' ? t.pagoMovilRecibido : t.pagoMovilAviso}
+            </Text>
+          ) : (
+            <>
+              <Text style={{ color: C.secundario }}>
+                {t.pagoMovilPregunta}{' '}
+                {viaje.total != null
+                  ? formatearMonto(viaje.total, viaje.moneda ?? 'USD', idioma)
+                  : ''}
+              </Text>
+              <Boton
+                texto={t.pagoMovilSi}
+                exito
+                cargando={enviando}
+                alTocar={() => void confirmarPagoMovil(true)}
+              />
+              <Boton
+                texto={t.pagoMovilNo}
+                secundario
+                alTocar={() => void confirmarPagoMovil(false)}
+              />
+            </>
+          )}
+        </View>
       ) : null}
       {viaje.estado === 'en_curso' && (!esEnvio || pinEntrega.length === 4) ? (
         <Boton

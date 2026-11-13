@@ -431,6 +431,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     total: desglose.total,
     venceEn,
     dePrueba: fila.de_prueba === 1,
+    metodosPago: [...perfilPasajeros(zona.pais).metodosPago],
   };
   return c.json({ cotizacion }, 201);
 });
