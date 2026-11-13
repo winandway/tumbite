@@ -142,7 +142,7 @@ async function conductorVenezolano(e: E) {
     modelo: 'SBR',
     anio: 2023,
     color: 'Negro',
-    placa: 'AB1C23D',
+    placa: `AB${Math.floor(Math.random() * 1e6)}`,
   });
   expect(v.estado).toBe(201);
   for (const t of ['registro', 'seguro', 'seguro_pasajeros', 'foto_frente'])
@@ -293,5 +293,250 @@ describe('C-PAPELES-CONDUCTOR: en Venezuela los antecedentes los aprueba el equi
       e.admin.token,
     );
     expect(r.estado).toBe(409);
+  });
+});
+
+// ---------------------------------------------------------------- recargas, viaje y comisión
+
+/**
+ * El equipo de Divoox como punto de venta autorizado en Venezuela: compra saldo (comprobante), emite
+ * un código y el conductor lo canjea en su app. Montos en centavos de dólar.
+ */
+async function recargar(e: E, c: Awaited<ReturnType<typeof conductorVenezolano>>, monto: number) {
+  const cfg = await c.equipo('PUT', '/datos/admin/paises/VE', { recargasPuntoVentaActivas: true });
+  expect(cfg.estado).toBe(200);
+  // Un solo punto del equipo por país y moneda (se crea la primera vez).
+  const lista = await c.equipo('GET', '/datos/admin/puntos-venta');
+  let puntoId = lista.datos.puntos.find(
+    (p: { pais: string; moneda: string }) => p.pais === 'VE' && p.moneda === 'USD',
+  )?.id as string | undefined;
+  if (!puntoId) {
+    const punto = await c.equipo('POST', '/datos/admin/puntos-venta', {
+      nombre: 'Equipo Divoox Caracas',
+      pais: 'VE',
+      moneda: 'USD',
+      usuarioId: e.admin.id,
+    });
+    expect(punto.estado).toBe(201);
+    expect(punto.datos.punto.moneda).toBe('USD');
+    puntoId = punto.datos.punto.id as string;
+  }
+  const fondo = await c.equipo('POST', `/datos/admin/puntos-venta/${puntoId}/fondo`, {
+    monto,
+    comprobante: `pago-${Math.random().toString(36).slice(2, 8)}`,
+  });
+  expect(fondo.estado).toBe(200);
+  const codigo = await c.equipo('POST', '/datos/punto-venta/codigos', { monto });
+  expect(codigo.estado).toBe(201);
+  const canje = await c.yo('POST', '/datos/repartidor/recargar', { codigo: codigo.datos.codigo });
+  expect(canje.estado).toBe(200);
+  return canje.datos.disponible as number;
+}
+
+/** Conductor listo en Caracas: aprobado, con saldo, conectado y ubicado en el punto de recogida. */
+async function conductorListo(e: E, saldo: number) {
+  const c = await conductorVenezolano(e);
+  await aprobarTodo(c);
+  if (saldo > 0) expect(await recargar(e, c, saldo)).toBe(saldo);
+  expect(
+    (await c.yo('PUT', '/datos/conductor/preferencias', { servicioId: 'moto', activa: true }))
+      .estado,
+  ).toBe(200);
+  expect(
+    (await c.yo('POST', '/datos/repartidor/conectar', { conectado: true, ...ORIGEN })).estado,
+  ).toBe(200);
+  expect(
+    (await c.yo('POST', '/datos/repartidor/ubicacion', { lat: ORIGEN.lat, lng: ORIGEN.lng }))
+      .estado,
+  ).toBe(200);
+  let n = 0;
+  const paso = async (op: string, nombre: string, cuerpo: unknown = {}) => {
+    n++;
+    const r = await e.m.crudo(`/datos/conductor/operaciones/${op}/${nombre}`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${c.rep.token}`,
+        'content-type': 'application/json',
+        'idempotency-key': `ve-${nombre}-${n}-${c.rep.id.slice(0, 8)}`,
+      },
+      body: JSON.stringify(cuerpo),
+    });
+    return { estado: r.status, datos: (await r.json()) as Record<string, unknown> };
+  };
+  return { ...c, paso };
+}
+
+/** El pasajero pide una moto en Caracas con ese método de pago. */
+async function pedirMoto(e: E, metodoPago: 'efectivo' | 'pago_movil') {
+  const cot = await cotizar(e, { lat: 10.4806, lng: -66.8406 });
+  expect(cot.estado).toBe(201);
+  const v = await e.m.llamar(
+    'POST',
+    '/datos/viajes',
+    { cotizacionId: cot.datos.cotizacion.id, metodoPago },
+    e.cliente.token,
+  );
+  expect(v.estado).toBe(201);
+  return { id: v.datos.viaje.id as string, total: cot.datos.cotizacion.total as number };
+}
+
+/** El conductor carga su pago móvil y el equipo la confirma (si no, entra en vigor a las 24 h). */
+async function cargarPagoMovil(c: Awaited<ReturnType<typeof conductorListo>>) {
+  const cuenta = await c.yo('POST', '/datos/repartidor/cuentas-cobro', {
+    clave: 'clave-segura-1',
+    tipo: 'pago_movil',
+    banco: 'Banco de pruebas',
+    titular: 'Conductor Caracas',
+    identificador: '0412-0000000 · V-00000000',
+  });
+  expect(cuenta.estado).toBe(201);
+  expect(
+    (await c.equipo('PATCH', `/datos/admin/cuentas-cobro/${cuenta.datos.cuenta.id}`)).estado,
+  ).toBe(200);
+}
+
+async function saldo(c: { yo: (m: string, r: string) => Promise<{ datos: any }> }) {
+  return (await c.yo('GET', '/datos/repartidor/saldo-prepago')).datos;
+}
+
+describe('C-MOTO-VENEZUELA de punta a punta: recarga, viaje en efectivo y comisión del prepago', () => {
+  it('el conductor ve para cuántas carreras le alcanza, hace el viaje y la comisión sale de su saldo', async () => {
+    const e = await escenario();
+    await abrirCaracas(e);
+    const c = await conductorListo(e, 300);
+    const antes = await saldo(c);
+    expect(antes.moneda).toBe('USD');
+    expect(antes.disponible).toBe(300);
+    expect(antes.comisionTipica).toBeGreaterThan(0);
+    expect(antes.carrerasAlcanzan).toBe(Math.floor(300 / antes.comisionTipica));
+    const v = await pedirMoto(e, 'efectivo');
+    const ofertas = await c.yo('GET', '/datos/conductor/operaciones/ofertas');
+    const oferta = ofertas.datos.ofertas.find(
+      (o: { operacionId: string }) => o.operacionId === v.id,
+    );
+    expect(oferta).toBeTruthy();
+    // El conductor ve cuánto gana: el precio menos el 10 %.
+    const comision = Math.round(v.total / 10);
+    expect((await c.paso(v.id, 'aceptar')).estado).toBe(200);
+    expect((await saldo(c)).reservado).toBe(comision);
+    expect((await c.paso(v.id, 'llegue')).estado).toBe(200);
+    const pin = (await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect((await c.paso(v.id, 'iniciar', { pin })).estado).toBe(200);
+    expect((await c.paso(v.id, 'terminar')).estado).toBe(200);
+    const despues = await saldo(c);
+    expect(despues.disponible).toBe(300 - comision);
+    expect(despues.reservado).toBe(0);
+    // La comisión quedó como ingreso de Divoox, en dólares.
+    const divoox = await e.m.DB.prepare(
+      "SELECT COALESCE(SUM(monto), 0) AS s FROM libro WHERE bolsillo = 'comisiones' AND pais = 'VE' AND moneda = 'USD'",
+    ).first<{ s: number }>();
+    expect(divoox?.s).toBe(comision);
+  });
+
+  it('sin saldo no se le ofrece el viaje, no lo puede aceptar y su app le dice que recargue', async () => {
+    const e = await escenario();
+    await abrirCaracas(e);
+    const c = await conductorListo(e, 0);
+    const s = await saldo(c);
+    expect(s.sinSaldo).toBe(true);
+    expect(s.carrerasAlcanzan).toBe(0);
+    expect(s.saldoBajo).toBe(true);
+    const v = await pedirMoto(e, 'efectivo');
+    const ofertas = await c.yo('GET', '/datos/conductor/operaciones/ofertas');
+    expect(ofertas.datos.ofertas.some((o: { operacionId: string }) => o.operacionId === v.id)).toBe(
+      false,
+    );
+    // Aunque le llegara (por ejemplo, una oferta vieja), aceptar se rechaza.
+    await e.m.DB.prepare(
+      "INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en) VALUES (?, ?, ?, 'ofrecida', datetime('now', '+1 minute'))",
+    )
+      .bind(v.id, c.rep.id, c.vehiculo)
+      .run();
+    const r = await c.paso(v.id, 'aceptar');
+    expect(r.estado).toBe(409);
+    expect(String(r.datos.error)).toMatch(/Recarga|Top up/);
+  });
+});
+
+describe('C-PAGO-MOVIL-VIAJE: el pasajero paga por pago móvil y el conductor confirma', () => {
+  it('el pasajero ve los datos del conductor, el conductor confirma y la comisión sale igual del prepago', async () => {
+    const e = await escenario();
+    await abrirCaracas(e);
+    const c = await conductorListo(e, 500);
+    await cargarPagoMovil(c);
+    const v = await pedirMoto(e, 'pago_movil');
+    expect((await c.paso(v.id, 'aceptar')).estado).toBe(200);
+    const vista = await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token);
+    expect(vista.datos.viaje.metodoPago).toBe('pago_movil');
+    expect(vista.datos.viaje.pagoMovil.datos).toEqual({
+      banco: 'Banco de pruebas',
+      titular: 'Conductor Caracas',
+      identificador: '0412-0000000 · V-00000000',
+    });
+    // Antes de que el pasajero suba, no se confirma nada.
+    expect((await c.paso(v.id, 'pago-movil', { recibido: true })).estado).toBe(409);
+    expect((await c.paso(v.id, 'llegue')).estado).toBe(200);
+    expect((await c.paso(v.id, 'iniciar', { pin: vista.datos.viaje.pin })).estado).toBe(200);
+    const ok = await c.paso(v.id, 'pago-movil', { recibido: true, referencia: '123456' });
+    expect(ok.estado).toBe(200);
+    expect(ok.datos.estado).toBe('recibido');
+    expect((await c.paso(v.id, 'terminar')).estado).toBe(200);
+    expect((await saldo(c)).disponible).toBe(500 - Math.round(v.total / 10));
+    const fin = await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token);
+    expect(fin.datos.viaje.pagoMovil.confirmado).toBe('recibido');
+  });
+
+  it('si no le llegó, queda un caso para soporte; y sin pago móvil cargado no recibe esos viajes', async () => {
+    const e = await escenario();
+    await abrirCaracas(e);
+    const sinCuenta = await conductorListo(e, 500);
+    const v = await pedirMoto(e, 'pago_movil');
+    const ofertas = await sinCuenta.yo('GET', '/datos/conductor/operaciones/ofertas');
+    expect(ofertas.datos.ofertas.some((o: { operacionId: string }) => o.operacionId === v.id)).toBe(
+      false,
+    );
+    // En Miami (EE. UU.) el pago móvil no existe.
+    const otro = await e.m.llamar(
+      'POST',
+      '/datos/viajes/cotizar',
+      {
+        servicio: 'moto',
+        origen: { lat: 25.7617, lng: -80.1918, direccion: 'Miami' },
+        destino: { lat: 25.79, lng: -80.13, direccion: 'Miami Beach' },
+      },
+      e.cliente.token,
+    );
+    expect([201, 409]).toContain(otro.estado);
+    if (otro.estado === 201) {
+      const r = await e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: otro.datos.cotizacion.id, metodoPago: 'pago_movil' },
+        e.cliente.token,
+      );
+      expect(r.estado).toBe(422);
+    }
+    // El caso de «no me llegó»: otro conductor, con su pago móvil cargado, toma el viaje.
+    const conCuenta = await conductorListo(e, 500);
+    await cargarPagoMovil(conCuenta);
+    await e.m.DB.prepare("UPDATE ofertas_operacion SET estado = 'vencida' WHERE operacion_id = ?")
+      .bind(v.id)
+      .run();
+    await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
+    expect((await conCuenta.paso(v.id, 'aceptar')).estado).toBe(200);
+    expect((await conCuenta.paso(v.id, 'llegue')).estado).toBe(200);
+    const pin = (await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect((await conCuenta.paso(v.id, 'iniciar', { pin })).estado).toBe(200);
+    const no = await conCuenta.paso(v.id, 'pago-movil', { recibido: false });
+    expect(no.estado).toBe(200);
+    const caso = await e.m.DB.prepare(
+      "SELECT tipo, monto_esperado FROM incidencias_dinero WHERE referencia = 'pago-movil-viaje:' || ?",
+    )
+      .bind(v.id)
+      .first<{ tipo: string; monto_esperado: number }>();
+    expect(caso?.tipo).toBe('pago_movil_viaje');
+    expect(caso?.monto_esperado).toBe(v.total);
   });
 });

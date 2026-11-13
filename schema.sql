@@ -2904,6 +2904,19 @@ CREATE INDEX IF NOT EXISTS cotizaciones_viaje_cliente ON cotizaciones_viaje(clie
 -- Divoox Moto · M2 (28 oct 2026): lo que el pasajero debe por cancelar tarde o no presentarse en un
 -- viaje en efectivo. No se puede cobrar en el momento: se suma a su siguiente viaje (como Namma
 -- Yatri). Una sola deuda por viaje y motivo.
+-- C-PAGO-MOVIL-VIAJE (13 nov 2026, Venezuela): el pasajero paga por pago móvil a la cuenta del
+-- conductor y el conductor confirma en su app si le llegó (confirmación MANUAL: nunca «verificado por
+-- el banco»). Si no le llegó, se abre un caso en la bandeja de dinero. La comisión sale igual del prepago.
+CREATE TABLE IF NOT EXISTS viajes_pago_movil (
+  operacion_id TEXT PRIMARY KEY REFERENCES operaciones(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('recibido', 'no_recibido')),
+  referencia TEXT NOT NULL DEFAULT '',
+  monto INTEGER,
+  moneda TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS deudas_pasajero (
   id TEXT PRIMARY KEY,
   cliente_id TEXT NOT NULL REFERENCES usuarios(id),

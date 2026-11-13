@@ -1828,6 +1828,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "operacion_id",
     "creado_en"
   ],
+  "viajes_pago_movil": [
+    "operacion_id",
+    "conductor_id",
+    "estado",
+    "referencia",
+    "monto",
+    "moneda",
+    "creado_en"
+  ],
   "deudas_pasajero": [
     "id",
     "cliente_id",

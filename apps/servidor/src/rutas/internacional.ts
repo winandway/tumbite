@@ -17,6 +17,8 @@ import {
 import { verificarClave } from '../cripto';
 import { crearTicket } from './tickets';
 import { Hono } from 'hono';
+import { CARRERAS_SALDO_BAJO, carrerasQueAlcanzan } from '@tumbite/compartido';
+import { comisionTipicaMoto } from './viajesPasajero';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
@@ -55,10 +57,13 @@ export const internacional = new Hono<{ Bindings: Env; Variables: Variables }>()
 const PAIS = z.string().regex(/^[A-Z]{2}$/);
 
 async function paisDelRepartidor(db: D1Database, repartidorId: string) {
+  // C-PAPELES-CONDUCTOR: antes de conectarse, la ciudad que eligió el conductor (usuarios.zona_id).
   const d = await db
-    .prepare('SELECT zona_id FROM repartidores WHERE usuario_id = ?')
+    .prepare(
+      'SELECT COALESCE(r.zona_id, u.zona_id) AS zona_id FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?',
+    )
     .bind(repartidorId)
-    .first<{ zona_id: string }>();
+    .first<{ zona_id: string | null }>();
   return paisDeZona(db, d?.zona_id ?? 'US-FL-MIAMI');
 }
 
@@ -88,19 +93,32 @@ internacional.post('/admin/puntos-venta', async (c) => {
       nombre: z.string().trim().min(2).max(80),
       pais: PAIS,
       usuarioId: z.string().min(1).nullable().default(null),
+      // C-RECARGAS-PREPAGO: la moneda del país o la de una de sus ciudades (Moto en Venezuela cobra
+      // en dólares: el saldo y la recarga van en la moneda del viaje).
+      moneda: z.string().trim().length(3).toUpperCase().optional(),
     }),
   );
   const db = base(c);
   const cfg = await leerConfigPais(db, d.pais);
+  let moneda = cfg.moneda;
+  if (d.moneda && d.moneda !== cfg.moneda) {
+    const ciudad = await db
+      .prepare('SELECT 1 FROM zonas WHERE pais = ? AND upper(moneda) = ? LIMIT 1')
+      .bind(d.pais, d.moneda)
+      .first();
+    if (!ciudad)
+      throw new ErrorDatos('Ninguna ciudad de ese país cobra en esa moneda.', 'moneda', 422);
+    moneda = d.moneda;
+  }
   const id = crypto.randomUUID();
   await db
     .prepare(
       'INSERT INTO puntos_venta (id, nombre, pais, moneda, usuario_id) VALUES (?, ?, ?, ?, ?)',
     )
-    .bind(id, d.nombre, d.pais, cfg.moneda, d.usuarioId)
+    .bind(id, d.nombre, d.pais, moneda, d.usuarioId)
     .run();
   return c.json(
-    { punto: { id, nombre: d.nombre, pais: d.pais, moneda: cfg.moneda, usuarioId: d.usuarioId } },
+    { punto: { id, nombre: d.nombre, pais: d.pais, moneda, usuarioId: d.usuarioId } },
     201,
   );
 });
@@ -282,12 +300,26 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     )
     .bind(u.id)
     .all<Record<string, unknown>>();
+  const disponible = await saldoLibro(db, u.id, 'prepago', pais, moneda);
+  // C-SALDO-CARRERAS: «te alcanza para unas N carreras» (saldo ÷ comisión de un viaje típico).
+  const zona = await db
+    .prepare(
+      'SELECT COALESCE(r.zona_id, u.zona_id) AS id FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?',
+    )
+    .bind(u.id)
+    .first<{ id: string | null }>();
+  const comisionTipica = zona?.id ? await comisionTipicaMoto(db, { id: zona.id, pais, moneda }) : 0;
+  const carreras = carrerasQueAlcanzan(disponible, comisionTipica);
   return c.json({
     pais,
     moneda,
     decimales: cfg.decimales,
-    disponible: await saldoLibro(db, u.id, 'prepago', pais, moneda),
+    disponible,
     reservado: await saldoLibro(db, u.id, 'reservado', pais, moneda),
+    comisionTipica,
+    carrerasAlcanzan: carreras,
+    saldoBajo: carreras != null && carreras < CARRERAS_SALDO_BAJO,
+    sinSaldo: comisionTipica > 0 && disponible < comisionTipica,
     efectivoActivo: cfg.efectivoActivo,
     transferenciaActiva: cfg.transferenciaRepartidorActiva,
     recargasPuntoVenta: cfg.recargasPuntoVentaActivas,

@@ -3638,3 +3638,20 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
   - Moto en Venezuela: la placa se guarda con el país como «estado» (placa nacional), así no se pide un estado que no existe.
 - **Prueba:** `apps/servidor/src/rutas/motoVenezuela.test.ts` («C-PAPELES-CONDUCTOR», 3): alta de punta a punta por la API hasta quedar habilitado; rechazo con motivo; en EE. UU. el papel no cumple antecedentes; la edad. Comprobada en rojo quitando el paso del papel al requisito y quitando la identidad del KYC.
 - **Qué NO tocar:** no abrir el aprobado manual de antecedentes por `PUT /admin/cumplimientos`; no bajar la edad mínima de un país sin fuente legal escrita.
+
+## C-SALDO-OFERTAS, C-SALDO-CARRERAS y C-RECARGAS-PREPAGO · Saldo prepago del mototaxista (13 nov 2026) — Venezuela y todos los países
+
+- **Modelo (Richard, 13 nov 2026, como inDrive en Cúcuta):** el conductor recarga saldo en un punto de venta autorizado; el pasajero le paga el viaje completo en mano; al cerrar el viaje la comisión sale del saldo; sin saldo no recibe carreras.
+- **Recargas:** el circuito ya existía (punto de venta → fondo con comprobante y control dual → código de un solo uso → el conductor lo canjea en su app). Ahora el punto puede llevar la moneda de una ciudad del país (`POST /datos/admin/puntos-venta` con `moneda`; Moto en Venezuela cobra en dólares), y un país con prepago aprobado puede encender SOLO las recargas en puntos de venta sin tener escritas las tarifas de comida (`guardarConfigPais`). El equipo de Divoox puede ser su propio punto de venta (usuario del punto = una cuenta del equipo).
+- **«Te alcanza para unas N carreras»:** `GET /datos/repartidor/saldo-prepago` trae `comisionTipica` (la comisión de un viaje de Moto de 5 km con la tarifa vigente de su ciudad, `comisionTipicaMoto`), `carrerasAlcanzan` (saldo ÷ comisión típica, hacia abajo), `saldoBajo` (menos de 3 carreras) y `sinSaldo`. Es aproximado y se dice así en la app.
+- **Sin saldo no se ofrece:** `repartirOperaciones` ya no le ofrece un viaje a quien no le alcanza el saldo para la comisión de ESE viaje (`sinSaldoPara`, una sola consulta por viaje); aceptar sigue rechazándose sin saldo (C-VIAJE-COMISION). Donde no rige el prepago (EE. UU.) no cambia nada.
+- **Prueba:** `apps/servidor/src/rutas/motoVenezuela.test.ts` («de punta a punta: recarga, viaje en efectivo y comisión»): recarga por el punto del equipo, carreras que alcanzan, viaje terminado y comisión cobrada en dólares; sin saldo no hay oferta y aceptar da 409. Comprobada en rojo quitando el filtro del despacho.
+- **Qué NO tocar:** no ofrecer viajes «a ver si recarga»: con una comisión que no puede pagar, el viaje se le cae al pasajero.
+
+## C-PAGO-MOVIL-VIAJE · Pago móvil en los viajes (13 nov 2026) — Venezuela
+
+- **Qué es:** además de efectivo, el pasajero elige «pago móvil» (solo donde el perfil del país lo tiene: Venezuela; en EE. UU. responde 422). Ve los datos de pago móvil que el conductor cargó en su cuenta de cobro (banco, titular, teléfono y cédula) desde que lo asignan, paga, y el conductor confirma en su app si le llegó (`POST /datos/conductor/operaciones/:id/pago-movil`, con el pasajero a bordo). Si no le llegó, se abre un caso `pago_movil_viaje` en la bandeja de dinero. Es una confirmación MANUAL: nunca se dice «verificado por el banco». La comisión sale igual del prepago al terminar.
+- **Despacho:** un viaje con pago móvil solo se ofrece a quien tiene una cuenta de pago móvil activa en ese país (`conductoresConPagoMovil`).
+- **Tabla:** `viajes_pago_movil` (una fila por viaje).
+- **Precio:** el viaje está en dólares; el pasajero paga el equivalente en bolívares a la tasa oficial del día. La tasa BCV automática NO está construida (diseño en `docs/DISENO-TASA-VES.md`), anotada en `PENDIENTES.md`.
+- **Prueba:** `motoVenezuela.test.ts` («C-PAGO-MOVIL-VIAJE», 2), comprobada en rojo quitando el filtro del despacho.

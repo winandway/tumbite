@@ -1728,6 +1728,21 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
   ['No encontramos a esa persona.', 'We couldn’t find that person.'],
+  // C-RECARGAS-PREPAGO y C-PAGO-MOVIL-VIAJE (13 nov 2026).
+  [
+    'Ninguna ciudad de ese país cobra en esa moneda.',
+    'No city in that country charges in that currency.',
+  ],
+  ['Este viaje no es tuyo.', 'This ride isn’t yours.'],
+  ['Este viaje no se paga por pago móvil.', 'This ride isn’t paid by mobile payment.'],
+  [
+    'Confirma el pago cuando el pasajero ya esté a bordo.',
+    'Confirm the payment once the rider is on board.',
+  ],
+  [
+    'Ese método de pago no está disponible en tu ciudad.',
+    'That payment method isn’t available in your city.',
+  ],
   [
     'Termina tu viaje en curso antes de cambiar de ciudad.',
     'Finish your current ride before changing cities.',

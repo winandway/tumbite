@@ -239,6 +239,44 @@ export async function candidatosParaOperacion(
   return { candidatos: lista, fuente: 'base' };
 }
 
+/** De estos conductores, los que NO tienen saldo prepago para `comision` (una sola consulta). */
+export async function sinSaldoPara(
+  db: D1Database,
+  ids: string[],
+  pais: string,
+  moneda: string,
+  comision: number,
+): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const { results } = await db
+    .prepare(
+      `SELECT cuenta_id, COALESCE(SUM(monto), 0) AS saldo FROM libro
+        WHERE bolsillo = 'prepago' AND pais = ? AND moneda = ? AND cuenta_id IN (${ids.map(() => '?').join(',')})
+        GROUP BY cuenta_id`,
+    )
+    .bind(pais, moneda, ...ids)
+    .all<{ cuenta_id: string; saldo: number }>();
+  const saldo = new Map(results.map((r) => [r.cuenta_id, Number(r.saldo)]));
+  return new Set(ids.filter((id) => (saldo.get(id) ?? 0) < comision));
+}
+
+/** De estos conductores, los que tienen una cuenta de pago móvil activa en ese país. */
+export async function conductoresConPagoMovil(
+  db: D1Database,
+  ids: string[],
+  pais: string,
+): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const { results } = await db
+    .prepare(
+      `SELECT DISTINCT usuario_id FROM cuentas_cobro WHERE tipo = 'pago_movil' AND pais = ? AND activa = 1
+          AND activa_desde <= datetime('now') AND usuario_id IN (${ids.map(() => '?').join(',')})`,
+    )
+    .bind(pais, ...ids)
+    .all<{ usuario_id: string }>();
+  return new Set(results.map((r) => r.usuario_id));
+}
+
 /**
  * Tarea del reloj (cada minuto): vence ofertas viejas, ofrece cada operación que busca a su mejor
  * candidato, y devuelve a «buscando» los viajes asignados cuyo conductor perdió la señal.
@@ -335,7 +373,8 @@ export async function repartirOperaciones(
       );
   const { results: buscando } = await db
     .prepare(
-      `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais
+      `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais,
+              v.metodo_pago
          FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -355,6 +394,7 @@ export async function repartirOperaciones(
       total: number | null;
       moneda: string | null;
       pais: string | null;
+      metodo_pago: string | null;
     }>();
   let ofrecidas = 0;
   const yaOfrecidos = new Set<string>();
@@ -374,25 +414,11 @@ export async function repartirOperaciones(
       },
       hacer,
     );
-    const elegido = candidatos.find((c) => {
-      if (yaOfrecidos.has(c.conductorId)) return false;
-      const destino = destinos.get(c.conductorId);
-      if (!destino) return true;
-      return (
-        op.destino_lat != null &&
-        op.destino_lng != null &&
-        acercaAlDestino(c, { lat: Number(op.destino_lat), lng: Number(op.destino_lng) }, destino)
-      );
-    });
-    if (!elegido) continue;
-    // La condición repite la regla de «libre» en la MISMA sentencia: si entre la consulta y aquí
-    // el conductor tomó otra cosa, la oferta no se crea.
     // M3 (C-OFERTA-COMPLETA): el conductor ve cuánto gana antes de aceptar, como en Uber: el
     // precio fijo del viaje menos la comisión de la política de Divoox que rija (si rige).
-    const ganancia =
+    const comision =
       op.total != null && op.moneda && op.pais
-        ? op.total -
-          ((
+        ? ((
             await comisionConductor(db, {
               servicio: SERVICIO_FINANCIERO.get(op.servicio_id) ?? 'ride',
               pais: op.pais,
@@ -405,6 +431,43 @@ export async function repartirOperaciones(
             })
           )?.monto ?? 0)
         : 0;
+    const ganancia = op.total != null ? op.total - comision : 0;
+    // C-SALDO-OFERTAS (13 nov 2026): donde rige el prepago, no se le ofrece el viaje a quien no le
+    // alcanza el saldo para la comisión (igual no podría aceptarlo); en su app ve por qué.
+    const sinSaldo =
+      comision > 0 && op.pais && op.moneda
+        ? await sinSaldoPara(
+            db,
+            candidatos.map((c) => c.conductorId),
+            op.pais,
+            op.moneda,
+            comision,
+          )
+        : new Set<string>();
+    // C-PAGO-MOVIL-VIAJE: un viaje con pago móvil va a quien tiene su pago móvil cargado.
+    const conPagoMovil =
+      op.metodo_pago === 'pago_movil' && op.pais
+        ? await conductoresConPagoMovil(
+            db,
+            candidatos.map((c) => c.conductorId),
+            op.pais,
+          )
+        : null;
+    const elegido = candidatos.find((c) => {
+      if (yaOfrecidos.has(c.conductorId)) return false;
+      if (sinSaldo.has(c.conductorId)) return false;
+      if (conPagoMovil && !conPagoMovil.has(c.conductorId)) return false;
+      const destino = destinos.get(c.conductorId);
+      if (!destino) return true;
+      return (
+        op.destino_lat != null &&
+        op.destino_lng != null &&
+        acercaAlDestino(c, { lat: Number(op.destino_lat), lng: Number(op.destino_lng) }, destino)
+      );
+    });
+    if (!elegido) continue;
+    // La condición repite la regla de «libre» en la MISMA sentencia: si entre la consulta y aquí
+    // el conductor tomó otra cosa, la oferta no se crea.
     const r = await db
       .prepare(
         `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos)
