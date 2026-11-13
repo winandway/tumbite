@@ -1,4 +1,5 @@
 import { anotarCambioDinero } from './dinero';
+import { efectivoDeJuego } from '../ciudadJuego';
 import {
   TIPOS_CASO,
   type TipoCaso,
@@ -584,7 +585,9 @@ internacional.get('/pais', async (c) => {
     pais,
     moneda,
     decimales: cfg.decimales,
-    efectivoActivo: cfg.efectivoActivo,
+    // C-CIUDAD-JUEGO: un restaurante robot del juego cobra en efectivo (solo pruebas y local).
+    efectivoActivo:
+      cfg.efectivoActivo || (deRest ? await efectivoDeJuego(c.req.url, db, rid) : false),
     transferenciaRepartidorActiva: cfg.transferenciaRepartidorActiva,
   });
 });

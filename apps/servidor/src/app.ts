@@ -59,6 +59,7 @@ import { kyc } from './rutas/kyc';
 import { fotos, media } from './rutas/fotos';
 import { diagnostico } from './rutas/diagnostico';
 import { ciudadPruebas } from './rutas/ciudadPruebas';
+import { fijarAppCiudad } from './ciudadJuego';
 import { saludServicios, servicios } from './rutas/servicios';
 import { buscar } from './rutas/buscar';
 import { demanda } from './rutas/demanda';
@@ -503,6 +504,8 @@ app.route('/datos', catalogo);
 app.route('/datos', dinero);
 app.route('/datos', diagnostico);
 app.route('/datos', ciudadPruebas);
+// C-CIUDAD-JUEGO: los robots de la ciudad de pruebas le hablan a esta misma app por dentro.
+fijarAppCiudad(app);
 app.route('/datos', servicios);
 app.route('/datos', buscar);
 app.route('/datos', demanda);

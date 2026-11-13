@@ -48,6 +48,9 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
     );
   await next();
   if (metodo === 'GET' || metodo === 'HEAD') return;
+  // C-CIUDAD-JUEGO: el latido de la ciudad de pruebas llega cada pocos segundos mientras la
+  // pantalla está abierta; anotarlo sería una fila por latido (encender y apagar sí se anotan).
+  if (c.req.path === '/datos/admin/ciudad-pruebas/latido') return;
   await db
     .prepare(
       'INSERT INTO acciones_equipo (usuario_id, perfil, metodo, ruta, estado) VALUES (?, ?, ?, ?, ?)',

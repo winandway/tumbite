@@ -7,6 +7,12 @@
 export const MENSAJES_EN = new Map<string, string>([
   // C-REFERIDOS
   ['Las invitaciones no están activas.', 'Invites aren’t active.'],
+  // C-CIUDAD-JUEGO (SIM-7)
+  ['La base no está disponible.', 'The database isn’t available.'],
+  [
+    'Este sitio no tiene el secreto del reloj (RELOJ_SECRETO): sin él no se pueden armar las cuentas robot.',
+    'This site doesn’t have the clock secret (RELOJ_SECRETO): the robot accounts can’t be set up without it.',
+  ],
   ['No puedes usar tu propio código.', 'You can’t use your own code.'],
   ['El código es solo para tu primer pedido.', 'This code is only for your first order.'],
   ['Ya usaste un código de invitación.', 'You already used an invite code.'],

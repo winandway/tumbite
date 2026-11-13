@@ -93,11 +93,13 @@ export async function abrirPedidoDirecto(
     zonaId: string;
     clienteId: string;
     metodo: Exclude<MetodoPago, 'tarjeta'>;
+    /** C-CIUDAD-JUEGO: restaurante robot del juego en pruebas o local (lo decide efectivoDeJuego). */
+    efectivoDeJuego?: boolean;
   },
 ) {
   const { pais, moneda } = await paisDeZona(db, p.zonaId);
   const cfg = await leerConfigPais(db, pais);
-  if (p.metodo === 'efectivo' && !cfg.efectivoActivo)
+  if (p.metodo === 'efectivo' && !cfg.efectivoActivo && !p.efectivoDeJuego)
     throw new ErrorDatos('Este país todavía no acepta pago en efectivo.', 'metodoPago', 409);
   if (p.metodo === 'transferencia_repartidor' && !cfg.transferenciaRepartidorActiva)
     throw new ErrorDatos(

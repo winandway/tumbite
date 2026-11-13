@@ -109,6 +109,8 @@ export default defineConfig({
             'rutas/cupones.ts',
             // C-TIENDAS-PESO-REAL (SIG-3): el peso real de los pesables.
             'rutas/tiendasPeso.ts',
+            // C-CIUDAD-JUEGO (SIM-7): efectivo de juego, saldo prepago de los robots y sus sesiones.
+            'ciudadJuego.ts',
           ].map((f) => [`apps/servidor/src/${f}`, { lines: 90 }]),
         ),
         // C-PROMO-RESTAURANTE (BRE-5): el reparto del pedido y la promoción, al 90 % de líneas.

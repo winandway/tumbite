@@ -12,6 +12,7 @@ import {
   recalcularConDescuentos,
 } from '../descuentosPedido';
 import { abrirPedidoDirecto } from '../internacional/cobroDirecto';
+import { efectivoDeJuego } from '../ciudadJuego';
 import { acreditarRecargaStripe } from '../internacional/recargas';
 import {
   TEXTOS_FINANZAS,
@@ -1078,6 +1079,9 @@ pedidos.post('/pedidos', async (c) => {
       zonaId: String(rest.zona_id ?? ZONA_INICIAL),
       clienteId: u.id,
       metodo: d.metodoPago,
+      // C-CIUDAD-JUEGO: los restaurantes robot del juego aceptan efectivo (solo pruebas y local).
+      efectivoDeJuego:
+        d.metodoPago === 'efectivo' && (await efectivoDeJuego(c.req.url, db, String(rest.id))),
     });
     await anotar(db, id, 'pagado', u.id);
     await correosDePedidoPagado(c.env, db, id).catch((e: unknown) =>
