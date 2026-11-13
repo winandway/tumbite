@@ -21,9 +21,14 @@ Opciones (van después de `--`):
 | ---------------------- | ---------------------------------------------------------------------- |
 | `--solo "rechaza,PIN"` | Solo los escenarios cuyo nombre contiene alguno de esos textos         |
 | `--etiqueta diario`    | Solo el subconjunto que corre cada día contra el sitio de pruebas      |
+| `--etiqueta moto`      | Solo Divoox Moto en Venezuela (efectivo, pago móvil y sin saldo)       |
 | `--semilla 1234`       | Repite una corrida: mismos nombres, mismas rutas de GPS, mismas manías |
 
 Contra el sitio de pruebas lo corre el flujo de GitHub `simulador.yml` (manual y una vez al día), con `SIMULADOR_URL` y `SIMULADOR_SECRETO`. Solo acepta `staging.tumbite.com` o `tumbite-pruebas.sitios.dev`: nunca producción.
+
+## Divoox Moto en Venezuela
+
+`simulador/divoox/moto.ts` (etiqueta `moto`; «efectivo» y «sin saldo» también van en `diario`). Hace el mismo camino que `scripts/staging/probar-moto-venezuela.mjs` con cuentas FIJAS de la puerta de diagnóstico (`zz-mtve-…`): el saldo y el libro del conductor no se borran nunca y su alta vuelve a empezar en cada escenario. En local Moto está cerrado como en producción, así que el escenario abre la compuerta de Venezuela en la base local; en el sitio de pruebas no hace falta. Candado C-MOTO-VE-PUNTA-A-PUNTA.
 
 ## Cómo se lee el reporte
 

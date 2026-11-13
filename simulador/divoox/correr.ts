@@ -15,6 +15,7 @@ import {
 import { destinoDesdeEntorno, levantarServidorLocal } from './destino.ts';
 import { libroCuadra, pedidosDelLibro } from './dinero.ts';
 import { ESCENARIOS } from './escenarios.ts';
+import { ESCENARIOS_MOTO } from './moto.ts';
 import { type Ctx, cerrarEscenario, crearCtx } from './mundo.ts';
 
 /**
@@ -53,7 +54,9 @@ try {
   const vueltaDe = (i: number) =>
     d.modo === 'staging' ? `simulador-${corrida}` : `simulador-${corrida}-e${i + 1}`;
   const escenarios = filtrar(
-    ESCENARIOS.filter((e) => d.modo === 'local' || !(e.etiquetas ?? []).includes('solo-local')),
+    [...ESCENARIOS, ...ESCENARIOS_MOTO].filter(
+      (e) => d.modo === 'local' || !(e.etiquetas ?? []).includes('solo-local'),
+    ),
     { solo: op.solo ?? null, etiqueta: op.etiqueta ?? null },
   );
   if (!escenarios.length) throw new Error('Ningún escenario coincide con el filtro.');
