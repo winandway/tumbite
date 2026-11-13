@@ -33,6 +33,14 @@ export default defineConfig({
       },
       {
         test: {
+          // El núcleo universal del simulador de compras y entregas (sin servidor ni red).
+          name: 'simulador',
+          include: ['simulador/nucleo/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'panel',
           include: ['apps/panel/src/**/*.test.{ts,tsx}'],
           environment: 'jsdom',

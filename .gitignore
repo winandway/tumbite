@@ -62,3 +62,7 @@ node_modules
 # Documentos para Richard con cuentas o datos privados (31 oct 2026): nunca al repositorio público
 privado/
 repaso-pantallas/
+
+# Simulador de compras: servidor armado en local y reportes de cada corrida
+/.simulador/
+simulador/reportes/

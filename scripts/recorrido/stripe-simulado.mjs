@@ -2,16 +2,36 @@
 // en la revisión automática de GitHub: el servidor le habla únicamente si STRIPE_API_URL apunta a
 // localhost (en producción esa variable se ignora y se habla con Stripe de verdad).
 // Responde a todo con un objeto «exitoso»: intento de pago, devolución, cuenta conectada.
+//
+// Simulador de compras (13 nov 2026): `POST /__simulador/estado {id, status}` deja anotado el
+// estado de UN intento de pago, y la consulta de ese intento (`GET /v1/payment_intents/<id>`)
+// responde con él. Así un pedido que nadie pagó se ve sin pagar, como en Stripe de verdad
+// (C-PENDIENTE-ABANDONADO). Sin anotación, todo sigue respondiendo «exitoso» como siempre.
 import { createServer } from 'node:http';
 
 const puerto = Number(process.env.PUERTO_STRIPE ?? 12111);
+const estados = new Map();
 let n = 0;
 createServer((req, res) => {
   let cuerpo = '';
   req.on('data', (d) => (cuerpo += d));
   req.on('end', () => {
     n++;
-    const id = `sim_${n}`;
+    if (req.method === 'POST' && req.url === '/__simulador/estado') {
+      try {
+        const { id, status } = JSON.parse(cuerpo);
+        if (typeof id === 'string' && typeof status === 'string') estados.set(id, status);
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end('{"ok":true}');
+      } catch {
+        res.writeHead(400, { 'content-type': 'application/json' });
+        res.end('{"ok":false}');
+      }
+      return;
+    }
+    const pi = /^\/v1\/payment_intents\/([^/?]+)$/.exec((req.url ?? '').split('?')[0] ?? '');
+    const anotado = req.method === 'GET' && pi ? estados.get(pi[1]) : undefined;
+    const id = pi ? pi[1] : `sim_${n}`;
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(
       JSON.stringify({
@@ -23,7 +43,7 @@ createServer((req, res) => {
         charges_enabled: true,
         payouts_enabled: true,
         details_submitted: true,
-        status: 'succeeded',
+        status: anotado ?? 'succeeded',
         payment_method: 'pm_simulado',
       }),
     );

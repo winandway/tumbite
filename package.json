@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p simulador",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -27,7 +27,8 @@
     "recorrido": "node scripts/recorrido/preparar.mjs && playwright test -c playwright.recorrido.config.ts",
     "recorrido:capturas": "node scripts/recorrido/preparar.mjs && CAPTURAS=1 playwright test -c playwright.recorrido.config.ts && node scripts/recorrido/a-docs.mjs",
     "recorrido:tiendas": "node scripts/recorrido/tiendas.mjs",
-    "recorrido:docs": "node scripts/recorrido/a-docs.mjs"
+    "recorrido:docs": "node scripts/recorrido/a-docs.mjs",
+    "simulador": "node simulador/divoox/correr.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

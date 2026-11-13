@@ -1,0 +1,83 @@
+name: simulador
+# Simulador de compras y entregas contra el SITIO DE PRUEBAS (13 nov 2026, pedido de Richard).
+# Clientes, restaurantes y repartidores falsos piden, aceptan, preparan, recogen con el código,
+# manejan con GPS simulado y entregan, con Stripe en MODO PRUEBA. Todos los países.
+#  - Una vez al día (a otra hora que la máquina de dinero) y a mano: el subconjunto «diario» del
+#    libreto (pocos escenarios, holgado bajo el tope de 6.000 filas por vuelta).
+#  - A mano con modo «ciudad»: una sesión acotada de la ciudad de pruebas (se ve en vivo en el
+#    superadmin del sitio de pruebas, «Ciudad de pruebas»), que se detiene sola antes del tope.
+# Nunca contra producción: el simulador solo acepta la dirección del sitio de pruebas.
+on:
+  schedule:
+    - cron: '43 10 * * *'
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'libreto (escenarios con nombre) o ciudad (sesión de la ciudad de pruebas)'
+        type: choice
+        options: [libreto, ciudad]
+        default: libreto
+      etiqueta:
+        description: 'Libreto: qué subconjunto (vacío = el diario)'
+        required: false
+        default: diario
+      pedidos:
+        description: 'Ciudad: cuántos pedidos como mucho'
+        required: false
+        default: '20'
+      minutos:
+        description: 'Ciudad: cuántos minutos como mucho'
+        required: false
+        default: '15'
+      semilla:
+        description: 'Semilla para repetir una corrida (vacío = nueva)'
+        required: false
+        default: ''
+
+concurrency:
+  group: simulador
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  simulador:
+    if: ${{ vars.URL_PRUEBAS != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      SIMULADOR_URL: ${{ vars.URL_PRUEBAS }}
+      SIMULADOR_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+      SIMULADOR_CORRIDA: ${{ github.run_id }}-${{ github.run_attempt }}
+      # Para el paso final (cuenta-vuelta.mjs): la misma vuelta que usó el simulador.
+      URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+      RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+      VUELTA_PRUEBAS: simulador-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - name: Canario del sitio de pruebas
+        run: curl -fsS "$URL_PRUEBAS/datos/salud" | head -c 2000
+      - name: Libreto de escenarios
+        if: ${{ github.event_name == 'schedule' || inputs.modo == 'libreto' }}
+        run: |
+          npm run simulador -- --etiqueta "${{ inputs.etiqueta || 'diario' }}" \
+            --semilla "${{ inputs.semilla }}" --reporte simulador/reportes/corrida
+      - name: Sesión de la ciudad de pruebas
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.modo == 'ciudad' }}
+        run: |
+          npm run simulador:ciudad -- --pedidos "${{ inputs.pedidos }}" --minutos "${{ inputs.minutos }}" \
+            --semilla "${{ inputs.semilla }}" --reporte simulador/reportes/corrida
+      - name: Guardar el reporte
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulador-reporte
+          path: simulador/reportes/corrida/
+          retention-days: 14
+      - name: Filas que leyó y escribió esta vuelta (presupuesto)
+        if: ${{ !cancelled() }}
+        run: node scripts/staging/cuenta-vuelta.mjs
