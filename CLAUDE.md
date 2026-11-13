@@ -244,7 +244,7 @@ DESARROLLO → STAGING → PRUEBAS → PRODUCCIÓN. **Toda versión aprobada en 
 - GitHub: repositorio `tumbite` de la cuenta conectada en `gh`.
 - YaDominios Cloud: solo el sitio `tumbite`.
 - Stripe: solo la cuenta de Windoce LLC (modo de prueba hasta probar el circuito completo).
-- Cloudflare (Workers externos de la Fase 2, decidido por Richard el 15 oct 2026): cuenta de windoce1@gmail.com (id 4d9e131f2c18bc10ac4700d689d5556c), SIEMPRE en la sesión aparte `HOME=~/.tumbite-cloudflare npx wrangler …` (la sesión por defecto de esta computadora es OTRA cuenta). Solo los Workers `tumbite-tiempo-real` y `tumbite-reloj`, conectados a staging hasta que Richard apruebe producción.
+- Cloudflare (Workers externos de la Fase 2, decidido por Richard el 15 oct 2026): cuenta de windoce1@gmail.com (id 4d9e131f2c18bc10ac4700d689d5556c), SIEMPRE en la sesión aparte `HOME=~/.tumbite-cloudflare npx wrangler …` (la sesión por defecto de esta computadora es OTRA cuenta). Solo los Workers `tumbite-tiempo-real` y `tumbite-reloj` (conectados a staging) y `tumbite-reloj-produccion` (el reloj exacto de producción: cada minuto llama a `POST https://divoox.com/datos/reloj`; encendido el 13 nov 2026 con el sí de Richard; candado C-RELOJ-PRODUCCION-CLOUDFLARE).
 - Nada más existe para la IA en este proyecto.
 
 ## Compuertas

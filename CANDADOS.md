@@ -3536,6 +3536,23 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué NO hay que tocar:** el orden `claro.mjs` → `instalable.mjs` en los tres guiones de `package.json`.
 - **Límites de la versión instalada desde la web en iPhone:** no recibe avisos al celular (hace falta construir los avisos web) y no manda la ubicación con la pantalla apagada; el código de recogida se escribe, no se escanea.
 
+## C-RELOJ-PRODUCCION-CLOUDFLARE: el reloj exacto de producción (13 nov 2026, autorizado por Richard) — todos los países
+
+- **Qué pasaba:** el canario de producción (`https://divoox.com/datos/salud`) decía `reloj: atrasado`. El único reloj de producción era GitHub Actions (`.github/workflows/reloj.yml`, «cada 5 minutos»), que en la práctica corre cada 4 a 7 horas. De ese reloj cuelgan cancelar pedidos abandonados, los recordatorios del Manager y los cobros al entregar.
+- **Qué se hizo:**
+  - Worker nuevo `tumbite-reloj-produccion` (`apps/tiempo-real/src/relojProduccion.ts`, `apps/tiempo-real/wrangler.reloj-produccion.jsonc`) en la cuenta de Cloudflare del proyecto (windoce1@gmail.com, `HOME=~/.tumbite-cloudflare`). Cron `* * * * *`: cada minuto hace `POST https://divoox.com/datos/reloj` con `x-reloj-secreto`.
+  - Es la MISMA ruta y el MISMO secreto que GitHub (`RELOJ_SECRETO`, copia en el llavero `-s tumbite-reloj-secreto`, cargado en el Worker con `wrangler secret put`). No se tocó ninguna variable de producción ni se republicó el sitio. No se usó la ruta firmada `/datos/interno/reloj` porque producción no tiene las llaves `INTERNO_*`.
+  - Sin duplicados: el servidor corre cada minuto una sola vez venga de donde venga (C-RELOJ-UNA-VEZ). GitHub queda de respaldo y sigue pidiendo la copia de seguridad diaria.
+  - El reloj de pruebas (`tumbite-reloj`) no se tocó y sigue en pausa (C-RELOJ-PRUEBAS-PAUSA).
+- **Gasto medido (vuelta ociosa):** antes del arreglo, cada vuelta escribía 1 fila de más: `fin_conciliacion` reescribía su resultado en `config` cada minuto aunque no cambiara (1.440 escrituras al día). Ahora se guarda solo si el resultado cambió o una vez por hora. Una vuelta ociosa escribe 0 filas en sus tareas; el registro de la vuelta en `tareas_programadas` es 1 INSERT + 1 UPDATE (unas 4 filas contando los dos índices), unas 5.800 al día, más la limpieza diaria de las 04:00 que borra las vueltas de hace 7 días (el mismo número). Las lecturas de las tareas se ven ahora en cada vuelta: `filas.leidas` / `filas.escritas` en la respuesta y en `tareas_programadas.resultado`.
+- **Pruebas** (comprobadas en rojo):
+  - `apps/servidor/src/reloj.test.ts`, «C-RELOJ-OCIOSO-SIN-ESCRITURAS»: tres vueltas ociosas seguidas con las tareas reales escriben 0 filas (rojo con la conciliación de billeteras reescribiendo: 1); la conciliación vuelve a escribir si cambia o pasó una hora.
+  - `apps/tiempo-real/src/relojProduccion.test.ts`: llama a `/datos/reloj` con el secreto, reintenta ante 5xx, NO reintenta un 404 (rojo comprobado), config apunta a divoox.com cada minuto.
+- **Cómo se comprueba:** `https://divoox.com/datos/salud` → `reloj: ok`. En la base (`consultar_base`): `SELECT clave FROM tareas_programadas WHERE empezada_en > datetime('now','-10 minutes')` muestra una fila por minuto. Registro del Worker: panel de Cloudflare → Workers → `tumbite-reloj-produccion` → Logs.
+- **Cómo se apaga en una emergencia:** en `apps/tiempo-real`, poner `"crons": []` en `wrangler.reloj-produccion.jsonc` y correr `HOME=~/.tumbite-cloudflare npx wrangler deploy -c wrangler.reloj-produccion.jsonc` (o, desde el panel de Cloudflare, quitar el disparador programado del Worker). Producción vuelve a depender solo de GitHub (impuntual: el canario volverá a «atrasado» a las 6 horas).
+- **Ojo con la salud:** como el Worker usa la ruta de GitHub, el canario sigue en el modo «solo GitHub» (atrasado a las 6 h sin vuelta buena, error a las 24 h). Si el Worker se cae, el canario tarda en verlo; el registro del Worker sí lo muestra al minuto. Para vigilancia al minuto haría falta la ruta firmada (cargar `INTERNO_LLAVE_ID` / `INTERNO_SECRETO_ACTUAL` en producción y en el Worker).
+- **No tocar:** no apuntar `tumbite-reloj` (pruebas) a producción; no poner el secreto en el repositorio; no volver a escribir en `config` en cada vuelta sin comparar.
+
 ## C-RESTAURANTE-DOBLE-TOQUE y C-FOTO-RECOGIDA-REPETIDA (13 nov 2026, los encontró el simulador de compras) — todos los países
 
 - **Qué pasaba:** el simulador de compras (`npm run simulador`, escenarios «Doble toque del restaurante…» y «Doble toque del repartidor…») mandó cada toque dos veces, como lo hace una tableta o un celular lento:

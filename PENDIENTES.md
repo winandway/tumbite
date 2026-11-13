@@ -93,7 +93,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [ ] 👤 Tope mensual de gasto en IA (propuesto 20 dólares prepago) y si el Manager puede dar regalos de disculpa.
 - [ ] 👤 Mirar las ideas de «Lo que viene» en la página Cómo funciona.
 - [ ] 👤 Antes del lanzamiento abierto: apagar o borrar los datos de prueba (Orlando y Tampa de prueba, cuentas `prueba.%@ejemplo.com`; la consulta está en `CANDADOS.md`).
-- [ ] 👤 Sí o no a un reloj exacto en Cloudflare (hoy el reloj de GitHub es impuntual; el Manager ya no depende de él para cancelar a tiempo).
+- [x] 👤 (13 nov: sí; encendido como `tumbite-reloj-produccion`, C-RELOJ-PRODUCCION-CLOUDFLARE) Sí o no a un reloj exacto en Cloudflare (hoy el reloj de GitHub es impuntual; el Manager ya no depende de él para cancelar a tiempo).
 
 - [x] Republicado por Richard (10 oct 2026): base y almacén en vivo.
 - [x] Republicación automática arreglada por YaDominios Cloud (11 oct 2026, 03:34 UTC). Ya no hay que republicar a mano.
@@ -210,7 +210,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] Publicar la Fase 3. Versión `36f4e35`, 16 oct; verificador «después» VERDE.
 - [ ] Integrar el reloj seguro con la Fase 3 (rama `fase-reloj-seguro`) y validarlo en el sitio de pruebas. Sin publicar.
 - [ ] 👤 Autorizar la publicación del reloj seguro.
-- [ ] 👤 Autorizar el trabajador del reloj de producción (`docs/EVALUACION-RELOJ-CLOUDFLARE.md` §B).
+- [x] 👤 (13 nov: autorizado y encendido, C-RELOJ-PRODUCCION-CLOUDFLARE) Autorizar el trabajador del reloj de producción (`docs/EVALUACION-RELOJ-CLOUDFLARE.md` §B).
 - [ ] Hito 1 del cliente: catálogo y sesión, dos correcciones independientes (`docs/PLAN-CATALOGO-Y-RELOJ.md`).
 - [ ] Validar el MVP de Comida.
 - [x] HECHO 3 nov (NXT-1, C-DINERO-30-DIAS) Tarea aparte (aprobada en concepto): la salud no oculta discrepancias viejas; excepciones auditables en una tabla propia, sin tocar las conciliaciones. Incluye los 10 pedidos de prueba de Novi del 11 y 12 oct, que nunca se conciliaron.
@@ -280,7 +280,7 @@ Ver `docs/RECONCILIACION-FASE-2.md`, sección 5: A (lo hace la IA), B (preparado
 - [x] (29 oct 2026) Versiones nuevas de las tres apps subidas a Google Play, a la revisión en curso: cliente versión 6 (tiendas, Moto, sugerencias de direcciones, entrega en mano con alcohol), restaurante versión 5 (faltantes de tienda), Driver versión 8 (cobro al entregar en Mi ruta y reintentos). Ninguna app está aprobada todavía: las tres siguen en su primera revisión desde el 27 oct.
 - [ ] 👤 Esperar la aprobación de Google de las tres apps (no depende de nosotros). Al aprobarse, revisar que en el celular aparezcan Mercado, Farmacia, Licores y Más como «muy pronto» y Moto apagado.
 
-- [ ] 👤 **Reloj de Cloudflare en producción (2 nov, 21:30):** GitHub deja huecos de 6 a 7 horas en el reloj de cada 5 minutos; mientras tanto se retrasan cobros al entregar, avisos del Manager y pedidos abandonados. Encenderlo es tu decisión (regla del proyecto). Con tu sí, la IA apunta el reloj ya probado en pruebas a producción. Todos los países.
+- [x] 👤 HECHO 13 nov (C-RELOJ-PRODUCCION-CLOUDFLARE, Worker `tumbite-reloj-produccion` cada minuto). **Reloj de Cloudflare en producción (2 nov, 21:30):** GitHub deja huecos de 6 a 7 horas en el reloj de cada 5 minutos; mientras tanto se retrasan cobros al entregar, avisos del Manager y pedidos abandonados. Encenderlo es tu decisión (regla del proyecto). Con tu sí, la IA apunta el reloj ya probado en pruebas a producción. Todos los países.
 
 - 👤 (3 nov, SIG-5) En el tablero de Stripe (modo prueba y modo real), en el nombre público del negocio, poner «Divoox». Hoy el formulario de alta de cobros dice «Tumbite test uses Stripe…». Es un ajuste de la cuenta de Richard.
 

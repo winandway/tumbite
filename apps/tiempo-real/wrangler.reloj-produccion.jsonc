@@ -1,0 +1,16 @@
+// C-RELOJ-PRODUCCION-CLOUDFLARE (13 nov 2026): el reloj exacto de PRODUCCIÓN. Cada minuto llama a
+// POST /datos/reloj de divoox.com con x-reloj-secreto (la misma ruta que GitHub, que queda de respaldo).
+// Cuenta de Cloudflare: windoce1@gmail.com, SIEMPRE con HOME=~/.tumbite-cloudflare npx wrangler …
+// Secreto (nunca aquí): RELOJ_SECRETO → `wrangler secret put RELOJ_SECRETO -c wrangler.reloj-produccion.jsonc`.
+// Apagar en una emergencia: `HOME=~/.tumbite-cloudflare npx wrangler triggers deploy -c wrangler.reloj-produccion.jsonc`
+// con "crons": [] (o borrar el Worker desde el panel). GitHub sigue moviendo el reloj cada pocas horas.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "tumbite-reloj-produccion",
+  "main": "src/relojProduccion.ts",
+  "compatibility_date": "2026-09-01",
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": { "BACKEND_URL": "https://divoox.com" },
+  "workers_dev": false,
+  "observability": { "enabled": true },
+}

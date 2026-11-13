@@ -84,3 +84,4 @@
 2026-11-02 · desarrollador · BRE-1 (tabla de brechas al día) y BRE-2 (seguimiento honesto: hace X s, señal perdida, rango de llegada; captura nueva espera staging en BRE-2b) · ok · 84811a4b4, 9400e19d9
 2026-11-08 · revisor-calidad · LAN-2zr · VISTO BUENO · faf95d4df
 2026-11-08 · tiendas-lanzamientos · LAN-7 · restaurante compilación 17 VALID en TestFlight interno, sin revisión de Apple · ok
+2026-11-13 · desarrollador · reloj exacto de producción en Cloudflare: Worker tumbite-reloj-produccion cada minuto contra POST divoox.com/datos/reloj (misma ruta y secreto que GitHub, que queda de respaldo; C-RELOJ-UNA-VEZ evita duplicados); la conciliación de billeteras ya no reescribe config en cada vuelta y cada vuelta cuenta sus filas (C-RELOJ-OCIOSO-SIN-ESCRITURAS, C-RELOJ-PRODUCCION-CLOUDFLARE); sin push, espera al revisor · ok · ver git log (C-RELOJ-PRODUCCION-CLOUDFLARE)

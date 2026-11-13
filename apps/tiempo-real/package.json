@@ -7,7 +7,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build:tiempo-real": "wrangler deploy --dry-run --outdir=.dist-tiempo-real",
-    "build:reloj": "wrangler deploy --dry-run -c wrangler.reloj.jsonc --outdir=.dist-reloj"
+    "build:reloj": "wrangler deploy --dry-run -c wrangler.reloj.jsonc --outdir=.dist-reloj",
+    "build:reloj-produccion": "wrangler deploy --dry-run -c wrangler.reloj-produccion.jsonc --outdir=.dist-reloj/produccion"
   },
   "dependencies": {
     "@tumbite/compartido": "0.1.0"
