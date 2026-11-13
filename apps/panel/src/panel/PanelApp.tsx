@@ -261,6 +261,18 @@ export function PanelApp({ ruta }: { ruta: string }) {
           <SelectorIdioma idioma={idioma} cambiar={cambiar} />
         </div>
       </header>
+      {/* C-FLEX-MARCA y C-FLEX-SALIR: en Flex siempre se ve dónde estás y cómo salir. */}
+      {esFlex && usuario && (
+        <div className="flex-franja">
+          <p className="flex-franja-marca" data-testid="flex-marca">
+            <strong>{t.flexNombre}</strong>
+            <span>{t.flexLema}</span>
+          </p>
+          <button type="button" data-testid="flex-salir" onClick={() => void salir(usuario)}>
+            {t.salir}
+          </button>
+        </div>
+      )}
 
       {estado.cargando ? (
         <main className="contenido">
@@ -292,6 +304,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
             idioma={idioma}
             alCambiar={(u) => setEstado({ cargando: false, usuario: u })}
             alBorrar={() => borrarCuenta(usuario)}
+            alSalir={() => salir(usuario)}
           />
         </main>
       ) : menu.length === 0 ? (
@@ -328,6 +341,15 @@ export function PanelApp({ ruta }: { ruta: string }) {
                 </Enlace>
               );
             })}
+            {/* C-SALIR-A-LA-VISTA: la salida también al final del menú, no solo bajo el nombre. */}
+            <button
+              type="button"
+              className="panel-menu-salir"
+              data-testid="menu-salir"
+              onClick={() => void salir(usuario)}
+            >
+              {t.salir}
+            </button>
           </nav>
           <main className="panel-contenido">
             {ruta === '/panel/settings' ? (
@@ -336,6 +358,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
                 idioma={idioma}
                 alCambiar={(u) => setEstado({ cargando: false, usuario: u })}
                 alBorrar={() => borrarCuenta(usuario)}
+                alSalir={() => salir(usuario)}
               />
             ) : (
               ((usuario.rol === 'admin' && baseAdmin && ruta.startsWith(baseAdmin)

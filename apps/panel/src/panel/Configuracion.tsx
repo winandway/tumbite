@@ -18,6 +18,7 @@ import { api, pedir } from './api';
 const T = {
   es: {
     titulo: 'Configuración',
+    salir: 'Cerrar sesión',
     datos: 'Mis datos',
     nombre: 'Nombre',
     telefono: 'Celular',
@@ -52,6 +53,7 @@ const T = {
   },
   en: {
     titulo: 'Settings',
+    salir: 'Sign out',
     datos: 'My details',
     nombre: 'Name',
     telefono: 'Mobile phone',
@@ -105,11 +107,13 @@ export function Configuracion({
   idioma,
   alCambiar,
   alBorrar,
+  alSalir,
 }: {
   usuario: Usuario;
   idioma: Idioma;
   alCambiar: (u: Usuario) => void;
   alBorrar: () => Promise<void>;
+  alSalir?: () => Promise<void>;
 }) {
   const t = enIdioma(T, idioma);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
@@ -383,6 +387,18 @@ export function Configuracion({
           {t.cambiarCorreo}
         </button>
       </form>
+      {alSalir && (
+        <p>
+          <button
+            type="button"
+            className="boton secundario"
+            data-testid="config-salir"
+            onClick={() => void alSalir()}
+          >
+            {t.salir}
+          </button>
+        </p>
+      )}
     </section>
   );
 }

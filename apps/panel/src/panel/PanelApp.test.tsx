@@ -120,8 +120,9 @@ describe('panel: entrar, ojito, borradores y salir', () => {
     render(<PanelApp ruta="/panel" />);
     expect(await screen.findByRole('heading', { name: 'Hola, Rosa' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Regalos y marketing' })).toBeInTheDocument();
-    await userEvent.click(screen.getByText('Rosa'));
-    await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+    // C-SALIR-A-LA-VISTA: la salida está bajo el nombre y también al final del menú, a la vista.
+    expect(screen.getAllByRole('button', { name: 'Cerrar sesión' })).toHaveLength(2);
+    await userEvent.click(screen.getByTestId('menu-salir'));
     await waitFor(() =>
       expect(llamadas.some((u) => u.endsWith('/datos/cuentas/salir'))).toBe(true),
     );

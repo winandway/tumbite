@@ -3579,6 +3579,21 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `apps/panel/src/estilos.css`, regla `.contenido-flex > section.flex-panel` (centrada, ancho máximo 880, relleno 32/24 y 24/16 en celular).
 - **Cómo se comprueba:** `e2e/recorrido/flexMargen.spec.ts` (computadora y celular), comprobada en rojo quitando la regla. Capturas en `docs/capturas/recorrido/flex-margen-*.png`.
 
+## C-FLEX-MARCA, C-FLEX-SALIR y C-SALIR-A-LA-VISTA (13 nov 2026, Richard) — todos los países
+
+- **Qué se veía:** dentro de una empresa de Divoox Flex (`/panel/business/<id>`) nada decía «Divoox Flex» y el panel se confundía con el de comida. Richard buscó «Cerrar sesión» en Configuración y en Perfil y no la encontró: solo vivía dentro del botón con el nombre de la cuenta («Demo»), que no parece un menú. Sin salir no podía entrar con otra cuenta.
+- **Causa:** la salida estaba en un solo sitio (`details.cuenta` de la cabecera) y sin señal de que se despliega; Flex solo cambiaba el color del ítem activo.
+- **Arreglo:** `PanelApp.tsx` dibuja en todas las páginas de Flex la franja `.flex-franja` (azul de logística `#1F4D69`) con «Divoox Flex», su lema y el botón «Cerrar sesión» a la vista; el menú lateral de Flex va en el mismo azul con el ítem activo en azul claro (`#4AA5DC`), y en celular es una sola fila deslizable. Para todos los paneles: el botón de la cuenta lleva flecha, «Cerrar sesión» está también al final del menú lateral (`menu-salir`) y en Configuración (`config-salir`).
+- **Cómo se comprueba:** `e2e/recorrido/flexCabecera.spec.ts` (computadora y celular: franja y menú en azul, nada se sale de la pantalla, el botón está dentro de la pantalla, al tocarlo vuelve a la entrada y el pase viejo responde 401). Visto en rojo antes del arreglo (no existía la franja). `PanelApp.test.tsx` exige las dos salidas. Capturas en `docs/capturas/recorrido/flex-cabecera-*.png`.
+- **Qué NO tocar:** la clase es `flex-franja`; `flex-barra` ya existe y es la barra de avance de las rutas (usarla rompió la franja en la primera prueba).
+
+## C-ACCESO-ENLACES-CENTRADOS (13 nov 2026, Richard) — todos los países
+
+- **Qué se veía:** en la entrada del panel, «¿Olvidaste tu contraseña?» quedaba corrido a la izquierda mientras el enlace de crear cuenta salía centrado.
+- **Causa:** los dos son botones con aspecto de enlace; el largo ocupaba todo el ancho y se centraba solo, el corto se quedaba al inicio de la línea.
+- **Arreglo:** `apps/panel/src/estilos.css`, regla `.acceso > .enlace` (bloque, ancho completo, texto centrado).
+- **Cómo se comprueba:** `e2e/recorrido/accesoCentrado.spec.ts` (el centro del texto de cada enlace coincide con el del botón, en computadora y celular). Visto en rojo con la compilación anterior.
+
 ## C-LECTURAS-POR-PETICION (13 nov 2026, orden de Gerencia; regla «la nube no se come el dinero») — todos los países
 
 - **Qué pasaba:** una vuelta de la máquina de pruebas de dinero leía unas 590.000 filas del sitio de pruebas. Medido por ruta en una corrida del simulador de 4 pedidos: conciliación de diagnóstico 19.053 filas en 4 llamadas, consulta de diagnóstico 6.451 en 2, crear plato 6.448 en 2, ofertas del repartidor 4.253 en 2, ubicación 3.242 en 1, registro 3.225 en 1. Casi todas traían las mismas ~3.200: la revisión de la base que corre al arrancar cada servidor.

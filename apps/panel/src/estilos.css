@@ -6172,3 +6172,124 @@ body.modo-tableta .panel-contenido {
 .ciudad-pruebas .tabla td {
   white-space: normal;
 }
+
+/* C-FLEX-MARCA y C-FLEX-SALIR (13 nov 2026, Richard): en Divoox Flex siempre se ve dónde estás y
+   cómo salir. Franja con el nombre del servicio y el menú lateral en el azul de logística. */
+.flex-franja {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #1f4d69;
+  color: #fff;
+}
+.flex-franja-marca {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.flex-franja-marca strong {
+  font-family: Poppins, Montserrat, system-ui, sans-serif;
+  font-size: 1.15rem;
+}
+.flex-franja-marca span {
+  font-size: 0.85rem;
+  color: #e7f1f8;
+}
+.flex-franja button {
+  flex: none;
+  background: #4aa5dc;
+  color: #0b1f2b;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.flex-franja button:hover {
+  background: #fff;
+}
+.flex-panel .panel-menu {
+  background: #1f4d69;
+  border-right: 0;
+}
+.flex-panel .panel-menu a,
+.flex-panel .panel-menu .flex-nombre {
+  color: #fff;
+}
+.flex-panel .panel-menu .flex-volver,
+.flex-panel .panel-menu .flex-nombre small,
+.flex-panel .panel-menu .flex-menu-titulo {
+  color: #e7f1f8;
+}
+.flex-panel .panel-menu a:hover {
+  background: rgb(255 255 255 / 12%);
+}
+.flex-panel .panel-menu a.activo {
+  background: #4aa5dc;
+  color: #0b1f2b;
+}
+@media (max-width: 720px) {
+  /* En celular el menú de Flex es una sola fila que se desliza, sin títulos de grupo. */
+  .flex-panel .panel-menu {
+    align-items: center;
+    padding: 8px;
+  }
+  .flex-panel .panel-menu .flex-menu-grupo {
+    flex-direction: row;
+    margin: 0;
+    gap: 4px;
+  }
+  .flex-panel .panel-menu .flex-menu-titulo,
+  .flex-panel .panel-menu .flex-nombre {
+    display: none;
+  }
+  .flex-franja-marca span {
+    display: none;
+  }
+}
+
+/* C-SALIR-A-LA-VISTA (13 nov 2026, Richard): la salida no se esconde solo bajo el nombre de la
+   cuenta. El botón del nombre lleva flecha para que se lea como menú, y «Cerrar sesión» va también
+   al final del menú lateral y en Configuración. */
+.cuenta summary::after {
+  content: ' ▾';
+  font-size: 0.8em;
+}
+.cuenta summary::-webkit-details-marker {
+  display: none;
+}
+.panel-menu-salir {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  background: #fff;
+  color: #101010;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.panel-menu-salir:hover {
+  border-color: #101010;
+}
+@media (max-width: 720px) {
+  .panel-menu-salir {
+    margin-top: 0;
+    white-space: nowrap;
+  }
+}
+
+/* C-ACCESO-ENLACES-CENTRADOS (13 nov 2026, Richard): bajo el botón de entrar, «¿Olvidaste tu
+   contraseña?» quedaba pegado a la izquierda mientras el otro enlace salía centrado. */
+.acceso > .enlace {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
