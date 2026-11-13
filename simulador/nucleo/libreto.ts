@@ -128,6 +128,58 @@ export async function correrLibreto<C>(op: OpcionesLibreto<C>): Promise<Resultad
   };
 }
 
+/**
+ * Una SESIÓN con varias historias a la vez (el «modo ciudad»): `siguiente` va dando historias nuevas
+ * (o null cuando ya no hay que empezar más), con hasta `concurrencia` corriendo a la vez y una pausa
+ * creíble entre una y otra. `alAvanzar` se llama cada vez que termina una: si devuelve false, no se
+ * empiezan más y se espera a que terminen las que están en curso. Nada aquí sabe de qué app es.
+ */
+export type OpcionesSesion<C> = Omit<OpcionesLibreto<C>, 'escenarios' | 'alEmpezar'> & {
+  siguiente(n: number): Escenario<C> | null;
+  concurrencia: number;
+  pausaMs(): number;
+  alAvanzar?(hechos: readonly ResultadoEscenario[]): Promise<boolean>;
+};
+
+export async function correrSesion<C>(op: OpcionesSesion<C>): Promise<ResultadoCorrida> {
+  const inicio = op.reloj.ahora();
+  const resultados: ResultadoEscenario[] = [];
+  const enCurso = new Set<Promise<void>>();
+  let seguir = true;
+  for (let n = 0; seguir; n++) {
+    while (enCurso.size >= op.concurrencia) await Promise.race(enCurso);
+    if (!seguir) break;
+    const esc = op.siguiente(n);
+    if (!esc) break;
+    const p: Promise<void> = correrEscenario({ ...op, escenarios: [] }, esc, n).then(async (r) => {
+      resultados.push(r);
+      op.alTerminar?.(r);
+      if (op.alAvanzar && !(await op.alAvanzar(resultados))) seguir = false;
+      enCurso.delete(p);
+    });
+    enCurso.add(p);
+    await op.reloj.dormir(op.pausaMs());
+  }
+  await Promise.all(enCurso);
+  const conFilas = resultados.filter((r) => r.filas);
+  return {
+    corrida: op.corrida,
+    semilla: op.semilla,
+    destino: op.destino,
+    inicio: new Date(Date.now() - (op.reloj.ahora() - inicio)).toISOString(),
+    ms: op.reloj.ahora() - inicio,
+    ok: resultados.every((r) => r.ok),
+    escenarios: resultados,
+    filas: conFilas.length
+      ? {
+          leidas: conFilas.reduce((s, r) => s + (r.filas?.leidas ?? 0), 0),
+          escritas: conFilas.reduce((s, r) => s + (r.filas?.escritas ?? 0), 0),
+        }
+      : null,
+    notas: [],
+  };
+}
+
 async function correrEscenario<C>(
   op: OpcionesLibreto<C>,
   esc: Escenario<C>,

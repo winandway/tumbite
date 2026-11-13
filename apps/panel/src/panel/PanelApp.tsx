@@ -7,6 +7,7 @@ import {
   almacenNavegador,
   borrarBorradoresDe,
   enIdioma,
+  entornoDeHost,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { SelectorIdioma } from '../SelectorIdioma';
@@ -54,12 +55,18 @@ import { SuperPiloto } from './SuperPiloto';
 import { SuperRewards } from './SuperRewards';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
+import { SuperCiudad } from './SuperCiudad';
 import { pedir } from './api';
 
 /**
  * Sección del superadmin según la parte de la dirección después de su base secreta
  * (/panel/control-<id>). Las herramientas de siempre (restaurantes, dinero…) viven también ahí.
  */
+/** C-CIUDAD-PRUEBAS: la ciudad de pruebas no aparece en producción. */
+const enProduccion = () =>
+  entornoDeHost(window.location.host) !== 'pruebas' &&
+  entornoDeHost(window.location.host) !== 'local';
+
 export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' | 'en') {
   if (sub === '') return <SuperResumen base={base} idioma={idioma} />;
   if (sub === '/tickets') return <SuperTickets base={base} idioma={idioma} ticketId={null} />;
@@ -78,6 +85,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/team') return <SuperEquipo idioma={idioma} miId={usuario.id} />;
   if (sub === '/approvals') return <SuperAprobaciones idioma={idioma} miId={usuario.id} />;
   if (sub === '/pilot') return <SuperPiloto idioma={idioma} />;
+  // C-CIUDAD-PRUEBAS: solo en el sitio de pruebas y en local (en producción no existe).
+  if (sub === '/test-city' && !enProduccion()) return <SuperCiudad idioma={idioma} />;
   if (sub === '/rewards') return <SuperRewards idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;
   if (sub === '/flexfinance') return <SuperFinanzas base={base} idioma={idioma} empresaId={null} />;
@@ -212,7 +221,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
 
   const menu =
     usuario?.rol === 'admin'
-      ? Object.entries(t.menuAdmin)
+      ? Object.entries(t.menuAdmin).filter(([clave]) => clave !== 'test-city' || !enProduccion())
       : usuario?.rol === 'restaurante'
         ? Object.entries(t.menuRest).filter(([clave]) => clave !== 'fleet' || flotaDisponible)
         : [];

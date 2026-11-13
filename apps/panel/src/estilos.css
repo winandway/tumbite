@@ -6105,3 +6105,56 @@ body.modo-tableta .panel-contenido {
   font-size: 0.86rem;
   font-weight: 400;
 }
+
+/* C-CIUDAD-PRUEBAS: la ciudad de pruebas en vivo (superadmin, solo pruebas y local). */
+.ciudad-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ciudad-estado {
+  font-weight: 600;
+}
+.ciudad-estado-corriendo,
+.ciudad-bien,
+.ciudad-bien strong {
+  color: #0d7a3a;
+}
+.ciudad-estados {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin: 8px 0 24px;
+}
+.ciudad-estados li {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+}
+.ciudad-estados span {
+  color: #5e5e5e;
+  font-size: 0.85rem;
+}
+.ciudad-mapa {
+  height: 320px;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  margin: 8px 0 16px;
+  overflow: hidden;
+}
+.ciudad-fallos li span {
+  white-space: normal;
+  word-break: break-word;
+}
+.ciudad-pruebas .tabla {
+  min-width: 0;
+}
+.ciudad-pruebas .tabla td {
+  white-space: normal;
+}

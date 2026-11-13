@@ -232,7 +232,9 @@ export async function crearRestaurante(
     'la ficha del restaurante',
   );
   const rid = (ficha.datos as { restaurante: { id: string } }).restaurante.id;
-  await ctx.sql(`UPDATE restaurantes SET estado = 'aprobado' WHERE id = '${limpio(rid)}'`);
+  await ctx.sql(
+    `UPDATE restaurantes SET estado = 'aprobado' WHERE id = '${limpio(rid)}' AND estado <> 'aprobado'`,
+  );
   // Una cuenta reutilizada ya tiene su menú: no se duplican los platos (menos filas).
   const ya = (await ctx.sql(
     `SELECT id, nombre_es FROM platos WHERE restaurante_id = '${limpio(rid)}' AND nombre_es IN ('Arroz con pollo', 'Jugo natural')`,
@@ -312,7 +314,10 @@ export async function crearRepartidor(
   op: { punto?: Punto; nombre?: string; fija?: { correo: string; clave: string } } = {},
 ): Promise<Repartidor> {
   const quien = op.nombre ?? `repartidor ${ctx.repartidores.length + 1}`;
-  const c = await cuenta(ctx, 'repartidor', quien, 'Repartidor Simulado', op.fija);
+  const visible = op.fija
+    ? `${quien.charAt(0).toUpperCase()}${quien.slice(1)} (simulado)`
+    : 'Repartidor Simulado';
+  const c = await cuenta(ctx, 'repartidor', quien, visible, op.fija);
   const uid = limpio(c.usuarioId);
   // Lo que la app pide la primera vez y no tiene sentido sin cámara: la foto de control de la semana.
   await ctx.sql(
@@ -452,7 +457,10 @@ export async function crearCliente(
   nombre = 'cliente',
   fija?: { correo: string; clave: string },
 ): Promise<Cliente> {
-  const c = await cuenta(ctx, 'cliente', nombre, 'Cliente Simulado', fija);
+  const visible = fija
+    ? `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} (simulado)`
+    : 'Cliente Simulado';
+  const c = await cuenta(ctx, 'cliente', nombre, visible, fija);
   const datos = sinActor(c);
   return vistaCliente(ctx, datos);
 }
@@ -549,12 +557,15 @@ async function pagar(ctx: Ctx, p: PedidoCreado) {
       const e = await ctx.estado(p.pedidoId);
       return e === 'pagado' || { listo: false, visto: e };
     },
-    { topeMs: 90_000, cadaMs: ctx.d.modo === 'staging' ? 3_000 : 500 },
+    { topeMs: 90_000, cadaMs: ctx.d.modo === 'staging' ? 3_000 : 1_000 },
   );
 }
 
 /** Cierra lo que el escenario dejó abierto, siempre por la API (nada de dinero tocado a mano). */
-export async function cerrarEscenario(ctx: Ctx): Promise<void> {
+export async function cerrarEscenario(
+  ctx: Ctx,
+  { desconectar = true }: { desconectar?: boolean } = {},
+): Promise<void> {
   for (const pid of ctx.pedidos) {
     const e = await ctx.estado(pid);
     if (e === 'pago_pendiente' || e === 'pagado') {
@@ -571,6 +582,8 @@ export async function cerrarEscenario(ctx: Ctx): Promise<void> {
         `UPDATE pedidos SET programado_para = '2099-01-01T00:00:00.000Z' WHERE id = '${limpio(pid)}' AND repartidor_id IS NULL`,
       );
   }
+  // La ciudad deja a su gente conectada y abierta entre un pedido y otro (lo cierra al final).
+  if (!desconectar) return;
   for (const r of ctx.repartidores) await r.desconectar();
   for (const r of ctx.restaurantes) await r.cerrar();
 }

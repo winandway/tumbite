@@ -28,7 +28,8 @@
     "recorrido:capturas": "node scripts/recorrido/preparar.mjs && CAPTURAS=1 playwright test -c playwright.recorrido.config.ts && node scripts/recorrido/a-docs.mjs",
     "recorrido:tiendas": "node scripts/recorrido/tiendas.mjs",
     "recorrido:docs": "node scripts/recorrido/a-docs.mjs",
-    "simulador": "node simulador/divoox/correr.ts"
+    "simulador": "node simulador/divoox/correr.ts",
+    "simulador:ciudad": "node simulador/divoox/ciudad.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

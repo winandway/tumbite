@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { crearActor } from './actor.ts';
 import { crearAzar, semillaDe } from './azar.ts';
 import { crearEmisor, metrosEntre, ruta } from './gps.ts';
-import { type Escenario, correrLibreto, filtrar } from './libreto.ts';
+import { type Escenario, correrLibreto, correrSesion, filtrar } from './libreto.ts';
 import { ErrorEspera, esperarHasta, relojFalso } from './reloj.ts';
 import { paginaHtml, resumenMarkdown, veredicto } from './reporte.ts';
 
@@ -180,5 +180,42 @@ describe('libreto y reporte', () => {
   it('elige por nombre o por etiqueta', () => {
     expect(filtrar(escenarios, { etiqueta: 'diario' }).map((e) => e.nombre)).toEqual(['pasa']);
     expect(filtrar(escenarios, { solo: 'ROMPE,conoc' })).toHaveLength(2);
+  });
+});
+
+describe('sesión con historias a la vez (modo ciudad)', () => {
+  it('nunca corre más de la concurrencia y para de empezar cuando alAvanzar dice que no', async () => {
+    let enCurso = 0;
+    let maximo = 0;
+    const r = await correrSesion<null>({
+      corrida: 'ciudad',
+      semilla: 3,
+      destino: 'servidor de mentira',
+      reloj: relojFalso(),
+      concurrencia: 2,
+      pausaMs: () => 0,
+      contexto: () => null,
+      siguiente: (n) =>
+        n >= 10
+          ? null
+          : {
+              nombre: `pedido ${n + 1}`,
+              descripcion: 'una historia',
+              async correr(e) {
+                enCurso++;
+                maximo = Math.max(maximo, enCurso);
+                await new Promise((ok) => setTimeout(ok, 5));
+                enCurso--;
+                e.comprobar(n !== 2, 'el tercero falla a propósito');
+              },
+            },
+      // A la cuarta terminada ya no se empiezan más (como el tope de filas o «Parar»).
+      alAvanzar: async (hechos) => hechos.length < 4,
+    });
+    expect(maximo).toBe(2);
+    expect(r.escenarios.length).toBeGreaterThanOrEqual(4);
+    expect(r.escenarios.length).toBeLessThan(10);
+    expect(r.ok).toBe(false);
+    expect(r.escenarios.filter((x) => !x.ok).map((x) => x.nombre)).toEqual(['pedido 3']);
   });
 });

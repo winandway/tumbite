@@ -1620,6 +1620,26 @@ CREATE TABLE IF NOT EXISTS vueltas_pruebas_rutas (
   PRIMARY KEY (vuelta, ruta)
 );
 
+-- C-CIUDAD-PRUEBAS (13 nov 2026): cada sesión de la ciudad de pruebas del simulador de compras (solo
+-- se usa en el sitio de pruebas y en local). Guarda QUIÉN es de la sesión (ids de restaurantes,
+-- repartidores y clientes falsos) para que la pantalla en vivo lea solo lo suyo, con filtro y límite.
+-- Una fila por sesión; se escribe al empezar, en cada avance (cada pocos pedidos) y al terminar.
+CREATE TABLE IF NOT EXISTS simulador_sesiones (
+  id TEXT PRIMARY KEY,
+  estado TEXT NOT NULL DEFAULT 'corriendo' CHECK (estado IN ('corriendo', 'parar', 'terminada')),
+  inicio TEXT NOT NULL DEFAULT (datetime('now')),
+  fin TEXT,
+  semilla INTEGER,
+  destino TEXT NOT NULL DEFAULT '',
+  restaurantes TEXT NOT NULL DEFAULT '[]',
+  repartidores TEXT NOT NULL DEFAULT '[]',
+  clientes TEXT NOT NULL DEFAULT '[]',
+  meta TEXT NOT NULL DEFAULT '{}',
+  resumen TEXT NOT NULL DEFAULT '{}',
+  fallos TEXT NOT NULL DEFAULT '[]',
+  actualizada_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Cada llamada interna firmada se acepta una sola vez (protección contra repetición).
 CREATE TABLE IF NOT EXISTS peticiones_internas (
   nonce TEXT PRIMARY KEY CHECK (length(nonce) BETWEEN 16 AND 64),

@@ -31,7 +31,12 @@ type FilaPedido = {
   repartidor_id: string | null;
 };
 
-export async function comprobarDinero(ctx: Ctx, pedidoId: string, final: Final): Promise<void> {
+export async function comprobarDinero(
+  ctx: Ctx,
+  pedidoId: string,
+  final: Final,
+  { libro = true }: { libro?: boolean } = {},
+): Promise<void> {
   const { e } = ctx;
   const id = limpio(pedidoId);
   await e.paso(`dinero del pedido (${final})`, async () => {
@@ -111,7 +116,8 @@ export async function comprobarDinero(ctx: Ctx, pedidoId: string, final: Final):
         );
       }
     }
-    await libroCuadra(ctx, id);
+    // En la ciudad el libro se revisa una vez al final (la conciliación cuesta filas).
+    if (libro) await libroCuadra(ctx, id);
   });
 }
 

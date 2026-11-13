@@ -44,4 +44,22 @@ Lo que no lleva el núcleo a propósito: modelos de IA (el «humano» es un acto
 
 ## Modo ciudad
 
-Ver la sección del modo ciudad en `divoox/ciudad.ts` y en este mismo archivo cuando esté (población con semilla que compra, vende y reparte durante una sesión acotada, con su pantalla en vivo en el superadmin del sitio de pruebas).
+Una población falsa (por defecto 3 restaurantes, 4 repartidores y 8 clientes) compra, vende y reparte durante una sesión ACOTADA, a ritmo creíble y mezclando al azar los comportamientos de los escenarios (a la puerta, en mano con PIN, para recoger, plato agotado, doble toque, el repartidor rechaza primero, propina después, el cliente cancela, el restaurante rechaza). El «humano» es el actor con manías y azar con semilla: ningún modelo de IA.
+
+```bash
+cd /Users/windocellc/Divoox && npm run simulador:ciudad -- --pedidos 20 --minutos 15
+```
+
+| Opción                                                   | Qué hace                                     |
+| -------------------------------------------------------- | -------------------------------------------- |
+| `--pedidos 20` / `--minutos 15`                          | Se detiene al llegar a cualquiera de los dos |
+| `--restaurantes 3` / `--repartidores 4` / `--clientes 8` | Tamaño de la población                       |
+| `--concurrencia 2`                                       | Pedidos en curso a la vez                    |
+| `--semilla 7`                                            | Repite la misma mezcla de comportamientos    |
+
+- **Cuentas que se reutilizan:** los correos son fijos (`ciudad.restaurante1@simulador.test`…) y la clave se deriva del secreto del sitio; si la cuenta ya existe, entra con ella (menos filas). El menú tampoco se duplica.
+- **Presupuesto:** contra el sitio de pruebas toda la sesión es una sola vuelta (`x-vuelta-pruebas: simulador-<corrida>`) y deja de empezar pedidos al llegar a 4.500 filas escritas (el tope es 6.000).
+- **Repartidores:** un solo despachador consulta las ofertas de los que están libres (una petición a la vez, sin pasar del límite por dirección) y les manda el latido de ubicación cada 2 minutos.
+- **En vivo:** superadmin → «Ciudad de pruebas» (solo en el sitio de pruebas y en local; en producción no existe). Muestra pedidos por estado, clientes comprando, restaurantes vendiendo, repartidores en la zona (lista y mapa), ventas y los fallos de la sesión, y tiene el botón «Parar la sesión».
+- **Arrancar en el sitio de pruebas:** GitHub → Actions → «simulador» → Run workflow → modo «ciudad».
+- El reporte queda igual que el del libreto: un escenario por pedido, con su línea de tiempo.

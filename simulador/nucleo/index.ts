@@ -13,6 +13,8 @@ export { metrosEntre, desplazar, ruta, crearEmisor, type Punto, type Emisor } fr
 export { crearActor, type Actor, type Manias, type Respuesta, type Peticion } from './actor.ts';
 export {
   correrLibreto,
+  correrSesion,
+  type OpcionesSesion,
   filtrar,
   ErrorComprobacion,
   type Escenario,

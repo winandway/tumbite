@@ -971,6 +971,21 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "escritas",
     "veces"
   ],
+  "simulador_sesiones": [
+    "id",
+    "estado",
+    "inicio",
+    "fin",
+    "semilla",
+    "destino",
+    "restaurantes",
+    "repartidores",
+    "clientes",
+    "meta",
+    "resumen",
+    "fallos",
+    "actualizada_en"
+  ],
   "peticiones_internas": [
     "nonce",
     "llave_id",

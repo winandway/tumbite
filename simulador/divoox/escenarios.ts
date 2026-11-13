@@ -26,17 +26,17 @@ type Esc = Escenario<Ctx>;
 
 // ------------------------------------------------------------------ piezas
 
-const esperarOk = (ctx: Ctx, r: Respuesta, que: string) =>
+export const esperarOk = (ctx: Ctx, r: Respuesta, que: string) =>
   ctx.e.comprobar(r.ok, `${que} (respuesta ${r.estado})`, r.texto);
 
-async function estadoEs(ctx: Ctx, pid: string, esperado: string, que?: string) {
+export async function estadoEs(ctx: Ctx, pid: string, esperado: string, que?: string) {
   await ctx.e.esperar(
     que ?? `el pedido quede «${esperado}»`,
     async () => {
       const e = await ctx.estado(pid);
       return e === esperado || { listo: false, visto: e };
     },
-    { topeMs: 30_000, cadaMs: 1_000 },
+    { topeMs: 30_000, cadaMs: 1_500 },
   );
 }
 
@@ -53,7 +53,7 @@ async function trio(ctx: Ctx, conRepartidor = true) {
   return { r, rep, cli };
 }
 
-async function pedidoPagado(
+export async function pedidoPagado(
   ctx: Ctx,
   cli: Cliente,
   r: Restaurante,
@@ -71,7 +71,7 @@ async function pedidoPagado(
   });
 }
 
-async function aceptarYListo(ctx: Ctx, r: Restaurante, pid: string) {
+export async function aceptarYListo(ctx: Ctx, r: Restaurante, pid: string) {
   await ctx.e.paso('el restaurante acepta (5 minutos)', async () =>
     esperarOk(ctx, await r.aceptar(pid), 'acepta'),
   );
@@ -88,9 +88,9 @@ async function tomarYRecoger(ctx: Ctx, rep: Repartidor, pid: string) {
   await recoger(ctx, rep, pid);
 }
 
-async function recoger(ctx: Ctx, rep: Repartidor, pid: string) {
-  if (Math.abs(rep.punto.lat - LOCAL_PUNTO.lat) + Math.abs(rep.punto.lng - LOCAL_PUNTO.lng) > 1e-4)
-    await ctx.e.paso(`${rep.actor.nombre}: maneja hasta el restaurante`, () => rep.ir(LOCAL_PUNTO));
+export async function recoger(ctx: Ctx, rep: Repartidor, pid: string, local = LOCAL_PUNTO) {
+  if (Math.abs(rep.punto.lat - local.lat) + Math.abs(rep.punto.lng - local.lng) > 1e-4)
+    await ctx.e.paso(`${rep.actor.nombre}: maneja hasta el restaurante`, () => rep.ir(local));
   await ctx.e.paso(
     `${rep.actor.nombre}: escanea el código y toma la foto de la bolsa`,
     async () => {
@@ -101,7 +101,7 @@ async function recoger(ctx: Ctx, rep: Repartidor, pid: string) {
   );
 }
 
-async function llevar(ctx: Ctx, rep: Repartidor, destino = CASA) {
+export async function llevar(ctx: Ctx, rep: Repartidor, destino = CASA) {
   await ctx.e.paso(`${rep.actor.nombre}: maneja hasta la puerta con el GPS`, async () => {
     const n = await rep.ir(destino);
     ctx.e.nota(`${n} lecturas de GPS por el camino`);
@@ -109,7 +109,7 @@ async function llevar(ctx: Ctx, rep: Repartidor, destino = CASA) {
   });
 }
 
-async function entregarConFoto(ctx: Ctx, rep: Repartidor, pid: string, destino = CASA) {
+export async function entregarConFoto(ctx: Ctx, rep: Repartidor, pid: string, destino = CASA) {
   await ctx.e.paso(`${rep.actor.nombre}: entrega en la puerta con la foto`, async () => {
     esperarOk(ctx, await rep.entregarConFoto(pid, destino), 'la entrega con foto');
     await estadoEs(ctx, pid, 'entregado');
@@ -125,7 +125,7 @@ async function deLaCocinaALaPuerta(ctx: Ctx, r: Restaurante, rep: Repartidor, pi
 }
 
 /** Adelanta el reloj del SISTEMA para una oferta: como si hubieran pasado esos segundos. */
-async function adelantarOferta(ctx: Ctx, pid: string, segundos: number) {
+export async function adelantarOferta(ctx: Ctx, pid: string, segundos: number) {
   await ctx.sql(
     `UPDATE ofertas SET creada_en = datetime('now', '-${Math.round(segundos)} seconds') WHERE pedido_id = '${limpio(pid)}'`,
   );
