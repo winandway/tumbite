@@ -11,6 +11,10 @@ import { type Ctx, type Variables, base, exigir } from '../sesion';
 import type { Entorno } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
+import { exigirComisionEnMoneda } from '../finanzas/conductor';
+import { SERVICIOS_VIAJE } from '@tumbite/compartido';
+
+const SERVICIOS_VIAJE_SET = new Set<string>(SERVICIOS_VIAJE);
 
 /**
  * Multiservicio, Fase 1 (15 oct 2026). Catálogo de servicios, vehículos, habilitaciones y
@@ -852,8 +856,11 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
     .bind(id)
     .first<{ transporta_personas: number }>();
   if (!s) throw new ErrorDatos('Ese servicio no existe.', undefined, 404);
-  if (!(await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(zona).first()))
-    throw new ErrorDatos('Esa zona no existe.', undefined, 404);
+  const laZona = await db
+    .prepare('SELECT pais, moneda FROM zonas WHERE id = ?')
+    .bind(zona)
+    .first<{ pais: string; moneda: string }>();
+  if (!laZona) throw new ErrorDatos('Esa zona no existe.', undefined, 404);
   const d = await leerCuerpo(
     c,
     z.object({
@@ -864,6 +871,9 @@ servicios.put('/admin/servicios/:id/zonas/:zona', async (c) => {
     }),
   );
   bloquearPasajeros(c, id, s.transporta_personas, d.estado);
+  // C-COMISION-MONEDA: un viaje no se enciende en una ciudad cuya moneda la comisión no cubre.
+  if (d.estado === 'disponible' && SERVICIOS_VIAJE_SET.has(id))
+    await exigirComisionEnMoneda(db, id, laZona);
   const antes = await db
     .prepare('SELECT * FROM servicios_zona WHERE servicio_id = ? AND zona_id = ?')
     .bind(id, zona)

@@ -1788,6 +1788,12 @@ const PARTES = new Map([
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
   [
+    // C-COMISION-MONEDA (13 nov 2026).
+    /^En este país la comisión de los conductores está en ([A-Z, ]+) y esta ciudad cobra en ([A-Z]{3})\. Crea la política de comisión en [A-Z]{3} antes de activar el servicio\.$/,
+    (m) =>
+      `In this country the driver commission is set in ${m[1]} and this city charges in ${m[2]}. Create the commission policy in ${m[2]} before turning on the service.`,
+  ],
+  [
     /^Ese peso pasa del 15 % sobre lo que pidió el cliente \(máximo ([\d.]+ ?[a-zA-Z]*)\)\. Quita un poco o márcalo como faltante\.$/,
     (m) =>
       `That weight is more than 15% over what the customer ordered (up to ${m[1]}). Take some off or mark it as missing.`,

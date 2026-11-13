@@ -22,7 +22,7 @@ import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
-import { devolverReservasViaje } from '../finanzas/conductor';
+import { devolverReservasViaje, exigirComisionEnMoneda } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
@@ -156,10 +156,12 @@ viajesPasajero.post('/admin/viajes/tarifas', async (c) => {
     }),
   );
   const zona = await db
-    .prepare('SELECT id, moneda FROM zonas WHERE id = ?')
+    .prepare('SELECT id, pais, moneda FROM zonas WHERE id = ?')
     .bind(d.zona)
-    .first<{ id: string; moneda: string }>();
+    .first<{ id: string; pais: string; moneda: string }>();
   if (!zona) throw new ErrorDatos('Esa ciudad no existe.', 'zona', 404);
+  // C-COMISION-MONEDA: una tarifa en una moneda sin política de comisión no se activa.
+  await exigirComisionEnMoneda(db, d.servicio, zona);
   const antes = await tarifaActiva(db, d.servicio, zona.id);
   const id = nuevoId();
   const t = d.tarifa;
@@ -889,10 +891,23 @@ export async function saludViajes(db: D1Database): Promise<'ok' | 'error'> {
            WHERE o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
              AND o.actualizado_en < datetime('now', '-10 minutes')
            GROUP BY r.op, r.cuenta_id HAVING SUM(r.monto) != 0)) AS colgadas,
-         (SELECT COUNT(*) FROM deudas_pasajero WHERE estado = 'cobrada' AND cobrada_en IS NULL) AS huerfanas`,
+         (SELECT COUNT(*) FROM deudas_pasajero WHERE estado = 'cobrada' AND cobrada_en IS NULL) AS huerfanas,
+         -- C-COMISION-MONEDA: una tarifa activa en una moneda que la comisión del país no cubre.
+         (SELECT COUNT(*) FROM tarifas_viaje t JOIN zonas z ON z.id = t.zona_id
+           WHERE t.activa = 1 AND EXISTS (SELECT 1 FROM politicas_financieras p
+                   WHERE p.servicio = CASE t.servicio_id WHEN 'carro' THEN 'car' ELSE 'ride' END
+                     AND p.tipo_cuenta = 'conductor' AND p.modalidad = 'prepago' AND p.activa = 1
+                     AND p.revision_legal_aprobada = 1 AND p.pais IN (z.pais, '*'))
+             AND NOT EXISTS (SELECT 1 FROM politicas_financieras p
+                   WHERE p.servicio = CASE t.servicio_id WHEN 'carro' THEN 'car' ELSE 'ride' END
+                     AND p.tipo_cuenta = 'conductor' AND p.modalidad = 'prepago' AND p.activa = 1
+                     AND p.revision_legal_aprobada = 1 AND p.pais IN (z.pais, '*')
+                     AND upper(p.moneda) = upper(t.moneda))) AS sin_comision`,
     )
-    .first<{ colgadas: number; huerfanas: number }>();
-  return Number(f?.colgadas) === 0 && Number(f?.huerfanas) === 0 ? 'ok' : 'error';
+    .first<{ colgadas: number; huerfanas: number; sin_comision: number }>();
+  return Number(f?.colgadas) === 0 && Number(f?.huerfanas) === 0 && Number(f?.sin_comision) === 0
+    ? 'ok'
+    : 'error';
 }
 
 // ---------------------------------------------------------------- M8: calificación
