@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-13T17:26:36.000Z",
+  "actualizado": "2026-11-13T19:40:00.000Z",
   "version": "7b9a5ca",
   "ahora": "13 nov: ya hay simulador de compras y entregas. Dieciocho casos de comida con cliente, restaurante y repartidor falsos, una ciudad virtual que compra y vende sola y una pantalla en vivo en el panel del sitio de pruebas. La primera corrida en el sitio de pruebas salió en verde. El reloj exacto de producción quedó encendido y en verde, Google aprobó las tres apps el 11 nov y las tres apps web ya se instalan desde el navegador del celular. En curso: bajar las lecturas de la base.",
   "proximo": [
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-13",
+      "titulo": "Divoox Flex se reconoce de un vistazo y la salida está a la vista",
+      "texto": "El panel de empresas ahora lleva una franja azul petróleo que dice Divoox Flex, con el botón de cerrar sesión a la vista, y el menú lateral en el mismo azul. En todos los paneles, cerrar sesión está también al final del menú y en Configuración, y el botón de la cuenta lleva flecha. En la entrada del panel, el enlace de la contraseña olvidada quedó centrado."
+    },
     {
       "fecha": "2026-11-13",
       "titulo": "Ciudad virtual en verde, lecturas de la base corregidas y margen de Flex",
