@@ -19,6 +19,12 @@
 - [ ] (SIM-5) Capa «película»: el pedido feliz por las PANTALLAS de las tres apps web, reutilizando los pasos de `e2e/recorrido/recorrido.spec.ts` (sacarlos a funciones, sin copiar las 2.200 líneas) y una captura por paso de cada actor en el reporte del simulador.
 - [ ] (SIM-6) Capa nativa Android primero (Richard: Android obligatorio para repartidores y restaurantes): dos o tres recorridos críticos con Maestro local en el emulador, coordinados por el estado del servidor (ficha, punto 6).
 
+## Lecturas de la base por petición (13 nov 2026, orden de Gerencia; regla «la nube no se come el dinero») — todos los países
+
+- [x] (LECT-1) C-LECTURAS-POR-PETICION (1a6a6034a): el arranque del servidor ya no revisa la base entera cada vez (huella en `config`), registro y panel del restaurante por índice, índice parcial de ofertas vigentes, limpieza del recorrido por los pedidos sin repartidor, el simulador concilia una vez al final y el contador de la vuelta ve también lo que solo lee. Candado `apps/servidor/src/lecturasPorPeticion.test.ts` con base de volumen, comprobado en rojo. Sin publicar.
+- [ ] [para: revisor-calidad] (LECT-1r) Revisar una vez LECT-1 (commit 1a6a6034a): la huella del esquema no deja pasar una base con columnas faltantes ni un código nuevo sin revisar; los tres índices nuevos de `usuarios` (dos simples y uno parcial de expresión) y el parcial de `ofertas` son los únicos y cada uno lo usa una consulta real; `restauranteDe` devuelve lo mismo que antes; el contador con `conFirst` solo en la vuelta de pruebas (el reloj sigue igual). Todos los países.
+- [ ] (LECT-2) Después de publicar en el sitio de pruebas: correr el simulador diario y `pruebas-continuas`, leer `FILAS-VUELTA` (ahora con las peticiones de solo lectura pesadas) y bajar la siguiente culpable que aparezca. Lo que queda conocido: la conciliación lee el día entero (unas 20.000 filas con el volumen del sitio de pruebas) y no lleva índice a propósito (ver CANDADOS.md); las rutas S2–S12 y «migraciones» de `probar-staging.mjs` no están medidas. Todos los países.
+
 ## DoorDash Dasher al volver (capturas de Richard, 31 oct 2026; ficha docs/investigaciones-rea/2026-10-31-doordash-dasher-capturas.md)
 
 - [x] (D1) HECHO 31 oct (C-VUELTA-VERIFICA). Verificación obligatoria al volver: si el repartidor lleva 14 días o más sin conectarse, la foto de control se pide siempre (no al azar). Todos los países.
