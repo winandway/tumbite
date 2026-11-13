@@ -63,6 +63,20 @@ describe('C-KYC-ATOMICO: aprobar la identidad no deja medio estado', () => {
   });
 });
 
+describe('C-ANTECEDENTES-POR-PAIS: Driver no ofrece el proveedor de antecedentes donde no se usa', () => {
+  it('en Venezuela no; en EE. UU. sí', async () => {
+    const e = await escenarioVe();
+    await abrirCaracas(e);
+    const ve = await e.m.cuenta('repartidor', 'Conductor Caracas');
+    await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id }, ve.token);
+    const r = await e.m.llamar('GET', '/datos/kyc', undefined, ve.token);
+    expect(r.datos.antecedentesPorProveedor).toBe(false);
+    const us = await e.m.cuenta('repartidor', 'Conductor Miami');
+    const r2 = await e.m.llamar('GET', '/datos/kyc', undefined, us.token);
+    expect(r2.datos.antecedentesPorProveedor).toBe(true);
+  });
+});
+
 describe('C-PAPELES-SOLO-PASAJEROS: el papel venezolano cumple solo lo de pasajeros', () => {
   it('el certificado de antecedentes no cumple el requisito «antecedentes» de Envíos, Mercado y Farmacia', async () => {
     const e = await escenarioVe();

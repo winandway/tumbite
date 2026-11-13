@@ -77,6 +77,13 @@ async function armar(ctx: Ctx): Promise<Moto> {
     n: 0,
   };
   await ctx.e.paso('el pasajero no tiene viajes colgados', () => cerrarColgados(m));
+  await ctx.e.paso('el alta del conductor vuelve a empezar', async () =>
+    exigirOk(
+      ctx,
+      await ctx.sistema.post('/datos/interno/diagnostico/moto-ve/reiniciar', {}),
+      'reiniciar',
+    ),
+  );
   await ctx.e.paso('Caracas de pruebas está abierta', async () => {
     const prueba = await m.pasajero.post('/datos/viajes/cotizar', {
       servicio: 'moto',

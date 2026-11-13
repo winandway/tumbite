@@ -1,5 +1,6 @@
 import type { Idioma } from '@tumbite/compartido';
 import type { NombreIcono } from '../Icono';
+import { GUIAS_MOTO } from './borradores/moto';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -9581,7 +9582,19 @@ const en: SeccionDocs[] = [
   },
 ];
 
-export const DOCS: Record<Idioma, SeccionDocs[]> = { es, en };
+/** C-DOCS-MOTO: las guías de Divoox Moto con capturas reales van en «Para pedir» y en «Repartidores». */
+function conMoto(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
+  const moto = idioma === 'es' ? GUIAS_MOTO.es : GUIAS_MOTO.en;
+  return secciones.map((s) =>
+    s.id === 'ordering'
+      ? { ...s, guias: [...s.guias, ...moto.pasajero] }
+      : s.id === 'drivers'
+        ? { ...s, guias: [...s.guias, ...moto.conductor] }
+        : s,
+  );
+}
+
+export const DOCS: Record<Idioma, SeccionDocs[]> = { es: conMoto(es, 'es'), en: conMoto(en, 'en') };
 
 export const TEXTOS_DOCS = {
   es: {

@@ -1,5 +1,5 @@
 import type { Idioma } from '@tumbite/compartido';
-import type { Guia } from '../guias';
+import type { Captura, Guia } from '../guias';
 
 /**
  * Guías de Divoox Moto escritas y GUARDADAS SIN PUBLICAR (punto 12 del roadmap). No están en `DOCS`:
@@ -13,7 +13,7 @@ import type { Guia } from '../guias';
  * alcanza para unas N carreras», el viaje con «¿Te llegó el pago móvil?», y en la app del pasajero la
  * elección de pago móvil y la tarjeta con los datos del conductor. Se toman en el sitio de pruebas.
  */
-export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
+const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
   es: {
     pasajero: [
       {
@@ -22,7 +22,8 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         resumen:
           'Elige a dónde vas, mira el precio antes de confirmar y sigue a tu conductor en el mapa hasta que llegue.',
         explicacion: [
-          'Divoox Moto te lleva rápido por la ciudad. El precio es fijo: lo ves antes de pedir y no cambia por el tráfico.',
+          'Divoox Moto te lleva rápido por la ciudad. Está disponible en las ciudades donde Divoox Moto esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo.',
+          'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día.',
           'Al confirmar buscamos al conductor más cercano. Cuando acepta, ves su nombre, su moto, el color y la placa, y lo sigues en el mapa.',
           'Para empezar el viaje, en las ciudades donde se usa, le dices al conductor tu código de cuatro números. Así sabes que te subes con la persona correcta.',
         ],
@@ -34,7 +35,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         pasos: [
           'Abre Divoox y toca «Moto».',
           'Confirma el punto de recogida (puedes moverlo en el mapa) y escribe tu destino.',
-          'Mira el precio fijo y elige cómo pagas: efectivo o tarjeta.',
+          'Mira el precio fijo y elige cómo pagas: la app te muestra los métodos de tu ciudad (en Venezuela, efectivo o pago móvil).',
           'Toca «Pedir». Cuando el conductor acepte, verás sus datos y su ubicación.',
           'Al subirte, comprueba la placa y, si la app te muestra un código, díselo al conductor.',
         ],
@@ -117,7 +118,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         resumen:
           'Elige tu ciudad, registra tu moto, sube tus papeles con la cámara y sigue tu aprobación desde la app.',
         explicacion: [
-          'Para llevar pasajeros en moto primero te conocemos: verificamos tu identidad, tu licencia, tus antecedentes y los papeles de tu moto. Así cuidamos al pasajero y a ti.',
+          'Divoox Moto se abre ciudad por ciudad: puedes registrarte en las ciudades donde Divoox Moto esté abierto. Para llevar pasajeros en moto primero te conocemos: verificamos tu identidad, tu licencia, tus antecedentes y los papeles de tu moto. Así cuidamos al pasajero y a ti.',
           'Lo que se pide depende de tu país. En Venezuela, por ejemplo, subes tu licencia para manejar moto y tu certificado de antecedentes penales, y nuestro equipo los revisa uno por uno.',
           'Cada papel muestra su estado: sin subir, en revisión, aprobado o «hay que corregir» con el motivo. Cuando todo está aprobado, activas «Recibir viajes de Moto».',
         ],
@@ -128,7 +129,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         ],
         pasos: [
           'En la app Divoox Driver, entra a Perfil y toca «Divoox Moto».',
-          'Revisa tu ciudad y cámbiala si hace falta.',
+          'Revisa tu ciudad y cámbiala si hace falta (después de elegirla, puedes cambiarla una vez cada 24 horas dentro de tu país).',
           'Escribe la marca, el modelo, el año, el color y la placa de tu moto, y toca «Guardar mi moto».',
           'Sube cada papel de la moto: toca «Subir» y elige «Tomar foto» o «Subir desde archivos».',
           'Sube tus papeles de conductor y verifica tu identidad en «Documentos».',
@@ -185,7 +186,8 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         resumen:
           'Choose where you’re going, see the price before you confirm, and follow your driver on the map until they arrive.',
         explicacion: [
-          'Divoox Moto gets you across the city fast. The price is upfront: you see it before you request and it doesn’t change with traffic.',
+          'Divoox Moto gets you across the city fast. It’s available in the cities where Divoox Moto is open; if it isn’t open in yours yet, the app won’t let you request it.',
+          'The price is upfront: you see it before you request and it doesn’t change with traffic. In Venezuela the price is in dollars, with its equivalent in bolívars at the day’s rate next to it.',
           'When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map.',
           'To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person.',
         ],
@@ -197,7 +199,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         pasos: [
           'Open Divoox and tap “Moto”.',
           'Confirm your pickup point (you can move it on the map) and enter your destination.',
-          'Check the upfront price and choose how to pay: cash or card.',
+          'Check the upfront price and choose how to pay: the app shows the methods available in your city (in Venezuela, cash or mobile payment).',
           'Tap “Request”. When a driver accepts, you’ll see their details and location.',
           'When you get on, check the plate and, if the app shows a code, tell it to the driver.',
         ],
@@ -279,7 +281,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         resumen:
           'Choose your city, register your motorcycle, upload your documents with your camera, and track your approval in the app.',
         explicacion: [
-          'Before you give rides, we get to know you: we verify your identity, your license, your background, and your motorcycle’s documents. That keeps riders and you safe.',
+          'Divoox Moto opens city by city: you can sign up in the cities where Divoox Moto is open. Before you give rides, we get to know you: we verify your identity, your license, your background, and your motorcycle’s documents. That keeps riders and you safe.',
           'What we ask for depends on your country. In Venezuela, for example, you upload your motorcycle license and your criminal record certificate, and our team reviews each one.',
           'Each document shows its status: not uploaded, under review, approved, or “needs a fix” with the reason. Once everything is approved, you turn on “Get Moto rides.”',
         ],
@@ -290,7 +292,7 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
         ],
         pasos: [
           'In the Divoox Driver app, go to Profile and tap “Divoox Moto.”',
-          'Check your city and change it if needed.',
+          'Check your city and change it if needed (once chosen, you can change it once every 24 hours within your country).',
           'Enter your motorcycle’s make, model, year, color, and license plate, and tap “Save my motorcycle.”',
           'Upload each motorcycle document: tap “Upload” and choose “Take photo” or “Upload from files.”',
           'Upload your driver documents and verify your identity under “Documents.”',
@@ -340,3 +342,254 @@ export const BORRADORES_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia
     ],
   },
 };
+
+/**
+ * C-DOCS-MOTO (13 nov 2026, Venezuela): las guías de Moto que ya tienen capturas REALES (tomadas con
+ * scripts/recorrido/capturas-moto-venezuela.mjs en las apps web y el servidor de esta computadora)
+ * se publican en Docs. Dicen con honestidad que Moto se abre ciudad por ciudad. Las de seguridad
+ * siguen guardadas hasta tener sus capturas.
+ */
+const PUBLICADAS = new Set([
+  'ride-moto',
+  'ride-moto-pago',
+  'drive-moto',
+  'drive-moto-alta',
+  'drive-moto-saldo',
+]);
+
+const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
+  src: `/docs/recorrido-moto-ve-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
+  es: {
+    'ride-moto': [
+      foto(
+        'cliente-pedir',
+        'es',
+        'La pantalla Moto con el punto de recogida, el destino, el mapa y el precio fijo en dólares con su equivalente en bolívares.',
+        'Antes de pedir ves el precio fijo y cómo puedes pagar.',
+      ),
+      foto(
+        'cliente-viaje',
+        'es',
+        'El viaje en curso con el mapa, la moto y la placa del conductor, y el precio fijo.',
+        'En el viaje ves al conductor, su moto y su placa.',
+      ),
+      foto(
+        'driver-oferta',
+        'es',
+        'La oferta que recibe el conductor con su ganancia, la distancia, la recogida y el destino.',
+        'Tu conductor recibe el viaje con la ruta completa.',
+      ),
+    ],
+    'ride-moto-pago': [
+      foto(
+        'cliente-pedir',
+        'es',
+        'Las formas de pago de la ciudad: efectivo y pago móvil, con el precio y su equivalente en bolívares.',
+        'Eliges efectivo o pago móvil antes de pedir.',
+      ),
+      foto(
+        'cliente-viaje',
+        'es',
+        'La tarjeta «Paga por pago móvil a» con el banco, el titular, el teléfono y la cédula del conductor.',
+        'Con pago móvil ves a quién pagar en cuanto te asignan conductor.',
+      ),
+      foto(
+        'driver-viaje-pago-movil',
+        'es',
+        'El conductor con la pregunta «¿Te llegó el pago móvil del pasajero?» y los botones para responder.',
+        'El conductor confirma en su app que le llegó el pago.',
+      ),
+    ],
+    'drive-moto': [
+      foto(
+        'driver-oferta',
+        'es',
+        'Una oferta de viaje en moto con la ganancia, la distancia a la recogida, el viaje y los minutos.',
+        'Antes de aceptar ves cuánto ganas y la ruta.',
+      ),
+      foto(
+        'driver-viaje-pago-movil',
+        'es',
+        'El viaje en curso con el destino y la pregunta del pago móvil.',
+        'Durante el viaje confirmas el pago y luego tocas «Terminar viaje».',
+      ),
+      foto(
+        'driver-cobro-efectivo',
+        'es',
+        'Viaje terminado: cuánto cobras en efectivo en dólares y su equivalente en bolívares.',
+        'Al terminar, la app te dice cuánto cobrar.',
+      ),
+    ],
+    'drive-moto-alta': [
+      foto(
+        'driver-moto',
+        'es',
+        'La sección Divoox Moto con tu ciudad, tu moto aprobada y los papeles de la moto con su estado.',
+        'Tu ciudad, tu moto y cada papel con su estado.',
+      ),
+      foto(
+        'driver-moto-papeles',
+        'es',
+        'Tus papeles de conductor aprobados y el aviso «Ya recibes viajes de Moto».',
+        'Con todo aprobado, ya recibes viajes de Moto.',
+      ),
+      foto(
+        'driver-identidad',
+        'es',
+        'La sección Documentos con la verificación de identidad aprobada.',
+        'Tu identidad se verifica en «Documentos».',
+      ),
+    ],
+    'drive-moto-saldo': [
+      foto(
+        'driver-saldo',
+        'es',
+        'El saldo para comisiones en dólares con la línea «Te alcanza para unas N carreras» y la casilla para el código de recarga.',
+        'Tu saldo y para cuántas carreras te alcanza.',
+      ),
+      foto(
+        'driver-cobro-efectivo',
+        'es',
+        'Viaje en efectivo terminado: el pasajero te paga el total a ti.',
+        'En efectivo, el pasajero te paga el viaje completo.',
+      ),
+      foto(
+        'driver-cobro-pago-movil',
+        'es',
+        'Viaje por pago móvil terminado con el monto en dólares y su equivalente en bolívares.',
+        'Por pago móvil también recibes tú el total; la comisión sale de tu saldo.',
+      ),
+    ],
+  },
+  en: {
+    'ride-moto': [
+      foto(
+        'cliente-pedir',
+        'en',
+        'The Moto screen with the pickup point, destination, map and upfront price in dollars with its bolívar equivalent.',
+        'Before you request, you see the upfront price and how you can pay.',
+      ),
+      foto(
+        'cliente-viaje',
+        'en',
+        'The ride in progress with the map, the driver’s motorcycle and plate, and the upfront price.',
+        'During the ride you see your driver, their motorcycle and plate.',
+      ),
+      foto(
+        'driver-oferta',
+        'en',
+        'The offer the driver gets, with earnings, distance, pickup and destination.',
+        'Your driver gets the ride with the full route.',
+      ),
+    ],
+    'ride-moto-pago': [
+      foto(
+        'cliente-pedir',
+        'en',
+        'The city’s payment methods: cash and mobile payment, with the price and its bolívar equivalent.',
+        'You choose cash or mobile payment before you request.',
+      ),
+      foto(
+        'cliente-viaje',
+        'en',
+        'The “Pay by mobile payment to” card with the driver’s bank, name, phone and ID number.',
+        'With mobile payment, you see who to pay as soon as you get a driver.',
+      ),
+      foto(
+        'driver-viaje-pago-movil',
+        'en',
+        'The driver with the question “Did the rider’s mobile payment arrive?” and the buttons to answer.',
+        'The driver confirms in their app that the payment arrived.',
+      ),
+    ],
+    'drive-moto': [
+      foto(
+        'driver-oferta',
+        'en',
+        'A motorcycle ride offer with earnings, distance to pickup, ride length and minutes.',
+        'Before you accept, you see what you earn and the route.',
+      ),
+      foto(
+        'driver-viaje-pago-movil',
+        'en',
+        'The ride in progress with the destination and the mobile payment question.',
+        'During the ride you confirm the payment, then tap “End ride.”',
+      ),
+      foto(
+        'driver-cobro-efectivo',
+        'en',
+        'Ride completed: how much to collect in cash in dollars and its bolívar equivalent.',
+        'When it ends, the app tells you how much to collect.',
+      ),
+    ],
+    'drive-moto-alta': [
+      foto(
+        'driver-moto',
+        'en',
+        'The Divoox Moto section with your city, your approved motorcycle and its documents with their status.',
+        'Your city, your motorcycle and each document with its status.',
+      ),
+      foto(
+        'driver-moto-papeles',
+        'en',
+        'Your approved driver documents and the notice “You’re getting Moto rides.”',
+        'With everything approved, you get Moto rides.',
+      ),
+      foto(
+        'driver-identidad',
+        'en',
+        'The Documents section with the identity verification approved.',
+        'Your identity is verified in “Documents.”',
+      ),
+    ],
+    'drive-moto-saldo': [
+      foto(
+        'driver-saldo',
+        'en',
+        'The fee balance in dollars with the line “Enough for about N rides” and the box for the top-up code.',
+        'Your balance and how many rides it covers.',
+      ),
+      foto(
+        'driver-cobro-efectivo',
+        'en',
+        'Cash ride completed: the rider pays the full amount to you.',
+        'With cash, the rider pays you the whole ride.',
+      ),
+      foto(
+        'driver-cobro-pago-movil',
+        'en',
+        'Mobile payment ride completed with the amount in dollars and its bolívar equivalent.',
+        'With mobile payment you also get the full amount; the fee comes from your balance.',
+      ),
+    ],
+  },
+};
+
+function separar(publicar: boolean): Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> {
+  const de = (idioma: Idioma, lista: Guia[]) => {
+    const fotos = new Map(Object.entries(idioma === 'es' ? CAPTURAS.es : CAPTURAS.en));
+    return lista
+      .filter((g) => PUBLICADAS.has(g.id) === publicar)
+      .map((g) => (publicar ? { ...g, capturas: fotos.get(g.id) ?? [] } : g));
+  };
+  return {
+    es: {
+      pasajero: de('es', TODAS_MOTO.es.pasajero),
+      conductor: de('es', TODAS_MOTO.es.conductor),
+    },
+    en: {
+      pasajero: de('en', TODAS_MOTO.en.pasajero),
+      conductor: de('en', TODAS_MOTO.en.conductor),
+    },
+  };
+}
+
+/** Publicadas en Docs: «ordering» (pasajero) y «drivers» (conductor). */
+export const GUIAS_MOTO = separar(true);
+/** Todavía guardadas sin publicar (les faltan capturas reales). */
+export const BORRADORES_MOTO = separar(false);

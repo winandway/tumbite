@@ -65,6 +65,7 @@ describe('C-MOTO-VE-PUNTA-A-PUNTA: la herramienta del guion de Moto en Venezuela
     ]);
     const b = await interno('armar');
     expect(b.estado).toBe(200);
+    expect((await interno('reiniciar')).estado).toBe(200);
     // El pase anterior ya no sirve; el nuevo sí.
     expect(
       (await m.llamar('GET', '/datos/conductor/papeles', undefined, a.datos.tokens.conductor))

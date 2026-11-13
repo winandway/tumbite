@@ -131,6 +131,8 @@ export function Verificacion() {
   const t = enIdioma(T, idioma);
   const [k, setK] = useState<Kyc | null>(null);
   const [antecedentes, setAntecedentes] = useState<Antecedentes>({ estado: 'sin_pedir', url: '' });
+  // C-ANTECEDENTES-POR-PAIS: donde no hay proveedor (Venezuela), el certificado va en «Divoox Moto».
+  const [conProveedor, setConProveedor] = useState(true);
   const [docTipo, setDocTipo] = useState<'licencia' | 'identificacion' | 'pasaporte'>('licencia');
   const [subiendo, setSubiendo] = useState('');
   const [error, setError] = useState('');
@@ -140,11 +142,17 @@ export function Verificacion() {
 
   const cargar = useCallback(() => {
     api
-      .pedir<{ kyc: Kyc; antecedentes?: Antecedentes; motor?: boolean }>('GET', '/datos/kyc')
+      .pedir<{
+        kyc: Kyc;
+        antecedentes?: Antecedentes;
+        motor?: boolean;
+        antecedentesPorProveedor?: boolean;
+      }>('GET', '/datos/kyc')
       .then((r) => {
         setK(r.kyc);
         setMotor(Boolean(r.motor));
         if (r.antecedentes) setAntecedentes(r.antecedentes);
+        setConProveedor(r.antecedentesPorProveedor !== false);
       })
       .catch(() => {});
   }, [api]);
@@ -331,24 +339,32 @@ export function Verificacion() {
           <Boton texto={conMotor ? t.verificarYa : t.enviar} alTocar={() => void enviar()} />
         </>
       ) : null}
-      <View style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: '#E6E6E6', paddingTop: 8 }}>
-        <Text style={{ fontWeight: '800' }}>{t.antecedentes}</Text>
-        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.antecedentesAyuda}</Text>
-        <Text
-          style={{
-            marginTop: 4,
-            fontWeight: '700',
-            color: antecedentes.estado === 'aprobado' ? '#0D7A3A' : C.secundario,
-          }}
+      {conProveedor ? (
+        <View
+          style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: '#E6E6E6', paddingTop: 8 }}
         >
-          {t.antecedentesEstados[antecedentes.estado] ?? antecedentes.estado}
-        </Text>
-        {antecedentes.estado === 'sin_pedir' ? (
-          <Boton texto={t.pedirAntecedentes} alTocar={() => void pedirAntecedentes()} secundario />
-        ) : antecedentes.estado === 'invitado' && antecedentes.url ? (
-          <Boton texto={t.abrirCheckr} alTocar={() => abrirPagina(antecedentes.url)} secundario />
-        ) : null}
-      </View>
+          <Text style={{ fontWeight: '800' }}>{t.antecedentes}</Text>
+          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.antecedentesAyuda}</Text>
+          <Text
+            style={{
+              marginTop: 4,
+              fontWeight: '700',
+              color: antecedentes.estado === 'aprobado' ? '#0D7A3A' : C.secundario,
+            }}
+          >
+            {t.antecedentesEstados[antecedentes.estado] ?? antecedentes.estado}
+          </Text>
+          {antecedentes.estado === 'sin_pedir' ? (
+            <Boton
+              texto={t.pedirAntecedentes}
+              alTocar={() => void pedirAntecedentes()}
+              secundario
+            />
+          ) : antecedentes.estado === 'invitado' && antecedentes.url ? (
+            <Boton texto={t.abrirCheckr} alTocar={() => abrirPagina(antecedentes.url)} secundario />
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }

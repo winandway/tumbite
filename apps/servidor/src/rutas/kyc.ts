@@ -7,7 +7,9 @@ import {
   edadEnAnios,
   edadMinimaRepartidor,
   estadoEeuuDeZona,
+  perfilPasajeros,
 } from '@tumbite/compartido';
+import { paisDelConductor } from '../paisConductor';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { enviarCorreo } from '../correo';
@@ -138,6 +140,11 @@ kyc.get('/kyc', async (c) => {
     // Con el motor, la app pide el consentimiento y las dos tomas girando la cabeza.
     motor: u.rol === 'repartidor' && motorEncendido(c.env),
     ...(u.rol === 'repartidor' ? await extrasRepartidor(db, u.id) : {}),
+    // C-ANTECEDENTES-POR-PAIS: el bloque del proveedor de antecedentes solo donde el país lo usa
+    // (EE. UU.); en Venezuela los antecedentes van con el certificado que revisa el equipo.
+    antecedentesPorProveedor:
+      u.rol === 'repartidor' &&
+      perfilPasajeros((await paisDelConductor(db, u.id)).pais).antecedentes === 'proveedor',
   });
 });
 

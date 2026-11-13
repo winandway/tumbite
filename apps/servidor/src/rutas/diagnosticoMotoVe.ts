@@ -58,6 +58,40 @@ export function rutasMotoVenezuela(diagnostico: App) {
           )
           .bind(huellas.at(i) ?? '', id),
       ),
+    ]);
+    return c.json({
+      ids: MOTO_VE,
+      clave,
+      versionTerminos: VERSION_TERMINOS,
+      tokens: {
+        cliente: tokens.at(0),
+        conductor: tokens.at(1),
+        sinSaldo: tokens.at(2),
+        equipo: tokens.at(3),
+      },
+    });
+  });
+
+  /**
+   * El alta del conductor vuelve a empezar (su saldo y su libro se quedan). Se llama DESPUÉS de cerrar
+   * por la API lo que una vuelta anterior haya dejado colgado: con un viaje abierto no se toca nada.
+   */
+  diagnostico.post('/interno/diagnostico/moto-ve/reiniciar', async (c) => {
+    const db = base(c);
+    const { conductor } = MOTO_VE;
+    const abierto = await db
+      .prepare(
+        "SELECT 1 FROM operaciones WHERE conductor_id = ? AND estado_general IN ('asignada', 'en_curso') LIMIT 1",
+      )
+      .bind(conductor)
+      .first();
+    if (abierto)
+      throw new ErrorDatos(
+        'El conductor de pruebas tiene un viaje abierto: ciérralo primero.',
+        undefined,
+        409,
+      );
+    await db.batch([
       // El alta del conductor vuelve a empezar (su saldo y su libro se quedan).
       db
         .prepare(
@@ -100,17 +134,7 @@ export function rutasMotoVenezuela(diagnostico: App) {
         )
         .bind(conductor),
     ]);
-    return c.json({
-      ids: MOTO_VE,
-      clave,
-      versionTerminos: VERSION_TERMINOS,
-      tokens: {
-        cliente: tokens.at(0),
-        conductor: tokens.at(1),
-        sinSaldo: tokens.at(2),
-        equipo: tokens.at(3),
-      },
-    });
+    return c.json({ ok: true });
   });
 
   /**

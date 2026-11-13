@@ -1734,6 +1734,10 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
   ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],
+  [
+    'El conductor de pruebas tiene un viaje abierto: ciérralo primero.',
+    'The test driver has an open ride: close it first.',
+  ],
   ['Desconéctate antes de cambiar de ciudad.', 'Go offline before changing your city.'],
   [
     'En este país los viajes no necesitan tasa de referencia.',

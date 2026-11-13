@@ -109,11 +109,11 @@ async function cerrarColgados() {
   const actual = await pasajero('GET', '/datos/viajes/actual');
   const v = actual.d.viaje;
   if (!v) return;
-  if (['buscando', 'asignada', 'asignado', 'pago_pendiente'].includes(v.estado))
+  if (v.estado === 'en_curso') await paso(v.id, 'terminar');
+  else
     await pedir('POST', `/datos/viajes/${v.id}/cancelar`, {}, tokens.cliente, {
       'idempotency-key': `mtve-cancelar-${VUELTA}`.slice(0, 80),
     });
-  else if (v.estado === 'en_curso') await paso(v.id, 'terminar');
 }
 
 async function cotizarYPedir(metodoPago) {
@@ -174,6 +174,8 @@ async function terminarYComprobar(v, antes, comision) {
 
 try {
   await cerrarColgados();
+  // Con nada colgado, el alta del conductor vuelve a empezar (su saldo y su libro se quedan).
+  exigir((await interno('reiniciar')).estado === 200, 'reiniciar el alta del conductor');
   // 1. El equipo abre Caracas de pruebas (solo si Moto todavía no cotiza ahí).
   const prueba = await pasajero('POST', '/datos/viajes/cotizar', {
     servicio: 'moto',
