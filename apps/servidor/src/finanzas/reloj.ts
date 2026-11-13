@@ -131,7 +131,9 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
       )
       .bind(JSON.stringify(resultado))
       .run();
-  if (!resultado.ok)
+  // El correo sale con el mismo ritmo que el guardado (al cambiar o una vez por hora): con el
+  // reloj a un minuto, avisar en cada vuelta serían 1.440 correos al día.
+  if (!resultado.ok && (!igual || !reciente))
     for (const para of await correosEquipo(env, 'dinero'))
       await enviarCorreo(env, {
         de: 'avisos',
