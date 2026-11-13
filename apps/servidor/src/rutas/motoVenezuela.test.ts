@@ -540,3 +540,64 @@ describe('C-PAGO-MOVIL-VIAJE: el pasajero paga por pago móvil y el conductor co
     expect(caso?.monto_esperado).toBe(v.total);
   });
 });
+
+describe('C-MOTO-POR-PAIS: la compuerta de producción por país (hoy cerrada)', () => {
+  const abrir = (e: E, pais: string, cuerpo: Record<string, unknown>) =>
+    e.m.llamar(
+      'PUT',
+      `/datos/admin/pasajeros-pais/${pais}/moto`,
+      { clave: 'clave-segura-1', ...cuerpo },
+      e.admin.token,
+    );
+
+  it('nace cerrada: en producción Moto no se enciende en Venezuela ni en ningún otro país', async () => {
+    const e = await escenario('divoox.com');
+    const lista = await e.m.llamar('GET', '/datos/admin/pasajeros-pais', undefined, e.admin.token);
+    expect(lista.datos.paises).toEqual([
+      { servicio: 'moto', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
+    ]);
+    expect((await abrirCaracas(e)).estado).toBe(409);
+    const { saludServicios } = await import('./servicios');
+    expect(await saludServicios(e.m.DB, 'produccion')).toBe('ok');
+  });
+
+  it('abrir exige el país permitido, la contraseña, la solicitud de la marca y la confirmación', async () => {
+    const e = await escenario('divoox.com');
+    const marca = { abierto: true, solicitudMarca: '97000001', confirmo: true };
+    expect((await abrir(e, 'US', marca)).estado).toBe(409);
+    expect((await abrir(e, 'CO', marca)).estado).toBe(409);
+    expect((await abrir(e, 'VE', { abierto: true, confirmo: true })).estado).toBe(422);
+    expect((await abrir(e, 'VE', { abierto: true, solicitudMarca: '97000001' })).estado).toBe(422);
+    expect((await abrir(e, 'VE', { ...marca, clave: 'otra-clave' })).estado).toBe(403);
+    expect((await abrirCaracas(e)).estado).toBe(409);
+  });
+
+  it('abierto Venezuela, Moto funciona en Caracas en producción; Miami sigue bloqueada; al cerrar se apaga', async () => {
+    const e = await escenario('divoox.com');
+    const ok = await abrir(e, 'VE', { abierto: true, solicitudMarca: '97000001', confirmo: true });
+    expect(ok.estado).toBe(200);
+    expect((await abrirCaracas(e)).estado).toBe(201);
+    expect((await cotizar(e, { lat: 10.4806, lng: -66.8406 })).estado).toBe(201);
+    const { saludServicios } = await import('./servicios');
+    expect(await saludServicios(e.m.DB, 'produccion')).toBe('ok');
+    const miami = await e.m.llamar(
+      'PUT',
+      '/datos/admin/servicios/moto/zonas/US-FL-MIAMI',
+      { estado: 'disponible' },
+      e.admin.token,
+    );
+    expect(miami.estado).toBe(409);
+    // Si alguien la encendiera en Miami por otro camino, la salud lo dice en rojo.
+    await e.m.DB.prepare(
+      "UPDATE servicios_zona SET estado = 'disponible' WHERE servicio_id = 'moto' AND zona_id = 'US-FL-MIAMI'",
+    ).run();
+    expect(await saludServicios(e.m.DB, 'produccion')).toBe('error');
+    await e.m.DB.prepare(
+      "UPDATE servicios_zona SET estado = 'suspendido' WHERE servicio_id = 'moto' AND zona_id = 'US-FL-MIAMI'",
+    ).run();
+    // Cerrar el país apaga Moto en sus ciudades y en general.
+    expect((await abrir(e, 'VE', { abierto: false })).estado).toBe(200);
+    expect((await cotizar(e, { lat: 10.4806, lng: -66.8406 })).estado).toBe(409);
+    expect(await saludServicios(e.m.DB, 'produccion')).toBe('ok');
+  });
+});

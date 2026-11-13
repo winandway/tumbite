@@ -1734,6 +1734,16 @@ export const MENSAJES_EN = new Map<string, string>([
     'No city in that country charges in that currency.',
   ],
   ['Este viaje no es tuyo.', 'This ride isn’t yours.'],
+  // C-MOTO-POR-PAIS (13 nov 2026).
+  ['Este servicio no se puede abrir en ese país.', 'This service can’t be opened in that country.'],
+  [
+    'Escribe el número de la solicitud de registro de la marca Divoox en ese país.',
+    'Enter the Divoox trademark application number for that country.',
+  ],
+  [
+    'Confirma que lo legal y el seguro de pasajeros de ese país están listos.',
+    'Confirm that the legal work and rider insurance for that country are ready.',
+  ],
   ['Este viaje no se paga por pago móvil.', 'This ride isn’t paid by mobile payment.'],
   [
     'Confirma el pago cuando el pasajero ya esté a bordo.',

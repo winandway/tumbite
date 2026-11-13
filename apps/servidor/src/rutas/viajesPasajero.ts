@@ -313,7 +313,7 @@ viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
   if (!tarifa)
     throw new ErrorDatos('Escribe la tarifa del servicio para esta ciudad.', 'tarifa', 422);
   // Antes de tocar nada: la compuerta del servicio y la comisión en la moneda de la ciudad.
-  await exigirPuedeEncender(c, d.servicio);
+  await exigirPuedeEncender(c, d.servicio, pais);
   await exigirComisionEnMoneda(db, d.servicio, { pais, moneda });
   const existia = await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(d.zona.id).first();
   await db
