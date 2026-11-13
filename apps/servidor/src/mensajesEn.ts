@@ -1734,6 +1734,10 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
   ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],
+  [
+    'No se pudo aprobar: a esta verificación le faltan el documento o la selfie. Pídele a la persona que vuelva a tomar las fotos.',
+    'It couldn’t be approved: this verification is missing the ID or the selfie. Ask the person to take the photos again.',
+  ],
   ['No encontramos a esa persona.', 'We couldn’t find that person.'],
   // C-RECARGAS-PREPAGO y C-PAGO-MOVIL-VIAJE (13 nov 2026).
   [

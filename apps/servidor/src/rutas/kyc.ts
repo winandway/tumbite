@@ -706,27 +706,44 @@ kyc.patch('/admin/kyc/:id', async (c) => {
     d.estado === 'aprobado' && u.rol === 'restaurante'
       ? new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10)
       : null;
-  const r = await db
-    .prepare(
-      "UPDATE kyc SET estado = ?, motivo = ?, revisado_en = datetime('now'), revisado_por = ?, proxima_revision = ? WHERE usuario_id = ? AND estado = 'pendiente'",
-    )
-    .bind(d.estado, d.motivo, admin.id, proxima, id)
-    .run();
-  if (!r.meta.changes) throw new ErrorDatos('Esa verificación no está pendiente.', undefined, 409);
   // C-IDENTIDAD-CUMPLIMIENTO (13 nov 2026): la identidad aprobada cuenta como requisito cumplido para
   // los servicios que la piden (Moto, Envíos…). El disparador de la base vuelve a exigir la
   // verificación real (documento, selfie y revisión de una persona admin).
-  if (u.rol === 'repartidor')
-    await db
+  // C-KYC-ATOMICO: la revisión y el requisito van en UN lote. Si el disparador rechaza el requisito,
+  // la base deshace también la revisión: el KYC sigue pendiente, nunca «aprobado» a medias.
+  const lote = [
+    db
       .prepare(
-        `INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, fuente_id, vence_en, aprobado_por)
-         VALUES (?, '', 'identidad', ?, 'kyc', 'kyc:' || ?, datetime('now', '+365 days'), ?)
-         ON CONFLICT(conductor_id, vehiculo_id, requisito) DO UPDATE SET estado = excluded.estado, fuente = excluded.fuente,
-           fuente_id = excluded.fuente_id, vence_en = excluded.vence_en, aprobado_por = excluded.aprobado_por,
-           actualizado_en = datetime('now')`,
+        "UPDATE kyc SET estado = ?, motivo = ?, revisado_en = datetime('now'), revisado_por = ?, proxima_revision = ? WHERE usuario_id = ? AND estado = 'pendiente'",
       )
-      .bind(id, d.estado === 'aprobado' ? 'aprobado' : 'rechazado', id, admin.id)
-      .run();
+      .bind(d.estado, d.motivo, admin.id, proxima, id),
+  ];
+  if (u.rol === 'repartidor')
+    lote.push(
+      db
+        .prepare(
+          `INSERT INTO cumplimientos (conductor_id, vehiculo_id, requisito, estado, fuente, fuente_id, vence_en, aprobado_por)
+           SELECT ?, '', 'identidad', ?, 'kyc', 'kyc:' || ?, datetime('now', '+365 days'), ? WHERE changes() > 0
+           ON CONFLICT(conductor_id, vehiculo_id, requisito) DO UPDATE SET estado = excluded.estado, fuente = excluded.fuente,
+             fuente_id = excluded.fuente_id, vence_en = excluded.vence_en, aprobado_por = excluded.aprobado_por,
+             actualizado_en = datetime('now')`,
+        )
+        .bind(id, d.estado === 'aprobado' ? 'aprobado' : 'rechazado', id, admin.id),
+    );
+  let r: D1Result[];
+  try {
+    r = await db.batch(lote);
+  } catch (e) {
+    if (!String((e as Error)?.message ?? e).includes('identidad_sin_verificacion')) throw e;
+    console.error('kyc: la base rechazó el requisito de identidad; la revisión no se guardó', id);
+    throw new ErrorDatos(
+      'No se pudo aprobar: a esta verificación le faltan el documento o la selfie. Pídele a la persona que vuelva a tomar las fotos.',
+      undefined,
+      409,
+    );
+  }
+  if (!r[0]?.meta.changes)
+    throw new ErrorDatos('Esa verificación no está pendiente.', undefined, 409);
   const en = u.idioma === 'en';
   await enviarCorreo(c.env, {
     de: 'soporte',
