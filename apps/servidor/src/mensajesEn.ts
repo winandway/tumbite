@@ -1733,6 +1733,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
+  ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],
   ['No encontramos a esa persona.', 'We couldn’t find that person.'],
   // C-RECARGAS-PREPAGO y C-PAGO-MOVIL-VIAJE (13 nov 2026).
   [

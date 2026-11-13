@@ -59,6 +59,13 @@ jobs:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
         run: node scripts/staging/probar-moto.mjs
+      - name: Moto en Venezuela de punta a punta (alta, recarga, efectivo, pago móvil, sin saldo)
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-moto-venezuela.mjs
       - name: Avisos de Stripe de prueba con los eventos de Flex (recargas, reembolsos, disputas)
         if: ${{ vars.URL_PRUEBAS != '' }}
         continue-on-error: true
