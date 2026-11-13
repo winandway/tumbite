@@ -6172,6 +6172,150 @@ body.modo-tableta .panel-contenido {
 .ciudad-pruebas .tabla td {
   white-space: normal;
 }
+/* C-CIUDAD-JUEGO (SIM-7): el modo juego, la pantalla grande del televisor y las tablas que en el
+   celular se apilan en vez de salirse de lado. */
+.ciudad-juego {
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0 24px;
+}
+.ciudad-juego h2 {
+  margin: 0 0 4px;
+}
+.ciudad-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ciudad-como summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.ciudad-como ol {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.ciudad-sesion,
+.ciudad-pruebas .lista-texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ciudad-jugadores {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.ciudad-jugador {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 12px;
+}
+.ciudad-moto {
+  background: transparent;
+  border: 0;
+}
+.ciudad-casa span {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #101010;
+  border-radius: 4px;
+  background: #fff;
+}
+.ciudad-tv {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #fff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 16px;
+  padding: 16px;
+  max-width: none;
+  margin: 0;
+}
+.ciudad-tv-mapa {
+  min-height: 0;
+}
+.ciudad-mapa-grande {
+  height: 100%;
+  min-height: 60vh;
+  margin: 0;
+}
+.ciudad-tv-lista {
+  overflow-y: auto;
+  min-width: 0;
+}
+.ciudad-tv-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ciudad-tv-lista p,
+.ciudad-tv-lista h2 {
+  font-size: 1.4rem;
+}
+.ciudad-tv-pedidos {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.ciudad-tv-pedidos li {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 1.15rem;
+}
+.ciudad-tv-pedidos strong {
+  font-size: 1.6rem;
+  font-family: Poppins, system-ui, sans-serif;
+}
+@media (max-width: 760px) {
+  .ciudad-tv {
+    grid-template-columns: 1fr;
+    grid-template-rows: 55vh auto;
+    overflow-y: auto;
+  }
+  .ciudad-mapa-grande {
+    min-height: 50vh;
+  }
+}
+@media (max-width: 640px) {
+  .ciudad-pruebas .tabla-apilada thead {
+    display: none;
+  }
+  .ciudad-pruebas .tabla-apilada,
+  .ciudad-pruebas .tabla-apilada tbody,
+  .ciudad-pruebas .tabla-apilada tr,
+  .ciudad-pruebas .tabla-apilada td {
+    display: block;
+    width: 100%;
+  }
+  .ciudad-pruebas .tabla-apilada tr {
+    border-bottom: 1px solid #e3e4e6;
+    padding: 6px 0;
+  }
+  .ciudad-pruebas .tabla-apilada td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    text-align: right;
+  }
+  .ciudad-pruebas .tabla-apilada td::before {
+    content: attr(data-etiqueta);
+    color: #5e5e5e;
+    text-align: left;
+  }
+}
 
 /* C-FLEX-MARCA y C-FLEX-SALIR (13 nov 2026, Richard): en Divoox Flex siempre se ve dónde estás y
    cómo salir. Franja con el nombre del servicio y el menú lateral en el azul de logística. */
