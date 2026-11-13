@@ -20,6 +20,12 @@
 - [ ] (SIM-6) Capa nativa Android primero (Richard: Android obligatorio para repartidores y restaurantes): dos o tres recorridos críticos con Maestro local en el emulador, coordinados por el estado del servidor (ficha, punto 6).
 - [ ] (SIM-7, idea de Richard, 13 nov) Ciudad de pruebas en modo juego: una persona (su hijo, el equipo) pide desde la app real del cliente en el sitio de pruebas y los restaurantes y repartidores son robots que aceptan, preparan y entregan; pantalla grande con el mapa de la ciudad y las motos moviéndose; pago con saldo de juego (sin tarjeta); reporte por jugador de lo que compró y de los fallos que encontró. Va después de SIM-5 y SIM-6. Todos los países.
 
+## Divoox Moto lista para pruebas en Venezuela (13 nov 2026, orden de Richard; rama `fase-moto-venezuela`) — Venezuela
+
+- [x] (MV-1 a MV-9) Trampa de moneda, Caracas de pruebas en dólares, requisitos por país, saldo y recargas, pago móvil, compuerta de producción cerrada, pantallas y guías guardadas (commits b2aa242e8 a 5ac88d660). Candados en CANDADOS.md (C-COMISION-MONEDA, C-MOTO-VENEZUELA, C-PAPELES-CONDUCTOR, C-SALDO-OFERTAS, C-PAGO-MOVIL-VIAJE, C-MOTO-POR-PAIS, C-MOTO-PANTALLAS). Sin publicar en producción.
+- [ ] [para: revisor-calidad] (MV-R) Revisar una vez la rama `fase-moto-venezuela`: la compuerta de producción sigue cerrada de fábrica (ninguna fila `pasajeros_pais:*`), `bloquearPasajeros` y `saludServicios` no dejan Moto encendida fuera de un país abierto, el despacho no ofrece viajes sin saldo ni con pago móvil a quien no lo tiene cargado, los antecedentes de Venezuela solo se aprueban con el papel revisado y en EE. UU. siguen con Checkr. Venezuela.
+- [ ] (MV-10) Capturas reales en el sitio de pruebas de Driver «Divoox Moto», Ganancias con las carreras, el viaje con pago móvil y el panel «Moto · Abrir y aprobar», para publicar las guías guardadas. Venezuela.
+
 ## Lecturas de la base por petición (13 nov 2026, orden de Gerencia; regla «la nube no se come el dinero») — todos los países
 
 - [x] (LECT-1) C-LECTURAS-POR-PETICION (1a6a6034a): el arranque del servidor ya no revisa la base entera cada vez (huella en `config`), registro y panel del restaurante por índice, índice parcial de ofertas vigentes, limpieza del recorrido por los pedidos sin repartidor, el simulador concilia una vez al final y el contador de la vuelta ve también lo que solo lee. Candado `apps/servidor/src/lecturasPorPeticion.test.ts` con base de volumen, comprobado en rojo. Sin publicar.
