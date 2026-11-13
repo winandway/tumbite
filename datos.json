@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-12T00:11:52.000Z",
+  "actualizado": "2026-11-13T16:09:43.000Z",
   "version": "7b9a5ca",
-  "ahora": "11 nov: las tres apps de Android con los nueve fallos corregidos se enviaron a Google Play (Divoox 17, Driver 16, Restaurants 11) y esperan la revisión de Google; las fichas de Google ya llevan el ícono, el gráfico y las capturas de cada app con su color; las guías públicas en español e inglés quedaron al día con lo que cambió.",
+  "ahora": "13 nov: ya hay simulador de compras y entregas. Dieciocho casos de comida con cliente, restaurante y repartidor falsos, una ciudad virtual que compra y vende sola y una pantalla en vivo en el panel del sitio de pruebas. La primera corrida en el sitio de pruebas salió en verde. El reloj exacto de producción quedó encendido y en verde, Google aprobó las tres apps el 11 nov y las tres apps web ya se instalan desde el navegador del celular. En curso: bajar las lecturas de la base.",
   "proximo": [
     {
       "quien": "richard",
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-13",
+      "titulo": "Simulador de compras y entregas, ciudad virtual y reloj exacto",
+      "texto": "Se construyó el simulador: un cliente, un restaurante y un repartidor falsos hacen el pedido completo contra el servidor, con dieciocho casos de comida (incluidos los nueve fallos de la calle) y comprobación del dinero al final de cada uno. Encontró dos fallos de doble toque y quedaron arreglados. Hay un modo ciudad con población que compra y vende sola y una pantalla en vivo en el panel, solo en el sitio de pruebas. Corre cada día. El reloj exacto de producción se encendió en Cloudflare y el canario pasó a verde. Las tres apps web se pueden agregar a la pantalla de inicio como aplicación. Falta: que el simulador maneje las pantallas y un Android de verdad, y la ubicación del repartidor con la pantalla apagada."
+    },
     {
       "fecha": "2026-11-11",
       "titulo": "Versión nueva en Google Play, fichas con el color de cada app y guías al día",
