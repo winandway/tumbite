@@ -159,7 +159,8 @@ describe('Docs públicos', () => {
       expect(texto).toMatch(
         i === 'es' ? /se escribe en vez de escanearse/ : /typed in instead of scanned/,
       );
-      for (const c of g?.capturas ?? []) expect(c.src).toMatch(/recorrido-(instalar|avisos-web)-/);
+      for (const c of g?.capturas ?? [])
+        expect(c.src).toMatch(/recorrido-(instalar|avisos-web|web-avisos)-/);
       expect(g?.capturas?.some((c) => c.src.includes('recorrido-avisos-web-'))).toBe(true);
     }
   });
