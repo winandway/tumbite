@@ -222,4 +222,58 @@ describe('C-RUTA-POR-CALLES: distancia por calles en la cotización', () => {
     const sin = await escenario({});
     expect((await sin.m.llamar('GET', '/datos/salud')).datos.piezas.rutas).toBe('estimada');
   });
+
+  it('es mundial: Carro y Envíos abiertos desde el panel en Detroit cotizan por calles (una sola consulta)', async () => {
+    const m = mundo({ GOOGLE_PLACES_KEY: LLAVE }, { host: 'staging.tumbite.com' });
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const cliente = await m.cuenta('cliente', 'Pasajero Michigan');
+    const zona = {
+      id: 'US-MI-DETROIT',
+      nombre: 'Detroit',
+      lat: 42.3314,
+      lng: -83.0458,
+      radioKm: 60,
+      zonaHoraria: 'America/Detroit',
+    };
+    for (const servicio of ['carro', 'envios'])
+      expect(
+        (
+          await m.llamar(
+            'POST',
+            '/datos/admin/viajes/ciudades',
+            {
+              servicio,
+              zona,
+              tarifa: { base: 250, porKm: 110, porMinuto: 30, minimo: 700, valorMaximo: 10_000 },
+              motivo: 'Pruebas en Michigan',
+            },
+            admin.token,
+          )
+        ).estado,
+      ).toBe(201);
+    respuesta = async () =>
+      Response.json({ routes: [{ distanceMeters: 46_930, duration: '1948s' }] });
+    const novi = { lat: 42.4806, lng: -83.4755, direccion: 'Novi' };
+    const detroit = { lat: 42.3314, lng: -83.0458, direccion: 'Detroit' };
+    const carro = await m.llamar(
+      'POST',
+      '/datos/viajes/cotizar',
+      { servicio: 'carro', origen: novi, destino: detroit },
+      cliente.token,
+    );
+    expect(carro.estado).toBe(201);
+    expect(carro.datos.cotizacion).toMatchObject({
+      distanciaM: 46_930,
+      duracionS: 1_948,
+      fuenteDistancia: 'calles',
+    });
+    const envio = await m.llamar(
+      'POST',
+      '/datos/viajes/cotizar',
+      { servicio: 'envios', origen: novi, destino: detroit },
+      cliente.token,
+    );
+    expect(envio.datos.cotizacion).toMatchObject({ distanciaM: 46_930, fuenteDistancia: 'calles' });
+    expect(llamadas).toHaveLength(1);
+  });
 });

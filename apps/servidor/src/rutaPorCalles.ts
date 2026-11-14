@@ -5,6 +5,11 @@ import type { Env } from './env';
  * C-RUTA-POR-CALLES (13 nov 2026, todos los países): distancia y tiempo REALES por calles para el
  * precio de un viaje (Moto, Carro, Envíos), con Google Routes API «Compute Routes» básico.
  *
+ * Es MUNDIAL: sirve para cualquier origen y destino del planeta y no lleva lista de ciudades. Abrir
+ * una ciudad nueva (panel: «Abrir un servicio de viajes en una ciudad») no pide nada aquí. La usan
+ * todos los servicios que cotizan por `/datos/viajes/cotizar` (Moto, Carro, Envíos) y comparten el
+ * mismo tope diario.
+ *
  * Reglas que NO se tocan (docs/investigaciones/2026-11-13-mapas-y-distancia-por-calles.md):
  * - Se pide SIN tráfico: `routingPreference: TRAFFIC_UNAWARE` y nunca `departureTime` ni otra
  *   preferencia de tráfico. Con tráfico Google lo factura como «Pro», mucho más caro.
