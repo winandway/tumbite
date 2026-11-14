@@ -6,6 +6,20 @@ import { Enlace } from '../Enlace';
 const T = {
   es: {
     titulo: 'Viaje en Moto en vivo',
+    tituloCarro: 'Viaje en Carro en vivo',
+    // C-ENVIO-TEXTOS (14 nov 2026): quien recibe un paquete ve su envío, no «un viaje».
+    tituloEnvio: 'Tu paquete en vivo',
+    privadoEnvio:
+      'Te enviaron un paquete. Solo lo ve quien tiene el enlace, y se apaga al entregarlo.',
+    terminadoEnvio: 'Este envío ya terminó. El enlace dejó de mostrar el recorrido.',
+    estadosEnvio: {
+      buscando: 'Buscando conductor',
+      pago_pendiente: 'Buscando conductor',
+      asignado: 'El conductor va a recoger el paquete',
+      conductor_llego: 'El conductor está recogiendo el paquete',
+      en_curso: 'Tu paquete va en camino',
+    } as Record<string, string>,
+    carro: 'Carro',
     cargando: 'Cargando el viaje…',
     noExiste: 'Este enlace no existe o está incompleto.',
     terminado: 'Este viaje ya terminó. El enlace dejó de mostrar el recorrido.',
@@ -29,6 +43,19 @@ const T = {
   },
   en: {
     titulo: 'Live Moto ride',
+    tituloCarro: 'Live car ride',
+    tituloEnvio: 'Your package, live',
+    privadoEnvio:
+      'Someone sent you a package. Only people with the link can see it, and it turns off once it’s delivered.',
+    terminadoEnvio: 'This delivery has ended. The link no longer shows the trip.',
+    estadosEnvio: {
+      buscando: 'Looking for a driver',
+      pago_pendiente: 'Looking for a driver',
+      asignado: 'The driver is heading to pick up the package',
+      conductor_llego: 'The driver is picking up the package',
+      en_curso: 'Your package is on its way',
+    } as Record<string, string>,
+    carro: 'Car',
     cargando: 'Loading the ride…',
     noExiste: 'This link doesn’t exist or is incomplete.',
     terminado: 'This ride has ended. The link no longer shows the trip.',
@@ -54,6 +81,7 @@ const T = {
 
 type Compartido = {
   estado: string;
+  servicio?: string;
   terminado: boolean;
   origen?: string;
   destino?: string;
@@ -98,12 +126,15 @@ export function ViajeCompartido({ codigo, idioma }: { codigo: string; idioma: Id
     return () => clearInterval(r);
   }, [cargar]);
 
+  const envio = viaje?.servicio === 'envios';
+  const titulo = envio ? t.tituloEnvio : viaje?.servicio === 'carro' ? t.tituloCarro : t.titulo;
+  const estados = envio ? t.estadosEnvio : t.estados;
   if (!viaje || viaje.terminado)
     return (
       <main className="ticket">
-        <h1>{t.titulo}</h1>
+        <h1>{titulo}</h1>
         <p role={falla ? 'alert' : 'status'}>
-          {falla || (viaje?.terminado ? t.terminado : t.cargando)}
+          {falla || (viaje?.terminado ? (envio ? t.terminadoEnvio : t.terminado) : t.cargando)}
         </p>
         <Enlace a="/" className="docs-volver">
           {t.volver}
@@ -114,10 +145,10 @@ export function ViajeCompartido({ codigo, idioma }: { codigo: string; idioma: Id
   const v = viaje.vehiculo;
   return (
     <main className="ticket">
-      <h1>{t.titulo}</h1>
+      <h1>{titulo}</h1>
       <p className="ticket-estado">
-        <span className="insignia ticket-abierto">{t.estados[viaje.estado] ?? viaje.estado}</span>{' '}
-        {t.privado}
+        <span className="insignia ticket-abierto">{estados[viaje.estado] ?? viaje.estado}</span>{' '}
+        {envio ? t.privadoEnvio : t.privado}
       </p>
       {viaje.conductor ? (
         <p>
@@ -125,7 +156,8 @@ export function ViajeCompartido({ codigo, idioma }: { codigo: string; idioma: Id
           {v ? (
             <>
               <br />
-              <strong>{t.moto}:</strong> {[v.marca, v.modelo, v.color].filter(Boolean).join(' · ')}
+              <strong>{viaje.servicio === 'carro' ? t.carro : t.moto}:</strong>{' '}
+              {[v.marca, v.modelo, v.color].filter(Boolean).join(' · ')}
               {v.placa ? (
                 <>
                   <br />

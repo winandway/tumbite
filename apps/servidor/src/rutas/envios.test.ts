@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
 import { jpegConGps } from '../pruebas/fotoConGps';
+import { idiomaDelEnvio, textoSmsDestinatario } from './viajesPasajero';
 
 /**
  * C-ENVIOS (30 oct 2026), como Uber Courier: envíos de persona a persona sobre el motor de viajes.
@@ -91,6 +92,11 @@ describe('Divoox Envíos (C-ENVIOS)', () => {
     });
     const pin = actual.paquete.pinEntrega as string;
     expect(pin).toMatch(/^\d{4}$/);
+    // C-ENVIO-TEXTOS: la página pública sabe que es un paquete (no «Viaje en Moto»).
+    const enlace = await e.m.llamar('POST', `/datos/viajes/${id}/compartir`, {}, e.cliente.token);
+    const codigo = String(enlace.datos.url).split('/ride/')[1];
+    const vivo = await e.m.llamar('GET', `/datos/publico/viaje/${codigo}`);
+    expect(vivo.datos.viaje.servicio).toBe('envios');
     // Un viaje en curso del mismo cliente no se mezcla con el envío.
     expect(
       (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos.viaje,
@@ -191,5 +197,17 @@ describe('Divoox Envíos (C-ENVIOS)', () => {
       .run();
     await repartirOperaciones(undefined, e.m.DB);
     expect(await ofertasDe(moto.token)).toContain(mediano);
+  });
+
+  it('C-ENVIO-TEXTOS: el mensaje a quien recibe va en el idioma de quien envía o del país', () => {
+    expect(idiomaDelEnvio('en', 'US')).toBe('en');
+    expect(idiomaDelEnvio('es', 'US')).toBe('es');
+    expect(idiomaDelEnvio('en', 'VE')).toBe('es');
+    const es = textoSmsDestinatario('es', 'Paula', 'https://divoox.com/es/ride/x', '1234');
+    expect(es).toContain('te envió un paquete');
+    expect(es).toContain('1234');
+    expect(textoSmsDestinatario('en', 'Paula', 'https://divoox.com/ride/x', '1234')).toContain(
+      'sent you a package',
+    );
   });
 });

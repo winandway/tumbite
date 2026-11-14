@@ -679,6 +679,26 @@ async function paqueteDe(db: D1Database, operacionId: string) {
 export const sitioDe = (c: Ctx) =>
   (c.env.SITIO_URL ?? new URL(c.req.url).origin).replace(/\/$/, '');
 
+/**
+ * C-ENVIO-TEXTOS (14 nov 2026): el mensaje a quien recibe va en el idioma de quien envía; fuera de
+ * EE. UU. siempre en español (el país de la zona manda).
+ */
+export function idiomaDelEnvio(idiomaRemitente: string | null, pais: string | null): 'es' | 'en' {
+  if (pais && pais !== 'US') return 'es';
+  return idiomaRemitente === 'en' ? 'en' : 'es';
+}
+
+export function textoSmsDestinatario(
+  idioma: 'es' | 'en',
+  nombre: string,
+  enlace: string,
+  pin: string,
+): string {
+  return idioma === 'en'
+    ? `Divoox: ${nombre} sent you a package. Follow it live: ${enlace} — Your delivery PIN: ${pin}. Share it only with your driver at delivery.`
+    : `Divoox: ${nombre} te envió un paquete. Síguelo en vivo: ${enlace} — Tu PIN de entrega: ${pin}. Dáselo solo a tu conductor al recibirlo.`;
+}
+
 export async function avisarDestinatario(
   env: Env,
   db: D1Database,
@@ -690,21 +710,30 @@ export async function avisarDestinatario(
 ) {
   const codigo = nuevoToken();
   const cliente = await db
-    .prepare('SELECT cliente_id FROM operaciones WHERE id = ?')
+    .prepare(
+      `SELECT o.cliente_id, u.idioma, z.pais FROM operaciones o JOIN usuarios u ON u.id = o.cliente_id
+         LEFT JOIN zonas z ON z.id = o.zona_id WHERE o.id = ?`,
+    )
     .bind(operacionId)
-    .first<{ cliente_id: string }>();
+    .first<{ cliente_id: string; idioma: string | null; pais: string | null }>();
   if (!cliente) return;
   await db
     .prepare('INSERT INTO viajes_compartidos (huella, operacion_id, creado_por) VALUES (?, ?, ?)')
     .bind(await sha256(codigo), operacionId, cliente.cliente_id)
     .run();
   const nombre = remitente.split(' ')[0] ?? '';
+  const idioma = idiomaDelEnvio(cliente.idioma, cliente.pais);
   await enviarSms(env, db, {
     usuarioId: cliente.cliente_id,
     pedidoId: null,
     tipo: 'envio_destinatario',
     telefono: telefonoCanonico(paquete.destinatario.telefono),
-    texto: `Divoox: ${nombre} sent you a package. Follow it live: ${sitio}/ride/${codigo} — Your delivery PIN: ${pin}. Share it only with your driver at delivery.`,
+    texto: textoSmsDestinatario(
+      idioma,
+      nombre,
+      `${sitio}${idioma === 'es' ? '/es' : ''}/ride/${codigo}`,
+      pin,
+    ),
   });
 }
 
@@ -1118,7 +1147,7 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT v.estado, v.origen_direccion, v.destino_direccion, v.destino_lat, v.destino_lng,
-              u.nombre AS conductor, d.lat, d.lng, d.ubicacion_en, h.marca, h.modelo, h.color, h.placa
+              o.servicio_id, u.nombre AS conductor, d.lat, d.lng, d.ubicacion_en, h.marca, h.modelo, h.color, h.placa
          FROM viajes_compartidos s JOIN operaciones o ON o.id = s.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN usuarios u ON u.id = o.conductor_id
@@ -1130,11 +1159,14 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
     .first<Record<string, unknown>>();
   if (!f) throw new ErrorDatos('Este enlace no existe.', undefined, 404);
   const estado = String(f.estado);
+  // C-ENVIO-TEXTOS: la página dice si es un viaje de Moto, de Carro o un paquete.
+  const servicio = String(f.servicio_id ?? 'moto');
   if (['terminado', 'cancelado', 'sin_conductor', 'no_show'].includes(estado))
-    return c.json({ viaje: { estado, terminado: true } });
+    return c.json({ viaje: { estado, servicio, terminado: true } });
   return c.json({
     viaje: {
       estado,
+      servicio,
       terminado: false,
       origen: String(f.origen_direccion),
       destino: String(f.destino_direccion),

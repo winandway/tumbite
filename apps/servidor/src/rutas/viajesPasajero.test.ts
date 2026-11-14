@@ -629,7 +629,7 @@ describe('M6 (C-VIAJE-SEGURIDAD): emergencia y viaje compartido', () => {
     expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
     expect(await cond.paso(id, 'terminar')).toBe(200);
     const fin = await e.m.llamar('GET', `/datos/publico/viaje/${codigo}`);
-    expect(fin.datos.viaje).toEqual({ estado: 'terminado', terminado: true });
+    expect(fin.datos.viaje).toEqual({ estado: 'terminado', servicio: 'moto', terminado: true });
     expect(
       (await e.m.llamar('POST', `/datos/viajes/${id}/compartir`, {}, e.cliente.token)).estado,
     ).toBe(409);

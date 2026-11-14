@@ -43,7 +43,10 @@ export function OfertaViajeModal({
   alAceptar: () => void;
   alRechazar: () => void;
 }) {
-  const t = enIdioma(TEXTOS_VIAJE, idioma).oferta;
+  const textos = enIdioma(TEXTOS_VIAJE, idioma);
+  // C-ENVIO-TEXTOS: la oferta de un envío dice «envío de paquete», no «viaje».
+  const t =
+    oferta.servicioId === 'envios' ? { ...textos.oferta, ...textos.ofertaEnvio } : textos.oferta;
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
     // C-AUDITIVA-REPARTIDOR: más larga y repetida si el repartidor marcó dificultad auditiva.

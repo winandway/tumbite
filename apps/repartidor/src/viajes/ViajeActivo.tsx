@@ -92,7 +92,10 @@ export function ViajeActivo({
   viaje: ViajeConductor;
   alCambiar: () => void;
 }) {
-  const t = enIdioma(TEXTOS_VIAJE, idioma).activo;
+  const textos = enIdioma(TEXTOS_VIAJE, idioma);
+  // C-ENVIO-TEXTOS: en un envío cada botón habla del paquete y de quien envía.
+  const t =
+    viaje.servicio_id === 'envios' ? { ...textos.activo, ...textos.activoEnvio } : textos.activo;
   const [pin, setPin] = useState('');
   const [cascoMarcado, setCasco] = useState(false);
   // C-CARRO-PRUEBAS / C-ENVIOS: el casco del pasajero solo se confirma en Moto.

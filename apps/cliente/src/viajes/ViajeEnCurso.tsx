@@ -138,7 +138,9 @@ export function ViajeEnCurso({
   alTerminar: () => void;
 }) {
   const { api, idioma } = useSesion();
-  const t = enIdioma(TEXTOS_MOTO, idioma);
+  const base = enIdioma(TEXTOS_MOTO, idioma);
+  // C-ENVIO-TEXTOS: un envío no es un viaje de pasajero; cada pantalla habla del paquete.
+  const t = viaje.servicio === 'envios' ? { ...base, ...base.envio } : base;
   const [error, setError] = useState('');
   const [cancelando, setCancelando] = useState(false);
   const [cargoCobrado, setCargoCobrado] = useState<number | null>(null);
