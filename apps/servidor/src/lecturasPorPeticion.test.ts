@@ -376,20 +376,25 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
           'x-reloj-secreto': SEC,
         }),
       );
-    // Topes con la base de volumen (filas estimadas con el plan; antes del arreglo del 13 nov:
-    // L1 50.497, F2 100.982, F3 cerrar 57.443). F2 incluye una vuelta REAL del reloj, con la
-    // conciliación del día entero (una vez al día) y la suma del libro.
+    // Topes con la base de volumen. LECT-4 (14 nov 2026): el medidor ahora cuenta lo que D1 cobra
+    // y antes no veía (claves foráneas al borrar, disparadores por fila, listas IN, bucles
+    // anidados y LIMIT; ver pruebas/lecturas.ts). Con el medidor nuevo, antes → después del arreglo:
+    // migraciones-prueba 39.209 → 2.810 (acotada a sus cuentas), F1 2.942 → 1.945 y F3 cerrar
+    // 20.140 → 17.143 (índice parcial del vehículo activo). S12, L1, F2, reloj y F3 siguen pagando
+    // la clave foránea de `movimientos.pedido_id` al borrar su pedido temporal (12.640 filas por
+    // pedido con este volumen): ver CANDADOS.md, C-LECTURAS-VUELTA-RUTAS, por qué no lleva índice.
+    // F2 incluye una vuelta REAL del reloj (con las limpiezas de la hora).
     const topes: [string, number, unknown?][] = [
       ['s2', 200],
-      ['s4', 13_000], // 20 × «LIMIT 50» que el estimador cuenta como 600 (lee 50)
+      ['s4', 1_600], // 20 × «LIMIT 50» (el medidor nuevo respeta el LIMIT)
       ['s11', 200],
-      ['s12', 200],
-      ['l1', 300],
-      ['f1', 2_000],
-      ['migraciones', 5_000, { paso: 'verificar' }],
-      ['migraciones-prueba', 16_000],
-      ['f2', 55_000],
-      ['reloj', 7_000],
+      ['s12', 13_700],
+      ['l1', 54_000],
+      ['f1', 2_100],
+      ['migraciones', 6_000, { paso: 'verificar' }],
+      ['migraciones-prueba', 3_000],
+      ['f2', 76_000],
+      ['reloj', 25_500],
     ];
     const informe: string[] = [];
     for (const [ruta, tope, cuerpo] of topes) {
@@ -408,7 +413,7 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
     expect(
       cerrar.total,
       `f3/cerrar leyó ${cerrar.total}:\n${culpables(cerrar.lecturas)}`,
-    ).toBeLessThanOrEqual(5_000);
+    ).toBeLessThanOrEqual(18_000);
   }, 120_000);
 });
 
@@ -471,5 +476,74 @@ describe('C-LECTURAS-POR-PETICION · el contador de la vuelta ve también lo que
       LECTURAS_PESADAS,
     );
     expect(c.pesadas).toEqual([expect.objectContaining({ ruta: 'GET /datos/salud', escritas: 0 })]);
+  });
+});
+
+describe('LECT-4 · el medidor cuenta lo que D1 cobra y el plan no muestra', () => {
+  async function base() {
+    const db = crearBasePruebas();
+    await db.exec(
+      [
+        'CREATE TABLE zz_madre (id TEXT PRIMARY KEY)',
+        'CREATE TABLE zz_hija (id INTEGER PRIMARY KEY, madre_id TEXT REFERENCES zz_madre(id), dato INTEGER)',
+        'CREATE TABLE zz_otra (id INTEGER PRIMARY KEY, madre_id TEXT REFERENCES zz_madre(id))',
+        'CREATE INDEX zz_otra_madre ON zz_otra(madre_id)',
+        'CREATE TABLE zz_log (n INTEGER)',
+        `CREATE TRIGGER zz_disparo AFTER UPDATE OF dato ON zz_hija BEGIN
+           INSERT INTO zz_log (n) SELECT COUNT(*) FROM zz_hija WHERE dato = NEW.dato; END`,
+      ].join(';'),
+    );
+    await db
+      .prepare(
+        `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 2000)
+         INSERT INTO zz_madre (id) SELECT 'm' || i FROM n`,
+      )
+      .run();
+    await db
+      .prepare(
+        `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 3000)
+         INSERT INTO zz_hija (madre_id, dato) SELECT 'm' || (1 + i % 1500), i % 7 FROM n`,
+      )
+      .run();
+    return { db, medidor: medidorDeLecturas(db) };
+  }
+
+  it('borrar en la madre recorre cada hija sin índice por cada fila borrada', async () => {
+    const { medidor } = await base();
+    const r = await medidor.medir(() =>
+      medidor.db.prepare("DELETE FROM zz_madre WHERE id IN ('m1900', 'm1901')").run(),
+    );
+    // 2 filas × (zz_hija entera, 3.000, sin índice + zz_otra por su índice) + las 2 por su clave.
+    expect(r.total).toBeGreaterThanOrEqual(6_000);
+    expect(r.lecturas[0]?.escaneos.join(' ')).toMatch(/clave foránea zz_hija\(madre_id\)/);
+  });
+
+  it('cada fila cambiada paga el cuerpo de sus disparadores', async () => {
+    const { medidor } = await base();
+    const r = await medidor.medir(() =>
+      medidor.db.prepare('UPDATE zz_hija SET dato = 9 WHERE id <= 3').run(),
+    );
+    // 3 filas × el disparador (recorre zz_hija: 3.000) = 9.000 más.
+    expect(r.total).toBeGreaterThanOrEqual(9_000);
+  });
+
+  it('una lista IN y un JOIN cuentan una búsqueda por valor y por fila de afuera', async () => {
+    const { medidor } = await base();
+    const lista = await medidor.medir(() =>
+      medidor.db
+        .prepare('SELECT id FROM zz_otra WHERE madre_id IN (?, ?, ?, ?, ?)')
+        .bind('m1', 'm2', 'm3', 'm4', 'm5')
+        .all(),
+    );
+    expect(lista.total).toBeGreaterThanOrEqual(5);
+    const join = await medidor.medir(() =>
+      medidor.db.prepare('SELECT h.id FROM zz_madre m JOIN zz_hija h ON h.madre_id = m.id').all(),
+    );
+    // 2.000 madres × la hija entera (sin índice SQLite arma uno automático: lo cuenta una vez).
+    expect(join.total).toBeGreaterThan(2_000);
+    const limite = await medidor.medir(() =>
+      medidor.db.prepare("SELECT id FROM zz_madre WHERE id >= 'm' LIMIT 10").all(),
+    );
+    expect(limite.total).toBeLessThanOrEqual(10);
   });
 });

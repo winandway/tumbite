@@ -2786,6 +2786,9 @@ CREATE TABLE IF NOT EXISTS cierres_restaurante (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (restaurante_id, fecha)
 );
+-- C-LECTURAS-CATALOGO (14 nov 2026): los cierres que vienen (de todos los restaurantes) por fecha,
+-- para el listado del catálogo. Una escritura más por cierre (el restaurante lo marca a mano).
+CREATE INDEX IF NOT EXISTS cierres_restaurante_fecha ON cierres_restaurante(fecha);
 
 -- Fase 2 · cobro directo (C-COBRO-DIRECTO-LOCAL): el repartidor paga la comida en el mostrador con su
 -- propio dinero y registra cuánto pagó y cuánto decía el ticket. Tumbite no financia esa compra.

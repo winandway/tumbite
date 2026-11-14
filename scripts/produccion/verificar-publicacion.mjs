@@ -202,7 +202,10 @@ if (conReloj) {
     const [r] = await consultar(
       `SELECT (SELECT COUNT(*) FROM reloj_tareas) filas,
               (SELECT COUNT(*) FROM reloj_tareas WHERE critica = 1 AND ok = 0
-                 AND clave = (SELECT clave FROM tareas_programadas WHERE tarea = 'reloj' AND terminada_en IS NOT NULL ORDER BY terminada_en DESC LIMIT 1)) criticas_ultima,
+                 AND clave = COALESCE(
+                   -- LECT-3: la última vuelta es la de la marca fija (las ociosas no dejan fila).
+                   (SELECT 'reloj:' || substr(valor, 1, 16) FROM config WHERE clave = 'reloj_marca'),
+                   (SELECT clave FROM tareas_programadas WHERE tarea = 'reloj' AND terminada_en IS NOT NULL ORDER BY terminada_en DESC LIMIT 1))) criticas_ultima,
               (SELECT group_concat(tarea) FROM reloj_tareas WHERE ok = 0 AND creado_en > datetime('now', '-1 day')) fallidas_dia`,
     );
     exigir(
