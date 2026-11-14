@@ -4,8 +4,8 @@
 
 ## Main pages
 
-- [Divoox · Food, stores and packages delivered](https://divoox.com/): Your favorite Miami restaurants, with drivers who truly earn.
-- [How Divoox works](https://divoox.com/how-it-works): Divoox is a delivery startup: an app to order food delivery (with groceries, pharmacy, package delivery, and motorbike or car rides coming soon) built so a
+- [Divoox · Food, stores and packages delivered](https://divoox.com/): Your favorite local restaurants, with drivers who truly earn.
+- [How Divoox works](https://divoox.com/how-it-works): Divoox is a delivery startup: an app to order food delivery built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here 
 
 ## Guides (Docs)
 
@@ -35,7 +35,7 @@
 - [Coupons and promotions · Divoox](https://divoox.com/docs/ordering/coupons): Enter a code in the cart and the discount applies before you pay. Current promotions show under “Today’s deals” on the home screen.
 - [Reporting a problem with your order · Divoox](https://divoox.com/docs/ordering/report-a-problem): Something missing, cold, late: tell us what happened in two taps. If an item was missing, you mark which one and, when enabled, only that value is refunded
 - [Pay on delivery: cash or a transfer to the driver · Divoox](https://divoox.com/docs/ordering/pay-on-delivery): In cities where it’s active, you can choose to pay when your order arrives: in cash to the driver, or with a transfer to the account they have published. Y
-- [Pay with Apple Pay or Google Pay (coming soon) · Divoox](https://divoox.com/docs/ordering/apple-pay-google-pay): Today you pay with your card inside the app. Soon, on the same payment screen, Apple Pay (iPhone) or Google Pay (Android and Chrome) will show up if your p
+- [How you pay for your order · Divoox](https://divoox.com/docs/ordering/apple-pay-google-pay): You pay with your card inside the app, without leaving to another page. It’s authorized when you order and charged when it’s delivered.
 - [The home screen: what’s there and what each thing does · Divoox](https://divoox.com/docs/ordering/home-screen): Like the big delivery apps: at the top, where we deliver your order, the bell and the language. Then search and filters, services, deals, categories, the f
 - [Searching Divoox: restaurants, dishes, and cuisines](https://divoox.com/docs/ordering/search): Tap the search bar on the home screen and type what you’re craving. As you type, Divoox searches your city and shows matching restaurants and dishes, open 
 - [Dietary filters: vegetarian, vegan, gluten-free, halal, and spicy · Divoox](https://divoox.com/docs/ordering/dietary-filters): Restaurants can label their dishes as vegetarian, vegan, gluten-free, halal, or spicy. You see those labels on the menu and can filter search by them, with
@@ -59,7 +59,6 @@
 - [Compliments and reasons when you rate · Divoox](https://divoox.com/docs/ordering/compliments-and-reasons): With 5 stars you pick what went well; with 3 or fewer, what went wrong. One tap, no typing.
 - [Request a motorcycle ride · Divoox](https://divoox.com/docs/ordering/ride-moto): Choose where you’re going, see the price before you confirm, and follow your driver on the map until they arrive.
 - [Paying, canceling and tipping on Moto · Divoox](https://divoox.com/docs/ordering/ride-moto-pago): Pay with cash, card, or mobile payment (depending on your country), cancel for free at the start, and leave a tip when the ride ends.
-- [Your safety on rides · Divoox](https://divoox.com/docs/ordering/ride-seguridad): Share your ride live, choose trusted contacts and get help with one tap.
 - [For restaurants · Divoox](https://divoox.com/docs/restaurants): ⌘K← Docs For restaurantsCanceling an order that is already readyA ready order already has food made and, sometimes, a driver on the way. That’s why you can
 - [Canceling an order that is already ready · Divoox](https://divoox.com/docs/restaurants/cancel-ready-order): A ready order already has food made and, sometimes, a driver on the way. That’s why you cancel it by asking support, with the reason. We tell you up front 
 - [Your city doesn’t have Divoox yet: how to ask for it](https://divoox.com/docs/restaurants/bring-divoox-to-your-city): You can register your restaurant from any country. If Divoox doesn’t deliver in your city yet, you ask with one tap and we open first where the most restau
@@ -118,7 +117,6 @@
 - [Driving with Divoox Moto](https://divoox.com/docs/drivers/drive-moto): Get ride offers with your earnings upfront, pick up the rider with their code and end the ride in the app.
 - [Register your motorcycle and documents for Divoox Moto](https://divoox.com/docs/drivers/drive-moto-alta): Choose your city, register your motorcycle, upload your documents with your camera, and track your approval in the app.
 - [Your fee balance and top-ups · Divoox](https://divoox.com/docs/drivers/drive-moto-saldo): The rider pays you the full fare; the Divoox fee comes out of your balance. See how many rides it covers and top up at an authorized sales point.
-- [Driver rest and safety · Divoox](https://divoox.com/docs/drivers/drive-moto-seguridad): After 12 hours of driving, you rest for 6 before getting more rides. Every ride has an emergency button.
 - [How we look after every order · Divoox](https://divoox.com/docs/trust): ⌘K← Docs How we look after every orderTwo-person approval for money moved by handA large refund, reimbursement or balance adjustment made by hand is never 
 - [Two-person approval for money moved by hand · Divoox](https://divoox.com/docs/trust/two-person-approval): A large refund, reimbursement or balance adjustment made by hand is never decided by one person: one team member requests it and another one at Divoox appr
 - [If you lose signal when delivering · Divoox](https://divoox.com/docs/trust/no-signal-delivery): The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.
@@ -157,8 +155,9 @@
 - [Calculator: how much you earn and save with Divoox](https://divoox.com/docs/business/calculator): A calculator for everyone: the restaurant, the driver, the customer, and whoever wants to open Divoox in their city.
 - [Franchises: bring Divoox to your city](https://divoox.com/docs/business/franchises): Every new city opens with a local partner. What you pay for isn’t a brand: it’s a complete launch, with a fleet, training, tablets, and the first customers
 - [Launch team training · Divoox](https://divoox.com/docs/business/team-training): The reading list for everyone on the team: what to read, in what order, and what they should be able to explain at the end. It covers restaurants, drivers,
-- [Your account · Divoox](https://divoox.com/docs/account): ⌘K← Docs Your accountCreate your accountOne account to order, one for your restaurant, and one to deliver. Each takes a minute.Forgot my passwordWe email y
+- [Your account · Divoox](https://divoox.com/docs/account): ⌘K← Docs Your accountCreate your accountOne account to order, one for your restaurant, and one to deliver. Each takes a minute.Install Divoox from your pho
 - [Create your account · Divoox](https://divoox.com/docs/account/create-account): One account to order, one for your restaurant, and one to deliver. Each takes a minute.
+- [Install Divoox from your phone’s browser](https://divoox.com/docs/account/install-from-browser): No app store needed: open Divoox in Chrome or Safari, add it to your Home Screen, and it opens full screen, like an app.
 - [Forgot my password · Divoox](https://divoox.com/docs/account/password): We email you a link. It works once and expires in 30 minutes.
 - [Confirm your email · Divoox](https://divoox.com/docs/account/confirm-email): You can browse restaurants and menus without an account. At checkout we ask for your account with a confirmed email: you get a link and the app notices on 
 - [Text messages (SMS): how to opt in or out · Divoox](https://divoox.com/docs/account/text-messages): A separate, unchecked box when you create your account and in “My account.” You only get account and order texts if you check it yourself.
@@ -237,5 +236,5 @@
 ## En español
 
 Every page above also exists in Spanish under https://divoox.com/es (for example https://divoox.com/es/how-it-works).
-- [Divoox · Comida, tiendas y paquetes a domicilio](https://divoox.com/es): Tus restaurantes favoritos de Miami, con repartidores que ganan de verdad.
-- [Cómo funciona Divoox](https://divoox.com/es/how-it-works): Divoox es una startup de reparto: una app para pedir comida a domicilio (y muy pronto mercado, farmacia, envíos de paquetes y viajes en moto o en carro) he
+- [Divoox · Comida, tiendas y paquetes a domicilio](https://divoox.com/es): Tus restaurantes favoritos de la zona, con repartidores que ganan de verdad.
+- [Cómo funciona Divoox](https://divoox.com/es/how-it-works): Divoox es una startup de reparto: una app para pedir comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el 
