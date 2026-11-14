@@ -322,6 +322,29 @@ describe('reloj · pieza de la salud', () => {
     expect(await saludReloj({} as never, o.DB)).toBe('error');
   });
 
+  it('C-RELOJ-CANARIO-MINUTOS: con el Worker de cada minuto por la ruta de GitHub, rojo a los 5 minutos de caerse', async () => {
+    // El Worker llamaba cada minuto y dejó de hacerlo hace 6 minutos: rojo (antes, 6 horas).
+    const m = mundo();
+    for (const min of [6, 7, 8, 9, 10]) await vuelta(m, `reloj:w${min}`, min);
+    expect(await saludReloj({} as never, m.DB)).toBe('error');
+    // Andando: verde.
+    const n = mundo();
+    for (const min of [1, 2, 3, 4, 5]) await vuelta(n, `reloj:w${min}`, min);
+    expect(await saludReloj({} as never, n.DB)).toBe('ok');
+    // Caído hace horas y GitHub (el respaldo) hizo una vuelta hace 1 minuto: verde 5 minutos...
+    const o = mundo();
+    for (const min of [1, 300, 301, 302, 303, 304]) await vuelta(o, `reloj:o${min}`, min);
+    expect(await saludReloj({} as never, o.DB)).toBe('ok');
+    // ...y otra vez rojo cuando pasan, porque las últimas vueltas siguen con el ritmo del Worker.
+    const p = mundo();
+    for (const min of [7, 300, 301, 302, 303, 304]) await vuelta(p, `reloj:p${min}`, min);
+    expect(await saludReloj({} as never, p.DB)).toBe('error');
+    // Solo GitHub, impuntual (vueltas separadas por horas): las reglas de siempre.
+    const q = mundo();
+    for (const min of [20, 300, 600]) await vuelta(q, `reloj:q${min}`, min);
+    expect(await saludReloj({} as never, q.DB)).toBe('ok');
+  });
+
   it('la salud completa muestra la pieza y un fallo crítico la pone en 503', async () => {
     const m = mundo(EXTERNO);
     await m.cuenta('cliente');
