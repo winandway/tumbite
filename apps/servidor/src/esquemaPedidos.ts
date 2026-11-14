@@ -28,13 +28,17 @@ END`,
 ];
 
 /** Pieza «transiciones» de la salud: ok si el disparador existe y la tabla tiene sus filas. */
-export async function saludTransiciones(db: D1Database): Promise<'ok' | 'error'> {
+export async function saludTransiciones(
+  db: D1Database,
+  /** C-LECTURAS-SALUD: los disparadores ya leídos por el canario (una sola lectura de sqlite_master). */
+  presentes?: Set<string>,
+): Promise<'ok' | 'error'> {
   const f = await db
     .prepare(
-      `SELECT (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = ?) AS disparador,
+      `SELECT ${presentes ? '?' : "(SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name = ?)"} AS disparador,
               (SELECT COUNT(*) FROM transiciones_pedido) AS filas`,
     )
-    .bind(DISPARADOR_TRANSICIONES)
+    .bind(presentes ? Number(presentes.has(DISPARADOR_TRANSICIONES)) : DISPARADOR_TRANSICIONES)
     .first<{ disparador: number; filas: number }>();
   // 12 de la Entrega 1 + 2 de la Fase 2 (en_camino → cancelado: el cliente no pagó al recibir;
   // listo → cancelado: soporte cancela un pedido ya listo).

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { app } from './app';
+import { conciliarPedidos } from './conciliacion';
 import { CLAVE_HUELLA_ESQUEMA, reiniciarEsquema } from './esquema';
 import { contarFilas } from './presupuestoFilas';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
@@ -195,6 +196,220 @@ describe('C-LECTURAS-POR-PETICION · la conciliación de diagnóstico va una vez
     expect(correr).toMatch(/escenarios\.push\(libroFinal\)/);
     expect(correr).toMatch(/libroCuadra\(ctx, \[\.\.\.pedidosDelLibro\]\)/);
   });
+});
+
+describe('C-LECTURAS-CONCILIACION · la conciliación de diagnóstico no suma el día entero', () => {
+  const llamar = (m: Awaited<ReturnType<typeof escenario>>['m'], cuerpo: unknown) =>
+    m.llamar('POST', '/datos/interno/diagnostico/conciliacion', cuerpo, undefined, {
+      'x-reloj-secreto': SEC,
+    });
+
+  it('con volumen: con los pedidos de la corrida lee unas pocas filas; sin ellos, los de hoy por índice', async () => {
+    const { m, medidor } = await escenario();
+    await m.llamar('GET', '/datos/version');
+    // Antes (medido el 13 nov con esta misma base): 20.610 filas con pedidos y 26.609 sin ellos.
+    const con = await medidor.medir(() => llamar(m, { pedidos: ['vol-p-30', 'vol-p-60'] }));
+    expect(con.resultado.estado).toBe(200);
+    expect(
+      con.total,
+      `con pedidos leyó ${con.total}:\n${culpables(con.lecturas)}`,
+    ).toBeLessThanOrEqual(50);
+    const sin = await medidor.medir(() => llamar(m, {}));
+    expect(sin.resultado.estado).toBe(200);
+    expect(
+      sin.total,
+      `sin pedidos leyó ${sin.total}:\n${culpables(sin.lecturas)}`,
+    ).toBeLessThanOrEqual(800);
+    // Ya no escribe ni borra la fila del día (la del día entero la hace el reloj).
+    expect(sin.lecturas.some((l) => /conciliaciones/.test(l.sql))).toBe(false);
+  });
+
+  it('pedido por pedido aplica las tres reglas del día: restaurante, repartidor y Stripe', async () => {
+    const db = crearBasePruebas();
+    const ins = (sql: string, ...v: unknown[]) =>
+      db
+        .prepare(sql)
+        .bind(...v)
+        .run();
+    await ins(
+      "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES ('c1','c1@ejemplo.com','C','cliente','x'), ('d1','d1@ejemplo.com','D','restaurante','x'), ('r1','r1@ejemplo.com','R','repartidor','x')",
+    );
+    await ins("INSERT INTO restaurantes (id, dueno_id, nombre) VALUES ('rest1', 'd1', 'Local')");
+    const pedido = (id: string, estado: string) =>
+      ins(
+        `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio,
+           cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, lat, lng)
+         VALUES (?, 'c1', 'rest1', 'r1', ?, '[]', 2000, 300, 200, 0, 300, 2800, 400, 1600, 900, 0, 200, 'basico', 'Calle 1', 25.7, -80.2)`,
+        id,
+        estado,
+      );
+    const mov = (pid: string, usuario: string, concepto: string, monto: number) =>
+      ins(
+        'INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, ?)',
+        `m-${pid}-${concepto}`,
+        usuario,
+        pid,
+        monto,
+        concepto,
+      );
+    await pedido('bien', 'entregado');
+    await ins(
+      "INSERT INTO cobros (pedido_id, capturado_en, capturado) VALUES ('bien', datetime('now'), 2800)",
+    );
+    await mov('bien', 'd1', 'venta', 1600);
+    await mov('bien', 'r1', 'entrega', 600);
+    await mov('bien', 'r1', 'propina', 300);
+    expect((await conciliarPedidos(db, ['bien'])).cuadra).toBe(true);
+    // Al restaurante se le abonó de menos.
+    await pedido('corto', 'entregado');
+    await mov('corto', 'd1', 'venta', 1500);
+    await mov('corto', 'r1', 'entrega', 900);
+    const corto = await conciliarPedidos(db, ['bien', 'corto']);
+    expect(corto.cuadra).toBe(false);
+    expect(String(corto.detalle.diferencias)).toMatch(/corto: restaurante 1600/);
+    // Un pedido cancelado con un abono al repartidor (en el día tampoco cuadraría).
+    await pedido('cancelado', 'cancelado');
+    await mov('cancelado', 'r1', 'entrega', 900);
+    expect((await conciliarPedidos(db, ['cancelado'])).cuadra).toBe(false);
+    // Capturado distinto del total.
+    await pedido('captura', 'entregado');
+    await ins(
+      "INSERT INTO cobros (pedido_id, capturado_en, capturado) VALUES ('captura', datetime('now'), 2000)",
+    );
+    await mov('captura', 'd1', 'venta', 1600);
+    await mov('captura', 'r1', 'entrega', 900);
+    expect((await conciliarPedidos(db, ['captura'])).detalle.diferencias).toMatch(
+      /Stripe esperado 2800/,
+    );
+  });
+});
+
+describe('C-LECTURAS-CIUDAD · la pantalla en vivo de la ciudad de pruebas lee solo la sesión', () => {
+  it('cada refresco busca los pedidos por zona, estado y fecha de la sesión, no toda la historia de los robots', async () => {
+    const consultas: { sql: string; v: unknown[] }[] = [];
+    const anotar = (db: D1Database): D1Database => {
+      const env = (sql: string, st: D1PreparedStatement, v: unknown[] = []): D1PreparedStatement =>
+        new Proxy(st, {
+          get(t, p) {
+            if (p === 'bind') return (...a: unknown[]) => env(sql, t.bind(...a), a);
+            if (p === 'all' || p === 'first' || p === 'run') consultas.push({ sql, v });
+            const x = Reflect.get(t, p, t) as unknown;
+            return typeof x === 'function' ? (x as (...y: unknown[]) => unknown).bind(t) : x;
+          },
+        });
+      return new Proxy(db, {
+        get(t, p) {
+          if (p === 'prepare') return (sql: string) => env(sql, t.prepare(sql));
+          const x = Reflect.get(t, p, t) as unknown;
+          return typeof x === 'function' ? (x as (...y: unknown[]) => unknown).bind(t) : x;
+        },
+      });
+    };
+    vi.stubGlobal('fetch', async () => new Response('{}', { status: 200 }));
+    const m = mundo({ RELOJ_SECRETO: SEC }, { host: 'staging.tumbite.com', envolver: anotar });
+    await sembrarVolumen(m.DB);
+    await m.llamar('GET', '/datos/version');
+    const admin = await m.cuenta('admin', 'Soporte Ciudad');
+    // Los restaurantes robot se reutilizan: 300 pedidos de sesiones anteriores.
+    await m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 300)
+       INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
+         propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, lat, lng, creado_en)
+       SELECT 'viejo-' || i, 'vol-u-1', 'vol-r-' || (1 + i % 3), 'entregado', '[]', 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+         'basico', 'x', 0, 0, datetime('now', '-3 days') FROM n`,
+    ).run();
+    await m.DB.prepare(
+      `INSERT INTO simulador_sesiones (id, destino, restaurantes, repartidores, inicio)
+       VALUES ('s1', 'juego', '["vol-r-1","vol-r-2","vol-r-3"]', '["vol-u-4001"]', datetime('now', '-1 hours'))`,
+    ).run();
+    consultas.length = 0;
+    const r = await m.llamar('GET', '/datos/admin/ciudad-pruebas', undefined, admin.token);
+    expect(r.estado).toBe(200);
+    const dePedidos = consultas.filter((q) => /FROM pedidos p/.test(q.sql));
+    expect(dePedidos.length).toBe(3); // la lista, los jugadores y los pedidos en curso
+    for (const q of dePedidos) {
+      const plan = await m.DB.prepare(`EXPLAIN QUERY PLAN ${q.sql}`)
+        .bind(...q.v)
+        .all<{ detail: string }>();
+      expect(
+        plan.results.map((x) => x.detail).join(' | '),
+        'los pedidos de la sesión van por zona, estado y el rango de la fecha',
+      ).toMatch(
+        /SEARCH p USING INDEX pedidos_zona_estado \(zona_id=\? AND estado=\? AND creado_en>\?\)/,
+      );
+    }
+    // Lo que eso lee de verdad: los pedidos de la zona desde el inicio (aquí ninguno) frente a la
+    // historia entera de los tres robots (330) que leía cada consulta antes, cada 4 a 5 segundos.
+    const historia = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM pedidos WHERE restaurante_id IN ('vol-r-1','vol-r-2','vol-r-3')",
+    ).first<{ n: number }>();
+    const ventana = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM pedidos WHERE zona_id = 'US-FL-MIAMI' AND creado_en >= datetime('now', '-1 hours')",
+    ).first<{ n: number }>();
+    expect(Number(historia?.n)).toBe(330);
+    expect(Number(ventana?.n)).toBeLessThan(10);
+  });
+});
+
+describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de filas', () => {
+  it('S2, S4, S11, S12, L1, F1, F2, F3, migraciones y reloj leen por debajo de su tope con volumen', async () => {
+    const { m, medidor } = await escenario();
+    // Stripe de mentira con las formas que piden L1 y el reloj (intentos, reembolsos, listas).
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: 'pi_x',
+            status: 'succeeded',
+            amount_received: 0,
+            client_secret: 's',
+            data: [],
+          }),
+          { status: 200 },
+        ),
+    );
+    await m.llamar('GET', '/datos/version');
+    const pedir = (ruta: string, cuerpo: unknown = {}) =>
+      medidor.medir(() =>
+        m.llamar('POST', `/datos/interno/diagnostico/${ruta}`, cuerpo, undefined, {
+          'x-reloj-secreto': SEC,
+        }),
+      );
+    // Topes con la base de volumen (filas estimadas con el plan; antes del arreglo del 13 nov:
+    // L1 50.497, F2 100.982, F3 cerrar 57.443). F2 incluye una vuelta REAL del reloj, con la
+    // conciliación del día entero (una vez al día) y la suma del libro.
+    const topes: [string, number, unknown?][] = [
+      ['s2', 200],
+      ['s4', 13_000], // 20 × «LIMIT 50» que el estimador cuenta como 600 (lee 50)
+      ['s11', 200],
+      ['s12', 200],
+      ['l1', 300],
+      ['f1', 2_000],
+      ['migraciones', 5_000, { paso: 'verificar' }],
+      ['migraciones-prueba', 16_000],
+      ['f2', 55_000],
+      ['reloj', 7_000],
+    ];
+    const informe: string[] = [];
+    for (const [ruta, tope, cuerpo] of topes) {
+      const r = await pedir(ruta, cuerpo);
+      informe.push(`${ruta}: ${r.total}`);
+      expect(r.resultado.estado, ruta).toBe(200);
+      expect(
+        r.total,
+        `${ruta} leyó ${r.total} (tope ${tope}):\n${culpables(r.lecturas)}`,
+      ).toBeLessThanOrEqual(tope);
+    }
+    const f3 = await pedir('f3/preparar', { conductores: 3 });
+    const sufijo = (f3.resultado as { datos: { sufijo?: string } }).datos.sufijo;
+    expect(sufijo).toBeTruthy();
+    const cerrar = await pedir('f3/cerrar', { sufijo });
+    expect(
+      cerrar.total,
+      `f3/cerrar leyó ${cerrar.total}:\n${culpables(cerrar.lecturas)}`,
+    ).toBeLessThanOrEqual(5_000);
+  }, 120_000);
 });
 
 /** Una base que informa filas leídas como D1 (la de pruebas no lo hace). */
