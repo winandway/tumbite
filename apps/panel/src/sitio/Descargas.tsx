@@ -20,6 +20,9 @@ const T = {
     iphone: 'iPhone',
     iphoneDetalle: 'En revisión de Apple',
     nota: 'En un teléfono Android, el botón abre Google Play y la instalas con un toque. Desde la computadora, Google Play te deja mandarla a tu teléfono.',
+    navegador:
+      '¿Tienes iPhone? Mientras Apple revisa las apps, abre Divoox en Safari y agrégala a tu pantalla de inicio: se abre a pantalla completa, como una app.',
+    navegadorGuia: 'Cómo instalar Divoox desde el navegador',
     apps: [
       {
         app: 'cliente',
@@ -55,6 +58,9 @@ const T = {
     iphone: 'iPhone',
     iphoneDetalle: 'In review by Apple',
     nota: 'On an Android phone, the button opens Google Play and you install it with one tap. From a computer, Google Play lets you send it to your phone.',
+    navegador:
+      'On an iPhone? While Apple reviews the apps, open Divoox in Safari and add it to your Home Screen: it opens full screen, like an app.',
+    navegadorGuia: 'How to install Divoox from your browser',
     apps: [
       {
         app: 'cliente',
@@ -91,6 +97,8 @@ const T = {
     iphone: string;
     iphoneDetalle: string;
     nota: string;
+    navegador: string;
+    navegadorGuia: string;
     apps: { app: AppDivoox; nombre: string; para: string; texto: string }[];
   }
 >;
@@ -145,6 +153,13 @@ export function Descargas({ idioma }: { idioma: Idioma }) {
         ))}
       </ul>
       <p className="descargas-nota">{t.nota}</p>
+      {/* C-GUIA-INSTALAR-NAVEGADOR: en iPhone, la app web instalada desde Safari (C-APP-INSTALABLE). */}
+      <p className="descargas-nota" data-testid="descargas-navegador">
+        {t.navegador}{' '}
+        <a href={`${idioma === 'es' ? '/es' : ''}/docs/account/install-from-browser`}>
+          {t.navegadorGuia}
+        </a>
+      </p>
     </main>
   );
 }

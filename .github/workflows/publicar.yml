@@ -66,6 +66,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.revisar.outputs.version }}
+      # C-MAPA-GOOGLE-WEB: llave PÚBLICA de Maps JavaScript API (restringida por dominio), variable
+      # del repositorio. Vacía = Leaflet como siempre.
+      VITE_GOOGLE_MAPS_WEB_KEY: ${{ vars.GOOGLE_MAPS_WEB_KEY }}
+      EXPO_PUBLIC_GOOGLE_MAPS_WEB_KEY: ${{ vars.GOOGLE_MAPS_WEB_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:

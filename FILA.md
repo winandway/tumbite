@@ -256,7 +256,7 @@
 
 - [x] HECHO 1 nov: no era la campana; la app se quedaba en la pantalla roja confirmando la sesión con el sitio de pruebas lento (hasta 3 intentos de 8 s) y la prueba solo esperaba 20 s; ahora espera 45 s. De paso, el enlace «¿Una empresa te invitó?» de Driver ya no queda sobre el mapa. (Original:) El recorrido de Comida en inglés del sitio de pruebas falla dos veces seguidas esperando el punto rojo de la campana del cliente (`campana-punto`, recorrido.spec.ts:802) con código que antes pasó: revisar con REA si es carrera o datos acumulados del sitio de pruebas. Todos los países.
 
-- [!] (espera que Google y Apple terminen sus revisiones: cambiar la ficha ahora puede cruzarse con ellas) Correo de contacto de las fichas de Google Play y del App Store al buzón de soporte de cada app (soporte+divoox, soporte+divoox.driver y soporte+divoox.restaurantes @windoce.com). Lo hago yo por la API apenas aprueben. Todos los países.
+- [x] HECHO 13 nov en el archivo (C-FICHA-CONTACTO, rama fase-web-docs): `fichas-google-play.json` lleva el buzón de cada app y el guion lo carga; falta correrlo en Google Play con el APTO del auditor [para: tiendas-lanzamientos]; App Store sigue aparte. Antes: (espera que Google y Apple terminen sus revisiones: cambiar la ficha ahora puede cruzarse con ellas) Correo de contacto de las fichas de Google Play y del App Store al buzón de soporte de cada app (soporte+divoox, soporte+divoox.driver y soporte+divoox.restaurantes @windoce.com). Lo hago yo por la API apenas aprueben. Todos los países.
 
 ## Repaso del 1 nov (docs/REPASO-ROADMAP-2026-11-01.md): construir como el mercado, apagado hasta poner el dinero
 
@@ -554,3 +554,9 @@
 
 - [ ] [para: revisor-calidad] (CALLE-3CEL-r) Revisar una vez el paquete de la prueba en la calle con tres celulares (rama claude/objective-lovelace-d34145, commits 2966853f0 a a041fa720): C-LISTO-SIN-AJUSTE, C-REOFERTA-UNICO, C-ACEPTAR-DOBLE-TOQUE, C-QR-UNA-VEZ, C-PIN-SIN-FOTO, C-LATIDO-UBICACION, C-COBRO-MISMOS-DATOS, C-TOTAL-CORREGIDO y C-PENDIENTE-ABANDONADO (este último toca el cobro: anula el PaymentIntent del pedido anterior sin pagar). Todos los países.
 - 13 nov 2026 (desarrollador): SIG-2 cerrado. El reloj exacto de producción corre en Cloudflare (`tumbite-reloj-produccion`, cada minuto, misma ruta y secreto que GitHub, que queda de respaldo). La conciliación de billeteras ya no reescribe `config` en cada vuelta. Candado C-RELOJ-PRODUCCION-CLOUDFLARE. Todos los países.
+
+## Paquete web y Docs del 13 nov (rama fase-web-docs) — todos los países
+
+- [ ] [para: revisor-calidad] Revisar la rama fase-web-docs: web al día (C-WEB-AL-DIA), guía «Instalar desde el navegador» (C-GUIA-INSTALAR-NAVEGADOR), mapa de Google en la web (C-MAPA-GOOGLE-WEB), correo de las fichas (C-FICHA-CONTACTO) y textos públicos (C-TEXTOS-PUBLICOS).
+- [ ] [para: desarrollador] Mapa web del Driver (`apps/repartidor/src/piezas/Mapa.web.tsx`, `flex/MapaRuta.web.tsx`) con la pieza `mapaWebGoogle` cuando dibuje restaurante o casa (C-MAPA-GOOGLE-WEB). No se tocó: era terreno del desarrollador de Driver.
+- [!] 👤 Richard: crear la llave de navegador de Maps JavaScript API (restringida por dominio) y guardarla como variable del repositorio GOOGLE_MAPS_WEB_KEY; tope de 300 cargas al día en Google Cloud. Sin eso, la web sigue con Leaflet (riesgo de términos abierto).

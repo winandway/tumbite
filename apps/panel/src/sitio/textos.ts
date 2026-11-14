@@ -20,8 +20,9 @@ const es = {
     comensal: {
       titulo: 'Pide hoy desde la web',
       texto:
-        'Crea tu cuenta gratis en un minuto y pide desde el navegador. Las apps para iPhone y Android llegan muy pronto.',
+        'Crea tu cuenta gratis en un minuto y pide desde el navegador. En Android, baja la app Divoox de Google Play; en iPhone, agrégala a tu pantalla de inicio desde Safari y se abre como una app.',
       boton: 'Pedir ahora',
+      guia: 'Cómo instalarla desde el navegador',
     },
     restaurante: {
       titulo: 'Abre tu restaurante en Divoox',
@@ -33,7 +34,7 @@ const es = {
     tienda: {
       titulo: '¿Tienes un supermercado, una farmacia o una tienda?',
       texto:
-        'Sube ya tu catálogo con una planilla o con el código de barras: supermercados, farmacias, licorerías, ferreterías y más. Tus clientes verán tu tienda por pasillos, buscarán tus productos y elegirán qué hacer si falta algo. Abrimos las tiendas ciudad por ciudad (muy pronto).',
+        'Sube ya tu catálogo con una planilla o con el código de barras: supermercados, farmacias, licorerías, ferreterías y más. Tus clientes verán tu tienda por pasillos, buscarán tus productos y elegirán qué hacer si falta algo. Las tiendas abren ciudad por ciudad: te avisamos cuando la tuya pueda vender en tu zona.',
       boton: 'Subir mis productos',
       guia: 'Cómo subir el catálogo',
     },
@@ -44,9 +45,9 @@ const es = {
     },
   },
   hero: {
-    etiqueta: 'Muy pronto en Miami',
+    etiqueta: 'La startup Divoox: comida a domicilio',
     titulo: 'Comida rica, hasta tu puerta.',
-    texto: 'Tus restaurantes favoritos de Miami, con repartidores que ganan de verdad.',
+    texto: 'Tus restaurantes favoritos de la zona, con repartidores que ganan de verdad.',
     pedir: 'Quiero pedir',
     restaurante: 'Tengo un restaurante',
     repartir: 'Quiero repartir',
@@ -68,7 +69,6 @@ const es = {
         'Crear mi cuenta',
       ],
     ],
-    tiendas: 'Muy pronto en App Store y Google Play',
   },
   ventajas: [
     ['comision', 'Comisiones hasta 50 % más bajas', 'para los restaurantes'],
@@ -86,7 +86,7 @@ const es = {
       ],
       [
         'Paga claro',
-        'Antes de pagar ves todo: comida, envío, servicio y propina. Pagas con tu tarjeta dentro de la app; Apple Pay y Google Pay, muy pronto.',
+        'Antes de pagar ves todo: comida, envío, servicio y propina. Pagas con tu tarjeta dentro de la app, sin salir a otra página.',
       ],
       ['Síguelo', 'Confirmado, en cocina, en camino y entregado. Ves a tu repartidor acercarse.'],
     ],
@@ -105,9 +105,14 @@ const es = {
         'Crece',
         '12,5 %',
         '25 %',
-        'Todo lo del Inicial. Promociones destacadas en el inicio de la app: muy pronto.',
+        'Todo lo del Inicial, con la mitad de la comisión de un plan intermedio.',
       ],
-      ['Élite', '15 %', '30 %', 'Todo lo del Crece. Ayuda con fotos y marketing: muy pronto.'],
+      [
+        'Élite',
+        '15 %',
+        '30 %',
+        'Todo lo del Crece, con la mitad de la comisión de un plan completo.',
+      ],
     ],
     comision: 'comisión',
     otros: 'en otras plataformas',
@@ -130,7 +135,12 @@ const es = {
       [
         'resumen',
         'Resumen del día',
-        'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.',
+        'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca, pedido por pedido.',
+      ],
+      [
+        'listo',
+        'Falta un plato: el cliente decide',
+        'Si se acabó algo de un pedido, se lo preguntas al cliente desde la app y esperas su respuesta antes de marcarlo listo. Nadie paga lo que no recibe.',
       ],
     ],
     form: 'Quiero mi restaurante en Divoox',
@@ -151,29 +161,35 @@ const es = {
         'Sube de nivel',
         'Bronce, Plata, Oro y Diamante: los niveles altos ven primero los pedidos grandes.',
       ],
-      ['billetera', 'Tu billetera', 'saldo, historial y retiro a tu banco.'],
-      ['ruta', 'Ruta en un toque', 'con Google Maps o Apple Maps.'],
+      ['billetera', 'Tu billetera', 'saldo e historial de lo que ganas en cada pedido.'],
+      [
+        'ruta',
+        'Cómo llegar en un toque',
+        'con la app que prefieras: Google Maps, Waze o Apple Maps.',
+      ],
+      [
+        'pin',
+        'Entrega en mano con PIN',
+        'si el cliente lo pide, se lo entregas solo con su PIN de 4 dígitos.',
+      ],
     ],
     form: 'Quiero repartir con Divoox',
   },
   mapa: {
     etiqueta: 'Dónde estamos',
-    titulo: 'Empezamos en Miami. Tu ciudad puede ser la siguiente.',
+    titulo: 'Abrimos ciudad por ciudad. La tuya puede ser la siguiente.',
     texto:
       'Divoox crece pueblo a pueblo. Cada ciudad tiene sus restaurantes y sus repartidores, con soporte en tu idioma. Anótate y cuando haya suficientes vecinos en tu zona, llegamos.',
     activa: 'Activa',
     proxima: 'Próximamente',
   },
-  musica: {
-    etiqueta: 'Música en vivo, de verdad',
-    titulo: 'Premiamos a los mejores restaurantes con bandas en vivo',
-    texto:
-      'Es lo que viene: una parte de lo que gane Divoox irá a llevar músicos de verdad a los restaurantes mejor calificados. Creemos en la música hecha por personas y en el arte de nuestra ciudad.',
-  },
   preguntas: {
     titulo: 'Preguntas frecuentes',
     lista: [
-      ['¿Cuándo empieza Divoox?', 'Muy pronto en Miami. Anótate y te avisamos primero.'],
+      [
+        '¿Dónde funciona Divoox?',
+        'Abrimos ciudad por ciudad. Escribe tu dirección arriba: si todavía no llegamos, déjanos tu correo y te avisamos primero.',
+      ],
       [
         '¿Cuánto cobra Divoox a los restaurantes?',
         'Desde 7,5 % por pedido, la mitad de lo que cobran las grandes plataformas. Sin contratos de permanencia.',
@@ -184,7 +200,7 @@ const es = {
       ],
       [
         '¿Cómo se le paga al restaurante y al repartidor?',
-        'Cada uno tiene su billetera en la app y retira a su banco. Los datos bancarios se guardan en Stripe, nunca en Divoox.',
+        'Cada uno ve en su billetera de la app lo que gana en cada pedido. Los pagos van por Stripe: los datos bancarios se guardan allí, nunca en Divoox.',
       ],
       [
         '¿Qué pasa si hay un problema con mi pedido?',
@@ -276,7 +292,6 @@ const es = {
     appWeb: 'Pide desde el navegador',
     repartidorWeb: 'Reparte desde el navegador',
     apps: 'Las apps',
-    tiendas: 'Muy pronto en App Store y Google Play',
   },
   lugar: {
     volver: '← Volver al inicio',
@@ -293,7 +308,7 @@ const es = {
     ciudadesDe: 'Ciudades en {lugar}',
     tresPublicos: 'Divoox en tu ciudad es para tres',
     paraComensales:
-      'Para los vecinos: pides comida en segundos y la sigues en vivo. Muy pronto también mercado, farmacia, envíos y viajes en moto o en carro.',
+      'Para los vecinos: pides comida en segundos y la sigues en vivo hasta tu puerta.',
     paraRestaurantes:
       'Para restaurantes: hasta la mitad de comisión, sin contratos de permanencia.',
     paraRepartidores:
@@ -339,8 +354,9 @@ const en: Textos = {
     comensal: {
       titulo: 'Order today from the web',
       texto:
-        'Create your free account in a minute and order from your browser. The iPhone and Android apps are coming very soon.',
+        'Create your free account in a minute and order from your browser. On Android, get the Divoox app on Google Play; on iPhone, add it to your Home Screen from Safari and it opens like an app.',
       boton: 'Order now',
+      guia: 'How to install it from your browser',
     },
     restaurante: {
       titulo: 'Open your restaurant on Divoox',
@@ -351,7 +367,7 @@ const en: Textos = {
     tienda: {
       titulo: 'Do you run a grocery store, pharmacy or shop?',
       texto:
-        'Upload your catalog now with a spreadsheet or by barcode: grocery, pharmacy, liquor, hardware and more. Customers will browse your store by aisle, search your products and choose what happens if something is out. We’re opening stores city by city (coming soon).',
+        'Upload your catalog now with a spreadsheet or by barcode: grocery, pharmacy, liquor, hardware and more. Customers will browse your store by aisle, search your products and choose what happens if something is out. Stores open city by city: we’ll let you know when yours can start selling in your area.',
       boton: 'Upload my products',
       guia: 'How to upload your catalog',
     },
@@ -362,9 +378,9 @@ const en: Textos = {
     },
   },
   hero: {
-    etiqueta: 'Coming soon to Miami',
+    etiqueta: 'Divoox, a food delivery startup',
     titulo: 'Great food, right to your door.',
-    texto: 'Your favorite Miami restaurants, with drivers who truly earn.',
+    texto: 'Your favorite local restaurants, with drivers who truly earn.',
     pedir: 'I want to order',
     restaurante: 'I own a restaurant',
     publicos: ['Customers', 'Restaurants', 'Drivers'],
@@ -382,7 +398,6 @@ const en: Textos = {
       ],
     ],
     repartir: 'I want to drive',
-    tiendas: 'Coming soon to the App Store and Google Play',
   },
   ventajas: [
     ['comision', 'Up to 50% lower commissions', 'for restaurants'],
@@ -400,7 +415,7 @@ const en: Textos = {
       ],
       [
         'Pay clearly',
-        'See everything before you pay: food, delivery, service, and tip. Pay with your card inside the app; Apple Pay and Google Pay, coming soon.',
+        'See everything before you pay: food, delivery, service, and tip. Pay with your card inside the app, without leaving to another page.',
       ],
       [
         'Track it',
@@ -422,9 +437,9 @@ const en: Textos = {
         'Growth',
         '12.5%',
         '25%',
-        'Everything in Starter. Featured promotions on the app’s home: coming soon.',
+        'Everything in Starter, at half the commission of a mid-tier plan.',
       ],
-      ['Elite', '15%', '30%', 'Everything in Growth. Help with photos and marketing: coming soon.'],
+      ['Elite', '15%', '30%', 'Everything in Growth, at half the commission of a full plan.'],
     ],
     comision: 'commission',
     otros: 'on other platforms',
@@ -447,7 +462,12 @@ const en: Textos = {
       [
         'resumen',
         'Daily summary',
-        'Orders, sales, commission, and your payout. Cash out to your bank.',
+        'Orders, sales, commission, and what you’re owed, order by order.',
+      ],
+      [
+        'listo',
+        'Missing an item? The customer decides',
+        'If something in an order runs out, you ask the customer from the app and wait for their answer before marking it ready. Nobody pays for what they don’t get.',
       ],
     ],
     form: 'I want my restaurant on Divoox',
@@ -468,29 +488,35 @@ const en: Textos = {
         'Level up',
         'Bronze, Silver, Gold, and Diamond: higher levels see bigger orders first.',
       ],
-      ['billetera', 'Your wallet', 'balance, history, and cash-out to your bank.'],
-      ['ruta', 'Directions in one tap', 'with Google Maps or Apple Maps.'],
+      ['billetera', 'Your wallet', 'balance and a history of what you earn on every order.'],
+      [
+        'ruta',
+        'Directions in one tap',
+        'with the app you prefer: Google Maps, Waze, or Apple Maps.',
+      ],
+      [
+        'pin',
+        'Hand-it-to-me with a PIN',
+        'when the customer asks for it, you hand over the order only with their 4-digit PIN.',
+      ],
     ],
     form: 'I want to drive with Divoox',
   },
   mapa: {
     etiqueta: 'Where we are',
-    titulo: 'We start in Miami. Your city could be next.',
+    titulo: 'We open city by city. Yours could be next.',
     texto:
       'Divoox grows town by town. Each city has its own restaurants and its own drivers, with support in your language. Sign up, and once enough neighbors in your area join, we’ll be there.',
     activa: 'Live',
     proxima: 'Coming soon',
   },
-  musica: {
-    etiqueta: 'Live music, for real',
-    titulo: 'We reward the best restaurants with live bands',
-    texto:
-      'It’s what’s coming: part of what Divoox earns will bring real musicians to the best-rated restaurants. We believe in music made by people and in our city’s art.',
-  },
   preguntas: {
     titulo: 'Frequently asked questions',
     lista: [
-      ['When does Divoox launch?', 'Very soon in Miami. Sign up and you’ll be the first to know.'],
+      [
+        'Where does Divoox work?',
+        'We open city by city. Type your address above: if we’re not there yet, leave your email and you’ll be the first to know.',
+      ],
       [
         'How much does Divoox charge restaurants?',
         'From 7.5% per order, half of what the big platforms charge. No long-term contracts.',
@@ -501,7 +527,7 @@ const en: Textos = {
       ],
       [
         'How do restaurants and drivers get paid?',
-        'Each one has a wallet in the app and cashes out to their bank. Bank details are stored with Stripe, never with Divoox.',
+        'Each one sees what they earn on every order in their in-app wallet. Payments go through Stripe: bank details are stored there, never with Divoox.',
       ],
       [
         'What if there’s a problem with my order?',
@@ -593,7 +619,6 @@ const en: Textos = {
     appWeb: 'Order from your browser',
     repartidorWeb: 'Deliver from your browser',
     apps: 'The apps',
-    tiendas: 'Coming soon to the App Store and Google Play',
   },
   lugar: {
     volver: '← Back to home',
@@ -609,8 +634,7 @@ const en: Textos = {
     enPais: 'Part of our network in {pais}.',
     ciudadesDe: 'Cities in {lugar}',
     tresPublicos: 'Divoox in your city is for three',
-    paraComensales:
-      'For neighbors: order food in seconds and track it live. Groceries, pharmacy, package delivery, and motorbike or car rides are coming soon.',
+    paraComensales: 'For neighbors: order food in seconds and track it live to your door.',
     paraRestaurantes: 'For restaurants: up to half the commission, no lock-in contracts.',
     paraRepartidores:
       'For drivers: see what you earn before you accept, and declining never counts against you.',

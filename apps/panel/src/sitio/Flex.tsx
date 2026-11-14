@@ -4,7 +4,7 @@ import { Enlace } from '../Enlace';
 /**
  * Divoox Flex: la página pública del servicio de logística y entrega de última milla (pedido de
  * Richard, 28 oct 2026). Solo capturas ORIGINALES de la app real (scripts/flex/capturas.mjs) y solo
- * lo que el producto ya hace; lo que viene se dice «muy pronto». Nada técnico ni privado.
+ * lo que el producto ya hace; lo que no está terminado no se muestra (C-SOLO-LO-TERMINADO). Nada técnico ni privado.
  */
 const img = (n: string, i: Idioma) => `/flex/${n}-${i}.webp`;
 /** Las capturas de celular se muestran a tamaño de celular (no estiradas al ancho). */
@@ -114,7 +114,6 @@ const T = {
           'Mensajes listos para WhatsApp.',
           'Cobro contra entrega en dólares o bolívares, con la caja de cada ruta.',
           'Retiro en tu centro con 5 días hábiles, cédula y aviso por WhatsApp.',
-          'Pagos locales en la billetera: muy pronto.',
         ],
       },
       us: {
@@ -234,7 +233,6 @@ const T = {
           'Messages ready for WhatsApp.',
           'Cash on delivery in dollars or bolívares, with each route’s cash panel.',
           'Pickup at your hub within 5 business days, with ID and a WhatsApp notice.',
-          'Local payments in the wallet: coming soon.',
         ],
       },
       us: {

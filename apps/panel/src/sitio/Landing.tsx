@@ -20,44 +20,6 @@ const IMG = {
   repartidora: '/marca/divoox-repartidora-bici.webp',
 };
 
-/**
- * Placa de marca (23 oct 2026): las fotos de marketing llevaban la marca vieja (Tumbite) en
- * letreros, maletas y carteles. Hasta que marketing entregue las nuevas, en su lugar va el logo
- * de Divoox sobre negro o rojo, con la misma proporción, para no mover el diseño.
- */
-function PlacaMarca({
-  fondo,
-  logo,
-  ancho,
-  alto,
-  etiqueta,
-  clase = 'ld-foto',
-}: {
-  fondo: 'negro' | 'rojo';
-  logo: 'completo' | 'isotipo';
-  ancho: number;
-  alto: number;
-  etiqueta: string;
-  clase?: string;
-}) {
-  const src =
-    logo === 'completo'
-      ? '/marca/divoox-logo-oscuro.svg'
-      : fondo === 'rojo'
-        ? '/marca/divoox-isotipo-blanco.svg'
-        : '/marca/divoox-isotipo-oscuro.svg';
-  return (
-    <div
-      className={`${clase} ld-placa ld-placa-${fondo}`}
-      role="img"
-      aria-label={etiqueta}
-      style={{ aspectRatio: `${ancho} / ${alto}` }}
-    >
-      <img src={src} alt="" className={`ld-placa-${logo}`} />
-    </div>
-  );
-}
-
 const ALT = {
   es: {
     pantallas: [
@@ -65,10 +27,10 @@ const ALT = {
       'Pantalla real de la app de Divoox: el menú de un restaurante',
       'Pantalla real de la app de Divoox: el pedido en camino, con el repartidor en el mapa',
     ],
-    servicios: 'Comida · Viajes · Envíos',
+    servicios: 'Comida a domicilio',
     restaurante:
       'Un repartidor de Divoox recoge un pedido en el mostrador de un restaurante de comida rápida',
-    repartidor: 'Repartidor de Divoox en su moto por Miami',
+    repartidor: 'Repartidora de Divoox en bicicleta por la ciudad',
     miami: 'Cartel de Divoox en una autopista de Miami',
     local: 'Local de Divoox',
     mascota: 'Mascota de Divoox',
@@ -79,9 +41,9 @@ const ALT = {
       'Real Divoox app screen: a restaurant menu',
       'Real Divoox app screen: the order on its way, with the driver on the map',
     ],
-    servicios: 'Food · Rides · Delivery',
+    servicios: 'Food delivery',
     restaurante: 'A Divoox driver picks up an order at a fast-food restaurant counter',
-    repartidor: 'Divoox driver on a bike in Miami',
+    repartidor: 'Divoox driver riding a bike through the city',
     miami: 'Divoox billboard on a Miami highway',
     local: 'Divoox storefront',
     mascota: 'Divoox mascot',
@@ -112,8 +74,8 @@ export function Landing({ idioma }: { idioma: Idioma }) {
   return (
     <main className="ld">
       {/* 1 · Portada estilo Uber Eats: titular, buscador de dirección y la app con pizzas */}
-      {/* Banner animado arriba de todo (Richard, 23 oct): «muy pronto en Miami» va dentro. */}
-      {/* C-DESFILE-FLOTA (4 nov): el desfile de la flota, con «muy pronto en Miami» arriba. */}
+      {/* C-DESFILE-FLOTA (4 nov): el desfile de la flota, con el lema de la startup arriba (sin
+          nombrar ciudad mientras ninguna está abierta: C-TEXTOS-PUBLICOS, 13 nov). */}
       <DesfileFlota
         lema={
           estadoCiudad({ slug: 'miami', estado: 'pronto' }) === 'activo'
@@ -240,7 +202,10 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <a className="boton" href="/app/">
             {t.acciones.comensal.boton}
           </a>
-          <BotonGooglePlay app="cliente" texto={tt.cliente} />
+          <BotonGooglePlay app="cliente" texto={tt.cliente} />{' '}
+          <a href={`${idioma === 'es' ? '/es' : ''}/docs/account/install-from-browser`}>
+            {t.acciones.comensal.guia}
+          </a>
         </div>
         <FormEspera tipo="comensal" idioma={idioma} titulo={t.comensales.form} />
       </section>
@@ -353,16 +318,6 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <p className="ld-entrada">{t.mapa.texto}</p>
         </div>
         <MapaCobertura idioma={idioma} />
-      </section>
-
-      {/* 6 · Música */}
-      <section className="ld-seccion ld-oscura ld-musica">
-        <span className="ld-etiqueta">
-          <Icono nombre="musica" tamano={16} /> {t.musica.etiqueta}
-        </span>
-        <h2>{t.musica.titulo}</h2>
-        <p className="ld-entrada">{t.musica.texto}</p>
-        <PlacaMarca fondo="negro" logo="completo" ancho={1400} alto={700} etiqueta={a.local} />
       </section>
 
       {/* 7 · Preguntas */}

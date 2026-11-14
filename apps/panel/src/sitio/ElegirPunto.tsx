@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { api } from '../panel/api';
+import { MapaGoogleBajoDemanda, elegirMapaWeb } from '@tumbite/compartido/src/mapaWebGoogle';
 
 type Punto = { lat: number; lng: number };
 
@@ -55,7 +56,7 @@ export function ElegirPunto({
     alCambiar.current = cambiar;
   }, [cambiar]);
   const [estadoGps, setEstadoGps] = useState('');
-  const [busqueda, setBusqueda] = useState(false);
+  const [busqueda, setBusqueda] = useState<boolean | null>(null);
   const [q, setQ] = useState('');
   const [sugerencias, setSugerencias] = useState<{ id: string; texto: string }[]>([]);
   const [sesion] = useState(
@@ -69,7 +70,18 @@ export function ElegirPunto({
       .catch(() => setBusqueda(false));
   }, []);
 
+  // C-MAPA-GOOGLE-WEB: con la búsqueda de Google encendida y la llave del navegador, el mapa es el
+  // de Google (bajo demanda). Sin llave, Leaflet como siempre, sin esperar a saber si hay búsqueda.
+  const llave = (import.meta.env.VITE_GOOGLE_MAPS_WEB_KEY as string | undefined) ?? '';
+  const proveedor =
+    elegirMapaWeb({ llave, origenes: ['google'] }) === 'leaflet'
+      ? 'leaflet'
+      : busqueda === null
+        ? null
+        : elegirMapaWeb({ llave, origenes: busqueda ? ['google'] : ['propio'] });
+
   useEffect(() => {
+    if (proveedor !== 'leaflet') return;
     let vivo = true;
     void (async () => {
       const leaflet = await import('leaflet');
@@ -96,7 +108,7 @@ export function ElegirPunto({
     };
     // El centro solo importa al abrir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [proveedor]);
 
   // El pin sigue al punto elegido.
   useEffect(() => {
@@ -178,12 +190,29 @@ export function ElegirPunto({
         </label>
       )}
       <p className="pista">{t.ayuda}</p>
-      <div
-        ref={caja}
-        role="application"
-        aria-label={t.ayuda}
-        style={{ height: 320, borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a' }}
-      />
+      {proveedor === 'google' ? (
+        <MapaGoogleBajoDemanda
+          llave={llave}
+          idioma={idioma}
+          centro={punto ?? centro}
+          zoom={punto ? 17 : 12}
+          alto={320}
+          etiqueta={t.ayuda}
+          puntos={
+            punto
+              ? [{ id: 'punto', ...punto, color: '#F20D20', radio: 10, etiqueta: t.marcado }]
+              : []
+          }
+          alTocarMapa={(p) => alCambiar.current(p)}
+        />
+      ) : (
+        <div
+          ref={caja}
+          role="application"
+          aria-label={t.ayuda}
+          style={{ height: 320, borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a' }}
+        />
+      )}
       <button type="button" className="boton secundario" onClick={usarGps}>
         {t.miUbicacion}
       </button>

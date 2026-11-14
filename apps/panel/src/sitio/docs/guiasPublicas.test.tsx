@@ -132,4 +132,25 @@ describe('Docs públicos', () => {
         expect(de('destination-mode')).toContain(`/docs/${n}-${i}.webp`);
     }
   });
+
+  // C-GUIA-INSTALAR-NAVEGADOR (13 nov 2026): la app web instalable (C-APP-INSTALABLE) tiene su guía
+  // pública, con tres o más capturas reales y los límites dichos en palabras. Todos los países.
+  it('la guía «Instalar Divoox desde el navegador» está en los dos idiomas, con sus límites', () => {
+    for (const i of ['es', 'en'] as const) {
+      const g = DOCS[i]
+        .find((s) => s.id === 'account')
+        ?.guias.find((x) => x.id === 'install-from-browser');
+      expect(g, i).toBeDefined();
+      expect(g?.capturas?.length ?? 0).toBeGreaterThanOrEqual(3);
+      const texto = JSON.stringify(g);
+      expect(texto).toMatch(i === 'es' ? /Safari/ : /Safari/);
+      expect(texto).toMatch(/Chrome/);
+      expect(texto).toMatch(i === 'es' ? /no te llegan avisos/ : /don’t get notifications/);
+      expect(texto).toMatch(i === 'es' ? /pantalla apagada/ : /screen off/);
+      expect(texto).toMatch(
+        i === 'es' ? /se escribe en vez de escanearse/ : /typed in instead of scanned/,
+      );
+      for (const c of g?.capturas ?? []) expect(c.src).toMatch(/recorrido-instalar-/);
+    }
+  });
 });

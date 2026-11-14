@@ -1,17 +1,52 @@
 import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
 import { COLORES, crearMapa, punto } from '../mapaWeb';
+import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
+import { useSesion } from '@tumbite/movil';
+import { LLAVE_MAPA_WEB, proveedorMapaWeb } from '../mapaGoogleWeb';
 
 export type Local = { id: string; nombre: string; lat: number; lng: number; detalle: string };
 
-/** C-RECOGER-MAPA en la versión web: un punto por local; al tocarlo se abre su menú. */
-export function MapaLocales({
-  locales,
-  alElegir,
-}: {
-  locales: Local[];
-  alElegir: (id: string) => void;
-}) {
+type Props = { locales: Local[]; alElegir: (id: string) => void };
+
+/**
+ * C-RECOGER-MAPA en la versión web: un punto por local; al tocarlo se abre su menú. Las direcciones
+ * de los locales vienen de Google Places: con la llave del navegador, mapa de Google bajo demanda
+ * (C-MAPA-GOOGLE-WEB); sin llave, Leaflet.
+ */
+export function MapaLocales(props: Props) {
+  return proveedorMapaWeb(['google']) === 'google' ? (
+    <MapaLocalesGoogle {...props} />
+  ) : (
+    <MapaLocalesLeaflet {...props} />
+  );
+}
+
+function MapaLocalesGoogle({ locales, alElegir }: Props) {
+  const { idioma } = useSesion();
+  const primero = locales[0];
+  if (!primero) return null;
+  return (
+    <MapaGoogleBajoDemanda
+      llave={LLAVE_MAPA_WEB}
+      idioma={idioma}
+      centro={primero}
+      zoom={13}
+      etiqueta="map"
+      puntos={locales.map((l) => ({
+        id: l.id,
+        lat: l.lat,
+        lng: l.lng,
+        color: COLORES.restaurante,
+        radio: 9,
+        etiqueta: `${l.nombre} · ${l.detalle}`,
+        alTocar: () => alElegir(l.id),
+      }))}
+    />
+  );
+}
+
+function MapaLocalesLeaflet({ locales, alElegir }: Props) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);

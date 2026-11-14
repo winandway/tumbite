@@ -264,7 +264,7 @@ const es: SeccionDocs[] = [
           'En el carrito eliges, producto por producto, qué hacer si la tienda no lo tiene: reembolsarlo, que te traigan uno parecido sin cobrarte de más, que te pregunten por el chat del pedido, o «Elegir uno»: buscas en la misma tienda el producto exacto que quieres en su lugar. Si no eliges nada, se reembolsa.',
           'Con «Elegir uno», la tienda ve tu reemplazo al preparar el pedido. Si el tuyo no está, te lleva el que elegiste sin preguntarte otra vez, y nunca te cobramos más de lo que autorizaste: si cuesta menos, te devolvemos la diferencia. Si tampoco tiene el que elegiste, te devolvemos lo que pagaste por ese producto.',
           'Si elegiste que te pregunten, y la tienda no tiene un producto, te puede proponer hasta tres reemplazos con su precio. Tocas el que quieras y listo, sin escribir en el chat. Si el reemplazo cuesta más, pagas lo mismo que el original; si cuesta menos, te devolvemos la diferencia. También puedes quitarlo o cancelar todo.',
-          'Las tiendas abren ciudad por ciudad. Si en la tuya todavía no hay, el servicio dice «muy pronto».',
+          'Las tiendas abren ciudad por ciudad. Si en la tuya todavía no hay, el servicio no aparece en tu app hasta que abra.',
         ],
         capturas: [
           {
@@ -796,14 +796,13 @@ const es: SeccionDocs[] = [
       },
       {
         id: 'apple-pay-google-pay',
-        titulo: 'Paga con Apple Pay o Google Pay (muy pronto)',
+        titulo: 'Cómo pagas tu pedido',
         resumen:
-          'Hoy pagas con tu tarjeta dentro de la app. Muy pronto, en la misma pantalla de pago, aparecerá Apple Pay (iPhone) o Google Pay (Android y Chrome) si tu celular los tiene configurados. Un toque y listo.',
+          'Pagas con tu tarjeta dentro de la app, sin salir a otra página. Se autoriza al pedir y se cobra al entregar.',
         explicacion: [
-          'Al confirmar tu pedido se abre el formulario de pago dentro de la app y pagas con tu tarjeta. Cuando Apple Pay y Google Pay estén activados en Divoox, aparecerán como primera opción en esa misma pantalla; te avisaremos en la app.',
+          'Al confirmar tu pedido se abre el formulario de pago dentro de la app y pagas con tu tarjeta; si quieres, queda guardada para la próxima vez. En la pantalla de pago de la app se paga con tarjeta; Apple Pay y Google Pay no están ahí.',
           'Es el mismo cobro: se autoriza al pedir y se cobra al entregar (si cancelas antes de que el restaurante acepte, no se te cobra nada).',
-          'Tus datos de pago los guarda Apple, Google o Stripe; Divoox nunca ve el número de tu tarjeta.',
-          'Si no te aparece Apple Pay o Google Pay, revisa que tengas una tarjeta agregada en la billetera de tu celular.',
+          'Tus datos de pago los guarda Stripe; Divoox nunca ve el número de tu tarjeta.',
         ],
         capturas: [
           {
@@ -812,11 +811,15 @@ const es: SeccionDocs[] = [
             pie: 'Al tocar «Continuar al pago» eliges cómo pagar.',
           },
         ],
-        preguntas: ['¿Puedo pagar con Apple Pay?', '¿Puedo pagar con Google Pay?'],
+        preguntas: [
+          '¿Cómo pago mi pedido?',
+          '¿Puedo pagar con Apple Pay?',
+          '¿Puedo pagar con Google Pay?',
+        ],
         pasos: [
-          'Arma tu carrito y toca «Pagar».',
-          'Elige Apple Pay o Google Pay (o tu tarjeta).',
-          'Confirma con tu huella, tu cara o tu clave.',
+          'Arma tu carrito y toca «Continuar al pago».',
+          'Escribe los datos de tu tarjeta en el formulario de pago, o usa la que ya guardaste.',
+          'Toca «Pagar»: el pedido queda confirmado y lo sigues en vivo.',
         ],
       },
       {
@@ -827,7 +830,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Arriba: «Entregar en» con tu dirección. Tócala para cambiarla: escribe y elige una de las direcciones que te sugerimos, toca una de tus direcciones guardadas o usa tu ubicación actual. Los restaurantes se ordenan desde ahí. A la derecha, la campana de avisos (con un punto rojo si tienes pedidos en curso) y el idioma (español o inglés).',
           'Buscador y filtros: toca el buscador para encontrar comida, tiendas y platos en tu ciudad (guía «Buscar en Divoox»). Debajo, los filtros rápidos: Entrega o Recoger, Ofertas y Abiertos. Cuando bajas por la pantalla, el buscador y los filtros se quedan fijos arriba.',
-          'Servicios: una fila que se desliza con los servicios que ya funcionan en tu ciudad (por ejemplo, Comida) y «Más». Los que todavía vienen están dentro de «Más», cada uno con su franja de estado (guía «Los servicios de Divoox»).',
+          'Servicios: una fila que se desliza con los servicios que ya funcionan en tu ciudad (por ejemplo, Comida) y «Más». «Más» solo aparece cuando en tu ciudad hay otros servicios además de Comida (guía «Los servicios de Divoox»).',
           'Aviso de pago: aparece solo si dejaste un carrito armado sin pagar, con el monto real y el botón «Pagar».',
           'Ofertas del día: los cupones vigentes, en tarjetas que se deslizan, con el descuento, su código y el mínimo de compra. Si tienes regalos en marcha (tarjeta de sellos, descuento por volver), los ves justo debajo.',
           'Categorías: círculos con los tipos de comida de los restaurantes de tu zona. Toca uno y ves la lista de Comida ya filtrada.',
@@ -1013,7 +1016,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Los restaurantes que ves dependen de tu ubicación. La app usa, en este orden: el punto que elegiste en el mapa del carrito, la última ubicación que guardaste y, si no hay ninguna, la de tu teléfono. Tu lista no cambia sola por moverte un poco ni por cambiar el idioma.',
           '«Todavía no hay restaurantes en tu zona»: Divoox ya funciona en tu zona, pero aún no hay restaurantes abiertos ahí. Estamos sumando más cada semana.',
-          '«Todavía no llegamos a tu zona»: tu ubicación está fuera de las ciudades donde trabajamos hoy. Pronto estaremos en más.',
+          '«Todavía no llegamos a tu zona»: tu ubicación está fuera de las ciudades donde trabajamos hoy. Debajo, en «Avísame cuando llegue», escribes tu ciudad y te avisamos primero.',
           '«No pudimos cargar los restaurantes»: falló la conexión. Toca «Intentar de nuevo». Si ya tenías una lista, la seguimos mostrando y te avisamos que no se pudo actualizar.',
           'Al abrir la app comprobamos tu sesión. Si el internet está lento, no te dejamos esperando para siempre: después de unos segundos ves «No pudimos confirmar tu sesión», con «Reintentar» y «Entrar con otra cuenta». Tu sesión no se borra por un problema de conexión.',
         ],
@@ -4619,6 +4622,53 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'install-from-browser',
+        titulo: 'Instalar Divoox desde el navegador del celular',
+        resumen:
+          'Sin pasar por la tienda: abre Divoox en Chrome o en Safari, agrégalo a tu pantalla de inicio y se abre a pantalla completa, como una app.',
+        explicacion: [
+          'Las tres apps de Divoox también funcionan en el navegador del celular: Divoox para pedir (divoox.com/app), Divoox Driver para repartir (divoox.com/driver) y Divoox Restaurants para tu restaurante (divoox.com/restaurant). Sirve para quien tiene iPhone mientras Apple revisa las apps, y para quien prefiere no instalar nada desde la tienda.',
+          'Al agregarla a tu pantalla de inicio queda con su nombre, su ícono y su color, y se abre a pantalla completa, sin la barra del navegador. Entras con la misma cuenta de siempre.',
+          'Instalada así, hay tres cosas que todavía no hace como la app de la tienda: no te llegan avisos al celular (tienes que tener Divoox abierto para ver un pedido nuevo), el repartidor no manda su ubicación con la pantalla apagada (lleva la app abierta mientras reparte), y el código de recogida del restaurante se escribe en vez de escanearse con la cámara. En Android, la app de Google Play no tiene ninguno de esos límites.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-instalar-cliente-navegador-es.webp',
+            alt: 'La app de Divoox abierta en el navegador del celular, con «Entregar en», el buscador y el aviso «Entra para pedir».',
+            pie: 'Divoox para pedir, abierta en el navegador del celular.',
+          },
+          {
+            src: '/docs/recorrido-instalar-driver-navegador-es.webp',
+            alt: 'La app Divoox Driver abierta en el navegador del celular, en la pantalla «Entrar» con la etiqueta «Para repartidores».',
+            pie: 'Divoox Driver, para repartir, también se abre desde el navegador.',
+          },
+          {
+            src: '/docs/recorrido-instalar-restaurante-navegador-es.webp',
+            alt: 'La app Divoox Restaurants abierta en el navegador del celular, en la pantalla para entrar con el correo y la contraseña del restaurante.',
+            pie: 'Divoox Restaurants, para recibir los pedidos de tu restaurante.',
+          },
+          {
+            src: '/docs/recorrido-instalar-descargas-es.webp',
+            alt: 'La página de descargas de Divoox con el botón de Android en Google Play, el iPhone en revisión de Apple y la nota para instalar desde Safari.',
+            pie: 'En la página de descargas está el enlace a esta guía para iPhone.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo instalo Divoox en mi iPhone si no está en la App Store?',
+          '¿Puedo usar Divoox sin descargarla de la tienda?',
+          '¿Cómo agrego Divoox a la pantalla de inicio?',
+          '¿Qué no funciona en la versión del navegador?',
+        ],
+        pasos: [
+          'Abre la dirección de tu app en el navegador del celular: divoox.com/app para pedir, divoox.com/driver para repartir o divoox.com/restaurant para tu restaurante.',
+          'En iPhone (Safari): toca el botón «Compartir» (el cuadro con la flecha hacia arriba), baja y toca «Agregar a inicio», y después «Agregar».',
+          'En Android (Chrome): toca los tres puntos de arriba a la derecha y elige «Instalar app» o «Agregar a la pantalla principal», y confirma.',
+          'Busca el ícono de Divoox en tu pantalla de inicio y ábrelo: se abre a pantalla completa. Entra con tu cuenta.',
+          'Si repartes o tienes un restaurante, deja Divoox abierto mientras trabajas: así ves cada pedido nuevo y, si repartes, tu ubicación sigue llegando.',
+        ],
+        nota: 'Los menús «Compartir», «Agregar a inicio» e «Instalar app» son del celular y pueden cambiar un poco de nombre según la versión. Si no los ves, actualiza el navegador.',
+      },
+      {
         id: 'password',
         titulo: 'Olvidé mi contraseña',
         resumen: 'Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.',
@@ -5057,7 +5107,7 @@ const en: SeccionDocs[] = [
           'In the cart you choose, item by item, what happens if the store doesn’t have it: refund it, get something similar at no extra charge, have them ask you in the order chat, or “Choose one”: you search the same store for the exact item you want instead. If you don’t choose, it’s refunded.',
           'With “Choose one,” the store sees your replacement while preparing the order. If yours is out, they bring the one you chose without asking you again, and we never charge you more than you authorized: if it costs less, we refund the difference. If they don’t have the one you chose either, we refund what you paid for that item.',
           'If you chose to be asked and the store is out of an item, it can suggest up to three replacements with their price. Tap the one you want and you’re done, no chat needed. If the replacement costs more, you pay the same as the original; if it costs less, we refund the difference. You can also remove it or cancel everything.',
-          'Stores open city by city. If yours isn’t open yet, the service says “coming soon.”',
+          'Stores open city by city. If yours isn’t open yet, the service won’t show up in your app until it opens.',
         ],
         capturas: [
           {
@@ -5582,14 +5632,13 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'apple-pay-google-pay',
-        titulo: 'Pay with Apple Pay or Google Pay (coming soon)',
+        titulo: 'How you pay for your order',
         resumen:
-          'Today you pay with your card inside the app. Soon, on the same payment screen, Apple Pay (iPhone) or Google Pay (Android and Chrome) will show up if your phone has it set up. One tap and done.',
+          'You pay with your card inside the app, without leaving to another page. It’s authorized when you order and charged when it’s delivered.',
         explicacion: [
-          'When you confirm your order, the payment form opens inside the app and you pay with your card. Once Apple Pay and Google Pay are turned on in Divoox, they will show as the first option on that same screen; we will let you know in the app.',
+          'When you confirm your order, the payment form opens inside the app and you pay with your card; if you want, it stays saved for next time. The app’s payment screen takes cards; Apple Pay and Google Pay aren’t on it.',
           'It’s the same charge: authorized when you order and charged when it’s delivered (if you cancel before the restaurant accepts, you’re not charged at all).',
-          'Your payment details are held by Apple, Google or Stripe; Divoox never sees your card number.',
-          'If Apple Pay or Google Pay doesn’t show up, check that you have a card added to your phone’s wallet.',
+          'Your payment details are held by Stripe; Divoox never sees your card number.',
         ],
         capturas: [
           {
@@ -5598,11 +5647,15 @@ const en: SeccionDocs[] = [
             pie: 'Tap “Continue to payment” to choose how to pay.',
           },
         ],
-        preguntas: ['Can I pay with Apple Pay?', 'Can I pay with Google Pay?'],
+        preguntas: [
+          'How do I pay for my order?',
+          'Can I pay with Apple Pay?',
+          'Can I pay with Google Pay?',
+        ],
         pasos: [
-          'Build your cart and tap “Pay.”',
-          'Choose Apple Pay or Google Pay (or your card).',
-          'Confirm with your fingerprint, your face or your passcode.',
+          'Build your cart and tap “Continue to payment.”',
+          'Enter your card details in the payment form, or use the one you saved.',
+          'Tap “Pay”: your order is confirmed and you can track it live.',
         ],
       },
       {
@@ -5613,7 +5666,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Top: “Deliver to” with your address. Tap it to change it: type and pick one of the suggested addresses, tap one of your saved addresses, or use your current location. Restaurants are sorted from there. On the right, the notifications bell (with a red dot when you have active orders) and the language (English or Spanish).',
           'Search and filters: tap the search bar to find food, stores and dishes in your city (guide “Searching Divoox”). Below it, quick filters: Delivery or Pickup, Deals and Open now. As you scroll down, the search bar and the filters stay pinned at the top.',
-          'Services: a row you can swipe with the services already working in your city (for example, Food) and “More”. The ones still on the way live inside “More”, each with its status strip (guide “Divoox services”).',
+          'Services: a row you can swipe with the services already working in your city (for example, Food) and “More”. “More” only shows up when your city has other services besides Food (guide “Divoox services”).',
           'Payment notice: it only shows up if you left a cart built but unpaid, with the real amount and the “Pay” button.',
           'Today’s deals: the active promo codes, in cards you can swipe, with the discount, the code and the minimum order. If you have gifts in progress (stamp card, come-back discount), you see them right below.',
           'Categories: circles with the kinds of food from the restaurants in your area. Tap one to see the Food list already filtered.',
@@ -5799,7 +5852,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'The restaurants you see depend on your location. The app uses, in this order: the spot you picked on the map in your cart, the last location you saved and, if there’s none, your phone’s location. Your list doesn’t change on its own when you move a little or switch languages.',
           '“No restaurants in your area yet”: Divoox already works in your area, but no restaurants are open there yet. We’re adding more every week.',
-          '“We’re not in your area yet”: your location is outside the cities we serve today. We’re coming to more soon.',
+          '“We’re not in your area yet”: your location is outside the cities we serve today. Below it, type your city under “Notify me when it arrives” and we’ll tell you first.',
           '“We couldn’t load the restaurants”: the connection failed. Tap “Try again.” If you already had a list, we keep showing it and let you know it couldn’t be refreshed.',
           'When the app opens, we verify your session. If your internet is slow, we don’t leave you waiting forever: after a few seconds you’ll see “We couldn’t confirm your session,” with “Try again” and “Sign in with another account.” A connection problem never signs you out.',
         ],
@@ -9377,6 +9430,53 @@ const en: SeccionDocs[] = [
           'To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.',
           'We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox.',
         ],
+      },
+      {
+        id: 'install-from-browser',
+        titulo: 'Install Divoox from your phone’s browser',
+        resumen:
+          'No app store needed: open Divoox in Chrome or Safari, add it to your Home Screen, and it opens full screen, like an app.',
+        explicacion: [
+          'All three Divoox apps also work in your phone’s browser: Divoox to order (divoox.com/app), Divoox Driver to deliver (divoox.com/driver), and Divoox Restaurants for your restaurant (divoox.com/restaurant). It’s handy on iPhone while Apple reviews the apps, and for anyone who’d rather not install from a store.',
+          'Once it’s on your Home Screen, it has its own name, icon, and color, and it opens full screen, without the browser bar. You sign in with the same account as always.',
+          'Installed this way, there are three things it doesn’t do yet like the store app: you don’t get notifications on your phone (keep Divoox open to see a new order), drivers don’t share their location with the screen off (keep the app open while delivering), and the restaurant’s pickup code is typed in instead of scanned with the camera. On Android, the Google Play app has none of these limits.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-instalar-cliente-navegador-en.webp',
+            alt: 'The Divoox app open in a phone browser, with “Deliver to,” the search bar, and the “Sign in to order” card.',
+            pie: 'Divoox for ordering, open in your phone’s browser.',
+          },
+          {
+            src: '/docs/recorrido-instalar-driver-navegador-en.webp',
+            alt: 'The Divoox Driver app open in a phone browser, on the sign-in screen with the “For drivers” label.',
+            pie: 'Divoox Driver, for delivering, also opens from the browser.',
+          },
+          {
+            src: '/docs/recorrido-instalar-restaurante-navegador-en.webp',
+            alt: 'The Divoox Restaurants app open in a phone browser, on the sign-in screen with the restaurant’s email and password.',
+            pie: 'Divoox Restaurants, to get your restaurant’s orders.',
+          },
+          {
+            src: '/docs/recorrido-instalar-descargas-en.webp',
+            alt: 'The Divoox downloads page with the Android button on Google Play, iPhone in review by Apple, and the note to install from Safari.',
+            pie: 'The downloads page links to this guide for iPhone.',
+          },
+        ],
+        preguntas: [
+          'How do I install Divoox on my iPhone if it isn’t in the App Store?',
+          'Can I use Divoox without downloading it from a store?',
+          'How do I add Divoox to my Home Screen?',
+          'What doesn’t work in the browser version?',
+        ],
+        pasos: [
+          'Open your app’s address in your phone’s browser: divoox.com/app to order, divoox.com/driver to deliver, or divoox.com/restaurant for your restaurant.',
+          'On iPhone (Safari): tap the Share button (the square with the up arrow), scroll down and tap “Add to Home Screen,” then “Add.”',
+          'On Android (Chrome): tap the three dots in the top right, choose “Install app” or “Add to Home screen,” and confirm.',
+          'Find the Divoox icon on your Home Screen and open it: it opens full screen. Sign in with your account.',
+          'If you deliver or run a restaurant, keep Divoox open while you work: that way you see every new order and, if you deliver, your location keeps coming through.',
+        ],
+        nota: 'The Share, Add to Home Screen, and Install app menus belong to your phone and their names can vary a little by version. If you don’t see them, update your browser.',
       },
       {
         id: 'password',

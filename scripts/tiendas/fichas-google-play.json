@@ -9,6 +9,10 @@
       "title": "Divoox",
       "shortDescription": "Restaurantes locales, precios claros y seguimiento en vivo hasta tu puerta.",
       "fullDescription": "Divoox te trae los mejores restaurantes locales con precios en los que puedes confiar.\n• Ves cada costo antes de pagar: comida, envío, servicio y propina. Sin sorpresas.\n• Pagas con tarjeta dentro de la app.\n• Guardas tus restaurantes favoritos y tus direcciones, y usas cupones al pagar.\n• Sigues tu pedido en vivo: en la cocina, en camino y en el mapa hasta tu puerta.\n• El 100 % de la propina es para tu repartidor.\n• ¿Cambiaste de idea? Cancela antes de que el restaurante acepte y te devolvemos todo. Si un restaurante no confirma en 10 minutos, lo cancelamos y te devolvemos el dinero solos.\n• Cada restaurante y cada repartidor está verificado por nuestro equipo.\n• Premios por volver: regalo de cumpleaños, tarjeta de sellos y ofertas de bienvenida.\n• En inglés y en español."
+    },
+    "contacto": {
+      "contactEmail": "soporte+divoox@windoce.com",
+      "contactWebsite": "https://divoox.com/support"
     }
   },
   "com.windoce.tumbite.driver": {
@@ -21,6 +25,10 @@
       "title": "Divoox Driver",
       "shortDescription": "Reparte con Divoox: pago claro, propina completa y una billetera clara.",
       "fullDescription": "Reparte con Divoox cuando quieras.\n• Ves el pago y la distancia de cada pedido antes de aceptar.\n• El 100 % de la propina es tuyo. Nunca se usa para completar tu pago.\n• Una billetera como la de un banco: saldo, ganancias, propinas y cada movimiento.\n• Rechazar un pedido nunca te baja de nivel. Los niveles te dan beneficios a medida que creces.\n• Verificas tu identidad una sola vez desde la app, para que el cliente sepa quién toca su puerta.\n• Reportas un problema con un toque y te contesta una persona.\n• En inglés y en español."
+    },
+    "contacto": {
+      "contactEmail": "soporte+divoox.driver@windoce.com",
+      "contactWebsite": "https://divoox.com/support"
     }
   },
   "com.windoce.tumbite.restaurants": {
@@ -33,6 +41,10 @@
       "title": "Divoox Restaurants",
       "shortDescription": "Recibe pedidos de Divoox con alarma, semáforo y pagos claros.",
       "fullDescription": "Maneja los pedidos de Divoox desde una tablet o un celular en el mostrador.\n• Una alarma fuerte hasta que alguien acepta el pedido. Eliges el tiempo de preparación con un toque.\n• Un semáforo en cada pedido: verde a tiempo, amarillo atrasándose, rojo necesita atención.\n• Marcas el pedido listo y enviamos al repartidor más cercano.\n• Tu tablero: pedidos, ventas, platos más vendidos, tiempo real de cocina contra el prometido y calificación.\n• Premios que tus clientes fieles valoran: cumpleaños, tarjeta de sellos y bienvenida.\n• Comisiones más bajas y el desglose de cada pedido. Sin contratos de permanencia.\n• En inglés y en español."
+    },
+    "contacto": {
+      "contactEmail": "soporte+divoox.restaurantes@windoce.com",
+      "contactWebsite": "https://divoox.com/support"
     }
   }
 }
