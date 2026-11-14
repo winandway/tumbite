@@ -12,14 +12,21 @@ Primero se presenta en Estados Unidos y, en paralelo y enseguida, en Venezuela. 
 
 La regla no cambia: no se enciende un país sin la marca presentada EN ese país. Moto y Carro en Venezuela siguen esperando el número de solicitud venezolano.
 
-Fecha límite que nace al presentar en Estados Unidos: seis meses exactos para presentar en Venezuela con prioridad. Se anota aquí el día que se presente.
+Fecha límite que nace al presentar en Estados Unidos: seis meses exactos para presentar en Venezuela con prioridad. Presentada el 14 de noviembre de 2026: la fecha límite para presentar en Venezuela con prioridad es el 14 de mayo de 2027.
+
+## Lo que sigue en Estados Unidos
+
+1. La oficina asigna un abogado examinador; la revisión tarda varios meses. Si pide algo (una «Office Action»), hay plazo para responder: se revisa el buzón go@windoce.com y el estado del número de serie.
+2. Si la aprueba, la publica treinta días para oposiciones y después emite el aviso de aprobación.
+3. Como es por intención de uso, hay seis meses desde ese aviso para presentar la declaración de uso con una captura de la app funcionando en Estados Unidos y pagar ciento cincuenta dólares (se puede pedir prórroga pagando).
+4. Cuidado con las estafas: la oficina no manda facturas por correo ni pide pagos por teléfono, mensaje o correo.
 
 ## Estado
 
-Estados Unidos, 14 de noviembre de 2026: cuenta creada e identidad de Richard verificada. Solicitud llena en el centro de marcas y guardada como borrador: dueño Windoce LLC (sociedad de responsabilidad limitada de Delaware, con sede en Novi, Michigan), marca DIVOOX en caracteres estándar, clase 39, base de intención de uso, cinco servicios del manual oficial (Food delivery, Passenger transport, Courier services, Delivery of goods, Taxi transport), trescientos cincuenta dólares. Falta la firma y el pago de Richard. Lección: los servicios se agregan con la página en inglés; si Chrome la traduce, el sistema los marca inválidos y no deja firmar.
+Estados Unidos, 14 de noviembre de 2026: cuenta creada e identidad de Richard verificada. Solicitud llena en el centro de marcas y guardada como borrador: dueño Windoce LLC (sociedad de responsabilidad limitada de Delaware, con sede en Novi, Michigan), marca DIVOOX en caracteres estándar, clase 39, base de intención de uso, cinco servicios del manual oficial (Food delivery, Passenger transport, Courier services, Delivery of goods, Taxi transport), trescientos cincuenta dólares. Richard firmó como Member y pagó ese mismo día: quedó presentada con el número de serie 50218051. Lección: los servicios se agregan con la página en inglés; si Chrome la traduce, el sistema los marca inválidos y no deja firmar.
 
 Venezuela: sin presentar. Número de solicitud: pendiente.
-Estados Unidos: sin presentar. Número de solicitud: pendiente.
+Estados Unidos: PRESENTADA el 14 de noviembre de 2026. Número de serie: 50218051. Clase 39, intención de uso, palabra DIVOOX, dueño Windoce LLC. Pagados 350 dólares.
 
 ## Lo más importante
 

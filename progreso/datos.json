@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-14T15:55:00.000Z",
+  "actualizado": "2026-11-14T20:10:00.000Z",
   "version": "7b9a5ca",
-  "ahora": "14 nov: los mapas de la web ya son los de Google, con el estilo de Divoox, y están en producción. Se comprobó en el sitio de pruebas en la pantalla de pedir un carro. Falta ver la vista inclinada en un viaje en curso. La marca se presenta primero en Estados Unidos: espera a que Richard cree su cuenta en la oficina de marcas. Los avisos del navegador están encendidos.",
+  "ahora": "14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos.",
   "proximo": [
     {
       "quien": "richard",
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-14",
+      "titulo": "Marca Divoox presentada en Estados Unidos",
+      "texto": "Richard creó su cuenta en la oficina de marcas, verificó su identidad, firmó y pagó. La solicitud quedó presentada con el número de serie 50218051: la palabra Divoox, a nombre de Windoce LLC, en la clase de transporte y reparto, por intención de uso. Desde hoy corren seis meses para presentarla en Venezuela conservando esta fecha."
+    },
     {
       "fecha": "2026-11-14",
       "titulo": "La marca se presenta primero en Estados Unidos",
