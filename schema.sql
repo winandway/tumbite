@@ -51,6 +51,18 @@ CREATE TABLE IF NOT EXISTS dispositivos (
   visto_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS dispositivos_usuario ON dispositivos(usuario_id, activo);
+-- C-AVISOS-WEB (13 nov 2026, todos los países): suscripciones Web Push de las apps instaladas desde el
+-- navegador (/app, /driver, /restaurant y el panel). Una fila por navegador; se borra al cerrar sesión
+-- o cuando el servicio de avisos responde 404/410.
+CREATE TABLE IF NOT EXISTS suscripciones_web (
+  endpoint TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  app TEXT NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS suscripciones_web_usuario ON suscripciones_web(usuario_id);
 
 CREATE TABLE IF NOT EXISTS sesiones (
   id TEXT PRIMARY KEY,
@@ -1317,7 +1329,7 @@ END;
 CREATE TABLE IF NOT EXISTS conductor_documentos (
   id TEXT PRIMARY KEY,
   conductor_id TEXT NOT NULL REFERENCES usuarios(id),
-  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales', 'licencia_conducir')),
   clave TEXT NOT NULL,
   vence_en TEXT,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'reemplazado')),
@@ -2786,6 +2798,9 @@ CREATE TABLE IF NOT EXISTS cierres_restaurante (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (restaurante_id, fecha)
 );
+-- C-LECTURAS-CATALOGO (14 nov 2026): los cierres que vienen (de todos los restaurantes) por fecha,
+-- para el listado del catálogo. Una escritura más por cierre (el restaurante lo marca a mano).
+CREATE INDEX IF NOT EXISTS cierres_restaurante_fecha ON cierres_restaurante(fecha);
 
 -- Fase 2 · cobro directo (C-COBRO-DIRECTO-LOCAL): el repartidor paga la comida en el mostrador con su
 -- propio dinero y registra cuánto pagó y cuánto decía el ticket. Tumbite no financia esa compra.
@@ -3082,6 +3097,40 @@ CREATE TABLE IF NOT EXISTS envios_persona (
   recogido_en TEXT,
   entregado_en TEXT
 );
+
+-- C-VIAJE-PROGRAMADO (14 nov 2026, todos los países): un viaje o envío reservado para más tarde,
+-- como Uber Reserve. El id es el de la operación que nacerá a la hora de buscar conductor (la
+-- cotización ya apunta a él: el precio queda fijo). El reloj lee solo las pendientes por el índice
+-- parcial y no escribe nada si ninguna vence. programado_para va en UTC (formato de datetime()).
+CREATE TABLE IF NOT EXISTS viajes_programados (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  cotizacion_id TEXT NOT NULL REFERENCES cotizaciones_viaje(id),
+  servicio_id TEXT NOT NULL,
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  programado_para TEXT NOT NULL,
+  metodo_pago TEXT NOT NULL,
+  metodo_pago_ref TEXT,
+  paquete_json TEXT,
+  estado TEXT NOT NULL DEFAULT 'programado' CHECK (estado IN ('programado', 'activado', 'cancelado', 'fallido')),
+  motivo TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelto_en TEXT
+);
+CREATE INDEX IF NOT EXISTS viajes_programados_vencen ON viajes_programados(programado_para) WHERE estado = 'programado';
+CREATE INDEX IF NOT EXISTS viajes_programados_cliente ON viajes_programados(cliente_id, estado);
+
+-- C-CHAT-VIAJE (14 nov 2026, todos los países): mensajes entre pasajero y conductor durante el viaje,
+-- con el mismo patrón que el chat del pedido de Comida. Sin teléfonos ni enlaces; al terminar el viaje
+-- ellos dejan de verlo (queda para soporte).
+CREATE TABLE IF NOT EXISTS mensajes_viaje (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  de_usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  texto TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS mensajes_viaje_idx ON mensajes_viaje(operacion_id, id);
 
 -- C-MOTO-CIUDAD (30 oct 2026): interruptores de cada servicio de viajes por ciudad, como Uber: el
 -- código para empezar (siempre, solo de noche o nunca) y la selfie del conductor con el casco puesto.
@@ -3503,7 +3552,7 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
 -- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
 CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
-  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local')),
   objeto TEXT NOT NULL,
   monto INTEGER NOT NULL,
   moneda TEXT NOT NULL,
@@ -3621,3 +3670,77 @@ CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancela
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
 -- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
 CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';
+
+-- C-COMIDA-VE-CIRCUITO (13 nov 2026, Venezuela): «sí me llegó / no me llegó» del pago móvil de un
+-- pedido de comida (una fila por pedido), con la corrección única de 30 minutos (pieza común con
+-- viajes_pago_movil). Confirmación MANUAL del repartidor, nunca del banco.
+CREATE TABLE IF NOT EXISTS pedidos_pago_movil (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('recibido', 'no_recibido')),
+  referencia TEXT NOT NULL DEFAULT '',
+  monto INTEGER,
+  moneda TEXT,
+  corregido_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- C-VIAJES-HISTORIAL (rama fase-carro-1, 13 nov 2026) — todos los países. «Mis viajes» del conductor
+-- se lee por este índice (parcial: solo operaciones que tuvieron conductor). La ayuda de un viaje
+-- (objeto olvidado, cobro, conductor, seguridad, otro) abre un ticket; un caso por viaje y motivo.
+CREATE INDEX IF NOT EXISTS operaciones_conductor ON operaciones(conductor_id, creado_en) WHERE conductor_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS ayuda_viajes (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  motivo TEXT NOT NULL CHECK (motivo IN ('objeto_olvidado', 'cobro', 'conductor', 'seguridad', 'otro')),
+  ticket_id TEXT NOT NULL REFERENCES tickets(id),
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  conductor_id TEXT REFERENCES usuarios(id),
+  detalle TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (operacion_id, motivo)
+);
+CREATE INDEX IF NOT EXISTS ayuda_viajes_conductor ON ayuda_viajes(conductor_id, creado_en) WHERE motivo = 'objeto_olvidado';
+-- ═══════════════ DIVOOX FLEX · FASE 7 (13 nov 2026) — bloque propio ═══════════════
+-- C-FLEX-RECARGA-LOCAL: la empresa declara una recarga pagada fuera de Stripe (pago móvil,
+-- transferencia, Zelle o efectivo) con su referencia y la foto del comprobante; el equipo de Divoox
+-- la acredita UNA vez (o la rechaza con motivo). Apagado por país (config fin_recargas_locales:<país>).
+CREATE TABLE IF NOT EXISTS recargas_locales_empresa (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  metodo TEXT NOT NULL CHECK (metodo IN ('pago_movil', 'transferencia', 'zelle', 'efectivo')),
+  referencia TEXT NOT NULL,
+  banco TEXT NOT NULL DEFAULT '',
+  fecha_pago TEXT,
+  comprobante_clave TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'acreditada', 'rechazada')),
+  motivo TEXT NOT NULL DEFAULT '',
+  idempotencia TEXT NOT NULL UNIQUE,
+  creado_por TEXT REFERENCES usuarios(id),
+  revisado_por TEXT REFERENCES usuarios(id),
+  revision_token TEXT,
+  revisado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- La misma referencia de pago no se declara dos veces en la misma empresa (salvo si se rechazó).
+CREATE UNIQUE INDEX IF NOT EXISTS recargas_locales_referencia ON recargas_locales_empresa(empresa_id, metodo, referencia) WHERE estado != 'rechazada';
+-- La lista de la empresa (por fecha) y la cola del equipo (solo las pendientes: índice parcial chico).
+-- Una foto de comprobante sirve para UNA sola declaración (revisión del 13 nov).
+CREATE UNIQUE INDEX IF NOT EXISTS recargas_locales_comprobante ON recargas_locales_empresa(comprobante_clave);
+CREATE INDEX IF NOT EXISTS recargas_locales_empresa_fecha ON recargas_locales_empresa(empresa_id, creado_en);
+CREATE INDEX IF NOT EXISTS recargas_locales_pendientes ON recargas_locales_empresa(creado_en) WHERE estado = 'pendiente';
+-- C-FLEX-RUTA-CALLES: kilómetros, duración y hora estimada por parada de una ruta, pedidos a Google
+-- UNA vez al confirmar el orden (nunca al mirar). Una fila por ruta; se reescribe solo si cambia el orden.
+CREATE TABLE IF NOT EXISTS rutas_flex_calles (
+  ruta_id TEXT PRIMARY KEY REFERENCES rutas_flex(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  huella_orden TEXT NOT NULL,
+  fuente TEXT NOT NULL CHECK (fuente IN ('google', 'estimada')),
+  metros INTEGER NOT NULL CHECK (metros >= 0),
+  segundos INTEGER NOT NULL CHECK (segundos >= 0),
+  tramos_json TEXT NOT NULL DEFAULT '[]',
+  consultas INTEGER NOT NULL DEFAULT 0,
+  calculado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
