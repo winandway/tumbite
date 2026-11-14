@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Image, Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
+import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 import { IMG } from './recursos';
 import type { Punto, ZonaDemanda } from './mapaWeb';
 
@@ -20,6 +21,7 @@ export function Mapa({
   etiquetaZona,
   alto = 300,
   etiquetas,
+  direccionDestino,
 }: {
   yo: Punto | null;
   restaurante?: Punto | null;
@@ -30,6 +32,8 @@ export function Mapa({
   etiquetaZona?: (pedidos: number, pico?: number) => string;
   alto?: number;
   etiquetas: { yo: string; restaurante: string; casa: string };
+  /** La dirección del destino de ahora (el local o la casa): su número se lee al llegar. */
+  direccionDestino?: string | null;
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [yo, restaurante ?? null, casa ?? null].filter((p): p is Punto => p != null);
@@ -37,8 +41,28 @@ export function Mapa({
   // de cargar; antes corría una sola vez, con el mapa todavía sin cargar, y en la entrega se veía
   // solo al repartidor sin el restaurante ni la casa.
   const [listo, setListo] = useState(false);
+  // C-MAPA-LLEGADA: a menos de 200 m del destino (el local o la casa) el mapa se acerca solo y el
+  // punto muestra el número de la dirección (igual que en la web).
+  const destino = casa ?? restaurante ?? null;
+  const llegada = destino ? vistaDeLlegada(yo, destino) : null;
+  const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
+  const cerca = llegada != null;
+  // Estando cerca, cada lectura de GPS ya no mueve la cámara (se puede mover el mapa con el dedo).
+  const latMovil = cerca ? 0 : yo?.lat;
+  const lngMovil = cerca ? 0 : yo?.lng;
   useEffect(() => {
     if (!listo) return;
+    if (llegada) {
+      mapa.current?.animateCamera(
+        {
+          center: { latitude: llegada.centro.lat, longitude: llegada.centro.lng },
+          zoom: llegada.zoom,
+          altitude: 450,
+        },
+        { duration: 600 },
+      );
+      return;
+    }
     // C-MAPA-SIGUE-AL-REPARTIDOR (31 oct 2026): con un solo punto (el repartidor, sin pedido) el mapa
     // se quedaba donde abrió (Miami) aunque estuviera en Michigan. Ahora va a ese punto.
     const [solo] = puntos;
@@ -56,9 +80,15 @@ export function Mapa({
     );
     // Se reencuadra cuando cambia algún punto o cuando el mapa termina de cargar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listo, yo?.lat, yo?.lng, restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng]);
-  const centro = yo ?? restaurante ?? casa ?? { lat: 25.7743, lng: -80.1937 };
+  }, [listo, latMovil, lngMovil, restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng, cerca]);
+  // C-MAPA-ABRE-DONDE-ESTAS: sin ningún punto todavía no hay mapa (nunca una ciudad fija): queda el
+  // hueco gris del mismo alto hasta que llega la ubicación.
+  const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0] ?? null;
   const ruta = restaurante && casa ? [restaurante, casa] : null;
+  if (!centro)
+    return (
+      <View testID="mapa-sin-ubicacion" style={{ height: alto, backgroundColor: '#E9EEF5' }} />
+    );
   return (
     <View style={{ height: alto, overflow: 'hidden' }}>
       <MapView
@@ -130,6 +160,27 @@ export function Mapa({
             pinColor={C.primario}
           />
         )}
+        {destino && rotulo ? (
+          <Marker
+            coordinate={{ latitude: destino.lat, longitude: destino.lng }}
+            anchor={{ x: 0.5, y: 1.6 }}
+            tracksViewChanges={false}
+          >
+            <View
+              testID="mapa-rotulo-destino"
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 15,
+                backgroundColor: casa ? C.primario : C.secundario,
+                borderWidth: 3,
+                borderColor: '#fff',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 13 }}>{rotulo}</Text>
+            </View>
+          </Marker>
+        ) : null}
         {yo && (
           <Marker
             coordinate={{ latitude: yo.lat, longitude: yo.lng }}

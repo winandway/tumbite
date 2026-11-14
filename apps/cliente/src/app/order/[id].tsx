@@ -1276,6 +1276,7 @@ function SeguirPedido() {
               nombreRepartidor={p.repartidor?.nombre}
               etiquetas={{ restaurante: t.elRestaurante, casa: t.tuCasa, repartidor: t.repartidor }}
               sinSenal={sinSenal}
+              direccion={p.direccion}
             />
             {haceRep != null ? (
               <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 6, textAlign: 'center' }}>

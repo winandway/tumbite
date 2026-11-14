@@ -1999,6 +1999,9 @@ export function Inicio() {
           yo={aqui}
           restaurante={restActivo}
           casa={activo.estado === 'en_camino' ? casaActivo : null}
+          direccionDestino={
+            activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.direccion
+          }
           alto={220}
           etiquetas={etiquetasMapa}
         />

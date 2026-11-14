@@ -9,6 +9,8 @@ export type PuntoRuta = {
   numero: string;
   tono: TonoPunto;
   nombre: string;
+  /** La dirección de la parada: su número se lee sobre el punto al llegar (C-MAPA-LLEGADA). */
+  direccion?: string;
 };
 
 /** Hecho en verde (lo que salió bien va en verde), la parada actual en rojo, el resto en gris. */

@@ -27,6 +27,8 @@ const registro = vi.hoisted(() => ({
   rumbos: [] as number[],
   idle: null as null | (() => void),
   encuadres: 0,
+  centros: [] as { lat: number; lng: number }[],
+  zooms: [] as number[],
   clic: null as null | ((e: { latLng?: { lat(): number; lng(): number } }) => void),
 }));
 
@@ -41,8 +43,12 @@ class MapaFalso {
   setHeading(x: number) {
     registro.rumbos.push(x);
   }
-  setCenter() {}
-  setZoom() {}
+  setCenter(p: { lat: number; lng: number }) {
+    registro.centros.push(p);
+  }
+  setZoom(z: number) {
+    registro.zooms.push(z);
+  }
   getZoom() {
     return 15;
   }
@@ -129,6 +135,8 @@ describe('MapaGoogleBajoDemanda', () => {
     registro.rumbos = [];
     registro.idle = null;
     registro.encuadres = 0;
+    registro.centros = [];
+    registro.zooms = [];
     registro.clic = null;
     olvidarCargaGoogleMaps();
   });
@@ -291,6 +299,73 @@ describe('MapaGoogleBajoDemanda', () => {
     rerender(vista([...PUNTOS, { ...casa, lat: 10.531 }]));
     await new Promise((r) => setTimeout(r, 10));
     expect(registro.encuadres).toBe(2);
+  });
+
+  it('C-MAPA-LLEGADA: cerca de la casa se centra en ella, de cerca, sin aplanar ni volver a encuadrar', async () => {
+    (window as { google?: unknown }).google = { maps: API_VECTORIAL };
+    const casa = { ...PUNTOS[1]!, id: 'casa' };
+    const vista = (
+      yo: { lat: number; lng: number },
+      llegada: { centro: { lat: number; lng: number }; zoom: number } | null,
+    ) => (
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        mapId="a1b2c3d4e5f6"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        inclinado
+        rumbo={90}
+        etiqueta="Mapa"
+        abierto
+        llegada={llegada}
+        puntos={[
+          { ...casa, texto: llegada ? '41000' : undefined },
+          { id: 'yo', ...yo, color: '#F20D20' },
+        ]}
+      />
+    );
+    const { rerender } = render(vista({ lat: 10.5, lng: -66.9 }, null));
+    await waitFor(() => expect(registro.encuadres).toBe(1));
+    registro.idle?.();
+    // Llega a menos de 200 m: se centra en la casa con zoom de calle y la marca muestra el número.
+    rerender(
+      vista({ lat: 10.5095, lng: -66.91 }, { centro: { lat: 10.51, lng: -66.91 }, zoom: 18 }),
+    );
+    await waitFor(() => expect(registro.zooms.at(-1)).toBe(18));
+    expect(registro.centros.at(-1)).toEqual({ lat: 10.51, lng: -66.91 });
+    expect(registro.encuadres).toBe(1);
+    expect((registro.avanzadas.at(-2)!.o.content as HTMLElement).textContent).toBe('41000');
+    registro.idle?.();
+    expect(registro.inclinacion.at(-1)).toBe(45);
+    // Otra lectura de GPS estando cerca: no se mueve la cámara otra vez ni se encuadra.
+    const antes = registro.zooms.length;
+    rerender(
+      vista({ lat: 10.5097, lng: -66.91 }, { centro: { lat: 10.51, lng: -66.91 }, zoom: 18 }),
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    expect(registro.zooms).toHaveLength(antes);
+    expect(registro.encuadres).toBe(1);
+  });
+
+  it('C-MAPA-ABRE-DONDE-ESTAS: sin puntos, si llega la ubicación de la persona el mapa se mueve ahí', async () => {
+    (window as { google?: unknown }).google = { maps: API };
+    const vista = (centro: { lat: number; lng: number }, zoom: number) => (
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        idioma="es"
+        centro={centro}
+        zoom={zoom}
+        puntos={[]}
+        etiqueta="Mapa"
+        abierto
+      />
+    );
+    const { rerender } = render(vista({ lat: 42.52, lng: -83.47 }, 13));
+    await waitFor(() => expect(registro.mapas).toBe(1));
+    expect(registro.opciones).toMatchObject({ center: { lat: 42.52, lng: -83.47 }, zoom: 13 });
+    rerender(vista({ lat: 42.48, lng: -83.475 }, 16));
+    await waitFor(() => expect(registro.centros.at(-1)).toEqual({ lat: 42.48, lng: -83.475 }));
+    expect(registro.zooms.at(-1)).toBe(16);
   });
 
   it('se cierra y se vuelve a abrir (segundo pedido en la misma pantalla): el mapa se crea de nuevo', async () => {

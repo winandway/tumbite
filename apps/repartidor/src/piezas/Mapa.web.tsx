@@ -7,6 +7,7 @@ import {
   origenesMapaDriver,
   vistaMapaDriver,
 } from '@tumbite/compartido/src/mapaDriverWeb';
+import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 import { useSesion } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from '../flex/mapaGoogleWeb';
 
@@ -40,12 +41,18 @@ function MapaGoogle({
   etiquetaZona = (n: number) => String(n),
   alto = 300,
   etiquetas,
+  direccionDestino,
 }: PropsMapa) {
   const { idioma } = useSesion();
   const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0];
   if (!centro) return null;
   const viaje = vistaMapaDriver({ restaurante, casa }) === 'viaje';
   const destino = destinoMapaDriver({ restaurante, casa });
+  // C-MAPA-LLEGADA: a menos de 200 m del destino (el local o la casa) el mapa se acerca solo y el
+  // punto muestra el número de la dirección.
+  const llegada = viaje ? vistaDeLlegada(yo, destino) : null;
+  const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
+  const vaALaCasa = casa != null;
   const puntos = [
     // C-PAGO-PICO: el monto extra queda a la vista sobre la zona (como el «+$2.00» de DoorDash).
     ...zonasDemanda
@@ -72,13 +79,23 @@ function MapaGoogle({
             id: 'restaurante',
             ...restaurante,
             color: COLORES.restaurante,
-            radio: 9,
+            radio: llegada && !vaALaCasa ? 13 : 9,
             etiqueta: etiquetas.restaurante,
+            texto: (!vaALaCasa && rotulo) || undefined,
           },
         ]
       : []),
     ...(casa
-      ? [{ id: 'casa', ...casa, color: COLORES.casa, radio: 9, etiqueta: etiquetas.casa }]
+      ? [
+          {
+            id: 'casa',
+            ...casa,
+            color: COLORES.casa,
+            radio: llegada ? 13 : 9,
+            etiqueta: etiquetas.casa,
+            texto: rotulo || undefined,
+          },
+        ]
       : []),
     ...(yo
       ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 12, etiqueta: etiquetas.yo }]
@@ -103,6 +120,7 @@ function MapaGoogle({
       abierto={viaje}
       inclinado={viaje}
       rumbo={viaje && yo && destino ? rumboEntre(yo, destino) : 0}
+      llegada={llegada}
     />
   );
 }
@@ -116,6 +134,7 @@ function MapaLeaflet({
   etiquetaZona = (n: number) => String(n),
   alto = 300,
   etiquetas,
+  direccionDestino,
 }: {
   yo: Punto | null;
   restaurante?: Punto | null;
@@ -125,23 +144,27 @@ function MapaLeaflet({
   etiquetaZona?: (pedidos: number, pico?: number) => string;
   alto?: number;
   etiquetas: { yo: string; restaurante: string; casa: string };
+  /** La dirección del destino de ahora (el local o la casa): su número se lee al llegar. */
+  direccionDestino?: string | null;
 }) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
-  const centro = yo ?? restaurante ?? casa ?? { lat: 25.7743, lng: -80.1937 };
+  // C-MAPA-ABRE-DONDE-ESTAS: sin ningún punto todavía no hay mapa (nunca una ciudad fija).
+  const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0] ?? null;
+  const hayCentro = centro != null;
   const firmaZonas = zonasDemanda.map((z) => `${z.lat},${z.lng},${z.pedidos}`).join('|');
 
   useEffect(() => {
-    if (!caja.current || mapa.current) return;
+    if (!caja.current || mapa.current || !centro) return;
     mapa.current = crearMapa(caja.current, centro, 14);
     return () => {
       mapa.current?.remove();
       mapa.current = null;
     };
-    // Se crea una sola vez; los puntos se actualizan abajo.
+    // Se crea una sola vez, cuando ya hay un punto; los puntos se actualizan abajo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hayCentro]);
 
   useEffect(() => {
     const m = mapa.current;
@@ -150,8 +173,18 @@ function MapaLeaflet({
     const nuevas: L.Layer[] = [];
     for (const z of zonasDemanda) nuevas.push(zona(z, etiquetaZona(z.pedidos, z.pico)));
     for (const x of marcadores) nuevas.push(punto(x.punto, COLORES.restaurante, 8, x.nombre));
-    if (restaurante) nuevas.push(punto(restaurante, COLORES.restaurante, 9, etiquetas.restaurante));
-    if (casa) nuevas.push(punto(casa, COLORES.casa, 9, etiquetas.casa));
+    const destino = casa ?? restaurante ?? null;
+    const llegada = vistaDeLlegada(yo, destino);
+    const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
+    const conRotulo = (c: L.CircleMarker, es: boolean) => {
+      if (es && rotulo) c.bindTooltip(rotulo, { permanent: true, direction: 'top' });
+      return c;
+    };
+    if (restaurante)
+      nuevas.push(
+        conRotulo(punto(restaurante, COLORES.restaurante, 9, etiquetas.restaurante), !casa),
+      );
+    if (casa) nuevas.push(conRotulo(punto(casa, COLORES.casa, 9, etiquetas.casa), true));
     if (yo) nuevas.push(punto(yo, COLORES.repartidor, 12, etiquetas.yo));
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
@@ -159,7 +192,8 @@ function MapaLeaflet({
     const separados =
       todos.length > 1 &&
       todos.some((p) => Math.abs(p.lat - todos[0]!.lat) + Math.abs(p.lng - todos[0]!.lng) > 0.0005);
-    if (separados)
+    if (llegada) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+    else if (separados)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),
         { padding: [40, 40], maxZoom: 16 },
@@ -176,6 +210,7 @@ function MapaLeaflet({
     casa?.lng,
     marcadores.length,
     firmaZonas,
+    hayCentro,
   ]);
 
   return (

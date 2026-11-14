@@ -1262,6 +1262,7 @@ function puntosDe(ruta: Ruta, siguienteId: string | null, t: Textos): PuntoRuta[
               numero: String(p.orden),
               tono: tonoParada(p, siguienteId),
               nombre: `${p.orden}. ${p.direccion}`,
+              direccion: p.direccion,
             },
           ]
         : [];

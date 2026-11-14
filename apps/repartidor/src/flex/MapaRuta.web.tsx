@@ -4,6 +4,7 @@ import { COLORES, type Punto, crearMapa, punto } from '../piezas/mapaWeb';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
 import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
 import { origenesMapaRutaFlex } from '@tumbite/compartido/src/mapaDriverWeb';
+import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 import { useSesion } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
@@ -34,7 +35,13 @@ function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta, area = null }: Props
   const { idioma } = useSesion();
   const centro = puntos[0]?.punto ?? yo;
   if (!centro) return null;
-  const actual = puntos.find((p) => p.tono === 'actual')?.punto ?? area?.punto ?? null;
+  const parada = puntos.find((p) => p.tono === 'actual') ?? null;
+  const actual = parada?.punto ?? area?.punto ?? null;
+  // C-MAPA-LLEGADA: a menos de 200 m de la parada actual el mapa se acerca solo y la parada muestra,
+  // junto a su número, el número de la dirección.
+  const llegada = vistaDeLlegada(yo, actual);
+  const rotulo = llegada ? rotuloDestino(parada?.direccion) : '';
+  const numero = (p: PuntoRuta) => p.numero.replace(/[^0-9A-Za-z]/g, '');
   return (
     <MapaGoogleBajoDemanda
       llave={LLAVE_MAPA_WEB}
@@ -46,6 +53,7 @@ function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta, area = null }: Props
       abierto
       inclinado
       rumbo={yo && actual ? rumboEntre(yo, actual) : 0}
+      llegada={llegada}
       lineas={
         puntos.length > 1
           ? [{ id: 'orden', puntos: puntos.map((p) => p.punto), color: '#8E9198', punteada: true }]
@@ -60,7 +68,7 @@ function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta, area = null }: Props
           ...p.punto,
           color: COLOR_TONO[p.tono],
           radio: 15,
-          texto: p.numero.replace(/[^0-9A-Za-z]/g, ''),
+          texto: p === parada && rotulo ? `${numero(p)} · ${rotulo}` : numero(p),
           etiqueta: `${p.numero} · ${p.nombre}`,
         })),
         ...(yo ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 9 }] : []),
@@ -94,8 +102,9 @@ function MapaRutaLeaflet({
   ].join('|');
 
   useEffect(() => {
-    if (!caja.current || mapa.current) return;
-    mapa.current = crearMapa(caja.current, todos[0] ?? { lat: 25.7743, lng: -80.1937 }, 13);
+    // C-MAPA-ABRE-DONDE-ESTAS: la ruta siempre trae puntos; sin ninguno no hay mapa.
+    if (!caja.current || mapa.current || !todos[0]) return;
+    mapa.current = crearMapa(caja.current, todos[0], 13);
     return () => {
       mapa.current?.remove();
       mapa.current = null;
@@ -138,7 +147,9 @@ function MapaRutaLeaflet({
     if (yo) nuevas.push(punto(yo, COLORES.repartidor, 9));
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
-    if (todos.length > 1)
+    const llegada = vistaDeLlegada(yo, puntos.find((p) => p.tono === 'actual')?.punto);
+    if (llegada) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+    else if (todos.length > 1)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),
         { padding: [40, 40], maxZoom: 16 },

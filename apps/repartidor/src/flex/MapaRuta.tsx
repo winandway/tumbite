@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
+import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 import type { Punto } from '../piezas/mapaWeb';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
 
@@ -12,8 +13,8 @@ export type { PuntoRuta };
  * el centro y todas las paradas (en el iPhone, encuadrar después no siempre se aplica).
  */
 export function regionDe(puntos: Punto[]) {
-  if (!puntos.length)
-    return { latitude: 25.7743, longitude: -80.1937, latitudeDelta: 0.08, longitudeDelta: 0.08 };
+  // C-MAPA-ABRE-DONDE-ESTAS: sin puntos no hay región (nunca una ciudad fija): el mapa no se dibuja.
+  if (!puntos.length) return null;
   const lats = puntos.map((p) => p.lat);
   const lngs = puntos.map((p) => p.lng);
   const [minLat, maxLat] = [Math.min(...lats), Math.max(...lats)];
@@ -48,9 +49,26 @@ export function MapaRuta({
   // C-FLEX-MAPA-ENCUADRE: encuadrar antes de que el mapa termine de cargar no hace nada.
   const [listo, setListo] = useState(false);
   const todos = [...puntos.map((p) => p.punto), ...(yo ? [yo] : [])];
-  const clave = todos.map((p) => `${p.lat},${p.lng}`).join('|');
+  // C-MAPA-LLEGADA: a menos de 200 m de la parada actual el mapa se acerca solo y la parada muestra,
+  // junto a su número, el número de la dirección (igual que en la web).
+  const parada = puntos.find((p) => p.tono === 'actual') ?? null;
+  const llegada = vistaDeLlegada(yo, parada?.punto);
+  const rotulo = llegada ? rotuloDestino(parada?.direccion) : '';
+  const clave = llegada ? `llegada:${parada?.id}` : todos.map((p) => `${p.lat},${p.lng}`).join('|');
   useEffect(() => {
-    if (!listo || todos.length < 2) return;
+    if (!listo) return;
+    if (llegada) {
+      mapa.current?.animateCamera(
+        {
+          center: { latitude: llegada.centro.lat, longitude: llegada.centro.lng },
+          zoom: llegada.zoom,
+          altitude: 450,
+        },
+        { duration: 600 },
+      );
+      return;
+    }
+    if (todos.length < 2) return;
     mapa.current?.fitToCoordinates(
       todos.map((p) => ({ latitude: p.lat, longitude: p.lng })),
       { edgePadding: { top: 60, right: 50, bottom: 60, left: 50 }, animated: true },
@@ -59,6 +77,7 @@ export function MapaRuta({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave, listo]);
   const inicial = regionDe(todos);
+  if (!inicial) return null;
   return (
     <View style={{ height: alto, overflow: 'hidden', borderRadius: 14 }}>
       <MapView
@@ -107,7 +126,9 @@ export function MapaRuta({
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13 }}>{p.numero}</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13 }}>
+                {p === parada && rotulo ? `${p.numero} · ${rotulo}` : p.numero}
+              </Text>
             </View>
           </Marker>
         ))}

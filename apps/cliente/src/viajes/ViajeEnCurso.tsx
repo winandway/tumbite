@@ -253,6 +253,17 @@ export function ViajeEnCurso({
           casa={{ lat: viaje.destino.lat, lng: viaje.destino.lng }}
           repartidor={viaje.conductor?.ubicacion ?? null}
           nombreRepartidor={viaje.conductor?.nombre}
+          // C-MAPA-LLEGADA: mientras viene a buscarte el mapa se acerca a la recogida; ya en viaje, al destino.
+          meta={
+            viaje.estado === 'asignado' || viaje.estado === 'conductor_llego'
+              ? 'restaurante'
+              : 'casa'
+          }
+          direccion={
+            viaje.estado === 'asignado' || viaje.estado === 'conductor_llego'
+              ? viaje.origen.direccion
+              : viaje.destino.direccion
+          }
           etiquetas={{
             restaurante: t.etiquetaRecogida,
             casa: t.etiquetaDestino,

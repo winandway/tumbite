@@ -50,6 +50,8 @@ export default tseslint.config(
       'scripts/marca/generar-identidad.mjs',
       'scripts/marca/fichas-tiendas.mjs',
       'scripts/marca/graficos-google-play.mjs',
+      // Lee la llave del navegador de ~/.config y escribe las paletas en identidad-divoox/.
+      'scripts/marca/opciones-mapa.mjs',
       'scripts/tiendas/*.mjs',
     ],
     rules: { 'security/detect-non-literal-fs-filename': 'off' },

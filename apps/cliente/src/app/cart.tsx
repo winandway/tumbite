@@ -261,14 +261,21 @@ function PantallaCarrito() {
   // C-PROMO-RESTAURANTE (BRE-5): las promociones vigentes del restaurante; se aplican igual que
   // en el servidor (la que más ahorra, solo con tarjeta) para que el total visto sea el cobrado.
   const [promociones, setPromociones] = useState<PromocionRestaurante[]>([]);
+  const [local, setLocal] = useState<Punto | null>(null);
   useEffect(() => {
     if (!carrito.restauranteId) return;
     api
-      .pedir<{ promociones?: PromocionRestaurante[] }>(
-        'GET',
-        `/datos/restaurantes/${carrito.restauranteId}`,
-      )
-      .then((r) => setPromociones(r.promociones ?? []))
+      .pedir<{
+        promociones?: PromocionRestaurante[];
+        restaurante?: { lat?: number | null; lng?: number | null };
+      }>('GET', `/datos/restaurantes/${carrito.restauranteId}`)
+      .then((r) => {
+        setPromociones(r.promociones ?? []);
+        // C-MAPA-ABRE-DONDE-ESTAS: el local del carrito es la zona del pedido (último recurso para
+        // centrar el mapa de la entrega). Sale de la misma lectura: no hay llamada nueva.
+        const { lat, lng } = r.restaurante ?? {};
+        setLocal(lat != null && lng != null ? { lat: Number(lat), lng: Number(lng) } : null);
+      })
       .catch((e: unknown) => {
         // BRE-R2: sin promociones el carrito sigue (el servidor devuelve el total correcto), pero
         // el fallo queda anotado en vez de callarse.
@@ -1130,6 +1137,7 @@ function PantallaCarrito() {
             }}
             cambiarDireccion={(x) => b.cambiar('direccion', x)}
             direccionVacia={!b.valores.direccion.trim()}
+            cerca={local}
             textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
           />
           {/* C-DIRECCION-SUGERENCIAS: direcciones reales mientras se escribe; al elegir, el pin va ahí.

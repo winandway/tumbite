@@ -24,7 +24,7 @@ export const cabecerasSeguridad: MiddlewareHandler = async (c, next) => {
     // mapa vectorial dibuja con WebGL en trabajadores creados desde `blob:` y pide teselas y datos a
     // *.googleapis.com, *.gstatic.com y *.google.com (política recomendada en la documentación
     // oficial de CSP de Maps JavaScript API). Sin 'unsafe-eval'.
-    "default-src 'self'; script-src 'self' https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com; " +
+    "default-src 'self'; script-src 'self' https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com 'wasm-unsafe-eval'; " +
       "frame-src https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com; img-src 'self' data: blob: https:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.google.com data: blob:; worker-src 'self' blob:; frame-ancestors 'none'",
   );

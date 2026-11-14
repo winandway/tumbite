@@ -50,6 +50,8 @@ describe('servidor', () => {
       // C-CSP-VISTA-PREVIA: el mapa web de Google (C-MAPA-GOOGLE-WEB), y nada más.
       'https://maps.googleapis.com',
       'https://maps.gstatic.com',
+      // C-MAPA-GOOGLE-WEB (14 nov 2026): el mapa vectorial compila WebAssembly. Solo eso: `eval` no.
+      "'wasm-unsafe-eval'",
     ]);
   });
 

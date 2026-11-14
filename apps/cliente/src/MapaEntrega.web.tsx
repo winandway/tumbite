@@ -3,6 +3,7 @@ import type L from 'leaflet';
 import { COLORES, crearMapa, punto } from './mapaWeb';
 import type { Punto } from './ubicacion';
 import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
+import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 import { useSesion } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
@@ -16,6 +17,11 @@ type Props = {
   repartidor: Punto | null;
   nombreRepartidor?: string;
   etiquetas: { restaurante: string; casa: string; repartidor: string };
+  /** La dirección de entrega (o el destino del viaje): su número se lee sobre el punto al llegar. */
+  direccion?: string | null;
+  /** Hacia dónde va ahora: tu casa (o el destino) o, en un viaje que viene a buscarte, la recogida. */
+  meta?: 'casa' | 'restaurante';
+  sinSenal?: boolean;
 };
 
 /**
@@ -23,6 +29,8 @@ type Props = {
  * viaje) en curso: se abre solo, sin botón, y con Map ID va inclinado a 45° mirando hacia tu casa
  * (desde el repartidor si ya se ve; si no, desde el restaurante), como Uber y DoorDash. Sin llave,
  * Leaflet.
+ * C-MAPA-LLEGADA: cuando el repartidor (o conductor) está a menos de 200 m de tu casa, el mapa se
+ * acerca solo y deja el punto de la casa centrado, con el número de la dirección a la vista.
  */
 export function MapaEntrega(props: Props) {
   return proveedorMapaWeb(['google', 'gps']) === 'google' ? (
@@ -32,8 +40,19 @@ export function MapaEntrega(props: Props) {
   );
 }
 
-function MapaEntregaGoogle({ restaurante, casa, repartidor, nombreRepartidor, etiquetas }: Props) {
+function MapaEntregaGoogle({
+  restaurante,
+  casa,
+  repartidor,
+  nombreRepartidor,
+  etiquetas,
+  direccion,
+  meta = 'casa',
+}: Props) {
   const { idioma } = useSesion();
+  const hacia = meta === 'restaurante' ? restaurante : casa;
+  const llegada = vistaDeLlegada(repartidor, hacia);
+  const rotulo = llegada ? rotuloDestino(direccion) : '';
   const centro = repartidor ?? restaurante ?? casa;
   if (!centro) return null;
   const puntos = [
@@ -41,10 +60,18 @@ function MapaEntregaGoogle({ restaurante, casa, repartidor, nombreRepartidor, et
       id: 'restaurante',
       ...restaurante,
       color: COLORES.restaurante,
-      radio: 9,
+      radio: llegada && meta === 'restaurante' ? 13 : 9,
       etiqueta: etiquetas.restaurante,
+      texto: (meta === 'restaurante' && rotulo) || undefined,
     },
-    casa && { id: 'casa', ...casa, color: COLORES.casa, radio: 8, etiqueta: etiquetas.casa },
+    casa && {
+      id: 'casa',
+      ...casa,
+      color: COLORES.casa,
+      radio: llegada && meta === 'casa' ? 13 : 8,
+      etiqueta: etiquetas.casa,
+      texto: (meta === 'casa' && rotulo) || undefined,
+    },
     repartidor && {
       id: 'repartidor',
       ...repartidor,
@@ -53,7 +80,7 @@ function MapaEntregaGoogle({ restaurante, casa, repartidor, nombreRepartidor, et
       etiqueta: nombreRepartidor ?? etiquetas.repartidor,
     },
   ].filter((p) => p != null);
-  const desde = repartidor ?? restaurante;
+  const desde = meta === 'restaurante' ? repartidor : (repartidor ?? restaurante);
   return (
     <MapaGoogleBajoDemanda
       llave={LLAVE_MAPA_WEB}
@@ -64,7 +91,8 @@ function MapaEntregaGoogle({ restaurante, casa, repartidor, nombreRepartidor, et
       etiqueta={etiquetas.repartidor}
       abierto
       inclinado
-      rumbo={desde && casa ? rumboEntre(desde, casa) : 0}
+      rumbo={desde && hacia ? rumboEntre(desde, hacia) : 0}
+      llegada={llegada}
     />
   );
 }
@@ -75,13 +103,9 @@ function MapaEntregaLeaflet({
   repartidor,
   nombreRepartidor,
   etiquetas,
-}: {
-  restaurante: Punto | null;
-  casa: Punto | null;
-  repartidor: Punto | null;
-  nombreRepartidor?: string;
-  etiquetas: { restaurante: string; casa: string; repartidor: string };
-}) {
+  direccion,
+  meta = 'casa',
+}: Props) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
@@ -103,8 +127,20 @@ function MapaEntregaLeaflet({
     if (!m) return;
     for (const c of capas.current) c.remove();
     const nuevas: L.Layer[] = [];
-    if (restaurante) nuevas.push(punto(restaurante, COLORES.restaurante, 9, etiquetas.restaurante));
-    if (casa) nuevas.push(punto(casa, COLORES.casa, 8, etiquetas.casa));
+    const llegada = vistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
+    const rotulo = llegada ? rotuloDestino(direccion) : '';
+    const conRotulo = (c: L.CircleMarker, es: boolean) => {
+      if (es && rotulo) c.bindTooltip(rotulo, { permanent: true, direction: 'top' });
+      return c;
+    };
+    if (restaurante)
+      nuevas.push(
+        conRotulo(
+          punto(restaurante, COLORES.restaurante, 9, etiquetas.restaurante),
+          meta === 'restaurante',
+        ),
+      );
+    if (casa) nuevas.push(conRotulo(punto(casa, COLORES.casa, 8, etiquetas.casa), meta === 'casa'));
     if (repartidor)
       nuevas.push(
         punto(repartidor, COLORES.repartidor, 12, nombreRepartidor ?? etiquetas.repartidor),
@@ -112,7 +148,8 @@ function MapaEntregaLeaflet({
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
     const todos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
-    if (todos.length > 1)
+    if (llegada) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+    else if (todos.length > 1)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),
         { padding: [40, 40], maxZoom: 17 },

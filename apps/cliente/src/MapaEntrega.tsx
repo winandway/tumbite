@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { C } from '@tumbite/movil';
+import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 
 export type Punto = { lat: number; lng: number };
 
@@ -11,6 +12,8 @@ export type Punto = { lat: number; lng: number };
  * Android necesita la llave de Google Maps en app.json (pendiente de Richard).
  * C-SEGUIMIENTO-HONESTO (BRE-2): sin señal del repartidor (más de 60 s) su punto se ve apagado y
  * sin la línea de ruta, para no presentar una ubicación vieja como si fuera en vivo.
+ * C-MAPA-LLEGADA: a menos de 200 m de la casa el mapa se acerca solo y deja el punto de la casa
+ * centrado, con el número de la dirección a la vista (igual que en la web).
  */
 export function MapaEntrega({
   restaurante,
@@ -19,6 +22,8 @@ export function MapaEntrega({
   nombreRepartidor,
   etiquetas,
   sinSenal = false,
+  direccion,
+  meta = 'casa',
 }: {
   restaurante: Punto | null;
   casa: Punto | null;
@@ -26,19 +31,43 @@ export function MapaEntrega({
   nombreRepartidor?: string;
   etiquetas: { restaurante: string; casa: string; repartidor: string };
   sinSenal?: boolean;
+  /** La dirección de entrega (o el destino del viaje): su número se lee sobre el punto al llegar. */
+  direccion?: string | null;
+  /** Hacia dónde va ahora: tu casa (o el destino) o, en un viaje que viene a buscarte, la recogida. */
+  meta?: 'casa' | 'restaurante';
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
 
+  const llegada = vistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
+  const rotulo = llegada ? rotuloDestino(direccion) : '';
+  const cerca = llegada != null;
+
+  // Estando cerca, cada lectura de GPS ya no mueve la cámara (se puede mover el mapa con el dedo).
+  const latMovil = cerca ? 0 : repartidor?.lat;
+  const lngMovil = cerca ? 0 : repartidor?.lng;
+
   useEffect(() => {
     if (puntos.length < 1) return;
+    if (llegada) {
+      // Cerca de la casa no se encuadra todo el recorrido: la casa, centrada y a nivel de calle.
+      mapa.current?.animateCamera(
+        {
+          center: { latitude: llegada.centro.lat, longitude: llegada.centro.lng },
+          zoom: llegada.zoom,
+          altitude: 450,
+        },
+        { duration: 600 },
+      );
+      return;
+    }
     mapa.current?.fitToCoordinates(
       puntos.map((p) => ({ latitude: p.lat, longitude: p.lng })),
       { edgePadding: { top: 60, right: 60, bottom: 60, left: 60 }, animated: true },
     );
     // Se reencuadra cuando cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng, repartidor?.lat, repartidor?.lng]);
+  }, [restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng, latMovil, lngMovil, cerca]);
 
   if (puntos.length === 0) return null;
   const centro = puntos[0] as Punto;
@@ -67,13 +96,55 @@ export function MapaEntrega({
             pinColor={C.secundario}
           />
         )}
-        {casa && (
+        {casa && !(rotulo && meta === 'casa') && (
           <Marker
             coordinate={{ latitude: casa.lat, longitude: casa.lng }}
             title={etiquetas.casa}
             pinColor={C.primario}
           />
         )}
+        {restaurante && rotulo && meta === 'restaurante' ? (
+          <Marker
+            coordinate={{ latitude: restaurante.lat, longitude: restaurante.lng }}
+            anchor={{ x: 0.5, y: 1.6 }}
+          >
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 15,
+                backgroundColor: C.secundario,
+                borderWidth: 3,
+                borderColor: '#fff',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>{rotulo}</Text>
+            </View>
+          </Marker>
+        ) : null}
+        {casa && rotulo && meta === 'casa' ? (
+          <Marker
+            coordinate={{ latitude: casa.lat, longitude: casa.lng }}
+            title={etiquetas.casa}
+            anchor={{ x: 0.5, y: 0.5 }}
+          >
+            <View
+              testID="mapa-rotulo-casa"
+              style={{
+                minHeight: 30,
+                paddingHorizontal: 10,
+                borderRadius: 15,
+                backgroundColor: C.primario,
+                borderWidth: 3,
+                borderColor: '#fff',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>{rotulo}</Text>
+            </View>
+          </Marker>
+        ) : null}
         {repartidor && (
           <Marker
             coordinate={{ latitude: repartidor.lat, longitude: repartidor.lng }}

@@ -31,6 +31,10 @@ describe('cabeceras de seguridad', () => {
     }
     for (const d of ['https://*.googleapis.com', 'https://*.gstatic.com', 'https://*.google.com'])
       expect(parte('connect-src')).toContain(d);
-    expect(parte('script-src')).not.toContain('unsafe-eval');
+    // Comprobado en vivo en el sitio de pruebas (14 nov 2026): el mapa vectorial compila un módulo
+    // WebAssembly y la consola lo mostraba bloqueado. Se permite SOLO WebAssembly; `eval` sigue cerrado.
+    const fuentes = parte('script-src').trim().split(/\s+/);
+    expect(fuentes).toContain("'wasm-unsafe-eval'");
+    expect(fuentes).not.toContain("'unsafe-eval'");
   });
 });

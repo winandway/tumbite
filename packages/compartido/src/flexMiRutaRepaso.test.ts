@@ -27,7 +27,10 @@ describe('Mi ruta: repaso en el simulador', () => {
   });
   it('el mapa de la ruta encuadra cuando termina de cargar (C-FLEX-MAPA-ENCUADRE)', () => {
     expect(mapa).toContain('onMapReady={() => setListo(true)}');
-    expect(mapa).toMatch(/if \(!listo \|\| todos\.length < 2\) return;/);
+    // 14 nov 2026 (C-MAPA-LLEGADA): la misma condición, en dos líneas (entre medias va el
+    // acercamiento a la parada actual): nada se mueve antes de que el mapa cargue.
+    expect(mapa).toMatch(/if \(!listo\) return;/);
+    expect(mapa).toMatch(/if \(todos\.length < 2\) return;/);
     // Y nace ya mostrando todos los puntos (en el iPhone, encuadrar después no siempre se aplica).
     expect(mapa).toContain('initialRegion={inicial}');
     expect(mapa).toContain('const inicial = regionDe(todos);');

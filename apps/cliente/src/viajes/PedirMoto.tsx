@@ -287,6 +287,7 @@ export function PedirMoto({
         cambiarDireccion={(d) => {
           if (!v.destino.trim()) cambiar('destino', d);
         }}
+        cerca={recogida}
         textos={{ ayuda: t.destinoAyuda, buscando: t.buscandoCalle, pin: t.pinDestino }}
       />
       {/* C-TEXTOS-POR-SERVICIO: cada servicio dice lo suyo. */}

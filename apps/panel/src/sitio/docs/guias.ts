@@ -1318,6 +1318,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Después de pagar, la pantalla del pedido muestra cuatro pasos: confirmado, en preparación, en camino y entregado. Lo que ya pasó se marca en verde.',
           'Cuando el repartidor recoge tu comida, aparece en el mapa acercándose a tu puerta. La llegada se muestra como un rango, por ejemplo «Llega entre 12:40 y 12:50», junto con la hora «a más tardar».',
+          'Cuando el repartidor está a menos de una cuadra y media de tu puerta (unos 200 metros), el mapa se acerca solo: tu casa queda en el centro, con el número de tu dirección escrito sobre el punto, para que veas el momento exacto en que llega.',
           'Debajo del mapa ves «Actualizado hace 8 s»: así sabes que el punto del repartidor es reciente.',
           'Si el celular del repartidor pierde la señal por más de un minuto, te lo decimos con un aviso: «Perdimos la señal de tu repartidor». Su punto se ve en gris, porque es su última ubicación conocida, y la hora puede cambiar. Sigue en camino; en cuanto vuelve la señal, el mapa se pone al día solo.',
           'Te llega un aviso al celular en cada paso importante, si los tienes encendidos.',
@@ -6172,6 +6173,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'After paying, the order screen shows four steps: confirmed, preparing, on the way, and delivered. What’s done turns green.',
           'When the driver picks up your food, they appear on the map heading to your door. Arrival is shown as a window, for example “Arrives between 12:40 and 12:50,” along with the “latest arrival” time.',
+          'When the driver is within about 650 feet (200 meters) of your door, the map zooms in on its own: your home sits in the center, with your street number written on the pin, so you can see the exact moment they arrive.',
           'Under the map you see “Updated 8 s ago,” so you know the driver’s location is fresh.',
           'If the driver’s phone loses signal for more than a minute, we tell you with a notice: “We lost your driver’s signal.” Their dot turns gray because it’s their last known location, and the time may change. They’re still on the way; as soon as the signal is back, the map catches up on its own.',
           'You get a phone notification at each key step, if notifications are on.',

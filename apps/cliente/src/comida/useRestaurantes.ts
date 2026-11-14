@@ -77,6 +77,8 @@ async function direccionGuardada(): Promise<DireccionEntrega | null> {
  * (C-UBICACION-NO-FRENA): primero el guardado, enseguida; después el GPS del momento.
  */
 export const puntoGuardado = ubicacionGuardada;
+/** C-MAPA-ABRE-DONDE-ESTAS: la dirección de entrega elegida a mano, para centrar los mapas. */
+export const direccionElegida = direccionGuardada;
 export const puntoGps = gpsReciente;
 
 export function useRestaurantes(api: Api, deUrl: Punto | null) {

@@ -1,3 +1,4 @@
+import type { VistaMapa } from './mapaLlegada';
 import { useEffect, useRef, useState } from 'react';
 
 import { ESTILO_MAPA_DIVOOX } from './estiloMapaDivoox';
@@ -333,8 +334,13 @@ function encuadrar(
   zoom: number,
   inclinado: boolean,
   rumbo: number,
+  llegada: VistaMapa | null = null,
 ) {
-  if (puntos.length > 1) {
+  if (llegada) {
+    // C-MAPA-LLEGADA: cerca del destino no se encuadra todo el recorrido: la casa, centrada y de cerca.
+    m.setCenter(llegada.centro);
+    m.setZoom(llegada.zoom);
+  } else if (puntos.length > 1) {
     const b = new g.LatLngBounds();
     for (const p of puntos) b.extend({ lat: p.lat, lng: p.lng });
     m.fitBounds(b, 40);
@@ -363,6 +369,7 @@ function dibujarTodo(
     avanzadas: boolean;
     inclinado: boolean;
     rumbo: number;
+    llegada?: VistaMapa | null;
   },
   anteriores: Quitable[],
 ): { todos: Quitable[]; marcas: Map<string, Quitable> } {
@@ -409,7 +416,7 @@ function dibujarTodo(
     marcas.set(p.id, x);
     nuevos.push(x);
   }
-  encuadrar(g, m, d.puntos, d.zoom, d.inclinado, d.rumbo);
+  encuadrar(g, m, d.puntos, d.zoom, d.inclinado, d.rumbo, d.llegada ?? null);
   return { todos: nuevos, marcas };
 }
 
@@ -437,6 +444,10 @@ const TEXTOS = {
  * entrega en curso) se abre solo; con `inclinado`, vista de 45° girada hacia `rumbo` (solo con Map
  * ID: el mapa vectorial). `alTocarMapa` recibe el punto tocado (para elegir la entrega). Una sola
  * pieza para el panel y las apps en la web.
+ * C-MAPA-LLEGADA: con `llegada` (el móvil está a menos de 200 m del destino, `vistaDeLlegada`) el
+ * mapa deja de encuadrar el recorrido y se queda centrado en el destino, de cerca.
+ * C-MAPA-ABRE-DONDE-ESTAS: sin puntos dibujados, si `centro` cambia (llegó el GPS de la persona) el
+ * mapa se mueve ahí.
  */
 export function MapaGoogleBajoDemanda({
   llave,
@@ -453,6 +464,7 @@ export function MapaGoogleBajoDemanda({
   abierto: abiertoInicial = false,
   inclinado = false,
   rumbo = 0,
+  llegada = null,
 }: {
   llave: string;
   mapId?: string | null;
@@ -468,6 +480,7 @@ export function MapaGoogleBajoDemanda({
   abierto?: boolean;
   inclinado?: boolean;
   rumbo?: number;
+  llegada?: VistaMapa | null;
 }) {
   const t = TEXTOS[idioma === 'es' ? 'es' : 'en'];
   // Abierto si la pantalla es de viaje o entrega en curso, o si la persona tocó «Ver en el mapa».
@@ -480,6 +493,8 @@ export function MapaGoogleBajoDemanda({
   const dibujados = useRef<Quitable[]>([]);
   const marcasPorId = useRef(new Map<string, Quitable>());
   const fijaDibujada = useRef<string | null>(null);
+  const llegadaAplicada = useRef('');
+  const centroAplicado = useRef('');
   const vectorial = mapIdValido(mapId);
   const alTocar = useRef(alTocarMapa);
   useEffect(() => {
@@ -507,6 +522,7 @@ export function MapaGoogleBajoDemanda({
           if (e.latLng) alTocar.current?.({ lat: e.latLng.lat(), lng: e.latLng.lng() });
         });
         mapa.current = m;
+        centroAplicado.current = `${centro.lat},${centro.lng},${zoom}`;
         setEstado('listo');
       })
       .catch((e: unknown) => {
@@ -522,6 +538,8 @@ export function MapaGoogleBajoDemanda({
       dibujados.current = [];
       marcasPorId.current = new Map();
       fijaDibujada.current = null;
+      llegadaAplicada.current = '';
+      centroAplicado.current = '';
       mapa.current = null;
       api.current = null;
     };
@@ -534,6 +552,7 @@ export function MapaGoogleBajoDemanda({
     ...lineas.map((l) => `${l.id}:${l.puntos.map((p) => `${p.lat},${p.lng}`).join(';')}`),
     ...circulos.map((c) => `${c.id}:${c.centro.lat},${c.centro.lng}:${c.metros}`),
     `r${Math.round(rumbo)}`,
+    `l${llegada ? `${llegada.centro.lat},${llegada.centro.lng},${llegada.zoom}` : ''}`,
   ].join('|');
   useEffect(() => {
     const g = api.current;
@@ -541,11 +560,21 @@ export function MapaGoogleBajoDemanda({
     if (estado !== 'listo' || !g || !m) return;
     const enViaje = inclinado && vectorial;
     const fija = firmaFija(puntos, lineas, circulos);
+    const claveLlegada = llegada
+      ? `${llegada.centro.lat},${llegada.centro.lng},${llegada.zoom}`
+      : '';
+    const cambioLlegada = claveLlegada !== llegadaAplicada.current;
+    llegadaAplicada.current = claveLlegada;
     if (fija === fijaDibujada.current) {
       // Solo cambiaron posiciones (GPS): se mueven las marcas. En viaje no se vuelve a encuadrar
       // (aplanaría el mapa): solo se corrige el rumbo. Fuera de viaje, se encuadra como siempre.
       for (const p of puntos) marcasPorId.current.get(p.id)?.mover?.(p);
-      if (enViaje) m.setHeading?.(rumbo);
+      // C-MAPA-LLEGADA: al entrar o salir de los 200 m se mueve la cámara UNA vez; estando cerca,
+      // las lecturas siguientes no la tocan (la persona puede mover el mapa con el dedo).
+      if (cambioLlegada) encuadrar(g, m, puntos, zoom, enViaje, rumbo, llegada);
+      else if (llegada) {
+        if (enViaje) m.setHeading?.(rumbo);
+      } else if (enViaje) m.setHeading?.(rumbo);
       else encuadrar(g, m, puntos, zoom, false, rumbo);
       return;
     }
@@ -554,7 +583,7 @@ export function MapaGoogleBajoDemanda({
     const r = dibujarTodo(
       g,
       m,
-      { puntos, lineas, circulos, zoom, avanzadas: vectorial, inclinado: enViaje, rumbo },
+      { puntos, lineas, circulos, zoom, avanzadas: vectorial, inclinado: enViaje, rumbo, llegada },
       dibujados.current,
     );
     dibujados.current = r.todos;
@@ -563,6 +592,19 @@ export function MapaGoogleBajoDemanda({
     // Se redibuja cuando el mapa queda listo o cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firma, estado]);
+
+  // C-MAPA-ABRE-DONDE-ESTAS: sin nada dibujado (elegir un punto), el mapa sigue al centro que le
+  // pasan: cuando llega la ubicación de la persona, se mueve ahí.
+  useEffect(() => {
+    const m = mapa.current;
+    if (estado !== 'listo' || !m || puntos.length > 0) return;
+    const clave = `${centro.lat},${centro.lng},${zoom}`;
+    if (clave === centroAplicado.current) return;
+    centroAplicado.current = clave;
+    m.setCenter(centro);
+    m.setZoom(zoom);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centro.lat, centro.lng, zoom, estado, puntos.length]);
 
   if (!abierto)
     return (
