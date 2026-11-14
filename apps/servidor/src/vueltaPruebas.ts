@@ -20,7 +20,14 @@ import type { Env } from './env';
 export const TOPE_VUELTA_PRUEBAS = { escritas: 6_000 };
 /** El recorrido completo de una rama (`rama-…`) prueba todos los servicios: tope aparte. */
 export const TOPE_VUELTA_RAMA = { escritas: 20_000 };
-export const TOPE_DIA_PRUEBAS = { escritas: 30_000 };
+/**
+ * Tope diario del sitio de pruebas. Subió de 30.000 a 120.000 el 14 nov 2026: en una noche con
+ * varias ramas probándose a la vez (cada recorrido de rama escribe unas 7.000 filas) el tope de
+ * 30.000 frenó la prueba del circuito de cobro, que es obligatoria antes de publicar pagos. Con
+ * 120.000 al día, el peor mes posible son 3,6 millones de escrituras (menos de 4 dólares en D1).
+ * El freno de verdad contra un bucle sigue siendo el tope POR VUELTA, que no cambia.
+ */
+export const TOPE_DIA_PRUEBAS = { escritas: 120_000 };
 export const topeDeVuelta = (id: string) =>
   id.startsWith('rama-') ? TOPE_VUELTA_RAMA : TOPE_VUELTA_PRUEBAS;
 export const CABECERA_VUELTA = 'x-vuelta-pruebas';
