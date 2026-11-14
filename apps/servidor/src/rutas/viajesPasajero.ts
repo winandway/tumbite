@@ -15,7 +15,6 @@ import {
   telefonoCanonico,
   VALOR_MAXIMO_ENVIO_POR_DEFECTO,
   tarifaXl,
-  estimarRuta,
   numeroEmergencia,
   perfilPasajeros,
   METODOS_PAGO_VIAJE,
@@ -40,6 +39,7 @@ import { enviarSms } from '../sms';
 import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } from './servicios';
 import { leerConfigPais, MONEDA_POR_PAIS, paisIncompleto } from '../internacional/paises';
 import { zonaPara } from './zonas';
+import { rutaParaCotizar } from '../rutaPorCalles';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -380,7 +380,9 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   const tarifa = d.categoria === 'xl' && d.servicio === 'carro' ? tarifaXl(normal) : normal;
   if (!tarifa || (d.categoria === 'xl' && d.servicio !== 'carro'))
     throw new ErrorDatos('Carro XL todavía no está disponible en tu ciudad.', 'categoria', 409);
-  const ruta = estimarRuta(tarifa, d.origen, d.destino);
+  // C-RUTA-POR-CALLES: distancia y tiempo reales por calles (Google Routes, sin tráfico); si no se
+  // puede, la fórmula de siempre, sin error para el pasajero. Solo para el precio.
+  const ruta = await rutaParaCotizar(c.env, db, u.id, tarifa, d.origen, d.destino);
   if (ruta.distanciaM < 200)
     throw new ErrorDatos('El destino está demasiado cerca del punto de recogida.', 'destino', 422);
   if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[d.servicio] * 1000)
@@ -394,8 +396,9 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     .prepare(
       `INSERT INTO cotizaciones_viaje (id, cliente_id, servicio_id, zona_id, tarifa_id,
          origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
-         distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en, categoria)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en, categoria,
+         fuente_distancia)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -418,6 +421,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
       fila.moneda,
       venceEn,
       d.categoria,
+      ruta.fuente,
     )
     .run();
   const cotizacion: CotizacionViaje = {
@@ -428,6 +432,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     moneda: fila.moneda,
     distanciaM: ruta.distanciaM,
     duracionS: ruta.duracionS,
+    fuenteDistancia: ruta.fuente,
     desglose,
     total: desglose.total,
     venceEn,
