@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { crearBasePruebas } from '../pruebas/d1';
+import { mundo } from '../pruebas/ayuda';
+import { TAREAS_RELOJ, correrRelojUnaVez } from './operacion';
 import { TAREA_TASA_BCV, saludTasaBcv, tasaVigente, tomarTasaBcv } from './tasasReferencia';
 
 /**
@@ -183,5 +185,32 @@ describe('C-TASA-BCV-AUTO', () => {
         })
       ).estado,
     ).toBe('guardada');
+  });
+
+  it('en el reloj real: declara una fila y 60 vueltas (con las 14:00) escriben solo esa fila de más', async () => {
+    const t = TAREAS_RELOJ.find((x) => x.nombre === 'tasa_bcv');
+    expect(t).toMatchObject({ critica: false, escriturasEsperadas: 1 });
+    const vueltas = async (html: string | null) => {
+      const m = mundo();
+      await m.cuenta('cliente');
+      const l = lector(html);
+      const base = { ...(m.extra as object), ENTORNO_RELOJ: 'produccion', __lectorTasaBcv: l.leer };
+      await correrRelojUnaVez(base as never, m.DB, '2026-11-14T13:29', 'externo');
+      const cambios = async () =>
+        Number((await m.DB.prepare('SELECT total_changes() AS n').first<{ n: number }>())?.n ?? 0);
+      const antes = await cambios();
+      for (let i = 0; i < 60; i++) {
+        const ventana = `2026-11-14T${i < 30 ? '13' : '14'}:${String((30 + i) % 60).padStart(2, '0')}`;
+        const env = { ...base, __ahora: Date.parse(`${ventana}:00Z`) };
+        await correrRelojUnaVez(env as never, m.DB, ventana, 'externo');
+      }
+      return { escritas: (await cambios()) - antes, lecturas: l.llamadas };
+    };
+    const sinTasa = await vueltas(null);
+    const conTasa = await vueltas(pagina('914,02180000', '2026-11-14'));
+    expect(sinTasa.lecturas).toBe(1);
+    expect(conTasa.lecturas).toBe(1);
+    // La única diferencia: la fila de la tasa del día.
+    expect(conTasa.escritas - sinTasa.escritas).toBe(1);
   });
 });

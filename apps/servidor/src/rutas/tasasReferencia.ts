@@ -187,6 +187,12 @@ export const TAREA_TASA_BCV: TareaReloj = {
     const d = new Date(ahora);
     const hhmm = d.toISOString().slice(11, 16);
     if (hhmm !== '14:00' && hhmm !== '20:00') return null;
+    // Ninguna prueba sale a internet: sin lector de prueba, dentro de vitest no se lee nada.
+    const enPruebas = Boolean(
+      (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
+        ?.VITEST,
+    );
+    if (enPruebas && !prueba.__lectorTasaBcv) return null;
     if (hhmm === '20:00') {
       // La de las 14:00 de hoy quedó hace 6 horas: con algo guardado en las últimas 12, no se lee.
       const hubo = await db
