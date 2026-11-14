@@ -3737,6 +3737,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Fuera de alcance a propósito:** los editores de zonas (`EditorArea`, `SuperCiudad`) dibujan polígonos propios, no contenido de Places: siguen en Leaflet.
 - **Pruebas:** `packages/compartido/src/mapaWebGoogle.test.ts` (elección y carga), `apps/panel/src/sitio/ElegirPunto.test.tsx` (con llave: botón y Google al tocar; sin llave: Leaflet; comprobada en rojo antes de cambiar `ElegirPunto`) y `apps/panel/src/sitio/MapaGoogleBajoDemanda.test.tsx` (no carga antes de tocar, dibuja, devuelve el punto tocado, avisa si Google no carga).
 - **Qué NO tocar:** no cargar el mapa de Google al abrir la página (solo al tocar); no poner la llave del servidor en el navegador; no dibujar puntos de Places sobre Leaflet cuando la llave exista.
+- **Pendiente al encender la llave (hallazgo del revisor, 13 nov):** la cabecera de seguridad del sitio (`apps/servidor/src/seguridad.ts`) todavía no permite `https://maps.googleapis.com` ni `https://maps.gstatic.com` en `script-src` y `connect-src`. En el mismo trabajo que ponga `GOOGLE_MAPS_WEB_KEY` hay que agregarlos, con su prueba en `app.test.ts`; si no, el navegador bloquea el mapa.
 
 ## C-GUIA-INSTALAR-NAVEGADOR · Guía pública para instalar Divoox desde el navegador del celular (13 nov 2026, punto 10 del reporte) — todos los países
 
