@@ -543,12 +543,7 @@ describe('C-PAGO-MOVIL-VIAJE: el pasajero paga por pago móvil y el conductor co
 
 describe('C-MOTO-POR-PAIS: la compuerta de producción por país (hoy cerrada)', () => {
   const abrir = (e: E, pais: string, cuerpo: Record<string, unknown>) =>
-    e.m.llamar(
-      'PUT',
-      `/datos/admin/pasajeros-pais/${pais}/moto`,
-      { clave: 'clave-segura-1', ...cuerpo },
-      e.admin.token,
-    );
+    e.m.llamar('PUT', `/datos/admin/pasajeros-pais/${pais}/moto`, cuerpo, e.admin.token);
 
   it('nace cerrada: en producción Moto no se enciende en Venezuela ni en ningún otro país', async () => {
     const e = await escenario('divoox.com');
@@ -563,20 +558,46 @@ describe('C-MOTO-POR-PAIS: la compuerta de producción por país (hoy cerrada)',
     expect(await saludServicios(e.m.DB, 'produccion')).toBe('ok');
   });
 
-  it('abrir exige el país permitido, la contraseña, la solicitud de la marca y la confirmación', async () => {
+  it('abrir exige el país permitido y una sola confirmación; ya no pide contraseña ni el número de la marca', async () => {
+    // Cambio del 14 nov 2026 (Richard): el superadmin ya inició sesión y el número de la marca es
+    // un dato fijo del registro; la compuerta queda en un interruptor con su confirmación.
     const e = await escenario('divoox.com');
-    const marca = { abierto: true, solicitudMarca: '97000001', confirmo: true };
-    expect((await abrir(e, 'US', marca)).estado).toBe(409);
-    expect((await abrir(e, 'CO', marca)).estado).toBe(409);
-    expect((await abrir(e, 'VE', { abierto: true, confirmo: true })).estado).toBe(422);
-    expect((await abrir(e, 'VE', { abierto: true, solicitudMarca: '97000001' })).estado).toBe(422);
-    expect((await abrir(e, 'VE', { ...marca, clave: 'otra-clave' })).estado).toBe(403);
+    expect((await abrir(e, 'US', { abierto: true, confirmo: true })).estado).toBe(409);
+    expect((await abrir(e, 'CO', { abierto: true, confirmo: true })).estado).toBe(409);
+    expect((await abrir(e, 'VE', { abierto: true })).estado).toBe(422);
     expect((await abrirCaracas(e)).estado).toBe(409);
+    // Solo el equipo: otra cuenta no puede.
+    const cliente = await e.m.cuenta('cliente');
+    const ajeno = await e.m.llamar(
+      'PUT',
+      '/datos/admin/pasajeros-pais/VE/moto',
+      { abierto: true, confirmo: true },
+      cliente.token,
+    );
+    expect(ajeno.estado).toBe(403);
+    expect((await abrir(e, 'VE', { abierto: true, confirmo: true })).estado).toBe(200);
+    // Queda la solicitud de Estados Unidos como dato del registro, y quién abrió y cuándo.
+    const lista = await e.m.llamar('GET', '/datos/admin/pasajeros-pais', undefined, e.admin.token);
+    expect(lista.datos.paises[0]).toMatchObject({
+      servicio: 'moto',
+      pais: 'VE',
+      abierto: true,
+      solicitudMarca: '50218051',
+    });
+    expect(lista.datos.paises[0].abiertoEn).toMatch(/^\d{4}-\d{2}-\d{2} /);
+    const rastro = await e.m.DB.prepare(
+      "SELECT actor_id, despues_json FROM auditoria_admin WHERE accion = 'pasajeros.pais' ORDER BY id DESC LIMIT 1",
+    ).first<{ actor_id: string; despues_json: string }>();
+    expect(rastro?.actor_id).toBe(e.admin.id);
+    expect(JSON.parse(rastro?.despues_json ?? '{}')).toMatchObject({
+      abiertoPor: e.admin.id,
+      solicitudMarca: '50218051',
+    });
   });
 
   it('abierto Venezuela, Moto funciona en Caracas en producción; Miami sigue bloqueada; al cerrar se apaga', async () => {
     const e = await escenario('divoox.com');
-    const ok = await abrir(e, 'VE', { abierto: true, solicitudMarca: '97000001', confirmo: true });
+    const ok = await abrir(e, 'VE', { abierto: true, confirmo: true });
     expect(ok.estado).toBe(200);
     expect((await abrirCaracas(e)).estado).toBe(201);
     expect((await cotizar(e, { lat: 10.4806, lng: -66.8406 })).estado).toBe(201);

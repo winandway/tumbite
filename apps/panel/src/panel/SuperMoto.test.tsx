@@ -251,54 +251,41 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     );
   });
 
-  it('abrir el país exige el número de solicitud; con todo manda el PUT completo', async () => {
+  it('abrir el país es un botón y una sola confirmación en línea: sin número de marca ni contraseña', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas);
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
     const fila = await screen.findByTestId('pais-VE');
     expect(within(fila).getByText('Cerrado')).toBeTruthy();
-    const abrir = within(fila).getByRole('button', { name: 'Abrir en producción' });
-    await userEvent.click(
-      within(fila).getByLabelText(
-        'Confirmo que lo legal y el seguro de pasajeros de este país están listos',
-      ),
-    );
-    await userEvent.type(within(fila).getByLabelText('Tu contraseña'), 'clave-segura');
-    // Sin el número de la solicitud de marca no se puede enviar.
-    expect((abrir as HTMLButtonElement).disabled).toBe(true);
-    await userEvent.click(abrir);
+    // Nada que escribir: ni el número de la marca ni la contraseña.
+    expect(within(fila).queryByLabelText(/contraseña/i)).toBeNull();
+    expect(within(fila).queryByLabelText(/solicitud de registro/i)).toBeNull();
+    expect(within(fila).queryAllByRole('textbox')).toHaveLength(0);
+    await userEvent.click(within(fila).getByRole('button', { name: 'Abrir en producción' }));
+    // Todavía no se mandó nada: primero la confirmación, en la misma tarjeta (sin ventana).
     expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(false);
-    await userEvent.type(
-      within(fila).getByLabelText(
-        'Número de la solicitud de registro de la marca Divoox (en este país o en Estados Unidos)',
-      ),
-      'SOL-2026-001',
-    );
-    expect((abrir as HTMLButtonElement).disabled).toBe(false);
-    await userEvent.click(abrir);
+    expect(within(fila).getByText(/¿Abrir Moto en VE en producción\?/)).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await userEvent.click(within(fila).getByRole('button', { name: 'Sí, abrir' }));
     await waitFor(() => {
       const put = llamadas.find((l) => l.metodo === 'PUT');
       expect(put?.url).toMatch(/\/datos\/admin\/pasajeros-pais\/VE\/moto$/);
-      expect(put?.cuerpo).toEqual({
-        abierto: true,
-        solicitudMarca: 'SOL-2026-001',
-        confirmo: true,
-        clave: 'clave-segura',
-        nota: '',
-      });
+      expect(put?.cuerpo).toEqual({ abierto: true, confirmo: true, nota: '' });
     });
   });
 
-  it('la contraseña no queda guardada en el borrador del país', async () => {
-    servidor([]);
+  it('cancelar la confirmación no manda nada y vuelve el botón', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
     const fila = await screen.findByTestId('pais-VE');
-    await userEvent.type(within(fila).getByLabelText('Tu contraseña'), 'clave-secreta');
-    await new Promise((r) => setTimeout(r, 700));
-    expect(JSON.stringify({ ...localStorage })).not.toContain('clave-secreta');
+    await userEvent.click(within(fila).getByRole('button', { name: 'Abrir en producción' }));
+    await userEvent.click(within(fila).getByRole('button', { name: 'Cancelar' }));
+    expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(false);
+    expect(within(fila).getByRole('button', { name: 'Abrir en producción' })).toBeTruthy();
   });
 
-  it('cerrar el país vive en los tres puntos y solo pide la contraseña', async () => {
+  it('cerrar el país vive en los tres puntos y pide una sola confirmación, sin contraseña', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas, { abierto: true });
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
@@ -307,12 +294,14 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     expect(within(fila).queryByRole('button', { name: 'Cerrar en producción' })).toBeNull();
     await userEvent.click(within(fila).getByRole('button', { name: 'Más opciones del país' }));
     await userEvent.click(within(fila).getByRole('menuitem', { name: 'Cerrar en producción' }));
-    await userEvent.type(within(fila).getByLabelText('Tu contraseña'), 'clave-segura');
+    expect(within(fila).queryByLabelText(/contraseña/i)).toBeNull();
+    expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(false);
     await userEvent.click(within(fila).getByRole('button', { name: 'Confirmar el cierre' }));
     await waitFor(() =>
-      expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toMatchObject({
+      expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toEqual({
         abierto: false,
-        clave: 'clave-segura',
+        confirmo: false,
+        nota: '',
       }),
     );
   });

@@ -1953,3 +1953,15 @@ body.modo-tableta .pd .pd-contenido {
 .pd-contenido .tarjeta > h3:first-child {
   margin-top: 0;
 }
+
+/* Confirmación en línea (sin ventana): la pregunta y sus dos botones, dentro de la misma tarjeta. */
+.pd-confirmar {
+  padding: 14px 16px;
+  border: 1px solid #f0d48a;
+  border-radius: 12px;
+  background: var(--pd-espera-suave);
+}
+.pd-confirmar p {
+  margin: 0 0 12px;
+  font-weight: 600;
+}

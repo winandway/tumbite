@@ -6,18 +6,25 @@ import { z } from 'zod';
  *
  * - Solo se pueden abrir los pares que el código permite (`PAISES_PASAJEROS_ABRIBLES`): Moto y Carro
  *   en Venezuela. Estados Unidos y Colombia siguen bloqueados por código, con o sin fila.
- * - Abrirlo lo hace una persona del equipo desde el superadmin, con el número de la solicitud de
- *   registro de la marca Divoox en ese país o la de Estados Unidos (regla de Richard, ajustada el
- *   14 nov 2026: con la marca presentada en EE. UU. se puede abrir el piloto de otro país mientras
- *   se presenta allá) y la confirmación escrita.
+ * - Abrirlo lo hace una persona del equipo desde el superadmin, con UNA confirmación de que lo
+ *   legal y el seguro están listos. Desde el 14 nov 2026 (Richard) no se escribe el número de la
+ *   marca ni se repite la contraseña: la solicitud de Estados Unidos queda guardada como dato fijo
+ *   (con la marca presentada en EE. UU. se puede abrir el piloto de otro país mientras se presenta allá).
  * - En el sitio de pruebas nada de esto hace falta (C-MOTO-SOLO-PRUEBAS sigue igual).
  */
 export const PAISES_PASAJEROS_ABRIBLES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['moto', new Set(['VE'])],
   // C-CARRO-POR-PAIS (13 nov 2026, orden de Richard): Carro (taxi) en Venezuela por la MISMA compuerta
-  // (contraseña, solicitud de la marca y confirmación legal y de seguro). Nace cerrada.
+  // (una confirmación de lo legal y el seguro). Nace cerrada.
   ['carro', new Set(['VE'])],
 ]);
+
+/**
+ * La solicitud de registro de la marca Divoox presentada en Estados Unidos (regla de Richard: no
+ * se arranca en un país sin la marca en proceso; desde el 14 nov 2026 la de EE. UU. vale para abrir
+ * el piloto de otro país). Es un dato fijo del registro: nadie tiene que escribirlo al abrir.
+ */
+export const SOLICITUD_MARCA_EEUU = '50218051';
 
 export const clavePasajerosPais = (pais: string) => `pasajeros_pais:${pais.toUpperCase()}`;
 

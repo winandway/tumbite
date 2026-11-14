@@ -14,7 +14,6 @@ import {
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
-import { CampoClave } from './CampoClave';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { pedir } from './api';
 
@@ -90,20 +89,16 @@ const T = {
     servicioMoto: 'Moto',
     desde: 'desde',
     solicitudVista: 'Solicitud de marca',
-    solicitud:
-      'Número de la solicitud de registro de la marca Divoox (en este país o en Estados Unidos)',
-    solicitudEjemplo: 'El número que dio la oficina de marcas',
-    confirmo: 'Confirmo que lo legal y el seguro de pasajeros de este país están listos',
-    clave: 'Tu contraseña',
-    ver: 'Ver la contraseña',
-    ocultar: 'Ocultar la contraseña',
-    nota: 'Nota (opcional)',
     abrirPais: 'Abrir en producción',
+    confirmarTitulo: 'Confirmación',
+    confirmarAbrir: (servicio: string, pais: string) =>
+      `¿Abrir ${servicio} en ${pais} en producción? Al abrir confirmas que lo legal y el seguro de pasajeros de ese país están listos.`,
+    confirmarCerrar: (servicio: string, pais: string) =>
+      `¿Cerrar ${servicio} en ${pais}? Deja de funcionar en todas las ciudades de ese país en producción.`,
+    siAbrir: 'Sí, abrir',
     paisAbierto: 'El país quedó abierto para Moto en producción.',
     opcionesPais: 'Más opciones del país',
     cerrarPais: 'Cerrar en producción',
-    cerrarAviso:
-      'Al cerrar, Moto deja de funcionar en todas las ciudades de este país en producción.',
     confirmarCierre: 'Confirmar el cierre',
     cancelar: 'Cancelar',
     paisCerrado: 'El país quedó cerrado para Moto en producción.',
@@ -310,18 +305,16 @@ const T = {
     servicioMoto: 'Moto',
     desde: 'since',
     solicitudVista: 'Trademark application',
-    solicitud: 'Divoox trademark application number (in this country or in the United States)',
-    solicitudEjemplo: 'The number given by the trademark office',
-    confirmo: 'I confirm the legal work and passenger insurance for this country are ready',
-    clave: 'Your password',
-    ver: 'Show password',
-    ocultar: 'Hide password',
-    nota: 'Note (optional)',
     abrirPais: 'Open in production',
+    confirmarTitulo: 'Confirmation',
+    confirmarAbrir: (servicio: string, pais: string) =>
+      `Open ${servicio} in ${pais} in production? By opening you confirm the legal work and passenger insurance for that country are ready.`,
+    confirmarCerrar: (servicio: string, pais: string) =>
+      `Close ${servicio} in ${pais}? It stops working in every city of that country in production.`,
+    siAbrir: 'Yes, open',
     paisAbierto: 'The country is now open for Moto in production.',
     opcionesPais: 'More country options',
     cerrarPais: 'Close in production',
-    cerrarAviso: 'Closing stops Moto in every city of this country in production.',
     confirmarCierre: 'Confirm closing',
     cancelar: 'Cancel',
     paisCerrado: 'The country is now closed for Moto in production.',
@@ -797,52 +790,34 @@ type PaisPasajeros = {
   abiertoEn: string | null;
 };
 
-function FilaPais({
-  p,
-  idioma,
-  t,
-  alCambiar,
-}: {
-  p: PaisPasajeros;
-  idioma: Idioma;
-  t: Textos;
-  alCambiar: () => void;
-}) {
-  const b = useBorrador({
-    formulario: `moto-pais-${p.pais}-${p.servicio}`,
-    cuenta: 'superadmin',
-    inicial: { solicitudMarca: '', confirmo: false, clave: '', nota: '' },
-    almacen: almacenNavegador,
-    sensibles: ['clave'],
-  });
-  const [cerrando, setCerrando] = useState(false);
-  const [claveCierre, setClaveCierre] = useState('');
+function FilaPais({ p, t, alCambiar }: { p: PaisPasajeros; t: Textos; alCambiar: () => void }) {
+  // C-MOTO-POR-PAIS (14 nov 2026, Richard): un botón y una sola confirmación en línea. Sin número
+  // de marca ni contraseña: el superadmin ya inició sesión y la marca es un dato fijo del registro.
+  const [confirmando, setConfirmando] = useState<'abrir' | 'cerrar' | null>(null);
+  const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
-  const v = b.valores;
 
   async function enviar(abierto: boolean) {
     setError('');
     setOk('');
+    setEnviando(true);
     try {
       await pedir('PUT', `/datos/admin/pasajeros-pais/${p.pais}/${p.servicio}`, {
         abierto,
-        solicitudMarca: abierto ? v.solicitudMarca.trim() : '',
-        confirmo: abierto ? v.confirmo : false,
-        clave: abierto ? v.clave : claveCierre,
-        nota: v.nota.trim(),
+        confirmo: abierto,
+        nota: '',
       });
-      if (abierto) await b.limpiar();
-      setCerrando(false);
-      setClaveCierre('');
+      setConfirmando(null);
       setOk(abierto ? t.paisAbierto : t.paisCerrado);
       alCambiar();
     } catch (x) {
       setError(mensaje(x));
+    } finally {
+      setEnviando(false);
     }
   }
-
-  const puedeAbrir = v.solicitudMarca.trim().length >= 4 && v.confirmo && v.clave.length > 0;
+  const nombre = enPalabras(t.nombresServicio, p.servicio);
 
   return (
     <li
@@ -864,96 +839,46 @@ function FilaPais({
         ) : null}
       </div>
       {p.abierto ? (
-        <>
-          <MenuTresPuntos
-            etiqueta={t.opcionesPais}
-            opciones={[{ texto: t.cerrarPais, peligro: true, alTocar: () => setCerrando(true) }]}
-          />
-          {cerrando ? (
-            <div className="formulario">
-              <p className="aviso">{t.cerrarAviso}</p>
-              <CampoClave
-                etiqueta={t.clave}
-                valor={claveCierre}
-                cambiar={setClaveCierre}
-                textoVer={t.ver}
-                textoOcultar={t.ocultar}
-              />
-              <div className="fila-botones">
-                <button
-                  type="button"
-                  className="boton"
-                  disabled={!claveCierre}
-                  onClick={() => void enviar(false)}
-                >
-                  {t.confirmarCierre}
-                </button>
-                <button
-                  type="button"
-                  className="boton secundario"
-                  onClick={() => {
-                    setCerrando(false);
-                    setClaveCierre('');
-                  }}
-                >
-                  {t.cancelar}
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </>
-      ) : (
-        <form
-          className="formulario"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (puedeAbrir) void enviar(true);
-          }}
-          noValidate
-        >
-          <AvisoBorrador
-            visible={b.recuperado}
-            idioma={idioma}
-            empezar={() => void b.empezarDeNuevo()}
-          />
-          <label>
-            {t.solicitud}
-            <input
-              value={v.solicitudMarca}
-              maxLength={60}
-              onChange={(e) => b.cambiar('solicitudMarca', e.target.value)}
-              placeholder={t.solicitudEjemplo}
-              autoComplete="off"
-            />
-          </label>
-          <label className="casilla">
-            <input
-              type="checkbox"
-              checked={v.confirmo}
-              onChange={(e) => b.cambiar('confirmo', e.target.checked)}
-            />
-            {t.confirmo}
-          </label>
-          <label>
-            {t.nota}
-            <input
-              value={v.nota}
-              maxLength={300}
-              onChange={(e) => b.cambiar('nota', e.target.value)}
-            />
-          </label>
-          <CampoClave
-            etiqueta={t.clave}
-            valor={v.clave}
-            cambiar={(x) => b.cambiar('clave', x)}
-            textoVer={t.ver}
-            textoOcultar={t.ocultar}
-          />
-          <button type="submit" className="boton" disabled={!puedeAbrir}>
+        <MenuTresPuntos
+          etiqueta={t.opcionesPais}
+          opciones={[
+            { texto: t.cerrarPais, peligro: true, alTocar: () => setConfirmando('cerrar') },
+          ]}
+        />
+      ) : confirmando === null ? (
+        <div className="fila-botones">
+          <button type="button" className="boton" onClick={() => setConfirmando('abrir')}>
             {t.abrirPais}
           </button>
-        </form>
-      )}
+        </div>
+      ) : null}
+      {confirmando ? (
+        <div className="pd-confirmar" role="group" aria-label={t.confirmarTitulo}>
+          <p>
+            {confirmando === 'abrir'
+              ? t.confirmarAbrir(nombre, p.pais)
+              : t.confirmarCerrar(nombre, p.pais)}
+          </p>
+          <div className="fila-botones">
+            <button
+              type="button"
+              className="boton"
+              disabled={enviando}
+              onClick={() => void enviar(confirmando === 'abrir')}
+            >
+              {confirmando === 'abrir' ? t.siAbrir : t.confirmarCierre}
+            </button>
+            <button
+              type="button"
+              className="boton secundario"
+              disabled={enviando}
+              onClick={() => setConfirmando(null)}
+            >
+              {t.cancelar}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {error ? (
         <p className="error-general" role="alert">
           {error}
@@ -968,7 +893,7 @@ function FilaPais({
   );
 }
 
-function CompuertaPais({ idioma, t }: { idioma: Idioma; t: Textos }) {
+function CompuertaPais({ t }: { t: Textos }) {
   const [paises, setPaises] = useState<PaisPasajeros[] | null>(null);
   const [error, setError] = useState('');
   const cargar = useCallback(() => {
@@ -989,13 +914,7 @@ function CompuertaPais({ idioma, t }: { idioma: Idioma; t: Textos }) {
       {paises && paises.length === 0 ? <p className="pista">{t.sinPaises}</p> : null}
       <ul className="lista">
         {(paises ?? []).map((p) => (
-          <FilaPais
-            key={`${p.pais}-${p.servicio}`}
-            p={p}
-            idioma={idioma}
-            t={t}
-            alCambiar={cargar}
-          />
+          <FilaPais key={`${p.pais}-${p.servicio}`} p={p} t={t} alCambiar={cargar} />
         ))}
       </ul>
     </>
@@ -1942,7 +1861,7 @@ export function SuperMoto({ base, idioma }: { base: string; idioma: Idioma }) {
       <h1>{t.titulo}</h1>
       <p className="pista">{t.intro}</p>
       <AbrirCiudad idioma={idioma} t={t} />
-      <CompuertaPais idioma={idioma} t={t} />
+      <CompuertaPais t={t} />
       <TasaReferencia idioma={idioma} t={t} />
       {conductor ? (
         <Conductor

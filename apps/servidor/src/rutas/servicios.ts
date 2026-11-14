@@ -4,7 +4,7 @@ import { Hono } from 'hono';
 import { esConductorOcupado } from '../operaciones';
 import { z } from 'zod';
 import type { Env } from '../env';
-import { nuevoId, verificarClave } from '../cripto';
+import { nuevoId } from '../cripto';
 import { SERVICIOS_EN_PRUEBA, SERVICIOS_PILOTO, serviciosImplementados } from '../esquema';
 import { esParticipante } from './piloto';
 import { entornoDe } from '../entorno';
@@ -17,6 +17,7 @@ import { SERVICIOS_VIAJE, perfilPasajeros } from '@tumbite/compartido';
 import { paisDelConductor } from '../paisConductor';
 import {
   PAISES_PASAJEROS_ABRIBLES,
+  SOLICITUD_MARCA_EEUU,
   abrible,
   aperturaPais,
   aperturasVigentes,
@@ -1408,9 +1409,13 @@ servicios.get('/admin/pasajeros-pais', async (c) => {
 });
 
 /**
- * Abre o cierra un servicio de pasajeros en un país de producción. Abrir exige: que el código lo
- * permita (Moto en Venezuela; EE. UU. y Colombia no), el número de la solicitud de registro de la
- * marca Divoox (en ese país o, desde el 14 nov 2026 por decisión de Richard, la de Estados Unidos) y la confirmación escrita, además de la contraseña de quien lo hace.
+ * Abre o cierra un servicio de pasajeros en un país de producción. Solo el superadmin, con su
+ * sesión. Abrir exige que el código lo permita (Moto y Carro en Venezuela; EE. UU. y Colombia no) y
+ * UNA confirmación de que lo legal y el seguro de pasajeros de ese país están listos.
+ *
+ * Cambio del 14 nov 2026 (Richard): ya no se escribe el número de la solicitud de la marca (queda
+ * guardada la de Estados Unidos, `SOLICITUD_MARCA_EEUU`) ni se repite la contraseña. Sigue quedando
+ * quién abrió o cerró y cuándo, en `config` y en la auditoría.
  */
 servicios.put('/admin/pasajeros-pais/:pais/:servicio', async (c) => {
   const admin = exigir(c, 'admin');
@@ -1421,28 +1426,14 @@ servicios.put('/admin/pasajeros-pais/:pais/:servicio', async (c) => {
     c,
     z.object({
       abierto: z.boolean(),
-      solicitudMarca: z.string().trim().max(60).default(''),
       confirmo: z.boolean().default(false),
-      clave: z.string().min(1, { error: 'Escribe tu contraseña.' }),
       nota: z.string().trim().max(300).default(''),
     }),
   );
-  const f = await db
-    .prepare('SELECT clave_hash FROM usuarios WHERE id = ?')
-    .bind(admin.id)
-    .first<{ clave_hash: string }>();
-  if (!f || !(await verificarClave(d.clave, f.clave_hash)))
-    throw new ErrorDatos('La contraseña no es correcta.', 'clave', 403);
   const antes = await aperturaPais(db, pais);
   if (d.abierto) {
     if (!abrible(servicio, pais))
       throw new ErrorDatos('Este servicio no se puede abrir en ese país.', 'pais', 409);
-    if (d.solicitudMarca.length < 4)
-      throw new ErrorDatos(
-        'Escribe el número de la solicitud de registro de la marca Divoox (en ese país o en Estados Unidos).',
-        'solicitudMarca',
-        422,
-      );
     if (!d.confirmo)
       throw new ErrorDatos(
         'Confirma que lo legal y el seguro de pasajeros de ese país están listos.',
@@ -1455,7 +1446,7 @@ servicios.put('/admin/pasajeros-pais/:pais/:servicio', async (c) => {
   else servicios_.delete(servicio);
   const despues = {
     servicios: [...servicios_],
-    solicitudMarca: d.abierto ? d.solicitudMarca : (antes?.solicitudMarca ?? '----'),
+    solicitudMarca: d.abierto ? SOLICITUD_MARCA_EEUU : (antes?.solicitudMarca ?? '----'),
     abiertoPor: admin.id,
     abiertoEn: new Date().toISOString().slice(0, 19).replace('T', ' '),
     nota: d.nota,

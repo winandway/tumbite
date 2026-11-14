@@ -191,13 +191,8 @@ describe('C-CARRO-TARIFA-VE: Carro en El Vigía con la tarifa del mercado venezo
 
 describe('C-CARRO-POR-PAIS: Carro en Venezuela se abre en producción por la misma compuerta de Moto', () => {
   const abrir = (e: E, pais: string, cuerpo: Record<string, unknown>) =>
-    e.m.llamar(
-      'PUT',
-      `/datos/admin/pasajeros-pais/${pais}/carro`,
-      { clave: 'clave-segura-1', ...cuerpo },
-      e.admin.token,
-    );
-  const marca = { abierto: true, solicitudMarca: '97000001', confirmo: true };
+    e.m.llamar('PUT', `/datos/admin/pasajeros-pais/${pais}/carro`, cuerpo, e.admin.token);
+  const marca = { abierto: true, confirmo: true };
 
   it('nace cerrada: en producción Carro no se abre en El Vigía y la compuerta la lista cerrada', async () => {
     const e = await escenario('divoox.com');
@@ -216,9 +211,8 @@ describe('C-CARRO-POR-PAIS: Carro en Venezuela se abre en producción por la mis
     const e = await escenario('divoox.com');
     expect((await abrir(e, 'US', marca)).estado).toBe(409);
     expect((await abrir(e, 'CO', marca)).estado).toBe(409);
-    expect((await abrir(e, 'VE', { abierto: true, confirmo: true })).estado).toBe(422);
-    expect((await abrir(e, 'VE', { abierto: true, solicitudMarca: '97000001' })).estado).toBe(422);
-    expect((await abrir(e, 'VE', { ...marca, clave: 'otra-clave' })).estado).toBe(403);
+    // 14 nov 2026: sin contraseña ni número de marca; solo falta la confirmación.
+    expect((await abrir(e, 'VE', { abierto: true })).estado).toBe(422);
   });
 
   it('abierta en Venezuela, Carro funciona en El Vigía; Detroit sigue bloqueada; abrir Carro no abre Moto', async () => {
