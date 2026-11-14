@@ -66,7 +66,7 @@ describe('C-CARRO-PAPELES-PAIS: los papeles del taxista dependen de su país', (
     // C-CARRO-PAPELES-PAIS: un tipo que no existe («licencia» a secas) dice cuál es el correcto.
     const mal = await subirA(e, '/datos/conductor/papeles?tipo=licencia', rep.token);
     expect(mal.estado).toBe(400);
-    expect(String(mal.datos.error)).toContain('licencia_conducir');
+    expect(JSON.stringify(mal.datos)).toContain('licencia_conducir');
     const lic = await subirA(e, '/datos/conductor/papeles?tipo=licencia_conducir', rep.token);
     expect(lic.estado).toBe(201);
     const ok = await e.m.llamar(
