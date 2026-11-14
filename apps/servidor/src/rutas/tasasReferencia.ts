@@ -72,6 +72,8 @@ const sqlUtc = (ms: number) => new Date(ms).toISOString().slice(0, 19).replace('
 const URL_BCV = 'https://www.bcv.org.ve/';
 /** Más de esto de diferencia con la última oficial guardada: no se usa (queda retenida). */
 export const SALTO_MAXIMO_PCT = 20;
+/** Dos lecturas seguidas de una tasa nueva que no se apartan más que esto la confirman. */
+export const MARGEN_CONFIRMA_PCT = 2;
 
 /** Lee la portada del Banco Central: UNA petición, con tope de tiempo, sin reintentos. */
 async function leerPortadaBcv(): Promise<string> {
@@ -110,23 +112,38 @@ export async function tomarTasaBcv(
     console.error('tasa bcv: la portada no trae la tasa o su fecha valor');
     return { estado: 'sin-lectura', motivo: 'la portada cambió de forma' };
   }
-  const ultima = await db
+  // Una sola lectura: la última oficial aceptada, la última retenida anterior y la última del equipo.
+  const ref = await db
     .prepare(
-      "SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv' AND fecha <= ? ORDER BY fecha DESC LIMIT 1",
+      `SELECT
+         (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv' AND fecha <= ?1
+           ORDER BY fecha DESC LIMIT 1) AS oficial,
+         (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv-retenida'
+           AND fecha < ?1 AND fecha >= date(?1, '-${DIAS_VIGENCIA_BCV} days')
+           ORDER BY fecha DESC LIMIT 1) AS retenida,
+         (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'equipo'
+           ORDER BY creado_en DESC LIMIT 1) AS equipo`,
     )
     .bind(leida.fecha)
-    .first<{ tasa: number }>();
+    .first<{ oficial: number | null; retenida: number | null; equipo: number | null }>();
   const pct = opciones.saltoMaximoPct ?? SALTO_MAXIMO_PCT;
-  const retenida = ultima && ultima.tasa > 0 && Math.abs(leida.tasa / ultima.tasa - 1) * 100 > pct;
+  const aparte = (a: number, b: number) => Math.abs(a / b - 1) * 100;
+  // Contra qué se compara: la última oficial; el primer día, la última del equipo (si hay).
+  const contra = ref?.oficial ?? ref?.equipo ?? null;
+  let retenida = contra !== null && contra > 0 && aparte(leida.tasa, contra) > pct;
+  // Devaluación real: la misma tasa nueva (dentro de MARGEN_CONFIRMA_PCT) leída dos días seguidos
+  // se acepta. Mientras tanto, la del equipo manda.
+  if (retenida && ref?.retenida && aparte(leida.tasa, ref.retenida) <= MARGEN_CONFIRMA_PCT)
+    retenida = false;
   await db
     .prepare('INSERT OR REPLACE INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES (?, ?, ?, ?)')
     .bind('VE', leida.fecha, retenida ? 'bcv-retenida' : 'bcv', leida.tasa)
     .run();
-  if (retenida) {
+  if (retenida && contra !== null) {
     console.error(
-      `tasa bcv: ${leida.tasa} se aparta más de ${pct} % de la última (${ultima.tasa}); retenida`,
+      `tasa bcv: ${leida.tasa} se aparta más de ${pct} % de la referencia (${contra}); retenida`,
     );
-    return { estado: 'retenida', tasa: leida.tasa, fecha: leida.fecha, anterior: ultima.tasa };
+    return { estado: 'retenida', tasa: leida.tasa, fecha: leida.fecha, anterior: contra };
   }
   return { estado: 'guardada', tasa: leida.tasa, fecha: leida.fecha };
 }
@@ -145,10 +162,10 @@ export async function saludTasaBcv(
       `SELECT
          (SELECT max(creado_en) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv') AS buena,
          (SELECT max(fecha) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv') AS fecha,
-         (SELECT max(creado_en) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv-retenida') AS retenida`,
+         (SELECT max(fecha) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv-retenida') AS retenida`,
     )
     .first<{ buena: string | null; fecha: string | null; retenida: string | null }>();
-  if (r?.retenida && (!r.buena || r.retenida >= r.buena)) return 'error';
+  if (r?.retenida && (!r.fecha || r.retenida > r.fecha)) return 'error';
   if (!r?.buena || !r.fecha) return 'pendiente';
   const limite = new Date(ahora - 4 * 3600_000 - DIAS_VIGENCIA_BCV * 86_400_000)
     .toISOString()
@@ -179,7 +196,13 @@ export const TAREA_TASA_BCV: TareaReloj = {
         .first();
       if (hubo) return null;
     }
-    return tomarTasaBcv(db, { leer: prueba.__lectorTasaBcv, ahora });
+    // Rango de cordura configurable por variable del sitio (por defecto, 20 %).
+    const pct = Number(env.TASA_BCV_SALTO_PCT);
+    return tomarTasaBcv(db, {
+      leer: prueba.__lectorTasaBcv,
+      ahora,
+      saltoMaximoPct: pct > 0 ? pct : undefined,
+    });
   },
 };
 

@@ -129,4 +129,59 @@ describe('C-TASA-BCV-AUTO', () => {
     expect(l.llamadas).toBe(1);
     expect(TAREA_TASA_BCV.critica).toBe(false);
   });
+
+  it('devaluación real: el mismo salto leído dos días seguidos se acepta; mientras tanto manda la del equipo', async () => {
+    const db = crearBasePruebas();
+    const leer = (t: string, f: string) => lector(pagina(t, f)).leer;
+    await tomarTasaBcv(db, { leer: leer('900,00000000', '2026-11-12'), ahora: AHORA });
+    // Día 1 del salto: retenida.
+    expect(
+      (await tomarTasaBcv(db, { leer: leer('1.200,00000000', '2026-11-13'), ahora: AHORA })).estado,
+    ).toBe('retenida');
+    await db
+      .prepare(
+        "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', '2026-11-14', 'equipo', 1190)",
+      )
+      .run();
+    expect(await tasaVigente(db, 'VE', AHORA)).toMatchObject({ tasa: 1190, fuente: 'equipo' });
+    // Día 2: casi la misma tasa nueva (dentro del margen): se acepta.
+    const r = await tomarTasaBcv(db, { leer: leer('1.205,00000000', '2026-11-14'), ahora: AHORA });
+    expect(r.estado).toBe('guardada');
+    expect(await saludTasaBcv(db, AHORA)).toBe('ok');
+    // Otro salto distinto al día siguiente vuelve a quedar retenido.
+    expect(
+      (await tomarTasaBcv(db, { leer: leer('2.000,00000000', '2026-11-15'), ahora: AHORA })).estado,
+    ).toBe('retenida');
+  });
+
+  it('el primer día sin oficial anterior: solo se acepta cerca de la última del equipo', async () => {
+    const db = crearBasePruebas();
+    await db
+      .prepare(
+        "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', '2026-11-13', 'equipo', 36.5)",
+      )
+      .run();
+    expect(
+      (
+        await tomarTasaBcv(db, {
+          leer: lector(pagina('914,02180000', '2026-11-14')).leer,
+          ahora: AHORA,
+        })
+      ).estado,
+    ).toBe('retenida');
+    const db2 = crearBasePruebas();
+    await db2
+      .prepare(
+        "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', '2026-11-13', 'equipo', 910)",
+      )
+      .run();
+    expect(
+      (
+        await tomarTasaBcv(db2, {
+          leer: lector(pagina('914,02180000', '2026-11-14')).leer,
+          ahora: AHORA,
+        })
+      ).estado,
+    ).toBe('guardada');
+  });
 });

@@ -52,6 +52,11 @@ export const esquemaEnv = z.object({
     .string()
     .regex(/^[A-Za-z0-9_-]{42,44}$/)
     .optional(),
+  /** C-TASA-BCV-AUTO: cuánto (en %) puede moverse la tasa oficial de un día a otro sin retenerla. */
+  TASA_BCV_SALTO_PCT: z
+    .string()
+    .regex(/^\d{1,3}$/)
+    .optional(),
   /** Contacto que va en la firma VAPID («mailto:…»). Por defecto, el buzón de soporte. */
   VAPID_SUBJECT: z.string().startsWith('mailto:').optional(),
   /** Token de acceso de Expo para los avisos al celular (opcional; sube el límite). */
