@@ -17,6 +17,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['cotizaciones_viaje', 'fuente_distancia', "TEXT NOT NULL DEFAULT 'estimada'"],
   // C-CIUDAD-ERRORES (13 nov 2026): de quién era la sesión del error no controlado (solo el id).
   ['errores_servidor', 'usuario_id', 'TEXT'],
+  // C-PENDIENTE-ABANDONADO (13 nov 2026): huella de los datos con que se creó el pedido sin pagar.
+  ['pedidos', 'huella_cuerpo', 'TEXT'],
   // C-FLOTA-PROPIA (10 nov 2026): el restaurante reparte con los suyos; respaldo con la red.
   ['restaurantes', 'flota_modo', "TEXT NOT NULL DEFAULT 'divoox'"],
   ['restaurantes', 'flota_respaldo', 'INTEGER NOT NULL DEFAULT 0'],
