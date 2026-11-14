@@ -81,7 +81,7 @@ type Pedido = {
   regalo?: number;
   propinaExtra?: number | null;
   requiereEdad?: boolean;
-  entregadoComo?: 'puerta' | 'mano' | 'seguro' | null;
+  entregadoComo?: 'puerta' | 'mano' | 'seguro' | 'ausente' | null;
   /** C-PEDIDO-PROGRAMADO: inicio de la franja (UTC «AAAA-MM-DD HH:MM:SS») o null. */
   programadoPara?: string | null;
   notaEntrega?: string;
@@ -196,6 +196,7 @@ const T = {
     problemaMotivo: 'El cliente reporta un problema con el cobro desde la app.',
     problemaEnviado: 'Soporte recibió tu reclamo y te responde por correo.',
     ayuda: '¿Problemas con tu pedido? Cuéntanos',
+    noEntregadoAusente: 'No pudimos entregar tu pedido.',
     estados: {
       pago_pendiente: 'Esperando el pago…',
       pagado: 'Pago recibido. Esperando que el restaurante lo acepte.',
@@ -274,6 +275,8 @@ const T = {
       puerta: 'Lo dejaron en tu puerta.',
       mano: 'Te lo entregaron en mano.',
       seguro: 'No te encontraron y lo dejaron en un lugar seguro:',
+      ausente:
+        'No pudimos entregarlo: tu repartidor esperó en tu puerta y no logró comunicarse contigo. Si algo salió mal, escríbenos desde este pedido.',
     } as Record<string, string>,
     tuCasa: 'Tu dirección',
     programado: 'Programado para',
@@ -328,6 +331,7 @@ const T = {
     problemaMotivo: 'The customer reports a payment problem from the app.',
     problemaEnviado: 'Support received your report and will reply by email.',
     ayuda: 'Problems with your order? Tell us',
+    noEntregadoAusente: 'We couldn’t deliver your order.',
     estados: {
       pago_pendiente: 'Waiting for payment…',
       pagado: 'Payment received. Waiting for the restaurant to accept.',
@@ -403,6 +407,8 @@ const T = {
       puerta: 'It was left at your door.',
       mano: 'It was handed to you.',
       seguro: 'They couldn’t find you and left it in a safe spot:',
+      ausente:
+        'We couldn’t deliver it: your driver waited at your door and couldn’t reach you. If something went wrong, contact us from this order.',
     } as Record<string, string>,
     tuCasa: 'Your address',
     programado: 'Scheduled for',
@@ -735,6 +741,8 @@ function SeguirPedido() {
   const esTienda = Boolean(p?.lineas.some((l) => l.sustitucion));
   const estadoTexto = p
     ? ((p.estado === 'cancelado' && p.motivoCancelacion ? t.motivos[p.motivoCancelacion] : null) ??
+      // C-CLIENTE-AUSENTE: cerrado sin entregar porque no estabas; no se dice «entregado».
+      (p.estado === 'entregado' && p.entregadoComo === 'ausente' ? t.noEntregadoAusente : null) ??
       (recoge ? t.estadosRecoger[p.estado] : undefined) ??
       (esTienda ? t.estadosTienda[p.estado] : undefined) ??
       t.estados[p.estado] ??

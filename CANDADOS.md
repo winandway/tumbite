@@ -3478,6 +3478,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pruebas:** `operacion.test.ts` («PIN en mano…» y «C-PIN-SIN-FOTO: con el PIN bloqueado…») y `pinSinFotoApp.test.ts`, comprobadas en rojo.
 - **No tocar:** no quitar la llamada a `sinFotoConPin` del camino con foto.
 
+### C-CLIENTE-AUSENTE: con PIN y sin cliente, el repartidor cierra como «cliente no apareció» (13 nov 2026) — todos los países
+
+- **Qué pasaba (devuelto por el revisor en C-PIN-SIN-FOTO):** con entrega «en mano con PIN», si el cliente no aparecía el repartidor no podía dejar en lugar seguro ni cerrar: quedaba atrapado.
+- **Qué se hizo (como DoorDash y Uber Eats, ficha `docs/investigaciones-rea/2026-11-13-cliente-ausente-con-pin.md`):** tras «El cliente no aparece» y la espera, `/repartidor/pedidos/:id/entregado?modo=ausente` con foto del lugar cierra el pedido por el MISMO camino de dinero de una entrega (el cliente paga sin reembolso automático; repartidor y restaurante cobran), con evidencia modo `ausente`, evento `cliente_ausente` en la bitácora, aviso `AVISOS.clienteAusente` y un caso de soporte (`cerrarComoAusente`). La foto «ausente» no pasa por `sinFotoConPin` porque no entrega nada; la foto normal sigue bloqueada con PIN. En efectivo o transferencia no se cierra como ausente (sigue «El cliente no pagó»). La espera es configurable: `ESPERA_CLIENTE_AUSENTE_MIN` (2 a 15, sin valor 5) vale para el lugar seguro y el cierre; la app la recibe como `esperaAusenteMin`. La app del cliente dice «No pudimos entregar tu pedido». Docs: guías del cliente y del repartidor, en español e inglés.
+- **Pruebas:** `operacion.test.ts` («C-CLIENTE-AUSENTE…», dos casos, en rojo antes de construir) y `pinSinFotoApp.test.ts` (bloque C-CLIENTE-AUSENTE).
+- **No tocar:** nunca dejar la comida de un pedido con PIN sin el código; no abrir un camino de dinero aparte para el ausente; `hitos_pedido` tiene un CHECK de hitos: no meter hitos nuevos ahí sin migración.
+
 ### C-LATIDO-UBICACION: conectado y quieto, el repartidor sigue mandando su posición
 
 - **Qué pasaba:** el GPS de la app (y la tarea de fondo) solo avisaba al moverse 30 m. Un repartidor conectado y quieto (esperando en el restaurante o en su casa) no mandaba nada; el servidor solo ofrece pedidos a quien tiene ubicación de los últimos 10 minutos y el Manager le quita un pedido aceptado a los 10 minutos sin ubicación.

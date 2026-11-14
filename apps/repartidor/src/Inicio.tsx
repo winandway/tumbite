@@ -154,6 +154,8 @@ type Pedido = {
   minutosEstimados?: number | null;
   articulos?: number;
   noApareceEn?: string | null;
+  /** C-CLIENTE-AUSENTE: minutos de espera en la puerta tras avisar (configuración del servidor). */
+  esperaAusenteMin?: number;
   excepcionUbicacion?: 'pedida' | 'autorizada' | null;
   entrega?: 'puerta' | 'mano';
   pinRequerido?: boolean;
@@ -328,6 +330,9 @@ const T = {
     noAparece: 'El cliente no aparece',
     esperando5: 'Avisamos al cliente. Escríbele por el chat y espera',
     dejarSeguro: 'Dejar en lugar seguro (con foto)',
+    clienteAusente: 'Cliente no apareció: cerrar con foto',
+    clienteAusenteAyuda:
+      'Con PIN la comida no se deja. Toma una foto de la puerta o del lugar como constancia: el pedido se cierra, tú cobras lo tuyo y soporte queda avisado.',
     dondeLoDejas: 'Escribe dónde lo dejas (con el portero, detrás de la maceta…)',
     permisoCamara: 'Para tomar la foto necesitamos permiso para usar la cámara.',
     esperando: 'El restaurante lo está terminando…',
@@ -464,6 +469,9 @@ const T = {
     noAparece: 'Customer isn’t here',
     esperando5: 'We told the customer. Message them in the chat and wait',
     dejarSeguro: 'Leave in a safe spot (with photo)',
+    clienteAusente: 'Customer didn’t show: close with photo',
+    clienteAusenteAyuda:
+      'With a PIN the food isn’t left behind. Take a photo of the door or the spot as proof: the order is closed, you get paid and support is notified.',
     dondeLoDejas: 'Where are you leaving it (with the doorman, behind the planter…)',
     permisoCamara: 'To take the photo, we need permission to use the camera.',
     esperando: 'The restaurant is finishing it…',
@@ -2255,7 +2263,12 @@ export function Inicio() {
                     const faltanSeg =
                       avisoMs == null
                         ? null
-                        : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
+                        : Math.max(
+                            0,
+                            Math.ceil(
+                              (avisoMs + (activo.esperaAusenteMin ?? 5) * 60_000 - tic) / 1000,
+                            ),
+                          );
                     return (
                       <>
                         {activo.excepcionUbicacion === 'autorizada' && !activo.llegoCliente ? (
@@ -2458,9 +2471,6 @@ export function Inicio() {
                             {t.esperando5} {Math.floor(faltanSeg / 60)}:
                             {String(faltanSeg % 60).padStart(2, '0')}
                           </Text>
-                        ) : activo.pinRequerido ? (
-                          // C-PIN-SIN-FOTO: con PIN no hay «lugar seguro»; si no aparece, soporte.
-                          <Text style={{ color: '#5E5E5E', marginTop: 6 }}>{t.conPinSinFoto}</Text>
                         ) : activo.metodoPago && activo.metodoPago !== 'tarjeta' ? (
                           // C-COBRO-DIRECTO: se cobra en mano; no hay «lugar seguro».
                           <Text
@@ -2469,6 +2479,24 @@ export function Inicio() {
                           >
                             {tg.pedido.sinLugarSeguro}
                           </Text>
+                        ) : activo.pinRequerido || activo.requiereEdad ? (
+                          // C-CLIENTE-AUSENTE: con PIN (o con edad) no hay «lugar seguro»: pasada la
+                          // espera se cierra como «cliente no apareció» con foto del lugar.
+                          <View style={{ gap: 6, marginTop: 6 }} testID="cliente-ausente">
+                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                              {t.clienteAusenteAyuda}
+                            </Text>
+                            <Boton
+                              texto={subiendo ? t.subiendo : t.clienteAusente}
+                              alTocar={() =>
+                                void tomarFoto(
+                                  `/datos/repartidor/pedidos/${activo.id}/entregado?modo=ausente`,
+                                )
+                              }
+                              cargando={subiendo}
+                              secundario
+                            />
+                          </View>
                         ) : (
                           <>
                             <TextInput

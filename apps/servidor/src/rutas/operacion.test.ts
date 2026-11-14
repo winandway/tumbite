@@ -2120,6 +2120,112 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
     expect(conFoto.datos.error).toMatch(/Too many|Demasiados/);
     expect(await estadoDe(e.m, id)).toBe('en_camino');
   });
+
+  it('C-CLIENTE-AUSENTE: con PIN y sin cliente, tras avisar y esperar se cierra como «cliente no apareció» con foto; el cliente paga, el repartidor y el restaurante cobran y soporte ve el caso', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e, 'mano', true);
+    const rep = await e.repartidor('Rep Ausente', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const enCasa = { lat: 25.7801, lng: -80.2001 };
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.ubicar(rep.token, enCasa);
+    const ruta = `/datos/repartidor/pedidos/${id}/entregado?modo=ausente`;
+    // Sin avisar que no aparece: no se puede cerrar.
+    const antes = await e.m.foto(ruta, rep.token, enCasa);
+    expect(antes.estado).toBe(409);
+    // Avisa: el reloj es el de la configuración (5 minutos, como DoorDash) y la app lo recibe.
+    const aviso = await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/no-aparece`,
+      {},
+      rep.token,
+    );
+    expect(aviso.estado).toBe(200);
+    const activo = (await e.m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token)).datos
+      .activo;
+    expect(activo.esperaAusenteMin).toBe(5);
+    // Antes de que se cumpla la espera, tampoco.
+    expect((await e.m.foto(ruta, rep.token, enCasa)).estado).toBe(409);
+    await e.m.DB.prepare(
+      "UPDATE hitos_pedido SET creado_en = datetime('now', '-6 minutes') WHERE pedido_id = ? AND hito = 'no_aparece'",
+    )
+      .bind(id)
+      .run();
+    // La foto normal sigue sin saltar el PIN, aunque haya pasado la espera.
+    expect(
+      (await e.m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, enCasa)).estado,
+    ).toBe(409);
+    const cerrado = await e.m.foto(ruta, rep.token, enCasa);
+    expect(cerrado.estado).toBe(200);
+    expect(await estadoDe(e.m, id)).toBe('entregado');
+    const ev = await e.m.DB.prepare(
+      "SELECT modo, clave FROM evidencias WHERE pedido_id = ? AND tipo = 'entrega'",
+    )
+      .bind(id)
+      .first<{ modo: string; clave: string }>();
+    expect(ev?.modo).toBe('ausente');
+    expect(ev?.clave).not.toBe('');
+    // El repartidor y el restaurante cobran lo suyo (no hay reembolso automático).
+    const abonos = await e.m.DB.prepare(
+      'SELECT COUNT(*) AS n FROM movimientos WHERE pedido_id = ? AND monto > 0',
+    )
+      .bind(id)
+      .first<{ n: number }>();
+    expect(Number(abonos?.n)).toBeGreaterThanOrEqual(2);
+    // Soporte tiene el caso, y el cliente lo ve en su pedido.
+    const caso = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM tickets WHERE asunto LIKE '%' || ? || '%'",
+    )
+      .bind(id.slice(0, 4).toUpperCase())
+      .first<{ n: number }>();
+    expect(caso?.n).toBe(1);
+    const seg = (
+      await e.m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, e.cliente.token)
+    ).datos.pedido;
+    expect(seg.entregadoComo).toBe('ausente');
+  });
+
+  it('C-CLIENTE-AUSENTE: un pedido que se cobra en mano no se cierra como ausente (va por «No pagó»)', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e, 'mano', true);
+    const rep = await e.repartidor('Rep Efectivo', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const enCasa = { lat: 25.7801, lng: -80.2001 };
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.DB.prepare("UPDATE pedidos SET metodo_pago = 'efectivo' WHERE id = ?").bind(id).run();
+    await e.m.llamar('POST', `/datos/repartidor/pedidos/${id}/no-aparece`, {}, rep.token);
+    await e.m.DB.prepare(
+      "UPDATE hitos_pedido SET creado_en = datetime('now', '-6 minutes') WHERE pedido_id = ? AND hito = 'no_aparece'",
+    )
+      .bind(id)
+      .run();
+    const r = await e.m.foto(
+      `/datos/repartidor/pedidos/${id}/entregado?modo=ausente`,
+      rep.token,
+      enCasa,
+    );
+    expect(r.estado).toBe(409);
+    expect(await estadoDe(e.m, id)).toBe('en_camino');
+  });
 });
 
 describe('horarios reales y opciones de los platos (C-HORARIOS, C-OPCIONES)', () => {

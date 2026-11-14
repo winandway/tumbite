@@ -158,6 +158,19 @@ export const AVISOS = {
           titulo: 'Tu comida está lista',
           cuerpo: `${rest} terminó tu pedido. Buscando tu repartidor.`,
         },
+  /** C-CLIENTE-AUSENTE: el repartidor esperó en la puerta y cerró el pedido sin entregarlo. */
+  clienteAusente: (i: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'We couldn’t deliver your order',
+          cuerpo:
+            'Your driver waited at your door and couldn’t reach you. If something went wrong, contact us from your order.',
+        }
+      : {
+          titulo: 'No pudimos entregar tu pedido',
+          cuerpo:
+            'Tu repartidor esperó en tu puerta y no logró comunicarse contigo. Si algo salió mal, escríbenos desde tu pedido.',
+        },
   noAparece: (i: string): Aviso =>
     i === 'en'
       ? {

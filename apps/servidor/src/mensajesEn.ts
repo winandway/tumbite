@@ -367,6 +367,11 @@ export const MENSAJES_EN = new Map<string, string>([
     'Este pedido se cobra en mano: no se puede dejar sin entregarlo. Si el cliente no aparece, toca «El cliente no pagó».',
     'This order is paid in person: it can’t be left without handing it over. If the customer doesn’t show up, tap “The customer didn’t pay.”',
   ],
+  [
+    // C-CLIENTE-AUSENTE (13 nov 2026).
+    'Este pedido se cobra en mano: si el cliente no aparece, toca «El cliente no pagó».',
+    'This order is paid in person: if the customer doesn’t show up, tap “The customer didn’t pay.”',
+  ],
   ['Ya confirmaste el cobro de este pedido.', 'You already confirmed the payment for this order.'],
   [
     'Este pedido se pagó en mano al repartidor: no hay cobro con tarjeta que devolver. Soporte coordina la devolución con el repartidor o el restaurante.',
@@ -1863,6 +1868,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    // C-CLIENTE-AUSENTE (13 nov 2026): la espera sale de la configuración.
+    /^Primero avisa que el cliente no aparece y espera (\d+) minutos\.$/,
+    (m) => `First report that the customer isn’t there and wait ${m[1]} minutes.`,
+  ],
   [
     /^Esta persona todavía no tiene (\d+) años: no se puede aprobar\.$/,
     (m) => `This person isn’t ${m[1]} yet, so this can’t be approved.`,
