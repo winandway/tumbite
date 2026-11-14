@@ -3613,3 +3613,17 @@ CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancela
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
 -- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
 CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';
+
+-- C-COMIDA-VE-CIRCUITO (13 nov 2026, Venezuela): «sí me llegó / no me llegó» del pago móvil de un
+-- pedido de comida (una fila por pedido), con la corrección única de 30 minutos (pieza común con
+-- viajes_pago_movil). Confirmación MANUAL del repartidor, nunca del banco.
+CREATE TABLE IF NOT EXISTS pedidos_pago_movil (
+  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
+  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
+  estado TEXT NOT NULL CHECK (estado IN ('recibido', 'no_recibido')),
+  referencia TEXT NOT NULL DEFAULT '',
+  monto INTEGER,
+  moneda TEXT,
+  corregido_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
