@@ -346,8 +346,9 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
 /**
  * C-DOCS-MOTO (13 nov 2026, Venezuela): las guías de Moto que ya tienen capturas REALES (tomadas con
  * scripts/recorrido/capturas-moto-venezuela.mjs en las apps web y el servidor de esta computadora)
- * se publican en Docs. Dicen con honestidad que Moto se abre ciudad por ciudad. Las de seguridad
- * siguen guardadas hasta tener sus capturas.
+ * se publican en Docs. Dicen con honestidad que Moto se abre ciudad por ciudad. Desde el 13 nov 2026
+ * las capturas se toman en El Vigía, estado Mérida (no en Caracas), con una tarifa que no es de
+ * prueba, y también se publicaron las dos de seguridad.
  */
 const PUBLICADAS = new Set([
   'ride-moto',
@@ -355,6 +356,9 @@ const PUBLICADAS = new Set([
   'drive-moto',
   'drive-moto-alta',
   'drive-moto-saldo',
+  // 13 nov 2026: las de seguridad, con sus capturas reales tomadas en El Vigía.
+  'ride-seguridad',
+  'drive-moto-seguridad',
 ]);
 
 const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
@@ -465,6 +469,46 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
         'Por pago móvil también recibes tú el total; la comisión sale de tu saldo.',
       ),
     ],
+    'ride-seguridad': [
+      foto(
+        'cliente-contactos',
+        'es',
+        'Los contactos de confianza en la pantalla de Moto, con un contacto guardado y la opción «Solo de noche» elegida.',
+        'Antes de pedir, eliges a quién y cuándo se comparte tu viaje.',
+      ),
+      foto(
+        'cliente-compartir',
+        'es',
+        'El viaje en curso con los botones «Compartir mi viaje» y «Emergencia».',
+        'Durante el viaje, compartes el enlace o pides ayuda con un toque.',
+      ),
+      foto(
+        'cliente-todo-bien',
+        'es',
+        'La pregunta «¿Todo bien?» con los botones «Estoy bien» y «Necesito ayuda», sobre el mapa del viaje.',
+        'Si el viaje se sale de la ruta, la app te pregunta si todo está bien.',
+      ),
+    ],
+    'drive-moto-seguridad': [
+      foto(
+        'driver-descanso',
+        'es',
+        'El aviso «Llevas 13 horas manejando. Por tu seguridad, descansa: vuelves a recibir viajes en 6 horas.» en el inicio del conductor.',
+        'Con 12 horas al volante, la app te pide descansar y te dice cuándo vuelves.',
+      ),
+      foto(
+        'driver-emergencia',
+        'es',
+        'El viaje en curso del conductor con el botón rojo «Emergencia» debajo de «Terminar viaje».',
+        'En cada viaje tienes el botón «Emergencia».',
+      ),
+      foto(
+        'cliente-todo-bien',
+        'es',
+        'La pregunta «¿Todo bien?» que recibe el pasajero si el viaje se sale de la ruta.',
+        'Si el viaje se sale de la ruta, también le preguntamos al pasajero.',
+      ),
+    ],
   },
   en: {
     'ride-moto': [
@@ -565,6 +609,46 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
         'en',
         'Mobile payment ride completed with the amount in dollars and its bolívar equivalent.',
         'With mobile payment you also get the full amount; the fee comes from your balance.',
+      ),
+    ],
+    'ride-seguridad': [
+      foto(
+        'cliente-contactos',
+        'en',
+        'Trusted contacts on the Moto screen, with one saved contact and “Only at night” selected.',
+        'Before you request, you choose who gets your ride and when.',
+      ),
+      foto(
+        'cliente-compartir',
+        'en',
+        'The ride in progress with the “Share my ride” and “Emergency” buttons.',
+        'During the ride, share the link or get help with one tap.',
+      ),
+      foto(
+        'cliente-todo-bien',
+        'en',
+        'The “Everything OK?” question with the “I’m OK” and “I need help” buttons, above the ride map.',
+        'If the ride goes off route, the app asks whether everything is OK.',
+      ),
+    ],
+    'drive-moto-seguridad': [
+      foto(
+        'driver-descanso',
+        'en',
+        'The notice “You’ve been driving for 13 hours. For your safety, take a break: you’ll get rides again in 6 hours.” on the driver’s home screen.',
+        'After 12 hours of driving, the app asks you to rest and tells you when you’re back.',
+      ),
+      foto(
+        'driver-emergencia',
+        'en',
+        'The driver’s ride in progress with the red “Emergency” button below “End ride.”',
+        'Every ride has the “Emergency” button.',
+      ),
+      foto(
+        'cliente-todo-bien',
+        'en',
+        'The “Everything OK?” question the rider gets if the ride goes off route.',
+        'If the ride goes off route, we also check in with the rider.',
       ),
     ],
   },

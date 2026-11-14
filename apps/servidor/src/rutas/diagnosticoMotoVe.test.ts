@@ -13,14 +13,14 @@ const SEC = `reloj-${crypto.randomUUID()}`;
 
 function escenario() {
   const m = mundo({ RELOJ_SECRETO: SEC }, { host: 'staging.tumbite.com' });
-  const interno = async (ruta: string, conSecreto = true) => {
+  const interno = async (ruta: string, conSecreto = true, cuerpo: unknown = {}) => {
     const r = await m.crudo(`/datos/interno/diagnostico/moto-ve/${ruta}`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         ...(conSecreto ? { 'x-reloj-secreto': SEC } : {}),
       },
-      body: '{}',
+      body: JSON.stringify(cuerpo),
     });
     return { estado: r.status, datos: (await r.json()) as any };
   };
@@ -95,6 +95,36 @@ describe('C-MOTO-VE-PUNTA-A-PUNTA: la herramienta del guion de Moto en Venezuela
       clave: b.datos.clave,
     });
     expect(entrar.estado).toBe(200);
+  });
+
+  it('desde el 13 nov las pruebas son en El Vigía: el conductor sin saldo queda en la ciudad que manda el guion (solo de Venezuela)', async () => {
+    const { m, interno } = escenario();
+    await interno('armar');
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const abrir = await m.llamar(
+      'POST',
+      '/datos/admin/viajes/ciudades',
+      {
+        servicio: 'moto',
+        zona: {
+          id: 'VE-MER-ELVIGIA',
+          nombre: 'El Vigía',
+          lat: 8.6219,
+          lng: -71.6506,
+          zonaHoraria: 'America/Caracas',
+        },
+        motivo: 'Ciudad de pruebas',
+      },
+      admin.token,
+    );
+    expect(abrir.estado).toBe(201);
+    expect((await interno('sin-saldo', true, { zonaId: 'VE-MER-ELVIGIA' })).estado).toBe(200);
+    const fila = await m.DB.prepare('SELECT zona_id FROM repartidores WHERE usuario_id = ?')
+      .bind(MOTO_VE.sinSaldo)
+      .first<{ zona_id: string }>();
+    expect(fila?.zona_id).toBe('VE-MER-ELVIGIA');
+    // Una zona de otro país no se acepta: vuelve a Caracas de pruebas, que aquí no está abierta.
+    expect((await interno('sin-saldo', true, { zonaId: 'US-FL-MIAMI' })).estado).toBe(409);
   });
 
   it('el conductor sin saldo pide la ciudad abierta, queda solo en Caracas y la limpieza no deja a nadie', async () => {
