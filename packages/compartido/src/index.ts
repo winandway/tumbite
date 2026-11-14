@@ -102,3 +102,4 @@ export * from './perfilPasajeros';
 export * from './tasaReferencia';
 export * from './comidaVenezuela';
 export * from './viajesProgramados';
+export * from './formaDePago';

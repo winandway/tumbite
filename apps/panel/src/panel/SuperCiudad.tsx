@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Idioma,
+  enIdioma,
+  formatearMonto,
+  nombreFormaPago,
+} from '@tumbite/compartido';
 import { pedir } from './api';
 import { descargarTexto, nombreReporte, reporteJugadoresCsv } from './reporteCiudad';
 
@@ -96,8 +102,6 @@ const T = {
     gastado: 'Gastó',
     minutos: (m: number) => `${m} min`,
     erroresServidor: 'Errores del servidor durante la sesión',
-    efectivo: 'Efectivo',
-    tarjeta: 'Tarjeta',
     descargarReporte: 'Descargar reporte',
     cerrando:
       'Apagando: los robots terminan de entregar lo que ya salió de la cocina. Lo que no alcancen se cancela con su devolución.',
@@ -181,8 +185,6 @@ const T = {
     gastado: 'Spent',
     minutos: (m: number) => `${m} min`,
     erroresServidor: 'Server errors during the session',
-    efectivo: 'Cash',
-    tarjeta: 'Card',
     descargarReporte: 'Download report',
     cerrando:
       'Turning off: the robots are finishing the orders that already left the kitchen. Anything they can’t finish is canceled and refunded.',
@@ -692,7 +694,7 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
                                   <span>
                                     {p.platos.join(', ')} ·{' '}
                                     {formatearMonto(p.total, p.moneda, idioma)} ·{' '}
-                                    {p.metodoPago === 'tarjeta' ? t.tarjeta : t.efectivo}
+                                    {nombreFormaPago(p.metodoPago, idioma)}
                                     {p.minutos != null ? ` · ${t.minutos(p.minutos)}` : ''}
                                   </span>
                                 </div>

@@ -1,3 +1,4 @@
+import { nombreFormaPago } from '@tumbite/compartido';
 /**
  * C-CIUDAD-REPORTE (13 nov 2026, todos los países): el reporte de los jugadores de la ciudad de
  * pruebas se arma en el navegador con lo que la pantalla ya tiene y se descarga como CSV. No
@@ -51,7 +52,7 @@ export function reporteJugadoresCsv(jugadores: JugadorReporte[], idioma: 'es' | 
           p.platos.join(' + '),
           monto(p.total),
           p.moneda,
-          p.metodoPago,
+          nombreFormaPago(p.metodoPago, idioma),
           p.minutos,
           '',
         ]

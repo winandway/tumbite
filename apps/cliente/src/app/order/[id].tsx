@@ -36,6 +36,7 @@ import {
   textoPesoReal,
   type Referencia,
   textoReferencia,
+  nombreFormaPago,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -1026,7 +1027,7 @@ function SeguirPedido() {
                       {p.cuentaCobro.titular}
                     </Text>
                     <Text style={{ color: C.secundario }} selectable>
-                      {p.cuentaCobro.tipo}
+                      {nombreFormaPago(p.cuentaCobro.tipo, idioma)}
                       {p.cuentaCobro.banco ? ` · ${p.cuentaCobro.banco}` : ''} ·{' '}
                       {p.cuentaCobro.identificador}
                     </Text>
