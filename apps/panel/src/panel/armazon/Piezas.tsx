@@ -361,7 +361,8 @@ export function Tabla({
   filas: ({ id: string } & Record<string, React.ReactNode>)[];
   vacio: string;
 }) {
-  if (filas.length === 0) return <EstadoVacio titulo={vacio} />;
+  // Sin filas y sin texto de vacío, la tabla no se dibuja (quien la usa ya mostró su estado vacío).
+  if (filas.length === 0) return vacio ? <EstadoVacio titulo={vacio} /> : null;
   return (
     <div className="pd-tabla-caja tabla-ancha">
       <table className="pd-tabla tabla">

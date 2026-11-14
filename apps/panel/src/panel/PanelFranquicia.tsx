@@ -65,6 +65,8 @@ const T = {
     puntos: 'puntos',
     noExiste: 'Esta página no existe.',
     porEstado: 'Tus pedidos de 30 días, por estado',
+    abiertosAhora: 'Restaurantes abiertos ahora',
+    conectadosAhora: 'Repartidores conectados ahora',
     sinRestaurantes: 'Todavía no hay restaurantes en tu territorio.',
     sinRepartidores: 'Todavía no hay repartidores en tu territorio.',
     enLinea: 'Conectado',
@@ -129,6 +131,8 @@ const T = {
     puntos: 'points',
     noExiste: 'This page doesn’t exist.',
     porEstado: 'Your 30-day orders, by status',
+    abiertosAhora: 'Restaurants open now',
+    conectadosAhora: 'Drivers online now',
     sinRestaurantes: 'No restaurants in your territory yet.',
     sinRepartidores: 'No drivers in your territory yet.',
     enLinea: 'Online',
@@ -279,9 +283,9 @@ export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma
         <Tarjeta titulo={t.porEstado} className="pd-ancho-6">
           <GraficaBarras titulo={t.porEstado} vacio={t.sinPedidos} datos={porEstado} />
         </Tarjeta>
-        <Tarjeta titulo={t.restaurantes} className="pd-ancho-3">
+        <Tarjeta titulo={t.abiertosAhora} className="pd-ancho-3">
           <Dona
-            titulo={t.restaurantes}
+            titulo={t.abiertosAhora}
             vacio={t.sinRestaurantes}
             partes={[
               { etiqueta: t.abierto, valor: m.restaurantesAbiertos, tono: 'exito' },
@@ -293,9 +297,9 @@ export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma
             ]}
           />
         </Tarjeta>
-        <Tarjeta titulo={t.repartidores} className="pd-ancho-3">
+        <Tarjeta titulo={t.conectadosAhora} className="pd-ancho-3">
           <Dona
-            titulo={t.repartidores}
+            titulo={t.conectadosAhora}
             vacio={t.sinRepartidores}
             partes={[
               { etiqueta: t.enLinea, valor: m.repartidoresConectados, tono: 'exito' },
@@ -363,8 +367,13 @@ export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma
         </Tarjeta>
       </div>
       <h2>{t.pedidos}</h2>
+      {r.pedidos.length === 0 ? (
+        <Tarjeta>
+          <EstadoVacio titulo={t.sinPedidos} />
+        </Tarjeta>
+      ) : null}
       <Tabla
-        vacio={t.sinPedidos}
+        vacio=""
         columnas={[
           { clave: 'codigo', titulo: t.colPedido },
           { clave: 'restaurante', titulo: t.colRestaurante },
