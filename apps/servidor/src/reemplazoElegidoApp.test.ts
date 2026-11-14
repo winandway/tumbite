@@ -14,7 +14,11 @@ describe('reemplazo elegido en las apps', () => {
   it('el carrito ofrece «Elegir uno», busca en la tienda y manda reemplazoId', () => {
     const carrito = leer('apps', 'cliente', 'src', 'app', 'cart.tsx');
     expect(carrito).toContain('<ElegirReemplazo');
-    expect(carrito).toContain('reemplazoId: l.reemplazo.platoId');
+    // C-COBRO-MISMOS-DATOS: el cuerpo del pedido lo arma la pieza compartida.
+    expect(carrito).toContain('armarCuerpoPedido(');
+    expect(leer('packages', 'compartido', 'src', 'cuerpoPedido.ts')).toContain(
+      'reemplazoId: l.reemplazo.platoId',
+    );
     expect(carrito).toContain('tt.faltaReemplazo');
     const pieza = leer('apps', 'cliente', 'src', 'tiendas', 'ElegirReemplazo.tsx');
     expect(pieza).toContain('/datos/tiendas/${tiendaId}/productos?');
