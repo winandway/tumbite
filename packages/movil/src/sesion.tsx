@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 import { VisorPaginas } from './PaginaEnApp';
 import { paseTurnstile } from './Turnstile';
 import {
@@ -25,7 +26,8 @@ import {
 } from '@tumbite/compartido';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
-import { darDeBajaAvisos, useAvisosCelular } from './avisos';
+import { darDeBajaAvisos, useAvisosCelular, useAvisosWebSilencioso } from './avisos';
+import { LLAVE_MARCA, guardarLocal } from '@tumbite/compartido/src/avisosWeb';
 
 const LLAVE_TOKEN = 'tumbite.sesion';
 
@@ -177,6 +179,8 @@ export function SesionProvider({
   const usarOtraCuenta = useCallback(() => setSinConfirmar(null), []);
 
   const alEntrar = useCallback(async (t: string, u: Usuario) => {
+    // C-AVISOS-WEB: sesión nueva = la suscripción del navegador se vuelve a mandar con ella.
+    if (Platform.OS === 'web') guardarLocal(LLAVE_MARCA, null);
     setToken(t);
     await llavero.guardar(LLAVE_TOKEN, t);
     setUsuario(u);
@@ -224,6 +228,8 @@ export function SesionProvider({
   }, [llavePermisos]);
   const permisosPorExplicar = Boolean(explicarPermisos && usuario && permisosVistos === false);
   useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true);
+  // C-AVISOS-WEB: en la versión web, renueva la suscripción si el permiso ya estaba dado.
+  useAvisosWebSilencioso(api, usuario);
 
   const cambiarIdioma = useCallback(
     (i: Idioma) => {

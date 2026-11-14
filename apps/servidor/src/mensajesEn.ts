@@ -1168,6 +1168,12 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['La fecha debe ser AAAA-MM-DD.', 'The date must be YYYY-MM-DD.'],
   ['Ese token de avisos no es válido.', 'That notification token isn’t valid.'],
+  // C-AVISOS-WEB
+  [
+    'Los avisos en el navegador todavía no están encendidos.',
+    'Browser notifications aren’t turned on yet.',
+  ],
+  ['Ese destino de avisos no es válido.', 'That notification address isn’t valid.'],
   ['firma inválida', 'invalid signature'],
   ['Escribe el nombre de tu restaurante.', 'Enter your restaurant’s name.'],
   ['Escribe un celular para llamarte.', 'Enter a mobile number we can call you at.'],

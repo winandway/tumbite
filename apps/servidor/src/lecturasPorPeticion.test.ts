@@ -384,8 +384,12 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
     // la clave foránea de `movimientos.pedido_id` al borrar su pedido temporal (12.640 filas por
     // pedido con este volumen): ver CANDADOS.md, C-LECTURAS-VUELTA-RUTAS, por qué no lleva índice.
     // F2 incluye una vuelta REAL del reloj (con las limpiezas de la hora).
+    // S2 borra su usuario temporal y D1 busca una fila por cada clave foránea hacia `usuarios`
+    // (145 al integrar cinco ramas el 14 nov 2026). Esa parte crece con cada tabla nueva que la
+    // tenga, así que el tope la suma aparte: 56 filas propias de la ruta + una por clave.
+    const clavesAUsuarios = (leer('schema.sql').match(/REFERENCES usuarios\b/g) ?? []).length;
     const topes: [string, number, unknown?][] = [
-      ['s2', 200],
+      ['s2', 56 + clavesAUsuarios],
       ['s4', 1_600], // 20 × «LIMIT 50» (el medidor nuevo respeta el LIMIT)
       ['s11', 200],
       ['s12', 13_700],

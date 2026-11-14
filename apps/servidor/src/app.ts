@@ -100,6 +100,10 @@ import { tiendasPeso } from './rutas/tiendasPeso';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
+// C-AVISOS-WEB (13 nov 2026): avisos de las apps instaladas desde el navegador.
+import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
+// C-TASA-BCV-AUTO (14 nov 2026): canario de la tasa oficial automática de Venezuela.
+import { saludTasaBcv } from './rutas/tasasReferencia';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludDinero } from './conciliacion';
 import { excepcionesConciliacion } from './rutas/excepcionesConciliacion';
@@ -118,6 +122,20 @@ app.use('*', async (c, next) => {
   await next();
 });
 app.use('*', cabecerasSeguridad);
+// C-AVISOS-WEB: el trabajo que no hace falta para responder (los avisos web) va con waitUntil.
+app.use('/datos/*', async (c, next) => {
+  let ctx: { waitUntil: (p: Promise<unknown>) => void } | null;
+  try {
+    ctx = c.executionCtx;
+  } catch {
+    ctx = null; // en las pruebas no hay contexto de ejecución
+  }
+  if (ctx) {
+    const ejecucion = ctx;
+    c.env = { ...c.env, ESPERAR_DESPUES: (p) => ejecucion.waitUntil(p) };
+  }
+  await next();
+});
 // C-PRESUPUESTO-VUELTA-PRUEBAS: las pruebas automáticas contra el sitio de pruebas tienen tope
 // de filas por vuelta y por día; en producción no hace nada.
 app.use('/datos/*', presupuestoVueltaPruebas);
@@ -269,6 +287,14 @@ app.get('/datos/salud', async (c) => {
       : 'error';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
+  // C-AVISOS-WEB: sin llaves VAPID, «pendiente».
+  piezas.avisosWeb = saludAvisosWeb(c.env);
+  // C-TASA-BCV-AUTO: «pendiente» mientras no se haya tomado nunca; «error» si la última quedó retenida.
+  if (c.env.DB)
+    piezas.tasaBcv = await saludTasaBcv(c.env.DB).catch((e: unknown) => {
+      console.error('salud: tasa bcv', e);
+      return 'error' as const;
+    });
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
   // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que
   // los miran (antes, cuatro recorridos). Si falla, cada pieza vuelve a preguntar por su cuenta.
@@ -529,6 +555,8 @@ app.notFound(async (c) => {
 });
 
 app.route('/datos/cuentas', cuentas);
+// C-AVISOS-WEB: suscribirse y darse de baja de los avisos en el navegador.
+app.route('/datos/avisos-web', rutasAvisosWeb);
 // C-ENTREGA-PRACTICA: antes que las de verdad; solo atiende los pedidos «prueba-…».
 app.route('/datos', rutasPractica(esRevisor));
 app.route('/datos', gerente);

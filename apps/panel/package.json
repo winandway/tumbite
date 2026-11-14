@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.mjs",
+    "build": "vite build && node scripts/prerender.mjs && node -e \"require('node:fs').mkdirSync('dist/panel',{recursive:true});require('node:fs').copyFileSync('../cliente/scripts/avisos-sw.js','dist/panel/avisos-sw.js')\"",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },

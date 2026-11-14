@@ -19,6 +19,8 @@ import { rehacerConductorDocumentos } from './esquemaPapeles';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-AVISOS-WEB (14 nov 2026): la sesión que registró la suscripción web (al borrarla, se borra).
+  ['suscripciones_web', 'sesion_id', 'TEXT'],
   // C-RUTA-POR-CALLES (13 nov 2026): de dónde salió la distancia cobrada en la cotización.
   ['cotizaciones_viaje', 'fuente_distancia', "TEXT NOT NULL DEFAULT 'estimada'"],
   // C-CIUDAD-ERRORES (13 nov 2026): de quién era la sesión del error no controlado (solo el id).
@@ -245,6 +247,11 @@ export const TELEFONO_DIEZ =
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
 const INDICES = [
+  // C-AVISOS-WEB: sobre la columna sesion_id (llega con COLUMNAS). Una sesión cerrada, vencida o
+  // borrada por cualquier camino (salir, cambio de clave, el reloj, el superadmin) se lleva sus
+  // suscripciones web: el navegador deja de recibir los pedidos de esa cuenta.
+  'CREATE INDEX IF NOT EXISTS suscripciones_web_sesion ON suscripciones_web(sesion_id)',
+  'CREATE TRIGGER IF NOT EXISTS suscripciones_web_sin_sesion AFTER DELETE ON sesiones BEGIN DELETE FROM suscripciones_web WHERE sesion_id = OLD.id; END',
   // Flex · Fase 5: sobre columnas que llegan con COLUMNAS (en schema.sql romperían la publicación).
   'CREATE INDEX IF NOT EXISTS envios_destinatario ON envios(destinatario_usuario_id, creado_en)',
   // Fase 6: el efectivo en la mano de cada conductor y los cobros de cada ruta.

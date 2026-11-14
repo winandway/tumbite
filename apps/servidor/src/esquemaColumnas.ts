@@ -40,6 +40,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "visto_en"
   ],
+  "suscripciones_web": [
+    "endpoint",
+    "usuario_id",
+    "app",
+    "p256dh",
+    "auth",
+    "creado_en"
+  ],
   "sesiones": [
     "id",
     "usuario_id",

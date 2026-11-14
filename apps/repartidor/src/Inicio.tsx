@@ -102,6 +102,7 @@ import {
   MisCasos,
   selectorDeCapturas,
   ReportarProblema,
+  TarjetaAvisosWeb,
   e,
   useSesion,
   useToqueAviso,
@@ -2838,6 +2839,8 @@ export function Inicio() {
             </Text>
           </Pressable>
         ) : null}
+        {/* C-AVISOS-WEB: en la versión web, la explicación del permiso al conectarse. */}
+        <TarjetaAvisosWeb visible={Boolean(estado?.conectado)} />
         {estado?.conectado && estado.ocupadoEn ? (
           // C-OCUPADO-VISIBLE (BRF-1): ocupado en una ruta o un viaje, nunca «Buscando pedidos».
           <View style={e.tarjeta} testID="ocupado-en-otra">

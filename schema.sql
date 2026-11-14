@@ -51,6 +51,18 @@ CREATE TABLE IF NOT EXISTS dispositivos (
   visto_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS dispositivos_usuario ON dispositivos(usuario_id, activo);
+-- C-AVISOS-WEB (13 nov 2026, todos los países): suscripciones Web Push de las apps instaladas desde el
+-- navegador (/app, /driver, /restaurant y el panel). Una fila por navegador; se borra al cerrar sesión
+-- o cuando el servicio de avisos responde 404/410.
+CREATE TABLE IF NOT EXISTS suscripciones_web (
+  endpoint TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  app TEXT NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS suscripciones_web_usuario ON suscripciones_web(usuario_id);
 
 CREATE TABLE IF NOT EXISTS sesiones (
   id TEXT PRIMARY KEY,

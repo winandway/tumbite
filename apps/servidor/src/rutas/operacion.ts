@@ -7,6 +7,7 @@ import { correosEquipo } from '../avisosEquipo';
 import { topesDeZona } from '../internacional/tarifas';
 import { TAREAS_FLEX } from '../flex/automatizacion';
 import { TAREAS_FINANZAS } from '../finanzas/reloj';
+import { TAREA_TASA_BCV } from './tasasReferencia';
 import {
   conciliarPedidoDirecto,
   esDirecto,
@@ -3038,6 +3039,9 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     escriturasEsperadas: 400,
     correr: (env, db) => (env.BUCKET ? depurarFotos(db, env.BUCKET) : Promise.resolve(0)),
   },
+  // C-TASA-BCV-AUTO (Venezuela): la tasa oficial del día, a las 14:00 UTC (y a las 20:00 si no
+  // hubo lectura). Una fila al día; el resto de las vueltas no lee ni escribe nada.
+  { ...TAREA_TASA_BCV, escriturasEsperadas: 1 },
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
   ...TAREAS_FLEX,
   // Flex · Fase 4: conciliación y recuperación de las billeteras, recarga automática y alertas.

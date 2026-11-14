@@ -40,6 +40,7 @@ import {
 import {
   Boton,
   C,
+  TarjetaAvisosWeb,
   CampoDireccion,
   ChatPedido,
   FotoPedido,
@@ -790,6 +791,8 @@ function SeguirPedido() {
         keyboardShouldPersistTaps="handled"
       >
         {error ? <Text style={e.error}>{error}</Text> : null}
+        {/* C-AVISOS-WEB: en la versión web, la explicación del permiso después de pedir. */}
+        <TarjetaAvisosWeb />
         {cuerpo}
       </ScrollView>
     </SafeAreaView>
