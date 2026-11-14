@@ -3120,6 +3120,18 @@ CREATE TABLE IF NOT EXISTS viajes_programados (
 CREATE INDEX IF NOT EXISTS viajes_programados_vencen ON viajes_programados(programado_para) WHERE estado = 'programado';
 CREATE INDEX IF NOT EXISTS viajes_programados_cliente ON viajes_programados(cliente_id, estado);
 
+-- C-CHAT-VIAJE (14 nov 2026, todos los países): mensajes entre pasajero y conductor durante el viaje,
+-- con el mismo patrón que el chat del pedido de Comida. Sin teléfonos ni enlaces; al terminar el viaje
+-- ellos dejan de verlo (queda para soporte).
+CREATE TABLE IF NOT EXISTS mensajes_viaje (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  de_usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  texto TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS mensajes_viaje_idx ON mensajes_viaje(operacion_id, id);
+
 -- C-MOTO-CIUDAD (30 oct 2026): interruptores de cada servicio de viajes por ciudad, como Uber: el
 -- código para empezar (siempre, solo de noche o nunca) y la selfie del conductor con el casco puesto.
 CREATE TABLE IF NOT EXISTS ajustes_viaje_zona (

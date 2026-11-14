@@ -24,17 +24,24 @@ import { crearTicket } from './tickets';
  */
 export const MAX_TEXTO_CONDUCTOR = 140;
 export function textoParaConductor(texto: string): string {
-  const limpio = texto
-    .replace(/\b(?:https?:\/\/|www\.)\S+/gi, '[…]')
-    .replace(/\S+@\S+/g, '[…]')
-    .replace(/\b[a-z0-9-]+\.(?:com|net|org|io|co|me|ve|us|app|link|ly)\b\S*/gi, '[…]')
-    // Un teléfono: dígitos con espacios, guiones, puntos o paréntesis, con 7 dígitos o más.
-    .replace(/[+\d(][\d\s().-]{5,}\d/g, (x) => (x.replace(/\D/g, '').length >= 7 ? '[…]' : x))
-    .replace(/\s+/g, ' ')
-    .trim();
+  const limpio = sinContacto(texto);
   return limpio.length > MAX_TEXTO_CONDUCTOR
     ? `${limpio.slice(0, MAX_TEXTO_CONDUCTOR - 1).trimEnd()}…`
     : limpio;
+}
+
+/** Quita enlaces, correos y teléfonos de un texto libre (filtro simple; C-CHAT-VIAJE también). */
+export function sinContacto(texto: string): string {
+  return (
+    texto
+      .replace(/\b(?:https?:\/\/|www\.)\S+/gi, '[…]')
+      .replace(/\S+@\S+/g, '[…]')
+      .replace(/\b[a-z0-9-]+\.(?:com|net|org|io|co|me|ve|us|app|link|ly)\b\S*/gi, '[…]')
+      // Un teléfono: dígitos con espacios, guiones, puntos o paréntesis, con 7 dígitos o más.
+      .replace(/[+\d(][\d\s().-]{5,}\d/g, (x) => (x.replace(/\D/g, '').length >= 7 ? '[…]' : x))
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
 
 export const viajesHistorial = new Hono<{ Bindings: Env; Variables: Variables }>();

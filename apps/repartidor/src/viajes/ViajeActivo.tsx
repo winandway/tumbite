@@ -10,7 +10,7 @@ import {
   textoReferencia,
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
-import { Boton, C, fotoConCamara } from '@tumbite/movil';
+import { Boton, C, ChatPedido, fotoConCamara } from '@tumbite/movil';
 
 /** C-ENVIO-FOTO-ENTREGA: la cámara y los archivos para la pieza común de fotos. */
 const CAMARA_ENTREGA = {
@@ -124,6 +124,8 @@ export function ViajeActivo({
    * «Tomar foto» o «Subir desde archivos» (C-CAMARA-EN-TODA-SUBIDA).
    */
   const [fotoEntregaLista, setFotoEntregaLista] = useState(false);
+  // C-CHAT-VIAJE: mensajes con el pasajero mientras el viaje está activo (sin teléfonos).
+  const [verChat, setVerChat] = useState(false);
   async function fotoEntrega() {
     setError('');
     const foto = await fotoConCamara(idioma, CAMARA_ENTREGA, deArchivosEntrega);
@@ -430,6 +432,16 @@ export function ViajeActivo({
             cargando={subiendoFoto}
             secundario
           />
+        </>
+      ) : null}
+      {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
+        <>
+          <Boton
+            texto={verChat ? t.ocultarMensajes : t.mensajesPasajero}
+            alTocar={() => setVerChat((x) => !x)}
+            secundario
+          />
+          {verChat ? <ChatPedido pedidoId={viaje.id} ruta={`/datos/viajes/${viaje.id}`} /> : null}
         </>
       ) : null}
       {/* C-PAGO-MOVIL-VIAJE: confirmación MANUAL de que el pago móvil llegó (nunca «del banco»). */}

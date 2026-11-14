@@ -7,7 +7,15 @@ import {
   formatearMonto,
   textoReferencia,
 } from '@tumbite/compartido';
-import { Boton, C, Campo, URL_SERVIDOR, leerTokenGuardado, useSesion } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  Campo,
+  ChatPedido,
+  URL_SERVIDOR,
+  leerTokenGuardado,
+  useSesion,
+} from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
 import { miUbicacion } from '../ubicacion';
@@ -137,6 +145,8 @@ export function ViajeEnCurso({
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState('');
   const [calificado, setCalificado] = useState(false);
+  // C-CHAT-VIAJE: mensajes con el conductor mientras el viaje está activo (sin teléfonos).
+  const [verChat, setVerChat] = useState(false);
   // C-VIAJE-PROPINA: propina después del viaje, con la tarjeta con la que pagó.
   const [propina, setPropina] = useState<number | null>(null);
   async function darPropina(centavos: number) {
@@ -391,6 +401,16 @@ export function ViajeEnCurso({
             cargando={cancelando}
             secundario
           />
+        </>
+      ) : null}
+      {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
+        <>
+          <Boton
+            texto={verChat ? t.ocultarMensajes : t.mensajesConductor}
+            alTocar={() => setVerChat((x) => !x)}
+            secundario
+          />
+          {verChat ? <ChatPedido pedidoId={viaje.id} ruta={`/datos/viajes/${viaje.id}`} /> : null}
         </>
       ) : null}
       {viaje.estado === 'terminado' && !calificado ? (

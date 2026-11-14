@@ -127,6 +127,9 @@ export const TEXTOS_MOTO = {
     cancelada: 'Reserva cancelada',
     canceladaCargo: 'Reserva cancelada. Cargo por cancelación tardía:',
     precioReservado: 'Precio reservado',
+    // C-CHAT-VIAJE (14 nov 2026).
+    mensajesConductor: 'Escribirle al conductor',
+    ocultarMensajes: 'Ocultar mensajes',
   },
   en: {
     titulo: 'Moto',
@@ -250,5 +253,7 @@ export const TEXTOS_MOTO = {
     cancelada: 'Reservation canceled',
     canceladaCargo: 'Reservation canceled. Late cancellation fee:',
     precioReservado: 'Reserved price',
+    mensajesConductor: 'Message your driver',
+    ocultarMensajes: 'Hide messages',
   },
 };

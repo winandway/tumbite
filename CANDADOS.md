@@ -4161,3 +4161,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Cómo funciona:** `POST /datos/conductor/operaciones/:id/foto-paquete?momento=entrega` (solo con el viaje `en_curso`; antes, 409) guarda `envios_persona.foto_entrega`, limpia y con su GPS aparte, como la de recogida. Quien envía ve `paquete.fotoEntrega`. Driver: «Agregar foto de la entrega» junto al PIN, por la pieza común `fotoConCamara` («Tomar foto» o «Subir desde archivos»). El PIN sigue siendo lo que cierra la entrega.
 - **Prueba:** `rutas/envios.test.ts` (409 antes de salir, 201 a bordo, `fotoEntrega: true`).
 - **Guía:** el texto para Docs está en `apps/panel/src/sitio/docs/borradores/viajesProgramadosYEnvios.ts` (lo publica con capturas el desarrollador de guías).
+
+## C-CHAT-VIAJE · Mensajes entre pasajero y conductor durante el viaje (14 nov 2026) — todos los países
+
+- **Qué es:** el mismo patrón del chat del pedido de Comida (`/datos/pedidos/:id/mensajes`), para viajes y envíos: `GET` y `POST /datos/viajes/:id/mensajes` (`rutas/chatViaje.ts`, montado antes que viajesPasajero), tabla nueva `mensajes_viaje`. Solo el pasajero y su conductor (y el equipo); abierto con el viaje asignado, con el conductor en la recogida o en curso. Terminado o cancelado, ellos reciben `{abierto: false, mensajes: []}` y no pueden escribir (la conversación queda para soporte). El texto pasa por `sinContacto` (sin enlaces, correos ni teléfonos; la misma pieza de «Olvidé algo»), hasta 300 caracteres, y avisa a la otra parte. Apps: «Escribirle al conductor» / «Escribirle al pasajero» con la pieza común `ChatPedido` (nueva prop `ruta`; sin fotos en viajes). Sin llamada enmascarada.
+- **Prueba:** `rutas/chatViaje.test.ts`.

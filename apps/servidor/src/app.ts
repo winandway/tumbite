@@ -90,6 +90,7 @@ import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
 import { viajesProgramados } from './rutas/viajesProgramados';
+import { chatViaje } from './rutas/chatViaje';
 import { comidaCiudad } from './rutas/comidaCiudad';
 import { pruebasComidaVe } from './rutas/pruebasComidaVe';
 import { saludComidaPaises } from './internacional/tarifas';
@@ -580,6 +581,7 @@ app.route('/datos', viajes);
 app.route('/datos', viajesHistorial);
 // C-VIAJE-PROGRAMADO: antes que viajesPasajero, para que /viajes/programados no caiga en /viajes/:id.
 app.route('/datos', viajesProgramados);
+app.route('/datos', chatViaje);
 app.route('/datos', viajesPasajero);
 app.route('/datos', comidaCiudad);
 app.route('/datos', pruebasComidaVe);

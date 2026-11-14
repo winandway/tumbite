@@ -1975,6 +1975,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "resuelto_en"
   ],
+  "mensajes_viaje": [
+    "id",
+    "operacion_id",
+    "de_usuario_id",
+    "texto",
+    "creado_en"
+  ],
   "ajustes_viaje_zona": [
     "zona_id",
     "servicio_id",

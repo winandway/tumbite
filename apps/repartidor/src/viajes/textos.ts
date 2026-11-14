@@ -46,6 +46,9 @@ export const TEXTOS_VIAJE = {
       fotoEntrega: 'Foto de la entrega (opcional)',
       fotoEntregaLista: 'Foto de la entrega guardada',
       fotoEntregaBoton: 'Agregar foto de la entrega',
+      // C-CHAT-VIAJE (14 nov 2026).
+      mensajesPasajero: 'Escribirle al pasajero',
+      ocultarMensajes: 'Ocultar mensajes',
       fotoEntregaOtra: 'Cambiar la foto de la entrega',
       entregar: 'Entregar el paquete',
       permisoCamara: 'Necesitamos permiso para usar la cámara.',
@@ -110,6 +113,8 @@ export const TEXTOS_VIAJE = {
       fotoEntrega: 'Delivery photo (optional)',
       fotoEntregaLista: 'Delivery photo saved',
       fotoEntregaBoton: 'Add a delivery photo',
+      mensajesPasajero: 'Message the rider',
+      ocultarMensajes: 'Hide messages',
       fotoEntregaOtra: 'Change the delivery photo',
       entregar: 'Deliver the package',
       permisoCamara: 'We need permission to use the camera.',
