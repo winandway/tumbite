@@ -1,14 +1,10 @@
 import type { OrigenPunto } from './mapaWebGoogle';
 
 /**
- * C-MAPA-GOOGLE-WEB en Divoox Driver (Flex Fase 7, 13 nov 2026) — todos los países. De dónde viene
- * cada punto de los mapas web del conductor, para elegir Google (con llave) o Leaflet:
- * - la ubicación del conductor es GPS;
- * - el restaurante, la casa del cliente y los restaurantes cercanos salen de direcciones elegidas
- *   con Google Places (pieza única `CampoDireccion`);
- * - en una ruta Flex, el centro y las paradas también salen de direcciones de Google Places
- *   (panel de la empresa); sin saber la fuente exacta de cada una, se toma la prudente: Google.
- * Sin puntos de Google, Leaflet; sin llave, Leaflet como siempre.
+ * C-MAPA-GOOGLE-WEB en Divoox Driver — todos los países. De dónde viene cada punto de los mapas web
+ * del conductor (la ubicación del conductor es GPS; el restaurante, la casa, los restaurantes
+ * cercanos y las paradas de Flex salen de direcciones de Google Places). Desde el 14 nov 2026 el
+ * origen ya no decide el proveedor (con llave, siempre Google), pero se sigue informando.
  */
 export function origenesMapaDriver(p: {
   yo?: unknown;
@@ -24,4 +20,23 @@ export function origenesMapaDriver(p: {
 
 export function origenesMapaRutaFlex(p: { paradas: number; yo?: unknown }): OrigenPunto[] {
   return [...(p.yo ? (['gps'] as const) : []), ...(p.paradas > 0 ? (['google'] as const) : [])];
+}
+
+/**
+ * Con un pedido activo (hay restaurante o casa) el mapa del conductor es de viaje: se abre solo y va
+ * inclinado hacia el destino. Sin pedido (conectado esperando ofertas), plano y con el botón
+ * «Ver en el mapa» para no gastar cargas por mirar.
+ */
+export function vistaMapaDriver(p: {
+  restaurante?: unknown;
+  casa?: unknown;
+  yo?: unknown;
+  marcadores?: unknown[];
+}): 'viaje' | 'plano' {
+  return p.restaurante || p.casa ? 'viaje' : 'plano';
+}
+
+/** Hacia dónde mira el mapa en viaje: la casa si ya la lleva; si no, el restaurante. */
+export function destinoMapaDriver<T>(p: { restaurante?: T | null; casa?: T | null }): T | null {
+  return p.casa ?? p.restaurante ?? null;
 }

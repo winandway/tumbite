@@ -70,15 +70,11 @@ export function ElegirPunto({
       .catch(() => setBusqueda(false));
   }, []);
 
-  // C-MAPA-GOOGLE-WEB: con la búsqueda de Google encendida y la llave del navegador, el mapa es el
-  // de Google (bajo demanda). Sin llave, Leaflet como siempre, sin esperar a saber si hay búsqueda.
+  // C-MAPA-GOOGLE-WEB (14 nov 2026): con la llave del navegador el mapa es SIEMPRE el de Google
+  // (bajo demanda, plano: elegir un punto no es un viaje), haya o no búsqueda. Sin llave, Leaflet.
   const llave = (import.meta.env.VITE_GOOGLE_MAPS_WEB_KEY as string | undefined) ?? '';
-  const proveedor =
-    elegirMapaWeb({ llave, origenes: ['google'] }) === 'leaflet'
-      ? 'leaflet'
-      : busqueda === null
-        ? null
-        : elegirMapaWeb({ llave, origenes: busqueda ? ['google'] : ['propio'] });
+  const mapId = (import.meta.env.VITE_GOOGLE_MAPS_WEB_MAP_ID as string | undefined) ?? '';
+  const proveedor = elegirMapaWeb({ llave });
 
   useEffect(() => {
     if (proveedor !== 'leaflet') return;
@@ -193,6 +189,7 @@ export function ElegirPunto({
       {proveedor === 'google' ? (
         <MapaGoogleBajoDemanda
           llave={llave}
+          mapId={mapId}
           idioma={idioma}
           centro={punto ?? centro}
           zoom={punto ? 17 : 12}

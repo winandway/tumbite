@@ -26,6 +26,7 @@ vi.mock('../panel/api', () => ({
 }));
 
 import { ElegirPunto } from './ElegirPunto';
+import { api } from '../panel/api';
 
 const LLAVE = 'AIzaSyEjemploDeLlaveDeNavegador_0123';
 
@@ -59,6 +60,23 @@ describe('ElegirPunto: qué mapa se usa (C-MAPA-GOOGLE-WEB)', () => {
     await userEvent.click(boton);
     await waitFor(() => expect(scriptsDeGoogle()).toHaveLength(1));
     expect(scriptsDeGoogle()[0]?.src).toContain('loading=async');
+    expect(leaflet.creados).toBe(0);
+  });
+
+  it('con la llave, aunque la búsqueda de Google esté apagada: también el mapa de Google (14 nov)', async () => {
+    vi.stubEnv('VITE_GOOGLE_MAPS_WEB_KEY', LLAVE);
+    vi.mocked(api.pedir).mockResolvedValueOnce({ busqueda: false });
+    render(
+      <ElegirPunto
+        punto={null}
+        cambiar={() => undefined}
+        centro={{ lat: 10.5, lng: -66.9 }}
+        pais="VE"
+        idioma="es"
+      />,
+    );
+    expect(await screen.findByRole('button', { name: 'Ver en el mapa' })).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 20));
     expect(leaflet.creados).toBe(0);
   });
 

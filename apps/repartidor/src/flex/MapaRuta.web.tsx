@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { COLORES, type Punto, crearMapa, punto } from '../piezas/mapaWeb';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
-import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
+import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
 import { origenesMapaRutaFlex } from '@tumbite/compartido/src/mapaDriverWeb';
 import { useSesion } from '@tumbite/movil';
-import { LLAVE_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
+import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
 export type { PuntoRuta };
 
@@ -16,9 +16,10 @@ export type { PuntoRuta };
 type PropsRuta = Parameters<typeof MapaRutaLeaflet>[0];
 
 /**
- * C-MAPA-GOOGLE-WEB: el centro y las paradas salen de direcciones de Google Places; con la llave
- * del navegador, el mapa de Google (al tocar «Ver en el mapa»), cada parada con su color de estado
- * y su número en la etiqueta. Sin llave, Leaflet como siempre (con la línea del orden y el área).
+ * C-MAPA-GOOGLE-WEB (14 nov 2026): con la llave del navegador, el mapa de Google. Es la ruta en
+ * curso: se abre solo y, con Map ID, va inclinado a 45° mirando hacia la parada actual. Cada parada
+ * con su color de estado y su número dentro de la marca, la línea punteada del orden y el círculo
+ * del área de entrega, igual que en Leaflet. Sin llave, Leaflet como siempre.
  */
 export function MapaRuta(props: PropsRuta) {
   return proveedorMapaWeb(origenesMapaRutaFlex({ paradas: props.puntos.length, yo: props.yo })) ===
@@ -29,26 +30,40 @@ export function MapaRuta(props: PropsRuta) {
   );
 }
 
-function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta }: PropsRuta) {
+function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta, area = null }: PropsRuta) {
   const { idioma } = useSesion();
   const centro = puntos[0]?.punto ?? yo;
   if (!centro) return null;
+  const actual = puntos.find((p) => p.tono === 'actual')?.punto ?? area?.punto ?? null;
   return (
     <MapaGoogleBajoDemanda
       llave={LLAVE_MAPA_WEB}
+      mapId={MAP_ID_MAPA_WEB}
       idioma={idioma}
       centro={centro}
       alto={alto}
       etiqueta={etiqueta}
+      abierto
+      inclinado
+      rumbo={yo && actual ? rumboEntre(yo, actual) : 0}
+      lineas={
+        puntos.length > 1
+          ? [{ id: 'orden', puntos: puntos.map((p) => p.punto), color: '#8E9198', punteada: true }]
+          : []
+      }
+      circulos={
+        area ? [{ id: 'area', centro: area.punto, metros: area.metros, color: '#4AA5DC' }] : []
+      }
       puntos={[
         ...puntos.map((p) => ({
           id: p.id,
           ...p.punto,
           color: COLOR_TONO[p.tono],
-          radio: p.tono === 'actual' ? 11 : 9,
+          radio: 15,
+          texto: p.numero.replace(/[^0-9A-Za-z]/g, ''),
           etiqueta: `${p.numero} · ${p.nombre}`,
         })),
-        ...(yo ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 8 }] : []),
+        ...(yo ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 9 }] : []),
       ]}
     />
   );

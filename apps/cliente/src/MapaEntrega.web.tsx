@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
 import { COLORES, crearMapa, punto } from './mapaWeb';
 import type { Punto } from './ubicacion';
-import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
+import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
 import { useSesion } from '@tumbite/movil';
-import { LLAVE_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
+import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
 /**
  * Mapa en vivo de la entrega en la versión web: restaurante (gris oscuro), tu casa (escarlata)
@@ -19,8 +19,10 @@ type Props = {
 };
 
 /**
- * C-MAPA-GOOGLE-WEB: el restaurante y tu casa vienen de direcciones de Google Places, así que con la
- * llave del navegador el mapa es el de Google, abierto al tocar «Ver en el mapa». Sin llave, Leaflet.
+ * C-MAPA-GOOGLE-WEB: con la llave del navegador, el mapa de Google. Es la pantalla de entrega (o
+ * viaje) en curso: se abre solo, sin botón, y con Map ID va inclinado a 45° mirando hacia tu casa
+ * (desde el repartidor si ya se ve; si no, desde el restaurante), como Uber y DoorDash. Sin llave,
+ * Leaflet.
  */
 export function MapaEntrega(props: Props) {
   return proveedorMapaWeb(['google', 'gps']) === 'google' ? (
@@ -51,13 +53,18 @@ function MapaEntregaGoogle({ restaurante, casa, repartidor, nombreRepartidor, et
       etiqueta: nombreRepartidor ?? etiquetas.repartidor,
     },
   ].filter((p) => p != null);
+  const desde = repartidor ?? restaurante;
   return (
     <MapaGoogleBajoDemanda
       llave={LLAVE_MAPA_WEB}
+      mapId={MAP_ID_MAPA_WEB}
       idioma={idioma}
       centro={centro}
       puntos={puntos}
       etiqueta={etiquetas.repartidor}
+      abierto
+      inclinado
+      rumbo={desde && casa ? rumboEntre(desde, casa) : 0}
     />
   );
 }

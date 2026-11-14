@@ -5,7 +5,7 @@ import { COLORES, crearMapa, punto as marca } from './mapaWeb';
 import type { Punto } from './ubicacion';
 import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
 import { useSesion } from '@tumbite/movil';
-import { LLAVE_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
+import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
 /**
  * Marcar el punto de entrega en la versión web: se toca el mapa y el pin va ahí.
@@ -20,8 +20,8 @@ type Props = {
 };
 
 /**
- * C-MAPA-GOOGLE-WEB: el punto sale de una dirección sugerida por Google Places, así que con la llave
- * del navegador se marca sobre el mapa de Google (al tocar «Ver en el mapa»). Sin llave, Leaflet.
+ * C-MAPA-GOOGLE-WEB: con la llave del navegador se marca sobre el mapa de Google, plano y al tocar
+ * «Ver en el mapa» (elegir un punto no es un viaje). Sin llave, Leaflet.
  */
 export function ElegirEnMapa(props: Props) {
   return proveedorMapaWeb(['google']) === 'google' ? (
@@ -38,6 +38,7 @@ function ElegirEnMapaGoogle({ punto, cambiarPunto, textos }: Props) {
       <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>{textos.ayuda}</Text>
       <MapaGoogleBajoDemanda
         llave={LLAVE_MAPA_WEB}
+        mapId={MAP_ID_MAPA_WEB}
         idioma={idioma}
         centro={punto ?? { lat: 25.7617, lng: -80.1918 }}
         zoom={punto ? 16 : 12}

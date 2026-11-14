@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
 import { COLORES, type Punto, type ZonaDemanda, crearMapa, punto, zona } from './mapaWeb';
-import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
-import { origenesMapaDriver } from '@tumbite/compartido/src/mapaDriverWeb';
+import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
+import {
+  destinoMapaDriver,
+  origenesMapaDriver,
+  vistaMapaDriver,
+} from '@tumbite/compartido/src/mapaDriverWeb';
 import { useSesion } from '@tumbite/movil';
-import { LLAVE_MAPA_WEB, proveedorMapaWeb } from '../flex/mapaGoogleWeb';
+import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from '../flex/mapaGoogleWeb';
 
 /**
  * Mapa del repartidor en la versión web (Leaflet con OpenStreetMap, sin llave): su ubicación en
@@ -14,10 +18,10 @@ import { LLAVE_MAPA_WEB, proveedorMapaWeb } from '../flex/mapaGoogleWeb';
 type PropsMapa = Parameters<typeof MapaLeaflet>[0];
 
 /**
- * C-MAPA-GOOGLE-WEB: el restaurante, la casa y los restaurantes cercanos vienen de direcciones de
- * Google Places; con la llave del navegador el mapa es el de Google, abierto al tocar «Ver en el
- * mapa». Solo la ubicación del conductor (GPS) o sin llave: Leaflet, como siempre. Las zonas con
- * más pedidos se dibujan solo en Leaflet.
+ * C-MAPA-GOOGLE-WEB (14 nov 2026): con la llave del navegador el mapa es SIEMPRE el de Google. Con un
+ * pedido activo (restaurante o casa) se abre solo y, con Map ID, va inclinado a 45° mirando hacia el
+ * destino; sin pedido, plano y con el botón «Ver en el mapa». Las zonas con más pedidos se dibujan
+ * como áreas rojas translúcidas, y la del pago extra lleva el monto a la vista. Sin llave, Leaflet.
  */
 export function Mapa(props: PropsMapa) {
   return proveedorMapaWeb(origenesMapaDriver(props)) === 'google' ? (
@@ -27,11 +31,34 @@ export function Mapa(props: PropsMapa) {
   );
 }
 
-function MapaGoogle({ yo, restaurante, casa, marcadores = [], alto = 300, etiquetas }: PropsMapa) {
+function MapaGoogle({
+  yo,
+  restaurante,
+  casa,
+  marcadores = [],
+  zonasDemanda = [],
+  etiquetaZona = (n: number) => String(n),
+  alto = 300,
+  etiquetas,
+}: PropsMapa) {
   const { idioma } = useSesion();
-  const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto;
+  const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0];
   if (!centro) return null;
+  const viaje = vistaMapaDriver({ restaurante, casa }) === 'viaje';
+  const destino = destinoMapaDriver({ restaurante, casa });
   const puntos = [
+    // C-PAGO-PICO: el monto extra queda a la vista sobre la zona (como el «+$2.00» de DoorDash).
+    ...zonasDemanda
+      .filter((z) => z.pico)
+      .map((z, i) => ({
+        id: `pico-${i}`,
+        lat: z.lat,
+        lng: z.lng,
+        color: '#F20D20',
+        radio: 12,
+        texto: etiquetaZona(z.pedidos, z.pico),
+        etiqueta: etiquetaZona(z.pedidos, z.pico),
+      })),
     ...marcadores.map((x) => ({
       id: `m-${x.id}`,
       ...x.punto,
@@ -60,11 +87,22 @@ function MapaGoogle({ yo, restaurante, casa, marcadores = [], alto = 300, etique
   return (
     <MapaGoogleBajoDemanda
       llave={LLAVE_MAPA_WEB}
+      mapId={MAP_ID_MAPA_WEB}
       idioma={idioma}
       centro={centro}
       puntos={puntos}
+      circulos={zonasDemanda.map((z, i) => ({
+        id: `zona-${i}`,
+        centro: { lat: z.lat, lng: z.lng },
+        metros: 600,
+        color: '#F20D20',
+        opacidad: z.nivel === 'alta' ? 0.35 : 0.18,
+      }))}
       alto={alto}
       etiqueta={etiquetas.yo}
+      abierto={viaje}
+      inclinado={viaje}
+      rumbo={viaje && yo && destino ? rumboEntre(yo, destino) : 0}
     />
   );
 }

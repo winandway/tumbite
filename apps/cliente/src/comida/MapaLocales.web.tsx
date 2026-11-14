@@ -3,7 +3,7 @@ import type L from 'leaflet';
 import { COLORES, crearMapa, punto } from '../mapaWeb';
 import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
 import { useSesion } from '@tumbite/movil';
-import { LLAVE_MAPA_WEB, proveedorMapaWeb } from '../mapaGoogleWeb';
+import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from '../mapaGoogleWeb';
 
 export type Local = { id: string; nombre: string; lat: number; lng: number; detalle: string };
 
@@ -11,8 +11,8 @@ type Props = { locales: Local[]; alElegir: (id: string) => void };
 
 /**
  * C-RECOGER-MAPA en la versión web: un punto por local; al tocarlo se abre su menú. Las direcciones
- * de los locales vienen de Google Places: con la llave del navegador, mapa de Google bajo demanda
- * (C-MAPA-GOOGLE-WEB); sin llave, Leaflet.
+ * de los locales vienen de Google Places: con la llave del navegador, mapa de Google plano y bajo
+ * demanda (C-MAPA-GOOGLE-WEB); sin llave, Leaflet.
  */
 export function MapaLocales(props: Props) {
   return proveedorMapaWeb(['google']) === 'google' ? (
@@ -29,6 +29,7 @@ function MapaLocalesGoogle({ locales, alElegir }: Props) {
   return (
     <MapaGoogleBajoDemanda
       llave={LLAVE_MAPA_WEB}
+      mapId={MAP_ID_MAPA_WEB}
       idioma={idioma}
       centro={primero}
       zoom={13}
