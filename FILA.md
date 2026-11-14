@@ -604,6 +604,7 @@
 ## Divoox Carro listo para probar (rama fase-carro-1, 13 nov 2026) — Venezuela y EE. UU.
 
 - [ ] [para: revisor-calidad] Revisar la rama fase-carro-1: C-CARRO-PAPELES-PAIS (y la tabla rehecha de `conductor_documentos`), C-CARRO-ALTA-DRIVER, C-CARRO-PANEL, C-CARRO-TARIFA-VE, C-CARRO-POR-PAIS, C-CARRO-VIAJE-PASAJERO (foto del conductor = selfie del KYC aprobado, solo al pasajero del viaje), C-CARRO-CIRCUITO y C-VIAJES-HISTORIAL.
+- [ ] [para: revisor-calidad] Revisar la rama fase-guias-2: guías públicas de la semana con capturas reales (C-DOCS-CARRO, C-DOCS-SEMANA, C-DOCS-BUSCADOR); solo Docs, capturas y guiones de capturas.
 - [ ] [para: desarrollador] Viaje programado de Carro (pedir para más tarde, hasta 7 días; el despacho arranca N minutos antes; cancelación gratis hasta una hora antes), copiando el pedido programado de Comida. No se hizo esta noche: arrancar el despacho a la hora necesita el reloj, que es terreno de otro desarrollador.
 - [ ] [para: desarrollador] Docs públicas de Carro en español e inglés con capturas reales (pedir un Carro, conducir con Divoox Carro, registrar el carro y sus papeles, Mis viajes y objetos olvidados). Falta tomar las capturas del recorrido.
 - [ ] [para: desarrollador] Carro, después: paradas múltiples, categorías Comfort y Premium, tarifa dinámica, peajes. Anotados, no construidos (orden del 13 nov).
