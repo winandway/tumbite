@@ -1,5 +1,6 @@
 import { formatearMonto } from '@tumbite/compartido';
 import type { Env } from './env';
+import { notificarWeb } from './avisosWeb';
 
 /**
  * Avisos al celular por el servicio de Expo. Cada teléfono registra su token en
@@ -29,7 +30,20 @@ export type Aviso = {
   sonido?: string;
 };
 
+/**
+ * Un aviso sale por todos los canales que la persona tenga: la app de la tienda (Expo) y la app
+ * instalada desde el navegador (Web Push, C-AVISOS-WEB). Cada canal tiene su propio destino (un
+ * token de Expo no es una suscripción web), así que el mismo aviso no llega dos veces al mismo canal.
+ */
 export async function notificar(env: Env, db: D1Database, usuarioId: string, aviso: Aviso) {
+  const [expo, web] = await Promise.all([
+    notificarExpo(env, db, usuarioId, aviso),
+    notificarWeb(env, db, usuarioId, aviso),
+  ]);
+  return { enviados: expo.enviados + web };
+}
+
+async function notificarExpo(env: Env, db: D1Database, usuarioId: string, aviso: Aviso) {
   const { results } = await db
     .prepare('SELECT token FROM dispositivos WHERE usuario_id = ? AND activo = 1')
     .bind(usuarioId)

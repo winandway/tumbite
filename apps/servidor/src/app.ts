@@ -96,6 +96,8 @@ import { tiendasPeso } from './rutas/tiendasPeso';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
+// C-AVISOS-WEB (13 nov 2026): avisos de las apps instaladas desde el navegador.
+import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludDinero } from './conciliacion';
 import { excepcionesConciliacion } from './rutas/excepcionesConciliacion';
@@ -265,6 +267,8 @@ app.get('/datos/salud', async (c) => {
       : 'error';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
+  // C-AVISOS-WEB: sin llaves VAPID, «pendiente».
+  piezas.avisosWeb = saludAvisosWeb(c.env);
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
   // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que
   // los miran (antes, cuatro recorridos). Si falla, cada pieza vuelve a preguntar por su cuenta.
@@ -519,6 +523,8 @@ app.notFound(async (c) => {
 });
 
 app.route('/datos/cuentas', cuentas);
+// C-AVISOS-WEB: suscribirse y darse de baja de los avisos en el navegador.
+app.route('/datos/avisos-web', rutasAvisosWeb);
 // C-ENTREGA-PRACTICA: antes que las de verdad; solo atiende los pedidos «prueba-…».
 app.route('/datos', rutasPractica(esRevisor));
 app.route('/datos', gerente);

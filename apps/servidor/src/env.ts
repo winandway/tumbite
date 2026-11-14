@@ -39,6 +39,21 @@ export const esquemaEnv = z.object({
     .string()
     .regex(/^\d{8,15}$/)
     .optional(),
+  /**
+   * C-AVISOS-WEB: llaves VAPID de los avisos de las apps instaladas desde el navegador. La pública
+   * (variable del sitio, la misma que EXPO_PUBLIC_VAPID_PUBLIC_KEY de la compilación) y la privada
+   * (secreto del sitio). Sin las dos, los avisos web quedan apagados.
+   */
+  VAPID_PUBLIC_KEY: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{86,88}$/)
+    .optional(),
+  VAPID_PRIVATE_KEY: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{42,44}$/)
+    .optional(),
+  /** Contacto que va en la firma VAPID («mailto:…»). Por defecto, el buzón de soporte. */
+  VAPID_SUBJECT: z.string().startsWith('mailto:').optional(),
   /** Token de acceso de Expo para los avisos al celular (opcional; sube el límite). */
   EXPO_ACCESS_TOKEN: z.string().min(10).optional(),
   /**
