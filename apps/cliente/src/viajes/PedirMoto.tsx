@@ -90,6 +90,9 @@ export function PedirMoto({
   // C-CARRO-VIAJE-PASAJERO: cada servicio dice lo suyo en el botón.
   const textoPedirViaje =
     servicio === 'carro' ? (v.categoria === 'xl' ? t.pedirCarroXl : t.pedirCarro) : t.pedirMoto;
+  // C-VIAJE-PROGRAMADO: con hora elegida, el botón dice «Reservar».
+  const textoPedir = v.cuando ? t.reservar : textoPedirViaje;
+  const textoEnviar = v.cuando ? t.reservar : t.pedirEnvio;
   const [cotizacion, setCotizacion] = useState<CotizacionViaje | null>(null);
   const [error, setError] = useState('');
   const [trabajando, setTrabajando] = useState(false);
@@ -478,7 +481,7 @@ export function PedirMoto({
             </Text>
           ) : null}
           <Boton
-            texto={cuando ? t.reservar : servicio === 'envios' ? t.pedirEnvio : textoPedirViaje}
+            texto={servicio === 'envios' ? textoEnviar : textoPedir}
             alTocar={() => void pedir()}
             cargando={trabajando}
             exito

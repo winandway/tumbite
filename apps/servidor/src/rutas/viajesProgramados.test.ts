@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../env';
 import { mundo } from '../pruebas/ayuda';
 type Mundo = ReturnType<typeof mundo>;
@@ -16,8 +16,8 @@ const ORIGEN = { lat: 25.7617, lng: -80.1918, direccion: 'Punto de recogida' };
 const DESTINO = { lat: 25.79, lng: -80.13, direccion: 'Destino del viaje' };
 const TARIFA = { base: 300, porKm: 120, porMinuto: 25, minimo: 800, cargoCancelacion: 500 };
 
-async function escenario() {
-  const m = mundo({}, { host: 'staging.tumbite.com' });
+async function escenario(extra: Record<string, string> = {}) {
+  const m = mundo(extra, { host: 'staging.tumbite.com' });
   const admin = await m.cuenta('admin', 'Soporte Divoox');
   const cliente = await m.cuenta('cliente', 'Paula Pasajera');
   await m.llamar('PUT', '/datos/admin/servicios/carro', { estado: 'disponible' }, admin.token);
@@ -215,5 +215,82 @@ describe('C-VIAJE-PROGRAMADO', () => {
     const id = (await reservar(e, 120)).r.datos.viaje.id as string;
     await correrHora(e, id, "datetime('now', '+25 minutes')");
     expect((await activarViajesProgramados(env(e.m), e.m.DB)).activados).toBe(1);
+  });
+
+  describe('con tarjeta', () => {
+    afterEach(() => vi.unstubAllGlobals());
+    const stripe = (rechaza = false) => {
+      const llamadas: string[] = [];
+      vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+        llamadas.push(
+          `${init?.method ?? 'GET'} ${String(url)} ${decodeURIComponent(String(init?.body ?? ''))}`,
+        );
+        if (String(url).includes('/payment_methods'))
+          return new Response(JSON.stringify({ data: [{ id: 'pm_guardada' }] }), { status: 200 });
+        if (/\/payment_intents$/.test(String(url)))
+          return rechaza
+            ? new Response(JSON.stringify({ error: { message: 'card_declined' } }), { status: 402 })
+            : new Response(JSON.stringify({ id: 'pi_prog', status: 'requires_capture' }), {
+                status: 200,
+              });
+        return new Response(JSON.stringify({ id: 'x' }), { status: 200 });
+      });
+      return llamadas;
+    };
+    const reservarConTarjeta = async (e: E) => {
+      const cot = (
+        await e.m.llamar(
+          'POST',
+          '/datos/viajes/cotizar',
+          { servicio: 'carro', origen: ORIGEN, destino: DESTINO },
+          e.cliente.token,
+        )
+      ).datos.cotizacion as { id: string };
+      return e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: cot.id, metodoPago: 'tarjeta', programadoPara: enMinutos(120) },
+        e.cliente.token,
+      );
+    };
+
+    it('sin tarjeta guardada no se reserva; con ella, a la hora se autoriza sin la persona delante', async () => {
+      const llamadas = stripe();
+      const e = await escenario({ STRIPE_SECRET_KEY: 'sk_test_x' });
+      expect((await reservarConTarjeta(e)).estado).toBe(409);
+      await e.m.DB.prepare("UPDATE usuarios SET stripe_cliente = 'cus_prueba' WHERE id = ?")
+        .bind(e.cliente.id)
+        .run();
+      const r = await reservarConTarjeta(e);
+      expect(r.estado).toBe(201);
+      const id = r.datos.viaje.id as string;
+      await correrHora(e, id, "datetime('now', '+10 minutes')");
+      expect((await activarViajesProgramados(env(e.m), e.m.DB)).activados).toBe(1);
+      const autorizacion = llamadas.find((x) => /POST \S+\/payment_intents /.test(x)) ?? '';
+      expect(autorizacion).toContain('off_session=true');
+      expect(autorizacion).toContain('payment_method=pm_guardada');
+      expect(autorizacion).toContain('capture_method=manual');
+      const v = await e.m.DB.prepare(
+        'SELECT v.estado, c.stripe_pago FROM viajes v JOIN cobros_viaje c ON c.operacion_id = v.operacion_id WHERE v.operacion_id = ?',
+      )
+        .bind(id)
+        .first<{ estado: string; stripe_pago: string }>();
+      expect(v).toEqual({ estado: 'pago_pendiente', stripe_pago: 'pi_prog' });
+    });
+
+    it('si Stripe rechaza la tarjeta a la hora, se cancela sin cargo', async () => {
+      stripe(true);
+      const e = await escenario({ STRIPE_SECRET_KEY: 'sk_test_x' });
+      await e.m.DB.prepare("UPDATE usuarios SET stripe_cliente = 'cus_prueba' WHERE id = ?")
+        .bind(e.cliente.id)
+        .run();
+      const id = (await reservarConTarjeta(e)).datos.viaje.id as string;
+      await correrHora(e, id, "datetime('now', '+10 minutes')");
+      await activarViajesProgramados(env(e.m), e.m.DB);
+      const v = await e.m.DB.prepare('SELECT estado FROM viajes WHERE operacion_id = ?')
+        .bind(id)
+        .first<{ estado: string }>();
+      expect(v?.estado).toBe('cancelado');
+    });
   });
 });
