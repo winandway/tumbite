@@ -12,11 +12,14 @@
     "turnstile": "pendiente",
     "correo": "ok",
     "avisosCelular": "ok",
+    "avisosWeb": "pendiente",
+    "tasaBcv": "pendiente",
     "sms": "ok",
     "dinero": "ok",
     "retiros": "pendiente",
     "servicios": "ok",
     "viajes": "ok",
+    "comidaPaises": "ok",
     "tiempoReal": "pendiente",
     "exclusividad": "ok",
     "reloj": "ok",
@@ -30,5 +33,5 @@
     "rutas": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-14T09:29:40.431213+00:00"
+  "medido": "2026-11-14T12:38:39.289641+00:00"
 }
