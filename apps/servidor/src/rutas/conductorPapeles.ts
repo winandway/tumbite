@@ -248,7 +248,12 @@ conductorPapeles.post('/conductor/papeles', async (c) => {
         .optional(),
     })
     .safeParse(c.req.query());
-  if (!q.success) throw new ErrorDatos('Elige qué documento estás subiendo.', 'tipo', 400);
+  if (!q.success)
+    throw new ErrorDatos(
+      'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
+      'tipo',
+      400,
+    );
   if (Number(c.req.header('content-length') ?? 0) > MAX_DOC_BYTES)
     throw new ErrorDatos('El archivo pesa demasiado. El máximo es 5 MB.', 'archivo', 413);
   const bytes = new Uint8Array(await c.req.arrayBuffer());

@@ -197,6 +197,7 @@ for (const t of [
   'registro',
   'seguro',
   'seguro_pasajeros',
+  'inspeccion',
   'foto_frente',
   'foto_lado',
   'foto_placa',
@@ -208,7 +209,7 @@ for (const t of [
 await conductor('POST', `/datos/conductor/vehiculos/${carro}/enviar`);
 // La licencia de conducir de carro (la de moto no sirve para Carro).
 const licencia = await intentar(
-  subir('/datos/conductor/papeles?tipo=licencia&vence=2030-01-01', tokens.conductor),
+  subir('/datos/conductor/papeles?tipo=licencia_conducir&vence=2030-01-01', tokens.conductor),
 );
 
 // ───────── 3. Driver: el carro en revisión, y el panel del equipo con la cola por revisar

@@ -7,6 +7,10 @@
 export const MENSAJES_EN = new Map<string, string>([
   // Pulido de la noche del 14 nov (bloque propio)
   [
+    'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
+    'That document isn’t on the list. Use licencia_conducir (Car), licencia_moto (Moto), or antecedentes_penales.',
+  ],
+  [
     'Este pedido se paga por pago móvil: confírmalo con «Sí, me llegó» o «No me llegó».',
     'This order is paid by Pago Móvil: confirm it with “Yes, the mobile payment arrived” or “It didn’t arrive.”',
   ],
