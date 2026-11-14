@@ -315,14 +315,48 @@ export async function libroDePedido(db: D1Database, pedidoId: string) {
   }));
 }
 
-/** Pieza «libro» de la salud: ningún prepago ni fondo de punto en negativo. */
+/** Sin conciliación vigente, cuánto se recuerda un «ok» de la suma del libro en el aislado. */
+export const LIBRO_OK_RECORDADO_MS = 60_000;
+const libroOkHasta = new WeakMap<D1Database, number>();
+
+/** Una conciliación del reloj de hace menos de esto vale para la pieza «libro» del canario. */
+export const LIBRO_CONCILIACION_VIGENTE_MS = 2 * 3_600_000;
+
+/**
+ * Pieza «libro» de la salud: ningún prepago ni fondo de punto en negativo.
+ * C-LECTURAS-SALUD: el libro solo crece (no se edita ni se borra), así que sumarlo entero en cada
+ * llamada al canario era leerlo todo cada pocos minutos. Con el reloj andando, la conciliación de
+ * finanzas ya lo suma cada minuto y guarda el resultado (solo si cambió, o una vez por hora): se
+ * usa ese resultado si tiene menos de 2 horas. Un saldo negativo nuevo se ve en el canario a la
+ * vuelta siguiente del reloj (un minuto). Sin conciliación vigente (reloj en pausa), se suma aquí.
+ */
 export async function saludLibro(db: D1Database): Promise<'ok' | 'error'> {
+  const conc = await db
+    .prepare("SELECT valor FROM config WHERE clave = 'fin_conciliacion'")
+    .first<{ valor: string }>()
+    .then((f) => (f ? (JSON.parse(f.valor) as { cuando?: string; libroNegativos?: number }) : null))
+    .catch(() => null);
+  if (
+    conc &&
+    typeof conc.libroNegativos === 'number' &&
+    Date.now() - Date.parse(String(conc.cuando)) < LIBRO_CONCILIACION_VIGENTE_MS
+  )
+    return conc.libroNegativos > 0 ? 'error' : 'ok';
+  // Sin reloj: la suma se hace aquí. Un «ok» se recuerda 60 segundos en este aislado (varias
+  // llamadas seguidas no vuelven a sumar); un «error» nunca se recuerda.
+  const recordado = libroOkHasta.get(db);
+  if (recordado && recordado > Date.now()) return 'ok';
   const f = await db
     .prepare(
       "SELECT COUNT(*) AS n FROM (SELECT cuenta_id, bolsillo, pais, moneda, SUM(monto) AS s FROM libro WHERE bolsillo IN ('prepago','punto','reservado') GROUP BY 1,2,3,4) WHERE s < 0",
     )
     .first<{ n: number }>();
-  return Number(f?.n ?? 0) > 0 ? 'error' : 'ok';
+  if (Number(f?.n ?? 0) > 0) {
+    libroOkHasta.delete(db);
+    return 'error';
+  }
+  libroOkHasta.set(db, Date.now() + LIBRO_OK_RECORDADO_MS);
+  return 'ok';
 }
 
 export function exigirPositivo(n: number, campo: string) {

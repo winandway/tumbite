@@ -131,6 +131,29 @@ export const MINUTOS_SIN_VUELTA_BUENA = 5;
 /** Vueltas con error en la ventana de vigilancia que ya son un problema. */
 export const FALLIDAS_MAX = 3;
 export const VENTANA_FALLIDAS_MIN = 15;
+/**
+ * C-RELOJ-CANARIO-MINUTOS (13 nov 2026): el reloj de producción es el Worker de Cloudflare
+ * `tumbite-reloj-produccion`, que llama cada minuto a la MISMA ruta que GitHub (sin las llaves de
+ * la ruta firmada, así que el servidor no lo distingue por la configuración). Se reconoce por su
+ * ritmo: entre las últimas `VUELTAS_RITMO` vueltas, al menos `SEGUIDAS_RITMO` separaciones de 2
+ * minutos o menos. Con ese ritmo, la pieza se vigila como con el reloj externo: error si pasan
+ * más de 5 minutos sin una vuelta buena. Si el Worker se cae, el canario se pone en rojo a los 5
+ * minutos (antes, 6 horas) y sigue en rojo mientras las últimas vueltas conserven ese ritmo,
+ * aunque GitHub (el respaldo) haga alguna vuelta suelta: tras cada una hay 5 minutos en verde.
+ * Sin ritmo de minuto (solo GitHub), las reglas de siempre (6 h atrasado, 24 h error).
+ */
+export const VUELTAS_RITMO = 6;
+export const SEGUIDAS_RITMO = 3;
+
+/** Las últimas vueltas tienen el ritmo de un reloj de cada minuto. */
+export function ritmoDeMinuto(empezadas: readonly string[]): boolean {
+  const t = empezadas.map((x) => Date.parse(`${x.replace(' ', 'T')}Z`)).filter(Number.isFinite);
+  const seguidas = t
+    .slice(1)
+    .filter((x, i) => Math.abs((t.at(i) ?? x) - x) <= 2 * 60_000 + 30_000).length;
+  return seguidas >= SEGUIDAS_RITMO;
+}
+
 /** Solo con GitHub (impuntual): más de esto sin vuelta buena es «atrasado», no error. */
 export const HORAS_ATRASO_GITHUB = 6;
 /** Solo con GitHub: pasado un día entero sin vuelta buena, el canario SÍ se pone en rojo (F11). */
@@ -142,7 +165,8 @@ export const HORAS_ERROR_GITHUB = 24;
  * - Con el reloj externo (Cloudflare) configurado, que corre cada minuto:
  *   error si no hubo una vuelta BUENA (terminada y sin tareas fallidas) en 5 minutos, si hubo
  *   3 o más vueltas con error en 15 minutos, o si la última vuelta terminada tuvo una tarea
- *   crítica fallida, aunque la vuelta haya terminado.
+ *   crítica fallida, aunque la vuelta haya terminado. Igual si las últimas vueltas llevan el
+ *   ritmo de un reloj de cada minuto (el Worker por la ruta de GitHub, C-RELOJ-CANARIO-MINUTOS).
  * - Solo con GitHub (impuntual por diseño): «atrasado» si no hubo vuelta buena en 6 horas; error
  *   solo si la última vuelta tuvo una tarea crítica fallida.
  * - Se recupera sola: en cuanto llega una vuelta buena y las fallidas salen de la ventana.
@@ -186,11 +210,21 @@ export async function saludReloj(
     }>();
   if (!f || Number(f.vueltas) === 0) return 'pendiente';
   if (Number(f.criticas_ultima) > 0) return 'error';
+  // C-RELOJ-CANARIO-MINUTOS: el ritmo de las últimas vueltas (por el índice de empezada_en, se
+  // corta a las 6).
+  const { results: ultimas } = await db
+    .prepare(
+      `SELECT empezada_en FROM tareas_programadas
+        WHERE empezada_en > datetime('now', '-25 hours') AND tarea = 'reloj'
+        ORDER BY empezada_en DESC LIMIT ${VUELTAS_RITMO}`,
+    )
+    .all<{ empezada_en: string }>();
+  const cadaMinuto = externo || ritmoDeMinuto(ultimas.map((u) => u.empezada_en));
   const viejaHace = (minutos: number) =>
     !f.ultima_buena ||
     f.ultima_buena <
       new Date(Date.now() - minutos * 60_000).toISOString().replace('T', ' ').slice(0, 19);
-  if (externo) {
+  if (cadaMinuto) {
     if (Number(f.fallidas) >= FALLIDAS_MAX) return 'error';
     if (viejaHace(MINUTOS_SIN_VUELTA_BUENA)) return 'error';
     return 'ok';

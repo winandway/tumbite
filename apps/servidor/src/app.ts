@@ -1,3 +1,4 @@
+import { disparadoresPresentes } from './canarioLecturas';
 import { presupuestoVueltaPruebas, saludVueltasPruebas } from './vueltaPruebas';
 import { DOMINIO_PRINCIPAL, redireccionDominio } from './dominio';
 import { rewardsSombra } from './rewards/rutas';
@@ -265,6 +266,14 @@ app.get('/datos/salud', async (c) => {
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
+  // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que
+  // los miran (antes, cuatro recorridos). Si falla, cada pieza vuelve a preguntar por su cuenta.
+  const presentes = c.env.DB
+    ? await disparadoresPresentes(c.env.DB).catch((e: unknown) => {
+        console.error('salud: disparadores', e);
+        return undefined;
+      })
+    : undefined;
   // C-DINERO-30-DIAS (NXT-1): los últimos 30 días, no solo la última conciliación.
   if (c.env.DB)
     piezas.dinero = await saludDinero(c.env.DB).catch((e: unknown) => {
@@ -273,17 +282,19 @@ app.get('/datos/salud', async (c) => {
     });
   // Fase 0: retiros sin doble pago (disparadores puestos, conciliación al día, nada en revisión).
   if (c.env.DB)
-    piezas.retiros = await saludRetiros(c.env, c.env.DB).catch((e: unknown) => {
+    piezas.retiros = await saludRetiros(c.env, c.env.DB, presentes).catch((e: unknown) => {
       console.error('salud: retiros', e);
       return 'error' as const;
     });
   // Fase 1: catálogo de servicios (Moto y Carro apagados, disparadores puestos). Moto se admite
   // encendida solo en el sitio de pruebas (C-MOTO-SOLO-PRUEBAS).
   if (c.env.DB)
-    piezas.servicios = await saludServicios(c.env.DB, entornoDe(c.req.url)).catch((e: unknown) => {
-      console.error('salud: servicios', e);
-      return 'error' as const;
-    });
+    piezas.servicios = await saludServicios(c.env.DB, entornoDe(c.req.url), presentes).catch(
+      (e: unknown) => {
+        console.error('salud: servicios', e);
+        return 'error' as const;
+      },
+    );
   // Divoox Moto · M7: ningún viaje cerrado con comisión apartada ni deudas sin su viaje.
   if (c.env.DB)
     piezas.viajes = await saludViajes(c.env.DB).catch((e: unknown) => {
@@ -298,7 +309,7 @@ app.get('/datos/salud', async (c) => {
     });
   // Fase 3: exclusividad (cero inconsistencias entre pedidos, operaciones y ocupación).
   if (c.env.DB)
-    piezas.exclusividad = await saludExclusividad(c.env.DB).catch((e: unknown) => {
+    piezas.exclusividad = await saludExclusividad(c.env.DB, presentes).catch((e: unknown) => {
       console.error('salud: exclusividad', e);
       return 'error' as const;
     });
@@ -318,7 +329,7 @@ app.get('/datos/salud', async (c) => {
     });
   // C-TRANSICIONES-PEDIDO: el disparador que impide los saltos de estado de los pedidos existe.
   if (c.env.DB)
-    piezas.transiciones = await saludTransiciones(c.env.DB).catch((e: unknown) => {
+    piezas.transiciones = await saludTransiciones(c.env.DB, presentes).catch((e: unknown) => {
       console.error('salud: transiciones', e);
       return 'error' as const;
     });
