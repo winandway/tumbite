@@ -1407,7 +1407,7 @@
 }
 .pd-contenido input::placeholder,
 .pd-contenido textarea::placeholder {
-  color: #8a9099;
+  color: #6f747c;
 }
 .pd-contenido
   input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):focus,
@@ -1427,14 +1427,15 @@
   color: var(--pd-gris);
 }
 .pd-contenido .clave input {
-  padding-right: 48px;
+  /* Con !important: la regla general de los campos pesa más y la clave quedaba bajo el ojito. */
+  padding-right: 48px !important;
 }
 /* Casillas y opciones: siempre en su propia línea, con la caja a la izquierda y el texto al lado. */
 .pd-contenido label.casilla,
 .pd-contenido label.casilla-fila,
 .pd-contenido label.flex-check,
-.pd-contenido label:has(> input[type='checkbox']),
-.pd-contenido label:has(> input[type='radio']) {
+.pd-contenido label:not(.interruptor):not(.opcion):has(> input[type='checkbox']),
+.pd-contenido label:not(.interruptor):not(.opcion):has(> input[type='radio']) {
   /* En bloque y con la caja fuera del texto: un texto largo con enlaces fluye como un párrafo. */
   display: block;
   position: relative;
@@ -1456,8 +1457,8 @@
   flex: none;
   accent-color: var(--pd-negro);
 }
-.pd-contenido label > input[type='checkbox'],
-.pd-contenido label > input[type='radio'] {
+.pd-contenido label:not(.interruptor):not(.opcion) > input[type='checkbox'],
+.pd-contenido label:not(.interruptor):not(.opcion) > input[type='radio'] {
   position: absolute;
   left: 0;
   top: 1px;
@@ -1509,11 +1510,16 @@
     inset: 0 auto 0 0;
     width: min(86vw, 300px);
     transform: translateX(-102%);
-    transition: transform 0.22s ease;
+    visibility: hidden;
+    transition:
+      transform 0.22s ease,
+      visibility 0s linear 0.22s;
     box-shadow: 0 0 40px rgb(0 0 0 / 35%);
   }
   .pd-menu-abierto .pd-lateral {
     transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
   }
   .pd-lateral-cerrar {
     display: grid;
@@ -1855,4 +1861,95 @@ body.modo-tableta .pd .pd-contenido {
     padding: 24px 20px;
     width: auto;
   }
+}
+
+/* Una casilla dentro de una fila (título con interruptor, botones) no ocupa toda la línea. */
+.pd-contenido .titulo-fila > label,
+.pd-contenido .fila-botones > label {
+  width: auto;
+  margin-bottom: 0;
+}
+.pd-contenido label.opcion,
+.pd-contenido label.interruptor {
+  margin-bottom: 12px;
+}
+/* Piezas de antes con borde gris oscuro: en el panel, borde fino claro como las demás tarjetas. */
+.pd-contenido .cocina,
+.pd-contenido .activacion,
+.pd-contenido .falta-plato,
+.pd-contenido .grupos-opciones,
+.pd-contenido .formulario fieldset,
+.pd-contenido .super-excepcion,
+.pd-contenido .flex-barra,
+.pd-contenido .flex-caja,
+.pd-contenido .flex-comprobante,
+.pd-contenido .flex-secreto,
+.pd-contenido .flex-tabla-caja,
+.pd-contenido .flex-tabla tr,
+.pd-contenido .flex-enlace-invitacion,
+.pd-contenido .flex-elegir-lote select,
+.pd-contenido .kyc-fotos figure,
+.pd-contenido .ticket-hilo li,
+.pd-contenido .sugeridas .chip,
+.pd-contenido .menu-tres-puntos .cuenta-menu {
+  border-color: var(--pd-borde);
+}
+.pd-contenido .cocina,
+.pd-contenido .activacion,
+.pd-contenido .falta-plato,
+.pd-contenido .grupos-opciones,
+.pd-contenido .formulario fieldset {
+  background: #fff;
+  border-radius: 14px;
+}
+.pd-opcion-activa {
+  background: var(--pd-fondo);
+}
+
+/* Pedidos del restaurante: el título arriba y, debajo, sus controles en una sola fila ordenada. */
+.pd-contenido .titulo-fila {
+  gap: 10px 12px;
+  margin-bottom: 14px;
+}
+.pd-contenido .titulo-fila:has(> label) {
+  justify-content: flex-start;
+}
+.pd-contenido .titulo-fila:has(> label) > h1 {
+  flex: 1 1 100%;
+}
+.pd-contenido .titulo-fila:has(> label) > .ok {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pd-contenido .fila-impresora {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.pd-contenido .fila-impresora > label {
+  flex: 0 1 220px;
+  margin-bottom: 0;
+}
+.pd-contenido label.cocina {
+  padding: 12px 14px 12px 46px !important;
+}
+.pd-contenido label.cocina > input[type='checkbox'] {
+  left: 14px !important;
+  top: 13px !important;
+}
+.pd-contenido .tarjeta {
+  background: #fff;
+  border: 1px solid var(--pd-borde);
+  border-radius: 14px;
+  box-shadow: var(--pd-sombra);
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+.pd-contenido .tarjeta > h2:first-child,
+.pd-contenido .tarjeta > h3:first-child {
+  margin-top: 0;
 }

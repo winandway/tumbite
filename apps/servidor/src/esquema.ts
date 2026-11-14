@@ -287,6 +287,10 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS restaurantes_area ON restaurantes(area_id)',
   'CREATE INDEX IF NOT EXISTS repartidores_area ON repartidores(area_id, conectado)',
   'CREATE INDEX IF NOT EXISTS pedidos_area_estado ON pedidos(area_id, estado, creado_en)',
+  // C-PANEL-ARMAZON (14 nov 2026): el tablero del superadmin cuenta pedidos y viajes por día. Sin
+  // estos dos índices recorría las tablas enteras en cada carga.
+  'CREATE INDEX IF NOT EXISTS pedidos_creado ON pedidos(creado_en)',
+  'CREATE INDEX IF NOT EXISTS operaciones_viaje_creado ON operaciones(tipo_operacion, creado_en)',
   // C-LECTURAS-POR-PETICION (13 nov 2026): el registro buscaba el correo y el teléfono únicos
   // recorriendo TODAS las cuentas (5.600 filas con el volumen del sitio de pruebas, y crece con
   // cada cliente). Una fila por cuenta nueva en cada índice; el registro pasa a leer unas pocas.

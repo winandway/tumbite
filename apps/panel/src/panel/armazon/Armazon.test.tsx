@@ -63,7 +63,7 @@ describe('armazón del panel', () => {
 
   it('la cabecera trae buscador, campana, idioma y la cuenta con cerrar sesión', async () => {
     const { salir } = montar();
-    expect(screen.getByRole('searchbox', { name: 'Buscar en el panel' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Buscar en el panel' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Avisos/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /ES · Cambiar idioma/ })).toBeInTheDocument();
     await userEvent.click(screen.getByText('Rosa'));
@@ -81,13 +81,31 @@ describe('armazón del panel', () => {
 
   it('el buscador encuentra una sección por su nombre, sin importar acentos ni mayúsculas', async () => {
     montar();
-    await userEvent.type(screen.getByRole('searchbox'), 'benef');
+    await userEvent.type(screen.getByRole('combobox'), 'benef');
     const resultados = screen.getByRole('listbox');
     expect(within(resultados).getByRole('option', { name: /Beneficios/ })).toBeInTheDocument();
     expect(within(resultados).queryByRole('option', { name: /Pedidos/ })).toBeNull();
-    await userEvent.clear(screen.getByRole('searchbox'));
-    await userEvent.type(screen.getByRole('searchbox'), 'zzz');
+    await userEvent.clear(screen.getByRole('combobox'));
+    await userEvent.type(screen.getByRole('combobox'), 'zzz');
     expect(screen.getByText('No encontramos esa sección.')).toBeInTheDocument();
+  });
+
+  it('el buscador se maneja con el teclado: flechas para elegir y Enter para ir', async () => {
+    montar();
+    const casilla = screen.getByRole('combobox');
+    expect(casilla).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.type(casilla, 'e');
+    expect(casilla).toHaveAttribute('aria-expanded', 'true');
+    const opciones = within(screen.getByRole('listbox')).getAllByRole('option');
+    expect(opciones.length).toBeGreaterThan(1);
+    expect(opciones[0]).toHaveAttribute('aria-selected', 'true');
+    await userEvent.keyboard('{ArrowDown}');
+    expect(opciones[1]).toHaveAttribute('aria-selected', 'true');
+    expect(casilla).toHaveAttribute('aria-activedescendant', opciones[1]?.id);
+    await userEvent.keyboard('{Enter}');
+    // «e» encuentra Inicio, Pedidos y Beneficios; la segunda es Pedidos.
+    expect(window.location.pathname).toBe('/panel/orders');
+    expect(casilla).toHaveValue('');
   });
 
   it('la campana muestra los avisos reales y, si no hay, lo dice', async () => {
@@ -132,7 +150,7 @@ describe('armazón del panel', () => {
         </Armazon>
       </SesionArmazon.Provider>,
     );
-    expect(screen.getByRole('searchbox', { name: 'Search the dashboard' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Search the dashboard' })).toBeInTheDocument();
     expect(screen.getByTestId('menu-salir')).toHaveTextContent('Sign out');
   });
 });

@@ -240,11 +240,18 @@ export function PanelApp({ ruta }: { ruta: string }) {
   const ultimaLectura = useRef(0);
   useEffect(() => {
     if (!usuario || (!esAdmin && !esRestaurante)) return;
-    if (Date.now() - ultimaLectura.current < 60_000) return;
-    ultimaLectura.current = Date.now();
-    void pedir<{ avisos: { clave: string; cantidad: number }[] }>('GET', '/datos/panel/avisos')
-      .then((r) => setAvisosCrudos(r.avisos ?? []))
-      .catch((e: unknown) => console.warn('avisos del panel: no se pudieron leer', e));
+    const leer = () => {
+      if (document.visibilityState === 'hidden') return;
+      if (Date.now() - ultimaLectura.current < 55_000) return;
+      ultimaLectura.current = Date.now();
+      void pedir<{ avisos: { clave: string; cantidad: number }[] }>('GET', '/datos/panel/avisos')
+        .then((r) => setAvisosCrudos(r.avisos ?? []))
+        .catch((e: unknown) => console.warn('avisos del panel: no se pudieron leer', e));
+    };
+    leer();
+    // Una lectura chica por minuto y solo con la pestaña a la vista (no escribe nada).
+    const reloj = window.setInterval(leer, 60_000);
+    return () => window.clearInterval(reloj);
   }, [usuario, esAdmin, esRestaurante, ruta]);
   const avisos: AvisoArmazon[] = avisosCrudos.flatMap((a) => {
     if (a.clave === 'tickets')
@@ -331,6 +338,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
       <SesionArmazon.Provider value={sesion}>
         <div className="pagina panel">
           <PanelEmpresa ruta={ruta} idioma={idioma} />
+          {esRestaurante && <AyudaBurbuja idioma={idioma} />}
         </div>
       </SesionArmazon.Provider>
     );
@@ -358,6 +366,7 @@ export function PanelApp({ ruta }: { ruta: string }) {
           >
             <PanelFranquicia ruta={ruta.slice('/panel/'.length)} idioma={idioma} />
           </Armazon>
+          {esRestaurante && <AyudaBurbuja idioma={idioma} />}
         </div>
       </SesionArmazon.Provider>
     );

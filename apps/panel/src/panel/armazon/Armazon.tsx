@@ -110,51 +110,69 @@ function Buscador({ grupos, idioma }: { grupos: GrupoMenu[]; idioma: Idioma }) {
       .filter((i) => sinAcentos(`${i.texto} ${i.grupo}`).includes(q))
       .slice(0, 8);
   }, [grupos, texto]);
+  const [marcado, setMarcado] = useState(0);
   const elegir = (i: ItemMenu) => {
     setTexto('');
     setAbierto(false);
     ir(i.a);
   };
+  const desplegado = abierto && texto.trim() !== '';
+  const idOpcion = (n: number) => `${id}-opcion-${n}`;
   return (
     <div className="pd-buscador" ref={caja}>
       <Search size={18} aria-hidden="true" className="pd-buscador-lupa" />
       <input
         type="search"
-        role="searchbox"
+        role="combobox"
         aria-label={t.buscar}
-        aria-controls={id}
+        aria-expanded={desplegado}
+        aria-controls={desplegado ? id : undefined}
+        aria-autocomplete="list"
+        aria-activedescendant={desplegado && resultados.length > 0 ? idOpcion(marcado) : undefined}
         placeholder={t.buscarCorto}
         value={texto}
         autoComplete="off"
         onChange={(e) => {
           setTexto(e.target.value);
+          setMarcado(0);
           setAbierto(true);
         }}
         onFocus={() => setAbierto(true)}
         onKeyDown={(e) => {
-          const primero = resultados[0];
-          if (e.key === 'Enter' && primero) {
+          if (e.key === 'ArrowDown' && resultados.length > 0) {
             e.preventDefault();
-            elegir(primero);
-          }
+            setAbierto(true);
+            setMarcado((n) => (n + 1) % resultados.length);
+          } else if (e.key === 'ArrowUp' && resultados.length > 0) {
+            e.preventDefault();
+            setMarcado((n) => (n - 1 + resultados.length) % resultados.length);
+          } else if (e.key === 'Enter') {
+            const elegido = resultados.at(marcado) ?? resultados[0];
+            if (elegido) {
+              e.preventDefault();
+              elegir(elegido);
+            }
+          } else if (e.key === 'Escape') setAbierto(false);
         }}
       />
-      {abierto && texto.trim() ? (
-        <div className="pd-flotante pd-buscador-caja" id={id}>
+      {desplegado ? (
+        <div className="pd-flotante pd-buscador-caja">
           {resultados.length === 0 ? (
-            <p className="pd-flotante-vacio">{t.sinResultados}</p>
+            <p className="pd-flotante-vacio" role="status">
+              {t.sinResultados}
+            </p>
           ) : (
-            <ul role="listbox" aria-label={t.buscar}>
-              {resultados.map((i) => (
+            <ul role="listbox" id={id} aria-label={t.buscar}>
+              {resultados.map((i, n) => (
+                // El teclado se maneja desde la casilla (flechas y Enter); aquí, el toque o el clic.
                 <li
                   key={`${i.grupo}-${i.clave}`}
+                  id={idOpcion(n)}
                   role="option"
-                  aria-selected={false}
-                  tabIndex={0}
+                  aria-selected={n === marcado}
+                  className={n === marcado ? 'pd-opcion-activa' : undefined}
+                  onMouseEnter={() => setMarcado(n)}
                   onClick={() => elegir(i)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') elegir(i);
-                  }}
                 >
                   <IconoDe clave={i.clave} tamano={18} />
                   <span>{i.texto}</span>
@@ -299,7 +317,17 @@ export function Armazon({
   const t = idioma === 'en' ? T.en : T.es;
   const [abierto, setAbierto] = useState(false);
   const logistica = variante === 'logistica';
+  const idLateral = useId();
+  const botonMenu = useRef<HTMLButtonElement>(null);
+  const botonCerrar = useRef<HTMLButtonElement>(null);
   const cerrar = () => setAbierto(false);
+  // Al abrir el menú del celular, el foco entra en él; al cerrarlo, vuelve al botón que lo abrió.
+  const estuvoAbierto = useRef(false);
+  useEffect(() => {
+    if (abierto) botonCerrar.current?.focus();
+    else if (estuvoAbierto.current) botonMenu.current?.focus();
+    estuvoAbierto.current = abierto;
+  }, [abierto]);
   useEffect(() => {
     if (!abierto) return;
     const tecla = (e: KeyboardEvent) => {
@@ -315,7 +343,7 @@ export function Armazon({
       data-menu={TONO_MENU}
       data-testid="armazon"
     >
-      <aside className="pd-lateral">
+      <aside className="pd-lateral" id={idLateral}>
         <div className="pd-lateral-cabeza">
           <Enlace a="/" className="pd-marca" onClick={cerrar}>
             <img
@@ -332,6 +360,7 @@ export function Armazon({
           <button
             type="button"
             className="pd-lateral-cerrar"
+            ref={botonCerrar}
             aria-label={t.cerrar}
             onClick={cerrar}
           >
@@ -387,8 +416,10 @@ export function Armazon({
           <button
             type="button"
             className="pd-icono-boton pd-hamburguesa"
+            ref={botonMenu}
             aria-label={abierto ? t.cerrar : t.abrir}
             aria-expanded={abierto}
+            aria-controls={idLateral}
             onClick={() => setAbierto((a) => !a)}
           >
             <IconoMenu size={22} aria-hidden="true" />

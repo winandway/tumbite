@@ -10,58 +10,36 @@ import { type Variables, base, exigir } from '../sesion';
 export const tableroPanel = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const DIAS = 14;
+const dia = (hoy: Date, atras: number) =>
+  new Date(hoy.getTime() - atras * 86_400_000).toISOString().slice(0, 10);
 
-/** Los últimos `DIAS` días (UTC), del más viejo al de hoy, con cero donde no hubo nada. */
-function serie(filas: { dia: string; n: number }[], campo: 'pedidos' | 'viajes', hoy = new Date()) {
-  const porDia = new Map(filas.map((f) => [f.dia, Number(f.n)]));
-  return Array.from({ length: DIAS }, (_, i) => {
-    const d = new Date(hoy.getTime() - (DIAS - 1 - i) * 86_400_000).toISOString().slice(0, 10);
-    return { dia: d, [campo]: porDia.get(d) ?? 0 };
-  });
-}
+type Fila = { dia: string; estado: string; n: number };
+
+/** Suma las filas (día, estado, cantidad) que cumplen una condición. */
+const suma = (filas: Fila[], cumple: (f: Fila) => boolean) =>
+  filas.reduce((s, f) => (cumple(f) ? s + Number(f.n) : s), 0);
 
 tableroPanel.get('/admin/tablero', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
-  const desde = `-${DIAS - 1} days`;
-  const { results: pedidosDia } = await db
+  // UNA lectura por tabla, por el índice de la fecha (pedidos_creado y operaciones_viaje_creado):
+  // 30 días agrupados por día y estado; de ahí salen la serie, los estados y la comparación.
+  const { results: pedidos } = await db
     .prepare(
-      `SELECT date(creado_en) AS dia, COUNT(*) AS n FROM pedidos
-        WHERE estado <> 'pago_pendiente' AND creado_en >= datetime('now', 'start of day', ?)
-        GROUP BY date(creado_en)`,
+      `SELECT date(creado_en) AS dia, estado, COUNT(*) AS n FROM pedidos
+        WHERE creado_en >= datetime('now', 'start of day', '-29 days') AND estado <> 'pago_pendiente'
+        GROUP BY date(creado_en), estado`,
     )
-    .bind(desde)
-    .all<{ dia: string; n: number }>();
-  const { results: viajesDia } = await db
+    .all<Fila>();
+  const { results: viajes } = await db
     .prepare(
-      `SELECT date(creado_en) AS dia, COUNT(*) AS n FROM operaciones
-        WHERE tipo_operacion = 'viaje_pasajero' AND estado_general <> 'pago_pendiente'
-          AND creado_en >= datetime('now', 'start of day', ?)
-        GROUP BY date(creado_en)`,
+      `SELECT date(creado_en) AS dia, estado_general AS estado, COUNT(*) AS n FROM operaciones
+        WHERE tipo_operacion = 'viaje_pasajero'
+          AND creado_en >= datetime('now', 'start of day', '-29 days')
+          AND estado_general <> 'pago_pendiente'
+        GROUP BY date(creado_en), estado_general`,
     )
-    .bind(desde)
-    .all<{ dia: string; n: number }>();
-  const p = await db
-    .prepare(
-      `SELECT
-         SUM(CASE WHEN estado = 'entregado' THEN 1 ELSE 0 END) AS entregados,
-         SUM(CASE WHEN estado IN ('pagado','aceptado','listo','en_camino') THEN 1 ELSE 0 END) AS en_curso,
-         SUM(CASE WHEN estado = 'cancelado' THEN 1 ELSE 0 END) AS cancelados,
-         SUM(CASE WHEN creado_en >= datetime('now','-7 days') THEN 1 ELSE 0 END) AS semana,
-         SUM(CASE WHEN creado_en < datetime('now','-7 days') AND creado_en >= datetime('now','-14 days') THEN 1 ELSE 0 END) AS anterior
-       FROM pedidos WHERE estado <> 'pago_pendiente' AND creado_en >= datetime('now','-30 days')`,
-    )
-    .first<Record<string, number | null>>();
-  const v = await db
-    .prepare(
-      `SELECT
-         SUM(CASE WHEN estado_general = 'terminada' THEN 1 ELSE 0 END) AS terminados,
-         SUM(CASE WHEN estado_general IN ('buscando','asignada','en_curso') THEN 1 ELSE 0 END) AS en_curso,
-         SUM(CASE WHEN estado_general IN ('cancelada','sin_conductor') THEN 1 ELSE 0 END) AS cancelados
-       FROM operaciones WHERE tipo_operacion = 'viaje_pasajero' AND estado_general <> 'pago_pendiente'
-         AND creado_en >= datetime('now','-30 days')`,
-    )
-    .first<Record<string, number | null>>();
+    .all<Fila>();
   const gente = await db
     .prepare(
       `SELECT
@@ -73,37 +51,58 @@ tableroPanel.get('/admin/tablero', async (c) => {
          (SELECT COUNT(*) FROM repartidores WHERE conectado = 1) AS conectados`,
     )
     .first<Record<string, number | null>>();
-  const { results: ultimos } = await db
-    .prepare(
-      `SELECT id, codigo, tipo, estado, asunto, actualizado_en AS fecha FROM tickets
-        ORDER BY actualizado_en DESC LIMIT 8`,
-    )
-    .all<{
-      id: string;
-      codigo: string;
-      tipo: string;
-      estado: string;
-      asunto: string;
-      fecha: string;
-    }>();
+  // Los últimos tickets: ocho por estado por el índice (estado, actualizado_en) y se mezclan aquí.
+  type Ticket = {
+    id: string;
+    codigo: string;
+    tipo: string;
+    estado: string;
+    asunto: string;
+    fecha: string;
+  };
+  const ultimos: Ticket[] = [];
+  for (const estado of ['abierto', 'respondido', 'cerrado']) {
+    const { results } = await db
+      .prepare(
+        `SELECT id, codigo, tipo, estado, asunto, actualizado_en AS fecha FROM tickets
+          WHERE estado = ? ORDER BY actualizado_en DESC LIMIT 8`,
+      )
+      .bind(estado)
+      .all<Ticket>();
+    ultimos.push(...results);
+  }
+  ultimos.sort((a, b) => (a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0));
+
+  const hoy = new Date();
+  const desdeSemana = dia(hoy, 6);
+  const desdeAnterior = dia(hoy, 13);
   const n = (x: number | null | undefined) => Number(x ?? 0);
-  const viajes = serie(viajesDia, 'viajes');
+  const EN_CURSO = ['pagado', 'aceptado', 'listo', 'en_camino'];
+  // Las respuestas de un tablero se pueden guardar un minuto en el navegador de quien las pidió.
+  c.header('Cache-Control', 'private, max-age=60');
   return c.json({
     tablero: {
-      porDia: serie(pedidosDia, 'pedidos').map((d, i) => ({
-        ...d,
-        viajes: viajes.at(i)?.viajes ?? 0,
-      })),
+      porDia: Array.from({ length: DIAS }, (_, i) => {
+        const d = dia(hoy, DIAS - 1 - i);
+        return {
+          dia: d,
+          pedidos: suma(pedidos, (f) => f.dia === d),
+          viajes: suma(viajes, (f) => f.dia === d),
+        };
+      }),
       pedidos30: {
-        entregados: n(p?.entregados),
-        enCurso: n(p?.en_curso),
-        cancelados: n(p?.cancelados),
+        entregados: suma(pedidos, (f) => f.estado === 'entregado'),
+        enCurso: suma(pedidos, (f) => EN_CURSO.includes(f.estado)),
+        cancelados: suma(pedidos, (f) => f.estado === 'cancelado'),
       },
-      semana: { pedidos: n(p?.semana), anterior: n(p?.anterior) },
+      semana: {
+        pedidos: suma(pedidos, (f) => f.dia >= desdeSemana),
+        anterior: suma(pedidos, (f) => f.dia >= desdeAnterior && f.dia < desdeSemana),
+      },
       viajes30: {
-        terminados: n(v?.terminados),
-        enCurso: n(v?.en_curso),
-        cancelados: n(v?.cancelados),
+        terminados: suma(viajes, (f) => f.estado === 'terminada'),
+        enCurso: suma(viajes, (f) => ['buscando', 'asignada', 'en_curso'].includes(f.estado)),
+        cancelados: suma(viajes, (f) => ['cancelada', 'sin_conductor'].includes(f.estado)),
       },
       personas: {
         clientes: n(gente?.clientes),
@@ -113,7 +112,7 @@ tableroPanel.get('/admin/tablero', async (c) => {
         repartidores: n(gente?.repartidores),
         repartidoresConectados: n(gente?.conectados),
       },
-      actividad: ultimos,
+      actividad: ultimos.slice(0, 8),
     },
   });
 });
