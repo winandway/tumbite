@@ -2652,6 +2652,46 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'panel-tour',
+        titulo: 'Moverte por tu panel: menú, buscador y avisos',
+        resumen:
+          'El panel web de tu restaurante tiene un menú con íconos a la izquierda, un buscador arriba, una campana con lo que espera por ti y tu cuenta con «Cerrar sesión». Así se usa, en computadora y en celular.',
+        explicacion: [
+          'El menú de la izquierda siempre está a la vista y está ordenado por grupos: «Operación» (el inicio y tus pedidos), «Mi negocio» (tu restaurante, tu empresa, el menú, los productos y tu equipo), «Dinero» (tus beneficios), «Ventas y marketing» (promociones, anuncios, regalos y reseñas) y «Ajustes». La sección en la que estás queda resaltada en rojo.',
+          'Arriba hay un buscador: escribe unas letras («men», «promo», «rese») y te lleva directo a esa sección, sin recorrer el menú.',
+          'La campana te dice cuántos pedidos están esperando que los aceptes. Si no hay nada pendiente, lo dice. Al lado están el idioma y tu nombre: ahí encuentras «Configuración» y «Cerrar sesión». La salida también está al final del menú.',
+          'En el celular el menú se guarda para dejarle la pantalla a tu información: toca el botón de las tres rayas, arriba a la izquierda, y se abre encima. Al elegir una sección se cierra solo.',
+        ],
+        capturas: [
+          {
+            src: '/docs/panel-inicio-es.webp',
+            alt: 'El panel web del restaurante en Divoox: menú lateral negro con íconos y grupos, cabecera con buscador, campana, idioma y cuenta, y el tablero con tarjetas y gráficas.',
+            pie: 'El menú a la izquierda, el buscador arriba y tu tablero en el centro.',
+          },
+          {
+            src: '/docs/panel-buscador-es.webp',
+            alt: 'El buscador del panel con las letras «men» escritas y, debajo, la sección «Menú» lista para abrirla.',
+            pie: 'Escribes unas letras y el buscador te muestra la sección.',
+          },
+          {
+            src: '/docs/panel-menu-celular-es.webp',
+            alt: 'El menú del panel abierto en un celular, con los grupos «Operación», «Mi negocio», «Dinero» y «Ventas y marketing», cada sección con su ícono.',
+            pie: 'En el celular, el menú se abre con el botón de las tres rayas.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo hago para encontrar una sección del panel?',
+          '¿Cómo hago para cerrar sesión en el panel?',
+        ],
+        pasos: [
+          'Entra a tu panel desde la computadora o desde el navegador del celular.',
+          'Elige una sección en el menú de la izquierda. En el celular, toca primero el botón de las tres rayas.',
+          'Si no la ves, escribe su nombre en el buscador de arriba y tócala.',
+          'Mira la campana: si tiene un número, hay pedidos esperando. Tócala para ir a ellos.',
+          'Para salir, toca tu nombre y luego «Cerrar sesión», o usa «Cerrar sesión» al final del menú.',
+        ],
+      },
+      {
         id: 'verify',
         titulo: 'Verificar tu restaurante',
         resumen:
@@ -4298,6 +4338,42 @@ const es: SeccionDocs[] = [
           'En «Configuración» elige tu alerta de saldo y, si quieres, la recarga automática.',
         ],
         nota: 'Las recargas con tarjeta se encienden país por país.',
+      },
+      {
+        id: 'flex-panel-tour',
+        titulo: 'El panel de Divoox Flex: menú, buscador y tu cuenta',
+        resumen:
+          'El panel de tu empresa en Divoox Flex va en azul, con un menú por grupos, un buscador, una campana con tus paquetes pendientes y la salida siempre a la vista.',
+        explicacion: [
+          'Divoox Flex tiene su propio color, el azul de logística, para que sepas de un vistazo que estás en el panel de tu empresa y no en el de comida. Arriba siempre dice «Divoox Flex».',
+          'El menú de la izquierda muestra tu empresa y tu rol, y está en tres grupos: «Día a día» (inicio, envíos, rutas, etiquetas, devoluciones e incidencias), «Configuración» (centros, conductores, vehículos, equipo y perfil) y «Más». Solo ves las secciones que tu rol puede usar.',
+          'El inicio resume tu operación en tarjetas (envíos, paquetes, entregados, pendientes, conductores, centros y equipo), una gráfica de tus paquetes y tus primeros pasos con su barra de avance.',
+          'Arriba tienes el buscador de secciones, la campana con los paquetes pendientes, el idioma, tu cuenta y «Cerrar sesión».',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-inicio-es.webp',
+            alt: 'El inicio del panel de Divoox Flex: menú lateral azul con íconos, tarjetas de envíos, paquetes, entregados y pendientes, y los primeros pasos con su barra de avance.',
+            pie: 'El inicio de tu empresa: tu operación en tarjetas y tus primeros pasos.',
+          },
+          {
+            src: '/docs/flex-panel-cuenta-es.webp',
+            alt: 'El menú de la cuenta abierto en el panel de Divoox Flex, con «Configuración» y «Cerrar sesión».',
+            pie: 'Tu cuenta, arriba a la derecha: configuración y cerrar sesión.',
+          },
+          {
+            src: '/docs/flex-panel-menu-celular-es.webp',
+            alt: 'El menú del panel de Divoox Flex abierto en un celular, con la empresa, el rol y los grupos «Día a día» y «Configuración».',
+            pie: 'En el celular, el menú se abre con el botón de las tres rayas.',
+          },
+        ],
+        preguntas: ['¿Cómo hago para moverme por el panel de Divoox Flex?'],
+        pasos: [
+          'Entra al panel de Divoox Flex y elige tu empresa.',
+          'Usa el menú de la izquierda para ir a envíos, rutas, etiquetas o conductores. En el celular, ábrelo con el botón de las tres rayas.',
+          'Escribe en el buscador de arriba para llegar más rápido a una sección.',
+          'Para cambiar de empresa, toca «Mis empresas» arriba del menú. Para salir, «Cerrar sesión».',
+        ],
       },
       {
         id: 'flex-getting-started',
@@ -7501,6 +7577,46 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'panel-tour',
+        titulo: 'Getting around your dashboard: menu, search and notifications',
+        resumen:
+          'Your restaurant’s web dashboard has a menu with icons on the left, a search box at the top, a bell with what’s waiting on you, and your account with “Sign out”. Here’s how to use it on a computer and on a phone.',
+        explicacion: [
+          'The menu on the left is always visible and is sorted into groups: “Operations” (home and your orders), “My business” (your restaurant, your company, the menu, products and your team), “Money” (your earnings), “Sales and marketing” (promotions, ads, gifts and reviews) and “Settings”. The section you’re in is highlighted in red.',
+          'At the top there’s a search box: type a few letters (“men”, “promo”, “rev”) and it takes you straight to that section, without going through the menu.',
+          'The bell tells you how many orders are waiting for you to accept them. If nothing is pending, it says so. Next to it are the language and your name: that’s where you find “Settings” and “Sign out”. Sign out is also at the bottom of the menu.',
+          'On a phone the menu tucks away to leave the screen to your information: tap the three-line button at the top left and it opens on top. It closes by itself when you pick a section.',
+        ],
+        capturas: [
+          {
+            src: '/docs/panel-inicio-en.webp',
+            alt: 'The Divoox restaurant web dashboard: black side menu with icons and groups, header with search, bell, language and account, and the overview with cards and charts.',
+            pie: 'The menu on the left, search at the top and your overview in the middle.',
+          },
+          {
+            src: '/docs/panel-buscador-en.webp',
+            alt: 'The dashboard search box with the letters “men” typed in and, below it, the “Menu” section ready to open.',
+            pie: 'Type a few letters and search shows you the section.',
+          },
+          {
+            src: '/docs/panel-menu-celular-en.webp',
+            alt: 'The dashboard menu open on a phone, with the groups “Operations”, “My business”, “Money” and “Sales and marketing”, each section with its icon.',
+            pie: 'On a phone, the menu opens with the three-line button.',
+          },
+        ],
+        preguntas: [
+          'How do I find a section of the dashboard?',
+          'How do I sign out of the dashboard?',
+        ],
+        pasos: [
+          'Open your dashboard on a computer or in your phone’s browser.',
+          'Pick a section in the menu on the left. On a phone, tap the three-line button first.',
+          'If you don’t see it, type its name in the search box at the top and tap it.',
+          'Check the bell: if it shows a number, orders are waiting. Tap it to go to them.',
+          'To leave, tap your name and then “Sign out”, or use “Sign out” at the bottom of the menu.',
+        ],
+      },
+      {
         id: 'verify',
         titulo: 'Verify your restaurant',
         resumen:
@@ -9134,6 +9250,42 @@ const en: SeccionDocs[] = [
           'In “Settings” choose your balance alert and, if you like, automatic top-up.',
         ],
         nota: 'Card top-ups are turned on country by country.',
+      },
+      {
+        id: 'flex-panel-tour',
+        titulo: 'The Divoox Flex dashboard: menu, search and your account',
+        resumen:
+          'Your company’s Divoox Flex dashboard is blue, with a grouped menu, a search box, a bell with your pending packages and sign out always in view.',
+        explicacion: [
+          'Divoox Flex has its own color, logistics blue, so you can tell at a glance that you’re in your company’s dashboard and not the food one. The top always says “Divoox Flex”.',
+          'The menu on the left shows your company and your role, in three groups: “Day to day” (home, shipments, routes, labels, returns and incidents), “Setup” (hubs, drivers, vehicles, team and profile) and “More”. You only see the sections your role can use.',
+          'Home sums up your operation in cards (shipments, packages, delivered, pending, drivers, hubs and team), a chart of your packages and your getting-started steps with their progress bar.',
+          'At the top you have the section search, the bell with pending packages, the language, your account and “Sign out”.',
+        ],
+        capturas: [
+          {
+            src: '/docs/flex-panel-inicio-en.webp',
+            alt: 'The Divoox Flex dashboard home: blue side menu with icons, cards for shipments, packages, delivered and pending, and the getting-started steps with their progress bar.',
+            pie: 'Your company’s home: your operation in cards and your getting-started steps.',
+          },
+          {
+            src: '/docs/flex-panel-cuenta-en.webp',
+            alt: 'The account menu open in the Divoox Flex dashboard, with “Settings” and “Sign out”.',
+            pie: 'Your account, top right: settings and sign out.',
+          },
+          {
+            src: '/docs/flex-panel-menu-celular-en.webp',
+            alt: 'The Divoox Flex dashboard menu open on a phone, with the company, the role and the groups “Day to day” and “Setup”.',
+            pie: 'On a phone, the menu opens with the three-line button.',
+          },
+        ],
+        preguntas: ['How do I get around the Divoox Flex dashboard?'],
+        pasos: [
+          'Open the Divoox Flex dashboard and pick your company.',
+          'Use the menu on the left to go to shipments, routes, labels or drivers. On a phone, open it with the three-line button.',
+          'Type in the search box at the top to get to a section faster.',
+          'To switch companies, tap “My companies” above the menu. To leave, “Sign out”.',
+        ],
       },
       {
         id: 'flex-getting-started',

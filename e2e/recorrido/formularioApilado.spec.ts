@@ -50,7 +50,8 @@ for (const [nombre, ancho] of [
     const etiquetas = form.locator('label:not(.casilla)');
     const n = await etiquetas.count();
     expect(n).toBeGreaterThan(3);
-    let abajoAnterior = -1;
+    // C-PANEL-ARMAZON: en computadora los campos van en dos columnas; ninguno se encima con otro.
+    const cajas: { x: number; y: number; width: number; height: number }[] = [];
     for (let i = 0; i < n; i++) {
       const etiqueta = etiquetas.nth(i);
       if (!(await etiqueta.isVisible())) continue;
@@ -63,8 +64,15 @@ for (const [nombre, ancho] of [
       // No se sale del formulario ni se encima con la etiqueta anterior.
       expect(c.x).toBeGreaterThanOrEqual(cajaForm.x - 1);
       expect(c.x + c.width).toBeLessThanOrEqual(cajaForm.x + cajaForm.width + 1);
-      expect(e.y).toBeGreaterThanOrEqual(abajoAnterior - 1);
-      abajoAnterior = e.y + e.height;
+      for (const otra of cajas) {
+        const seEnciman =
+          e.x < otra.x + otra.width - 1 &&
+          otra.x < e.x + e.width - 1 &&
+          e.y < otra.y + otra.height - 1 &&
+          otra.y < e.y + e.height - 1;
+        expect(seEnciman, `${nombre}: la etiqueta ${i} se encima con otra`).toBe(false);
+      }
+      cajas.push(e);
     }
     const sobra = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(sobra, `${nombre}: la pantalla se sale de lado`).toBeLessThanOrEqual(0);

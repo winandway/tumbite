@@ -29,6 +29,7 @@ if (ruta.includes('@flex')) {
 await p.goto(`${base}${destino}`, { waitUntil: 'networkidle' }).catch(() => undefined);
 await p.waitForTimeout(900);
 if (process.env.ABRIR_MENU) await p.locator('.pd-hamburguesa').click();
+if (process.env.ESCRIBIR) await p.locator('.pd-buscador input').fill(process.env.ESCRIBIR);
 if (process.env.CLIC) await p.locator(process.env.CLIC).first().click();
 await p.waitForTimeout(300);
 await p.screenshot({ path: archivo, fullPage: process.env.SOLO_VISTA !== '1' });

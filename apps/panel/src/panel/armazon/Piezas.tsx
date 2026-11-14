@@ -272,7 +272,8 @@ export function GraficaBarras({
   // Tope redondo de la escala: 1, 2 o 5 por su potencia de diez.
   const potencia = 10 ** Math.floor(Math.log10(max));
   const tope = [1, 2, 5, 10].map((m) => m * potencia).find((m) => m >= max) ?? max;
-  const marcas = [tope, tope / 2, 0];
+  // Con un tope de 1 no hay media marca entera: solo el tope y el cero.
+  const marcas = Number.isInteger(tope / 2) ? [tope, tope / 2, 0] : [tope, 0];
   return (
     <div
       className="pd-barras"
