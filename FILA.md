@@ -19,6 +19,14 @@
 - [x] HECHO 13 nov (C-DECISIONES-MERCADO) retiro mínimo de 10 dólares, techo del reembolso automático por país, reparto de la comida de un pedido listo anotado.
 - [ ] [para: revisor-calidad] (CIERRE-R) Revisar una vez la rama `fase-cierre-apps` (cinco commits de arriba): sobre todo el cierre de la ciudad de juego (que ningún pedido quede vivo y que el cierre no acepte nada nuevo), la columna nueva `errores_servidor.usuario_id`, el techo del reembolso automático y que el reparto de la comida no mueva dinero.
 
+## Calle y Venezuela (13 nov 2026, rama `fase-calle-y-venezuela`)
+
+- [ ] [para: revisor-calidad] (CV-R) Revisar una vez la rama `fase-calle-y-venezuela`: C-CLIENTE-AUSENTE (el cierre usa el camino de dinero de una entrega; el cliente paga), la reutilización del cobro en C-PENDIENTE-ABANDONADO (columna nueva `pedidos.huella_cuerpo`), la lectura vieja de C-LATIDO-UBICACION y los tres menores de C-RUTA-POR-CALLES. Todos los países.
+- [ ] [para: desarrollador] (CV-B6) Venezuela en comida: tarifas de comida de Venezuela en dólares con valores del mercado (Yummy, PedidosYa, ficha) y el equivalente en bolívares en el carrito y el pedido. Punto de partida: las tarifas ya son por país (`internacional/tarifas.ts`, `tarifasDeZona` + `leerConfigPais`), no globales; falta comprobar la moneda de la configuración de Venezuela frente a la de la zona de El Vigía (USD) y sembrar. EE. UU. sin cambios. Venezuela.
+- [ ] [para: desarrollador] (CV-B7) Comida en Venezuela en efectivo y pago móvil con comisión prepago en la MISMA billetera y capa de políticas de los viajes; circuito de punta a punta por la API y `VERIFICAR-PAGOS.md`. Venezuela.
+- [ ] [para: desarrollador] (CV-B8) Abrir Comida en El Vigía como paso de panel (restaurante con país Venezuela en esa zona) y el caso en `docs/COMO-ABRIR-UNA-CIUDAD.md`; escenario del simulador «comida Venezuela en efectivo». Venezuela.
+- [ ] [para: desarrollador] (CV-CAP) Captura real de «Cliente no apareció: cerrar con foto» en la app Driver para la guía del repartidor (hoy la guía usa la captura real de la puerta). Todos los países.
+
 ## Simulador de compras y entregas (13 nov 2026, pedido de Richard; ficha docs/investigaciones-rea/2026-11-13-simulador-de-compras-y-entregas.md) — todos los países
 
 - [x] (SIM-1) Núcleo universal (`simulador/nucleo/`) y 18 escenarios de comida de Divoox por la API real, con su comprobación de dinero. `npm run simulador`. La primera corrida encontró dos fallos (doble toque del restaurante y foto de la bolsa repetida): arreglados (C-RESTAURANTE-DOBLE-TOQUE, C-FOTO-RECOGIDA-REPETIDA). 18 de 18 en verde en local (4.273 filas en total; el subconjunto diario, unas 780).
