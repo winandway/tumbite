@@ -67,7 +67,7 @@ const T = {
     motivoEjemplo: 'Por qué se abre esta ciudad',
     abrirBoton: (servicio: string) => `Abrir ${servicio} en esta ciudad`,
     abierta: (servicio: string, id: string, pais: string, moneda: string, estado: string) =>
-      `${servicio} quedó abierto en ${id} (${pais}, viajes en ${moneda}). Estado: ${estado}.`,
+      `Se abrió ${servicio} en ${id} (${pais}, viajes en ${moneda}). Estado: ${estado}.`,
     estados: {
       disponible: 'encendido para todos',
       piloto: 'solo para el piloto',
@@ -591,7 +591,11 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
     (conTarifaDeMercado || tarifaLista);
 
   return (
-    <form className="formulario tarjeta-form" onSubmit={(e) => void abrir(e)} noValidate>
+    <form
+      className="formulario formulario-apilado tarjeta-form"
+      onSubmit={(e) => void abrir(e)}
+      noValidate
+    >
       <h2>{t.abrir}</h2>
       <p className="pista">{t.abrirAyuda}</p>
       <AvisoBorrador

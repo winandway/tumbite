@@ -4211,3 +4211,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** el ejemplo del CSV de «Importar» traía «Ana,100 Main St,3051112222» y varias casillas de celular usaban «(305) 000-0000» (código de Miami).
 - **Arreglo:** el ejemplo del CSV sale de los textos (`csvEjemplo`, español e inglés) con columnas válidas y una fila claramente ficticia («Nombre del destinatario, Dirección de entrega, 5550100000»); las casillas de celular dicen «Número de celular» / «Mobile number»; el ejemplo de teléfono del perfil de EE. UU. en `flexPaises.ts` es «(555) 010-0000». Además el título y la casilla de «Importar» dicen Excel o CSV (ya acepta .xlsx).
 - **Candado:** `packages/compartido/src/sinEjemplosReales.test.ts` recorre las fuentes y falla con un «(305) …», un número 305 de diez cifras o una «… Main St».
+
+## C-FORMULARIO-APILADO · Pulido del panel visto en las capturas (14 nov 2026) — todos los países
+
+- **Qué se vio:** «Abrir un servicio en una ciudad» (panel del equipo) salía en 1440 de ancho con las casillas sin estilo, en línea con sus etiquetas; el aviso decía «Comida quedó abierto»; en la ruta de Flex «Llegada estimada» numeraba dos veces («1. 1. RUTA-…»); en la página de rastreo el botón flotante «¿Preguntas?» tapaba el final del historial.
+- **Arreglo:** clase `formulario-apilado` en `estilos.css` (etiqueta arriba, casilla a lo ancho, como `.campo`), puesta en el formulario de `SuperMoto.tsx`; el aviso dice «Se abrió <servicio> en <ciudad>»; `PantallasRutas.tsx` pasa a `RecorridoCalles` el nombre de la parada sin el número (la lista `<ol>` ya numera); `.seguimiento` deja 96 px abajo para el botón flotante.
+- **Pruebas:** `e2e/recorrido/formularioApilado.spec.ts` (1440 y 375: cada casilla debajo de su etiqueta, dentro del formulario, sin salirse de lado; rojo comprobado quitando la clase), `flex/RecorridoCalles.test.tsx` (sin `p.orden` en los nombres) y `SuperMoto.test.tsx` (texto del aviso).

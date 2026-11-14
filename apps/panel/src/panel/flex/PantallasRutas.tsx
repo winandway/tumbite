@@ -501,7 +501,8 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
         rutaId={r.id}
         nombres={r.paradas.map((p) => ({
           id: p.id,
-          nombre: `${p.orden}. ${p.referenciaExterna ?? p.destinatarioNombre}`,
+          // La lista ya va numerada (<ol>): el nombre sin «1.» delante.
+          nombre: p.referenciaExterna ?? p.destinatarioNombre,
         }))}
         puedeCalcular={ctx.permisos.includes('lotes.gestionar')}
       />

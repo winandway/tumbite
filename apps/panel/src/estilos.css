@@ -6437,3 +6437,37 @@ body.modo-tableta .panel-contenido {
   width: 100%;
   text-align: center;
 }
+
+/* Pulido 14 nov (noche): la página de rastreo deja espacio abajo para el botón flotante «¿Preguntas?»,
+   que tapaba el final del historial (C-RASTREO-ESPACIO). */
+.seguimiento {
+  padding-bottom: 96px;
+}
+
+/* C-FORMULARIO-APILADO: formularios del panel con etiquetas sueltas (<label>texto <input></label>):
+   etiqueta arriba y campo debajo, a lo ancho, como `.campo`. En computadora y en celular. */
+.formulario-apilado label:not(.casilla) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.formulario-apilado label:not(.casilla) input,
+.formulario-apilado label:not(.casilla) select,
+.formulario-apilado label:not(.casilla) textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 12px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+.formulario-apilado label:not(.casilla) input:focus,
+.formulario-apilado label:not(.casilla) select:focus {
+  outline: 2px solid var(--primario);
+  border-color: transparent;
+}

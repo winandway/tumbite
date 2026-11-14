@@ -146,7 +146,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
         motivo: 'Pruebas Moto',
       }),
     );
-    expect(await screen.findByText(/Moto quedó abierto en VE-CCS-PRUEBAS/)).toBeTruthy();
+    expect(await screen.findByText(/Se abrió Moto en VE-CCS-PRUEBAS/)).toBeTruthy();
   });
 
   it('C-COMIDA-CIUDAD: Comida se abre en El Vigía con el mismo paso y sus tarifas de mercado', async () => {
@@ -179,7 +179,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
         },
       }),
     );
-    expect(await screen.findByText(/Comida quedó abierto en VE-MER-ELVIGIA/)).toBeTruthy();
+    expect(await screen.findByText(/Se abrió Comida en VE-MER-ELVIGIA/)).toBeTruthy();
   });
 
   it('C-CARRO-TARIFA-VE: «Usar El Vigía» con Carro muestra la tarifa de mercado y no la manda escrita', async () => {
