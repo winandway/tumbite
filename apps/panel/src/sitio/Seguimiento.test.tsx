@@ -33,7 +33,7 @@ describe('C-FLEX-SEGUIMIENTO-PLUS · página pública', () => {
     expect(screen.getByText(/¿No vas a estar\?/)).toBeInTheDocument();
   });
 
-  it('entregado: dónde quedó y la foto de la entrega', async () => {
+  it('entregado: dónde quedó; la foto se ve en el enlace, no aquí', async () => {
     servidor({
       codigo: 'DVXABCDEFGHJK',
       estado: 'entregado',
@@ -42,14 +42,15 @@ describe('C-FLEX-SEGUIMIENTO-PLUS · página pública', () => {
       llegadaEstimada: null,
       paradasAntes: null,
       cerca: null,
-      entrega: { lugar: 'puerta', foto: true, entregadoEn: '2026-11-13 15:12:00' },
+      entrega: { lugar: 'puerta', fotoEnEnlace: true, entregadoEn: '2026-11-13 15:12:00' },
     });
     render(<Seguimiento codigo="DVXABCDEFGHJK" idioma="en" />);
     expect(await screen.findByText('At the door')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Delivery photo' })).toHaveAttribute(
-      'src',
-      '/datos/v1/flex/seguimiento/DVXABCDEFGHJK/foto',
-    );
+    // La foto no se muestra con solo el número de guía: se dice dónde verla.
+    expect(
+      screen.getByText('You can see the delivery photo in the link we sent you.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /photo/i })).toBeNull();
     expect(screen.queryByText(/Won’t be home/)).toBeNull();
   });
 

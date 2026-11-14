@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos } from '../validar';
+import { sha256 } from '../cripto';
 import { horasEstimadas, rutaCallesGuardada } from './rutaCalles';
 
 /**
@@ -11,8 +12,10 @@ import { horasEstimadas, rutaCallesGuardada } from './rutaCalles';
  * - cuántas paradas faltan antes de la tuya mientras el conductor está en la calle;
  * - cuando eres la PRÓXIMA parada y el conductor mandó su ubicación hace poco, su posición
  *   aproximada (redondeada a unos 100 m) para el mapa. Nunca la dirección de destino ni de nadie;
- * - entregado: dónde quedó (puerta, recepción…) y la foto de la entrega durante 14 días (la foto se
- *   pide «que se vea el lugar y sin personas», C-FLEX-LUGAR). Nunca la firma ni el nombre.
+ * - entregado: dónde quedó (puerta, recepción…) y si hay foto. La FOTO no se muestra con solo el
+ *   número de guía (revisión del 13 nov, como Amazon y UPS): se ve en el enlace con token que
+ *   recibe el destinatario (`/publico/ubicacion/{código}/foto`, 14 días) o con la sesión de la
+ *   empresa. Nunca la firma ni el nombre.
  * Nada de esto escribe en la base: solo lecturas por clave o por índice.
  */
 export const flexSeguimientoPublico = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -23,7 +26,7 @@ const ANTES_DE_ENTREGAR = ['asignado', 'cargado', 'en_transito'];
 
 const redondear = (n: number) => Math.round(n * 1000) / 1000;
 
-type Entrega = { lugar: string | null; foto: boolean; entregadoEn: string };
+type Entrega = { lugar: string | null; fotoEnEnlace: boolean; entregadoEn: string };
 export type ExtraSeguimiento = {
   llegadaEstimada: string | null;
   paradasAntes: number | null;
@@ -61,7 +64,7 @@ export async function extraSeguimiento(
       ...vacio,
       entrega: {
         lugar: meta.lugar ?? null,
-        foto: Boolean(meta.fotoId) && reciente,
+        fotoEnEnlace: Boolean(meta.fotoId) && reciente,
         entregadoEn: ev.creado_en,
       },
     };
@@ -123,35 +126,44 @@ export async function extraSeguimiento(
   return { llegadaEstimada, paradasAntes, cerca, entrega: null };
 }
 
-const CODIGO = /^DVX[A-Z2-9]{10}$/;
-
-/** La foto de la entrega, solo si el paquete se entregó hace menos de 14 días. Privada y sin caché. */
-flexSeguimientoPublico.get('/seguimiento/:codigo/foto', async (c) => {
-  const db = base(c);
-  const codigo = c.req.param('codigo').trim().toUpperCase();
-  const noHay = () => new ErrorDatos('Esa foto no está disponible.', undefined, 404);
-  if (!CODIGO.test(codigo)) throw noHay();
-  const p = await db
-    .prepare('SELECT id, estado FROM paquetes WHERE codigo_seguimiento = ?')
-    .bind(codigo)
-    .first<{ id: string; estado: string }>();
-  if (!p || p.estado !== 'entregado') throw noHay();
-  const extra = await extraSeguimiento(db, p);
-  if (!extra.entrega?.foto) throw noHay();
+/** La foto de la entrega de un paquete (null si no hay o pasaron 14 días). Solo lecturas. */
+async function fotoDeEntrega(db: D1Database, paqueteId: string) {
   const ev = await db
     .prepare(
-      "SELECT json_extract(metadatos_json, '$.fotoId') AS foto FROM paquete_eventos WHERE paquete_id = ? AND tipo = 'entregado' ORDER BY id DESC LIMIT 1",
+      "SELECT json_extract(metadatos_json, '$.fotoId') AS foto, creado_en FROM paquete_eventos WHERE paquete_id = ? AND tipo = 'entregado' ORDER BY id DESC LIMIT 1",
     )
-    .bind(p.id)
-    .first<{ foto: string | null }>();
-  const f = ev?.foto
-    ? await db
-        .prepare(
-          "SELECT clave FROM flex_pruebas WHERE id = ? AND tipo = 'foto' AND purgada_en IS NULL",
-        )
-        .bind(ev.foto)
-        .first<{ clave: string }>()
-    : null;
+    .bind(paqueteId)
+    .first<{ foto: string | null; creado_en: string }>();
+  if (!ev?.foto) return null;
+  if (
+    Date.now() - Date.parse(`${ev.creado_en.replace(' ', 'T')}Z`) >=
+    DIAS_FOTO_PUBLICA * 86_400_000
+  )
+    return null;
+  return db
+    .prepare("SELECT clave FROM flex_pruebas WHERE id = ? AND tipo = 'foto' AND purgada_en IS NULL")
+    .bind(ev.foto)
+    .first<{ clave: string }>();
+}
+
+/**
+ * La foto de la entrega SOLO con el enlace con token que recibe el destinatario (el mismo de
+ * «marca tu ubicación»): con el número de guía no se ve. Privada y sin caché.
+ */
+flexSeguimientoPublico.get('/publico/ubicacion/:codigo/foto', async (c) => {
+  const db = base(c);
+  const codigo = c.req.param('codigo');
+  const noHay = () => new ErrorDatos('Esa foto no está disponible.', undefined, 404);
+  if (!/^[A-Za-z0-9_-]{40,60}$/.test(codigo)) throw noHay();
+  const p = await db
+    .prepare(
+      `SELECT p.id FROM envios e JOIN paquetes p ON p.envio_id = e.id
+        WHERE e.enlace_ubicacion_huella = ? AND e.enlace_ubicacion_vence > datetime('now') AND p.estado = 'entregado'
+        ORDER BY p.actualizado_en DESC LIMIT 1`,
+    )
+    .bind(await sha256(codigo))
+    .first<{ id: string }>();
+  const f = p ? await fotoDeEntrega(db, p.id) : null;
   const obj = f && c.env.BUCKET ? await c.env.BUCKET.get(f.clave) : null;
   if (!obj) throw noHay();
   return new Response(obj.body, {

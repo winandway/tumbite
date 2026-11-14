@@ -51,7 +51,7 @@ const T = {
       buzon: 'En el buzón',
       otro: 'En otro lugar seguro',
     } as Record<string, string>,
-    foto: 'Foto de la entrega',
+    fotoEnEnlace: 'La foto de la entrega la ves en el enlace que te enviamos.',
     noEstaras:
       '¿No vas a estar? Usa el enlace que te envió la empresa para dejar instrucciones o confirmar tu ubicación, o escríbele a la empresa que te envía el paquete.',
   },
@@ -90,7 +90,7 @@ const T = {
       buzon: 'In the mailbox',
       otro: 'In another safe place',
     } as Record<string, string>,
-    foto: 'Delivery photo',
+    fotoEnEnlace: 'You can see the delivery photo in the link we sent you.',
     noEstaras:
       'Won’t be home? Use the link the company sent you to leave instructions or confirm your location, or contact the company sending the package.',
   },
@@ -104,7 +104,7 @@ type Seguimiento = {
   llegadaEstimada?: string | null;
   paradasAntes?: number | null;
   cerca?: { lat: number; lng: number; actualizadoEn: string } | null;
-  entrega?: { lugar: string | null; foto: boolean; entregadoEn: string } | null;
+  entrega?: { lugar: string | null; fotoEnEnlace: boolean; entregadoEn: string } | null;
 };
 
 /**
@@ -301,16 +301,7 @@ export function Seguimiento({ codigo, idioma }: { codigo: string | null; idioma:
                   {lugares.get(datos.entrega.lugar) ?? datos.entrega.lugar}
                 </p>
               ) : null}
-              {datos.entrega.foto ? (
-                <figure style={{ margin: '12px 0' }}>
-                  <img
-                    src={`/datos/v1/flex/seguimiento/${encodeURIComponent(datos.codigo)}/foto`}
-                    alt={t.foto}
-                    style={{ maxWidth: '100%', width: 384, borderRadius: 12 }}
-                  />
-                  <figcaption className="pista">{t.foto}</figcaption>
-                </figure>
-              ) : null}
+              {datos.entrega.fotoEnEnlace ? <p className="pista">{t.fotoEnEnlace}</p> : null}
             </>
           ) : null}
           {!datos.final ? <p className="pista">{t.noEstaras}</p> : null}

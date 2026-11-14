@@ -51,7 +51,7 @@ describe('C-FLEX-SEGUIMIENTO-PLUS · rastreo público del destinatario', () => {
     expect((await rastrear(m, c1)).datos.seguimiento.cerca).toBeNull();
   });
 
-  it('entregado: dónde quedó y la foto de la entrega durante 14 días', async () => {
+  it('entregado: con el número de guía se ve dónde quedó, pero la FOTO solo con el enlace con token (14 días)', async () => {
     const m = mundo();
     const r = await rutaEnCurso(m, 2);
     const p = r.paradas[0];
@@ -69,18 +69,29 @@ describe('C-FLEX-SEGUIMIENTO-PLUS · rastreo público del destinatario', () => {
     ).toBe(200);
     const codigo = await codigoDe(m, p.envioId);
     const s = (await rastrear(m, codigo)).datos.seguimiento;
-    expect(s.entrega).toMatchObject({ lugar: 'puerta', foto: true });
-    const img = await m.crudo(`${B}/seguimiento/${codigo}/foto`, {});
+    expect(s.entrega).toMatchObject({ lugar: 'puerta', fotoEnEnlace: true });
+    // Con solo el número de guía no hay foto.
+    expect((await m.crudo(`${B}/seguimiento/${codigo}/foto`, {})).status).toBe(404);
+    // Con el enlace con token del destinatario, sí.
+    const token = 'T'.repeat(43);
+    const huella = Array.from(
+      new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))),
+      (b) => b.toString(16).padStart(2, '0'),
+    ).join('');
+    await m.DB.prepare(
+      "UPDATE envios SET enlace_ubicacion_huella = ?, enlace_ubicacion_vence = datetime('now', '+5 days') WHERE id = ?",
+    )
+      .bind(huella, p.envioId)
+      .run();
+    const img = await m.crudo(`${B}/publico/ubicacion/${token}/foto`, {});
     expect(img.status).toBe(200);
     expect(img.headers.get('cache-control')).toBe('private, no-store');
+    expect((await m.crudo(`${B}/publico/ubicacion/${'X'.repeat(43)}/foto`, {})).status).toBe(404);
     // Veinte días después (los eventos de custodia no se pueden cambiar: se adelanta el reloj).
     const ahora = Date.now();
     const reloj = vi.spyOn(Date, 'now').mockReturnValue(ahora + 20 * 86_400_000);
-    expect((await rastrear(m, codigo)).datos.seguimiento.entrega.foto).toBe(false);
-    expect((await m.crudo(`${B}/seguimiento/${codigo}/foto`, {})).status).toBe(404);
+    expect((await rastrear(m, codigo)).datos.seguimiento.entrega.fotoEnEnlace).toBe(false);
+    expect((await m.crudo(`${B}/publico/ubicacion/${token}/foto`, {})).status).toBe(404);
     reloj.mockRestore();
-    // Un paquete que no se entregó no tiene foto pública.
-    const otro = await codigoDe(m, r.paradas[1].envioId);
-    expect((await m.crudo(`${B}/seguimiento/${otro}/foto`, {})).status).toBe(404);
   });
 });
