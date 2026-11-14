@@ -2,7 +2,7 @@ import { correosEquipo, smsEquipo } from './avisosEquipo';
 import { enviarCorreo } from './correo';
 import type { Env } from './env';
 
-type Estado = 'ok' | 'error' | 'pendiente' | 'atrasado';
+type Estado = 'ok' | 'error' | 'pendiente' | 'atrasado' | 'estimada';
 
 /**
  * Aviso al equipo cuando una pieza del canario (/datos/salud) pasa a rojo, y otro cuando vuelve

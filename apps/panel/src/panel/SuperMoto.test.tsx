@@ -138,6 +138,36 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     expect(await screen.findByText(/Moto quedó abierto en VE-CCS-PRUEBAS/)).toBeTruthy();
   });
 
+  it('C-ABRIR-CIUDAD: abre Carro en una ciudad de cualquier país con su tarifa escrita', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    await userEvent.selectOptions(screen.getByLabelText('Servicio'), 'carro');
+    await userEvent.type(screen.getByLabelText('Código de la ciudad'), 'US-MI-DETROIT');
+    await userEvent.type(screen.getByLabelText('Nombre de la ciudad'), 'Detroit');
+    await userEvent.type(screen.getByLabelText('Latitud del centro'), '42.3314');
+    await userEvent.type(screen.getByLabelText('Longitud del centro'), '-83.0458');
+    await userEvent.clear(screen.getByLabelText('Zona horaria'));
+    await userEvent.type(screen.getByLabelText('Zona horaria'), 'America/Detroit');
+    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Pruebas Carro');
+    const boton = screen.getByRole('button', { name: 'Abrir Carro en esta ciudad' });
+    // Sin tarifa no se puede abrir: fuera de Moto en Venezuela no hay tarifa de mercado.
+    expect((boton as HTMLButtonElement).disabled).toBe(true);
+    await userEvent.type(screen.getByLabelText('Banderazo'), '2.50');
+    await userEvent.type(screen.getByLabelText('Por kilómetro'), '1.10');
+    await userEvent.type(screen.getByLabelText('Por minuto'), '0.30');
+    await userEvent.type(screen.getByLabelText('Precio mínimo'), '7');
+    await userEvent.click(boton);
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'POST')?.cuerpo).toMatchObject({
+        servicio: 'carro',
+        zona: { id: 'US-MI-DETROIT', nombre: 'Detroit', zonaHoraria: 'America/Detroit' },
+        tarifa: { base: 250, porKm: 110, porMinuto: 30, minimo: 700 },
+        motivo: 'Pruebas Carro',
+      }),
+    );
+  });
+
   it('lo escrito al abrir una ciudad se recupera al volver a la pantalla', async () => {
     servidor([]);
     const { unmount } = render(<SuperMoto base="/panel/control-x" idioma="es" />);
