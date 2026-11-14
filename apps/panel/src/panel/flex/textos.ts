@@ -2,6 +2,11 @@
 import type { Idioma } from '@tumbite/compartido';
 export const TEXTOS_FLEX = {
   es: {
+    // Fase 7 · exportar (C-FLEX-EXPORTAR)
+    exportar: 'Exportar',
+    exportando: 'Exportando…',
+    exportarListo: 'Listo: {n} filas en el archivo CSV.',
+    exportarCortado: 'El archivo trae las primeras {n} filas. Pon un filtro para bajar el resto.',
     flex: 'Divoox Flex',
     misEmpresas: 'Mis empresas',
     sinEmpresas: 'Todavía no tienes una empresa en Divoox Flex.',
@@ -456,6 +461,11 @@ export const TEXTOS_FLEX = {
     auditoria: 'Actividad reciente',
   },
   en: {
+    // Phase 7 · export (C-FLEX-EXPORTAR)
+    exportar: 'Export',
+    exportando: 'Exporting…',
+    exportarListo: 'Done: {n} rows in the CSV file.',
+    exportarCortado: 'The file has the first {n} rows. Add a filter to download the rest.',
     flex: 'Divoox Flex',
     misEmpresas: 'My companies',
     sinEmpresas: 'You don’t have a company on Divoox Flex yet.',

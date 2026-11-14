@@ -13,6 +13,7 @@ import {
 import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { pedir } from '../api';
+import { BotonExportar } from './Exportar';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 
 /**
@@ -434,6 +435,9 @@ function Resumen({ ctx }: { ctx: Contexto }) {
           : ''}
       </p>
       <h2>{t.movimientos}</h2>
+      <div className="flex-filtros">
+        <BotonExportar ctx={ctx} tipo="movimientos" filtros={{}} />
+      </div>
       {mov === null ? (
         <p role="status">{ctx.t.cargando}</p>
       ) : mov.length === 0 ? (

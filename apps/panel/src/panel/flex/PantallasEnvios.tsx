@@ -21,6 +21,7 @@ import { marcarEtiquetasImpresas } from './primerosPasos';
 import { Campo } from '../CampoClave';
 import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
+import { BotonExportar } from './Exportar';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { HerramientasEnvio } from './PantallasRutas';
 import { type UbicacionDeEnvio, UbicacionEnvio } from './UbicacionEnvio';
@@ -154,6 +155,7 @@ export function Envios({ ctx }: { ctx: Contexto }) {
         )}
       </div>
       <div className="flex-filtros">
+        <BotonExportar ctx={ctx} tipo="envios" filtros={{ q, estado }} />
         <input
           type="search"
           aria-label={t.buscar}
@@ -796,6 +798,7 @@ export function Paquetes({ ctx }: { ctx: Contexto }) {
       </header>
       <Error_ error={error} />
       <div className="flex-filtros">
+        <BotonExportar ctx={ctx} tipo="paquetes" filtros={{ q, estado, centro }} />
         <input
           type="search"
           className="flex-buscador"

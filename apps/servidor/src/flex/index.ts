@@ -14,6 +14,7 @@ import { flexConductor } from './conductor';
 import { flexIntegraciones, despacharIntegraciones } from './integraciones';
 import { flexOperaciones } from './operaciones';
 import { flexRetencion } from './automatizacion';
+import { flexExportar } from './exportar';
 import { despues } from './avisosFlex';
 import { finanzasEmpresa } from '../finanzas/rutasEmpresa';
 
@@ -50,4 +51,5 @@ flex.route('/', flexRetiro);
 flex.route('/', flexIntegraciones);
 flex.route('/', flexOperaciones);
 flex.route('/', flexRetencion);
+flex.route('/', flexExportar);
 flex.route('/', finanzasEmpresa);

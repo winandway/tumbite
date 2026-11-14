@@ -11,6 +11,7 @@ import {
 import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
+import { BotonExportar } from './Exportar';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { CapacidadAlAsignar, SugerenciaOrden } from './PantallasFase3';
 
@@ -172,6 +173,7 @@ export function RutasOperativas({ ctx }: { ctx: Contexto }) {
       <p className="pista">{t.rutasOperativasAyuda}</p>
       <Error_ error={error} />
       <div className="flex-filtros" aria-label={t.filtros}>
+        <BotonExportar ctx={ctx} tipo="rutas" filtros={f} />
         <select
           aria-label={t.estado}
           value={f.estado}
@@ -853,6 +855,9 @@ export function Devoluciones({ ctx }: { ctx: Contexto }) {
     <section className="super">
       <h1>{t.devoluciones}</h1>
       <p className="pista">{t.devolucionesAyuda}</p>
+      <div className="flex-filtros">
+        <BotonExportar ctx={ctx} tipo="devoluciones" filtros={{}} />
+      </div>
       <Error_ error={error} />
       {ok ? <p className="aviso-borrador">{ok}</p> : null}
       {puede ? (
@@ -941,6 +946,7 @@ export function Incidencias({ ctx }: { ctx: Contexto }) {
       <h1>{t.incidencias}</h1>
       <Error_ error={error} />
       <div className="flex-filtros">
+        <BotonExportar ctx={ctx} tipo="incidencias" filtros={{ estado }} />
         <select aria-label={t.estado} value={estado} onChange={(e) => setEstado(e.target.value)}>
           <option value="">{t.todos}</option>
           {Object.entries(t.estadosIncidencia).map(([k, v]) => (

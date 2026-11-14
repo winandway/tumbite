@@ -5,6 +5,9 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-FLEX-EXPORTAR y Flex Fase 7 (bloque propio)
+  ['Cursor inválido.', 'Invalid cursor.'],
+  ['Esa lista no se puede exportar.', 'That list can’t be exported.'],
   // C-REFERIDOS
   ['Las invitaciones no están activas.', 'Invites aren’t active.'],
   // C-CIUDAD-JUEGO (SIM-7)
