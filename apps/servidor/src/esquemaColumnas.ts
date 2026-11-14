@@ -1890,6 +1890,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_por",
     "creado_en"
   ],
+  "tasas_modo": [
+    "pais",
+    "modo",
+    "ajuste_pct",
+    "tasa_fija",
+    "cambiado_por",
+    "cambiado_en"
+  ],
   "catalogo_productos": [
     "id",
     "comercio_id",

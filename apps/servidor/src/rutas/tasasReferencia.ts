@@ -38,14 +38,36 @@ type FilaTasa = {
   fuente: 'equipo' | 'bcv';
 };
 
+/** Lo que se usa hoy: la oficial (o la del equipo) o, según el modo del país, flotante o fija. */
+export type TasaEnUso = {
+  tasa: number;
+  fecha: string;
+  fuente: 'equipo' | 'bcv' | 'flotante' | 'fija';
+  /** En «flotante», la oficial sobre la que se calculó. */
+  base?: { tasa: number; fecha: string; fuente: 'equipo' | 'bcv' };
+  ajustePct?: number;
+};
+
 /**
  * C-TASA-BCV-AUTO: la oficial automática vale con fecha valor de hoy o de hasta estos días atrás
  * (fines de semana y feriados largos no tienen publicación).
  */
 export const DIAS_VIGENCIA_BCV = 5;
+/**
+ * C-TASA-MODOS: el Banco Central publica el viernes la tasa con fecha valor del lunes (y antes de un
+ * feriado, la del día hábil siguiente). Si no hay ninguna oficial con fecha valor de hoy o anterior,
+ * se usa la publicada con fecha valor futura hasta estos días adelante, en vez de no mostrar nada.
+ */
+export const DIAS_ADELANTO_BCV = 4;
+/** C-TASA-MODOS: tope del ajuste de la tasa flotante, en porcentaje (positivo o negativo). */
+export const AJUSTE_MAXIMO_PCT = 30;
 
-/** La tasa vigente del país, o null. Lee una fila (una sola consulta por el índice de la tabla). */
-export async function tasaVigente(
+/**
+ * La oficial del país, o null: la del equipo escrita hoy; si no, la «bcv» más reciente con fecha valor
+ * de hoy o de los últimos días; si no, la del equipo de las últimas 48 horas; si no, la «bcv» con la
+ * fecha valor futura más cercana (C-TASA-MODOS). Una sola consulta.
+ */
+export async function tasaOficial(
   db: D1Database,
   pais: string,
   ahora = Date.now(),
@@ -55,15 +77,81 @@ export async function tasaVigente(
   return db
     .prepare(
       `SELECT tasa, fecha, creado_en, creado_por, fuente FROM tasas_cambio
-        WHERE pais = ?
-          AND ((fuente = 'equipo' AND creado_en > datetime(?, '-${HORAS_VIGENCIA_TASA} hours'))
-            OR (fuente = 'bcv' AND fecha <= ? AND fecha >= date(?, '-${DIAS_VIGENCIA_BCV} days')))
-        ORDER BY CASE WHEN fuente = 'equipo' AND fecha = ? THEN 0 WHEN fuente = 'bcv' THEN 1 ELSE 2 END,
+        WHERE pais = ?1
+          AND ((fuente = 'equipo' AND creado_en > datetime(?2, '-${HORAS_VIGENCIA_TASA} hours'))
+            OR (fuente = 'bcv' AND fecha <= date(?3, '+${DIAS_ADELANTO_BCV} days')
+                AND fecha >= date(?3, '-${DIAS_VIGENCIA_BCV} days')))
+        ORDER BY CASE WHEN fuente = 'equipo' AND fecha = ?3 THEN 0
+                      WHEN fuente = 'bcv' AND fecha <= ?3 THEN 1
+                      WHEN fuente = 'equipo' THEN 2 ELSE 3 END,
+                 CASE WHEN fecha > ?3 THEN fecha END ASC,
                  fecha DESC, creado_en DESC
         LIMIT 1`,
     )
-    .bind(pais, sqlUtc(ahora), hoy, hoy, hoy)
+    .bind(pais, sqlUtc(ahora), hoy)
     .first<FilaTasa>();
+}
+
+export type ModoTasa = {
+  modo: 'oficial' | 'flotante' | 'fija';
+  ajuste_pct: number | null;
+  tasa_fija: number | null;
+  cambiado_en: string | null;
+  cambiado_por: string | null;
+};
+
+/** El modo del país (C-TASA-MODOS). Sin fila: «oficial». */
+export async function modoTasa(db: D1Database, pais: string): Promise<ModoTasa> {
+  const m = await db
+    .prepare(
+      'SELECT modo, ajuste_pct, tasa_fija, cambiado_en, cambiado_por FROM tasas_modo WHERE pais = ?',
+    )
+    .bind(pais)
+    .first<ModoTasa>();
+  return (
+    m ?? {
+      modo: 'oficial',
+      ajuste_pct: null,
+      tasa_fija: null,
+      cambiado_en: null,
+      cambiado_por: null,
+    }
+  );
+}
+
+/** Bolívares por dólar con 4 decimales, como los publica el Banco Central. */
+const a4 = (n: number) => Math.round(n * 10_000) / 10_000;
+
+/**
+ * C-TASA-MODOS: la tasa que se usa hoy en el país, respetando su modo. ÚNICA pieza que leen viajes,
+ * comida y el panel; solo convierte a bolívares de referencia, nunca cambia un monto en dólares.
+ * Solo lee (dos consultas como mucho); nunca escribe.
+ */
+export async function tasaVigente(
+  db: D1Database,
+  pais: string,
+  ahora = Date.now(),
+): Promise<TasaEnUso | null> {
+  if (!MONEDA_REFERENCIA.has(pais)) return null;
+  const m = await modoTasa(db, pais);
+  if (m.modo === 'fija' && m.tasa_fija && m.tasa_fija > 0)
+    return {
+      tasa: m.tasa_fija,
+      fecha: (m.cambiado_en ?? sqlUtc(ahora)).slice(0, 10),
+      fuente: 'fija',
+    };
+  const o = await tasaOficial(db, pais, ahora);
+  if (!o) return null;
+  const base = { tasa: o.tasa, fecha: o.fecha, fuente: o.fuente };
+  if (m.modo === 'flotante' && m.ajuste_pct != null && Math.abs(m.ajuste_pct) <= AJUSTE_MAXIMO_PCT)
+    return {
+      tasa: a4(o.tasa * (1 + m.ajuste_pct / 100)),
+      fecha: o.fecha,
+      fuente: 'flotante',
+      base,
+      ajustePct: m.ajuste_pct,
+    };
+  return base;
 }
 
 /** Una hora como la escribe SQLite («AAAA-MM-DD HH:MM:SS», UTC). */
@@ -85,34 +173,48 @@ async function leerPortadaBcv(): Promise<string> {
   return r.text();
 }
 
+/**
+ * C-TASA-MODOS: el respaldo, el mismo dólar oficial del Banco Central republicado por DolarApi (código
+ * abierto, sin llave), con su fecha valor en `fechaActualizacion`. Flex ya lo usa (flex/tasas.ts).
+ */
+const URL_RESPALDO_BCV = 'https://ve.dolarapi.com/v1/dolares/oficial';
+async function leerRespaldoBcv(): Promise<unknown> {
+  const r = await fetch(URL_RESPALDO_BCV, { signal: AbortSignal.timeout(8_000) });
+  if (!r.ok) throw new Error(`el respaldo respondió ${r.status}`);
+  return r.json();
+}
+
+/** La tasa y su fecha valor del respaldo, o null si no trae la forma esperada. */
+function leerRespuestaRespaldo(d: unknown): { tasa: number; fecha: string } | null {
+  const r = d as { promedio?: unknown; fechaActualizacion?: unknown } | null;
+  const tasa = r?.promedio;
+  const fecha = typeof r?.fechaActualizacion === 'string' ? r.fechaActualizacion.slice(0, 10) : '';
+  if (typeof tasa !== 'number' || !(tasa > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return null;
+  return { tasa, fecha };
+}
+
+const enVitest = () =>
+  Boolean(
+    (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.VITEST,
+  );
+
 export type ResultadoTasaBcv =
   | { estado: 'guardada'; tasa: number; fecha: string }
   | { estado: 'retenida'; tasa: number; fecha: string; anterior: number }
   | { estado: 'sin-lectura'; motivo: string };
 
 /**
- * C-TASA-BCV-AUTO: toma la tasa oficial del día de la portada del Banco Central y la guarda con su
- * fecha valor y fuente «bcv» (una lectura externa y una escritura). Si se aparta de la última
- * guardada más de `saltoMaximoPct`, NO se usa: se guarda como «bcv-retenida» (nadie la lee para
- * cobrar ni mostrar) y el canario se pone en rojo. Nunca lanza.
+ * Guarda una oficial leída con su fecha valor, con la validación de cordura (C-TASA-BCV-AUTO): si se
+ * aparta de la referencia más de `pct`, queda «bcv-retenida» (nadie la lee). Una lectura y una
+ * escritura, y solo si cambió (la misma tasa ya guardada para esa fecha no se reescribe).
  */
-export async function tomarTasaBcv(
+async function guardarOficial(
   db: D1Database,
-  opciones: { leer?: () => Promise<string>; ahora?: number; saltoMaximoPct?: number } = {},
+  leida: { tasa: number; fecha: string },
+  pct: number,
 ): Promise<ResultadoTasaBcv> {
-  let html: string;
-  try {
-    html = await (opciones.leer ?? leerPortadaBcv)();
-  } catch (e) {
-    console.error('tasa bcv: no se pudo leer la portada', e);
-    return { estado: 'sin-lectura', motivo: String(e) };
-  }
-  const leida = leerTasaBcv(html);
-  if (!leida?.fecha || !/^\d{4}-\d{2}-\d{2}$/.test(leida.fecha)) {
-    console.error('tasa bcv: la portada no trae la tasa o su fecha valor');
-    return { estado: 'sin-lectura', motivo: 'la portada cambió de forma' };
-  }
-  // Una sola lectura: la última oficial aceptada, la última retenida anterior y la última del equipo.
+  // Una sola lectura: la última oficial aceptada, la última retenida anterior, la del equipo y la
+  // misma fecha si ya estaba guardada.
   const ref = await db
     .prepare(
       `SELECT
@@ -122,11 +224,18 @@ export async function tomarTasaBcv(
            AND fecha < ?1 AND fecha >= date(?1, '-${DIAS_VIGENCIA_BCV} days')
            ORDER BY fecha DESC LIMIT 1) AS retenida,
          (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'equipo'
-           ORDER BY creado_en DESC LIMIT 1) AS equipo`,
+           ORDER BY creado_en DESC LIMIT 1) AS equipo,
+         (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv' AND fecha = ?1) AS misma`,
     )
     .bind(leida.fecha)
-    .first<{ oficial: number | null; retenida: number | null; equipo: number | null }>();
-  const pct = opciones.saltoMaximoPct ?? SALTO_MAXIMO_PCT;
+    .first<{
+      oficial: number | null;
+      retenida: number | null;
+      equipo: number | null;
+      misma: number | null;
+    }>();
+  if (ref?.misma === leida.tasa)
+    return { estado: 'guardada', tasa: leida.tasa, fecha: leida.fecha };
   const aparte = (a: number, b: number) => Math.abs(a / b - 1) * 100;
   // Contra qué se compara: la última oficial; el primer día, la última del equipo (si hay).
   const contra = ref?.oficial ?? ref?.equipo ?? null;
@@ -146,6 +255,78 @@ export async function tomarTasaBcv(
     return { estado: 'retenida', tasa: leida.tasa, fecha: leida.fecha, anterior: contra };
   }
   return { estado: 'guardada', tasa: leida.tasa, fecha: leida.fecha };
+}
+
+/**
+ * C-TASA-BCV-AUTO: toma la tasa oficial del día de la portada del Banco Central y la guarda con su
+ * fecha valor y fuente «bcv». C-TASA-MODOS: si la portada no responde, o trae una fecha valor futura
+ * (publicada el viernes para el lunes) y no hay ninguna oficial vigente hoy, hace UNA lectura del
+ * respaldo (DolarApi, el mismo dólar oficial con su fecha valor). Como mucho dos lecturas externas y
+ * dos escrituras. Nunca lanza.
+ */
+export async function tomarTasaBcv(
+  db: D1Database,
+  opciones: {
+    leer?: () => Promise<string>;
+    leerRespaldo?: (() => Promise<unknown>) | null;
+    ahora?: number;
+    saltoMaximoPct?: number;
+  } = {},
+): Promise<ResultadoTasaBcv> {
+  const ahora = opciones.ahora ?? Date.now();
+  const hoy = hoyEn('VE', ahora);
+  const pct = opciones.saltoMaximoPct ?? SALTO_MAXIMO_PCT;
+  // Ninguna prueba sale a internet: dentro de vitest, sin lector de prueba, no hay respaldo.
+  const lectorRespaldo =
+    opciones.leerRespaldo !== undefined
+      ? opciones.leerRespaldo
+      : enVitest()
+        ? null
+        : leerRespaldoBcv;
+  const delRespaldo = async (): Promise<{ tasa: number; fecha: string } | null> => {
+    if (!lectorRespaldo) return null;
+    try {
+      const r = leerRespuestaRespaldo(await lectorRespaldo());
+      if (!r) console.error('tasa bcv: el respaldo no trae la tasa o su fecha valor');
+      return r;
+    } catch (e) {
+      console.error('tasa bcv: no se pudo leer el respaldo', e);
+      return null;
+    }
+  };
+  let leida: { tasa: number; fecha: string | null } | null = null;
+  let motivo = 'la portada cambió de forma';
+  try {
+    leida = leerTasaBcv(await (opciones.leer ?? leerPortadaBcv)());
+  } catch (e) {
+    console.error('tasa bcv: no se pudo leer la portada', e);
+    motivo = String(e);
+  }
+  if (!leida?.fecha || !/^\d{4}-\d{2}-\d{2}$/.test(leida.fecha)) {
+    if (leida) console.error('tasa bcv: la portada no trae la tasa o su fecha valor');
+    const r = await delRespaldo();
+    return r ? guardarOficial(db, r, pct) : { estado: 'sin-lectura', motivo };
+  }
+  const portada = { tasa: leida.tasa, fecha: leida.fecha };
+  const resultado = await guardarOficial(db, portada, pct);
+  if (portada.fecha > hoy) {
+    // Fecha valor futura: ¿hay alguna oficial vigente hoy? Si no, la del día sale del respaldo.
+    const vigente = await db
+      .prepare(
+        `SELECT 1 FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv' AND fecha <= ?1
+           AND fecha >= date(?1, '-${DIAS_VIGENCIA_BCV} days') LIMIT 1`,
+      )
+      .bind(hoy)
+      .first();
+    if (!vigente) {
+      const r = await delRespaldo();
+      const minimo = new Date(Date.parse(`${hoy}T00:00:00Z`) - DIAS_VIGENCIA_BCV * 86_400_000)
+        .toISOString()
+        .slice(0, 10);
+      if (r && r.fecha <= hoy && r.fecha >= minimo) await guardarOficial(db, r, pct);
+    }
+  }
+  return resultado;
 }
 
 /**
@@ -175,23 +356,24 @@ export async function saludTasaBcv(
 
 /**
  * La tarea del reloj (C-TASA-BCV-AUTO): a las 14:00 UTC (10:00 de Caracas) lee una vez; a las 20:00
- * UTC solo si ese día no hubo ninguna lectura guardada. Máximo dos lecturas externas al día, nunca en
- * bucle. No es crítica: sin tasa automática, el equipo la escribe a mano como siempre.
+ * UTC solo si ese día no hubo ninguna lectura guardada. Cada vuelta, como mucho la portada y una del
+ * respaldo (C-TASA-MODOS); nunca en bucle. No es crítica: sin tasa automática, el equipo la escribe a mano como siempre.
  */
 export const TAREA_TASA_BCV: TareaReloj = {
   nombre: 'tasa_bcv',
   critica: false,
   correr: async (env, db) => {
-    const prueba = env as unknown as { __lectorTasaBcv?: () => Promise<string>; __ahora?: number };
+    const prueba = env as unknown as {
+      __lectorTasaBcv?: () => Promise<string>;
+      __lectorRespaldoBcv?: () => Promise<unknown>;
+      __ahora?: number;
+    };
     const ahora = prueba.__ahora ?? Date.now();
     const d = new Date(ahora);
     const hhmm = d.toISOString().slice(11, 16);
     if (hhmm !== '14:00' && hhmm !== '20:00') return null;
     // Ninguna prueba sale a internet: sin lector de prueba, dentro de vitest no se lee nada.
-    const enPruebas = Boolean(
-      (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
-        ?.VITEST,
-    );
+    const enPruebas = enVitest();
     if (enPruebas && !prueba.__lectorTasaBcv) return null;
     if (hhmm === '20:00') {
       // La de las 14:00 de hoy quedó hace 6 horas: con algo guardado en las últimas 12, no se lee.
@@ -206,6 +388,8 @@ export const TAREA_TASA_BCV: TareaReloj = {
     const pct = Number(env.TASA_BCV_SALTO_PCT);
     return tomarTasaBcv(db, {
       leer: prueba.__lectorTasaBcv,
+      // Dentro de vitest, sin lector de prueba del respaldo, tampoco se sale a internet.
+      leerRespaldo: prueba.__lectorRespaldoBcv,
       ahora,
       saltoMaximoPct: pct > 0 ? pct : undefined,
     });
@@ -250,13 +434,31 @@ tasasReferencia.get('/admin/tasas-referencia', async (c) => {
         }>(),
     ),
   );
-  // C-TASA-BCV-AUTO: la oficial automática y la que se usa hoy, para que el equipo las vea.
-  const enUso = await Promise.all(paises.map((pais) => tasaVigente(db, pais)));
+  // C-TASA-BCV-AUTO / C-TASA-MODOS: la oficial, el modo y la que se usa hoy, para que el equipo
+  // las vea. Solo lecturas.
+  const detalle = await Promise.all(
+    paises.map(async (pais) => {
+      const [enUso, oficial, m] = await Promise.all([
+        tasaVigente(db, pais),
+        tasaOficial(db, pais),
+        db
+          .prepare(
+            `SELECT m.modo, m.ajuste_pct, m.tasa_fija, m.cambiado_en, u.nombre AS cambiado_por
+               FROM tasas_modo m LEFT JOIN usuarios u ON u.id = m.cambiado_por WHERE m.pais = ?`,
+          )
+          .bind(pais)
+          .first<ModoTasa>(),
+      ]);
+      return { enUso, oficial, m };
+    }),
+  );
   return c.json({
     horasVigencia: HORAS_VIGENCIA_TASA,
+    ajusteMaximoPct: AJUSTE_MAXIMO_PCT,
     tasas: paises.map((pais, i) => {
       const f = filas.at(i);
-      const u = enUso.at(i);
+      const d = detalle.at(i);
+      const u = d?.enUso;
       return {
         pais,
         moneda: MONEDA_REFERENCIA.get(pais),
@@ -266,8 +468,74 @@ tasasReferencia.get('/admin/tasas-referencia', async (c) => {
         puestaPor: f?.puesta_por ?? null,
         vigente: f?.vigente === 1,
         enUso: u ? { tasa: u.tasa, fecha: u.fecha, fuente: u.fuente } : null,
+        oficial: d?.oficial
+          ? { tasa: d.oficial.tasa, fecha: d.oficial.fecha, fuente: d.oficial.fuente }
+          : null,
+        modo: {
+          modo: d?.m?.modo ?? 'oficial',
+          ajustePct: d?.m?.ajuste_pct ?? null,
+          tasaFija: d?.m?.tasa_fija ?? null,
+          cambiadoEn: d?.m?.cambiado_en ?? null,
+          cambiadoPor: d?.m?.cambiado_por ?? null,
+        },
       };
     }),
+  });
+});
+
+const CUERPO_MODO = z.discriminatedUnion('modo', [
+  z.object({ modo: z.literal('oficial') }),
+  z.object({
+    modo: z.literal('flotante'),
+    ajustePct: z.number().finite().min(-AJUSTE_MAXIMO_PCT).max(AJUSTE_MAXIMO_PCT),
+  }),
+  z.object({ modo: z.literal('fija'), tasaFija: z.number().positive().max(10_000_000) }),
+]);
+
+/**
+ * C-TASA-MODOS: el equipo elige cómo sale la tasa del país. Una escritura y su auditoría (antes y
+ * después); el cambio vale desde ya para todo lo que muestra bolívares de referencia.
+ */
+tasasReferencia.put('/admin/tasas-referencia/:pais/modo', async (c) => {
+  const admin = exigir(c, 'admin');
+  const pais = c.req.param('pais').toUpperCase();
+  if (!MONEDA_REFERENCIA.has(pais))
+    throw new ErrorDatos('En este país los viajes no necesitan tasa de referencia.', 'pais', 422);
+  const d = await leerCuerpo(c, CUERPO_MODO);
+  const db = base(c);
+  const antes = await modoTasa(db, pais);
+  const ajuste = d.modo === 'flotante' ? d.ajustePct : null;
+  const fija = d.modo === 'fija' ? d.tasaFija : null;
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO tasas_modo (pais, modo, ajuste_pct, tasa_fija, cambiado_por, cambiado_en)
+         VALUES (?1, ?2, ?3, ?4, ?5, datetime('now'))
+         ON CONFLICT (pais) DO UPDATE SET modo = ?2, ajuste_pct = ?3, tasa_fija = ?4,
+           cambiado_por = ?5, cambiado_en = datetime('now')`,
+      )
+      .bind(pais, d.modo, ajuste, fija, admin.id),
+    db
+      .prepare(
+        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(
+        admin.id,
+        'tasa.modo',
+        `tasa:${pais}`,
+        JSON.stringify({
+          modo: antes.modo,
+          ajustePct: antes.ajuste_pct,
+          tasaFija: antes.tasa_fija,
+        }),
+        JSON.stringify({ modo: d.modo, ajustePct: ajuste, tasaFija: fija }),
+      ),
+  ]);
+  const enUso = await tasaVigente(db, pais);
+  return c.json({
+    pais,
+    modo: d.modo,
+    enUso: enUso ? { tasa: enUso.tasa, fecha: enUso.fecha, fuente: enUso.fuente } : null,
   });
 });
 

@@ -3041,8 +3041,9 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     correr: (env, db) => (env.BUCKET ? depurarFotos(db, env.BUCKET) : Promise.resolve(0)),
   },
   // C-TASA-BCV-AUTO (Venezuela): la tasa oficial del día, a las 14:00 UTC (y a las 20:00 si no
-  // hubo lectura). Una fila al día; el resto de las vueltas no lee ni escribe nada.
-  { ...TAREA_TASA_BCV, escriturasEsperadas: 1 },
+  // hubo lectura). Una fila al día (dos si la portada trae la del lunes y falta la de hoy:
+  // C-TASA-MODOS); el resto de las vueltas no lee ni escribe nada.
+  { ...TAREA_TASA_BCV, escriturasEsperadas: 2 },
   // C-VIAJE-PROGRAMADO (todos los países): los viajes reservados empiezan a buscar conductor unos
   // minutos antes de su hora. Lee solo el índice de pendientes; sin ninguna que venza, no escribe.
   TAREA_VIAJES_PROGRAMADOS,

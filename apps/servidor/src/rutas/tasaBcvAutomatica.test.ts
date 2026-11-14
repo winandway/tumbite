@@ -27,6 +27,20 @@ const lector = (html: string | null) => {
     },
   };
 };
+/** El respaldo (DolarApi, dólar oficial) con su forma real; null = no responde. */
+const lectorRespaldo = (json: { promedio: number; fechaActualizacion: string } | null) => {
+  let llamadas = 0;
+  return {
+    get llamadas() {
+      return llamadas;
+    },
+    leer: async () => {
+      llamadas++;
+      if (json === null) throw new Error('sin red');
+      return json as unknown;
+    },
+  };
+};
 /** 14 nov 2026 a las 10:00 de Caracas (14:00 UTC). */
 const AHORA = Date.UTC(2026, 10, 14, 14, 0);
 
@@ -84,6 +98,84 @@ describe('C-TASA-BCV-AUTO', () => {
     });
     expect(await tasaVigente(db, 'VE', AHORA)).toMatchObject({ tasa: 900 });
     expect(await tasaVigente(db, 'VE', Date.UTC(2026, 10, 16, 14))).toMatchObject({ tasa: 905 });
+  });
+
+  it('C-TASA-MODOS: en fin de semana, con solo la oficial publicada para el lunes, se usa esa (hasta 4 días adelante)', async () => {
+    // El caso real de producción del sábado 14 nov 2026: una sola fila, con fecha valor del lunes.
+    const db = crearBasePruebas();
+    await db
+      .prepare(
+        "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', '2026-11-16', 'bcv', 914.0218)",
+      )
+      .run();
+    expect(await tasaVigente(db, 'VE', AHORA)).toMatchObject({
+      tasa: 914.0218,
+      fecha: '2026-11-16',
+      fuente: 'bcv',
+    });
+    expect(await saludTasaBcv(db, AHORA)).toBe('ok');
+    // Una fecha valor a más de 4 días no se usa.
+    const lejos = crearBasePruebas();
+    await lejos
+      .prepare(
+        "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', '2026-11-19', 'bcv', 920)",
+      )
+      .run();
+    expect(await tasaVigente(lejos, 'VE', AHORA)).toBeNull();
+  });
+
+  it('C-TASA-MODOS: portada con fecha valor futura y sin oficial de hoy: una lectura del respaldo trae la del día vigente', async () => {
+    const db = crearBasePruebas();
+    const respaldo = lectorRespaldo({
+      promedio: 911.6243,
+      fechaActualizacion: '2026-11-13T00:00:00-04:00',
+    });
+    const r = await tomarTasaBcv(db, {
+      leer: lector(pagina('914,02180000', '2026-11-16')).leer,
+      leerRespaldo: respaldo.leer,
+      ahora: AHORA,
+    });
+    expect(r).toMatchObject({ estado: 'guardada', tasa: 914.0218, fecha: '2026-11-16' });
+    expect(respaldo.llamadas).toBe(1);
+    expect(await filas(db)).toEqual([
+      { fecha: '2026-11-13', fuente: 'bcv', tasa: 911.6243 },
+      { fecha: '2026-11-16', fuente: 'bcv', tasa: 914.0218 },
+    ]);
+    expect(await tasaVigente(db, 'VE', AHORA)).toMatchObject({
+      tasa: 911.6243,
+      fecha: '2026-11-13',
+    });
+    // Con la del día ya guardada, la siguiente lectura no vuelve al respaldo.
+    await tomarTasaBcv(db, {
+      leer: lector(pagina('914,02180000', '2026-11-16')).leer,
+      leerRespaldo: respaldo.leer,
+      ahora: AHORA,
+    });
+    expect(respaldo.llamadas).toBe(1);
+  });
+
+  it('C-TASA-MODOS: si la portada no responde, la oficial sale del respaldo (una sola lectura extra)', async () => {
+    const db = crearBasePruebas();
+    const respaldo = lectorRespaldo({
+      promedio: 911.6243,
+      fechaActualizacion: '2026-11-13T00:00:00-04:00',
+    });
+    const r = await tomarTasaBcv(db, {
+      leer: lector(null).leer,
+      leerRespaldo: respaldo.leer,
+      ahora: AHORA,
+    });
+    expect(r).toMatchObject({ estado: 'guardada', tasa: 911.6243, fecha: '2026-11-13' });
+    expect(respaldo.llamadas).toBe(1);
+    expect(await saludTasaBcv(db, AHORA)).toBe('ok');
+    // Respaldo caído también: nada se escribe.
+    const db2 = crearBasePruebas();
+    const caido = lectorRespaldo(null);
+    expect(
+      (await tomarTasaBcv(db2, { leer: lector(null).leer, leerRespaldo: caido.leer, ahora: AHORA }))
+        .estado,
+    ).toBe('sin-lectura');
+    expect(await filas(db2)).toEqual([]);
   });
 
   it('la del equipo escrita hoy manda sobre la automática; la de ayer no', async () => {
@@ -189,7 +281,7 @@ describe('C-TASA-BCV-AUTO', () => {
 
   it('en el reloj real: declara una fila y 60 vueltas (con las 14:00) escriben solo esa fila de más', async () => {
     const t = TAREAS_RELOJ.find((x) => x.nombre === 'tasa_bcv');
-    expect(t).toMatchObject({ critica: false, escriturasEsperadas: 1 });
+    expect(t).toMatchObject({ critica: false, escriturasEsperadas: 2 });
     const vueltas = async (html: string | null) => {
       const m = mundo();
       await m.cuenta('cliente');
