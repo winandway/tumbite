@@ -270,7 +270,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(false);
     await userEvent.type(
       within(fila).getByLabelText(
-        'Número de la solicitud de registro de la marca Divoox en este país',
+        'Número de la solicitud de registro de la marca Divoox (en este país o en Estados Unidos)',
       ),
       'SOL-2026-001',
     );

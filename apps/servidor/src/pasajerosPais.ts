@@ -7,8 +7,9 @@ import { z } from 'zod';
  * - Solo se pueden abrir los pares que el código permite (`PAISES_PASAJEROS_ABRIBLES`): Moto y Carro
  *   en Venezuela. Estados Unidos y Colombia siguen bloqueados por código, con o sin fila.
  * - Abrirlo lo hace una persona del equipo desde el superadmin, con el número de la solicitud de
- *   registro de la marca Divoox en ese país (regla de Richard: no se enciende un país sin la marca
- *   en proceso de registro) y la confirmación escrita.
+ *   registro de la marca Divoox en ese país o la de Estados Unidos (regla de Richard, ajustada el
+ *   14 nov 2026: con la marca presentada en EE. UU. se puede abrir el piloto de otro país mientras
+ *   se presenta allá) y la confirmación escrita.
  * - En el sitio de pruebas nada de esto hace falta (C-MOTO-SOLO-PRUEBAS sigue igual).
  */
 export const PAISES_PASAJEROS_ABRIBLES: ReadonlyMap<string, ReadonlySet<string>> = new Map([

@@ -1410,7 +1410,7 @@ servicios.get('/admin/pasajeros-pais', async (c) => {
 /**
  * Abre o cierra un servicio de pasajeros en un país de producción. Abrir exige: que el código lo
  * permita (Moto en Venezuela; EE. UU. y Colombia no), el número de la solicitud de registro de la
- * marca Divoox en ese país y la confirmación escrita, además de la contraseña de quien lo hace.
+ * marca Divoox (en ese país o, desde el 14 nov 2026 por decisión de Richard, la de Estados Unidos) y la confirmación escrita, además de la contraseña de quien lo hace.
  */
 servicios.put('/admin/pasajeros-pais/:pais/:servicio', async (c) => {
   const admin = exigir(c, 'admin');
@@ -1439,7 +1439,7 @@ servicios.put('/admin/pasajeros-pais/:pais/:servicio', async (c) => {
       throw new ErrorDatos('Este servicio no se puede abrir en ese país.', 'pais', 409);
     if (d.solicitudMarca.length < 4)
       throw new ErrorDatos(
-        'Escribe el número de la solicitud de registro de la marca Divoox en ese país.',
+        'Escribe el número de la solicitud de registro de la marca Divoox (en ese país o en Estados Unidos).',
         'solicitudMarca',
         422,
       );

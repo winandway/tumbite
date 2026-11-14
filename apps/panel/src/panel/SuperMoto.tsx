@@ -90,7 +90,8 @@ const T = {
     servicioMoto: 'Moto',
     desde: 'desde',
     solicitudVista: 'Solicitud de marca',
-    solicitud: 'Número de la solicitud de registro de la marca Divoox en este país',
+    solicitud:
+      'Número de la solicitud de registro de la marca Divoox (en este país o en Estados Unidos)',
     solicitudEjemplo: 'El número que dio la oficina de marcas',
     confirmo: 'Confirmo que lo legal y el seguro de pasajeros de este país están listos',
     clave: 'Tu contraseña',
@@ -309,7 +310,7 @@ const T = {
     servicioMoto: 'Moto',
     desde: 'since',
     solicitudVista: 'Trademark application',
-    solicitud: 'Divoox trademark application number in this country',
+    solicitud: 'Divoox trademark application number (in this country or in the United States)',
     solicitudEjemplo: 'The number given by the trademark office',
     confirmo: 'I confirm the legal work and passenger insurance for this country are ready',
     clave: 'Your password',

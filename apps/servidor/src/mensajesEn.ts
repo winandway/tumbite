@@ -1899,8 +1899,8 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-MOTO-POR-PAIS (13 nov 2026).
   ['Este servicio no se puede abrir en ese país.', 'This service can’t be opened in that country.'],
   [
-    'Escribe el número de la solicitud de registro de la marca Divoox en ese país.',
-    'Enter the Divoox trademark application number for that country.',
+    'Escribe el número de la solicitud de registro de la marca Divoox (en ese país o en Estados Unidos).',
+    'Enter the Divoox trademark application number (for that country or the United States).',
   ],
   [
     'Confirma que lo legal y el seguro de pasajeros de ese país están listos.',
