@@ -22,6 +22,7 @@ import { Campo } from '../CampoClave';
 import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
 import { BotonExportar } from './Exportar';
+import { plantillaXlsx, xlsxACsv } from './excel';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { HerramientasEnvio } from './PantallasRutas';
 import { type UbicacionDeEnvio, UbicacionEnvio } from './UbicacionEnvio';
@@ -1119,7 +1120,19 @@ export function Importar({ ctx }: { ctx: Contexto }) {
   async function archivo(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    setError('');
     setNombre(f.name);
+    // C-FLEX-EXCEL: el .xlsx se convierte al CSV en el navegador (el archivo no sube al servidor).
+    if (/\.xlsx$/i.test(f.name)) {
+      try {
+        setCsv(xlsxACsv(new Uint8Array(await f.arrayBuffer())));
+      } catch {
+        // El motivo exacto queda en español en el error; a la persona, en su idioma.
+        setCsv('');
+        setError(t.excelIlegible);
+      }
+      return;
+    }
     setCsv(await f.text());
   }
   async function previsualizar() {
@@ -1171,9 +1184,32 @@ export function Importar({ ctx }: { ctx: Contexto }) {
           <input
             id="flex-csv"
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={(e) => void archivo(e)}
           />
+          <p className="pista">
+            {t.excelAyuda}{' '}
+            <button
+              type="button"
+              className="enlace"
+              onClick={() => {
+                const url = URL.createObjectURL(
+                  new Blob([plantillaXlsx() as BlobPart], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                  }),
+                );
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'divoox-flex-plantilla.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1_000);
+              }}
+            >
+              {t.excelPlantilla}
+            </button>
+          </p>
         </div>
         <div className="campo">
           <label htmlFor="flex-csv-texto">CSV</label>

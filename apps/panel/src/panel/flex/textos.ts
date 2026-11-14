@@ -7,6 +7,11 @@ export const TEXTOS_FLEX = {
     exportando: 'Exportando…',
     exportarListo: 'Listo: {n} filas en el archivo CSV.',
     exportarCortado: 'El archivo trae las primeras {n} filas. Pon un filtro para bajar el resto.',
+    // Fase 7 · importar Excel (C-FLEX-EXCEL)
+    excelAyuda:
+      'Sirve un CSV o un Excel (.xlsx): se lee la primera hoja aquí mismo, sin subir el archivo.',
+    excelPlantilla: 'Descargar la plantilla de Excel',
+    excelIlegible: 'No pudimos leer ese Excel. Guárdalo otra vez como .xlsx o usa CSV.',
     flex: 'Divoox Flex',
     misEmpresas: 'Mis empresas',
     sinEmpresas: 'Todavía no tienes una empresa en Divoox Flex.',
@@ -466,6 +471,11 @@ export const TEXTOS_FLEX = {
     exportando: 'Exporting…',
     exportarListo: 'Done: {n} rows in the CSV file.',
     exportarCortado: 'The file has the first {n} rows. Add a filter to download the rest.',
+    // Phase 7 · Excel import (C-FLEX-EXCEL)
+    excelAyuda:
+      'Use a CSV or an Excel file (.xlsx): the first sheet is read right here, without uploading the file.',
+    excelPlantilla: 'Download the Excel template',
+    excelIlegible: 'We couldn’t read that Excel file. Save it again as .xlsx or use CSV.',
     flex: 'Divoox Flex',
     misEmpresas: 'My companies',
     sinEmpresas: 'You don’t have a company on Divoox Flex yet.',
