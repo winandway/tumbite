@@ -507,13 +507,13 @@ function PantallaCarrito() {
   const previo = carrito.lineas.length
     ? calcularPedido({ ...base, recogida: recogidaElegida })
     : null;
-  // C-PLUS: la misma cuenta que el servidor (envío gratis y servicio rebajado, solo en dólares).
+  // C-PLUS-SOLO-EEUU (14 nov 2026): Plus y el saldo de regalo valen solo en Estados Unidos, igual
+  // que el servidor (enEeuu). Venezuela también cobra en dólares: la moneda no basta. Un servidor
+  // viejo sin `tarjetaActiva`: la regla de antes (dólares).
+  const enEeuu = pais?.tarjetaActiva ?? moneda === 'USD';
+  // C-PLUS: la misma cuenta que el servidor (envío gratis y servicio rebajado, solo en EE. UU.).
   const plusAplica = Boolean(
-    previo &&
-    plusVigente &&
-    moneda === 'USD' &&
-    !recogidaElegida &&
-    descuentoPlus(previo, plusVigente) > 0,
+    previo && plusVigente && enEeuu && !recogidaElegida && descuentoPlus(previo, plusVigente) > 0,
   );
   // BRE-R2: el envío que ya cubren Plus o un cupón de envío gratis no lo vuelve a pagar la
   // promoción «envío gratis» del restaurante (la misma regla que el servidor).
@@ -543,7 +543,7 @@ function PantallaCarrito() {
   // C-TARJETAS-REGALO: la misma cuenta que el servidor (solo con tarjeta y en dólares).
   const regaloConTarjeta = conTarjeta;
   const usoRegalo =
-    conPlus && usarRegalo && saldoRegaloCli > 0 && moneda === 'USD' && regaloConTarjeta
+    conPlus && usarRegalo && saldoRegaloCli > 0 && enEeuu && regaloConTarjeta
       ? saldoAplicable(conPlus, saldoRegaloCli)
       : 0;
   const conEdad = carrito.lineas.some((l) => l.requiereEdad);
@@ -1019,7 +1019,7 @@ function PantallaCarrito() {
         </Tarjeta>
       ) : null}
 
-      {saldoRegaloCli > 0 && moneda === 'USD' ? (
+      {saldoRegaloCli > 0 && enEeuu ? (
         <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontWeight: '700' }}>

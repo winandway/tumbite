@@ -452,6 +452,17 @@ internacional.post('/repartidor/pedidos/:id/pago-movil', async (c) => {
     .first<{ estado: string; corregido_en: string | null; a_tiempo: number }>();
   if (ya) {
     const decision = decidirPagoMovil(ya, d.recibido);
+    // C-PAGO-MOVIL-REINTENTO (14 nov 2026, Venezuela): «sí me llegó» quedó anotado pero el cobro no
+    // se cerró (se cortó entre las dos escrituras). El reintento lo completa en vez de decir «igual».
+    if (
+      decision === 'igual' &&
+      ya.estado === 'recibido' &&
+      d.recibido &&
+      f.cobro_estado === 'pendiente'
+    ) {
+      await confirmarCobro(db, { pedidoId: id, repartidorId: u.id, montoRecibido: esperado, nota });
+      return c.json({ estado: 'recibido' });
+    }
     if (decision === 'igual') return c.json({ estado: ya.estado });
     if (decision === 'rechazar')
       throw new ErrorDatos(

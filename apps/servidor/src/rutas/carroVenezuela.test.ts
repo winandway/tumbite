@@ -313,12 +313,50 @@ describe('C-CARRO-VIAJE-PASAJERO: la pantalla del viaje dice lo de cada servicio
     // 2 km × 1,3 por calle a 24 km/h: unos 7 minutos.
     expect(v.conductor.llegadaMin).toBeGreaterThanOrEqual(5);
     expect(v.conductor.llegadaMin).toBeLessThanOrEqual(9);
-    expect(v.conductor.foto).toBe(true);
+    // C-FOTO-CONDUCTOR-MINIATURA: sin miniatura, el pasajero no ve foto (nunca la selfie original).
+    expect(v.conductor.foto).toBe(false);
+    const sinMini = await e.m.crudo(`/datos/viajes/${id}/conductor/foto`, {
+      headers: { authorization: `Bearer ${e.cliente.token}` },
+    });
+    expect(sinMini.status).toBe(404);
+    // El panel guarda la miniatura al aprobar: WebP de 200 × 150.
+    const txt = (t: string) => [...t].map((x) => x.charCodeAt(0));
+    const le32 = (n: number) => [n & 0xff, (n >> 8) & 0xff, (n >> 16) & 0xff, (n >>> 24) & 0xff];
+    const trozo = (tipo: string, datos: number[]) => [
+      ...txt(tipo),
+      ...le32(datos.length),
+      ...datos,
+      ...(datos.length % 2 ? [0] : []),
+    ];
+    const cuerpoWebp = [
+      ...txt('WEBP'),
+      ...trozo('VP8X', [0, 0, 0, 0, 0xc7, 0, 0, 0x95, 0, 0]),
+      ...trozo('VP8 ', [1, 2, 3, 4, 5]),
+    ];
+    const WEBP = new Uint8Array([...txt('RIFF'), ...le32(cuerpoWebp.length), ...cuerpoWebp]);
+    const grande = await e.m.crudo(`/datos/admin/kyc/${carro.id}/miniatura`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${e.admin.token}`, 'content-type': 'image/jpeg' },
+      body: JPEG,
+    });
+    expect(grande.status).toBe(422);
+    const mini = await e.m.crudo(`/datos/admin/kyc/${carro.id}/miniatura`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${e.admin.token}`, 'content-type': 'image/webp' },
+      body: WEBP,
+    });
+    expect(mini.status).toBe(201);
+    const v2 = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje;
+    expect(v2.conductor.foto).toBe(true);
     const foto = await e.m.crudo(`/datos/viajes/${id}/conductor/foto`, {
       headers: { authorization: `Bearer ${e.cliente.token}` },
     });
     expect(foto.status).toBe(200);
     expect(foto.headers.get('cache-control')).toContain('private');
+    expect(foto.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(foto.headers.get('content-type')).toBe('image/webp');
+    expect(new Uint8Array(await foto.arrayBuffer()).byteLength).toBeLessThan(JPEG.byteLength + 200);
     // Otro pasajero no ve la foto de ese conductor.
     const otro = await e.m.cuenta('cliente', 'Otro Pasajero');
     const ajena = await e.m.crudo(`/datos/viajes/${id}/conductor/foto`, {

@@ -18,6 +18,25 @@ import { crearTicket } from './tickets';
  *   al conductor y le deja el caso a la vista en su historial; el contacto es SIEMPRE por soporte: nadie
  *   ve el teléfono del otro. Un caso por viaje y motivo (repetir devuelve el mismo).
  */
+/**
+ * C-OLVIDE-ALGO-UNA-VEZ: lo que el conductor ve del caso. Hasta 140 caracteres, sin enlaces, correos
+ * ni teléfonos (filtro simple: el contacto va siempre por soporte). El ticket guarda el texto entero.
+ */
+export const MAX_TEXTO_CONDUCTOR = 140;
+export function textoParaConductor(texto: string): string {
+  const limpio = texto
+    .replace(/\b(?:https?:\/\/|www\.)\S+/gi, '[…]')
+    .replace(/\S+@\S+/g, '[…]')
+    .replace(/\b[a-z0-9-]+\.(?:com|net|org|io|co|me|ve|us|app|link|ly)\b\S*/gi, '[…]')
+    // Un teléfono: dígitos con espacios, guiones, puntos o paréntesis, con 7 dígitos o más.
+    .replace(/[+\d(][\d\s().-]{5,}\d/g, (x) => (x.replace(/\D/g, '').length >= 7 ? '[…]' : x))
+    .replace(/\s+/g, ' ')
+    .trim();
+  return limpio.length > MAX_TEXTO_CONDUCTOR
+    ? `${limpio.slice(0, MAX_TEXTO_CONDUCTOR - 1).trimEnd()}…`
+    : limpio;
+}
+
 export const viajesHistorial = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const TAMANO_PAGINA = 20;
@@ -277,27 +296,45 @@ viajesHistorial.post('/viajes/:id/ayuda', async (c) => {
   if (ya) return c.json({ ticketId: ya.ticket_id, repetido: true });
   const en = f.idioma === 'en';
   const asunto = ASUNTOS.get(d.motivo) ?? ['Ayuda con un viaje', 'Help with a ride'];
-  const t = await crearTicket(c.env, db, {
-    tipo: 'soporte',
-    nombre: f.nombre,
-    correo: f.correo,
-    pais: f.pais ?? '',
-    idioma: en ? 'en' : 'es',
-    asunto: en ? asunto[1] : asunto[0],
-    mensaje: d.detalle,
-    datos: { viaje: id, servicio: f.servicio_id, motivo: d.motivo, estado: f.estado },
-    usuarioId: u.id,
-    zonaId: f.zona_id,
-  });
-  // Un caso por viaje y motivo: si dos toques llegan a la vez, el segundo devuelve el primero.
-  const r = await db
-    .prepare(
-      `INSERT OR IGNORE INTO ayuda_viajes (operacion_id, motivo, ticket_id, cliente_id, conductor_id, detalle)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(id, d.motivo, t.id, u.id, f.conductor_id, d.detalle.slice(0, 300))
-    .run();
-  if (d.motivo === 'objeto_olvidado' && f.conductor_id && r.meta.changes) {
+  // C-OLVIDE-ALGO-UNA-VEZ (14 nov 2026): el caso se reclama en el MISMO lote que el ticket. Si dos
+  // toques llegan a la vez, el segundo choca con la clave (viaje, motivo), no nace un segundo ticket
+  // y devuelve el primero. Lo que ve el conductor es un texto corto y sin teléfonos ni enlaces.
+  const reclamo = (ticketId: string) => [
+    db
+      .prepare(
+        `INSERT INTO ayuda_viajes (operacion_id, motivo, ticket_id, cliente_id, conductor_id, detalle)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(id, d.motivo, ticketId, u.id, f.conductor_id, textoParaConductor(d.detalle)),
+  ];
+  let t: { id: string };
+  try {
+    t = await crearTicket(
+      c.env,
+      db,
+      {
+        tipo: 'soporte',
+        nombre: f.nombre,
+        correo: f.correo,
+        pais: f.pais ?? '',
+        idioma: en ? 'en' : 'es',
+        asunto: en ? asunto[1] : asunto[0],
+        mensaje: d.detalle,
+        datos: { viaje: id, servicio: f.servicio_id, motivo: d.motivo, estado: f.estado },
+        usuarioId: u.id,
+        zonaId: f.zona_id,
+      },
+      reclamo,
+    );
+  } catch (e) {
+    const otro = await db
+      .prepare('SELECT ticket_id FROM ayuda_viajes WHERE operacion_id = ? AND motivo = ?')
+      .bind(id, d.motivo)
+      .first<{ ticket_id: string }>();
+    if (otro) return c.json({ ticketId: otro.ticket_id, repetido: true });
+    throw e;
+  }
+  if (d.motivo === 'objeto_olvidado' && f.conductor_id) {
     // Se avisa al conductor; si el aviso no sale, el caso igual queda en su historial y en soporte.
     await notificar(c.env, db, f.conductor_id, {
       titulo: 'Objeto olvidado · Lost item',

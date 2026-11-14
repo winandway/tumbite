@@ -238,6 +238,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // minutos antes empieza a buscar conductor en esa ciudad (sin valor, 15).
   ['viajes', 'programado_para', 'TEXT'],
   ['ajustes_viaje_zona', 'programado_antes_min', 'INTEGER'],
+  // C-FOTO-CONDUCTOR-MINIATURA (14 nov 2026): la miniatura de la selfie aprobada que ve el pasajero
+  // (nunca la original). La hace el panel al aprobar la verificación.
+  ['kyc', 'selfie_miniatura', 'TEXT'],
   // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
   ...COLUMNAS_RESUMEN_CATALOGO,
 ];

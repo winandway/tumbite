@@ -755,7 +755,7 @@ async function viajeDelCliente(
               h.marca, h.modelo, h.color, h.placa, h.tipo AS vehiculo_tipo, h.plazas, v.categoria,
               -- C-CARRO-VIAJE-PASAJERO: la foto es la selfie verificada (como Uber), solo si está aprobada.
               (SELECT 1 FROM kyc ky WHERE ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
-                 AND ky.selfie IS NOT NULL) AS conductor_foto,
+                 AND ky.selfie_miniatura IS NOT NULL) AS conductor_foto,
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
               pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
@@ -945,18 +945,22 @@ viajesPasajero.get('/viajes/:id/conductor/foto', async (c) => {
   const u = exigir(c, 'cliente');
   const f = await base(c)
     .prepare(
-      `SELECT ky.selfie FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+      `SELECT ky.selfie_miniatura FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          JOIN kyc ky ON ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
         WHERE o.id = ? AND o.cliente_id = ? AND v.estado IN ('asignado', 'conductor_llego', 'en_curso')`,
     )
     .bind(c.req.param('id'), u.id)
-    .first<{ selfie: string | null }>();
-  const obj = f?.selfie && c.env.BUCKET ? await c.env.BUCKET.get(f.selfie) : null;
+    .first<{ selfie_miniatura: string | null }>();
+  // C-FOTO-CONDUCTOR-MINIATURA: solo la miniatura (200 px, WebP) que se guardó al aprobar; la
+  // selfie original es evidencia de identidad y nunca sale hacia el pasajero.
+  const obj =
+    f?.selfie_miniatura && c.env.BUCKET ? await c.env.BUCKET.get(f.selfie_miniatura) : null;
   if (!obj) throw new ErrorDatos('No hay foto para mostrar.', undefined, 404);
   return new Response(obj.body, {
     headers: {
-      'content-type': obj.httpMetadata?.contentType ?? 'image/jpeg',
+      'content-type': 'image/webp',
       'cache-control': 'private, no-store',
+      'x-content-type-options': 'nosniff',
     },
   });
 });

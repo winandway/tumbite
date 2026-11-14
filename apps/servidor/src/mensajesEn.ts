@@ -1806,6 +1806,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your ride is already looking for a driver: cancel it from the ride screen.',
   ],
   ['La reserva cambió. Actualiza la pantalla.', 'The reservation changed. Refresh the screen.'],
+  ['Esa miniatura no cumple las medidas.', 'That thumbnail doesn’t meet the size limits.'],
+  ['Primero aprueba la verificación.', 'Approve the verification first.'],
   [
     'El taxista de pruebas tiene un viaje abierto: ciérralo primero.',
     'The test driver has an open ride: close it first.',
