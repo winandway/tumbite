@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-14T03:00:00.000Z",
+  "actualizado": "2026-11-14T02:10:00.000Z",
   "version": "7b9a5ca",
   "ahora": "13 nov: la ciudad de pruebas ya se enciende desde el panel y tiene modo juego: una persona pide desde la app real y restaurantes y repartidores robot atienden; probada con una partida completa en el sitio de pruebas. Divoox Moto quedó preparado para pruebas en Venezuela con saldo prepago, recargas, efectivo y pago móvil; en producción sigue apagado con llave. Regla nueva: ningún país se enciende sin la marca Divoox en proceso de registro.",
   "proximo": [
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-13",
+      "titulo": "El Vigía abierta para pruebas de Moto, rutas de Google activadas y apps de prueba para Android",
+      "texto": "Las pruebas de Venezuela serán en El Vigía, estado Mérida, donde está el equipo: la ciudad quedó abierta en el sitio de pruebas y ya cotiza viajes de moto. Se activó la distancia por calles de Google con un tope diario que la mantiene sin costo. Hay instaladores de prueba para Android del cliente y del conductor con el mototaxi nuevo."
+    },
     {
       "fecha": "2026-11-13",
       "titulo": "Moto para Venezuela: viaje completo probado en el sitio de pruebas y guías publicadas",
