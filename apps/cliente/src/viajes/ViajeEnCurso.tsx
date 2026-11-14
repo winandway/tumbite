@@ -465,6 +465,13 @@ export function ViajeEnCurso({
           )}
         </Tarjeta>
       ) : null}
+      {/* C-VIAJE-PROPINA-MANO: con efectivo o pago móvil la propina se da en mano (inDrive, Ridery);
+          la app no la cobra, pero lo dice en vez de callarse. */}
+      {viaje.estado === 'terminado' && viaje.metodoPago !== 'tarjeta' ? (
+        <Text testID="viaje-propina-mano" style={{ color: '#5E5E5E' }}>
+          {t.propinaEnMano}
+        </Text>
+      ) : null}
       {FINALES.has(viaje.estado) ? (
         <Boton texto={t.otraVez} alTocar={alTerminar} exito={viaje.estado === 'terminado'} />
       ) : null}

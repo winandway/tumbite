@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { TEXTOS_VIAJE } from '../../../apps/repartidor/src/viajes/textos';
 import { TEXTOS_MOTO } from '../../../apps/cliente/src/viajes/textos';
@@ -27,5 +29,14 @@ describe('C-ENVIO-TEXTOS', () => {
       expect(t.envio.enCurso).not.toBe(t.enCurso);
     }
     expect(TEXTOS_MOTO.es.envio.enCurso).toBe('Tu paquete va en camino');
+  });
+
+  it('C-VIAJE-PROPINA-MANO: con efectivo o pago móvil se dice que la propina va en mano', () => {
+    for (const i of ['es', 'en'] as const) expect(TEXTOS_MOTO[i].propinaEnMano).toBeTruthy();
+    const s = readFileSync(
+      join(__dirname, '..', '..', '..', 'apps', 'cliente', 'src', 'viajes', 'ViajeEnCurso.tsx'),
+      'utf8',
+    );
+    expect(s).toMatch(/metodoPago !== 'tarjeta'[\s\S]{0,120}viaje-propina-mano/);
   });
 });

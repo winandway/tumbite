@@ -49,6 +49,7 @@ export const TEXTOS_MOTO = {
     pagadoTarjeta: 'Cobrado a tu tarjeta',
     propinaTitulo: '¿Le dejas propina a tu conductor? La recibe completa.',
     propinaGracias: 'Gracias. Tu conductor recibió',
+    propinaEnMano: 'Si quieres dejar propina, dásela a tu conductor. La recibe completa.',
     pagoTarjeta: 'Tarjeta',
     pagoMovil: 'Pago móvil',
     pagoMovilAyuda:
@@ -92,6 +93,7 @@ export const TEXTOS_MOTO = {
       compartirMensaje: 'Sigue mi envío en Divoox en vivo:',
       calificar: '¿Cómo estuvo tu envío?',
       gracias: '¡Gracias por calificar tu envío!',
+      propinaEnMano: 'Si quieres dejar propina, dásela a tu conductor al recoger el paquete.',
     },
     enCurso: 'Vas en camino a tu destino',
     terminado: 'Llegaste a tu destino',
@@ -196,6 +198,7 @@ export const TEXTOS_MOTO = {
     pagadoTarjeta: 'Charged to your card',
     propinaTitulo: 'Tip your driver? It all goes to them.',
     propinaGracias: 'Thanks. Your driver received',
+    propinaEnMano: 'If you’d like to leave a tip, hand it to your driver. They keep all of it.',
     pagoTarjeta: 'Card',
     pagoMovil: 'Mobile payment',
     pagoMovilAyuda:
@@ -236,6 +239,7 @@ export const TEXTOS_MOTO = {
       compartirMensaje: 'Follow my Divoox delivery live:',
       calificar: 'How was your delivery?',
       gracias: 'Thanks for rating your delivery!',
+      propinaEnMano: 'If you’d like to leave a tip, hand it to your driver at pickup.',
     },
     enCurso: 'You’re on your way',
     terminado: 'You’ve arrived',
