@@ -34,6 +34,8 @@ import {
   tipoEtiquetas,
   tituloEtiquetas,
   textoPesoReal,
+  type Referencia,
+  textoReferencia,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -64,6 +66,8 @@ type Pedido = {
   total: number;
   /** C-MONEDA-RECORRIDO: la moneda del pedido (los viejos no la traen: dólares). */
   moneda?: string;
+  /** C-COMIDA-VENEZUELA: equivalente en bolívares con la tasa del día (solo informativo). */
+  referencia?: Referencia | null;
   direccion: string;
   lat: number | null;
   lng: number | null;
@@ -210,6 +214,7 @@ const T = {
     fotoSellado:
       'Tu pedido salió del restaurante cerrado y en buen estado. El restaurante confirmó que se lo entregó a tu repartidor.',
     fotoEntregado: 'Así quedó tu pedido al entregarlo.',
+    fotoAusente: 'El lugar donde te esperó tu repartidor.',
     ubicacion: 'Ubicación actualizada',
     llega: 'Llega en unos',
     minutos: 'min',
@@ -345,6 +350,7 @@ const T = {
     fotoSellado:
       'Your order left the restaurant closed and in good shape. The restaurant confirmed it handed it to your driver.',
     fotoEntregado: 'How your order was left at delivery.',
+    fotoAusente: 'Where your courier waited for you.',
     ubicacion: 'Location updated',
     llega: 'Arriving in about',
     minutos: 'min',
@@ -910,6 +916,14 @@ function SeguirPedido() {
             {p.subtotal != null ? (
               <View style={{ marginTop: 10 }} testID="recibo">
                 <Text style={{ fontWeight: '700', color: C.secundario }}>{t.recibo}</Text>
+                {p.estado === 'entregado' && p.entregadoComo === 'ausente' ? (
+                  <Text
+                    style={{ color: C.primario, fontWeight: '700' }}
+                    testID="recibo-no-entregado"
+                  >
+                    {t.noEntregadoAusente}
+                  </Text>
+                ) : null}
                 {/* C-TIENDAS-PESO-REAL: lo pesado se cobra por su peso real, como en Instacart. */}
                 {p.lineas
                   .filter((l) => l.pesoReal != null)
@@ -960,6 +974,14 @@ function SeguirPedido() {
                     {formatearMonto(p.total, moneda, idioma)}
                   </Text>
                 </View>
+                {p.referencia ? (
+                  <Text
+                    testID="pedido-total-bs"
+                    style={{ color: '#5E5E5E', fontSize: 13, textAlign: 'right' }}
+                  >
+                    {textoReferencia(p.referencia, idioma)}
+                  </Text>
+                ) : null}
               </View>
             ) : null}
             {p.metodoPago && p.metodoPago !== 'tarjeta' && p.estado !== 'cancelado' ? (
@@ -1327,7 +1349,7 @@ function SeguirPedido() {
                 pedidoId={p.id}
                 tipo="entrega"
                 version={p.fotoEntrega.tomadaEn}
-                pie={t.fotoEntregado}
+                pie={p.entregadoComo === 'ausente' ? t.fotoAusente : t.fotoEntregado}
               />
             ) : null}
           </Tarjeta>

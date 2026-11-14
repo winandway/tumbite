@@ -16,6 +16,7 @@ import { destinoDesdeEntorno, levantarServidorLocal } from './destino.ts';
 import { libroCuadra, pedidosDelLibro } from './dinero.ts';
 import { ESCENARIOS } from './escenarios.ts';
 import { ESCENARIOS_MOTO } from './moto.ts';
+import { ESCENARIOS_COMIDA_VE } from './comidaVe.ts';
 import { type Ctx, cerrarEscenario, crearCtx } from './mundo.ts';
 
 /**
@@ -54,7 +55,7 @@ try {
   const vueltaDe = (i: number) =>
     d.modo === 'staging' ? `simulador-${corrida}` : `simulador-${corrida}-e${i + 1}`;
   const escenarios = filtrar(
-    [...ESCENARIOS, ...ESCENARIOS_MOTO].filter(
+    [...ESCENARIOS, ...ESCENARIOS_MOTO, ...ESCENARIOS_COMIDA_VE].filter(
       (e) => d.modo === 'local' || !(e.etiquetas ?? []).includes('solo-local'),
     ),
     { solo: op.solo ?? null, etiqueta: op.etiqueta ?? null },

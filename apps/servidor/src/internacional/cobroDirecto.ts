@@ -1,4 +1,4 @@
-import { porcentajeDe } from '@tumbite/compartido';
+import { calcularPedido, porcentajeDe } from '@tumbite/compartido';
 import { anotarEvento } from '../manager';
 import { ErrorDatos } from '../validar';
 import {
@@ -13,6 +13,7 @@ import {
 } from './libro';
 import { leerConfigPais, paisDeZona, type ConfigPais } from './paises';
 import { registrarPerdidaComida } from './pagoLocal';
+import { cuentaVigente } from './cuentasCobro';
 import { comisionConductor } from '../finanzas/conductor';
 import { politicaCancelacionVigente } from '../finanzas/politicas';
 import { comisionPorCancelacion } from '@tumbite/compartido';
@@ -81,6 +82,34 @@ export async function comisionFood(
   return pol ? pol.monto : comisionDirecta(p, cfg);
 }
 
+/** Un pedido típico para «te alcanza para unos N pedidos»: 10 de comida (unidad mayor), 3 km. */
+const PEDIDO_TIPICO_UNIDADES = 10;
+const KM_PEDIDO_TIPICO = 3;
+
+/**
+ * C-COMIDA-VE-CIRCUITO (13 nov 2026): la comisión de un pedido típico en cobro directo, con las
+ * tarifas y la comisión vigentes del país (la misma cuenta que `comisionFood`). 0 si el país no
+ * tiene tarifas (o es EE. UU., que cobra con tarjeta). Aproximado: así se dice en la app.
+ */
+export async function comisionTipicaComida(
+  db: D1Database,
+  pais: string,
+  moneda: string,
+): Promise<number> {
+  if (pais === 'US') return 0;
+  const cfg = await leerConfigPais(db, pais);
+  if (!cfg.tarifas || cfg.moneda !== moneda) return 0;
+  const subtotal = PEDIDO_TIPICO_UNIDADES * 10 ** cfg.decimales;
+  const d = calcularPedido({
+    lineas: [{ precioCentavos: subtotal, cantidad: 1 }],
+    plan: 'inicial',
+    propina: 0,
+    distanciaKm: KM_PEDIDO_TIPICO,
+    config: cfg.tarifas,
+  });
+  return comisionFood(db, { subtotal, ganancia: d.gananciaPlataforma }, pais, moneda, cfg);
+}
+
 /**
  * Convierte un pedido recién creado (pago_pendiente) en un pedido de cobro directo: el cliente paga
  * al repartidor al recibir. Exige el interruptor del país y que el cliente no tenga deuda.
@@ -140,7 +169,7 @@ export async function puedeTomarDirecto(
   repartidorId: string,
 ): Promise<
   | { ok: true; comision: number; pais: string; moneda: string }
-  | { ok: false; motivo: 'saldo' | 'tope' }
+  | { ok: false; motivo: 'saldo' | 'tope' | 'cuenta' }
 > {
   const f = await filaDirecta(db, pedidoId);
   if (!f || !esDirecto(f.metodo_pago)) return { ok: true, comision: 0, pais: 'US', moneda: 'USD' };
@@ -149,6 +178,14 @@ export async function puedeTomarDirecto(
   const comision = await comisionFood(db, f, pais, moneda, cfg);
   const saldo = await saldoLibro(db, repartidorId, 'prepago', pais, moneda);
   if (saldo < comision) return { ok: false, motivo: 'saldo' };
+  // C-COMIDA-VE-CIRCUITO: fuera de EE. UU. un pedido por pago móvil (transferencia al repartidor)
+  // solo va a quien tiene una cuenta para recibirlo en ese país y esa moneda, como en los viajes.
+  if (
+    f.metodo_pago === 'transferencia_repartidor' &&
+    pais !== 'US' &&
+    !(await cuentaVigente(db, repartidorId, pais, moneda))
+  )
+    return { ok: false, motivo: 'cuenta' };
   if (cfg.topeEfectivoDiario != null) {
     const enMano = await db
       .prepare(
@@ -169,7 +206,9 @@ export async function reservarAlAceptar(db: D1Database, pedidoId: string, repart
     throw new ErrorDatos(
       p.motivo === 'saldo'
         ? 'Te falta saldo para la comisión de este pedido. Recarga y vuelve a intentar.'
-        : 'Llegaste al tope de efectivo del día. Concilia o recarga para seguir con pedidos en efectivo.',
+        : p.motivo === 'cuenta'
+          ? 'Este pedido se paga por pago móvil y no tienes una cuenta para recibirlo. Agrégala en Ganancias.'
+          : 'Llegaste al tope de efectivo del día. Concilia o recarga para seguir con pedidos en efectivo.',
       undefined,
       409,
     );

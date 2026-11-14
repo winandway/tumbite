@@ -2345,5 +2345,15 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "resuelta_por",
     "creado_en",
     "resuelta_en"
+  ],
+  "pedidos_pago_movil": [
+    "pedido_id",
+    "repartidor_id",
+    "estado",
+    "referencia",
+    "monto",
+    "moneda",
+    "corregido_en",
+    "creado_en"
   ]
 };

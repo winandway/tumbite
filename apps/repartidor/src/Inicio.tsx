@@ -44,6 +44,8 @@ import {
   paraEnviarUbicacion,
   modoRastreo,
   tocaMandarSegunModo,
+  type Referencia,
+  textoReferencia,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -168,6 +170,8 @@ type Pedido = {
   moneda?: string;
   cobroEstado?: string;
   total?: number;
+  /** C-COMIDA-VENEZUELA: lo que cobra en mano, en bolívares de referencia (tasa del día). */
+  referenciaCobro?: Referencia | null;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -1027,6 +1031,10 @@ export function Inicio() {
     carrerasAlcanzan?: number | null;
     saldoBajo?: boolean;
     sinSaldo?: boolean;
+    /** C-COMIDA-VE-CIRCUITO: comisión de un pedido típico de comida y pedidos que alcanzan. */
+    comisionTipicaComida?: number;
+    pedidosAlcanzan?: number | null;
+    sinSaldoComida?: boolean;
   } | null>(null);
   // Pedidos cobrados en mano de hoy: no pasan por la billetera de Stripe, así que «Hoy» los suma
   // desde Ganancias (C-MONEDA-RECORRIDO). Solo donde el país tiene el cobro en mano encendido.
@@ -1138,14 +1146,16 @@ export function Inicio() {
     await cargar();
   }
 
-  async function accion(ruta: string, cuerpo: unknown = {}) {
+  async function accion(ruta: string, cuerpo: unknown = {}): Promise<boolean> {
     setError('');
     try {
       await api.pedir('POST', ruta, cuerpo);
       await cargar();
+      return true;
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
       await cargar();
+      return false;
     }
   }
 
@@ -1582,6 +1592,26 @@ export function Inicio() {
                   )}
                 </Text>
               </View>
+            ) : null}
+            {prepago.pedidosAlcanzan != null && prepago.comisionTipicaComida ? (
+              <View testID="pedidos-alcanzan">
+                <Text
+                  style={{
+                    fontWeight: '800',
+                    color: prepago.pedidosAlcanzan < 3 ? C.primario : '#0D7A3A',
+                  }}
+                >
+                  {tg.prepago.pedidos(prepago.pedidosAlcanzan)}
+                </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                  {tg.prepago.pedidosAyuda(
+                    formatearMonto(prepago.comisionTipicaComida, prepago.moneda, idioma),
+                  )}
+                </Text>
+              </View>
+            ) : null}
+            {prepago.sinSaldoComida ? (
+              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoPedidos}</Text>
             ) : null}
             {prepago.sinSaldo ? (
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoViajes}</Text>
@@ -2311,6 +2341,14 @@ export function Inicio() {
                                     )}
                                   </Text>
                                 </Text>
+                                {activo.referenciaCobro ? (
+                                  <Text
+                                    testID="cobro-directo-bs"
+                                    style={{ color: '#5E5E5E', fontWeight: '700' }}
+                                  >
+                                    {textoReferencia(activo.referenciaCobro, idioma)}
+                                  </Text>
+                                ) : null}
                                 <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
                                   {tg.pedido.propinaAparte}
                                 </Text>
@@ -2327,6 +2365,32 @@ export function Inicio() {
                                   alTocar={() => void cobre(activo.id)}
                                   exito
                                 />
+                                {activo.metodoPago === 'transferencia_repartidor' &&
+                                activo.pais &&
+                                activo.pais !== 'US' ? (
+                                  <>
+                                    <Boton
+                                      texto={tg.pedido.pagoMovilSi}
+                                      alTocar={() =>
+                                        void accion(
+                                          `/datos/repartidor/pedidos/${activo.id}/pago-movil`,
+                                          { recibido: true },
+                                        ).then((ok) => ok && setAviso(tg.pedido.cobroOk))
+                                      }
+                                      exito
+                                    />
+                                    <Boton
+                                      texto={tg.pedido.pagoMovilNo}
+                                      alTocar={() =>
+                                        void accion(
+                                          `/datos/repartidor/pedidos/${activo.id}/pago-movil`,
+                                          { recibido: false },
+                                        ).then((ok) => ok && setAviso(tg.pedido.pagoMovilNoOk))
+                                      }
+                                      secundario
+                                    />
+                                  </>
+                                ) : null}
                                 {activo.metodoPago === 'transferencia_repartidor' ? (
                                   <Boton
                                     texto={tg.pedido.transferPendiente}

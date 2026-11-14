@@ -21,6 +21,11 @@ function servidor(
       metodo,
       cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined,
     });
+    if (metodo === 'POST' && u.endsWith('/datos/admin/comida/ciudades'))
+      return responder(
+        { zona: { id: 'VE-MER-ELVIGIA', pais: 'VE', moneda: 'USD' }, estado: 'disponible' },
+        201,
+      );
     if (metodo === 'POST' && u.endsWith('/datos/admin/viajes/ciudades'))
       return responder(
         {
@@ -136,6 +141,39 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
       }),
     );
     expect(await screen.findByText(/Moto quedó abierto en VE-CCS-PRUEBAS/)).toBeTruthy();
+  });
+
+  it('C-COMIDA-CIUDAD: Comida se abre en El Vigía con el mismo paso y sus tarifas de mercado', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    await userEvent.selectOptions(screen.getByLabelText('Servicio'), 'comida');
+    await userEvent.click(screen.getByRole('button', { name: 'Usar El Vigía de pruebas' }));
+    expect(
+      screen.getByText('Tarifas de comida que se van a cobrar (mercado de Venezuela)'),
+    ).toBeTruthy();
+    expect(screen.getByText('$1.50')).toBeTruthy();
+    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Comida El Vigía');
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir Comida en esta ciudad' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'POST')).toEqual({
+        url: expect.stringMatching(/\/datos\/admin\/comida\/ciudades$/),
+        metodo: 'POST',
+        cuerpo: {
+          zona: {
+            id: 'VE-MER-ELVIGIA',
+            nombre: 'El Vigía',
+            lat: 8.6219,
+            lng: -71.6506,
+            radioKm: 15,
+            zonaHoraria: 'America/Caracas',
+            moneda: 'USD',
+          },
+          motivo: 'Comida El Vigía',
+        },
+      }),
+    );
+    expect(await screen.findByText(/Comida quedó abierto en VE-MER-ELVIGIA/)).toBeTruthy();
   });
 
   it('C-ABRIR-CIUDAD: abre Carro en una ciudad de cualquier país con su tarifa escrita', async () => {

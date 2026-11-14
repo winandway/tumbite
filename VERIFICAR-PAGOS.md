@@ -123,6 +123,12 @@ Actualizado: 12 de octubre de 2026. El formulario de tarjeta dentro del carrito 
 
 `GET /datos/salud` → `stripe` y `webhookStripe` dicen `ok` o `pendiente`; `base` dice `ok`/`error`.
 
+## 🔴 Comida en Venezuela (13 nov 2026): efectivo y pago móvil, con comisión del saldo prepago · construido, probado solo con pruebas automáticas, en local y en el sitio de pruebas; nunca con dinero real ni en la calle
+
+- **Cómo cobra:** el pedido se cobra en dólares (centavos) con el equivalente en bolívares solo de referencia (tasa manual del equipo). El cliente le paga todo al repartidor en efectivo o por pago móvil (confirmación MANUAL del repartidor: «sí me llegó / no me llegó», con una corrección de 30 minutos; nunca «del banco»). El repartidor paga en el local lo del restaurante; la parte de Divoox (la ganancia del desglose) se aparta del saldo prepago al aceptar, se cobra una sola vez al conciliar y vuelve si se cancela. Recargas: código de un punto de venta (el equipo es su propio punto en dólares). Tarjeta, Plus y saldo de regalo: no existen en Venezuela.
+- **Probado:** `comidaVenezuela.test.ts` (7), `comidaVenezuelaCircuito.test.ts` (6: efectivo de punta a punta, pago móvil «sí me llegó», «no me llegó» con corrección, sin saldo sin oferta, cancelación, cliente no pagó), `pruebasComidaVe.test.ts`; el guion `scripts/staging/probar-comida-venezuela.mjs` en local dos veces en verde (13 nov; comisión 1,80 de un pedido de 11,45, conciliado) y en el sitio de pruebas en cada rama `fase-*`; el simulador `--etiqueta venezuela`.
+- **Sin probar:** ningún pedido con dinero real, ningún pago móvil real, ninguna recarga real, ningún teléfono en la calle, ningún restaurante real. En producción no se abre Comida en Venezuela (el paso del panel se niega). No lo anuncies a nadie.
+
 ## 🔴 Divoox Moto en Venezuela (13 nov 2026): efectivo y pago móvil, con comisión del saldo prepago · construido, probado solo con pruebas automáticas y en el sitio de pruebas; nunca con dinero real ni en la calle
 
 - **Cómo cobra:** el viaje se cotiza en dólares (centavos); el pasajero le paga todo al conductor en efectivo o por pago móvil (confirmación MANUAL del conductor, nunca «del banco»); la comisión del 10 % se aparta del saldo prepago al aceptar y se cobra al terminar. Las recargas son códigos de un punto de venta.

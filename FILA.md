@@ -22,10 +22,14 @@
 ## Calle y Venezuela (13 nov 2026, rama `fase-calle-y-venezuela`)
 
 - [ ] [para: revisor-calidad] (CV-R) Revisar una vez la rama `fase-calle-y-venezuela`: C-CLIENTE-AUSENTE (el cierre usa el camino de dinero de una entrega; el cliente paga), la reutilización del cobro en C-PENDIENTE-ABANDONADO (columna nueva `pedidos.huella_cuerpo`), la lectura vieja de C-LATIDO-UBICACION y los tres menores de C-RUTA-POR-CALLES. Todos los países.
-- [ ] [para: desarrollador] (CV-B6) Venezuela en comida: tarifas de comida de Venezuela en dólares con valores del mercado (Yummy, PedidosYa, ficha) y el equivalente en bolívares en el carrito y el pedido. Punto de partida: las tarifas ya son por país (`internacional/tarifas.ts`, `tarifasDeZona` + `leerConfigPais`), no globales; falta comprobar la moneda de la configuración de Venezuela frente a la de la zona de El Vigía (USD) y sembrar. EE. UU. sin cambios. Venezuela.
-- [ ] [para: desarrollador] (CV-B7) Comida en Venezuela en efectivo y pago móvil con comisión prepago en la MISMA billetera y capa de políticas de los viajes; circuito de punta a punta por la API y `VERIFICAR-PAGOS.md`. Venezuela.
-- [ ] [para: desarrollador] (CV-B8) Abrir Comida en El Vigía como paso de panel (restaurante con país Venezuela en esa zona) y el caso en `docs/COMO-ABRIR-UNA-CIUDAD.md`; escenario del simulador «comida Venezuela en efectivo». Venezuela.
-- [ ] [para: desarrollador] (CV-CAP) Captura real de «Cliente no apareció: cerrar con foto» en la app Driver para la guía del repartidor (hoy la guía usa la captura real de la puerta). Todos los países.
+- [x] [para: desarrollador] (CV-B6) hecho en `fase-comida-venezuela` (C-COMIDA-VENEZUELA) — Venezuela en comida: tarifas de comida de Venezuela en dólares con valores del mercado (Yummy, PedidosYa, ficha) y el equivalente en bolívares en el carrito y el pedido. Punto de partida: las tarifas ya son por país (`internacional/tarifas.ts`, `tarifasDeZona` + `leerConfigPais`), no globales; falta comprobar la moneda de la configuración de Venezuela frente a la de la zona de El Vigía (USD) y sembrar. EE. UU. sin cambios. Venezuela.
+- [x] [para: desarrollador] (CV-B7) hecho en `fase-comida-venezuela` (C-COMIDA-VE-CIRCUITO) — Comida en Venezuela en efectivo y pago móvil con comisión prepago en la MISMA billetera y capa de políticas de los viajes; circuito de punta a punta por la API y `VERIFICAR-PAGOS.md`. Venezuela.
+- [x] [para: desarrollador] (CV-B8) hecho en `fase-comida-venezuela` (C-COMIDA-CIUDAD, C-COMIDA-VE-PUNTA-A-PUNTA) — Abrir Comida en El Vigía como paso de panel (restaurante con país Venezuela en esa zona) y el caso en `docs/COMO-ABRIR-UNA-CIUDAD.md`; escenario del simulador «comida Venezuela en efectivo». Venezuela.
+- [ ] [para: desarrollador] (CV-CAP) (sigue pendiente: no se tomó en `fase-comida-venezuela`) Captura real de «Cliente no apareció: cerrar con foto» en la app Driver para la guía del repartidor (hoy la guía usa la captura real de la puerta). Todos los países.
+
+## Comida en Venezuela (13 nov 2026, rama `fase-comida-venezuela`)
+
+- [ ] [para: revisor-calidad] (CV-R2) Revisar una vez la rama `fase-comida-venezuela`: C-COMIDA-VENEZUELA (tarjeta, Plus y regalo ahora por país y no por moneda; canario `comidaPaises`), C-COMIDA-CIUDAD (paso del panel), C-COMIDA-VE-CIRCUITO (filtro de cuenta de pago móvil en `puedeTomarDirecto`, ruta `pago-movil` de pedidos y la pieza común `decidirPagoMovil` que ahora usa también el viaje), tabla nueva `pedidos_pago_movil`, rutas internas `pruebasComidaVe.ts` y C-AUSENTE-EN-MIS-PEDIDOS. Venezuela y todos los países.
 
 ## Simulador de compras y entregas (13 nov 2026, pedido de Richard; ficha docs/investigaciones-rea/2026-11-13-simulador-de-compras-y-entregas.md) — todos los países
 

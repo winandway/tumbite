@@ -105,6 +105,11 @@ const es = {
     transferPendiente: 'La transferencia aún no me llega',
     transferPendienteOk:
       'Quedó anotado. Puedes entregar; cuando la veas en tu banco, confirma lo que llegó (o 0 si no llegó).',
+    // C-COMIDA-VE-CIRCUITO (13 nov 2026): pago móvil, igual que en los viajes.
+    pagoMovilSi: 'Sí, me llegó el pago móvil',
+    pagoMovilNo: 'No me llegó',
+    pagoMovilNoOk:
+      'Abrimos un caso para soporte. Si te llega en los próximos 30 minutos, toca «Sí, me llegó».',
   },
   local: {
     titulo: 'Paga la comida en el restaurante',
@@ -163,6 +168,13 @@ const es = {
       `Calculado con la comisión de un viaje típico de 5 km (${comision}). Es un aproximado.`,
     saldoBajo: 'Tu saldo se está acabando. Recarga para seguir recibiendo carreras.',
     sinSaldoViajes: 'Sin saldo no recibes carreras. Recarga en un punto de venta autorizado.',
+    // C-COMIDA-VE-CIRCUITO (13 nov 2026): lo mismo para los pedidos de comida cobrados en mano.
+    pedidos: (n: number) =>
+      n === 1 ? 'Te alcanza para más o menos 1 pedido.' : `Te alcanza para unos ${n} pedidos.`,
+    pedidosAyuda: (comision: string) =>
+      `Calculado con la comisión de un pedido típico de comida (${comision}). Es un aproximado.`,
+    sinSaldoPedidos:
+      'Sin saldo no recibes pedidos en efectivo ni por pago móvil. Recarga en un punto de venta autorizado.',
   },
   ayuda: {
     titulo: '¿Qué pasa?',
@@ -304,6 +316,10 @@ const en: T = {
     transferPendiente: 'The transfer hasn’t reached me yet',
     transferPendienteOk:
       'Noted. You can deliver; when you see it in your bank, confirm what arrived (or 0 if it didn’t).',
+    pagoMovilSi: 'Yes, the mobile payment arrived',
+    pagoMovilNo: 'It didn’t arrive',
+    pagoMovilNoOk:
+      'We opened a case for support. If it arrives in the next 30 minutes, tap «Yes, it arrived».',
   },
   local: {
     titulo: 'Pay for the food at the restaurant',
@@ -361,6 +377,12 @@ const en: T = {
       `Based on the fee for a typical 5 km ride (${comision}). It’s an estimate.`,
     saldoBajo: 'Your balance is running low. Top up to keep getting rides.',
     sinSaldoViajes: 'Without balance you won’t get rides. Top up at an authorized sales point.',
+    pedidos: (n: number) =>
+      n === 1 ? 'Enough for about 1 order.' : `Enough for about ${n} orders.`,
+    pedidosAyuda: (comision: string) =>
+      `Based on the fee for a typical food order (${comision}). It’s an estimate.`,
+    sinSaldoPedidos:
+      'Without balance you won’t get cash or mobile payment orders. Top up at an authorized sales point.',
   },
   ayuda: {
     titulo: 'What’s going on?',

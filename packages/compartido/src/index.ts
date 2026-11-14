@@ -99,3 +99,4 @@ export * from './enlacesTiendas';
 export * from './smsConsentimiento';
 export * from './perfilPasajeros';
 export * from './tasaReferencia';
+export * from './comidaVenezuela';
