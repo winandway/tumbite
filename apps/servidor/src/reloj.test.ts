@@ -450,3 +450,157 @@ describe('C-RELOJ-OCIOSO-SIN-ESCRITURAS', () => {
     expect((await ultimaConciliacion(m.DB))?.ok).toBe(true);
   });
 });
+
+describe('LECT-3 · el registro del reloj escribe una fila fija por minuto', () => {
+  const totalCambios = async (m: Mundo) =>
+    Number((await m.DB.prepare('SELECT total_changes() AS n').first<{ n: number }>())?.n ?? 0);
+  const filasVuelta = async (m: Mundo) =>
+    Number(
+      (
+        await m.DB.prepare(
+          "SELECT COUNT(*) AS n FROM tareas_programadas WHERE tarea = 'reloj'",
+        ).first<{ n: number }>()
+      )?.n ?? 0,
+    );
+
+  it('60 vueltas ociosas seguidas del reloj real escriben como mucho 61 filas (60 de la marca + 1 latido) y ninguna fila nueva de detalle', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const env = { ...(m.extra as object), ENTORNO_RELOJ: 'produccion' } as never;
+    // La primera vuelta puede dejar el estado inicial (la primera conciliación, la del día).
+    await correrRelojUnaVez(env, m.DB, '2026-11-13T11:59', 'externo');
+    const antes = await totalCambios(m);
+    const filasAntes = await filasVuelta(m);
+    for (let i = 0; i < 60; i++) {
+      const r = await correrRelojUnaVez(
+        env,
+        m.DB,
+        `2026-11-13T12:${String(i).padStart(2, '0')}`,
+        'externo',
+      );
+      expect('yaHecho' in r, `vuelta ${i}`).toBe(false);
+    }
+    const escritas = (await totalCambios(m)) - antes;
+    // Antes del arreglo: 2 por vuelta en tareas_programadas (INSERT + UPDATE) = 120, más índices.
+    expect(escritas, `escribió ${escritas} filas en 60 vueltas`).toBeLessThanOrEqual(61);
+    expect((await filasVuelta(m)) - filasAntes).toBe(1); // el latido de las 12
+    const n = await m.DB.prepare('SELECT COUNT(*) AS n FROM reloj_tareas').first<{ n: number }>();
+    expect(n?.n).toBe(0);
+  });
+
+  it('una vuelta con trabajo o con una falla sí deja su fila de detalle', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    await m.DB.exec('CREATE TABLE zz_trabajo (i INTEGER)');
+    const escribe: TareaReloj = {
+      nombre: 'escribe',
+      critica: false,
+      correr: async (_e, db) => db.prepare('INSERT INTO zz_trabajo (i) VALUES (1)').run(),
+    };
+    await vueltaReal(m, '2026-11-13T12:00', [contadora('nada', new Map())]); // latido
+    await vueltaReal(m, '2026-11-13T12:01', [contadora('nada', new Map())]); // ociosa: sin fila
+    await vueltaReal(m, '2026-11-13T12:02', [escribe]); // escribió: fila
+    await vueltaReal(m, '2026-11-13T12:03', [fallona('manager')]); // falló: fila
+    const { results } = await m.DB.prepare(
+      "SELECT clave FROM tareas_programadas WHERE tarea = 'reloj' ORDER BY clave",
+    ).all<{ clave: string }>();
+    expect(results.map((r) => r.clave)).toEqual([
+      'reloj:2026-11-13T12:00',
+      'reloj:2026-11-13T12:02',
+      'reloj:2026-11-13T12:03',
+    ]);
+  });
+
+  it('C-RELOJ-UNA-VEZ con la marca: el mismo minuto corre una vez aunque lleguen en otro orden', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const cuenta = new Map<string, number>();
+    const t = [contadora('t', cuenta)];
+    await vueltaReal(m, '2026-11-13T12:04', t);
+    await vueltaReal(m, '2026-11-13T12:03', t); // la lenta del minuto anterior llegó después
+    expect('yaHecho' in (await vueltaReal(m, '2026-11-13T12:03', t))).toBe(true);
+    expect('yaHecho' in (await vueltaReal(m, '2026-11-13T12:04', t))).toBe(true);
+    expect(cuenta.get('t')).toBe(2);
+    // Una ventana que no es de minuto nunca entra en la marca del reloj de verdad.
+    await expect(vueltaReal(m, 'diag-abc', t)).rejects.toThrow(/ventana inválida/);
+  });
+
+  it('las limpiezas de cada hora corren solo en la primera vuelta de cada hora', async () => {
+    const m = mundo();
+    await m.cuenta('cliente');
+    const cuenta = new Map<string, number>();
+    const horaria: TareaReloj = { ...contadora('horaria', cuenta), cada: 'hora' };
+    for (const v of ['12:58', '12:59', '13:00', '13:01', '13:30', '14:05'])
+      await vueltaReal(m, `2026-11-13T${v}`, [horaria]);
+    expect(cuenta.get('horaria')).toBe(3); // 12:58, 13:00 y 14:05
+    const reales = TAREAS_RELOJ.filter((x) => x.cada === 'hora').map((x) => x.nombre);
+    expect(reales).toEqual(expect.arrayContaining(['sesiones_vencidas', 'fotos']));
+    for (const x of TAREAS_RELOJ.filter((y) => y.cada === 'hora'))
+      expect(x.escriturasEsperadas, x.nombre).toBeGreaterThan(0);
+  });
+
+  describe('el canario lee la marca fija', () => {
+    const minuto = (hace: number) =>
+      new Date(Date.now() - hace * 60_000).toISOString().slice(0, 16);
+    const marcar = (m: Mundo, haceMin: number[], origen = 'e') =>
+      m.DB.prepare("INSERT INTO config (clave, valor) VALUES ('reloj_marca', ?)")
+        .bind(haceMin.map((h) => `${minuto(h)}${origen}`).join(' '))
+        .run();
+    const fallo = async (m: Mundo, haceMin: number, critica: boolean) => {
+      const clave = `reloj:${minuto(haceMin)}`;
+      await m.DB.prepare(
+        "INSERT INTO tareas_programadas (clave, tarea, empezada_en, terminada_en, resultado) VALUES (?, 'reloj', datetime('now', ?), datetime('now', ?), 'origen:externo parcial')",
+      )
+        .bind(clave, `-${haceMin} minutes`, `-${haceMin} minutes`)
+        .run();
+      await m.DB.prepare(
+        "INSERT INTO reloj_tareas (clave, tarea, critica, ok) VALUES (?, 'manager', ?, 0)",
+      )
+        .bind(clave, critica ? 1 : 0)
+        .run();
+    };
+
+    it('Worker andando: verde; caído hace 6 minutos: rojo (C-RELOJ-CANARIO-MINUTOS)', async () => {
+      const m = mundo();
+      await marcar(m, [1, 2, 3, 4, 5, 6]);
+      expect(await saludReloj({} as never, m.DB)).toBe('ok');
+      const n = mundo();
+      await marcar(n, [6, 7, 8, 9, 10, 11]);
+      expect(await saludReloj({} as never, n.DB)).toBe('error');
+    });
+
+    it('solo GitHub (vueltas separadas por horas): 6 h atrasado y 24 h error, como siempre', async () => {
+      const m = mundo();
+      await marcar(m, [60, 300, 600], 'g');
+      expect(await saludReloj({} as never, m.DB)).toBe('ok');
+      const n = mundo();
+      await marcar(n, [7 * 60, 12 * 60], 'g');
+      expect(await saludReloj({} as never, n.DB)).toBe('atrasado');
+      const o = mundo();
+      await marcar(o, [25 * 60, 30 * 60], 'g');
+      expect(await saludReloj({} as never, o.DB)).toBe('error');
+    });
+
+    it('una crítica fallida en la última vuelta: rojo; una no crítica suelta: verde; tres en 15 minutos: rojo', async () => {
+      const m = mundo();
+      await marcar(m, [1, 2, 3, 4, 5, 6]);
+      await fallo(m, 1, true);
+      expect(await saludReloj({} as never, m.DB)).toBe('error');
+      const n = mundo();
+      await marcar(n, [1, 2, 3, 4, 5, 6]);
+      await fallo(n, 1, false);
+      expect(await saludReloj({} as never, n.DB)).toBe('ok'); // la anterior (hace 2) fue buena
+      const o = mundo();
+      await marcar(o, [1, 2, 3, 4, 5, 6]);
+      for (const h of [2, 3, 4]) await fallo(o, h, false);
+      expect(await saludReloj({} as never, o.DB)).toBe('error');
+    });
+
+    it('el canario del tiempo real usa la hora de la marca', async () => {
+      const { ultimaVueltaReloj } = await import('./reloj');
+      const m = mundo();
+      await marcar(m, [2, 3]);
+      expect(await ultimaVueltaReloj(m.DB)).toBe(`${minuto(2).replace('T', ' ')}:00`);
+    });
+  });
+});

@@ -304,6 +304,75 @@ catalogo.get('/config-dinero', async (c) => {
   return c.json({ config: t.config, moneda: t.moneda, pais: t.pais, planes: PLANES });
 });
 
+/**
+ * C-LECTURAS-CATALOGO (14 nov 2026): los turnos, los cierres y la zona de los restaurantes del
+ * listado sin leer una fila más por restaurante. Los turnos salen del resumen de cada fila
+ * (`horarios_json`, al día por disparadores: resumenCatalogo.ts); los cierres que vienen, por su
+ * índice de fecha (pocos, de todos los restaurantes); la zona, solo la que aparece. Deja cada fila
+ * EXACTAMENTE como `conHorarios` (mismos turnos en el mismo orden, misma zona horaria y moneda).
+ */
+async function turnosDelListado(db: D1Database, filas: FilaRest[]): Promise<FilaRest[]> {
+  if (!filas.length) return filas;
+  const ids = new Set(filas.map((f) => String(f.id)));
+  const zonasIds = [...new Set(filas.map((f) => String(f.zona_id)))];
+  const zonas = await enTrozos(
+    zonasIds,
+    async (trozo, marcas) =>
+      (
+        await db
+          .prepare(`SELECT id, zona_horaria, moneda, pais FROM zonas WHERE id IN (${marcas})`)
+          .bind(...trozo)
+          .all<{ id: string; zona_horaria: string; moneda: string | null; pais: string | null }>()
+      ).results,
+  );
+  const { results: cierres } = await db
+    .prepare(
+      // Sin ORDER BY: así SQLite va por el índice de fecha (el orden se pone aquí abajo).
+      "SELECT restaurante_id, fecha FROM cierres_restaurante WHERE fecha >= date('now', '-1 day')",
+    )
+    .all<{ restaurante_id: string; fecha: string }>();
+  const cierresDe = new Map<string, string[]>();
+  cierres.sort((x, y) => x.fecha.localeCompare(y.fecha));
+  for (const x of cierres) {
+    if (!ids.has(x.restaurante_id)) continue;
+    cierresDe.set(x.restaurante_id, [...(cierresDe.get(x.restaurante_id) ?? []), x.fecha]);
+  }
+  const tz = new Map(zonas.map((z) => [z.id, z.zona_horaria]));
+  const monedas = new Map(zonas.map((z) => [z.id, z.moneda || 'USD']));
+  const paises = new Map(zonas.map((z) => [z.id, z.pais]));
+  const turnosDe = (f: FilaRest) => {
+    let lista: { dia: number; abre: string; cierra: string }[] = [];
+    try {
+      lista = JSON.parse(String(f.horarios_json ?? '[]')) as typeof lista;
+    } catch {
+      lista = [];
+    }
+    return lista
+      .map((t) => ({ dia: Number(t.dia), abre: String(t.abre), cierra: String(t.cierra) }))
+      .sort((a, b) => a.dia - b.dia || a.abre.localeCompare(b.abre));
+  };
+  return filas.map((f) => ({
+    ...f,
+    horarios: turnosDe(f),
+    zona_horaria: tz.get(String(f.zona_id)) ?? 'America/New_York',
+    zona_moneda: monedas.get(String(f.zona_id)) ?? 'USD',
+    zona_pais: paises.get(String(f.zona_id)) ?? null,
+    cierres: cierresDe.get(String(f.id)) ?? [],
+  }));
+}
+
+/** La calificación pública de una fila de restaurante, desde su resumen (C-CALIFICACION-PUBLICA). */
+const calificacionDeFila = (f: FilaRest): CalificacionPublica | null => {
+  const n = Number(f.calif_n ?? 0);
+  return calificacionPublica(n > 0 ? Number(f.calif_suma ?? 0) / n : null, n);
+};
+
+/** Página del listado (opcional, para las apps nuevas): `?limite=30&desde=0`. Sin `limite`, todo. */
+const esquemaPagina = z.object({
+  limite: z.coerce.number().int().min(1).max(100).optional(),
+  desde: z.coerce.number().int().min(0).max(100_000).default(0),
+});
+
 catalogo.get('/restaurantes', async (c) => {
   const lat = Number(c.req.query('lat'));
   const lng = Number(c.req.query('lng'));
@@ -317,6 +386,13 @@ catalogo.get('/restaurantes', async (c) => {
       ? await zonaPara(db, lat, lng)
       : { id: ZONA_INICIAL };
   if (!zona) return c.json({ restaurantes: [], zona: null, fueraDeZona: true });
+  const pagina = esquemaPagina.safeParse({
+    limite: c.req.query('limite') || undefined,
+    desde: c.req.query('desde') || undefined,
+  });
+  const { limite, desde } = pagina.success ? pagina.data : { limite: undefined, desde: 0 };
+  // C-LECTURAS-CATALOGO: una fila por restaurante de la zona (por el índice zona + estado), con su
+  // resumen de turnos y calificaciones. Nada recorre los pedidos.
   const { results } = await db
     .prepare(
       `SELECT * FROM restaurantes WHERE zona_id = ? AND estado = 'aprobado'
@@ -329,10 +405,10 @@ catalogo.get('/restaurantes', async (c) => {
     .bind(zona.id)
     .all<FilaRest>();
   const minutos = await minutosPausa(db);
-  let lista = await conCalificaciones(
-    db,
-    (await conHorarios(db, results)).map((f) => aRestaurante(f, minutos)),
-  );
+  let lista = (await turnosDelListado(db, results)).map((f) => ({
+    ...aRestaurante(f, minutos),
+    calificacion: calificacionDeFila(f),
+  }));
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
     lista = lista
       .map((r) =>
@@ -352,18 +428,29 @@ catalogo.get('/restaurantes', async (c) => {
   }
   // C-ANUNCIOS: hasta dos patrocinados primero, con su etiqueta (apagado con precio en cero).
   const conAnuncios = await conPatrocinados(db, lista);
+  const vista = limite ? conAnuncios.slice(desde, desde + limite) : conAnuncios;
   // C-PROMO-RESTAURANTE: la insignia de su promoción (la más nueva; apagadas, ninguna).
   const promos = await promocionesVigentes(
     db,
-    conAnuncios.map((r) => r.id),
+    vista.map((r) => r.id),
   );
   return c.json({
-    restaurantes: conAnuncios.map((r) => {
+    restaurantes: vista.map((r) => {
       const suyas = promos.get(r.id);
       return suyas ? { ...r, promocion: suyas[0], promociones: suyas } : r;
     }),
     zona: { id: zona.id },
     fueraDeZona: false,
+    ...(limite
+      ? {
+          pagina: {
+            desde,
+            limite,
+            total: conAnuncios.length,
+            siguiente: desde + limite < conAnuncios.length ? desde + limite : null,
+          },
+        }
+      : {}),
   });
 });
 
