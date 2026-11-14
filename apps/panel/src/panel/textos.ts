@@ -40,6 +40,15 @@ const es = {
   flex: 'Divoox Flex (empresas)',
   flexNombre: 'Divoox Flex',
   flexLema: 'Logística para empresas',
+  irAppAyuda: 'Pide comida y sigue tus pedidos en la app.',
+  miFranquiciaAyuda: 'Tu territorio, tus restaurantes y tus repartidores.',
+  configuracionAyuda: 'Tu nombre, tu contraseña y tu cuenta.',
+  volverSuperadmin: 'Volver al superadmin',
+  avisos: {
+    tickets: 'Tickets abiertos',
+    restaurantes: 'Restaurantes por aprobar',
+    pedidos: 'Pedidos por aceptar',
+  },
   menuRest: {
     inicio: 'Inicio',
     restaurant: 'Mi restaurante',
@@ -128,6 +137,15 @@ const en: T = {
   flex: 'Divoox Flex (businesses)',
   flexNombre: 'Divoox Flex',
   flexLema: 'Logistics for businesses',
+  irAppAyuda: 'Order food and track your orders in the app.',
+  miFranquiciaAyuda: 'Your territory, your restaurants and your drivers.',
+  configuracionAyuda: 'Your name, your password and your account.',
+  volverSuperadmin: 'Back to superadmin',
+  avisos: {
+    tickets: 'Open tickets',
+    restaurantes: 'Restaurants to approve',
+    pedidos: 'Orders to accept',
+  },
   menuRest: {
     inicio: 'Home',
     restaurant: 'My restaurant',

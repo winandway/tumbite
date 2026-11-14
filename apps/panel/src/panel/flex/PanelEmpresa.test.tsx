@@ -253,7 +253,7 @@ describe('Divoox Flex · panel de empresas', () => {
     expect(within(menu).queryByText('Equipo')).toBeNull();
     expect(within(menu).queryByText('API')).toBeNull();
     expect(
-      screen.getByText('Paquetes', { selector: '.super-tarjeta span' }).closest('li'),
+      screen.getByText('Paquetes', { selector: '.pd-metrica-etiqueta' }).closest('li'),
     ).toHaveTextContent('5');
   });
 

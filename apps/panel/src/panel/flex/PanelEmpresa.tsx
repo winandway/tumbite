@@ -16,6 +16,8 @@ import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
 import { Campo } from '../CampoClave';
+import { Armazon } from '../armazon/Armazon';
+import type { GrupoMenu } from '../armazon/menus';
 import { crear, pedir } from '../api';
 import { TEXTOS_FLEX } from './textos';
 import { Centros, Claves, Conductores, Equipo, Inicio, Perfil } from './Pantallas';
@@ -68,12 +70,30 @@ export const mensajeDe = (x: unknown) => (x instanceof ErrorApi ? x.message : St
 export function PanelEmpresa({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const t = enIdioma(TEXTOS_FLEX, idioma);
   const sub = ruta.replace(/^\/panel\/business\/?/, '');
-  if (sub === '') return <MisEmpresas idioma={idioma} />;
+  // C-PANEL-ARMAZON: las páginas de Flex sin empresa elegida usan el mismo armazón, en azul.
+  const sinEmpresa = (hijo: React.ReactNode) => (
+    <Armazon
+      variante="logistica"
+      nombreMenu={t.flex}
+      grupos={[
+        {
+          titulo: t.flex,
+          items: [
+            { clave: 'home', texto: t.misEmpresas, a: '/panel/business', activo: sub === '' },
+          ],
+        },
+      ]}
+      volver={{ texto: t.volverPanel, a: '/panel' }}
+    >
+      {hijo}
+    </Armazon>
+  );
+  if (sub === '') return sinEmpresa(<MisEmpresas idioma={idioma} />);
   const inv = /^invite\/([A-Za-z0-9_-]+)$/.exec(sub);
-  if (inv?.[1]) return <AceptarInvitacion token={inv[1]} idioma={idioma} />;
+  if (inv?.[1]) return sinEmpresa(<AceptarInvitacion token={inv[1]} idioma={idioma} />);
   // eslint-disable-next-line security/detect-unsafe-regex -- id fijo de 36 caracteres y un resto opcional
   const m = /^([0-9a-f-]{36})(?:\/(.*))?$/.exec(sub);
-  if (!m?.[1]) return <p role="alert">{t.noExiste}</p>;
+  if (!m?.[1]) return sinEmpresa(<p role="alert">{t.noExiste}</p>);
   return <Empresa id={m[1]} sub={m[2] ?? ''} idioma={idioma} />;
 }
 
@@ -457,37 +477,42 @@ function Empresa({ id, sub, idioma }: { id: string; sub: string; idioma: Idioma 
     contenido = <BilleteraEmpresa ctx={ctx} sub={sub} />;
   else if (sub === 'keys') contenido = <Claves ctx={ctx} />;
   else contenido = <p role="alert">{t.noExiste}</p>;
+  const seccionDe = (clave: string) =>
+    clave === 'home'
+      ? sub === ''
+      : seccion === clave || (clave === 'operativas' && seccion === 'routes'); // «Nueva ruta» vive en «Rutas».
+  const menu: GrupoMenu[] = grupos
+    .map(([grupo, items]) => ({
+      titulo: new Map(Object.entries(t.grupos)).get(grupo) ?? grupo,
+      items: items.map(([clave, texto]) => ({
+        clave,
+        texto,
+        a: clave === 'home' ? raiz : `${raiz}/${clave}`,
+        activo: seccionDe(clave),
+      })),
+    }))
+    .filter((g) => g.items.length > 0);
+  const pendientes = ficha.resumen.pendientes ?? 0;
   return (
-    <div className="panel-cuerpo flex-panel">
-      <nav className="panel-menu" aria-label={t.flex}>
-        <Enlace a="/panel/business" className="flex-volver">
-          {t.volver}
-        </Enlace>
-        <p className="flex-nombre">
-          <strong>{ficha.empresa.nombre}</strong>
-          <br />
-          <small>{t.roles[ficha.rol ?? ''] ?? ficha.rol}</small>
-        </p>
-        {grupos.map(([grupo, items]) => (
-          <div key={grupo} className="flex-menu-grupo">
-            <p className="flex-menu-titulo">{new Map(Object.entries(t.grupos)).get(grupo)}</p>
-            {items.map(([clave, texto]) => {
-              const destino = clave === 'home' ? raiz : `${raiz}/${clave}`;
-              // «Nueva ruta» vive dentro de «Rutas».
-              const activo =
-                clave === 'home'
-                  ? sub === ''
-                  : seccion === clave || (clave === 'operativas' && seccion === 'routes');
-              return (
-                <Enlace key={clave} a={destino} className={activo ? 'activo' : undefined}>
-                  {texto}
-                </Enlace>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-      <main className="panel-contenido">{contenido}</main>
-    </div>
+    <Armazon
+      variante="logistica"
+      nombreMenu={t.flex}
+      grupos={menu}
+      encabezado={{
+        titulo: ficha.empresa.nombre,
+        detalle: t.roles[ficha.rol ?? ''] ?? ficha.rol ?? undefined,
+      }}
+      volver={{ texto: t.volver, a: '/panel/business' }}
+      avisos={[
+        {
+          clave: 'pendientes',
+          texto: t.avisoPendientes,
+          cantidad: pendientes,
+          a: `${raiz}/packages`,
+        },
+      ]}
+    >
+      {contenido}
+    </Armazon>
   );
 }

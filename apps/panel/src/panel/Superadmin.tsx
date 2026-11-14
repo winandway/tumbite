@@ -13,6 +13,8 @@ import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
 import { GestionFranquicia, SolicitudesFranquicia } from './GestionFranquicia';
 import { pedir } from './api';
+import { EncabezadoPagina, Pastilla } from './armazon/Piezas';
+import { TableroSuper } from './TableroSuper';
 
 /** Punto 28: el canario de /datos/salud dentro del panel (antes solo se veía por la API). */
 function SaludPiezas() {
@@ -33,18 +35,23 @@ function SaludPiezas() {
   }, []);
   if (!piezas) return null;
   return (
-    <ul className="super-tarjetas" aria-label="salud">
+    <ul className="pd-salud" aria-label="salud">
       {Object.entries(piezas).map(([pieza, estado]) => (
-        <li
-          key={pieza}
-          className={`super-tarjeta ${estado === 'error' ? 'super-tarjeta-alerta' : ''}`}
-        >
+        <li key={pieza} className={estado === 'error' ? 'pd-salud-error' : undefined}>
           <span>{pieza}</span>
-          <strong
-            className={estado === 'ok' ? 'ok' : estado === 'error' ? 'error-general' : 'suave'}
+          <Pastilla
+            tono={
+              estado === 'ok'
+                ? 'exito'
+                : estado === 'error'
+                  ? 'problema'
+                  : estado === 'atrasado'
+                    ? 'espera'
+                    : 'neutro'
+            }
           >
             {estado}
-          </strong>
+          </Pastilla>
         </li>
       ))}
     </ul>
@@ -133,6 +140,7 @@ function ErroresServidor({ idioma }: { idioma: Idioma }) {
 const T = {
   es: {
     resumen: 'Resumen',
+    resumenDetalle: 'Cómo va Divoox hoy: pedidos, viajes, personas y lo que espera por el equipo.',
     salud: 'Salud del sistema (canario)',
     saludAyuda:
       'Cada pieza dice ok, pendiente (apagada a propósito), atrasado o error. Si algo está en error, el equipo ya recibió el correo del canario.',
@@ -239,6 +247,8 @@ const T = {
   },
   en: {
     resumen: 'Overview',
+    resumenDetalle:
+      'How Divoox is doing today: orders, rides, people and what’s waiting on the team.',
     salud: 'System health (canary)',
     saludAyuda:
       'Each piece says ok, pending (turned off on purpose), delayed or error. If something is in error, the team already got the canary email.',
@@ -483,36 +493,27 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
     }
   }
   if (!r) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
-  const tarjeta = (titulo: string, valor: string | number, a?: string) => (
-    <li className="super-tarjeta">
-      <span>{titulo}</span>
-      <strong>{a ? <Enlace a={a}>{valor}</Enlace> : valor}</strong>
-    </li>
-  );
   const dinero = (c: number, moneda = 'USD') => formatearMonto(c, moneda, idioma);
   return (
     <section className="super">
-      <h1>{t.resumen}</h1>
-      <ul className="super-tarjetas">
-        {tarjeta(t.franquicias, r.totales.franquicias, `${base}/franchises`)}
-        {tarjeta(t.vendidas, r.totales.vendidas)}
-        {tarjeta(t.activas, r.totales.activas)}
-        {tarjeta(t.interesados, r.totales.interesados, `${base}/tickets?tipo=franquicia`)}
-        {tarjeta(t.tickets, r.totales.ticketsAbiertos, `${base}/tickets`)}
-        {tarjeta(t.motos, r.totales.motos)}
-        <li
-          className={`super-tarjeta ${conciliacion && !conciliacion.cuadra ? 'super-tarjeta-alerta' : ''}`}
-        >
-          <span>{t.dinero}</span>
-          <strong>
-            {!conciliacion ? t.sinConciliar : conciliacion.cuadra ? t.cuadra : t.noCuadra}
-          </strong>
-          <button type="button" className="enlace" onClick={() => void activarWallets()}>
-            {t.activarWallets}
-          </button>
-          {wallets ? <span className="suave">{wallets}</span> : null}
-        </li>
-      </ul>
+      <EncabezadoPagina titulo={t.resumen} detalle={t.resumenDetalle} />
+      <TableroSuper
+        base={base}
+        idioma={idioma}
+        totales={r.totales}
+        dinero={{
+          texto: !conciliacion ? t.sinConciliar : conciliacion.cuadra ? t.cuadra : t.noCuadra,
+          tono: !conciliacion ? 'suave' : conciliacion.cuadra ? 'exito' : 'problema',
+          extra: (
+            <>
+              <button type="button" className="enlace" onClick={() => void activarWallets()}>
+                {t.activarWallets}
+              </button>
+              {wallets ? <span className="suave"> {wallets}</span> : null}
+            </>
+          ),
+        }}
+      />
       <h2>{t.revisores}</h2>
       <p className="suave">{t.revisoresAyuda}</p>
       <button

@@ -8,12 +8,15 @@ export function Enlace({
   children,
   className,
   onClick,
+  actual,
 }: {
   a: string;
   children: ReactNode;
   className?: string;
   /** Además de navegar (por ejemplo, cerrar el menú del celular). */
   onClick?: () => void;
+  /** Es la página en la que ya se está (menús): se anuncia a los lectores de pantalla. */
+  actual?: boolean;
 }) {
   // Dentro de la versión en español (/es/...), los enlaces internos se quedan en español.
   const destino =
@@ -22,6 +25,7 @@ export function Enlace({
     <a
       href={destino}
       className={className}
+      aria-current={actual ? 'page' : undefined}
       onClick={(e) => {
         onClick?.();
         if (e.metaKey || e.ctrlKey || e.shiftKey || a.startsWith('#')) return;

@@ -46,6 +46,7 @@ import { ciudadesWeb } from './rutas/ciudadesWeb';
 import { equipo, permisosInternos } from './rutas/equipo';
 import { piloto } from './rutas/piloto';
 import { informes } from './rutas/informes';
+import { tableroPanel } from './rutas/tableroPanel';
 import { turnos } from './rutas/turnos';
 import { grupos } from './rutas/grupos';
 import { pedidoCompartido } from './rutas/pedidoCompartido';
@@ -605,6 +606,8 @@ app.route('/datos', ciudadesWeb);
 app.route('/datos', equipo);
 app.route('/datos', piloto);
 app.route('/datos', informes);
+// C-PANEL-ARMAZON: lecturas de los tableros del panel web (nunca escriben).
+app.route('/datos', tableroPanel);
 app.route('/datos', turnos);
 app.route('/datos', grupos);
 app.route('/datos', pedidoCompartido);

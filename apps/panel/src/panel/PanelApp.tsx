@@ -1,7 +1,15 @@
 import { AvisosWebPanel, darDeBajaAlSalir } from './AvisosWebPanel';
 import { Flota } from './Flota';
-import { useEffect, useState } from 'react';
-import { VersionPublicada } from '../VersionPublicada';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Armazon, type AvisoArmazon, SesionArmazon } from './armazon/Armazon';
+import { EncabezadoPagina, Metricas, TarjetaMetrica } from './armazon/Piezas';
+import {
+  gruposAdmin,
+  gruposCuenta,
+  gruposRestaurante,
+  IconoDe,
+  titulosGrupo,
+} from './armazon/menus';
 import {
   MARCA,
   type Usuario,
@@ -15,7 +23,6 @@ import { SelectorIdioma } from '../SelectorIdioma';
 import { useIdioma } from '../usarIdioma';
 import { Acceso } from './Acceso';
 import { Configuracion } from './Configuracion';
-import { Icono } from '../sitio/Icono';
 import { api } from './api';
 import { TEXTOS_PANEL } from './textos';
 import { MiRestaurante } from './MiRestaurante';
@@ -216,6 +223,60 @@ export function PanelApp({ ruta }: { ruta: string }) {
   const esFranquicia = ruta.startsWith('/panel/franchise-');
   // Divoox Flex (empresas de paquetería): cualquier cuenta con sesión; el servidor decide qué ve.
   const esFlex = ruta === '/panel/business' || ruta.startsWith('/panel/business/');
+  const esAdmin = usuario?.rol === 'admin';
+  const esRestaurante = usuario?.rol === 'restaurante';
+  const raizAdmin = esAdmin && baseAdmin ? baseAdmin : '/panel';
+  // C-PANEL-ARMAZON: el menú de cada rol, en grupos y con su ícono (armazon/menus.ts).
+  const grupos = !usuario
+    ? []
+    : esAdmin
+      ? gruposAdmin(t, idioma, raizAdmin, ruta, !enProduccion())
+      : esRestaurante
+        ? gruposRestaurante(t, idioma, ruta, flotaDisponible)
+        : gruposCuenta(t, idioma, ruta, miFranquicia);
+
+  // La campana: lo que espera por la persona (lectura; como mucho una vez por minuto).
+  const [avisosCrudos, setAvisosCrudos] = useState<{ clave: string; cantidad: number }[]>([]);
+  const ultimaLectura = useRef(0);
+  useEffect(() => {
+    if (!usuario || (!esAdmin && !esRestaurante)) return;
+    if (Date.now() - ultimaLectura.current < 60_000) return;
+    ultimaLectura.current = Date.now();
+    void pedir<{ avisos: { clave: string; cantidad: number }[] }>('GET', '/datos/panel/avisos')
+      .then((r) => setAvisosCrudos(r.avisos ?? []))
+      .catch((e: unknown) => console.warn('avisos del panel: no se pudieron leer', e));
+  }, [usuario, esAdmin, esRestaurante, ruta]);
+  const avisos: AvisoArmazon[] = avisosCrudos.flatMap((a) => {
+    if (a.clave === 'tickets')
+      return [{ ...a, texto: t.avisos.tickets, a: `${raizAdmin}/tickets` }];
+    if (a.clave === 'restaurantes')
+      return [{ ...a, texto: t.avisos.restaurantes, a: `${raizAdmin}/restaurants` }];
+    if (a.clave === 'pedidos') return [{ ...a, texto: t.avisos.pedidos, a: '/panel/orders' }];
+    return [];
+  });
+
+  const sesion = useMemo(
+    () => ({
+      usuario,
+      idioma,
+      cambiar,
+      salir: () => {
+        if (usuario) void salir(usuario);
+      },
+    }),
+    [usuario, idioma, cambiar],
+  );
+
+  const configuracion = usuario ? (
+    <Configuracion
+      usuario={usuario}
+      idioma={idioma}
+      alCambiar={(u) => setEstado({ cargando: false, usuario: u })}
+      alBorrar={() => borrarCuenta(usuario)}
+      alSalir={() => salir(usuario)}
+    />
+  ) : null;
+
   // La dirección del superadmin no existe para nadie más (ni siquiera muestra el login).
   if (
     esControl &&
@@ -231,168 +292,167 @@ export function PanelApp({ ruta }: { ruta: string }) {
       </div>
     );
 
-  const menu =
-    usuario?.rol === 'admin'
-      ? Object.entries(t.menuAdmin).filter(([clave]) => clave !== 'test-city' || !enProduccion())
-      : usuario?.rol === 'restaurante'
-        ? Object.entries(t.menuRest).filter(([clave]) => clave !== 'fleet' || flotaDisponible)
-        : [];
+  // Sin sesión (o mientras se sabe): la cabecera sencilla con el logo y el idioma.
+  if (estado.cargando || !usuario)
+    return (
+      <div className="pagina panel">
+        <header className="cabecera">
+          <Enlace a="/" className="logo">
+            <img
+              className="logo-marca"
+              src="/marca/divoox-logo.svg"
+              alt={MARCA.nombre}
+              width={138}
+              height={34}
+            />
+          </Enlace>
+          <div className="cabecera-derecha">
+            <SelectorIdioma idioma={idioma} cambiar={cambiar} />
+          </div>
+        </header>
+        {estado.cargando ? (
+          <main className="contenido">
+            <p>{t.cargando}</p>
+          </main>
+        ) : (
+          <Acceso
+            idioma={idioma}
+            tipo={esFlex ? 'empresa' : 'restaurante'}
+            alEntrar={(u) => setEstado({ cargando: false, usuario: u })}
+          />
+        )}
+      </div>
+    );
+
+  let contenido: React.ReactNode;
+  if (esFlex)
+    // Divoox Flex arma su propio menú (depende de la empresa): usa el mismo armazón, en azul.
+    return (
+      <SesionArmazon.Provider value={sesion}>
+        <div className="pagina panel">
+          <PanelEmpresa ruta={ruta} idioma={idioma} />
+        </div>
+      </SesionArmazon.Provider>
+    );
+  if (esFranquicia) {
+    const g = titulosGrupo(idioma);
+    return (
+      <SesionArmazon.Provider value={sesion}>
+        <div className="pagina panel">
+          <Armazon
+            grupos={[
+              {
+                titulo: g.operacion,
+                items: [{ clave: 'inicio', texto: t.menuAdmin.inicio, a: ruta, activo: true }],
+              },
+              {
+                titulo: g.ajustes,
+                items: [{ clave: 'settings', texto: t.configuracion, a: '/panel/settings' }],
+              },
+            ]}
+            volver={
+              esAdmin && baseAdmin
+                ? { texto: t.volverSuperadmin, a: `${baseAdmin}/franchises` }
+                : undefined
+            }
+          >
+            <PanelFranquicia ruta={ruta.slice('/panel/'.length)} idioma={idioma} />
+          </Armazon>
+        </div>
+      </SesionArmazon.Provider>
+    );
+  }
+  if (ruta === '/panel/settings') contenido = configuracion;
+  else if (usuario.rol === 'repartidor' && ruta === '/panel/earnings')
+    // C-ALTA-COBROS-DENTRO: Driver abre aquí sus cobros (puente con la sesión ya iniciada).
+    contenido = <Billetera usuario={usuario} idioma={idioma} />;
+  else if (!esAdmin && !esRestaurante)
+    contenido = (
+      <section className="super">
+        <EncabezadoPagina
+          titulo={`${t.hola}, ${usuario.nombre.split(' ')[0] ?? ''}`}
+          detalle={t.soloEquipo}
+        />
+        <Metricas>
+          <li className="pd-metrica">
+            <a className="pd-metrica-enlace" href="/app/">
+              <TarjetaMetricaCuerpo icono="app" etiqueta={t.irApp} detalle={t.irAppAyuda} />
+            </a>
+          </li>
+          {miFranquicia ? (
+            <TarjetaMetrica
+              icono="franchise"
+              etiqueta={t.miFranquicia}
+              valor=""
+              detalle={t.miFranquiciaAyuda}
+              a={miFranquicia}
+            />
+          ) : null}
+          <TarjetaMetrica
+            icono="flex"
+            tono="logistica"
+            etiqueta={t.flex}
+            valor=""
+            detalle={t.flexLema}
+            a="/panel/business"
+          />
+          <TarjetaMetrica
+            icono="settings"
+            etiqueta={t.configuracion}
+            valor=""
+            detalle={t.configuracionAyuda}
+            a="/panel/settings"
+          />
+        </Metricas>
+      </section>
+    );
+  else
+    contenido =
+      (esAdmin && baseAdmin && ruta.startsWith(baseAdmin)
+        ? seccionAdmin(ruta.slice(baseAdmin.length), baseAdmin, usuario, idioma)
+        : seccion(ruta, usuario, idioma)) ??
+      (ruta === '/panel' && esRestaurante ? (
+        <TableroRestaurante nombre={usuario.nombre.split(' ')[0] ?? ''} idioma={idioma} />
+      ) : ruta === '/panel' ? (
+        <EncabezadoPagina
+          titulo={`${t.hola}, ${usuario.nombre.split(' ')[0] ?? ''}`}
+          detalle={t.bienvenidaAdmin}
+        />
+      ) : (
+        <p role="alert">{t.noExiste}</p>
+      ));
 
   return (
-    <div className="pagina panel">
-      <header className="cabecera">
-        <Enlace a="/" className="logo">
-          <img
-            className="logo-marca"
-            src="/marca/divoox-logo.svg"
-            alt={MARCA.nombre}
-            width={138}
-            height={34}
-          />
-        </Enlace>
-        <div className="cabecera-derecha">
-          {usuario && (
-            <details className="cuenta">
-              <summary>{usuario.nombre.split(' ')[0]}</summary>
-              <div className="cuenta-menu">
-                <p>{usuario.correo}</p>
-                {/* Borrar la cuenta vive en Configuración, escondido y con confirmación escrita. */}
-                <Enlace a="/panel/settings" className="boton secundario">
-                  <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
-                </Enlace>
-                <Enlace a="/panel/business" className="boton secundario">
-                  <Icono nombre="ruta" tamano={16} /> {t.flex}
-                </Enlace>
-                <button type="button" onClick={() => void salir(usuario)}>
-                  {t.salir}
-                </button>
-                <VersionPublicada idioma={idioma} conServidor />
-              </div>
-            </details>
-          )}
-          <SelectorIdioma idioma={idioma} cambiar={cambiar} />
-        </div>
-      </header>
-      {/* C-FLEX-MARCA y C-FLEX-SALIR: en Flex siempre se ve dónde estás y cómo salir. */}
-      {esFlex && usuario && (
-        <div className="flex-franja">
-          <p className="flex-franja-marca" data-testid="flex-marca">
-            <strong>{t.flexNombre}</strong>
-            <span>{t.flexLema}</span>
-          </p>
-          <button type="button" data-testid="flex-salir" onClick={() => void salir(usuario)}>
-            {t.salir}
-          </button>
-        </div>
-      )}
+    <SesionArmazon.Provider value={sesion}>
+      <div className="pagina panel">
+        <Armazon grupos={grupos} avisos={avisos}>
+          {contenido}
+        </Armazon>
+        {esRestaurante && <AyudaBurbuja idioma={idioma} />}
+      </div>
+    </SesionArmazon.Provider>
+  );
+}
 
-      {estado.cargando ? (
-        <main className="contenido">
-          <p>{t.cargando}</p>
-        </main>
-      ) : !usuario ? (
-        <Acceso
-          idioma={idioma}
-          tipo={esFlex ? 'empresa' : 'restaurante'}
-          alEntrar={(u) => setEstado({ cargando: false, usuario: u })}
-        />
-      ) : esFranquicia ? (
-        <main className="contenido">
-          <PanelFranquicia ruta={ruta.slice('/panel/'.length)} idioma={idioma} />
-        </main>
-      ) : esFlex ? (
-        <main className="contenido contenido-flex">
-          <PanelEmpresa ruta={ruta} idioma={idioma} />
-        </main>
-      ) : usuario.rol === 'repartidor' && ruta === '/panel/earnings' ? (
-        // C-ALTA-COBROS-DENTRO: Driver abre aquí sus cobros (puente con la sesión ya iniciada).
-        <main className="contenido">
-          <Billetera usuario={usuario} idioma={idioma} />
-        </main>
-      ) : menu.length === 0 && ruta === '/panel/settings' ? (
-        <main className="contenido">
-          <Configuracion
-            usuario={usuario}
-            idioma={idioma}
-            alCambiar={(u) => setEstado({ cargando: false, usuario: u })}
-            alBorrar={() => borrarCuenta(usuario)}
-            alSalir={() => salir(usuario)}
-          />
-        </main>
-      ) : menu.length === 0 ? (
-        <main className="contenido">
-          <p>{t.soloEquipo}</p>
-          {miFranquicia && (
-            <p>
-              <Enlace a={miFranquicia} className="boton">
-                {t.miFranquicia}
-              </Enlace>
-            </p>
-          )}
-          <div className="fila-botones">
-            <a className="boton" href="/app/">
-              {t.irApp}
-            </a>
-            <Enlace a="/panel/business" className="boton secundario">
-              {t.flex}
-            </Enlace>
-            <Enlace a="/panel/settings" className="boton secundario">
-              <Icono nombre="ajustes" tamano={16} /> {t.configuracion}
-            </Enlace>
-          </div>
-        </main>
-      ) : (
-        <div className="panel-cuerpo">
-          <nav className="panel-menu" aria-label="Panel">
-            {menu.map(([clave, texto]) => {
-              const raiz = usuario.rol === 'admin' && baseAdmin ? baseAdmin : '/panel';
-              const destino = clave === 'inicio' ? raiz : `${raiz}/${clave}`;
-              return (
-                <Enlace key={clave} a={destino} className={ruta === destino ? 'activo' : undefined}>
-                  {texto}
-                </Enlace>
-              );
-            })}
-            {/* C-SALIR-A-LA-VISTA: la salida también al final del menú, no solo bajo el nombre. */}
-            <button
-              type="button"
-              className="panel-menu-salir"
-              data-testid="menu-salir"
-              onClick={() => void salir(usuario)}
-            >
-              {t.salir}
-            </button>
-          </nav>
-          <main className="panel-contenido">
-            {ruta === '/panel/settings' ? (
-              <Configuracion
-                usuario={usuario}
-                idioma={idioma}
-                alCambiar={(u) => setEstado({ cargando: false, usuario: u })}
-                alBorrar={() => borrarCuenta(usuario)}
-                alSalir={() => salir(usuario)}
-              />
-            ) : (
-              ((usuario.rol === 'admin' && baseAdmin && ruta.startsWith(baseAdmin)
-                ? seccionAdmin(ruta.slice(baseAdmin.length), baseAdmin, usuario, idioma)
-                : seccion(ruta, usuario, idioma)) ??
-              (ruta === '/panel' && usuario.rol === 'restaurante' ? (
-                <TableroRestaurante nombre={usuario.nombre.split(' ')[0] ?? ''} idioma={idioma} />
-              ) : ruta === '/panel' ? (
-                <>
-                  <h1>
-                    {t.hola}, {usuario.nombre.split(' ')[0]}
-                  </h1>
-                  <p>{usuario.rol === 'admin' ? t.bienvenidaAdmin : t.bienvenidaRest}</p>
-                </>
-              ) : (
-                <p>{t.pronto}</p>
-              )))
-            )}
-          </main>
-        </div>
-      )}
-      {usuario?.rol === 'restaurante' && <AyudaBurbuja idioma={idioma} />}
-    </div>
+/** El cuerpo de una tarjeta de acceso (ícono, nombre y una línea) para un enlace que sale del panel. */
+function TarjetaMetricaCuerpo({
+  icono,
+  etiqueta,
+  detalle,
+}: {
+  icono: string;
+  etiqueta: string;
+  detalle: string;
+}) {
+  return (
+    <>
+      <span className="pd-metrica-icono pd-tono-neutro" aria-hidden="true">
+        <IconoDe clave={icono} tamano={22} />
+      </span>
+      <span className="pd-metrica-texto">
+        <span className="pd-metrica-etiqueta">{etiqueta}</span>
+        <small className="pd-metrica-detalle">{detalle}</small>
+      </span>
+    </>
   );
 }

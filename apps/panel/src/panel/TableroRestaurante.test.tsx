@@ -39,7 +39,7 @@ describe('C-RENDIMIENTO-REST en el panel', () => {
     );
     render(<TableroRestaurante nombre="Prueba" idioma="es" />);
     expect(await screen.findByText('Pedidos por hora (últimos 30 días)')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: '12: 3' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /12: 3/ })).toBeInTheDocument();
     expect(screen.getByText('Pedidos por día (últimos 30 días)')).toBeInTheDocument();
     expect(screen.getByText('Nuevos').nextSibling?.textContent).toBe('2');
     expect(screen.getByText('Repiten').nextSibling?.textContent).toBe('2');

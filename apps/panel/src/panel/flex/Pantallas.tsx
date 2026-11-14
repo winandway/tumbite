@@ -13,6 +13,14 @@ import { Enlace } from '../../Enlace';
 import { CampoDireccion } from '../../sitio/CampoDireccion';
 import { Campo } from '../CampoClave';
 import { MenuTresPuntos } from '../MenuTresPuntos';
+import {
+  Dona,
+  EncabezadoPagina,
+  Metricas,
+  Pastilla,
+  Tarjeta,
+  TarjetaMetrica,
+} from '../armazon/Piezas';
 import { crear, pedir } from '../api';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { ConfigEntrega } from './PantallasRutas';
@@ -32,68 +40,89 @@ export function Inicio({ ctx, resumen }: { ctx: Contexto; resumen: Record<string
   const { t, raiz } = ctx;
   const pasos = pasosFlex(raiz, ctx.empresa.id, resumen);
   const hechos = pasos.filter((p) => p.hecho).length;
-  const tarjetas: [keyof typeof t.resumen, string][] = [
-    ['centros', `${raiz}/hubs`],
-    ['miembros', `${raiz}/team`],
-    ['conductores', `${raiz}/drivers`],
-    ['envios', `${raiz}/shipments`],
-    ['paquetes', `${raiz}/packages`],
-    ['entregados', `${raiz}/packages?estado=entregado`],
-    ['pendientes', `${raiz}/packages`],
+  const tarjetas: [keyof typeof t.resumen, string, string][] = [
+    ['envios', `${raiz}/shipments`, 'shipments'],
+    ['paquetes', `${raiz}/packages`, 'packages'],
+    ['entregados', `${raiz}/packages?estado=entregado`, 'labels'],
+    ['pendientes', `${raiz}/packages`, 'operativas'],
+    ['conductores', `${raiz}/drivers`, 'drivers'],
+    ['centros', `${raiz}/hubs`, 'hubs'],
+    ['miembros', `${raiz}/team`, 'team'],
   ];
+  const entregados = resumen.entregados ?? 0;
+  const pendientes = resumen.pendientes ?? 0;
   return (
     <section className="super">
-      <h1>{ctx.empresa.nombre}</h1>
-      <p>
-        <span className={`insignia ${ctx.empresa.estado === 'activa' ? 'insignia-aprobado' : ''}`}>
-          {t.estadosEmpresa[ctx.empresa.estado] ?? ctx.empresa.estado}
-        </span>{' '}
-        · {ctx.empresa.pais} · {ctx.empresa.moneda}
-      </p>
-      <ul className="super-tarjetas">
-        {tarjetas.map(([k, a]) => (
-          <li className="super-tarjeta" key={k}>
-            <span>{t.resumen[k]}</span>
-            <strong>{resumen[k] ?? 0}</strong>
-            <Enlace a={a} className="enlace">
-              {t.verDetalle}
-            </Enlace>
-          </li>
+      <EncabezadoPagina
+        titulo={ctx.empresa.nombre}
+        detalle={
+          <>
+            <Pastilla tono={ctx.empresa.estado === 'activa' ? 'exito' : 'neutro'}>
+              {t.estadosEmpresa[ctx.empresa.estado] ?? ctx.empresa.estado}
+            </Pastilla>{' '}
+            {ctx.empresa.pais} · {ctx.empresa.moneda}
+          </>
+        }
+      />
+      <Metricas>
+        {tarjetas.map(([k, a, icono]) => (
+          <TarjetaMetrica
+            key={k}
+            icono={icono}
+            tono={k === 'entregados' ? 'exito' : 'logistica'}
+            etiqueta={t.resumen[k]}
+            valor={resumen[k] ?? 0}
+            detalle={t.verDetalle}
+            a={a}
+          />
         ))}
-      </ul>
-      {/* C-FLEX-PRIMEROS-PASOS: se marcan solos con lo que la empresa ya hizo. */}
-      <h2>{t.primerosPasos}</h2>
-      <p className="pista" data-testid="pasos-listos">
-        {t.pasosListos(hechos, pasos.length)}
-      </p>
-      <div
-        className="flex-progreso"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={pasos.length}
-        aria-valuenow={hechos}
-      >
-        <span style={{ width: `${Math.round((hechos / pasos.length) * 100)}%` }} />
+      </Metricas>
+      <div className="pd-rejilla">
+        <Tarjeta titulo={t.tableroPaquetes} className="pd-ancho-5">
+          <Dona
+            titulo={t.tableroPaquetes}
+            vacio={t.tableroSinPaquetes}
+            partes={[
+              { etiqueta: t.resumen.entregados, valor: entregados, tono: 'exito' },
+              { etiqueta: t.resumen.pendientes, valor: pendientes, tono: 'logistica' },
+            ]}
+          />
+        </Tarjeta>
+        <Tarjeta titulo={t.primerosPasos} className="pd-ancho-7">
+          {/* C-FLEX-PRIMEROS-PASOS: se marcan solos con lo que la empresa ya hizo. */}
+          <p className="pista" data-testid="pasos-listos">
+            {t.pasosListos(hechos, pasos.length)}
+          </p>
+          <div
+            className="flex-progreso"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={pasos.length}
+            aria-valuenow={hechos}
+          >
+            <span style={{ width: `${Math.round((hechos / pasos.length) * 100)}%` }} />
+          </div>
+          <ol className="flex-pasos flex-pasos-lista">
+            {pasos.map((p) => {
+              const [titulo, ayuda] = t.pasosFlex[p.clave] ?? [p.clave, ''];
+              return (
+                <li key={p.clave} className={p.hecho ? 'hecho' : undefined} data-paso={p.clave}>
+                  <span className="flex-paso-marca" aria-hidden="true">
+                    {p.hecho ? '✓' : ''}
+                  </span>
+                  <div className="lista-texto">
+                    <strong>{titulo}</strong>
+                    <span>{ayuda}</span>
+                  </div>
+                  <Enlace a={p.destino} className={p.hecho ? 'enlace' : 'boton'}>
+                    {p.hecho ? t.verPaso : t.hacerPaso}
+                  </Enlace>
+                </li>
+              );
+            })}
+          </ol>
+        </Tarjeta>
       </div>
-      <ol className="flex-pasos flex-pasos-lista">
-        {pasos.map((p) => {
-          const [titulo, ayuda] = t.pasosFlex[p.clave] ?? [p.clave, ''];
-          return (
-            <li key={p.clave} className={p.hecho ? 'hecho' : undefined} data-paso={p.clave}>
-              <span className="flex-paso-marca" aria-hidden="true">
-                {p.hecho ? '✓' : ''}
-              </span>
-              <div className="lista-texto">
-                <strong>{titulo}</strong>
-                <span>{ayuda}</span>
-              </div>
-              <Enlace a={p.destino} className={p.hecho ? 'enlace' : 'boton'}>
-                {p.hecho ? t.verPaso : t.hacerPaso}
-              </Enlace>
-            </li>
-          );
-        })}
-      </ol>
     </section>
   );
 }

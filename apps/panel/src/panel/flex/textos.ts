@@ -49,6 +49,8 @@ export const TEXTOS_FLEX = {
     recuperado: 'Recuperamos lo que estabas escribiendo.',
     empezarDeNuevo: 'Empezar de nuevo',
     volver: '← Mis empresas',
+    volverPanel: 'Volver a mi panel',
+    avisoPendientes: 'Paquetes pendientes',
     grupos: { dia: 'Día a día', config: 'Configuración', mas: 'Más' } as Record<string, string>,
     menu: {
       home: 'Inicio',
@@ -114,6 +116,8 @@ export const TEXTOS_FLEX = {
       pendientes: 'Pendientes',
     },
     primerosPasos: 'Primeros pasos',
+    tableroPaquetes: 'Tus paquetes',
+    tableroSinPaquetes: 'Todavía no hay paquetes. Aparecen con tu primer envío.',
     // C-FLEX-PRIMEROS-PASOS
     pasosListos: (n: number, total: number) => `${n} de ${total} listos`,
     hacerPaso: 'Hacer este paso',
@@ -518,6 +522,8 @@ export const TEXTOS_FLEX = {
     recuperado: 'We recovered what you were typing.',
     empezarDeNuevo: 'Start over',
     volver: '← My companies',
+    volverPanel: 'Back to my dashboard',
+    avisoPendientes: 'Pending packages',
     grupos: { dia: 'Day to day', config: 'Setup', mas: 'More' } as Record<string, string>,
     menu: {
       home: 'Home',
@@ -582,6 +588,8 @@ export const TEXTOS_FLEX = {
       pendientes: 'Pending',
     },
     primerosPasos: 'Getting started',
+    tableroPaquetes: 'Your packages',
+    tableroSinPaquetes: 'No packages yet. They show up with your first shipment.',
     pasosListos: (n: number, total: number) => `${n} of ${total} done`,
     hacerPaso: 'Do this step',
     verPaso: 'View',

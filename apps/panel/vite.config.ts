@@ -18,5 +18,12 @@ export default defineConfig({
         html.replace('</head>', `  <meta name="version" content="${VERSION}" />\n  </head>`),
     },
   ],
-  server: { port: 5173, proxy: { '/datos': 'http://localhost:8787' } },
+  // DATOS_URL deja mirar el panel en desarrollo con los datos de otro servidor (por ejemplo el
+  // sitio de pruebas); sin ella, el servidor de esta computadora.
+  server: {
+    port: Number(process.env.PUERTO_PANEL ?? 5173),
+    proxy: {
+      '/datos': { target: process.env.DATOS_URL ?? 'http://localhost:8787', changeOrigin: true },
+    },
+  },
 });

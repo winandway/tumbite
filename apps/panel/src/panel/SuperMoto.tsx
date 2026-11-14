@@ -846,7 +846,7 @@ function FilaPais({
 
   return (
     <li
-      className="tarjeta-form"
+      className="tarjeta-form pd-apilada"
       data-testid={`pais-${p.pais}${p.servicio === 'moto' ? '' : `-${p.servicio}`}`}
     >
       <div className="lista-texto">

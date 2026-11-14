@@ -63,6 +63,41 @@
       "runtimeArgs": ["-m", "http.server", "8790"],
       "cwd": "progreso",
       "port": 8790
+    },
+    {
+      "name": "panel-con-datos-de-pruebas",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@tumbite/panel"],
+      "env": {
+        "DATOS_URL": "https://staging.tumbite.com",
+        "PUERTO_PANEL": "5183"
+      },
+      "port": 5183
+    },
+    {
+      "name": "servidor-recorrido",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "wrangler",
+        "dev",
+        "-c",
+        ".recorrido/wrangler.jsonc",
+        "--port",
+        "8791",
+        "--persist-to",
+        ".recorrido/estado"
+      ],
+      "port": 8791
+    },
+    {
+      "name": "panel-con-servidor-recorrido",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@tumbite/panel"],
+      "env": {
+        "DATOS_URL": "http://localhost:8791",
+        "PUERTO_PANEL": "5184"
+      },
+      "port": 5184
     }
   ]
 }

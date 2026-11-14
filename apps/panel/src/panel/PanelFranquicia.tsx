@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { pedir } from './api';
+import {
+  Dona,
+  EncabezadoPagina,
+  EstadoVacio,
+  GraficaBarras,
+  Metricas,
+  Pastilla,
+  Tabla,
+  Tarjeta,
+  TarjetaMetrica,
+  type Tono,
+} from './armazon/Piezas';
 
 const T = {
   es: {
@@ -47,11 +59,26 @@ const T = {
     repartidores: 'Repartidores',
     conectados: 'conectados ahora',
     quejas: 'Quejas y pedidos de ayuda',
-    sinQuejas: 'No hay quejas en tu territorio. ¡Bien!',
+    sinQuejas: 'No hay quejas en tu territorio.',
     abierto: 'Abierto',
     cerrado: 'Cerrado',
     puntos: 'puntos',
     noExiste: 'Esta página no existe.',
+    porEstado: 'Tus pedidos de 30 días, por estado',
+    sinRestaurantes: 'Todavía no hay restaurantes en tu territorio.',
+    sinRepartidores: 'Todavía no hay repartidores en tu territorio.',
+    enLinea: 'Conectado',
+    fueraDeLinea: 'Sin conectar',
+    colPedido: 'Pedido',
+    colRestaurante: 'Restaurante',
+    colEstado: 'Estado',
+    colTotal: 'Total',
+    colFecha: 'Fecha',
+    colArea: 'Área',
+    estadosQueja: { abierto: 'Abierta', respondido: 'Respondida', cerrado: 'Cerrada' } as Record<
+      string,
+      string
+    >,
   },
   en: {
     titulo: '{nombre}',
@@ -96,11 +123,26 @@ const T = {
     repartidores: 'Drivers',
     conectados: 'online now',
     quejas: 'Complaints and help requests',
-    sinQuejas: 'No complaints in your territory. Nice!',
+    sinQuejas: 'No complaints in your territory.',
     abierto: 'Open',
     cerrado: 'Closed',
     puntos: 'points',
     noExiste: 'This page doesn’t exist.',
+    porEstado: 'Your 30-day orders, by status',
+    sinRestaurantes: 'No restaurants in your territory yet.',
+    sinRepartidores: 'No drivers in your territory yet.',
+    enLinea: 'Online',
+    fueraDeLinea: 'Offline',
+    colPedido: 'Order',
+    colRestaurante: 'Restaurant',
+    colEstado: 'Status',
+    colTotal: 'Total',
+    colFecha: 'Date',
+    colArea: 'Area',
+    estadosQueja: { abierto: 'Open', respondido: 'Answered', cerrado: 'Closed' } as Record<
+      string,
+      string
+    >,
   },
 };
 
@@ -177,116 +219,190 @@ export function PanelFranquicia({ ruta, idioma }: { ruta: string; idioma: Idioma
     new Map(Object.entries(mapa)).get(k) ?? k;
   if (!r) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const m = r.metricas;
+  const porEstado = (
+    ['pagado', 'aceptado', 'listo', 'en_camino', 'entregado', 'cancelado'] as const
+  )
+    .map((estado) => ({
+      etiqueta: nombreDe(t.estadosPedido, estado),
+      valor: r.pedidos.filter((p) => p.estado === estado).length,
+    }))
+    .filter((e) => e.valor > 0);
+  const tonoPedido = (estado: string): Tono =>
+    estado === 'entregado'
+      ? 'exito'
+      : estado === 'cancelado' || estado === 'rechazado'
+        ? 'problema'
+        : 'espera';
   return (
     <section className="super">
-      <h1>{t.titulo.replace('{nombre}', r.franquicia.nombre)}</h1>
-      <p>
-        {t.subtitulo.replace('{ciudad}', r.franquicia.ciudad)} ·{' '}
-        <span className={`insignia ${r.franquicia.estado === 'activa' ? 'insignia-aprobado' : ''}`}>
-          {t.estados[r.franquicia.estado]}
-        </span>{' '}
-        <span className="insignia">{t.roles[r.rol]}</span>
-      </p>
+      <EncabezadoPagina
+        titulo={t.titulo.replace('{nombre}', r.franquicia.nombre)}
+        detalle={
+          <>
+            {t.subtitulo.replace('{ciudad}', r.franquicia.ciudad)}{' '}
+            <Pastilla tono={r.franquicia.estado === 'activa' ? 'exito' : 'neutro'}>
+              {t.estados[r.franquicia.estado]}
+            </Pastilla>{' '}
+            <Pastilla>{t.roles[r.rol]}</Pastilla>
+          </>
+        }
+      />
       {error && (
         <p className="error-general" role="alert">
           {error}
         </p>
       )}
-      <h2>{t.territorio}</h2>
-      {r.areas.length === 0 ? (
-        <p className="pista">{t.sinTerritorio}</p>
-      ) : (
-        <ul className="super-lista">
-          {r.areas.map((a) => (
-            <li key={a.id}>
-              <strong>{a.nombre}</strong> ·{' '}
-              <span className={`insignia ${a.estado === 'activa' ? 'insignia-aprobado' : ''}`}>
-                {nombreDe(t.estadosArea, a.estado)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <ul className="super-tarjetas">
-        <li className="super-tarjeta">
-          <span>{t.hoy}</span>
-          <strong>{m.pedidosHoy}</strong>
-        </li>
-        <li className="super-tarjeta">
-          <span>{t.pedidos30}</span>
-          <strong>{m.pedidos30}</strong>
-        </li>
-        <li className="super-tarjeta">
-          <span>{t.ventas30}</span>
-          <strong>{formatearMonto(m.ventas30, m.moneda ?? 'USD', idioma)}</strong>
-        </li>
-        <li className="super-tarjeta">
-          <span>{t.motos}</span>
-          <strong>{r.franquicia.motos}</strong>
-        </li>
-        <li className="super-tarjeta">
-          <span>{t.restaurantes}</span>
-          <strong>{m.restaurantes}</strong>
-          <small>
-            {m.restaurantesAbiertos} {t.abiertos}
-          </small>
-        </li>
-        <li className="super-tarjeta">
-          <span>{t.repartidores}</span>
-          <strong>{m.repartidores}</strong>
-          <small>
-            {m.repartidoresConectados} {t.conectados}
-          </small>
-        </li>
-      </ul>
-      <div className="super-dos">
-        <div>
-          <h2>{t.restaurantes}</h2>
-          <ul className="super-lista">
-            {r.restaurantes.map((x) => (
-              <li key={x.nombre}>
-                <strong>{x.nombre}</strong> · {x.abierto ? t.abierto : t.cerrado} · {x.plan}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h2>{t.repartidores}</h2>
-          <ul className="super-lista">
-            {r.repartidores.map((x, i) => (
-              <li key={`${x.nombre}-${i}`}>
-                <strong>{x.nombre}</strong> · {x.conectado ? t.conectados : '—'} · {x.puntos}{' '}
-                {t.puntos}
-              </li>
-            ))}
-          </ul>
-        </div>
+      <Metricas>
+        <TarjetaMetrica icono="orders" tono="marca" etiqueta={t.hoy} valor={m.pedidosHoy} />
+        <TarjetaMetrica icono="reports" etiqueta={t.pedidos30} valor={m.pedidos30} />
+        <TarjetaMetrica
+          icono="money"
+          tono="exito"
+          etiqueta={t.ventas30}
+          valor={formatearMonto(m.ventas30, m.moneda ?? 'USD', idioma)}
+        />
+        <TarjetaMetrica
+          icono="restaurants"
+          etiqueta={t.restaurantes}
+          valor={m.restaurantes}
+          detalle={`${m.restaurantesAbiertos} ${t.abiertos}`}
+        />
+        <TarjetaMetrica
+          icono="drivers"
+          etiqueta={t.repartidores}
+          valor={m.repartidores}
+          detalle={`${m.repartidoresConectados} ${t.conectados}`}
+        />
+        <TarjetaMetrica icono="moto" etiqueta={t.motos} valor={r.franquicia.motos} />
+      </Metricas>
+      <div className="pd-rejilla">
+        <Tarjeta titulo={t.porEstado} className="pd-ancho-6">
+          <GraficaBarras titulo={t.porEstado} vacio={t.sinPedidos} datos={porEstado} />
+        </Tarjeta>
+        <Tarjeta titulo={t.restaurantes} className="pd-ancho-3">
+          <Dona
+            titulo={t.restaurantes}
+            vacio={t.sinRestaurantes}
+            partes={[
+              { etiqueta: t.abierto, valor: m.restaurantesAbiertos, tono: 'exito' },
+              {
+                etiqueta: t.cerrado,
+                valor: Math.max(0, m.restaurantes - m.restaurantesAbiertos),
+                tono: 'suave',
+              },
+            ]}
+          />
+        </Tarjeta>
+        <Tarjeta titulo={t.repartidores} className="pd-ancho-3">
+          <Dona
+            titulo={t.repartidores}
+            vacio={t.sinRepartidores}
+            partes={[
+              { etiqueta: t.enLinea, valor: m.repartidoresConectados, tono: 'exito' },
+              {
+                etiqueta: t.fueraDeLinea,
+                valor: Math.max(0, m.repartidores - m.repartidoresConectados),
+                tono: 'suave',
+              },
+            ]}
+          />
+        </Tarjeta>
+      </div>
+      <div className="pd-rejilla">
+        <Tarjeta titulo={t.territorio} className="pd-ancho-4">
+          {r.areas.length === 0 ? (
+            <EstadoVacio titulo={t.sinTerritorio} />
+          ) : (
+            <ul className="super-lista">
+              {r.areas.map((a) => (
+                <li key={a.id}>
+                  <strong>{a.nombre}</strong>{' '}
+                  <Pastilla tono={a.estado === 'activa' ? 'exito' : 'neutro'}>
+                    {nombreDe(t.estadosArea, a.estado)}
+                  </Pastilla>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Tarjeta>
+        <Tarjeta titulo={t.restaurantes} className="pd-ancho-4">
+          {r.restaurantes.length === 0 ? (
+            <EstadoVacio titulo={t.sinRestaurantes} />
+          ) : (
+            <ul className="super-lista">
+              {r.restaurantes.map((x) => (
+                <li key={x.nombre}>
+                  <strong>{x.nombre}</strong>{' '}
+                  <Pastilla tono={x.abierto ? 'exito' : 'neutro'}>
+                    {x.abierto ? t.abierto : t.cerrado}
+                  </Pastilla>{' '}
+                  <small>{x.plan}</small>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Tarjeta>
+        <Tarjeta titulo={t.repartidores} className="pd-ancho-4">
+          {r.repartidores.length === 0 ? (
+            <EstadoVacio titulo={t.sinRepartidores} />
+          ) : (
+            <ul className="super-lista">
+              {r.repartidores.map((x, i) => (
+                <li key={`${x.nombre}-${i}`}>
+                  <strong>{x.nombre}</strong>{' '}
+                  <Pastilla tono={x.conectado ? 'exito' : 'neutro'}>
+                    {x.conectado ? t.enLinea : t.fueraDeLinea}
+                  </Pastilla>{' '}
+                  <small>
+                    {x.puntos} {t.puntos}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Tarjeta>
       </div>
       <h2>{t.pedidos}</h2>
-      {r.pedidos.length === 0 ? (
-        <p>{t.sinPedidos}</p>
-      ) : (
-        <ul className="super-lista">
-          {r.pedidos.map((p) => (
-            <li key={p.codigo}>
-              <strong>#{p.codigo}</strong> · {p.restaurante} ·{' '}
-              <span className={`insignia ${p.estado === 'entregado' ? 'insignia-aprobado' : ''}`}>
-                {nombreDe(t.estadosPedido, p.estado)}
-              </span>{' '}
-              · {formatearMonto(p.total, p.moneda ?? 'USD', idioma)} · {p.creado}
-              {p.area ? ` · ${p.area}` : ''}
-            </li>
-          ))}
-        </ul>
-      )}
+      <Tabla
+        vacio={t.sinPedidos}
+        columnas={[
+          { clave: 'codigo', titulo: t.colPedido },
+          { clave: 'restaurante', titulo: t.colRestaurante },
+          { clave: 'estado', titulo: t.colEstado },
+          { clave: 'total', titulo: t.colTotal, numero: true },
+          { clave: 'creado', titulo: t.colFecha },
+          { clave: 'area', titulo: t.colArea },
+        ]}
+        filas={r.pedidos.map((p) => ({
+          id: p.codigo,
+          codigo: <strong>#{p.codigo}</strong>,
+          restaurante: p.restaurante,
+          estado: (
+            <Pastilla tono={tonoPedido(p.estado)}>{nombreDe(t.estadosPedido, p.estado)}</Pastilla>
+          ),
+          total: formatearMonto(p.total, p.moneda ?? 'USD', idioma),
+          creado: p.creado,
+          area: p.area ?? '',
+        }))}
+      />
       <h2>{t.quejas}</h2>
       {r.quejas.length === 0 ? (
-        <p>{t.sinQuejas}</p>
+        <Tarjeta>
+          <EstadoVacio titulo={t.sinQuejas} />
+        </Tarjeta>
       ) : (
-        <ul className="super-lista">
+        <ul className="super-lista pd-tarjeta">
           {r.quejas.map((q) => (
             <li key={q.id}>
-              <strong>{q.asunto}</strong> · {q.estado} · {q.fecha}{' '}
+              <strong>{q.asunto}</strong>{' '}
+              <Pastilla
+                tono={
+                  q.estado === 'abierto' ? 'espera' : q.estado === 'respondido' ? 'exito' : 'neutro'
+                }
+              >
+                {nombreDe(t.estadosQueja, q.estado)}
+              </Pastilla>{' '}
+              <small>{q.fecha}</small>{' '}
               {q.estado === 'abierto' && (
                 <button
                   type="button"
