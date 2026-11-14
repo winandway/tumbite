@@ -21,7 +21,19 @@ Una sola clase: la treinta y nueve, transporte y reparto. Es la única que cubre
 
 ## Si el nombre está libre
 
-No se encontró ninguna marca «Divoox» registrada en ninguna parte. Hay parecidas en Estados Unidos que hay que mirar una por una antes de pagar: Divoix, Dovox y Digivox. Divox está abandonada y era de papelería. Esto no es todavía una búsqueda oficial: las bases de datos oficiales no se pudieron consultar de forma automática. En Estados Unidos la búsqueda oficial es gratis y la hace la IA en el navegador antes de presentar. En Venezuela la búsqueda es un servicio pagado de la propia oficina.
+No se encontró ninguna marca «Divoox» registrada en ninguna parte. La búsqueda oficial en Estados Unidos ya se hizo (ver más abajo) y no muestra choque. En Venezuela la búsqueda es un servicio pagado de la propia oficina.
+
+## Búsqueda oficial en Estados Unidos (hecha el 13 de noviembre de 2026 en el buscador de la oficina de marcas)
+
+«Divoox»: ningún resultado, ni viva ni muerta. «Divoo»: ningún resultado. «Divox»: una sola, abandonada en 2004, de joyería, ropa y juguetes. «Divoix»: una sola, cancelada en 2022, de la clase nueve. «Dovox»: una sola, viva, registrada en 2021 en la clase nueve para audífonos, parlantes y micrófonos. Ninguna está en la clase treinta y nueve ni tiene que ver con transporte o reparto. No se ve ningún choque para presentar «Divoox» en la clase treinta y nueve. Esto no reemplaza el examen de la oficina, que es quien decide.
+
+## Textos listos para la solicitud
+
+Para Venezuela, clase treinta y nueve, en español: «Servicios de transporte de pasajeros, incluido el transporte en motocicleta y en automóvil; servicios de reparto y entrega a domicilio de comidas, mercancías y paquetes; servicios de mensajería; organización de transporte y de entregas por medio de una aplicación.»
+
+Para Estados Unidos hay que elegir las frases dentro del formulario, tomadas del manual oficial, para no pagar el recargo por texto libre. Se buscan en ese orden: «delivery of goods», «food delivery», «courier services», «passenger transport», «transport of passengers by motorcycle». Se marcan las que aparezcan tal cual.
+
+El borrador del poder para Venezuela está en `docs/BORRADOR-PODER-MARCA-VENEZUELA.md`.
 
 ## Venezuela, paso a paso
 
