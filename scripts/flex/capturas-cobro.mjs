@@ -172,7 +172,8 @@ const movil = (idioma) =>
   });
 
 // ── 1. El conductor ante la parada que se cobra (antes de entregar) ──
-for (const idioma of ['es', 'en']) {
+// SOLO_PANEL=1 rehace solo las pantallas del panel (sin la app del conductor).
+for (const idioma of process.env.SOLO_PANEL ? [] : ['es', 'en']) {
   const m = await movil(idioma);
   const drv = await m.newPage();
   await drv.addInitScript(

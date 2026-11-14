@@ -230,32 +230,35 @@ for (const idioma of ['es', 'en']) {
   await foto(app, `app-mis-paquetes-${idioma}`);
   await p.goto(`${URL}${pre}/panel/business/${empresa.id}/routes`);
   await foto(p, `panel-rutas-${idioma}`);
-  // ── App del conductor: «Mis rutas» y el detalle de la ruta ──
-  const drv = await movil.newPage();
-  await drv.addInitScript(
-    ([t, i]) => {
-      localStorage.setItem('tumbite.sesion', t);
-      localStorage.setItem('tumbite.idioma', i);
-    },
-    [conductor.token, idioma],
-  );
-  await drv.goto(`${URL}/driver/`);
-  await drv.waitForTimeout(3500);
-  await drv
-    .getByText(idioma === 'es' ? 'Pedidos' : 'Orders', { exact: true })
-    .last()
-    .click();
-  await drv.waitForTimeout(1200);
-  await drv
-    .getByText(idioma === 'es' ? /Mi ruta/ : /My route/)
-    .first()
-    .click();
-  await foto(drv, `driver-mis-rutas-${idioma}`);
-  await drv
-    .getByText(idioma === 'es' ? 'Ver detalles' : 'View details')
-    .first()
-    .click();
-  await foto(drv, `driver-ruta-${idioma}`);
+  // SOLO_PANEL=1 rehace solo las pantallas del panel y del destinatario (sin la app del conductor).
+  if (!process.env.SOLO_PANEL) {
+    // ── App del conductor: «Mis rutas» y el detalle de la ruta ──
+    const drv = await movil.newPage();
+    await drv.addInitScript(
+      ([t, i]) => {
+        localStorage.setItem('tumbite.sesion', t);
+        localStorage.setItem('tumbite.idioma', i);
+      },
+      [conductor.token, idioma],
+    );
+    await drv.goto(`${URL}/driver/`);
+    await drv.waitForTimeout(3500);
+    await drv
+      .getByText(idioma === 'es' ? 'Pedidos' : 'Orders', { exact: true })
+      .last()
+      .click();
+    await drv.waitForTimeout(1200);
+    await drv
+      .getByText(idioma === 'es' ? /Mi ruta/ : /My route/)
+      .first()
+      .click();
+    await foto(drv, `driver-mis-rutas-${idioma}`);
+    await drv
+      .getByText(idioma === 'es' ? 'Ver detalles' : 'View details')
+      .first()
+      .click();
+    await foto(drv, `driver-ruta-${idioma}`);
+  }
   await ctx.close();
   await movil.close();
 }
