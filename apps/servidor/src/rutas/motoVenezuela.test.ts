@@ -553,8 +553,10 @@ describe('C-MOTO-POR-PAIS: la compuerta de producción por país (hoy cerrada)',
   it('nace cerrada: en producción Moto no se enciende en Venezuela ni en ningún otro país', async () => {
     const e = await escenario('divoox.com');
     const lista = await e.m.llamar('GET', '/datos/admin/pasajeros-pais', undefined, e.admin.token);
+    // C-CARRO-POR-PAIS: Carro en Venezuela también se puede abrir, y también nace cerrado.
     expect(lista.datos.paises).toEqual([
       { servicio: 'moto', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
+      { servicio: 'carro', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
     ]);
     expect((await abrirCaracas(e)).estado).toBe(409);
     const { saludServicios } = await import('./servicios');

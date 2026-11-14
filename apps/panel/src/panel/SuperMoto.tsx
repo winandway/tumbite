@@ -783,10 +783,13 @@ function FilaPais({
   const puedeAbrir = v.solicitudMarca.trim().length >= 4 && v.confirmo && v.clave.length > 0;
 
   return (
-    <li className="tarjeta-form" data-testid={`pais-${p.pais}`}>
+    <li
+      className="tarjeta-form"
+      data-testid={`pais-${p.pais}${p.servicio === 'moto' ? '' : `-${p.servicio}`}`}
+    >
       <div className="lista-texto">
         <strong>
-          {p.pais} · {p.servicio === 'moto' ? t.servicioMoto : p.servicio}{' '}
+          {p.pais} · {enPalabras(t.nombresServicio, p.servicio)}{' '}
           <span className={`insignia ${p.abierto ? 'insignia-aprobado' : ''}`}>
             {p.abierto ? t.abiertoEstado : t.cerradoEstado}
           </span>

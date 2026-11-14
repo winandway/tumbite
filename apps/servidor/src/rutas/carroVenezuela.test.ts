@@ -183,3 +183,69 @@ describe('C-CARRO-TARIFA-VE: Carro en El Vigía con la tarifa del mercado venezo
     ).toBeGreaterThan(0);
   });
 });
+
+describe('C-CARRO-POR-PAIS: Carro en Venezuela se abre en producción por la misma compuerta de Moto', () => {
+  const abrir = (e: E, pais: string, cuerpo: Record<string, unknown>) =>
+    e.m.llamar(
+      'PUT',
+      `/datos/admin/pasajeros-pais/${pais}/carro`,
+      { clave: 'clave-segura-1', ...cuerpo },
+      e.admin.token,
+    );
+  const marca = { abierto: true, solicitudMarca: '97000001', confirmo: true };
+
+  it('nace cerrada: en producción Carro no se abre en El Vigía y la compuerta la lista cerrada', async () => {
+    const e = await escenario('divoox.com');
+    const lista = await e.m.llamar('GET', '/datos/admin/pasajeros-pais', undefined, e.admin.token);
+    expect(lista.datos.paises).toContainEqual({
+      servicio: 'carro',
+      pais: 'VE',
+      abierto: false,
+      solicitudMarca: null,
+      abiertoEn: null,
+    });
+    expect((await abrirElVigia(e)).estado).toBe(409);
+  });
+
+  it('EE. UU. y Colombia siguen bloqueados por código; Venezuela exige marca, confirmación y contraseña', async () => {
+    const e = await escenario('divoox.com');
+    expect((await abrir(e, 'US', marca)).estado).toBe(409);
+    expect((await abrir(e, 'CO', marca)).estado).toBe(409);
+    expect((await abrir(e, 'VE', { abierto: true, confirmo: true })).estado).toBe(422);
+    expect((await abrir(e, 'VE', { abierto: true, solicitudMarca: '97000001' })).estado).toBe(422);
+    expect((await abrir(e, 'VE', { ...marca, clave: 'otra-clave' })).estado).toBe(403);
+  });
+
+  it('abierta en Venezuela, Carro funciona en El Vigía; Detroit sigue bloqueada; abrir Carro no abre Moto', async () => {
+    const e = await escenario('divoox.com');
+    expect((await abrir(e, 'VE', marca)).estado).toBe(200);
+    expect((await abrirElVigia(e)).estado).toBe(201);
+    expect((await cotizarCarro(e, { lat: EVG.lat, lng: EVG.lng + 0.03 })).estado).toBe(201);
+    const { saludServicios } = await import('./servicios');
+    expect(await saludServicios(e.m.DB, 'produccion')).toBe('ok');
+    // Moto sigue cerrada en Venezuela aunque Carro esté abierto.
+    expect((await abrirElVigia(e, 'moto')).estado).toBe(409);
+    const detroit = await e.m.llamar(
+      'POST',
+      '/datos/admin/viajes/ciudades',
+      {
+        servicio: 'carro',
+        zona: {
+          id: 'US-MI-DETROIT',
+          nombre: 'Detroit',
+          lat: 42.3314,
+          lng: -83.0458,
+          radioKm: 30,
+          zonaHoraria: 'America/Detroit',
+        },
+        tarifa: { base: 250, porKm: 110, porMinuto: 30, minimo: 800 },
+        motivo: 'Prueba de compuerta',
+      },
+      e.admin.token,
+    );
+    expect(detroit.estado).toBe(409);
+    // Cerrarla apaga Carro en sus ciudades.
+    expect((await abrir(e, 'VE', { abierto: false })).estado).toBe(200);
+    expect((await cotizarCarro(e, { lat: EVG.lat, lng: EVG.lng + 0.03 })).estado).toBe(409);
+  });
+});
