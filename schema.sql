@@ -3613,3 +3613,19 @@ CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancela
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
 -- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
 CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';
+
+-- C-VIAJES-HISTORIAL (rama fase-carro-1, 13 nov 2026) — todos los países. «Mis viajes» del conductor
+-- se lee por este índice (parcial: solo operaciones que tuvieron conductor). La ayuda de un viaje
+-- (objeto olvidado, cobro, conductor, seguridad, otro) abre un ticket; un caso por viaje y motivo.
+CREATE INDEX IF NOT EXISTS operaciones_conductor ON operaciones(conductor_id, creado_en) WHERE conductor_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS ayuda_viajes (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  motivo TEXT NOT NULL CHECK (motivo IN ('objeto_olvidado', 'cobro', 'conductor', 'seguridad', 'otro')),
+  ticket_id TEXT NOT NULL REFERENCES tickets(id),
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  conductor_id TEXT REFERENCES usuarios(id),
+  detalle TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (operacion_id, motivo)
+);
+CREATE INDEX IF NOT EXISTS ayuda_viajes_conductor ON ayuda_viajes(conductor_id, creado_en) WHERE motivo = 'objeto_olvidado';

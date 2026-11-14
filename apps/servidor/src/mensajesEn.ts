@@ -1855,6 +1855,11 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   // Divoox Carro (rama fase-carro-1, 13 nov 2026).
   ['No hay foto para mostrar.', 'There’s no photo to show.'],
+  ['Este viaje no llegó a tener conductor.', 'This ride never had a driver.'],
+  [
+    'Pasaron más de 30 días desde este viaje. Escríbenos desde Ayuda.',
+    'It’s been more than 30 days since this ride. Write to us from Help.',
+  ],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

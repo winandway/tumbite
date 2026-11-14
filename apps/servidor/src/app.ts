@@ -87,6 +87,7 @@ import { stripeAvisos } from './rutas/stripeAvisos';
 import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
+import { viajesHistorial } from './rutas/viajesHistorial';
 import { seguridadViaje } from './rutas/seguridadViaje';
 import { ajustesViaje } from './rutas/ajustesViaje';
 import { lugares } from './rutas/lugares';
@@ -525,6 +526,8 @@ app.route('/datos', demanda);
 app.route('/datos', avisos);
 app.route('/datos', repartidorGrandes);
 app.route('/datos', viajes);
+// C-VIAJES-HISTORIAL: antes que viajesPasajero, para que /viajes/historial no caiga en /viajes/:id.
+app.route('/datos', viajesHistorial);
 app.route('/datos', viajesPasajero);
 app.route('/datos', seguridadViaje);
 app.route('/datos', ajustesViaje);

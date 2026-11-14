@@ -2345,5 +2345,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "resuelta_por",
     "creado_en",
     "resuelta_en"
+  ],
+  "ayuda_viajes": [
+    "operacion_id",
+    "motivo",
+    "ticket_id",
+    "cliente_id",
+    "conductor_id",
+    "detalle",
+    "creado_en"
   ]
 };
