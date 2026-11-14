@@ -27,7 +27,15 @@ import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorT
 import { paisDeZona } from '../internacional/paises';
 import { sinFotoConPin, verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
-import { type TareaReloj, anotarTareas, correrTareas, relojEnPausa } from '../reloj';
+import {
+  type TareaReloj,
+  anotarTareas,
+  correrTareas,
+  esPrimeraDeLaHora,
+  esPrimeraDelDia,
+  relojEnPausa,
+  tomarMinuto,
+} from '../reloj';
 import { PRESUPUESTO_VUELTA_RELOJ, contarFilas, pasoDelTope } from '../presupuestoFilas';
 import { volverPlatosAgotados } from './catalogo';
 import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra';
@@ -2818,13 +2826,30 @@ operacion.post('/reloj', async (c) => {
   );
 });
 
-/** La limpieza diaria corre en la vuelta de las 04:00 UTC (ventana «AAAA-MM-DDT04:00»). */
-export const esVueltaDeLimpieza = (ventana: string) => ventana.slice(11, 16) === '04:00';
+/**
+ * La limpieza diaria corre en la primera vuelta del día desde las 04:00 UTC (LECT-3: antes solo en
+ * la ventana exacta «AAAA-MM-DDT04:00», que con GitHub solo casi nunca caía).
+ */
+export const esVueltaDeLimpieza = (ventana: string, anterior?: string) =>
+  esPrimeraDelDia(ventana, anterior ?? `${ventana.slice(0, 10)}T03:59`);
+
+/** LECT-3: la fila de detalle de una vuelta (solo si falló, si escribió algo o es el latido). */
+async function anotarVuelta(db: D1Database, clave: string, tarea: string, resultado: string) {
+  await db
+    .prepare(
+      `INSERT INTO tareas_programadas (clave, tarea, terminada_en, resultado) VALUES (?, ?, datetime('now'), ?)
+       ON CONFLICT(clave) DO UPDATE SET terminada_en = excluded.terminada_en, resultado = excluded.resultado`,
+    )
+    .bind(clave, tarea, resultado.slice(0, 2000))
+    .run();
+}
 
 /**
  * Corre las tareas del reloj UNA vez por minuto, venga de donde venga (reloj actual de GitHub o
- * Worker externo). La fila de tareas_programadas se crea en una sola sentencia: el segundo que
- * llega en el mismo minuto encuentra la fila y no corre nada.
+ * Worker externo). LECT-3 (13 nov 2026): el minuto se toma en UNA fila fija de `config` con una
+ * sola sentencia atómica (`tomarMinuto`): el segundo que llega en el mismo minuto no corre nada.
+ * Una vuelta ociosa escribe solo esa fila; la de `tareas_programadas` queda si falló, si sus
+ * tareas escribieron algo, y una vez por hora (el latido).
  */
 export async function correrRelojUnaVez(
   env: Env,
@@ -2836,45 +2861,49 @@ export async function correrRelojUnaVez(
 ) {
   const tarea = prueba?.tarea ?? 'reloj';
   const clave = `${tarea}:${ventana}`;
-  // C-RELOJ-UNA-VEZ: una fila por minuto, creada en una sola sentencia. El segundo que llega en
-  // ese minuto (GitHub o Cloudflare, o un reintento) no corre nada.
-  const nueva = await db
-    .prepare('INSERT OR IGNORE INTO tareas_programadas (clave, tarea, resultado) VALUES (?, ?, ?)')
-    .bind(clave, tarea, `origen:${origen}`)
-    .run();
-  if (!nueva.meta.changes) return { ok: true as const, yaHecho: true as const, ventana };
+  // C-RELOJ-UNA-VEZ: una escritura atómica por minuto en una sola fila. El segundo que llega en
+  // ese minuto (GitHub o Cloudflare, o un reintento en otro aislado) no corre nada.
+  const marcadas = await tomarMinuto(db, tarea, ventana, origen);
+  if (!marcadas) return { ok: true as const, yaHecho: true as const, ventana };
+  // La vuelta anterior: la más nueva de las marcadas que sea más vieja que esta.
+  const anterior = marcadas.find((v) => v.ventana < ventana)?.ventana;
+  const deLaHora = esPrimeraDeLaHora(ventana, anterior);
+  // Las limpiezas que pueden esperar (cada: 'hora') corren solo en la primera vuelta de la hora.
+  const tareas = (prueba?.tareas ?? TAREAS_RELOJ).filter((t) => t.cada !== 'hora' || deLaHora);
   let resultado: Awaited<ReturnType<typeof correrReloj>>;
   try {
     // C-RELOJ-AISLADO: cada tarea con su propio manejo de errores; esto ya no lanza por una tarea.
-    resultado = await correrReloj(env, db, prueba?.tareas);
+    resultado = await correrReloj(env, db, tareas);
     await anotarTareas(db, clave, resultado.vuelta);
   } catch (e) {
     console.error('reloj', origen, e);
-    await db
-      .prepare('UPDATE tareas_programadas SET resultado = ? WHERE clave = ?')
-      .bind(`origen:${origen} error`, clave)
-      .run();
+    await anotarVuelta(db, clave, tarea, `origen:${origen} error`);
     throw e;
   }
-  await db
-    .prepare(
-      "UPDATE tareas_programadas SET terminada_en = datetime('now'), resultado = ? WHERE clave = ?",
-    )
-    .bind(
-      `origen:${origen} ${resultado.vuelta.estado} ${JSON.stringify(resultado.resumen)}`.slice(
-        0,
-        2000,
-      ),
+  if (resultado.vuelta.fallidas.length || resultado.resumen.filas.escritas > 0 || deLaHora)
+    await anotarVuelta(
+      db,
       clave,
-    )
-    .run();
-  await db
-    .prepare("DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')")
-    .run();
-  // C-RELOJ-SOLO-FALLAS: la limpieza grande corre UNA vez al día (la vuelta de las 04:00 UTC), no
-  // en cada minuto. Cada borrado va por índice: reloj_tareas solo guarda fallas y su índice
-  // parcial es de creado_en con ok = 0; las filas buenas que quedaron de antes se borran por tandas.
-  if (esVueltaDeLimpieza(ventana)) {
+      tarea,
+      `origen:${origen} ${resultado.vuelta.estado} ${JSON.stringify(resultado.resumen)}`,
+    );
+  // Las vueltas de diagnóstico (otra tarea: «reloj-diag», «reloj-f2») no hacen la limpieza.
+  if (tarea !== 'reloj')
+    return {
+      ok: true as const,
+      ...resultado.resumen,
+      fallidas: resultado.vuelta.fallidas,
+      ventana,
+    };
+  // Los sellos de las peticiones firmadas (anti-repetición de 10 minutos): una vez por hora basta.
+  if (deLaHora)
+    await db
+      .prepare("DELETE FROM peticiones_internas WHERE recibida_en < datetime('now', '-10 minutes')")
+      .run();
+  // C-RELOJ-SOLO-FALLAS: la limpieza grande corre UNA vez al día (la primera vuelta desde las
+  // 04:00 UTC), no en cada minuto. Cada borrado va por índice: reloj_tareas solo guarda fallas y su
+  // índice parcial es de creado_en con ok = 0; las filas buenas que quedaron de antes, por tandas.
+  if (esPrimeraDelDia(ventana, anterior)) {
     await db.batch([
       db.prepare("DELETE FROM tareas_programadas WHERE empezada_en < datetime('now', '-7 days')"),
       db.prepare(
@@ -2965,9 +2994,13 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   },
   // Sesiones vencidas: no sirven para entrar (se valida el vencimiento), pero se borran para que la
   // tabla no crezca sin fin.
+  // LECT-3: una vez por hora (recorre la tabla de sesiones: no tiene índice por vencimiento). Como
+  // mucho 500 filas borradas por vuelta.
   {
     nombre: 'sesiones_vencidas',
     critica: false,
+    cada: 'hora',
+    escriturasEsperadas: 500,
     correr: async (_env, db) => {
       const r = await db
         .prepare(
@@ -2981,9 +3014,13 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // Pausa sin señal (C-PAUSA-SIN-SENAL): solo avisa. La pausa misma se calcula al leer, así que
   // si esta tarea falla, los clientes igual no pueden pedir a una tienda sin señal.
   { nombre: 'pausa_sin_senal', critica: false, correr: (env, db) => pausarSinSenal(env, db) },
+  // LECT-3: la retención de fotos (evidencias y tickets de 30 días) una vez por hora: recorre
+  // `evidencias` hasta encontrar las viejas. Como mucho 200 evidencias y 200 tickets por vuelta.
   {
     nombre: 'fotos',
     critica: false,
+    cada: 'hora',
+    escriturasEsperadas: 400,
     correr: (env, db) => (env.BUCKET ? depurarFotos(db, env.BUCKET) : Promise.resolve(0)),
   },
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).

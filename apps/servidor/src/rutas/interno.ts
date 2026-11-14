@@ -9,7 +9,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { entornoDe } from '../entorno';
-import { relojEnPausa } from '../reloj';
+import { relojEnPausa, ultimaVueltaReloj } from '../reloj';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
 import { correrRelojUnaVez } from './operacion';
@@ -311,9 +311,9 @@ export async function saludTiempoReal(
   db: D1Database,
 ): Promise<'ok' | 'pendiente' | 'atrasado'> {
   if (!env.TIEMPO_REAL_URL || !llavesEntrada(env).some(Boolean)) return 'pendiente';
-  const f = await db
-    .prepare("SELECT MAX(empezada_en) AS ultima FROM tareas_programadas WHERE tarea = 'reloj'")
-    .first<{ ultima: string | null }>();
-  if (!f?.ultima) return 'pendiente';
-  return f.ultima >= aSql(Date.now() - 5 * 60_000) ? 'ok' : 'atrasado';
+  // LECT-3: la hora de la última vuelta sale de la marca fija del reloj (las vueltas ociosas ya
+  // no dejan fila en tareas_programadas).
+  const ultima = await ultimaVueltaReloj(db);
+  if (!ultima) return 'pendiente';
+  return ultima >= aSql(Date.now() - 5 * 60_000) ? 'ok' : 'atrasado';
 }

@@ -6,6 +6,11 @@ import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
+import {
+  COLUMNAS_RESUMEN_CATALOGO,
+  DISPARADORES_RESUMEN_CATALOGO,
+  asegurarResumenCatalogo,
+} from './resumenCatalogo';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -226,6 +231,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'ciudad_elegida_en', 'TEXT'],
   // C-PAGO-MOVIL-CORREGIR (13 nov 2026): el «no me llegó» corregido a «sí me llegó» (una sola vez).
   ['viajes_pago_movil', 'corregido_en', 'TEXT'],
+  // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
+  ...COLUMNAS_RESUMEN_CATALOGO,
 ];
 
 /**
@@ -272,6 +279,12 @@ const INDICES = [
   // un rato» y recorría el menú entero (3.000 filas con el volumen del sitio de pruebas). Solo
   // guarda los platos con hora de vuelta: una escritura al agotarlo con hora y otra al volver.
   'CREATE INDEX IF NOT EXISTS platos_agotados_hasta ON platos(agotado_hasta) WHERE agotado_hasta IS NOT NULL',
+  // LECT-4 (14 nov 2026): borrar un vehículo hace que SQLite busque si algún repartidor lo tiene
+  // como activo (clave foránea): sin índice recorría TODOS los repartidores por cada vehículo (las
+  // pruebas F1, F3 y M4/M5 borran sus vehículos temporales). Solo guarda los que tienen vehículo
+  // activo y se escribe solo cuando ese vehículo cambia: la ubicación, que cambia cada pocos
+  // segundos, no lo toca.
+  'CREATE INDEX IF NOT EXISTS repartidores_vehiculo_activo ON repartidores(vehiculo_activo_id) WHERE vehiculo_activo_id IS NOT NULL',
 ];
 
 /**
@@ -530,6 +543,8 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerAprobacionesDinero),
         String(sincronizarServicios),
         String(preciosDeFabrica),
+        DISPARADORES_RESUMEN_CATALOGO,
+        String(asegurarResumenCatalogo),
       ]),
     ) + `:${entorno ?? 'local'}`
   );
@@ -590,6 +605,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   }
   // Un solo viaje a la base para todos los índices (antes, uno por índice en cada arranque).
   await db.batch(INDICES.map((sql) => db.prepare(sql)));
+  // C-LECTURAS-CATALOGO: los disparadores del resumen del listado (y su relleno, una sola vez).
+  await asegurarResumenCatalogo(db);
   // Flex · Fase 2: rehacer rutas_flex y conductor_ocupacion si vienen de antes (sin perder filas);
   // suelta sus disparadores y vistas, que asegurarFase3 vuelve a crear justo después.
   await rehacerFlex(db);

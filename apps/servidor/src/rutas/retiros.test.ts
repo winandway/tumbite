@@ -128,6 +128,7 @@ async function escenario(extra: Record<string, unknown> = {}) {
     ).run();
     // Cada vuelta representa un minuto nuevo: el candado por minuto (C-RELOJ-UNA-VEZ) se libera.
     await m.DB.prepare('DELETE FROM tareas_programadas').run();
+    await m.DB.prepare("DELETE FROM config WHERE clave = 'reloj_marca'").run(); // LECT-3
     const r = await app.request(
       '/datos/reloj',
       { method: 'POST', headers: { 'x-reloj-secreto': SECRETO_RELOJ } },
