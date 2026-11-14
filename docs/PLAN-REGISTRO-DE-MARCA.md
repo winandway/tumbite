@@ -16,6 +16,8 @@ Fecha límite que nace al presentar en Estados Unidos: seis meses exactos para p
 
 ## Estado
 
+Estados Unidos, 14 de noviembre de 2026: cuenta creada e identidad de Richard verificada. Solicitud llena en el centro de marcas y guardada como borrador: dueño Windoce LLC (sociedad de responsabilidad limitada de Delaware, con sede en Novi, Michigan), marca DIVOOX en caracteres estándar, clase 39, base de intención de uso, cinco servicios del manual oficial (Food delivery, Passenger transport, Courier services, Delivery of goods, Taxi transport), trescientos cincuenta dólares. Falta la firma y el pago de Richard. Lección: los servicios se agregan con la página en inglés; si Chrome la traduce, el sistema los marca inválidos y no deja firmar.
+
 Venezuela: sin presentar. Número de solicitud: pendiente.
 Estados Unidos: sin presentar. Número de solicitud: pendiente.
 
