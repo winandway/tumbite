@@ -1227,9 +1227,7 @@ export function Importar({ ctx }: { ctx: Contexto }) {
             rows={6}
             value={csv}
             onChange={(e) => setCsv(e.target.value)}
-            placeholder={
-              'reference,recipient,address,phone,packages\nORD-1,Ana,100 Main St,3051112222,2'
-            }
+            placeholder={t.csvEjemplo}
           />
         </div>
         <div className="campo">

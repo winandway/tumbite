@@ -244,10 +244,13 @@ export const TEXTOS_FLEX = {
     sinEventos: 'Sin movimientos todavía.',
     por: 'por',
     // Importar
-    importar: 'Importar paquetes desde CSV',
+    importar: 'Importar paquetes desde Excel o CSV',
+    // C-SIN-DATOS-REALES: el ejemplo es un formato, no una persona ni una ciudad.
+    csvEjemplo:
+      'referencia,destinatario,direccion,telefono,paquetes\nPEDIDO-1,Nombre del destinatario,Dirección de entrega,5550100000,1',
     importarAyuda:
-      'Sube un archivo CSV (en Excel o Google Sheets: «Guardar como» o «Descargar» → CSV). Columnas aceptadas, en español o inglés: referencia, destinatario, telefono, correo, cedula (Venezuela), direccion, punto_referencia, lat, lng, instrucciones, paquetes, peso_g, descripcion, cobro y moneda (cobro contra entrega en Venezuela), ventana_desde, ventana_hasta. Obligatorias: destinatario y direccion.',
-    archivo: 'Archivo CSV',
+      'Sube un archivo de Excel (.xlsx) o CSV (en Google Sheets: «Descargar» → CSV). Columnas aceptadas, en español o inglés: referencia, destinatario, telefono, correo, cedula (Venezuela), direccion, punto_referencia, lat, lng, instrucciones, paquetes, peso_g, descripcion, cobro y moneda (cobro contra entrega en Venezuela), ventana_desde, ventana_hasta. Obligatorias: destinatario y direccion.',
+    archivo: 'Archivo de Excel o CSV',
     previsualizar: 'Previsualizar',
     filas: 'Filas',
     validas: 'Válidas',
@@ -695,10 +698,12 @@ export const TEXTOS_FLEX = {
     nota: 'Note (optional)',
     sinEventos: 'No movements yet.',
     por: 'by',
-    importar: 'Import packages from CSV',
+    importar: 'Import packages from Excel or CSV',
+    csvEjemplo:
+      'reference,recipient,address,phone,packages\nORDER-1,Recipient name,Delivery address,5550100000,1',
     importarAyuda:
-      'Upload a CSV file (in Excel or Google Sheets: “Save as” or “Download” → CSV). Accepted columns, in Spanish or English: reference, recipient, phone, email, id_number (Venezuela), address, landmark, lat, lng, instructions, packages, weight_g, description, cod and currency (cash on delivery in Venezuela), window_from, window_to. Required: recipient and address.',
-    archivo: 'CSV file',
+      'Upload an Excel file (.xlsx) or a CSV (in Google Sheets: “Download” → CSV). Accepted columns, in Spanish or English: reference, recipient, phone, email, id_number (Venezuela), address, landmark, lat, lng, instructions, packages, weight_g, description, cod and currency (cash on delivery in Venezuela), window_from, window_to. Required: recipient and address.',
+    archivo: 'Excel or CSV file',
     previsualizar: 'Preview',
     filas: 'Rows',
     validas: 'Valid',

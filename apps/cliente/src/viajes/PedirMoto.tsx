@@ -446,7 +446,7 @@ export function PedirMoto({
                 value={v.destinatarioTelefono}
                 onChangeText={(x) => cambiar('destinatarioTelefono', x)}
                 keyboardType="phone-pad"
-                placeholder="(305) 000-0000"
+                placeholder={idioma === 'en' ? 'Mobile number' : 'Número de celular'}
               />
               <Pressable
                 onPress={() => cambiar('sinProhibidos', !v.sinProhibidos)}

@@ -4205,3 +4205,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** en el panel de Flex, «Pago local», la vista previa de la foto del comprobante salía rota: la política de seguridad no admitía imágenes `blob:`.
 - **Arreglo:** `apps/servidor/src/seguridad.ts` agrega `blob:` SOLO a `img-src`, y deja permitidos `https://maps.googleapis.com` y `https://maps.gstatic.com` en `script-src` y `connect-src` (el pendiente anotado en C-MAPA-GOOGLE-WEB para cuando exista la llave del mapa web).
 - **Prueba:** `apps/servidor/src/seguridad.test.ts` (blob en imágenes y en ninguna otra directiva; Maps en script y connect).
+
+## C-SIN-DATOS-REALES · Ejemplos neutros en las casillas, sin Miami (14 nov 2026) — todos los países
+
+- **Qué se rompió:** el ejemplo del CSV de «Importar» traía «Ana,100 Main St,3051112222» y varias casillas de celular usaban «(305) 000-0000» (código de Miami).
+- **Arreglo:** el ejemplo del CSV sale de los textos (`csvEjemplo`, español e inglés) con columnas válidas y una fila claramente ficticia («Nombre del destinatario, Dirección de entrega, 5550100000»); las casillas de celular dicen «Número de celular» / «Mobile number»; el ejemplo de teléfono del perfil de EE. UU. en `flexPaises.ts` es «(555) 010-0000». Además el título y la casilla de «Importar» dicen Excel o CSV (ya acepta .xlsx).
+- **Candado:** `packages/compartido/src/sinEjemplosReales.test.ts` recorre las fuentes y falla con un «(305) …», un número 305 de diez cifras o una «… Main St».
