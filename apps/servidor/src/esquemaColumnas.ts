@@ -40,6 +40,14 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "visto_en"
   ],
+  "suscripciones_web": [
+    "endpoint",
+    "usuario_id",
+    "app",
+    "p256dh",
+    "auth",
+    "creado_en"
+  ],
   "sesiones": [
     "id",
     "usuario_id",
@@ -1952,6 +1960,28 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "recogido_en",
     "entregado_en"
   ],
+  "viajes_programados": [
+    "id",
+    "cliente_id",
+    "cotizacion_id",
+    "servicio_id",
+    "zona_id",
+    "programado_para",
+    "metodo_pago",
+    "metodo_pago_ref",
+    "paquete_json",
+    "estado",
+    "motivo",
+    "creado_en",
+    "resuelto_en"
+  ],
+  "mensajes_viaje": [
+    "id",
+    "operacion_id",
+    "de_usuario_id",
+    "texto",
+    "creado_en"
+  ],
   "ajustes_viaje_zona": [
     "zona_id",
     "servicio_id",
@@ -2345,5 +2375,56 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "resuelta_por",
     "creado_en",
     "resuelta_en"
+  ],
+  "pedidos_pago_movil": [
+    "pedido_id",
+    "repartidor_id",
+    "estado",
+    "referencia",
+    "monto",
+    "moneda",
+    "corregido_en",
+    "creado_en"
+  ],
+  "ayuda_viajes": [
+    "operacion_id",
+    "motivo",
+    "ticket_id",
+    "cliente_id",
+    "conductor_id",
+    "detalle",
+    "creado_en"
+  ],
+  "recargas_locales_empresa": [
+    "id",
+    "empresa_id",
+    "pais",
+    "moneda",
+    "monto",
+    "metodo",
+    "referencia",
+    "banco",
+    "fecha_pago",
+    "comprobante_clave",
+    "estado",
+    "motivo",
+    "idempotencia",
+    "creado_por",
+    "revisado_por",
+    "revision_token",
+    "revisado_en",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "rutas_flex_calles": [
+    "ruta_id",
+    "empresa_id",
+    "huella_orden",
+    "fuente",
+    "metros",
+    "segundos",
+    "tramos_json",
+    "consultas",
+    "calculado_en"
   ]
 };

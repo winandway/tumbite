@@ -11,7 +11,13 @@ const responder = (cuerpo: unknown, estado = 200) =>
 /** El servidor simulado: lo que devuelven las rutas de Moto del superadmin. */
 function servidor(
   llamadas: Llamada[],
-  op: { abierto?: boolean; habilitar409?: boolean; papeles?: unknown[] } = {},
+  op: {
+    abierto?: boolean;
+    habilitar409?: boolean;
+    papeles?: unknown[];
+    vehiculos?: unknown[];
+    servicios?: unknown[];
+  } = {},
 ) {
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const metodo = init?.method ?? 'GET';
@@ -21,6 +27,11 @@ function servidor(
       metodo,
       cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined,
     });
+    if (metodo === 'POST' && u.endsWith('/datos/admin/comida/ciudades'))
+      return responder(
+        { zona: { id: 'VE-MER-ELVIGIA', pais: 'VE', moneda: 'USD' }, estado: 'disponible' },
+        201,
+      );
     if (metodo === 'POST' && u.endsWith('/datos/admin/viajes/ciudades'))
       return responder(
         {
@@ -67,7 +78,7 @@ function servidor(
         identidad: 'pendiente',
         documentos: [],
         vehiculoActivo: { id: 'v1', tipo: 'moto', estado: 'aprobado' },
-        servicios: [
+        servicios: op.servicios ?? [
           {
             servicioId: 'moto',
             habilitacion: null,
@@ -77,7 +88,7 @@ function servidor(
           },
         ],
       });
-    if (u.includes('/datos/admin/vehiculos?')) return responder({ vehiculos: [] });
+    if (u.includes('/datos/admin/vehiculos?')) return responder({ vehiculos: op.vehiculos ?? [] });
     if (metodo === 'GET' && u.endsWith('/datos/admin/tasas-referencia'))
       return responder({
         horasVigencia: 48,
@@ -135,7 +146,60 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
         motivo: 'Pruebas Moto',
       }),
     );
-    expect(await screen.findByText(/Moto quedó abierto en VE-CCS-PRUEBAS/)).toBeTruthy();
+    expect(await screen.findByText(/Se abrió Moto en VE-CCS-PRUEBAS/)).toBeTruthy();
+  });
+
+  it('C-COMIDA-CIUDAD: Comida se abre en El Vigía con el mismo paso y sus tarifas de mercado', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    await userEvent.selectOptions(screen.getByLabelText('Servicio'), 'comida');
+    await userEvent.click(screen.getByRole('button', { name: 'Usar El Vigía de pruebas' }));
+    expect(
+      screen.getByText('Tarifas de comida que se van a cobrar (mercado de Venezuela)'),
+    ).toBeTruthy();
+    expect(screen.getByText('$1.50')).toBeTruthy();
+    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Comida El Vigía');
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir Comida en esta ciudad' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.metodo === 'POST')).toEqual({
+        url: expect.stringMatching(/\/datos\/admin\/comida\/ciudades$/),
+        metodo: 'POST',
+        cuerpo: {
+          zona: {
+            id: 'VE-MER-ELVIGIA',
+            nombre: 'El Vigía',
+            lat: 8.6219,
+            lng: -71.6506,
+            radioKm: 15,
+            zonaHoraria: 'America/Caracas',
+            moneda: 'USD',
+          },
+          motivo: 'Comida El Vigía',
+        },
+      }),
+    );
+    expect(await screen.findByText(/Se abrió Comida en VE-MER-ELVIGIA/)).toBeTruthy();
+  });
+
+  it('C-CARRO-TARIFA-VE: «Usar El Vigía» con Carro muestra la tarifa de mercado y no la manda escrita', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    await userEvent.selectOptions(screen.getByLabelText('Servicio'), 'carro');
+    await userEvent.click(screen.getByRole('button', { name: 'Usar El Vigía' }));
+    expect(screen.getByLabelText<HTMLInputElement>('Código de la ciudad').value).toBe(
+      'VE-MER-ELVIGIA',
+    );
+    expect(screen.getByText('$1.50')).toBeTruthy();
+    expect(screen.getByText('$3.50')).toBeTruthy();
+    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Pruebas Carro');
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir Carro en esta ciudad' }));
+    await waitFor(() => {
+      const cuerpo = llamadas.find((l) => l.metodo === 'POST')?.cuerpo as Record<string, unknown>;
+      expect(cuerpo.servicio).toBe('carro');
+      expect(cuerpo.tarifa).toBeUndefined();
+    });
   });
 
   it('C-ABRIR-CIUDAD: abre Carro en una ciudad de cualquier país con su tarifa escrita', async () => {
@@ -313,6 +377,59 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Moto' }));
     const alerta = await within(detalle).findByRole('alert');
     expect(within(alerta).getByText('Licencia de moto')).toBeTruthy();
+  });
+
+  it('C-CARRO-PANEL: la cola muestra carros con sus papeles e inspección y se habilita para Carro', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas, {
+      vehiculos: [
+        {
+          id: 'car1',
+          conductor: 'Taxista Uno',
+          conductor_id: 'c1',
+          tipo: 'carro',
+          marca: 'Toyota',
+          modelo: 'Corolla',
+          anio: 2018,
+          color: 'Gris',
+          placa: 'AB123CD',
+          placa_estado: 'VE',
+          plazas: 6,
+          estado: 'en_revision',
+          documentos: [{ id: 'dI', tipo: 'inspeccion', estado: 'pendiente', venceEn: null }],
+        },
+      ],
+      servicios: [
+        {
+          servicioId: 'carro',
+          habilitacion: null,
+          requisitosFaltantes: ['licencia', 'inspeccion_vehiculo'],
+          puedeActivar: false,
+          motivo: '',
+        },
+      ],
+    });
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    expect(await screen.findByText('Motos y carros por revisar')).toBeTruthy();
+    const fila = await screen.findByTestId('moto-car1');
+    expect(within(fila).getByText(/Carro · 6 plazas/)).toBeTruthy();
+    expect(within(fila).getByText('Revisión del vehículo (inspección)')).toBeTruthy();
+    await userEvent.click(within(fila).getByRole('button', { name: 'Aprobar el carro' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/admin/vehiculos/car1'))?.cuerpo).toEqual({
+        estado: 'aprobado',
+      }),
+    );
+    await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
+    const detalle = await screen.findByTestId('detalle-conductor');
+    expect(await within(detalle).findByText('Licencia de conducir')).toBeTruthy();
+    expect(within(detalle).getByText('Revisión del vehículo')).toBeTruthy();
+    await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Carro' }));
+    await waitFor(() =>
+      expect(
+        llamadas.find((l) => l.metodo === 'PUT' && l.url.endsWith('/habilitaciones/c1/carro')),
+      ).toBeTruthy(),
+    );
   });
 
   it('C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad del conductor con motivo', async () => {

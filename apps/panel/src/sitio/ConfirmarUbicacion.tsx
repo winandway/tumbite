@@ -12,6 +12,7 @@ import { ElegirPunto } from './ElegirPunto';
 
 const T = {
   es: {
+    fotoEntrega: 'Foto de la entrega de tu paquete',
     titulo: 'Confirma dónde recibes tu paquete',
     cargando: 'Cargando…',
     noExiste: 'Este enlace no existe o venció. Pídele uno nuevo a quien te envía el paquete.',
@@ -36,6 +37,7 @@ const T = {
     empezar: 'Empezar de nuevo',
   },
   en: {
+    fotoEntrega: 'Photo of your package delivery',
     titulo: 'Confirm where you receive your package',
     cargando: 'Loading…',
     noExiste: 'This link doesn’t exist or has expired. Ask the sender for a new one.',
@@ -78,6 +80,22 @@ type Envio = {
  * WhatsApp al destinatario; sin cuenta, marca su casa en el mapa con un punto de referencia y la ruta
  * puede salir. Ningún programa grande de última milla lo trae (investigación del 28 oct 2026).
  */
+function FotoEntrega({ codigo, alt }: { codigo: string; alt: string }) {
+  const [visible, setVisible] = useState(true);
+  if (!visible) return null;
+  return (
+    <figure style={{ margin: '12px 0' }}>
+      <img
+        src={`/datos/v1/flex/publico/ubicacion/${encodeURIComponent(codigo)}/foto`}
+        alt={alt}
+        onError={() => setVisible(false)}
+        style={{ maxWidth: '100%', width: 384, borderRadius: 12 }}
+      />
+      <figcaption className="pista">{alt}</figcaption>
+    </figure>
+  );
+}
+
 export function ConfirmarUbicacion({ codigo, idioma }: { codigo: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [envio, setEnvio] = useState<Envio | null>(null);
@@ -147,6 +165,8 @@ export function ConfirmarUbicacion({ codigo, idioma }: { codigo: string; idioma:
   return (
     <main className="ticket confirmar-ubicacion">
       <h1>{t.titulo}</h1>
+      {/* C-FLEX-SEGUIMIENTO-PLUS: la foto de la entrega se ve SOLO con este enlace (si ya se entregó). */}
+      <FotoEntrega codigo={codigo} alt={t.fotoEntrega} />
       <p>
         <strong>{envio.empresa}</strong> {t.teEnvia} {t.paraQue}
       </p>

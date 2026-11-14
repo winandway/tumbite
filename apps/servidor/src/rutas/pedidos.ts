@@ -69,6 +69,8 @@ import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
 import { tarifasDeZona, tarifasDelPedido, topesDeZona } from '../internacional/tarifas';
+import { paisDeZona } from '../internacional/paises';
+import { referenciaLocal } from './tasasReferencia';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { exigirCobertura } from '../territorio';
@@ -545,7 +547,12 @@ export function aPedido(f: FilaPedido) {
       : null,
     fotoEntrega: f.ev_entrega ? { tomadaEn: String(f.ev_entrega) } : null,
     // Cómo pidió recibirlo y cómo se entregó de verdad (en mano, en la puerta, en lugar seguro).
-    entrega: f.recogida ? 'recoger' : (f.entrega as string | null) === 'mano' ? 'mano' : 'puerta',
+    // C-COBRO-EN-MANO: un pedido que se cobra al recibir se entrega en mano (también los viejos).
+    entrega: f.recogida
+      ? 'recoger'
+      : (f.entrega as string | null) === 'mano' || String(f.metodo_pago ?? 'tarjeta') !== 'tarjeta'
+        ? 'mano'
+        : 'puerta',
     propinaExtra: f.propina_extra == null ? null : Number(f.propina_extra),
     grupoId: (f.grupo_id as string | null) ?? null,
     requiereEdad: lineasDe(f).some((l) => l.requiereEdad),
@@ -875,11 +882,14 @@ pedidos.post('/pedidos', async (c) => {
   await exigirCobertura(db, String(rest.zona_id ?? ZONA_INICIAL), d.lat, d.lng, recogida);
   const plan = rest.plan as Plan;
   // C-TARIFAS-PAIS: tarifas y moneda del país de la zona (EE. UU. = la configuración de siempre).
-  const { moneda, config } = await tarifasDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
+  const { pais, moneda, config } = await tarifasDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
+  // C-COMIDA-VENEZUELA: tarjeta, Plus y saldo de regalo son de Estados Unidos. Venezuela también
+  // cobra en dólares, pero en mano: la moneda sola no basta para encenderlos.
+  const enEeuu = pais === 'US' && moneda === 'USD';
   const { topes } = await topesDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
   if (d.propinaCentavos > (topes?.propinaMax ?? 0))
     throw new ErrorDatos('La propina pasa del máximo permitido.', 'propinaCentavos', 400);
-  if (d.metodoPago === 'tarjeta' && moneda !== 'USD')
+  if (d.metodoPago === 'tarjeta' && !enEeuu)
     throw new ErrorDatos(
       'El pago con tarjeta todavía no está disponible en este país.',
       'metodoPago',
@@ -907,8 +917,7 @@ pedidos.post('/pedidos', async (c) => {
   });
   // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
   // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
-  const planPlus =
-    moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
+  const planPlus = enEeuu && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
   const plusAplica = planPlus ? descuentoPlus(previo, planPlus) > 0 : false;
   // Cupón: se valida con el envío ya calculado (para «envío gratis») y nunca se confía en la app.
   // C-ENVIO-UNA-VEZ (BRE-R3): si Plus ya deja el envío en cero, un cupón de envío gratis se rechaza
@@ -976,7 +985,7 @@ pedidos.post('/pedidos', async (c) => {
   // C-TARJETAS-REGALO: el saldo de regalo baja el total como un descuento (Divoox ya cobró la
   // tarjeta). Solo en dólares y con tarjeta; se aparta al crear el pedido.
   const usoRegalo =
-    d.usarSaldoRegalo && moneda === 'USD' && d.metodoPago === 'tarjeta'
+    d.usarSaldoRegalo && enEeuu && d.metodoPago === 'tarjeta'
       ? saldoAplicable(conPlus, await saldoRegalo(db, u.id, vigente?.id))
       : 0;
   const desglose = usoRegalo
@@ -1714,7 +1723,10 @@ pedidos.get('/mis-pedidos', async (c) => {
   const u = exigir(c, 'cliente');
   const { results } = await base(c)
     .prepare(
-      `SELECT p.*, r.nombre AS restaurante_nombre, r.imagen AS restaurante_imagen, r.categoria AS restaurante_categoria FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.*, r.nombre AS restaurante_nombre, r.imagen AS restaurante_imagen, r.categoria AS restaurante_categoria,
+        -- C-CLIENTE-AUSENTE: cómo se cerró la entrega, para que la lista no diga «Entregado» si no se entregó.
+        (SELECT modo FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_modo
+      FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.cliente_id = ? AND p.estado != 'pago_pendiente'
         -- C-PENDIENTE-ABANDONADO: el que se cerró porque pidió de nuevo sin pagarlo no es un pedido.
         AND NOT EXISTS (SELECT 1 FROM bitacora_pedidos b WHERE b.pedido_id = p.id AND b.evento = 'reemplazado_sin_pagar')
@@ -1737,7 +1749,19 @@ pedidos.get('/pedidos/:id', async (c) => {
     f &&
     (u.rol === 'admin' || f.cliente_id === u.id || f.dueno_id === u.id || f.repartidor_id === u.id);
   if (!f || !puede) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
-  return c.json({ pedido: aPedido(f) });
+  // C-COMIDA-VENEZUELA: un pedido en dólares fuera de EE. UU. lleva su equivalente en bolívares con
+  // la tasa del día (solo informativo: el cobro y la comisión siguen en dólares).
+  const db = base(c);
+  const referencia =
+    f.moneda === 'USD' && f.zona_id
+      ? await referenciaLocal(
+          db,
+          (await paisDeZona(db, String(f.zona_id))).pais,
+          Number(f.total),
+          'USD',
+        )
+      : null;
+  return c.json({ pedido: { ...aPedido(f), referencia } });
 });
 
 /**

@@ -145,12 +145,23 @@ describe('Docs públicos', () => {
       const texto = JSON.stringify(g);
       expect(texto).toMatch(i === 'es' ? /Safari/ : /Safari/);
       expect(texto).toMatch(/Chrome/);
-      expect(texto).toMatch(i === 'es' ? /no te llegan avisos/ : /don’t get notifications/);
+      // C-AVISOS-WEB (13 nov 2026): ahora sí llegan avisos si se permiten; siguen sin llegar sin
+      // permiso y en iPhone sin agregar Divoox a inicio.
+      expect(texto).toMatch(i === 'es' ? /Activar avisos/ : /Turn on notifications/);
+      expect(texto).toMatch(i === 'es' ? /iOS 16\.4/ : /iOS 16\.4/);
+      expect(texto).toMatch(i === 'es' ? /no te llegan/ : /won’t get them/);
+      expect(texto).not.toMatch(
+        i === 'es'
+          ? /no te llegan avisos al celular \(/
+          : /you don’t get notifications on your phone \(/,
+      );
       expect(texto).toMatch(i === 'es' ? /pantalla apagada/ : /screen off/);
       expect(texto).toMatch(
         i === 'es' ? /se escribe en vez de escanearse/ : /typed in instead of scanned/,
       );
-      for (const c of g?.capturas ?? []) expect(c.src).toMatch(/recorrido-instalar-/);
+      for (const c of g?.capturas ?? [])
+        expect(c.src).toMatch(/recorrido-(instalar|avisos-web|web-avisos)-/);
+      expect(g?.capturas?.some((c) => c.src.includes('recorrido-avisos-web-'))).toBe(true);
     }
   });
 });

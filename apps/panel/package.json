@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/prerender.mjs",
+    "build": "vite build && node scripts/prerender.mjs && node -e \"require('node:fs').mkdirSync('dist/panel',{recursive:true});require('node:fs').copyFileSync('../cliente/scripts/avisos-sw.js','dist/panel/avisos-sw.js')\"",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
@@ -16,6 +16,7 @@
     "@stripe/react-stripe-js": "^7.0.1",
     "@stripe/stripe-js": "^10.2.0",
     "@tumbite/compartido": "0.1.0",
+    "fflate": "0.8.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.55.0",
     "qrcode": "^1.5.4",

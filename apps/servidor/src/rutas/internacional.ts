@@ -3,6 +3,7 @@ import { efectivoDeJuego } from '../ciudadJuego';
 import {
   TIPOS_CASO,
   type TipoCaso,
+  abrirIncidencia,
   accionCaso,
   detalleCaso,
   listarCasos,
@@ -39,9 +40,15 @@ import {
   libroDePedido,
   saldoLibro,
 } from '../internacional/libro';
-import { clienteNoPago, confirmarCobro, deudaCliente } from '../internacional/cobroDirecto';
+import {
+  clienteNoPago,
+  comisionTipicaComida as comisionTipicaComidaDe,
+  confirmarCobro,
+  deudaCliente,
+} from '../internacional/cobroDirecto';
 import { leerPagoLocal, registrarPagoLocal } from '../internacional/pagoLocal';
 import { anotarEvento } from '../manager';
+import { SQL_A_TIEMPO, decidirPagoMovil } from '../internacional/pagoMovil';
 import {
   anularCodigo,
   canjearCodigo,
@@ -311,6 +318,10 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     .first<{ id: string | null }>();
   const comisionTipica = zona?.id ? await comisionTipicaMoto(db, { id: zona.id, pais, moneda }) : 0;
   const carreras = carrerasQueAlcanzan(disponible, comisionTipica);
+  const comisionTipicaComida =
+    cfg.efectivoActivo || cfg.transferenciaRepartidorActiva
+      ? await comisionTipicaComidaDe(db, pais, moneda)
+      : 0;
   return c.json({
     pais,
     moneda,
@@ -321,6 +332,10 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     carrerasAlcanzan: carreras,
     saldoBajo: carreras != null && carreras < CARRERAS_SALDO_BAJO,
     sinSaldo: comisionTipica > 0 && disponible < comisionTipica,
+    // C-COMIDA-VE-CIRCUITO: lo mismo para los pedidos de comida en mano (efectivo o pago móvil).
+    comisionTipicaComida,
+    pedidosAlcanzan: carrerasQueAlcanzan(disponible, comisionTipicaComida),
+    sinSaldoComida: comisionTipicaComida > 0 && disponible < comisionTipicaComida,
     efectivoActivo: cfg.efectivoActivo,
     transferenciaActiva: cfg.transferenciaRepartidorActiva,
     recargasPuntoVenta: cfg.recargasPuntoVentaActivas,
@@ -382,6 +397,19 @@ internacional.post('/repartidor/pedidos/:id/cobre', async (c) => {
       nota: z.string().trim().max(300).default(''),
     }),
   );
+  // C-PAGO-MOVIL-UNA-CORRECCION (14 nov 2026, Venezuela): quien marcó «no me llegó» el pago móvil
+  // solo lo corrige por su camino (una vez, dentro de 30 minutos, cerrando el caso abierto); «cobré»
+  // no sirve para saltárselo con el monto completo.
+  const pm = await base(c)
+    .prepare('SELECT estado FROM pedidos_pago_movil WHERE pedido_id = ?')
+    .bind(c.req.param('id'))
+    .first<{ estado: string }>();
+  if (pm)
+    throw new ErrorDatos(
+      'Este pedido se paga por pago móvil: confírmalo con «Sí, me llegó» o «No me llegó».',
+      undefined,
+      409,
+    );
   const estado = await confirmarCobro(base(c), {
     pedidoId: c.req.param('id'),
     repartidorId: u.id,
@@ -389,6 +417,123 @@ internacional.post('/repartidor/pedidos/:id/cobre', async (c) => {
     nota: d.nota,
   });
   return c.json({ cobroEstado: estado });
+});
+
+/**
+ * C-COMIDA-VE-CIRCUITO (13 nov 2026, Venezuela): el repartidor dice si le llegó el pago móvil del
+ * pedido, con la MISMA regla de los viajes (`decidirPagoMovil`): «sí me llegó» cierra el cobro por
+ * el total sin propina; «no me llegó» deja el cobro pendiente (la comisión apartada) y abre un caso
+ * en la bandeja de dinero; ese «no» se corrige a «sí» UNA vez dentro de 30 minutos. Confirmación
+ * MANUAL, nunca del banco.
+ */
+internacional.post('/repartidor/pedidos/:id/pago-movil', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const d = await leerCuerpo(
+    c,
+    z.object({ recibido: z.boolean(), referencia: z.string().trim().max(40).default('') }),
+  );
+  const db = base(c);
+  const id = c.req.param('id');
+  const f = await db
+    .prepare(
+      'SELECT estado, zona_id, total, propina, metodo_pago, cobro_estado, repartidor_id FROM pedidos WHERE id = ?',
+    )
+    .bind(id)
+    .first<{
+      estado: string;
+      zona_id: string;
+      total: number;
+      propina: number;
+      metodo_pago: string;
+      cobro_estado: string;
+      repartidor_id: string | null;
+    }>();
+  if (!f || f.repartidor_id !== u.id)
+    throw new ErrorDatos('Este pedido no es tuyo.', undefined, 404);
+  if (f.metodo_pago !== 'transferencia_repartidor')
+    throw new ErrorDatos('Este pedido no se paga por pago móvil.', undefined, 409);
+  if (!['en_camino', 'entregado'].includes(f.estado))
+    throw new ErrorDatos('Confirma el cobro cuando estés con el cliente.', undefined, 409);
+  const { pais, moneda } = await paisDeZona(db, f.zona_id);
+  const esperado = Number(f.total) - Number(f.propina ?? 0);
+  const nota = `Pago móvil: sí me llegó${d.referencia ? ` (referencia ${d.referencia})` : ''}.`;
+  const ya = await db
+    .prepare(
+      `SELECT estado, corregido_en, ${SQL_A_TIEMPO} FROM pedidos_pago_movil WHERE pedido_id = ?`,
+    )
+    .bind(id)
+    .first<{ estado: string; corregido_en: string | null; a_tiempo: number }>();
+  if (ya) {
+    const decision = decidirPagoMovil(ya, d.recibido);
+    // C-PAGO-MOVIL-REINTENTO (14 nov 2026, Venezuela): «sí me llegó» quedó anotado pero el cobro no
+    // se cerró (se cortó entre las dos escrituras). El reintento lo completa en vez de decir «igual».
+    if (
+      decision === 'igual' &&
+      ya.estado === 'recibido' &&
+      d.recibido &&
+      f.cobro_estado === 'pendiente'
+    ) {
+      await confirmarCobro(db, { pedidoId: id, repartidorId: u.id, montoRecibido: esperado, nota });
+      return c.json({ estado: 'recibido' });
+    }
+    if (decision === 'igual') return c.json({ estado: ya.estado });
+    if (decision === 'rechazar')
+      throw new ErrorDatos(
+        'Ya confirmaste este pago. Si hay que cambiarlo, escribe a soporte desde Ayuda.',
+        undefined,
+        409,
+      );
+    const [cambio] = await db.batch([
+      db
+        .prepare(
+          `UPDATE pedidos_pago_movil SET estado = 'recibido', corregido_en = datetime('now'),
+             referencia = CASE WHEN ? != '' THEN ? ELSE referencia END
+           WHERE pedido_id = ? AND estado = 'no_recibido' AND corregido_en IS NULL`,
+        )
+        .bind(d.referencia, d.referencia, id),
+      db
+        .prepare(
+          `UPDATE incidencias_dinero SET estado = 'resuelta', resuelta_en = datetime('now'), detalle = detalle || ?
+           WHERE referencia = ? AND estado = 'abierta' AND changes() > 0`,
+        )
+        .bind(
+          ' Nota: el repartidor corrigió a «sí me llegó»; el caso se cerró solo.',
+          `pago-movil-pedido:${id}`,
+        ),
+    ]);
+    if (!cambio?.meta.changes)
+      throw new ErrorDatos('El pago cambió. Actualiza la pantalla.', undefined, 409);
+    await confirmarCobro(db, { pedidoId: id, repartidorId: u.id, montoRecibido: esperado, nota });
+    return c.json({ estado: 'recibido', corregido: true });
+  }
+  if (f.cobro_estado !== 'pendiente')
+    throw new ErrorDatos('Ya confirmaste el cobro de este pedido.', undefined, 409);
+  const ins = await db
+    .prepare(
+      `INSERT OR IGNORE INTO pedidos_pago_movil (pedido_id, repartidor_id, estado, referencia, monto, moneda)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(id, u.id, d.recibido ? 'recibido' : 'no_recibido', d.referencia, esperado, moneda)
+    .run();
+  if (!ins.meta.changes)
+    throw new ErrorDatos('El pago cambió. Actualiza la pantalla.', undefined, 409);
+  if (d.recibido) {
+    await confirmarCobro(db, { pedidoId: id, repartidorId: u.id, montoRecibido: esperado, nota });
+    return c.json({ estado: 'recibido' });
+  }
+  await abrirIncidencia(db, {
+    tipo: 'pago_movil_pedido',
+    referencia: `pago-movil-pedido:${id}`,
+    pedidoId: id,
+    cuentaId: u.id,
+    pais,
+    moneda,
+    esperado,
+    recibido: 0,
+    detalle: `El repartidor dice que no le llegó el pago móvil del pedido ${id}.${d.referencia ? ` Referencia: ${d.referencia}.` : ''}`,
+  });
+  await anotarEvento(db, id, 'transferencia_por_verificar', 'pago móvil: no me llegó');
+  return c.json({ estado: 'no_recibido' });
 });
 
 // ───────── Pago de la comida en el local (C-COBRO-DIRECTO-LOCAL) ─────────
@@ -621,5 +766,8 @@ internacional.get('/pais', async (c) => {
     efectivoActivo:
       cfg.efectivoActivo || (deRest ? await efectivoDeJuego(c.req.url, db, rid) : false),
     transferenciaRepartidorActiva: cfg.transferenciaRepartidorActiva,
+    // C-COMIDA-VENEZUELA: la tarjeta (Stripe) solo en Estados Unidos. Venezuela cobra en dólares,
+    // pero en mano: que la moneda sea USD no enciende la tarjeta.
+    tarjetaActiva: pais === 'US',
   });
 });

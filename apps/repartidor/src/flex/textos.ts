@@ -172,6 +172,10 @@ export const TEXTOS_RUTA = {
     siguienteParada: 'Siguiente parada',
     paradaActual: 'Parada actual',
     iniciarNavegacion: 'Iniciar navegación',
+    navegarRuta: 'Navegar la ruta',
+    navegarRutaTodas: 'Abre Google Maps con tus {n} próximas paradas en orden.',
+    navegarRutaTramo:
+      'Abre Google Maps con las próximas {n} paradas. Al terminarlas, toca de nuevo para el siguiente tramo.',
     sinSiguiente: 'Ya no quedan paradas por visitar.',
     aprox: 'aprox.',
     distanciaAyuda: 'Distancias aproximadas en línea recta, no por calles.',
@@ -432,6 +436,10 @@ export const TEXTOS_RUTA = {
     siguienteParada: 'Next stop',
     paradaActual: 'Current stop',
     iniciarNavegacion: 'Start navigation',
+    navegarRuta: 'Navigate the route',
+    navegarRutaTodas: 'Opens Google Maps with your next {n} stops in order.',
+    navegarRutaTramo:
+      'Opens Google Maps with the next {n} stops. When you finish them, tap again for the next leg.',
     sinSiguiente: 'There are no stops left to visit.',
     aprox: 'approx.',
     distanciaAyuda: 'Approximate straight-line distances, not by road.',

@@ -55,7 +55,7 @@ export const PERFILES_FLEX: Record<PaisFlex, PerfilFlex> = {
     ubicacion: 'recomendada',
     appDestinatario: 'opcional',
     documento: { pide: false, ejemplo: '', patron: null },
-    telefono: { prefijo: '+1', ejemplo: '(305) 000-0000' },
+    telefono: { prefijo: '+1', ejemplo: '(555) 010-0000' },
     referenciasObligatorias: false,
     centroMapa: { lat: 25.7617, lng: -80.1918 },
   },

@@ -1,7 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ControlDinero } from './ControlDinero';
+import { ControlDinero, propinasDeTexto } from './ControlDinero';
+
+describe('C-COMIDA-VENEZUELA: propinas sugeridas del país desde el panel', () => {
+  it('lee «0, 5, 10, 15» en puntos base y deja vacío como «las de siempre»', () => {
+    expect(propinasDeTexto('0, 5, 10, 15')).toEqual([0, 500, 1000, 1500]);
+    expect(propinasDeTexto('0,12.5%,20')).toEqual([0, 1250, 2000]);
+    expect(propinasDeTexto('')).toBeNull();
+    expect(propinasDeTexto('5')).toBeNull();
+    expect(propinasDeTexto('0, 80')).toBeNull();
+  });
+});
 
 function servidor(estado: { activos: boolean }) {
   const llamadas: { url: string; metodo: string; cuerpo: unknown }[] = [];

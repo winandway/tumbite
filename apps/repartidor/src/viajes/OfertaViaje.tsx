@@ -20,6 +20,8 @@ export type OfertaViaje = {
   metodoPago: string;
   /** C-CARRO-PRUEBAS: «moto» o «carro». */
   servicioId?: string;
+  /** C-VIAJE-PROGRAMADO: si es una reserva, para cuándo (ISO). */
+  programadoPara?: string | null;
 };
 
 const distancia = (m: number, i: Idioma) =>
@@ -41,7 +43,10 @@ export function OfertaViajeModal({
   alAceptar: () => void;
   alRechazar: () => void;
 }) {
-  const t = enIdioma(TEXTOS_VIAJE, idioma).oferta;
+  const textos = enIdioma(TEXTOS_VIAJE, idioma);
+  // C-ENVIO-TEXTOS: la oferta de un envío dice «envío de paquete», no «viaje».
+  const t =
+    oferta.servicioId === 'envios' ? { ...textos.oferta, ...textos.ofertaEnvio } : textos.oferta;
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
     // C-AUDITIVA-REPARTIDOR: más larga y repetida si el repartidor marcó dificultad auditiva.
@@ -102,6 +107,21 @@ export function OfertaViajeModal({
               }}
             />
           </View>
+          {oferta.programadoPara ? (
+            <View
+              testID="oferta-viaje-programado"
+              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+            >
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
+                {t.programado}{' '}
+                {new Date(oferta.programadoPara).toLocaleString(idioma === 'en' ? 'en-US' : 'es', {
+                  weekday: 'short',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </Text>
+            </View>
+          ) : null}
           {oferta.metodoPago === 'efectivo' ? (
             <View
               testID="oferta-viaje-efectivo"

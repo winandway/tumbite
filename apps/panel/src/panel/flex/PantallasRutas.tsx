@@ -11,6 +11,8 @@ import {
 import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
+import { BotonExportar } from './Exportar';
+import { RecorridoCalles } from './RecorridoCalles';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { CapacidadAlAsignar, SugerenciaOrden } from './PantallasFase3';
 
@@ -172,6 +174,7 @@ export function RutasOperativas({ ctx }: { ctx: Contexto }) {
       <p className="pista">{t.rutasOperativasAyuda}</p>
       <Error_ error={error} />
       <div className="flex-filtros" aria-label={t.filtros}>
+        <BotonExportar ctx={ctx} tipo="rutas" filtros={f} />
         <select
           aria-label={t.estado}
           value={f.estado}
@@ -493,6 +496,16 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
         </div>
       ) : null}
       <h2>{t.listaParadas}</h2>
+      <RecorridoCalles
+        ctx={ctx}
+        rutaId={r.id}
+        nombres={r.paradas.map((p) => ({
+          id: p.id,
+          // La lista ya va numerada (<ol>): el nombre sin «1.» delante.
+          nombre: p.referenciaExterna ?? p.destinatarioNombre ?? '',
+        }))}
+        puedeCalcular={ctx.permisos.includes('lotes.gestionar')}
+      />
       {reordenable ? <p className="pista">{t.ordenAyuda}</p> : null}
       {reordenable && r.paradas.length > 1 ? (
         <SugerenciaOrden ctx={ctx} rutaId={r.id} paradas={r.paradas} aplicado={cargar} />
@@ -853,6 +866,9 @@ export function Devoluciones({ ctx }: { ctx: Contexto }) {
     <section className="super">
       <h1>{t.devoluciones}</h1>
       <p className="pista">{t.devolucionesAyuda}</p>
+      <div className="flex-filtros">
+        <BotonExportar ctx={ctx} tipo="devoluciones" filtros={{}} />
+      </div>
       <Error_ error={error} />
       {ok ? <p className="aviso-borrador">{ok}</p> : null}
       {puede ? (
@@ -941,6 +957,7 @@ export function Incidencias({ ctx }: { ctx: Contexto }) {
       <h1>{t.incidencias}</h1>
       <Error_ error={error} />
       <div className="flex-filtros">
+        <BotonExportar ctx={ctx} tipo="incidencias" filtros={{ estado }} />
         <select aria-label={t.estado} value={estado} onChange={(e) => setEstado(e.target.value)}>
           <option value="">{t.todos}</option>
           {Object.entries(t.estadosIncidencia).map(([k, v]) => (

@@ -2,6 +2,19 @@
 import type { Idioma } from '@tumbite/compartido';
 export const TEXTOS_FLEX = {
   es: {
+    // Fase 7 · exportar (C-FLEX-EXPORTAR)
+    exportar: 'Exportar',
+    exportando: 'Exportando…',
+    exportarListo: 'Listo: {n} filas en el archivo CSV.',
+    exportarCortado: 'El archivo trae las primeras {n} filas. Pon un filtro para bajar el resto.',
+    // Fase 7 · importar Excel (C-FLEX-EXCEL)
+    excelAyuda:
+      'Sirve un CSV o un Excel (.xlsx): se lee la primera hoja aquí mismo, sin subir el archivo.',
+    excelPlantilla: 'Descargar la plantilla de Excel',
+    excelIlegible: 'No pudimos leer ese Excel. Guárdalo otra vez como .xlsx o usa CSV.',
+    excelMuyGrande: 'El Excel tiene más de {n} filas. Divídelo en varios archivos más pequeños.',
+    excelPesado: 'El archivo pesa demasiado (máximo 5 MB). Divídelo en varios archivos.',
+    excelVacio: 'La primera hoja del Excel está vacía.',
     flex: 'Divoox Flex',
     misEmpresas: 'Mis empresas',
     sinEmpresas: 'Todavía no tienes una empresa en Divoox Flex.',
@@ -231,10 +244,13 @@ export const TEXTOS_FLEX = {
     sinEventos: 'Sin movimientos todavía.',
     por: 'por',
     // Importar
-    importar: 'Importar paquetes desde CSV',
+    importar: 'Importar paquetes desde Excel o CSV',
+    // C-SIN-DATOS-REALES: el ejemplo es un formato, no una persona ni una ciudad.
+    csvEjemplo:
+      'referencia,destinatario,direccion,telefono,paquetes\nPEDIDO-1,Nombre del destinatario,Dirección de entrega,5550100000,1',
     importarAyuda:
-      'Sube un archivo CSV (en Excel o Google Sheets: «Guardar como» o «Descargar» → CSV). Columnas aceptadas, en español o inglés: referencia, destinatario, telefono, correo, cedula (Venezuela), direccion, punto_referencia, lat, lng, instrucciones, paquetes, peso_g, descripcion, cobro y moneda (cobro contra entrega en Venezuela), ventana_desde, ventana_hasta. Obligatorias: destinatario y direccion.',
-    archivo: 'Archivo CSV',
+      'Sube un archivo de Excel (.xlsx) o CSV (en Google Sheets: «Descargar» → CSV). Columnas aceptadas, en español o inglés: referencia, destinatario, telefono, correo, cedula (Venezuela), direccion, punto_referencia, lat, lng, instrucciones, paquetes, peso_g, descripcion, cobro y moneda (cobro contra entrega en Venezuela), ventana_desde, ventana_hasta. Obligatorias: destinatario y direccion.',
+    archivo: 'Archivo de Excel o CSV',
     previsualizar: 'Previsualizar',
     filas: 'Filas',
     validas: 'Válidas',
@@ -456,6 +472,19 @@ export const TEXTOS_FLEX = {
     auditoria: 'Actividad reciente',
   },
   en: {
+    // Phase 7 · export (C-FLEX-EXPORTAR)
+    exportar: 'Export',
+    exportando: 'Exporting…',
+    exportarListo: 'Done: {n} rows in the CSV file.',
+    exportarCortado: 'The file has the first {n} rows. Add a filter to download the rest.',
+    // Phase 7 · Excel import (C-FLEX-EXCEL)
+    excelAyuda:
+      'Use a CSV or an Excel file (.xlsx): the first sheet is read right here, without uploading the file.',
+    excelPlantilla: 'Download the Excel template',
+    excelIlegible: 'We couldn’t read that Excel file. Save it again as .xlsx or use CSV.',
+    excelMuyGrande: 'The Excel file has more than {n} rows. Split it into smaller files.',
+    excelPesado: 'The file is too large (5 MB max). Split it into smaller files.',
+    excelVacio: 'The first sheet of the Excel file is empty.',
     flex: 'Divoox Flex',
     misEmpresas: 'My companies',
     sinEmpresas: 'You don’t have a company on Divoox Flex yet.',
@@ -669,10 +698,12 @@ export const TEXTOS_FLEX = {
     nota: 'Note (optional)',
     sinEventos: 'No movements yet.',
     por: 'by',
-    importar: 'Import packages from CSV',
+    importar: 'Import packages from Excel or CSV',
+    csvEjemplo:
+      'reference,recipient,address,phone,packages\nORDER-1,Recipient name,Delivery address,5550100000,1',
     importarAyuda:
-      'Upload a CSV file (in Excel or Google Sheets: “Save as” or “Download” → CSV). Accepted columns, in Spanish or English: reference, recipient, phone, email, id_number (Venezuela), address, landmark, lat, lng, instructions, packages, weight_g, description, cod and currency (cash on delivery in Venezuela), window_from, window_to. Required: recipient and address.',
-    archivo: 'CSV file',
+      'Upload an Excel file (.xlsx) or a CSV (in Google Sheets: “Download” → CSV). Accepted columns, in Spanish or English: reference, recipient, phone, email, id_number (Venezuela), address, landmark, lat, lng, instructions, packages, weight_g, description, cod and currency (cash on delivery in Venezuela), window_from, window_to. Required: recipient and address.',
+    archivo: 'Excel or CSV file',
     previsualizar: 'Preview',
     filas: 'Rows',
     validas: 'Valid',

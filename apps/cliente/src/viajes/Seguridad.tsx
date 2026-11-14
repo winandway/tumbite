@@ -129,7 +129,7 @@ export function ContactosConfianza() {
             value={b.valores.telefono}
             onChangeText={(x) => b.cambiar('telefono', x)}
             keyboardType="phone-pad"
-            placeholder="(305) 000-0000"
+            placeholder={idioma === 'en' ? 'Mobile number' : 'Número de celular'}
           />
           <Boton
             texto={t.agregar}

@@ -5,6 +5,62 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // Pulido de la noche del 14 nov (bloque propio)
+  [
+    'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
+    'That document isn’t on the list. Use licencia_conducir (Car), licencia_moto (Moto), or antecedentes_penales.',
+  ],
+  [
+    'Este pedido se paga por pago móvil: confírmalo con «Sí, me llegó» o «No me llegó».',
+    'This order is paid by Pago Móvil: confirm it with “Yes, the mobile payment arrived” or “It didn’t arrive.”',
+  ],
+  [
+    'Estás enviando muchos mensajes seguidos. Espera un momento.',
+    'You’re sending a lot of messages in a row. Please wait a moment.',
+  ],
+  // C-FLEX-EXPORTAR y Flex Fase 7 (bloque propio)
+  ['Cursor inválido.', 'Invalid cursor.'],
+  ['Esa lista no se puede exportar.', 'That list can’t be exported.'],
+  ['La ruta no tiene paradas con coordenadas.', 'The route has no stops with coordinates.'],
+  ['Esa foto no está disponible.', 'That photo isn’t available.'],
+  [
+    'Llegaste al máximo de fotos de comprobante por hoy. Intenta mañana o escríbenos.',
+    'You reached today’s limit of receipt photos. Try again tomorrow or contact us.',
+  ],
+  [
+    'Esa foto de comprobante ya se usó en otra recarga. Sube la foto de este pago.',
+    'That receipt photo was already used for another top-up. Upload the photo of this payment.',
+  ],
+  [
+    'Las recargas las declara una persona de la empresa, no una clave de API.',
+    'Top-ups are reported by a person at the company, not an API key.',
+  ],
+  [
+    'Las recargas con pago local no están activas en tu país.',
+    'Local-payment top-ups aren’t available in your country yet.',
+  ],
+  ['Falta la foto del comprobante.', 'The receipt photo is missing.'],
+  [
+    'Ese método de pago no está disponible en tu país.',
+    'That payment method isn’t available in your country.',
+  ],
+  [
+    'El monto está fuera de los límites de tu país.',
+    'The amount is outside your country’s limits.',
+  ],
+  [
+    'Esa referencia de pago ya se declaró. Si es otro pago, escribe su referencia.',
+    'That payment reference was already reported. If it’s a different payment, enter its reference.',
+  ],
+  ['País inválido.', 'Invalid country.'],
+  ['La foto del comprobante no está disponible.', 'The receipt photo isn’t available.'],
+  ['Esa recarga ya se acreditó.', 'That top-up was already credited.'],
+  ['Esa recarga se rechazó.', 'That top-up was declined.'],
+  [
+    'La empresa cambió de país o de moneda: revisa la recarga.',
+    'The company changed its country or currency: review the top-up.',
+  ],
+  ['Esa recarga ya no está pendiente.', 'That top-up is no longer pending.'],
   // C-REFERIDOS
   ['Las invitaciones no están activas.', 'Invites aren’t active.'],
   // C-CIUDAD-JUEGO (SIM-7)
@@ -1168,6 +1224,12 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['La fecha debe ser AAAA-MM-DD.', 'The date must be YYYY-MM-DD.'],
   ['Ese token de avisos no es válido.', 'That notification token isn’t valid.'],
+  // C-AVISOS-WEB
+  [
+    'Los avisos en el navegador todavía no están encendidos.',
+    'Browser notifications aren’t turned on yet.',
+  ],
+  ['Ese destino de avisos no es válido.', 'That notification address isn’t valid.'],
   ['firma inválida', 'invalid signature'],
   ['Escribe el nombre de tu restaurante.', 'Enter your restaurant’s name.'],
   ['Escribe un celular para llamarte.', 'Enter a mobile number we can call you at.'],
@@ -1737,9 +1799,63 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your prepaid balance doesn’t cover the commission for this ride. Top up to accept it.',
   ],
   ['Este viaje ya terminó.', 'This ride has already ended.'],
+  // C-VIAJE-PROGRAMADO (14 nov 2026).
+  [
+    'Elige una hora de al menos 30 minutos desde ahora.',
+    'Pick a time at least 30 minutes from now.',
+  ],
+  ['Se puede reservar hasta 7 días adelante.', 'You can schedule up to 7 days ahead.'],
+  [
+    'Puedes tener hasta 5 viajes programados a la vez.',
+    'You can have up to 5 scheduled rides at a time.',
+  ],
+  [
+    'Para reservar con tarjeta, primero paga un viaje con tarjeta en la app (queda guardada).',
+    'To schedule with a card, first pay for a ride with a card in the app (it stays saved).',
+  ],
+  ['Esa reserva no existe.', 'That reservation doesn’t exist.'],
+  [
+    'Tu viaje ya está buscando conductor: cancélalo desde la pantalla del viaje.',
+    'Your ride is already looking for a driver: cancel it from the ride screen.',
+  ],
+  ['La reserva cambió. Actualiza la pantalla.', 'The reservation changed. Refresh the screen.'],
+  ['Esa miniatura no cumple las medidas.', 'That thumbnail doesn’t meet the size limits.'],
+  ['Primero aprueba la verificación.', 'Approve the verification first.'],
+  [
+    'Este viaje ya no está activo: el chat se cerró.',
+    'This ride is no longer active: the chat is closed.',
+  ],
+  ['Escribe un mensaje.', 'Write a message.'],
+  [
+    'La foto de entrega se toma con el paquete a bordo.',
+    'The delivery photo is taken with the package on board.',
+  ],
+  [
+    'El taxista de pruebas tiene un viaje abierto: ciérralo primero.',
+    'The test driver has an open ride: close it first.',
+  ],
   // C-MOTO-VENEZUELA (13 nov 2026).
   ['Escribe la tarifa del servicio para esta ciudad.', 'Enter the service fare for this city.'],
   ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
+  // C-COMIDA-CIUDAD y C-COMIDA-VENEZUELA (13 nov 2026).
+  ['El código de la ciudad va como VE-MER-ELVIGIA.', 'The city code looks like VE-MER-ELVIGIA.'],
+  [
+    'En Estados Unidos Comida usa la configuración de siempre: no se abre con este paso.',
+    'In the United States, Food uses the usual settings: it isn’t opened with this step.',
+  ],
+  [
+    'En producción Comida no se abre en un país nuevo desde aquí: necesita la orden de Richard.',
+    'In production, Food isn’t opened in a new country from here: it needs Richard’s go-ahead.',
+  ],
+  ['Escribe las tarifas de comida de este país.', 'Enter this country’s food fees.'],
+  // C-COMIDA-VE-CIRCUITO (13 nov 2026).
+  [
+    'Este pedido se paga por pago móvil y no tienes una cuenta para recibirlo. Agrégala en Ganancias.',
+    'This order is paid by mobile payment and you don’t have an account to receive it. Add one in Earnings.',
+  ],
+  ['Este pedido no es tuyo.', 'This order isn’t yours.'],
+  ['Este pedido no se paga por pago móvil.', 'This order isn’t paid by mobile payment.'],
+  ['Escribe los topes de comida de este país.', 'Enter this country’s food limits.'],
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
   ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],
@@ -1853,6 +1969,13 @@ export const MENSAJES_EN = new Map<string, string>([
     'El destino está demasiado lejos para este servicio.',
     'The destination is too far for this service.',
   ],
+  // Divoox Carro (rama fase-carro-1, 13 nov 2026).
+  ['No hay foto para mostrar.', 'There’s no photo to show.'],
+  ['Este viaje no llegó a tener conductor.', 'This ride never had a driver.'],
+  [
+    'Pasaron más de 30 días desde este viaje. Escríbenos desde Ayuda.',
+    'It’s been more than 30 days since this ride. Write to us from Help.',
+  ],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */
@@ -1880,6 +2003,17 @@ export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = 
   [
     /^Esta persona todavía no tiene (\d+) años: no se puede aprobar\.$/,
     (m) => `This person isn’t ${m[1]} yet, so this can’t be approved.`,
+  ],
+  // C-COMIDA-CIUDAD (13 nov 2026).
+  [
+    /^Las tarifas de comida de este país están en ([A-Z]{3}) y esta ciudad cobra en ([A-Z]{3})\. Cambia primero la configuración del país\.$/,
+    (m) =>
+      `This country’s food fees are in ${m[1]} and this city charges in ${m[2]}. Change the country settings first.`,
+  ],
+  [
+    /^En este país la comisión de comida está en ([A-Z, ]+) y esta ciudad cobra en ([A-Z]{3})\. Crea la política de comida en [A-Z]{3} antes de abrir Comida\.$/,
+    (m) =>
+      `In this country the food commission is set in ${m[1]} and this city charges in ${m[2]}. Create the food policy in ${m[2]} before opening Food.`,
   ],
   [
     // C-COMISION-MONEDA (13 nov 2026).

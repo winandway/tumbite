@@ -224,8 +224,12 @@ try {
   );
   const externos = leido.reloj.filter((r) => r.origen === 'origen:externo');
   caso(
-    'el reloj externo está corriendo (vueltas recientes)',
-    externos.length > 0,
+    // C-RELOJ-PRUEBAS-PAUSA: con el reloj de pruebas en pausa no hay vueltas; desde LECT-3 las
+    // vueltas salen de la marca fija y ya no quedan filas viejas que hicieran pasar este caso.
+    leido.relojEnPausa
+      ? 'el reloj de pruebas está en pausa (no se exigen vueltas)'
+      : 'el reloj externo está corriendo (vueltas recientes)',
+    leido.relojEnPausa === true || externos.length > 0,
     `${externos.length} de ${leido.reloj.length}`,
   );
   caso(

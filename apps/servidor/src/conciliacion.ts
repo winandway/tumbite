@@ -156,9 +156,12 @@ export async function pedidosCreadosDesde(
   const estados = ESTADOS_PEDIDO.map((e) => `'${e}'`).join(', ');
   const { results } = await db
     .prepare(
+      // LECT-4 (14 nov 2026): sin ORDER BY. Con él, SQLite juntaba TODOS los pedidos del día de
+      // cada zona y estado para ordenarlos y quedarse con 100 (en el sitio de pruebas, los robots
+      // crean miles al día: 17.175 filas medidas). Sin él, para en cuanto tiene los 100.
       `SELECT id FROM pedidos INDEXED BY pedidos_zona_estado
         WHERE zona_id IN (SELECT id FROM zonas) AND estado IN (${estados}) AND creado_en >= ?1
-        ORDER BY creado_en DESC LIMIT ?2`,
+        LIMIT ?2`,
     )
     .bind(desde, limite)
     .all<{ id: string }>();

@@ -1,7 +1,7 @@
 /**
  * C-IDENTIDAD-UNICA (29 oct 2026, pedido de Richard): el mismo correo o el mismo teléfono escritos de
  * otra forma cuentan como el mismo. Así nadie abre una segunda cuenta con «Juan.Perez+2@gmail.com»
- * o con el teléfono «(305) 555-0100» cuando ya existe «3055550100».
+ * o con el teléfono «(555) 010-0100» cuando ya existe «5550100100».
  */
 const GMAIL = new Set(['gmail.com', 'googlemail.com']);
 /**

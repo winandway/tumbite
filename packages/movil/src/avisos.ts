@@ -1,6 +1,34 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { CANAL_AVISOS, canalPedidos, type Api, type Usuario } from '@tumbite/compartido';
+import {
+  darDeBajaAvisosWeb,
+  entornoActual,
+  escucharToqueAvisoWeb,
+  estadoAvisosWeb,
+  suscribirAvisosWeb,
+} from '@tumbite/compartido/src/avisosWeb';
+
+/**
+ * C-AVISOS-WEB (13 nov 2026) — todos los países: la llave pública VAPID de la versión web, como
+ * variable pública de compilación. Si falta, la app la pide al servidor; sin llave en ninguno de los
+ * dos, los avisos web quedan apagados sin errores.
+ */
+export const LLAVE_VAPID_COMPILADA = process.env.EXPO_PUBLIC_VAPID_PUBLIC_KEY || undefined;
+
+/**
+ * C-AVISOS-WEB: si el permiso ya estaba dado, la suscripción del navegador se renueva sola al abrir
+ * sesión (sin ventanas). Solo escribe en el servidor si es nueva para esta cuenta.
+ */
+export function useAvisosWebSilencioso(api: Api, usuario: Usuario | null) {
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !usuario) return;
+    if (estadoAvisosWeb(entornoActual()) !== 'permitido') return;
+    void suscribirAvisosWeb(api, usuario.id, LLAVE_VAPID_COMPILADA).catch((err: unknown) =>
+      console.warn('avisos web: no se pudo renovar la suscripción', err),
+    );
+  }, [api, usuario]);
+}
 
 /**
  * Avisos al celular: pide permiso y registra el token del teléfono en el servidor.
@@ -10,7 +38,8 @@ import { CANAL_AVISOS, canalPedidos, type Api, type Usuario } from '@tumbite/com
 /** Al cerrar sesión: el teléfono deja de recibir los avisos de esa cuenta. */
 export async function darDeBajaAvisos(api: Api) {
   try {
-    if (Platform.OS === 'web') return;
+    // C-AVISOS-WEB: en la versión web, se borra la suscripción del navegador.
+    if (Platform.OS === 'web') return await darDeBajaAvisosWeb(api);
     const Notifications = await import('expo-notifications');
     const Constants = (await import('expo-constants')).default;
     const proyecto = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
@@ -68,7 +97,8 @@ export function useAvisosCelular(api: Api, usuario: Usuario | null, preguntar = 
  */
 export function useToqueAviso(alTocar: (datos: Record<string, unknown>) => void) {
   useEffect(() => {
-    if (Platform.OS === 'web') return;
+    // C-AVISOS-WEB: en la versión web, el toque llega del trabajador de avisos.
+    if (Platform.OS === 'web') return escucharToqueAvisoWeb(alTocar);
     let vivo = true;
     let quitar: (() => void) | null = null;
     (async () => {

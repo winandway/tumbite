@@ -28,6 +28,13 @@ export type TareaReloj = {
   /** Crítica = toca pedidos o dinero. Si falla, la salud se pone en rojo aunque la vuelta termine. */
   critica: boolean;
   correr: (env: Env, db: D1Database) => Promise<unknown>;
+  /**
+   * LECT-3: las limpiezas que pueden esperar corren una vez por hora (la primera vuelta de cada
+   * hora), no cada minuto. Sin esto, cada vuelta.
+   */
+  cada?: 'hora';
+  /** LECT-3: cuántas filas espera escribir como mucho en una vuelta (la declara cada limpieza). */
+  escriturasEsperadas?: number;
 };
 
 export type ResultadoTarea = {
@@ -179,6 +186,84 @@ export async function saludReloj(
     (env.INTERNO_LLAVE_ID && env.INTERNO_SECRETO_ACTUAL) ||
     (env.INTERNO_LLAVE_ID_ANTERIOR && env.INTERNO_SECRETO_ANTERIOR),
   );
+  // LECT-3: con la marca fija, la hora de la última vuelta y el ritmo salen de UNA fila.
+  const marcadas = await vueltasMarcadas(db);
+  if (marcadas.length) return saludPorMarca(db, externo, marcadas);
+  return saludPorFilas(db, externo);
+}
+
+/**
+ * LECT-3: la salud del reloj leyendo la marca fija. Una vuelta marcada es buena si no dejó fila de
+ * error ni tareas fallidas (las vueltas buenas y ociosas no dejan fila: ahí está el ahorro). Las
+ * mismas reglas de siempre: con ritmo de minuto (Worker), error a los 5 minutos sin vuelta buena,
+ * con 3 fallidas en 15 minutos o con una crítica fallida en la última; solo GitHub, 6 h y 24 h.
+ */
+async function saludPorMarca(
+  db: D1Database,
+  externo: boolean,
+  marcadas: VueltaMarcada[],
+): Promise<'ok' | 'error' | 'atrasado' | 'pendiente'> {
+  const claves = marcadas.map((v) => `reloj:${v.ventana}`);
+  const marcas = claves.map((_, i) => `?${i + 3}`).join(', ');
+  const f = await db
+    .prepare(
+      `SELECT
+         (SELECT COUNT(*) FROM tareas_programadas t
+           WHERE t.tarea = 'reloj' AND t.empezada_en > datetime('now', ?1)
+             AND (t.resultado LIKE '% error' OR EXISTS (SELECT 1 FROM reloj_tareas r WHERE r.clave = t.clave AND r.ok = 0))) AS fallidas,
+         (SELECT COUNT(*) FROM reloj_tareas r WHERE r.clave = ?2 AND r.critica = 1 AND r.ok = 0) AS criticas_ultima,
+         (SELECT group_concat(t.clave, ' ') FROM tareas_programadas t
+           WHERE t.clave IN (${marcas})
+             AND (t.resultado LIKE '% error' OR EXISTS (SELECT 1 FROM reloj_tareas r WHERE r.clave = t.clave AND r.ok = 0))) AS falladas,
+         (SELECT t.terminada_en FROM tareas_programadas t
+           WHERE t.empezada_en > datetime('now', '-25 hours') AND t.tarea = 'reloj'
+             AND t.terminada_en IS NOT NULL AND t.resultado NOT LIKE '% error'
+             AND NOT EXISTS (SELECT 1 FROM reloj_tareas r WHERE r.clave = t.clave AND r.ok = 0)
+           ORDER BY t.empezada_en DESC LIMIT 1) AS buena_en_filas`,
+    )
+    .bind(`-${VENTANA_FALLIDAS_MIN} minutes`, claves[0], ...claves)
+    .first<{
+      fallidas: number;
+      criticas_ultima: number;
+      falladas: string | null;
+      buena_en_filas: string | null;
+    }>();
+  if (Number(f?.criticas_ultima ?? 0) > 0) return 'error';
+  const falladas = new Set(String(f?.falladas ?? '').split(' '));
+  const buena = marcadas.find((v) => !falladas.has(`reloj:${v.ventana}`));
+  const ultimaBuena = [buena ? horaDeVentana(buena.ventana) : null, f?.buena_en_filas ?? null]
+    .filter((x): x is string => !!x)
+    .sort()
+    .at(-1);
+  const cadaMinuto = externo || ritmoDeMinuto(marcadas.map((v) => horaDeVentana(v.ventana)));
+  const viejaHace = (minutos: number) =>
+    !ultimaBuena ||
+    ultimaBuena <
+      new Date(Date.now() - minutos * 60_000).toISOString().replace('T', ' ').slice(0, 19);
+  if (cadaMinuto) {
+    if (Number(f?.fallidas ?? 0) >= FALLIDAS_MAX) return 'error';
+    if (viejaHace(MINUTOS_SIN_VUELTA_BUENA)) return 'error';
+    return 'ok';
+  }
+  if (viejaHace(HORAS_ERROR_GITHUB * 60)) return 'error';
+  return viejaHace(HORAS_ATRASO_GITHUB * 60) ? 'atrasado' : 'ok';
+}
+
+/** La hora de la última vuelta del reloj (la marca; sin marca, la última fila de vuelta). */
+export async function ultimaVueltaReloj(db: D1Database): Promise<string | null> {
+  const [ultima] = await vueltasMarcadas(db);
+  if (ultima) return horaDeVentana(ultima.ventana);
+  const f = await db
+    .prepare("SELECT MAX(empezada_en) AS ultima FROM tareas_programadas WHERE tarea = 'reloj'")
+    .first<{ ultima: string | null }>();
+  return f?.ultima ?? null;
+}
+
+/** La salud del reloj por las filas de vuelta: bases que todavía no tienen la marca (LECT-3). */
+async function saludPorFilas(
+  db: D1Database,
+  externo: boolean,
+): Promise<'ok' | 'error' | 'atrasado' | 'pendiente'> {
   const f = await db
     .prepare(
       // C-RELOJ-SOLO-FALLAS: cada subconsulta camina el índice de empezada_en desde la vuelta
@@ -232,3 +317,91 @@ export async function saludReloj(
   if (viejaHace(HORAS_ERROR_GITHUB * 60)) return 'error';
   return viejaHace(HORAS_ATRASO_GITHUB * 60) ? 'atrasado' : 'ok';
 }
+
+// ======================= LECT-3: la marca fija del reloj =======================
+
+/**
+ * LECT-3 (13 nov 2026, orden de Richard; regla «la nube no se come el dinero»). Todos los países.
+ *
+ * Antes cada vuelta del reloj (una por minuto con el Worker de producción) creaba una fila en
+ * `tareas_programadas` y la actualizaba al terminar: unas 4 filas escritas por minuto, 5.800 al
+ * día, más 4.300 que la limpieza borraba: unas 10.000 filas al día con el reloj ocioso.
+ *
+ * Ahora el candado por minuto (C-RELOJ-UNA-VEZ) es UNA fila fija de `config` (`reloj_marca`),
+ * tomada en una sola sentencia atómica: `INSERT … ON CONFLICT DO UPDATE … WHERE la última ventana
+ * < la nueva`. El que llega segundo en ese minuto (GitHub, el Worker o un reintento en otro
+ * aislado) no cambia nada y no corre. La misma fila guarda las últimas seis ventanas con su origen
+ * (`AAAA-MM-DDTHH:MMe`, «e» externo, «g» GitHub): con eso el canario sabe la hora de la última
+ * vuelta y el ritmo del Worker sin leer filas de vueltas. Cuesta una fila escrita por minuto.
+ *
+ * En `tareas_programadas` queda una fila solo si la vuelta falló, si sus tareas escribieron algo,
+ * y una por hora (el latido: la primera vuelta de cada hora).
+ */
+export const VUELTAS_EN_MARCA = 6;
+export const claveMarca = (tarea: string) => `${tarea}_marca`;
+const VENTANA_CANONICA = /^\d{4}-\d\d-\d\dT\d\d:\d\d$/;
+const LARGO_MARCA = VUELTAS_EN_MARCA * 17 + (VUELTAS_EN_MARCA - 1);
+
+export type VueltaMarcada = { ventana: string; origen: 'externo' | 'github' };
+
+/** Las vueltas de la marca, de la más nueva a la más vieja (pueden haberse tomado en otro orden). */
+function leerVentanas(valor: string | null | undefined): VueltaMarcada[] {
+  return String(valor ?? '')
+    .split(' ')
+    .filter((x) => x.length >= 16)
+    .map((x) => ({
+      ventana: x.slice(0, 16),
+      origen: x.charAt(16) === 'g' ? ('github' as const) : ('externo' as const),
+    }))
+    .sort((x, y) => (x.ventana < y.ventana ? 1 : x.ventana > y.ventana ? -1 : 0));
+}
+
+/**
+ * Toma el minuto `ventana` para `tarea`. Devuelve las vueltas marcadas (la más nueva primero) si
+ * este llamado ganó el minuto, o null si ese minuto ya está en la marca (lo tomó otro). Una vuelta
+ * lenta y la del minuto siguiente pueden llegar en cualquier orden: las dos corren.
+ */
+export async function tomarMinuto(
+  db: D1Database,
+  tarea: string,
+  ventana: string,
+  origen: 'externo' | 'github',
+): Promise<VueltaMarcada[] | null> {
+  // El reloj real solo acepta ventanas de minuto: una ventana rara («diag-…») escrita en la marca
+  // la dejaría por delante de todas las de verdad y el reloj no volvería a correr.
+  if (tarea === 'reloj' && !VENTANA_CANONICA.test(ventana))
+    throw new Error(`reloj: ventana inválida «${ventana}»`);
+  const fila = await db
+    .prepare(
+      `INSERT INTO config (clave, valor) VALUES (?1, ?2)
+       ON CONFLICT(clave) DO UPDATE SET valor = substr(excluded.valor || ' ' || config.valor, 1, ${LARGO_MARCA}),
+         actualizado_en = datetime('now')
+       WHERE instr(config.valor, substr(excluded.valor, 1, 16)) = 0
+       RETURNING valor`,
+    )
+    .bind(claveMarca(tarea), `${ventana}${origen === 'github' ? 'g' : 'e'}`)
+    .first<{ valor: string }>();
+  return fila ? leerVentanas(fila.valor) : null;
+}
+
+/** Las últimas vueltas marcadas del reloj (la más nueva primero); vacío si nunca corrió. */
+export async function vueltasMarcadas(db: D1Database, tarea = 'reloj'): Promise<VueltaMarcada[]> {
+  const f = await db
+    .prepare('SELECT valor FROM config WHERE clave = ?')
+    .bind(claveMarca(tarea))
+    .first<{ valor: string }>();
+  return leerVentanas(f?.valor);
+}
+
+/** La hora de una ventana en el formato de las fechas de la base («AAAA-MM-DD HH:MM:00»). */
+export const horaDeVentana = (ventana: string) => `${ventana.replace('T', ' ')}:00`;
+
+/** Las tareas de cada hora corren en la primera vuelta de cada hora (y en la primera de todas). */
+export const esPrimeraDeLaHora = (ventana: string, anterior: string | undefined) =>
+  !anterior || anterior.slice(0, 13) !== ventana.slice(0, 13);
+
+/** La limpieza diaria: la primera vuelta del día desde las 04:00 UTC. */
+export const esPrimeraDelDia = (ventana: string, anterior: string | undefined) => {
+  const corte = `${ventana.slice(0, 10)}T04:00`;
+  return ventana >= corte && (!anterior || anterior < corte);
+};

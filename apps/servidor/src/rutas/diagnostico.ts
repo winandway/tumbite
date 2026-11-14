@@ -23,13 +23,14 @@ import { saldoRetirable } from '../retiros';
 import { MIGRACIONES_FASE1 } from '../migraciones/fase1';
 import { sentencias } from '../migraciones/sentencias';
 import { aplicarLote } from './interno';
-import { correrRelojUnaVez, tomarPedidoComida } from './operacion';
+import { TAREAS_RELOJ, correrRelojUnaVez, tomarPedidoComida } from './operacion';
 import { aceptarOperacion, liberarViaje } from '../operaciones';
-import { type TareaReloj } from '../reloj';
+import { type TareaReloj, claveMarca, relojEnPausa, vueltasMarcadas } from '../reloj';
 import { vigilarPedidos } from '../manager';
 import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
 import { cuentaVuelta } from '../vueltaPruebas';
 import { rutasMotoVenezuela } from './diagnosticoMotoVe';
+import { rutasCarroGuion } from './diagnosticoCarro';
 
 /**
  * Diagnóstico del SITIO DE PRUEBAS (Fase 0, 15 oct 2026): las pruebas S2–S5, S7 y S11 de
@@ -812,21 +813,27 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
   // El reloj se prueba ANTES de crear los repartidores temporales: así sus tareas reales (ofertas,
   // Manager) nunca los ven y la limpieza no choca con nada (falló así el 15 oct).
   // Candado del reloj: dos llamadas a la vez con la misma ventana corren las tareas UNA vez.
-  const ventana = `diag-${sufijo()}`;
+  // LECT-3: con las tareas REALES pero con su propia marca («reloj-f2»): una ventana de
+  // diagnóstico en la marca del reloj de verdad lo dejaría sin correr.
+  const ventana = new Date(Date.UTC(2020, 0, 1) + Math.floor(Math.random() * 1e6) * 60_000)
+    .toISOString()
+    .slice(0, 16);
+  const comoReloj = { tareas: TAREAS_RELOJ, tarea: 'reloj-f2' };
+  await db.prepare('DELETE FROM config WHERE clave = ?').bind(claveMarca('reloj-f2')).run();
   const [a, b] = await Promise.all([
-    correrRelojUnaVez(c.env, db, ventana, 'github'),
-    correrRelojUnaVez(c.env, db, ventana, 'externo'),
+    correrRelojUnaVez(c.env, db, ventana, 'github', comoReloj),
+    correrRelojUnaVez(c.env, db, ventana, 'externo', comoReloj),
   ]);
   const yaHecho = [a, b].filter((x) => 'yaHecho' in x).length;
-  const filas = await db
-    .prepare('SELECT COUNT(*) AS n FROM tareas_programadas WHERE clave = ?')
-    .bind(`reloj:${ventana}`)
-    .first<{ n: number }>();
+  const marcadas = await vueltasMarcadas(db, 'reloj-f2');
   casos.push({
     nombre: 'el reloj actual y el nuevo en el mismo minuto corren las tareas una sola vez',
-    ok: yaHecho === 1 && Number(filas?.n) === 1,
+    ok: yaHecho === 1 && marcadas.length === 1 && marcadas[0]?.ventana === ventana,
   });
-  await db.prepare('DELETE FROM tareas_programadas WHERE clave = ?').bind(`reloj:${ventana}`).run();
+  await db.batch([
+    db.prepare('DELETE FROM tareas_programadas WHERE clave = ?').bind(`reloj-f2:${ventana}`),
+    db.prepare('DELETE FROM config WHERE clave = ?').bind(claveMarca('reloj-f2')),
+  ]);
   await db.batch([
     db
       .prepare(
@@ -937,6 +944,29 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
  * carro con placa, bicicleta, moto sin placa, dos con la misma placa, uno con identidad verificada
  * de verdad y otro «aprobado» sin evidencia. Corre las migraciones dos veces y borra todo al final.
  */
+/**
+ * LECT-4: acota una sentencia de las migraciones M4/M5 a las cuentas temporales de la prueba
+ * («zz-mig-…», por el rango de la clave). Devuelve si la pudo acotar: una sentencia nueva que no
+ * reconoce queda sin acotar y la prueba lo dice en rojo.
+ */
+export function acotarAPrueba(sql: string): { sql: string; acotada: boolean } {
+  const rango = (col: string) => `${col} >= 'zz-mig-' AND ${col} < 'zz-mig.'`;
+  const reglas: [RegExp, string][] = [
+    [/u\.rol = 'repartidor'/g, `+u.rol = 'repartidor' AND ${rango('u.id')}`],
+    [
+      /WHERE v\.origen = 'migracion' AND v\.estado = 'aprobado'/g,
+      `WHERE v.origen = 'migracion' AND v.estado = 'aprobado' AND ${rango('v.conductor_id')}`,
+    ],
+    [
+      /WHERE vehiculo_activo_id IS NULL/g,
+      `WHERE vehiculo_activo_id IS NULL AND ${rango('usuario_id')}`,
+    ],
+  ];
+  let nueva = sql;
+  for (const [re, por] of reglas) nueva = nueva.replace(re, por);
+  return { sql: nueva, acotada: nueva !== sql };
+}
+
 diagnostico.post('/interno/diagnostico/migraciones-prueba', async (c) => {
   const db = base(c);
   const k = sufijo();
@@ -991,9 +1021,21 @@ diagnostico.post('/interno/diagnostico/migraciones-prueba', async (c) => {
     db.prepare("INSERT INTO kyc (usuario_id, estado) VALUES (?, 'aprobado')").bind(bici),
   ]);
   try {
-    for (let vez = 0; vez < 2; vez++)
-      for (const sql of [...sentencias(MIGRACIONES_FASE1.m4), ...sentencias(MIGRACIONES_FASE1.m5)])
-        await db.prepare(sql).run();
+    // LECT-4 (14 nov 2026): las migraciones de verdad, acotadas a las cuentas de esta prueba. Sin
+    // acotar recorrían TODOS los repartidores del sitio de pruebas dos veces, con sus disparadores
+    // por cada habilitación (74.607 filas medidas en una vuelta). La lógica es la misma.
+    const acotadas = [...sentencias(MIGRACIONES_FASE1.m4), ...sentencias(MIGRACIONES_FASE1.m5)].map(
+      acotarAPrueba,
+    );
+    casos.push({
+      nombre: 'las migraciones se acotaron a las cuentas de la prueba',
+      ok: acotadas.every((x) => x.acotada),
+      detalle: acotadas
+        .filter((x) => !x.acotada)
+        .map((x) => x.sql.slice(0, 80))
+        .join(' | '),
+    });
+    for (let vez = 0; vez < 2; vez++) for (const { sql } of acotadas) await db.prepare(sql).run();
     const marcas = ids.map(() => '?').join(',');
     const veh = await db
       .prepare(
@@ -1147,14 +1189,13 @@ diagnostico.post('/interno/diagnostico/vivo', async (c) => {
       )
       .bind(ids.repLibre, ids.repPedido)
       .all();
-    const reloj = await db
-      .prepare(
-        "SELECT clave, resultado FROM tareas_programadas WHERE tarea = 'reloj' ORDER BY empezada_en DESC LIMIT 10",
-      )
-      .all<{ clave: string; resultado: string }>();
+    // LECT-3: las últimas vueltas del reloj salen de su marca fija (las ociosas no dejan fila).
+    const reloj = await vueltasMarcadas(db);
     return c.json({
       posiciones: pos.results,
-      reloj: reloj.results.map((r) => ({ clave: r.clave, origen: r.resultado.split(' ')[0] })),
+      reloj: reloj.map((r) => ({ clave: `reloj:${r.ventana}`, origen: `origen:${r.origen}` })),
+      // C-RELOJ-PRUEBAS-PAUSA: con el reloj de pruebas en pausa no hay vueltas que comprobar.
+      relojEnPausa: relojEnPausa(c.req.url),
     });
   }
   const todos = Object.values(ids);
@@ -1774,6 +1815,8 @@ diagnostico.post('/interno/diagnostico/reloj', async (c) => {
   const vuelta = (n: number, tareas: TareaReloj[], origen: 'github' | 'externo' = 'externo') =>
     correrRelojUnaVez(c.env, db, ventana(n), origen, { tareas, tarea: 'reloj-diag' });
   const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  // LECT-3: la marca de las vueltas de diagnóstico empieza vacía (sus ventanas son de 2020).
+  await db.prepare('DELETE FROM config WHERE clave = ?').bind(claveMarca('reloj-diag')).run();
   await db.exec(`CREATE TABLE ${tabla} (nombre TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)`);
   const cuenta = (nombre: string, ms = 0): TareaReloj => ({
     nombre,
@@ -1948,6 +1991,7 @@ diagnostico.post('/interno/diagnostico/reloj', async (c) => {
           "DELETE FROM reloj_tareas WHERE clave LIKE 'reloj-diag:%' AND clave IN (SELECT clave FROM tareas_programadas WHERE tarea = 'reloj-diag' AND empezada_en > datetime('now', '-1 hour'))",
         ),
         db.prepare("DELETE FROM tareas_programadas WHERE tarea = 'reloj-diag'"),
+        db.prepare('DELETE FROM config WHERE clave = ?').bind(claveMarca('reloj-diag')),
       ])
       .catch((e: unknown) => console.error('diagnóstico reloj: limpieza', e, like));
     await db.exec(`DROP TABLE IF EXISTS ${tabla}`).catch(() => undefined);
@@ -2529,3 +2573,4 @@ diagnostico.post('/interno/diagnostico/moto/limpiar', async (c) => {
 
 // Divoox Moto · Venezuela (C-MOTO-VE-PUNTA-A-PUNTA): cuentas fijas y conductor sin saldo.
 rutasMotoVenezuela(diagnostico);
+rutasCarroGuion(diagnostico);

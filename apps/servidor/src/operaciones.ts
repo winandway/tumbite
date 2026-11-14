@@ -1,10 +1,17 @@
 import { cuantosHay } from './canarioLecturas';
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
-import { PLAZAS_XL, acercaAlDestino, distanciaKm } from '@tumbite/compartido';
+import {
+  PLAZAS_XL,
+  type TamanoPaquete,
+  acercaAlDestino,
+  distanciaKm,
+  vehiculoLlevaPaquete,
+} from '@tumbite/compartido';
 import { destinosActivos } from './modoDestino';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 import { soltarCobroViaje } from './viajesCobro';
+import { notificar } from './notificaciones';
 
 /**
  * Fase 3 · Exclusividad y asignación (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md; V1.2 §3 y §5).
@@ -283,6 +290,48 @@ export async function conductoresConPagoMovil(
  * candidato, y devuelve a «buscando» los viajes asignados cuyo conductor perdió la señal.
  * En producción no hay operaciones: no hace nada.
  */
+/** C-VIAJE-PROGRAMADO: el aviso al pasajero cuando su viaje reservado se queda sin conductor. */
+async function avisarProgramadoSinConductor(
+  env: Env,
+  db: D1Database,
+  operacionId: string,
+  clienteId: string,
+) {
+  const u = await db
+    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+    .bind(clienteId)
+    .first<{ idioma: string | null }>();
+  const aviso =
+    u?.idioma === 'en'
+      ? {
+          titulo: 'No driver for your scheduled ride',
+          cuerpo: 'We couldn’t find a driver in time. It was canceled at no charge.',
+        }
+      : {
+          titulo: 'No hubo conductor para tu viaje programado',
+          cuerpo: 'No encontramos conductor a tiempo. Se canceló sin cargo.',
+        };
+  await notificar(env, db, clienteId, {
+    ...aviso,
+    datos: { tipo: 'viaje', viajeId: operacionId },
+  }).catch((e: unknown) => console.error('viajes programados: aviso sin conductor', e));
+}
+
+/** C-ENVIO-TAMANO: el vehículo activo de cada candidato (tipo y si la moto lleva cajón). */
+async function vehiculosActivos(db: D1Database, conductores: string[]) {
+  const mapa = new Map<string, { tipo: string; conCajon: boolean }>();
+  if (!conductores.length) return mapa;
+  const { results } = await db
+    .prepare(
+      `SELECT r.usuario_id, v.tipo, v.con_cajon FROM repartidores r JOIN vehiculos v ON v.id = r.vehiculo_activo_id
+        WHERE r.usuario_id IN (${conductores.map(() => '?').join(',')})`,
+    )
+    .bind(...conductores)
+    .all<{ usuario_id: string; tipo: string; con_cajon: number }>();
+  for (const f of results) mapa.set(f.usuario_id, { tipo: f.tipo, conCajon: f.con_cajon === 1 });
+  return mapa;
+}
+
 export async function repartirOperaciones(
   env: Env | undefined,
   db: D1Database,
@@ -322,17 +371,20 @@ export async function repartirOperaciones(
   }
   // M2: un viaje que lleva demasiado buscando (desde que empezó a buscar, también tras una
   // liberación) se cierra como «sin conductor» y el pasajero lo ve en vez de esperar para siempre.
+  // C-VIAJE-PROGRAMADO: un viaje reservado empieza a buscar unos minutos antes de su hora; se
+  // cierra «sin conductor» recién a la hora (no antes) y al pasajero se le avisa, sin cargo.
   const { results: vencidos } = await db
     .prepare(
-      `SELECT o.id FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+      `SELECT o.id, o.cliente_id, v.programado_para FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
         WHERE o.estado_general = 'buscando' AND v.estado = 'buscando'
           AND COALESCE((SELECT MAX(e.creado_en) FROM eventos_operacion e
                          WHERE e.operacion_id = o.id AND e.estado_nuevo = 'buscando'), o.creado_en)
               < datetime('now', ?)
+          AND (v.programado_para IS NULL OR v.programado_para <= datetime('now'))
         LIMIT 50`,
     )
     .bind(`-${MINUTOS_SIN_CONDUCTOR} minutes`)
-    .all<{ id: string }>();
+    .all<{ id: string; cliente_id: string; programado_para: string | null }>();
   for (const v of vencidos)
     if (
       await cambiarEstadoViaje(db, {
@@ -344,11 +396,13 @@ export async function repartirOperaciones(
         clave: `sin-conductor:${v.id}`,
         motivo: 'sin_conductor',
       })
-    )
+    ) {
       // C-VIAJE-TARJETA: sin conductor, la autorización de la tarjeta se anula entera.
       await (env ? soltarCobroViaje(env, db, v.id, 0) : Promise.resolve(0)).catch((e: unknown) =>
         console.error('viajes: anular cobro sin conductor', v.id, e),
       );
+      if (env && v.programado_para) await avisarProgramadoSinConductor(env, db, v.id, v.cliente_id);
+    }
   // C-VIAJE-TARJETA: un pago que nunca se autorizó (la persona cerró la hoja de pago) no deja el
   // viaje colgado: a los 20 minutos se cancela y se anula el intento.
   const { results: sinPagar } = await db
@@ -375,7 +429,7 @@ export async function repartirOperaciones(
   const { results: buscando } = await db
     .prepare(
       `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais,
-              v.metodo_pago
+              v.metodo_pago, (SELECT p.tamano FROM envios_persona p WHERE p.operacion_id = o.id) AS tamano
          FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -396,6 +450,7 @@ export async function repartirOperaciones(
       moneda: string | null;
       pais: string | null;
       metodo_pago: string | null;
+      tamano: TamanoPaquete | null;
     }>();
   let ofrecidas = 0;
   const yaOfrecidos = new Set<string>();
@@ -454,8 +509,20 @@ export async function repartirOperaciones(
             op.pais,
           )
         : null;
+    // C-ENVIO-TAMANO: un paquete mediano o grande solo va a quien lo puede llevar en su vehículo.
+    const vehiculos =
+      op.tamano === 'mediano' || op.tamano === 'grande'
+        ? await vehiculosActivos(
+            db,
+            candidatos.map((c) => c.conductorId),
+          )
+        : null;
     const elegido = candidatos.find((c) => {
       if (yaOfrecidos.has(c.conductorId)) return false;
+      if (vehiculos && op.tamano) {
+        const v = vehiculos.get(c.conductorId);
+        if (!v || !vehiculoLlevaPaquete(op.tamano, v)) return false;
+      }
       if (sinSaldo.has(c.conductorId)) return false;
       if (conPagoMovil && !conPagoMovil.has(c.conductorId)) return false;
       const destino = destinos.get(c.conductorId);

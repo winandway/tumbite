@@ -6,6 +6,7 @@ import { guardarError, saludErrores } from './errores';
 import { saludBandeja } from './internacional/bandeja';
 import { finanzasAdmin } from './finanzas/rutasAdmin';
 import { controlDual } from './finanzas/controlDual';
+import { flexRecargasLocalesAdmin } from './flex/recargasLocales';
 import { saludBilleteras } from './finanzas/reloj';
 import { blindarStripeEnPruebas, entornoDe, problemasDeEntorno } from './entorno';
 import { saludRetiros } from './retiros';
@@ -88,6 +89,12 @@ import { stripeAvisos } from './rutas/stripeAvisos';
 import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
+import { viajesProgramados } from './rutas/viajesProgramados';
+import { chatViaje } from './rutas/chatViaje';
+import { comidaCiudad } from './rutas/comidaCiudad';
+import { pruebasComidaVe } from './rutas/pruebasComidaVe';
+import { saludComidaPaises } from './internacional/tarifas';
+import { viajesHistorial } from './rutas/viajesHistorial';
 import { seguridadViaje } from './rutas/seguridadViaje';
 import { ajustesViaje } from './rutas/ajustesViaje';
 import { lugares } from './rutas/lugares';
@@ -96,6 +103,10 @@ import { tiendasPeso } from './rutas/tiendasPeso';
 import { saludExclusividad } from './operaciones';
 import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
+// C-AVISOS-WEB (13 nov 2026): avisos de las apps instaladas desde el navegador.
+import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
+// C-TASA-BCV-AUTO (14 nov 2026): canario de la tasa oficial automática de Venezuela.
+import { saludTasaBcv } from './rutas/tasasReferencia';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludDinero } from './conciliacion';
 import { excepcionesConciliacion } from './rutas/excepcionesConciliacion';
@@ -114,6 +125,20 @@ app.use('*', async (c, next) => {
   await next();
 });
 app.use('*', cabecerasSeguridad);
+// C-AVISOS-WEB: el trabajo que no hace falta para responder (los avisos web) va con waitUntil.
+app.use('/datos/*', async (c, next) => {
+  let ctx: { waitUntil: (p: Promise<unknown>) => void } | null;
+  try {
+    ctx = c.executionCtx;
+  } catch {
+    ctx = null; // en las pruebas no hay contexto de ejecución
+  }
+  if (ctx) {
+    const ejecucion = ctx;
+    c.env = { ...c.env, ESPERAR_DESPUES: (p) => ejecucion.waitUntil(p) };
+  }
+  await next();
+});
 // C-PRESUPUESTO-VUELTA-PRUEBAS: las pruebas automáticas contra el sitio de pruebas tienen tope
 // de filas por vuelta y por día; en producción no hace nada.
 app.use('/datos/*', presupuestoVueltaPruebas);
@@ -192,6 +217,8 @@ app.use(
     credentials: true,
   }),
 );
+/** Páginas privadas por enlace (tickets, viaje compartido, entrega): ningún buscador las guarda. */
+export const RUTAS_PRIVADAS = ['/t/', '/ride/', '/deliver/'];
 const limiteGeneral = limiteIntentos(120, 60_000);
 // Los avisos de Stripe llegan de sus servidores y ya vienen firmados: no se frenan por IP.
 app.use('/datos/*', (c, next) =>
@@ -265,6 +292,14 @@ app.get('/datos/salud', async (c) => {
       : 'error';
   piezas.correo = !correoConfigurado(c.env) ? 'pendiente' : ultimoErrorCorreo ? 'error' : 'ok';
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
+  // C-AVISOS-WEB: sin llaves VAPID, «pendiente».
+  piezas.avisosWeb = saludAvisosWeb(c.env);
+  // C-TASA-BCV-AUTO: «pendiente» mientras no se haya tomado nunca; «error» si la última quedó retenida.
+  if (c.env.DB)
+    piezas.tasaBcv = await saludTasaBcv(c.env.DB).catch((e: unknown) => {
+      console.error('salud: tasa bcv', e);
+      return 'error' as const;
+    });
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
   // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que
   // los miran (antes, cuatro recorridos). Si falla, cada pieza vuelve a preguntar por su cuenta.
@@ -299,6 +334,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.viajes = await saludViajes(c.env.DB).catch((e: unknown) => {
       console.error('salud: viajes', e);
+      return 'error' as const;
+    });
+  // C-COMIDA-VENEZUELA: ciudad con Comida encendida fuera de EE. UU. en otra moneda que su país.
+  if (c.env.DB)
+    piezas.comidaPaises = await saludComidaPaises(c.env.DB).catch((e: unknown) => {
+      console.error('salud: comida por país', e);
       return 'error' as const;
     });
   // Fase 2: tiempo real (apagado = «pendiente»; las apps siguen con la consulta normal).
@@ -506,7 +547,8 @@ app.notFound(async (c) => {
   let respuesta = new Response(res.body, res);
   // Las conversaciones de tickets (/t/<codigo>) son privadas: ningún buscador las guarda.
   // Igual el viaje compartido (/ride/<codigo>, M6): privado y en vivo.
-  if (['/t/', '/ride/', '/deliver/'].some((p) => c.req.path.startsWith(p)))
+  // C-NOINDEX-ES: también sus versiones en español (/es/ride/…).
+  if (RUTAS_PRIVADAS.some((p) => c.req.path.startsWith(p) || c.req.path.startsWith(`/es${p}`)))
     respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow');
   if (esRutaPublica(c.req.path) && res.ok) {
     // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.
@@ -519,6 +561,8 @@ app.notFound(async (c) => {
 });
 
 app.route('/datos/cuentas', cuentas);
+// C-AVISOS-WEB: suscribirse y darse de baja de los avisos en el navegador.
+app.route('/datos/avisos-web', rutasAvisosWeb);
 // C-ENTREGA-PRACTICA: antes que las de verdad; solo atiende los pedidos «prueba-…».
 app.route('/datos', rutasPractica(esRevisor));
 app.route('/datos', gerente);
@@ -536,7 +580,14 @@ app.route('/datos', demanda);
 app.route('/datos', avisos);
 app.route('/datos', repartidorGrandes);
 app.route('/datos', viajes);
+// C-VIAJES-HISTORIAL: antes que viajesPasajero, para que /viajes/historial no caiga en /viajes/:id.
+app.route('/datos', viajesHistorial);
+// C-VIAJE-PROGRAMADO: antes que viajesPasajero, para que /viajes/programados no caiga en /viajes/:id.
+app.route('/datos', viajesProgramados);
+app.route('/datos', chatViaje);
 app.route('/datos', viajesPasajero);
+app.route('/datos', comidaCiudad);
+app.route('/datos', pruebasComidaVe);
 app.route('/datos', seguridadViaje);
 app.route('/datos', ajustesViaje);
 app.route('/datos', lugares);
@@ -582,6 +633,8 @@ app.route('/datos', respaldo);
 app.route('/datos/v1/flex', flex);
 app.route('/datos', finanzasAdmin);
 app.route('/datos', controlDual);
+// C-FLEX-RECARGA-LOCAL: lo del equipo bajo /datos/admin/finanzas (perfiles y bitácora del equipo).
+app.route('/datos', flexRecargasLocalesAdmin);
 app.route('/datos', excepcionesConciliacion);
 // Divoox Rewards · Fase 2: lectura del modo sombra (solo admin y solo en pruebas).
 app.route('/datos', rewardsSombra);

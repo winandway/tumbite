@@ -10,7 +10,20 @@ import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
 import { DespachoCatalogo } from './DespachoCatalogo';
 import { InterruptoresRepartidor } from './InterruptoresRepartidor';
-import { pedir } from './api';
+import { api, pedir } from './api';
+import { miniaturaWebp } from './SubirFoto';
+
+/** Reduce la selfie aprobada a una miniatura y la guarda; si no se puede, el pasajero no ve foto. */
+async function guardarMiniatura(id: string) {
+  try {
+    const r = await fetch(`/datos/admin/kyc/${id}/foto/selfie`, { credentials: 'same-origin' });
+    if (!r.ok) return;
+    const mini = await miniaturaWebp(await r.blob());
+    if (mini) await api.subirFoto(mini, `/datos/admin/kyc/${id}/miniatura`);
+  } catch (e) {
+    console.error('kyc: miniatura de la selfie', e);
+  }
+}
 
 const T = {
   es: {
@@ -262,6 +275,8 @@ function RevisarKyc({ base, idioma, id }: { base: string; idioma: Idioma; id: st
     setError('');
     try {
       await pedir('PATCH', `/datos/admin/kyc/${id}`, { estado, motivo: b.valores.motivo });
+      // C-FOTO-CONDUCTOR-MINIATURA: al aprobar, la miniatura que verá el pasajero (nunca la original).
+      if (estado === 'aprobado') await guardarMiniatura(id);
       await b.limpiar();
       cargar();
     } catch (x) {

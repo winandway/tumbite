@@ -1,4 +1,5 @@
 import type { TarifaViaje } from './viajes';
+import { CIUDAD_PRUEBAS_EL_VIGIA } from './comidaVenezuela';
 
 /**
  * Divoox Moto por país (13 nov 2026, regla «cada país es su propio sistema»): una sola pieza dice,
@@ -14,8 +15,36 @@ export const METODOS_PAGO_VIAJE = ['efectivo', 'tarjeta', 'pago_movil'] as const
 export type MetodoPagoViaje = (typeof METODOS_PAGO_VIAJE)[number];
 
 /** Papeles del CONDUCTOR (no del vehículo) que se suben a mano y revisa el equipo. */
-export const DOCUMENTOS_CONDUCTOR = ['licencia_moto', 'antecedentes_penales'] as const;
+export const DOCUMENTOS_CONDUCTOR = [
+  'licencia_moto',
+  'antecedentes_penales',
+  // C-CARRO-PAPELES-PAIS (13 nov 2026): la licencia para manejar carro (en Venezuela, la del INTT).
+  'licencia_conducir',
+] as const;
 export type DocumentoConductor = (typeof DOCUMENTOS_CONDUCTOR)[number];
+
+/** Servicios de pasajeros que piden papeles al conductor (Moto y Carro). */
+export type ServicioPasajeros = 'moto' | 'carro';
+
+/**
+ * C-CARRO-PAPELES-PAIS: papeles del VEHÍCULO que se suben para llevar pasajeros en cada servicio. Son los
+ * mismos en todos los países (el despacho exige registro, seguro y seguro de pasajeros aprobados; Carro
+ * además la inspección, requisito `inspeccion_vehiculo`); lo que cambia por país es cómo se llama cada
+ * papel (en Venezuela: título o carnet de circulación, póliza RCV, revisión del vehículo).
+ */
+export const DOCUMENTOS_VEHICULO_PASAJEROS: Readonly<Record<ServicioPasajeros, readonly string[]>> =
+  {
+    moto: ['registro', 'seguro', 'seguro_pasajeros', 'foto_frente', 'foto_placa'],
+    carro: [
+      'registro',
+      'seguro',
+      'seguro_pasajeros',
+      'inspeccion',
+      'foto_frente',
+      'foto_placa',
+      'foto_interior',
+    ],
+  };
 
 export type PerfilPasajeros = {
   pais: string;
@@ -32,8 +61,10 @@ export type PerfilPasajeros = {
   monedaViajes: string | null;
   /** La placa es nacional (no hay «estado que la emitió»): se guarda con el código del país. */
   placaNacional: boolean;
-  /** Papeles del conductor que se piden en ese país. */
+  /** Papeles del conductor de MOTO que se piden en ese país. */
   documentosConductor: readonly DocumentoConductor[];
+  /** C-CARRO-PAPELES-PAIS: papeles del conductor de CARRO que se piden en ese país. */
+  documentosCarro: readonly DocumentoConductor[];
   /** Qué requisitos DE PASAJEROS cumple cada papel cuando el equipo lo aprueba. */
   requisitosDeDocumento: Readonly<Partial<Record<DocumentoConductor, readonly string[]>>>;
   /**
@@ -47,6 +78,7 @@ export type PerfilPasajeros = {
 /** Los requisitos que son de llevar pasajeros (los únicos que un papel cumple por defecto). */
 export const REQUISITOS_PASAJEROS: ReadonlySet<string> = new Set([
   'licencia_moto',
+  'licencia',
   'historial_manejo',
   'antecedentes_pasajeros',
 ]);
@@ -67,7 +99,10 @@ const EEUU: PerfilPasajeros = {
   metodosPago: ['efectivo', 'tarjeta'],
   monedaViajes: null,
   placaNacional: false,
+  // EE. UU.: antecedentes e historial de manejo con el proveedor (Checkr); la licencia, la
+  // inspección y el seguro de pasajeros siguen como estaban sembrados. No se baja ese piso.
   documentosConductor: [],
+  documentosCarro: [],
   requisitosDeDocumento: {},
 };
 
@@ -85,8 +120,13 @@ const VENEZUELA: PerfilPasajeros = {
   monedaViajes: 'USD',
   placaNacional: true,
   documentosConductor: ['licencia_moto', 'antecedentes_penales'],
+  // C-CARRO-PAPELES-PAIS: el taxista sube su licencia de conducir y el certificado de antecedentes;
+  // los papeles del carro (título o carnet de circulación, RCV, revisión) van con el vehículo.
+  // Ficha: docs/investigaciones-rea/2026-11-13-carro-venezuela.md.
+  documentosCarro: ['licencia_conducir', 'antecedentes_penales'],
   requisitosDeDocumento: {
     licencia_moto: ['licencia_moto', 'historial_manejo'],
+    licencia_conducir: ['licencia', 'historial_manejo'],
     antecedentes_penales: ['antecedentes_pasajeros'],
   },
   requisitosOtrosServicios: {},
@@ -96,6 +136,14 @@ const PERFILES = new Map<string, PerfilPasajeros>([
   ['US', EEUU],
   ['VE', VENEZUELA],
 ]);
+
+/** Los papeles del conductor que pide su país para un servicio de pasajeros. */
+export function documentosDelConductor(
+  perfil: PerfilPasajeros,
+  servicio: ServicioPasajeros,
+): readonly DocumentoConductor[] {
+  return servicio === 'carro' ? perfil.documentosCarro : perfil.documentosConductor;
+}
 
 export function perfilPasajeros(pais: string | null | undefined): PerfilPasajeros {
   const p = PERFILES.get((pais ?? '').toUpperCase());
@@ -124,6 +172,38 @@ export const TARIFA_MOTO_VENEZUELA: TarifaViaje = {
   velocidadKmh: 24,
 };
 
+/**
+ * C-CARRO-TARIFA-VE (13 nov 2026): tarifa de Carro de mercado para una ciudad de Venezuela, en centavos
+ * de dólar. Calibrada con Caracas (1,2 km en carro: Ridery 4,20 y Yummy 4,25 [OBS]; taxis desde 3 o 4
+ * dólares [OBS]) y algo por debajo para una ciudad mediana como El Vigía. Carro XL = × 1,5 (C-CARRO-XL).
+ * Ficha: docs/investigaciones-rea/2026-11-13-carro-venezuela.md. Sin redondeo ni precio dinámico.
+ */
+export const TARIFA_CARRO_VENEZUELA: TarifaViaje = {
+  base: 150,
+  porKm: 45,
+  porMinuto: 6,
+  minimo: 350,
+  esperaGratisS: 180,
+  porMinutoEspera: 10,
+  cancelacionGratisS: 120,
+  cargoCancelacion: 100,
+  cargoNoSePresento: 100,
+  topeDinamicoPb: 10_000,
+  redondeo: 1,
+  cargoFijo: 0,
+  xlPb: 15_000,
+  factorCallePb: 13_000,
+  velocidadKmh: 24,
+};
+
+/** La tarifa de mercado sembrada para un servicio de viajes en un país (null = hay que escribirla). */
+export function tarifaDeMercado(pais: string, servicio: string): TarifaViaje | null {
+  if (pais.toUpperCase() !== 'VE') return null;
+  if (servicio === 'moto') return TARIFA_MOTO_VENEZUELA;
+  if (servicio === 'carro') return TARIFA_CARRO_VENEZUELA;
+  return null;
+}
+
 /** Caracas como ciudad de PRUEBAS de Moto (la ciudad real la decide Richard). */
 export const CIUDAD_PRUEBAS_VENEZUELA = {
   id: 'VE-CCS-PRUEBAS',
@@ -135,6 +215,13 @@ export const CIUDAD_PRUEBAS_VENEZUELA = {
   lng: -66.9036,
   radioKm: 25,
 } as const;
+
+/**
+ * El Vigía (estado Mérida) como ciudad de PRUEBAS de Carro, Moto y Envíos en Venezuela (orden de
+ * Richard del 13 nov 2026). Es la MISMA zona que Comida (VE-MER-ELVIGIA): una sola ciudad de pruebas
+ * en El Vigía (C-EL-VIGIA-UNA-ZONA, 14 nov 2026). La VE-VIG-CENTRO de antes ya no se siembra.
+ */
+export const CIUDAD_EL_VIGIA = CIUDAD_PRUEBAS_EL_VIGIA;
 
 /**
  * «Te alcanza para unas N carreras»: saldo prepago dividido por la comisión típica (aproximado).

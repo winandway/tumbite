@@ -63,6 +63,7 @@ const T = {
     comisionPais: 'Comisión por pedido (%; vacío = la del plan)',
     cargoFijo: 'Cargo fijo por pedido',
     topeEfectivo: 'Tope de efectivo sin conciliar (vacío = sin tope)',
+    propinas: 'Propinas sugeridas en el carrito, en % separadas por comas (vacío = 0, 15, 20, 25)',
     guardarPais: 'Guardar país',
     comisionesCobradas: 'Comisiones cobradas',
     puntos: 'Puntos de venta de recargas',
@@ -175,6 +176,7 @@ const T = {
     comisionPais: 'Fee per order (%; empty = the plan’s)',
     cargoFijo: 'Fixed charge per order',
     topeEfectivo: 'Unsettled cash cap (empty = no cap)',
+    propinas: 'Suggested tips in the cart, in % separated by commas (empty = 0, 15, 20, 25)',
     guardarPais: 'Save country',
     comisionesCobradas: 'Fees collected',
     puntos: 'Top-up sales points',
@@ -302,6 +304,8 @@ type ConfigPais = {
   topeEfectivoDiario: number | null;
   tarifas: TarifasPais | null;
   topes: TopesPais | null;
+  /** C-COMIDA-VENEZUELA: propinas sugeridas en el carrito, en puntos base (null = las de siempre). */
+  propinasPb?: number[] | null;
 };
 type Punto = {
   id: string;
@@ -331,6 +335,17 @@ type Conciliacion = {
  * los cobros en revisión con sus dos salidas, los abonos rechazados por el banco y el historial de
  * la conciliación con su detalle y el recálculo. Todo con rutas que ya existían o se agregaron hoy.
  */
+/** «0, 5, 10, 15» → [0, 500, 1000, 1500]; vacío o inválido → null (las de siempre). */
+export function propinasDeTexto(texto: string): number[] | null {
+  const partes = texto
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map((x) => Math.round(Number(x.replace('%', '')) * 100));
+  if (partes.length < 2 || partes.length > 4) return null;
+  return partes.every((n) => Number.isInteger(n) && n >= 0 && n <= 5000) ? partes : null;
+}
+
 export function ControlDinero({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [retiros, setRetiros] = useState<Retiros | null>(null);
@@ -730,6 +745,14 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                 })
               }
               aria-label={t.topeEfectivo}
+            />
+          </label>
+          <label className="campo">
+            <span>{t.propinas}</span>
+            <input
+              defaultValue={(pais.propinasPb ?? []).map((pb) => pb / 100).join(', ')}
+              onBlur={(ev) => setPais({ ...pais, propinasPb: propinasDeTexto(ev.target.value) })}
+              aria-label={t.propinas}
             />
           </label>
           <button

@@ -8,6 +8,8 @@ import {
   edadMinimaRepartidor,
   estadoEeuuDeZona,
   perfilPasajeros,
+  TAMANOS_FOTO,
+  medidasWebp,
 } from '@tumbite/compartido';
 import { paisDelConductor } from '../paisConductor';
 import type { Env } from '../env';
@@ -578,6 +580,41 @@ kyc.get('/pedidos/:id/repartidor/foto', async (c) => {
  * La foto verificada no se cambia desde la app. Si hace falta una nueva (cambió mucho, la foto quedó
  * mal), soporte la libera con motivo: la verificación vuelve a empezar y queda en el registro.
  */
+/**
+ * C-FOTO-CONDUCTOR-MINIATURA (14 nov 2026): al aprobar la verificación, el panel reduce la selfie a
+ * una miniatura WebP de 200 px (en el navegador del equipo: un Worker no tiene con qué reducir) y la
+ * guarda aquí. Es lo único que ve el pasajero en su viaje. Solo WebP, con su lado y peso máximos.
+ */
+kyc.post('/admin/kyc/:id/miniatura', async (c) => {
+  exigir(c, 'admin');
+  const id = c.req.param('id');
+  const bytes = new Uint8Array(await c.req.arrayBuffer());
+  const regla = TAMANOS_FOTO.miniatura;
+  const medidas = tipoReal(bytes) === 'image/webp' ? medidasWebp(bytes) : null;
+  if (
+    !medidas ||
+    Math.max(medidas.ancho, medidas.alto) > regla.lado ||
+    bytes.byteLength > regla.maxBytes
+  )
+    throw new ErrorDatos('Esa miniatura no cumple las medidas.', 'foto', 422);
+  const db = base(c);
+  const k = await db
+    .prepare('SELECT estado FROM kyc WHERE usuario_id = ? AND selfie IS NOT NULL')
+    .bind(id)
+    .first<{ estado: string }>();
+  if (k?.estado !== 'aprobado')
+    throw new ErrorDatos('Primero aprueba la verificación.', undefined, 409);
+  const clave = `kyc/${id}/selfie-s-${nuevoId()}.webp`;
+  await guardarFoto(almacen(c.env), clave, bytes, 'image/webp', {
+    cacheControl: 'private, no-store',
+  });
+  await db
+    .prepare('UPDATE kyc SET selfie_miniatura = ? WHERE usuario_id = ?')
+    .bind(clave, id)
+    .run();
+  return c.json({ ok: true }, 201);
+});
+
 kyc.post('/admin/kyc/:id/liberar-foto', async (c) => {
   const admin = exigir(c, 'admin');
   const { motivo } = await leerCuerpo(
@@ -588,7 +625,7 @@ kyc.post('/admin/kyc/:id/liberar-foto', async (c) => {
   const id = c.req.param('id');
   const r = await db
     .prepare(
-      "UPDATE kyc SET selfie = NULL, estado = 'sin_enviar', motivo = ?, revisado_en = datetime('now'), revisado_por = ? WHERE usuario_id = ? AND selfie IS NOT NULL",
+      "UPDATE kyc SET selfie = NULL, selfie_miniatura = NULL, estado = 'sin_enviar', motivo = ?, revisado_en = datetime('now'), revisado_por = ? WHERE usuario_id = ? AND selfie IS NOT NULL",
     )
     .bind(`Soporte pidió una foto nueva: ${motivo}`, admin.id, id)
     .run();

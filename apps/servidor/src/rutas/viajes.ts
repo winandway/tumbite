@@ -25,6 +25,11 @@ import {
 } from '../operaciones';
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
 import { capturarCobroViaje, soltarCobroViaje } from '../viajesCobro';
+import {
+  MINUTOS_CORREGIR_PAGO_MOVIL,
+  SQL_A_TIEMPO,
+  decidirPagoMovil,
+} from '../internacional/pagoMovil';
 
 /**
  * C-VIAJE-PASOS-REALES (28 oct 2026, encontrado con REA): sin estas reglas un conductor podía
@@ -96,7 +101,7 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
     .prepare(
       `SELECT f.operacion_id, f.vehiculo_id, f.ganancia_centavos, f.expira_en, o.servicio_id,
               v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
-              v.destino_lng, v.pasajeros, v.metodo_pago, q.distancia_m, q.duracion_s, q.moneda,
+              v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               d.lat AS yo_lat, d.lng AS yo_lng
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
@@ -130,6 +135,11 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         viajeS: f.duracion_s == null ? null : Number(f.duracion_s),
         metodoPago: String(f.metodo_pago ?? 'efectivo'),
         pasajeros: Number(f.pasajeros),
+        // C-VIAJE-PROGRAMADO: la oferta dice que es una reserva y para cuándo (UTC, ISO).
+        programadoPara:
+          f.programado_para == null
+            ? null
+            : new Date(`${String(f.programado_para).replace(' ', 'T')}Z`).toISOString(),
       };
     }),
   });
@@ -151,7 +161,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               p.nombre AS pasajero,
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
-              e.foto_recogida IS NOT NULL AS paquete_foto
+              e.foto_recogida IS NOT NULL AS paquete_foto, e.foto_entrega IS NOT NULL AS paquete_foto_entrega,
+              e.tamano AS paquete_tamano
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -426,8 +437,8 @@ viajes.post(
  * bandeja de dinero para soporte. Es una confirmación MANUAL (nunca «verificado por el banco»). La
  * comisión sale igual del prepago al terminar, como en efectivo.
  */
-/** Minutos para corregir un «no me llegó» puesto por error (C-PAGO-MOVIL-CORREGIR). */
-export const MINUTOS_CORREGIR_PAGO_MOVIL = 30;
+/** Minutos para corregir un «no me llegó» puesto por error (C-PAGO-MOVIL-CORREGIR, pieza común). */
+export { MINUTOS_CORREGIR_PAGO_MOVIL };
 
 viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
   const u = exigir(c, 'repartidor');
@@ -470,19 +481,16 @@ viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
   if (!r.meta.changes) {
     const ya = await db
       .prepare(
-        `SELECT estado, corregido_en,
-                creado_en > datetime('now', '-${MINUTOS_CORREGIR_PAGO_MOVIL} minutes') AS a_tiempo
-           FROM viajes_pago_movil WHERE operacion_id = ?`,
+        `SELECT estado, corregido_en, ${SQL_A_TIEMPO} FROM viajes_pago_movil WHERE operacion_id = ?`,
       )
       .bind(id)
       .first<{ estado: string; corregido_en: string | null; a_tiempo: number }>();
-    const pedido = d.recibido ? 'recibido' : 'no_recibido';
-    // Lo mismo otra vez (doble toque, respuesta perdida): no es un error.
-    if (!ya || ya.estado === pedido) return c.json({ estado: ya?.estado ?? null });
-    // C-PAGO-MOVIL-CORREGIR (como la transferencia de Comida): «no me llegó» por error se corrige
-    // a «sí me llegó» UNA vez y dentro de un plazo corto; el caso de soporte se cierra con nota.
-    // Después de eso, o en el otro sentido, lo cambia solo soporte.
-    if (!(ya.estado === 'no_recibido' && d.recibido && !ya.corregido_en && ya.a_tiempo === 1))
+    // C-PAGO-MOVIL-CORREGIR (pieza común con la comida, `decidirPagoMovil`): lo mismo otra vez no
+    // es un error; «no me llegó» por error se corrige a «sí me llegó» UNA vez y a tiempo, y el caso
+    // de soporte se cierra con nota. Después de eso, o en el otro sentido, lo cambia solo soporte.
+    const decision = decidirPagoMovil(ya, d.recibido);
+    if (decision === 'igual') return c.json({ estado: ya?.estado ?? null });
+    if (decision === 'rechazar')
       throw new ErrorDatos(
         'Ya confirmaste este pago. Si hay que cambiarlo, escribe a soporte desde Ayuda.',
         undefined,
@@ -669,18 +677,26 @@ async function revisarPaquete(c: Ctx, db: D1Database, id: string, paso: string) 
     .run();
 }
 
-/** C-ENVIOS: la foto del paquete al recogerlo (privada; la ven quien envía y el equipo). */
+/**
+ * C-ENVIOS: la foto del paquete al recogerlo (privada; la ven quien envía y el equipo).
+ * C-ENVIO-FOTO-ENTREGA (14 nov 2026): con `?momento=entrega`, la foto OPCIONAL al entregar, además
+ * del PIN (como la foto de entrega de DoorDash y Uber), solo con el paquete a bordo.
+ */
 viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
   const u = exigir(c, 'repartidor');
   const id = c.req.param('id');
+  const entrega = c.req.query('momento') === 'entrega';
   const db = base(c);
   const es = await db
     .prepare(
-      'SELECT 1 FROM envios_persona p JOIN operaciones o ON o.id = p.operacion_id WHERE p.operacion_id = ? AND o.conductor_id = ?',
+      `SELECT v.estado FROM envios_persona p JOIN operaciones o ON o.id = p.operacion_id
+         JOIN viajes v ON v.operacion_id = o.id WHERE p.operacion_id = ? AND o.conductor_id = ?`,
     )
     .bind(id, u.id)
-    .first();
+    .first<{ estado: string }>();
   if (!es) throw new ErrorDatos('Este envío ya no está asignado a ti.', undefined, 404);
+  if (entrega && es.estado !== 'en_curso')
+    throw new ErrorDatos('La foto de entrega se toma con el paquete a bordo.', undefined, 409);
   const bytes = new Uint8Array(await c.req.arrayBuffer());
   if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
   if (bytes.byteLength > MAX_FOTO_BYTES)
@@ -693,7 +709,7 @@ viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
       undefined,
       503,
     );
-  const clave = `envios/${id}/recogida-${nuevoId()}`;
+  const clave = `envios/${id}/${entrega ? 'entrega' : 'recogida'}-${nuevoId()}`;
   // C-FOTOS-SIN-METADATOS (SIG-6x): la foto se guarda limpia; el GPS que traía queda aparte como
   // prueba de dónde se recogió el paquete, igual que las evidencias de los pedidos.
   const { gps } = await guardarFoto(c.env.BUCKET, clave, bytes, tipo, {
@@ -701,7 +717,11 @@ viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
   });
   if (gps) await anotarGpsFoto(db, clave, gps);
   await db
-    .prepare('UPDATE envios_persona SET foto_recogida = ? WHERE operacion_id = ?')
+    .prepare(
+      entrega
+        ? 'UPDATE envios_persona SET foto_entrega = ? WHERE operacion_id = ?'
+        : 'UPDATE envios_persona SET foto_recogida = ? WHERE operacion_id = ?',
+    )
     .bind(clave, id)
     .run();
   return c.json({ ok: true }, 201);

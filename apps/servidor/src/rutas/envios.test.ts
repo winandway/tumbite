@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
 import { jpegConGps } from '../pruebas/fotoConGps';
+import { idiomaDelEnvio, textoSmsDestinatario } from './viajesPasajero';
 
 /**
  * C-ENVIOS (30 oct 2026), como Uber Courier: envíos de persona a persona sobre el motor de viajes.
@@ -91,6 +92,11 @@ describe('Divoox Envíos (C-ENVIOS)', () => {
     });
     const pin = actual.paquete.pinEntrega as string;
     expect(pin).toMatch(/^\d{4}$/);
+    // C-ENVIO-TEXTOS: la página pública sabe que es un paquete (no «Viaje en Moto»).
+    const enlace = await e.m.llamar('POST', `/datos/viajes/${id}/compartir`, {}, e.cliente.token);
+    const codigo = String(enlace.datos.url).split('/ride/')[1];
+    const vivo = await e.m.llamar('GET', `/datos/publico/viaje/${codigo}`);
+    expect(vivo.datos.viaje.servicio).toBe('envios');
     // Un viaje en curso del mismo cliente no se mezcla con el envío.
     expect(
       (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos.viaje,
@@ -120,7 +126,16 @@ describe('Divoox Envíos (C-ENVIOS)', () => {
       .first<{ lat: number; lng: number }>();
     expect(gps?.lat).toBeCloseTo(25.775, 3);
     expect(gps?.lng).toBeCloseTo(-80.19, 3);
+    // C-ENVIO-FOTO-ENTREGA: la foto de entrega solo con el paquete a bordo (es opcional).
+    const fotoEntrega = (body: BodyInit) =>
+      e.m.crudo(`/datos/conductor/operaciones/${id}/foto-paquete?momento=entrega`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${cond.token}`, 'content-type': 'image/png' },
+        body,
+      });
+    expect((await fotoEntrega(PNG as BodyInit)).status).toBe(409);
     expect(await cond.paso(id, 'iniciar', {})).toBe(200);
+    expect((await fotoEntrega(PNG as BodyInit)).status).toBe(201);
     // Con el PIN equivocado no se entrega; con el de quien recibe, sí.
     expect(await cond.paso(id, 'terminar', { pinEntrega: pin === '0000' ? '1111' : '0000' })).toBe(
       409,
@@ -128,6 +143,71 @@ describe('Divoox Envíos (C-ENVIOS)', () => {
     expect(await cond.paso(id, 'terminar', { pinEntrega: pin })).toBe(200);
     const fin = (await e.m.llamar('GET', `/datos/viajes/${id}`, undefined, e.cliente.token)).datos;
     expect(fin.viaje.estado).toBe('terminado');
-    expect(fin.paquete).toMatchObject({ recogido: true, entregado: true, pinEntrega: null });
+    expect(fin.paquete).toMatchObject({
+      recogido: true,
+      entregado: true,
+      pinEntrega: null,
+      tamano: 'pequeno',
+      fotoEntrega: true,
+    });
+  });
+
+  it('C-ENVIO-TAMANO: un paquete grande solo va en carro; uno mediano, en carro o moto con cajón', async () => {
+    const e = await encender();
+    const moto = await conductorDeMoto(e.m, ORIGEN, 'US-FL-MIAMI', 'envios');
+    const ofertasDe = async (token: string) =>
+      (
+        (await e.m.llamar('GET', '/datos/conductor/operaciones/ofertas', undefined, token)).datos
+          .ofertas as { operacionId: string }[]
+      ).map((o) => o.operacionId);
+    // Grande: la moto no lo recibe.
+    const grande = (await pedir(e, { ...PAQUETE, tamano: 'grande' })).datos.viaje.id as string;
+    expect(await ofertasDe(moto.token)).not.toContain(grande);
+    // Un carro sí (el mismo conductor cambia a un carro aprobado).
+    await e.m.DB.prepare("UPDATE vehiculos SET tipo = 'carro', plazas = 4 WHERE id = ?")
+      .bind(moto.vehiculo)
+      .run();
+    await e.m.DB.prepare(
+      "UPDATE ofertas_operacion SET expira_en = datetime('now', '-1 minute')",
+    ).run();
+    const { repartirOperaciones } = await import('../operaciones');
+    await repartirOperaciones(undefined, e.m.DB);
+    expect(await ofertasDe(moto.token)).toContain(grande);
+    const cancelar = await e.m.crudo(`/datos/viajes/${grande}/cancelar`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${e.cliente.token}`,
+        'content-type': 'application/json',
+        'idempotency-key': 'cancelar-grande-1',
+      },
+      body: '{}',
+    });
+    expect(cancelar.status).toBe(200);
+    // Mediano: una moto sin cajón no; con cajón, sí.
+    await e.m.DB.prepare(
+      "UPDATE vehiculos SET tipo = 'moto', plazas = 1, con_cajon = 0 WHERE id = ?",
+    )
+      .bind(moto.vehiculo)
+      .run();
+    const r = await pedir(e, { ...PAQUETE, tamano: 'mediano' });
+    const mediano = r.datos.viaje.id as string;
+    expect(await ofertasDe(moto.token)).not.toContain(mediano);
+    await e.m.DB.prepare('UPDATE vehiculos SET con_cajon = 1 WHERE id = ?')
+      .bind(moto.vehiculo)
+      .run();
+    await repartirOperaciones(undefined, e.m.DB);
+    expect(await ofertasDe(moto.token)).toContain(mediano);
+  });
+
+  it('C-ENVIO-TEXTOS: el mensaje a quien recibe va en el idioma de quien envía o del país', () => {
+    expect(idiomaDelEnvio('en', 'US')).toBe('en');
+    expect(idiomaDelEnvio('es', 'US')).toBe('es');
+    expect(idiomaDelEnvio('en', 'VE')).toBe('es');
+    const es = textoSmsDestinatario('es', 'Paula', 'https://divoox.com/es/ride/x', '1234');
+    expect(es).toContain('te envió un paquete');
+    expect(es).toContain('1234');
+    expect(textoSmsDestinatario('en', 'Paula', 'https://divoox.com/ride/x', '1234')).toContain(
+      'sent you a package',
+    );
   });
 });

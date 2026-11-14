@@ -1,6 +1,8 @@
 import type { Idioma } from '@tumbite/compartido';
 import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
+import { GUIAS_CARRO } from './carro';
+import { GUIAS_SEMANA } from './semana';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -4631,7 +4633,9 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Las tres apps de Divoox también funcionan en el navegador del celular: Divoox para pedir (divoox.com/app), Divoox Driver para repartir (divoox.com/driver) y Divoox Restaurants para tu restaurante (divoox.com/restaurant). Sirve para quien tiene iPhone mientras Apple revisa las apps, y para quien prefiere no instalar nada desde la tienda.',
           'Al agregarla a tu pantalla de inicio queda con su nombre, su ícono y su color, y se abre a pantalla completa, sin la barra del navegador. Entras con la misma cuenta de siempre.',
-          'Instalada así, hay tres cosas que todavía no hace como la app de la tienda: no te llegan avisos al celular (tienes que tener Divoox abierto para ver un pedido nuevo), el repartidor no manda su ubicación con la pantalla apagada (lleva la app abierta mientras reparte), y el código de recogida del restaurante se escribe en vez de escanearse con la cámara. En Android, la app de Google Play no tiene ninguno de esos límites.',
+          'Avisos al celular: instalada desde el navegador, Divoox también te avisa con la app cerrada, si lo permites. El restaurante ve la explicación al abrir su sesión, el repartidor al conectarse y el cliente después de hacer su pedido: toca «Activar avisos» y acepta la ventana del celular. Nunca te lo pedimos sin que toques el botón.',
+          'En Android (Chrome) los avisos funcionan en el navegador o con la app agregada a la pantalla de inicio. En iPhone (iOS 16.4 o superior) solo funcionan con Divoox agregada a la pantalla de inicio y abierta desde ese ícono: en Safari, sin agregarla, no existen, y la app te lo explica en una línea. Si dijiste que no, los vuelves a encender en la configuración del sitio (el candado junto a la dirección) o, en iPhone, en Configuración, Notificaciones, Divoox.',
+          'Sin permitir los avisos (o en iPhone sin agregar Divoox a inicio) no te llegan: en ese caso deja Divoox abierto para ver cada pedido nuevo. Además, instalada así el repartidor no manda su ubicación con la pantalla apagada (lleva la app abierta mientras reparte) y el código de recogida del restaurante se escribe en vez de escanearse con la cámara. En Android, la app de Google Play no tiene esos límites.',
         ],
         capturas: [
           {
@@ -4650,6 +4654,21 @@ const es: SeccionDocs[] = [
             pie: 'Divoox Restaurants, para recibir los pedidos de tu restaurante.',
           },
           {
+            src: '/docs/recorrido-avisos-web-android-es.webp',
+            alt: 'La app Divoox Restaurants en el navegador con la tarjeta «Entérate de cada pedido aunque la app esté cerrada», el botón verde «Activar avisos» y «Ahora no».',
+            pie: 'Antes de pedir el permiso, la app explica para qué son los avisos. La ventana del celular sale solo al tocar «Activar avisos».',
+          },
+          {
+            src: '/docs/recorrido-avisos-web-iphone-es.webp',
+            alt: 'La misma tarjeta en un iPhone, que explica que los avisos funcionan con Divoox agregada a la pantalla de inicio.',
+            pie: 'En iPhone, primero agregas Divoox a tu pantalla de inicio y la abres desde ese ícono.',
+          },
+          {
+            src: '/docs/recorrido-web-avisos-restaurante-computadora-es.webp',
+            alt: 'El panel de Divoox Restaurants abierto en una computadora con la tarjeta «Entérate de cada pedido aunque la app esté cerrada», el botón verde «Activar avisos» y «Ahora no».',
+            pie: 'En la computadora del restaurante, la misma tarjeta: los avisos llegan aunque la pestaña esté cerrada.',
+          },
+          {
             src: '/docs/recorrido-instalar-descargas-es.webp',
             alt: 'La página de descargas de Divoox con el botón de Android en Google Play, el iPhone en revisión de Apple y la nota para instalar desde Safari.',
             pie: 'En la página de descargas está el enlace a esta guía para iPhone.',
@@ -4660,13 +4679,14 @@ const es: SeccionDocs[] = [
           '¿Puedo usar Divoox sin descargarla de la tienda?',
           '¿Cómo agrego Divoox a la pantalla de inicio?',
           '¿Qué no funciona en la versión del navegador?',
+          '¿Me llegan avisos con Divoox instalada desde el navegador?',
         ],
         pasos: [
           'Abre la dirección de tu app en el navegador del celular: divoox.com/app para pedir, divoox.com/driver para repartir o divoox.com/restaurant para tu restaurante.',
           'En iPhone (Safari): toca el botón «Compartir» (el cuadro con la flecha hacia arriba), baja y toca «Agregar a inicio», y después «Agregar».',
           'En Android (Chrome): toca los tres puntos de arriba a la derecha y elige «Instalar app» o «Agregar a la pantalla principal», y confirma.',
           'Busca el ícono de Divoox en tu pantalla de inicio y ábrelo: se abre a pantalla completa. Entra con tu cuenta.',
-          'Si repartes o tienes un restaurante, deja Divoox abierto mientras trabajas: así ves cada pedido nuevo y, si repartes, tu ubicación sigue llegando.',
+          'Cuando la app te lo explique, toca «Activar avisos» y acepta: así te llegan los pedidos con la app cerrada. Si repartes, igual lleva Divoox abierto mientras trabajas para que tu ubicación siga llegando.',
         ],
         nota: 'Los menús «Compartir», «Agregar a inicio» e «Instalar app» son del celular y pueden cambiar un poco de nombre según la versión. Si no los ves, actualiza el navegador.',
       },
@@ -9443,7 +9463,9 @@ const en: SeccionDocs[] = [
         explicacion: [
           'All three Divoox apps also work in your phone’s browser: Divoox to order (divoox.com/app), Divoox Driver to deliver (divoox.com/driver), and Divoox Restaurants for your restaurant (divoox.com/restaurant). It’s handy on iPhone while Apple reviews the apps, and for anyone who’d rather not install from a store.',
           'Once it’s on your Home Screen, it has its own name, icon, and color, and it opens full screen, without the browser bar. You sign in with the same account as always.',
-          'Installed this way, there are three things it doesn’t do yet like the store app: you don’t get notifications on your phone (keep Divoox open to see a new order), drivers don’t share their location with the screen off (keep the app open while delivering), and the restaurant’s pickup code is typed in instead of scanned with the camera. On Android, the Google Play app has none of these limits.',
+          'Notifications: installed from the browser, Divoox can also notify you with the app closed, if you allow it. Restaurants see the explanation when they sign in, drivers when they go online, and customers after placing an order: tap “Turn on notifications” and accept your phone’s prompt. We never ask until you tap the button.',
+          'On Android (Chrome), notifications work in the browser or with the app on your Home Screen. On iPhone (iOS 16.4 or later), they only work with Divoox added to your Home Screen and opened from that icon: in Safari, without adding it, they don’t exist, and the app tells you so in one line. If you said no, turn them back on in the site settings (the lock next to the address) or, on iPhone, in Settings, Notifications, Divoox.',
+          'If you don’t allow notifications (or on iPhone without adding Divoox to your Home Screen), you won’t get them: in that case keep Divoox open to see each new order. Also, installed this way, drivers don’t share their location with the screen off (keep the app open while delivering), and the restaurant’s pickup code is typed in instead of scanned with the camera. On Android, the Google Play app has none of these limits.',
         ],
         capturas: [
           {
@@ -9462,6 +9484,21 @@ const en: SeccionDocs[] = [
             pie: 'Divoox Restaurants, to get your restaurant’s orders.',
           },
           {
+            src: '/docs/recorrido-avisos-web-android-en.webp',
+            alt: 'The Divoox Restaurants app in the browser with the card “Know about every order, even with the app closed,” the green “Turn on notifications” button, and “Not now.”',
+            pie: 'Before asking for permission, the app explains what notifications are for. Your phone’s prompt only appears when you tap “Turn on notifications.”',
+          },
+          {
+            src: '/docs/recorrido-avisos-web-iphone-en.webp',
+            alt: 'The same card on an iPhone, explaining that notifications work with Divoox added to the Home Screen.',
+            pie: 'On iPhone, first add Divoox to your Home Screen and open it from that icon.',
+          },
+          {
+            src: '/docs/recorrido-web-avisos-restaurante-computadora-en.webp',
+            alt: 'The Divoox Restaurants panel open on a computer with the card “Know about every order, even with the app closed,” the green “Turn on notifications” button, and “Not now.”',
+            pie: 'On the restaurant’s computer, the same card: notifications arrive even with the tab closed.',
+          },
+          {
             src: '/docs/recorrido-instalar-descargas-en.webp',
             alt: 'The Divoox downloads page with the Android button on Google Play, iPhone in review by Apple, and the note to install from Safari.',
             pie: 'The downloads page links to this guide for iPhone.',
@@ -9472,13 +9509,14 @@ const en: SeccionDocs[] = [
           'Can I use Divoox without downloading it from a store?',
           'How do I add Divoox to my Home Screen?',
           'What doesn’t work in the browser version?',
+          'Do I get notifications with Divoox installed from the browser?',
         ],
         pasos: [
           'Open your app’s address in your phone’s browser: divoox.com/app to order, divoox.com/driver to deliver, or divoox.com/restaurant for your restaurant.',
           'On iPhone (Safari): tap the Share button (the square with the up arrow), scroll down and tap “Add to Home Screen,” then “Add.”',
           'On Android (Chrome): tap the three dots in the top right, choose “Install app” or “Add to Home screen,” and confirm.',
           'Find the Divoox icon on your Home Screen and open it: it opens full screen. Sign in with your account.',
-          'If you deliver or run a restaurant, keep Divoox open while you work: that way you see every new order and, if you deliver, your location keeps coming through.',
+          'When the app explains it, tap “Turn on notifications” and accept: that way orders reach you with the app closed. If you deliver, still keep Divoox open while you work so your location keeps coming through.',
         ],
         nota: 'The Share, Add to Home Screen, and Install app menus belong to your phone and their names can vary a little by version. If you don’t see them, update your browser.',
       },
@@ -9686,19 +9724,29 @@ const en: SeccionDocs[] = [
   },
 ];
 
-/** C-DOCS-MOTO: las guías de Divoox Moto con capturas reales van en «Para pedir» y en «Repartidores». */
-function conMoto(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
+/**
+ * C-DOCS-MOTO y C-DOCS-SEMANA (14 nov 2026): las guías que viven en su propio archivo, con capturas
+ * reales, se suman al final de su sección: Moto y Carro (pasajero en «Para pedir», conductor en
+ * «Repartidores») y las demás de la semana, cada una en la sección que dice su archivo.
+ */
+function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const moto = idioma === 'es' ? GUIAS_MOTO.es : GUIAS_MOTO.en;
-  return secciones.map((s) =>
-    s.id === 'ordering'
-      ? { ...s, guias: [...s.guias, ...moto.pasajero] }
-      : s.id === 'drivers'
-        ? { ...s, guias: [...s.guias, ...moto.conductor] }
-        : s,
-  );
+  const carro = idioma === 'es' ? GUIAS_CARRO.es : GUIAS_CARRO.en;
+  const extras = new Map(Object.entries(idioma === 'es' ? GUIAS_SEMANA.es : GUIAS_SEMANA.en));
+  const de = (id: SeccionDocs['id']) => extras.get(id) ?? [];
+  return secciones.map((s) => {
+    if (s.id === 'ordering')
+      return { ...s, guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, ...de(s.id)] };
+    if (s.id === 'drivers')
+      return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
+    return { ...s, guias: [...s.guias, ...de(s.id)] };
+  });
 }
 
-export const DOCS: Record<Idioma, SeccionDocs[]> = { es: conMoto(es, 'es'), en: conMoto(en, 'en') };
+export const DOCS: Record<Idioma, SeccionDocs[]> = {
+  es: conExtras(es, 'es'),
+  en: conExtras(en, 'en'),
+};
 
 export const TEXTOS_DOCS = {
   es: {

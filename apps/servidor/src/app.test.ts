@@ -47,6 +47,9 @@ describe('servidor', () => {
       'https://connect-js.stripe.com',
       'https://challenges.cloudflare.com',
       'https://static.cloudflareinsights.com',
+      // C-CSP-VISTA-PREVIA: el mapa web de Google (C-MAPA-GOOGLE-WEB), y nada más.
+      'https://maps.googleapis.com',
+      'https://maps.gstatic.com',
     ]);
   });
 

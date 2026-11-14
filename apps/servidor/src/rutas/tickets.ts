@@ -95,6 +95,11 @@ export async function crearTicket(
   env: Env,
   db: D1Database,
   t: NuevoTicket,
+  /**
+   * Sentencias que van en el MISMO lote que el ticket (todo o nada). Si una falla (por ejemplo, un
+   * INSERT que choca con su clave única), no nace el ticket ni sale ningún correo.
+   */
+  junto?: (ticketId: string) => D1PreparedStatement[],
 ): Promise<{ id: string; codigo: string }> {
   const id = nuevoId();
   const codigo = nuevoToken();
@@ -125,6 +130,7 @@ export async function crearTicket(
         "INSERT INTO ticket_mensajes (id, ticket_id, autor, texto) VALUES (?, ?, 'persona', ?)",
       )
       .bind(nuevoId(), id, t.mensaje),
+    ...(junto?.(id) ?? []),
   ]);
 
   const en = t.idioma === 'en';

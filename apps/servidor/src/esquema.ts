@@ -6,6 +6,12 @@ import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
+import {
+  COLUMNAS_RESUMEN_CATALOGO,
+  DISPARADORES_RESUMEN_CATALOGO,
+  asegurarResumenCatalogo,
+} from './resumenCatalogo';
+import { rehacerConductorDocumentos } from './esquemaPapeles';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -13,6 +19,8 @@ import { rehacerAprobacionesDinero } from './esquemaDinero';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-AVISOS-WEB (14 nov 2026): la sesión que registró la suscripción web (al borrarla, se borra).
+  ['suscripciones_web', 'sesion_id', 'TEXT'],
   // C-RUTA-POR-CALLES (13 nov 2026): de dónde salió la distancia cobrada en la cotización.
   ['cotizaciones_viaje', 'fuente_distancia', "TEXT NOT NULL DEFAULT 'estimada'"],
   // C-CIUDAD-ERRORES (13 nov 2026): de quién era la sesión del error no controlado (solo el id).
@@ -226,6 +234,20 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'ciudad_elegida_en', 'TEXT'],
   // C-PAGO-MOVIL-CORREGIR (13 nov 2026): el «no me llegó» corregido a «sí me llegó» (una sola vez).
   ['viajes_pago_movil', 'corregido_en', 'TEXT'],
+  // C-VIAJE-PROGRAMADO (14 nov 2026): la hora reservada del viaje (sin valor, es para ya) y cuántos
+  // minutos antes empieza a buscar conductor en esa ciudad (sin valor, 15).
+  ['viajes', 'programado_para', 'TEXT'],
+  ['ajustes_viaje_zona', 'programado_antes_min', 'INTEGER'],
+  // C-FOTO-CONDUCTOR-MINIATURA (14 nov 2026): la miniatura de la selfie aprobada que ve el pasajero
+  // (nunca la original). La hace el panel al aprobar la verificación.
+  ['kyc', 'selfie_miniatura', 'TEXT'],
+  // C-ENVIO-TAMANO y C-ENVIO-FOTO-ENTREGA (14 nov 2026): el tamaño del paquete, si la moto lleva
+  // cajón (mediano) y la foto opcional al entregar.
+  ['envios_persona', 'tamano', "TEXT NOT NULL DEFAULT 'pequeno'"],
+  ['envios_persona', 'foto_entrega', 'TEXT'],
+  ['vehiculos', 'con_cajon', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
+  ...COLUMNAS_RESUMEN_CATALOGO,
 ];
 
 /**
@@ -237,6 +259,11 @@ export const TELEFONO_DIEZ =
 
 /** Índices compuestos: primero la zona (filtra casi todo), luego el estado, luego orden o celda. */
 const INDICES = [
+  // C-AVISOS-WEB: sobre la columna sesion_id (llega con COLUMNAS). Una sesión cerrada, vencida o
+  // borrada por cualquier camino (salir, cambio de clave, el reloj, el superadmin) se lleva sus
+  // suscripciones web: el navegador deja de recibir los pedidos de esa cuenta.
+  'CREATE INDEX IF NOT EXISTS suscripciones_web_sesion ON suscripciones_web(sesion_id)',
+  'CREATE TRIGGER IF NOT EXISTS suscripciones_web_sin_sesion AFTER DELETE ON sesiones BEGIN DELETE FROM suscripciones_web WHERE sesion_id = OLD.id; END',
   // Flex · Fase 5: sobre columnas que llegan con COLUMNAS (en schema.sql romperían la publicación).
   'CREATE INDEX IF NOT EXISTS envios_destinatario ON envios(destinatario_usuario_id, creado_en)',
   // Fase 6: el efectivo en la mano de cada conductor y los cobros de cada ruta.
@@ -272,6 +299,12 @@ const INDICES = [
   // un rato» y recorría el menú entero (3.000 filas con el volumen del sitio de pruebas). Solo
   // guarda los platos con hora de vuelta: una escritura al agotarlo con hora y otra al volver.
   'CREATE INDEX IF NOT EXISTS platos_agotados_hasta ON platos(agotado_hasta) WHERE agotado_hasta IS NOT NULL',
+  // LECT-4 (14 nov 2026): borrar un vehículo hace que SQLite busque si algún repartidor lo tiene
+  // como activo (clave foránea): sin índice recorría TODOS los repartidores por cada vehículo (las
+  // pruebas F1, F3 y M4/M5 borran sus vehículos temporales). Solo guarda los que tienen vehículo
+  // activo y se escribe solo cuando ese vehículo cambia: la ubicación, que cambia cada pocos
+  // segundos, no lo toca.
+  'CREATE INDEX IF NOT EXISTS repartidores_vehiculo_activo ON repartidores(vehiculo_activo_id) WHERE vehiculo_activo_id IS NOT NULL',
 ];
 
 /**
@@ -528,8 +561,11 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerFranquicias),
         String(rehacerFlex),
         String(rehacerAprobacionesDinero),
+        String(rehacerConductorDocumentos),
         String(sincronizarServicios),
         String(preciosDeFabrica),
+        DISPARADORES_RESUMEN_CATALOGO,
+        String(asegurarResumenCatalogo),
       ]),
     ) + `:${entorno ?? 'local'}`
   );
@@ -590,11 +626,15 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   }
   // Un solo viaje a la base para todos los índices (antes, uno por índice en cada arranque).
   await db.batch(INDICES.map((sql) => db.prepare(sql)));
+  // C-LECTURAS-CATALOGO: los disparadores del resumen del listado (y su relleno, una sola vez).
+  await asegurarResumenCatalogo(db);
   // Flex · Fase 2: rehacer rutas_flex y conductor_ocupacion si vienen de antes (sin perder filas);
   // suelta sus disparadores y vistas, que asegurarFase3 vuelve a crear justo después.
   await rehacerFlex(db);
   // C-CONTROL-DUAL (SIG-4x): los tipos nuevos de la segunda firma (excedente devuelto, límite).
   await rehacerAprobacionesDinero(db);
+  // C-CARRO-PAPELES-PAIS: la licencia de conducir del taxista en los papeles del conductor.
+  await rehacerConductorDocumentos(db);
   await asegurarFase3(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);

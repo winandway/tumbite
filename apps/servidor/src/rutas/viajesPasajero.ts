@@ -18,8 +18,9 @@ import {
   numeroEmergencia,
   perfilPasajeros,
   METODOS_PAGO_VIAJE,
-  TARIFA_MOTO_VENEZUELA,
+  tarifaDeMercado,
   distanciaKm,
+  estimarRuta,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
@@ -35,6 +36,7 @@ import { referenciaLocal } from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
 import { pinParaViajeNuevo } from './ajustesViaje';
+import { ESTADOS_ACTIVOS, crearViajeDeCotizacion, pinNuevo, programarViaje } from '../viajeCrear';
 import { revisarDesvio } from './seguridadViaje';
 import { enviarSms } from '../sms';
 import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } from './servicios';
@@ -140,7 +142,9 @@ export async function comisionTipicaMoto(
   db: D1Database,
   zona: { id: string; pais: string; moneda: string },
 ): Promise<number> {
-  const fila = await tarifaActiva(db, 'moto', zona.id);
+  // C-CARRO-TARIFA-VE: en una ciudad solo de Carro, la comisión típica sale de la tarifa de Carro.
+  const deMoto = await tarifaActiva(db, 'moto', zona.id);
+  const fila = deMoto ?? (await tarifaActiva(db, 'carro', zona.id));
   if (!fila) return 0;
   const t = filaATarifa(fila);
   const total = cotizarViaje(t, {
@@ -148,7 +152,7 @@ export async function comisionTipicaMoto(
     duracionS: Math.round((KM_VIAJE_TIPICO / t.velocidadKmh) * 3600),
   }).total;
   const c = await comisionConductor(db, {
-    servicio: 'ride',
+    servicio: deMoto ? 'ride' : 'car',
     pais: zona.pais,
     ciudad: zona.id,
     moneda: zona.moneda,
@@ -310,8 +314,8 @@ viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
     perfil.monedaViajes ??
     new Map(Object.entries(MONEDA_POR_PAIS)).get(pais) ??
     'USD';
-  const tarifa =
-    d.tarifa ?? (pais === 'VE' && d.servicio === 'moto' ? TARIFA_MOTO_VENEZUELA : null);
+  // C-CARRO-TARIFA-VE: Moto y Carro en Venezuela traen la tarifa de mercado si no se escribe otra.
+  const tarifa = d.tarifa ?? tarifaDeMercado(pais, d.servicio);
   if (!tarifa)
     throw new ErrorDatos('Escribe la tarifa del servicio para esta ciudad.', 'tarifa', 422);
   // Antes de tocar nada: la compuerta del servicio y la comisión en la moneda de la ciudad.
@@ -500,20 +504,12 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
 
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
 
-/** El código de 4 dígitos que el pasajero le dice al conductor para empezar. */
-function pinNuevo(): string {
-  const n = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
-  return String(n % 10_000).padStart(4, '0');
-}
-
 function claveDe(c: Ctx, accion: string, id: string): string {
   const k = c.req.header('idempotency-key') ?? '';
   if (!/^[A-Za-z0-9_-]{8,80}$/.test(k))
     throw new ErrorDatos('Falta la clave de la solicitud. Actualiza la app.', undefined, 400);
   return `${accion}:${id}:${k}`;
 }
-
-const ESTADOS_ACTIVOS = "('pago_pendiente', 'buscando', 'asignada', 'en_curso')";
 
 /**
  * Pedir el viaje con una cotización vigente. La cotización es de un solo uso: el mismo pedido
@@ -533,6 +529,8 @@ viajesPasajero.post('/viajes', async (c) => {
       metodoPago: z.enum(METODOS_PAGO_VIAJE).default('efectivo'),
       // C-ENVIOS: qué se envía y quién lo recibe (solo en Envíos).
       paquete: esquemaPaqueteEnvio.optional(),
+      // C-VIAJE-PROGRAMADO: la hora reservada (desde 30 minutos hasta 7 días).
+      programadoPara: z.iso.datetime().optional(),
     }),
   );
   const cot = await db
@@ -583,61 +581,39 @@ viajesPasajero.post('/viajes', async (c) => {
       throw new ErrorDatos('El celular de quien recibe no parece válido.', 'telefono', 422);
   }
   const op = nuevoId();
+  // C-VIAJE-PROGRAMADO: con hora reservada, la cotización queda apartada (precio fijo) y el viaje
+  // nace a la hora de buscar conductor (el reloj); hasta entonces se cancela gratis.
+  if (d.programadoPara)
+    return c.json(
+      await programarViaje(c.env, db, u, {
+        op,
+        cotizacionId: cot.id,
+        servicioId: cot.servicio_id,
+        zonaId: cot.zona_id,
+        metodoPago: d.metodoPago,
+        paquete: d.paquete ?? null,
+        programadoPara: new Date(d.programadoPara),
+      }),
+      201,
+    );
   const inicial = d.metodoPago === 'tarjeta' ? 'pago_pendiente' : 'buscando';
   const pinEntrega = pinNuevo();
-  const r = await db.batch([
-    db
-      .prepare(
-        `UPDATE cotizaciones_viaje SET usada_en = datetime('now'), operacion_id = ?1
-          WHERE id = ?2 AND cliente_id = ?3 AND usada_en IS NULL AND vence_en > datetime('now')
-            AND NOT EXISTS (SELECT 1 FROM operaciones o WHERE o.cliente_id = ?3
-                             AND o.tipo_operacion = ?4 AND o.estado_general IN ${ESTADOS_ACTIVOS})`,
-      )
-      .bind(op, cot.id, u.id, tipo),
-    db
-      .prepare(
-        `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, ultima_clave)
-         SELECT ?1, servicio_id, ?5, cliente_id, zona_id, ?4, ?3
-           FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
-      )
-      .bind(op, cot.id, `pedir:${cot.id}`, inicial, tipo),
-    db
-      .prepare(
-        `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultimo_actor_id, ultima_clave,
-           origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
-           pasajeros, pin_recogida, metodo_pago, cotizacion_id, categoria)
-         SELECT ?1, ?6, 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
-                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria
-           FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1`,
-      )
-      .bind(op, cot.id, `pedir:${cot.id}`, pinNuevo(), d.metodoPago, inicial),
-    ...(esEnvio && d.paquete
-      ? [
-          db
-            .prepare(
-              `INSERT INTO envios_persona (operacion_id, descripcion, valor_declarado, destinatario_nombre, destinatario_telefono, pin_entrega)
-               SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM operaciones WHERE id = ?)`,
-            )
-            .bind(
-              op,
-              d.paquete.descripcion,
-              d.paquete.valorDeclarado,
-              d.paquete.destinatario.nombre,
-              telefonoCanonico(d.paquete.destinatario.telefono),
-              pinEntrega,
-              op,
-            ),
-        ]
-      : []),
-  ]);
+  const creado = await crearViajeDeCotizacion(db, {
+    op,
+    cotizacionId: cot.id,
+    clienteId: u.id,
+    tipo,
+    estado: inicial,
+    metodoPago: d.metodoPago,
+    paquete: esEnvio ? (d.paquete ?? null) : null,
+    pinEntrega,
+    exigirSinActivo: true,
+  });
   // C-MOTO-CIUDAD: el código para empezar según la ciudad y la hora (se decide al pedir).
   // C-ENVIOS: un envío no lleva código al recoger (lleva foto); el PIN es de quien recibe.
-  if (
-    r[0]?.meta.changes &&
-    (esEnvio || !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id)))
-  )
+  if (creado && (esEnvio || !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id))))
     await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(op).run();
-  if (!r[0]?.meta.changes) {
+  if (!creado) {
     const otra = await db
       .prepare('SELECT operacion_id FROM cotizaciones_viaje WHERE id = ? AND usada_en IS NOT NULL')
       .bind(cot.id)
@@ -650,8 +626,8 @@ viajesPasajero.post('/viajes', async (c) => {
     );
   }
   if (esEnvio && d.paquete)
-    await avisarDestinatario(c, op, d.paquete, pinEntrega, u.nombre).catch((e: unknown) =>
-      console.error('envios: aviso a quien recibe', e),
+    await avisarDestinatario(c.env, db, sitioDe(c), op, d.paquete, pinEntrega, u.nombre).catch(
+      (e: unknown) => console.error('envios: aviso a quien recibe', e),
     );
   // C-VIAJE-TARJETA: con tarjeta, primero la autorización; se busca conductor cuando Stripe avisa.
   if (d.metodoPago === 'tarjeta') {
@@ -672,7 +648,7 @@ viajesPasajero.post('/viajes', async (c) => {
 async function paqueteDe(db: D1Database, operacionId: string) {
   const p = await db
     .prepare(
-      'SELECT descripcion, valor_declarado, destinatario_nombre, pin_entrega, recogido_en, entregado_en FROM envios_persona WHERE operacion_id = ?',
+      'SELECT descripcion, valor_declarado, destinatario_nombre, pin_entrega, recogido_en, entregado_en, tamano, foto_entrega FROM envios_persona WHERE operacion_id = ?',
     )
     .bind(operacionId)
     .first<{
@@ -682,6 +658,8 @@ async function paqueteDe(db: D1Database, operacionId: string) {
       pin_entrega: string;
       recogido_en: string | null;
       entregado_en: string | null;
+      tamano: string | null;
+      foto_entrega: string | null;
     }>();
   return p
     ? {
@@ -691,37 +669,71 @@ async function paqueteDe(db: D1Database, operacionId: string) {
         pinEntrega: p.entregado_en ? null : p.pin_entrega,
         recogido: Boolean(p.recogido_en),
         entregado: Boolean(p.entregado_en),
+        tamano: p.tamano ?? 'pequeno',
+        fotoEntrega: Boolean(p.foto_entrega),
       }
     : null;
 }
 
 /** Quien recibe: un mensaje con el enlace para seguir el envío en vivo y su PIN de entrega. */
-async function avisarDestinatario(
-  c: Ctx,
+export const sitioDe = (c: Ctx) =>
+  (c.env.SITIO_URL ?? new URL(c.req.url).origin).replace(/\/$/, '');
+
+/**
+ * C-ENVIO-TEXTOS (14 nov 2026): el mensaje a quien recibe va en el idioma de quien envía; fuera de
+ * EE. UU. siempre en español (el país de la zona manda).
+ */
+export function idiomaDelEnvio(idiomaRemitente: string | null, pais: string | null): 'es' | 'en' {
+  if (pais && pais !== 'US') return 'es';
+  return idiomaRemitente === 'en' ? 'en' : 'es';
+}
+
+export function textoSmsDestinatario(
+  idioma: 'es' | 'en',
+  nombre: string,
+  enlace: string,
+  pin: string,
+): string {
+  return idioma === 'en'
+    ? `Divoox: ${nombre} sent you a package. Follow it live: ${enlace} — Your delivery PIN: ${pin}. Share it only with your driver at delivery.`
+    : `Divoox: ${nombre} te envió un paquete. Síguelo en vivo: ${enlace} — Tu PIN de entrega: ${pin}. Dáselo solo a tu conductor al recibirlo.`;
+}
+
+export async function avisarDestinatario(
+  env: Env,
+  db: D1Database,
+  sitio: string,
   operacionId: string,
   paquete: PaqueteEnvio,
   pin: string,
   remitente: string,
 ) {
-  const db = base(c);
   const codigo = nuevoToken();
   const cliente = await db
-    .prepare('SELECT cliente_id FROM operaciones WHERE id = ?')
+    .prepare(
+      `SELECT o.cliente_id, u.idioma, z.pais FROM operaciones o JOIN usuarios u ON u.id = o.cliente_id
+         LEFT JOIN zonas z ON z.id = o.zona_id WHERE o.id = ?`,
+    )
     .bind(operacionId)
-    .first<{ cliente_id: string }>();
+    .first<{ cliente_id: string; idioma: string | null; pais: string | null }>();
   if (!cliente) return;
   await db
     .prepare('INSERT INTO viajes_compartidos (huella, operacion_id, creado_por) VALUES (?, ?, ?)')
     .bind(await sha256(codigo), operacionId, cliente.cliente_id)
     .run();
-  const sitio = (c.env.SITIO_URL ?? new URL(c.req.url).origin).replace(/\/$/, '');
   const nombre = remitente.split(' ')[0] ?? '';
-  await enviarSms(c.env, db, {
+  const idioma = idiomaDelEnvio(cliente.idioma, cliente.pais);
+  await enviarSms(env, db, {
     usuarioId: cliente.cliente_id,
     pedidoId: null,
     tipo: 'envio_destinatario',
     telefono: telefonoCanonico(paquete.destinatario.telefono),
-    texto: `Divoox: ${nombre} sent you a package. Follow it live: ${sitio}/ride/${codigo} — Your delivery PIN: ${pin}. Share it only with your driver at delivery.`,
+    texto: textoSmsDestinatario(
+      idioma,
+      nombre,
+      `${sitio}${idioma === 'es' ? '/es' : ''}/ride/${codigo}`,
+      pin,
+    ),
   });
 }
 
@@ -754,6 +766,10 @@ type FilaViajeCliente = {
   pm_identificador: string | null;
   pm_estado: string | null;
   pais: string | null;
+  categoria: string | null;
+  vehiculo_tipo: string | null;
+  plazas: number | null;
+  conductor_foto: number | null;
 };
 
 async function viajeDelCliente(
@@ -769,7 +785,10 @@ async function viajeDelCliente(
               CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
               q.total, q.moneda, q.tarifa_json,
               u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
-              h.marca, h.modelo, h.color, h.placa,
+              h.marca, h.modelo, h.color, h.placa, h.tipo AS vehiculo_tipo, h.plazas, v.categoria,
+              -- C-CARRO-VIAJE-PASAJERO: la foto es la selfie verificada (como Uber), solo si está aprobada.
+              (SELECT 1 FROM kyc ky WHERE ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
+                 AND ky.selfie_miniatura IS NOT NULL) AS conductor_foto,
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
               pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
@@ -799,6 +818,25 @@ function tarifaDeCopia(json: string | null) {
   }
 }
 
+/**
+ * C-CARRO-VIAJE-PASAJERO: minutos que faltan, como la hora estimada de Uber, sin consultar a Google en
+ * cada refresco: distancia en línea recta desde la posición del conductor hasta la recogida (si viene
+ * en camino) o hasta el destino (en curso), por el factor de calle y la velocidad de la tarifa copiada
+ * en la cotización. Aproximado; la app lo dice como «unos N min».
+ */
+function minutosEstimados(f: FilaViajeCliente, t: ReturnType<typeof tarifaDeCopia>) {
+  if (!t || f.conductor_lat == null || f.conductor_lng == null) return null;
+  const hacia =
+    f.estado === 'asignado'
+      ? { lat: f.origen_lat, lng: f.origen_lng }
+      : f.estado === 'en_curso'
+        ? { lat: f.destino_lat, lng: f.destino_lng }
+        : null;
+  if (!hacia) return null;
+  const r = estimarRuta(t, { lat: f.conductor_lat, lng: f.conductor_lng }, hacia);
+  return Math.max(1, Math.round(r.duracionS / 60));
+}
+
 function viajePublico(f: FilaViajeCliente) {
   const t = tarifaDeCopia(f.tarifa_json);
   const cargo = t ? cargoCancelacionViaje(t, f.estado, f.segundos_asignado) : null;
@@ -806,6 +844,7 @@ function viajePublico(f: FilaViajeCliente) {
   return {
     id: f.id,
     servicio: f.servicio_id,
+    categoria: f.categoria ?? 'estandar',
     estado: f.estado,
     // El código solo lo ve el pasajero, y solo hasta que empieza el viaje.
     pin:
@@ -825,7 +864,16 @@ function viajePublico(f: FilaViajeCliente) {
               f.conductor_lat != null && f.conductor_lng != null
                 ? { lat: f.conductor_lat, lng: f.conductor_lng }
                 : null,
-            vehiculo: { marca: f.marca, modelo: f.modelo, color: f.color, placa: f.placa },
+            vehiculo: {
+              tipo: f.vehiculo_tipo,
+              marca: f.marca,
+              modelo: f.modelo,
+              color: f.color,
+              placa: f.placa,
+              plazas: f.plazas,
+            },
+            llegadaMin: minutosEstimados(f, t),
+            foto: f.conductor_foto === 1,
           }
         : null,
     // C-PAGO-MOVIL-VIAJE: a quién se le paga y si el conductor ya confirmó que le llegó.
@@ -919,6 +967,34 @@ viajesPasajero.get('/viajes/:id', async (c) => {
       destino: viaje.destino,
       conductor: viaje.conductor?.ubicacion ?? null,
     }),
+  });
+});
+
+/**
+ * C-CARRO-VIAJE-PASAJERO: la foto del conductor (su selfie verificada) para el pasajero de ESE viaje,
+ * solo mientras el conductor viene o lo lleva. Privada y sin caché compartida.
+ */
+viajesPasajero.get('/viajes/:id/conductor/foto', async (c) => {
+  const u = exigir(c, 'cliente');
+  const f = await base(c)
+    .prepare(
+      `SELECT ky.selfie_miniatura FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         JOIN kyc ky ON ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
+        WHERE o.id = ? AND o.cliente_id = ? AND v.estado IN ('asignado', 'conductor_llego', 'en_curso')`,
+    )
+    .bind(c.req.param('id'), u.id)
+    .first<{ selfie_miniatura: string | null }>();
+  // C-FOTO-CONDUCTOR-MINIATURA: solo la miniatura (200 px, WebP) que se guardó al aprobar; la
+  // selfie original es evidencia de identidad y nunca sale hacia el pasajero.
+  const obj =
+    f?.selfie_miniatura && c.env.BUCKET ? await c.env.BUCKET.get(f.selfie_miniatura) : null;
+  if (!obj) throw new ErrorDatos('No hay foto para mostrar.', undefined, 404);
+  return new Response(obj.body, {
+    headers: {
+      'content-type': 'image/webp',
+      'cache-control': 'private, no-store',
+      'x-content-type-options': 'nosniff',
+    },
   });
 });
 
@@ -1071,7 +1147,7 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
   const f = await base(c)
     .prepare(
       `SELECT v.estado, v.origen_direccion, v.destino_direccion, v.destino_lat, v.destino_lng,
-              u.nombre AS conductor, d.lat, d.lng, d.ubicacion_en, h.marca, h.modelo, h.color, h.placa
+              o.servicio_id, u.nombre AS conductor, d.lat, d.lng, d.ubicacion_en, h.marca, h.modelo, h.color, h.placa
          FROM viajes_compartidos s JOIN operaciones o ON o.id = s.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN usuarios u ON u.id = o.conductor_id
@@ -1083,11 +1159,14 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
     .first<Record<string, unknown>>();
   if (!f) throw new ErrorDatos('Este enlace no existe.', undefined, 404);
   const estado = String(f.estado);
+  // C-ENVIO-TEXTOS: la página dice si es un viaje de Moto, de Carro o un paquete.
+  const servicio = String(f.servicio_id ?? 'moto');
   if (['terminado', 'cancelado', 'sin_conductor', 'no_show'].includes(estado))
-    return c.json({ viaje: { estado, terminado: true } });
+    return c.json({ viaje: { estado, servicio, terminado: true } });
   return c.json({
     viaje: {
       estado,
+      servicio,
       terminado: false,
       origen: String(f.origen_direccion),
       destino: String(f.destino_direccion),

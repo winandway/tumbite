@@ -6,6 +6,7 @@ import { conIdioma, enEspanol } from '../../rutaIdioma';
 import { Icono } from '../Icono';
 import { DOCS, type Guia, type SeccionDocs, TEXTOS_DOCS } from './guias';
 import { iconoDeGuia } from './iconosGuia';
+import { coincide, palabrasDeBusqueda } from './buscar';
 
 /** Navegar a una guía quedándose en el idioma de la página (como Enlace). */
 function irA(a: string) {
@@ -78,21 +79,12 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
     return () => window.removeEventListener('keydown', atajo);
   }, []);
 
-  // Son veinte guías: filtrar en cada tecla es barato, no hace falta memoria.
-  const q = busqueda.trim().toLowerCase();
-  const resultados = q
+  // Filtrar en cada tecla es barato, no hace falta memoria. C-DOCS-BUSCADOR (14 nov 2026): sin
+  // acentos ni mayúsculas y por palabras sueltas («rastrear paquete», «pago movil», «taxi»).
+  const palabras = palabrasDeBusqueda(busqueda);
+  const resultados = palabras.length
     ? secciones.flatMap((s) =>
-        s.guias
-          .filter((g) =>
-            [
-              g.titulo,
-              g.resumen,
-              ...(g.preguntas ?? []),
-              ...(g.explicacion ?? []),
-              ...g.pasos,
-            ].some((x) => x.toLowerCase().includes(q)),
-          )
-          .map((g) => ({ seccion: s, guia: g })),
+        s.guias.filter((g) => coincide(g, palabras)).map((g) => ({ seccion: s, guia: g })),
       )
     : null;
 

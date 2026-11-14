@@ -38,12 +38,18 @@ demanda.get('/repartidor/demanda', async (c) => {
   const db = base(c);
   const zona = await zonaPara(db, q.data.lat, q.data.lng);
   if (!zona) return c.json({ zonas: [] });
+  // C-LECTURAS-DEMANDA (14 nov 2026): parte de los pedidos de la ÚLTIMA HORA de la zona, por el
+  // índice zona + estado + fecha (cinco rangos cortos), y de cada uno busca su local por la clave.
+  // Antes partía de los restaurantes de la zona y leía TODOS los pedidos de su historia en esos
+  // estados (63.442 filas en una vuelta del sitio de pruebas) para quedarse con los de la hora.
+  // El pedido nace con la zona de su local (pedidos.ts); se exige además que el local siga en ella.
   const { results } = await db
     .prepare(
-      `SELECT r.lat, r.lng FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-        WHERE r.zona_id = ? AND r.lat IS NOT NULL AND r.lng IS NOT NULL
-          AND p.estado IN ('pagado','aceptado','listo','en_camino','entregado')
+      `SELECT r.lat, r.lng FROM pedidos p INDEXED BY pedidos_zona_estado
+         CROSS JOIN restaurantes r ON r.id = p.restaurante_id
+        WHERE p.zona_id = ?1 AND p.estado IN ('pagado','aceptado','listo','en_camino','entregado')
           AND p.creado_en >= datetime('now', '-60 minutes')
+          AND r.zona_id = ?1 AND r.lat IS NOT NULL AND r.lng IS NOT NULL
         LIMIT 5000`,
     )
     .bind(zona.id)

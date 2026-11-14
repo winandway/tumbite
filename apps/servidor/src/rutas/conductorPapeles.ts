@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { DOCUMENTOS_CONDUCTOR, perfilPasajeros, requisitosQueCumple } from '@tumbite/compartido';
+import {
+  DOCUMENTOS_CONDUCTOR,
+  DOCUMENTOS_VEHICULO_PASAJEROS,
+  perfilPasajeros,
+  requisitosQueCumple,
+} from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
 import type { Env } from '../env';
 import { guardarFoto } from '../fotoLimpia';
@@ -70,6 +75,9 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
       edadMinima: perfil.edadMinima,
       placaNacional: perfil.placaNacional,
       documentos: perfil.documentosConductor,
+      // C-CARRO-PAPELES-PAIS: lo que pide su país para cada servicio de pasajeros.
+      documentosPorServicio: { moto: perfil.documentosConductor, carro: perfil.documentosCarro },
+      documentosVehiculo: DOCUMENTOS_VEHICULO_PASAJEROS,
     },
     documentos: docs,
   });
@@ -240,7 +248,12 @@ conductorPapeles.post('/conductor/papeles', async (c) => {
         .optional(),
     })
     .safeParse(c.req.query());
-  if (!q.success) throw new ErrorDatos('Elige qué documento estás subiendo.', 'tipo', 400);
+  if (!q.success)
+    throw new ErrorDatos(
+      'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
+      'tipo',
+      400,
+    );
   if (Number(c.req.header('content-length') ?? 0) > MAX_DOC_BYTES)
     throw new ErrorDatos('El archivo pesa demasiado. El máximo es 5 MB.', 'archivo', 413);
   const bytes = new Uint8Array(await c.req.arrayBuffer());

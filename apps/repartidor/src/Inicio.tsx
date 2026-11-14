@@ -44,6 +44,8 @@ import {
   paraEnviarUbicacion,
   modoRastreo,
   tocaMandarSegunModo,
+  type Referencia,
+  textoReferencia,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -54,6 +56,8 @@ import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
+import { MiCarro } from './viajes/MiCarro';
+import { MisViajesConductor } from './viajes/MisViajesConductor';
 import { MiMoto } from './viajes/MiMoto';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
@@ -98,6 +102,7 @@ import {
   MisCasos,
   selectorDeCapturas,
   ReportarProblema,
+  TarjetaAvisosWeb,
   e,
   useSesion,
   useToqueAviso,
@@ -168,6 +173,8 @@ type Pedido = {
   moneda?: string;
   cobroEstado?: string;
   total?: number;
+  /** C-COMIDA-VENEZUELA: lo que cobra en mano, en bolívares de referencia (tasa del día). */
+  referenciaCobro?: Referencia | null;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -561,7 +568,7 @@ export function Inicio() {
   const tg = textosGrandes(idioma);
   const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [seccionPerfil, setSeccionPerfil] = useState<
-    'vehiculo' | 'documentos' | 'moto' | 'soporte' | null
+    'vehiculo' | 'documentos' | 'moto' | 'carro' | 'viajes' | 'soporte' | null
   >(null);
   const [mostrarChat, setMostrarChat] = useState(true);
   // Desde cuándo está conectado en esta sesión (el servidor no lo guarda).
@@ -1027,6 +1034,10 @@ export function Inicio() {
     carrerasAlcanzan?: number | null;
     saldoBajo?: boolean;
     sinSaldo?: boolean;
+    /** C-COMIDA-VE-CIRCUITO: comisión de un pedido típico de comida y pedidos que alcanzan. */
+    comisionTipicaComida?: number;
+    pedidosAlcanzan?: number | null;
+    sinSaldoComida?: boolean;
   } | null>(null);
   // Pedidos cobrados en mano de hoy: no pasan por la billetera de Stripe, así que «Hoy» los suma
   // desde Ganancias (C-MONEDA-RECORRIDO). Solo donde el país tiene el cobro en mano encendido.
@@ -1138,14 +1149,16 @@ export function Inicio() {
     await cargar();
   }
 
-  async function accion(ruta: string, cuerpo: unknown = {}) {
+  async function accion(ruta: string, cuerpo: unknown = {}): Promise<boolean> {
     setError('');
     try {
       await api.pedir('POST', ruta, cuerpo);
       await cargar();
+      return true;
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
       await cargar();
+      return false;
     }
   }
 
@@ -1583,6 +1596,26 @@ export function Inicio() {
                 </Text>
               </View>
             ) : null}
+            {prepago.pedidosAlcanzan != null && prepago.comisionTipicaComida ? (
+              <View testID="pedidos-alcanzan">
+                <Text
+                  style={{
+                    fontWeight: '800',
+                    color: prepago.pedidosAlcanzan < 3 ? C.primario : '#0D7A3A',
+                  }}
+                >
+                  {tg.prepago.pedidos(prepago.pedidosAlcanzan)}
+                </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                  {tg.prepago.pedidosAyuda(
+                    formatearMonto(prepago.comisionTipicaComida, prepago.moneda, idioma),
+                  )}
+                </Text>
+              </View>
+            ) : null}
+            {prepago.sinSaldoComida ? (
+              <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoPedidos}</Text>
+            ) : null}
             {prepago.sinSaldo ? (
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldoViajes}</Text>
             ) : prepago.saldoBajo ? (
@@ -1855,6 +1888,20 @@ export function Inicio() {
             td.miMotoDetalle,
           )}
           {seccionPerfil === 'moto' ? <MiMoto /> : null}
+          {fila(
+            td.miCarro,
+            () => setSeccionPerfil((x) => (x === 'carro' ? null : 'carro')),
+            seccionPerfil === 'carro',
+            td.miCarroDetalle,
+          )}
+          {seccionPerfil === 'carro' ? <MiCarro /> : null}
+          {fila(
+            td.misViajes,
+            () => setSeccionPerfil((x) => (x === 'viajes' ? null : 'viajes')),
+            seccionPerfil === 'viajes',
+            td.misViajesDetalle,
+          )}
+          {seccionPerfil === 'viajes' ? <MisViajesConductor /> : null}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(
@@ -2259,6 +2306,10 @@ export function Inicio() {
                     }
                     // En la puerta. En mano: el cliente lo recibe (sin foto). En la puerta: foto.
                     const enMano = activo.entrega === 'mano';
+                    const pagoMovilActivo =
+                      activo.metodoPago === 'transferencia_repartidor' &&
+                      Boolean(activo.pais) &&
+                      activo.pais !== 'US';
                     const avisoMs = activo.noApareceEn
                       ? Date.parse(`${activo.noApareceEn.replace(' ', 'T')}Z`)
                       : null;
@@ -2311,23 +2362,62 @@ export function Inicio() {
                                     )}
                                   </Text>
                                 </Text>
+                                {activo.referenciaCobro ? (
+                                  <Text
+                                    testID="cobro-directo-bs"
+                                    style={{ color: '#5E5E5E', fontWeight: '700' }}
+                                  >
+                                    {textoReferencia(activo.referenciaCobro, idioma)}
+                                  </Text>
+                                ) : null}
                                 <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
                                   {tg.pedido.propinaAparte}
                                 </Text>
-                                <TextInput
-                                  value={montoCobro}
-                                  onChangeText={setMontoCobro}
-                                  placeholder={tg.pedido.recibi}
-                                  accessibilityLabel={tg.pedido.recibi}
-                                  keyboardType="decimal-pad"
-                                  style={e.input}
-                                />
-                                <Boton
-                                  texto={tg.pedido.cobre}
-                                  alTocar={() => void cobre(activo.id)}
-                                  exito
-                                />
-                                {activo.metodoPago === 'transferencia_repartidor' ? (
+                                {/* C-PAGO-MOVIL-UNA-CORRECCION: con pago móvil solo va su
+                                    confirmación (sí o no); «Cobré» y el monto son del efectivo. */}
+                                {!pagoMovilActivo ? (
+                                  <>
+                                    <TextInput
+                                      value={montoCobro}
+                                      onChangeText={setMontoCobro}
+                                      placeholder={tg.pedido.recibi}
+                                      accessibilityLabel={tg.pedido.recibi}
+                                      keyboardType="decimal-pad"
+                                      style={e.input}
+                                    />
+                                    <Boton
+                                      texto={tg.pedido.cobre}
+                                      alTocar={() => void cobre(activo.id)}
+                                      exito
+                                    />
+                                  </>
+                                ) : null}
+                                {pagoMovilActivo ? (
+                                  <>
+                                    <Boton
+                                      texto={tg.pedido.pagoMovilSi}
+                                      alTocar={() =>
+                                        void accion(
+                                          `/datos/repartidor/pedidos/${activo.id}/pago-movil`,
+                                          { recibido: true },
+                                        ).then((ok) => ok && setAviso(tg.pedido.cobroOk))
+                                      }
+                                      exito
+                                    />
+                                    <Boton
+                                      texto={tg.pedido.pagoMovilNo}
+                                      alTocar={() =>
+                                        void accion(
+                                          `/datos/repartidor/pedidos/${activo.id}/pago-movil`,
+                                          { recibido: false },
+                                        ).then((ok) => ok && setAviso(tg.pedido.pagoMovilNoOk))
+                                      }
+                                      secundario
+                                    />
+                                  </>
+                                ) : null}
+                                {activo.metodoPago === 'transferencia_repartidor' &&
+                                !pagoMovilActivo ? (
                                   <Boton
                                     texto={tg.pedido.transferPendiente}
                                     alTocar={() =>
@@ -2758,6 +2848,8 @@ export function Inicio() {
             </Text>
           </Pressable>
         ) : null}
+        {/* C-AVISOS-WEB: en la versión web, la explicación del permiso al conectarse. */}
+        <TarjetaAvisosWeb visible={Boolean(estado?.conectado)} />
         {estado?.conectado && estado.ocupadoEn ? (
           // C-OCUPADO-VISIBLE (BRF-1): ocupado en una ruta o un viaje, nunca «Buscando pedidos».
           <View style={e.tarjeta} testID="ocupado-en-otra">

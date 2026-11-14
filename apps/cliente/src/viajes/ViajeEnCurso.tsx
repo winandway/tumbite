@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Linking, Pressable, Share, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Image, Linking, Pressable, Share, Text, View } from 'react-native';
 import {
   ErrorApi,
   type Referencia,
@@ -7,7 +7,15 @@ import {
   formatearMonto,
   textoReferencia,
 } from '@tumbite/compartido';
-import { Boton, C, Campo, useSesion } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  Campo,
+  ChatPedido,
+  URL_SERVIDOR,
+  leerTokenGuardado,
+  useSesion,
+} from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
 import { miUbicacion } from '../ubicacion';
@@ -16,6 +24,9 @@ import { TEXTOS_MOTO } from './textos';
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
 export type ViajePasajero = {
   id: string;
+  /** C-CARRO-VIAJE-PASAJERO: moto, carro o envios, y en Carro si es XL. */
+  servicio?: string;
+  categoria?: string;
   estado: string;
   pin: string | null;
   metodoPago: string;
@@ -27,11 +38,17 @@ export type ViajePasajero = {
     nombre: string;
     ubicacion: { lat: number; lng: number } | null;
     vehiculo: {
+      tipo?: string | null;
       marca: string | null;
       modelo: string | null;
       color: string | null;
       placa: string | null;
+      plazas?: number | null;
     };
+    /** Minutos estimados hasta la recogida (viene en camino) o hasta el destino (en curso). */
+    llegadaMin?: number | null;
+    /** Hay foto verificada del conductor (su selfie aprobada). */
+    foto?: boolean;
   } | null;
   cancelacion: { cargo: number; gratisPorS: number | null } | null;
   /** C-PAGO-MOVIL-VIAJE: a quién pagar y si el conductor ya confirmó que le llegó. */
@@ -56,6 +73,55 @@ export type PaqueteCliente = {
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
 
 /**
+ * C-CARRO-VIAJE-PASAJERO: la foto del conductor (privada, con la sesión). Sin foto o si no carga, la
+ * inicial de su nombre en un círculo, como Uber.
+ */
+function FotoConductor({
+  viajeId,
+  nombre,
+  hay,
+}: {
+  viajeId: string;
+  nombre: string;
+  hay: boolean;
+}) {
+  const [token, setToken] = useState<string | null>(null);
+  const [fallo, setFallo] = useState(false);
+  useEffect(() => {
+    if (hay) void leerTokenGuardado().then(setToken);
+  }, [hay]);
+  const lado = 56;
+  if (!hay || fallo || !token)
+    return (
+      <View
+        style={{
+          width: lado,
+          height: lado,
+          borderRadius: lado / 2,
+          backgroundColor: '#EEF0F3',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontWeight: '700', fontSize: 22, color: C.secundario }}>
+          {nombre.slice(0, 1).toUpperCase()}
+        </Text>
+      </View>
+    );
+  return (
+    <Image
+      accessibilityIgnoresInvertColors
+      onError={() => setFallo(true)}
+      source={{
+        uri: `${URL_SERVIDOR}/datos/viajes/${viajeId}/conductor/foto`,
+        headers: { authorization: `Bearer ${token}` },
+      }}
+      style={{ width: lado, height: lado, borderRadius: lado / 2 }}
+    />
+  );
+}
+
+/**
  * El viaje del pasajero mientras pasa (M5), como Uber Moto: buscando conductor; conductor
  * asignado con su nombre, su moto y su placa; el código para empezar; el mapa con el conductor;
  * en camino; y al llegar, cuánto pagar en efectivo. Cancelar dice antes cuánto cuesta.
@@ -72,13 +138,17 @@ export function ViajeEnCurso({
   alTerminar: () => void;
 }) {
   const { api, idioma } = useSesion();
-  const t = enIdioma(TEXTOS_MOTO, idioma);
+  const base = enIdioma(TEXTOS_MOTO, idioma);
+  // C-ENVIO-TEXTOS: un envío no es un viaje de pasajero; cada pantalla habla del paquete.
+  const t = viaje.servicio === 'envios' ? { ...base, ...base.envio } : base;
   const [error, setError] = useState('');
   const [cancelando, setCancelando] = useState(false);
   const [cargoCobrado, setCargoCobrado] = useState<number | null>(null);
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState('');
   const [calificado, setCalificado] = useState(false);
+  // C-CHAT-VIAJE: mensajes con el conductor mientras el viaje está activo (sin teléfonos).
+  const [verChat, setVerChat] = useState(false);
   // C-VIAJE-PROPINA: propina después del viaje, con la tarjeta con la que pagó.
   const [propina, setPropina] = useState<number | null>(null);
   async function darPropina(centavos: number) {
@@ -113,6 +183,16 @@ export function ViajeEnCurso({
   ]).get(viaje.estado);
   const monto = (m: number) => formatearMonto(m, viaje.moneda ?? 'USD', idioma);
   const moto = viaje.conductor?.vehiculo;
+  // C-CARRO-VIAJE-PASAJERO: cada servicio rotula su vehículo (Moto, Carro, Carro XL, Envío).
+  const nombreVehiculo =
+    viaje.servicio === 'carro'
+      ? viaje.categoria === 'xl'
+        ? t.vehiculoCarroXl
+        : t.vehiculoCarro
+      : viaje.servicio === 'envios'
+        ? t.vehiculoEnvio
+        : t.moto;
+  const llegada = viaje.conductor?.llegadaMin;
 
   async function cancelar() {
     setCancelando(true);
@@ -184,11 +264,27 @@ export function ViajeEnCurso({
       {viaje.conductor ? (
         <Tarjeta>
           <View testID="viaje-conductor" style={{ gap: 2 }}>
-            <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>
-              {viaje.conductor.nombre}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <FotoConductor
+                viajeId={viaje.id}
+                nombre={viaje.conductor.nombre}
+                hay={Boolean(viaje.conductor.foto)}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>
+                  {viaje.conductor.nombre}
+                </Text>
+                {llegada && (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
+                  <Text testID="viaje-llegada" style={{ fontWeight: '700', color: C.exito }}>
+                    {viaje.estado === 'asignado' ? t.llegaEn(llegada) : t.destinoEn(llegada)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
             <Text style={{ color: '#5E5E5E' }}>
-              {t.moto}: {[moto?.marca, moto?.modelo, moto?.color].filter(Boolean).join(' · ')}
+              {nombreVehiculo}:{' '}
+              {[moto?.marca, moto?.modelo, moto?.color].filter(Boolean).join(' · ')}
+              {viaje.servicio === 'carro' && moto?.plazas ? ` · ${t.plazas(moto.plazas)}` : ''}
             </Text>
             {moto?.placa ? (
               <Text style={{ fontWeight: '700', color: C.secundario, letterSpacing: 1 }}>
@@ -309,6 +405,16 @@ export function ViajeEnCurso({
           />
         </>
       ) : null}
+      {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
+        <>
+          <Boton
+            texto={verChat ? t.ocultarMensajes : t.mensajesConductor}
+            alTocar={() => setVerChat((x) => !x)}
+            secundario
+          />
+          {verChat ? <ChatPedido pedidoId={viaje.id} ruta={`/datos/viajes/${viaje.id}`} /> : null}
+        </>
+      ) : null}
       {viaje.estado === 'terminado' && !calificado ? (
         <Tarjeta>
           <View testID="viaje-calificar" style={{ gap: 8 }}>
@@ -358,6 +464,13 @@ export function ViajeEnCurso({
             </View>
           )}
         </Tarjeta>
+      ) : null}
+      {/* C-VIAJE-PROPINA-MANO: con efectivo o pago móvil la propina se da en mano (inDrive, Ridery);
+          la app no la cobra, pero lo dice en vez de callarse. */}
+      {viaje.estado === 'terminado' && viaje.metodoPago !== 'tarjeta' ? (
+        <Text testID="viaje-propina-mano" style={{ color: '#5E5E5E' }}>
+          {t.propinaEnMano}
+        </Text>
       ) : null}
       {FINALES.has(viaje.estado) ? (
         <Boton texto={t.otraVez} alTocar={alTerminar} exito={viaje.estado === 'terminado'} />

@@ -39,7 +39,7 @@ describe('C-CIUDAD-REPORTE', () => {
       'jugador,tipo,hora,restaurante,estado,platos,total,moneda,pago,minutos,detalle',
     );
     expect(filas[1]).toBe(
-      '"Mateo ""el rápido"", Jugador",pedido,2026-11-13 19:50:00,Pizza del Robot,entregado,2 × Pizza,25.00,USD,efectivo,12,',
+      '"Mateo ""el rápido"", Jugador",pedido,2026-11-13 19:50:00,Pizza del Robot,entregado,2 × Pizza,25.00,USD,Efectivo,12,',
     );
     expect(filas[2]).toContain(',fallo,2026-11-13T20:00:00Z,');
     expect(filas[2]).toContain('error del servidor · GET /x: falló');

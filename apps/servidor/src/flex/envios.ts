@@ -22,6 +22,7 @@ import {
   vincularDestinatarios,
 } from './ubicacion';
 import { despues, invitarDestinatarios } from './avisosFlex';
+import { extraSeguimiento } from './seguimientoPublico';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import {
   type ActorFlex,
@@ -783,6 +784,8 @@ flexEnvios.get('/seguimiento/:codigo', async (c) => {
       estado: f.estado,
       final: ESTADOS_FINALES_PAQUETE.includes(String(f.estado) as EstadoPaquete),
       eventos: results.map((e) => ({ tipo: e.tipo, creadoEn: e.creado_en })),
+      // C-FLEX-SEGUIMIENTO-PLUS: hora estimada, paradas antes, conductor cerca y prueba de entrega.
+      ...(await extraSeguimiento(db, { id: String(f.id), estado: String(f.estado) })),
     },
   });
 });

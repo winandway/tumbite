@@ -2,6 +2,10 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { COLORES, type Punto, crearMapa, punto } from '../piezas/mapaWeb';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
+import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
+import { origenesMapaRutaFlex } from '@tumbite/compartido/src/mapaDriverWeb';
+import { useSesion } from '@tumbite/movil';
+import { LLAVE_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
 export type { PuntoRuta };
 
@@ -9,7 +13,48 @@ export type { PuntoRuta };
  * Mapa de la ruta Flex en la versión web (el mismo Leaflet con OpenStreetMap de la app): el centro
  * y las paradas con su número, unidos en orden con una línea punteada (orden de visita, no calles).
  */
-export function MapaRuta({
+type PropsRuta = Parameters<typeof MapaRutaLeaflet>[0];
+
+/**
+ * C-MAPA-GOOGLE-WEB: el centro y las paradas salen de direcciones de Google Places; con la llave
+ * del navegador, el mapa de Google (al tocar «Ver en el mapa»), cada parada con su color de estado
+ * y su número en la etiqueta. Sin llave, Leaflet como siempre (con la línea del orden y el área).
+ */
+export function MapaRuta(props: PropsRuta) {
+  return proveedorMapaWeb(origenesMapaRutaFlex({ paradas: props.puntos.length, yo: props.yo })) ===
+    'google' ? (
+    <MapaRutaGoogle {...props} />
+  ) : (
+    <MapaRutaLeaflet {...props} />
+  );
+}
+
+function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta }: PropsRuta) {
+  const { idioma } = useSesion();
+  const centro = puntos[0]?.punto ?? yo;
+  if (!centro) return null;
+  return (
+    <MapaGoogleBajoDemanda
+      llave={LLAVE_MAPA_WEB}
+      idioma={idioma}
+      centro={centro}
+      alto={alto}
+      etiqueta={etiqueta}
+      puntos={[
+        ...puntos.map((p) => ({
+          id: p.id,
+          ...p.punto,
+          color: COLOR_TONO[p.tono],
+          radio: p.tono === 'actual' ? 11 : 9,
+          etiqueta: `${p.numero} · ${p.nombre}`,
+        })),
+        ...(yo ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 8 }] : []),
+      ]}
+    />
+  );
+}
+
+function MapaRutaLeaflet({
   puntos,
   yo,
   alto = 380,

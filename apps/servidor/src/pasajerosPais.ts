@@ -4,8 +4,8 @@ import { z } from 'zod';
  * C-MOTO-POR-PAIS (13 nov 2026): la compuerta para abrir un servicio de pasajeros en un país de
  * PRODUCCIÓN. Hoy está CERRADA en todos: no hay ninguna fila `pasajeros_pais:*` en `config`.
  *
- * - Solo se pueden abrir los pares que el código permite (`PAISES_PASAJEROS_ABRIBLES`): Moto en
- *   Venezuela. Estados Unidos y Colombia siguen bloqueados por código, con o sin fila.
+ * - Solo se pueden abrir los pares que el código permite (`PAISES_PASAJEROS_ABRIBLES`): Moto y Carro
+ *   en Venezuela. Estados Unidos y Colombia siguen bloqueados por código, con o sin fila.
  * - Abrirlo lo hace una persona del equipo desde el superadmin, con el número de la solicitud de
  *   registro de la marca Divoox en ese país (regla de Richard: no se enciende un país sin la marca
  *   en proceso de registro) y la confirmación escrita.
@@ -13,6 +13,9 @@ import { z } from 'zod';
  */
 export const PAISES_PASAJEROS_ABRIBLES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   ['moto', new Set(['VE'])],
+  // C-CARRO-POR-PAIS (13 nov 2026, orden de Richard): Carro (taxi) en Venezuela por la MISMA compuerta
+  // (contraseña, solicitud de la marca y confirmación legal y de seguro). Nace cerrada.
+  ['carro', new Set(['VE'])],
 ]);
 
 export const clavePasajerosPais = (pais: string) => `pasajeros_pais:${pais.toUpperCase()}`;
