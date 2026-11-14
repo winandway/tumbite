@@ -50,6 +50,7 @@ Las reglas globales de Richard aplican; estas se suman.
 - **Después de cada trabajo** se edita `progreso/datos.json` (fecha `actualizado`, `ahora`, `proximo`, `esperando`, avance de `partes` y `etapas`, una entrada nueva arriba en `bitacora`, `incidencias`), se hace commit y se publica con `bash scripts/progreso/publicar.sh`.
 - **El link va al pie de cada respuesta a Richard**, solo, en su propio bloque copiable (es la excepción a la regla del podcast: él lo pidió).
 - Los puntos de `esperando` usan un `id` fijo (minúsculas y guiones): su marca se guarda con ese id. No cambiar un id ya publicado.
+- **Cada punto de `esperando` lleva su `numero` fijo y Richard lo nombra así: «Progreso 3»** (pedido suyo del 14 nov 2026). El número nunca cambia ni se reutiliza, aunque el punto se cierre o se quite: un punto nuevo toma `siguienteProgreso` de `datos.json` y ese contador sube en uno. Cuando Richard diga «en el progreso 5 ya hice tal cosa», se busca ese número en `datos.json`.
 - **Nada privado en la página** (el repositorio es público): ni claves, ni el EIN, ni la dirección del superadmin, ni datos de clientes. La clave del equipo para marcar está en `~/.config/tumbite/progreso-clave`; en el repo solo va su huella.
 
 ## SE TRABAJA 24 HORAS, TODOS LOS DÍAS, CONTRA RELOJ (REGLA PRINCIPAL, Richard, 1 nov 2026)
