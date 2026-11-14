@@ -30,6 +30,11 @@ import { rutaPorId } from './rutasComun';
  */
 export const flexRutaCalles = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+/**
+ * Tope de consultas a Google por EMPRESA y día (revisión del 13 nov): una sola empresa no puede
+ * agotar el tope diario del sitio, que comparten los viajes de todos. Se aparta ANTES del global.
+ */
+export const TOPE_RUTAS_CALLES_EMPRESA_DIA = 20;
 /** Intermedios por consulta que Google cobra a la tarifa básica. */
 export const MAX_INTERMEDIOS_BASICO = 10;
 /** Minutos que se suman en cada parada para la hora estimada (entregar y volver al vehículo). */
@@ -114,17 +119,26 @@ async function pedirTramo(
   }
 }
 
-/** Aparta `k` consultas del tope diario COMPARTIDO en una sola sentencia; todas o ninguna. */
-async function apartarConsultas(db: D1Database, k: number, tope: number): Promise<boolean> {
+/** Aparta `k` consultas de un contador del día (una fila por clave); todas o ninguna. */
+async function apartar(db: D1Database, clave: string, k: number, tope: number): Promise<boolean> {
   if (k <= 0 || k > tope) return false;
   const r = await db
     .prepare(
       `INSERT INTO contadores (clave, n) SELECT ?1, ?3 WHERE ?3 <= ?2
        ON CONFLICT(clave) DO UPDATE SET n = n + ?3 WHERE n + ?3 <= ?2`,
     )
-    .bind(claveContadorRutas(), tope, k)
+    .bind(clave, tope, k)
     .run();
   return Number(r.meta?.changes ?? 0) > 0;
+}
+
+/** Devuelve `k` consultas apartadas (Google falló o no hubo cupo global). */
+async function devolver(db: D1Database, clave: string, k: number) {
+  await db.prepare('UPDATE contadores SET n = MAX(0, n - ?) WHERE clave = ?').bind(k, clave).run();
+}
+
+export function claveContadorEmpresa(empresaId: string, fecha = new Date()): string {
+  return `rutas-calles-empresa:${empresaId}:${fecha.toISOString().slice(0, 10)}`;
 }
 
 function estimada(puntos: Punto[], ids: string[]): Tramo[] {
@@ -204,27 +218,44 @@ export async function confirmarRutaCalles(
     .bind(ruta.id)
     .first<{ huella_orden: string }>();
   if (previa?.huella_orden === huella) return rutaCallesGuardada(db, ruta.id);
+  // Si Google falló la vez anterior con este mismo orden, se permite UN reintento más tarde.
+  const esReintento = previa?.huella_orden === `reintentar:${huella}`;
 
   const puntos: Punto[] = [origen, ...paradas];
   const ids = paradas.map((p) => p.id);
   const grupos = partirEnTramos(puntos);
+  const k = grupos.length;
   const llave = llaveRutas(env);
   let tramos: Tramo[] | null = null;
   let consultas = 0;
-  if (llave && (await apartarConsultas(db, grupos.length, topeRutasDia(env)))) {
-    consultas = grupos.length;
-    const respuestas = await Promise.all(grupos.map((g) => pedirTramo(llave, g)));
-    if (respuestas.every(Boolean)) {
-      const legs = respuestas.flatMap((r) => r!);
-      tramos = ids.map((paradaId, i) => ({
-        paradaId,
-        metros: legs.at(i)!.metros,
-        segundos: legs.at(i)!.segundos,
-      }));
+  let fallo = false;
+  const claveEmpresa = claveContadorEmpresa(ruta.empresa_id);
+  if (llave) {
+    // Primero el tope de la empresa; después el del sitio. Si uno no alcanza, no se pide nada.
+    if (!(await apartar(db, claveEmpresa, k, TOPE_RUTAS_CALLES_EMPRESA_DIA))) {
+      console.error('flex: tope diario de la empresa sin cupo; ruta', ruta.id, 'estimada');
+    } else if (!(await apartar(db, claveContadorRutas(), k, topeRutasDia(env)))) {
+      await devolver(db, claveEmpresa, k);
+      console.error('flex: tope diario de rutas por calles sin cupo; ruta', ruta.id, 'estimada');
+    } else {
+      const respuestas = await Promise.all(grupos.map((g) => pedirTramo(llave, g)));
+      if (respuestas.every(Boolean)) {
+        consultas = k;
+        const legs = respuestas.flatMap((r) => r!);
+        tramos = ids.map((paradaId, i) => ({
+          paradaId,
+          metros: legs.at(i)!.metros,
+          segundos: legs.at(i)!.segundos,
+        }));
+      } else {
+        // Google falló: se devuelve lo apartado y el resultado no queda como definitivo.
+        await devolver(db, claveContadorRutas(), k);
+        await devolver(db, claveEmpresa, k);
+        fallo = true;
+      }
     }
-  } else if (llave) {
-    console.error('flex: tope diario de rutas por calles sin cupo; ruta', ruta.id, 'estimada');
   }
+  const huellaGuardada = fallo && !esReintento ? `reintentar:${huella}` : huella;
   const fuente = tramos ? 'google' : 'estimada';
   const lista = tramos ?? estimada(puntos, ids);
   const metros = lista.reduce((a, t) => a + t.metros, 0);
@@ -239,7 +270,7 @@ export async function confirmarRutaCalles(
     .bind(
       ruta.id,
       ruta.empresa_id,
-      huella,
+      huellaGuardada,
       fuente,
       metros,
       segundos,

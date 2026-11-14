@@ -2,7 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { B, empresa, envios, llamar, ruta, vincular, type M } from '../pruebas/flex';
 import { claveContadorRutas } from '../rutaPorCalles';
-import { horasEstimadas, partirEnTramos } from './rutaCalles';
+import {
+  TOPE_RUTAS_CALLES_EMPRESA_DIA,
+  claveContadorEmpresa,
+  horasEstimadas,
+  partirEnTramos,
+} from './rutaCalles';
 
 /**
  * C-FLEX-RUTA-CALLES (Flex Fase 7, 13 nov 2026). Todos los países (pruebas con puntos de Novi,
@@ -10,8 +15,10 @@ import { horasEstimadas, partirEnTramos } from './rutaCalles';
  */
 type Pedido = { cuerpo: any; mascara: string };
 let pedidos: Pedido[] = [];
+let googleFalla = false;
 beforeEach(() => {
   pedidos = [];
+  googleFalla = false;
   const original = globalThis.fetch;
   vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
     if (!String(url).includes('routes.googleapis.com')) return original(url, init);
@@ -20,6 +27,7 @@ beforeEach(() => {
       cuerpo,
       mascara: (init?.headers as Record<string, string>)['X-Goog-FieldMask']!,
     });
+    if (googleFalla) return new Response('{}', { status: 500 });
     const legs = Array.from({ length: cuerpo.intermediates.length + 1 }, () => ({
       distanceMeters: 1500,
       duration: '240s',
@@ -159,5 +167,75 @@ describe('C-FLEX-RUTA-CALLES · km y tiempos reales al confirmar la ruta', () =>
       { paradaId: 'a', llegada: '2026-11-13T14:10:00.000Z' },
       { paradaId: 'b', llegada: '2026-11-13T14:18:00.000Z' },
     ]);
+  });
+
+  it('tope por empresa: la consulta 21.ª del día cae a la estimación sin tocar el contador del sitio', async () => {
+    expect(TOPE_RUTAS_CALLES_EMPRESA_DIA).toBe(20);
+    const m = mundo({ GOOGLE_ROUTES_KEY: 'llave-de-prueba' });
+    const e = await empresa(m, 'Paquetería Detroit');
+    // Ya hizo 20 consultas hoy (otras rutas).
+    await m.DB.prepare('INSERT INTO contadores (clave, n) VALUES (?, 20)')
+      .bind(claveContadorEmpresa(e.id))
+      .run();
+    const rutaId = await ruta(m, e, await envios(m, e, 3));
+    const r = await llamar(
+      m,
+      'POST',
+      `${B}/empresas/${e.id}/rutas/${rutaId}/calles`,
+      {},
+      e.dueno.token,
+    );
+    expect(r.datos.calles.fuente).toBe('estimada');
+    expect(pedidos).toHaveLength(0);
+    expect(await contador(m)).toBe(0);
+    // Con 19 y una ruta que necesita 2 consultas tampoco: todas o ninguna.
+    await m.DB.prepare('UPDATE contadores SET n = 19 WHERE clave = ?')
+      .bind(claveContadorEmpresa(e.id))
+      .run();
+    const grande = await ruta(m, e, await envios(m, e, 12, 1, 'G'));
+    await llamar(m, 'POST', `${B}/empresas/${e.id}/rutas/${grande}/calles`, {}, e.dueno.token);
+    expect(pedidos).toHaveLength(0);
+    expect(await contador(m)).toBe(0);
+  });
+
+  it('si Google falla, devuelve el cupo apartado y permite UN reintento más tarde', async () => {
+    const m = mundo({ GOOGLE_ROUTES_KEY: 'llave-de-prueba' });
+    const e = await empresa(m, 'Paquetería Novi');
+    const rutaId = await ruta(m, e, await envios(m, e, 3));
+    const calcular = () =>
+      llamar(m, 'POST', `${B}/empresas/${e.id}/rutas/${rutaId}/calles`, {}, e.dueno.token);
+    const empresaHoy = async () =>
+      Number(
+        (
+          await m.DB.prepare('SELECT n FROM contadores WHERE clave = ?')
+            .bind(claveContadorEmpresa(e.id))
+            .first<{ n: number }>()
+        )?.n ?? 0,
+      );
+    googleFalla = true;
+    expect((await calcular()).datos.calles.fuente).toBe('estimada');
+    expect(pedidos).toHaveLength(1);
+    expect(await contador(m)).toBe(0);
+    expect(await empresaHoy()).toBe(0);
+    googleFalla = false;
+    expect((await calcular()).datos.calles.fuente).toBe('google');
+    expect(pedidos).toHaveLength(2);
+    expect(await contador(m)).toBe(1);
+    expect(await empresaHoy()).toBe(1);
+    await calcular();
+    expect(pedidos).toHaveLength(2);
+  });
+
+  it('si Google falla dos veces con el mismo orden, la estimación queda como definitiva', async () => {
+    const m = mundo({ GOOGLE_ROUTES_KEY: 'llave-de-prueba' });
+    const e = await empresa(m, 'Paquetería Novi');
+    const rutaId = await ruta(m, e, await envios(m, e, 3));
+    const calcular = () =>
+      llamar(m, 'POST', `${B}/empresas/${e.id}/rutas/${rutaId}/calles`, {}, e.dueno.token);
+    googleFalla = true;
+    await calcular();
+    await calcular();
+    await calcular();
+    expect(pedidos).toHaveLength(2);
   });
 });
