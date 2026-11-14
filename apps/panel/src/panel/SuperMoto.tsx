@@ -5,7 +5,8 @@ import {
   TARIFAS_COMIDA_VENEZUELA,
   ErrorApi,
   type Idioma,
-  TARIFA_MOTO_VENEZUELA,
+  tarifaDeMercado,
+  CIUDAD_EL_VIGIA,
   almacenNavegador,
   enIdioma,
   formatearMonto,
@@ -40,7 +41,7 @@ const T = {
       comida: 'Comida',
     } as Record<string, string>,
     // C-COMIDA-CIUDAD (13 nov 2026): Comida se abre con el mismo paso.
-    usarElVigia: 'Usar El Vigía de pruebas',
+    usarElVigiaComida: 'Usar El Vigía de pruebas',
     comidaTitulo: 'Tarifas de comida que se van a cobrar (mercado de Venezuela)',
     comidaAyuda:
       'En dólares, con el equivalente en bolívares de referencia. Se encienden el efectivo, el pago móvil y las recargas en puntos de venta. Fuera de Venezuela se usan las tarifas de comida que ya tenga el país. Todo se cambia después en Control de dinero.',
@@ -51,6 +52,7 @@ const T = {
     tarifaEscribeAyuda:
       'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en Moto · Viajes.',
     usarCaracas: 'Usar Caracas de pruebas',
+    usarElVigia: 'Usar El Vigía',
     codigo: 'Código de la ciudad',
     codigoEjemplo: 'País-ciudad-zona, por ejemplo VE-CCS-CENTRO',
     nombre: 'Nombre de la ciudad',
@@ -115,6 +117,7 @@ const T = {
     tiposPapel: {
       licencia_moto: 'Licencia de moto',
       antecedentes_penales: 'Certificado de antecedentes penales',
+      licencia_conducir: 'Licencia de conducir',
     } as Record<string, string>,
     estadosPapel: {
       pendiente: 'Por revisar',
@@ -191,17 +194,41 @@ const T = {
       seguro_pasajeros: 'Seguro de pasajeros',
       casco_pasajero: 'Casco para el pasajero',
       seguro_vehiculo: 'Seguro del vehículo',
+      licencia: 'Licencia de conducir',
+      inspeccion_vehiculo: 'Revisión del vehículo',
     } as Record<string, string>,
     aprobarEdad: 'Aprobar la edad',
     aprobarCasco: 'Aprobar el casco del pasajero',
     cascoSinMoto: 'El casco se aprueba sobre su moto activa: primero hay que aprobar la moto.',
     habilitar: 'Habilitar para Moto',
     habilitado: 'Conductor habilitado para Moto.',
+    // C-CARRO-PANEL: lo mismo para Carro.
+    habilitacionCarro: 'Habilitación para Carro',
+    nadaFaltaCarro: 'No le falta nada para Carro.',
+    habilitarCarro: 'Habilitar para Carro',
+    habilitadoCarro: 'Conductor habilitado para Carro.',
+    vehiculoActivo: 'Vehículo activo',
     noHabilitado: 'Todavía no se puede habilitar. Le falta:',
     hecho: 'Listo.',
     // 5. Motos
-    motos: 'Motos por revisar',
-    sinMotos: 'No hay motos esperando revisión.',
+    motos: 'Motos y carros por revisar',
+    sinMotos: 'No hay motos ni carros esperando revisión.',
+    tiposVehiculo: { moto: 'Moto', carro: 'Carro' } as Record<string, string>,
+    plazas: (n: number) => `${n} plazas`,
+    documentosCarro: {
+      registro: 'Título de propiedad o carnet de circulación',
+      seguro: 'Póliza RCV del carro',
+      seguro_pasajeros: 'Póliza que cubre a los pasajeros',
+      inspeccion: 'Revisión del vehículo (inspección)',
+      foto_frente: 'Foto de frente',
+      foto_lado: 'Foto de lado',
+      foto_placa: 'Foto de la placa',
+      foto_interior: 'Foto del interior',
+    } as Record<string, string>,
+    aprobarCarro: 'Aprobar el carro',
+    carroAprobado: 'Carro aprobado.',
+    opcionesCarro: 'Más opciones del carro',
+    rechazarCarro: 'Rechazar el carro',
     placa: 'Placa',
     documentosMoto: {
       registro: 'Registro (título) de la moto',
@@ -234,7 +261,7 @@ const T = {
       envios: 'Courier',
       comida: 'Food',
     } as Record<string, string>,
-    usarElVigia: 'Use El Vigía test city',
+    usarElVigiaComida: 'Use El Vigía test city',
     comidaTitulo: 'Food fees that will be charged (Venezuela market)',
     comidaAyuda:
       'In dollars, with the bolívar equivalent for reference. Cash, mobile payment and sales point top-ups are turned on. Outside Venezuela the country’s existing food fees are used. You can change everything later in Money control.',
@@ -245,6 +272,7 @@ const T = {
     tarifaEscribeAyuda:
       'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in Moto · Rides.',
     usarCaracas: 'Use Caracas test city',
+    usarElVigia: 'Use El Vigía',
     codigo: 'City code',
     codigoEjemplo: 'Country-city-area, for example VE-CCS-CENTRO',
     nombre: 'City name',
@@ -306,6 +334,7 @@ const T = {
     tiposPapel: {
       licencia_moto: 'Motorcycle license',
       antecedentes_penales: 'Criminal record certificate',
+      licencia_conducir: 'Driver’s license',
     } as Record<string, string>,
     estadosPapel: {
       pendiente: 'To review',
@@ -381,16 +410,39 @@ const T = {
       seguro_pasajeros: 'Passenger insurance',
       casco_pasajero: 'Passenger helmet',
       seguro_vehiculo: 'Vehicle insurance',
+      licencia: 'Driver’s license',
+      inspeccion_vehiculo: 'Vehicle inspection',
     } as Record<string, string>,
     aprobarEdad: 'Approve age',
     aprobarCasco: 'Approve passenger helmet',
     cascoSinMoto: 'The helmet is approved on the active motorbike: approve the motorbike first.',
     habilitar: 'Approve for Moto',
     habilitado: 'Driver approved for Moto.',
+    habilitacionCarro: 'Car approval',
+    nadaFaltaCarro: 'Nothing missing for Car.',
+    habilitarCarro: 'Approve for Car',
+    habilitadoCarro: 'Driver approved for Car.',
+    vehiculoActivo: 'Active vehicle',
     noHabilitado: 'Can’t approve yet. Missing:',
     hecho: 'Done.',
-    motos: 'Motorbikes to review',
-    sinMotos: 'No motorbikes waiting for review.',
+    motos: 'Motorbikes and cars to review',
+    sinMotos: 'No motorbikes or cars waiting for review.',
+    tiposVehiculo: { moto: 'Moto', carro: 'Car' } as Record<string, string>,
+    plazas: (n: number) => `${n} seats`,
+    documentosCarro: {
+      registro: 'Vehicle title or registration',
+      seguro: 'Car liability insurance',
+      seguro_pasajeros: 'Policy that covers passengers',
+      inspeccion: 'Vehicle inspection',
+      foto_frente: 'Front photo',
+      foto_lado: 'Side photo',
+      foto_placa: 'Plate photo',
+      foto_interior: 'Interior photo',
+    } as Record<string, string>,
+    aprobarCarro: 'Approve car',
+    carroAprobado: 'Car approved.',
+    opcionesCarro: 'More car options',
+    rechazarCarro: 'Reject car',
     placa: 'Plate',
     documentosMoto: {
       registro: 'Motorbike registration',
@@ -452,8 +504,10 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
   const comida = servicio === 'comida';
   const nombreServicio = enPalabras(t.nombresServicio, servicio);
   const venezuela = v.id.trim().toUpperCase().startsWith('VE');
-  // C-ABRIR-CIUDAD (13 nov 2026): solo Moto en Venezuela trae tarifa de mercado; lo demás se escribe.
-  const conTarifaDeMercado = comida || (servicio === 'moto' && (venezuela || !v.id.trim()));
+  // C-ABRIR-CIUDAD (13 nov 2026): Moto y Carro en Venezuela traen tarifa de mercado
+  // (C-CARRO-TARIFA-VE); Comida trae las suyas (C-COMIDA-CIUDAD); lo demás se escribe.
+  const deMercado = comida ? null : tarifaDeMercado('VE', servicio);
+  const conTarifaDeMercado = comida || (Boolean(deMercado) && (venezuela || !v.id.trim()));
   const monedaTarifa = v.moneda.trim().toUpperCase() || 'USD';
   const tarifaEscrita = {
     base: textoAMonto(v.base || '', monedaTarifa),
@@ -466,22 +520,9 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
     Object.values(tarifaEscrita).every((n) => Number.isFinite(n) && n >= 0);
   const usd = (c: number) => formatearMonto(c, 'USD', idioma);
 
-  function usarElVigia() {
-    const c = CIUDAD_PRUEBAS_EL_VIGIA;
-    b.setValores((antes) => ({
-      ...antes,
-      id: c.id,
-      nombre: c.nombre,
-      lat: String(c.lat),
-      lng: String(c.lng),
-      radioKm: String(c.radioKm),
-      zonaHoraria: c.zonaHoraria,
-      moneda: c.moneda,
-    }));
-  }
-
-  function usarCaracas() {
-    const c = CIUDAD_PRUEBAS_VENEZUELA;
+  function usarCiudad(
+    c: typeof CIUDAD_PRUEBAS_VENEZUELA | typeof CIUDAD_EL_VIGIA | typeof CIUDAD_PRUEBAS_EL_VIGIA,
+  ) {
     b.setValores((antes) => ({
       ...antes,
       id: c.id,
@@ -571,12 +612,22 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           ))}
         </select>
       </label>
-      <button type="button" className="boton secundario" onClick={usarElVigia}>
-        {t.usarElVigia}
-      </button>
-      <button type="button" className="boton secundario" onClick={usarCaracas}>
-        {t.usarCaracas}
-      </button>
+      <div className="fila-botones">
+        <button
+          type="button"
+          className="boton secundario"
+          onClick={() => usarCiudad(CIUDAD_PRUEBAS_VENEZUELA)}
+        >
+          {t.usarCaracas}
+        </button>
+        <button
+          type="button"
+          className="boton secundario"
+          onClick={() => usarCiudad(comida ? CIUDAD_PRUEBAS_EL_VIGIA : CIUDAD_EL_VIGIA)}
+        >
+          {comida ? t.usarElVigiaComida : t.usarElVigia}
+        </button>
+      </div>
       <label>
         {t.codigo}
         <input
@@ -671,17 +722,17 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
             </ul>
           ) : null}
         </div>
-      ) : conTarifaDeMercado ? (
+      ) : conTarifaDeMercado && deMercado ? (
         <div aria-label={t.tarifaTitulo}>
           <h3>{t.tarifaTitulo}</h3>
           <p className="pista">{t.tarifaAyuda}</p>
           <ul className="lista">
             {(
               [
-                [t.base, TARIFA_MOTO_VENEZUELA.base],
-                [t.porKm, TARIFA_MOTO_VENEZUELA.porKm],
-                [t.porMinuto, TARIFA_MOTO_VENEZUELA.porMinuto],
-                [t.minimo, TARIFA_MOTO_VENEZUELA.minimo],
+                [t.base, deMercado.base],
+                [t.porKm, deMercado.porKm],
+                [t.porMinuto, deMercado.porMinuto],
+                [t.minimo, deMercado.minimo],
               ] as const
             ).map(([nombre, centavos]) => (
               <li key={nombre}>
@@ -792,10 +843,13 @@ function FilaPais({
   const puedeAbrir = v.solicitudMarca.trim().length >= 4 && v.confirmo && v.clave.length > 0;
 
   return (
-    <li className="tarjeta-form" data-testid={`pais-${p.pais}`}>
+    <li
+      className="tarjeta-form"
+      data-testid={`pais-${p.pais}${p.servicio === 'moto' ? '' : `-${p.servicio}`}`}
+    >
       <div className="lista-texto">
         <strong>
-          {p.pais} · {p.servicio === 'moto' ? t.servicioMoto : p.servicio}{' '}
+          {p.pais} · {enPalabras(t.nombresServicio, p.servicio)}{' '}
           <span className={`insignia ${p.abierto ? 'insignia-aprobado' : ''}`}>
             {p.abierto ? t.abiertoEstado : t.cerradoEstado}
           </span>
@@ -1449,8 +1503,38 @@ function Conductor({
     }
   }
 
-  const moto = d?.servicios.find((s) => s.servicioId === 'moto');
   const requisito = (r: string) => enPalabras(t.requisitos, r);
+  // C-CARRO-PANEL: la habilitación de cada servicio de pasajeros que el conductor tenga a la vista.
+  const deServicio = (s: string) => d?.servicios.find((x) => x.servicioId === s);
+  const moto = deServicio('moto');
+  const carro = deServicio('carro');
+  const bloqueServicio = (
+    x: NonNullable<ReturnType<typeof deServicio>>,
+    titulo: string,
+    nadaFalta: string,
+  ) => (
+    <div key={x.servicioId}>
+      <h3>
+        {titulo}:{' '}
+        <span className={`insignia ${x.habilitacion === 'aprobada' ? 'insignia-aprobado' : ''}`}>
+          {enPalabras(t.estadosHabilitacion, x.habilitacion ?? 'ninguna')}
+        </span>
+      </h3>
+      {x.requisitosFaltantes.length ? (
+        <>
+          <p>{t.leFalta}:</p>
+          <ul aria-label={`${t.leFalta} · ${titulo}`}>
+            {x.requisitosFaltantes.map((r) => (
+              <li key={r}>{requisito(r)}</li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="texto-exito">{nadaFalta}</p>
+      )}
+      {x.motivo ? <p className="pista">{x.motivo}</p> : null}
+    </div>
+  );
   return (
     <div className="tarjeta-form" data-testid="detalle-conductor">
       <div className="fila-botones">
@@ -1489,7 +1573,7 @@ function Conductor({
             </li>
             <li>
               <div className="lista-texto">
-                <strong>{t.motoActiva}</strong>
+                <strong>{carro && !moto ? t.vehiculoActivo : t.motoActiva}</strong>
                 <span>
                   {d.vehiculoActivo
                     ? `${d.vehiculoActivo.tipo} · ${d.vehiculoActivo.estado}`
@@ -1518,31 +1602,8 @@ function Conductor({
               cargar();
             }}
           />
-          {moto ? (
-            <>
-              <h3>
-                {t.habilitacion}:{' '}
-                <span
-                  className={`insignia ${moto.habilitacion === 'aprobada' ? 'insignia-aprobado' : ''}`}
-                >
-                  {enPalabras(t.estadosHabilitacion, moto.habilitacion ?? 'ninguna')}
-                </span>
-              </h3>
-              {moto.requisitosFaltantes.length ? (
-                <>
-                  <p>{t.leFalta}:</p>
-                  <ul aria-label={t.leFalta}>
-                    {moto.requisitosFaltantes.map((r) => (
-                      <li key={r}>{requisito(r)}</li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p className="texto-exito">{t.nadaFalta}</p>
-              )}
-              {moto.motivo ? <p className="pista">{moto.motivo}</p> : null}
-            </>
-          ) : null}
+          {moto ? bloqueServicio(moto, t.habilitacion, t.nadaFalta) : null}
+          {carro ? bloqueServicio(carro, t.habilitacionCarro, t.nadaFaltaCarro) : null}
           <div className="fila-botones">
             <button
               type="button"
@@ -1558,38 +1619,58 @@ function Conductor({
             >
               {t.aprobarEdad}
             </button>
-            <button
-              type="button"
-              className="boton exito"
-              disabled={!d.vehiculoActivo}
-              onClick={() =>
-                d.vehiculoActivo &&
-                void hacer(
-                  'PUT',
-                  `/datos/admin/cumplimientos/${id}/casco_pasajero`,
-                  { estado: 'aprobado', vehiculoId: d.vehiculoActivo.id },
-                  t.hecho,
-                )
-              }
-            >
-              {t.aprobarCasco}
-            </button>
-            <button
-              type="button"
-              className="boton exito"
-              onClick={() =>
-                void hacer(
-                  'PUT',
-                  `/datos/admin/habilitaciones/${id}/moto`,
-                  { estado: 'aprobada' },
-                  t.habilitado,
-                )
-              }
-            >
-              {t.habilitar}
-            </button>
+            {moto || !carro ? (
+              <button
+                type="button"
+                className="boton exito"
+                disabled={!d.vehiculoActivo}
+                onClick={() =>
+                  d.vehiculoActivo &&
+                  void hacer(
+                    'PUT',
+                    `/datos/admin/cumplimientos/${id}/casco_pasajero`,
+                    { estado: 'aprobado', vehiculoId: d.vehiculoActivo.id },
+                    t.hecho,
+                  )
+                }
+              >
+                {t.aprobarCasco}
+              </button>
+            ) : null}
+            {moto || !carro ? (
+              <button
+                type="button"
+                className="boton exito"
+                onClick={() =>
+                  void hacer(
+                    'PUT',
+                    `/datos/admin/habilitaciones/${id}/moto`,
+                    { estado: 'aprobada' },
+                    t.habilitado,
+                  )
+                }
+              >
+                {t.habilitar}
+              </button>
+            ) : null}
+            {carro ? (
+              <button
+                type="button"
+                className="boton exito"
+                onClick={() =>
+                  void hacer(
+                    'PUT',
+                    `/datos/admin/habilitaciones/${id}/carro`,
+                    { estado: 'aprobada' },
+                    t.habilitadoCarro,
+                  )
+                }
+              >
+                {t.habilitarCarro}
+              </button>
+            ) : null}
           </div>
-          {!d.vehiculoActivo ? <p className="pista">{t.cascoSinMoto}</p> : null}
+          {!d.vehiculoActivo && (moto || !carro) ? <p className="pista">{t.cascoSinMoto}</p> : null}
         </>
       ) : null}
       {error ? (
@@ -1626,6 +1707,7 @@ type Moto = {
   color: string;
   placa: string;
   placa_estado: string;
+  plazas?: number | null;
   estado: string;
   documentos: { id: string; tipo: string; estado: string; venceEn: string | null }[];
 };
@@ -1649,6 +1731,9 @@ function FilaMoto({
   const [rechazando, setRechazando] = useState(false);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  // C-CARRO-PANEL: la misma cola revisa motos y carros, cada uno con sus textos.
+  const esCarro = m.tipo === 'carro';
+  const nombresDoc = esCarro ? t.documentosCarro : t.documentosMoto;
 
   async function hacer(ruta: string, cuerpo: Record<string, unknown>, exito: string) {
     setError('');
@@ -1672,7 +1757,9 @@ function FilaMoto({
           {m.color ? ` · ${m.color}` : ''}
         </strong>
         <span>
-          {m.conductor} · {t.placa}: {m.placa}
+          {enPalabras(t.tiposVehiculo, m.tipo)}
+          {esCarro && m.plazas ? ` · ${t.plazas(m.plazas)}` : ''} · {m.conductor} · {t.placa}:{' '}
+          {m.placa}
           {m.placa_estado ? ` (${m.placa_estado})` : ''}
         </span>
       </div>
@@ -1691,7 +1778,7 @@ function FilaMoto({
           <li key={d.id}>
             <div className="lista-texto">
               <strong>
-                {enPalabras(t.documentosMoto, d.tipo)}{' '}
+                {enPalabras(nombresDoc, d.tipo)}{' '}
                 <span
                   className={`insignia ${
                     d.estado === 'aprobado'
@@ -1749,14 +1836,24 @@ function FilaMoto({
           type="button"
           className="boton exito"
           onClick={() =>
-            void hacer(`/datos/admin/vehiculos/${m.id}`, { estado: 'aprobado' }, t.motoAprobada)
+            void hacer(
+              `/datos/admin/vehiculos/${m.id}`,
+              { estado: 'aprobado' },
+              esCarro ? t.carroAprobado : t.motoAprobada,
+            )
           }
         >
-          {t.aprobarMoto}
+          {esCarro ? t.aprobarCarro : t.aprobarMoto}
         </button>
         <MenuTresPuntos
-          etiqueta={t.opcionesMoto}
-          opciones={[{ texto: t.rechazarMoto, peligro: true, alTocar: () => setRechazando(true) }]}
+          etiqueta={esCarro ? t.opcionesCarro : t.opcionesMoto}
+          opciones={[
+            {
+              texto: esCarro ? t.rechazarCarro : t.rechazarMoto,
+              peligro: true,
+              alTocar: () => setRechazando(true),
+            },
+          ]}
         />
       </div>
       {rechazando ? (
@@ -1804,7 +1901,7 @@ function Motos({
   const [error, setError] = useState('');
   const cargar = useCallback(() => {
     pedir<{ vehiculos: Moto[] }>('GET', '/datos/admin/vehiculos?estado=en_revision')
-      .then((r) => setLista(r.vehiculos.filter((v) => v.tipo === 'moto')))
+      .then((r) => setLista(r.vehiculos.filter((v) => v.tipo === 'moto' || v.tipo === 'carro')))
       .catch((x: unknown) => setError(mensaje(x)));
   }, []);
   useEffect(cargar, [cargar]);

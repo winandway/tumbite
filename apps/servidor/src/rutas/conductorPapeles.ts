@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { DOCUMENTOS_CONDUCTOR, perfilPasajeros, requisitosQueCumple } from '@tumbite/compartido';
+import {
+  DOCUMENTOS_CONDUCTOR,
+  DOCUMENTOS_VEHICULO_PASAJEROS,
+  perfilPasajeros,
+  requisitosQueCumple,
+} from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
 import type { Env } from '../env';
 import { guardarFoto } from '../fotoLimpia';
@@ -70,6 +75,9 @@ conductorPapeles.get('/conductor/papeles', async (c) => {
       edadMinima: perfil.edadMinima,
       placaNacional: perfil.placaNacional,
       documentos: perfil.documentosConductor,
+      // C-CARRO-PAPELES-PAIS: lo que pide su país para cada servicio de pasajeros.
+      documentosPorServicio: { moto: perfil.documentosConductor, carro: perfil.documentosCarro },
+      documentosVehiculo: DOCUMENTOS_VEHICULO_PASAJEROS,
     },
     documentos: docs,
   });

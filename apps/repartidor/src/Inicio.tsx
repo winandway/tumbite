@@ -56,6 +56,8 @@ import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisDatos } from './MisDatos';
 import { Verificacion } from './Verificacion';
+import { MiCarro } from './viajes/MiCarro';
+import { MisViajesConductor } from './viajes/MisViajesConductor';
 import { MiMoto } from './viajes/MiMoto';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
@@ -565,7 +567,7 @@ export function Inicio() {
   const tg = textosGrandes(idioma);
   const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [seccionPerfil, setSeccionPerfil] = useState<
-    'vehiculo' | 'documentos' | 'moto' | 'soporte' | null
+    'vehiculo' | 'documentos' | 'moto' | 'carro' | 'viajes' | 'soporte' | null
   >(null);
   const [mostrarChat, setMostrarChat] = useState(true);
   // Desde cuándo está conectado en esta sesión (el servidor no lo guarda).
@@ -1885,6 +1887,20 @@ export function Inicio() {
             td.miMotoDetalle,
           )}
           {seccionPerfil === 'moto' ? <MiMoto /> : null}
+          {fila(
+            td.miCarro,
+            () => setSeccionPerfil((x) => (x === 'carro' ? null : 'carro')),
+            seccionPerfil === 'carro',
+            td.miCarroDetalle,
+          )}
+          {seccionPerfil === 'carro' ? <MiCarro /> : null}
+          {fila(
+            td.misViajes,
+            () => setSeccionPerfil((x) => (x === 'viajes' ? null : 'viajes')),
+            seccionPerfil === 'viajes',
+            td.misViajesDetalle,
+          )}
+          {seccionPerfil === 'viajes' ? <MisViajesConductor /> : null}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(

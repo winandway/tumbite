@@ -1317,7 +1317,7 @@ END;
 CREATE TABLE IF NOT EXISTS conductor_documentos (
   id TEXT PRIMARY KEY,
   conductor_id TEXT NOT NULL REFERENCES usuarios(id),
-  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('licencia_moto', 'antecedentes_penales', 'licencia_conducir')),
   clave TEXT NOT NULL,
   vence_en TEXT,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado', 'reemplazado')),
@@ -3638,3 +3638,18 @@ CREATE TABLE IF NOT EXISTS pedidos_pago_movil (
   corregido_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-VIAJES-HISTORIAL (rama fase-carro-1, 13 nov 2026) — todos los países. «Mis viajes» del conductor
+-- se lee por este índice (parcial: solo operaciones que tuvieron conductor). La ayuda de un viaje
+-- (objeto olvidado, cobro, conductor, seguridad, otro) abre un ticket; un caso por viaje y motivo.
+CREATE INDEX IF NOT EXISTS operaciones_conductor ON operaciones(conductor_id, creado_en) WHERE conductor_id IS NOT NULL;
+CREATE TABLE IF NOT EXISTS ayuda_viajes (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  motivo TEXT NOT NULL CHECK (motivo IN ('objeto_olvidado', 'cobro', 'conductor', 'seguridad', 'otro')),
+  ticket_id TEXT NOT NULL REFERENCES tickets(id),
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  conductor_id TEXT REFERENCES usuarios(id),
+  detalle TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (operacion_id, motivo)
+);
+CREATE INDEX IF NOT EXISTS ayuda_viajes_conductor ON ayuda_viajes(conductor_id, creado_en) WHERE motivo = 'objeto_olvidado';

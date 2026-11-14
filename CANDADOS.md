@@ -1315,6 +1315,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `rutas/viajesPasajero.test.ts` («en producción Moto no se enciende ni se cotiza»), comprobada en rojo cambiando la condición del entorno.
 - **No tocar:** no mover `moto` a `SERVICIOS_IMPLEMENTADOS` sin la orden de Richard de encender Moto en producción (con aprobación legal y aseguradora).
 - **Cambio del 13 nov 2026 (C-MOTO-POR-PAIS, Venezuela):** el código ya puede atender Moto en producción en UN país, pero la compuerta nace CERRADA. Solo se abre Moto en Venezuela (`PAISES_PASAJEROS_ABRIBLES` en `apps/servidor/src/pasajerosPais.ts`; EE. UU. y Colombia siguen bloqueados por código). Abrirla es `PUT /datos/admin/pasajeros-pais/VE/moto` del superadmin con su contraseña, el número de la solicitud de registro de la marca Divoox en Venezuela (regla de Richard) y la confirmación de que lo legal y el seguro están listos; queda en `config` (`pasajeros_pais:VE`) y en la auditoría. Con el país abierto: `bloquearPasajeros` deja encender Moto solo en ciudades de ese país, `sincronizarServicios` la sigue declarando implementada y `saludServicios` acepta Moto encendida solo en ciudades de un país abierto (en cualquier otra, «error»). Cerrarlo suspende Moto en sus ciudades y, si no queda otro país, en general. En el sitio de pruebas no cambia nada.
+- **Cambio del 13 nov 2026 (C-CARRO-POR-PAIS):** Carro en Venezuela también es abrible por esta MISMA compuerta (`PAISES_PASAJEROS_ABRIBLES` tiene `carro → VE`), y también nace cerrada. EE. UU. y Colombia siguen bloqueados por código para pasajeros.
 - **Prueba del cambio:** `motoVenezuela.test.ts` («C-MOTO-POR-PAIS», 3): cerrada de fábrica, requisitos para abrir (país, contraseña, solicitud de marca, confirmación), Caracas funciona en producción con el país abierto, Miami sigue bloqueada, la salud se pone en rojo si Moto aparece en Miami, y cerrar la apaga. Comprobada en rojo dejando abrir cualquier país.
 
 ## C-VIAJE-PRECIO-FIJO · Tarifa versionada y cotización con precio fijo (28 oct 2026)
@@ -3973,3 +3974,62 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se hizo:** `mis-pedidos` trae `ev_entrega_modo` (la misma subconsulta de las evidencias); la lista dice «No entregado» / «Not delivered» en rojo; el detalle dice «El lugar donde te esperó tu repartidor» bajo la foto y el recibo arranca con «No pudimos entregar tu pedido» (español e inglés).
 - **Prueba:** `operacion.test.ts` («C-CLIENTE-AUSENTE: con PIN y sin cliente…», la lista de «Mis pedidos» devuelve `entregadoComo: 'ausente'`), comprobada en rojo antes del arreglo.
 - **No tocar:** el cierre como ausente sigue por el MISMO camino de dinero de una entrega (C-CLIENTE-AUSENTE).
+
+## Divoox Carro listo para probar (rama fase-carro-1, 13 nov 2026) — Venezuela y EE. UU.
+
+### C-CARRO-PAPELES-PAIS · Los papeles del taxista dependen de su país
+
+- **Qué protege:** que un taxista venezolano pueda cumplir los requisitos de Carro con documentos que revisa el equipo, sin bajar el piso de EE. UU.
+- **Cómo funciona:** `perfilPasajeros` (compartido) tiene `documentosCarro` por país: Venezuela pide `licencia_conducir` y `antecedentes_penales`; al aprobarlos cumplen `licencia` + `historial_manejo` y `antecedentes_pasajeros` (los de pasajeros, C-PAPELES-SOLO-PASAJEROS). EE. UU. no pide ninguno (Checkr, inspección y seguro de pasajeros como estaban). Los papeles del carro son los de siempre del vehículo (`DOCUMENTOS_VEHICULO_PASAJEROS.carro`: registro = título o carnet de circulación, seguro = RCV, seguro de pasajeros, inspección = revisión, fotos). `GET /datos/conductor/papeles` devuelve `perfil.documentosPorServicio` y `perfil.documentosVehiculo`.
+- **Tabla:** `conductor_documentos` nació con un CHECK que no conocía `licencia_conducir`. `schema.sql` ya trae la lista nueva y `rehacerConductorDocumentos` (`apps/servidor/src/esquemaPapeles.ts`, llamado desde `migrarCompleto`) rehace la tabla vieja una sola vez sin perder filas, como `rehacerAprobacionesDinero`.
+- **Prueba:** `rutas/carroVenezuela.test.ts` («C-CARRO-PAPELES-PAIS», 3): Venezuela pide y cumple; EE. UU. no cumple con papeles; la tabla vieja se rehace y conserva sus filas. Comprobada en rojo (sin el perfil, 422/undefined; sin rehacer, CHECK).
+- **No tocar:** no hacer que un papel aprobado en EE. UU. cumpla antecedentes; no quitar `rehacerConductorDocumentos` mientras pueda quedar una base vieja.
+- Ficha: `docs/investigaciones-rea/2026-11-13-carro-venezuela.md`.
+
+### C-CARRO-ALTA-DRIVER · El taxista se da de alta en Driver
+
+- **Qué protege:** que el taxista tenga su pantalla «Divoox Carro» en el perfil de Driver, hermana de «Divoox Moto», sin duplicar código.
+- **Cómo funciona:** la pieza común `apps/repartidor/src/viajes/AltaPasajeros.tsx` (antes era `MiMoto.tsx` entero) recibe `servicio` (`moto` o `carro`): ciudad, vehículo (marca, modelo, año, color, placa y, en Carro, plazas 4 o 6), papeles del vehículo y del conductor que pide su país (`perfil.documentosVehiculo` y `perfil.documentosPorServicio` del servidor), estado de la aprobación con lo que falta, e interruptor «Recibir viajes de Carro». Con 6 plazas o más dice que también recibe Carro XL (el despacho ya lo filtra por plazas, C-CARRO-XL; no hay interruptor aparte). Borrador `driver-mi-carro`; fotos por `fotoConCamara` (C-CAMARA-EN-TODA-SUBIDA). `MiMoto.tsx` y `MiCarro.tsx` solo montan la pieza.
+- **Prueba:** `apps/servidor/src/carroAltaDriver.test.ts` (candado sobre el código de Driver; las apps no corren en vitest). Comprobada en rojo quitando `<MiCarro />` del perfil.
+- **No tocar:** no volver a copiar la pantalla para cada servicio; no quitar el borrador ni la cámara.
+
+### C-CARRO-PANEL · La cola de revisión del panel también revisa carros
+
+- **Qué protege:** que el equipo apruebe a un taxista desde la misma sección Moto del superadmin, con los nombres correctos de cada papel.
+- **Cómo funciona:** `SuperMoto.tsx`: la cola «Motos y carros por revisar» trae los vehículos en revisión de tipo moto y carro; cada fila dice el tipo (y las plazas del carro) y nombra los papeles según el tipo (en Carro: título o carnet de circulación, póliza RCV, póliza de pasajeros, revisión del vehículo). Aprobar y rechazar (en los tres puntos, con motivo) usan las rutas de siempre. En la ficha del conductor se ve la habilitación de Moto y la de Carro con lo que le falta en palabras (licencia de conducir, revisión del vehículo) y el botón «Habilitar para Carro»; el casco solo aparece si el conductor está en Moto. La inspección del carro se aprueba como papel del vehículo (`inspeccion` → `inspeccion_vehiculo`).
+- **Prueba:** `apps/panel/src/panel/SuperMoto.test.tsx` («C-CARRO-PANEL»), comprobada en rojo antes del cambio.
+- **No tocar:** no separar otra cola para carros (el equipo revisa todo en un lugar).
+
+### C-CARRO-TARIFA-VE · Tarifa de mercado de Carro y Carro XL en Venezuela
+
+- **Qué protege:** que abrir Carro en una ciudad venezolana sea un paso del panel con precios del mercado local, y que la comisión del prepago rija en dólares.
+- **Cómo funciona:** `TARIFA_CARRO_VENEZUELA` (compartido, centavos de dólar: base 1,50; 0,45/km; 0,06/min; mínimo 3,50; XL × 1,5) y `tarifaDeMercado(pais, servicio)` (Moto y Carro en Venezuela). `POST /datos/admin/viajes/ciudades` la usa si no se escribe otra; el panel la muestra de solo lectura y trae el botón «Usar El Vigía» (`CIUDAD_EL_VIGIA`, `VE-VIG-CENTRO`). La comisión es `prepago-ve-car-usd` (el mismo 10 % ya aprobado; no se inventó otro porcentaje). `comisionTipicaMoto` (las «carreras que te alcanzan» del saldo) usa la tarifa de Carro cuando la ciudad no tiene Moto. El pago móvil es el mismo de Moto.
+- **Prueba:** `rutas/carroVenezuela.test.ts` («C-CARRO-TARIFA-VE», 3) y `SuperMoto.test.tsx` («C-CARRO-TARIFA-VE»); comprobadas en rojo (422 sin tarifa, 0 en la comisión típica).
+- **No tocar:** no cambiar el porcentaje sin Richard; la tarifa es de prueba y se ajusta con la práctica, con su fuente en la ficha.
+
+### C-CARRO-POR-PAIS · Carro en Venezuela por la misma compuerta de producción de Moto
+
+- **Qué protege:** que el taxi en Venezuela solo se encienda en producción con la orden escrita (contraseña, número de solicitud de la marca, confirmación legal y de seguro), igual que Moto, y que EE. UU. y Colombia sigan bloqueados por código.
+- **Cómo funciona:** `PAISES_PASAJEROS_ABRIBLES` (`apps/servidor/src/pasajerosPais.ts`) suma `carro → VE`. Todo lo demás es la pieza común de C-MOTO-POR-PAIS: `PUT /datos/admin/pasajeros-pais/VE/carro`, `exigirPuedeEncender`, `sincronizarServicios` y `saludServicios`. Abrir Carro no abre Moto (cada servicio se abre aparte). El panel lista «VE · Carro» en la compuerta (`pais-VE-carro`).
+- **Prueba:** `rutas/carroVenezuela.test.ts` («C-CARRO-POR-PAIS», 3) y `motoVenezuela.test.ts` (la lista de la compuerta). Comprobada en rojo antes de sumar Carro.
+- **No tocar:** no sumar EE. UU. ni Colombia para pasajeros sin orden de Richard con lo legal y el seguro.
+
+### C-CARRO-VIAJE-PASAJERO · Cada servicio dice lo suyo en la app del pasajero
+
+- **Qué protege:** que en Carro no diga «Pedir Moto» ni «Moto:», y que el pasajero vea a quién espera como en Uber.
+- **Cómo funciona:** `PedirMoto.tsx`: el botón dice «Pedir Moto», «Pedir Carro», «Pedir Carro XL» o «Enviar»; el casco y «un pasajero» solo en Moto; en Carro, las plazas (4, o 6 en XL). `ViajeEnCurso.tsx`: rotula el vehículo (Moto, Carro, Carro XL, Envío) con marca, modelo, color, plazas y placa; muestra la foto verificada del conductor (`FotoConductor`, con la inicial si no hay) y «Llega en unos N min» / «Llegas en unos N min». El servidor (`viajePublico`) manda `servicio`, `categoria`, `conductor.vehiculo.{tipo,plazas}`, `conductor.llegadaMin` y `conductor.foto`. La llegada se calcula con la posición del conductor, el factor de calle y la velocidad de la tarifa copiada en la cotización: **ninguna consulta nueva a Google por refresco**. La foto es la selfie del KYC aprobado, servida por `GET /datos/viajes/:id/conductor/foto` solo al pasajero de ESE viaje mientras el conductor viene o lo lleva (privada, sin caché).
+- **Prueba:** `rutas/carroVenezuela.test.ts` («C-CARRO-VIAJE-PASAJERO»: servicio, categoría, plazas, minutos, foto y que otro pasajero no la ve) y `carroAltaDriver.test.ts` (candado sobre el código de la app). Comprobadas en rojo.
+- **No tocar:** no llamar a Google para la llegada en cada consulta; no mostrar la foto fuera del viaje en curso ni a otro pasajero.
+
+### C-CARRO-CIRCUITO · El taxi de punta a punta por la API
+
+- **Qué protege:** que todo el circuito del taxi siga funcionando junto, como en `motoVenezuela.test.ts`.
+- **Prueba:** `apps/servidor/src/rutas/carroCircuito.test.ts` (5): en El Vigía el taxista se registra (ciudad, carro con plazas, papeles del carro y los suyos, identidad), el equipo lo aprueba desde el panel (papeles, identidad, edad, documentos e inspección del carro, carro, habilitación para Carro), recarga, y el pasajero pide en efectivo (la comisión del 10 % sale UNA sola vez del saldo, también si se repite «terminar») y por pago móvil; sin saldo no hay oferta ni aceptación; Carro XL solo llega a un carro de 6 plazas. En Detroit, Carro con tarjeta (Stripe simulado: autoriza, cobra al terminar una sola vez) y propina completa al conductor. Comprobada en rojo quitando que la licencia de conducir cumpla `licencia`.
+- **Límite:** el alta de un conductor de EE. UU. pasa por Checkr y aquí no se simula (el de Detroit nace con todo en regla, `conductorDeMoto`).
+
+### C-VIAJES-HISTORIAL · Mis viajes, recibo y ayuda con el viaje adjunto (objetos perdidos)
+
+- **Qué protege:** que pasajero y conductor vean sus viajes y su recibo, y que el pasajero pida ayuda con el viaje adjunto (como Uber), incluido «Olvidé algo en el vehículo», sin que nadie vea el teléfono del otro.
+- **Cómo funciona:** `apps/servidor/src/rutas/viajesHistorial.ts` (montado ANTES de `viajesPasajero`, para que `/viajes/historial` no caiga en `/viajes/:id`): `GET /datos/viajes/historial` y `GET /datos/conductor/viajes/historial` (páginas de 20 con cursor `antes` = fecha; índices `operaciones_cliente` y el nuevo `operaciones_conductor`, parcial con conductor), `GET /datos/viajes/:id/recibo` y `/datos/conductor/viajes/:id/recibo` (desglose de la cotización, forma de pago, propina con tarjeta, distancia, tiempo real, nombre de pila y vehículo), `POST /datos/viajes/:id/ayuda` (motivos: objeto olvidado, cobro, conductor, seguridad, otro; hasta 30 días; abre un ticket de soporte con `datos_json.viaje`; un caso por viaje y motivo en `ayuda_viajes`; el objeto olvidado avisa al conductor con `notificar` y queda en su historial 7 días). Apps: `MisViajes.tsx` (pasajero, en la pantalla de viajes, con borrador en la ayuda) y `MisViajesConductor.tsx` (Driver, en el perfil). Nada escribe por mirar.
+- **Prueba:** `rutas/viajesHistorial.test.ts` (4) y `carroAltaDriver.test.ts` («C-VIAJES-HISTORIAL»). Rojo: sin el archivo de rutas (o montado después), 404.
+- **No tocar:** no mostrar teléfonos; no montar `viajesHistorial` después de `viajesPasajero`.

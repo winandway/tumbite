@@ -587,3 +587,12 @@
 - [ ] [para: revisor-calidad] Revisar la rama fase-web-docs: web al día (C-WEB-AL-DIA), guía «Instalar desde el navegador» (C-GUIA-INSTALAR-NAVEGADOR), mapa de Google en la web (C-MAPA-GOOGLE-WEB), correo de las fichas (C-FICHA-CONTACTO) y textos públicos (C-TEXTOS-PUBLICOS).
 - [ ] [para: desarrollador] Mapa web del Driver (`apps/repartidor/src/piezas/Mapa.web.tsx`, `flex/MapaRuta.web.tsx`) con la pieza `mapaWebGoogle` cuando dibuje restaurante o casa (C-MAPA-GOOGLE-WEB). No se tocó: era terreno del desarrollador de Driver.
 - [!] 👤 Richard: crear la llave de navegador de Maps JavaScript API (restringida por dominio) y guardarla como variable del repositorio GOOGLE_MAPS_WEB_KEY; tope de 300 cargas al día en Google Cloud. Sin eso, la web sigue con Leaflet (riesgo de términos abierto).
+
+## Divoox Carro listo para probar (rama fase-carro-1, 13 nov 2026) — Venezuela y EE. UU.
+
+- [ ] [para: revisor-calidad] Revisar la rama fase-carro-1: C-CARRO-PAPELES-PAIS (y la tabla rehecha de `conductor_documentos`), C-CARRO-ALTA-DRIVER, C-CARRO-PANEL, C-CARRO-TARIFA-VE, C-CARRO-POR-PAIS, C-CARRO-VIAJE-PASAJERO (foto del conductor = selfie del KYC aprobado, solo al pasajero del viaje), C-CARRO-CIRCUITO y C-VIAJES-HISTORIAL.
+- [ ] [para: desarrollador] Viaje programado de Carro (pedir para más tarde, hasta 7 días; el despacho arranca N minutos antes; cancelación gratis hasta una hora antes), copiando el pedido programado de Comida. No se hizo esta noche: arrancar el despacho a la hora necesita el reloj, que es terreno de otro desarrollador.
+- [ ] [para: desarrollador] Docs públicas de Carro en español e inglés con capturas reales (pedir un Carro, conducir con Divoox Carro, registrar el carro y sus papeles, Mis viajes y objetos olvidados). Falta tomar las capturas del recorrido.
+- [ ] [para: desarrollador] Carro, después: paradas múltiples, categorías Comfort y Premium, tarifa dinámica, peajes. Anotados, no construidos (orden del 13 nov).
+- [!] 👤 Richard: llamada enmascarada entre pasajero y conductor (depende de la cuenta de Twilio para voz). Mientras tanto el contacto va por soporte.
+- [!] 👤 Richard: para abrir Carro en Venezuela en producción, el número de solicitud de la marca, la confirmación del abogado (registro del INTT para apps de pasajeros, edad mínima, seguro de ocupantes) y quién recibe las recargas en El Vigía.

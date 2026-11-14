@@ -9,6 +9,7 @@ import { textosComida } from '../comida/textos';
 import { PedirMoto } from '../viajes/PedirMoto';
 import { type PaqueteCliente, type ViajePasajero, ViajeEnCurso } from '../viajes/ViajeEnCurso';
 import { ContactosConfianza, PreguntaTodoBien } from '../viajes/Seguridad';
+import { MisViajes } from '../viajes/MisViajes';
 import { TEXTOS_MOTO } from '../viajes/textos';
 import { conCuenta } from '../ConCuenta';
 
@@ -122,6 +123,8 @@ function PantallaMoto() {
               alPedir={(id) => setViajeId(id)}
             />
             {servicio !== 'envios' ? <ContactosConfianza /> : null}
+            {/* C-VIAJES-HISTORIAL: sus viajes anteriores con el recibo y la ayuda. */}
+            {servicio !== 'envios' ? <MisViajes /> : null}
           </>
         )}
       </ScrollView>
