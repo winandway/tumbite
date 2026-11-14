@@ -197,10 +197,6 @@ CREATE INDEX IF NOT EXISTS pedidos_cliente ON pedidos(cliente_id, creado_en);
 CREATE INDEX IF NOT EXISTS pedidos_restaurante ON pedidos(restaurante_id, estado);
 CREATE INDEX IF NOT EXISTS pedidos_estado ON pedidos(estado);
 CREATE INDEX IF NOT EXISTS pedidos_sesion ON pedidos(stripe_sesion);
--- C-LECTURAS-SALUD: solo los pedidos con cobro en mano (efectivo o transferencia). Los de tarjeta no
--- entran en el índice y no pagan ninguna escritura de más; la bandeja del canario lee solo estos.
-CREATE INDEX IF NOT EXISTS pedidos_cobro_en_mano ON pedidos(cobro_estado) WHERE metodo_pago != 'tarjeta';
-CREATE INDEX IF NOT EXISTS pedidos_conciliacion_en_mano ON pedidos(conciliacion_estado) WHERE metodo_pago != 'tarjeta';
 
 -- Libro de la billetera: cada entrada es dinero que entra (+) o sale (-) de una cuenta.
 CREATE TABLE IF NOT EXISTS movimientos (
@@ -2632,8 +2628,6 @@ CREATE TABLE IF NOT EXISTS libro (
 CREATE INDEX IF NOT EXISTS libro_cuenta ON libro(cuenta_id, bolsillo, pais, moneda);
 CREATE INDEX IF NOT EXISTS libro_pedido ON libro(pedido_id);
 CREATE UNIQUE INDEX IF NOT EXISTS libro_referencia_unica ON libro(referencia) WHERE referencia IS NOT NULL;
--- C-LECTURAS-SALUD: solo el dinero «directo» (cobro en mano): excedentes y comida sin entregar.
-CREATE INDEX IF NOT EXISTS libro_directo ON libro(concepto, pedido_id) WHERE bolsillo = 'directo';
 
 -- Puntos de venta de recargas: compran saldo a Tumbite por adelantado y lo venden en códigos.
 CREATE TABLE IF NOT EXISTS puntos_venta (
@@ -2679,8 +2673,6 @@ CREATE TABLE IF NOT EXISTS recargas (
   acreditada_en TEXT
 );
 CREATE INDEX IF NOT EXISTS recargas_usuario ON recargas(usuario_id, creado_en);
--- C-LECTURAS-SALUD: solo las recargas pendientes (dos escrituras por recarga con tarjeta: al nacer y al acreditarse).
-CREATE INDEX IF NOT EXISTS recargas_pendientes ON recargas(creado_en) WHERE estado = 'pendiente';
 -- Cobro directo: un cliente que no paga al recibir deja el pedido cancelado aunque ya iba en camino.
 INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('en_camino', 'cancelado', 0);
 -- Soporte cancela un pedido ya listo (el superadmin lo ofrecía y la base lo rechazaba con un error
@@ -3503,7 +3495,7 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
 -- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
 CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
-  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local')),
   objeto TEXT NOT NULL,
   monto INTEGER NOT NULL,
   moneda TEXT NOT NULL,
@@ -3621,3 +3613,49 @@ CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancela
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
 -- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
 CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';
+
+-- ═══════════════ DIVOOX FLEX · FASE 7 (13 nov 2026) — bloque propio ═══════════════
+-- C-FLEX-RECARGA-LOCAL: la empresa declara una recarga pagada fuera de Stripe (pago móvil,
+-- transferencia, Zelle o efectivo) con su referencia y la foto del comprobante; el equipo de Divoox
+-- la acredita UNA vez (o la rechaza con motivo). Apagado por país (config fin_recargas_locales:<país>).
+CREATE TABLE IF NOT EXISTS recargas_locales_empresa (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  metodo TEXT NOT NULL CHECK (metodo IN ('pago_movil', 'transferencia', 'zelle', 'efectivo')),
+  referencia TEXT NOT NULL,
+  banco TEXT NOT NULL DEFAULT '',
+  fecha_pago TEXT,
+  comprobante_clave TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'acreditada', 'rechazada')),
+  motivo TEXT NOT NULL DEFAULT '',
+  idempotencia TEXT NOT NULL UNIQUE,
+  creado_por TEXT REFERENCES usuarios(id),
+  revisado_por TEXT REFERENCES usuarios(id),
+  revision_token TEXT,
+  revisado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- La misma referencia de pago no se declara dos veces en la misma empresa (salvo si se rechazó).
+CREATE UNIQUE INDEX IF NOT EXISTS recargas_locales_referencia ON recargas_locales_empresa(empresa_id, metodo, referencia) WHERE estado != 'rechazada';
+-- La lista de la empresa (por fecha) y la cola del equipo (solo las pendientes: índice parcial chico).
+-- Una foto de comprobante sirve para UNA sola declaración (revisión del 13 nov).
+CREATE UNIQUE INDEX IF NOT EXISTS recargas_locales_comprobante ON recargas_locales_empresa(comprobante_clave);
+CREATE INDEX IF NOT EXISTS recargas_locales_empresa_fecha ON recargas_locales_empresa(empresa_id, creado_en);
+CREATE INDEX IF NOT EXISTS recargas_locales_pendientes ON recargas_locales_empresa(creado_en) WHERE estado = 'pendiente';
+-- C-FLEX-RUTA-CALLES: kilómetros, duración y hora estimada por parada de una ruta, pedidos a Google
+-- UNA vez al confirmar el orden (nunca al mirar). Una fila por ruta; se reescribe solo si cambia el orden.
+CREATE TABLE IF NOT EXISTS rutas_flex_calles (
+  ruta_id TEXT PRIMARY KEY REFERENCES rutas_flex(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  huella_orden TEXT NOT NULL,
+  fuente TEXT NOT NULL CHECK (fuente IN ('google', 'estimada')),
+  metros INTEGER NOT NULL CHECK (metros >= 0),
+  segundos INTEGER NOT NULL CHECK (segundos >= 0),
+  tramos_json TEXT NOT NULL DEFAULT '[]',
+  consultas INTEGER NOT NULL DEFAULT 0,
+  calculado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
