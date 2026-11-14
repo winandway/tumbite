@@ -1,3 +1,4 @@
+import { cuantosHay } from './canarioLecturas';
 import type { Env } from './env';
 import { SOLO_LO_COBRADO } from './liquidaciones';
 import { nuevoId } from './cripto';
@@ -314,14 +315,19 @@ export const DISPARADORES_RETIROS = [
 export async function saludRetiros(
   env: Env,
   db: D1Database,
+  /** C-LECTURAS-SALUD: los disparadores ya leídos por el canario (una sola lectura de sqlite_master). */
+  presentes?: Set<string>,
 ): Promise<'ok' | 'error' | 'pendiente' | 'atrasado'> {
-  const d = await db
-    .prepare(
-      `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_RETIROS.map(() => '?').join(',')})`,
-    )
-    .bind(...DISPARADORES_RETIROS)
-    .first<{ n: number }>();
-  if (Number(d?.n ?? 0) !== DISPARADORES_RETIROS.length) return 'error';
+  const hay = presentes
+    ? cuantosHay(presentes, DISPARADORES_RETIROS)
+    : await db
+        .prepare(
+          `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_RETIROS.map(() => '?').join(',')})`,
+        )
+        .bind(...DISPARADORES_RETIROS)
+        .first<{ n: number }>()
+        .then((d) => Number(d?.n ?? 0));
+  if (hay !== DISPARADORES_RETIROS.length) return 'error';
   const conc = await db
     .prepare("SELECT valor FROM config WHERE clave = 'retiros_conciliacion'")
     .first<{ valor: string }>();

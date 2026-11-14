@@ -118,6 +118,21 @@ const lista = (s: string) => {
   }
 };
 const marcas = (n: number) => Array.from({ length: n }, () => '?').join(',');
+/** Todos los estados de un pedido (el CHECK de `pedidos.estado`). */
+const TODOS = [...ACTIVOS, 'entregado', 'cancelado'];
+const lit = (xs: readonly string[]) => xs.map((x) => `'${x}'`).join(', ');
+/**
+ * C-LECTURAS-CIUDAD (13 nov 2026): los pedidos de la sesión por el índice que ya existe
+ * `pedidos_zona_estado (zona_id, estado, creado_en)`, con el rango desde el inicio de la sesión.
+ * Antes iban por el índice del restaurante, que no tiene la fecha: cada refresco de la pantalla
+ * (cada 4 a 5 segundos) leía TODOS los pedidos de la historia de los restaurantes robot, que se
+ * reutilizan de una sesión a otra (tres consultas por refresco). Ahora lee solo los pedidos de su
+ * zona creados durante la sesión.
+ */
+const DE_LA_SESION = (zonas: number, rids: number, estados: readonly string[]) =>
+  `FROM pedidos p INDEXED BY pedidos_zona_estado
+   WHERE p.zona_id IN (${marcas(zonas)}) AND p.estado IN (${lit(estados)}) AND p.creado_en >= ?
+     AND p.restaurante_id IN (${marcas(rids)})`;
 
 ciudadPruebas.get('/admin/ciudad-pruebas', async (c) => {
   soloPruebas(c.req.url);
@@ -132,15 +147,38 @@ ciudadPruebas.get('/admin/ciudad-pruebas', async (c) => {
   if (!sesion) return c.json({ sesion: null });
   const rids = lista(String(sesion.restaurantes));
   const uids = lista(String(sesion.repartidores));
-  const { results: pedidos } = rids.length
+  const { results: conZona } = rids.length
+    ? await db
+        .prepare(
+          `SELECT id, nombre, lat, lng, abierto, zona_id FROM restaurantes WHERE id IN (${marcas(rids.length)})`,
+        )
+        .bind(...rids)
+        .all<{
+          id: string;
+          nombre: string;
+          lat: number;
+          lng: number;
+          abierto: number;
+          zona_id: string;
+        }>()
+    : { results: [] };
+  const restaurantes = conZona.map((r) => ({
+    id: r.id,
+    nombre: r.nombre,
+    lat: r.lat,
+    lng: r.lng,
+    abierto: r.abierto,
+  }));
+  const zonas = [...new Set(conZona.map((r) => r.zona_id))];
+  const { results: pedidos } = zonas.length
     ? await db
         .prepare(
           `SELECT p.id, p.estado, p.total, p.moneda, p.restaurante_id AS restauranteId, p.cliente_id AS clienteId,
              p.repartidor_id AS repartidorId, p.creado_en AS creadoEn, p.entregado_en AS entregadoEn
-           FROM pedidos p WHERE p.restaurante_id IN (${marcas(rids.length)}) AND p.creado_en >= ?
+           ${DE_LA_SESION(zonas.length, rids.length, TODOS)}
            ORDER BY p.creado_en DESC LIMIT 200`,
         )
-        .bind(...rids, sesion.inicio)
+        .bind(...zonas, sesion.inicio, ...rids)
         .all<{
           id: string;
           estado: string;
@@ -152,14 +190,6 @@ ciudadPruebas.get('/admin/ciudad-pruebas', async (c) => {
           creadoEn: string;
           entregadoEn: string | null;
         }>()
-    : { results: [] };
-  const { results: restaurantes } = rids.length
-    ? await db
-        .prepare(
-          `SELECT id, nombre, lat, lng, abierto FROM restaurantes WHERE id IN (${marcas(rids.length)})`,
-        )
-        .bind(...rids)
-        .all<{ id: string; nombre: string; lat: number; lng: number; abierto: number }>()
     : { results: [] };
   const { results: repartidores } = uids.length
     ? await db
@@ -177,7 +207,7 @@ ciudadPruebas.get('/admin/ciudad-pruebas', async (c) => {
           ubicacionEn: string | null;
         }>()
     : { results: [] };
-  const juego = sesion.destino === 'juego' ? await vistaJuego(db, sesion, rids) : null;
+  const juego = sesion.destino === 'juego' ? await vistaJuego(db, sesion, rids, zonas) : null;
   const activos = pedidos.filter((p) => ACTIVOS.includes(p.estado));
   const porEstado: Record<string, number> = {};
   for (const p of pedidos) porEstado[p.estado] = (porEstado[p.estado] ?? 0) + 1;
@@ -292,6 +322,7 @@ async function vistaJuego(
   db: D1Database,
   sesion: Record<string, string | number | null>,
   rids: string[],
+  zonas: string[],
 ) {
   const id = String(sesion.id);
   const inicio = String(sesion.inicio);
@@ -306,16 +337,16 @@ async function vistaJuego(
   };
   const filas = await filasDeSesion(db, id);
   const fallos = JSON.parse(String(sesion.fallos)) as z.infer<typeof FALLO>[];
-  const { results: filasJ } = rids.length
+  const { results: filasJ } = zonas.length
     ? await db
         .prepare(
           `SELECT p.id, p.estado, p.total, p.moneda, COALESCE(p.metodo_pago, 'tarjeta') AS metodoPago, p.lineas_json AS lineas,
              p.creado_en AS creadoEn, p.entregado_en AS entregadoEn, p.cliente_id AS clienteId, u.nombre, r.nombre AS restaurante
-            FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id
-           WHERE p.restaurante_id IN (${marcas(rids.length)}) AND p.creado_en >= ? AND u.correo NOT LIKE '%@simulador.test'
+            ${DE_LA_SESION(zonas.length, rids.length, TODOS).replace('WHERE', 'JOIN usuarios u ON u.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id WHERE')}
+              AND u.correo NOT LIKE '%@simulador.test'
            ORDER BY p.creado_en LIMIT 200`,
         )
-        .bind(...rids, inicio)
+        .bind(...zonas, inicio, ...rids)
         .all<FilaJugador>()
     : { results: [] as FilaJugador[] };
   const porJugador = new Map<
@@ -361,15 +392,14 @@ async function vistaJuego(
     j.fallos.push(...fallos.filter((f) => f.pedido === p.id));
     porJugador.set(p.clienteId, j);
   }
-  const { results: enCurso } = rids.length
+  const { results: enCurso } = zonas.length
     ? await db
         .prepare(
           `SELECT p.id, p.estado, p.lat, p.lng, p.restaurante_id AS restauranteId, p.repartidor_id AS repartidorId, u.nombre AS cliente
-             FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id
-            WHERE p.restaurante_id IN (${marcas(rids.length)}) AND p.creado_en >= ? AND p.estado IN ('pagado','aceptado','listo','en_camino')
+             ${DE_LA_SESION(zonas.length, rids.length, ['pagado', 'aceptado', 'listo', 'en_camino']).replace('WHERE', 'JOIN usuarios u ON u.id = p.cliente_id WHERE')}
             ORDER BY p.creado_en LIMIT 30`,
         )
-        .bind(...rids, inicio)
+        .bind(...zonas, inicio, ...rids)
         .all<{
           id: string;
           estado: string;

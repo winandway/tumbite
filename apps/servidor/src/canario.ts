@@ -19,7 +19,9 @@ export async function alertarCanario(
     .all<{ pieza: string; estado: string }>()
     .then((r) => new Map(r.results.map((f) => [f.pieza, f.estado])))
     .catch(() => new Map<string, string>());
-  const destinos = await correosEquipo(env, 'sistema');
+  // C-LECTURAS-SALUD: los correos del equipo se buscan solo si hay que avisar (antes, en cada
+  // llamada al canario aunque nada cambiara de color).
+  let destinos: string[] | null = null;
   for (const [pieza, estado] of Object.entries(piezas)) {
     const rojo = estado === 'error';
     const estabaRojo = previas.get(pieza) === 'error';
@@ -52,6 +54,7 @@ export async function alertarCanario(
     const texto = rojo
       ? `La pieza «${pieza}» de /datos/salud pasó a error. Revisa el sitio y el registro de errores en YaDominios Cloud. Este aviso se manda una sola vez; llegará otro cuando se recupere.`
       : `La pieza «${pieza}» de /datos/salud volvió a «${estado}».`;
+    destinos ??= await correosEquipo(env, 'sistema');
     for (const para of destinos)
       await enviarCorreo(env, { de: 'avisos', para, asunto, texto }).catch((e: unknown) =>
         console.error('canario: correo al equipo', e),

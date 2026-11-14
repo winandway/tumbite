@@ -162,7 +162,8 @@ const FUENTES: readonly Fuente[] = [
     tipo: 'transferencia',
     sql: `SELECT ${CON_PEDIDO}, b.creado_en AS creado, 'transferencia:' || p.id AS clave
             FROM pedidos p JOIN bitacora_pedidos b ON b.pedido_id = p.id AND b.evento = 'transferencia_por_verificar'
-           WHERE p.metodo_pago = 'transferencia_repartidor' AND p.cobro_estado = 'pendiente' AND {{id}}`,
+           WHERE p.metodo_pago = 'transferencia_repartidor' AND p.metodo_pago != 'tarjeta'
+             AND p.cobro_estado = 'pendiente' AND {{id}}`,
     idCol: 'p.id',
     mapear: (f) =>
       base(
@@ -243,7 +244,7 @@ const FUENTES: readonly Fuente[] = [
     // Pago en el local que el restaurante no confirmó y el pedido ya salió.
     tipo: 'local',
     sql: `SELECT ${CON_PEDIDO}, l.monto_pagado, l.importe_ticket, l.creado_en AS creado, 'local:' || p.id AS clave
-            FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id
+            FROM pagos_local l CROSS JOIN pedidos p ON p.id = l.pedido_id
            WHERE l.confirmado_restaurante_en IS NULL AND p.estado IN ('en_camino', 'entregado') AND {{id}}`,
     idCol: 'p.id',
     mapear: (f) =>
@@ -538,10 +539,21 @@ export async function accionCaso(
   return { repetida: false, caso: despues ?? { ...caso, estado: 'resuelto' as const } };
 }
 
-/** Pieza «bandeja» de la salud: «pendiente» si hay casos abiertos (no es un error del sistema). */
+/**
+ * Pieza «bandeja» de la salud: «pendiente» si hay casos abiertos (no es un error del sistema).
+ * C-LECTURAS-SALUD (13 nov 2026): solo pregunta si EXISTE un caso abierto, fuente por fuente, sin
+ * contar ni traer la página (antes, la bandeja entera: unas 60.000 filas por llamada al canario
+ * con el volumen del sitio de pruebas). Cada fuente va por un índice parcial de lo que es cobro
+ * en mano (pedidos y libro «directo») o de las recargas pendientes: con tarjeta no se lee nada.
+ */
 export async function saludBandeja(db: D1Database): Promise<'ok' | 'pendiente'> {
-  const { totales } = await listarCasos(db);
-  return Object.values(totales).some((x) => x > 0) ? 'pendiente' : 'ok';
+  for (const f of FUENTES) {
+    const hay = await db
+      .prepare(`SELECT 1 AS hay FROM (${todos(f)}) x ${sinResueltos(false)} LIMIT 1`)
+      .first<{ hay: number }>();
+    if (hay) return 'pendiente';
+  }
+  return 'ok';
 }
 
 /** Anota una incidencia de dinero una sola vez por referencia. */
