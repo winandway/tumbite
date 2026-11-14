@@ -117,10 +117,12 @@ export type MapaG = {
 };
 type MarcaG = {
   setMap(m: MapaG | null): void;
+  setPosition?(p: LatLng): void;
   addListener(evento: string, cb: () => void): Escuchador;
 };
 type MarcaAvanzadaG = {
   map: MapaG | null;
+  position?: LatLng | null;
   addListener(evento: string, cb: () => void): Escuchador;
 };
 type FiguraG = { setMap(m: MapaG | null): void };
@@ -133,13 +135,56 @@ export type GoogleMapsApi = {
   Circle?: new (opciones: Record<string, unknown>) => FiguraG;
   Polygon?: new (opciones: Record<string, unknown>) => FiguraG;
   marker?: { AdvancedMarkerElement?: new (opciones: Record<string, unknown>) => MarcaAvanzadaG };
+  importLibrary?: (nombre: string) => Promise<Record<string, unknown>>;
 };
 
 let cargando: Promise<GoogleMapsApi> | null = null;
+let llaveRechazada = false;
+const escuchasLlave = new Set<() => void>();
 
 /** Para las pruebas: olvida la carga anterior. */
 export function olvidarCargaGoogleMaps() {
   cargando = null;
+  llaveRechazada = false;
+}
+
+/**
+ * Google llama a `window.gm_authFailure` cuando rechaza la llave (dominio no permitido, API sin
+ * habilitar, cuota agotada): sin esto, el mapa queda gris y nadie se entera. Avisa a cada mapa
+ * abierto y deja rastro en la consola.
+ */
+function escucharLlaveRechazada(ventana: object | null) {
+  if (!ventana) return;
+  (ventana as { gm_authFailure?: () => void }).gm_authFailure = () => {
+    llaveRechazada = true;
+    console.error('Google Maps rechazó la llave del navegador (gm_authFailure).');
+    for (const f of escuchasLlave) f();
+  };
+}
+
+/** Se entera si Google rechaza la llave; devuelve cómo dejar de escuchar. */
+export function alRechazarLlaveGoogle(f: () => void): () => void {
+  escuchasLlave.add(f);
+  return () => escuchasLlave.delete(f);
+}
+
+/**
+ * Con la carga dinámica («loading=async») las clases se piden con `importLibrary` (documentación
+ * oficial, «Load the Maps JavaScript API»): core, maps y marker en paralelo. Si la página no tiene
+ * `importLibrary` (pruebas o una carga vieja), se usa `google.maps` tal cual.
+ */
+async function armarApi(maps: GoogleMapsApi): Promise<GoogleMapsApi> {
+  if (typeof maps.importLibrary !== 'function') return maps;
+  const [core, mapsLib, marker] = await Promise.all(
+    ['core', 'maps', 'marker'].map((n) => maps.importLibrary!(n)),
+  );
+  return {
+    ...maps,
+    ...core,
+    ...mapsLib,
+    Marker: (marker?.Marker as GoogleMapsApi['Marker'] | undefined) ?? maps.Marker,
+    marker: { ...maps.marker, ...marker },
+  } as GoogleMapsApi;
 }
 
 /**
@@ -153,14 +198,16 @@ export function cargarGoogleMaps(
 ): Promise<GoogleMapsApi> {
   if (cargando) return cargando;
   const ventana = doc.defaultView as (Window & { google?: { maps?: GoogleMapsApi } }) | null;
-  if (ventana?.google?.maps?.Map) return (cargando = Promise.resolve(ventana.google.maps));
+  escucharLlaveRechazada(ventana);
+  const ya = ventana?.google?.maps;
+  if (ya?.importLibrary || ya?.Map) return (cargando = armarApi(ya));
   cargando = new Promise<GoogleMapsApi>((resolver, rechazar) => {
     const nombre = '__divooxMapaListo';
     const v = ventana as unknown as { __divooxMapaListo?: () => void } | null;
     if (v)
       v.__divooxMapaListo = () => {
         const g = (ventana as { google?: { maps?: GoogleMapsApi } } | null)?.google?.maps;
-        if (g) resolver(g);
+        if (g) armarApi(g).then(resolver, rechazar);
         else rechazar(new Error('Google Maps no respondió'));
       };
     const s = doc.createElement('script');
@@ -208,7 +255,7 @@ export type CirculoMapaWeb = {
   opacidad?: number;
 };
 
-type Quitable = { quitar(): void };
+type Quitable = { quitar(): void; mover?(p: LatLng): void };
 
 /** El círculo de color con borde blanco (y su texto) de las marcas avanzadas. */
 function contenidoMarca(p: PuntoMapaWeb): HTMLElement {
@@ -247,7 +294,10 @@ function dibujarMarca(g: GoogleMapsApi, m: MapaG, p: PuntoMapaWeb, avanzadas: bo
       gmpClickable: Boolean(p.alTocar),
     });
     if (p.alTocar) marca.addListener('gmp-click', p.alTocar);
-    return { quitar: () => (marca.map = null) };
+    return {
+      quitar: () => (marca.map = null),
+      mover: (q) => (marca.position = { lat: q.lat, lng: q.lng }),
+    };
   }
   const marca = new g.Marker({
     map: m,
@@ -266,13 +316,42 @@ function dibujarMarca(g: GoogleMapsApi, m: MapaG, p: PuntoMapaWeb, avanzadas: bo
     },
   });
   if (p.alTocar) marca.addListener('click', p.alTocar);
-  return { quitar: () => marca.setMap(null) };
+  return {
+    quitar: () => marca.setMap(null),
+    mover: (q) => marca.setPosition?.({ lat: q.lat, lng: q.lng }),
+  };
 }
 
 /**
- * Dibuja puntos, líneas y áreas (y quita lo anterior); con varios puntos, encuadra todos. En viaje,
- * como `fitBounds` deja el mapa plano, al quedar quieto se vuelve a inclinar y a girar.
+ * Encuadra los puntos. En viaje, como `fitBounds` deja el mapa plano, al quedar quieto se vuelve a
+ * inclinar y a girar.
  */
+function encuadrar(
+  g: GoogleMapsApi,
+  m: MapaG,
+  puntos: PuntoMapaWeb[],
+  zoom: number,
+  inclinado: boolean,
+  rumbo: number,
+) {
+  if (puntos.length > 1) {
+    const b = new g.LatLngBounds();
+    for (const p of puntos) b.extend({ lat: p.lat, lng: p.lng });
+    m.fitBounds(b, 40);
+  } else if (puntos[0]) {
+    m.setCenter({ lat: puntos[0].lat, lng: puntos[0].lng });
+    m.setZoom(Math.max(m.getZoom() ?? zoom, 16));
+  }
+  if (inclinado && m.setTilt) {
+    const una = m.addListener('idle', () => {
+      una.remove();
+      m.setTilt?.(INCLINACION_VIAJE);
+      m.setHeading?.(rumbo);
+    });
+  }
+}
+
+/** Dibuja puntos, líneas y áreas (y quita lo anterior). Devuelve las marcas por id para moverlas. */
 function dibujarTodo(
   g: GoogleMapsApi,
   m: MapaG,
@@ -284,11 +363,9 @@ function dibujarTodo(
     avanzadas: boolean;
     inclinado: boolean;
     rumbo: number;
-    /** En viaje solo se encuadra la primera vez: encuadrar de nuevo aplana el mapa en cada paso. */
-    encuadrar: boolean;
   },
   anteriores: Quitable[],
-): Quitable[] {
+): { todos: Quitable[]; marcas: Map<string, Quitable> } {
   for (const x of anteriores) x.quitar();
   const nuevos: Quitable[] = [];
   for (const c of d.circulos)
@@ -326,28 +403,27 @@ function dibujarTodo(
       });
       nuevos.push({ quitar: () => f.setMap(null) });
     }
-  for (const p of d.puntos) nuevos.push(dibujarMarca(g, m, p, d.avanzadas));
-  if (!d.encuadrar) {
-    // Sin encuadrar, la inclinación se mantiene: solo se gira hacia el destino si cambió.
-    if (d.inclinado) m.setHeading?.(d.rumbo);
-    return nuevos;
+  const marcas = new Map<string, Quitable>();
+  for (const p of d.puntos) {
+    const x = dibujarMarca(g, m, p, d.avanzadas);
+    marcas.set(p.id, x);
+    nuevos.push(x);
   }
-  if (d.puntos.length > 1) {
-    const b = new g.LatLngBounds();
-    for (const p of d.puntos) b.extend({ lat: p.lat, lng: p.lng });
-    m.fitBounds(b, 40);
-  } else if (d.puntos[0]) {
-    m.setCenter({ lat: d.puntos[0].lat, lng: d.puntos[0].lng });
-    m.setZoom(Math.max(m.getZoom() ?? d.zoom, 16));
-  }
-  if (d.inclinado && m.setTilt) {
-    const una = m.addListener('idle', () => {
-      una.remove();
-      m.setTilt?.(INCLINACION_VIAJE);
-      m.setHeading?.(d.rumbo);
-    });
-  }
-  return nuevos;
+  encuadrar(g, m, d.puntos, d.zoom, d.inclinado, d.rumbo);
+  return { todos: nuevos, marcas };
+}
+
+/**
+ * Lo que obliga a redibujar (y, en viaje, a volver a encuadrar una vez): qué puntos hay, su color,
+ * su texto, las líneas y las áreas. Si solo cambian las posiciones (una lectura de GPS), se mueven
+ * las marcas y nada más.
+ */
+function firmaFija(puntos: PuntoMapaWeb[], lineas: LineaMapaWeb[], circulos: CirculoMapaWeb[]) {
+  return [
+    ...puntos.map((p) => `${p.id}:${p.color}:${p.radio ?? ''}:${p.texto ?? ''}`),
+    ...lineas.map((l) => `${l.id}:${l.puntos.map((p) => `${p.lat},${p.lng}`).join(';')}`),
+    ...circulos.map((c) => `${c.id}:${c.centro.lat},${c.centro.lng}:${c.metros}`),
+  ].join('|');
 }
 
 const TEXTOS = {
@@ -402,7 +478,8 @@ export function MapaGoogleBajoDemanda({
   const api = useRef<GoogleMapsApi | null>(null);
   const mapa = useRef<MapaG | null>(null);
   const dibujados = useRef<Quitable[]>([]);
-  const encuadrado = useRef(false);
+  const marcasPorId = useRef(new Map<string, Quitable>());
+  const fijaDibujada = useRef<string | null>(null);
   const vectorial = mapIdValido(mapId);
   const alTocar = useRef(alTocarMapa);
   useEffect(() => {
@@ -413,9 +490,14 @@ export function MapaGoogleBajoDemanda({
     if (!abierto || mapa.current) return;
     let vivo = true;
     setEstado('cargando');
+    const dejar = alRechazarLlaveGoogle(() => vivo && setEstado('error'));
     cargarGoogleMaps(llave, idioma)
       .then((g) => {
         if (!vivo || !caja.current) return;
+        if (llaveRechazada) {
+          setEstado('error');
+          return;
+        }
         api.current = g;
         const m = new g.Map(
           caja.current,
@@ -427,9 +509,21 @@ export function MapaGoogleBajoDemanda({
         mapa.current = m;
         setEstado('listo');
       })
-      .catch(() => vivo && setEstado('error'));
+      .catch((e: unknown) => {
+        console.error('No se pudo abrir el mapa de Google:', e);
+        if (vivo) setEstado('error');
+      });
     return () => {
       vivo = false;
+      dejar();
+      // Al cerrarse (abierto pasa a false o la pantalla se va) el div del mapa desaparece: se
+      // olvida todo, para que al volver a abrir se cree un mapa nuevo sobre el div nuevo.
+      for (const x of dibujados.current) x.quitar();
+      dibujados.current = [];
+      marcasPorId.current = new Map();
+      fijaDibujada.current = null;
+      mapa.current = null;
+      api.current = null;
     };
     // Se crea una sola vez al abrir; los puntos se redibujan abajo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -445,22 +539,27 @@ export function MapaGoogleBajoDemanda({
     const g = api.current;
     const m = mapa.current;
     if (estado !== 'listo' || !g || !m) return;
-    dibujados.current = dibujarTodo(
+    const enViaje = inclinado && vectorial;
+    const fija = firmaFija(puntos, lineas, circulos);
+    if (fija === fijaDibujada.current) {
+      // Solo cambiaron posiciones (GPS): se mueven las marcas. En viaje no se vuelve a encuadrar
+      // (aplanaría el mapa): solo se corrige el rumbo. Fuera de viaje, se encuadra como siempre.
+      for (const p of puntos) marcasPorId.current.get(p.id)?.mover?.(p);
+      if (enViaje) m.setHeading?.(rumbo);
+      else encuadrar(g, m, puntos, zoom, false, rumbo);
+      return;
+    }
+    // Cambió qué se dibuja (por ejemplo, el destino pasa del restaurante a la casa): se redibuja
+    // y se encuadra una vez.
+    const r = dibujarTodo(
       g,
       m,
-      {
-        puntos,
-        lineas,
-        circulos,
-        zoom,
-        avanzadas: vectorial,
-        inclinado: inclinado && vectorial,
-        rumbo,
-        encuadrar: !inclinado || !encuadrado.current,
-      },
+      { puntos, lineas, circulos, zoom, avanzadas: vectorial, inclinado: enViaje, rumbo },
       dibujados.current,
     );
-    if (puntos.length) encuadrado.current = true;
+    dibujados.current = r.todos;
+    marcasPorId.current = r.marcas;
+    fijaDibujada.current = fija;
     // Se redibuja cuando el mapa queda listo o cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firma, estado]);
@@ -493,7 +592,14 @@ export function MapaGoogleBajoDemanda({
         role="application"
         aria-label={etiqueta}
         data-testid="mapa-google"
-        style={{ height: alto, borderRadius: 16, overflow: 'hidden', background: '#E9EEF5' }}
+        style={{
+          // Con la llave rechazada no se deja el mapa gris: solo el mensaje.
+          display: estado === 'error' ? 'none' : 'block',
+          height: alto,
+          borderRadius: 16,
+          overflow: 'hidden',
+          background: '#E9EEF5',
+        }}
       />
       {estado === 'cargando' ? <p role="status">{t.cargando}</p> : null}
       {estado === 'error' ? <p role="alert">{t.error}</p> : null}

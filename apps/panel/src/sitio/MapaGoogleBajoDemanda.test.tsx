@@ -14,7 +14,12 @@ import {
 type Clic = (e: { latLng?: { lat(): number; lng(): number } }) => void;
 const registro = vi.hoisted(() => ({
   marcas: [] as Record<string, unknown>[],
-  avanzadas: [] as { o: Record<string, unknown>; clic?: () => void }[],
+  avanzadas: [] as {
+    o: Record<string, unknown>;
+    clic?: () => void;
+    yo: { position: unknown; map: unknown };
+  }[],
+  mapas: 0,
   lineas: [] as Record<string, unknown>[],
   circulos: [] as Record<string, unknown>[],
   opciones: null as null | Record<string, unknown>,
@@ -28,6 +33,7 @@ const registro = vi.hoisted(() => ({
 class MapaFalso {
   constructor(_div: unknown, o: Record<string, unknown>) {
     registro.opciones = o;
+    registro.mapas += 1;
   }
   setTilt(x: number) {
     registro.inclinacion.push(x);
@@ -51,9 +57,16 @@ class MapaFalso {
 }
 class AvanzadaFalsa {
   map: unknown = null;
-  registro: { o: Record<string, unknown>; clic?: () => void };
+  position: unknown = null;
+  registro: {
+    o: Record<string, unknown>;
+    clic?: () => void;
+    yo: { position: unknown; map: unknown };
+  };
   constructor(o: Record<string, unknown>) {
-    this.registro = { o };
+    this.position = o.position;
+    this.map = o.map;
+    this.registro = { o, yo: this };
     registro.avanzadas.push(this.registro);
   }
   addListener(evento: string, cb: () => void) {
@@ -108,6 +121,7 @@ describe('MapaGoogleBajoDemanda', () => {
   beforeEach(() => {
     registro.marcas = [];
     registro.avanzadas = [];
+    registro.mapas = 0;
     registro.lineas = [];
     registro.circulos = [];
     registro.opciones = null;
@@ -120,6 +134,7 @@ describe('MapaGoogleBajoDemanda', () => {
   });
   afterEach(() => {
     delete (window as { google?: unknown }).google;
+    vi.restoreAllMocks();
   });
 
   it('no abre el mapa hasta tocar «See on the map»; luego dibuja los puntos y encuadra', async () => {
@@ -198,17 +213,21 @@ describe('MapaGoogleBajoDemanda', () => {
 
   it('en viaje: se abre solo, se inclina a 45° con el rumbo y dibuja la línea y el área', async () => {
     (window as { google?: unknown }).google = { maps: API_VECTORIAL };
-    const vista = (puntos: typeof PUNTOS) => (
+    const lineas = [{ id: 'orden', puntos: PUNTOS, color: '#8E9198', punteada: true }];
+    const circulos = [{ id: 'area', centro: PUNTOS[1]!, metros: 80, color: '#4AA5DC' }];
+    const vista = (puntos: typeof PUNTOS, rumbo = 135) => (
       <MapaGoogleBajoDemanda
         llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
         mapId="a1b2c3d4e5f6"
         idioma="en"
         centro={{ lat: 10.5, lng: -66.9 }}
         inclinado
-        rumbo={135}
+        rumbo={rumbo}
         etiqueta="Trip map"
         abierto
         puntos={puntos}
+        lineas={lineas}
+        circulos={circulos}
       />
     );
     const { rerender } = render(
@@ -237,9 +256,84 @@ describe('MapaGoogleBajoDemanda', () => {
     registro.idle?.();
     expect(registro.inclinacion.at(-1)).toBe(45);
     expect(registro.rumbos.at(-1)).toBe(135);
-    // El repartidor se mueve: la marca se mueve, pero no se vuelve a encuadrar (no aplana el mapa).
-    rerender(vista([PUNTOS[0]!, { ...PUNTOS[1]!, lat: 10.52 }]));
-    await waitFor(() => expect(registro.avanzadas.length).toBeGreaterThan(2));
+    // El repartidor se mueve: SOLO su marca se mueve (no se rehace nada) y no se vuelve a
+    // encuadrar (no aplana el mapa); el rumbo se corrige.
+    rerender(vista([PUNTOS[0]!, { ...PUNTOS[1]!, lat: 10.52 }], 140));
+    await waitFor(() =>
+      expect(registro.avanzadas[1]!.yo.position).toEqual({ lat: 10.52, lng: -66.91 }),
+    );
+    expect(registro.avanzadas).toHaveLength(2);
+    expect(registro.lineas).toHaveLength(1);
+    expect(registro.circulos).toHaveLength(1);
     expect(registro.encuadres).toBe(1);
+    expect(registro.rumbos.at(-1)).toBe(140);
+  });
+
+  it('en viaje: si cambia el destino (aparece la casa), vuelve a encuadrar una sola vez', async () => {
+    (window as { google?: unknown }).google = { maps: API_VECTORIAL };
+    const vista = (puntos: typeof PUNTOS) => (
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        mapId="a1b2c3d4e5f6"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        inclinado
+        etiqueta="Mapa"
+        abierto
+        puntos={puntos}
+      />
+    );
+    const { rerender } = render(vista(PUNTOS));
+    await waitFor(() => expect(registro.encuadres).toBe(1));
+    const casa = { id: 'c', lat: 10.53, lng: -66.95, color: '#F20D20', etiqueta: 'Casa' };
+    rerender(vista([...PUNTOS, casa]));
+    await waitFor(() => expect(registro.encuadres).toBe(2));
+    rerender(vista([...PUNTOS, { ...casa, lat: 10.531 }]));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(registro.encuadres).toBe(2);
+  });
+
+  it('se cierra y se vuelve a abrir (segundo pedido en la misma pantalla): el mapa se crea de nuevo', async () => {
+    (window as { google?: unknown }).google = { maps: API_VECTORIAL };
+    const vista = (abierto: boolean) => (
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        mapId="a1b2c3d4e5f6"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        inclinado={abierto}
+        etiqueta="Mapa"
+        abierto={abierto}
+        puntos={PUNTOS}
+      />
+    );
+    const { rerender } = render(vista(true));
+    await waitFor(() => expect(registro.avanzadas).toHaveLength(2));
+    rerender(vista(false));
+    expect(screen.queryByTestId('mapa-google')).toBeNull();
+    rerender(vista(true));
+    await waitFor(() => expect(registro.mapas).toBe(2));
+    await waitFor(() => expect(registro.avanzadas).toHaveLength(4));
+    expect(registro.avanzadas[2]!.yo.map).not.toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('si Google rechaza la llave, lo dice en palabras y deja rastro en la consola', async () => {
+    (window as { google?: unknown }).google = { maps: API };
+    const consola = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        puntos={PUNTOS}
+        etiqueta="Mapa"
+        abierto
+      />,
+    );
+    await waitFor(() => expect(registro.marcas).toHaveLength(2));
+    (window as unknown as { gm_authFailure?: () => void }).gm_authFailure?.();
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos abrir el mapa.');
+    expect(consola).toHaveBeenCalled();
   });
 });

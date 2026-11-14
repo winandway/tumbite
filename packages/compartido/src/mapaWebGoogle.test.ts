@@ -137,6 +137,35 @@ describe('cargarGoogleMaps', () => {
     expect(scripts).toHaveLength(2);
   });
 
+  it('con carga dinámica pide las bibliotecas con importLibrary (maps, marker y core)', async () => {
+    const { doc, ventana, scripts } = documentoFalso();
+    const pedidas: string[] = [];
+    class MapaNuevo {}
+    class Avanzada {}
+    const libs: Record<string, Record<string, unknown>> = {
+      core: { LatLngBounds: class {}, SymbolPath: { CIRCLE: 0 } },
+      maps: { Map: MapaNuevo, Polyline: class {}, Circle: class {}, Polygon: class {} },
+      marker: { AdvancedMarkerElement: Avanzada, Marker: class {} },
+    };
+    const a = cargarGoogleMaps(LLAVE, 'en', doc);
+    ventana.google = {
+      maps: {
+        importLibrary: async (n: string) => {
+          pedidas.push(n);
+          return libs[n];
+        },
+      },
+    };
+    const url = new URL(scripts[0]!.src);
+    (ventana[url.searchParams.get('callback')!] as () => void)();
+    const api = await a;
+    expect(pedidas.sort()).toEqual(['core', 'maps', 'marker']);
+    expect(api.Map).toBe(MapaNuevo);
+    expect(api.marker?.AdvancedMarkerElement).toBe(Avanzada);
+    expect(api.Polygon).toBe(libs.maps!.Polygon);
+    expect(api.LatLngBounds).toBe(libs.core!.LatLngBounds);
+  });
+
   it('si Google Maps ya está en la página, no agrega otro script', async () => {
     const { doc, ventana, scripts } = documentoFalso();
     const api = { Map: class {} };

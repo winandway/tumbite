@@ -4,6 +4,7 @@ import { enIdioma } from '@tumbite/compartido';
 import {
   type GoogleMapsApi,
   type MapaG,
+  alRechazarLlaveGoogle,
   cargarGoogleMaps,
   elegirMapaWeb,
   opcionesMapaGoogle,
@@ -84,6 +85,7 @@ function EditorAreaGoogle({
   // El mapa se crea una vez.
   useEffect(() => {
     let vivo = true;
+    const dejar = alRechazarLlaveGoogle(() => vivo && setError(true));
     cargarGoogleMaps(llave, idioma === 'es' ? 'es' : 'en')
       .then((g) => {
         if (!vivo || !caja.current) return;
@@ -95,9 +97,13 @@ function EditorAreaGoogle({
         mapa.current = m;
         setListo(true);
       })
-      .catch(() => vivo && setError(true));
+      .catch((e: unknown) => {
+        console.error('No se pudo abrir el mapa de Google en el editor de áreas:', e);
+        if (vivo) setError(true);
+      });
     return () => {
       vivo = false;
+      dejar();
     };
     // El centro solo importa al abrir.
     // eslint-disable-next-line react-hooks/exhaustive-deps

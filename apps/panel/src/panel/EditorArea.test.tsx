@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { olvidarCargaGoogleMaps } from '@tumbite/compartido/src/mapaWebGoogle';
 import type { Poligono } from '@tumbite/compartido';
 
@@ -132,6 +132,26 @@ describe('EditorArea: qué mapa se usa y cómo se edita (C-MAPA-GOOGLE-WEB)', ()
     expect(cambiar).toHaveBeenLastCalledWith([...poligono, [-83.45, 42.55]]);
     g.esquinas[1]!.soltar?.(ev(42.41, -83.39));
     expect(cambiar).toHaveBeenLastCalledWith([poligono[0], [-83.39, 42.41], poligono[2]]);
+  });
+
+  it('con llave rechazada por Google: lo dice en palabras y deja rastro en la consola', async () => {
+    vi.stubEnv('VITE_GOOGLE_MAPS_WEB_KEY', LLAVE);
+    (window as { google?: unknown }).google = { maps: API };
+    const consola = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(
+      <EditorArea
+        centro={{ lat: 42.45, lng: -83.45 }}
+        poligono={[]}
+        otras={[]}
+        cambiar={() => undefined}
+        idioma="es"
+      />,
+    );
+    await waitFor(() => expect(g.clicMapa).not.toBeNull());
+    (window as unknown as { gm_authFailure?: () => void }).gm_authFailure?.();
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos abrir el mapa.');
+    expect(consola).toHaveBeenCalled();
+    consola.mockRestore();
   });
 
   it('sin llave: Leaflet como siempre', async () => {
