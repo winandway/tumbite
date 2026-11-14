@@ -128,6 +128,13 @@ const es = {
   fondo: {
     titulo: 'Divoox está activo',
     cuerpo: 'Seguimos mandando tu ubicación mientras estás conectado.',
+    explicacion: {
+      titulo: 'Usamos tu ubicación',
+      cuerpo:
+        'Para ofrecerte pedidos y viajes cerca y para que el cliente vea por dónde vas, Divoox usa tu ubicación mientras estás conectado o tienes una entrega en curso, también con la pantalla apagada. Verás un aviso fijo mientras esté activa. Al desconectarte, deja de usarse.',
+      seguir: 'Continuar',
+      ahoraNo: 'Ahora no',
+    },
   },
   edad: {
     documentos: { licencia: 'Licencia', pasaporte: 'Pasaporte', otro: 'Otro documento' } as Record<
@@ -320,6 +327,13 @@ const en: T = {
   fondo: {
     titulo: 'Divoox is active',
     cuerpo: 'We keep sending your location while you’re online.',
+    explicacion: {
+      titulo: 'We use your location',
+      cuerpo:
+        'To offer you nearby orders and rides and to let the customer see where you are, Divoox uses your location while you’re online or have a delivery in progress, even with the screen off. You’ll see an ongoing notification while it’s active. When you go offline, it stops.',
+      seguir: 'Continue',
+      ahoraNo: 'Not now',
+    },
   },
   edad: {
     documentos: { licencia: 'Driver’s license', pasaporte: 'Passport', otro: 'Other ID' } as Record<
