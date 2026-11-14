@@ -2192,6 +2192,10 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
       await e.m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, e.cliente.token)
     ).datos.pedido;
     expect(seg.entregadoComo).toBe('ausente');
+    // «Mis pedidos» también lo sabe: la lista no lo pinta como «Entregado» (cabo suelto del 13 nov).
+    const lista = (await e.m.llamar('GET', '/datos/mis-pedidos', undefined, e.cliente.token)).datos
+      .pedidos as { id: string; entregadoComo: string | null }[];
+    expect(lista.find((x) => x.id === id)?.entregadoComo).toBe('ausente');
   });
 
   it('C-CLIENTE-AUSENTE: un pedido que se cobra en mano no se cierra como ausente (va por «No pagó»)', async () => {

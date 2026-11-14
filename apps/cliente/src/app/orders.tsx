@@ -30,6 +30,8 @@ const T = {
       entregado: 'Entregado',
       cancelado: 'Cancelado',
     } as Record<string, string>,
+    // C-CLIENTE-AUSENTE: cerrado sin entregar porque no estabas; no se dice «Entregado».
+    noEntregado: 'No entregado',
   },
   en: {
     titulo: 'My orders',
@@ -50,12 +52,15 @@ const T = {
       entregado: 'Delivered',
       cancelado: 'Canceled',
     } as Record<string, string>,
+    noEntregado: 'Not delivered',
   },
 };
 
 type Pedido = {
   id: string;
   estado: string;
+  /** C-CLIENTE-AUSENTE: «ausente» = se cerró sin entregar porque no estabas. */
+  entregadoComo?: string | null;
   restauranteId: string;
   restauranteNombre?: string;
   restauranteImagen?: string;
@@ -149,8 +154,11 @@ function Pedidos() {
         {pedidos?.map((p, i) => {
           // C-MIS-PEDIDOS-MINIATURA (1 nov 2026, pedido de Richard): como la lista de pedidos de los
           // grandes: miniatura del local, estado con color (verde = entregado) y botones compactos.
-          const estado =
-            p.estado === 'entregado'
+          const ausente = p.estado === 'entregado' && p.entregadoComo === 'ausente';
+          const textoEstado = ausente ? t.noEntregado : (t.estados[p.estado] ?? p.estado);
+          const estado = ausente
+            ? { fondo: '#FDECEC', texto: C.primario }
+            : p.estado === 'entregado'
               ? { fondo: '#E6F4EC', texto: C.exito }
               : p.estado === 'cancelado'
                 ? { fondo: '#F1F1F2', texto: '#5E5E5E' }
@@ -162,7 +170,7 @@ function Pedidos() {
               <Pressable
                 onPress={() => router.push(`/order/${p.id}`)}
                 accessibilityRole="link"
-                accessibilityLabel={`${p.restauranteNombre ?? ''} · ${t.estados[p.estado] ?? p.estado}`}
+                accessibilityLabel={`${p.restauranteNombre ?? ''} · ${textoEstado}`}
                 style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}
               >
                 <Image
@@ -196,7 +204,7 @@ function Pedidos() {
                     }}
                   >
                     <Text style={{ color: estado.texto, fontWeight: '700', fontSize: 12 }}>
-                      {t.estados[p.estado] ?? p.estado}
+                      {textoEstado}
                     </Text>
                   </View>
                 </View>

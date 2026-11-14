@@ -1698,7 +1698,10 @@ pedidos.get('/mis-pedidos', async (c) => {
   const u = exigir(c, 'cliente');
   const { results } = await base(c)
     .prepare(
-      `SELECT p.*, r.nombre AS restaurante_nombre, r.imagen AS restaurante_imagen, r.categoria AS restaurante_categoria FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+      `SELECT p.*, r.nombre AS restaurante_nombre, r.imagen AS restaurante_imagen, r.categoria AS restaurante_categoria,
+        -- C-CLIENTE-AUSENTE: cómo se cerró la entrega, para que la lista no diga «Entregado» si no se entregó.
+        (SELECT modo FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_modo
+      FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.cliente_id = ? AND p.estado != 'pago_pendiente'
         -- C-PENDIENTE-ABANDONADO: el que se cerró porque pidió de nuevo sin pagarlo no es un pedido.
         AND NOT EXISTS (SELECT 1 FROM bitacora_pedidos b WHERE b.pedido_id = p.id AND b.evento = 'reemplazado_sin_pagar')

@@ -3849,3 +3849,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Simulador:** `simulador/divoox/comidaVe.ts`, etiqueta `venezuela` («Comida Venezuela en efectivo»).
 - **Prueba:** `pruebasComidaVe.test.ts` (2). Guion verde dos veces seguidas en local (13 nov, la segunda reutilizando las cuentas y el saldo); simulador `--etiqueta venezuela` 2/2 en verde, 362 filas.
 - **No tocar:** no borrar filas de `libro` en la limpieza; no apuntar el guion a producción (se niega).
+
+## C-AUSENTE-EN-MIS-PEDIDOS · «Mis pedidos» no dice «Entregado» si no se entregó (13 nov 2026) — todos los países
+
+- **Qué pasaba:** un pedido cerrado por «cliente no apareció» salía como «Entregado» en «Mis pedidos»: `GET /datos/mis-pedidos` no traía cómo se cerró la entrega (`entregadoComo`). En el detalle, la foto decía «Así quedó tu pedido al entregarlo».
+- **Qué se hizo:** `mis-pedidos` trae `ev_entrega_modo` (la misma subconsulta de las evidencias); la lista dice «No entregado» / «Not delivered» en rojo; el detalle dice «El lugar donde te esperó tu repartidor» bajo la foto y el recibo arranca con «No pudimos entregar tu pedido» (español e inglés).
+- **Prueba:** `operacion.test.ts` («C-CLIENTE-AUSENTE: con PIN y sin cliente…», la lista de «Mis pedidos» devuelve `entregadoComo: 'ausente'`), comprobada en rojo antes del arreglo.
+- **No tocar:** el cierre como ausente sigue por el MISMO camino de dinero de una entrega (C-CLIENTE-AUSENTE).
