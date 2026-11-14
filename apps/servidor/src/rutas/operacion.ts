@@ -25,6 +25,7 @@ import { pagoPicoPara } from '../pagoPico';
 import { sentenciasCobroAnuncio } from '../anuncios';
 import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorTiempo';
 import { paisDeZona } from '../internacional/paises';
+import { referenciaLocal } from './tasasReferencia';
 import { sinFotoConPin, verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import { type TareaReloj, anotarTareas, correrTareas, relojEnPausa } from '../reloj';
@@ -1333,7 +1334,21 @@ operacion.get('/repartidor/estado', async (c) => {
       undefined,
     // C-ENTREGA-PRACTICA: sin entrega real, la de práctica de la cuenta de revisión (o null).
     activo: activo
-      ? { ...conDatosRestaurante(activo), esperaAusenteMin: minutosEsperaAusente(c.env) }
+      ? {
+          ...conDatosRestaurante(activo),
+          esperaAusenteMin: minutosEsperaAusente(c.env),
+          // C-COMIDA-VENEZUELA: lo que cobra en mano (sin propina), en bolívares de referencia.
+          referenciaCobro:
+            activo.moneda === 'USD' &&
+            (activo.metodo_pago === 'efectivo' || activo.metodo_pago === 'transferencia_repartidor')
+              ? await referenciaLocal(
+                  db,
+                  (await paisDeZona(db, String(activo.zona_id))).pais,
+                  Number(activo.total) - Number(activo.propina ?? 0),
+                  'USD',
+                )
+              : null,
+        }
       : await practicaActiva(db, u.id),
     agrupados: await agrupadosDe(db, u.id, activo),
     // C-OCUPADO-VISIBLE (BRF-1): si una ruta Flex o un viaje lo ocupa, no le llegan pedidos de

@@ -87,6 +87,8 @@ import { stripeAvisos } from './rutas/stripeAvisos';
 import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
+import { comidaCiudad } from './rutas/comidaCiudad';
+import { saludComidaPaises } from './internacional/tarifas';
 import { seguridadViaje } from './rutas/seguridadViaje';
 import { ajustesViaje } from './rutas/ajustesViaje';
 import { lugares } from './rutas/lugares';
@@ -288,6 +290,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.viajes = await saludViajes(c.env.DB).catch((e: unknown) => {
       console.error('salud: viajes', e);
+      return 'error' as const;
+    });
+  // C-COMIDA-VENEZUELA: ciudad con Comida encendida fuera de EE. UU. en otra moneda que su país.
+  if (c.env.DB)
+    piezas.comidaPaises = await saludComidaPaises(c.env.DB).catch((e: unknown) => {
+      console.error('salud: comida por país', e);
       return 'error' as const;
     });
   // Fase 2: tiempo real (apagado = «pendiente»; las apps siguen con la consulta normal).
@@ -526,6 +534,7 @@ app.route('/datos', avisos);
 app.route('/datos', repartidorGrandes);
 app.route('/datos', viajes);
 app.route('/datos', viajesPasajero);
+app.route('/datos', comidaCiudad);
 app.route('/datos', seguridadViaje);
 app.route('/datos', ajustesViaje);
 app.route('/datos', lugares);

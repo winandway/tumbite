@@ -621,5 +621,8 @@ internacional.get('/pais', async (c) => {
     efectivoActivo:
       cfg.efectivoActivo || (deRest ? await efectivoDeJuego(c.req.url, db, rid) : false),
     transferenciaRepartidorActiva: cfg.transferenciaRepartidorActiva,
+    // C-COMIDA-VENEZUELA: la tarjeta (Stripe) solo en Estados Unidos. Venezuela cobra en dólares,
+    // pero en mano: que la moneda sea USD no enciende la tarjeta.
+    tarjetaActiva: pais === 'US',
   });
 });

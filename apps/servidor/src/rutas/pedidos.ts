@@ -69,6 +69,8 @@ import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
 import { tarifasDeZona, tarifasDelPedido, topesDeZona } from '../internacional/tarifas';
+import { paisDeZona } from '../internacional/paises';
+import { referenciaLocal } from './tasasReferencia';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { exigirCobertura } from '../territorio';
@@ -875,11 +877,14 @@ pedidos.post('/pedidos', async (c) => {
   await exigirCobertura(db, String(rest.zona_id ?? ZONA_INICIAL), d.lat, d.lng, recogida);
   const plan = rest.plan as Plan;
   // C-TARIFAS-PAIS: tarifas y moneda del país de la zona (EE. UU. = la configuración de siempre).
-  const { moneda, config } = await tarifasDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
+  const { pais, moneda, config } = await tarifasDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
+  // C-COMIDA-VENEZUELA: tarjeta, Plus y saldo de regalo son de Estados Unidos. Venezuela también
+  // cobra en dólares, pero en mano: la moneda sola no basta para encenderlos.
+  const enEeuu = pais === 'US' && moneda === 'USD';
   const { topes } = await topesDeZona(db, String(rest.zona_id ?? ZONA_INICIAL));
   if (d.propinaCentavos > (topes?.propinaMax ?? 0))
     throw new ErrorDatos('La propina pasa del máximo permitido.', 'propinaCentavos', 400);
-  if (d.metodoPago === 'tarjeta' && moneda !== 'USD')
+  if (d.metodoPago === 'tarjeta' && !enEeuu)
     throw new ErrorDatos(
       'El pago con tarjeta todavía no está disponible en este país.',
       'metodoPago',
@@ -907,8 +912,7 @@ pedidos.post('/pedidos', async (c) => {
   });
   // C-PLUS: con la suscripción vigente, envío en cero y servicio rebajado (lo absorbe Divoox, como
   // el cupón). Solo en dólares. La app hace la misma cuenta con descuentoPlus.
-  const planPlus =
-    moneda === 'USD' && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
+  const planPlus = enEeuu && !recogida && (await tienePlus(db, u.id)) ? await leerPlus(db) : null;
   const plusAplica = planPlus ? descuentoPlus(previo, planPlus) > 0 : false;
   // Cupón: se valida con el envío ya calculado (para «envío gratis») y nunca se confía en la app.
   // C-ENVIO-UNA-VEZ (BRE-R3): si Plus ya deja el envío en cero, un cupón de envío gratis se rechaza
@@ -976,7 +980,7 @@ pedidos.post('/pedidos', async (c) => {
   // C-TARJETAS-REGALO: el saldo de regalo baja el total como un descuento (Divoox ya cobró la
   // tarjeta). Solo en dólares y con tarjeta; se aparta al crear el pedido.
   const usoRegalo =
-    d.usarSaldoRegalo && moneda === 'USD' && d.metodoPago === 'tarjeta'
+    d.usarSaldoRegalo && enEeuu && d.metodoPago === 'tarjeta'
       ? saldoAplicable(conPlus, await saldoRegalo(db, u.id))
       : 0;
   const desglose = usoRegalo
@@ -1717,7 +1721,19 @@ pedidos.get('/pedidos/:id', async (c) => {
     f &&
     (u.rol === 'admin' || f.cliente_id === u.id || f.dueno_id === u.id || f.repartidor_id === u.id);
   if (!f || !puede) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
-  return c.json({ pedido: aPedido(f) });
+  // C-COMIDA-VENEZUELA: un pedido en dólares fuera de EE. UU. lleva su equivalente en bolívares con
+  // la tasa del día (solo informativo: el cobro y la comisión siguen en dólares).
+  const db = base(c);
+  const referencia =
+    f.moneda === 'USD' && f.zona_id
+      ? await referenciaLocal(
+          db,
+          (await paisDeZona(db, String(f.zona_id))).pais,
+          Number(f.total),
+          'USD',
+        )
+      : null;
+  return c.json({ pedido: { ...aPedido(f), referencia } });
 });
 
 /**

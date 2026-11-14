@@ -1736,6 +1736,28 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-MOTO-VENEZUELA (13 nov 2026).
   ['Escribe la tarifa del servicio para esta ciudad.', 'Enter the service fare for this city.'],
   ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
+  // C-COMIDA-CIUDAD y C-COMIDA-VENEZUELA (13 nov 2026).
+  ['El código de la ciudad va como VE-MER-ELVIGIA.', 'The city code looks like VE-MER-ELVIGIA.'],
+  [
+    'En Estados Unidos Comida usa la configuración de siempre: no se abre con este paso.',
+    'In the United States, Food uses the usual settings: it isn’t opened with this step.',
+  ],
+  [
+    'En producción Comida no se abre en un país nuevo desde aquí: necesita la orden de Richard.',
+    'In production, Food isn’t opened in a new country from here: it needs Richard’s go-ahead.',
+  ],
+  ['Escribe las tarifas de comida de este país.', 'Enter this country’s food fees.'],
+  ['Escribe los topes de comida de este país.', 'Enter this country’s food limits.'],
+  [
+    /^Las tarifas de comida de este país están en ([A-Z]{3}) y esta ciudad cobra en ([A-Z]{3})\. Cambia primero la configuración del país\.$/,
+    (m) =>
+      `This country’s food fees are in ${m[1]} and this city charges in ${m[2]}. Change the country settings first.`,
+  ],
+  [
+    /^En este país la comisión de comida está en ([A-Z, ]+) y esta ciudad cobra en ([A-Z]{3})\. Crea la política de comida en [A-Z]{3} antes de abrir Comida\.$/,
+    (m) =>
+      `In this country the food commission is set in ${m[1]} and this city charges in ${m[2]}. Create the food policy in ${m[2]} before opening Food.`,
+  ],
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
   ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],

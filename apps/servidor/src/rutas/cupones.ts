@@ -151,7 +151,8 @@ cupones.post('/cupones/validar', async (c) => {
   // La misma condición que al crear el pedido: Plus vigente, en dólares y con envío que cubrir.
   const plusCubreEnvio =
     d.envio > 0 &&
-    (await paisDeZona(db, zonaId)).moneda === 'USD' &&
+    // C-COMIDA-VENEZUELA: Plus es de Estados Unidos (Venezuela también cobra en dólares).
+    (await paisDeZona(db, zonaId)).pais === 'US' &&
     (await tienePlus(db, u.id)) &&
     descuentoPlus({ subtotal: d.subtotal, envio: d.envio, servicio: 0 }, await leerPlus(db)) > 0;
   const r = await validarCupon(db, { ...d, usuarioId: u.id, zonaId, plusCubreEnvio });

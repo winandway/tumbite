@@ -9,6 +9,9 @@ import {
   ErrorApi,
   type ConfigDinero,
   type Desglose,
+  type TasaDelDia,
+  referenciaConTasa,
+  textoReferencia,
   type PromocionRestaurante,
   calcularConPromocion,
   calcularPedido,
@@ -171,12 +174,16 @@ function PantallaCarrito() {
     config: ConfigDinero;
     moneda: string | null;
     error: string;
+    // C-COMIDA-VENEZUELA: propinas sugeridas del país y la tasa del día (equivalente en bolívares).
+    propinasPb?: number[];
+    tasaReferencia?: TasaDelDia | null;
   } | null>(null);
   // Fase 2: qué formas de pago permite el país de la zona (efectivo, transferencia). Vacío = solo tarjeta.
   const [pais, setPais] = useState<{
     moneda?: string;
     efectivoActivo: boolean;
     transferenciaRepartidorActiva: boolean;
+    tarjetaActiva?: boolean;
   } | null>(null);
   // C-PAIS-DEL-RESTAURANTE: las formas de pago son las del país del RESTAURANTE del carrito (antes,
   // las de la ciudad guardada del cliente: uno nuevo caía en Miami y no veía el efectivo de su país).
@@ -184,7 +191,12 @@ function PantallaCarrito() {
   useEffect(() => {
     let vivo = true;
     api
-      .pedir<{ moneda?: string; efectivoActivo: boolean; transferenciaRepartidorActiva: boolean }>(
+      .pedir<{
+        moneda?: string;
+        efectivoActivo: boolean;
+        transferenciaRepartidorActiva: boolean;
+        tarjetaActiva?: boolean;
+      }>(
         'GET',
         ridPais ? `/datos/pais?restauranteId=${encodeURIComponent(ridPais)}` : '/datos/pais',
       )
@@ -300,7 +312,12 @@ function PantallaCarrito() {
   useEffect(() => {
     let vivo = true;
     api
-      .pedir<{ config: ConfigDinero; moneda?: string }>(
+      .pedir<{
+        config: ConfigDinero;
+        moneda?: string;
+        propinasPb?: number[];
+        tasaReferencia?: TasaDelDia | null;
+      }>(
         'GET',
         restauranteCarrito
           ? `/datos/config-dinero?restauranteId=${encodeURIComponent(restauranteCarrito)}`
@@ -313,6 +330,8 @@ function PantallaCarrito() {
             config: r.config,
             moneda: r.moneda ?? null,
             error: '',
+            propinasPb: r.propinasPb,
+            tasaReferencia: r.tasaReferencia ?? null,
           });
       })
       .catch((x: unknown) => {
@@ -331,6 +350,13 @@ function PantallaCarrito() {
     };
   }, [api, restauranteCarrito]);
   const tarifasListas = tarifas?.rid === restauranteCarrito ? tarifas : null;
+  // C-COMIDA-VENEZUELA: si el país sugiere otras propinas (Venezuela: 0, 5, 10 y 15 %), la que
+  // venía marcada de fábrica (20 %) cuenta como la del medio de su lista; la elegida se respeta.
+  const propinasPais = tarifasListas?.propinasPb;
+  const propinaEntregaVigente =
+    propinaEntregaPb === 'otra' || !propinasPais?.length || propinasPais.includes(propinaEntregaPb)
+      ? propinaEntregaPb
+      : (propinasPais.at(Math.min(2, propinasPais.length - 1)) ?? 0);
   const config = tarifasListas?.config ?? CONFIG_DINERO_INICIAL;
   const sinTarifas = tarifasListas?.error ?? '';
   const moneda = tarifasListas?.moneda ?? carrito.moneda ?? 'USD';
@@ -456,7 +482,7 @@ function PantallaCarrito() {
   }
 
   const subtotal = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
-  const propinaPb = b.valores.entrega === 'recoger' ? propinaRecogerPb : propinaEntregaPb;
+  const propinaPb = b.valores.entrega === 'recoger' ? propinaRecogerPb : propinaEntregaVigente;
   const setPropinaPb = b.valores.entrega === 'recoger' ? setPropinaRecogerPb : setPropinaEntregaPb;
   const propina =
     propinaPb === 'otra'
@@ -525,8 +551,9 @@ function PantallaCarrito() {
   const modoActual = conEdad && modoElegido === 'puerta' ? 'mano' : modoElegido;
   const directoPermitido =
     modoActual !== 'recoger' && (pais?.efectivoActivo || pais?.transferenciaRepartidorActiva);
-  // C-TARIFAS-PAIS: la tarjeta solo cobra en dólares; en otra moneda no se ofrece.
-  const tarjetaPermitida = (pais?.moneda ?? 'USD') === 'USD';
+  // C-TARIFAS-PAIS y C-COMIDA-VENEZUELA: la tarjeta solo en Estados Unidos (Venezuela cobra en
+  // dólares, pero en mano). Un servidor viejo sin `tarjetaActiva`: la regla de antes (dólares).
+  const tarjetaPermitida = pais?.tarjetaActiva ?? (pais?.moneda ?? 'USD') === 'USD';
   const primeroDirecto = pais?.efectivoActivo ? 'efectivo' : 'transferencia_repartidor';
   const metodoPago = (
     directoPermitido
@@ -1220,7 +1247,7 @@ function PantallaCarrito() {
 
       {titulo(recogidaElegida ? t.propinaRecoger : t.propina)}
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-        {[...PROPINAS, 'otra' as const].map((pb) => (
+        {[...(tarifasListas?.propinasPb ?? PROPINAS), 'otra' as const].map((pb) => (
           <Pressable
             key={String(pb)}
             onPress={() => setPropinaPb(pb)}
@@ -1352,6 +1379,14 @@ function PantallaCarrito() {
           {fila(recogidaElegida ? t.propinaRecoger : t.propina, d.propina)}
           <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
             {fila(t.total, d.totalCliente, true)}
+            {referenciaConTasa(d.totalCliente, tarifasListas?.tasaReferencia) ? (
+              <Text testID="carrito-total-bs" style={{ color: '#5E5E5E', fontSize: 13 }}>
+                {textoReferencia(
+                  referenciaConTasa(d.totalCliente, tarifasListas?.tasaReferencia),
+                  idioma,
+                )}
+              </Text>
+            ) : null}
           </View>
           {/* C-TIENDAS-PESO-REAL: con productos por peso se retiene un poco más, como Instacart. */}
           {carrito.esTienda &&

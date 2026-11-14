@@ -43,6 +43,8 @@ import {
   paraEnviarUbicacion,
   modoRastreo,
   tocaMandarSegunModo,
+  type Referencia,
+  textoReferencia,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -167,6 +169,8 @@ type Pedido = {
   moneda?: string;
   cobroEstado?: string;
   total?: number;
+  /** C-COMIDA-VENEZUELA: lo que cobra en mano, en bolívares de referencia (tasa del día). */
+  referenciaCobro?: Referencia | null;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -2309,6 +2313,14 @@ export function Inicio() {
                                     )}
                                   </Text>
                                 </Text>
+                                {activo.referenciaCobro ? (
+                                  <Text
+                                    testID="cobro-directo-bs"
+                                    style={{ color: '#5E5E5E', fontWeight: '700' }}
+                                  >
+                                    {textoReferencia(activo.referenciaCobro, idioma)}
+                                  </Text>
+                                ) : null}
                                 <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
                                   {tg.pedido.propinaAparte}
                                 </Text>

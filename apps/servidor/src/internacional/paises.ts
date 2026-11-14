@@ -50,6 +50,11 @@ export const esquemaConfigPais = z.object({
    * puede encender ni recibe pedidos. Estados Unidos no usa este campo (sigue con sus cifras de
    * siempre, `TOPES_EEUU`). Las cifras las fija Richard.
    */
+  /**
+   * C-COMIDA-VENEZUELA: propinas sugeridas en el carrito, en puntos base (tres o cuatro). null = las
+   * de siempre (0, 15, 20 y 25 %). Estados Unidos no usa este campo.
+   */
+  propinasPb: z.array(z.number().int().min(0).max(5000)).min(2).max(4).nullable().optional(),
   topes: z
     .object({
       bonoOfertaAbierta: z.number().int().min(0),
@@ -101,6 +106,7 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     recargasSemanaMax: 20,
     comisionPuntoPb: 0,
     tarifas: null,
+    propinasPb: null,
     topes: null,
   };
 }

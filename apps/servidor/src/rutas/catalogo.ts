@@ -5,6 +5,7 @@ import { areaPara } from '../territorio';
 import { z } from 'zod';
 import {
   ESTADOS_RESTAURANTE,
+  MONEDA_REFERENCIA,
   PLANES,
   type Plato,
   type Restaurante,
@@ -47,7 +48,8 @@ import { minutosPausa } from '../pausa';
 import { restauranteDe } from './restauranteMas';
 import { enTrozos } from '../trozos';
 import { topesDeZona } from '../internacional/tarifas';
-import { tarifasDeZona } from '../internacional/tarifas';
+import { propinasDePais, tarifasDeZona } from '../internacional/tarifas';
+import { tasaVigente } from './tasasReferencia';
 import { leerConfigDinero } from './dinero';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -301,7 +303,19 @@ catalogo.get('/config-dinero', async (c) => {
     .first<{ zona_id: string | null }>();
   if (!f) throw new ErrorDatos('Este restaurante no está disponible.', undefined, 404);
   const t = await tarifasDeZona(db, String(f.zona_id ?? ZONA_INICIAL));
-  return c.json({ config: t.config, moneda: t.moneda, pais: t.pais, planes: PLANES });
+  // C-COMIDA-VENEZUELA: las propinas sugeridas del país y la tasa del día para el equivalente en
+  // bolívares (solo informativo; la app lo calcula sobre su total con `referenciaConTasa`).
+  const tasa = t.moneda === 'USD' && t.pais !== 'US' ? await tasaVigente(db, t.pais) : null;
+  return c.json({
+    config: t.config,
+    moneda: t.moneda,
+    pais: t.pais,
+    planes: PLANES,
+    propinasPb: await propinasDePais(db, t.pais),
+    tasaReferencia: tasa
+      ? { moneda: MONEDA_REFERENCIA.get(t.pais) ?? 'VES', tasa: tasa.tasa, fecha: tasa.fecha }
+      : null,
+  });
 });
 
 catalogo.get('/restaurantes', async (c) => {

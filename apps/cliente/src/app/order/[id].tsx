@@ -34,6 +34,8 @@ import {
   tipoEtiquetas,
   tituloEtiquetas,
   textoPesoReal,
+  type Referencia,
+  textoReferencia,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -64,6 +66,8 @@ type Pedido = {
   total: number;
   /** C-MONEDA-RECORRIDO: la moneda del pedido (los viejos no la traen: dólares). */
   moneda?: string;
+  /** C-COMIDA-VENEZUELA: equivalente en bolívares con la tasa del día (solo informativo). */
+  referencia?: Referencia | null;
   direccion: string;
   lat: number | null;
   lng: number | null;
@@ -960,6 +964,14 @@ function SeguirPedido() {
                     {formatearMonto(p.total, moneda, idioma)}
                   </Text>
                 </View>
+                {p.referencia ? (
+                  <Text
+                    testID="pedido-total-bs"
+                    style={{ color: '#5E5E5E', fontSize: 13, textAlign: 'right' }}
+                  >
+                    {textoReferencia(p.referencia, idioma)}
+                  </Text>
+                ) : null}
               </View>
             ) : null}
             {p.metodoPago && p.metodoPago !== 'tarjeta' && p.estado !== 'cancelado' ? (
