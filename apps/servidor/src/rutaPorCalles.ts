@@ -33,6 +33,43 @@ export const REUSO_RUTA_MINUTOS = 10;
 /** Qué tan cerca deben estar origen y destino para contar como «la misma ruta». */
 export const REUSO_RUTA_RADIO_M = 50;
 
+/**
+ * Cota de cordura (revisión del 13 nov 2026): si Google devuelve una distancia de más de 3 veces la
+ * línea recta (y la recta pasa de 1 km, para no castigar trayectos cortos con vueltas) o una
+ * velocidad media imposible, se cobra con la fórmula y queda el motivo `ruta_absurda`.
+ */
+export const FACTOR_MAXIMO_SOBRE_RECTA = 3;
+export const RECTA_MINIMA_PARA_FACTOR_M = 1_000;
+export const VELOCIDAD_MINIMA_KMH = 3;
+export const VELOCIDAD_MAXIMA_KMH = 130;
+/** Consultas a Google por usuario y día; pasado eso, ese usuario cotiza con la fórmula. */
+export const TOPE_RUTAS_USUARIO_DIA = 20;
+
+/** ¿La ruta de Google es creíble para cobrar? */
+export function rutaCreible(origen: Punto, destino: Punto, distanciaM: number, duracionS: number) {
+  const rectaM = distanciaKm(origen, destino) * 1000;
+  if (rectaM > RECTA_MINIMA_PARA_FACTOR_M && distanciaM > FACTOR_MAXIMO_SOBRE_RECTA * rectaM)
+    return false;
+  const kmh = distanciaM / 1000 / (duracionS / 3600);
+  return kmh >= VELOCIDAD_MINIMA_KMH && kmh <= VELOCIDAD_MAXIMA_KMH;
+}
+
+/**
+ * Consultas a Google de este usuario hoy (UTC): sus cotizaciones por calles del día, con el índice
+ * `cotizaciones_viaje_cliente` (lee solo sus filas de hoy, ninguna escritura). Cuenta también las
+ * recotizaciones reutilizadas: el tope queda del lado prudente.
+ */
+async function consultasDelUsuarioHoy(db: D1Database, clienteId: string): Promise<number> {
+  const f = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM cotizaciones_viaje
+        WHERE cliente_id = ? AND creado_en >= date('now') AND fuente_distancia = 'calles'`,
+    )
+    .bind(clienteId)
+    .first<{ n: number }>();
+  return Number(f?.n ?? 0);
+}
+
 export const URL_RUTAS = 'https://routes.googleapis.com/directions/v2:computeRoutes';
 const MASCARA = 'routes.distanceMeters,routes.duration';
 
@@ -230,6 +267,8 @@ export async function rutaParaCotizar(
   try {
     const previa = await rutaReciente(db, clienteId, origen, destino);
     if (previa) return { ...previa, fuente: 'calles', motivo: '', reutilizada: true };
+    if ((await consultasDelUsuarioHoy(db, clienteId)) >= TOPE_RUTAS_USUARIO_DIA)
+      return estimada('tope_usuario');
     if (!(await apartarConsulta(db, topeRutasDia(env)))) {
       ultimoEstado = 'estimada';
       return estimada('tope_del_dia');
@@ -240,6 +279,7 @@ export async function rutaParaCotizar(
   }
   const g = await consultarGoogle(llave, origen, destino);
   if (!g.ok) return estimada(g.motivo);
+  if (!rutaCreible(origen, destino, g.distanciaM, g.duracionS)) return estimada('ruta_absurda');
   return {
     distanciaM: g.distanciaM,
     duracionS: g.duracionS,

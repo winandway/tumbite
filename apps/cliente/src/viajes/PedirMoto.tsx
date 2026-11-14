@@ -275,6 +275,13 @@ export function PedirMoto({
             <Text style={{ fontSize: 34, fontWeight: '700', color: C.secundario }}>
               {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
             </Text>
+            {cotizacion.precioCambio && cotizacion.totalAnterior != null ? (
+              // C-RUTA-POR-CALLES: una línea discreta, antes de pedir, si el precio cambió.
+              <Text testID="moto-precio-cambio" style={{ color: '#5E5E5E', fontSize: 13 }}>
+                {t.precioActualizado}{' '}
+                {formatearMonto(cotizacion.totalAnterior, cotizacion.moneda, idioma)}
+              </Text>
+            ) : null}
             {cotizacion.referencia ? (
               <Text testID="moto-precio-bs" style={{ color: '#5E5E5E', fontWeight: '700' }}>
                 {textoReferencia(cotizacion.referencia, idioma)}

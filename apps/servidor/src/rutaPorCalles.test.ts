@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from './pruebas/ayuda';
 import { contarFilas, type CuentaFilas } from './presupuestoFilas';
@@ -275,5 +277,82 @@ describe('C-RUTA-POR-CALLES: distancia por calles en la cotización', () => {
     );
     expect(envio.datos.cotizacion).toMatchObject({ distanciaM: 46_930, fuenteDistancia: 'calles' });
     expect(llamadas).toHaveLength(1);
+  });
+});
+
+// Revisión del 13 nov 2026 (C-RUTA-POR-CALLES, todos los países).
+describe('C-RUTA-POR-CALLES: cota de cordura, tope por usuario y aviso de precio', () => {
+  it('una distancia de Google de más de 3 veces la línea recta se descarta (ruta_absurda)', async () => {
+    const e = await escenario();
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    respuesta = async () =>
+      Response.json({ routes: [{ distanceMeters: 30_000, duration: '2400s' }] });
+    const r = await e.cotizar();
+    expect(r.datos.cotizacion.fuenteDistancia).toBe('estimada');
+    expect(aviso.mock.calls.flat().join(' ')).toContain('ruta_absurda');
+    aviso.mockRestore();
+  });
+
+  it('una duración absurda (menos de 3 km/h o más de 130 km/h) también se descarta', async () => {
+    const e = await escenario();
+    respuesta = async () =>
+      Response.json({ routes: [{ distanceMeters: 9_400, duration: '120s' }] });
+    expect((await e.cotizar()).datos.cotizacion.fuenteDistancia).toBe('estimada');
+    respuesta = async () =>
+      Response.json({ routes: [{ distanceMeters: 9_400, duration: '20000s' }] });
+    const lenta = await e.cotizar({ destino: { ...DESTINO, lat: DESTINO.lat + 0.01 } });
+    expect(lenta.datos.cotizacion.fuenteDistancia).toBe('estimada');
+  });
+
+  it('un trayecto corto (línea recta de menos de 1 km) con vueltas no se castiga', async () => {
+    const e = await escenario();
+    respuesta = async () =>
+      Response.json({ routes: [{ distanceMeters: 2_000, duration: '300s' }] });
+    const cerca = { ...ORIGEN, lat: ORIGEN.lat + 0.005, direccion: 'Cerca' };
+    const r = await e.cotizar({ destino: cerca });
+    expect(r.estado).toBe(201);
+    expect(r.datos.cotizacion.fuenteDistancia).toBe('calles');
+  });
+
+  it('como mucho 20 consultas a Google por usuario y día; después ese usuario cotiza con la fórmula', async () => {
+    const e = await escenario();
+    for (let i = 1; i <= 20; i++)
+      expect(
+        (await e.cotizar({ destino: { ...DESTINO, lat: DESTINO.lat + 0.001 * i } })).datos
+          .cotizacion.fuenteDistancia,
+      ).toBe('calles');
+    expect(llamadas).toHaveLength(20);
+    const r = await e.cotizar({ destino: { ...DESTINO, lat: DESTINO.lat + 0.03 } });
+    expect(r.datos.cotizacion.fuenteDistancia).toBe('estimada');
+    expect(llamadas).toHaveLength(20);
+  });
+
+  it('si al recotizar el mismo trayecto el precio cambió, la respuesta lo dice con el total anterior', async () => {
+    const e = await escenario();
+    const a = await e.cotizar();
+    expect(a.datos.cotizacion.precioCambio).toBe(false);
+    const igual = await e.cotizar();
+    expect(igual.datos.cotizacion.precioCambio).toBe(false);
+    const admin = await e.m.cuenta('admin', 'Soporte Precio');
+    await e.m.llamar(
+      'POST',
+      '/datos/admin/viajes/tarifas',
+      { servicio: 'moto', zona: ZONA, tarifa: { ...TARIFA, porKm: 90 }, motivo: 'Subió la tarifa' },
+      admin.token,
+    );
+    const b = await e.cotizar();
+    expect(b.datos.cotizacion.total).not.toBe(a.datos.cotizacion.total);
+    expect(b.datos.cotizacion.precioCambio).toBe(true);
+    expect(b.datos.cotizacion.totalAnterior).toBe(a.datos.cotizacion.total);
+  });
+
+  it('la app del cliente muestra «El precio se actualizó» en una línea, en español e inglés', () => {
+    const raiz = join(__dirname, '..', '..', 'cliente', 'src', 'viajes');
+    const pantalla = readFileSync(join(raiz, 'PedirMoto.tsx'), 'utf8');
+    const textos = readFileSync(join(raiz, 'textos.ts'), 'utf8');
+    expect(pantalla).toContain('cotizacion.precioCambio && cotizacion.totalAnterior != null');
+    expect(pantalla).toContain('testID="moto-precio-cambio"');
+    expect(textos).toContain("precioActualizado: 'El precio se actualizó. Antes:'");
+    expect(textos).toContain("precioActualizado: 'The price was updated. Before:'");
   });
 });
