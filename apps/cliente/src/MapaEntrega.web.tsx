@@ -109,6 +109,7 @@ function MapaEntregaLeaflet({
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
+  const estabaCerca = useRef(false);
   const centro = repartidor ?? restaurante ?? casa;
 
   useEffect(() => {
@@ -148,8 +149,12 @@ function MapaEntregaLeaflet({
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
     const todos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
-    if (llegada) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
-    else if (todos.length > 1)
+    // Estando cerca, la cámara se mueve UNA vez (después se puede mover el mapa con el dedo).
+    const yaCerca = estabaCerca.current;
+    estabaCerca.current = llegada != null;
+    if (llegada) {
+      if (!yaCerca) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+    } else if (todos.length > 1)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),
         { padding: [40, 40], maxZoom: 17 },

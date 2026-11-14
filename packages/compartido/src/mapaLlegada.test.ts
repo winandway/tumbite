@@ -68,6 +68,10 @@ describe('rotuloDestino: lo que se lee sobre el punto de la casa', () => {
     expect(rotuloDestino('Calle 5 #12-34, El Vigía')).toBe('12-34');
     expect(rotuloDestino('Av. Bolívar, casa 27, El Vigía')).toBe('27');
   });
+  it('el número de la calle manda sobre el del apartamento', () => {
+    expect(rotuloDestino('41000 W Ten Mile Rd #4B, Novi, MI')).toBe('41000');
+    expect(rotuloDestino('41000 Grand River Ave, Apt 5, Novi, MI')).toBe('41000');
+  });
   it('sin número: el primer tramo de la dirección, corto', () => {
     expect(rotuloDestino('Calle 5 con avenida 3 frente a la panadería, El Vigía')).toBe(
       'Calle 5 con avenida 3…',

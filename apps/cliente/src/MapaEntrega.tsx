@@ -107,6 +107,7 @@ export function MapaEntrega({
           <Marker
             coordinate={{ latitude: restaurante.lat, longitude: restaurante.lng }}
             anchor={{ x: 0.5, y: 1.6 }}
+            tracksViewChanges={false}
           >
             <View
               style={{
@@ -127,6 +128,7 @@ export function MapaEntrega({
             coordinate={{ latitude: casa.lat, longitude: casa.lng }}
             title={etiquetas.casa}
             anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
           >
             <View
               testID="mapa-rotulo-casa"

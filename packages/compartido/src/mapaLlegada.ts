@@ -55,16 +55,17 @@ const LARGO_ROTULO = 22;
 
 /**
  * Lo que se escribe sobre el punto de la casa al acercarse: el número de la casa si la dirección lo
- * trae («41000», «12-34», «casa 27» → «27»); si no, el primer tramo de la dirección, corto.
+ * trae («41000», «12-34», «casa 27» → «27»); si no, el primer tramo de la dirección, corto. El número
+ * con que empieza la calle manda sobre el del apartamento («41000 W Ten Mile Rd #4B» → «41000»).
  */
 export function rotuloDestino(direccion: string | null | undefined): string {
   const calle = (direccion ?? '').split(',')[0]?.trim() ?? '';
   if (!calle && !(direccion ?? '').trim()) return '';
   const todo = (direccion ?? '').trim();
-  const numeral = /#\s*([\dA-Za-z-]+)/.exec(todo);
-  if (numeral?.[1]) return numeral[1];
   const alInicio = /^(\d[\dA-Za-z-]*)\s/.exec(calle);
   if (alInicio?.[1]) return alInicio[1];
+  const numeral = /#\s*([\dA-Za-z-]+)/.exec(todo);
+  if (numeral?.[1]) return numeral[1];
   const casa = /\b(?:casa|house|apt|apto|n[°ºo]\.?|nro\.?|no\.)\s*(\d+[A-Za-z]?)\b/i.exec(todo);
   if (casa?.[1]) return casa[1];
   if (calle.length <= LARGO_ROTULO) return calle;

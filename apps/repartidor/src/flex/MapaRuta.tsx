@@ -108,7 +108,10 @@ export function MapaRuta({
         ) : null}
         {puntos.map((p) => (
           <Marker
-            key={p.id}
+            // La marca no se vuelve a pintar en cada lectura de GPS; cambia de llave cuando cambia lo
+            // que muestra (su estado o el rótulo de llegada).
+            key={`${p.id}:${p.tono}:${p === parada ? rotulo : ''}`}
+            tracksViewChanges={false}
             coordinate={{ latitude: p.punto.lat, longitude: p.punto.lng }}
             title={p.nombre}
             anchor={{ x: 0.5, y: 0.5 }}

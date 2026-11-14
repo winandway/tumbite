@@ -150,6 +150,7 @@ function MapaLeaflet({
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
+  const estabaCerca = useRef(false);
   // C-MAPA-ABRE-DONDE-ESTAS: sin ningún punto todavía no hay mapa (nunca una ciudad fija).
   const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0] ?? null;
   const hayCentro = centro != null;
@@ -192,8 +193,12 @@ function MapaLeaflet({
     const separados =
       todos.length > 1 &&
       todos.some((p) => Math.abs(p.lat - todos[0]!.lat) + Math.abs(p.lng - todos[0]!.lng) > 0.0005);
-    if (llegada) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
-    else if (separados)
+    // Estando cerca, la cámara se mueve UNA vez (después se puede mover el mapa con el dedo).
+    const yaCerca = estabaCerca.current;
+    estabaCerca.current = llegada != null;
+    if (llegada) {
+      if (!yaCerca) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+    } else if (separados)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),
         { padding: [40, 40], maxZoom: 16 },
