@@ -13,7 +13,7 @@
     "correo": "ok",
     "avisosCelular": "ok",
     "avisosWeb": "ok",
-    "tasaBcv": "pendiente",
+    "tasaBcv": "ok",
     "sms": "ok",
     "dinero": "ok",
     "retiros": "pendiente",
@@ -33,5 +33,5 @@
     "rutas": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-14T13:59:36.557974+00:00"
+  "medido": "2026-11-14T15:35:33.060908+00:00"
 }
