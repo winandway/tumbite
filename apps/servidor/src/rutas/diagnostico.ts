@@ -7,7 +7,7 @@ import { type Variables, base } from '../sesion';
 import { crearStripe, type Stripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { conciliarRetiros, pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
-import { conciliar } from '../conciliacion';
+import { conciliarPedidos, pedidosCreadosDesde } from '../conciliacion';
 import { cancelarConReembolso } from '../manager';
 import { entornoDeHost } from '@tumbite/compartido';
 import { entornoDe } from '../entorno';
@@ -1273,11 +1273,16 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
     z.object({ pedidos: z.array(z.string().min(1).max(64)).max(20).optional() }),
   );
   const hoy = new Date().toISOString().slice(0, 10);
-  const libro = await conciliar(db, hoy);
-  // No queda guardada: la del día la hace el reloj mañana, completa.
-  await db.prepare('DELETE FROM conciliaciones WHERE dia = ?').bind(hoy).run();
+  // C-LECTURAS-CONCILIACION: se concilian los pedidos dados (o, sin ellos, los creados hoy, hasta
+  // 100, por el índice de zona y estado), pedido por pedido. Antes se sumaba el día entero en cada
+  // llamada (unas 20.000 filas con el volumen del sitio de pruebas) y se escribía y borraba la fila
+  // del día en `conciliaciones`. La del día entero la sigue haciendo el reloj, una vez al día.
+  const revisados = elegidos?.length
+    ? elegidos
+    : await pedidosCreadosDesde(db, `${hoy} 00:00:00`, 100);
+  const libro = await conciliarPedidos(db, revisados);
   casos.push({
-    nombre: 'el libro del día cuadra por dentro (restaurantes, repartidores y plataforma)',
+    nombre: `el libro del día cuadra por dentro (restaurantes, repartidores y plataforma; ${libro.pedidos} pedidos)`,
     ok: libro.cuadra,
     detalle: JSON.stringify(libro.detalle),
   });
@@ -1294,9 +1299,9 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
           .bind(...elegidos)
       : db
           .prepare(
-            `${sel} WHERE p.creado_en >= ? AND p.stripe_sesion LIKE 'pi_%' ORDER BY p.creado_en DESC LIMIT 40`,
+            `${sel} WHERE p.stripe_sesion LIKE 'pi_%' AND p.id IN (SELECT value FROM json_each(?)) ORDER BY p.creado_en DESC LIMIT 40`,
           )
-          .bind(`${hoy} 00:00:00`)
+          .bind(JSON.stringify(revisados))
   ).all<{
     devuelto: number;
     ndev: number;

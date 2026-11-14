@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { app } from './app';
+import { conciliarPedidos } from './conciliacion';
 import { CLAVE_HUELLA_ESQUEMA, reiniciarEsquema } from './esquema';
 import { contarFilas } from './presupuestoFilas';
 import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
@@ -194,6 +195,92 @@ describe('C-LECTURAS-POR-PETICION · la conciliación de diagnóstico va una vez
     const correr = leer('simulador', 'divoox', 'correr.ts');
     expect(correr).toMatch(/escenarios\.push\(libroFinal\)/);
     expect(correr).toMatch(/libroCuadra\(ctx, \[\.\.\.pedidosDelLibro\]\)/);
+  });
+});
+
+describe('C-LECTURAS-CONCILIACION · la conciliación de diagnóstico no suma el día entero', () => {
+  const llamar = (m: Awaited<ReturnType<typeof escenario>>['m'], cuerpo: unknown) =>
+    m.llamar('POST', '/datos/interno/diagnostico/conciliacion', cuerpo, undefined, {
+      'x-reloj-secreto': SEC,
+    });
+
+  it('con volumen: con los pedidos de la corrida lee unas pocas filas; sin ellos, los de hoy por índice', async () => {
+    const { m, medidor } = await escenario();
+    await m.llamar('GET', '/datos/version');
+    // Antes (medido el 13 nov con esta misma base): 20.610 filas con pedidos y 26.609 sin ellos.
+    const con = await medidor.medir(() => llamar(m, { pedidos: ['vol-p-30', 'vol-p-60'] }));
+    expect(con.resultado.estado).toBe(200);
+    expect(
+      con.total,
+      `con pedidos leyó ${con.total}:\n${culpables(con.lecturas)}`,
+    ).toBeLessThanOrEqual(50);
+    const sin = await medidor.medir(() => llamar(m, {}));
+    expect(sin.resultado.estado).toBe(200);
+    expect(
+      sin.total,
+      `sin pedidos leyó ${sin.total}:\n${culpables(sin.lecturas)}`,
+    ).toBeLessThanOrEqual(800);
+    // Ya no escribe ni borra la fila del día (la del día entero la hace el reloj).
+    expect(sin.lecturas.some((l) => /conciliaciones/.test(l.sql))).toBe(false);
+  });
+
+  it('pedido por pedido aplica las tres reglas del día: restaurante, repartidor y Stripe', async () => {
+    const db = crearBasePruebas();
+    const ins = (sql: string, ...v: unknown[]) =>
+      db
+        .prepare(sql)
+        .bind(...v)
+        .run();
+    await ins(
+      "INSERT INTO usuarios (id, correo, nombre, rol, clave_hash) VALUES ('c1','c1@ejemplo.com','C','cliente','x'), ('d1','d1@ejemplo.com','D','restaurante','x'), ('r1','r1@ejemplo.com','R','repartidor','x')",
+    );
+    await ins("INSERT INTO restaurantes (id, dueno_id, nombre) VALUES ('rest1', 'd1', 'Local')");
+    const pedido = (id: string, estado: string) =>
+      ins(
+        `INSERT INTO pedidos (id, cliente_id, restaurante_id, repartidor_id, estado, lineas_json, subtotal, envio, servicio,
+           cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, lat, lng)
+         VALUES (?, 'c1', 'rest1', 'r1', ?, '[]', 2000, 300, 200, 0, 300, 2800, 400, 1600, 900, 0, 200, 'basico', 'Calle 1', 25.7, -80.2)`,
+        id,
+        estado,
+      );
+    const mov = (pid: string, usuario: string, concepto: string, monto: number) =>
+      ins(
+        'INSERT INTO movimientos (id, usuario_id, pedido_id, monto, concepto) VALUES (?, ?, ?, ?, ?)',
+        `m-${pid}-${concepto}`,
+        usuario,
+        pid,
+        monto,
+        concepto,
+      );
+    await pedido('bien', 'entregado');
+    await ins(
+      "INSERT INTO cobros (pedido_id, capturado_en, capturado) VALUES ('bien', datetime('now'), 2800)",
+    );
+    await mov('bien', 'd1', 'venta', 1600);
+    await mov('bien', 'r1', 'entrega', 600);
+    await mov('bien', 'r1', 'propina', 300);
+    expect((await conciliarPedidos(db, ['bien'])).cuadra).toBe(true);
+    // Al restaurante se le abonó de menos.
+    await pedido('corto', 'entregado');
+    await mov('corto', 'd1', 'venta', 1500);
+    await mov('corto', 'r1', 'entrega', 900);
+    const corto = await conciliarPedidos(db, ['bien', 'corto']);
+    expect(corto.cuadra).toBe(false);
+    expect(String(corto.detalle.diferencias)).toMatch(/corto: restaurante 1600/);
+    // Un pedido cancelado con un abono al repartidor (en el día tampoco cuadraría).
+    await pedido('cancelado', 'cancelado');
+    await mov('cancelado', 'r1', 'entrega', 900);
+    expect((await conciliarPedidos(db, ['cancelado'])).cuadra).toBe(false);
+    // Capturado distinto del total.
+    await pedido('captura', 'entregado');
+    await ins(
+      "INSERT INTO cobros (pedido_id, capturado_en, capturado) VALUES ('captura', datetime('now'), 2000)",
+    );
+    await mov('captura', 'd1', 'venta', 1600);
+    await mov('captura', 'r1', 'entrega', 900);
+    expect((await conciliarPedidos(db, ['captura'])).detalle.diferencias).toMatch(
+      /Stripe esperado 2800/,
+    );
   });
 });
 

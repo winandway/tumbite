@@ -131,6 +131,115 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
   return r;
 }
 
+/** Los estados de un pedido (el CHECK de `pedidos.estado` en schema.sql). */
+const ESTADOS_PEDIDO = [
+  'pago_pendiente',
+  'pagado',
+  'aceptado',
+  'listo',
+  'en_camino',
+  'entregado',
+  'cancelado',
+] as const;
+
+/**
+ * C-LECTURAS-CONCILIACION (13 nov 2026): los pedidos creados desde `desde` (los de la corrida de
+ * hoy), sin recorrer la tabla. Va por el índice que ya existe `pedidos_zona_estado (zona_id,
+ * estado, creado_en)`: una búsqueda por zona y estado con el rango de la fecha (`zona_id` es
+ * NOT NULL y sale de `zonas`). Nada de `date(col)` (no deja usar ningún índice).
+ */
+export async function pedidosCreadosDesde(
+  db: D1Database,
+  desde: string,
+  limite: number,
+): Promise<string[]> {
+  const estados = ESTADOS_PEDIDO.map((e) => `'${e}'`).join(', ');
+  const { results } = await db
+    .prepare(
+      `SELECT id FROM pedidos INDEXED BY pedidos_zona_estado
+        WHERE zona_id IN (SELECT id FROM zonas) AND estado IN (${estados}) AND creado_en >= ?1
+        ORDER BY creado_en DESC LIMIT ?2`,
+    )
+    .bind(desde, limite)
+    .all<{ id: string }>();
+  return results.map((r) => r.id);
+}
+
+/**
+ * C-LECTURAS-CONCILIACION (13 nov 2026): las mismas tres reglas de `conciliar`, pero pedido por
+ * pedido y solo para los pedidos dados (la conciliación de diagnóstico de las pruebas). Antes,
+ * cada llamada sumaba el día entero: el movimiento de los bolsillos recorría `movimientos`
+ * (`date(creado_en)` no deja usar índice) y los pedidos entregados se leían cuatro veces (unas
+ * 20.000 filas por llamada con el volumen del sitio de pruebas). Ahora cada pedido va por su clave
+ * y sus movimientos por el índice único `movimientos_unico (usuario_id, pedido_id, concepto)`.
+ *
+ * Por pedido (lo esperado es 0 si no está entregado o no se pagó con tarjeta, igual que en el
+ * día: ahí esos pedidos no suman a lo esperado, pero sus movimientos sí):
+ * 1) restaurante: el movimiento «venta» de su dueño = pago_restaurante;
+ * 2) repartidor: «entrega» + «propina» = pago_repartidor + el bono;
+ * 3) Stripe: lo capturado = el total, si el pedido tenía cobro autorizado.
+ */
+export async function conciliarPedidos(
+  db: D1Database,
+  ids: readonly string[],
+): Promise<{ pedidos: number; cuadra: boolean; detalle: Record<string, number | string> }> {
+  const filas: Record<string, unknown>[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const tanda = ids.slice(i, i + 50);
+    const { results } = await db
+      .prepare(
+        `SELECT p.id, p.estado, p.metodo_pago, p.total, p.pago_restaurante, p.pago_repartidor,
+           (SELECT b.centavos FROM bonos_pedido b WHERE b.pedido_id = p.id) AS bono,
+           (SELECT 1 FROM cobros c WHERE c.pedido_id = p.id) AS con_cobro,
+           (SELECT c.capturado FROM cobros c WHERE c.pedido_id = p.id AND c.capturado_en IS NOT NULL) AS capturado,
+           (SELECT COALESCE(SUM(m.monto), 0) FROM movimientos m
+             WHERE m.usuario_id = r.dueno_id AND m.pedido_id = p.id AND m.concepto = 'venta') AS venta,
+           (SELECT COALESCE(SUM(m.monto), 0) FROM movimientos m
+             WHERE m.usuario_id = p.repartidor_id AND m.pedido_id = p.id AND m.concepto IN ('entrega', 'propina')) AS al_repartidor
+         FROM pedidos p LEFT JOIN restaurantes r ON r.id = p.restaurante_id
+        WHERE p.id IN (${tanda.map(() => '?').join(', ')})`,
+      )
+      .bind(...tanda)
+      .all<Record<string, unknown>>();
+    filas.push(...results);
+  }
+  const t = { rest: 0, venta: 0, rep: 0, alRep: 0, stripeEsp: 0, stripeCap: 0 };
+  const difs: string[] = [];
+  for (const f of filas) {
+    const cuenta = f.estado === 'entregado' && f.metodo_pago === 'tarjeta';
+    const rest = cuenta ? n(f.pago_restaurante) : 0;
+    const rep = cuenta ? n(f.pago_repartidor) + n(f.bono) : 0;
+    const stripeEsp = cuenta && f.con_cobro ? n(f.total) : 0;
+    const stripeCap = f.estado === 'entregado' ? n(f.capturado) : 0;
+    t.rest += rest;
+    t.venta += n(f.venta);
+    t.rep += rep;
+    t.alRep += n(f.al_repartidor);
+    t.stripeEsp += stripeEsp;
+    t.stripeCap += stripeCap;
+    if (rest !== n(f.venta))
+      difs.push(`${String(f.id)}: restaurante ${rest} ≠ abonado ${n(f.venta)}`);
+    if (rep !== n(f.al_repartidor))
+      difs.push(`${String(f.id)}: repartidor ${rep} ≠ abonado ${n(f.al_repartidor)}`);
+    if (stripeEsp !== stripeCap)
+      difs.push(`${String(f.id)}: Stripe esperado ${stripeEsp} ≠ capturado ${stripeCap}`);
+  }
+  return {
+    pedidos: filas.length,
+    cuadra: difs.length === 0,
+    detalle: {
+      pedidosRevisados: filas.length,
+      restaurantesEsperado: t.rest,
+      restaurantesAbonado: t.venta,
+      repartidoresEsperado: t.rep,
+      repartidoresAbonado: t.alRep,
+      stripeEsperado: t.stripeEsp,
+      stripeCapturado: t.stripeCap,
+      ...(difs.length ? { diferencias: difs.slice(0, 20).join(' | ') } : {}),
+    },
+  };
+}
+
 /** La fecha UTC de ayer, como la guarda la base (YYYY-MM-DD). */
 export const ayer = (ahora = Date.now()) => new Date(ahora - 86_400_000).toISOString().slice(0, 10);
 
