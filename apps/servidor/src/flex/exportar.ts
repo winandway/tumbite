@@ -38,7 +38,12 @@ export type TipoExportar = (typeof TIPOS_EXPORTAR)[number];
 export function celdaCsv(v: unknown): string {
   if (v === null || v === undefined) return '';
   let s = String(v);
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  // Un número válido (también negativo, como un monto) sale como número; lo demás que empieza con
+  // = + - @ (o un tabulador) se desarma con un apóstrofo para que la hoja no lo ejecute.
+  const numero =
+    typeof v === 'number' ||
+    (s.trim() !== '' && Number.isFinite(Number(s)) && /^-?[\d.]+$/.test(s));
+  if (!numero && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 export const filaCsv = (celdas: unknown[]) => celdas.map(celdaCsv).join(',');

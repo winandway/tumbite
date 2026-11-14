@@ -28,6 +28,11 @@ describe('C-FLEX-EXPORTAR · CSV de las listas de la empresa', () => {
     expect(celdaCsv('+1 305')).toBe("'+1 305");
     expect(celdaCsv('a,b')).toBe('"a,b"');
     expect(celdaCsv(null)).toBe('');
+    // Los montos negativos siguen siendo números; «-» seguido de texto se desarma.
+    expect(celdaCsv('-5.00')).toBe('-5.00');
+    expect(celdaCsv(-500)).toBe('-500');
+    expect(celdaCsv('-2+3')).toBe("'-2+3");
+    expect(celdaCsv('-cmd')).toBe("'-cmd");
     expect(unidades(123456)).toBe('1234.56');
     expect(unidades(-5)).toBe('-0.05');
     expect(unidades(0)).toBe('0.00');
