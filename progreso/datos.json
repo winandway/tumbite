@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-14T10:00:00.000Z",
+  "actualizado": "2026-11-14T13:30:00.000Z",
   "version": "7b9a5ca",
-  "ahora": "14 nov, madrugada: en producción ya están la distancia por calles, la web y las guías al día, la ubicación del repartidor con la pantalla apagada (falta compilar la app), el cierre cuando el cliente no aparece y los arreglos del cobro. Construido, revisado y verificado, esperando su última prueba en el sitio de pruebas antes de publicarse: comida en Venezuela, taxis (Divoox Carro) con alta del conductor, historial y viaje programado, lo nuevo de Divoox Flex, avisos en la app instalada desde el navegador, envíos por tamaño y dieciséis guías nuevas con capturas.",
+  "ahora": "14 nov: toda la noche de cierre ya está en producción y comprobada en vivo: comida en Venezuela con pago al recibir, taxis (Divoox Carro) con alta del conductor, historial y viaje programado, lo nuevo de Divoox Flex (exportar a hoja de cálculo, recargas locales con doble firma, ruta por calles, seguimiento), avisos en la app instalada desde el navegador (falta encenderlos con sus llaves), tasa del bolívar automática, envíos por tamaño y las guías nuevas con capturas. Moto y Carro siguen apagados para el público hasta tener la marca presentada. Nada se ha probado con dinero real ni con teléfonos en la calle.",
   "proximo": [
     {
       "quien": "richard",
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-14",
+      "titulo": "La noche de cierre quedó en producción",
+      "texto": "Pasó la prueba completa en el sitio de pruebas (Moto, Moto en Venezuela, taxis en Detroit con tarjeta de prueba, comida en Venezuela, avisos de Stripe y conciliación) y se publicó. La primera publicación la frenó una prueba vieja que no registraba la cuenta del repartidor para recibir transferencias; se corrigió la prueba y se publicó. Producción y el sitio de pruebas responden bien y las guías nuevas abren."
+    },
     {
       "fecha": "2026-11-14",
       "titulo": "Noche de cierre: taxis, Flex, comida en Venezuela, avisos del navegador y lecturas",
