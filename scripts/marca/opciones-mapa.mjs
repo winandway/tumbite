@@ -4,6 +4,8 @@
 // cada paleta, sobre el mapa de Google real, y guarda las capturas para elegir. La llave del
 // navegador solo sirve en los dominios de Divoox: la página se sirve dentro del sitio de pruebas
 // (interceptada, no se publica nada). Cada mapa dibujado gasta una carga de la cuota diaria.
+// Decidido el 14 nov 2026: «Día · azul Divoox» y «Noche · oscuro con azul». Los estilos vigentes
+// salen de packages/compartido/src/estiloMapaDivoox.ts; este guion queda para comparar opciones.
 // Uso: node scripts/marca/opciones-mapa.mjs
 import { chromium } from '@playwright/test';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -119,7 +121,7 @@ export const OPCIONES = {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const actual = JSON.parse(
-    readFileSync('identidad-divoox/mapa-google-estilo-divoox.json', 'utf8'),
+    readFileSync('identidad-divoox/mapa-google-estilo-divoox-dia.json', 'utf8'),
   );
   const estilos = new Map([['0-actual', { nombre: 'Como está hoy', estilo: actual }]]);
   for (const [k, p] of Object.entries(OPCIONES)) {

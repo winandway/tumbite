@@ -8,7 +8,11 @@
 // y, si el conductor tiene una ruta Flex asignada (scripts/staging/armar-ruta-flex-novi.mjs), «Mi
 // ruta». Guarda las capturas en docs/capturas/mapa-google/ y dice si la consola mostró un bloqueo de
 // la política de contenido (CSP). Cada pedido abre mapas: gasta unas seis cargas de la cuota diaria.
-// Uso: CLAVE_DEMO=… node scripts/recorrido/capturas-mapa-google-vivo.mjs [comida|flex|elegir]
+// C-MAPA-DIA-NOCHE (14 nov 2026): TEMA=claro u oscuro fija el ajuste «Colores del mapa» de la persona
+// (como si lo hubiera elegido en su cuenta) y las capturas llevan «dia-» o «noche-» delante; sin TEMA
+// queda en automático. El modo «ajuste» abre la cuenta, captura el ajuste de tres posiciones, toca
+// «Oscuro» y comprueba en un mapa que quedó de noche.
+// Uso: CLAVE_DEMO=… [TEMA=claro|oscuro] node scripts/recorrido/capturas-mapa-google-vivo.mjs [comida|flex|elegir|ajuste]
 /* global window, document -- las funciones que se pasan a la página corren en el navegador */
 import { chromium } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
@@ -28,6 +32,8 @@ const QUE = process.argv[2] ?? 'comida';
 const IDIOMA = process.env.IDIOMA === 'en' ? 'en' : 'es';
 const SUFIJO = IDIOMA === 'en' ? '-en' : '';
 const VUELTAS = process.env.VUELTAS === '1' ? [1] : [1, 2];
+const TEMA = ['claro', 'oscuro'].includes(process.env.TEMA) ? process.env.TEMA : '';
+const PREFIJO = TEMA === 'claro' ? 'dia-' : TEMA === 'oscuro' ? 'noche-' : '';
 const CARPETA = 'docs/capturas/mapa-google';
 mkdirSync(CARPETA, { recursive: true });
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -65,6 +71,8 @@ async function abrir(navegador, token, donde, nombre) {
   if (token)
     await ctx.addInitScript((t) => window.localStorage.setItem('tumbite.sesion', t), token);
   await ctx.addInitScript((i) => window.localStorage.setItem('tumbite.idioma', i), IDIOMA);
+  if (TEMA)
+    await ctx.addInitScript((t) => window.localStorage.setItem('divoox.mapa.tema', t), TEMA);
   const pagina = await ctx.newPage();
   pagina.on('console', (m) => {
     const t = m.text();
@@ -90,13 +98,16 @@ async function mapaListo(pagina, ms = 25000) {
       lienzos: m.querySelectorAll('canvas').length,
       imagenes: m.querySelectorAll('img').length,
       marcas: document.querySelectorAll('gmp-advanced-marker').length,
+      // C-MAPA-DIA-NOCHE y C-MAPA-ISOTIPO: con qué tema quedó y si el repartidor es el isotipo.
+      tema: document.querySelector('[data-testid="mapa-google"]')?.getAttribute('data-tema'),
+      isotipos: document.querySelectorAll('[data-marca="isotipo"]').length,
     };
   });
 }
 const foto = (pagina, nombre) =>
   pagina
-    .screenshot({ path: `${CARPETA}/${nombre}${SUFIJO}.png` })
-    .then(() => console.log(`  captura ${nombre}${SUFIJO}`));
+    .screenshot({ path: `${CARPETA}/${PREFIJO}${nombre}${SUFIJO}.png` })
+    .then(() => console.log(`  captura ${PREFIJO}${nombre}${SUFIJO}`));
 
 // Con la tarjeta gráfica (Metal en Mac) para que Google dibuje el mapa vectorial e inclinado; con el
 // dibujo por software cae al mapa plano de imágenes.
@@ -119,6 +130,43 @@ try {
       .click();
     console.log('elegir punto:', JSON.stringify(await mapaListo(pagina)));
     await foto(pagina, 'elegir-punto-abre-donde-estas');
+  }
+
+  if (QUE === 'ajuste') {
+    // El ajuste «Colores del mapa» de la cuenta del cliente y del conductor: se toca «Oscuro» y un
+    // mapa abierto después sale de noche (se guardó en el navegador de la persona).
+    const novi = { lat: 42.4806, lng: -83.4755 };
+    const { pagina } = await abrir(navegador, tCliente, novi, 'ajuste');
+    await pagina.goto(`${BASE}/app/account`, { waitUntil: 'domcontentloaded' });
+    const ajuste = pagina.getByTestId('ajuste-mapa');
+    await ajuste.waitFor({ timeout: 20000 });
+    await ajuste.scrollIntoViewIfNeeded();
+    await foto(pagina, 'ajuste-cuenta-cliente-automatico');
+    await pagina.getByTestId('ajuste-mapa-oscuro').click();
+    await esperar(600);
+    await foto(pagina, 'ajuste-cuenta-cliente-oscuro');
+    const guardado = await pagina.evaluate(() => window.localStorage.getItem('divoox.mapa.tema'));
+    console.log('ajuste guardado en el navegador:', guardado);
+    await pagina.goto(`${BASE}/app/ride?servicio=carro`, { waitUntil: 'domcontentloaded' });
+    await pagina
+      .getByText(/Ver en el mapa|See on the map/)
+      .first()
+      .click();
+    console.log('mapa después de elegir «Oscuro»:', JSON.stringify(await mapaListo(pagina)));
+    await foto(pagina, 'ajuste-mapa-queda-de-noche');
+    const conductor = await abrir(navegador, tRepartidor, novi, 'ajuste-conductor');
+    await conductor.pagina.goto(`${BASE}/driver/`, { waitUntil: 'domcontentloaded' });
+    await esperar(3000);
+    const listo = conductor.pagina.getByText(/^(Estoy listo|I'm ready)$/);
+    if (await listo.count()) await listo.first().click();
+    await conductor.pagina
+      .getByText(/^(Cuenta|Account)$/)
+      .last()
+      .click();
+    const ajusteConductor = conductor.pagina.getByTestId('ajuste-mapa');
+    await ajusteConductor.waitFor({ timeout: 20000 });
+    await ajusteConductor.scrollIntoViewIfNeeded();
+    await foto(conductor.pagina, 'ajuste-cuenta-conductor');
   }
 
   if (QUE === 'flex') {

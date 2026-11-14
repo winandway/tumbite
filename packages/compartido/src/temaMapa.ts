@@ -9,9 +9,10 @@ import type { TemaMapa } from './estiloMapaDivoox';
  * y las apps (cliente, conductor y ruta Flex).
  *
  * Tres posiciones, guardadas en el teléfono o en el navegador de cada persona:
- * - automático (de fábrica): de noche según el sol del lugar del mapa (como el modo «Automático»
- *   de la navegación de Google Maps y de Waze, que cambian al anochecer), y también cuando el
- *   teléfono está en modo oscuro (como `FOLLOW_SYSTEM` de Google Maps y los mapas de Apple);
+ * - automático (de fábrica): de noche según el lugar del mapa y la hora local (el sol de ese sitio),
+ *   igual que el modo `AUTO` del Navigation SDK de Google, el que usan las apps de reparto y de
+ *   viajes («according to user's location and local time»); y también cuando el teléfono o el
+ *   navegador están en modo oscuro (`FOLLOW_SYSTEM` de Maps JavaScript API);
  * - claro: siempre de día;
  * - oscuro: siempre de noche.
  *
