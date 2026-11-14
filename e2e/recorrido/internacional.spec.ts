@@ -642,6 +642,25 @@ for (const P of PAISES) {
           headers: hdr(paseRep),
           data: { montoRecibido: monto, nota: 'prueba' },
         });
+      // C-COMIDA-VE-CIRCUITO: un pedido por transferencia solo se le ofrece a quien tiene una cuenta
+      // vigente para recibirla en ese país y moneda. El repartidor la registra y el equipo la confirma.
+      const alta = await request.post('/datos/repartidor/cuentas-cobro', {
+        headers: hdr(paseRep),
+        data: {
+          clave,
+          tipo: P.pais === 'VE' ? 'pago_movil' : 'banco',
+          banco: 'Banco de prueba',
+          titular: 'Repartidor de prueba',
+          identificador: '04140000000',
+        },
+      });
+      expect(alta.status(), await alta.text()).toBe(201);
+      const cuentaRep = ((await alta.json()) as { cuenta: { id: string } }).cuenta;
+      const confirma = await request.patch(`/datos/admin/cuentas-cobro/${cuentaRep.id}`, {
+        headers: hdr(admin),
+        data: {},
+      });
+      expect(confirma.ok(), await confirma.text()).toBe(true);
       // Excedente: transferencia repetida.
       const x = await pedirApi('transferencia_repartidor');
       await recogerYEntregar(x.id);
