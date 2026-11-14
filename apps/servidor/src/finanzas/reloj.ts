@@ -68,14 +68,23 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
   // 2) Reservas huérfanas (rutas que ya no están activas).
   const huerfanas = await recuperarCobrosHuerfanos(db);
   // 3) Invariantes del libro.
+  // C-LECTURAS-SALUD: UNA pasada por el libro sirve a las dos piezas del canario: las billeteras
+  // de empresa (como antes) y la pieza «libro» (ningún prepago, fondo de punto ni reserva en
+  // negativo, de cualquier cuenta), que ahora lee este resultado en vez de recorrer el libro en
+  // cada llamada al canario.
   const negativos = await db
     .prepare(
-      `SELECT cuenta_id, bolsillo, SUM(monto) AS s FROM libro WHERE cuenta_id LIKE 'empresa:%'
-         AND bolsillo IN ('prepago', 'reservado', 'deuda_cliente') GROUP BY cuenta_id, bolsillo, pais, moneda HAVING s < 0`,
+      `SELECT cuenta_id, bolsillo, SUM(monto) AS s FROM libro
+        WHERE bolsillo IN ('prepago', 'reservado', 'deuda_cliente', 'punto')
+        GROUP BY cuenta_id, bolsillo, pais, moneda HAVING s < 0`,
     )
     .all<{ cuenta_id: string; bolsillo: string; s: number }>();
   for (const n of negativos.results)
-    problemas.push({ tipo: 'saldo_negativo', detalle: `${n.cuenta_id} ${n.bolsillo} ${n.s}` });
+    if (n.cuenta_id.startsWith('empresa:') && n.bolsillo !== 'punto')
+      problemas.push({ tipo: 'saldo_negativo', detalle: `${n.cuenta_id} ${n.bolsillo} ${n.s}` });
+  const libroNegativos = negativos.results.filter((n) =>
+    ['prepago', 'punto', 'reservado'].includes(n.bolsillo),
+  ).length;
   const sinAcreditar = await db
     .prepare(
       `SELECT r.id FROM recargas_empresa r WHERE r.estado = 'acreditada'
@@ -111,6 +120,7 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
     problemas: problemas.slice(0, 50),
     recargasRecuperadas: recuperadas,
     reservasRecuperadas: huerfanas,
+    libroNegativos,
   };
   // C-RELOJ-OCIOSO-SIN-ESCRITURAS: el reloj corre cada minuto. Se guarda solo si el resultado
   // cambió, o una vez por hora para que «cuando» siga diciendo que la conciliación está viva.

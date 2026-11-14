@@ -1,3 +1,4 @@
+import { cuantosHay } from '../canarioLecturas';
 import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { esConductorOcupado } from '../operaciones';
@@ -1521,6 +1522,8 @@ export const DISPARADORES_SERVICIOS = [
 export async function saludServicios(
   db: D1Database,
   entorno: Entorno | null = null,
+  /** C-LECTURAS-SALUD: los disparadores ya leídos por el canario (una sola lectura de sqlite_master). */
+  presentes?: Set<string>,
 ): Promise<'ok' | 'error'> {
   // En pruebas, el servicio de pasajeros en construcción puede estar encendido. En producción, solo
   // en las ciudades de un país abierto por el superadmin (C-MOTO-POR-PAIS; hoy ninguno).
@@ -1533,11 +1536,13 @@ export async function saludServicios(
     db
       .prepare(
         `SELECT
-           (SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_SERVICIOS.map(() => '?').join(',')})) AS disparadores,
+           ${presentes ? '?' : `(SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_SERVICIOS.map(() => '?').join(',')}))`} AS disparadores,
            (SELECT COUNT(*) FROM servicios s WHERE s.estado = 'disponible'
               AND NOT EXISTS (SELECT 1 FROM servicios_implementados i WHERE i.servicio_id = s.id)) AS sin_codigo`,
       )
-      .bind(...DISPARADORES_SERVICIOS)
+      .bind(
+        ...(presentes ? [cuantosHay(presentes, DISPARADORES_SERVICIOS)] : DISPARADORES_SERVICIOS),
+      )
       .first<{ disparadores: number; sin_codigo: number }>(),
     db
       .prepare(

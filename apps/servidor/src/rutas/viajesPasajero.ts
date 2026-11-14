@@ -1058,7 +1058,10 @@ export async function saludViajes(db: D1Database): Promise<'ok' | 'error'> {
               SELECT substr(l.referencia, 15, instr(substr(l.referencia, 15), ':') - 1) AS op,
                      l.cuenta_id, l.monto
                 FROM libro l
-               WHERE l.bolsillo = 'reservado' AND l.referencia LIKE 'reserva_viaje:%') r
+               -- C-LECTURAS-SALUD: rango sobre la referencia (va por el índice único que ya
+               -- existe); el LIKE recorría el libro entero en cada llamada al canario.
+               WHERE l.referencia >= 'reserva_viaje:' AND l.referencia < 'reserva_viaje;'
+                 AND l.bolsillo = 'reservado') r
             JOIN operaciones o ON o.id = r.op
            WHERE o.estado_general IN ('terminada', 'cancelada', 'sin_conductor')
              AND o.actualizado_en < datetime('now', '-10 minutes')

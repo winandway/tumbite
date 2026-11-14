@@ -1,3 +1,4 @@
+import { cuantosHay } from './canarioLecturas';
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
 import { PLAZAS_XL, acercaAlDestino, distanciaKm } from '@tumbite/compartido';
@@ -527,14 +528,21 @@ export const DISPARADORES_EXCLUSIVIDAD = [
 ] as const;
 
 /** Pieza «exclusividad» de la salud: todos los disparadores puestos y cero inconsistencias. */
-export async function saludExclusividad(db: D1Database): Promise<'ok' | 'error'> {
-  const d = await db
-    .prepare(
-      `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_EXCLUSIVIDAD.map(() => '?').join(',')})`,
-    )
-    .bind(...DISPARADORES_EXCLUSIVIDAD)
-    .first<{ n: number }>();
-  if (Number(d?.n) !== DISPARADORES_EXCLUSIVIDAD.length) return 'error';
+export async function saludExclusividad(
+  db: D1Database,
+  /** C-LECTURAS-SALUD: los disparadores ya leídos por el canario (una sola lectura de sqlite_master). */
+  presentes?: Set<string>,
+): Promise<'ok' | 'error'> {
+  const hay = presentes
+    ? cuantosHay(presentes, DISPARADORES_EXCLUSIVIDAD)
+    : await db
+        .prepare(
+          `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_EXCLUSIVIDAD.map(() => '?').join(',')})`,
+        )
+        .bind(...DISPARADORES_EXCLUSIVIDAD)
+        .first<{ n: number }>()
+        .then((d) => Number(d?.n));
+  if (hay !== DISPARADORES_EXCLUSIVIDAD.length) return 'error';
   const f = await db
     .prepare('SELECT COUNT(*) AS n FROM inconsistencias_operaciones')
     .first<{ n: number }>();

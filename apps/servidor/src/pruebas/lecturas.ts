@@ -76,6 +76,17 @@ export async function sembrarVolumen(db: D1Database): Promise<void> {
          FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.estado = 'entregado'
        UNION ALL SELECT 'vol-me-' || id, repartidor_id, id, pago_repartidor, 'entrega', entregado_en FROM pedidos WHERE estado = 'entregado'
        UNION ALL SELECT 'vol-mp-' || id, repartidor_id, id, propina, 'propina', entregado_en FROM pedidos WHERE estado = 'entregado'`,
+    // El libro del saldo prepago y las recargas (lo que lee el canario del dinero).
+    `${serie(6000)} INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia, creado_en)
+       SELECT 'vol-l-' || i, 'vol-u-' || (${v.clientes} + 1 + i % ${v.repartidores}),
+         CASE WHEN i % 6 < 3 THEN 'prepago' WHEN i % 6 = 3 THEN 'reservado' ELSE 'comisiones' END,
+         'US', 'USD', CASE WHEN i % 6 < 3 THEN 1000 WHEN i % 6 = 3 THEN 0 ELSE 100 END,
+         CASE WHEN i % 6 < 3 THEN 'recarga' WHEN i % 6 = 3 THEN 'reserva' ELSE 'comision' END,
+         'vol-ref-' || i, datetime('now', '-' || (i % 30) || ' days') FROM n`,
+    `${serie(1500)} INSERT INTO recargas (id, usuario_id, pais, moneda, monto, canal, estado, creado_en)
+       SELECT 'vol-rc-' || i, 'vol-u-' || (${v.clientes} + 1 + i % ${v.repartidores}), 'US', 'USD', 2000,
+         CASE WHEN i % 2 = 0 THEN 'stripe' ELSE 'codigo' END, 'acreditada',
+         datetime('now', '-' || (i % 30) || ' days') FROM n`,
     `${serie(20000)} INSERT INTO ubicaciones_recientes (usuario_id, lat, lng, precision_m, creado_en)
        SELECT 'vol-u-' || (${v.clientes} + 1 + i % ${v.repartidores}), 25.7, -80.2, 10, datetime('now', '-' || (i % 600) || ' minutes') FROM n`,
   ];
@@ -134,18 +145,19 @@ export function medidorDeLecturas(db: D1Database) {
   /**
    * Filas que lee una búsqueda por índice: las filas de la tabla repartidas entre los valores
    * distintos de las columnas fijadas con «=» (las primeras del índice). Una condición de rango
-   * («>», «<») lee una cuarta parte de eso, como lo supone el propio SQLite sin estadísticas.
+   * («>», «<») lee una cuarta parte de eso, y un rango cerrado por los dos lados («> ? AND < ?»)
+   * una decimosexta, como lo supone el propio SQLite sin estadísticas (cada lado divide por 4).
    */
   const promedios = new Map<string, number>();
   const porBusqueda = async (tabla: string, indice: string, condicion: string) => {
     // SQLite escribe «<expr>» por la columna de un índice de expresión: no es un rango.
     const terminos = condicion.replace(/<expr>/g, 'expr').split(' AND ');
     const iguales = terminos.filter((t) => /=\?$/.test(t.trim()) && !/[<>]/.test(t)).length;
-    const rango = terminos.some((t) => /[<>]/.test(t));
+    const rangos = terminos.filter((t) => /[<>]/.test(t)).length;
     const clave = `${indice}:${iguales}`;
     if (!promedios.has(clave)) promedios.set(clave, await promedioDe(tabla, indice, iguales));
     const n = promedios.get(clave)!;
-    return Math.max(1, rango ? Math.ceil(n / 4) : n);
+    return Math.max(1, rangos ? Math.ceil(n / (rangos > 1 ? 16 : 4)) : n);
   };
   /**
    * Cuántas filas trae, en promedio, fijar las primeras `iguales` claves del índice. Cuenta solo
