@@ -284,6 +284,73 @@ describe('C-LECTURAS-CONCILIACION · la conciliación de diagnóstico no suma el
   });
 });
 
+describe('C-LECTURAS-CIUDAD · la pantalla en vivo de la ciudad de pruebas lee solo la sesión', () => {
+  it('cada refresco busca los pedidos por zona, estado y fecha de la sesión, no toda la historia de los robots', async () => {
+    const consultas: { sql: string; v: unknown[] }[] = [];
+    const anotar = (db: D1Database): D1Database => {
+      const env = (sql: string, st: D1PreparedStatement, v: unknown[] = []): D1PreparedStatement =>
+        new Proxy(st, {
+          get(t, p) {
+            if (p === 'bind') return (...a: unknown[]) => env(sql, t.bind(...a), a);
+            if (p === 'all' || p === 'first' || p === 'run') consultas.push({ sql, v });
+            const x = Reflect.get(t, p, t) as unknown;
+            return typeof x === 'function' ? (x as (...y: unknown[]) => unknown).bind(t) : x;
+          },
+        });
+      return new Proxy(db, {
+        get(t, p) {
+          if (p === 'prepare') return (sql: string) => env(sql, t.prepare(sql));
+          const x = Reflect.get(t, p, t) as unknown;
+          return typeof x === 'function' ? (x as (...y: unknown[]) => unknown).bind(t) : x;
+        },
+      });
+    };
+    vi.stubGlobal('fetch', async () => new Response('{}', { status: 200 }));
+    const m = mundo({ RELOJ_SECRETO: SEC }, { host: 'staging.tumbite.com', envolver: anotar });
+    await sembrarVolumen(m.DB);
+    await m.llamar('GET', '/datos/version');
+    const admin = await m.cuenta('admin', 'Soporte Ciudad');
+    // Los restaurantes robot se reutilizan: 300 pedidos de sesiones anteriores.
+    await m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 300)
+       INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno,
+         propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, lat, lng, creado_en)
+       SELECT 'viejo-' || i, 'vol-u-1', 'vol-r-' || (1 + i % 3), 'entregado', '[]', 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+         'basico', 'x', 0, 0, datetime('now', '-3 days') FROM n`,
+    ).run();
+    await m.DB.prepare(
+      `INSERT INTO simulador_sesiones (id, destino, restaurantes, repartidores, inicio)
+       VALUES ('s1', 'juego', '["vol-r-1","vol-r-2","vol-r-3"]', '["vol-u-4001"]', datetime('now', '-1 hours'))`,
+    ).run();
+    consultas.length = 0;
+    const r = await m.llamar('GET', '/datos/admin/ciudad-pruebas', undefined, admin.token);
+    expect(r.estado).toBe(200);
+    const dePedidos = consultas.filter((q) => /FROM pedidos p/.test(q.sql));
+    expect(dePedidos.length).toBe(3); // la lista, los jugadores y los pedidos en curso
+    for (const q of dePedidos) {
+      const plan = await m.DB.prepare(`EXPLAIN QUERY PLAN ${q.sql}`)
+        .bind(...q.v)
+        .all<{ detail: string }>();
+      expect(
+        plan.results.map((x) => x.detail).join(' | '),
+        'los pedidos de la sesión van por zona, estado y el rango de la fecha',
+      ).toMatch(
+        /SEARCH p USING INDEX pedidos_zona_estado \(zona_id=\? AND estado=\? AND creado_en>\?\)/,
+      );
+    }
+    // Lo que eso lee de verdad: los pedidos de la zona desde el inicio (aquí ninguno) frente a la
+    // historia entera de los tres robots (330) que leía cada consulta antes, cada 4 a 5 segundos.
+    const historia = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM pedidos WHERE restaurante_id IN ('vol-r-1','vol-r-2','vol-r-3')",
+    ).first<{ n: number }>();
+    const ventana = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM pedidos WHERE zona_id = 'US-FL-MIAMI' AND creado_en >= datetime('now', '-1 hours')",
+    ).first<{ n: number }>();
+    expect(Number(historia?.n)).toBe(330);
+    expect(Number(ventana?.n)).toBeLessThan(10);
+  });
+});
+
 /** Una base que informa filas leídas como D1 (la de pruebas no lo hace). */
 function baseQueInforma(db: D1Database, porConsulta: number): D1Database {
   const envolver = (s: D1PreparedStatement): D1PreparedStatement =>

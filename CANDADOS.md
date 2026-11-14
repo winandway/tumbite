@@ -3646,6 +3646,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Candado:** `lecturasPorPeticion.test.ts`, «C-LECTURAS-CONCILIACION» (tope 50 con pedidos y 800 sin ellos; no toca `conciliaciones`; las tres reglas pedido por pedido, también un cancelado con abono). Comprobado en rojo con la ruta vieja: 20.610.
 - **Qué NO tocar:** no volver a llamar `conciliar` (el del día) desde la ruta de diagnóstico; no cambiar el nombre del caso «el libro del día cuadra…» (el simulador lo busca por ese principio); no quitar el `INDEXED BY` (sin él SQLite elige `pedidos_estado` y lee todos los pedidos).
 
+## C-LECTURAS-CIUDAD: la pantalla en vivo de la ciudad de pruebas lee solo la sesión (13 nov 2026, orden de Richard) — todos los países
+
+- **Qué pasaba:** mirar no escribía (C-CIUDAD-PRUEBAS), pero cada refresco de «Ciudad de pruebas» (cada 4 a 5 segundos con la pantalla abierta) hacía hasta tres consultas de pedidos por `restaurante_id IN (…) AND creado_en >= inicio`. El índice del restaurante (`pedidos_restaurante (restaurante_id, estado)`) no tiene la fecha: cada consulta leía TODA la historia de los restaurantes robot, que se reutilizan de una sesión a otra. Con 300 pedidos de sesiones anteriores: unas 330 filas por consulta, unas 1.000 por refresco y unas 12.000 por minuto con la pantalla abierta, creciendo con cada sesión.
+- **Arreglo (sin índices nuevos):** las tres consultas (`rutas/ciudadPruebas.ts`, `DE_LA_SESION`) van por el índice que ya existía `pedidos_zona_estado (zona_id, estado, creado_en)` con `INDEXED BY`: zona de los restaurantes de la sesión, estados y el rango desde el inicio de la sesión. Leen solo los pedidos de esa zona creados durante la sesión (en el sitio de pruebas, los de la propia sesión). Lo demás de la pantalla ya iba por clave: restaurantes y repartidores por id, la sesión por id, los errores por su índice de fecha. El latido (que sí escribe, con su tope) no cambió: sus pedidos van por estados activos.
+- **Medido:** historia de los robots 330 filas por consulta → los pedidos de la zona desde el inicio (en la prueba, ninguno). Escrituras al mirar: 0, como antes.
+- **Candado:** `lecturasPorPeticion.test.ts`, «C-LECTURAS-CIUDAD»: el plan de las tres consultas de pedidos del refresco tiene que ser `SEARCH p USING INDEX pedidos_zona_estado (zona_id=? AND estado=? AND creado_en>?)`. Comprobado en rojo con la ruta vieja (`pedidos_restaurante`).
+- **Qué NO tocar:** no volver a filtrar los pedidos de la pantalla solo por restaurante; no quitar el `INDEXED BY`.
+
 ## C-COMISION-MONEDA · Un viaje no se activa en una moneda sin comisión (13 nov 2026) — Venezuela y todos los países
 
 - **Qué se rompía (en silencio):** la política de comisión del prepago exige la MISMA moneda que el viaje (`elegirPolitica`, `packages/compartido/src/finanzas.ts`). Una ciudad de Venezuela con la tarifa en dólares y la política en bolívares no cobraba ninguna comisión y nadie se enteraba.
