@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C, MarcaIsotipo, usePropsMapaDivoox } from '@tumbite/movil';
-import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
+import {
+  altitudDeZoom,
+  rotuloDestino,
+  useVistaDeLlegada,
+} from '@tumbite/compartido/src/mapaLlegada';
 import type { Punto } from '../piezas/mapaWeb';
 import { IMG } from '../piezas/recursos';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
@@ -53,7 +57,7 @@ export function MapaRuta({
   // C-MAPA-LLEGADA: a menos de 200 m de la parada actual el mapa se acerca solo y la parada muestra,
   // junto a su número, el número de la dirección (igual que en la web).
   const parada = puntos.find((p) => p.tono === 'actual') ?? null;
-  const llegada = vistaDeLlegada(yo, parada?.punto);
+  const llegada = useVistaDeLlegada(yo, parada?.punto);
   const rotulo = llegada ? rotuloDestino(parada?.direccion) : '';
   // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom.
   const clave = llegada?.clave
@@ -68,7 +72,7 @@ export function MapaRuta({
         {
           center: { latitude: llegada.centro.lat, longitude: llegada.centro.lng },
           zoom: llegada.zoom,
-          altitude: 450,
+          altitude: altitudDeZoom(llegada.zoom),
         },
         { duration: 600 },
       );

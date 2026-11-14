@@ -3,7 +3,12 @@ import type L from 'leaflet';
 import { COLORES, crearMapa, isotipo, punto } from './mapaWeb';
 import type { Punto } from './ubicacion';
 import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
-import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
+import {
+  type VistaMapa,
+  rotuloDestino,
+  useVistaDeLlegada,
+  vistaDeLlegada,
+} from '@tumbite/compartido/src/mapaLlegada';
 import { useSesion } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
@@ -52,7 +57,7 @@ function MapaEntregaGoogle({
 }: Props) {
   const { idioma } = useSesion();
   const hacia = meta === 'restaurante' ? restaurante : casa;
-  const llegada = vistaDeLlegada(repartidor, hacia);
+  const llegada = useVistaDeLlegada(repartidor, hacia);
   const rotulo = llegada ? rotuloDestino(direccion) : '';
   const centro = repartidor ?? restaurante ?? casa;
   if (!centro) return null;
@@ -114,7 +119,7 @@ function MapaEntregaLeaflet({
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
-  const claveCerca = useRef('');
+  const vistaCerca = useRef<VistaMapa | null>(null);
   const centro = repartidor ?? restaurante ?? casa;
 
   useEffect(() => {
@@ -133,7 +138,12 @@ function MapaEntregaLeaflet({
     if (!m) return;
     for (const c of capas.current) c.remove();
     const nuevas: L.Layer[] = [];
-    const llegada = vistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
+    const llegada = vistaDeLlegada(
+      repartidor,
+      meta === 'restaurante' ? restaurante : casa,
+      undefined,
+      vistaCerca.current,
+    );
     const rotulo = llegada ? rotuloDestino(direccion) : '';
     const conRotulo = (c: L.CircleMarker, es: boolean) => {
       if (es && rotulo) c.bindTooltip(rotulo, { permanent: true, direction: 'top' });
@@ -154,8 +164,8 @@ function MapaEntregaLeaflet({
     const todos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
     // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom (entre
     // uno y otro se puede mover el mapa con el dedo): casa y repartidor juntos.
-    const claveAntes = claveCerca.current;
-    claveCerca.current = llegada?.clave ?? '';
+    const claveAntes = vistaCerca.current?.clave ?? '';
+    vistaCerca.current = llegada;
     if (llegada) {
       if (llegada.clave !== claveAntes)
         m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);

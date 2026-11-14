@@ -69,7 +69,8 @@ describe('día y noche en todos los mapas', () => {
   it('el mapa de respaldo (Leaflet) sigue el mismo ajuste en cada lugar donde se crea', () => {
     const conLeaflet = FUENTES.filter(([, t]) => /tileLayer\(/.test(t));
     expect(conLeaflet.length).toBeGreaterThanOrEqual(5);
-    for (const [r, t] of conLeaflet) expect(t, r).toContain('seguirTemaEnLeaflet(');
+    // Al quitarse el mapa se deja de escuchar (si no, queda un reloj corriendo por cada mapa abierto).
+    for (const [r, t] of conLeaflet) expect(t, r).toMatch(/\.on\('unload', seguirTemaEnLeaflet\(/);
   });
 
   it('el ajuste de tres posiciones está en la cuenta del cliente y del conductor, y en la web', () => {
@@ -130,5 +131,23 @@ describe('al llegar se ven la casa y el repartidor juntos', () => {
       'apps/repartidor/src/flex/MapaRuta.web.tsx',
     ])
       expect(leer(r), r).toMatch(/llegada\??\.clave/);
+    // La vista anterior se recuerda para que la cámara no baile con el GPS; en el iPhone la altura
+    // de la cámara sale del mismo zoom.
+    for (const r of [
+      'apps/cliente/src/MapaEntrega.tsx',
+      'apps/repartidor/src/piezas/Mapa.tsx',
+      'apps/repartidor/src/flex/MapaRuta.tsx',
+    ]) {
+      expect(leer(r), r).toContain('useVistaDeLlegada(');
+      expect(leer(r), r).toContain('altitudDeZoom(llegada.zoom)');
+    }
+    for (const r of [
+      'apps/cliente/src/MapaEntrega.web.tsx',
+      'apps/repartidor/src/piezas/Mapa.web.tsx',
+      'apps/repartidor/src/flex/MapaRuta.web.tsx',
+    ]) {
+      expect(leer(r), r).toContain('useVistaDeLlegada(');
+      expect(leer(r), r).toContain('vistaCerca.current');
+    }
   });
 });

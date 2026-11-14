@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   METROS_LLEGADA,
   ZOOM_LLEGADA,
+  altitudDeZoom,
   centroParaElegir,
   rotuloDestino,
   vistaDeLlegada,
@@ -75,6 +76,35 @@ describe('vistaDeLlegada: cerca del destino el mapa se acerca solo', () => {
     expect(vistaDeLlegada({ lat: 42.5201, lng: -83.47 }, otra)?.clave).not.toBe(
       vistaDeLlegada({ lat: 42.5145, lng: -83.4742 }, casa)?.clave,
     );
+  });
+  it('si el GPS oscila justo entre dos escalones, la cámara no baila: no se aleja sin una holgura', () => {
+    // A 42,5° de latitud el zoom pasa de 17 a 16 hacia los 140 m y de 18 a 17 hacia los 70 m.
+    const a = (metros: number) => ({ lat: casa.lat + metros / 111_320, lng: casa.lng });
+    for (const borde of [140, 70]) {
+      let previa = vistaDeLlegada(a(borde - 4), casa);
+      const claves = new Set([previa?.clave]);
+      for (const m of [borde + 3, borde - 3, borde + 4, borde - 2, borde + 5, borde - 4]) {
+        previa = vistaDeLlegada(a(m), casa, METROS_LLEGADA, previa);
+        claves.add(previa?.clave);
+      }
+      expect(claves.size, `oscilando en ${borde} m`).toBe(1);
+    }
+    // Si de verdad se aleja (más de un 15 %), sí se abre para que el repartidor siga a la vista.
+    const cerca = vistaDeLlegada(a(60), casa);
+    expect(cerca?.zoom).toBe(18);
+    expect(vistaDeLlegada(a(110), casa, METROS_LLEGADA, cerca)?.zoom).toBe(17);
+    // Y al acercarse sube de escalón enseguida.
+    const lejos = vistaDeLlegada(a(190), casa);
+    expect(vistaDeLlegada(a(60), casa, METROS_LLEGADA, lejos)?.zoom).toBe(18);
+    // La vista anterior de OTRA casa no cuenta.
+    const otra = { lat: 42.52, lng: -83.47 };
+    const deOtra = vistaDeLlegada({ lat: 42.5201, lng: -83.47 }, otra);
+    expect(vistaDeLlegada(a(143), casa, METROS_LLEGADA, deOtra)?.zoom).toBe(16);
+  });
+  it('en el iPhone (mapa de Apple) la altura de la cámara sale del mismo zoom', () => {
+    expect(altitudDeZoom(18)).toBe(450);
+    expect(altitudDeZoom(17)).toBe(900);
+    expect(altitudDeZoom(16)).toBe(1800);
   });
   it('sin móvil o sin destino no hay acercamiento', () => {
     expect(vistaDeLlegada(null, casa)).toBeNull();

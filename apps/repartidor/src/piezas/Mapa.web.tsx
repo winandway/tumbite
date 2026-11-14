@@ -7,7 +7,12 @@ import {
   origenesMapaDriver,
   vistaMapaDriver,
 } from '@tumbite/compartido/src/mapaDriverWeb';
-import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
+import {
+  type VistaMapa,
+  rotuloDestino,
+  useVistaDeLlegada,
+  vistaDeLlegada,
+} from '@tumbite/compartido/src/mapaLlegada';
 import { useSesion } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from '../flex/mapaGoogleWeb';
 
@@ -45,12 +50,12 @@ function MapaGoogle({
 }: PropsMapa) {
   const { idioma } = useSesion();
   const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0];
-  if (!centro) return null;
   const viaje = vistaMapaDriver({ restaurante, casa }) === 'viaje';
   const destino = destinoMapaDriver({ restaurante, casa });
   // C-MAPA-LLEGADA: a menos de 200 m del destino (el local o la casa) el mapa se acerca solo y el
   // punto muestra el número de la dirección.
-  const llegada = viaje ? vistaDeLlegada(yo, destino) : null;
+  const llegada = useVistaDeLlegada(yo, viaje ? destino : null);
+  if (!centro) return null;
   const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
   const vaALaCasa = casa != null;
   const puntos = [
@@ -160,7 +165,7 @@ function MapaLeaflet({
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
-  const claveCerca = useRef('');
+  const vistaCerca = useRef<VistaMapa | null>(null);
   // C-MAPA-ABRE-DONDE-ESTAS: sin ningún punto todavía no hay mapa (nunca una ciudad fija).
   const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0] ?? null;
   const hayCentro = centro != null;
@@ -185,7 +190,7 @@ function MapaLeaflet({
     for (const z of zonasDemanda) nuevas.push(zona(z, etiquetaZona(z.pedidos, z.pico)));
     for (const x of marcadores) nuevas.push(punto(x.punto, COLORES.restaurante, 8, x.nombre));
     const destino = casa ?? restaurante ?? null;
-    const llegada = vistaDeLlegada(yo, destino);
+    const llegada = vistaDeLlegada(yo, destino, undefined, vistaCerca.current);
     const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
     const conRotulo = (c: L.CircleMarker, es: boolean) => {
       if (es && rotulo) c.bindTooltip(rotulo, { permanent: true, direction: 'top' });
@@ -205,8 +210,8 @@ function MapaLeaflet({
       todos.some((p) => Math.abs(p.lat - todos[0]!.lat) + Math.abs(p.lng - todos[0]!.lng) > 0.0005);
     // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom (entre
     // uno y otro se puede mover el mapa con el dedo): casa y repartidor juntos.
-    const claveAntes = claveCerca.current;
-    claveCerca.current = llegada?.clave ?? '';
+    const claveAntes = vistaCerca.current?.clave ?? '';
+    vistaCerca.current = llegada;
     if (llegada) {
       if (llegada.clave !== claveAntes)
         m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);

@@ -535,6 +535,7 @@ export function AjusteTemaMapaWeb({ idioma }: { idioma: 'es' | 'en' }) {
     <div
       role="radiogroup"
       aria-label={t.titulo}
+      className="divoox-tema-mapa"
       data-testid="ajuste-tema-mapa"
       style={{
         display: 'inline-flex',
@@ -548,13 +549,21 @@ export function AjusteTemaMapaWeb({ idioma }: { idioma: 'es' | 'en' }) {
         fontSize: 13,
       }}
     >
+      {/* Quien navega con el teclado ve en cuál está. */}
+      <style>
+        {'.divoox-tema-mapa label:focus-within{outline:2px solid #101010;outline-offset:2px}'}
+      </style>
       {AJUSTES_TEMA_MAPA.map((a) => {
         const elegido = a === ajuste;
         return (
           <label
             key={a}
             style={{
-              padding: '6px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              minHeight: 44,
+              padding: '0 14px',
+              boxSizing: 'border-box',
               borderRadius: 999,
               cursor: 'pointer',
               fontWeight: 700,

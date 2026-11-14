@@ -4,7 +4,12 @@ import { COLORES, type Punto, crearMapa, isotipo } from '../piezas/mapaWeb';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
 import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
 import { origenesMapaRutaFlex } from '@tumbite/compartido/src/mapaDriverWeb';
-import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
+import {
+  type VistaMapa,
+  rotuloDestino,
+  useVistaDeLlegada,
+  vistaDeLlegada,
+} from '@tumbite/compartido/src/mapaLlegada';
 import { useSesion } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
@@ -34,12 +39,12 @@ export function MapaRuta(props: PropsRuta) {
 function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta, area = null }: PropsRuta) {
   const { idioma } = useSesion();
   const centro = puntos[0]?.punto ?? yo;
-  if (!centro) return null;
   const parada = puntos.find((p) => p.tono === 'actual') ?? null;
   const actual = parada?.punto ?? area?.punto ?? null;
   // C-MAPA-LLEGADA: a menos de 200 m de la parada actual el mapa se acerca solo y la parada muestra,
   // junto a su número, el número de la dirección.
-  const llegada = vistaDeLlegada(yo, actual);
+  const llegada = useVistaDeLlegada(yo, actual);
+  if (!centro) return null;
   const rotulo = llegada ? rotuloDestino(parada?.direccion) : '';
   const numero = (p: PuntoRuta) => p.numero.replace(/[^0-9A-Za-z]/g, '');
   return (
@@ -95,7 +100,7 @@ function MapaRutaLeaflet({
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
-  const claveCerca = useRef('');
+  const vistaCerca = useRef<VistaMapa | null>(null);
   const todos = [...puntos.map((p) => p.punto), ...(yo ? [yo] : [])];
   const clave = [
     ...puntos.map((p) => `${p.id}:${p.tono}:${p.punto.lat},${p.punto.lng}`),
@@ -149,11 +154,16 @@ function MapaRutaLeaflet({
     if (yo) nuevas.push(isotipo(yo));
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
-    const llegada = vistaDeLlegada(yo, puntos.find((p) => p.tono === 'actual')?.punto);
+    const llegada = vistaDeLlegada(
+      yo,
+      puntos.find((p) => p.tono === 'actual')?.punto,
+      undefined,
+      vistaCerca.current,
+    );
     // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom (entre
     // uno y otro se puede mover el mapa con el dedo): casa y repartidor juntos.
-    const claveAntes = claveCerca.current;
-    claveCerca.current = llegada?.clave ?? '';
+    const claveAntes = vistaCerca.current?.clave ?? '';
+    vistaCerca.current = llegada;
     if (llegada) {
       if (llegada.clave !== claveAntes)
         m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);

@@ -2,7 +2,11 @@ import { useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { C, MarcaIsotipo, usePropsMapaDivoox } from '@tumbite/movil';
-import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
+import {
+  altitudDeZoom,
+  rotuloDestino,
+  useVistaDeLlegada,
+} from '@tumbite/compartido/src/mapaLlegada';
 import { IMG_COMIDA } from './comida/recursos';
 
 export type Punto = { lat: number; lng: number };
@@ -42,7 +46,7 @@ export function MapaEntrega({
   const mapa = useRef<MapView>(null);
   const puntos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
 
-  const llegada = vistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
+  const llegada = useVistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
   const rotulo = llegada ? rotuloDestino(direccion) : '';
   const cerca = llegada != null;
   const { coloresMapa } = usePropsMapaDivoox(casa ?? restaurante ?? repartidor);
@@ -60,7 +64,7 @@ export function MapaEntrega({
         {
           center: { latitude: llegada.centro.lat, longitude: llegada.centro.lng },
           zoom: llegada.zoom,
-          altitude: 450,
+          altitude: altitudDeZoom(llegada.zoom),
         },
         { duration: 600 },
       );

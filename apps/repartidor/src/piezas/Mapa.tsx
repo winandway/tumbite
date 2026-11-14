@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
 import { C, MarcaIsotipo, usePropsMapaDivoox } from '@tumbite/movil';
-import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
+import {
+  altitudDeZoom,
+  rotuloDestino,
+  useVistaDeLlegada,
+} from '@tumbite/compartido/src/mapaLlegada';
 import { IMG } from './recursos';
 import type { Punto, ZonaDemanda } from './mapaWeb';
 
@@ -44,7 +48,7 @@ export function Mapa({
   // C-MAPA-LLEGADA: a menos de 200 m del destino (el local o la casa) el mapa se acerca solo y el
   // punto muestra el número de la dirección (igual que en la web).
   const destino = casa ?? restaurante ?? null;
-  const llegada = destino ? vistaDeLlegada(yo, destino) : null;
+  const llegada = useVistaDeLlegada(yo, destino);
   const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
   const cerca = llegada != null;
   // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
@@ -60,7 +64,7 @@ export function Mapa({
         {
           center: { latitude: llegada.centro.lat, longitude: llegada.centro.lng },
           zoom: llegada.zoom,
-          altitude: 450,
+          altitude: altitudDeZoom(llegada.zoom),
         },
         { duration: 600 },
       );

@@ -47,7 +47,7 @@ describe('los mapas de las apps', () => {
       'apps/repartidor/src/flex/MapaRuta.tsx',
       'apps/repartidor/src/flex/MapaRuta.web.tsx',
     ]) {
-      expect(leer(r), r).toContain('vistaDeLlegada(');
+      expect(leer(r), r).toMatch(/[vV]istaDeLlegada\(/);
       expect(leer(r), r).toContain('rotuloDestino(');
     }
   });

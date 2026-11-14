@@ -23,8 +23,7 @@ export function crearMapa(div: HTMLDivElement, centro: Punto, zoom = 15): L.Map 
     attribution: '© OpenStreetMap',
   }).addTo(mapa);
   // C-MAPA-DIA-NOCHE: el mapa de respaldo sigue el mismo ajuste (de noche se oscurecen los mosaicos).
-  const dejar = seguirTemaEnLeaflet(mapa, centro);
-  mapa.on('unload', dejar);
+  mapa.on('unload', seguirTemaEnLeaflet(mapa, centro));
   return mapa;
 }
 

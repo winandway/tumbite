@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { RADIO_LLEGADA_M, metrosEntre, type Punto } from './llegada';
 
 /**
@@ -55,32 +57,68 @@ const LADO_UTIL_PX = 160;
 /** Metros por píxel del mapa en el ecuador con zoom 0 (proyección de Mercator, mosaicos de 256). */
 const METROS_PX_ZOOM_0 = 156_543.03392;
 
+/** Para alejarse un escalón, la separación tiene que pasar el borde con esta holgura (15 %). */
+const HOLGURA_PARA_ALEJAR = 1.15;
+
+function zoomEnQueCaben(separacion: number, latitud: number): number {
+  const metrosPorPixel = Math.max(separacion, 1) / LADO_UTIL_PX;
+  const cabe = Math.floor(
+    Math.log2((METROS_PX_ZOOM_0 * Math.cos((latitud * Math.PI) / 180)) / metrosPorPixel),
+  );
+  return Math.min(ZOOM_LLEGADA, Math.max(ZOOM_LLEGADA_MINIMO, cabe));
+}
+
 /**
  * La vista de llegada si el móvil está cerca del destino; si no, `null` (el mapa sigue como iba).
  * Se ven la casa y el repartidor JUNTOS: el centro es el punto medio entre los dos y el zoom es el
- * más cercano en el que caben, con el nivel de calle (18) como tope. El zoom baja por escalones
+ * más cercano en el que caben, con el nivel de calle (18) como tope. El zoom va por escalones
  * enteros (16, 17, 18) y `clave` solo cambia con el escalón o con el destino: la cámara se mueve
  * dos o tres veces durante la llegada, no en cada lectura de GPS.
+ * Con `previa` (la vista anterior del mismo destino) el mapa no se aleja por una oscilación del GPS
+ * justo en el borde de un escalón: para abrirse hace falta pasar el borde con un 15 % de holgura.
  */
 export function vistaDeLlegada(
   movil: Punto | null | undefined,
   destino: Punto | null | undefined,
   metros = METROS_LLEGADA,
+  previa?: VistaMapa | null,
 ): VistaMapa | null {
   if (!valido(movil) || !valido(destino)) return null;
   const separacion = metrosEntre(movil, destino);
   if (separacion > metros) return null;
-  const metrosPorPixel = Math.max(separacion, 1) / LADO_UTIL_PX;
-  const cabe = Math.floor(
-    Math.log2((METROS_PX_ZOOM_0 * Math.cos((destino.lat * Math.PI) / 180)) / metrosPorPixel),
-  );
-  const zoom = Math.min(ZOOM_LLEGADA, Math.max(ZOOM_LLEGADA_MINIMO, cabe));
+  const sitio = `${destino.lat},${destino.lng}`;
+  let zoom = zoomEnQueCaben(separacion, destino.lat);
+  const zoomPrevio = previa?.clave?.startsWith(`${sitio},`) ? previa.zoom : null;
+  if (zoomPrevio != null && zoom < zoomPrevio)
+    zoom = Math.min(zoomPrevio, zoomEnQueCaben(separacion / HOLGURA_PARA_ALEJAR, destino.lat));
   return {
     centro: { lat: (movil.lat + destino.lat) / 2, lng: (movil.lng + destino.lng) / 2 },
     zoom,
-    clave: `${destino.lat},${destino.lng},${zoom}`,
+    clave: `${sitio},${zoom}`,
   };
 }
+
+/**
+ * La vista de llegada dentro de una pantalla: recuerda la anterior para que la cámara no baile
+ * (ver `vistaDeLlegada`). Mientras la clave no cambia, devuelve la vista nueva (el centro se
+ * actualiza, pero quien la usa solo mueve la cámara cuando cambia la clave).
+ */
+export function useVistaDeLlegada(
+  movil: Punto | null | undefined,
+  destino: Punto | null | undefined,
+): VistaMapa | null {
+  const [previa, setPrevia] = useState<VistaMapa | null>(null);
+  const vista = vistaDeLlegada(movil, destino, METROS_LLEGADA, previa);
+  // Ajuste de estado durante el dibujo (patrón de React): solo cuando cambia el escalón.
+  if ((vista?.clave ?? '') !== (previa?.clave ?? '')) setPrevia(vista);
+  return vista;
+}
+
+/**
+ * El mapa de Apple (iPhone) no entiende de niveles de zoom: usa la altura de la cámara, en metros.
+ * 450 m equivalen al nivel de calle (18); cada nivel menos, el doble de altura.
+ */
+export const altitudDeZoom = (zoom: number): number => 450 * 2 ** (ZOOM_LLEGADA - zoom);
 
 const LARGO_ROTULO = 22;
 

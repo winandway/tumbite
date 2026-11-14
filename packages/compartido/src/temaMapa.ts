@@ -27,14 +27,16 @@ export const LLAVE_AJUSTE_TEMA_MAPA = 'divoox.mapa.tema';
 export const TEXTOS_TEMA_MAPA = {
   es: {
     titulo: 'Colores del mapa',
-    ayuda: 'En automático, el mapa se oscurece solo cuando anochece.',
+    ayuda:
+      'En automático, el mapa se oscurece solo cuando anochece o cuando tu dispositivo está en modo oscuro.',
     auto: 'Automático',
     claro: 'Claro',
     oscuro: 'Oscuro',
   },
   en: {
     titulo: 'Map colors',
-    ayuda: 'On automatic, the map turns dark on its own after sunset.',
+    ayuda:
+      'On automatic, the map turns dark on its own after sunset or when your device is in dark mode.',
     auto: 'Automatic',
     claro: 'Light',
     oscuro: 'Dark',
@@ -146,6 +148,8 @@ export function ajusteTemaMapa(): AjusteTemaMapa {
 export async function cargarAjusteTemaMapa(almacen: Almacen): Promise<AjusteTemaMapa> {
   try {
     const v = await almacen.leer(LLAVE_AJUSTE_TEMA_MAPA);
+    // Si la persona ya tocó el ajuste mientras se leía el almacén, manda lo que acaba de elegir.
+    if (actual) return actual;
     const nuevo = esAjuste(v) ? v : 'auto';
     if (nuevo !== actual) {
       actual = nuevo;
