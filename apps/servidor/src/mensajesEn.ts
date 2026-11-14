@@ -11,6 +11,14 @@ export const MENSAJES_EN = new Map<string, string>([
   ['La ruta no tiene paradas con coordenadas.', 'The route has no stops with coordinates.'],
   ['Esa foto no está disponible.', 'That photo isn’t available.'],
   [
+    'Llegaste al máximo de fotos de comprobante por hoy. Intenta mañana o escríbenos.',
+    'You reached today’s limit of receipt photos. Try again tomorrow or contact us.',
+  ],
+  [
+    'Esa foto de comprobante ya se usó en otra recarga. Sube la foto de este pago.',
+    'That receipt photo was already used for another top-up. Upload the photo of this payment.',
+  ],
+  [
     'Las recargas las declara una persona de la empresa, no una clave de API.',
     'Top-ups are reported by a person at the company, not an API key.',
   ],

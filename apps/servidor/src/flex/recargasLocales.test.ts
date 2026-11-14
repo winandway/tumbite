@@ -363,4 +363,23 @@ describe('C-FLEX-RECARGA-LOCAL · recargas con pago local verificadas por Divoox
       .first<{ n: number }>();
     expect(comp!.n).toBe(1);
   });
+
+  it('una foto de comprobante sirve para una sola declaración, y hay cuota diaria de subidas', async () => {
+    const { m, e } = await escenario();
+    const foto = await subirComprobante(m, e);
+    const declararCon = (referencia: string) =>
+      llamar(
+        m,
+        'POST',
+        `${B}/empresas/${e.id}/billetera/recargas-locales`,
+        { monto: 5000, metodo: 'zelle', referencia, comprobanteId: foto.datos.comprobanteId },
+        e.dueno.token,
+      );
+    expect((await declararCon('ZL-1')).estado).toBe(201);
+    const otra = await declararCon('ZL-2');
+    expect(otra.estado).toBe(409);
+    expect(otra.datos.campo).toBe('comprobanteId');
+    await m.DB.prepare("UPDATE contadores SET n = 30 WHERE clave LIKE 'flex-comprobantes:%'").run();
+    expect((await subirComprobante(m, e)).estado).toBe(429);
+  });
 });

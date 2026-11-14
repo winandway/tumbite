@@ -100,6 +100,8 @@ export const recargaLocalPublica = (r: FilaLocal) => ({
 });
 
 const carpetaComprobantes = (empresaId: string) => `flex/${empresaId}/recargas/`;
+/** Fotos de comprobante que una empresa puede subir por día (una fila por empresa y día). */
+export const MAX_COMPROBANTES_DIA = 30;
 const esIdComprobante = (s: string) => /^[a-f0-9-]{36}$/.test(s);
 
 function exigirPersona(actor: { actorTipo: string }) {
@@ -165,6 +167,23 @@ flexRecargasLocales.post('/empresas/:id/billetera/recargas-locales/comprobante',
   if (!mime) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'comprobante', 415);
   if (!c.env.BUCKET)
     throw new ErrorDatos('El almacén de fotos no está disponible en este momento.', undefined, 503);
+  // Cuota diaria por empresa, apartada en una sola sentencia antes de guardar nada.
+  const cuota = await db
+    .prepare(
+      `INSERT INTO contadores (clave, n) VALUES (?1, 1)
+       ON CONFLICT(clave) DO UPDATE SET n = n + 1 WHERE n < ?2`,
+    )
+    .bind(
+      `flex-comprobantes:${e.id}:${new Date().toISOString().slice(0, 10)}`,
+      MAX_COMPROBANTES_DIA,
+    )
+    .run();
+  if (!cuota.meta.changes)
+    throw new ErrorDatos(
+      'Llegaste al máximo de fotos de comprobante por hoy. Intenta mañana o escríbenos.',
+      'comprobante',
+      429,
+    );
   const id = crypto.randomUUID();
   await guardarFoto(c.env.BUCKET, `${carpetaComprobantes(e.id)}${id}`, bytes, mime, {
     cacheControl: 'private, no-store',
@@ -217,6 +236,16 @@ flexRecargasLocales.post('/empresas/:id/billetera/recargas-locales', async (c) =
   const claveFoto = `${carpetaComprobantes(e.id)}${d.comprobanteId}`;
   const foto = c.env.BUCKET ? await c.env.BUCKET.head(claveFoto) : null;
   if (!foto) throw new ErrorDatos('Falta la foto del comprobante.', 'comprobanteId', 422);
+  const usada = await db
+    .prepare('SELECT 1 FROM recargas_locales_empresa WHERE comprobante_clave = ?')
+    .bind(claveFoto)
+    .first();
+  if (usada)
+    throw new ErrorDatos(
+      'Esa foto de comprobante ya se usó en otra recarga. Sube la foto de este pago.',
+      'comprobanteId',
+      409,
+    );
   const id = crypto.randomUUID();
   const r = await db
     .prepare(

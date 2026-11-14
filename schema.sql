@@ -3642,6 +3642,8 @@ CREATE TABLE IF NOT EXISTS recargas_locales_empresa (
 -- La misma referencia de pago no se declara dos veces en la misma empresa (salvo si se rechazó).
 CREATE UNIQUE INDEX IF NOT EXISTS recargas_locales_referencia ON recargas_locales_empresa(empresa_id, metodo, referencia) WHERE estado != 'rechazada';
 -- La lista de la empresa (por fecha) y la cola del equipo (solo las pendientes: índice parcial chico).
+-- Una foto de comprobante sirve para UNA sola declaración (revisión del 13 nov).
+CREATE UNIQUE INDEX IF NOT EXISTS recargas_locales_comprobante ON recargas_locales_empresa(comprobante_clave);
 CREATE INDEX IF NOT EXISTS recargas_locales_empresa_fecha ON recargas_locales_empresa(empresa_id, creado_en);
 CREATE INDEX IF NOT EXISTS recargas_locales_pendientes ON recargas_locales_empresa(creado_en) WHERE estado = 'pendiente';
 -- C-FLEX-RUTA-CALLES: kilómetros, duración y hora estimada por parada de una ruta, pedidos a Google
