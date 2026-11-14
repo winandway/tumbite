@@ -143,13 +143,17 @@ export async function cuentaVuelta(db: D1Database, id: string) {
   };
 }
 
-/** Canario: rojo si hoy se frenó una vuelta o el día pasó del tope. En producción no aplica. */
+/**
+ * Canario: rojo si hoy el día pasó del tope o si una vuelta pasó de SU propio tope (un bucle).
+ * Una vuelta frenada solo porque el día había llegado al tope no cuenta: dejaba el canario en rojo
+ * hasta la medianoche aunque el tope diario ya se hubiera subido (14 nov 2026), y con eso el
+ * semáforo del sitio de pruebas rechazaba todas las ramas. En producción no aplica.
+ */
 export async function saludVueltasPruebas(db: D1Database): Promise<'ok' | 'error'> {
-  const r = (await db
-    .prepare(
-      'SELECT COALESCE(SUM(escritas), 0) AS escritas, COALESCE(MAX(frenada), 0) AS frenada FROM vueltas_pruebas WHERE dia = ?',
-    )
-    .bind(hoy())
-    .first()) as { escritas: number; frenada: number } | null;
-  return r && (r.frenada || r.escritas > TOPE_DIA_PRUEBAS.escritas) ? 'error' : 'ok';
+  const filas = (
+    await db.prepare('SELECT id, escritas FROM vueltas_pruebas WHERE dia = ?').bind(hoy()).all()
+  ).results as { id: string; escritas: number }[];
+  const delDia = filas.reduce((n, f) => n + f.escritas, 0);
+  const pasada = filas.some((f) => f.escritas > topeDeVuelta(f.id).escritas);
+  return pasada || delDia > TOPE_DIA_PRUEBAS.escritas ? 'error' : 'ok';
 }

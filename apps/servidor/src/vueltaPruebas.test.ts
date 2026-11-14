@@ -101,6 +101,16 @@ describe('C-PRESUPUESTO-VUELTA-PRUEBAS', () => {
     expect((await registrar('continuas-1005-1')).status).toBe(429);
   });
 
+  it('una vuelta frenada solo por el tope del día no deja el canario en rojo todo el día', async () => {
+    const { m } = preparar();
+    await m.DB.prepare(
+      'INSERT INTO vueltas_pruebas (id, dia, escritas, frenada, creada_en) VALUES (?, ?, ?, 1, ?)',
+    )
+      .bind('rama-1007-1', hoy(), 500, new Date().toISOString())
+      .run();
+    expect(await saludVueltasPruebas(m.DB)).toBe('ok');
+  });
+
   it('el recorrido de una rama tiene su propio tope, más alto', async () => {
     const { registrar, poner } = preparar();
     await poner('rama-1006-1', TOPE_VUELTA_PRUEBAS.escritas + 1);
