@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
-import { detenerUbicacionFondo, iniciarUbicacionFondo } from './ubicacionFondo';
+import { detenerUbicacionFondo, fijarModoRastreo, iniciarUbicacionFondo } from './ubicacionFondo';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -39,6 +39,9 @@ import {
   sePuedeReintentar,
   usaMillas,
   LATIDO_UBICACION_MS,
+  cuerpoUbicacion,
+  modoRastreo,
+  tocaMandarSegunModo,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -727,18 +730,38 @@ export function Inicio() {
   // Al salir de la pantalla (cerrar sesión, cambiar de cuenta) el GPS de fondo se apaga.
   useEffect(() => () => void detenerUbicacionFondo(), []);
 
-  // Mientras está conectado, la ubicación se manda cada vez que se mueve (solo con la app abierta)
-  // y, quieto, cada 2 minutos (C-LATIDO-UBICACION).
+  // C-GPS-PANTALLA-APAGADA: se rastrea conectado o con un pedido, viaje o ruta en curso; nunca
+  // desconectado sin trabajo. Activo manda cada 25 m; libre cada 250 m; quieto, el latido de 2 min.
+  const modoGps = modoRastreo({
+    conectado: !!estado?.conectado,
+    pedidoActivo: !!estado?.activo,
+    viajeActivo: !!viajeActivo,
+    // Ruta de paquetes ya en marcha (cargando o repartiendo), no solo ofrecida.
+    rutaFlexActiva: rutaFlex?.estado === 'en_carga' || rutaFlex?.estado === 'en_curso',
+  });
   useEffect(() => {
-    if (!estado?.conectado) {
+    fijarModoRastreo(modoGps);
+    if (modoGps === 'apagado') {
       vigilante.current?.remove();
       vigilante.current = null;
       void detenerUbicacionFondo();
       return;
     }
     let vivo = true;
-    // GPS en segundo plano (punto 23): sigue mandando posición con la pantalla apagada o detrás del mapa.
-    void iniciarUbicacionFondo({ titulo: tg.fondo.titulo, cuerpo: tg.fondo.cuerpo });
+    let ultimoEnvio: { lat: number; lng: number; en: number } | null = null;
+    const mandar = (p: Location.LocationObject, forzar = false) => {
+      const cuerpo = cuerpoUbicacion(p);
+      if (!forzar && !tocaMandarSegunModo(modoGps, ultimoEnvio, cuerpo)) return;
+      ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };
+      return api.pedir('POST', '/datos/repartidor/ubicacion', cuerpo).catch(() => undefined);
+    };
+    // GPS en segundo plano (punto 23): sigue mandando posición con la pantalla apagada o detrás del
+    // mapa. La primera vez, una explicación antes del cuadro del sistema (como Dasher).
+    void iniciarUbicacionFondo({
+      titulo: tg.fondo.titulo,
+      cuerpo: tg.fondo.cuerpo,
+      explicacion: tg.fondo.explicacion,
+    });
     void Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, distanceInterval: 30, timeInterval: 10_000 },
       (p) => {
@@ -746,14 +769,7 @@ export function Inicio() {
         setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
         setPrecision(p.coords.accuracy ?? null);
         setGpsSimulado(p.mocked === true);
-        void api
-          .pedir('POST', '/datos/repartidor/ubicacion', {
-            lat: p.coords.latitude,
-            lng: p.coords.longitude,
-            precision: p.coords.accuracy ?? null,
-            simulada: p.mocked === true,
-          })
-          .catch(() => undefined);
+        void mandar(p);
       },
     ).then((s) => {
       if (vivo) vigilante.current = s;
@@ -767,14 +783,7 @@ export function Inicio() {
         const p =
           ultimaLectura.current ?? (await Location.getLastKnownPositionAsync().catch(() => null));
         if (!vivo || !p) return;
-        await api
-          .pedir('POST', '/datos/repartidor/ubicacion', {
-            lat: p.coords.latitude,
-            lng: p.coords.longitude,
-            precision: p.coords.accuracy ?? null,
-            simulada: p.mocked === true,
-          })
-          .catch(() => undefined);
+        await mandar(p, true);
       })();
     }, LATIDO_UBICACION_MS);
     return () => {
@@ -783,7 +792,7 @@ export function Inicio() {
       vigilante.current?.remove();
       vigilante.current = null;
     };
-  }, [estado?.conectado, api, tg.fondo.titulo, tg.fondo.cuerpo]);
+  }, [modoGps, api, tg.fondo]);
 
   // C-ZONAS-ANTES-DE-CONECTAR: desconectado también se ve el mapa de zonas con más pedidos (como
   // Dasher): es cuando el repartidor decide adónde ir. Se lee la ubicación UNA vez y solo si ya dio

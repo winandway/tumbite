@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Divoox Moto · Venezuela (C-MOTO-VE-PUNTA-A-PUNTA, 13 nov 2026). Hermano de probar-moto.mjs: hace por
-// la API, como las apps y el panel, todo el camino del mototaxi en Caracas de pruebas:
-//   el equipo abre la ciudad (si no está abierta) → el conductor elige Caracas, registra su moto y
+// la API, como las apps y el panel, todo el camino del mototaxi en la ciudad de pruebas (El Vigía):
+//   el equipo abre la ciudad (si no está abierta) → el conductor la elige, registra su moto y
 //   sube sus papeles y su identidad → el equipo lo aprueba → recarga en dólares en el punto de venta
 //   del equipo → viaje en EFECTIVO (cotiza, pide, oferta, acepta, ubicación en la recogida, llegué,
 //   código, termina) con la comisión del 10 % descontada del saldo → un conductor SIN saldo no
@@ -36,16 +36,42 @@ const VUELTA = process.env.VUELTA_PRUEBAS ?? `moto-ve-${Date.now().toString(36)}
 const FOTO = readFileSync(
   join(import.meta.dirname, '..', '..', 'e2e', 'recorrido', 'fotos', 'bolsa-entrega.jpg'),
 );
-const CIUDAD = {
-  id: 'VE-CCS-PRUEBAS',
-  nombre: 'Caracas (pruebas)',
-  lat: 10.4806,
-  lng: -66.9036,
-  radioKm: 25,
-  zonaHoraria: 'America/Caracas',
+// Desde el 13 nov 2026 las pruebas y las capturas de Venezuela son en El Vigía, estado Mérida, donde
+// está el equipo (zona VE-MER-ELVIGIA). Con CIUDAD_VE=caracas se usa la Caracas de pruebas de antes.
+const CIUDADES_VE = {
+  'el-vigia': {
+    ciudad: {
+      id: 'VE-MER-ELVIGIA',
+      nombre: 'El Vigía',
+      lat: 8.6219,
+      lng: -71.6506,
+      radioKm: 15,
+      zonaHoraria: 'America/Caracas',
+    },
+    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' },
+    destino: { lat: 8.624, lng: -71.672, direccion: 'Aeropuerto de El Vigía' },
+  },
+  caracas: {
+    ciudad: {
+      id: 'VE-CCS-PRUEBAS',
+      nombre: 'Caracas (pruebas)',
+      lat: 10.4806,
+      lng: -66.9036,
+      radioKm: 25,
+      zonaHoraria: 'America/Caracas',
+    },
+    origen: { lat: 10.4806, lng: -66.9036, direccion: 'Plaza Venezuela' },
+    destino: { lat: 10.4806, lng: -66.8406, direccion: 'Los Dos Caminos' },
+  },
 };
-const ORIGEN = { lat: 10.4806, lng: -66.9036, direccion: 'Plaza Venezuela' };
-const DESTINO = { lat: 10.4806, lng: -66.8406, direccion: 'Los Dos Caminos' };
+const ELEGIDA = CIUDADES_VE[process.env.CIUDAD_VE ?? 'el-vigia'];
+if (!ELEGIDA) {
+  console.error('CIUDAD_VE debe ser el-vigia o caracas.');
+  process.exit(1);
+}
+const CIUDAD = ELEGIDA.ciudad;
+const ORIGEN = ELEGIDA.origen;
+const DESTINO = ELEGIDA.destino;
 const RECARGA = 300; // centavos de dólar
 
 const casos = [];
@@ -123,7 +149,7 @@ async function cotizarYPedir(metodoPago) {
       origen: ORIGEN,
       destino: DESTINO,
     }),
-    'cotizar en Caracas',
+    `cotizar en ${CIUDAD.nombre}`,
   ).cotizacion;
   exigir(cot.moneda === 'USD', `la cotización debería ir en dólares (${cot.moneda})`);
   exigir(cot.metodosPago.includes(metodoPago), `${metodoPago} no está entre los métodos de pago`);
@@ -176,7 +202,7 @@ try {
   await cerrarColgados();
   // Con nada colgado, el alta del conductor vuelve a empezar (su saldo y su libro se quedan).
   exigir((await interno('reiniciar')).estado === 200, 'reiniciar el alta del conductor');
-  // 1. El equipo abre Caracas de pruebas (solo si Moto todavía no cotiza ahí).
+  // 1. El equipo abre la ciudad de pruebas (solo si Moto todavía no cotiza ahí).
   const prueba = await pasajero('POST', '/datos/viajes/cotizar', {
     servicio: 'moto',
     origen: ORIGEN,
@@ -203,9 +229,9 @@ try {
       );
       r = await abrir();
     }
-    ok(r, 'abrir Caracas de pruebas');
-    casos.push('el equipo abrió Caracas de pruebas con un paso del panel');
-  } else casos.push('Caracas de pruebas ya estaba abierta');
+    ok(r, `abrir ${CIUDAD.nombre}`);
+    casos.push(`el equipo abrió ${CIUDAD.nombre} con un paso del panel`);
+  } else casos.push(`${CIUDAD.nombre} ya estaba abierta`);
   const pais = ok(await equipo('GET', '/datos/admin/paises/VE'), 'configuración de Venezuela');
   if (!pais.config?.recargasPuntoVentaActivas)
     ok(
@@ -214,7 +240,7 @@ try {
     );
 
   // 2. El conductor se registra con la app.
-  ok(await yo('PUT', '/datos/conductor/ciudad', { zonaId: CIUDAD.id }), 'elegir Caracas');
+  ok(await yo('PUT', '/datos/conductor/ciudad', { zonaId: CIUDAD.id }), `elegir ${CIUDAD.nombre}`);
   const papeles = ok(await yo('GET', '/datos/conductor/papeles'), 'qué papeles pide');
   exigir(papeles.ciudad.pais === 'VE', 'la ciudad del conductor no es de Venezuela');
   exigir(
@@ -247,7 +273,9 @@ try {
   for (const p of ['doc_frente', 'doc_reverso', 'selfie'])
     ok(await subir(`/datos/kyc/foto/${p}`, tokens.conductor), `identidad: ${p}`);
   ok(await yo('POST', '/datos/kyc/enviar', { docTipo: 'identificacion' }), 'enviar la identidad');
-  casos.push('el conductor eligió Caracas, registró su moto y subió sus papeles y su identidad');
+  casos.push(
+    `el conductor eligió ${CIUDAD.nombre}, registró su moto y subió sus papeles y su identidad`,
+  );
 
   // 3. El equipo lo aprueba desde el panel.
   const cola = ok(await equipo('GET', '/datos/admin/papeles-conductor'), 'cola de papeles');
@@ -315,7 +343,7 @@ try {
   if (!punto)
     punto = ok(
       await equipo('POST', '/datos/admin/puntos-venta', {
-        nombre: 'Equipo Divoox Caracas (pruebas)',
+        nombre: 'Equipo Divoox Venezuela (pruebas)',
         pais: 'VE',
         moneda: 'USD',
         usuarioId: ids.equipo,
@@ -376,7 +404,10 @@ try {
     'ubicación',
   );
   // Y el conductor SIN saldo, aprobado y conectado al lado.
-  exigir((await interno('sin-saldo')).estado === 200, 'preparar el conductor sin saldo');
+  exigir(
+    (await interno('sin-saldo', { zonaId: CIUDAD.id })).estado === 200,
+    'preparar el conductor sin saldo',
+  );
 
   // 6. Viaje en efectivo.
   const v1 = await cotizarYPedir('efectivo');

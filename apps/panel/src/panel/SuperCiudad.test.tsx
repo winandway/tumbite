@@ -191,6 +191,20 @@ describe('C-CIUDAD-PRUEBAS en el panel', () => {
     expect(within(jugadores).getByText('Mateo Jugador')).toBeTruthy();
     expect(within(jugadores).getByText(/2 × Pizza de queso/)).toBeTruthy();
     expect(within(jugadores).getByText(/Gastó \$26\.50/)).toBeTruthy();
+    // C-CIUDAD-REPORTE: el reporte se arma en el navegador; no pide nada al servidor.
+    const blobs: Blob[] = [];
+    const crear = vi.fn((b: Blob) => {
+      blobs.push(b);
+      return 'blob:reporte';
+    });
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: crear, revokeObjectURL: vi.fn() }));
+    const antes = metodos.length;
+    await userEvent.click(screen.getByTestId('ciudad-descargar-reporte'));
+    expect(crear).toHaveBeenCalledTimes(1);
+    expect(await blobs[0]!.text()).toContain('Mateo Jugador,pedido,2026-11-13 10:02:00');
+    expect(
+      metodos.slice(antes).filter((x) => !x.endsWith('/latido') && !x.startsWith('GET')),
+    ).toEqual([]);
     // Con la ciudad encendida y la pantalla abierta, late (los robots avanzan).
     await waitFor(() => expect(metodos).toContain('POST /datos/admin/ciudad-pruebas/latido'), {
       timeout: 7_000,
@@ -205,4 +219,45 @@ describe('C-CIUDAD-PRUEBAS en el panel', () => {
     await waitFor(() => expect(metodos).toContain('POST /datos/admin/ciudad-pruebas/apagar'));
     expect(await screen.findByText(/la apagó el superadmin/)).toBeTruthy();
   }, 15_000);
+
+  it('C-CIUDAD-CIERRE: mientras termina las entregas lo dice y el botón pasa a «Apagar ya»', async () => {
+    vi.stubGlobal('fetch', async (url: string) => {
+      if (url.endsWith('/latido'))
+        return new Response(JSON.stringify({ estado: 'corriendo' }), { status: 200 });
+      return new Response(
+        JSON.stringify({
+          sesion: {
+            id: 'juego-2',
+            estado: 'corriendo',
+            inicio: '2026-11-13 10:00:00',
+            fin: null,
+            meta: {},
+            fallos: [],
+          },
+          porEstado: {},
+          ventas: { entregados: 0, total: 0, moneda: 'USD', cancelados: 0 },
+          pedidos: [],
+          restaurantes: [],
+          repartidores: [],
+          juego: {
+            encendida: true,
+            segundosSinLatido: 1,
+            quieta: false,
+            filas: { sesion: 10, tope: 3000 },
+            minutosMax: 60,
+            robots: { listos: 7, total: 7 },
+            motivoFin: null,
+            cerrando: true,
+          },
+          enCurso: [],
+          jugadores: [],
+          erroresServidor: [],
+        }),
+        { status: 200 },
+      );
+    });
+    render(<SuperCiudad idioma="es" />);
+    expect(await screen.findByTestId('ciudad-cerrando')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Apagar ya' })).toBeTruthy();
+  });
 });

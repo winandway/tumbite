@@ -384,9 +384,20 @@ describe('retiros sin doble pago (C-RETIROS-SEGUROS)', () => {
   it('dos retiros a la vez con saldo para uno: pasa uno solo', async () => {
     stripeSimulado();
     const e = await escenario();
-    const [a, b] = await Promise.all([e.retirar(800), e.retirar(800)]);
+    const [a, b] = await Promise.all([e.retirar(1000), e.retirar(1000)]);
     expect([a.estado, b.estado].sort()).toEqual([200, 409]);
-    expect(await e.saldo()).toBe(200);
+    expect(await e.saldo()).toBe(0);
+  });
+
+  it('C-DECISIONES-MERCADO: el retiro mínimo es de 10 dólares (sin tocar Stripe ni el saldo)', async () => {
+    const st = stripeSimulado();
+    const e = await escenario();
+    const r = await e.retirar(999);
+    expect(r.estado).toBe(400);
+    expect(r.datos.campo).toBe('montoCentavos');
+    expect(String(r.datos.error)).toContain('10');
+    expect(st.posts).toHaveLength(0);
+    expect(await e.saldo()).toBe(1000);
   });
 
   it('demasiados intentos dudosos: pasa a revisión con el saldo descontado', async () => {

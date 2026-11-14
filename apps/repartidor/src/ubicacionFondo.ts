@@ -1,35 +1,52 @@
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { URL_SERVIDOR, leerTokenGuardado } from '@tumbite/movil';
-import { tocaMandarUbicacion } from '@tumbite/compartido';
+import {
+  colaUbicacion,
+  cuerpoUbicacion,
+  necesitaExplicacionPrevia,
+  tocaMandarSegunModo,
+  type ModoRastreo,
+} from '@tumbite/compartido';
 
 /**
- * GPS en segundo plano (auditoría final, punto 23; Fase 2 del repartidor «como los grandes»):
- * mientras el repartidor está conectado, el celular sigue mandando su posición aunque la pantalla
- * esté apagada o la app detrás de Google Maps. Android lo muestra como servicio en primer plano
- * (notificación fija); iOS pide el permiso «Siempre». Sin permiso, sigue funcionando solo con la
- * app abierta, como antes.
+ * GPS con la pantalla apagada (auditoría final, punto 23; C-GPS-FONDO y C-GPS-PANTALLA-APAGADA,
+ * todos los países): mientras el conductor está conectado o tiene un pedido, viaje o ruta en
+ * curso, el celular sigue mandando su posición aunque la pantalla esté apagada o la app detrás de
+ * Google Maps. Android lo muestra como servicio en primer plano (notificación fija); iOS pide el
+ * permiso «Siempre». Sin permiso, sigue funcionando solo con la app abierta, como antes.
  *
- * Android, versión 1 de las tiendas (27 oct 2026): la app NO pide el permiso de ubicación «todo el
- * tiempo» (ACCESS_BACKGROUND_LOCATION), que Google Play solo aprueba con un video de demostración.
- * No hace falta: el servicio en primer plano con notificación, iniciado con la app abierta, sigue
- * mandando la posición con la pantalla apagada (así lo permite expo-location y Android 10+).
+ * Android (27 oct 2026): la app NO pide el permiso «todo el tiempo» (ACCESS_BACKGROUND_LOCATION),
+ * que Google Play solo aprueba con un video. No hace falta: un servicio en primer plano de tipo
+ * ubicación, iniciado con la app abierta y el permiso «mientras se usa la app», sigue recibiendo
+ * la posición con la pantalla apagada (Android 10+; así lo documenta expo-location).
  */
 export const TAREA_UBICACION = 'tumbite-ubicacion-fondo';
 
 /** C-LATIDO-UBICACION: el último envío desde la tarea (para mandar cada 2 minutos o al moverse). */
 let ultimoEnvio: { lat: number; lng: number; en: number } | null = null;
+/** C-GPS-PANTALLA-APAGADA: lo fija el inicio con modoRastreo (libre, activo o apagado). */
+let modoActual: ModoRastreo = 'libre';
+const cola = colaUbicacion();
+
+export function fijarModoRastreo(modo: ModoRastreo) {
+  modoActual = modo;
+}
 
 TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
   if (error || !data) return;
+  // Nunca se rastrea a alguien desconectado: si el inicio dijo «apagado», el servicio se cierra.
+  if (modoActual === 'apagado') return detenerUbicacionFondo();
   const { locations } = data as { locations: Location.LocationObject[] };
   const ultima = locations.at(-1);
   if (!ultima) return;
-  const punto = { lat: ultima.coords.latitude, lng: ultima.coords.longitude };
+  const cuerpo = cuerpoUbicacion(ultima);
+  const pendiente = cola.tomar();
   // C-LATIDO-UBICACION: Android entrega una lectura cada 15 s aunque esté quieto; se manda solo si
-  // se movió 25 m o pasaron 2 minutos (el latido que lo mantiene disponible).
-  if (!tocaMandarUbicacion(ultimoEnvio, punto)) return;
+  // toca según el modo (activo cada 25 m, libre cada 250 m) o pasaron 2 minutos. Si quedó una
+  // lectura sin mandar por falta de señal, la nueva la reemplaza y se intenta en seguida.
+  if (!pendiente && !tocaMandarSegunModo(modoActual, ultimoEnvio, cuerpo)) return;
   const token = await leerTokenGuardado();
   // Sin sesión (cerró sesión o venció): el servicio se apaga solo; no sigue gastando batería ni
   // queda la notificación fija.
@@ -38,26 +55,38 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
     const r = await fetch(`${URL_SERVIDOR}/datos/repartidor/ubicacion`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        lat: ultima.coords.latitude,
-        lng: ultima.coords.longitude,
-        precision: ultima.coords.accuracy ?? null,
-        simulada: ultima.mocked === true,
-      }),
+      body: JSON.stringify(cuerpo),
     });
     if (r.status === 401) await detenerUbicacionFondo();
-    else if (r.ok) ultimoEnvio = { ...punto, en: Date.now() };
+    else if (r.ok) ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };
+    else if (r.status >= 500) cola.guardar(cuerpo);
   } catch {
-    // Sin señal: la próxima lectura lo intenta otra vez.
+    // Sin señal: se guarda la última lectura (cola corta) y la próxima la intenta otra vez.
+    cola.guardar(cuerpo);
   }
 });
+
+/** Como Dasher: antes del cuadro del sistema, una explicación de para qué se usa la ubicación. */
+function explicar(t: { titulo: string; cuerpo: string; seguir: string; ahoraNo: string }) {
+  return new Promise<boolean>((ok) =>
+    Alert.alert(t.titulo, t.cuerpo, [
+      { text: t.ahoraNo, style: 'cancel', onPress: () => ok(false) },
+      { text: t.seguir, onPress: () => ok(true) },
+    ]),
+  );
+}
 
 export async function iniciarUbicacionFondo(textos: {
   titulo: string;
   cuerpo: string;
+  explicacion?: { titulo: string; cuerpo: string; seguir: string; ahoraNo: string };
 }): Promise<boolean> {
   try {
-    const primer = await Location.requestForegroundPermissionsAsync();
+    const actual = await Location.getForegroundPermissionsAsync();
+    if (textos.explicacion && necesitaExplicacionPrevia(actual)) {
+      if (!(await explicar(textos.explicacion))) return false;
+    }
+    const primer = actual.granted ? actual : await Location.requestForegroundPermissionsAsync();
     if (primer.status !== 'granted') return false;
     if (Platform.OS === 'ios') {
       const fondo = await Location.requestBackgroundPermissionsAsync();

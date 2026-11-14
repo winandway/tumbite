@@ -4,6 +4,7 @@ import {
   IDS_MOTIVO_CANCELACION,
   type PagaComida,
   motivoCancelacion,
+  repartoCancelacionListo,
   textoMotivoCancelacion,
 } from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
@@ -196,9 +197,23 @@ cancelaciones.post('/admin/cancelaciones/:id/:decision', async (c) => {
     .first<Fila & { dueno_id: string }>();
   if (!s) throw new ErrorDatos('Esta solicitud ya fue resuelta.', undefined, 409);
   const paga = d.pagaComida ?? s.paga_comida;
+  let reparto: ReturnType<typeof repartoCancelacionListo> | null = null;
   if (decision === 'aprobar') {
     if (paga === 'por_definir')
       throw new ErrorDatos('Elige quién asume la comida antes de aprobar.', 'pagaComida', 400);
+    // C-DECISIONES-MERCADO: la regla del mercado (DoorDash) calculada con los montos del pedido.
+    // Solo se anota: el dinero que se mueve hoy sigue siendo el reembolso completo al cliente.
+    const montos = await db
+      .prepare('SELECT total, subtotal, envio, propina FROM pedidos WHERE id = ?')
+      .bind(s.pedido_id)
+      .first<{ total: number; subtotal: number; envio: number; propina: number }>();
+    if (montos)
+      reparto = repartoCancelacionListo(paga as 'restaurante' | 'cliente' | 'divoox', {
+        total: Number(montos.total),
+        comida: Number(montos.subtotal),
+        envio: Number(montos.envio),
+        propina: Number(montos.propina),
+      });
     const ok = await cancelarConReembolso(c.env, db, s.pedido_id, {
       desde: ['listo'],
       actorId: admin.id,
@@ -217,7 +232,11 @@ cancelaciones.post('/admin/cancelaciones/:id/:decision', async (c) => {
       db,
       s.pedido_id,
       'cancelado_por_soporte',
-      `${s.motivo} · comida: ${paga}${d.nota ? ` · ${d.nota}` : ''}`,
+      `${s.motivo} · comida: ${paga}${
+        reparto
+          ? ` · regla del mercado: al cliente ${reparto.reembolsoCliente}, comida al restaurante ${reparto.comidaAlRestaurante}`
+          : ''
+      }${d.nota ? ` · ${d.nota}` : ''}`,
     );
   }
   await db
@@ -237,5 +256,9 @@ cancelaciones.post('/admin/cancelaciones/:id/:decision', async (c) => {
         : `Soporte no aprobó la cancelación.${d.nota ? ` ${d.nota}` : ''}`,
     datos: { tipo: 'cancelacion_resuelta', pedidoId: s.pedido_id },
   }).catch((e: unknown) => console.error('cancelaciones: no se pudo avisar al restaurante', e));
-  return c.json({ ok: true, estado: decision === 'aprobar' ? 'aprobada' : 'rechazada' });
+  return c.json({
+    ok: true,
+    estado: decision === 'aprobar' ? 'aprobada' : 'rechazada',
+    ...(reparto ? { reparto } : {}),
+  });
 });

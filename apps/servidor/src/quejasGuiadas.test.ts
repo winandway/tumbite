@@ -144,6 +144,30 @@ describe('queja guiada y comentario (C-QUEJA-GUIADA)', () => {
     expect(q2.datos.propuesta).toBe(1000);
   });
 
+  it('C-DECISIONES-MERCADO: aunque soporte suba el tope, más de 15 dólares en EE. UU. no se devuelven solos', async () => {
+    const e = await escenario();
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/quejas-config',
+      { reembolsoAuto: true, topeCentavos: 5000 },
+      e.admin.token,
+    );
+    // Cubano (15) + dos jugos (10) = 25 dólares: pasa del tope del mercado, va a una persona.
+    const platos = (await e.m.DB.prepare('SELECT lineas_json FROM pedidos WHERE id = ?')
+      .bind(e.id)
+      .first<{ lineas_json: string }>())!;
+    const ids = (JSON.parse(platos.lineas_json) as { platoId: string }[]).map((l) => l.platoId);
+    const q = await e.m.llamar(
+      'POST',
+      '/datos/quejas',
+      { pedidoId: e.id, texto: 'No llegó nada', motivo: 'articulo_faltante', platoIds: ids },
+      e.cliente.token,
+    );
+    expect(q.datos.propuesta).toBe(2500);
+    expect(q.datos.reembolso).toBe(0);
+    expect(e.llamadas.some((l) => /\/refunds$/.test(l))).toBe(false);
+  });
+
   it('la calificación guarda el comentario y la app lo pide; la queja de la app manda motivo y platos', async () => {
     const e = await escenario();
     const r = await e.m.llamar(

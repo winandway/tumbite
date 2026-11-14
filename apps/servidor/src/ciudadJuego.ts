@@ -4,6 +4,7 @@ import { FOTO_JUEGO_BASE64 } from './ciudadJuegoFoto';
 import { entornoDe } from './entorno';
 import type { Env } from './env';
 import { anotarLibro, saldoLibro } from './internacional/libro';
+import { anotarEvento, cancelarConReembolso } from './manager';
 import { paisDeZona } from './internacional/paises';
 import { contarFilas, type CuentaFilas } from './presupuestoFilas';
 import { zonaPara } from './rutas/zonas';
@@ -56,6 +57,12 @@ export const JUEGO = {
   esperaRecogerS: 20,
   saldoMinimo: 2_000,
   saldoRecarga: 10_000,
+  /**
+   * C-CIUDAD-CIERRE: al apagar con pedidos listos o en camino, los robots tienen como mucho estos
+   * latidos (unos 2 minutos con la pantalla abierta) para terminar de entregarlos; lo que quede se
+   * cancela con su devolución. Ningún pedido de juego queda colgado.
+   */
+  pasosCierre: 30,
 };
 
 export type Punto = { lat: number; lng: number };
@@ -469,6 +476,8 @@ export type MetaJuego = {
   centro: Punto;
   robots: RobotGuardado[];
   motivoFin?: string;
+  /** C-CIUDAD-CIERRE: se pidió apagar y los robots terminan lo que ya salió de la cocina. */
+  cierre?: { motivo: string; pasos: number };
 };
 
 const leerMeta = (s: FilaSesion) => JSON.parse(s.meta) as MetaJuego;
@@ -598,16 +607,12 @@ async function robotsDe(env: Env, s: FilaSesion): Promise<Robot[]> {
   );
 }
 
-/** Desconecta a los repartidores, rechaza lo que no empezó y cierra los restaurantes. */
-async function retirarRobots(ctx: Ctx, robots: Robot[]) {
-  for (const r of robots.filter((x) => x.rol === 'repartidor'))
-    await llamar(ctx, r, 'POST', '/datos/repartidor/conectar', { conectado: false }).catch(
-      () => null,
-    );
+/** Rechaza lo que no salió de la cocina y cierra los restaurantes robot. */
+async function cerrarRestaurantes(ctx: Ctx, robots: Robot[]) {
   for (const r of robots.filter((x) => x.rol === 'restaurante' && x.rid)) {
     const { results } = await ctx.db
       .prepare(
-        "SELECT id FROM pedidos WHERE restaurante_id = ? AND estado IN ('pagado','aceptado') LIMIT 20",
+        "SELECT id FROM pedidos WHERE restaurante_id = ? AND estado IN ('pagado','aceptado') AND repartidor_id IS NULL LIMIT 20",
       )
       .bind(r.rid)
       .all<{ id: string }>();
@@ -628,31 +633,97 @@ async function retirarRobots(ctx: Ctx, robots: Robot[]) {
   }
 }
 
-/** «Apagar la ciudad» (a mano, por tiempo o por filas). */
+/** Los pedidos de juego que siguen vivos (de los restaurantes robot). */
+async function pedidosVivosDeJuego(ctx: Ctx, robots: Robot[]) {
+  const rids = robots.filter((r) => r.rid).map((r) => r.rid!);
+  if (!rids.length) return [];
+  const { results } = await ctx.db
+    .prepare(
+      `SELECT id, estado FROM pedidos WHERE restaurante_id IN (${marcas(rids.length)})
+        AND estado IN ('pagado','aceptado','listo','en_camino') LIMIT 40`,
+    )
+    .bind(...rids)
+    .all<{ id: string; estado: string }>();
+  return results;
+}
+
+/**
+ * C-CIUDAD-CIERRE: lo que quedó sin entregar al final del cierre se cancela por el camino de
+ * siempre (devuelve la tarjeta si la hubo y cierra lo apartado del saldo del repartidor).
+ */
+async function cancelarColgados(ctx: Ctx, robots: Robot[]) {
+  for (const p of await pedidosVivosDeJuego(ctx, robots)) {
+    try {
+      const ok = await cancelarConReembolso(ctx.env, ctx.db, p.id, {
+        desde: ['pagado', 'aceptado', 'listo', 'en_camino'],
+        actorId: null,
+      });
+      if (ok) await anotarEvento(ctx.db, p.id, 'cancelado_cierre_juego', 'la ciudad se apagó');
+    } catch (e) {
+      ctx.fallos.push({
+        cuando: new Date().toISOString(),
+        pedido: p.id,
+        comportamiento: 'cierre · cancelar al apagar',
+        mensaje: (e instanceof Error ? e.message : String(e)).slice(0, 500),
+      });
+    }
+  }
+}
+
+async function desconectarRepartidores(ctx: Ctx, robots: Robot[]) {
+  for (const r of robots.filter((x) => x.rol === 'repartidor'))
+    await llamar(ctx, r, 'POST', '/datos/repartidor/conectar', { conectado: false }).catch(
+      () => null,
+    );
+}
+
+/**
+ * «Apagar la ciudad» (a mano, por tiempo o por filas). Con pedidos listos o en camino, la ciudad
+ * entra en cierre: los latidos siguen solo para terminarlos (como mucho `JUEGO.pasosCierre`). Con
+ * `inmediato` (tope de filas, o el cierre ya agotado) lo que quede se cancela con su devolución.
+ */
 export async function apagar(
   env: Env,
   url: string,
   sesionId: string,
   motivo: string,
   ec?: ExecutionContext,
-) {
+  opciones: { inmediato?: boolean } = {},
+): Promise<{ estado: string; motivo?: string; pendientes?: number }> {
   soloPruebas(url);
   const real = env.DB!;
   const s = await sesionDeJuego(real, sesionId);
   if (!s) throw new ErrorDatos('No encontrado.', undefined, 404);
   if (s.estado !== 'corriendo') return { estado: s.estado };
   const ctx = crearCtx(env, url, ec);
-  await retirarRobots(ctx, await robotsDe(env, s));
+  const robots = await robotsDe(env, s);
+  const meta = leerMeta(s);
+  if (!meta.cierre) await cerrarRestaurantes(ctx, robots);
+  const vivos = await pedidosVivosDeJuego(ctx, robots);
+  if (vivos.length && !opciones.inmediato && !meta.cierre) {
+    await ctx.db
+      .prepare(
+        "UPDATE simulador_sesiones SET meta = json_set(meta, '$.cierre', json(?)), actualizada_en = datetime('now') WHERE id = ? AND estado = 'corriendo'",
+      )
+      .bind(JSON.stringify({ motivo: motivo.slice(0, 200), pasos: 0 }), s.id)
+      .run();
+    await guardarFallos(ctx, s, true);
+    await anotarFilas(real, s.id, ctx.cuenta);
+    return { estado: 'cerrando', motivo, pendientes: vivos.length };
+  }
+  if (vivos.length) await cancelarColgados(ctx, robots);
+  await desconectarRepartidores(ctx, robots);
   await guardarFallos(ctx, s, true);
+  const motivoFin = meta.cierre?.motivo ?? motivo;
   await ctx.db
     .prepare(
       `UPDATE simulador_sesiones SET estado = 'terminada', fin = datetime('now'), actualizada_en = datetime('now'),
-         meta = json_set(meta, '$.motivoFin', ?) WHERE id = ? AND estado = 'corriendo'`,
+         meta = json_remove(json_set(meta, '$.motivoFin', ?), '$.cierre') WHERE id = ? AND estado = 'corriendo'`,
     )
-    .bind(motivo.slice(0, 200), s.id)
+    .bind(motivoFin.slice(0, 200), s.id)
     .run();
   await anotarFilas(real, s.id, ctx.cuenta);
-  return { estado: 'terminada', motivo };
+  return { estado: 'terminada', motivo: motivoFin };
 }
 
 const MAX_FALLOS = 50;
@@ -724,15 +795,21 @@ export async function latido(
   // Se apaga sola: por tiempo, por las filas de la sesión o por el tope del día.
   const minutos = (Date.now() - Date.parse(`${s.inicio.replace(' ', 'T')}Z`)) / 60_000;
   const filas = await filasDeSesion(real, s.id);
-  const motivo =
-    minutos >= JUEGO.minutosMax
-      ? `se cumplieron ${JUEGO.minutosMax} minutos`
-      : filas.sesion >= JUEGO.topeFilasSesion
-        ? `llegó al tope de ${JUEGO.topeFilasSesion} filas escritas de la sesión`
-        : filas.dia > TOPE_DIA_PRUEBAS.escritas
-          ? `las pruebas de hoy pasaron el tope diario de ${TOPE_DIA_PRUEBAS.escritas} filas`
-          : null;
-  if (motivo) return apagar(env, url, s.id, motivo, ec);
+  const porFilas =
+    filas.sesion >= JUEGO.topeFilasSesion
+      ? `llegó al tope de ${JUEGO.topeFilasSesion} filas escritas de la sesión`
+      : filas.dia > TOPE_DIA_PRUEBAS.escritas
+        ? `las pruebas de hoy pasaron el tope diario de ${TOPE_DIA_PRUEBAS.escritas} filas`
+        : null;
+  // Por filas no se gasta más: lo que quede se cancela ya. Por tiempo, entra en cierre.
+  if (porFilas) return apagar(env, url, s.id, porFilas, ec, { inmediato: true });
+  const metaS = leerMeta(s);
+  if (minutos >= JUEGO.minutosMax && !metaS.cierre)
+    return apagar(env, url, s.id, `se cumplieron ${JUEGO.minutosMax} minutos`, ec);
+  // C-CIUDAD-CIERRE: agotados los pasos finales, se cancela lo que quede y se apaga.
+  const cierre = metaS.cierre;
+  if (cierre && cierre.pasos >= JUEGO.pasosCierre)
+    return apagar(env, url, s.id, cierre.motivo, ec, { inmediato: true });
 
   const ctx = crearCtx(env, url, ec);
   const robots = await robotsDe(env, s);
@@ -817,7 +894,7 @@ export async function latido(
     // 1. El restaurante robot: acepta, prepara y marca listo (y entrega lo que se recoge).
     if (rest) {
       const ruta = (q: string) => `/datos/restaurante/pedidos/${p.id}/${q}`;
-      if (p.estado === 'pagado' && (p.seg_pagado ?? 0) >= JUEGO.esperaAceptarS) {
+      if (!cierre && p.estado === 'pagado' && (p.seg_pagado ?? 0) >= JUEGO.esperaAceptarS) {
         await accion(ctx, rest, 'aceptar', p.id, 'POST', ruta('aceptar'), { minutos: 10 });
         continue;
       }
@@ -937,7 +1014,7 @@ export async function latido(
     if (sobrePresupuesto()) break;
     const f = ficha.get(rep.id);
     if (!f?.conectado || ocupados.has(rep.id)) continue;
-    if (esperando.size) {
+    if (esperando.size && !cierre) {
       const r = await llamar(ctx, rep, 'GET', '/datos/repartidor/ofertas');
       const ids = ((r.datos.ofertas as { id: string }[] | undefined) ?? []).map((o) => o.id);
       const mio = ids.find((x) => esperando.has(x));
@@ -978,6 +1055,20 @@ export async function latido(
     if (l.seg_senal != null && l.seg_senal < JUEGO.senalRestauranteS) continue;
     const r = restaurantes.get(l.id);
     if (r) await llamar(ctx, r, 'GET', '/datos/restaurante/pedidos');
+  }
+  if (cierre) {
+    // Cuenta el paso final; si ya no queda nada vivo, se apaga de una vez.
+    await ctx.db
+      .prepare(
+        "UPDATE simulador_sesiones SET meta = json_set(meta, '$.cierre.pasos', ?), actualizada_en = datetime('now') WHERE id = ?",
+      )
+      .bind(cierre.pasos + 1, s.id)
+      .run();
+    await guardarFallos(ctx, s, true);
+    await anotarFilas(real, s.id, ctx.cuenta);
+    const vivos = await pedidosVivosDeJuego(ctx, robots);
+    if (!vivos.length) return apagar(env, url, s.id, cierre.motivo, ec, { inmediato: true });
+    return { estado: 'corriendo', filas: ctx.cuenta.escritas };
   }
   await guardarFallos(ctx, s);
   await anotarFilas(real, s.id, ctx.cuenta);

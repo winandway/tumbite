@@ -38,7 +38,9 @@ describe('C-LATIDO-UBICACION', () => {
 
   it('en segundo plano, Android entrega lecturas por tiempo y la tarea filtra con el latido', () => {
     const src = readFileSync(join(raiz, 'apps/repartidor/src/ubicacionFondo.ts'), 'utf8');
-    expect(src).toContain('tocaMandarUbicacion(');
+    // C-GPS-PANTALLA-APAGADA: el filtro ahora depende del modo (activo 25 m, libre 250 m) y
+    // conserva el latido de 2 minutos.
+    expect(src).toContain('tocaMandarSegunModo(');
     expect(src).toMatch(/distanceInterval: Platform\.OS === 'android' \? 0 : 30/);
   });
 });

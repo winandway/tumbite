@@ -17,7 +17,7 @@ import {
   tipoAdjunto,
 } from '../adjuntosTicket';
 import { pasaTurnstile } from '../turnstile';
-import { SOY_CONTACTO } from '@tumbite/compartido';
+import { SOY_CONTACTO, topeReembolsoSinRevision } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { rutaSuperadmin } from '../superadmin';
@@ -563,7 +563,9 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
         .reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
       const cfg = await leerConfigQuejas(db);
       // C-TOPES-PAIS: el tope del país del pedido (EE. UU.: el que fija soporte, como siempre).
-      const { topes } = await topesDeZona(db, p.zona_id);
+      const { topes, pais } = await topesDeZona(db, p.zona_id);
+      // C-DECISIONES-MERCADO: además, nunca más del tope del mercado sin que lo mire una persona.
+      const topeMercado = topeReembolsoSinRevision(pais) ?? 0;
       // Un solo reembolso automático por pedido: la segunda queja la revisa una persona.
       const yaDevuelto = await db
         .prepare('SELECT 1 FROM devoluciones WHERE pedido_id = ? LIMIT 1')
@@ -573,7 +575,7 @@ tickets.post('/quejas', limiteIntentos(10, 60_000), async (c) => {
         propuesta > 0 &&
         !yaDevuelto &&
         cfg.reembolsoAuto &&
-        propuesta <= (topes?.quejaReembolsoMax ?? 0) &&
+        propuesta <= Math.min(topes?.quejaReembolsoMax ?? 0, topeMercado) &&
         p.estado === 'entregado'
       ) {
         try {

@@ -122,6 +122,27 @@ conductorPapeles.put('/conductor/ciudad', async (c) => {
     .first();
   if (ocupado)
     throw new ErrorDatos('Termina tu viaje en curso antes de cambiar de ciudad.', undefined, 409);
+  if (!ahora?.ciudad_elegida_en) {
+    // C-CIUDAD-PRIMERA-APROBADO: la primera elección es libre solo para quien todavía no fue
+    // aprobado. Con la identidad o un papel ya aprobados, también exige el país de su cuenta (sin
+    // zona propia, la de siempre del esquema: Miami, EE. UU.).
+    const cuenta = await db
+      .prepare(
+        `SELECT z.pais,
+           (EXISTS (SELECT 1 FROM kyc k WHERE k.usuario_id = u.id AND k.estado = 'aprobado')
+            OR EXISTS (SELECT 1 FROM cumplimientos cu WHERE cu.conductor_id = u.id AND cu.estado = 'aprobado')) AS aprobado
+          FROM usuarios u JOIN zonas z ON z.id = COALESCE((SELECT r.zona_id FROM repartidores r WHERE r.usuario_id = u.id), u.zona_id, 'US-FL-MIAMI')
+         WHERE u.id = ?`,
+      )
+      .bind(u.id)
+      .first<{ pais: string; aprobado: number }>();
+    if (cuenta?.aprobado && cuenta.pais !== zona.pais)
+      throw new ErrorDatos(
+        'Solo puedes elegir una ciudad de tu país. Para cambiar de país, escribe a soporte.',
+        'zonaId',
+        409,
+      );
+  }
   if (ahora?.ciudad_elegida_en) {
     if (zona.pais !== ahora.pais)
       throw new ErrorDatos(

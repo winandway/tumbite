@@ -295,7 +295,7 @@ describe('pedidos y pagos', () => {
     const sinActivar = await m.llamar(
       'POST',
       '/datos/billetera/retirar',
-      { montoCentavos: 500 },
+      { montoCentavos: 1000 },
       dueno.token,
     );
     expect(sinActivar.estado).toBe(409);
@@ -303,7 +303,7 @@ describe('pedidos y pagos', () => {
     // Fase 0: los retiros nacen apagados; aquí se encienden con la bandera.
     await m.DB.prepare("INSERT INTO config (clave, valor) VALUES ('retiros_activos', '1')").run();
     await m.DB.prepare(
-      "INSERT INTO movimientos (id, usuario_id, monto, concepto) VALUES ('m1', ?, 1000, 'ajuste')",
+      "INSERT INTO movimientos (id, usuario_id, monto, concepto) VALUES ('m1', ?, 1500, 'ajuste')",
     )
       .bind(dueno.id)
       .run();
@@ -317,12 +317,12 @@ describe('pedidos y pagos', () => {
     const ok = await m.llamar(
       'POST',
       '/datos/billetera/retirar',
-      { montoCentavos: 600 },
+      { montoCentavos: 1000 },
       dueno.token,
     );
-    expect(ok.datos.saldo).toBe(400);
+    expect(ok.datos.saldo).toBe(500);
     const b = await m.llamar('GET', '/datos/billetera', undefined, dueno.token);
-    expect(b.datos.saldo).toBe(400);
+    expect(b.datos.saldo).toBe(500);
     expect(b.datos.pagosActivos).toBe(true);
   });
 });

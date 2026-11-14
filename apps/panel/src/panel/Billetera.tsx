@@ -11,6 +11,7 @@ import {
   enIdioma,
   formatearDolares,
   formatearMonto,
+  retiroMinimo,
   useBorrador,
 } from '@tumbite/compartido';
 import { AltaCobros } from './AltaCobros';
@@ -63,6 +64,7 @@ const T = {
     } as Record<string, string>,
     pedido: 'Pedido',
     montoMal: 'Escribe un monto como 25.00',
+    minimo: 'Mínimo $10.00 por retiro.',
     hoy: 'Hoy',
     entregados: 'Pedidos entregados',
     ventas: 'Ventas',
@@ -109,6 +111,7 @@ const T = {
     } as Record<string, string>,
     pedido: 'Order',
     montoMal: 'Enter an amount like 25.00',
+    minimo: 'Minimum $10.00 per cash-out.',
     hoy: 'Today',
     entregados: 'Orders delivered',
     ventas: 'Sales',
@@ -179,6 +182,8 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
     setAviso('');
     const c = dolaresACentavos(monto);
     if (c === null) return setError(t.montoMal);
+    // C-DECISIONES-MERCADO: el mismo mínimo que exige el servidor, dicho antes de pedir.
+    if (c < (retiroMinimo('USD') ?? 1_000)) return setError(t.minimo);
     try {
       const r = await pedir<{ retiro?: { estado?: string } }>('POST', '/datos/billetera/retirar', {
         montoCentavos: c,
@@ -277,6 +282,7 @@ export function Billetera({ usuario, idioma }: { usuario: Usuario; idioma: Idiom
               onChange={(e) => b.cambiar('monto', e.target.value)}
               placeholder="0.00"
             />
+            <small className="pista">{t.minimo}</small>
           </label>
           <button type="submit" className="boton">
             {t.retirar}

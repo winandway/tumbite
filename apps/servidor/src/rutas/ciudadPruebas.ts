@@ -303,6 +303,7 @@ async function vistaJuego(
     motivoFin?: string;
     centro?: unknown;
     robots?: unknown[];
+    cierre?: { pasos: number };
   };
   const filas = await filasDeSesion(db, id);
   const fallos = JSON.parse(String(sesion.fallos)) as z.infer<typeof FALLO>[];
@@ -361,6 +362,25 @@ async function vistaJuego(
     j.fallos.push(...fallos.filter((f) => f.pedido === p.id));
     porJugador.set(p.clienteId, j);
   }
+  // C-CIUDAD-ERRORES: los errores del servidor que pasaron con la sesión de un jugador van a sus
+  // fallos (solo lee; la columna usuario_id la llena app.onError).
+  const ids = [...porJugador.keys()];
+  if (ids.length) {
+    const { results: suyos } = await db
+      .prepare(
+        `SELECT usuario_id AS usuarioId, metodo, ruta, mensaje, creado_en AS creadoEn FROM errores_servidor
+          WHERE creado_en >= ? AND usuario_id IN (${marcas(ids.length)}) ORDER BY id LIMIT 50`,
+      )
+      .bind(inicio, ...ids)
+      .all<{ usuarioId: string; metodo: string; ruta: string; mensaje: string; creadoEn: string }>()
+      .catch(() => ({ results: [] }));
+    for (const e of suyos)
+      porJugador.get(e.usuarioId)?.fallos.push({
+        cuando: e.creadoEn,
+        comportamiento: `error del servidor · ${e.metodo} ${e.ruta}`.slice(0, 60),
+        mensaje: e.mensaje,
+      });
+  }
   const { results: enCurso } = rids.length
     ? await db
         .prepare(
@@ -395,6 +415,8 @@ async function vistaJuego(
       minutosMax: JUEGO.minutosMax,
       robots: { listos: meta.robots?.length ?? 0, total: ROBOTS_TOTAL },
       motivoFin: meta.motivoFin ?? null,
+      // C-CIUDAD-CIERRE: se pidió apagar y los robots terminan lo que ya salió de la cocina.
+      cerrando: Boolean(meta.cierre),
       centro: meta.centro ?? null,
     },
     enCurso: enCurso.map((p) => ({ ...p, cliente: p.cliente.split(' ')[0] ?? '' })),
