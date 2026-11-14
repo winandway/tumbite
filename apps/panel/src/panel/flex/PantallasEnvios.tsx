@@ -22,7 +22,7 @@ import { Campo } from '../CampoClave';
 import { MenuTresPuntos } from '../MenuTresPuntos';
 import { crear, pedir } from '../api';
 import { BotonExportar } from './Exportar';
-import { plantillaXlsx, xlsxACsv } from './excel';
+import { ExcelIlegible, MAX_FILAS_XLSX, plantillaXlsx, xlsxACsv } from './excel';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { HerramientasEnvio } from './PantallasRutas';
 import { type UbicacionDeEnvio, UbicacionEnvio } from './UbicacionEnvio';
@@ -1126,10 +1126,19 @@ export function Importar({ ctx }: { ctx: Contexto }) {
     if (/\.xlsx$/i.test(f.name)) {
       try {
         setCsv(xlsxACsv(new Uint8Array(await f.arrayBuffer())));
-      } catch {
-        // El motivo exacto queda en español en el error; a la persona, en su idioma.
+      } catch (x) {
+        // A la persona, en su idioma y con el motivo (C-FLEX-EXCEL).
         setCsv('');
-        setError(t.excelIlegible);
+        const motivo = x instanceof ExcelIlegible ? x.motivo : 'invalido';
+        setError(
+          motivo === 'filas' || motivo === 'celdas'
+            ? t.excelMuyGrande.replace('{n}', MAX_FILAS_XLSX.toLocaleString(ctx.idioma))
+            : motivo === 'grande'
+              ? t.excelPesado
+              : motivo === 'vacio'
+                ? t.excelVacio
+                : t.excelIlegible,
+        );
       }
       return;
     }

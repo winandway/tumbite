@@ -53,4 +53,18 @@ describe('C-FLEX-EXCEL · importar desde Excel sin subir el archivo', () => {
     expect(() => xlsxACsv(new TextEncoder().encode('reference,recipient'))).toThrow(ExcelIlegible);
     expect(() => xlsxACsv(libro('', []))).toThrow('vacía');
   });
+
+  it('más de 5.000 filas: se corta antes de convertir, con su motivo', () => {
+    const filas = Array.from(
+      { length: 5_001 },
+      (_, i) => `<row r="${i + 1}"><c r="A${i + 1}" t="inlineStr"><is><t>x</t></is></c></row>`,
+    ).join('');
+    try {
+      xlsxACsv(libro(filas, []));
+      expect.unreachable();
+    } catch (e) {
+      expect(e).toBeInstanceOf(ExcelIlegible);
+      expect((e as ExcelIlegible).motivo).toBe('filas');
+    }
+  });
 });

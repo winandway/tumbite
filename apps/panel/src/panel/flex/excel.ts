@@ -12,7 +12,19 @@ import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 export const MAX_XLSX_BYTES = 5 * 1024 * 1024;
 const MAX_DESCOMPRIMIDO = 40 * 1024 * 1024;
 
-export class ExcelIlegible extends Error {}
+/** Topes en el navegador antes de convertir: un Excel enorme no traba la pestaña. */
+export const MAX_FILAS_XLSX = 5_000;
+export const MAX_CELDAS_XLSX = 100_000;
+
+export type MotivoExcel = 'invalido' | 'grande' | 'filas' | 'celdas' | 'vacio';
+export class ExcelIlegible extends Error {
+  constructor(
+    mensaje: string,
+    readonly motivo: MotivoExcel = 'invalido',
+  ) {
+    super(mensaje);
+  }
+}
 
 /** «AB12» → índice de columna 27 (base 0). */
 function columna(ref: string): number {
@@ -56,14 +68,15 @@ function primeraHoja(archivos: Record<string, Uint8Array>, xml: (r: string) => D
 /** Convierte la primera hoja de un .xlsx al CSV que entiende la importación. */
 export function xlsxACsv(bytes: Uint8Array): string {
   if (bytes.byteLength > MAX_XLSX_BYTES)
-    throw new ExcelIlegible('El archivo pesa demasiado (máximo 5 MB).');
+    throw new ExcelIlegible('El archivo pesa demasiado (máximo 5 MB).', 'grande');
   let archivos: Record<string, Uint8Array>;
   try {
     let total = 0;
     archivos = unzipSync(bytes, {
       filter: (f) => {
         total += f.originalSize;
-        if (total > MAX_DESCOMPRIMIDO) throw new ExcelIlegible('El archivo es demasiado grande.');
+        if (total > MAX_DESCOMPRIMIDO)
+          throw new ExcelIlegible('El archivo es demasiado grande.', 'grande');
         return (f.name.startsWith('xl/') && f.name.endsWith('.xml')) || f.name.endsWith('.rels');
       },
     });
@@ -83,8 +96,13 @@ export function xlsxACsv(bytes: Uint8Array): string {
     xml('xl/sharedStrings.xml')?.getElementsByTagName('si') ?? [],
     (si) => textoDe(si),
   );
+  const todasLasFilas = hoja.getElementsByTagName('row');
+  if (todasLasFilas.length > MAX_FILAS_XLSX)
+    throw new ExcelIlegible(`El Excel tiene más de ${MAX_FILAS_XLSX} filas.`, 'filas');
+  if (hoja.getElementsByTagName('c').length > MAX_CELDAS_XLSX)
+    throw new ExcelIlegible(`El Excel tiene más de ${MAX_CELDAS_XLSX} celdas.`, 'celdas');
   const filas: string[][] = [];
-  for (const fila of Array.from(hoja.getElementsByTagName('row'))) {
+  for (const fila of Array.from(todasLasFilas)) {
     const celdas: string[] = [];
     let siguiente = 0;
     for (const c of Array.from(fila.getElementsByTagName('c'))) {
@@ -109,7 +127,7 @@ export function xlsxACsv(bytes: Uint8Array): string {
     }
     if (celdas.some((x) => x !== '')) filas.push(celdas);
   }
-  if (!filas.length) throw new ExcelIlegible('La primera hoja del Excel está vacía.');
+  if (!filas.length) throw new ExcelIlegible('La primera hoja del Excel está vacía.', 'vacio');
   return `${filas.map((f) => f.map(celdaCsv).join(',')).join('\r\n')}\r\n`;
 }
 
