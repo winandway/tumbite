@@ -2345,5 +2345,37 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "resuelta_por",
     "creado_en",
     "resuelta_en"
+  ],
+  "recargas_locales_empresa": [
+    "id",
+    "empresa_id",
+    "pais",
+    "moneda",
+    "monto",
+    "metodo",
+    "referencia",
+    "banco",
+    "fecha_pago",
+    "comprobante_clave",
+    "estado",
+    "motivo",
+    "idempotencia",
+    "creado_por",
+    "revisado_por",
+    "revision_token",
+    "revisado_en",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "rutas_flex_calles": [
+    "ruta_id",
+    "empresa_id",
+    "huella_orden",
+    "fuente",
+    "metros",
+    "segundos",
+    "tramos_json",
+    "consultas",
+    "calculado_en"
   ]
 };

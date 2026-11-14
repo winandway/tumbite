@@ -15,6 +15,7 @@ import { flexIntegraciones, despacharIntegraciones } from './integraciones';
 import { flexOperaciones } from './operaciones';
 import { flexRetencion } from './automatizacion';
 import { flexExportar } from './exportar';
+import { flexRecargasLocales } from './recargasLocales';
 import { despues } from './avisosFlex';
 import { finanzasEmpresa } from '../finanzas/rutasEmpresa';
 
@@ -52,4 +53,5 @@ flex.route('/', flexIntegraciones);
 flex.route('/', flexOperaciones);
 flex.route('/', flexRetencion);
 flex.route('/', flexExportar);
+flex.route('/', flexRecargasLocales);
 flex.route('/', finanzasEmpresa);

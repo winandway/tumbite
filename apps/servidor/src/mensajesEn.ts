@@ -8,6 +8,36 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-FLEX-EXPORTAR y Flex Fase 7 (bloque propio)
   ['Cursor inválido.', 'Invalid cursor.'],
   ['Esa lista no se puede exportar.', 'That list can’t be exported.'],
+  [
+    'Las recargas las declara una persona de la empresa, no una clave de API.',
+    'Top-ups are reported by a person at the company, not an API key.',
+  ],
+  [
+    'Las recargas con pago local no están activas en tu país.',
+    'Local-payment top-ups aren’t available in your country yet.',
+  ],
+  ['Falta la foto del comprobante.', 'The receipt photo is missing.'],
+  [
+    'Ese método de pago no está disponible en tu país.',
+    'That payment method isn’t available in your country.',
+  ],
+  [
+    'El monto está fuera de los límites de tu país.',
+    'The amount is outside your country’s limits.',
+  ],
+  [
+    'Esa referencia de pago ya se declaró. Si es otro pago, escribe su referencia.',
+    'That payment reference was already reported. If it’s a different payment, enter its reference.',
+  ],
+  ['País inválido.', 'Invalid country.'],
+  ['La foto del comprobante no está disponible.', 'The receipt photo isn’t available.'],
+  ['Esa recarga ya se acreditó.', 'That top-up was already credited.'],
+  ['Esa recarga se rechazó.', 'That top-up was declined.'],
+  [
+    'La empresa cambió de país o de moneda: revisa la recarga.',
+    'The company changed its country or currency: review the top-up.',
+  ],
+  ['Esa recarga ya no está pendiente.', 'That top-up is no longer pending.'],
   // C-REFERIDOS
   ['Las invitaciones no están activas.', 'Invites aren’t active.'],
   // C-CIUDAD-JUEGO (SIM-7)

@@ -14,6 +14,7 @@ import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { pedir } from '../api';
 import { BotonExportar } from './Exportar';
+import { RecargaLocal } from './RecargaLocal';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 
 /**
@@ -28,6 +29,7 @@ export const TEXTOS_BILLETERA = {
     pestanas: {
       '': 'Resumen',
       topup: 'Recargar',
+      local: 'Pago local',
       commissions: 'Comisiones',
       receipts: 'Comprobantes',
       settings: 'Configuración',
@@ -145,6 +147,7 @@ export const TEXTOS_BILLETERA = {
     pestanas: {
       '': 'Overview',
       topup: 'Top up',
+      local: 'Local payment',
       commissions: 'Commissions',
       receipts: 'Receipts',
       settings: 'Settings',
@@ -339,6 +342,7 @@ export function BilleteraEmpresa({ ctx, sub }: { ctx: Contexto; sub: string }) {
   const pestanas = [
     '',
     'topup',
+    'local',
     'commissions',
     'receipts',
     ...(puedeGestionar ? ['settings'] : []),
@@ -347,6 +351,7 @@ export function BilleteraEmpresa({ ctx, sub }: { ctx: Contexto; sub: string }) {
   let contenido: React.ReactNode;
   if (reciboId) contenido = <Comprobante ctx={ctx} id={reciboId} />;
   else if (pestana === 'topup' && puedeGestionar) contenido = <Recargar ctx={ctx} />;
+  else if (pestana === 'local') contenido = <RecargaLocal ctx={ctx} />;
   else if (pestana === 'commissions') contenido = <Comisiones ctx={ctx} />;
   else if (pestana === 'receipts') contenido = <Comprobantes ctx={ctx} />;
   else if (pestana === 'settings' && puedeGestionar) contenido = <ConfigBilletera ctx={ctx} />;

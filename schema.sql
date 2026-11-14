@@ -3613,3 +3613,47 @@ CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancela
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
 -- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
 CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';
+
+-- ═══════════════ DIVOOX FLEX · FASE 7 (13 nov 2026) — bloque propio ═══════════════
+-- C-FLEX-RECARGA-LOCAL: la empresa declara una recarga pagada fuera de Stripe (pago móvil,
+-- transferencia, Zelle o efectivo) con su referencia y la foto del comprobante; el equipo de Divoox
+-- la acredita UNA vez (o la rechaza con motivo). Apagado por país (config fin_recargas_locales:<país>).
+CREATE TABLE IF NOT EXISTS recargas_locales_empresa (
+  id TEXT PRIMARY KEY,
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  metodo TEXT NOT NULL CHECK (metodo IN ('pago_movil', 'transferencia', 'zelle', 'efectivo')),
+  referencia TEXT NOT NULL,
+  banco TEXT NOT NULL DEFAULT '',
+  fecha_pago TEXT,
+  comprobante_clave TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'acreditada', 'rechazada')),
+  motivo TEXT NOT NULL DEFAULT '',
+  idempotencia TEXT NOT NULL UNIQUE,
+  creado_por TEXT REFERENCES usuarios(id),
+  revisado_por TEXT REFERENCES usuarios(id),
+  revision_token TEXT,
+  revisado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- La misma referencia de pago no se declara dos veces en la misma empresa (salvo si se rechazó).
+CREATE UNIQUE INDEX IF NOT EXISTS recargas_locales_referencia ON recargas_locales_empresa(empresa_id, metodo, referencia) WHERE estado != 'rechazada';
+-- La lista de la empresa (por fecha) y la cola del equipo (solo las pendientes: índice parcial chico).
+CREATE INDEX IF NOT EXISTS recargas_locales_empresa_fecha ON recargas_locales_empresa(empresa_id, creado_en);
+CREATE INDEX IF NOT EXISTS recargas_locales_pendientes ON recargas_locales_empresa(creado_en) WHERE estado = 'pendiente';
+-- C-FLEX-RUTA-CALLES: kilómetros, duración y hora estimada por parada de una ruta, pedidos a Google
+-- UNA vez al confirmar el orden (nunca al mirar). Una fila por ruta; se reescribe solo si cambia el orden.
+CREATE TABLE IF NOT EXISTS rutas_flex_calles (
+  ruta_id TEXT PRIMARY KEY REFERENCES rutas_flex(id),
+  empresa_id TEXT NOT NULL REFERENCES empresas(id),
+  huella_orden TEXT NOT NULL,
+  fuente TEXT NOT NULL CHECK (fuente IN ('google', 'estimada')),
+  metros INTEGER NOT NULL CHECK (metros >= 0),
+  segundos INTEGER NOT NULL CHECK (segundos >= 0),
+  tramos_json TEXT NOT NULL DEFAULT '[]',
+  consultas INTEGER NOT NULL DEFAULT 0,
+  calculado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
