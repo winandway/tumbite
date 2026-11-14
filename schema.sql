@@ -197,6 +197,10 @@ CREATE INDEX IF NOT EXISTS pedidos_cliente ON pedidos(cliente_id, creado_en);
 CREATE INDEX IF NOT EXISTS pedidos_restaurante ON pedidos(restaurante_id, estado);
 CREATE INDEX IF NOT EXISTS pedidos_estado ON pedidos(estado);
 CREATE INDEX IF NOT EXISTS pedidos_sesion ON pedidos(stripe_sesion);
+-- C-LECTURAS-SALUD: solo los pedidos con cobro en mano (efectivo o transferencia). Los de tarjeta no
+-- entran en el índice y no pagan ninguna escritura de más; la bandeja del canario lee solo estos.
+CREATE INDEX IF NOT EXISTS pedidos_cobro_en_mano ON pedidos(cobro_estado) WHERE metodo_pago != 'tarjeta';
+CREATE INDEX IF NOT EXISTS pedidos_conciliacion_en_mano ON pedidos(conciliacion_estado) WHERE metodo_pago != 'tarjeta';
 
 -- Libro de la billetera: cada entrada es dinero que entra (+) o sale (-) de una cuenta.
 CREATE TABLE IF NOT EXISTS movimientos (
@@ -2628,6 +2632,8 @@ CREATE TABLE IF NOT EXISTS libro (
 CREATE INDEX IF NOT EXISTS libro_cuenta ON libro(cuenta_id, bolsillo, pais, moneda);
 CREATE INDEX IF NOT EXISTS libro_pedido ON libro(pedido_id);
 CREATE UNIQUE INDEX IF NOT EXISTS libro_referencia_unica ON libro(referencia) WHERE referencia IS NOT NULL;
+-- C-LECTURAS-SALUD: solo el dinero «directo» (cobro en mano): excedentes y comida sin entregar.
+CREATE INDEX IF NOT EXISTS libro_directo ON libro(concepto, pedido_id) WHERE bolsillo = 'directo';
 
 -- Puntos de venta de recargas: compran saldo a Tumbite por adelantado y lo venden en códigos.
 CREATE TABLE IF NOT EXISTS puntos_venta (
@@ -2673,6 +2679,8 @@ CREATE TABLE IF NOT EXISTS recargas (
   acreditada_en TEXT
 );
 CREATE INDEX IF NOT EXISTS recargas_usuario ON recargas(usuario_id, creado_en);
+-- C-LECTURAS-SALUD: solo las recargas pendientes (dos escrituras por recarga con tarjeta: al nacer y al acreditarse).
+CREATE INDEX IF NOT EXISTS recargas_pendientes ON recargas(creado_en) WHERE estado = 'pendiente';
 -- Cobro directo: un cliente que no paga al recibir deja el pedido cancelado aunque ya iba en camino.
 INSERT OR IGNORE INTO transiciones_pedido (desde, hacia, reversion) VALUES ('en_camino', 'cancelado', 0);
 -- Soporte cancela un pedido ya listo (el superadmin lo ofrecía y la base lo rechazaba con un error
@@ -3613,17 +3621,3 @@ CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_pedido ON solicitudes_cancela
 CREATE INDEX IF NOT EXISTS solicitudes_cancelacion_estado ON solicitudes_cancelacion(estado, creado_en);
 -- Una sola solicitud pendiente por pedido (dos toques seguidos no crean dos).
 CREATE UNIQUE INDEX IF NOT EXISTS solicitudes_cancelacion_una_pendiente ON solicitudes_cancelacion(pedido_id) WHERE estado = 'pendiente';
-
--- C-COMIDA-VE-CIRCUITO (13 nov 2026, Venezuela): «sí me llegó / no me llegó» del pago móvil de un
--- pedido de comida (una fila por pedido), con la corrección única de 30 minutos (pieza común con
--- viajes_pago_movil). Confirmación MANUAL del repartidor, nunca del banco.
-CREATE TABLE IF NOT EXISTS pedidos_pago_movil (
-  pedido_id TEXT PRIMARY KEY REFERENCES pedidos(id),
-  repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
-  estado TEXT NOT NULL CHECK (estado IN ('recibido', 'no_recibido')),
-  referencia TEXT NOT NULL DEFAULT '',
-  monto INTEGER,
-  moneda TEXT,
-  corregido_en TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-);
