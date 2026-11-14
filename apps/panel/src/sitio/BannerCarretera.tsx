@@ -14,7 +14,7 @@ import { DesfileFlota } from './DesfileFlota';
  */
 export function BannerArriba({
   idioma,
-  lugar = 'Miami',
+  lugar,
   activo: activoDado,
   estilo = 'desfile',
 }: {
@@ -28,16 +28,23 @@ export function BannerArriba({
   estilo?: 'avenida' | 'desfile';
 }) {
   const estadoCiudad = useCiudadesEnVivo();
-  // Sin dato de la página, el banner dice el estado real de Miami (interruptor del superadmin).
-  const activo = activoDado ?? estadoCiudad({ slug: 'miami', estado: 'pronto' }) === 'activo';
-  const lema = activo
+  // C-TEXTOS-PUBLICOS (13 nov 2026): sin ciudad (portada, «Cómo funciona») no se nombra ninguna:
+  // va el lema de la startup. En la página de una ciudad, su estado real (interruptor del superadmin).
+  const slug = (lugar ?? '').toLowerCase();
+  const activo =
+    activoDado ?? (lugar ? estadoCiudad({ slug, estado: 'pronto' }) === 'activo' : false);
+  const lema = !lugar
     ? idioma === 'en'
-      ? `Now in ${lugar}`
-      : `Ya estamos en ${lugar}`
-    : idioma === 'en'
-      ? `Coming soon to ${lugar}`
-      : `Muy pronto en ${lugar}`;
-  const servicios = idioma === 'en' ? 'Food · Rides · Delivery' : 'Comida · Viajes · Envíos';
+      ? 'Divoox, a food delivery startup'
+      : 'La startup Divoox: comida a domicilio'
+    : activo
+      ? idioma === 'en'
+        ? `Now in ${lugar}`
+        : `Ya estamos en ${lugar}`
+      : idioma === 'en'
+        ? `Coming soon to ${lugar}`
+        : `Muy pronto en ${lugar}`;
+  const servicios = idioma === 'en' ? 'Food delivery' : 'Comida a domicilio';
   if (estilo === 'desfile') return <DesfileFlota lema={lema} servicios={servicios} />;
   return (
     <div className="ld-banner ld-banner-arriba">

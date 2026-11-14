@@ -18,18 +18,20 @@ describe('la web solo promete lo que existe (C-WEB-HONESTA)', () => {
     }
   });
 
-  it('Apple Pay y Google Pay, promociones destacadas y ayuda con fotos dicen «muy pronto»', () => {
-    expect(es).toMatch(/Apple Pay y Google Pay, muy pronto/);
-    expect(en).toMatch(/Apple Pay and Google Pay, coming soon/);
-    expect(es).toMatch(/Promociones destacadas en el inicio de la app: muy pronto/);
-    expect(en).toMatch(/Featured promotions on the app’s home: coming soon/);
-    expect(es).toMatch(/Ayuda con fotos y marketing: muy pronto/);
-    expect(en).toMatch(/Help with photos and marketing: coming soon/);
-  });
-
-  it('la música en vivo se presenta como lo que viene, no como algo que ya pasa', () => {
-    expect(es).toMatch(/Es lo que viene/);
-    expect(en).toMatch(/It’s what’s coming/);
+  it('sin «muy pronto» ni listas de lo que vendrá (C-SOLO-LO-TERMINADO, 3 nov 2026)', () => {
+    // Solo queda el aviso real de cobertura: el estado de cada ciudad y país («Muy pronto» al lado
+    // de una ciudad que todavía no abre).
+    for (const t of [TEXTOS_SITIO.es, TEXTOS_SITIO.en]) {
+      const sinCobertura = JSON.parse(JSON.stringify(t)) as Record<string, Record<string, unknown>>;
+      delete sinCobertura.pie?.pronto;
+      delete sinCobertura.lugar?.pronto;
+      delete sinCobertura.lugar?.tituloPronto;
+      delete sinCobertura.mapa?.proxima;
+      const texto = JSON.stringify(sinCobertura);
+      expect(texto).not.toMatch(/muy pronto|coming soon|en construcción|under construction/i);
+      expect(texto).not.toMatch(/Es lo que viene|It’s what’s coming/);
+      expect(texto).not.toMatch(/Apple Pay|Google Pay,/);
+    }
   });
 
   it('ninguna ciudad figura como abierta antes del lanzamiento público', () => {

@@ -14,7 +14,7 @@ const T = {
     etiqueta: 'Cómo funciona',
     titulo: 'Cómo funciona Divoox',
     intro:
-      'Divoox es una startup de reparto: una app para pedir comida a domicilio (y muy pronto mercado, farmacia, envíos de paquetes y viajes en moto o en carro) hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
+      'Divoox es una startup de reparto: una app para pedir comida a domicilio hecha para que ganen los tres: el que tiene hambre, el restaurante del barrio y el repartidor. Aquí explicamos todo, sin letra pequeña: cómo pides, cómo vende un restaurante, cómo gana un repartidor, a dónde va cada dólar y cómo abrimos una ciudad nueva desde cero.',
     indice: 'En esta página',
     tres: {
       titulo: 'Tres personas, una sola entrega',
@@ -27,7 +27,7 @@ const T = {
           puntos: [
             'Abres la app, ves los restaurantes abiertos cerca de ti y eliges.',
             'Antes de pagar ves todo el desglose: comida, envío, servicio y propina. Sin sorpresas.',
-            'Pagas dentro de la app con tu tarjeta, sin salir a otra página; queda guardada si quieres. Apple Pay y Google Pay, muy pronto.',
+            'Pagas dentro de la app con tu tarjeta, sin salir a otra página; queda guardada si quieres.',
             'Sigues el pedido en vivo en el mapa, desde la cocina hasta tu puerta.',
             'Si se acabó algo de tu pedido, el restaurante te pregunta antes de prepararlo: tú decides y no pagas lo que no llega.',
             'Tu restaurante favorito te premia: regalo de cumpleaños, tarjeta de sellos y sorpresas cuando vuelves.',
@@ -125,33 +125,6 @@ const T = {
           'Cada restaurante decide cómo premiar a sus clientes.',
         ],
         ['Bilingüe de verdad', 'Español e inglés en todo: apps, menús, recibos y soporte.'],
-        [
-          'Divoox AI',
-          'Un asistente que vigila cada pedido y responde dudas con los datos reales. Muy pronto.',
-        ],
-      ],
-    },
-    ideas: {
-      titulo: 'Lo que viene',
-      texto: 'Ideas en las que estamos trabajando para las próximas ciudades:',
-      items: [
-        [
-          'Motos eléctricas en la flota',
-          'Menos gasto por kilómetro para el repartidor y menos ruido en el barrio.',
-        ],
-        [
-          'Base Divoox en cada ciudad',
-          'Un punto para cargar el celular, descansar y recibir soporte en persona.',
-        ],
-        [
-          'Seguro para los repartidores',
-          'Cobertura durante las entregas incluida en el plan de cada ciudad.',
-        ],
-        [
-          'Embajadores de barrio',
-          'Clientes que recomiendan a su restaurante favorito y ganan créditos cuando entra.',
-        ],
-        ['Divoox para empresas', 'Almuerzos para oficinas con una sola factura al mes.'],
       ],
     },
     preguntas: {
@@ -159,7 +132,7 @@ const T = {
       items: [
         [
           '¿En qué ciudades está Divoox?',
-          'Empezamos en Miami y abrimos ciudad por ciudad. En el pie de esta página están todos los países y ciudades, con su estado.',
+          'Abrimos ciudad por ciudad. En el pie de esta página están todos los países y ciudades, con su estado.',
         ],
         [
           '¿Cuánto cobra Divoox a los restaurantes?',
@@ -185,7 +158,7 @@ const T = {
     etiqueta: 'How it works',
     titulo: 'How Divoox works',
     intro:
-      'Divoox is a delivery startup: an app to order food delivery (with groceries, pharmacy, package delivery, and motorbike or car rides coming soon) built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
+      'Divoox is a delivery startup: an app to order food delivery built so all three win: the hungry customer, the neighborhood restaurant, and the driver. Here we explain everything, no fine print: how you order, how a restaurant sells, how a driver earns, where every dollar goes, and how we launch a new city from scratch.',
     indice: 'On this page',
     tres: {
       titulo: 'Three people, one delivery',
@@ -198,7 +171,7 @@ const T = {
           puntos: [
             'Open the app, see the restaurants open near you, and pick one.',
             'Before you pay you see the full breakdown: food, delivery, service, and tip. No surprises.',
-            'Pay inside the app with your card, without leaving to another page; it stays saved if you want. Apple Pay and Google Pay, coming soon.',
+            'Pay inside the app with your card, without leaving to another page; it stays saved if you want.',
             'Follow your order live on the map, from the kitchen to your door.',
             'If something in your order runs out, the restaurant asks you before making it: you decide, and you don’t pay for what doesn’t arrive.',
             'Your favorite restaurant rewards you: a birthday gift, a punch card, and surprises when you come back.',
@@ -292,30 +265,6 @@ const T = {
           'Each restaurant decides how to reward its customers.',
         ],
         ['Truly bilingual', 'English and Spanish everywhere: apps, menus, receipts, and support.'],
-        [
-          'Divoox AI',
-          'An assistant that watches every order and answers questions with real data. Coming soon.',
-        ],
-      ],
-    },
-    ideas: {
-      titulo: 'What’s next',
-      texto: 'Ideas we’re working on for the next cities:',
-      items: [
-        [
-          'Electric motorbikes in the fleet',
-          'Lower cost per mile for drivers and less noise in the neighborhood.',
-        ],
-        [
-          'A Divoox hub in every city',
-          'A place to charge your phone, rest, and get support in person.',
-        ],
-        ['Insurance for drivers', 'Coverage during deliveries included in each city’s plan.'],
-        [
-          'Neighborhood ambassadors',
-          'Customers who recommend their favorite restaurant and earn credit when it joins.',
-        ],
-        ['Divoox for business', 'Office lunches with a single monthly invoice.'],
       ],
     },
     preguntas: {
@@ -323,7 +272,7 @@ const T = {
       items: [
         [
           'Which cities is Divoox in?',
-          'We start in Miami and open city by city. The footer of this page lists every country and city with its status.',
+          'We open city by city. The footer of this page lists every country and city with its status.',
         ],
         [
           'How much does Divoox charge restaurants?',
@@ -453,15 +402,6 @@ export function ComoFunciona({ idioma }: { idioma: Idioma }) {
               <li key={titulo}>
                 <h3>{titulo}</h3>
                 <p>{texto}</p>
-              </li>
-            ))}
-          </ul>
-          <h3>{t.ideas.titulo}</h3>
-          <p>{t.ideas.texto}</p>
-          <ul className="como-ideas">
-            {t.ideas.items.map(([titulo, texto]) => (
-              <li key={titulo}>
-                <strong>{titulo}.</strong> {texto}
               </li>
             ))}
           </ul>
