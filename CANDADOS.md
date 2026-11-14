@@ -3467,7 +3467,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 
 - **Qué pasaba:** la cámara dispara `onBarcodeScanned` varias veces seguidas. La primera lectura verificaba el código y, si la foto ya estaba, el pedido salía (`en_camino`); la segunda llamada a `/verificar` encontraba el pedido fuera de `listo/aceptado` y dejaba «Este pedido no está contigo.» en rojo después del éxito.
 - **Qué se hizo:** la app del repartidor tiene una guarda de un solo disparo (`qrLeido`), que se rearma al abrir el escáner. En el servidor, `/repartidor/pedidos/:id/verificar` acepta también un pedido suyo ya `en_camino`: con el código correcto responde `{ ok, correcto, salio: true }` sin escribir nada. Un código equivocado o un repartidor ajeno siguen con 409.
-- **Pruebas:** `operacion.test.ts` («los 4 caracteres del número también valen…», con la segunda lectura) y `qrUnaVezApp.test.ts`, comprobadas en rojo.
+- **Pruebas:** `operacion.test.ts` («los 4 caracteres del número también valen…», con la segunda lectura), «C-QR-UNA-VEZ: ya en camino, un segundo escaneo no reescribe nada ni vuelve a avisar» (13 nov: compara la fila del pedido, la bitácora, los hitos, las evidencias y los avisos antes y después; en rojo si la segunda lectura pasa por la salida del pedido y esta repite el aviso) y `qrUnaVezApp.test.ts`, comprobadas en rojo.
 - **No tocar:** no quitar la guarda ni el caso `en_camino` del verificador.
 
 ### C-PIN-SIN-FOTO: un pedido «en mano con PIN» no se entrega con foto

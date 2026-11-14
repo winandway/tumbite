@@ -1260,6 +1260,63 @@ describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que s
     ).toBe(409);
   });
 
+  it('C-QR-UNA-VEZ: ya en camino, un segundo escaneo no reescribe nada ni vuelve a avisar al cliente', async () => {
+    const { m, rep, id } = await hastaListo();
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const enviados: string[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      enviados.push(String(init.body));
+      return new Response(JSON.stringify({ data: [{ status: 'ok' }] }), { status: 200 });
+    });
+    try {
+      const yo = await m.DB.prepare('SELECT cliente_id FROM pedidos WHERE id = ?')
+        .bind(id)
+        .first<{ cliente_id: string }>();
+      expect(yo?.cliente_id).toBeTruthy();
+      await m.DB.prepare('INSERT INTO dispositivos (token, usuario_id) VALUES (?, ?)')
+        .bind('ExponentPushToken[qr-una-vez]', yo?.cliente_id)
+        .run();
+      await m.foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, rep.token, {
+        lat: 25.7701,
+        lng: -80.1901,
+      });
+      await m.llamar(
+        'POST',
+        `/datos/repartidor/pedidos/${id}/verificar`,
+        { codigo: id },
+        rep.token,
+      );
+      expect(await estado(m, id)).toBe('en_camino');
+      const foto = async () => ({
+        pedido: await m.DB.prepare('SELECT * FROM pedidos WHERE id = ?').bind(id).first(),
+        bitacora: await m.DB.prepare('SELECT * FROM bitacora_pedidos WHERE pedido_id = ?')
+          .bind(id)
+          .all(),
+        hitos: await m.DB.prepare('SELECT * FROM hitos_pedido WHERE pedido_id = ?').bind(id).all(),
+        evidencias: await m.DB.prepare(
+          'SELECT tipo, confirmada_en FROM evidencias WHERE pedido_id = ?',
+        )
+          .bind(id)
+          .all(),
+      });
+      const antes = await foto();
+      const avisosAntes = enviados.length;
+      expect(avisosAntes).toBeGreaterThan(0);
+      const otraVez = await m.llamar(
+        'POST',
+        `/datos/repartidor/pedidos/${id}/verificar`,
+        { codigo: id },
+        rep.token,
+      );
+      expect(otraVez.estado).toBe(200);
+      expect(otraVez.datos).toEqual({ ok: true, correcto: true, salio: true });
+      expect(await foto()).toEqual(antes);
+      expect(enviados.length).toBe(avisosAntes);
+    } finally {
+      usarTransporteAvisos(null);
+    }
+  });
+
   it('C-FOTO-RECOGIDA-REPETIDA: la foto de la bolsa mandada dos veces (a la vez o tras un corte) responde ok y sale una sola vez', async () => {
     // Lo encontró el simulador de compras (13 nov 2026): con el código ya leído, la segunda foto
     // respondía «Este pedido ya cambió de estado» (a la vez) o «todavía no marcó listo» (después).
