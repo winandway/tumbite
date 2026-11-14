@@ -40,6 +40,7 @@ import {
   usaMillas,
   LATIDO_UBICACION_MS,
   cuerpoUbicacion,
+  marcarRecibida,
   paraEnviarUbicacion,
   modoRastreo,
   tocaMandarSegunModo,
@@ -778,11 +779,12 @@ export function Inicio() {
     void Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, distanceInterval: 30, timeInterval: 10_000 },
       (p) => {
-        ultimaLectura.current = p;
+        // Revisión 2 (C-LATIDO-UBICACION): marcada con el reloj del celular al recibirla.
+        ultimaLectura.current = marcarRecibida(p);
         setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
         setPrecision(p.coords.accuracy ?? null);
         setGpsSimulado(p.mocked === true);
-        void mandar(p);
+        void mandar(ultimaLectura.current);
       },
     ).then((s) => {
       if (vivo) vigilante.current = s;
@@ -796,7 +798,7 @@ export function Inicio() {
         // Se pide una lectura NUEVA (quieto, el GPS no avisa nada). Si el GPS no da, se manda la
         // última con su hora real y el servidor no la toma por señal viva (C-LATIDO-UBICACION).
         const p =
-          (await ubicacionConLimite()) ??
+          (await ubicacionConLimite().then((x) => x && marcarRecibida(x))) ??
           ultimaLectura.current ??
           (await Location.getLastKnownPositionAsync().catch(() => null));
         if (!vivo || !p) return;

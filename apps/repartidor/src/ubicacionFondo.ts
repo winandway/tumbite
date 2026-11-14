@@ -5,6 +5,7 @@ import { URL_SERVIDOR, leerTokenGuardado } from '@tumbite/movil';
 import {
   colaUbicacion,
   cuerpoUbicacion,
+  marcarRecibida,
   paraEnviarUbicacion,
   necesitaExplicacionPrevia,
   tocaMandarSegunModo,
@@ -42,7 +43,8 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
   const { locations } = data as { locations: Location.LocationObject[] };
   const ultima = locations.at(-1);
   if (!ultima) return;
-  const cuerpo = cuerpoUbicacion(ultima);
+  // Revisión 2: la edad se mide con el reloj del celular desde que llega aquí, no con la hora del GPS.
+  const cuerpo = cuerpoUbicacion(marcarRecibida(ultima));
   const pendiente = cola.tomar();
   // C-LATIDO-UBICACION: Android entrega una lectura cada 15 s aunque esté quieto; se manda solo si
   // toca según el modo (activo cada 25 m, libre cada 250 m) o pasaron 2 minutos. Si quedó una

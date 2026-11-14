@@ -4088,6 +4088,24 @@ describe('C-SEGUIMIENTO-HONESTO', () => {
     expect((await senal()).senalPerdida).toBe(false);
   });
 
+  it('C-LATIDO-UBICACION (revisión 2): la edad medida con un solo reloj manda; negativa o de más de un día cuenta como fresca', async () => {
+    const { m, repartidor } = await escenario();
+    const rep = await repartidor('Rafa Reloj', 25.781, -80.201);
+    const enviar = (edadMs: number) =>
+      m.llamar(
+        'POST',
+        '/datos/repartidor/ubicacion',
+        { lat: 25.781, lng: -80.201, precision: 8, edadMs },
+        rep.token,
+      );
+    expect((await enviar(180_000)).datos.lecturaVieja).toBe(true);
+    for (const edad of [5_000, -2_000, 3 * 86_400_000]) {
+      const r = await enviar(edad);
+      expect(r.estado).toBe(200);
+      expect(r.datos.lecturaVieja).toBeUndefined();
+    }
+  });
+
   it('C-LATIDO-UBICACION: una app vieja que no manda la hora de la lectura sigue como antes', async () => {
     const { m, repartidor } = await escenario();
     const rep = await repartidor('Rafa Viejo', 25.781, -80.201);
