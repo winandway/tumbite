@@ -70,4 +70,21 @@ describe('billetera del restaurante: retiros (Fase 0)', () => {
     expect(screen.getByText(/en pausa/)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('0.00')).not.toBeInTheDocument();
   });
+  it('C-DECISIONES-MERCADO: dice el mínimo de 10 dólares y no pide un retiro menor', async () => {
+    const pedidos: string[] = [];
+    servidor({ estado: 'enviado' });
+    const f = globalThis.fetch;
+    vi.stubGlobal('fetch', (url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') pedidos.push(String(url));
+      return f(url, init);
+    });
+    render(<Billetera usuario={usuario} idioma="es" />);
+    expect(await screen.findByText('Mínimo $10.00 por retiro.')).toBeTruthy();
+    await userEvent.type(screen.getByPlaceholderText('0.00'), '9.99');
+    await userEvent.click(screen.getByRole('button', { name: /Retirar/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Mínimo $10.00 por retiro.');
+    expect(pedidos).toEqual([]);
+    // El borrador del monto se queda (regla de formularios): se limpia para la prueba siguiente.
+    localStorage.clear();
+  });
 });

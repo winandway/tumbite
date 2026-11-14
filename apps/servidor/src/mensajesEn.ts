@@ -247,7 +247,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'El restaurante ya está preparando tu pedido y no se puede cancelar. Si hay un problema, repórtalo y te ayudamos.',
     'The restaurant is already preparing your order, so it can’t be canceled. If something is wrong, report it and we’ll help you.',
   ],
-  ['El retiro mínimo es de 1 dólar.', 'The minimum withdrawal is $1.'],
+  ['El retiro mínimo es de 10 dólares.', 'The minimum withdrawal is $10.'],
   [
     'Esa ciudad no existe. Créala primero en Zonas.',
     'That city doesn’t exist. Create it first in Zones.',
