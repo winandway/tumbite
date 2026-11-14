@@ -61,6 +61,7 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
         titulo: 'Paquetes por tamaño y foto de entrega',
         resumen:
           'Recibes los envíos que caben en tu vehículo, y puedes dejar una foto al entregar.',
+        preguntas: ['¿Qué paquetes me llegan con moto?', '¿Cómo dejo una foto de la entrega?'],
         explicacion: [
           'Cada envío tiene un tamaño. Con moto recibes sobres y paquetes pequeños; si tu moto tiene cajón o baúl, también medianos. Con carro recibes todos.',
           'Para recibir medianos en moto, marca «Mi moto tiene cajón o baúl» al registrar tu moto.',
@@ -70,7 +71,7 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
           'Registra tu moto y marca si tiene cajón.',
           'Acepta el envío y toma la foto del paquete al recogerlo.',
           'Al llegar, escribe el PIN de quien recibe y, si quieres, deja una foto de la entrega.',
-          'Toca «Terminar».',
+          'Toca «Entregar el paquete».',
         ],
       },
     ],
@@ -124,6 +125,10 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
         id: 'driver-package-size-photo',
         titulo: 'Packages by size and delivery photo',
         resumen: 'You get deliveries that fit your vehicle, and you can leave a photo at drop-off.',
+        preguntas: [
+          'Which packages can I get on a motorcycle?',
+          'How do I leave a delivery photo?',
+        ],
         explicacion: [
           'Every delivery has a size. On a motorcycle you get envelopes and small packages; if your motorcycle has a delivery box, medium ones too. By car you get all sizes.',
           'To get medium packages on a motorcycle, check “My motorcycle has a delivery box” when you register it.',
@@ -133,7 +138,7 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
           'Register your motorcycle and check whether it has a delivery box.',
           'Accept the delivery and take the package photo at pickup.',
           'When you arrive, enter the recipient’s PIN and, if you want, leave a delivery photo.',
-          'Tap “Finish”.',
+          'Tap “Deliver the package.”',
         ],
       },
     ],

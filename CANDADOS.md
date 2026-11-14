@@ -4217,3 +4217,21 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se vio:** «Abrir un servicio en una ciudad» (panel del equipo) salía en 1440 de ancho con las casillas sin estilo, en línea con sus etiquetas; el aviso decía «Comida quedó abierto»; en la ruta de Flex «Llegada estimada» numeraba dos veces («1. 1. RUTA-…»); en la página de rastreo el botón flotante «¿Preguntas?» tapaba el final del historial.
 - **Arreglo:** clase `formulario-apilado` en `estilos.css` (etiqueta arriba, casilla a lo ancho, como `.campo`), puesta en el formulario de `SuperMoto.tsx`; el aviso dice «Se abrió <servicio> en <ciudad>»; `PantallasRutas.tsx` pasa a `RecorridoCalles` el nombre de la parada sin el número (la lista `<ol>` ya numera); `.seguimiento` deja 96 px abajo para el botón flotante.
 - **Pruebas:** `e2e/recorrido/formularioApilado.spec.ts` (1440 y 375: cada casilla debajo de su etiqueta, dentro del formulario, sin salirse de lado; rojo comprobado quitando la clase), `flex/RecorridoCalles.test.tsx` (sin `p.orden` en los nombres) y `SuperMoto.test.tsx` (texto del aviso).
+
+## C-VIAJE-PROPINA-MANO · Con efectivo o pago móvil, la propina se da en mano (14 nov 2026) — Venezuela y EE. UU. (Carro, Moto, Envíos)
+
+- **Qué es:** como inDrive y Ridery, la app no cobra propina cuando el viaje se paga en efectivo o por pago móvil (no hay cobro por saldo); al terminar dice «Si quieres dejar propina, dásela a tu conductor» (en un envío, «al recoger el paquete»). La propina con tarjeta (C-VIAJE-PROPINA) sigue igual.
+- **Dónde:** `apps/cliente/src/viajes/ViajeEnCurso.tsx` (`testID="viaje-propina-mano"`), textos `propinaEnMano` en `apps/cliente/src/viajes/textos.ts`. Prueba: `packages/compartido/src/envioTextos.test.ts`.
+
+## C-DOCS-SEMANA · Las guías de lo construido en la semana, publicadas con capturas reales (14 nov 2026) — todos los países
+
+- **Qué es:** las guías públicas de la semana del 9 al 14 de noviembre: Comida en Venezuela (pagar al recibir, «sí me llegó», saldo para comisiones, cliente que no aparece) en `apps/panel/src/sitio/docs/semana.ts`, y Divoox Flex y Envíos de A a B en `semanaFlexEnvios.ts`. Cada lista va al final de su sección de Docs (`guias.ts` las suma). El 14 nov en la noche se publicaron desde su borrador «El tamaño de tu paquete» (`package-size`) y «Paquetes por tamaño y foto de entrega» (`driver-package-size-photo`), con capturas reales rehechas con `scripts/recorrido/capturas-envios.mjs` (pantallas de envío con sus textos propios, C-ENVIO-TEXTOS). «Reservar un viaje o un envío para más tarde» (`schedule-ride`) sigue en `borradores/viajesProgramadosYEnvios.ts` hasta tener su captura real.
+- **Cómo se rehacen las capturas:** recorrido local encendido (`node scripts/recorrido/preparar.mjs` y los tres servidores del `playwright.recorrido.config.ts`), luego el guion `capturas-*.mjs` y `cwebp -q 82 -resize 540 0` solo de las que cambiaron (las originales en `docs/capturas/recorrido/`).
+- **Candado:** `apps/panel/src/sitio/docs/guiasSemana.test.ts` (los dos idiomas con los mismos ids y pasos, capturas que existen, preguntas «¿Cómo hago…?», nada interno ni «Pronto», ni Miami ni Caracas) y `guiasPublicas.test.tsx` (tres capturas o más cuando la guía tiene varios pasos).
+- **No tocar:** no publicar una guía sin capturas reales (regla de Richard del 1 nov).
+
+## C-DOCS-BUSCADOR · El buscador de Docs encuentra con palabras normales (14 nov 2026) — todos los países
+
+- **Qué es:** «pago movil» encuentra «Pago móvil», «taxi» encuentra Carro: el buscador de Docs compara sin acentos ni mayúsculas, por palabras sueltas y sin palabras de relleno («cómo», «de», «the»…), en título, resumen, preguntas y texto de cada guía.
+- **Dónde:** `apps/panel/src/sitio/docs/buscar.ts` (`normalizar`, `palabrasDeBusqueda`, `coincide`), usado por `Docs.tsx` en cada tecla (filtrar es barato, sin memoria).
+- **Candado:** `guiasSemana.test.ts`, bloque «C-DOCS-BUSCADOR» (taxi, carro, pago movil, mobile payment, recarga en los dos idiomas).

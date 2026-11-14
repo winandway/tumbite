@@ -9,6 +9,8 @@ import type { Guia, SeccionDocs } from './guias';
  * El Vigía, Mérida), con datos neutros. Español e inglés con los mismos ids, el mismo número de
  * párrafos, capturas y pasos, en el mismo orden.
  */
+import { BORRADORES_VIAJES_2 } from './borradores/viajesProgramadosYEnvios';
+
 const c = (nombre: string, idioma: Idioma, alt: string, pie: string) => ({
   src: `/docs/recorrido-${nombre}-${idioma}.webp`,
   alt,
@@ -783,3 +785,108 @@ export const GUIAS_FLEX_ENVIOS: Record<Idioma, Partial<Record<SeccionDocs['id'],
     ],
   },
 };
+
+/**
+ * C-DOCS-SEMANA (14 nov 2026, noche): «El tamaño de tu paquete» y «Paquetes por tamaño y foto de
+ * entrega» se publican desde su borrador con capturas REALES (capturas-envios.mjs). «Reservar un viaje
+ * para más tarde» sigue en borrador hasta tener su captura real.
+ */
+const CAPTURAS_TAMANO = {
+  es: {
+    cliente: [
+      c(
+        'envios-cliente-precio',
+        'es',
+        'Divoox Envíos con la dirección de recogida y de entrega y el precio fijo.',
+        'Primero, las dos direcciones y el precio.',
+      ),
+      c(
+        'envios-cliente-paquete',
+        'es',
+        'El formulario del envío con el tamaño del paquete elegido (sobre, pequeño, mediano o grande) y qué vehículos lo llevan.',
+        'Elige el tamaño: debajo dice quién lo puede llevar.',
+      ),
+      c(
+        'envios-cliente-pin',
+        'es',
+        'El envío pedido, buscando conductor, con el PIN de entrega para quien recibe.',
+        'Listo: tu envío busca un conductor que pueda llevarlo.',
+      ),
+    ],
+    conductor: [
+      c(
+        'envios-driver-oferta',
+        'es',
+        'La oferta de un envío de paquete en Divoox Driver con la ganancia, el recorrido y el botón Aceptar envío.',
+        'Te llegan los envíos que caben en tu vehículo.',
+      ),
+      c(
+        'envios-driver-foto',
+        'es',
+        'En la recogida, el botón para tomar la foto del paquete.',
+        'Al recoger, la foto del paquete.',
+      ),
+      c(
+        'envios-driver-pin',
+        'es',
+        'Llevando el paquete, con el PIN de entrega, el botón Agregar foto de la entrega y el botón Entregar el paquete.',
+        'En la entrega: el PIN y, si quieres, la foto.',
+      ),
+    ],
+  },
+  en: {
+    cliente: [
+      c(
+        'envios-cliente-precio',
+        'en',
+        'Divoox Delivery with the pickup and drop-off addresses and the fixed price.',
+        'First, both addresses and the price.',
+      ),
+      c(
+        'envios-cliente-paquete',
+        'en',
+        'The delivery form with the package size selected (envelope, small, medium, or large) and which vehicles can take it.',
+        'Pick the size: below it says who can carry it.',
+      ),
+      c(
+        'envios-cliente-pin',
+        'en',
+        'The delivery requested, looking for a driver, with the delivery PIN for the recipient.',
+        'Done: your delivery is looking for a driver who can carry it.',
+      ),
+    ],
+    conductor: [
+      c(
+        'envios-driver-oferta',
+        'en',
+        'A package delivery offer in Divoox Driver with the earnings, the trip, and the Accept delivery button.',
+        'You get deliveries that fit your vehicle.',
+      ),
+      c(
+        'envios-driver-foto',
+        'en',
+        'At pickup, the button to take a photo of the package.',
+        'At pickup, the package photo.',
+      ),
+      c(
+        'envios-driver-pin',
+        'en',
+        'Taking the package, with the delivery PIN, the Add a delivery photo button, and the Deliver the package button.',
+        'At drop-off: the PIN and, if you want, a photo.',
+      ),
+    ],
+  },
+};
+
+const publicar = (
+  destino: Partial<Record<SeccionDocs['id'], Guia[]>>,
+  borrador: { cliente: Guia[]; conductor: Guia[] },
+  capturas: (typeof CAPTURAS_TAMANO)['es'],
+) => {
+  const tamano = borrador.cliente.find((g) => g.id === 'package-size');
+  const conductor = borrador.conductor.find((g) => g.id === 'driver-package-size-photo');
+  if (tamano) destino.ordering?.push({ ...tamano, capturas: [...capturas.cliente] });
+  if (conductor) destino.drivers?.push({ ...conductor, capturas: [...capturas.conductor] });
+};
+publicar(GUIAS_FLEX_ENVIOS.es, BORRADORES_VIAJES_2.es, CAPTURAS_TAMANO.es);
+publicar(GUIAS_FLEX_ENVIOS.en, BORRADORES_VIAJES_2.en, CAPTURAS_TAMANO.en);
