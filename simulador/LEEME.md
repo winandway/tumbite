@@ -22,6 +22,7 @@ Opciones (van después de `--`):
 | `--solo "rechaza,PIN"` | Solo los escenarios cuyo nombre contiene alguno de esos textos         |
 | `--etiqueta diario`    | Solo el subconjunto que corre cada día contra el sitio de pruebas      |
 | `--etiqueta moto`      | Solo Divoox Moto en Venezuela (efectivo, pago móvil y sin saldo)       |
+| `--etiqueta venezuela` | Comida en Venezuela (El Vigía, en efectivo, comisión del saldo)        |
 | `--semilla 1234`       | Repite una corrida: mismos nombres, mismas rutas de GPS, mismas manías |
 
 Contra el sitio de pruebas lo corre el flujo de GitHub `simulador.yml` (manual y una vez al día), con `SIMULADOR_URL` y `SIMULADOR_SECRETO`. Solo acepta `staging.tumbite.com` o `tumbite-pruebas.sitios.dev`: nunca producción.

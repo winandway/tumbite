@@ -3841,3 +3841,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
   - El equipo es su propio punto de venta en dólares para El Vigía (`moneda: 'USD'`).
 - **Prueba:** `apps/servidor/src/rutas/comidaVenezuelaCircuito.test.ts` (5): efectivo de punta a punta con comisión una sola vez y conciliado; pago móvil solo a quien tiene cuenta y «sí me llegó» conciliado; «no me llegó» con caso y corrección única; sin saldo no hay oferta y aceptar da 409 con el porqué; cancelar devuelve lo apartado. En rojo antes de construir (sin pago-movil, sin `pedidosAlcanzan`, con la oferta de pago móvil yendo a quien no tiene cuenta).
 - **Qué NO tocar:** nada de «verificado por el banco»; no cerrar un «no me llegó» como no pagado sin soporte; no cobrar la comisión fuera de la conciliación.
+
+## C-COMIDA-VE-PUNTA-A-PUNTA · Guion y simulador de comida en Venezuela (13 nov 2026) — Venezuela
+
+- **Qué es:** `scripts/staging/probar-comida-venezuela.mjs` corre en cada rama `fase-*` (paso de `pruebas-rama.yml`) contra el sitio de pruebas, y también contra local. Por la API, como las apps: abre Comida en El Vigía (paso del panel), registra y aprueba el restaurante de pruebas con su menú, recarga en dólares en el punto del equipo, pedido en efectivo de punta a punta con la comisión una sola vez y conciliado, el repartidor sin saldo sin oferta, un pedido cancelado que devuelve lo apartado, y pedido por pago móvil con «sí me llegó». Manda `x-vuelta-pruebas` y se frena con el presupuesto.
+- **Cuentas fijas:** `apps/servidor/src/rutas/pruebasComidaVe.ts` (`/datos/interno/pruebas/comida-ve/armar` y `limpiar`, solo en pruebas o local y con el secreto del reloj): pases de 30 minutos para `zz-cmve-c/r/k/s/a`, la foto de control del día marcada (en un guion no hay cámara). Nunca borra saldo, pedidos ni libro.
+- **Simulador:** `simulador/divoox/comidaVe.ts`, etiqueta `venezuela` («Comida Venezuela en efectivo»).
+- **Prueba:** `pruebasComidaVe.test.ts` (2). Guion verde dos veces seguidas en local (13 nov, la segunda reutilizando las cuentas y el saldo); simulador `--etiqueta venezuela` 2/2 en verde, 362 filas.
+- **No tocar:** no borrar filas de `libro` en la limpieza; no apuntar el guion a producción (se niega).
