@@ -25,7 +25,7 @@ import { sentencias } from '../migraciones/sentencias';
 import { aplicarLote } from './interno';
 import { TAREAS_RELOJ, correrRelojUnaVez, tomarPedidoComida } from './operacion';
 import { aceptarOperacion, liberarViaje } from '../operaciones';
-import { type TareaReloj, claveMarca, vueltasMarcadas } from '../reloj';
+import { RELOJ_PRUEBAS_EN_PAUSA, type TareaReloj, claveMarca, vueltasMarcadas } from '../reloj';
 import { vigilarPedidos } from '../manager';
 import { DISPARADORES_SERVICIOS, saludServicios } from './servicios';
 import { cuentaVuelta } from '../vueltaPruebas';
@@ -1194,6 +1194,8 @@ diagnostico.post('/interno/diagnostico/vivo', async (c) => {
     return c.json({
       posiciones: pos.results,
       reloj: reloj.map((r) => ({ clave: `reloj:${r.ventana}`, origen: `origen:${r.origen}` })),
+      // C-RELOJ-PRUEBAS-PAUSA: con el reloj de pruebas en pausa no hay vueltas que comprobar.
+      relojEnPausa: RELOJ_PRUEBAS_EN_PAUSA,
     });
   }
   const todos = Object.values(ids);
