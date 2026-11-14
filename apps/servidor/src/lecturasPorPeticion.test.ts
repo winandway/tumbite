@@ -351,6 +351,67 @@ describe('C-LECTURAS-CIUDAD · la pantalla en vivo de la ciudad de pruebas lee s
   });
 });
 
+describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de filas', () => {
+  it('S2, S4, S11, S12, L1, F1, F2, F3, migraciones y reloj leen por debajo de su tope con volumen', async () => {
+    const { m, medidor } = await escenario();
+    // Stripe de mentira con las formas que piden L1 y el reloj (intentos, reembolsos, listas).
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(
+          JSON.stringify({
+            id: 'pi_x',
+            status: 'succeeded',
+            amount_received: 0,
+            client_secret: 's',
+            data: [],
+          }),
+          { status: 200 },
+        ),
+    );
+    await m.llamar('GET', '/datos/version');
+    const pedir = (ruta: string, cuerpo: unknown = {}) =>
+      medidor.medir(() =>
+        m.llamar('POST', `/datos/interno/diagnostico/${ruta}`, cuerpo, undefined, {
+          'x-reloj-secreto': SEC,
+        }),
+      );
+    // Topes con la base de volumen (filas estimadas con el plan; antes del arreglo del 13 nov:
+    // L1 50.497, F2 100.982, F3 cerrar 57.443). F2 incluye una vuelta REAL del reloj, con la
+    // conciliación del día entero (una vez al día) y la suma del libro.
+    const topes: [string, number, unknown?][] = [
+      ['s2', 200],
+      ['s4', 13_000], // 20 × «LIMIT 50» que el estimador cuenta como 600 (lee 50)
+      ['s11', 200],
+      ['s12', 200],
+      ['l1', 300],
+      ['f1', 2_000],
+      ['migraciones', 5_000, { paso: 'verificar' }],
+      ['migraciones-prueba', 16_000],
+      ['f2', 55_000],
+      ['reloj', 7_000],
+    ];
+    const informe: string[] = [];
+    for (const [ruta, tope, cuerpo] of topes) {
+      const r = await pedir(ruta, cuerpo);
+      informe.push(`${ruta}: ${r.total}`);
+      expect(r.resultado.estado, ruta).toBe(200);
+      expect(
+        r.total,
+        `${ruta} leyó ${r.total} (tope ${tope}):\n${culpables(r.lecturas)}`,
+      ).toBeLessThanOrEqual(tope);
+    }
+    const f3 = await pedir('f3/preparar', { conductores: 3 });
+    const sufijo = (f3.resultado as { datos: { sufijo?: string } }).datos.sufijo;
+    expect(sufijo).toBeTruthy();
+    const cerrar = await pedir('f3/cerrar', { sufijo });
+    expect(
+      cerrar.total,
+      `f3/cerrar leyó ${cerrar.total}:\n${culpables(cerrar.lecturas)}`,
+    ).toBeLessThanOrEqual(5_000);
+  }, 120_000);
+});
+
 /** Una base que informa filas leídas como D1 (la de pruebas no lo hace). */
 function baseQueInforma(db: D1Database, porConsulta: number): D1Database {
   const envolver = (s: D1PreparedStatement): D1PreparedStatement =>

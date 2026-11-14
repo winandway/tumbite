@@ -262,6 +262,10 @@ const INDICES = [
   // Solo las cuentas viejas sin teléfono único (de antes del 29 oct): las nuevas no escriben aquí.
   `CREATE INDEX IF NOT EXISTS usuarios_telefono_viejo ON usuarios(${TELEFONO_DIEZ})
      WHERE telefono_canonico IS NULL AND telefono IS NOT NULL AND telefono != ''`,
+  // C-LECTURAS-VUELTA-RUTAS (13 nov 2026): el reloj devuelve cada minuto los platos agotados «por
+  // un rato» y recorría el menú entero (3.000 filas con el volumen del sitio de pruebas). Solo
+  // guarda los platos con hora de vuelta: una escritura al agotarlo con hora y otra al volver.
+  'CREATE INDEX IF NOT EXISTS platos_agotados_hasta ON platos(agotado_hasta) WHERE agotado_hasta IS NOT NULL',
 ];
 
 /**

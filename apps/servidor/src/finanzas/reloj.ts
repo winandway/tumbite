@@ -67,7 +67,8 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
   }
   // 2) Reservas huérfanas (rutas que ya no están activas).
   const huerfanas = await recuperarCobrosHuerfanos(db);
-  // 3) Invariantes del libro.
+  // 3) Invariantes del libro. C-LECTURAS-VUELTA-RUTAS: corre cada minuto; las búsquedas por prefijo
+  // de la referencia van por rango sobre el índice único que ya existía (el LIKE recorría el libro).
   // C-LECTURAS-SALUD: UNA pasada por el libro sirve a las dos piezas del canario: las billeteras
   // de empresa (como antes) y la pieza «libro» (ningún prepago, fondo de punto ni reserva en
   // negativo, de cualquier cuenta), que ahora lee este resultado en vez de recorrer el libro en
@@ -95,7 +96,8 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
     problemas.push({ tipo: 'recarga_sin_movimiento', detalle: x.id });
   const sinRecarga = await db
     .prepare(
-      `SELECT l.referencia FROM libro l WHERE l.referencia LIKE 'recarga_empresa:%'
+      `SELECT l.referencia FROM libro l
+        WHERE l.referencia >= 'recarga_empresa:' AND l.referencia < 'recarga_empresa;'
          AND NOT EXISTS (SELECT 1 FROM recargas_empresa r WHERE r.estado = 'acreditada'
            AND l.referencia IN ('recarga_empresa:' || r.id || ':prepago', 'recarga_empresa:' || r.id || ':deuda'))`,
     )
@@ -105,8 +107,10 @@ export async function conciliarFinanzas(env: Env, db: D1Database) {
   const cruce = await db
     .prepare(
       `SELECT
-         (SELECT COALESCE(-SUM(monto), 0) FROM libro WHERE bolsillo = 'reservado' AND referencia LIKE 'comision_flex_paquete:%:reservado') AS empresas,
-         (SELECT COALESCE(SUM(monto), 0) FROM libro WHERE bolsillo = 'comisiones' AND referencia LIKE 'comision_flex_paquete:%:divoox') AS divoox`,
+         (SELECT COALESCE(-SUM(monto), 0) FROM libro WHERE referencia >= 'comision_flex_paquete:' AND referencia < 'comision_flex_paquete;'
+            AND bolsillo = 'reservado' AND referencia LIKE 'comision_flex_paquete:%:reservado') AS empresas,
+         (SELECT COALESCE(SUM(monto), 0) FROM libro WHERE referencia >= 'comision_flex_paquete:' AND referencia < 'comision_flex_paquete;'
+            AND bolsillo = 'comisiones' AND referencia LIKE 'comision_flex_paquete:%:divoox') AS divoox`,
     )
     .first<{ empresas: number; divoox: number }>();
   if (Number(cruce?.empresas) !== Number(cruce?.divoox))

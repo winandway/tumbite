@@ -368,7 +368,8 @@ export async function depurarFotos(db: D1Database, almacen: R2Bucket): Promise<n
   // quedó conciliado sin diferencias. Con diferencia o reclamo abierto, es evidencia y se queda.
   const { results: tickets } = await db
     .prepare(
-      `SELECT l.pedido_id, l.ticket_clave FROM pagos_local l JOIN pedidos p ON p.id = l.pedido_id
+      // C-LECTURAS-VUELTA-RUTAS: desde pagos_local (solo cobro en mano), no recorriendo pedidos.
+      `SELECT l.pedido_id, l.ticket_clave FROM pagos_local l CROSS JOIN pedidos p ON p.id = l.pedido_id
        WHERE l.ticket_clave IS NOT NULL AND l.creado_en < datetime('now', ?) AND p.conciliacion_estado = 'conciliado'
        AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.pedido_id = l.pedido_id AND t.estado != 'cerrado')
        LIMIT 200`,

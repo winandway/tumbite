@@ -876,9 +876,16 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
       )
       .bind(pedido, libre, rest.id, ocupado)
       .run();
-    const dineroAntes = await db
-      .prepare('SELECT COUNT(*) AS n, COALESCE(SUM(monto), 0) AS s FROM movimientos')
-      .first<{ n: number; s: number }>();
+    // C-LECTURAS-VUELTA-RUTAS: el dinero de las cuentas de la prueba, por su índice (antes, la
+    // tabla entera de movimientos dos veces).
+    const dineroDe = () =>
+      db
+        .prepare(
+          'SELECT COUNT(*) AS n, COALESCE(SUM(monto), 0) AS s FROM movimientos WHERE usuario_id IN (?, ?, ?)',
+        )
+        .bind(libre, ocupado, dueno)
+        .first<{ n: number; s: number }>();
+    const dineroAntes = await dineroDe();
     const muestras = [libre, ocupado].map((id) => ({ c: id, lat: 25.81, lng: -80.13, t: ahora }));
     const r1 = await aplicarLote(db, { loteId, zona: 'US-FL-MIAMI', muestras });
     const r2 = await aplicarLote(db, { loteId, zona: 'US-FL-MIAMI', muestras });
@@ -906,9 +913,7 @@ diagnostico.post('/interno/diagnostico/f2', async (c) => {
       ok: !r2.loteNuevo && r2.aplicadas === 0,
     });
     casos.push({ nombre: 'una muestra más vieja no hace retroceder', ok: vieja.aplicadas === 0 });
-    const dineroDespues = await db
-      .prepare('SELECT COUNT(*) AS n, COALESCE(SUM(monto), 0) AS s FROM movimientos')
-      .first<{ n: number; s: number }>();
+    const dineroDespues = await dineroDe();
     casos.push({
       nombre: 'el dinero no se movió',
       ok: dineroAntes?.n === dineroDespues?.n && dineroAntes?.s === dineroDespues?.s,
@@ -1606,7 +1611,7 @@ diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
   const like = `zz-f3_-${s}%`;
   const asign = await db
     .prepare(
-      'SELECT operacion_id, conductor_id FROM asignaciones_operacion WHERE operacion_id LIKE ? AND fin IS NULL',
+      `SELECT operacion_id, conductor_id FROM asignaciones_operacion WHERE operacion_id >= 'zz-f3' AND operacion_id < 'zz-f4' AND operacion_id LIKE ? AND fin IS NULL`,
     )
     .bind(like)
     .all<{ operacion_id: string; conductor_id: string }>();
@@ -1656,31 +1661,73 @@ diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
   }
   // Limpieza completa de lo temporal (en orden, por las llaves foráneas).
   const ids = await db
-    .prepare("SELECT id FROM usuarios WHERE id LIKE ? AND id LIKE 'zz-f3%'")
+    .prepare(
+      "SELECT id FROM usuarios WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ? AND id LIKE 'zz-f3%'",
+    )
     .bind(like)
     .all<{ id: string }>();
   const usuarios = ids.results.map((r) => r.id);
   const marcas = usuarios.map(() => '?').join(',') || "''";
   await db.batch([
-    db.prepare('DELETE FROM ofertas_operacion WHERE operacion_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM eventos_operacion WHERE operacion_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM asignaciones_operacion WHERE operacion_id LIKE ?').bind(like),
+    db
+      .prepare(
+        `DELETE FROM ofertas_operacion WHERE operacion_id >= 'zz-f3' AND operacion_id < 'zz-f4' AND operacion_id LIKE ?`,
+      )
+      .bind(like),
+    db
+      .prepare(
+        `DELETE FROM eventos_operacion WHERE operacion_id >= 'zz-f3' AND operacion_id < 'zz-f4' AND operacion_id LIKE ?`,
+      )
+      .bind(like),
+    db
+      .prepare(
+        `DELETE FROM asignaciones_operacion WHERE operacion_id >= 'zz-f3' AND operacion_id < 'zz-f4' AND operacion_id LIKE ?`,
+      )
+      .bind(like),
     db
       .prepare(`DELETE FROM conductor_ocupacion WHERE conductor_id IN (${marcas})`)
       .bind(...usuarios),
-    db.prepare('DELETE FROM viajes WHERE operacion_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM operaciones WHERE id LIKE ?').bind(like),
-    db.prepare('DELETE FROM ofertas WHERE pedido_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM historial_estados WHERE pedido_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM bitacora_pedidos WHERE pedido_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM pedidos WHERE id LIKE ?').bind(like),
+    db
+      .prepare(
+        `DELETE FROM viajes WHERE operacion_id >= 'zz-f3' AND operacion_id < 'zz-f4' AND operacion_id LIKE ?`,
+      )
+      .bind(like),
+    db
+      .prepare(`DELETE FROM operaciones WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ?`)
+      .bind(like),
+    db
+      .prepare(
+        `DELETE FROM ofertas WHERE pedido_id >= 'zz-f3' AND pedido_id < 'zz-f4' AND pedido_id LIKE ?`,
+      )
+      .bind(like),
+    db
+      .prepare(
+        `DELETE FROM historial_estados WHERE pedido_id >= 'zz-f3' AND pedido_id < 'zz-f4' AND pedido_id LIKE ?`,
+      )
+      .bind(like),
+    db
+      .prepare(
+        `DELETE FROM bitacora_pedidos WHERE pedido_id >= 'zz-f3' AND pedido_id < 'zz-f4' AND pedido_id LIKE ?`,
+      )
+      .bind(like),
+    db.prepare(`DELETE FROM pedidos WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ?`).bind(like),
     db.prepare(`DELETE FROM ofertas WHERE repartidor_id IN (${marcas})`).bind(...usuarios),
     db
       .prepare(`UPDATE repartidores SET vehiculo_activo_id = NULL WHERE usuario_id IN (${marcas})`)
       .bind(...usuarios),
-    db.prepare('DELETE FROM vehiculo_documentos WHERE vehiculo_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM vehiculo_revisiones WHERE vehiculo_id LIKE ?').bind(like),
-    db.prepare('DELETE FROM vehiculos WHERE id LIKE ?').bind(like),
+    db
+      .prepare(
+        `DELETE FROM vehiculo_documentos WHERE vehiculo_id >= 'zz-f3' AND vehiculo_id < 'zz-f4' AND vehiculo_id LIKE ?`,
+      )
+      .bind(like),
+    db
+      .prepare(
+        `DELETE FROM vehiculo_revisiones WHERE vehiculo_id >= 'zz-f3' AND vehiculo_id < 'zz-f4' AND vehiculo_id LIKE ?`,
+      )
+      .bind(like),
+    db
+      .prepare(`DELETE FROM vehiculos WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ?`)
+      .bind(like),
     db
       .prepare(`DELETE FROM habilitaciones_historial WHERE conductor_id IN (${marcas})`)
       .bind(...usuarios),
@@ -1689,13 +1736,15 @@ diagnostico.post('/interno/diagnostico/f3/cerrar', async (c) => {
       .prepare(`DELETE FROM preferencias_servicio WHERE conductor_id IN (${marcas})`)
       .bind(...usuarios),
     db.prepare(`DELETE FROM repartidores WHERE usuario_id IN (${marcas})`).bind(...usuarios),
-    db.prepare('DELETE FROM restaurantes WHERE id LIKE ?').bind(like),
+    db
+      .prepare(`DELETE FROM restaurantes WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ?`)
+      .bind(like),
     ...borrarRewardsDe(db, usuarios),
     db.prepare(`DELETE FROM usuarios WHERE id IN (${marcas})`).bind(...usuarios),
   ]);
   const resto = await db
     .prepare(
-      'SELECT (SELECT COUNT(*) FROM usuarios WHERE id LIKE ?1) + (SELECT COUNT(*) FROM operaciones WHERE id LIKE ?1) + (SELECT COUNT(*) FROM pedidos WHERE id LIKE ?1) AS n',
+      `SELECT (SELECT COUNT(*) FROM usuarios WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ?1) + (SELECT COUNT(*) FROM operaciones WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ?1) + (SELECT COUNT(*) FROM pedidos WHERE id >= 'zz-f3' AND id < 'zz-f4' AND id LIKE ?1) AS n`,
     )
     .bind(like)
     .first<{ n: number }>();
@@ -2317,14 +2366,13 @@ diagnostico.post('/interno/diagnostico/l1', async (c) => {
         await stripe.post(`/payment_intents/${id}/cancel`, {}, `l1-limpia-${id}`).catch(() => null);
     }
     const lote = [];
+    // C-LECTURAS-VUELTA-RUTAS: los movimientos de las cuentas temporales por su índice de cuenta
+    // (por pedido_id no hay índice: cada borrado recorría la tabla entera).
+    lote.push(
+      db.prepare('DELETE FROM movimientos WHERE usuario_id IN (?, ?, ?)').bind(cliente, dueno, rep),
+    );
     for (const id of pedidos)
-      for (const t of [
-        'movimientos',
-        'liquidaciones',
-        'cobros',
-        'historial_estados',
-        'bitacora_pedidos',
-      ])
+      for (const t of ['liquidaciones', 'cobros', 'historial_estados', 'bitacora_pedidos'])
         lote.push(db.prepare(`DELETE FROM ${t} WHERE pedido_id = ?`).bind(id));
     for (const id of pedidos) lote.push(db.prepare('DELETE FROM pedidos WHERE id = ?').bind(id));
     lote.push(db.prepare('DELETE FROM restaurantes WHERE id = ?').bind(rest));
