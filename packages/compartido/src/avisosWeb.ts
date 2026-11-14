@@ -223,10 +223,11 @@ export async function darDeBajaAvisosWeb(api: ApiAvisos): Promise<void> {
     const sub = await reg?.pushManager.getSubscription();
     guardarLocal(LLAVE_MARCA, null);
     if (!sub) return;
-    await api
-      .pedir('DELETE', '/datos/avisos-web/suscripcion', { endpoint: sub.endpoint })
-      .catch(() => undefined);
+    // Primero se suelta en el navegador (inmediato, no depende de la red); después se avisa al
+    // servidor, que además la borra solo al cerrar la sesión.
+    const endpoint = sub.endpoint;
     await sub.unsubscribe().catch(() => false);
+    await api.pedir('DELETE', '/datos/avisos-web/suscripcion', { endpoint }).catch(() => undefined);
   } catch (e) {
     console.warn('avisos web: no se pudo dar de baja', e);
   }

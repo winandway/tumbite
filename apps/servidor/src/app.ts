@@ -118,6 +118,20 @@ app.use('*', async (c, next) => {
   await next();
 });
 app.use('*', cabecerasSeguridad);
+// C-AVISOS-WEB: el trabajo que no hace falta para responder (los avisos web) va con waitUntil.
+app.use('/datos/*', async (c, next) => {
+  let ctx: { waitUntil: (p: Promise<unknown>) => void } | null;
+  try {
+    ctx = c.executionCtx;
+  } catch {
+    ctx = null; // en las pruebas no hay contexto de ejecución
+  }
+  if (ctx) {
+    const ejecucion = ctx;
+    c.env = { ...c.env, ESPERAR_DESPUES: (p) => ejecucion.waitUntil(p) };
+  }
+  await next();
+});
 // C-PRESUPUESTO-VUELTA-PRUEBAS: las pruebas automáticas contra el sitio de pruebas tienen tope
 // de filas por vuelta y por día; en producción no hace nada.
 app.use('/datos/*', presupuestoVueltaPruebas);

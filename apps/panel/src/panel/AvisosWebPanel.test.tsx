@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AvisosWebPanel } from './AvisosWebPanel';
+import { AvisosWebPanel, darDeBajaAlSalir } from './AvisosWebPanel';
+import { api } from './api';
 
 /** C-AVISOS-WEB (14 nov 2026) — todos los países: los avisos también en el panel del restaurante. */
 const USUARIO = {
@@ -48,5 +49,42 @@ describe('C-AVISOS-WEB · panel del restaurante en computadora', () => {
     expect(readFileSync(join(raiz, 'apps/panel/package.json'), 'utf8')).toContain(
       'dist/panel/avisos-sw.js',
     );
+  });
+});
+
+describe('C-AVISOS-WEB · el panel da de baja al cerrar sesión', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('borra la suscripción de este navegador antes de salir, y sale igual si el servidor no responde', async () => {
+    const quitar = vi.fn(async () => true);
+    const suscripcion = {
+      endpoint: 'https://fcm.googleapis.com/fcm/send/abc',
+      unsubscribe: quitar,
+    };
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: {
+        getRegistration: async (alcance: string) =>
+          alcance === '/panel/'
+            ? { pushManager: { getSubscription: async () => suscripcion } }
+            : undefined,
+      },
+      configurable: true,
+    });
+    window.history.pushState(null, '', '/panel/orders');
+    const pedir = vi.spyOn(api, 'pedir').mockImplementation(() => new Promise(() => undefined));
+    vi.useFakeTimers();
+    const fin = darDeBajaAlSalir();
+    await vi.advanceTimersByTimeAsync(3500);
+    await fin; // el servidor nunca contestó y aun así terminó (tope de 3 segundos)
+    expect(pedir).toHaveBeenCalledWith('DELETE', '/datos/avisos-web/suscripcion', {
+      endpoint: suscripcion.endpoint,
+    });
+    const panel = readFileSync(join(__dirname, 'PanelApp.tsx'), 'utf8');
+    const salir = panel.slice(panel.indexOf('async function salir('));
+    expect(salir.indexOf('darDeBajaAlSalir()')).toBeGreaterThan(-1);
+    expect(salir.indexOf('darDeBajaAlSalir()')).toBeLessThan(salir.indexOf('api.salir()'));
   });
 });

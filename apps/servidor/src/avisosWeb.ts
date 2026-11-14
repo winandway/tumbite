@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from './env';
-import { type Variables, base, exigir } from './sesion';
+import { sha256 } from './cripto';
+import { type Variables, base, exigir, leerToken } from './sesion';
 import { ErrorDatos, leerCuerpo } from './validar';
 
 /**
@@ -171,14 +172,43 @@ export function avisosWebConfigurado(env: Env): boolean {
   return Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY);
 }
 
-export let ultimoErrorAvisoWeb: { cuando: string; motivo: string } | null = null;
+/**
+ * Revisión C-AVISOS-WEB: el canario mira una VENTANA, no el último error (un endpoint falso que
+ * responde 400 dejaba el rojo fijo hasta reiniciar el Worker). Se recuerdan los envíos de los
+ * últimos minutos; hay error solo si los últimos fallaron todos y a servicios distintos.
+ */
+const VENTANA_MS = 10 * 60_000;
+const FALLOS_PARA_ROJO = 2;
+let recientes: { cuando: number; host: string; ok: boolean }[] = [];
+/** Endpoints que respondieron 400/403 (en este Worker): al tercero se borran. */
+const rechazos = new Map<string, number>();
+const RECHAZOS_PARA_BORRAR = 3;
+
+function anotar(endpoint: string, ok: boolean, motivo?: string) {
+  const ahora = Date.now();
+  let host: string;
+  try {
+    host = new URL(endpoint).hostname;
+  } catch {
+    host = endpoint;
+  }
+  recientes = [
+    ...recientes.filter((r) => ahora - r.cuando < VENTANA_MS),
+    { cuando: ahora, host, ok },
+  ].slice(-20);
+  if (!ok) console.error('avisos web:', motivo ?? 'fallo');
+}
+
+/** Topes del canal web (los usan las pruebas). */
+export const avisosWebInterno = { TOPE_MS: 4000, MAX_POR_USUARIO: 10 };
 
 type Transporte = (url: string, init: RequestInit) => Promise<Response>;
 let transporte: Transporte = (u, i) => fetch(u, i);
 /** Solo para pruebas: ninguna prueba le pega a un servicio de avisos real. */
 export function usarTransporteAvisosWeb(t: Transporte | null) {
   transporte = t ?? ((u, i) => fetch(u, i));
-  ultimoErrorAvisoWeb = null;
+  recientes = [];
+  rechazos.clear();
 }
 
 /**
@@ -204,9 +234,69 @@ export function esServicioDeAvisos(endpoint: string): boolean {
 
 export type AvisoWeb = { titulo: string; cuerpo: string; datos?: Record<string, string> };
 
+/** Un envío a UNA suscripción. Devuelve 1 si el servicio lo aceptó. Nunca lanza. */
+async function enviarUno(
+  env: Env,
+  db: D1Database,
+  s: { endpoint: string; p256dh: string; auth: string },
+  texto: Uint8Array,
+): Promise<number> {
+  try {
+    const res = await transporte(s.endpoint, {
+      method: 'POST',
+      headers: {
+        authorization: await cabeceraVapid(
+          s.endpoint,
+          env.VAPID_PUBLIC_KEY as string,
+          env.VAPID_PRIVATE_KEY as string,
+          env.VAPID_SUBJECT ?? SUJETO_POR_DEFECTO,
+        ),
+        'content-encoding': 'aes128gcm',
+        'content-type': 'application/octet-stream',
+        // Un pedido de hace una hora ya no sirve: el servicio lo descarta pasado este tiempo.
+        ttl: '3600',
+        urgency: 'high',
+      },
+      body: await cifrarAvisoWeb(texto, s.p256dh, s.auth),
+      // La lista de servicios solo protege la primera llamada: una redirección NO se sigue.
+      redirect: 'manual',
+      signal: AbortSignal.timeout(avisosWebInterno.TOPE_MS),
+    });
+    if (res.status === 404 || res.status === 410) {
+      // El navegador ya no tiene esa suscripción (app quitada, permiso retirado): se borra.
+      await db.prepare('DELETE FROM suscripciones_web WHERE endpoint = ?').bind(s.endpoint).run();
+      return 0;
+    }
+    if (res.status === 400 || res.status === 403) {
+      // Mal formada o firmada con otra llave: al tercer rechazo se borra (sin escribir antes).
+      const n = (rechazos.get(s.endpoint) ?? 0) + 1;
+      rechazos.set(s.endpoint, n);
+      if (n >= RECHAZOS_PARA_BORRAR) {
+        rechazos.delete(s.endpoint);
+        await db.prepare('DELETE FROM suscripciones_web WHERE endpoint = ?').bind(s.endpoint).run();
+      }
+      anotar(s.endpoint, false, `el servicio de avisos rechazó la suscripción (${res.status})`);
+      return 0;
+    }
+    if (!res.ok) {
+      // Incluye un 3xx: con redirect manual no se sigue y cuenta como fallo.
+      anotar(s.endpoint, false, `el servicio de avisos respondió ${res.status}`);
+      return 0;
+    }
+    rechazos.delete(s.endpoint);
+    anotar(s.endpoint, true);
+    return 1;
+  } catch (e) {
+    anotar(s.endpoint, false, `no se pudo mandar: ${String(e)}`);
+    return 0;
+  }
+}
+
 /**
- * Manda el aviso a todas las apps web de la persona. Nunca lanza ni frena el flujo: un fallo queda
- * en el canario. Sin llaves, no hace nada (ni siquiera lee).
+ * Manda el aviso a todas las apps web de la persona (como mucho 10). Nunca lanza ni frena el flujo:
+ * un fallo queda en el canario. Sin llaves, no hace nada (ni siquiera lee). Si la petición trae
+ * contexto de ejecución (`ESPERAR_DESPUES`, el waitUntil del Worker), los envíos van DESPUÉS de
+ * responder y esto devuelve cuántos quedaron en camino; si no, cada llamada tiene tope de 4 s.
  */
 export async function notificarWeb(
   env: Env,
@@ -215,13 +305,14 @@ export async function notificarWeb(
   aviso: AvisoWeb,
 ): Promise<number> {
   if (!avisosWebConfigurado(env)) return 0;
-  const publica = env.VAPID_PUBLIC_KEY as string;
-  const privada = env.VAPID_PRIVATE_KEY as string;
   try {
     const { results } = await db
-      .prepare('SELECT endpoint, p256dh, auth, app FROM suscripciones_web WHERE usuario_id = ?')
+      .prepare(
+        `SELECT endpoint, p256dh, auth FROM suscripciones_web WHERE usuario_id = ?
+          ORDER BY creado_en DESC, rowid DESC LIMIT ${avisosWebInterno.MAX_POR_USUARIO}`,
+      )
       .bind(usuarioId)
-      .all<{ endpoint: string; p256dh: string; auth: string; app: string }>();
+      .all<{ endpoint: string; p256dh: string; auth: string }>();
     if (!results.length) return 0;
     const texto = enc.encode(
       JSON.stringify({
@@ -230,63 +321,40 @@ export async function notificarWeb(
         datos: aviso.datos ?? {},
       }).slice(0, MAX_TEXTO),
     );
-    const enviados = await Promise.all(
-      results.map(async (s) => {
-        try {
-          const res = await transporte(s.endpoint, {
-            method: 'POST',
-            headers: {
-              authorization: await cabeceraVapid(
-                s.endpoint,
-                publica,
-                privada,
-                env.VAPID_SUBJECT ?? SUJETO_POR_DEFECTO,
-              ),
-              'content-encoding': 'aes128gcm',
-              'content-type': 'application/octet-stream',
-              // Un pedido de hace una hora ya no sirve: el servicio lo descarta pasado este tiempo.
-              ttl: '3600',
-              urgency: 'high',
-            },
-            body: await cifrarAvisoWeb(texto, s.p256dh, s.auth),
-            signal: AbortSignal.timeout(10_000),
-          });
-          if (res.status === 404 || res.status === 410) {
-            // El navegador ya no tiene esa suscripción (app quitada, permiso retirado): se borra.
-            await db
-              .prepare('DELETE FROM suscripciones_web WHERE endpoint = ?')
-              .bind(s.endpoint)
-              .run();
-            return 0;
-          }
-          if (!res.ok) {
-            ultimoErrorAvisoWeb = {
-              cuando: new Date().toISOString(),
-              motivo: `el servicio de avisos respondió ${res.status}`,
-            };
-            console.error('avisos web:', ultimoErrorAvisoWeb.motivo);
-            return 0;
-          }
-          return 1;
-        } catch (e) {
-          ultimoErrorAvisoWeb = { cuando: new Date().toISOString(), motivo: String(e) };
-          console.error('avisos web: no se pudo mandar', e);
-          return 0;
-        }
-      }),
+    const todo = Promise.all(results.map((s) => enviarUno(env, db, s, texto))).then((r) =>
+      r.reduce<number>((n, x) => n + x, 0),
     );
-    return enviados.reduce<number>((n, x) => n + x, 0);
+    if (env.ESPERAR_DESPUES) {
+      try {
+        env.ESPERAR_DESPUES(todo);
+        return results.length;
+      } catch {
+        // Sin contexto válido: se espera aquí, con el tope de cada llamada.
+      }
+    }
+    return await todo;
   } catch (e) {
-    ultimoErrorAvisoWeb = { cuando: new Date().toISOString(), motivo: String(e) };
-    console.error('avisos web: no se pudieron leer las suscripciones', e);
+    anotar('lectura', false, `no se pudieron leer las suscripciones: ${String(e)}`);
     return 0;
   }
 }
 
-/** Canario: sin llaves «pendiente»; con un fallo reciente «error». */
+/**
+ * Canario: sin llaves «pendiente». «error» solo si los últimos envíos de los últimos minutos
+ * fallaron todos y a más de un servicio (un endpoint falso no basta para encender el rojo).
+ */
 export function saludAvisosWeb(env: Env): 'ok' | 'error' | 'pendiente' {
   if (!avisosWebConfigurado(env)) return 'pendiente';
-  return ultimoErrorAvisoWeb ? 'error' : 'ok';
+  const ahora = Date.now();
+  const ultimos = recientes.filter((r) => ahora - r.cuando < VENTANA_MS).slice(-4);
+  const fallidos: typeof ultimos = [];
+  for (let i = ultimos.length - 1; i >= 0; i--) {
+    const r = ultimos.at(i);
+    if (!r || r.ok) break;
+    fallidos.push(r);
+  }
+  const hosts = new Set(fallidos.map((r) => r.host));
+  return fallidos.length >= FALLOS_PARA_ROJO && hosts.size >= 2 ? 'error' : 'ok';
 }
 
 const esquemaSuscripcion = z.object({
@@ -319,16 +387,31 @@ rutasAvisosWeb.post('/suscripcion', async (c) => {
   if (!avisosWebConfigurado(c.env))
     throw new ErrorDatos('Los avisos en el navegador todavía no están encendidos.', undefined, 409);
   const d = await leerCuerpo(c, esquemaSuscripcion);
-  await base(c)
-    .prepare(
-      `INSERT INTO suscripciones_web (endpoint, usuario_id, app, p256dh, auth) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(endpoint) DO UPDATE SET usuario_id = excluded.usuario_id, app = excluded.app,
-         p256dh = excluded.p256dh, auth = excluded.auth
-       WHERE suscripciones_web.usuario_id != excluded.usuario_id OR suscripciones_web.app != excluded.app
-         OR suscripciones_web.p256dh != excluded.p256dh OR suscripciones_web.auth != excluded.auth`,
-    )
-    .bind(d.endpoint, u.id, d.app, d.keys.p256dh, d.keys.auth)
-    .run();
+  // La sesión que la registró: al cerrarla, vencer o borrarla, la suscripción se borra con ella
+  // (disparador suscripciones_web_sin_sesion), sin depender del navegador.
+  const token = leerToken(c);
+  const sesion = token ? await sha256(token) : null;
+  const db = base(c);
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO suscripciones_web (endpoint, usuario_id, app, p256dh, auth, sesion_id) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(endpoint) DO UPDATE SET usuario_id = excluded.usuario_id, app = excluded.app,
+           p256dh = excluded.p256dh, auth = excluded.auth, sesion_id = excluded.sesion_id
+         WHERE suscripciones_web.usuario_id != excluded.usuario_id OR suscripciones_web.app != excluded.app
+           OR suscripciones_web.p256dh != excluded.p256dh OR suscripciones_web.auth != excluded.auth
+           OR suscripciones_web.sesion_id IS NOT excluded.sesion_id`,
+      )
+      .bind(d.endpoint, u.id, d.app, d.keys.p256dh, d.keys.auth, sesion),
+    // Tope por persona: al pasarlo se borran las más viejas (nadie llena la tabla de destinos).
+    db
+      .prepare(
+        `DELETE FROM suscripciones_web WHERE usuario_id = ? AND endpoint NOT IN (
+           SELECT endpoint FROM suscripciones_web WHERE usuario_id = ?
+            ORDER BY creado_en DESC, rowid DESC LIMIT ${avisosWebInterno.MAX_POR_USUARIO})`,
+      )
+      .bind(u.id, u.id),
+  ]);
   return c.json({ ok: true });
 });
 

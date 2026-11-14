@@ -1,10 +1,12 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from './pruebas/ayuda';
 import {
   b64url,
   cabeceraVapid,
   cifrarAvisoWeb,
   desdeB64url,
+  avisosWebInterno,
+  saludAvisosWeb,
   usarTransporteAvisosWeb,
 } from './avisosWeb';
 import { notificar, usarTransporteAvisos } from './notificaciones';
@@ -277,5 +279,148 @@ describe('C-AVISOS-WEB · cabeceras', () => {
     const csp =
       (await app.request('/datos/salud', {}, {})).headers.get('Content-Security-Policy') ?? '';
     expect(/worker-src ([^;]+)/.exec(csp)?.[1]).toBe("'self'");
+  });
+});
+
+describe('C-AVISOS-WEB · revisión (bloqueantes y menores)', () => {
+  afterEach(() => {
+    usarTransporteAvisosWeb(null);
+    usarTransporteAvisos(null);
+  });
+
+  async function preparado() {
+    const v = await parVapid();
+    const m = mundo({ VAPID_PUBLIC_KEY: v.publica, VAPID_PRIVATE_KEY: v.privada });
+    const env = { VAPID_PUBLIC_KEY: v.publica, VAPID_PRIVATE_KEY: v.privada } as never;
+    return { m, env };
+  }
+  const contar = async (m: ReturnType<typeof mundo>, donde = '1 = 1') =>
+    (
+      await m.DB.prepare(`SELECT count(*) AS n FROM suscripciones_web WHERE ${donde}`).first<{
+        n: number;
+      }>()
+    )?.n;
+  const sub = async (n: number, host = 'https://fcm.googleapis.com/fcm/send/') => {
+    const nav = await navegador();
+    return {
+      endpoint: `${host}e${n}`,
+      keys: { p256dh: nav.p256dh, auth: nav.auth },
+      app: 'restaurante',
+    };
+  };
+
+  it('cerrar sesión en el servidor borra las suscripciones de ESA sesión, no las de otra', async () => {
+    const { m } = await preparado();
+    const u = await m.cuenta('restaurante');
+    const fila = await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(u.id)
+      .first<{ correo: string }>();
+    const otra = await m.llamar('POST', '/datos/cuentas/entrar', {
+      correo: fila?.correo,
+      clave: 'clave-segura-1',
+    });
+    expect(otra.estado).toBe(200);
+    const otraSesion = otra.datos.token as string;
+    await m.llamar('POST', '/datos/avisos-web/suscripcion', await sub(1), u.token);
+    await m.llamar('POST', '/datos/avisos-web/suscripcion', await sub(2), otraSesion);
+    expect(await contar(m, 'sesion_id IS NOT NULL')).toBe(2);
+    await m.llamar('POST', '/datos/cuentas/salir', {}, u.token);
+    expect(await contar(m)).toBe(1);
+    // Una sesión borrada por cualquier otro camino (vencida, cambio de clave) también.
+    await m.DB.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(u.id).run();
+    expect(await contar(m)).toBe(0);
+  });
+
+  it('como mucho 10 suscripciones por persona: al pasarlas se borran las más viejas', async () => {
+    const { m } = await preparado();
+    const u = await m.cuenta('restaurante');
+    for (let i = 0; i < 12; i++)
+      expect(
+        (await m.llamar('POST', '/datos/avisos-web/suscripcion', await sub(i), u.token)).estado,
+      ).toBe(200);
+    expect(await contar(m)).toBe(10);
+    expect(await contar(m, "endpoint LIKE '%/e0' OR endpoint LIKE '%/e1'")).toBe(0);
+  });
+
+  it('no sigue redirecciones (un 3xx es fallo) y cada llamada tiene tope de 4 segundos', async () => {
+    const { m, env } = await preparado();
+    const u = await m.cuenta('restaurante');
+    await m.llamar('POST', '/datos/avisos-web/suscripcion', await sub(1), u.token);
+    const inits: RequestInit[] = [];
+    usarTransporteAvisosWeb(async (_url, init) => {
+      inits.push(init);
+      return new Response(null, { status: 302, headers: { location: 'http://169.254.169.254/' } });
+    });
+    usarTransporteAvisos(async () => new Response(JSON.stringify({ data: [] })));
+    const r = await notificar(env, m.DB, u.id, { titulo: 't', cuerpo: 'c' });
+    expect(r.enviados).toBe(0);
+    expect(inits).toHaveLength(1);
+    expect(inits[0]?.redirect).toBe('manual');
+    expect(avisosWebInterno.TOPE_MS).toBe(4000);
+  });
+
+  it('un destino que responde 400/403 varias veces se borra; el canario no se pone rojo por uno solo', async () => {
+    const { m, env } = await preparado();
+    const u = await m.cuenta('restaurante');
+    await m.llamar('POST', '/datos/avisos-web/suscripcion', await sub(1), u.token);
+    usarTransporteAvisosWeb(async () => new Response(null, { status: 403 }));
+    usarTransporteAvisos(async () => new Response(JSON.stringify({ data: [] })));
+    for (let i = 0; i < 3; i++) await notificar(env, m.DB, u.id, { titulo: 't', cuerpo: 'c' });
+    expect(await contar(m)).toBe(0);
+    // Todos los fallos fueron del mismo servicio: no basta para encender el rojo.
+    expect(saludAvisosWeb(env)).toBe('ok');
+  });
+
+  it('el canario se pone rojo solo si fallan varios envíos seguidos a servicios distintos', async () => {
+    const { m, env } = await preparado();
+    const u = await m.cuenta('restaurante');
+    await m.llamar('POST', '/datos/avisos-web/suscripcion', await sub(1), u.token);
+    await m.llamar(
+      'POST',
+      '/datos/avisos-web/suscripcion',
+      await sub(2, 'https://web.push.apple.com/'),
+      u.token,
+    );
+    usarTransporteAvisosWeb(async (url) =>
+      url.includes('apple')
+        ? new Response(null, { status: 500 })
+        : new Response(null, { status: 201 }),
+    );
+    usarTransporteAvisos(async () => new Response(JSON.stringify({ data: [] })));
+    await notificar(env, m.DB, u.id, { titulo: 't', cuerpo: 'c' });
+    expect(saludAvisosWeb(env)).toBe('ok');
+    usarTransporteAvisosWeb(async () => new Response(null, { status: 500 }));
+    await notificar(env, m.DB, u.id, { titulo: 't', cuerpo: 'c' });
+    expect(saludAvisosWeb(env)).toBe('error');
+    // Un envío bueno lo vuelve a verde.
+    usarTransporteAvisosWeb(async () => new Response(null, { status: 201 }));
+    await notificar(env, m.DB, u.id, { titulo: 't', cuerpo: 'c' });
+    expect(saludAvisosWeb(env)).toBe('ok');
+  });
+
+  it('con contexto de ejecución, el envío web va después de responder (waitUntil)', async () => {
+    const { m, env } = await preparado();
+    const u = await m.cuenta('restaurante');
+    await m.llamar('POST', '/datos/avisos-web/suscripcion', await sub(1), u.token);
+    let liberar: (() => void) | null = null;
+    usarTransporteAvisosWeb(
+      () =>
+        new Promise((ok) => {
+          liberar = () => ok(new Response(null, { status: 201 }));
+        }),
+    );
+    usarTransporteAvisos(async () => new Response(JSON.stringify({ data: [] })));
+    const pendientes: Promise<unknown>[] = [];
+    const conCtx = {
+      ...(env as object),
+      ESPERAR_DESPUES: (p: Promise<unknown>) => pendientes.push(p),
+    };
+    // No se queda esperando al servicio de avisos.
+    await notificar(conCtx as never, m.DB, u.id, { titulo: 't', cuerpo: 'c' });
+    expect(pendientes).toHaveLength(1);
+    // El envío sigue en camino mientras la petición ya respondió; al soltarlo, termina bien.
+    await vi.waitFor(() => expect(liberar).not.toBeNull());
+    (liberar as unknown as () => void)();
+    expect(await Promise.all(pendientes)).toEqual([1]);
   });
 });

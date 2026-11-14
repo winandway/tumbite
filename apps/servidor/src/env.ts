@@ -162,6 +162,11 @@ export type Variables = z.infer<typeof esquemaEnv>;
 
 export interface Env extends Variables {
   DB?: D1Database;
+  /**
+   * C-AVISOS-WEB: el waitUntil del contexto de ejecución de la petición (lo pone app.ts). Con él,
+   * el trabajo que no hace falta para responder (los avisos web) va después de la respuesta.
+   */
+  ESPERAR_DESPUES?: (p: Promise<unknown>) => void;
   BUCKET?: R2Bucket;
   ASSETS?: Fetcher;
 }

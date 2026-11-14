@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Usuario } from '@tumbite/compartido';
 import {
   activarAvisosWeb,
+  darDeBajaAvisosWeb,
   entornoActual,
   estadoAvisosWeb,
   guardarLocal,
@@ -80,4 +81,16 @@ export function AvisosWebPanel({ usuario, idioma }: { usuario: Usuario; idioma: 
       </button>
     </div>
   );
+}
+
+/**
+ * Revisión C-AVISOS-WEB: al cerrar sesión en el panel, este navegador deja de recibir los pedidos
+ * (computadora compartida). Como mucho 3 segundos: si el servidor no contesta, se sale igual (el
+ * servidor de todos modos la borra con la sesión).
+ */
+export async function darDeBajaAlSalir(): Promise<void> {
+  await Promise.race([
+    darDeBajaAvisosWeb(api),
+    new Promise<void>((listo) => setTimeout(listo, 3000)),
+  ]);
 }

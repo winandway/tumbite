@@ -1,4 +1,4 @@
-import { AvisosWebPanel } from './AvisosWebPanel';
+import { AvisosWebPanel, darDeBajaAlSalir } from './AvisosWebPanel';
 import { Flota } from './Flota';
 import { useEffect, useState } from 'react';
 import { VersionPublicada } from '../VersionPublicada';
@@ -167,6 +167,8 @@ export function PanelApp({ ruta }: { ruta: string }) {
   }
 
   async function salir(usuario: Usuario) {
+    // C-AVISOS-WEB: primero este navegador deja de recibir los avisos de la cuenta (tope de 3 s).
+    await darDeBajaAlSalir();
     try {
       await api.salir();
     } catch (e) {
