@@ -381,4 +381,40 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
     expect(await w.saldo(rep)).toMatchObject({ disponible: 1000, reservado: 0 });
     expect(await w.comisionesDe(id)).toEqual({ n: 0, s: 0 });
   });
+  it('«cliente no apareció» no cierra un pedido en mano; «el cliente no pagó» cancela, devuelve lo apartado y anota la deuda', async () => {
+    const w = await mundoVe();
+    const rep = await w.repartidor('Repartidor El Vigía');
+    await w.recargar(rep, 1000);
+    const p = await w.pedir('efectivo');
+    const id = p.datos.pedidoId as string;
+    await w.hastaEnCamino(id, rep);
+    await w.e.m.ubicar(rep.token, CASA);
+    await w.e.m.ubicar(rep.token, CASA);
+    await w.e.m.llamar('POST', `/datos/repartidor/pedidos/${id}/no-aparece`, {}, rep.token);
+    await w.e.m.DB.prepare(
+      "UPDATE hitos_pedido SET creado_en = datetime('now', '-16 minutes') WHERE pedido_id = ? AND hito = 'no_aparece'",
+    )
+      .bind(id)
+      .run();
+    const ausente = await w.e.m.foto(
+      `/datos/repartidor/pedidos/${id}/entregado?modo=ausente`,
+      rep.token,
+      CASA,
+    );
+    expect(ausente.estado).toBe(409);
+    const no = await w.e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/no-pago`,
+      { motivo: 'El cliente no tenía el dinero' },
+      rep.token,
+    );
+    expect(no.estado).toBe(200);
+    const f = await w.fila(id);
+    expect(f).toMatchObject({ estado: 'cancelado', cobro_estado: 'no_pagado' });
+    expect(await w.saldo(rep)).toMatchObject({ disponible: 1000, reservado: 0 });
+    expect(await w.comisionesDe(id)).toEqual({ n: 0, s: 0 });
+    expect(await saldoLibro(w.e.m.DB, w.e.cliente.id, 'deuda_cliente', 'VE', 'USD')).toBe(
+      Number(f?.total) - Number(f?.propina),
+    );
+  });
 });
