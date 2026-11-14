@@ -240,7 +240,10 @@ export function Landing({ idioma }: { idioma: Idioma }) {
           <a className="boton" href="/app/">
             {t.acciones.comensal.boton}
           </a>
-          <BotonGooglePlay app="cliente" texto={tt.cliente} />
+          <BotonGooglePlay app="cliente" texto={tt.cliente} />{' '}
+          <a href={`${idioma === 'es' ? '/es' : ''}/docs/account/install-from-browser`}>
+            {t.acciones.comensal.guia}
+          </a>
         </div>
         <FormEspera tipo="comensal" idioma={idioma} titulo={t.comensales.form} />
       </section>

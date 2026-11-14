@@ -59,4 +59,24 @@ describe('enlaces a las apps en Google Play', () => {
       expect(iphone?.tagName).not.toBe('A');
     }
   });
+
+  it('C-GUIA-INSTALAR-NAVEGADOR: la zona de descarga y la portada llevan a la guía del navegador', () => {
+    window.history.pushState(null, '', '/es/download');
+    render(<App />);
+    expect(
+      within(screen.getByTestId('descargas-navegador')).getByRole('link', {
+        name: 'Cómo instalar Divoox desde el navegador',
+      }),
+    ).toHaveAttribute('href', '/es/docs/account/install-from-browser');
+  });
+
+  it('la portada en inglés lleva a la guía desde la tarjeta para pedir', () => {
+    window.history.pushState(null, '', '/');
+    render(<App />);
+    expect(
+      within(screen.getByTestId('accion-comensal')).getByRole('link', {
+        name: 'How to install it from your browser',
+      }),
+    ).toHaveAttribute('href', '/docs/account/install-from-browser');
+  });
 });

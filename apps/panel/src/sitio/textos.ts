@@ -22,6 +22,7 @@ const es = {
       texto:
         'Crea tu cuenta gratis en un minuto y pide desde el navegador. En Android, baja la app Divoox de Google Play; en iPhone, agrégala a tu pantalla de inicio desde Safari y se abre como una app.',
       boton: 'Pedir ahora',
+      guia: 'Cómo instalarla desde el navegador',
     },
     restaurante: {
       titulo: 'Abre tu restaurante en Divoox',
@@ -355,6 +356,7 @@ const en: Textos = {
       texto:
         'Create your free account in a minute and order from your browser. On Android, get the Divoox app on Google Play; on iPhone, add it to your Home Screen from Safari and it opens like an app.',
       boton: 'Order now',
+      guia: 'How to install it from your browser',
     },
     restaurante: {
       titulo: 'Open your restaurant on Divoox',

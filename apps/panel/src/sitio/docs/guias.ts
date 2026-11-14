@@ -4619,6 +4619,53 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'install-from-browser',
+        titulo: 'Instalar Divoox desde el navegador del celular',
+        resumen:
+          'Sin pasar por la tienda: abre Divoox en Chrome o en Safari, agrégalo a tu pantalla de inicio y se abre a pantalla completa, como una app.',
+        explicacion: [
+          'Las tres apps de Divoox también funcionan en el navegador del celular: Divoox para pedir (divoox.com/app), Divoox Driver para repartir (divoox.com/driver) y Divoox Restaurants para tu restaurante (divoox.com/restaurant). Sirve para quien tiene iPhone mientras Apple revisa las apps, y para quien prefiere no instalar nada desde la tienda.',
+          'Al agregarla a tu pantalla de inicio queda con su nombre, su ícono y su color, y se abre a pantalla completa, sin la barra del navegador. Entras con la misma cuenta de siempre.',
+          'Instalada así, hay tres cosas que todavía no hace como la app de la tienda: no te llegan avisos al celular (tienes que tener Divoox abierto para ver un pedido nuevo), el repartidor no manda su ubicación con la pantalla apagada (lleva la app abierta mientras reparte), y el código de recogida del restaurante se escribe en vez de escanearse con la cámara. En Android, la app de Google Play no tiene ninguno de esos límites.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-instalar-cliente-navegador-es.webp',
+            alt: 'La app de Divoox abierta en el navegador del celular, con «Entregar en», el buscador y el aviso «Entra para pedir».',
+            pie: 'Divoox para pedir, abierta en el navegador del celular.',
+          },
+          {
+            src: '/docs/recorrido-instalar-driver-navegador-es.webp',
+            alt: 'La app Divoox Driver abierta en el navegador del celular, en la pantalla «Entrar» con la etiqueta «Para repartidores».',
+            pie: 'Divoox Driver, para repartir, también se abre desde el navegador.',
+          },
+          {
+            src: '/docs/recorrido-instalar-restaurante-navegador-es.webp',
+            alt: 'La app Divoox Restaurants abierta en el navegador del celular, en la pantalla para entrar con el correo y la contraseña del restaurante.',
+            pie: 'Divoox Restaurants, para recibir los pedidos de tu restaurante.',
+          },
+          {
+            src: '/docs/recorrido-instalar-descargas-es.webp',
+            alt: 'La página de descargas de Divoox con el botón de Android en Google Play, el iPhone en revisión de Apple y la nota para instalar desde Safari.',
+            pie: 'En la página de descargas está el enlace a esta guía para iPhone.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo instalo Divoox en mi iPhone si no está en la App Store?',
+          '¿Puedo usar Divoox sin descargarla de la tienda?',
+          '¿Cómo agrego Divoox a la pantalla de inicio?',
+          '¿Qué no funciona en la versión del navegador?',
+        ],
+        pasos: [
+          'Abre la dirección de tu app en el navegador del celular: divoox.com/app para pedir, divoox.com/driver para repartir o divoox.com/restaurant para tu restaurante.',
+          'En iPhone (Safari): toca el botón «Compartir» (el cuadro con la flecha hacia arriba), baja y toca «Agregar a inicio», y después «Agregar».',
+          'En Android (Chrome): toca los tres puntos de arriba a la derecha y elige «Instalar app» o «Agregar a la pantalla principal», y confirma.',
+          'Busca el ícono de Divoox en tu pantalla de inicio y ábrelo: se abre a pantalla completa. Entra con tu cuenta.',
+          'Si repartes o tienes un restaurante, deja Divoox abierto mientras trabajas: así ves cada pedido nuevo y, si repartes, tu ubicación sigue llegando.',
+        ],
+        nota: 'Los menús «Compartir», «Agregar a inicio» e «Instalar app» son del celular y pueden cambiar un poco de nombre según la versión. Si no los ves, actualiza el navegador.',
+      },
+      {
         id: 'password',
         titulo: 'Olvidé mi contraseña',
         resumen: 'Te mandamos un enlace al correo. Sirve una sola vez y vence en 30 minutos.',
@@ -9377,6 +9424,53 @@ const en: SeccionDocs[] = [
           'To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.',
           'We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox.',
         ],
+      },
+      {
+        id: 'install-from-browser',
+        titulo: 'Install Divoox from your phone’s browser',
+        resumen:
+          'No app store needed: open Divoox in Chrome or Safari, add it to your Home Screen, and it opens full screen, like an app.',
+        explicacion: [
+          'All three Divoox apps also work in your phone’s browser: Divoox to order (divoox.com/app), Divoox Driver to deliver (divoox.com/driver), and Divoox Restaurants for your restaurant (divoox.com/restaurant). It’s handy on iPhone while Apple reviews the apps, and for anyone who’d rather not install from a store.',
+          'Once it’s on your Home Screen, it has its own name, icon, and color, and it opens full screen, without the browser bar. You sign in with the same account as always.',
+          'Installed this way, there are three things it doesn’t do yet like the store app: you don’t get notifications on your phone (keep Divoox open to see a new order), drivers don’t share their location with the screen off (keep the app open while delivering), and the restaurant’s pickup code is typed in instead of scanned with the camera. On Android, the Google Play app has none of these limits.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-instalar-cliente-navegador-en.webp',
+            alt: 'The Divoox app open in a phone browser, with “Deliver to,” the search bar, and the “Sign in to order” card.',
+            pie: 'Divoox for ordering, open in your phone’s browser.',
+          },
+          {
+            src: '/docs/recorrido-instalar-driver-navegador-en.webp',
+            alt: 'The Divoox Driver app open in a phone browser, on the sign-in screen with the “For drivers” label.',
+            pie: 'Divoox Driver, for delivering, also opens from the browser.',
+          },
+          {
+            src: '/docs/recorrido-instalar-restaurante-navegador-en.webp',
+            alt: 'The Divoox Restaurants app open in a phone browser, on the sign-in screen with the restaurant’s email and password.',
+            pie: 'Divoox Restaurants, to get your restaurant’s orders.',
+          },
+          {
+            src: '/docs/recorrido-instalar-descargas-en.webp',
+            alt: 'The Divoox downloads page with the Android button on Google Play, iPhone in review by Apple, and the note to install from Safari.',
+            pie: 'The downloads page links to this guide for iPhone.',
+          },
+        ],
+        preguntas: [
+          'How do I install Divoox on my iPhone if it isn’t in the App Store?',
+          'Can I use Divoox without downloading it from a store?',
+          'How do I add Divoox to my Home Screen?',
+          'What doesn’t work in the browser version?',
+        ],
+        pasos: [
+          'Open your app’s address in your phone’s browser: divoox.com/app to order, divoox.com/driver to deliver, or divoox.com/restaurant for your restaurant.',
+          'On iPhone (Safari): tap the Share button (the square with the up arrow), scroll down and tap “Add to Home Screen,” then “Add.”',
+          'On Android (Chrome): tap the three dots in the top right, choose “Install app” or “Add to Home screen,” and confirm.',
+          'Find the Divoox icon on your Home Screen and open it: it opens full screen. Sign in with your account.',
+          'If you deliver or run a restaurant, keep Divoox open while you work: that way you see every new order and, if you deliver, your location keeps coming through.',
+        ],
+        nota: 'The Share, Add to Home Screen, and Install app menus belong to your phone and their names can vary a little by version. If you don’t see them, update your browser.',
       },
       {
         id: 'password',
