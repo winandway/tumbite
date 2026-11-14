@@ -11,7 +11,13 @@ const responder = (cuerpo: unknown, estado = 200) =>
 /** El servidor simulado: lo que devuelven las rutas de Moto del superadmin. */
 function servidor(
   llamadas: Llamada[],
-  op: { abierto?: boolean; habilitar409?: boolean; papeles?: unknown[] } = {},
+  op: {
+    abierto?: boolean;
+    habilitar409?: boolean;
+    papeles?: unknown[];
+    vehiculos?: unknown[];
+    servicios?: unknown[];
+  } = {},
 ) {
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const metodo = init?.method ?? 'GET';
@@ -67,7 +73,7 @@ function servidor(
         identidad: 'pendiente',
         documentos: [],
         vehiculoActivo: { id: 'v1', tipo: 'moto', estado: 'aprobado' },
-        servicios: [
+        servicios: op.servicios ?? [
           {
             servicioId: 'moto',
             habilitacion: null,
@@ -77,7 +83,7 @@ function servidor(
           },
         ],
       });
-    if (u.includes('/datos/admin/vehiculos?')) return responder({ vehiculos: [] });
+    if (u.includes('/datos/admin/vehiculos?')) return responder({ vehiculos: op.vehiculos ?? [] });
     if (metodo === 'GET' && u.endsWith('/datos/admin/tasas-referencia'))
       return responder({
         horasVigencia: 48,
@@ -313,6 +319,59 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Moto' }));
     const alerta = await within(detalle).findByRole('alert');
     expect(within(alerta).getByText('Licencia de moto')).toBeTruthy();
+  });
+
+  it('C-CARRO-PANEL: la cola muestra carros con sus papeles e inspección y se habilita para Carro', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas, {
+      vehiculos: [
+        {
+          id: 'car1',
+          conductor: 'Taxista Uno',
+          conductor_id: 'c1',
+          tipo: 'carro',
+          marca: 'Toyota',
+          modelo: 'Corolla',
+          anio: 2018,
+          color: 'Gris',
+          placa: 'AB123CD',
+          placa_estado: 'VE',
+          plazas: 6,
+          estado: 'en_revision',
+          documentos: [{ id: 'dI', tipo: 'inspeccion', estado: 'pendiente', venceEn: null }],
+        },
+      ],
+      servicios: [
+        {
+          servicioId: 'carro',
+          habilitacion: null,
+          requisitosFaltantes: ['licencia', 'inspeccion_vehiculo'],
+          puedeActivar: false,
+          motivo: '',
+        },
+      ],
+    });
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    expect(await screen.findByText('Motos y carros por revisar')).toBeTruthy();
+    const fila = await screen.findByTestId('moto-car1');
+    expect(within(fila).getByText(/Carro · 6 plazas/)).toBeTruthy();
+    expect(within(fila).getByText('Revisión del vehículo (inspección)')).toBeTruthy();
+    await userEvent.click(within(fila).getByRole('button', { name: 'Aprobar el carro' }));
+    await waitFor(() =>
+      expect(llamadas.find((l) => l.url.endsWith('/admin/vehiculos/car1'))?.cuerpo).toEqual({
+        estado: 'aprobado',
+      }),
+    );
+    await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
+    const detalle = await screen.findByTestId('detalle-conductor');
+    expect(await within(detalle).findByText('Licencia de conducir')).toBeTruthy();
+    expect(within(detalle).getByText('Revisión del vehículo')).toBeTruthy();
+    await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Carro' }));
+    await waitFor(() =>
+      expect(
+        llamadas.find((l) => l.metodo === 'PUT' && l.url.endsWith('/habilitaciones/c1/carro')),
+      ).toBeTruthy(),
+    );
   });
 
   it('C-CIUDAD-CONDUCTOR: el equipo cambia la ciudad del conductor con motivo', async () => {
