@@ -11,7 +11,7 @@ import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
 import { crearViajeDeCotizacion, pinNuevo } from '../viajeCrear';
-import { autorizarViajeProgramado } from '../viajesCobro';
+import { anularAutorizacionProgramada, autorizarViajeProgramado } from '../viajesCobro';
 import { pinParaViajeNuevo } from './ajustesViaje';
 import { estadoServicioEnZona } from './servicios';
 import { avisarDestinatario } from './viajesPasajero';
@@ -123,18 +123,17 @@ viajesProgramados.post('/viajes/programados/:id/cancelar', async (c) => {
   const gratis = cancelacionProgramadaGratis(deSql(f.programado_para));
   const tarifa = f.tarifa_json ? (JSON.parse(f.tarifa_json) as { cargoCancelacion?: number }) : {};
   const cargo = gratis ? 0 : Math.max(0, Math.round(Number(tarifa.cargoCancelacion ?? 0)));
-  const r = await db
+  const cancelar = db
     .prepare(
       `UPDATE viajes_programados SET estado = 'cancelado', motivo = 'cancelado_por_pasajero', resuelto_en = datetime('now')
         WHERE id = ? AND estado = 'programado'`,
     )
-    .bind(f.id)
-    .run();
-  if (!r.meta.changes)
-    throw new ErrorDatos('La reserva cambió. Actualiza la pantalla.', undefined, 409);
+    .bind(f.id);
+  let cancelada: boolean;
   if (cargo > 0) {
-    // La deuda necesita su operación: nace ya cancelada, con el mismo precio reservado.
-    await crearViajeDeCotizacion(db, {
+    // Todo en un lote: la reserva cancelada, su operación (nace ya cancelada, con el precio
+    // reservado) y la deuda. Un corte a la mitad no deja la cancelación sin su cargo.
+    cancelada = await crearViajeDeCotizacion(db, {
       op: f.id,
       cotizacionId: f.cotizacion_id,
       clienteId: u.id,
@@ -145,15 +144,25 @@ viajesProgramados.post('/viajes/programados/:id/cancelar', async (c) => {
       pinEntrega: pinNuevo(),
       exigirSinActivo: false,
       programadoPara: f.programado_para,
+      reserva: {
+        estado: 'cancelado',
+        cambio: cancelar,
+        despues: [
+          db
+            .prepare(
+              `INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda)
+               SELECT ?, ?, ?, 'cancelacion', ?, ? WHERE EXISTS (
+                 SELECT 1 FROM viajes_programados WHERE id = ?3 AND estado = 'cancelado')
+                 AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?3)`,
+            )
+            .bind(nuevoId(), u.id, f.id, cargo, f.moneda),
+        ],
+      },
     });
-    await db
-      .prepare(
-        `INSERT OR IGNORE INTO deudas_pasajero (id, cliente_id, operacion_id, motivo, monto, moneda)
-         VALUES (?, ?, ?, 'cancelacion', ?, ?)`,
-      )
-      .bind(nuevoId(), u.id, f.id, cargo, f.moneda)
-      .run();
+  } else {
+    cancelada = Boolean((await cancelar.run()).meta.changes);
   }
+  if (!cancelada) throw new ErrorDatos('La reserva cambió. Actualiza la pantalla.', undefined, 409);
   return c.json({ ok: true, cargo });
 });
 
@@ -204,6 +213,109 @@ async function avisar(
 /** Lo que el reloj puede activar en una vuelta (cada una escribe unas 8 filas). */
 export const PROGRAMADOS_POR_VUELTA = 20;
 
+/** Activa UNA reserva. Devuelve true si esta vuelta hizo nacer su viaje. */
+async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<boolean> {
+  const { idioma, nombre } = await idiomaDe(db, f.cliente_id);
+  const hora = horaLocal(f.programado_para, f.zona_horaria, idioma);
+  const fallar = async (motivo: string) => {
+    const r = await db
+      .prepare(
+        `UPDATE viajes_programados SET estado = 'fallido', motivo = ?, resuelto_en = datetime('now')
+          WHERE id = ? AND estado = 'programado'`,
+      )
+      .bind(motivo, f.id)
+      .run();
+    if (r.meta.changes) await avisar(env, db, f.cliente_id, AVISO.fallido(idioma, hora), f.id);
+  };
+  if ((await estadoServicioEnZona(db, f.servicio_id, f.zona_id, f.cliente_id)) !== 'disponible') {
+    await fallar('servicio_cerrado');
+    return false;
+  }
+  const envio = f.servicio_id === 'envios';
+  const paquete = f.paquete_json ? (JSON.parse(f.paquete_json) as PaqueteEnvio) : null;
+  const pinEntrega = pinNuevo();
+  const tarjeta = f.metodo_pago === 'tarjeta';
+  // La reserva se toma y el viaje nace en el MISMO lote: dos vueltas a la vez no hacen nacer dos
+  // viajes, y un corte a la mitad no deja la reserva «activada» sin viaje.
+  const tomada = await crearViajeDeCotizacion(db, {
+    op: f.id,
+    cotizacionId: f.cotizacion_id,
+    clienteId: f.cliente_id,
+    tipo: envio ? 'envio_paquete' : 'viaje_pasajero',
+    estado: tarjeta ? 'pago_pendiente' : 'buscando',
+    metodoPago: f.metodo_pago,
+    paquete,
+    pinEntrega,
+    exigirSinActivo: false,
+    programadoPara: f.programado_para,
+    reserva: {
+      estado: 'activado',
+      cambio: db
+        .prepare(
+          `UPDATE viajes_programados SET estado = 'activado', resuelto_en = datetime('now')
+            WHERE id = ? AND estado = 'programado'`,
+        )
+        .bind(f.id),
+    },
+  });
+  if (!tomada) return false;
+  if (envio || !(await pinParaViajeNuevo(db, f.servicio_id, f.zona_id)))
+    await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(f.id).run();
+  if (tarjeta) {
+    const cliente = await db
+      .prepare('SELECT stripe_cliente FROM usuarios WHERE id = ?')
+      .bind(f.cliente_id)
+      .first<{ stripe_cliente: string | null }>();
+    const cobro = {
+      operacionId: f.id,
+      cliente: cliente?.stripe_cliente ?? '',
+      pm: f.metodo_pago_ref ?? '',
+      monto: Number(f.total),
+      moneda: f.moneda,
+    };
+    try {
+      if (!cobro.cliente || !cobro.pm) throw new Error('sin tarjeta guardada');
+      await autorizarViajeProgramado(env, db, cobro);
+    } catch (e) {
+      console.error('viajes programados: la tarjeta no se autorizó', f.id, e);
+      // Si la llamada se cortó pero Stripe sí autorizó, la retención se suelta (nunca se queda
+      // el dinero del pasajero apartado por un viaje que no va a existir).
+      if (cobro.cliente && cobro.pm)
+        await anularAutorizacionProgramada(env, db, cobro).catch((x: unknown) =>
+          console.error('viajes programados: no se pudo soltar la retención', f.id, x),
+        );
+      for (const desde of ['pago_pendiente', 'buscando'] as const)
+        await cambiarEstadoViaje(db, {
+          operacionId: f.id,
+          desde,
+          hacia: 'cancelado',
+          actor: 'sistema',
+          actorId: null,
+          clave:
+            desde === 'pago_pendiente'
+              ? `programado-sin-pago:${f.id}`
+              : `programado-sin-pago-buscando:${f.id}`,
+          motivo: 'sin_pago',
+        });
+      await avisar(env, db, f.cliente_id, AVISO.fallido(idioma, hora), f.id);
+      return true;
+    }
+  }
+  if (envio && paquete)
+    await avisarDestinatario(
+      env,
+      db,
+      (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, ''),
+      f.id,
+      paquete,
+      pinEntrega,
+      nombre,
+    ).catch((e: unknown) => console.error('viajes programados: aviso a quien recibe', e));
+  // El recordatorio: ya casi es la hora y se está buscando conductor.
+  await avisar(env, db, f.cliente_id, AVISO.buscando(idioma, hora, envio), f.id);
+  return true;
+}
+
 /**
  * La tarea del reloj. Lee por el índice parcial solo las reservas pendientes cuya búsqueda ya
  * empieza (N minutos antes de la hora, por ciudad; 15 por defecto). Sin ninguna, no escribe nada.
@@ -219,98 +331,19 @@ export async function activarViajesProgramados(env: Env, db: D1Database) {
     )
     .all<FilaProgramado>();
   let activados = 0;
+  let errores = 0;
   for (const f of results) {
-    const { idioma, nombre } = await idiomaDe(db, f.cliente_id);
-    const hora = horaLocal(f.programado_para, f.zona_horaria, idioma);
-    const fallar = async (motivo: string) => {
-      const r = await db
-        .prepare(
-          `UPDATE viajes_programados SET estado = 'fallido', motivo = ?, resuelto_en = datetime('now')
-            WHERE id = ? AND estado = 'programado'`,
-        )
-        .bind(motivo, f.id)
-        .run();
-      if (r.meta.changes) await avisar(env, db, f.cliente_id, AVISO.fallido(idioma, hora), f.id);
-    };
-    if ((await estadoServicioEnZona(db, f.servicio_id, f.zona_id, f.cliente_id)) !== 'disponible') {
-      await fallar('servicio_cerrado');
-      continue;
+    // Cada reserva en su propio intento: si una falla, las que vienen detrás siguen su camino y
+    // ella queda «programado» para la vuelta siguiente (o se cierra avisando si ya no hay viaje).
+    try {
+      if (await activarUna(env, db, f)) activados++;
+    } catch (e) {
+      errores++;
+      console.error('viajes programados: no se pudo activar la reserva', f.id, e);
     }
-    // Se toma la reserva primero: dos vueltas a la vez no hacen nacer dos viajes.
-    const tomada = await db
-      .prepare(
-        `UPDATE viajes_programados SET estado = 'activado', resuelto_en = datetime('now')
-          WHERE id = ? AND estado = 'programado'`,
-      )
-      .bind(f.id)
-      .run();
-    if (!tomada.meta.changes) continue;
-    const envio = f.servicio_id === 'envios';
-    const paquete = f.paquete_json ? (JSON.parse(f.paquete_json) as PaqueteEnvio) : null;
-    const pinEntrega = pinNuevo();
-    const tarjeta = f.metodo_pago === 'tarjeta';
-    await crearViajeDeCotizacion(db, {
-      op: f.id,
-      cotizacionId: f.cotizacion_id,
-      clienteId: f.cliente_id,
-      tipo: envio ? 'envio_paquete' : 'viaje_pasajero',
-      estado: tarjeta ? 'pago_pendiente' : 'buscando',
-      metodoPago: f.metodo_pago,
-      paquete,
-      pinEntrega,
-      exigirSinActivo: false,
-      programadoPara: f.programado_para,
-    });
-    if (envio || !(await pinParaViajeNuevo(db, f.servicio_id, f.zona_id)))
-      await db
-        .prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?')
-        .bind(f.id)
-        .run();
-    activados++;
-    if (tarjeta) {
-      const cliente = await db
-        .prepare('SELECT stripe_cliente FROM usuarios WHERE id = ?')
-        .bind(f.cliente_id)
-        .first<{ stripe_cliente: string | null }>();
-      try {
-        if (!cliente?.stripe_cliente || !f.metodo_pago_ref) throw new Error('sin tarjeta guardada');
-        await autorizarViajeProgramado(env, db, {
-          operacionId: f.id,
-          cliente: cliente.stripe_cliente,
-          pm: f.metodo_pago_ref,
-          monto: Number(f.total),
-          moneda: f.moneda,
-        });
-      } catch (e) {
-        console.error('viajes programados: la tarjeta no se autorizó', f.id, e);
-        await cambiarEstadoViaje(db, {
-          operacionId: f.id,
-          desde: 'pago_pendiente',
-          hacia: 'cancelado',
-          actor: 'sistema',
-          actorId: null,
-          clave: `programado-sin-pago:${f.id}`,
-          motivo: 'sin_pago',
-        });
-        await avisar(env, db, f.cliente_id, AVISO.fallido(idioma, hora), f.id);
-        continue;
-      }
-    }
-    if (envio && paquete)
-      await avisarDestinatario(
-        env,
-        db,
-        (env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, ''),
-        f.id,
-        paquete,
-        pinEntrega,
-        nombre,
-      ).catch((e: unknown) => console.error('viajes programados: aviso a quien recibe', e));
-    // El recordatorio: ya casi es la hora y se está buscando conductor.
-    await avisar(env, db, f.cliente_id, AVISO.buscando(idioma, hora, envio), f.id);
   }
   if (activados) await repartirOperaciones(env, db);
-  return { activados };
+  return { activados, errores };
 }
 
 /**

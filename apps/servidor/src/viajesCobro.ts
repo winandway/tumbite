@@ -36,15 +36,17 @@ async function clienteStripe(env: Env, db: D1Database, u: Usuario) {
  * autorizada y el viaje pasa a buscar conductor por el camino de siempre. Si Stripe la rechaza,
  * lanza el error y quien llama cancela sin cargo.
  */
-export async function autorizarViajeProgramado(
-  env: Env,
-  db: D1Database,
-  p: { operacionId: string; cliente: string; pm: string; monto: number; moneda: string },
-) {
-  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
-  if (!stripe)
-    throw new ErrorDatos('Los pagos con tarjeta todavía no están activados.', undefined, 422);
-  const intento = await stripe.post<{ id: string; status?: string }>(
+type CobroProgramado = {
+  operacionId: string;
+  cliente: string;
+  pm: string;
+  monto: number;
+  moneda: string;
+};
+
+/** La autorización del viaje programado: siempre los mismos datos y la misma clave de idempotencia. */
+const intentoProgramado = (p: CobroProgramado) =>
+  [
     '/payment_intents',
     {
       amount: p.monto,
@@ -58,12 +60,48 @@ export async function autorizarViajeProgramado(
       metadata: { viaje_id: p.operacionId },
     },
     `viaje-${p.operacionId}`,
-  );
+  ] as const;
+
+export async function autorizarViajeProgramado(env: Env, db: D1Database, p: CobroProgramado) {
+  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+  if (!stripe)
+    throw new ErrorDatos('Los pagos con tarjeta todavía no están activados.', undefined, 422);
+  const [ruta, datos, clave] = intentoProgramado(p);
+  const intento = await stripe.post<{ id: string; status?: string }>(ruta, { ...datos }, clave);
+  // Si el aviso de Stripe llegó antes, ya creó esta fila (autorizacionViaje): no se pisa.
   await db
     .prepare('INSERT OR IGNORE INTO cobros_viaje (operacion_id, stripe_pago) VALUES (?, ?)')
     .bind(p.operacionId, intento.id)
     .run();
   return intento;
+}
+
+/**
+ * La llamada a Stripe se cortó (tiempo, red) y el viaje se cancela: puede que Stripe sí haya
+ * autorizado. Repetir la MISMA petición con la misma clave de idempotencia devuelve el intento que
+ * quedó (Stripe guarda la respuesta 24 horas); si está retenido, se anula. Si Stripe la había
+ * rechazado, devuelve el mismo rechazo y no hay nada que soltar.
+ */
+export async function anularAutorizacionProgramada(
+  env: Env,
+  db: D1Database,
+  p: CobroProgramado,
+): Promise<boolean> {
+  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+  if (!stripe) return false;
+  const [ruta, datos, clave] = intentoProgramado(p);
+  const intento = await stripe
+    .post<{ id?: string; status?: string }>(ruta, { ...datos }, clave)
+    .catch(() => null);
+  if (!intento?.id || intento.status === 'canceled' || intento.status === 'succeeded') return false;
+  await stripe.post(`/payment_intents/${intento.id}/cancel`, {}, `anular-viaje-${p.operacionId}`);
+  await db
+    .prepare(
+      "UPDATE cobros_viaje SET estado = 'anulado', actualizado_en = datetime('now') WHERE operacion_id = ?",
+    )
+    .bind(p.operacionId)
+    .run();
+  return true;
 }
 
 /** Abre el cobro: autorización por el precio fijo. La app paga con la hoja de pago de siempre. */
@@ -125,13 +163,28 @@ export async function autorizacionViaje(
 ): Promise<string | null> {
   const op = (obj.metadata as Record<string, string> | undefined)?.viaje_id;
   if (!op) return null;
-  const f = await db
-    .prepare(
-      `SELECT c.stripe_pago, c.estado, q.total FROM cobros_viaje c JOIN viajes v ON v.operacion_id = c.operacion_id
+  const leer = () =>
+    db
+      .prepare(
+        `SELECT c.stripe_pago, c.estado, q.total FROM cobros_viaje c JOIN viajes v ON v.operacion_id = c.operacion_id
          JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id WHERE c.operacion_id = ?`,
-    )
-    .bind(op)
-    .first<{ stripe_pago: string; estado: string; total: number }>();
+      )
+      .bind(op)
+      .first<{ stripe_pago: string; estado: string; total: number }>();
+  let f = await leer();
+  if (!f && typeof obj.id === 'string') {
+    // C-VIAJE-PROGRAMADO: el aviso puede llegar ANTES de que el reloj anote el intento (la
+    // autorización sin la persona delante se confirma al crearse). El aviso viene firmado: se anota
+    // aquí mismo, solo para un viaje que espera su pago, y la otra escritura no lo pisa.
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO cobros_viaje (operacion_id, stripe_pago)
+         SELECT v.operacion_id, ? FROM viajes v WHERE v.operacion_id = ? AND v.estado = 'pago_pendiente'`,
+      )
+      .bind(obj.id, op)
+      .run();
+    f = await leer();
+  }
   if (!f || f.stripe_pago !== obj.id || Number(obj.amount_capturable) !== Number(f.total)) {
     console.error('viaje: aviso de autorización que no cuadra', op, obj.amount_capturable);
     return null;

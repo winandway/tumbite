@@ -46,12 +46,26 @@ export type NuevoViaje = {
    */
   exigirSinActivo: boolean;
   programadoPara?: string | null;
+  /**
+   * C-VIAJE-PROGRAMADO: el viaje nace en el MISMO lote que cambia la reserva (tomarla o cancelarla
+   * tarde), y solo si la reserva quedó en ese estado. Así un corte a la mitad nunca deja una reserva
+   * «activada» sin viaje ni un viaje de una reserva que ya no corresponde.
+   */
+  reserva?: {
+    estado: 'activado' | 'cancelado';
+    cambio: D1PreparedStatement;
+    despues?: D1PreparedStatement[];
+  };
 };
 
 /** Devuelve true si el viaje nació en este lote (false: la cotización ya no servía). */
 export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Promise<boolean> {
   const general = ESTADO_GENERAL.get(v.estado) ?? v.estado;
+  const conReserva = v.reserva
+    ? ` AND EXISTS (SELECT 1 FROM viajes_programados WHERE id = ?1 AND estado = '${v.reserva.estado}')`
+    : '';
   const r = await db.batch([
+    ...(v.reserva ? [v.reserva.cambio] : []),
     ...(v.exigirSinActivo
       ? [
           db
@@ -69,7 +83,7 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
         `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, ultima_clave)
          SELECT ?1, servicio_id, ?5, cliente_id, zona_id, ?4, ?3
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1
-            AND NOT EXISTS (SELECT 1 FROM operaciones WHERE id = ?1)`,
+            AND NOT EXISTS (SELECT 1 FROM operaciones WHERE id = ?1)${conReserva}`,
       )
       .bind(v.op, v.cotizacionId, `pedir:${v.cotizacionId}`, general, v.tipo),
     db
@@ -80,7 +94,8 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
          SELECT ?1, ?6, 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
                 destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria, ?7
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1
-            AND NOT EXISTS (SELECT 1 FROM viajes WHERE operacion_id = ?1)`,
+            AND NOT EXISTS (SELECT 1 FROM viajes WHERE operacion_id = ?1)
+            AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1)${conReserva}`,
       )
       .bind(
         v.op,
@@ -110,7 +125,9 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
             ),
         ]
       : []),
+    ...(v.reserva?.despues ?? []),
   ]);
+  // Con reserva, r[0] es su cambio: true si esta llamada la tomó (o la canceló).
   return Boolean(r[0]?.meta.changes);
 }
 

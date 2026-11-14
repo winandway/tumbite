@@ -6,6 +6,7 @@ import { conductorDeMoto } from '../pruebas/conductorMoto';
 import { repartirOperaciones } from '../operaciones';
 import { TAREAS_RELOJ } from './operacion';
 import { activarViajesProgramados } from './viajesProgramados';
+import { autorizacionViaje } from '../viajesCobro';
 
 /**
  * C-VIAJE-PROGRAMADO (14 nov 2026, todos los países): reservar Carro (y Moto, XL, Envíos) para más
@@ -217,6 +218,64 @@ describe('C-VIAJE-PROGRAMADO', () => {
     expect((await activarViajesProgramados(env(e.m), e.m.DB)).activados).toBe(1);
   });
 
+  it('un corte al hacer nacer el viaje no deja la reserva «activada» sin viaje, y no frena a las demás', async () => {
+    const e = await escenario();
+    const a = (await reservar(e, 120)).r.datos.viaje.id as string;
+    const b = (await reservar(e, 121)).r.datos.viaje.id as string;
+    await correrHora(e, a, "datetime('now', '+9 minutes')");
+    await correrHora(e, b, "datetime('now', '+10 minutes')");
+    // El corte: el viaje de la primera reserva no se puede escribir.
+    await e.m.DB.prepare(
+      `CREATE TRIGGER corte_prueba BEFORE INSERT ON viajes WHEN NEW.operacion_id = '${a}'
+         BEGIN SELECT RAISE(ABORT, 'corte'); END`,
+    ).run();
+    const vuelta = await activarViajesProgramados(env(e.m), e.m.DB);
+    expect(vuelta).toEqual({ activados: 1, errores: 1 });
+    const estado = async (id: string) =>
+      (
+        await e.m.DB.prepare('SELECT estado FROM viajes_programados WHERE id = ?')
+          .bind(id)
+          .first<{ estado: string }>()
+      )?.estado;
+    expect(await estado(a)).toBe('programado');
+    expect(await estado(b)).toBe('activado');
+    expect(
+      await e.m.DB.prepare('SELECT 1 FROM operaciones WHERE id = ?').bind(a).first(),
+    ).toBeNull();
+    // Pasado el corte, la vuelta siguiente la retoma.
+    await e.m.DB.prepare('DROP TRIGGER corte_prueba').run();
+    expect((await activarViajesProgramados(env(e.m), e.m.DB)).activados).toBe(1);
+    expect(await estado(a)).toBe('activado');
+  });
+
+  it('la cancelación tardía, su viaje y su deuda van juntos: un corte no deja la cancelación sin cargo', async () => {
+    const e = await escenario();
+    const id = (await reservar(e, 180)).r.datos.viaje.id as string;
+    await correrHora(e, id, "datetime('now', '+40 minutes')");
+    await e.m.DB.prepare(
+      `CREATE TRIGGER corte_deuda BEFORE INSERT ON deudas_pasajero BEGIN SELECT RAISE(ABORT, 'corte'); END`,
+    ).run();
+    const r = await e.m.llamar(
+      'POST',
+      `/datos/viajes/programados/${id}/cancelar`,
+      {},
+      e.cliente.token,
+    );
+    expect(r.estado).toBeGreaterThanOrEqual(500);
+    const f = await e.m.DB.prepare('SELECT estado FROM viajes_programados WHERE id = ?')
+      .bind(id)
+      .first<{ estado: string }>();
+    expect(f?.estado).toBe('programado');
+    await e.m.DB.prepare('DROP TRIGGER corte_deuda').run();
+    const otra = await e.m.llamar(
+      'POST',
+      `/datos/viajes/programados/${id}/cancelar`,
+      {},
+      e.cliente.token,
+    );
+    expect(otra.datos).toEqual({ ok: true, cargo: 500 });
+  });
+
   describe('con tarjeta', () => {
     afterEach(() => vi.unstubAllGlobals());
     const stripe = (rechaza = false) => {
@@ -287,6 +346,69 @@ describe('C-VIAJE-PROGRAMADO', () => {
       const id = (await reservarConTarjeta(e)).datos.viaje.id as string;
       await correrHora(e, id, "datetime('now', '+10 minutes')");
       await activarViajesProgramados(env(e.m), e.m.DB);
+      const v = await e.m.DB.prepare('SELECT estado FROM viajes WHERE operacion_id = ?')
+        .bind(id)
+        .first<{ estado: string }>();
+      expect(v?.estado).toBe('cancelado');
+    });
+    it('si el aviso de Stripe llega antes de anotar el intento, igual vale', async () => {
+      stripe();
+      const e = await escenario({ STRIPE_SECRET_KEY: 'sk_test_x' });
+      await e.m.DB.prepare("UPDATE usuarios SET stripe_cliente = 'cus_prueba' WHERE id = ?")
+        .bind(e.cliente.id)
+        .run();
+      const id = (await reservarConTarjeta(e)).datos.viaje.id as string;
+      await correrHora(e, id, "datetime('now', '+10 minutes')");
+      await activarViajesProgramados(env(e.m), e.m.DB);
+      // Como si el aviso hubiera llegado antes de la fila: se borra y llega el aviso.
+      await e.m.DB.prepare('DELETE FROM cobros_viaje WHERE operacion_id = ?').bind(id).run();
+      const total = (
+        await e.m.DB.prepare(
+          'SELECT q.total FROM viajes v JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id WHERE v.operacion_id = ?',
+        )
+          .bind(id)
+          .first<{ total: number }>()
+      )?.total;
+      const op = await autorizacionViaje(e.m.DB, {
+        id: 'pi_prog',
+        amount_capturable: total,
+        metadata: { viaje_id: id },
+      });
+      expect(op).toBe(id);
+      const c = await e.m.DB.prepare(
+        'SELECT estado, stripe_pago FROM cobros_viaje WHERE operacion_id = ?',
+      )
+        .bind(id)
+        .first();
+      expect(c).toEqual({ estado: 'autorizado', stripe_pago: 'pi_prog' });
+    });
+
+    it('si la llamada a Stripe se corta pero sí autorizó, se suelta la retención y se cancela sin cargo', async () => {
+      const llamadas: string[] = [];
+      let primera = true;
+      vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+        llamadas.push(`${init?.method ?? 'GET'} ${String(url)}`);
+        if (String(url).includes('/payment_methods'))
+          return new Response(JSON.stringify({ data: [{ id: 'pm_guardada' }] }), { status: 200 });
+        if (/\/payment_intents$/.test(String(url))) {
+          if (primera) {
+            primera = false;
+            throw new Error('The operation was aborted due to timeout');
+          }
+          return new Response(JSON.stringify({ id: 'pi_prog', status: 'requires_capture' }), {
+            status: 200,
+          });
+        }
+        return new Response(JSON.stringify({ id: 'x' }), { status: 200 });
+      });
+      const e = await escenario({ STRIPE_SECRET_KEY: 'sk_test_x' });
+      await e.m.DB.prepare("UPDATE usuarios SET stripe_cliente = 'cus_prueba' WHERE id = ?")
+        .bind(e.cliente.id)
+        .run();
+      const id = (await reservarConTarjeta(e)).datos.viaje.id as string;
+      await correrHora(e, id, "datetime('now', '+10 minutes')");
+      await activarViajesProgramados(env(e.m), e.m.DB);
+      expect(llamadas.some((x) => x.includes('/payment_intents/pi_prog/cancel'))).toBe(true);
       const v = await e.m.DB.prepare('SELECT estado FROM viajes WHERE operacion_id = ?')
         .bind(id)
         .first<{ estado: string }>();
