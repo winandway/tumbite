@@ -47,6 +47,7 @@ import {
   CodigoQR,
   FotoPedido,
   Pantalla,
+  TarjetaAvisosWeb,
   TEXTOS_MOVIL,
   e,
   urlFoto,
@@ -1441,6 +1442,8 @@ export function Inicio() {
             {error}
           </Text>
         ) : null}
+        {/* C-AVISOS-WEB: en la versión web, la explicación del permiso al abrir sesión. */}
+        <TarjetaAvisosWeb visible={!detalle && vista === 'inicio'} />
         {cuerpo}
       </ScrollView>
       <BarraInferior

@@ -2,8 +2,9 @@
 // pantalla de inicio» y queda como una aplicación (ícono propio, sin la barra del navegador). Sirve
 // para quien tiene iPhone mientras Apple revisa, y para cualquier celular sin tienda. Todos los países.
 // Uso: node apps/cliente/scripts/instalable.mjs <carpeta exportada> <carpeta de la app>
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const salida = resolve(process.argv[2] ?? 'dist-web');
@@ -68,4 +69,10 @@ html = html
 if (!html.includes('rel="manifest"'))
   throw new Error('instalable: no se pudo enlazar el manifiesto');
 writeFileSync(archivo, html);
-console.log(`web: ${ficha.name} instalable en ${base}`);
+// C-AVISOS-WEB (13 nov 2026): el trabajador de avisos, en la carpeta de la app (su alcance es esa
+// carpeta). Solo avisos: no guarda copias de la app. Se registra desde la app, no desde esta página.
+copyFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), 'avisos-sw.js'),
+  join(salida, 'avisos-sw.js'),
+);
+console.log(`web: ${ficha.name} instalable en ${base}, con su trabajador de avisos`);

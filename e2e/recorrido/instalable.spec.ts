@@ -43,5 +43,10 @@ for (const a of APPS) {
       expect(img.ok(), i).toBe(true);
       expect(img.headers()['content-type']).toContain('image/png');
     }
+    // C-AVISOS-WEB: el trabajador de avisos vive en la carpeta de la app y se sirve como JavaScript.
+    const sw = await request.get(`${a.base}/avisos-sw.js`);
+    expect(sw.ok()).toBe(true);
+    expect(sw.headers()['content-type']).toContain('javascript');
+    expect(await sw.text()).toContain("addEventListener('push'");
   });
 }

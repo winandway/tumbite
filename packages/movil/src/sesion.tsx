@@ -25,7 +25,7 @@ import {
 } from '@tumbite/compartido';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
-import { darDeBajaAvisos, useAvisosCelular } from './avisos';
+import { darDeBajaAvisos, useAvisosCelular, useAvisosWebSilencioso } from './avisos';
 
 const LLAVE_TOKEN = 'tumbite.sesion';
 
@@ -224,6 +224,8 @@ export function SesionProvider({
   }, [llavePermisos]);
   const permisosPorExplicar = Boolean(explicarPermisos && usuario && permisosVistos === false);
   useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true);
+  // C-AVISOS-WEB: en la versión web, renueva la suscripción si el permiso ya estaba dado.
+  useAvisosWebSilencioso(api, usuario);
 
   const cambiarIdioma = useCallback(
     (i: Idioma) => {
