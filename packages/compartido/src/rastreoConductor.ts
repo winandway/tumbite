@@ -28,6 +28,19 @@ export function modoRastreo(e: {
   return e.conectado ? 'libre' : 'apagado';
 }
 
+/**
+ * Revisión del 13 nov 2026: el sistema puede relanzar la tarea de fondo sin abrir la pantalla (y sin
+ * que nadie llame a fijarModoRastreo). Se usa el modo que se guardó la última vez; con duda, el más
+ * frecuente (activo: con un pedido en curso nunca se manda menos de lo necesario), y apagado si no
+ * hay sesión.
+ */
+export function modoGuardadoAlArrancar(guardado: string | null, conSesion: boolean): ModoRastreo {
+  if (!conSesion) return 'apagado';
+  return guardado === 'apagado' || guardado === 'libre' || guardado === 'activo'
+    ? guardado
+    : 'activo';
+}
+
 export function tocaMandarSegunModo(
   modo: ModoRastreo,
   ultimo: (Punto & { en: number }) | null,

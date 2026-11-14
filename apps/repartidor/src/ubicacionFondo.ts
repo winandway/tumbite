@@ -1,11 +1,13 @@
 import { Alert, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { URL_SERVIDOR, leerTokenGuardado } from '@tumbite/movil';
 import {
   colaUbicacion,
   cuerpoUbicacion,
   marcarRecibida,
+  modoGuardadoAlArrancar,
   paraEnviarUbicacion,
   necesitaExplicacionPrevia,
   tocaMandarSegunModo,
@@ -28,18 +30,35 @@ export const TAREA_UBICACION = 'tumbite-ubicacion-fondo';
 
 /** C-LATIDO-UBICACION: el último envío desde la tarea (para mandar cada 2 minutos o al moverse). */
 let ultimoEnvio: { lat: number; lng: number; en: number } | null = null;
-/** C-GPS-PANTALLA-APAGADA: lo fija el inicio con modoRastreo (libre, activo o apagado). */
-let modoActual: ModoRastreo = 'libre';
+/**
+ * C-GPS-PANTALLA-APAGADA: lo fija el inicio con modoRastreo (libre, activo o apagado) y queda
+ * guardado. Arranca sin saberse (null): si el sistema relanza la tarea sin abrir la pantalla, se lee
+ * el guardado (antes arrancaba en «libre» y con un pedido en curso mandaba cada 250 m).
+ */
+let modoActual: ModoRastreo | null = null;
+const LLAVE_MODO = 'divoox.modo-rastreo';
 const cola = colaUbicacion();
 
 export function fijarModoRastreo(modo: ModoRastreo) {
   modoActual = modo;
+  void AsyncStorage.setItem(LLAVE_MODO, modo).catch(() => undefined);
+}
+
+async function modoAlArrancar(): Promise<ModoRastreo> {
+  if (modoActual) return modoActual;
+  const [guardado, token] = await Promise.all([
+    AsyncStorage.getItem(LLAVE_MODO).catch(() => null),
+    leerTokenGuardado(),
+  ]);
+  modoActual = modoGuardadoAlArrancar(guardado, Boolean(token));
+  return modoActual;
 }
 
 TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
   if (error || !data) return;
+  const modo = await modoAlArrancar();
   // Nunca se rastrea a alguien desconectado: si el inicio dijo «apagado», el servicio se cierra.
-  if (modoActual === 'apagado') return detenerUbicacionFondo();
+  if (modo === 'apagado') return detenerUbicacionFondo();
   const { locations } = data as { locations: Location.LocationObject[] };
   const ultima = locations.at(-1);
   if (!ultima) return;
@@ -49,7 +68,7 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
   // C-LATIDO-UBICACION: Android entrega una lectura cada 15 s aunque esté quieto; se manda solo si
   // toca según el modo (activo cada 25 m, libre cada 250 m) o pasaron 2 minutos. Si quedó una
   // lectura sin mandar por falta de señal, la nueva la reemplaza y se intenta en seguida.
-  if (!pendiente && !tocaMandarSegunModo(modoActual, ultimoEnvio, cuerpo)) return;
+  if (!pendiente && !tocaMandarSegunModo(modo, ultimoEnvio, cuerpo)) return;
   const token = await leerTokenGuardado();
   // Sin sesión (cerró sesión o venció): el servicio se apaga solo; no sigue gastando batería ni
   // queda la notificación fija.
