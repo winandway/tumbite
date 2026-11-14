@@ -152,6 +152,18 @@ describe('pedir a soporte la cancelación de un pedido listo (C-CANCELAR-LISTO)'
       .bind(id)
       .first<{ detalle: string }>();
     expect(evento?.detalle).toContain('repartidor_no_llego');
+    // C-DECISIONES-MERCADO: la regla del mercado queda calculada (Divoox le paga la comida al
+    // restaurante y el cliente recupera todo). Hoy el dinero que se mueve sigue siendo el reembolso
+    // completo al cliente; el pago de la comida queda anotado para conciliarlo.
+    const p = (await e.m.DB.prepare('SELECT total, subtotal FROM pedidos WHERE id = ?')
+      .bind(id)
+      .first<{ total: number; subtotal: number }>())!;
+    expect(ok.datos.reparto).toEqual({
+      reembolsoCliente: p.total,
+      comidaAlRestaurante: p.subtotal,
+      asumeComida: 'divoox',
+    });
+    expect(evento?.detalle).toContain(`comida al restaurante ${p.subtotal}`);
   });
 
   it('soporte la rechaza: el pedido sigue su curso y el restaurante puede volver a pedirla', async () => {

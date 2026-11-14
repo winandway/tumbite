@@ -216,6 +216,12 @@ export type CotizacionViaje = {
   metodosPago?: ('efectivo' | 'tarjeta' | 'pago_movil')[];
   /** C-BS-REFERENCIA: el equivalente en la moneda local (solo informativo; null sin tasa vigente). */
   referencia?: import('./tasaReferencia').Referencia | null;
+  /**
+   * C-RUTA-POR-CALLES: el pasajero ya veía otro precio para este mismo trayecto (unos 50 m, últimos
+   * minutos) y cambió. La app lo dice en una línea discreta antes de pedir.
+   */
+  precioCambio?: boolean;
+  totalAnterior?: number;
 };
 
 /**

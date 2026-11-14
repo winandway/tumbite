@@ -60,6 +60,8 @@ import {
   segundosDesde,
   senalPerdida,
   acercaAlDestino,
+  LECTURA_VIEJA_MS,
+  edadLecturaMs,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
@@ -103,6 +105,7 @@ import {
 } from '../liquidaciones';
 import { enviarCorreo } from '../correo';
 import { conciliarAyer, depurarFotos } from '../conciliacion';
+import { crearTicket } from './tickets';
 import {
   abrirPase,
   enviarSms,
@@ -136,7 +139,22 @@ const puntoConPrecision = punto.extend({
   precision: z.number().min(0).max(100_000).nullable().optional(),
   /** Android marca la ubicación simulada («mock»); G2: nunca cuenta para llegar ni mueve la ficha. */
   simulada: z.boolean().optional(),
+  /** C-LATIDO-UBICACION: hora de la lectura y del envío, los dos del reloj del celular (ms). */
+  leidaEn: z.number().int().min(0).optional(),
+  enviadaEn: z.number().int().min(0).optional(),
+  /** Revisión 2: edad de la lectura medida con un solo reloj del celular (puede venir negativa). */
+  edadMs: z.number().int().optional(),
 });
+
+/**
+ * C-CLIENTE-AUSENTE: minutos que el repartidor espera en la puerta tras avisar que el cliente no
+ * aparece (DoorDash 5, Uber Eats 8 [DOC]). Por configuración (`ESPERA_CLIENTE_AUSENTE_MIN`).
+ */
+export const ESPERA_AUSENTE_POR_DEFECTO_MIN = 5;
+export function minutosEsperaAusente(env: Env): number {
+  const n = Number(env.ESPERA_CLIENTE_AUSENTE_MIN ?? ESPERA_AUSENTE_POR_DEFECTO_MIN);
+  return Number.isInteger(n) ? Math.min(15, Math.max(2, n)) : ESPERA_AUSENTE_POR_DEFECTO_MIN;
+}
 
 // ======================= Restaurante =======================
 
@@ -1316,7 +1334,9 @@ operacion.get('/repartidor/estado', async (c) => {
       (await reputacionVisible({ ...c.env, ENTORNO_RELOJ: entornoDe(c.req.url) }, db, u.id)) ??
       undefined,
     // C-ENTREGA-PRACTICA: sin entrega real, la de práctica de la cuenta de revisión (o null).
-    activo: activo ? conDatosRestaurante(activo) : await practicaActiva(db, u.id),
+    activo: activo
+      ? { ...conDatosRestaurante(activo), esperaAusenteMin: minutosEsperaAusente(c.env) }
+      : await practicaActiva(db, u.id),
     agrupados: await agrupadosDe(db, u.id, activo),
     // C-OCUPADO-VISIBLE (BRF-1): si una ruta Flex o un viaje lo ocupa, no le llegan pedidos de
     // comida (C-FLEX-OCUPACION); la app lo dice en vez de «Buscando pedidos cerca de ti…».
@@ -1547,6 +1567,9 @@ operacion.post('/repartidor/ubicacion', async (c) => {
       await anotarEvento(db, activo.id, 'gps_simulado', `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`);
     return c.json({ ok: true, simulada: true });
   }
+  // C-LATIDO-UBICACION: una lectura vieja (el celular reenvía la última que tenía) no es señal
+  // nueva. No se guarda ni refresca «última señal»: el cliente ve «señal perdida».
+  if (edadLecturaMs(d) > LECTURA_VIEJA_MS) return c.json({ ok: true, lecturaVieja: true });
   const { muestras, salto } = await guardarMuestra(db, u.id, d);
   if (salto) {
     // No se mueve la ficha ni cuenta para los hitos; queda anotado en el pedido activo.
@@ -2566,24 +2589,28 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   // En la puerta: con foto. En mano: sin foto (el cliente lo recibió). En lugar seguro: foto y nota,
   // después de avisar que el cliente no aparece y esperar 5 minutos.
   const esFoto = (c.req.header('content-type') ?? '').startsWith('image/');
-  if (requiereEdad && esFoto)
+  const modoPedido = String(c.req.query('modo') ?? '');
+  // C-CLIENTE-AUSENTE: «el cliente no apareció» se cierra con una foto del lugar como constancia;
+  // la comida no se deja (con PIN, con edad o en efectivo nunca se deja sin entregar).
+  const ausente = esFoto && modoPedido === 'ausente';
+  if (requiereEdad && esFoto && !ausente)
     throw new ErrorDatos(
       'Este pedido tiene productos para mayores de 21: entrégalo en mano y revisa el documento.',
       'edad',
       409,
     );
-  const modoPedido = String(c.req.query('modo') ?? '');
   let donde: { lat: number; lng: number };
-  let modo: 'puerta' | 'mano' | 'seguro';
+  let modo: 'puerta' | 'mano' | 'seguro' | 'ausente';
   let nota = String(c.req.query('nota') ?? '')
     .trim()
     .slice(0, 300);
   let foto: Awaited<ReturnType<typeof leerFoto>> | null = null;
   if (esFoto) {
-    await sinFotoConPin(db, id);
+    // C-PIN-SIN-FOTO: la foto no salta el PIN; la de «no apareció» no entrega nada.
+    if (!ausente) await sinFotoConPin(db, id);
     foto = await leerFoto(c);
     donde = foto.donde;
-    modo = modoPedido === 'seguro' ? 'seguro' : 'puerta';
+    modo = ausente ? 'ausente' : modoPedido === 'seguro' ? 'seguro' : 'puerta';
   } else {
     const d = await leerCuerpo(
       c,
@@ -2657,15 +2684,23 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       undefined,
       409,
     );
-  if (modo === 'seguro') {
+  if (modo === 'ausente' && esDirecto(String(p.metodo_pago ?? 'tarjeta')))
+    throw new ErrorDatos(
+      'Este pedido se cobra en mano: si el cliente no aparece, toca «El cliente no pagó».',
+      undefined,
+      409,
+    );
+  if (modo === 'seguro' || modo === 'ausente') {
     const aviso = msDeBase(p.h_no_aparece);
-    if (aviso == null || Date.now() - aviso < 5 * 60_000)
+    const espera = minutosEsperaAusente(c.env);
+    if (aviso == null || Date.now() - aviso < espera * 60_000)
       throw new ErrorDatos(
-        'Primero avisa que el cliente no aparece y espera 5 minutos.',
+        `Primero avisa que el cliente no aparece y espera ${espera} minutos.`,
         undefined,
         409,
       );
-    if (!nota) throw new ErrorDatos('Escribe dónde dejaste el pedido.', 'nota', 422);
+    if (modo === 'seguro' && !nota)
+      throw new ErrorDatos('Escribe dónde dejaste el pedido.', 'nota', 422);
   }
   if (foto) await guardarEvidencia(db, foto, id, 'entrega', metros, true, modo, nota);
   else
@@ -2742,11 +2777,14 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   await liquidar(c.env, db, id).catch((e: unknown) =>
     console.error('entrega: el cobro queda para el reloj', id, e),
   );
-  await avisarAlCliente(c.env, db, c.req.param('id'), (i) => AVISOS.entregado(i));
-  // C-CORREO-ENTREGA: el correo con la foto; si falla, la entrega ya quedó (queda en el canario).
-  await correoDeEntrega(c.env, db, id).catch((e: unknown) =>
-    console.error('correo de entrega', id, e),
-  );
+  if (modo === 'ausente') await cerrarComoAusente(c.env, db, id, u, nota);
+  else {
+    await avisarAlCliente(c.env, db, c.req.param('id'), (i) => AVISOS.entregado(i));
+    // C-CORREO-ENTREGA: el correo con la foto; si falla, la entrega ya quedó (queda en el canario).
+    await correoDeEntrega(c.env, db, id).catch((e: unknown) =>
+      console.error('correo de entrega', id, e),
+    );
+  }
   // Fase 2 · cobro directo: si el cobro ya estaba confirmado, la conciliación cierra aquí.
   await conciliarPedidoDirecto(db, id).catch((e: unknown) =>
     console.error('conciliación directa', e),
@@ -3333,7 +3371,42 @@ operacion.on(['GET', 'POST'], '/twilio/puente', async (c) => {
   return c.body(twimlPuente(a, c.env.TWILIO_FROM), 200, { 'content-type': 'text/xml' });
 });
 
-/** El cliente no aparece: el repartidor avisa desde la puerta; a los 5 minutos puede dejarlo en lugar seguro. */
+/**
+ * C-CLIENTE-AUSENTE: el pedido se cerró como «cliente no apareció». El dinero siguió el camino de
+ * una entrega (el cliente paga, sin reembolso automático; el repartidor y el restaurante cobran lo
+ * suyo, como en DoorDash y Uber Eats). Aquí: la bitácora, el aviso al cliente y el caso
+ * para soporte (si el cliente reclama, soporte decide con la foto y la hora de cada paso).
+ */
+async function cerrarComoAusente(
+  env: Env,
+  db: D1Database,
+  id: string,
+  rep: { id: string; nombre: string; correo: string; idioma?: string },
+  nota: string,
+) {
+  // La constancia es la evidencia (modo «ausente», con foto); el evento queda en la bitácora.
+  await anotarEvento(db, id, 'cliente_ausente', nota);
+  await avisarAlCliente(env, db, id, (i) => AVISOS.clienteAusente(i), 'cliente_ausente');
+  const codigo = id.slice(0, 4).toUpperCase();
+  await crearTicket(env, db, {
+    tipo: 'soporte',
+    nombre: `${rep.nombre} (repartidor)`,
+    correo: rep.correo,
+    idioma: rep.idioma === 'en' ? 'en' : 'es',
+    asunto: `Cliente no apareció · pedido ${codigo}`,
+    mensaje: [
+      `El repartidor cerró el pedido ${codigo} como «cliente no apareció» después de avisar y esperar en la puerta.`,
+      'Hay foto del lugar como constancia. El cliente pagó y el repartidor y el restaurante cobraron lo suyo.',
+      nota ? `Nota del repartidor: ${nota}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
+    usuarioId: rep.id,
+    pedidoId: id,
+  }).catch((e: unknown) => console.error('cliente ausente: caso de soporte', id, e));
+}
+
+/** El cliente no aparece: el repartidor avisa desde la puerta; pasada la espera puede dejarlo en lugar seguro o, con PIN, cerrar como «cliente no apareció». */
 operacion.post('/repartidor/pedidos/:id/no-aparece', async (c) => {
   const { u, db } = await miFicha(c);
   const id = c.req.param('id');
@@ -3360,8 +3433,9 @@ operacion.post('/repartidor/pedidos/:id/no-aparece', async (c) => {
       .bind(id)
       .first<{ creado_en: string }>()
   )?.creado_en;
-  const hasta = (msDeBase(desde) ?? Date.now()) + 5 * 60_000;
-  return c.json({ ok: true, esperaHasta: new Date(hasta).toISOString() });
+  const minutos = minutosEsperaAusente(c.env);
+  const hasta = (msDeBase(desde) ?? Date.now()) + minutos * 60_000;
+  return c.json({ ok: true, esperaHasta: new Date(hasta).toISOString(), minutos });
 });
 
 /** El repartidor no puede seguir (antes de recoger): el pedido vuelve a buscar repartidor, sin castigo. */

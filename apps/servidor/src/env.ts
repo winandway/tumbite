@@ -89,6 +89,15 @@ export const esquemaEnv = z.object({
   TWILIO_API_URL: z.string().optional(),
   /** Prefijos a los que salen SMS y llamadas (C-SMS-PAISES). Sin valor: solo «+1». */
   SMS_PREFIJOS: z.string().optional(),
+  /**
+   * C-CLIENTE-AUSENTE: minutos que el repartidor espera en la puerta, después de avisar que el
+   * cliente no aparece, antes de poder dejarlo en lugar seguro o cerrar como «cliente no apareció».
+   * Sin valor: 5 (DoorDash). Uber Eats usa 8. Entre 2 y 15.
+   */
+  ESPERA_CLIENTE_AUSENTE_MIN: z
+    .string()
+    .regex(/^\d{1,2}$/)
+    .optional(),
   /** Checkr (antecedentes de repartidores). Sin la llave, el botón dice que se activa pronto. */
   CHECKR_API_KEY: z.string().min(16).optional(),
   /** Solo para el recorrido: Checkr simulado en localhost (en producción se ignora). */

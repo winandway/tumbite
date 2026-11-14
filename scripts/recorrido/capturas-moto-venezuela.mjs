@@ -1,4 +1,7 @@
 // Capturas REALES de Divoox Moto en Venezuela para Docs (C-MOTO-VE-CAPTURAS, 13 nov 2026). Venezuela.
+// Desde el 13 nov 2026 se toman en El Vigía, estado Mérida (zona VE-MER-ELVIGIA), no en Caracas, con
+// una tarifa que no es de prueba (sin la etiqueta «Precio de prueba» en Docs públicos), y también
+// las de seguridad: contactos de confianza, «¿Todo bien?», compartir y emergencia, y el descanso.
 // Contra el servidor local del recorrido (.recorrido, armado con scripts/recorrido/preparar.mjs y
 // encendido en el puerto 8790), con las apps web reales del cliente y del Driver y el panel:
 //   1. corre el guion de punta a punta (probar-moto-venezuela.mjs): conductor aprobado con saldo;
@@ -17,15 +20,10 @@ const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'u
 const URL = DATOS.url;
 const SECRETO = DATOS.relojSecreto;
 const SALIDA = join(RAIZ, 'docs', 'capturas', 'recorrido');
-const ORIGEN = { lat: 10.4806, lng: -66.9036, direccion: 'Plaza Venezuela' };
-const DESTINO = { lat: 10.4806, lng: -66.8406, direccion: 'Los Dos Caminos' };
+const ZONA = 'VE-MER-ELVIGIA';
+const ORIGEN = { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' };
+const DESTINO = { lat: 8.624, lng: -71.672, direccion: 'Aeropuerto de El Vigía' };
 const IDS = { cliente: 'zz-mtve-c', conductor: 'zz-mtve-k', equipo: 'zz-mtve-a' };
-
-execFileSync('node', ['scripts/staging/probar-moto-venezuela.mjs'], {
-  cwd: RAIZ,
-  env: { ...process.env, URL_PRUEBAS: URL, RELOJ_SECRETO: SECRETO },
-  stdio: ['ignore', 'ignore', 'inherit'],
-});
 
 let ip = 0;
 async function pedir(metodo, ruta, cuerpo, token, extra = {}, intento = 1) {
@@ -52,6 +50,16 @@ const sql = (q) =>
   pedir('POST', '/datos/interno/diagnostico/sql', { sql: q }, undefined, {
     'x-reloj-secreto': SECRETO,
   });
+// Si una vuelta anterior se cortó en la captura del descanso, sus horas al volante se deshacen.
+await sql(
+  `UPDATE viajes SET asignado_en = datetime('now', '-15 minutes') WHERE asignado_en < datetime('now', '-12 hours') AND operacion_id IN (SELECT id FROM operaciones WHERE conductor_id = '${IDS.conductor}')`,
+).catch(() => null);
+execFileSync('node', ['scripts/staging/probar-moto-venezuela.mjs'], {
+  cwd: RAIZ,
+  env: { ...process.env, URL_PRUEBAS: URL, RELOJ_SECRETO: SECRETO, CIUDAD_VE: 'el-vigia' },
+  stdio: ['ignore', 'ignore', 'inherit'],
+});
+
 // Pases de sesión de una hora para las cuentas fijas (el guion borró los suyos al terminar).
 const tokens = Object.fromEntries(
   Object.keys(IDS).map((k) => [k, randomBytes(24).toString('hex')]),
@@ -81,6 +89,17 @@ const cerrarColgado = async () => {
     });
 };
 await pedir('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 240 }, tokens.equipo);
+// Solo en este servidor local: la tarifa de la ciudad pasa a «no de prueba» para que la captura
+// pública no diga «Precio de prueba (sitio de pruebas)». En el sitio de pruebas sigue siendo de prueba.
+await sql(`UPDATE tarifas_viaje SET de_prueba = 0 WHERE zona_id = '${ZONA}' AND activa = 1`);
+// Un contacto de confianza neutro y «solo de noche», para la guía de seguridad.
+const seg = await pasajero('GET', '/datos/seguridad');
+if (!(seg.contactos ?? []).length)
+  await pasajero('POST', '/datos/seguridad/contactos', {
+    nombre: 'Contacto de confianza',
+    telefono: '+58 414 000 0000',
+  });
+await pasajero('PUT', '/datos/seguridad/compartir', { compartir: 'noche' });
 await conductor('PUT', '/datos/conductor/preferencias', { servicioId: 'moto', activa: true });
 
 const navegador = await chromium.launch();
@@ -202,6 +221,14 @@ for (const idioma of ['es', 'en']) {
     fullPage: true,
     clip: { x: 0, y: desde, width: c.viewportSize().width, height: precio.fin + 90 - desde },
   });
+  // Seguridad del pasajero: los contactos de confianza, debajo de la pantalla de Moto.
+  await c
+    .getByText(en ? 'Trusted contacts' : 'Contactos de confianza', { exact: true })
+    .first()
+    .evaluate((n) => n.scrollIntoView({ block: 'start' }));
+  await espera(600);
+  await foto(c, 'cliente-contactos', idioma);
+  await c.getByTestId('moto-precio').scrollIntoViewIfNeeded();
   await c
     .getByRole('button', { name: en ? /Request/ : /Pedir/ })
     .last()
@@ -226,6 +253,25 @@ for (const idioma of ['es', 'en']) {
   await c.getByTestId('viaje-pago-movil').waitFor({ timeout: 60_000 });
   await espera(800);
   await foto(c, 'cliente-viaje', idioma);
+  // Compartir y emergencia, al final del viaje en curso.
+  await c
+    .getByText(en ? 'Share my ride' : 'Compartir mi viaje', { exact: true })
+    .first()
+    .evaluate((n) => n.scrollIntoView({ block: 'center' }));
+  await espera(600);
+  await foto(c, 'cliente-compartir', idioma);
+  // «¿Todo bien?»: el servidor la levanta cuando el viaje se sale de la ruta; aquí se simula la alerta.
+  await sql(
+    `INSERT OR IGNORE INTO alertas_viaje (id, operacion_id, tipo, lat, lng) VALUES ('zz-alerta-${viaje.id}', '${viaje.id}', 'desvio', ${ORIGEN.lat}, ${ORIGEN.lng})`,
+  );
+  await c.reload();
+  await c
+    .getByText(en ? 'Everything OK?' : '¿Todo bien?', { exact: true })
+    .waitFor({ timeout: 60_000 });
+  await espera(800);
+  await foto(c, 'cliente-todo-bien', idioma);
+  await c.getByText(en ? 'I’m OK' : 'Estoy bien', { exact: true }).click();
+  await espera(1_000);
 
   // ───────── Driver: viaje activo con pago móvil, «sí me llegó» y la pantalla de cobro
   await d.reload();
@@ -233,6 +279,13 @@ for (const idioma of ['es', 'en']) {
   await d.getByTestId('viaje-pago-movil').scrollIntoViewIfNeeded();
   await espera(800);
   await foto(d, 'driver-viaje-pago-movil', idioma);
+  await d
+    .getByText(en ? 'Emergency' : 'Emergencia', { exact: true })
+    .last()
+    .evaluate((n) => n.scrollIntoView({ block: 'center' }));
+  await espera(600);
+  await foto(d, 'driver-emergencia', idioma);
+  await d.getByTestId('viaje-pago-movil').scrollIntoViewIfNeeded();
   await d.getByText(en ? 'Yes, it arrived' : 'Sí, me llegó', { exact: true }).click();
   await d.getByText(en ? 'End ride' : 'Terminar viaje', { exact: true }).click();
   await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
@@ -260,6 +313,38 @@ for (const idioma of ['es', 'en']) {
   await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
   await espera(800);
   await foto(d, 'driver-cobro-efectivo', idioma);
+
+  // ───────── Driver: con 12 horas al volante, descansa (se simula alargando el viaje recién hecho)
+  await sql(
+    `UPDATE viajes SET asignado_en = datetime('now', '-13 hours'), terminado_en = datetime('now', '-5 minutes') WHERE operacion_id = '${v2.id}'`,
+  );
+  const cot3 = (
+    await pasajero('POST', '/datos/viajes/cotizar', {
+      servicio: 'moto',
+      origen: ORIGEN,
+      destino: DESTINO,
+    })
+  ).cotizacion;
+  const v3 = (
+    await pasajero('POST', '/datos/viajes', { cotizacionId: cot3.id, metodoPago: 'efectivo' })
+  ).viaje;
+  await d.reload();
+  await d.getByTestId('oferta-viaje').waitFor({ timeout: 60_000 });
+  await d.getByText(en ? 'Accept ride' : 'Aceptar viaje', { exact: true }).click();
+  await espera(1_500);
+  await pedir('POST', `/datos/viajes/${v3.id}/cancelar`, {}, tokens.cliente, {
+    'idempotency-key': `capturas-cancelar-descanso-${Date.now().toString(36)}`,
+  });
+  await d.getByTestId('oferta-viaje').waitFor({ state: 'detached', timeout: 30_000 });
+  await d
+    .getByText(en ? /been driving/ : /horas manejando/)
+    .first()
+    .waitFor({ timeout: 30_000 });
+  await espera(600);
+  await foto(d, 'driver-descanso', idioma);
+  await sql(
+    `UPDATE viajes SET asignado_en = datetime('now', '-15 minutes') WHERE operacion_id = '${v2.id}'`,
+  );
   await ctxC.close();
   await ctxD.close();
 

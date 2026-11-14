@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
-import { detenerUbicacionFondo, iniciarUbicacionFondo } from './ubicacionFondo';
+import { detenerUbicacionFondo, fijarModoRastreo, iniciarUbicacionFondo } from './ubicacionFondo';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -39,6 +39,11 @@ import {
   sePuedeReintentar,
   usaMillas,
   LATIDO_UBICACION_MS,
+  cuerpoUbicacion,
+  marcarRecibida,
+  paraEnviarUbicacion,
+  modoRastreo,
+  tocaMandarSegunModo,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -150,6 +155,8 @@ type Pedido = {
   minutosEstimados?: number | null;
   articulos?: number;
   noApareceEn?: string | null;
+  /** C-CLIENTE-AUSENTE: minutos de espera en la puerta tras avisar (configuración del servidor). */
+  esperaAusenteMin?: number;
   excepcionUbicacion?: 'pedida' | 'autorizada' | null;
   entrega?: 'puerta' | 'mano';
   pinRequerido?: boolean;
@@ -324,6 +331,9 @@ const T = {
     noAparece: 'El cliente no aparece',
     esperando5: 'Avisamos al cliente. Escríbele por el chat y espera',
     dejarSeguro: 'Dejar en lugar seguro (con foto)',
+    clienteAusente: 'Cliente no apareció: cerrar con foto',
+    clienteAusenteAyuda:
+      'Con PIN la comida no se deja. Toma una foto de la puerta o del lugar como constancia: el pedido se cierra, tú cobras lo tuyo y soporte queda avisado.',
     dondeLoDejas: 'Escribe dónde lo dejas (con el portero, detrás de la maceta…)',
     permisoCamara: 'Para tomar la foto necesitamos permiso para usar la cámara.',
     esperando: 'El restaurante lo está terminando…',
@@ -460,6 +470,9 @@ const T = {
     noAparece: 'Customer isn’t here',
     esperando5: 'We told the customer. Message them in the chat and wait',
     dejarSeguro: 'Leave in a safe spot (with photo)',
+    clienteAusente: 'Customer didn’t show: close with photo',
+    clienteAusenteAyuda:
+      'With a PIN the food isn’t left behind. Take a photo of the door or the spot as proof: the order is closed, you get paid and support is notified.',
     dondeLoDejas: 'Where are you leaving it (with the doorman, behind the planter…)',
     permisoCamara: 'To take the photo, we need permission to use the camera.',
     esperando: 'The restaurant is finishing it…',
@@ -727,33 +740,51 @@ export function Inicio() {
   // Al salir de la pantalla (cerrar sesión, cambiar de cuenta) el GPS de fondo se apaga.
   useEffect(() => () => void detenerUbicacionFondo(), []);
 
-  // Mientras está conectado, la ubicación se manda cada vez que se mueve (solo con la app abierta)
-  // y, quieto, cada 2 minutos (C-LATIDO-UBICACION).
+  // C-GPS-PANTALLA-APAGADA: se rastrea conectado o con un pedido, viaje o ruta en curso; nunca
+  // desconectado sin trabajo. Activo manda cada 25 m; libre cada 250 m; quieto, el latido de 2 min.
+  const modoGps = modoRastreo({
+    conectado: !!estado?.conectado,
+    pedidoActivo: !!estado?.activo,
+    viajeActivo: !!viajeActivo,
+    // Ruta de paquetes ya en marcha (cargando o repartiendo), no solo ofrecida.
+    rutaFlexActiva: rutaFlex?.estado === 'en_carga' || rutaFlex?.estado === 'en_curso',
+  });
   useEffect(() => {
-    if (!estado?.conectado) {
+    fijarModoRastreo(modoGps);
+    if (modoGps === 'apagado') {
       vigilante.current?.remove();
       vigilante.current = null;
       void detenerUbicacionFondo();
       return;
     }
     let vivo = true;
-    // GPS en segundo plano (punto 23): sigue mandando posición con la pantalla apagada o detrás del mapa.
-    void iniciarUbicacionFondo({ titulo: tg.fondo.titulo, cuerpo: tg.fondo.cuerpo });
+    let ultimoEnvio: { lat: number; lng: number; en: number } | null = null;
+    const mandar = (p: Location.LocationObject, forzar = false) => {
+      const cuerpo = cuerpoUbicacion(p);
+      if (!forzar && !tocaMandarSegunModo(modoGps, ultimoEnvio, cuerpo)) return;
+      ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };
+      // C-LATIDO-UBICACION: viaja con la hora de la lectura y la del envío; el servidor no cuenta
+      // como señal nueva una lectura vieja.
+      return api
+        .pedir('POST', '/datos/repartidor/ubicacion', paraEnviarUbicacion(cuerpo))
+        .catch(() => undefined);
+    };
+    // GPS en segundo plano (punto 23): sigue mandando posición con la pantalla apagada o detrás del
+    // mapa. La primera vez, una explicación antes del cuadro del sistema (como Dasher).
+    void iniciarUbicacionFondo({
+      titulo: tg.fondo.titulo,
+      cuerpo: tg.fondo.cuerpo,
+      explicacion: tg.fondo.explicacion,
+    });
     void Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, distanceInterval: 30, timeInterval: 10_000 },
       (p) => {
-        ultimaLectura.current = p;
+        // Revisión 2 (C-LATIDO-UBICACION): marcada con el reloj del celular al recibirla.
+        ultimaLectura.current = marcarRecibida(p);
         setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
         setPrecision(p.coords.accuracy ?? null);
         setGpsSimulado(p.mocked === true);
-        void api
-          .pedir('POST', '/datos/repartidor/ubicacion', {
-            lat: p.coords.latitude,
-            lng: p.coords.longitude,
-            precision: p.coords.accuracy ?? null,
-            simulada: p.mocked === true,
-          })
-          .catch(() => undefined);
+        void mandar(ultimaLectura.current);
       },
     ).then((s) => {
       if (vivo) vigilante.current = s;
@@ -764,17 +795,15 @@ export function Inicio() {
     // quite un pedido aceptado. El servidor escribe como mucho una vez por latido.
     const latido = setInterval(() => {
       void (async () => {
+        // Se pide una lectura NUEVA (quieto, el GPS no avisa nada). Si el GPS no da, se manda la
+        // última con su hora real y el servidor no la toma por señal viva (C-LATIDO-UBICACION).
         const p =
-          ultimaLectura.current ?? (await Location.getLastKnownPositionAsync().catch(() => null));
+          (await ubicacionConLimite().then((x) => x && marcarRecibida(x))) ??
+          ultimaLectura.current ??
+          (await Location.getLastKnownPositionAsync().catch(() => null));
         if (!vivo || !p) return;
-        await api
-          .pedir('POST', '/datos/repartidor/ubicacion', {
-            lat: p.coords.latitude,
-            lng: p.coords.longitude,
-            precision: p.coords.accuracy ?? null,
-            simulada: p.mocked === true,
-          })
-          .catch(() => undefined);
+        ultimaLectura.current = p;
+        await mandar(p, true);
       })();
     }, LATIDO_UBICACION_MS);
     return () => {
@@ -783,7 +812,7 @@ export function Inicio() {
       vigilante.current?.remove();
       vigilante.current = null;
     };
-  }, [estado?.conectado, api, tg.fondo.titulo, tg.fondo.cuerpo]);
+  }, [modoGps, api, tg.fondo]);
 
   // C-ZONAS-ANTES-DE-CONECTAR: desconectado también se ve el mapa de zonas con más pedidos (como
   // Dasher): es cuando el repartidor decide adónde ir. Se lee la ubicación UNA vez y solo si ya dio
@@ -2236,7 +2265,12 @@ export function Inicio() {
                     const faltanSeg =
                       avisoMs == null
                         ? null
-                        : Math.max(0, Math.ceil((avisoMs + 5 * 60_000 - tic) / 1000));
+                        : Math.max(
+                            0,
+                            Math.ceil(
+                              (avisoMs + (activo.esperaAusenteMin ?? 5) * 60_000 - tic) / 1000,
+                            ),
+                          );
                     return (
                       <>
                         {activo.excepcionUbicacion === 'autorizada' && !activo.llegoCliente ? (
@@ -2439,9 +2473,6 @@ export function Inicio() {
                             {t.esperando5} {Math.floor(faltanSeg / 60)}:
                             {String(faltanSeg % 60).padStart(2, '0')}
                           </Text>
-                        ) : activo.pinRequerido ? (
-                          // C-PIN-SIN-FOTO: con PIN no hay «lugar seguro»; si no aparece, soporte.
-                          <Text style={{ color: '#5E5E5E', marginTop: 6 }}>{t.conPinSinFoto}</Text>
                         ) : activo.metodoPago && activo.metodoPago !== 'tarjeta' ? (
                           // C-COBRO-DIRECTO: se cobra en mano; no hay «lugar seguro».
                           <Text
@@ -2450,6 +2481,24 @@ export function Inicio() {
                           >
                             {tg.pedido.sinLugarSeguro}
                           </Text>
+                        ) : activo.pinRequerido || activo.requiereEdad ? (
+                          // C-CLIENTE-AUSENTE: con PIN (o con edad) no hay «lugar seguro»: pasada la
+                          // espera se cierra como «cliente no apareció» con foto del lugar.
+                          <View style={{ gap: 6, marginTop: 6 }} testID="cliente-ausente">
+                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                              {t.clienteAusenteAyuda}
+                            </Text>
+                            <Boton
+                              texto={subiendo ? t.subiendo : t.clienteAusente}
+                              alTocar={() =>
+                                void tomarFoto(
+                                  `/datos/repartidor/pedidos/${activo.id}/entregado?modo=ausente`,
+                                )
+                              }
+                              cargando={subiendo}
+                              secundario
+                            />
+                          </View>
                         ) : (
                           <>
                             <TextInput

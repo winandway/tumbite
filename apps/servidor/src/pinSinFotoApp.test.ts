@@ -21,10 +21,30 @@ describe('app del repartidor: con PIN no se entrega con foto (C-PIN-SIN-FOTO)', 
   });
 
   it('el lugar seguro con foto tampoco se ofrece con PIN, y se explica', () => {
-    expect(antesDe('texto={subiendo ? t.subiendo : t.dejarSeguro}', 1500)).toContain(
-      'activo.pinRequerido ?',
+    // C-CLIENTE-AUSENTE: con PIN, en lugar del lugar seguro va «cliente no apareció».
+    expect(antesDe('texto={subiendo ? t.subiendo : t.dejarSeguro}', 2500)).toContain(
+      'activo.pinRequerido || activo.requiereEdad ?',
     );
     expect(src).toMatch(/conPinSinFoto:\s*\n?\s*'Este pedido se entrega en mano con el PIN/);
     expect(src).toMatch(/conPinSinFoto:\s*\n?\s*'This order is handed over in person with the PIN/);
+  });
+});
+
+// C-CLIENTE-AUSENTE (13 nov 2026): con PIN y sin cliente, el repartidor no queda atrapado.
+describe('app del repartidor: cliente ausente con PIN (C-CLIENTE-AUSENTE)', () => {
+  const src = readFileSync(join(raiz, 'apps/repartidor/src/Inicio.tsx'), 'utf8');
+  it('pasada la espera, con PIN se ofrece cerrar como «cliente no apareció» con foto', () => {
+    const i = src.indexOf('testID="cliente-ausente"');
+    expect(i).toBeGreaterThan(0);
+    expect(src.slice(i - 400, i)).toContain('activo.pinRequerido || activo.requiereEdad ?');
+    expect(src.slice(i, i + 900)).toContain('/entregado?modo=ausente');
+  });
+  it('el reloj de espera es el que manda el servidor (configuración), no un número fijo', () => {
+    expect(src).toContain('(activo.esperaAusenteMin ?? 5) * 60_000');
+    expect(src).not.toContain('avisoMs + 5 * 60_000');
+  });
+  it('los textos están en español e inglés', () => {
+    expect(src).toContain("clienteAusente: 'Cliente no apareció: cerrar con foto'");
+    expect(src).toContain("clienteAusente: 'Customer didn’t show: close with photo'");
   });
 });

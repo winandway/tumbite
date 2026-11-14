@@ -42,7 +42,12 @@ import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { textosTiendas } from '../tiendas/textos';
 import { ElegirReemplazo } from '../tiendas/ElegirReemplazo';
-import { SUSTITUCIONES, huellaPedido, margenPesables } from '@tumbite/compartido';
+import {
+  SUSTITUCIONES,
+  armarCuerpoPedido,
+  huellaPedido,
+  margenPesables,
+} from '@tumbite/compartido';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
@@ -535,47 +540,21 @@ function PantallaCarrito() {
 
   // C-COBRO-MISMOS-DATOS: el cuerpo del pedido tal como se manda (sin el total) y su huella. El
   // cobro ya creado solo se reutiliza si TODOS estos datos siguen iguales.
-  const cuerpoPedido = {
+  const cuerpoPedido = armarCuerpoPedido({
     restauranteId: carrito.restauranteId,
-    lineas: carrito.lineas.map((l) => ({
-      platoId: l.platoId,
-      cantidad: l.cantidad,
-      opciones: (l.opciones ?? []).map((o) => o.id),
-      ...(carrito.esTienda ? { sustitucion: l.sustitucion ?? 'reembolsar' } : {}),
-      ...(carrito.esTienda && l.sustitucion === 'especifico' && l.reemplazo
-        ? { reemplazoId: l.reemplazo.platoId }
-        : {}),
-      ...(l.nota ? { nota: l.nota } : {}),
-    })),
+    esTienda: carrito.esTienda,
+    lineas: carrito.lineas,
     propinaCentavos: propina,
-    // C-ANUNCIOS: si entró tocando el anuncio de este restaurante (se cobra al restaurante, no al cliente).
     anuncioId: anuncioPara(carrito.restauranteId),
     usarSaldoRegalo: usoRegalo > 0,
-    direccion: b.valores.direccion,
-    apto: b.valores.apto,
-    notas: b.valores.notas,
-    alergias: b.valores.alergias,
-    paraOtro: comoRegalo
-      ? {
-          nombre: b.valores.paraNombre,
-          telefono: b.valores.paraTelefono,
-          mensaje: b.valores.paraMensaje,
-        }
-      : null,
-    entrega:
-      b.valores.entrega === 'recoger'
-        ? 'recoger'
-        : b.valores.entrega === 'mano'
-          ? 'mano'
-          : 'puerta',
-    pin: b.valores.pin !== 'no',
+    valores: b.valores,
+    comoRegalo,
     metodoPago,
     cupon: cupon?.codigo,
-    lat: punto?.lat ?? null,
-    lng: punto?.lng ?? null,
+    punto,
     regalo: regalo > 0 ? regaloElegido : null,
-    ...(franjaElegida ? { programadoPara: franjaElegida.inicio } : {}),
-  };
+    programadoPara: franjaElegida?.inicio,
+  });
   const huella = huellaPedido(cuerpoPedido);
   const dLocal =
     conPlus && usoRegalo

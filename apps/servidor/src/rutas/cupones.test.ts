@@ -177,9 +177,14 @@ describe('pedido sin pagar que queda atrás (C-PENDIENTE-ABANDONADO)', () => {
       }
       const leer = /\/payment_intents\/(pi_\d+)$/.exec(u);
       if (leer && (init?.method ?? 'GET') === 'GET')
-        return new Response(JSON.stringify({ id: leer[1], status: 'requires_payment_method' }), {
-          status: 200,
-        });
+        return new Response(
+          JSON.stringify({
+            id: leer[1],
+            status: 'requires_payment_method',
+            client_secret: `${leer[1]}_s`,
+          }),
+          { status: 200 },
+        );
       if (u.includes('/payment_intents')) {
         n++;
         return new Response(JSON.stringify({ id: `pi_${n}`, client_secret: `pi_${n}_s` }), {
@@ -265,6 +270,179 @@ describe('pedido sin pagar que queda atrás (C-PENDIENTE-ABANDONADO)', () => {
       .first<{ estado: string }>();
     expect(estadoViejo?.estado).toBe('pago_pendiente');
     expect(anulados).toEqual([]);
+  });
+
+  // Revisión del 13 nov 2026.
+  it('un pedido sin cobro de Stripe se respeta 2 minutos (puede estar creándose) y después se cierra', async () => {
+    const e = await escenario();
+    stripeFalso();
+    const viejo = await e.pedir();
+    const id = viejo.datos.pedidoId as string;
+    await e.m.DB.prepare('UPDATE pedidos SET stripe_sesion = NULL WHERE id = ?').bind(id).run();
+    const estado = async () =>
+      (
+        await e.m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?')
+          .bind(id)
+          .first<{ estado: string }>()
+      )?.estado;
+    expect((await e.pedir({ direccion: '401 Calle Nueva' })).estado).toBe(201);
+    expect(await estado()).toBe('pago_pendiente');
+    await e.m.DB.prepare(
+      "UPDATE pedidos SET creado_en = datetime('now', '-3 minutes') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    expect((await e.pedir({ direccion: '402 Calle Nueva' })).estado).toBe(201);
+    expect(await estado()).toBe('cancelado');
+  });
+
+  it('dos «Continuar al pago» casi a la vez con los mismos datos: el segundo reutiliza el cobro del primero y no lo anula', async () => {
+    const e = await escenario();
+    const anulados = stripeFalso();
+    const primero = await e.pedir();
+    const segundo = await e.pedir();
+    expect(primero.estado).toBe(201);
+    expect(segundo.estado).toBe(201);
+    expect(segundo.datos.pedidoId).toBe(primero.datos.pedidoId);
+    expect(segundo.datos.clientSecret).toBe(primero.datos.clientSecret);
+    expect(segundo.datos.desglose.totalCliente).toBe(primero.datos.desglose.totalCliente);
+    expect(anulados).toEqual([]);
+    const { n } = (await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM pedidos WHERE estado = 'pago_pendiente'",
+    ).first<{ n: number }>())!;
+    expect(n).toBe(1);
+    // Con un cupón de un solo uso pasa lo mismo: el uso del primero no bloquea al segundo.
+    await e.m.llamar(
+      'POST',
+      '/datos/admin/cupones',
+      { codigo: 'CARRERA', tipo: 'monto', valor: 200, usosPorCliente: 1 },
+      e.admin.token,
+    );
+    const a = await e.pedir({ cupon: 'CARRERA' });
+    const b = await e.pedir({ cupon: 'CARRERA' });
+    expect(b.estado).toBe(201);
+    expect(b.datos.pedidoId).toBe(a.datos.pedidoId);
+    expect(anulados).toEqual(['pi_1']);
+  });
+
+  // Revisión del 13 nov 2026 (2): el saldo de regalo apartado por el pendiente vigente no cambia el
+  // total del segundo intento, y nunca quedan dos pendientes vivos para el mismo carrito.
+  const darSaldo = (e: Awaited<ReturnType<typeof escenario>>, centavos: number, ref: string) =>
+    e.m.DB.prepare(
+      "INSERT INTO creditos_regalo (id, usuario_id, centavos, motivo, referencia) VALUES (?1, ?2, ?3, 'prueba', ?1)",
+    )
+      .bind(ref, e.cliente.id, centavos)
+      .run();
+  const pendientes = async (e: Awaited<ReturnType<typeof escenario>>) =>
+    (await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM pedidos WHERE estado = 'pago_pendiente'",
+    ).first<{ n: number }>())!.n;
+
+  for (const conTotal of [false, true])
+    it(`con saldo de regalo, el segundo «Continuar al pago» reutiliza el mismo cobro (${conTotal ? 'con' : 'sin'} totalEsperado)`, async () => {
+      const e = await escenario();
+      const anulados = stripeFalso();
+      await darSaldo(e, 500, 'r1');
+      const primero = await e.pedir({ usarSaldoRegalo: true });
+      expect(primero.estado).toBe(201);
+      expect(primero.datos.desglose.descuento).toBe(500);
+      const total = primero.datos.desglose.totalCliente as number;
+      for (let i = 0; i < 3; i++) {
+        const otra = await e.pedir({
+          usarSaldoRegalo: true,
+          ...(conTotal ? { totalEsperado: total } : {}),
+        });
+        expect(otra.estado).toBe(201);
+        expect(otra.datos.pedidoId).toBe(primero.datos.pedidoId);
+        expect(otra.datos.clientSecret).toBe(primero.datos.clientSecret);
+      }
+      expect(anulados).toEqual([]);
+      expect(await pendientes(e)).toBe(1);
+    });
+
+  for (const conTotal of [false, true])
+    it(`con saldo de regalo y cupón de un solo uso, si el total cambia se cancela el pendiente antes de crear el nuevo (${conTotal ? 'con' : 'sin'} totalEsperado)`, async () => {
+      const e = await escenario();
+      await e.m.llamar(
+        'POST',
+        '/datos/admin/cupones',
+        { codigo: 'SOLOUNO', tipo: 'monto', valor: 200, usosPorCliente: 1 },
+        e.admin.token,
+      );
+      const anulados = stripeFalso();
+      await darSaldo(e, 500, 'r1');
+      const cuerpo = { usarSaldoRegalo: true, cupon: 'SOLOUNO' };
+      const primero = await e.pedir(cuerpo);
+      expect(primero.estado).toBe(201);
+      const total = primero.datos.desglose.totalCliente as number;
+      // Mismo carrito: mismo cobro.
+      const igual = await e.pedir({ ...cuerpo, ...(conTotal ? { totalEsperado: total } : {}) });
+      expect(igual.datos.pedidoId).toBe(primero.datos.pedidoId);
+      // Entra más saldo: el total baja. El pendiente se cancela primero (libera saldo y cupón).
+      await darSaldo(e, 300, 'r2');
+      const nuevo = await e.pedir({
+        ...cuerpo,
+        ...(conTotal ? { totalEsperado: total - 300 } : {}),
+      });
+      expect(nuevo.estado).toBe(201);
+      expect(nuevo.datos.pedidoId).not.toBe(primero.datos.pedidoId);
+      expect(nuevo.datos.desglose.totalCliente).toBe(total - 300);
+      expect(nuevo.datos.desglose.descuento).toBe(200 + 800);
+      expect(anulados).toEqual(['pi_1']);
+      expect(await pendientes(e)).toBe(1);
+      const usos = await e.m.DB.prepare(
+        "SELECT COUNT(*) AS n FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = 'SOLOUNO' AND p.estado <> 'cancelado'",
+      ).first<{ n: number }>();
+      expect(usos?.n).toBe(1);
+    });
+
+  it('el listado de cupones del equipo no cuenta los usos de pedidos cancelados', async () => {
+    const e = await escenario();
+    await e.m.llamar(
+      'POST',
+      '/datos/admin/cupones',
+      { codigo: 'LISTADO', tipo: 'monto', valor: 200, usosPorCliente: 1 },
+      e.admin.token,
+    );
+    stripeFalso();
+    const p = await e.pedir({ cupon: 'LISTADO' });
+    await e.m.llamar('POST', `/datos/pedidos/${p.datos.pedidoId}/cancelar`, {}, e.cliente.token);
+    const l = await e.m.llamar('GET', '/datos/admin/cupones', undefined, e.admin.token);
+    const c = (l.datos.cupones as { codigo: string; usos: number; descontado: number }[]).find(
+      (x) => x.codigo === 'LISTADO',
+    );
+    expect(c?.usos).toBe(0);
+    expect(c?.descontado).toBe(0);
+  });
+
+  it('si la comida ya lista se cancela a cargo del cliente, el cupón de un solo uso no vuelve', async () => {
+    const e = await escenario();
+    await e.m.llamar(
+      'POST',
+      '/datos/admin/cupones',
+      { codigo: 'CULPA', tipo: 'monto', valor: 200, usosPorCliente: 1 },
+      e.admin.token,
+    );
+    stripeFalso();
+    const p = await e.pedir({ cupon: 'CULPA' });
+    const id = p.datos.pedidoId as string;
+    await e.m.DB.prepare("UPDATE pedidos SET estado = 'cancelado' WHERE id = ?").bind(id).run();
+    await e.m.DB.prepare(
+      "INSERT INTO solicitudes_cancelacion (id, pedido_id, restaurante_id, motivo, paga_comida, estado) VALUES ('s1', ?, ?, 'cliente_no_responde', 'cliente', 'aprobada')",
+    )
+      .bind(id, e.rid)
+      .run();
+    const validar = () =>
+      e.m.llamar(
+        'POST',
+        '/datos/cupones/validar',
+        { codigo: 'CULPA', restauranteId: e.rid, subtotal: 3000, envio: 399 },
+        e.cliente.token,
+      );
+    expect((await validar()).estado).toBe(409);
+    // Si la comida la asume el restaurante (no fue culpa del cliente), el cupón vuelve.
+    await e.m.DB.prepare("UPDATE solicitudes_cancelacion SET paga_comida = 'restaurante'").run();
+    expect((await validar()).estado).toBe(200);
   });
 });
 

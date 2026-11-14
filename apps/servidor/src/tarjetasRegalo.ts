@@ -41,8 +41,19 @@ const SALDO = `(COALESCE((SELECT SUM(centavos) FROM tarjetas_regalo WHERE canjea
   - COALESCE((SELECT SUM(u.centavos) FROM pedidos_saldo_regalo u JOIN pedidos p ON p.id = u.pedido_id
       WHERE u.usuario_id = ?1 AND p.estado <> 'cancelado'), 0))`;
 
-export async function saldoRegalo(db: D1Database, usuarioId: string): Promise<number> {
-  const f = await db.prepare(`SELECT ${SALDO} AS saldo`).bind(usuarioId).first<{ saldo: number }>();
+export async function saldoRegalo(
+  db: D1Database,
+  usuarioId: string,
+  /** C-PENDIENTE-ABANDONADO: el pedido sin pagar que se va a reutilizar no cuenta como apartado. */
+  ignorarPedido?: string,
+): Promise<number> {
+  const f = await db
+    .prepare(
+      `SELECT ${SALDO} + COALESCE((SELECT SUM(u.centavos) FROM pedidos_saldo_regalo u JOIN pedidos p
+        ON p.id = u.pedido_id WHERE u.usuario_id = ?1 AND u.pedido_id = ?2 AND p.estado <> 'cancelado'), 0) AS saldo`,
+    )
+    .bind(usuarioId, ignorarPedido ?? '')
+    .first<{ saldo: number }>();
   return Math.max(0, Number(f?.saldo ?? 0));
 }
 

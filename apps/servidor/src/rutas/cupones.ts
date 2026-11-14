@@ -9,6 +9,14 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerPlus, tienePlus } from '../plus';
 
 /**
+ * C-PENDIENTE-ABANDONADO (revisión del 13 nov 2026): cuándo cuenta el uso de un cupón, para el
+ * tope y para el listado del equipo. Un pedido cancelado (o cerrado sin pagar) lo devuelve, como en
+ * DoorDash y Uber Eats, salvo que soporte aprobara la cancelación de un pedido ya listo cargándole
+ * la comida al cliente: ahí la cancelación fue culpa suya y el cupón queda gastado.
+ */
+export const USO_CUENTA = `(p.estado <> 'cancelado' OR EXISTS (SELECT 1 FROM solicitudes_cancelacion s WHERE s.pedido_id = p.id AND s.estado = 'aprobada' AND s.paga_comida = 'cliente'))`;
+
+/**
  * Cupones y promociones reales (auditoría final, punto 15). Los crea el superadmin; el cliente los
  * aplica en el carrito; el servidor los valida de nuevo al crear el pedido (nunca se confía en la
  * app). El descuento lo absorbe Divoox (baja su ganancia): quién paga cada campaña es decisión de
@@ -47,6 +55,8 @@ export async function validarCupon(
     zonaId: string;
     /** C-ENVIO-UNA-VEZ: Divoox Plus ya deja el envío de este pedido en cero. */
     plusCubreEnvio?: boolean;
+    /** C-PENDIENTE-ABANDONADO: el pedido sin pagar que se va a reutilizar no cuenta como otro uso. */
+    ignorarPedido?: string;
   },
 ): Promise<{ descuento: number; cupon: FilaCupon }> {
   const codigo = normalizarCupon(p.codigo);
@@ -73,11 +83,12 @@ export async function validarCupon(
     throw new ErrorDatos('Ya tienes el envío gratis con Divoox Plus.', 'cupon', 409);
   const usos = await db
     .prepare(
-      // C-PENDIENTE-ABANDONADO: el uso de un pedido cancelado (o cerrado sin pagar) no cuenta.
-      `SELECT (SELECT COUNT(*) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = ?1 AND p.estado <> 'cancelado') AS total,
-        (SELECT COUNT(*) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = ?1 AND u.usuario_id = ?2 AND p.estado <> 'cancelado') AS mios`,
+      // C-PENDIENTE-ABANDONADO: el uso de un pedido cancelado (o cerrado sin pagar) no cuenta, salvo
+      // que la comida preparada la asuma el cliente (USO_CUENTA).
+      `SELECT (SELECT COUNT(*) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = ?1 AND u.pedido_id <> ?3 AND ${USO_CUENTA}) AS total,
+        (SELECT COUNT(*) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = ?1 AND u.usuario_id = ?2 AND u.pedido_id <> ?3 AND ${USO_CUENTA}) AS mios`,
     )
-    .bind(codigo, p.usuarioId)
+    .bind(codigo, p.usuarioId, p.ignorarPedido ?? '')
     .first<{ total: number; mios: number }>();
   if (c.usos_max != null && Number(usos?.total ?? 0) >= c.usos_max)
     throw new ErrorDatos('Ese cupón ya se agotó.', 'cupon', 409);
@@ -174,7 +185,7 @@ cupones.get('/admin/cupones', async (c) => {
   exigir(c, 'admin');
   const { results } = await base(c)
     .prepare(
-      "SELECT c.*, COALESCE((SELECT moneda FROM zonas WHERE id = c.zona_id), (SELECT z.moneda FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = c.restaurante_id), 'USD') AS moneda, (SELECT COUNT(*) FROM usos_cupon u WHERE u.codigo = c.codigo) AS usos, (SELECT COALESCE(SUM(descuento),0) FROM usos_cupon u WHERE u.codigo = c.codigo) AS descontado FROM cupones c ORDER BY c.activo DESC, c.creado_en DESC LIMIT 200",
+      `SELECT c.*, COALESCE((SELECT moneda FROM zonas WHERE id = c.zona_id), (SELECT z.moneda FROM restaurantes r JOIN zonas z ON z.id = r.zona_id WHERE r.id = c.restaurante_id), 'USD') AS moneda, (SELECT COUNT(*) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = c.codigo AND ${USO_CUENTA}) AS usos, (SELECT COALESCE(SUM(u.descuento),0) FROM usos_cupon u JOIN pedidos p ON p.id = u.pedido_id WHERE u.codigo = c.codigo AND ${USO_CUENTA}) AS descontado FROM cupones c ORDER BY c.activo DESC, c.creado_en DESC LIMIT 200`,
     )
     .all<FilaCupon & { usos: number; descontado: number; moneda: string }>();
   return c.json({

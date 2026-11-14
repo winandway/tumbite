@@ -1165,7 +1165,7 @@ const es: SeccionDocs[] = [
           'En mano: el repartidor te lo entrega a ti. Cuando esté en tu puerta te avisamos para que salgas. En ese caso no hace falta foto: la prueba es un PIN de 4 dígitos que aparece en tu pedido y que quien recibe le dice al repartidor. Sin el PIN correcto no se entrega: el repartidor tampoco puede cambiar el PIN por una foto.',
           'El PIN es opcional: si va a recibir otra persona (un familiar, el portero) y no quieres pasarle el PIN, apágalo con el interruptor al pedir. Entonces se entrega en mano sin PIN.',
           'Si tu pedido lleva alcohol o tabaco, «En la puerta» sale apagado: se entrega en mano a un mayor de 21 años, que muestra su identificación.',
-          'Si no apareces, el repartidor te avisa y te escribe por el chat. A los 5 minutos puede dejarlo en un lugar seguro (con el portero, en la recepción) con una foto y una nota de dónde quedó, y tú lo ves en tu pedido. Si pediste el PIN, no se deja en un lugar seguro: el repartidor escribe a soporte y te ayudamos.',
+          'Si no apareces, el repartidor te avisa y te escribe por el chat. A los 5 minutos puede dejarlo en un lugar seguro (con el portero, en la recepción) con una foto y una nota de dónde quedó, y tú lo ves en tu pedido. Si pediste el PIN, no se deja en un lugar seguro: pasada la espera, el repartidor cierra el pedido como «cliente no apareció» con una foto de tu puerta. En tu pedido verás «No pudimos entregar tu pedido». Como en las grandes apps de reparto, el pedido se cobra (la comida ya se preparó y se llevó); si algo salió mal, escríbenos desde ese pedido y lo revisamos con la foto y la hora de cada paso.',
         ],
         capturas: [
           {
@@ -2971,7 +2971,8 @@ const es: SeccionDocs[] = [
           'Si tu celular se queda 10 minutos sin mandar ubicación antes de llegar al restaurante, el pedido se reasigna solo.',
           'En la puerta, si nadie sale: toca «El cliente no aparece». Le llega un aviso y puedes escribirle por el chat. Pasados 5 minutos, escribe dónde lo dejas, toma la foto y toca «Dejar en lugar seguro». Cobras igual.',
           'Si el cliente pidió «en mano» y te lo recibe, toca «Entregado en mano». Solo funciona estando en la puerta.',
-          'Si el pedido en mano lleva PIN, pídele el PIN de 4 dígitos a quien recibe y escríbelo: con PIN no se entrega con foto ni se deja en un lugar seguro, y la app te lo explica en esa pantalla. Si no aparece, escribe a soporte con «Ayuda con este pedido».',
+          'Si el pedido en mano lleva PIN, pídele el PIN de 4 dígitos a quien recibe y escríbelo: con PIN no se entrega con foto ni se deja en un lugar seguro, y la app te lo explica en esa pantalla.',
+          'Si el pedido lleva PIN y el cliente no aparece: toca «El cliente no aparece», llámalo o escríbele por el chat y espera los 5 minutos que marca la app. Al terminar la espera aparece «Cliente no apareció: cerrar con foto». Toma una foto de la puerta o del lugar como constancia: la comida no se deja, el pedido se cierra, cobras lo tuyo como en cualquier entrega y soporte queda avisado. Lo mismo vale para un pedido con productos para mayores de 21.',
         ],
         capturas: [
           {
@@ -2995,6 +2996,7 @@ const es: SeccionDocs[] = [
           'Antes de recoger: escribe el motivo y toca «Soltar el pedido».',
           'En la puerta sin respuesta: «El cliente no aparece», escríbele, espera 5 minutos.',
           'Luego: nota de dónde lo dejas, foto y «Dejar en lugar seguro» (solo si el pedido no lleva PIN).',
+          'Con PIN: al terminar la espera, «Cliente no apareció: cerrar con foto» y la foto del lugar.',
         ],
       },
       {
@@ -6001,7 +6003,7 @@ const en: SeccionDocs[] = [
           'If your order has alcohol or tobacco, “Leave at my door” is turned off: it’s handed to someone 21 or older, who shows their ID.',
           'In hand: the driver hands it to you. When they’re at your door we let you know so you can come out. No photo is needed in that case: the proof is a 4-digit PIN that shows in your order and that whoever receives tells the driver. Without the right PIN it isn’t handed over, and the driver can’t swap the PIN for a photo.',
           'The PIN is optional: if someone else will receive it (a relative, the doorman) and you don’t want to pass the PIN along, turn it off with the switch when ordering. Then it’s handed over without a PIN.',
-          'If you don’t show up, the driver lets you know and messages you in the chat. After 5 minutes they can leave it in a safe spot (with the doorman, at reception) with a photo and a note of where it is, and you see it in your order. If you asked for the PIN, it isn’t left in a safe spot: the driver writes to support and we help you.',
+          'If you don’t show up, the driver lets you know and messages you in the chat. After 5 minutes they can leave it in a safe spot (with the doorman, at reception) with a photo and a note of where it is, and you see it in your order. If you asked for the PIN, it isn’t left in a safe spot: after the wait, the driver closes the order as “customer didn’t show” with a photo of your door. Your order will say “We couldn’t deliver your order.” As with the major delivery apps, the order is charged (the food was already made and brought to you); if something went wrong, contact us from that order and we review it with the photo and the time of each step.',
         ],
         capturas: [
           {
@@ -7788,7 +7790,8 @@ const en: SeccionDocs[] = [
           'If your phone goes 10 minutes without sending its location before you reach the restaurant, the order is reassigned automatically.',
           'At the door, if nobody comes out: tap “Customer isn’t here.” They get a notice and you can message them in the chat. After 5 minutes, write where you’re leaving it, take the photo and tap “Leave in a safe spot.” You get paid the same.',
           'If the customer chose “hand it to me” and takes it from you, tap “Handed to the customer”. It only works at the door.',
-          'If the in-hand order has a PIN, ask whoever receives it for the 4-digit PIN and type it in: with a PIN the order isn’t delivered with a photo or left in a safe spot, and the app explains it on that screen. If they don’t show up, write to support with “Help with this order.”',
+          'If the in-hand order has a PIN, ask whoever receives it for the 4-digit PIN and type it in: with a PIN the order isn’t delivered with a photo or left in a safe spot, and the app explains it on that screen.',
+          'If the order has a PIN and the customer doesn’t show up: tap “Customer isn’t here,” call them or message them in the chat and wait the 5 minutes the app shows. When the wait is over, “Customer didn’t show: close with photo” appears. Take a photo of the door or the spot as proof: the food isn’t left behind, the order is closed, you get paid like any delivery and support is notified. The same applies to an order with items for people over 21.',
         ],
         capturas: [
           {
@@ -7812,6 +7815,7 @@ const en: SeccionDocs[] = [
           'Before pickup: write the reason and tap “Release the order.”',
           'At the door with no answer: “Customer isn’t here,” message them, wait 5 minutes.',
           'Then: note where you leave it, photo and “Leave in a safe spot” (only if the order has no PIN).',
+          'With a PIN: when the wait is over, “Customer didn’t show: close with photo” and the photo of the spot.',
         ],
       },
       {

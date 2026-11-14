@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DOCS } from './guias';
-import { GUIAS_MOTO } from './borradores/moto';
+import { BORRADORES_MOTO, GUIAS_MOTO } from './borradores/moto';
 
 /**
  * C-DOCS-MOTO (13 nov 2026, Venezuela): las guías de Divoox Moto publicadas en Docs, con capturas
@@ -15,11 +15,23 @@ describe('C-DOCS-MOTO: guías de Moto publicadas', () => {
     for (const idioma of ['es', 'en'] as const) {
       const secciones = idioma === 'es' ? DOCS.es : DOCS.en;
       const ids = (id: string) => secciones.find((s) => s.id === id)?.guias.map((g) => g.id) ?? [];
-      expect(ids('ordering')).toEqual(expect.arrayContaining(['ride-moto', 'ride-moto-pago']));
+      expect(ids('ordering')).toEqual(
+        expect.arrayContaining(['ride-moto', 'ride-moto-pago', 'ride-seguridad']),
+      );
       expect(ids('drivers')).toEqual(
-        expect.arrayContaining(['drive-moto', 'drive-moto-alta', 'drive-moto-saldo']),
+        expect.arrayContaining([
+          'drive-moto',
+          'drive-moto-alta',
+          'drive-moto-saldo',
+          'drive-moto-seguridad',
+        ]),
       );
     }
+  });
+
+  it('13 nov 2026: las dos de seguridad también se publicaron; no queda ninguna de Moto guardada', () => {
+    for (const lista of [BORRADORES_MOTO.es, BORRADORES_MOTO.en])
+      expect([...lista.pasajero, ...lista.conductor]).toEqual([]);
   });
 
   it('cada guía lleva tres o más capturas reales que existen', () => {

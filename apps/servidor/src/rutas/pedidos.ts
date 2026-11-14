@@ -45,6 +45,7 @@ import {
   conNotaPlato,
   margenPesables,
   type LineaPesable,
+  huellaPedido,
 } from '@tumbite/compartido';
 import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
@@ -81,7 +82,7 @@ import { aceptarSiEsAutomatico } from './operacion';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const esquemaNuevoPedido = z.object({
+export const esquemaNuevoPedido = z.object({
   restauranteId: z.string().min(1),
   lineas: z
     .array(
@@ -664,15 +665,21 @@ export async function lineasDeRestaurante(
  * a las 2 horas. Si Stripe dice que ese cobro ya se autorizó o no responde, no se toca (lo resuelve
  * el aviso del pago o el Manager).
  */
-async function cerrarPendientesSinPagar(env: Env, db: D1Database, clienteId: string) {
+async function cerrarPendientesSinPagar(
+  env: Env,
+  db: D1Database,
+  clienteId: string,
+  /** El pedido que se va a reutilizar (mismos datos, C-PENDIENTE-ABANDONADO): no se cierra. */
+  respetar: string | null = null,
+) {
   const { results } = await db
     .prepare(
       // Uno sin cobro de Stripe todavía puede estar creándose en otra petición: solo se cierra si
       // lleva más de 2 minutos así (quedó huérfano).
       `SELECT id, stripe_sesion FROM pedidos WHERE cliente_id = ? AND estado = 'pago_pendiente'
-        AND (stripe_sesion IS NOT NULL OR creado_en <= datetime('now', '-2 minutes')) LIMIT 10`,
+        AND (stripe_sesion IS NOT NULL OR creado_en <= datetime('now', ?)) AND id <> ? LIMIT 10`,
     )
-    .bind(clienteId)
+    .bind(clienteId, `-${PENDIENTE_EN_CURSO_MIN} minutes`, respetar ?? '')
     .all<{ id: string; stripe_sesion: string | null }>();
   for (const p of results) {
     try {
@@ -697,6 +704,42 @@ async function cerrarPendientesSinPagar(env: Env, db: D1Database, clienteId: str
       );
     }
   }
+}
+
+/** Minutos en que un pedido sin pagar se considera «en curso» (otra petición lo está creando). */
+const PENDIENTE_EN_CURSO_MIN = 2;
+
+/**
+ * C-PENDIENTE-ABANDONADO (revisión del 13 nov 2026): dos «Continuar al pago» casi a la vez con los
+ * mismos datos. El segundo no anula el cobro que el primero acaba de crear (y que la app puede estar
+ * usando): devuelve ese mismo cobro, como hace Stripe con la misma llave de operación. Solo si los
+ * datos son idénticos (misma huella), el total que vio el cliente coincide y Stripe dice que sigue
+ * sin pagar. Si no, se sigue como siempre (el viejo se cierra y se crea uno nuevo).
+ */
+async function cobroVigenteMismosDatos(
+  env: Env,
+  db: D1Database,
+  clienteId: string,
+  huella: string,
+  totalEsperado: number | undefined,
+): Promise<{ id: string; total: number; clientSecret: string } | null> {
+  const p = await db
+    .prepare(
+      `SELECT id, total, stripe_sesion FROM pedidos WHERE cliente_id = ? AND estado = 'pago_pendiente'
+        AND huella_cuerpo = ? AND stripe_sesion IS NOT NULL AND creado_en > datetime('now', ?)
+        ORDER BY creado_en DESC LIMIT 1`,
+    )
+    .bind(clienteId, huella, `-${PENDIENTE_EN_CURSO_MIN} minutes`)
+    .first<{ id: string; total: number; stripe_sesion: string }>();
+  if (!p || (totalEsperado != null && totalEsperado !== p.total)) return null;
+  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+  if (!stripe) return null;
+  const real = await stripe
+    .get<{ status?: string; client_secret?: string }>(`/payment_intents/${p.stripe_sesion}`)
+    .catch(() => null);
+  if (!real?.client_secret || !real.status || real.status === 'canceled') return null;
+  if (!SIN_PAGAR_STRIPE.has(real.status)) return null;
+  return { id: p.id, total: p.total, clientSecret: real.client_secret };
 }
 
 /** Estados de un PaymentIntent en los que todavía no se pagó nada (se puede anular sin más). */
@@ -873,7 +916,12 @@ pedidos.post('/pedidos', async (c) => {
   let cupon: { codigo: string; descuento: number; tipo: string } | null = null;
   // C-PENDIENTE-ABANDONADO: antes de mirar el cupón y el saldo de regalo, el pedido anterior sin
   // pagar de este cliente se cierra (el cliente está pidiendo de nuevo).
-  await cerrarPendientesSinPagar(c.env, db, u.id);
+  const huellaCuerpo = huellaPedido({ ...d, totalEsperado: undefined });
+  let vigente =
+    d.metodoPago === 'tarjeta'
+      ? await cobroVigenteMismosDatos(c.env, db, u.id, huellaCuerpo, d.totalEsperado)
+      : null;
+  await cerrarPendientesSinPagar(c.env, db, u.id, vigente?.id ?? null);
   if (d.cupon) {
     const v = await validarCupon(db, {
       codigo: d.cupon,
@@ -883,6 +931,7 @@ pedidos.post('/pedidos', async (c) => {
       envio: previo.envio,
       zonaId: String(rest.zona_id ?? ZONA_INICIAL),
       plusCubreEnvio: plusAplica && previo.envio > 0,
+      ignorarPedido: vigente?.id,
     });
     cupon = { codigo: v.cupon.codigo, descuento: v.descuento, tipo: v.cupon.tipo };
   }
@@ -928,7 +977,7 @@ pedidos.post('/pedidos', async (c) => {
   // tarjeta). Solo en dólares y con tarjeta; se aparta al crear el pedido.
   const usoRegalo =
     d.usarSaldoRegalo && moneda === 'USD' && d.metodoPago === 'tarjeta'
-      ? saldoAplicable(conPlus, await saldoRegalo(db, u.id))
+      ? saldoAplicable(conPlus, await saldoRegalo(db, u.id, vigente?.id))
       : 0;
   const desglose = usoRegalo
     ? conPromo({
@@ -942,6 +991,26 @@ pedidos.post('/pedidos', async (c) => {
         descuento: (cupon?.descuento ?? 0) + descPlus + usoRegalo,
       })
     : conPlus;
+  // C-PENDIENTE-ABANDONADO (revisión 2 del 13 nov 2026): el total se calculó como si el pendiente
+  // vigente no existiera (su cupón y su saldo de regalo no cuentan). Si aun así no coincide, ese
+  // pendiente se cierra AHORA (libera su saldo y su cupón): nunca dos pendientes vivos con cobro para
+  // el mismo carrito, tampoco con apps viejas que no mandan totalEsperado.
+  if (vigente && vigente.total !== desglose.totalCliente) {
+    await cerrarPendientesSinPagar(c.env, db, u.id, null);
+    const sigue = await db
+      .prepare("SELECT 1 FROM pedidos WHERE id = ? AND estado = 'pago_pendiente'")
+      .bind(vigente.id)
+      .first();
+    // Si no se pudo cerrar (Stripe ya lo autorizó o no responde), su cupón y su saldo siguen
+    // apartados: no se crea otro pedido encima.
+    if (sigue)
+      throw new ErrorDatos(
+        'Tu pago anterior todavía se está procesando. Espera un momento y vuelve a intentar.',
+        undefined,
+        409,
+      );
+    vigente = null;
+  }
   // C-FALLOS-DINERO (F6): el cliente paga exactamente lo que vio. Si la app calculó otra cosa
   // (envío en una recogida, configuración vieja), se le devuelve el total correcto y no se cobra.
   if (d.totalEsperado != null && d.totalEsperado !== desglose.totalCliente)
@@ -958,6 +1027,42 @@ pedidos.post('/pedidos', async (c) => {
 
   // C-PILOTO-LIMITES: un participante del piloto no pasa del tope por pedido ni por día.
   await exigirTopePiloto(db, u.id, desglose.totalCliente);
+  // C-PENDIENTE-ABANDONADO: con los mismos datos, ya validados (cupón, topes), y el mismo total, se
+  // devuelve el cobro que la otra petición acaba de crear en vez de crear y anular otro.
+  if (vigente && vigente.total === desglose.totalCliente) {
+    const stripe = crearStripe(c.env.STRIPE_SECRET_KEY)!;
+    const fila = await db
+      .prepare('SELECT stripe_cliente FROM usuarios WHERE id = ?')
+      .bind(u.id)
+      .first<{ stripe_cliente: string | null }>();
+    const clienteStripe = fila?.stripe_cliente ?? '';
+    const funciones = {
+      payment_method_save: 'enabled',
+      payment_method_redisplay: 'enabled',
+      payment_method_remove: 'enabled',
+    };
+    const sesionCliente = clienteStripe
+      ? await stripe.post<{ client_secret: string }>('/customer_sessions', {
+          customer: clienteStripe,
+          components: {
+            payment_element: { enabled: true, features: funciones },
+            mobile_payment_element: { enabled: true, features: funciones },
+          },
+        })
+      : { client_secret: '' };
+    return c.json(
+      {
+        pedidoId: vigente.id,
+        clientSecret: vigente.clientSecret,
+        sesionCliente: sesionCliente.client_secret,
+        clienteStripe,
+        clavePublica: c.env.STRIPE_PUBLISHABLE_KEY ?? '',
+        desglose: { totalCliente: vigente.total },
+        reutilizado: true,
+      },
+      201,
+    );
+  }
   const id = nuevoId();
   await db
     .prepare(
@@ -1151,7 +1256,10 @@ pedidos.post('/pedidos', async (c) => {
       mobile_payment_element: { enabled: true, features: funciones },
     },
   });
-  await db.prepare('UPDATE pedidos SET stripe_sesion = ? WHERE id = ?').bind(intento.id, id).run();
+  await db
+    .prepare('UPDATE pedidos SET stripe_sesion = ?, huella_cuerpo = ? WHERE id = ?')
+    .bind(intento.id, huellaCuerpo, id)
+    .run();
   return c.json(
     {
       pedidoId: id,

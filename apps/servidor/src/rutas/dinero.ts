@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { CONFIG_DINERO_INICIAL, type ConfigDinero } from '@tumbite/compartido';
+import { CONFIG_DINERO_INICIAL, type ConfigDinero, retiroMinimo } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
@@ -238,7 +238,11 @@ dinero.post('/billetera/retirar', async (c) => {
   const { montoCentavos } = await leerCuerpo(
     c,
     z.object({
-      montoCentavos: z.number().int().min(100, { error: 'El retiro mínimo es de 1 dólar.' }),
+      // C-DECISIONES-MERCADO: 10 dólares (solo hay retiros en dólares, por Stripe Connect).
+      montoCentavos: z
+        .number()
+        .int()
+        .min(retiroMinimo('USD') ?? 1_000, { error: 'El retiro mínimo es de 10 dólares.' }),
     }),
   );
   const db = base(c);

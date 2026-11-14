@@ -121,6 +121,53 @@ describe('C-PAPELES-SOLO-PASAJEROS: el papel venezolano cumple solo lo de pasaje
 });
 
 describe('C-CIUDAD-CONDUCTOR: cambiar de ciudad como en el mercado', () => {
+  it('C-CIUDAD-PRIMERA-APROBADO: un conductor ya aprobado no salta de país ni la primera vez', async () => {
+    const e = await escenarioVe();
+    expect((await abrirCaracas(e)).estado).toBe(201);
+    // Cuenta de EE. UU. (Miami, la zona por defecto) ya aprobada por el equipo, sin ciudad elegida.
+    const rep = await e.m.cuenta('repartidor', 'Conductor Miami');
+    await e.m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado) VALUES (?, 'aprobado') ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado'",
+    )
+      .bind(rep.id)
+      .run();
+    const r = await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id }, rep.token);
+    expect(r.estado).toBe(409);
+    expect(r.datos.campo).toBe('zonaId');
+    // Dentro de su país, la primera elección sí vale.
+    expect(
+      (await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: 'US-FL-MIAMI' }, rep.token))
+        .estado,
+    ).toBe(200);
+  });
+
+  it('C-CIUDAD-PRIMERA-APROBADO (revisión): un conductor venezolano aprobado sin ciudad elegida es de Venezuela aunque su fila de repartidor tenga Miami por defecto', async () => {
+    const e = await escenarioVe();
+    expect((await abrirCaracas(e)).estado).toBe(201);
+    const rep = await e.m.cuenta('repartidor', 'Conductor Venezuela');
+    // País de la cuenta: Venezuela. La fila de repartidor nace con la zona por defecto (Miami) y sin
+    // ubicación, como la crean el KYC y las habilitaciones.
+    await e.m.DB.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(CCS.id, rep.id).run();
+    await e.m.DB.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)')
+      .bind(rep.id)
+      .run();
+    await e.m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado) VALUES (?, 'aprobado') ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado'",
+    )
+      .bind(rep.id)
+      .run();
+    const miami = await e.m.llamar(
+      'PUT',
+      '/datos/conductor/ciudad',
+      { zonaId: 'US-FL-MIAMI' },
+      rep.token,
+    );
+    expect(miami.estado).toBe(409);
+    expect(
+      (await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id }, rep.token)).estado,
+    ).toBe(200);
+  });
+
   it('la primera vez elige cualquiera; después solo de su país, una vez cada 24 horas y desconectado', async () => {
     const e = await escenarioVe();
     expect((await abrirCaracas(e)).estado).toBe(201);

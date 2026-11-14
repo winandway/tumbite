@@ -247,7 +247,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'El restaurante ya está preparando tu pedido y no se puede cancelar. Si hay un problema, repórtalo y te ayudamos.',
     'The restaurant is already preparing your order, so it can’t be canceled. If something is wrong, report it and we’ll help you.',
   ],
-  ['El retiro mínimo es de 1 dólar.', 'The minimum withdrawal is $1.'],
+  ['El retiro mínimo es de 10 dólares.', 'The minimum withdrawal is $10.'],
   [
     'Esa ciudad no existe. Créala primero en Zonas.',
     'That city doesn’t exist. Create it first in Zones.',
@@ -366,6 +366,11 @@ export const MENSAJES_EN = new Map<string, string>([
   [
     'Este pedido se cobra en mano: no se puede dejar sin entregarlo. Si el cliente no aparece, toca «El cliente no pagó».',
     'This order is paid in person: it can’t be left without handing it over. If the customer doesn’t show up, tap “The customer didn’t pay.”',
+  ],
+  [
+    // C-CLIENTE-AUSENTE (13 nov 2026).
+    'Este pedido se cobra en mano: si el cliente no aparece, toca «El cliente no pagó».',
+    'This order is paid in person: if the customer doesn’t show up, tap “The customer didn’t pay.”',
   ],
   ['Ya confirmaste el cobro de este pedido.', 'You already confirmed the payment for this order.'],
   [
@@ -864,6 +869,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Elige una de las franjas que te mostramos.', 'Pick one of the windows we show you.'],
   ['Ese plato no existe en tu menú.', 'That item isn’t on your menu.'],
   ['Ese regalo ya no está disponible.', 'That gift is no longer available.'],
+  [
+    'Tu pago anterior todavía se está procesando. Espera un momento y vuelve a intentar.',
+    'Your previous payment is still processing. Wait a moment and try again.',
+  ],
   ['Ese repartidor no existe.', 'That driver doesn’t exist.'],
   ['Ese restaurante no existe.', 'That restaurant doesn’t exist.'],
   ['Ese ticket no existe.', 'That ticket doesn’t exist.'],
@@ -1863,6 +1872,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [
+    // C-CLIENTE-AUSENTE (13 nov 2026): la espera sale de la configuración.
+    /^Primero avisa que el cliente no aparece y espera (\d+) minutos\.$/,
+    (m) => `First report that the customer isn’t there and wait ${m[1]} minutes.`,
+  ],
   [
     /^Esta persona todavía no tiene (\d+) años: no se puede aprobar\.$/,
     (m) => `This person isn’t ${m[1]} yet, so this can’t be approved.`,

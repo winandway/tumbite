@@ -1260,6 +1260,63 @@ describe('código QR, entrega en mano o en lugar seguro, chat y repartidor que s
     ).toBe(409);
   });
 
+  it('C-QR-UNA-VEZ: ya en camino, un segundo escaneo no reescribe nada ni vuelve a avisar al cliente', async () => {
+    const { m, rep, id } = await hastaListo();
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const enviados: string[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      enviados.push(String(init.body));
+      return new Response(JSON.stringify({ data: [{ status: 'ok' }] }), { status: 200 });
+    });
+    try {
+      const yo = await m.DB.prepare('SELECT cliente_id FROM pedidos WHERE id = ?')
+        .bind(id)
+        .first<{ cliente_id: string }>();
+      expect(yo?.cliente_id).toBeTruthy();
+      await m.DB.prepare('INSERT INTO dispositivos (token, usuario_id) VALUES (?, ?)')
+        .bind('ExponentPushToken[qr-una-vez]', yo?.cliente_id)
+        .run();
+      await m.foto(`/datos/repartidor/pedidos/${id}/foto-recogida`, rep.token, {
+        lat: 25.7701,
+        lng: -80.1901,
+      });
+      await m.llamar(
+        'POST',
+        `/datos/repartidor/pedidos/${id}/verificar`,
+        { codigo: id },
+        rep.token,
+      );
+      expect(await estado(m, id)).toBe('en_camino');
+      const foto = async () => ({
+        pedido: await m.DB.prepare('SELECT * FROM pedidos WHERE id = ?').bind(id).first(),
+        bitacora: await m.DB.prepare('SELECT * FROM bitacora_pedidos WHERE pedido_id = ?')
+          .bind(id)
+          .all(),
+        hitos: await m.DB.prepare('SELECT * FROM hitos_pedido WHERE pedido_id = ?').bind(id).all(),
+        evidencias: await m.DB.prepare(
+          'SELECT tipo, confirmada_en FROM evidencias WHERE pedido_id = ?',
+        )
+          .bind(id)
+          .all(),
+      });
+      const antes = await foto();
+      const avisosAntes = enviados.length;
+      expect(avisosAntes).toBeGreaterThan(0);
+      const otraVez = await m.llamar(
+        'POST',
+        `/datos/repartidor/pedidos/${id}/verificar`,
+        { codigo: id },
+        rep.token,
+      );
+      expect(otraVez.estado).toBe(200);
+      expect(otraVez.datos).toEqual({ ok: true, correcto: true, salio: true });
+      expect(await foto()).toEqual(antes);
+      expect(enviados.length).toBe(avisosAntes);
+    } finally {
+      usarTransporteAvisos(null);
+    }
+  });
+
   it('C-FOTO-RECOGIDA-REPETIDA: la foto de la bolsa mandada dos veces (a la vez o tras un corte) responde ok y sale una sola vez', async () => {
     // Lo encontró el simulador de compras (13 nov 2026): con el código ya leído, la segunda foto
     // respondía «Este pedido ya cambió de estado» (a la vez) o «todavía no marcó listo» (después).
@@ -2061,6 +2118,112 @@ describe('cobrar al entregar y PIN en mano (C-CAPTURA, C-PIN)', () => {
     const conFoto = await e.m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, enCasa);
     expect(conFoto.estado).toBe(409);
     expect(conFoto.datos.error).toMatch(/Too many|Demasiados/);
+    expect(await estadoDe(e.m, id)).toBe('en_camino');
+  });
+
+  it('C-CLIENTE-AUSENTE: con PIN y sin cliente, tras avisar y esperar se cierra como «cliente no apareció» con foto; el cliente paga, el repartidor y el restaurante cobran y soporte ve el caso', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e, 'mano', true);
+    const rep = await e.repartidor('Rep Ausente', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const enCasa = { lat: 25.7801, lng: -80.2001 };
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.ubicar(rep.token, enCasa);
+    const ruta = `/datos/repartidor/pedidos/${id}/entregado?modo=ausente`;
+    // Sin avisar que no aparece: no se puede cerrar.
+    const antes = await e.m.foto(ruta, rep.token, enCasa);
+    expect(antes.estado).toBe(409);
+    // Avisa: el reloj es el de la configuración (5 minutos, como DoorDash) y la app lo recibe.
+    const aviso = await e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/no-aparece`,
+      {},
+      rep.token,
+    );
+    expect(aviso.estado).toBe(200);
+    const activo = (await e.m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token)).datos
+      .activo;
+    expect(activo.esperaAusenteMin).toBe(5);
+    // Antes de que se cumpla la espera, tampoco.
+    expect((await e.m.foto(ruta, rep.token, enCasa)).estado).toBe(409);
+    await e.m.DB.prepare(
+      "UPDATE hitos_pedido SET creado_en = datetime('now', '-6 minutes') WHERE pedido_id = ? AND hito = 'no_aparece'",
+    )
+      .bind(id)
+      .run();
+    // La foto normal sigue sin saltar el PIN, aunque haya pasado la espera.
+    expect(
+      (await e.m.foto(`/datos/repartidor/pedidos/${id}/entregado`, rep.token, enCasa)).estado,
+    ).toBe(409);
+    const cerrado = await e.m.foto(ruta, rep.token, enCasa);
+    expect(cerrado.estado).toBe(200);
+    expect(await estadoDe(e.m, id)).toBe('entregado');
+    const ev = await e.m.DB.prepare(
+      "SELECT modo, clave FROM evidencias WHERE pedido_id = ? AND tipo = 'entrega'",
+    )
+      .bind(id)
+      .first<{ modo: string; clave: string }>();
+    expect(ev?.modo).toBe('ausente');
+    expect(ev?.clave).not.toBe('');
+    // El repartidor y el restaurante cobran lo suyo (no hay reembolso automático).
+    const abonos = await e.m.DB.prepare(
+      'SELECT COUNT(*) AS n FROM movimientos WHERE pedido_id = ? AND monto > 0',
+    )
+      .bind(id)
+      .first<{ n: number }>();
+    expect(Number(abonos?.n)).toBeGreaterThanOrEqual(2);
+    // Soporte tiene el caso, y el cliente lo ve en su pedido.
+    const caso = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM tickets WHERE asunto LIKE '%' || ? || '%'",
+    )
+      .bind(id.slice(0, 4).toUpperCase())
+      .first<{ n: number }>();
+    expect(caso?.n).toBe(1);
+    const seg = (
+      await e.m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, e.cliente.token)
+    ).datos.pedido;
+    expect(seg.entregadoComo).toBe('ausente');
+  });
+
+  it('C-CLIENTE-AUSENTE: un pedido que se cobra en mano no se cierra como ausente (va por «No pagó»)', async () => {
+    const e = await escenario();
+    const { id } = await pedidoAutorizado(e, 'mano', true);
+    const rep = await e.repartidor('Rep Efectivo', 25.771, -80.191);
+    await e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      e.dueno.token,
+    );
+    await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token);
+    await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
+    await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
+    await e.m.recoger(id, rep.token, e.dueno.token);
+    const enCasa = { lat: 25.7801, lng: -80.2001 };
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.ubicar(rep.token, enCasa);
+    await e.m.DB.prepare("UPDATE pedidos SET metodo_pago = 'efectivo' WHERE id = ?").bind(id).run();
+    await e.m.llamar('POST', `/datos/repartidor/pedidos/${id}/no-aparece`, {}, rep.token);
+    await e.m.DB.prepare(
+      "UPDATE hitos_pedido SET creado_en = datetime('now', '-6 minutes') WHERE pedido_id = ? AND hito = 'no_aparece'",
+    )
+      .bind(id)
+      .run();
+    const r = await e.m.foto(
+      `/datos/repartidor/pedidos/${id}/entregado?modo=ausente`,
+      rep.token,
+      enCasa,
+    );
+    expect(r.estado).toBe(409);
     expect(await estadoDe(e.m, id)).toBe('en_camino');
   });
 });
@@ -3881,6 +4044,83 @@ describe('C-SEGUIMIENTO-HONESTO', () => {
     const sin = await enlace();
     expect(sin.senalPerdida).toBe(true);
     expect(sin.haceSegundos).toBeGreaterThanOrEqual(119);
+  });
+
+  it('C-LATIDO-UBICACION: una lectura vieja reenviada no refresca la última señal; el cliente ve «señal perdida»', async () => {
+    const { m, cliente, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    const rep = await repartidor('Rafa Latido', 25.781, -80.201);
+    for (const estado of ['aceptado', 'listo', 'en_camino'])
+      await m.DB.prepare(
+        "UPDATE pedidos SET estado = ?, repartidor_id = ?, aceptado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(estado, rep.id, id)
+        .run();
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now', '-3 minutes') WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .run();
+    const senal = async () =>
+      (await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)).datos
+        .pedido.repartidor;
+    expect((await senal()).senalPerdida).toBe(true);
+    // El celular manda la misma lectura de hace 3 minutos (con su reloj adelantado una hora: la
+    // edad sale de sus dos tiempos, no del reloj del servidor).
+    const reloj = Date.now() + 3_600_000;
+    const vieja = await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { lat: 25.781, lng: -80.201, precision: 8, leidaEn: reloj - 180_000, enviadaEn: reloj },
+      rep.token,
+    );
+    expect(vieja.estado).toBe(200);
+    expect(vieja.datos.lecturaVieja).toBe(true);
+    expect((await senal()).senalPerdida).toBe(true);
+    // Una lectura de hace 5 segundos sí cuenta.
+    const nueva = await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { lat: 25.781, lng: -80.201, precision: 8, leidaEn: reloj - 5_000, enviadaEn: reloj },
+      rep.token,
+    );
+    expect(nueva.datos.lecturaVieja).toBeUndefined();
+    expect((await senal()).senalPerdida).toBe(false);
+  });
+
+  it('C-LATIDO-UBICACION (revisión 2): la edad medida con un solo reloj manda; negativa o de más de un día cuenta como fresca', async () => {
+    const { m, repartidor } = await escenario();
+    const rep = await repartidor('Rafa Reloj', 25.781, -80.201);
+    const enviar = (edadMs: number) =>
+      m.llamar(
+        'POST',
+        '/datos/repartidor/ubicacion',
+        { lat: 25.781, lng: -80.201, precision: 8, edadMs },
+        rep.token,
+      );
+    expect((await enviar(180_000)).datos.lecturaVieja).toBe(true);
+    for (const edad of [5_000, -2_000, 3 * 86_400_000]) {
+      const r = await enviar(edad);
+      expect(r.estado).toBe(200);
+      expect(r.datos.lecturaVieja).toBeUndefined();
+    }
+  });
+
+  it('C-LATIDO-UBICACION: una app vieja que no manda la hora de la lectura sigue como antes', async () => {
+    const { m, repartidor } = await escenario();
+    const rep = await repartidor('Rafa Viejo', 25.781, -80.201);
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now', '-3 minutes') WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .run();
+    await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.781, lng: -80.201 }, rep.token);
+    const f = await m.DB.prepare(
+      "SELECT ubicacion_en >= datetime('now', '-10 seconds') AS fresca FROM repartidores WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .first<{ fresca: number }>();
+    expect(f?.fresca).toBe(1);
   });
 });
 

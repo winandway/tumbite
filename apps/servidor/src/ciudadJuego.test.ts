@@ -10,6 +10,7 @@ import {
   metros,
   tramoPermitido,
 } from './ciudadJuego';
+import { guardarError } from './errores';
 import { contarFilas } from './presupuestoFilas';
 import { mundo } from './pruebas/ayuda';
 
@@ -328,6 +329,155 @@ describe('C-CIUDAD-JUEGO', () => {
     const colgado = await pedir('Sol Jugadora', r1!.id, { entrega: 'puerta' });
     await post('apagar', { sesion });
     expect(await estado(colgado)).toBe('cancelado');
+  }, 60_000);
+
+  it('C-CIUDAD-CIERRE: al apagar con un pedido en camino, los robots lo terminan y después se apaga', async () => {
+    const { m, admin, post, envejecer, encenderTodo } = await ciudad();
+    const sesion = (await encenderTodo()).datos.sesion as string;
+    const vivo0 = await m.llamar('GET', '/datos/admin/ciudad-pruebas', undefined, admin.token);
+    const r1 = vivo0.datos.restaurantes[0] as { id: string; lat: number; lng: number };
+    const plato = (await m.DB.prepare('SELECT id FROM platos WHERE restaurante_id = ? LIMIT 1')
+      .bind(r1.id)
+      .first<{ id: string }>())!.id;
+    const j = await m.cuenta('cliente', 'Iris Jugadora');
+    await m.confirmarCorreo(j.id);
+    const pid = (
+      await m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: r1.id,
+          lineas: [{ platoId: plato, cantidad: 1 }],
+          propinaCentavos: 0,
+          metodoPago: 'efectivo',
+          entrega: 'puerta',
+          direccion: '800 Calle del Jugador',
+          ...desplazar(r1, 700, 100),
+        },
+        j.token,
+      )
+    ).datos.pedidoId as string;
+    const estado = async () =>
+      (await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(pid).first<{
+        estado: string;
+      }>())!.estado;
+    for (let i = 0; i < 60 && (await estado()) !== 'en_camino'; i++) {
+      await envejecer();
+      await post('latido', { sesion });
+    }
+    expect(await estado()).toBe('en_camino');
+    // Apagar con un pedido en camino: la ciudad entra en cierre (no deja el pedido colgado).
+    const ap = await post('apagar', { sesion });
+    expect(ap.datos).toMatchObject({ estado: 'cerrando', pendientes: 1 });
+    const vista = await m.llamar('GET', '/datos/admin/ciudad-pruebas', undefined, admin.token);
+    expect(vista.datos.juego).toMatchObject({ encendida: true, cerrando: true });
+    let ultimo = ap;
+    for (let i = 0; i < JUEGO.pasosCierre + 2 && ultimo.datos.estado !== 'terminada'; i++) {
+      await envejecer();
+      ultimo = await post('latido', { sesion });
+    }
+    expect(await estado()).toBe('entregado');
+    expect(ultimo.datos.estado).toBe('terminada');
+    const conectados = await m.DB.prepare(
+      `SELECT COUNT(*) AS n FROM repartidores d JOIN usuarios u ON u.id = d.usuario_id WHERE u.correo LIKE 'juego.%' AND d.conectado = 1`,
+    ).first<{ n: number }>();
+    expect(conectados?.n).toBe(0);
+  }, 60_000);
+
+  it('C-CIUDAD-CIERRE: si no alcanzan a entregarlo en los pasos finales, se cancela limpio con lo apartado devuelto', async () => {
+    const { m, admin, post, envejecer, encenderTodo } = await ciudad();
+    const sesion = (await encenderTodo()).datos.sesion as string;
+    const vivo0 = await m.llamar('GET', '/datos/admin/ciudad-pruebas', undefined, admin.token);
+    const r1 = vivo0.datos.restaurantes[0] as { id: string; lat: number; lng: number };
+    const plato = (await m.DB.prepare('SELECT id FROM platos WHERE restaurante_id = ? LIMIT 1')
+      .bind(r1.id)
+      .first<{ id: string }>())!.id;
+    const j = await m.cuenta('cliente', 'Teo Jugador');
+    await m.confirmarCorreo(j.id);
+    const pid = (
+      await m.llamar(
+        'POST',
+        '/datos/pedidos',
+        {
+          restauranteId: r1.id,
+          lineas: [{ platoId: plato, cantidad: 1 }],
+          propinaCentavos: 0,
+          metodoPago: 'efectivo',
+          entrega: 'puerta',
+          direccion: '900 Calle del Jugador',
+          ...desplazar(r1, 5000, 0),
+        },
+        j.token,
+      )
+    ).datos.pedidoId as string;
+    const estado = async () =>
+      (await m.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(pid).first<{
+        estado: string;
+      }>())!.estado;
+    for (let i = 0; i < 60 && (await estado()) !== 'en_camino'; i++) {
+      await envejecer();
+      await post('latido', { sesion });
+    }
+    expect(await estado()).toBe('en_camino');
+    expect((await post('apagar', { sesion })).datos.estado).toBe('cerrando');
+    // Sin que pase el tiempo el robot no puede manejar (tope de velocidad): se agotan los pasos.
+    let ultimo: { datos: { estado?: string } } = { datos: {} };
+    for (let i = 0; i < JUEGO.pasosCierre + 2 && ultimo.datos.estado !== 'terminada'; i++)
+      ultimo = await post('latido', { sesion });
+    expect(ultimo.datos.estado).toBe('terminada');
+    expect(await estado()).toBe('cancelado');
+    const reservado = await m.DB.prepare(
+      "SELECT COALESCE(SUM(monto), 0) AS n FROM libro WHERE pedido_id = ? AND bolsillo = 'reservado'",
+    )
+      .bind(pid)
+      .first<{ n: number }>();
+    expect(reservado?.n).toBe(0);
+    // Ningún pedido de juego queda vivo.
+    const vivos = await m.DB.prepare(
+      `SELECT COUNT(*) AS n FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios u ON u.id = r.dueno_id
+        WHERE u.correo LIKE 'juego.%' AND p.estado IN ('pagado','aceptado','listo','en_camino')`,
+    ).first<{ n: number }>();
+    expect(vivos?.n).toBe(0);
+  }, 60_000);
+
+  it('C-CIUDAD-ERRORES: un error del servidor con la sesión de un jugador queda en sus fallos', async () => {
+    const { m, admin, encenderTodo } = await ciudad();
+    await encenderTodo();
+    const vivo0 = await m.llamar('GET', '/datos/admin/ciudad-pruebas', undefined, admin.token);
+    const r1 = vivo0.datos.restaurantes[0] as { id: string; lat: number; lng: number };
+    const plato = (await m.DB.prepare('SELECT id FROM platos WHERE restaurante_id = ? LIMIT 1')
+      .bind(r1.id)
+      .first<{ id: string }>())!.id;
+    const j = await m.cuenta('cliente', 'Bea Jugadora');
+    await m.confirmarCorreo(j.id);
+    await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      {
+        restauranteId: r1.id,
+        lineas: [{ platoId: plato, cantidad: 1 }],
+        propinaCentavos: 0,
+        metodoPago: 'efectivo',
+        entrega: 'puerta',
+        direccion: '1000 Calle del Jugador',
+        ...desplazar(r1, 300, 100),
+      },
+      j.token,
+    );
+    // Un error no controlado con su sesión (como lo guarda app.onError).
+    await guardarError(m.DB, 'GET', '/datos/algo-que-fallo', new Error('fallo de prueba'), j.id);
+    await guardarError(m.DB, 'GET', '/datos/otro', new Error('de nadie'));
+    const vivo = await m.llamar('GET', '/datos/admin/ciudad-pruebas', undefined, admin.token);
+    const bea = (
+      vivo.datos.jugadores as {
+        nombre: string;
+        fallos: { comportamiento: string; mensaje: string }[];
+      }[]
+    ).find((x) => x.nombre === 'Bea Jugadora');
+    expect(bea?.fallos).toEqual([
+      expect.objectContaining({ comportamiento: 'error del servidor · GET /datos/algo-que-fallo' }),
+    ]);
+    expect(bea?.fallos[0]?.mensaje).toContain('fallo de prueba');
   }, 60_000);
 
   it('se apaga sola al llegar al tope de filas de la sesión o a los 60 minutos', async () => {

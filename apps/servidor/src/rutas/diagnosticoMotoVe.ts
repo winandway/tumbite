@@ -138,16 +138,22 @@ export function rutasMotoVenezuela(diagnostico: App) {
   });
 
   /**
-   * El conductor SIN saldo, aprobado y conectado en Caracas de pruebas (que el guion abrió antes con
-   * el panel). Desconecta además a cualquier otro conductor de esa ciudad, para que nadie más se
+   * El conductor SIN saldo, aprobado y conectado en la ciudad de pruebas de Venezuela que mande el
+   * guion (`zonaId`; si no, Caracas de pruebas), que el guion abrió antes con el panel. Desconecta además a cualquier otro conductor de esa ciudad, para que nadie más se
    * lleve la oferta.
    */
   diagnostico.post('/interno/diagnostico/moto-ve/sin-saldo', async (c) => {
     const db = base(c);
     const { conductor, sinSaldo, equipo, vehiculoSinSaldo: veh } = MOTO_VE;
+    // La ciudad de pruebas la elige el guion (El Vigía desde el 13 nov 2026); solo de Venezuela.
+    const cuerpo = (await c.req.json().catch(() => ({}))) as { zonaId?: unknown };
+    const zonaId =
+      typeof cuerpo.zonaId === 'string' && /^VE-[A-Z0-9-]{2,30}$/.test(cuerpo.zonaId)
+        ? cuerpo.zonaId
+        : CIUDAD_PRUEBAS_VENEZUELA.id;
     const z = await db
-      .prepare('SELECT id, lat, lng FROM zonas WHERE id = ?')
-      .bind(CIUDAD_PRUEBAS_VENEZUELA.id)
+      .prepare("SELECT id, lat, lng FROM zonas WHERE id = ? AND pais = 'VE'")
+      .bind(zonaId)
       .first<{ id: string; lat: number; lng: number }>();
     if (!z) throw new ErrorDatos('Primero hay que abrir la ciudad de pruebas.', undefined, 409);
     await db.batch([

@@ -19,6 +19,7 @@ import {
   perfilPasajeros,
   METODOS_PAGO_VIAJE,
   TARIFA_MOTO_VENEZUELA,
+  distanciaKm,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
@@ -39,7 +40,7 @@ import { enviarSms } from '../sms';
 import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } from './servicios';
 import { leerConfigPais, MONEDA_POR_PAIS, paisIncompleto } from '../internacional/paises';
 import { zonaPara } from './zonas';
-import { rutaParaCotizar } from '../rutaPorCalles';
+import { REUSO_RUTA_MINUTOS, REUSO_RUTA_RADIO_M, rutaParaCotizar } from '../rutaPorCalles';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -358,6 +359,46 @@ viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
 
 // ---------------------------------------------------------------- pasajero
 
+/**
+ * C-RUTA-POR-CALLES (revisión del 13 nov 2026): la última cotización del mismo pasajero, servicio y
+ * categoría para el mismo trayecto (unos 50 m) en los últimos minutos. Lee por el índice del cliente.
+ */
+async function cotizacionAnteriorMismoTrayecto(
+  db: D1Database,
+  clienteId: string,
+  servicio: string,
+  categoria: string,
+  origen: { lat: number; lng: number },
+  destino: { lat: number; lng: number },
+): Promise<{ total: number } | null> {
+  const { results } = await db
+    .prepare(
+      `SELECT origen_lat, origen_lng, destino_lat, destino_lng, total, servicio_id, categoria
+         FROM cotizaciones_viaje WHERE cliente_id = ? AND creado_en >= datetime('now', ?)
+        ORDER BY creado_en DESC, rowid DESC LIMIT 10`,
+    )
+    .bind(clienteId, `-${REUSO_RUTA_MINUTOS} minutes`)
+    .all<{
+      origen_lat: number;
+      origen_lng: number;
+      destino_lat: number;
+      destino_lng: number;
+      total: number;
+      servicio_id: string;
+      categoria: string | null;
+    }>();
+  const cerca = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
+    distanciaKm(a, b) * 1000 <= REUSO_RUTA_RADIO_M;
+  const f = results.find(
+    (x) =>
+      x.servicio_id === servicio &&
+      (x.categoria ?? 'estandar') === categoria &&
+      cerca({ lat: x.origen_lat, lng: x.origen_lng }, origen) &&
+      cerca({ lat: x.destino_lat, lng: x.destino_lng }, destino),
+  );
+  return f ? { total: f.total } : null;
+}
+
 viajesPasajero.post('/viajes/cotizar', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
@@ -390,6 +431,15 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   // M1: sin precio dinámico todavía (multiplicador 1). El tope ya vive en la tarifa.
   const multiplicadorPb = 10_000;
   const desglose = cotizarViaje(tarifa, ruta, multiplicadorPb);
+  // C-RUTA-POR-CALLES: si el pasajero ya veía un precio para este mismo trayecto y cambió, se dice.
+  const anterior = await cotizacionAnteriorMismoTrayecto(
+    db,
+    u.id,
+    d.servicio,
+    d.categoria,
+    d.origen,
+    d.destino,
+  );
   const id = nuevoId();
   const venceEn = sqlFecha(new Date(Date.now() + VIGENCIA_COTIZACION_S * 1000));
   await db
@@ -438,6 +488,10 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     venceEn,
     dePrueba: fila.de_prueba === 1,
     metodosPago: [...perfilPasajeros(zona.pais).metodosPago],
+    precioCambio: anterior != null && anterior.total !== desglose.total,
+    ...(anterior != null && anterior.total !== desglose.total
+      ? { totalAnterior: anterior.total }
+      : {}),
   };
   // C-BS-REFERENCIA: el equivalente en bolívares, solo informativo (null sin tasa vigente).
   const referencia = await referenciaLocal(db, zona.pais, desglose.total, fila.moneda);
