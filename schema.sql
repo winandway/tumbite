@@ -3495,7 +3495,7 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
 -- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
 CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
-  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local')),
   objeto TEXT NOT NULL,
   monto INTEGER NOT NULL,
   moneda TEXT NOT NULL,

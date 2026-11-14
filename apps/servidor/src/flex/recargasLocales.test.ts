@@ -38,8 +38,15 @@ async function escenario(encender = true) {
   await m.DB.prepare("UPDATE empresas SET pais = 'VE' WHERE id = ?").bind(e.id).run();
   if (encender)
     expect(
-      (await llamar(m, 'PUT', `${B}/admin/recargas-locales/config/VE`, CONFIG_VE, admin.token))
-        .estado,
+      (
+        await llamar(
+          m,
+          'PUT',
+          `/datos/admin/finanzas/recargas-locales/config/VE`,
+          CONFIG_VE,
+          admin.token,
+        )
+      ).estado,
     ).toBe(200);
   return { m, admin, e };
 }
@@ -104,27 +111,40 @@ describe('C-FLEX-RECARGA-LOCAL · recargas con pago local verificadas por Divoox
     expect((await saldo(m, e)).disponible).toBe(0);
 
     const rid = d.datos.recarga.id;
-    const cola = await llamar(m, 'GET', `${B}/admin/recargas-locales`, undefined, admin.token);
+    const cola = await llamar(
+      m,
+      'GET',
+      `/datos/admin/finanzas/recargas-locales`,
+      undefined,
+      admin.token,
+    );
     expect(cola.datos.recargas.map((r: any) => r.id)).toEqual([rid]);
-    const img = await m.crudo(`${B}/admin/recargas-locales/${rid}/comprobante`, {
+    const img = await m.crudo(`/datos/admin/finanzas/recargas-locales/${rid}/comprobante`, {
       headers: { authorization: `Bearer ${admin.token}` },
     });
     expect(img.status).toBe(200);
     // La empresa no ve la cola ni acredita.
     expect(
-      (await llamar(m, 'POST', `${B}/admin/recargas-locales/${rid}/acreditar`, {}, e.dueno.token))
-        .estado,
+      (
+        await llamar(
+          m,
+          'POST',
+          `/datos/admin/finanzas/recargas-locales/${rid}/acreditar`,
+          {},
+          e.dueno.token,
+        )
+      ).estado,
     ).toBe(403);
 
     const [a1, a2] = await Promise.all([
-      llamar(m, 'POST', `${B}/admin/recargas-locales/${rid}/acreditar`, {}, admin.token),
-      llamar(m, 'POST', `${B}/admin/recargas-locales/${rid}/acreditar`, {}, admin.token),
+      llamar(m, 'POST', `/datos/admin/finanzas/recargas-locales/${rid}/acreditar`, {}, admin.token),
+      llamar(m, 'POST', `/datos/admin/finanzas/recargas-locales/${rid}/acreditar`, {}, admin.token),
     ]);
     expect([a1.estado, a2.estado].sort()).toEqual([200, 409]);
     const a3 = await llamar(
       m,
       'POST',
-      `${B}/admin/recargas-locales/${rid}/acreditar`,
+      `/datos/admin/finanzas/recargas-locales/${rid}/acreditar`,
       {},
       admin.token,
     );
@@ -156,7 +176,7 @@ describe('C-FLEX-RECARGA-LOCAL · recargas con pago local verificadas por Divoox
     const corto = await llamar(
       m,
       'POST',
-      `${B}/admin/recargas-locales/${rid}/rechazar`,
+      `/datos/admin/finanzas/recargas-locales/${rid}/rechazar`,
       { motivo: 'no' },
       admin.token,
     );
@@ -164,14 +184,21 @@ describe('C-FLEX-RECARGA-LOCAL · recargas con pago local verificadas por Divoox
     const r = await llamar(
       m,
       'POST',
-      `${B}/admin/recargas-locales/${rid}/rechazar`,
+      `/datos/admin/finanzas/recargas-locales/${rid}/rechazar`,
       { motivo: 'La referencia no aparece en el banco.' },
       admin.token,
     );
     expect(r.estado).toBe(200);
     expect(
-      (await llamar(m, 'POST', `${B}/admin/recargas-locales/${rid}/acreditar`, {}, admin.token))
-        .estado,
+      (
+        await llamar(
+          m,
+          'POST',
+          `/datos/admin/finanzas/recargas-locales/${rid}/acreditar`,
+          {},
+          admin.token,
+        )
+      ).estado,
     ).toBe(409);
     expect((await saldo(m, e)).disponible).toBe(0);
     const lista = await llamar(
@@ -248,7 +275,7 @@ describe('C-FLEX-RECARGA-LOCAL · recargas con pago local verificadas por Divoox
         await llamar(
           m,
           'POST',
-          `${B}/admin/recargas-locales/${d.datos.recarga.id}/acreditar`,
+          `/datos/admin/finanzas/recargas-locales/${d.datos.recarga.id}/acreditar`,
           {},
           admin.token,
         )
@@ -256,5 +283,84 @@ describe('C-FLEX-RECARGA-LOCAL · recargas con pago local verificadas por Divoox
     ).toBe(200);
     expect((await asignar()).estado).toBe(200);
     expect(await saldo(m, e)).toMatchObject({ disponible: 900, reservado: 100 });
+  });
+
+  it('perfiles del equipo: Solo lectura y Soporte no acreditan, rechazan ni configuran; queda en acciones_equipo', async () => {
+    const { m, admin, e } = await escenario();
+    const d = await declarar(m, e);
+    const rid = d.datos.recarga.id;
+    const perfil = async (id: string, p: string) =>
+      m.DB.prepare(
+        'INSERT INTO perfiles_internos (usuario_id, perfil, actualizado_por) VALUES (?, ?, ?)',
+      )
+        .bind(id, p, admin.id)
+        .run();
+    const lectura = await m.cuenta('admin', 'Equipo lectura');
+    const soporte = await m.cuenta('admin', 'Equipo soporte');
+    await perfil(lectura.id, 'lectura');
+    await perfil(soporte.id, 'soporte');
+    const A = '/datos/admin/finanzas/recargas-locales';
+    for (const u of [lectura, soporte]) {
+      expect((await llamar(m, 'POST', `${A}/${rid}/acreditar`, {}, u.token)).estado).toBe(403);
+      expect(
+        (await llamar(m, 'POST', `${A}/${rid}/rechazar`, { motivo: 'No cuadra el pago' }, u.token))
+          .estado,
+      ).toBe(403);
+      expect((await llamar(m, 'PUT', `${A}/config/VE`, CONFIG_VE, u.token)).estado).toBe(403);
+    }
+    // Mirar la cola sí pueden.
+    expect((await llamar(m, 'GET', A, undefined, lectura.token)).estado).toBe(200);
+    expect((await saldo(m, e)).disponible).toBe(0);
+    expect((await llamar(m, 'POST', `${A}/${rid}/acreditar`, {}, admin.token)).estado).toBe(200);
+    const acc = await m.DB.prepare(
+      'SELECT usuario_id, metodo, ruta, estado FROM acciones_equipo WHERE ruta LIKE ? ORDER BY id',
+    )
+      .bind(`${A}/${rid}/acreditar`)
+      .all();
+    expect(acc.results).toContainEqual({
+      usuario_id: admin.id,
+      metodo: 'POST',
+      ruta: `${A}/${rid}/acreditar`,
+      estado: 200,
+    });
+  });
+
+  it('control dual: por encima del umbral una sola cuenta no acredita; otra distinta aprueba', async () => {
+    const { m, admin, e } = await escenario();
+    const d = await declarar(m, e, { monto: 50_000, referencia: 'PM-GRANDE' });
+    const rid = d.datos.recarga.id;
+    const A = '/datos/admin/finanzas/recargas-locales';
+    const pedido = await llamar(m, 'POST', `${A}/${rid}/acreditar`, {}, admin.token);
+    expect(pedido.estado).toBe(202);
+    expect(pedido.datos.pendiente).toBe(true);
+    expect((await saldo(m, e)).disponible).toBe(0);
+    const aid = pedido.datos.aprobacion.id;
+    // La misma persona no se aprueba a sí misma.
+    expect(
+      (
+        await llamar(
+          m,
+          'POST',
+          `/datos/admin/aprobaciones-dinero/${aid}/aprobar`,
+          { clave: 'clave-segura-1' },
+          admin.token,
+        )
+      ).estado,
+    ).toBe(409);
+    expect((await saldo(m, e)).disponible).toBe(0);
+    const otra = await m.cuenta('admin', 'Equipo finanzas');
+    const ok = await llamar(
+      m,
+      'POST',
+      `/datos/admin/aprobaciones-dinero/${aid}/aprobar`,
+      { clave: 'clave-segura-1' },
+      otra.token,
+    );
+    expect(ok.estado).toBe(200);
+    expect((await saldo(m, e)).disponible).toBe(50_000);
+    const comp = await m.DB.prepare('SELECT COUNT(*) AS n FROM comprobantes WHERE referencia = ?')
+      .bind(`recarga_local:${rid}`)
+      .first<{ n: number }>();
+    expect(comp!.n).toBe(1);
   });
 });

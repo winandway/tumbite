@@ -5,13 +5,9 @@ import { guardarFoto } from '../fotoLimpia';
 import { MAX_FOTO_BYTES, tipoReal } from '../rutas/fotos';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import {
-  cuentaEmpresa,
-  empresaFinanciera,
-  saldoEmpresa,
-  sentenciasComprobante,
-} from '../finanzas/billetera';
+import { cuentaEmpresa, empresaFinanciera, saldoEmpresa } from '../finanzas/billetera';
 import { sentenciaAuditoriaFin } from '../finanzas/politicas';
+import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { CABECERA_IDEMPOTENCIA, actorDeEmpresa, exigirPermiso } from './autorizacion';
 
 /**
@@ -265,12 +261,22 @@ flexRecargasLocales.post('/empresas/:id/billetera/recargas-locales', async (c) =
 
 // ───────────────────────────── El equipo de Divoox (superadmin) ─────────────────────────────
 
-flexRecargasLocales.get('/admin/recargas-locales/config/:pais', async (c) => {
+/**
+ * Las rutas del equipo viven bajo `/datos/admin/finanzas/recargas-locales` (se montan en `/datos`):
+ * así las cubre el guardia de perfiles del equipo (`permisosInternos`: escribir exige perfil Total
+ * o Finanzas; Solo lectura y Soporte reciben 403) y cada cambio queda en `acciones_equipo`.
+ * Acreditar pasa por el control dual (`recarga_local` en `TIPOS_DUAL`): por encima del umbral, una
+ * persona pide y otra distinta aprueba.
+ */
+export const flexRecargasLocalesAdmin = new Hono<{ Bindings: Env; Variables: Variables }>();
+const ADMIN = '/admin/finanzas/recargas-locales';
+
+flexRecargasLocalesAdmin.get(`${ADMIN}/config/:pais`, async (c) => {
   exigir(c, 'admin');
   return c.json({ config: await leerConfigLocales(base(c), c.req.param('pais').toUpperCase()) });
 });
 
-flexRecargasLocales.put('/admin/recargas-locales/config/:pais', async (c) => {
+flexRecargasLocalesAdmin.put(`${ADMIN}/config/:pais`, async (c) => {
   const u = exigir(c, 'admin');
   const pais = c.req.param('pais').toUpperCase();
   if (!/^[A-Z]{2}$/.test(pais)) throw new ErrorDatos('País inválido.', 'pais');
@@ -294,7 +300,7 @@ flexRecargasLocales.put('/admin/recargas-locales/config/:pais', async (c) => {
   return c.json({ config: cfg });
 });
 
-flexRecargasLocales.get('/admin/recargas-locales', async (c) => {
+flexRecargasLocalesAdmin.get(ADMIN, async (c) => {
   exigir(c, 'admin');
   const estado = c.req.query('estado') ?? 'pendiente';
   const db = base(c);
@@ -328,7 +334,7 @@ async function recargaLocal(db: D1Database, id: string) {
 }
 
 /** La foto del comprobante, solo para el equipo (privada, sin caché). */
-flexRecargasLocales.get('/admin/recargas-locales/:rid/comprobante', async (c) => {
+flexRecargasLocalesAdmin.get(`${ADMIN}/:rid/comprobante`, async (c) => {
   exigir(c, 'admin');
   const r = await recargaLocal(base(c), c.req.param('rid'));
   const obj = c.env.BUCKET ? await c.env.BUCKET.get(r.comprobante_clave) : null;
@@ -377,10 +383,17 @@ function libroSiGano(
     );
 }
 
-flexRecargasLocales.post('/admin/recargas-locales/:rid/acreditar', async (c) => {
-  const u = exigir(c, 'admin');
-  const db = base(c);
-  const r = await recargaLocal(db, c.req.param('rid'));
+/** Una sentencia cualquiera que SOLO corre si el token de esta revisión quedó en la recarga. */
+const siGano = (id = '?', token = '?') =>
+  `EXISTS (SELECT 1 FROM recargas_locales_empresa WHERE id = ${id} AND estado = 'acreditada' AND revision_token = ${token})`;
+
+/**
+ * Acredita UNA vez, en UNA sola transacción: cambio de estado, libro, comprobante numerado y
+ * auditoría. Todo lo que sigue al UPDATE está condicionado a que esta revisión lo haya ganado.
+ * La usa la ruta (bajo el umbral) y la aprobación del control dual (por encima).
+ */
+export async function acreditarRecargaLocal(db: D1Database, recargaId: string, autorId: string) {
+  const r = await recargaLocal(db, recargaId);
   if (r.estado !== 'pendiente')
     throw new ErrorDatos(
       r.estado === 'acreditada' ? 'Esa recarga ya se acreditó.' : 'Esa recarga se rechazó.',
@@ -398,14 +411,16 @@ flexRecargasLocales.post('/admin/recargas-locales/:rid/acreditar', async (c) => 
   const prefijo = `recarga_local:${r.id}`;
   const s = await saldoEmpresa(db, e);
   const aDeuda = Math.min(Math.max(s.deuda, 0), r.monto);
-  const base_ = { recargaId: r.id, token, e, autorId: u.id };
+  const base_ = { recargaId: r.id, token, e, autorId };
+  const anio = String(new Date().getUTCFullYear());
+  const contador = `comprobantes:${anio}`;
   const lista: D1PreparedStatement[] = [
     db
       .prepare(
         `UPDATE recargas_locales_empresa SET estado = 'acreditada', revisado_por = ?, revisado_en = datetime('now'),
            revision_token = ?, actualizado_en = datetime('now') WHERE id = ? AND estado = 'pendiente'`,
       )
-      .bind(u.id, token, r.id),
+      .bind(autorId, token, r.id),
   ];
   if (aDeuda > 0)
     lista.push(
@@ -427,37 +442,80 @@ flexRecargasLocales.post('/admin/recargas-locales/:rid/acreditar', async (c) => 
         referencia: `${prefijo}:prepago`,
       }),
     );
+  // El comprobante (mismo formato que `sentenciasComprobante`) y la auditoría, con la misma guarda.
+  lista.push(
+    db
+      .prepare(
+        `INSERT INTO contadores (clave, n) SELECT ?1, 1
+          WHERE NOT EXISTS (SELECT 1 FROM comprobantes WHERE referencia = ?2) AND ${siGano('?3', '?4')}
+         ON CONFLICT(clave) DO UPDATE SET n = n + 1`,
+      )
+      .bind(contador, prefijo, r.id, token),
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO comprobantes (id, numero, empresa_id, tipo, monto, pais, moneda, referencia, datos_json)
+         SELECT ?1, 'DVX-' || ?2 || '-' || printf('%06d', (SELECT n FROM contadores WHERE clave = ?3)), ?4, 'recarga', ?5, ?6, ?7, ?8, ?9
+          WHERE NOT EXISTS (SELECT 1 FROM comprobantes WHERE referencia = ?8) AND ${siGano('?10', '?11')}`,
+      )
+      .bind(
+        crypto.randomUUID(),
+        anio,
+        contador,
+        e.id,
+        r.monto,
+        e.pais,
+        e.moneda,
+        prefijo,
+        JSON.stringify({ recargaLocalId: r.id, metodo: r.metodo, referencia: r.referencia }),
+        r.id,
+        token,
+      ),
+    db
+      .prepare(
+        `INSERT INTO finanzas_auditoria (actor_id, actor_tipo, accion, objeto, empresa_id, detalle_json)
+         SELECT ?, 'usuario', 'recarga_local.acreditar', ?, ?, ? WHERE ${siGano()}`,
+      )
+      .bind(
+        autorId,
+        r.id,
+        e.id,
+        JSON.stringify({ monto: r.monto, metodo: r.metodo, aDeuda }),
+        r.id,
+        token,
+      ),
+  );
   const res = await db.batch(lista);
   if (!res[0]?.meta.changes)
     throw new ErrorDatos('Esa recarga ya no está pendiente.', undefined, 409);
-  // Ganó esta revisión: comprobante (idempotente por referencia) y auditoría.
-  await db.batch([
-    ...sentenciasComprobante(db, {
-      empresaId: e.id,
-      tipo: 'recarga',
-      monto: r.monto,
-      pais: e.pais,
-      moneda: e.moneda,
-      referencia: prefijo,
-      datos: { recargaLocalId: r.id, metodo: r.metodo, referencia: r.referencia },
-    }),
-    sentenciaAuditoriaFin(db, {
-      actorId: u.id,
-      accion: 'recarga_local.acreditar',
-      objeto: r.id,
-      empresaId: e.id,
-      detalle: { monto: r.monto, metodo: r.metodo, aDeuda },
-    }),
-  ]);
-  return c.json({
+  return {
     recarga: recargaLocalPublica(await recargaLocal(db, r.id)),
     saldo: await saldoEmpresa(db, e),
+  };
+}
+
+flexRecargasLocalesAdmin.post(`${ADMIN}/:rid/acreditar`, async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const r = await recargaLocal(db, c.req.param('rid'));
+  if (r.estado !== 'pendiente')
+    throw new ErrorDatos(
+      r.estado === 'acreditada' ? 'Esa recarga ya se acreditó.' : 'Esa recarga se rechazó.',
+      undefined,
+      409,
+    );
+  // C-CONTROL-DUAL: bajo el umbral se acredita ya; por encima queda pendiente (202) para otra persona.
+  return hacerOPedirAprobacion(c, {
+    tipo: 'recarga_local',
+    objeto: r.id,
+    monto: r.monto,
+    motivo: `Recarga con pago local ${r.metodo} ${r.referencia}`,
+    datos: { recargaId: r.id },
   });
 });
 
 const esquemaRechazo = z.object({ motivo: z.string().trim().min(5).max(300) });
 
-flexRecargasLocales.post('/admin/recargas-locales/:rid/rechazar', async (c) => {
+flexRecargasLocalesAdmin.post(`${ADMIN}/:rid/rechazar`, async (c) => {
   const u = exigir(c, 'admin');
   const d = await leerCuerpo(c, esquemaRechazo);
   const db = base(c);

@@ -417,7 +417,10 @@ export function RecargasLocalesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
   });
   const moneda = 'USD';
   const cargar = useCallback(() => {
-    pedir<{ recargas: Pendiente[] }>('GET', `${BASE_FLEX}/admin/recargas-locales?estado=pendiente`)
+    pedir<{ recargas: Pendiente[] }>(
+      'GET',
+      `/datos/admin/finanzas/recargas-locales?estado=pendiente`,
+    )
       .then((r) => setLista(r.recargas))
       .catch((x: unknown) => setError(mensajeDe(x)));
   }, []);
@@ -436,7 +439,7 @@ export function RecargasLocalesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
         };
       }>(
         'GET',
-        `${BASE_FLEX}/admin/recargas-locales/config/${fb.valores.pais.trim().toUpperCase()}`,
+        `/datos/admin/finanzas/recargas-locales/config/${fb.valores.pais.trim().toUpperCase()}`,
       );
       fb.cargarBase({
         pais: fb.valores.pais,
@@ -457,7 +460,7 @@ export function RecargasLocalesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
     try {
       await pedir(
         'PUT',
-        `${BASE_FLEX}/admin/recargas-locales/config/${fb.valores.pais.trim().toUpperCase()}`,
+        `/datos/admin/finanzas/recargas-locales/config/${fb.valores.pais.trim().toUpperCase()}`,
         {
           activas: fb.valores.activas === '1',
           minimo: textoAMonto(fb.valores.minimo, moneda),
@@ -477,8 +480,13 @@ export function RecargasLocalesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
     setError('');
     setOk('');
     try {
-      await pedir('POST', `${BASE_FLEX}/admin/recargas-locales/${id}/acreditar`, {});
-      setOk(t.acreditada);
+      // C-CONTROL-DUAL: por encima del umbral queda esperando a otra persona (202 con el aviso).
+      const r = await pedir<{ pendiente?: boolean; mensaje?: string }>(
+        'POST',
+        `/datos/admin/finanzas/recargas-locales/${id}/acreditar`,
+        {},
+      );
+      setOk(r.pendiente ? (r.mensaje ?? t.acreditada) : t.acreditada);
       cargar();
     } catch (x) {
       setError(mensajeDe(x));
@@ -488,7 +496,7 @@ export function RecargasLocalesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
     setError('');
     setOk('');
     try {
-      await pedir('POST', `${BASE_FLEX}/admin/recargas-locales/${id}/rechazar`, { motivo });
+      await pedir('POST', `/datos/admin/finanzas/recargas-locales/${id}/rechazar`, { motivo });
       setRechazando(null);
       setMotivo('');
       setOk(t.rechazada);
@@ -522,7 +530,7 @@ export function RecargasLocalesAdmin({ idioma }: { idioma: 'es' | 'en' }) {
               · {TEXTOS_RECARGA_LOCAL[idioma].metodos[r.metodo] ?? r.metodo} · {r.referencia} ·{' '}
               {fechaHoraLocal(r.creadoEn, idioma)} ·{' '}
               <a
-                href={`${BASE_FLEX}/admin/recargas-locales/${r.id}/comprobante`}
+                href={`/datos/admin/finanzas/recargas-locales/${r.id}/comprobante`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
