@@ -144,6 +144,26 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     expect(await screen.findByText(/Moto quedó abierto en VE-CCS-PRUEBAS/)).toBeTruthy();
   });
 
+  it('C-CARRO-TARIFA-VE: «Usar El Vigía» con Carro muestra la tarifa de mercado y no la manda escrita', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    await userEvent.selectOptions(screen.getByLabelText('Servicio'), 'carro');
+    await userEvent.click(screen.getByRole('button', { name: 'Usar El Vigía' }));
+    expect(screen.getByLabelText<HTMLInputElement>('Código de la ciudad').value).toBe(
+      'VE-VIG-CENTRO',
+    );
+    expect(screen.getByText('$1.50')).toBeTruthy();
+    expect(screen.getByText('$3.50')).toBeTruthy();
+    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Pruebas Carro');
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir Carro en esta ciudad' }));
+    await waitFor(() => {
+      const cuerpo = llamadas.find((l) => l.metodo === 'POST')?.cuerpo as Record<string, unknown>;
+      expect(cuerpo.servicio).toBe('carro');
+      expect(cuerpo.tarifa).toBeUndefined();
+    });
+  });
+
   it('C-ABRIR-CIUDAD: abre Carro en una ciudad de cualquier país con su tarifa escrita', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas);

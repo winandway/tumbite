@@ -171,6 +171,38 @@ export const TARIFA_MOTO_VENEZUELA: TarifaViaje = {
   velocidadKmh: 24,
 };
 
+/**
+ * C-CARRO-TARIFA-VE (13 nov 2026): tarifa de Carro de mercado para una ciudad de Venezuela, en centavos
+ * de dólar. Calibrada con Caracas (1,2 km en carro: Ridery 4,20 y Yummy 4,25 [OBS]; taxis desde 3 o 4
+ * dólares [OBS]) y algo por debajo para una ciudad mediana como El Vigía. Carro XL = × 1,5 (C-CARRO-XL).
+ * Ficha: docs/investigaciones-rea/2026-11-13-carro-venezuela.md. Sin redondeo ni precio dinámico.
+ */
+export const TARIFA_CARRO_VENEZUELA: TarifaViaje = {
+  base: 150,
+  porKm: 45,
+  porMinuto: 6,
+  minimo: 350,
+  esperaGratisS: 180,
+  porMinutoEspera: 10,
+  cancelacionGratisS: 120,
+  cargoCancelacion: 100,
+  cargoNoSePresento: 100,
+  topeDinamicoPb: 10_000,
+  redondeo: 1,
+  cargoFijo: 0,
+  xlPb: 15_000,
+  factorCallePb: 13_000,
+  velocidadKmh: 24,
+};
+
+/** La tarifa de mercado sembrada para un servicio de viajes en un país (null = hay que escribirla). */
+export function tarifaDeMercado(pais: string, servicio: string): TarifaViaje | null {
+  if (pais.toUpperCase() !== 'VE') return null;
+  if (servicio === 'moto') return TARIFA_MOTO_VENEZUELA;
+  if (servicio === 'carro') return TARIFA_CARRO_VENEZUELA;
+  return null;
+}
+
 /** Caracas como ciudad de PRUEBAS de Moto (la ciudad real la decide Richard). */
 export const CIUDAD_PRUEBAS_VENEZUELA = {
   id: 'VE-CCS-PRUEBAS',

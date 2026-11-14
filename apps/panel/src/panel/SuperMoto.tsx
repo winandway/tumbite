@@ -3,7 +3,8 @@ import {
   CIUDAD_PRUEBAS_VENEZUELA,
   ErrorApi,
   type Idioma,
-  TARIFA_MOTO_VENEZUELA,
+  tarifaDeMercado,
+  CIUDAD_EL_VIGIA,
   almacenNavegador,
   enIdioma,
   formatearMonto,
@@ -36,6 +37,7 @@ const T = {
     tarifaEscribeAyuda:
       'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en Moto · Viajes.',
     usarCaracas: 'Usar Caracas de pruebas',
+    usarElVigia: 'Usar El Vigía',
     codigo: 'Código de la ciudad',
     codigoEjemplo: 'País-ciudad-zona, por ejemplo VE-CCS-CENTRO',
     nombre: 'Nombre de la ciudad',
@@ -243,6 +245,7 @@ const T = {
     tarifaEscribeAyuda:
       'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in Moto · Rides.',
     usarCaracas: 'Use Caracas test city',
+    usarElVigia: 'Use El Vigía',
     codigo: 'City code',
     codigoEjemplo: 'Country-city-area, for example VE-CCS-CENTRO',
     nombre: 'City name',
@@ -470,8 +473,10 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
   const servicio = v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto';
   const nombreServicio = enPalabras(t.nombresServicio, servicio);
   const venezuela = v.id.trim().toUpperCase().startsWith('VE');
-  // C-ABRIR-CIUDAD (13 nov 2026): solo Moto en Venezuela trae tarifa de mercado; lo demás se escribe.
-  const conTarifaDeMercado = servicio === 'moto' && (venezuela || !v.id.trim());
+  // C-ABRIR-CIUDAD (13 nov 2026): Moto y Carro en Venezuela traen tarifa de mercado
+  // (C-CARRO-TARIFA-VE); lo demás se escribe.
+  const deMercado = tarifaDeMercado('VE', servicio);
+  const conTarifaDeMercado = Boolean(deMercado) && (venezuela || !v.id.trim());
   const monedaTarifa = v.moneda.trim().toUpperCase() || 'USD';
   const tarifaEscrita = {
     base: textoAMonto(v.base || '', monedaTarifa),
@@ -484,8 +489,7 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
     Object.values(tarifaEscrita).every((n) => Number.isFinite(n) && n >= 0);
   const usd = (c: number) => formatearMonto(c, 'USD', idioma);
 
-  function usarCaracas() {
-    const c = CIUDAD_PRUEBAS_VENEZUELA;
+  function usarCiudad(c: typeof CIUDAD_PRUEBAS_VENEZUELA | typeof CIUDAD_EL_VIGIA) {
     b.setValores((antes) => ({
       ...antes,
       id: c.id,
@@ -575,9 +579,22 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           ))}
         </select>
       </label>
-      <button type="button" className="boton secundario" onClick={usarCaracas}>
-        {t.usarCaracas}
-      </button>
+      <div className="fila-botones">
+        <button
+          type="button"
+          className="boton secundario"
+          onClick={() => usarCiudad(CIUDAD_PRUEBAS_VENEZUELA)}
+        >
+          {t.usarCaracas}
+        </button>
+        <button
+          type="button"
+          className="boton secundario"
+          onClick={() => usarCiudad(CIUDAD_EL_VIGIA)}
+        >
+          {t.usarElVigia}
+        </button>
+      </div>
       <label>
         {t.codigo}
         <input
@@ -645,17 +662,17 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           placeholder={t.motivoEjemplo}
         />
       </label>
-      {conTarifaDeMercado ? (
+      {conTarifaDeMercado && deMercado ? (
         <div aria-label={t.tarifaTitulo}>
           <h3>{t.tarifaTitulo}</h3>
           <p className="pista">{t.tarifaAyuda}</p>
           <ul className="lista">
             {(
               [
-                [t.base, TARIFA_MOTO_VENEZUELA.base],
-                [t.porKm, TARIFA_MOTO_VENEZUELA.porKm],
-                [t.porMinuto, TARIFA_MOTO_VENEZUELA.porMinuto],
-                [t.minimo, TARIFA_MOTO_VENEZUELA.minimo],
+                [t.base, deMercado.base],
+                [t.porKm, deMercado.porKm],
+                [t.porMinuto, deMercado.porMinuto],
+                [t.minimo, deMercado.minimo],
               ] as const
             ).map(([nombre, centavos]) => (
               <li key={nombre}>

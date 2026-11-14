@@ -7,6 +7,7 @@ import { mundo } from '../pruebas/ayuda';
  * y pago móvil, comisión del saldo prepago) y EE. UU. (Detroit: tarjeta y propina). Ficha:
  * docs/investigaciones-rea/2026-11-13-carro-venezuela.md.
  */
+const ORIGEN = { lat: EVG.lat, lng: EVG.lng, direccion: 'Plaza Bolívar de El Vigía' };
 
 async function escenario(host = 'staging.tumbite.com') {
   const m = mundo({}, { host });
@@ -119,5 +120,66 @@ describe('C-CARRO-PAPELES-PAIS: la tabla vieja de papeles se rehace sin perder f
     )
       .bind(rep.id)
       .run();
+  });
+});
+
+const cotizarCarro = (e: E, destino: { lat: number; lng: number }, categoria?: 'xl') =>
+  e.m.llamar(
+    'POST',
+    '/datos/viajes/cotizar',
+    {
+      servicio: 'carro',
+      origen: ORIGEN,
+      destino: { ...destino, direccion: 'Destino' },
+      ...(categoria ? { categoria } : {}),
+    },
+    e.cliente.token,
+  );
+
+describe('C-CARRO-TARIFA-VE: Carro en El Vigía con la tarifa del mercado venezolano', () => {
+  it('abrir El Vigía sin escribir tarifa pone la de mercado en dólares, con su XL', async () => {
+    const e = await escenario();
+    const r = await abrirElVigia(e);
+    expect(r.estado).toBe(201);
+    expect(r.datos.zona).toEqual({ id: EVG.id, pais: 'VE', moneda: 'USD' });
+    expect(r.datos.tarifa.moneda).toBe('USD');
+    expect(r.datos.tarifa.minimo).toBe(350);
+    expect(r.datos.tarifa.xlPb).toBe(15_000);
+    expect(r.datos.estado).toBe('disponible');
+  });
+
+  it('cotiza el mínimo en un viaje corto, unos 6 a 8 dólares en 9 km, y el XL por 1,5', async () => {
+    const e = await escenario();
+    await abrirElVigia(e);
+    const corto = await cotizarCarro(e, { lat: EVG.lat + 0.008, lng: EVG.lng });
+    expect(corto.estado).toBe(201);
+    expect(corto.datos.cotizacion.moneda).toBe('USD');
+    expect(corto.datos.cotizacion.total).toBe(350);
+    const largo = await cotizarCarro(e, { lat: EVG.lat, lng: EVG.lng + 0.063 });
+    expect(largo.datos.cotizacion.total).toBeGreaterThan(600);
+    expect(largo.datos.cotizacion.total).toBeLessThan(800);
+    const xl = await cotizarCarro(e, { lat: EVG.lat, lng: EVG.lng + 0.063 }, 'xl');
+    expect(xl.estado).toBe(201);
+    // El factor se aplica a cada pieza del precio: cerca de 1,5 veces el carro normal.
+    const veces = xl.datos.cotizacion.total / largo.datos.cotizacion.total;
+    expect(veces).toBeGreaterThan(1.45);
+    expect(veces).toBeLessThan(1.55);
+  });
+
+  it('la comisión es el mismo 10 % en dólares, y el saldo calcula las carreras con la tarifa de Carro', async () => {
+    const e = await escenario();
+    await abrirElVigia(e);
+    const { comisionConductor } = await import('../finanzas/conductor');
+    const c = await comisionConductor(e.m.DB, {
+      servicio: 'car',
+      pais: 'VE',
+      moneda: 'USD',
+      valor: 500,
+    });
+    expect(c?.monto).toBe(50);
+    const { comisionTipicaMoto } = await import('./viajesPasajero');
+    expect(
+      await comisionTipicaMoto(e.m.DB, { id: EVG.id, pais: 'VE', moneda: 'USD' }),
+    ).toBeGreaterThan(0);
   });
 });

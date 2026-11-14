@@ -18,7 +18,7 @@ import {
   numeroEmergencia,
   perfilPasajeros,
   METODOS_PAGO_VIAJE,
-  TARIFA_MOTO_VENEZUELA,
+  tarifaDeMercado,
   distanciaKm,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
@@ -140,7 +140,9 @@ export async function comisionTipicaMoto(
   db: D1Database,
   zona: { id: string; pais: string; moneda: string },
 ): Promise<number> {
-  const fila = await tarifaActiva(db, 'moto', zona.id);
+  // C-CARRO-TARIFA-VE: en una ciudad solo de Carro, la comisión típica sale de la tarifa de Carro.
+  const deMoto = await tarifaActiva(db, 'moto', zona.id);
+  const fila = deMoto ?? (await tarifaActiva(db, 'carro', zona.id));
   if (!fila) return 0;
   const t = filaATarifa(fila);
   const total = cotizarViaje(t, {
@@ -148,7 +150,7 @@ export async function comisionTipicaMoto(
     duracionS: Math.round((KM_VIAJE_TIPICO / t.velocidadKmh) * 3600),
   }).total;
   const c = await comisionConductor(db, {
-    servicio: 'ride',
+    servicio: deMoto ? 'ride' : 'car',
     pais: zona.pais,
     ciudad: zona.id,
     moneda: zona.moneda,
@@ -310,8 +312,8 @@ viajesPasajero.post('/admin/viajes/ciudades', async (c) => {
     perfil.monedaViajes ??
     new Map(Object.entries(MONEDA_POR_PAIS)).get(pais) ??
     'USD';
-  const tarifa =
-    d.tarifa ?? (pais === 'VE' && d.servicio === 'moto' ? TARIFA_MOTO_VENEZUELA : null);
+  // C-CARRO-TARIFA-VE: Moto y Carro en Venezuela traen la tarifa de mercado si no se escribe otra.
+  const tarifa = d.tarifa ?? tarifaDeMercado(pais, d.servicio);
   if (!tarifa)
     throw new ErrorDatos('Escribe la tarifa del servicio para esta ciudad.', 'tarifa', 422);
   // Antes de tocar nada: la compuerta del servicio y la comisión en la moneda de la ciudad.
