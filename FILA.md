@@ -599,7 +599,7 @@
 
 - [ ] [para: revisor-calidad] Revisar la rama fase-web-docs: web al día (C-WEB-AL-DIA), guía «Instalar desde el navegador» (C-GUIA-INSTALAR-NAVEGADOR), mapa de Google en la web (C-MAPA-GOOGLE-WEB), correo de las fichas (C-FICHA-CONTACTO) y textos públicos (C-TEXTOS-PUBLICOS).
 - [ ] [para: desarrollador] Mapa web del Driver (`apps/repartidor/src/piezas/Mapa.web.tsx`, `flex/MapaRuta.web.tsx`) con la pieza `mapaWebGoogle` cuando dibuje restaurante o casa (C-MAPA-GOOGLE-WEB). No se tocó: era terreno del desarrollador de Driver.
-- [!] 👤 Richard: crear la llave de navegador de Maps JavaScript API (restringida por dominio) y guardarla como variable del repositorio GOOGLE_MAPS_WEB_KEY; tope de 300 cargas al día en Google Cloud. Sin eso, la web sigue con Leaflet (riesgo de términos abierto).
+- [x] ✅ (hecha por la IA el 14 nov con el sí de Richard) Richard: crear la llave de navegador de Maps JavaScript API (restringida por dominio) y guardarla como variable del repositorio GOOGLE_MAPS_WEB_KEY; tope de 300 cargas al día en Google Cloud. Sin eso, la web sigue con Leaflet (riesgo de términos abierto).
 
 ## Divoox Carro listo para probar (rama fase-carro-1, 13 nov 2026) — Venezuela y EE. UU.
 
