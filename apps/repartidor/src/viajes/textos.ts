@@ -4,6 +4,8 @@ export const TEXTOS_VIAJE = {
     oferta: {
       titulo: 'Nuevo viaje en Moto',
       tituloCarro: 'Nuevo viaje en Carro',
+      // C-VIAJE-PROGRAMADO: la oferta de una reserva dice para cuándo.
+      programado: 'Viaje programado para',
       ganas: 'Ganas',
       recogida: 'hasta la recogida',
       viaje: 'de viaje',
@@ -63,6 +65,7 @@ export const TEXTOS_VIAJE = {
     oferta: {
       titulo: 'New Moto ride',
       tituloCarro: 'New Car ride',
+      programado: 'Scheduled ride for',
       ganas: 'You earn',
       recogida: 'to pickup',
       viaje: 'trip',

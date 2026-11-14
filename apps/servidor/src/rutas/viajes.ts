@@ -101,7 +101,7 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
     .prepare(
       `SELECT f.operacion_id, f.vehiculo_id, f.ganancia_centavos, f.expira_en, o.servicio_id,
               v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
-              v.destino_lng, v.pasajeros, v.metodo_pago, q.distancia_m, q.duracion_s, q.moneda,
+              v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               d.lat AS yo_lat, d.lng AS yo_lng
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
@@ -135,6 +135,11 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         viajeS: f.duracion_s == null ? null : Number(f.duracion_s),
         metodoPago: String(f.metodo_pago ?? 'efectivo'),
         pasajeros: Number(f.pasajeros),
+        // C-VIAJE-PROGRAMADO: la oferta dice que es una reserva y para cuándo (UTC, ISO).
+        programadoPara:
+          f.programado_para == null
+            ? null
+            : new Date(`${String(f.programado_para).replace(' ', 'T')}Z`).toISOString(),
       };
     }),
   });

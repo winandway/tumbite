@@ -1,4 +1,5 @@
 import { flotasActivas } from './flota';
+import { TAREA_VIAJES_PROGRAMADOS } from './viajesProgramados';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
@@ -3042,6 +3043,9 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // C-TASA-BCV-AUTO (Venezuela): la tasa oficial del día, a las 14:00 UTC (y a las 20:00 si no
   // hubo lectura). Una fila al día; el resto de las vueltas no lee ni escribe nada.
   { ...TAREA_TASA_BCV, escriturasEsperadas: 1 },
+  // C-VIAJE-PROGRAMADO (todos los países): los viajes reservados empiezan a buscar conductor unos
+  // minutos antes de su hora. Lee solo el índice de pendientes; sin ninguna que venza, no escribe.
+  TAREA_VIAJES_PROGRAMADOS,
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
   ...TAREAS_FLEX,
   // Flex · Fase 4: conciliación y recuperación de las billeteras, recarga automática y alertas.

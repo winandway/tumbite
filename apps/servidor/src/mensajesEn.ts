@@ -1786,6 +1786,26 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your prepaid balance doesn’t cover the commission for this ride. Top up to accept it.',
   ],
   ['Este viaje ya terminó.', 'This ride has already ended.'],
+  // C-VIAJE-PROGRAMADO (14 nov 2026).
+  [
+    'Elige una hora de al menos 30 minutos desde ahora.',
+    'Pick a time at least 30 minutes from now.',
+  ],
+  ['Se puede reservar hasta 7 días adelante.', 'You can schedule up to 7 days ahead.'],
+  [
+    'Puedes tener hasta 5 viajes programados a la vez.',
+    'You can have up to 5 scheduled rides at a time.',
+  ],
+  [
+    'Para reservar con tarjeta, primero paga un viaje con tarjeta en la app (queda guardada).',
+    'To schedule with a card, first pay for a ride with a card in the app (it stays saved).',
+  ],
+  ['Esa reserva no existe.', 'That reservation doesn’t exist.'],
+  [
+    'Tu viaje ya está buscando conductor: cancélalo desde la pantalla del viaje.',
+    'Your ride is already looking for a driver: cancel it from the ride screen.',
+  ],
+  ['La reserva cambió. Actualiza la pantalla.', 'The reservation changed. Refresh the screen.'],
   // C-MOTO-VENEZUELA (13 nov 2026).
   ['Escribe la tarifa del servicio para esta ciudad.', 'Enter the service fare for this city.'],
   ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],

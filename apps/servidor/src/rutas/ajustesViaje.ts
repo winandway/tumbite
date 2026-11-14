@@ -1,7 +1,7 @@
 import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { esDeNoche } from '@tumbite/compartido';
+import { VIAJE_PROGRAMADO, esDeNoche } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
@@ -73,7 +73,7 @@ ajustesViaje.get('/admin/viajes/ajustes', async (c) => {
   exigir(c, 'admin');
   const { results } = await base(c)
     .prepare(
-      'SELECT zona_id AS zona, servicio_id AS servicio, pin, selfie_casco AS selfieCasco, actualizado_en AS actualizado FROM ajustes_viaje_zona ORDER BY zona_id, servicio_id',
+      'SELECT zona_id AS zona, servicio_id AS servicio, pin, selfie_casco AS selfieCasco, programado_antes_min AS programadoAntesMin, actualizado_en AS actualizado FROM ajustes_viaje_zona ORDER BY zona_id, servicio_id',
     )
     .all();
   return c.json({ ajustes: results.map((r) => ({ ...r, selfieCasco: Boolean(r.selfieCasco) })) });
@@ -85,9 +85,16 @@ ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
     c,
     z.object({
       zona: z.string().min(2).max(40),
-      servicio: z.enum(['moto', 'carro']),
+      servicio: z.enum(['moto', 'carro', 'envios']),
       pin: z.enum(['siempre', 'noche', 'nunca']),
       selfieCasco: z.boolean(),
+      // C-VIAJE-PROGRAMADO: cuántos minutos antes de la hora de una reserva se busca conductor.
+      programadoAntesMin: z
+        .number()
+        .int()
+        .min(VIAJE_PROGRAMADO.despachoAntesMinimo)
+        .max(VIAJE_PROGRAMADO.despachoAntesMaximo)
+        .optional(),
     }),
   );
   const db = base(c);
@@ -97,11 +104,19 @@ ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
   await db.batch([
     db
       .prepare(
-        `INSERT INTO ajustes_viaje_zona (zona_id, servicio_id, pin, selfie_casco, actualizado_por) VALUES (?, ?, ?, ?, ?)
+        `INSERT INTO ajustes_viaje_zona (zona_id, servicio_id, pin, selfie_casco, actualizado_por, programado_antes_min) VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(zona_id, servicio_id) DO UPDATE SET pin = excluded.pin, selfie_casco = excluded.selfie_casco,
-           actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now')`,
+           actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now'),
+           programado_antes_min = COALESCE(excluded.programado_antes_min, programado_antes_min)`,
       )
-      .bind(d.zona, d.servicio, d.pin, d.selfieCasco ? 1 : 0, admin.id),
+      .bind(
+        d.zona,
+        d.servicio,
+        d.pin,
+        d.selfieCasco ? 1 : 0,
+        admin.id,
+        d.programadoAntesMin ?? null,
+      ),
     db
       .prepare(
         'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
@@ -111,7 +126,11 @@ ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
         'ajustes_viaje',
         `${d.servicio}:${d.zona}`,
         JSON.stringify(antes),
-        JSON.stringify({ pin: d.pin, selfieCasco: d.selfieCasco }),
+        JSON.stringify({
+          pin: d.pin,
+          selfieCasco: d.selfieCasco,
+          programadoAntesMin: d.programadoAntesMin ?? null,
+        }),
       ),
   ]);
   return c.json({ ok: true });

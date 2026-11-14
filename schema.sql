@@ -3098,6 +3098,28 @@ CREATE TABLE IF NOT EXISTS envios_persona (
   entregado_en TEXT
 );
 
+-- C-VIAJE-PROGRAMADO (14 nov 2026, todos los países): un viaje o envío reservado para más tarde,
+-- como Uber Reserve. El id es el de la operación que nacerá a la hora de buscar conductor (la
+-- cotización ya apunta a él: el precio queda fijo). El reloj lee solo las pendientes por el índice
+-- parcial y no escribe nada si ninguna vence. programado_para va en UTC (formato de datetime()).
+CREATE TABLE IF NOT EXISTS viajes_programados (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  cotizacion_id TEXT NOT NULL REFERENCES cotizaciones_viaje(id),
+  servicio_id TEXT NOT NULL,
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  programado_para TEXT NOT NULL,
+  metodo_pago TEXT NOT NULL,
+  metodo_pago_ref TEXT,
+  paquete_json TEXT,
+  estado TEXT NOT NULL DEFAULT 'programado' CHECK (estado IN ('programado', 'activado', 'cancelado', 'fallido')),
+  motivo TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelto_en TEXT
+);
+CREATE INDEX IF NOT EXISTS viajes_programados_vencen ON viajes_programados(programado_para) WHERE estado = 'programado';
+CREATE INDEX IF NOT EXISTS viajes_programados_cliente ON viajes_programados(cliente_id, estado);
+
 -- C-MOTO-CIUDAD (30 oct 2026): interruptores de cada servicio de viajes por ciudad, como Uber: el
 -- código para empezar (siempre, solo de noche o nunca) y la selfie del conductor con el casco puesto.
 CREATE TABLE IF NOT EXISTS ajustes_viaje_zona (

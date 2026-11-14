@@ -1960,6 +1960,21 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "recogido_en",
     "entregado_en"
   ],
+  "viajes_programados": [
+    "id",
+    "cliente_id",
+    "cotizacion_id",
+    "servicio_id",
+    "zona_id",
+    "programado_para",
+    "metodo_pago",
+    "metodo_pago_ref",
+    "paquete_json",
+    "estado",
+    "motivo",
+    "creado_en",
+    "resuelto_en"
+  ],
   "ajustes_viaje_zona": [
     "zona_id",
     "servicio_id",

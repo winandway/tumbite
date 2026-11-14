@@ -5,6 +5,7 @@ import { PLAZAS_XL, acercaAlDestino, distanciaKm } from '@tumbite/compartido';
 import { destinosActivos } from './modoDestino';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 import { soltarCobroViaje } from './viajesCobro';
+import { notificar } from './notificaciones';
 
 /**
  * Fase 3 · Exclusividad y asignación (docs/FASE-3-EXCLUSIVIDAD-ASIGNACION.md; V1.2 §3 y §5).
@@ -283,6 +284,33 @@ export async function conductoresConPagoMovil(
  * candidato, y devuelve a «buscando» los viajes asignados cuyo conductor perdió la señal.
  * En producción no hay operaciones: no hace nada.
  */
+/** C-VIAJE-PROGRAMADO: el aviso al pasajero cuando su viaje reservado se queda sin conductor. */
+async function avisarProgramadoSinConductor(
+  env: Env,
+  db: D1Database,
+  operacionId: string,
+  clienteId: string,
+) {
+  const u = await db
+    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
+    .bind(clienteId)
+    .first<{ idioma: string | null }>();
+  const aviso =
+    u?.idioma === 'en'
+      ? {
+          titulo: 'No driver for your scheduled ride',
+          cuerpo: 'We couldn’t find a driver in time. It was canceled at no charge.',
+        }
+      : {
+          titulo: 'No hubo conductor para tu viaje programado',
+          cuerpo: 'No encontramos conductor a tiempo. Se canceló sin cargo.',
+        };
+  await notificar(env, db, clienteId, {
+    ...aviso,
+    datos: { tipo: 'viaje', viajeId: operacionId },
+  }).catch((e: unknown) => console.error('viajes programados: aviso sin conductor', e));
+}
+
 export async function repartirOperaciones(
   env: Env | undefined,
   db: D1Database,
@@ -322,17 +350,20 @@ export async function repartirOperaciones(
   }
   // M2: un viaje que lleva demasiado buscando (desde que empezó a buscar, también tras una
   // liberación) se cierra como «sin conductor» y el pasajero lo ve en vez de esperar para siempre.
+  // C-VIAJE-PROGRAMADO: un viaje reservado empieza a buscar unos minutos antes de su hora; se
+  // cierra «sin conductor» recién a la hora (no antes) y al pasajero se le avisa, sin cargo.
   const { results: vencidos } = await db
     .prepare(
-      `SELECT o.id FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+      `SELECT o.id, o.cliente_id, v.programado_para FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
         WHERE o.estado_general = 'buscando' AND v.estado = 'buscando'
           AND COALESCE((SELECT MAX(e.creado_en) FROM eventos_operacion e
                          WHERE e.operacion_id = o.id AND e.estado_nuevo = 'buscando'), o.creado_en)
               < datetime('now', ?)
+          AND (v.programado_para IS NULL OR v.programado_para <= datetime('now'))
         LIMIT 50`,
     )
     .bind(`-${MINUTOS_SIN_CONDUCTOR} minutes`)
-    .all<{ id: string }>();
+    .all<{ id: string; cliente_id: string; programado_para: string | null }>();
   for (const v of vencidos)
     if (
       await cambiarEstadoViaje(db, {
@@ -344,11 +375,13 @@ export async function repartirOperaciones(
         clave: `sin-conductor:${v.id}`,
         motivo: 'sin_conductor',
       })
-    )
+    ) {
       // C-VIAJE-TARJETA: sin conductor, la autorización de la tarjeta se anula entera.
       await (env ? soltarCobroViaje(env, db, v.id, 0) : Promise.resolve(0)).catch((e: unknown) =>
         console.error('viajes: anular cobro sin conductor', v.id, e),
       );
+      if (env && v.programado_para) await avisarProgramadoSinConductor(env, db, v.id, v.cliente_id);
+    }
   // C-VIAJE-TARJETA: un pago que nunca se autorizó (la persona cerró la hoja de pago) no deja el
   // viaje colgado: a los 20 minutos se cancela y se anula el intento.
   const { results: sinPagar } = await db

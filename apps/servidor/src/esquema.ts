@@ -234,6 +234,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'ciudad_elegida_en', 'TEXT'],
   // C-PAGO-MOVIL-CORREGIR (13 nov 2026): el «no me llegó» corregido a «sí me llegó» (una sola vez).
   ['viajes_pago_movil', 'corregido_en', 'TEXT'],
+  // C-VIAJE-PROGRAMADO (14 nov 2026): la hora reservada del viaje (sin valor, es para ya) y cuántos
+  // minutos antes empieza a buscar conductor en esa ciudad (sin valor, 15).
+  ['viajes', 'programado_para', 'TEXT'],
+  ['ajustes_viaje_zona', 'programado_antes_min', 'INTEGER'],
   // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
   ...COLUMNAS_RESUMEN_CATALOGO,
 ];
