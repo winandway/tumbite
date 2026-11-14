@@ -117,15 +117,33 @@ export function rutasCarroGuion(diagnostico: App) {
   /** El taxista de `quien` (ve | us) listo para Carro y conectado en la recogida de su ciudad. */
   diagnostico.post('/interno/diagnostico/carro/conductor', async (c) => {
     const db = base(c);
-    const cuerpo = (await c.req.json().catch(() => ({}))) as { quien?: unknown };
+    const cuerpo = (await c.req.json().catch(() => ({}))) as {
+      quien?: unknown;
+      zonaId?: unknown;
+      lat?: unknown;
+      lng?: unknown;
+    };
     const quien = cuerpo.quien === 'us' ? 'us' : 've';
     const conductor = quien === 'us' ? CARRO_GUION.conductorUs : CARRO_GUION.conductorVe;
-    const zonaId = quien === 'us' ? DETROIT_PRUEBAS.id : CIUDAD_EL_VIGIA.id;
+    // C-CARRO-GUION-ZONA: el taxista va a la zona que de verdad cotizó el viaje (el guion la manda).
+    // En el sitio de pruebas otra zona puede cubrir el mismo punto (Novi cubre Detroit): ponerlo en
+    // la zona fija dejaba la oferta sin candidatos.
+    const pedida =
+      typeof cuerpo.zonaId === 'string' && /^[A-Z]{2}-[A-Z0-9-]{2,40}$/.test(cuerpo.zonaId)
+        ? cuerpo.zonaId
+        : null;
+    const zonaId = pedida ?? (quien === 'us' ? DETROIT_PRUEBAS.id : CIUDAD_EL_VIGIA.id);
     const z = await db
-      .prepare('SELECT id, lat, lng FROM zonas WHERE id = ?')
-      .bind(zonaId)
+      .prepare('SELECT id, lat, lng FROM zonas WHERE id = ? AND pais = ?')
+      .bind(zonaId, quien === 'us' ? 'US' : 'VE')
       .first<{ id: string; lat: number; lng: number }>();
     if (!z) throw new ErrorDatos('Primero hay que abrir la ciudad de pruebas.', undefined, 409);
+    const lat = Number(cuerpo.lat);
+    const lng = Number(cuerpo.lng);
+    const punto =
+      Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+        ? { lat, lng }
+        : { lat: z.lat, lng: z.lng };
     const abierto = await db
       .prepare(
         "SELECT 1 FROM operaciones WHERE conductor_id = ? AND estado_general IN ('asignada', 'en_curso') LIMIT 1",
@@ -195,7 +213,7 @@ export function rutasCarroGuion(diagnostico: App) {
            ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng,
              ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id, vehiculo_activo_id = excluded.vehiculo_activo_id`,
         )
-        .bind(conductor, z.lat, z.lng, z.id, veh),
+        .bind(conductor, punto.lat, punto.lng, z.id, veh),
       db
         .prepare(
           `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en)
@@ -210,7 +228,7 @@ export function rutasCarroGuion(diagnostico: App) {
         )
         .bind(conductor),
     ]);
-    return c.json({ ok: true, punto: { lat: z.lat, lng: z.lng }, vehiculoId: veh });
+    return c.json({ ok: true, zonaId: z.id, punto, vehiculoId: veh });
   });
 
   /** Fin de la vuelta: nadie queda conectado ni con sesión. El saldo, el libro y los viajes se quedan. */

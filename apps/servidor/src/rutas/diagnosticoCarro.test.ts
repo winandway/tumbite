@@ -119,4 +119,32 @@ describe('C-CARRO-GUION: la herramienta del guion de Carro', () => {
       .first<{ n: number }>();
     expect(conectados?.n).toBe(0);
   });
+
+  it('C-CARRO-GUION-ZONA: el taxista queda en la zona y en el punto que manda el guion, no en el centro de la zona', async () => {
+    const { m, interno } = escenario();
+    await interno('armar');
+    // Como en el sitio de pruebas: Detroit ya existía con su centro a unos 21 km de la recogida.
+    await m.DB.prepare('UPDATE zonas SET lat = 42.42, lng = -83.27, radio_km = 50 WHERE id = ?')
+      .bind(DETROIT_PRUEBAS.id)
+      .run();
+    const r = await interno('conductor', {
+      quien: 'us',
+      zonaId: DETROIT_PRUEBAS.id,
+      lat: 42.3314,
+      lng: -83.0458,
+    });
+    expect(r.estado).toBe(200);
+    expect(r.datos).toMatchObject({
+      zonaId: 'US-MI-DETROIT',
+      punto: { lat: 42.3314, lng: -83.0458 },
+    });
+    const f = await m.DB.prepare('SELECT zona_id, lat, lng FROM repartidores WHERE usuario_id = ?')
+      .bind(CARRO_GUION.conductorUs)
+      .first<{ zona_id: string; lat: number; lng: number }>();
+    expect(f).toEqual({ zona_id: 'US-MI-DETROIT', lat: 42.3314, lng: -83.0458 });
+    // Una zona de otro país no vale para el taxista de EE. UU.
+    expect((await interno('conductor', { quien: 'us', zonaId: 'VE-MER-ELVIGIA' })).estado).toBe(
+      409,
+    );
+  });
 });

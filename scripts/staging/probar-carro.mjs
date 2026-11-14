@@ -107,15 +107,44 @@ async function cotizar(origen, destino) {
 }
 
 /** Acepta, llega, el pasajero da su código, empieza y termina; devuelve lo que cobró. */
-async function hacerViaje(token, id, total, origen) {
-  const ofertas = ok(
-    await pedir('GET', '/datos/conductor/operaciones/ofertas', undefined, token),
-    'ofertas',
-  ).ofertas;
-  exigir(
-    ofertas.some((o) => o.operacionId === id),
-    'la oferta no le llegó al taxista',
+/**
+ * Espera la oferta del taxista. El reloj del sitio de pruebas está en pausa (C-RELOJ-PRUEBAS-PAUSA):
+ * la oferta sale al pedir y cada vez que el pasajero consulta su viaje. Si no llega a la primera, se
+ * consulta como pasajero (redespacha) hasta un tope, y si nunca llega se dice qué se vio.
+ */
+async function esperarOferta(token, id) {
+  let ultimo = null;
+  for (let i = 0; i < 12; i++) {
+    ultimo = ok(
+      await pedir('GET', '/datos/conductor/operaciones/ofertas', undefined, token),
+      'ofertas',
+    ).ofertas;
+    if (ultimo.some((o) => o.operacionId === id)) {
+      if (i > 0) console.error(`traza: la oferta llegó en el intento ${i + 1}`);
+      return;
+    }
+    await pasajero('GET', `/datos/viajes/${id}`);
+    await esperar(2500);
+  }
+  const viaje = (await pasajero('GET', `/datos/viajes/${id}`)).d.viaje;
+  // Lo que ve el taxista de sí mismo, para saber por qué el despacho no lo eligió.
+  const [estado, servicios, comida] = await Promise.all([
+    pedir('GET', '/datos/repartidor/estado', undefined, token),
+    pedir('GET', '/datos/conductor/servicios', undefined, token),
+    pedir('GET', '/datos/repartidor/ofertas', undefined, token),
+  ]);
+  console.error(
+    `traza: estado ${JSON.stringify(estado.d).slice(0, 600)}\ntraza: servicios ${JSON.stringify(
+      (servicios.d.servicios ?? []).find((x) => x.servicioId === 'carro'),
+    )}\ntraza: ofertas de comida ${JSON.stringify(comida.d).slice(0, 300)}`,
   );
+  throw new Error(
+    `la oferta no le llegó al taxista: viaje ${viaje?.estado ?? '?'}; ofertas del taxista: ${JSON.stringify((ultimo ?? []).map((o) => o.operacionId))}`,
+  );
+}
+
+async function hacerViaje(token, id, total, origen) {
+  await esperarOferta(token, id);
   ok(await paso(token, id, 'aceptar'), 'aceptar');
   ok(
     await pedir('POST', '/datos/repartidor/ubicacion', { lat: origen.lat, lng: origen.lng }, token),
@@ -169,7 +198,7 @@ try {
     ok(r, 'abrir Carro en El Vigía');
     casos.push('el equipo abrió Carro en El Vigía con un paso del panel');
   } else casos.push('Carro ya estaba abierto en El Vigía');
-  ok(await interno('conductor', { quien: 've' }), 'taxista de El Vigía listo');
+  ok(await interno('conductor', { quien: 've', ...ORIGEN_VE }), 'taxista de El Vigía listo');
   ok(
     await taxistaVe('POST', '/datos/repartidor/terminos', { version: versionTerminos }),
     'términos',
@@ -239,14 +268,7 @@ try {
     ).viaje;
     const antes = await saldo();
     const comision = Math.round(cot.total / 10);
-    const ofertas = ok(
-      await taxistaVe('GET', '/datos/conductor/operaciones/ofertas'),
-      'ofertas',
-    ).ofertas;
-    exigir(
-      ofertas.some((o) => o.operacionId === v.id),
-      'la oferta no le llegó al taxista',
-    );
+    await esperarOferta(tokens.conductorVe, v.id);
     ok(await paso(tokens.conductorVe, v.id, 'aceptar'), 'aceptar');
     exigir(
       (await saldo()).reservado === comision,
@@ -318,7 +340,24 @@ try {
   casos.push('reserva de Carro para dentro de dos horas con precio fijo, cancelada gratis');
 
   // ---------------------------------------------------------------- 2. Detroit (EE. UU.)
-  ok(await interno('conductor', { quien: 'us' }), 'taxista de Detroit listo');
+  // C-CARRO-GUION-ZONA: el taxista queda en la zona que de verdad cotiza el viaje y EN el punto de
+  // recogida, y además manda su ubicación como la app. En el sitio de pruebas US-MI-DETROIT ya
+  // existía con su centro a unos 21 km de Campus Martius: ponerlo en el centro de la zona lo dejaba
+  // fuera de los 15 km del despacho y la oferta nunca le llegaba (14 nov 2026).
+  const cotZona = await cotizar(ORIGEN_US, DESTINO_US);
+  const listoUs = ok(
+    await interno('conductor', { quien: 'us', zonaId: cotZona.zona?.id, ...ORIGEN_US }),
+    'taxista de Detroit listo',
+  );
+  casos.push(`Detroit cotiza en la zona ${listoUs.zonaId}; el taxista quedó ahí`);
+  ok(
+    await taxistaUs('POST', '/datos/repartidor/ubicacion', {
+      lat: ORIGEN_US.lat,
+      lng: ORIGEN_US.lng,
+    }),
+    'ubicación del taxista de Detroit',
+  );
+
   ok(
     await taxistaUs('POST', '/datos/repartidor/terminos', { version: versionTerminos }),
     'términos',

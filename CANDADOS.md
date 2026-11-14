@@ -4235,3 +4235,11 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué es:** «pago movil» encuentra «Pago móvil», «taxi» encuentra Carro: el buscador de Docs compara sin acentos ni mayúsculas, por palabras sueltas y sin palabras de relleno («cómo», «de», «the»…), en título, resumen, preguntas y texto de cada guía.
 - **Dónde:** `apps/panel/src/sitio/docs/buscar.ts` (`normalizar`, `palabrasDeBusqueda`, `coincide`), usado por `Docs.tsx` en cada tecla (filtrar es barato, sin memoria).
 - **Candado:** `guiasSemana.test.ts`, bloque «C-DOCS-BUSCADOR» (taxi, carro, pago movil, mobile payment, recarga en los dos idiomas).
+
+## C-CARRO-GUION-ZONA · El guion de Carro pone al taxista en la zona y el punto del viaje (14 nov 2026) — EE. UU. y Venezuela
+
+- **Qué se rompió:** `probar-carro.mjs` fallaba contra el sitio de pruebas en Detroit («la oferta no le llegó al taxista») y frenaba el resto de la corrida (Comida de Venezuela, pruebas S). En local pasaba.
+- **Causa real (del guion, no del producto):** `carro/conductor` ponía al taxista en el CENTRO guardado de la zona. En el sitio de pruebas `US-MI-DETROIT` ya existía con centro 42.42, -83.27 (radio 50 km), a unos 21 km de Campus Martius; el despacho solo ofrece hasta 15 km (`KM_MAXIMO_OFERTA`), así que nunca lo elegía. En local la zona nacía con el centro en Campus Martius. Comprobado en el sitio de pruebas: 3 de 3 vueltas fallan con el taxista en el centro y 3 de 3 pasan con el taxista en la recogida.
+- **Arreglo:** la ruta interna acepta `zonaId` (la de la cotización, del mismo país) y `lat`/`lng` (la recogida); el guion manda los dos y además manda la ubicación por `/datos/repartidor/ubicacion`, como la app. La espera de la oferta consulta como pasajero hasta 12 veces (el reloj de pruebas está en pausa) y, si no llega, imprime el estado, los servicios y las ofertas del taxista.
+- **Prueba:** `rutas/diagnosticoCarro.test.ts` («C-CARRO-GUION-ZONA», en rojo con la ruta anterior).
+- **No tocar:** el despacho de 15 km está bien; no subir el radio para que pase un guion.
