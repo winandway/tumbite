@@ -386,8 +386,12 @@ describe('C-VIAJE-PROGRAMADO', () => {
     it('si la llamada a Stripe se corta pero sí autorizó, se suelta la retención y se cancela sin cargo', async () => {
       const llamadas: string[] = [];
       let primera = true;
+      // C-PROGRAMADO-CANCELAR-PRIMERO: el estado del viaje en el momento de soltar la retención.
+      let estadoAlSoltar = '';
+      let leerEstado: () => Promise<string> = async () => '';
       vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
         llamadas.push(`${init?.method ?? 'GET'} ${String(url)}`);
+        if (String(url).endsWith('/cancel')) estadoAlSoltar = await leerEstado();
         if (String(url).includes('/payment_methods'))
           return new Response(JSON.stringify({ data: [{ id: 'pm_guardada' }] }), { status: 200 });
         if (/\/payment_intents$/.test(String(url))) {
@@ -406,9 +410,17 @@ describe('C-VIAJE-PROGRAMADO', () => {
         .bind(e.cliente.id)
         .run();
       const id = (await reservarConTarjeta(e)).datos.viaje.id as string;
+      leerEstado = async () =>
+        (
+          await e.m.DB.prepare('SELECT estado FROM viajes WHERE operacion_id = ?')
+            .bind(id)
+            .first<{ estado: string }>()
+        )?.estado ?? '';
       await correrHora(e, id, "datetime('now', '+10 minutes')");
       await activarViajesProgramados(env(e.m), e.m.DB);
       expect(llamadas.some((x) => x.includes('/payment_intents/pi_prog/cancel'))).toBe(true);
+      // Primero se canceló el viaje y después se soltó la retención.
+      expect(estadoAlSoltar).toBe('cancelado');
       const v = await e.m.DB.prepare('SELECT estado FROM viajes WHERE operacion_id = ?')
         .bind(id)
         .first<{ estado: string }>();

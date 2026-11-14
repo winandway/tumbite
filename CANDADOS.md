@@ -4243,3 +4243,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** la ruta interna acepta `zonaId` (la de la cotización, del mismo país) y `lat`/`lng` (la recogida); el guion manda los dos y además manda la ubicación por `/datos/repartidor/ubicacion`, como la app. La espera de la oferta consulta como pasajero hasta 12 veces (el reloj de pruebas está en pausa) y, si no llega, imprime el estado, los servicios y las ofertas del taxista.
 - **Prueba:** `rutas/diagnosticoCarro.test.ts` («C-CARRO-GUION-ZONA», en rojo con la ruta anterior).
 - **No tocar:** el despacho de 15 km está bien; no subir el radio para que pase un guion.
+
+## Menores del revisor del pulido (14 nov 2026) — todos los países
+
+- **C-PROGRAMADO-CANCELAR-PRIMERO:** si la tarjeta de un viaje programado falla a la hora, `rutas/viajesProgramados.ts` cancela PRIMERO el viaje y DESPUÉS suelta la retención (al revés, un conductor que aceptaba en ese instante quedaba con un viaje asignado sin dinero retenido). Prueba: `rutas/viajesProgramados.test.ts` (el viaje ya está cancelado cuando sale la anulación; en rojo con el orden anterior).
+- **C-PROGRAMADO-ANULAR-REINTENTO:** `ErrorStripe` guarda el código de Stripe; `anularAutorizacionProgramada` repite UNA vez tras 1,5 s si Stripe responde `idempotency_key_in_use` (la primera petición todavía en curso). Un rechazo de verdad no se repite. Prueba: `menoresPulido.test.ts`.
+- **C-RELOJ-PAUSA-DIAGNOSTICO:** `/datos/interno/diagnostico/vivo` dice `relojEnPausa` con `relojEnPausa(c.req.url)` (en local no hay pausa), no con la constante. Prueba: `menoresPulido.test.ts`.
+- **C-NOINDEX-ES:** `RUTAS_PRIVADAS` (`/t/`, `/ride/`, `/deliver/`) llevan `X-Robots-Tag: noindex, nofollow` también con `/es` delante. Prueba: `menoresPulido.test.ts`.

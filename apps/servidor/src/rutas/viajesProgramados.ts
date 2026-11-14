@@ -278,12 +278,9 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
       await autorizarViajeProgramado(env, db, cobro);
     } catch (e) {
       console.error('viajes programados: la tarjeta no se autorizó', f.id, e);
-      // Si la llamada se cortó pero Stripe sí autorizó, la retención se suelta (nunca se queda
-      // el dinero del pasajero apartado por un viaje que no va a existir).
-      if (cobro.cliente && cobro.pm)
-        await anularAutorizacionProgramada(env, db, cobro).catch((x: unknown) =>
-          console.error('viajes programados: no se pudo soltar la retención', f.id, x),
-        );
+      // C-PROGRAMADO-CANCELAR-PRIMERO: primero se cancela el viaje (así ningún conductor lo acepta
+      // en ese instante) y DESPUÉS se suelta la retención; al revés, un conductor podía quedar con
+      // un viaje «asignado» sin dinero retenido.
       for (const desde of ['pago_pendiente', 'buscando'] as const)
         await cambiarEstadoViaje(db, {
           operacionId: f.id,
@@ -297,6 +294,12 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
               : `programado-sin-pago-buscando:${f.id}`,
           motivo: 'sin_pago',
         });
+      // Si la llamada se cortó pero Stripe sí autorizó, la retención se suelta (nunca se queda
+      // el dinero del pasajero apartado por un viaje que no va a existir).
+      if (cobro.cliente && cobro.pm)
+        await anularAutorizacionProgramada(env, db, cobro).catch((x: unknown) =>
+          console.error('viajes programados: no se pudo soltar la retención', f.id, x),
+        );
       await avisar(env, db, f.cliente_id, AVISO.fallido(idioma, hora), f.id);
       return true;
     }

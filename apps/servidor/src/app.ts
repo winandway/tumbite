@@ -217,6 +217,8 @@ app.use(
     credentials: true,
   }),
 );
+/** Páginas privadas por enlace (tickets, viaje compartido, entrega): ningún buscador las guarda. */
+export const RUTAS_PRIVADAS = ['/t/', '/ride/', '/deliver/'];
 const limiteGeneral = limiteIntentos(120, 60_000);
 // Los avisos de Stripe llegan de sus servidores y ya vienen firmados: no se frenan por IP.
 app.use('/datos/*', (c, next) =>
@@ -545,7 +547,8 @@ app.notFound(async (c) => {
   let respuesta = new Response(res.body, res);
   // Las conversaciones de tickets (/t/<codigo>) son privadas: ningún buscador las guarda.
   // Igual el viaje compartido (/ride/<codigo>, M6): privado y en vivo.
-  if (['/t/', '/ride/', '/deliver/'].some((p) => c.req.path.startsWith(p)))
+  // C-NOINDEX-ES: también sus versiones en español (/es/ride/…).
+  if (RUTAS_PRIVADAS.some((p) => c.req.path.startsWith(p) || c.req.path.startsWith(`/es${p}`)))
     respuesta.headers.set('X-Robots-Tag', 'noindex, nofollow');
   if (esRutaPublica(c.req.path) && res.ok) {
     // Caché de borde para las páginas públicas (sin cookies). El panel nunca se cachea.

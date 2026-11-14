@@ -6,6 +6,8 @@ export class ErrorStripe extends Error {
   constructor(
     message: string,
     public readonly estado: number,
+    /** El código de Stripe (por ejemplo `idempotency_key_in_use`), si vino. */
+    public readonly codigo?: string,
   ) {
     super(message);
   }
@@ -85,10 +87,16 @@ export function crearStripe(secreta: string | undefined) {
         signal: AbortSignal.timeout(25_000),
       },
     );
-    const json = (await res.json().catch(() => ({}))) as { error?: { message?: string } } & T;
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: { message?: string; code?: string };
+    } & T;
     if (!res.ok) {
       console.error('stripe: error', res.status, json.error?.message);
-      throw new ErrorStripe(json.error?.message ?? 'Stripe no respondió', res.status);
+      throw new ErrorStripe(
+        json.error?.message ?? 'Stripe no respondió',
+        res.status,
+        json.error?.code,
+      );
     }
     return json;
   }

@@ -1,6 +1,6 @@
 import type { Env } from './env';
 import { nuevoId } from './cripto';
-import { crearStripe } from './stripe';
+import { ErrorStripe, crearStripe } from './stripe';
 import { ErrorDatos } from './validar';
 
 /**
@@ -86,13 +86,19 @@ export async function anularAutorizacionProgramada(
   env: Env,
   db: D1Database,
   p: CobroProgramado,
+  esperaMs = 1500,
 ): Promise<boolean> {
   const stripe = crearStripe(env.STRIPE_SECRET_KEY);
   if (!stripe) return false;
   const [ruta, datos, clave] = intentoProgramado(p);
-  const intento = await stripe
-    .post<{ id?: string; status?: string }>(ruta, { ...datos }, clave)
-    .catch(() => null);
+  const repetir = () => stripe.post<{ id?: string; status?: string }>(ruta, { ...datos }, clave);
+  // Si la primera petición todavía está en curso en Stripe, responde `idempotency_key_in_use`: se
+  // espera un momento y se repite UNA vez antes de darla por perdida (C-PROGRAMADO-ANULAR-REINTENTO).
+  const intento = await repetir().catch(async (e: unknown) => {
+    if (!(e instanceof ErrorStripe) || e.codigo !== 'idempotency_key_in_use') return null;
+    await new Promise((listo) => setTimeout(listo, esperaMs));
+    return repetir().catch(() => null);
+  });
   if (!intento?.id || intento.status === 'canceled' || intento.status === 'succeeded') return false;
   await stripe.post(`/payment_intents/${intento.id}/cancel`, {}, `anular-viaje-${p.operacionId}`);
   await db
