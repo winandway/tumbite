@@ -24,6 +24,10 @@ if (!CLAVE) {
   process.exit(2);
 }
 const QUE = process.argv[2] ?? 'comida';
+// IDIOMA=en saca las capturas en inglés (con su sufijo); VUELTAS=1 hace un solo pedido.
+const IDIOMA = process.env.IDIOMA === 'en' ? 'en' : 'es';
+const SUFIJO = IDIOMA === 'en' ? '-en' : '';
+const VUELTAS = process.env.VUELTAS === '1' ? [1] : [1, 2];
 const CARPETA = 'docs/capturas/mapa-google';
 mkdirSync(CARPETA, { recursive: true });
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -54,12 +58,13 @@ async function abrir(navegador, token, donde, nombre) {
   const ctx = await navegador.newContext({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,
-    locale: 'es-US',
+    locale: IDIOMA === 'en' ? 'en-US' : 'es-US',
     geolocation: { latitude: donde.lat, longitude: donde.lng, accuracy: 8 },
     permissions: ['geolocation'],
   });
   if (token)
     await ctx.addInitScript((t) => window.localStorage.setItem('tumbite.sesion', t), token);
+  await ctx.addInitScript((i) => window.localStorage.setItem('tumbite.idioma', i), IDIOMA);
   const pagina = await ctx.newPage();
   pagina.on('console', (m) => {
     const t = m.text();
@@ -90,8 +95,8 @@ async function mapaListo(pagina, ms = 25000) {
 }
 const foto = (pagina, nombre) =>
   pagina
-    .screenshot({ path: `${CARPETA}/${nombre}.png` })
-    .then(() => console.log(`  captura ${nombre}`));
+    .screenshot({ path: `${CARPETA}/${nombre}${SUFIJO}.png` })
+    .then(() => console.log(`  captura ${nombre}${SUFIJO}`));
 
 // Con la tarjeta gráfica (Metal en Mac) para que Google dibuje el mapa vectorial e inclinado; con el
 // dibujo por software cae al mapa plano de imágenes.
@@ -201,7 +206,7 @@ try {
     const conductor = await abrir(navegador, tRepartidor, local, 'conductor');
     await conductor.pagina.goto(`${BASE}/driver/`, { waitUntil: 'domcontentloaded' });
 
-    for (const vuelta of [1, 2]) {
+    for (const vuelta of VUELTAS) {
       console.log(`pedido ${vuelta}`);
       // El panel del local «pregunta por pedidos»: eso marca que tiene señal y puede recibir.
       await api('GET', '/datos/restaurante/pedidos', undefined, tResto);

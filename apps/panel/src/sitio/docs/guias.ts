@@ -1306,6 +1306,11 @@ const es: SeccionDocs[] = [
             pie: 'Sigues al repartidor en el mapa hasta tu puerta.',
           },
           {
+            src: '/docs/recorrido-cliente-llegando-es.webp',
+            alt: 'El pedido en camino con el aviso «Tu repartidor está a un minuto» y el mapa acercado a la casa, con el número de la dirección escrito sobre el punto rojo.',
+            pie: 'Cuando está por llegar, el mapa se acerca solo a tu casa y muestra el número de tu dirección.',
+          },
+          {
             src: '/docs/recorrido-cliente-sin-senal-es.webp',
             alt: 'El pedido en camino con el aviso «Perdimos la señal de tu repartidor» y su última ubicación conocida en el mapa.',
             pie: 'Si el repartidor pierde la señal, te lo decimos en vez de mostrar un punto que parece en vivo.',
@@ -6162,6 +6167,11 @@ const en: SeccionDocs[] = [
             src: '/docs/recorrido-cliente-en-camino-en.webp',
             alt: 'Live tracking: “Your driver is on the way,” the green bar, the map with the driver, and the estimated time.',
             pie: 'Follow your driver on the map all the way to your door.',
+          },
+          {
+            src: '/docs/recorrido-cliente-llegando-en.webp',
+            alt: 'The order on its way with the “Your driver is a minute away” notice and the map zoomed in on the home, with the street number written on the red pin.',
+            pie: 'When they’re about to arrive, the map zooms in on your home by itself and shows your street number.',
           },
           {
             src: '/docs/recorrido-cliente-sin-senal-en.webp',
