@@ -6,6 +6,7 @@ import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
+import { rehacerConductorDocumentos } from './esquemaPapeles';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -524,6 +525,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerFranquicias),
         String(rehacerFlex),
         String(rehacerAprobacionesDinero),
+        String(rehacerConductorDocumentos),
         String(sincronizarServicios),
         String(preciosDeFabrica),
       ]),
@@ -591,6 +593,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await rehacerFlex(db);
   // C-CONTROL-DUAL (SIG-4x): los tipos nuevos de la segunda firma (excedente devuelto, límite).
   await rehacerAprobacionesDinero(db);
+  // C-CARRO-PAPELES-PAIS: la licencia de conducir del taxista en los papeles del conductor.
+  await rehacerConductorDocumentos(db);
   await asegurarFase3(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);

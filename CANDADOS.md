@@ -3823,3 +3823,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Pedido listo cancelado:** `repartoCancelacionListo` (regla de DoorDash) se calcula al aprobar, va en la respuesta (`reparto`) y en la bitácora. El dinero que se mueve sigue siendo el reembolso completo al cliente.
 - **Pruebas:** `decisionesMercado.test.ts`, `retiros.test.ts` (mínimo), `quejasGuiadas.test.ts` (techo), `cancelaciones.test.ts` (reparto), `BilleteraRetiro.test.tsx`; comprobadas en rojo. Se ajustaron montos de `retiros.test.ts` y `pedidos.test.ts` que retiraban menos de 10 dólares.
 - **No tocar:** no subir el techo del reembolso automático sin la autorización de Richard; no hacer que el reparto mueva dinero sin su orden.
+
+## Divoox Carro listo para probar (rama fase-carro-1, 13 nov 2026) — Venezuela y EE. UU.
+
+### C-CARRO-PAPELES-PAIS · Los papeles del taxista dependen de su país
+
+- **Qué protege:** que un taxista venezolano pueda cumplir los requisitos de Carro con documentos que revisa el equipo, sin bajar el piso de EE. UU.
+- **Cómo funciona:** `perfilPasajeros` (compartido) tiene `documentosCarro` por país: Venezuela pide `licencia_conducir` y `antecedentes_penales`; al aprobarlos cumplen `licencia` + `historial_manejo` y `antecedentes_pasajeros` (los de pasajeros, C-PAPELES-SOLO-PASAJEROS). EE. UU. no pide ninguno (Checkr, inspección y seguro de pasajeros como estaban). Los papeles del carro son los de siempre del vehículo (`DOCUMENTOS_VEHICULO_PASAJEROS.carro`: registro = título o carnet de circulación, seguro = RCV, seguro de pasajeros, inspección = revisión, fotos). `GET /datos/conductor/papeles` devuelve `perfil.documentosPorServicio` y `perfil.documentosVehiculo`.
+- **Tabla:** `conductor_documentos` nació con un CHECK que no conocía `licencia_conducir`. `schema.sql` ya trae la lista nueva y `rehacerConductorDocumentos` (`apps/servidor/src/esquemaPapeles.ts`, llamado desde `migrarCompleto`) rehace la tabla vieja una sola vez sin perder filas, como `rehacerAprobacionesDinero`.
+- **Prueba:** `rutas/carroVenezuela.test.ts` («C-CARRO-PAPELES-PAIS», 3): Venezuela pide y cumple; EE. UU. no cumple con papeles; la tabla vieja se rehace y conserva sus filas. Comprobada en rojo (sin el perfil, 422/undefined; sin rehacer, CHECK).
+- **No tocar:** no hacer que un papel aprobado en EE. UU. cumpla antecedentes; no quitar `rehacerConductorDocumentos` mientras pueda quedar una base vieja.
+- Ficha: `docs/investigaciones-rea/2026-11-13-carro-venezuela.md`.
