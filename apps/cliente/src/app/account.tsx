@@ -8,6 +8,7 @@ import {
   C,
   MenuCuenta,
   PreferenciaSms,
+  AjusteMapa,
   MisCasos,
   TEXTOS_MOVIL,
   selectorDeCapturas,
@@ -361,6 +362,10 @@ function MiCuenta() {
         {/* C-SMS-CONSENTIMIENTO: aceptar o retirar los SMS desde la cuenta. */}
         <View style={{ marginTop: 20 }}>
           <PreferenciaSms />
+        </View>
+        {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
+        <View style={{ marginTop: 20 }}>
+          <AjusteMapa />
         </View>
         <View style={{ marginTop: 20, gap: 8 }}>
           <Boton texto={tm.salir} alTocar={() => void salir()} secundario />

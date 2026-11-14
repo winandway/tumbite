@@ -61,6 +61,18 @@ copyFileSync(
   join(RAIZ, 'apps/panel/public/favicon.ico'),
 );
 
+// 1b. C-MAPA-ISOTIPO (14 nov 2026): la marca del repartidor o conductor en los mapas de la web es
+// el isotipo, tal cual el vector. Se guarda como texto para dibujarlo dentro de la marca.
+guardar(
+  join(RAIZ, 'packages/compartido/src/isotipoDivoox.generado.ts'),
+  `// GENERADO por scripts/marca/generar-identidad.mjs desde
+// identidad-divoox/Divoox_Vectoriales/05_Isotipo_GPS_Fondo_Claro.svg. No se edita a mano: los
+// trazos son los del vector aprobado, tal cual (una prueba lo exige).
+export const ISOTIPO_DIVOOX_SVG =
+  '${ISO_CLARO.trim()}';
+`,
+);
+
 const datos = (svg) => `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 const navegador = await chromium.launch();
 

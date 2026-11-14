@@ -10,7 +10,15 @@ import { RADIO_LLEGADA_M, metrosEntre, type Punto } from './llegada';
  *    DoorDash). Usa las coordenadas que ya guardamos de la dirección elegida: no llama a Google.
  *    Ficha con las fuentes: `docs/investigaciones-rea/2026-11-14-mapa-llegada-y-precision.md`.
  */
-export type VistaMapa = { centro: Punto; zoom: number };
+export type VistaMapa = {
+  centro: Punto;
+  zoom: number;
+  /**
+   * Solo en la vista de llegada: cambia cuando hay que mover la cámara (otro destino u otro nivel de
+   * zoom), no en cada lectura de GPS.
+   */
+  clave?: string;
+};
 
 const valido = (p: Punto | null | undefined): p is Punto =>
   p != null && Number.isFinite(p.lat) && Number.isFinite(p.lng);
@@ -38,17 +46,40 @@ export function centroParaElegir(d: {
 
 /** A esta distancia del destino el mapa se acerca (la misma del «llegué»: C-GPS-SERIO). */
 export const METROS_LLEGADA = RADIO_LLEGADA_M;
-/** Nivel de calle: se distingue cada casa. */
+/** Nivel de calle: se distingue cada casa. Es el tope del acercamiento. */
 export const ZOOM_LLEGADA = 18;
+/** Lo más abierto que queda el mapa al llegar (a 200 m caben los dos con este nivel). */
+const ZOOM_LLEGADA_MINIMO = 15;
+/** Lado útil del mapa en pantalla, en píxeles, descontando el margen para que nada quede al borde. */
+const LADO_UTIL_PX = 160;
+/** Metros por píxel del mapa en el ecuador con zoom 0 (proyección de Mercator, mosaicos de 256). */
+const METROS_PX_ZOOM_0 = 156_543.03392;
 
-/** La vista de llegada si el móvil está cerca del destino; si no, `null` (el mapa sigue como iba). */
+/**
+ * La vista de llegada si el móvil está cerca del destino; si no, `null` (el mapa sigue como iba).
+ * Se ven la casa y el repartidor JUNTOS: el centro es el punto medio entre los dos y el zoom es el
+ * más cercano en el que caben, con el nivel de calle (18) como tope. El zoom baja por escalones
+ * enteros (16, 17, 18) y `clave` solo cambia con el escalón o con el destino: la cámara se mueve
+ * dos o tres veces durante la llegada, no en cada lectura de GPS.
+ */
 export function vistaDeLlegada(
   movil: Punto | null | undefined,
   destino: Punto | null | undefined,
   metros = METROS_LLEGADA,
 ): VistaMapa | null {
   if (!valido(movil) || !valido(destino)) return null;
-  return metrosEntre(movil, destino) <= metros ? { centro: destino, zoom: ZOOM_LLEGADA } : null;
+  const separacion = metrosEntre(movil, destino);
+  if (separacion > metros) return null;
+  const metrosPorPixel = Math.max(separacion, 1) / LADO_UTIL_PX;
+  const cabe = Math.floor(
+    Math.log2((METROS_PX_ZOOM_0 * Math.cos((destino.lat * Math.PI) / 180)) / metrosPorPixel),
+  );
+  const zoom = Math.min(ZOOM_LLEGADA, Math.max(ZOOM_LLEGADA_MINIMO, cabe));
+  return {
+    centro: { lat: (movil.lat + destino.lat) / 2, lng: (movil.lng + destino.lng) / 2 },
+    zoom,
+    clave: `${destino.lat},${destino.lng},${zoom}`,
+  };
 }
 
 const LARGO_ROTULO = 22;

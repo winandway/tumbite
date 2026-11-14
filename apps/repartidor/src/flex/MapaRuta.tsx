@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
-import { C } from '@tumbite/movil';
+import { C, MarcaIsotipo, usePropsMapaDivoox } from '@tumbite/movil';
 import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 import type { Punto } from '../piezas/mapaWeb';
+import { IMG } from '../piezas/recursos';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
 
 export type { PuntoRuta };
@@ -54,7 +55,12 @@ export function MapaRuta({
   const parada = puntos.find((p) => p.tono === 'actual') ?? null;
   const llegada = vistaDeLlegada(yo, parada?.punto);
   const rotulo = llegada ? rotuloDestino(parada?.direccion) : '';
-  const clave = llegada ? `llegada:${parada?.id}` : todos.map((p) => `${p.lat},${p.lng}`).join('|');
+  // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom.
+  const clave = llegada?.clave
+    ? `llegada:${parada?.id}:${llegada.clave}`
+    : todos.map((p) => `${p.lat},${p.lng}`).join('|');
+  // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
+  const { coloresMapa } = usePropsMapaDivoox(todos[0]);
   useEffect(() => {
     if (!listo) return;
     if (llegada) {
@@ -88,6 +94,7 @@ export function MapaRuta({
         showsUserLocation={false}
         toolbarEnabled={false}
         accessibilityLabel={etiqueta}
+        {...coloresMapa}
       >
         {puntos.length > 1 ? (
           <Polyline
@@ -136,17 +143,13 @@ export function MapaRuta({
           </Marker>
         ))}
         {yo ? (
-          <Marker coordinate={{ latitude: yo.lat, longitude: yo.lng }} anchor={{ x: 0.5, y: 0.5 }}>
-            <View
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 10,
-                backgroundColor: C.logisticaAccion,
-                borderWidth: 3,
-                borderColor: '#FFFFFF',
-              }}
-            />
+          <Marker
+            coordinate={{ latitude: yo.lat, longitude: yo.lng }}
+            anchor={{ x: 0.5, y: 0.5 }}
+            zIndex={10}
+          >
+            {/* C-MAPA-ISOTIPO: el conductor es el isotipo de Divoox. */}
+            <MarcaIsotipo fuente={IMG.mascota} />
           </Marker>
         ) : null}
       </MapView>

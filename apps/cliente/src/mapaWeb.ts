@@ -1,10 +1,13 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { LADO_MARCA_ISOTIPO, urlMarcaIsotipo } from '@tumbite/compartido/src/mapaWebGoogle';
+import { seguirTemaEnLeaflet } from '@tumbite/compartido/src/temaMapa';
 import type { Punto } from './ubicacion';
 
 /**
  * Mapa para la versión web de la app (tumbite.com/app): Leaflet con OpenStreetMap, gratis y de
  * código abierto, sin llave. En el celular se usa el mapa nativo (Apple / Google).
+ * Es el mapa de respaldo: con la llave del navegador el mapa es el de Google (C-MAPA-GOOGLE-WEB).
  * Ojo: los mosaicos de openstreetmap.org son para poco tráfico; si la web crece, se cambia la
  * dirección de los mosaicos aquí por un proveedor propio.
  */
@@ -19,7 +22,28 @@ export function crearMapa(div: HTMLDivElement, centro: Punto, zoom = 15): L.Map 
     maxZoom: 19,
     attribution: '© OpenStreetMap',
   }).addTo(mapa);
+  // C-MAPA-DIA-NOCHE: el mapa de respaldo sigue el mismo ajuste (de noche se oscurecen los mosaicos).
+  const dejar = seguirTemaEnLeaflet(mapa, centro);
+  mapa.on('unload', dejar);
   return mapa;
+}
+
+/**
+ * C-MAPA-ISOTIPO: la marca del repartidor o conductor es el isotipo de Divoox (disco blanco con el
+ * isotipo, el mismo dibujo que en el mapa de Google); `apagado` cuando no hay señal reciente.
+ */
+export function isotipo(p: Punto, etiqueta?: string, apagado = false): L.Marker {
+  const m = L.marker([p.lat, p.lng], {
+    icon: L.icon({
+      iconUrl: urlMarcaIsotipo(apagado),
+      iconSize: [LADO_MARCA_ISOTIPO, LADO_MARCA_ISOTIPO],
+      iconAnchor: [LADO_MARCA_ISOTIPO / 2, LADO_MARCA_ISOTIPO / 2],
+    }),
+    zIndexOffset: 1000,
+    keyboard: false,
+  });
+  if (etiqueta) m.bindTooltip(etiqueta);
+  return m;
 }
 
 /** Punto redondo (sin imágenes, que en la web se rompen): relleno de color y borde blanco. */

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
-import { COLORES, crearMapa, punto } from './mapaWeb';
+import { COLORES, crearMapa, isotipo, punto } from './mapaWeb';
 import type { Punto } from './ubicacion';
 import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
 import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
@@ -9,7 +9,7 @@ import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleW
 
 /**
  * Mapa en vivo de la entrega en la versión web: restaurante (gris oscuro), tu casa (escarlata)
- * y el repartidor (escarlata grande) que se mueve con cada actualización.
+ * y el repartidor (el isotipo de Divoox, C-MAPA-ISOTIPO) que se mueve con cada actualización.
  */
 type Props = {
   restaurante: Punto | null;
@@ -48,6 +48,7 @@ function MapaEntregaGoogle({
   etiquetas,
   direccion,
   meta = 'casa',
+  sinSenal = false,
 }: Props) {
   const { idioma } = useSesion();
   const hacia = meta === 'restaurante' ? restaurante : casa;
@@ -77,6 +78,9 @@ function MapaEntregaGoogle({
       ...repartidor,
       color: COLORES.repartidor,
       radio: 12,
+      isotipo: true,
+      // C-SEGUIMIENTO-HONESTO: sin señal reciente, la marca se ve apagada.
+      apagado: sinSenal,
       etiqueta: nombreRepartidor ?? etiquetas.repartidor,
     },
   ].filter((p) => p != null);
@@ -105,11 +109,12 @@ function MapaEntregaLeaflet({
   etiquetas,
   direccion,
   meta = 'casa',
+  sinSenal = false,
 }: Props) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
-  const estabaCerca = useRef(false);
+  const claveCerca = useRef('');
   const centro = repartidor ?? restaurante ?? casa;
 
   useEffect(() => {
@@ -143,17 +148,17 @@ function MapaEntregaLeaflet({
       );
     if (casa) nuevas.push(conRotulo(punto(casa, COLORES.casa, 8, etiquetas.casa), meta === 'casa'));
     if (repartidor)
-      nuevas.push(
-        punto(repartidor, COLORES.repartidor, 12, nombreRepartidor ?? etiquetas.repartidor),
-      );
+      nuevas.push(isotipo(repartidor, nombreRepartidor ?? etiquetas.repartidor, sinSenal));
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
     const todos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
-    // Estando cerca, la cámara se mueve UNA vez (después se puede mover el mapa con el dedo).
-    const yaCerca = estabaCerca.current;
-    estabaCerca.current = llegada != null;
+    // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom (entre
+    // uno y otro se puede mover el mapa con el dedo): casa y repartidor juntos.
+    const claveAntes = claveCerca.current;
+    claveCerca.current = llegada?.clave ?? '';
     if (llegada) {
-      if (!yaCerca) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+      if (llegada.clave !== claveAntes)
+        m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
     } else if (todos.length > 1)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),
@@ -162,7 +167,15 @@ function MapaEntregaLeaflet({
     else if (todos[0]) m.setView([todos[0].lat, todos[0].lng], 16);
     // Se redibuja cuando cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng, repartidor?.lat, repartidor?.lng]);
+  }, [
+    restaurante?.lat,
+    restaurante?.lng,
+    casa?.lat,
+    casa?.lng,
+    repartidor?.lat,
+    repartidor?.lng,
+    sinSenal,
+  ]);
 
   if (!centro) return null;
   return (

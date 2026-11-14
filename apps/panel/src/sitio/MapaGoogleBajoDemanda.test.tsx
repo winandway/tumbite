@@ -1,10 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   MapaGoogleBajoDemanda,
   olvidarCargaGoogleMaps,
 } from '@tumbite/compartido/src/mapaWebGoogle';
+import { ESTILO_MAPA_DIA, ESTILO_MAPA_NOCHE } from '@tumbite/compartido/src/estiloMapaDivoox';
+import {
+  LLAVE_AJUSTE_TEMA_MAPA,
+  cambiarAjusteTemaMapa,
+  olvidarAjusteTemaMapa,
+} from '@tumbite/compartido/src/temaMapa';
 
 /**
  * C-MAPA-GOOGLE-WEB (13 nov 2026) — todos los países. La pieza única del mapa de Google en la web:
@@ -139,6 +145,8 @@ describe('MapaGoogleBajoDemanda', () => {
     registro.zooms = [];
     registro.clic = null;
     olvidarCargaGoogleMaps();
+    window.localStorage.clear();
+    olvidarAjusteTemaMapa();
   });
   afterEach(() => {
     delete (window as { google?: unknown }).google;
@@ -345,6 +353,165 @@ describe('MapaGoogleBajoDemanda', () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(registro.zooms).toHaveLength(antes);
     expect(registro.encuadres).toBe(1);
+  });
+
+  it('C-MAPA-LLEGADA: al llegar se ven la casa y el repartidor juntos; la cámara se mueve por escalones, no en cada lectura de GPS', async () => {
+    (window as { google?: unknown }).google = { maps: API_VECTORIAL };
+    const casa = { ...PUNTOS[1]!, id: 'casa' };
+    type Llegada = { centro: { lat: number; lng: number }; zoom: number; clave: string };
+    const vista = (yo: { lat: number; lng: number }, llegada: Llegada | null) => (
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        mapId="a1b2c3d4e5f6"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        inclinado
+        rumbo={90}
+        etiqueta="Mapa"
+        abierto
+        llegada={llegada}
+        puntos={[casa, { id: 'yo', ...yo, color: '#F20D20', isotipo: true }]}
+      />
+    );
+    const { rerender } = render(vista({ lat: 10.5, lng: -66.9 }, null));
+    await waitFor(() => expect(registro.encuadres).toBe(1));
+    // Entra al radio: el centro es el punto medio entre la casa y el repartidor, con zoom 16.
+    rerender(
+      vista(
+        { lat: 10.5084, lng: -66.91 },
+        { centro: { lat: 10.5092, lng: -66.91 }, zoom: 16, clave: 'casa,16' },
+      ),
+    );
+    await waitFor(() => expect(registro.zooms.at(-1)).toBe(16));
+    expect(registro.centros.at(-1)).toEqual({ lat: 10.5092, lng: -66.91 });
+    // Otra lectura en el mismo escalón (el punto medio cambió un poco): la cámara NO se mueve.
+    const antes = registro.centros.length;
+    rerender(
+      vista(
+        { lat: 10.5086, lng: -66.91 },
+        { centro: { lat: 10.5093, lng: -66.91 }, zoom: 16, clave: 'casa,16' },
+      ),
+    );
+    await new Promise((r) => setTimeout(r, 10));
+    expect(registro.centros).toHaveLength(antes);
+    expect(registro.avanzadas.at(-1)!.yo.position).toEqual({ lat: 10.5086, lng: -66.91 });
+    // Más cerca: escalón nuevo, la cámara se mueve UNA vez, con el zoom de calle como tope.
+    rerender(
+      vista(
+        { lat: 10.5097, lng: -66.91 },
+        { centro: { lat: 10.50985, lng: -66.91 }, zoom: 18, clave: 'casa,18' },
+      ),
+    );
+    await waitFor(() => expect(registro.zooms.at(-1)).toBe(18));
+    expect(registro.centros).toHaveLength(antes + 1);
+    expect(registro.encuadres).toBe(1);
+  });
+
+  it('C-MAPA-ISOTIPO: la marca del repartidor es el isotipo de Divoox (con y sin Map ID); el local y la casa siguen siendo círculos', async () => {
+    (window as { google?: unknown }).google = { maps: API_VECTORIAL };
+    const puntos = [
+      PUNTOS[0]!,
+      { id: 'yo', lat: 10.505, lng: -66.905, color: '#F20D20', isotipo: true, etiqueta: 'Ana' },
+    ];
+    const { unmount } = render(
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        mapId="a1b2c3d4e5f6"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        puntos={puntos}
+        etiqueta="Mapa"
+        abierto
+      />,
+    );
+    await waitFor(() => expect(registro.avanzadas).toHaveLength(2));
+    const local = registro.avanzadas[0]!.o.content as HTMLElement;
+    const yo = registro.avanzadas[1]!.o.content as HTMLElement;
+    expect(local.querySelector('img')).toBeNull();
+    const imagen = yo.querySelector('img');
+    expect(imagen?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+    expect(decodeURIComponent(imagen!.getAttribute('src')!)).toContain('Divoox isotipo');
+    expect(yo.dataset.marca).toBe('isotipo');
+    unmount();
+    olvidarCargaGoogleMaps();
+    (window as { google?: unknown }).google = { maps: API };
+    render(
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        puntos={puntos}
+        etiqueta="Mapa"
+        abierto
+      />,
+    );
+    await waitFor(() => expect(registro.marcas).toHaveLength(2));
+    expect((registro.marcas[1]!.icon as { url?: string }).url).toMatch(/^data:image\/svg\+xml/);
+    expect((registro.marcas[0]!.icon as { url?: string }).url).toBeUndefined();
+  });
+
+  it('C-MAPA-DIA-NOCHE: de día el estilo claro y con el ajuste en oscuro el de noche (con Map ID, el esquema de color de Google); al cambiar el ajuste el mapa se rehace', async () => {
+    (window as { google?: unknown }).google = { maps: API };
+    await cambiarAjusteTemaMapa('claro');
+    const { unmount } = render(
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        puntos={PUNTOS}
+        etiqueta="Mapa"
+        abierto
+      />,
+    );
+    await waitFor(() => expect(registro.mapas).toBe(1));
+    expect(registro.opciones!.styles).toBe(ESTILO_MAPA_DIA);
+    await act(() => cambiarAjusteTemaMapa('oscuro'));
+    await waitFor(() => expect(registro.mapas).toBe(2));
+    expect(registro.opciones!.styles).toBe(ESTILO_MAPA_NOCHE);
+    await waitFor(() => expect(registro.marcas).toHaveLength(4));
+    unmount();
+    olvidarCargaGoogleMaps();
+    (window as { google?: unknown }).google = { maps: API_VECTORIAL };
+    render(
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        mapId="a1b2c3d4e5f6"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        puntos={PUNTOS}
+        etiqueta="Mapa"
+        abierto
+      />,
+    );
+    await waitFor(() => expect(registro.mapas).toBe(3));
+    expect(registro.opciones).toMatchObject({ colorScheme: 'DARK', mapId: 'a1b2c3d4e5f6' });
+    expect(registro.opciones!.styles).toBeUndefined();
+    await act(() => cambiarAjusteTemaMapa('claro'));
+    await waitFor(() => expect(registro.mapas).toBe(4));
+    expect(registro.opciones).toMatchObject({ colorScheme: 'LIGHT' });
+  });
+
+  it('C-MAPA-DIA-NOCHE: con `conAjuste` el mapa trae el ajuste de tres posiciones y se guarda en el navegador', async () => {
+    (window as { google?: unknown }).google = { maps: API };
+    render(
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        idioma="es"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        puntos={PUNTOS}
+        etiqueta="Mapa"
+        abierto
+        conAjuste
+      />,
+    );
+    await waitFor(() => expect(registro.mapas).toBe(1));
+    const grupo = screen.getByRole('radiogroup', { name: 'Colores del mapa' });
+    expect(grupo).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Automático' })).toBeChecked();
+    await userEvent.click(screen.getByRole('radio', { name: 'Oscuro' }));
+    expect(screen.getByRole('radio', { name: 'Oscuro' })).toBeChecked();
+    expect(window.localStorage.getItem(LLAVE_AJUSTE_TEMA_MAPA)).toBe('oscuro');
+    await waitFor(() => expect(registro.opciones!.styles).toBe(ESTILO_MAPA_NOCHE));
   });
 
   it('C-MAPA-ABRE-DONDE-ESTAS: sin puntos, si llega la ubicación de la persona el mapa se mueve ahí', async () => {

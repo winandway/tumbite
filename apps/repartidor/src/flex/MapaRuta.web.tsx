@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import { COLORES, type Punto, crearMapa, punto } from '../piezas/mapaWeb';
+import { COLORES, type Punto, crearMapa, isotipo } from '../piezas/mapaWeb';
 import { COLOR_TONO, type PuntoRuta } from './colorTono';
 import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
 import { origenesMapaRutaFlex } from '@tumbite/compartido/src/mapaDriverWeb';
@@ -71,7 +71,8 @@ function MapaRutaGoogle({ puntos, yo, alto = 380, etiqueta, area = null }: Props
           texto: p === parada && rotulo ? `${numero(p)} · ${rotulo}` : numero(p),
           etiqueta: `${p.numero} · ${p.nombre}`,
         })),
-        ...(yo ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 9 }] : []),
+        // C-MAPA-ISOTIPO: el conductor es el isotipo de Divoox.
+        ...(yo ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 9, isotipo: true }] : []),
       ]}
     />
   );
@@ -94,7 +95,7 @@ function MapaRutaLeaflet({
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
-  const estabaCerca = useRef(false);
+  const claveCerca = useRef('');
   const todos = [...puntos.map((p) => p.punto), ...(yo ? [yo] : [])];
   const clave = [
     ...puntos.map((p) => `${p.id}:${p.tono}:${p.punto.lat},${p.punto.lng}`),
@@ -145,15 +146,17 @@ function MapaRutaLeaflet({
           fillOpacity: 0.18,
         }),
       );
-    if (yo) nuevas.push(punto(yo, COLORES.repartidor, 9));
+    if (yo) nuevas.push(isotipo(yo));
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
     const llegada = vistaDeLlegada(yo, puntos.find((p) => p.tono === 'actual')?.punto);
-    // Estando cerca, la cámara se mueve UNA vez (después se puede mover el mapa con el dedo).
-    const yaCerca = estabaCerca.current;
-    estabaCerca.current = llegada != null;
+    // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom (entre
+    // uno y otro se puede mover el mapa con el dedo): casa y repartidor juntos.
+    const claveAntes = claveCerca.current;
+    claveCerca.current = llegada?.clave ?? '';
     if (llegada) {
-      if (!yaCerca) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+      if (llegada.clave !== claveAntes)
+        m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
     } else if (todos.length > 1)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
-import { COLORES, type Punto, type ZonaDemanda, crearMapa, punto, zona } from './mapaWeb';
+import { COLORES, type Punto, type ZonaDemanda, crearMapa, isotipo, punto, zona } from './mapaWeb';
 import { MapaGoogleBajoDemanda, rumboEntre } from '@tumbite/compartido/src/mapaWebGoogle';
 import {
   destinoMapaDriver,
@@ -12,8 +12,8 @@ import { useSesion } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from '../flex/mapaGoogleWeb';
 
 /**
- * Mapa del repartidor en la versión web (Leaflet con OpenStreetMap, sin llave): su ubicación en
- * escarlata, los restaurantes cercanos, el restaurante del pedido y la casa con la ruta. Con
+ * Mapa del repartidor en la versión web (Leaflet con OpenStreetMap, sin llave): su ubicación con
+ * el isotipo de Divoox, los restaurantes cercanos, el restaurante del pedido y la casa con la ruta. Con
  * `zonasDemanda`, las zonas con más pedidos ahora (C-MAPA-DEMANDA), debajo de todo lo demás.
  */
 type PropsMapa = Parameters<typeof MapaLeaflet>[0];
@@ -98,7 +98,17 @@ function MapaGoogle({
         ]
       : []),
     ...(yo
-      ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 12, etiqueta: etiquetas.yo }]
+      ? [
+          {
+            id: 'yo',
+            ...yo,
+            color: COLORES.repartidor,
+            radio: 12,
+            // C-MAPA-ISOTIPO: el conductor es el isotipo de Divoox.
+            isotipo: true,
+            etiqueta: etiquetas.yo,
+          },
+        ]
       : []),
   ];
   return (
@@ -150,7 +160,7 @@ function MapaLeaflet({
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const capas = useRef<L.Layer[]>([]);
-  const estabaCerca = useRef(false);
+  const claveCerca = useRef('');
   // C-MAPA-ABRE-DONDE-ESTAS: sin ningún punto todavía no hay mapa (nunca una ciudad fija).
   const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0] ?? null;
   const hayCentro = centro != null;
@@ -186,18 +196,20 @@ function MapaLeaflet({
         conRotulo(punto(restaurante, COLORES.restaurante, 9, etiquetas.restaurante), !casa),
       );
     if (casa) nuevas.push(conRotulo(punto(casa, COLORES.casa, 9, etiquetas.casa), true));
-    if (yo) nuevas.push(punto(yo, COLORES.repartidor, 12, etiquetas.yo));
+    if (yo) nuevas.push(isotipo(yo, etiquetas.yo));
     for (const c of nuevas) c.addTo(m);
     capas.current = nuevas;
     const todos = [yo, restaurante ?? null, casa ?? null].filter((p): p is Punto => p != null);
     const separados =
       todos.length > 1 &&
       todos.some((p) => Math.abs(p.lat - todos[0]!.lat) + Math.abs(p.lng - todos[0]!.lng) > 0.0005);
-    // Estando cerca, la cámara se mueve UNA vez (después se puede mover el mapa con el dedo).
-    const yaCerca = estabaCerca.current;
-    estabaCerca.current = llegada != null;
+    // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom (entre
+    // uno y otro se puede mover el mapa con el dedo): casa y repartidor juntos.
+    const claveAntes = claveCerca.current;
+    claveCerca.current = llegada?.clave ?? '';
     if (llegada) {
-      if (!yaCerca) m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
+      if (llegada.clave !== claveAntes)
+        m.setView([llegada.centro.lat, llegada.centro.lng], llegada.zoom);
     } else if (separados)
       m.fitBounds(
         todos.map((p) => [p.lat, p.lng] as [number, number]),

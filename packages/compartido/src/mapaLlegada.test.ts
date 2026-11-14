@@ -48,13 +48,33 @@ describe('vistaDeLlegada: cerca del destino el mapa se acerca solo', () => {
   it('a más de 200 metros no cambia nada', () => {
     expect(vistaDeLlegada({ lat: 42.5172, lng: -83.4742 }, casa)).toBeNull();
   });
-  it('a menos de 200 metros: centrado en la casa y de cerca', () => {
+  it('a menos de 200 metros se acerca, con el zoom de calle (18) como tope', () => {
     expect(METROS_LLEGADA).toBe(200);
-    expect(vistaDeLlegada({ lat: 42.5155, lng: -83.4742 }, casa)).toEqual({
-      centro: casa,
-      zoom: ZOOM_LLEGADA,
-    });
-    expect(ZOOM_LLEGADA).toBeGreaterThanOrEqual(18);
+    expect(ZOOM_LLEGADA).toBe(18);
+    // A unos 40 metros: lo más cerca que se acerca.
+    expect(vistaDeLlegada({ lat: 42.51476, lng: -83.4742 }, casa)?.zoom).toBe(18);
+  });
+  it('se ven la casa y el repartidor juntos: el centro es el punto medio y el zoom los hace caber', () => {
+    // A unos 190 metros no caben los dos con zoom 18: se abre lo justo.
+    const lejos = vistaDeLlegada({ lat: 42.5161, lng: -83.4742 }, casa);
+    expect(lejos?.zoom).toBe(16);
+    expect(lejos?.centro.lat).toBeCloseTo((42.5161 + 42.5144) / 2, 6);
+    expect(lejos?.centro.lng).toBeCloseTo(-83.4742, 6);
+    // A unos 120 metros, un nivel más cerca.
+    expect(vistaDeLlegada({ lat: 42.5155, lng: -83.4742 }, casa)?.zoom).toBe(17);
+  });
+  it('la cámara se mueve por escalones, no en cada lectura de GPS: la clave solo cambia con el zoom', () => {
+    const a = vistaDeLlegada({ lat: 42.5161, lng: -83.4742 }, casa);
+    const b = vistaDeLlegada({ lat: 42.516, lng: -83.47425 }, casa);
+    const c = vistaDeLlegada({ lat: 42.5155, lng: -83.4742 }, casa);
+    expect(a?.clave).toBe(b?.clave);
+    expect(a?.centro).not.toEqual(b?.centro);
+    expect(c?.clave).not.toBe(a?.clave);
+    // Otra casa es otra clave aunque el zoom sea el mismo.
+    const otra = { lat: 42.52, lng: -83.47 };
+    expect(vistaDeLlegada({ lat: 42.5201, lng: -83.47 }, otra)?.clave).not.toBe(
+      vistaDeLlegada({ lat: 42.5145, lng: -83.4742 }, casa)?.clave,
+    );
   });
   it('sin móvil o sin destino no hay acercamiento', () => {
     expect(vistaDeLlegada(null, casa)).toBeNull();

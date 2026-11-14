@@ -111,6 +111,9 @@ describe('C-SEGUIMIENTO-HONESTO en la app del cliente', () => {
     expect(app).toMatch(/<MapaEntrega[\s\S]*?sinSenal=/);
     const mapa = leer('apps', 'cliente', 'src', 'MapaEntrega.tsx');
     expect(mapa).toContain('sinSenal');
-    expect(mapa).toMatch(/opacity: sinSenal/);
+    // C-MAPA-ISOTIPO (14 nov 2026): la marca es el isotipo; sin señal se ve apagada (la opacidad
+    // vive en la pieza única `MarcaIsotipo`).
+    expect(mapa).toContain('apagado={sinSenal}');
+    expect(leer('packages', 'movil', 'src', 'mapaDivoox.tsx')).toMatch(/opacity: apagado/);
   });
 });

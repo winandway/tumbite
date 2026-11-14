@@ -9,8 +9,11 @@ import {
   olvidarCargaGoogleMaps,
   opcionesMapaGoogle,
   rumboEntre,
+  svgMarcaIsotipo,
+  urlMarcaIsotipo,
 } from './mapaWebGoogle';
-import { ESTILO_MAPA_DIVOOX } from './estiloMapaDivoox';
+import { ESTILO_MAPA_DIA, ESTILO_MAPA_NOCHE } from './estiloMapaDivoox';
+import { ISOTIPO_DIVOOX_SVG } from './isotipoDivoox.generado';
 
 /**
  * C-MAPA-GOOGLE-WEB (13 nov 2026; 14 nov 2026: todos los mapas de la web en Google, decisión de
@@ -64,20 +67,48 @@ describe('opcionesMapaGoogle (mapa vectorial con el estilo de Divoox)', () => {
     expect(o.mapId).toBeUndefined();
     expect(o.renderingType).toBeUndefined();
     expect(o.tilt).toBeUndefined();
-    expect(o.styles).toBe(ESTILO_MAPA_DIVOOX);
+    expect(o.styles).toBe(ESTILO_MAPA_DIA);
+    expect(o.colorScheme).toBeUndefined();
+    expect(opcionesMapaGoogle({ centro, zoom: 15, tema: 'noche' }).styles).toBe(ESTILO_MAPA_NOCHE);
     expect(o.clickableIcons).toBe(false);
   });
   it('el Map ID se valida (vacío, con espacios o raro = sin Map ID)', () => {
     expect(mapIdValido('a1b2c3d4e5f6')).toBe(true);
     for (const x of [undefined, null, '', '  ', 'a b', '<x>']) expect(mapIdValido(x)).toBe(false);
   });
-  it('el JSON para importar en la consola es el mismo estilo que usa el código', () => {
+  it('C-MAPA-DIA-NOCHE: con Map ID se pide a Google el esquema claro u oscuro; el estilo vive en la consola', () => {
+    const dia = opcionesMapaGoogle({ centro, zoom: 15, mapId: 'a1b2c3d4e5f6' });
+    const noche = opcionesMapaGoogle({ centro, zoom: 15, mapId: 'a1b2c3d4e5f6', tema: 'noche' });
+    expect(dia.colorScheme).toBe('LIGHT');
+    expect(noche.colorScheme).toBe('DARK');
+    expect(noche.styles).toBeUndefined();
+    expect(noche.backgroundColor).toBe('#1C1F24');
+  });
+});
+
+describe('C-MAPA-ISOTIPO: la marca del repartidor o conductor', () => {
+  it('el isotipo del código es el vector aprobado de identidad-divoox, tal cual', () => {
     const ruta = fileURLToPath(
-      new URL('../../../identidad-divoox/mapa-google-estilo-divoox.json', import.meta.url),
+      new URL(
+        '../../../identidad-divoox/Divoox_Vectoriales/05_Isotipo_GPS_Fondo_Claro.svg',
+        import.meta.url,
+      ),
     );
-    expect(JSON.parse(readFileSync(ruta, 'utf8'))).toEqual(ESTILO_MAPA_DIVOOX);
-    // Sobrio: sin puntos de interés ni transporte, y sin el rojo de la marca en el mapa base.
-    expect(JSON.stringify(ESTILO_MAPA_DIVOOX)).not.toMatch(/F20D20/i);
+    expect(ISOTIPO_DIVOOX_SVG).toBe(readFileSync(ruta, 'utf8').trim());
+  });
+  it('va entero y sin deformar dentro de un disco blanco, que se lee de día y de noche', () => {
+    const svg = svgMarcaIsotipo();
+    // Los trazos del vector, sin tocar.
+    const trazos = ISOTIPO_DIVOOX_SVG.match(/ d="[^"]+"/g) ?? [];
+    expect(trazos.length).toBeGreaterThan(0);
+    for (const t of trazos) expect(svg).toContain(t);
+    expect(svg).toContain('viewBox="245 50 970 925"');
+    // Encajado en un cuadro (el vector conserva su proporción: no se estira).
+    expect(svg).toContain('width="26" height="26"');
+    expect(svg).not.toMatch(/preserveAspectRatio="none"/);
+    expect(svg).toContain('<circle cx="22" cy="22" r="20" fill="#FFFFFF"');
+    expect(svgMarcaIsotipo(true)).toContain('opacity="0.55"');
+    expect(decodeURIComponent(urlMarcaIsotipo())).toContain(svg);
   });
 });
 

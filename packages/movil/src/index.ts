@@ -27,3 +27,4 @@ export * from './fotoLiviana';
 export * from './CasillaSms';
 export * from './Disponibilidad';
 export * from './camara';
+export * from './mapaDivoox';

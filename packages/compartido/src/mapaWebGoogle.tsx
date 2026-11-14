@@ -1,7 +1,16 @@
 import type { VistaMapa } from './mapaLlegada';
 import { useEffect, useRef, useState } from 'react';
 
-import { ESTILO_MAPA_DIVOOX } from './estiloMapaDivoox';
+import { type TemaMapa, estiloMapaDe, fondoMapaDe } from './estiloMapaDivoox';
+import { ISOTIPO_DIVOOX_SVG } from './isotipoDivoox.generado';
+import {
+  AJUSTES_TEMA_MAPA,
+  TEXTOS_TEMA_MAPA,
+  nombreAjusteTemaMapa,
+  cambiarAjusteTemaMapa,
+  useAjusteTemaMapa,
+  useTemaMapa,
+} from './temaMapa';
 
 /**
  * C-MAPA-GOOGLE-WEB — todos los países. Pieza única del mapa web (panel, sitio y apps exportadas a
@@ -16,6 +25,11 @@ import { ESTILO_MAPA_DIVOOX } from './estiloMapaDivoox';
  *   con el estilo de Divoox guardado en la consola de Google y marcas avanzadas; en las pantallas de
  *   viaje o entrega en curso, inclinado a 45° y girado hacia el destino, como Uber y DoorDash. Sin
  *   Map ID: mapa de Google normal con el mismo estilo en la opción `styles` y sin inclinar.
+ * - C-MAPA-DIA-NOCHE (14 nov 2026): dos estilos que cambian solos, de día y de noche (`useTemaMapa`).
+ *   Con Map ID se pide a Google el esquema claro u oscuro (`colorScheme`, que solo se puede fijar al
+ *   crear el mapa: al cambiar, el mapa se rehace); sin Map ID, el estilo de día o de noche en `styles`.
+ * - C-MAPA-ISOTIPO (14 nov 2026): la marca del repartidor o conductor (`isotipo`) es el isotipo de
+ *   Divoox sobre un disco blanco, que se lee igual de día y de noche.
  * - Gasto: en las pantallas de viaje o entrega en curso el mapa se abre solo; en las demás, botón
  *   «Ver en el mapa». Una sola carga del script por página. El servidor no escribe nada por cada mapa
  *   abierto (regla «la nube no se come el dinero»). Tope duro en la cuota «Map loads per day» de
@@ -76,12 +90,14 @@ export function opcionesMapaGoogle({
   mapId,
   inclinado = false,
   rumbo = 0,
+  tema = 'dia',
 }: {
   centro: LatLng;
   zoom: number;
   mapId?: string | null;
   inclinado?: boolean;
   rumbo?: number;
+  tema?: TemaMapa;
 }): Record<string, unknown> {
   const base = {
     center: centro,
@@ -90,11 +106,15 @@ export function opcionesMapaGoogle({
     zoomControl: true,
     clickableIcons: false,
     gestureHandling: 'cooperative',
+    backgroundColor: fondoMapaDe(tema),
   };
-  if (!mapIdValido(mapId)) return { ...base, styles: ESTILO_MAPA_DIVOOX };
+  if (!mapIdValido(mapId)) return { ...base, styles: estiloMapaDe(tema) };
   return {
     ...base,
     mapId: mapId.trim(),
+    // El estilo claro y el oscuro están asociados al Map ID en la consola de Google; aquí se elige
+    // cuál. Google solo lo admite al crear el mapa (documentación «Map color scheme»).
+    colorScheme: tema === 'noche' ? 'DARK' : 'LIGHT',
     renderingType: 'VECTOR',
     tilt: inclinado ? INCLINACION_VIAJE : 0,
     heading: inclinado ? ((rumbo % 360) + 360) % 360 : 0,
@@ -132,6 +152,8 @@ export type GoogleMapsApi = {
   Marker: new (opciones: Record<string, unknown>) => MarcaG;
   LatLngBounds: new () => { extend(p: LatLng): void };
   SymbolPath: { CIRCLE: unknown };
+  Point?: new (x: number, y: number) => unknown;
+  Size?: new (ancho: number, alto: number) => unknown;
   Polyline?: new (opciones: Record<string, unknown>) => FiguraG;
   Circle?: new (opciones: Record<string, unknown>) => FiguraG;
   Polygon?: new (opciones: Record<string, unknown>) => FiguraG;
@@ -241,6 +263,10 @@ export type PuntoMapaWeb = {
   etiqueta?: string;
   /** Texto corto dentro de la marca (el número de la parada, el pago extra de una zona). */
   texto?: string;
+  /** C-MAPA-ISOTIPO: la marca es el isotipo de Divoox (el repartidor o conductor), no un círculo. */
+  isotipo?: boolean;
+  /** Sin señal reciente: el isotipo se ve apagado (no se presenta una ubicación vieja como viva). */
+  apagado?: boolean;
   alTocar?: () => void;
 };
 
@@ -258,8 +284,50 @@ export type CirculoMapaWeb = {
 
 type Quitable = { quitar(): void; mover?(p: LatLng): void };
 
+/** Lado, en píxeles, de la marca del repartidor o conductor (disco blanco con el isotipo). */
+export const LADO_MARCA_ISOTIPO = 44;
+
+/**
+ * C-MAPA-ISOTIPO: la marca del repartidor o conductor como dibujo vectorial: un disco blanco con
+ * borde negro y, dentro, el isotipo de Divoox tal cual el vector aprobado (sin deformar: se encaja
+ * entero). El disco blanco hace que se lea igual sobre el mapa de día y sobre el de noche.
+ */
+export function svgMarcaIsotipo(apagado = false): string {
+  const dentro = ISOTIPO_DIVOOX_SVG.replace('<svg ', '<svg x="9" y="9" ').replace(
+    /width="\d+" height="\d+"/,
+    'width="26" height="26"',
+  );
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${LADO_MARCA_ISOTIPO}" height="${LADO_MARCA_ISOTIPO}" viewBox="0 0 44 44"><g opacity="${apagado ? 0.55 : 1}"><circle cx="22" cy="22" r="20" fill="#FFFFFF" stroke="#101010" stroke-width="2"/>${dentro}</g></svg>`;
+}
+
+/** La misma marca como dirección de imagen (para Google sin Map ID y para Leaflet). */
+export const urlMarcaIsotipo = (apagado = false): string =>
+  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarcaIsotipo(apagado))}`;
+
+function contenidoIsotipo(p: PuntoMapaWeb): HTMLElement {
+  const d = document.createElement('div');
+  d.dataset.marca = 'isotipo';
+  Object.assign(d.style, {
+    width: `${LADO_MARCA_ISOTIPO}px`,
+    height: `${LADO_MARCA_ISOTIPO}px`,
+    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.45))',
+    // La marca avanzada se ancla abajo al centro: se baja media altura para centrarla en el punto.
+    transform: 'translateY(50%)',
+    cursor: p.alTocar ? 'pointer' : 'default',
+  });
+  const img = document.createElement('img');
+  img.src = urlMarcaIsotipo(p.apagado);
+  img.alt = p.etiqueta ?? '';
+  img.width = LADO_MARCA_ISOTIPO;
+  img.height = LADO_MARCA_ISOTIPO;
+  img.style.display = 'block';
+  d.appendChild(img);
+  return d;
+}
+
 /** El círculo de color con borde blanco (y su texto) de las marcas avanzadas. */
 function contenidoMarca(p: PuntoMapaWeb): HTMLElement {
+  if (p.isotipo) return contenidoIsotipo(p);
   const d = document.createElement('div');
   const lado = (p.radio ?? 9) * 2;
   Object.assign(d.style, {
@@ -293,6 +361,7 @@ function dibujarMarca(g: GoogleMapsApi, m: MapaG, p: PuntoMapaWeb, avanzadas: bo
       title: p.etiqueta ?? '',
       content: contenidoMarca(p),
       gmpClickable: Boolean(p.alTocar),
+      zIndex: p.isotipo ? 1000 : undefined,
     });
     if (p.alTocar) marca.addListener('gmp-click', p.alTocar);
     return {
@@ -304,17 +373,26 @@ function dibujarMarca(g: GoogleMapsApi, m: MapaG, p: PuntoMapaWeb, avanzadas: bo
     map: m,
     position: { lat: p.lat, lng: p.lng },
     title: p.etiqueta,
-    label: p.texto
-      ? { text: p.texto, color: '#FFFFFF', fontWeight: '800', fontSize: '12px' }
-      : undefined,
-    icon: {
-      path: g.SymbolPath.CIRCLE,
-      scale: p.radio ?? 9,
-      fillColor: p.color,
-      fillOpacity: 1,
-      strokeColor: '#FFFFFF',
-      strokeWeight: 3,
-    },
+    label:
+      p.texto && !p.isotipo
+        ? { text: p.texto, color: '#FFFFFF', fontWeight: '800', fontSize: '12px' }
+        : undefined,
+    icon: p.isotipo
+      ? {
+          url: urlMarcaIsotipo(p.apagado),
+          scaledSize: g.Size ? new g.Size(LADO_MARCA_ISOTIPO, LADO_MARCA_ISOTIPO) : undefined,
+          anchor: g.Point ? new g.Point(LADO_MARCA_ISOTIPO / 2, LADO_MARCA_ISOTIPO / 2) : undefined,
+        }
+      : {
+          path: g.SymbolPath.CIRCLE,
+          scale: p.radio ?? 9,
+          fillColor: p.color,
+          fillOpacity: 1,
+          strokeColor: '#FFFFFF',
+          strokeWeight: 3,
+        },
+    // El repartidor va encima del local y de la casa.
+    zIndex: p.isotipo ? 1000 : undefined,
   });
   if (p.alTocar) marca.addListener('click', p.alTocar);
   return {
@@ -337,7 +415,8 @@ function encuadrar(
   llegada: VistaMapa | null = null,
 ) {
   if (llegada) {
-    // C-MAPA-LLEGADA: cerca del destino no se encuadra todo el recorrido: la casa, centrada y de cerca.
+    // C-MAPA-LLEGADA: cerca del destino no se encuadra todo el recorrido: la casa y el repartidor
+    // juntos, de cerca (el centro y el zoom los decide `vistaDeLlegada`).
     m.setCenter(llegada.centro);
     m.setZoom(llegada.zoom);
   } else if (puntos.length > 1) {
@@ -427,7 +506,10 @@ function dibujarTodo(
  */
 function firmaFija(puntos: PuntoMapaWeb[], lineas: LineaMapaWeb[], circulos: CirculoMapaWeb[]) {
   return [
-    ...puntos.map((p) => `${p.id}:${p.color}:${p.radio ?? ''}:${p.texto ?? ''}`),
+    ...puntos.map(
+      (p) =>
+        `${p.id}:${p.color}:${p.radio ?? ''}:${p.texto ?? ''}:${p.isotipo ? 'i' : ''}${p.apagado ? 'a' : ''}`,
+    ),
     ...lineas.map((l) => `${l.id}:${l.puntos.map((p) => `${p.lat},${p.lng}`).join(';')}`),
     ...circulos.map((c) => `${c.id}:${c.centro.lat},${c.centro.lng}:${c.metros}`),
   ].join('|');
@@ -438,6 +520,69 @@ const TEXTOS = {
   en: { ver: 'See on the map', cargando: 'Opening the map…', error: 'We couldn’t open the map.' },
 };
 
+/** La clave de la vista de llegada: cuando cambia, la cámara se mueve una vez. */
+const claveDeLlegada = (l: VistaMapa | null) =>
+  l ? (l.clave ?? `${l.centro.lat},${l.centro.lng},${l.zoom}`) : '';
+
+/**
+ * C-MAPA-DIA-NOCHE: el ajuste de tres posiciones (automático, claro, oscuro) para la web. Se guarda
+ * en el navegador de la persona y lo siguen todos los mapas abiertos.
+ */
+export function AjusteTemaMapaWeb({ idioma }: { idioma: 'es' | 'en' }) {
+  const t = TEXTOS_TEMA_MAPA[idioma === 'es' ? 'es' : 'en'];
+  const ajuste = useAjusteTemaMapa();
+  return (
+    <div
+      role="radiogroup"
+      aria-label={t.titulo}
+      data-testid="ajuste-tema-mapa"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        marginTop: 8,
+        padding: 3,
+        borderRadius: 999,
+        border: '1px solid #2a2a2a',
+        background: '#FFFFFF',
+        fontSize: 13,
+      }}
+    >
+      {AJUSTES_TEMA_MAPA.map((a) => {
+        const elegido = a === ajuste;
+        return (
+          <label
+            key={a}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 999,
+              cursor: 'pointer',
+              fontWeight: 700,
+              background: elegido ? '#101010' : 'transparent',
+              color: elegido ? '#FFFFFF' : '#101010',
+            }}
+          >
+            <input
+              type="radio"
+              name="divoox-tema-mapa"
+              value={a}
+              checked={elegido}
+              onChange={() => void cambiarAjusteTemaMapa(a)}
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                opacity: 0,
+              }}
+            />
+            {nombreAjusteTemaMapa(idioma, a)}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * Mapa de Google: un botón «Ver en el mapa» y, al tocarlo, se carga Google Maps y se dibujan los
  * puntos (círculos con borde blanco), las líneas y las áreas. Con `abierto` (pantallas de viaje o
@@ -445,7 +590,10 @@ const TEXTOS = {
  * ID: el mapa vectorial). `alTocarMapa` recibe el punto tocado (para elegir la entrega). Una sola
  * pieza para el panel y las apps en la web.
  * C-MAPA-LLEGADA: con `llegada` (el móvil está a menos de 200 m del destino, `vistaDeLlegada`) el
- * mapa deja de encuadrar el recorrido y se queda centrado en el destino, de cerca.
+ * mapa deja de encuadrar el recorrido y muestra la casa y el repartidor juntos, de cerca. La cámara
+ * se mueve solo cuando cambia `llegada.clave` (al entrar al radio y en cada escalón de zoom).
+ * C-MAPA-DIA-NOCHE: de día o de noche según `useTemaMapa` (automático, claro u oscuro); con
+ * `conAjuste`, debajo del mapa va el ajuste de tres posiciones.
  * C-MAPA-ABRE-DONDE-ESTAS: sin puntos dibujados, si `centro` cambia (llegó el GPS de la persona) el
  * mapa se mueve ahí.
  */
@@ -465,6 +613,7 @@ export function MapaGoogleBajoDemanda({
   inclinado = false,
   rumbo = 0,
   llegada = null,
+  conAjuste = false,
 }: {
   llave: string;
   mapId?: string | null;
@@ -481,12 +630,17 @@ export function MapaGoogleBajoDemanda({
   inclinado?: boolean;
   rumbo?: number;
   llegada?: VistaMapa | null;
+  /** Muestra el ajuste de colores del mapa (el panel; en las apps va en la cuenta). */
+  conAjuste?: boolean;
 }) {
   const t = TEXTOS[idioma === 'es' ? 'es' : 'en'];
   // Abierto si la pantalla es de viaje o entrega en curso, o si la persona tocó «Ver en el mapa».
   const [tocado, setTocado] = useState(false);
   const abierto = abiertoInicial || tocado;
   const [estado, setEstado] = useState<'' | 'cargando' | 'error' | 'listo'>('');
+  // Cuenta cada mapa creado: al rehacerse (de día a noche) hay que volver a dibujar todo, aunque
+  // el estado pase de «listo» a «listo» en el mismo instante.
+  const [creado, setCreado] = useState(0);
   const caja = useRef<HTMLDivElement>(null);
   const api = useRef<GoogleMapsApi | null>(null);
   const mapa = useRef<MapaG | null>(null);
@@ -496,6 +650,7 @@ export function MapaGoogleBajoDemanda({
   const llegadaAplicada = useRef('');
   const centroAplicado = useRef('');
   const vectorial = mapIdValido(mapId);
+  const tema = useTemaMapa(centro);
   const alTocar = useRef(alTocarMapa);
   useEffect(() => {
     alTocar.current = alTocarMapa;
@@ -516,7 +671,7 @@ export function MapaGoogleBajoDemanda({
         api.current = g;
         const m = new g.Map(
           caja.current,
-          opcionesMapaGoogle({ centro, zoom, mapId, inclinado, rumbo }),
+          opcionesMapaGoogle({ centro, zoom, mapId, inclinado, rumbo, tema }),
         );
         m.addListener('click', (e) => {
           if (e.latLng) alTocar.current?.({ lat: e.latLng.lat(), lng: e.latLng.lng() });
@@ -524,6 +679,7 @@ export function MapaGoogleBajoDemanda({
         mapa.current = m;
         centroAplicado.current = `${centro.lat},${centro.lng},${zoom}`;
         setEstado('listo');
+        setCreado((n) => n + 1);
       })
       .catch((e: unknown) => {
         console.error('No se pudo abrir el mapa de Google:', e);
@@ -543,16 +699,18 @@ export function MapaGoogleBajoDemanda({
       mapa.current = null;
       api.current = null;
     };
-    // Se crea una sola vez al abrir; los puntos se redibujan abajo.
+    // Se crea una sola vez al abrir; los puntos se redibujan abajo. Al cambiar de día a noche (o al
+    // revés) el mapa se rehace: Google solo admite el esquema de color al crearlo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [abierto]);
+  }, [abierto, tema]);
 
   const firma = [
     ...puntos.map((p) => `${p.id}:${p.lat},${p.lng}:${p.color}:${p.texto ?? ''}`),
     ...lineas.map((l) => `${l.id}:${l.puntos.map((p) => `${p.lat},${p.lng}`).join(';')}`),
     ...circulos.map((c) => `${c.id}:${c.centro.lat},${c.centro.lng}:${c.metros}`),
     `r${Math.round(rumbo)}`,
-    `l${llegada ? `${llegada.centro.lat},${llegada.centro.lng},${llegada.zoom}` : ''}`,
+    `l${claveDeLlegada(llegada)}`,
+    puntos.map((p) => (p.isotipo ? `i${p.apagado ? 'a' : ''}` : '')).join(''),
   ].join('|');
   useEffect(() => {
     const g = api.current;
@@ -560,17 +718,15 @@ export function MapaGoogleBajoDemanda({
     if (estado !== 'listo' || !g || !m) return;
     const enViaje = inclinado && vectorial;
     const fija = firmaFija(puntos, lineas, circulos);
-    const claveLlegada = llegada
-      ? `${llegada.centro.lat},${llegada.centro.lng},${llegada.zoom}`
-      : '';
+    const claveLlegada = claveDeLlegada(llegada);
     const cambioLlegada = claveLlegada !== llegadaAplicada.current;
     llegadaAplicada.current = claveLlegada;
     if (fija === fijaDibujada.current) {
       // Solo cambiaron posiciones (GPS): se mueven las marcas. En viaje no se vuelve a encuadrar
       // (aplanaría el mapa): solo se corrige el rumbo. Fuera de viaje, se encuadra como siempre.
       for (const p of puntos) marcasPorId.current.get(p.id)?.mover?.(p);
-      // C-MAPA-LLEGADA: al entrar o salir de los 200 m se mueve la cámara UNA vez; estando cerca,
-      // las lecturas siguientes no la tocan (la persona puede mover el mapa con el dedo).
+      // C-MAPA-LLEGADA: al entrar o salir de los 200 m, y en cada escalón de zoom, se mueve la
+      // cámara UNA vez; entre escalones las lecturas no la tocan (se puede mover el mapa con el dedo).
       if (cambioLlegada) encuadrar(g, m, puntos, zoom, enViaje, rumbo, llegada);
       else if (llegada) {
         if (enViaje) m.setHeading?.(rumbo);
@@ -589,9 +745,9 @@ export function MapaGoogleBajoDemanda({
     dibujados.current = r.todos;
     marcasPorId.current = r.marcas;
     fijaDibujada.current = fija;
-    // Se redibuja cuando el mapa queda listo o cambia algún punto.
+    // Se redibuja cuando el mapa queda listo (o se rehace) o cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firma, estado]);
+  }, [firma, estado, creado]);
 
   // C-MAPA-ABRE-DONDE-ESTAS: sin nada dibujado (elegir un punto), el mapa sigue al centro que le
   // pasan: cuando llega la ubicación de la persona, se mueve ahí.
@@ -604,7 +760,7 @@ export function MapaGoogleBajoDemanda({
     m.setCenter(centro);
     m.setZoom(zoom);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [centro.lat, centro.lng, zoom, estado, puntos.length]);
+  }, [centro.lat, centro.lng, zoom, estado, creado, puntos.length]);
 
   if (!abierto)
     return (
@@ -630,7 +786,10 @@ export function MapaGoogleBajoDemanda({
   return (
     <div style={{ marginBottom: 12 }}>
       <div
+        // De día a noche el mapa se rehace sobre una caja nueva.
+        key={tema}
         ref={caja}
+        data-tema={tema}
         role="application"
         aria-label={etiqueta}
         data-testid="mapa-google"
@@ -640,11 +799,12 @@ export function MapaGoogleBajoDemanda({
           height: alto,
           borderRadius: 16,
           overflow: 'hidden',
-          background: '#E9EEF5',
+          background: fondoMapaDe(tema),
         }}
       />
       {estado === 'cargando' ? <p role="status">{t.cargando}</p> : null}
       {estado === 'error' ? <p role="alert">{t.error}</p> : null}
+      {conAjuste && estado !== 'error' ? <AjusteTemaMapaWeb idioma={idioma} /> : null}
     </div>
   );
 }

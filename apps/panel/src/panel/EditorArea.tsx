@@ -7,8 +7,10 @@ import {
   alRechazarLlaveGoogle,
   cargarGoogleMaps,
   elegirMapaWeb,
+  AjusteTemaMapaWeb,
   opcionesMapaGoogle,
 } from '@tumbite/compartido/src/mapaWebGoogle';
+import { seguirTemaEnLeaflet, useTemaMapa } from '@tumbite/compartido/src/temaMapa';
 
 /**
  * Dibujo de un área de cobertura sobre el mapa (C-TERRITORIO). Cada clic agrega un punto; los
@@ -79,10 +81,14 @@ function EditorAreaGoogle({
     actual.current = poligono;
     alCambiar.current = cambiar;
   }, [poligono, cambiar]);
-  const [listo, setListo] = useState(false);
+  // Cuenta cada mapa creado (0 = todavía ninguno): al rehacerse, el área se vuelve a dibujar.
+  const [listo, setListo] = useState(0);
   const [error, setError] = useState(false);
+  // C-MAPA-DIA-NOCHE: de día o de noche, como todos los mapas (automático, claro u oscuro).
+  const tema = useTemaMapa(centro);
 
-  // El mapa se crea una vez.
+  // El mapa se crea una vez (y se rehace al pasar de día a noche: Google solo admite el esquema de
+  // color al crear el mapa).
   useEffect(() => {
     let vivo = true;
     const dejar = alRechazarLlaveGoogle(() => vivo && setError(true));
@@ -90,12 +96,12 @@ function EditorAreaGoogle({
       .then((g) => {
         if (!vivo || !caja.current) return;
         api.current = g;
-        const m = new g.Map(caja.current, opcionesMapaGoogle({ centro, zoom: 11, mapId }));
+        const m = new g.Map(caja.current, opcionesMapaGoogle({ centro, zoom: 11, mapId, tema }));
         m.addListener('click', (e) => {
           if (e.latLng) alCambiar.current([...actual.current, [e.latLng.lng(), e.latLng.lat()]]);
         });
         mapa.current = m;
-        setListo(true);
+        setListo((n) => n + 1);
       })
       .catch((e: unknown) => {
         console.error('No se pudo abrir el mapa de Google en el editor de áreas:', e);
@@ -104,10 +110,14 @@ function EditorAreaGoogle({
     return () => {
       vivo = false;
       dejar();
+      for (const x of dibujados.current) x.setMap(null);
+      dibujados.current = [];
+      mapa.current = null;
+      api.current = null;
     };
     // El centro solo importa al abrir.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tema]);
 
   useEffect(() => {
     const g = api.current;
@@ -170,8 +180,14 @@ function EditorAreaGoogle({
   return (
     <div className="editor-area">
       <p className="pista">{t.ayuda}</p>
-      <div ref={caja} className="editor-area-mapa" role="application" aria-label={t.ayuda} />
-      {error ? <p role="alert">{t.error}</p> : null}
+      <div
+        key={tema}
+        ref={caja}
+        className="editor-area-mapa"
+        role="application"
+        aria-label={t.ayuda}
+      />
+      {error ? <p role="alert">{t.error}</p> : <AjusteTemaMapaWeb idioma={idioma} />}
       <Botones t={t} poligono={poligono} cambiar={cambiar} />
     </div>
   );
@@ -240,6 +256,7 @@ function EditorAreaLeaflet({ centro, poligono, otras, cambiar, idioma }: PropsEd
       m.on('click', (e: import('leaflet').LeafletMouseEvent) =>
         alCambiar.current([...actual.current, [e.latlng.lng, e.latlng.lat]]),
       );
+      m.on('unload', seguirTemaEnLeaflet(m, centro));
       mapa.current = m;
       capa.current = leaflet.layerGroup().addTo(m);
       pintar();

@@ -98,6 +98,7 @@ import {
   ChatPedido,
   MenuCuenta,
   OpcionesCuenta,
+  AjusteMapa,
   VersionInstalada,
   MisCasos,
   selectorDeCapturas,
@@ -1937,6 +1938,8 @@ export function Inicio() {
           porPais={usaMillas(paisDelCodigoZona(estado?.zonaId), idioma) ? 'mi' : 'km'}
           cambiar={unidadDistancia.cambiar}
         />
+        {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
+        <AjusteMapa />
         {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista. */}
         <OpcionesCuenta />
         {/* C-VERSION-VISIBLE: versión y compilación instaladas, para soporte. */}

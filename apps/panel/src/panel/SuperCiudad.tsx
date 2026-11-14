@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { pedir } from './api';
 import { descargarTexto, nombreReporte, reporteJugadoresCsv } from './reporteCiudad';
+import { seguirTemaEnLeaflet } from '@tumbite/compartido/src/temaMapa';
 
 /**
  * C-CIUDAD-PRUEBAS (13 nov 2026, pedido de Richard): la ciudad de pruebas EN VIVO. Una población
@@ -877,6 +878,8 @@ function MapaCiudad({
         })
         .addTo(m);
       capa.current = leaflet.layerGroup().addTo(m);
+      // C-MAPA-DIA-NOCHE: de noche el mapa de la ciudad también se oscurece.
+      m.on('unload', seguirTemaEnLeaflet(m, centro));
       mapa.current = m;
       // La caja termina de tomar su tamaño después de pintar: sin esto quedan cuadros grises.
       window.setTimeout(() => m.invalidateSize(), 200);

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { api } from '../panel/api';
 import { MapaGoogleBajoDemanda, elegirMapaWeb } from '@tumbite/compartido/src/mapaWebGoogle';
+import { seguirTemaEnLeaflet } from '@tumbite/compartido/src/temaMapa';
 
 type Punto = { lat: number; lng: number };
 
@@ -95,6 +96,8 @@ export function ElegirPunto({
       m.on('click', (e: import('leaflet').LeafletMouseEvent) =>
         alCambiar.current({ lat: e.latlng.lat, lng: e.latlng.lng }),
       );
+      // C-MAPA-DIA-NOCHE: el mapa de respaldo sigue el mismo ajuste de día y noche.
+      m.on('unload', seguirTemaEnLeaflet(m, inicio));
       mapa.current = m;
     })();
     return () => {
@@ -201,6 +204,7 @@ export function ElegirPunto({
               : []
           }
           alTocarMapa={(p) => alCambiar.current(p)}
+          conAjuste
         />
       ) : (
         <div

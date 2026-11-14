@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { C } from '@tumbite/movil';
+import { C, MarcaIsotipo, usePropsMapaDivoox } from '@tumbite/movil';
 import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
+import { IMG_COMIDA } from './comida/recursos';
 
 export type Punto = { lat: number; lng: number };
 
@@ -12,8 +13,10 @@ export type Punto = { lat: number; lng: number };
  * Android necesita la llave de Google Maps en app.json (pendiente de Richard).
  * C-SEGUIMIENTO-HONESTO (BRE-2): sin señal del repartidor (más de 60 s) su punto se ve apagado y
  * sin la línea de ruta, para no presentar una ubicación vieja como si fuera en vivo.
- * C-MAPA-LLEGADA: a menos de 200 m de la casa el mapa se acerca solo y deja el punto de la casa
- * centrado, con el número de la dirección a la vista (igual que en la web).
+ * C-MAPA-LLEGADA: a menos de 200 m de la casa el mapa se acerca solo y muestra la casa y el
+ * repartidor juntos, con el número de la dirección a la vista (igual que en la web).
+ * C-MAPA-DIA-NOCHE y C-MAPA-ISOTIPO: colores de día o de noche (`usePropsMapaDivoox`) y el repartidor
+ * con el isotipo de Divoox (`MarcaIsotipo`), igual que en la web.
  */
 export function MapaEntrega({
   restaurante,
@@ -42,15 +45,17 @@ export function MapaEntrega({
   const llegada = vistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
   const rotulo = llegada ? rotuloDestino(direccion) : '';
   const cerca = llegada != null;
+  const { coloresMapa } = usePropsMapaDivoox(casa ?? restaurante ?? repartidor);
 
-  // Estando cerca, cada lectura de GPS ya no mueve la cámara (se puede mover el mapa con el dedo).
+  // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom
+  // (`llegada.clave`), no en cada lectura de GPS (se puede mover el mapa con el dedo).
   const latMovil = cerca ? 0 : repartidor?.lat;
   const lngMovil = cerca ? 0 : repartidor?.lng;
 
   useEffect(() => {
     if (puntos.length < 1) return;
     if (llegada) {
-      // Cerca de la casa no se encuadra todo el recorrido: la casa, centrada y a nivel de calle.
+      // Cerca de la casa no se encuadra todo el recorrido: la casa y el repartidor juntos, de cerca.
       mapa.current?.animateCamera(
         {
           center: { latitude: llegada.centro.lat, longitude: llegada.centro.lng },
@@ -67,7 +72,15 @@ export function MapaEntrega({
     );
     // Se reencuadra cuando cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng, latMovil, lngMovil, cerca]);
+  }, [
+    restaurante?.lat,
+    restaurante?.lng,
+    casa?.lat,
+    casa?.lng,
+    latMovil,
+    lngMovil,
+    llegada?.clave,
+  ]);
 
   if (puntos.length === 0) return null;
   const centro = puntos[0] as Punto;
@@ -88,6 +101,7 @@ export function MapaEntrega({
         showsUserLocation={false}
         toolbarEnabled={false}
         accessibilityLabel={etiquetas.repartidor}
+        {...coloresMapa}
       >
         {restaurante && (
           <Marker
@@ -152,18 +166,9 @@ export function MapaEntrega({
             coordinate={{ latitude: repartidor.lat, longitude: repartidor.lng }}
             title={nombreRepartidor ?? etiquetas.repartidor}
             anchor={{ x: 0.5, y: 0.5 }}
+            zIndex={10}
           >
-            <View
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                backgroundColor: sinSenal ? '#9A9A9A' : C.primario,
-                borderWidth: 3,
-                borderColor: '#fff',
-                opacity: sinSenal ? 0.6 : 1,
-              }}
-            />
+            <MarcaIsotipo fuente={IMG_COMIDA.mascota} apagado={sinSenal} />
           </Marker>
         )}
         {ruta && ruta[0] && ruta[1] && (

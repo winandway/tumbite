@@ -6,7 +6,7 @@ import MapView, {
   type MapPressEvent,
   type MarkerDragStartEndEvent,
 } from 'react-native-maps';
-import { C, useSesion } from '@tumbite/movil';
+import { C, usePropsMapaDivoox, useSesion } from '@tumbite/movil';
 import { TEXTOS_SIN_CENTRO, useCentroParaElegir } from './centroMapa';
 import type { Punto } from './ubicacion';
 
@@ -40,6 +40,8 @@ export function ElegirEnMapa({
   const { vista, buscando: buscandoCentro, pedirUbicacion } = useCentroParaElegir(punto, cerca);
   const [sinPermiso, setSinPermiso] = useState(false);
   const mapa = useRef<MapView>(null);
+  // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
+  const { coloresMapa } = usePropsMapaDivoox(punto ?? vista?.centro);
 
   // Sin punto marcado, el mapa sigue a la persona cuando llega su ubicación.
   useEffect(() => {
@@ -148,6 +150,7 @@ export function ElegirEnMapa({
           showsUserLocation
           toolbarEnabled={false}
           accessibilityLabel={textos.pin}
+          {...coloresMapa}
         >
           {punto && (
             <Marker

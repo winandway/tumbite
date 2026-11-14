@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
-import { C } from '@tumbite/movil';
+import { C, MarcaIsotipo, usePropsMapaDivoox } from '@tumbite/movil';
 import { rotuloDestino, vistaDeLlegada } from '@tumbite/compartido/src/mapaLlegada';
 import { IMG } from './recursos';
 import type { Punto, ZonaDemanda } from './mapaWeb';
 
 /**
- * Mapa del repartidor (celular): su ubicación con la mascota, los restaurantes cercanos, el
+ * Mapa del repartidor (celular): su ubicación con el isotipo de Divoox (C-MAPA-ISOTIPO), los restaurantes cercanos, el
  * restaurante del pedido y la casa del cliente con la línea de la ruta. iOS usa Apple Maps;
  * Android necesita la llave de Google Maps en app.json. Con `zonasDemanda`, las zonas con más
  * pedidos ahora (C-MAPA-DEMANDA) como círculos rojos translúcidos.
@@ -47,7 +47,10 @@ export function Mapa({
   const llegada = destino ? vistaDeLlegada(yo, destino) : null;
   const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
   const cerca = llegada != null;
-  // Estando cerca, cada lectura de GPS ya no mueve la cámara (se puede mover el mapa con el dedo).
+  // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
+  const { coloresMapa } = usePropsMapaDivoox(yo ?? restaurante ?? casa);
+  // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom
+  // (`llegada.clave`), no en cada lectura de GPS (se puede mover el mapa con el dedo).
   const latMovil = cerca ? 0 : yo?.lat;
   const lngMovil = cerca ? 0 : yo?.lng;
   useEffect(() => {
@@ -80,7 +83,16 @@ export function Mapa({
     );
     // Se reencuadra cuando cambia algún punto o cuando el mapa termina de cargar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listo, latMovil, lngMovil, restaurante?.lat, restaurante?.lng, casa?.lat, casa?.lng, cerca]);
+  }, [
+    listo,
+    latMovil,
+    lngMovil,
+    restaurante?.lat,
+    restaurante?.lng,
+    casa?.lat,
+    casa?.lng,
+    llegada?.clave,
+  ]);
   // C-MAPA-ABRE-DONDE-ESTAS: sin ningún punto todavía no hay mapa (nunca una ciudad fija): queda el
   // hueco gris del mismo alto hasta que llega la ubicación.
   const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto ?? zonasDemanda[0] ?? null;
@@ -104,6 +116,7 @@ export function Mapa({
         showsUserLocation={false}
         toolbarEnabled={false}
         accessibilityLabel={etiquetas.yo}
+        {...coloresMapa}
       >
         {zonasDemanda.map((z) => (
           <Circle
@@ -186,24 +199,9 @@ export function Mapa({
             coordinate={{ latitude: yo.lat, longitude: yo.lng }}
             title={etiquetas.yo}
             anchor={{ x: 0.5, y: 0.5 }}
+            zIndex={10}
           >
-            <View
-              style={{
-                width: 54,
-                height: 54,
-                borderRadius: 27,
-                backgroundColor: 'rgba(242, 13, 32, 0.18)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Image
-                source={IMG.mascota}
-                style={{ width: 36, height: 24 }}
-                resizeMode="contain"
-                accessibilityIgnoresInvertColors
-              />
-            </View>
+            <MarcaIsotipo fuente={IMG.mascota} />
           </Marker>
         )}
         {ruta && (

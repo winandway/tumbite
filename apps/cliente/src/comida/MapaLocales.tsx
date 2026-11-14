@@ -1,5 +1,5 @@
 import MapView, { Marker } from 'react-native-maps';
-import { C } from '@tumbite/movil';
+import { C, usePropsMapaDivoox } from '@tumbite/movil';
 
 export type Local = { id: string; nombre: string; lat: number; lng: number; detalle: string };
 
@@ -15,6 +15,8 @@ export function MapaLocales({
   alElegir: (id: string) => void;
 }) {
   const primero = locales[0];
+  // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
+  const { coloresMapa } = usePropsMapaDivoox(primero);
   if (!primero) return null;
   return (
     <MapView
@@ -26,6 +28,7 @@ export function MapaLocales({
         longitudeDelta: 0.06,
       }}
       accessibilityLabel="map"
+      {...coloresMapa}
     >
       {locales.map((l) => (
         <Marker
