@@ -3463,7 +3463,7 @@ const es: SeccionDocs[] = [
           'El mapa de la app Driver marca en rojo las zonas de tu ciudad con más pedidos en la última hora, para que sepas dónde hay más trabajo, como en las grandes apps de reparto.',
         explicacion: [
           'En el inicio de la app Driver, el mapa muestra círculos rojos translúcidos sobre las zonas con más pedidos de la última hora. Cuanto más intenso el rojo, más pedidos hay.',
-          'Toca un círculo (en la versión web) para ver cuántos pedidos tuvo esa zona en la última hora. Arriba del mapa aparece la leyenda «Zonas con más pedidos ahora» cuando hay alguna.',
+          'En la versión web de la app, el mapa se abre al tocar «Ver en el mapa». Arriba del mapa aparece la leyenda «Zonas con más pedidos ahora» cuando hay alguna.',
           'El mapa se actualiza solo cada minuto. Una zona con un solo pedido no aparece: solo se marcan las que tienen movimiento de verdad.',
           'Las zonas se calculan con la ubicación de los restaurantes, nunca con la de los clientes. No se muestran nombres, direcciones ni pedidos concretos.',
           'Estar en una zona marcada no garantiza ofertas: es una guía de dónde está la demanda ahora mismo. Las ofertas siguen llegando por cercanía, turnos y nivel.',
@@ -8298,7 +8298,7 @@ const en: SeccionDocs[] = [
           'The Driver app map highlights in red the areas of your city with the most orders in the last hour, so you know where the work is, just like the big delivery apps.',
         explicacion: [
           'On the Driver app home screen, the map shows translucent red circles over the areas with the most orders in the last hour. The deeper the red, the more orders.',
-          'Tap a circle (on the web version) to see how many orders that area had in the last hour. When there are busy areas, the “Busy areas right now” legend shows above the map.',
+          'On the web version of the app, the map opens when you tap “See on the map.” When there are busy areas, the “Busy areas right now” legend shows above the map.',
           'The map refreshes on its own every minute. An area with a single order isn’t shown: only areas with real activity are highlighted.',
           'Areas are based on restaurant locations, never customer locations. No names, addresses, or specific orders are shown.',
           'Being in a highlighted area doesn’t guarantee offers: it’s a guide to where demand is right now. Offers still come by distance, shifts, and level.',
