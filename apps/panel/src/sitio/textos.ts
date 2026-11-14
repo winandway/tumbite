@@ -20,7 +20,7 @@ const es = {
     comensal: {
       titulo: 'Pide hoy desde la web',
       texto:
-        'Crea tu cuenta gratis en un minuto y pide desde el navegador. Las apps para iPhone y Android llegan muy pronto.',
+        'Crea tu cuenta gratis en un minuto y pide desde el navegador. En Android, baja la app Divoox de Google Play; en iPhone, agrégala a tu pantalla de inicio desde Safari y se abre como una app.',
       boton: 'Pedir ahora',
     },
     restaurante: {
@@ -130,7 +130,12 @@ const es = {
       [
         'resumen',
         'Resumen del día',
-        'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca. Y lo retiras a tu banco.',
+        'Cuántos pedidos hiciste, cuánto vendiste, la comisión y lo que te toca, pedido por pedido.',
+      ],
+      [
+        'listo',
+        'Falta un plato: el cliente decide',
+        'Si se acabó algo de un pedido, se lo preguntas al cliente desde la app y esperas su respuesta antes de marcarlo listo. Nadie paga lo que no recibe.',
       ],
     ],
     form: 'Quiero mi restaurante en Divoox',
@@ -151,8 +156,17 @@ const es = {
         'Sube de nivel',
         'Bronce, Plata, Oro y Diamante: los niveles altos ven primero los pedidos grandes.',
       ],
-      ['billetera', 'Tu billetera', 'saldo, historial y retiro a tu banco.'],
-      ['ruta', 'Ruta en un toque', 'con Google Maps o Apple Maps.'],
+      ['billetera', 'Tu billetera', 'saldo e historial de lo que ganas en cada pedido.'],
+      [
+        'ruta',
+        'Cómo llegar en un toque',
+        'con la app que prefieras: Google Maps, Waze o Apple Maps.',
+      ],
+      [
+        'pin',
+        'Entrega en mano con PIN',
+        'si el cliente lo pide, se lo entregas solo con su PIN de 4 dígitos.',
+      ],
     ],
     form: 'Quiero repartir con Divoox',
   },
@@ -184,7 +198,7 @@ const es = {
       ],
       [
         '¿Cómo se le paga al restaurante y al repartidor?',
-        'Cada uno tiene su billetera en la app y retira a su banco. Los datos bancarios se guardan en Stripe, nunca en Divoox.',
+        'Cada uno ve en su billetera de la app lo que gana en cada pedido. Los pagos van por Stripe: los datos bancarios se guardan allí, nunca en Divoox.',
       ],
       [
         '¿Qué pasa si hay un problema con mi pedido?',
@@ -339,7 +353,7 @@ const en: Textos = {
     comensal: {
       titulo: 'Order today from the web',
       texto:
-        'Create your free account in a minute and order from your browser. The iPhone and Android apps are coming very soon.',
+        'Create your free account in a minute and order from your browser. On Android, get the Divoox app on Google Play; on iPhone, add it to your Home Screen from Safari and it opens like an app.',
       boton: 'Order now',
     },
     restaurante: {
@@ -447,7 +461,12 @@ const en: Textos = {
       [
         'resumen',
         'Daily summary',
-        'Orders, sales, commission, and your payout. Cash out to your bank.',
+        'Orders, sales, commission, and what you’re owed, order by order.',
+      ],
+      [
+        'listo',
+        'Missing an item? The customer decides',
+        'If something in an order runs out, you ask the customer from the app and wait for their answer before marking it ready. Nobody pays for what they don’t get.',
       ],
     ],
     form: 'I want my restaurant on Divoox',
@@ -468,8 +487,17 @@ const en: Textos = {
         'Level up',
         'Bronze, Silver, Gold, and Diamond: higher levels see bigger orders first.',
       ],
-      ['billetera', 'Your wallet', 'balance, history, and cash-out to your bank.'],
-      ['ruta', 'Directions in one tap', 'with Google Maps or Apple Maps.'],
+      ['billetera', 'Your wallet', 'balance and a history of what you earn on every order.'],
+      [
+        'ruta',
+        'Directions in one tap',
+        'with the app you prefer: Google Maps, Waze, or Apple Maps.',
+      ],
+      [
+        'pin',
+        'Hand-it-to-me with a PIN',
+        'when the customer asks for it, you hand over the order only with their 4-digit PIN.',
+      ],
     ],
     form: 'I want to drive with Divoox',
   },
@@ -501,7 +529,7 @@ const en: Textos = {
       ],
       [
         'How do restaurants and drivers get paid?',
-        'Each one has a wallet in the app and cashes out to their bank. Bank details are stored with Stripe, never with Divoox.',
+        'Each one sees what they earn on every order in their in-app wallet. Payments go through Stripe: bank details are stored there, never with Divoox.',
       ],
       [
         'What if there’s a problem with my order?',

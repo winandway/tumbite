@@ -37,3 +37,44 @@ describe('la web solo promete lo que existe (C-WEB-HONESTA)', () => {
     expect(CIUDADES.filter((c) => c.estado === 'activo')).toEqual([]);
   });
 });
+
+/**
+ * C-WEB-AL-DIA (13 nov 2026, orden de Richard): la portada y «Cómo funciona» cuentan lo publicado
+ * el 10, 11 y 13 de noviembre para comida, y no prometen lo que está apagado (los retiros al banco).
+ * Todos los países.
+ */
+describe('la web está al día con lo publicado (C-WEB-AL-DIA)', async () => {
+  const { PREGUNTAS_COMO_FUNCIONA } = await import('./ComoFunciona');
+  const fuente = await import('./ComoFunciona?raw').then((m: { default: string }) => m.default);
+  const es = JSON.stringify(TEXTOS_SITIO.es);
+  const en = JSON.stringify(TEXTOS_SITIO.en);
+
+  it('las apps de Android ya están en Google Play y el iPhone se instala desde Safari', () => {
+    expect(es).not.toMatch(/apps para iPhone y Android llegan/);
+    expect(en).not.toMatch(/iPhone and Android apps are coming/);
+    expect(es).toMatch(/Google Play.*Safari/);
+    expect(en).toMatch(/Google Play.*Safari/);
+  });
+
+  it('«Cómo llegar» con Google Maps, Waze o Apple Maps (C-ELEGIR-MAPAS) y entrega con PIN', () => {
+    for (const t of [es, en, fuente]) {
+      expect(t).toMatch(/Google Maps, Waze,? o?r? ?Apple Maps/);
+      expect(t).toMatch(/PIN/);
+    }
+  });
+
+  it('el plato que falta lo decide el cliente antes de «Listo» (C-LISTO-SIN-AJUSTE)', () => {
+    expect(es).toMatch(/Falta un plato: el cliente decide/);
+    expect(en).toMatch(/Missing an item\? The customer decides/);
+    expect(fuente).toMatch(/antes de marcarlo listo/);
+    expect(fuente).toMatch(/before marking it ready/);
+  });
+
+  it('no promete retiros al banco mientras están apagados (como la ficha de Google Play)', () => {
+    for (const t of [es, en, fuente, JSON.stringify(PREGUNTAS_COMO_FUNCIONA)]) {
+      expect(t).not.toMatch(/retiras a tu banco|retiro a tu banco|retira a su banco/);
+      expect(t).not.toMatch(/[Cc]ash out to (your|their) bank|cash-out to your bank/);
+      expect(t).not.toMatch(/Cobras en tu banco|Get paid to your bank/);
+    }
+  });
+});
