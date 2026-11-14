@@ -121,6 +121,26 @@ describe('C-PAPELES-SOLO-PASAJEROS: el papel venezolano cumple solo lo de pasaje
 });
 
 describe('C-CIUDAD-CONDUCTOR: cambiar de ciudad como en el mercado', () => {
+  it('C-CIUDAD-PRIMERA-APROBADO: un conductor ya aprobado no salta de país ni la primera vez', async () => {
+    const e = await escenarioVe();
+    expect((await abrirCaracas(e)).estado).toBe(201);
+    // Cuenta de EE. UU. (Miami, la zona por defecto) ya aprobada por el equipo, sin ciudad elegida.
+    const rep = await e.m.cuenta('repartidor', 'Conductor Miami');
+    await e.m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado) VALUES (?, 'aprobado') ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado'",
+    )
+      .bind(rep.id)
+      .run();
+    const r = await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id }, rep.token);
+    expect(r.estado).toBe(409);
+    expect(r.datos.campo).toBe('zonaId');
+    // Dentro de su país, la primera elección sí vale.
+    expect(
+      (await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: 'US-FL-MIAMI' }, rep.token))
+        .estado,
+    ).toBe(200);
+  });
+
   it('la primera vez elige cualquiera; después solo de su país, una vez cada 24 horas y desconectado', async () => {
     const e = await escenarioVe();
     expect((await abrirCaracas(e)).estado).toBe(201);

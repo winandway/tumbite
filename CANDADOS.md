@@ -3742,3 +3742,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Errores atribuidos:** columna nueva `errores_servidor.usuario_id` (migración en `COLUMNAS` de `esquema.ts`); `app.onError` guarda el id de la sesión (solo el id). La vista del juego suma a los fallos de cada jugador los errores del servidor que pasaron con su sesión. Si la columna todavía no existe, `guardarError` guarda el error igual sin dueño.
 - **Pruebas:** `ciudadJuego.test.ts` (tres nuevas: cierre que termina la entrega, cierre que cancela con lo apartado en cero y ningún pedido de juego vivo, error atribuido), `SuperCiudad.test.tsx` (descarga sin pedir nada y aviso de cierre) y `reporteCiudad.test.ts`; todas comprobadas en rojo.
 - **No tocar:** el cierre no acepta pedidos nuevos ni ofertas; no quitar el tope de pasos (sin él, una pantalla abierta mantendría la ciudad viva para siempre).
+
+## C-CIUDAD-PRIMERA-APROBADO · La primera ciudad de un conductor aprobado también es de su país (13 nov 2026) — todos los países (visto en Venezuela)
+
+- **Qué pasaba:** `PUT /conductor/ciudad` dejaba la primera elección libre. Un conductor de EE. UU. ya aprobado que nunca había elegido ciudad podía pasarse a Caracas o El Vigía y quedar con papeles de otro país.
+- **Qué se hizo:** si todavía no eligió ciudad pero ya tiene la identidad (`kyc.estado = 'aprobado'`) o algún cumplimiento aprobado, la ciudad tiene que ser del país de su cuenta (zona del repartidor, si no la del usuario, si no Miami, la de siempre del esquema). Mismo mensaje y código (409, campo `zonaId`) que el cambio posterior. Quien todavía no fue aprobado sigue eligiendo libre (así se da de alta en otro país). Cambiar de país lo hace el equipo (`/admin/conductores/:id/ciudad`).
+- **Prueba:** `motoVenezuelaRevision.test.ts`, «C-CIUDAD-PRIMERA-APROBADO», comprobada en rojo.
