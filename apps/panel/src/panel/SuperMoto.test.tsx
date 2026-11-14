@@ -101,9 +101,21 @@ function servidor(
             puestaEn: '2026-11-11 10:00:00',
             puestaPor: 'Soporte Divoox',
             vigente: false,
+            enUso: { tasa: 911.6243, fecha: '2026-11-13', fuente: 'bcv' },
+            oficial: { tasa: 911.6243, fecha: '2026-11-13', fuente: 'bcv' },
+            modo: {
+              modo: 'oficial',
+              ajustePct: null,
+              tasaFija: null,
+              cambiadoEn: null,
+              cambiadoPor: null,
+            },
           },
         ],
+        ajusteMaximoPct: 30,
       });
+    if (metodo === 'PUT' && u.endsWith('/datos/admin/tasas-referencia/VE/modo'))
+      return responder({ pais: 'VE', modo: 'flotante', enUso: null });
     if (metodo === 'PUT' && u.endsWith('/habilitaciones/c1/moto') && op.habilitar409)
       return responder(
         { error: 'Le faltan requisitos.', requisitosFaltantes: ['licencia_moto'] },
@@ -441,22 +453,50 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     expect(await screen.findByText('Ciudad cambiada.')).toBeTruthy();
   });
 
-  it('C-BS-REFERENCIA: la tasa vencida se dice así y guardar la de hoy manda el PUT', async () => {
+  it('C-TASA-MODOS: muestra la tasa en uso y su fuente aunque nadie la haya escrito, y guarda el modo', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas);
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
     const caja = await screen.findByTestId('tasa-referencia');
-    expect(await within(caja).findByText('Vencida: ya no se muestra')).toBeTruthy();
-    await userEvent.type(
-      within(caja).getByLabelText('Tasa de hoy (bolívares por dólar)'),
-      '842,56',
-    );
-    await userEvent.click(within(caja).getByRole('button', { name: 'Guardar la tasa de hoy' }));
+    expect(await within(caja).findByText(/911,6243/)).toBeTruthy();
+    expect(within(caja).getByText(/Oficial BCV, automática/)).toBeTruthy();
+    expect(
+      (within(caja).getByLabelText(/Oficial BCV automática/) as HTMLInputElement).checked,
+    ).toBe(true);
+    // Flotante: la vista previa calcula el resultado sobre la oficial.
+    await userEvent.click(within(caja).getByLabelText(/Flotante/));
+    await userEvent.type(within(caja).getByLabelText('Ajuste sobre la oficial (%)'), '5');
+    expect(within(caja).getByText(/957,2055/)).toBeTruthy();
+    await userEvent.click(within(caja).getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
-      expect(llamadas.find((l) => l.url.endsWith('/tasas-referencia/VE'))?.cuerpo).toEqual({
-        tasa: 842.56,
+      expect(llamadas.find((l) => l.url.endsWith('/tasas-referencia/VE/modo'))?.cuerpo).toEqual({
+        modo: 'flotante',
+        ajustePct: 5,
       }),
     );
-    expect(await within(caja).findByText('Tasa guardada.')).toBeTruthy();
+    expect(await within(caja).findByText('Guardado.')).toBeTruthy();
+  });
+
+  it('C-TASA-MODOS: la fija exige su tasa y un ajuste fuera del tope no se manda', async () => {
+    const llamadas: Llamada[] = [];
+    servidor(llamadas);
+    render(<SuperMoto base="/panel/control-x" idioma="es" />);
+    const caja = await screen.findByTestId('tasa-referencia');
+    await within(caja).findByText(/911,6243/);
+    await userEvent.click(within(caja).getByLabelText(/Flotante/));
+    await userEvent.type(within(caja).getByLabelText('Ajuste sobre la oficial (%)'), '45');
+    await userEvent.click(within(caja).getByRole('button', { name: 'Guardar' }));
+    expect(await within(caja).findByText(/entre -30 % y 30 %/)).toBeTruthy();
+    await userEvent.click(within(caja).getByLabelText(/^Fija/));
+    await userEvent.type(within(caja).getByLabelText('Tasa fija (bolívares por dólar)'), '950,5');
+    await userEvent.click(within(caja).getByRole('button', { name: 'Guardar' }));
+    await waitFor(() =>
+      expect(
+        llamadas.filter((l) => l.url.endsWith('/tasas-referencia/VE/modo')).at(-1)?.cuerpo,
+      ).toEqual({
+        modo: 'fija',
+        tasaFija: 950.5,
+      }),
+    );
   });
 });

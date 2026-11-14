@@ -15,6 +15,7 @@ import {
 import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { Pastilla } from './armazon/Piezas';
 import { pedir } from './api';
 
 /**
@@ -137,15 +138,31 @@ const T = {
     ciudad: 'Ciudad',
     tasaTitulo: 'Tasa de referencia en bolívares',
     tasaAyuda:
-      'Copia aquí la tasa oficial del BCV de hoy. Con ella, el pasajero y el conductor ven el equivalente en bolívares junto al precio en dólares. Es solo informativa: el viaje y la comisión siguen en dólares. Si pasan 48 horas sin actualizarla, el equivalente deja de mostrarse.',
+      'Con esta tasa, el pasajero, el cliente y el conductor ven el equivalente en bolívares junto al precio en dólares. Es solo informativa: el pedido, el viaje y la comisión siguen en dólares.',
     tasaPorDolar: 'bolívares por dólar',
+    tasaEnUso: 'En uso hoy',
+    tasaSinCargar: 'Todavía no hay tasa: el equivalente en bolívares no se muestra.',
+    tasaFuente: {
+      bcv: 'Oficial BCV, automática',
+      equipo: 'Oficial, escrita por el equipo',
+      flotante: 'Flotante: oficial',
+      fija: 'Fija, puesta por el equipo',
+    },
     tasaDel: 'del',
-    tasaVigente: 'Vigente',
-    tasaVencida: 'Vencida: ya no se muestra',
-    tasaSinCargar: 'todavía no hay tasa',
-    tasaNueva: 'Tasa de hoy (bolívares por dólar)',
-    tasaGuardar: 'Guardar la tasa de hoy',
-    tasaGuardada: 'Tasa guardada.',
+    tasaComo: '¿Cómo sale la tasa?',
+    tasaModoOficial: 'Oficial BCV automática (recomendada): la del Banco Central, cada día',
+    tasaModoFlotante: 'Flotante: la oficial más un ajuste en porcentaje',
+    tasaModoFija: 'Fija: una tasa que pones tú y no vence hasta que la cambies',
+    tasaAjuste: 'Ajuste sobre la oficial (%)',
+    tasaAjusteAyuda: 'Positivo para subirla, negativo para bajarla.',
+    tasaQuedaria: 'Quedaría en',
+    tasaSinOficial: 'Sin tasa oficial disponible, la flotante no se muestra hasta que llegue.',
+    tasaFija: 'Tasa fija (bolívares por dólar)',
+    tasaAjusteFuera: (max: number) => `El ajuste va entre -${max} % y ${max} %.`,
+    tasaFijaInvalida: 'Escribe la tasa fija en números, mayor que cero.',
+    tasaCambiadoPor: 'Último cambio:',
+    tasaGuardar: 'Guardar',
+    tasaGuardada: 'Guardado.',
     cambiarCiudad: 'Cambiar la ciudad del conductor',
     cambiarCiudadAyuda:
       'El conductor puede cambiarla él mismo una vez cada 24 horas y dentro de su país. Aquí el equipo la cambia a cualquier ciudad (también de país); queda en la auditoría.',
@@ -351,15 +368,32 @@ const T = {
     ciudad: 'City',
     tasaTitulo: 'Bolívar reference rate',
     tasaAyuda:
-      'Paste today’s official BCV rate here. Riders and drivers then see the bolívar equivalent next to the dollar price. It’s for reference only: the ride and the commission stay in dollars. If it isn’t updated for 48 hours, the equivalent stops showing.',
+      'With this rate, riders, customers and drivers see the bolívar equivalent next to the dollar price. It’s for reference only: the order, the ride and the commission stay in dollars.',
     tasaPorDolar: 'bolívars per dollar',
+    tasaEnUso: 'In use today',
+    tasaSinCargar: 'No rate yet: the bolívar equivalent isn’t shown.',
+    tasaFuente: {
+      bcv: 'Official BCV rate, automatic',
+      equipo: 'Official, entered by the team',
+      flotante: 'Floating: official',
+      fija: 'Fixed, set by the team',
+    },
     tasaDel: 'from',
-    tasaVigente: 'Current',
-    tasaVencida: 'Expired: no longer shown',
-    tasaSinCargar: 'no rate yet',
-    tasaNueva: 'Today’s rate (bolívars per dollar)',
-    tasaGuardar: 'Save today’s rate',
-    tasaGuardada: 'Rate saved.',
+    tasaComo: 'How is the rate set?',
+    tasaModoOficial: 'Official BCV rate, automatic (recommended): the Central Bank’s, every day',
+    tasaModoFlotante: 'Floating: the official rate plus a percentage adjustment',
+    tasaModoFija: 'Fixed: a rate you set that doesn’t expire until you change it',
+    tasaAjuste: 'Adjustment over the official rate (%)',
+    tasaAjusteAyuda: 'Positive to raise it, negative to lower it.',
+    tasaQuedaria: 'It would be',
+    tasaSinOficial:
+      'With no official rate available, the floating rate isn’t shown until one arrives.',
+    tasaFija: 'Fixed rate (bolívars per dollar)',
+    tasaAjusteFuera: (max: number) => `The adjustment must be between -${max}% and ${max}%.`,
+    tasaFijaInvalida: 'Enter the fixed rate as a number greater than zero.',
+    tasaCambiadoPor: 'Last change:',
+    tasaGuardar: 'Save',
+    tasaGuardada: 'Saved.',
     cambiarCiudad: 'Change the driver’s city',
     cambiarCiudadAyuda:
       'Drivers can change it themselves once every 24 hours, within their country. Here the team can move them to any city (including another country); it’s logged in the audit trail.',
@@ -1208,48 +1242,97 @@ type DetalleConductor = {
 
 // ---------------------------------------------------------------- tasa de referencia (bolívares)
 
+type FuenteTasa = 'bcv' | 'equipo' | 'flotante' | 'fija';
+type ModoTasa = 'oficial' | 'flotante' | 'fija';
 type FilaTasaRef = {
   pais: string;
   moneda: string;
-  tasa: number | null;
-  fecha: string | null;
-  puestaEn: string | null;
-  puestaPor: string | null;
-  vigente: boolean;
+  enUso: { tasa: number; fecha: string; fuente: FuenteTasa } | null;
+  oficial: { tasa: number; fecha: string; fuente: 'bcv' | 'equipo' } | null;
+  modo: {
+    modo: ModoTasa;
+    ajustePct: number | null;
+    tasaFija: number | null;
+    cambiadoEn: string | null;
+    cambiadoPor: string | null;
+  };
 };
 
+const numeroTasa = (n: number, idioma: Idioma) =>
+  new Intl.NumberFormat(idioma === 'en' ? 'en-US' : 'es-VE', { maximumFractionDigits: 4 }).format(
+    n,
+  );
+const fechaTasa = (f: string, idioma: Idioma) =>
+  new Intl.DateTimeFormat(idioma === 'en' ? 'en-US' : 'es-VE', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${f.slice(0, 10)}T12:00:00Z`));
+const leerNumero = (v: string) => Number(v.trim().replace(',', '.'));
+
 /**
- * C-BS-REFERENCIA: el equipo escribe la tasa oficial del día (bolívares por dólar). Con ella, el
- * pasajero y el conductor ven el equivalente en bolívares junto al precio en dólares. Solo
- * informativa; con más de 48 horas no se muestra.
+ * C-BS-REFERENCIA / C-TASA-MODOS: arriba, la tasa que se usa hoy, su fuente y su fecha (aunque nadie
+ * la haya escrito: la oficial del Banco Central llega sola). Debajo, cómo sale: oficial automática,
+ * flotante (oficial más un ajuste, con vista previa) o fija. Solo informativa: los montos siguen en
+ * dólares.
  */
 function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
   const b = useBorrador({
     formulario: 'moto-tasa-referencia',
     cuenta: 'superadmin',
-    inicial: { tasa: '' },
+    inicial: { modo: '', ajuste: '', fija: '' },
     almacen: almacenNavegador,
   });
   const [filas, setFilas] = useState<FilaTasaRef[]>([]);
+  const [maximo, setMaximo] = useState(30);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
   const cargar = useCallback(() => {
-    pedir<{ tasas: FilaTasaRef[] }>('GET', '/datos/admin/tasas-referencia')
-      .then((r) => setFilas(r.tasas))
+    pedir<{ tasas: FilaTasaRef[]; ajusteMaximoPct?: number }>(
+      'GET',
+      '/datos/admin/tasas-referencia',
+    )
+      .then((r) => {
+        setFilas(r.tasas);
+        if (r.ajusteMaximoPct) setMaximo(r.ajusteMaximoPct);
+      })
       .catch((x: unknown) => setError(mensaje(x)));
   }, []);
   useEffect(cargar, [cargar]);
-  async function guardar(e: React.FormEvent, pais: string) {
+
+  const fuente = (u: NonNullable<FilaTasaRef['enUso']>, f: FilaTasaRef) =>
+    u.fuente === 'flotante'
+      ? `${t.tasaFuente.flotante} ${(f.modo.ajustePct ?? 0) >= 0 ? '+' : ''}${numeroTasa(f.modo.ajustePct ?? 0, idioma)} %`
+      : t.tasaFuente[u.fuente];
+
+  async function guardar(e: React.FormEvent, f: FilaTasaRef, modo: ModoTasa) {
     e.preventDefault();
     setError('');
     setOk('');
-    const tasa = Number(b.valores.tasa.replace(',', '.'));
-    if (!(tasa > 0)) {
-      setError(t.numeroInvalido);
-      return;
+    let cuerpo: { modo: ModoTasa; ajustePct?: number; tasaFija?: number } = { modo };
+    if (modo === 'flotante') {
+      const ajuste = leerNumero(b.valores.ajuste || String(f.modo.ajustePct ?? ''));
+      if (
+        !Number.isFinite(ajuste) ||
+        Math.abs(ajuste) > maximo ||
+        (b.valores.ajuste.trim() === '' && f.modo.ajustePct == null)
+      ) {
+        setError(t.tasaAjusteFuera(maximo));
+        return;
+      }
+      cuerpo = { modo, ajustePct: ajuste };
+    }
+    if (modo === 'fija') {
+      const fija = leerNumero(b.valores.fija || String(f.modo.tasaFija ?? ''));
+      if (!(fija > 0) || !Number.isFinite(fija)) {
+        setError(t.tasaFijaInvalida);
+        return;
+      }
+      cuerpo = { modo, tasaFija: fija };
     }
     try {
-      await pedir('PUT', `/datos/admin/tasas-referencia/${pais}`, { tasa });
+      await pedir('PUT', `/datos/admin/tasas-referencia/${f.pais}/modo`, cuerpo);
       await b.limpiar();
       setOk(t.tasaGuardada);
       cargar();
@@ -1257,6 +1340,7 @@ function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
       setError(mensaje(x));
     }
   }
+
   return (
     <div className="tarjeta-form" data-testid="tasa-referencia">
       <h2>{t.tasaTitulo}</h2>
@@ -1266,36 +1350,102 @@ function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
         idioma={idioma}
         empezar={() => void b.empezarDeNuevo()}
       />
-      {filas.map((f) => (
-        <form key={f.pais} onSubmit={(e) => void guardar(e, f.pais)}>
-          <p>
-            <strong>{f.pais}</strong> ·{' '}
-            {f.tasa != null ? (
-              <>
-                {f.tasa} {t.tasaPorDolar} · {t.tasaDel} {f.fecha} · {f.puestaPor ?? ''}{' '}
-                <span className={`insignia ${f.vigente ? 'insignia-aprobado' : ''}`}>
-                  {f.vigente ? t.tasaVigente : t.tasaVencida}
-                </span>
-              </>
+      {filas.map((f) => {
+        const modo = (b.valores.modo || f.modo.modo) as ModoTasa;
+        const ajusteTexto =
+          b.valores.ajuste !== '' ? b.valores.ajuste : String(f.modo.ajustePct ?? '');
+        const fijaTexto = b.valores.fija !== '' ? b.valores.fija : String(f.modo.tasaFija ?? '');
+        const ajuste = leerNumero(ajusteTexto);
+        const vista =
+          f.oficial &&
+          ajusteTexto.trim() !== '' &&
+          Number.isFinite(ajuste) &&
+          Math.abs(ajuste) <= maximo
+            ? Math.round(f.oficial.tasa * (1 + ajuste / 100) * 10_000) / 10_000
+            : null;
+        return (
+          <form key={f.pais} onSubmit={(e) => void guardar(e, f, modo)}>
+            <p>
+              <strong>
+                {t.tasaEnUso} · {f.pais}
+              </strong>
+            </p>
+            {f.enUso ? (
+              <p>
+                <strong>
+                  {numeroTasa(f.enUso.tasa, idioma)} {t.tasaPorDolar}
+                </strong>{' '}
+                · <Pastilla tono="exito">{fuente(f.enUso, f)}</Pastilla> · {t.tasaDel}{' '}
+                {fechaTasa(f.enUso.fecha, idioma)}
+              </p>
             ) : (
-              t.tasaSinCargar
+              <p className="pista">{t.tasaSinCargar}</p>
             )}
-          </p>
-          <label>
-            {t.tasaNueva}
-            <input
-              value={b.valores.tasa}
-              onChange={(e) => b.cambiar('tasa', e.target.value)}
-              placeholder="0,00"
-              inputMode="decimal"
-              required
-            />
-          </label>
-          <button type="submit" className="boton">
-            {t.tasaGuardar}
-          </button>
-        </form>
-      ))}
+            {f.modo.cambiadoEn ? (
+              <p className="pista">
+                {t.tasaCambiadoPor} {fechaTasa(f.modo.cambiadoEn, idioma)}
+                {f.modo.cambiadoPor ? ` · ${f.modo.cambiadoPor}` : ''}
+              </p>
+            ) : null}
+            <fieldset>
+              <legend>{t.tasaComo}</legend>
+              {(
+                [
+                  ['oficial', t.tasaModoOficial],
+                  ['flotante', t.tasaModoFlotante],
+                  ['fija', t.tasaModoFija],
+                ] as const
+              ).map(([valor, texto]) => (
+                <label key={valor}>
+                  <input
+                    type="radio"
+                    name={`modo-tasa-${f.pais}`}
+                    value={valor}
+                    checked={modo === valor}
+                    onChange={() => b.cambiar('modo', valor)}
+                  />
+                  {texto}
+                </label>
+              ))}
+            </fieldset>
+            {modo === 'flotante' ? (
+              <>
+                <label>
+                  {t.tasaAjuste}
+                  <input
+                    value={ajusteTexto}
+                    onChange={(e) => b.cambiar('ajuste', e.target.value)}
+                    placeholder="0"
+                    inputMode="decimal"
+                  />
+                </label>
+                <p className="pista">{t.tasaAjusteAyuda}</p>
+                <p role="status">
+                  {f.oficial
+                    ? vista != null
+                      ? `${t.tasaQuedaria} ${numeroTasa(vista, idioma)} ${t.tasaPorDolar}`
+                      : ''
+                    : t.tasaSinOficial}
+                </p>
+              </>
+            ) : null}
+            {modo === 'fija' ? (
+              <label>
+                {t.tasaFija}
+                <input
+                  value={fijaTexto}
+                  onChange={(e) => b.cambiar('fija', e.target.value)}
+                  placeholder="0,00"
+                  inputMode="decimal"
+                />
+              </label>
+            ) : null}
+            <button type="submit" className="boton">
+              {t.tasaGuardar}
+            </button>
+          </form>
+        );
+      })}
       {error ? <p className="error">{error}</p> : null}
       {ok ? (
         <p className="texto-exito" role="status">

@@ -27,7 +27,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           'En Venezuela pagas tu pedido cuando llega, en efectivo o con una transferencia por pago móvil al repartidor, y ves el total también en bolívares.',
         explicacion: [
           'En los países donde se cobra en mano, como Venezuela, al pedir eliges «Efectivo al recibir» o «Transferencia al repartidor» (pago móvil). No hace falta tarjeta.',
-          'Los precios van en dólares y el total de tu carrito trae al lado su equivalente en bolívares con la tasa del día, para que sepas cuánto vas a pagar.',
+          'Los precios van en dólares y el total de tu carrito trae al lado su equivalente en bolívares con la tasa del día, para que sepas cuánto vas a pagar. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares.',
           'Si eliges transferencia, en el seguimiento de tu pedido ves el nombre del repartidor y los datos de su cuenta para pagarle cuando llegue. El repartidor confirma en su app que le llegó.',
           'La propina en efectivo se la das directamente al repartidor: es toda suya.',
         ],
@@ -190,7 +190,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           'In Venezuela you pay when your order arrives, in cash or with a mobile payment transfer to the driver, and you also see the total in bolívares.',
         explicacion: [
           'In countries where payment is collected in person, like Venezuela, you choose “Cash on delivery” or “Transfer to the driver” (mobile payment) when you order. No card needed.',
-          'Prices are in US dollars, and your cart total shows its equivalent in bolívares at the day’s rate, so you know how much you’ll pay.',
+          'Prices are in US dollars, and your cart total shows its equivalent in bolívares at the day’s rate, so you know how much you’ll pay. By default the rate is the Central Bank of Venezuela’s official rate, which updates on its own every business day; next to it you see which day it’s from. It’s for reference only: the price is set in US dollars.',
           'If you choose transfer, your order tracking shows the driver’s name and account details so you can pay them when they arrive. The driver confirms in their app that it arrived.',
           'A cash tip goes straight to the driver: they keep all of it.',
         ],

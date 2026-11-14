@@ -23,7 +23,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Elige a dónde vas, mira el precio antes de confirmar y sigue a tu conductor en el mapa hasta que llegue.',
         explicacion: [
           'Divoox Moto te lleva rápido por la ciudad. Está disponible en las ciudades donde Divoox Moto esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo.',
-          'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día.',
+          'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares.',
           'Al confirmar buscamos al conductor más cercano. Cuando acepta, ves su nombre, su moto, el color y la placa, y lo sigues en el mapa.',
           'Para empezar el viaje, en las ciudades donde se usa, le dices al conductor tu código de cuatro números. Así sabes que te subes con la persona correcta.',
         ],
@@ -187,7 +187,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Choose where you’re going, see the price before you confirm, and follow your driver on the map until they arrive.',
         explicacion: [
           'Divoox Moto gets you across the city fast. It’s available in the cities where Divoox Moto is open; if it isn’t open in yours yet, the app won’t let you request it.',
-          'The price is upfront: you see it before you request and it doesn’t change with traffic. In Venezuela the price is in dollars, with its equivalent in bolívars at the day’s rate next to it.',
+          'The price is upfront: you see it before you request and it doesn’t change with traffic. In Venezuela the price is in dollars, with its equivalent in bolívars at the day’s rate next to it. By default the rate is the Central Bank of Venezuela’s official rate, which updates on its own every business day; next to it you see which day it’s from. It’s for reference only: the price is set in US dollars.',
           'When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map.',
           'To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person.',
         ],

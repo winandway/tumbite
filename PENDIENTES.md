@@ -25,11 +25,12 @@
 - [x] **Marca Divoox presentada en Estados Unidos (14 nov 2026):** número de serie 50218051, clase 39, intención de uso, a nombre de Windoce LLC. Sigue: vigilar el buzón go@windoce.com por si el examinador pide algo, y presentar la declaración de uso cuando la app opere en EE. UU. (`docs/PLAN-REGISTRO-DE-MARCA.md`).
 - [x] **Venezuela abierta en producción para el piloto (14 nov 2026):** Richard abrió Moto y Carro para Venezuela en el superadmin (solicitud 50218051) y la IA abrió El Vigía (VE-MER-ELVIGIA) para Moto y Carro, en dólares, con la tarifa de mercado. Falta aprobar y recargar a los conductores del piloto y compilar las apps.
 - [ ] 👤 **Solicitud de la marca Divoox en Venezuela:** en paralelo, meta de un mes; ya no frena el piloto. Fecha límite para presentarla conservando la fecha de Estados Unidos: 14 de mayo de 2027.
-- [ ] **Tasa BCV automática** para mostrar el precio en bolívares en el pago móvil (diseño en `docs/DISENO-TASA-VES.md`; hoy el pasajero hace la cuenta con la tasa del día).
+- [x] **Tasa BCV automática** (14 nov 2026, C-TASA-BCV-AUTO y C-TASA-MODOS): la oficial llega sola cada día con respaldo de DolarApi, también en fin de semana; el equipo puede elegir por país oficial, flotante (±30 %) o fija en el panel. Cobrar en bolívares con tasa guardada por pedido (`docs/DISENO-TASA-VES.md`) sigue sin construir.
 - [x] **Capturas reales** de Moto (Driver, cliente y panel) tomadas el 13 nov en local y cinco guías publicadas en Docs (C-DOCS-MOTO). Faltan las de las guías de seguridad.
 - [x] **Escenarios del simulador** de Moto en Venezuela (`simulador/divoox/moto.ts`, etiqueta `moto`) y guion de punta a punta en cada rama (13 nov).
 - [ ] 👤 **Distancia real por calles** para cotizar Moto (hoy línea recta por 1,3): elegir el proveedor de rutas y aprobar su costo.
-- [ ] 👤 **Quién escribe cada día la tasa de referencia del BCV** en el panel (Moto · Abrir y aprobar). Sin tasa de menos de 48 horas, el equivalente en bolívares no se muestra.
+- [x] ~~Quién escribe cada día la tasa del BCV~~: ya no hace falta, llega sola (C-TASA-MODOS, 14 nov 2026).
+- [ ] 👤 **MontosVE como segunda fuente de la tasa BCV** (opcional): su API pide registrarse y una llave; abrir la cuenta lo decide Richard. Hoy alcanza con el BCV y DolarApi.
 
 - [ ] **Monetización prepago multiservicio** (requisito de Richard, 27 oct 2026, `docs/REQUISITO-MONETIZACION-PREPAGO-MULTISERVICIO.md`): unificar Food en cobro directo con la capa de políticas sin cambiar su resultado; política de cancelaciones por servicio; enchufar Express, Grocery y Flex conductor cuando existan.
 - [x] **Autorización comercial y legal por mercado** para el prepago de conductores: Richard dijo «Sí» el 2 nov 2026. Encendido en Venezuela y Colombia al 10 % en Moto, Carro y Envíos (C-PREPAGO-MERCADOS); EE. UU. sigue con Stripe.
