@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  CIUDAD_PRUEBAS_EL_VIGIA,
   CIUDAD_PRUEBAS_VENEZUELA,
   TARIFAS_COMIDA_VENEZUELA,
   ErrorApi,
@@ -520,9 +519,7 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
     Object.values(tarifaEscrita).every((n) => Number.isFinite(n) && n >= 0);
   const usd = (c: number) => formatearMonto(c, 'USD', idioma);
 
-  function usarCiudad(
-    c: typeof CIUDAD_PRUEBAS_VENEZUELA | typeof CIUDAD_EL_VIGIA | typeof CIUDAD_PRUEBAS_EL_VIGIA,
-  ) {
+  function usarCiudad(c: typeof CIUDAD_PRUEBAS_VENEZUELA | typeof CIUDAD_EL_VIGIA) {
     b.setValores((antes) => ({
       ...antes,
       id: c.id,
@@ -623,7 +620,7 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
         <button
           type="button"
           className="boton secundario"
-          onClick={() => usarCiudad(comida ? CIUDAD_PRUEBAS_EL_VIGIA : CIUDAD_EL_VIGIA)}
+          onClick={() => usarCiudad(CIUDAD_EL_VIGIA)}
         >
           {comida ? t.usarElVigiaComida : t.usarElVigia}
         </button>

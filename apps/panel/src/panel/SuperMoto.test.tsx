@@ -189,7 +189,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     await userEvent.selectOptions(screen.getByLabelText('Servicio'), 'carro');
     await userEvent.click(screen.getByRole('button', { name: 'Usar El Vigía' }));
     expect(screen.getByLabelText<HTMLInputElement>('Código de la ciudad').value).toBe(
-      'VE-VIG-CENTRO',
+      'VE-MER-ELVIGIA',
     );
     expect(screen.getByText('$1.50')).toBeTruthy();
     expect(screen.getByText('$3.50')).toBeTruthy();

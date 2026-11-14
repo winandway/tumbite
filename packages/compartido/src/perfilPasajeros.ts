@@ -1,4 +1,5 @@
 import type { TarifaViaje } from './viajes';
+import { CIUDAD_PRUEBAS_EL_VIGIA } from './comidaVenezuela';
 
 /**
  * Divoox Moto por país (13 nov 2026, regla «cada país es su propio sistema»): una sola pieza dice,
@@ -216,19 +217,11 @@ export const CIUDAD_PRUEBAS_VENEZUELA = {
 } as const;
 
 /**
- * El Vigía (estado Mérida) como ciudad de PRUEBAS de Carro y Moto en Venezuela (orden de Richard del
- * 13 nov 2026). El código de la ciudad es el del aeropuerto (VIG); el centro, la plaza Bolívar.
+ * El Vigía (estado Mérida) como ciudad de PRUEBAS de Carro, Moto y Envíos en Venezuela (orden de
+ * Richard del 13 nov 2026). Es la MISMA zona que Comida (VE-MER-ELVIGIA): una sola ciudad de pruebas
+ * en El Vigía (C-EL-VIGIA-UNA-ZONA, 14 nov 2026). La VE-VIG-CENTRO de antes ya no se siembra.
  */
-export const CIUDAD_EL_VIGIA = {
-  id: 'VE-VIG-CENTRO',
-  nombre: 'El Vigía',
-  pais: 'VE',
-  moneda: 'USD',
-  zonaHoraria: 'America/Caracas',
-  lat: 8.6194,
-  lng: -71.6573,
-  radioKm: 15,
-} as const;
+export const CIUDAD_EL_VIGIA = CIUDAD_PRUEBAS_EL_VIGIA;
 
 /**
  * «Te alcanza para unas N carreras»: saldo prepago dividido por la comisión típica (aproximado).
