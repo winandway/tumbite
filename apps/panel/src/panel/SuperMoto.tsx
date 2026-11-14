@@ -7,6 +7,7 @@ import {
   almacenNavegador,
   enIdioma,
   formatearMonto,
+  textoAMonto,
   useBorrador,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
@@ -26,9 +27,14 @@ const T = {
     intro:
       'Aquí se prepara Divoox Moto en cada país: se abre la ciudad, se revisan los papeles de los conductores y sus motos, y se habilita a cada conductor. Las tarifas y las emergencias siguen en Moto · Viajes.',
     // 1. Abrir en una ciudad
-    abrir: 'Abrir Moto en una ciudad',
+    abrir: 'Abrir un servicio de viajes en una ciudad',
     abrirAyuda:
-      'Crea la ciudad (o la pone al día), le pone la tarifa y enciende Moto en ella. En producción, primero tiene que estar abierto el país (abajo).',
+      'Para cualquier país: crea la ciudad (o la pone al día), le pone la tarifa y enciende el servicio en ella. En producción, primero tiene que estar abierto el país (abajo). Para cubrir un estado entero, dibuja después el área en Áreas de cobertura de esa ciudad.',
+    servicio: 'Servicio',
+    nombresServicio: { moto: 'Moto', carro: 'Carro', envios: 'Envíos' } as Record<string, string>,
+    tarifaEscribe: 'Tarifa de esta ciudad (en la moneda de los viajes)',
+    tarifaEscribeAyuda:
+      'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en Moto · Viajes.',
     usarCaracas: 'Usar Caracas de pruebas',
     codigo: 'Código de la ciudad',
     codigoEjemplo: 'País-ciudad-zona, por ejemplo VE-CCS-CENTRO',
@@ -43,9 +49,9 @@ const T = {
     monedaEjemplo: 'Código de tres letras; vacío = la del país',
     motivo: 'Motivo (queda en el registro)',
     motivoEjemplo: 'Por qué se abre esta ciudad',
-    abrirBoton: 'Abrir Moto en esta ciudad',
-    abierta: (id: string, pais: string, moneda: string, estado: string) =>
-      `Moto quedó abierto en ${id} (${pais}, viajes en ${moneda}). Estado: ${estado}.`,
+    abrirBoton: (servicio: string) => `Abrir ${servicio} en esta ciudad`,
+    abierta: (servicio: string, id: string, pais: string, moneda: string, estado: string) =>
+      `${servicio} quedó abierto en ${id} (${pais}, viajes en ${moneda}). Estado: ${estado}.`,
     estados: {
       disponible: 'encendido para todos',
       piloto: 'solo para el piloto',
@@ -54,8 +60,6 @@ const T = {
     tarifaTitulo: 'Tarifa que se va a cobrar (mercado de Venezuela)',
     tarifaAyuda:
       'Es la tarifa de mercado de Venezuela, en dólares. Se puede cambiar después en Moto · Viajes.',
-    tarifaFuera:
-      'Fuera de Venezuela todavía no hay tarifa de mercado cargada: el servidor va a pedir la tarifa de esa ciudad.',
     base: 'Banderazo',
     porKm: 'Por kilómetro',
     porMinuto: 'Por minuto',
@@ -205,9 +209,14 @@ const T = {
     titulo: 'Moto · Launch and approve',
     intro:
       'This is where Divoox Moto is prepared in each country: open the city, review drivers’ documents and motorbikes, and approve each driver. Pricing and emergencies stay in Moto · Rides.',
-    abrir: 'Open Moto in a city',
+    abrir: 'Open a ride service in a city',
     abrirAyuda:
-      'Creates the city (or updates it), sets its pricing and turns Moto on there. In production, the country has to be open first (below).',
+      'For any country: creates the city (or updates it), sets its pricing and turns the service on there. In production, the country has to be open first (below). To cover a whole state, draw the area afterwards in that city’s Coverage areas.',
+    servicio: 'Service',
+    nombresServicio: { moto: 'Moto', carro: 'Car', envios: 'Courier' } as Record<string, string>,
+    tarifaEscribe: 'Pricing for this city (in the ride currency)',
+    tarifaEscribeAyuda:
+      'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in Moto · Rides.',
     usarCaracas: 'Use Caracas test city',
     codigo: 'City code',
     codigoEjemplo: 'Country-city-area, for example VE-CCS-CENTRO',
@@ -222,9 +231,9 @@ const T = {
     monedaEjemplo: 'Three-letter code; empty = the country’s',
     motivo: 'Reason (kept in the log)',
     motivoEjemplo: 'Why this city is opening',
-    abrirBoton: 'Open Moto in this city',
-    abierta: (id: string, pais: string, moneda: string, estado: string) =>
-      `Moto is now open in ${id} (${pais}, rides in ${moneda}). Status: ${estado}.`,
+    abrirBoton: (servicio: string) => `Open ${servicio} in this city`,
+    abierta: (servicio: string, id: string, pais: string, moneda: string, estado: string) =>
+      `${servicio} is now open in ${id} (${pais}, rides in ${moneda}). Status: ${estado}.`,
     estados: {
       disponible: 'on for everyone',
       piloto: 'pilot only',
@@ -233,8 +242,6 @@ const T = {
     tarifaTitulo: 'Pricing that will be charged (Venezuela market)',
     tarifaAyuda:
       'This is the Venezuela market pricing, in dollars. You can change it later in Moto · Rides.',
-    tarifaFuera:
-      'Outside Venezuela there is no market pricing loaded yet: the server will ask for that city’s pricing.',
     base: 'Base fare',
     porKm: 'Per kilometer',
     porMinuto: 'Per minute',
@@ -399,6 +406,11 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
       zonaHoraria: 'America/Caracas',
       moneda: '',
       motivo: '',
+      servicio: 'moto',
+      base: '',
+      porKm: '',
+      porMinuto: '',
+      minimo: '',
     },
     almacen: almacenNavegador,
   });
@@ -406,7 +418,21 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
   const [ok, setOk] = useState('');
   const [enviando, setEnviando] = useState(false);
   const v = b.valores;
+  const servicio = v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto';
+  const nombreServicio = enPalabras(t.nombresServicio, servicio);
   const venezuela = v.id.trim().toUpperCase().startsWith('VE');
+  // C-ABRIR-CIUDAD (13 nov 2026): solo Moto en Venezuela trae tarifa de mercado; lo demás se escribe.
+  const conTarifaDeMercado = servicio === 'moto' && (venezuela || !v.id.trim());
+  const monedaTarifa = v.moneda.trim().toUpperCase() || 'USD';
+  const tarifaEscrita = {
+    base: textoAMonto(v.base || '', monedaTarifa),
+    porKm: textoAMonto(v.porKm || '', monedaTarifa),
+    porMinuto: textoAMonto(v.porMinuto || '', monedaTarifa),
+    minimo: textoAMonto(v.minimo || '', monedaTarifa),
+  };
+  const tarifaLista =
+    [v.base, v.porKm, v.porMinuto, v.minimo].every((x) => (x ?? '').trim() !== '') &&
+    Object.values(tarifaEscrita).every((n) => Number.isFinite(n) && n >= 0);
   const usd = (c: number) => formatearMonto(c, 'USD', idioma);
 
   function usarCaracas() {
@@ -441,7 +467,7 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
         zona: { id: string; pais: string; moneda: string };
         estado: string;
       }>('POST', '/datos/admin/viajes/ciudades', {
-        servicio: 'moto',
+        servicio,
         zona: {
           id: v.id.trim().toUpperCase(),
           nombre: v.nombre.trim(),
@@ -451,11 +477,18 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           zonaHoraria: v.zonaHoraria.trim(),
           ...(moneda ? { moneda } : {}),
         },
+        ...(conTarifaDeMercado ? {} : { tarifa: tarifaEscrita }),
         motivo: v.motivo.trim(),
       });
       await b.limpiar();
       setOk(
-        t.abierta(r.zona.id, r.zona.pais, r.zona.moneda, enPalabras(t.estados, String(r.estado))),
+        t.abierta(
+          nombreServicio,
+          r.zona.id,
+          r.zona.pais,
+          r.zona.moneda,
+          enPalabras(t.estados, String(r.estado)),
+        ),
       );
     } catch (x) {
       // Lo escrito se queda para corregirlo.
@@ -471,7 +504,8 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
     v.lat.trim() !== '' &&
     v.lng.trim() !== '' &&
     v.zonaHoraria.trim().length >= 3 &&
-    v.motivo.trim().length >= 3;
+    v.motivo.trim().length >= 3 &&
+    (conTarifaDeMercado || tarifaLista);
 
   return (
     <form className="formulario tarjeta-form" onSubmit={(e) => void abrir(e)} noValidate>
@@ -482,6 +516,16 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
         idioma={idioma}
         empezar={() => void b.empezarDeNuevo()}
       />
+      <label>
+        {t.servicio}
+        <select value={servicio} onChange={(e) => b.cambiar('servicio', e.target.value)}>
+          {(['moto', 'carro', 'envios'] as const).map((s) => (
+            <option key={s} value={s}>
+              {enPalabras(t.nombresServicio, s)}
+            </option>
+          ))}
+        </select>
+      </label>
       <button type="button" className="boton secundario" onClick={usarCaracas}>
         {t.usarCaracas}
       </button>
@@ -552,7 +596,7 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           placeholder={t.motivoEjemplo}
         />
       </label>
-      {venezuela || !v.id.trim() ? (
+      {conTarifaDeMercado ? (
         <div aria-label={t.tarifaTitulo}>
           <h3>{t.tarifaTitulo}</h3>
           <p className="pista">{t.tarifaAyuda}</p>
@@ -575,7 +619,28 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           </ul>
         </div>
       ) : (
-        <p className="pista">{t.tarifaFuera}</p>
+        <fieldset aria-label={t.tarifaEscribe}>
+          <legend>{t.tarifaEscribe}</legend>
+          <p className="pista">{t.tarifaEscribeAyuda}</p>
+          {(
+            [
+              ['base', t.base],
+              ['porKm', t.porKm],
+              ['porMinuto', t.porMinuto],
+              ['minimo', t.minimo],
+            ] as const
+          ).map(([clave, nombre]) => (
+            <label key={clave}>
+              {nombre}
+              <input
+                inputMode="decimal"
+                value={new Map(Object.entries(v)).get(clave) ?? ''}
+                onChange={(e) => b.cambiar(clave, e.target.value)}
+                placeholder="0.00"
+              />
+            </label>
+          ))}
+        </fieldset>
       )}
       {error ? (
         <p className="error-general" role="alert">
@@ -588,7 +653,7 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
         </p>
       ) : null}
       <button type="submit" className="boton" disabled={!listo || enviando}>
-        {t.abrirBoton}
+        {t.abrirBoton(nombreServicio)}
       </button>
     </form>
   );

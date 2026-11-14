@@ -51,6 +51,16 @@ export const esquemaEnv = z.object({
    * búsqueda se apaga y se usa el pin en el mapa (C-FLEX-UBICACION).
    */
   GOOGLE_PLACES_KEY: z.string().min(20).optional(),
+  /**
+   * C-RUTA-POR-CALLES: llave de Google Routes API para la distancia por calles del precio de un
+   * viaje. Si falta, se usa GOOGLE_PLACES_KEY (la misma llave del servidor con Routes habilitada).
+   */
+  GOOGLE_ROUTES_KEY: z.string().min(20).optional(),
+  /** C-RUTA-POR-CALLES: tope propio de consultas a Google Routes por día (por defecto 320). */
+  TOPE_RUTAS_CALLES_DIA: z
+    .string()
+    .regex(/^\d{1,6}$/)
+    .optional(),
   /** Secreto del reloj externo (GitHub Actions llama a /datos/reloj con él cada 5 min). */
   RELOJ_SECRETO: z.string().min(24).optional(),
   // Cuentas de prueba para los revisores de Apple y Google (correos separados por coma): prueban

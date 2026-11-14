@@ -102,6 +102,7 @@ import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } fr
 import { VERSION_SERVIDOR } from './version';
 import { saludTransiciones } from './esquemaPedidos';
 import { saludCobros } from './liquidaciones';
+import { saludRutas } from './rutaPorCalles';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -230,7 +231,7 @@ app.use('/datos/admin/*', permisosInternos);
  * si una pieza se cae, aquí se ve.
  */
 app.get('/datos/salud', async (c) => {
-  const piezas: Record<string, 'ok' | 'error' | 'pendiente' | 'atrasado'> = {};
+  const piezas: Record<string, 'ok' | 'error' | 'pendiente' | 'atrasado' | 'estimada'> = {};
 
   if (!c.env.DB) {
     piezas.base = 'pendiente';
@@ -357,6 +358,13 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: billeteras', e);
       return 'error' as const;
     });
+  // C-RUTA-POR-CALLES: Google Routes respondiendo (ok), sin llave o sin la API (estimada: se usa la
+  // fórmula) o roto (error), y cuántas consultas van hoy contra el tope. Solo lee.
+  const rutas = await saludRutas(c.env, c.env.DB).catch((e: unknown) => {
+    console.error('salud: rutas', e);
+    return { estado: 'error' as const, consultasHoy: 0, tope: 0 };
+  });
+  piezas.rutas = rutas.estado;
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {
@@ -375,6 +383,7 @@ app.get('/datos/salud', async (c) => {
       servicio: MARCA.nombre,
       ok: !algunError,
       piezas,
+      rutas: { consultasHoy: rutas.consultasHoy, tope: rutas.tope },
       ultimoRespaldo: fechaRespaldo,
       version: VERSION_SERVIDOR,
     },

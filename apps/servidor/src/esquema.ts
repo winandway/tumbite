@@ -13,6 +13,8 @@ import { rehacerAprobacionesDinero } from './esquemaDinero';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-RUTA-POR-CALLES (13 nov 2026): de dónde salió la distancia cobrada en la cotización.
+  ['cotizaciones_viaje', 'fuente_distancia', "TEXT NOT NULL DEFAULT 'estimada'"],
   // C-FLOTA-PROPIA (10 nov 2026): el restaurante reparte con los suyos; respaldo con la red.
   ['restaurantes', 'flota_modo', "TEXT NOT NULL DEFAULT 'divoox'"],
   ['restaurantes', 'flota_respaldo', 'INTEGER NOT NULL DEFAULT 0'],

@@ -205,6 +205,8 @@ export type CotizacionViaje = {
   moneda: string;
   distanciaM: number;
   duracionS: number;
+  /** C-RUTA-POR-CALLES: 'calles' (distancia real por calles) o 'estimada' (fórmula). */
+  fuenteDistancia?: 'calles' | 'estimada';
   desglose: DesgloseViaje;
   total: number;
   venceEn: string;
