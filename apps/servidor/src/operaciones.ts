@@ -1,7 +1,13 @@
 import { cuantosHay } from './canarioLecturas';
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
-import { PLAZAS_XL, acercaAlDestino, distanciaKm } from '@tumbite/compartido';
+import {
+  PLAZAS_XL,
+  type TamanoPaquete,
+  acercaAlDestino,
+  distanciaKm,
+  vehiculoLlevaPaquete,
+} from '@tumbite/compartido';
 import { destinosActivos } from './modoDestino';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 import { soltarCobroViaje } from './viajesCobro';
@@ -311,6 +317,21 @@ async function avisarProgramadoSinConductor(
   }).catch((e: unknown) => console.error('viajes programados: aviso sin conductor', e));
 }
 
+/** C-ENVIO-TAMANO: el vehículo activo de cada candidato (tipo y si la moto lleva cajón). */
+async function vehiculosActivos(db: D1Database, conductores: string[]) {
+  const mapa = new Map<string, { tipo: string; conCajon: boolean }>();
+  if (!conductores.length) return mapa;
+  const { results } = await db
+    .prepare(
+      `SELECT r.usuario_id, v.tipo, v.con_cajon FROM repartidores r JOIN vehiculos v ON v.id = r.vehiculo_activo_id
+        WHERE r.usuario_id IN (${conductores.map(() => '?').join(',')})`,
+    )
+    .bind(...conductores)
+    .all<{ usuario_id: string; tipo: string; con_cajon: number }>();
+  for (const f of results) mapa.set(f.usuario_id, { tipo: f.tipo, conCajon: f.con_cajon === 1 });
+  return mapa;
+}
+
 export async function repartirOperaciones(
   env: Env | undefined,
   db: D1Database,
@@ -408,7 +429,7 @@ export async function repartirOperaciones(
   const { results: buscando } = await db
     .prepare(
       `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais,
-              v.metodo_pago
+              v.metodo_pago, (SELECT p.tamano FROM envios_persona p WHERE p.operacion_id = o.id) AS tamano
          FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -429,6 +450,7 @@ export async function repartirOperaciones(
       moneda: string | null;
       pais: string | null;
       metodo_pago: string | null;
+      tamano: TamanoPaquete | null;
     }>();
   let ofrecidas = 0;
   const yaOfrecidos = new Set<string>();
@@ -487,8 +509,20 @@ export async function repartirOperaciones(
             op.pais,
           )
         : null;
+    // C-ENVIO-TAMANO: un paquete mediano o grande solo va a quien lo puede llevar en su vehículo.
+    const vehiculos =
+      op.tamano === 'mediano' || op.tamano === 'grande'
+        ? await vehiculosActivos(
+            db,
+            candidatos.map((c) => c.conductorId),
+          )
+        : null;
     const elegido = candidatos.find((c) => {
       if (yaOfrecidos.has(c.conductorId)) return false;
+      if (vehiculos && op.tamano) {
+        const v = vehiculos.get(c.conductorId);
+        if (!v || !vehiculoLlevaPaquete(op.tamano, v)) return false;
+      }
       if (sinSaldo.has(c.conductorId)) return false;
       if (conPagoMovil && !conPagoMovil.has(c.conductorId)) return false;
       const destino = destinos.get(c.conductorId);

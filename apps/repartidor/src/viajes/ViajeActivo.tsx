@@ -10,7 +10,22 @@ import {
   textoReferencia,
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
-import { Boton, C } from '@tumbite/movil';
+import { Boton, C, fotoConCamara } from '@tumbite/movil';
+
+/** C-ENVIO-FOTO-ENTREGA: la cámara y los archivos para la pieza común de fotos. */
+const CAMARA_ENTREGA = {
+  pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
+  tomar: () => ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 }),
+};
+const deArchivosEntrega = async () => {
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    preferredAssetRepresentationMode:
+      ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+    quality: 0.5,
+  });
+  return r.canceled ? null : (r.assets[0] ?? null);
+};
 import { TEXTOS_VIAJE } from './textos';
 
 type Api = {
@@ -98,6 +113,29 @@ export function ViajeActivo({
       const blob = await (await fetch(foto.uri)).blob();
       await api.subirFoto(blob, `/datos/conductor/operaciones/${viaje.id}/foto-paquete`);
       alCambiar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    } finally {
+      setSubiendoFoto(false);
+    }
+  }
+  /**
+   * C-ENVIO-FOTO-ENTREGA: la foto OPCIONAL al entregar, además del PIN, por la pieza común que pregunta
+   * «Tomar foto» o «Subir desde archivos» (C-CAMARA-EN-TODA-SUBIDA).
+   */
+  const [fotoEntregaLista, setFotoEntregaLista] = useState(false);
+  async function fotoEntrega() {
+    setError('');
+    const foto = await fotoConCamara(idioma, CAMARA_ENTREGA, deArchivosEntrega);
+    if (!foto) return;
+    setSubiendoFoto(true);
+    try {
+      const blob = await (await fetch(foto.uri)).blob();
+      await api.subirFoto(
+        blob,
+        `/datos/conductor/operaciones/${viaje.id}/foto-paquete?momento=entrega`,
+      );
+      setFotoEntregaLista(true);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
@@ -383,6 +421,15 @@ export function ViajeActivo({
             }}
           />
           <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
+          <Text style={{ fontWeight: '700', color: C.secundario }}>
+            {fotoEntregaLista ? t.fotoEntregaLista : t.fotoEntrega}
+          </Text>
+          <Boton
+            texto={fotoEntregaLista ? t.fotoEntregaOtra : t.fotoEntregaBoton}
+            alTocar={() => void fotoEntrega()}
+            cargando={subiendoFoto}
+            secundario
+          />
         </>
       ) : null}
       {/* C-PAGO-MOVIL-VIAJE: confirmación MANUAL de que el pago móvil llegó (nunca «del banco»). */}

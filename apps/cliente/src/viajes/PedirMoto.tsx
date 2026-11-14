@@ -3,6 +3,9 @@ import { Pressable, Text, View } from 'react-native';
 import {
   type CotizacionViaje,
   ErrorApi,
+  PAQUETE_MAX_KG,
+  TAMANOS_PAQUETE,
+  type TamanoPaquete,
   type Idioma,
   enIdioma,
   formatearMonto,
@@ -65,6 +68,8 @@ export function PedirMoto({
       categoria: 'estandar',
       // C-ENVIOS: qué se envía y quién lo recibe.
       paqueteDescripcion: '',
+      // C-ENVIO-TAMANO: sobre, pequeño, mediano o grande.
+      paqueteTamano: 'pequeno',
       paqueteValor: '',
       destinatarioNombre: '',
       destinatarioTelefono: '',
@@ -76,6 +81,12 @@ export function PedirMoto({
     alSalir: alSalirTelefono,
   });
   const { valores: v, cambiar } = b;
+  // C-ENVIO-TAMANO: «Mediano · 15 kg» (en libras en inglés).
+  const textoTamano = (x: TamanoPaquete) => {
+    const kg = new Map(Object.entries(PAQUETE_MAX_KG)).get(x) ?? 0;
+    const nombre = new Map(Object.entries(t.tamanos)).get(x) ?? x;
+    return `${nombre} · ${idioma === 'en' ? `${Math.round(kg * 2.2)} lb` : `${kg} kg`}`;
+  };
   // C-CARRO-VIAJE-PASAJERO: cada servicio dice lo suyo en el botón.
   const textoPedirViaje =
     servicio === 'carro' ? (v.categoria === 'xl' ? t.pedirCarroXl : t.pedirCarro) : t.pedirMoto;
@@ -181,6 +192,7 @@ export function PedirMoto({
           ? {
               paquete: {
                 descripcion: v.paqueteDescripcion,
+                tamano: v.paqueteTamano || 'pequeno',
                 valorDeclarado: textoAMonto(v.paqueteValor || '0', cotizacion.moneda),
                 destinatario: { nombre: v.destinatarioNombre, telefono: v.destinatarioTelefono },
                 sinProhibidos: v.sinProhibidos,
@@ -394,6 +406,25 @@ export function PedirMoto({
                 returnKeyType="done"
                 placeholder={t.paqueteQueEjemplo}
               />
+              <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.paqueteTamano}</Text>
+              <View
+                style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}
+                accessibilityRole="radiogroup"
+                testID="envio-tamano"
+              >
+                {TAMANOS_PAQUETE.map((x) => (
+                  <Pildora
+                    key={x}
+                    texto={textoTamano(x)}
+                    activa={(v.paqueteTamano || 'pequeno') === x}
+                    alTocar={() => cambiar('paqueteTamano', x)}
+                    rol="radio"
+                  />
+                ))}
+              </View>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                {new Map(Object.entries(t.tamanoAyuda)).get(v.paqueteTamano || 'pequeno') ?? ''}
+              </Text>
               <Campo
                 etiqueta={t.paqueteValor}
                 value={v.paqueteValor}

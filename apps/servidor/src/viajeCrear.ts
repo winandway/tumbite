@@ -95,8 +95,8 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
       ? [
           db
             .prepare(
-              `INSERT OR IGNORE INTO envios_persona (operacion_id, descripcion, valor_declarado, destinatario_nombre, destinatario_telefono, pin_entrega)
-               SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM operaciones WHERE id = ?)`,
+              `INSERT OR IGNORE INTO envios_persona (operacion_id, descripcion, valor_declarado, destinatario_nombre, destinatario_telefono, pin_entrega, tamano)
+               SELECT ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM operaciones WHERE id = ?)`,
             )
             .bind(
               v.op,
@@ -105,6 +105,7 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
               v.paquete.destinatario.nombre,
               telefonoCanonico(v.paquete.destinatario.telefono),
               v.pinEntrega,
+              v.paquete.tamano ?? 'pequeno',
               v.op,
             ),
         ]

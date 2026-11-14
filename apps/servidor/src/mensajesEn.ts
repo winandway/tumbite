@@ -1809,6 +1809,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Esa miniatura no cumple las medidas.', 'That thumbnail doesn’t meet the size limits.'],
   ['Primero aprueba la verificación.', 'Approve the verification first.'],
   [
+    'La foto de entrega se toma con el paquete a bordo.',
+    'The delivery photo is taken with the package on board.',
+  ],
+  [
     'El taxista de pruebas tiene un viaje abierto: ciérralo primero.',
     'The test driver has an open ride: close it first.',
   ],

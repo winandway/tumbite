@@ -4150,3 +4150,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** si «sí me llegó» quedaba anotado en `pedidos_pago_movil` pero `confirmarCobro` fallaba, el reintento respondía «igual» y el cobro quedaba pendiente para siempre.
 - **Cómo funciona:** en `POST /datos/repartidor/pedidos/:id/pago-movil`, con la decisión «igual», estado `recibido`, `recibido: true` y `cobro_estado` pendiente, se llama `confirmarCobro` (que solo cambia un cobro pendiente: no confirma dos veces).
 - **Prueba:** `rutas/comidaVenezuelaCircuito.test.ts` («C-PAGO-MOVIL-REINTENTO», en rojo antes del arreglo).
+
+## C-ENVIO-TAMANO · El paquete dice su tamaño y solo se ofrece a quien lo puede llevar (14 nov 2026) — todos los países
+
+- **Qué es:** como Uber Connect y DoorDash Package Pickup [DOC: sus ayudas públicas piden que el paquete quepa en el vehículo, con tope de peso]: sobre (1 kg), pequeño (5 kg), mediano (15 kg: carro o moto con cajón), grande (30 kg: solo carro). `TAMANOS_PAQUETE`, `PAQUETE_MAX_KG` y `vehiculoLlevaPaquete` en compartido; `esquemaPaqueteEnvio.tamano` (por defecto pequeño); `envios_persona.tamano` y `vehiculos.con_cajon` por COLUMNAS; `POST /datos/conductor/vehiculos` acepta `conCajon` (solo moto). `repartirOperaciones` lee el tamaño con el envío y, si es mediano o grande, mira el vehículo activo de cada candidato. App del cliente: elegir tamaño con su peso (libras en inglés) y qué vehículos lo llevan. Driver: «Mi moto tiene cajón o baúl» al registrar la moto.
+- **Prueba:** `rutas/envios.test.ts` («C-ENVIO-TAMANO», en rojo quitando el filtro).
+
+## C-ENVIO-FOTO-ENTREGA · Foto opcional al entregar un envío, además del PIN (14 nov 2026) — todos los países
+
+- **Cómo funciona:** `POST /datos/conductor/operaciones/:id/foto-paquete?momento=entrega` (solo con el viaje `en_curso`; antes, 409) guarda `envios_persona.foto_entrega`, limpia y con su GPS aparte, como la de recogida. Quien envía ve `paquete.fotoEntrega`. Driver: «Agregar foto de la entrega» junto al PIN, por la pieza común `fotoConCamara` («Tomar foto» o «Subir desde archivos»). El PIN sigue siendo lo que cierra la entrega.
+- **Prueba:** `rutas/envios.test.ts` (409 antes de salir, 201 a bordo, `fotoEntrega: true`).
+- **Guía:** el texto para Docs está en `apps/panel/src/sitio/docs/borradores/viajesProgramadosYEnvios.ts` (lo publica con capturas el desarrollador de guías).

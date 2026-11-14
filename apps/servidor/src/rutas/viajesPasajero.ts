@@ -648,7 +648,7 @@ viajesPasajero.post('/viajes', async (c) => {
 async function paqueteDe(db: D1Database, operacionId: string) {
   const p = await db
     .prepare(
-      'SELECT descripcion, valor_declarado, destinatario_nombre, pin_entrega, recogido_en, entregado_en FROM envios_persona WHERE operacion_id = ?',
+      'SELECT descripcion, valor_declarado, destinatario_nombre, pin_entrega, recogido_en, entregado_en, tamano, foto_entrega FROM envios_persona WHERE operacion_id = ?',
     )
     .bind(operacionId)
     .first<{
@@ -658,6 +658,8 @@ async function paqueteDe(db: D1Database, operacionId: string) {
       pin_entrega: string;
       recogido_en: string | null;
       entregado_en: string | null;
+      tamano: string | null;
+      foto_entrega: string | null;
     }>();
   return p
     ? {
@@ -667,6 +669,8 @@ async function paqueteDe(db: D1Database, operacionId: string) {
         pinEntrega: p.entregado_en ? null : p.pin_entrega,
         recogido: Boolean(p.recogido_en),
         entregado: Boolean(p.entregado_en),
+        tamano: p.tamano ?? 'pequeno',
+        fotoEntrega: Boolean(p.foto_entrega),
       }
     : null;
 }

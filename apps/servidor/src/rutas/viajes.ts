@@ -161,7 +161,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               p.nombre AS pasajero,
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
-              e.foto_recogida IS NOT NULL AS paquete_foto
+              e.foto_recogida IS NOT NULL AS paquete_foto, e.foto_entrega IS NOT NULL AS paquete_foto_entrega,
+              e.tamano AS paquete_tamano
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -676,18 +677,26 @@ async function revisarPaquete(c: Ctx, db: D1Database, id: string, paso: string) 
     .run();
 }
 
-/** C-ENVIOS: la foto del paquete al recogerlo (privada; la ven quien envía y el equipo). */
+/**
+ * C-ENVIOS: la foto del paquete al recogerlo (privada; la ven quien envía y el equipo).
+ * C-ENVIO-FOTO-ENTREGA (14 nov 2026): con `?momento=entrega`, la foto OPCIONAL al entregar, además
+ * del PIN (como la foto de entrega de DoorDash y Uber), solo con el paquete a bordo.
+ */
 viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
   const u = exigir(c, 'repartidor');
   const id = c.req.param('id');
+  const entrega = c.req.query('momento') === 'entrega';
   const db = base(c);
   const es = await db
     .prepare(
-      'SELECT 1 FROM envios_persona p JOIN operaciones o ON o.id = p.operacion_id WHERE p.operacion_id = ? AND o.conductor_id = ?',
+      `SELECT v.estado FROM envios_persona p JOIN operaciones o ON o.id = p.operacion_id
+         JOIN viajes v ON v.operacion_id = o.id WHERE p.operacion_id = ? AND o.conductor_id = ?`,
     )
     .bind(id, u.id)
-    .first();
+    .first<{ estado: string }>();
   if (!es) throw new ErrorDatos('Este envío ya no está asignado a ti.', undefined, 404);
+  if (entrega && es.estado !== 'en_curso')
+    throw new ErrorDatos('La foto de entrega se toma con el paquete a bordo.', undefined, 409);
   const bytes = new Uint8Array(await c.req.arrayBuffer());
   if (bytes.byteLength === 0) throw new ErrorDatos('No llegó ninguna foto.', 'foto', 400);
   if (bytes.byteLength > MAX_FOTO_BYTES)
@@ -700,7 +709,7 @@ viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
       undefined,
       503,
     );
-  const clave = `envios/${id}/recogida-${nuevoId()}`;
+  const clave = `envios/${id}/${entrega ? 'entrega' : 'recogida'}-${nuevoId()}`;
   // C-FOTOS-SIN-METADATOS (SIG-6x): la foto se guarda limpia; el GPS que traía queda aparte como
   // prueba de dónde se recogió el paquete, igual que las evidencias de los pedidos.
   const { gps } = await guardarFoto(c.env.BUCKET, clave, bytes, tipo, {
@@ -708,7 +717,11 @@ viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
   });
   if (gps) await anotarGpsFoto(db, clave, gps);
   await db
-    .prepare('UPDATE envios_persona SET foto_recogida = ? WHERE operacion_id = ?')
+    .prepare(
+      entrega
+        ? 'UPDATE envios_persona SET foto_entrega = ? WHERE operacion_id = ?'
+        : 'UPDATE envios_persona SET foto_recogida = ? WHERE operacion_id = ?',
+    )
     .bind(clave, id)
     .run();
   return c.json({ ok: true }, 201);

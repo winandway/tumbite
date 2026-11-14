@@ -241,6 +241,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-FOTO-CONDUCTOR-MINIATURA (14 nov 2026): la miniatura de la selfie aprobada que ve el pasajero
   // (nunca la original). La hace el panel al aprobar la verificación.
   ['kyc', 'selfie_miniatura', 'TEXT'],
+  // C-ENVIO-TAMANO y C-ENVIO-FOTO-ENTREGA (14 nov 2026): el tamaño del paquete, si la moto lleva
+  // cajón (mediano) y la foto opcional al entregar.
+  ['envios_persona', 'tamano', "TEXT NOT NULL DEFAULT 'pequeno'"],
+  ['envios_persona', 'foto_entrega', 'TEXT'],
+  ['vehiculos', 'con_cajon', 'INTEGER NOT NULL DEFAULT 0'],
   // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
   ...COLUMNAS_RESUMEN_CATALOGO,
 ];

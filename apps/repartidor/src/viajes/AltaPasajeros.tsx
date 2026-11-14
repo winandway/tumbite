@@ -90,6 +90,7 @@ const COMUN = {
     placa: 'Placa',
     estadoPlaca: 'Estado de la placa (dos letras)',
     plazas: 'Plazas para pasajeros',
+    cajon: 'Mi moto tiene cajón o baúl (llevo paquetes medianos, hasta 15 kg)',
     papelesTuyos: 'Tus papeles',
     subir: 'Subir',
     subirOtra: 'Subir otro',
@@ -119,6 +120,7 @@ const COMUN = {
     placa: 'License plate',
     estadoPlaca: 'Plate state (two letters)',
     plazas: 'Passenger seats',
+    cajon: 'My motorcycle has a delivery box (I carry medium packages, up to 15 kg / 33 lb)',
     papelesTuyos: 'Your documents',
     subir: 'Upload',
     subirOtra: 'Upload another',
@@ -439,6 +441,8 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       placa: '',
       placaEstado: '',
       plazas: '4',
+      // C-ENVIO-TAMANO: una moto con cajón lleva paquetes medianos (hasta 15 kg).
+      cajon: 'no',
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
@@ -501,6 +505,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
         placa: v.placa.trim(),
         placaEstado: v.placaEstado.trim(),
         ...(servicio === 'carro' ? { plazas: Number(v.plazas) || 4 } : {}),
+        ...(servicio === 'moto' ? { conCajon: v.cajon === 'si' } : {}),
       });
       // Solo se borra lo escrito cuando el servidor confirmó que el vehículo quedó guardado.
       await b.limpiar();
@@ -665,6 +670,27 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                   })}
                 </View>
               </View>
+            ) : null}
+            {servicio === 'moto' ? (
+              <Pressable
+                onPress={() => b.cambiar('cajon', b.valores.cajon === 'si' ? 'no' : 'si')}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: b.valores.cajon === 'si' }}
+                testID="moto-cajon"
+                style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 }}
+              >
+                <View
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 6,
+                    borderWidth: 2,
+                    borderColor: b.valores.cajon === 'si' ? C.exito : '#8A8A8A',
+                    backgroundColor: b.valores.cajon === 'si' ? C.exito : '#fff',
+                  }}
+                />
+                <Text style={{ flex: 1, color: C.secundario }}>{tc.cajon}</Text>
+              </Pressable>
             ) : null}
             <Boton texto={t.guardar} alTocar={() => void guardar()} />
           </View>
