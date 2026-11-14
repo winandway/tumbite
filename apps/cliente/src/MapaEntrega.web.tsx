@@ -2,12 +2,67 @@ import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
 import { COLORES, crearMapa, punto } from './mapaWeb';
 import type { Punto } from './ubicacion';
+import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
+import { useSesion } from '@tumbite/movil';
+import { LLAVE_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
 /**
  * Mapa en vivo de la entrega en la versión web: restaurante (gris oscuro), tu casa (escarlata)
  * y el repartidor (escarlata grande) que se mueve con cada actualización.
  */
-export function MapaEntrega({
+type Props = {
+  restaurante: Punto | null;
+  casa: Punto | null;
+  repartidor: Punto | null;
+  nombreRepartidor?: string;
+  etiquetas: { restaurante: string; casa: string; repartidor: string };
+};
+
+/**
+ * C-MAPA-GOOGLE-WEB: el restaurante y tu casa vienen de direcciones de Google Places, así que con la
+ * llave del navegador el mapa es el de Google, abierto al tocar «Ver en el mapa». Sin llave, Leaflet.
+ */
+export function MapaEntrega(props: Props) {
+  return proveedorMapaWeb(['google', 'gps']) === 'google' ? (
+    <MapaEntregaGoogle {...props} />
+  ) : (
+    <MapaEntregaLeaflet {...props} />
+  );
+}
+
+function MapaEntregaGoogle({ restaurante, casa, repartidor, nombreRepartidor, etiquetas }: Props) {
+  const { idioma } = useSesion();
+  const centro = repartidor ?? restaurante ?? casa;
+  if (!centro) return null;
+  const puntos = [
+    restaurante && {
+      id: 'restaurante',
+      ...restaurante,
+      color: COLORES.restaurante,
+      radio: 9,
+      etiqueta: etiquetas.restaurante,
+    },
+    casa && { id: 'casa', ...casa, color: COLORES.casa, radio: 8, etiqueta: etiquetas.casa },
+    repartidor && {
+      id: 'repartidor',
+      ...repartidor,
+      color: COLORES.repartidor,
+      radio: 12,
+      etiqueta: nombreRepartidor ?? etiquetas.repartidor,
+    },
+  ].filter((p) => p != null);
+  return (
+    <MapaGoogleBajoDemanda
+      llave={LLAVE_MAPA_WEB}
+      idioma={idioma}
+      centro={centro}
+      puntos={puntos}
+      etiqueta={etiquetas.repartidor}
+    />
+  );
+}
+
+function MapaEntregaLeaflet({
   restaurante,
   casa,
   repartidor,

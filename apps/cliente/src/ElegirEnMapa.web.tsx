@@ -3,22 +3,58 @@ import { Text, View } from 'react-native';
 import type L from 'leaflet';
 import { COLORES, crearMapa, punto as marca } from './mapaWeb';
 import type { Punto } from './ubicacion';
+import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
+import { useSesion } from '@tumbite/movil';
+import { LLAVE_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 
 /**
  * Marcar el punto de entrega en la versión web: se toca el mapa y el pin va ahí.
  * La dirección escrita no se toca (en la web no se busca la calle por el pin).
  */
-export function ElegirEnMapa({
-  punto,
-  cambiarPunto,
-  textos,
-}: {
+type Props = {
   punto: Punto | null;
   cambiarPunto: (p: Punto) => void;
   cambiarDireccion: (direccion: string) => void;
   direccionVacia?: boolean;
   textos: { ayuda: string; buscando: string; pin: string };
-}) {
+};
+
+/**
+ * C-MAPA-GOOGLE-WEB: el punto sale de una dirección sugerida por Google Places, así que con la llave
+ * del navegador se marca sobre el mapa de Google (al tocar «Ver en el mapa»). Sin llave, Leaflet.
+ */
+export function ElegirEnMapa(props: Props) {
+  return proveedorMapaWeb(['google']) === 'google' ? (
+    <ElegirEnMapaGoogle {...props} />
+  ) : (
+    <ElegirEnMapaLeaflet {...props} />
+  );
+}
+
+function ElegirEnMapaGoogle({ punto, cambiarPunto, textos }: Props) {
+  const { idioma } = useSesion();
+  return (
+    <View style={{ marginBottom: 12 }}>
+      <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>{textos.ayuda}</Text>
+      <MapaGoogleBajoDemanda
+        llave={LLAVE_MAPA_WEB}
+        idioma={idioma}
+        centro={punto ?? { lat: 25.7617, lng: -80.1918 }}
+        zoom={punto ? 16 : 12}
+        alto={220}
+        etiqueta={textos.pin}
+        puntos={
+          punto
+            ? [{ id: 'pin', ...punto, color: COLORES.casa, radio: 10, etiqueta: textos.pin }]
+            : []
+        }
+        alTocarMapa={cambiarPunto}
+      />
+    </View>
+  );
+}
+
+function ElegirEnMapaLeaflet({ punto, cambiarPunto, textos }: Props) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
   const pin = useRef<L.CircleMarker | null>(null);
