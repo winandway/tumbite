@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
+import { MENSAJES_POR_MINUTO } from './chatViaje';
 
 /**
  * C-CHAT-VIAJE (14 nov 2026, todos los países): pasajero y conductor se escriben durante el viaje,
@@ -85,5 +86,64 @@ describe('C-CHAT-VIAJE', () => {
     const despues = await m.llamar('GET', `/datos/viajes/${id}/mensajes`, undefined, cliente.token);
     expect(despues.datos).toEqual({ abierto: false, mensajes: [] });
     expect((await escribir(cliente.token, 'Gracias')).estado).toBe(409);
+  });
+
+  it('límite por persona: no se puede inundar el chat', async () => {
+    const { m, cliente, cond, id } = await escenario();
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    for (let i = 0; i < MENSAJES_POR_MINUTO; i++)
+      expect(
+        (
+          await m.llamar(
+            'POST',
+            `/datos/viajes/${id}/mensajes`,
+            { texto: `Hola ${i}` },
+            cliente.token,
+          )
+        ).estado,
+      ).toBe(200);
+    const demas = await m.llamar(
+      'POST',
+      `/datos/viajes/${id}/mensajes`,
+      { texto: 'Otro' },
+      cliente.token,
+    );
+    expect(demas.estado).toBe(429);
+    // El conductor sigue pudiendo responder: el límite es de cada persona.
+    expect(
+      (await m.llamar('POST', `/datos/viajes/${id}/mensajes`, { texto: 'Voy' }, cond.token)).estado,
+    ).toBe(200);
+  });
+
+  it('si el viaje cambia de conductor, el nuevo no ve lo que se habló con el anterior', async () => {
+    const { m, cliente, cond, id } = await escenario();
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    await m.llamar(
+      'POST',
+      `/datos/viajes/${id}/mensajes`,
+      { texto: 'Mensaje viejo' },
+      cliente.token,
+    );
+    await m.DB.prepare("UPDATE mensajes_viaje SET creado_en = datetime('now', '-5 minutes')").run();
+    // El conductor suelta el viaje y lo toma otro.
+    const otro = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    expect(await cond.paso(id, 'liberar')).toBe(200);
+    expect(await otro.paso(id, 'aceptar')).toBe(200);
+    const nuevo = await m.llamar('GET', `/datos/viajes/${id}/mensajes`, undefined, otro.token);
+    expect(nuevo.estado).toBe(200);
+    expect(nuevo.datos.mensajes).toEqual([]);
+    expect(
+      (await m.llamar('GET', `/datos/viajes/${id}/mensajes`, undefined, cond.token)).estado,
+    ).toBe(404);
+    await m.llamar(
+      'POST',
+      `/datos/viajes/${id}/mensajes`,
+      { texto: 'Hola de nuevo' },
+      cliente.token,
+    );
+    const ahora = await m.llamar('GET', `/datos/viajes/${id}/mensajes`, undefined, otro.token);
+    expect((ahora.datos.mensajes as { texto: string }[]).map((x) => x.texto)).toEqual([
+      'Hola de nuevo',
+    ]);
   });
 });

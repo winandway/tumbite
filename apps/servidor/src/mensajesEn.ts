@@ -5,6 +5,11 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // Pulido de la noche del 14 nov (bloque propio)
+  [
+    'Estás enviando muchos mensajes seguidos. Espera un momento.',
+    'You’re sending a lot of messages in a row. Please wait a moment.',
+  ],
   // C-FLEX-EXPORTAR y Flex Fase 7 (bloque propio)
   ['Cursor inválido.', 'Invalid cursor.'],
   ['Esa lista no se puede exportar.', 'That list can’t be exported.'],
