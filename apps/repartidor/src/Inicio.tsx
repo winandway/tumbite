@@ -40,6 +40,7 @@ import {
   usaMillas,
   LATIDO_UBICACION_MS,
   cuerpoUbicacion,
+  paraEnviarUbicacion,
   modoRastreo,
   tocaMandarSegunModo,
 } from '@tumbite/compartido';
@@ -753,7 +754,11 @@ export function Inicio() {
       const cuerpo = cuerpoUbicacion(p);
       if (!forzar && !tocaMandarSegunModo(modoGps, ultimoEnvio, cuerpo)) return;
       ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };
-      return api.pedir('POST', '/datos/repartidor/ubicacion', cuerpo).catch(() => undefined);
+      // C-LATIDO-UBICACION: viaja con la hora de la lectura y la del envío; el servidor no cuenta
+      // como señal nueva una lectura vieja.
+      return api
+        .pedir('POST', '/datos/repartidor/ubicacion', paraEnviarUbicacion(cuerpo))
+        .catch(() => undefined);
     };
     // GPS en segundo plano (punto 23): sigue mandando posición con la pantalla apagada o detrás del
     // mapa. La primera vez, una explicación antes del cuadro del sistema (como Dasher).
@@ -780,9 +785,14 @@ export function Inicio() {
     // quite un pedido aceptado. El servidor escribe como mucho una vez por latido.
     const latido = setInterval(() => {
       void (async () => {
+        // Se pide una lectura NUEVA (quieto, el GPS no avisa nada). Si el GPS no da, se manda la
+        // última con su hora real y el servidor no la toma por señal viva (C-LATIDO-UBICACION).
         const p =
-          ultimaLectura.current ?? (await Location.getLastKnownPositionAsync().catch(() => null));
+          (await ubicacionConLimite()) ??
+          ultimaLectura.current ??
+          (await Location.getLastKnownPositionAsync().catch(() => null));
         if (!vivo || !p) return;
+        ultimaLectura.current = p;
         await mandar(p, true);
       })();
     }, LATIDO_UBICACION_MS);

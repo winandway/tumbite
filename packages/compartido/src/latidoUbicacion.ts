@@ -8,6 +8,19 @@ import { metrosEntre, type Punto } from './llegada';
  */
 export const LATIDO_UBICACION_MS = 120_000;
 
+/**
+ * C-LATIDO-UBICACION (revisión del 13 nov 2026): una lectura del GPS con más de 90 segundos no
+ * cuenta como señal nueva. El servidor no refresca «última señal» con ella: el cliente debe ver
+ * «señal perdida», no a un repartidor quieto que parece vivo.
+ */
+export const LECTURA_VIEJA_MS = 90_000;
+
+/** Edad de una lectura según el propio celular (los dos tiempos del mismo reloj). Sin datos, 0. */
+export function edadLecturaMs(d: { leidaEn?: number | null; enviadaEn?: number | null }): number {
+  if (d.leidaEn == null || d.enviadaEn == null) return 0;
+  return Math.max(0, d.enviadaEn - d.leidaEn);
+}
+
 /** Metros desde el último envío a partir de los cuales se manda en seguida. */
 export const MOVIDO_LATIDO_M = 25;
 

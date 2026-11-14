@@ -5,6 +5,7 @@ import { URL_SERVIDOR, leerTokenGuardado } from '@tumbite/movil';
 import {
   colaUbicacion,
   cuerpoUbicacion,
+  paraEnviarUbicacion,
   necesitaExplicacionPrevia,
   tocaMandarSegunModo,
   type ModoRastreo,
@@ -55,7 +56,8 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
     const r = await fetch(`${URL_SERVIDOR}/datos/repartidor/ubicacion`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify(cuerpo),
+      // C-LATIDO-UBICACION: con la hora de la lectura; una lectura de la cola ya vieja no cuenta.
+      body: JSON.stringify(paraEnviarUbicacion(cuerpo)),
     });
     if (r.status === 401) await detenerUbicacionFondo();
     else if (r.ok) ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };

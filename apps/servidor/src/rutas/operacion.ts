@@ -60,6 +60,8 @@ import {
   segundosDesde,
   senalPerdida,
   acercaAlDestino,
+  LECTURA_VIEJA_MS,
+  edadLecturaMs,
 } from '@tumbite/compartido';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
@@ -136,6 +138,9 @@ const puntoConPrecision = punto.extend({
   precision: z.number().min(0).max(100_000).nullable().optional(),
   /** Android marca la ubicación simulada («mock»); G2: nunca cuenta para llegar ni mueve la ficha. */
   simulada: z.boolean().optional(),
+  /** C-LATIDO-UBICACION: hora de la lectura y del envío, los dos del reloj del celular (ms). */
+  leidaEn: z.number().int().min(0).optional(),
+  enviadaEn: z.number().int().min(0).optional(),
 });
 
 // ======================= Restaurante =======================
@@ -1547,6 +1552,9 @@ operacion.post('/repartidor/ubicacion', async (c) => {
       await anotarEvento(db, activo.id, 'gps_simulado', `${d.lat.toFixed(4)},${d.lng.toFixed(4)}`);
     return c.json({ ok: true, simulada: true });
   }
+  // C-LATIDO-UBICACION: una lectura vieja (el celular reenvía la última que tenía) no es señal
+  // nueva. No se guarda ni refresca «última señal»: el cliente ve «señal perdida».
+  if (edadLecturaMs(d) > LECTURA_VIEJA_MS) return c.json({ ok: true, lecturaVieja: true });
   const { muestras, salto } = await guardarMuestra(db, u.id, d);
   if (salto) {
     // No se mueve la ficha ni cuenta para los hitos; queda anotado en el pedido activo.

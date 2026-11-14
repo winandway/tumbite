@@ -3939,6 +3939,65 @@ describe('C-SEGUIMIENTO-HONESTO', () => {
     expect(sin.senalPerdida).toBe(true);
     expect(sin.haceSegundos).toBeGreaterThanOrEqual(119);
   });
+
+  it('C-LATIDO-UBICACION: una lectura vieja reenviada no refresca la última señal; el cliente ve «señal perdida»', async () => {
+    const { m, cliente, pedidoPagado, repartidor } = await escenario();
+    const id = await pedidoPagado();
+    const rep = await repartidor('Rafa Latido', 25.781, -80.201);
+    for (const estado of ['aceptado', 'listo', 'en_camino'])
+      await m.DB.prepare(
+        "UPDATE pedidos SET estado = ?, repartidor_id = ?, aceptado_en = datetime('now') WHERE id = ?",
+      )
+        .bind(estado, rep.id, id)
+        .run();
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now', '-3 minutes') WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .run();
+    const senal = async () =>
+      (await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)).datos
+        .pedido.repartidor;
+    expect((await senal()).senalPerdida).toBe(true);
+    // El celular manda la misma lectura de hace 3 minutos (con su reloj adelantado una hora: la
+    // edad sale de sus dos tiempos, no del reloj del servidor).
+    const reloj = Date.now() + 3_600_000;
+    const vieja = await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { lat: 25.781, lng: -80.201, precision: 8, leidaEn: reloj - 180_000, enviadaEn: reloj },
+      rep.token,
+    );
+    expect(vieja.estado).toBe(200);
+    expect(vieja.datos.lecturaVieja).toBe(true);
+    expect((await senal()).senalPerdida).toBe(true);
+    // Una lectura de hace 5 segundos sí cuenta.
+    const nueva = await m.llamar(
+      'POST',
+      '/datos/repartidor/ubicacion',
+      { lat: 25.781, lng: -80.201, precision: 8, leidaEn: reloj - 5_000, enviadaEn: reloj },
+      rep.token,
+    );
+    expect(nueva.datos.lecturaVieja).toBeUndefined();
+    expect((await senal()).senalPerdida).toBe(false);
+  });
+
+  it('C-LATIDO-UBICACION: una app vieja que no manda la hora de la lectura sigue como antes', async () => {
+    const { m, repartidor } = await escenario();
+    const rep = await repartidor('Rafa Viejo', 25.781, -80.201);
+    await m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now', '-3 minutes') WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .run();
+    await m.llamar('POST', '/datos/repartidor/ubicacion', { lat: 25.781, lng: -80.201 }, rep.token);
+    const f = await m.DB.prepare(
+      "SELECT ubicacion_en >= datetime('now', '-10 seconds') AS fresca FROM repartidores WHERE usuario_id = ?",
+    )
+      .bind(rep.id)
+      .first<{ fresca: number }>();
+    expect(f?.fresca).toBe(1);
+  });
 });
 
 describe('C-CALIFICA-CLIENTE', () => {

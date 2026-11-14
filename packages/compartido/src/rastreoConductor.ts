@@ -46,18 +46,35 @@ export type CuerpoUbicacion = {
   lng: number;
   precision: number | null;
   simulada: boolean;
+  /**
+   * C-LATIDO-UBICACION: hora (reloj del celular, ms) en que el GPS hizo esta lectura. Viaja con
+   * `enviadaEn` (mismo reloj) para que el servidor sepa su edad aunque el reloj del celular esté mal.
+   */
+  leidaEn?: number;
 };
+
+/** Lo que de verdad viaja: la lectura más la hora del envío (mismo reloj que `leidaEn`). */
+export function paraEnviarUbicacion(
+  cuerpo: CuerpoUbicacion,
+  ahora = Date.now(),
+): CuerpoUbicacion & { enviadaEn: number } {
+  return { ...cuerpo, enviadaEn: ahora };
+}
 
 /** Lo único que viaja al servidor: posición, precisión y si el propio celular la marca simulada. */
 export function cuerpoUbicacion(l: {
   coords: { latitude: number; longitude: number; accuracy?: number | null };
   mocked?: boolean;
+  timestamp?: number;
 }): CuerpoUbicacion {
   return {
     lat: l.coords.latitude,
     lng: l.coords.longitude,
     precision: l.coords.accuracy ?? null,
     simulada: l.mocked === true,
+    ...(typeof l.timestamp === 'number' && Number.isFinite(l.timestamp)
+      ? { leidaEn: Math.round(l.timestamp) }
+      : {}),
   };
 }
 
