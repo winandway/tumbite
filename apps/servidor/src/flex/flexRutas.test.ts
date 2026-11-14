@@ -1035,13 +1035,17 @@ describe('Flex · incidencias, devoluciones y cierre (C-FLEX-DEVOLUCIONES)', () 
     await expect(
       m.DB.prepare("UPDATE rutas_flex SET estado = 'borrador' WHERE id = ?").bind(rutaId).run(),
     ).rejects.toThrow(/transicion_de_ruta_no_permitida/);
-    // El seguimiento público no muestra la ubicación del conductor.
+    // El seguimiento público no muestra coordenadas, salvo (orden de Richard, 13 nov 2026,
+    // C-FLEX-SEGUIMIENTO-PLUS) la posición APROXIMADA del conductor cuando el paquete es la
+    // próxima parada: redondeada a 3 decimales (unos 100 m). Nunca la del destinatario.
     const seg = await llamar(
       m,
       'GET',
       `${B}/seguimiento/${paradas[0].paquetes[0].codigoSeguimiento}`,
     );
-    expect(JSON.stringify(seg.datos)).not.toMatch(/lat|lng/);
+    const { cerca, ...resto } = seg.datos.seguimiento;
+    expect(JSON.stringify(resto)).not.toMatch(/lat|lng/);
+    if (cerca) for (const n of [cerca.lat, cerca.lng]) expect(Math.round(n * 1000) / 1000).toBe(n);
   });
 });
 

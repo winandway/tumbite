@@ -39,6 +39,21 @@ const T = {
       cancelado: 'Cancelado',
     } as Record<string, string>,
     privado: 'Por tu privacidad, aquí no mostramos direcciones ni nombres.',
+    llegada: 'Llegada estimada',
+    proxima: 'Eres la próxima parada.',
+    faltan: 'Faltan {n} paradas antes de la tuya.',
+    mapa: 'Dónde va el conductor ahora (aproximado)',
+    lugar: 'Dónde quedó',
+    lugares: {
+      destinatario: 'Entregado en mano',
+      recepcion: 'En la recepción o con el conserje',
+      puerta: 'En la puerta',
+      buzon: 'En el buzón',
+      otro: 'En otro lugar seguro',
+    } as Record<string, string>,
+    fotoEnEnlace: 'La foto de la entrega la ves en el enlace que te enviamos.',
+    noEstaras:
+      '¿No vas a estar? Usa el enlace que te envió la empresa para dejar instrucciones o confirmar tu ubicación, o escríbele a la empresa que te envía el paquete.',
   },
   en: {
     titulo: 'Track your package',
@@ -63,6 +78,21 @@ const T = {
       cancelado: 'Canceled',
     } as Record<string, string>,
     privado: 'For your privacy, we don’t show addresses or names here.',
+    llegada: 'Estimated arrival',
+    proxima: 'You’re the next stop.',
+    faltan: '{n} stops before yours.',
+    mapa: 'Where the driver is now (approximate)',
+    lugar: 'Where it was left',
+    lugares: {
+      destinatario: 'Handed to you',
+      recepcion: 'At the front desk or with the concierge',
+      puerta: 'At the door',
+      buzon: 'In the mailbox',
+      otro: 'In another safe place',
+    } as Record<string, string>,
+    fotoEnEnlace: 'You can see the delivery photo in the link we sent you.',
+    noEstaras:
+      'Won’t be home? Use the link the company sent you to leave instructions or confirm your location, or contact the company sending the package.',
   },
 };
 
@@ -71,11 +101,100 @@ type Seguimiento = {
   estado: string;
   final: boolean;
   eventos: { tipo: string; creadoEn: string }[];
+  llegadaEstimada?: string | null;
+  paradasAntes?: number | null;
+  cerca?: { lat: number; lng: number; actualizadoEn: string } | null;
+  entrega?: { lugar: string | null; fotoEnEnlace: boolean; entregadoEn: string } | null;
 };
+
+/**
+ * C-FLEX-SEGUIMIENTO-PLUS: un mapa liviano con las teselas públicas de OpenStreetMap (3 × 3, sin
+ * biblioteca ni llave) y un punto donde va el conductor. Solo la posición aproximada del conductor
+ * (no es un dato de Google Places), nunca la dirección de destino.
+ */
+export function teselasOsm(lat: number, lng: number, zoom = 15) {
+  const n = 2 ** zoom;
+  const x = ((lng + 180) / 360) * n;
+  const rad = (lat * Math.PI) / 180;
+  const y = ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n;
+  const cx = Math.floor(x);
+  const cy = Math.floor(y);
+  const teselas = [-1, 0, 1].flatMap((dy) =>
+    [-1, 0, 1].map((dx) => ({
+      url: `https://tile.openstreetmap.org/${zoom}/${cx + dx}/${cy + dy}.png`,
+      col: dx + 1,
+      fila: dy + 1,
+    })),
+  );
+  // Posición del punto dentro del mosaico de 768 × 768 px.
+  return { teselas, punto: { x: (x - cx + 1) * 256, y: (y - cy + 1) * 256 } };
+}
+
+function MapaConductor({ lat, lng, etiqueta }: { lat: number; lng: number; etiqueta: string }) {
+  const { teselas, punto } = teselasOsm(lat, lng);
+  return (
+    <figure style={{ margin: '12px 0' }}>
+      <div
+        role="img"
+        aria-label={etiqueta}
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: 384,
+          aspectRatio: '1',
+          overflow: 'hidden',
+          borderRadius: 12,
+          border: '1px solid #2a2a2a',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            width: 768,
+            height: 768,
+            left: `calc(50% - ${punto.x}px)`,
+            top: `calc(50% - ${punto.y}px)`,
+          }}
+        >
+          {teselas.map((t) => (
+            <img
+              key={t.url}
+              src={t.url}
+              alt=""
+              width={256}
+              height={256}
+              style={{ position: 'absolute', left: t.col * 256, top: t.fila * 256 }}
+            />
+          ))}
+        </div>
+        <span
+          style={{
+            position: 'absolute',
+            left: 'calc(50% - 9px)',
+            top: 'calc(50% - 9px)',
+            width: 18,
+            height: 18,
+            borderRadius: 9,
+            background: '#1F4D69',
+            border: '3px solid #fff',
+            boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+          }}
+        />
+      </div>
+      <figcaption className="pista">
+        {etiqueta} · ©{' '}
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">
+          OpenStreetMap
+        </a>
+      </figcaption>
+    </figure>
+  );
+}
 
 export function Seguimiento({ codigo, idioma }: { codigo: string | null; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const estados = new Map(Object.entries(t.estados));
+  const lugares = new Map(Object.entries(t.lugares));
   // Regla de la casa: ningún formulario pierde lo escrito (aunque sea un número de guía).
   const b = useBorrador({
     formulario: 'rastreo',
@@ -115,7 +234,8 @@ export function Seguimiento({ codigo, idioma }: { codigo: string | null; idioma:
     return () => clearTimeout(r);
   }, [codigo, buscar]);
 
-  const fecha = (s: string) => new Date(`${s.replace(' ', 'T')}Z`).toLocaleString(idioma);
+  const fecha = (s: string) =>
+    new Date(s.includes('T') ? s : `${s.replace(' ', 'T')}Z`).toLocaleString(idioma);
   const pasos = (datos?.eventos ?? []).filter((e) => estados.has(e.tipo));
   return (
     <main className="ticket seguimiento">
@@ -158,6 +278,33 @@ export function Seguimiento({ codigo, idioma }: { codigo: string | null; idioma:
             </span>{' '}
             · {datos.codigo}
           </p>
+          {datos.llegadaEstimada && !datos.final ? (
+            <p>
+              <strong>{t.llegada}:</strong> {fecha(datos.llegadaEstimada)}
+            </p>
+          ) : null}
+          {datos.paradasAntes != null && !datos.final ? (
+            <p>
+              {datos.paradasAntes === 0
+                ? t.proxima
+                : t.faltan.replace('{n}', String(datos.paradasAntes))}
+            </p>
+          ) : null}
+          {datos.cerca ? (
+            <MapaConductor lat={datos.cerca.lat} lng={datos.cerca.lng} etiqueta={t.mapa} />
+          ) : null}
+          {datos.entrega ? (
+            <>
+              {datos.entrega.lugar ? (
+                <p>
+                  <strong>{t.lugar}:</strong>{' '}
+                  {lugares.get(datos.entrega.lugar) ?? datos.entrega.lugar}
+                </p>
+              ) : null}
+              {datos.entrega.fotoEnEnlace ? <p className="pista">{t.fotoEnEnlace}</p> : null}
+            </>
+          ) : null}
+          {!datos.final ? <p className="pista">{t.noEstaras}</p> : null}
           <h2>{t.historial}</h2>
           <ol className="ticket-hilo">
             {pasos

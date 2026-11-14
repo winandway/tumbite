@@ -10,6 +10,19 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Divoox Flex · Fase 7 (13 nov 2026, orden de Richard; rama `fase-flex-7`) — todos los países
+
+- [x] HECHO 13 nov (C-FLEX-EXPORTAR) Exportar a CSV envíos, paquetes, rutas, incidencias, devoluciones y movimientos con los filtros puestos, por índice y sin escribir. Todos los países.
+- [x] HECHO 13 nov (C-FLEX-RECARGA-LOCAL) Recargas de la billetera de la empresa con pago local verificadas y acreditadas una vez por Divoox; apagadas por país. Venezuela y países sin Stripe.
+- [x] HECHO 13 nov (C-FLEX-RUTA-CALLES) Km, duración y hora estimada reales al confirmar la ruta: ceil(N/11) consultas a Google contra el tope compartido. Todos los países.
+- [x] HECHO 13 nov (C-FLEX-NAVEGAR-RUTA) «Navegar la ruta» en Google Maps con hasta 10 paradas por tramo. Todos los países.
+- [x] HECHO 13 nov (C-MAPA-GOOGLE-WEB-DRIVER) Mapas web del Driver con la pieza de Google cuando hay puntos de Places y llave. Todos los países.
+- [x] HECHO 13 nov (C-FLEX-EXCEL) Importar desde Excel en el navegador y plantilla descargable. Todos los países.
+- [x] HECHO 13 nov (C-FLEX-SEGUIMIENTO-PLUS) Rastreo público con hora estimada, paradas antes, conductor cerca y foto de entrega. Todos los países.
+- [ ] [para: desarrollador] Guías públicas de Docs (español e inglés) con capturas REALES en local de lo nuevo de la Fase 7: exportar (en «flex-import-and-labels» o guía propia), recargas con pago local (El Vigía, Venezuela), tiempos reales y «Navegar la ruta» (Novi/Detroit), rastreo mejorado (en «flex-tracking»), importar Excel. Falta tomar las capturas con el recorrido local. Todos los países.
+- [ ] [para: revisor-calidad] Revisar la rama `fase-flex-7` (siete piezas, una por commit) antes de integrarla. Todos los países.
+- Anotado, NO construido (orden de Richard): servicio logístico completo con pagos a conductores de la red, WhatsApp Business automático, WebSocket en tiempo real, conectores con tiendas en línea, reprogramar desde el rastreo público.
+
 ## Cierre de apps (13 nov 2026, orden de Richard; rama `fase-cierre-apps`) — todos los países salvo lo marcado
 
 - [x] HECHO 13 nov (C-GPS-PANTALLA-APAGADA) ubicación del conductor con la pantalla apagada por modo (pedido, viaje, ruta), explicación previa y cola corta. Falta comprobarlo en un teléfono Android real (ahorro de batería de cada marca, app deslizada fuera de recientes).

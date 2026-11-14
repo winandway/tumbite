@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
+import { RecargasLocalesAdmin } from './flex/RecargaLocal';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -287,6 +288,7 @@ export function SuperFinanzas({
       <Politicas t={t} idioma={idioma} />
       <Cancelaciones idioma={idioma} />
       <LimitesRecarga t={t} idioma={idioma} />
+      <RecargasLocalesAdmin idioma={idioma} />
       <Empresas t={t} idioma={idioma} base={base} />
       <Conciliacion t={t} />
       <Simulador t={t} idioma={idioma} />

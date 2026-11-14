@@ -33,6 +33,8 @@ export const TIPOS_DUAL = [
   'umbral',
   // ETP-3: excusar un día de la conciliación que no cuadró (lo pide uno, lo aprueba otro).
   'excusa_conciliacion',
+  // Flex Fase 7 (C-FLEX-RECARGA-LOCAL): acreditar una recarga de empresa pagada fuera de Stripe.
+  'recarga_local',
 ] as const;
 export type TipoDual = (typeof TIPOS_DUAL)[number];
 
@@ -178,6 +180,10 @@ export async function ejecutarDual(
       const { excusarDia } = await import('../rutas/excepcionesConciliacion');
       return excusarDia(db, d, actorId, aprobadorId);
     }
+    case 'recarga_local': {
+      const { acreditarRecargaLocal } = await import('../flex/recargasLocales');
+      return acreditarRecargaLocal(db, texto(d, 'recargaId'), aprobadorId ?? actorId);
+    }
     case 'umbral': {
       const pedidos = z
         .record(z.string(), z.number().int().min(0))
@@ -219,13 +225,15 @@ async function monedaYMonto(
       ? await una('SELECT moneda FROM pedidos WHERE id = ?')
       : tipo === 'reembolso_recarga'
         ? await una('SELECT moneda FROM recargas_empresa WHERE id = ?')
-        : tipo === 'ajuste_billetera'
-          ? await una('SELECT moneda FROM empresas WHERE id = ?')
-          : tipo === 'fondo_punto'
-            ? await una('SELECT moneda FROM puntos_venta WHERE id = ?')
-            : await una(
-                "SELECT p.moneda, l.monto FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.estado <> 'capturada'",
-              );
+        : tipo === 'recarga_local'
+          ? await una('SELECT moneda FROM recargas_locales_empresa WHERE id = ?')
+          : tipo === 'ajuste_billetera'
+            ? await una('SELECT moneda FROM empresas WHERE id = ?')
+            : tipo === 'fondo_punto'
+              ? await una('SELECT moneda FROM puntos_venta WHERE id = ?')
+              : await una(
+                  "SELECT p.moneda, l.monto FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.estado <> 'capturada'",
+                );
   if (!f) return null;
   return {
     moneda: f.moneda || 'USD',

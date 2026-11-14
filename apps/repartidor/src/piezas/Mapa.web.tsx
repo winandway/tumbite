@@ -1,13 +1,75 @@
 import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
 import { COLORES, type Punto, type ZonaDemanda, crearMapa, punto, zona } from './mapaWeb';
+import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
+import { origenesMapaDriver } from '@tumbite/compartido/src/mapaDriverWeb';
+import { useSesion } from '@tumbite/movil';
+import { LLAVE_MAPA_WEB, proveedorMapaWeb } from '../flex/mapaGoogleWeb';
 
 /**
  * Mapa del repartidor en la versión web (Leaflet con OpenStreetMap, sin llave): su ubicación en
  * escarlata, los restaurantes cercanos, el restaurante del pedido y la casa con la ruta. Con
  * `zonasDemanda`, las zonas con más pedidos ahora (C-MAPA-DEMANDA), debajo de todo lo demás.
  */
-export function Mapa({
+type PropsMapa = Parameters<typeof MapaLeaflet>[0];
+
+/**
+ * C-MAPA-GOOGLE-WEB: el restaurante, la casa y los restaurantes cercanos vienen de direcciones de
+ * Google Places; con la llave del navegador el mapa es el de Google, abierto al tocar «Ver en el
+ * mapa». Solo la ubicación del conductor (GPS) o sin llave: Leaflet, como siempre. Las zonas con
+ * más pedidos se dibujan solo en Leaflet.
+ */
+export function Mapa(props: PropsMapa) {
+  return proveedorMapaWeb(origenesMapaDriver(props)) === 'google' ? (
+    <MapaGoogle {...props} />
+  ) : (
+    <MapaLeaflet {...props} />
+  );
+}
+
+function MapaGoogle({ yo, restaurante, casa, marcadores = [], alto = 300, etiquetas }: PropsMapa) {
+  const { idioma } = useSesion();
+  const centro = yo ?? restaurante ?? casa ?? marcadores[0]?.punto;
+  if (!centro) return null;
+  const puntos = [
+    ...marcadores.map((x) => ({
+      id: `m-${x.id}`,
+      ...x.punto,
+      color: COLORES.restaurante,
+      radio: 8,
+      etiqueta: x.nombre,
+    })),
+    ...(restaurante
+      ? [
+          {
+            id: 'restaurante',
+            ...restaurante,
+            color: COLORES.restaurante,
+            radio: 9,
+            etiqueta: etiquetas.restaurante,
+          },
+        ]
+      : []),
+    ...(casa
+      ? [{ id: 'casa', ...casa, color: COLORES.casa, radio: 9, etiqueta: etiquetas.casa }]
+      : []),
+    ...(yo
+      ? [{ id: 'yo', ...yo, color: COLORES.repartidor, radio: 12, etiqueta: etiquetas.yo }]
+      : []),
+  ];
+  return (
+    <MapaGoogleBajoDemanda
+      llave={LLAVE_MAPA_WEB}
+      idioma={idioma}
+      centro={centro}
+      puntos={puntos}
+      alto={alto}
+      etiqueta={etiquetas.yo}
+    />
+  );
+}
+
+function MapaLeaflet({
   yo,
   restaurante,
   casa,

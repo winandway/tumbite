@@ -64,6 +64,7 @@ export * from './identidadUnica';
 export * from './seguridadViaje';
 export * from './masRestaurante';
 export * from './flexTextos';
+export * from './flexNavegacion';
 export * from './calificacionPublica';
 export * from './menuPlanilla';
 export * from './opcionesFormulario';

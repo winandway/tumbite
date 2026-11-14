@@ -223,10 +223,10 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
     ).run();
     await DB.exec('DROP TABLE aprobaciones_dinero');
     await DB.exec(
-      APROBACIONES_DINERO_DDL.replace(
-        ", 'excedente_devuelto', 'umbral', 'excusa_conciliacion'",
-        '',
-      ).replace(/\n/g, ' '),
+      // Las tablas viejas de producción tampoco tenían «recarga_local» (Flex Fase 7).
+      APROBACIONES_DINERO_DDL.replace(", 'recarga_local'", '')
+        .replace(", 'excedente_devuelto', 'umbral', 'excusa_conciliacion'", '')
+        .replace(/\n/g, ' '),
     );
     await DB.prepare(
       "INSERT INTO aprobaciones_dinero (id, tipo, objeto, monto, moneda, datos, pedido_por) VALUES ('a1', 'fondo_punto', 'p1', 5, 'USD', '{}', 'u1')",
@@ -249,7 +249,9 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
     ).run();
     await DB.exec('DROP TABLE aprobaciones_dinero');
     await DB.exec(
-      APROBACIONES_DINERO_DDL.replace(", 'excusa_conciliacion'", '').replace(/\n/g, ' '),
+      APROBACIONES_DINERO_DDL.replace(", 'recarga_local'", '')
+        .replace(", 'excusa_conciliacion'", '')
+        .replace(/\n/g, ' '),
     );
     await DB.prepare(
       "INSERT INTO aprobaciones_dinero (id, tipo, objeto, monto, moneda, datos, pedido_por) VALUES ('a1', 'umbral', 'umbrales:USD', 5, 'USD', '{}', 'u1')",
