@@ -17,6 +17,7 @@ import { flexRetencion } from './automatizacion';
 import { flexExportar } from './exportar';
 import { flexRecargasLocales } from './recargasLocales';
 import { flexRutaCalles } from './rutaCalles';
+import { flexSeguimientoPublico } from './seguimientoPublico';
 import { despues } from './avisosFlex';
 import { finanzasEmpresa } from '../finanzas/rutasEmpresa';
 
@@ -56,4 +57,5 @@ flex.route('/', flexRetencion);
 flex.route('/', flexExportar);
 flex.route('/', flexRecargasLocales);
 flex.route('/', flexRutaCalles);
+flex.route('/', flexSeguimientoPublico);
 flex.route('/', finanzasEmpresa);
