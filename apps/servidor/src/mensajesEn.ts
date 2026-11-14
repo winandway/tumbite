@@ -1853,6 +1853,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'El destino está demasiado lejos para este servicio.',
     'The destination is too far for this service.',
   ],
+  // Divoox Carro (rama fase-carro-1, 13 nov 2026).
+  ['No hay foto para mostrar.', 'There’s no photo to show.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

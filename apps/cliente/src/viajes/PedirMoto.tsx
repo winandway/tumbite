@@ -410,7 +410,15 @@ export function PedirMoto({
             </Text>
           ) : null}
           <Boton
-            texto={servicio === 'envios' ? t.pedirEnvio : t.pedirMoto}
+            texto={
+              servicio === 'envios'
+                ? t.pedirEnvio
+                : servicio === 'carro'
+                  ? v.categoria === 'xl'
+                    ? t.pedirCarroXl
+                    : t.pedirCarro
+                  : t.pedirMoto
+            }
             alTocar={() => void pedir()}
             cargando={trabajando}
             exito

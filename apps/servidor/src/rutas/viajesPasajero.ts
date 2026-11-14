@@ -20,6 +20,7 @@ import {
   METODOS_PAGO_VIAJE,
   tarifaDeMercado,
   distanciaKm,
+  estimarRuta,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
@@ -756,6 +757,10 @@ type FilaViajeCliente = {
   pm_identificador: string | null;
   pm_estado: string | null;
   pais: string | null;
+  categoria: string | null;
+  vehiculo_tipo: string | null;
+  plazas: number | null;
+  conductor_foto: number | null;
 };
 
 async function viajeDelCliente(
@@ -771,7 +776,10 @@ async function viajeDelCliente(
               CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
               q.total, q.moneda, q.tarifa_json,
               u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
-              h.marca, h.modelo, h.color, h.placa,
+              h.marca, h.modelo, h.color, h.placa, h.tipo AS vehiculo_tipo, h.plazas, v.categoria,
+              -- C-CARRO-VIAJE-PASAJERO: la foto es la selfie verificada (como Uber), solo si está aprobada.
+              (SELECT 1 FROM kyc ky WHERE ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
+                 AND ky.selfie IS NOT NULL) AS conductor_foto,
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
               pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
@@ -801,6 +809,25 @@ function tarifaDeCopia(json: string | null) {
   }
 }
 
+/**
+ * C-CARRO-VIAJE-PASAJERO: minutos que faltan, como la hora estimada de Uber, sin consultar a Google en
+ * cada refresco: distancia en línea recta desde la posición del conductor hasta la recogida (si viene
+ * en camino) o hasta el destino (en curso), por el factor de calle y la velocidad de la tarifa copiada
+ * en la cotización. Aproximado; la app lo dice como «unos N min».
+ */
+function minutosEstimados(f: FilaViajeCliente, t: ReturnType<typeof tarifaDeCopia>) {
+  if (!t || f.conductor_lat == null || f.conductor_lng == null) return null;
+  const hacia =
+    f.estado === 'asignado'
+      ? { lat: f.origen_lat, lng: f.origen_lng }
+      : f.estado === 'en_curso'
+        ? { lat: f.destino_lat, lng: f.destino_lng }
+        : null;
+  if (!hacia) return null;
+  const r = estimarRuta(t, { lat: f.conductor_lat, lng: f.conductor_lng }, hacia);
+  return Math.max(1, Math.round(r.duracionS / 60));
+}
+
 function viajePublico(f: FilaViajeCliente) {
   const t = tarifaDeCopia(f.tarifa_json);
   const cargo = t ? cargoCancelacionViaje(t, f.estado, f.segundos_asignado) : null;
@@ -808,6 +835,7 @@ function viajePublico(f: FilaViajeCliente) {
   return {
     id: f.id,
     servicio: f.servicio_id,
+    categoria: f.categoria ?? 'estandar',
     estado: f.estado,
     // El código solo lo ve el pasajero, y solo hasta que empieza el viaje.
     pin:
@@ -827,7 +855,16 @@ function viajePublico(f: FilaViajeCliente) {
               f.conductor_lat != null && f.conductor_lng != null
                 ? { lat: f.conductor_lat, lng: f.conductor_lng }
                 : null,
-            vehiculo: { marca: f.marca, modelo: f.modelo, color: f.color, placa: f.placa },
+            vehiculo: {
+              tipo: f.vehiculo_tipo,
+              marca: f.marca,
+              modelo: f.modelo,
+              color: f.color,
+              placa: f.placa,
+              plazas: f.plazas,
+            },
+            llegadaMin: minutosEstimados(f, t),
+            foto: f.conductor_foto === 1,
           }
         : null,
     // C-PAGO-MOVIL-VIAJE: a quién se le paga y si el conductor ya confirmó que le llegó.
@@ -921,6 +958,30 @@ viajesPasajero.get('/viajes/:id', async (c) => {
       destino: viaje.destino,
       conductor: viaje.conductor?.ubicacion ?? null,
     }),
+  });
+});
+
+/**
+ * C-CARRO-VIAJE-PASAJERO: la foto del conductor (su selfie verificada) para el pasajero de ESE viaje,
+ * solo mientras el conductor viene o lo lleva. Privada y sin caché compartida.
+ */
+viajesPasajero.get('/viajes/:id/conductor/foto', async (c) => {
+  const u = exigir(c, 'cliente');
+  const f = await base(c)
+    .prepare(
+      `SELECT ky.selfie FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         JOIN kyc ky ON ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
+        WHERE o.id = ? AND o.cliente_id = ? AND v.estado IN ('asignado', 'conductor_llego', 'en_curso')`,
+    )
+    .bind(c.req.param('id'), u.id)
+    .first<{ selfie: string | null }>();
+  const obj = f?.selfie && c.env.BUCKET ? await c.env.BUCKET.get(f.selfie) : null;
+  if (!obj) throw new ErrorDatos('No hay foto para mostrar.', undefined, 404);
+  return new Response(obj.body, {
+    headers: {
+      'content-type': obj.httpMetadata?.contentType ?? 'image/jpeg',
+      'cache-control': 'private, no-store',
+    },
   });
 });
 

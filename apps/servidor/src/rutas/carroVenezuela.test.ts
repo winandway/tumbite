@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CIUDAD_EL_VIGIA as EVG } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
+import { conductorDeMoto } from '../pruebas/conductorMoto';
 
 /**
  * Divoox Carro (taxi) listo para probar — 13 nov 2026. Venezuela (El Vigía, estado Mérida: efectivo
@@ -247,5 +248,82 @@ describe('C-CARRO-POR-PAIS: Carro en Venezuela se abre en producción por la mis
     // Cerrarla apaga Carro en sus ciudades.
     expect((await abrir(e, 'VE', { abierto: false })).estado).toBe(200);
     expect((await cotizarCarro(e, { lat: EVG.lat, lng: EVG.lng + 0.03 })).estado).toBe(409);
+  });
+});
+
+describe('C-CARRO-VIAJE-PASAJERO: la pantalla del viaje dice lo de cada servicio', () => {
+  const MIAMI = { lat: 25.7617, lng: -80.1918, direccion: 'Punto de recogida' };
+  it('el viaje en carro trae servicio, categoría, vehículo con plazas, llegada estimada y la foto verificada del conductor', async () => {
+    const e = await escenario();
+    for (const r of [
+      '/datos/admin/servicios/carro',
+      '/datos/admin/servicios/carro/zonas/US-FL-MIAMI',
+    ])
+      expect((await e.m.llamar('PUT', r, { estado: 'disponible' }, e.admin.token)).estado).toBe(
+        200,
+      );
+    await e.m.llamar(
+      'POST',
+      '/datos/admin/viajes/tarifas',
+      {
+        servicio: 'carro',
+        zona: 'US-FL-MIAMI',
+        tarifa: { base: 300, porKm: 120, porMinuto: 25, minimo: 800 },
+        motivo: 'Tarifa de prueba',
+      },
+      e.admin.token,
+    );
+    // El conductor está a unos 2 km del punto de recogida.
+    const carro = await conductorDeMoto(e.m, { lat: 25.78, lng: -80.1918 }, 'US-FL-MIAMI', 'carro');
+    await e.m.extra.BUCKET.put(`kyc/${carro.id}/selfie.jpg`, JPEG, {
+      httpMetadata: { contentType: 'image/jpeg' },
+    });
+    await e.m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado, doc_tipo, selfie) VALUES (?, 'aprobado', 'licencia', ?)",
+    )
+      .bind(carro.id, `kyc/${carro.id}/selfie.jpg`)
+      .run();
+    const cot = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes/cotizar',
+        {
+          servicio: 'carro',
+          origen: MIAMI,
+          destino: { lat: 25.79, lng: -80.13, direccion: 'Destino' },
+        },
+        e.cliente.token,
+      )
+    ).datos.cotizacion;
+    const id = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes',
+        { cotizacionId: cot.id, metodoPago: 'efectivo' },
+        e.cliente.token,
+      )
+    ).datos.viaje.id as string;
+    await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
+    expect(await carro.paso(id, 'aceptar')).toBe(200);
+    const v = (await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token)).datos
+      .viaje;
+    expect(v.servicio).toBe('carro');
+    expect(v.categoria).toBe('estandar');
+    expect(v.conductor.vehiculo).toMatchObject({ tipo: 'carro', marca: 'Toyota', plazas: 4 });
+    // 2 km × 1,3 por calle a 24 km/h: unos 7 minutos.
+    expect(v.conductor.llegadaMin).toBeGreaterThanOrEqual(5);
+    expect(v.conductor.llegadaMin).toBeLessThanOrEqual(9);
+    expect(v.conductor.foto).toBe(true);
+    const foto = await e.m.crudo(`/datos/viajes/${id}/conductor/foto`, {
+      headers: { authorization: `Bearer ${e.cliente.token}` },
+    });
+    expect(foto.status).toBe(200);
+    expect(foto.headers.get('cache-control')).toContain('private');
+    // Otro pasajero no ve la foto de ese conductor.
+    const otro = await e.m.cuenta('cliente', 'Otro Pasajero');
+    const ajena = await e.m.crudo(`/datos/viajes/${id}/conductor/foto`, {
+      headers: { authorization: `Bearer ${otro.token}` },
+    });
+    expect(ajena.status).toBe(404);
   });
 });

@@ -35,3 +35,24 @@ describe('C-CARRO-ALTA-DRIVER: el taxista se da de alta en Driver', () => {
     expect(s).toMatch(/Divoox Car'/);
   });
 });
+
+/** C-CARRO-VIAJE-PASAJERO: la app del pasajero dice lo de cada servicio (candado sobre el código). */
+describe('C-CARRO-VIAJE-PASAJERO: el pasajero ve lo de su servicio', () => {
+  it('«Pedir» dice Moto, Carro o Carro XL; el casco solo en Moto', () => {
+    const s = leer('apps/cliente/src/viajes/PedirMoto.tsx');
+    expect(s).toMatch(/t\.pedirCarroXl/);
+    expect(s).toMatch(/t\.pedirCarro\b/);
+    expect(s).toMatch(
+      /servicio === 'carro' \? t\.avisoCarro : servicio === 'envios' \? t\.avisoEnvio : t\.casco/,
+    );
+  });
+
+  it('el viaje rotula el vehículo por servicio y muestra foto, plazas y llegada estimada', () => {
+    const s = leer('apps/cliente/src/viajes/ViajeEnCurso.tsx');
+    expect(s).not.toMatch(/\{t\.moto\}:/);
+    expect(s).toMatch(/nombreVehiculo/);
+    expect(s).toMatch(/<FotoConductor/);
+    expect(s).toMatch(/t\.plazas\(moto\.plazas\)/);
+    expect(s).toMatch(/t\.llegaEn\(llegada\)/);
+  });
+});
