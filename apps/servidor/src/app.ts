@@ -98,6 +98,8 @@ import { correoConfigurado, ultimoErrorCorreo } from './correo';
 import { ultimoErrorAviso } from './notificaciones';
 // C-AVISOS-WEB (13 nov 2026): avisos de las apps instaladas desde el navegador.
 import { rutasAvisosWeb, saludAvisosWeb } from './avisosWeb';
+// C-TASA-BCV-AUTO (14 nov 2026): canario de la tasa oficial automática de Venezuela.
+import { saludTasaBcv } from './rutas/tasasReferencia';
 import { smsConfigurado, ultimoErrorSms } from './sms';
 import { saludDinero } from './conciliacion';
 import { excepcionesConciliacion } from './rutas/excepcionesConciliacion';
@@ -269,6 +271,12 @@ app.get('/datos/salud', async (c) => {
   piezas.avisosCelular = ultimoErrorAviso ? 'error' : 'ok';
   // C-AVISOS-WEB: sin llaves VAPID, «pendiente».
   piezas.avisosWeb = saludAvisosWeb(c.env);
+  // C-TASA-BCV-AUTO: «pendiente» mientras no se haya tomado nunca; «error» si la última quedó retenida.
+  if (c.env.DB)
+    piezas.tasaBcv = await saludTasaBcv(c.env.DB).catch((e: unknown) => {
+      console.error('salud: tasa bcv', e);
+      return 'error' as const;
+    });
   piezas.sms = !smsConfigurado(c.env) ? 'pendiente' : ultimoErrorSms ? 'error' : 'ok';
   // C-LECTURAS-SALUD: los disparadores en UNA lectura de sqlite_master para las cuatro piezas que
   // los miran (antes, cuatro recorridos). Si falla, cada pieza vuelve a preguntar por su cuenta.
