@@ -8,7 +8,7 @@ Las reglas globales de Richard aplican; estas se suman.
 > Sus palabras: _«no podemos arrancar en Venezuela si la marca por lo menos no está en proceso de registro… lo mismo cuenta para Estados Unidos»_.
 
 - Antes de encender cualquier servicio en producción para un país, la marca Divoox (nombre y logo) tiene que estar al menos presentada para registro en ese país, en la clase principal más cercana a lo que hacemos. Las demás clases se agregan después.
-- Venezuela primero; Estados Unidos en cuanto alcance el presupuesto. El trámite lo hacemos nosotros mismos, por la vía más económica. Plan y estado: `docs/PLAN-REGISTRO-DE-MARCA.md`.
+- Estados Unidos primero (cambio del 14 nov 2026, por consejo del contador de Richard: trámite transparente y su fecha da seis meses de prioridad en Venezuela por el Convenio de París); Venezuela en paralelo y siempre dentro de esos seis meses. Cada país sigue necesitando su propia solicitud presentada antes de encenderse. El trámite lo hacemos nosotros mismos, por la vía más económica. Plan y estado: `docs/PLAN-REGISTRO-DE-MARCA.md`.
 - Pagar las tasas y firmar la solicitud es de Richard; todo lo demás (búsqueda, formularios listos, archivos del logo) es de la IA.
 
 ## NO ES UN MVP: SE TERMINA CADA PANTALLA Y SOLO SE MUESTRA LO TERMINADO (REGLA PRINCIPAL, Richard, 3 nov 2026)

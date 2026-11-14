@@ -1,6 +1,18 @@
-# Plan para registrar la marca Divoox (Venezuela primero, Estados Unidos después)
+# Plan para registrar la marca Divoox (Estados Unidos primero, Venezuela enseguida)
 
 Investigado el 13 de noviembre de 2026 con fuentes oficiales y despachos de abogados (lista al final). Regla de Richard: no se arranca en un país sin la marca al menos presentada para registro ahí.
+
+## Cambio de orden (14 de noviembre de 2026, decisión de Richard por consejo de su contador)
+
+Primero se presenta en Estados Unidos y, en paralelo y enseguida, en Venezuela. Motivos:
+
+1. En Estados Unidos el trámite es transparente y lo hace Richard solo, en línea, sin intermediarios. En Venezuela hace falta una persona allá y hay riesgo de estafa.
+2. La fecha de la solicitud de Estados Unidos sirve en Venezuela: por el Convenio de París hay seis meses para presentar allá reclamando esa primera fecha (prioridad). Quien registre «Divoox» en Venezuela después de nuestra fecha de Estados Unidos queda detrás de nosotros, siempre que presentemos dentro de esos seis meses. Este es el beneficio fuerte.
+3. La solicitud de Estados Unidos también sirve de prueba si alguien registra la misma marca de mala fe en otro país. Ayuda, pero la mala fe hay que demostrarla y la marca solo protege en el país donde está registrada: no reemplaza la solicitud en Venezuela.
+
+La regla no cambia: no se enciende un país sin la marca presentada EN ese país. Moto y Carro en Venezuela siguen esperando el número de solicitud venezolano.
+
+Fecha límite que nace al presentar en Estados Unidos: seis meses exactos para presentar en Venezuela con prioridad. Se anota aquí el día que se presente.
 
 ## Estado
 
