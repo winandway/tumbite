@@ -14,6 +14,16 @@ La tarifa se escribe en el mismo formulario: banderazo, por kilómetro, por minu
 
 Los detalles de la tarifa (espera, cancelación, redondeo, Carro XL, tope del valor de un paquete) se ajustan después en «Moto · Viajes».
 
+![El formulario «Abrir un servicio de viajes en una ciudad» en el panel del equipo](capturas/ciudad-abrir-servicio-es.png)
+
+### Motos y carros por revisar
+
+En la misma pantalla, la cola «Motos y carros por revisar» trae cada vehículo que un conductor envió desde su app: tipo (Moto o Carro), plazas, placa y cada papel con su foto. Se aprueba papel por papel, después el vehículo con «Aprobar el carro» (o la moto), y al final se habilita al conductor para el servicio. Rechazar está en los tres puntos del vehículo y pide el motivo, que el conductor ve en su app.
+
+![La cola «Motos y carros por revisar» con un carro de cuatro plazas y sus papeles](capturas/ciudad-vehiculos-por-revisar-es.png)
+
+Capturas reales del servidor local (El Vigía, datos de prueba), tomadas con `node scripts/recorrido/capturas-carro.mjs`; están también en inglés (`-en.png`). No van a Docs públicos: el panel del equipo es interno.
+
 ## Un estado o un país entero
 
 El radio llega hasta cien kilómetros. Para cubrir algo más grande, como todo Michigan, se abre la ciudad con su centro y después, en la lista de ciudades, se entra a «Áreas de cobertura» y se dibuja el contorno del estado como un área. Un punto dentro de un área activa cuenta como dentro de la ciudad, aunque quede lejos del centro. Así, un viaje de Novi a Lansing cotiza igual que uno dentro de Detroit. Ojo: apenas la ciudad tiene un área publicada, deja de contar el círculo del radio y solo se atiende dentro de las áreas activas, así que el contorno tiene que cubrir todo lo que se quiere atender.
