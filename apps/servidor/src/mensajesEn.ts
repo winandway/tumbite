@@ -7,6 +7,10 @@
 export const MENSAJES_EN = new Map<string, string>([
   // Pulido de la noche del 14 nov (bloque propio)
   [
+    'Este pedido se paga por pago móvil: confírmalo con «Sí, me llegó» o «No me llegó».',
+    'This order is paid by Pago Móvil: confirm it with “Yes, the mobile payment arrived” or “It didn’t arrive.”',
+  ],
+  [
     'Estás enviando muchos mensajes seguidos. Espera un momento.',
     'You’re sending a lot of messages in a row. Please wait a moment.',
   ],

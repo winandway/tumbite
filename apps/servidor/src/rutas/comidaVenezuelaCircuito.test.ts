@@ -345,6 +345,16 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
         .bind(`pago-movil-pedido:${id}`)
         .first<{ estado: string }>();
     expect((await caso())?.estado).toBe('abierta');
+    // El «no me llegó» no se salta por la ruta de «cobré» con el monto completo: se corrige UNA vez.
+    const f0 = await w.fila(id);
+    const salto = await w.e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/cobre`,
+      { montoRecibido: Number(f0?.total) - Number(f0?.propina) },
+      rep.token,
+    );
+    expect(salto.estado).toBe(409);
+    expect((await caso())?.estado).toBe('abierta');
     const corrige = await w.e.m.llamar(
       'POST',
       `/datos/repartidor/pedidos/${id}/pago-movil`,

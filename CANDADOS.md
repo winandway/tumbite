@@ -4181,3 +4181,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** el seguimiento (`GET /datos/pedidos/:id/seguimiento`, `rutas/operacion.ts`) devuelve `motivoCancelacion: 'no_pago'` cuando `cobro_estado = 'no_pagado'`; `entrega` sale `mano` para todo pedido que no es con tarjeta (`rutas/pedidos.ts`, también los viejos). En la app del cliente (`app/order/[id].tsx`) los pedidos de pago directo usan `motivosDirecto` («No se te cobró nada», o la deuda pendiente si no pagó); los textos de devolución a la tarjeta quedan solo para tarjeta.
 - **Prueba:** `rutas/comidaVenezuelaCircuito.test.ts` («el cliente no pagó…»), rojo comprobado con el código anterior.
 - **No tocar:** no se cambia la `entrega` guardada al crear el pedido (el paso de entregar en la puerta del circuito lo usa); solo lo que se muestra.
+
+## C-PAGO-MOVIL-UNA-CORRECCION · Driver: pago móvil solo con su sí o no; «Cobré» no salta la corrección (14 nov 2026) — Venezuela
+
+- **Qué se rompió:** en un pedido por pago móvil, Driver mostraba a la vez «Cobré» (con la casilla del monto) y «Sí, me llegó el pago móvil»; además quien marcaba «No me llegó» podía tocar «Cobré» con el monto completo y saltarse la corrección única de 30 minutos (el caso de la bandeja quedaba abierto y el cobro, confirmado).
+- **Arreglo:** `apps/repartidor/src/Inicio.tsx` calcula `pagoMovilActivo` (transferencia del repartidor fuera de EE. UU.): con pago móvil solo «Sí, me llegó» / «No me llegó» (y «El cliente no pagó»); con efectivo, el monto y «Cobré». En el servidor, `POST /datos/repartidor/pedidos/:id/cobre` (`rutas/internacional.ts`) responde 409 si el pedido ya tiene su fila en `pedidos_pago_movil`.
+- **Pruebas:** `rutas/comidaVenezuelaCircuito.test.ts` («no me llegó…»: el salto por «cobré» da 409 y el caso sigue abierto) y `packages/compartido/src/cobroPagoMovilDriver.test.ts` (estructura de la pantalla). Las dos en rojo comprobado.

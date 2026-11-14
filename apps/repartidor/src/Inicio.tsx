@@ -2306,6 +2306,10 @@ export function Inicio() {
                     }
                     // En la puerta. En mano: el cliente lo recibe (sin foto). En la puerta: foto.
                     const enMano = activo.entrega === 'mano';
+                    const pagoMovilActivo =
+                      activo.metodoPago === 'transferencia_repartidor' &&
+                      Boolean(activo.pais) &&
+                      activo.pais !== 'US';
                     const avisoMs = activo.noApareceEn
                       ? Date.parse(`${activo.noApareceEn.replace(' ', 'T')}Z`)
                       : null;
@@ -2369,22 +2373,26 @@ export function Inicio() {
                                 <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
                                   {tg.pedido.propinaAparte}
                                 </Text>
-                                <TextInput
-                                  value={montoCobro}
-                                  onChangeText={setMontoCobro}
-                                  placeholder={tg.pedido.recibi}
-                                  accessibilityLabel={tg.pedido.recibi}
-                                  keyboardType="decimal-pad"
-                                  style={e.input}
-                                />
-                                <Boton
-                                  texto={tg.pedido.cobre}
-                                  alTocar={() => void cobre(activo.id)}
-                                  exito
-                                />
-                                {activo.metodoPago === 'transferencia_repartidor' &&
-                                activo.pais &&
-                                activo.pais !== 'US' ? (
+                                {/* C-PAGO-MOVIL-UNA-CORRECCION: con pago móvil solo va su
+                                    confirmación (sí o no); «Cobré» y el monto son del efectivo. */}
+                                {!pagoMovilActivo ? (
+                                  <>
+                                    <TextInput
+                                      value={montoCobro}
+                                      onChangeText={setMontoCobro}
+                                      placeholder={tg.pedido.recibi}
+                                      accessibilityLabel={tg.pedido.recibi}
+                                      keyboardType="decimal-pad"
+                                      style={e.input}
+                                    />
+                                    <Boton
+                                      texto={tg.pedido.cobre}
+                                      alTocar={() => void cobre(activo.id)}
+                                      exito
+                                    />
+                                  </>
+                                ) : null}
+                                {pagoMovilActivo ? (
                                   <>
                                     <Boton
                                       texto={tg.pedido.pagoMovilSi}
@@ -2408,7 +2416,8 @@ export function Inicio() {
                                     />
                                   </>
                                 ) : null}
-                                {activo.metodoPago === 'transferencia_repartidor' ? (
+                                {activo.metodoPago === 'transferencia_repartidor' &&
+                                !pagoMovilActivo ? (
                                   <Boton
                                     texto={tg.pedido.transferPendiente}
                                     alTocar={() =>

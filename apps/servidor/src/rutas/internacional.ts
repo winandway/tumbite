@@ -397,6 +397,19 @@ internacional.post('/repartidor/pedidos/:id/cobre', async (c) => {
       nota: z.string().trim().max(300).default(''),
     }),
   );
+  // C-PAGO-MOVIL-UNA-CORRECCION (14 nov 2026, Venezuela): quien marcó «no me llegó» el pago móvil
+  // solo lo corrige por su camino (una vez, dentro de 30 minutos, cerrando el caso abierto); «cobré»
+  // no sirve para saltárselo con el monto completo.
+  const pm = await base(c)
+    .prepare('SELECT estado FROM pedidos_pago_movil WHERE pedido_id = ?')
+    .bind(c.req.param('id'))
+    .first<{ estado: string }>();
+  if (pm)
+    throw new ErrorDatos(
+      'Este pedido se paga por pago móvil: confírmalo con «Sí, me llegó» o «No me llegó».',
+      undefined,
+      409,
+    );
   const estado = await confirmarCobro(base(c), {
     pedidoId: c.req.param('id'),
     repartidorId: u.id,
