@@ -30,6 +30,42 @@ async function clienteStripe(env: Env, db: D1Database, u: Usuario) {
   return { stripe, cliente: c.id };
 }
 
+/**
+ * C-VIAJE-PROGRAMADO: a la hora de un viaje reservado con tarjeta, la autorización se hace con la
+ * tarjeta guardada, sin la persona delante (como Uber Reserve). El aviso firmado de Stripe la marca
+ * autorizada y el viaje pasa a buscar conductor por el camino de siempre. Si Stripe la rechaza,
+ * lanza el error y quien llama cancela sin cargo.
+ */
+export async function autorizarViajeProgramado(
+  env: Env,
+  db: D1Database,
+  p: { operacionId: string; cliente: string; pm: string; monto: number; moneda: string },
+) {
+  const stripe = crearStripe(env.STRIPE_SECRET_KEY);
+  if (!stripe)
+    throw new ErrorDatos('Los pagos con tarjeta todavía no están activados.', undefined, 422);
+  const intento = await stripe.post<{ id: string; status?: string }>(
+    '/payment_intents',
+    {
+      amount: p.monto,
+      currency: p.moneda.toLowerCase(),
+      customer: p.cliente,
+      payment_method: p.pm,
+      off_session: true,
+      confirm: true,
+      capture_method: 'manual',
+      description: 'Divoox · viaje programado',
+      metadata: { viaje_id: p.operacionId },
+    },
+    `viaje-${p.operacionId}`,
+  );
+  await db
+    .prepare('INSERT OR IGNORE INTO cobros_viaje (operacion_id, stripe_pago) VALUES (?, ?)')
+    .bind(p.operacionId, intento.id)
+    .run();
+  return intento;
+}
+
 /** Abre el cobro: autorización por el precio fijo. La app paga con la hoja de pago de siempre. */
 export async function abrirCobroViaje(
   env: Env,

@@ -3,6 +3,9 @@ import { Pressable, Text, View } from 'react-native';
 import {
   type CotizacionViaje,
   ErrorApi,
+  PAQUETE_MAX_KG,
+  TAMANOS_PAQUETE,
+  type TamanoPaquete,
   type Idioma,
   enIdioma,
   formatearMonto,
@@ -26,6 +29,7 @@ import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
+import { ElegirCuando, MisProgramados, horaCorta } from './Programar';
 
 const distancia = (m: number, i: Idioma) =>
   i === 'en' ? `${((m / 1000) * 0.621371).toFixed(1)} mi` : `${(m / 1000).toFixed(1)} km`;
@@ -64,24 +68,41 @@ export function PedirMoto({
       categoria: 'estandar',
       // C-ENVIOS: qué se envía y quién lo recibe.
       paqueteDescripcion: '',
+      // C-ENVIO-TAMANO: sobre, pequeño, mediano o grande.
+      paqueteTamano: 'pequeno',
       paqueteValor: '',
       destinatarioNombre: '',
       destinatarioTelefono: '',
       sinProhibidos: false,
+      // C-VIAJE-PROGRAMADO: '' = ahora; si no, la hora reservada (ISO).
+      cuando: '',
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
   const { valores: v, cambiar } = b;
+  // C-ENVIO-TAMANO: «Mediano · 15 kg» (en libras en inglés).
+  const textoTamano = (x: TamanoPaquete) => {
+    const kg = new Map(Object.entries(PAQUETE_MAX_KG)).get(x) ?? 0;
+    const nombre = new Map(Object.entries(t.tamanos)).get(x) ?? x;
+    return `${nombre} · ${idioma === 'en' ? `${Math.round(kg * 2.2)} lb` : `${kg} kg`}`;
+  };
   // C-CARRO-VIAJE-PASAJERO: cada servicio dice lo suyo en el botón.
   const textoPedirViaje =
     servicio === 'carro' ? (v.categoria === 'xl' ? t.pedirCarroXl : t.pedirCarro) : t.pedirMoto;
+  // C-VIAJE-PROGRAMADO: con hora elegida, el botón dice «Reservar».
+  const textoPedir = v.cuando ? t.reservar : textoPedirViaje;
+  const textoEnviar = v.cuando ? t.reservar : t.pedirEnvio;
   const [cotizacion, setCotizacion] = useState<CotizacionViaje | null>(null);
   const [error, setError] = useState('');
   const [trabajando, setTrabajando] = useState(false);
   // C-VIAJE-TARJETA: con tarjeta, el cobro abierto y la hoja de pago de siempre (la de Comida).
   const [cobro, setCobro] = useState<(Cobro & { viajeId: string }) | null>(null);
   const tarjeta = v.metodo === 'tarjeta';
+  // C-VIAJE-PROGRAMADO: la reserva hecha (para el aviso verde) y la lista que se refresca.
+  const [reservado, setReservado] = useState<string | null>(null);
+  const [vueltaLista, setVueltaLista] = useState(0);
+  const cuando = v.cuando;
 
   // La recogida arranca en la ubicación de ahora (se puede mover en el mapa de recogida).
   useEffect(() => {
@@ -153,31 +174,43 @@ export function PedirMoto({
         return setError(t.faltaDatosEnvio);
       if (!v.sinProhibidos) return setError(t.faltaProhibidos);
     }
+    // Una hora recuperada del borrador que ya quedó muy cerca se vuelve a elegir.
+    if (cuando && Date.parse(cuando) < Date.now() + 30 * 60_000) {
+      cambiar('cuando', '');
+      return setError(t.eligeHora);
+    }
     setTrabajando(true);
     try {
-      const r = await api.pedir<{ viaje: { id: string }; pago?: Omit<Cobro, 'pedidoId'> }>(
-        'POST',
-        '/datos/viajes',
-        {
-          cotizacionId: cotizacion.id,
-          // Un método recuperado del borrador que esta ciudad no tiene vuelve a efectivo.
-          metodoPago: (cotizacion.metodosPago ?? ['efectivo', 'tarjeta']).some(
-            (m) => m === v.metodo,
-          )
-            ? v.metodo
-            : 'efectivo',
-          ...(servicio === 'envios'
-            ? {
-                paquete: {
-                  descripcion: v.paqueteDescripcion,
-                  valorDeclarado: textoAMonto(v.paqueteValor || '0', cotizacion.moneda),
-                  destinatario: { nombre: v.destinatarioNombre, telefono: v.destinatarioTelefono },
-                  sinProhibidos: v.sinProhibidos,
-                },
-              }
-            : {}),
-        },
-      );
+      const r = await api.pedir<{
+        viaje: { id: string; programadoPara?: string };
+        pago?: Omit<Cobro, 'pedidoId'>;
+        programado?: boolean;
+      }>('POST', '/datos/viajes', {
+        cotizacionId: cotizacion.id,
+        // Un método recuperado del borrador que esta ciudad no tiene vuelve a efectivo.
+        metodoPago: (cotizacion.metodosPago ?? ['efectivo', 'tarjeta']).some((m) => m === v.metodo)
+          ? v.metodo
+          : 'efectivo',
+        ...(servicio === 'envios'
+          ? {
+              paquete: {
+                descripcion: v.paqueteDescripcion,
+                tamano: v.paqueteTamano || 'pequeno',
+                valorDeclarado: textoAMonto(v.paqueteValor || '0', cotizacion.moneda),
+                destinatario: { nombre: v.destinatarioNombre, telefono: v.destinatarioTelefono },
+                sinProhibidos: v.sinProhibidos,
+              },
+            }
+          : {}),
+        ...(cuando ? { programadoPara: cuando } : {}),
+      });
+      if (r.programado) {
+        await b.limpiar();
+        setCotizacion(null);
+        setReservado(r.viaje.programadoPara ?? cuando);
+        setVueltaLista((n) => n + 1);
+        return;
+      }
       if (r.pago) {
         setCobro({ ...r.pago, pedidoId: r.viaje.id, viajeId: r.viaje.id });
         return;
@@ -196,6 +229,21 @@ export function PedirMoto({
   return (
     <View style={{ gap: 12 }}>
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
+      {reservado ? (
+        <Tarjeta>
+          <View testID="viaje-reservado" style={{ gap: 4 }}>
+            <Text style={{ color: C.exito, fontWeight: '700', fontSize: 18 }}>
+              {servicio === 'envios' ? t.reservadoEnvio : t.reservado}
+            </Text>
+            <Text style={{ color: C.secundario }}>{t.reservadoAyuda}</Text>
+            <Text style={{ color: '#5E5E5E' }}>
+              {t.cancelaGratis}{' '}
+              {horaCorta(new Date(Date.parse(reservado) - 60 * 60_000).toISOString(), idioma)}
+            </Text>
+          </View>
+        </Tarjeta>
+      ) : null}
+      <MisProgramados recargar={vueltaLista} />
       {/* C-DIRECCION-SUGERENCIAS: recogida y destino con direcciones reales y su punto exacto. */}
       <CampoDireccion
         etiqueta={t.recogida}
@@ -269,6 +317,7 @@ export function PedirMoto({
           />
         </View>
       ) : null}
+      <ElegirCuando valor={cuando} cambiar={(iso) => cambiar('cuando', iso)} />
       {cotizacion ? (
         <Tarjeta>
           <View testID="moto-precio" style={{ gap: 4 }}>
@@ -360,6 +409,25 @@ export function PedirMoto({
                 returnKeyType="done"
                 placeholder={t.paqueteQueEjemplo}
               />
+              <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.paqueteTamano}</Text>
+              <View
+                style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}
+                accessibilityRole="radiogroup"
+                testID="envio-tamano"
+              >
+                {TAMANOS_PAQUETE.map((x) => (
+                  <Pildora
+                    key={x}
+                    texto={textoTamano(x)}
+                    activa={(v.paqueteTamano || 'pequeno') === x}
+                    alTocar={() => cambiar('paqueteTamano', x)}
+                    rol="radio"
+                  />
+                ))}
+              </View>
+              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                {new Map(Object.entries(t.tamanoAyuda)).get(v.paqueteTamano || 'pequeno') ?? ''}
+              </Text>
               <Campo
                 etiqueta={t.paqueteValor}
                 value={v.paqueteValor}
@@ -413,7 +481,7 @@ export function PedirMoto({
             </Text>
           ) : null}
           <Boton
-            texto={servicio === 'envios' ? t.pedirEnvio : textoPedirViaje}
+            texto={servicio === 'envios' ? textoEnviar : textoPedir}
             alTocar={() => void pedir()}
             cargando={trabajando}
             exito

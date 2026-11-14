@@ -78,6 +78,18 @@ async function aWebp(img: ImageBitmap, lado: number, calidad: number): Promise<B
   return new Promise<Blob | null>((ok) => lienzo.toBlob(ok, 'image/webp', calidad));
 }
 
+/**
+ * C-FOTO-CONDUCTOR-MINIATURA: la miniatura WebP (200 px) de la selfie aprobada del conductor, la única
+ * que ve el pasajero. Sin WebP en el navegador, null (no se guarda nada y el pasajero no ve foto).
+ */
+export async function miniaturaWebp(foto: Blob): Promise<Blob | null> {
+  if (typeof createImageBitmap !== 'function') return null;
+  const img = await createImageBitmap(foto).catch(() => null);
+  if (!img) return null;
+  const b = await aWebp(img, TAMANOS_FOTO.miniatura.lado, TAMANOS_FOTO.miniatura.calidad);
+  return b && b.type === 'image/webp' ? b : null;
+}
+
 /** Reduce la foto en el navegador (máx. 1200 px, WebP) antes de subirla (verificación). */
 export async function reducirFoto(archivo: File): Promise<Blob> {
   const img = await abrirFoto(archivo);

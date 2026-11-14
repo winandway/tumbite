@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
+import { textoParaConductor } from './viajesHistorial';
 
 /**
  * C-VIAJES-HISTORIAL (13 nov 2026) — todos los países. «Mis viajes» del pasajero y del conductor, el
@@ -181,6 +182,37 @@ describe('C-VIAJES-AYUDA: ayuda con el viaje adjunto y objeto olvidado', () => {
     // El recibo del pasajero dice que ya hay un caso abierto.
     const rec = await e.m.llamar('GET', `/datos/viajes/${v.id}/recibo`, undefined, e.cliente.token);
     expect(rec.datos.ayuda).toEqual([{ motivo: 'objeto_olvidado', ticketId: r.datos.ticketId }]);
+  });
+
+  it('C-OLVIDE-ALGO-UNA-VEZ: dos toques a la vez dejan UN ticket; el conductor ve un texto corto sin teléfonos ni enlaces', async () => {
+    const e = await escenario();
+    const v = await viajeTerminado(e);
+    const largo = `Mi celular +1 (305) 555-0199, escríbeme a ana@correo.com o mira www.ejemplo.com/x ${'y'.repeat(200)}`;
+    const pedir = () =>
+      e.m.llamar(
+        'POST',
+        `/datos/viajes/${v.id}/ayuda`,
+        { motivo: 'objeto_olvidado', detalle: largo },
+        e.cliente.token,
+      );
+    const [a, b] = await Promise.all([pedir(), pedir()]);
+    expect(a.datos.ticketId).toBe(b.datos.ticketId);
+    const n = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM tickets WHERE usuario_id = ? AND datos_json LIKE '%objeto_olvidado%'",
+    )
+      .bind(e.cliente.id)
+      .first<{ n: number }>();
+    expect(n?.n).toBe(1);
+    const suya = await e.m.llamar(
+      'GET',
+      '/datos/conductor/viajes/historial',
+      undefined,
+      e.cond.token,
+    );
+    const detalle = String(suya.datos.objetosOlvidados[0]?.detalle ?? '');
+    expect(detalle.length).toBeLessThanOrEqual(140);
+    expect(detalle).not.toMatch(/555|0199|@|www\.|ejemplo\.com/);
+    expect(textoParaConductor('Dejé una sombrilla azul')).toBe('Dejé una sombrilla azul');
   });
 
   it('solo el pasajero de ese viaje y dentro de 30 días', async () => {

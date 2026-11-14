@@ -4024,7 +4024,7 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 ### C-CARRO-TARIFA-VE · Tarifa de mercado de Carro y Carro XL en Venezuela
 
 - **Qué protege:** que abrir Carro en una ciudad venezolana sea un paso del panel con precios del mercado local, y que la comisión del prepago rija en dólares.
-- **Cómo funciona:** `TARIFA_CARRO_VENEZUELA` (compartido, centavos de dólar: base 1,50; 0,45/km; 0,06/min; mínimo 3,50; XL × 1,5) y `tarifaDeMercado(pais, servicio)` (Moto y Carro en Venezuela). `POST /datos/admin/viajes/ciudades` la usa si no se escribe otra; el panel la muestra de solo lectura y trae el botón «Usar El Vigía» (`CIUDAD_EL_VIGIA`, `VE-VIG-CENTRO`). La comisión es `prepago-ve-car-usd` (el mismo 10 % ya aprobado; no se inventó otro porcentaje). `comisionTipicaMoto` (las «carreras que te alcanzan» del saldo) usa la tarifa de Carro cuando la ciudad no tiene Moto. El pago móvil es el mismo de Moto.
+- **Cómo funciona:** `TARIFA_CARRO_VENEZUELA` (compartido, centavos de dólar: base 1,50; 0,45/km; 0,06/min; mínimo 3,50; XL × 1,5) y `tarifaDeMercado(pais, servicio)` (Moto y Carro en Venezuela). `POST /datos/admin/viajes/ciudades` la usa si no se escribe otra; el panel la muestra de solo lectura y trae el botón «Usar El Vigía» (`CIUDAD_EL_VIGIA`, la misma zona `VE-MER-ELVIGIA` de Comida: C-EL-VIGIA-UNA-ZONA). La comisión es `prepago-ve-car-usd` (el mismo 10 % ya aprobado; no se inventó otro porcentaje). `comisionTipicaMoto` (las «carreras que te alcanzan» del saldo) usa la tarifa de Carro cuando la ciudad no tiene Moto. El pago móvil es el mismo de Moto.
 - **Prueba:** `rutas/carroVenezuela.test.ts` («C-CARRO-TARIFA-VE», 3) y `SuperMoto.test.tsx` («C-CARRO-TARIFA-VE»); comprobadas en rojo (422 sin tarifa, 0 en la comisión típica).
 - **No tocar:** no cambiar el porcentaje sin Richard; la tarifa es de prueba y se ajusta con la práctica, con su fuente en la ficha.
 
@@ -4104,3 +4104,65 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Nunca:** la dirección de destino, el nombre, el teléfono, la firma ni el documento de nadie. Sin escrituras al mirar. Reprogramar o cambiar instrucciones con solo el número de guía NO existe a propósito (cualquiera con el número podría cambiarlas); eso va por el enlace con token de la empresa.
 - **Cambio a un candado anterior:** C-FLEX-SEGUIMIENTO decía que el rastreo no mostraba la ubicación del conductor; por la orden de Richard del 13 nov 2026 («mapa cuando el conductor está cerca») ahora se muestra SOLO la posición aproximada (3 decimales) cuando el paquete es la próxima parada. `flexRutas.test.ts` se ajustó a esa regla (nada más con coordenadas en la respuesta y la del conductor redondeada).
 - **Pruebas:** `flex/seguimientoPublico.test.ts` (paradas antes, hora, conductor cerca solo para la próxima parada — en rojo quitando esa condición —, ubicación vieja oculta, nada privado en la respuesta, la foto da 404 con el número de guía y 200 con el token, 14 días) y `panel/sitio/Seguimiento.test.tsx`.
+
+## C-EL-VIGIA-UNA-ZONA · Una sola zona de pruebas en El Vigía para todos los servicios (14 nov 2026) — Venezuela
+
+- **Qué se rompió:** la integración dejó dos ciudades de pruebas en El Vigía: Comida en `VE-MER-ELVIGIA` y Carro/Moto en `VE-VIG-CENTRO` (otro centro, 8.6194, -71.6573). El botón «Usar El Vigía» del panel sembraba una segunda zona en el mismo lugar.
+- **Cómo funciona:** `CIUDAD_EL_VIGIA` (compartido, `perfilPasajeros.ts`) es la MISMA constante que `CIUDAD_PRUEBAS_EL_VIGIA` (`comidaVenezuela.ts`): `VE-MER-ELVIGIA`, centro 8.6219, -71.6506, radio 15 km, dólares. El panel tiene un solo botón «Usar El Vigía» para cualquier servicio. Guiones, simulador y capturas ya usaban esa zona. Si en algún sitio quedó sembrada `VE-VIG-CENTRO`, no se borra (es un dato), solo deja de crearse.
+- **Prueba:** `packages/compartido/src/zonaElVigiaUnica.test.ts` (en rojo antes del cambio) y `SuperMoto.test.tsx` («C-CARRO-TARIFA-VE» espera `VE-MER-ELVIGIA`).
+- **No tocar:** no volver a definir otra zona de El Vigía; cualquier servicio nuevo usa `CIUDAD_EL_VIGIA`.
+
+## C-VIAJE-PROGRAMADO · Viaje o envío reservado para más tarde, como Uber Reserve (14 nov 2026) — todos los países
+
+- **Qué es:** el pasajero elige «Programar», día y hora (de 30 minutos a 7 días, cada 15 minutos), ve el precio fijo y reserva. Cancela gratis hasta 60 minutos antes; después, el cargo de cancelación de la tarifa queda como deuda (sobre una operación que nace ya cancelada). N minutos antes (por ciudad y servicio en `ajustes_viaje_zona.programado_antes_min`, 15 por defecto, de 5 a 60, por `PUT /datos/admin/viajes/ajustes`) nace el viaje con las reglas normales de oferta y se le avisa al pasajero; si a la hora no hay conductor, «sin conductor» sin cargo y aviso. La oferta del Driver dice «Viaje programado para …».
+- **Cómo funciona:** `POST /datos/viajes` con `programadoPara` → `programarViaje` (`apps/servidor/src/viajeCrear.ts`) aparta la cotización para el id de la operación futura y guarda la reserva en `viajes_programados`. `GET /datos/viajes/programados` y `POST /datos/viajes/programados/:id/cancelar` (`rutas/viajesProgramados.ts`, montado antes que viajesPasajero). La tarea `viajes_programados` de `TAREAS_RELOJ` (crítica, `escriturasEsperadas` 160) lee por el índice parcial `viajes_programados_vencen` y no escribe si nada vence; toma la reserva con `UPDATE … WHERE estado = 'programado'` (dos vueltas no hacen dos viajes) y crea el viaje con `crearViajeDeCotizacion` (la misma pieza de «pedir ya»). `viajes.programado_para` hace que `repartirOperaciones` no cierre por «sin conductor» antes de la hora. Con tarjeta: `autorizarViajeProgramado` (tarjeta guardada, sin la persona delante); el aviso firmado de Stripe sigue el camino de siempre.
+- **Pruebas:** `rutas/viajesProgramados.test.ts` (7; en rojo quitando la condición de la hora en el despacho) y `packages/compartido/src/viajesProgramados.test.ts`.
+- **No tocar:** no agregar un estado «programado» a `viajes` (los disparadores de esquemaFase3 no lo conocen); la reserva vive aparte hasta que nace. Ficha: `docs/investigaciones-rea/2026-11-14-viaje-programado.md`.
+
+## C-CARRO-GUION · Carro de punta a punta contra el sitio de pruebas y en el simulador (14 nov 2026) — Venezuela y EE. UU.
+
+- **Qué es:** `scripts/staging/probar-carro.mjs` (en `pruebas-rama.yml`, después de Moto en Venezuela): Carro en El Vigía (`VE-MER-ELVIGIA`) en efectivo y por pago móvil con la comisión del 10 % apartada al aceptar y descontada al terminar, una reserva para dentro de dos horas cancelada gratis (C-VIAJE-PROGRAMADO), y Carro en Detroit con la tarjeta de PRUEBA `pm_card_visa` (clave pública `pk_test_`), el aviso firmado de Stripe, el cobro al terminar y la propina. En local (Stripe simulado) la parte con tarjeta se salta y se dice.
+- **Cómo funciona:** rutas internas `apps/servidor/src/rutas/diagnosticoCarro.ts` detrás de la puerta del diagnóstico (solo pruebas o local, con el secreto del reloj): `carro/armar` (cuentas fijas `zz-car-…`, Detroit con Carro y tarifa DE PRUEBA si no tiene), `carro/conductor` (el taxista de cada país con su carro aprobado, los requisitos de Carro cumplidos —la identidad con fuente kyc—, conectado en la recogida y los demás de esa ciudad desconectados) y `carro/limpiar`. Cabecera `x-vuelta-pruebas` y presupuesto de filas como el guion de Moto. Simulador: `simulador/divoox/carro.ts` (etiqueta `carro`; «Carro Venezuela en efectivo» también en `diario`). El simulador de Moto pasó a El Vigía (C-EL-VIGIA-UNA-ZONA).
+- **Pruebas:** `rutas/diagnosticoCarro.test.ts` (3). Guion en verde contra el servidor local el 14 nov (dos vueltas: la primera abrió El Vigía); simulador `--etiqueta carro` y `--etiqueta moto` 4 de 4 en verde.
+- **No tocar:** el saldo y el libro de `zz-car-k` no se borran nunca (descuadra la conciliación).
+
+## C-FOTO-CONDUCTOR-MINIATURA · El pasajero ve solo una miniatura de la foto del conductor (14 nov 2026) — todos los países
+
+- **Qué se rompió:** `GET /datos/viajes/:id/conductor/foto` servía la selfie ORIGINAL de la verificación (evidencia de identidad, pesada) y sin `nosniff`.
+- **Cómo funciona:** un Worker no tiene con qué reducir fotos, así que al aprobar la verificación el panel (`SuperKyc.tsx` → `miniaturaWebp` de `SubirFoto.tsx`) reduce la selfie a WebP de 200 px y la sube a `POST /datos/admin/kyc/:id/miniatura` (solo WebP, lado ≤ 200 y ≤ 40 KB, solo con la verificación aprobada; guarda `kyc.selfie_miniatura`). La ruta del pasajero sirve SOLO esa miniatura, `image/webp`, `private, no-store` y `X-Content-Type-Options: nosniff`; sin miniatura, 404 y `conductor.foto` falso. Liberar la foto borra también la miniatura.
+- **Prueba:** `rutas/carroVenezuela.test.ts` (sin miniatura 404 —antes servía la original—, JPEG grande 422, WebP 201, cabeceras).
+- **No tocar:** nunca volver a servir `kyc.selfie` fuera del panel del equipo.
+
+## C-OLVIDE-ALGO-UNA-VEZ · «Olvidé algo» no duplica tickets y el conductor ve un texto limpio (14 nov 2026) — todos los países
+
+- **Qué se rompió:** el ticket se creaba ANTES del `INSERT OR IGNORE` del caso: dos toques a la vez dejaban dos tickets (y dos correos). El conductor veía hasta 300 caracteres del texto libre, con teléfonos o enlaces si el pasajero los escribía.
+- **Cómo funciona:** `crearTicket` acepta sentencias `junto` que van en el MISMO lote; `viajesHistorial.ts` mete ahí el `INSERT` (sin OR IGNORE) en `ayuda_viajes`: si choca con la clave (viaje, motivo), no nace el ticket y se devuelve el primero. `textoParaConductor` deja 140 caracteres sin enlaces, correos ni teléfonos (el ticket guarda el texto entero para soporte).
+- **Prueba:** `rutas/viajesHistorial.test.ts` («C-OLVIDE-ALGO-UNA-VEZ», en rojo con el código anterior).
+
+## C-PLUS-SOLO-EEUU · El carrito decide Plus y saldo de regalo por el país, no por la moneda (14 nov 2026) — Venezuela y EE. UU.
+
+- **Qué se rompió:** `cart.tsx` aplicaba Plus y el saldo de regalo con `moneda === 'USD'`; El Vigía cobra en dólares y la app mostraba un descuento que el servidor (que usa `enEeuu`) no aplica.
+- **Cómo funciona:** `const enEeuu = pais?.tarjetaActiva ?? moneda === 'USD'` (el servidor manda `tarjetaActiva: pais === 'US'` en `/datos/pais`).
+- **Prueba:** `apps/servidor/src/plusSoloEeuuApp.test.ts` (en rojo con el carrito anterior).
+
+## C-PAGO-MOVIL-REINTENTO · El reintento de «sí me llegó» completa el cobro de un pedido (14 nov 2026) — Venezuela
+
+- **Qué se rompió:** si «sí me llegó» quedaba anotado en `pedidos_pago_movil` pero `confirmarCobro` fallaba, el reintento respondía «igual» y el cobro quedaba pendiente para siempre.
+- **Cómo funciona:** en `POST /datos/repartidor/pedidos/:id/pago-movil`, con la decisión «igual», estado `recibido`, `recibido: true` y `cobro_estado` pendiente, se llama `confirmarCobro` (que solo cambia un cobro pendiente: no confirma dos veces).
+- **Prueba:** `rutas/comidaVenezuelaCircuito.test.ts` («C-PAGO-MOVIL-REINTENTO», en rojo antes del arreglo).
+
+## C-ENVIO-TAMANO · El paquete dice su tamaño y solo se ofrece a quien lo puede llevar (14 nov 2026) — todos los países
+
+- **Qué es:** como Uber Connect y DoorDash Package Pickup [DOC: sus ayudas públicas piden que el paquete quepa en el vehículo, con tope de peso]: sobre (1 kg), pequeño (5 kg), mediano (15 kg: carro o moto con cajón), grande (30 kg: solo carro). `TAMANOS_PAQUETE`, `PAQUETE_MAX_KG` y `vehiculoLlevaPaquete` en compartido; `esquemaPaqueteEnvio.tamano` (por defecto pequeño); `envios_persona.tamano` y `vehiculos.con_cajon` por COLUMNAS; `POST /datos/conductor/vehiculos` acepta `conCajon` (solo moto). `repartirOperaciones` lee el tamaño con el envío y, si es mediano o grande, mira el vehículo activo de cada candidato. App del cliente: elegir tamaño con su peso (libras en inglés) y qué vehículos lo llevan. Driver: «Mi moto tiene cajón o baúl» al registrar la moto.
+- **Prueba:** `rutas/envios.test.ts` («C-ENVIO-TAMANO», en rojo quitando el filtro).
+
+## C-ENVIO-FOTO-ENTREGA · Foto opcional al entregar un envío, además del PIN (14 nov 2026) — todos los países
+
+- **Cómo funciona:** `POST /datos/conductor/operaciones/:id/foto-paquete?momento=entrega` (solo con el viaje `en_curso`; antes, 409) guarda `envios_persona.foto_entrega`, limpia y con su GPS aparte, como la de recogida. Quien envía ve `paquete.fotoEntrega`. Driver: «Agregar foto de la entrega» junto al PIN, por la pieza común `fotoConCamara` («Tomar foto» o «Subir desde archivos»). El PIN sigue siendo lo que cierra la entrega.
+- **Prueba:** `rutas/envios.test.ts` (409 antes de salir, 201 a bordo, `fotoEntrega: true`).
+- **Guía:** el texto para Docs está en `apps/panel/src/sitio/docs/borradores/viajesProgramadosYEnvios.ts` (lo publica con capturas el desarrollador de guías).
+
+## C-CHAT-VIAJE · Mensajes entre pasajero y conductor durante el viaje (14 nov 2026) — todos los países
+
+- **Qué es:** el mismo patrón del chat del pedido de Comida (`/datos/pedidos/:id/mensajes`), para viajes y envíos: `GET` y `POST /datos/viajes/:id/mensajes` (`rutas/chatViaje.ts`, montado antes que viajesPasajero), tabla nueva `mensajes_viaje`. Solo el pasajero y su conductor (y el equipo); abierto con el viaje asignado, con el conductor en la recogida o en curso. Terminado o cancelado, ellos reciben `{abierto: false, mensajes: []}` y no pueden escribir (la conversación queda para soporte). El texto pasa por `sinContacto` (sin enlaces, correos ni teléfonos; la misma pieza de «Olvidé algo»), hasta 300 caracteres, y avisa a la otra parte. Apps: «Escribirle al conductor» / «Escribirle al pasajero» con la pieza común `ChatPedido` (nueva prop `ruta`; sin fotos en viajes). Sin llamada enmascarada.
+- **Prueba:** `rutas/chatViaje.test.ts`.

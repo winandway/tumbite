@@ -77,12 +77,19 @@ const T = {
 export function ChatPedido({
   pedidoId,
   elegirFoto,
+  ruta,
 }: {
   pedidoId: string;
+  /**
+   * C-CHAT-VIAJE: el chat de un viaje usa la misma pieza con su ruta (`/datos/viajes/<id>`). Sin
+   * ella, la del pedido de Comida.
+   */
+  ruta?: string;
   /** C-CHAT-FOTOS: la app pasa cómo elegir una foto (cámara o galería). Sin ella, solo texto. */
   elegirFoto?: () => Promise<Blob | null>;
 }) {
   const { api, idioma } = useSesion();
+  const raiz = ruta ?? `/datos/pedidos/${pedidoId}`;
   const t = enIdioma(T, idioma);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [abierto, setAbierto] = useState(true);
@@ -95,7 +102,7 @@ export function ChatPedido({
     try {
       const r = await api.pedir<{ abierto: boolean; mensajes: Mensaje[] }>(
         'GET',
-        `/datos/pedidos/${pedidoId}/mensajes?desde=${ultimo.current}`,
+        `${raiz}/mensajes?desde=${ultimo.current}`,
       );
       setAbierto(r.abierto);
       if (r.mensajes.length) {
@@ -106,7 +113,7 @@ export function ChatPedido({
     } catch {
       /* la siguiente consulta lo intenta otra vez */
     }
-  }, [api, pedidoId]);
+  }, [api, raiz]);
 
   useEffect(() => {
     const primero = setTimeout(() => void cargar(), 0);
@@ -123,7 +130,7 @@ export function ChatPedido({
     setEnviando(true);
     setError('');
     try {
-      await api.pedir('POST', `/datos/pedidos/${pedidoId}/mensajes`, { texto: limpio });
+      await api.pedir('POST', `${raiz}/mensajes`, { texto: limpio });
       setTexto('');
       await cargar();
     } catch (x) {
@@ -140,7 +147,7 @@ export function ChatPedido({
       const f = await elegirFoto();
       if (!f) return;
       setEnviando(true);
-      await api.subirFoto(f, `/datos/pedidos/${pedidoId}/mensajes/foto`);
+      await api.subirFoto(f, `${raiz}/mensajes/foto`);
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));

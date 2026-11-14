@@ -234,6 +234,18 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['repartidores', 'ciudad_elegida_en', 'TEXT'],
   // C-PAGO-MOVIL-CORREGIR (13 nov 2026): el «no me llegó» corregido a «sí me llegó» (una sola vez).
   ['viajes_pago_movil', 'corregido_en', 'TEXT'],
+  // C-VIAJE-PROGRAMADO (14 nov 2026): la hora reservada del viaje (sin valor, es para ya) y cuántos
+  // minutos antes empieza a buscar conductor en esa ciudad (sin valor, 15).
+  ['viajes', 'programado_para', 'TEXT'],
+  ['ajustes_viaje_zona', 'programado_antes_min', 'INTEGER'],
+  // C-FOTO-CONDUCTOR-MINIATURA (14 nov 2026): la miniatura de la selfie aprobada que ve el pasajero
+  // (nunca la original). La hace el panel al aprobar la verificación.
+  ['kyc', 'selfie_miniatura', 'TEXT'],
+  // C-ENVIO-TAMANO y C-ENVIO-FOTO-ENTREGA (14 nov 2026): el tamaño del paquete, si la moto lleva
+  // cajón (mediano) y la foto opcional al entregar.
+  ['envios_persona', 'tamano', "TEXT NOT NULL DEFAULT 'pequeno'"],
+  ['envios_persona', 'foto_entrega', 'TEXT'],
+  ['vehiculos', 'con_cajon', 'INTEGER NOT NULL DEFAULT 0'],
   // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
   ...COLUMNAS_RESUMEN_CATALOGO,
 ];

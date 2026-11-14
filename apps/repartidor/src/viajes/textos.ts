@@ -4,6 +4,8 @@ export const TEXTOS_VIAJE = {
     oferta: {
       titulo: 'Nuevo viaje en Moto',
       tituloCarro: 'Nuevo viaje en Carro',
+      // C-VIAJE-PROGRAMADO: la oferta de una reserva dice para cuándo.
+      programado: 'Viaje programado para',
       ganas: 'Ganas',
       recogida: 'hasta la recogida',
       viaje: 'de viaje',
@@ -40,6 +42,14 @@ export const TEXTOS_VIAJE = {
       fotoPaqueteLista: 'Foto del paquete lista · tomar otra',
       pinEntrega: 'PIN de entrega',
       pinEntregaAyuda: 'Pídeselo a quien recibe el paquete.',
+      // C-ENVIO-FOTO-ENTREGA (14 nov 2026).
+      fotoEntrega: 'Foto de la entrega (opcional)',
+      fotoEntregaLista: 'Foto de la entrega guardada',
+      fotoEntregaBoton: 'Agregar foto de la entrega',
+      // C-CHAT-VIAJE (14 nov 2026).
+      mensajesPasajero: 'Escribirle al pasajero',
+      ocultarMensajes: 'Ocultar mensajes',
+      fotoEntregaOtra: 'Cambiar la foto de la entrega',
       entregar: 'Entregar el paquete',
       permisoCamara: 'Necesitamos permiso para usar la cámara.',
       cobra: 'Cobra en efectivo',
@@ -63,6 +73,7 @@ export const TEXTOS_VIAJE = {
     oferta: {
       titulo: 'New Moto ride',
       tituloCarro: 'New Car ride',
+      programado: 'Scheduled ride for',
       ganas: 'You earn',
       recogida: 'to pickup',
       viaje: 'trip',
@@ -99,6 +110,12 @@ export const TEXTOS_VIAJE = {
       fotoPaqueteLista: 'Package photo ready · retake',
       pinEntrega: 'Delivery PIN',
       pinEntregaAyuda: 'Ask the recipient for it.',
+      fotoEntrega: 'Delivery photo (optional)',
+      fotoEntregaLista: 'Delivery photo saved',
+      fotoEntregaBoton: 'Add a delivery photo',
+      mensajesPasajero: 'Message the rider',
+      ocultarMensajes: 'Hide messages',
+      fotoEntregaOtra: 'Change the delivery photo',
       entregar: 'Deliver the package',
       permisoCamara: 'We need permission to use the camera.',
       cobra: 'Collect in cash',

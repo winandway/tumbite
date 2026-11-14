@@ -76,8 +76,34 @@ export const DISTANCIA_MAXIMA_KM: Record<ServicioViaje, number> = {
  * declarado tiene tope por ciudad (`valorMaximo` de la tarifa; sin él, 100 en la moneda local) y quien
  * envía confirma que no manda nada prohibido.
  */
+/**
+ * C-ENVIO-TAMANO (14 nov 2026, todos los países): el tamaño del paquete, con categorías simples como
+ * el mercado (Uber Connect y DoorDash Package Pickup piden que quepa en el vehículo y ponen un tope de
+ * peso [DOC]). Cada tamaño dice qué vehículos lo llevan: el envío solo se ofrece a quien puede.
+ */
+export const TAMANOS_PAQUETE = ['sobre', 'pequeno', 'mediano', 'grande'] as const;
+export type TamanoPaquete = (typeof TAMANOS_PAQUETE)[number];
+/** Peso máximo de cada tamaño, en kilos. */
+export const PAQUETE_MAX_KG: Record<TamanoPaquete, number> = {
+  sobre: 1,
+  pequeno: 5,
+  mediano: 15,
+  grande: 30,
+};
+/** ¿Este vehículo lleva un paquete de ese tamaño? Mediano: carro o moto con cajón. Grande: carro. */
+export function vehiculoLlevaPaquete(
+  tamano: TamanoPaquete,
+  vehiculo: { tipo: string; conCajon?: boolean },
+): boolean {
+  if (tamano === 'grande') return vehiculo.tipo === 'carro';
+  if (tamano === 'mediano')
+    return vehiculo.tipo === 'carro' || (vehiculo.tipo === 'moto' && Boolean(vehiculo.conCajon));
+  return vehiculo.tipo !== 'a_pie';
+}
+
 export const esquemaPaqueteEnvio = z.object({
   descripcion: z.string().trim().min(3).max(120),
+  tamano: z.enum(TAMANOS_PAQUETE).default('pequeno'),
   valorDeclarado: z.number().int().min(0).max(100_000_000),
   destinatario: z.object({
     nombre: z.string().trim().min(2).max(60),

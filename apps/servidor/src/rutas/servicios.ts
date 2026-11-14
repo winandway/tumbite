@@ -458,6 +458,8 @@ const datosVehiculo = z.object({
     .regex(/^[A-Za-z]{0,2}$/, 'El estado de la placa son dos letras (por ejemplo, FL).')
     .default(''),
   plazas: z.number().int().min(1).max(8).nullable().optional(),
+  // C-ENVIO-TAMANO: una moto con cajón lleva paquetes medianos (hasta 15 kg).
+  conCajon: z.boolean().optional(),
 });
 
 /**
@@ -521,7 +523,7 @@ servicios.post('/conductor/vehiculos', async (c) => {
   await conRestricciones(
     db
       .prepare(
-        'INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, anio, color, placa, placa_estado, plazas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, anio, color, placa, placa_estado, plazas, con_cajon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       )
       .bind(
         id,
@@ -534,6 +536,7 @@ servicios.post('/conductor/vehiculos', async (c) => {
         d.placa.toUpperCase(),
         d.placaEstado.toUpperCase(),
         d.plazas ?? null,
+        d.tipo === 'moto' && d.conCajon ? 1 : 0,
       )
       .run(),
   );

@@ -7,7 +7,7 @@ import type { Ctx } from './mundo.ts';
  * Los escenarios de DIVOOX MOTO en Venezuela (C-MOTO-VE-PUNTA-A-PUNTA, 13 nov 2026). Venezuela.
  *
  * Mismo camino que scripts/staging/probar-moto-venezuela.mjs, con actores del simulador: el equipo
- * abre Caracas de pruebas, el conductor se registra con la app y el equipo lo aprueba, recarga en
+ * abre El Vigía, el conductor se registra con la app y el equipo lo aprueba, recarga en
  * dólares en el punto de venta del equipo, y el pasajero pide en efectivo o por pago móvil. Las
  * cuentas son FIJAS (zz-mtve-…, de la puerta de diagnóstico): el saldo y el libro del conductor no se
  * borran nunca; su alta vuelve a empezar en cada escenario. En local Moto está cerrado como en
@@ -20,16 +20,18 @@ const FOTO = new Uint8Array(
     join(import.meta.dirname, '..', '..', 'e2e', 'recorrido', 'fotos', 'bolsa-entrega.jpg'),
   ),
 );
+// C-EL-VIGIA-UNA-ZONA (14 nov 2026): las pruebas de Venezuela son en El Vigía (VE-MER-ELVIGIA), la
+// misma zona de Comida, Carro y Envíos.
 const CIUDAD = {
-  id: 'VE-CCS-PRUEBAS',
-  nombre: 'Caracas (pruebas)',
-  lat: 10.4806,
-  lng: -66.9036,
-  radioKm: 25,
+  id: 'VE-MER-ELVIGIA',
+  nombre: 'El Vigía',
+  lat: 8.6219,
+  lng: -71.6506,
+  radioKm: 15,
   zonaHoraria: 'America/Caracas',
 };
-const ORIGEN = { lat: 10.4806, lng: -66.9036, direccion: 'Plaza Venezuela' };
-const DESTINO = { lat: 10.4806, lng: -66.8406, direccion: 'Los Dos Caminos' };
+const ORIGEN = { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' };
+const DESTINO = { lat: 8.624, lng: -71.672, direccion: 'Aeropuerto de El Vigía' };
 const RECARGA = 300;
 
 /** Lo que responde el servidor, tal como sale de JSON.parse (cada paso lo comprueba con comprobar). */
@@ -52,7 +54,7 @@ function exigirOk(ctx: Ctx, r: Respuesta, que: string): Datos {
   return d(r);
 }
 
-/** Las cuentas fijas de Moto Venezuela con su pase de esta vuelta, y Caracas abierta. */
+/** Las cuentas fijas de Moto Venezuela con su pase de esta vuelta, y El Vigía abierta. */
 async function armar(ctx: Ctx): Promise<Moto> {
   const a = await ctx.e.paso('se arman las cuentas fijas de Moto Venezuela', async () =>
     exigirOk(ctx, await ctx.sistema.post('/datos/interno/diagnostico/moto-ve/armar', {}), 'armar'),
@@ -84,7 +86,7 @@ async function armar(ctx: Ctx): Promise<Moto> {
       'reiniciar',
     ),
   );
-  await ctx.e.paso('Caracas de pruebas está abierta', async () => {
+  await ctx.e.paso('El Vigía está abierta', async () => {
     const prueba = await m.pasajero.post('/datos/viajes/cotizar', {
       servicio: 'moto',
       origen: ORIGEN,
@@ -111,7 +113,7 @@ async function armar(ctx: Ctx): Promise<Moto> {
       );
       r = await abrir();
     }
-    exigirOk(ctx, r, 'el equipo abre Caracas de pruebas');
+    exigirOk(ctx, r, 'el equipo abre El Vigía');
   });
   return m;
 }
@@ -141,12 +143,12 @@ async function conductorListo(ctx: Ctx, m: Moto) {
   const { conductor: yo, equipo } = m;
   const subir = (ruta: string) => yo.post(ruta, { bytes: FOTO, tipo: 'image/jpeg' });
   const moto = await ctx.e.paso(
-    'el conductor elige Caracas, registra su moto y sube sus papeles',
+    'el conductor elige El Vigía, registra su moto y sube sus papeles',
     async () => {
       exigirOk(
         ctx,
         await yo.put('/datos/conductor/ciudad', { zonaId: CIUDAD.id }),
-        'elegir Caracas',
+        'elegir El Vigía',
       );
       const papeles = exigirOk(ctx, await yo.get('/datos/conductor/papeles'), 'qué papeles pide');
       ctx.e.comprobar(
@@ -255,7 +257,7 @@ async function conductorListo(ctx: Ctx, m: Moto) {
       punto = exigirOk(
         ctx,
         await equipo.post('/datos/admin/puntos-venta', {
-          nombre: 'Equipo Divoox Caracas (pruebas)',
+          nombre: 'Equipo Divoox Venezuela (pruebas)',
           pais: 'VE',
           moneda: 'USD',
           usuarioId: m.ids.equipo,
@@ -410,7 +412,7 @@ export const ESCENARIOS_MOTO: readonly Esc[] = [
   {
     nombre: 'Moto Venezuela en efectivo',
     descripcion:
-      'En Caracas de pruebas: el conductor se registra y el equipo lo aprueba, recarga 3 dólares, el pasajero pide en efectivo, el conductor acepta, llega, arranca con el código y termina. La comisión del 10 % sale de su saldo.',
+      'En El Vigía: el conductor se registra y el equipo lo aprueba, recarga 3 dólares, el pasajero pide en efectivo, el conductor acepta, llega, arranca con el código y termina. La comisión del 10 % sale de su saldo.',
     etiquetas: ['moto', 'diario'],
     vigila: ['C-MOTO-VENEZUELA', 'C-PAPELES-CONDUCTOR', 'C-SALDO-CARRERAS', 'C-RECARGAS-PREPAGO'],
     async correr(_e, ctx) {
@@ -495,7 +497,7 @@ export const ESCENARIOS_MOTO: readonly Esc[] = [
   {
     nombre: 'Conductor sin saldo no recibe carreras',
     descripcion:
-      'Un conductor aprobado y conectado en Caracas, pero con saldo cero, no recibe la oferta del viaje que pide el pasajero y su app le dice que no tiene saldo. El pasajero cancela sin cargo.',
+      'Un conductor aprobado y conectado en El Vigía, pero con saldo cero, no recibe la oferta del viaje que pide el pasajero y su app le dice que no tiene saldo. El pasajero cancela sin cargo.',
     etiquetas: ['moto', 'diario'],
     vigila: ['C-SALDO-OFERTAS'],
     async correr(_e, ctx) {
@@ -504,11 +506,13 @@ export const ESCENARIOS_MOTO: readonly Esc[] = [
         m = await armar(ctx);
         const mm = m;
         await ctx.e.paso(
-          'el conductor sin saldo está aprobado y conectado en Caracas',
+          'el conductor sin saldo está aprobado y conectado en El Vigía',
           async () => {
             exigirOk(
               ctx,
-              await ctx.sistema.post('/datos/interno/diagnostico/moto-ve/sin-saldo', {}),
+              await ctx.sistema.post('/datos/interno/diagnostico/moto-ve/sin-saldo', {
+                zonaId: CIUDAD.id,
+              }),
               'preparar',
             );
             const s = await saldoDe(ctx, mm.sinSaldo);

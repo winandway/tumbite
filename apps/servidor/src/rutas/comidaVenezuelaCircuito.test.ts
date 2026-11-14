@@ -280,6 +280,48 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
     expect(await w.comisionesDe(id)).toEqual({ n: 1, s: comision });
   });
 
+  it('C-PAGO-MOVIL-REINTENTO: si «sí me llegó» quedó anotado pero el cobro no se cerró, el reintento lo cierra', async () => {
+    const w = await mundoVe();
+    const rep = await w.repartidor('Con pago móvil');
+    await w.recargar(rep, 1000);
+    await w.pagoMovil(rep);
+    const p = await w.pedir('transferencia_repartidor');
+    const id = p.datos.pedidoId as string;
+    await w.e.m.llamar(
+      'POST',
+      `/datos/restaurante/pedidos/${id}/aceptar`,
+      { minutos: 5 },
+      w.r.dueno.token,
+    );
+    await w.hastaEnCamino(id, rep, true);
+    expect((await w.e.m.entregar(id, rep.token)).estado).toBe(200);
+    // Lo que deja un primer intento que se cortó después de anotar «sí me llegó».
+    await w.e.m.DB.prepare(
+      "INSERT INTO pedidos_pago_movil (pedido_id, repartidor_id, estado, referencia, monto, moneda) VALUES (?, ?, 'recibido', '123456', 0, 'USD')",
+    )
+      .bind(id, rep.id)
+      .run();
+    expect((await w.fila(id))?.cobro_estado).toBe('pendiente');
+    const otra = await w.e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/pago-movil`,
+      { recibido: true, referencia: '123456' },
+      rep.token,
+    );
+    expect(otra.estado).toBe(200);
+    expect(otra.datos.estado).toBe('recibido');
+    expect((await w.fila(id))?.cobro_estado).toBe('confirmado');
+    // Y un tercer toque ya no hace nada (el cobro no se confirma dos veces).
+    const tercera = await w.e.m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/pago-movil`,
+      { recibido: true },
+      rep.token,
+    );
+    expect(tercera.estado).toBe(200);
+    expect(await w.comisionesDe(id)).toMatchObject({ n: 1 });
+  });
+
   it('pago móvil: «no me llegó» abre un caso y se corrige UNA vez dentro de 30 minutos', async () => {
     const w = await mundoVe();
     const rep = await w.repartidor('Con pago móvil');
