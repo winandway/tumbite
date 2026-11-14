@@ -574,9 +574,13 @@ app.onError(async (err, c) => {
   console.error('error no controlado', err);
   // C-ERRORES-VISIBLES: queda escrito para poder diagnosticarlo después (si la base responde).
   if (c.env.DB)
-    await guardarError(c.env.DB, c.req.method, c.req.path, err).catch((e: unknown) =>
-      console.error('no se pudo guardar el error', e),
-    );
+    await guardarError(
+      c.env.DB,
+      c.req.method,
+      c.req.path,
+      err,
+      (c.get('usuario') as { id?: string } | null | undefined)?.id ?? null,
+    ).catch((e: unknown) => console.error('no se pudo guardar el error', e));
   return c.json(
     {
       error: enIdiomaDePeticion('Algo salió mal de nuestro lado. Ya lo estamos revisando.', idioma),

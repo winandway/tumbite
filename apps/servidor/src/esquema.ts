@@ -13,6 +13,8 @@ import { rehacerAprobacionesDinero } from './esquemaDinero';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-CIUDAD-ERRORES (13 nov 2026): de quién era la sesión del error no controlado (solo el id).
+  ['errores_servidor', 'usuario_id', 'TEXT'],
   // C-FLOTA-PROPIA (10 nov 2026): el restaurante reparte con los suyos; respaldo con la red.
   ['restaurantes', 'flota_modo', "TEXT NOT NULL DEFAULT 'divoox'"],
   ['restaurantes', 'flota_respaldo', 'INTEGER NOT NULL DEFAULT 0'],

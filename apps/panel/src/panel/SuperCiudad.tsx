@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
 import { pedir } from './api';
+import { descargarTexto, nombreReporte, reporteJugadoresCsv } from './reporteCiudad';
 
 /**
  * C-CIUDAD-PRUEBAS (13 nov 2026, pedido de Richard): la ciudad de pruebas EN VIVO. Una población
@@ -97,6 +98,10 @@ const T = {
     erroresServidor: 'Errores del servidor durante la sesión',
     efectivo: 'Efectivo',
     tarjeta: 'Tarjeta',
+    descargarReporte: 'Descargar reporte',
+    cerrando:
+      'Apagando: los robots terminan de entregar lo que ya salió de la cocina. Lo que no alcancen se cancela con su devolución.',
+    apagarYa: 'Apagar ya',
   },
   en: {
     titulo: 'Test city',
@@ -178,6 +183,10 @@ const T = {
     erroresServidor: 'Server errors during the session',
     efectivo: 'Cash',
     tarjeta: 'Card',
+    descargarReporte: 'Download report',
+    cerrando:
+      'Turning off: the robots are finishing the orders that already left the kitchen. Anything they can’t finish is canceled and refunded.',
+    apagarYa: 'Turn off now',
   },
 };
 
@@ -247,6 +256,7 @@ type Vivo = {
     minutosMax: number;
     robots: { listos: number; total: number };
     motivoFin: string | null;
+    cerrando?: boolean;
   };
   enCurso?: EnCurso[];
   jugadores?: Jugador[];
@@ -504,7 +514,7 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
                       onClick={() => void apagar()}
                       disabled={trabajando}
                     >
-                      {t.apagar}
+                      {juego?.cerrando ? t.apagarYa : t.apagar}
                     </button>
                   </>
                 ) : (
@@ -544,6 +554,11 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
               </ul>
             ) : null}
             {juego?.quieta ? <p className="pista">{t.quieta}</p> : null}
+            {encendida && juego?.cerrando ? (
+              <p className="pista" role="status" data-testid="ciudad-cerrando">
+                {t.cerrando}
+              </p>
+            ) : null}
             {encendida ? <p className="pista">{t.seApaga(juego?.minutosMax ?? 60)}</p> : null}
             {juego && !juego.encendida && juego.motivoFin ? (
               <p className="pista">
@@ -627,7 +642,27 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
 
               {esJuego ? (
                 <>
-                  <h2>{t.jugadores}</h2>
+                  <div className="ciudad-cabecera">
+                    <h2>{t.jugadores}</h2>
+                    {(vivo?.jugadores ?? []).length && s ? (
+                      <button
+                        type="button"
+                        className="boton secundario"
+                        data-testid="ciudad-descargar-reporte"
+                        onClick={() =>
+                          descargarTexto(
+                            nombreReporte(s.id),
+                            reporteJugadoresCsv(
+                              vivo?.jugadores ?? [],
+                              idioma === 'en' ? 'en' : 'es',
+                            ),
+                          )
+                        }
+                      >
+                        {t.descargarReporte}
+                      </button>
+                    ) : null}
+                  </div>
                   {(vivo?.jugadores ?? []).length === 0 ? (
                     <p className="pista">{t.sinJugadores}</p>
                   ) : (
