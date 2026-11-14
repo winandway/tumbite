@@ -81,7 +81,7 @@ import { aceptarSiEsAutomatico } from './operacion';
 
 export const pedidos = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const esquemaNuevoPedido = z.object({
+export const esquemaNuevoPedido = z.object({
   restauranteId: z.string().min(1),
   lineas: z
     .array(

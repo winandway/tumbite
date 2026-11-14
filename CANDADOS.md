@@ -3491,7 +3491,8 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Causa:** el cobro guardado solo se comparaba por el total.
 - **Qué se hizo:** el carrito arma una sola vez el cuerpo del pedido (`cuerpoPedido`, sin el total) y su huella (`huellaPedido` en `packages/compartido`, JSON con las claves ordenadas). El cobro se guarda con su huella y solo se reutiliza si la huella y el total son iguales; si algo cambió, vuelve «Continuar al pago» y se crea el pedido de nuevo (el viejo, sin pagar, lo cierra C-PENDIENTE-ABANDONADO).
 - **Prueba:** `packages/compartido/src/carritoMismosDatos.test.ts`, comprobada en rojo.
-- **No tocar:** todo dato nuevo que se mande al crear el pedido va dentro de `cuerpoPedido`, nunca agregado aparte en la llamada.
+- **Revisión del 13 nov (cuerpo real contra el esquema):** el cuerpo se arma con `armarCuerpoPedido` (`packages/compartido/src/cuerpoPedido.ts`, función pura) y `apps/servidor/src/cuerpoPedidoEsquema.test.ts` compara sus campos (y los de cada línea) con `esquemaNuevoPedido` del servidor. Rojo comprobado de las dos formas: quitando `alergias` del cuerpo y agregando un campo nuevo al esquema sin ponerlo en el cuerpo.
+- **No tocar:** todo dato nuevo que se mande al crear el pedido va dentro de `armarCuerpoPedido`, nunca agregado aparte en la llamada; `totalEsperado` es el único campo del esquema fuera de la huella.
 
 ### C-TOTAL-CORREGIDO: tras «El total cambió», el carrito muestra el total del servidor y deja pagar
 

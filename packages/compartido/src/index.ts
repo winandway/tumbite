@@ -20,6 +20,7 @@ export * from './latidoUbicacion';
 export * from './rastreoConductor';
 export * from './decisionesMercado';
 export * from './huellaPedido';
+export * from './cuerpoPedido';
 export * from './despacho';
 export * from './mostrador';
 export * from './horarios';
