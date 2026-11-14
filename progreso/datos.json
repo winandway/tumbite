@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-14T14:10:00.000Z",
+  "actualizado": "2026-11-14T15:55:00.000Z",
   "version": "7b9a5ca",
-  "ahora": "14 nov: se crearon las llaves de los avisos del navegador y del mapa de Google para la web, con el sí de Richard. Los avisos ya están encendidos en el sitio de pruebas y en producción. El mapa de Google en la web entra con la publicación de hoy, con tope de trescientas cargas al día. Además, toda la noche de cierre ya está en producción y comprobada en vivo: comida en Venezuela con pago al recibir, taxis (Divoox Carro) con alta del conductor, historial y viaje programado, lo nuevo de Divoox Flex (exportar a hoja de cálculo, recargas locales con doble firma, ruta por calles, seguimiento), avisos en la app instalada desde el navegador (falta encenderlos con sus llaves), tasa del bolívar automática, envíos por tamaño y las guías nuevas con capturas. Moto y Carro siguen apagados para el público hasta tener la marca presentada. Nada se ha probado con dinero real ni con teléfonos en la calle.",
+  "ahora": "14 nov: los mapas de la web ya son los de Google, con el estilo de Divoox, y están en producción. Se comprobó en el sitio de pruebas en la pantalla de pedir un carro. Falta ver la vista inclinada en un viaje en curso. La marca se presenta primero en Estados Unidos: espera a que Richard cree su cuenta en la oficina de marcas. Los avisos del navegador están encendidos.",
   "proximo": [
     {
       "quien": "richard",
@@ -331,6 +331,16 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-14",
+      "titulo": "La marca se presenta primero en Estados Unidos",
+      "texto": "Por consejo del contador, Divoox se presenta primero en Estados Unidos y después en Venezuela, dentro de los seis meses en que la fecha de aquí vale allá. La búsqueda y los textos están listos; falta la cuenta y la verificación de identidad de Richard."
+    },
+    {
+      "fecha": "2026-11-14",
+      "titulo": "Mapas de Google con el estilo de Divoox en toda la web",
+      "texto": "Los mapas de las apps web y del panel pasaron del mapa libre al de Google en modo moderno, con un estilo sobrio de Divoox, y se inclinan durante el viaje o la entrega. El revisor encontró un fallo antes de publicar (el mapa del conductor quedaba en blanco en el segundo pedido) y se corrigió con su prueba. El tope sigue en trescientas cargas al día, dentro de lo gratuito. La ciudad de pruebas del equipo sigue con el mapa anterior."
+    },
     {
       "fecha": "2026-11-14",
       "titulo": "Avisos del navegador encendidos y llave del mapa web creada",
