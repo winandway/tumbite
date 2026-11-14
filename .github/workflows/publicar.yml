@@ -73,6 +73,7 @@ jobs:
       # C-AVISOS-WEB: llave PÚBLICA VAPID de los avisos de las apps web (variable del repositorio). Vacía =
       # la app la pide al servidor (VAPID_PUBLIC_KEY del sitio); sin ninguna, avisos web apagados.
       EXPO_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
+      VITE_VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:

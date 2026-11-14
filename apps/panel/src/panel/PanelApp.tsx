@@ -1,3 +1,4 @@
+import { AvisosWebPanel } from './AvisosWebPanel';
 import { Flota } from './Flota';
 import { useEffect, useState } from 'react';
 import { VersionPublicada } from '../VersionPublicada';
@@ -124,7 +125,14 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
     if (ruta === '/panel/promotions') return <Promociones usuario={usuario} idioma={idioma} />;
     if (ruta === '/panel/team') return <Equipo idioma={idioma} />;
     if (ruta === '/panel/fleet') return <Flota idioma={idioma} />;
-    if (ruta === '/panel/orders') return <Pedidos idioma={idioma} />;
+    if (ruta === '/panel/orders')
+      return (
+        <>
+          {/* C-AVISOS-WEB: avisos del navegador también en la computadora del restaurante. */}
+          <AvisosWebPanel usuario={usuario} idioma={idioma} />
+          <Pedidos idioma={idioma} />
+        </>
+      );
   }
   if (usuario.rol === 'admin') {
     if (ruta === '/panel/restaurants') return <AdminRestaurantes idioma={idioma} />;
