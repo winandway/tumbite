@@ -547,7 +547,12 @@ export function aPedido(f: FilaPedido) {
       : null,
     fotoEntrega: f.ev_entrega ? { tomadaEn: String(f.ev_entrega) } : null,
     // Cómo pidió recibirlo y cómo se entregó de verdad (en mano, en la puerta, en lugar seguro).
-    entrega: f.recogida ? 'recoger' : (f.entrega as string | null) === 'mano' ? 'mano' : 'puerta',
+    // C-COBRO-EN-MANO: un pedido que se cobra al recibir se entrega en mano (también los viejos).
+    entrega: f.recogida
+      ? 'recoger'
+      : (f.entrega as string | null) === 'mano' || String(f.metodo_pago ?? 'tarjeta') !== 'tarjeta'
+        ? 'mano'
+        : 'puerta',
     propinaExtra: f.propina_extra == null ? null : Number(f.propina_extra),
     grupoId: (f.grupo_id as string | null) ?? null,
     requiereEdad: lineasDe(f).some((l) => l.requiereEdad),

@@ -4174,3 +4174,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se rompió:** el pedido del cliente mostraba «pago_movil · Banco de Venezuela» (la clave del tipo de cuenta pintada tal cual), el panel de la ciudad de pruebas decía «Efectivo» para un pago móvil o una transferencia, y el reporte CSV llevaba «efectivo»/«transferencia_repartidor» crudos.
 - **Arreglo:** una sola pieza, `nombreFormaPago(clave, idioma)` en `packages/compartido/src/formaDePago.ts` (tarjeta, efectivo, efectivo en dólares, pago móvil, transferencia, cuenta bancaria, Nequi, Daviplata, Zelle, saldo, otro; una clave nueva sale legible, sin guiones bajos). La usan el pedido del cliente, `SuperCiudad.tsx` y `reporteCiudad.ts`.
 - **Candado:** `packages/compartido/src/formaDePago.test.ts` revisa los dos idiomas y recorre las fuentes de las tres apps, el panel y `packages/movil`: falla si alguna pinta `{…metodoPago}`, `{…metodo_pago}` o `{…cuentaCobro.tipo}` sin traducir (rojo comprobado con la pantalla del pedido).
+
+## C-COBRO-EN-MANO · Pedido que se cobra al recibir: textos fieles a cómo se cerró (14 nov 2026) — Venezuela y Colombia (todo pago directo)
+
+- **Qué se rompió:** un pedido en efectivo cerrado con «El cliente no pagó» le decía al cliente «Si ya habías pagado, te devolvimos todo el dinero» (falso: no pagó y quedó con deuda) y el tipo de entrega decía «Dejar en la puerta».
+- **Arreglo:** el seguimiento (`GET /datos/pedidos/:id/seguimiento`, `rutas/operacion.ts`) devuelve `motivoCancelacion: 'no_pago'` cuando `cobro_estado = 'no_pagado'`; `entrega` sale `mano` para todo pedido que no es con tarjeta (`rutas/pedidos.ts`, también los viejos). En la app del cliente (`app/order/[id].tsx`) los pedidos de pago directo usan `motivosDirecto` («No se te cobró nada», o la deuda pendiente si no pagó); los textos de devolución a la tarjeta quedan solo para tarjeta.
+- **Prueba:** `rutas/comidaVenezuelaCircuito.test.ts` («el cliente no pagó…»), rojo comprobado con el código anterior.
+- **No tocar:** no se cambia la `entrega` guardada al crear el pedido (el paso de entregar en la puerta del circuito lo usa); solo lo que se muestra.

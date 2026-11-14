@@ -3140,13 +3140,16 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
           .first<{ evento: string }>()
       : null;
   const motivoCancelacion =
-    motivo?.evento === 'cancelado_por_cliente'
-      ? 'cliente'
-      : motivo?.evento === 'rechazado_por_restaurante'
-        ? 'restaurante'
-        : motivo?.evento === 'cancelado_sin_respuesta'
-          ? 'sin_respuesta'
-          : null;
+    // C-COBRO-EN-MANO: el repartidor marcó «El cliente no pagó»: ni hubo pago ni devolución.
+    f.estado === 'cancelado' && f.cobro_estado === 'no_pagado'
+      ? 'no_pago'
+      : motivo?.evento === 'cancelado_por_cliente'
+        ? 'cliente'
+        : motivo?.evento === 'rechazado_por_restaurante'
+          ? 'restaurante'
+          : motivo?.evento === 'cancelado_sin_respuesta'
+            ? 'sin_respuesta'
+            : null;
   const { results: historial } = await base(c)
     .prepare(
       'SELECT estado, creado_en AS fecha FROM historial_estados WHERE pedido_id = ? ORDER BY id',

@@ -458,5 +458,16 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
     expect(await saldoLibro(w.e.m.DB, w.e.cliente.id, 'deuda_cliente', 'VE', 'USD')).toBe(
       Number(f?.total) - Number(f?.propina),
     );
+    // C-COBRO-EN-MANO: el cliente lee por qué se cerró (no «te devolvimos el dinero») y que era en mano.
+    const seg = await w.e.m.llamar(
+      'GET',
+      `/datos/pedidos/${id}/seguimiento`,
+      undefined,
+      w.e.cliente.token,
+    );
+    expect(seg.datos.pedido ?? seg.datos).toMatchObject({
+      motivoCancelacion: 'no_pago',
+      entrega: 'mano',
+    });
   });
 });

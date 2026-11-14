@@ -63,7 +63,7 @@ import { conCuenta } from '../../ConCuenta';
 type Pedido = {
   id: string;
   estado: string;
-  motivoCancelacion?: 'cliente' | 'restaurante' | 'sin_respuesta' | null;
+  motivoCancelacion?: 'cliente' | 'restaurante' | 'sin_respuesta' | 'no_pago' | null;
   restauranteNombre?: string;
   total: number;
   /** C-MONEDA-RECORRIDO: la moneda del pedido (los viejos no la traen: dólares). */
@@ -310,6 +310,16 @@ const T = {
       sin_respuesta:
         'El restaurante no confirmó a tiempo, así que lo cancelamos. Te devolvimos todo el dinero a tu tarjeta.',
     } as Record<string, string>,
+    // C-COBRO-EN-MANO: el pedido se pagaba al recibirlo; no hubo cobro, así que no hay devolución.
+    motivosDirecto: {
+      cliente: 'Cancelaste este pedido. No se te cobró nada.',
+      restaurante: 'El restaurante no pudo atender tu pedido. No se te cobró nada.',
+      sin_respuesta:
+        'El restaurante no confirmó a tiempo, así que lo cancelamos. No se te cobró nada.',
+      no_pago:
+        'Tu repartidor indicó que el pedido no se pagó al recibirlo, así que no se entregó. El monto quedó como saldo pendiente en tu cuenta: págalo para volver a pedir. Si ya pagaste, escríbenos desde Ayuda.',
+      otro: 'Pedido cancelado. No se te cobró nada.',
+    } as Record<string, string>,
     cancelar: 'Cancelar el pedido',
     seguro: 'Te devolvemos todo el dinero a tu tarjeta. ¿Cancelamos?',
     siCancelar: 'Sí, cancelar',
@@ -441,6 +451,15 @@ const T = {
         'The restaurant couldn’t take your order. We refunded all your money to your card.',
       sin_respuesta:
         'The restaurant didn’t confirm in time, so we canceled it. We refunded all your money to your card.',
+    } as Record<string, string>,
+    motivosDirecto: {
+      cliente: 'You canceled this order. You weren’t charged.',
+      restaurante: 'The restaurant couldn’t take your order. You weren’t charged.',
+      sin_respuesta:
+        'The restaurant didn’t confirm in time, so we canceled it. You weren’t charged.',
+      no_pago:
+        'Your driver reported that the order wasn’t paid on delivery, so it wasn’t handed over. The amount is now an outstanding balance on your account: pay it to order again. If you already paid, contact us from Help.',
+      otro: 'Order canceled. You weren’t charged.',
     } as Record<string, string>,
     cancelar: 'Cancel order',
     seguro: 'We’ll refund all your money to your card. Cancel it?',
@@ -748,7 +767,10 @@ function SeguirPedido() {
   const numero = `#${String(id).slice(0, 4).toUpperCase()}`;
   const esTienda = Boolean(p?.lineas.some((l) => l.sustitucion));
   const estadoTexto = p
-    ? ((p.estado === 'cancelado' && p.motivoCancelacion ? t.motivos[p.motivoCancelacion] : null) ??
+    ? ((p.estado === 'cancelado' && p.metodoPago && p.metodoPago !== 'tarjeta'
+        ? t.motivosDirecto[p.motivoCancelacion ?? 'otro']
+        : null) ??
+      (p.estado === 'cancelado' && p.motivoCancelacion ? t.motivos[p.motivoCancelacion] : null) ??
       // C-CLIENTE-AUSENTE: cerrado sin entregar porque no estabas; no se dice «entregado».
       (p.estado === 'entregado' && p.entregadoComo === 'ausente' ? t.noEntregadoAusente : null) ??
       (recoge ? t.estadosRecoger[p.estado] : undefined) ??
