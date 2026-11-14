@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-13T23:10:00.000Z",
+  "actualizado": "2026-11-14T03:00:00.000Z",
   "version": "7b9a5ca",
   "ahora": "13 nov: la ciudad de pruebas ya se enciende desde el panel y tiene modo juego: una persona pide desde la app real y restaurantes y repartidores robot atienden; probada con una partida completa en el sitio de pruebas. Divoox Moto quedó preparado para pruebas en Venezuela con saldo prepago, recargas, efectivo y pago móvil; en producción sigue apagado con llave. Regla nueva: ningún país se enciende sin la marca Divoox en proceso de registro.",
   "proximo": [
@@ -331,6 +331,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-13",
+      "titulo": "Moto para Venezuela: viaje completo probado en el sitio de pruebas y guías publicadas",
+      "texto": "El viaje completo de Divoox Moto en Caracas de pruebas pasó en el sitio de pruebas: alta del conductor, aprobación, recarga, viaje en efectivo con la comisión descontada del saldo, viaje con pago móvil y conductor sin saldo que no recibe carreras. Se agregó el precio en bolívares de referencia con la tasa que escribe el equipo, el simulador ya hace viajes de moto y hay cinco guías públicas nuevas con capturas reales. En producción Moto sigue apagado hasta tener la marca presentada."
+    },
     {
       "fecha": "2026-11-13",
       "titulo": "Modo juego de la ciudad de pruebas y Moto preparado para Venezuela",
