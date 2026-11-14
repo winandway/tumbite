@@ -4199,3 +4199,9 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Qué se vio:** al tomar capturas, Driver decía «Ya recibes viajes de Carro» con la licencia y la revisión del vehículo «Sin subir». El estado SÍ sale del servidor (`preferencia` ya exige `puedeActivar`: habilitación aprobada, vehículo compatible y sin requisitos faltantes); lo que pasó es que el guion de capturas subió la licencia con `tipo=licencia` (no existe: el papel es `licencia_conducir`), el servidor la rechazó con un mensaje vago y el guion aprobó los requisitos a mano sin los papeles, y además no subía la `inspeccion` del carro.
 - **Arreglo:** `POST /datos/conductor/papeles` (`rutas/conductorPapeles.ts`) con un tipo inválido responde 400 diciendo los tipos válidos (`licencia_conducir` para Carro, `licencia_moto`, `antecedentes_penales`); `scripts/recorrido/capturas-carro.mjs` sube `licencia_conducir` y la `inspeccion`.
 - **Prueba:** `rutas/carroVenezuela.test.ts` (el tipo «licencia» da 400 con el nombre correcto).
+
+## C-CSP-VISTA-PREVIA · La vista previa del comprobante se ve y el mapa web de Google tiene paso (14 nov 2026) — todos los países
+
+- **Qué se rompió:** en el panel de Flex, «Pago local», la vista previa de la foto del comprobante salía rota: la política de seguridad no admitía imágenes `blob:`.
+- **Arreglo:** `apps/servidor/src/seguridad.ts` agrega `blob:` SOLO a `img-src`, y deja permitidos `https://maps.googleapis.com` y `https://maps.gstatic.com` en `script-src` y `connect-src` (el pendiente anotado en C-MAPA-GOOGLE-WEB para cuando exista la llave del mapa web).
+- **Prueba:** `apps/servidor/src/seguridad.test.ts` (blob en imágenes y en ninguna otra directiva; Maps en script y connect).
