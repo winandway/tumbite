@@ -256,7 +256,7 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
       </Pressable>
       {r ? (
         <Tarjeta>
-          <Text style={{ fontWeight: '800', fontSize: 18, color: C.secundario }}>{t.recibo}</Text>
+          <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>{t.recibo}</Text>
           <Text style={{ color: '#5E5E5E' }}>
             {nombre(r)} · {de(t.estados, r.estado)} · {r.fecha.slice(0, 16)}
           </Text>
@@ -277,8 +277,8 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
             ) : null}
             {r.total != null ? (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>{t.total}</Text>
-                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>{t.total}</Text>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>
                   {monto(r.total + r.propina)}
                 </Text>
               </View>
@@ -302,7 +302,7 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
       ) : null}
       {r ? (
         <Tarjeta>
-          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.ayuda}</Text>
+          <Text style={{ fontWeight: '700', color: C.secundario }}>{t.ayuda}</Text>
           {ayuda.map((a) => (
             <Text key={a.motivo} style={{ color: C.exito, fontWeight: '700' }}>
               {t.casoAbierto} {de(t.motivos, a.motivo)}
@@ -389,7 +389,7 @@ export function MisViajes() {
   if (abierto) return <Detalle id={abierto} alVolver={() => setAbierto(null)} />;
   return (
     <View style={{ gap: 8 }} testID="mis-viajes">
-      <Text style={{ fontWeight: '800', fontSize: 18, color: C.secundario }}>{t.titulo}</Text>
+      <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>{t.titulo}</Text>
       {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}
       {filas && filas.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
       {(filas ?? []).map((f) => (

@@ -73,6 +73,9 @@ export function PedirMoto({
     alSalir: alSalirTelefono,
   });
   const { valores: v, cambiar } = b;
+  // C-CARRO-VIAJE-PASAJERO: cada servicio dice lo suyo en el botón.
+  const textoPedirViaje =
+    servicio === 'carro' ? (v.categoria === 'xl' ? t.pedirCarroXl : t.pedirCarro) : t.pedirMoto;
   const [cotizacion, setCotizacion] = useState<CotizacionViaje | null>(null);
   const [error, setError] = useState('');
   const [trabajando, setTrabajando] = useState(false);
@@ -410,15 +413,7 @@ export function PedirMoto({
             </Text>
           ) : null}
           <Boton
-            texto={
-              servicio === 'envios'
-                ? t.pedirEnvio
-                : servicio === 'carro'
-                  ? v.categoria === 'xl'
-                    ? t.pedirCarroXl
-                    : t.pedirCarro
-                  : t.pedirMoto
-            }
+            texto={servicio === 'envios' ? t.pedirEnvio : textoPedirViaje}
             alTocar={() => void pedir()}
             cargando={trabajando}
             exito

@@ -95,7 +95,7 @@ function FotoConductor({
           justifyContent: 'center',
         }}
       >
-        <Text style={{ fontWeight: '800', fontSize: 22, color: C.secundario }}>
+        <Text style={{ fontWeight: '700', fontSize: 22, color: C.secundario }}>
           {nombre.slice(0, 1).toUpperCase()}
         </Text>
       </View>
