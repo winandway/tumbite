@@ -22,9 +22,17 @@ El radio llega hasta cien kilómetros. Para cubrir algo más grande, como todo M
 
 En el sitio de pruebas los servicios de viajes se encienden sin más. En producción no: Moto y Carro siguen apagados por candado y solo se encienden en un país que el superadmin abrió con su número de solicitud, en la sección de compuerta del país del mismo panel. En Estados Unidos no hay Moto. Nada de esto se enciende en producción sin la decisión de Richard.
 
-## Comida
+## Comida (el mismo paso)
 
-Comida no se abre con este formulario. Una ciudad nueva cuyo país todavía no tiene tarifas de comida queda con Comida en «próximamente» hasta que se carguen las tarifas del país en la configuración internacional.
+Comida se abre con el mismo formulario: en «Servicio» se elige Comida. Para las pruebas de Venezuela está el botón «Usar El Vigía de pruebas» (estado Mérida, en dólares). Al tocar «Abrir Comida en esta ciudad», la ciudad queda creada (o puesta al día) y la configuración del país queda en la moneda de esa ciudad, con sus tarifas de comida, sus topes y sus propinas sugeridas; se encienden el efectivo, el pago móvil y las recargas en puntos de venta, y Comida queda encendida en esa ciudad.
+
+- En Venezuela, si el país todavía no tiene tarifas de comida, se ponen solas las de mercado, en dólares (envío por distancia desde 1,50, cargo de servicio del 5 %, pedido pequeño de 0,50, propinas de 0, 5, 10 y 15 %). En otro país hay que escribir antes las tarifas de comida del país en «Control de dinero»; si no, el paso lo dice y no abre nada.
+- Si las tarifas del país ya están en otra moneda que la de la ciudad, el paso lo dice y no abre nada: primero se cambia la configuración del país.
+- Si el país tiene una política de comisión de comida en otra moneda, el paso tampoco abre (la comisión no se cobraría). El canario de salud tiene la pieza «comidaPaises» para vigilarlo.
+- El equivalente en bolívares que ven el cliente y el repartidor sale de la tasa del día que el equipo escribe en este mismo panel («Tasa de referencia»). Sin tasa de las últimas 48 horas, no se muestra.
+- Para recibir pedidos por pago móvil, cada repartidor agrega su cuenta de pago móvil en Ganancias y el equipo la confirma (si no, entra en vigor a las 24 horas). Para cobrar en efectivo o pago móvil necesita saldo: el equipo es su propio punto de venta en dólares.
+- En producción este paso no abre Comida en un país nuevo: es una decisión de Richard.
+- En Estados Unidos no se usa: Comida sigue con la configuración de siempre.
 
 ## Cómo se comprueba
 

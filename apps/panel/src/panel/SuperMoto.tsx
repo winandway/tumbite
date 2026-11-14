@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  CIUDAD_PRUEBAS_EL_VIGIA,
   CIUDAD_PRUEBAS_VENEZUELA,
+  TARIFAS_COMIDA_VENEZUELA,
   ErrorApi,
   type Idioma,
   TARIFA_MOTO_VENEZUELA,
@@ -31,7 +33,20 @@ const T = {
     abrirAyuda:
       'Para cualquier país: crea la ciudad (o la pone al día), le pone la tarifa y enciende el servicio en ella. En producción, primero tiene que estar abierto el país (abajo). Para cubrir un estado entero, dibuja después el área en Áreas de cobertura de esa ciudad.',
     servicio: 'Servicio',
-    nombresServicio: { moto: 'Moto', carro: 'Carro', envios: 'Envíos' } as Record<string, string>,
+    nombresServicio: {
+      moto: 'Moto',
+      carro: 'Carro',
+      envios: 'Envíos',
+      comida: 'Comida',
+    } as Record<string, string>,
+    // C-COMIDA-CIUDAD (13 nov 2026): Comida se abre con el mismo paso.
+    usarElVigia: 'Usar El Vigía de pruebas',
+    comidaTitulo: 'Tarifas de comida que se van a cobrar (mercado de Venezuela)',
+    comidaAyuda:
+      'En dólares, con el equivalente en bolívares de referencia. Se encienden el efectivo, el pago móvil y las recargas en puntos de venta. Fuera de Venezuela se usan las tarifas de comida que ya tenga el país. Todo se cambia después en Control de dinero.',
+    envio: 'Envío hasta 3 km',
+    servicioCargo: 'Cargo de servicio',
+    pedidoPequeno: 'Pedido pequeño (menos de 5 dólares)',
     tarifaEscribe: 'Tarifa de esta ciudad (en la moneda de los viajes)',
     tarifaEscribeAyuda:
       'Se cobra por calles: banderazo, más lo que cuesta cada kilómetro y cada minuto por la ruta real, sin bajar del mínimo. Se puede cambiar después en Moto · Viajes.',
@@ -213,7 +228,19 @@ const T = {
     abrirAyuda:
       'For any country: creates the city (or updates it), sets its pricing and turns the service on there. In production, the country has to be open first (below). To cover a whole state, draw the area afterwards in that city’s Coverage areas.',
     servicio: 'Service',
-    nombresServicio: { moto: 'Moto', carro: 'Car', envios: 'Courier' } as Record<string, string>,
+    nombresServicio: {
+      moto: 'Moto',
+      carro: 'Car',
+      envios: 'Courier',
+      comida: 'Food',
+    } as Record<string, string>,
+    usarElVigia: 'Use El Vigía test city',
+    comidaTitulo: 'Food fees that will be charged (Venezuela market)',
+    comidaAyuda:
+      'In dollars, with the bolívar equivalent for reference. Cash, mobile payment and sales point top-ups are turned on. Outside Venezuela the country’s existing food fees are used. You can change everything later in Money control.',
+    envio: 'Delivery up to 3 km',
+    servicioCargo: 'Service fee',
+    pedidoPequeno: 'Small order (under 5 dollars)',
     tarifaEscribe: 'Pricing for this city (in the ride currency)',
     tarifaEscribeAyuda:
       'Charged by street distance: a base fare, plus each kilometer and each minute along the real route, never below the minimum. You can change it later in Moto · Rides.',
@@ -418,11 +445,15 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
   const [ok, setOk] = useState('');
   const [enviando, setEnviando] = useState(false);
   const v = b.valores;
-  const servicio = v.servicio === 'carro' || v.servicio === 'envios' ? v.servicio : 'moto';
+  const servicio =
+    v.servicio === 'carro' || v.servicio === 'envios' || v.servicio === 'comida'
+      ? v.servicio
+      : 'moto';
+  const comida = servicio === 'comida';
   const nombreServicio = enPalabras(t.nombresServicio, servicio);
   const venezuela = v.id.trim().toUpperCase().startsWith('VE');
   // C-ABRIR-CIUDAD (13 nov 2026): solo Moto en Venezuela trae tarifa de mercado; lo demás se escribe.
-  const conTarifaDeMercado = servicio === 'moto' && (venezuela || !v.id.trim());
+  const conTarifaDeMercado = comida || (servicio === 'moto' && (venezuela || !v.id.trim()));
   const monedaTarifa = v.moneda.trim().toUpperCase() || 'USD';
   const tarifaEscrita = {
     base: textoAMonto(v.base || '', monedaTarifa),
@@ -434,6 +465,20 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
     [v.base, v.porKm, v.porMinuto, v.minimo].every((x) => (x ?? '').trim() !== '') &&
     Object.values(tarifaEscrita).every((n) => Number.isFinite(n) && n >= 0);
   const usd = (c: number) => formatearMonto(c, 'USD', idioma);
+
+  function usarElVigia() {
+    const c = CIUDAD_PRUEBAS_EL_VIGIA;
+    b.setValores((antes) => ({
+      ...antes,
+      id: c.id,
+      nombre: c.nombre,
+      lat: String(c.lat),
+      lng: String(c.lng),
+      radioKm: String(c.radioKm),
+      zonaHoraria: c.zonaHoraria,
+      moneda: c.moneda,
+    }));
+  }
 
   function usarCaracas() {
     const c = CIUDAD_PRUEBAS_VENEZUELA;
@@ -466,8 +511,8 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
       const r = await pedir<{
         zona: { id: string; pais: string; moneda: string };
         estado: string;
-      }>('POST', '/datos/admin/viajes/ciudades', {
-        servicio,
+      }>('POST', comida ? '/datos/admin/comida/ciudades' : '/datos/admin/viajes/ciudades', {
+        ...(comida ? {} : { servicio }),
         zona: {
           id: v.id.trim().toUpperCase(),
           nombre: v.nombre.trim(),
@@ -477,7 +522,7 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           zonaHoraria: v.zonaHoraria.trim(),
           ...(moneda ? { moneda } : {}),
         },
-        ...(conTarifaDeMercado ? {} : { tarifa: tarifaEscrita }),
+        ...(conTarifaDeMercado || comida ? {} : { tarifa: tarifaEscrita }),
         motivo: v.motivo.trim(),
       });
       await b.limpiar();
@@ -519,13 +564,16 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
       <label>
         {t.servicio}
         <select value={servicio} onChange={(e) => b.cambiar('servicio', e.target.value)}>
-          {(['moto', 'carro', 'envios'] as const).map((s) => (
+          {(['moto', 'carro', 'envios', 'comida'] as const).map((s) => (
             <option key={s} value={s}>
               {enPalabras(t.nombresServicio, s)}
             </option>
           ))}
         </select>
       </label>
+      <button type="button" className="boton secundario" onClick={usarElVigia}>
+        {t.usarElVigia}
+      </button>
       <button type="button" className="boton secundario" onClick={usarCaracas}>
         {t.usarCaracas}
       </button>
@@ -596,7 +644,34 @@ function AbrirCiudad({ idioma, t }: { idioma: Idioma; t: Textos }) {
           placeholder={t.motivoEjemplo}
         />
       </label>
-      {conTarifaDeMercado ? (
+      {comida ? (
+        <div aria-label={t.comidaTitulo}>
+          <h3>{t.comidaTitulo}</h3>
+          <p className="pista">{t.comidaAyuda}</p>
+          {venezuela || !v.id.trim() ? (
+            <ul className="lista">
+              {(
+                [
+                  [t.envio, TARIFAS_COMIDA_VENEZUELA.envioBase],
+                  [t.servicioCargo, TARIFAS_COMIDA_VENEZUELA.servicioMinimo],
+                  [t.pedidoPequeno, TARIFAS_COMIDA_VENEZUELA.cargoPedidoPequeno],
+                ] as const
+              ).map(([nombre, centavos]) => (
+                <li key={nombre}>
+                  <div className="lista-texto">
+                    <strong>{nombre}</strong>
+                    <span>
+                      {nombre === t.servicioCargo
+                        ? `${TARIFAS_COMIDA_VENEZUELA.servicioPb / 100} % (${usd(centavos)} – ${usd(TARIFAS_COMIDA_VENEZUELA.servicioMaximo)})`
+                        : usd(centavos)}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : conTarifaDeMercado ? (
         <div aria-label={t.tarifaTitulo}>
           <h3>{t.tarifaTitulo}</h3>
           <p className="pista">{t.tarifaAyuda}</p>

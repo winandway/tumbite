@@ -30,6 +30,18 @@ export const TARIFAS_COMIDA_VENEZUELA: ConfigDinero = {
   impuestoPb: 0,
 };
 
+/** La ciudad de pruebas de Venezuela desde el 13 nov 2026: El Vigía, estado Mérida (en dólares). */
+export const CIUDAD_PRUEBAS_EL_VIGIA = {
+  id: 'VE-MER-ELVIGIA',
+  nombre: 'El Vigía',
+  pais: 'VE',
+  moneda: 'USD',
+  zonaHoraria: 'America/Caracas',
+  lat: 8.6219,
+  lng: -71.6506,
+  radioKm: 15,
+} as const;
+
 /** Topes en centavos de dólar (los mismos campos que el resto de países). */
 export const TOPES_COMIDA_VENEZUELA = {
   bonoOfertaAbierta: 50,
