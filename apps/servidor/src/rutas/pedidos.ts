@@ -921,7 +921,7 @@ pedidos.post('/pedidos', async (c) => {
   // C-PENDIENTE-ABANDONADO: antes de mirar el cupón y el saldo de regalo, el pedido anterior sin
   // pagar de este cliente se cierra (el cliente está pidiendo de nuevo).
   const huellaCuerpo = huellaPedido({ ...d, totalEsperado: undefined });
-  const vigente =
+  let vigente =
     d.metodoPago === 'tarjeta'
       ? await cobroVigenteMismosDatos(c.env, db, u.id, huellaCuerpo, d.totalEsperado)
       : null;
@@ -981,7 +981,7 @@ pedidos.post('/pedidos', async (c) => {
   // tarjeta). Solo en dólares y con tarjeta; se aparta al crear el pedido.
   const usoRegalo =
     d.usarSaldoRegalo && enEeuu && d.metodoPago === 'tarjeta'
-      ? saldoAplicable(conPlus, await saldoRegalo(db, u.id))
+      ? saldoAplicable(conPlus, await saldoRegalo(db, u.id, vigente?.id))
       : 0;
   const desglose = usoRegalo
     ? conPromo({
@@ -995,6 +995,26 @@ pedidos.post('/pedidos', async (c) => {
         descuento: (cupon?.descuento ?? 0) + descPlus + usoRegalo,
       })
     : conPlus;
+  // C-PENDIENTE-ABANDONADO (revisión 2 del 13 nov 2026): el total se calculó como si el pendiente
+  // vigente no existiera (su cupón y su saldo de regalo no cuentan). Si aun así no coincide, ese
+  // pendiente se cierra AHORA (libera su saldo y su cupón): nunca dos pendientes vivos con cobro para
+  // el mismo carrito, tampoco con apps viejas que no mandan totalEsperado.
+  if (vigente && vigente.total !== desglose.totalCliente) {
+    await cerrarPendientesSinPagar(c.env, db, u.id, null);
+    const sigue = await db
+      .prepare("SELECT 1 FROM pedidos WHERE id = ? AND estado = 'pago_pendiente'")
+      .bind(vigente.id)
+      .first();
+    // Si no se pudo cerrar (Stripe ya lo autorizó o no responde), su cupón y su saldo siguen
+    // apartados: no se crea otro pedido encima.
+    if (sigue)
+      throw new ErrorDatos(
+        'Tu pago anterior todavía se está procesando. Espera un momento y vuelve a intentar.',
+        undefined,
+        409,
+      );
+    vigente = null;
+  }
   // C-FALLOS-DINERO (F6): el cliente paga exactamente lo que vio. Si la app calculó otra cosa
   // (envío en una recogida, configuración vieja), se le devuelve el total correcto y no se cobra.
   if (d.totalEsperado != null && d.totalEsperado !== desglose.totalCliente)

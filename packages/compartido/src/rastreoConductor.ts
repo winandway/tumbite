@@ -28,6 +28,19 @@ export function modoRastreo(e: {
   return e.conectado ? 'libre' : 'apagado';
 }
 
+/**
+ * Revisión del 13 nov 2026: el sistema puede relanzar la tarea de fondo sin abrir la pantalla (y sin
+ * que nadie llame a fijarModoRastreo). Se usa el modo que se guardó la última vez; con duda, el más
+ * frecuente (activo: con un pedido en curso nunca se manda menos de lo necesario), y apagado si no
+ * hay sesión.
+ */
+export function modoGuardadoAlArrancar(guardado: string | null, conSesion: boolean): ModoRastreo {
+  if (!conSesion) return 'apagado';
+  return guardado === 'apagado' || guardado === 'libre' || guardado === 'activo'
+    ? guardado
+    : 'activo';
+}
+
 export function tocaMandarSegunModo(
   modo: ModoRastreo,
   ultimo: (Punto & { en: number }) | null,
@@ -51,14 +64,36 @@ export type CuerpoUbicacion = {
    * `enviadaEn` (mismo reloj) para que el servidor sepa su edad aunque el reloj del celular esté mal.
    */
   leidaEn?: number;
+  /**
+   * Revisión 2 del 13 nov 2026: Date.now() del celular en el momento en que la app RECIBIÓ la
+   * lectura (`marcarRecibida`). La hora del GPS puede venir de otro reloj (en Android, la del
+   * satélite) y con el reloj del sistema mal puesto toda lectura parecería vieja. No viaja: al
+   * enviar se convierte en `edadMs`, medida con el mismo reloj.
+   */
+  recibidaEn?: number;
 };
 
-/** Lo que de verdad viaja: la lectura más la hora del envío (mismo reloj que `leidaEn`). */
+/** Marca una lectura con la hora (reloj del celular) en que la app la recibió. */
+export function marcarRecibida<T extends object>(
+  l: T,
+  ahora = Date.now(),
+): T & { recibidaEn: number } {
+  return { ...l, recibidaEn: ahora };
+}
+
+/**
+ * Lo que de verdad viaja. Con la lectura marcada al recibirla: su edad (`edadMs`, un solo reloj).
+ * Sin marca (por ejemplo, la última conocida del sistema): la hora del GPS y la del envío, como antes.
+ */
 export function paraEnviarUbicacion(
   cuerpo: CuerpoUbicacion,
   ahora = Date.now(),
-): CuerpoUbicacion & { enviadaEn: number } {
-  return { ...cuerpo, enviadaEn: ahora };
+): Omit<CuerpoUbicacion, 'recibidaEn'> & { enviadaEn: number; edadMs?: number } {
+  const { recibidaEn, ...resto } = cuerpo;
+  if (recibidaEn == null) return { ...resto, enviadaEn: ahora };
+  const { leidaEn: _hora, ...sinHora } = resto;
+  void _hora;
+  return { ...sinHora, edadMs: Math.round(ahora - recibidaEn), enviadaEn: ahora };
 }
 
 /** Lo único que viaja al servidor: posición, precisión y si el propio celular la marca simulada. */
@@ -66,6 +101,7 @@ export function cuerpoUbicacion(l: {
   coords: { latitude: number; longitude: number; accuracy?: number | null };
   mocked?: boolean;
   timestamp?: number;
+  recibidaEn?: number;
 }): CuerpoUbicacion {
   return {
     lat: l.coords.latitude,
@@ -75,6 +111,7 @@ export function cuerpoUbicacion(l: {
     ...(typeof l.timestamp === 'number' && Number.isFinite(l.timestamp)
       ? { leidaEn: Math.round(l.timestamp) }
       : {}),
+    ...(typeof l.recibidaEn === 'number' ? { recibidaEn: l.recibidaEn } : {}),
   };
 }
 

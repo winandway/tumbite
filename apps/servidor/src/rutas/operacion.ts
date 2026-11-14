@@ -143,6 +143,8 @@ const puntoConPrecision = punto.extend({
   /** C-LATIDO-UBICACION: hora de la lectura y del envío, los dos del reloj del celular (ms). */
   leidaEn: z.number().int().min(0).optional(),
   enviadaEn: z.number().int().min(0).optional(),
+  /** Revisión 2: edad de la lectura medida con un solo reloj del celular (puede venir negativa). */
+  edadMs: z.number().int().optional(),
 });
 
 /**

@@ -869,6 +869,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Elige una de las franjas que te mostramos.', 'Pick one of the windows we show you.'],
   ['Ese plato no existe en tu menú.', 'That item isn’t on your menu.'],
   ['Ese regalo ya no está disponible.', 'That gift is no longer available.'],
+  [
+    'Tu pago anterior todavía se está procesando. Espera un momento y vuelve a intentar.',
+    'Your previous payment is still processing. Wait a moment and try again.',
+  ],
   ['Ese repartidor no existe.', 'That driver doesn’t exist.'],
   ['Ese restaurante no existe.', 'That restaurant doesn’t exist.'],
   ['Ese ticket no existe.', 'That ticket doesn’t exist.'],

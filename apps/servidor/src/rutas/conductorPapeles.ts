@@ -124,14 +124,18 @@ conductorPapeles.put('/conductor/ciudad', async (c) => {
     throw new ErrorDatos('Termina tu viaje en curso antes de cambiar de ciudad.', undefined, 409);
   if (!ahora?.ciudad_elegida_en) {
     // C-CIUDAD-PRIMERA-APROBADO: la primera elección es libre solo para quien todavía no fue
-    // aprobado. Con la identidad o un papel ya aprobados, también exige el país de su cuenta (sin
-    // zona propia, la de siempre del esquema: Miami, EE. UU.).
+    // aprobado. Con la identidad o un papel ya aprobados, también exige el país de su cuenta.
+    // Revisión del 13 nov 2026: el país sale de la cuenta (`usuarios.zona_id`, sin valor por
+    // defecto). La zona de la fila de repartidor solo cuenta si salió de una ubicación real
+    // (`ubicacion_en`): sin eso vale Miami por el DEFAULT del esquema y haría pasar a un venezolano
+    // por EE. UU. Sin ningún dato, la de siempre (Miami, EE. UU.).
     const cuenta = await db
       .prepare(
         `SELECT z.pais,
            (EXISTS (SELECT 1 FROM kyc k WHERE k.usuario_id = u.id AND k.estado = 'aprobado')
             OR EXISTS (SELECT 1 FROM cumplimientos cu WHERE cu.conductor_id = u.id AND cu.estado = 'aprobado')) AS aprobado
-          FROM usuarios u JOIN zonas z ON z.id = COALESCE((SELECT r.zona_id FROM repartidores r WHERE r.usuario_id = u.id), u.zona_id, 'US-FL-MIAMI')
+          FROM usuarios u JOIN zonas z ON z.id = COALESCE(u.zona_id,
+            (SELECT r.zona_id FROM repartidores r WHERE r.usuario_id = u.id AND r.ubicacion_en IS NOT NULL), 'US-FL-MIAMI')
          WHERE u.id = ?`,
       )
       .bind(u.id)

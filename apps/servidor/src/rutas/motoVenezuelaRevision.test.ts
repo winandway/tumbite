@@ -141,6 +141,33 @@ describe('C-CIUDAD-CONDUCTOR: cambiar de ciudad como en el mercado', () => {
     ).toBe(200);
   });
 
+  it('C-CIUDAD-PRIMERA-APROBADO (revisión): un conductor venezolano aprobado sin ciudad elegida es de Venezuela aunque su fila de repartidor tenga Miami por defecto', async () => {
+    const e = await escenarioVe();
+    expect((await abrirCaracas(e)).estado).toBe(201);
+    const rep = await e.m.cuenta('repartidor', 'Conductor Venezuela');
+    // País de la cuenta: Venezuela. La fila de repartidor nace con la zona por defecto (Miami) y sin
+    // ubicación, como la crean el KYC y las habilitaciones.
+    await e.m.DB.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(CCS.id, rep.id).run();
+    await e.m.DB.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)')
+      .bind(rep.id)
+      .run();
+    await e.m.DB.prepare(
+      "INSERT INTO kyc (usuario_id, estado) VALUES (?, 'aprobado') ON CONFLICT(usuario_id) DO UPDATE SET estado = 'aprobado'",
+    )
+      .bind(rep.id)
+      .run();
+    const miami = await e.m.llamar(
+      'PUT',
+      '/datos/conductor/ciudad',
+      { zonaId: 'US-FL-MIAMI' },
+      rep.token,
+    );
+    expect(miami.estado).toBe(409);
+    expect(
+      (await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id }, rep.token)).estado,
+    ).toBe(200);
+  });
+
   it('la primera vez elige cualquiera; después solo de su país, una vez cada 24 horas y desconectado', async () => {
     const e = await escenarioVe();
     expect((await abrirCaracas(e)).estado).toBe(201);

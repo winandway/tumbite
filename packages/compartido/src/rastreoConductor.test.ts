@@ -6,6 +6,7 @@ import {
   PENDIENTE_VIGENTE_MS,
   colaUbicacion,
   cuerpoUbicacion,
+  modoGuardadoAlArrancar,
   modoRastreo,
   necesitaExplicacionPrevia,
   tocaMandarSegunModo,
@@ -100,7 +101,7 @@ describe('C-GPS-PANTALLA-APAGADA: la app usa esta lógica', () => {
     const src = readFileSync(join(raiz, 'apps/repartidor/src/ubicacionFondo.ts'), 'utf8');
     expect(src).toContain('tocaMandarSegunModo(');
     expect(src).toContain('colaUbicacion(');
-    expect(src).toContain("if (modoActual === 'apagado') return detenerUbicacionFondo();");
+    expect(src).toContain("if (modo === 'apagado') return detenerUbicacionFondo();");
     expect(src).toContain('necesitaExplicacionPrevia(');
   });
   it('el inicio decide con modoRastreo (pedido, viaje y ruta incluidos)', () => {
@@ -108,5 +109,26 @@ describe('C-GPS-PANTALLA-APAGADA: la app usa esta lógica', () => {
     expect(src).toContain('modoRastreo({');
     expect(src).toContain('fijarModoRastreo(');
     expect(src).toMatch(/viajeActivo: !!viajeActivo/);
+  });
+});
+
+// Revisión del 13 nov 2026: si el sistema relanza la tarea de fondo sin abrir la pantalla, el modo
+// no vuelve a «libre» (250 m) con un pedido en curso.
+describe('C-GPS-PANTALLA-APAGADA: el modo sobrevive a un relanzamiento de la tarea', () => {
+  it('se usa el modo guardado; con duda, el más frecuente; sin sesión, apagado', () => {
+    expect(modoGuardadoAlArrancar('activo', true)).toBe('activo');
+    expect(modoGuardadoAlArrancar('libre', true)).toBe('libre');
+    expect(modoGuardadoAlArrancar('apagado', true)).toBe('apagado');
+    expect(modoGuardadoAlArrancar(null, true)).toBe('activo');
+    expect(modoGuardadoAlArrancar('basura', true)).toBe('activo');
+    expect(modoGuardadoAlArrancar('activo', false)).toBe('apagado');
+    expect(modoGuardadoAlArrancar(null, false)).toBe('apagado');
+  });
+  it('la tarea guarda el modo al fijarlo y lo lee al arrancar en frío', () => {
+    const src = readFileSync(join(raiz, 'apps/repartidor/src/ubicacionFondo.ts'), 'utf8');
+    expect(src).toContain('let modoActual: ModoRastreo | null = null;');
+    expect(src).toContain('AsyncStorage.setItem(LLAVE_MODO, modo)');
+    expect(src).toContain('modoGuardadoAlArrancar(');
+    expect(src).not.toContain("let modoActual: ModoRastreo = 'libre';");
   });
 });
