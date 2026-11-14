@@ -118,6 +118,8 @@ comidaCiudad.post('/admin/comida/ciudades', async (c) => {
     propinasPb: d.propinasPb ?? antes.propinasPb ?? (deMercado ? [...PROPINAS_VENEZUELA_PB] : null),
     efectivoActivo: d.efectivo || antes.efectivoActivo,
     transferenciaRepartidorActiva: d.pagoMovil || antes.transferenciaRepartidorActiva,
+    // Sin recargas no hay saldo prepago para la comisión del cobro en mano.
+    recargasPuntoVentaActivas: true,
   });
   await anotarCambioDinero(db, admin.id, `config-pais:${pais}`, antes, config);
   const estado = await encenderServicioEnZona(c, admin.id, 'comida', d.zona.id, d.motivo);

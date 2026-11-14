@@ -1747,17 +1747,14 @@ export const MENSAJES_EN = new Map<string, string>([
     'In production, Food isn’t opened in a new country from here: it needs Richard’s go-ahead.',
   ],
   ['Escribe las tarifas de comida de este país.', 'Enter this country’s food fees.'],
+  // C-COMIDA-VE-CIRCUITO (13 nov 2026).
+  [
+    'Este pedido se paga por pago móvil y no tienes una cuenta para recibirlo. Agrégala en Ganancias.',
+    'This order is paid by mobile payment and you don’t have an account to receive it. Add one in Earnings.',
+  ],
+  ['Este pedido no es tuyo.', 'This order isn’t yours.'],
+  ['Este pedido no se paga por pago móvil.', 'This order isn’t paid by mobile payment.'],
   ['Escribe los topes de comida de este país.', 'Enter this country’s food limits.'],
-  [
-    /^Las tarifas de comida de este país están en ([A-Z]{3}) y esta ciudad cobra en ([A-Z]{3})\. Cambia primero la configuración del país\.$/,
-    (m) =>
-      `This country’s food fees are in ${m[1]} and this city charges in ${m[2]}. Change the country settings first.`,
-  ],
-  [
-    /^En este país la comisión de comida está en ([A-Z, ]+) y esta ciudad cobra en ([A-Z]{3})\. Crea la política de comida en [A-Z]{3} antes de abrir Comida\.$/,
-    (m) =>
-      `In this country the food commission is set in ${m[1]} and this city charges in ${m[2]}. Create the food policy in ${m[2]} before opening Food.`,
-  ],
   // C-PAPELES-CONDUCTOR (13 nov 2026).
   ['Esa ciudad no está disponible.', 'That city isn’t available.'],
   ['Primero hay que abrir la ciudad de pruebas.', 'Open the test city first.'],
@@ -1898,6 +1895,17 @@ export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = 
   [
     /^Esta persona todavía no tiene (\d+) años: no se puede aprobar\.$/,
     (m) => `This person isn’t ${m[1]} yet, so this can’t be approved.`,
+  ],
+  // C-COMIDA-CIUDAD (13 nov 2026).
+  [
+    /^Las tarifas de comida de este país están en ([A-Z]{3}) y esta ciudad cobra en ([A-Z]{3})\. Cambia primero la configuración del país\.$/,
+    (m) =>
+      `This country’s food fees are in ${m[1]} and this city charges in ${m[2]}. Change the country settings first.`,
+  ],
+  [
+    /^En este país la comisión de comida está en ([A-Z, ]+) y esta ciudad cobra en ([A-Z]{3})\. Crea la política de comida en [A-Z]{3} antes de abrir Comida\.$/,
+    (m) =>
+      `In this country the food commission is set in ${m[1]} and this city charges in ${m[2]}. Create the food policy in ${m[2]} before opening Food.`,
   ],
   [
     // C-COMISION-MONEDA (13 nov 2026).

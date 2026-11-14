@@ -1,11 +1,12 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   CONFIG_DINERO_INICIAL,
   PROPINAS_PB_INICIALES,
   PROPINAS_VENEZUELA_PB,
   TARIFAS_COMIDA_VENEZUELA,
 } from '@tumbite/compartido';
-import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
+import { RESTAURANTE_BASE } from '../pruebas/ayuda';
+import { EL_VIGIA, abrirComida, escenarioVe, restauranteVe } from '../pruebas/comidaVe';
 
 /**
  * C-COMIDA-VENEZUELA (13 nov 2026) — Venezuela. La comida en El Vigía (estado Mérida) en dólares,
@@ -13,73 +14,8 @@ import { RESTAURANTE_BASE, mundo } from '../pruebas/ayuda';
  * ciudad con UN paso del panel; la comisión de comida nunca queda en una moneda que no cubre la
  * ciudad. Estados Unidos no cambia ni un centavo.
  */
-export const EL_VIGIA = {
-  id: 'VE-MER-ELVIGIA',
-  nombre: 'El Vigía',
-  lat: 8.6219,
-  lng: -71.6506,
-  radioKm: 15,
-  zonaHoraria: 'America/Caracas',
-};
-
-export async function escenarioVe(host = 'staging.tumbite.com') {
-  vi.stubGlobal(
-    'fetch',
-    async () => new Response(JSON.stringify({ id: 'x', status: 'succeeded' }), { status: 200 }),
-  );
-  const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' }, { host });
-  const admin = await m.cuenta('admin', 'Soporte Divoox');
-  const cliente = await m.cuenta('cliente', 'Cliente El Vigía');
-  return { m, admin, cliente };
-}
-type E = Awaited<ReturnType<typeof escenarioVe>>;
-
-export const abrirComida = (e: E, extra: Record<string, unknown> = {}) =>
-  e.m.llamar(
-    'POST',
-    '/datos/admin/comida/ciudades',
-    { zona: EL_VIGIA, motivo: 'Comida de pruebas en El Vigía', ...extra },
-    e.admin.token,
-  );
-
-/** Un restaurante de El Vigía se registra (su país sale de su ubicación) y el equipo lo aprueba. */
-export async function restauranteVe(e: E) {
-  const dueno = await e.m.cuenta('restaurante', 'Dueño Arepera');
-  const r = await e.m.llamar(
-    'PUT',
-    '/datos/mi-restaurante',
-    {
-      ...RESTAURANTE_BASE,
-      nombre: 'Arepera El Vigía',
-      direccion: 'Avenida Bolívar, El Vigía, Mérida',
-      lat: 8.6225,
-      lng: -71.651,
-      categoria: 'Venezolana',
-      telefono: '+584141234567',
-    },
-    dueno.token,
-  );
-  expect(r.estado).toBe(201);
-  const rid = r.datos.restaurante.id as string;
-  await e.m.llamar(
-    'PATCH',
-    `/datos/admin/restaurantes/${rid}`,
-    { estado: 'aprobado' },
-    e.admin.token,
-  );
-  const plato = await e.m.llamar(
-    'POST',
-    '/datos/mi-restaurante/platos',
-    { nombreEs: 'Arepa reina pepiada', nombreEn: 'Reina pepiada arepa', precioCentavos: 450 },
-    dueno.token,
-  );
-  expect(plato.estado).toBe(201);
-  await e.m.abrir(dueno.token);
-  return { dueno, rid, platoId: plato.datos.plato.id as string };
-}
-
 describe('C-COMIDA-VENEZUELA: Comida se abre en El Vigía con un paso del panel', () => {
-  it('deja el país en dólares con las tarifas del mercado, efectivo y pago móvil, y Comida encendida', async () => {
+  it('deja el país en dólares con las tarifas del mercado, efectivo y pago móvil, recargas y Comida encendida', async () => {
     const e = await escenarioVe();
     const r = await abrirComida(e);
     expect(r.estado).toBe(201);
@@ -91,6 +27,7 @@ describe('C-COMIDA-VENEZUELA: Comida se abre en El Vigía con un paso del panel'
     expect(ve.config.topes).not.toBeNull();
     expect(ve.config.efectivoActivo).toBe(true);
     expect(ve.config.transferenciaRepartidorActiva).toBe(true);
+    expect(ve.config.recargasPuntoVentaActivas).toBe(true);
     expect(ve.config.propinasPb).toEqual([...PROPINAS_VENEZUELA_PB]);
     // Repetirlo no duplica la ciudad.
     expect((await abrirComida(e)).estado).toBe(201);

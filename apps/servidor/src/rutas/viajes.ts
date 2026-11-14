@@ -25,6 +25,11 @@ import {
 } from '../operaciones';
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
 import { capturarCobroViaje, soltarCobroViaje } from '../viajesCobro';
+import {
+  MINUTOS_CORREGIR_PAGO_MOVIL,
+  SQL_A_TIEMPO,
+  decidirPagoMovil,
+} from '../internacional/pagoMovil';
 
 /**
  * C-VIAJE-PASOS-REALES (28 oct 2026, encontrado con REA): sin estas reglas un conductor podía
@@ -426,8 +431,8 @@ viajes.post(
  * bandeja de dinero para soporte. Es una confirmación MANUAL (nunca «verificado por el banco»). La
  * comisión sale igual del prepago al terminar, como en efectivo.
  */
-/** Minutos para corregir un «no me llegó» puesto por error (C-PAGO-MOVIL-CORREGIR). */
-export const MINUTOS_CORREGIR_PAGO_MOVIL = 30;
+/** Minutos para corregir un «no me llegó» puesto por error (C-PAGO-MOVIL-CORREGIR, pieza común). */
+export { MINUTOS_CORREGIR_PAGO_MOVIL };
 
 viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
   const u = exigir(c, 'repartidor');
@@ -470,19 +475,16 @@ viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
   if (!r.meta.changes) {
     const ya = await db
       .prepare(
-        `SELECT estado, corregido_en,
-                creado_en > datetime('now', '-${MINUTOS_CORREGIR_PAGO_MOVIL} minutes') AS a_tiempo
-           FROM viajes_pago_movil WHERE operacion_id = ?`,
+        `SELECT estado, corregido_en, ${SQL_A_TIEMPO} FROM viajes_pago_movil WHERE operacion_id = ?`,
       )
       .bind(id)
       .first<{ estado: string; corregido_en: string | null; a_tiempo: number }>();
-    const pedido = d.recibido ? 'recibido' : 'no_recibido';
-    // Lo mismo otra vez (doble toque, respuesta perdida): no es un error.
-    if (!ya || ya.estado === pedido) return c.json({ estado: ya?.estado ?? null });
-    // C-PAGO-MOVIL-CORREGIR (como la transferencia de Comida): «no me llegó» por error se corrige
-    // a «sí me llegó» UNA vez y dentro de un plazo corto; el caso de soporte se cierra con nota.
-    // Después de eso, o en el otro sentido, lo cambia solo soporte.
-    if (!(ya.estado === 'no_recibido' && d.recibido && !ya.corregido_en && ya.a_tiempo === 1))
+    // C-PAGO-MOVIL-CORREGIR (pieza común con la comida, `decidirPagoMovil`): lo mismo otra vez no
+    // es un error; «no me llegó» por error se corrige a «sí me llegó» UNA vez y a tiempo, y el caso
+    // de soporte se cierra con nota. Después de eso, o en el otro sentido, lo cambia solo soporte.
+    const decision = decidirPagoMovil(ya, d.recibido);
+    if (decision === 'igual') return c.json({ estado: ya?.estado ?? null });
+    if (decision === 'rechazar')
       throw new ErrorDatos(
         'Ya confirmaste este pago. Si hay que cambiarlo, escribe a soporte desde Ayuda.',
         undefined,
