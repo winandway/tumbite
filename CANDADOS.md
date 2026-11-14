@@ -3834,3 +3834,10 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Prueba:** `rutas/carroVenezuela.test.ts` («C-CARRO-PAPELES-PAIS», 3): Venezuela pide y cumple; EE. UU. no cumple con papeles; la tabla vieja se rehace y conserva sus filas. Comprobada en rojo (sin el perfil, 422/undefined; sin rehacer, CHECK).
 - **No tocar:** no hacer que un papel aprobado en EE. UU. cumpla antecedentes; no quitar `rehacerConductorDocumentos` mientras pueda quedar una base vieja.
 - Ficha: `docs/investigaciones-rea/2026-11-13-carro-venezuela.md`.
+
+### C-CARRO-ALTA-DRIVER · El taxista se da de alta en Driver
+
+- **Qué protege:** que el taxista tenga su pantalla «Divoox Carro» en el perfil de Driver, hermana de «Divoox Moto», sin duplicar código.
+- **Cómo funciona:** la pieza común `apps/repartidor/src/viajes/AltaPasajeros.tsx` (antes era `MiMoto.tsx` entero) recibe `servicio` (`moto` o `carro`): ciudad, vehículo (marca, modelo, año, color, placa y, en Carro, plazas 4 o 6), papeles del vehículo y del conductor que pide su país (`perfil.documentosVehiculo` y `perfil.documentosPorServicio` del servidor), estado de la aprobación con lo que falta, e interruptor «Recibir viajes de Carro». Con 6 plazas o más dice que también recibe Carro XL (el despacho ya lo filtra por plazas, C-CARRO-XL; no hay interruptor aparte). Borrador `driver-mi-carro`; fotos por `fotoConCamara` (C-CAMARA-EN-TODA-SUBIDA). `MiMoto.tsx` y `MiCarro.tsx` solo montan la pieza.
+- **Prueba:** `apps/servidor/src/carroAltaDriver.test.ts` (candado sobre el código de Driver; las apps no corren en vitest). Comprobada en rojo quitando `<MiCarro />` del perfil.
+- **No tocar:** no volver a copiar la pantalla para cada servicio; no quitar el borrador ni la cámara.
