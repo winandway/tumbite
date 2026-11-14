@@ -19,11 +19,14 @@ export const cabecerasSeguridad: MiddlewareHandler = async (c, next) => {
   h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(self)');
   h.set(
     'Content-Security-Policy',
-    // C-CSP-VISTA-PREVIA (14 nov 2026): `blob:` solo en imágenes (la vista previa del comprobante que
-    // se elige antes de subirlo); Google Maps listo en script y connect para el mapa web (C-MAPA-GOOGLE-WEB).
+    // C-CSP-VISTA-PREVIA (14 nov 2026): `blob:` en imágenes (la vista previa del comprobante que se
+    // elige antes de subirlo). C-MAPA-GOOGLE-WEB (14 nov 2026): Google Maps en script y connect; el
+    // mapa vectorial dibuja con WebGL en trabajadores creados desde `blob:` y pide teselas y datos a
+    // *.googleapis.com, *.gstatic.com y *.google.com (política recomendada en la documentación
+    // oficial de CSP de Maps JavaScript API). Sin 'unsafe-eval'.
     "default-src 'self'; script-src 'self' https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com; " +
       "frame-src https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com; img-src 'self' data: blob: https:; " +
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://maps.gstatic.com; worker-src 'self'; frame-ancestors 'none'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.google.com data: blob:; worker-src 'self' blob:; frame-ancestors 'none'",
   );
 };
 

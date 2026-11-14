@@ -278,7 +278,12 @@ describe('C-AVISOS-WEB · cabeceras', () => {
   it('la política de contenido deja registrar el trabajador de avisos solo desde el mismo sitio', async () => {
     const csp =
       (await app.request('/datos/salud', {}, {})).headers.get('Content-Security-Policy') ?? '';
-    expect(/worker-src ([^;]+)/.exec(csp)?.[1]).toBe("'self'");
+    // C-MAPA-GOOGLE-WEB (14 nov 2026) suma `blob:` para los trabajadores del mapa vectorial de
+    // Google. Un service worker no se puede registrar desde blob: (solo desde una dirección http(s)
+    // del mismo sitio), así que el trabajador de avisos sigue saliendo solo de 'self'. Ningún
+    // dominio de afuera puede dar trabajadores.
+    const fuentes = (/worker-src ([^;]+)/.exec(csp)?.[1] ?? '').trim().split(/\s+/);
+    expect(fuentes.sort()).toEqual(["'self'", 'blob:']);
   });
 });
 
