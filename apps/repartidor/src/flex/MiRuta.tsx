@@ -1,5 +1,6 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { comoLlegar } from '../comoLlegar';
+import { enlaceRutaGoogle } from '@tumbite/compartido';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -1290,6 +1291,10 @@ function VistaMapa({
     filtro === 'todos' ? ruta.paradas : ruta.paradas.filter((p) => cumpleFiltro(p, filtro));
   const puntos = puntosDe({ ...ruta, paradas: paradasFiltradas }, siguiente?.id ?? null, t);
   const distancia = siguiente ? km(yo, coord(siguiente), t, idioma, ruta.pais) : null;
+  // C-FLEX-NAVEGAR-RUTA: Google Maps con las próximas paradas en orden (hasta 10 por tramo).
+  const enlaceRuta = enlaceRutaGoogle(
+    ruta.paradas.filter((p) => ['pendiente', 'llegada'].includes(p.estado)),
+  );
   return (
     <>
       <Pestanas
@@ -1340,6 +1345,17 @@ function VistaMapa({
             texto={t.iniciarNavegacion}
             alTocar={() => navegar(siguiente.lat, siguiente.lng, siguiente.direccion, t)}
           />
+          {enlaceRuta && enlaceRuta.paradas > 1 ? (
+            <>
+              <Boton texto={t.navegarRuta} alTocar={() => void Linking.openURL(enlaceRuta.url)} />
+              <Text style={{ color: GRIS, fontSize: 12 }}>
+                {(enlaceRuta.quedan ? t.navegarRutaTramo : t.navegarRutaTodas).replace(
+                  '{n}',
+                  String(enlaceRuta.paradas),
+                )}
+              </Text>
+            </>
+          ) : null}
           {distancia ? <Text style={{ color: GRIS, fontSize: 12 }}>{t.distanciaAyuda}</Text> : null}
         </>
       ) : (
