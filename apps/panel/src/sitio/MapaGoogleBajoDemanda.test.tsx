@@ -198,7 +198,20 @@ describe('MapaGoogleBajoDemanda', () => {
 
   it('en viaje: se abre solo, se inclina a 45° con el rumbo y dibuja la línea y el área', async () => {
     (window as { google?: unknown }).google = { maps: API_VECTORIAL };
-    render(
+    const vista = (puntos: typeof PUNTOS) => (
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        mapId="a1b2c3d4e5f6"
+        idioma="en"
+        centro={{ lat: 10.5, lng: -66.9 }}
+        inclinado
+        rumbo={135}
+        etiqueta="Trip map"
+        abierto
+        puntos={puntos}
+      />
+    );
+    const { rerender } = render(
       <MapaGoogleBajoDemanda
         llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
         mapId="a1b2c3d4e5f6"
@@ -224,5 +237,9 @@ describe('MapaGoogleBajoDemanda', () => {
     registro.idle?.();
     expect(registro.inclinacion.at(-1)).toBe(45);
     expect(registro.rumbos.at(-1)).toBe(135);
+    // El repartidor se mueve: la marca se mueve, pero no se vuelve a encuadrar (no aplana el mapa).
+    rerender(vista([PUNTOS[0]!, { ...PUNTOS[1]!, lat: 10.52 }]));
+    await waitFor(() => expect(registro.avanzadas.length).toBeGreaterThan(2));
+    expect(registro.encuadres).toBe(1);
   });
 });

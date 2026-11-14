@@ -284,6 +284,8 @@ function dibujarTodo(
     avanzadas: boolean;
     inclinado: boolean;
     rumbo: number;
+    /** En viaje solo se encuadra la primera vez: encuadrar de nuevo aplana el mapa en cada paso. */
+    encuadrar: boolean;
   },
   anteriores: Quitable[],
 ): Quitable[] {
@@ -325,6 +327,11 @@ function dibujarTodo(
       nuevos.push({ quitar: () => f.setMap(null) });
     }
   for (const p of d.puntos) nuevos.push(dibujarMarca(g, m, p, d.avanzadas));
+  if (!d.encuadrar) {
+    // Sin encuadrar, la inclinación se mantiene: solo se gira hacia el destino si cambió.
+    if (d.inclinado) m.setHeading?.(d.rumbo);
+    return nuevos;
+  }
   if (d.puntos.length > 1) {
     const b = new g.LatLngBounds();
     for (const p of d.puntos) b.extend({ lat: p.lat, lng: p.lng });
@@ -395,6 +402,7 @@ export function MapaGoogleBajoDemanda({
   const api = useRef<GoogleMapsApi | null>(null);
   const mapa = useRef<MapaG | null>(null);
   const dibujados = useRef<Quitable[]>([]);
+  const encuadrado = useRef(false);
   const vectorial = mapIdValido(mapId);
   const alTocar = useRef(alTocarMapa);
   useEffect(() => {
@@ -448,9 +456,11 @@ export function MapaGoogleBajoDemanda({
         avanzadas: vectorial,
         inclinado: inclinado && vectorial,
         rumbo,
+        encuadrar: !inclinado || !encuadrado.current,
       },
       dibujados.current,
     );
+    if (puntos.length) encuadrado.current = true;
     // Se redibuja cuando el mapa queda listo o cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firma, estado]);
