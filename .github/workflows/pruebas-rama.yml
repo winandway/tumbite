@@ -66,6 +66,13 @@ jobs:
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
           VUELTA_PRUEBAS: rama-${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/staging/probar-moto-venezuela.mjs
+      - name: Carro de punta a punta (El Vigía efectivo y pago móvil con comisión del saldo, reserva, Detroit con tarjeta de prueba y propina)
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          VUELTA_PRUEBAS: rama-carro-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-carro.mjs
       - name: Comida en Venezuela de punta a punta (El Vigía, efectivo, pago móvil, sin saldo, cancelación)
         if: ${{ vars.URL_PRUEBAS != '' }}
         env:

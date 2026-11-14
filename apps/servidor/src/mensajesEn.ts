@@ -1806,6 +1806,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Your ride is already looking for a driver: cancel it from the ride screen.',
   ],
   ['La reserva cambió. Actualiza la pantalla.', 'The reservation changed. Refresh the screen.'],
+  [
+    'El taxista de pruebas tiene un viaje abierto: ciérralo primero.',
+    'The test driver has an open ride: close it first.',
+  ],
   // C-MOTO-VENEZUELA (13 nov 2026).
   ['Escribe la tarifa del servicio para esta ciudad.', 'Enter the service fare for this city.'],
   ['El código de la ciudad va como VE-CCS-CENTRO.', 'The city code looks like VE-CCS-CENTRO.'],
