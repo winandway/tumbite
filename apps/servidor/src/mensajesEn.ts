@@ -8,6 +8,7 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-FLEX-EXPORTAR y Flex Fase 7 (bloque propio)
   ['Cursor inválido.', 'Invalid cursor.'],
   ['Esa lista no se puede exportar.', 'That list can’t be exported.'],
+  ['La ruta no tiene paradas con coordenadas.', 'The route has no stops with coordinates.'],
   [
     'Las recargas las declara una persona de la empresa, no una clave de API.',
     'Top-ups are reported by a person at the company, not an API key.',

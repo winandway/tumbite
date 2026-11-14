@@ -1,4 +1,5 @@
 import { avisarConductor, despues } from './avisosFlex';
+import { confirmarRutaCalles } from './rutaCalles';
 import { evaluarCapacidadRuta } from './operaciones';
 import { liberarCobroRuta, reservarCobroRuta } from '../finanzas/cobrosRuta';
 import { Hono } from 'hono';
@@ -340,6 +341,10 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
     await despues(c, () =>
       avisarConductor(c.env, db, { tipo: 'asignacion', rutaId: r.id, ocasion: clave }),
     );
+    // C-FLEX-RUTA-CALLES: el orden quedó confirmado; km y tiempos reales en segundo plano.
+    await despues(c, async () => {
+      await confirmarRutaCalles(c.env, db, r);
+    });
     return {
       estado: 200,
       datos: await detalleRuta(db, await rutaPorId(db, r.id), { paraConductor: false }),
@@ -404,6 +409,10 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
     await despues(c, () =>
       avisarConductor(c.env, db, { tipo: 'oferta', rutaId: r.id, ocasion: clave }),
     );
+    // C-FLEX-RUTA-CALLES: el orden quedó confirmado; km y tiempos reales en segundo plano.
+    await despues(c, async () => {
+      await confirmarRutaCalles(c.env, db, r);
+    });
     return {
       estado: 200,
       datos: await detalleRuta(db, await rutaPorId(db, r.id), { paraConductor: false }),

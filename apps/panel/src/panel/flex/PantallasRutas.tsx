@@ -12,6 +12,7 @@ import { Enlace } from '../../Enlace';
 import { Campo } from '../CampoClave';
 import { crear, pedir } from '../api';
 import { BotonExportar } from './Exportar';
+import { RecorridoCalles } from './RecorridoCalles';
 import { BASE_FLEX, type Contexto, mensajeDe } from './PanelEmpresa';
 import { CapacidadAlAsignar, SugerenciaOrden } from './PantallasFase3';
 
@@ -495,6 +496,15 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
         </div>
       ) : null}
       <h2>{t.listaParadas}</h2>
+      <RecorridoCalles
+        ctx={ctx}
+        rutaId={r.id}
+        nombres={r.paradas.map((p) => ({
+          id: p.id,
+          nombre: `${p.orden}. ${p.referenciaExterna ?? p.destinatarioNombre}`,
+        }))}
+        puedeCalcular={ctx.permisos.includes('lotes.gestionar')}
+      />
       {reordenable ? <p className="pista">{t.ordenAyuda}</p> : null}
       {reordenable && r.paradas.length > 1 ? (
         <SugerenciaOrden ctx={ctx} rutaId={r.id} paradas={r.paradas} aplicado={cargar} />
