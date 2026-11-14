@@ -1,6 +1,7 @@
 import {
   Bell,
   Bike,
+  CarTaxiFront,
   CalendarClock,
   ChartColumn,
   CircleHelp,
@@ -45,6 +46,9 @@ const REGLAS: [RegExp, LucideIcon][] = [
   [/salespeople-presentation/, Handshake],
   [/drivers-presentation/, Bike],
   [/presentation|course|training/, Presentation],
+  // C-DOCS-SEMANA: el taxi y la moto con su propio dibujo.
+  [/ride-car|drive-car/, CarTaxiFront],
+  [/ride-moto|drive-moto/, Bike],
   [/schedule|shift|hours|holiday/, CalendarClock],
   [/reorder|again/, Repeat],
   [/group/, Users],

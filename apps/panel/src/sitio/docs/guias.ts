@@ -1,6 +1,8 @@
 import type { Idioma } from '@tumbite/compartido';
 import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
+import { GUIAS_CARRO } from './carro';
+import { GUIAS_SEMANA } from './semana';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -4660,6 +4662,11 @@ const es: SeccionDocs[] = [
             src: '/docs/recorrido-avisos-web-iphone-es.webp',
             alt: 'La misma tarjeta en un iPhone, que explica que los avisos funcionan con Divoox agregada a la pantalla de inicio.',
             pie: 'En iPhone, primero agregas Divoox a tu pantalla de inicio y la abres desde ese ícono.',
+          },
+          {
+            src: '/docs/recorrido-web-avisos-restaurante-computadora-es.webp',
+            alt: 'El panel de Divoox Restaurants abierto en una computadora con la tarjeta «Entérate de cada pedido aunque la app esté cerrada», el botón verde «Activar avisos» y «Ahora no».',
+            pie: 'En la computadora del restaurante, la misma tarjeta: los avisos llegan aunque la pestaña esté cerrada.',
           },
           {
             src: '/docs/recorrido-instalar-descargas-es.webp',
@@ -9487,6 +9494,11 @@ const en: SeccionDocs[] = [
             pie: 'On iPhone, first add Divoox to your Home Screen and open it from that icon.',
           },
           {
+            src: '/docs/recorrido-web-avisos-restaurante-computadora-en.webp',
+            alt: 'The Divoox Restaurants panel open on a computer with the card “Know about every order, even with the app closed,” the green “Turn on notifications” button, and “Not now.”',
+            pie: 'On the restaurant’s computer, the same card: notifications arrive even with the tab closed.',
+          },
+          {
             src: '/docs/recorrido-instalar-descargas-en.webp',
             alt: 'The Divoox downloads page with the Android button on Google Play, iPhone in review by Apple, and the note to install from Safari.',
             pie: 'The downloads page links to this guide for iPhone.',
@@ -9712,19 +9724,29 @@ const en: SeccionDocs[] = [
   },
 ];
 
-/** C-DOCS-MOTO: las guías de Divoox Moto con capturas reales van en «Para pedir» y en «Repartidores». */
-function conMoto(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
+/**
+ * C-DOCS-MOTO y C-DOCS-SEMANA (14 nov 2026): las guías que viven en su propio archivo, con capturas
+ * reales, se suman al final de su sección: Moto y Carro (pasajero en «Para pedir», conductor en
+ * «Repartidores») y las demás de la semana, cada una en la sección que dice su archivo.
+ */
+function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const moto = idioma === 'es' ? GUIAS_MOTO.es : GUIAS_MOTO.en;
-  return secciones.map((s) =>
-    s.id === 'ordering'
-      ? { ...s, guias: [...s.guias, ...moto.pasajero] }
-      : s.id === 'drivers'
-        ? { ...s, guias: [...s.guias, ...moto.conductor] }
-        : s,
-  );
+  const carro = idioma === 'es' ? GUIAS_CARRO.es : GUIAS_CARRO.en;
+  const extras = new Map(Object.entries(idioma === 'es' ? GUIAS_SEMANA.es : GUIAS_SEMANA.en));
+  const de = (id: SeccionDocs['id']) => extras.get(id) ?? [];
+  return secciones.map((s) => {
+    if (s.id === 'ordering')
+      return { ...s, guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, ...de(s.id)] };
+    if (s.id === 'drivers')
+      return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
+    return { ...s, guias: [...s.guias, ...de(s.id)] };
+  });
 }
 
-export const DOCS: Record<Idioma, SeccionDocs[]> = { es: conMoto(es, 'es'), en: conMoto(en, 'en') };
+export const DOCS: Record<Idioma, SeccionDocs[]> = {
+  es: conExtras(es, 'es'),
+  en: conExtras(en, 'en'),
+};
 
 export const TEXTOS_DOCS = {
   es: {
