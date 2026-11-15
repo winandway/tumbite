@@ -3,6 +3,7 @@ import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
 import { GUIAS_SEMANA } from './semana';
+import { GUIAS_DOCS } from './guiasDocs';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -10005,6 +10006,12 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
       return { ...s, guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, ...de(s.id)] };
     if (s.id === 'drivers')
       return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
+    // C-DOCS-LUPA (15 nov 2026): cómo buscar en Docs y ampliar una captura, al final de «Tu cuenta».
+    if (s.id === 'account')
+      return {
+        ...s,
+        guias: [...s.guias, ...de(s.id), ...(idioma === 'es' ? GUIAS_DOCS.es : GUIAS_DOCS.en)],
+      };
     return { ...s, guias: [...s.guias, ...de(s.id)] };
   });
 }
@@ -10022,6 +10029,7 @@ export const TEXTOS_DOCS = {
     buscar: 'Buscar en Docs',
     atajo: '⌘K',
     sinResultados: 'No encontramos nada con eso. Prueba con otra palabra.',
+    sugerencias: 'Guías que coinciden',
     volver: '← Docs',
     pasos: 'Pasos',
     comoFunciona: 'Cómo funciona',
@@ -10043,6 +10051,7 @@ export const TEXTOS_DOCS = {
     buscar: 'Search Docs',
     atajo: '⌘K',
     sinResultados: 'Nothing matched. Try another word.',
+    sugerencias: 'Matching guides',
     volver: '← Docs',
     pasos: 'Steps',
     comoFunciona: 'How it works',

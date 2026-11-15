@@ -4336,6 +4336,23 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Dónde:** `apps/panel/src/sitio/docs/buscar.ts` (`normalizar`, `palabrasDeBusqueda`, `coincide`), usado por `Docs.tsx` en cada tecla (filtrar es barato, sin memoria).
 - **Candado:** `guiasSemana.test.ts`, bloque «C-DOCS-BUSCADOR» (taxi, carro, pago movil, mobile payment, recarga en los dos idiomas).
 
+## C-DOCS-BUSCADOR-MOTOR y C-DOCS-BUSCADOR-BILINGUE · Buscador de Docs con sugerencias, errores y dos idiomas (15 nov 2026) — todos los países
+
+- **Qué se rompió (pedido de Richard):** el buscador solo pintaba tarjetas y casi no encontraba: en español «wallet» no daba nada, aunque la gente usa esa palabra; un error de escritura tampoco.
+- **Arreglo:** `apps/panel/src/sitio/docs/buscar.ts` usa MiniSearch 7.2.0 (código libre, MIT, corre en el navegador; nada va a la base ni a un servicio): índice por idioma armado una vez, título con más peso, comienzo de palabra, un error tolerado (dos en las largas), ordenado por relevancia. `sinonimos.ts` es el diccionario único de equivalencias entre idiomas (wallet ↔ billetera, tracking ↔ rastreo, top up ↔ recargar…). `Docs.tsx` muestra la lista de sugerencias (combobox accesible) desde la primera letra, hasta 20, con la palabra resaltada, flechas, Enter y Escape; las tarjetas siguen debajo. Al llegar por el enlace de una guía, una búsqueda vieja guardada ya no la tapa.
+- **Ficha:** `docs/investigaciones-rea/2026-11-15-docs-buscador-y-lupa.md` (por qué MiniSearch y no Pagefind, Fuse, FlexSearch, Orama, Lunr ni DocSearch; Google no publica su motor).
+- **Candado:** `guiasSemana.test.ts` bloque «C-DOCS-BUSCADOR-BILINGUE» (wallet, billetera, biletera, walet, tracking, rastreo, recargar, top up, moto, pago móvil, Zelle, propina, una letra; rojo comprobado vaciando el diccionario) y `Docs.test.tsx` (lista con teclado; búsqueda vieja que no tapa la guía, rojo comprobado).
+- **No tocar:** no volver a `includes` por palabra; no quitar el diccionario; una palabra nueva va a su grupo con su ejemplo en la prueba. Una palabra no puede estar en dos grupos (lo vigila la prueba).
+
+## C-DOCS-LUPA · Cada captura de Docs se abre en grande con zoom (15 nov 2026) — todos los países
+
+- **Qué se rompió (pedido de Richard):** las capturas se veían chicas y no se podían leer.
+- **Arreglo:** `Lupa.tsx` (una sola pieza; cada captura es un botón «Ampliar la imagen» / «Enlarge image» con la lupa en la esquina) abre `lupaVisor.ts` con PhotoSwipe 5.4.4 (MIT), que solo se baja al tocar: pantalla completa, pie debajo, «+» y «−», rueda, pellizco, doble toque, arrastre, flechas, Escape, X o tocar afuera; foco atrapado entre sus botones y devuelto a la captura que se veía. `scripts/docs/capturas-grandes.mjs` deja la versión nítida de cada captura en `apps/panel/public/docs/grande/` desde su original de `docs/capturas/` y escribe `capturasMedidas.json`.
+- **Cuándo se corre el guion:** después de agregar o rehacer capturas de Docs (`node scripts/docs/capturas-grandes.mjs`): si falta una medida, la prueba se pone en rojo. Si una captura no tiene original más grande, la lupa usa la liviana.
+- **Candado:** `Docs.test.tsx` (botón en cada captura, en los dos idiomas; abre con sus capturas; toda captura de Docs tiene medidas y su archivo existe; rojo comprobado volviendo a la imagen suelta). Evidencia REA `evidencia-rea-2026-11-15-docs-lupa.json.gz`: el visor y la imagen grande se piden solo después del toque.
+- **No tocar:** `div.pswp` va por encima de todo (z-index) para que el botón «¿Preguntas?» no lo tape; el marco del visor no se desplaza nunca (si el navegador lo corre al enfocar un botón, la imagen queda movida).
+- **De paso (15 nov):** `.pie-oculto` (los enlaces de países del pie) ensanchaba la página y salía barra de desplazamiento de lado en computadoras de 1024: ahora va pegado a la izquierda y recortado.
+
 ## C-CARRO-GUION-ZONA · El guion de Carro pone al taxista en la zona y el punto del viaje (14 nov 2026) — EE. UU. y Venezuela
 
 - **Qué se rompió:** `probar-carro.mjs` fallaba contra el sitio de pruebas en Detroit («la oferta no le llegó al taxista») y frenaba el resto de la corrida (Comida de Venezuela, pruebas S). En local pasaba.

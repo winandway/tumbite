@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef } from 'react';
+import { createElement, useEffect, useId, useRef, useState } from 'react';
 import { type Idioma, almacenNavegador, enIdioma, useBorrador } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
@@ -6,7 +6,11 @@ import { conIdioma, enEspanol } from '../../rutaIdioma';
 import { Icono } from '../Icono';
 import { DOCS, type Guia, type SeccionDocs, TEXTOS_DOCS } from './guias';
 import { iconoDeGuia } from './iconosGuia';
-import { coincide, palabrasDeBusqueda } from './buscar';
+import { buscarGuias, resaltar } from './buscar';
+import { CapturasConLupa } from './Lupa';
+
+/** Cuántas sugerencias muestra la lista que se abre mientras se escribe. */
+const SUGERENCIAS = 20;
 
 /** Navegar a una guía quedándose en el idioma de la página (como Enlace). */
 function irA(a: string) {
@@ -59,12 +63,21 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   // Al abrir una guía (desde un resultado o el menú) la búsqueda se limpia: antes el texto quedaba
   // guardado y la pantalla seguía mostrando los resultados, como si el clic no abriera nada.
   const rutaVista = useRef(ruta);
-  const { cambiar } = b;
+  const { cambiar, recuperado, empezarDeNuevo } = b;
   useEffect(() => {
     if (rutaVista.current === ruta) return;
     rutaVista.current = ruta;
     cambiar('q', '');
   }, [ruta, cambiar]);
+  // Al llegar por el enlace de una guía, una búsqueda vieja guardada no la tapa (15 nov 2026: se
+  // abría /docs/ordering/ride-moto y se veían los resultados de «tracking»). El borrador llega un
+  // instante después de dibujar, por eso se mira cuando llega.
+  const llegoAUnaGuia = useRef(Boolean(guia) || comoHago);
+  useEffect(() => {
+    if (!recuperado || !llegoAUnaGuia.current) return;
+    llegoAUnaGuia.current = false;
+    void empezarDeNuevo();
+  }, [recuperado, empezarDeNuevo]);
   const campo = useRef<HTMLInputElement>(null);
 
   // ⌘K o Ctrl+K enfoca el buscador desde cualquier página de Docs.
@@ -79,14 +92,21 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
     return () => window.removeEventListener('keydown', atajo);
   }, []);
 
-  // Filtrar en cada tecla es barato, no hace falta memoria. C-DOCS-BUSCADOR (14 nov 2026): sin
-  // acentos ni mayúsculas y por palabras sueltas («rastrear paquete», «pago movil», «taxi»).
-  const palabras = palabrasDeBusqueda(busqueda);
-  const resultados = palabras.length
-    ? secciones.flatMap((s) =>
-        s.guias.filter((g) => coincide(g, palabras)).map((g) => ({ seccion: s, guia: g })),
-      )
-    : null;
+  // C-DOCS-BUSCADOR-MOTOR (15 nov 2026): buscar en cada tecla tarda unas milésimas (el índice se
+  // arma una vez). Sin acentos, con errores de escritura, por el comienzo de la palabra y en los
+  // dos idiomas («wallet» encuentra la billetera), ordenado por relevancia.
+  const resultados = busqueda.trim() ? buscarGuias(secciones, busqueda) : null;
+  const sugerencias = resultados?.slice(0, SUGERENCIAS) ?? [];
+  // La lista de sugerencias (combobox, como el buscador de la documentación de los grandes).
+  const [abierta, setAbierta] = useState(false);
+  const [activa, setActiva] = useState(-1);
+  const idLista = useId();
+  const mostrarLista = abierta && sugerencias.length > 0;
+  const abrirResultado = (r: { seccion: SeccionDocs; guia: Guia }) => {
+    setAbierta(false);
+    setBusqueda('');
+    irA(`/docs/${r.seccion.id}/${r.guia.id}`);
+  };
 
   const buscador = (
     <form
@@ -94,24 +114,83 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
       role="search"
       onSubmit={(e) => {
         e.preventDefault();
-        // Enter abre el primer resultado.
-        const primero = resultados?.[0];
-        if (primero) {
-          setBusqueda('');
-          irA(`/docs/${primero.seccion.id}/${primero.guia.id}`);
-        }
+        // Enter abre la sugerencia marcada con las flechas, o la primera.
+        const elegido = (activa >= 0 ? sugerencias.at(activa) : undefined) ?? resultados?.at(0);
+        if (elegido) abrirResultado(elegido);
       }}
     >
       <Icono nombre="buscar" tamano={18} />
       <input
         ref={campo}
         type="search"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={mostrarLista}
+        aria-controls={idLista}
+        aria-activedescendant={mostrarLista && activa >= 0 ? `${idLista}-${activa}` : undefined}
+        autoComplete="off"
         value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
+        onChange={(e) => {
+          setBusqueda(e.target.value);
+          setAbierta(true);
+          setActiva(-1);
+        }}
+        onFocus={() => setAbierta(true)}
+        onBlur={() => setAbierta(false)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            if (!sugerencias.length) return;
+            e.preventDefault();
+            setAbierta(true);
+            const paso = e.key === 'ArrowDown' ? 1 : -1;
+            // De -1 (en el campo) a la última y vuelta a empezar.
+            setActiva((a) => {
+              const n = a + paso;
+              return n >= sugerencias.length ? -1 : n < -1 ? sugerencias.length - 1 : n;
+            });
+          } else if (e.key === 'Escape' && mostrarLista) {
+            e.preventDefault();
+            setAbierta(false);
+            setActiva(-1);
+          }
+        }}
         placeholder={t.buscar}
         aria-label={t.buscar}
       />
       <kbd>{t.atajo}</kbd>
+      <ul
+        id={idLista}
+        role="listbox"
+        aria-label={t.sugerencias}
+        className="docs-sugerencias"
+        hidden={!mostrarLista}
+      >
+        {sugerencias.map((r, i) => (
+          <li
+            key={`${r.seccion.id}/${r.guia.id}`}
+            id={`${idLista}-${i}`}
+            role="option"
+            aria-selected={i === activa}
+            className={i === activa ? 'activa' : undefined}
+            // mousedown: elegir antes de que el campo pierda el foco y cierre la lista.
+            onMouseDown={(e) => {
+              e.preventDefault();
+              abrirResultado(r);
+            }}
+            onMouseEnter={() => setActiva(i)}
+          >
+            <IconoGuia id={r.guia.id} tamano={18} />
+            <span className="docs-sugerencia-texto">
+              <span className="docs-sugerencia-titulo">
+                {resaltar(r.guia.titulo, r.terminos).map((x, j) =>
+                  x.marca ? <mark key={j}>{x.texto}</mark> : <span key={j}>{x.texto}</span>,
+                )}
+              </span>
+              <span className="docs-sugerencia-seccion">{r.seccion.titulo}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </form>
   );
 
@@ -173,7 +252,7 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
         ) : comoHago ? (
           <ComoHago secciones={secciones} t={t} />
         ) : guia && seccion ? (
-          <PaginaGuia seccion={seccion} guia={guia} t={t} />
+          <PaginaGuia seccion={seccion} guia={guia} t={t} idioma={idioma} />
         ) : seccion ? (
           <>
             <Enlace a="/docs" className="docs-volver">
@@ -284,10 +363,12 @@ function PaginaGuia({
   seccion,
   guia,
   t,
+  idioma,
 }: {
   seccion: SeccionDocs;
   guia: Guia;
   t: (typeof TEXTOS_DOCS)['es'];
+  idioma: Idioma;
 }) {
   const i = seccion.guias.indexOf(guia);
   const anterior = seccion.guias.at(i - 1 < 0 ? seccion.guias.length : i - 1);
@@ -312,15 +393,8 @@ function PaginaGuia({
           ))}
         </>
       )}
-      {guia.capturas && (
-        <div className="docs-capturas">
-          {guia.capturas.map((c) => (
-            <figure key={c.src} className="docs-captura">
-              <img src={c.src} alt={c.alt} loading="lazy" />
-              <figcaption>{c.pie}</figcaption>
-            </figure>
-          ))}
-        </div>
+      {guia.capturas && guia.capturas.length > 0 && (
+        <CapturasConLupa capturas={guia.capturas} idioma={idioma} />
       )}
       {guia.descargas && guia.descargas.length > 0 && (
         <ul className="docs-descargas">

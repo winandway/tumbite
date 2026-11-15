@@ -10,6 +10,11 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Docs con lentes (15 nov 2026, pedido de Richard) — todos los países
+
+- [x] HECHO 15 nov (C-DOCS-LUPA) Cada captura de Docs se abre en grande, nítida y con zoom (rueda, «+» y «−», pellizco, doble toque, arrastre, flechas, Escape), en computadora y celular, en los dos idiomas. Versión grande que solo se baja al abrir. Guía «Buscar en Docs y ampliar una captura». Todos los países.
+- [x] HECHO 15 nov (C-DOCS-BUSCADOR-MOTOR, C-DOCS-BUSCADOR-BILINGUE) Buscador de Docs con lista de sugerencias desde la primera letra, tolerante a errores, por relevancia y bilingüe (wallet ↔ billetera, tracking ↔ rastreo, top up ↔ recargar…), con MiniSearch (código libre) en el navegador. Ficha `docs/investigaciones-rea/2026-11-15-docs-buscador-y-lupa.md`. Todos los países.
+
 ## Prueba con teléfonos (14 nov 2026, orden de Richard, probando en un Xiaomi con Android 14) — todos los países
 
 - [x] HECHO 14 nov (C-SOBRE-LOS-BOTONES) El menú de abajo quedaba tapado por los botones del teléfono en Android y no recibía el toque. Pieza única `SobreLosBotones` en las tres apps. Se ve en la próxima compilación. Todos los países.

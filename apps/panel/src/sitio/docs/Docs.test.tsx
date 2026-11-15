@@ -5,6 +5,14 @@ import { App } from '../../App';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { DOCS } from './guias';
+import { datosDeCaptura } from './lupaVisor';
+import MEDIDAS from './capturasMedidas.json';
+
+const abrirLupa = vi.fn();
+vi.mock('./lupaVisor', async (original) => ({
+  ...(await original<typeof import('./lupaVisor')>()),
+  abrirLupa: (...a: unknown[]) => abrirLupa(...a),
+}));
 
 describe('Docs', () => {
   beforeEach(() => {
@@ -42,12 +50,18 @@ describe('Docs', () => {
   it('el buscador filtra mientras se escribe', async () => {
     window.history.pushState(null, '', '/docs');
     render(<App />);
-    await userEvent.type(screen.getByRole('searchbox'), 'alarm');
+    await userEvent.type(
+      screen.getByRole('combobox', { name: /Buscar en Docs|Search Docs/ }),
+      'alarm',
+    );
     const tarjetas = document.querySelectorAll('.docs-contenido .docs-tarjeta');
     expect(tarjetas.length).toBeGreaterThanOrEqual(1);
     expect(tarjetas[0]).toHaveTextContent(/alarma|alarm/i);
-    await userEvent.clear(screen.getByRole('searchbox'));
-    await userEvent.type(screen.getByRole('searchbox'), 'zzzzqqq');
+    await userEvent.clear(screen.getByRole('combobox', { name: /Buscar en Docs|Search Docs/ }));
+    await userEvent.type(
+      screen.getByRole('combobox', { name: /Buscar en Docs|Search Docs/ }),
+      'zzzzqqq',
+    );
     expect(screen.getByText(/No encontramos nada|Nothing matched/)).toBeInTheDocument();
   });
 
@@ -63,7 +77,10 @@ describe('Docs', () => {
   it('el buscador también encuentra por pregunta', async () => {
     window.history.pushState(null, '', '/docs');
     render(<App />);
-    await userEvent.type(screen.getByRole('searchbox'), 'fixed schedule');
+    await userEvent.type(
+      screen.getByRole('combobox', { name: /Buscar en Docs|Search Docs/ }),
+      'fixed schedule',
+    );
     expect(document.querySelector('.docs-contenido .docs-tarjeta')).toHaveTextContent(
       /Start delivering/,
     );
@@ -77,19 +94,25 @@ describe('Docs', () => {
   it('al tocar un resultado se abre la guía y la búsqueda se limpia', async () => {
     window.history.pushState(null, '', '/docs');
     render(<App />);
-    await userEvent.type(screen.getByRole('searchbox'), 'salespeople');
+    await userEvent.type(
+      screen.getByRole('combobox', { name: /Buscar en Docs|Search Docs/ }),
+      'salespeople',
+    );
     await userEvent.click(
       document.querySelector<HTMLAnchorElement>('.docs-contenido .docs-tarjeta')!,
     );
     expect(window.location.pathname).toBe('/docs/courses/salespeople-presentation');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Course for salespeople');
-    expect(screen.getByRole('searchbox')).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: /Buscar en Docs|Search Docs/ })).toHaveValue('');
   });
 
   it('Enter en el buscador abre el primer resultado', async () => {
     window.history.pushState(null, '', '/docs');
     render(<App />);
-    await userEvent.type(screen.getByRole('searchbox'), 'driver presentation{Enter}');
+    await userEvent.type(
+      screen.getByRole('combobox', { name: /Buscar en Docs|Search Docs/ }),
+      'driver presentation{Enter}',
+    );
     expect(window.location.pathname).toBe('/docs/courses/drivers-presentation');
   });
 
@@ -117,5 +140,90 @@ describe('Docs', () => {
       for (const href of pdfs)
         expect(existsSync(join(process.cwd(), 'apps', 'panel', 'public', href)), href).toBe(true);
     }
+  });
+
+  // C-DOCS-BUSCADOR-MOTOR (15 nov 2026): la lista de sugerencias desde la primera letra.
+  it('el buscador abre la lista de sugerencias desde la primera letra, con teclado', async () => {
+    window.history.pushState(null, '', '/es/docs');
+    render(<App />);
+    const campo = screen.getByRole('combobox', { name: 'Buscar en Docs' });
+    await userEvent.type(campo, 'w');
+    expect(campo).toHaveAttribute('aria-expanded', 'true');
+    const lista = screen.getByRole('listbox', { name: 'Guías que coinciden' });
+    expect(lista.querySelectorAll('[role="option"]').length).toBeGreaterThan(0);
+    await userEvent.type(campo, 'allet');
+    const opciones = [...lista.querySelectorAll('[role="option"]')];
+    expect(opciones.length).toBeGreaterThan(3);
+    expect(opciones.length).toBeLessThanOrEqual(20);
+    // «wallet» en español trae la billetera, con la palabra resaltada.
+    expect(opciones.slice(0, 5).some((o) => /billetera/i.test(o.textContent ?? ''))).toBe(true);
+    expect(lista.querySelector('mark')).toHaveTextContent(/billetera/i);
+    // Flecha abajo marca la primera y Enter la abre.
+    await userEvent.keyboard('{ArrowDown}');
+    expect(opciones[0]).toHaveAttribute('aria-selected', 'true');
+    expect(campo).toHaveAttribute('aria-activedescendant', opciones[0]?.id);
+    const titulo = opciones[0]?.querySelector('.docs-sugerencia-titulo')?.textContent ?? '';
+    await userEvent.keyboard('{Enter}');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(titulo);
+    // Escape cierra la lista sin borrar lo escrito.
+    await userEvent.type(campo, 'moto');
+    expect(campo).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.keyboard('{Escape}');
+    expect(campo).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('una búsqueda vieja guardada no tapa la guía que se abre por su enlace', async () => {
+    window.history.pushState(null, '', '/es/docs');
+    const { unmount } = render(<App />);
+    await userEvent.type(screen.getByRole('combobox', { name: 'Buscar en Docs' }), 'tracking');
+    await new Promise((r) => setTimeout(r, 700)); // el borrador se guarda al medio segundo
+    unmount();
+    window.history.pushState(null, '', '/es/docs/business/flex-wallet');
+    render(<App />);
+    // El borrador vuelve un instante después de dibujar: se espera a que llegue.
+    await new Promise((r) => setTimeout(r, 100));
+    await vi.waitFor(() =>
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/billetera/i),
+    );
+  }, 20_000);
+
+  // C-DOCS-LUPA (15 nov 2026): cada captura es un botón «Ampliar la imagen» que abre la lupa.
+  it('cada captura de una guía se abre en grande con la lupa', async () => {
+    abrirLupa.mockClear();
+    window.history.pushState(null, '', '/es/docs/business/flex-wallet');
+    render(<App />);
+    const botones = screen.getAllByRole('button', { name: /^Ampliar la imagen/ });
+    const guia = DOCS.es.flatMap((s) => s.guias).find((g) => g.id === 'flex-wallet');
+    expect(botones).toHaveLength(guia?.capturas?.length ?? -1);
+    await userEvent.click(botones[0]!);
+    await vi.waitFor(() => expect(abrirLupa).toHaveBeenCalledTimes(1));
+    expect(abrirLupa).toHaveBeenCalledWith(guia?.capturas, 0, 'es', botones);
+  });
+
+  it('en inglés el botón dice «Enlarge image»', () => {
+    window.history.pushState(null, '', '/docs/business/flex-wallet');
+    render(<App />);
+    expect(screen.getAllByRole('button', { name: /^Enlarge image/ }).length).toBeGreaterThan(0);
+  });
+
+  it('la lupa usa la versión grande cuando existe, y toda captura de Docs tiene sus medidas', () => {
+    const medidas = MEDIDAS as Record<string, number[]>;
+    const todas = (['es', 'en'] as const).flatMap((i) =>
+      DOCS[i].flatMap((s) => s.guias.flatMap((g) => g.capturas ?? [])),
+    );
+    const sinMedidas = todas
+      .map((c) => c.src.replace(/^.*\//, '').replace(/\.webp$/, ''))
+      .filter((n) => !medidas[n]);
+    expect(sinMedidas, 'corre node scripts/docs/capturas-grandes.mjs').toEqual([]);
+    for (const c of todas) {
+      const d = datosDeCaptura(c);
+      expect(existsSync(join(__dirname, '../../../public', String(d.src))), String(d.src)).toBe(
+        true,
+      );
+    }
+    const billetera = datosDeCaptura({ src: '/docs/flex-billetera-es.webp', alt: 'x', pie: 'y' });
+    expect(billetera.src).toBe('/docs/grande/flex-billetera-es.webp');
+    expect(Number(billetera.width)).toBeGreaterThan(960);
+    expect(billetera.msrc).toBe('/docs/flex-billetera-es.webp');
   });
 });
