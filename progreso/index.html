@@ -495,6 +495,7 @@
         <a href="/apps.html">Apps de prueba</a>
         <a href="#resumen">Dónde estamos</a>
         <a href="#esperando">Lo que depende de ti</a>
+        <a href="#cuentas">Cuentas de prueba</a>
         <a href="#partes">Cada parte</a>
         <a href="#apps">Qué hace cada app</a>
         <a href="#etapas">Etapas</a>
@@ -552,6 +553,17 @@
         <div class="pend" id="pend"></div>
         <h3 style="margin: 22px 0 10px">Esperando a otros</h3>
         <div class="rejilla" id="terceros"></div>
+      </section>
+
+      <section id="cuentas">
+        <h2>Cuentas de prueba</h2>
+        <p class="pista">
+          Los usuarios y la contraseña del sitio de pruebas, para configurar los teléfonos. Se ven
+          solo con la clave del equipo. Nunca se paga con dinero real: usa la tarjeta de prueba.
+        </p>
+        <div class="acciones"><button class="boton" id="cuentas-ver">Ver las cuentas</button></div>
+        <div id="cuentas-msg"></div>
+        <div class="rejilla" id="cuentas-lista"></div>
       </section>
 
       <section id="partes">
@@ -795,6 +807,66 @@
           /* el estado en vivo es un extra: la página sigue */
         }
       }
+
+      // Cuentas de prueba (14 nov 2026): se piden al servidor con la clave del equipo; no están en
+      // la página ni en el repositorio.
+      async function verCuentas() {
+        const msg = el('cuentas-msg');
+        const clave = guardado('clave-equipo');
+        if (!clave) {
+          el('clave-caja').style.display = 'block';
+          el('clave-caja').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el('clave').focus();
+          msg.innerHTML =
+            '<div class="aviso">Primero escribe la clave del equipo y toca «Guardar clave». Después vuelve a tocar «Ver las cuentas».</div>';
+          return;
+        }
+        msg.innerHTML = '';
+        try {
+          const r = await fetch('/datos/cuentas', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ clave }),
+          });
+          const d = await r.json();
+          if (!r.ok) {
+            if (r.status === 401) {
+              guardado('clave-equipo', '');
+              el('clave-caja').style.display = 'block';
+            }
+            msg.innerHTML = `<div class="aviso">${esc(d.error ?? 'No se pudieron leer las cuentas. Intenta otra vez.')}</div>`;
+            return;
+          }
+          const copiable = (etiqueta, valor) =>
+            valor
+              ? `<p class="sub" style="margin:8px 0 2px">${esc(etiqueta)}</p><div style="display:flex;gap:8px;align-items:center"><code style="flex:1;overflow-wrap:anywhere">${esc(valor)}</code><button class="boton sec" data-copiar="${esc(valor)}">Copiar</button></div>`
+              : '';
+          el('cuentas-lista').innerHTML = d.cuentas
+            .map(
+              (c) =>
+                `<div class="tarjeta"><b>${esc(c.titulo)}</b><p class="sub" style="margin:4px 0">${esc(c.para ?? '')}</p>${copiable('Dónde se entra', c.donde)}${copiable('Usuario', c.usuario)}${copiable('Contraseña', c.clave)}</div>`,
+            )
+            .join('');
+          if (d.nota) msg.innerHTML = `<p class="pista">${esc(d.nota)}</p>`;
+          if (!d.cuentas.length)
+            msg.innerHTML = '<div class="aviso">Todavía no hay cuentas cargadas.</div>';
+        } catch {
+          msg.innerHTML =
+            '<div class="aviso">No se pudieron leer las cuentas. Revisa tu conexión e intenta otra vez.</div>';
+        }
+      }
+      el('cuentas-ver').addEventListener('click', verCuentas);
+      el('cuentas-lista').addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-copiar]');
+        if (!b) return;
+        try {
+          await navigator.clipboard.writeText(b.dataset.copiar);
+          b.textContent = 'Copiado';
+          setTimeout(() => (b.textContent = 'Copiar'), 1500);
+        } catch {
+          b.textContent = 'Mantén presionado el texto para copiar';
+        }
+      });
 
       async function enviar(tarjeta, hecho) {
         const id = tarjeta.dataset.id;
