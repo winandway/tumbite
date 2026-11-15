@@ -20,6 +20,16 @@ Las reglas globales de Richard aplican; estas se suman.
 - **Prohibido «Pronto», «Muy pronto», «En construcción» y las listas de «Ejemplo» de lo que vendrá** en lo que ve el cliente, el restaurante o el repartidor. Lo que no está terminado no se muestra; aparece solo el día que funciona en esa ciudad (C-SOLO-LO-TERMINADO). Se exceptúa el aviso real de que una zona todavía no tiene cobertura.
 - Antes de rehacer una pantalla se mira con REA cómo la tienen los grandes y se copia su estándar.
 
+## CADA IDIOMA LLEVA SUS CAPTURAS Y SUS EJEMPLOS (REGLA PRINCIPAL, Richard, 15 nov 2026)
+
+> Sus palabras: _«si se cambia el idioma también se tiene que cambiar la captura de pantalla… la persona que habla inglés está viendo ese tutorial porque quiere leer y ver la captura… el texto con la captura en otro idioma nos presenta como una empresa inepta… una persona en el estado de Michigan no va a estar mirando El Vigía»_.
+
+- **En inglés, todo es de Estados Unidos:** la pantalla en inglés Y los ejemplos de allá. Ciudad, direcciones, moneda y formas de pago de Estados Unidos (Novi, Michigan, que es donde estamos; también sirven Detroit u otra ciudad conocida). Nada de El Vigía, bolívares ni pago móvil en una guía en inglés.
+- **En español, los ejemplos son de ciudades de habla hispana:** El Vigía, Caracas u otra conocida. Eso está bien y se queda.
+- Vale para Docs, la web, las presentaciones y las tiendas: una captura con la interfaz en inglés pero con datos de Venezuela cuenta como captura en el idioma equivocado.
+- Cada guion de capturas toma las dos: la pasada en español en su ciudad y la pasada en inglés en la suya. El texto de cada idioma describe lo que muestra SU captura (si en inglés no hay pago móvil, la guía en inglés no lo enseña en la foto).
+- Una guía que todavía tenga capturas en inglés con ejemplos de otro país está sin terminar: se rehace cuando se toque, y queda anotada en `FILA.md` mientras tanto. Candado C-CAPTURAS-POR-IDIOMA.
+
 ## NINGUNA GUÍA DE DOCS SIN CAPTURAS (REGLA PRINCIPAL, Richard, 1 nov 2026)
 
 > Sus palabras: _«no poner ninguna explicación para los usuarios si no tiene una captura de pantalla… eso se vende por imágenes»_.

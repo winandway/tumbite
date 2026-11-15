@@ -6,6 +6,8 @@ import type { Captura, Guia } from './guias';
  * pasajero («ordering») y dos del conductor («drivers»), con capturas REALES tomadas en El Vigía,
  * estado Mérida, con `scripts/recorrido/capturas-carro.mjs`. Lo que cambia por país (efectivo, pago
  * móvil o tarjeta) se dice así, sin prometer nada que la app no haga.
+ * C-CAPTURAS-POR-IDIOMA (15 nov 2026): las capturas en español son de El Vigía; las de inglés, de Novi,
+ * Michigan, en dólares y con efectivo o tarjeta. El texto de cada idioma describe SU captura.
  */
 const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
   src: `/docs/recorrido-carro-${nombre}-${idioma}.webp`,
@@ -461,14 +463,14 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       explicacion: [
         'Divoox Car is the Divoox taxi: a verified driver takes you in their car from one place to another in the city. It’s available in cities where Divoox Car is open; if it isn’t open in yours yet, the app won’t let you request it.',
         'There are two sizes. Car fits up to four riders with carry-on bags. Car XL fits up to six, for groups or more luggage.',
-        'The price is fixed: you see it before you request and traffic doesn’t change it. In Venezuela it’s in US dollars, with its equivalent in bolívares at the day’s rate next to it. By default the rate is the Central Bank of Venezuela’s official rate, which updates on its own every business day; next to it you see which day it’s from. It’s for reference only: the price is set in US dollars.',
+        'The price is fixed: you see it before you request and traffic doesn’t change it. In the United States it’s in US dollars. In countries where people also think in a local currency, the app shows the equivalent next to it, for reference only.',
         'When a driver accepts, you see their name, their photo (if they have one), the car with its color and seats, the license plate, and how many minutes away they are. To start the ride you tell them your four-digit code, so you know you’re getting in with the right person.',
       ],
       capturas: [
         foto(
           'pasajero-precio',
           'en',
-          'The Car screen with the “Choose your car” list, the fixed price in US dollars with its equivalent in bolívares, and the payment methods.',
+          'The Car screen with the “Choose your car” list, the fixed price in US dollars, and the payment methods: cash or card.',
           'Before you request, you see the fixed price and choose how to pay.',
         ),
         foto(
@@ -500,7 +502,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'Open Divoox and tap “Car.”',
         'Confirm the pickup point (you can move it on the map) and enter your destination.',
         'Tap “See price.” Under “Choose your car” you see each car with its price; tap the one you want (for example “Car XL” for up to six).',
-        'Check the fixed price and choose how to pay: the app shows the methods in your country (cash or mobile payment in Venezuela; card in the United States).',
+        'Check the fixed price and choose how to pay: the app shows the methods available in your country (in the United States, card or cash).',
         'Tap “Request Car.” When the driver accepts, you’ll see their details and location on the map.',
         'When you get in, check the plate and tell the driver your four-digit code.',
       ],
@@ -510,11 +512,11 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       id: 'ride-car-pay',
       titulo: 'Pay, tip, and see your rides in Car',
       resumen:
-        'Pay with cash, mobile payment, or card depending on your country, tip when you arrive, and find the receipt and help in “My rides.”',
+        'Pay by card or with cash, tip your driver when you arrive, and find the receipt and help in “My rides.”',
       explicacion: [
         'With cash, you pay the driver when you arrive. With a card, we authorize the fixed price when you request and charge it when the ride ends.',
-        'Where mobile payment exists (for example, in Venezuela), you see your driver’s mobile payment details in the app as soon as they’re assigned. You pay the equivalent in bolívares at the day’s official rate, and the driver confirms in their app that it arrived.',
-        'When you arrive you rate the ride with stars and a comment. If you paid by card, you can also tip your driver in the app; they get the whole tip. With cash or mobile payment, you tip them directly.',
+        'Before you request, you choose how to pay, and the ride shows it the whole way: next to the fixed price you see whether you’re paying by card or with cash. In some countries the app also offers local payment methods; it only shows the ones available where you are.',
+        'When you arrive you rate the ride with stars and a comment. If you paid by card, you can also tip your driver in the app; they get the whole tip. With cash, you tip them directly.',
         '“My rides,” below the Car screen, lists your past rides. Each one opens its receipt with the price breakdown, payment method, driver, and car.',
         'If you left something in the car, open that ride and choose “I left something in the vehicle.” We let the driver know and open your case; our team arranges the return with you. For safety, we don’t share phone numbers.',
       ],
@@ -522,14 +524,14 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-codigo',
           'en',
-          'The ride in progress with the code to start and the driver’s mobile payment details: bank, name, phone, and ID number.',
-          'With mobile payment, you see who to pay as soon as a driver is assigned.',
+          'The ride with your driver on the way on the map and your four-digit code to start the ride.',
+          'Your code is on the ride screen as soon as a driver is assigned.',
         ),
         foto(
           'pasajero-propina',
           'en',
-          'On arrival: the stars to rate the ride, the comment box, and the mobile payment confirmed by the driver.',
-          'When you arrive, rate the ride and see that the driver confirmed your payment.',
+          'On arrival: the pickup and destination, what you pay in cash, the stars to rate the ride, and the comment box.',
+          'When you arrive, you rate the ride.',
         ),
         foto(
           'pasajero-mis-viajes',
@@ -552,14 +554,14 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       ],
       preguntas: [
         'How do I pay for a car ride?',
-        'Can I pay for a taxi with mobile payment?',
+        'Can I pay for a ride with cash?',
         'Can I tip my driver?',
         'Where do I see my ride receipt?',
         'What do I do if I left something in the car?',
       ],
       pasos: [
         'When you request, choose the payment method the app shows you.',
-        'With mobile payment, pay to the details shown in the ride; with cash, pay when you arrive.',
+        'With card, we charge the fixed price when the ride ends; with cash, pay your driver when you arrive.',
         'When you arrive, rate the ride. If you paid by card, you can tip in the app.',
         'To see a past ride, open “Car” and scroll down to “My rides.” Tap the ride to see its receipt.',
         'If you left something, in that ride tap “I left something in the vehicle,” tell us what and where, and tap “Send to support.”',
@@ -716,7 +718,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-alta',
           'en',
-          'The Divoox Car screen in Driver with the city, El Vigía, and the car form: make, model, year, color, license plate, and seats.',
+          'The Divoox Car screen in Driver with the city, Novi, and the car form: make, model, year, color, license plate, and seats.',
           'Register your car with its seats: 4 or 6.',
         ),
         foto(
@@ -754,7 +756,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       explicacion: [
         'Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination.',
         'When you reach the pickup, tap “I’ve arrived.” The ride starts only when you enter the four-digit code the rider gives you.',
-        'If the rider pays by mobile payment, you confirm in the ride whether it arrived: “Yes, it arrived” or “It didn’t arrive.” If they pay cash, the app tells you how much to collect when the ride ends.',
+        'During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived.',
         'In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings.',
       ],
       capturas: [
@@ -773,8 +775,8 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-viaje',
           'en',
-          'The ride in progress with the mobile payment confirmation: Yes, it arrived or It didn’t arrive.',
-          'With mobile payment, you confirm whether it arrived.',
+          'The ride in progress with the destination, the amount to collect in cash, and the “End ride” button.',
+          'During the ride you see the destination and what to collect.',
         ),
         foto(
           'driver-cobro-efectivo',
@@ -786,14 +788,14 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       preguntas: [
         'How do I receive taxi rides on Divoox?',
         'What is the rider’s code for?',
-        'How do I confirm a mobile payment?',
+        'How much do I collect when the rider pays cash?',
       ],
       pasos: [
         'Go online on the Home screen.',
         'When an offer arrives, check the earnings and route, and tap “Accept ride.”',
         'Go to the pickup and tap “I’ve arrived.”',
         'Ask the rider for their code, enter it, and tap “Start ride.”',
-        'If they pay by mobile payment, confirm whether it arrived. At the destination, tap “End ride” and, if it’s cash, collect what the app tells you.',
+        'At the destination, tap “End ride” and, if it’s cash, collect what the app tells you.',
       ],
     },
     {
@@ -802,8 +804,8 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       resumen:
         'Your car gets rides in its category, which pay more, and you decide whether to also get rides from the categories below.',
       explicacion: [
-        'When our team approves your car, it gets its category. Car is the everyday one. Car Comfort is for newer cars: up to 12 years old in Venezuela and up to 8 in the United States, with four seats or more. If your car qualifies, it’s set to Comfort without you doing anything.',
-        'Car Premium is for high-end cars (up to 8 years old in Venezuela and up to 6 in the United States), and our team decides it one by one, looking at the model and the car’s condition.',
+        'When our team approves your car, it gets its category. Car is the everyday one. Car Comfort is for newer cars: up to 8 years old in the United States, with four seats or more (other countries have their own limit; the app tells you yours). If your car qualifies, it’s set to Comfort without you doing anything.',
+        'Car Premium is for high-end cars (up to 6 years old in the United States), and our team decides it one by one, looking at the model and the car’s condition.',
         'Comfort and Premium rides cost the rider more, so you earn more for the same trip. The offer tells you which category the ride is.',
         'With a Comfort or Premium car you also get Car rides, so you’re never short on work. If you’d rather only get rides in your category, turn off “Also get Car rides” under “Divoox Car” in your profile. You can change it anytime.',
         'If your car has six seats or more, you also get Car XL rides.',

@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Guia } from './guias';
@@ -83,6 +83,23 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     }
   });
 
+  it('C-CAPTURAS-POR-IDIOMA: en inglés, Carro se enseña con ejemplos de Estados Unidos', () => {
+    // Regla de Richard (15 nov 2026): al cambiar el idioma cambia la captura Y sus ejemplos. Las guías
+    // en inglés no hablan de lo que solo se ve en las capturas de Venezuela…
+    const ingles = JSON.stringify(GUIAS_CARRO.en).toLowerCase();
+    for (const ajeno of ['vigía', 'bolívar', 'mobile payment', 'pago móvil', 'venezuela'])
+      expect(ingles, ajeno).not.toContain(ajeno);
+    expect(ingles).toContain('novi');
+    // …y el guion toma cada idioma en su ciudad: español en El Vigía, inglés en Novi, Michigan.
+    const guion = readFileSync(
+      join(__dirname, '..', '..', '..', '..', '..', 'scripts', 'recorrido', 'capturas-carro.mjs'),
+      'utf8',
+    );
+    expect(guion).toMatch(/correr\(LUGARES\.ve, \['es'\]\)/);
+    expect(guion).toMatch(/correr\(LUGARES\.us, \['en'\]\)/);
+    expect(guion).toContain("id: 'US-MI-NOVI'");
+  });
+
   it('Carro dice que se abre por ciudad', () => {
     expect(JSON.stringify(GUIAS_CARRO.es)).toContain('donde Divoox Carro esté abierto');
     expect(JSON.stringify(GUIAS_CARRO.en)).toContain('where Divoox Car is open');
@@ -106,7 +123,8 @@ describe('C-DOCS-BUSCADOR: el buscador encuentra con palabras normales', () => {
     expect(buscar('es', 'carro')).toEqual(expect.arrayContaining(['ride-car', 'drive-car-signup']));
     expect(buscar('es', 'pago movil')).toEqual(expect.arrayContaining(['ride-car-pay']));
     expect(buscar('en', 'taxi')).toEqual(expect.arrayContaining(['ride-car', 'drive-car']));
-    expect(buscar('en', 'mobile payment')).toEqual(expect.arrayContaining(['ride-car-pay']));
+    // C-CAPTURAS-POR-IDIOMA: en inglés la guía de pagos de Carro habla de tarjeta y efectivo.
+    expect(buscar('en', 'pay cash')).toEqual(expect.arrayContaining(['ride-car-pay']));
     expect(buscar('es', 'recarga')).toEqual(
       expect.arrayContaining(['driver-commission-balance-top-up', 'flex-wallet-local-topup']),
     );

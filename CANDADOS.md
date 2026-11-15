@@ -4433,3 +4433,13 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Cómo se comprueba:** `/datos/salud` del sitio de pruebas con `dinero: ok`; en la tabla `conciliaciones`, el día con `cuadraRepartidores: sí`.
 - **Lo que queda abierto:** el dinero de los viajes con tarjeta (lo capturado en Stripe frente a lo abonado al conductor) todavía no tiene su propia conciliación diaria. Hoy solo existen en el sitio de pruebas. Va antes de encender viajes con tarjeta en producción.
 - **No tocar:** no volver a sumar movimientos sin pedido en la conciliación de pedidos.
+
+## C-CAPTURAS-POR-IDIOMA · En inglés, pantalla y ejemplos de Estados Unidos (15 nov 2026) — EE. UU. y Venezuela
+
+- **Qué pidió Richard:** al abrir en inglés la guía de paradas de Carro vio la pantalla en inglés pero con El Vigía, bolívares y pago móvil. Sus palabras: «una persona en el estado de Michigan no va a estar mirando El Vigía… nos presenta como una empresa inepta». Quedó como regla principal en `CLAUDE.md`: cada idioma lleva sus capturas Y sus ejemplos (inglés: Estados Unidos, con Novi, Michigan; español: ciudades de habla hispana).
+- **Cómo quedó en Carro:** `scripts/recorrido/capturas-carro.mjs` hace dos pasadas (`LUGARES`): español en El Vigía (dólares con bolívares, efectivo y pago móvil) e inglés en Novi (`US-MI-NOVI`: Twelve Oaks Mall, Novi Civic Center, Novi Town Center y Novi Public Library; dólares; efectivo o tarjeta; nombres en inglés). `SOLO_IDIOMA=en` o `es` corre una sola. Las 28 capturas en inglés de las nueve guías de Carro se rehicieron.
+- **El texto sigue a su captura:** las guías en inglés de `apps/panel/src/sitio/docs/carro.ts` ya no enseñan pago móvil ni bolívares; hablan de tarjeta y efectivo, y de Novi.
+- **Prueba:** `guiasSemana.test.ts` («C-CAPTURAS-POR-IDIOMA»): el inglés de las guías de Carro no nombra El Vigía, bolívares, pago móvil ni Venezuela, y el guion toma el inglés en Novi. Rojo comprobado antes de cambiar los textos (la prueba nombraba «mobile payment» y «El Vigía»).
+- **Trucos del guion en Estados Unidos (servidor local):** la ciudad se arma directo (el paso del panel no abre el país sin la orden legal); el conductor de prueba acepta los términos y su foto de control queda como tomada; los viajes van en efectivo.
+- **Lo que falta (en `FILA.md`):** las demás guías con capturas de Venezuela en inglés (Moto, Comida en Venezuela, Envíos, viajes programados). Se rehacen igual.
+- **No tocar:** no volver a tomar las capturas en inglés en una ciudad de Venezuela; no correr `npm run recorrido:docs` entero para Carro (reconvierte las de otras guías).
