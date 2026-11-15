@@ -11,6 +11,8 @@ d = json.load(sys.stdin)
 salida = {"ok": d.get("ok", False), "piezas": d.get("piezas", {}), "medido": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 open("progreso/salud.json", "w").write(json.dumps(salida, ensure_ascii=False, indent=2) + "\n")
 ' || echo "aviso: no se pudo leer el estado de Divoox; se publica sin foto nueva"
+# Apps de prueba (C-PROGRESO-APPS-AL-DIA): el enlace y el código QR más nuevos de cada app.
+EXPO_TOKEN=$(cat ~/.config/tumbite/expo-token 2>/dev/null || true) node scripts/progreso/apps-de-prueba.mjs >/dev/null || echo "aviso: no se pudieron refrescar las apps de prueba; se publica con las que había"
 git add progreso
 # Solo la carpeta progreso: el índice lo comparten varias sesiones (C-PROGRESO-SOLO-LO-SUYO).
 git diff --cached --quiet -- progreso || git commit -q -m "chore(progreso): actualiza la página de progreso [skip ci]" -- progreso
