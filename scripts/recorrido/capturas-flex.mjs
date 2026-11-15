@@ -652,5 +652,15 @@ for (const idioma of IDIOMAS)
       '-o',
       join(DOCS, `recorrido-flex2-${n}-${idioma}.webp`),
     ]);
+    // C-CAPTURAS-POR-IDIOMA: la página pública /flex en inglés enseña la recarga con tarjeta.
+    if (n === 'recarga-local-revision' && idioma === 'en')
+      execFileSync('cwebp', [
+        '-quiet',
+        '-q',
+        '82',
+        png,
+        '-o',
+        join(RAIZ, 'apps', 'panel', 'public', 'flex', 'panel-recarga-en.webp'),
+      ]);
   }
 console.log('capturas de Flex listas en docs/capturas/recorrido/flex2-*.png');

@@ -5,8 +5,8 @@ import type { Guia, SeccionDocs } from './guias';
  * Guías públicas de Divoox Flex (lo nuevo de la Fase 7: exportar, recargas con pago local, importar
  * desde Excel, kilómetros y tiempos de la ruta, «Navegar la ruta» y la página de rastreo) y de
  * Divoox Envíos de A a B (quien envía, quien recibe y el conductor). Capturas REALES tomadas con
- * scripts/recorrido/capturas-flex.mjs y capturas-envios.mjs (EE. UU. en Novi, Michigan; Venezuela en
- * El Vigía, Mérida), con datos neutros. Español e inglés con los mismos ids, el mismo número de
+ * scripts/recorrido/capturas-flex.mjs y capturas-envios.mjs (C-CAPTURAS-POR-IDIOMA: el inglés en Novi,
+ * Michigan; el español en Venezuela, Envíos en El Vigía, Mérida), con datos neutros. Español e inglés con los mismos ids, el mismo número de
  * párrafos, capturas y pasos, en el mismo orden.
  */
 import { BORRADORES_VIAJES_2 } from './borradores/viajesProgramadosYEnvios';
@@ -270,21 +270,21 @@ export const GUIAS_FLEX_ENVIOS: Record<Idioma, Partial<Record<SeccionDocs['id'],
         resumen:
           'Envía llaves, documentos o un regalo de un lugar a otro, tan fácil como pedir un viaje.',
         explicacion: [
-          'Con Divoox Envíos un conductor recoge tu paquete y lo lleva a quien lo recibe, dentro de la misma ciudad. Escribes dónde se recoge y a dónde va, y ves el precio fijo antes de confirmar. Pagas en efectivo al conductor o con tarjeta, según tu ciudad.',
-          'Nos dices qué envías, su valor aproximado y el nombre y celular de quien lo recibe. Cada ciudad tiene un valor máximo por paquete, y confirmas que no envías nada prohibido. Tiene que caber en el maletero de un carro mediano.',
+          'Con Divoox Envíos un conductor recoge tu paquete y lo lleva a quien lo recibe, dentro de la misma ciudad. Escribes dónde se recoge y a dónde va, y ves el precio fijo antes de confirmar, en dólares y con su equivalente en bolívares. Pagas al conductor en efectivo o con pago móvil.',
+          'Nos dices qué envías, su tamaño, su valor aproximado y el nombre y celular de quien lo recibe. Cada ciudad tiene un valor máximo por paquete, y confirmas que no envías nada prohibido. Tiene que caber en el maletero de un carro mediano.',
           'Al pedir, ves el PIN de entrega: le llega a quien recibe en un mensaje de texto, con el enlace para seguir el envío. Si el mensaje no le llega, pásaselo tú. El conductor toma una foto del paquete al recogerlo y solo lo entrega con ese PIN.',
         ],
         capturas: [
           c(
             'envios-cliente-precio',
             'es',
-            'Divoox Envíos con la dirección de recogida y de entrega, y el precio fijo de 18,27 dólares con la opción de pagar en efectivo o con tarjeta.',
+            'Divoox Envíos en El Vigía, de la Plaza Bolívar al terminal de pasajeros: el precio fijo de 2 dólares con su equivalente en bolívares y la opción de pagar en efectivo o con pago móvil.',
             'Escribe las dos direcciones y mira el precio.',
           ),
           c(
             'envios-cliente-paquete',
             'es',
-            'El formulario del envío con qué envías, el valor aproximado, el nombre y el celular de quien recibe y la casilla de no enviar nada prohibido.',
+            'El formulario del envío con qué envías, el tamaño del paquete, el valor aproximado, el nombre y el celular de quien recibe y la casilla de no enviar nada prohibido.',
             'Cuéntanos qué envías y quién lo recibe.',
           ),
           c(
@@ -309,7 +309,7 @@ export const GUIAS_FLEX_ENVIOS: Record<Idioma, Partial<Record<SeccionDocs['id'],
         pasos: [
           'Abre Divoox y toca «Envíos».',
           'Escribe dónde se recoge y a dónde va, y toca «Ver precio».',
-          'Elige cómo pagas y cuéntanos qué envías, su valor aproximado y el nombre y celular de quien lo recibe.',
+          'Elige cómo pagas y cuéntanos qué envías, su tamaño, su valor aproximado y el nombre y celular de quien lo recibe.',
           'Confirma que no envías nada prohibido y toca «Enviar».',
           'Sigue el envío en el mapa. Cuando se entregue, lo verás en la app.',
         ],
@@ -371,7 +371,7 @@ export const GUIAS_FLEX_ENVIOS: Record<Idioma, Partial<Record<SeccionDocs['id'],
           c(
             'envios-driver-oferta',
             'es',
-            'La oferta de un envío en Divoox Driver con la ganancia, la distancia, el tiempo, la dirección de recogida y la de entrega, y el botón Aceptar.',
+            'La oferta de un envío en Divoox Driver en El Vigía: cobras en efectivo a quien envía, la ganancia, la distancia, el tiempo, la dirección de recogida y la de entrega, y el botón Aceptar envío.',
             'La oferta: lo que ganas y el recorrido.',
           ),
           c(
