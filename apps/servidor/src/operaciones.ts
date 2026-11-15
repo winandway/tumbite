@@ -42,7 +42,7 @@ export const MINUTOS_SIN_SENAL = 5;
 /** Cuánto busca conductor un viaje antes de cerrarse como «sin conductor» (M2). */
 export const MINUTOS_SIN_CONDUCTOR = 10;
 /** Ubicación más vieja que esto no cuenta para ofrecer. */
-const MINUTOS_UBICACION_VIGENTE = 2;
+export const MINUTOS_UBICACION_VIGENTE = 2;
 const KM_MAXIMO_OFERTA = 15;
 
 /** El error de la base que significa «ese conductor ya está ocupado». */
@@ -201,7 +201,16 @@ export async function candidatosParaOperacion(
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ? AND v.conductor_id = e.conductor_id)
           -- C-CARRO-XL: un viaje XL solo va a un carro de 6 plazas o más.
           AND (COALESCE((SELECT x.categoria FROM viajes x WHERE x.operacion_id = ?), 'estandar') <> 'xl'
-               OR (SELECT h.plazas FROM vehiculos h WHERE h.id = e.vehiculo_id) >= ?)`,
+               OR (SELECT h.plazas FROM vehiculos h WHERE h.id = e.vehiculo_id) >= ?)
+          -- C-CARRO-CATEGORIAS: un viaje Comfort o Premium solo va a un carro de esa categoría o de una
+          -- mejor; un carro mejor recibe los viajes de abajo solo si su conductor no lo apagó.
+          AND (e.servicio_id <> 'carro' OR EXISTS (
+                SELECT 1 FROM vehiculos h, (SELECT CASE COALESCE((SELECT x.categoria FROM viajes x WHERE x.operacion_id = ?), 'estandar')
+                                                     WHEN 'premium' THEN 2 WHEN 'comfort' THEN 1 ELSE 0 END AS pedido) p
+                 WHERE h.id = e.vehiculo_id
+                   AND ((CASE h.categoria WHEN 'premium' THEN 2 WHEN 'comfort' THEN 1 ELSE 0 END) = p.pedido
+                     OR ((CASE h.categoria WHEN 'premium' THEN 2 WHEN 'comfort' THEN 1 ELSE 0 END) > p.pedido
+                         AND h.acepta_menores = 1))))`,
     )
     .bind(
       op.servicioId,
@@ -210,6 +219,7 @@ export async function candidatosParaOperacion(
       op.id,
       op.id,
       PLAZAS_XL,
+      op.id,
     )
     .all<{ conductor_id: string; vehiculo_id: string; lat: number; lng: number; puntos: number }>();
   const porId = new Map(results.map((r) => [r.conductor_id, r]));

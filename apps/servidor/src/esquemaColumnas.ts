@@ -774,7 +774,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "aprobado_por",
     "origen",
     "creado_en",
-    "actualizado_en"
+    "actualizado_en",
+    "categoria",
+    "acepta_menores"
   ],
   "vehiculo_documentos": [
     "id",
@@ -1809,6 +1811,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "cargo_fijo",
     "factor_calle_pb",
     "velocidad_kmh",
+    "comfort_pb",
+    "premium_pb",
+    "espera_parada_gratis_s",
     "de_prueba",
     "activa",
     "motivo",
@@ -1834,7 +1839,39 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "vence_en",
     "usada_en",
     "operacion_id",
+    "creado_en",
+    "paradas_json"
+  ],
+  "paradas_viaje": [
+    "operacion_id",
+    "orden",
+    "lat",
+    "estado",
+    "llego_en",
+    "salio_en",
     "creado_en"
+  ],
+  "cambios_viaje": [
+    "id",
+    "operacion_id",
+    "actor",
+    "actor_id",
+    "total_antes",
+    "total_despues",
+    "paradas_json",
+    "creado_en"
+  ],
+  "dinamica_zona": [
+    "servicio_id",
+    "zona_id",
+    "multiplicador_pb",
+    "demanda",
+    "oferta",
+    "modo",
+    "vale_hasta",
+    "motivo",
+    "actualizado_por",
+    "actualizado_en"
   ],
   "viajes_pago_movil": [
     "operacion_id",

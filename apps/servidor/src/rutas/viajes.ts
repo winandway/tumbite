@@ -10,7 +10,12 @@ import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
 import { nuevoId } from '../cripto';
 import { abrirIncidencia } from '../internacional/bandeja';
-import { calificarViaje, esquemaCalificacionViaje, registrarEmergencia } from './viajesPasajero';
+import {
+  calificarViaje,
+  esquemaCalificacionViaje,
+  leerParadas,
+  registrarEmergencia,
+} from './viajesPasajero';
 import {
   cobrarReservaViaje,
   devolverReservaViaje,
@@ -51,6 +56,8 @@ const MINUTOS_UBICACION_LLEGADA = 2;
  * Cada acción lleva la cabecera «idempotency-key» (la misma si la app reintenta): un doble toque o
  * una respuesta perdida no repiten nada.
  */
+import { cargoParadasDe, paradaSinCerrar, paradasDe } from './paradasViaje';
+
 export const viajes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 /**
@@ -102,6 +109,7 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
       `SELECT f.operacion_id, f.vehiculo_id, f.ganancia_centavos, f.expira_en, o.servicio_id,
               v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
+              v.categoria, q.multiplicador_pb, q.paradas_json,
               d.lat AS yo_lat, d.lng AS yo_lng
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
@@ -135,6 +143,13 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         viajeS: f.duracion_s == null ? null : Number(f.duracion_s),
         metodoPago: String(f.metodo_pago ?? 'efectivo'),
         pasajeros: Number(f.pasajeros),
+        // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS: la oferta dice la categoría del
+        // viaje, si lleva tarifa dinámica (ya incluida en lo que gana) y por dónde para.
+        categoria: String(f.categoria ?? 'estandar'),
+        multiplicadorPb: Number(f.multiplicador_pb ?? 10_000),
+        paradas: leerParadas(f.paradas_json == null ? null : String(f.paradas_json)).map(
+          (p) => p.direccion,
+        ),
         // C-VIAJE-PROGRAMADO: la oferta dice que es una reserva y para cuándo (UTC, ISO).
         programadoPara:
           f.programado_para == null
@@ -155,7 +170,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
     .prepare(
       `SELECT o.id, o.servicio_id, o.version, v.estado, v.origen_direccion, v.destino_direccion,
               v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, v.pasajeros, v.metodo_pago,
-              v.intentos_pin, v.pin_requerido, v.llego_en,
+              v.intentos_pin, v.pin_requerido, v.llego_en, v.categoria, q.multiplicador_pb,
+              json_extract(q.tarifa_json, '$.esperaParadaGratisS') AS espera_parada_gratis_s,
               CAST((julianday('now') - julianday(v.llego_en)) * 86400 AS INTEGER) AS segundos_esperando,
               q.total, q.moneda, json_extract(q.tarifa_json, '$.esperaGratisS') AS espera_gratis_s,
               (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
@@ -183,6 +199,10 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
         f.moneda == null ? null : String(f.moneda),
       ),
       pasajero: String(f.pasajero ?? '').split(' ')[0] ?? '',
+      // C-VIAJE-PARADAS: las paradas del viaje, en orden, con su estado y su espera.
+      paradas: await paradasDe(base(c), String(f.id)),
+      espera_parada_gratis_s:
+        f.espera_parada_gratis_s == null ? 120 : Number(f.espera_parada_gratis_s),
       espera_gratis_s:
         f.espera_gratis_s == null ? ESPERA_GRATIS_S_POR_DEFECTO : Number(f.espera_gratis_s),
       intentos_pin_quedan: Math.max(0, INTENTOS_PIN_MAXIMOS - Number(f.intentos_pin ?? 0)),
@@ -364,6 +384,13 @@ viajes.post(
         }
       }
     }
+    // C-VIAJE-PARADAS: con una parada por hacer (o detenido en una) el viaje no se termina.
+    if (nombre === 'terminar' && op.estado === paso.desde && (await paradaSinCerrar(db, id)))
+      throw new ErrorDatos(
+        'Te falta una parada. Si tu pasajero ya no va a parar, toca «Saltar parada».',
+        undefined,
+        409,
+      );
     // C-ENVIOS: sin la foto del paquete no sale; sin el PIN de quien recibe no se entrega.
     if (op.estado === paso.desde && (nombre === 'iniciar' || nombre === 'terminar'))
       await revisarPaquete(c, db, id, nombre);
@@ -575,10 +602,9 @@ async function cerrarCuentaViaje(c: Ctx, operacionId: string, conductorId: strin
   if (f.total_final_centavos != null) return f.total_final_centavos;
   let espera = 0;
   try {
-    espera = cargoEspera(
-      esquemaTarifaViaje.parse(JSON.parse(f.tarifa_json ?? '{}')),
-      f.espera_s ?? 0,
-    );
+    const tarifa = esquemaTarifaViaje.parse(JSON.parse(f.tarifa_json ?? '{}'));
+    // C-VIAJE-PARADAS: la espera de más en cada parada se cobra igual que la de la recogida.
+    espera = cargoEspera(tarifa, f.espera_s ?? 0) + (await cargoParadasDe(db, operacionId, tarifa));
   } catch {
     console.error('viajes: copia de tarifa dañada al cerrar', operacionId);
   }

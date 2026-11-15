@@ -1,4 +1,4 @@
-import type { TarifaViaje } from './viajes';
+import type { CategoriaCarro, ConfigDinamica, RequisitosCategoria, TarifaViaje } from './viajes';
 import { CIUDAD_PRUEBAS_EL_VIGIA } from './comidaVenezuela';
 
 /**
@@ -73,7 +73,28 @@ export type PerfilPasajeros = {
    * pasajeros no reemplaza por sí solo la verificación de los demás servicios.
    */
   requisitosOtrosServicios?: Readonly<Partial<Record<DocumentoConductor, readonly string[]>>>;
+  /**
+   * C-CARRO-CATEGORIAS, C-VIAJE-PARADAS y C-CARRO-DINAMICA (14 nov 2026): lo que cambia de Carro por
+   * país. Ficha: docs/investigaciones-rea/2026-11-14-carro-paradas-categorias-dinamica.md.
+   */
+  carro: PerfilCarro;
 };
+
+export type PerfilCarro = {
+  /** Requisitos del carro para Comfort y Premium (el económico usa los de siempre del servicio). */
+  categorias: Readonly<Record<Exclude<CategoriaCarro, 'estandar'>, RequisitosCategoria>>;
+  /** Paradas intermedias como máximo en un viaje. */
+  paradasMaximas: number;
+  /** Tarifa dinámica: tope del país y escalones por demanda. */
+  dinamica: ConfigDinamica;
+};
+
+/** Escalones de la tarifa dinámica (razón de viajes buscando por cada conductor libre, × 100). */
+const ESCALONES_DINAMICA = [
+  { razonPc: 150, multPb: 12_000 },
+  { razonPc: 200, multPb: 15_000 },
+  { razonPc: 300, multPb: 20_000 },
+] as const;
 
 /** Los requisitos que son de llevar pasajeros (los únicos que un papel cumple por defecto). */
 export const REQUISITOS_PASAJEROS: ReadonlySet<string> = new Set([
@@ -104,6 +125,17 @@ const EEUU: PerfilPasajeros = {
   documentosConductor: [],
   documentosCarro: [],
   requisitosDeDocumento: {},
+  carro: {
+    categorias: {
+      // Uber Comfort y Black publican listas de modelos; el año es nuestro corte [INF] (Black: 6 o 7 años [DOC]).
+      comfort: { antiguedadMaxima: 8, plazasMinimas: 4, revisionManual: false },
+      premium: { antiguedadMaxima: 6, plazasMinimas: 4, revisionManual: true },
+    },
+    // Uber deja hasta 5 [REA] y DiDi 2 [DOC]; empezamos con 3 [INF].
+    paradasMaximas: 3,
+    // Uber no publica multiplicadores; tope de 2,0 [INF], con escalones 1,2 · 1,5 · 2,0.
+    dinamica: { topePb: 20_000, demandaMinima: 3, escalones: ESCALONES_DINAMICA },
+  },
 };
 
 /**
@@ -130,6 +162,17 @@ const VENEZUELA: PerfilPasajeros = {
     antecedentes_penales: ['antecedentes_pasajeros'],
   },
   requisitosOtrosServicios: {},
+  carro: {
+    categorias: {
+      // El parque de carros de Venezuela es más viejo: Comfort hasta 12 años y Premium hasta 8 [INF].
+      comfort: { antiguedadMaxima: 12, plazasMinimas: 4, revisionManual: false },
+      premium: { antiguedadMaxima: 8, plazasMinimas: 4, revisionManual: true },
+    },
+    // DiDi deja 2 en la región [DOC].
+    paradasMaximas: 2,
+    // Tope prudente para empezar: 1,5 [INF]. No se encontró norma local; lo legal lo confirma el abogado.
+    dinamica: { topePb: 15_000, demandaMinima: 3, escalones: ESCALONES_DINAMICA },
+  },
 };
 
 const PERFILES = new Map<string, PerfilPasajeros>([
@@ -168,6 +211,7 @@ export const TARIFA_MOTO_VENEZUELA: TarifaViaje = {
   topeDinamicoPb: 10_000,
   redondeo: 1,
   cargoFijo: 0,
+  esperaParadaGratisS: 120,
   factorCallePb: 13_000,
   velocidadKmh: 24,
 };
@@ -192,6 +236,10 @@ export const TARIFA_CARRO_VENEZUELA: TarifaViaje = {
   redondeo: 1,
   cargoFijo: 0,
   xlPb: 15_000,
+  // Comfort × 1,3 [INF]; Premium × 1,8 (Yummy «Ejecutivo» ronda 1,8 veces el básico [REA]).
+  comfortPb: 13_000,
+  premiumPb: 18_000,
+  esperaParadaGratisS: 120,
   factorCallePb: 13_000,
   velocidadKmh: 24,
 };

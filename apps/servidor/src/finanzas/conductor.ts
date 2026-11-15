@@ -194,10 +194,18 @@ export async function reservaDeViaje(db: D1Database, operacionId: string, conduc
   const r = refReserva(operacionId, conductorId);
   const f = await db
     .prepare(
+      // C-VIAJE-PARADAS: también cuentan los ajustes por cambio de paradas (`…:ajuste:<cambio>:reservado`).
       `SELECT COALESCE(SUM(monto), 0) AS monto, MAX(pais) AS pais, MAX(moneda) AS moneda FROM libro
-        WHERE cuenta_id = ? AND bolsillo = 'reservado' AND referencia IN (?, ?, ?)`,
+        WHERE cuenta_id = ?1 AND bolsillo = 'reservado'
+          AND (referencia IN (?2, ?3, ?4) OR substr(referencia, 1, length(?5)) = ?5)`,
     )
-    .bind(conductorId, `${r}:reservado`, `${r}:devuelta:reservado`, `${r}:cobrada:reservado`)
+    .bind(
+      conductorId,
+      `${r}:reservado`,
+      `${r}:devuelta:reservado`,
+      `${r}:cobrada:reservado`,
+      `${r}:ajuste:`,
+    )
     .first<{ monto: number; pais: string | null; moneda: string | null }>();
   return { monto: Number(f?.monto ?? 0), pais: f?.pais ?? 'US', moneda: f?.moneda ?? 'USD' };
 }
@@ -245,6 +253,86 @@ export async function reservarComisionViaje(
     await db.prepare('SELECT 1 FROM libro WHERE referencia = ?').bind(`${r}:reservado`).first(),
   );
   return { ok, monto: c.monto };
+}
+
+/**
+ * C-VIAJE-PARADAS (14 nov 2026): el precio del viaje cambió con el viaje ya aceptado (el pasajero
+ * agregó o quitó una parada). Lo apartado se pone al día con la comisión del precio nuevo: si sube,
+ * la diferencia sale del prepago SOLO si alcanza (nunca negativo; si no alcanza, queda la de antes);
+ * si baja, la diferencia vuelve al prepago. Una vez por cambio (referencia con el id del cambio).
+ * Devuelve cuánto se movió (positivo = se apartó más).
+ */
+export async function reajustarReservaViaje(
+  db: D1Database,
+  p: ContextoConductor & {
+    operacionId: string;
+    conductorId: string;
+    valor: number;
+    cambioId: string;
+  },
+): Promise<number> {
+  const actual = await reservaDeViaje(db, p.operacionId, p.conductorId);
+  if (actual.monto <= 0) return 0;
+  const c = await comisionConductor(db, p);
+  if (!c) return 0;
+  const delta = c.monto - actual.monto;
+  if (delta === 0) return 0;
+  const r = `${refReserva(p.operacionId, p.conductorId)}:ajuste:${p.cambioId}`;
+  const concepto = `ajuste_viaje:${p.servicio}`;
+  if (delta > 0) {
+    await db.batch([
+      sentenciaDescontar(db, {
+        cuentaId: p.conductorId,
+        bolsillo: 'prepago',
+        pais: actual.pais,
+        moneda: actual.moneda,
+        monto: delta,
+        concepto,
+        referencia: `${r}:prepago`,
+      }),
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia)
+           SELECT ?, ?, 'reservado', ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM libro WHERE referencia = ?)`,
+        )
+        .bind(
+          crypto.randomUUID(),
+          p.conductorId,
+          actual.pais,
+          actual.moneda,
+          delta,
+          concepto,
+          `${r}:reservado`,
+          `${r}:prepago`,
+        ),
+    ]);
+    const ok = await db
+      .prepare('SELECT 1 FROM libro WHERE referencia = ?')
+      .bind(`${r}:reservado`)
+      .first();
+    return ok ? delta : 0;
+  }
+  await db.batch([
+    sentenciaLibro(db, {
+      cuentaId: p.conductorId,
+      bolsillo: 'reservado',
+      pais: actual.pais,
+      moneda: actual.moneda,
+      monto: delta,
+      concepto,
+      referencia: `${r}:reservado`,
+    }),
+    sentenciaLibro(db, {
+      cuentaId: p.conductorId,
+      bolsillo: 'prepago',
+      pais: actual.pais,
+      moneda: actual.moneda,
+      monto: -delta,
+      concepto,
+      referencia: `${r}:prepago`,
+    }),
+  ]);
+  return delta;
 }
 
 /** Devuelve al prepago lo apartado (el viaje no se hizo). Idempotente. */

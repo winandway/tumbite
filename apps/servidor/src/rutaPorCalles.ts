@@ -46,12 +46,47 @@ export const VELOCIDAD_MAXIMA_KMH = 130;
 export const TOPE_RUTAS_USUARIO_DIA = 20;
 
 /** ¿La ruta de Google es creíble para cobrar? */
-export function rutaCreible(origen: Punto, destino: Punto, distanciaM: number, duracionS: number) {
-  const rectaM = distanciaKm(origen, destino) * 1000;
+export function rutaCreible(
+  origen: Punto,
+  destino: Punto,
+  distanciaM: number,
+  duracionS: number,
+  paradas: readonly Punto[] = [],
+) {
+  // C-VIAJE-PARADAS: con paradas, la recta es la suma de los tramos.
+  const rectaM = tramos(origen, destino, paradas).reduce(
+    (m, [a, b]) => m + distanciaKm(a, b) * 1000,
+    0,
+  );
   if (rectaM > RECTA_MINIMA_PARA_FACTOR_M && distanciaM > FACTOR_MAXIMO_SOBRE_RECTA * rectaM)
     return false;
   const kmh = distanciaM / 1000 / (duracionS / 3600);
   return kmh >= VELOCIDAD_MINIMA_KMH && kmh <= VELOCIDAD_MAXIMA_KMH;
+}
+
+/** C-VIAJE-PARADAS: los tramos de un viaje en orden (recogida → paradas → destino). */
+export function tramos(origen: Punto, destino: Punto, paradas: readonly Punto[]): [Punto, Punto][] {
+  const desde = [origen, ...paradas];
+  const hasta = [...paradas, destino];
+  return desde.flatMap((a, i) => {
+    const b = hasta.at(i);
+    return b ? [[a, b] as [Punto, Punto]] : [];
+  });
+}
+
+/** La fórmula de siempre, tramo por tramo (sin paradas es `estimarRuta` tal cual). */
+export function estimarRutaConParadas(
+  tarifa: Pick<TarifaViaje, 'factorCallePb' | 'velocidadKmh'>,
+  origen: Punto,
+  destino: Punto,
+  paradas: readonly Punto[],
+): { distanciaM: number; duracionS: number } {
+  return tramos(origen, destino, paradas)
+    .map(([a, b]) => estimarRuta(tarifa, a, b))
+    .reduce((t, r) => ({
+      distanciaM: t.distanciaM + r.distanciaM,
+      duracionS: t.duracionS + r.duracionS,
+    }));
 }
 
 /**
@@ -128,10 +163,18 @@ export async function consultasRutasHoy(db: D1Database): Promise<number> {
 }
 
 /** El cuerpo exacto que se manda a Google (exportado para que la prueba lo vigile). */
-export function cuerpoRutas(origen: Punto, destino: Punto) {
+export function cuerpoRutas(origen: Punto, destino: Punto, paradas: readonly Punto[] = []) {
   return {
     origin: { location: { latLng: { latitude: origen.lat, longitude: origen.lng } } },
     destination: { location: { latLng: { latitude: destino.lat, longitude: destino.lng } } },
+    // C-VIAJE-PARADAS: las paradas intermedias, en orden (una sola consulta para todo el viaje).
+    ...(paradas.length
+      ? {
+          intermediates: paradas.map((p) => ({
+            location: { latLng: { latitude: p.lat, longitude: p.lng } },
+          })),
+        }
+      : {}),
     travelMode: 'DRIVE',
     routingPreference: 'TRAFFIC_UNAWARE',
     computeAlternativeRoutes: false,
@@ -146,6 +189,7 @@ export async function consultarGoogle(
   llave: string,
   origen: Punto,
   destino: Punto,
+  paradas: readonly Punto[] = [],
 ): Promise<Respuesta> {
   let r: Response;
   try {
@@ -156,7 +200,7 @@ export async function consultarGoogle(
         'X-Goog-Api-Key': llave,
         'X-Goog-FieldMask': MASCARA,
       },
-      body: JSON.stringify(cuerpoRutas(origen, destino)),
+      body: JSON.stringify(cuerpoRutas(origen, destino, paradas)),
       signal: AbortSignal.timeout(TIEMPO_RUTA_MS),
     });
   } catch (e) {
@@ -218,6 +262,7 @@ async function rutaReciente(
       `SELECT origen_lat, origen_lng, destino_lat, destino_lng, distancia_m, duracion_s
          FROM cotizaciones_viaje
         WHERE cliente_id = ? AND creado_en >= datetime('now', ?) AND fuente_distancia = 'calles'
+          AND paradas_json = '[]'
         ORDER BY creado_en DESC LIMIT 10`,
     )
     .bind(clienteId, `-${REUSO_RUTA_MINUTOS} minutes`)
@@ -249,11 +294,13 @@ export async function rutaParaCotizar(
   tarifa: Pick<TarifaViaje, 'factorCallePb' | 'velocidadKmh'>,
   origen: Punto,
   destino: Punto,
+  /** C-VIAJE-PARADAS: paradas intermedias en orden (con paradas no se reutiliza una ruta anterior). */
+  paradas: readonly Punto[] = [],
 ): Promise<RutaCotizada> {
   const estimada = (motivo: string): RutaCotizada => {
     console.warn(`rutas: se usa la distancia estimada (${motivo})`);
     return {
-      ...estimarRuta(tarifa, origen, destino),
+      ...estimarRutaConParadas(tarifa, origen, destino, paradas),
       fuente: 'estimada',
       motivo,
       reutilizada: false,
@@ -265,7 +312,7 @@ export async function rutaParaCotizar(
     return estimada('sin_llave');
   }
   try {
-    const previa = await rutaReciente(db, clienteId, origen, destino);
+    const previa = paradas.length ? null : await rutaReciente(db, clienteId, origen, destino);
     if (previa) return { ...previa, fuente: 'calles', motivo: '', reutilizada: true };
     if ((await consultasDelUsuarioHoy(db, clienteId)) >= TOPE_RUTAS_USUARIO_DIA)
       return estimada('tope_usuario');
@@ -277,9 +324,10 @@ export async function rutaParaCotizar(
     console.error('rutas: no se pudo leer el contador o la cotización anterior', e);
     return estimada('base');
   }
-  const g = await consultarGoogle(llave, origen, destino);
+  const g = await consultarGoogle(llave, origen, destino, paradas);
   if (!g.ok) return estimada(g.motivo);
-  if (!rutaCreible(origen, destino, g.distanciaM, g.duracionS)) return estimada('ruta_absurda');
+  if (!rutaCreible(origen, destino, g.distanciaM, g.duracionS, paradas))
+    return estimada('ruta_absurda');
   return {
     distanciaM: g.distanciaM,
     duracionS: g.duracionS,

@@ -13,7 +13,13 @@ import type { Entorno } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { ZONA_INICIAL, zonaPara } from './zonas';
 import { exigirComisionEnMoneda } from '../finanzas/conductor';
-import { SERVICIOS_VIAJE, perfilPasajeros } from '@tumbite/compartido';
+import {
+  CATEGORIAS_CARRO,
+  type CategoriaCarro,
+  SERVICIOS_VIAJE,
+  carroCumpleCategoria,
+  perfilPasajeros,
+} from '@tumbite/compartido';
 import { paisDelConductor } from '../paisConductor';
 import {
   PAISES_PASAJEROS_ABRIBLES,
@@ -486,10 +492,16 @@ servicios.get('/conductor/vehiculos', async (c) => {
   const [{ results: vehiculos }, { results: docs }, rep] = await Promise.all([
     db
       .prepare(
-        "SELECT id, tipo, marca, modelo, anio, color, placa, placa_estado AS placaEstado, plazas, estado, motivo FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado' ORDER BY creado_en",
+        "SELECT id, tipo, marca, modelo, anio, color, placa, placa_estado AS placaEstado, plazas, estado, motivo, categoria, acepta_menores AS aceptaMenores FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado' ORDER BY creado_en",
       )
       .bind(u.id)
-      .all<{ id: string }>(),
+      .all<{
+        id: string;
+        tipo: string;
+        anio: number | null;
+        plazas: number | null;
+        aceptaMenores: number;
+      }>(),
     db
       .prepare(
         "SELECT d.id, d.vehiculo_id AS vehiculoId, d.tipo, d.estado, d.motivo, d.vence_en AS venceEn FROM vehiculo_documentos d JOIN vehiculos v ON v.id = d.vehiculo_id WHERE v.conductor_id = ? AND d.estado != 'reemplazado'",
@@ -501,13 +513,101 @@ servicios.get('/conductor/vehiculos', async (c) => {
       .bind(u.id)
       .first<{ id: string | null }>(),
   ]);
+  // C-CARRO-CATEGORIAS: qué pide cada categoría en el país del conductor (para decírselo en su app).
+  const requisitos = perfilPasajeros((await paisDelConductor(db, u.id)).pais).carro.categorias;
   return c.json({
     vehiculoActivoId: rep?.id ?? null,
+    requisitosCategoria: requisitos,
     vehiculos: vehiculos.map((v) => ({
       ...v,
+      aceptaMenores: Boolean(v.aceptaMenores),
       documentos: docs.filter((d) => d.vehiculoId === v.id),
     })),
   });
+});
+
+/**
+ * C-CARRO-CATEGORIAS (14 nov 2026, todos los países): la categoría de un carro (económico, Comfort o
+ * Premium), como Uber Comfort y Uber Black. Los requisitos (antigüedad y plazas) viven en el perfil
+ * del país; Premium además lo aprueba una persona del equipo. Ficha:
+ * docs/investigaciones-rea/2026-11-14-carro-paradas-categorias-dinamica.md.
+ */
+export function categoriaAlAprobar(
+  pais: string,
+  carro: { tipo: string; anio: number | null; plazas: number | null },
+  pedida: CategoriaCarro | undefined,
+  hoy = new Date(),
+): CategoriaCarro {
+  if (carro.tipo !== 'carro') {
+    if (pedida && pedida !== 'estandar')
+      throw new ErrorDatos('Solo un carro puede ser Comfort o Premium.', 'categoria', 422);
+    return 'estandar';
+  }
+  const req = perfilPasajeros(pais).carro.categorias;
+  const anio = hoy.getUTCFullYear();
+  if (pedida && pedida !== 'estandar') {
+    const r = pedida === 'comfort' ? req.comfort : req.premium;
+    if (!carroCumpleCategoria(r, carro, anio))
+      throw new ErrorDatos(
+        `Este carro no cumple lo que pide esa categoría: ${r.antiguedadMaxima} años como máximo y ${r.plazasMinimas} plazas o más.`,
+        'categoria',
+        422,
+      );
+    return pedida;
+  }
+  if (pedida === 'estandar') return 'estandar';
+  // Sin decirlo: Comfort se da solo si el carro cumple; Premium siempre lo decide una persona.
+  return !req.comfort.revisionManual && carroCumpleCategoria(req.comfort, carro, anio)
+    ? 'comfort'
+    : 'estandar';
+}
+
+/** El conductor de un carro Comfort o Premium decide si también recibe los viajes de abajo. */
+servicios.put('/conductor/vehiculos/:id/categorias-menores', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const v = await miVehiculo(db, u.id, c.req.param('id'));
+  const { acepta } = await leerCuerpo(c, z.object({ acepta: z.boolean() }));
+  await db
+    .prepare(
+      "UPDATE vehiculos SET acepta_menores = ?, actualizado_en = datetime('now') WHERE id = ? AND acepta_menores != ?",
+    )
+    .bind(acepta ? 1 : 0, v.id, acepta ? 1 : 0)
+    .run();
+  return c.json({ aceptaMenores: acepta });
+});
+
+/** El equipo cambia la categoría de un carro ya aprobado (sube a Premium, baja a económico). */
+servicios.put('/admin/vehiculos/:id/categoria', async (c) => {
+  const admin = exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      categoria: z.enum(CATEGORIAS_CARRO),
+      motivo: z.string().trim().min(3).max(200),
+    }),
+  );
+  const antes = await db.prepare('SELECT * FROM vehiculos WHERE id = ?').bind(id).first<{
+    conductor_id: string;
+    tipo: string;
+    anio: number | null;
+    plazas: number | null;
+    categoria: string;
+  }>();
+  if (!antes) throw new ErrorDatos('No encontramos ese vehículo.', undefined, 404);
+  const categoria = categoriaAlAprobar(
+    (await paisDelConductor(db, antes.conductor_id)).pais,
+    antes,
+    d.categoria,
+  );
+  await db
+    .prepare("UPDATE vehiculos SET categoria = ?, actualizado_en = datetime('now') WHERE id = ?")
+    .bind(categoria, id)
+    .run();
+  await auditar(db, admin.id, 'vehiculo.categoria', `vehiculo:${id}`, antes, d);
+  return c.json({ categoria });
 });
 
 servicios.post('/conductor/vehiculos', async (c) => {
@@ -1174,24 +1274,37 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
     z.object({
       estado: z.enum(['aprobado', 'rechazado', 'suspendido']),
       motivo: z.string().trim().max(200).default(''),
+      // C-CARRO-CATEGORIAS: al aprobar un carro, su categoría (sin decirla, la que le toca sola).
+      categoria: z.enum(CATEGORIAS_CARRO).optional(),
     }),
   );
   if (d.estado !== 'aprobado' && !d.motivo)
     throw new ErrorDatos('Escribe el motivo para que la persona sepa qué corregir.', 'motivo', 422);
-  const antes = await db
-    .prepare('SELECT * FROM vehiculos WHERE id = ?')
-    .bind(id)
-    .first<{ conductor_id: string }>();
+  const antes = await db.prepare('SELECT * FROM vehiculos WHERE id = ?').bind(id).first<{
+    conductor_id: string;
+    tipo: string;
+    anio: number | null;
+    plazas: number | null;
+    categoria: string;
+  }>();
   if (!antes) throw new ErrorDatos('No encontramos ese vehículo.', undefined, 404);
+  const categoria =
+    d.estado === 'aprobado'
+      ? categoriaAlAprobar(
+          (await paisDelConductor(db, antes.conductor_id)).pais,
+          antes,
+          d.categoria,
+        )
+      : antes.categoria;
   await conRestricciones(
     db.batch([
       db
         .prepare(
-          `UPDATE vehiculos SET estado = ?, motivo = ?, aprobado_por = ?,
+          `UPDATE vehiculos SET estado = ?, motivo = ?, aprobado_por = ?, categoria = ?,
              aprobado_en = CASE WHEN ? = 'aprobado' THEN datetime('now') ELSE aprobado_en END,
              actualizado_en = datetime('now') WHERE id = ?`,
         )
-        .bind(d.estado, d.motivo, admin.id, d.estado, id),
+        .bind(d.estado, d.motivo, admin.id, categoria, d.estado, id),
       // Un vehículo que deja de estar aprobado deja de ser el activo (Comida no lo lee aún).
       db
         .prepare(
@@ -1200,8 +1313,8 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
         .bind(id, d.estado),
     ]),
   );
-  await auditar(db, admin.id, 'vehiculo.revision', `vehiculo:${id}`, antes, d);
-  return c.json({ estado: d.estado });
+  await auditar(db, admin.id, 'vehiculo.revision', `vehiculo:${id}`, antes, { ...d, categoria });
+  return c.json({ estado: d.estado, categoria });
 });
 
 servicios.get('/admin/habilitaciones', async (c) => {

@@ -106,6 +106,17 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
         v.estado,
         v.programadoPara ?? null,
       ),
+    // C-VIAJE-PARADAS: las paradas de la cotización nacen con el viaje, en su orden.
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO paradas_viaje (operacion_id, orden, lat, lng, direccion)
+         SELECT ?1, j.key + 1, json_extract(j.value, '$.lat'), json_extract(j.value, '$.lng'),
+                COALESCE(json_extract(j.value, '$.direccion'), '')
+           FROM cotizaciones_viaje q, json_each(q.paradas_json) j
+          WHERE q.id = ?2 AND q.operacion_id = ?1 AND q.paradas_json != '[]'
+            AND EXISTS (SELECT 1 FROM viajes WHERE operacion_id = ?1)`,
+      )
+      .bind(v.op, v.cotizacionId),
     ...(v.tipo === 'envio_paquete' && v.paquete
       ? [
           db

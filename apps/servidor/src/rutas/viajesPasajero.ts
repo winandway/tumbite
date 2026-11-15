@@ -14,7 +14,10 @@ import {
   type PaqueteEnvio,
   telefonoCanonico,
   VALOR_MAXIMO_ENVIO_POR_DEFECTO,
-  tarifaXl,
+  tarifaDeCategoria,
+  categoriasOfrecidas,
+  type CategoriaViaje,
+  type PuntoViaje,
   numeroEmergencia,
   perfilPasajeros,
   METODOS_PAGO_VIAJE,
@@ -43,6 +46,8 @@ import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } fro
 import { leerConfigPais, MONEDA_POR_PAIS, paisIncompleto } from '../internacional/paises';
 import { zonaPara } from './zonas';
 import { REUSO_RUTA_MINUTOS, REUSO_RUTA_RADIO_M, rutaParaCotizar } from '../rutaPorCalles';
+import { multiplicadorVigente } from '../viajesDinamica';
+import { paradasDe } from './paradasViaje';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -73,6 +78,9 @@ type FilaTarifa = {
   factor_calle_pb: number;
   velocidad_kmh: number;
   xl_pb: number | null;
+  comfort_pb: number | null;
+  premium_pb: number | null;
+  espera_parada_gratis_s: number | null;
   valor_maximo: number | null;
   de_prueba: number;
   activa: number;
@@ -98,6 +106,9 @@ export function filaATarifa(f: FilaTarifa): TarifaViaje {
     cargoFijo: f.cargo_fijo,
     factorCallePb: f.factor_calle_pb,
     ...(f.xl_pb ? { xlPb: f.xl_pb } : {}),
+    ...(f.comfort_pb ? { comfortPb: f.comfort_pb } : {}),
+    ...(f.premium_pb ? { premiumPb: f.premium_pb } : {}),
+    esperaParadaGratisS: f.espera_parada_gratis_s ?? 120,
     ...(f.valor_maximo != null ? { valorMaximo: f.valor_maximo } : {}),
     velocidadKmh: f.velocidad_kmh,
   };
@@ -233,8 +244,8 @@ export async function guardarTarifaViaje(
         `INSERT INTO tarifas_viaje (id, servicio_id, zona_id, moneda, base, por_km, por_minuto, minimo,
            espera_gratis_s, por_minuto_espera, cancelacion_gratis_s, cargo_cancelacion,
            cargo_no_se_presento, tope_dinamico_pb, redondeo, cargo_fijo, factor_calle_pb, velocidad_kmh,
-           de_prueba, motivo, creada_por, xl_pb, valor_maximo)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           de_prueba, motivo, creada_por, xl_pb, valor_maximo, comfort_pb, premium_pb, espera_parada_gratis_s)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -260,6 +271,9 @@ export async function guardarTarifaViaje(
         adminId,
         t.xlPb ?? null,
         t.valorMaximo ?? null,
+        t.comfortPb ?? null,
+        t.premiumPb ?? null,
+        t.esperaParadaGratisS,
       ),
     db
       .prepare(
@@ -374,10 +388,11 @@ async function cotizacionAnteriorMismoTrayecto(
   categoria: string,
   origen: { lat: number; lng: number },
   destino: { lat: number; lng: number },
+  paradas: readonly { lat: number; lng: number }[] = [],
 ): Promise<{ total: number } | null> {
   const { results } = await db
     .prepare(
-      `SELECT origen_lat, origen_lng, destino_lat, destino_lng, total, servicio_id, categoria
+      `SELECT origen_lat, origen_lng, destino_lat, destino_lng, total, servicio_id, categoria, paradas_json
          FROM cotizaciones_viaje WHERE cliente_id = ? AND creado_en >= datetime('now', ?)
         ORDER BY creado_en DESC, rowid DESC LIMIT 10`,
     )
@@ -390,6 +405,7 @@ async function cotizacionAnteriorMismoTrayecto(
       total: number;
       servicio_id: string;
       categoria: string | null;
+      paradas_json: string | null;
     }>();
   const cerca = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
     distanciaKm(a, b) * 1000 <= REUSO_RUTA_RADIO_M;
@@ -398,9 +414,76 @@ async function cotizacionAnteriorMismoTrayecto(
       x.servicio_id === servicio &&
       (x.categoria ?? 'estandar') === categoria &&
       cerca({ lat: x.origen_lat, lng: x.origen_lng }, origen) &&
-      cerca({ lat: x.destino_lat, lng: x.destino_lng }, destino),
+      cerca({ lat: x.destino_lat, lng: x.destino_lng }, destino) &&
+      mismasParadas(leerParadas(x.paradas_json), paradas),
   );
   return f ? { total: f.total } : null;
+}
+
+/** C-VIAJE-PARADAS: las paradas guardadas en una cotización (lista vacía si no hay o está dañada). */
+export function leerParadas(json: string | null | undefined): PuntoViaje[] {
+  try {
+    const v: unknown = JSON.parse(json ?? '[]');
+    return Array.isArray(v)
+      ? v.flatMap((p) => {
+          const o = p as Partial<PuntoViaje> | null;
+          return o && typeof o.lat === 'number' && typeof o.lng === 'number'
+            ? [{ lat: o.lat, lng: o.lng, direccion: String(o.direccion ?? '') }]
+            : [];
+        })
+      : [];
+  } catch {
+    console.error('viajes: paradas dañadas en la cotización');
+    return [];
+  }
+}
+
+function mismasParadas(
+  a: readonly { lat: number; lng: number }[],
+  b: readonly { lat: number; lng: number }[],
+): boolean {
+  return (
+    a.length === b.length &&
+    a.every((p, i) => {
+      const q = b.at(i);
+      return q != null && distanciaKm(p, q) * 1000 <= REUSO_RUTA_RADIO_M;
+    })
+  );
+}
+
+const SIN_CATEGORIA: Record<Exclude<CategoriaViaje, 'estandar'>, string> = {
+  xl: 'Carro XL todavía no está disponible en tu ciudad.',
+  comfort: 'Carro Comfort todavía no está disponible en tu ciudad.',
+  premium: 'Carro Premium todavía no está disponible en tu ciudad.',
+};
+
+/**
+ * C-VIAJE-PARADAS: las paradas de un viaje son válidas si el servicio las admite (Moto y Carro; un
+ * envío va de un punto a otro), no pasan del máximo del país y quedan en la ciudad del viaje.
+ */
+export async function exigirParadasValidas(
+  db: D1Database,
+  servicio: string,
+  zona: { id: string; pais: string },
+  paradas: readonly PuntoViaje[],
+): Promise<void> {
+  if (!paradas.length) return;
+  if (servicio === 'envios')
+    throw new ErrorDatos('Un envío va de un punto a otro, sin paradas.', 'paradas', 422);
+  const maximo = perfilPasajeros(zona.pais).carro.paradasMaximas;
+  if (paradas.length > maximo)
+    throw new ErrorDatos(
+      maximo === 1
+        ? 'Un viaje puede llevar una parada como máximo.'
+        : `Un viaje puede llevar hasta ${maximo} paradas.`,
+      'paradas',
+      422,
+    );
+  for (const p of paradas) {
+    const z = await zonaPara(db, p.lat, p.lng);
+    if (z?.id !== zona.id)
+      throw new ErrorDatos('Una parada queda fuera de la ciudad del viaje.', 'paradas', 422);
+  }
 }
 
 viajesPasajero.post('/viajes/cotizar', async (c) => {
@@ -421,20 +504,34 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   if (!fila)
     throw new ErrorDatos('Este servicio todavía no tiene precio en tu ciudad.', 'servicio', 409);
   const normal = filaATarifa(fila);
-  // C-CARRO-XL: el carro grande cotiza con su factor; sin factor en la ciudad, no hay XL.
-  const tarifa = d.categoria === 'xl' && d.servicio === 'carro' ? tarifaXl(normal) : normal;
-  if (!tarifa || (d.categoria === 'xl' && d.servicio !== 'carro'))
-    throw new ErrorDatos('Carro XL todavía no está disponible en tu ciudad.', 'categoria', 409);
+  // C-CARRO-XL y C-CARRO-CATEGORIAS: cada categoría cotiza con su factor; sin factor en la ciudad,
+  // esa categoría no existe. Solo Carro tiene categorías.
+  const tarifa = d.servicio === 'carro' ? tarifaDeCategoria(normal, d.categoria) : normal;
+  if (d.categoria !== 'estandar' && (!tarifa || d.servicio !== 'carro'))
+    throw new ErrorDatos(SIN_CATEGORIA[d.categoria], 'categoria', 409);
+  if (!tarifa) throw new ErrorDatos(SIN_CATEGORIA.xl, 'categoria', 409);
+  // C-VIAJE-PARADAS: paradas intermedias (máximo del país, todas dentro de la ciudad).
+  await exigirParadasValidas(db, d.servicio, zona, d.paradas);
   // C-RUTA-POR-CALLES: distancia y tiempo reales por calles (Google Routes, sin tráfico); si no se
   // puede, la fórmula de siempre, sin error para el pasajero. Solo para el precio.
-  const ruta = await rutaParaCotizar(c.env, db, u.id, tarifa, d.origen, d.destino);
+  const ruta = await rutaParaCotizar(c.env, db, u.id, tarifa, d.origen, d.destino, d.paradas);
   if (ruta.distanciaM < 200)
     throw new ErrorDatos('El destino está demasiado cerca del punto de recogida.', 'destino', 422);
   if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[d.servicio] * 1000)
     throw new ErrorDatos('El destino está demasiado lejos para este servicio.', 'destino', 422);
-  // M1: sin precio dinámico todavía (multiplicador 1). El tope ya vive en la tarifa.
-  const multiplicadorPb = 10_000;
+  // C-CARRO-DINAMICA: el multiplicador de la ciudad en este momento (10 000 = precio normal), nunca
+  // por encima del tope de la tarifa ni del tope del país. Queda fijo para este viaje.
+  const multiplicadorPb = await multiplicadorVigente(db, d.servicio, zona, tarifa.topeDinamicoPb);
   const desglose = cotizarViaje(tarifa, ruta, multiplicadorPb);
+  // C-CARRO-CATEGORIAS: el precio de cada categoría que ofrece la ciudad para este mismo trayecto,
+  // calculado aquí mismo (sin guardar nada): la app las muestra para elegir.
+  const opciones =
+    d.servicio === 'carro'
+      ? categoriasOfrecidas(normal).flatMap((categoria) => {
+          const t = tarifaDeCategoria(normal, categoria);
+          return t ? [{ categoria, total: cotizarViaje(t, ruta, multiplicadorPb).total }] : [];
+        })
+      : [];
   // C-RUTA-POR-CALLES: si el pasajero ya veía un precio para este mismo trayecto y cambió, se dice.
   const anterior = await cotizacionAnteriorMismoTrayecto(
     db,
@@ -443,6 +540,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     d.categoria,
     d.origen,
     d.destino,
+    d.paradas,
   );
   const id = nuevoId();
   const venceEn = sqlFecha(new Date(Date.now() + VIGENCIA_COTIZACION_S * 1000));
@@ -451,8 +549,8 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
       `INSERT INTO cotizaciones_viaje (id, cliente_id, servicio_id, zona_id, tarifa_id,
          origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
          distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en, categoria,
-         fuente_distancia)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         fuente_distancia, paradas_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -476,12 +574,15 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
       venceEn,
       d.categoria,
       ruta.fuente,
+      JSON.stringify(d.paradas),
     )
     .run();
   const cotizacion: CotizacionViaje = {
     id,
     servicio: d.servicio,
     categoria: d.categoria,
+    paradas: d.paradas,
+    multiplicadorPb,
     zona: { id: zona.id, nombre: zona.nombre },
     moneda: fila.moneda,
     distanciaM: ruta.distanciaM,
@@ -499,7 +600,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   };
   // C-BS-REFERENCIA: el equivalente en bolívares, solo informativo (null sin tasa vigente).
   const referencia = await referenciaLocal(db, zona.pais, desglose.total, fila.moneda);
-  return c.json({ cotizacion: { ...cotizacion, referencia } }, 201);
+  return c.json({ cotizacion: { ...cotizacion, referencia, opciones } }, 201);
 });
 
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
@@ -767,6 +868,7 @@ type FilaViajeCliente = {
   pm_estado: string | null;
   pais: string | null;
   categoria: string | null;
+  multiplicador_pb: number | null;
   vehiculo_tipo: string | null;
   plazas: number | null;
   conductor_foto: number | null;
@@ -783,7 +885,7 @@ async function viajeDelCliente(
       `SELECT o.id, o.servicio_id, v.estado, v.pin_recogida, v.pin_requerido, v.metodo_pago, v.origen_direccion,
               v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
               CAST((julianday('now') - julianday(v.asignado_en)) * 86400 AS INTEGER) AS segundos_asignado,
-              q.total, q.moneda, q.tarifa_json,
+              q.total, q.moneda, q.tarifa_json, q.multiplicador_pb,
               u.nombre AS conductor_nombre, d.lat AS conductor_lat, d.lng AS conductor_lng,
               h.marca, h.modelo, h.color, h.placa, h.tipo AS vehiculo_tipo, h.plazas, v.categoria,
               -- C-CARRO-VIAJE-PASAJERO: la foto es la selfie verificada (como Uber), solo si está aprobada.
@@ -845,6 +947,8 @@ function viajePublico(f: FilaViajeCliente) {
     id: f.id,
     servicio: f.servicio_id,
     categoria: f.categoria ?? 'estandar',
+    // C-CARRO-DINAMICA: el multiplicador con que se cotizó este viaje (10 000 = precio normal).
+    multiplicadorPb: Number(f.multiplicador_pb ?? 10_000),
     estado: f.estado,
     // El código solo lo ve el pasajero, y solo hasta que empieza el viaje.
     pin:
@@ -953,8 +1057,12 @@ viajesPasajero.get('/viajes/:id', async (c) => {
   const db = base(c);
   const f = await viajeDelCliente(db, u.id, c.req.param('id'));
   if (!f) throw new ErrorDatos('Ese viaje no existe.', undefined, 404);
+  // C-VIAJE-PARADAS: las paradas del viaje, en orden, con su estado.
+  const paradas = await paradasDe(db, f.id);
   const viaje = {
     ...viajePublico(f),
+    paradas,
+    paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
     referencia: await referenciaLocal(db, f.pais, f.total, f.moneda),
   };
   return c.json({
@@ -965,6 +1073,7 @@ viajesPasajero.get('/viajes/:id', async (c) => {
       estado: viaje.estado,
       origen: viaje.origen,
       destino: viaje.destino,
+      paradas,
       conductor: viaje.conductor?.ubicacion ?? null,
     }),
   });

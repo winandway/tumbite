@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { tramos } from '../rutaPorCalles';
 import { z } from 'zod';
 import { bloqueoPorHoras, esDeNoche, seDesvio, telefonoCanonico } from '@tumbite/compartido';
 import type { Env } from '../env';
@@ -152,16 +153,23 @@ export async function revisarDesvio(
     estado: string;
     origen: { lat: number; lng: number };
     destino: { lat: number; lng: number };
+    /** C-VIAJE-PARADAS: con paradas, ir a una parada no es desviarse. */
+    paradas?: readonly { lat: number; lng: number }[];
     conductor: { lat: number; lng: number } | null;
   },
 ): Promise<{ id: string; tipo: 'desvio' } | null> {
   if (v.estado !== 'en_curso') return null;
-  if (v.conductor && seDesvio(v.origen, v.destino, v.conductor))
+  const conductor = v.conductor;
+  // Se desvió si está lejos de TODOS los tramos del viaje (recogida → paradas → destino).
+  if (
+    conductor &&
+    tramos(v.origen, v.destino, v.paradas ?? []).every(([a, b]) => seDesvio(a, b, conductor))
+  )
     await db
       .prepare(
         "INSERT OR IGNORE INTO alertas_viaje (id, operacion_id, tipo, lat, lng) VALUES (?, ?, 'desvio', ?, ?)",
       )
-      .bind(nuevoId(), v.id, v.conductor.lat, v.conductor.lng)
+      .bind(nuevoId(), v.id, conductor.lat, conductor.lng)
       .run();
   const a = await db
     .prepare(

@@ -44,6 +44,7 @@ import { volverPlatosAgotados } from './catalogo';
 import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra';
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
+import { recalcularDinamica } from '../viajesDinamica';
 import { Hono } from 'hono';
 import { cobertura } from '../territorio';
 import { z } from 'zod';
@@ -2946,6 +2947,9 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // ofrece viajes y devuelve a «buscando» los de un conductor sin señal. Sin catch propio: si falla,
   // lo atrapa correrTareas, queda en reloj_tareas y la salud lo ve.
   { nombre: 'operaciones', critica: true, correr: (env, db) => repartirOperaciones(env, db) },
+  // C-CARRO-DINAMICA: el multiplicador de cada ciudad con tarifa dinámica encendida. Escribe como
+  // mucho una fila por ciudad y solo cuando cambia (o cada 5 minutos mientras dura un recargo).
+  { nombre: 'dinamica', critica: false, correr: (_env, db) => recalcularDinamica(db) },
   { nombre: 'manager', critica: true, correr: (env, db) => vigilarPedidos(env, db) },
   // Divoox Rewards · Fase 2: reputación en MODO SOMBRA (solo en pruebas; en producción no hace nada).
   { nombre: 'rewards_sombra', critica: false, correr: (env, db) => correrSombra(env, db) },

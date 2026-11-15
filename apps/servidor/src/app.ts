@@ -92,6 +92,8 @@ import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
 import { viajesProgramados } from './rutas/viajesProgramados';
 import { chatViaje } from './rutas/chatViaje';
+import { paradasViaje } from './rutas/paradasViaje';
+import { dinamicaViaje } from './rutas/dinamicaViaje';
 import { comidaCiudad } from './rutas/comidaCiudad';
 import { pruebasComidaVe } from './rutas/pruebasComidaVe';
 import { saludComidaPaises } from './internacional/tarifas';
@@ -586,6 +588,9 @@ app.route('/datos', viajesHistorial);
 // C-VIAJE-PROGRAMADO: antes que viajesPasajero, para que /viajes/programados no caiga en /viajes/:id.
 app.route('/datos', viajesProgramados);
 app.route('/datos', chatViaje);
+// C-VIAJE-PARADAS y C-CARRO-DINAMICA (14 nov 2026).
+app.route('/datos', paradasViaje);
+app.route('/datos', dinamicaViaje);
 app.route('/datos', viajesPasajero);
 app.route('/datos', comidaCiudad);
 app.route('/datos', pruebasComidaVe);

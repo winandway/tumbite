@@ -5,6 +5,64 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026, bloque propio)
+  ['Ese servicio no tiene tarifa dinámica.', 'That service doesn’t have dynamic pricing.'],
+  ['Este viaje ya no admite cambios de paradas.', 'This ride can no longer change its stops.'],
+  [
+    'Un envío va de un punto a otro, sin paradas.',
+    'A delivery goes from one point to another, with no stops.',
+  ],
+  ['Un viaje puede llevar una parada como máximo.', 'A ride can have one stop at most.'],
+  [
+    'No pudimos recalcular este viaje. Escríbenos desde Ayuda.',
+    'We couldn’t recalculate this ride. Message us from Help.',
+  ],
+  ['Con esas paradas el viaje queda demasiado largo.', 'With those stops the ride gets too long.'],
+  [
+    'El precio con esas paradas cambió. Revísalo y confirma otra vez.',
+    'The price with those stops changed. Review it and confirm again.',
+  ],
+  [
+    'El viaje cambió mientras lo calculábamos. Vuelve a intentarlo.',
+    'The ride changed while we were calculating. Please try again.',
+  ],
+  ['Esa parada no existe.', 'That stop doesn’t exist.'],
+  [
+    'Esa no es la parada que sigue. Actualiza la pantalla.',
+    'That isn’t the next stop. Refresh the screen.',
+  ],
+  [
+    'Todavía no estás en la parada. Acércate y vuelve a intentarlo.',
+    'You’re not at the stop yet. Get closer and try again.',
+  ],
+  ['Primero marca que llegaste a la parada.', 'First mark that you arrived at the stop.'],
+  ['Esa parada ya se hizo. Toca «Seguir».', 'That stop is already done. Tap “Continue.”'],
+  ['Solo un carro puede ser Comfort o Premium.', 'Only a car can be Comfort or Premium.'],
+  [
+    'Te falta una parada. Si tu pasajero ya no va a parar, toca «Saltar parada».',
+    'You still have a stop to make. If your rider no longer wants to stop, tap “Skip stop.”',
+  ],
+  [
+    'Una parada queda fuera de la ciudad del viaje.',
+    'One of the stops is outside the ride’s city.',
+  ],
+  ['Esa ciudad no tiene tarifa de este servicio.', 'That city has no fare for this service.'],
+  [
+    'Ese multiplicador pasa del tope de la ciudad. Sube primero el tope en la tarifa.',
+    'That multiplier is above the city’s cap. Raise the cap in the fare first.',
+  ],
+  [
+    'Carro Comfort todavía no está disponible en tu ciudad.',
+    'Car Comfort isn’t available in your city yet.',
+  ],
+  [
+    'Carro Premium todavía no está disponible en tu ciudad.',
+    'Car Premium isn’t available in your city yet.',
+  ],
+  [
+    'Con tarjeta, el precio no puede subir después de pedir el viaje. Agrega tus paradas antes de pedirlo.',
+    'With a card, the price can’t go up after you request the ride. Add your stops before requesting it.',
+  ],
   // Pulido de la noche del 14 nov (bloque propio)
   [
     'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
@@ -1991,6 +2049,12 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  [/^Un viaje puede llevar hasta (\d+) paradas\.$/, (m) => `A ride can have up to ${m[1]} stops.`],
+  [
+    /^Este carro no cumple lo que pide esa categoría: (\d+) años como máximo y (\d+) plazas o más\.$/,
+    (m) =>
+      `This car doesn’t meet that category’s requirements: at most ${m[1]} years old and ${m[2]} seats or more.`,
+  ],
   [
     // C-CLIENTE-AUSENTE (13 nov 2026): la espera sale de la configuración.
     /^Primero avisa que el cliente no aparece y espera (\d+) minutos\.$/,

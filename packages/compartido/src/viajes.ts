@@ -47,6 +47,18 @@ export const esquemaTarifaViaje = z
      * este factor (15 000 = × 1,5). Sin él, la ciudad no ofrece XL.
      */
     xlPb: z.number().int().min(10_000).max(30_000).optional(),
+    /**
+     * C-CARRO-CATEGORIAS (14 nov 2026): Comfort y Premium, como Uber Comfort y Uber Black. Su precio es
+     * el del carro normal por este factor (12 500 = × 1,25). Sin el factor, la ciudad no ofrece esa
+     * categoría.
+     */
+    comfortPb: z.number().int().min(10_000).max(40_000).optional(),
+    premiumPb: z.number().int().min(10_000).max(40_000).optional(),
+    /**
+     * C-VIAJE-PARADAS (14 nov 2026): espera gratis en cada parada intermedia; después se cobra por
+     * minuto empezado con `porMinutoEspera`, como la espera en la recogida.
+     */
+    esperaParadaGratisS: segundos(1800).default(120),
     /** C-ENVIOS: valor declarado máximo de un paquete (unidad menor). */
     valorMaximo: monto.optional(),
     /** Sin mapa de rutas: distancia por calle = línea recta × este factor (13 000 = × 1,3). [INF] */
@@ -195,11 +207,29 @@ const punto = z.object({
   lng: z.number().min(-180).max(180),
   direccion: z.string().trim().min(3).max(200),
 });
+/**
+ * C-CARRO-CATEGORIAS: las categorías de un viaje. «estandar» es el económico; «comfort» y «premium»
+ * piden un carro mejor (requisitos del perfil del país); «xl» es el carro grande (C-CARRO-XL). Solo
+ * Carro tiene categorías distintas de la estándar.
+ */
+export const CATEGORIAS_VIAJE = ['estandar', 'comfort', 'premium', 'xl'] as const;
+export type CategoriaViaje = (typeof CATEGORIAS_VIAJE)[number];
+/** Las categorías que puede tener un CARRO (el XL no es categoría del carro: son sus plazas). */
+export const CATEGORIAS_CARRO = ['estandar', 'comfort', 'premium'] as const;
+export type CategoriaCarro = (typeof CATEGORIAS_CARRO)[number];
+
+/** C-VIAJE-PARADAS: lo más que acepta el servidor; cada país pone su máximo en el perfil. */
+export const PARADAS_MAXIMAS_ABSOLUTO = 5;
+
+export const esquemaPuntoViaje = punto;
+export type PuntoViaje = z.infer<typeof punto>;
+
 export const esquemaCotizarViaje = z.object({
   servicio: z.enum(SERVICIOS_VIAJE),
-  /** C-CARRO-XL: «xl» = carro grande (solo en Carro). */
-  categoria: z.enum(['estandar', 'xl']).default('estandar'),
+  categoria: z.enum(CATEGORIAS_VIAJE).default('estandar'),
   origen: punto,
+  /** C-VIAJE-PARADAS: paradas intermedias, en orden, entre la recogida y el destino. */
+  paradas: z.array(punto).max(PARADAS_MAXIMAS_ABSOLUTO).default([]),
   destino: punto,
 });
 
@@ -222,11 +252,169 @@ export function tarifaXl<
 }
 export type PedidoCotizacion = z.infer<typeof esquemaCotizarViaje>;
 
+/**
+ * C-CARRO-CATEGORIAS: la tarifa de una categoría de Carro en la ciudad (null = la ciudad no la ofrece).
+ * Los montos del recorrido van por el factor de la categoría; la espera y los cargos, iguales.
+ */
+export function tarifaDeCategoria<
+  T extends {
+    base: number;
+    porKm: number;
+    porMinuto: number;
+    minimo: number;
+    xlPb?: number;
+    comfortPb?: number;
+    premiumPb?: number;
+  },
+>(t: T, categoria: CategoriaViaje): T | null {
+  if (categoria === 'estandar') return t;
+  if (categoria === 'xl') return tarifaXl(t);
+  const factor = categoria === 'comfort' ? t.comfortPb : t.premiumPb;
+  if (!factor) return null;
+  const f = (n: number) => Math.round((n * factor) / 10_000);
+  return {
+    ...t,
+    base: f(t.base),
+    porKm: f(t.porKm),
+    porMinuto: f(t.porMinuto),
+    minimo: f(t.minimo),
+  };
+}
+
+/** Las categorías que una ciudad ofrece con esa tarifa de Carro, en el orden en que se muestran. */
+export function categoriasOfrecidas(t: {
+  xlPb?: number;
+  comfortPb?: number;
+  premiumPb?: number;
+}): CategoriaViaje[] {
+  return CATEGORIAS_VIAJE.filter(
+    (c) =>
+      c === 'estandar' ||
+      (c === 'comfort' && Boolean(t.comfortPb)) ||
+      (c === 'premium' && Boolean(t.premiumPb)) ||
+      (c === 'xl' && Boolean(t.xlPb)),
+  );
+}
+
+const RANGO_CARRO: Record<CategoriaCarro, number> = { estandar: 0, comfort: 1, premium: 2 };
+export const rangoCategoria = (c: string | null | undefined): number =>
+  c === 'premium' ? RANGO_CARRO.premium : c === 'comfort' ? RANGO_CARRO.comfort : 0;
+
+/**
+ * C-CARRO-CATEGORIAS: ¿este carro recibe un viaje de esa categoría? Como en Uber: un carro Premium o
+ * Comfort también puede recibir los viajes de las categorías de abajo, si su conductor no lo apagó
+ * («aceptaMenores»); nunca recibe los de una categoría de arriba. El XL va por plazas.
+ */
+export function carroRecibeCategoria(
+  carro: { categoria: string | null; plazas: number | null; aceptaMenores: boolean },
+  categoriaViaje: string | null,
+): boolean {
+  if (categoriaViaje === 'xl') return (carro.plazas ?? 0) >= PLAZAS_XL;
+  const mio = rangoCategoria(carro.categoria);
+  const pedido = rangoCategoria(categoriaViaje);
+  return mio === pedido || (mio > pedido && carro.aceptaMenores);
+}
+
+/** Requisitos del carro para una categoría (viven en el perfil del país). */
+export type RequisitosCategoria = {
+  /** Años de antigüedad como máximo (año de hoy − año del carro). */
+  antiguedadMaxima: number;
+  plazasMinimas: number;
+  /** Además de cumplir, una persona del equipo la aprueba (Premium: modelo, interior, estado). */
+  revisionManual: boolean;
+};
+
+/** ¿El carro cumple los requisitos medibles de la categoría? (La revisión manual va aparte.) */
+export function carroCumpleCategoria(
+  r: RequisitosCategoria,
+  carro: { anio: number | null; plazas: number | null },
+  anioDeHoy: number,
+): boolean {
+  if (carro.anio == null || anioDeHoy - carro.anio > r.antiguedadMaxima) return false;
+  return (carro.plazas ?? 0) >= r.plazasMinimas;
+}
+
+/**
+ * C-CARRO-DINAMICA (14 nov 2026): tarifa dinámica por zona, como el «surge» de Uber y la tarifa
+ * dinámica de DiDi. El multiplicador sale de cuántos viajes buscan conductor frente a cuántos
+ * conductores libres hay, por escalones, y NUNCA pasa del tope (el de la tarifa de la ciudad y el del
+ * país, el menor). Por debajo de `demandaMinima` solicitudes no hay recargo: en una ciudad que
+ * empieza, un solo pedido no dispara el precio.
+ */
+export type ConfigDinamica = {
+  /** Tope del país (10 000 = sin recargo). El de la tarifa de la ciudad nunca lo supera. */
+  topePb: number;
+  demandaMinima: number;
+  /** Escalones: desde esta razón demanda/oferta (× 100), este multiplicador. En orden creciente. */
+  escalones: readonly { razonPc: number; multPb: number }[];
+};
+
+export function multiplicadorPorDemanda(
+  cfg: ConfigDinamica,
+  demanda: number,
+  oferta: number,
+  topeTarifaPb: number,
+): number {
+  const tope = Math.max(10_000, Math.min(cfg.topePb, topeTarifaPb));
+  if (tope <= 10_000 || demanda < cfg.demandaMinima) return 10_000;
+  const razonPc = Math.round((demanda * 100) / Math.max(1, oferta));
+  let mult = 10_000;
+  for (const e of cfg.escalones) if (razonPc >= e.razonPc) mult = Math.max(mult, e.multPb);
+  return Math.min(mult, tope);
+}
+
+/** «× 1,5» para mostrar el multiplicador (una cifra decimal, sin ceros de más). */
+export function textoMultiplicador(pb: number): string {
+  const d = Math.round(pb / 1000) / 10;
+  return `× ${String(d).replace('.', ',')}`;
+}
+
+/**
+ * C-VIAJE-PARADAS: la espera cobrada en las paradas. Cada parada tiene su espera gratis; después,
+ * por minuto empezado.
+ */
+export function cargoEsperaParadas(
+  t: Pick<TarifaViaje, 'esperaParadaGratisS' | 'porMinutoEspera'>,
+  segundosPorParada: readonly number[],
+): number {
+  return segundosPorParada.reduce((suma, s) => {
+    const extra = Math.max(0, Math.floor(s) - t.esperaParadaGratisS);
+    return suma + (extra === 0 ? 0 : Math.ceil(extra / 60) * t.porMinutoEspera);
+  }, 0);
+}
+
+/** Estados de una parada intermedia. */
+export const ESTADOS_PARADA = ['pendiente', 'en_parada', 'visitada', 'quitada'] as const;
+export type EstadoParada = (typeof ESTADOS_PARADA)[number];
+export type ParadaViaje = {
+  orden: number;
+  lat: number;
+  lng: number;
+  direccion: string;
+  estado: EstadoParada;
+};
+
+/** C-VIAJE-PARADAS: lo que manda la app para cambiar las paradas pendientes de un viaje. */
+export const esquemaCambiarParadas = z.object({
+  /** Las paradas que QUEDAN por hacer, en orden (las ya visitadas no se tocan). */
+  paradas: z.array(punto).max(PARADAS_MAXIMAS_ABSOLUTO),
+  /** false = solo dime cuánto costaría; true = aplícalo. */
+  confirmar: z.boolean().default(false),
+  /** El total que la persona vio al confirmar: si cambió, se le vuelve a mostrar. */
+  totalVisto: z.number().int().min(0).optional(),
+});
+
 /** Lo que devuelve POST /datos/viajes/cotizar. */
 export type CotizacionViaje = {
   id: string;
   servicio: ServicioViaje;
-  categoria?: 'estandar' | 'xl';
+  categoria?: CategoriaViaje;
+  /** C-VIAJE-PARADAS: las paradas intermedias de la cotización, en orden. */
+  paradas?: PuntoViaje[];
+  /** C-CARRO-DINAMICA: el multiplicador aplicado (10 000 = precio normal). */
+  multiplicadorPb?: number;
+  /** C-CARRO-CATEGORIAS: el precio de cada categoría que la ciudad ofrece para este trayecto. */
+  opciones?: { categoria: CategoriaViaje; total: number }[];
   zona: { id: string; nombre: string };
   moneda: string;
   distanciaM: number;

@@ -19,6 +19,13 @@ import { rehacerConductorDocumentos } from './esquemaPapeles';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-CARRO-CATEGORIAS, C-VIAJE-PARADAS (14 nov 2026): Comfort y Premium, y paradas intermedias.
+  ['tarifas_viaje', 'comfort_pb', 'INTEGER'],
+  ['tarifas_viaje', 'premium_pb', 'INTEGER'],
+  ['tarifas_viaje', 'espera_parada_gratis_s', 'INTEGER NOT NULL DEFAULT 120'],
+  ['cotizaciones_viaje', 'paradas_json', "TEXT NOT NULL DEFAULT '[]'"],
+  ['vehiculos', 'categoria', "TEXT NOT NULL DEFAULT 'estandar'"],
+  ['vehiculos', 'acepta_menores', 'INTEGER NOT NULL DEFAULT 1'],
   // C-AVISOS-WEB (14 nov 2026): la sesión que registró la suscripción web (al borrarla, se borra).
   ['suscripciones_web', 'sesion_id', 'TEXT'],
   // C-RUTA-POR-CALLES (13 nov 2026): de dónde salió la distancia cobrada en la cotización.
