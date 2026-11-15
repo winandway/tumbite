@@ -1,11 +1,11 @@
-import { Image, Pressable, ScrollView, Text } from 'react-native';
+import { Image, Pressable, ScrollView } from 'react-native';
 import {
   type Idioma,
   type ServicioCatalogo,
   hayMasServicios,
   serviciosTerminados,
 } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 import { ICONO_SERVICIO, IMG } from './recursos';
 import { textosInicio } from './textos';
 

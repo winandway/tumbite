@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Pressable, View } from 'react-native';
 import {
   type Idioma,
   TEXTO_CONSENTIMIENTO_SMS,
@@ -44,7 +45,7 @@ export function CasillaSms({
           height: 22,
           borderRadius: 4,
           borderWidth: 2,
-          borderColor: marcada ? C.primario : '#8A8A8A',
+          borderColor: marcada ? C.primario : '#8A8F98',
           backgroundColor: marcada ? C.primario : '#FFFFFF',
           alignItems: 'center',
           justifyContent: 'center',
@@ -55,7 +56,7 @@ export function CasillaSms({
           <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>✓</Text>
         ) : null}
       </Pressable>
-      <Text style={{ color: '#5E5E5E', fontSize: 13, flex: 1 }}>
+      <Text style={{ color: '#666B73', fontSize: 13, flex: 1 }}>
         <Text style={{ fontWeight: '700', color: '#333333' }}>{t.titulo}. </Text>
         {t.antes}{' '}
         <Text style={e.enlaceLinea} onPress={() => abrir('/privacy')} accessibilityRole="link">

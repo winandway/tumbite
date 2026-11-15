@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { Text } from './diseno';
+import { FlatList, Image, Pressable, TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma, unirMensajes } from '@tumbite/compartido';
 import { Boton, C, e } from './ui';
 import { useSesion } from './sesion';
@@ -160,7 +161,7 @@ export function ChatPedido({
     <View style={e.tarjeta} accessibilityLabel={t.titulo}>
       <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.titulo}</Text>
       {mensajes.length === 0 ? (
-        <Text style={{ color: '#5E5E5E' }}>{abierto ? t.vacio : t.cerrado}</Text>
+        <Text style={{ color: '#666B73' }}>{abierto ? t.vacio : t.cerrado}</Text>
       ) : (
         <FlatList
           data={mensajes}
@@ -179,7 +180,7 @@ export function ChatPedido({
               }}
             >
               {!item.mio ? (
-                <Text style={{ fontSize: 12, color: '#5E5E5E', fontWeight: '700' }}>
+                <Text style={{ fontSize: 12, color: '#666B73', fontWeight: '700' }}>
                   {item.nombre}
                 </Text>
               ) : null}
@@ -222,7 +223,7 @@ export function ChatPedido({
           </View>
         </View>
       ) : mensajes.length ? (
-        <Text style={{ color: '#5E5E5E', marginTop: 6 }}>{t.cerrado}</Text>
+        <Text style={{ color: '#666B73', marginTop: 6 }}>{t.cerrado}</Text>
       ) : null}
     </View>
   );

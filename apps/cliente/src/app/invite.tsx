@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Share, Text } from 'react-native';
+import { ScrollView, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
@@ -10,6 +10,7 @@ import {
   alSalirTelefono,
   almacenTelefono,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { conCuenta } from '../ConCuenta';
@@ -106,7 +107,7 @@ function InvitarAmigo() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f6' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }}>
       <Encabezado titulo={t.titulo} alVolver={() => router.back()} etiquetaVolver="‹" />
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -121,10 +122,10 @@ function InvitarAmigo() {
         {estado?.activos && estado.codigo ? (
           <>
             <Tarjeta>
-              <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>
+              <Text style={{ color: '#666B73', marginBottom: 8 }}>
                 {t.explica(dinero(estado.paraAmigo), dinero(estado.paraQuienInvita))}
               </Text>
-              <Text style={{ color: '#5E5E5E' }}>{t.tuCodigo}</Text>
+              <Text style={{ color: '#666B73' }}>{t.tuCodigo}</Text>
               <Text
                 testID="mi-codigo-invitacion"
                 selectable
@@ -140,14 +141,14 @@ function InvitarAmigo() {
                   }).catch(() => undefined)
                 }
               />
-              <Text style={{ color: '#5E5E5E', marginTop: 10 }}>
+              <Text style={{ color: '#666B73', marginTop: 10 }}>
                 {t.invitados(estado.invitados, estado.premiados)}
               </Text>
             </Tarjeta>
             <Tarjeta>
               <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.teInvitaron}</Text>
               {estado.yaUsoUnCodigo ? (
-                <Text style={{ color: '#5E5E5E' }}>{t.yaUsaste}</Text>
+                <Text style={{ color: '#666B73' }}>{t.yaUsaste}</Text>
               ) : (
                 <>
                   <AvisoBorrador

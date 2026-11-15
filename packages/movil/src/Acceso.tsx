@@ -1,6 +1,7 @@
 import { abrirPagina } from './PaginaEnApp';
 import { useEffect, useState, type ReactNode } from 'react';
-import { BackHandler, Pressable, ScrollView, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { BackHandler, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
@@ -175,7 +176,7 @@ export function Acceso({
       {rolRegistro ? (
         // Que se sepa siempre qué cuenta se crea o se usa: de cliente o de repartidor.
         <Text
-          style={{ color: '#5E5E5E', fontSize: 15, marginBottom: 12 }}
+          style={{ color: '#666B73', fontSize: 15, marginBottom: 12 }}
           accessibilityRole="header"
         >
           {rolRegistro === 'repartidor' ? t.cuentaDe.repartidor : t.cuentaDe.cliente}
@@ -253,7 +254,7 @@ export function Acceso({
               height: 22,
               borderRadius: 4,
               borderWidth: 2,
-              borderColor: acepto ? C.primario : '#8A8A8A',
+              borderColor: acepto ? C.primario : '#8A8F98',
               backgroundColor: acepto ? C.primario : '#FFFFFF',
               alignItems: 'center',
               justifyContent: 'center',
@@ -264,7 +265,7 @@ export function Acceso({
               <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>✓</Text>
             ) : null}
           </Pressable>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, flex: 1 }}>
+          <Text style={{ color: '#666B73', fontSize: 13, flex: 1 }}>
             {t.aceptas}{' '}
             <Text style={e.enlaceLinea} onPress={() => abrir('/terms')} accessibilityRole="link">
               {t.terminos}

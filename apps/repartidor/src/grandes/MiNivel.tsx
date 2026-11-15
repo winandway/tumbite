@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { type Api, ErrorApi, type Idioma, enIdioma, useBorrador } from '@tumbite/compartido';
-import { AvisoBorrador, Boton, C, Campo, almacenTelefono, e } from '@tumbite/movil';
+import { AvisoBorrador, Boton, C, Campo, almacenTelefono, e, Text } from '@tumbite/movil';
 import { Elogios } from './Elogios';
 
 /**
@@ -137,7 +137,7 @@ export function MiNivel({ api, idioma }: { api: Api; idioma: Idioma }) {
             <Text style={{ fontWeight: '600' }}>
               {nombre}: {c.puntos.toFixed(1)} / {c.maximo}
             </Text>
-            <Text style={{ color: '#5E5E5E' }}>{ayuda}</Text>
+            <Text style={{ color: '#666B73' }}>{ayuda}</Text>
           </View>
         );
       })}

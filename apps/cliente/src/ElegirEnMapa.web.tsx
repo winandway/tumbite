@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import type L from 'leaflet';
 import { COLORES, crearMapa, punto as marca } from './mapaWeb';
 import type { Punto } from './ubicacion';
 import { MapaGoogleBajoDemanda } from '@tumbite/compartido/src/mapaWebGoogle';
 import type { VistaMapa } from '@tumbite/compartido/src/mapaLlegada';
-import { C, useSesion } from '@tumbite/movil';
+import { C, useSesion, Text } from '@tumbite/movil';
 import { LLAVE_MAPA_WEB, MAP_ID_MAPA_WEB, proveedorMapaWeb } from './mapaGoogleWeb';
 import { TEXTOS_SIN_CENTRO, useCentroParaElegir } from './centroMapa';
 
@@ -37,7 +37,7 @@ export function ElegirEnMapa(props: Props) {
   if (!vista)
     return (
       <View style={{ marginBottom: 12, gap: 8 }} testID="mapa-sin-centro">
-        <Text style={{ color: '#5E5E5E' }}>
+        <Text style={{ color: '#666B73' }}>
           {buscando ? props.textos.buscando : sinPermiso ? t.no : t.sin}
         </Text>
         {!buscando ? (
@@ -71,7 +71,7 @@ function ElegirEnMapaGoogle({ punto, cambiarPunto, textos, vista }: Props & { vi
   const { idioma } = useSesion();
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>{textos.ayuda}</Text>
+      <Text style={{ color: '#666B73', marginBottom: 6 }}>{textos.ayuda}</Text>
       <MapaGoogleBajoDemanda
         llave={LLAVE_MAPA_WEB}
         mapId={MAP_ID_MAPA_WEB}
@@ -131,7 +131,7 @@ function ElegirEnMapaLeaflet({ punto, cambiarPunto, textos, vista }: Props & { v
 
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>{textos.ayuda}</Text>
+      <Text style={{ color: '#666B73', marginBottom: 6 }}>{textos.ayuda}</Text>
       <div
         ref={caja}
         role="application"

@@ -1,6 +1,6 @@
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import type { Idioma, Restaurante } from '@tumbite/compartido';
-import { C, urlFoto } from '@tumbite/movil';
+import { C, urlFoto, Text } from '@tumbite/movil';
 import { fotoDeRelleno } from './recursos';
 import { textosInicio } from './textos';
 
@@ -59,7 +59,7 @@ export function Categorias({
                 width: 64,
                 height: 64,
                 borderRadius: 32,
-                backgroundColor: '#F2F3F5',
+                backgroundColor: '#F6F6F6',
                 borderWidth: 1,
                 borderColor: '#E3E5E8',
               }}

@@ -1,15 +1,15 @@
 import type { ReactNode } from 'react';
-import { Image, Pressable, Text, View, type ViewStyle } from 'react-native';
+import { Image, Pressable, View, type ViewStyle } from 'react-native';
 import type { Idioma } from '@tumbite/compartido';
-import { C, SelectorIdioma } from '@tumbite/movil';
-import { ICONO_PESTANA, IMG, type Pestana } from './recursos';
+import { BarraPestanas, C, COLOR, SelectorIdioma, Text } from '@tumbite/movil';
+import { IMG, type Pestana } from './recursos';
 import { textosRest } from './textos';
 
 export const sombra: ViewStyle = {
   shadowColor: '#101010',
-  shadowOpacity: 0.07,
-  shadowRadius: 10,
-  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.08,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 1 },
   elevation: 2,
 };
 
@@ -27,7 +27,14 @@ export function Tarjeta({
     <View
       accessibilityLabel={etiqueta}
       style={[
-        { backgroundColor: '#fff', borderRadius: 18, padding: 14, marginBottom: 12 },
+        {
+          backgroundColor: '#fff',
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: COLOR.borde,
+          padding: 16,
+          marginBottom: 12,
+        },
         sombra,
         ...(Array.isArray(style) ? style : [style]),
       ]}
@@ -63,7 +70,7 @@ export function BotonGrande({
         ? C.exito
         : tipo === 'borde'
           ? '#FFF4F1'
-          : '#F2F3F5';
+          : '#F6F6F6';
   const color = tipo === 'claro' ? C.secundario : tipo === 'borde' ? C.primario : '#fff';
   return (
     <Pressable
@@ -78,15 +85,17 @@ export function BotonGrande({
         backgroundColor: fondo,
         borderWidth: tipo === 'borde' ? 1.5 : 0,
         borderColor: C.primario,
-        borderRadius: 14,
-        paddingVertical: 17,
-        paddingHorizontal: 12,
+        borderRadius: 999,
+        minHeight: 56,
+        paddingVertical: 16,
+        paddingHorizontal: 16,
         alignItems: 'center',
+        justifyContent: 'center',
         marginTop: 10,
         opacity: pressed ? 0.85 : 1,
       })}
     >
-      <Text style={{ color, fontWeight: '800', fontSize: 17 }}>{texto}</Text>
+      <Text style={{ color, fontWeight: '700', fontSize: 18 }}>{texto}</Text>
     </Pressable>
   );
 }
@@ -113,11 +122,12 @@ export function Pildora({
       accessibilityState={{ selected: activa }}
       style={{
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 12,
+        minHeight: 40,
+        justifyContent: 'center',
+        borderRadius: 999,
         borderWidth: 1,
-        borderColor: activa ? (verde ? C.exito : C.primario) : '#DADADA',
-        backgroundColor: activa ? (verde ? C.exito : C.primario) : '#fff',
+        borderColor: activa ? (verde ? C.exito : COLOR.negro) : '#D6D8DC',
+        backgroundColor: activa ? (verde ? C.exito : COLOR.negro) : '#fff',
       }}
     >
       <Text style={{ color: activa ? '#fff' : C.secundario, fontWeight: '700', fontSize: 15 }}>
@@ -136,15 +146,15 @@ export function Insignia({ estado, texto }: { estado: string; texto: string }) {
     <View
       style={{
         alignSelf: 'flex-start',
-        backgroundColor: bien ? '#E8F5EE' : mal ? '#FDECEC' : nuevo ? '#FFF4F1' : '#F2F3F5',
-        borderRadius: 8,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
+        backgroundColor: bien ? '#E8F5EE' : mal ? '#FDECEC' : nuevo ? '#FFF4F1' : '#F6F6F6',
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
       }}
     >
       <Text
         style={{
-          color: bien ? C.exito : mal ? '#B3261E' : nuevo ? C.primario : '#5E5E5E',
+          color: bien ? C.exito : mal ? '#B3261E' : nuevo ? C.primario : '#666B73',
           fontWeight: '700',
           fontSize: 12,
         }}
@@ -174,7 +184,7 @@ export function Cabecera({
         paddingVertical: 8,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#EFEFEF',
+        borderBottomColor: '#E6E7EA',
       }}
     >
       <View style={{ alignItems: 'flex-start' }}>
@@ -225,7 +235,7 @@ export function CabeceraInterna({
         paddingVertical: 8,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#EFEFEF',
+        borderBottomColor: '#E6E7EA',
       }}
     >
       <Pressable
@@ -268,7 +278,7 @@ export function Pasos({ nombres, paso }: { nombres: string[]; paso: number }) {
                 right: '50%',
                 width: '100%',
                 height: 3,
-                backgroundColor: i <= paso ? C.exito : '#E5E5E5',
+                backgroundColor: i <= paso ? C.exito : '#E6E7EA',
               }}
             />
           ) : null}
@@ -279,7 +289,7 @@ export function Pasos({ nombres, paso }: { nombres: string[]; paso: number }) {
               borderRadius: 16,
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: i <= paso ? C.exito : '#E5E5E5',
+              backgroundColor: i <= paso ? C.exito : '#E6E7EA',
             }}
           >
             <Text style={{ color: '#fff', fontWeight: '800' }}>{i <= paso ? '✓' : ''}</Text>
@@ -289,7 +299,7 @@ export function Pasos({ nombres, paso }: { nombres: string[]; paso: number }) {
               fontSize: 12,
               marginTop: 4,
               textAlign: 'center',
-              color: i === paso ? C.secundario : '#5E5E5E',
+              color: i === paso ? C.secundario : '#666B73',
               fontWeight: i === paso ? '800' : '500',
             }}
           >
@@ -301,7 +311,10 @@ export function Pasos({ nombres, paso }: { nombres: string[]; paso: number }) {
   );
 }
 
-/** Barra de abajo: Inicio, Pedidos, Menú, Estadísticas y Más. */
+/**
+ * Barra de abajo: Inicio, Pedidos, Menú, Estadísticas y Más. C-APPS-DISENO (15 nov 2026): íconos de
+ * línea (rellenos al elegirse) en el negro de Restaurants y el número de pedidos nuevos en rojo.
+ */
 export function BarraInferior({
   idioma,
   activa,
@@ -314,70 +327,40 @@ export function BarraInferior({
   aviso?: number;
 }) {
   const t = textosRest(idioma);
-  const nombres = new Map(Object.entries(t.nav) as [Pestana, string][]);
+  const nombre = (p: Pestana) => new Map(Object.entries(t.nav) as [Pestana, string][]).get(p) ?? p;
   return (
-    <View
-      style={[
+    <BarraPestanas
+      activa={activa}
+      alTocar={(p) => alTocar(p as Pestana)}
+      colorActivo={COLOR.negro}
+      pestanas={[
         {
-          flexDirection: 'row',
-          backgroundColor: '#fff',
-          paddingTop: 8,
-          paddingBottom: 10,
-          borderTopWidth: 1,
-          borderTopColor: '#EFEFEF',
+          clave: 'inicio',
+          texto: nombre('inicio'),
+          icono: 'home-outline',
+          iconoActivo: 'home',
+          insignia: aviso,
         },
+        {
+          clave: 'pedidos',
+          texto: nombre('pedidos'),
+          icono: 'receipt-outline',
+          iconoActivo: 'receipt',
+        },
+        {
+          clave: 'menu',
+          texto: nombre('menu'),
+          icono: 'restaurant-outline',
+          iconoActivo: 'restaurant',
+        },
+        {
+          clave: 'estadisticas',
+          texto: nombre('estadisticas'),
+          icono: 'stats-chart-outline',
+          iconoActivo: 'stats-chart',
+        },
+        { clave: 'mas', texto: nombre('mas'), icono: 'menu-outline', iconoActivo: 'menu' },
       ]}
-      accessibilityRole="tablist"
-    >
-      {(['inicio', 'pedidos', 'menu', 'estadisticas', 'mas'] as const).map((p) => {
-        const on = p === activa;
-        return (
-          <Pressable
-            key={p}
-            onPress={() => alTocar(p)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
-            accessibilityLabel={nombres.get(p)}
-            style={{ flex: 1, alignItems: 'center', gap: 3 }}
-          >
-            <View>
-              <Image
-                source={ICONO_PESTANA.get(p) ?? IMG.logo}
-                style={{ width: 24, height: 24, tintColor: on ? C.primario : '#6B6B6B' }}
-                resizeMode="contain"
-                accessibilityIgnoresInvertColors
-              />
-              {p === 'inicio' && aviso > 0 ? (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -10,
-                    minWidth: 18,
-                    height: 18,
-                    borderRadius: 9,
-                    backgroundColor: C.primario,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingHorizontal: 4,
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{aviso}</Text>
-                </View>
-              ) : null}
-            </View>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: on ? '800' : '500',
-                color: on ? C.primario : '#6B6B6B',
-              }}
-            >
-              {nombres.get(p)}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    />
   );
 }

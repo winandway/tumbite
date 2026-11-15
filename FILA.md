@@ -10,6 +10,10 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Rediseño visual de las tres apps (15 nov 2026) — todos los países
+
+- [ ] [para: desarrollador] Crear la pieza única de tokens de diseño (espacio, radios, alturas de botón, letra, sombras) y aplicarla a cliente, Driver y Restaurants según `docs/investigaciones-rea/2026-11-15-diseno-apps-moviles.md` (sección 7). Motivo: hoy cada pantalla decide sola; ojo al contraste de blanco sobre #F20D20 (4,33:1) y blanco sobre #4AA5DC (2,72:1).
+
 ## Prueba con teléfonos (14 nov 2026, orden de Richard, probando en un Xiaomi con Android 14) — todos los países
 
 - [x] HECHO 14 nov (C-SOBRE-LOS-BOTONES) El menú de abajo quedaba tapado por los botones del teléfono en Android y no recibía el toque. Pieza única `SobreLosBotones` en las tres apps. Se ve en la próxima compilación. Todos los países.

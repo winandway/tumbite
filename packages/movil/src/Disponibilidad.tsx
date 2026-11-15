@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from './diseno';
+import { View } from 'react-native';
 import {
   type Disponibilidad,
   ErrorApi,
@@ -67,7 +68,7 @@ const T = {
   },
 };
 
-const suave = { color: '#5E5E5E', fontSize: 14 } as const;
+const suave = { color: '#666B73', fontSize: 14 } as const;
 
 /** Lee una vez dónde funciona Divoox. Si falla, no estorba: la pantalla sigue sin la lista. */
 export function useDisponibilidad(): Disponibilidad | null {

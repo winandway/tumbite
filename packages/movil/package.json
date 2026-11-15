@@ -20,7 +20,11 @@
     "react": "19.2.3",
     "react-native": "*",
     "react-native-safe-area-context": "*",
-    "react-native-webview": "*"
+    "react-native-webview": "*",
+    "expo-font": "*",
+    "@expo/vector-icons": "*",
+    "@expo-google-fonts/poppins": "*",
+    "@expo-google-fonts/montserrat": "*"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.5"

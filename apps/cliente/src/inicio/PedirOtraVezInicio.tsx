@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { C, useSesion } from '@tumbite/movil';
+import { C, useSesion, Text } from '@tumbite/movil';
 import { usePedirOtraVez } from '../pedirOtraVez';
 
 /**
@@ -59,7 +59,7 @@ export function PedirOtraVezInicio({ idioma }: { idioma: Idioma }) {
       >
         <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>{t.titulo}</Text>
         <Pressable onPress={() => router.push('/orders')} accessibilityRole="button">
-          <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.verTodos} ›</Text>
+          <Text style={{ color: '#666B73', fontWeight: '600' }}>{t.verTodos} ›</Text>
         </Pressable>
       </View>
       {error ? <Text style={{ color: C.primario, marginHorizontal: 16 }}>{error}</Text> : null}
@@ -96,7 +96,7 @@ export function PedirOtraVezInicio({ idioma }: { idioma: Idioma }) {
               <Text style={{ fontWeight: '700', color: C.secundario }} numberOfLines={1}>
                 {p.restauranteNombre}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }} numberOfLines={2}>
+              <Text style={{ color: '#666B73', fontSize: 13, marginTop: 4 }} numberOfLines={2}>
                 {resumen}
               </Text>
               <Text style={{ fontWeight: '700', color: C.secundario, marginTop: 8 }}>

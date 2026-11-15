@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { type Idioma, formatearMonto } from '@tumbite/compartido';
-import { useSesion } from '@tumbite/movil';
+import { useSesion, Text } from '@tumbite/movil';
 import { textosTiendas } from './textos';
 import type { ProductoTienda } from './tipos';
 
@@ -75,7 +75,7 @@ export function ElegirReemplazo({
             autoCapitalize="none"
             style={{
               borderWidth: 1,
-              borderColor: '#D6D6D6',
+              borderColor: '#D6D8DC',
               borderRadius: 10,
               paddingHorizontal: 10,
               paddingVertical: 8,
@@ -101,12 +101,12 @@ export function ElegirReemplazo({
               }}
             >
               <Text style={{ fontSize: 14, color: '#101010', flex: 1 }}>{nombre(p)}</Text>
-              <Text style={{ fontSize: 13, color: '#5E5E5E' }}>
+              <Text style={{ fontSize: 13, color: '#666B73' }}>
                 {formatearMonto(p.precioEstimado ?? p.precio, 'USD', idioma)}
               </Text>
             </Pressable>
           ))}
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tt.reemplazoTecho}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{tt.reemplazoTecho}</Text>
         </>
       )}
     </View>

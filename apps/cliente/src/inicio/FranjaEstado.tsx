@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { Text } from '@tumbite/movil';
+import { View } from 'react-native';
 
 /**
  * Franja discreta de estado (regla de Richard: nunca una ventana ni un pop-up). Con «enProceso»

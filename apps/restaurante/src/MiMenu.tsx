@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Platform, Pressable, Switch, Text, View } from 'react-native';
+import { Alert, Image, Platform, Pressable, Switch, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import {
@@ -29,6 +29,7 @@ import {
   useSesion,
   subirFotoLivianaApp,
   fotoConCamara,
+  Text,
 } from '@tumbite/movil';
 import { IMG } from './piezas/recursos';
 import { EditorOpciones } from './EditorOpciones';
@@ -170,12 +171,12 @@ export function MiMenu({
               {foto ? (
                 <Image
                   source={{ uri: foto }}
-                  style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+                  style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#EEEFF1' }}
                   accessibilityIgnoresInvertColors
                 />
               ) : (
                 <View
-                  style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#F2F3F5' }}
+                  style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#F6F6F6' }}
                 />
               )}
               <View style={{ flex: 1 }}>
@@ -211,7 +212,7 @@ export function MiMenu({
                   backgroundColor: '#fff',
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: '#E5E5E5',
+                  borderColor: '#E6E7EA',
                   paddingVertical: 4,
                   zIndex: 10,
                 }}
@@ -461,7 +462,7 @@ function FormPlato({
         {foto ? (
           <Image
             source={{ uri: foto }}
-            style={{ width: 130, height: 100, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+            style={{ width: 130, height: 100, borderRadius: 14, backgroundColor: '#EEEFF1' }}
             accessibilityIgnoresInvertColors
           />
         ) : null}
@@ -484,10 +485,10 @@ function FormPlato({
         >
           <Image
             source={IMG.iconoCamara}
-            style={{ width: 28, height: 28, tintColor: '#5E5E5E' }}
+            style={{ width: 28, height: 28, tintColor: '#666B73' }}
             accessibilityIgnoresInvertColors
           />
-          <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>
+          <Text style={{ color: '#666B73', fontWeight: '700' }}>
             {subiendo ? t.subiendo : foto ? t.cambiarFoto : t.anadirFoto}
           </Text>
         </Pressable>
@@ -557,7 +558,7 @@ function FormPlato({
           value={v.disponible !== 'no'}
           onValueChange={(x) => b.cambiar('disponible', x ? 'si' : 'no')}
           accessibilityLabel={t.disponible}
-          trackColor={{ true: C.exito, false: '#D6D6D6' }}
+          trackColor={{ true: C.exito, false: '#D6D8DC' }}
         />
       </View>
       <Text style={{ fontWeight: '800', color: C.secundario, marginTop: 4 }}>{t.marcasDieta}</Text>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Share, Text, View } from 'react-native';
+import { Share, View } from 'react-native';
 import {
   type Api,
   type Idioma,
@@ -8,7 +8,7 @@ import {
   enIdioma,
   formatearMonto,
 } from '@tumbite/compartido';
-import { Boton, C, e } from '@tumbite/movil';
+import { Boton, C, e, Text } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -63,15 +63,15 @@ export function ResumenAnual({ api, idioma }: { api: Api; idioma: Idioma }) {
       <Text style={{ fontWeight: '800', fontSize: 17 }}>
         {t.titulo} {d.anio}
       </Text>
-      <Text style={{ color: '#5E5E5E', marginVertical: 6 }}>{t.ayuda}</Text>
-      {d.meses.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text> : null}
+      <Text style={{ color: '#666B73', marginVertical: 6 }}>{t.ayuda}</Text>
+      {d.meses.length === 0 ? <Text style={{ color: '#666B73' }}>{t.sin}</Text> : null}
       {d.meses.map((m) => (
         <View
           key={m.mes}
           style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}
         >
           <Text style={{ fontWeight: '700', textTransform: 'capitalize' }}>{mesNombre(m.mes)}</Text>
-          <Text style={{ color: '#5E5E5E' }}>
+          <Text style={{ color: '#666B73' }}>
             {m.entregas} {m.entregas === 1 ? t.entrega : t.entregas} · {m.millas} {t.millas}
           </Text>
           <Text style={{ fontWeight: '700', color: C.secundario }}>

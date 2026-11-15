@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { type Api, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
-import { C, e } from '@tumbite/movil';
+import { C, e, Text } from '@tumbite/movil';
 
 /**
  * C-CALIFICA-CLIENTE (29 oct 2026), como Uber: el repartidor califica al cliente de sus entregas
@@ -79,13 +79,13 @@ function Una({
             accessibilityLabel={`${n} ★`}
             accessibilityState={{ selected: estrellas >= n }}
           >
-            <Text style={{ fontSize: 28, color: estrellas >= n ? '#F5A623' : '#D6D6D6' }}>★</Text>
+            <Text style={{ fontSize: 28, color: estrellas >= n ? '#F5A623' : '#D6D8DC' }}>★</Text>
           </Pressable>
         ))}
       </View>
       {estrellas > 0 && estrellas < 4 ? (
         <View style={{ gap: 6 }}>
-          <Text style={{ color: '#5E5E5E' }}>{t.motivo}</Text>
+          <Text style={{ color: '#666B73' }}>{t.motivo}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {Object.entries(t.motivos).map(([k, texto]) => (
               <Pressable
@@ -98,11 +98,11 @@ function Una({
                   paddingHorizontal: 10,
                   borderRadius: 12,
                   borderWidth: motivo === k ? 2 : 1,
-                  borderColor: motivo === k ? C.primario : '#DADADA',
+                  borderColor: motivo === k ? C.logistica : '#D6D8DC',
                 }}
               >
                 <Text
-                  style={{ color: motivo === k ? C.primario : C.secundario, fontWeight: '700' }}
+                  style={{ color: motivo === k ? C.logistica : C.secundario, fontWeight: '700' }}
                 >
                   {texto}
                 </Text>
@@ -137,7 +137,7 @@ export function CalificarCliente({ api, idioma }: { api: Api; idioma: Idioma }) 
   return (
     <View style={{ gap: 8 }} testID="calificar-cliente">
       <Text style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.ayuda}</Text>
+      <Text style={{ color: '#666B73', fontSize: 13 }}>{t.ayuda}</Text>
       {lista.map((p) => (
         <Una
           key={p.pedidoId}

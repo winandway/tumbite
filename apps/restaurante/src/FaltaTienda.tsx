@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { type Api, type Idioma, enIdioma, textoLinea } from '@tumbite/compartido';
-import { Boton, C } from '@tumbite/movil';
+import { Boton, C, Text } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -57,7 +57,7 @@ export function FaltaTienda({
   }, [api, busca]);
   const ficha = (activa: boolean) => ({
     borderWidth: 1,
-    borderColor: activa ? C.primario : '#D6D6D6',
+    borderColor: activa ? C.primario : '#D6D8DC',
     backgroundColor: activa ? '#FFF1F2' : '#fff',
     borderRadius: 8,
     paddingHorizontal: 10,
@@ -81,13 +81,13 @@ export function FaltaTienda({
       </View>
       {falta ? (
         <>
-          <Text style={{ fontSize: 13, color: '#5E5E5E' }}>{t.reemplazos}</Text>
+          <Text style={{ fontSize: 13, color: '#666B73' }}>{t.reemplazos}</Text>
           <TextInput
             value={busca}
             onChangeText={setBusca}
             placeholder={t.buscar}
             accessibilityLabel={t.buscar}
-            style={{ borderWidth: 1, borderColor: '#D6D6D6', borderRadius: 8, padding: 8 }}
+            style={{ borderWidth: 1, borderColor: '#D6D8DC', borderRadius: 8, padding: 8 }}
           />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {encontrados.map((x) => {

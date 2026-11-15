@@ -8,7 +8,6 @@ import {
   Pressable,
   ScrollView,
   Switch,
-  Text,
   TextInput,
   View,
   useWindowDimensions,
@@ -52,6 +51,7 @@ import {
   e,
   urlFoto,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { Estadisticas } from './Estadisticas';
 import { MiMenu } from './MiMenu';
@@ -535,7 +535,7 @@ export function Inicio() {
     return f ? (
       <Image
         source={{ uri: f }}
-        style={{ width: lado, height: lado, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+        style={{ width: lado, height: lado, borderRadius: 12, backgroundColor: '#EEEFF1' }}
         accessibilityIgnoresInvertColors
       />
     ) : null;
@@ -585,7 +585,7 @@ export function Inicio() {
               {l.cantidad} × {textoLinea(l, idioma)}
               {/* C-TIENDAS-COMPRA: en una tienda, qué hacer si falta este producto. */}
               {notaSustitucion(l, idioma) ? (
-                <Text style={{ fontSize: 13, color: '#5E5E5E' }}>
+                <Text style={{ fontSize: 13, color: '#666B73' }}>
                   {`\n${notaSustitucion(l, idioma)}`}
                 </Text>
               ) : null}
@@ -628,7 +628,7 @@ export function Inicio() {
         </View>
       </View>
       {p.notas ? (
-        <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
+        <Text style={{ marginTop: 8, color: '#666B73' }}>
           {t.notas}: {p.notas}
         </Text>
       ) : null}
@@ -651,7 +651,7 @@ export function Inicio() {
       ) : null}
       {p.ajuste?.estado === 'pendiente' ? (
         <Text
-          style={{ marginTop: 8, color: '#B26A00', fontWeight: '800' }}
+          style={{ marginTop: 8, color: '#8A5300', fontWeight: '800' }}
           accessibilityRole="alert"
         >
           {t.esperandoCliente.replace('{plato}', nombreAjuste(p))}
@@ -673,14 +673,14 @@ export function Inicio() {
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
-              backgroundColor: '#F7F8FA',
+              backgroundColor: '#F6F6F6',
               borderRadius: 10,
               paddingHorizontal: 12,
               paddingVertical: 9,
             }}
           >
-            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{tr.faltaProducto}</Text>
-            <Text style={{ color: '#5E5E5E' }}>{faltaDe === p.id ? '▾' : '›'}</Text>
+            <Text style={{ color: '#666B73', fontSize: 13 }}>{tr.faltaProducto}</Text>
+            <Text style={{ color: '#666B73' }}>{faltaDe === p.id ? '▾' : '›'}</Text>
           </Pressable>
           {faltaDe === p.id && p.lineas.some((l) => l.sustitucion) ? (
             <FaltaTienda
@@ -703,7 +703,7 @@ export function Inicio() {
                   accessibilityLabel={`${t.faltaPlato} ${textoLinea(l, idioma)}`}
                   style={{
                     borderWidth: 1,
-                    borderColor: '#D6D6D6',
+                    borderColor: '#D6D8DC',
                     borderRadius: 8,
                     paddingHorizontal: 10,
                     paddingVertical: 6,
@@ -723,7 +723,7 @@ export function Inicio() {
       ) : null}
       {fotoSinConfirmar(p) ? (
         <Text
-          style={{ marginTop: 6, color: '#B26A00', fontWeight: '800' }}
+          style={{ marginTop: 6, color: '#8A5300', fontWeight: '800' }}
           accessibilityRole="alert"
         >
           {t.sinConfirmar}
@@ -763,7 +763,7 @@ export function Inicio() {
               backgroundColor: '#fff',
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: '#E5E5E5',
+              borderColor: '#E6E7EA',
               paddingHorizontal: 16,
               paddingVertical: 12,
               zIndex: 10,
@@ -779,7 +779,7 @@ export function Inicio() {
     ) : p.estado === 'listo' && p.cancelacion === 'pendiente' ? (
       <Text
         testID="cancelacion-pendiente"
-        style={{ color: '#5E5E5E', fontSize: 12, maxWidth: 150, textAlign: 'right' }}
+        style={{ color: '#666B73', fontSize: 12, maxWidth: 150, textAlign: 'right' }}
       >
         {t.cancelacionPendiente}
       </Text>
@@ -851,7 +851,7 @@ export function Inicio() {
             alignSelf: 'flex-start',
             marginTop: 6,
             // F13: verde solo si DE VERDAD recibe pedidos (abierto, en horario y con señal).
-            backgroundColor: rest.abierto && rest.abiertoAhora ? C.exito : '#5E5E5E',
+            backgroundColor: rest.abierto && rest.abiertoAhora ? C.exito : '#666B73',
             borderRadius: 8,
             paddingHorizontal: 8,
             paddingVertical: 3,
@@ -897,7 +897,7 @@ export function Inicio() {
           style={{ flex: 1, marginBottom: 0, alignItems: 'center', paddingVertical: 12 }}
         >
           <Text style={{ fontSize: 28, fontWeight: '800', color }}>{n}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 12, textAlign: 'center' }}>{nombre}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12, textAlign: 'center' }}>{nombre}</Text>
         </Tarjeta>
       ))}
     </View>
@@ -918,7 +918,7 @@ export function Inicio() {
       {rest ? (
         <Tarjeta>
           <Text style={{ fontWeight: '800' }}>{t.cocina}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cocinaAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13 }}>{t.cocinaAyuda}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
             {OPCIONES_COCINA_OCUPADA.map((min) => (
               <Pildora
@@ -950,7 +950,7 @@ export function Inicio() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '800' }}>{t.aceptarSolo}</Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.aceptarSoloAyuda}</Text>
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{t.aceptarSoloAyuda}</Text>
             </View>
             <Switch
               testID="aceptar-solo"
@@ -975,7 +975,7 @@ export function Inicio() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '800' }}>{t.imprimirAlAceptar}</Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.imprimirAyuda}</Text>
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{t.imprimirAyuda}</Text>
             </View>
             <Switch
               testID="comanda-al-aceptar"
@@ -1042,7 +1042,7 @@ export function Inicio() {
         (p) => p.prueba && ['pagado', 'aceptado', 'listo'].includes(p.estado),
       ) ? null : (
         <Tarjeta>
-          <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.pruebaAyuda}</Text>
+          <Text style={{ color: '#666B73', marginBottom: 8 }}>{t.pruebaAyuda}</Text>
           <BotonGrande
             texto={t.pruebaBoton}
             tipo="claro"
@@ -1082,7 +1082,7 @@ export function Inicio() {
               {formatearMonto(p.subtotal, p.moneda ?? 'USD', idioma)}
             </Text>
           </View>
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>
             {new Date(p.creadoEn.endsWith('Z') ? p.creadoEn : `${p.creadoEn}Z`).toLocaleTimeString(
               idioma === 'en' ? 'en-US' : 'es-US',
               { hour: 'numeric', minute: '2-digit' },
@@ -1133,16 +1133,16 @@ export function Inicio() {
           <Tarjeta>
             <View style={{ flexDirection: 'row' }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#5E5E5E' }}>{tr.transcurrido}</Text>
+                <Text style={{ color: '#666B73' }}>{tr.transcurrido}</Text>
                 <Text style={{ fontSize: 34, fontWeight: '800', color: C.secundario }}>
                   {reloj(pasado)}{' '}
-                  <Text style={{ fontSize: 13, fontWeight: '500', color: '#5E5E5E' }}>
+                  <Text style={{ fontSize: 13, fontWeight: '500', color: '#666B73' }}>
                     {tr.de} {p.tiempoPrepMin} {t.minutos}
                   </Text>
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ color: '#5E5E5E' }}>{tr.restante}</Text>
+                <Text style={{ color: '#666B73' }}>{tr.restante}</Text>
                 <Text
                   style={{
                     fontSize: 34,
@@ -1154,7 +1154,7 @@ export function Inicio() {
                 </Text>
               </View>
             </View>
-            <View style={{ height: 8, borderRadius: 4, backgroundColor: '#F2F3F5', marginTop: 10 }}>
+            <View style={{ height: 8, borderRadius: 4, backgroundColor: '#F6F6F6', marginTop: 10 }}>
               <View
                 style={{
                   width: `${Math.min(100, Math.round((pasado / total) * 100))}%`,
@@ -1304,7 +1304,7 @@ export function Inicio() {
           </Tarjeta>
         ) : null}
         {p.estado === 'listo' && p.entrega !== 'recoger' && !p.fotoRecogida && !p.prueba ? (
-          <Text style={{ color: '#5E5E5E', textAlign: 'center', marginBottom: 8 }}>
+          <Text style={{ color: '#666B73', textAlign: 'center', marginBottom: 8 }}>
             {t.esperandoFoto}
           </Text>
         ) : null}
@@ -1326,7 +1326,7 @@ export function Inicio() {
           </Text>
         ) : null}
         {t.estados[p.estado] ? (
-          <Text style={{ color: '#5E5E5E', textAlign: 'center', marginVertical: 8 }}>
+          <Text style={{ color: '#666B73', textAlign: 'center', marginVertical: 8 }}>
             {t.estados[p.estado]}
           </Text>
         ) : null}
@@ -1356,9 +1356,9 @@ export function Inicio() {
           <Pildora key={f} texto={nombre} activa={filtro === f} alTocar={() => setFiltro(f)} />
         ))}
       </View>
-      <Text style={{ color: '#5E5E5E', fontSize: 12, marginBottom: 10 }}>{tr.historialAyuda}</Text>
+      <Text style={{ color: '#666B73', fontSize: 12, marginBottom: 10 }}>{tr.historialAyuda}</Text>
       {pedidos.filter(GRUPO.get(filtro) ?? (() => true)).map(filaPedido)}
-      {pedidos.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{tr.sinPedidos}</Text> : null}
+      {pedidos.length === 0 ? <Text style={{ color: '#666B73' }}>{tr.sinPedidos}</Text> : null}
     </View>
   );
 
@@ -1406,7 +1406,7 @@ export function Inicio() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       {cancelando ? (
         <PedirCancelacion
           pedidoId={cancelando}

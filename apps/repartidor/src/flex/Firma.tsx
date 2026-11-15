@@ -1,7 +1,7 @@
 import { useRef } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Boton as BotonBase } from '@tumbite/movil';
+import { Boton as BotonBase, Text } from '@tumbite/movil';
 
 /** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
 const Boton = (p: Parameters<typeof BotonBase>[0]) => <BotonBase oscuro {...p} />;

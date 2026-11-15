@@ -1,14 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  FlatList,
-  Image,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { FlatList, Image, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
@@ -23,7 +14,7 @@ import {
   quitarBusqueda,
   sumarBusqueda,
 } from '@tumbite/compartido';
-import { C, almacenTelefono, urlFoto, useSesion } from '@tumbite/movil';
+import { C, almacenTelefono, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
@@ -162,7 +153,7 @@ export default function Buscar() {
           />
           {q ? (
             <Pressable onPress={() => setQ('')} accessibilityRole="button" accessibilityLabel="×">
-              <Text style={{ fontSize: 18, color: '#8A8A8A' }}>×</Text>
+              <Text style={{ fontSize: 18, color: '#8A8F98' }}>×</Text>
             </Pressable>
           ) : null}
         </View>
@@ -222,7 +213,7 @@ export default function Buscar() {
                   paddingVertical: 12,
                 }}
               >
-                <Text style={{ color: '#8A8A8A', fontSize: 16 }}>↺</Text>
+                <Text style={{ color: '#8A8F98', fontSize: 16 }}>↺</Text>
                 <Text style={{ color: C.secundario, fontSize: 15 }} numberOfLines={1}>
                   {r}
                 </Text>
@@ -234,7 +225,7 @@ export default function Buscar() {
                 hitSlop={8}
                 style={{ paddingHorizontal: 6, paddingVertical: 12 }}
               >
-                <Text style={{ fontSize: 18, color: '#8A8A8A' }}>×</Text>
+                <Text style={{ fontSize: 18, color: '#8A8F98' }}>×</Text>
               </Pressable>
             </View>
           ))}
@@ -255,13 +246,13 @@ export default function Buscar() {
         />
       </View>
       {buscando && activa ? (
-        <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.buscando}</Text>
+        <Text style={{ color: '#666B73', marginBottom: 8 }}>{t.buscando}</Text>
       ) : null}
       {texto.length > 0 && !conTexto && !dieta ? (
-        <Text style={{ color: '#5E5E5E' }}>{t.escribeMas}</Text>
+        <Text style={{ color: '#666B73' }}>{t.escribeMas}</Text>
       ) : null}
       {resultado && !resultado.zona ? (
-        <Text style={{ color: '#5E5E5E' }}>{t.fueraCiudadBusqueda}</Text>
+        <Text style={{ color: '#666B73' }}>{t.fueraCiudadBusqueda}</Text>
       ) : null}
     </View>
   );
@@ -270,7 +261,7 @@ export default function Buscar() {
     resultado.zona &&
     !buscando &&
     !(pestana === 'restaurantes' ? resultado.restaurantes : resultado.platos).length ? (
-      <Text style={{ color: '#5E5E5E', marginTop: 12 }}>
+      <Text style={{ color: '#666B73', marginTop: 12 }}>
         {t.sinResultadosBusqueda.replace(
           '{q}',
           [conTexto ? texto : '', dieta ? nombreEtiquetaDieta(dieta, idioma) : '']
@@ -294,7 +285,7 @@ export default function Buscar() {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       {pestana === 'restaurantes' ? (
         <FlatList
           data={resultado?.restaurantes ?? []}
@@ -325,7 +316,7 @@ export default function Buscar() {
                     ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
                     : fotoDeRelleno(r.categoria, index)
                 }
-                style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+                style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>
@@ -335,7 +326,7 @@ export default function Buscar() {
                 >
                   {r.nombre}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={1}>
+                <Text style={{ color: '#666B73', fontSize: 13 }} numberOfLines={1}>
                   {r.categoria}
                 </Text>
                 <Estado abierto={abierto(r)} texto={abierto(r) ? tc.abierto : tc.cerrado} />
@@ -373,7 +364,7 @@ export default function Buscar() {
                     ? { uri: urlFoto(p.imagen, 'miniatura') ?? undefined }
                     : fotoDeRelleno('', index)
                 }
-                style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+                style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>
@@ -383,7 +374,7 @@ export default function Buscar() {
                 >
                   {p.nombre}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={1}>
+                <Text style={{ color: '#666B73', fontSize: 13 }} numberOfLines={1}>
                   {[
                     p.restauranteNombre,
                     ...(p.etiquetas ?? []).map((m) => nombreEtiquetaDieta(m, idioma)),

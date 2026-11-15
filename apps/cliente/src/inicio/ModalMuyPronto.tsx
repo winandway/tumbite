@@ -1,5 +1,5 @@
-import { Modal, Pressable, Text, View } from 'react-native';
-import { Boton, C } from '@tumbite/movil';
+import { Modal, Pressable, View } from 'react-native';
+import { Boton, C, Text } from '@tumbite/movil';
 import { textosInicio } from './textos';
 import type { Idioma } from '@tumbite/compartido';
 
@@ -36,7 +36,7 @@ export function ModalMuyPronto({
           >
             {t.prontoTitulo}
           </Text>
-          <Text style={{ color: '#5E5E5E', marginTop: 8, textAlign: 'center' }}>
+          <Text style={{ color: '#666B73', marginTop: 8, textAlign: 'center' }}>
             {t.prontoTexto}
           </Text>
           <View style={{ alignSelf: 'stretch', marginTop: 14 }}>

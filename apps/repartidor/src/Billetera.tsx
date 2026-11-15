@@ -1,6 +1,6 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, C, e } from '@tumbite/movil';
+import { Boton, C, e, Text } from '@tumbite/movil';
 
 export type Movimiento = {
   id: string;
@@ -145,24 +145,24 @@ export function BilleteraRepartidor({
               style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}
             >
               <Text>{dinero(r.monto)}</Text>
-              <Text style={{ fontWeight: '700', color: '#B26A00' }}>{t.enProceso}</Text>
+              <Text style={{ fontWeight: '700', color: '#8A5300' }}>{t.enProceso}</Text>
             </View>
           ))}
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }}>{t.enProcesoAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginTop: 4 }}>{t.enProcesoAyuda}</Text>
         </View>
       ) : null}
       {datos.pagosActivos && datos.retirosActivos === false ? (
-        <Text style={{ color: '#5E5E5E', marginBottom: 12 }}>{t.pausa}</Text>
+        <Text style={{ color: '#666B73', marginBottom: 12 }}>{t.pausa}</Text>
       ) : datos.pagosActivos ? (
         datos.saldo >= 100 ? (
           <Boton texto={t.retirar} alTocar={retirar} />
         ) : (
-          <Text style={{ color: '#5E5E5E', marginBottom: 12 }}>{t.minimo}</Text>
+          <Text style={{ color: '#666B73', marginBottom: 12 }}>{t.minimo}</Text>
         )
       ) : (
         <View style={{ marginBottom: 8 }}>
           <Boton texto={t.conectar} alTocar={conectar} secundario />
-          <Text style={{ color: '#5E5E5E', marginTop: -4, marginBottom: 8 }}>
+          <Text style={{ color: '#666B73', marginTop: -4, marginBottom: 8 }}>
             {t.conectarAyuda}
           </Text>
         </View>
@@ -186,7 +186,7 @@ export function BilleteraRepartidor({
             >
               <View style={{ flex: 1 }}>
                 <Text style={{ fontWeight: '700' }}>{t.conceptos[m.concepto] ?? m.concepto}</Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                <Text style={{ color: '#666B73', fontSize: 13 }}>
                   {fecha(m.fecha)}
                   {m.pedidoId ? ` · ${t.pedido} #${m.pedidoId.slice(0, 4).toUpperCase()}` : ''}
                 </Text>

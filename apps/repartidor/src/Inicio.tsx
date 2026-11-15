@@ -9,7 +9,6 @@ import {
   Pressable,
   ScrollView,
   Switch,
-  Text,
   TextInput,
   View,
   useWindowDimensions,
@@ -109,6 +108,7 @@ import {
   useToqueAviso,
   URL_SERVIDOR,
   capturasConCamara,
+  Text,
 } from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
@@ -1225,7 +1225,7 @@ export function Inicio() {
           {Platform.OS !== 'web' ? (
             <Boton texto={t.escanear} alTocar={() => void escanear()} exito />
           ) : null}
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 6 }}>{t.escribirCodigo}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginTop: 6 }}>{t.escribirCodigo}</Text>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <TextInput
               value={codigo}
@@ -1250,9 +1250,9 @@ export function Inicio() {
         </Text>
       ) : null}
       {pideCasco ? (
-        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}>
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}>
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieCasco}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
+          <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 6 }}>
             {t.selfieCascoAyuda}
           </Text>
           <Boton
@@ -1270,9 +1270,9 @@ export function Inicio() {
       ) : null}
       {estado?.terminosPorAceptar ? (
         // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): leer, marcar y aceptar.
-        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]} testID="terminos">
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]} testID="terminos">
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.terminosTitulo}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>{t.terminosAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 6 }}>{t.terminosAyuda}</Text>
           <Text
             accessibilityRole="link"
             style={{ color: C.secundario, textDecorationLine: 'underline', marginBottom: 10 }}
@@ -1294,8 +1294,8 @@ export function Inicio() {
                 height: 22,
                 borderRadius: 4,
                 borderWidth: 2,
-                borderColor: aceptoTerminos ? C.primario : '#8A8A8A',
-                backgroundColor: aceptoTerminos ? C.primario : '#fff',
+                borderColor: aceptoTerminos ? C.logistica : '#8A8F98',
+                backgroundColor: aceptoTerminos ? C.logistica : '#fff',
               }}
             />
             <Text style={{ flex: 1 }}>{t.terminosAcepto}</Text>
@@ -1346,9 +1346,9 @@ export function Inicio() {
         />
       ) : null}
       {estado?.selfieControlPendiente ? (
-        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}>
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}>
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieControl}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
+          <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 6 }}>
             {t.selfieControlAyuda}
           </Text>
           {/* C-PRUEBA-DE-VIDA (como DoorDash): de frente y después mirando a la derecha. */}
@@ -1375,11 +1375,11 @@ export function Inicio() {
         </View>
       ) : null}
       {pendientes.length ? (
-        <View style={[e.tarjeta, { borderColor: '#B26A00' }]}>
-          <Text style={{ color: '#B26A00', fontWeight: '800' }}>
+        <View style={[e.tarjeta, { borderColor: '#8A5300' }]}>
+          <Text style={{ color: '#8A5300', fontWeight: '800' }}>
             {t.pendientes}: {pendientes.length}
           </Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.pendienteConfirmar}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13 }}>{t.pendienteConfirmar}</Text>
         </View>
       ) : null}
       {aviso ? (
@@ -1436,7 +1436,7 @@ export function Inicio() {
   const etiquetasMapa = { yo: td.tuUbicacion, restaurante: t.recoger, casa: t.entregar };
   const lienzo = (pestana: Pestana, cuerpo: ReactNode, sinScroll = false) => (
     <SafeAreaView
-      style={[e.fondo, { backgroundColor: '#F4F6F9' }]}
+      style={[e.fondo, { backgroundColor: '#F6F6F6' }]}
       edges={['top', 'left', 'right']}
     >
       <CabeceraDriver
@@ -1562,7 +1562,7 @@ export function Inicio() {
             testID="saldo-prepago"
           >
             <Text style={{ fontWeight: '800', color: C.secundario }}>{tg.prepago.titulo}</Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tg.prepago.ayuda}</Text>
+            <Text style={{ color: '#666B73', fontSize: 12 }}>{tg.prepago.ayuda}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ color: C.secundario }}>{tg.prepago.disponible}</Text>
               <Text
@@ -1590,7 +1590,7 @@ export function Inicio() {
                 >
                   {tg.prepago.carreras(prepago.carrerasAlcanzan)}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>
                   {tg.prepago.carrerasAyuda(
                     formatearMonto(prepago.comisionTipica, prepago.moneda, idioma),
                   )}
@@ -1607,7 +1607,7 @@ export function Inicio() {
                 >
                   {tg.prepago.pedidos(prepago.pedidosAlcanzan)}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>
                   {tg.prepago.pedidosAyuda(
                     formatearMonto(prepago.comisionTipicaComida, prepago.moneda, idioma),
                   )}
@@ -1650,7 +1650,7 @@ export function Inicio() {
                 paddingHorizontal: 18,
                 paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: periodo === pz ? C.primario : '#fff',
+                backgroundColor: periodo === pz ? C.logistica : '#fff',
               }}
             >
               <Text style={{ fontWeight: '700', color: periodo === pz ? '#fff' : C.secundario }}>
@@ -1660,7 +1660,7 @@ export function Inicio() {
           ))}
         </View>
         <View style={e.tarjeta}>
-          <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>
+          <Text style={{ color: '#666B73', fontWeight: '600' }}>
             {periodo === 'hoy'
               ? td.totalDe.hoy
               : periodo === 'semana'
@@ -1671,7 +1671,7 @@ export function Inicio() {
             {/* Billetera de Stripe: solo pedidos con tarjeta, hoy siempre en USD. */}
             {formatearMonto(total, 'USD', idioma)}
           </Text>
-          <Text style={{ color: '#5E5E5E' }}>
+          <Text style={{ color: '#666B73' }}>
             {porPedido.size} {td.entregas.toLowerCase()}
             {periodo === 'hoy' && segundosConectado
               ? ` · ${Math.floor(segundosConectado / 3600)}h ${Math.floor((segundosConectado % 3600) / 60)}m`
@@ -1767,10 +1767,10 @@ export function Inicio() {
           style={[e.tarjeta, { borderWidth: 1, borderColor: '#2a2a2a' }]}
         >
           <Text style={{ fontWeight: '800', color: C.secundario }}>{t.vistaMiRuta}</Text>
-          <Text style={{ color: '#5E5E5E' }}>{t.miRutaAyuda}</Text>
+          <Text style={{ color: '#666B73' }}>{t.miRutaAyuda}</Text>
         </Pressable>
         {entregas.length === 0 ? (
-          <Text style={{ color: '#5E5E5E' }}>{td.sinPedidos}</Text>
+          <Text style={{ color: '#666B73' }}>{td.sinPedidos}</Text>
         ) : (
           entregas.map((m) => (
             <View
@@ -1781,7 +1781,7 @@ export function Inicio() {
                 <Text style={{ fontWeight: '800', color: C.secundario }}>
                   #{(m.pedidoId ?? m.id).slice(0, 4).toUpperCase()}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>
                   {new Date(`${m.fecha.replace(' ', 'T')}Z`).toLocaleString(
                     idioma === 'en' ? 'en-US' : 'es-US',
                     { dateStyle: 'medium', timeStyle: 'short' },
@@ -1817,14 +1817,14 @@ export function Inicio() {
           justifyContent: 'space-between',
           paddingVertical: 14,
           borderBottomWidth: 1,
-          borderBottomColor: '#EEF0F3',
+          borderBottomColor: '#E6E7EA',
         }}
       >
         <View>
           <Text style={{ fontWeight: '700', color: C.secundario }}>{nombre}</Text>
-          {detalle ? <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{detalle}</Text> : null}
+          {detalle ? <Text style={{ color: '#666B73', fontSize: 12 }}>{detalle}</Text> : null}
         </View>
-        <Text style={{ color: '#8A8A8A', fontSize: 18 }}>{abierto ? '˅' : '›'}</Text>
+        <Text style={{ color: '#8A8F98', fontSize: 18 }}>{abierto ? '˅' : '›'}</Text>
       </Pressable>
     );
     return lienzo(
@@ -1837,7 +1837,7 @@ export function Inicio() {
               width: 92,
               height: 92,
               borderRadius: 46,
-              backgroundColor: C.primario,
+              backgroundColor: C.logistica,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -1848,10 +1848,10 @@ export function Inicio() {
             {usuario?.nombre}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-            <Text style={{ color: '#5E5E5E' }}>{td.repartidor}</Text>
+            <Text style={{ color: '#666B73' }}>{td.repartidor}</Text>
             <View
               style={{
-                backgroundColor: kycAprobado ? '#E6F4EC' : '#F4F5F7',
+                backgroundColor: kycAprobado ? '#E6F4EC' : '#F6F6F6',
                 borderRadius: 999,
                 paddingHorizontal: 10,
                 paddingVertical: 2,
@@ -1861,7 +1861,7 @@ export function Inicio() {
                 style={{
                   fontSize: 12,
                   fontWeight: '700',
-                  color: kycAprobado ? C.exito : '#5E5E5E',
+                  color: kycAprobado ? C.exito : '#666B73',
                 }}
               >
                 {kycAprobado ? td.verificado : td.sinVerificar}
@@ -1990,7 +1990,7 @@ export function Inicio() {
     return lienzo(
       'inicio',
       <View>
-        <View style={{ backgroundColor: C.primario, paddingHorizontal: 16, paddingVertical: 14 }}>
+        <View style={{ backgroundColor: C.logistica, paddingHorizontal: 16, paddingVertical: 14 }}>
           <Text style={{ color: '#fff', fontSize: 30, fontWeight: '800' }}>
             {distanciaTexto || (activo.estado === 'en_camino' ? td.entregaEn : td.recogeEn)}
           </Text>
@@ -2019,12 +2019,12 @@ export function Inicio() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
             <Image
               source={IMG.comida}
-              style={{ width: 54, height: 54, borderRadius: 12, backgroundColor: '#F4F5F7' }}
+              style={{ width: 54, height: 54, borderRadius: 12, backgroundColor: '#F6F6F6' }}
               resizeMode="contain"
               accessibilityIgnoresInvertColors
             />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>
                 {activo.estado === 'en_camino' ? td.entregaEn : td.recogeEn}
               </Text>
               <Text
@@ -2033,7 +2033,7 @@ export function Inicio() {
               >
                 {activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.nombre}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }} numberOfLines={1}>
+              <Text style={{ color: '#666B73', fontSize: 12 }} numberOfLines={1}>
                 {activo.estado === 'en_camino' ? activo.notas || '' : activo.restaurante.direccion}
               </Text>
             </View>
@@ -2183,10 +2183,10 @@ export function Inicio() {
                         exito={!!activo.verificado}
                         secundario={!activo.verificado}
                       />
-                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
+                      <Text style={{ color: '#666B73', fontSize: 13 }}>{t.fotoRecogidaAyuda}</Text>
                     </>
                   ) : (
-                    <Text style={{ marginTop: 8, color: '#5E5E5E' }}>
+                    <Text style={{ marginTop: 8, color: '#666B73' }}>
                       {t.esperando}
                       {activo.minutosParaListo
                         ? ` ${t.listoEn} ${activo.minutosParaListo} min.`
@@ -2198,12 +2198,12 @@ export function Inicio() {
                     style={{
                       marginTop: 14,
                       borderTopWidth: 1,
-                      borderTopColor: '#E6E6E6',
+                      borderTopColor: '#E6E7EA',
                       paddingTop: 8,
                     }}
                   >
                     <Text style={{ fontWeight: '700' }}>{t.noPuedo}</Text>
-                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.motivo}</Text>
+                    <Text style={{ color: '#666B73', fontSize: 13 }}>{t.motivo}</Text>
                     <TextInput
                       value={motivo}
                       onChangeText={setMotivo}
@@ -2229,7 +2229,7 @@ export function Inicio() {
                   <Text style={{ marginTop: 10, fontWeight: '700' }}>{t.entregar}:</Text>
                   <Text>{activo.direccion}</Text>
                   {activo.notas ? (
-                    <Text style={{ color: '#5E5E5E' }}>
+                    <Text style={{ color: '#666B73' }}>
                       {t.notas}: {activo.notas}
                     </Text>
                   ) : null}
@@ -2271,19 +2271,19 @@ export function Inicio() {
                                 : ''}
                             </Text>
                           ) : (
-                            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                            <Text style={{ color: '#666B73', fontSize: 13 }}>
                               {falta ? `${t.teFaltan} ${falta}. ` : ''}
                               {t.alLlegar}
                             </Text>
                           )}
                           {activo.excepcionUbicacion === 'pedida' ? (
-                            <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 8 }}>
+                            <Text style={{ color: '#8A5300', fontWeight: '700', marginTop: 8 }}>
                               {t.esperandoSoporte}
                             </Text>
                           ) : (
                             <View style={{ marginTop: 10 }}>
                               <Text style={{ fontWeight: '700' }}>{t.sinGps}</Text>
-                              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                              <Text style={{ color: '#666B73', fontSize: 13 }}>
                                 {t.sinGpsAyuda}
                               </Text>
                               <TextInput
@@ -2356,7 +2356,7 @@ export function Inicio() {
                               </Text>
                             ) : (
                               <>
-                                <Text style={{ color: '#5E5E5E' }}>
+                                <Text style={{ color: '#666B73' }}>
                                   {activo.metodoPago === 'efectivo'
                                     ? tg.pedido.cobrarEfectivo
                                     : tg.pedido.cobrarTransfer}{' '}
@@ -2371,12 +2371,12 @@ export function Inicio() {
                                 {activo.referenciaCobro ? (
                                   <Text
                                     testID="cobro-directo-bs"
-                                    style={{ color: '#5E5E5E', fontWeight: '700' }}
+                                    style={{ color: '#666B73', fontWeight: '700' }}
                                   >
                                     {textoReferencia(activo.referenciaCobro, idioma)}
                                   </Text>
                                 ) : null}
-                                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                                <Text style={{ color: '#666B73', fontSize: 12 }}>
                                   {tg.pedido.propinaAparte}
                                 </Text>
                                 {/* C-PAGO-MOVIL-UNA-CORRECCION: con pago móvil solo va su
@@ -2456,11 +2456,11 @@ export function Inicio() {
                               exito={!enMano}
                               secundario={enMano}
                             />
-                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.sinCaras}</Text>
                           </>
                         ) : (
                           <Text
-                            style={{ color: '#5E5E5E', fontSize: 12 }}
+                            style={{ color: '#666B73', fontSize: 12 }}
                             testID="con-pin-sin-foto"
                           >
                             {t.conPinSinFoto}
@@ -2496,7 +2496,7 @@ export function Inicio() {
                             />
                             <View style={{ flex: 1 }}>
                               <Text style={{ fontWeight: '700' }}>{t.mayorEdad}</Text>
-                              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                              <Text style={{ color: '#666B73', fontSize: 12 }}>
                                 {t.mayorEdadAyuda}
                               </Text>
                             </View>
@@ -2516,8 +2516,8 @@ export function Inicio() {
                                     paddingVertical: 8,
                                     borderRadius: 999,
                                     borderWidth: 1,
-                                    borderColor: documento === d ? C.primario : '#DADADA',
-                                    backgroundColor: documento === d ? C.primario : '#fff',
+                                    borderColor: documento === d ? C.logistica : '#D6D8DC',
+                                    backgroundColor: documento === d ? C.logistica : '#fff',
                                   }}
                                 >
                                   <Text
@@ -2546,7 +2546,7 @@ export function Inicio() {
                               accessibilityLabel={tg.edad.nombre}
                               style={e.input}
                             />
-                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tg.edad.ayuda}</Text>
+                            <Text style={{ color: '#666B73', fontSize: 12 }}>{tg.edad.ayuda}</Text>
                           </View>
                         ) : null}
                         <Boton
@@ -2565,14 +2565,14 @@ export function Inicio() {
                             secundario
                           />
                         ) : faltanSeg > 0 ? (
-                          <Text style={{ color: '#B26A00', fontWeight: '700', marginTop: 6 }}>
+                          <Text style={{ color: '#8A5300', fontWeight: '700', marginTop: 6 }}>
                             {t.esperando5} {Math.floor(faltanSeg / 60)}:
                             {String(faltanSeg % 60).padStart(2, '0')}
                           </Text>
                         ) : activo.metodoPago && activo.metodoPago !== 'tarjeta' ? (
                           // C-COBRO-DIRECTO: se cobra en mano; no hay «lugar seguro».
                           <Text
-                            style={{ color: '#5E5E5E', marginTop: 6 }}
+                            style={{ color: '#666B73', marginTop: 6 }}
                             testID="sin-lugar-seguro"
                           >
                             {tg.pedido.sinLugarSeguro}
@@ -2581,7 +2581,7 @@ export function Inicio() {
                           // C-CLIENTE-AUSENTE: con PIN (o con edad) no hay «lugar seguro»: pasada la
                           // espera se cierra como «cliente no apareció» con foto del lugar.
                           <View style={{ gap: 6, marginTop: 6 }} testID="cliente-ausente">
-                            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                            <Text style={{ color: '#666B73', fontSize: 12 }}>
                               {t.clienteAusenteAyuda}
                             </Text>
                             <Boton
@@ -2645,7 +2645,7 @@ export function Inicio() {
               return (
                 <View key={g.id} style={[e.tarjeta, { borderWidth: 1, borderColor: '#2A2A2A' }]}>
                   <Text style={{ fontWeight: '800', color: C.primario }}>{t.agrupado}</Text>
-                  <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.agrupadoAyuda}</Text>
+                  <Text style={{ color: '#666B73', fontSize: 12 }}>{t.agrupadoAyuda}</Text>
                   <Text style={{ fontWeight: '800', fontSize: 16, marginTop: 4 }}>
                     {t.pedido} #{g.id.slice(0, 4).toUpperCase()} ·{' '}
                     {formatearMonto(g.pagoRepartidor, g.moneda, idioma)}
@@ -2668,7 +2668,7 @@ export function Inicio() {
                           cargando={subiendo}
                           exito
                         />
-                        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.sinCaras}</Text>
+                        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.sinCaras}</Text>
                       </>
                     ) : (
                       <>
@@ -2677,14 +2677,14 @@ export function Inicio() {
                           alTocar={() => abrirMapa(g.lat, g.lng, g.direccion)}
                           exito
                         />
-                        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                        <Text style={{ color: '#666B73', fontSize: 13 }}>
                           {aqui && casaG ? `${t.teFaltan} ${metrosEntre(aqui, casaG)} m. ` : ''}
                           {t.alLlegar}
                         </Text>
                       </>
                     )
                   ) : (
-                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.esperando}</Text>
+                    <Text style={{ color: '#666B73', fontSize: 13 }}>{t.esperando}</Text>
                   )}
                   <ChatPedido pedidoId={g.id} elegirFoto={fotoParaChat} />
                 </View>
@@ -2859,7 +2859,7 @@ export function Inicio() {
         {estado?.conectado && estado.ocupadoEn ? (
           // C-OCUPADO-VISIBLE (BRF-1): ocupado en una ruta o un viaje, nunca «Buscando pedidos».
           <View style={e.tarjeta} testID="ocupado-en-otra">
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {estado.ocupadoEn === 'ruta_flex' ? t.ocupadoRuta : t.ocupadoViaje}
             </Text>
           </View>
@@ -2870,7 +2870,7 @@ export function Inicio() {
               {estado.pausado ? tg.pausa.enPausa : t.buscando}
             </Text>
             {!estado.pausado ? (
-              <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.buscandoAyuda}</Text>
+              <Text style={{ color: '#666B73', marginTop: 4 }}>{t.buscandoAyuda}</Text>
             ) : null}
           </View>
         ) : estado?.vuelveTrasDias ? (
@@ -2879,7 +2879,7 @@ export function Inicio() {
             <Text style={{ fontWeight: '800', fontSize: 16 }}>
               {t.bienvenida(usuario?.nombre.split(' ')[0] ?? '')}
             </Text>
-            <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
+            <Text style={{ color: '#666B73', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
           </View>
         ) : null}
         {ofertasViaje[0] && !ofertas[0] ? (
@@ -2915,7 +2915,7 @@ export function Inicio() {
               flexDirection: 'row',
               alignItems: 'center',
               gap: 12,
-              backgroundColor: estado.conectado ? C.exito : '#6B6B6B',
+              backgroundColor: estado.conectado ? C.exito : '#666B73',
               borderRadius: 999,
               padding: 8,
               paddingRight: 20,
@@ -2950,13 +2950,13 @@ export function Inicio() {
               {estado.reputacion.puntaje.toFixed(1)} {t.deCien}
             </Text>
             {estado.reputacion.siguiente ? (
-              <Text style={{ color: '#5E5E5E' }}>
+              <Text style={{ color: '#666B73' }}>
                 {t.faltan} {estado.reputacion.siguiente.faltan} {t.puntos} {t.para}{' '}
                 {new Map(Object.entries(t.niveles)).get(estado.reputacion.siguiente.nivel)}
               </Text>
             ) : null}
             {estado.reputacion.provisional ? (
-              <Text style={{ color: '#5E5E5E' }}>{t.provisional}</Text>
+              <Text style={{ color: '#666B73' }}>{t.provisional}</Text>
             ) : null}
             <View
               accessibilityRole="progressbar"
@@ -2964,7 +2964,7 @@ export function Inicio() {
               style={{
                 height: 8,
                 borderRadius: 4,
-                backgroundColor: '#ECECEC',
+                backgroundColor: '#E6E7EA',
                 marginTop: 8,
                 overflow: 'hidden',
               }}
@@ -2988,7 +2988,7 @@ export function Inicio() {
               {estado.puntos} {t.puntos}
             </Text>
             {estado.nivel.siguiente ? (
-              <Text style={{ color: '#5E5E5E' }}>
+              <Text style={{ color: '#666B73' }}>
                 {t.faltan} {estado.nivel.siguiente.faltan} {t.puntos} {t.para}{' '}
                 {enIdioma({ es: estado.nivel.siguiente.es, en: estado.nivel.siguiente.en }, idioma)}
               </Text>
@@ -3000,7 +3000,7 @@ export function Inicio() {
               style={{
                 height: 8,
                 borderRadius: 4,
-                backgroundColor: '#ECECEC',
+                backgroundColor: '#E6E7EA',
                 marginTop: 8,
                 overflow: 'hidden',
               }}

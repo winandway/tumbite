@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
 import {
   AvisoBorrador,
@@ -10,6 +10,7 @@ import {
   almacenTelefono,
   e,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 
 const T = {
@@ -180,7 +181,7 @@ export function MisDatos() {
               paddingVertical: 8,
               borderRadius: 999,
               borderWidth: 1,
-              borderColor: v.vehiculoTipo === valor ? C.secundario : '#D6D6D6',
+              borderColor: v.vehiculoTipo === valor ? C.secundario : '#D6D8DC',
               backgroundColor: v.vehiculoTipo === valor ? C.secundario : '#FFFFFF',
             }}
           >
@@ -220,7 +221,7 @@ export function MisDatos() {
       ) : null}
       {aviso ? <Text style={{ color: '#0D7A3A', marginBottom: 8 }}>{aviso}</Text> : null}
       <Boton texto={t.guardar} alTocar={() => void guardar()} cargando={guardando} />
-      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.privado}</Text>
+      <Text style={{ color: '#666B73', fontSize: 13 }}>{t.privado}</Text>
     </View>
   );
 }

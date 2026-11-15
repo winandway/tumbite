@@ -1,7 +1,12 @@
 import { type ErrorBoundaryProps, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { SesionProvider, SobreLosBotones, PantallaConFallo } from '@tumbite/movil';
+import {
+  SesionProvider,
+  SobreLosBotones,
+  PantallaConFallo,
+  useFuentesDivoox,
+} from '@tumbite/movil';
 import { AbrirAvisos } from '../AbrirAvisos';
 import { CarritoProvider } from '../carrito';
 
@@ -28,11 +33,14 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 export default function Raiz() {
+  // C-APPS-DISENO: Poppins, Montserrat y los íconos se cargan antes de pintar (la portada espera).
+  const fuentes = useFuentesDivoox();
+  if (!fuentes) return null;
   return (
     <SafeAreaProvider>
       <SesionProvider roles={['cliente']}>
         <CarritoProvider>
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
           {/* C-MIRAR-SIN-CUENTA: sin cuenta se mira; cada pantalla de la cuenta la pide (ConCuenta). */}
           <AbrirAvisos />
           {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}

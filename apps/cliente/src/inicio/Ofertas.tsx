@@ -1,6 +1,6 @@
-import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { type Idioma, formatearMonto } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
 

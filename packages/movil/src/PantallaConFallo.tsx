@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { URL_SERVIDOR } from './sesion';
 import { C } from './ui';
@@ -72,7 +73,7 @@ export function PantallaConFallo({
         <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario, marginBottom: 8 }}>
           {t.titulo}
         </Text>
-        <Text style={{ fontSize: 16, color: '#5E5E5E', marginBottom: 24 }}>{t.texto}</Text>
+        <Text style={{ fontSize: 16, color: '#666B73', marginBottom: 24 }}>{t.texto}</Text>
         <Pressable
           onPress={volver}
           accessibilityRole="button"

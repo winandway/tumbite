@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { type Api, ErrorApi, type Idioma } from '@tumbite/compartido';
-import { Boton, C, Campo, e } from '@tumbite/movil';
+import { Boton, C, Campo, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 /**
@@ -88,7 +88,7 @@ export function AyudaPedido({
         style={{ alignItems: 'center', paddingVertical: 8 }}
       >
         <Text style={{ color: C.primario, fontWeight: '800' }}>{tp.emergencia} · 911</Text>
-        <Text style={{ color: '#8A8A8A', fontSize: 12 }}>{tp.emergenciaAyuda}</Text>
+        <Text style={{ color: '#8A8F98', fontSize: 12 }}>{tp.emergenciaAyuda}</Text>
       </Pressable>
     </View>
   );

@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
-import { C, CampoDireccion, alSalirTelefono, almacenTelefono, e, useSesion } from '@tumbite/movil';
+import {
+  C,
+  CampoDireccion,
+  alSalirTelefono,
+  almacenTelefono,
+  e,
+  useSesion,
+  Text,
+} from '@tumbite/movil';
 
 /**
  * C-MODO-DESTINO (BRE-6, como «Driver Destinations» de Uber): el repartidor pone su destino (su
@@ -106,7 +114,7 @@ export function ModoDestino({ cerca }: { cerca?: { lat: number; lng: number } | 
       accessibilityRole="button"
       onPress={alTocar}
       style={{
-        backgroundColor: claro ? '#F2F3F5' : C.secundario,
+        backgroundColor: claro ? '#F6F6F6' : C.secundario,
         borderRadius: 12,
         paddingVertical: 12,
         alignItems: 'center',
@@ -127,7 +135,7 @@ export function ModoDestino({ cerca }: { cerca?: { lat: number; lng: number } | 
         </>
       ) : (
         <>
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.ayuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.ayuda}</Text>
           {estado.motivo === 'llegada' ? (
             <Text style={{ color: C.exito, fontWeight: '700' }}>{t.llegaste}</Text>
           ) : null}
@@ -148,7 +156,7 @@ export function ModoDestino({ cerca }: { cerca?: { lat: number; lng: number } | 
           ) : null}
         </>
       )}
-      <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.quedan(estado.usosRestantes)}</Text>
+      <Text style={{ color: '#666B73', fontSize: 12 }}>{t.quedan(estado.usosRestantes)}</Text>
       {error ? <Text style={e.error}>{error}</Text> : null}
     </View>
   );

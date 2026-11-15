@@ -4,7 +4,6 @@ import {
   type NativeSyntheticEvent,
   Pressable,
   ScrollView,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,7 +14,7 @@ import {
   enIdioma,
   recomendarRestaurantes,
 } from '@tumbite/compartido';
-import { AvisoCorreo, C, useSesion } from '@tumbite/movil';
+import { AvisoCorreo, C, useSesion, Text } from '@tumbite/movil';
 import { EntrarInvitado } from './inicio/EntrarInvitado';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';

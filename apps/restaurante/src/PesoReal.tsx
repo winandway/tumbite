@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { TextInput, View } from 'react-native';
 import { type Idioma, enIdioma, textoPesoReal } from '@tumbite/compartido';
-import { Boton } from '@tumbite/movil';
+import { Boton, Text } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -48,7 +48,7 @@ export function PesoReal({
   const unidad = linea.unidadPeso ?? 'kg';
   return (
     <View style={{ gap: 6, marginTop: 4 }}>
-      <Text style={{ fontSize: 13, color: '#5E5E5E' }}>
+      <Text style={{ fontSize: 13, color: '#666B73' }}>
         {linea.pesoReal != null ? textoPesoReal(linea, idioma === 'en' ? 'en' : 'es') : t.ayuda}
       </Text>
       {editable ? (
@@ -61,7 +61,7 @@ export function PesoReal({
             accessibilityLabel={`${t.peso} (${unidad})`}
             style={{
               borderWidth: 1,
-              borderColor: '#D6D6D6',
+              borderColor: '#D6D8DC',
               borderRadius: 8,
               padding: 8,
               minWidth: 120,

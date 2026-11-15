@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MARCA } from '@tumbite/compartido';
-import { C, useSesion } from '@tumbite/movil';
+import { C, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Pildora, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
@@ -113,7 +113,7 @@ function Avisos() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={pestana === 'regalos' ? t.tusRegalos : t.avisosTitulo}
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
@@ -143,7 +143,7 @@ function Avisos() {
           />
         </View>
         {datos && !lista.length ? (
-          <Text style={{ color: '#5E5E5E', fontSize: 15 }} testID="avisos-vacio">
+          <Text style={{ color: '#666B73', fontSize: 15 }} testID="avisos-vacio">
             {pestana === 'regalos' ? t.sinRegalos : t.sinAvisos}
           </Text>
         ) : null}

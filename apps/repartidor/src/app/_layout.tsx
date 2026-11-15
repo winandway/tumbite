@@ -8,6 +8,8 @@ import {
   SobreLosBotones,
   useSesion,
   PantallaConFallo,
+  useFuentesDivoox,
+  TemaApp,
 } from '@tumbite/movil';
 
 /**
@@ -87,16 +89,21 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 export default function Raiz() {
+  // C-APPS-DISENO: Poppins, Montserrat y los íconos se cargan antes de pintar (la portada espera).
+  const fuentes = useFuentesDivoox();
+  if (!fuentes) return null;
   return (
     <SafeAreaProvider>
-      <SesionProvider roles={['repartidor']} explicarPermisos>
-        <StatusBar style="light" />
-        {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}
-        <SobreLosBotones>
-          <Stack screenOptions={{ headerShown: false }} />
-          <Permisos />
-        </SobreLosBotones>
-      </SesionProvider>
+      <TemaApp acento="logistica">
+        <SesionProvider roles={['repartidor']} explicarPermisos>
+          <StatusBar style="dark" />
+          {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}
+          <SobreLosBotones>
+            <Stack screenOptions={{ headerShown: false }} />
+            <Permisos />
+          </SobreLosBotones>
+        </SesionProvider>
+      </TemaApp>
     </SafeAreaProvider>
   );
 }

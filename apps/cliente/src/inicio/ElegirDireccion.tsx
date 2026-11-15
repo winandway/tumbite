@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Idioma } from '@tumbite/compartido';
-import { C, CampoDireccion, useSesion } from '@tumbite/movil';
+import { C, CampoDireccion, useSesion, Text } from '@tumbite/movil';
 import type { DireccionEntrega } from '../comida/useRestaurantes';
 import { textosInicio } from './textos';
 

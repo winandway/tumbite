@@ -1,6 +1,6 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { type Idioma, formatearMonto } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 import { textosDriver } from './textos';
 
 /** Tarjeta «Hoy»: ganancias y entregas reales de hoy, y el tiempo conectado en esta sesión. */
@@ -24,7 +24,7 @@ export function ResumenDia({
   const celda = (valor: string, nombre: string) => (
     <View style={{ flex: 1, alignItems: 'center' }}>
       <Text style={{ fontSize: 20, fontWeight: '800', color: C.secundario }}>{valor}</Text>
-      <Text style={{ fontSize: 12, color: '#5E5E5E' }}>{nombre}</Text>
+      <Text style={{ fontSize: 12, color: '#666B73' }}>{nombre}</Text>
     </View>
   );
   return (
@@ -53,9 +53,9 @@ export function ResumenDia({
             : formatearMonto(ganancias + (enMano?.total ?? 0), 'USD', idioma),
           t.ganancias,
         )}
-        <View style={{ width: 1, backgroundColor: '#EEF0F3' }} />
+        <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
         {celda(String(entregas), t.entregas)}
-        <View style={{ width: 1, backgroundColor: '#EEF0F3' }} />
+        <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
         {celda(`${h}h ${m}m`, t.conectadoTiempo)}
       </View>
     </View>

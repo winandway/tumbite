@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Text, View, useWindowDimensions } from 'react-native';
+import { View, useWindowDimensions } from 'react-native';
 import {
   ErrorApi,
   formatearMonto,
@@ -7,7 +7,7 @@ import {
   nombrePlato,
   ventanaHoras,
 } from '@tumbite/compartido';
-import { C, e, useSesion } from '@tumbite/movil';
+import { C, e, useSesion, Text } from '@tumbite/movil';
 import { Pildora, Tarjeta } from './piezas/ui';
 import { textosRest } from './piezas/textos';
 
@@ -89,7 +89,7 @@ function Barras({ valores, etiquetas }: { valores: number[]; etiquetas: string[]
               backgroundColor: v ? C.secundario : '#E6E7EA',
             }}
           />
-          <Text style={{ fontSize: 10, color: '#5E5E5E', marginTop: 3 }}>
+          <Text style={{ fontSize: 10, color: '#666B73', marginTop: 3 }}>
             {etiquetas.at(i) ?? String(i)}
           </Text>
         </View>
@@ -170,7 +170,7 @@ export function Estadisticas() {
         {cifras.map(([nombre, valor]) => (
           <View key={nombre} style={{ width: `${100 / columnas - 3}%` }}>
             <Tarjeta style={{ marginBottom: 0 }}>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{nombre}</Text>
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{nombre}</Text>
               <Text style={{ fontSize: 26, fontWeight: '800', color: C.secundario, marginTop: 4 }}>
                 {valor}
               </Text>
@@ -199,7 +199,7 @@ export function Estadisticas() {
                       style={{
                         height: 8,
                         borderRadius: 4,
-                        backgroundColor: '#F2F3F5',
+                        backgroundColor: '#F6F6F6',
                         marginTop: 4,
                       }}
                     >
@@ -274,7 +274,7 @@ export function Estadisticas() {
                   ] as const
                 ).map(([nombre, n]) => (
                   <View key={nombre} style={{ flex: 1 }}>
-                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{nombre}</Text>
+                    <Text style={{ color: '#666B73', fontSize: 13 }}>{nombre}</Text>
                     <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>
                       {n}
                     </Text>
@@ -286,23 +286,23 @@ export function Estadisticas() {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {tablero.calificacion != null ? (
               <Tarjeta style={{ flex: 1 }}>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.calificacion}</Text>
+                <Text style={{ color: '#666B73', fontSize: 13 }}>{t.calificacion}</Text>
                 <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>
                   {tablero.calificacion} ★
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>
                   {tablero.calificaciones} {t.opiniones}
                 </Text>
               </Tarjeta>
             ) : null}
             {tablero.minutosCocina != null ? (
               <Tarjeta style={{ flex: 1 }}>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cocinaReal}</Text>
+                <Text style={{ color: '#666B73', fontSize: 13 }}>{t.cocinaReal}</Text>
                 <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>
                   {tablero.minutosCocina} min
                 </Text>
                 {tablero.minutosPrometidos != null ? (
-                  <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                  <Text style={{ color: '#666B73', fontSize: 12 }}>
                     {tablero.minutosPrometidos} min {t.prometido}
                   </Text>
                 ) : null}

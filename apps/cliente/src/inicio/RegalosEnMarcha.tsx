@@ -1,6 +1,6 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { type Idioma, MARCA } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 import type { Aviso } from './useAvisos';
 import { textosInicio } from './textos';
 
@@ -24,7 +24,7 @@ export function RegalosEnMarcha({
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>{t.tusRegalos}</Text>
         <Pressable onPress={alVer} accessibilityRole="button" accessibilityLabel={t.verRegalos}>
-          <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.verRegalos} ›</Text>
+          <Text style={{ color: '#666B73', fontWeight: '600' }}>{t.verRegalos} ›</Text>
         </Pressable>
       </View>
       {lista.map((r) =>

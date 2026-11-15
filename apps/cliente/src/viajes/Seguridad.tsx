@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
 import {
   AvisoBorrador,
@@ -9,6 +9,7 @@ import {
   alSalirTelefono,
   almacenTelefono,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { Tarjeta } from '../comida/piezas';
 import { miUbicacion } from '../ubicacion';
@@ -92,7 +93,7 @@ export function ContactosConfianza() {
   return (
     <Tarjeta>
       <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.ayuda}</Text>
+      <Text style={{ color: '#666B73', marginBottom: 8 }}>{t.ayuda}</Text>
       {contactos.map((k) => (
         <View
           key={k.id}
@@ -162,7 +163,7 @@ export function ContactosConfianza() {
               paddingVertical: 8,
               borderRadius: 999,
               borderWidth: 1,
-              borderColor: modo === m ? C.secundario : '#D6D6D6',
+              borderColor: modo === m ? C.secundario : '#D6D8DC',
               backgroundColor: modo === m ? C.secundario : '#FFFFFF',
             }}
           >
@@ -210,7 +211,7 @@ export function PreguntaTodoBien({
       >
         {t.pregunta}
       </Text>
-      <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.preguntaAyuda}</Text>
+      <Text style={{ color: '#666B73', marginBottom: 8 }}>{t.preguntaAyuda}</Text>
       <View style={{ gap: 8 }}>
         <Boton texto={t.bien} secundario alTocar={() => void responder('bien')} />
         <Boton texto={t.ayudaBoton} alTocar={() => void responder('ayuda')} />

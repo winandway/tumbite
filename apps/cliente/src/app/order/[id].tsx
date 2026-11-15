@@ -8,7 +8,6 @@ import {
   ScrollView,
   Share,
   Switch,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -50,6 +49,7 @@ import {
   urlFoto,
   useSesion,
   fotoConCamara,
+  Text,
 } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { usePedirOtraVez } from '../../pedirOtraVez';
@@ -494,7 +494,7 @@ function Estrellas({
             }
             hitSlop={6}
           >
-            <Text style={{ fontSize: 30, color: n <= valor ? '#F20D20' : '#D6D6D6' }}>★</Text>
+            <Text style={{ fontSize: 30, color: n <= valor ? '#F20D20' : '#D6D8DC' }}>★</Text>
           </Pressable>
         ))}
       </View>
@@ -543,7 +543,7 @@ function Etiquetas({
                 paddingVertical: 8,
                 borderRadius: 999,
                 borderWidth: 1,
-                borderColor: si ? '#101010' : '#D9D9D9',
+                borderColor: si ? '#101010' : '#D6D8DC',
                 backgroundColor: si ? '#101010' : '#FFFFFF',
               }}
             >
@@ -783,7 +783,7 @@ function SeguirPedido() {
   // un pedido recién hecho (o un enlace abierto de afuera) vuelve al inicio, como en DoorDash.
   const volver = () => (!nuevo && router.canGoBack() ? router.back() : irInicio());
   const marco = (cuerpo: React.ReactNode, conEncabezado = true) => (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       {conEncabezado ? (
         <Encabezado
           titulo={t.titulo}
@@ -858,7 +858,7 @@ function SeguirPedido() {
         >
           {tc.pedidoRealizado}
         </Text>
-        <Text style={{ color: '#5E5E5E', fontSize: 15, marginTop: 6, textAlign: 'center' }}>
+        <Text style={{ color: '#666B73', fontSize: 15, marginTop: 6, textAlign: 'center' }}>
           {tc.enviadoA.replace('{restaurante}', p.restauranteNombre ?? '')}
         </Text>
         <Tarjeta style={{ alignSelf: 'stretch', alignItems: 'center', marginTop: 20 }}>
@@ -867,7 +867,7 @@ function SeguirPedido() {
             {t.total}: {formatearMonto(p.total, moneda, idioma)}
           </Text>
           <Text
-            style={{ color: '#5E5E5E', marginTop: 8, textAlign: 'center' }}
+            style={{ color: '#666B73', marginTop: 8, textAlign: 'center' }}
             accessibilityLiveRegion="polite"
           >
             {estadoTexto}
@@ -908,7 +908,7 @@ function SeguirPedido() {
               {tc.pedidoEntregado}
             </Text>
             <Text
-              style={{ color: '#5E5E5E', fontSize: 15, marginTop: 4 }}
+              style={{ color: '#666B73', fontSize: 15, marginTop: 4 }}
               accessibilityLiveRegion="polite"
             >
               {estadoTexto}
@@ -927,7 +927,7 @@ function SeguirPedido() {
                 <Text style={{ fontWeight: '700', fontSize: 19, color: C.secundario }}>
                   {p.restauranteNombre}
                 </Text>
-                <Text style={{ color: '#5E5E5E', marginTop: 2 }}>
+                <Text style={{ color: '#666B73', marginTop: 2 }}>
                   {numero} · {formatearMonto(p.total, moneda, idioma)}
                 </Text>
               </View>
@@ -959,7 +959,7 @@ function SeguirPedido() {
                       style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}
                       testID="peso-real"
                     >
-                      <Text style={{ color: '#5E5E5E', flex: 1, fontSize: 13 }}>
+                      <Text style={{ color: '#666B73', flex: 1, fontSize: 13 }}>
                         {idioma === 'en' ? l.nombreEn || l.nombreEs : l.nombreEs}
                         {'\n'}
                         {textoPesoReal(l, idioma === 'en' ? 'en' : 'es')}
@@ -986,7 +986,7 @@ function SeguirPedido() {
                       key={etiqueta}
                       style={{ flexDirection: 'row', justifyContent: 'space-between' }}
                     >
-                      <Text style={{ color: '#5E5E5E' }}>{etiqueta}</Text>
+                      <Text style={{ color: '#666B73' }}>{etiqueta}</Text>
                       <Text style={{ color: C.secundario }}>
                         {formatearMonto(monto, moneda, idioma)}
                       </Text>
@@ -1003,7 +1003,7 @@ function SeguirPedido() {
                 {p.referencia ? (
                   <Text
                     testID="pedido-total-bs"
-                    style={{ color: '#5E5E5E', fontSize: 13, textAlign: 'right' }}
+                    style={{ color: '#666B73', fontSize: 13, textAlign: 'right' }}
                   >
                     {textoReferencia(p.referencia, idioma)}
                   </Text>
@@ -1028,7 +1028,7 @@ function SeguirPedido() {
                     {t.cobroConfirmado}
                   </Text>
                 ) : p.metodoPago === 'efectivo' ? (
-                  <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
+                  <Text style={{ color: '#666B73', marginTop: 4 }}>
                     {t.enEfectivo.replace(
                       '{monto}',
                       formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
@@ -1036,7 +1036,7 @@ function SeguirPedido() {
                   </Text>
                 ) : p.cuentaCobro ? (
                   <>
-                    <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
+                    <Text style={{ color: '#666B73', marginTop: 4 }}>
                       {t.transfiereA.replace(
                         '{monto}',
                         formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
@@ -1055,7 +1055,7 @@ function SeguirPedido() {
                     </Text>
                   </>
                 ) : (
-                  <Text style={{ color: '#5E5E5E', marginTop: 4 }}>{t.cuentaPendiente}</Text>
+                  <Text style={{ color: '#666B73', marginTop: 4 }}>{t.cuentaPendiente}</Text>
                 )}
                 {p.estado === 'entregado' || p.estado === 'en_camino' ? (
                   <Pressable
@@ -1092,7 +1092,7 @@ function SeguirPedido() {
                           width: '100%',
                           height: 3,
                           // Lo que ya pasó va en verde: es un avance, no una alarma.
-                          backgroundColor: i <= paso ? C.exito : '#E5E5E5',
+                          backgroundColor: i <= paso ? C.exito : '#E6E7EA',
                         }}
                       />
                     ) : null}
@@ -1103,7 +1103,7 @@ function SeguirPedido() {
                         borderRadius: 14,
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: i <= paso ? C.exito : '#E5E5E5',
+                        backgroundColor: i <= paso ? C.exito : '#E6E7EA',
                       }}
                     >
                       <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>
@@ -1115,7 +1115,7 @@ function SeguirPedido() {
                         fontSize: 11,
                         marginTop: 4,
                         textAlign: 'center',
-                        color: i === paso ? C.secundario : '#5E5E5E',
+                        color: i === paso ? C.secundario : '#666B73',
                         fontWeight: i === paso ? '800' : '500',
                       }}
                     >
@@ -1133,7 +1133,7 @@ function SeguirPedido() {
             ) : null}
             {/* BRE-R (4): atrasado, el «a más tardar» ya pasó: no se muestra una hora que contradice. */}
             {p.llegaAMasTardar && activo && !recoge && !p.llegadaRango?.atrasado ? (
-              <Text style={{ color: '#5E5E5E', marginTop: 10 }}>
+              <Text style={{ color: '#666B73', marginTop: 10 }}>
                 {t.aMasTardar}{' '}
                 {new Date(p.llegaAMasTardar).toLocaleTimeString(
                   idioma === 'en' ? 'en-US' : 'es-US',
@@ -1159,7 +1159,7 @@ function SeguirPedido() {
                     idioma === 'en' ? p.ajuste.nombreEn || p.ajuste.nombreEs : p.ajuste.nombreEs,
                   )}
                 </Text>
-                <Text style={{ color: '#5E5E5E', marginVertical: 6 }}>{t.faltaTexto}</Text>
+                <Text style={{ color: '#666B73', marginVertical: 6 }}>{t.faltaTexto}</Text>
                 {p.ajuste.propuestas?.length ? (
                   <>
                     <Text style={{ fontWeight: '700', marginBottom: 4 }}>{t.reemplazos}</Text>
@@ -1180,7 +1180,7 @@ function SeguirPedido() {
                                 width: 48,
                                 height: 48,
                                 borderRadius: 8,
-                                backgroundColor: '#f1f1f1',
+                                backgroundColor: '#EEEFF1',
                               }}
                               accessibilityIgnoresInvertColors
                             />
@@ -1249,7 +1249,7 @@ function SeguirPedido() {
           <Tarjeta style={{ borderWidth: 2, borderColor: C.exito }}>
             <Text style={{ fontWeight: '700' }}>{t.tuPin}</Text>
             <Text style={{ fontSize: 34, fontWeight: '700', letterSpacing: 6 }}>{p.pin}</Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+            <Text style={{ color: '#666B73', fontSize: 13 }}>
               {p.entrega === 'recoger' ? t.tuPinRecoger : t.tuPinAyuda}
             </Text>
           </Tarjeta>
@@ -1279,7 +1279,7 @@ function SeguirPedido() {
               direccion={p.direccion}
             />
             {haceRep != null ? (
-              <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 6, textAlign: 'center' }}>
+              <Text style={{ color: '#666B73', fontSize: 13, marginTop: 6, textAlign: 'center' }}>
                 {textoActualizado(haceRep, idioma)}
               </Text>
             ) : null}
@@ -1301,7 +1301,7 @@ function SeguirPedido() {
                 <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>
                   {p.repartidor.nombre}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                <Text style={{ color: '#666B73', fontSize: 13 }}>
                   {p.estado === 'en_camino' ? tc.enCaminoATi : t.repartidor}
                   {p.repartidor.actualizado
                     ? ` · ${t.ubicacion}: ${new Date(
@@ -1431,7 +1431,7 @@ function SeguirPedido() {
                                 paddingVertical: 8,
                                 borderRadius: 999,
                                 borderWidth: 1,
-                                borderColor: elegido ? (gusta ? C.exito : C.secundario) : '#D9D9D9',
+                                borderColor: elegido ? (gusta ? C.exito : C.secundario) : '#D6D8DC',
                                 backgroundColor: elegido
                                   ? gusta
                                     ? C.exito
@@ -1506,7 +1506,7 @@ function SeguirPedido() {
         !propinaEnviada ? (
           <Tarjeta>
             <Text style={{ fontWeight: '700' }}>{t.propinaDespues}</Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
+            <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 6 }}>
               {t.propinaDespuesAyuda}
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -1552,7 +1552,7 @@ function SeguirPedido() {
         {p.entrega !== 'recoger' && ['pagado', 'aceptado', 'listo'].includes(p.estado) ? (
           <Tarjeta>
             <Text style={{ fontWeight: '700' }}>{t.cambiarDireccion}</Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.cambiarDireccionAyuda}</Text>
+            <Text style={{ color: '#666B73', fontSize: 13 }}>{t.cambiarDireccionAyuda}</Text>
             {/* C-DIRECCION-SUGERENCIAS: la dirección nueva con su punto exacto. */}
             <CampoDireccion
               etiqueta={t.nuevaDireccion}
@@ -1625,7 +1625,7 @@ function SeguirPedido() {
               <Text style={{ fontWeight: '700', marginTop: 12, color: C.secundario }}>
                 {t.tuCasa}
               </Text>
-              <Text style={{ color: '#5E5E5E' }}>{p.direccion}</Text>
+              <Text style={{ color: '#666B73' }}>{p.direccion}</Text>
             </>
           ) : null}
           {entregaMostrada(p.entrega, p.entregadoComo) ? (
@@ -1633,7 +1633,7 @@ function SeguirPedido() {
               <Text style={{ fontWeight: '700', marginTop: 10, color: C.secundario }}>
                 {tc.tipoEntrega}
               </Text>
-              <Text style={{ color: '#5E5E5E' }}>
+              <Text style={{ color: '#666B73' }}>
                 {tc.tipoEntregaPedido[entregaMostrada(p.entrega, p.entregadoComo) ?? '']}
               </Text>
             </>
@@ -1672,7 +1672,7 @@ function SeguirPedido() {
                 idioma,
               )}
             </Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }}>
+            <Text style={{ color: '#666B73', fontSize: 13, marginTop: 4 }}>
               {t.programadoAyuda}
             </Text>
           </Tarjeta>

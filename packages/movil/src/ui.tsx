@@ -1,10 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
+import { Text } from './diseno';
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
   type TextInputProps,
@@ -14,8 +14,26 @@ import { MARCA, enIdioma } from '@tumbite/compartido';
 import { SelectorIdioma } from './SelectorIdioma';
 import { useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
+import { Icono } from './diseno';
+import { ALTO, COLOR, ESPACIO, FUENTE, RADIO, SOMBRA } from './tokens';
 
 export const C = MARCA.colores;
+
+/**
+ * C-APPS-DISENO: el color de acción de cada app. El Driver va con el azul de logística (su color);
+ * el cliente y Restaurants, con el rojo de la marca. Lo pone la raíz de cada app.
+ */
+const AcentoApp = createContext<'marca' | 'logistica'>('marca');
+export function TemaApp({
+  acento,
+  children,
+}: {
+  acento: 'marca' | 'logistica';
+  children: ReactNode;
+}) {
+  return <AcentoApp.Provider value={acento}>{children}</AcentoApp.Provider>;
+}
+export const useAcentoApp = () => useContext(AcentoApp);
 
 export function Pantalla({
   titulo,
@@ -47,16 +65,16 @@ export function Pantalla({
               accessibilityRole="button"
               accessibilityLabel={enIdioma(TEXTOS_MOVIL, idioma).volver}
               hitSlop={12}
-              style={{ paddingRight: 10, paddingVertical: 2 }}
+              style={{ paddingRight: 6 }}
             >
-              <Text style={{ color: '#fff', fontSize: 30, fontWeight: '700', lineHeight: 32 }}>
-                ‹
-              </Text>
+              <View style={e.volver}>
+                <Icono nombre="chevron-back" tamano={22} />
+              </View>
             </Pressable>
           ) : null}
           <Text style={e.marca}>{MARCA.nombre}</Text>
         </View>
-        <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
+        <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
       </View>
       {scroll ? (
         <ScrollView
@@ -100,7 +118,7 @@ export function Campo({
         // («Abre · Lunes»), sin repetirlo en pantalla.
         accessibilityLabel={nombreAccesible ?? etiqueta}
         style={[e.input, error ? e.inputError : null]}
-        placeholderTextColor="#9A9A9A"
+        placeholderTextColor={COLOR.textoTenue}
       />
       {error ? <Text style={e.error}>{error}</Text> : null}
     </View>
@@ -188,6 +206,8 @@ export function Boton({
   /** C-FLEX-OSCURO: sobre fondo oscuro, el secundario va con borde azul claro, sin fondo blanco. */
   oscuro?: boolean;
 }) {
+  const acento = useAcentoApp();
+  const azul = acento === 'logistica' && !exito && !logistica && !secundario;
   return (
     <Pressable
       onPress={alTocar}
@@ -199,6 +219,7 @@ export function Boton({
         secundario && e.botonSecundario,
         exito && !secundario && { backgroundColor: C.exito },
         logistica && !secundario && !exito && { backgroundColor: C.logisticaAccion },
+        azul && { backgroundColor: COLOR.logistica },
         oscuro &&
           secundario && {
             backgroundColor: 'transparent',
@@ -209,7 +230,7 @@ export function Boton({
       ]}
     >
       {cargando ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={secundario ? COLOR.texto : '#fff'} />
       ) : (
         <Text
           style={[
@@ -227,34 +248,54 @@ export function Boton({
 }
 
 export const e = StyleSheet.create({
-  fondo: { flex: 1, backgroundColor: C.fondo },
+  fondo: { flex: 1, backgroundColor: COLOR.fondo },
+  // C-APPS-DISENO: cabecera blanca con línea fina (dirección «A · Clara»), como Uber Eats y DoorDash.
   cabecera: {
-    backgroundColor: C.primario,
+    backgroundColor: COLOR.blanco,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: ESPACIO.l,
+    minHeight: ALTO.encabezado,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLOR.bordeFuerte,
   },
-  marca: { color: '#fff', fontSize: 22, fontWeight: '700' },
+  volver: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLOR.superficie,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  marca: { color: COLOR.marca, fontSize: 22, fontFamily: FUENTE.titulo, letterSpacing: -0.3 },
   banderas: { flexDirection: 'row', gap: 6 },
   bandera: { borderWidth: 2, borderColor: 'transparent', borderRadius: 8, paddingHorizontal: 4 },
   banderaActiva: { borderColor: '#FFFFFF' },
-  contenido: { padding: 16, gap: 4 },
-  titulo: { fontSize: 26, fontWeight: '700', color: C.secundario, marginBottom: 12 },
-  campo: { marginBottom: 14 },
-  etiqueta: { fontWeight: '600', marginBottom: 6, color: C.texto },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#D6D6D6',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: C.texto,
+  contenido: { padding: ESPACIO.l, gap: 4 },
+  titulo: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontFamily: FUENTE.titulo,
+    color: COLOR.texto,
+    marginBottom: ESPACIO.m,
   },
-  inputError: { borderColor: '#c4001d' },
-  error: { color: '#c4001d', marginTop: 4 },
+  campo: { marginBottom: ESPACIO.l },
+  etiqueta: { fontSize: 14, fontWeight: '600', marginBottom: 6, color: COLOR.texto },
+  input: {
+    backgroundColor: COLOR.blanco,
+    borderWidth: 1,
+    borderColor: COLOR.bordeFuerte,
+    borderRadius: RADIO.m,
+    minHeight: ALTO.campo,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: FUENTE.texto,
+    color: COLOR.texto,
+  },
+  inputError: { borderColor: COLOR.error },
+  error: { color: COLOR.error, marginTop: 4, fontSize: 13 },
   ojito: {
     position: 'absolute',
     right: 8,
@@ -267,57 +308,65 @@ export const e = StyleSheet.create({
     width: 22,
     height: 14,
     borderWidth: 2,
-    borderColor: '#5e5e5e',
+    borderColor: COLOR.textoSuave,
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ojoPupila: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#5e5e5e' },
+  ojoPupila: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLOR.textoSuave },
   ojoRaya: {
     position: 'absolute',
     width: 26,
     height: 2,
-    backgroundColor: '#5e5e5e',
+    backgroundColor: COLOR.textoSuave,
     transform: [{ rotate: '-35deg' }],
   },
+  // Botón píldora de 52 de alto con letra Poppins, como el de Uber Eats y DoorDash.
   boton: {
-    backgroundColor: C.primario,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: COLOR.marca,
+    borderRadius: RADIO.pildora,
+    minHeight: ALTO.boton,
+    paddingHorizontal: ESPACIO.xl,
+    paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     marginVertical: 6,
   },
-  botonSecundario: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#D6D6D6' },
-  botonTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  botonSecundario: {
+    backgroundColor: COLOR.blanco,
+    borderWidth: 1,
+    borderColor: COLOR.bordeFuerte,
+  },
+  botonTexto: { color: COLOR.blanco, fontFamily: FUENTE.tituloMedio, fontSize: 16, lineHeight: 20 },
   // Sin franja gruesa al costado (regla de diseño de Richard, 12 oct 2026): borde fino y esquinas suaves.
   aviso: {
-    backgroundColor: '#FFF1EE',
+    backgroundColor: COLOR.marcaSuave,
     borderWidth: 1,
-    borderColor: '#F3CBC4',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    borderColor: '#F6C7CC',
+    borderRadius: RADIO.m,
+    padding: ESPACIO.m,
+    marginBottom: ESPACIO.m,
   },
   enlace: {
-    color: C.secundario,
+    color: COLOR.texto,
     textDecorationLine: 'underline',
-    paddingVertical: 10,
+    fontWeight: '600',
+    paddingVertical: 12,
     textAlign: 'center',
   },
   // Enlace dentro de una frase (sin márgenes propios).
   enlaceLinea: {
-    color: C.secundario,
+    color: COLOR.texto,
     textDecorationLine: 'underline',
     fontWeight: '600',
   },
   tarjeta: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#101010',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: COLOR.blanco,
+    borderRadius: RADIO.m,
+    borderWidth: 1,
+    borderColor: COLOR.borde,
+    padding: ESPACIO.l,
+    marginBottom: ESPACIO.m,
+    ...SOMBRA.tarjeta,
   },
 });

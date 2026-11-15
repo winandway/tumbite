@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { C, e, useSesion } from '@tumbite/movil';
+import { C, e, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-GANAR-POR-TIEMPO (R-T1, como «Earn by Time» de DoorDash): antes de conectarse, el repartidor
@@ -64,12 +64,12 @@ export function ModoPago({
           padding: 10,
           borderRadius: 10,
           borderWidth: activa ? 2 : 1,
-          borderColor: activa ? C.secundario : '#D0D0D0',
+          borderColor: activa ? C.secundario : '#D6D8DC',
           opacity: conectado && !activa ? 0.5 : 1,
         }}
       >
         <Text style={{ fontWeight: '700', color: C.secundario }}>{titulo}</Text>
-        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{ayuda}</Text>
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{ayuda}</Text>
       </Pressable>
     );
   };
@@ -80,7 +80,7 @@ export function ModoPago({
         {opcion('oferta', t.oferta, t.ofertaAyuda)}
         {opcion('tiempo', t.tiempo, t.tiempoAyuda(hora))}
       </View>
-      {conectado ? <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.conectado}</Text> : null}
+      {conectado ? <Text style={{ color: '#666B73', fontSize: 12 }}>{t.conectado}</Text> : null}
       {error ? <Text style={e.error}>{error}</Text> : null}
     </View>
   );

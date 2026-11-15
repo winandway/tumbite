@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
   ErrorApi,
   type Referencia,
@@ -7,7 +7,7 @@ import {
   formatearMonto,
   textoReferencia,
 } from '@tumbite/compartido';
-import { Boton, C, CampoDireccion, useSesion } from '@tumbite/movil';
+import { Boton, C, CampoDireccion, useSesion, Text } from '@tumbite/movil';
 import { Tarjeta } from '../comida/piezas';
 import { TEXTOS_MOTO } from './textos';
 
@@ -125,10 +125,10 @@ export function EditorParadas({
           </Text>
         </Pressable>
       ) : (
-        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.paradasMaximo(maximo)}</Text>
+        <Text style={{ color: '#666B73', fontSize: 13 }}>{t.paradasMaximo(maximo)}</Text>
       )}
       {paradas.length ? (
-        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.paradasEspera}</Text>
+        <Text style={{ color: '#666B73', fontSize: 13 }}>{t.paradasEspera}</Text>
       ) : null}
     </View>
   );
@@ -243,7 +243,7 @@ export function ParadasDelViaje({
             </Text>
             <Text
               style={{
-                color: p.estado === 'visitada' ? C.exito : '#5E5E5E',
+                color: p.estado === 'visitada' ? C.exito : '#666B73',
                 fontWeight: p.estado === 'pendiente' ? '400' : '700',
               }}
             >
@@ -284,16 +284,16 @@ export function ParadasDelViaje({
             />
             {vista ? (
               <View testID="viaje-paradas-precio" style={{ gap: 2 }}>
-                <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.precioNuevo}</Text>
+                <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.precioNuevo}</Text>
                 <Text style={{ fontSize: 28, fontWeight: '700', color: C.secundario }}>
                   {monto(vista.cambio.totalNuevo, vista.cambio.moneda)}
                 </Text>
                 {vista.referencia ? (
-                  <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>
+                  <Text style={{ color: '#666B73', fontWeight: '700' }}>
                     {textoReferencia(vista.referencia, idioma)}
                   </Text>
                 ) : null}
-                <Text style={{ color: '#5E5E5E' }}>
+                <Text style={{ color: '#666B73' }}>
                   {t.precioAntes} {monto(vista.cambio.totalActual, vista.cambio.moneda)}
                 </Text>
                 {vista.cambio.motivo ? (
@@ -327,7 +327,7 @@ export function ParadasDelViaje({
               accessibilityRole="button"
               style={{ paddingVertical: 8, minHeight: 44, justifyContent: 'center' }}
             >
-              <Text style={{ color: '#5E5E5E', fontWeight: '700', textAlign: 'center' }}>
+              <Text style={{ color: '#666B73', fontWeight: '700', textAlign: 'center' }}>
                 {t.noCambiar}
               </Text>
             </Pressable>

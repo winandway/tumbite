@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { ActivityIndicator, View } from 'react-native';
 import { Acceso } from './Acceso';
 import { PuertaCorreo } from './VerificarCorreo';
 import { useSesion } from './sesion';
@@ -100,7 +101,7 @@ export function SesionSinConfirmar() {
       >
         {t.sesionSinConfirmar}
       </Text>
-      <Text style={{ fontSize: 15, color: '#5E5E5E' }}>{t.sesionSinConfirmarDetalle}</Text>
+      <Text style={{ fontSize: 15, color: '#666B73' }}>{t.sesionSinConfirmarDetalle}</Text>
       <Text style={{ fontSize: 13, color: '#666B73' }}>{t.reintentandoSolo}</Text>
       <Boton texto={t.reintentarSesion} alTocar={() => void reintentarSesion()} />
       <Boton texto={t.otraCuenta} alTocar={usarOtraCuenta} secundario />

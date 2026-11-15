@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
-import { C, MarcaIsotipo, usePropsMapaDivoox } from '@tumbite/movil';
+import { C, MarcaIsotipo, usePropsMapaDivoox, Text } from '@tumbite/movil';
 import {
   altitudDeZoom,
   rotuloDestino,

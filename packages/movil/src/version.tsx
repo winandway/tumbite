@@ -1,6 +1,7 @@
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
-import { Text } from 'react-native';
+import { Text } from './diseno';
+
 import { crearInfoVersion, textoVersion, type InfoVersion } from '@tumbite/compartido';
 import { useSesion } from './sesion';
 

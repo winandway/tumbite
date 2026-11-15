@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, {
   Marker,
   type MapPressEvent,
   type MarkerDragStartEndEvent,
 } from 'react-native-maps';
-import { C, usePropsMapaDivoox, useSesion } from '@tumbite/movil';
+import { C, usePropsMapaDivoox, useSesion, Text } from '@tumbite/movil';
 import { TEXTOS_SIN_CENTRO, useCentroParaElegir } from './centroMapa';
 import type { Punto } from './ubicacion';
 
@@ -106,7 +106,7 @@ export function ElegirEnMapa({
   if (!vista)
     return (
       <View style={{ marginBottom: 12, gap: 8 }} testID="mapa-sin-centro">
-        <Text style={{ color: '#5E5E5E' }}>
+        <Text style={{ color: '#666B73' }}>
           {buscandoCentro ? textos.buscando : sinPermiso ? ts.no : ts.sin}
         </Text>
         {!buscandoCentro ? (
@@ -133,7 +133,7 @@ export function ElegirEnMapa({
   const delta = vista.zoom >= 15 ? 0.02 : 0.12;
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>
+      <Text style={{ color: '#666B73', marginBottom: 6 }}>
         {buscando ? textos.buscando : textos.ayuda}
       </Text>
       <View style={{ height: 220, borderRadius: 16, overflow: 'hidden' }}>

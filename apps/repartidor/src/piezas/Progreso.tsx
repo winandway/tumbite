@@ -1,6 +1,6 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { Idioma } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 import { textosDriver } from './textos';
 
 /** Recoger → Entregar → Completar: tres puntos unidos por una línea; lo hecho va en escarlata. */
@@ -18,7 +18,7 @@ export function Progreso({ idioma, paso }: { idioma: Idioma; paso: 0 | 1 | 2 }) 
             left: '16.6%',
             right: '16.6%',
             height: 3,
-            backgroundColor: '#E6E6E6',
+            backgroundColor: '#E6E7EA',
             borderRadius: 2,
           }}
         >
@@ -34,7 +34,7 @@ export function Progreso({ idioma, paso }: { idioma: Idioma; paso: 0 | 1 | 2 }) 
                   width: 16,
                   height: 16,
                   borderRadius: 8,
-                  backgroundColor: i <= paso ? C.primario : '#D6D6D6',
+                  backgroundColor: i <= paso ? C.primario : '#D6D8DC',
                   borderWidth: 3,
                   borderColor: '#fff',
                 }}
@@ -43,7 +43,7 @@ export function Progreso({ idioma, paso }: { idioma: Idioma; paso: 0 | 1 | 2 }) 
                 style={{
                   fontSize: 12,
                   fontWeight: i === paso ? '800' : '600',
-                  color: i <= paso ? C.primario : '#8A8A8A',
+                  color: i <= paso ? C.primario : '#8A8F98',
                   marginTop: 4,
                 }}
               >

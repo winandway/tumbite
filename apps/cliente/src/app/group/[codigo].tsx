@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, ScrollView, Share, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, Share, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -10,7 +10,7 @@ import {
   formatearMonto,
   textoLinea,
 } from '@tumbite/compartido';
-import { C, e, useSesion } from '@tumbite/movil';
+import { C, e, useSesion, Text } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas';
 import { conCuenta } from '../../ConCuenta';
@@ -187,7 +187,7 @@ function PedidoEnGrupo() {
   const total = (g?.items ?? []).reduce((s, i) => s + i.precioCentavos * i.cantidad, 0);
   const personas = [...new Set((g?.items ?? []).map((i) => i.persona))];
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado titulo={t.titulo} alVolver={() => router.back()} etiquetaVolver={t.titulo} />
       <ScrollView
         keyboardDismissMode="interactive"
@@ -201,7 +201,7 @@ function PedidoEnGrupo() {
               <Text style={{ fontSize: 22, fontWeight: '700', color: C.secundario }}>
                 {g.restaurante.nombre}
               </Text>
-              <Text style={{ color: '#5E5E5E' }}>{t.ayuda}</Text>
+              <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
               {g.estado === 'cerrado' ? <Text style={e.aviso}>{t.cerrado}</Text> : null}
               {g.estado === 'cancelado' ? <Text style={e.aviso}>{t.cancelado}</Text> : null}
               {g.estado === 'abierto' && g.cierraEn ? (
@@ -220,7 +220,7 @@ function PedidoEnGrupo() {
               ) : null}
               {g.estado === 'abierto' && g.soyAnfitrion && !g.pasoLaHora ? (
                 <View style={{ gap: 6 }}>
-                  <Text style={{ color: '#5E5E5E' }}>{t.hora}</Text>
+                  <Text style={{ color: '#666B73' }}>{t.hora}</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {(
                       [
@@ -239,7 +239,7 @@ function PedidoEnGrupo() {
                           paddingHorizontal: 12,
                           borderRadius: 12,
                           borderWidth: 1,
-                          borderColor: '#DADADA',
+                          borderColor: '#D6D8DC',
                           backgroundColor: '#fff',
                           fontWeight: '700',
                           color: C.secundario,
@@ -264,7 +264,7 @@ function PedidoEnGrupo() {
                   />
                 </View>
               ) : null}
-              {!g.items.length ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
+              {!g.items.length ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
               {personas.map((persona) => (
                 <Tarjeta key={persona}>
                   <Text style={{ fontWeight: '700', color: C.secundario, marginBottom: 6 }}>

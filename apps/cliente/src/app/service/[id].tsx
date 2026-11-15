@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -8,7 +8,7 @@ import {
   ORDEN_SERVICIOS,
   SERVICIOS_TIENDA,
 } from '@tumbite/compartido';
-import { Boton, C, useSesion } from '@tumbite/movil';
+import { Boton, C, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado } from '../../comida/piezas';
 import { textosComida } from '../../comida/textos';
 import { ICONO_SERVICIO, IMG, type Servicio } from '../../inicio/recursosServicio';
@@ -50,7 +50,7 @@ export default function PantallaServicio() {
   const accion = s?.accion ?? 'muy_pronto';
   const abrir = () => router.push('/restaurants');
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={nombre}
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
@@ -90,7 +90,7 @@ export default function PantallaServicio() {
               {nombre}
             </Text>
             {s?.descripcion ? (
-              <Text style={{ color: '#5E5E5E', fontSize: 15, textAlign: 'center', marginTop: 6 }}>
+              <Text style={{ color: '#666B73', fontSize: 15, textAlign: 'center', marginTop: 6 }}>
                 {s.descripcion}
               </Text>
             ) : null}

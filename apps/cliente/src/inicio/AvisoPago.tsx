@@ -1,6 +1,6 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { type Idioma, formatearMonto } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
 
@@ -46,7 +46,7 @@ export function AvisoPago({
         <Text style={{ fontWeight: '700', color: C.secundario }}>
           {t.pendienteTitulo.replace('{monto}', formatearMonto(centavos, moneda, idioma))}
         </Text>
-        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pendienteTexto}</Text>
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.pendienteTexto}</Text>
       </View>
       <Pressable
         onPress={alPagar}

@@ -1,5 +1,5 @@
-import { ActivityIndicator, Image, Text, View } from 'react-native';
-import { Acceso, C, useSesion } from '@tumbite/movil';
+import { ActivityIndicator, Image, View } from 'react-native';
+import { Acceso, C, useSesion, Text } from '@tumbite/movil';
 import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 import { textosRest } from '../piezas/textos';
@@ -25,7 +25,7 @@ function Portada() {
       >
         {t.iniciaSesion}
       </Text>
-      <Text style={{ color: '#5E5E5E', fontSize: 15, marginTop: 4 }}>{t.accede}</Text>
+      <Text style={{ color: '#666B73', fontSize: 15, marginTop: 4 }}>{t.accede}</Text>
     </View>
   );
 }

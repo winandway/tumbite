@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
 import {
   AvisoBorrador,
@@ -9,6 +9,7 @@ import {
   alSalirTelefono,
   almacenTelefono,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { Tarjeta } from '../comida/piezas';
 
@@ -257,7 +258,7 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
       {r ? (
         <Tarjeta>
           <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>{t.recibo}</Text>
-          <Text style={{ color: '#5E5E5E' }}>
+          <Text style={{ color: '#666B73' }}>
             {nombre(r)} · {de(t.estados, r.estado)} · {r.fecha.slice(0, 16)}
           </Text>
           <Text style={{ color: C.secundario, marginTop: 6 }}>{r.origen}</Text>
@@ -265,13 +266,13 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
           <View style={{ marginTop: 8, gap: 2 }}>
             {ORDEN_PIEZAS.filter((k) => (pieza(k) ?? 0) !== 0).map((k) => (
               <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: '#5E5E5E' }}>{de(t.piezas, k)}</Text>
+                <Text style={{ color: '#666B73' }}>{de(t.piezas, k)}</Text>
                 <Text style={{ color: C.secundario }}>{monto(pieza(k) ?? 0)}</Text>
               </View>
             ))}
             {r.propina > 0 ? (
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: '#5E5E5E' }}>{t.propina}</Text>
+                <Text style={{ color: '#666B73' }}>{t.propina}</Text>
                 <Text style={{ color: C.secundario }}>{monto(r.propina)}</Text>
               </View>
             ) : null}
@@ -284,13 +285,13 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
               </View>
             ) : null}
           </View>
-          <Text style={{ color: '#5E5E5E', marginTop: 8 }}>
+          <Text style={{ color: '#666B73', marginTop: 8 }}>
             {t.pago}: {de(t.pagos, r.metodoPago)}
             {r.distanciaM ? ` · ${t.km(r.distanciaM)}` : ''}
             {r.duracionS != null ? ` · ${t.min(r.duracionS)}` : ''}
           </Text>
           {r.conductor ? (
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {t.conductor}: {r.conductor.nombre} ·{' '}
               {[r.conductor.vehiculo.marca, r.conductor.vehiculo.modelo, r.conductor.vehiculo.color]
                 .filter(Boolean)
@@ -391,7 +392,7 @@ export function MisViajes() {
     <View style={{ gap: 8 }} testID="mis-viajes">
       <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>{t.titulo}</Text>
       {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}
-      {filas && filas.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
+      {filas && filas.length === 0 ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
       {(filas ?? []).map((f) => (
         <Pressable key={f.id} onPress={() => setAbierto(f.id)} accessibilityRole="button">
           <Tarjeta>
@@ -409,14 +410,14 @@ export function MisViajes() {
                 </Text>
               ) : null}
             </View>
-            <Text numberOfLines={1} style={{ color: '#5E5E5E' }}>
+            <Text numberOfLines={1} style={{ color: '#666B73' }}>
               {f.destino}
             </Text>
             <Text
               style={{
                 fontSize: 12,
                 fontWeight: '700',
-                color: f.estado === 'terminado' ? C.exito : '#5E5E5E',
+                color: f.estado === 'terminado' ? C.exito : '#666B73',
               }}
             >
               {de(t.estados, f.estado)}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import {
   type Api,
   ErrorApi,
@@ -8,7 +8,7 @@ import {
   montoATexto,
   textoAMonto,
 } from '@tumbite/compartido';
-import { Boton, C, e } from '@tumbite/movil';
+import { Boton, C, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 type Datos = {
@@ -92,7 +92,7 @@ export function PagoEnLocal({
     }
   }
 
-  if (!d) return error ? <Text style={{ color: '#c4001d' }}>{error}</Text> : null;
+  if (!d) return error ? <Text style={{ color: '#B3261E' }}>{error}</Text> : null;
   const reg = d.registrado;
   return (
     <View
@@ -108,13 +108,13 @@ export function PagoEnLocal({
       testID="pago-en-local"
     >
       <Text style={{ fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E' }}>
+      <Text style={{ color: '#666B73' }}>
         {t.paga}{' '}
         <Text style={{ fontWeight: '800', color: C.secundario }}>
           {formatearMonto(d.montoEsperado, d.moneda, idioma)}
         </Text>
       </Text>
-      <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+      <Text style={{ color: '#666B73', fontSize: 12 }}>
         {t.explica.replace('{comida}', formatearMonto(d.subtotal, d.moneda, idioma))}
       </Text>
       {reg ? (
@@ -122,16 +122,16 @@ export function PagoEnLocal({
           <Text style={{ color: C.exito, fontWeight: '800' }} accessibilityRole="alert">
             {t.registrado}
           </Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+          <Text style={{ color: '#666B73', fontSize: 13 }}>
             {t.resumen
               .replace('{pagado}', formatearMonto(reg.montoPagado, d.moneda, idioma))
               .replace('{ticket}', formatearMonto(reg.importeTicket, d.moneda, idioma))
               .replace('{metodo}', reg.metodo === 'efectivo' ? t.efectivo : t.tarjeta)}
           </Text>
           {reg.diferenciaPago !== 0 || reg.diferenciaTicket !== 0 ? (
-            <Text style={{ color: '#c4001d', fontSize: 13 }}>{t.conDiferencia}</Text>
+            <Text style={{ color: '#B3261E', fontSize: 13 }}>{t.conDiferencia}</Text>
           ) : null}
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.entregaTicket}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.entregaTicket}</Text>
           {reg.conFotoTicket ? (
             <Text style={{ color: C.exito, fontWeight: '700', fontSize: 13 }}>
               {t.fotoTicketOk}
@@ -164,7 +164,7 @@ export function PagoEnLocal({
                 style={{
                   flex: 1,
                   borderWidth: 1,
-                  borderColor: metodo === m ? C.primario : '#DADADA',
+                  borderColor: metodo === m ? C.primario : '#D6D8DC',
                   borderRadius: 10,
                   padding: 10,
                 }}
@@ -194,11 +194,11 @@ export function PagoEnLocal({
             style={e.input}
           />
           <Boton texto={t.registrar} alTocar={() => void registrar()} cargando={enviando} exito />
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.tuDinero}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.tuDinero}</Text>
         </>
       )}
       {error ? (
-        <Text style={{ color: '#c4001d' }} accessibilityRole="alert">
+        <Text style={{ color: '#B3261E' }} accessibilityRole="alert">
           {error}
         </Text>
       ) : null}

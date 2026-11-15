@@ -1,6 +1,7 @@
 import { abrirPagina, abrirPanel } from './PaginaEnApp';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Pressable, View } from 'react-native';
 import { enIdioma, enIdiomaDireccion, textoVersion } from '@tumbite/compartido';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { C } from './ui';

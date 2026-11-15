@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Text } from 'react-native';
+
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { Boton, e } from '@tumbite/movil';
+import { Boton, e, Text } from '@tumbite/movil';
 import type { PropsPago } from './pagoTipos';
 
 /**
@@ -105,7 +105,7 @@ function Formulario({
       ) : error ? (
         <Boton texto={textos.reintentar} alTocar={reintentar} secundario />
       ) : (
-        <Text style={{ color: '#5E5E5E' }}>{textos.cargando}</Text>
+        <Text style={{ color: '#666B73' }}>{textos.cargando}</Text>
       )}
     </>
   );

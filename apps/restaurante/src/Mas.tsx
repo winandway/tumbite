@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { type OpcionMas, opcionesMasRestaurante } from '@tumbite/compartido';
 import {
   C,
@@ -8,6 +8,7 @@ import {
   useSesion,
   useSoporte,
   abrirPanel,
+  Text,
 } from '@tumbite/movil';
 import { Tarjeta } from './piezas/ui';
 
@@ -45,7 +46,7 @@ export function Mas({
       </Text>
       {opcionesMasRestaurante(idioma, { tienda }).map((g) => (
         <View key={g.titulo} style={{ marginBottom: 6 }}>
-          <Text style={{ fontWeight: '800', color: '#5E5E5E', fontSize: 13, marginBottom: 6 }}>
+          <Text style={{ fontWeight: '800', color: '#666B73', fontSize: 13, marginBottom: 6 }}>
             {g.titulo}
           </Text>
           <Tarjeta style={{ padding: 0 }}>
@@ -64,14 +65,14 @@ export function Mas({
                     paddingVertical: 14,
                     paddingHorizontal: 16,
                     borderTopWidth: i === 0 ? 0 : 1,
-                    borderTopColor: '#ECECEC',
+                    borderTopColor: '#E6E7EA',
                   }}
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontWeight: '800', fontSize: 16, color: C.secundario }}>
                       {o.titulo}
                     </Text>
-                    <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 2 }}>{o.ayuda}</Text>
+                    <Text style={{ color: '#666B73', fontSize: 13, marginTop: 2 }}>{o.ayuda}</Text>
                   </View>
                   <Text style={{ fontSize: 22, color: '#9a9a9a' }}>›</Text>
                 </Pressable>

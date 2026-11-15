@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, Text, View, type ViewStyle } from 'react-native';
-import { C } from '@tumbite/movil';
+import { Pressable, View, type ViewStyle } from 'react-native';
+import { C, Text } from '@tumbite/movil';
 
 /** Ancho máximo del contenido: en tableta la columna queda centrada y legible. */
 export const ANCHO_MAX = 640;
@@ -81,7 +81,7 @@ export function Encabezado({
         paddingVertical: 6,
         backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#EFEFEF',
+        borderBottomColor: '#E6E7EA',
       }}
     >
       <Flecha alTocar={alVolver} etiqueta={etiquetaVolver} />
@@ -135,7 +135,7 @@ export function Pildora({
         paddingVertical: 9,
         borderRadius: 999,
         // El rojo oscuro de la marca: 4,5:1 con el texto blanco (el rojo principal da 4,3:1).
-        backgroundColor: activa ? C.acento : '#F2F3F5',
+        backgroundColor: activa ? C.acento : '#F6F6F6',
       }}
     >
       <Text style={{ color: activa ? '#fff' : C.secundario, fontWeight: '700', fontSize: 14 }}>
@@ -178,7 +178,7 @@ export function BotonRedondo({
         justifyContent: 'center',
         backgroundColor: lleno ? fondo : '#fff',
         borderWidth: lleno ? 0 : 1,
-        borderColor: '#D6D6D6',
+        borderColor: '#D6D8DC',
       }}
     >
       <Text
@@ -223,7 +223,7 @@ export function BotonAncho({
         backgroundColor: desactivado
           ? '#CCCCCC'
           : secundario
-            ? '#F2F3F5'
+            ? '#F6F6F6'
             : exito
               ? C.exito
               : C.primario,
@@ -247,13 +247,13 @@ export function Estado({ abierto, texto }: { abierto: boolean; texto: string }) 
     <View
       style={{
         alignSelf: 'flex-start',
-        backgroundColor: abierto ? '#E8F5EE' : '#F2F3F5',
+        backgroundColor: abierto ? '#E8F5EE' : '#F6F6F6',
         borderRadius: 8,
         paddingHorizontal: 8,
         paddingVertical: 3,
       }}
     >
-      <Text style={{ color: abierto ? C.exito : '#5E5E5E', fontWeight: '700', fontSize: 12 }}>
+      <Text style={{ color: abierto ? C.exito : '#666B73', fontWeight: '700', fontSize: 12 }}>
         {texto}
       </Text>
     </View>

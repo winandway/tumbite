@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
   type CategoriaViaje,
   type CotizacionViaje,
@@ -24,6 +24,7 @@ import {
   alSalirTelefono,
   almacenTelefono,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { ElegirEnMapa } from '../ElegirEnMapa';
 import { Pildora, Tarjeta } from '../comida/piezas';
@@ -270,7 +271,7 @@ export function PedirMoto({
               {servicio === 'envios' ? t.reservadoEnvio : t.reservado}
             </Text>
             <Text style={{ color: C.secundario }}>{t.reservadoAyuda}</Text>
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {t.cancelaGratis}{' '}
               {horaCorta(new Date(Date.parse(reservado) - 60 * 60_000).toISOString(), idioma)}
             </Text>
@@ -334,10 +335,10 @@ export function PedirMoto({
         textos={{ ayuda: t.destinoAyuda, buscando: t.buscandoCalle, pin: t.pinDestino }}
       />
       {/* C-TEXTOS-POR-SERVICIO: cada servicio dice lo suyo. */}
-      <Text style={{ color: '#5E5E5E' }}>
+      <Text style={{ color: '#666B73' }}>
         {servicio === 'carro' ? t.avisoCarro : servicio === 'envios' ? t.avisoEnvio : t.casco}
       </Text>
-      {servicio === 'moto' ? <Text style={{ color: '#5E5E5E' }}>{t.unPasajero}</Text> : null}
+      {servicio === 'moto' ? <Text style={{ color: '#666B73' }}>{t.unPasajero}</Text> : null}
 
       <ElegirCuando valor={cuando} cambiar={(iso) => cambiar('cuando', iso)} />
       {/* C-CARRO-CATEGORIAS: las categorías que ofrece la ciudad, cada una con su precio para este
@@ -377,7 +378,7 @@ export function PedirMoto({
                   <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
                     {t.categorias[o.categoria]}
                   </Text>
-                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                  <Text style={{ color: '#666B73', fontSize: 13 }}>
                     {t.categoriasAyuda[o.categoria]}
                   </Text>
                 </View>
@@ -392,7 +393,7 @@ export function PedirMoto({
       {cotizacion ? (
         <Tarjeta>
           <View testID="moto-precio" style={{ gap: 4 }}>
-            <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>
+            <Text style={{ color: '#666B73', fontWeight: '700' }}>
               {cotizacion.dePrueba ? t.precioPrueba : t.precioFijo}
             </Text>
             <Text style={{ fontSize: 34, fontWeight: '700', color: C.secundario }}>
@@ -405,22 +406,22 @@ export function PedirMoto({
                   {t.dinamicaTitulo} ·{' '}
                   {textoMultiplicador(cotizacion.multiplicadorPb ?? 10_000, idioma)}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.dinamicaAyuda}</Text>
+                <Text style={{ color: '#666B73', fontSize: 13 }}>{t.dinamicaAyuda}</Text>
               </View>
             ) : null}
             {cotizacion.precioCambio && cotizacion.totalAnterior != null ? (
               // C-RUTA-POR-CALLES: una línea discreta, antes de pedir, si el precio cambió.
-              <Text testID="moto-precio-cambio" style={{ color: '#5E5E5E', fontSize: 13 }}>
+              <Text testID="moto-precio-cambio" style={{ color: '#666B73', fontSize: 13 }}>
                 {t.precioActualizado}{' '}
                 {formatearMonto(cotizacion.totalAnterior, cotizacion.moneda, idioma)}
               </Text>
             ) : null}
             {cotizacion.referencia ? (
-              <Text testID="moto-precio-bs" style={{ color: '#5E5E5E', fontWeight: '700' }}>
+              <Text testID="moto-precio-bs" style={{ color: '#666B73', fontWeight: '700' }}>
                 {textoReferencia(cotizacion.referencia, idioma)}
               </Text>
             ) : null}
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {distancia(cotizacion.distanciaM, idioma)} ·{' '}
               {Math.max(1, Math.round(cotizacion.duracionS / 60))} {t.min}
             </Text>
@@ -449,7 +450,7 @@ export function PedirMoto({
               {tarjeta ? t.tarjetaAyuda : v.metodo === 'pago_movil' ? t.pagoMovilAyuda : t.efectivo}
             </Text>
             {deudaPendiente ? (
-              <Text style={{ color: '#5E5E5E' }}>
+              <Text style={{ color: '#666B73' }}>
                 {t.deuda}{' '}
                 {formatearMonto(deudaPendiente.monto, deudaPendiente.moneda ?? 'USD', idioma)}
               </Text>
@@ -490,7 +491,7 @@ export function PedirMoto({
                 returnKeyType="done"
                 placeholder={t.paqueteQueEjemplo}
               />
-              <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.paqueteTamano}</Text>
+              <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.paqueteTamano}</Text>
               <View
                 style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}
                 accessibilityRole="radiogroup"
@@ -506,7 +507,7 @@ export function PedirMoto({
                   />
                 ))}
               </View>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+              <Text style={{ color: '#666B73', fontSize: 13 }}>
                 {new Map(Object.entries(t.tamanoAyuda)).get(v.paqueteTamano || 'pequeno') ?? ''}
               </Text>
               <Campo
@@ -542,7 +543,7 @@ export function PedirMoto({
                     height: 24,
                     borderRadius: 6,
                     borderWidth: 2,
-                    borderColor: v.sinProhibidos ? C.exito : '#8A8A8A',
+                    borderColor: v.sinProhibidos ? C.exito : '#8A8F98',
                     backgroundColor: v.sinProhibidos ? C.exito : '#fff',
                     alignItems: 'center',
                     justifyContent: 'center',

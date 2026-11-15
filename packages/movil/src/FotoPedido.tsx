@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Image, View } from 'react-native';
 import { useSesion } from './sesion';
 
 /**
@@ -48,7 +49,7 @@ export function FotoPedido({
         }}
         resizeMode="cover"
       />
-      {pie ? <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }}>{pie}</Text> : null}
+      {pie ? <Text style={{ color: '#666B73', fontSize: 13, marginTop: 4 }}>{pie}</Text> : null}
     </View>
   );
 }

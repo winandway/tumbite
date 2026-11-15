@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, ScrollView, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { ActivityIndicator, AppState, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { enIdioma, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
@@ -165,7 +166,7 @@ function Verificado({ alSeguir }: { alSeguir: () => void }) {
       >
         {t.verificado}
       </Text>
-      <Text style={{ fontSize: 16, color: '#5E5E5E' }}>{t.verificadoDetalle}</Text>
+      <Text style={{ fontSize: 16, color: '#666B73' }}>{t.verificadoDetalle}</Text>
       <Boton texto={t.continuar} exito alTocar={alSeguir} />
     </View>
   );
@@ -261,14 +262,14 @@ function ConfirmaTuCorreo({
       >
         {t.titulo}
       </Text>
-      <Text style={{ fontSize: 16, color: '#5E5E5E' }}>{t.enviamos}</Text>
+      <Text style={{ fontSize: 16, color: '#666B73' }}>{t.enviamos}</Text>
       <Text
         style={{ fontSize: 17, fontWeight: '700', color: C.secundario }}
         testID="correo-a-confirmar"
       >
         {correo}
       </Text>
-      <Text style={{ fontSize: 16, color: '#5E5E5E' }}>{t.abrelo}</Text>
+      <Text style={{ fontSize: 16, color: '#666B73' }}>{t.abrelo}</Text>
       <Text style={{ fontSize: 14, color: C.gris }}>{t.spam}</Text>
       {sinConexion ? <SinConexion /> : null}
       {aviso ? (
@@ -433,7 +434,7 @@ export function AvisoCorreo() {
       }}
     >
       <Text style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E' }}>
+      <Text style={{ color: '#666B73' }}>
         {t.detalle} <Text style={{ fontWeight: '700' }}>{correo}</Text>. {t.abrelo}
       </Text>
       <Pressable
