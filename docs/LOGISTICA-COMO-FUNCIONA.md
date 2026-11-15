@@ -72,7 +72,7 @@ seguimiento sin app para quien recibe.
 
 ## 6. Cada país
 
-- **Estados Unidos:** avisos por SMS (cuando Twilio apruebe el número), correo y celular. Sin cobro
+- **Estados Unidos:** avisos por SMS (número aprobado por Twilio el 11 nov), correo y celular. Sin cobro
   contra entrega.
 - **Venezuela:** cédula o RIF, ubicación confirmada antes de asignar (las direcciones son
   imprecisas), cobro contra entrega en dólares o bolívares con la caja de la ruta, tasa del BCV,

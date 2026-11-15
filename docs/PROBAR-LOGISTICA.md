@@ -62,7 +62,7 @@ Arma seis envíos nuevos, otra ruta y un PDF nuevo de etiquetas.
 
 1. En el panel: «Conductores» → «Invitar conductor». Escribe un nombre y TU celular (o un correo
    tuyo que no sea de una cuenta de restaurante).
-2. Te llega el enlace por correo (y por SMS cuando Twilio apruebe el número). En el panel también
+2. Te llega el enlace por correo (y por SMS en EE. UU.). En el panel también
    aparece el enlace con «Mandar por WhatsApp».
 3. Abre el enlace en el celular: dice qué empresa te invita y cómo instalar Divoox Driver.
 4. En Divoox Driver, crea una cuenta con ese mismo celular o correo: en el inicio aparece «Divoox
@@ -70,5 +70,4 @@ Arma seis envíos nuevos, otra ruta y un PDF nuevo de etiquetas.
 
 ## Lo que todavía depende de otros
 
-- **Mensajes de texto en EE. UU.:** salen solos cuando Twilio apruebe el número gratuito (en
-  revisión desde el 31 oct).
+- **Mensajes de texto en EE. UU.:** ya salen: Twilio aprobó el número gratuito el 11 nov.
