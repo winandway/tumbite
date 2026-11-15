@@ -6,7 +6,8 @@
 //   3. el cliente cotiza, declara qué envía, su valor y quién lo recibe, y ve su PIN de entrega;
 //   4. el Driver ve la oferta, toma la foto del paquete y entrega con el PIN;
 //   5. quien recibe sigue el envío en vivo con su enlace.
-// Datos neutros («Remitente de prueba», «Destinatario de prueba», «Conductor de prueba»). Al terminar,
+// Datos neutros («Remitente de prueba», «Destinatario de prueba», «Conductor de prueba»; en inglés,
+// nombres en inglés: C-CAPTURAS-POR-IDIOMA). Al terminar,
 // Envíos vuelve a quedar apagado (los demás recorridos esperan verlo así).
 // Guarda las originales en docs/capturas/recorrido/envios-*.png.
 // Uso: node scripts/recorrido/capturas-envios.mjs
@@ -113,7 +114,7 @@ await limpiarColgados();
 
 // ───────── 2. Un conductor con moto aprobada y habilitado para Envíos, conectado en la recogida
 // Uno por idioma: al terminar un envío en efectivo, el conductor queda en «cobra y califica».
-async function nuevoConductor(sufijo, nombre) {
+async function nuevoConductor(sufijo, nombre, color) {
   const cond = await cuenta('repartidor', nombre);
   const veh = `veh-envios-${ID}-${sufijo}`;
   await sql(
@@ -123,7 +124,7 @@ async function nuevoConductor(sufijo, nombre) {
   await sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${cond.id}', 1, ${ORIGEN.lat}, ${ORIGEN.lng}, datetime('now'), '${CIUDAD.id}')
     ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);
   await sql(`INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
-    VALUES ('${veh}', '${cond.id}', 'moto', 'Honda', 'PCX', 'Gris', 'MI${ID.slice(-4).toUpperCase()}${sufijo}', 'MI', 2023, 1, 'aprobado')`);
+    VALUES ('${veh}', '${cond.id}', 'moto', 'Honda', 'PCX', '${color}', 'MI${ID.slice(-4).toUpperCase()}${sufijo}', 'MI', 2023, 1, 'aprobado')`);
   for (const t of ['registro', 'seguro', 'seguro_pasajeros'])
     await sql(
       `INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en) VALUES ('doc-${t}-${ID}-${sufijo}', '${veh}', '${t}', 'doc', 'aprobado', datetime('now', '+1 year'))`,
@@ -170,11 +171,19 @@ const caja = (l) =>
   });
 
 try {
-  for (const idioma of ['es', 'en']) {
+  // C-CAPTURAS-POR-IDIOMA: `SOLO_IDIOMA=en` o `es` corre una sola pasada. El inglés va con nombres en
+  // inglés y sin una palabra en español (el color de la moto incluido).
+  for (const idioma of ['es', 'en'].filter(
+    (i) => !process.env.SOLO_IDIOMA || process.env.SOLO_IDIOMA === i,
+  )) {
     const en = idioma === 'en';
-    const cond = await nuevoConductor(en ? 'B' : 'A', en ? 'Test Driver' : 'Conductor de prueba');
+    const cond = await nuevoConductor(
+      en ? 'B' : 'A',
+      en ? 'Sam Carter' : 'Conductor de prueba',
+      en ? 'Gray' : 'Gris',
+    );
     conductores.push(cond.id);
-    const cli = await cuenta('cliente', en ? 'Test Sender' : 'Remitente de prueba');
+    const cli = await cuenta('cliente', en ? 'Jamie Lee' : 'Remitente de prueba');
     const remitente = (m, r, c) => pedir(m, r, c, cli.token);
 
     // ───────── Cliente: cotizar, qué envía y quién lo recibe
@@ -194,7 +203,7 @@ try {
           categoria: 'estandar',
           paqueteDescripcion: en ? 'House keys' : 'Llaves de la casa',
           paqueteValor: '40',
-          destinatarioNombre: en ? 'Test recipient' : 'Destinatario de prueba',
+          destinatarioNombre: en ? 'Alex Morgan' : 'Destinatario de prueba',
           destinatarioTelefono: '(248) 555-0134',
           sinProhibidos: true,
         }),
