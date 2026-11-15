@@ -132,3 +132,5 @@ El equipo de Divoox — Windoce LLC
   Google dice que responde por correo a go@windoce.com en unos 2 días hábiles. El ticket se ve en
   Play Console → Ayuda → «Tus tickets de asistencia».
 - Hasta que el especialista responda que sí, NO se crea ninguna app nueva (decisión de Richard).
+- 15 nov 2026, 18:12 UTC: llegó el acuse automático de Google a go@windoce.com, caso 4-0869000041726. Todavía no es la respuesta del especialista.
+- Vigilante: tarea programada «divoox-vigilar-respuesta-google-play», cada 4 horas mira el correo; al llegar la respuesta avisa a Richard, la anota aquí y se apaga.
