@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-15T16:29:14.000Z",
+  "actualizado": "2026-11-15T16:54:00.000Z",
   "version": "7b9a5ca",
   "ahora": "15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
@@ -177,6 +177,30 @@
       "titulo": "Preguntarle al contador por el impuesto con promoción",
       "para": "Saber si el impuesto va sobre el precio de la comida ya rebajado por la promoción que paga el restaurante.",
       "destraba": "Ajustar la cuenta del impuesto en los pedidos con promoción."
+    },
+    {
+      "numero": 20,
+      "id": "comida-efectivo-eeuu",
+      "prioridad": "baja",
+      "titulo": "Decidir si en Estados Unidos la comida se podrá pagar en efectivo al recibir",
+      "para": "Hoy en Estados Unidos solo se paga con tarjeta en la app, y las guías en inglés lo dicen así.",
+      "destraba": "Si dices que sí, se enciende el pago al recibir allá y se actualizan las guías en inglés."
+    },
+    {
+      "numero": 21,
+      "id": "comision-efectivo-eeuu",
+      "prioridad": "media",
+      "titulo": "Decidir cómo cobra Divoox su comisión en los viajes en efectivo de Estados Unidos",
+      "para": "Para Moto y Carro en Estados Unidos no hay una comisión escrita cuando el pasajero paga en efectivo.",
+      "destraba": "Abrir Moto o Carro en Estados Unidos con la comisión clara desde el primer viaje."
+    },
+    {
+      "numero": 22,
+      "id": "flex-recargas-tarjeta-eeuu",
+      "prioridad": "baja",
+      "titulo": "Confirmar que las empresas de Flex en Estados Unidos recargan con tarjeta",
+      "para": "Las guías en inglés de Flex enseñan la recarga con tarjeta, que en producción sigue apagada.",
+      "destraba": "Encender las recargas con tarjeta de Flex para Estados Unidos cuando llegue la primera empresa."
     }
   ],
   "terceros": [
@@ -356,6 +380,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-15",
+      "titulo": "Todas las guías en inglés se enseñan con Estados Unidos",
+      "texto": "Las guías de Docs en inglés de Moto, Comida, Envíos y Divoox Flex ya no muestran El Vigía, Caracas, bolívares ni pago móvil: sus capturas se tomaron de nuevo en Novi, Michigan, en dólares, con nombres en inglés, y las de Flex sobre el panel nuevo. Las guías cuyo tema es propio de Venezuela (pagar al recibir, cobrar en mano, saldo para comisiones, cobro contra entrega y recarga local de Flex) dicen en inglés, con honestidad, cómo funciona en Estados Unidos. Las de español siguen igual. El candado revisa todas las guías en inglés. Publicado y comprobado en vivo."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "Apps de prueba con códigos QR y cuentas en un solo lugar",
