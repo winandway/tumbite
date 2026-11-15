@@ -107,5 +107,7 @@ describe('espera en las paradas', () => {
     expect(cargoEsperaParadas(t, [60, 120])).toBe(0);
     expect(cargoEsperaParadas(t, [121])).toBe(50);
     expect(cargoEsperaParadas(t, [300, 181])).toBe(150 + 100);
+    // Un «Seguir» olvidado no le cobra horas al pasajero: como mucho 10 minutos por parada.
+    expect(cargoEsperaParadas(t, [3 * 3600])).toBe(10 * 50);
   });
 });

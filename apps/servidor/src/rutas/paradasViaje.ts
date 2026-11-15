@@ -39,6 +39,13 @@ import { exigirParadasValidas } from './viajesPasajero';
  */
 export const paradasViaje = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+/**
+ * Cambios de paradas que el pasajero puede APLICAR en un viaje. Acota las consultas de ruta (cada
+ * cambio pide una) y los números de parada (cada cambio usa números nuevos; las quitadas se quedan
+ * como historia). Mirar el precio sin aplicar va por el límite de intentos de la ruta (app.ts).
+ */
+export const CAMBIOS_PARADAS_MAXIMOS = 10;
+
 /** Estados del viaje en que el pasajero puede cambiar sus paradas. */
 const CAMBIABLE = new Set(['buscando', 'asignado', 'conductor_llego', 'en_curso']);
 const MINUTOS_UBICACION_PARADA = 2;
@@ -222,6 +229,20 @@ export async function cambiarParadas(
   };
   if (!opciones.confirmar) return resultado;
   if (motivo) throw new ErrorDatos(motivo, 'paradas', 409);
+  if (actor.tipo === 'cliente') {
+    const hechos = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM cambios_viaje WHERE operacion_id = ? AND actor = 'cliente'",
+      )
+      .bind(v.id)
+      .first<{ n: number }>();
+    if (Number(hechos?.n ?? 0) >= CAMBIOS_PARADAS_MAXIMOS)
+      throw new ErrorDatos(
+        'Ya cambiaste las paradas de este viaje muchas veces. Si necesitas otro cambio, díselo a tu conductor.',
+        'paradas',
+        409,
+      );
+  }
   if (opciones.totalVisto != null && opciones.totalVisto !== desglose.total)
     throw new ErrorDatos(
       'El precio con esas paradas cambió. Revísalo y confirma otra vez.',
@@ -306,8 +327,8 @@ export async function cambiarParadas(
       409,
     );
   // La comisión apartada del conductor se pone al día con el precio nuevo (nunca frena el cambio).
-  if (v.conductor_id && totalFinal !== totalActual)
-    await reajustarReservaViaje(db, {
+  if (v.conductor_id && totalFinal !== totalActual) {
+    const movido = await reajustarReservaViaje(db, {
       servicio: servicioFinancieroViaje(v.servicio_id),
       pais: v.pais,
       ciudad: v.zona_id,
@@ -316,7 +337,14 @@ export async function cambiarParadas(
       conductorId: v.conductor_id,
       valor: totalFinal,
       cambioId,
-    }).catch((e: unknown) => console.error('paradas: reajuste de la comisión apartada', v.id, e));
+    }).catch((e: unknown) => {
+      console.error('paradas: reajuste de la comisión apartada', v.id, e);
+      return null;
+    });
+    // El precio subió y no se pudo apartar la diferencia (no alcanzó el saldo): queda dicho.
+    if (movido === 0 && totalFinal > totalActual)
+      console.warn('paradas: la comisión apartada no subió con el precio', v.id);
+  }
   return {
     ...resultado,
     totalNuevo: totalFinal,

@@ -4413,3 +4413,13 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Peajes:** no entraron (no salían gratis de este trabajo).
 - **Apps:** las tres pantallas nuevas viven en la app web y en el código de las apps; las de las tiendas necesitan compilación nueva (sin permiso de Gerencia no se compiló nada).
 - **Encendido:** Carro sigue apagado en producción por su compuerta de país. La tarifa dinámica además nace apagada en cada ciudad.
+
+### Lo que encontró el revisor de calidad en la fase 2 de Carro (y quedó corregido, 14 nov 2026)
+
+- **Un «Seguir» olvidado le cobraba horas de espera al pasajero.** Ahora la espera cobrable por parada tiene tope: 10 minutos después de la gratis (`ESPERA_PARADA_COBRABLE_MAX_S`). Prueba: «un «Seguir» olvidado no le cobra horas al pasajero».
+- **Volver a aprobar un carro Premium le quitaba la categoría.** Al reaprobar sin decirla se conserva la que tenía si todavía la cumple (`categoriaQueConserva`). Prueba: «volver a aprobar un carro Premium no le quita su categoría».
+- **Cambiar paradas sin fin** gastaba consultas de ruta y números de parada. Ahora el pasajero aplica hasta 10 cambios por viaje (`CAMBIOS_PARADAS_MAXIMOS`) y la ruta tiene límite de intentos por minuto. Prueba: «el pasajero no puede cambiar las paradas sin fin».
+- **Terminar justo cuando el pasajero agrega una parada:** la regla va ahora en la MISMA sentencia que termina el viaje (`sinParadasPendientes` en `cambiarEstadoViaje`).
+- **La lista de columnas** no veía `lng` ni `direccion` de `paradas_viaje` (iban tres columnas en un renglón): una por renglón y lista regenerada.
+- Además: otro conductor no toca las paradas de un viaje (404), la tarifa dinámica solo la toca el equipo (403), un Premium de seis plazas que apagó los viajes de abajo no recibe un XL, y el reajuste de la comisión no deja saldo negativo ni se repite. Todo en `carroFase2.test.ts`.
+- **El guion del sitio de pruebas** (`scripts/staging/probar-carro.mjs`) hace un viaje Comfort con tarifa dinámica fijada a mano y paradas (una hecha, una agregada en el camino y saltada) y comprueba el cobro y la comisión. Para llevar al taxista de prueba a la parada usa la ruta interna `carro/mover` (por la app no se puede saltar: el servidor descarta el salto como GPS falso).

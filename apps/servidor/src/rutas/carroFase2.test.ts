@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
-import { reservaDeViaje } from '../finanzas/conductor';
+import { reajustarReservaViaje, reservaDeViaje } from '../finanzas/conductor';
 import { recalcularDinamica } from '../viajesDinamica';
 import { categoriaAlAprobar } from './servicios';
+import { CAMBIOS_PARADAS_MAXIMOS } from './paradasViaje';
 
 /**
  * Divoox Carro, fase 2 (14 nov 2026, todos los países): C-CARRO-CATEGORIAS (Comfort y Premium),
@@ -195,6 +196,61 @@ describe('Categorías de Carro (C-CARRO-CATEGORIAS)', () => {
     expect(lista.datos.vehiculos[0].categoria).toBe('premium');
     expect(lista.datos.vehiculos[0].aceptaMenores).toBe(true);
     expect(lista.datos.requisitosCategoria.comfort.antiguedadMaxima).toBe(8);
+  });
+});
+
+describe('Categorías de Carro: lo que encontró la revisión', () => {
+  it('volver a aprobar un carro Premium no le quita su categoría', async () => {
+    const { m, admin } = await ciudad();
+    const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    await m.llamar(
+      'PUT',
+      `/datos/admin/vehiculos/${c.vehiculo}/categoria`,
+      { categoria: 'premium', motivo: 'Revisión del carro' },
+      admin.token,
+    );
+    const revisar = (cuerpo: object) =>
+      m.llamar('PUT', `/datos/admin/vehiculos/${c.vehiculo}`, cuerpo, admin.token);
+    expect((await revisar({ estado: 'suspendido', motivo: 'Papeles por renovar' })).estado).toBe(
+      200,
+    );
+    expect((await revisar({ estado: 'aprobado' })).datos.categoria).toBe('premium');
+    // Si con los años deja de cumplir, baja sola a la que le toque.
+    await sql(m, 'UPDATE vehiculos SET anio = 2012 WHERE id = ?', c.vehiculo);
+    expect((await revisar({ estado: 'aprobado' })).datos.categoria).toBe('estandar');
+  });
+
+  it('un carro Premium de seis plazas que apagó los viajes de abajo no recibe un XL', async () => {
+    const { m, cotizar, pedir } = await ciudad({ xlPb: 15_000, premiumPb: 18_000 });
+    const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    await sql(
+      m,
+      "UPDATE vehiculos SET plazas = 7, categoria = 'premium', acepta_menores = 0 WHERE id = ?",
+      c.vehiculo,
+    );
+    const id = await pedir((await cotizar({ categoria: 'xl' })).datos.cotizacion.id);
+    expect(await c.paso(id, 'aceptar')).toBe(409);
+  });
+
+  it('la tarifa dinámica solo la toca el equipo', async () => {
+    const { m, cliente } = await ciudad({ topeDinamicoPb: 15_000 });
+    const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    for (const token of [cliente.token, c.token]) {
+      expect(
+        (await m.llamar('GET', '/datos/admin/viajes/dinamica/carro/US-FL-MIAMI', undefined, token))
+          .estado,
+      ).toBe(403);
+      expect(
+        (
+          await m.llamar(
+            'PUT',
+            '/datos/admin/viajes/dinamica/carro/US-FL-MIAMI',
+            { modo: 'apagada', motivo: 'No soy del equipo' },
+            token,
+          )
+        ).estado,
+      ).toBe(403);
+    }
   });
 });
 
@@ -546,6 +602,57 @@ describe('Paradas de un viaje (C-VIAJE-PARADAS)', () => {
     ).toBe(409);
   });
 
+  it('un «Seguir» olvidado no le cobra horas al pasajero, y otro conductor no toca las paradas', async () => {
+    const { m, cliente, cotizar, pedir } = await ciudad();
+    const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    const cot = (await cotizar({ paradas: [PARADA] })).datos.cotizacion;
+    const id = await pedir(cot.id);
+    await c.paso(id, 'aceptar');
+    const viaje = (await m.llamar('GET', '/datos/viajes/actual', undefined, cliente.token)).datos
+      .viaje;
+    await c.paso(id, 'llegue');
+    await c.paso(id, 'iniciar', { pin: viaje.pin });
+    // Otro conductor no puede marcar ni saltar las paradas de este viaje.
+    const intruso = await conductorDeMoto(m, PARADA, 'US-FL-MIAMI', 'carro');
+    expect(await intruso.paso(id, 'paradas/1/llegue')).toBe(404);
+    expect(await intruso.paso(id, 'paradas/1/saltar')).toBe(404);
+    await mover(m, c.id, PARADA);
+    expect(await c.paso(id, 'paradas/1/llegue')).toBe(200);
+    // Se quedó tres horas «en la parada»: se cobran 10 minutos (a 50), no tres horas.
+    await sql(
+      m,
+      "UPDATE paradas_viaje SET llego_en = datetime('now', '-3 hours') WHERE operacion_id = ?",
+      id,
+    );
+    expect(await c.paso(id, 'paradas/1/seguir')).toBe(200);
+    expect(await c.paso(id, 'paradas/1/seguir')).toBe(200); // doble toque
+    expect(await c.paso(id, 'paradas/1/saltar')).toBe(409); // ya se hizo
+    const fin = await terminar(m, c.token, id, 'terminar-tope-1');
+    expect(fin.datos.totalFinal).toBe(cot.total + 500);
+  });
+
+  it('el pasajero no puede cambiar las paradas sin fin', async () => {
+    const { m, cliente, cotizar, pedir } = await ciudad();
+    const id = await pedir((await cotizar()).datos.cotizacion.id);
+    const cambiar = async (paradas: object[]) => {
+      const vista = await m.llamar(
+        'POST',
+        `/datos/viajes/${id}/paradas`,
+        { paradas },
+        cliente.token,
+      );
+      return m.llamar(
+        'POST',
+        `/datos/viajes/${id}/paradas`,
+        { paradas, confirmar: true, totalVisto: vista.datos.cambio.totalNuevo },
+        cliente.token,
+      );
+    };
+    for (let i = 0; i < CAMBIOS_PARADAS_MAXIMOS; i++)
+      expect((await cambiar(i % 2 ? [] : [PARADA])).estado, `cambio ${i + 1}`).toBe(200);
+    expect((await cambiar([PARADA])).estado).toBe(409);
+  });
+
   it('la comisión apartada del conductor se pone al día cuando el precio cambia', async () => {
     const { m, cliente, cotizar, pedir } = await ciudad();
     await sql(
@@ -591,5 +698,79 @@ describe('Paradas de un viaje (C-VIAJE-PARADAS)', () => {
       .bind(c.id)
       .first<{ n: number }>();
     expect(saldo?.n).toBe(5000 - antes);
+  });
+
+  it('el reajuste de la comisión nunca deja el saldo en negativo, no se repite y no inventa reservas', async () => {
+    const { m, cotizar, pedir } = await ciudad();
+    await sql(
+      m,
+      `INSERT INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada)
+       VALUES ('p-us-car', 'Carro US', 'car', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-01-01 00:00:00', 1)`,
+    );
+    const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    const cot = (await cotizar()).datos.cotizacion;
+    const comision = Math.round(cot.total * 0.1);
+    // Saldo justo para la comisión del precio de ahora: nada más.
+    await sql(
+      m,
+      "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('rec-2', ?, 'prepago', 'US', 'USD', ?, 'recarga', 'recarga:justa')",
+      c.id,
+      comision,
+    );
+    const id = await pedir(cot.id);
+    expect(await c.paso(id, 'aceptar')).toBe(200);
+    const contexto = {
+      servicio: 'car' as const,
+      pais: 'US',
+      ciudad: 'US-FL-MIAMI',
+      moneda: 'USD',
+      operacionId: id,
+      conductorId: c.id,
+    };
+    const saldo = async () =>
+      (
+        await m.DB.prepare(
+          "SELECT COALESCE(SUM(monto), 0) AS n FROM libro WHERE cuenta_id = ? AND bolsillo = 'prepago'",
+        )
+          .bind(c.id)
+          .first<{ n: number }>()
+      )?.n;
+    // El precio se duplica y no alcanza el saldo: lo apartado se queda como estaba, sin negativo.
+    expect(
+      await reajustarReservaViaje(m.DB, { ...contexto, valor: cot.total * 2, cambioId: 'k1' }),
+    ).toBe(0);
+    expect((await reservaDeViaje(m.DB, id, c.id)).monto).toBe(comision);
+    expect(await saldo()).toBe(0);
+    // El mismo precio: nada que mover.
+    expect(
+      await reajustarReservaViaje(m.DB, { ...contexto, valor: cot.total, cambioId: 'k2' }),
+    ).toBe(0);
+    // Baja a la mitad: la diferencia vuelve al prepago, y repetir el mismo cambio no la devuelve dos veces.
+    const mitad = Math.round((cot.total / 2) * 0.1);
+    expect(
+      await reajustarReservaViaje(m.DB, { ...contexto, valor: cot.total / 2, cambioId: 'k3' }),
+    ).toBe(mitad - comision);
+    expect((await reservaDeViaje(m.DB, id, c.id)).monto).toBe(mitad);
+    expect(await saldo()).toBe(comision - mitad);
+    // Un conductor sin nada apartado en ese viaje no recibe ajustes.
+    const otro = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
+    expect(
+      await reajustarReservaViaje(m.DB, {
+        ...contexto,
+        conductorId: otro.id,
+        valor: cot.total * 2,
+        cambioId: 'k4',
+      }),
+    ).toBe(0);
+    // Sin política de comisión (otra moneda) tampoco se toca.
+    expect(
+      await reajustarReservaViaje(m.DB, {
+        ...contexto,
+        moneda: 'COP',
+        valor: cot.total * 2,
+        cambioId: 'k5',
+      }),
+    ).toBe(0);
+    expect(await saldo()).toBe(comision - mitad);
   });
 });

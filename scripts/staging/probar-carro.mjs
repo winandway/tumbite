@@ -339,6 +339,240 @@ try {
   exigir(cancelada.cargo === 0, 'cancelar con dos horas de anticipo debía ser gratis');
   casos.push('reserva de Carro para dentro de dos horas con precio fijo, cancelada gratis');
 
+  // ---------------------------------------------------------------- 1b. Fase 2 de Carro (14 nov 2026)
+  // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS, por la API como las apps y el panel: la
+  // ciudad ofrece Comfort y admite tarifa dinámica; el carro del taxista queda Comfort; un viaje
+  // Comfort con una parada y la tarifa dinámica fijada a mano; el pasajero agrega otra parada en el
+  // camino (ve el precio y lo confirma); el taxista hace una y salta la otra; la comisión sigue al precio.
+  const PARADA_1 = { lat: 8.6195, lng: -71.6585, direccion: 'Terminal de pasajeros de El Vigía' };
+  const PARADA_2 = { lat: 8.6262, lng: -71.6612, direccion: 'Farmacia del centro de El Vigía' };
+  const dinamica = (cuerpo) =>
+    equipo('PUT', `/datos/admin/viajes/dinamica/carro/${elVigia.id}`, cuerpo);
+  const tarifas = ok(await equipo('GET', '/datos/admin/viajes'), 'tarifas').tarifas;
+  const actual = tarifas.find((t) => t.servicio === 'carro' && t.zona === elVigia.id);
+  exigir(actual, 'El Vigía no tiene tarifa de Carro');
+  if (!actual.comfortPb || !actual.premiumPb || (actual.topeDinamicoPb ?? 10_000) < 15_000) {
+    const {
+      base,
+      porKm,
+      porMinuto,
+      minimo,
+      esperaGratisS,
+      porMinutoEspera,
+      cancelacionGratisS,
+      cargoCancelacion,
+      cargoNoSePresento,
+      redondeo,
+      cargoFijo,
+      factorCallePb,
+      velocidadKmh,
+      xlPb,
+    } = actual;
+    ok(
+      await equipo('POST', '/datos/admin/viajes/tarifas', {
+        servicio: 'carro',
+        zona: elVigia.id,
+        tarifa: {
+          base,
+          porKm,
+          porMinuto,
+          minimo,
+          esperaGratisS,
+          porMinutoEspera,
+          cancelacionGratisS,
+          cargoCancelacion,
+          cargoNoSePresento,
+          redondeo,
+          cargoFijo,
+          factorCallePb,
+          velocidadKmh,
+          ...(xlPb ? { xlPb } : {}),
+          comfortPb: 13_000,
+          premiumPb: 18_000,
+          topeDinamicoPb: 15_000,
+          esperaParadaGratisS: 120,
+        },
+        dePrueba: true,
+        motivo: 'Fase 2 de Carro: Comfort, Premium y tarifa dinámica hasta 1,5 (sitio de pruebas)',
+      }),
+      'tarifa de Carro con categorías y tope dinámico',
+    );
+    casos.push('El Vigía ofrece Carro Comfort y Premium y admite tarifa dinámica hasta 1,5');
+  }
+  const carro = ok(
+    await taxistaVe('GET', '/datos/conductor/vehiculos'),
+    'vehículos del taxista',
+  ).vehiculos.find((v) => v.tipo === 'carro' && v.estado === 'aprobado');
+  exigir(carro, 'el taxista de El Vigía no tiene un carro aprobado');
+  if (carro.categoria !== 'comfort')
+    ok(
+      await equipo('PUT', `/datos/admin/vehiculos/${carro.id}/categoria`, {
+        categoria: 'comfort',
+        motivo: 'Fase 2 de Carro: el carro de prueba cumple Comfort',
+      }),
+      'poner el carro en Comfort',
+    );
+  // Un Premium no se le ofrece a un carro Comfort: la cotización existe, pero nadie lo toma.
+  ok(
+    await dinamica({
+      modo: 'manual',
+      multiplicadorPb: 12_000,
+      minutos: 10,
+      motivo: 'Guion de Carro',
+    }),
+    'fijar la tarifa dinámica en 1,2',
+  );
+  exigir(
+    (await dinamica({ modo: 'manual', multiplicadorPb: 20_000, minutos: 10, motivo: 'De más' }))
+      .estado === 422,
+    'un multiplicador por encima del tope debía rechazarse',
+  );
+  const normal = await cotizar(ORIGEN_VE, DESTINO_VE);
+  const cotF = ok(
+    await pasajero('POST', '/datos/viajes/cotizar', {
+      servicio: 'carro',
+      categoria: 'comfort',
+      origen: ORIGEN_VE,
+      paradas: [PARADA_1],
+      destino: DESTINO_VE,
+    }),
+    'cotizar Comfort con una parada',
+  ).cotizacion;
+  exigir(
+    cotF.multiplicadorPb === 12_000,
+    `la tarifa dinámica debía ser 1,2 (${cotF.multiplicadorPb})`,
+  );
+  exigir(cotF.desglose.dinamico > 0, 'el desglose no trae el recargo dinámico');
+  exigir(cotF.total > normal.total, 'Comfort con parada debía costar más que Carro directo');
+  exigir(
+    (cotF.opciones ?? []).some((o) => o.categoria === 'comfort' && o.total === cotF.total),
+    'la cotización no trae el precio de cada categoría',
+  );
+  exigir(
+    (
+      await pasajero('POST', '/datos/viajes/cotizar', {
+        servicio: 'carro',
+        origen: ORIGEN_VE,
+        paradas: [PARADA_1, PARADA_2, PARADA_1],
+        destino: DESTINO_VE,
+      })
+    ).estado === 422,
+    'tres paradas en Venezuela debían rechazarse (máximo 2)',
+  );
+  const vF = ok(
+    await pasajero('POST', '/datos/viajes', { cotizacionId: cotF.id, metodoPago: 'efectivo' }),
+    'pedir Comfort con parada',
+  ).viaje;
+  const antesF = await saldo();
+  await esperarOferta(tokens.conductorVe, vF.id);
+  const oferta = ok(
+    await taxistaVe('GET', '/datos/conductor/operaciones/ofertas'),
+    'ofertas',
+  ).ofertas.find((o) => o.operacionId === vF.id);
+  exigir(
+    oferta?.categoria === 'comfort' &&
+      oferta.multiplicadorPb === 12_000 &&
+      oferta.paradas?.length === 1,
+    `la oferta no dice categoría, tarifa dinámica y paradas: ${JSON.stringify(oferta)}`,
+  );
+  ok(await paso(tokens.conductorVe, vF.id, 'aceptar'), 'aceptar');
+  exigir(
+    (await saldo()).reservado === Math.round(cotF.total / 10),
+    'al aceptar se debía apartar la comisión del precio con parada',
+  );
+  ok(await taxistaVe('POST', '/datos/repartidor/ubicacion', ORIGEN_VE), 'ubicación');
+  ok(await paso(tokens.conductorVe, vF.id, 'llegue'), 'llegué');
+  const vistaF = ok(
+    await pasajero('GET', `/datos/viajes/${vF.id}`),
+    'el pasajero ve su viaje',
+  ).viaje;
+  exigir(
+    vistaF.paradas?.length === 1 && vistaF.categoria === 'comfort',
+    'el viaje no trae su parada',
+  );
+  ok(
+    await paso(tokens.conductorVe, vF.id, 'iniciar', vistaF.pin ? { pin: vistaF.pin } : {}),
+    'iniciar',
+  );
+  // El pasajero agrega otra parada en el camino: primero ve el precio, después confirma.
+  const cambiar = (cuerpo) => pasajero('POST', `/datos/viajes/${vF.id}/paradas`, cuerpo);
+  const vistaCambio = ok(
+    await cambiar({ paradas: [PARADA_1, PARADA_2] }),
+    'ver el precio nuevo',
+  ).cambio;
+  exigir(
+    vistaCambio.aplicado === false && vistaCambio.totalNuevo > cotF.total,
+    'la vista del cambio debía subir el precio sin aplicarlo',
+  );
+  exigir(
+    (await cambiar({ paradas: [PARADA_1, PARADA_2], confirmar: true, totalVisto: 1 })).estado ===
+      409,
+    'confirmar con un precio que no es el del servidor debía rechazarse',
+  );
+  ok(
+    await cambiar({
+      paradas: [PARADA_1, PARADA_2],
+      confirmar: true,
+      totalVisto: vistaCambio.totalNuevo,
+    }),
+    'confirmar la parada nueva',
+  );
+  exigir(
+    (await saldo()).reservado === Math.round(vistaCambio.totalNuevo / 10),
+    'la comisión apartada no siguió al precio nuevo',
+  );
+  exigir(
+    (await paso(tokens.conductorVe, vF.id, 'terminar')).estado === 409,
+    'con paradas por hacer no se debía poder terminar',
+  );
+  const paradasAhora = ok(
+    await taxistaVe('GET', '/datos/conductor/operaciones/actual'),
+    'el viaje del taxista',
+  ).operacion.paradas;
+  const [primera, segunda] = paradasAhora;
+  exigir(primera && segunda, 'el taxista no ve las dos paradas');
+  exigir(
+    (await paso(tokens.conductorVe, vF.id, `paradas/${primera.orden}/llegue`)).estado === 409,
+    'lejos de la parada no debía poder marcar que llegó',
+  );
+  // El taxista «maneja» hasta la parada (por la app no se puede saltar: se descarta como GPS falso).
+  ok(await interno('mover', { quien: 've', ...PARADA_1 }), 'el taxista llega a la parada');
+  ok(
+    await paso(tokens.conductorVe, vF.id, `paradas/${primera.orden}/llegue`),
+    'llegué a la parada',
+  );
+  ok(await paso(tokens.conductorVe, vF.id, `paradas/${primera.orden}/seguir`), 'seguir el viaje');
+  const salto = ok(
+    await paso(tokens.conductorVe, vF.id, `paradas/${segunda.orden}/saltar`),
+    'saltar la segunda parada',
+  );
+  exigir(
+    salto.cambio.totalNuevo <= vistaCambio.totalNuevo,
+    'saltar una parada no debía subir el precio',
+  );
+  const finF = ok(await paso(tokens.conductorVe, vF.id, 'terminar'), 'terminar');
+  exigir(
+    finF.totalFinal === salto.cambio.totalNuevo,
+    `se cobró ${finF.totalFinal} y el precio con una parada era ${salto.cambio.totalNuevo}`,
+  );
+  const despuesF = await saldo();
+  const comisionF = Math.round(salto.cambio.totalNuevo / 10);
+  exigir(
+    despuesF.disponible === antesF.disponible - comisionF && despuesF.reservado === 0,
+    `la comisión del viaje con paradas no salió bien (${antesF.disponible} → ${despuesF.disponible}, comisión ${comisionF})`,
+  );
+  ok(
+    await dinamica({ modo: 'auto', motivo: 'Guion de Carro: fin' }),
+    'tarifa dinámica en automática',
+  );
+  exigir(
+    (await cotizar(ORIGEN_VE, DESTINO_VE)).multiplicadorPb === 10_000,
+    'en automática y sin demanda el precio debía volver a normal',
+  );
+  casos.push(
+    `Carro Comfort con tarifa dinámica 1,2 y paradas: una hecha, una agregada en el camino y saltada; se cobraron ${finF.totalFinal} y la comisión de ${comisionF} salió del saldo`,
+  );
+
   // ---------------------------------------------------------------- 2. Detroit (EE. UU.)
   // C-CARRO-GUION-ZONA: el taxista queda en la zona que de verdad cotiza el viaje y EN el punto de
   // recogida, y además manda su ubicación como la app. En el sitio de pruebas US-MI-DETROIT ya

@@ -1846,6 +1846,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "operacion_id",
     "orden",
     "lat",
+    "lng",
+    "direccion",
     "estado",
     "llego_en",
     "salio_en",

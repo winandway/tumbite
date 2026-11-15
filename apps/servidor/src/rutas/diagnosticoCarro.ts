@@ -231,6 +231,31 @@ export function rutasCarroGuion(diagnostico: App) {
     return c.json({ ok: true, zonaId: z.id, punto, vehiculoId: veh });
   });
 
+  /**
+   * C-VIAJE-PARADAS: el taxista de prueba «maneja» hasta un punto con el viaje ya en curso (el guion no
+   * puede mandarlo por la app: un salto de cientos de metros en segundos se descarta como GPS falso, y
+   * está bien que así sea). Solo mueve las dos cuentas fijas del guion.
+   */
+  diagnostico.post('/interno/diagnostico/carro/mover', async (c) => {
+    const cuerpo = (await c.req.json().catch(() => ({}))) as {
+      quien?: unknown;
+      lat?: unknown;
+      lng?: unknown;
+    };
+    const lat = Number(cuerpo.lat);
+    const lng = Number(cuerpo.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
+      throw new ErrorDatos('Falta el punto.', undefined, 422);
+    const conductor = cuerpo.quien === 'us' ? CARRO_GUION.conductorUs : CARRO_GUION.conductorVe;
+    await base(c)
+      .prepare(
+        "UPDATE repartidores SET lat = ?, lng = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      )
+      .bind(lat, lng, conductor)
+      .run();
+    return c.json({ ok: true, punto: { lat, lng } });
+  });
+
   /** Fin de la vuelta: nadie queda conectado ni con sesión. El saldo, el libro y los viajes se quedan. */
   diagnostico.post('/interno/diagnostico/carro/limpiar', async (c) => {
     const db = base(c);

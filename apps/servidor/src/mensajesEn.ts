@@ -6,6 +6,11 @@
  */
 export const MENSAJES_EN = new Map<string, string>([
   // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026, bloque propio)
+  [
+    'Ya cambiaste las paradas de este viaje muchas veces. Si necesitas otro cambio, díselo a tu conductor.',
+    'You’ve changed this ride’s stops many times. If you need another change, tell your driver.',
+  ],
+  ['Falta el punto.', 'The location is missing.'],
   ['Ese servicio no tiene tarifa dinámica.', 'That service doesn’t have dynamic pricing.'],
   ['Este viaje ya no admite cambios de paradas.', 'This ride can no longer change its stops.'],
   [

@@ -146,13 +146,21 @@ export async function cambiarEstadoViaje(
     actorId: string | null;
     clave: string;
     motivo?: string;
+    /**
+     * C-VIAJE-PARADAS: el cambio no pasa si queda una parada por hacer (o detenido en una). Va en la
+     * MISMA sentencia: una parada agregada en ese instante no se queda sin hacer en un viaje terminado.
+     */
+    sinParadasPendientes?: boolean;
   },
 ): Promise<boolean> {
+  const sinParadas = a.sinParadasPendientes
+    ? ` AND NOT EXISTS (SELECT 1 FROM paradas_viaje p WHERE p.operacion_id = ?1 AND p.estado IN ('pendiente', 'en_parada'))`
+    : '';
   const r = await db
     .prepare(
       `UPDATE viajes
           SET estado = ?2, ultimo_actor = ?3, ultimo_actor_id = ?4, ultima_clave = ?5, motivo_transicion = ?6
-        WHERE operacion_id = ?1 AND estado = ?7`,
+        WHERE operacion_id = ?1 AND estado = ?7${sinParadas}`,
     )
     .bind(
       a.operacionId,

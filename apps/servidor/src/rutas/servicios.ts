@@ -578,6 +578,27 @@ export function categoriaAlAprobar(
     : 'estandar';
 }
 
+/**
+ * Al volver a aprobar un carro (después de una suspensión, por ejemplo) sin decir la categoría, se
+ * conserva la que ya tenía si todavía la cumple: un Premium decidido por una persona no se pierde.
+ */
+export function categoriaQueConserva(
+  pais: string,
+  carro: { tipo: string; anio: number | null; plazas: number | null; categoria: string },
+  hoy = new Date(),
+): CategoriaCarro | undefined {
+  if (carro.tipo !== 'carro' || (carro.categoria !== 'comfort' && carro.categoria !== 'premium'))
+    return undefined;
+  const r = perfilPasajeros(pais).carro.categorias;
+  return carroCumpleCategoria(
+    carro.categoria === 'comfort' ? r.comfort : r.premium,
+    carro,
+    hoy.getUTCFullYear(),
+  )
+    ? carro.categoria
+    : undefined;
+}
+
 /** El conductor de un carro Comfort o Premium decide si también recibe los viajes de abajo. */
 servicios.put('/conductor/vehiculos/:id/categorias-menores', async (c) => {
   const u = exigir(c, 'repartidor');
@@ -1304,13 +1325,10 @@ servicios.put('/admin/vehiculos/:id', async (c) => {
     categoria: string;
   }>();
   if (!antes) throw new ErrorDatos('No encontramos ese vehículo.', undefined, 404);
+  const pais = d.estado === 'aprobado' ? (await paisDelConductor(db, antes.conductor_id)).pais : '';
   const categoria =
     d.estado === 'aprobado'
-      ? categoriaAlAprobar(
-          (await paisDelConductor(db, antes.conductor_id)).pais,
-          antes,
-          d.categoria,
-        )
+      ? categoriaAlAprobar(pais, antes, d.categoria ?? categoriaQueConserva(pais, antes))
       : antes.categoria;
   await conRestricciones(
     db.batch([

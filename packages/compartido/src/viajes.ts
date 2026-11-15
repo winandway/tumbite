@@ -370,15 +370,25 @@ export function textoMultiplicador(pb: number, idioma: 'es' | 'en' = 'es'): stri
 }
 
 /**
+ * C-VIAJE-PARADAS: lo más que se cobra de espera en UNA parada, después de la gratis (10 minutos). Una
+ * parada es corta (Uber pide menos de 3 minutos [DOC]); sin este tope, un «Seguir» olvidado le cobraría
+ * al pasajero horas de espera. [INF]
+ */
+export const ESPERA_PARADA_COBRABLE_MAX_S = 600;
+
+/**
  * C-VIAJE-PARADAS: la espera cobrada en las paradas. Cada parada tiene su espera gratis; después,
- * por minuto empezado.
+ * por minuto empezado, hasta el tope cobrable por parada.
  */
 export function cargoEsperaParadas(
   t: Pick<TarifaViaje, 'esperaParadaGratisS' | 'porMinutoEspera'>,
   segundosPorParada: readonly number[],
 ): number {
   return segundosPorParada.reduce((suma, s) => {
-    const extra = Math.max(0, Math.floor(s) - t.esperaParadaGratisS);
+    const extra = Math.min(
+      ESPERA_PARADA_COBRABLE_MAX_S,
+      Math.max(0, Math.floor(s) - t.esperaParadaGratisS),
+    );
     return suma + (extra === 0 ? 0 : Math.ceil(extra / 60) * t.porMinutoEspera);
   }, 0);
 }

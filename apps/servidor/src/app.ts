@@ -234,6 +234,8 @@ app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/viajes/cotizar', limiteIntentos(30, 60_000));
+// C-VIAJE-PARADAS: mirar o cambiar las paradas pide una ruta cada vez (como cotizar).
+app.use('/datos/viajes/:id/paradas', limiteIntentos(30, 60_000));
 app.use('/datos/publico/viaje/*', limiteIntentos(60, 60_000));
 // Cada búsqueda de Google cuesta: tope por persona (red).
 app.use('/datos/lugares/*', limiteIntentos(40, 60_000));

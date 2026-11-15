@@ -401,6 +401,7 @@ viajes.post(
       actor: 'conductor',
       actorId: u.id,
       clave,
+      ...(nombre === 'terminar' ? { sinParadasPendientes: true } : {}),
     });
     if (!ok) {
       if (op.estado === paso.hacia) return c.json({ ok: true, estado: op.estado }); // reintento

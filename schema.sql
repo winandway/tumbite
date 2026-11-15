@@ -2942,7 +2942,9 @@ CREATE INDEX IF NOT EXISTS cotizaciones_viaje_cliente ON cotizaciones_viaje(clie
 CREATE TABLE IF NOT EXISTS paradas_viaje (
   operacion_id TEXT NOT NULL REFERENCES operaciones(id),
   orden INTEGER NOT NULL CHECK (orden BETWEEN 1 AND 99),
-  lat REAL NOT NULL, lng REAL NOT NULL, direccion TEXT NOT NULL,
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  direccion TEXT NOT NULL,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'en_parada', 'visitada', 'quitada')),
   llego_en TEXT,
   salio_en TEXT,
