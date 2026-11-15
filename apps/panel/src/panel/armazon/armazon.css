@@ -1965,3 +1965,16 @@ body.modo-tableta .pd .pd-contenido {
   margin: 0 0 12px;
   font-weight: 600;
 }
+
+/* Lo que sale bien va en verde (C-VERDE-EXITO): el botón de éxito no se pinta con el rojo de marca. */
+.pd-contenido .boton.exito,
+.pd-logistica .pd-contenido .boton.exito:not(.secundario) {
+  background: var(--pd-exito);
+  border-color: var(--pd-exito);
+  color: #fff;
+}
+.pd-contenido .boton.exito:hover:not(:disabled),
+.pd-logistica .pd-contenido .boton.exito:not(.secundario):hover:not(:disabled) {
+  background: #0a5f2d;
+  border-color: #0a5f2d;
+}
