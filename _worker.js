@@ -4,6 +4,9 @@
 //   GET  /datos/marcas  → lo que Richard marcó como «Ya lo hice» (la IA lo lee antes de cada respuesta)
 //   POST /datos/marcar  → marcar o desmarcar un punto, con la clave del equipo
 //   GET  /datos/salud   → el estado en vivo de divoox.com (sin datos privados)
+//   POST /datos/cuentas  → las cuentas demo del sitio de pruebas, SOLO con la clave del equipo
+//   POST /datos/cuentas/guardar → la IA las carga o las cambia, con la clave del equipo
+// Las cuentas demo viven en la base de este sitio, nunca en el repositorio (que es público).
 // La clave del equipo no está en el repositorio: solo su huella SHA-256.
 const HUELLA_CLAVE = 'a937141f91d693b02fb8abc404928bc823a78b807b2383d467e18f3925b64753';
 
@@ -53,6 +56,41 @@ async function marcar(request, env) {
   return json({ ok: true, marcas: await marcas(env) });
 }
 
+async function leerCuerpo(request) {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
+
+/** Las cuentas demo del sitio de pruebas (14 nov 2026, Richard): solo con la clave del equipo. */
+async function cuentas(request, env, guardar) {
+  const d = await leerCuerpo(request);
+  if (!d) return json({ error: 'No pudimos leer lo que mandaste.' }, 400);
+  if ((await huella(String(d.clave ?? '').trim())) !== HUELLA_CLAVE)
+    return json({ error: 'La clave del equipo no es correcta.' }, 401);
+  if (guardar) {
+    const lista = Array.isArray(d.cuentas) ? d.cuentas : null;
+    if (!lista || lista.length > 30) return json({ error: 'Lista de cuentas no válida.' }, 400);
+    const limpio = JSON.stringify({ nota: String(d.nota ?? '').slice(0, 600), cuentas: lista });
+    if (limpio.length > 20000) return json({ error: 'Demasiado largo.' }, 400);
+    await env.DB.prepare(
+      `INSERT INTO cuentas_demo (id, contenido, actualizado_en) VALUES (1, ?, datetime('now'))
+       ON CONFLICT(id) DO UPDATE SET contenido = excluded.contenido,
+         actualizado_en = excluded.actualizado_en`,
+    )
+      .bind(limpio)
+      .run();
+    return json({ ok: true });
+  }
+  const fila = await env.DB.prepare(
+    'SELECT contenido, actualizado_en FROM cuentas_demo WHERE id = 1',
+  ).first();
+  if (!fila) return json({ nota: '', cuentas: [], actualizado: null });
+  return json({ ...JSON.parse(fila.contenido), actualizado: fila.actualizado_en });
+}
+
 /**
  * El estado de Divoox. Desde la plataforma un sitio no alcanza a otro (se queda esperando), así que
  * se sirve la foto que toma scripts/progreso/publicar.sh en cada publicación, con su hora.
@@ -76,6 +114,10 @@ export default {
       if (url.pathname === '/datos/marcar' && request.method === 'POST')
         return marcar(request, env);
       if (url.pathname === '/datos/salud' && request.method === 'GET') return salud(request, env);
+      if (url.pathname === '/datos/cuentas' && request.method === 'POST')
+        return cuentas(request, env, false);
+      if (url.pathname === '/datos/cuentas/guardar' && request.method === 'POST')
+        return cuentas(request, env, true);
     } catch (e) {
       console.error('progreso:', e);
       return json({ error: 'Algo falló de nuestro lado. Intenta otra vez.' }, 500);
