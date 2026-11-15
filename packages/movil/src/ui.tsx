@@ -176,6 +176,7 @@ export function Boton({
   exito,
   logistica,
   oscuro,
+  enFila,
 }: {
   texto: string;
   alTocar: () => void;
@@ -187,6 +188,12 @@ export function Boton({
   logistica?: boolean;
   /** C-FLEX-OSCURO: sobre fondo oscuro, el secundario va con borde azul claro, sin fondo blanco. */
   oscuro?: boolean;
+  /**
+   * C-BOTON-EN-FILA (15 nov 2026): el botón que va al lado de una casilla («Verificar», «Enviar»).
+   * Toma el ancho de su palabra y nunca la parte en dos renglones (en el iPhone «Verificar» salía
+   * como «Verifica» y «r»). PROHIBIDO meter un Boton en una caja de ancho fijo: se usa esto.
+   */
+  enFila?: boolean;
 }) {
   return (
     <Pressable
@@ -196,6 +203,7 @@ export function Boton({
       accessibilityLabel={texto}
       style={({ pressed }) => [
         e.boton,
+        enFila && e.botonEnFila,
         secundario && e.botonSecundario,
         exito && !secundario && { backgroundColor: C.exito },
         logistica && !secundario && !exito && { backgroundColor: C.logisticaAccion },
@@ -212,6 +220,9 @@ export function Boton({
         <ActivityIndicator color="#fff" />
       ) : (
         <Text
+          // En fila: una sola línea, con el ancho que pida la palabra (también en inglés y con
+          // letra grande del sistema); la casilla de al lado es la que cede.
+          numberOfLines={enFila ? 1 : undefined}
           style={[
             e.botonTexto,
             secundario && { color: C.secundario },
@@ -287,6 +298,7 @@ export const e = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 6,
   },
+  botonEnFila: { flexShrink: 0, flexGrow: 0, minWidth: 96, paddingHorizontal: 18 },
   botonSecundario: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#D6D6D6' },
   botonTexto: { color: '#fff', fontWeight: '700', fontSize: 16 },
   // Sin franja gruesa al costado (regla de diseño de Richard, 12 oct 2026): borde fino y esquinas suaves.

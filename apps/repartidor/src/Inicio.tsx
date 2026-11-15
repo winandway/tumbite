@@ -1234,11 +1234,10 @@ export function Inicio() {
               placeholder="A1B2"
               accessibilityLabel={t.escribirCodigo}
               autoCapitalize="characters"
-              style={[e.input, { flex: 1, letterSpacing: 4 }]}
+              style={[e.input, { flex: 1, minWidth: 0, letterSpacing: 4 }]}
             />
-            <View style={{ width: 120 }}>
-              <Boton texto={t.verificar} alTocar={() => void verificar(codigo)} secundario />
-            </View>
+            {/* C-BOTON-EN-FILA: sin caja de ancho fijo; la palabra nunca se parte. */}
+            <Boton texto={t.verificar} alTocar={() => void verificar(codigo)} secundario enFila />
           </View>
         </>
       )

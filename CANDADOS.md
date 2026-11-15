@@ -4488,3 +4488,11 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Interruptor por zona:** superadmin, pantalla de zonas, «Foto de la puerta obligatoria para pedir». De fábrica apagado en todas las zonas (también Estados Unidos). Encendido, sin la primera foto el pedido a domicilio responde 422 con el campo `fotoPuerta`. Encenderlo en una zona es decisión de Richard.
 - **Presupuesto de escrituras:** subir o cambiar una foto escribe una fila; la miniatura (misma clave con «-s») no escribe; mirar (cliente o repartidor) escribe cero. Lo fija la prueba.
 - **Candado:** `apps/servidor/src/rutas/fotoPuerta.test.ts` (acceso comprobado en rojo quitando la condición de «en camino» y la del repartidor asignado). Commit f61a8afa5.
+
+## C-BOTON-EN-FILA: un botón al lado de una casilla nunca parte su palabra (15 nov 2026, Richard lo vio en Driver para iPhone) — todos los países
+
+- **Qué se veía:** en Driver, pedido aceptado, bloque de recogida: el botón «Verificar» al lado de «O escribe el número del pedido» salía en dos renglones, «Verifica» y «r».
+- **Causa:** el botón vivía en una caja de 120 de ancho fijo; con el relleno quedaban 88 para la palabra y en el iPhone no cabía. El mismo patrón estaba en «Enviar» del chat del pedido (110 de ancho), que usan las tres apps.
+- **Arreglo:** `Boton` tiene la opción `enFila` (`packages/movil/src/ui.tsx`): una sola línea, el ancho que pida la palabra, no se encoge; la casilla de al lado es la que cede. Se quitaron las dos cajas de ancho fijo. Aguanta el inglés y la letra grande del sistema.
+- **Candado:** `apps/servidor/src/botonEnFila.test.ts`, comprobado en rojo con el código anterior: revisa las tres apps y la pieza común y falla si un `Boton` vuelve a una caja de ancho fijo. En la web del panel los botones no parten palabras (no llevan corte de palabra).
+- **No era la causa de no poder cerrar la recogida:** el botón funcionaba aunque se viera mal.

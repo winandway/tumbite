@@ -217,9 +217,7 @@ export function ChatPedido({
               <Text style={{ fontWeight: '700', color: C.secundario }}>{t.foto}</Text>
             </Pressable>
           ) : null}
-          <View style={{ width: 110 }}>
-            <Boton texto={t.enviar} alTocar={() => void enviar()} cargando={enviando} exito />
-          </View>
+          <Boton texto={t.enviar} alTocar={() => void enviar()} cargando={enviando} exito enFila />
         </View>
       ) : mensajes.length ? (
         <Text style={{ color: '#5E5E5E', marginTop: 6 }}>{t.cerrado}</Text>
