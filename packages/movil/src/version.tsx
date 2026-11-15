@@ -2,6 +2,7 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { Text } from 'react-native';
 import { crearInfoVersion, textoVersion, type InfoVersion } from '@tumbite/compartido';
+import { FranjaPruebas } from './FranjaPruebas';
 import { useSesion } from './sesion';
 
 /**
@@ -26,12 +27,16 @@ export const COMPILACION_APP: string | null = Application.nativeBuildVersion ?? 
 export function VersionInstalada() {
   const { idioma } = useSesion();
   return (
-    <Text
-      testID="version-app"
-      selectable
-      style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: '#9a9a9a' }}
-    >
-      {textoVersion(VERSION_APP, idioma, COMPILACION_APP)}
-    </Text>
+    <>
+      {/* C-APP-DE-PRUEBAS-VISIBLE: el menú de las tres apps dice si es la app de pruebas. */}
+      <FranjaPruebas />
+      <Text
+        testID="version-app"
+        selectable
+        style={{ textAlign: 'center', marginTop: 12, fontSize: 11, color: '#9a9a9a' }}
+      >
+        {textoVersion(VERSION_APP, idioma, COMPILACION_APP)}
+      </Text>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { abrirPagina } from './PaginaEnApp';
 import { useEffect, useState, type ReactNode } from 'react';
-import { BackHandler, Pressable, ScrollView, Text, View } from 'react-native';
+import { BackHandler, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
@@ -9,11 +9,13 @@ import {
   enIdioma,
   enIdiomaDireccion,
   useBorrador,
+  pistaDeEntrada,
 } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
+import { APP_DE_PRUEBAS, FranjaPruebas } from './FranjaPruebas';
 import { DondeFunciona } from './Disponibilidad';
 import { CasillaSms } from './CasillaSms';
 import { Boton, C, Campo, CampoClave, Pantalla, e } from './ui';
@@ -73,6 +75,10 @@ export function Acceso({
     alSalir: alSalirTelefono,
   });
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
+  // C-APP-DE-PRUEBAS-VISIBLE: si entrar falla y la causa probable es la app equivocada (la de
+  // pruebas con una cuenta real, o la de la tienda con una cuenta de prueba), se orienta. Sale de
+  // la app y de lo escrito, nunca del servidor: no revela si la cuenta existe.
+  const [pista, setPista] = useState<'appDePruebas' | 'appReal' | null>(null);
   const [enviando, setEnviando] = useState(false);
   // Casilla de aceptación de los términos al crear la cuenta (pedido de Richard, 27 oct 2026).
   const [acepto, setAcepto] = useState(false);
@@ -88,6 +94,7 @@ export function Acceso({
 
   async function enviar() {
     setError(null);
+    setPista(null);
     if (!pareceCorreo(v.correo)) {
       setError({ mensaje: t.correoInvalido, campo: 'correo' });
       return;
@@ -122,6 +129,8 @@ export function Acceso({
     } catch (x) {
       // Un 403 del escudo anti-robots: el pase ya no sirve, se pide otro.
       if (x instanceof ErrorApi && x.estado === 403) olvidarPaseTurnstile();
+      if (modo === 'entrar' && x instanceof ErrorApi && x.estado === 401 && Platform.OS !== 'web')
+        setPista(pistaDeEntrada(URL_SERVIDOR, v.correo));
       setError(
         x instanceof ErrorApi ? { mensaje: x.message, campo: x.campo } : { mensaje: String(x) },
       );
@@ -181,6 +190,8 @@ export function Acceso({
           {rolRegistro === 'repartidor' ? t.cuentaDe.repartidor : t.cuentaDe.cliente}
         </Text>
       ) : null}
+      {/* C-APP-DE-PRUEBAS-VISIBLE: la app de pruebas lo dice antes de pedir la cuenta. */}
+      <FranjaPruebas visible={APP_DE_PRUEBAS} />
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {/* C-DISPONIBLE-MUNDO: al crear la cuenta se dice dónde ya funciona; nadie queda fuera. */}
       {registro ? <DondeFunciona idioma={idioma} conInvitacion /> : null}
@@ -291,6 +302,15 @@ export function Acceso({
       ) : null}
       {registro ? (
         <CasillaSms idioma={idioma} marcada={v.sms} cambiar={(x) => b.cambiar('sms', x)} />
+      ) : null}
+      {pista ? (
+        <Text
+          testID="pista-entrada"
+          accessibilityRole="alert"
+          style={{ color: '#7A4B00', fontSize: 14, marginBottom: 10 }}
+        >
+          {pista === 'appDePruebas' ? t.pistaAppDePruebas : t.pistaAppReal}
+        </Text>
       ) : null}
       <Boton
         texto={enviando ? t.enviando : registro ? t.crearCuenta : t.entrar}

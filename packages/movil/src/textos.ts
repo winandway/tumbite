@@ -45,6 +45,12 @@ const es = {
   rolEquivocado:
     'Esta cuenta no es de esta app. Descarga la app de Divoox que corresponde a tu cuenta.',
   soloPanel: 'Las cuentas de restaurante se crean en divoox.com/panel. Aquí solo entras.',
+  franjaPruebas: 'PRUEBAS',
+  franjaPruebasDetalle: 'App de pruebas: no es la de la tienda',
+  pistaAppDePruebas:
+    'Esta es la app de PRUEBAS: aquí solo entran las cuentas de prueba. Tu cuenta de siempre entra en la app de la tienda.',
+  pistaAppReal:
+    'Las cuentas de prueba solo entran en la app que dice PRUEBAS. Esta es la app de la tienda.',
 };
 
 type T = typeof es;
@@ -95,6 +101,12 @@ const en: T = {
   rolEquivocado:
     'This account doesn’t belong to this app. Please download the Divoox app for your account type.',
   soloPanel: 'Restaurant accounts are created at divoox.com/panel. Sign in here.',
+  franjaPruebas: 'TEST',
+  franjaPruebasDetalle: 'Test app (PRUEBAS): not the store version',
+  pistaAppDePruebas:
+    'This is the TEST app (PRUEBAS): only test accounts can sign in here. Your regular account works in the store app.',
+  pistaAppReal:
+    'Test accounts only work in the test app, the one named PRUEBAS. This is the store app.',
 };
 
 export const TEXTOS_MOVIL: Record<Idioma, T> = { es, en };

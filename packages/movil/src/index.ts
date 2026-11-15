@@ -30,3 +30,4 @@ export * from './camara';
 export * from './mapaDivoox';
 export * from './SobreLosBotones';
 export * from './FotosPuerta';
+export * from './FranjaPruebas';

@@ -49,3 +49,42 @@ export function elegirServidor(origen: string | null, variable: string | undefin
   }
   return variable || SERVIDOR_PRODUCCION;
 }
+
+/**
+ * C-APP-DE-PRUEBAS-VISIBLE (15 nov 2026) — todos los países. El entorno del servidor con el que
+ * quedó construida una app. Richard perdió una hora probando con la app de la tienda creyendo que
+ * era la de pruebas: nada en la pantalla decía a qué sitio estaba conectada. Con esto, toda app
+ * que no hable con producción lo dice en la pantalla de entrar y en su menú.
+ */
+export function entornoDeServidor(url: string): Entorno | null {
+  try {
+    return entornoDeHost(new URL(url).host);
+  } catch {
+    return null;
+  }
+}
+
+/** La app habla con un servidor que no es el real (sitio de pruebas, local o desconocido). */
+export function esAppDePruebas(url: string): boolean {
+  return entornoDeServidor(url) !== 'produccion';
+}
+
+/**
+ * Correos que solo pueden ser de una cuenta de prueba: ejemplo.com y example.com son dominios
+ * reservados, nadie recibe correo ahí, así que ninguna cuenta real los usa. Sirve para orientar
+ * SIN consultar al servidor y, por eso, sin revelar si una cuenta existe.
+ */
+export function pareceCorreoDePrueba(correo: string): boolean {
+  return /@(ejemplo|example)\.(com|org|net)$/i.test(correo.trim());
+}
+
+/**
+ * La pista que acompaña al «no coinciden» cuando la causa probable es la app equivocada. Depende
+ * solo de la app y de lo que la persona escribió, nunca de la respuesta del servidor:
+ *  - en la app de pruebas, siempre: ahí solo entran las cuentas de prueba;
+ *  - en la app real, solo si escribió un correo de prueba.
+ */
+export function pistaDeEntrada(url: string, correo: string): 'appDePruebas' | 'appReal' | null {
+  if (esAppDePruebas(url)) return 'appDePruebas';
+  return pareceCorreoDePrueba(correo) ? 'appReal' : null;
+}
