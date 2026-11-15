@@ -107,6 +107,12 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['pedidos', 'para_telefono', "TEXT NOT NULL DEFAULT ''"],
   ['pedidos', 'para_mensaje', "TEXT NOT NULL DEFAULT ''"],
   ['direcciones_cliente', 'apto', "TEXT NOT NULL DEFAULT ''"],
+  // C-FOTO-PUERTA (15 nov 2026): casa o edificio de la dirección guardada; el pedido recuerda de qué
+  // dirección guardada salió (para mostrarle sus fotos al repartidor); y el interruptor por zona
+  // que exige la primera foto (apagado en todas partes: lo enciende el superadmin).
+  ['direcciones_cliente', 'tipo_lugar', "TEXT NOT NULL DEFAULT ''"],
+  ['pedidos', 'direccion_id', 'TEXT'],
+  ['zonas', 'foto_puerta_obligatoria', 'INTEGER NOT NULL DEFAULT 0'],
   // C-OPCIONES-ANIDADAS: la opción abre otro grupo del mismo plato (combo → bebida → tamaño).
   ['opciones', 'abre_grupo_id', 'TEXT'],
   // C-CHAT-FOTOS: foto dentro del chat del pedido (privada, en chat/<pedido>/…).

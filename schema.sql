@@ -2754,6 +2754,18 @@ CREATE TABLE IF NOT EXISTS direcciones_cliente (
 );
 CREATE INDEX IF NOT EXISTS direcciones_cliente_usuario ON direcciones_cliente(usuario_id, usada_en);
 
+-- C-FOTO-PUERTA (15 nov 2026): hasta tres fotos del frente y la puerta por dirección guardada, de
+-- afuera hacia adentro. El archivo vive en el almacén privado (puertas/<usuario>/<direccion>/…);
+-- la miniatura es la misma clave con «-s». Un solo índice: el de la llave única.
+CREATE TABLE IF NOT EXISTS direcciones_fotos (
+  id TEXT PRIMARY KEY,
+  direccion_id TEXT NOT NULL REFERENCES direcciones_cliente(id),
+  orden INTEGER NOT NULL CHECK (orden BETWEEN 1 AND 3),
+  clave TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (direccion_id, orden)
+);
+
 -- Cupones (auditoría final, punto 15). Quién los paga (Tumbite o el restaurante) lo fija cada cupón;
 -- de fábrica los paga Tumbite (baja su ganancia), decisión de Richard por cupón.
 CREATE TABLE IF NOT EXISTS cupones (

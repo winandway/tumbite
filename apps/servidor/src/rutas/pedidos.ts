@@ -1,3 +1,4 @@
+import { direccionDelPedido } from './fotoPuerta';
 import { apartarSaldo, avisoTarjetaRegalo, saldoRegalo } from '../tarjetasRegalo';
 import { avisoPlus, leerPlus, tienePlus } from '../plus';
 import { anotarPedidoDeAnuncio } from '../anuncios';
@@ -858,7 +859,11 @@ pedidos.post('/pedidos', async (c) => {
     d.lng = rest.lng == null ? null : Number(rest.lng);
   } else if (d.direccion.length < 5)
     throw new ErrorDatos('Escribe la dirección de entrega.', 'direccion', 422);
-  else if (d.apto) d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
+  // C-FOTO-PUERTA: el texto tal como lo escribió el cliente (sin el apartamento) es el que se
+  // compara con sus direcciones guardadas para saber de cuál salió el pedido.
+  const direccionEscrita = d.direccion;
+  if (!recogida && d.direccion.length >= 5 && d.apto)
+    d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
   if (recogida) d.apto = '';
   // C-REGALAR-PEDIDO: un regalo se lleva a la puerta de otra persona; no hay regalo para recoger.
   if (d.paraOtro && recogida)
@@ -1072,12 +1077,25 @@ pedidos.post('/pedidos', async (c) => {
       201,
     );
   }
+  // C-FOTO-PUERTA: el pedido recuerda de qué dirección guardada salió, para que el repartidor vea
+  // las fotos de esa puerta. Un regalo va a la casa de otra persona y una recogida al local: sin
+  // enlace. Si la zona exige la primera foto (interruptor del superadmin), sin ella no se pide.
+  const puerta =
+    recogida || d.paraOtro
+      ? null
+      : await direccionDelPedido(db, u.id, direccionEscrita, String(rest.zona_id ?? ZONA_INICIAL));
+  if (puerta?.obligatoria && !puerta.tieneFoto)
+    throw new ErrorDatos(
+      'En esta zona hace falta una foto del frente de tu casa o edificio para que tu repartidor te encuentre. Agrégala y vuelve a intentar.',
+      'fotoPuerta',
+      422,
+    );
   const id = nuevoId();
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, alergias, para_nombre, para_telefono, para_mensaje)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, alergias, para_nombre, para_telefono, para_mensaje, direccion_id)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -1116,6 +1134,7 @@ pedidos.post('/pedidos', async (c) => {
       d.paraOtro?.nombre ?? '',
       d.paraOtro?.telefono ?? '',
       d.paraOtro?.mensaje ?? '',
+      puerta?.direccionId ?? null,
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);

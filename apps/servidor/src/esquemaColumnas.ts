@@ -1702,6 +1702,13 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "creado_en",
     "usada_en"
   ],
+  "direcciones_fotos": [
+    "id",
+    "direccion_id",
+    "orden",
+    "clave",
+    "creado_en"
+  ],
   "cupones": [
     "codigo",
     "tipo",

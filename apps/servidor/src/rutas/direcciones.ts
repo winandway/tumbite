@@ -3,13 +3,14 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { borrarFotosDeDireccion, fotosPorDireccion } from './fotoPuerta';
 
 /** Direcciones guardadas del cliente (auditoría final, punto 14): casa, trabajo, con instrucciones. */
 export const direcciones = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 const MAX = 10;
 
-const aDireccion = (r: Record<string, unknown>) => ({
+const aDireccion = (r: Record<string, unknown>, fotos: number[] = []) => ({
   id: String(r.id),
   etiqueta: String(r.etiqueta ?? ''),
   direccion: String(r.direccion),
@@ -19,6 +20,9 @@ const aDireccion = (r: Record<string, unknown>) => ({
   apto: String(r.apto ?? ''),
   entrega: String(r.entrega ?? 'puerta') as 'puerta' | 'mano',
   usadaEn: String(r.usada_en),
+  // C-FOTO-PUERTA: casa o edificio («» si todavía no lo dijo) y qué fotos de la puerta tiene.
+  tipoLugar: String(r.tipo_lugar ?? '') as '' | 'casa' | 'edificio',
+  fotos,
 });
 
 direcciones.get('/mis-direcciones', async (c) => {
@@ -29,7 +33,10 @@ direcciones.get('/mis-direcciones', async (c) => {
     )
     .bind(u.id, MAX)
     .all<Record<string, unknown>>();
-  return c.json({ direcciones: results.map(aDireccion) });
+  const fotos = results.length
+    ? await fotosPorDireccion(base(c), u.id)
+    : new Map<string, number[]>();
+  return c.json({ direcciones: results.map((r) => aDireccion(r, fotos.get(String(r.id)) ?? [])) });
 });
 
 direcciones.post('/mis-direcciones', async (c) => {
@@ -85,11 +92,18 @@ direcciones.post('/mis-direcciones', async (c) => {
     .prepare('SELECT * FROM direcciones_cliente WHERE id = ?')
     .bind(id)
     .first<Record<string, unknown>>())!;
-  return c.json({ direccion: aDireccion(r) }, igual ? 200 : 201);
+  const fotos = igual ? await fotosPorDireccion(db, u.id) : new Map<string, number[]>();
+  return c.json({ direccion: aDireccion(r, fotos.get(id) ?? []) }, igual ? 200 : 201);
 });
 
 direcciones.delete('/mis-direcciones/:id', async (c) => {
   const u = exigir(c, 'cliente');
+  // C-FOTO-PUERTA: con la dirección se van sus fotos (filas y archivos), antes que la dirección.
+  const mia = await base(c)
+    .prepare('SELECT id FROM direcciones_cliente WHERE id = ? AND usuario_id = ?')
+    .bind(c.req.param('id'), u.id)
+    .first<{ id: string }>();
+  if (mia) await borrarFotosDeDireccion(c.env, base(c), mia.id);
   await base(c)
     .prepare('DELETE FROM direcciones_cliente WHERE id = ? AND usuario_id = ?')
     .bind(c.req.param('id'), u.id)

@@ -1259,6 +1259,20 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Solo se califican pedidos entregados.', 'Only delivered orders can be rated.'],
   ['Sube una foto en JPG, PNG o WebP.', 'Upload a JPG, PNG, or WebP photo.'],
+  // C-FOTO-PUERTA (15 nov 2026).
+  ['No encontrado', 'Not found'],
+  ['Esa dirección ya no está guardada.', 'That address is no longer saved.'],
+  [
+    'Una casa lleva dos fotos: el frente y la puerta.',
+    'A house takes two photos: the front and the door.',
+  ],
+  ['Primero sube la foto.', 'Upload the photo first.'],
+  ['Ese pedido no es tuyo.', 'That order isn’t yours.'],
+  [
+    'En esta zona hace falta una foto del frente de tu casa o edificio para que tu repartidor te encuentre. Agrégala y vuelve a intentar.',
+    'This area requires a photo of the front of your house or building so your courier can find you. Add it and try again.',
+  ],
+  ['No llegó ningún cambio.', 'No change was sent.'],
   [
     'Termina tu entrega actual antes de aceptar otra.',
     'Finish your current delivery before accepting another.',

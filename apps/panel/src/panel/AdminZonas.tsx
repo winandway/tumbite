@@ -24,6 +24,7 @@ type Zona = {
   restaurantes: number;
   repartidores: number;
   enEspera: number;
+  fotoPuertaObligatoria: boolean;
 };
 type Persona = {
   id: string;
@@ -48,6 +49,9 @@ const T = {
     apagada: 'Apagada',
     activar: 'Activar',
     apagar: 'Apagar',
+    fotoPuerta: 'Foto de la puerta obligatoria para pedir',
+    fotoPuertaAyuda:
+      'Apagado: el cliente decide si la sube. Encendido: sin la primera foto no puede pedir a domicilio en esta zona.',
     restaurantes: 'restaurantes',
     repartidores: 'repartidores',
     enEspera: 'en espera',
@@ -78,6 +82,9 @@ const T = {
     apagada: 'Off',
     activar: 'Turn on',
     apagar: 'Turn off',
+    fotoPuerta: 'Door photo required to order',
+    fotoPuertaAyuda:
+      'Off: the customer chooses whether to add it. On: without the first photo they cannot order delivery in this zone.',
     restaurantes: 'restaurants',
     repartidores: 'drivers',
     enEspera: 'waiting',
@@ -129,6 +136,19 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
   async function alternar(z: Zona) {
     await pedir('PATCH', `/datos/admin/zonas/${z.id}`, { activa: !z.activa });
     await cargar();
+  }
+
+  // C-FOTO-PUERTA: el interruptor por zona de la primera foto obligatoria (de fábrica apagado).
+  async function alternarFotoPuerta(z: Zona) {
+    setError(null);
+    try {
+      await pedir('PATCH', `/datos/admin/zonas/${z.id}`, {
+        fotoPuertaObligatoria: !z.fotoPuertaObligatoria,
+      });
+      await cargar();
+    } catch (e) {
+      setError({ mensaje: e instanceof ErrorApi ? e.message : String(e) });
+    }
   }
 
   async function guardar(e: React.FormEvent) {
@@ -191,6 +211,19 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
             >
               {conAreas === z.id ? t.ocultar : t.areas}
             </button>
+            <label className="lista-texto" style={{ flexBasis: '100%', cursor: 'pointer' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  role="switch"
+                  checked={z.fotoPuertaObligatoria}
+                  onChange={() => void alternarFotoPuerta(z)}
+                  data-testid={`zona-foto-puerta-${z.id}`}
+                />
+                <strong>{t.fotoPuerta}</strong>
+              </span>
+              <span>{t.fotoPuertaAyuda}</span>
+            </label>
             {conAreas === z.id && <AreasCiudad zona={z} usuario={usuario} idioma={idioma} />}
           </li>
         ))}

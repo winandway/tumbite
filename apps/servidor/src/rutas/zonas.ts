@@ -106,6 +106,8 @@ zonas.get('/admin/zonas', async (c) => {
       restaurantes: Number(f.restaurantes),
       repartidores: Number(f.repartidores),
       enEspera: Number(f.en_espera),
+      // C-FOTO-PUERTA: si en esta zona la primera foto de la puerta es obligatoria para pedir.
+      fotoPuertaObligatoria: Number(f.foto_puerta_obligatoria ?? 0) === 1,
     })),
   });
 });
@@ -149,10 +151,25 @@ zonas.put('/admin/zonas', async (c) => {
 
 zonas.patch('/admin/zonas/:id', async (c) => {
   exigir(c, 'admin');
-  const { activa } = await leerCuerpo(c, z.object({ activa: z.boolean() }));
+  // C-FOTO-PUERTA: el mismo interruptor de la zona enciende o apaga que la primera foto de la
+  // puerta sea obligatoria (de fábrica apagado en todas las zonas).
+  const d = await leerCuerpo(
+    c,
+    z
+      .object({ activa: z.boolean().optional(), fotoPuertaObligatoria: z.boolean().optional() })
+      .refine((x) => x.activa !== undefined || x.fotoPuertaObligatoria !== undefined, {
+        error: 'No llegó ningún cambio.',
+      }),
+  );
   const r = await base(c)
-    .prepare('UPDATE zonas SET activa = ? WHERE id = ?')
-    .bind(activa ? 1 : 0, c.req.param('id'))
+    .prepare(
+      'UPDATE zonas SET activa = COALESCE(?, activa), foto_puerta_obligatoria = COALESCE(?, foto_puerta_obligatoria) WHERE id = ?',
+    )
+    .bind(
+      d.activa === undefined ? null : d.activa ? 1 : 0,
+      d.fotoPuertaObligatoria === undefined ? null : d.fotoPuertaObligatoria ? 1 : 0,
+      c.req.param('id'),
+    )
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Esa zona no existe.', undefined, 404);
   return c.json({ ok: true });

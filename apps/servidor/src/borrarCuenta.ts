@@ -1,4 +1,5 @@
 import type { Env } from './env';
+import { borrarPuertasDeUsuario } from './rutas/fotoPuerta';
 import { ErrorDatos } from './validar';
 
 /**
@@ -42,7 +43,7 @@ export async function borrarCuenta(
     // guardan (impuestos y contabilidad). Candado C-BORRADO-COMPLETO.
     db
       .prepare(
-        "UPDATE pedidos SET direccion = 'Dirección borrada', notas = '', lat = NULL, lng = NULL WHERE cliente_id = ?",
+        "UPDATE pedidos SET direccion = 'Dirección borrada', notas = '', lat = NULL, lng = NULL, direccion_id = NULL WHERE cliente_id = ?",
       )
       .bind(u.id),
     db
@@ -50,6 +51,14 @@ export async function borrarCuenta(
         "UPDATE calificaciones SET comentario = '' WHERE pedido_id IN (SELECT id FROM pedidos WHERE cliente_id = ?)",
       )
       .bind(u.id),
+    // C-BORRADO-DIRECCIONES (15 nov 2026): las direcciones guardadas y las fotos de la puerta se
+    // van con la cuenta. Antes se quedaban: la casa de la persona seguía en la base.
+    db
+      .prepare(
+        'DELETE FROM direcciones_fotos WHERE direccion_id IN (SELECT id FROM direcciones_cliente WHERE usuario_id = ?)',
+      )
+      .bind(u.id),
+    db.prepare('DELETE FROM direcciones_cliente WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM suscripciones_web WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
@@ -77,4 +86,6 @@ export async function borrarCuenta(
       } while (cursor);
     }
   }
+  // Y los archivos de las fotos de la puerta (puertas/<usuario>/…), del almacén privado.
+  await borrarPuertasDeUsuario(env, u.id);
 }
