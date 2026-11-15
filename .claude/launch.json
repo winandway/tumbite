@@ -75,7 +75,7 @@
       "port": 5183
     },
     {
-      "name": "servidor-recorrido",
+      "name": "recorrido-servidor",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "wrangler",
@@ -83,21 +83,23 @@
         "-c",
         ".recorrido/wrangler.jsonc",
         "--port",
-        "8791",
+        "8790",
         "--persist-to",
         ".recorrido/estado"
       ],
-      "port": 8791
+      "port": 8790
     },
     {
-      "name": "panel-con-servidor-recorrido",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "@tumbite/panel"],
-      "env": {
-        "DATOS_URL": "http://localhost:8791",
-        "PUERTO_PANEL": "5184"
-      },
-      "port": 5184
+      "name": "recorrido-stripe-simulado",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/recorrido/stripe-simulado.mjs"],
+      "port": 12111
+    },
+    {
+      "name": "recorrido-twilio-simulado",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/recorrido/twilio-simulado.mjs"],
+      "port": 12112
     }
   ]
 }

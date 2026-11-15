@@ -271,6 +271,18 @@
         margin-top: 2px;
         cursor: pointer;
       }
+      /* Cada punto lleva su número fijo: «Progreso 3». Así se nombra al hablar de él. */
+      .progreso-num {
+        display: inline-block;
+        margin-right: 10px;
+        padding: 3px 12px;
+        border-radius: 999px;
+        background: #101010;
+        color: #fff;
+        font-family: Poppins, Montserrat, system-ui, sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+      }
       .prio {
         font-size: 11px;
         font-weight: 700;
@@ -541,8 +553,8 @@
       <section id="esperando">
         <h2>Lo que depende de ti</h2>
         <p class="pista">
-          Cuando hagas algo, márcalo y escribe una nota si quieres. Nosotros lo leemos y seguimos
-          desde ahí.
+          Cada punto tiene su número: «Progreso 1», «Progreso 2»… Cuando hagas algo, márcalo,
+          escribe una nota si quieres y toca «Ya lo hice». Nosotros lo leemos y seguimos desde ahí.
         </p>
         <div class="clave tarjeta" id="clave-caja">
           <b>Clave del equipo</b>
@@ -696,8 +708,9 @@
             const m = marcas.get(e.id);
             const listo = Boolean(m?.hecho);
             return `<div class="tarjeta ${listo ? 'listo' : ''}" data-id="${esc(e.id)}">
-      <input type="checkbox" class="caja" ${listo ? 'checked' : ''} aria-label="Ya lo hice: ${esc(e.titulo)}">
+      <input type="checkbox" class="caja" ${listo ? 'checked' : ''} aria-label="Progreso ${Number(e.numero) || ''}. Ya lo hice: ${esc(e.titulo)}">
       <div>
+        <span class="progreso-num">Progreso ${Number(e.numero) || ''}</span>
         <span class="prio p-${esc(e.prioridad)}">${{ alta: 'Urgente', media: 'Importante', baja: 'Puede esperar' }[e.prioridad] ?? ''}</span>
         <h3>${esc(e.titulo)}</h3>
         <p class="det"><span>Para qué:</span> ${esc(e.para)}</p>
