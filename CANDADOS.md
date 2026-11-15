@@ -3908,6 +3908,16 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **No visto en un teléfono:** se ve en la próxima compilación de las apps (no se compila sin permiso de Gerencia). La versión web no tenía el fallo.
 - **Qué NO tocar:** no quitar `SobreLosBotones` de la raíz; no volver a poner márgenes fijos «a ojo» para los botones del sistema.
 
+## C-PROGRESO-CUENTAS · Las cuentas de prueba están en la página de progreso, solo con la clave del equipo (14 nov 2026, pedido de Richard) — todos los países
+
+- **Qué pidió Richard:** tener a mano el usuario y la contraseña de las cuentas demo sin pedirlos cada vez: «déjalos en la página de progreso… cuando los pida, me dices que están allí».
+- **El cuidado:** la página de progreso y su repositorio son públicos. Las cuentas NO van en `progreso/datos.json` ni en ningún archivo del repositorio.
+- **Qué se hizo:** sección «Cuentas de prueba» en `progreso/index.html` con el botón «Ver las cuentas». El servidor de la página (`progreso/_worker.js`) las entrega en `POST /datos/cuentas` solo si llega la clave del equipo (la misma de «Ya lo hice»; en el repositorio está solo su huella). Viven en la base del sitio de progreso (tabla `cuentas_demo`, `progreso/schema.sql`) y se cargan o cambian con `POST /datos/cuentas/guardar`, también con la clave. Cada dato tiene su botón «Copiar».
+- **Qué hay cargado:** cliente, conductor, restaurante de Novi y la tarjeta de prueba, todo del sitio de pruebas. La cuenta de superadmin NO se carga ahí.
+- **Cómo se comprueba:** sin clave o con una clave mala responde 401; con la clave, las cuatro tarjetas (comprobado el 14 nov).
+- **Ojo al publicar (aprendido ese día):** un cambio de `progreso/` sin `[skip ci]` seguido del automático con `[skip ci]` deja la rama principal sin verificación en la punta y la publicación del sitio se salta. Los cambios de la página de progreso se suben SIEMPRE por `scripts/progreso/publicar.sh`, nunca mezclados con una subida del producto.
+- **Qué NO tocar:** no escribir contraseñas en `datos.json`; no quitar la comprobación de la clave.
+
 ## C-GUIA-INSTALAR-NAVEGADOR · Guía pública para instalar Divoox desde el navegador del celular (13 nov 2026, punto 10 del reporte) — todos los países
 
 - **Qué se hizo:** guía `account/install-from-browser` en Docs (es y en, dirección en inglés, entra sola en el mapa del sitio por `prerender.mjs`): qué es, cómo se agrega en iPhone (Safari) y en Android (Chrome), y lo que NO hace instalada así (sin avisos al celular, sin ubicación con la pantalla apagada, el código de recogida se escribe). Enlaces a la guía desde la zona de descargas (nota del iPhone, `data-testid="descargas-navegador"`) y desde la tarjeta «Pide hoy desde la web» de la portada.
