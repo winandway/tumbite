@@ -121,7 +121,7 @@ test('cada servicio de viajes dice lo suyo en el formulario (es)', async ({ brow
   await expect(p.getByText(casco)).toBeVisible({ timeout: 30_000 });
   await p.goto('/app/ride?servicio=carro');
   // C-CARRO-CATEGORIAS: las categorías se eligen al ver el precio; el formulario dice lo de Carro.
-  await expect(p.getByText(/Para 6, elige Carro XL/)).toBeVisible({ timeout: 30_000 });
+  await expect(p.getByText(/Para 6, elige Auto XL/)).toBeVisible({ timeout: 30_000 });
   await expect(p.getByTestId('parada-agregar')).toBeVisible();
   await expect(p.getByText(casco)).toHaveCount(0);
   await p.goto('/app/ride?servicio=envios');

@@ -944,7 +944,7 @@ async function bloquearPasajeros(
     : (await aperturasVigentes(db)).some(([s]) => s === id);
   if (abierto) return;
   throw new ErrorDatos(
-    'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',
+    'Los servicios de pasajeros (Moto y Auto) no se pueden encender todavía.',
     'estado',
     409,
   );

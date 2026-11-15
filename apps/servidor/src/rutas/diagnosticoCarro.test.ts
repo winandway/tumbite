@@ -26,13 +26,13 @@ function escenario(host = 'staging.tumbite.com') {
   return { m, interno };
 }
 
-describe('C-CARRO-GUION: la herramienta del guion de Carro', () => {
+describe('C-CARRO-GUION: la herramienta del guion de Auto', () => {
   it('sin el secreto no existe; en producción tampoco', async () => {
     expect((await escenario().interno('armar', {}, false)).estado).toBe(404);
     expect((await escenario('divoox.com').interno('armar')).estado).toBe(404);
   });
 
-  it('Detroit queda con Carro: el pasajero cotiza, el taxista recibe la oferta y la acepta', async () => {
+  it('Detroit queda con Auto: el pasajero cotiza, el taxista recibe la oferta y la acepta', async () => {
     const { m, interno } = escenario();
     const a = await interno('armar');
     expect(a.estado).toBe(200);
@@ -81,7 +81,7 @@ describe('C-CARRO-GUION: la herramienta del guion de Carro', () => {
     expect(r.status).toBe(200);
   });
 
-  it('el taxista de El Vigía queda listo para Carro en la zona única; la limpieza lo desconecta', async () => {
+  it('el taxista de El Vigía queda listo para Auto en la zona única; la limpieza lo desconecta', async () => {
     const { m, interno } = escenario();
     const { tokens } = (await interno('armar')).datos;
     expect((await interno('conductor', { quien: 've' })).estado).toBe(409); // ciudad sin abrir
@@ -98,7 +98,7 @@ describe('C-CARRO-GUION: la herramienta del guion de Carro', () => {
           radioKm: EVG.radioKm,
           zonaHoraria: EVG.zonaHoraria,
         },
-        motivo: 'Carro de pruebas',
+        motivo: 'Auto de pruebas',
       },
       tokens.equipo,
     );

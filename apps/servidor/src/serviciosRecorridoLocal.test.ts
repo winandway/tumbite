@@ -37,7 +37,7 @@ async function carroEncendido(url: string, env: Record<string, string>) {
 }
 
 describe('servicios en prueba en el recorrido local (C-SERVICIOS-RECORRIDO-LOCAL)', () => {
-  it('un arranque nuevo del servidor local del recorrido no apaga Carro encendido por la prueba', async () => {
+  it('un arranque nuevo del servidor local del recorrido no apaga Auto encendido por la prueba', async () => {
     expect(
       await carroEncendido('http://localhost:8790/datos/servicios', {
         SERVICIOS_PRUEBA_LOCAL: '1',

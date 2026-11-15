@@ -65,7 +65,7 @@ const T = {
     verMas: 'Ver más viajes',
     volver: 'Volver a mis viajes',
     recibo: 'Recibo del viaje',
-    servicios: { moto: 'Moto', carro: 'Carro', carro_xl: 'Carro XL', envios: 'Envío' } as Record<
+    servicios: { moto: 'Moto', carro: 'Auto', carro_xl: 'Auto XL', envios: 'Envío' } as Record<
       string,
       string
     >,
@@ -123,7 +123,7 @@ const T = {
     verMas: 'See more rides',
     volver: 'Back to my rides',
     recibo: 'Ride receipt',
-    servicios: { moto: 'Moto', carro: 'Car', carro_xl: 'Car XL', envios: 'Delivery' } as Record<
+    servicios: { moto: 'Moto', carro: 'Auto', carro_xl: 'Auto XL', envios: 'Delivery' } as Record<
       string,
       string
     >,

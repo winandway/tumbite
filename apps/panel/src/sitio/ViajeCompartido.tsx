@@ -6,7 +6,7 @@ import { Enlace } from '../Enlace';
 const T = {
   es: {
     titulo: 'Viaje en Moto en vivo',
-    tituloCarro: 'Viaje en Carro en vivo',
+    tituloCarro: 'Viaje en Auto en vivo',
     // C-ENVIO-TEXTOS (14 nov 2026): quien recibe un paquete ve su envío, no «un viaje».
     tituloEnvio: 'Tu paquete en vivo',
     privadoEnvio:
@@ -19,7 +19,7 @@ const T = {
       conductor_llego: 'El conductor está recogiendo el paquete',
       en_curso: 'Tu paquete va en camino',
     } as Record<string, string>,
-    carro: 'Carro',
+    carro: 'Auto',
     cargando: 'Cargando el viaje…',
     noExiste: 'Este enlace no existe o está incompleto.',
     terminado: 'Este viaje ya terminó. El enlace dejó de mostrar el recorrido.',
@@ -58,7 +58,7 @@ const T = {
       conductor_llego: 'The driver is picking up the package',
       en_curso: 'Your package is on its way',
     } as Record<string, string>,
-    carro: 'Car',
+    carro: 'Auto',
     cargando: 'Loading the ride…',
     noExiste: 'This link doesn’t exist or is incomplete.',
     terminado: 'This ride has ended. The link no longer shows the trip.',

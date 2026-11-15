@@ -127,7 +127,7 @@ describe('C-PILOTO-SERVICIOS: servicios encendidos solo para el piloto', () => {
     expect(await estadoDe(m, 'mercado', dentro.token)).toBe('proximamente');
   });
 
-  it('Moto y Carro no se pueden poner en piloto (llevan pasajeros: falta lo legal y el seguro)', async () => {
+  it('Moto y Auto no se pueden poner en piloto (llevan pasajeros: falta lo legal y el seguro)', async () => {
     const m = mundo();
     const admin = await m.cuenta('admin');
     for (const servicio of ['moto', 'carro']) {

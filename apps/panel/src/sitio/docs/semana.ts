@@ -159,7 +159,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           'Las comisiones de los pedidos que cobras en mano salen de tu saldo; la app te dice para cuántos pedidos te alcanza y recargas con un código.',
         explicacion: [
           'En los países donde cobras en mano, la comisión de Divoox no se descuenta de un pago con tarjeta: sale de tu saldo para comisiones. Se aparta al aceptar el pedido y se cobra al entregar; si el pedido se cancela, vuelve a tu saldo.',
-          'En «Ganancias» ves tu saldo disponible, lo apartado en pedidos y una estimación de para cuántos pedidos (y viajes, si haces Moto o Carro) te alcanza. Cuando queda poco, el aviso sale en rojo.',
+          'En «Ganancias» ves tu saldo disponible, lo apartado en pedidos y una estimación de para cuántos pedidos (y viajes, si haces Moto o Auto) te alcanza. Cuando queda poco, el aviso sale en rojo.',
           'Para recargar, pagas en un punto de venta autorizado y te dan un código. Lo escribes en «Código de recarga» y tocas «Recargar con el código»: el saldo se suma al momento.',
           'Sin saldo no recibes pedidos que se cobran en mano.',
         ],

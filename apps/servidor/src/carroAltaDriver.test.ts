@@ -11,7 +11,7 @@ const raiz = join(__dirname, '..', '..', '..');
 const leer = (r: string) => readFileSync(join(raiz, r), 'utf8');
 
 describe('C-CARRO-ALTA-DRIVER: el taxista se da de alta en Driver', () => {
-  it('el perfil abre «Divoox Carro» con la pieza común de Moto', () => {
+  it('el perfil abre «Divoox Auto» con la pieza común de Moto', () => {
     expect(leer('apps/repartidor/src/Inicio.tsx')).toMatch(/<MiCarro \/>/);
     expect(leer('apps/repartidor/src/viajes/MiCarro.tsx')).toMatch(
       /<AltaPasajeros servicio="carro" \/>/,
@@ -31,19 +31,19 @@ describe('C-CARRO-ALTA-DRIVER: el taxista se da de alta en Driver', () => {
     expect(s).toMatch(/servicioId: servicio,/);
     expect(s).toMatch(/tipo: servicio,/);
     // Español e inglés.
-    expect(s).toMatch(/Divoox Carro/);
-    expect(s).toMatch(/Divoox Car'/);
+    expect(s).toMatch(/Divoox Auto/);
+    expect(s).toMatch(/Divoox Auto'/);
   });
 });
 
 /** C-CARRO-VIAJE-PASAJERO: la app del pasajero dice lo de cada servicio (candado sobre el código). */
 describe('C-CARRO-VIAJE-PASAJERO: el pasajero ve lo de su servicio', () => {
-  it('«Pedir» dice Moto, Carro o la categoría del carro; el casco solo en Moto', () => {
+  it('«Pedir» dice Moto, Auto o la categoría del carro; el casco solo en Moto', () => {
     const s = leer('apps/cliente/src/viajes/PedirMoto.tsx');
     // C-CARRO-CATEGORIAS (14 nov 2026): el botón dice Carro, Carro Comfort, Carro Premium o Carro XL.
     expect(s).toMatch(/t\.pedirCategoria/);
     const textos = leer('apps/cliente/src/viajes/textos.ts');
-    for (const boton of ['Pedir Carro XL', 'Pedir Carro Comfort', 'Pedir Carro Premium'])
+    for (const boton of ['Pedir Auto XL', 'Pedir Auto Comfort', 'Pedir Auto Premium'])
       expect(textos).toContain(boton);
     expect(s).toMatch(/t\.pedirCarro\b/);
     expect(s).toMatch(

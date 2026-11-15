@@ -192,7 +192,7 @@ async function correr(M, idiomas) {
       servicio: 'carro',
       zona: CIUDAD,
       ...(M.tarifa ? { tarifa: M.tarifa } : {}),
-      motivo: 'Ciudad de las capturas de Carro (servidor local)',
+      motivo: 'Ciudad de las capturas de Auto (servidor local)',
     });
   if (M.pais === 'US') {
     // En Estados Unidos el paso del panel no abre el país (lo abre la orden legal): en este servidor
@@ -211,7 +211,7 @@ async function correr(M, idiomas) {
       zona: CIUDAD.id,
       tarifa: M.tarifa,
       dePrueba: false,
-      motivo: 'Tarifa de las capturas de Carro (servidor local)',
+      motivo: 'Tarifa de las capturas de Auto (servidor local)',
     });
   } else if ((await intentar(abrir())).error) {
     await equipo('PUT', `/datos/admin/pasajeros-pais/${M.pais}/carro`, {
@@ -282,7 +282,7 @@ async function correr(M, idiomas) {
     await d.goto('/driver/');
     await d.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
     await d
-      .getByText(en ? 'Divoox Car' : 'Divoox Carro', { exact: true })
+      .getByText(en ? 'Divoox Auto' : 'Divoox Auto', { exact: true })
       .first()
       .click();
     await d.getByTestId('alta-carro').waitFor({ timeout: 30_000 });
@@ -477,20 +477,20 @@ async function correr(M, idiomas) {
     await foto(c, 'pasajero-categorias', idioma);
     await c.getByTestId('carro-categoria-comfort').click();
     await c
-      .getByRole('button', { name: en ? 'Request Car Comfort' : 'Pedir Carro Comfort' })
+      .getByRole('button', { name: en ? 'Request Auto Comfort' : 'Pedir Auto Comfort' })
       .waitFor({ timeout: 30_000 });
     await verCategorias();
     await foto(c, 'pasajero-comfort', idioma);
     await c.getByTestId('carro-categoria-xl').click();
     await c
-      .getByRole('button', { name: en ? 'Request Car XL' : 'Pedir Carro XL' })
+      .getByRole('button', { name: en ? 'Request Auto XL' : 'Pedir Auto XL' })
       .waitFor({ timeout: 30_000 });
     await verCategorias();
     await foto(c, 'pasajero-xl', idioma);
     // Vuelve a Carro normal y pide con pago móvil.
     await c.getByTestId('carro-categoria-estandar').click();
     await c
-      .getByRole('button', { name: en ? 'Request Car' : 'Pedir Carro', exact: true })
+      .getByRole('button', { name: en ? 'Request Auto' : 'Pedir Auto', exact: true })
       .waitFor({ timeout: 30_000 });
     const cot = (
       await pasajero('POST', '/datos/viajes/cotizar', {
@@ -805,4 +805,4 @@ try {
   await apagarPasajerosUs();
   await navegador.close();
 }
-console.log('capturas de Carro listas en docs/capturas/recorrido/carro-*.png');
+console.log('capturas de Auto listas en docs/capturas/recorrido/carro-*.png');

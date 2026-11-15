@@ -76,7 +76,7 @@ async function vehiculoAprobado(
 }
 
 describe('catálogo de servicios (GET /datos/servicios)', () => {
-  it('Comida se abre en Miami; Moto, Carro y los demás salen «muy pronto»', async () => {
+  it('Comida se abre en Miami; Moto, Auto y los demás salen «muy pronto»', async () => {
     const { m } = await escenario();
     const r = await m.llamar('GET', `/datos/servicios?lat=${MIAMI.lat}&lng=${MIAMI.lng}`);
     expect(r.estado).toBe(200);
@@ -121,7 +121,7 @@ describe('catálogo de servicios (GET /datos/servicios)', () => {
   });
 });
 
-describe('C-SERVICIOS-IMPLEMENTADOS: Moto y Carro no se pueden encender', () => {
+describe('C-SERVICIOS-IMPLEMENTADOS: Moto y Auto no se pueden encender', () => {
   it('el panel lo rechaza (servicio y zona)', async () => {
     const { m, admin } = await escenario();
     for (const id of ['moto', 'carro']) {
@@ -510,7 +510,7 @@ describe('habilitaciones', () => {
 });
 
 describe('salud del catálogo (canario)', () => {
-  it('dice ok con Moto y Carro apagados y error si alguien enciende uno a la fuerza', async () => {
+  it('dice ok con Moto y Auto apagados y error si alguien enciende uno a la fuerza', async () => {
     const { m } = await escenario();
     const pieza = async () =>
       (await m.llamar('GET', '/datos/salud')).datos.piezas.servicios as string;
@@ -523,7 +523,7 @@ describe('salud del catálogo (canario)', () => {
 });
 
 describe('ciudades nuevas', () => {
-  it('una ciudad activa nueva abre Comida sola; Moto y Carro quedan próximamente', async () => {
+  it('una ciudad activa nueva abre Comida sola; Moto y Auto quedan próximamente', async () => {
     const { m, admin } = await escenario();
     const zona = {
       id: 'US-FL-ORLANDO',

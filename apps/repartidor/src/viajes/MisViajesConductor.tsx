@@ -38,7 +38,7 @@ const T = {
     olvidados: 'Objetos olvidados en tu vehículo',
     olvidadosAyuda:
       'Guárdalo en un lugar seguro. Nuestro equipo te escribe para coordinar la devolución.',
-    servicios: { moto: 'Moto', carro: 'Carro', carro_xl: 'Carro XL', envios: 'Envío' } as Record<
+    servicios: { moto: 'Moto', carro: 'Auto', carro_xl: 'Auto XL', envios: 'Envío' } as Record<
       string,
       string
     >,
@@ -65,7 +65,7 @@ const T = {
     verMas: 'See more rides',
     olvidados: 'Items left in your vehicle',
     olvidadosAyuda: 'Keep it somewhere safe. Our team will contact you to arrange the return.',
-    servicios: { moto: 'Moto', carro: 'Car', carro_xl: 'Car XL', envios: 'Delivery' } as Record<
+    servicios: { moto: 'Moto', carro: 'Auto', carro_xl: 'Auto XL', envios: 'Delivery' } as Record<
       string,
       string
     >,

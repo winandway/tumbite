@@ -34,7 +34,7 @@ const abrirElVigia = (e: E, servicio: 'carro' | 'moto' = 'carro', tarifa?: objec
         zonaHoraria: EVG.zonaHoraria,
       },
       ...(tarifa ? { tarifa } : {}),
-      motivo: 'Ciudad de pruebas de Carro en Venezuela',
+      motivo: 'Ciudad de pruebas de Auto en Venezuela',
     },
     e.admin.token,
   );
@@ -141,7 +141,7 @@ const cotizarCarro = (e: E, destino: { lat: number; lng: number }, categoria?: '
     e.cliente.token,
   );
 
-describe('C-CARRO-TARIFA-VE: Carro en El Vigía con la tarifa del mercado venezolano', () => {
+describe('C-CARRO-TARIFA-VE: Auto en El Vigía con la tarifa del mercado venezolano', () => {
   it('abrir El Vigía sin escribir tarifa pone la de mercado en dólares, con su XL', async () => {
     const e = await escenario();
     const r = await abrirElVigia(e);
@@ -171,7 +171,7 @@ describe('C-CARRO-TARIFA-VE: Carro en El Vigía con la tarifa del mercado venezo
     expect(veces).toBeLessThan(1.55);
   });
 
-  it('la comisión es el mismo 10 % en dólares, y el saldo calcula las carreras con la tarifa de Carro', async () => {
+  it('la comisión es el mismo 10 % en dólares, y el saldo calcula las carreras con la tarifa de Auto', async () => {
     const e = await escenario();
     await abrirElVigia(e);
     const { comisionConductor } = await import('../finanzas/conductor');
@@ -189,12 +189,12 @@ describe('C-CARRO-TARIFA-VE: Carro en El Vigía con la tarifa del mercado venezo
   });
 });
 
-describe('C-CARRO-POR-PAIS: Carro en Venezuela se abre en producción por la misma compuerta de Moto', () => {
+describe('C-CARRO-POR-PAIS: Auto en Venezuela se abre en producción por la misma compuerta de Moto', () => {
   const abrir = (e: E, pais: string, cuerpo: Record<string, unknown>) =>
     e.m.llamar('PUT', `/datos/admin/pasajeros-pais/${pais}/carro`, cuerpo, e.admin.token);
   const marca = { abierto: true, confirmo: true };
 
-  it('nace cerrada: en producción Carro no se abre en El Vigía y la compuerta la lista cerrada', async () => {
+  it('nace cerrada: en producción Auto no se abre en El Vigía y la compuerta la lista cerrada', async () => {
     const e = await escenario('divoox.com');
     const lista = await e.m.llamar('GET', '/datos/admin/pasajeros-pais', undefined, e.admin.token);
     expect(lista.datos.paises).toContainEqual({
@@ -215,7 +215,7 @@ describe('C-CARRO-POR-PAIS: Carro en Venezuela se abre en producción por la mis
     expect((await abrir(e, 'VE', { abierto: true })).estado).toBe(422);
   });
 
-  it('abierta en Venezuela, Carro funciona en El Vigía; Detroit sigue bloqueada; abrir Carro no abre Moto', async () => {
+  it('abierta en Venezuela, Auto funciona en El Vigía; Detroit sigue bloqueada; abrir Auto no abre Moto', async () => {
     const e = await escenario('divoox.com');
     expect((await abrir(e, 'VE', marca)).estado).toBe(200);
     expect((await abrirElVigia(e)).estado).toBe(201);

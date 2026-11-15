@@ -84,7 +84,7 @@ async function terminar(m: Mundo, token: string, id: string, clave: string) {
   return { estado: r.status, datos: (await r.json()) as { totalFinal?: number; error?: string } };
 }
 
-describe('Categorías de Carro (C-CARRO-CATEGORIAS)', () => {
+describe('Categorías de Auto (C-CARRO-CATEGORIAS)', () => {
   it('sin factor en la ciudad la categoría no existe; con factor cuesta más y la cotización trae las opciones', async () => {
     const { tarifa, cotizar } = await ciudad();
     expect((await cotizar({ categoria: 'comfort' })).estado).toBe(409);
@@ -104,7 +104,7 @@ describe('Categorías de Carro (C-CARRO-CATEGORIAS)', () => {
     ]);
   });
 
-  it('una categoría que no es de Carro no se cotiza en Moto', async () => {
+  it('una categoría que no es de Auto no se cotiza en Moto', async () => {
     const { m, cliente } = await ciudad({ comfortPb: 12_500 });
     const r = await m.llamar(
       'POST',
@@ -199,7 +199,7 @@ describe('Categorías de Carro (C-CARRO-CATEGORIAS)', () => {
   });
 });
 
-describe('Categorías de Carro: lo que encontró la revisión', () => {
+describe('Categorías de Auto: lo que encontró la revisión', () => {
   it('volver a aprobar un carro Premium no le quita su categoría', async () => {
     const { m, admin } = await ciudad();
     const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
@@ -254,7 +254,7 @@ describe('Categorías de Carro: lo que encontró la revisión', () => {
   });
 });
 
-describe('Tarifa dinámica de Carro (C-CARRO-DINAMICA)', () => {
+describe('Tarifa dinámica de Auto (C-CARRO-DINAMICA)', () => {
   const fijar = (m: Mundo, token: string, cuerpo: object) =>
     m.llamar('PUT', '/datos/admin/viajes/dinamica/carro/US-FL-MIAMI', cuerpo, token);
 
@@ -658,7 +658,7 @@ describe('Paradas de un viaje (C-VIAJE-PARADAS)', () => {
     await sql(
       m,
       `INSERT INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada)
-       VALUES ('p-us-car', 'Carro US', 'car', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-01-01 00:00:00', 1)`,
+       VALUES ('p-us-car', 'Auto US', 'car', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-01-01 00:00:00', 1)`,
     );
     const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
     await sql(
@@ -705,7 +705,7 @@ describe('Paradas de un viaje (C-VIAJE-PARADAS)', () => {
     await sql(
       m,
       `INSERT INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada)
-       VALUES ('p-us-car', 'Carro US', 'car', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-01-01 00:00:00', 1)`,
+       VALUES ('p-us-car', 'Auto US', 'car', 'conductor', 'US', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-01-01 00:00:00', 1)`,
     );
     const c = await conductorDeMoto(m, ORIGEN, 'US-FL-MIAMI', 'carro');
     const cot = (await cotizar()).datos.cotizacion;

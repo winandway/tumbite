@@ -225,7 +225,7 @@ describe('C-RUTA-POR-CALLES: distancia por calles en la cotización', () => {
     expect((await sin.m.llamar('GET', '/datos/salud')).datos.piezas.rutas).toBe('estimada');
   });
 
-  it('es mundial: Carro y Envíos abiertos desde el panel en Detroit cotizan por calles (una sola consulta)', async () => {
+  it('es mundial: Auto y Envíos abiertos desde el panel en Detroit cotizan por calles (una sola consulta)', async () => {
     const m = mundo({ GOOGLE_PLACES_KEY: LLAVE }, { host: 'staging.tumbite.com' });
     const admin = await m.cuenta('admin', 'Soporte Divoox');
     const cliente = await m.cuenta('cliente', 'Pasajero Michigan');

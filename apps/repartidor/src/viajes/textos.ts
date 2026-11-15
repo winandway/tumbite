@@ -3,12 +3,12 @@ export const TEXTOS_VIAJE = {
   es: {
     oferta: {
       titulo: 'Nuevo viaje en Moto',
-      tituloCarro: 'Nuevo viaje en Carro',
+      tituloCarro: 'Nuevo viaje en Auto',
       // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026).
       tituloCategoria: {
-        comfort: 'Nuevo viaje en Carro Comfort',
-        premium: 'Nuevo viaje en Carro Premium',
-        xl: 'Nuevo viaje en Carro XL',
+        comfort: 'Nuevo viaje en Auto Comfort',
+        premium: 'Nuevo viaje en Auto Premium',
+        xl: 'Nuevo viaje en Auto XL',
       } as Record<string, string>,
       dinamica: 'Tarifa dinámica',
       dinamicaAyuda: 'Ya está incluida en lo que ganas.',
@@ -117,12 +117,12 @@ export const TEXTOS_VIAJE = {
   en: {
     oferta: {
       titulo: 'New Moto ride',
-      tituloCarro: 'New Car ride',
+      tituloCarro: 'New Auto ride',
       // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA and C-VIAJE-PARADAS (Nov 14, 2026).
       tituloCategoria: {
-        comfort: 'New Car Comfort ride',
-        premium: 'New Car Premium ride',
-        xl: 'New Car XL ride',
+        comfort: 'New Auto Comfort ride',
+        premium: 'New Auto Premium ride',
+        xl: 'New Auto XL ride',
       } as Record<string, string>,
       dinamica: 'Dynamic pricing',
       dinamicaAyuda: 'Already included in what you earn.',

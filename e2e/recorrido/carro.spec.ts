@@ -39,7 +39,7 @@ test.afterAll(() => {
 const ORIGEN = { lat: 25.7617, lng: -80.1918, direccion: '100 SE 2nd St, Miami' };
 const DESTINO = { lat: 25.79, lng: -80.13, direccion: '1000 Collins Ave, Miami Beach' };
 
-test('un viaje en Carro de punta a punta: código sin casco (es)', async ({ browser, request }) => {
+test('un viaje en Auto de punta a punta: código sin casco (es)', async ({ browser, request }) => {
   test.setTimeout(180_000);
   const id = Date.now().toString(36);
   let ip = 0;
@@ -57,7 +57,7 @@ test('un viaje en Carro de punta a punta: código sin casco (es)', async ({ brow
     return (await r.json()) as { token: string; usuario: { id: string } };
   };
   const h = (t: string) => ({ authorization: `Bearer ${t}` });
-  const admin = await cuenta('admin', 'Soporte Carro');
+  const admin = await cuenta('admin', 'Soporte Auto');
   sql(`UPDATE usuarios SET rol = 'admin' WHERE id = '${admin.usuario.id}'`);
   sql(REQUISITOS_CARRO);
   sql(`INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('carro', 1)`);
@@ -76,7 +76,7 @@ test('un viaje en Carro de punta a punta: código sin casco (es)', async ({ brow
     },
   });
   expect(tarifa.ok(), await tarifa.text()).toBe(true);
-  const cond = await cuenta('repartidor', 'Conductor Carro');
+  const cond = await cuenta('repartidor', 'Conductor Auto');
   const c = cond.usuario.id;
   const v = `veh-carro-${id}`;
   // C-RECORRIDO-NO-PISA: solo Miami, donde corre; no desconecta a quien prueba en otra ciudad.

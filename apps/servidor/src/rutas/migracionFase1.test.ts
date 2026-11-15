@@ -25,7 +25,7 @@ async function correr(db: D1Database, archivo: string) {
 describe('migraciones preparadas de la Fase 1 (M4 y M5)', () => {
   it('copian los vehículos, habilitan Comida a todos y se pueden repetir sin duplicar', async () => {
     const m = mundo();
-    const conCarro = await m.cuenta('repartidor', 'Rep Carro');
+    const conCarro = await m.cuenta('repartidor', 'Rep Auto');
     const enBici = await m.cuenta('repartidor', 'Rep Bici');
     const sinPlaca = await m.cuenta('repartidor', 'Rep Moto');
     const repetidoA = await m.cuenta('repartidor', 'Rep A');

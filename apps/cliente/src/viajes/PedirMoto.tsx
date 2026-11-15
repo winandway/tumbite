@@ -311,7 +311,7 @@ export function PedirMoto({
         cerca={recogida}
         testID="moto-destino"
       />
-      {/* C-VIAJE-PARADAS: paradas intermedias, antes de ver el precio (Moto y Carro). */}
+      {/* C-VIAJE-PARADAS: paradas intermedias, antes de ver el precio (Moto y Auto). */}
       {servicio !== 'envios' ? (
         <EditorParadas
           paradas={paradas}

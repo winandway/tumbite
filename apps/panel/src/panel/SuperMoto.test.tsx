@@ -194,7 +194,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     expect(await screen.findByText(/Se abrió Comida en VE-MER-ELVIGIA/)).toBeTruthy();
   });
 
-  it('C-CARRO-TARIFA-VE: «Usar El Vigía» con Carro muestra la tarifa de mercado y no la manda escrita', async () => {
+  it('C-CARRO-TARIFA-VE: «Usar El Vigía» con Auto muestra la tarifa de mercado y no la manda escrita', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas);
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
@@ -205,8 +205,8 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     );
     expect(screen.getByText('$1.50')).toBeTruthy();
     expect(screen.getByText('$3.50')).toBeTruthy();
-    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Pruebas Carro');
-    await userEvent.click(screen.getByRole('button', { name: 'Abrir Carro en esta ciudad' }));
+    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Pruebas Auto');
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir Auto en esta ciudad' }));
     await waitFor(() => {
       const cuerpo = llamadas.find((l) => l.metodo === 'POST')?.cuerpo as Record<string, unknown>;
       expect(cuerpo.servicio).toBe('carro');
@@ -214,7 +214,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     });
   });
 
-  it('C-ABRIR-CIUDAD: abre Carro en una ciudad de cualquier país con su tarifa escrita', async () => {
+  it('C-ABRIR-CIUDAD: abre Auto en una ciudad de cualquier país con su tarifa escrita', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas);
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
@@ -225,8 +225,8 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     await userEvent.type(screen.getByLabelText('Longitud del centro'), '-83.0458');
     await userEvent.clear(screen.getByLabelText('Zona horaria'));
     await userEvent.type(screen.getByLabelText('Zona horaria'), 'America/Detroit');
-    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Pruebas Carro');
-    const boton = screen.getByRole('button', { name: 'Abrir Carro en esta ciudad' });
+    await userEvent.type(screen.getByLabelText('Motivo (queda en el registro)'), 'Pruebas Auto');
+    const boton = screen.getByRole('button', { name: 'Abrir Auto en esta ciudad' });
     // Sin tarifa no se puede abrir: fuera de Moto en Venezuela no hay tarifa de mercado.
     expect((boton as HTMLButtonElement).disabled).toBe(true);
     await userEvent.type(screen.getByLabelText('Banderazo'), '2.50');
@@ -239,7 +239,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
         servicio: 'carro',
         zona: { id: 'US-MI-DETROIT', nombre: 'Detroit', zonaHoraria: 'America/Detroit' },
         tarifa: { base: 250, porKm: 110, porMinuto: 30, minimo: 700 },
-        motivo: 'Pruebas Carro',
+        motivo: 'Pruebas Auto',
       }),
     );
   });
@@ -380,7 +380,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     expect(within(alerta).getByText('Licencia de moto')).toBeTruthy();
   });
 
-  it('C-CARRO-PANEL: la cola muestra carros con sus papeles e inspección y se habilita para Carro', async () => {
+  it('C-CARRO-PANEL: la cola muestra carros con sus papeles e inspección y se habilita para Auto', async () => {
     const llamadas: Llamada[] = [];
     servidor(llamadas, {
       vehiculos: [
@@ -425,7 +425,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     const detalle = await screen.findByTestId('detalle-conductor');
     expect(await within(detalle).findByText('Licencia de conducir')).toBeTruthy();
     expect(within(detalle).getByText('Revisión del vehículo')).toBeTruthy();
-    await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Carro' }));
+    await userEvent.click(within(detalle).getByRole('button', { name: 'Habilitar para Auto' }));
     await waitFor(() =>
       expect(
         llamadas.find((l) => l.metodo === 'PUT' && l.url.endsWith('/habilitaciones/c1/carro')),

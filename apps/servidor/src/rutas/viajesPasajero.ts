@@ -452,9 +452,9 @@ function mismasParadas(
 }
 
 const SIN_CATEGORIA: Record<Exclude<CategoriaViaje, 'estandar'>, string> = {
-  xl: 'Carro XL todavía no está disponible en tu ciudad.',
-  comfort: 'Carro Comfort todavía no está disponible en tu ciudad.',
-  premium: 'Carro Premium todavía no está disponible en tu ciudad.',
+  xl: 'Auto XL todavía no está disponible en tu ciudad.',
+  comfort: 'Auto Comfort todavía no está disponible en tu ciudad.',
+  premium: 'Auto Premium todavía no está disponible en tu ciudad.',
 };
 
 /**

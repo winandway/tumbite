@@ -125,7 +125,7 @@ piloto.put('/admin/piloto/servicios', async (c) => {
   );
   if (!SERVICIOS_PILOTO.has(d.servicio))
     throw new ErrorDatos(
-      'Ese servicio no se puede encender en el piloto. Moto y Carro llevan pasajeros y esperan la aprobación legal y el seguro.',
+      'Ese servicio no se puede encender en el piloto. Moto y Auto llevan pasajeros y esperan la aprobación legal y el seguro.',
       'servicio',
       409,
     );

@@ -33,7 +33,7 @@ async function escenario() {
         radioKm: EVG.radioKm,
         zonaHoraria: EVG.zonaHoraria,
       },
-      motivo: 'Ciudad de pruebas de Carro en Venezuela',
+      motivo: 'Ciudad de pruebas de Auto en Venezuela',
     },
     admin.token,
   );
@@ -312,7 +312,7 @@ describe('C-CARRO-CIRCUITO: taxi en El Vigía de punta a punta', () => {
     expect(String(r.datos.error)).toMatch(/Recarga|Top up/);
   });
 
-  it('Carro XL solo llega a un carro de 6 plazas', async () => {
+  it('Auto XL solo llega a un carro de 6 plazas', async () => {
     const e = await escenario();
     const cuatro = await taxistaListo(e, 1000, 4);
     const seis = await taxistaListo(e, 1000, 6);
@@ -344,7 +344,7 @@ async function firmar(cuerpo: string) {
   return `t=${t},v1=${[...new Uint8Array(f)].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
-describe('C-CARRO-CIRCUITO: Carro en Detroit con tarjeta y propina', () => {
+describe('C-CARRO-CIRCUITO: Auto en Detroit con tarjeta y propina', () => {
   it('se autoriza al pedir, se cobra al terminar y la propina llega completa al conductor', async () => {
     const stripe: { url: string; cuerpo: string }[] = [];
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
@@ -386,7 +386,7 @@ describe('C-CARRO-CIRCUITO: Carro en Detroit con tarjeta y propina', () => {
             zonaHoraria: 'America/Detroit',
           },
           tarifa: { base: 250, porKm: 110, porMinuto: 30, minimo: 800, xlPb: 15_000 },
-          motivo: 'Ciudad de pruebas de Carro en Michigan',
+          motivo: 'Ciudad de pruebas de Auto en Michigan',
         },
         admin.token,
       );

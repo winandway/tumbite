@@ -41,7 +41,7 @@ const T = {
     topesGuardados: 'Topes guardados.',
     servicios: 'Servicios solo para el piloto',
     serviciosAyuda:
-      'Lo marcado se enciende solo para los participantes en esa ciudad; el público lo sigue viendo «muy pronto». Moto y Carro no aparecen: llevan pasajeros y esperan la aprobación legal y el seguro.',
+      'Lo marcado se enciende solo para los participantes en esa ciudad; el público lo sigue viendo «muy pronto». Moto y Auto no aparecen: llevan pasajeros y esperan la aprobación legal y el seguro.',
     registro: 'Últimos cambios',
     sinRegistro: 'Todavía no hay cambios.',
     alta: 'entró',
@@ -80,7 +80,7 @@ const T = {
     topesGuardados: 'Limits saved.',
     servicios: 'Pilot-only services',
     serviciosAyuda:
-      'What you check turns on only for participants in that city; the public still sees “coming soon”. Moto and Car aren’t listed: they carry passengers and are waiting for legal approval and insurance.',
+      'What you check turns on only for participants in that city; the public still sees “coming soon”. Moto and Auto aren’t listed: they carry passengers and are waiting for legal approval and insurance.',
     registro: 'Latest changes',
     sinRegistro: 'No changes yet.',
     alta: 'joined',

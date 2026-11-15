@@ -19,12 +19,12 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
   pasajero: [
     {
       id: 'ride-car',
-      titulo: 'Pedir un carro (taxi) con Divoox Carro',
+      titulo: 'Pedir un viaje con Divoox Auto',
       resumen:
-        'Pide un Carro, elige la categoría que quieras (Comfort, Premium o XL de seis plazas), mira el precio fijo antes de confirmar y sigue a tu conductor hasta que llegue.',
+        'Pide un Auto, elige la categoría que quieras (Comfort, Premium o XL de seis plazas), mira el precio fijo antes de confirmar y sigue a tu conductor hasta que llegue.',
       explicacion: [
-        'Divoox Carro es el taxi de Divoox: un conductor verificado te lleva en su carro de un punto a otro de la ciudad. Está disponible en las ciudades donde Divoox Carro esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo.',
-        'Al ver el precio, la app te muestra los carros que hay en tu ciudad, cada uno con su precio para ese mismo viaje. Carro lleva hasta cuatro pasajeros con equipaje de mano. Carro XL lleva hasta seis, para grupos o con más maletas. Donde estén disponibles, también puedes elegir Carro Comfort o Carro Premium.',
+        'Divoox Auto es el servicio de viajes en carro de Divoox: un conductor verificado te lleva en su carro de un punto a otro de la ciudad. Está disponible en las ciudades donde Divoox Auto esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo.',
+        'Al ver el precio, la app te muestra los carros que hay en tu ciudad, cada uno con su precio para ese mismo viaje. Auto lleva hasta cuatro pasajeros con equipaje de mano. Auto XL lleva hasta seis, para grupos o con más maletas. Donde estén disponibles, también puedes elegir Auto Comfort o Auto Premium.',
         'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares.',
         'Cuando un conductor acepta, ves su nombre, su foto (si la tiene), el carro con su color y sus plazas, la placa y en cuántos minutos llega. Para empezar el viaje le dices tu código de cuatro números: así sabes que te subes con la persona correcta.',
       ],
@@ -32,14 +32,14 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-precio',
           'es',
-          'La pantalla Carro con la lista «Elige tu carro», el precio fijo en dólares con su equivalente en bolívares y las formas de pago.',
+          'La pantalla Auto con la lista «Elige tu carro», el precio fijo en dólares con su equivalente en bolívares y las formas de pago.',
           'Antes de pedir ves el precio fijo y eliges cómo pagas.',
         ),
         foto(
           'pasajero-xl',
           'es',
-          'La lista «Elige tu carro» con Carro XL, para hasta seis personas, elegido y su precio fijo.',
-          'Para seis pasajeros eliges Carro XL.',
+          'La lista «Elige tu carro» con Auto XL, para hasta seis personas, elegido y su precio fijo.',
+          'Para seis pasajeros eliges Auto XL.',
         ),
         foto(
           'pasajero-conductor',
@@ -56,30 +56,30 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       ],
       preguntas: [
         '¿Cómo pido un taxi en Divoox?',
-        '¿Qué diferencia hay entre Carro y Carro XL?',
+        '¿Qué diferencia hay entre Auto y Auto XL?',
         '¿El precio del carro puede cambiar?',
         '¿Para qué sirve el código del viaje?',
       ],
       pasos: [
-        'Abre Divoox y toca «Carro».',
+        'Abre Divoox y toca «Auto».',
         'Confirma el punto de recogida (puedes moverlo en el mapa) y escribe tu destino.',
-        'Toca «Ver precio». En «Elige tu carro» ves cada carro con su precio; toca el que quieras (por ejemplo «Carro XL» si son hasta seis).',
+        'Toca «Ver precio». En «Elige tu carro» ves cada carro con su precio; toca el que quieras (por ejemplo «Auto XL» si son hasta seis).',
         'Mira el precio fijo y elige cómo pagas: la app te muestra los métodos de tu país (en Venezuela, efectivo o pago móvil; en Estados Unidos, tarjeta).',
-        'Toca «Pedir Carro». Cuando el conductor acepte, verás sus datos y su ubicación en el mapa.',
+        'Toca «Pedir Auto». Cuando el conductor acepte, verás sus datos y su ubicación en el mapa.',
         'Al subirte, comprueba la placa y dile al conductor tu código de cuatro números.',
       ],
       nota: 'No compartas tu código por mensaje: díselo al conductor en persona cuando te recoja.',
     },
     {
       id: 'ride-car-pay',
-      titulo: 'Pagar, dejar propina y ver tus viajes en Carro',
+      titulo: 'Pagar, dejar propina y ver tus viajes en Auto',
       resumen:
         'Paga en efectivo, por pago móvil o con tarjeta según tu país, deja propina al llegar y encuentra el recibo y la ayuda en «Mis viajes».',
       explicacion: [
         'En efectivo, le pagas al conductor al llegar. Con tarjeta, autorizamos el precio fijo al pedir y lo cobramos al terminar el viaje.',
         'Donde existe el pago móvil (por ejemplo, en Venezuela), cuando te asignan conductor ves sus datos de pago móvil en la app. Pagas el equivalente en bolívares a la tasa oficial del día y el conductor confirma en su app que le llegó.',
         'Al llegar calificas el viaje con estrellas y un comentario. Si pagaste con tarjeta, además puedes dejarle propina desde la app; la recibe completa. En efectivo o pago móvil, la propina se la das directamente.',
-        'En «Mis viajes», debajo de la pantalla Carro, están tus viajes anteriores. Cada uno abre su recibo con el detalle del precio, la forma de pago, el conductor y el carro.',
+        'En «Mis viajes», debajo de la pantalla Auto, están tus viajes anteriores. Cada uno abre su recibo con el detalle del precio, la forma de pago, el conductor y el carro.',
         'Si olvidaste algo en el carro, abre ese viaje y elige «Olvidé algo en el vehículo». Le avisamos al conductor y abrimos tu caso; nuestro equipo coordina la devolución contigo. Por seguridad no compartimos teléfonos.',
       ],
       capturas: [
@@ -98,13 +98,13 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-mis-viajes',
           'es',
-          'La lista «Mis viajes» con el viaje en Carro, la fecha, el destino, el total y el estado en verde.',
-          'Tus viajes anteriores, debajo de la pantalla Carro.',
+          'La lista «Mis viajes» con el viaje en Auto, la fecha, el destino, el total y el estado en verde.',
+          'Tus viajes anteriores, debajo de la pantalla Auto.',
         ),
         foto(
           'pasajero-recibo',
           'es',
-          'El recibo de un viaje en Carro con la recogida, el destino, el detalle del precio, la forma de pago, el conductor y el carro.',
+          'El recibo de un viaje en Auto con la recogida, el destino, el detalle del precio, la forma de pago, el conductor y el carro.',
           'Cada viaje abre su recibo.',
         ),
         foto(
@@ -125,52 +125,52 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Al pedir, elige la forma de pago que te muestra la app.',
         'Con pago móvil, paga a los datos que aparecen en el viaje; con efectivo, paga al llegar.',
         'Al llegar, califica el viaje. Si pagaste con tarjeta, puedes dejar propina en la app.',
-        'Para ver un viaje anterior, abre «Carro» y baja hasta «Mis viajes». Toca el viaje para ver su recibo.',
+        'Para ver un viaje anterior, abre «Auto» y baja hasta «Mis viajes». Toca el viaje para ver su recibo.',
         'Si olvidaste algo, en ese viaje toca «Olvidé algo en el vehículo», cuéntanos qué y dónde lo dejaste, y toca «Enviar a soporte».',
       ],
     },
     {
       id: 'ride-car-categories',
-      titulo: 'Elegir tu carro: Carro, Comfort, Premium o XL',
+      titulo: 'Elegir tu carro: Auto, Comfort, Premium o XL',
       resumen:
         'Mira el precio de cada categoría para tu mismo viaje y elige la que quieras antes de pedir.',
       explicacion: [
-        'Divoox Carro tiene categorías, como las apps de viajes más conocidas. Carro es el de siempre, al mejor precio. Carro Comfort son carros más nuevos y con más espacio. Carro Premium son carros de alta gama, aprobados uno por uno por nuestro equipo. Carro XL lleva hasta seis personas.',
+        'Divoox Auto tiene categorías, como las apps de viajes más conocidas. Auto es el de siempre, al mejor precio. Auto Comfort son carros más nuevos y con más espacio. Auto Premium son carros de alta gama, aprobados uno por uno por nuestro equipo. Auto XL lleva hasta seis personas.',
         'Cada ciudad ofrece las categorías que tiene disponibles: la app solo te muestra las que puedes pedir ahí.',
-        'Cuando tocas «Ver precio», en «Elige tu carro» ves el precio fijo de cada categoría para ese mismo recorrido. Tocas otra y el precio de abajo cambia al de esa categoría. El botón te dice qué estás pidiendo: «Pedir Carro Comfort», por ejemplo.',
+        'Cuando tocas «Ver precio», en «Elige tu carro» ves el precio fijo de cada categoría para ese mismo recorrido. Tocas otra y el precio de abajo cambia al de esa categoría. El botón te dice qué estás pidiendo: «Pedir Auto Comfort», por ejemplo.',
         'Un viaje Comfort o Premium solo se le ofrece a un conductor con un carro de esa categoría o de una mejor. Al asignarte conductor ves qué carro viene, su color, sus plazas y su placa.',
       ],
       capturas: [
         foto(
           'pasajero-categorias',
           'es',
-          'La lista «Elige tu carro» con Carro, Carro Comfort, Carro Premium y Carro XL, cada uno con su precio para el mismo viaje.',
+          'La lista «Elige tu carro» con Auto, Auto Comfort, Auto Premium y Auto XL, cada uno con su precio para el mismo viaje.',
           'Cada categoría con su precio para tu mismo viaje.',
         ),
         foto(
           'pasajero-comfort',
           'es',
-          'Carro Comfort elegido en la lista, con su precio fijo, las formas de pago y el botón «Pedir Carro Comfort».',
+          'Auto Comfort elegido en la lista, con su precio fijo, las formas de pago y el botón «Pedir Auto Comfort».',
           'Tocas la categoría y el botón dice lo que pides.',
         ),
         foto(
           'pasajero-conductor-comfort',
           'es',
-          'El viaje asignado en Carro Comfort: el conductor, su carro con el color y las plazas, la placa y el código del viaje.',
+          'El viaje asignado en Auto Comfort: el conductor, su carro con el color y las plazas, la placa y el código del viaje.',
           'Al asignarte conductor ves el carro que viene.',
         ),
       ],
       preguntas: [
         '¿Qué categorías de carro tiene Divoox?',
-        '¿Qué diferencia hay entre Carro y Carro Comfort?',
-        '¿Cuánto más cuesta un Carro Premium?',
+        '¿Qué diferencia hay entre Auto y Auto Comfort?',
+        '¿Cuánto más cuesta un Auto Premium?',
         '¿Por qué no me aparece Comfort en mi ciudad?',
       ],
       pasos: [
-        'Abre Divoox, toca «Carro», confirma la recogida y escribe tu destino.',
+        'Abre Divoox, toca «Auto», confirma la recogida y escribe tu destino.',
         'Toca «Ver precio».',
         'En «Elige tu carro», toca la categoría que quieras. Abajo ves su precio fijo.',
-        'Elige cómo pagas y toca el botón de pedir (por ejemplo, «Pedir Carro Comfort»).',
+        'Elige cómo pagas y toca el botón de pedir (por ejemplo, «Pedir Auto Comfort»).',
       ],
       nota: 'Si una categoría no aparece en la lista, es que todavía no está disponible en tu ciudad.',
     },
@@ -190,7 +190,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-paradas',
           'es',
-          'La pantalla Carro con la recogida, el destino y una parada agregada debajo, con el botón «Agregar parada».',
+          'La pantalla Auto con la recogida, el destino y una parada agregada debajo, con el botón «Agregar parada».',
           'Agregas las paradas debajo del destino, antes de ver el precio.',
         ),
         foto(
@@ -233,7 +233,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       resumen:
         'Cuando hay muchas personas pidiendo viajes y pocos conductores libres, el precio sube por un rato. Lo ves antes de pedir.',
       explicacion: [
-        'En las ciudades donde la tarifa dinámica está activa, el precio de Divoox Carro puede subir cuando hay mucha más gente pidiendo viajes que conductores libres: un concierto, la lluvia, la hora pico. Es lo que usan las apps de viajes para que haya más conductores donde hacen falta.',
+        'En las ciudades donde la tarifa dinámica está activa, el precio de Divoox Auto puede subir cuando hay mucha más gente pidiendo viajes que conductores libres: un concierto, la lluvia, la hora pico. Es lo que usan las apps de viajes para que haya más conductores donde hacen falta.',
         'Siempre lo ves antes de pedir. En el precio aparece «Tarifa más alta por demanda» con el multiplicador (por ejemplo, × 1,5). El precio que ves ya lo incluye, es fijo y no cambia durante el viaje.',
         'La tarifa dinámica tiene un tope en cada ciudad y en cada país: nunca pasa de ahí. Sube y baja sola con la demanda, así que si esperas unos minutos puede volver al precio normal. En una emergencia en la ciudad, nuestro equipo la apaga.',
         'Tu conductor también lo ve: su oferta le dice que el viaje lleva tarifa dinámica y de cuánto.',
@@ -267,56 +267,56 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
   conductor: [
     {
       id: 'drive-car-signup',
-      titulo: 'Registrarte para Divoox Carro: tu carro y tus papeles',
+      titulo: 'Registrarte para Divoox Auto: tu carro y tus papeles',
       resumen:
         'Registra tu carro con sus plazas, sube los papeles del carro y los tuyos, y sigue la aprobación desde la app.',
       explicacion: [
-        'Para llevar pasajeros en tu carro abres «Divoox Carro» en el Perfil de la app Divoox Driver. Ahí ves tu ciudad, registras el carro y subes lo que pide tu país.',
-        'Del carro anotas la marca, el modelo, el año, el color, la placa y las plazas: cuatro para Carro o seis para Carro XL. Después subes sus papeles (el título o carnet de circulación, la póliza del carro y la que cubre a los pasajeros) y sus fotos.',
+        'Para llevar pasajeros en tu carro abres «Divoox Auto» en el Perfil de la app Divoox Driver. Ahí ves tu ciudad, registras el carro y subes lo que pide tu país.',
+        'Del carro anotas la marca, el modelo, el año, el color, la placa y las plazas: cuatro para Auto o seis para Auto XL. Después subes sus papeles (el título o carnet de circulación, la póliza del carro y la que cubre a los pasajeros) y sus fotos.',
         'Tus papeles personales dependen del país; por ejemplo, la licencia de conducir. La app te dice uno por uno lo que te falta.',
-        'Nuestro equipo revisa todo. Mientras tanto ves «Te falta» con lo pendiente; cuando te aprueban, la app te dice «Ya recibes viajes de Carro».',
+        'Nuestro equipo revisa todo. Mientras tanto ves «Te falta» con lo pendiente; cuando te aprueban, la app te dice «Ya recibes viajes de Auto».',
       ],
       capturas: [
         foto(
           'driver-alta',
           'es',
-          'La pantalla Divoox Carro del Driver con la ciudad, El Vigía, y el formulario del carro: marca, modelo, año, color, placa y plazas.',
+          'La pantalla Divoox Auto del Driver con la ciudad, El Vigía, y el formulario del carro: marca, modelo, año, color, placa y plazas.',
           'Registras tu carro con sus plazas: 4 o 6.',
         ),
         foto(
           'driver-revision',
           'es',
-          'El estado de la aprobación para Carro con la lista de lo que falta.',
+          'El estado de la aprobación para Auto con la lista de lo que falta.',
           'Mientras revisamos, ves lo que te falta.',
         ),
         foto(
           'driver-aprobado',
           'es',
-          'El estado de la aprobación en verde: Ya recibes viajes de Carro.',
-          'Aprobado: ya recibes viajes de Carro.',
+          'El estado de la aprobación en verde: Ya recibes viajes de Auto.',
+          'Aprobado: ya recibes viajes de Auto.',
         ),
       ],
       preguntas: [
         '¿Cómo me registro como taxista en Divoox?',
-        '¿Qué papeles piden para Divoox Carro?',
-        '¿Cómo sé si ya me aprobaron para Carro?',
+        '¿Qué papeles piden para Divoox Auto?',
+        '¿Cómo sé si ya me aprobaron para Auto?',
       ],
       pasos: [
-        'En Divoox Driver, toca «Perfil» y abre «Divoox Carro».',
+        'En Divoox Driver, toca «Perfil» y abre «Divoox Auto».',
         'Comprueba tu ciudad.',
         'Escribe los datos de tu carro, elige sus plazas y toca «Guardar mi carro».',
         'Sube los papeles y las fotos del carro, y tus papeles personales, y envíalos a revisión.',
-        'Revisa «Te falta» hasta que diga «Ya recibes viajes de Carro».',
+        'Revisa «Te falta» hasta que diga «Ya recibes viajes de Auto».',
       ],
       nota: 'Si te rechazan un papel, la app te dice por qué y puedes subirlo otra vez.',
     },
     {
       id: 'drive-car',
-      titulo: 'Recibir y hacer viajes de Divoox Carro',
+      titulo: 'Recibir y hacer viajes de Divoox Auto',
       resumen:
         'Acepta la oferta, busca al pasajero, empieza con su código y cobra al terminar según la forma de pago.',
       explicacion: [
-        'Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino.',
+        'Con Auto aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino.',
         'Al llegar a la recogida tocas «Llegué». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero.',
         'Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar.',
         'En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias.',
@@ -325,7 +325,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-oferta',
           'es',
-          'La oferta de un viaje de Carro con la ganancia, la distancia, la recogida y el destino.',
+          'La oferta de un viaje de Auto con la ganancia, la distancia, la recogida y el destino.',
           'La oferta te muestra lo que ganas y la ruta.',
         ),
         foto(
@@ -362,34 +362,34 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
     },
     {
       id: 'drive-car-categories',
-      titulo: 'La categoría de tu carro: Carro, Comfort y Premium',
+      titulo: 'La categoría de tu carro: Auto, Comfort y Premium',
       resumen:
         'Tu carro recibe los viajes de su categoría, que pagan más, y tú decides si también recibes los de las categorías de abajo.',
       explicacion: [
-        'Cuando nuestro equipo aprueba tu carro, le pone su categoría. Carro es la de siempre. Carro Comfort es para carros más nuevos: hasta 12 años en Venezuela y hasta 8 en Estados Unidos, con cuatro plazas o más. Si tu carro cumple, queda como Comfort sin que hagas nada.',
-        'Carro Premium es para carros de alta gama (hasta 8 años en Venezuela y hasta 6 en Estados Unidos) y lo decide nuestro equipo, uno por uno, mirando el modelo y el estado del carro.',
+        'Cuando nuestro equipo aprueba tu carro, le pone su categoría. Auto es la de siempre. Auto Comfort es para carros más nuevos: hasta 12 años en Venezuela y hasta 8 en Estados Unidos, con cuatro plazas o más. Si tu carro cumple, queda como Comfort sin que hagas nada.',
+        'Auto Premium es para carros de alta gama (hasta 8 años en Venezuela y hasta 6 en Estados Unidos) y lo decide nuestro equipo, uno por uno, mirando el modelo y el estado del carro.',
         'Los viajes Comfort y Premium cuestan más para el pasajero, así que ganas más por el mismo recorrido. La oferta te dice de qué categoría es el viaje.',
-        'Con un carro Comfort o Premium también te llegan los viajes de Carro, para que no te quedes sin trabajo. Si prefieres solo los de tu categoría, apaga «Recibir también viajes de Carro» en «Divoox Carro», dentro de tu perfil. Lo puedes cambiar cuando quieras.',
-        'Si tu carro tiene seis plazas o más, además recibes los viajes de Carro XL.',
+        'Con un carro Comfort o Premium también te llegan los viajes de Auto, para que no te quedes sin trabajo. Si prefieres solo los de tu categoría, apaga «Recibir también viajes de Auto» en «Divoox Auto», dentro de tu perfil. Lo puedes cambiar cuando quieras.',
+        'Si tu carro tiene seis plazas o más, además recibes los viajes de Auto XL.',
       ],
       capturas: [
         foto(
           'driver-categoria',
           'es',
-          'La pantalla Divoox Carro del conductor con el carro aprobado como Comfort y el interruptor «Recibir también viajes de Carro».',
-          'En «Divoox Carro» ves la categoría de tu carro y el interruptor.',
+          'La pantalla Divoox Auto del conductor con el carro aprobado como Comfort y el interruptor «Recibir también viajes de Auto».',
+          'En «Divoox Auto» ves la categoría de tu carro y el interruptor.',
         ),
         foto(
           'driver-oferta-paradas',
           'es',
-          'La oferta de un viaje en Carro Comfort con lo que gana el conductor, la distancia, la recogida y el destino.',
+          'La oferta de un viaje en Auto Comfort con lo que gana el conductor, la distancia, la recogida y el destino.',
           'La oferta dice de qué categoría es el viaje.',
         ),
         foto(
           'driver-aprobado',
           'es',
-          'El carro aprobado en la app del conductor con el interruptor para recibir viajes de Carro.',
-          'Con el carro aprobado, enciendes los viajes de Carro.',
+          'El carro aprobado en la app del conductor con el interruptor para recibir viajes de Auto.',
+          'Con el carro aprobado, enciendes los viajes de Auto.',
         ),
       ],
       preguntas: [
@@ -400,8 +400,8 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       ],
       pasos: [
         'Registra tu carro con su año y sus plazas, sube los papeles y espera la aprobación.',
-        'Abre tu perfil y toca «Divoox Carro»: ahí ves la categoría con que quedó tu carro.',
-        'Si tu carro es Comfort o Premium, deja encendido «Recibir también viajes de Carro» para recibir más viajes, o apágalo para recibir solo los de tu categoría.',
+        'Abre tu perfil y toca «Divoox Auto»: ahí ves la categoría con que quedó tu carro.',
+        'Si tu carro es Comfort o Premium, deja encendido «Recibir también viajes de Auto» para recibir más viajes, o apágalo para recibir solo los de tu categoría.',
       ],
       nota: 'Si crees que tu carro debería ser Premium, escríbenos desde Ayuda: nuestro equipo lo revisa.',
     },
@@ -457,12 +457,12 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
   pasajero: [
     {
       id: 'ride-car',
-      titulo: 'Request a car (taxi) with Divoox Car',
+      titulo: 'Request a ride with Divoox Auto',
       resumen:
-        'Request a Car or a six-seat Car XL, see the fixed price before you confirm, and follow your driver until they arrive.',
+        'Request a Auto or a six-seat Auto XL, see the fixed price before you confirm, and follow your driver until they arrive.',
       explicacion: [
-        'Divoox Car is the Divoox taxi: a verified driver takes you in their car from one place to another in the city. It’s available in cities where Divoox Car is open; if it isn’t open in yours yet, the app won’t let you request it.',
-        'There are two sizes. Car fits up to four riders with carry-on bags. Car XL fits up to six, for groups or more luggage.',
+        'Divoox Auto is the Divoox car ride service: a verified driver takes you in their car from one place to another in the city. It’s available in cities where Divoox Auto is open; if it isn’t open in yours yet, the app won’t let you request it.',
+        'There are two sizes. Auto fits up to four riders with carry-on bags. Auto XL fits up to six, for groups or more luggage.',
         'The price is fixed: you see it before you request and traffic doesn’t change it. In the United States it’s in US dollars. In countries where people also think in a local currency, the app shows the equivalent next to it, for reference only.',
         'When a driver accepts, you see their name, their photo (if they have one), the car with its color and seats, the license plate, and how many minutes away they are. To start the ride you tell them your four-digit code, so you know you’re getting in with the right person.',
       ],
@@ -470,14 +470,14 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-precio',
           'en',
-          'The Car screen with the “Choose your car” list, the fixed price in US dollars, and the payment methods: cash or card.',
+          'The Auto screen with the “Choose your car” list, the fixed price in US dollars, and the payment methods: cash or card.',
           'Before you request, you see the fixed price and choose how to pay.',
         ),
         foto(
           'pasajero-xl',
           'en',
-          'The “Choose your car” list with Car XL, for up to six people, selected and its fixed price.',
-          'For six riders, choose Car XL.',
+          'The “Choose your car” list with Auto XL, for up to six people, selected and its fixed price.',
+          'For six riders, choose Auto XL.',
         ),
         foto(
           'pasajero-conductor',
@@ -494,30 +494,30 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       ],
       preguntas: [
         'How do I request a taxi on Divoox?',
-        'What’s the difference between Car and Car XL?',
+        'What’s the difference between Auto and Auto XL?',
         'Can the car price change?',
         'What is the ride code for?',
       ],
       pasos: [
-        'Open Divoox and tap “Car.”',
+        'Open Divoox and tap “Auto.”',
         'Confirm the pickup point (you can move it on the map) and enter your destination.',
-        'Tap “See price.” Under “Choose your car” you see each car with its price; tap the one you want (for example “Car XL” for up to six).',
+        'Tap “See price.” Under “Choose your car” you see each car with its price; tap the one you want (for example “Auto XL” for up to six).',
         'Check the fixed price and choose how to pay: the app shows the methods available in your country (in the United States, card or cash).',
-        'Tap “Request Car.” When the driver accepts, you’ll see their details and location on the map.',
+        'Tap “Request Auto.” When the driver accepts, you’ll see their details and location on the map.',
         'When you get in, check the plate and tell the driver your four-digit code.',
       ],
       nota: 'Don’t share your code by message: tell it to the driver in person when they pick you up.',
     },
     {
       id: 'ride-car-pay',
-      titulo: 'Pay, tip, and see your rides in Car',
+      titulo: 'Pay, tip, and see your rides in Auto',
       resumen:
         'Pay by card or with cash, tip your driver when you arrive, and find the receipt and help in “My rides.”',
       explicacion: [
         'With cash, you pay the driver when you arrive. With a card, we authorize the fixed price when you request and charge it when the ride ends.',
         'Before you request, you choose how to pay, and the ride shows it the whole way: next to the fixed price you see whether you’re paying by card or with cash. In some countries the app also offers local payment methods; it only shows the ones available where you are.',
         'When you arrive you rate the ride with stars and a comment. If you paid by card, you can also tip your driver in the app; they get the whole tip. With cash, you tip them directly.',
-        '“My rides,” below the Car screen, lists your past rides. Each one opens its receipt with the price breakdown, payment method, driver, and car.',
+        '“My rides,” below the Auto screen, lists your past rides. Each one opens its receipt with the price breakdown, payment method, driver, and car.',
         'If you left something in the car, open that ride and choose “I left something in the vehicle.” We let the driver know and open your case; our team arranges the return with you. For safety, we don’t share phone numbers.',
       ],
       capturas: [
@@ -536,13 +536,13 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-mis-viajes',
           'en',
-          'The “My rides” list with the Car ride, date, destination, total, and status in green.',
-          'Your past rides, below the Car screen.',
+          'The “My rides” list with the Auto ride, date, destination, total, and status in green.',
+          'Your past rides, below the Auto screen.',
         ),
         foto(
           'pasajero-recibo',
           'en',
-          'A Car ride receipt with pickup, destination, price breakdown, payment method, driver, and car.',
+          'A Auto ride receipt with pickup, destination, price breakdown, payment method, driver, and car.',
           'Every ride opens its receipt.',
         ),
         foto(
@@ -563,52 +563,52 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'When you request, choose the payment method the app shows you.',
         'With card, we charge the fixed price when the ride ends; with cash, pay your driver when you arrive.',
         'When you arrive, rate the ride. If you paid by card, you can tip in the app.',
-        'To see a past ride, open “Car” and scroll down to “My rides.” Tap the ride to see its receipt.',
+        'To see a past ride, open “Auto” and scroll down to “My rides.” Tap the ride to see its receipt.',
         'If you left something, in that ride tap “I left something in the vehicle,” tell us what and where, and tap “Send to support.”',
       ],
     },
     {
       id: 'ride-car-categories',
-      titulo: 'Choose your car: Car, Comfort, Premium, or XL',
+      titulo: 'Choose your car: Auto, Comfort, Premium, or XL',
       resumen:
         'See each category’s price for your same ride and pick the one you want before you request.',
       explicacion: [
-        'Divoox Car has categories, like the best-known ride apps. Car is the everyday ride, at the best price. Car Comfort means newer cars with extra room. Car Premium means high-end cars, approved one by one by our team. Car XL fits up to six people.',
+        'Divoox Auto has categories, like the best-known ride apps. Auto is the everyday ride, at the best price. Auto Comfort means newer cars with extra room. Auto Premium means high-end cars, approved one by one by our team. Auto XL fits up to six people.',
         'Each city offers the categories it has available: the app only shows the ones you can request there.',
-        'When you tap “See price,” under “Choose your car” you see each category’s fixed price for that same trip. Tap another one and the price below changes to that category’s. The button tells you what you’re requesting: “Request Car Comfort,” for example.',
+        'When you tap “See price,” under “Choose your car” you see each category’s fixed price for that same trip. Tap another one and the price below changes to that category’s. The button tells you what you’re requesting: “Request Auto Comfort,” for example.',
         'A Comfort or Premium ride is only offered to a driver whose car is in that category or a higher one. Once a driver is assigned, you see which car is coming, its color, its seats, and its plate.',
       ],
       capturas: [
         foto(
           'pasajero-categorias',
           'en',
-          'The “Choose your car” list with Car, Car Comfort, Car Premium, and Car XL, each with its price for the same ride.',
+          'The “Choose your car” list with Auto, Auto Comfort, Auto Premium, and Auto XL, each with its price for the same ride.',
           'Each category with its price for your same ride.',
         ),
         foto(
           'pasajero-comfort',
           'en',
-          'Car Comfort selected in the list, with its fixed price, the payment methods, and the “Request Car Comfort” button.',
+          'Auto Comfort selected in the list, with its fixed price, the payment methods, and the “Request Auto Comfort” button.',
           'Tap the category and the button says what you’re requesting.',
         ),
         foto(
           'pasajero-conductor-comfort',
           'en',
-          'The assigned Car Comfort ride: the driver, their car with its color and seats, the plate, and the ride code.',
+          'The assigned Auto Comfort ride: the driver, their car with its color and seats, the plate, and the ride code.',
           'Once a driver is assigned, you see the car that’s coming.',
         ),
       ],
       preguntas: [
         'What car categories does Divoox have?',
-        'What’s the difference between Car and Car Comfort?',
-        'How much more is Car Premium?',
+        'What’s the difference between Auto and Auto Comfort?',
+        'How much more is Auto Premium?',
         'Why don’t I see Comfort in my city?',
       ],
       pasos: [
-        'Open Divoox, tap “Car,” confirm the pickup, and enter your destination.',
+        'Open Divoox, tap “Auto,” confirm the pickup, and enter your destination.',
         'Tap “See price.”',
         'Under “Choose your car,” tap the category you want. Its fixed price shows below.',
-        'Choose how to pay and tap the request button (for example, “Request Car Comfort”).',
+        'Choose how to pay and tap the request button (for example, “Request Auto Comfort”).',
       ],
       nota: 'If a category isn’t in the list, it isn’t available in your city yet.',
     },
@@ -628,7 +628,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-paradas',
           'en',
-          'The Car screen with the pickup, the destination, and a stop added below, with the “Add a stop” button.',
+          'The Auto screen with the pickup, the destination, and a stop added below, with the “Add a stop” button.',
           'Add stops below the destination, before you see the price.',
         ),
         foto(
@@ -671,7 +671,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       resumen:
         'When lots of people are requesting rides and few drivers are available, the price goes up for a while. You see it before you request.',
       explicacion: [
-        'In cities where dynamic pricing is active, the Divoox Car price can go up when far more people are requesting rides than there are available drivers: a concert, rain, rush hour. It’s what ride apps use to get more drivers where they’re needed.',
+        'In cities where dynamic pricing is active, the Divoox Auto price can go up when far more people are requesting rides than there are available drivers: a concert, rain, rush hour. It’s what ride apps use to get more drivers where they’re needed.',
         'You always see it before you request. The price shows “Fares are higher due to demand” with the multiplier (for example, × 1.5). The price you see already includes it, it’s fixed, and it won’t change during the ride.',
         'Dynamic pricing has a cap in each city and each country: it never goes above that. It goes up and down on its own with demand, so if you wait a few minutes it may return to the normal price. In a citywide emergency, our team turns it off.',
         'Your driver sees it too: their offer says the ride has dynamic pricing and by how much.',
@@ -705,56 +705,56 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
   conductor: [
     {
       id: 'drive-car-signup',
-      titulo: 'Sign up for Divoox Car: your car and your documents',
+      titulo: 'Sign up for Divoox Auto: your car and your documents',
       resumen:
         'Register your car with its seats, upload the car’s documents and your own, and track your approval in the app.',
       explicacion: [
-        'To give rides in your car, open “Divoox Car” in Profile in the Divoox Driver app. There you see your city, register the car, and upload what your country requires.',
-        'For the car you enter the make, model, year, color, license plate, and seats: four for Car or six for Car XL. Then you upload its documents (title or registration card, the car’s insurance policy, and the one that covers riders) and its photos.',
+        'To give rides in your car, open “Divoox Auto” in Profile in the Divoox Driver app. There you see your city, register the car, and upload what your country requires.',
+        'For the car you enter the make, model, year, color, license plate, and seats: four for Auto or six for Auto XL. Then you upload its documents (title or registration card, the car’s insurance policy, and the one that covers riders) and its photos.',
         'Your personal documents depend on the country; for example, your driver’s license. The app tells you, one by one, what’s missing.',
-        'Our team reviews everything. Meanwhile you see “Still needed” with what’s pending; once you’re approved, the app says “You’re receiving Car rides.”',
+        'Our team reviews everything. Meanwhile you see “Still needed” with what’s pending; once you’re approved, the app says “You’re receiving Auto rides.”',
       ],
       capturas: [
         foto(
           'driver-alta',
           'en',
-          'The Divoox Car screen in Driver with the city, Novi, and the car form: make, model, year, color, license plate, and seats.',
+          'The Divoox Auto screen in Driver with the city, Novi, and the car form: make, model, year, color, license plate, and seats.',
           'Register your car with its seats: 4 or 6.',
         ),
         foto(
           'driver-revision',
           'en',
-          'The Car approval status with the list of what’s still needed.',
+          'The Auto approval status with the list of what’s still needed.',
           'While we review, you see what’s still needed.',
         ),
         foto(
           'driver-aprobado',
           'en',
-          'The approval status in green: you’re receiving Car rides.',
-          'Approved: you’re receiving Car rides.',
+          'The approval status in green: you’re receiving Auto rides.',
+          'Approved: you’re receiving Auto rides.',
         ),
       ],
       preguntas: [
         'How do I sign up as a taxi driver on Divoox?',
-        'What documents does Divoox Car require?',
-        'How do I know I’m approved for Car?',
+        'What documents does Divoox Auto require?',
+        'How do I know I’m approved for Auto?',
       ],
       pasos: [
-        'In Divoox Driver, tap “Profile” and open “Divoox Car.”',
+        'In Divoox Driver, tap “Profile” and open “Divoox Auto.”',
         'Check your city.',
         'Enter your car’s details, choose its seats, and tap “Save my car.”',
         'Upload the car’s documents and photos and your personal documents, and send them for review.',
-        'Check the list of what’s still needed until it says you’re receiving Car rides.',
+        'Check the list of what’s still needed until it says you’re receiving Auto rides.',
       ],
       nota: 'If a document is rejected, the app tells you why and you can upload it again.',
     },
     {
       id: 'drive-car',
-      titulo: 'Receive and complete Divoox Car rides',
+      titulo: 'Receive and complete Divoox Auto rides',
       resumen:
         'Accept the offer, pick up the rider, start with their code, and collect at the end based on the payment method.',
       explicacion: [
-        'Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination.',
+        'Once approved for Auto and online, you receive ride offers with your earnings, the distance, the pickup, and the destination.',
         'When you reach the pickup, tap “I’ve arrived.” The ride starts only when you enter the four-digit code the rider gives you.',
         'During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived.',
         'In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings.',
@@ -763,7 +763,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-oferta',
           'en',
-          'A Car ride offer with earnings, distance, pickup, and destination.',
+          'A Auto ride offer with earnings, distance, pickup, and destination.',
           'The offer shows your earnings and the route.',
         ),
         foto(
@@ -800,34 +800,34 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
     },
     {
       id: 'drive-car-categories',
-      titulo: 'Your car’s category: Car, Comfort, and Premium',
+      titulo: 'Your car’s category: Auto, Comfort, and Premium',
       resumen:
         'Your car gets rides in its category, which pay more, and you decide whether to also get rides from the categories below.',
       explicacion: [
-        'When our team approves your car, it gets its category. Car is the everyday one. Car Comfort is for newer cars: up to 8 years old in the United States, with four seats or more (other countries have their own limit; the app tells you yours). If your car qualifies, it’s set to Comfort without you doing anything.',
-        'Car Premium is for high-end cars (up to 6 years old in the United States), and our team decides it one by one, looking at the model and the car’s condition.',
+        'When our team approves your car, it gets its category. Auto is the everyday one. Auto Comfort is for newer cars: up to 8 years old in the United States, with four seats or more (other countries have their own limit; the app tells you yours). If your car qualifies, it’s set to Comfort without you doing anything.',
+        'Auto Premium is for high-end cars (up to 6 years old in the United States), and our team decides it one by one, looking at the model and the car’s condition.',
         'Comfort and Premium rides cost the rider more, so you earn more for the same trip. The offer tells you which category the ride is.',
-        'With a Comfort or Premium car you also get Car rides, so you’re never short on work. If you’d rather only get rides in your category, turn off “Also get Car rides” under “Divoox Car” in your profile. You can change it anytime.',
-        'If your car has six seats or more, you also get Car XL rides.',
+        'With a Comfort or Premium car you also get Auto rides, so you’re never short on work. If you’d rather only get rides in your category, turn off “Also get Auto rides” under “Divoox Auto” in your profile. You can change it anytime.',
+        'If your car has six seats or more, you also get Auto XL rides.',
       ],
       capturas: [
         foto(
           'driver-categoria',
           'en',
-          'The driver’s Divoox Car screen with the car approved as Comfort and the “Also get Car rides” switch.',
-          'Under “Divoox Car” you see your car’s category and the switch.',
+          'The driver’s Divoox Auto screen with the car approved as Comfort and the “Also get Auto rides” switch.',
+          'Under “Divoox Auto” you see your car’s category and the switch.',
         ),
         foto(
           'driver-oferta-paradas',
           'en',
-          'The offer for a Car Comfort ride with what the driver earns, the distance, the pickup, and the destination.',
+          'The offer for a Auto Comfort ride with what the driver earns, the distance, the pickup, and the destination.',
           'The offer says which category the ride is.',
         ),
         foto(
           'driver-aprobado',
           'en',
-          'The approved car in the driver app with the switch to receive Car rides.',
-          'With the car approved, you turn on Car rides.',
+          'The approved car in the driver app with the switch to receive Auto rides.',
+          'With the car approved, you turn on Auto rides.',
         ),
       ],
       preguntas: [
@@ -838,8 +838,8 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       ],
       pasos: [
         'Register your car with its year and seats, upload the documents, and wait for approval.',
-        'Open your profile and tap “Divoox Car”: that’s where you see the category your car was given.',
-        'If your car is Comfort or Premium, leave “Also get Car rides” on to get more rides, or turn it off to get only rides in your category.',
+        'Open your profile and tap “Divoox Auto”: that’s where you see the category your car was given.',
+        'If your car is Comfort or Premium, leave “Also get Auto rides” on to get more rides, or turn it off to get only rides in your category.',
       ],
       nota: 'If you think your car should be Premium, message us from Help: our team will review it.',
     },

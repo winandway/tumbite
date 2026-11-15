@@ -192,7 +192,7 @@ export function ViajeEnCurso({
   // C-CARRO-VIAJE-PASAJERO: cada servicio rotula su vehículo (Moto, Carro, Carro XL, Envío).
   const nombreVehiculo =
     viaje.servicio === 'carro'
-      ? // C-CARRO-CATEGORIAS: Carro, Carro Comfort, Carro Premium o Carro XL.
+      ? // C-CARRO-CATEGORIAS: Auto, Auto Comfort, Auto Premium o Auto XL.
         (new Map(Object.entries(t.vehiculoCategoria)).get(viaje.categoria ?? 'estandar') ??
         t.vehiculoCarro)
       : viaje.servicio === 'envios'

@@ -97,7 +97,7 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     }
   });
 
-  it('C-CAPTURAS-POR-IDIOMA: en inglés, Carro se enseña con ejemplos de Estados Unidos', () => {
+  it('C-CAPTURAS-POR-IDIOMA: en inglés, Auto se enseña con ejemplos de Estados Unidos', () => {
     // Regla de Richard (15 nov 2026): al cambiar el idioma cambia la captura Y sus ejemplos. Las guías
     // en inglés no hablan de lo que solo se ve en las capturas de Venezuela…
     const ingles = JSON.stringify(GUIAS_CARRO.en).toLowerCase();
@@ -275,9 +275,9 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     expect(envios.at(2)).toContain('El Vigía');
   });
 
-  it('Carro dice que se abre por ciudad', () => {
-    expect(JSON.stringify(GUIAS_CARRO.es)).toContain('donde Divoox Carro esté abierto');
-    expect(JSON.stringify(GUIAS_CARRO.en)).toContain('where Divoox Car is open');
+  it('Auto dice que se abre por ciudad', () => {
+    expect(JSON.stringify(GUIAS_CARRO.es)).toContain('donde Divoox Auto esté abierto');
+    expect(JSON.stringify(GUIAS_CARRO.en)).toContain('where Divoox Auto is open');
   });
 
   it('cada guía nueva tiene su propio ícono, no la hoja genérica', () => {

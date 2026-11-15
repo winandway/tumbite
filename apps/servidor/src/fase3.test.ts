@@ -580,7 +580,7 @@ describe('Fase 3 · elegibilidad', () => {
     await expect(conductor(m)).rejects.toThrow(/habilitacion_con_requisitos_faltantes/);
   });
 
-  it('el código desplegado NO declara Moto ni Carro: en una base normal nadie es elegible', async () => {
+  it('el código desplegado NO declara Moto ni Auto: en una base normal nadie es elegible', async () => {
     const m = mundo();
     await m.cuenta('cliente');
     const n = await uno<{ n: number }>(m, 'SELECT COUNT(*) AS n FROM conductores_elegibles');

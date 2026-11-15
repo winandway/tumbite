@@ -170,7 +170,7 @@ exigir(
 exigir(Number(m.abonos_fallidos) === 0, 'sin abonos fallidos');
 exigir(
   m.implementados === 'comida' && Number(m.moto_carro) === 0,
-  `solo Comida; Moto y Carro apagados (${m.implementados}, ${m.moto_carro})`,
+  `solo Comida; Moto y Auto apagados (${m.implementados}, ${m.moto_carro})`,
 );
 avisos.push(`info · repartidores conectados: ${m.conectados}`);
 
@@ -189,7 +189,7 @@ if (modo === 'despues') {
     );
     exigir(
       Number(f.operaciones) === 0,
-      `ninguna operación de Moto o Carro creada (${f.operaciones})`,
+      `ninguna operación de Moto o Auto creada (${f.operaciones})`,
     );
   } catch (e) {
     fallas.push(`no se pudo leer la Fase 3 en la base: ${String(e?.message ?? e).slice(0, 160)}`);

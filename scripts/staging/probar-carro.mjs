@@ -102,7 +102,7 @@ async function cerrarColgados() {
 async function cotizar(origen, destino) {
   return ok(
     await pasajero('POST', '/datos/viajes/cotizar', { servicio: 'carro', origen, destino }),
-    'cotizar Carro',
+    'cotizar Auto',
   ).cotizacion;
 }
 
@@ -180,7 +180,7 @@ try {
           radioKm: elVigia.radioKm,
           zonaHoraria: elVigia.zonaHoraria,
         },
-        motivo: 'Carro de pruebas en El Vigía (guion de punta a punta)',
+        motivo: 'Auto de pruebas en El Vigía (guion de punta a punta)',
       });
     let r = await abrir();
     if (r.estado === 409 && LOCAL) {
@@ -191,13 +191,13 @@ try {
           solicitudMarca: 'LOCAL-0000',
           confirmo: true,
         }),
-        'abrir Carro en Venezuela (solo local)',
+        'abrir Auto en Venezuela (solo local)',
       );
       r = await abrir();
     }
-    ok(r, 'abrir Carro en El Vigía');
-    casos.push('el equipo abrió Carro en El Vigía con un paso del panel');
-  } else casos.push('Carro ya estaba abierto en El Vigía');
+    ok(r, 'abrir Auto en El Vigía');
+    casos.push('el equipo abrió Auto en El Vigía con un paso del panel');
+  } else casos.push('Auto ya estaba abierto en El Vigía');
   ok(await interno('conductor', { quien: 've', ...ORIGEN_VE }), 'taxista de El Vigía listo');
   ok(
     await taxistaVe('POST', '/datos/repartidor/terminos', { version: versionTerminos }),
@@ -218,7 +218,7 @@ try {
   if (!punto)
     punto = ok(
       await equipo('POST', '/datos/admin/puntos-venta', {
-        nombre: 'Equipo Divoox Venezuela (guion de Carro)',
+        nombre: 'Equipo Divoox Venezuela (guion de Auto)',
         pais: 'VE',
         moneda: 'USD',
         usuarioId: ids.equipo,
@@ -264,7 +264,7 @@ try {
     exigir(cot.metodosPago.includes(metodoPago), `${metodoPago} no está entre los métodos`);
     const v = ok(
       await pasajero('POST', '/datos/viajes', { cotizacionId: cot.id, metodoPago }),
-      `pedir Carro en ${metodoPago}`,
+      `pedir Auto en ${metodoPago}`,
     ).viaje;
     const antes = await saldo();
     const comision = Math.round(cot.total / 10);
@@ -312,7 +312,7 @@ try {
       `la comisión no salió bien del saldo (${antes.disponible} → ${despues.disponible}, comisión ${comision})`,
     );
     casos.push(
-      `Carro en ${metodoPago} de ${cot.total} centavos de dólar; la comisión de ${comision} salió del saldo`,
+      `Auto en ${metodoPago} de ${cot.total} centavos de dólar; la comisión de ${comision} salió del saldo`,
     );
   }
 
@@ -324,7 +324,7 @@ try {
       metodoPago: 'efectivo',
       programadoPara: new Date(Date.now() + 2 * 3_600_000).toISOString(),
     }),
-    'reservar Carro para dentro de dos horas',
+    'reservar Auto para dentro de dos horas',
   );
   exigir(reserva.programado === true, 'la reserva no quedó programada');
   const lista = ok(await pasajero('GET', '/datos/viajes/programados'), 'mis viajes programados');
@@ -337,7 +337,7 @@ try {
     'cancelar la reserva',
   );
   exigir(cancelada.cargo === 0, 'cancelar con dos horas de anticipo debía ser gratis');
-  casos.push('reserva de Carro para dentro de dos horas con precio fijo, cancelada gratis');
+  casos.push('reserva de Auto para dentro de dos horas con precio fijo, cancelada gratis');
 
   // ---------------------------------------------------------------- 1b. Fase 2 de Carro (14 nov 2026)
   // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS, por la API como las apps y el panel: la
@@ -350,7 +350,7 @@ try {
     equipo('PUT', `/datos/admin/viajes/dinamica/carro/${elVigia.id}`, cuerpo);
   const tarifas = ok(await equipo('GET', '/datos/admin/viajes'), 'tarifas').tarifas;
   const actual = tarifas.find((t) => t.servicio === 'carro' && t.zona === elVigia.id);
-  exigir(actual, 'El Vigía no tiene tarifa de Carro');
+  exigir(actual, 'El Vigía no tiene tarifa de Auto');
   if (!actual.comfortPb || !actual.premiumPb || (actual.topeDinamicoPb ?? 10_000) < 15_000) {
     const {
       base,
@@ -393,11 +393,11 @@ try {
           esperaParadaGratisS: 120,
         },
         dePrueba: true,
-        motivo: 'Fase 2 de Carro: Comfort, Premium y tarifa dinámica hasta 1,5 (sitio de pruebas)',
+        motivo: 'Fase 2 de Auto: Comfort, Premium y tarifa dinámica hasta 1,5 (sitio de pruebas)',
       }),
-      'tarifa de Carro con categorías y tope dinámico',
+      'tarifa de Auto con categorías y tope dinámico',
     );
-    casos.push('El Vigía ofrece Carro Comfort y Premium y admite tarifa dinámica hasta 1,5');
+    casos.push('El Vigía ofrece Auto Comfort y Premium y admite tarifa dinámica hasta 1,5');
   }
   const carro = ok(
     await taxistaVe('GET', '/datos/conductor/vehiculos'),
@@ -408,7 +408,7 @@ try {
     ok(
       await equipo('PUT', `/datos/admin/vehiculos/${carro.id}/categoria`, {
         categoria: 'comfort',
-        motivo: 'Fase 2 de Carro: el carro de prueba cumple Comfort',
+        motivo: 'Fase 2 de Auto: el carro de prueba cumple Comfort',
       }),
       'poner el carro en Comfort',
     );
@@ -418,7 +418,7 @@ try {
       modo: 'manual',
       multiplicadorPb: 12_000,
       minutos: 10,
-      motivo: 'Guion de Carro',
+      motivo: 'Guion de Auto',
     }),
     'fijar la tarifa dinámica en 1,2',
   );
@@ -443,7 +443,7 @@ try {
     `la tarifa dinámica debía ser 1,2 (${cotF.multiplicadorPb})`,
   );
   exigir(cotF.desglose.dinamico > 0, 'el desglose no trae el recargo dinámico');
-  exigir(cotF.total > normal.total, 'Comfort con parada debía costar más que Carro directo');
+  exigir(cotF.total > normal.total, 'Comfort con parada debía costar más que Auto directo');
   exigir(
     (cotF.opciones ?? []).some((o) => o.categoria === 'comfort' && o.total === cotF.total),
     'la cotización no trae el precio de cada categoría',
@@ -562,7 +562,7 @@ try {
     `la comisión del viaje con paradas no salió bien (${antesF.disponible} → ${despuesF.disponible}, comisión ${comisionF})`,
   );
   ok(
-    await dinamica({ modo: 'auto', motivo: 'Guion de Carro: fin' }),
+    await dinamica({ modo: 'auto', motivo: 'Guion de Auto: fin' }),
     'tarifa dinámica en automática',
   );
   exigir(
@@ -570,7 +570,7 @@ try {
     'en automática y sin demanda el precio debía volver a normal',
   );
   casos.push(
-    `Carro Comfort con tarifa dinámica 1,2 y paradas: una hecha, una agregada en el camino y saltada; se cobraron ${finF.totalFinal} y la comisión de ${comisionF} salió del saldo`,
+    `Auto Comfort con tarifa dinámica 1,2 y paradas: una hecha, una agregada en el camino y saltada; se cobraron ${finF.totalFinal} y la comisión de ${comisionF} salió del saldo`,
   );
 
   // ---------------------------------------------------------------- 2. Detroit (EE. UU.)
@@ -603,7 +603,7 @@ try {
   } else {
     const pedido = ok(
       await pasajero('POST', '/datos/viajes', { cotizacionId: cotUs.id, metodoPago: 'tarjeta' }),
-      'pedir Carro con tarjeta',
+      'pedir Auto con tarjeta',
     );
     const id = pedido.viaje.id;
     const pago = pedido.pago ?? {};
@@ -643,7 +643,7 @@ try {
       exigir(estado === 'buscando', `el aviso de Stripe no pasó el viaje a buscar (${estado})`);
       casos.push('la tarjeta de prueba quedó autorizada y el aviso firmado lo pasó a buscar');
       await hacerViaje(tokens.conductorUs, id, cotUs.total, ORIGEN_US);
-      casos.push(`Carro en Detroit con tarjeta: se cobró ${cotUs.total} centavos al terminar`);
+      casos.push(`Auto en Detroit con tarjeta: se cobró ${cotUs.total} centavos al terminar`);
       const propina = await pasajero('POST', `/datos/viajes/${id}/propina`, { centavos: 200 });
       exigir(propina.estado === 200 || propina.estado === 201, `propina: ${propina.estado}`);
       casos.push('propina de 2 dólares cobrada con la tarjeta guardada');

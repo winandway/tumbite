@@ -19,7 +19,7 @@ const ORIGEN_US = { lat: 42.3314, lng: -83.0458, direccion: 'Campus Martius' };
 const DESTINO_US = { lat: 42.36, lng: -83.07, direccion: 'Midtown Detroit' };
 const RECARGA = 500;
 
-type Carro = {
+type Auto = {
   equipo: Actor;
   pasajero: Actor;
   ve: Actor;
@@ -36,8 +36,8 @@ function ok(ctx: Ctx, r: Respuesta, que: string): Datos {
   return d(r);
 }
 
-async function armar(ctx: Ctx): Promise<Carro> {
-  const a = await ctx.e.paso('se arman las cuentas fijas de Carro', async () =>
+async function armar(ctx: Ctx): Promise<Auto> {
+  const a = await ctx.e.paso('se arman las cuentas fijas de Auto', async () =>
     ok(ctx, await ctx.sistema.post('/datos/interno/diagnostico/carro/armar', {}), 'armar'),
   );
   const actor = (nombre: string, token: string) => {
@@ -49,7 +49,7 @@ async function armar(ctx: Ctx): Promise<Carro> {
     x.entrar(token);
     return x;
   };
-  const c: Carro = {
+  const c: Auto = {
     equipo: actor('equipo', a.tokens.equipo),
     pasajero: actor('pasajero', a.tokens.cliente),
     ve: actor('taxista El Vigía', a.tokens.conductorVe),
@@ -64,7 +64,7 @@ async function armar(ctx: Ctx): Promise<Carro> {
   return c;
 }
 
-async function cerrarColgados(c: Carro) {
+async function cerrarColgados(c: Auto) {
   const v = d(await c.pasajero.get('/datos/viajes/actual')).viaje;
   if (!v) return;
   if (v.estado === 'en_curso') {
@@ -79,7 +79,7 @@ async function cerrarColgados(c: Carro) {
     );
 }
 
-const paso = (c: Carro, quien: Actor, op: string, nombre: string, cuerpo: unknown = {}) =>
+const paso = (c: Auto, quien: Actor, op: string, nombre: string, cuerpo: unknown = {}) =>
   quien.pedir('POST', `/datos/conductor/operaciones/${op}/${nombre}`, cuerpo, {
     cabeceras: {
       'idempotency-key': `sim-car-${nombre}-${++c.n}-${Date.now().toString(36)}`.slice(0, 80),
@@ -87,8 +87,8 @@ const paso = (c: Carro, quien: Actor, op: string, nombre: string, cuerpo: unknow
   });
 
 /** El Vigía abierto para Carro, el taxista listo, con saldo y su pago móvil. */
-async function elVigiaListo(ctx: Ctx, c: Carro) {
-  await ctx.e.paso('Carro está abierto en El Vigía', async () => {
+async function elVigiaListo(ctx: Ctx, c: Auto) {
+  await ctx.e.paso('Auto está abierto en El Vigía', async () => {
     const prueba = await c.pasajero.post('/datos/viajes/cotizar', {
       servicio: 'carro',
       origen: ORIGEN_VE,
@@ -107,7 +107,7 @@ async function elVigiaListo(ctx: Ctx, c: Carro) {
           radioKm: z.radioKm,
           zonaHoraria: z.zonaHoraria,
         },
-        motivo: 'Carro de pruebas en El Vigía (simulador)',
+        motivo: 'Auto de pruebas en El Vigía (simulador)',
       });
     let r = await abrir();
     if (r.estado === 409 && ctx.d.modo === 'local') {
@@ -119,11 +119,11 @@ async function elVigiaListo(ctx: Ctx, c: Carro) {
           solicitudMarca: 'LOCAL-0000',
           confirmo: true,
         }),
-        'abrir Carro en Venezuela (solo en la base local)',
+        'abrir Auto en Venezuela (solo en la base local)',
       );
       r = await abrir();
     }
-    ok(ctx, r, 'el equipo abre Carro en El Vigía');
+    ok(ctx, r, 'el equipo abre Auto en El Vigía');
   });
   await ctx.e.paso('el taxista de El Vigía está listo, recargado y con su pago móvil', async () => {
     ok(
@@ -152,7 +152,7 @@ async function elVigiaListo(ctx: Ctx, c: Carro) {
       punto = ok(
         ctx,
         await c.equipo.post('/datos/admin/puntos-venta', {
-          nombre: 'Equipo Divoox Venezuela (simulador de Carro)',
+          nombre: 'Equipo Divoox Venezuela (simulador de Auto)',
           pais: 'VE',
           moneda: 'USD',
           usuarioId: c.ids.equipo,
@@ -194,8 +194,8 @@ async function elVigiaListo(ctx: Ctx, c: Carro) {
 }
 
 /** Un Carro en El Vigía de punta a punta; la comisión sale del saldo una sola vez. */
-async function carroVe(ctx: Ctx, c: Carro, metodoPago: 'efectivo' | 'pago_movil') {
-  await ctx.e.paso(`Carro en El Vigía por ${metodoPago}`, async () => {
+async function carroVe(ctx: Ctx, c: Auto, metodoPago: 'efectivo' | 'pago_movil') {
+  await ctx.e.paso(`Auto en El Vigía por ${metodoPago}`, async () => {
     const cot = ok(
       ctx,
       await c.pasajero.post('/datos/viajes/cotizar', {
@@ -235,20 +235,20 @@ async function carroVe(ctx: Ctx, c: Carro, metodoPago: 'efectivo' | 'pago_movil'
   });
 }
 
-const limpiar = async (ctx: Ctx, c: Carro | null) => {
+const limpiar = async (ctx: Ctx, c: Auto | null) => {
   if (c) await cerrarColgados(c).catch(() => null);
   await ctx.sistema.post('/datos/interno/diagnostico/carro/limpiar', {});
 };
 
 export const ESCENARIOS_CARRO: readonly Esc[] = [
   {
-    nombre: 'Carro Venezuela en efectivo',
+    nombre: 'Auto Venezuela en efectivo',
     descripcion:
-      'En El Vigía: el taxista recarga 5 dólares, el pasajero pide Carro en efectivo, el taxista acepta, llega, arranca y termina. La comisión del 10 % se aparta al aceptar y sale del saldo al terminar.',
+      'En El Vigía: el taxista recarga 5 dólares, el pasajero pide Auto en efectivo, el taxista acepta, llega, arranca y termina. La comisión del 10 % se aparta al aceptar y sale del saldo al terminar.',
     etiquetas: ['carro', 'diario'],
     vigila: ['C-CARRO-TARIFA-VE', 'C-CARRO-CIRCUITO', 'C-EL-VIGIA-UNA-ZONA'],
     async correr(_e, ctx) {
-      let c: Carro | null = null;
+      let c: Auto | null = null;
       try {
         c = await armar(ctx);
         await elVigiaListo(ctx, c);
@@ -259,13 +259,13 @@ export const ESCENARIOS_CARRO: readonly Esc[] = [
     },
   },
   {
-    nombre: 'Carro Venezuela pago móvil',
+    nombre: 'Auto Venezuela pago móvil',
     descripcion:
-      'En El Vigía: el pasajero pide Carro por pago móvil, el taxista confirma «sí me llegó» con el pasajero a bordo y la comisión sale igual del saldo.',
+      'En El Vigía: el pasajero pide Auto por pago móvil, el taxista confirma «sí me llegó» con el pasajero a bordo y la comisión sale igual del saldo.',
     etiquetas: ['carro'],
     vigila: ['C-PAGO-MOVIL-VIAJE', 'C-CARRO-CIRCUITO'],
     async correr(_e, ctx) {
-      let c: Carro | null = null;
+      let c: Auto | null = null;
       try {
         c = await armar(ctx);
         await elVigiaListo(ctx, c);
@@ -276,13 +276,13 @@ export const ESCENARIOS_CARRO: readonly Esc[] = [
     },
   },
   {
-    nombre: 'Carro Detroit en efectivo y reserva para más tarde',
+    nombre: 'Auto Detroit en efectivo y reserva para más tarde',
     descripcion:
-      'En Detroit: el pasajero pide Carro en efectivo y el taxista lo lleva de punta a punta; después reserva otro para dentro de dos horas con el precio fijo y lo cancela gratis.',
+      'En Detroit: el pasajero pide Auto en efectivo y el taxista lo lleva de punta a punta; después reserva otro para dentro de dos horas con el precio fijo y lo cancela gratis.',
     etiquetas: ['carro'],
     vigila: ['C-CARRO-CIRCUITO', 'C-VIAJE-PROGRAMADO'],
     async correr(_e, ctx) {
-      let c: Carro | null = null;
+      let c: Auto | null = null;
       try {
         c = await armar(ctx);
         const cc = c;
@@ -298,7 +298,7 @@ export const ESCENARIOS_CARRO: readonly Esc[] = [
             'términos',
           );
         });
-        await ctx.e.paso('Carro en Detroit de punta a punta', async () => {
+        await ctx.e.paso('Auto en Detroit de punta a punta', async () => {
           const cot = ok(
             ctx,
             await cc.pasajero.post('/datos/viajes/cotizar', {

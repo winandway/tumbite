@@ -29,7 +29,7 @@ async function encender(host: string) {
   return { m, admin, cliente, estados: [s.estado, z.estado] };
 }
 
-describe('Divoox Carro (C-CARRO-PRUEBAS)', () => {
+describe('Divoox Auto (C-CARRO-PRUEBAS)', () => {
   it('en producción no se enciende', async () => {
     const { estados } = await encender('divoox.com');
     expect(estados[0]).not.toBe(200);
@@ -91,7 +91,7 @@ describe('Divoox Carro (C-CARRO-PRUEBAS)', () => {
   });
 });
 
-describe('Carro XL (C-CARRO-XL)', () => {
+describe('Auto XL (C-CARRO-XL)', () => {
   it('cuesta el factor de la ciudad, solo se ofrece a carros de 6 plazas y sin factor no existe', async () => {
     const { m, admin, cliente } = await encender('staging.tumbite.com');
     const tarifa = (extra: object) =>

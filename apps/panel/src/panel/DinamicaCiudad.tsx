@@ -15,7 +15,7 @@ export const vecesDe = (pb: number, idioma: Idioma) =>
 
 const T = {
   es: {
-    titulo: 'Tarifa dinámica de Carro',
+    titulo: 'Tarifa dinámica de Auto',
     ahora: 'Ahora',
     normal: 'precio normal',
     veces: 'veces el precio normal',
@@ -41,7 +41,7 @@ const T = {
     faltaMotivo: 'Escribe el motivo.',
   },
   en: {
-    titulo: 'Car dynamic pricing',
+    titulo: 'Auto dynamic pricing',
     ahora: 'Now',
     normal: 'normal price',
     veces: 'times the normal price',

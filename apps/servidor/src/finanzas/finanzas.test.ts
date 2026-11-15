@@ -1150,7 +1150,7 @@ describe('C-FIN-CONDUCTOR · prepago de conductores, por mercado', () => {
 });
 
 describe('C-PREPAGO-MERCADOS: prepago de conductores encendido en Venezuela y Colombia (Richard, 2 nov 2026)', () => {
-  it('Moto, Carro y Envíos cobran 10 % del prepago en VE y CO; en EE. UU. no hay política de prepago', async () => {
+  it('Moto, Auto y Envíos cobran 10 % del prepago en VE y CO; en EE. UU. no hay política de prepago', async () => {
     const m = mundo();
     const { comisionConductor } = await import('./conductor');
     for (const servicio of ['ride', 'car', 'express'] as const) {

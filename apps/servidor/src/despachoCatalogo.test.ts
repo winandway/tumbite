@@ -128,7 +128,7 @@ describe('C-DESPACHO-CATALOGO · Comida lee el catálogo de habilitaciones', () 
   it('encendido: en carro hace falta la licencia y el seguro aprobados; con ellos, recibe la oferta', async () => {
     const { q, admin, pedidoListo, repartidor, ofertas, encender } = await escenario();
     await encender(true);
-    const rep = await repartidor('Rep Carro', 25.771);
+    const rep = await repartidor('Rep Auto', 25.771);
     await q(
       "INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado) VALUES ('veh-c1', ?, 'carro', 'Toyota', 'Corolla', 'Negro', 'C1X', 'FL', 2022, 4, 'aprobado')",
       rep.id,

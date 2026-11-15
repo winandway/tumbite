@@ -57,12 +57,12 @@ export const MENSAJES_EN = new Map<string, string>([
     'That multiplier is above the city’s cap. Raise the cap in the fare first.',
   ],
   [
-    'Carro Comfort todavía no está disponible en tu ciudad.',
-    'Car Comfort isn’t available in your city yet.',
+    'Auto Comfort todavía no está disponible en tu ciudad.',
+    'Auto Comfort isn’t available in your city yet.',
   ],
   [
-    'Carro Premium todavía no está disponible en tu ciudad.',
-    'Car Premium isn’t available in your city yet.',
+    'Auto Premium todavía no está disponible en tu ciudad.',
+    'Auto Premium isn’t available in your city yet.',
   ],
   [
     'Con tarjeta, el precio no puede subir después de pedir el viaje. Agrega tus paradas antes de pedirlo.',
@@ -70,8 +70,8 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   // Pulido de la noche del 14 nov (bloque propio)
   [
-    'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
-    'That document isn’t on the list. Use licencia_conducir (Car), licencia_moto (Moto), or antecedentes_penales.',
+    'Ese papel no está en la lista. Usa licencia_conducir (Auto), licencia_moto (Moto) o antecedentes_penales.',
+    'That document isn’t on the list. Use licencia_conducir (Auto), licencia_moto (Moto), or antecedentes_penales.',
   ],
   [
     'Este pedido se paga por pago móvil: confírmalo con «Sí, me llegó» o «No me llegó».',
@@ -1057,7 +1057,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Puedes tener hasta 5 contactos de confianza.', 'You can have up to 5 trusted contacts.'],
   ['Ese número ya está en tus contactos.', 'That number is already in your contacts.'],
   ['Ese aviso ya no está abierto.', 'That alert is no longer open.'],
-  ['Carro XL todavía no está disponible en tu ciudad.', 'Car XL isn’t available in your city yet.'],
+  ['Auto XL todavía no está disponible en tu ciudad.', 'Auto XL isn’t available in your city yet.'],
   [
     'Cuéntanos qué envías y quién lo recibe.',
     'Tell us what you’re sending and who’s receiving it.',
@@ -1121,8 +1121,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'Thresholds go in order: Silver below Gold, and Gold below Diamond.',
   ],
   [
-    'Ese servicio no se puede encender en el piloto. Moto y Carro llevan pasajeros y esperan la aprobación legal y el seguro.',
-    'That service can’t be turned on for the pilot. Moto and Car carry passengers and are waiting for legal approval and insurance.',
+    'Ese servicio no se puede encender en el piloto. Moto y Auto llevan pasajeros y esperan la aprobación legal y el seguro.',
+    'That service can’t be turned on for the pilot. Moto and Auto carry passengers and are waiting for legal approval and insurance.',
   ],
   ['Escribe el motivo de la mala conducta.', 'Write the reason for the misconduct.'],
   ['Los pagos con tarjeta todavía no están activados.', 'Card payments aren’t turned on yet.'],
@@ -1330,8 +1330,8 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t switch your vehicle. Please try again.',
   ],
   [
-    'Los servicios de pasajeros (Moto y Carro) no se pueden encender todavía.',
-    'Passenger services (Moto and Car) can’t be turned on yet.',
+    'Los servicios de pasajeros (Moto y Auto) no se pueden encender todavía.',
+    'Passenger services (Moto and Auto) can’t be turned on yet.',
   ],
   ['No encontramos ese documento.', 'We couldn’t find that document.'],
   [

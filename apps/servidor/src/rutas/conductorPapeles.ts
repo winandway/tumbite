@@ -250,7 +250,7 @@ conductorPapeles.post('/conductor/papeles', async (c) => {
     .safeParse(c.req.query());
   if (!q.success)
     throw new ErrorDatos(
-      'Ese papel no está en la lista. Usa licencia_conducir (Carro), licencia_moto (Moto) o antecedentes_penales.',
+      'Ese papel no está en la lista. Usa licencia_conducir (Auto), licencia_moto (Moto) o antecedentes_penales.',
       'tipo',
       400,
     );

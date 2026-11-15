@@ -19,7 +19,7 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
         resumen:
           'Elige el día y la hora, con el precio fijo desde ya. Cancela gratis hasta una hora antes.',
         explicacion: [
-          'Puedes reservar un viaje en Moto o Carro, o un envío, desde 30 minutos hasta 7 días antes. El precio que ves al reservar es el que pagas.',
+          'Puedes reservar un viaje en Moto o Auto, o un envío, desde 30 minutos hasta 7 días antes. El precio que ves al reservar es el que pagas.',
           'Unos minutos antes de la hora buscamos a tu conductor y te avisamos. Si a la hora no encontramos a nadie, la reserva se cancela sin ningún cargo y te avisamos.',
           'Cancelar es gratis hasta 60 minutos antes. Después de ese momento se cobra el cargo de cancelación de tu ciudad, que se suma a tu próximo viaje.',
         ],
@@ -29,7 +29,7 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
           '¿Qué pasa si no hay conductor a la hora?',
         ],
         pasos: [
-          'Abre Divoox y elige Moto, Carro o Envíos.',
+          'Abre Divoox y elige Moto, Auto o Envíos.',
           'Escribe dónde te recogen y a dónde vas, y toca «Ver precio».',
           'En «¿Cuándo?» toca «Programar» y elige el día y la hora.',
           'Revisa el precio y toca «Reservar».',
@@ -84,7 +84,7 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
         resumen:
           'Pick the day and time with an upfront price. Cancel for free up to one hour before.',
         explicacion: [
-          'You can schedule a Moto or Car ride, or a delivery, from 30 minutes to 7 days ahead. The price you see when you book is the price you pay.',
+          'You can schedule a Moto or Auto ride, or a delivery, from 30 minutes to 7 days ahead. The price you see when you book is the price you pay.',
           'A few minutes before your time, we start finding your driver and let you know. If no driver is found by then, the reservation is canceled at no charge and we notify you.',
           'Canceling is free up to 60 minutes before. After that, your city’s cancellation fee applies and is added to your next ride.',
         ],
@@ -94,7 +94,7 @@ export const BORRADORES_VIAJES_2: Record<Idioma, { cliente: Guia[]; conductor: G
           'What happens if there’s no driver at my time?',
         ],
         pasos: [
-          'Open Divoox and choose Moto, Car or Deliveries.',
+          'Open Divoox and choose Moto, Auto or Deliveries.',
           'Enter your pickup and destination, and tap “See price”.',
           'Under “When?”, tap “Schedule” and pick the day and time.',
           'Check the price and tap “Reserve”.',
