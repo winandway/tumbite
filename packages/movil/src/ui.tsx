@@ -21,10 +21,13 @@ export function Pantalla({
   titulo,
   children,
   scroll = true,
+  volver,
 }: {
   titulo?: string;
   children: ReactNode;
   scroll?: boolean;
+  /** C-ENTRAR-CON-SALIDA: con esto, la cabecera lleva la flecha «Volver» a la izquierda. */
+  volver?: () => void;
 }) {
   const { idioma, cambiarIdioma } = useSesion();
   const cuerpo = (
@@ -36,7 +39,23 @@ export function Pantalla({
   return (
     <SafeAreaView style={e.fondo} edges={['top', 'left', 'right']}>
       <View style={e.cabecera}>
-        <Text style={e.marca}>{MARCA.nombre}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          {volver ? (
+            <Pressable
+              testID="cabecera-volver"
+              onPress={volver}
+              accessibilityRole="button"
+              accessibilityLabel={enIdioma(TEXTOS_MOVIL, idioma).volver}
+              hitSlop={12}
+              style={{ paddingRight: 10, paddingVertical: 2 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 30, fontWeight: '700', lineHeight: 32 }}>
+                ‹
+              </Text>
+            </Pressable>
+          ) : null}
+          <Text style={e.marca}>{MARCA.nombre}</Text>
+        </View>
         <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
       </View>
       {scroll ? (

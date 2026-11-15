@@ -1,7 +1,7 @@
 import { type ErrorBoundaryProps, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { SesionProvider, PantallaConFallo } from '@tumbite/movil';
+import { SesionProvider, SobreLosBotones, PantallaConFallo } from '@tumbite/movil';
 
 /**
  * C-APP-SIN-CIERRES: si una pantalla falla, la app no se cierra; se ve el aviso con «Volver» (vuelve
@@ -30,7 +30,10 @@ export default function Raiz() {
     <SafeAreaProvider>
       <SesionProvider roles={['restaurante']}>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
+        {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}
+        <SobreLosBotones>
+          <Stack screenOptions={{ headerShown: false }} />
+        </SobreLosBotones>
       </SesionProvider>
     </SafeAreaProvider>
   );

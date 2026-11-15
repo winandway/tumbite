@@ -1,7 +1,7 @@
 import { type ErrorBoundaryProps, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { SesionProvider, PantallaConFallo } from '@tumbite/movil';
+import { SesionProvider, SobreLosBotones, PantallaConFallo } from '@tumbite/movil';
 import { AbrirAvisos } from '../AbrirAvisos';
 import { CarritoProvider } from '../carrito';
 
@@ -35,7 +35,10 @@ export default function Raiz() {
           <StatusBar style="light" />
           {/* C-MIRAR-SIN-CUENTA: sin cuenta se mira; cada pantalla de la cuenta la pide (ConCuenta). */}
           <AbrirAvisos />
-          <Stack screenOptions={{ headerShown: false }} />
+          {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}
+          <SobreLosBotones>
+            <Stack screenOptions={{ headerShown: false }} />
+          </SobreLosBotones>
         </CarritoProvider>
       </SesionProvider>
     </SafeAreaProvider>

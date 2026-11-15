@@ -1,6 +1,6 @@
 import { abrirPagina } from './PaginaEnApp';
-import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { BackHandler, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   correoEjemplo,
@@ -55,6 +55,16 @@ export function Acceso({
   const { api, idioma, alEntrar, rolesPermitidos, cambiarIdioma } = useSesion();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
   const [modo, setModo] = useState<'entrar' | 'registro'>(modoInicial);
+  // C-ENTRAR-CON-SALIDA (14 nov 2026, Richard): el botón de atrás del teléfono también saca de
+  // la pantalla de entrar cuando se puede seguir mirando sin cuenta; nadie queda atrapado.
+  useEffect(() => {
+    if (!seguirMirando) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      seguirMirando();
+      return true;
+    });
+    return () => sub.remove();
+  }, [seguirMirando]);
   const b = useBorrador({
     formulario: `app-${modo}`,
     inicial: INICIAL,
@@ -147,7 +157,9 @@ export function Acceso({
         </ScrollView>
       </SafeAreaView>
     ) : (
-      <Pantalla titulo={registro ? t.crearCuenta : t.entrar}>{cuerpo}</Pantalla>
+      <Pantalla titulo={registro ? t.crearCuenta : t.entrar} volver={seguirMirando}>
+        {cuerpo}
+      </Pantalla>
     );
   return marco(
     <>

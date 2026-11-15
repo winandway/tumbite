@@ -2,7 +2,13 @@ import { type ErrorBoundaryProps, Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as Location from 'expo-location';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PantallaPermisos, SesionProvider, useSesion, PantallaConFallo } from '@tumbite/movil';
+import {
+  PantallaPermisos,
+  SesionProvider,
+  SobreLosBotones,
+  useSesion,
+  PantallaConFallo,
+} from '@tumbite/movil';
 
 /**
  * C-PERMISOS-EXPLICADOS (31 oct 2026, como DoorDash): la primera vez que entra, el repartidor ve para
@@ -85,8 +91,11 @@ export default function Raiz() {
     <SafeAreaProvider>
       <SesionProvider roles={['repartidor']} explicarPermisos>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
-        <Permisos />
+        {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}
+        <SobreLosBotones>
+          <Stack screenOptions={{ headerShown: false }} />
+          <Permisos />
+        </SobreLosBotones>
       </SesionProvider>
     </SafeAreaProvider>
   );

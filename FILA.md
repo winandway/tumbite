@@ -10,6 +10,15 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Prueba con teléfonos (14 nov 2026, orden de Richard, probando en un Xiaomi con Android 14) — todos los países
+
+- [x] HECHO 14 nov (C-SOBRE-LOS-BOTONES) El menú de abajo quedaba tapado por los botones del teléfono en Android y no recibía el toque. Pieza única `SobreLosBotones` en las tres apps. Se ve en la próxima compilación. Todos los países.
+- [x] HECHO 14 nov (C-ENTRAR-CON-SALIDA) La pantalla de entrar del cliente tiene flecha «Volver» arriba y responde al botón de atrás del teléfono. Se ve en la próxima compilación. Todos los países.
+- [x] HECHO 14 nov Cuentas de prueba en la página de progreso, solo con la clave del equipo y guardadas fuera del repositorio. Todos los países.
+- [ ] [para: investigador] (BIENVENIDA-1) Carrusel de bienvenida al abrir cada app por primera vez (pedido de Richard, 14 nov): cuatro o cinco láminas que se pasan con el dedo y explican qué hace la app, con capturas reales y mapas, y al final «Crear cuenta» o «Entrar» (en el cliente, también «Seguir mirando»). Primero REA y observación pública de cómo lo hacen los grandes (Uber, DoorDash, Rappi, DiDi: cuántas láminas, qué dicen, si se pueden saltar, cuándo piden los permisos), ficha en `docs/investigaciones-rea/`. Todos los países.
+- [ ] [para: desarrollador] (BIENVENIDA-2) Construir el carrusel como pieza única en `packages/movil` para las tres apps (cliente, Driver y Restaurants; web, Android y iPhone iguales), en español e inglés, con «Saltar», puntos de avance, se muestra una sola vez por teléfono (guardado en el teléfono) y se puede volver a ver desde la cuenta. Láminas con capturas REALES de la app (las del recorrido) y, en Driver, antes de la pantalla de permisos. Prueba en rojo, guía de Docs es/en con capturas, y web al día. Todos los países.
+- [ ] [para: tiendas-lanzamientos] (BIENVENIDA-3) Compilación nueva de las tres apps con el carrusel, el menú sobre los botones, la salida de la pantalla de entrar y los mapas de día y de noche con el isotipo. Pide el permiso de Gerencia para compilar; en Google Play, solo si no hay revisión en curso. Todos los países.
+
 ## Divoox Flex · Fase 7 (13 nov 2026, orden de Richard; rama `fase-flex-7`) — todos los países
 
 - [x] HECHO 13 nov (C-FLEX-EXPORTAR) Exportar a CSV envíos, paquetes, rutas, incidencias, devoluciones y movimientos con los filtros puestos, por índice y sin escribir. Todos los países.
