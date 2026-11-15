@@ -187,7 +187,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Choose where you’re going, see the price before you confirm, and follow your driver on the map until they arrive.',
         explicacion: [
           'Divoox Moto gets you across the city fast. It’s available in the cities where Divoox Moto is open; if it isn’t open in yours yet, the app won’t let you request it.',
-          'The price is upfront: you see it before you request and it doesn’t change with traffic. In Venezuela the price is in dollars, with its equivalent in bolívars at the day’s rate next to it. By default the rate is the Central Bank of Venezuela’s official rate, which updates on its own every business day; next to it you see which day it’s from. It’s for reference only: the price is set in US dollars.',
+          'The price is upfront: you see it before you request and it doesn’t change with traffic. In the United States the price is in US dollars, and the app shows it next to the distance and the time of your ride, so you know what you’ll pay before you get on.',
           'When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map.',
           'To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person.',
         ],
@@ -199,7 +199,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         pasos: [
           'Open Divoox and tap “Moto”.',
           'Confirm your pickup point (you can move it on the map) and enter your destination.',
-          'Check the upfront price and choose how to pay: the app shows the methods available in your city (in Venezuela, cash or mobile payment).',
+          'Check the upfront price and choose how to pay: the app shows the methods available in your city (in the United States, cash or card).',
           'Tap “Request”. When a driver accepts, you’ll see their details and location.',
           'When you get on, check the plate and, if the app shows a code, tell it to the driver.',
         ],
@@ -209,10 +209,10 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         id: 'ride-moto-pago',
         titulo: 'Paying, canceling and tipping on Moto',
         resumen:
-          'Pay with cash, card, or mobile payment (depending on your country), cancel for free at the start, and leave a tip when the ride ends.',
+          'Pay with cash or card, cancel for free at the start, and tip your driver when the ride ends.',
         explicacion: [
           'With a card, we hold the price when you request and charge it when the ride ends. With cash, you pay the driver when you arrive.',
-          'Where mobile payment is available (for example, in Venezuela), once you get a driver you see their mobile payment details in the app. You pay the equivalent in bolívars at the official rate of the day, and the driver confirms in their app that it arrived.',
+          'You pick cash or card on the same screen where you see the price, before you request. During the ride the app keeps the upfront price in view, so you always know exactly what you’ll pay.',
           'Canceling is free while we look for a driver and for the first few minutes after one accepts. After that, the app tells you upfront what canceling costs; that fee goes to the driver who came to pick you up.',
           'If the driver waits longer than the included time at pickup, a small per-minute fee is added, as with other ride services.',
         ],
@@ -224,7 +224,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         pasos: [
           'Choose how you pay before you request: the app only shows the methods available in your city.',
           'To cancel, tap “Cancel ride”: the app tells you whether it’s free or what it costs.',
-          'When the ride ends, rate it and, if you paid by card, leave a tip if you like. It all goes to the driver.',
+          'When the ride ends, rate it and leave a tip if you like: in the app if you paid by card, or handed to your driver if you paid in cash. It all goes to the driver.',
           'If you canceled a cash ride late, the fee is added to your next ride.',
         ],
       },
@@ -282,7 +282,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Choose your city, register your motorcycle, upload your documents with your camera, and track your approval in the app.',
         explicacion: [
           'Divoox Moto opens city by city: you can sign up in the cities where Divoox Moto is open. Before you give rides, we get to know you: we verify your identity, your license, your background, and your motorcycle’s documents. That keeps riders and you safe.',
-          'What we ask for depends on your country. In Venezuela, for example, you upload your motorcycle license and your criminal record certificate, and our team reviews each one.',
+          'What we ask for depends on your country. In the United States, your background check and driving record are run by our screening partner, so you don’t upload them yourself: you enter your details on the partner’s secure page and see the result in the app.',
           'Each document shows its status: not uploaded, under review, approved, or “needs a fix” with the reason. Once everything is approved, you turn on “Get Moto rides.”',
         ],
         preguntas: [
@@ -295,7 +295,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Check your city and change it if needed (once chosen, you can change it once every 24 hours within your country).',
           'Enter your motorcycle’s make, model, year, color, and license plate, and tap “Save my motorcycle.”',
           'Upload each motorcycle document: tap “Upload” and choose “Take photo” or “Upload from files.”',
-          'Upload your driver documents and verify your identity under “Documents.”',
+          'Verify your identity and complete your background check under “Documents.”',
           'Tap “Send my motorcycle for review.” We’ll let you know when it’s approved.',
           'Once everything is approved, tap “Use this motorcycle to work” and “Get Moto rides.”',
         ],
@@ -303,26 +303,26 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
       },
       {
         id: 'drive-moto-saldo',
-        titulo: 'Your fee balance and top-ups',
+        titulo: 'How you’re paid for Moto rides',
         resumen:
-          'The rider pays you the full fare; the Divoox fee comes out of your balance. See how many rides it covers and top up at an authorized sales point.',
+          'On a cash ride the rider pays you the full fare at the end, and the app shows the amount at every step. A prepaid fee balance is only used in some countries, not in the United States.',
         explicacion: [
-          'In countries where you work with a balance, the rider pays you the whole fare, in cash or by mobile payment. When the ride ends, the Divoox fee is deducted from your balance.',
-          'When you accept a ride, we set its fee aside; if the ride doesn’t happen, it goes back to your balance. It’s never deducted twice.',
-          'The app tells you how many rides your balance covers, based on the fee for a typical ride. It’s an estimate. When it’s running low we let you know; with no balance you don’t get rides until you top up.',
+          'Every offer tells you how the rider pays before you accept. On a cash ride you collect the full upfront price from the rider when you arrive: the app shows “Collect in cash” with the exact amount during the ride and again when it ends.',
+          'On a card ride there is nothing to collect: the rider pays in the app and the fare is added to your earnings.',
+          'In some countries drivers work with a prepaid fee balance that they top up with a code at a sales point. That balance isn’t used in the United States, so there is nothing to top up before you drive here.',
         ],
         preguntas: [
-          'How do I top up my balance?',
-          'How many rides does my balance cover?',
-          'Why am I not getting rides?',
+          'How do I get paid for a cash ride?',
+          'Do I need to top up a balance to drive in the United States?',
+          'Where do I see how the rider pays?',
         ],
         pasos: [
-          'Buy a top-up at an authorized Divoox sales point. You get a code.',
-          'In the app, go to Earnings and find “Balance for fees.”',
-          'Enter the code and tap “Top up with the code.” The balance shows up right away.',
-          'Check the line “Enough for about N rides” and top up before you run out.',
+          'Before you accept, check the top of the offer: it says whether you collect cash at the end.',
+          'During the ride, the amount to collect stays on screen under the destination.',
+          'When you tap “End ride,” collect the amount shown under “Collect in cash.”',
+          'Rate your rider and tap “Done” to get your next offer.',
         ],
-        nota: 'Your fee balance isn’t earnings and can’t be withdrawn: it only pays the fees for your rides.',
+        nota: 'Collect only the amount the app shows. A tip is the rider’s choice, and it’s all yours.',
       },
       {
         id: 'drive-moto-seguridad',
@@ -361,8 +361,10 @@ const PUBLICADAS = new Set([
   'drive-moto-seguridad',
 ]);
 
+// C-CAPTURAS-POR-IDIOMA (15 nov 2026): el español se enseña con El Vigía (`moto-ve`); el inglés, con
+// Novi, Michigan (`moto-us`). Las toma `scripts/recorrido/capturas-moto-venezuela.mjs` en dos pasadas.
 const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
-  src: `/docs/recorrido-moto-ve-${nombre}-${idioma}.webp`,
+  src: `/docs/recorrido-moto-${idioma === 'en' ? 'us' : 've'}-${nombre}-${idioma}.webp`,
   alt,
   pie,
 });
@@ -515,13 +517,13 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'cliente-pedir',
         'en',
-        'The Moto screen with the pickup point, destination, map and upfront price in dollars with its bolívar equivalent.',
+        'The Moto screen in Novi, Michigan, with the map, the upfront price in US dollars, the distance and time, and the Cash and Card options.',
         'Before you request, you see the upfront price and how you can pay.',
       ),
       foto(
         'cliente-viaje',
         'en',
-        'The ride in progress with the map, the driver’s motorcycle and plate, and the upfront price.',
+        'The ride in progress with the map, the driver’s name, motorcycle and plate, the pickup at Twelve Oaks Mall and the upfront price.',
         'During the ride you see your driver, their motorcycle and plate.',
       ),
       foto(
@@ -535,20 +537,20 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'cliente-pedir',
         'en',
-        'The city’s payment methods: cash and mobile payment, with the price and its bolívar equivalent.',
-        'You choose cash or mobile payment before you request.',
+        'The payment methods under the upfront price: Cash, selected, and Card, with the note “Pay your driver in cash when you arrive.”',
+        'You choose cash or card before you request.',
       ),
       foto(
         'cliente-viaje',
         'en',
-        'The “Pay by mobile payment to” card with the driver’s bank, name, phone and ID number.',
-        'With mobile payment, you see who to pay as soon as you get a driver.',
+        'The ride in progress with the pickup, the destination and the upfront price that doesn’t change.',
+        'The upfront price stays in view for the whole ride.',
       ),
       foto(
-        'driver-viaje-pago-movil',
+        'cliente-propina',
         'en',
-        'The driver with the question “Did the rider’s mobile payment arrive?” and the buttons to answer.',
-        'The driver confirms in their app that the payment arrived.',
+        'The end of a cash ride: “Pay in cash” with the amount, the star rating, and the note about handing a tip to your driver.',
+        'When you arrive, you pay, rate the ride and can leave a tip.',
       ),
     ],
     'drive-moto': [
@@ -559,15 +561,15 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
         'Before you accept, you see what you earn and the route.',
       ),
       foto(
-        'driver-viaje-pago-movil',
+        'driver-viaje',
         'en',
-        'The ride in progress with the destination and the mobile payment question.',
-        'During the ride you confirm the payment, then tap “End ride.”',
+        'The ride in progress with the rider’s name, the destination, the amount to collect in cash, and the “End ride” button.',
+        'During the ride you see where you’re going and what to collect, then tap “End ride.”',
       ),
       foto(
         'driver-cobro-efectivo',
         'en',
-        'Ride completed: how much to collect in cash in dollars and its bolívar equivalent.',
+        'Ride completed: how much to collect in cash, in US dollars.',
         'When it ends, the app tells you how much to collect.',
       ),
     ],
@@ -575,40 +577,40 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'driver-moto',
         'en',
-        'The Divoox Moto section with your city, your approved motorcycle and its documents with their status.',
+        'The Divoox Moto section with your city, Novi, your approved motorcycle and its documents with their status.',
         'Your city, your motorcycle and each document with its status.',
       ),
       foto(
         'driver-moto-papeles',
         'en',
-        'Your approved driver documents and the notice “You’re getting Moto rides.”',
+        'Every motorcycle document approved and the notice “You’re getting Moto rides.”',
         'With everything approved, you get Moto rides.',
       ),
       foto(
         'driver-identidad',
         'en',
-        'The Documents section with the identity verification approved.',
-        'Your identity is verified in “Documents.”',
+        'The Documents section with your identity verified and your background check approved.',
+        'Your identity and background check are under “Documents.”',
       ),
     ],
     'drive-moto-saldo': [
       foto(
-        'driver-saldo',
+        'driver-oferta',
         'en',
-        'The fee balance in dollars with the line “Enough for about N rides” and the box for the top-up code.',
-        'Your balance and how many rides it covers.',
+        'A Moto ride offer that says “You collect cash at the end,” with what you earn and the route.',
+        'The offer tells you how the rider pays.',
+      ),
+      foto(
+        'driver-viaje',
+        'en',
+        'The ride in progress with “Collect in cash” and the amount under the destination.',
+        'The amount to collect stays on screen during the ride.',
       ),
       foto(
         'driver-cobro-efectivo',
         'en',
         'Cash ride completed: the rider pays the full amount to you.',
         'With cash, the rider pays you the whole ride.',
-      ),
-      foto(
-        'driver-cobro-pago-movil',
-        'en',
-        'Mobile payment ride completed with the amount in dollars and its bolívar equivalent.',
-        'With mobile payment you also get the full amount; the fee comes from your balance.',
       ),
     ],
     'ride-seguridad': [
@@ -635,7 +637,7 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'driver-descanso',
         'en',
-        'The notice “You’ve been driving for 13 hours. For your safety, take a break: you’ll get rides again in 6 hours.” on the driver’s home screen.',
+        'The notice “You’ve been driving for 12 hours. For your safety, take a break: you’ll get rides again in 6 hours.” on the driver’s home screen.',
         'After 12 hours of driving, the app asks you to rest and tells you when you’re back.',
       ),
       foto(

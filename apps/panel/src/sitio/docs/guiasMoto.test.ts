@@ -39,7 +39,7 @@ describe('C-DOCS-MOTO: guías de Moto publicadas', () => {
       for (const g of [...lista.pasajero, ...lista.conductor]) {
         expect(g.capturas?.length ?? 0).toBeGreaterThanOrEqual(3);
         for (const c of g.capturas ?? []) {
-          expect(c.src).toMatch(/^\/docs\/recorrido-moto-ve-/);
+          expect(c.src).toMatch(/^\/docs\/recorrido-moto-(ve|us)-/);
           expect(existsSync(join(PUBLICO, c.src))).toBe(true);
           expect(c.alt.length).toBeGreaterThan(10);
         }
