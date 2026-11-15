@@ -3003,6 +3003,18 @@ CREATE TABLE IF NOT EXISTS tasas_cambio (
   PRIMARY KEY (pais, fecha, fuente)
 );
 
+-- C-TASA-MODOS (14 nov 2026, Venezuela): cómo sale la tasa de referencia de cada país. Una fila por
+-- país; sin fila, «oficial» (la del Banco Central, automática). «flotante» = la oficial más
+-- `ajuste_pct` (tope ±30 %); «fija» = `tasa_fija`, que no vence hasta que el equipo la cambie.
+CREATE TABLE IF NOT EXISTS tasas_modo (
+  pais TEXT PRIMARY KEY,
+  modo TEXT NOT NULL DEFAULT 'oficial' CHECK (modo IN ('oficial', 'flotante', 'fija')),
+  ajuste_pct REAL CHECK (ajuste_pct IS NULL OR (ajuste_pct >= -30 AND ajuste_pct <= 30)),
+  tasa_fija REAL CHECK (tasa_fija IS NULL OR tasa_fija > 0),
+  cambiado_por TEXT,
+  cambiado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Tiendas · C-TIENDAS-CATALOGO (28 oct 2026, todos los países): la FICHA del producto (una vez) y la
 -- OFERTA de cada tienda (precio, si hay, existencias, pasillo), como DoorDash, Uber Eats, Rappi e
 -- Instacart. Hoy cada comercio es su propia tienda; la ficha queda lista para cadenas. Nunca se borra
