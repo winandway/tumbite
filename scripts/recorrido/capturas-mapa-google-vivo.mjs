@@ -137,30 +137,34 @@ try {
     // mapa abierto después sale de noche (se guardó en el navegador de la persona).
     const novi = { lat: 42.4806, lng: -83.4755 };
     const { pagina } = await abrir(navegador, tCliente, novi, 'ajuste');
-    await pagina.goto(`${BASE}/app/account`, { waitUntil: 'domcontentloaded' });
-    const ajuste = pagina.getByTestId('ajuste-mapa');
-    await ajuste.waitFor({ timeout: 20000 });
-    await ajuste.scrollIntoViewIfNeeded();
-    await foto(pagina, 'ajuste-cuenta-cliente-automatico');
-    await pagina.getByTestId('ajuste-mapa-oscuro').click();
-    await esperar(600);
-    await foto(pagina, 'ajuste-cuenta-cliente-oscuro');
-    const guardado = await pagina.evaluate(() => window.localStorage.getItem('divoox.mapa.tema'));
-    console.log('ajuste guardado en el navegador:', guardado);
-    await pagina.goto(`${BASE}/app/ride?servicio=carro`, { waitUntil: 'domcontentloaded' });
-    await pagina
-      .getByText(/Ver en el mapa|See on the map/)
-      .first()
-      .click();
-    console.log('mapa después de elegir «Oscuro»:', JSON.stringify(await mapaListo(pagina)));
-    await foto(pagina, 'ajuste-mapa-queda-de-noche');
+    if (process.env.SOLO_CONDUCTOR !== '1') {
+      await pagina.goto(`${BASE}/app/account`, { waitUntil: 'domcontentloaded' });
+      const ajuste = pagina.getByTestId('ajuste-mapa');
+      await ajuste.waitFor({ timeout: 20000 });
+      await ajuste.scrollIntoViewIfNeeded();
+      await foto(pagina, 'ajuste-cuenta-cliente-automatico');
+      await pagina.getByTestId('ajuste-mapa-oscuro').click();
+      await esperar(600);
+      await foto(pagina, 'ajuste-cuenta-cliente-oscuro');
+      const guardado = await pagina.evaluate(() => window.localStorage.getItem('divoox.mapa.tema'));
+      console.log('ajuste guardado en el navegador:', guardado);
+      await pagina.goto(`${BASE}/app/ride?servicio=carro`, { waitUntil: 'domcontentloaded' });
+      await pagina
+        .getByText(/Ver en el mapa|See on the map/)
+        .first()
+        .click();
+      console.log('mapa después de elegir «Oscuro»:', JSON.stringify(await mapaListo(pagina)));
+      await foto(pagina, 'ajuste-mapa-queda-de-noche');
+    }
     const conductor = await abrir(navegador, tRepartidor, novi, 'ajuste-conductor');
     await conductor.pagina.goto(`${BASE}/driver/`, { waitUntil: 'domcontentloaded' });
-    await esperar(3000);
-    const listo = conductor.pagina.getByText(/^(Estoy listo|I'm ready)$/);
-    if (await listo.count()) await listo.first().click();
+    // La primera vez la app explica los permisos: se cierra antes de ir al perfil.
+    const listo = conductor.pagina.getByText(/^(Estoy listo|I.m ready)$/).first();
+    await listo.waitFor({ timeout: 8000 }).catch(() => {});
+    if (await listo.count()) await listo.click();
+    await esperar(1500);
     await conductor.pagina
-      .getByText(/^(Cuenta|Account)$/)
+      .getByText(/^(Perfil|Profile)$/)
       .last()
       .click();
     const ajusteConductor = conductor.pagina.getByTestId('ajuste-mapa');
@@ -345,6 +349,15 @@ try {
         await foto(cliente.pagina, `pedido${vuelta}-cliente-${nombre}`);
         console.log(`  ${nombre} conductor:`, JSON.stringify(await mapaListo(conductor.pagina)));
         await foto(conductor.pagina, `pedido${vuelta}-conductor-${nombre}`);
+      }
+      if (process.env.SIN_SENAL === '1') {
+        // C-SEGUIMIENTO-HONESTO: sin lecturas por más de un minuto, la marca del repartidor se ve
+        // apagada. La app del conductor abierta manda su ubicación: se cierra mientras tanto.
+        await conductor.pagina.goto('about:blank');
+        await esperar(80000);
+        await foto(cliente.pagina, `pedido${vuelta}-cliente-5-sin-senal`);
+        await conductor.pagina.goto(`${BASE}/driver/`, { waitUntil: 'domcontentloaded' });
+        await esperar(4000);
       }
       // La app abierta también manda su ubicación: se pone en la casa para que no se intercale.
       await conductor.ctx.setGeolocation({ latitude: casa.lat, longitude: casa.lng, accuracy: 8 });

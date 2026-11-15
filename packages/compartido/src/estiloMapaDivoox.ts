@@ -37,6 +37,8 @@ export type PaletaMapa = {
   bordeAutopista: string;
   agua: string;
   parque: string;
+  /** Los edificios (de cerca se ven en relieve): un tono apenas distinto de la tierra. */
+  edificio: string;
   texto: string;
   textoFuerte: string;
   bordeTexto: string;
@@ -54,6 +56,7 @@ export const PALETA_MAPA_DIA: PaletaMapa = {
   bordeAutopista: '#1F4D69',
   agua: '#4FB3D9',
   parque: '#A9DCC0',
+  edificio: '#B7CEDC',
   texto: '#1F4D69',
   textoFuerte: '#0C2A3B',
   bordeTexto: '#FFFFFF',
@@ -71,6 +74,7 @@ export const PALETA_MAPA_NOCHE: PaletaMapa = {
   bordeAutopista: '#15171B',
   agua: '#0E3F5C',
   parque: '#1F4030',
+  edificio: '#2B3039',
   texto: '#C4C9D1',
   textoFuerte: '#FFFFFF',
   bordeTexto: '#101010',
@@ -106,6 +110,11 @@ export function estiloDePaleta(p: PaletaMapa): ReglaEstiloMapa[] {
       stylers: [{ visibility: 'on' }, { color: p.parque }],
     },
     { featureType: 'poi.park', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+    {
+      featureType: 'landscape.man_made',
+      elementType: 'geometry',
+      stylers: [{ color: p.edificio }],
+    },
     { featureType: 'road', elementType: 'geometry', stylers: [{ color: p.calle }] },
     { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: p.bordeCalle }] },
     { featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{ color: p.texto }] },
@@ -157,11 +166,15 @@ export type EstiloNube = {
 export function estiloNubeDePaleta(p: PaletaMapa, variante: 'light' | 'dark'): EstiloNube {
   const texto = (color: string) => ({ textFillColor: color, textStrokeColor: p.bordeTexto });
   const oculto = { geometry: { visible: false }, label: { visible: false } };
+  // Cada regla lleva solo los elementos que el editor de Google reconoce para ese identificador
+  // (comprobado al importarlo el 14 nov 2026: sin advertencias).
   return {
     variant: variante,
     backgroundColor: p.tierra,
     styles: [
       { id: 'natural.land', geometry: { fillColor: p.tierra } },
+      // La mancha de «zona urbana» tapa la tierra en las ciudades: va del mismo color.
+      { id: 'infrastructure.urbanArea', geometry: { fillColor: p.tierra } },
       { id: 'natural.water', geometry: { fillColor: p.agua }, label: texto(p.textoAgua) },
       // Ningún punto de interés de Google a la vista: ni la figura, ni el pin, ni el texto.
       { id: 'pointOfInterest', ...oculto },
@@ -170,11 +183,11 @@ export function estiloNubeDePaleta(p: PaletaMapa, variante: 'light' | 'dark'): E
         geometry: { visible: true, fillColor: p.parque },
         label: { visible: false },
       },
-      { id: 'infrastructure.transitStation', ...oculto },
-      { id: 'infrastructure.railwayTrack', ...oculto },
+      { id: 'infrastructure.building', geometry: { fillColor: p.edificio } },
+      { id: 'infrastructure.transitStation', label: { visible: false } },
+      { id: 'infrastructure.railwayTrack', geometry: { visible: false } },
       { id: 'infrastructure.businessCorridor', geometry: { visible: false } },
-      { id: 'political.landParcel', ...oculto },
-      { id: 'political.border', geometry: { strokeColor: p.bordeCalle } },
+      { id: 'political.landParcel', geometry: { visible: false } },
       { id: 'political.city', label: texto(p.textoFuerte) },
       { id: 'political.sublocality', label: texto(p.texto) },
       { id: 'political.neighborhood', label: texto(p.texto) },

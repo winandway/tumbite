@@ -9,6 +9,12 @@
       }
     },
     {
+      "id": "infrastructure.urbanArea",
+      "geometry": {
+        "fillColor": "#1C1F24"
+      }
+    },
+    {
       "id": "natural.water",
       "geometry": {
         "fillColor": "#0E3F5C"
@@ -38,10 +44,13 @@
       }
     },
     {
-      "id": "infrastructure.transitStation",
+      "id": "infrastructure.building",
       "geometry": {
-        "visible": false
-      },
+        "fillColor": "#2B3039"
+      }
+    },
+    {
+      "id": "infrastructure.transitStation",
       "label": {
         "visible": false
       }
@@ -49,9 +58,6 @@
     {
       "id": "infrastructure.railwayTrack",
       "geometry": {
-        "visible": false
-      },
-      "label": {
         "visible": false
       }
     },
@@ -65,15 +71,6 @@
       "id": "political.landParcel",
       "geometry": {
         "visible": false
-      },
-      "label": {
-        "visible": false
-      }
-    },
-    {
-      "id": "political.border",
-      "geometry": {
-        "strokeColor": "#15171B"
       }
     },
     {

@@ -133,6 +133,29 @@ describe('Docs públicos', () => {
     }
   });
 
+  // C-MAPA-DIA-NOCHE y C-MAPA-ISOTIPO (14 nov 2026): el ajuste «Colores del mapa» tiene su guía
+  // pública, y el seguimiento muestra capturas reales del mapa de día y de noche. Todos los países.
+  it('la guía «Colores del mapa» está en los dos idiomas, y el seguimiento muestra el día y la noche', () => {
+    for (const i of ['es', 'en'] as const) {
+      const cuenta = DOCS[i].find((s) => s.id === 'account');
+      const g = cuenta?.guias.find((x) => x.id === 'map-colors');
+      expect(g, i).toBeDefined();
+      expect(g?.capturas?.length ?? 0).toBeGreaterThanOrEqual(3);
+      const texto = JSON.stringify(g);
+      expect(texto).toMatch(i === 'es' ? /Automático/ : /Automatic/);
+      expect(texto).toMatch(i === 'es' ? /Claro/ : /Light/);
+      expect(texto).toMatch(i === 'es' ? /Oscuro/ : /Dark/);
+      // Lo que el iPhone no permite se dice claro.
+      expect(texto).toMatch(i === 'es' ? /mapa de Apple/ : /Apple’s map/);
+      const seguimiento = DOCS[i].flatMap((s) => s.guias).find((x) => x.id === 'track-order');
+      const fotos = (seguimiento?.capturas ?? []).map((c) => c.src);
+      for (const n of ['mapa-dia-en-camino', 'mapa-dia-llegando', 'mapa-noche-en-camino'])
+        expect(fotos).toContain(`/docs/${n}-${i}.webp`);
+      // Ninguna guía sigue mostrando el punto rojo viejo del repartidor.
+      expect(JSON.stringify(DOCS[i])).not.toMatch(/recorrido-cliente-(en-camino|llegando)-/);
+    }
+  });
+
   // C-GUIA-INSTALAR-NAVEGADOR (13 nov 2026): la app web instalable (C-APP-INSTALABLE) tiene su guía
   // pública, con tres o más capturas reales y los límites dichos en palabras. Todos los países.
   it('la guía «Instalar Divoox desde el navegador» está en los dos idiomas, con sus límites', () => {

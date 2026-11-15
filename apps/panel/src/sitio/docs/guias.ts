@@ -1301,19 +1301,24 @@ const es: SeccionDocs[] = [
         resumen: 'Confirmado, en cocina, en camino y entregado, con el repartidor en el mapa.',
         capturas: [
           {
-            src: '/docs/recorrido-cliente-en-camino-es.webp',
-            alt: 'Seguimiento en vivo: «Tu repartidor va en camino», la barra en verde, el mapa con el repartidor y la hora estimada.',
-            pie: 'Sigues al repartidor en el mapa hasta tu puerta.',
+            src: '/docs/mapa-dia-en-camino-es.webp',
+            alt: 'Seguimiento en vivo: «Tu repartidor va en camino», la barra en verde y el mapa de día en tonos azules, con el repartidor marcado con el símbolo de Divoox.',
+            pie: 'Sigues al repartidor en el mapa hasta tu puerta. Su marca es el símbolo de Divoox.',
           },
           {
-            src: '/docs/recorrido-cliente-llegando-es.webp',
-            alt: 'El pedido en camino con el aviso «Tu repartidor está a un minuto» y el mapa acercado a la casa, con el número de la dirección escrito sobre el punto rojo.',
-            pie: 'Cuando está por llegar, el mapa se acerca solo a tu casa y muestra el número de tu dirección.',
+            src: '/docs/mapa-dia-llegando-es.webp',
+            alt: 'El pedido en camino con el mapa acercado: la casa, con el número de la dirección escrito sobre el punto rojo, y el repartidor a pocos metros.',
+            pie: 'Cuando está por llegar, el mapa se acerca solo y ves tu casa y al repartidor juntos.',
           },
           {
-            src: '/docs/recorrido-cliente-sin-senal-es.webp',
-            alt: 'El pedido en camino con el aviso «Perdimos la señal de tu repartidor» y su última ubicación conocida en el mapa.',
-            pie: 'Si el repartidor pierde la señal, te lo decimos en vez de mostrar un punto que parece en vivo.',
+            src: '/docs/mapa-noche-en-camino-es.webp',
+            alt: 'El mismo seguimiento de noche: el mapa en tonos oscuros con las avenidas principales en azul claro y el repartidor con el símbolo de Divoox.',
+            pie: 'De noche el mapa se oscurece solo, para que no te encandile.',
+          },
+          {
+            src: '/docs/mapa-dia-sin-senal-es.webp',
+            alt: 'El mapa del pedido en camino con la marca del repartidor apagada, en su última ubicación conocida, cerca de la casa.',
+            pie: 'Si el repartidor pierde la señal, su marca se apaga y te lo decimos, en vez de mostrar una ubicación que parece en vivo.',
           },
         ],
         preguntas: [
@@ -1322,10 +1327,11 @@ const es: SeccionDocs[] = [
         ],
         pasos: [
           'Después de pagar, la pantalla del pedido muestra cuatro pasos: confirmado, en preparación, en camino y entregado. Lo que ya pasó se marca en verde.',
-          'Cuando el repartidor recoge tu comida, aparece en el mapa acercándose a tu puerta. La llegada se muestra como un rango, por ejemplo «Llega entre 12:40 y 12:50», junto con la hora «a más tardar».',
-          'Cuando el repartidor está a menos de una cuadra y media de tu puerta (unos 200 metros), el mapa se acerca solo: tu casa queda en el centro, con el número de tu dirección escrito sobre el punto, para que veas el momento exacto en que llega.',
-          'Debajo del mapa ves «Actualizado hace 8 s»: así sabes que el punto del repartidor es reciente.',
-          'Si el celular del repartidor pierde la señal por más de un minuto, te lo decimos con un aviso: «Perdimos la señal de tu repartidor». Su punto se ve en gris, porque es su última ubicación conocida, y la hora puede cambiar. Sigue en camino; en cuanto vuelve la señal, el mapa se pone al día solo.',
+          'Cuando el repartidor recoge tu comida, aparece en el mapa acercándose a tu puerta, marcado con el símbolo de Divoox. La llegada se muestra como un rango, por ejemplo «Llega entre 12:40 y 12:50», junto con la hora «a más tardar».',
+          'Cuando el repartidor está a menos de una cuadra y media de tu puerta (unos 200 metros), el mapa se acerca solo: ves tu casa, con el número de tu dirección escrito sobre el punto, y al repartidor juntos, cada vez más de cerca, para que veas el momento exacto en que llega.',
+          'El mapa cambia solo de día a noche: de día va en tonos azules y, cuando anochece, se oscurece. Si prefieres dejarlo siempre claro o siempre oscuro, lo eliges en tu cuenta, en «Colores del mapa».',
+          'Debajo del mapa ves «Actualizado hace 8 s»: así sabes que la ubicación del repartidor es reciente.',
+          'Si el celular del repartidor pierde la señal por más de un minuto, te lo decimos con un aviso: «Perdimos la señal de tu repartidor». Su marca se ve apagada, porque es su última ubicación conocida, y la hora puede cambiar. Sigue en camino; en cuanto vuelve la señal, el mapa se pone al día solo.',
           'Te llega un aviso al celular en cada paso importante, si los tienes encendidos.',
           'Si algo no cuadra, toca «¿Problemas con tu pedido?» y escríbenos: te contesta una persona.',
         ],
@@ -3910,7 +3916,7 @@ const es: SeccionDocs[] = [
             pie: 'En camino, «Cómo llegar» te lleva a la puerta del cliente.',
           },
           {
-            src: '/docs/recorrido-cliente-en-camino-es.webp',
+            src: '/docs/mapa-dia-en-camino-es.webp',
             alt: 'Seguimiento en vivo: «Tu repartidor va en camino», la barra en verde, el mapa con el repartidor y la hora estimada.',
             pie: 'Sigues al repartidor en el mapa hasta tu puerta.',
           },
@@ -4705,6 +4711,51 @@ const es: SeccionDocs[] = [
           'Para tu restaurante: entra a divoox.com, toca «Panel», luego «¿Tu restaurante aún no está en Divoox? Crea tu cuenta», y completa tus datos.',
           'Para repartir: abre la app Divoox Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.',
           'Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Divoox.',
+        ],
+      },
+      {
+        id: 'map-colors',
+        titulo: 'Colores del mapa: de día y de noche',
+        resumen:
+          'El mapa de Divoox cambia solo: azul de día y oscuro de noche. Y si prefieres uno fijo, lo eliges en tu cuenta.',
+        explicacion: [
+          'Todos los mapas de Divoox (el seguimiento de tu pedido o de tu viaje, el mapa para marcar tu dirección, el de los locales para recoger y los de Divoox Driver) tienen dos estilos. De día van en tonos azules, con las calles blancas bien marcadas. De noche se oscurecen, con las avenidas principales en azul claro, para que la pantalla no te encandile.',
+          'El cambio es automático: el mapa sabe a qué hora anochece y amanece en el lugar que estás mirando. También se oscurece si tu teléfono o tu computadora están en modo oscuro.',
+          'El repartidor o el conductor aparece siempre con el símbolo de Divoox, que se distingue igual de bien sobre el mapa de día y sobre el de noche. Tu casa y el local siguen con sus puntos de siempre.',
+        ],
+        capturas: [
+          {
+            src: '/docs/mapa-ajuste-cuenta-es.webp',
+            alt: 'La cuenta en la app de Divoox con la tarjeta «Colores del mapa» y sus tres opciones: Automático, Claro y Oscuro.',
+            pie: 'En tu cuenta eliges Automático, Claro u Oscuro.',
+          },
+          {
+            src: '/docs/mapa-dia-en-camino-es.webp',
+            alt: 'El seguimiento de un pedido con el mapa de día, en tonos azules, y el repartidor marcado con el símbolo de Divoox.',
+            pie: 'De día: tonos azules y calles blancas.',
+          },
+          {
+            src: '/docs/mapa-noche-en-camino-es.webp',
+            alt: 'El mismo seguimiento con el mapa de noche, en tonos oscuros con las avenidas principales en azul claro.',
+            pie: 'De noche: oscuro, con las avenidas en azul claro.',
+          },
+          {
+            src: '/docs/mapa-ajuste-conductor-es.webp',
+            alt: 'El perfil de Divoox Driver con la tarjeta «Colores del mapa» y sus tres opciones.',
+            pie: 'En Divoox Driver el ajuste está en la pestaña «Perfil».',
+          },
+        ],
+        preguntas: [
+          '¿Por qué el mapa se puso oscuro?',
+          '¿Cómo dejo el mapa siempre claro?',
+          '¿Cómo pongo el mapa en modo noche?',
+        ],
+        pasos: [
+          'Abre tu cuenta: en la app de Divoox, la pestaña «Mi cuenta»; en Divoox Driver, la pestaña «Perfil».',
+          'Busca la tarjeta «Colores del mapa».',
+          'Toca «Automático» para que cambie solo según la hora, «Claro» para dejarlo siempre de día u «Oscuro» para dejarlo siempre de noche.',
+          'Listo: todos los mapas cambian al momento y tu elección queda guardada en ese teléfono o navegador.',
+          'En el iPhone, la app usa el mapa de Apple: cambia igual entre claro y oscuro, con los colores propios de Apple.',
         ],
       },
       {
@@ -6240,28 +6291,34 @@ const en: SeccionDocs[] = [
           'Confirmed, in the kitchen, on the way, and delivered, with your driver on the map.',
         capturas: [
           {
-            src: '/docs/recorrido-cliente-en-camino-en.webp',
-            alt: 'Live tracking: “Your driver is on the way,” the green bar, the map with the driver, and the estimated time.',
-            pie: 'Follow your driver on the map all the way to your door.',
+            src: '/docs/mapa-dia-en-camino-en.webp',
+            alt: 'Live tracking: “Your driver is on the way,” the green bar, and the daytime map in blue tones, with the driver shown as the Divoox symbol.',
+            pie: 'Follow your driver on the map all the way to your door. Their marker is the Divoox symbol.',
           },
           {
-            src: '/docs/recorrido-cliente-llegando-en.webp',
-            alt: 'The order on its way with the “Your driver is a minute away” notice and the map zoomed in on the home, with the street number written on the red pin.',
-            pie: 'When they’re about to arrive, the map zooms in on your home by itself and shows your street number.',
+            src: '/docs/mapa-dia-llegando-en.webp',
+            alt: 'The order on its way with the map zoomed in: the home, with the street number written on the red pin, and the driver a few yards away.',
+            pie: 'When they’re about to arrive, the map zooms in by itself and shows your home and the driver together.',
           },
           {
-            src: '/docs/recorrido-cliente-sin-senal-en.webp',
-            alt: 'The order on its way with the “We lost your driver’s signal” notice and their last known location on the map.',
-            pie: 'If the driver loses signal, we tell you instead of showing a dot that looks live.',
+            src: '/docs/mapa-noche-en-camino-en.webp',
+            alt: 'The same tracking screen at night: the map in dark tones with main roads in light blue and the driver shown as the Divoox symbol.',
+            pie: 'At night the map turns dark on its own, so it’s easy on your eyes.',
+          },
+          {
+            src: '/docs/mapa-dia-sin-senal-en.webp',
+            alt: 'The map of an order on its way with the driver’s marker dimmed at their last known location, near the home.',
+            pie: 'If the driver loses signal, their marker dims and we tell you, instead of showing a location that looks live.',
           },
         ],
         preguntas: ['Where can I see where my order is?', 'How long until my food arrives?'],
         pasos: [
           'After paying, the order screen shows four steps: confirmed, preparing, on the way, and delivered. What’s done turns green.',
-          'When the driver picks up your food, they appear on the map heading to your door. Arrival is shown as a window, for example “Arrives between 12:40 and 12:50,” along with the “latest arrival” time.',
-          'When the driver is within about 650 feet (200 meters) of your door, the map zooms in on its own: your home sits in the center, with your street number written on the pin, so you can see the exact moment they arrive.',
+          'When the driver picks up your food, they appear on the map heading to your door, shown as the Divoox symbol. Arrival is shown as a window, for example “Arrives between 12:40 and 12:50,” along with the “latest arrival” time.',
+          'When the driver is within about 650 feet (200 meters) of your door, the map zooms in on its own: you see your home, with your street number written on the pin, and the driver together, closer and closer, so you can see the exact moment they arrive.',
+          'The map switches between day and night on its own: blue tones during the day, dark after sunset. If you’d rather keep it always light or always dark, choose it in your account, under “Map colors.”',
           'Under the map you see “Updated 8 s ago,” so you know the driver’s location is fresh.',
-          'If the driver’s phone loses signal for more than a minute, we tell you with a notice: “We lost your driver’s signal.” Their dot turns gray because it’s their last known location, and the time may change. They’re still on the way; as soon as the signal is back, the map catches up on its own.',
+          'If the driver’s phone loses signal for more than a minute, we tell you with a notice: “We lost your driver’s signal.” Their marker looks dimmed because it’s their last known location, and the time may change. They’re still on the way; as soon as the signal is back, the map catches up on its own.',
           'You get a phone notification at each key step, if notifications are on.',
           'If something’s off, tap “Problems with your order?” and write to us: a real person answers.',
         ],
@@ -8832,7 +8889,7 @@ const en: SeccionDocs[] = [
             pie: 'On the way, “Directions” takes you to the customer’s door.',
           },
           {
-            src: '/docs/recorrido-cliente-en-camino-en.webp',
+            src: '/docs/mapa-dia-en-camino-en.webp',
             alt: 'Live tracking: “Your driver is on the way,” the green bar, the map with the driver, and the estimated time.',
             pie: 'Follow your driver on the map all the way to your door.',
           },
@@ -9617,6 +9674,51 @@ const en: SeccionDocs[] = [
           'For your restaurant: go to divoox.com, tap “Dashboard,” then “Restaurant not on Divoox yet? Create your account,” and fill in your details.',
           'To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.',
           'We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox.',
+        ],
+      },
+      {
+        id: 'map-colors',
+        titulo: 'Map colors: day and night',
+        resumen:
+          'The Divoox map switches on its own: blue by day, dark at night. If you’d rather keep one, choose it in your account.',
+        explicacion: [
+          'Every Divoox map (tracking your order or your ride, the map where you set your address, the pickup locations map, and the ones in Divoox Driver) has two styles. By day it uses blue tones with crisp white streets. At night it turns dark, with main roads in light blue, so the screen is easy on your eyes.',
+          'The switch is automatic: the map knows when the sun sets and rises in the place you’re looking at. It also turns dark if your phone or computer is in dark mode.',
+          'Your driver always shows up as the Divoox symbol, which stands out just as well on the day map and on the night map. Your home and the restaurant keep their usual pins.',
+        ],
+        capturas: [
+          {
+            src: '/docs/mapa-ajuste-cuenta-en.webp',
+            alt: 'The account screen in the Divoox app with the “Map colors” card and its three options: Automatic, Light, and Dark.',
+            pie: 'In your account, choose Automatic, Light, or Dark.',
+          },
+          {
+            src: '/docs/mapa-dia-en-camino-en.webp',
+            alt: 'An order being tracked on the daytime map, in blue tones, with the driver shown as the Divoox symbol.',
+            pie: 'By day: blue tones and white streets.',
+          },
+          {
+            src: '/docs/mapa-noche-en-camino-en.webp',
+            alt: 'The same tracking screen on the night map, in dark tones with main roads in light blue.',
+            pie: 'At night: dark, with main roads in light blue.',
+          },
+          {
+            src: '/docs/mapa-ajuste-conductor-en.webp',
+            alt: 'The Divoox Driver profile screen with the “Map colors” card and its three options.',
+            pie: 'In Divoox Driver, the setting is on the “Profile” tab.',
+          },
+        ],
+        preguntas: [
+          'Why did the map turn dark?',
+          'How do I keep the map always light?',
+          'How do I turn on night mode for the map?',
+        ],
+        pasos: [
+          'Open your account: in the Divoox app, the “My account” tab; in Divoox Driver, the “Profile” tab.',
+          'Find the “Map colors” card.',
+          'Tap “Automatic” to let it switch by time of day, “Light” to keep it on day, or “Dark” to keep it on night.',
+          'Done: every map changes right away, and your choice is saved on that phone or browser.',
+          'On iPhone, the app uses Apple’s map: it switches between light and dark the same way, in Apple’s own colors.',
         ],
       },
       {

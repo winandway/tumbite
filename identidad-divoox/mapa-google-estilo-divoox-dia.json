@@ -107,6 +107,15 @@
     ]
   },
   {
+    "featureType": "landscape.man_made",
+    "elementType": "geometry",
+    "stylers": [
+      {
+        "color": "#B7CEDC"
+      }
+    ]
+  },
+  {
     "featureType": "road",
     "elementType": "geometry",
     "stylers": [

@@ -96,6 +96,15 @@ Auditoría de los estudios de Richard y de la comparación del ciclo del pedido.
     impuesto por condado, pedir a dos tiendas a la vez, mapa de Google en la web y varios locales por cuenta.
     Cada una tiene su punto trabado en `FILA.md` y se construye apenas Richard la decida.
 
+### Bienvenida de las apps (pedido de Richard, 14 nov 2026) — todos los países
+
+Al abrir cada app por primera vez, un carrusel de cuatro o cinco láminas que se pasan con el dedo
+y muestran, con capturas reales, qué hace la app (pedir, seguir en el mapa, pagar; o recibir
+ofertas y ganar; o recibir pedidos), y al final la entrada o el registro. Como los grandes. Va en
+las tres apps y en web, Android y iPhone por igual. Orden en `FILA.md`: BIENVENIDA-1 (estudio con
+REA), BIENVENIDA-2 (construcción, Docs y web) y BIENVENIDA-3 (compilación nueva, con permiso de
+Gerencia).
+
 ## 3. Reglas que siguen valiendo en todas las etapas
 
 - Todo cambio dice a qué país aplica. Cada país es su propio sistema.

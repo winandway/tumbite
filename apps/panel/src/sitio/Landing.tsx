@@ -54,7 +54,8 @@ const ALT = {
 const pantallasReales = (idioma: Idioma) => ({
   inicio: `/docs/recorrido-cliente-inicio-${idioma}.webp`,
   menu: `/docs/recorrido-cliente-menu-${idioma}.webp`,
-  seguimiento: `/docs/recorrido-cliente-en-camino-${idioma}.webp`,
+  // Captura real del sitio de pruebas con el mapa de Google de día y el símbolo de Divoox.
+  seguimiento: `/docs/mapa-dia-en-camino-${idioma}.webp`,
 });
 
 export function Landing({ idioma }: { idioma: Idioma }) {
