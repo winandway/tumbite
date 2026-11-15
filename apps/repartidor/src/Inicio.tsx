@@ -71,6 +71,7 @@ import { CabeceraDriver } from './piezas/CabeceraDriver';
 import { Mapa } from './piezas/Mapa';
 import type { ZonaDemanda } from './piezas/mapaWeb';
 import { Progreso } from './piezas/Progreso';
+import { MiniaturaPuerta } from './piezas/FotosPuerta';
 import { ResumenDia } from './piezas/ResumenDia';
 import { IMG } from './piezas/recursos';
 import { textosDriver } from './piezas/textos';
@@ -2017,11 +2018,20 @@ export function Inicio() {
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
-            <Image
-              source={IMG.comida}
-              style={{ width: 54, height: 54, borderRadius: 12, backgroundColor: '#F4F5F7' }}
-              resizeMode="contain"
-              accessibilityIgnoresInvertColors
+            {/* C-FOTO-PUERTA: en camino y con fotos, la miniatura de la puerta reemplaza la comida. */}
+            <MiniaturaPuerta
+              pedidoId={activo.id}
+              estado={activo.estado}
+              notas={activo.notas || ''}
+              idioma={idioma}
+              respaldo={
+                <Image
+                  source={IMG.comida}
+                  style={{ width: 54, height: 54, borderRadius: 12, backgroundColor: '#F4F5F7' }}
+                  resizeMode="contain"
+                  accessibilityIgnoresInvertColors
+                />
+              }
             />
             <View style={{ flex: 1 }}>
               <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
@@ -2033,7 +2043,11 @@ export function Inicio() {
               >
                 {activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.nombre}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }} numberOfLines={1}>
+              {/* C-FOTO-PUERTA: las notas de entrega ya no se cortan a una línea (hasta tres). */}
+              <Text
+                style={{ color: '#5E5E5E', fontSize: 12 }}
+                numberOfLines={activo.estado === 'en_camino' ? 3 : 1}
+              >
                 {activo.estado === 'en_camino' ? activo.notas || '' : activo.restaurante.direccion}
               </Text>
             </View>

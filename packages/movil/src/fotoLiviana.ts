@@ -1,4 +1,4 @@
-import { TAMANOS_FOTO, idDeFoto, medidasReducidas } from '@tumbite/compartido';
+import { TAMANOS_FOTO, TAMANOS_FOTO_PUERTA, idDeFoto, medidasReducidas } from '@tumbite/compartido';
 
 /**
  * C-FOTOS-LIVIANAS (NXT-7): en el teléfono, la foto de un plato (o de un producto) se convierte con
@@ -45,4 +45,35 @@ export async function subirFotoLivianaApp<F>(
     }
   }
   return url;
+}
+
+/**
+ * C-FOTO-PUERTA (15 nov 2026) — todos los países. La foto de la puerta se convierte en el teléfono
+ * a WebP (lado mayor 1024, calidad 0,75) y se sube a su casilla; después, la miniatura (200 px,
+ * calidad 0,7) a la misma ruta con `?tam=mini`. La original nunca se sube. Si cualquiera de las dos
+ * falla, lanza el error: la pantalla deja la foto elegida con «Reintentar» (nada se limpia antes
+ * de la confirmación del servidor), y al reintentar se reemplazan las dos.
+ */
+export async function subirFotoPuertaApp<F>(
+  subir: Subir,
+  foto: { uri: string; width: number; height: number },
+  manipular: Manipular<F>,
+  webp: F,
+  ruta: string,
+  leer: (uri: string) => Promise<Blob> = async (uri) => (await fetch(uri)).blob(),
+): Promise<void> {
+  const convertir = async (lado: number, calidad: number) => {
+    const { ancho, alto } = medidasReducidas(foto.width, foto.height, lado);
+    const r = await manipular(foto.uri, [{ resize: { width: ancho, height: alto } }], {
+      compress: calidad,
+      format: webp,
+    });
+    return leer(r.uri);
+  };
+  const { grande, mini } = TAMANOS_FOTO_PUERTA;
+  await subir(await convertir(grande.lado, grande.calidad), ruta);
+  await subir(
+    await convertir(mini.lado, mini.calidad),
+    `${ruta}${ruta.includes('?') ? '&' : '?'}tam=mini`,
+  );
 }

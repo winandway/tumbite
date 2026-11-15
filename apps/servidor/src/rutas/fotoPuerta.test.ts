@@ -90,8 +90,13 @@ describe('foto de la puerta: el cliente', () => {
     const d = (await guardar()).datos.direccion;
     expect(d).toMatchObject({ tipoLugar: '', fotos: [] });
     const ruta = `/datos/mis-direcciones/${d.id}/fotos`;
-    expect((await m.foto(`${ruta}/1`, cliente.token)).estado).toBe(201);
-    expect((await m.foto(`${ruta}/1?tam=mini`, cliente.token)).estado).toBe(201);
+    const subida = await m.foto(`${ruta}/1`, cliente.token);
+    expect(subida.estado).toBe(201);
+    // La app (api.subirFoto) exige una dirección en la respuesta: la ruta privada de la foto.
+    expect(subida.datos.url).toBe(`${ruta}/1`);
+    const chica = await m.foto(`${ruta}/1?tam=mini`, cliente.token);
+    expect(chica.estado).toBe(201);
+    expect(chica.datos.url).toBe(`${ruta}/1`);
     // Sin apartamento es casa: no hay tercera foto.
     expect((await m.foto(`${ruta}/3`, cliente.token)).estado).toBe(422);
     // La miniatura sin su foto no entra.
@@ -296,7 +301,11 @@ describe('foto de la puerta: candados del código', () => {
     const codigo = leer('fotoPuerta.ts')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/^\s*\/\/.*$/gm, '');
-    expect(codigo).not.toMatch(/['"`]\/?media\/|fotos\/\$\{/);
+    expect(codigo).not.toMatch(/['"`]\/?media\//);
+    // Toda clave nueva del almacén nace bajo puertas/.
+    const claves = [...codigo.matchAll(/const clave = `([^`]*)`/g)].map((m) => m[1]);
+    expect(claves.length).toBeGreaterThan(0);
+    expect(claves.every((k) => k?.startsWith('puertas/'))).toBe(true);
     expect(codigo).toMatch(/puertas\/\$\{u\.id\}/);
     expect(codigo).not.toMatch(/cacheControl: 'public/);
     // El repartidor solo las ve «en camino».

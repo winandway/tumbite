@@ -59,6 +59,7 @@ import { guardarUbicacion } from '../comida/useRestaurantes';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { conCuenta } from '../ConCuenta';
+import { type DireccionGuardada, TarjetaFotosPuerta } from '../FotosPuertaCliente';
 
 const TE = {
   es: {
@@ -393,17 +394,27 @@ function PantallaCarrito() {
   const regalo = regalos.find((r) => r.tipo === regaloElegido)?.valorCentavos ?? 0;
 
   // Direcciones guardadas (punto 14): chips arriba del mapa; «guardar» al pedir.
-  type Direccion = {
-    id: string;
-    etiqueta: string;
-    direccion: string;
-    lat: number | null;
-    lng: number | null;
-    instrucciones: string;
-    entrega: 'puerta' | 'mano';
-    apto?: string;
-  };
+  // C-FOTO-PUERTA: cada dirección guardada trae su tipo de lugar y qué fotos de la puerta tiene.
+  type Direccion = DireccionGuardada;
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
+  // La dirección escrita coincide con una guardada: el servidor enlaza el pedido con ella.
+  const guardadaActual =
+    direcciones.find((x) => x.direccion.trim() === b.valores.direccion.trim()) ?? null;
+  const [errorFotoPuerta, setErrorFotoPuerta] = useState('');
+  /** Guarda la dirección escrita (el mismo POST de siempre) y la suma a las guardadas. */
+  async function guardarDireccionActual(): Promise<Direccion> {
+    const r = await api.pedir<{ direccion: Direccion }>('POST', '/datos/mis-direcciones', {
+      etiqueta: b.valores.etiquetaDireccion,
+      direccion: b.valores.direccion,
+      apto: b.valores.apto,
+      lat: punto?.lat ?? null,
+      lng: punto?.lng ?? null,
+      instrucciones: b.valores.notas,
+      entrega: b.valores.entrega === 'mano' ? 'mano' : 'puerta',
+    });
+    setDirecciones((ds) => [r.direccion, ...ds.filter((x) => x.id !== r.direccion.id)]);
+    return r.direccion;
+  }
   useEffect(() => {
     let vivo = true;
     api
@@ -420,7 +431,7 @@ function PantallaCarrito() {
     b.cambiar('direccion', dir.direccion);
     b.cambiar('apto', dir.apto ?? '');
     if (dir.instrucciones) b.cambiar('notas', dir.instrucciones);
-    b.cambiar('entrega', dir.entrega);
+    b.cambiar('entrega', dir.entrega ?? 'puerta');
     if (dir.lat != null && dir.lng != null) {
       setPunto({ lat: dir.lat, lng: dir.lng });
       void guardarUbicacion({ lat: dir.lat, lng: dir.lng });
@@ -630,28 +641,23 @@ function PantallaCarrito() {
         ),
       );
     setError('');
+    setErrorFotoPuerta('');
     setPagando(true);
     // C-PENDIENTE-ABANDONADO: al pedir de nuevo, el servidor anula el cobro del pedido anterior.
     setCobro(null);
     try {
+      // Guardar la dirección para la próxima (si lo pidió) ANTES de crear el pedido: el servidor
+      // enlaza el pedido con la dirección guardada (y sus fotos de la puerta) si el texto coincide.
+      // Si falla, no frena el pago.
+      if (b.valores.guardarDireccion === 'si' && b.valores.entrega !== 'recoger' && !guardadaActual)
+        await guardarDireccionActual().catch((x: unknown) =>
+          console.warn('dirección: no se pudo guardar', x),
+        );
       const r = await api.pedir<Cobro>('POST', '/datos/pedidos', {
         ...cuerpoPedido,
         // El servidor compara este total con el suyo y no cobra si no coinciden.
         totalEsperado: d.totalCliente,
       });
-      // Guardar la dirección para la próxima (si lo pidió), sin frenar el pago si falla.
-      if (b.valores.guardarDireccion === 'si' && b.valores.entrega !== 'recoger')
-        void api
-          .pedir('POST', '/datos/mis-direcciones', {
-            etiqueta: b.valores.etiquetaDireccion,
-            direccion: b.valores.direccion,
-            apto: b.valores.apto,
-            lat: punto?.lat ?? null,
-            lng: punto?.lng ?? null,
-            instrucciones: b.valores.notas,
-            entrega: b.valores.entrega === 'mano' ? 'mano' : 'puerta',
-          })
-          .catch(() => undefined);
       // Cobro directo: no hay tarjeta; el pedido ya quedó confirmado y se paga al recibir.
       if (r.directo) {
         await b.limpiar();
@@ -668,6 +674,8 @@ function PantallaCarrito() {
           ? (x.datos as { desglose?: Desglose } | undefined)?.desglose
           : undefined;
       if (desgloseServidor) setCorregido({ huella, desglose: desgloseServidor });
+      // C-FOTO-PUERTA: la zona exige la foto de la puerta; el aviso va también junto a sus fotos.
+      if (x instanceof ErrorApi && x.campo === 'fotoPuerta') setErrorFotoPuerta(x.message);
       setError(x instanceof Error ? x.message : String(x));
     } finally {
       setPagando(false);
@@ -1183,6 +1191,24 @@ function PantallaCarrito() {
               value={b.valores.etiquetaDireccion}
               onChangeText={(x) => b.cambiar('etiquetaDireccion', x)}
               placeholder={te.etiqueta}
+            />
+          ) : null}
+          {/* C-FOTO-PUERTA: fotos de la puerta de esta dirección (no en un regalo: el que recibe
+              no tiene foto). Tarjeta discreta, sin ventana emergente encima del pago. */}
+          {!comoRegalo ? (
+            <TarjetaFotosPuerta
+              direccion={guardadaActual}
+              textoDireccion={b.valores.direccion}
+              guardar={guardarDireccionActual}
+              error={errorFotoPuerta}
+              alCambiar={(c) => {
+                setErrorFotoPuerta('');
+                setDirecciones((ds) =>
+                  ds.map((x) =>
+                    x.id === c.id ? { ...x, tipoLugar: c.tipoLugar, fotos: c.fotos } : x,
+                  ),
+                );
+              }}
             />
           ) : null}
         </>

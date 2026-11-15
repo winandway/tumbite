@@ -29,3 +29,4 @@ export * from './Disponibilidad';
 export * from './camara';
 export * from './mapaDivoox';
 export * from './SobreLosBotones';
+export * from './FotosPuerta';

@@ -25,8 +25,8 @@ const EMPRESA = 'Windoce, LLC';
 const SITIO = 'https://divoox.com';
 // C-SMS-CONSENTIMIENTO: Privacidad y Términos cambiaron el 9 nov 2026 (sección de SMS).
 const FECHA_SMS = {
-  es: 'Actualizado: 9 de noviembre de 2026',
-  en: 'Last updated: November 9, 2026',
+  es: 'Actualizado: 15 de noviembre de 2026',
+  en: 'Last updated: November 15, 2026',
 };
 
 // ─────────────────────────────── Privacidad ───────────────────────────────
@@ -50,6 +50,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Datos que nos das tú: nombre, correo, número de celular, contraseña (la guardamos cifrada, nunca en texto), idioma y, si lo eliges, tu fecha de nacimiento para el regalo de cumpleaños. Si eres restaurante: nombre del negocio, dirección, teléfono, menú, precios y fotos. Si eres repartidor: tu vehículo (tipo, marca, modelo, año, color y placa), tu licencia de conducir (número, estado y vencimiento) y tu seguro (aseguradora, póliza y vencimiento).',
           'Datos de tus pedidos: lo que pides, el restaurante, la dirección de entrega, las indicaciones para el repartidor, los importes, la propina, las calificaciones y los comentarios que dejas.',
           'Verificación de identidad (repartidores y dueños de restaurante): una foto de tu documento (frente y reverso) y una foto de tu cara, que toma tu cámara. Si tienes un restaurante, también una foto del local con la ubicación del celular en ese momento, para comprobar que existe en la dirección registrada. Una persona del equipo compara las fotos; no creamos plantillas biométricas de tu cara. Las fotos se guardan en un almacén privado que solo ve el equipo de Divoox y se borran cuando borras tu cuenta.',
+          'Fotos de tu puerta (clientes, opcional): en cada dirección guardada puedes agregar hasta tres fotos del frente de tu casa o edificio y de tu puerta, para que tu repartidor te encuentre. Se guardan en un almacén privado, sin los datos de ubicación que el teléfono pone dentro del archivo. Solo las ve el repartidor asignado a tu pedido y solo mientras ese pedido va en camino; ni antes de recogerlo ni después de entregarlo. No las usamos para mercadeo, publicidad ni para entrenar ningún sistema. Puedes cambiarlas o borrarlas cuando quieras, y se borran cuando borras la dirección o tu cuenta.',
           'Ubicación: solo con tu permiso. Ver la sección 4.',
           'Pagos: los procesa Stripe. Nosotros nunca recibimos ni guardamos el número completo de tu tarjeta, el código de seguridad ni tus datos bancarios. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta.',
           'Datos técnicos: el identificador del teléfono para enviarte avisos (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
@@ -85,7 +86,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. Cuánto tiempo guardamos tus datos',
         parrafos: [
           'Mientras tu cuenta esté abierta, guardamos los datos de tu cuenta y de tus pedidos para darte el servicio.',
-          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, las fotos y datos de tu verificación de identidad, tu vehículo, licencia y seguro, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones y tu anotación en la lista de espera.',
+          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, tus direcciones guardadas y las fotos de tu puerta, las fotos y datos de tu verificación de identidad, tu vehículo, licencia y seguro, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones y tu anotación en la lista de espera.',
           'Lo que guardamos sin tu nombre: el importe, la fecha y el restaurante de cada pedido, durante siete años, porque lo exigen las leyes de impuestos y contabilidad y para resolver reclamos de pago o fraude. Esos registros ya no te identifican.',
           'Copias de seguridad: guardamos copias diarias durante 30 días. Lo que borres desaparece de ellas cuando caducan, como máximo 30 días después.',
           'Stripe guarda los datos de tus pagos según su propia política y las leyes financieras.',
@@ -162,6 +163,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Information you give us: name, email, mobile number, password (stored encrypted, never in plain text), language, and, if you choose, your birthday for your birthday gift. Restaurants: business name, address, phone, menu, prices, and photos. Drivers: your vehicle (type, make, model, year, color, and plate), your driver’s license (number, issuing state, and expiration), and your insurance (insurer, policy, and expiration).',
           'Order information: what you order, the restaurant, the delivery address, notes for your driver, amounts, tip, and the ratings and comments you leave.',
           'Identity verification (drivers and restaurant owners): a photo of your ID document (front and back) and a photo of your face, taken with your camera. If you own a restaurant, also a photo of the storefront with your phone’s location at that moment, to confirm it exists at the registered address. A person on our team compares the photos; we don’t create biometric templates of your face. The photos are stored privately, only the Divoox team can see them, and they’re deleted when you delete your account.',
+          'Photos of your door (customers, optional): for each saved address you can add up to three photos of the front of your house or building and of your door, so your courier can find you. They are stored in a private store, without the location data your phone embeds in the file. Only the courier assigned to your order sees them, and only while that order is on its way; not before pickup and not after delivery. We do not use them for marketing, advertising, or to train any system. You can change or delete them at any time, and they are deleted when you delete the address or your account.',
           'Location: only with your permission. See section 4.',
           'Payments: processed by Stripe. We never receive or store your full card number, security code, or bank details. Stripe only sends us a payment ID, the card brand, and its last four digits.',
           'Technical information: your device token to send you notifications (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
@@ -197,7 +199,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. How long we keep your data',
         parrafos: [
           'While your account is open, we keep your account and order data to provide the service.',
-          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, your identity verification photos and details, your vehicle, license, and insurance, the addresses, notes, and location of your orders, the text of your ratings, and your waitlist entry.',
+          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, your saved addresses and the photos of your door, your identity verification photos and details, your vehicle, license, and insurance, the addresses, notes, and location of your orders, the text of your ratings, and your waitlist entry.',
           'What we keep without your name: the amount, date, and restaurant of each order, for seven years, as required by tax and accounting laws and to resolve payment disputes or fraud. Those records no longer identify you.',
           'Backups: we keep daily backups for 30 days. Deleted data disappears from them as they expire, at most 30 days later.',
           'Stripe keeps your payment data under its own policy and financial regulations.',

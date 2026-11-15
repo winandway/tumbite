@@ -133,8 +133,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Divoox uses your photos so you can attach a picture when you report a wrong or damaged item.",
-          "cameraPermission": "Divoox uses the camera to scan a package tracking label and to photograph a wrong or damaged item when you report a problem with your order.",
+          "photosPermission": "Divoox uses your photos so you can attach a picture when you report a wrong or damaged item, or add a photo of your door or building entrance so your courier can find you.",
+          "cameraPermission": "Divoox uses the camera to scan a package tracking label, to photograph a wrong or damaged item when you report a problem with your order, and to take a photo of your door or building entrance so your courier can find you.",
           "microphonePermission": false
         }
       ],
@@ -175,7 +175,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Divoox uses the camera to scan a package tracking label and to photograph a wrong or damaged item when you report a problem with your order.",
+          "cameraPermission": "Divoox uses the camera to scan a package tracking label, to photograph a wrong or damaged item when you report a problem with your order, and to take a photo of your door or building entrance so your courier can find you.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }

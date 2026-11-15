@@ -168,6 +168,7 @@ fotoPuerta.post('/mis-direcciones/:id/fotos/:orden', async (c) => {
     throw new ErrorDatos('La foto pesa demasiado. El máximo es 3 MB.', 'foto', 413);
   const tipo = tipoReal(bytes);
   if (!tipo) throw new ErrorDatos('Sube una foto en JPG, PNG o WebP.', 'foto', 415);
+  // La app exige una dirección en la respuesta: es la ruta privada de esta misma foto (con sesión).
   const bucket = almacen(c.env);
   const anterior = await db
     .prepare('SELECT clave FROM direcciones_fotos WHERE direccion_id = ? AND orden = ?')
@@ -177,7 +178,7 @@ fotoPuerta.post('/mis-direcciones/:id/fotos/:orden', async (c) => {
     // La miniatura acompaña a la foto ya subida: misma clave con «-s», sin escribir en la base.
     if (!anterior) throw new ErrorDatos('Primero sube la foto.', 'foto', 409);
     await guardarFoto(bucket, `${anterior.clave}-s`, bytes, tipo, { cacheControl: PRIVADA });
-    return c.json({ ok: true, url: '' }, 201);
+    return c.json({ ok: true, url: `/datos/mis-direcciones/${d.id}/fotos/${orden}` }, 201);
   }
   const clave = `puertas/${u.id}/${d.id}/${orden}-${nuevoId()}`;
   // Sin datos ocultos: la limpieza quita la ubicación y el modelo del teléfono (C-FOTOS-SIN-METADATOS).
@@ -190,7 +191,7 @@ fotoPuerta.post('/mis-direcciones/:id/fotos/:orden', async (c) => {
     .run();
   // Al cambiar la foto, la anterior se elimina de verdad.
   if (anterior) await borrarArchivos(c.env, [anterior.clave]);
-  return c.json({ ok: true, url: '' }, 201);
+  return c.json({ ok: true, url: `/datos/mis-direcciones/${d.id}/fotos/${orden}` }, 201);
 });
 
 fotoPuerta.get('/mis-direcciones/:id/fotos/:orden', async (c) => {
