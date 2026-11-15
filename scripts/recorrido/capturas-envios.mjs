@@ -1,7 +1,9 @@
 // Capturas REALES de Divoox Envíos (de A a B, persona a persona) para Docs (C-DOCS-ENVIOS, 14 nov
-// 2026). EE. UU. (Novi, Michigan). Contra el servidor local del recorrido (.recorrido, encendido en el
-// puerto 8790), con las apps web reales del cliente y del Driver:
-//   1. el equipo abre Envíos en Novi con el paso del panel (tarifa de mercado, no «de prueba»);
+// 2026). C-CAPTURAS-POR-IDIOMA (15 nov 2026, Venezuela y EE. UU.): cada idioma con SUS ejemplos. El
+// español se toma en El Vigía (Venezuela: dólares con su equivalente en bolívares, efectivo o pago
+// móvil) y el inglés en Novi, Michigan (Estados Unidos: dólares, efectivo o tarjeta). Contra el
+// servidor local del recorrido (.recorrido), con las apps web reales del cliente y del Driver:
+//   1. el equipo abre Envíos en la ciudad con el paso del panel (tarifa de mercado, no «de prueba»);
 //   2. un conductor de prueba con moto aprobada y habilitado para Envíos se conecta en la recogida;
 //   3. el cliente cotiza, declara qué envía, su valor y quién lo recibe, y ve su PIN de entrega;
 //   4. el Driver ve la oferta, toma la foto del paquete y entrega con el PIN;
@@ -20,19 +22,62 @@ const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'u
 const URL = DATOS.url;
 const SECRETO = DATOS.relojSecreto;
 const SALIDA = join(RAIZ, 'docs', 'capturas', 'recorrido');
-const CIUDAD = {
-  id: 'US-MI-NOVI',
-  nombre: 'Novi',
-  lat: 42.4806,
-  lng: -83.4755,
-  radioKm: 25,
-  zonaHoraria: 'America/Detroit',
-};
-const ORIGEN = { lat: 42.4725, lng: -83.4757, direccion: '45175 W Ten Mile Rd, Novi, MI 48375' };
-const DESTINO = {
-  lat: 42.5373,
-  lng: -83.4583,
-  direccion: '1499 E West Maple Rd, Walled Lake, MI 48390',
+// C-CAPTURAS-POR-IDIOMA: los datos de cada pasada. Español: El Vigía. Inglés: Novi, Michigan.
+const LUGARES = {
+  ve: {
+    pais: 'VE',
+    ciudad: {
+      id: 'VE-MER-ELVIGIA',
+      nombre: 'El Vigía',
+      lat: 8.6219,
+      lng: -71.6506,
+      radioKm: 15,
+      zonaHoraria: 'America/Caracas',
+    },
+    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' },
+    destino: { lat: 8.6195, lng: -71.6585, direccion: 'Terminal de pasajeros de El Vigía' },
+    enCamino: { lat: 8.6208, lng: -71.6545 },
+    tarifa: { base: 100, porKm: 50, porMinuto: 10, minimo: 200, valorMaximo: 20_000 },
+    telefono: '0414-5550134',
+    moto: {
+      marca: 'Empire',
+      modelo: 'Horse',
+      color: 'Gris',
+      placa: 'AB1C23D',
+      placaEstado: 'Mérida',
+    },
+    conductor: 'Conductor de prueba',
+    cliente: 'Remitente de prueba',
+    destinatario: 'Destinatario de prueba',
+    paquete: 'Llaves de la casa',
+    valor: '15',
+  },
+  us: {
+    pais: 'US',
+    ciudad: {
+      id: 'US-MI-NOVI',
+      nombre: 'Novi',
+      lat: 42.4806,
+      lng: -83.4755,
+      radioKm: 25,
+      zonaHoraria: 'America/Detroit',
+    },
+    origen: { lat: 42.4725, lng: -83.4757, direccion: '45175 W Ten Mile Rd, Novi, MI 48375' },
+    destino: {
+      lat: 42.5373,
+      lng: -83.4583,
+      direccion: '1499 E West Maple Rd, Walled Lake, MI 48390',
+    },
+    enCamino: { lat: 42.505, lng: -83.468 },
+    tarifa: { base: 300, porKm: 110, porMinuto: 20, minimo: 800, valorMaximo: 50_000 },
+    telefono: '(248) 555-0134',
+    moto: { marca: 'Honda', modelo: 'PCX', color: 'Gray', placa: 'MI4821B', placaEstado: 'MI' },
+    conductor: 'Sam Carter',
+    cliente: 'Jamie Lee',
+    destinatario: 'Alex Morgan',
+    paquete: 'House keys',
+    valor: '40',
+  },
 };
 const FOTO = readFileSync(join(RAIZ, 'e2e', 'recorrido', 'fotos', 'bolsa-entrega.jpg'));
 const ID = Date.now().toString(36);
@@ -78,44 +123,51 @@ const cuenta = async (rol, nombre) => {
 };
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// ───────── 1. Envíos encendido en Novi con su tarifa (solo en este servidor local)
+// ───────── 1. Envíos encendido en la ciudad con su tarifa (solo en este servidor local)
 const admin = await cuenta('admin', 'Soporte Envíos');
 await sql(`UPDATE usuarios SET rol = 'admin' WHERE id = '${admin.id}'`);
 await sql(
   `INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('envios', 1)`,
 );
-await sql(`UPDATE servicios SET estado = 'disponible' WHERE id = 'envios'`);
-await pedir(
-  'POST',
-  '/datos/admin/viajes/ciudades',
-  {
-    servicio: 'envios',
-    zona: CIUDAD,
-    tarifa: { base: 300, porKm: 110, porMinuto: 20, minimo: 800, valorMaximo: 50_000 },
-    motivo: 'Ciudad de las capturas de Envíos (servidor local)',
-  },
-  admin.token,
-);
-await sql(`UPDATE tarifas_viaje SET de_prueba = 0 WHERE zona_id = '${CIUDAD.id}' AND activa = 1`);
+async function abrirCiudad(M) {
+  await sql(`UPDATE servicios SET estado = 'disponible' WHERE id = 'envios'`);
+  await pedir(
+    'POST',
+    '/datos/admin/viajes/ciudades',
+    {
+      servicio: 'envios',
+      zona: M.ciudad,
+      tarifa: M.tarifa,
+      motivo: 'Ciudad de las capturas de Envíos (servidor local)',
+    },
+    admin.token,
+  );
+  await sql(
+    `UPDATE tarifas_viaje SET de_prueba = 0 WHERE zona_id = '${M.ciudad.id}' AND activa = 1`,
+  );
+  if (M.pais === 'VE')
+    await pedir('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 240 }, admin.token);
+}
 
-const limpiarColgados = async () => {
+const limpiarColgados = async (zona) => {
   // Un envío de una vuelta anterior que quedó buscando conductor se llevaría la oferta.
   await sql(
-    `UPDATE viajes SET estado = 'sin_conductor', ultimo_actor = 'sistema', ultimo_actor_id = NULL, ultima_clave = 'capturas-limpieza-' || hex(randomblob(6)) WHERE estado = 'buscando' AND operacion_id IN (SELECT id FROM operaciones WHERE zona_id = '${CIUDAD.id}')`,
+    `UPDATE viajes SET estado = 'sin_conductor', ultimo_actor = 'sistema', ultimo_actor_id = NULL, ultima_clave = 'capturas-limpieza-' || hex(randomblob(6)) WHERE estado = 'buscando' AND operacion_id IN (SELECT id FROM operaciones WHERE zona_id = '${zona}')`,
   );
   await sql(
-    `UPDATE operaciones SET estado_general = 'sin_conductor' WHERE zona_id = '${CIUDAD.id}' AND estado_general = 'buscando'`,
+    `UPDATE operaciones SET estado_general = 'sin_conductor' WHERE zona_id = '${zona}' AND estado_general = 'buscando'`,
   );
   await sql(
-    `UPDATE ofertas_operacion SET estado = 'vencida' WHERE estado = 'ofrecida' AND operacion_id IN (SELECT id FROM operaciones WHERE zona_id = '${CIUDAD.id}')`,
+    `UPDATE ofertas_operacion SET estado = 'vencida' WHERE estado = 'ofrecida' AND operacion_id IN (SELECT id FROM operaciones WHERE zona_id = '${zona}')`,
   ).catch(() => null);
 };
-await limpiarColgados();
 
 // ───────── 2. Un conductor con moto aprobada y habilitado para Envíos, conectado en la recogida
-// Uno por idioma: al terminar un envío en efectivo, el conductor queda en «cobra y califica».
-async function nuevoConductor(sufijo, nombre, color) {
-  const cond = await cuenta('repartidor', nombre);
+// Uno por pasada: al terminar un envío en efectivo, el conductor queda en «cobra y califica».
+async function nuevoConductor(M, sufijo) {
+  const CIUDAD = M.ciudad;
+  const ORIGEN = M.origen;
+  const cond = await cuenta('repartidor', M.conductor);
   const veh = `veh-envios-${ID}-${sufijo}`;
   await sql(
     `UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = '${CIUDAD.id}'`,
@@ -123,8 +175,12 @@ async function nuevoConductor(sufijo, nombre, color) {
   await sql(`DELETE FROM servicio_requisitos WHERE servicio_id = 'envios'`);
   await sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${cond.id}', 1, ${ORIGEN.lat}, ${ORIGEN.lng}, datetime('now'), '${CIUDAD.id}')
     ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);
+  // La placa de la foto es fija: la moto de una vuelta anterior de este guion le deja el sitio.
+  await sql(
+    `UPDATE vehiculos SET placa = 'ANT' || substr(id, -6), estado = 'retirado' WHERE placa = '${M.moto.placa}'`,
+  );
   await sql(`INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
-    VALUES ('${veh}', '${cond.id}', 'moto', 'Honda', 'PCX', '${color}', 'MI${ID.slice(-4).toUpperCase()}${sufijo}', 'MI', 2023, 1, 'aprobado')`);
+    VALUES ('${veh}', '${cond.id}', 'moto', '${M.moto.marca}', '${M.moto.modelo}', '${M.moto.color}', '${M.moto.placa}', '${M.moto.placaEstado}', 2023, 1, 'aprobado')`);
   for (const t of ['registro', 'seguro', 'seguro_pasajeros'])
     await sql(
       `INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en) VALUES ('doc-${t}-${ID}-${sufijo}', '${veh}', '${t}', 'doc', 'aprobado', datetime('now', '+1 year'))`,
@@ -138,18 +194,24 @@ async function nuevoConductor(sufijo, nombre, color) {
   await sql(
     `INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES ('${cond.id}', 'envios', 1)`,
   );
+  // C-SALDO-OFERTAS: en Venezuela la comisión sale del saldo prepago; sin saldo no llega la oferta.
+  if (M.pais === 'VE')
+    await sql(
+      `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia)
+       VALUES ('capturas-envios-saldo-${ID}-${sufijo}', '${cond.id}', 'prepago', 'VE', 'USD', 2000, 'recarga', 'capturas-envios:saldo:${ID}:${sufijo}')`,
+    );
   return cond;
 }
 const conductores = [];
 
 const navegador = await chromium.launch();
-const telefono = async (token, id, idioma) => {
+const telefono = async (M, token, id, idioma) => {
   const ctx = await navegador.newContext({
     ...devices['Pixel 7'],
     baseURL: URL,
-    locale: idioma === 'en' ? 'en-US' : 'es-US',
-    timezoneId: 'America/Detroit',
-    geolocation: { latitude: ORIGEN.lat, longitude: ORIGEN.lng },
+    locale: idioma === 'en' ? 'en-US' : 'es-VE',
+    timezoneId: M.ciudad.zonaHoraria,
+    geolocation: { latitude: M.origen.lat, longitude: M.origen.lng },
     permissions: ['geolocation'],
   });
   await ctx.addInitScript(
@@ -170,24 +232,22 @@ const caja = (l) =>
     return { y: r.top + globalThis.scrollY, fin: r.bottom + globalThis.scrollY };
   });
 
-try {
-  // C-CAPTURAS-POR-IDIOMA: `SOLO_IDIOMA=en` o `es` corre una sola pasada. El inglés va con nombres en
-  // inglés y sin una palabra en español (el color de la moto incluido).
-  for (const idioma of ['es', 'en'].filter(
-    (i) => !process.env.SOLO_IDIOMA || process.env.SOLO_IDIOMA === i,
-  )) {
+/** Las capturas de Envíos de un país, en los idiomas que le tocan. */
+async function correr(M, idiomas) {
+  const CIUDAD = M.ciudad;
+  const ORIGEN = M.origen;
+  const DESTINO = M.destino;
+  await abrirCiudad(M);
+  await limpiarColgados(CIUDAD.id);
+  for (const idioma of idiomas) {
     const en = idioma === 'en';
-    const cond = await nuevoConductor(
-      en ? 'B' : 'A',
-      en ? 'Sam Carter' : 'Conductor de prueba',
-      en ? 'Gray' : 'Gris',
-    );
+    const cond = await nuevoConductor(M, `${M.pais}${idioma}`);
     conductores.push(cond.id);
-    const cli = await cuenta('cliente', en ? 'Jamie Lee' : 'Remitente de prueba');
+    const cli = await cuenta('cliente', M.cliente);
     const remitente = (m, r, c) => pedir(m, r, c, cli.token);
 
     // ───────── Cliente: cotizar, qué envía y quién lo recibe
-    const ctxC = await telefono(cli.token, cli.id, idioma);
+    const ctxC = await telefono(M, cli.token, cli.id, idioma);
     await ctxC.addInitScript(
       ([u, b]) => localStorage.setItem(`tumbite.borrador.envios.${u}`, b),
       [
@@ -201,10 +261,10 @@ try {
           destinoLng: String(DESTINO.lng),
           metodo: 'efectivo',
           categoria: 'estandar',
-          paqueteDescripcion: en ? 'House keys' : 'Llaves de la casa',
-          paqueteValor: '40',
-          destinatarioNombre: en ? 'Alex Morgan' : 'Destinatario de prueba',
-          destinatarioTelefono: '(248) 555-0134',
+          paqueteDescripcion: M.paquete,
+          paqueteValor: M.valor,
+          destinatarioNombre: M.destinatario,
+          destinatarioTelefono: M.telefono,
           sinProhibidos: true,
         }),
       ],
@@ -259,7 +319,7 @@ try {
     await sql(
       `UPDATE repartidores SET conectado = 1, lat = ${ORIGEN.lat}, lng = ${ORIGEN.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${cond.id}'`,
     );
-    const ctxD = await telefono(cond.token, cond.id, idioma);
+    const ctxD = await telefono(M, cond.token, cond.id, idioma);
     const d = await ctxD.newPage();
     await d.goto('/driver/');
     const oferta = await d
@@ -299,12 +359,12 @@ try {
     if (rf.status !== 201) throw new Error(`foto del paquete: ${rf.status} ${await rf.text()}`);
     await paso('iniciar');
     await sql(
-      `UPDATE repartidores SET lat = 42.505, lng = -83.468, ubicacion_en = datetime('now') WHERE usuario_id = '${cond.id}'`,
+      `UPDATE repartidores SET lat = ${M.enCamino.lat}, lng = ${M.enCamino.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${cond.id}'`,
     );
 
     // ───────── Quien recibe: el enlace para seguir el envío en vivo (el mismo que le llega por mensaje)
     const enlace = (await remitente('POST', `/datos/viajes/${op}/compartir`)).url;
-    const ctxR = await telefono(null, null, idioma);
+    const ctxR = await telefono(M, null, null, idioma);
     const r = await ctxR.newPage();
     await r.goto(new globalThis.URL(enlace).pathname);
     await r.waitForLoadState('networkidle').catch(() => null);
@@ -352,8 +412,16 @@ try {
     await ctxD.close();
     await ctxC.close();
   }
+  await limpiarColgados(CIUDAD.id).catch(() => null);
+}
+
+// Español en El Vigía; inglés en Novi, Michigan (C-CAPTURAS-POR-IDIOMA). `SOLO_IDIOMA=en` o `es`
+// corre una sola pasada.
+const SOLO = process.env.SOLO_IDIOMA;
+try {
+  if (SOLO !== 'en') await correr(LUGARES.ve, ['es']);
+  if (SOLO !== 'es') await correr(LUGARES.us, ['en']);
 } finally {
-  await limpiarColgados().catch(() => null);
   // Envíos vuelve a quedar apagado y el conductor de prueba, desconectado.
   for (const c of conductores)
     await sql(`UPDATE repartidores SET conectado = 0 WHERE usuario_id = '${c}'`).catch(() => null);

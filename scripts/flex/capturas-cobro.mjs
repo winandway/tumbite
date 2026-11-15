@@ -464,7 +464,7 @@ if (SOLO !== 'es') await correrUs(['en']);
 await navegador.close();
 
 // Para Docs (y, en español, para la página /flex): WebP livianos (las originales quedan en
-// docs/capturas). La página /flex en inglés no se toca aquí: su texto habla del cobro contra entrega.
+// docs/capturas). La página /flex en inglés solo lleva de aquí la parada del conductor (`driver-entrega-en`).
 const idiomas = SOLO === 'en' ? ['en'] : SOLO === 'es' ? ['es'] : ['es', 'en'];
 for (const l of idiomas) {
   const nombres =
@@ -474,6 +474,8 @@ for (const l of idiomas) {
   for (const n of nombres) {
     const png = join(salida, `fase6-${n}-${l}.png`);
     if (l === 'es') aWebp(png, join(web, `${n}-${l}.webp`));
+    // La página /flex en inglés enseña la parada sin nada que cobrar (allá no hay cobro contra entrega).
+    if (l === 'en' && n === 'driver-cobrar') aWebp(png, join(web, 'driver-entrega-en.webp'));
     if (n !== 'panel-etiqueta-cobro') aWebp(png, join(docs, `flex-${n}-${l}.webp`));
   }
 }
