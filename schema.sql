@@ -1246,6 +1246,10 @@ CREATE TABLE IF NOT EXISTS vehiculos (
   origen TEXT NOT NULL DEFAULT 'app' CHECK (origen IN ('app', 'migracion')),
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-CARRO-CATEGORIAS (14 nov 2026): la categoría del carro (estandar, comfort o premium) y si su
+  -- conductor también recibe los viajes de las categorías de abajo.
+  categoria TEXT NOT NULL DEFAULT 'estandar',
+  acepta_menores INTEGER NOT NULL DEFAULT 1,
   CHECK (estado != 'aprobado' OR tipo IN ('bicicleta', 'a_pie') OR placa != '')
 );
 CREATE INDEX IF NOT EXISTS vehiculos_conductor ON vehiculos(conductor_id, estado);
@@ -2892,6 +2896,11 @@ CREATE TABLE IF NOT EXISTS tarifas_viaje (
   cargo_fijo INTEGER NOT NULL DEFAULT 0 CHECK (cargo_fijo >= 0),
   factor_calle_pb INTEGER NOT NULL DEFAULT 13000,
   velocidad_kmh INTEGER NOT NULL DEFAULT 24,
+  -- C-CARRO-CATEGORIAS (14 nov 2026): factor de Comfort y de Premium (NULL = la ciudad no la ofrece).
+  comfort_pb INTEGER,
+  premium_pb INTEGER,
+  -- C-VIAJE-PARADAS (14 nov 2026): espera gratis en cada parada intermedia.
+  espera_parada_gratis_s INTEGER NOT NULL DEFAULT 120,
   de_prueba INTEGER NOT NULL DEFAULT 1 CHECK (de_prueba IN (0, 1)),
   activa INTEGER NOT NULL DEFAULT 1 CHECK (activa IN (0, 1)),
   motivo TEXT NOT NULL DEFAULT '',
@@ -2920,9 +2929,61 @@ CREATE TABLE IF NOT EXISTS cotizaciones_viaje (
   vence_en TEXT NOT NULL,
   usada_en TEXT,
   operacion_id TEXT,
-  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-VIAJE-PARADAS (14 nov 2026): las paradas intermedias cotizadas, en orden ([{lat,lng,direccion}]).
+  paradas_json TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS cotizaciones_viaje_cliente ON cotizaciones_viaje(cliente_id, creado_en);
+
+-- C-VIAJE-PARADAS (14 nov 2026, todos los países): paradas intermedias de un viaje, como «Agregar
+-- parada» de Uber y DiDi. Nacen con el viaje (de la cotización) y el pasajero las puede cambiar
+-- mientras el viaje no termine; el conductor marca cuándo llega y cuándo sigue (la espera de más se
+-- cobra por minuto). Una parada quitada se queda como historia.
+CREATE TABLE IF NOT EXISTS paradas_viaje (
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  orden INTEGER NOT NULL CHECK (orden BETWEEN 1 AND 99),
+  lat REAL NOT NULL,
+  lng REAL NOT NULL,
+  direccion TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'en_parada', 'visitada', 'quitada')),
+  llego_en TEXT,
+  salio_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (operacion_id, orden)
+);
+
+-- C-VIAJE-PARADAS: cada cambio de paradas hecho con el viaje ya pedido (quién, qué precio había y
+-- cuál quedó). El precio lo calcula siempre el servidor con la tarifa copiada en la cotización.
+CREATE TABLE IF NOT EXISTS cambios_viaje (
+  id TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL REFERENCES operaciones(id),
+  actor TEXT NOT NULL CHECK (actor IN ('cliente', 'conductor', 'soporte')),
+  actor_id TEXT REFERENCES usuarios(id),
+  total_antes INTEGER NOT NULL,
+  total_despues INTEGER NOT NULL,
+  paradas_json TEXT NOT NULL DEFAULT '[]',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS cambios_viaje_operacion ON cambios_viaje(operacion_id);
+
+-- C-CARRO-DINAMICA (14 nov 2026, todos los países): el multiplicador de la tarifa dinámica de un
+-- servicio en una ciudad. UNA fila por servicio y ciudad; el reloj la escribe SOLO cuando el
+-- multiplicador cambia (nunca por mirar), y el equipo puede fijarla a mano por un rato o apagarla.
+CREATE TABLE IF NOT EXISTS dinamica_zona (
+  servicio_id TEXT NOT NULL REFERENCES servicios(id),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  multiplicador_pb INTEGER NOT NULL DEFAULT 10000 CHECK (multiplicador_pb BETWEEN 10000 AND 30000),
+  demanda INTEGER NOT NULL DEFAULT 0,
+  oferta INTEGER NOT NULL DEFAULT 0,
+  modo TEXT NOT NULL DEFAULT 'auto' CHECK (modo IN ('auto', 'manual', 'apagada')),
+  -- Hasta cuándo vale el multiplicador: lo fijado a mano (después vuelve a automático) o el recargo
+  -- automático (el reloj lo renueva mientras siga la demanda; si el reloj se para, el recargo se cae solo).
+  vale_hasta TEXT,
+  motivo TEXT NOT NULL DEFAULT '',
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (servicio_id, zona_id)
+);
 
 -- Divoox Moto · M2 (28 oct 2026): lo que el pasajero debe por cancelar tarde o no presentarse en un
 -- viaje en efectivo. No se puede cobrar en el momento: se suma a su siguiente viaje (como Namma
