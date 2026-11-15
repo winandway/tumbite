@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Guia } from './guias';
@@ -8,6 +8,8 @@ import { GUIAS_SEMANA } from './semana';
 import { GUIAS_MOTO } from './borradores/moto';
 import { coincide, palabrasDeBusqueda } from './buscar';
 import { iconoDeGuia } from './iconosGuia';
+import { TEXTOS_FLEX } from '../Flex';
+import { TEXTOS_SITIO } from '../textos';
 
 /**
  * C-DOCS-CARRO y C-DOCS-SEMANA (14 nov 2026) — todos los países: lo construido esta semana tiene su
@@ -178,6 +180,99 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     const enviosGuion = guion('capturas-envios.mjs');
     expect(enviosGuion).toContain("id: 'US-MI-NOVI'");
     expect(enviosGuion).not.toMatch(/'Test (Driver|Sender|recipient)'/);
+  });
+
+  it('C-CAPTURAS-POR-IDIOMA: la web pública en inglés se enseña con ejemplos de Estados Unidos', () => {
+    // 15 nov 2026 (tercera parte, EE. UU.): la regla vale también para la web. La página de Flex en
+    // inglés no enseña el cobro contra entrega (allá no existe): dice que no se usa y muestra la
+    // recarga con tarjeta y la parada sin nada que cobrar, con capturas de Novi.
+    const { paises, ...resto } = TEXTOS_FLEX.en;
+    const flexEs = readdirSync(join(PUBLICO, 'flex'));
+    const ingles = JSON.stringify(resto).toLowerCase();
+    for (const ajeno of [...AJENO_EN_INGLES, 'caracas', 'bcv', 'cédula', 'national id'])
+      expect(ingles, `flex: ${ajeno}`).not.toContain(ajeno);
+    expect(TEXTOS_FLEX.en.cobro.texto).toMatch(
+      /In the United States .* doesn’t use cash on delivery/,
+    );
+    expect(TEXTOS_FLEX.en.cobro.texto).toMatch(/by card/);
+    expect(JSON.stringify(TEXTOS_FLEX.en.cobro)).toContain('Novi');
+    // La tarjeta del país sí nombra a Venezuela (es dónde funciona el producto, no un ejemplo), sin
+    // sus monedas ni sus formas de pago.
+    const tarjetas = JSON.stringify(paises).toLowerCase();
+    for (const ajeno of ['bolívar', 'bolivar', 'pago móvil', 'zelle', 'vigía', 'caracas'])
+      expect(tarjetas, `flex, países: ${ajeno}`).not.toContain(ajeno);
+    // Las capturas del pago en inglés no son las del cobro contra entrega (tomadas en Venezuela)…
+    expect(TEXTOS_FLEX.en.cobro.img1).toBe('panel-recarga');
+    expect(TEXTOS_FLEX.en.cobro.img2).toBe('driver-entrega');
+    expect(TEXTOS_FLEX.es.cobro.img1).toBe('panel-caja');
+    // El español sigue enseñando el cobro contra entrega de Venezuela, con sus capturas.
+    expect(TEXTOS_FLEX.es.cobro.img2).toBe('driver-cobrar');
+    expect(TEXTOS_FLEX.es.cobro.texto).toMatch(/En Venezuela el cliente paga al recibir/);
+    expect(flexEs).toContain('panel-caja-es.webp');
+    expect(flexEs).toContain('driver-cobrar-es.webp');
+    // …y esas no existen en inglés en la carpeta de la web: nadie las puede volver a enlazar.
+    const flex = readdirSync(join(PUBLICO, 'flex'));
+    for (const vieja of [
+      'driver-cobrar',
+      'panel-caja',
+      'panel-cobro-envio',
+      'panel-etiqueta-cobro',
+      'panel-retiro',
+    ])
+      expect(flex, vieja).not.toContain(`${vieja}-en.webp`);
+    // Cada imagen que la página de Flex muestra en inglés existe.
+    const en = TEXTOS_FLEX.en;
+    for (const n of [
+      ...en.punta.pasos.map((p) => p.img),
+      en.ubicacion.img1,
+      en.ubicacion.img2,
+      en.cobro.img1,
+      en.cobro.img2,
+      en.sinTecnologia.panel,
+    ])
+      expect(flex, n).toContain(`${n}-en.webp`);
+    // El guion que toma la recarga y la parada en Novi deja también las de la web.
+    const raiz = join(__dirname, '..', '..', '..', '..', '..', 'scripts');
+    expect(readFileSync(join(raiz, 'recorrido', 'capturas-flex.mjs'), 'utf8')).toContain(
+      "'panel-recarga-en.webp'",
+    );
+    expect(readFileSync(join(raiz, 'flex', 'capturas-cobro.mjs'), 'utf8')).toContain(
+      "'driver-entrega-en.webp'",
+    );
+    // El resto de la web en inglés (portada, «How it works», restaurantes, repartidores, franquicias):
+    // sus textos no nombran lo que es de Venezuela y sus capturas no salen de una pasada de allá.
+    const sitio = JSON.stringify(TEXTOS_SITIO.en).toLowerCase();
+    for (const ajeno of [...AJENO_EN_INGLES.filter((a) => a !== 'venezuela'), 'caracas', 'bcv'])
+      expect(sitio, `web: ${ajeno}`).not.toContain(ajeno);
+    for (const pagina of ['ComoFunciona.tsx', 'Landing.tsx', 'Flex.tsx']) {
+      const fuente = readFileSync(join(__dirname, '..', pagina), 'utf8');
+      for (const [src] of fuente.matchAll(/\/docs\/[a-z0-9-]+-en\.webp/g))
+        expect(src, pagina).not.toMatch(/-ve-/);
+      expect(fuente, pagina).not.toMatch(/-ve-[a-z0-9-]*\$\{idioma\}/);
+    }
+  });
+
+  it('C-CAPTURAS-POR-IDIOMA: en español, Envíos se enseña en una ciudad de habla hispana', () => {
+    // 15 nov 2026 (Venezuela): la pasada en español de Envíos ya no se toma en Novi, Michigan.
+    const guion = readFileSync(
+      join(__dirname, '..', '..', '..', '..', '..', 'scripts', 'recorrido', 'capturas-envios.mjs'),
+      'utf8',
+    );
+    expect(guion).toMatch(/correr\(LUGARES\.ve, \['es'\]\)/);
+    expect(guion).toMatch(/correr\(LUGARES\.us, \['en'\]\)/);
+    expect(guion).toContain("id: 'VE-MER-ELVIGIA'");
+    expect(guion).not.toMatch(/'es-US'/);
+    // El texto en español describe lo que muestra SU captura: El Vigía, bolívares y pago móvil.
+    const es = Object.values(GUIAS_SEMANA.es).flat();
+    const envios = ['send-package', 'receive-package', 'drive-delivery'].map((id) =>
+      JSON.stringify(es.find((g) => g.id === id)),
+    );
+    for (const g of envios) expect(g).not.toMatch(/Novi|Michigan|Walled Lake/);
+    expect(envios.at(0)).toContain('El Vigía');
+    expect(envios.at(0)).toContain('pago móvil');
+    expect(envios.at(0)).toContain('bolívares');
+    expect(envios.at(0)).not.toMatch(/18,27|con tarjeta/);
+    expect(envios.at(2)).toContain('El Vigía');
   });
 
   it('Carro dice que se abre por ciudad', () => {

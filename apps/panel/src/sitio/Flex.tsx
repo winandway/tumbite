@@ -5,12 +5,16 @@ import { Enlace } from '../Enlace';
  * Divoox Flex: la página pública del servicio de logística y entrega de última milla (pedido de
  * Richard, 28 oct 2026). Solo capturas ORIGINALES de la app real (scripts/flex/capturas.mjs) y solo
  * lo que el producto ya hace; lo que no está terminado no se muestra (C-SOLO-LO-TERMINADO). Nada técnico ni privado.
+ * C-CAPTURAS-POR-IDIOMA (15 nov 2026): el español se enseña con Venezuela (Caracas) y el inglés con
+ * Estados Unidos (Novi, Michigan). En inglés la sección del pago no enseña el cobro contra entrega
+ * (allá no existe): enseña la recarga con tarjeta y la parada sin nada que cobrar.
  */
 const img = (n: string, i: Idioma) => `/flex/${n}-${i}.webp`;
 /** Las capturas de celular se muestran a tamaño de celular (no estiradas al ancho). */
 const deCelular = (n: string) => /^(destinatario|rastreo|driver|app)-/.test(n);
 
-const T = {
+/** Exportado para su candado (C-CAPTURAS-POR-IDIOMA). */
+export const TEXTOS_FLEX = {
   es: {
     etiqueta: 'Divoox Flex',
     titulo: 'Servicios de logística y entrega de última milla',
@@ -146,7 +150,7 @@ const T = {
         {
           titulo: '1. You receive the package and register it',
           texto:
-            'One by one or hundreds at once with a CSV sheet (saved from Excel or Google Sheets). You save who receives it, their phone, the address, a landmark and, in Venezuela, their national ID.',
+            'One by one or hundreds at once with a CSV sheet (saved from Excel or Google Sheets). You save who receives it, their phone, the address and a landmark for the driver.',
           img: 'panel-nuevo-envio',
           alt: 'Form to create a shipment in the Divoox Flex dashboard',
         },
@@ -190,7 +194,7 @@ const T = {
     ubicacion: {
       titulo: 'The exact location, before leaving',
       texto:
-        'A written address isn’t enough to reach the door. That’s why every shipment shows whether its location is confirmed, and with one tap you ask the recipient for it on WhatsApp or mark it yourself with the pin. In Venezuela the route can’t leave until every stop has a confirmed spot: the driver doesn’t waste time calling to ask.',
+        'A written address isn’t enough to reach the door. That’s why every shipment shows whether its location is confirmed, and with one tap you ask the recipient for it on WhatsApp or mark it yourself with the pin. In the United States the written address is enough and the pin is optional; with the spot confirmed, the driver doesn’t waste time calling to ask.',
       img1: 'panel-pedir-ubicacion',
       alt1: 'Asking the recipient for their location on WhatsApp from the dashboard',
       img2: 'app-mis-paquetes',
@@ -198,21 +202,21 @@ const T = {
       app: 'With the Divoox app, the recipient marks their home once and every package sent to them goes to that spot. They see it in “My packages”.',
     },
     cobro: {
-      titulo: 'Cash on delivery, with each route’s cash panel',
+      titulo: 'Paying in the United States: by card, with nothing to collect at the door',
       texto:
-        'In Venezuela the customer pays on receipt. You set the amount on the shipment and the driver can’t deliver without recording the payment: how they paid (cash in dollars or bolívares, pago móvil, bank transfer, Zelle or card terminal), the reference and the payer’s ID. Back at the center, you mark “I received the cash” and everything is logged. Divoox doesn’t touch that money: it records it.',
-      img1: 'panel-caja',
-      alt1: 'A route’s cash panel with what was collected and the cash to receive',
-      img2: 'driver-cobrar',
-      alt2: 'The driver records the payment in the app before delivering',
-      app: 'The driver records the payment in the app before marking it delivered.',
+        'In the United States Divoox Flex doesn’t use cash on delivery: your customers pay you when they order, so the driver delivers with the proof you require and there’s no cash to count back at the hub. Your company keeps a prepaid wallet and tops it up by card: pick an amount, pay on the same screen and the balance shows up in your wallet. Cash on delivery is turned on country by country, where customers usually pay on receipt.',
+      img1: 'panel-recarga',
+      alt1: 'The wallet’s Top up tab in the Divoox Flex dashboard, with suggested amounts in dollars and Continue to payment',
+      img2: 'driver-entrega',
+      alt2: 'A stop in Divoox Driver in Novi, Michigan: the package to scan and Confirm delivery, with nothing to collect',
+      app: 'At the door, the driver scans the package and confirms the delivery. There’s nothing to collect.',
     },
     sinTecnologia: {
       titulo: 'If your company doesn’t have technology yet',
       intro:
         'You don’t need developers, servers or special equipment. With a computer, a printer and drivers with a phone, you can start today.',
       pasos: [
-        'Create your company account and choose your country (Venezuela or the United States): the system adapts to how work is done there.',
+        'Create your company account and choose your country: the system adapts to how work is done there.',
         'Register your hub or distribution center, where packages leave from.',
         'Invite your team with their role (receiving, dispatch, finance) and your drivers, who use the Divoox Driver app.',
         'Load your shipments one by one or with the spreadsheet you already use, saved as CSV.',
@@ -227,11 +231,11 @@ const T = {
       ve: {
         nombre: 'Venezuela',
         puntos: [
-          'Recipient’s national ID and a landmark on every shipment.',
+          'Recipient’s ID number and a landmark on every shipment.',
           'The route can’t leave without each stop’s confirmed location.',
           'Plus code on the label: the exact spot even without a formal address.',
           'Messages ready for WhatsApp.',
-          'Cash on delivery in dollars or bolívares, with each route’s cash panel.',
+          'Cash on delivery, with each route’s cash panel.',
           'Pickup at your hub within 5 business days, with ID and a WhatsApp notice.',
         ],
       },
@@ -241,6 +245,7 @@ const T = {
           'The written address is enough; the pin is optional.',
           'Proof of delivery with photo, signature or code.',
           'Prepaid balance by card for the company.',
+          'No cash on delivery: your customers pay when they order.',
         ],
       },
     },
@@ -252,7 +257,7 @@ const T = {
 };
 
 export function Flex({ idioma }: { idioma: Idioma }) {
-  const t = enIdioma(T, idioma);
+  const t = enIdioma(TEXTOS_FLEX, idioma);
   const secciones: [string, string][] = [
     ['punta', t.punta.titulo],
     ['ubicacion', t.ubicacion.titulo],
@@ -363,7 +368,8 @@ export function Flex({ idioma }: { idioma: Idioma }) {
       <section id="paises" className="como-seccion">
         <h2>{t.paises.titulo}</h2>
         <div className="fw-dos">
-          {[t.paises.ve, t.paises.us].map((p) => (
+          {/* C-CAPTURAS-POR-IDIOMA: en inglés, Estados Unidos va primero. */}
+          {(idioma === 'en' ? [t.paises.us, t.paises.ve] : [t.paises.ve, t.paises.us]).map((p) => (
             <article key={p.nombre} className="fw-tarjeta">
               <h3>{p.nombre}</h3>
               <ul>
