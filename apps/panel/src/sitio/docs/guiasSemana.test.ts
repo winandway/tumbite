@@ -153,12 +153,16 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     expect(comidaGuion).toMatch(/correrVe\(\['es'\]\)/);
     expect(comidaGuion).toMatch(/correrUs\(\['en'\]\)/);
     expect(comidaGuion).toContain("id: 'US-MI-NOVI'");
-    // Divoox Flex: todas sus guías en inglés (las de la semana y las de siempre), igual.
-    const flex = DOCS.en.flatMap((sec) => sec.guias.filter((g) => g.id.startsWith('flex-')));
-    expect(flex.length).toBeGreaterThan(10);
-    const flexIngles = JSON.stringify(flex.map((g) => ({ ...g, id: '' }))).toLowerCase();
-    for (const ajeno of [...AJENO_EN_INGLES, 'caracas', 'bcv', 'national id'])
-      expect(flexIngles, `flex: ${ajeno}`).not.toContain(ajeno);
+    // Y TODAS las guías públicas en inglés (también las de Flex y las que solo citan a otra): ni el
+    // texto ni el `alt` o el pie de una captura nombran lo que es de Venezuela.
+    const todasEn = DOCS.en.flatMap((sec) => sec.guias);
+    expect(todasEn.length).toBeGreaterThan(100);
+    for (const g of todasEn) {
+      const texto = JSON.stringify({ ...g, id: '' }).toLowerCase();
+      for (const ajeno of [...AJENO_EN_INGLES, 'caracas', 'bcv', 'cédula', 'national id'])
+        expect(texto, `${g.id}: ${ajeno}`).not.toContain(ajeno);
+      for (const c of g.capturas ?? []) expect(c.src, g.id).not.toMatch(/-ve-/);
+    }
     expect(guion('capturas-flex.mjs')).toMatch(
       /idiomaPasada === 'en' \? NOMBRES\.en : NOMBRES\.es/,
     );

@@ -7825,8 +7825,8 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/flex-driver-cobrar-en.webp',
-            alt: 'Collect on delivery in Divoox Driver.',
-            pie: 'In Venezuela, collect on delivery.',
+            alt: 'A stop in Divoox Driver: scan the packages and confirm the delivery.',
+            pie: 'At each stop, scan the packages and confirm the delivery.',
           },
         ],
         preguntas: [
@@ -9627,7 +9627,7 @@ const en: SeccionDocs[] = [
           'Restaurant visits: “Put your restaurant on Divoox,” “Verify your restaurant,” “Your menu,” “Receiving orders and the alarm,” “Your dashboard,” “Gifts and marketing,” and “Daily summary and your wallet.”',
           'Driver training: “Start delivering,” “Verify your identity,” “Offers,” “Levels,” and “Your wallet.”',
           'Customer support: “How to place your first order,” “Track your order live,” “Cancel an order,” “My account,” and “Help from a real person.”',
-          'Package companies (Divoox Flex), in this order: “your package company, your team and your hubs,” “create shipments, import packages from a spreadsheet and label them,” “each recipient’s exact location,” “assign routes and follow every delivery,” “My route: delivering company packages with Divoox Driver,” “cash on delivery in Venezuela,” “your wallet, top-ups, fees and receipts,” “notifications, suggested order, capacity and operations metrics,” and “track a package with its tracking number.”',
+          'Package companies (Divoox Flex), in this order: “your package company, your team and your hubs,” “create shipments, import packages from a spreadsheet and label them,” “each recipient’s exact location,” “assign routes and follow every delivery,” “My route: delivering company packages with Divoox Driver,” “cash on delivery, country by country,” “your wallet, top-ups, fees and receipts,” “notifications, suggested order, capacity and operations metrics,” and “track a package with its tracking number.”',
           'To finish: walk another team member through a full order, phone in hand, and what happens if the restaurant doesn’t answer.',
         ],
       },
