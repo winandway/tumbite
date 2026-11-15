@@ -68,6 +68,9 @@
   <url><loc>https://divoox.com/docs/ordering/ride-seguridad</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-car</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/ride-car-pay</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/ride-car-categories</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/ride-car-stops</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/ride-car-dynamic-pricing</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/pay-on-delivery-venezuela</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/order-not-delivered</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/send-package</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
@@ -135,6 +138,8 @@
   <url><loc>https://divoox.com/docs/drivers/drive-moto-seguridad</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/drive-car-signup</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/drive-car</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/drive-car-categories</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/drive-car-stops</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/driver-cash-mobile-payment-venezuela</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/driver-commission-balance-top-up</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/drive-delivery</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
@@ -309,6 +314,9 @@
   <url><loc>https://divoox.com/es/docs/ordering/ride-seguridad</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-car</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/ride-car-pay</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/ride-car-categories</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/ride-car-stops</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/ride-car-dynamic-pricing</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/pay-on-delivery-venezuela</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/order-not-delivered</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/send-package</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
@@ -376,6 +384,8 @@
   <url><loc>https://divoox.com/es/docs/drivers/drive-moto-seguridad</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/drive-car-signup</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/drive-car</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/drive-car-categories</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/drive-car-stops</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/driver-cash-mobile-payment-venezuela</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/driver-commission-balance-top-up</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/drive-delivery</loc><lastmod>2026-11-15</lastmod><priority>0.7</priority></url>
