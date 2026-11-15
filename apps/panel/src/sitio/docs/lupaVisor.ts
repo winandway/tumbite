@@ -41,15 +41,25 @@ const TEXTOS = {
 
 let activo: PhotoSwipe | null = null;
 
-const medidas = new Map(Object.entries(MEDIDAS as Record<string, number[]>));
+const medidas = new Map(Object.entries(MEDIDAS as Record<string, (number | string)[]>));
 
 /** Lo que el visor necesita de cada captura: la versión grande si existe y sus medidas. */
-export function datosDeCaptura(c: Captura): SlideData & { pie: string } {
+export function datosDeCaptura(c: Captura): SlideData & { pie: string; liviana: SlideData } {
   const nombre = c.src.replace(/^.*\//, '').replace(/\.webp$/, '');
-  const [w = 0, h = 0, gw, gh] = medidas.get(nombre) ?? [];
-  const grande = gw && gh ? { src: `/docs/grande/${nombre}.webp`, width: gw, height: gh } : null;
+  const [w = 0, h = 0, gw, gh, huella] = medidas.get(nombre) ?? [];
+  const liviana = { src: c.src, width: Number(w) || 1200, height: Number(h) || 800 };
+  // La nítida vive en el almacén del sitio (no en el paquete), con su huella en el nombre.
+  const grande =
+    gw && gh && huella
+      ? {
+          src: `/media/docs-grande/${nombre}-${String(huella)}.webp`,
+          width: Number(gw),
+          height: Number(gh),
+        }
+      : null;
   return {
-    ...(grande ?? { src: c.src, width: w || 1200, height: h || 800 }),
+    ...(grande ?? liviana),
+    liviana,
     // Mientras baja la grande se ve la liviana, que ya está en la página.
     msrc: c.src,
     alt: c.alt,
@@ -147,6 +157,14 @@ export function abrirLupa(
         poner();
       },
     });
+  });
+  // Si la nítida no llega (todavía no se subió al almacén), se muestra la liviana: nunca un error.
+  pswp.on('loadError', ({ content }) => {
+    const d = content.data as SlideData & { liviana?: SlideData };
+    if (!d.liviana || d.src === d.liviana.src) return;
+    console.warn('lupa: falta la captura nítida, se usa la liviana', d.src);
+    Object.assign(d, d.liviana);
+    pswp.refreshSlideContent(content.index);
   });
   pswp.on('firstUpdate', () => {
     pswp.element?.setAttribute('aria-label', t.titulo);

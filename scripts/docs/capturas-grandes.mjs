@@ -1,17 +1,19 @@
 // C-DOCS-LUPA (15 nov 2026): la lupa de Docs muestra cada captura en grande y nítida.
 // Las capturas de Docs son livianas (las del celular van a 540 de ancho, ver a-docs.mjs). Este guion
 // busca la ORIGINAL de cada una en docs/capturas/ y, si es bastante más grande, deja una segunda
-// versión en apps/panel/public/docs/grande/<nombre>.webp, que solo se baja al abrir la lupa: la
-// página no pesa más al cargar. Además escribe las medidas de todas (las pide el visor).
+// versión en .docs-grande/<nombre>.webp (fuera de git y del paquete del sitio: con ellas adentro el
+// paquete no se pudo publicar). Escribe las medidas de todas y la huella de cada grande (las pide el
+// visor). Después: node scripts/docs/subir-capturas-grandes.mjs las sube al almacén de los sitios.
 // Uso: node scripts/docs/capturas-grandes.mjs        (rehace solo las que faltan o cambiaron)
 /* eslint-disable security/detect-non-literal-fs-filename, security/detect-object-injection -- guion local: rutas y nombres salen de las carpetas del propio repositorio */
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
 
 const raiz = join(import.meta.dirname, '..', '..');
 const publicas = join(raiz, 'apps', 'panel', 'public', 'docs');
-const grandes = join(publicas, 'grande');
+const grandes = join(raiz, '.docs-grande');
 const originales = join(raiz, 'docs', 'capturas');
 const salida = join(raiz, 'apps', 'panel', 'src', 'sitio', 'docs', 'capturasMedidas.json');
 const ANCHO_MAXIMO = 2000;
@@ -84,10 +86,11 @@ for (const archivo of readdirSync(publicas)
     ]);
     hechas++;
   }
-  manifiesto[nombre] = [w, h, gw, gh];
+  const huella = createHash('sha256').update(readFileSync(destino)).digest('hex').slice(0, 8);
+  manifiesto[nombre] = [w, h, gw, gh, huella];
 }
 writeFileSync(salida, `${JSON.stringify(manifiesto, null, 0).replace(/\],"/g, '],\n"')}\n`);
-const conGrande = Object.values(manifiesto).filter((m) => m.length === 4).length;
+const conGrande = Object.values(manifiesto).filter((m) => m.length >= 4).length;
 console.log(
   `lupa: ${Object.keys(manifiesto).length} capturas medidas, ${conGrande} con versión grande (${hechas} rehechas)`,
 );

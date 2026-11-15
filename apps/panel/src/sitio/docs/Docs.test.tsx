@@ -14,7 +14,8 @@ vi.mock('./lupaVisor', async (original) => ({
   abrirLupa: (...a: unknown[]) => abrirLupa(...a),
 }));
 
-describe('Docs', () => {
+// Cada prueba dibuja la web entera con las 348 guías: con la máquina cargada pasa de 5 s.
+describe('Docs', { timeout: 30_000 }, () => {
   beforeEach(() => {
     localStorage.clear();
     vi.stubGlobal('fetch', async () => new Response('{}', { status: 404 }));
@@ -217,12 +218,18 @@ describe('Docs', () => {
     expect(sinMedidas, 'corre node scripts/docs/capturas-grandes.mjs').toEqual([]);
     for (const c of todas) {
       const d = datosDeCaptura(c);
-      expect(existsSync(join(__dirname, '../../../public', String(d.src))), String(d.src)).toBe(
+      // La liviana existe en el paquete; la nítida, si hay, va al almacén con su huella.
+      expect(existsSync(join(__dirname, '../../../public', String(d.liviana.src))), c.src).toBe(
         true,
       );
+      expect(String(d.src)).toMatch(
+        /^\/docs\/|^\/media\/docs-grande\/[a-z0-9-]+-[0-9a-f]{8}\.webp$/,
+      );
     }
+    // C-DOCS-LUPA: las nítidas NO van en el paquete (lo hicieron imposible de publicar).
+    expect(existsSync(join(__dirname, '../../../public/docs/grande'))).toBe(false);
     const billetera = datosDeCaptura({ src: '/docs/flex-billetera-es.webp', alt: 'x', pie: 'y' });
-    expect(billetera.src).toBe('/docs/grande/flex-billetera-es.webp');
+    expect(billetera.src).toMatch(/^\/media\/docs-grande\/flex-billetera-es-[0-9a-f]{8}\.webp$/);
     expect(Number(billetera.width)).toBeGreaterThan(960);
     expect(billetera.msrc).toBe('/docs/flex-billetera-es.webp');
   });

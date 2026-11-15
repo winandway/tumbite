@@ -76,8 +76,11 @@ Cómo quedó (`apps/panel/src/sitio/docs/buscar.ts`):
   «Enlarge image» con la lupa en la esquina) y `lupaVisor.ts` (PhotoSwipe, cargado solo al tocar).
 - Nitidez: las capturas del celular en Docs van a 540 de ancho. `scripts/docs/capturas-grandes.mjs`
   busca la original de cada una (misma proporción, al menos 1,4 veces más ancha) y deja una segunda
-  versión en `public/docs/grande/` (hasta 2000 de ancho, calidad 80): 463 de 711 la tienen, unos
-  32 MB en el repositorio, **cero bytes más al cargar la página** (la evidencia REA lo confirma).
+  versión (hasta 2000 de ancho, calidad 80): 463 de 711 la tienen, unos 32 MB, **cero bytes más al
+  cargar la página** (la evidencia REA lo confirma). Primero iban dentro del paquete del sitio, que
+  pasó de 112 a 146 MB y la plataforma no lo pudo publicar (se quedó sin memoria). Ahora viven en el
+  almacén de cada sitio (`subir-capturas-grandes.mjs`) y el servidor las sirve en
+  `/media/docs-grande/`, con la huella del archivo en el nombre y caché de un año.
   El visor muestra primero la liviana que ya está en pantalla y la cambia por la grande cuando llega.
 - Peso: la página principal suma unos 6 KB comprimidos (MiniSearch). El visor pesa 23 KB comprimidos
   más 1,4 KB de estilos, y solo se baja al abrir la primera captura.

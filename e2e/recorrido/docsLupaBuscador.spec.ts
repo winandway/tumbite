@@ -34,7 +34,8 @@ for (const [nombre, opciones] of [
     const visor = p.getByRole('dialog', { name: 'Captura ampliada' });
     await expect(visor).toBeVisible();
     const imagen = visor.locator('.pswp__img:not(.pswp__img--placeholder)').first();
-    await expect(imagen).toHaveAttribute('src', '/docs/grande/flex-billetera-es.webp');
+    // La nítida llega del almacén del sitio (C-DOCS-LUPA); en local, sin almacén, queda la liviana.
+    await expect(imagen).toHaveAttribute('src', /flex-billetera-es/);
     await expect(visor.locator('.pswp__pie')).toHaveText('Tu saldo, recargas y comprobantes.');
     const antes = (await imagen.boundingBox())?.width ?? 0;
     await visor.getByRole('button', { name: 'Acercar', exact: true }).click();
