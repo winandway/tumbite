@@ -413,6 +413,8 @@ export type CotizacionViaje = {
   paradas?: PuntoViaje[];
   /** C-CARRO-DINAMICA: el multiplicador aplicado (10 000 = precio normal). */
   multiplicadorPb?: number;
+  /** C-VIAJE-PARADAS: cuántas paradas admite un viaje en esa ciudad (perfil del país). */
+  paradasMaximas?: number;
   /** C-CARRO-CATEGORIAS: el precio de cada categoría que la ciudad ofrece para este trayecto. */
   opciones?: { categoria: CategoriaViaje; total: number }[];
   zona: { id: string; nombre: string };

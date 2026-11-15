@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Switch, Text, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {
   DOCUMENTOS_VEHICULO_PASAJEROS,
@@ -43,6 +43,9 @@ type Vehiculo = {
   estado: string;
   motivo: string;
   documentos: Doc[];
+  /** C-CARRO-CATEGORIAS: estandar, comfort o premium, y si también recibe los viajes de abajo. */
+  categoria?: string;
+  aceptaMenores?: boolean;
 };
 type Papeles = {
   ciudad: { id: string; nombre: string; pais: string };
@@ -187,6 +190,10 @@ const POR_SERVICIO = {
         habilitado: 'Todo listo.',
       } as Record<string, string>,
       xl: '',
+      categorias: { estandar: '', comfort: '', premium: '' } as Record<string, string>,
+      categoriaPide: (a: number) => String(a).slice(0, 0),
+      menores: '',
+      menoresAyuda: '',
     },
     en: {
       titulo: 'Divoox Moto',
@@ -232,6 +239,10 @@ const POR_SERVICIO = {
         habilitado: 'All set.',
       } as Record<string, string>,
       xl: '',
+      categorias: { estandar: '', comfort: '', premium: '' } as Record<string, string>,
+      categoriaPide: (a: number) => String(a).slice(0, 0),
+      menores: '',
+      menoresAyuda: '',
     },
   },
   carro: {
@@ -281,6 +292,17 @@ const POR_SERVICIO = {
         habilitado: 'Todo listo.',
       } as Record<string, string>,
       xl: 'Tu carro tiene 6 plazas o más: también recibes viajes de Carro XL.',
+      // C-CARRO-CATEGORIAS (14 nov 2026): la categoría del carro y los viajes de categorías menores.
+      categorias: {
+        estandar: 'Tu carro recibe viajes de Carro.',
+        comfort: 'Tu carro es Comfort: recibes viajes de Carro Comfort, que pagan más.',
+        premium: 'Tu carro es Premium: recibes viajes de Carro Premium, los que más pagan.',
+      } as Record<string, string>,
+      categoriaPide: (a: number) =>
+        `Para Carro Comfort, el carro debe tener ${a} años o menos. Lo revisamos al aprobarlo.`,
+      menores: 'Recibir también viajes de Carro',
+      menoresAyuda:
+        'Encendido, también te llegan los viajes de las categorías de abajo. Apagado, solo los de tu categoría.',
     },
     en: {
       titulo: 'Divoox Car',
@@ -328,6 +350,17 @@ const POR_SERVICIO = {
         habilitado: 'All set.',
       } as Record<string, string>,
       xl: 'Your car has 6 or more seats: you also get Car XL rides.',
+      // C-CARRO-CATEGORIAS (Nov 14, 2026): the car's category and lower-category rides.
+      categorias: {
+        estandar: 'Your car gets Car rides.',
+        comfort: 'Your car is Comfort: you get Car Comfort rides, which pay more.',
+        premium: 'Your car is Premium: you get Car Premium rides, the highest paying.',
+      } as Record<string, string>,
+      categoriaPide: (a: number) =>
+        `For Car Comfort, the car must be ${a} years old or newer. We check it when we approve it.`,
+      menores: 'Also get Car rides',
+      menoresAyuda:
+        'When on, you also get rides from the categories below. When off, only rides in your category.',
     },
   },
 };
@@ -430,6 +463,8 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   const [error, setError] = useState('');
   const [subiendo, setSubiendo] = useState('');
   const [verCiudades, setVerCiudades] = useState(false);
+  // C-CARRO-CATEGORIAS: cuántos años admite Comfort en el país del conductor.
+  const [aniosComfort, setAniosComfort] = useState<number | null>(null);
   const b = useBorrador({
     formulario: servicio === 'carro' ? 'driver-mi-carro' : 'driver-mi-moto',
     cuenta: usuario?.id,
@@ -452,12 +487,16 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     () =>
       Promise.all([
         api.pedir<Papeles>('GET', '/datos/conductor/papeles'),
-        api.pedir<{ vehiculos: Vehiculo[] }>('GET', '/datos/conductor/vehiculos'),
+        api.pedir<{
+          vehiculos: Vehiculo[];
+          requisitosCategoria?: { comfort?: { antiguedadMaxima: number } };
+        }>('GET', '/datos/conductor/vehiculos'),
         api.pedir<{ servicios: ServicioConductor[] }>('GET', '/datos/conductor/servicios'),
       ])
         .then(([p, v, s]) => {
           setPapeles(p);
           setVehiculo(v.vehiculos.find((x) => x.tipo === servicio) ?? null);
+          setAniosComfort(v.requisitosCategoria?.comfort?.antiguedadMaxima ?? null);
           setEstado(s.servicios.find((x) => x.servicioId === servicio) ?? null);
         })
         .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x))),
@@ -614,6 +653,49 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
             ) : null}
             {servicio === 'carro' && (vehiculo.plazas ?? 0) >= PLAZAS_XL ? (
               <Text style={{ color: VERDE, fontSize: 12, fontWeight: '700' }}>{t.xl}</Text>
+            ) : null}
+            {servicio === 'carro' && vehiculo.estado === 'aprobado' ? (
+              <View testID="carro-categoria" style={{ gap: 6 }}>
+                <Text style={{ color: VERDE, fontSize: 12, fontWeight: '700' }}>
+                  {de(t.categorias, vehiculo.categoria ?? 'estandar') ?? t.categorias.estandar}
+                </Text>
+                {(vehiculo.categoria ?? 'estandar') === 'estandar' && aniosComfort != null ? (
+                  <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                    {t.categoriaPide(aniosComfort)}
+                  </Text>
+                ) : null}
+                {(vehiculo.categoria ?? 'estandar') !== 'estandar' ? (
+                  <View style={{ gap: 2 }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                      }}
+                    >
+                      <Text style={{ flex: 1, color: C.secundario, fontWeight: '700' }}>
+                        {t.menores}
+                      </Text>
+                      <Switch
+                        testID="carro-menores"
+                        accessibilityLabel={t.menores}
+                        value={vehiculo.aceptaMenores !== false}
+                        onValueChange={(acepta) =>
+                          void hacer(() =>
+                            api.pedir(
+                              'PUT',
+                              `/datos/conductor/vehiculos/${vehiculo.id}/categorias-menores`,
+                              { acepta },
+                            ),
+                          )
+                        }
+                      />
+                    </View>
+                    <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.menoresAyuda}</Text>
+                  </View>
+                ) : null}
+              </View>
             ) : null}
             {vehiculo.estado === 'aprobado' && estado?.motivo === 'vehiculo_incompatible' ? (
               <Boton

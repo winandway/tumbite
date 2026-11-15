@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, Vibration, View } from 'react-native';
-import { type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
+import { type Idioma, enIdioma, formatearMonto, textoMultiplicador } from '@tumbite/compartido';
 import { vibracionOferta } from '../grandes/accesibilidad';
 import { Boton, C } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
@@ -22,6 +22,12 @@ export type OfertaViaje = {
   servicioId?: string;
   /** C-VIAJE-PROGRAMADO: si es una reserva, para cuándo (ISO). */
   programadoPara?: string | null;
+  /** C-CARRO-CATEGORIAS: estandar, comfort, premium o xl. */
+  categoria?: string;
+  /** C-CARRO-DINAMICA: el multiplicador del viaje (10 000 = precio normal). */
+  multiplicadorPb?: number;
+  /** C-VIAJE-PARADAS: las direcciones de las paradas intermedias, en orden. */
+  paradas?: string[];
 };
 
 const distancia = (m: number, i: Idioma) =>
@@ -78,7 +84,11 @@ export function OfertaViajeModal({
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
             <Text style={{ color: C.primario, fontWeight: '800', fontSize: 16 }}>
-              {oferta.servicioId === 'carro' ? t.tituloCarro : t.titulo}
+              {oferta.servicioId === 'carro'
+                ? (new Map(Object.entries(textos.oferta.tituloCategoria)).get(
+                    oferta.categoria ?? 'estandar',
+                  ) ?? t.tituloCarro)
+                : t.titulo}
             </Text>
             <View
               accessibilityRole="timer"
@@ -130,6 +140,18 @@ export function OfertaViajeModal({
               <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
             </View>
           ) : null}
+          {(oferta.multiplicadorPb ?? 10_000) > 10_000 ? (
+            // C-CARRO-DINAMICA: el conductor ve que el viaje lleva tarifa dinámica y de cuánto.
+            <View
+              testID="oferta-viaje-dinamica"
+              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+            >
+              <Text style={{ fontWeight: '800', color: C.secundario }}>
+                {textos.oferta.dinamica} {textoMultiplicador(oferta.multiplicadorPb ?? 10_000)}
+              </Text>
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{textos.oferta.dinamicaAyuda}</Text>
+            </View>
+          ) : null}
           <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.ganas}</Text>
           <Text style={{ fontSize: 40, fontWeight: '800', color: C.secundario, lineHeight: 44 }}>
             {formatearMonto(oferta.gananciaCentavos, oferta.moneda ?? 'USD', idioma)}
@@ -151,6 +173,19 @@ export function OfertaViajeModal({
               {oferta.origen}
             </Text>
           </View>
+          {oferta.paradas?.length ? (
+            // C-VIAJE-PARADAS: por dónde para el viaje antes del destino.
+            <View testID="oferta-viaje-paradas">
+              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                {textos.oferta.conParadas(oferta.paradas.length)}
+              </Text>
+              {oferta.paradas.map((d, i) => (
+                <Text key={i} style={{ fontWeight: '700', color: C.secundario }} numberOfLines={1}>
+                  {i + 1}. {d}
+                </Text>
+              ))}
+            </View>
+          ) : null}
           <View>
             <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.llevar}</Text>
             <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>

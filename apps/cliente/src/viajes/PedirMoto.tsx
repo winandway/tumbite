@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import {
+  type CategoriaViaje,
   type CotizacionViaje,
   ErrorApi,
   PAQUETE_MAX_KG,
@@ -11,6 +12,7 @@ import {
   formatearMonto,
   textoReferencia,
   textoAMonto,
+  textoMultiplicador,
   useBorrador,
 } from '@tumbite/compartido';
 import {
@@ -30,6 +32,13 @@ import type { Cobro } from '../pagoTipos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
 import { ElegirCuando, MisProgramados, horaCorta } from './Programar';
+import {
+  EditorParadas,
+  PARADAS_SIN_SABER,
+  type ParadaEscrita,
+  leerParadasEscritas,
+  paradasListas,
+} from './Paradas';
 
 const distancia = (m: number, i: Idioma) =>
   i === 'en' ? `${((m / 1000) * 0.621371).toFixed(1)} mi` : `${(m / 1000).toFixed(1)} km`;
@@ -64,8 +73,10 @@ export function PedirMoto({
       recogidaLng: '',
       // C-VIAJE-TARJETA: cómo paga el viaje.
       metodo: 'efectivo',
-      // C-CARRO-XL: en Carro, normal o grande (6 plazas o más).
+      // C-CARRO-CATEGORIAS: en Carro, económico, Comfort, Premium o XL (lo que ofrezca la ciudad).
       categoria: 'estandar',
+      // C-VIAJE-PARADAS: las paradas intermedias escritas (lista en texto, para el borrador).
+      paradas: '[]',
       // C-ENVIOS: qué se envía y quién lo recibe.
       paqueteDescripcion: '',
       // C-ENVIO-TAMANO: sobre, pequeño, mediano o grande.
@@ -88,8 +99,19 @@ export function PedirMoto({
     return `${nombre} · ${idioma === 'en' ? `${Math.round(kg * 2.2)} lb` : `${kg} kg`}`;
   };
   // C-CARRO-VIAJE-PASAJERO: cada servicio dice lo suyo en el botón.
+  const categoria = (
+    ['comfort', 'premium', 'xl'].includes(v.categoria) ? v.categoria : 'estandar'
+  ) as CategoriaViaje;
   const textoPedirViaje =
-    servicio === 'carro' ? (v.categoria === 'xl' ? t.pedirCarroXl : t.pedirCarro) : t.pedirMoto;
+    servicio === 'carro'
+      ? (new Map(Object.entries(t.pedirCategoria)).get(categoria) ?? t.pedirCarro)
+      : t.pedirMoto;
+  // C-VIAJE-PARADAS: las paradas escritas (Moto y Carro; un envío va de un punto a otro).
+  const paradas = useMemo(() => leerParadasEscritas(v.paradas), [v.paradas]);
+  const ponerParadas = (nuevas: ParadaEscrita[]) => {
+    cambiar('paradas', JSON.stringify(nuevas));
+    setCotizacion(null);
+  };
   // C-VIAJE-PROGRAMADO: con hora elegida, el botón dice «Reservar».
   const textoPedir = v.cuando ? t.reservar : textoPedirViaje;
   const textoEnviar = v.cuando ? t.reservar : t.pedirEnvio;
@@ -125,26 +147,38 @@ export function PedirMoto({
     [v.destinoLat, v.destinoLng],
   );
 
-  const cotizar = useCallback(async () => {
-    setError('');
-    if (!recogida) return setError(t.faltaOrigen);
-    if (!destino || v.destino.trim().length < 3) return setError(t.faltaDestino);
-    setTrabajando(true);
-    try {
-      const r = await api.pedir<{ cotizacion: CotizacionViaje }>('POST', '/datos/viajes/cotizar', {
-        servicio,
-        categoria: servicio === 'carro' && v.categoria === 'xl' ? 'xl' : 'estandar',
-        origen: { ...recogida, direccion: v.recogida.trim() || t.recogida },
-        destino: { ...destino, direccion: v.destino.trim() },
-      });
-      setCotizacion(r.cotizacion);
-    } catch (x) {
-      setCotizacion(null);
-      setError(x instanceof ErrorApi ? x.message : String(x));
-    } finally {
-      setTrabajando(false);
-    }
-  }, [api, recogida, destino, v.recogida, v.destino, t, servicio, v.categoria]);
+  const cotizar = useCallback(
+    async (otraCategoria?: CategoriaViaje) => {
+      setError('');
+      if (!recogida) return setError(t.faltaOrigen);
+      if (!destino || v.destino.trim().length < 3) return setError(t.faltaDestino);
+      const intermedias = servicio === 'envios' ? [] : paradasListas(paradas);
+      if (!intermedias) return setError(t.faltaParada);
+      setTrabajando(true);
+      try {
+        const r = await api.pedir<{ cotizacion: CotizacionViaje }>(
+          'POST',
+          '/datos/viajes/cotizar',
+          {
+            servicio,
+            categoria: servicio === 'carro' ? (otraCategoria ?? categoria) : 'estandar',
+            origen: { ...recogida, direccion: v.recogida.trim() || t.recogida },
+            ...(intermedias.length ? { paradas: intermedias } : {}),
+            destino: { ...destino, direccion: v.destino.trim() },
+          },
+        );
+        setCotizacion(r.cotizacion);
+      } catch (x) {
+        setCotizacion(null);
+        // Una categoría recuperada del borrador que esta ciudad no ofrece vuelve al carro de siempre.
+        if (x instanceof ErrorApi && x.campo === 'categoria') cambiar('categoria', 'estandar');
+        setError(x instanceof ErrorApi ? x.message : String(x));
+      } finally {
+        setTrabajando(false);
+      }
+    },
+    [api, recogida, destino, v.recogida, v.destino, t, servicio, categoria, paradas, cambiar],
+  );
 
   // Volver a cotizar sola 20 segundos antes de que venza el precio.
   const cotizarRef = useRef(cotizar);
@@ -277,6 +311,15 @@ export function PedirMoto({
         cerca={recogida}
         testID="moto-destino"
       />
+      {/* C-VIAJE-PARADAS: paradas intermedias, antes de ver el precio (Moto y Carro). */}
+      {servicio !== 'envios' ? (
+        <EditorParadas
+          paradas={paradas}
+          cambiar={ponerParadas}
+          maximo={cotizacion?.paradasMaximas ?? PARADAS_SIN_SABER}
+          cerca={recogida}
+        />
+      ) : null}
       <ElegirEnMapa
         punto={destino}
         cambiarPunto={(p) => {
@@ -296,29 +339,56 @@ export function PedirMoto({
       </Text>
       {servicio === 'moto' ? <Text style={{ color: '#5E5E5E' }}>{t.unPasajero}</Text> : null}
 
-      {servicio === 'carro' ? (
-        <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup">
-          <Pildora
-            texto={t.carroNormal}
-            activa={v.categoria !== 'xl'}
-            alTocar={() => {
-              cambiar('categoria', 'estandar');
-              setCotizacion(null);
-            }}
-            rol="radio"
-          />
-          <Pildora
-            texto={t.carroXl}
-            activa={v.categoria === 'xl'}
-            alTocar={() => {
-              cambiar('categoria', 'xl');
-              setCotizacion(null);
-            }}
-            rol="radio"
-          />
+      <ElegirCuando valor={cuando} cambiar={(iso) => cambiar('cuando', iso)} />
+      {/* C-CARRO-CATEGORIAS: las categorías que ofrece la ciudad, cada una con su precio para este
+          trayecto, como la lista de Uber. Al tocar otra, se cotiza con esa. */}
+      {cotizacion && servicio === 'carro' && (cotizacion.opciones?.length ?? 0) > 1 ? (
+        <View style={{ gap: 8 }} accessibilityRole="radiogroup" testID="carro-categorias">
+          <Text style={{ fontWeight: '700', color: C.secundario, fontSize: 16 }}>
+            {t.eligeCarro}
+          </Text>
+          {(cotizacion.opciones ?? []).map((o) => {
+            const elegida = (cotizacion.categoria ?? 'estandar') === o.categoria;
+            return (
+              <Pressable
+                key={o.categoria}
+                onPress={() => {
+                  if (elegida) return;
+                  cambiar('categoria', o.categoria);
+                  void cotizar(o.categoria);
+                }}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: elegida }}
+                testID={`carro-categoria-${o.categoria}`}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  borderRadius: 12,
+                  borderWidth: elegida ? 2 : 1,
+                  borderColor: elegida ? C.secundario : '#D5D8DD',
+                  backgroundColor: '#fff',
+                  minHeight: 64,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
+                    {t.categorias[o.categoria]}
+                  </Text>
+                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                    {t.categoriasAyuda[o.categoria]}
+                  </Text>
+                </View>
+                <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
+                  {formatearMonto(o.total, cotizacion.moneda, idioma)}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
-      <ElegirCuando valor={cuando} cambiar={(iso) => cambiar('cuando', iso)} />
       {cotizacion ? (
         <Tarjeta>
           <View testID="moto-precio" style={{ gap: 4 }}>
@@ -328,6 +398,15 @@ export function PedirMoto({
             <Text style={{ fontSize: 34, fontWeight: '700', color: C.secundario }}>
               {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
             </Text>
+            {(cotizacion.multiplicadorPb ?? 10_000) > 10_000 ? (
+              // C-CARRO-DINAMICA: se dice antes de pedir, con el multiplicador, como el mercado.
+              <View testID="moto-dinamica" style={{ gap: 2, marginVertical: 4 }}>
+                <Text style={{ color: C.secundario, fontWeight: '700' }}>
+                  {t.dinamicaTitulo} · {textoMultiplicador(cotizacion.multiplicadorPb ?? 10_000)}
+                </Text>
+                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.dinamicaAyuda}</Text>
+              </View>
+            ) : null}
             {cotizacion.precioCambio && cotizacion.totalAnterior != null ? (
               // C-RUTA-POR-CALLES: una línea discreta, antes de pedir, si el precio cambió.
               <Text testID="moto-precio-cambio" style={{ color: '#5E5E5E', fontSize: 13 }}>

@@ -31,6 +31,7 @@ export function MapaEntrega({
   sinSenal = false,
   direccion,
   meta = 'casa',
+  paradas = [],
 }: {
   restaurante: Punto | null;
   casa: Punto | null;
@@ -42,6 +43,8 @@ export function MapaEntrega({
   direccion?: string | null;
   /** Hacia dónde va ahora: tu casa (o el destino) o, en un viaje que viene a buscarte, la recogida. */
   meta?: 'casa' | 'restaurante';
+  /** C-VIAJE-PARADAS: las paradas intermedias de un viaje (se pintan numeradas, en gris). */
+  paradas?: readonly (Punto & { etiqueta: string })[];
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
@@ -165,6 +168,30 @@ export function MapaEntrega({
             </View>
           </Marker>
         ) : null}
+        {paradas.map((p, i) => (
+          <Marker
+            key={`parada-${i + 1}`}
+            coordinate={{ latitude: p.lat, longitude: p.lng }}
+            title={p.etiqueta}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
+          >
+            <View
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 13,
+                backgroundColor: '#666B73',
+                borderWidth: 3,
+                borderColor: '#fff',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{i + 1}</Text>
+            </View>
+          </Marker>
+        ))}
         {repartidor && (
           <Marker
             coordinate={{ latitude: repartidor.lat, longitude: repartidor.lng }}

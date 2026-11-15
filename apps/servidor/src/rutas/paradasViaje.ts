@@ -50,13 +50,14 @@ type FilaParada = {
   direccion: string;
   estado: ParadaViaje['estado'];
   espera_s: number | null;
+  llego_en: string | null;
 };
 
 /** Las paradas de un viaje que siguen en pie (las quitadas no), en orden, con su espera. */
 export async function paradasDe(db: D1Database, operacionId: string) {
   const { results } = await db
     .prepare(
-      `SELECT orden, lat, lng, direccion, estado,
+      `SELECT orden, lat, lng, direccion, estado, llego_en,
               CASE WHEN llego_en IS NULL THEN NULL ELSE
                 CAST((julianday(COALESCE(salio_en, datetime('now'))) - julianday(llego_en)) * 86400 AS INTEGER) END AS espera_s
          FROM paradas_viaje WHERE operacion_id = ? AND estado != 'quitada' ORDER BY orden`,
@@ -70,6 +71,7 @@ export async function paradasDe(db: D1Database, operacionId: string) {
     direccion: String(p.direccion),
     estado: p.estado,
     esperaS: p.espera_s == null ? null : Number(p.espera_s),
+    llegoEn: p.llego_en,
   }));
 }
 

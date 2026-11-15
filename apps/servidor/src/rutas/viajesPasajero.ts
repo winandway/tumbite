@@ -582,6 +582,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     servicio: d.servicio,
     categoria: d.categoria,
     paradas: d.paradas,
+    paradasMaximas: d.servicio === 'envios' ? 0 : perfilPasajeros(zona.pais).carro.paradasMaximas,
     multiplicadorPb,
     zona: { id: zona.id, nombre: zona.nombre },
     moneda: fila.moneda,
@@ -1033,7 +1034,13 @@ viajesPasajero.get('/viajes/actual', async (c) => {
     .bind(u.id)
     .first<{ monto: number; moneda: string | null }>();
   const viaje = f
-    ? { ...viajePublico(f), referencia: await referenciaLocal(db, f.pais, f.total, f.moneda) }
+    ? {
+        ...viajePublico(f),
+        // C-VIAJE-PARADAS: las paradas del viaje y cuántas admite su ciudad.
+        paradas: await paradasDe(db, f.id),
+        paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
+        referencia: await referenciaLocal(db, f.pais, f.total, f.moneda),
+      }
     : null;
   return c.json({
     viaje,
@@ -1045,6 +1052,7 @@ viajesPasajero.get('/viajes/actual', async (c) => {
           estado: viaje.estado,
           origen: viaje.origen,
           destino: viaje.destino,
+          paradas: viaje.paradas,
           conductor: viaje.conductor?.ubicacion ?? null,
         })
       : null,

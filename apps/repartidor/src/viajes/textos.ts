@@ -4,6 +4,15 @@ export const TEXTOS_VIAJE = {
     oferta: {
       titulo: 'Nuevo viaje en Moto',
       tituloCarro: 'Nuevo viaje en Carro',
+      // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026).
+      tituloCategoria: {
+        comfort: 'Nuevo viaje en Carro Comfort',
+        premium: 'Nuevo viaje en Carro Premium',
+        xl: 'Nuevo viaje en Carro XL',
+      } as Record<string, string>,
+      dinamica: 'Tarifa dinámica',
+      dinamicaAyuda: 'Ya está incluida en lo que ganas.',
+      conParadas: (n: number) => (n === 1 ? 'Con 1 parada' : `Con ${n} paradas`),
       // C-VIAJE-PROGRAMADO: la oferta de una reserva dice para cuándo.
       programado: 'Viaje programado para',
       ganas: 'Ganas',
@@ -51,6 +60,17 @@ export const TEXTOS_VIAJE = {
       pasajero: 'tu pasajero',
       navegar: 'Abrir navegación',
       llegue: 'Llegué',
+      // C-VIAJE-PARADAS (14 nov 2026).
+      irAParada: (n: number, de: number) => `Ve a la parada ${n} de ${de}`,
+      enParada: (n: number) => `Esperando en la parada ${n}`,
+      llegueParada: 'Llegué a la parada',
+      seguir: 'Seguir el viaje',
+      saltarParada: 'Saltar parada',
+      saltarConfirmar: 'Si tu pasajero ya no va a parar, toca de nuevo para saltarla',
+      esperaParada: 'Espera gratis en la parada',
+      esperaParadaTerminada: 'La espera gratis terminó: ya se cobra la espera',
+      despues: 'Después',
+      destinoFinal: 'Destino',
       soltar: 'Soltar el viaje',
       esperaGratis: 'Espera gratis',
       esperaTerminada: 'La espera gratis terminó',
@@ -98,6 +118,15 @@ export const TEXTOS_VIAJE = {
     oferta: {
       titulo: 'New Moto ride',
       tituloCarro: 'New Car ride',
+      // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA and C-VIAJE-PARADAS (Nov 14, 2026).
+      tituloCategoria: {
+        comfort: 'New Car Comfort ride',
+        premium: 'New Car Premium ride',
+        xl: 'New Car XL ride',
+      } as Record<string, string>,
+      dinamica: 'Dynamic pricing',
+      dinamicaAyuda: 'Already included in what you earn.',
+      conParadas: (n: number) => (n === 1 ? 'With 1 stop' : `With ${n} stops`),
       programado: 'Scheduled ride for',
       ganas: 'You earn',
       recogida: 'to pickup',
@@ -143,6 +172,17 @@ export const TEXTOS_VIAJE = {
       pasajero: 'your rider',
       navegar: 'Open navigation',
       llegue: 'I’ve arrived',
+      // C-VIAJE-PARADAS (Nov 14, 2026).
+      irAParada: (n: number, de: number) => `Go to stop ${n} of ${de}`,
+      enParada: (n: number) => `Waiting at stop ${n}`,
+      llegueParada: 'I’m at the stop',
+      seguir: 'Continue the ride',
+      saltarParada: 'Skip stop',
+      saltarConfirmar: 'If your rider no longer wants to stop, tap again to skip it',
+      esperaParada: 'Free wait at the stop',
+      esperaParadaTerminada: 'Free wait is over: wait time is now charged',
+      despues: 'Next',
+      destinoFinal: 'Destination',
       soltar: 'Unassign this ride',
       esperaGratis: 'Free waiting time',
       esperaTerminada: 'Free waiting time is over',

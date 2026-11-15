@@ -27,6 +27,8 @@ type Props = {
   /** Hacia dónde va ahora: tu casa (o el destino) o, en un viaje que viene a buscarte, la recogida. */
   meta?: 'casa' | 'restaurante';
   sinSenal?: boolean;
+  /** C-VIAJE-PARADAS: las paradas intermedias de un viaje (se pintan numeradas, en gris). */
+  paradas?: readonly (Punto & { etiqueta: string })[];
 };
 
 /**
@@ -37,6 +39,9 @@ type Props = {
  * C-MAPA-LLEGADA: cuando el repartidor (o conductor) está a menos de 200 m de tu casa, el mapa se
  * acerca solo y deja el punto de la casa centrado, con el número de la dirección a la vista.
  */
+/** C-VIAJE-PARADAS: las paradas van en gris de apoyo, entre la recogida y el destino. */
+const COLOR_PARADA = '#666B73';
+
 export function MapaEntrega(props: Props) {
   return proveedorMapaWeb(['google', 'gps']) === 'google' ? (
     <MapaEntregaGoogle {...props} />
@@ -54,6 +59,7 @@ function MapaEntregaGoogle({
   direccion,
   meta = 'casa',
   sinSenal = false,
+  paradas = [],
 }: Props) {
   const { idioma } = useSesion();
   const hacia = meta === 'restaurante' ? restaurante : casa;
@@ -78,6 +84,15 @@ function MapaEntregaGoogle({
       etiqueta: etiquetas.casa,
       texto: (meta === 'casa' && rotulo) || undefined,
     },
+    ...paradas.map((p, i) => ({
+      id: `parada-${i + 1}`,
+      lat: p.lat,
+      lng: p.lng,
+      color: COLOR_PARADA,
+      radio: 10,
+      etiqueta: p.etiqueta,
+      texto: String(i + 1),
+    })),
     repartidor && {
       id: 'repartidor',
       ...repartidor,
@@ -115,9 +130,11 @@ function MapaEntregaLeaflet({
   direccion,
   meta = 'casa',
   sinSenal = false,
+  paradas = [],
 }: Props) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
+  const claveParadas = paradas.map((p) => `${p.lat},${p.lng}`).join('|');
   const capas = useRef<L.Layer[]>([]);
   const vistaCerca = useRef<VistaMapa | null>(null);
   const centro = repartidor ?? restaurante ?? casa;
@@ -157,6 +174,7 @@ function MapaEntregaLeaflet({
         ),
       );
     if (casa) nuevas.push(conRotulo(punto(casa, COLORES.casa, 8, etiquetas.casa), meta === 'casa'));
+    for (const p of paradas) nuevas.push(punto(p, COLOR_PARADA, 7, p.etiqueta));
     if (repartidor)
       nuevas.push(isotipo(repartidor, nombreRepartidor ?? etiquetas.repartidor, sinSenal));
     for (const c of nuevas) c.addTo(m);
@@ -185,6 +203,7 @@ function MapaEntregaLeaflet({
     repartidor?.lat,
     repartidor?.lng,
     sinSenal,
+    claveParadas,
   ]);
 
   if (!centro) return null;

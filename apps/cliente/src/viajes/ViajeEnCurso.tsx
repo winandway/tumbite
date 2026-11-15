@@ -20,6 +20,7 @@ import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
 import { miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
+import { type ParadaDelViaje, ParadasDelViaje } from './Paradas';
 
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
 export type ViajePasajero = {
@@ -58,6 +59,11 @@ export type ViajePasajero = {
   } | null;
   /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
   referencia?: Referencia | null;
+  /** C-VIAJE-PARADAS: las paradas del viaje, en orden, y cuántas admite la ciudad. */
+  paradas?: ParadaDelViaje[];
+  paradasMaximas?: number;
+  /** C-CARRO-DINAMICA: el multiplicador con que se cotizó (10 000 = precio normal). */
+  multiplicadorPb?: number;
 };
 
 /** C-ENVIOS: lo que manda el servidor del paquete de un envío. */
@@ -186,9 +192,9 @@ export function ViajeEnCurso({
   // C-CARRO-VIAJE-PASAJERO: cada servicio rotula su vehículo (Moto, Carro, Carro XL, Envío).
   const nombreVehiculo =
     viaje.servicio === 'carro'
-      ? viaje.categoria === 'xl'
-        ? t.vehiculoCarroXl
-        : t.vehiculoCarro
+      ? // C-CARRO-CATEGORIAS: Carro, Carro Comfort, Carro Premium o Carro XL.
+        (new Map(Object.entries(t.vehiculoCategoria)).get(viaje.categoria ?? 'estandar') ??
+        t.vehiculoCarro)
       : viaje.servicio === 'envios'
         ? t.vehiculoEnvio
         : t.moto;
@@ -269,6 +275,27 @@ export function ViajeEnCurso({
             casa: t.etiquetaDestino,
             repartidor: t.etiquetaConductor,
           }}
+          // C-VIAJE-PARADAS: las paradas que faltan o en las que está, numeradas en el mapa.
+          paradas={(viaje.paradas ?? []).map((p, i) => ({
+            lat: p.lat,
+            lng: p.lng,
+            etiqueta: `${base.parada(i + 1)} · ${p.direccion}`,
+          }))}
+        />
+      ) : null}
+
+      {/* C-VIAJE-PARADAS: las paradas del viaje y, mientras no termine, cambiarlas viendo el precio. */}
+      {viaje.servicio !== 'envios' && !FINALES.has(viaje.estado) ? (
+        <ParadasDelViaje
+          viajeId={viaje.id}
+          paradas={viaje.paradas ?? []}
+          maximo={viaje.paradasMaximas ?? 0}
+          puedeCambiar={
+            (viaje.paradasMaximas ?? 0) > 0 &&
+            ['buscando', 'asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado)
+          }
+          cerca={{ lat: viaje.origen.lat, lng: viaje.origen.lng }}
+          alCambiar={alCambiar}
         />
       ) : null}
 

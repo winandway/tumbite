@@ -67,6 +67,18 @@ export type ViajeConductor = {
   pasajero: string;
   /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
   referencia?: Referencia | null;
+  /** C-VIAJE-PARADAS: las paradas del viaje, en orden, con su estado y su espera. */
+  paradas?: {
+    orden: number;
+    lat: number;
+    lng: number;
+    direccion: string;
+    estado: 'pendiente' | 'en_parada' | 'visitada';
+    esperaS: number | null;
+    /** Cuándo llegó a la parada (hora del servidor, UTC). */
+    llegoEn?: string | null;
+  }[];
+  espera_parada_gratis_s?: number;
 };
 
 /** Una clave nueva por acción: el servidor no repite nada si la app reintenta. */
@@ -151,6 +163,8 @@ export function ViajeActivo({
   // C-MOTO-CIUDAD: en las ciudades (u horas) sin código, no se pide.
   const conCodigo = viaje.pin_requerido !== 0;
   const [error, setError] = useState('');
+  // C-VIAJE-PARADAS: «Saltar parada» pide un segundo toque.
+  const [saltar, setSaltar] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
   // M7: lo que cobra al terminar (precio fijo + espera + lo que el pasajero debía), del servidor.
@@ -269,17 +283,41 @@ export function ViajeActivo({
       </View>
     );
 
+  // C-VIAJE-PARADAS: con el viaje en curso, la parada que toca (en la que está o la que sigue).
+  const paradas = viaje.paradas ?? [];
+  const indiceParada =
+    viaje.estado === 'en_curso' ? paradas.findIndex((p) => p.estado !== 'visitada') : -1;
+  const parada = indiceParada >= 0 ? paradas.at(indiceParada) : undefined;
+  const enParada = parada?.estado === 'en_parada';
+  // La espera de la parada corre desde la hora de llegada que guardó el servidor.
+  const llegadaParada =
+    enParada && parada?.llegoEn ? Date.parse(`${parada.llegoEn.replace(' ', 'T')}Z`) : null;
+  const esperaParada = !enParada
+    ? 0
+    : llegadaParada == null
+      ? (parada?.esperaS ?? 0)
+      : Math.max(0, Math.floor((tic - llegadaParada) / 1000));
+  const quedaParada = (viaje.espera_parada_gratis_s ?? 120) - esperaParada;
   const titulo =
     viaje.estado === 'asignado'
       ? `${t.irARecoger} ${nombre}`
       : viaje.estado === 'conductor_llego'
         ? `${t.esperando} ${nombre}`
-        : esEnvio
-          ? `${t.llevandoPaquete} ${viaje.paquete_destinatario ?? ''}`.trim()
-          : `${t.llevando} ${nombre}`;
-  const direccion = viaje.estado === 'en_curso' ? viaje.destino_direccion : viaje.origen_direccion;
-  const punto =
-    viaje.estado === 'en_curso'
+        : parada
+          ? enParada
+            ? t.enParada(indiceParada + 1)
+            : t.irAParada(indiceParada + 1, paradas.length)
+          : esEnvio
+            ? `${t.llevandoPaquete} ${viaje.paquete_destinatario ?? ''}`.trim()
+            : `${t.llevando} ${nombre}`;
+  const direccion = parada
+    ? parada.direccion
+    : viaje.estado === 'en_curso'
+      ? viaje.destino_direccion
+      : viaje.origen_direccion;
+  const punto = parada
+    ? { lat: parada.lat, lng: parada.lng }
+    : viaje.estado === 'en_curso'
       ? { lat: viaje.destino_lat, lng: viaje.destino_lng }
       : { lat: viaje.origen_lat, lng: viaje.origen_lng };
 
@@ -299,7 +337,21 @@ export function ViajeActivo({
           </Text>
         ) : null}
       </View>
-      {viaje.estado !== 'conductor_llego' ? (
+      {parada ? (
+        // C-VIAJE-PARADAS: qué sigue después de esta parada (las demás paradas y el destino).
+        <View testID="viaje-paradas" style={{ gap: 2 }}>
+          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.despues}</Text>
+          {paradas.slice(indiceParada + 1).map((p, i) => (
+            <Text key={p.orden} style={{ color: C.secundario }} numberOfLines={1}>
+              {indiceParada + 2 + i}. {p.direccion}
+            </Text>
+          ))}
+          <Text style={{ color: C.secundario }} numberOfLines={1}>
+            {t.destinoFinal}: {viaje.destino_direccion}
+          </Text>
+        </View>
+      ) : null}
+      {viaje.estado !== 'conductor_llego' && !enParada ? (
         <Boton
           texto={t.navegar}
           alTocar={() => comoLlegar({ lat: punto.lat, lng: punto.lng }, idioma)}
@@ -496,7 +548,51 @@ export function ViajeActivo({
           )}
         </View>
       ) : null}
-      {viaje.estado === 'en_curso' && (!esEnvio || pinEntrega.length === 4) ? (
+      {parada && !enParada ? (
+        <>
+          <Boton
+            texto={t.llegueParada}
+            alTocar={() => void paso(`paradas/${parada.orden}/llegue`)}
+            cargando={enviando}
+            exito
+          />
+          <Pressable
+            onPress={() => {
+              if (!saltar) return setSaltar(true);
+              setSaltar(false);
+              void paso(`paradas/${parada.orden}/saltar`);
+            }}
+            accessibilityRole="button"
+            testID="viaje-parada-saltar"
+          >
+            <Text style={{ textAlign: 'center', color: '#5E5E5E', fontWeight: '700', padding: 8 }}>
+              {saltar ? t.saltarConfirmar : t.saltarParada}
+            </Text>
+          </Pressable>
+        </>
+      ) : null}
+      {parada && enParada ? (
+        <>
+          <View
+            testID="viaje-parada-espera"
+            style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}
+          >
+            <Text style={{ color: '#5E5E5E' }}>
+              {quedaParada > 0 ? t.esperaParada : t.esperaParadaTerminada}
+            </Text>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: C.secundario }}>
+              {reloj(quedaParada > 0 ? quedaParada : esperaParada)}
+            </Text>
+          </View>
+          <Boton
+            texto={t.seguir}
+            alTocar={() => void paso(`paradas/${parada.orden}/seguir`)}
+            cargando={enviando}
+            exito
+          />
+        </>
+      ) : null}
+      {viaje.estado === 'en_curso' && !parada && (!esEnvio || pinEntrega.length === 4) ? (
         <Boton
           texto={esEnvio ? t.entregar : t.terminar}
           alTocar={() => void paso('terminar', esEnvio ? { pinEntrega } : {}, 'terminado')}
