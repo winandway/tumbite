@@ -161,7 +161,7 @@ export function Pildora({
   alTocar?: () => void;
   testID?: string;
 }) {
-  const t = activa ? TONO.oscuro : TONO[tono];
+  const t = activa ? TONO.oscuro : (new Map(Object.entries(TONO)).get(tono) ?? TONO.neutro);
   const cuerpo = (
     <>
       {icono ? <Icono nombre={icono} tamano={14} color={t.texto} /> : null}

@@ -32,8 +32,9 @@ describe('app del restaurante con el diseño aprobado', () => {
     expect(inicio).toMatch(/\/datos\/restaurante\/cocina/);
   });
   it('barra de abajo con Inicio, Pedidos, Menú, Estadísticas y Más', () => {
+    // C-APPS-DISENO: la barra se arma con BarraPestanas, en este orden.
     expect(leer(...APP, 'piezas', 'ui.tsx')).toMatch(
-      /\['inicio', 'pedidos', 'menu', 'estadisticas', 'mas'\] as const/,
+      /clave: 'inicio'[\s\S]*clave: 'pedidos'[\s\S]*clave: 'menu'[\s\S]*clave: 'estadisticas'[\s\S]*clave: 'mas'/,
     );
     // C-MONEDA-RECORRIDO: el menú recibe además la moneda del restaurante.
     expect(inicio).toMatch(/<MiMenu platos=\{platos\} recargar=\{cargar\} moneda=\{/);

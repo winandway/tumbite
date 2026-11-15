@@ -33,7 +33,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 export default function Raiz() {
-  // C-APPS-DISENO: Poppins, Montserrat y los íconos se cargan antes de pintar (la portada espera).
+  // C-APPS-DISENO: Poppins, Montserrat y los íconos se cargan antes de pintar (la pantalla de arranque espera).
   const fuentes = useFuentesDivoox();
   if (!fuentes) return null;
   return (
