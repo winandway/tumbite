@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-15T19:31:00.000Z",
+  "actualizado": "2026-11-15T19:00:00-05:00",
   "version": "7b9a5ca",
   "ahora": "15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
@@ -380,6 +380,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-15",
+      "titulo": "Las tres apps del celular con diseño nuevo",
+      "texto": "Se estudió cómo se ven Uber Eats, DoorDash, Rappi, Uber Driver y Dasher, y se prepararon tres propuestas (clara, roja y contraste negro). Se aplicó la clara, la más cercana al estándar: fondo blanco, letra negra, rojo solo en lo que se toca. Las tres apps estrenan las letras de la marca, íconos de línea en la barra de abajo, botones redondeados, tarjetas con borde fino y el Driver en su azul. Todas las capturas de Docs y de la web se rehicieron con el diseño nuevo. Falta compilar y subir las apps a las tiendas."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "La página de Flex en inglés y las guías de Envíos en español, cada una con su país",
