@@ -38,9 +38,13 @@ describe('C-CARRO-ALTA-DRIVER: el taxista se da de alta en Driver', () => {
 
 /** C-CARRO-VIAJE-PASAJERO: la app del pasajero dice lo de cada servicio (candado sobre el código). */
 describe('C-CARRO-VIAJE-PASAJERO: el pasajero ve lo de su servicio', () => {
-  it('«Pedir» dice Moto, Carro o Carro XL; el casco solo en Moto', () => {
+  it('«Pedir» dice Moto, Carro o la categoría del carro; el casco solo en Moto', () => {
     const s = leer('apps/cliente/src/viajes/PedirMoto.tsx');
-    expect(s).toMatch(/t\.pedirCarroXl/);
+    // C-CARRO-CATEGORIAS (14 nov 2026): el botón dice Carro, Carro Comfort, Carro Premium o Carro XL.
+    expect(s).toMatch(/t\.pedirCategoria/);
+    const textos = leer('apps/cliente/src/viajes/textos.ts');
+    for (const boton of ['Pedir Carro XL', 'Pedir Carro Comfort', 'Pedir Carro Premium'])
+      expect(textos).toContain(boton);
     expect(s).toMatch(/t\.pedirCarro\b/);
     expect(s).toMatch(
       /servicio === 'carro' \? t\.avisoCarro : servicio === 'envios' \? t\.avisoEnvio : t\.casco/,

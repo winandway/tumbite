@@ -238,6 +238,18 @@ const T = {
       foto_interior: 'Foto del interior',
     } as Record<string, string>,
     aprobarCarro: 'Aprobar el carro',
+    // C-CARRO-CATEGORIAS (14 nov 2026).
+    categoriaCarro: 'Categoría del carro',
+    categoriasCarro: {
+      auto: 'La que le toque sola (Comfort si cumple; si no, Carro)',
+      estandar: 'Carro (económico)',
+      comfort: 'Carro Comfort',
+      premium: 'Carro Premium (lo decide el equipo)',
+    } as Record<string, string>,
+    categoriaActual: 'Categoría',
+    cambiarCategoria: 'Cambiar la categoría',
+    motivoCategoria: 'Motivo del cambio de categoría',
+    categoriaCambiada: 'Categoría cambiada.',
     carroAprobado: 'Carro aprobado.',
     opcionesCarro: 'Más opciones del carro',
     rechazarCarro: 'Rechazar el carro',
@@ -467,6 +479,18 @@ const T = {
       foto_interior: 'Interior photo',
     } as Record<string, string>,
     aprobarCarro: 'Approve car',
+    // C-CARRO-CATEGORIAS (Nov 14, 2026).
+    categoriaCarro: 'Car category',
+    categoriasCarro: {
+      auto: 'Whatever it qualifies for (Comfort if it qualifies; otherwise Car)',
+      estandar: 'Car (economy)',
+      comfort: 'Car Comfort',
+      premium: 'Car Premium (decided by our team)',
+    } as Record<string, string>,
+    categoriaActual: 'Category',
+    cambiarCategoria: 'Change the category',
+    motivoCategoria: 'Reason for the category change',
+    categoriaCambiada: 'Category changed.',
     carroAprobado: 'Car approved.',
     opcionesCarro: 'More car options',
     rechazarCarro: 'Reject car',
@@ -1230,7 +1254,7 @@ type DetalleConductor = {
     motivo: string;
     venceEn: string | null;
   }[];
-  vehiculoActivo: { id: string; tipo: string; estado: string } | null;
+  vehiculoActivo: { id: string; tipo: string; estado: string; categoria?: string } | null;
   servicios: {
     servicioId: string;
     habilitacion: string | null;
@@ -1530,6 +1554,101 @@ function CambiarCiudad({
   );
 }
 
+/**
+ * C-CARRO-CATEGORIAS: la categoría de un carro ya aprobado (el equipo lo sube a Premium o lo baja).
+ * El servidor comprueba los requisitos del país; lo escrito no se pierde (borrador).
+ */
+function CategoriaCarro({
+  vehiculo,
+  idioma,
+  t,
+  alCambiar,
+}: {
+  vehiculo: { id: string; categoria?: string };
+  idioma: Idioma;
+  t: Textos;
+  alCambiar: () => void;
+}) {
+  const b = useBorrador({
+    formulario: 'carro-categoria',
+    cuenta: vehiculo.id,
+    inicial: { categoria: vehiculo.categoria ?? 'estandar', motivo: '' },
+    almacen: almacenNavegador,
+  });
+  const [error, setError] = useState('');
+  const [ok, setOk] = useState('');
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setOk('');
+    try {
+      await pedir('PUT', `/datos/admin/vehiculos/${vehiculo.id}/categoria`, {
+        categoria: b.valores.categoria,
+        motivo: b.valores.motivo.trim(),
+      });
+      await b.limpiar();
+      setOk(t.categoriaCambiada);
+      alCambiar();
+    } catch (x) {
+      setError(mensaje(x));
+    }
+  }
+  return (
+    <form
+      className="formulario formulario-apilado"
+      onSubmit={(e) => void enviar(e)}
+      noValidate
+      data-testid="categoria-carro"
+    >
+      <p className="pista">
+        {t.categoriaActual}: {enPalabras(t.categoriasCarro, vehiculo.categoria ?? 'estandar')}
+      </p>
+      <AvisoBorrador
+        visible={b.recuperado}
+        idioma={idioma}
+        empezar={() => void b.empezarDeNuevo()}
+      />
+      <label>
+        {t.categoriaCarro}
+        <select
+          value={b.valores.categoria}
+          onChange={(e) => b.cambiar('categoria', e.target.value)}
+        >
+          {(['estandar', 'comfort', 'premium'] as const).map((c) => (
+            <option key={c} value={c}>
+              {enPalabras(t.categoriasCarro, c)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {t.motivoCategoria}
+        <input value={b.valores.motivo} onChange={(e) => b.cambiar('motivo', e.target.value)} />
+      </label>
+      <button
+        type="submit"
+        className="boton"
+        disabled={
+          b.valores.motivo.trim().length < 3 ||
+          b.valores.categoria === (vehiculo.categoria ?? 'estandar')
+        }
+      >
+        {t.cambiarCategoria}
+      </button>
+      {error ? (
+        <p className="error-general" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {ok ? (
+        <p className="texto-exito" role="status">
+          {ok}
+        </p>
+      ) : null}
+    </form>
+  );
+}
+
 function Conductor({
   id,
   base,
@@ -1651,6 +1770,15 @@ function Conductor({
                     : t.sinMoto}
                 </span>
               </div>
+              {d.vehiculoActivo?.tipo === 'carro' && d.vehiculoActivo.estado === 'aprobado' ? (
+                <CategoriaCarro
+                  key={`${d.vehiculoActivo.id}-${d.vehiculoActivo.categoria ?? ''}`}
+                  vehiculo={d.vehiculoActivo}
+                  idioma={idioma}
+                  t={t}
+                  alCambiar={cargar}
+                />
+              ) : null}
             </li>
             {d.documentos.map((doc) => (
               <li key={doc.id}>
@@ -1802,6 +1930,8 @@ function FilaMoto({
   const [rechazando, setRechazando] = useState(false);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+  // C-CARRO-CATEGORIAS: la categoría con que se aprueba el carro («auto» = la que le toque).
+  const [categoria, setCategoria] = useState('auto');
   // C-CARRO-PANEL: la misma cola revisa motos y carros, cada uno con sus textos.
   const esCarro = m.tipo === 'carro';
   const nombresDoc = esCarro ? t.documentosCarro : t.documentosMoto;
@@ -1902,6 +2032,22 @@ function FilaMoto({
           </li>
         ))}
       </ul>
+      {esCarro ? (
+        <label className="campo">
+          <span>{t.categoriaCarro}</span>
+          <select
+            value={categoria}
+            onChange={(e) => setCategoria(e.target.value)}
+            data-testid={`categoria-${m.id}`}
+          >
+            {(['auto', 'estandar', 'comfort', 'premium'] as const).map((c) => (
+              <option key={c} value={c}>
+                {enPalabras(t.categoriasCarro, c)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <div className="fila-botones">
         <button
           type="button"
@@ -1909,7 +2055,7 @@ function FilaMoto({
           onClick={() =>
             void hacer(
               `/datos/admin/vehiculos/${m.id}`,
-              { estado: 'aprobado' },
+              { estado: 'aprobado', ...(esCarro && categoria !== 'auto' ? { categoria } : {}) },
               esCarro ? t.carroAprobado : t.motoAprobada,
             )
           }

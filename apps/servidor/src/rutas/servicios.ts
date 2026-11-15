@@ -321,7 +321,14 @@ export async function estadoDelConductor(
   ingles: boolean,
   versionDriver: number,
 ): Promise<{
-  vehiculoActivo: { id: string; tipo: string; estado: string } | null;
+  vehiculoActivo: {
+    id: string;
+    tipo: string;
+    estado: string;
+    categoria?: string;
+    anio?: number | null;
+    plazas?: number | null;
+  } | null;
   servicios: EstadoConductor[];
 }> {
   // La fila de repartidores nace la primera vez que usa la app; antes, su zona es la de su cuenta
@@ -335,9 +342,18 @@ export async function estadoDelConductor(
     .first<{ zona_id: string; vehiculo_activo_id: string | null }>();
   const vehiculo = rep?.vehiculo_activo_id
     ? await db
-        .prepare('SELECT id, tipo, estado FROM vehiculos WHERE id = ? AND conductor_id = ?')
+        .prepare(
+          'SELECT id, tipo, estado, categoria, anio, plazas FROM vehiculos WHERE id = ? AND conductor_id = ?',
+        )
         .bind(rep.vehiculo_activo_id, conductorId)
-        .first<{ id: string; tipo: string; estado: string }>()
+        .first<{
+          id: string;
+          tipo: string;
+          estado: string;
+          categoria: string;
+          anio: number | null;
+          plazas: number | null;
+        }>()
     : null;
   const [lista, habs, prefs, compat, faltan] = await Promise.all([
     catalogo(db, rep?.zona_id ?? null),

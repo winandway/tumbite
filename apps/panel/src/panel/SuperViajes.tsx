@@ -12,6 +12,7 @@ import {
 import { api } from './api';
 import { AvisoBorrador } from './AvisoBorrador';
 import { InterruptoresViaje } from './InterruptoresViaje';
+import { DinamicaCiudad, vecesDe } from './DinamicaCiudad';
 
 const T = {
   es: {
@@ -53,6 +54,15 @@ const T = {
     envios: 'Envíos',
     valorMaximo: 'Envíos: valor máximo declarado de un paquete (vacío = 100)',
     xl: 'Carro XL: veces el precio del carro (vacío = sin XL; 1,5 = la mitad más)',
+    // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026).
+    comfort: 'Carro Comfort: veces el precio del carro (vacío = sin Comfort; 1,3 = un 30 % más)',
+    premium: 'Carro Premium: veces el precio del carro (vacío = sin Premium; 1,8 = un 80 % más)',
+    topeDinamico:
+      'Tarifa dinámica: tope en veces el precio normal (vacío o 1 = sin tarifa dinámica; 1,5 = hasta la mitad más)',
+    esperaParada: 'Espera gratis en cada parada (minutos)',
+    conCategorias: 'Categorías',
+    sinDinamica: 'sin tarifa dinámica',
+    dinamicaHasta: 'tarifa dinámica hasta',
     motivo: 'Motivo del cambio',
     guardar: 'Guardar tarifa',
     guardada: 'Tarifa guardada. Las cotizaciones nuevas ya la usan.',
@@ -97,6 +107,15 @@ const T = {
     envios: 'Delivery',
     valorMaximo: 'Delivery: maximum declared value of a package (empty = 100)',
     xl: 'Car XL: times the car price (empty = no XL; 1.5 = half again)',
+    // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA and C-VIAJE-PARADAS (Nov 14, 2026).
+    comfort: 'Car Comfort: times the car price (empty = no Comfort; 1.3 = 30% more)',
+    premium: 'Car Premium: times the car price (empty = no Premium; 1.8 = 80% more)',
+    topeDinamico:
+      'Dynamic pricing: cap as a multiple of the normal price (empty or 1 = no dynamic pricing; 1.5 = up to half again)',
+    esperaParada: 'Free wait at each stop (minutes)',
+    conCategorias: 'Categories',
+    sinDinamica: 'no dynamic pricing',
+    dinamicaHasta: 'dynamic pricing up to',
     motivo: 'Reason for the change',
     guardar: 'Save pricing',
     guardada: 'Pricing saved. New quotes use it now.',
@@ -125,6 +144,11 @@ type Tarifa = Record<(typeof MONTOS)[number], number> & {
   redondeo: number;
   dePrueba: boolean;
   creadaEn: string;
+  servicio?: string;
+  xlPb?: number;
+  comfortPb?: number;
+  premiumPb?: number;
+  topeDinamicoPb?: number;
 };
 type Datos = {
   emergencias: Record<string, unknown>[];
@@ -161,6 +185,10 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
       cancelacionGratis: '2',
       redondeo: '1',
       xl: '',
+      comfort: '',
+      premium: '',
+      topeDinamico: '',
+      esperaParada: '2',
       valorMaximo: '',
       motivo: '',
     },
@@ -207,6 +235,18 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
     // C-CARRO-XL: el factor del carro grande (solo Carro); vacío = la ciudad no ofrece XL.
     const xl = Number(v.xl.replace(',', '.'));
     if (xl >= 1) tarifa.xlPb = Math.round(xl * 10_000);
+    // C-CARRO-CATEGORIAS: los factores de Comfort y Premium (solo Carro); vacío = no se ofrece.
+    const veces = (texto: string) => Number(texto.replace(',', '.'));
+    if (v.servicio === 'carro' && veces(v.comfort) >= 1)
+      tarifa.comfortPb = Math.round(veces(v.comfort) * 10_000);
+    if (v.servicio === 'carro' && veces(v.premium) >= 1)
+      tarifa.premiumPb = Math.round(veces(v.premium) * 10_000);
+    // C-CARRO-DINAMICA: el tope de la tarifa dinámica de la ciudad (1 = apagada).
+    if (veces(v.topeDinamico) > 1)
+      tarifa.topeDinamicoPb = Math.round(veces(v.topeDinamico) * 10_000);
+    // C-VIAJE-PARADAS: espera gratis en cada parada.
+    if (v.esperaParada.trim())
+      tarifa.esperaParadaGratisS = Math.max(0, Math.round(veces(v.esperaParada) * 60));
     // C-ENVIOS: tope del valor declarado de un paquete en esta ciudad.
     if (v.valorMaximo.trim()) tarifa.valorMaximo = textoAMonto(v.valorMaximo, m);
     try {
@@ -329,6 +369,27 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
                 (k) =>
                   `${campos.get(k) ?? k} ${montoATexto(Number(new Map(Object.entries(x)).get(k) ?? 0), x.moneda)}`,
               ).join(' · ')}
+              {x.servicio === 'carro' ? (
+                <>
+                  {' · '}
+                  {t.conCategorias}:{' '}
+                  {[
+                    t.carro,
+                    x.comfortPb ? `Comfort × ${vecesDe(x.comfortPb, idioma)}` : '',
+                    x.premiumPb ? `Premium × ${vecesDe(x.premiumPb, idioma)}` : '',
+                    x.xlPb ? `XL × ${vecesDe(x.xlPb, idioma)}` : '',
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
+                  {' · '}
+                  {(x.topeDinamicoPb ?? 10_000) > 10_000
+                    ? `${t.dinamicaHasta} × ${vecesDe(x.topeDinamicoPb ?? 10_000, idioma)}`
+                    : t.sinDinamica}
+                </>
+              ) : null}
+              {x.servicio === 'carro' && (x.topeDinamicoPb ?? 10_000) > 10_000 ? (
+                <DinamicaCiudad zona={x.zona} idioma={idioma} />
+              ) : null}
             </li>
           ))}
         </ul>
@@ -402,6 +463,44 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
             onChange={(e) => b.cambiar('xl', e.target.value)}
           />
         </label>
+        {b.valores.servicio === 'carro' ? (
+          <>
+            <label className="campo">
+              <span>{t.comfort}</span>
+              <input
+                inputMode="decimal"
+                value={b.valores.comfort}
+                onChange={(e) => b.cambiar('comfort', e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span>{t.premium}</span>
+              <input
+                inputMode="decimal"
+                value={b.valores.premium}
+                onChange={(e) => b.cambiar('premium', e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span>{t.topeDinamico}</span>
+              <input
+                inputMode="decimal"
+                value={b.valores.topeDinamico}
+                onChange={(e) => b.cambiar('topeDinamico', e.target.value)}
+              />
+            </label>
+          </>
+        ) : null}
+        {b.valores.servicio !== 'envios' ? (
+          <label className="campo">
+            <span>{t.esperaParada}</span>
+            <input
+              inputMode="decimal"
+              value={b.valores.esperaParada}
+              onChange={(e) => b.cambiar('esperaParada', e.target.value)}
+            />
+          </label>
+        ) : null}
         <label className="campo">
           <span>{t.valorMaximo}</span>
           <input
