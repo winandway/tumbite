@@ -108,6 +108,21 @@
         font-size: 12px;
         margin-bottom: 8px;
       }
+      .lado small.ojo-corto {
+        color: #7a4b00;
+        margin: 8px 0 0;
+        line-height: 1.35;
+      }
+      .ojo {
+        margin: 10px 0 0;
+        padding: 10px 12px;
+        border: 1px solid #b7791f;
+        border-radius: 8px;
+        background: #fff8e1;
+        color: #5c3900;
+        font-size: 14px;
+        line-height: 1.45;
+      }
       .boton {
         display: inline-block;
         border: 0;
@@ -223,11 +238,15 @@
             <li>Apunta la cámara al código de Android y abre el enlace.</li>
             <li>Espera la descarga y abre el archivo.</li>
             <li>Si Android pregunta, permite «Instalar apps desconocidas» para el navegador.</li>
-            <li>
-              Si tienes la versión de Google Play con el mismo nombre, desinstálala primero. La de
-              prueba dice «PRUEBAS».
-            </li>
           </ol>
+          <p class="ojo" id="aviso-android">
+            <b
+              >Si ya tienes la app de la tienda, desinstálala primero; las dos no pueden estar
+              juntas.</b
+            >
+            La de pruebas dice «PRUEBAS» en el ícono, en la pantalla de entrar y en el menú. Si no
+            lo dice, tienes la de la tienda y las cuentas de prueba no entran.
+          </p>
         </div>
         <div class="tarjeta">
           <b>iPhone</b>
@@ -236,6 +255,13 @@
             <li>Apunta la cámara al código de iPhone y abre el enlace: se abre TestFlight.</li>
             <li>Toca «Instalar» o «Actualizar» y comprueba que el número sea el de esta página.</li>
           </ol>
+          <p class="ojo" id="aviso-iphone">
+            <b>TestFlight reemplaza la app de la tienda; las dos no pueden estar juntas.</b>
+            Si la instalaste desde la App Store, al tocar «Instalar» en TestFlight queda la de
+            pruebas en su lugar. La de pruebas dice «PRUEBAS» en la pantalla de entrar y en el menú,
+            y lleva un punto naranja junto al nombre. Para volver a la real, instálala de nuevo
+            desde la App Store.
+          </p>
         </div>
       </div>
       <p style="margin-top: 24px"><a href="/">← Volver al progreso</a></p>
@@ -261,15 +287,21 @@
       }
       const dia = (f) => new Date(f).toLocaleDateString('es-US', { day: 'numeric', month: 'long' });
 
+      // C-APP-DE-PRUEBAS-VISIBLE: junto a cada descarga, que la de pruebas y la de la tienda no conviven.
+      const AVISO_ANDROID =
+        'Si ya tienes la app de la tienda, desinstálala primero; las dos no pueden estar juntas.';
+      const AVISO_IPHONE =
+        'TestFlight reemplaza la app de la tienda; las dos no pueden estar juntas.';
+
       async function cargarApps() {
         try {
           const d = await (await fetch('/apps.json', { cache: 'no-store' })).json();
-          const lado = (titulo, x, texto) =>
-            `<div class="lado"><strong>${titulo}</strong><span class="qr">${x.qr}</span><small>Número ${esc(x.numero)} · ${esc(dia(x.fecha))}</small><a class="boton" href="${esc(x.url)}">${texto}</a></div>`;
+          const lado = (titulo, x, texto, aviso) =>
+            `<div class="lado"><strong>${titulo}</strong><span class="qr">${x.qr}</span><small>Número ${esc(x.numero)} · ${esc(dia(x.fecha))}</small><a class="boton" href="${esc(x.url)}">${texto}</a><small class="ojo-corto">${aviso}</small></div>`;
           el('apps').innerHTML = d.apps
             .map(
               (a) =>
-                `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><div class="par">${lado('Android', a.android, 'Descargar')}${lado('iPhone', a.iphone, 'Abrir TestFlight')}</div></div>`,
+                `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><div class="par">${lado('Android', a.android, 'Descargar', AVISO_ANDROID)}${lado('iPhone', a.iphone, 'Abrir TestFlight', AVISO_IPHONE)}</div></div>`,
             )
             .join('');
           el('al-dia').textContent = `Enlaces comprobados el ${dia(d.actualizado)}.`;
