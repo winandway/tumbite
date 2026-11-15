@@ -1,0 +1,77 @@
+{
+  "nota": "Lo que sale con QR en la página de apps de prueba. Las direcciones de los APK cambian con cada compilación: se actualizan aquí y se corre node scripts/progreso/apps-qr.mjs",
+  "grupos": [
+    {
+      "titulo": "Sin instalar nada: en el navegador (Android y iPhone)",
+      "pista": "Escanea con la cámara del teléfono y se abre en el navegador, ya con lo último. Trabaja con el sitio de pruebas.",
+      "enlaces": [
+        {
+          "id": "web-cliente",
+          "titulo": "Divoox (cliente)",
+          "para": "Pedir comida o un viaje.",
+          "url": "https://staging.tumbite.com/app/"
+        },
+        {
+          "id": "web-driver",
+          "titulo": "Divoox Driver",
+          "para": "Repartir o conducir.",
+          "url": "https://staging.tumbite.com/driver/"
+        },
+        {
+          "id": "web-restaurante",
+          "titulo": "Divoox Restaurants",
+          "para": "Recibir los pedidos del restaurante.",
+          "url": "https://staging.tumbite.com/restaurant/"
+        }
+      ]
+    },
+    {
+      "titulo": "Apps de PRUEBAS para Android (instalables)",
+      "pista": "Escanea, descarga e instala. Dicen «PRUEBAS» debajo del ícono, usan el sitio de pruebas y nunca cobran dinero real.",
+      "enlaces": [
+        {
+          "id": "apk-cliente",
+          "titulo": "Divoox PRUEBAS",
+          "para": "App del cliente.",
+          "url": "https://expo.dev/artifacts/eas/ovWbnRuedlbxWzezjTRhttbIJRyS7L8pW1I2o6uzYs8.apk"
+        },
+        {
+          "id": "apk-driver",
+          "titulo": "Divoox Driver PRUEBAS",
+          "para": "App del repartidor o conductor.",
+          "url": "https://expo.dev/artifacts/eas/BF6xA5CUcnkm295UjTHE-PiOXyoJeosXKJbbPTDXobs.apk"
+        },
+        {
+          "id": "apk-restaurante",
+          "titulo": "Divoox Restaurants PRUEBAS",
+          "para": "App del restaurante.",
+          "url": "https://expo.dev/artifacts/eas/1BJZq-KmFoujeg_0V0LIUwGh_iLaZQbqFZxS8yz3tF0.apk"
+        }
+      ]
+    },
+    {
+      "titulo": "Apps de la tienda (Google Play): la Divoox real",
+      "pista": "Estas cobran de verdad: no pagues con ellas en una prueba.",
+      "enlaces": [
+        {
+          "id": "play-cliente",
+          "titulo": "Divoox",
+          "para": "Cliente, en Google Play.",
+          "url": "https://play.google.com/store/apps/details?id=com.windoce.tumbite"
+        },
+        {
+          "id": "play-driver",
+          "titulo": "Divoox Driver",
+          "para": "Conductor, en Google Play.",
+          "url": "https://play.google.com/store/apps/details?id=com.windoce.tumbite.driver"
+        },
+        {
+          "id": "play-restaurante",
+          "titulo": "Divoox Restaurants",
+          "para": "Restaurante, en Google Play.",
+          "url": "https://play.google.com/store/apps/details?id=com.windoce.tumbite.restaurants"
+        }
+      ]
+    }
+  ]
+}
