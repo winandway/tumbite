@@ -4177,6 +4177,14 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Límite:** el enlace universal de Google (Maps URLs) admite 9 intermedios en la app o en la computadora (3 en el navegador del celular): un tramo lleva como mucho 10 paradas (9 + destino) y la pantalla dice «toca de nuevo para el siguiente tramo». Sin origen (Google parte del celular). Coordenadas con 6 decimales; sin coordenadas, la dirección. Waze y Apple Maps no admiten varias paradas en su enlace.
 - **Pruebas:** `packages/compartido/src/flexNavegacion.test.ts` (orden, 9 intermedias + destino y lo que queda, una sola parada, dirección, vacío).
 
+## C-MAPA-PANTALLA-LIMPIA · El mapa de Google va sin botones de sobra y con los créditos intactos (15 nov 2026) — todos los países
+
+- **Qué es:** `opcionesMapaGoogle` (`packages/compartido/src/mapaWebGoogle.tsx`) crea todos los mapas web sin el botón del teclado (`keyboardShortcuts: false`) y, en pantallas táctiles (`pantallaTactil()`), sin los botones de acercar y alejar. En la computadora los de acercar se quedan.
+- **Qué NO hay que tocar:** el logo de Google y la línea de datos y términos. La política de atribución de Google prohíbe quitarlos, ocultarlos o taparlos; nada de estilos que los escondan.
+- **Costo (para no asustarse ni encarecerlo):** el mapa vectorial con relieve cuesta lo mismo que el plano (Dynamic Maps, 10.000 cargas gratis al mes). Las apps de Android usan `customMapStyle` sin identificador de mapa y por eso son gratis; ponerles identificador las vuelve de pago.
+- **Prueba:** `packages/compartido/src/mapaWebGoogle.test.ts` («C-MAPA-PANTALLA-LIMPIA»), vista en rojo antes del cambio.
+- **Ficha con fuentes:** `docs/investigaciones-rea/2026-11-15-mapa-precio-y-creditos.md`.
+
 ## C-MAPA-GOOGLE-WEB-DRIVER · Los mapas web de Divoox Driver usan la pieza de Google cuando hay puntos de Places y llave (Flex Fase 7, 13 nov 2026) — todos los países
 
 - **Qué es:** `apps/repartidor/src/piezas/Mapa.web.tsx` (mapa general del conductor) y `apps/repartidor/src/flex/MapaRuta.web.tsx` (ruta Flex) eligen con `elegirMapaWeb` (pieza de `packages/compartido/src/mapaWebGoogle.tsx`): con puntos de Google Places (restaurante, casa, restaurantes cercanos; en Flex, el centro y las paradas) y la llave pública `EXPO_PUBLIC_GOOGLE_MAPS_WEB_KEY`, `MapaGoogleBajoDemanda` (se carga solo al tocar «Ver en el mapa»); solo con el GPS del conductor o sin llave, Leaflet como antes. De dónde viene cada punto: `packages/compartido/src/mapaDriverWeb.ts`. Llave: `apps/repartidor/src/flex/mapaGoogleWeb.ts`.

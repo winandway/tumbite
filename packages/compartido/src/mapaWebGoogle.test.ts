@@ -45,6 +45,21 @@ describe('elegirMapaWeb', () => {
 
 describe('opcionesMapaGoogle (mapa vectorial con el estilo de Divoox)', () => {
   const centro = { lat: 42.48, lng: -83.47 };
+  it('C-MAPA-PANTALLA-LIMPIA: sin botones de sobra; los de acercar solo donde no hay dedos', () => {
+    // Documentación oficial de controles de Maps JavaScript API (15 nov 2026): `disableDefaultUI`
+    // quita los botones y `keyboardShortcuts: false` quita el del teclado. El logo de Google y la
+    // línea de datos y términos NO se pueden quitar (política de atribución): no se tocan.
+    const celular = opcionesMapaGoogle({ centro, zoom: 15, mapId: 'a1b2c3d4e5f6', tactil: true });
+    expect(celular.disableDefaultUI).toBe(true);
+    expect(celular.keyboardShortcuts).toBe(false);
+    expect(celular.zoomControl).toBe(false);
+    const computadora = opcionesMapaGoogle({ centro, zoom: 15, tactil: false });
+    expect(computadora.keyboardShortcuts).toBe(false);
+    expect(computadora.zoomControl).toBe(true);
+    for (const o of [celular, computadora])
+      for (const n of ['mapTypeControl', 'streetViewControl', 'fullscreenControl', 'cameraControl'])
+        expect(o[n]).toBeUndefined();
+  });
   it('con Map ID: vectorial, inclinado 45° y con rumbo solo en viaje; sin `styles`', () => {
     const o = opcionesMapaGoogle({
       centro,

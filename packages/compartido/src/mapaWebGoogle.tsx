@@ -83,7 +83,21 @@ export function rumboEntre(desde: LatLng, hacia: LatLng): number {
   return (((Math.atan2(y, x) / rad) % 360) + 360) % 360;
 }
 
-/** Opciones con las que se crea el mapa de Google (pura, para poder probarla). */
+/** ¿La pantalla se maneja con los dedos? Ahí se acerca pellizcando y los botones sobran. */
+export function pantallaTactil(): boolean {
+  try {
+    return globalThis.matchMedia?.('(pointer: coarse)').matches === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Opciones con las que se crea el mapa de Google (pura, para poder probarla).
+ * C-MAPA-PANTALLA-LIMPIA (15 nov 2026): sin botones de sobra. El del teclado se quita siempre y los
+ * de acercar y alejar solo quedan en la computadora (en el celular se pellizca). El logo de Google
+ * y la línea de datos y términos son obligatorios por la política de atribución: no se ocultan.
+ */
 export function opcionesMapaGoogle({
   centro,
   zoom,
@@ -91,6 +105,7 @@ export function opcionesMapaGoogle({
   inclinado = false,
   rumbo = 0,
   tema = 'dia',
+  tactil = pantallaTactil(),
 }: {
   centro: LatLng;
   zoom: number;
@@ -98,12 +113,14 @@ export function opcionesMapaGoogle({
   inclinado?: boolean;
   rumbo?: number;
   tema?: TemaMapa;
+  tactil?: boolean;
 }): Record<string, unknown> {
   const base = {
     center: centro,
     zoom,
     disableDefaultUI: true,
-    zoomControl: true,
+    zoomControl: !tactil,
+    keyboardShortcuts: false,
     clickableIcons: false,
     gestureHandling: 'cooperative',
     backgroundColor: fondoMapaDe(tema),
