@@ -11,8 +11,10 @@ import { GUIAS_FLEX_ENVIOS } from './semanaFlexEnvios';
  */
 type PorSeccion = Partial<Record<SeccionDocs['id'], Guia[]>>;
 
+// C-CAPTURAS-POR-IDIOMA (15 nov 2026): el español se enseña con El Vigía (`comida-ve`); el inglés, con
+// Novi, Michigan (`comida-us`), como funciona Comida en Estados Unidos: se paga con tarjeta en la app.
 const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
-  src: `/docs/recorrido-comida-ve-${nombre}-${idioma}.webp`,
+  src: `/docs/recorrido-comida-${idioma === 'en' ? 'us' : 've'}-${nombre}-${idioma}.webp`,
   alt,
   pie,
 });
@@ -181,62 +183,64 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
       },
     ],
   },
+  // En inglés, Estados Unidos: allá la comida se paga con tarjeta en la app. El pago al recibir, el pago
+  // móvil y el saldo para comisiones son de los países donde se cobra en mano, y la guía lo dice.
   en: {
     ordering: [
       {
         id: 'pay-on-delivery-venezuela',
-        titulo: 'Pay for your food on delivery: cash or mobile payment',
+        titulo: 'How you pay for your food order',
         resumen:
-          'In Venezuela you pay when your order arrives, in cash or with a mobile payment transfer to the driver, and you also see the total in bolívares.',
+          'In the United States you pay by card in the app when you order, in US dollars, and you see every charge before you confirm.',
         explicacion: [
-          'In countries where payment is collected in person, like Venezuela, you choose “Cash on delivery” or “Transfer to the driver” (mobile payment) when you order. No card needed.',
-          'Prices are in US dollars, and your cart total shows its equivalent in bolívares at the day’s rate, so you know how much you’ll pay. By default the rate is the Central Bank of Venezuela’s official rate, which updates on its own every business day; next to it you see which day it’s from. It’s for reference only: the price is set in US dollars.',
-          'If you choose transfer, your order tracking shows the driver’s name and account details so you can pay them when they arrive. The driver confirms in their app that it arrived.',
-          'A cash tip goes straight to the driver: they keep all of it.',
+          'In the United States, food orders are paid by card in the app. You don’t pay the driver at the door: when your order arrives, you only have to receive it.',
+          'Prices are in US dollars. Before you pay, your cart shows the food, the delivery fee, the service fee, the tip and the total, and “What are these fees?” explains each one.',
+          'After you pay, your order tracking shows the receipt, where your driver is and, if you chose “Hand it to me,” the PIN you give the driver to receive your order.',
+          'The tip you add in the app goes to your driver in full. Paying in cash or by bank transfer on delivery is offered only in countries where Divoox collects in person; it isn’t available in the United States.',
         ],
         capturas: [
           foto(
-            'carrito-pago',
+            'carrito',
             'en',
-            'The cart with “How do you pay?”: Cash on delivery and Transfer to the driver, and the delivery address in El Vigía.',
-            'Choose how you’ll pay on delivery.',
+            'The cart for an order from a restaurant in Novi, Michigan: the item in US dollars, when you want it and how you want to receive it.',
+            'Your cart, in US dollars.',
           ),
           foto(
             'carrito-total',
             'en',
-            'The cart total in US dollars with its equivalent in bolívares at the day’s rate.',
-            'The total in bolívares, too.',
+            'The tip options and the totals: food, delivery, service fee, tip and total, with the “Continue to payment” button.',
+            'You see every charge before you pay.',
           ),
           foto(
             'pedido-cliente',
             'en',
-            'Order tracking with “Pay on delivery”: how much to transfer, the driver’s name, and their account details.',
-            'Tracking shows who to pay.',
+            'Order tracking: the receipt, “Your driver is on the way,” the arrival window and the PIN to receive the order.',
+            'Tracking shows your receipt, your driver and your PIN.',
           ),
         ],
         preguntas: [
+          'How do I pay for my food order?',
           'Can I pay for food in cash?',
-          'How do I pay for my order with mobile payment?',
-          'How much is it in bolívares?',
+          'Where do I see the fees before I pay?',
         ],
         pasos: [
           'Build your order and open the cart.',
-          'Under “How do you pay?”, choose “Cash on delivery” or “Transfer to the driver.”',
-          'Check the total in US dollars and its equivalent in bolívares, and tap to order and pay on delivery.',
-          'If you chose transfer, tracking will show the driver’s details: pay them when they arrive.',
+          'Choose when you want it and how to receive it, and check your delivery address.',
+          'Pick a tip, review the total and tap “Continue to payment” to pay by card.',
+          'Follow your order in tracking; if you chose “Hand it to me,” give the driver your PIN when they arrive.',
         ],
-        nota: 'Have the amount ready when the driver arrives so the handoff is quick.',
+        nota: 'Keep your phone handy when your order is close so the handoff is quick.',
       },
       {
         id: 'order-not-delivered',
         titulo: 'If you weren’t there when the driver arrived',
         resumen:
-          'If the driver arrives and can’t find you, we notify you and they wait a few minutes. If you don’t show up, the order is closed and you see it in your order.',
+          'If the driver arrives and can’t find you, we notify you and they wait a few minutes. If you don’t show up, the driver closes the order with a photo and you see what happened in your order.',
         explicacion: [
           'When the driver reaches your door and can’t find you, they tap “Customer isn’t here”: we notify your phone and they wait a few minutes while messaging you in the chat.',
-          'If the wait ends and you don’t show up, food paid on delivery isn’t left at the door: the driver closes the order and your order shows “Order canceled.” The cost of the food stays as an outstanding balance with Divoox, which you resolve with support before ordering again.',
-          'For card orders with a PIN, the food isn’t left alone either: the driver closes the order with a photo of where they waited, and your order shows “We couldn’t deliver your order” with that photo.',
-          'If something went wrong (the address was right, nobody notified you), write to us from that same order with “Problems with your order? Tell us.”',
+          'If the wait ends and you don’t show up, an order you asked to receive in person with a PIN isn’t left alone at the door: the driver closes it with a photo of where they waited, and your order shows “We couldn’t deliver it” with that photo.',
+          'If you chose “Leave at my door” instead, the driver doesn’t need you to be there: they leave the order at your door and send you a photo.',
+          'If something went wrong (the address was right, nobody notified you), contact us from that same order.',
         ],
         capturas: [
           foto(
@@ -248,45 +252,45 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           foto(
             'driver-no-aparece',
             'en',
-            'After the wait, on an order paid in person: no safe-spot drop-off and the “The customer didn’t pay” button.',
+            'After the wait, on an order handed over with a PIN: the “Customer didn’t show: close with photo” button.',
             'If you don’t show up, the driver closes the order.',
           ),
           foto(
             'pedido-no-entregado',
             'en',
-            'The customer’s order after the driver couldn’t find them: “Order canceled,” the receipt, and the button to report the problem.',
+            'The customer’s order after the driver couldn’t reach them: the message “We couldn’t deliver it” and the photo of where the driver waited.',
             'Your order shows what happened, and you can ask for help.',
           ),
         ],
         preguntas: [
           'What happens if I’m not there when the driver arrives?',
-          'Why does my order say “Order canceled” or “We couldn’t deliver your order”?',
+          'Why does my order say “We couldn’t deliver it”?',
         ],
         pasos: [
           'Keep your phone handy while your order is on the way.',
           'If we tell you the driver arrived and can’t find you, go out to meet them or message them in the chat.',
-          'If you didn’t make it in time, open your order to see what happened and, if something went wrong, tap “Problems with your order? Tell us.”',
+          'If you didn’t make it in time, open your order to see what happened and, if something went wrong, tap “Help” to contact us.',
         ],
       },
     ],
     drivers: [
       {
         id: 'driver-cash-mobile-payment-venezuela',
-        titulo: 'Collect orders in person: cash and mobile payment',
+        titulo: 'At the customer’s door: handing over the order',
         resumen:
-          'For orders paid on delivery, you collect at the customer’s door and confirm mobile payments with “Yes, it arrived” or “It didn’t arrive.”',
+          'In the United States orders are already paid in the app, so there is nothing to collect at the door: you hand over the order with the customer’s PIN, and the app tells you what to do if they aren’t there.',
         explicacion: [
-          'When the customer pays on delivery, at their door your app shows “Collect from the customer” with the amount without the tip and its equivalent in bolívares at the day’s rate.',
-          'For cash, enter what you received and tap “Collected.” For mobile payment, check your bank and tap “Yes, the mobile payment arrived” or “It didn’t arrive.” If the transfer hasn’t shown up yet, tap “The transfer hasn’t arrived yet.”',
-          'If the customer isn’t there, tap “Customer isn’t here”: we notify them and you wait a few minutes. An order paid in person is never left in a safe spot: after the wait, tap “The customer didn’t pay” and take the food back to the restaurant.',
-          'A cash tip is yours and isn’t counted in the collection.',
+          'In the United States, customers pay by card in the app. At the door your app shows the address and how the customer chose to receive the order; you don’t collect any money.',
+          'If the customer chose “Hand it to me,” ask for their 4-digit PIN, enter it and tap “Handed to the customer.” An order with a PIN can’t be left with a photo.',
+          'If the customer isn’t there, tap “Customer isn’t here”: we notify them and you wait a few minutes while you message or call them. After the wait, on an order with a PIN, tap “Customer didn’t show: close with photo” and take a photo of the door or the spot: the order is closed, you get paid and support is notified.',
+          'Collecting cash or a bank transfer at the door applies only in countries where Divoox collects in person. It isn’t used in the United States.',
         ],
         capturas: [
           foto(
-            'driver-cobro',
+            'driver-puerta',
             'en',
-            'The “Collect from the customer” card with the amount in US dollars and bolívares, and the buttons to confirm the cash or mobile payment.',
-            'At the door you collect and confirm the mobile payment.',
+            'The order at the customer’s door in Novi, Michigan: the address, “Customer chose: hand it to them,” the PIN box and the “Handed to the customer” button.',
+            'At the door you hand over the order with the customer’s PIN.',
           ),
           foto(
             'driver-no-aparece-espera',
@@ -297,49 +301,48 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           foto(
             'driver-no-aparece',
             'en',
-            'An order paid in person isn’t left in a safe spot: the “The customer didn’t pay” button.',
-            'After the wait, close it with “The customer didn’t pay.”',
+            'After the wait, on an order with a PIN: the “Customer didn’t show: close with photo” button.',
+            'After the wait, close the order with a photo.',
           ),
         ],
         preguntas: [
-          'How do I collect a cash order?',
-          'How do I confirm a mobile payment arrived?',
+          'Do I collect money at the door?',
+          'How do I hand over an order with a PIN?',
           'What do I do if the customer isn’t there?',
         ],
         pasos: [
-          'At the door, check the amount to collect under “Collect from the customer.”',
-          'For cash, enter what you received and tap “Collected.”',
-          'For mobile payment, check your bank and tap “Yes, the mobile payment arrived” or “It didn’t arrive.”',
-          'If the customer isn’t there, tap “Customer isn’t here” and wait; when time is up, tap “The customer didn’t pay.”',
+          'At the door, check how the customer chose to receive the order.',
+          'For “hand it to them,” ask for the PIN, enter it and tap “Handed to the customer.”',
+          'If the customer isn’t there, tap “Customer isn’t here,” then message or call them while you wait.',
+          'When the wait is over, tap “Customer didn’t show: close with photo” and take the photo.',
         ],
       },
       {
         id: 'driver-commission-balance-top-up',
-        titulo: 'Your fee balance and how to top it up with a code',
+        titulo: 'Fee balance and top-ups: not needed in the United States',
         resumen:
-          'Fees for orders you collect in person come out of your balance; the app tells you how many orders it covers, and you top up with a code.',
+          'In the United States customers pay in the app, so you don’t keep a fee balance or buy top-ups: what you earn on each delivery shows under Earnings.',
         explicacion: [
-          'In countries where you collect in person, the Divoox fee isn’t taken from a card payment: it comes out of your fee balance. It’s reserved when you accept the order and charged when you deliver; if the order is canceled, it goes back to your balance.',
-          'Under “Earnings” you see your available balance, what’s reserved in orders, and an estimate of how many orders (and rides, if you drive Moto or Car) it covers. When it’s running low, the notice turns red.',
-          'To top up, you pay at an authorized sales point and get a code. Enter it under “Top-up code” and tap “Top up with the code”: the balance is added right away.',
-          'Without a balance, you don’t receive orders paid in person.',
+          'A fee balance exists only in countries where drivers collect orders in person: there, the Divoox fee comes out of a prepaid balance that the driver tops up with a code from a sales point.',
+          'In the United States orders are paid by card in the app, so there is no balance to top up and no code to enter before you can receive orders.',
+          'Under “Earnings” you see today’s total, the week and the month, split into base pay, bonuses and tips.',
+          'Base pay never changes because of the tip: tips are added on top, and they’re all yours.',
         ],
         capturas: [
-          foto(
-            'driver-saldo',
-            'en',
-            'The fee balance under Earnings: available, reserved in orders, “Enough for about N orders,” and the top-up code box.',
-            'Your balance, how many orders it covers, and the code top-up.',
-          ),
+          {
+            src: '/docs/recorrido-repartidor-ganancias-en.webp',
+            alt: 'The Earnings tab in Divoox Driver: today’s total with base pay, bonuses and tips, in US dollars.',
+            pie: 'Your earnings by day, week and month.',
+          },
         ],
         preguntas: [
-          'Where does the fee for a cash order come from?',
-          'How do I top up my balance with a code?',
-          'How many orders does my balance cover?',
+          'Do I need a fee balance to deliver in the United States?',
+          'Where do I see what I earned?',
+          'Do tips change my base pay?',
         ],
         pasos: [
-          'In the app, tap “Earnings” and check your fee balance.',
-          'To top up, enter the sales point code under “Top-up code” and tap “Top up with the code.”',
+          'In the app, tap “Earnings.”',
+          'Switch between Today, Week and Month to see your base pay, bonuses and tips.',
         ],
       },
     ],
