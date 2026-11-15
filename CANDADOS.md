@@ -28,6 +28,14 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - `npm audit` marca altas en `node-forge`, `braces`, `metro` y `uuid` dentro de `expo` / `@expo/cli`. Son herramientas de compilación que corren en la máquina del programador, no viajan en la app ni en el servidor, y no tienen versión corregida (10 oct 2026).
 - Se revisa con `npm run audit:apps` en cada actualización de SDK de Expo.
 
+## C-HONO-SEGURIDAD · hono 4.13.18 o mayor (todos los países)
+
+- Qué se rompía: hono hasta 4.13.15 (y en parte hasta 4.13.17) dejaba que una petición armada se saltara middleware comodín del RegExpRouter (el router por defecto), y con él nuestras sesiones y permisos de `/datos/*` y `/datos/admin/*`. También: `mount()` con prefijo, `csrf()` sin revisar `text/ping`, `validator('form'|'json')` con Content-Type raro, el ayudante `css`, `bodyLimit()` y `serveStatic()` (GHSA-4m76-xfj5-7975, GHSA-h7mg-cq63-vhpq, GHSA-3gg2-335m-rxc6, GHSA-46wx-v44x-9hh2, GHSA-4h7h-rv7c-7m2v, GHSA-92p4-j3wq-jmqx, GHSA-39q9-qp46-w8xg, GHSA-h25j-2p75-qj33, GHSA-74fm-fwc7-3fwp).
+- Qué usamos de eso (revisado el 15 nov 2026): NO usamos `mount()`, `csrf()`, `validator()`, `css`, `bodyLimit()` ni `serveStatic()`. SÍ usamos mucho middleware comodín (`app.use('*')`, `/datos/*` con `cargarSesion`, `/datos/admin/*` con `permisosInternos`, y los `use` de flex, gerente, diagnóstico, pruebas y Stripe): esa es la parte que nos tocaba. Las dos rutas con patrón propio (`:paso{llegue|iniciar|…}` en viajes y paradas) no aceptan vacío, así que el router nuevo no las rechaza.
+- Arreglo: `hono` `^4.13.18` en `apps/servidor/package.json` (único paquete del monorepo que lo usa). Sin cambios de código: las notas de 4.13.16 a 4.13.18 no rompen nada de lo que usamos.
+- Candado: `apps/servidor/src/honoVersion.test.ts` se pone en rojo si la versión instalada baja de 4.13.18 (comprobado en rojo el 15 nov 2026 subiendo la mínima a 4.13.19).
+- Antes de un rollback o de regenerar el lockfile: comprobar `npm ls hono` ≥ 4.13.18.
+
 ## C-CUENTAS-1 · Contraseñas, sesiones y administradores
 
 - Contraseñas con PBKDF2 (100 000 vueltas, el tope del servidor); nunca en claro. Sesiones guardadas como hash SHA-256 del token.
