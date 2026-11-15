@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-15",
+  "actualizado": "2026-11-15T19:31:00.000Z",
   "version": "7b9a5ca",
   "ahora": "15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
@@ -380,6 +380,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-15",
+      "titulo": "La página de Flex en inglés y las guías de Envíos en español, cada una con su país",
+      "texto": "La página pública de Divoox Flex en inglés ya no enseña el cobro contra entrega con capturas de Venezuela: dice que en Estados Unidos no se usa y muestra lo que sí hay allá, la recarga de la billetera con tarjeta y la parada del conductor sin nada que cobrar, con capturas tomadas en Novi, Michigan. Se revisaron una por una las demás imágenes en inglés de la web y todas son de Estados Unidos. Del lado del español, las guías de Envíos (enviar un paquete, recibir un paquete y entregar paquetes) ahora se enseñan en El Vigía, en dólares con su equivalente en bolívares y con efectivo o pago móvil. El candado vigila las dos cosas."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "",
