@@ -6,9 +6,15 @@
 //   (número de guía) y el enlace del destinatario.
 //   Venezuela (El Vigía, Mérida): recargar la billetera con pago móvil y comprobante; el equipo la
 //   verifica y la acredita.
-// Datos neutros («Paquetería de Prueba», «Destinatario de prueba 1»…). Guarda las originales en
-// docs/capturas/recorrido/flex2-*.png. Uso: node scripts/recorrido/capturas-flex.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// C-CAPTURAS-POR-IDIOMA (15 nov 2026): cada idioma con SUS ejemplos. La pasada en español queda como
+// estaba («Paquetería de Prueba», «Destinatario de prueba 1»…, y la recarga local en Venezuela). La
+// pasada en inglés se toma en Novi (Michigan) con su propia empresa, nombres en inglés y dólares, y en
+// la billetera muestra lo que tiene una empresa de Estados Unidos: la recarga con tarjeta (el pago
+// local no está disponible allí). SOLO_IDIOMA=en (o es) corre una sola pasada.
+// Guarda las originales en docs/capturas/recorrido/flex2-*.png.
+// Uso: SOLO_IDIOMA=en node scripts/recorrido/capturas-flex.mjs
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { strToU8, zipSync } from 'fflate';
 import { chromium, devices } from '@playwright/test';
@@ -37,6 +43,31 @@ const PARADAS = [
   { direccion: '1201 W West Maple Rd, Walled Lake, MI 48390', lat: 42.5393, lng: -83.5004 },
   { direccion: '45175 W Ten Mile Rd, Novi, MI 48375', lat: 42.4725, lng: -83.4757 },
 ];
+
+// Los nombres de cada pasada (en inglés, nada en español ni que diga «Test»).
+const NOMBRES = {
+  es: {
+    dueno: 'Paquetería de Prueba',
+    empresa: 'Paquetería de Prueba',
+    centro: 'Centro Novi',
+    conductor: 'Conductor de prueba',
+    destinatario: 'Destinatario de prueba',
+    ruta: 'Ruta Walled Lake',
+    caja: 'Caja',
+  },
+  en: {
+    dueno: 'Pat Morgan',
+    empresa: 'Great Lakes Supply',
+    centro: 'Novi Warehouse',
+    conductor: 'Alex Turner',
+    destinatarios: ['Jamie Lee', 'Chris Miller', 'Taylor Brooks', 'Morgan Davis'],
+    importados: ['Riley Johnson', 'Avery Wilson', 'Jordan Smith'],
+    ruta: 'Walled Lake route',
+    caja: 'Box',
+  },
+};
+const SOLO = process.env.SOLO_IDIOMA;
+const IDIOMAS = SOLO === 'en' ? ['en'] : SOLO === 'es' ? ['es'] : ['es', 'en'];
 
 let ip = 0;
 async function pedir(metodo, ruta, cuerpo, token, extra = {}, intento = 1) {
@@ -119,27 +150,9 @@ function xlsx(filas) {
   });
 }
 
-// ───────── Cuentas y empresa de EE. UU. con su centro en Novi
-const dueno = await cuenta('cliente', 'Paquetería de Prueba');
-const conductor = await cuenta('repartidor', 'Conductor de prueba');
+// El equipo de Divoox (acredita la recarga local y ajusta la configuración de este servidor local).
 const admin = await cuenta('admin', 'Soporte Flex');
 await sql(`UPDATE usuarios SET rol = 'admin' WHERE id = '${admin.id}'`);
-const empresa = (
-  await pedir(
-    'POST',
-    `${B}/empresas`,
-    { nombre: 'Paquetería de Prueba', pais: 'US', moneda: 'USD' },
-    dueno.token,
-  )
-).empresa;
-const E = `${B}/empresas/${empresa.id}`;
-const centro = (await pedir('POST', `${E}/centros`, CENTRO, dueno.token)).centro;
-await pedir(
-  'POST',
-  `${E}/conductores`,
-  { correo: conductor.correo, vinculo: 'propio' },
-  dueno.token,
-);
 
 const navegador = await chromium.launch();
 const panel = async (token, idioma) => {
@@ -183,284 +196,318 @@ const foto = (p, nombre, idioma, extra = {}) =>
   p.screenshot({ path: join(SALIDA, `flex2-${nombre}-${idioma}.png`), ...extra });
 const pre = (idioma) => (idioma === 'en' ? '' : '/es');
 
-// ───────── 1. Importar desde Excel (una vez por idioma, con su archivo)
-for (const idioma of ['es', 'en']) {
-  const en = idioma === 'en';
-  const archivo = join(TMP, en ? 'shipments.xlsx' : 'envios.xlsx');
-  // Ruta fija dentro de la carpeta temporal de este guion (envios.xlsx o shipments.xlsx).
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  writeFileSync(
-    archivo,
-    xlsx([
-      [
-        'reference',
-        'recipient',
-        'phone',
-        'email',
-        'address',
-        'lat',
-        'lng',
-        'packages',
-        'description',
-        'instructions',
-      ],
-      ...PARADAS.slice(0, 3).map((p, i) => [
-        `ORD-${idioma.toUpperCase()}-${ID.slice(-4)}-${i + 1}`,
-        `${en ? 'Test recipient' : 'Destinatario de prueba'} ${i + 1}`,
-        `+1248555014${i}`,
-        '',
-        p.direccion,
-        p.lat,
-        p.lng,
-        1,
-        en ? 'Box' : 'Caja',
-        '',
-      ]),
-    ]),
-  );
-  const ctx = await panel(dueno.token, idioma);
-  const p = await ctx.newPage();
-  await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/import`);
-  await p.locator('#flex-csv').waitFor({ timeout: 60_000 });
-  await espera(800);
-  await foto(p, 'importar', idioma);
-  await p.locator('#flex-csv').setInputFiles(archivo);
-  await p.locator('#flex-csv-centro').selectOption({ label: CENTRO.nombre });
-  await espera(500);
-  await p.getByRole('button', { name: en ? 'Preview' : 'Previsualizar' }).click();
-  await p.locator('.flex-importacion').waitFor({ timeout: 30_000 });
-  await espera(800);
-  await p.locator('.flex-importacion').scrollIntoViewIfNeeded();
-  await foto(p, 'importar-vista', idioma);
-  await p.locator('.flex-importacion button.boton').first().click();
-  await p
-    .locator('.flex-importacion .insignia')
-    .filter({ hasText: en ? /Finished|Done|Complete/ : /Terminada/ })
-    .waitFor({ timeout: 30_000 })
-    .catch(() => null);
-  await espera(800);
-  await p.locator('.flex-importacion').scrollIntoViewIfNeeded();
-  await foto(p, 'importar-listo', idioma);
-  await ctx.close();
-}
-
-// ───────── 2. La ruta: 4 envíos en orden, asignada al conductor (calcula km y tiempos)
-const envios = [];
-for (const [i, e] of PARADAS.entries())
-  envios.push(
-    (
-      await pedir(
-        'POST',
-        `${E}/envios`,
-        {
-          centroId: centro.id,
-          ...e,
-          referenciaExterna: `RUTA-${ID.slice(-4)}-${i + 1}`,
-          destinatarioNombre: `Destinatario de prueba ${i + 1}`,
-          destinatarioTelefono: `+1248555015${i}`,
-          paquetes: [{ descripcion: 'Caja', pesoG: 1500 }],
-        },
-        dueno.token,
-      )
-    ).envio,
-  );
-const ruta = (
+/** Una pasada (un idioma) con su propia empresa de EE. UU. y su centro en Novi. */
+async function pasada(idiomaPasada) {
+  const N = idiomaPasada === 'en' ? NOMBRES.en : NOMBRES.es;
+  const nombreDestinatario = (i) => N.destinatarios?.at(i) ?? `${N.destinatario} ${i + 1}`;
+  const nombreImportado = (i) => N.importados?.at(i) ?? `${N.destinatario} ${i + 1}`;
+  // ───────── Cuentas y empresa de EE. UU. con su centro en Novi
+  const dueno = await cuenta('cliente', N.dueno);
+  const conductor = await cuenta('repartidor', N.conductor);
+  const empresa = (
+    await pedir(
+      'POST',
+      `${B}/empresas`,
+      { nombre: N.empresa, pais: 'US', moneda: 'USD' },
+      dueno.token,
+    )
+  ).empresa;
+  const E = `${B}/empresas/${empresa.id}`;
+  const centro = (await pedir('POST', `${E}/centros`, { ...CENTRO, nombre: N.centro }, dueno.token))
+    .centro;
   await pedir(
     'POST',
-    `${E}/rutas`,
-    {
-      nombre: `Ruta Walled Lake ${ID.slice(-4)}`,
-      centroId: centro.id,
-      envioIds: envios.map((x) => x.id),
-    },
+    `${E}/conductores`,
+    { correo: conductor.correo, vinculo: 'propio' },
     dueno.token,
-  )
-).ruta;
-await pedir('POST', `${E}/rutas/${ruta.id}/asignar`, { conductorId: conductor.id }, dueno.token);
-// Sin llave de mapas en este servidor local, el recorrido sale como estimación; se marca como «por
-// calles» solo aquí para que la captura pública muestre el caso normal (las cifras son las calculadas).
-await pedir('POST', `${E}/rutas/${ruta.id}/calles`, {}, dueno.token).catch(() => null);
-await sql(`UPDATE rutas_flex_calles SET fuente = 'google' WHERE ruta_id = '${ruta.id}'`);
+  );
 
-for (const idioma of ['es', 'en']) {
-  const en = idioma === 'en';
-  const ctx = await panel(dueno.token, idioma);
-  const p = await ctx.newPage();
-  await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/operativas/${ruta.id}`);
-  const tarjeta = p
-    .locator('.flex-tarjeta')
-    .filter({ hasText: en ? 'Route by road' : 'Recorrido por calles' });
-  await tarjeta.waitFor({ timeout: 60_000 });
-  await tarjeta.locator('summary').click();
-  await espera(800);
-  await tarjeta.evaluate((n) => n.scrollIntoView({ block: 'center' }));
-  await espera(500);
-  await foto(p, 'ruta-calles', idioma);
-  await ctx.close();
-}
-
-// El conductor acepta, carga los paquetes en el centro y sale.
-const cond = (m, r, c) => pedir(m, `${B}${r}`, c, conductor.token);
-await cond('POST', `/conductor/rutas/${ruta.id}/aceptar`, {});
-// El enlace para el destinatario se pide antes de que el paquete salga.
-const enlace = (
-  await pedir('POST', `${E}/envios/${envios[0].id}/enlace-ubicacion`, {}, dueno.token).catch(
-    (x) => {
-      console.error('enlace de ubicación:', String(x).slice(0, 160));
-      return {};
-    },
-  )
-).url;
-// Quien recibe abre su enlace (antes de que el paquete salga): marca su punto en el mapa.
-if (enlace)
-  for (const idioma of ['es', 'en']) {
-    const ctx = await telefono(null, null, idioma, PARADAS[0]);
-    const r = await ctx.newPage();
-    await r.goto(`${pre(idioma)}${new globalThis.URL(enlace).pathname}`);
-    await r.waitForLoadState('networkidle').catch(() => null);
-    await espera(3_000);
-    const pie = await r
-      .locator('footer')
-      .first()
-      .evaluate((n) => n.getBoundingClientRect().top + globalThis.scrollY)
-      .catch(() => 1400);
-    await r.screenshot({
-      path: join(SALIDA, `flex2-enlace-destinatario-${idioma}.png`),
-      fullPage: true,
-      clip: { x: 0, y: 0, width: r.viewportSize().width, height: Math.min(pie, 1500) },
-    });
+  // ───────── 1. Importar desde Excel (una vez por idioma, con su archivo)
+  for (const idioma of [idiomaPasada]) {
+    const en = idioma === 'en';
+    const archivo = join(TMP, en ? 'shipments.xlsx' : 'envios.xlsx');
+    // Ruta fija dentro de la carpeta temporal de este guion (envios.xlsx o shipments.xlsx).
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    writeFileSync(
+      archivo,
+      xlsx([
+        [
+          'reference',
+          'recipient',
+          'phone',
+          'email',
+          'address',
+          'lat',
+          'lng',
+          'packages',
+          'description',
+          'instructions',
+        ],
+        ...PARADAS.slice(0, 3).map((p, i) => [
+          en ? `ORD-${3001 + i}` : `ORD-${idioma.toUpperCase()}-${ID.slice(-4)}-${i + 1}`,
+          nombreImportado(i),
+          `+1248555014${i}`,
+          '',
+          p.direccion,
+          p.lat,
+          p.lng,
+          1,
+          N.caja,
+          '',
+        ]),
+      ]),
+    );
+    const ctx = await panel(dueno.token, idioma);
+    const p = await ctx.newPage();
+    await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/import`);
+    await p.locator('#flex-csv').waitFor({ timeout: 60_000 });
+    await espera(800);
+    await foto(p, 'importar', idioma);
+    await p.locator('#flex-csv').setInputFiles(archivo);
+    await p.locator('#flex-csv-centro').selectOption({ label: N.centro });
+    await espera(500);
+    await p.getByRole('button', { name: en ? 'Preview' : 'Previsualizar' }).click();
+    await p.locator('.flex-importacion').waitFor({ timeout: 30_000 });
+    await espera(800);
+    await p.locator('.flex-importacion').scrollIntoViewIfNeeded();
+    await foto(p, 'importar-vista', idioma);
+    await p.locator('.flex-importacion button.boton').first().click();
+    await p
+      .locator('.flex-importacion .insignia')
+      .filter({ hasText: en ? /Finished|Done|Complete/ : /Terminada/ })
+      .waitFor({ timeout: 30_000 })
+      .catch(() => null);
+    await espera(800);
+    await p.locator('.flex-importacion').scrollIntoViewIfNeeded();
+    await foto(p, 'importar-listo', idioma);
     await ctx.close();
   }
-// Carga y salida (API, como la app): llegar al centro, escanear cada paquete, iniciar.
-await cond('POST', `/conductor/rutas/${ruta.id}/llegada-centro`, {
-  lat: CENTRO.lat,
-  lng: CENTRO.lng,
-});
-const paquetes = await sql(
-  `SELECT p.id, p.codigo_seguimiento AS codigo, rp.orden FROM ruta_paquetes rq JOIN paquetes p ON p.id = rq.paquete_id JOIN ruta_paradas rp ON rp.id = rq.parada_id WHERE rq.ruta_id = '${ruta.id}' ORDER BY rp.orden`,
-);
-for (const q of paquetes)
-  await cond('POST', `/conductor/rutas/${ruta.id}/escanear`, { codigo: q.codigo });
-await cond('POST', `/conductor/rutas/${ruta.id}/iniciar`, { lat: CENTRO.lat, lng: CENTRO.lng });
-await cond('POST', `/conductor/rutas/${ruta.id}/ubicacion`, { lat: 42.5301, lng: -83.4612 });
 
-// ───────── 3. Mi ruta en el Driver: el mapa con «Navegar la ruta»
-for (const idioma of ['es', 'en']) {
-  const en = idioma === 'en';
-  const ctx = await telefono(conductor.token, conductor.id, idioma);
-  const d = await ctx.newPage();
-  await d.goto('/driver/');
-  await d
-    .getByRole('button', { name: en ? /menu/i : /menú/i })
-    .first()
-    .click({ timeout: 60_000 })
-    .catch(async () => {
-      await d.locator('[aria-label]').first().click();
-    });
-  await d
-    .getByText(en ? 'My route (packages)' : 'Mi ruta (paquetes)', { exact: true })
-    .first()
-    .click({ timeout: 30_000 });
-  await espera(2_500);
-  await foto(d, 'driver-mis-rutas', idioma);
-  await d
-    .getByText(
-      en ? /Continue route|Start route|Open route/ : /Continuar ruta|Empezar ruta|Abrir ruta/,
+  // ───────── 2. La ruta: 4 envíos en orden, asignada al conductor (calcula km y tiempos)
+  const envios = [];
+  for (const [i, e] of PARADAS.entries())
+    envios.push(
+      (
+        await pedir(
+          'POST',
+          `${E}/envios`,
+          {
+            centroId: centro.id,
+            ...e,
+            referenciaExterna:
+              idiomaPasada === 'en' ? `ORD-${4001 + i}` : `RUTA-${ID.slice(-4)}-${i + 1}`,
+            destinatarioNombre: nombreDestinatario(i),
+            destinatarioTelefono: `+1248555015${i}`,
+            paquetes: [{ descripcion: N.caja, pesoG: 1500 }],
+          },
+          dueno.token,
+        )
+      ).envio,
+    );
+  const ruta = (
+    await pedir(
+      'POST',
+      `${E}/rutas`,
+      {
+        nombre: idiomaPasada === 'en' ? N.ruta : `${N.ruta} ${ID.slice(-4)}`,
+        centroId: centro.id,
+        envioIds: envios.map((x) => x.id),
+      },
+      dueno.token,
     )
-    .first()
-    .click({ timeout: 30_000 })
-    .catch(() => null);
-  await espera(2_500);
-  await foto(d, 'driver-ruta', idioma);
-  const mapa = d.getByText(en ? 'Map' : 'Mapa', { exact: true }).first();
-  if (await mapa.count()) {
-    await mapa.click();
-    await espera(2_500);
-  }
-  const nav = d.getByText(en ? 'Navigate the route' : 'Navegar la ruta', { exact: true }).first();
-  if (await nav.count()) {
-    await nav.evaluate((n) => n.scrollIntoView({ block: 'center' }));
+  ).ruta;
+  await pedir('POST', `${E}/rutas/${ruta.id}/asignar`, { conductorId: conductor.id }, dueno.token);
+  // Sin llave de mapas en este servidor local, el recorrido sale como estimación; se marca como «por
+  // calles» solo aquí para que la captura pública muestre el caso normal (las cifras son las calculadas).
+  await pedir('POST', `${E}/rutas/${ruta.id}/calles`, {}, dueno.token).catch(() => null);
+  await sql(`UPDATE rutas_flex_calles SET fuente = 'google' WHERE ruta_id = '${ruta.id}'`);
+
+  for (const idioma of [idiomaPasada]) {
+    const en = idioma === 'en';
+    const ctx = await panel(dueno.token, idioma);
+    const p = await ctx.newPage();
+    await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/operativas/${ruta.id}`);
+    const tarjeta = p
+      .locator('.flex-tarjeta')
+      .filter({ hasText: en ? 'Route by road' : 'Recorrido por calles' });
+    await tarjeta.waitFor({ timeout: 60_000 });
+    await tarjeta.locator('summary').click();
     await espera(800);
-  } else console.error(`(${idioma}) no apareció «Navegar la ruta»`);
-  await foto(d, 'driver-navegar', idioma);
-  await ctx.close();
-}
+    await tarjeta.evaluate((n) => n.scrollIntoView({ block: 'center' }));
+    await espera(500);
+    await foto(p, 'ruta-calles', idioma);
+    await ctx.close();
+  }
 
-// ───────── 4. Rastreo: con el número de guía (en camino, tres paradas antes) y siendo la próxima
-const tercero = paquetes.at(2);
-const primero = paquetes.at(0);
+  // El conductor acepta, carga los paquetes en el centro y sale.
+  const cond = (m, r, c) => pedir(m, `${B}${r}`, c, conductor.token);
+  await cond('POST', `/conductor/rutas/${ruta.id}/aceptar`, {});
+  // El enlace para el destinatario se pide antes de que el paquete salga.
+  const enlace = (
+    await pedir('POST', `${E}/envios/${envios[0].id}/enlace-ubicacion`, {}, dueno.token).catch(
+      (x) => {
+        console.error('enlace de ubicación:', String(x).slice(0, 160));
+        return {};
+      },
+    )
+  ).url;
+  // Quien recibe abre su enlace (antes de que el paquete salga): marca su punto en el mapa.
+  if (enlace)
+    for (const idioma of [idiomaPasada]) {
+      const ctx = await telefono(null, null, idioma, PARADAS[0]);
+      const r = await ctx.newPage();
+      await r.goto(`${pre(idioma)}${new globalThis.URL(enlace).pathname}`);
+      await r.waitForLoadState('networkidle').catch(() => null);
+      await espera(3_000);
+      const pie = await r
+        .locator('footer')
+        .first()
+        .evaluate((n) => n.getBoundingClientRect().top + globalThis.scrollY)
+        .catch(() => 1400);
+      await r.screenshot({
+        path: join(SALIDA, `flex2-enlace-destinatario-${idioma}.png`),
+        fullPage: true,
+        clip: { x: 0, y: 0, width: r.viewportSize().width, height: Math.min(pie, 1500) },
+      });
+      await ctx.close();
+    }
+  // Carga y salida (API, como la app): llegar al centro, escanear cada paquete, iniciar.
+  await cond('POST', `/conductor/rutas/${ruta.id}/llegada-centro`, {
+    lat: CENTRO.lat,
+    lng: CENTRO.lng,
+  });
+  const paquetes = await sql(
+    `SELECT p.id, p.codigo_seguimiento AS codigo, rp.orden FROM ruta_paquetes rq JOIN paquetes p ON p.id = rq.paquete_id JOIN ruta_paradas rp ON rp.id = rq.parada_id WHERE rq.ruta_id = '${ruta.id}' ORDER BY rp.orden`,
+  );
+  for (const q of paquetes)
+    await cond('POST', `/conductor/rutas/${ruta.id}/escanear`, { codigo: q.codigo });
+  await cond('POST', `/conductor/rutas/${ruta.id}/iniciar`, { lat: CENTRO.lat, lng: CENTRO.lng });
+  await cond('POST', `/conductor/rutas/${ruta.id}/ubicacion`, { lat: 42.5301, lng: -83.4612 });
 
-for (const idioma of ['es', 'en']) {
-  const ctx = await telefono(null, null, idioma);
-  const r = await ctx.newPage();
-  const recorte = async (nombre) => {
-    const pie = await r
-      .locator('footer')
+  // ───────── 3. Mi ruta en el Driver: el mapa con «Navegar la ruta»
+  for (const idioma of [idiomaPasada]) {
+    const en = idioma === 'en';
+    const ctx = await telefono(conductor.token, conductor.id, idioma);
+    const d = await ctx.newPage();
+    await d.goto('/driver/');
+    await d
+      .getByRole('button', { name: en ? /menu/i : /menú/i })
       .first()
-      .evaluate((n) => n.getBoundingClientRect().top + globalThis.scrollY)
-      .catch(() => 900);
-    await r.screenshot({
-      path: join(SALIDA, `flex2-${nombre}-${idioma}.png`),
-      fullPage: true,
-      clip: { x: 0, y: 0, width: r.viewportSize().width, height: Math.min(pie, 1400) },
-    });
-  };
-  await r.goto(`${pre(idioma)}/track/${tercero.codigo}`);
-  await r.locator('.ticket-estado').first().waitFor({ timeout: 60_000 });
-  await espera(1_200);
-  await recorte('rastreo-en-camino');
-  await r.goto(`${pre(idioma)}/track/${primero.codigo}`);
-  await r.locator('.ticket-estado').first().waitFor({ timeout: 60_000 });
-  await r.waitForLoadState('networkidle').catch(() => null);
-  await espera(2_500);
-  await recorte('rastreo-proxima');
-  await ctx.close();
+      .click({ timeout: 60_000 })
+      .catch(async () => {
+        await d.locator('[aria-label]').first().click();
+      });
+    await d
+      .getByText(en ? 'My route (packages)' : 'Mi ruta (paquetes)', { exact: true })
+      .first()
+      .click({ timeout: 30_000 });
+    await espera(2_500);
+    await foto(d, 'driver-mis-rutas', idioma);
+    await d
+      .getByText(
+        en ? /Continue route|Start route|Open route/ : /Continuar ruta|Empezar ruta|Abrir ruta/,
+      )
+      .first()
+      .click({ timeout: 30_000 })
+      .catch(() => null);
+    await espera(2_500);
+    await foto(d, 'driver-ruta', idioma);
+    const mapa = d.getByText(en ? 'Map' : 'Mapa', { exact: true }).first();
+    if (await mapa.count()) {
+      await mapa.click();
+      await espera(2_500);
+    }
+    const nav = d.getByText(en ? 'Navigate the route' : 'Navegar la ruta', { exact: true }).first();
+    if (await nav.count()) {
+      await nav.evaluate((n) => n.scrollIntoView({ block: 'center' }));
+      await espera(800);
+    } else console.error(`(${idioma}) no apareció «Navegar la ruta»`);
+    await foto(d, 'driver-navegar', idioma);
+    await ctx.close();
+  }
+
+  // ───────── 4. Rastreo: con el número de guía (en camino, tres paradas antes) y siendo la próxima
+  const tercero = paquetes.at(2);
+  const primero = paquetes.at(0);
+
+  for (const idioma of [idiomaPasada]) {
+    const ctx = await telefono(null, null, idioma);
+    const r = await ctx.newPage();
+    const recorte = async (nombre) => {
+      const pie = await r
+        .locator('footer')
+        .first()
+        .evaluate((n) => n.getBoundingClientRect().top + globalThis.scrollY)
+        .catch(() => 900);
+      await r.screenshot({
+        path: join(SALIDA, `flex2-${nombre}-${idioma}.png`),
+        fullPage: true,
+        clip: { x: 0, y: 0, width: r.viewportSize().width, height: Math.min(pie, 1400) },
+      });
+    };
+    await r.goto(`${pre(idioma)}/track/${tercero.codigo}`);
+    await r.locator('.ticket-estado').first().waitFor({ timeout: 60_000 });
+    await espera(1_200);
+    await recorte('rastreo-en-camino');
+    await r.goto(`${pre(idioma)}/track/${primero.codigo}`);
+    await r.locator('.ticket-estado').first().waitFor({ timeout: 60_000 });
+    await r.waitForLoadState('networkidle').catch(() => null);
+    await espera(2_500);
+    await recorte('rastreo-proxima');
+    await ctx.close();
+  }
+
+  // ───────── 5. Exportar a hoja de cálculo (envíos y rutas)
+  for (const idioma of [idiomaPasada]) {
+    const en = idioma === 'en';
+    const ctx = await panel(dueno.token, idioma);
+    const p = await ctx.newPage();
+    await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/shipments`);
+    const boton = p.getByRole('button', { name: en ? 'Export' : 'Exportar', exact: true }).first();
+    await boton.waitFor({ timeout: 60_000 });
+    await espera(1_500);
+    await foto(p, 'exportar', idioma);
+    const descarga = p.waitForEvent('download', { timeout: 30_000 }).catch(() => null);
+    await boton.click();
+    const archivo = await descarga;
+    if (archivo) await archivo.saveAs(join(TMP, `export-${idioma}.csv`));
+    await p.locator('.flex-exportar [role="status"]').waitFor({ timeout: 30_000 });
+    await espera(600);
+    await foto(p, 'exportar-listo', idioma);
+    await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/operativas`);
+    await p
+      .getByRole('button', { name: en ? 'Export' : 'Exportar', exact: true })
+      .first()
+      .waitFor({ timeout: 60_000 });
+    await espera(1_500);
+    await foto(p, 'exportar-rutas', idioma);
+    await ctx.close();
+  }
+  return { dueno, empresa };
 }
 
-// ───────── 5. Exportar a hoja de cálculo (envíos y rutas)
-for (const idioma of ['es', 'en']) {
-  const en = idioma === 'en';
-  const ctx = await panel(dueno.token, idioma);
-  const p = await ctx.newPage();
-  await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/shipments`);
-  const boton = p.getByRole('button', { name: en ? 'Export' : 'Exportar', exact: true }).first();
-  await boton.waitFor({ timeout: 60_000 });
-  await espera(1_500);
-  await foto(p, 'exportar', idioma);
-  const descarga = p.waitForEvent('download', { timeout: 30_000 }).catch(() => null);
-  await boton.click();
-  const archivo = await descarga;
-  if (archivo) await archivo.saveAs(join(TMP, `export-${idioma}.csv`));
-  await p.locator('.flex-exportar [role="status"]').waitFor({ timeout: 30_000 });
-  await espera(600);
-  await foto(p, 'exportar-listo', idioma);
-  await p.goto(`${pre(idioma)}/panel/business/${empresa.id}/operativas`);
-  await p
-    .getByRole('button', { name: en ? 'Export' : 'Exportar', exact: true })
-    .first()
-    .waitFor({ timeout: 60_000 });
-  await espera(1_500);
-  await foto(p, 'exportar-rutas', idioma);
-  await ctx.close();
-}
+const pasadas = new Map();
+for (const idioma of IDIOMAS) pasadas.set(idioma, await pasada(idioma));
 
-// ───────── 6. Venezuela: recargar con pago móvil y comprobante; el equipo la acredita
-await pedir(
-  'PUT',
-  '/datos/admin/finanzas/recargas-locales/config/VE',
-  {
-    activas: true,
-    minimo: 500,
-    maximo: 500_000,
-    metodos: ['pago_movil', 'transferencia', 'zelle', 'efectivo'],
-    instruccionesEs:
-      'Pago móvil: Banco 0000 · teléfono 0414-000-0000 · RIF J-00000000-0\nTransferencia: cuenta 0000-0000-00-0000000000\nZelle: pagos@ejemplo.com\nEfectivo: en la oficina de Divoox, de lunes a viernes.',
-    instruccionesEn:
-      'Mobile payment: Bank 0000 · phone 0414-000-0000 · RIF J-00000000-0\nBank transfer: account 0000-0000-00-0000000000\nZelle: pagos@ejemplo.com\nCash: at the Divoox office, Monday to Friday.',
-  },
-  admin.token,
-);
-for (const idioma of ['es', 'en']) {
+// ───────── 6. Venezuela (solo en español): recargar con pago móvil y comprobante; el equipo la
+// acredita. C-CAPTURAS-POR-IDIOMA: en inglés no se fotografía una empresa de Venezuela (sección 7).
+if (IDIOMAS.includes('es'))
+  await pedir(
+    'PUT',
+    '/datos/admin/finanzas/recargas-locales/config/VE',
+    {
+      activas: true,
+      minimo: 500,
+      maximo: 500_000,
+      metodos: ['pago_movil', 'transferencia', 'zelle', 'efectivo'],
+      instruccionesEs:
+        'Pago móvil: Banco 0000 · teléfono 0414-000-0000 · RIF J-00000000-0\nTransferencia: cuenta 0000-0000-00-0000000000\nZelle: pagos@ejemplo.com\nEfectivo: en la oficina de Divoox, de lunes a viernes.',
+      instruccionesEn:
+        'Mobile payment: Bank 0000 · phone 0414-000-0000 · RIF J-00000000-0\nBank transfer: account 0000-0000-00-0000000000\nZelle: pagos@ejemplo.com\nCash: at the Divoox office, Monday to Friday.',
+    },
+    admin.token,
+  );
+for (const idioma of IDIOMAS.filter((i) => i === 'es')) {
   const en = idioma === 'en';
   const duenoVe = await cuenta('cliente', 'Encomiendas de Prueba');
   const ve = (
@@ -513,5 +560,97 @@ for (const idioma of ['es', 'en']) {
   await ctx.close();
 }
 
+// ───────── 7. Estados Unidos (solo en inglés): la billetera de una empresa de allí. El pago local
+// no está encendido para Estados Unidos (se enciende país por país), así que la pestaña lo dice; la
+// recarga es con tarjeta. En este servidor local se encienden las recargas con tarjeta de EE. UU.
+// con los importes sugeridos de la guía (10, 20, 50 y 100 dólares), y el saldo de la foto sale de
+// un ajuste del equipo (aquí no hay pasarela de pago).
+if (IDIOMAS.includes('en')) {
+  const idioma = 'en';
+  const { dueno: duenoUs, empresa: us } = pasadas.get('en');
+  await pedir(
+    'PUT',
+    '/datos/admin/finanzas/recargas-config/US',
+    {
+      activas: true,
+      minimo: 500,
+      maximo: 100_000,
+      sugeridos: [1000, 2000, 5000, 10_000],
+      automaticaPermitida: true,
+    },
+    admin.token,
+  );
+  await pedir(
+    'POST',
+    `/datos/admin/finanzas/empresas/${us.id}/ajuste`,
+    { monto: 2000, motivo: 'Opening balance for the wallet', clave: DATOS.clave },
+    admin.token,
+  ).catch((x) => console.error('ajuste de billetera:', String(x).slice(0, 200)));
+  const ctx = await panel(duenoUs.token, idioma);
+  const p = await ctx.newPage();
+  const R = `${pre(idioma)}/panel/business/${us.id}/wallet`;
+  await p.goto(`${R}/local`);
+  await p.getByText('Your local-payment top-ups').waitFor({ timeout: 60_000 });
+  await espera(1_000);
+  await foto(p, 'recarga-local', idioma);
+  await p.goto(`${R}/topup`);
+  await p.locator('.flex-billetera h1').waitFor({ timeout: 60_000 });
+  await espera(1_000);
+  await p
+    .getByText('$50.00', { exact: true })
+    .first()
+    .click()
+    .catch(() => null);
+  await espera(1_000);
+  await foto(p, 'recarga-local-revision', idioma);
+  await p.goto(`${R}/settings`);
+  await p.locator('.flex-billetera h1').waitFor({ timeout: 60_000 });
+  await espera(2_000);
+  await foto(p, 'recarga-local-historial', idioma);
+  await p.goto(R);
+  await p.locator('.flex-kpis').waitFor({ timeout: 60_000 });
+  await espera(1_500);
+  await foto(p, 'recarga-local-acreditada', idioma);
+  await ctx.close();
+}
+
 await navegador.close();
+// Para Docs, SOLO las de esta corrida (no se corre recorrido:docs entero): las del celular a 540 de
+// ancho y las del panel a su ancho, como las convierte scripts/recorrido/a-docs.mjs.
+const DOCS = join(RAIZ, 'apps', 'panel', 'public', 'docs');
+for (const idioma of IDIOMAS)
+  for (const n of [
+    'importar',
+    'importar-vista',
+    'importar-listo',
+    'ruta-calles',
+    'enlace-destinatario',
+    'driver-mis-rutas',
+    'driver-ruta',
+    'driver-navegar',
+    'rastreo-en-camino',
+    'rastreo-proxima',
+    'exportar',
+    'exportar-listo',
+    'exportar-rutas',
+    'recarga-local',
+    'recarga-local-revision',
+    'recarga-local-historial',
+    'recarga-local-acreditada',
+  ]) {
+    const png = join(SALIDA, `flex2-${n}-${idioma}.png`);
+    // Ruta fija dentro de docs/capturas/recorrido (nombre de la lista de arriba).
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    if (!existsSync(png)) continue;
+    const celular = /^(driver|rastreo|enlace)/.test(n);
+    execFileSync('cwebp', [
+      '-quiet',
+      '-q',
+      '82',
+      ...(celular ? ['-resize', '540', '0'] : []),
+      png,
+      '-o',
+      join(DOCS, `recorrido-flex2-${n}-${idioma}.webp`),
+    ]);
+  }
 console.log('capturas de Flex listas en docs/capturas/recorrido/flex2-*.png');

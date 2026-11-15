@@ -608,12 +608,25 @@ async function correrUs(idiomas) {
   await yo('POST', '/datos/repartidor/conectar', { conectado: false });
 }
 
+// Los servicios de pasajeros de Estados Unidos vuelven a quedar apagados en este servidor local: el
+// país no está abierto y, encendidos, el canario de servicios se pone en rojo y frena la pasada de
+// Venezuela (su guion de punta a punta exige la salud en verde).
+const apagarPasajerosUs = async () => {
+  await sql(
+    "UPDATE servicios_zona SET estado = 'proximamente' WHERE servicio_id IN ('moto', 'carro') AND zona_id IN (SELECT id FROM zonas WHERE pais = 'US')",
+  ).catch(() => null);
+  // Y el servicio que no quedó encendido en ninguna ciudad vuelve a «próximamente».
+  await sql(
+    "UPDATE servicios SET estado = 'proximamente' WHERE id IN ('moto', 'carro') AND NOT EXISTS (SELECT 1 FROM servicios_zona z WHERE z.servicio_id = servicios.id AND z.estado = 'disponible')",
+  ).catch(() => null);
+};
 // Español en El Vigía; inglés en Novi, Michigan (C-CAPTURAS-POR-IDIOMA).
 const SOLO = process.env.SOLO_IDIOMA;
 try {
   if (SOLO !== 'en') await correrVe(['es']);
   if (SOLO !== 'es') await correrUs(['en']);
 } finally {
+  await apagarPasajerosUs();
   await navegador.close();
 }
 console.log('capturas de Comida listas en docs/capturas/recorrido/comida-{ve,us}-*.png');

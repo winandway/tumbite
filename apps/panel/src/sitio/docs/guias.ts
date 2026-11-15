@@ -9045,8 +9045,8 @@ const en: SeccionDocs[] = [
           'With “Ask the recipient for their location” we prepare a message with a link you can send on WhatsApp or copy. The recipient opens it, marks the exact delivery spot on the map and adds a landmark (“blue house across from the bakery”). No account needed. The link lasts 7 days and, while it lasts, it’s the same every time you ask.',
           'If the recipient already uses the Divoox app with the same phone or email, the shipment shows up in “My packages”. If they marked their home in the app, the package arrives already located without you asking.',
           'You can also mark the spot yourself with the pin on the map from the shipment detail.',
-          'Each country works its own way. In Venezuela the route can’t leave until every stop has a confirmed location, a landmark is required and you can save the recipient’s national ID. In the United States the written address is enough and the pin is optional.',
-          'To search for an address in Venezuela, type the street or place and the city or neighborhood, without the house number first: “Calle 3, El Vigía” or “Av. Francisco de Miranda, Chacao”. Pick the suggestion, then mark the door with the pin and a landmark, because many houses have no number on the map.',
+          'Each country works its own way. In the United States the written address is enough and the pin is optional: the route can leave without it. In countries where many addresses are informal, the route can’t leave until every stop has a confirmed location, and a landmark is required.',
+          'To search for an address, type the number and the street, then the city: “45175 W 10 Mile Rd, Novi”. Pick the suggestion. If the door is hard to find (a back entrance, a suite or a large building), mark it with the pin and add a landmark.',
           'The package label carries the landmark and the plus code of the exact spot: a short code Google Maps understands even offline.',
           'For privacy, the link only shows who is sending the package and the address; never the phone or other details. Once the package leaves on the route, the location can no longer change.',
         ],
@@ -9058,7 +9058,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/flex-destinatario-confirmar-en.webp',
-            alt: 'Page where the recipient marks on the map where they receive their package.',
+            alt: 'Page where the recipient marks on the map where they receive their package: the map is on their current location, with the address below.',
             pie: 'The recipient marks their door on the map, no account needed.',
           },
           {
@@ -9074,7 +9074,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: [
           'How do I ask the recipient for their exact location?',
-          'Why won’t my route leave in Venezuela?',
+          'Does every stop need a confirmed location before the route leaves?',
           'Does the recipient need the app?',
           'What is the plus code on the label?',
         ],
@@ -9087,63 +9087,63 @@ const en: SeccionDocs[] = [
       },
       {
         id: 'flex-cash-on-delivery',
-        titulo: 'Divoox Flex: cash on delivery in Venezuela',
+        titulo: 'Divoox Flex: cash on delivery, country by country',
         resumen:
-          'The driver collects on delivery, records how the customer paid, and your company receives the cash when the route closes. Everything is logged, package by package.',
+          'Cash on delivery is turned on country by country. In the United States your customers pay when they order: the driver delivers with the proof you require, and your dashboard shows every delivery with no cash to reconcile.',
         explicacion: [
-          'In Venezuela many customers pay when they receive. With Divoox Flex you set the amount to collect on each shipment, in dollars or bolívares, when you create it or from your spreadsheet (the “cobro” column). The label shows it in large letters.',
-          'At the door, the driver can’t mark the package delivered without recording the payment: how the customer paid (cash in dollars or bolívares, pago móvil, bank transfer, Zelle or card terminal), the amount, the payment reference for digital methods, and the name and ID of the person receiving and paying. When money is involved, a package is never left without contact.',
-          'The driver sees in their app the cash they’re carrying. Back at the center they hand it to you and you tap “I received the cash” in the route cash panel. It happens only once and stays in your company history with your name.',
-          'Divoox doesn’t touch that money: the payment is between your customer and your company. Divoox records it so you always know how much was collected, how, and how much is still on its way to the center.',
-          'If you collect in dollars and bolívares, the cash panel also shows everything in dollars using the Central Bank’s official rate for that day. If your company uses another rate, enter it in the cash panel and it applies that day.',
-          'Each country works its own way. Cash on delivery is available in Venezuela; it isn’t used in the United States.',
+          'Each country works its own way. In countries where customers pay when they receive, you can set an amount to collect on each shipment and the label shows it in large letters.',
+          'In the United States cash on delivery isn’t used: your customers pay you when they order, so a shipment never carries an amount to collect and the new-shipment form doesn’t ask for one.',
+          'At the door, the driver opens the stop in Divoox Driver: who receives it, the address, the packages to scan and the proof you require. There’s no payment to record before marking it delivered.',
+          'In “Routes”, the route page shows the progress in green and every stop delivered. There’s no route cash: nothing comes back to the hub but the packages that weren’t delivered.',
+          'Each shipment keeps its chain of custody: created, assigned, loaded, in transit and delivered, with the time and who recorded each step.',
+          'Where cash on delivery is turned on, the driver can’t mark a package delivered without recording how the customer paid and how much, and your company marks the cash as received when the driver hands it over at the hub. Divoox never touches that money: it only records it.',
         ],
         capturas: [
           {
             src: '/docs/flex-driver-cobrar-en.webp',
-            alt: 'Divoox driver app with the form to record the payment before delivering.',
-            pie: 'The driver records the payment before marking it delivered.',
+            alt: 'A stop in Divoox Driver: the recipient, the address in Novi, the package to scan and Confirm delivery, with nothing to collect.',
+            pie: 'At the stop, the driver scans the package and confirms the delivery: there’s nothing to collect.',
           },
           {
             src: '/docs/flex-panel-caja-en.webp',
-            alt: 'Route cash panel in Divoox Flex with what was collected and the “I received the cash” button.',
-            pie: 'Route cash: what was collected and the cash still to receive.',
+            alt: 'A route in the Divoox Flex dashboard with 2 of 2 packages delivered, the route by road and both stops marked Delivered.',
+            pie: 'The route with every stop delivered and no cash to receive.',
           },
           {
             src: '/docs/flex-panel-cobro-envio-en.webp',
-            alt: 'Detail of a delivered shipment in the Divoox Flex dashboard: cash on delivery collected by the driver, with the payment method and its reference.',
-            pie: 'Each shipment shows how much was collected, how it was paid and its reference.',
+            alt: 'Details of a delivered shipment in the Divoox Flex dashboard: the confirmed delivery location and the chain of custody up to Delivered.',
+            pie: 'Each shipment shows its delivery, step by step.',
           },
         ],
         preguntas: [
-          'How do I collect on delivery in Venezuela?',
-          'Which payment methods can the driver record?',
-          'How do I know how much cash the driver is carrying?',
+          'Is cash on delivery available in the United States?',
+          'How do my customers pay in the United States?',
+          'What does the driver record at the door?',
           'Does Divoox keep the money collected?',
         ],
         pasos: [
-          'When you create the shipment, enter the amount in “Collect on delivery” and choose the currency.',
-          'The driver records the payment on delivery: method, amount, reference and the payer’s ID.',
-          'In “Routes”, open the route and check “Route cash”.',
-          'When the driver hands you the cash, tap “I received the cash”.',
+          'Create the shipment as usual: in the United States there’s no amount to collect.',
+          'The driver delivers and records the proof you require.',
+          'In “Routes”, open the route and check that every stop is delivered.',
+          'Open the shipment to see its chain of custody up to “Delivered”.',
         ],
       },
       {
         id: 'flex-pickup-point',
         titulo: 'Divoox Flex: pickup at your hub, with a deadline',
         resumen:
-          'The package stays at your hub and the recipient picks it up with their ID and the tracking number within 5 business days. If it’s paid on delivery, they pay there.',
+          'The package stays at your hub and the recipient picks it up with the tracking number within 5 business days. If someone else picks it up for them, it’s recorded.',
         explicacion: [
           'Besides home delivery, each shipment can be picked up at one of your hubs, like at an agency. When you create it, choose “Pickup at the hub” and the hub.',
-          'When the package is at the hub, tap “notify the recipient” and Divoox prepares the WhatsApp message: where to pick it up, until which day, what to bring and, if it’s paid on delivery, how much.',
-          'At the counter you enter the tracking number the person brings. In Venezuela also their ID, which must be the recipient’s; if someone else picks it up, they’re marked as an authorized third party and it’s recorded. If the shipment is paid on delivery, you record how they paid and the money is already in your cash.',
+          'When the package is at the hub, tap “It’s at the hub: notify the recipient” and Divoox prepares the WhatsApp message: where to pick it up, until which day and what to bring.',
+          'At the counter you enter the tracking number the person brings and tap “Confirm the handover”. If someone other than the recipient picks it up, check “Someone else authorized is picking up”: they’re marked as an authorized third party and it’s recorded.',
           'There are 5 business days to pick it up. If the deadline passes and nobody picked it up, the package goes back to the sender with one tap.',
           'What’s picked up at a hub never goes on a delivery route.',
         ],
         capturas: [
           {
             src: '/docs/flex-panel-retiro-en.webp',
-            alt: 'Hub pickup in the Divoox Flex dashboard: notify the recipient and hand over at the counter with ID and payment.',
+            alt: 'Hub pickup in the Divoox Flex dashboard: ready for pickup until its date, the button to notify the recipient and the counter handover with the tracking number.',
             pie: 'Notify the recipient and hand it over at the counter.',
           },
         ],
@@ -9155,7 +9155,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'When you create the shipment, under “How it’s delivered”, choose “Pickup at the hub” and the hub.',
           'When the package is at the hub, open the shipment and tap “It’s at the hub: notify the recipient”.',
-          'At the counter, enter the tracking number and the ID, record the payment if there is one, and tap “Confirm the handover”.',
+          'At the counter, enter the tracking number, check “Someone else authorized is picking up” if it applies, and tap “Confirm the handover”.',
           'If 5 business days pass, tap “Deadline passed: return to sender”.',
         ],
       },
@@ -9190,7 +9190,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'A route is a run with several stops: it can carry 30, 40 or more packages. For the driver it is a single job: while doing it, they get no other routes or food orders.',
           'You assign a route directly to your company’s own driver. A Divoox network driver gets an offer for a limited time (for example, 60 minutes) and decides whether to accept it. If two companies try to book the same driver at the same time, only one gets them.',
-          'Before the route goes out you can change the stop order. Every stop needs verified coordinates: if one is missing, Divoox won’t let the route leave until you fix it in the shipment details. In Venezuela, each location must also be confirmed (see the guide on each recipient’s exact location).',
+          'Before the route goes out you can change the stop order. Every stop needs verified coordinates: if one is missing, Divoox won’t let the route leave until you fix it in the shipment details. In countries that require it, each location must also be confirmed (see the guide on each recipient’s exact location).',
           'At the hub, the driver scans every package (the label’s QR code or barcode). A package from another route isn’t loaded, and scanning it twice doesn’t count twice. If one is missing, they mark it and it’s recorded.',
           'In “Routes” you see progress in green, every stop with its status, the driver’s last location while working, delivery photos and signatures, and exceptions. The screen refreshes itself every 20 seconds.',
           'You decide which proof you require on every delivery: photo, recipient PIN, signature, or allowing contactless delivery with a photo. A shipment can ask for something different. Without the required proof, the driver can’t mark it delivered.',
@@ -9200,7 +9200,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/flex-panel-rutas-en.webp',
-            alt: 'Divoox Flex routes in the company dashboard.',
+            alt: 'The Routes list in the Divoox Flex dashboard: an assigned route and a draft, with their hub, driver and stops resolved.',
             pie: 'Your routes and their status.',
           },
           {
@@ -9433,7 +9433,7 @@ const en: SeccionDocs[] = [
           'In “Routes”, create the route and assign it to your driver.',
           'Follow every delivery in “Routes”.',
         ],
-        nota: 'Divoox Flex doesn’t charge for now. Each country has its own rules: in Venezuela, for example, the recipient’s location is confirmed before heading out and cash on delivery is available.',
+        nota: 'Divoox Flex doesn’t charge for now. Each country has its own rules: in the United States, for example, the written address is enough and there’s no cash on delivery.',
       },
       {
         id: 'flex-company-and-team',
@@ -9490,9 +9490,9 @@ const en: SeccionDocs[] = [
             pie: 'The label with QR and barcode.',
           },
           {
-            src: '/docs/flex-panel-etiqueta-cobro-en.webp',
-            alt: 'Label with cash on delivery in Divoox Flex.',
-            pie: 'In Venezuela, the label says how much to collect.',
+            src: '/docs/flex-panel-custodia-en.webp',
+            alt: 'A package’s chain of custody in the Divoox Flex dashboard: created, received at the hub, ready and assigned, each with its time and who recorded it.',
+            pie: 'Each package’s chain of custody, step by step.',
           },
         ],
         preguntas: [

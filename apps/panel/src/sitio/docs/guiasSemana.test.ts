@@ -5,6 +5,7 @@ import type { Guia } from './guias';
 import { DOCS } from './guias';
 import { GUIAS_CARRO } from './carro';
 import { GUIAS_SEMANA } from './semana';
+import { GUIAS_MOTO } from './borradores/moto';
 import { coincide, palabrasDeBusqueda } from './buscar';
 import { iconoDeGuia } from './iconosGuia';
 
@@ -27,6 +28,17 @@ const PROHIBIDAS = [
   'test price',
   'caracas',
   'miami',
+];
+
+/** C-CAPTURAS-POR-IDIOMA: lo que una guía en inglés no nombra (solo se ve en las capturas de Venezuela). */
+const AJENO_EN_INGLES = [
+  'vigía',
+  'bolívar',
+  'bolivar',
+  'mobile payment',
+  'pago móvil',
+  'venezuela',
+  'zelle',
 ];
 
 const todas = (idioma: 'es' | 'en'): Guia[] => [
@@ -87,8 +99,7 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     // Regla de Richard (15 nov 2026): al cambiar el idioma cambia la captura Y sus ejemplos. Las guías
     // en inglés no hablan de lo que solo se ve en las capturas de Venezuela…
     const ingles = JSON.stringify(GUIAS_CARRO.en).toLowerCase();
-    for (const ajeno of ['vigía', 'bolívar', 'mobile payment', 'pago móvil', 'venezuela'])
-      expect(ingles, ajeno).not.toContain(ajeno);
+    for (const ajeno of AJENO_EN_INGLES) expect(ingles, ajeno).not.toContain(ajeno);
     expect(ingles).toContain('novi');
     // …y el guion toma cada idioma en su ciudad: español en El Vigía, inglés en Novi, Michigan.
     const guion = readFileSync(
@@ -98,6 +109,71 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     expect(guion).toMatch(/correr\(LUGARES\.ve, \['es'\]\)/);
     expect(guion).toMatch(/correr\(LUGARES\.us, \['en'\]\)/);
     expect(guion).toContain("id: 'US-MI-NOVI'");
+  });
+
+  it('C-CAPTURAS-POR-IDIOMA: en inglés, Moto, Comida, Envíos y Flex se enseñan con ejemplos de Estados Unidos', () => {
+    // 15 nov 2026 (segunda parte): lo mismo que Carro para el resto de las guías con capturas del
+    // recorrido. El inglés no habla de lo que solo existe en Venezuela (pago móvil, bolívares, El Vigía)…
+    const moto = [...GUIAS_MOTO.en.pasajero, ...GUIAS_MOTO.en.conductor];
+    const semana = Object.values(GUIAS_SEMANA.en).flat();
+    for (const [nombre, guias] of [
+      ['moto', moto],
+      ['semana', semana],
+    ] as const) {
+      const ingles = JSON.stringify(guias.map((g) => ({ ...g, id: '' }))).toLowerCase();
+      for (const ajeno of AJENO_EN_INGLES)
+        expect(ingles, `${nombre}: ${ajeno}`).not.toContain(ajeno);
+      // …y ninguna captura en inglés sale de una pasada de Venezuela.
+      for (const g of guias)
+        for (const c of g.capturas ?? []) expect(c.src, g.id).not.toMatch(/-ve-/);
+    }
+    expect(JSON.stringify(moto)).toContain('Novi');
+    expect(JSON.stringify(semana)).toContain('Novi');
+    // Las guías cuyo tema es propio de los países donde se cobra en mano dicen en inglés, con
+    // honestidad, que eso no se usa en Estados Unidos (no enseñan una pantalla de otro país).
+    const porId = new Map([...moto, ...semana].map((g) => [g.id, JSON.stringify(g)]));
+    for (const id of [
+      'pay-on-delivery-venezuela',
+      'driver-cash-mobile-payment-venezuela',
+      'driver-commission-balance-top-up',
+      'drive-moto-saldo',
+    ])
+      expect(porId.get(id), id).toMatch(/in the United States/);
+    // Cada guion toma el español en su ciudad y el inglés en Novi, Michigan.
+    const guion = (nombre: string) =>
+      readFileSync(
+        join(__dirname, '..', '..', '..', '..', '..', 'scripts', 'recorrido', nombre),
+        'utf8',
+      );
+    const motoGuion = guion('capturas-moto-venezuela.mjs');
+    expect(motoGuion).toMatch(/correr\(LUGARES\.ve, \['es'\]\)/);
+    expect(motoGuion).toMatch(/correr\(LUGARES\.us, \['en'\]\)/);
+    expect(motoGuion).toContain("id: 'US-MI-NOVI'");
+    const comidaGuion = guion('capturas-comida-venezuela.mjs');
+    expect(comidaGuion).toMatch(/correrVe\(\['es'\]\)/);
+    expect(comidaGuion).toMatch(/correrUs\(\['en'\]\)/);
+    expect(comidaGuion).toContain("id: 'US-MI-NOVI'");
+    // Divoox Flex: todas sus guías en inglés (las de la semana y las de siempre), igual.
+    const flex = DOCS.en.flatMap((sec) => sec.guias.filter((g) => g.id.startsWith('flex-')));
+    expect(flex.length).toBeGreaterThan(10);
+    const flexIngles = JSON.stringify(flex.map((g) => ({ ...g, id: '' }))).toLowerCase();
+    for (const ajeno of [...AJENO_EN_INGLES, 'caracas', 'bcv', 'national id'])
+      expect(flexIngles, `flex: ${ajeno}`).not.toContain(ajeno);
+    expect(guion('capturas-flex.mjs')).toMatch(
+      /idiomaPasada === 'en' \? NOMBRES\.en : NOMBRES\.es/,
+    );
+    const flexGuion = (nombre: string) =>
+      readFileSync(
+        join(__dirname, '..', '..', '..', '..', '..', 'scripts', 'flex', nombre),
+        'utf8',
+      );
+    expect(flexGuion('capturas.mjs')).toMatch(/correr\(LUGARES\.us, \['en'\]\)/);
+    expect(flexGuion('capturas.mjs')).toContain('Novi, MI 48375');
+    expect(flexGuion('capturas-cobro.mjs')).toMatch(/correrUs\(\['en'\]\)/);
+    expect(flexGuion('capturas-cobro.mjs')).toContain('Novi, MI 48375');
+    const enviosGuion = guion('capturas-envios.mjs');
+    expect(enviosGuion).toContain("id: 'US-MI-NOVI'");
+    expect(enviosGuion).not.toMatch(/'Test (Driver|Sender|recipient)'/);
   });
 
   it('Carro dice que se abre por ciudad', () => {
