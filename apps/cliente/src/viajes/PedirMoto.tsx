@@ -402,7 +402,8 @@ export function PedirMoto({
               // C-CARRO-DINAMICA: se dice antes de pedir, con el multiplicador, como el mercado.
               <View testID="moto-dinamica" style={{ gap: 2, marginVertical: 4 }}>
                 <Text style={{ color: C.secundario, fontWeight: '700' }}>
-                  {t.dinamicaTitulo} · {textoMultiplicador(cotizacion.multiplicadorPb ?? 10_000)}
+                  {t.dinamicaTitulo} ·{' '}
+                  {textoMultiplicador(cotizacion.multiplicadorPb ?? 10_000, idioma)}
                 </Text>
                 <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.dinamicaAyuda}</Text>
               </View>

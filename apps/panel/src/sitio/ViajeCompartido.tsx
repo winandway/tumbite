@@ -36,6 +36,9 @@ const T = {
     moto: 'Moto',
     placa: 'Placa',
     desde: 'Desde',
+    // C-VIAJE-PARADAS (14 nov 2026).
+    parada: 'Parada',
+    paradaHecha: 'hecha',
     hacia: 'Hacia',
     mapa: 'Ver la ubicación del conductor en el mapa',
     actualizado: 'Se actualiza solo cada pocos segundos.',
@@ -72,6 +75,8 @@ const T = {
     moto: 'Motorcycle',
     placa: 'Plate',
     desde: 'From',
+    parada: 'Stop',
+    paradaHecha: 'done',
     hacia: 'To',
     mapa: 'See the driver’s location on the map',
     actualizado: 'Updates on its own every few seconds.',
@@ -93,6 +98,7 @@ type Compartido = {
     placa: string | null;
   } | null;
   ubicacion?: { lat: number; lng: number } | null;
+  paradas?: { direccion: string; hecha: boolean }[];
 };
 
 /**
@@ -171,6 +177,16 @@ export function ViajeCompartido({ codigo, idioma }: { codigo: string; idioma: Id
       <p>
         <strong>{t.desde}:</strong> {viaje.origen}
         <br />
+        {(viaje.paradas ?? []).map((p, i) => (
+          <span key={i} data-testid={`compartido-parada-${i + 1}`}>
+            <strong>
+              {t.parada} {i + 1}:
+            </strong>{' '}
+            {p.direccion}
+            {p.hecha ? ` (${t.paradaHecha})` : ''}
+            <br />
+          </span>
+        ))}
         <strong>{t.hacia}:</strong> {viaje.destino}
       </p>
       {viaje.ubicacion ? (

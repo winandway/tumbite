@@ -96,6 +96,7 @@ describe('tarifa dinámica', () => {
   it('el multiplicador se dice en palabras cortas', () => {
     expect(textoMultiplicador(15_000)).toBe('× 1,5');
     expect(textoMultiplicador(20_000)).toBe('× 2');
+    expect(textoMultiplicador(15_000, 'en')).toBe('× 1.5');
   });
 });
 

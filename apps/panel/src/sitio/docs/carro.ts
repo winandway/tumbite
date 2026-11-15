@@ -19,10 +19,10 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       id: 'ride-car',
       titulo: 'Pedir un carro (taxi) con Divoox Carro',
       resumen:
-        'Pide un Carro o un Carro XL de seis plazas, mira el precio fijo antes de confirmar y sigue a tu conductor hasta que llegue.',
+        'Pide un Carro, elige la categoría que quieras (Comfort, Premium o XL de seis plazas), mira el precio fijo antes de confirmar y sigue a tu conductor hasta que llegue.',
       explicacion: [
         'Divoox Carro es el taxi de Divoox: un conductor verificado te lleva en su carro de un punto a otro de la ciudad. Está disponible en las ciudades donde Divoox Carro esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo.',
-        'Hay dos tamaños. Carro lleva hasta cuatro pasajeros con equipaje de mano. Carro XL lleva hasta seis, para grupos o con más maletas.',
+        'Al ver el precio, la app te muestra los carros que hay en tu ciudad, cada uno con su precio para ese mismo viaje. Carro lleva hasta cuatro pasajeros con equipaje de mano. Carro XL lleva hasta seis, para grupos o con más maletas. Donde estén disponibles, también puedes elegir Carro Comfort o Carro Premium.',
         'El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares.',
         'Cuando un conductor acepta, ves su nombre, su foto (si la tiene), el carro con su color y sus plazas, la placa y en cuántos minutos llega. Para empezar el viaje le dices tu código de cuatro números: así sabes que te subes con la persona correcta.',
       ],
@@ -30,13 +30,13 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-precio',
           'es',
-          'La pantalla Carro con el mapa, la elección entre Carro y Carro XL, el precio fijo en dólares con su equivalente en bolívares y las formas de pago.',
+          'La pantalla Carro con la lista «Elige tu carro», el precio fijo en dólares con su equivalente en bolívares y las formas de pago.',
           'Antes de pedir ves el precio fijo y eliges cómo pagas.',
         ),
         foto(
           'pasajero-xl',
           'es',
-          'La pantalla Carro con Carro XL de seis plazas elegido y su precio fijo.',
+          'La lista «Elige tu carro» con Carro XL, para hasta seis personas, elegido y su precio fijo.',
           'Para seis pasajeros eliges Carro XL.',
         ),
         foto(
@@ -61,7 +61,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       pasos: [
         'Abre Divoox y toca «Carro».',
         'Confirma el punto de recogida (puedes moverlo en el mapa) y escribe tu destino.',
-        'Elige «Carro» o «Carro XL (6 plazas)» y toca «Ver precio».',
+        'Toca «Ver precio». En «Elige tu carro» ves cada carro con su precio; toca el que quieras (por ejemplo «Carro XL» si son hasta seis).',
         'Mira el precio fijo y elige cómo pagas: la app te muestra los métodos de tu país (en Venezuela, efectivo o pago móvil; en Estados Unidos, tarjeta).',
         'Toca «Pedir Carro». Cuando el conductor acepte, verás sus datos y su ubicación en el mapa.',
         'Al subirte, comprueba la placa y dile al conductor tu código de cuatro números.',
@@ -125,6 +125,140 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Al llegar, califica el viaje. Si pagaste con tarjeta, puedes dejar propina en la app.',
         'Para ver un viaje anterior, abre «Carro» y baja hasta «Mis viajes». Toca el viaje para ver su recibo.',
         'Si olvidaste algo, en ese viaje toca «Olvidé algo en el vehículo», cuéntanos qué y dónde lo dejaste, y toca «Enviar a soporte».',
+      ],
+    },
+    {
+      id: 'ride-car-categories',
+      titulo: 'Elegir tu carro: Carro, Comfort, Premium o XL',
+      resumen:
+        'Mira el precio de cada categoría para tu mismo viaje y elige la que quieras antes de pedir.',
+      explicacion: [
+        'Divoox Carro tiene categorías, como las apps de viajes más conocidas. Carro es el de siempre, al mejor precio. Carro Comfort son carros más nuevos y con más espacio. Carro Premium son carros de alta gama, aprobados uno por uno por nuestro equipo. Carro XL lleva hasta seis personas.',
+        'Cada ciudad ofrece las categorías que tiene disponibles: la app solo te muestra las que puedes pedir ahí.',
+        'Cuando tocas «Ver precio», en «Elige tu carro» ves el precio fijo de cada categoría para ese mismo recorrido. Tocas otra y el precio de abajo cambia al de esa categoría. El botón te dice qué estás pidiendo: «Pedir Carro Comfort», por ejemplo.',
+        'Un viaje Comfort o Premium solo se le ofrece a un conductor con un carro de esa categoría o de una mejor. Al asignarte conductor ves qué carro viene, su color, sus plazas y su placa.',
+      ],
+      capturas: [
+        foto(
+          'pasajero-categorias',
+          'es',
+          'La lista «Elige tu carro» con Carro, Carro Comfort, Carro Premium y Carro XL, cada uno con su precio para el mismo viaje.',
+          'Cada categoría con su precio para tu mismo viaje.',
+        ),
+        foto(
+          'pasajero-comfort',
+          'es',
+          'Carro Comfort elegido en la lista, con su precio fijo, las formas de pago y el botón «Pedir Carro Comfort».',
+          'Tocas la categoría y el botón dice lo que pides.',
+        ),
+        foto(
+          'pasajero-conductor-comfort',
+          'es',
+          'El viaje asignado en Carro Comfort: el conductor, su carro con el color y las plazas, la placa y el código del viaje.',
+          'Al asignarte conductor ves el carro que viene.',
+        ),
+      ],
+      preguntas: [
+        '¿Qué categorías de carro tiene Divoox?',
+        '¿Qué diferencia hay entre Carro y Carro Comfort?',
+        '¿Cuánto más cuesta un Carro Premium?',
+        '¿Por qué no me aparece Comfort en mi ciudad?',
+      ],
+      pasos: [
+        'Abre Divoox, toca «Carro», confirma la recogida y escribe tu destino.',
+        'Toca «Ver precio».',
+        'En «Elige tu carro», toca la categoría que quieras. Abajo ves su precio fijo.',
+        'Elige cómo pagas y toca el botón de pedir (por ejemplo, «Pedir Carro Comfort»).',
+      ],
+      nota: 'Si una categoría no aparece en la lista, es que todavía no está disponible en tu ciudad.',
+    },
+    {
+      id: 'ride-car-stops',
+      titulo: 'Agregar paradas a tu viaje',
+      resumen:
+        'Agrega paradas antes de pedir o con el viaje ya en marcha. Siempre ves el precio nuevo antes de confirmar.',
+      explicacion: [
+        'Un viaje puede llevar paradas en el camino: pasar por alguien, dejar algo o entrar un momento a una tienda. Las agregas antes de ver el precio, debajo del destino, con «Agregar parada». Cuántas puedes llevar depende de tu ciudad; la app te lo dice.',
+        'El precio fijo que ves ya incluye todo el recorrido con sus paradas.',
+        'En cada parada tu conductor te espera unos minutos sin costo. Si te tardas más, se cobra la espera por minuto, igual que en la recogida.',
+        'Con el viaje ya pedido también puedes agregar, cambiar o quitar las paradas que faltan, desde la tarjeta «Paradas» del viaje. Primero tocas «Ver precio nuevo»: la app te muestra cuánto queda el viaje y cuánto costaba antes. Solo cambia cuando tocas «Confirmar cambio», y tu conductor ve la ruta nueva al momento.',
+        'Si pagas con tarjeta, el precio no puede subir después de pedir: agrega tus paradas antes de pedir el viaje.',
+      ],
+      capturas: [
+        foto(
+          'pasajero-paradas',
+          'es',
+          'La pantalla Carro con la recogida, el destino y una parada agregada debajo, con el botón «Agregar parada».',
+          'Agregas las paradas debajo del destino, antes de ver el precio.',
+        ),
+        foto(
+          'pasajero-paradas-precio',
+          'es',
+          'El precio fijo del viaje con una parada, con la distancia y los minutos de todo el recorrido.',
+          'El precio fijo ya incluye la parada.',
+        ),
+        foto(
+          'pasajero-paradas-viaje',
+          'es',
+          'El viaje en curso con la tarjeta «Paradas», la parada por hacer y el botón para agregar o cambiar paradas.',
+          'En el viaje ves tus paradas y su estado.',
+        ),
+        foto(
+          'pasajero-paradas-cambio',
+          'es',
+          'El cambio de paradas con el viaje en marcha: la parada nueva, el precio nuevo del viaje, el precio de antes y el botón «Confirmar cambio».',
+          'Antes de confirmar ves el precio nuevo y el de antes.',
+        ),
+      ],
+      preguntas: [
+        '¿Puedo agregar una parada a mi viaje?',
+        '¿Cuánto cuesta agregar una parada?',
+        '¿Puedo agregar una parada con el viaje ya empezado?',
+        '¿Cuánto me espera el conductor en una parada?',
+      ],
+      pasos: [
+        'En la pantalla del viaje, escribe tu destino y toca «Agregar parada».',
+        'Escribe la dirección de la parada y elígela de la lista de sugerencias.',
+        'Toca «Ver precio»: el precio fijo ya incluye la parada. Pide tu viaje.',
+        'Con el viaje pedido, en la tarjeta «Paradas» toca «Agregar parada» o «Agregar o cambiar paradas».',
+        'Toca «Ver precio nuevo», revísalo y toca «Confirmar cambio».',
+      ],
+      nota: 'Para quitar una parada, toca la equis que está a su lado y confirma el precio nuevo.',
+    },
+    {
+      id: 'ride-car-dynamic-pricing',
+      titulo: 'Tarifa dinámica: por qué a veces el precio es más alto',
+      resumen:
+        'Cuando hay muchas personas pidiendo viajes y pocos conductores libres, el precio sube por un rato. Lo ves antes de pedir.',
+      explicacion: [
+        'En las ciudades donde la tarifa dinámica está activa, el precio de Divoox Carro puede subir cuando hay mucha más gente pidiendo viajes que conductores libres: un concierto, la lluvia, la hora pico. Es lo que usan las apps de viajes para que haya más conductores donde hacen falta.',
+        'Siempre lo ves antes de pedir. En el precio aparece «Tarifa más alta por demanda» con el multiplicador (por ejemplo, × 1,5). El precio que ves ya lo incluye, es fijo y no cambia durante el viaje.',
+        'La tarifa dinámica tiene un tope en cada ciudad y en cada país: nunca pasa de ahí. Sube y baja sola con la demanda, así que si esperas unos minutos puede volver al precio normal. En una emergencia en la ciudad, nuestro equipo la apaga.',
+        'Tu conductor también lo ve: su oferta le dice que el viaje lleva tarifa dinámica y de cuánto.',
+      ],
+      capturas: [
+        foto(
+          'pasajero-dinamica',
+          'es',
+          'El precio fijo de un viaje con el aviso «Tarifa más alta por demanda» y su multiplicador, antes de pedir.',
+          'El aviso aparece en el precio, antes de pedir.',
+        ),
+        foto(
+          'driver-oferta-paradas',
+          'es',
+          'La oferta que recibe el conductor con el aviso de tarifa dinámica y su multiplicador, lo que gana y la ruta.',
+          'El conductor también ve que el viaje lleva tarifa dinámica.',
+        ),
+      ],
+      preguntas: [
+        '¿Por qué el precio del carro está más alto?',
+        '¿Qué es la tarifa dinámica?',
+        '¿El precio puede subir durante el viaje?',
+        '¿La tarifa dinámica tiene un límite?',
+      ],
+      pasos: [
+        'Toca «Ver precio». Si hay tarifa dinámica, la ves en el precio con su multiplicador.',
+        'Si te parece bien, pide tu viaje: el precio queda fijo. Si prefieres esperar, vuelve a ver el precio en unos minutos.',
       ],
     },
   ],
@@ -224,6 +358,96 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Si paga por pago móvil, confirma si te llegó. Al llegar al destino, toca «Terminar viaje» y, si es en efectivo, cobra lo que te dice la app.',
       ],
     },
+    {
+      id: 'drive-car-categories',
+      titulo: 'La categoría de tu carro: Carro, Comfort y Premium',
+      resumen:
+        'Tu carro recibe los viajes de su categoría, que pagan más, y tú decides si también recibes los de las categorías de abajo.',
+      explicacion: [
+        'Cuando nuestro equipo aprueba tu carro, le pone su categoría. Carro es la de siempre. Carro Comfort es para carros más nuevos: hasta 12 años en Venezuela y hasta 8 en Estados Unidos, con cuatro plazas o más. Si tu carro cumple, queda como Comfort sin que hagas nada.',
+        'Carro Premium es para carros de alta gama (hasta 8 años en Venezuela y hasta 6 en Estados Unidos) y lo decide nuestro equipo, uno por uno, mirando el modelo y el estado del carro.',
+        'Los viajes Comfort y Premium cuestan más para el pasajero, así que ganas más por el mismo recorrido. La oferta te dice de qué categoría es el viaje.',
+        'Con un carro Comfort o Premium también te llegan los viajes de Carro, para que no te quedes sin trabajo. Si prefieres solo los de tu categoría, apaga «Recibir también viajes de Carro» en «Divoox Carro», dentro de tu perfil. Lo puedes cambiar cuando quieras.',
+        'Si tu carro tiene seis plazas o más, además recibes los viajes de Carro XL.',
+      ],
+      capturas: [
+        foto(
+          'driver-categoria',
+          'es',
+          'La pantalla Divoox Carro del conductor con el carro aprobado como Comfort y el interruptor «Recibir también viajes de Carro».',
+          'En «Divoox Carro» ves la categoría de tu carro y el interruptor.',
+        ),
+        foto(
+          'driver-oferta-paradas',
+          'es',
+          'La oferta de un viaje en Carro Comfort con lo que gana el conductor, la distancia, la recogida y el destino.',
+          'La oferta dice de qué categoría es el viaje.',
+        ),
+        foto(
+          'driver-aprobado',
+          'es',
+          'El carro aprobado en la app del conductor con el interruptor para recibir viajes de Carro.',
+          'Con el carro aprobado, enciendes los viajes de Carro.',
+        ),
+      ],
+      preguntas: [
+        '¿Qué carro necesito para Divoox Comfort?',
+        '¿Cómo paso mi carro a Premium?',
+        '¿Puedo recibir solo viajes Comfort?',
+        '¿Se gana más con Comfort?',
+      ],
+      pasos: [
+        'Registra tu carro con su año y sus plazas, sube los papeles y espera la aprobación.',
+        'Abre tu perfil y toca «Divoox Carro»: ahí ves la categoría con que quedó tu carro.',
+        'Si tu carro es Comfort o Premium, deja encendido «Recibir también viajes de Carro» para recibir más viajes, o apágalo para recibir solo los de tu categoría.',
+      ],
+      nota: 'Si crees que tu carro debería ser Premium, escríbenos desde Ayuda: nuestro equipo lo revisa.',
+    },
+    {
+      id: 'drive-car-stops',
+      titulo: 'Viajes con paradas y con tarifa dinámica',
+      resumen:
+        'La oferta te dice si el viaje lleva paradas o tarifa dinámica. En cada parada marcas que llegaste y sigues cuando tu pasajero vuelve.',
+      explicacion: [
+        'Un pasajero puede agregar paradas al pedir o con el viaje en marcha. La oferta te dice cuántas son y dónde quedan, y lo que ganas ya cuenta todo el recorrido.',
+        'Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar tocas «Llegué a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, tocas «Seguir el viaje».',
+        'Si tu pasajero ya no quiere parar, toca «Saltar parada» dos veces. El precio se recalcula y nunca sube por saltarla. Mientras quede una parada por hacer, la app no te deja terminar el viaje.',
+        'Si el pasajero agrega o quita una parada en el camino, te llega un aviso y la pantalla te muestra la ruta nueva. La comisión se ajusta sola al precio nuevo.',
+        'Cuando hay tarifa dinámica en tu ciudad, la oferta lo dice con su multiplicador. Ya está incluida en lo que ganas.',
+      ],
+      capturas: [
+        foto(
+          'driver-oferta-paradas',
+          'es',
+          'La oferta de un viaje con el aviso de tarifa dinámica, lo que gana el conductor, la parada del camino, la recogida y el destino.',
+          'La oferta te dice si hay tarifa dinámica y por dónde para el viaje.',
+        ),
+        foto(
+          'driver-parada',
+          'es',
+          'El viaje en curso llevando al conductor a la parada 1, con lo que sigue después y los botones «Llegué a la parada» y «Saltar parada».',
+          'La app te lleva a la parada que sigue.',
+        ),
+        foto(
+          'driver-parada-espera',
+          'es',
+          'El conductor esperando en la parada con la cuenta de la espera gratis y el botón «Seguir el viaje».',
+          'En la parada corre la espera gratis; después sigues el viaje.',
+        ),
+      ],
+      preguntas: [
+        '¿Cómo hago un viaje con paradas?',
+        '¿Me pagan la espera en una parada?',
+        '¿Qué hago si el pasajero ya no quiere parar?',
+        '¿Qué es la tarifa dinámica para el conductor?',
+      ],
+      pasos: [
+        'Revisa la oferta: la ganancia, las paradas y si hay tarifa dinámica. Toca «Aceptar viaje».',
+        'Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, toca «Llegué a la parada».',
+        'Cuando tu pasajero vuelva, toca «Seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.',
+        'Con todas las paradas hechas, lleva a tu pasajero al destino y toca «Terminar viaje».',
+      ],
+    },
   ],
 };
 
@@ -244,13 +468,13 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'pasajero-precio',
           'en',
-          'The Car screen with the map, the choice between Car and Car XL, the fixed price in US dollars with its equivalent in bolívares, and the payment methods.',
+          'The Car screen with the “Choose your car” list, the fixed price in US dollars with its equivalent in bolívares, and the payment methods.',
           'Before you request, you see the fixed price and choose how to pay.',
         ),
         foto(
           'pasajero-xl',
           'en',
-          'The Car screen with the six-seat Car XL selected and its fixed price.',
+          'The “Choose your car” list with Car XL, for up to six people, selected and its fixed price.',
           'For six riders, choose Car XL.',
         ),
         foto(
@@ -275,7 +499,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       pasos: [
         'Open Divoox and tap “Car.”',
         'Confirm the pickup point (you can move it on the map) and enter your destination.',
-        'Choose “Car” or “Car XL (6 seats)” and tap “See price.”',
+        'Tap “See price.” Under “Choose your car” you see each car with its price; tap the one you want (for example “Car XL” for up to six).',
         'Check the fixed price and choose how to pay: the app shows the methods in your country (cash or mobile payment in Venezuela; card in the United States).',
         'Tap “Request Car.” When the driver accepts, you’ll see their details and location on the map.',
         'When you get in, check the plate and tell the driver your four-digit code.',
@@ -339,6 +563,140 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'When you arrive, rate the ride. If you paid by card, you can tip in the app.',
         'To see a past ride, open “Car” and scroll down to “My rides.” Tap the ride to see its receipt.',
         'If you left something, in that ride tap “I left something in the vehicle,” tell us what and where, and tap “Send to support.”',
+      ],
+    },
+    {
+      id: 'ride-car-categories',
+      titulo: 'Choose your car: Car, Comfort, Premium, or XL',
+      resumen:
+        'See each category’s price for your same ride and pick the one you want before you request.',
+      explicacion: [
+        'Divoox Car has categories, like the best-known ride apps. Car is the everyday ride, at the best price. Car Comfort means newer cars with extra room. Car Premium means high-end cars, approved one by one by our team. Car XL fits up to six people.',
+        'Each city offers the categories it has available: the app only shows the ones you can request there.',
+        'When you tap “See price,” under “Choose your car” you see each category’s fixed price for that same trip. Tap another one and the price below changes to that category’s. The button tells you what you’re requesting: “Request Car Comfort,” for example.',
+        'A Comfort or Premium ride is only offered to a driver whose car is in that category or a higher one. Once a driver is assigned, you see which car is coming, its color, its seats, and its plate.',
+      ],
+      capturas: [
+        foto(
+          'pasajero-categorias',
+          'en',
+          'The “Choose your car” list with Car, Car Comfort, Car Premium, and Car XL, each with its price for the same ride.',
+          'Each category with its price for your same ride.',
+        ),
+        foto(
+          'pasajero-comfort',
+          'en',
+          'Car Comfort selected in the list, with its fixed price, the payment methods, and the “Request Car Comfort” button.',
+          'Tap the category and the button says what you’re requesting.',
+        ),
+        foto(
+          'pasajero-conductor-comfort',
+          'en',
+          'The assigned Car Comfort ride: the driver, their car with its color and seats, the plate, and the ride code.',
+          'Once a driver is assigned, you see the car that’s coming.',
+        ),
+      ],
+      preguntas: [
+        'What car categories does Divoox have?',
+        'What’s the difference between Car and Car Comfort?',
+        'How much more is Car Premium?',
+        'Why don’t I see Comfort in my city?',
+      ],
+      pasos: [
+        'Open Divoox, tap “Car,” confirm the pickup, and enter your destination.',
+        'Tap “See price.”',
+        'Under “Choose your car,” tap the category you want. Its fixed price shows below.',
+        'Choose how to pay and tap the request button (for example, “Request Car Comfort”).',
+      ],
+      nota: 'If a category isn’t in the list, it isn’t available in your city yet.',
+    },
+    {
+      id: 'ride-car-stops',
+      titulo: 'Add stops to your ride',
+      resumen:
+        'Add stops before you request or once the ride is underway. You always see the new price before you confirm.',
+      explicacion: [
+        'A ride can have stops along the way: picking someone up, dropping something off, or running into a store. You add them before you see the price, below the destination, with “Add a stop.” How many you can add depends on your city; the app tells you.',
+        'The fixed price you see already includes the whole trip with its stops.',
+        'At each stop your driver waits a few minutes at no cost. If you take longer, wait time is charged per minute, the same as at pickup.',
+        'Once the ride is requested you can also add, change, or remove the stops that are left, from the ride’s “Stops” card. First tap “See new price”: the app shows the new ride total and what it was before. It only changes when you tap “Confirm change,” and your driver sees the new route right away.',
+        'If you pay by card, the price can’t go up after you request: add your stops before requesting the ride.',
+      ],
+      capturas: [
+        foto(
+          'pasajero-paradas',
+          'en',
+          'The Car screen with the pickup, the destination, and a stop added below, with the “Add a stop” button.',
+          'Add stops below the destination, before you see the price.',
+        ),
+        foto(
+          'pasajero-paradas-precio',
+          'en',
+          'The fixed price of a ride with one stop, with the distance and minutes for the whole trip.',
+          'The fixed price already includes the stop.',
+        ),
+        foto(
+          'pasajero-paradas-viaje',
+          'en',
+          'The ride in progress with the “Stops” card, the stop still to do, and the button to add or change stops.',
+          'During the ride you see your stops and their status.',
+        ),
+        foto(
+          'pasajero-paradas-cambio',
+          'en',
+          'Changing stops with the ride underway: the new stop, the new ride price, the previous price, and the “Confirm change” button.',
+          'Before you confirm, you see the new price and the previous one.',
+        ),
+      ],
+      preguntas: [
+        'Can I add a stop to my ride?',
+        'How much does adding a stop cost?',
+        'Can I add a stop once the ride has started?',
+        'How long does the driver wait at a stop?',
+      ],
+      pasos: [
+        'On the ride screen, enter your destination and tap “Add a stop.”',
+        'Type the stop’s address and pick it from the suggestions.',
+        'Tap “See price”: the fixed price already includes the stop. Request your ride.',
+        'With the ride requested, on the “Stops” card tap “Add a stop” or “Add or change stops.”',
+        'Tap “See new price,” review it, and tap “Confirm change.”',
+      ],
+      nota: 'To remove a stop, tap the X next to it and confirm the new price.',
+    },
+    {
+      id: 'ride-car-dynamic-pricing',
+      titulo: 'Dynamic pricing: why the price is sometimes higher',
+      resumen:
+        'When lots of people are requesting rides and few drivers are available, the price goes up for a while. You see it before you request.',
+      explicacion: [
+        'In cities where dynamic pricing is active, the Divoox Car price can go up when far more people are requesting rides than there are available drivers: a concert, rain, rush hour. It’s what ride apps use to get more drivers where they’re needed.',
+        'You always see it before you request. The price shows “Fares are higher due to demand” with the multiplier (for example, × 1.5). The price you see already includes it, it’s fixed, and it won’t change during the ride.',
+        'Dynamic pricing has a cap in each city and each country: it never goes above that. It goes up and down on its own with demand, so if you wait a few minutes it may return to the normal price. In a citywide emergency, our team turns it off.',
+        'Your driver sees it too: their offer says the ride has dynamic pricing and by how much.',
+      ],
+      capturas: [
+        foto(
+          'pasajero-dinamica',
+          'en',
+          'The fixed price of a ride with the “Fares are higher due to demand” notice and its multiplier, before requesting.',
+          'The notice appears with the price, before you request.',
+        ),
+        foto(
+          'driver-oferta-paradas',
+          'en',
+          'The offer the driver receives with the dynamic pricing notice and its multiplier, what they earn, and the route.',
+          'The driver also sees that the ride has dynamic pricing.',
+        ),
+      ],
+      preguntas: [
+        'Why is the car price higher?',
+        'What is dynamic pricing?',
+        'Can the price go up during the ride?',
+        'Does dynamic pricing have a limit?',
+      ],
+      pasos: [
+        'Tap “See price.” If dynamic pricing applies, you see it with the price and its multiplier.',
+        'If it works for you, request your ride: the price stays fixed. If you’d rather wait, check the price again in a few minutes.',
       ],
     },
   ],
@@ -436,6 +794,96 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'Go to the pickup and tap “I’ve arrived.”',
         'Ask the rider for their code, enter it, and tap “Start ride.”',
         'If they pay by mobile payment, confirm whether it arrived. At the destination, tap “End ride” and, if it’s cash, collect what the app tells you.',
+      ],
+    },
+    {
+      id: 'drive-car-categories',
+      titulo: 'Your car’s category: Car, Comfort, and Premium',
+      resumen:
+        'Your car gets rides in its category, which pay more, and you decide whether to also get rides from the categories below.',
+      explicacion: [
+        'When our team approves your car, it gets its category. Car is the everyday one. Car Comfort is for newer cars: up to 12 years old in Venezuela and up to 8 in the United States, with four seats or more. If your car qualifies, it’s set to Comfort without you doing anything.',
+        'Car Premium is for high-end cars (up to 8 years old in Venezuela and up to 6 in the United States), and our team decides it one by one, looking at the model and the car’s condition.',
+        'Comfort and Premium rides cost the rider more, so you earn more for the same trip. The offer tells you which category the ride is.',
+        'With a Comfort or Premium car you also get Car rides, so you’re never short on work. If you’d rather only get rides in your category, turn off “Also get Car rides” under “Divoox Car” in your profile. You can change it anytime.',
+        'If your car has six seats or more, you also get Car XL rides.',
+      ],
+      capturas: [
+        foto(
+          'driver-categoria',
+          'en',
+          'The driver’s Divoox Car screen with the car approved as Comfort and the “Also get Car rides” switch.',
+          'Under “Divoox Car” you see your car’s category and the switch.',
+        ),
+        foto(
+          'driver-oferta-paradas',
+          'en',
+          'The offer for a Car Comfort ride with what the driver earns, the distance, the pickup, and the destination.',
+          'The offer says which category the ride is.',
+        ),
+        foto(
+          'driver-aprobado',
+          'en',
+          'The approved car in the driver app with the switch to receive Car rides.',
+          'With the car approved, you turn on Car rides.',
+        ),
+      ],
+      preguntas: [
+        'What car do I need for Divoox Comfort?',
+        'How do I move my car to Premium?',
+        'Can I get only Comfort rides?',
+        'Do you earn more with Comfort?',
+      ],
+      pasos: [
+        'Register your car with its year and seats, upload the documents, and wait for approval.',
+        'Open your profile and tap “Divoox Car”: that’s where you see the category your car was given.',
+        'If your car is Comfort or Premium, leave “Also get Car rides” on to get more rides, or turn it off to get only rides in your category.',
+      ],
+      nota: 'If you think your car should be Premium, message us from Help: our team will review it.',
+    },
+    {
+      id: 'drive-car-stops',
+      titulo: 'Rides with stops and with dynamic pricing',
+      resumen:
+        'The offer tells you if the ride has stops or dynamic pricing. At each stop you mark that you arrived and continue when your rider is back.',
+      explicacion: [
+        'A rider can add stops when requesting or with the ride underway. The offer tells you how many there are and where, and what you earn already counts the whole trip.',
+        'With the ride in progress, the app takes you to the next stop. When you get there, tap “I’m at the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, tap “Continue the ride.”',
+        'If your rider no longer wants to stop, tap “Skip stop” twice. The price is recalculated and never goes up for skipping it. While there’s a stop left to make, the app won’t let you end the ride.',
+        'If the rider adds or removes a stop along the way, you get a notification and the screen shows the new route. The commission adjusts on its own to the new price.',
+        'When there’s dynamic pricing in your city, the offer says so with its multiplier. It’s already included in what you earn.',
+      ],
+      capturas: [
+        foto(
+          'driver-oferta-paradas',
+          'en',
+          'The offer for a ride with the dynamic pricing notice, what the driver earns, the stop along the way, the pickup, and the destination.',
+          'The offer tells you if there’s dynamic pricing and where the ride stops.',
+        ),
+        foto(
+          'driver-parada',
+          'en',
+          'The ride in progress taking the driver to stop 1, with what comes next and the “I’m at the stop” and “Skip stop” buttons.',
+          'The app takes you to the next stop.',
+        ),
+        foto(
+          'driver-parada-espera',
+          'en',
+          'The driver waiting at the stop with the free wait countdown and the “Continue the ride” button.',
+          'At the stop the free wait runs; then you continue the ride.',
+        ),
+      ],
+      preguntas: [
+        'How do I do a ride with stops?',
+        'Am I paid for waiting at a stop?',
+        'What do I do if the rider no longer wants to stop?',
+        'What is dynamic pricing for the driver?',
+      ],
+      pasos: [
+        'Check the offer: the earnings, the stops, and whether there’s dynamic pricing. Tap “Accept ride.”',
+        'Start the ride as usual. The app takes you to the first stop: when you get there, tap “I’m at the stop.”',
+        'When your rider is back, tap “Continue the ride.” If they no longer want to stop, tap “Skip stop” twice.',
+        'With every stop done, take your rider to the destination and tap “End ride.”',
       ],
     },
   ],

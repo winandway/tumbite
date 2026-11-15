@@ -147,7 +147,8 @@ export function OfertaViajeModal({
               style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
             >
               <Text style={{ fontWeight: '800', color: C.secundario }}>
-                {textos.oferta.dinamica} {textoMultiplicador(oferta.multiplicadorPb ?? 10_000)}
+                {textos.oferta.dinamica}{' '}
+                {textoMultiplicador(oferta.multiplicadorPb ?? 10_000, idioma)}
               </Text>
               <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{textos.oferta.dinamicaAyuda}</Text>
             </View>

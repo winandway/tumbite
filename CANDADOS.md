@@ -4362,3 +4362,54 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Lo que encontró el revisor de calidad (y quedó corregido):** una contraseña larga quedaba debajo del ojito (la regla general de los campos pesaba más que la del relleno derecho); el tablero recorría las tablas enteras; el menú cerrado del celular se podía recorrer con el teclado; el buscador no se manejaba con flechas. Ahora el buscador es un cuadro combinado (flechas y Enter), el cajón cerrado queda fuera del teclado y el foco entra y sale con él.
 - **Cómo se comprueba a ojo:** `CLAVE_DEMO=… node scripts/panel/capturas-panel.mjs https://staging.tumbite.com <carpeta>` toma todas las pantallas de cada rol en computadora y en celular (cuentas de demostración). `scripts/panel/captura-una.mjs` toma una sola. En desarrollo, `DATOS_URL=https://staging.tumbite.com npm run dev -w @tumbite/panel` deja ver el panel con los datos del sitio de pruebas.
 - **No tocar:** no volver a escribir un menú o una cabecera dentro de una pantalla; no meter datos de muestra en una gráfica; no escribir en la base desde una ruta de tablero; no publicar en Docs ni en la página de progreso la dirección privada del superadmin. Las tarjetas del panel llevan borde fino gris claro y sombra suave (el borde gris oscuro de antes queda para la web pública).
+
+## Divoox Carro, fase 2: categorías, tarifa dinámica y paradas (rama fase-carro-2, 14 nov 2026) — todos los países, con valores propios de Venezuela y EE. UU.
+
+Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa dinámica de Carro»). Ficha con evidencia REA: `docs/investigaciones-rea/2026-11-14-carro-paradas-categorias-dinamica.md` (paquete `evidencia-rea-2026-11-14-carro-2.json`). Lo que cambia por país vive en UNA pieza: `perfilPasajeros(pais).carro` (`packages/compartido/src/perfilPasajeros.ts`). Resultados: `docs/CARRO-FASE-2-RESULTADOS.md`.
+
+### C-CARRO-CATEGORIAS · Carro, Comfort, Premium y XL
+
+- **Cómo funciona:** la categoría del viaje (`estandar`, `comfort`, `premium`, `xl`) cotiza con el factor de la tarifa de la ciudad (`comfort_pb`, `premium_pb`, `xl_pb` en `tarifas_viaje`; sin factor, la ciudad no ofrece esa categoría y la cotización responde 409). `tarifaDeCategoria` y `categoriasOfrecidas` en `packages/compartido/src/viajes.ts`. La cotización trae `opciones` (el precio de cada categoría para el mismo trayecto, calculado en memoria: no guarda nada) y la app las pinta en «Elige tu carro».
+- **El carro:** `vehiculos.categoria` (`estandar`, `comfort`, `premium`) y `vehiculos.acepta_menores`. Al aprobar (`PUT /datos/admin/vehiculos/:id`), `categoriaAlAprobar` le pone Comfort si cumple la antigüedad y las plazas de su país; Premium siempre lo decide una persona (`PUT /datos/admin/vehiculos/:id/categoria`, con motivo y auditoría). Requisitos: EE. UU. Comfort hasta 8 años y Premium hasta 6; Venezuela Comfort hasta 12 y Premium hasta 8 [INF, en la ficha].
+- **El despacho** (`candidatosParaOperacion` en `operaciones.ts`): un viaje Comfort o Premium solo va a un carro de esa categoría o de una mejor; un carro mejor recibe los de abajo solo con `acepta_menores = 1` (interruptor del conductor: `PUT /datos/conductor/vehiculos/:id/categorias-menores`). El XL sigue yendo por plazas (C-CARRO-XL).
+- **Venezuela:** la tarifa de mercado trae Comfort × 1,3 y Premium × 1,8 (`TARIFA_CARRO_VENEZUELA`).
+- **Prueba:** `apps/servidor/src/rutas/carroFase2.test.ts` («Categorías de Carro», 6) y `packages/compartido/src/viajesCarro2.test.ts`. Rojo comprobado: quitando el filtro de categoría del despacho fallan «un viaje Comfort solo va a un carro Comfort o mejor» y «un carro mejor recibe los viajes económicos solo si su conductor no lo apagó».
+- **Candado tocado a propósito:** C-CARRO-VIAJE-PASAJERO (`carroAltaDriver.test.ts`) vigilaba el texto `t.pedirCarroXl`; ahora vigila `t.pedirCategoria` y los cuatro botones («Pedir Carro», «… Comfort», «… Premium», «… XL»).
+- **No tocar:** no aceptar una categoría que la tarifa de la ciudad no tenga; no subir un carro a Premium sin una persona; no quitar el filtro del despacho.
+
+### C-CARRO-DINAMICA · Tarifa dinámica por ciudad, con tope y sin escribir de más
+
+- **Cómo funciona:** una fila por servicio y ciudad en `dinamica_zona`. La cotización lee el multiplicador con `multiplicadorVigente` (`apps/servidor/src/viajesDinamica.ts`) y lo acota OTRA VEZ al menor de dos topes: el de la tarifa de la ciudad (`tope_dinamico_pb`) y el del país (`perfil.carro.dinamica.topePb`: EE. UU. 2,0 y Venezuela 1,5 [INF]). El multiplicador queda copiado en la cotización: el precio del viaje no cambia después.
+- **Nace apagada:** con el tope de la tarifa en 10 000 (como nace, también en la tarifa de mercado de Venezuela) no hay tarifa dinámica. Encenderla es subir el tope en la tarifa de la ciudad (panel → Viajes → nueva tarifa). **En Venezuela no se encontró norma sobre precios dinámicos [NV]: encenderla allá en producción espera la confirmación del abogado, junto con lo demás de Carro.**
+- **El reloj** (tarea `dinamica`, no crítica, en `TAREAS_RELOJ`): `recalcularDinamica` mira solo las ciudades con el tope encendido, cuenta viajes buscando conductor (más los que se quedaron sin uno en 10 minutos) frente a conductores libres, y aplica los escalones del país (1,2 · 1,5 · 2,0 desde razón 1,5 · 2 · 3, y nunca con menos de 3 solicitudes).
+- **Presupuesto de escrituras (regla «la nube no se come el dinero»):** escribe como mucho UNA fila por ciudad, y solo cuando el multiplicador cambia o cada 5 minutos mientras dura un recargo. Sin demanda alta: cero escrituras. Una ciudad sin tarifa dinámica no le cuesta ni una lectura de más.
+- **No se queda pegada:** un recargo vale 10 minutos (`vale_hasta`); si el reloj se para, se cae solo.
+- **El equipo:** `GET` y `PUT /datos/admin/viajes/dinamica/carro/:zona` (fijar a mano hasta 6 horas dentro del tope, apagar por una emergencia, volver a automática), con motivo y auditoría. En el panel: `DinamicaCiudad.tsx`, dentro de Viajes, en cada ciudad con el tope encendido.
+- **Quién lo ve:** el pasajero antes de pedir («Tarifa más alta por demanda · × 1,5», `moto-dinamica`) y el conductor en la oferta (`oferta-viaje-dinamica`).
+- **Prueba:** `carroFase2.test.ts` («Tarifa dinámica de Carro», 7) y `viajesCarro2.test.ts`. Rojo comprobado, uno por uno: sin el tope en la cotización falla «el tope del país manda»; cobrando un recargo vencido falla «un recargo vencido no se cobra»; escribiendo en cada vuelta falla «escribe solo cuando cambia».
+- **No tocar:** no quitar el tope de `multiplicadorVigente`; no escribir en cada vuelta del reloj; no subir el tope del país sin fuente y sin Richard.
+
+### C-VIAJE-PARADAS · Paradas al pedir y durante el viaje
+
+- **Cómo funciona:** la cotización acepta `paradas` (máximo del país: EE. UU. 3, Venezuela 2; todas dentro de la ciudad; un envío no lleva). La ruta se calcula con las paradas en UNA consulta (`rutaParaCotizar` con intermedios; sin llave, la fórmula tramo por tramo) y el precio fijo incluye todo el recorrido. Quedan en `cotizaciones_viaje.paradas_json` y nacen con el viaje en `paradas_viaje` (`viajeCrear.ts`).
+- **Con el viaje pedido** (`rutas/paradasViaje.ts`): `POST /datos/viajes/:id/paradas` con las paradas que faltan. Primero devuelve el precio nuevo (`confirmar: false`, no guarda nada); solo aplica con `confirmar: true` y `totalVisto` igual al que calcula el servidor. El precio sale SIEMPRE de la tarifa y el multiplicador copiados en la cotización (C-VIAJE-PRECIO-FIJO sigue en pie: la app nunca manda un precio). Cada cambio queda en `cambios_viaje`. Todo en un lote que solo corre si nada se movió entre el cálculo y el guardado.
+- **El conductor:** `POST /datos/conductor/operaciones/:id/paradas/:orden/llegue` (tiene que estar a 200 m o menos, con ubicación de menos de 2 minutos), `/seguir` y `/saltar` (el pasajero ya no para: el precio solo puede bajar). Con una parada por hacer o detenido en una, «Terminar» responde 409.
+- **La espera:** cada parada tiene su espera gratis (`esperaParadaGratisS` de la tarifa, 2 minutos por defecto) y después se cobra por minuto empezado, igual que la recogida; se suma al cerrar la cuenta.
+- **La comisión apartada** del conductor se pone al día con el precio nuevo (`reajustarReservaViaje` en `finanzas/conductor.ts`): si sube, sale del prepago solo si alcanza; si baja, vuelve. Una vez por cambio.
+- **Con tarjeta el precio no sube después de pedir** (la autorización es por el precio exacto y esta fase no toca el cobro): la app lo dice y pide agregar las paradas antes de pedir. Quitar paradas sí se puede. Punto abierto, abajo.
+- **El «¿Todo bien?»** (desvío de ruta) cuenta las paradas: ir a una parada no es desviarse (`revisarDesvio`).
+- **Prueba:** `carroFase2.test.ts` («Paradas de un viaje», 6). Rojo comprobado: sin la regla de terminar, sin exigir estar en la parada, aceptando un total que no es el del servidor y dejando subir el precio con tarjeta, falla su prueba cada vez.
+- **No tocar:** no aceptar un precio de la app; no dejar terminar con paradas pendientes; no quitar el radio de llegada.
+
+### C-DOCS-CARRO-2 · Guías y capturas reales de la fase 2
+
+- Cinco guías nuevas en `apps/panel/src/sitio/docs/carro.ts`, en español e inglés (`ride-car-categories`, `ride-car-stops`, `ride-car-dynamic-pricing`, `drive-car-categories`, `drive-car-stops`) y la de «Pedir un carro» puesta al día. Las vigila el candado de siempre (`guiasSemana.test.ts`): capturas que existen, dos idiomas iguales, nada interno.
+- Capturas REALES en El Vigía con `node scripts/recorrido/capturas-carro.mjs` (ampliado). En ese servidor local la tarifa dinámica se fija a mano y la sugerencia de la parada nueva se responde con un lugar fijo, porque el local no tiene la llave de direcciones; las pantallas y los precios son los reales. Después solo se convierten las de Carro (no correr `recorrido:docs` entero: reconvierte las de otras guías).
+- La página web del viaje compartido (`ViajeCompartido.tsx`) muestra las paradas y cuáles ya se hicieron.
+
+### Puntos abiertos de la fase 2 (no son detalles: son lo que falta)
+
+- **Tarjeta (EE. UU.):** con tarjeta no se puede agregar una parada que suba el precio con el viaje ya pedido. Cerrarlo pide ampliar la autorización del cobro, y esta fase tenía prohibido tocar el cobro.
+- **Peajes:** no entraron (no salían gratis de este trabajo).
+- **Apps:** las tres pantallas nuevas viven en la app web y en el código de las apps; las de las tiendas necesitan compilación nueva (sin permiso de Gerencia no se compiló nada).
+- **Encendido:** Carro sigue apagado en producción por su compuerta de país. La tarifa dinámica además nace apagada en cada ciudad.

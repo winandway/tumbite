@@ -363,10 +363,10 @@ export function multiplicadorPorDemanda(
   return Math.min(mult, tope);
 }
 
-/** «× 1,5» para mostrar el multiplicador (una cifra decimal, sin ceros de más). */
-export function textoMultiplicador(pb: number): string {
-  const d = Math.round(pb / 1000) / 10;
-  return `× ${String(d).replace('.', ',')}`;
+/** «× 1,5» («× 1.5» en inglés) para mostrar el multiplicador: una cifra decimal, sin ceros de más. */
+export function textoMultiplicador(pb: number, idioma: 'es' | 'en' = 'es'): string {
+  const d = String(Math.round(pb / 1000) / 10);
+  return `× ${idioma === 'en' ? d : d.replace('.', ',')}`;
 }
 
 /**

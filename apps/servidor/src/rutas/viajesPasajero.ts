@@ -1263,7 +1263,7 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
     throw new ErrorDatos('Este enlace no existe.', undefined, 404);
   const f = await base(c)
     .prepare(
-      `SELECT v.estado, v.origen_direccion, v.destino_direccion, v.destino_lat, v.destino_lng,
+      `SELECT o.id, v.estado, v.origen_direccion, v.destino_direccion, v.destino_lat, v.destino_lng,
               o.servicio_id, u.nombre AS conductor, d.lat, d.lng, d.ubicacion_en, h.marca, h.modelo, h.color, h.placa
          FROM viajes_compartidos s JOIN operaciones o ON o.id = s.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
@@ -1286,6 +1286,11 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
       servicio,
       terminado: false,
       origen: String(f.origen_direccion),
+      // C-VIAJE-PARADAS: quien acompaña el viaje ve por dónde para (solo la dirección y si ya se hizo).
+      paradas: (await paradasDe(base(c), String(f.id))).map((p) => ({
+        direccion: p.direccion,
+        hecha: p.estado === 'visitada',
+      })),
       destino: String(f.destino_direccion),
       conductor: f.conductor ? String(f.conductor).split(' ')[0] : null,
       vehiculo: f.conductor

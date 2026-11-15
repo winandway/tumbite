@@ -6,7 +6,12 @@
 //   2. abre Carro en El Vigía con el paso del panel (tarifa de mercado, no «de prueba»);
 //   3. el conductor registra su carro y sus papeles desde la app; el equipo lo revisa y lo aprueba;
 //   4. viaje en Carro (pago móvil) y en Carro XL (efectivo), propina, «Mis viajes» con su recibo y
-//      «Olvidé algo en el vehículo».
+//      «Olvidé algo en el vehículo»;
+//   5. C-CARRO-CATEGORIAS, C-VIAJE-PARADAS y C-CARRO-DINAMICA (14 nov 2026): la lista de categorías con
+//      precio, un viaje Comfort con una parada y tarifa dinámica (fijada a mano en este servidor local),
+//      el cambio de paradas con el viaje en marcha y los pasos de la parada en el Driver. Este servidor
+//      local no tiene la llave de direcciones: la sugerencia de la parada nueva se responde aquí con un
+//      lugar fijo de El Vigía (la pantalla y el precio son los reales).
 // Datos neutros («Pasajero de prueba», «Conductor de prueba»). Guarda las originales en
 // docs/capturas/recorrido/carro-*.png (y las del panel interno en docs/capturas/ciudad-*.png para la
 // guía interna COMO-ABRIR-UNA-CIUDAD). Uso: node scripts/recorrido/capturas-carro.mjs
@@ -32,6 +37,8 @@ const CIUDAD = {
 };
 const ORIGEN = { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' };
 const DESTINO = { lat: 8.624, lng: -71.672, direccion: 'Aeropuerto de El Vigía' };
+const PARADA = { lat: 8.6195, lng: -71.6585, direccion: 'Terminal de pasajeros de El Vigía' };
+const PARADA_2 = { lat: 8.6262, lng: -71.6612, direccion: 'Farmacia del centro, El Vigía' };
 const FOTO = readFileSync(join(RAIZ, 'e2e', 'recorrido', 'fotos', 'bolsa-entrega.jpg'));
 
 let ip = 0;
@@ -119,6 +126,10 @@ if ((await intentar(abrir())).error) {
   await abrir();
 }
 await sql(`UPDATE tarifas_viaje SET de_prueba = 0 WHERE zona_id = '${CIUDAD.id}' AND activa = 1`);
+// C-CARRO-DINAMICA: en este servidor local la ciudad admite tarifa dinámica hasta 1,5 (para sus capturas).
+await sql(
+  `UPDATE tarifas_viaje SET tope_dinamico_pb = 15000 WHERE zona_id = '${CIUDAD.id}' AND servicio_id = 'carro' AND activa = 1`,
+);
 await pedir('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 240 }, tokens.equipo);
 
 // Un carro anterior de estas cuentas fijas se retira para que el alta empiece de cero.
@@ -282,10 +293,23 @@ await conductor('PUT', '/datos/conductor/preferencias', { servicioId: 'moto', ac
 // ───────── 4. Driver: aprobado, con el interruptor para recibir viajes de Carro
 for (const idioma of ['es', 'en'])
   await altaCarro(idioma, 'driver-aprobado', (d) => abajoDe(d.getByTestId('estado-carro')));
+// C-CARRO-CATEGORIAS: el carro quedó Comfort (cumple la antigüedad de su país) y su interruptor.
+for (const idioma of ['es', 'en'])
+  await altaCarro(idioma, 'driver-categoria', async (d) => {
+    await d.getByTestId('carro-menores').waitFor({ timeout: 30_000 });
+    await d.getByTestId('carro-categoria').evaluate((x) => x.scrollIntoView({ block: 'center' }));
+  });
 
 for (const idioma of ['es', 'en']) {
   const en = idioma === 'en';
   await cerrarColgado();
+  // Cada idioma empieza a precio normal (la tarifa dinámica se fija más abajo, para sus fotos).
+  await pedir(
+    'PUT',
+    `/datos/admin/viajes/dinamica/carro/${CIUDAD.id}`,
+    { modo: 'auto', motivo: 'Capturas: precio normal' },
+    tokens.equipo,
+  );
   await conductor('POST', '/datos/repartidor/conectar', { conectado: true, ...ORIGEN });
   await conductor('POST', '/datos/repartidor/ubicacion', { lat: ORIGEN.lat, lng: ORIGEN.lng });
 
@@ -316,24 +340,31 @@ for (const idioma of ['es', 'en']) {
   await c.getByTestId('moto-precio').scrollIntoViewIfNeeded();
   await espera(800);
   await foto(c, 'pasajero-precio', idioma);
+  // C-CARRO-CATEGORIAS: la lista «Elige tu carro» con el precio de cada categoría.
+  const verCategorias = async () => {
+    await arribaDe(c.getByTestId('carro-categorias'));
+    await c.evaluate(() => globalThis.scrollBy(0, -90));
+    await espera(800);
+  };
+  await verCategorias();
+  await foto(c, 'pasajero-categorias', idioma);
+  await c.getByTestId('carro-categoria-comfort').click();
   await c
-    .getByText(en ? 'Car XL (6 seats)' : 'Carro XL (6 plazas)', { exact: true })
-    .first()
-    .click();
-  await c.getByRole('button', { name: en ? 'See price' : 'Ver precio' }).click();
-  await c.getByTestId('moto-precio').waitFor({ timeout: 30_000 });
-  await arribaDe(
-    c.getByText(en ? 'Car XL (6 seats)' : 'Carro XL (6 plazas)', { exact: true }).first(),
-  );
-  await c.evaluate(() => globalThis.scrollBy(0, -120));
-  await espera(800);
+    .getByRole('button', { name: en ? 'Request Car Comfort' : 'Pedir Carro Comfort' })
+    .waitFor({ timeout: 30_000 });
+  await verCategorias();
+  await foto(c, 'pasajero-comfort', idioma);
+  await c.getByTestId('carro-categoria-xl').click();
+  await c
+    .getByRole('button', { name: en ? 'Request Car XL' : 'Pedir Carro XL' })
+    .waitFor({ timeout: 30_000 });
+  await verCategorias();
   await foto(c, 'pasajero-xl', idioma);
   // Vuelve a Carro normal y pide con pago móvil.
+  await c.getByTestId('carro-categoria-estandar').click();
   await c
-    .getByText(en ? 'Car' : 'Carro', { exact: true })
-    .first()
-    .click()
-    .catch(() => null);
+    .getByRole('button', { name: en ? 'Request Car' : 'Pedir Carro', exact: true })
+    .waitFor({ timeout: 30_000 });
   const cot = (
     await pasajero('POST', '/datos/viajes/cotizar', {
       servicio: 'carro',
@@ -442,8 +473,169 @@ for (const idioma of ['es', 'en']) {
   await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
   await espera(800);
   await foto(d, 'driver-cobro-efectivo', idioma);
+
+  // ───────── C-VIAJE-PARADAS: el pasajero agrega una parada antes de ver el precio
+  await pedir(
+    'PUT',
+    `/datos/admin/viajes/dinamica/carro/${CIUDAD.id}`,
+    {
+      modo: 'auto',
+      motivo: 'Capturas: precio normal',
+    },
+    tokens.equipo,
+  );
+  const borradorConParada = JSON.stringify({
+    recogida: ORIGEN.direccion,
+    recogidaLat: String(ORIGEN.lat),
+    recogidaLng: String(ORIGEN.lng),
+    destino: DESTINO.direccion,
+    destinoLat: String(DESTINO.lat),
+    destinoLng: String(DESTINO.lng),
+    categoria: 'comfort',
+    paradas: JSON.stringify([PARADA]),
+  });
+  const ctxP = await telefono(tokens.cliente, IDS.cliente, idioma);
+  await ctxP.addInitScript(
+    ([u, b]) => localStorage.setItem(`tumbite.borrador.carro.${u}`, b),
+    [IDS.cliente, borradorConParada],
+  );
+  const q = await ctxP.newPage();
+  // La sugerencia de la parada nueva (este servidor local no tiene la llave de direcciones).
+  await q.route('**/datos/lugares/sugerencias*', (r) =>
+    r.fulfill({ json: { sugerencias: [{ id: 'parada-2', texto: PARADA_2.direccion }] } }),
+  );
+  await q.route('**/datos/lugares/punto/*', (r) =>
+    r.fulfill({
+      json: { punto: { lat: PARADA_2.lat, lng: PARADA_2.lng }, direccion: PARADA_2.direccion },
+    }),
+  );
+  await q.goto('/app/ride?servicio=carro');
+  await q.getByTestId('parada-editor').waitFor({ timeout: 60_000 });
+  await arribaDe(q.getByTestId('moto-recogida'));
+  await q.evaluate(() => globalThis.scrollBy(0, -110));
+  await espera(1_000);
+  await foto(q, 'pasajero-paradas', idioma);
+  await q.getByRole('button', { name: en ? 'See price' : 'Ver precio' }).click();
+  await q.getByTestId('moto-precio').waitFor({ timeout: 30_000 });
+  await arribaDe(q.getByTestId('moto-precio'));
+  await q.evaluate(() => globalThis.scrollBy(0, -140));
+  await espera(800);
+  await foto(q, 'pasajero-paradas-precio', idioma);
+
+  // ───────── C-CARRO-DINAMICA: con la tarifa dinámica en 1,5, el aviso sale antes de pedir
+  await pedir(
+    'PUT',
+    `/datos/admin/viajes/dinamica/carro/${CIUDAD.id}`,
+    {
+      modo: 'manual',
+      multiplicadorPb: 15_000,
+      minutos: 60,
+      motivo: 'Capturas: mucha demanda',
+    },
+    tokens.equipo,
+  );
+  await q.reload();
+  await q.getByRole('button', { name: en ? 'See price' : 'Ver precio' }).click({ timeout: 60_000 });
+  await q.getByTestId('moto-dinamica').waitFor({ timeout: 30_000 });
+  await arribaDe(q.getByTestId('moto-precio'));
+  await q.evaluate(() => globalThis.scrollBy(0, -140));
+  await espera(800);
+  await foto(q, 'pasajero-dinamica', idioma);
+
+  // El conductor sigue conectado en la recogida (su última posición ya tenía unos minutos).
+  await sql(
+    `UPDATE repartidores SET conectado = 1, lat = ${ORIGEN.lat}, lng = ${ORIGEN.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${IDS.conductor}'`,
+  );
+  // Y con saldo para la comisión (C-SALDO-OFERTAS: sin saldo no le llega la oferta). Los viajes
+  // anteriores de este guion ya gastaron el de la cuenta de prueba.
+  await sql(
+    `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia)
+     VALUES ('capturas-carro-saldo-${idioma}', '${IDS.conductor}', 'prepago', 'VE', 'USD', 2000, 'recarga', 'capturas-carro:saldo:${idioma}')`,
+  );
+  // Viaje Comfort con una parada y tarifa dinámica: la oferta del conductor lo dice todo.
+  const cot3 = (
+    await pasajero('POST', '/datos/viajes/cotizar', {
+      servicio: 'carro',
+      categoria: 'comfort',
+      origen: ORIGEN,
+      paradas: [PARADA],
+      destino: DESTINO,
+    })
+  ).cotizacion;
+  const v3 = (
+    await pasajero('POST', '/datos/viajes', { cotizacionId: cot3.id, metodoPago: 'efectivo' })
+  ).viaje;
+  await d.goto('/driver/');
+  await d.getByTestId('oferta-viaje').waitFor({ timeout: 60_000 });
+  await espera(800);
+  await foto(d, 'driver-oferta-paradas', idioma);
+  await paso(v3.id, 'aceptar');
+  await q.reload();
+  await q.getByTestId('viaje-conductor').waitFor({ timeout: 60_000 });
+  await espera(4_000);
+  await arribaDe(q.getByTestId('viaje-conductor'));
+  await q.evaluate(() => globalThis.scrollBy(0, -330));
+  await espera(600);
+  await foto(q, 'pasajero-conductor-comfort', idioma);
+  await paso(v3.id, 'llegue');
+  await paso(v3.id, 'iniciar', {
+    pin: (await pasajero('GET', `/datos/viajes/${v3.id}`)).viaje.pin,
+  });
+
+  // ───────── Pasajero: las paradas del viaje y el cambio con el precio nuevo
+  await q.reload();
+  await q.getByTestId('viaje-paradas').waitFor({ timeout: 60_000 });
+  await espera(4_000);
+  await arribaDe(q.getByTestId('viaje-paradas'));
+  await q.evaluate(() => globalThis.scrollBy(0, -330));
+  await espera(600);
+  await foto(q, 'pasajero-paradas-viaje', idioma);
+  await q.getByTestId('viaje-paradas-cambiar').click();
+  await q.getByTestId('viaje-parada-nueva-agregar').click();
+  await q.getByTestId('viaje-parada-nueva-2').fill(en ? 'Pharmacy' : 'Farmacia');
+  await q.getByTestId('sugerencia-direccion-0').click({ timeout: 30_000 });
+  await q.getByRole('button', { name: en ? 'See new price' : 'Ver precio nuevo' }).click();
+  await q.getByTestId('viaje-paradas-precio').waitFor({ timeout: 30_000 });
+  await arribaDe(q.getByTestId('viaje-paradas'));
+  await q.evaluate(() => globalThis.scrollBy(0, -70));
+  await espera(800);
+  await foto(q, 'pasajero-paradas-cambio', idioma);
+  await ctxP.close();
+
+  // ───────── Driver: la parada que sigue y la espera en la parada
+  await d.reload();
+  await d.getByText(en ? 'I’m at the stop' : 'Llegué a la parada', { exact: true }).waitFor({
+    timeout: 60_000,
+  });
+  await espera(800);
+  await foto(d, 'driver-parada', idioma);
+  // El conductor llega a la parada (su posición se pone directo: el servidor no reescribe la ficha
+  // por cada lectura de GPS seguida).
+  await sql(
+    `UPDATE repartidores SET lat = ${PARADA.lat}, lng = ${PARADA.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${IDS.conductor}'`,
+  );
+  await paso(v3.id, 'paradas/1/llegue');
+  await d.reload();
+  await d.getByTestId('viaje-parada-espera').waitFor({ timeout: 60_000 });
+  await espera(800);
+  await foto(d, 'driver-parada-espera', idioma);
+  await paso(v3.id, 'paradas/1/seguir');
+  await paso(v3.id, 'terminar');
+  await sql(
+    `UPDATE repartidores SET lat = ${ORIGEN.lat}, lng = ${ORIGEN.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${IDS.conductor}'`,
+  );
   await ctxD.close();
 }
+// La tarifa dinámica vuelve a precio normal.
+await pedir(
+  'PUT',
+  `/datos/admin/viajes/dinamica/carro/${CIUDAD.id}`,
+  {
+    modo: 'auto',
+    motivo: 'Capturas: fin',
+  },
+  tokens.equipo,
+);
 // Vuelve a dejarlo con su moto para el guion de Moto.
 await intentar(
   conductor('PUT', '/datos/conductor/preferencias', { servicioId: 'carro', activa: false }),
