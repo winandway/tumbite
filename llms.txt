@@ -61,7 +61,7 @@
 - [Paying, canceling and tipping on Moto · Divoox](https://divoox.com/docs/ordering/ride-moto-pago): Pay with cash, card, or mobile payment (depending on your country), cancel for free at the start, and leave a tip when the ride ends.
 - [Your safety on rides · Divoox](https://divoox.com/docs/ordering/ride-seguridad): Share your ride live, choose trusted contacts and get help with one tap.
 - [Request a car (taxi) with Divoox Car](https://divoox.com/docs/ordering/ride-car): Request a Car or a six-seat Car XL, see the fixed price before you confirm, and follow your driver until they arrive.
-- [Pay, tip, and see your rides in Car · Divoox](https://divoox.com/docs/ordering/ride-car-pay): Pay with cash, mobile payment, or card depending on your country, tip when you arrive, and find the receipt and help in “My rides.”
+- [Pay, tip, and see your rides in Car · Divoox](https://divoox.com/docs/ordering/ride-car-pay): Pay by card or with cash, tip your driver when you arrive, and find the receipt and help in “My rides.”
 - [Choose your car: Car, Comfort, Premium, or XL · Divoox](https://divoox.com/docs/ordering/ride-car-categories): See each category’s price for your same ride and pick the one you want before you request.
 - [Add stops to your ride · Divoox](https://divoox.com/docs/ordering/ride-car-stops): Add stops before you request or once the ride is underway. You always see the new price before you confirm.
 - [Dynamic pricing: why the price is sometimes higher · Divoox](https://divoox.com/docs/ordering/ride-car-dynamic-pricing): When lots of people are requesting rides and few drivers are available, the price goes up for a while. You see it before you request.
