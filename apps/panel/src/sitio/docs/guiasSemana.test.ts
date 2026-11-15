@@ -187,6 +187,7 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     // inglés no enseña el cobro contra entrega (allá no existe): dice que no se usa y muestra la
     // recarga con tarjeta y la parada sin nada que cobrar, con capturas de Novi.
     const { paises, ...resto } = TEXTOS_FLEX.en;
+    const flexEs = readdirSync(join(PUBLICO, 'flex'));
     const ingles = JSON.stringify(resto).toLowerCase();
     for (const ajeno of [...AJENO_EN_INGLES, 'caracas', 'bcv', 'cédula', 'national id'])
       expect(ingles, `flex: ${ajeno}`).not.toContain(ajeno);
@@ -204,6 +205,11 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     expect(TEXTOS_FLEX.en.cobro.img1).toBe('panel-recarga');
     expect(TEXTOS_FLEX.en.cobro.img2).toBe('driver-entrega');
     expect(TEXTOS_FLEX.es.cobro.img1).toBe('panel-caja');
+    // El español sigue enseñando el cobro contra entrega de Venezuela, con sus capturas.
+    expect(TEXTOS_FLEX.es.cobro.img2).toBe('driver-cobrar');
+    expect(TEXTOS_FLEX.es.cobro.texto).toMatch(/En Venezuela el cliente paga al recibir/);
+    expect(flexEs).toContain('panel-caja-es.webp');
+    expect(flexEs).toContain('driver-cobrar-es.webp');
     // …y esas no existen en inglés en la carpeta de la web: nadie las puede volver a enlazar.
     const flex = readdirSync(join(PUBLICO, 'flex'));
     for (const vieja of [
