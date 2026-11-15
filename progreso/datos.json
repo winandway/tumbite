@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-15T16:29:14.000Z",
+  "actualizado": "2026-11-15T16:54:28.000Z",
   "version": "7b9a5ca",
   "ahora": "15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
@@ -356,6 +356,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-15",
+      "titulo": "Las guías de Docs ya muestran el panel nuevo",
+      "texto": "Se rehicieron con el panel web nuevo las capturas del tutorial «Empieza con Divoox Flex» (doce pasos), del pedido de prueba del restaurante, del modo tableta y de la planilla de pedidos, en español y en inglés. El botón de las acciones que salen bien va en verde. Publicado y comprobado en divoox.com. Queda sin rehacer la captura de anuncios del restaurante, porque esa función está apagada en el sitio de pruebas."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "Apps de prueba con códigos QR y cuentas en un solo lugar",
