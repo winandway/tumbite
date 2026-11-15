@@ -56,11 +56,15 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
   // El libro de los bolsillos (movimientos) de ese día, por concepto.
   const { results: mov } = await db
     .prepare(
-      `SELECT concepto, COALESCE(SUM(monto),0) AS monto FROM movimientos WHERE date(creado_en) = ? GROUP BY concepto`,
+      // C-CONCILIACION-SOLO-PEDIDOS (15 nov 2026): «de_pedidos» deja fuera lo que no es de un pedido.
+      `SELECT concepto, COALESCE(SUM(monto),0) AS monto,
+              COALESCE(SUM(CASE WHEN pedido_id IS NOT NULL THEN monto ELSE 0 END),0) AS de_pedidos
+         FROM movimientos WHERE date(creado_en) = ? GROUP BY concepto`,
     )
     .bind(dia)
-    .all<{ concepto: string; monto: number }>();
+    .all<{ concepto: string; monto: number; de_pedidos: number }>();
   const por = new Map(mov.map((m) => [m.concepto, Number(m.monto)]));
+  const dePedidos = new Map(mov.map((m) => [m.concepto, Number(m.de_pedidos)]));
   // C-CONCILIACION-DIRECTA (19 oct 2026): los pedidos cobrados en mano (efectivo o transferencia al
   // repartidor) no pasan por Stripe ni por la billetera: se cuentan aparte y por moneda, nunca se
   // suman a lo de arriba. Cada uno tiene su propia conciliación (conciliacion_estado).
@@ -79,8 +83,12 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
     directos[`directosPendientes_${d.moneda}`] = n(d.pend);
   }
   const venta = por.get('venta') ?? 0;
-  const entrega = por.get('entrega') ?? 0;
-  const propina = por.get('propina') ?? 0;
+  // Esta conciliación es la de los PEDIDOS: lo que un conductor gana por un viaje de pasajeros con
+  // tarjeta (y su propina) también entra a su billetera como «entrega» y «propina», pero sin pedido.
+  // Contarlo aquí hacía descuadrar el día (pasó en el sitio de pruebas el 14 nov, con los viajes de
+  // Carro con tarjeta de prueba: 56,57 dólares «de más» que eran de viajes).
+  const entrega = dePedidos.get('entrega') ?? 0;
+  const propina = dePedidos.get('propina') ?? 0;
   const retirado = -(por.get('retiro') ?? 0);
   // Reglas que tienen que cuadrar:
   // 1) lo abonado a restaurantes = la suma de pago_restaurante de lo entregado ese día;
@@ -246,13 +254,26 @@ export async function conciliarPedidos(
 /** La fecha UTC de ayer, como la guarda la base (YYYY-MM-DD). */
 export const ayer = (ahora = Date.now()) => new Date(ahora - 86_400_000).toISOString().slice(0, 10);
 
+/** Cada cuánto se vuelve a calcular la conciliación de ayer si no cuadró y nadie la excusó. */
+export const MINUTOS_REINTENTO_CONCILIACION = 60;
+
 /** El reloj llama aquí: concilia ayer si todavía no se hizo y avisa al equipo si no cuadra. */
 export async function conciliarAyer(env: Env, db: D1Database): Promise<Conciliacion | null> {
   const dia = ayer();
-  const hecha = await db.prepare('SELECT 1 FROM conciliaciones WHERE dia = ?').bind(dia).first();
-  if (hecha) return null;
+  const hecha = await db
+    .prepare(
+      `SELECT c.cuadra, c.creado_en < datetime('now', ?) AS vieja,
+              EXISTS (SELECT 1 FROM conciliacion_excepciones e WHERE e.dia = c.dia) AS excusada
+         FROM conciliaciones c WHERE c.dia = ?`,
+    )
+    .bind(`-${MINUTOS_REINTENTO_CONCILIACION} minutes`, dia)
+    .first<{ cuadra: number; vieja: number; excusada: number }>();
+  // Ya hecha: no se repite, salvo que no cuadre, nadie la haya excusado y tenga más de una hora (lo
+  // que la descuadró pudo corregirse: se vuelve a calcular sola, como mucho una vez por hora).
+  if (hecha && (hecha.cuadra || hecha.excusada || !hecha.vieja)) return null;
   const r = await conciliar(db, dia);
-  if (!r.cuadra)
+  // El aviso por correo sale solo la primera vez (no en cada reintento).
+  if (!r.cuadra && !hecha)
     for (const para of await correosEquipo(env, 'dinero'))
       await enviarCorreo(env, {
         de: 'avisos',
