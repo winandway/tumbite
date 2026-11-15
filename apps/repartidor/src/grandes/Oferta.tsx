@@ -194,7 +194,7 @@ export function Oferta({
               {t.rechazar}
             </Text>
           </Pressable>
-          <Text style={{ color: '#8A8F98', fontSize: 12, textAlign: 'center' }}>
+          <Text style={{ color: '#6B7078', fontSize: 12, textAlign: 'center' }}>
             {t.vence} {t.sinCastigo}
           </Text>
         </View>

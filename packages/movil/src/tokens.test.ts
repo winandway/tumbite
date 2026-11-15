@@ -16,6 +16,7 @@ describe('tokens de diseño de las apps', () => {
   it('el texto se lee: contraste AA en cada par de uso', () => {
     expect(contraste(COLOR.texto, COLOR.fondo)).toBeGreaterThanOrEqual(7);
     expect(contraste(COLOR.textoSuave, COLOR.fondo)).toBeGreaterThanOrEqual(4.5);
+    expect(contraste(COLOR.textoTenue, COLOR.fondo)).toBeGreaterThanOrEqual(4.5);
     expect(contraste(COLOR.marcaOscuro, COLOR.fondo)).toBeGreaterThanOrEqual(4.5);
     expect(contraste(COLOR.logisticaTexto, COLOR.logisticaAccion)).toBeGreaterThanOrEqual(4.5);
     expect(contraste(COLOR.blanco, COLOR.logistica)).toBeGreaterThanOrEqual(4.5);

@@ -768,7 +768,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                     height: 24,
                     borderRadius: 6,
                     borderWidth: 2,
-                    borderColor: b.valores.cajon === 'si' ? C.exito : '#8A8F98',
+                    borderColor: b.valores.cajon === 'si' ? C.exito : '#6B7078',
                     backgroundColor: b.valores.cajon === 'si' ? C.exito : '#fff',
                   }}
                 />

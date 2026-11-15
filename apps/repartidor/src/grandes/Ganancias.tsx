@@ -83,7 +83,7 @@ export function Ganancias({
             {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
             {linea(t.propinas, x.propinas, x.moneda)}
             {linea(`${t.total} · ${x.entregas} ${t.entregas}`, x.total, x.moneda, true)}
-            <Text style={{ color: '#8A8F98', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
+            <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
           </View>
         ),
       )}

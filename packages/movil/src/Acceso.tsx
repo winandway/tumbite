@@ -254,7 +254,7 @@ export function Acceso({
               height: 22,
               borderRadius: 4,
               borderWidth: 2,
-              borderColor: acepto ? C.primario : '#8A8F98',
+              borderColor: acepto ? C.primario : '#6B7078',
               backgroundColor: acepto ? C.primario : '#FFFFFF',
               alignItems: 'center',
               justifyContent: 'center',

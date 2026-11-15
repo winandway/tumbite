@@ -1294,7 +1294,7 @@ export function Inicio() {
                 height: 22,
                 borderRadius: 4,
                 borderWidth: 2,
-                borderColor: aceptoTerminos ? C.logistica : '#8A8F98',
+                borderColor: aceptoTerminos ? C.logistica : '#6B7078',
                 backgroundColor: aceptoTerminos ? C.logistica : '#fff',
               }}
             />
@@ -1824,7 +1824,7 @@ export function Inicio() {
           <Text style={{ fontWeight: '700', color: C.secundario }}>{nombre}</Text>
           {detalle ? <Text style={{ color: '#666B73', fontSize: 12 }}>{detalle}</Text> : null}
         </View>
-        <Text style={{ color: '#8A8F98', fontSize: 18 }}>{abierto ? '˅' : '›'}</Text>
+        <Text style={{ color: '#6B7078', fontSize: 18 }}>{abierto ? '˅' : '›'}</Text>
       </Pressable>
     );
     return lienzo(

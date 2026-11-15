@@ -349,7 +349,7 @@ export default function Tienda() {
                 {p.precioAntes ? (
                   <Text
                     accessibilityLabel={`${t.antes} ${formatearMonto(p.precioAntes, moneda, idioma)}`}
-                    style={{ color: '#8A8F98', fontSize: 13, textDecorationLine: 'line-through' }}
+                    style={{ color: '#6B7078', fontSize: 13, textDecorationLine: 'line-through' }}
                   >
                     {formatearMonto(p.precioAntes, moneda, idioma)}
                   </Text>

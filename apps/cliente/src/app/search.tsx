@@ -153,7 +153,7 @@ export default function Buscar() {
           />
           {q ? (
             <Pressable onPress={() => setQ('')} accessibilityRole="button" accessibilityLabel="×">
-              <Text style={{ fontSize: 18, color: '#8A8F98' }}>×</Text>
+              <Text style={{ fontSize: 18, color: '#6B7078' }}>×</Text>
             </Pressable>
           ) : null}
         </View>
@@ -213,7 +213,7 @@ export default function Buscar() {
                   paddingVertical: 12,
                 }}
               >
-                <Text style={{ color: '#8A8F98', fontSize: 16 }}>↺</Text>
+                <Text style={{ color: '#6B7078', fontSize: 16 }}>↺</Text>
                 <Text style={{ color: C.secundario, fontSize: 15 }} numberOfLines={1}>
                   {r}
                 </Text>
@@ -225,7 +225,7 @@ export default function Buscar() {
                 hitSlop={8}
                 style={{ paddingHorizontal: 6, paddingVertical: 12 }}
               >
-                <Text style={{ fontSize: 18, color: '#8A8F98' }}>×</Text>
+                <Text style={{ fontSize: 18, color: '#6B7078' }}>×</Text>
               </Pressable>
             </View>
           ))}

@@ -45,7 +45,7 @@ export function CasillaSms({
           height: 22,
           borderRadius: 4,
           borderWidth: 2,
-          borderColor: marcada ? C.primario : '#8A8F98',
+          borderColor: marcada ? C.primario : '#6B7078',
           backgroundColor: marcada ? C.primario : '#FFFFFF',
           alignItems: 'center',
           justifyContent: 'center',

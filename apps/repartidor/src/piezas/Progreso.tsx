@@ -43,7 +43,7 @@ export function Progreso({ idioma, paso }: { idioma: Idioma; paso: 0 | 1 | 2 }) 
                 style={{
                   fontSize: 12,
                   fontWeight: i === paso ? '800' : '600',
-                  color: i <= paso ? C.primario : '#8A8F98',
+                  color: i <= paso ? C.primario : '#6B7078',
                   marginTop: 4,
                 }}
               >

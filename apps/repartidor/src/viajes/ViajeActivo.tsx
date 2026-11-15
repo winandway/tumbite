@@ -619,7 +619,7 @@ export function ViajeActivo({
             .then((r) => Linking.openURL(`tel:${r.numero}`))
         }
       />
-      <Text style={{ color: '#8A8F98', fontSize: 12 }}>{t.soporte}</Text>
+      <Text style={{ color: '#6B7078', fontSize: 12 }}>{t.soporte}</Text>
     </View>
   );
 }

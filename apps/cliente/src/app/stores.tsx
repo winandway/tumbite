@@ -159,7 +159,7 @@ export default function Tiendas() {
       {fuera ? t.fueraDeZona : t.sinTiendas}
     </Text>
   ) : (
-    <Text style={{ color: '#8A8F98', textAlign: 'center', marginTop: 24 }}>…</Text>
+    <Text style={{ color: '#6B7078', textAlign: 'center', marginTop: 24 }}>…</Text>
   );
 
   return (

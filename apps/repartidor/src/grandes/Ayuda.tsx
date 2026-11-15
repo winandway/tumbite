@@ -88,7 +88,7 @@ export function AyudaPedido({
         style={{ alignItems: 'center', paddingVertical: 8 }}
       >
         <Text style={{ color: C.primario, fontWeight: '800' }}>{tp.emergencia} · 911</Text>
-        <Text style={{ color: '#8A8F98', fontSize: 12 }}>{tp.emergenciaAyuda}</Text>
+        <Text style={{ color: '#6B7078', fontSize: 12 }}>{tp.emergenciaAyuda}</Text>
       </Pressable>
     </View>
   );

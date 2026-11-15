@@ -240,7 +240,7 @@ export function ReportarProblema({
                         height: 20,
                         borderRadius: 5,
                         borderWidth: 2,
-                        borderColor: marcado ? '#F20D20' : '#8A8F98',
+                        borderColor: marcado ? '#F20D20' : '#6B7078',
                         backgroundColor: marcado ? '#F20D20' : '#fff',
                       }}
                     />

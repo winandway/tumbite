@@ -90,7 +90,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
         </Text>
       </View>
       <Text style={{ color: '#666B73', fontSize: 13, marginTop: 4 }}>{ayuda}</Text>
-      <Text style={{ color: '#8A8F98', fontSize: 12, marginTop: 2 }}>
+      <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 2 }}>
         {t.referencia}: {referencia}
       </Text>
     </View>

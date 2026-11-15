@@ -53,7 +53,7 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
               ? ` · ${t.quedasLibre}`
               : ''}
           </Text>
-          <Text style={{ color: '#8A8F98', fontSize: 11, marginTop: 2 }}>
+          <Text style={{ color: '#6B7078', fontSize: 11, marginTop: 2 }}>
             {new Date(`${a.en.replace(' ', 'T')}Z`).toLocaleString(
               idioma === 'en' ? 'en-US' : 'es-US',
               { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },

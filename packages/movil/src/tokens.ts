@@ -20,7 +20,7 @@ export const COLOR = {
   texto: M.texto,
   /** Texto secundario: el gris de apoyo de la marca. */
   textoSuave: M.gris,
-  textoTenue: '#8A8F98',
+  textoTenue: '#6B7078',
   blanco: '#FFFFFF',
   fondo: '#FFFFFF',
   /** Lienzo gris muy claro para separar bloques, chips y buscador. */

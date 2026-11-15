@@ -424,7 +424,7 @@ function PantallaEmpresas() {
                   height: 24,
                   borderRadius: 6,
                   borderWidth: 2,
-                  borderColor: v.acepto ? C.exito : '#8A8F98',
+                  borderColor: v.acepto ? C.exito : '#6B7078',
                   backgroundColor: v.acepto ? C.exito : '#fff',
                   alignItems: 'center',
                   justifyContent: 'center',
