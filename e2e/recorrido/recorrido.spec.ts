@@ -970,7 +970,8 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(rapp.getByText(/^(On the way|En camino)$/).first()).toBeVisible({
       timeout: 20_000,
     });
-    await Promise.all(restApps.map((p) => p.context().close()));
+    // La del celular sigue abierta: al final ve el pedido entregado con sus dos fotos.
+    await Promise.all(restApps.filter((p) => p !== rapp).map((p) => p.context().close()));
 
     // 9. En camino: «Cómo llegar» mientras está lejos; el cliente ve su pedido sellado.
     // Espera la pantalla de entrega (en la de recogida también hay un «Cómo llegar», al restaurante).
@@ -1121,6 +1122,35 @@ for (const idioma of ['en', 'es'] as const) {
       })
       .toBe('entregado');
     await expect(rep.getByText(`${L.pendientes}: 1`)).toHaveCount(0, { timeout: 20_000 });
+    // C-FOTOS-AL-COMERCIO: el restaurante ve el pedido «Entregado al cliente» con las DOS fotos
+    // (al recoger y al entregar), en su app y en su panel, y la abre en grande.
+    await rapp.reload();
+    await rapp.getByRole('tab', { name: /^(Orders|Pedidos)$/ }).click();
+    await expect(async () => {
+      if (!(await rapp.getByTestId('pedido-entregado').count()))
+        await filaRapp(rapp).first().click();
+      await expect(rapp.getByTestId('pedido-entregado').first()).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 30_000 });
+    const fotosRapp = rapp.getByTestId('fotos-del-pedido').first();
+    await expect(fotosRapp.getByTestId('foto-al-recoger').getByRole('img')).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(fotosRapp.getByTestId('foto-al-entregar').getByRole('img')).toBeVisible({
+      timeout: 20_000,
+    });
+    await fotosRapp.scrollIntoViewIfNeeded();
+    await foto(rapp, 'restapp-fotos-del-pedido');
+    await fotosRapp.getByTestId('foto-al-entregar').getByRole('img').click();
+    await expect(rapp.getByRole('button', { name: L.cerrar })).toBeVisible({ timeout: 10_000 });
+    await rapp.waitForTimeout(700); // la ventana aparece con un fundido
+    await foto(rapp, 'restapp-foto-en-grande');
+    await rapp.getByRole('button', { name: L.cerrar }).click();
+    await rapp.context().close();
+    await panel.reload();
+    const fotosPanel = panel.getByRole('region', { name: L.fotosDelPedido }).first();
+    await expect(fotosPanel.getByRole('img')).toHaveCount(2, { timeout: 20_000 });
+    await fotosPanel.scrollIntoViewIfNeeded();
+    await foto(panel, 'restaurante-fotos-del-pedido');
     // Propina después de entregar: el cliente deja $2 extra con su tarjeta guardada.
     await cli.goto(`/app/order/${cobro.pedidoId}`);
     const dosDolares = cli.getByRole('button', { name: /\$2\.00/ }).first();

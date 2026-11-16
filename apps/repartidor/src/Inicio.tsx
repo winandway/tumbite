@@ -18,6 +18,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import { detenerUbicacionFondo, fijarModoRastreo, iniciarUbicacionFondo } from './ubicacionFondo';
 import * as ImagePicker from 'expo-image-picker';
+import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useKeepAwake } from 'expo-keep-awake';
 import {
@@ -110,6 +111,7 @@ import {
   useToqueAviso,
   URL_SERVIDOR,
   capturasConCamara,
+  achicarFotoEvidencia,
   Text,
 } from '@tumbite/movil';
 
@@ -888,7 +890,10 @@ export function Inicio() {
     }
     const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 });
     const a = r.canceled ? null : r.assets[0];
-    return a ? (await fetch(a.uri)).blob() : null;
+    // C-FOTO-EVIDENCIA-LIVIANA: achicada en el teléfono antes de subir.
+    return a
+      ? (await fetch(await achicarFotoEvidencia(a, manipulateAsync, SaveFormat.JPEG))).blob()
+      : null;
   }
 
   /**
@@ -904,6 +909,9 @@ export function Inicio() {
         setError(t.permisoCamara);
         return null;
       }
+      // C-FOTO-EVIDENCIA-LIVIANA: la ubicación se pide mientras la cámara está abierta (no después),
+      // y la foto se achica en el teléfono (1280 px, JPEG 0,6) antes de subir.
+      const ubicacion = ubicacionConLimite();
       const r = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
         quality: 0.5,
@@ -912,21 +920,28 @@ export function Inicio() {
       const foto = r.canceled ? null : r.assets[0];
       if (!foto) return null;
       setSubiendo(true);
-      const p = await ubicacionConLimite();
+      const [p, uriChica] = await Promise.all([
+        ubicacion,
+        achicarFotoEvidencia(foto, manipulateAsync, SaveFormat.JPEG),
+      ]);
       if (!p) {
         setError(t.ubicacionTarda);
         return null;
       }
       setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
-      const blob = await (await fetch(foto.uri)).blob();
+      const blob = await (await fetch(uriChica)).blob();
       const rutaCompleta = `${ruta}${ruta.includes('?') ? '&' : '?'}lat=${p.coords.latitude}&lng=${p.coords.longitude}`;
       try {
         await api.subirFoto(blob, rutaCompleta);
       } catch (x) {
-        // Solo la entrega se guarda sin señal (la recogida la confirma el restaurante en persona).
-        const esEntrega = ruta.includes('/entregado') || ruta.includes('/foto-entrega');
+        // Sin señal (o con un error pasajero) la foto de la recogida y la de la entrega se guardan
+        // en el celular y se reintentan solas cada 10 segundos (C-FOTO-EVIDENCIA-LIVIANA).
+        const seReintenta =
+          ruta.includes('/entregado') ||
+          ruta.includes('/foto-entrega') ||
+          ruta.includes('/foto-recogida');
         if (
-          !esEntrega ||
+          !seReintenta ||
           !(await guardarSiSinSenal(x, {
             ruta: rutaCompleta,
             tipo: 'foto',

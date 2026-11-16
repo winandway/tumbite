@@ -3022,7 +3022,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Cuando llegas a la dirección y el GPS confirma que estás en la puerta, aparece «Tomar foto de la entrega».',
           'Deja la comida y toma la foto de lado: que se vean la comida y la entrada de la casa, nunca la cara de nadie.',
-          'La foto se sube sola. Verás una miniatura con «Foto de la entrega lista». Si no te gustó, toca «Tomar otra foto» y reemplaza la anterior.',
+          'La foto se sube sola y en uno o dos segundos: la app la achica en tu celular antes de enviarla, así gasta pocos datos aunque la señal sea mala. Verás una miniatura con «Foto de la entrega lista». Si no te gustó, toca «Tomar otra foto» y reemplaza la anterior.',
           'Con la foto lista, la barra de abajo se pone verde: desliza la bola de izquierda a derecha hasta el final. El pedido queda entregado y el cliente recibe la foto.',
           'Deslizar, en vez de tocar, evita cerrar un pedido sin querer con el celular en el bolsillo. Si usas el lector de pantalla del celular, basta con activar la barra.',
           'Si no tienes señal en la puerta, la foto y el cierre se guardan en tu celular y se mandan solos cuando vuelve la señal. Mientras tanto ves «Pendiente de confirmar».',
@@ -3866,6 +3866,47 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'order-photos',
+        titulo: 'Las fotos de cada pedido: al recoger y al entregar',
+        resumen:
+          'En el detalle de cada pedido, tu restaurante ve las dos fotos que toma el repartidor: la del pedido cerrado al salir de tu local y la de la comida en la puerta del cliente. Sirven para atender cualquier reclamo.',
+        explicacion: [
+          'Cuando el repartidor sale con el pedido, en tu app y en tu panel el pedido pasa a «En camino» y aparece la foto «Al recoger».',
+          'Cuando lo entrega, el pedido pasa a «Entregado al cliente» y aparece la segunda foto, «Al entregar».',
+          'Toca cualquiera de las dos y se abre en grande. Toca «Cerrar» para volver.',
+          'Si el cliente lo recibió en mano, la segunda casilla dice «En mano: sin foto».',
+          'Son las mismas fotos que ve el cliente y que guarda nuestro equipo de soporte: si alguien reclama que su pedido no llegó o llegó abierto, las tienes a la mano en tu pantalla.',
+          'Están en el detalle de los pedidos de las últimas 24 horas, en la pestaña «Pedidos» de la app y en «Pedidos» del panel.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restapp-fotos-del-pedido-es.webp',
+            alt: 'App del restaurante: pedido «Entregado al cliente» con las dos miniaturas «Al recoger» y «Al entregar».',
+            pie: 'En la app: el pedido entregado con sus dos fotos.',
+          },
+          {
+            src: '/docs/recorrido-restapp-foto-en-grande-es.webp',
+            alt: 'La foto «Al entregar» abierta en grande, con el botón «Cerrar».',
+            pie: 'Toca una foto para verla en grande.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-fotos-del-pedido-es.webp',
+            alt: 'Panel del restaurante en la computadora: el pedido entregado con «Fotos del pedido», al recoger y al entregar.',
+            pie: 'En el panel de la computadora, las mismas dos fotos.',
+          },
+        ],
+        preguntas: [
+          '¿Dónde veo la foto de la entrega de un pedido?',
+          '¿Cómo atiendo un reclamo de un pedido que no llegó?',
+          '¿Por qué un pedido no tiene foto de entrega?',
+        ],
+        pasos: [
+          'Abre «Pedidos» y toca el pedido.',
+          'Mira «Fotos del pedido»: «Al recoger» y «Al entregar».',
+          'Toca una foto para verla en grande.',
+        ],
+      },
+      {
         id: 'pickup-and-delivery-photos',
         titulo: 'Recogida con foto y entrega en la puerta',
         resumen:
@@ -3876,7 +3917,7 @@ const es: SeccionDocs[] = [
           'El repartidor también escanea el código QR de la pantalla del restaurante, que confirma que es el pedido correcto; con el código y la foto, el pedido sale solo. Si no escaneó, el restaurante ve la foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada.',
           'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a unos 80 metros de la dirección, confirmado por el GPS con dos lecturas precisas), ese botón se quita y aparece «Tomar foto de la entrega». Con la foto lista, el repartidor desliza «Desliza para completar». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto.',
           'La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa.',
-          'Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo.',
+          'Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo. El restaurante las tiene juntas en el detalle del pedido: «Al recoger» y «Al entregar».',
           'Al entregar, al cliente también le llega un correo con la foto de la entrega y el enlace para calificar. Ese enlace de la foto es solo de su pedido y deja de funcionar a los 7 días.',
           'Antes de guardar cualquier foto en Divoox (entregas, platos, chat, quejas), le quitamos los datos ocultos que pone el celular: la ubicación exacta, el modelo del teléfono y la hora. Así nadie puede sacar tu dirección de una foto. En la foto de la entrega, el lugar se guarda aparte, solo como prueba de que se entregó.',
         ],
@@ -8037,7 +8078,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'When you reach the address and GPS confirms you’re at the door, “Take the delivery photo” appears.',
           'Leave the food and take the photo from the side: show the food and the entrance, never anyone’s face.',
-          'The photo uploads on its own. You’ll see a thumbnail with “Delivery photo ready.” If you don’t like it, tap “Retake photo” to replace it.',
+          'The photo uploads on its own in a second or two: the app shrinks it on your phone before sending, so it uses little data even with a weak signal. You’ll see a thumbnail with “Delivery photo ready.” If you don’t like it, tap “Retake photo” to replace it.',
           'With the photo ready, the bar below turns green: slide the ball all the way from left to right. The order is delivered and the customer gets the photo.',
           'Sliding instead of tapping keeps you from closing an order by accident with the phone in your pocket. If you use your phone’s screen reader, just activate the bar.',
           'If you have no signal at the door, the photo and the completion are saved on your phone and sent on their own when the signal comes back. Meanwhile you see “Pending confirmation.”',
@@ -8884,6 +8925,47 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'order-photos',
+        titulo: 'Each order’s photos: at pickup and at drop-off',
+        resumen:
+          'In each order’s details, your restaurant sees both photos the driver takes: the sealed order leaving your place and the food at the customer’s door. Use them to handle any complaint.',
+        explicacion: [
+          'When the driver leaves with the order, it moves to “On the way” in your app and panel, and the “At pickup” photo appears.',
+          'When it’s delivered, the order moves to “Delivered to the customer” and the second photo, “At drop-off,” appears.',
+          'Tap either one to open it full size. Tap “Close” to go back.',
+          'If the customer took it in person, the second box says “Handed over: no photo.”',
+          'They’re the same photos the customer sees and our support team keeps: if someone says their order never arrived or arrived open, you have them right on your screen.',
+          'You’ll find them in the details of the last 24 hours of orders, in the “Orders” tab of the app and in “Orders” in the panel.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-restapp-fotos-del-pedido-en.webp',
+            alt: 'Restaurant app: order “Delivered to the customer” with the two thumbnails “At pickup” and “At drop-off.”',
+            pie: 'In the app: the delivered order with both photos.',
+          },
+          {
+            src: '/docs/recorrido-restapp-foto-en-grande-en.webp',
+            alt: 'The “At drop-off” photo open full size, with the “Close” button.',
+            pie: 'Tap a photo to see it full size.',
+          },
+          {
+            src: '/docs/recorrido-restaurante-fotos-del-pedido-en.webp',
+            alt: 'Restaurant panel on the computer: the delivered order with “Order photos,” at pickup and at drop-off.',
+            pie: 'On the computer panel, the same two photos.',
+          },
+        ],
+        preguntas: [
+          'Where do I see an order’s delivery photo?',
+          'How do I handle a complaint about an order that never arrived?',
+          'Why doesn’t an order have a delivery photo?',
+        ],
+        pasos: [
+          'Open “Orders” and tap the order.',
+          'Check “Order photos”: “At pickup” and “At drop-off.”',
+          'Tap a photo to see it full size.',
+        ],
+      },
+      {
         id: 'pickup-and-delivery-photos',
         titulo: 'Photo at pickup, delivery at the door',
         resumen:
@@ -8894,7 +8976,7 @@ const en: SeccionDocs[] = [
           'The driver also scans the QR code on the restaurant’s screen, which confirms it’s the right order; with the code and the photo, the order goes out on its own. If they didn’t scan, the restaurant sees the photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time.',
           'On the way, the green “Directions” button guides the driver. At the door (about 80 meters from the address, confirmed by GPS with two precise readings), that button goes away and “Take the delivery photo” appears. With the photo ready, the driver slides “Slide to complete delivery.” It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed.',
           'The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance.',
-          'Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim.',
+          'Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim. The restaurant has both together in the order details: “At pickup” and “At drop-off.”',
           'When the order is delivered, the customer also gets an email with the delivery photo and a link to rate it. That photo link belongs to their order only and stops working after 7 days.',
           'Before we store any photo on Divoox (deliveries, dishes, chat, complaints), we remove the hidden data the phone adds: the exact location, the phone model and the time. That way nobody can pull your address out of a photo. For the delivery photo, the place is kept separately, only as proof that it was delivered.',
         ],

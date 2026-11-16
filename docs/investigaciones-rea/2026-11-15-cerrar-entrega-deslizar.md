@@ -55,3 +55,41 @@ Sin señal: la foto y el cierre quedan en la cola del celular, en orden, y se ma
 
 Fuentes: ayuda de DoorDash Dasher («No-Contact Delivery Requests»), guía de Uber para repartidores
 («Delivering using the Uber Eats app»), ayuda de Shipt («Proof of delivery»).
+
+## Segunda parte (15 nov 2026): fotos livianas y las dos fotos para el restaurante
+
+### Fotos que suben rápido (C-FOTO-EVIDENCIA-LIVIANA)
+
+- Richard vio que la foto en el restaurante tardaba mucho. Causa [OBS]: el Driver subía la foto de
+  la cámara en tamaño completo (12 megapíxeles), y además pedía la ubicación DESPUÉS de tomarla.
+- Decisión: achicar en el teléfono a 1280 px de lado mayor y JPEG 0,6 (rango habitual de las apps de
+  reparto para fotos de prueba [INF]: no publican su número), pedir la ubicación mientras la cámara
+  está abierta, y reintentar sola la recogida y la entrega cuando falla la señal.
+- Medida con dos fotos reales de 12 megapíxeles (4032 × 2268), en esta computadora:
+
+| Foto | Antes (completa, JPEG 0,5) | Después (1280 px, JPEG 0,6) | Con 1 Mbps de subida |
+| ---- | -------------------------- | --------------------------- | -------------------- |
+| 1    | 786 KB                     | 137 KB                      | de 6,3 s a 1,1 s     |
+| 2    | 969 KB                     | 192 KB                      | de 7,8 s a 1,5 s     |
+
+Un iPhone suele sacar la foto más pesada que esta prueba (1,5 a 2,5 MB): ahí la diferencia pasa
+de 12-20 segundos a uno o dos.
+
+### El restaurante ve las dos fotos (C-FOTOS-AL-COMERCIO)
+
+| Referencia               | Qué se encontró                                                                                                                                                                                                                                                                 | Etiqueta                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| DoorDash Merchant Portal | El detalle de un pedido muestra datos del cliente y del Dasher, horas estimadas y reales y la dirección; no documenta la foto de la entrega para el comercio. La única foto que DoorDash comparte con el comercio es la del montaje de los pedidos grandes (Drive Large Order). | [DOC] ayuda pública de DoorDash para comercios |
+| DoorDash Dasher          | La foto de la entrega es obligatoria y se le manda al cliente.                                                                                                                                                                                                                  | [REA] (primera parte)                          |
+| Uber Eats Manager        | Los reclamos se atienden desde el pedido, con pruebas; no hay documento oficial que diga que el comercio ve la foto de la entrega.                                                                                                                                              | [NV]                                           |
+
+- Decisión: es un pedido explícito de Richard y va un paso más allá de lo que documentan los grandes.
+  El restaurante ve en el detalle del pedido (app y panel) «Al recoger» y «Al entregar», que se
+  abren en grande. Es la misma foto guardada una sola vez (`/datos/pedidos/:id/evidencia/:tipo`,
+  que ya permitía al dueño y a su equipo); nada se copia.
+- La app del restaurante dice «Entregado al cliente» cuando el pedido se cierra; antes se quedaba en
+  «Recogido / En camino» porque el cierre fallaba (primera parte).
+- El cliente ve la foto de la entrega en su pedido («Así quedó tu pedido»), comprobado en el recorrido.
+
+Fuentes: ayuda de DoorDash para comercios («How to Find and Manage Orders in the Merchant Portal»,
+«Completing a Drive Large Order Delivery»).

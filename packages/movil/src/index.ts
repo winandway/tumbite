@@ -33,3 +33,4 @@ export * from './FotosPuerta';
 export * from './FranjaPruebas';
 export * from './tokens';
 export * from './diseno';
+export * from './FotosDelPedido';

@@ -79,6 +79,8 @@ export const TEXTOS = {
     comoLlegar: 'Directions',
     fotoEntrega: 'Take the delivery photo',
     fotoLista: 'Delivery photo ready',
+    cerrar: 'Close',
+    fotosDelPedido: 'Order photos',
     primeroFoto: 'Take the photo first',
     deslizar: 'Slide to complete delivery',
     sinGpsAyuda:
@@ -217,6 +219,8 @@ export const TEXTOS = {
     comoLlegar: 'Cómo llegar',
     fotoEntrega: 'Tomar foto de la entrega',
     fotoLista: 'Foto de la entrega lista',
+    cerrar: 'Cerrar',
+    fotosDelPedido: 'Fotos del pedido',
     primeroFoto: 'Primero toma la foto',
     deslizar: 'Desliza para completar',
     sinGpsAyuda:

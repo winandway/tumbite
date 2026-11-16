@@ -10,7 +10,8 @@ import {
   textoReferencia,
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
-import { Boton, C, ChatPedido, fotoConCamara, Text } from '@tumbite/movil';
+import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
+import { Boton, C, ChatPedido, achicarFotoEvidencia, fotoConCamara, Text } from '@tumbite/movil';
 
 /** C-ENVIO-FOTO-ENTREGA: la cámara y los archivos para la pieza común de fotos. */
 const CAMARA_ENTREGA = {
@@ -125,7 +126,10 @@ export function ViajeActivo({
     if (!foto) return;
     setSubiendoFoto(true);
     try {
-      const blob = await (await fetch(foto.uri)).blob();
+      // C-FOTO-EVIDENCIA-LIVIANA: achicada en el teléfono antes de subir.
+      const blob = await (
+        await fetch(await achicarFotoEvidencia(foto, manipulateAsync, SaveFormat.JPEG))
+      ).blob();
       await api.subirFoto(blob, `/datos/conductor/operaciones/${viaje.id}/foto-paquete`);
       alCambiar();
     } catch (x) {
@@ -147,7 +151,10 @@ export function ViajeActivo({
     if (!foto) return;
     setSubiendoFoto(true);
     try {
-      const blob = await (await fetch(foto.uri)).blob();
+      // C-FOTO-EVIDENCIA-LIVIANA: achicada en el teléfono antes de subir.
+      const blob = await (
+        await fetch(await achicarFotoEvidencia(foto, manipulateAsync, SaveFormat.JPEG))
+      ).blob();
       await api.subirFoto(
         blob,
         `/datos/conductor/operaciones/${viaje.id}/foto-paquete?momento=entrega`,
