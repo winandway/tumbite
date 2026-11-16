@@ -218,3 +218,9 @@ for (const idioma of idiomas) {
   await ctx.close();
 }
 await navegador.close();
+// Moto y Carro de pasajeros vuelven a quedar como estaban (el canario de este servidor local exige
+// que no estén encendidos sin país abierto, y los demás guiones los abren cuando los necesitan).
+await sql(`UPDATE servicios SET estado = 'proximamente' WHERE id IN ('moto', 'carro')`);
+await sql(
+  `UPDATE servicios_zona SET estado = 'proximamente' WHERE servicio_id IN ('moto', 'carro')`,
+);

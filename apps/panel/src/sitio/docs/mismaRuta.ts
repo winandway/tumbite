@@ -12,7 +12,7 @@ import type { Captura, Guia } from './guias';
  * `mismaRuta.test.ts` se pone en rojo si las capturas ya existen y la guía sigue sin publicar, o si se
  * publica sin ellas.
  */
-export const MISMA_RUTA_PUBLICADA = false;
+export const MISMA_RUTA_PUBLICADA = true;
 
 /** Los nombres de las capturas, en el orden de la guía. */
 export const CAPTURAS_MISMA_RUTA = ['mis-viajes', 'confirmar', 'espera', 'inicio-repetir'] as const;
