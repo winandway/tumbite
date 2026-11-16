@@ -4,6 +4,7 @@ import { type Idioma, enIdioma, formatearMonto, textoMultiplicador } from '@tumb
 import { vibracionOferta } from '../grandes/accesibilidad';
 import { Boton, C, Text } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
+import { textoOfertaConfianza } from './agendaFijos';
 import { sonarOferta } from '../sonidoOferta';
 
 /** Lo que manda GET /datos/conductor/operaciones/ofertas (C-OFERTA-COMPLETA). */
@@ -28,6 +29,11 @@ export type OfertaViaje = {
   multiplicadorPb?: number;
   /** C-VIAJE-PARADAS: las direcciones de las paradas intermedias, en orden. */
   paradas?: string[];
+  /** C-CONDUCTOR-CONFIANZA: el cliente lo eligió de confianza (solo para él, por un minuto). */
+  deConfianza?: boolean;
+  /** C-VIAJES-FIJOS: sale de un viaje fijo, y el nombre del menor si lleva a uno. */
+  viajeFijo?: boolean;
+  menor?: string | null;
 };
 
 const distancia = (m: number, i: Idioma) =>
@@ -66,7 +72,9 @@ export function OfertaViajeModal({
   }, [oferta.operacionId]);
   const vence = new Date(`${oferta.expiraEn.replace(' ', 'T')}Z`).getTime();
   const quedan = Math.max(0, Math.ceil((vence - ahora) / 1000));
-  const total = 30;
+  // C-CONDUCTOR-CONFIANZA: la oferta exclusiva al conductor de confianza dura un minuto.
+  const total = oferta.deConfianza ? 60 : 30;
+  const lineas = textoOfertaConfianza(oferta, idioma === 'en' ? 'en' : 'es');
   return (
     <Modal visible transparent animationType="slide" onRequestClose={alRechazar}>
       <View style={{ flex: 1, backgroundColor: 'rgba(25,25,25,0.55)', justifyContent: 'flex-end' }}>
@@ -117,6 +125,25 @@ export function OfertaViajeModal({
               }}
             />
           </View>
+          {lineas.length ? (
+            // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: confianza, viaje fijo y menor, arriba de todo.
+            <View
+              testID="oferta-viaje-confianza"
+              style={{
+                borderWidth: 1,
+                borderColor: '#2a2a2a',
+                borderRadius: 10,
+                padding: 10,
+                gap: 4,
+              }}
+            >
+              {lineas.map((l) => (
+                <Text key={l} style={{ fontWeight: '800', color: C.secundario }}>
+                  {l}
+                </Text>
+              ))}
+            </View>
+          ) : null}
           {oferta.programadoPara ? (
             <View
               testID="oferta-viaje-programado"

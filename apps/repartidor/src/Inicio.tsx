@@ -55,6 +55,7 @@ import { Seguridad } from './grandes/Seguridad';
 import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisViajesConductor } from './viajes/MisViajesConductor';
+import { ClientesFijos } from './viajes/ClientesFijos';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
 import { InvitacionesFlota } from './InvitacionesFlota';
@@ -593,6 +594,7 @@ export function Inicio() {
     | 'turnos'
     | 'seguridad'
     | 'agregar'
+    | 'clientesFijos'
   >('inicio');
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
   const servicios = usePanelServicios(api, 0);
@@ -1678,6 +1680,8 @@ export function Inicio() {
               ['inicio', t.vistaInicio],
               ['miRuta', t.vistaMiRuta],
               ['turnos', idioma === 'en' ? 'My shifts' : 'Mis turnos'],
+              // C-VIAJES-FIJOS: la agenda de sus clientes fijos.
+              ['clientesFijos', idioma === 'en' ? 'Regular riders' : 'Clientes fijos'],
               ['seguridad', idioma === 'en' ? 'Safety' : 'Seguridad'],
               ['billetera', t.vistaBilletera],
               ['datos', t.vistaDatos],
@@ -1936,6 +1940,9 @@ export function Inicio() {
   if (vista === 'avisos') return lienzo('inicio', <Avisos api={api} idioma={idioma} />);
   // C-TURNOS-REPARTIDOR: reservar horas, como el «Schedule» de DoorDash.
   if (vista === 'turnos') return lienzo('inicio', <Turnos api={api} idioma={idioma} />);
+  // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: la agenda de sus clientes fijos y «No puedo».
+  if (vista === 'clientesFijos')
+    return lienzo('inicio', <ClientesFijos api={api} idioma={idioma} />);
   // C-SEGURIDAD-REPARTIDOR: emergencia, recorrido compartido e incidentes.
   if (vista === 'seguridad') return lienzo('inicio', <Seguridad api={api} idioma={idioma} />);
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
@@ -2106,6 +2113,14 @@ export function Inicio() {
             td.misViajesDetalle,
           )}
           {seccionPerfil === 'viajes' ? <MisViajesConductor /> : null}
+          {fila(
+            idioma === 'en' ? 'Regular riders' : 'Clientes fijos',
+            () => setVista('clientesFijos'),
+            false,
+            idioma === 'en'
+              ? 'Riders who picked you and your next regular rides'
+              : 'Quién te eligió de confianza y tus próximos viajes fijos',
+          )}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
           {fila(

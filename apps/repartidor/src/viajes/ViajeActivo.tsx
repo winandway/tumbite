@@ -28,6 +28,7 @@ const deArchivosEntrega = async () => {
   return r.canceled ? null : (r.assets[0] ?? null);
 };
 import { TEXTOS_VIAJE } from './textos';
+import { textoOfertaConfianza } from './agendaFijos';
 
 type Api = {
   pedir<T>(
@@ -80,6 +81,9 @@ export type ViajeConductor = {
     llegoEn?: string | null;
   }[];
   espera_parada_gratis_s?: number;
+  /** C-VIAJES-FIJOS: el nombre del menor que se recoge (pide su PIN) y si sale de un viaje fijo. */
+  menor_nombre?: string | null;
+  viaje_fijo?: number | boolean | null;
 };
 
 /** Una clave nueva por acción: el servidor no repite nada si la app reintenta. */
@@ -331,6 +335,22 @@ export function ViajeActivo({
   return (
     <View testID="viaje-activo" style={{ padding: 16, gap: 12 }}>
       <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{titulo}</Text>
+      {viaje.menor_nombre || viaje.viaje_fijo ? (
+        // C-VIAJES-FIJOS: el viaje de un menor se recuerda en todo el viaje (y su PIN, al recogerlo).
+        <View
+          testID="viaje-menor"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12, gap: 4 }}
+        >
+          {textoOfertaConfianza(
+            { viajeFijo: Boolean(viaje.viaje_fijo), menor: viaje.menor_nombre ?? null },
+            idioma === 'en' ? 'en' : 'es',
+          ).map((l) => (
+            <Text key={l} style={{ fontWeight: '800', color: C.secundario }}>
+              {l}
+            </Text>
+          ))}
+        </View>
+      ) : null}
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
         {viaje.metodo_pago === 'efectivo' && viaje.total != null ? (

@@ -194,6 +194,9 @@ export const POR_SERVICIO = {
       categorias: { estandar: '', comfort: '', premium: '' } as Record<string, string>,
       categoriaPide: (a: number) => String(a).slice(0, 0),
       menores: '',
+      llevaMenores: 'Acepto llevar menores',
+      llevaMenoresAyuda:
+        'Encendido, te pueden llegar viajes fijos de un niño o niña que viaja sin un adulto (siempre con su PIN). Apagado, nunca te llegan.',
       menoresAyuda: '',
     },
     en: {
@@ -243,6 +246,9 @@ export const POR_SERVICIO = {
       categorias: { estandar: '', comfort: '', premium: '' } as Record<string, string>,
       categoriaPide: (a: number) => String(a).slice(0, 0),
       menores: '',
+      llevaMenores: 'I accept minors',
+      llevaMenoresAyuda:
+        'When on, you can get regular rides for a child traveling without an adult (always with their PIN). When off, you never get them.',
       menoresAyuda: '',
     },
   },
@@ -302,6 +308,9 @@ export const POR_SERVICIO = {
       categoriaPide: (a: number) =>
         `Para Carro Comfort, el carro debe tener ${a} años o menos. Lo revisamos al aprobarlo.`,
       menores: 'Recibir también viajes de Carro',
+      llevaMenores: 'Acepto llevar menores',
+      llevaMenoresAyuda:
+        'Encendido, te pueden llegar viajes fijos de un niño o niña que viaja sin un adulto (siempre con su PIN). Apagado, nunca te llegan.',
       menoresAyuda:
         'Encendido, también te llegan los viajes de las categorías de abajo. Apagado, solo los de tu categoría.',
     },
@@ -360,6 +369,9 @@ export const POR_SERVICIO = {
       categoriaPide: (a: number) =>
         `For Car Comfort, the car must be ${a} years old or newer. We check it when we approve it.`,
       menores: 'Also get Car rides',
+      llevaMenores: 'I accept minors',
+      llevaMenoresAyuda:
+        'When on, you can get regular rides for a child traveling without an adult (always with their PIN). When off, you never get them.',
       menoresAyuda:
         'When on, you also get rides from the categories below. When off, only rides in your category.',
     },
@@ -698,6 +710,38 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                     <Text style={{ color: '#666B73', fontSize: 12 }}>{t.menoresAyuda}</Text>
                   </View>
                 ) : null}
+              </View>
+            ) : null}
+            {servicio === 'moto' && vehiculo.estado === 'aprobado' ? (
+              // C-VIAJES-FIJOS: el conductor de Moto decide si lleva menores (viajes fijos con PIN).
+              <View testID="moto-menores" style={{ gap: 2 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                  }}
+                >
+                  <Text style={{ flex: 1, color: C.secundario, fontWeight: '700' }}>
+                    {t.llevaMenores}
+                  </Text>
+                  <Switch
+                    testID="moto-acepta-menores"
+                    accessibilityLabel={t.llevaMenores}
+                    value={vehiculo.aceptaMenores !== false}
+                    onValueChange={(acepta) =>
+                      void hacer(() =>
+                        api.pedir(
+                          'PUT',
+                          `/datos/conductor/vehiculos/${vehiculo.id}/categorias-menores`,
+                          { acepta },
+                        ),
+                      )
+                    }
+                  />
+                </View>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>{t.llevaMenoresAyuda}</Text>
               </View>
             ) : null}
             {vehiculo.estado === 'aprobado' && estado?.motivo === 'vehiculo_incompatible' ? (
