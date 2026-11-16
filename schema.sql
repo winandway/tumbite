@@ -4020,3 +4020,73 @@ CREATE TABLE IF NOT EXISTS bloqueos_usuario (
   PRIMARY KEY (usuario_id, bloqueado_id)
 );
 CREATE INDEX IF NOT EXISTS bloqueos_usuario_inverso ON bloqueos_usuario(bloqueado_id);
+
+-- C-CONDUCTOR-CONFIANZA (16 nov 2026, todos los países): el conductor de confianza del cliente (hasta
+-- 3). Al pedir Moto, Carro o un envío, el viaje se le ofrece primero a él por un minuto; si no lo
+-- toma, pasa a los demás. Se marca desde un viaje terminado con ese conductor.
+CREATE TABLE IF NOT EXISTS conductores_confianza (
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  conductor_id TEXT NOT NULL REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (cliente_id, conductor_id)
+) WITHOUT ROWID;
+-- La lista de clientes fijos del conductor.
+CREATE INDEX IF NOT EXISTS conductores_confianza_conductor ON conductores_confianza(conductor_id);
+
+-- C-VIAJES-FIJOS (16 nov 2026, todos los países): los viajes fijos (rutinas) del cliente: días de la
+-- semana, hora de ida y de vuelta en la hora local de la ciudad. Cada salida nace como un viaje
+-- programado 24 horas antes (precio fijo). Se pausan, se saltan días y se borran sin perder la
+-- historia. proxima_revision_en (UTC) dice cuándo el reloj tiene que volver a mirarla: el reloj solo
+-- lee las vencidas por el índice parcial.
+CREATE TABLE IF NOT EXISTS rutinas_viaje (
+  id TEXT PRIMARY KEY,
+  cliente_id TEXT NOT NULL REFERENCES usuarios(id),
+  nombre TEXT NOT NULL,
+  servicio_id TEXT NOT NULL CHECK (servicio_id IN ('moto', 'carro', 'envios')),
+  zona_id TEXT NOT NULL REFERENCES zonas(id),
+  categoria TEXT NOT NULL DEFAULT 'estandar',
+  origen_lat REAL NOT NULL,
+  origen_lng REAL NOT NULL,
+  origen_direccion TEXT NOT NULL,
+  destino_lat REAL NOT NULL,
+  destino_lng REAL NOT NULL,
+  destino_direccion TEXT NOT NULL,
+  dias TEXT NOT NULL,
+  hora_ida TEXT NOT NULL,
+  hora_vuelta TEXT,
+  metodo_pago TEXT NOT NULL DEFAULT 'efectivo',
+  conductor_id TEXT REFERENCES usuarios(id),
+  menor_nombre TEXT,
+  pin_menor TEXT,
+  paquete_json TEXT,
+  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa', 'pausada', 'borrada')),
+  pausada_hasta TEXT,
+  proxima_revision_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS rutinas_viaje_cliente ON rutinas_viaje(cliente_id, estado);
+CREATE INDEX IF NOT EXISTS rutinas_viaje_conductor ON rutinas_viaje(conductor_id) WHERE conductor_id IS NOT NULL AND estado != 'borrada';
+CREATE INDEX IF NOT EXISTS rutinas_viaje_revisar ON rutinas_viaje(proxima_revision_en) WHERE estado != 'borrada';
+
+-- Cada salida de un viaje fijo, una sola vez por día y sentido (la llave lo garantiza aunque dos
+-- vueltas del reloj corran a la vez): creada (con su viaje programado), saltada por el cliente o
+-- fallida. conductor_no_puede_en: el conductor de confianza avisó que no puede (va a cualquiera).
+CREATE TABLE IF NOT EXISTS rutina_salidas (
+  rutina_id TEXT NOT NULL REFERENCES rutinas_viaje(id),
+  fecha TEXT NOT NULL,
+  sentido TEXT NOT NULL CHECK (sentido IN ('ida', 'vuelta')),
+  hora TEXT NOT NULL,
+  estado TEXT NOT NULL CHECK (estado IN ('creada', 'saltada', 'fallida')),
+  programado_id TEXT,
+  conductor_id TEXT,
+  conductor_no_puede_en TEXT,
+  motivo TEXT,
+  aviso_conductor_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (rutina_id, fecha, sentido)
+) WITHOUT ROWID;
+-- El aviso previo al conductor (30 minutos antes): el reloj lee solo las que faltan por avisar.
+CREATE INDEX IF NOT EXISTS rutina_salidas_avisar ON rutina_salidas(hora) WHERE estado = 'creada' AND aviso_conductor_en IS NULL AND conductor_id IS NOT NULL;
+-- La agenda del conductor.
+CREATE INDEX IF NOT EXISTS rutina_salidas_conductor ON rutina_salidas(conductor_id, hora) WHERE conductor_id IS NOT NULL;
