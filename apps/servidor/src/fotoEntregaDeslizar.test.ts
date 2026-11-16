@@ -216,7 +216,7 @@ describe('las apps: subir fotos sin falsos errores y el deslizador (fuente)', ()
   });
 
   it('el deslizador está en español e inglés y se puede usar con lector de pantalla', () => {
-    expect(deslizar()).toContain('Desliza para completar la entrega');
+    expect(deslizar()).toContain('Desliza para completar');
     expect(deslizar()).toContain('Slide to complete delivery');
     expect(deslizar()).toContain("accessibilityActions={[{ name: 'activate'");
   });

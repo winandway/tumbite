@@ -79,6 +79,8 @@ export const TEXTOS = {
     comoLlegar: 'Directions',
     fotoEntrega: 'Take the delivery photo',
     fotoLista: 'Delivery photo ready',
+    primeroFoto: 'Take the photo first',
+    deslizar: 'Slide to complete delivery',
     sinGpsAyuda:
       'Tell us what’s going on (tall building, garage, no signal). Support reviews it and authorizes the delivery.',
     pedirExcepcion: 'I can’t confirm my location',
@@ -215,6 +217,8 @@ export const TEXTOS = {
     comoLlegar: 'Cómo llegar',
     fotoEntrega: 'Tomar foto de la entrega',
     fotoLista: 'Foto de la entrega lista',
+    primeroFoto: 'Primero toma la foto',
+    deslizar: 'Desliza para completar',
     sinGpsAyuda:
       'Cuéntanos qué pasa (edificio, garaje, celular sin señal). Soporte lo revisa y te autoriza entregar.',
     pedirExcepcion: 'No puedo confirmar mi ubicación',

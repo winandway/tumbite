@@ -175,3 +175,10 @@ Uber Eats / Uber Direct
 - Preguntas de entrega para repartidores (dejar en la puerta, saltar foto, lugar seguro): https://help.uber.com/en/driving-and-delivering/article/delivery-faq?nodeId=ede068b9-9ed7-4b60-92b1-6e5211c6d83f
 - Estado del pedido para el cliente («Heading to store», «Almost here», mapa): https://help.uber.com/en/ubereats/stores/article/check-the-status-of-my-order-?nodeId=14ad371a-cc67-408c-8d62-34bf738dc8c6
 - Seguimiento en vivo para comercios con entrega propia (100 m): https://help.uber.com/en/merchants-and-restaurants/article/live-order-tracking---faq?nodeId=d006582e-113f-4423-9d33-e938de34b3a2
+
+## Cierre en la puerta: foto y deslizar (15 nov 2026)
+
+- DoorDash: foto en la puerta y después «complete delivery» [REA]. Uber: se desliza «delivered» [DOC].
+- Divoox desde el 15 nov: «Tomar foto de la entrega» sube la foto como evidencia sin cerrar; después
+  «Desliza para completar», que el servidor acepta solo con la foto y el GPS en la puerta.
+  Ficha: `docs/investigaciones-rea/2026-11-15-cerrar-entrega-deslizar.md`. Sin brecha pendiente.

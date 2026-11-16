@@ -13,14 +13,14 @@ import { C, Text } from '@tumbite/movil';
  */
 const T = {
   es: {
-    deslizar: 'Desliza para completar la entrega',
-    primeroFoto: 'Toma la foto para poder completar',
-    completando: 'Completando la entrega…',
+    deslizar: 'Desliza para completar',
+    primeroFoto: 'Primero toma la foto',
+    completando: 'Completando…',
   },
   en: {
     deslizar: 'Slide to complete delivery',
-    primeroFoto: 'Take the photo to complete',
-    completando: 'Completing delivery…',
+    primeroFoto: 'Take the photo first',
+    completando: 'Completing…',
   },
 };
 

@@ -3015,6 +3015,50 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'complete-delivery',
+        titulo: 'Completar la entrega: foto y deslizar',
+        resumen:
+          'En la puerta del cliente tomas la foto de la entrega y deslizas «Desliza para completar». Así se cierra el pedido, como en las apps de reparto más grandes.',
+        explicacion: [
+          'Cuando llegas a la dirección y el GPS confirma que estás en la puerta, aparece «Tomar foto de la entrega».',
+          'Deja la comida y toma la foto de lado: que se vean la comida y la entrada de la casa, nunca la cara de nadie.',
+          'La foto se sube sola. Verás una miniatura con «Foto de la entrega lista». Si no te gustó, toca «Tomar otra foto» y reemplaza la anterior.',
+          'Con la foto lista, la barra de abajo se pone verde: desliza la bola de izquierda a derecha hasta el final. El pedido queda entregado y el cliente recibe la foto.',
+          'Deslizar, en vez de tocar, evita cerrar un pedido sin querer con el celular en el bolsillo. Si usas el lector de pantalla del celular, basta con activar la barra.',
+          'Si no tienes señal en la puerta, la foto y el cierre se guardan en tu celular y se mandan solos cuando vuelve la señal. Mientras tanto ves «Pendiente de confirmar».',
+          'Si el cliente pidió «en mano» y lo recibe, toca «Entregado en mano»: no hace falta foto. Con PIN o con productos para mayores de 21, siempre se entrega en mano.',
+          'Mientras tienes un pedido en curso no aparece «Modo destino»: lo eliges entre pedidos.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-entrega-foto-es.webp',
+            alt: 'App del repartidor en la puerta: botón verde «Tomar foto de la entrega» y debajo la barra gris «Primero toma la foto».',
+            pie: 'En la puerta: primero la foto. La barra espera en gris.',
+          },
+          {
+            src: '/docs/recorrido-driver-entrega-lista-es.webp',
+            alt: 'Miniatura de la foto con «Foto de la entrega lista», el enlace «Tomar otra foto» y la barra verde «Desliza para completar».',
+            pie: 'Con la foto lista, la barra se pone verde: desliza para completar.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-sin-senal-es.webp',
+            alt: 'La tarjeta «Pendiente de confirmar: 2» con la foto y el cierre guardados en el celular, esperando señal.',
+            pie: 'Sin señal: la foto y el cierre se mandan solos cuando vuelve.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo completo una entrega en la puerta?',
+          '¿Por qué tengo que deslizar en vez de tocar?',
+          '¿Puedo volver a tomar la foto de la entrega?',
+          '¿Qué pasa si no tengo señal al entregar?',
+        ],
+        pasos: [
+          'En la puerta, toca «Tomar foto de la entrega» y toma la foto de lado, sin caras.',
+          'Revisa la miniatura. Si no sirve, toca «Tomar otra foto».',
+          'Desliza la barra verde «Desliza para completar» hasta el final.',
+        ],
+      },
+      {
         id: 'cant-continue',
         titulo: 'Si no puedes seguir con un pedido o el cliente no aparece',
         resumen:
@@ -3830,7 +3874,7 @@ const es: SeccionDocs[] = [
           'Así nadie se lleva una bolsa sin dejar rastro y nadie marca «entregado» desde otro lugar.',
           'En el restaurante, el repartidor toma la foto de la bolsa cerrada, con el sello o el ticket a la vista. La app solo la acepta si está en el restaurante.',
           'El repartidor también escanea el código QR de la pantalla del restaurante, que confirma que es el pedido correcto; con el código y la foto, el pedido sale solo. Si no escaneó, el restaurante ve la foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada.',
-          'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a unos 80 metros de la dirección, confirmado por el GPS con dos lecturas precisas), ese botón se quita y aparece «Tomar foto de la entrega». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto.',
+          'En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a unos 80 metros de la dirección, confirmado por el GPS con dos lecturas precisas), ese botón se quita y aparece «Tomar foto de la entrega». Con la foto lista, el repartidor desliza «Desliza para completar». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto.',
           'La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa.',
           'Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo.',
           'Al entregar, al cliente también le llega un correo con la foto de la entrega y el enlace para calificar. Ese enlace de la foto es solo de su pedido y deja de funcionar a los 7 días.',
@@ -3869,6 +3913,7 @@ const es: SeccionDocs[] = [
           'Restaurante: mira la foto en tu pantalla y toca «Confirmar: se lo entregué al repartidor».',
           'Repartidor: sigue «Cómo llegar» hasta la puerta del cliente.',
           'Repartidor: en la puerta, toca «Tomar foto de la entrega». Sin caras: de lado, con las manos, la comida y la entrada.',
+          'Repartidor: desliza «Desliza para completar» hasta el final.',
           'Cliente: ve la foto de su pedido cerrado al salir y la de la entrega al llegar.',
         ],
       },
@@ -7985,6 +8030,50 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'complete-delivery',
+        titulo: 'Complete the delivery: photo and slide',
+        resumen:
+          'At the customer’s door, take the delivery photo and slide “Slide to complete delivery.” That closes the order, just like the biggest delivery apps.',
+        explicacion: [
+          'When you reach the address and GPS confirms you’re at the door, “Take the delivery photo” appears.',
+          'Leave the food and take the photo from the side: show the food and the entrance, never anyone’s face.',
+          'The photo uploads on its own. You’ll see a thumbnail with “Delivery photo ready.” If you don’t like it, tap “Retake photo” to replace it.',
+          'With the photo ready, the bar below turns green: slide the ball all the way from left to right. The order is delivered and the customer gets the photo.',
+          'Sliding instead of tapping keeps you from closing an order by accident with the phone in your pocket. If you use your phone’s screen reader, just activate the bar.',
+          'If you have no signal at the door, the photo and the completion are saved on your phone and sent on their own when the signal comes back. Meanwhile you see “Pending confirmation.”',
+          'If the customer chose “hand it to me” and takes it, tap “Handed to the customer”: no photo needed. Orders with a PIN or with 21+ items are always handed over in person.',
+          'While you have an order in progress, “Destination mode” is hidden: you set it between orders.',
+        ],
+        capturas: [
+          {
+            src: '/docs/recorrido-driver-entrega-foto-en.webp',
+            alt: 'Driver app at the door: green “Take the delivery photo” button and, below it, the gray bar “Take the photo first.”',
+            pie: 'At the door: photo first. The bar waits in gray.',
+          },
+          {
+            src: '/docs/recorrido-driver-entrega-lista-en.webp',
+            alt: 'Photo thumbnail with “Delivery photo ready,” the “Retake photo” link and the green bar “Slide to complete delivery.”',
+            pie: 'With the photo ready, the bar turns green: slide to complete.',
+          },
+          {
+            src: '/docs/recorrido-repartidor-sin-senal-en.webp',
+            alt: 'The “Pending confirmation: 2” card with the photo and the completion saved on the phone, waiting for signal.',
+            pie: 'No signal: the photo and the completion go out on their own when it returns.',
+          },
+        ],
+        preguntas: [
+          'How do I complete a delivery at the door?',
+          'Why do I have to slide instead of tap?',
+          'Can I retake the delivery photo?',
+          'What if I have no signal when I deliver?',
+        ],
+        pasos: [
+          'At the door, tap “Take the delivery photo” and shoot from the side, no faces.',
+          'Check the thumbnail. If it’s not good, tap “Retake photo.”',
+          'Slide the green “Slide to complete delivery” bar all the way.',
+        ],
+      },
+      {
         id: 'cant-continue',
         titulo: 'If you can’t continue with an order or the customer isn’t there',
         resumen:
@@ -8803,7 +8892,7 @@ const en: SeccionDocs[] = [
           'That way no one walks off with a bag without a trace, and no one marks an order “delivered” from somewhere else.',
           'At the restaurant, the driver takes a photo of the closed bag with the seal or receipt showing. The app only accepts it at the restaurant.',
           'The driver also scans the QR code on the restaurant’s screen, which confirms it’s the right order; with the code and the photo, the order goes out on its own. If they didn’t scan, the restaurant sees the photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time.',
-          'On the way, the green “Directions” button guides the driver. At the door (about 80 meters from the address, confirmed by GPS with two precise readings), that button goes away and “Take the delivery photo” appears. It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed.',
+          'On the way, the green “Directions” button guides the driver. At the door (about 80 meters from the address, confirmed by GPS with two precise readings), that button goes away and “Take the delivery photo” appears. With the photo ready, the driver slides “Slide to complete delivery.” It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed.',
           'The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance.',
           'Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim.',
           'When the order is delivered, the customer also gets an email with the delivery photo and a link to rate it. That photo link belongs to their order only and stops working after 7 days.',
@@ -8842,6 +8931,7 @@ const en: SeccionDocs[] = [
           'Restaurant: look at the photo on your screen and tap “Confirm: I handed it to the driver.”',
           'Driver: follow “Directions” to the customer’s door.',
           'Driver: at the door, tap “Take the delivery photo.” No faces: from the side, with the hands, the food, and the entrance.',
+          'Driver: slide “Slide to complete delivery” all the way.',
           'Customer: sees the photo of the closed order when it leaves and the delivery photo when it arrives.',
         ],
       },

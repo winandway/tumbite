@@ -88,6 +88,7 @@ const PARA_TIENDA = new Map<string, [string, string]>([
   ],
   ['repartidor-en-camino', ['Divoox Driver (repartidor)', '04-en-camino-como-llegar']],
   ['repartidor-llegada', ['Divoox Driver (repartidor)', '05-en-la-puerta-foto-de-la-entrega']],
+  ['driver-entrega-lista', ['Divoox Driver (repartidor)', '05b-foto-lista-desliza-para-completar']],
   ['repartidor-billetera', ['Divoox Driver (repartidor)', '06-billetera']],
   ['repartidor-retiro', ['Divoox Driver (repartidor)', '07-retiro-al-banco']],
   ['restapp-nuevo', ['Divoox Restaurants (restaurante)', '01-pedido-nuevo-y-tiempo-para-aceptar']],
@@ -1080,23 +1081,27 @@ for (const idioma of ['en', 'es'] as const) {
     // 11. Sin señal al entregar: la foto se guarda en el celular, «pendiente de confirmar», y se
     // manda sola cuando vuelve la señal. El pedido NO queda entregado hasta entonces.
     // C-DESLIZAR-ENTREGA (como DoorDash y Uber): la foto no cierra el pedido; se cierra al
-    // deslizar «Desliza para completar la entrega». Sin señal, los dos quedan en la cola, en orden.
+    // deslizar «Desliza para completar». Sin señal, los dos quedan en la cola, en orden.
     const deslizador = rep.getByTestId('deslizar-completar').filter({ visible: true });
     await expect(deslizador).toBeVisible({ timeout: 20_000 });
-    await expect(deslizador).toHaveAttribute('aria-disabled', 'true');
+    await expect(deslizador).toHaveAttribute('aria-label', L.primeroFoto);
+    await deslizador.scrollIntoViewIfNeeded();
+    await foto(rep, 'driver-entrega-foto');
     await repCtx.setOffline(true);
     await tomarFoto(L.fotoEntrega, FOTO_ENTREGA);
     await expect(rep.getByText(`${L.pendientes}: 1`)).toBeVisible({ timeout: 20_000 });
     await expect(rep.getByText(L.fotoLista).filter({ visible: true })).toBeVisible({
       timeout: 20_000,
     });
-    await expect(deslizador).not.toHaveAttribute('aria-disabled', 'true');
+    await expect(deslizador).toHaveAttribute('aria-label', L.deslizar);
     expect(sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado).toBe(
       'en_camino',
     );
     await deslizador.scrollIntoViewIfNeeded();
-    await foto(rep, 'repartidor-foto-lista');
-    // Deslizar la bola de punta a punta, como con el dedo.
+    await foto(rep, 'driver-entrega-lista');
+    // Deslizar la bola de punta a punta, como con el dedo (la captura mueve la página: se vuelve
+    // a enfocar la barra antes de medirla).
+    await deslizador.scrollIntoViewIfNeeded();
     const caja = (await deslizador.boundingBox())!;
     const y = caja.y + caja.height / 2;
     await rep.mouse.move(caja.x + 30, y);
