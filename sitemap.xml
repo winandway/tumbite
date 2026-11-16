@@ -76,6 +76,7 @@
   <url><loc>https://divoox.com/docs/ordering/send-package</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/receive-package</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/ordering/package-size</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/ordering/door-photos</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/cancel-ready-order</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/restaurants/bring-divoox-to-your-city</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
@@ -121,6 +122,7 @@
   <url><loc>https://divoox.com/docs/drivers/id-check-deliveries</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/cash-orders-and-top-ups</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/offer-timing-and-pickup-code</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/complete-delivery</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/cant-continue</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/get-started</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/verify</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
@@ -144,6 +146,7 @@
   <url><loc>https://divoox.com/docs/drivers/driver-commission-balance-top-up</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/drive-delivery</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/drivers/driver-package-size-photo</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/docs/drivers/door-photo-for-drivers</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/trust</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/trust/two-person-approval</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/docs/trust/no-signal-delivery</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
@@ -322,6 +325,7 @@
   <url><loc>https://divoox.com/es/docs/ordering/send-package</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/receive-package</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/ordering/package-size</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/ordering/door-photos</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/cancel-ready-order</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/restaurants/bring-divoox-to-your-city</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
@@ -367,6 +371,7 @@
   <url><loc>https://divoox.com/es/docs/drivers/id-check-deliveries</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/cash-orders-and-top-ups</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/offer-timing-and-pickup-code</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/complete-delivery</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/cant-continue</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/get-started</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/verify</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
@@ -390,6 +395,7 @@
   <url><loc>https://divoox.com/es/docs/drivers/driver-commission-balance-top-up</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/drive-delivery</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/drivers/driver-package-size-photo</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
+  <url><loc>https://divoox.com/es/docs/drivers/door-photo-for-drivers</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/trust</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/trust/two-person-approval</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
   <url><loc>https://divoox.com/es/docs/trust/no-signal-delivery</loc><lastmod>2026-11-16</lastmod><priority>0.7</priority></url>
