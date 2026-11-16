@@ -3944,3 +3944,52 @@ CREATE TABLE IF NOT EXISTS rutas_flex_calles (
   consultas INTEGER NOT NULL DEFAULT 0,
   calculado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- C-MODERACION (16 nov 2026, todos los países; regla 1.2 de Apple, como Uber, DoorDash y Rappi):
+-- (Sin REFERENCES a usuarios a propósito: cada llave más encarece borrar una cuenta, C-LECTURAS-VUELTA.)
+-- reportar un mensaje del chat (pedido o viaje), una reseña o la respuesta del restaurante; el
+-- filtro de palabras ofensivas también deja aquí lo que marcó (reporta_id NULL). Quien fue reportado
+-- nunca ve quién lo reportó: esta tabla solo la lee el equipo interno.
+CREATE TABLE IF NOT EXISTS reportes_contenido (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('mensaje_pedido', 'mensaje_viaje', 'resena', 'respuesta_resena')),
+  ref TEXT NOT NULL,
+  objeto TEXT NOT NULL CHECK (objeto IN ('pedido', 'viaje')),
+  objeto_id TEXT NOT NULL,
+  autor_id TEXT,
+  reporta_id TEXT,
+  motivo TEXT NOT NULL CHECK (motivo IN ('ofensivo', 'acoso', 'spam', 'otro', 'filtro')),
+  nota TEXT NOT NULL DEFAULT '',
+  texto TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'resuelto')),
+  accion TEXT CHECK (accion IN ('ocultar', 'publicar', 'avisar', 'suspender', 'descartar')),
+  resuelto_por TEXT,
+  resuelto_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Una persona reporta una vez cada cosa (y el filtro, una vez): reportar otra vez no escribe nada.
+CREATE UNIQUE INDEX IF NOT EXISTS reportes_contenido_uno ON reportes_contenido(tipo, ref, COALESCE(reporta_id, ''));
+CREATE INDEX IF NOT EXISTS reportes_contenido_bandeja ON reportes_contenido(estado, creado_en);
+-- El tope de reportes por persona y por minuto, y borrar la nota al borrar la cuenta.
+CREATE INDEX IF NOT EXISTS reportes_contenido_quien ON reportes_contenido(reporta_id, creado_en);
+
+-- Lo que el equipo (o el filtro) ocultó: una reseña, la respuesta del restaurante o un mensaje.
+-- Ocultar no borra: el texto sigue en su tabla para soporte y se puede volver a publicar.
+CREATE TABLE IF NOT EXISTS contenido_oculto (
+  tipo TEXT NOT NULL CHECK (tipo IN ('mensaje_pedido', 'mensaje_viaje', 'resena', 'respuesta_resena')),
+  ref TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT '',
+  por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (tipo, ref)
+);
+
+-- Bloquear a otra persona (cliente ↔ repartidor o conductor): no se le vuelve a ofrecer su pedido ni
+-- su viaje, y quien bloqueó deja de ver sus mensajes y de recibir sus avisos. El bloqueado no se entera.
+CREATE TABLE IF NOT EXISTS bloqueos_usuario (
+  usuario_id TEXT NOT NULL,
+  bloqueado_id TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, bloqueado_id)
+);
+CREATE INDEX IF NOT EXISTS bloqueos_usuario_inverso ON bloqueos_usuario(bloqueado_id);
