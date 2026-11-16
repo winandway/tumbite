@@ -298,6 +298,7 @@ export function Armazon({
   encabezado,
   volver,
   nombreMenu,
+  buscador,
   children,
 }: {
   grupos: GrupoMenu[];
@@ -310,6 +311,8 @@ export function Armazon({
   volver?: { texto: string; a: string };
   /** Nombre del menú para los lectores de pantalla (por defecto, «Panel»). */
   nombreMenu?: string;
+  /** C-BUSCADOR-SERIO: otro buscador en la cabecera (el del superadmin busca datos, no solo secciones). */
+  buscador?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const sesion = useContext(SesionArmazon);
@@ -430,7 +433,7 @@ export function Armazon({
               <span>{t.flexLema}</span>
             </p>
           ) : null}
-          <Buscador grupos={grupos} idioma={idioma} />
+          {buscador ?? <Buscador grupos={grupos} idioma={idioma} />}
           <div className="pd-cabecera-derecha">
             <Campana avisos={avisos ?? []} idioma={idioma} />
             <SelectorIdioma idioma={idioma} cambiar={sesion.cambiar} />

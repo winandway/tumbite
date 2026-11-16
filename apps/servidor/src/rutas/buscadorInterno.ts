@@ -68,6 +68,8 @@ export type ResultadoBusqueda = {
   enlace: string;
   /** Lo que coincidió, para resaltarlo dentro de `titulo` o `detalle`. */
   coincide: string;
+  /** La clase, sin traducir: tipo de comercio, servicio del viaje, tipo de vehículo o de ticket. */
+  clase?: string | null;
   fecha?: string | null;
   monto?: number | null;
   moneda?: string | null;
@@ -343,11 +345,8 @@ async function grupoViajes(db: D1Database, b: BusquedaInterna): Promise<Resultad
     .map((f) => ({
       id: String(f.id),
       titulo: `#${String(f.id).slice(0, 6).toUpperCase()}`,
-      detalle: [
-        texto(f.servicio_id),
-        Number(f.pasajero_activo ?? 1) === 0 ? null : texto(f.pasajero),
-        texto(f.conductor),
-      ]
+      clase: texto(f.servicio_id),
+      detalle: [Number(f.pasajero_activo ?? 1) === 0 ? null : texto(f.pasajero), texto(f.conductor)]
         .filter(Boolean)
         .join(' · '),
       estado: texto(f.estado ?? f.estado_general),
@@ -424,7 +423,8 @@ async function grupoComercios(db: D1Database, b: BusquedaInterna): Promise<Resul
           {
             id,
             titulo: String(f.nombre),
-            detalle: String(f.tipo_comercio ?? 'restaurante'),
+            detalle: '',
+            clase: String(f.tipo_comercio ?? 'restaurante'),
             estado: texto(f.estado),
             ciudad: texto(f.ciudad),
             enlace: `/restaurants/${id}`,
@@ -451,7 +451,8 @@ async function grupoVehiculos(db: D1Database, b: BusquedaInterna): Promise<Resul
   return filas.map((f) => ({
     id: String(f.id),
     titulo: String(f.placa).toUpperCase(),
-    detalle: [texto(f.tipo), [f.marca, f.modelo].filter(Boolean).join(' '), texto(f.dueno)]
+    clase: texto(f.tipo),
+    detalle: [[f.marca, f.modelo].filter(Boolean).join(' '), texto(f.dueno)]
       .filter(Boolean)
       .join(' · '),
     estado: texto(f.estado),
@@ -490,9 +491,8 @@ async function grupoTickets(
     .map((f) => ({
       id: String(f.id),
       titulo: `#${String(f.id).slice(0, 6).toUpperCase()} · ${String(f.asunto)}`,
-      detalle: [texto(f.tipo), contactoVisible(quien, 'correo', f.correo)]
-        .filter(Boolean)
-        .join(' · '),
+      clase: texto(f.tipo),
+      detalle: contactoVisible(quien, 'correo', f.correo),
       estado: texto(f.estado),
       ciudad: texto(f.ciudad) || null,
       enlace: `/tickets/${String(f.id)}`,

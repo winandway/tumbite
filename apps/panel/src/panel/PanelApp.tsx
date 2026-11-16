@@ -67,6 +67,7 @@ import { SuperViajes } from './SuperViajes';
 import { SuperMoto } from './SuperMoto';
 import { SuperCiudad } from './SuperCiudad';
 import { pedir } from './api';
+import { BuscadorSuper } from './BuscadorSuper';
 
 /**
  * Sección del superadmin según la parte de la dirección después de su base secreta
@@ -463,7 +464,15 @@ export function PanelApp({ ruta }: { ruta: string }) {
   return (
     <SesionArmazon.Provider value={sesion}>
       <div className="pagina panel">
-        <Armazon grupos={grupos} avisos={avisos}>
+        <Armazon
+          grupos={grupos}
+          avisos={avisos}
+          buscador={
+            esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
+              <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
+            ) : undefined
+          }
+        >
           {contenido}
         </Armazon>
         {esRestaurante && <AyudaBurbuja idioma={idioma} />}

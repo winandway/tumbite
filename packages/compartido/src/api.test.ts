@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ErrorApi, crearApi } from './api';
+import { ESTADO_CANCELADA, ErrorApi, crearApi } from './api';
 
 describe('cliente del servidor', () => {
   it('una respuesta que nunca llega se corta a tiempo y se cuenta como sin conexión', async () => {
@@ -118,5 +118,31 @@ describe('cliente del servidor', () => {
   it('una respuesta rota no explota', async () => {
     const api = crearApi({ base: '', fetch: async () => new Response('no json', { status: 500 }) });
     await expect(api.yo()).rejects.toMatchObject({ estado: 500 });
+  });
+
+  // C-BUSCADOR-SERIO (15 nov 2026): el buscador cancela la búsqueda anterior al escribir otra letra.
+  it('una lectura cancelada a propósito no se repite y termina como «cancelada»', async () => {
+    let llamadas = 0;
+    const api = crearApi({
+      base: '',
+      tiempoMs: 1_000,
+      fetch: (_u, init) => {
+        llamadas++;
+        return new Promise((_ok, falla) => {
+          init?.signal?.addEventListener('abort', () => falla(new Error('abortado')));
+        });
+      },
+    });
+    const corte = new AbortController();
+    const promesa = api.pedir('GET', '/datos/admin/buscar?q=40', undefined, {
+      senal: corte.signal,
+    });
+    corte.abort();
+    await expect(promesa).rejects.toMatchObject({ estado: ESTADO_CANCELADA });
+    expect(llamadas).toBe(1);
+    // Ya cancelada antes de salir: ni siquiera sale.
+    const otra = api.pedir('GET', '/datos/x', undefined, { senal: corte.signal });
+    await expect(otra).rejects.toMatchObject({ estado: ESTADO_CANCELADA });
+    expect(llamadas).toBe(1);
   });
 });

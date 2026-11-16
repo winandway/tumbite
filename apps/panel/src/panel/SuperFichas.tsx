@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ImportarMenu } from './ImportarMenu';
 import {
   ErrorApi,
@@ -11,6 +11,8 @@ import { Enlace } from '../Enlace';
 import { ir } from '../ruta';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
+import { usePreferencias } from './usePreferencias';
 
 /**
  * Superadmin a escala: ciudades → repartidores / clientes / restaurantes de cada ciudad, con
@@ -405,11 +407,21 @@ export function SuperCiudades({ base, idioma }: { base: string; idioma: Idioma }
   );
 }
 
-/** Buscador con lista paginada «cargar más» (por clave, sirve con millones). */
+/**
+ * Buscador con lista paginada «cargar más» (por clave, sirve con millones). La ciudad se guarda
+ * por empleado (C-FILTROS-GUARDADOS); el texto buscado no se guarda nunca.
+ */
 function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
-  const q0 = consulta();
-  const [zona, setZona] = useState(q0.get('zona') ?? '');
+  const [q0] = useState(consulta);
+  const pref = usePreferencias(clave, { zona: '' });
+  // Un enlace con ?zona= (desde Ciudades) manda en esta visita, sin cambiar lo guardado.
+  const [zonaDeEnlace, setZonaDeEnlace] = useState<string | null>(q0.get('zona') || null);
+  const zona = zonaDeEnlace ?? pref.valores.zona ?? '';
   const [q, setQ] = useState(q0.get('q') ?? '');
+  const textoActual = useRef(q);
+  useEffect(() => {
+    textoActual.current = q;
+  }, [q]);
   const [filas, setFilas] = useState<T[] | null>(null);
   const [siguiente, setSiguiente] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -424,25 +436,33 @@ function useBuscador<T>(ruta: string, clave: 'repartidores' | 'clientes') {
         const nuevas = (new Map(Object.entries(r)).get(clave) ?? []) as T[];
         setFilas((viejas) => (despues ? [...(viejas ?? []), ...nuevas] : nuevas));
         setSiguiente((r.siguiente as string | null) ?? null);
+        setError('');
       } catch (e) {
         setError(e instanceof ErrorApi ? e.message : String(e));
       }
     },
     [ruta, clave],
   );
+  // Al abrir, al cambiar la ciudad y cuando llegan los filtros guardados: la primera página.
   useEffect(() => {
-    void Promise.resolve().then(() => pedirPagina(null, q0.get('q') ?? '', q0.get('zona') ?? ''));
-    // Solo al abrir: después busca el botón.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    void pedirPagina(null, textoActual.current, zona);
+  }, [pedirPagina, zona]);
   return {
     zona,
-    setZona,
+    setZona: (z: string) => {
+      setZonaDeEnlace(null);
+      pref.cambiar('zona', z);
+    },
     q,
     setQ,
     filas,
     siguiente,
     error,
+    guardados: pref.guardados,
+    restablecer: () => {
+      setZonaDeEnlace(null);
+      pref.restablecer();
+    },
     buscar: () => void pedirPagina(null, q, zona),
     mas: () => void pedirPagina(siguiente, q, zona),
   };
@@ -506,6 +526,7 @@ export function SuperRepartidores({ base, idioma }: { base: string; idioma: Idio
           {t.buscar}
         </button>
       </div>
+      <AvisoFiltrosGuardados visible={b.guardados} idioma={idioma} restablecer={b.restablecer} />
       {b.error && (
         <p className="error-general" role="alert">
           {b.error}
@@ -925,6 +946,7 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
           {t.buscar}
         </button>
       </div>
+      <AvisoFiltrosGuardados visible={b.guardados} idioma={idioma} restablecer={b.restablecer} />
       {b.error && (
         <p className="error-general" role="alert">
           {b.error}

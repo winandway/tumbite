@@ -1,3 +1,5 @@
+import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
+import { usePreferencias } from './usePreferencias';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   correoEjemplo,
@@ -724,14 +726,23 @@ export function SuperTickets({
   idioma: Idioma;
   ticketId: string | null;
 }) {
+  if (ticketId) return <SuperTicket base={base} idioma={idioma} id={ticketId} />;
+  return <BandejaTickets base={base} idioma={idioma} />;
+}
+
+/** La bandeja de tickets. Estado y «A cargo» se guardan por empleado (C-FILTROS-GUARDADOS). */
+function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const filtroTipo = new URLSearchParams(window.location.search).get('tipo') ?? '';
   const tk = enIdioma(TK, idioma);
-  const [estado, setEstado] = useState('abierto');
-  const [asignado, setAsignado] = useState('');
+  const pref = usePreferencias('tickets', { estado: 'abierto', asignado: '' });
+  // «todos» se guarda con nombre; el servidor lo pide sin estado.
+  const estado = pref.valores.estado === 'todos' ? '' : (pref.valores.estado ?? 'abierto');
+  const asignado = pref.valores.asignado ?? '';
+  const setEstado = (v: string) => pref.cambiar('estado', v || 'todos');
+  const setAsignado = (v: string) => pref.cambiar('asignado', v);
   const [lista, setLista] = useState<FilaTicket[] | null>(null);
   useEffect(() => {
-    if (ticketId) return;
     const q = new URLSearchParams();
     if (estado) q.set('estado', estado);
     if (filtroTipo) q.set('tipo', filtroTipo);
@@ -739,12 +750,16 @@ export function SuperTickets({
     pedir<{ tickets: FilaTicket[] }>('GET', `/datos/admin/tickets?${q.toString()}`)
       .then((r) => setLista(r.tickets))
       .catch(() => setLista([]));
-  }, [estado, filtroTipo, asignado, ticketId]);
+  }, [estado, filtroTipo, asignado]);
 
-  if (ticketId) return <SuperTicket base={base} idioma={idioma} id={ticketId} />;
   return (
     <section className="super">
       <h1>{t.bandeja}</h1>
+      <AvisoFiltrosGuardados
+        visible={pref.guardados}
+        idioma={idioma}
+        restablecer={pref.restablecer}
+      />
       <div className="super-filtros" role="tablist">
         {(
           [

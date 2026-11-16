@@ -1978,3 +1978,174 @@ body.modo-tableta .pd .pd-contenido {
   background: #0a5f2d;
   border-color: #0a5f2d;
 }
+
+/* C-BUSCADOR-SERIO (15 nov 2026): el buscador del superadmin, arriba de todo. Sobrio: borde fino,
+   grupos con su título, lo que coincidió en negrita y el estado con su color (verde lo que salió
+   bien, rojo los problemas, gris lo que espera). */
+.pd-buscador.bs {
+  max-width: 560px;
+}
+.bs-atajo {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 1px 7px;
+  border: 1px solid var(--pd-borde-campo);
+  border-radius: 6px;
+  color: var(--pd-gris);
+  font:
+    600 0.75rem/1.4 Montserrat,
+    system-ui,
+    sans-serif;
+  background: #fff;
+  pointer-events: none;
+}
+.pd-buscador.bs input:focus + .bs-atajo {
+  display: none;
+}
+.bs-caja {
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  min-width: min(560px, calc(100vw - 32px));
+}
+.bs-caja ul {
+  padding: 4px 6px 8px;
+}
+.bs-caja .bs-grupo {
+  padding: 10px 10px 4px;
+  color: var(--pd-gris);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: default;
+}
+.bs-caja .bs-grupo:hover {
+  background: transparent;
+}
+.bs-caja li.bs-opcion {
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+.bs-caja li.bs-opcion.bs-seccion {
+  justify-content: flex-start;
+  align-items: center;
+}
+.bs-principal,
+.bs-donde {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.bs-principal strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.bs-principal small,
+.bs-donde small {
+  margin-left: 0;
+  color: var(--pd-gris);
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+.bs-donde {
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+}
+.bs mark,
+.super-encurso mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.bs-estado {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.bs-exito {
+  background: var(--pd-exito-suave);
+  color: var(--pd-exito);
+}
+.bs-problema {
+  background: var(--pd-problema-suave);
+  color: var(--pd-problema);
+}
+.bs-neutro {
+  background: var(--pd-fondo);
+  color: var(--pd-gris);
+}
+.bs-vivo {
+  border: 1px solid var(--pd-borde-campo);
+  color: var(--pd-negro);
+}
+.bs-aviso {
+  margin: 0;
+  padding: 10px 14px 0;
+  color: var(--pd-gris);
+  font-size: 0.8rem;
+}
+@media (max-width: 700px) {
+  .bs-atajo {
+    display: none;
+  }
+  .bs-caja li.bs-opcion {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bs-donde {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+/* «Pedidos en curso» (C-BUSCADOR-SERIO): filtros en una fila, código con las 4 letras de las apps
+   resaltadas, y notas discretas de «dónde se encontró». */
+.super-pedidos-filtros {
+  align-items: center;
+}
+.super-pedidos-filtros .super-filtros {
+  margin-bottom: 0;
+}
+.codigo-pedido {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+  color: var(--pd-gris);
+}
+.codigo-pedido b {
+  color: var(--pd-negro);
+  font-weight: 800;
+}
+.codigo-repartidor {
+  white-space: nowrap;
+}
+.encurso-estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.super-nota {
+  margin: 4px 0 8px;
+  color: var(--pd-gris);
+  font-size: 0.88rem;
+}
+.pd-contenido .aviso-borrador.filtros-guardados {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pd-gris);
+  font-size: 0.88rem;
+}

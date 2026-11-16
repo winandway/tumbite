@@ -13,6 +13,9 @@ import { api } from './api';
 import { AvisoBorrador } from './AvisoBorrador';
 import { InterruptoresViaje } from './InterruptoresViaje';
 import { DinamicaCiudad, vecesDe } from './DinamicaCiudad';
+import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
+import { SelectorCiudad } from './SuperFichas';
+import { usePreferencias } from './usePreferencias';
 
 const T = {
   es: {
@@ -26,7 +29,14 @@ const T = {
     atender: 'Marcar atendida',
     nota: 'Qué se hizo',
     viajes: 'Viajes recientes',
-    sinViajes: 'Todavía no hay viajes.',
+    sinViajes: 'No hay viajes con estos filtros.',
+    // C-FILTROS-GUARDADOS (15 nov 2026): filtros de la lista de viajes, guardados por empleado.
+    filtroEstado: 'Estado del viaje',
+    filtros: { vivos: 'Vivos', cerrados: 'Cerrados', todos: 'Todos' } as Record<string, string>,
+    buscado: 'Mostrando los viajes que empiezan por',
+    verTodos: 'Ver todos',
+    codigo: 'Código',
+    ciudadCol: 'Ciudad',
     estado: 'Estado',
     desde: 'Desde',
     hacia: 'Hacia',
@@ -79,7 +89,14 @@ const T = {
     atender: 'Mark as handled',
     nota: 'What was done',
     viajes: 'Recent rides',
-    sinViajes: 'No rides yet.',
+    sinViajes: 'No rides match these filters.',
+    // C-FILTROS-GUARDADOS (Nov 15, 2026).
+    filtroEstado: 'Ride status',
+    filtros: { vivos: 'Live', cerrados: 'Closed', todos: 'All' } as Record<string, string>,
+    buscado: 'Showing rides that start with',
+    verTodos: 'See all',
+    codigo: 'Code',
+    ciudadCol: 'City',
     estado: 'Status',
     desde: 'From',
     hacia: 'To',
@@ -162,6 +179,13 @@ type Datos = {
  */
 export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
+  const pref = usePreferencias('viajes', { zona: '', estado: 'todos' });
+  const zonaFiltro = pref.valores.zona ?? '';
+  const estadoFiltro = pref.valores.estado ?? 'todos';
+  // C-BUSCADOR-SERIO: el buscador de arriba trae aquí un viaje por su código (?q=…); no se guarda.
+  const [buscado, setBuscado] = useState(
+    () => new URLSearchParams(window.location.search).get('q') ?? '',
+  );
   const campos = new Map(Object.entries(t.campos));
   const [datos, setDatos] = useState<Datos | null>(null);
   const [falla, setFalla] = useState('');
@@ -196,11 +220,14 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
   });
 
   const cargar = useCallback(() => {
+    const p = new URLSearchParams({ estado: estadoFiltro });
+    if (zonaFiltro) p.set('zona', zonaFiltro);
+    if (buscado) p.set('q', buscado);
     api
-      .pedir<Datos>('GET', '/datos/admin/viajes')
+      .pedir<Datos>('GET', `/datos/admin/viajes?${p.toString()}`)
       .then(setDatos)
       .catch((x: unknown) => setFalla(x instanceof ErrorApi ? x.message : String(x)));
-  }, []);
+  }, [estadoFiltro, zonaFiltro, buscado]);
   useEffect(() => {
     cargar();
     const r = setInterval(cargar, 15_000);
@@ -318,6 +345,39 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
       )}
 
       <h2>{t.viajes}</h2>
+      <div className="super-busqueda super-pedidos-filtros" role="search">
+        <SelectorCiudad
+          zona={zonaFiltro}
+          cambiar={(z) => pref.cambiar('zona', z)}
+          idioma={idioma}
+        />
+        <div className="super-filtros" role="group" aria-label={t.filtroEstado}>
+          {(['vivos', 'cerrados', 'todos'] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              aria-pressed={estadoFiltro === f}
+              className={estadoFiltro === f ? 'activa' : undefined}
+              onClick={() => pref.cambiar('estado', f)}
+            >
+              {new Map(Object.entries(t.filtros)).get(f)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <AvisoFiltrosGuardados
+        visible={pref.guardados}
+        idioma={idioma}
+        restablecer={pref.restablecer}
+      />
+      {buscado ? (
+        <p className="super-nota" role="status">
+          {t.buscado} #{buscado.slice(0, 6).toUpperCase()} ·{' '}
+          <button type="button" className="enlace" onClick={() => setBuscado('')}>
+            {t.verTodos}
+          </button>
+        </p>
+      ) : null}
       {!datos?.viajes.length ? (
         <p>{t.sinViajes}</p>
       ) : (
@@ -325,7 +385,9 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
           <table className="tabla">
             <thead>
               <tr>
+                <th>{t.codigo}</th>
                 <th>{t.estado}</th>
+                <th>{t.ciudadCol}</th>
                 <th>{t.pasajero}</th>
                 <th>{t.conductor}</th>
                 <th>{t.desde}</th>
@@ -336,7 +398,11 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
             <tbody>
               {datos.viajes.map((v) => (
                 <tr key={String(v.id)}>
+                  <td>
+                    <span className="codigo-pedido">#{String(v.id).slice(0, 6).toUpperCase()}</span>
+                  </td>
                   <td>{String(v.estado)}</td>
+                  <td>{String(v.ciudad ?? v.zona_id ?? '—')}</td>
                   <td>{String(v.pasajero ?? '—')}</td>
                   <td>{String(v.conductor ?? '—')}</td>
                   <td>{String(v.origen_direccion)}</td>
