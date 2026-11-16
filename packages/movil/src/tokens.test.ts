@@ -100,4 +100,14 @@ describe('tokens de diseño de las apps', () => {
       expect(morado, v).toBe(false);
     }
   });
+
+  // C-SERVICIOS-CONECTADOS (DRIVER.md §3): los dos verdes nuevos del Driver.
+  it('verde de borde y verde vivo del Driver; el vivo nunca va de texto', () => {
+    expect(COLOR.exitoBorde).toBe('#9FD3B3');
+    expect(COLOR.exitoVivo).toBe('#1DB954');
+    // El verde vivo no da 4,5:1 sobre blanco: por eso es solo luz y radar, nunca letra.
+    expect(contraste(COLOR.exitoVivo, COLOR.fondo)).toBeLessThan(4.5);
+    // El texto verde de la tarjeta conectada (exito) sí se lee sobre su fondo.
+    expect(contraste(COLOR.exito, COLOR.exitoSuave)).toBeGreaterThanOrEqual(4.5);
+  });
 });

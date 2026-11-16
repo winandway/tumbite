@@ -34,6 +34,10 @@ export const COLOR = {
   bordeOscuro: '#2A2A2A',
   exito: M.exito,
   exitoSuave: '#E6F4EC',
+  /** C-SERVICIOS-CONECTADOS (DRIVER.md §3): borde de la tarjeta de un servicio conectado. */
+  exitoBorde: '#9FD3B3',
+  /** Solo la luz viva y el radar del Driver. Nunca texto: no da contraste para letra. */
+  exitoVivo: '#1DB954',
   aviso: '#8A5300',
   avisoSuave: '#FFF4E0',
   error: '#B3261E',

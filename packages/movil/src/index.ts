@@ -34,3 +34,8 @@ export * from './FranjaPruebas';
 export * from './tokens';
 export * from './diseno';
 export * from './FotosDelPedido';
+export * from './serviciosLogica';
+export * from './movimiento';
+export * from './Deslizador';
+export * from './TarjetaServicio';
+export * from './AvisoDeshacer';
