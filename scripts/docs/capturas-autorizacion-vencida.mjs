@@ -220,33 +220,29 @@ async function abrir(id, idioma) {
   await tarjeta.locator('.resolver-opciones').waitFor();
   return tarjeta;
 }
+// Revisión de calidad (16 nov 2026, B1): «Volver a cobrar» está APAGADO por defecto (la variable
+// RECOBRO_TARJETA_ACTIVO no está puesta en el servidor local), así que la guía muestra lo que ve el
+// equipo hoy: la línea que dice por qué está apagado y «Cerrar sin cobro» con su nota.
 for (const idioma of ['en', 'es']) {
   const ids = idioma === 'en' ? ID.en : ID.es;
-  // 1. El estado real del pago y las dos salidas (el cliente sí dejó su tarjeta para cobros futuros).
-  let tarjeta = await abrir(ids.cobra, idioma);
+  // 1. El estado real del pago; «Volver a cobrar» dice que está apagado.
+  const tarjeta = await abrir(ids.cobra, idioma);
   await guardar('estado', idioma, tarjeta);
-  // 2. Volver a cobrar pide confirmar el monto.
-  await tarjeta.locator('.resolver-opcion').first().getByRole('button').click();
-  await pagina.mouse.move(0, 0);
-  // Solo lo que se lee: la caja a la altura de su contenido.
-  await pagina.addStyleTag({ content: '.resolver-opcion { align-self: start; }' });
-  await guardar('confirmar', idioma, tarjeta.locator('.resolver-opcion').first());
-  await tarjeta
-    .getByRole('button', { name: idioma === 'en' ? /Yes, charge/ : /Sí, cobrar/ })
-    .click();
-  await pagina.locator('.resolver-autorizacion').waitFor({ state: 'detached' });
-  // 3. En la línea de tiempo queda quién lo resolvió y cómo.
-  await guardar('linea', idioma, pagina.locator('[aria-labelledby="ficha-linea-titulo"]'));
-  // 4. Sin el permiso del cliente no hay cobro: se cierra sin cobro con una nota.
-  tarjeta = await abrir(ids.sin, idioma);
+  // 2. Cerrar sin cobro con su nota obligatoria.
   await tarjeta
     .getByLabel(idioma === 'en' ? /Note \(required\)/ : /Nota \(obligatoria\)/)
     .fill(
       idioma === 'en'
-        ? 'Customer confirmed the order arrived. Card no longer saved: Divoox covers it.'
-        : 'El cliente confirmó que recibió el pedido. Ya no tiene la tarjeta guardada: lo asume Divoox.',
+        ? 'Customer confirmed the order arrived. Divoox covers the expired hold.'
+        : 'El cliente confirmó que recibió el pedido. Divoox asume la retención vencida.',
     );
   await guardar('sin-cobro', idioma, tarjeta);
+  await tarjeta
+    .getByRole('button', { name: idioma === 'en' ? 'Close without charging' : 'Cerrar sin cobro' })
+    .click();
+  await pagina.locator('.resolver-autorizacion').waitFor({ state: 'detached' });
+  // 3. En la línea de tiempo queda quién lo resolvió y cómo.
+  await guardar('linea', idioma, pagina.locator('[aria-labelledby="ficha-linea-titulo"]'));
 }
 await navegador.close();
 for (const h of hechas) console.log(h);
