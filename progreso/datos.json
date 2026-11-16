@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-15T19:00:00-05:00",
+  "actualizado": "2026-11-15T21:15:00-05:00",
   "version": "7b9a5ca",
   "ahora": "15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
@@ -380,6 +380,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-15",
+      "titulo": "Entregar en la puerta: foto y «Desliza para completar»",
+      "texto": "En la primera prueba real en Novi, la entrega en la puerta no se cerraba desde el iPhone: salía «No pudimos leer los datos enviados» y un falso «No se pudo subir la foto». Las dos causas se arreglaron de raíz para todos los repartidores, también para la app que ya está instalada. Ahora, como en DoorDash y Uber, el repartidor toma la foto de la entrega (se sube sola y puede volver a tomarla) y cierra el pedido deslizando la barra verde «Desliza para completar». Sin señal, se guarda en el celular y se manda sola. «Modo destino» ya no aparece con un pedido en curso. Guía nueva en Docs en español e inglés, con capturas reales."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "Las tres apps del celular con diseño nuevo",
@@ -780,6 +785,12 @@
     }
   ],
   "incidencias": [
+    {
+      "fecha": "2026-11-15",
+      "titulo": "La entrega en la puerta no se cerraba desde el iPhone",
+      "estado": "resuelto",
+      "texto": "El iPhone manda la foto sin decir que es una foto y el servidor la rechazaba; además la app avisaba «No se pudo subir la foto» aunque sí se había subido. Arreglado para todos, con su prueba y su candado."
+    },
     {
       "fecha": "2026-11-10",
       "titulo": "El enlace de invitación de conductores de Flex abría la app Driver",
