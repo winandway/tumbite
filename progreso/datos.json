@@ -419,6 +419,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-16",
+      "titulo": "Docs públicos solo para clientes y terceros",
+      "texto": "Por decisión de Richard, las guías que explicaban el panel interno del equipo salieron de Docs públicos: sus direcciones ya no existen y no aparecen en buscadores. Ahora viven en una ayuda interna dentro del panel del equipo, con su botón «?», solo para quien tiene sesión del equipo, en español e inglés y con capturas. Docs sigue con todo lo de clientes, restaurantes, repartidores y empresas."
+    },
+    {
+      "fecha": "2026-11-16",
       "titulo": "Buscador al instante y repartidor en vivo en la ficha",
       "texto": "El buscador del panel de operaciones encuentra pedidos y viajes desde la primera letra del código («7», «b4»), con los que están en curso arriba, cuántos hay y «Ver todos»; si no hay nada, sugiere el código bien escrito. La ficha del pedido y del viaje muestra en un mapa de Google al repartidor moviéndose, la ruta y la hora de llegada con tráfico («Llega a las 3:28 p. m. · faltan 9 min»), y avisa si está detenido o sin señal. El cliente ve la misma hora en su app (llega con la próxima versión). Los tramos sin terminar ya no dicen «Tomó 761 h»."
     },
