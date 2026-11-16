@@ -606,6 +606,8 @@ export function Inicio() {
   const [escaneando, setEscaneando] = useState(false);
   // C-QR-UNA-VEZ: la cámara dispara la lectura varias veces seguidas; se verifica una sola.
   const qrLeido = useRef(false);
+  // C-FOTO-PUERTA: la fila de la tarjeta del pedido (la hoja de las fotos se abre debajo de ella).
+  const filaPedido = useRef<View>(null);
   const [permisoCamara, pedirCamara] = useCameraPermissions();
   const [codigo, setCodigo] = useState('');
   const [motivo, setMotivo] = useState('');
@@ -2016,9 +2018,13 @@ export function Inicio() {
             marginTop: -18,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}>
+          <View
+            ref={filaPedido}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 }}
+          >
             {/* C-FOTO-PUERTA: en camino y con fotos, la miniatura de la puerta reemplaza la comida. */}
             <MiniaturaPuerta
+              tarjeta={filaPedido}
               pedidoId={activo.id}
               estado={activo.estado}
               notas={activo.notas || ''}

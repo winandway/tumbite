@@ -546,7 +546,13 @@ function ContenidoFotosPuerta<F>({
                     zIndex: 10 - c.orden,
                   }}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+                  {/* En la web cada vista abre su propia capa (z-index 0): sin subir esta fila,
+                      la miniatura de abajo tapaba el menú abierto y «Borrar foto» no se podía
+                      tocar (visto en el recorrido del 15 nov 2026). */}
+                  <View
+                    testID={`fotos-puerta-cabecera-${c.orden}`}
+                    style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, zIndex: 2 }}
+                  >
                     <View
                       style={{
                         width: 26,

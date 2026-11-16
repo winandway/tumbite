@@ -99,6 +99,8 @@ describe('candado: pantallas de la foto de la puerta', () => {
     // Borrar va dentro del menú de tres puntos, con confirmación.
     expect(s).toMatch(/MenuTresPuntos[\s\S]*t\.borrarFoto/);
     expect(s).toMatch(/confirmar\(t\.borrarTitulo/);
+    // La fila del menú va por encima de la miniatura: en la web la tapaba y no se podía borrar.
+    expect(s).toMatch(/testID=\{`fotos-puerta-cabecera-[\s\S]{0,120}zIndex: 2/);
     // El paquete compartido no depende de los módulos nativos de la cámara.
     expect(s).not.toMatch(/from 'expo-image-(picker|manipulator)'/);
   });

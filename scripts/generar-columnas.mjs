@@ -7,7 +7,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 export function columnasDelEsquema(sql) {
   const limpio = sql.replace(/--[^\n]*/g, '');
   const tablas = {};
-  for (const m of limpio.matchAll(/CREATE TABLE IF NOT EXISTS (\w+) \(([\s\S]*?)\n\);/g)) {
+  // Una tabla termina en «);» o en «) WITHOUT ROWID;» (C-FOTO-PUERTA: direcciones_fotos).
+  for (const m of limpio.matchAll(
+    /CREATE TABLE IF NOT EXISTS (\w+) \(([\s\S]*?)\n\)(?: WITHOUT ROWID)?;/g,
+  )) {
     const cols = [];
     for (const linea of m[2].split('\n')) {
       const w = /^\s*([a-z_][a-z0-9_]*)\s+(TEXT|INTEGER|REAL|BLOB|NUMERIC)\b/.exec(linea);

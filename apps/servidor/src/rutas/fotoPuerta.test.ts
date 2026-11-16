@@ -255,6 +255,20 @@ describe('foto de la puerta: presupuesto de escrituras e interruptor por zona', 
     expect(Number(filas?.n)).toBe(3);
   });
 
+  it('una foto es UNA fila en D1: la tabla es un solo árbol, sin índices aparte', async () => {
+    // Medido en el recorrido del 15 nov 2026: con `id` de llave y la llave única aparte, subir tres
+    // fotos escribía 9 filas (tabla + 2 índices). La llave es (dirección, orden), WITHOUT ROWID.
+    const { m } = await escenario();
+    const { results } = await m.DB.prepare("PRAGMA index_list('direcciones_fotos')").all<{
+      origin: string;
+    }>();
+    expect(results.filter((r) => r.origin !== 'pk')).toEqual([]);
+    const sqlTabla = await m.DB.prepare(
+      "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'direcciones_fotos'",
+    ).first<{ sql: string }>();
+    expect(sqlTabla?.sql).toMatch(/WITHOUT ROWID/);
+  });
+
   it('el interruptor nace apagado; encendido, sin la primera foto no se puede pedir', async () => {
     const { m, admin, cliente, restId, guardar, pedir } = await escenario();
     const zona = await m.DB.prepare(

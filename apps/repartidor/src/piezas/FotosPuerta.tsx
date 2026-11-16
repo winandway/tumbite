@@ -1,9 +1,10 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, type RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -107,12 +108,15 @@ function HojaFotos({
   fotos,
   notas,
   idioma,
+  desde,
 }: {
   cerrar: () => void;
   pedidoId: string;
   fotos: FotoPuerta[];
   notas: string;
   idioma: Idioma;
+  /** Dónde termina la tarjeta del pedido (en pantalla): la hoja empieza debajo y no la tapa. */
+  desde: number | null;
 }) {
   const { api } = useSesion();
   const t = idioma === 'en' ? T.en : T.es;
@@ -122,14 +126,27 @@ function HojaFotos({
   const [fallo, setFallo] = useState<Record<number, boolean>>({});
   const [pagina, setPagina] = useState(0);
   const [intento, setIntento] = useState(0);
-  const alto = Math.round(height * 0.55);
-  const altoFoto = Math.max(140, Math.min(alto - 190 - abajo, Math.round(width * 0.75)));
+  // Media altura, pero sin tapar el mapa ni la tarjeta del pedido (dirección y miniatura): la hoja
+  // empieza justo debajo de la tarjeta. Nunca menos de lo que pide una foto legible.
+  const alto = Math.max(
+    Math.round(height * 0.42),
+    Math.min(Math.round(height * 0.55), desde != null ? Math.round(height - desde - 8) : 9e9),
+  );
+  // La foto deja sitio a tres renglones de indicaciones y al botón «Cerrar» (visto en la captura de
+  // El Vigía: con la foto más alta, las indicaciones quedaban pegadas al botón).
+  const altoFoto = Math.max(140, Math.min(alto - 240 - abajo, Math.round(width * 0.75)));
 
-  // Deslizar hacia abajo desde la manija cierra la hoja.
+  // Deslizar hacia abajo desde la manija cierra la hoja. El gesto debe ser SIEMPRE el mismo: si se
+  // rehacía en cada render (al llegar cada foto grande), el gesto en curso se perdía y la hoja no se
+  // cerraba. Por eso `cerrar` llega estable (useCallback en MiniaturaPuerta).
   const arrastre = useMemo(
     () =>
       PanResponder.create({
+        // La manija no tiene otro uso: se queda con el gesto desde que se toca (en la web, si
+        // esperaba al movimiento, el navegador se lo quedaba y la hoja no se cerraba).
+        onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_e, g) => g.dy > 8 && Math.abs(g.dy) > Math.abs(g.dx),
+        onPanResponderTerminationRequest: () => false,
         onPanResponderRelease: (_e, g) => {
           if (g.dy > 60) cerrar();
         },
@@ -171,7 +188,7 @@ function HojaFotos({
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
         {/* Tocar fuera cierra. */}
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' }}
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.18)' }}
           onPress={cerrar}
           accessibilityRole="button"
           accessibilityLabel={t.cerrar}
@@ -187,21 +204,37 @@ function HojaFotos({
             paddingBottom: abajo + 10,
           }}
         >
-          <View {...arrastre.panHandlers} style={{ alignItems: 'center', paddingVertical: 10 }}>
+          <View
+            {...arrastre.panHandlers}
+            testID="puerta-manija"
+            style={[
+              { alignItems: 'center', paddingVertical: 10 },
+              // En la web el navegador se quedaba con el dedo para desplazar la página
+              // (pointercancel) y deslizar hacia abajo no cerraba: la manija no desplaza nada.
+              Platform.OS === 'web' ? ({ touchAction: 'none' } as object) : null,
+            ]}
+          >
             <View style={{ width: 40, height: 5, borderRadius: 3, backgroundColor: '#D6D6D6' }} />
           </View>
+          {/* La página se calcula al desplazarse (onScroll): en la web no existe onMomentumScrollEnd
+              y los puntos se quedaban siempre en la primera foto. */}
           <ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={(ev) =>
+            onScroll={(ev) =>
               setPagina(Math.round(ev.nativeEvent.contentOffset.x / Math.max(1, width)))
             }
             scrollEventThrottle={16}
             style={{ flexGrow: 0 }}
+            testID="puerta-fotos"
           >
             {fotos.map((f) => (
-              <View key={f.orden} style={{ width, paddingHorizontal: 16, gap: 6 }}>
+              <View
+                key={f.orden}
+                testID={`puerta-foto-${f.orden}`}
+                style={{ width, paddingHorizontal: 16, gap: 6 }}
+              >
                 <Text style={{ fontWeight: '800', color: C.secundario }}>
                   {textoRolPuerta(idioma, f.rol).rotulo}
                 </Text>
@@ -259,6 +292,8 @@ function HojaFotos({
               {fotos.map((f, i) => (
                 <View
                   key={f.orden}
+                  testID={`puerta-punto-${f.orden}`}
+                  aria-selected={i === pagina}
                   style={{
                     width: 7,
                     height: 7,
@@ -282,6 +317,7 @@ function HojaFotos({
             testID="puerta-cerrar"
             style={({ pressed }) => ({
               marginHorizontal: 16,
+              marginTop: 8,
               minHeight: 48,
               borderRadius: 12,
               borderWidth: 1,
@@ -309,22 +345,35 @@ export function MiniaturaPuerta({
   notas,
   idioma,
   respaldo,
+  tarjeta,
 }: {
   pedidoId: string;
   estado: string;
   notas: string;
   idioma: Idioma;
   respaldo: ReactNode;
+  /** La fila de la tarjeta del pedido: la hoja se abre debajo de ella, sin taparla. */
+  tarjeta?: RefObject<View | null>;
 }) {
   const t = idioma === 'en' ? T.en : T.es;
   const { fotos, mini } = usePuerta(pedidoId, estado);
   const [abierta, setAbierta] = useState(false);
+  const [desde, setDesde] = useState<number | null>(null);
+  const cerrar = useCallback(() => setAbierta(false), []);
+  const abrir = () => {
+    const fila = tarjeta?.current;
+    if (!fila) return setAbierta(true);
+    fila.measureInWindow((_x, y, _w, h) => {
+      setDesde(Number.isFinite(y + h) && h > 0 ? y + h : null);
+      setAbierta(true);
+    });
+  };
   const hay = fotos.length > 0 && !!mini;
   if (!hay) return <>{respaldo}</>;
   return (
     <>
       <Pressable
-        onPress={() => setAbierta(true)}
+        onPress={abrir}
         accessibilityRole="button"
         accessibilityLabel={t.verFotos}
         testID="puerta-miniatura"
@@ -359,11 +408,12 @@ export function MiniaturaPuerta({
       {/* Sin fotos (entregado o cancelado) la hoja desaparece con la miniatura. */}
       {abierta ? (
         <HojaFotos
-          cerrar={() => setAbierta(false)}
+          cerrar={cerrar}
           pedidoId={pedidoId}
           fotos={fotos}
           notas={notas}
           idioma={idioma}
+          desde={desde}
         />
       ) : null}
     </>

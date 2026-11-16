@@ -2756,15 +2756,18 @@ CREATE INDEX IF NOT EXISTS direcciones_cliente_usuario ON direcciones_cliente(us
 
 -- C-FOTO-PUERTA (15 nov 2026): hasta tres fotos del frente y la puerta por dirección guardada, de
 -- afuera hacia adentro. El archivo vive en el almacén privado (puertas/<usuario>/<direccion>/…);
--- la miniatura es la misma clave con «-s». Un solo índice: el de la llave única.
+-- la miniatura es la misma clave con «-s». UN SOLO árbol: la llave es (dirección, orden) y la tabla
+-- va WITHOUT ROWID. Con `id` como llave y aparte la llave única, cada foto escribía TRES filas en D1
+-- (la tabla y dos índices; medido en el recorrido del 15 nov 2026); así escribe una. `id` se queda
+-- como columna (lo escriben el servidor y las bases que ya tienen la forma anterior).
 CREATE TABLE IF NOT EXISTS direcciones_fotos (
-  id TEXT PRIMARY KEY,
+  id TEXT NOT NULL,
   direccion_id TEXT NOT NULL REFERENCES direcciones_cliente(id),
   orden INTEGER NOT NULL CHECK (orden BETWEEN 1 AND 3),
   clave TEXT NOT NULL,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE (direccion_id, orden)
-);
+  PRIMARY KEY (direccion_id, orden)
+) WITHOUT ROWID;
 
 -- Cupones (auditoría final, punto 15). Quién los paga (Tumbite o el restaurante) lo fija cada cupón;
 -- de fábrica los paga Tumbite (baja su ganancia), decisión de Richard por cupón.
