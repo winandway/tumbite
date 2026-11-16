@@ -58,7 +58,9 @@ describe('Docs', () => {
     await userEvent.click(screen.getByRole('link', { name: 'How do I cancel an order?' }));
     expect(window.location.pathname).toBe('/docs/ordering/cancel-order');
     expect(screen.getByText('This guide answers')).toBeInTheDocument();
-  });
+    // Pinta la App entera con todas las guías: con la máquina cargada pasaba de 5 s y frenaba el
+    // envío a main sin que nada fallara de verdad (15 nov 2026).
+  }, 20_000);
 
   it('el buscador también encuentra por pregunta', async () => {
     window.history.pushState(null, '', '/docs');
