@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-16T02:45:00-05:00",
+  "actualizado": "2026-11-16T07:10:00-05:00",
   "version": "fe71f3f",
-  "ahora": "15 nov: las tres apps con el diseño nuevo ya están en las tiendas. En Google Play, Divoox Driver (versión 18) y Divoox Restaurants (versión 13) están en revisión; en App Store Connect quedaron las compilaciones 34 del cliente, 28 del Driver y 20 de Restaurants para TestFlight. El sitio de pruebas y divoox.com sirven la misma versión, con el diseño nuevo y la foto de la puerta. 15 nov: la foto de la puerta ya está en vivo. El cliente puede guardar hasta tres fotos del frente, la entrada del edificio y su puerta en cada dirección, con la cámara o desde sus archivos; el repartidor asignado las ve solo mientras lleva el pedido, y nadie más. Probado en pantalla con 86 comprobaciones, con guías en español e inglés. Las tres apps de pruebas ya traen el diseño nuevo y la franja «PRUEBAS». 15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
+  "ahora": "16 nov: diseño fase cero cerrado y publicado (pruebas y producción, 850edb4). La espera de cada servicio ya tiene su vehículo: carro, moto con el casco del pasajero, envío en moto y envío en carro, con un solo bucle continuo de 4,8 segundos y por el carril derecho. Guías nuevas en Docs: «Mientras buscamos a tu conductor» y «Pide la misma ruta otra vez», con capturas reales en español e inglés. Apps de pruebas nuevas: cliente iPhone 38 y Android 20, Driver iPhone 32 y Android 20, Restaurants iPhone 23 y Android 14.",
   "proximo": [
     {
       "quien": "ia",
@@ -417,6 +417,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-16",
+      "titulo": "La espera de cada servicio, con su vehículo y sin cortes",
+      "texto": "Al pedir un viaje o un envío, la pantalla de espera muestra el vehículo de lo que pediste: carro, moto con el casco del pasajero, moto con caja de reparto o carro con una caja en el techo. La animación es un solo bucle continuo, el vehículo va por su carril derecho y con «reducir movimiento» queda quieta. Cuando aparece el conductor, el mapa entra con un fundido suave. «Mis viajes» con «Pedir la misma ruta» ya tiene su guía. Las tres apps de pruebas se compilaron con todo esto."
+    },
     {
       "fecha": "2026-11-16",
       "titulo": "Resolver una autorización de tarjeta vencida desde la ficha del pedido",
