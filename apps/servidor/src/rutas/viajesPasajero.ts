@@ -49,6 +49,7 @@ import { zonaPara } from './zonas';
 import { REUSO_RUTA_MINUTOS, REUSO_RUTA_RADIO_M, rutaParaCotizar } from '../rutaPorCalles';
 import { multiplicadorVigente } from '../viajesDinamica';
 import { paradasDe } from './paradasViaje';
+import { accesoDe, filtroAlcance, servicioOperacionSql, tienePermiso } from '../accesoInterno';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -1411,6 +1412,15 @@ viajesPasajero.get('/admin/viajes', async (c) => {
   const porCodigo = /^[0-9a-z_-]{3,100}$/.test(codigo) ? rangoPrefijo(codigo) : null;
   const filtros: string[] = [];
   const valores: unknown[] = [];
+  // C-PERMISOS-FINOS: solo los viajes de la zona de trabajo y servicios de quien mira.
+  const alc = filtroAlcance(accesoDe(c), {
+    zona: '+o.zona_id',
+    servicio: servicioOperacionSql('o.servicio_id'),
+  });
+  if (alc.sql) {
+    filtros.push(alc.sql.replace(/^ AND /, ''));
+    valores.push(...alc.valores);
+  }
   if (porCodigo) {
     filtros.push('o.id >= ? AND o.id < ?');
     valores.push(...porCodigo);
@@ -1441,16 +1451,22 @@ viajesPasajero.get('/admin/viajes', async (c) => {
       .bind(tipo, ...valores)
       .all<Record<string, unknown>>();
   const vivo = new Set<string>(ESTADOS_OPERACION.vivos);
+  // C-MONITOREO-SERVICIOS: la pantalla de emergencias y tarifas pide `lista=0` (la lista de viajes
+  // vive en «Pedidos en curso», paginada por clave); así no se leen viajes que nadie mira.
+  const conLista = c.req.query('lista') !== '0';
+  const vacia = Promise.resolve({ results: [] as Record<string, unknown>[] });
   const [emergencias, pasajeros, paquetes, tarifas] = await Promise.all([
     db
       .prepare(
         `SELECT e.id, e.operacion_id, e.rol, e.lat, e.lng, e.creado_en, u.nombre, u.correo, u.telefono
            FROM emergencias_viaje e JOIN usuarios u ON u.id = e.actor_id
-          WHERE e.atendida_en IS NULL ORDER BY e.creado_en DESC LIMIT 50`,
+          WHERE e.atendida_en IS NULL${alc.sql ? ` AND e.operacion_id IN (SELECT o.id FROM operaciones o WHERE 1 = 1${alc.sql})` : ''}
+          ORDER BY e.creado_en DESC LIMIT 50`,
       )
+      .bind(...alc.valores)
       .all<Record<string, unknown>>(),
-    unaParte('viaje_pasajero'),
-    unaParte('envio_paquete'),
+    conLista ? unaParte('viaje_pasajero') : vacia,
+    conLista ? unaParte('envio_paquete') : vacia,
     db
       .prepare(
         `SELECT t.*, z.nombre AS zona_nombre FROM tarifas_viaje t JOIN zonas z ON z.id = t.zona_id
@@ -1466,8 +1482,13 @@ viajesPasajero.get('/admin/viajes', async (c) => {
         String(b.creado_en).localeCompare(String(a.creado_en)),
     )
     .slice(0, 50);
+  // C-PERMISOS-FINOS: el punto donde estaba quien pidió ayuda es la «ubicación en vivo» del viaje
+  // para el equipo: solo con `viajes.ubicacion_en_vivo` (la tiene la plantilla «Emergencias»).
+  const conUbicacion = tienePermiso(c, 'viajes.ubicacion_en_vivo');
   return c.json({
-    emergencias: emergencias.results,
+    emergencias: conUbicacion
+      ? emergencias.results
+      : emergencias.results.map((e) => ({ ...e, lat: null, lng: null })),
     viajes,
     tarifas: tarifas.results.map((f) => ({ ...tarifaPublica(f), zonaNombre: f.zona_nombre })),
   });

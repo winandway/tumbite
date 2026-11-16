@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Hora } from './horario';
 import {
   ErrorApi,
   type Idioma,
@@ -356,7 +357,7 @@ export function SuperPiloto({ idioma }: { idioma: Idioma }) {
                 {e.nombre ?? e.usuarioId} {e.accion === 'alta' ? t.alta : t.baja}
               </strong>
               <span>
-                {e.creadoEn}
+                <Hora fecha={e.creadoEn} idioma={idioma} />
                 {e.autor ? ` · ${t.por} ${e.autor}` : ''}
               </span>
             </div>

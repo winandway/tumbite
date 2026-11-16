@@ -69,6 +69,13 @@ export function mundo(
         .run();
     return { token: r.datos.token as string, id: r.datos.usuario.id as string };
   }
+  /**
+   * C-PERMISOS-FINOS: como al entrar al panel, la sesión del equipo queda con sus permisos ya
+   * calculados (una escritura por sesión). Las pruebas de «mirar no escribe» la llaman antes de medir.
+   */
+  async function sesionLista(token: string) {
+    await llamar('GET', '/datos/admin/equipo/yo', undefined, token);
+  }
   /** Marca el correo de la cuenta como confirmado (como si hubiera tocado el enlace del correo). */
   async function confirmarCorreo(id: string) {
     await DB.prepare("UPDATE usuarios SET correo_confirmado_en = datetime('now') WHERE id = ?")
@@ -155,6 +162,7 @@ export function mundo(
     DB,
     llamar,
     cuenta,
+    sesionLista,
     confirmarCorreo,
     crudo,
     foto,

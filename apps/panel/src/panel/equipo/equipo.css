@@ -1,0 +1,432 @@
+/* C-PERMISOS-FINOS: «Equipo interno», «Ver dato», «Ver foto» y el segundo factor. Sobrio: bordes
+   finos grises, sin franjas de color ni degradados (regla de diseño de Divoox). */
+
+.eq-barra {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.eq-buscar {
+  flex: 1 1 260px;
+  max-width: 420px;
+  padding: 10px 12px;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  font: inherit;
+}
+.eq .pd-tarjeta {
+  margin-bottom: 16px;
+}
+.eq-filas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.eq-fila {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.6fr) minmax(90px, 0.7fr) minmax(140px, 1.2fr) minmax(120px, 1fr)
+    minmax(120px, 1fr) minmax(110px, 0.9fr) 36px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 4px;
+  border-bottom: 1px solid #ececec;
+}
+.eq-fila:last-child {
+  border-bottom: 0;
+}
+.eq-fila-cabeza {
+  font-size: 12px;
+  color: #666b73;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-top: 0;
+}
+.eq-fila-persona {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.eq-fila-persona strong,
+.eq-fila-persona small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.eq-fila-persona small,
+.eq-fila-dato {
+  color: #666b73;
+  font-size: 13px;
+}
+.eq-dueno {
+  display: block;
+  color: #666b73;
+  font-size: 12px;
+  margin-top: 2px;
+}
+.eq-invitar h2 {
+  margin-top: 0;
+}
+.eq-dos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0 16px;
+}
+.eq-grupo {
+  border: 1px solid #e4e4e4;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0 0 14px;
+}
+.eq-grupo legend {
+  font-weight: 600;
+  padding: 0 6px;
+}
+.eq-opciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+}
+.eq-opcion {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border: 1px solid #e4e4e4;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+}
+.eq-opcion span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.eq-opcion small {
+  color: #666b73;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.eq-opcion-apagada {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.eq-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.eq-chips-titulo {
+  font-size: 13px;
+  color: #666b73;
+  min-width: 80px;
+}
+.eq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d6d6d6;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  background: #fff;
+}
+.eq-tope {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.eq-tope input {
+  width: 110px;
+  padding: 6px 8px;
+  border: 1px solid #d6d6d6;
+  border-radius: 8px;
+}
+.eq-recuperado {
+  background: #f6f6f6;
+  border: 1px solid #e4e4e4;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.eq-enlace {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #e4e4e4;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.eq-enlace code {
+  word-break: break-all;
+  background: #f6f6f6;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+}
+.eq-dialogo-botones {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.boton.peligro {
+  background: #c20a1a;
+  border-color: #c20a1a;
+  color: #fff;
+}
+.eq-velo {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 16, 16, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 60;
+}
+.eq-dialogo {
+  background: #fff;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  padding: 20px;
+  width: min(460px, 100%);
+}
+.eq-dialogo h2 {
+  margin-top: 0;
+}
+.eq-dialogo textarea {
+  width: 100%;
+  font: inherit;
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.eq-interruptor .campo-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.eq-volver {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #666b73;
+}
+.eq-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.eq-datos {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+}
+.eq-datos dt {
+  color: #666b73;
+}
+.eq-datos dd {
+  margin: 0;
+}
+.eq-area h3 {
+  font-size: 14px;
+  margin: 12px 0 6px;
+}
+.eq-area .eq-nota {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #666b73;
+}
+.eq-area ul,
+.eq-registro,
+.eq-plantilla-permisos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.eq-area li,
+.eq-registro li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+.eq-area li small,
+.eq-registro li small {
+  color: #666b73;
+  font-size: 12px;
+  text-align: right;
+}
+.eq-plantillas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.eq-plantilla header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eq-plantilla header h2 {
+  margin: 0;
+  font-size: 17px;
+  flex: 1;
+}
+.eq-plantilla-cuenta {
+  font-size: 13px;
+  color: #666b73;
+}
+.eq-plantilla-permisos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.eq-plantilla-permisos li {
+  border: 1px solid #e4e4e4;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.eq-filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0 12px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+.eq-filtros .boton {
+  margin-bottom: 14px;
+}
+/* «Ver dato» */
+.eq-dato {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.eq-dato-mascara {
+  color: #666b73;
+  letter-spacing: 0.02em;
+}
+.eq-dato-valor {
+  font-weight: 600;
+}
+/* «Ver foto»: borrosa hasta pulsar */
+.eq-foto {
+  margin: 0;
+  max-width: 320px;
+}
+.eq-foto-marco {
+  position: relative;
+  border: 1px solid #e4e4e4;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.eq-foto-marco img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.eq-foto-velo {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, #e9e9e9 0 12px, #f4f4f4 12px 24px);
+  filter: blur(6px);
+}
+.eq-foto-boton {
+  position: relative;
+}
+.eq-foto-candado {
+  position: relative;
+  max-width: 80%;
+  text-align: center;
+  font-size: 13px;
+  color: #3a3a3a;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #e4e4e4;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.eq-foto figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.eq-foto figcaption small {
+  color: #666b73;
+  font-size: 12px;
+}
+/* Segundo factor */
+.eq-franja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #e4e4e4;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.eq-codigo-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.eq-codigo-form input {
+  width: 130px;
+  padding: 6px 10px;
+  border: 1px solid #d6d6d6;
+  border-radius: 8px;
+  letter-spacing: 0.2em;
+}
+
+@media (max-width: 820px) {
+  .eq-fila {
+    grid-template-columns: 1fr auto;
+    gap: 4px 10px;
+  }
+  .eq-fila-cabeza {
+    display: none;
+  }
+  .eq-fila > :nth-child(2) {
+    justify-self: end;
+  }
+  .eq-fila-dato {
+    grid-column: 1 / 2;
+  }
+  /* En el celular no hay cabecera de columnas: cada fecha dice qué es. */
+  .eq-fila-dato[data-etiqueta]::before {
+    content: attr(data-etiqueta) ': ';
+  }
+  .eq-fila > :last-child {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .eq-fila > :nth-child(2) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}

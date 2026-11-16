@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Hora } from './horario';
 import {
   ErrorApi,
   type Idioma,
@@ -245,7 +246,7 @@ export function SuperRewards({ idioma }: { idioma: Idioma }) {
             <div className="lista-texto">
               <strong>{a.nombre ?? a.unidadId}</strong>
               <span>
-                {a.creadoEn} · {a.motivo}
+                <Hora fecha={a.creadoEn} idioma={idioma} /> · {a.motivo}
               </span>
             </div>
             <button type="button" className="boton" onClick={() => void resolver(a.id, 'aceptada')}>

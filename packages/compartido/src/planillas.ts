@@ -6,8 +6,10 @@ import { montoATexto } from './dinero';
  */
 export function celdaCsv(v: string | number): string {
   const t = String(v);
-  const segura = /^[=+\-@]/.test(t) && typeof v === 'string' ? `'${t}` : t;
-  return /[",\n]/.test(segura) ? `"${segura.replace(/"/g, '""')}"` : segura;
+  // Lo que una hoja de cálculo leería como fórmula: =, +, -, @, y también un tabulador o un
+  // retorno de carro al comienzo (Excel y Google Sheets los saltan y leen la fórmula de después).
+  const segura = /^[=+\-@\t\r]/.test(t) && typeof v === 'string' ? `'${t}` : t;
+  return /[",\n\r]/.test(segura) ? `"${segura.replace(/"/g, '""')}"` : segura;
 }
 
 /** Las ganancias del repartidor, una fila por entrega, como el estado de cuenta de Uber Driver. */

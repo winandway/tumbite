@@ -26,8 +26,10 @@ import {
   base,
   exigir,
   leerToken,
+  usuarioPublico,
 } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
+import { leerAccesoInterno } from '../accesoInterno';
 import { limiteIntentos } from '../seguridad';
 import { enviarCorreo, esCorreoDePrueba } from '../correo';
 import { correoDeConfirmacion } from '../avisos';
@@ -127,11 +129,18 @@ function esAdmin(correo: string, lista: string | undefined): boolean {
     .includes(correo.toLowerCase());
 }
 
-async function abrirSesion(db: D1Database, usuarioId: string): Promise<string> {
+async function abrirSesion(
+  db: D1Database,
+  usuarioId: string,
+  permisosJson: string | null = null,
+): Promise<string> {
   const token = nuevoToken();
+  // C-PERMISOS-FINOS: una cuenta del equipo entra con sus permisos ya calculados (en la misma fila).
   await db
-    .prepare(`INSERT INTO sesiones (id, usuario_id, expira_en) VALUES (?, ?, datetime('now', ?))`)
-    .bind(await sha256(token), usuarioId, `+${DIAS_SESION} days`)
+    .prepare(
+      `INSERT INTO sesiones (id, usuario_id, expira_en, permisos_json) VALUES (?, ?, datetime('now', ?), ?)`,
+    )
+    .bind(await sha256(token), usuarioId, `+${DIAS_SESION} days`, permisosJson)
     .run();
   return token;
 }
@@ -260,12 +269,28 @@ cuentas.post('/entrar', async (c) => {
   if (!fila || !claveOk) {
     throw new ErrorDatos('El correo o la contraseña no coinciden.', undefined, 401);
   }
+  // C-PERMISOS-FINOS: una cuenta del equipo suspendida, retirada o vencida no entra (lo dice claro).
+  const acceso = fila.rol === 'admin' ? await leerAccesoInterno(db, c.env, fila) : null;
+  if (acceso && acceso.estado !== 'activo')
+    throw new ErrorDatos(
+      'Tu acceso al equipo de Divoox está suspendido o vencido. Habla con quien gestiona el equipo.',
+      undefined,
+      403,
+    );
+  if (acceso)
+    await db
+      .prepare(
+        `INSERT INTO equipo_cuentas (usuario_id, ultima_entrada_en) VALUES (?, datetime('now'))
+         ON CONFLICT(usuario_id) DO UPDATE SET ultima_entrada_en = excluded.ultima_entrada_en`,
+      )
+      .bind(fila.id)
+      .run();
   // C-REPARTIDOR-UN-TELEFONO (8 nov 2026, Richard): un repartidor trabaja en UN solo teléfono, como
   // en Uber y DoorDash. Entrar en otro cierra la sesión del anterior: si no, los dos reciben las
   // mismas ofertas. Restaurantes y empresas sí pueden tener varias pantallas abiertas.
   if (fila.rol === 'repartidor')
     await db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(fila.id).run();
-  const token = await abrirSesion(db, fila.id);
+  const token = await abrirSesion(db, fila.id, acceso ? JSON.stringify(acceso) : null);
   const usuario: Usuario = {
     id: fila.id,
     nombre: fila.nombre,
@@ -505,7 +530,7 @@ cuentas.delete('/yo', async (c) => {
   return c.json({ ok: true });
 });
 
-cuentas.get('/yo', (c) => c.json({ usuario: exigir(c) }));
+cuentas.get('/yo', (c) => c.json({ usuario: usuarioPublico(exigir(c)) }));
 
 // ---------- Configuración de la cuenta ----------
 
@@ -564,7 +589,7 @@ cuentas.patch('/yo', async (c) => {
     )
     .bind(d.nombre, d.telefono || null, d.fechaNacimiento, d.idioma, u.id)
     .run();
-  return c.json({ usuario: { ...u, nombre: d.nombre, idioma: d.idioma } });
+  return c.json({ usuario: { ...usuarioPublico(u), nombre: d.nombre, idioma: d.idioma } });
 });
 
 /**
@@ -624,7 +649,7 @@ cuentas.post('/correo', async (c) => {
     .first<{ clave_hash: string }>();
   if (!f || !(await verificarClave(d.clave, f.clave_hash)))
     throw new ErrorDatos('La contraseña no es correcta.', 'clave', 401);
-  if (d.correo === u.correo.toLowerCase()) return c.json({ usuario: u });
+  if (d.correo === u.correo.toLowerCase()) return c.json({ usuario: usuarioPublico(u) });
   const existe = await db.prepare('SELECT 1 FROM usuarios WHERE correo = ?').bind(d.correo).first();
   if (existe) throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);
   await db
@@ -637,7 +662,7 @@ cuentas.post('/correo', async (c) => {
     correo: d.correo,
     idioma: u.idioma,
   });
-  return c.json({ usuario: { ...u, correo: d.correo } });
+  return c.json({ usuario: { ...usuarioPublico(u), correo: d.correo } });
 });
 
 /**

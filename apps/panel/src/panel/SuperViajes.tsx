@@ -4,7 +4,6 @@ import {
   type Idioma,
   almacenNavegador,
   enIdioma,
-  formatearMonto,
   montoATexto,
   textoAMonto,
   useBorrador,
@@ -13,13 +12,12 @@ import { api } from './api';
 import { AvisoBorrador } from './AvisoBorrador';
 import { InterruptoresViaje } from './InterruptoresViaje';
 import { DinamicaCiudad, vecesDe } from './DinamicaCiudad';
-import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
-import { SelectorCiudad } from './SuperFichas';
-import { usePreferencias } from './usePreferencias';
+import { Enlace } from '../Enlace';
+import { Hora } from './horario';
 
 const T = {
   es: {
-    titulo: 'Moto · Viajes',
+    titulo: 'Viajes · Emergencias y tarifas',
     intro:
       'Moto existe solo en el sitio de pruebas hasta que Richard lo encienda con la aprobación legal. Las tarifas son de prueba.',
     emergencias: 'Emergencias abiertas',
@@ -28,19 +26,14 @@ const T = {
     conductor: 'Conductor',
     atender: 'Marcar atendida',
     nota: 'Qué se hizo',
-    viajes: 'Viajes recientes',
-    sinViajes: 'No hay viajes con estos filtros.',
-    // C-FILTROS-GUARDADOS (15 nov 2026): filtros de la lista de viajes, guardados por empleado.
-    filtroEstado: 'Estado del viaje',
-    filtros: { vivos: 'Vivos', cerrados: 'Cerrados', todos: 'Todos' } as Record<string, string>,
-    buscado: 'Mostrando los viajes que empiezan por',
-    verTodos: 'Ver todos',
-    codigo: 'Código',
-    ciudadCol: 'Ciudad',
-    estado: 'Estado',
-    desde: 'Desde',
-    hacia: 'Hacia',
-    precio: 'Precio',
+    viajes: 'Viajes',
+    // C-MONITOREO-SERVICIOS (15 nov 2026): los viajes se vigilan en «Pedidos en curso».
+    enMonitoreo:
+      'Los viajes en auto, en moto y los envíos se vigilan en «Pedidos en curso», con su semáforo, su búsqueda y «Cargar más». Cada uno abre su ficha.',
+    verAuto: 'Ver los viajes en auto',
+    verMoto: 'Ver los viajes en moto',
+    verEnvios: 'Ver los envíos',
+    verFicha: 'Ver el viaje',
     tarifas: 'Tarifas activas',
     sinTarifas: 'Ninguna ciudad tiene tarifa de Moto todavía.',
     nueva: 'Nueva tarifa (cierra la anterior de esa ciudad)',
@@ -79,7 +72,7 @@ const T = {
     dePrueba: 'de prueba',
   },
   en: {
-    titulo: 'Moto · Rides',
+    titulo: 'Rides · Emergencies and fares',
     intro:
       'Moto exists only on the test site until Richard turns it on with legal approval. Prices are test prices.',
     emergencias: 'Open emergencies',
@@ -88,19 +81,14 @@ const T = {
     conductor: 'Driver',
     atender: 'Mark as handled',
     nota: 'What was done',
-    viajes: 'Recent rides',
-    sinViajes: 'No rides match these filters.',
-    // C-FILTROS-GUARDADOS (Nov 15, 2026).
-    filtroEstado: 'Ride status',
-    filtros: { vivos: 'Live', cerrados: 'Closed', todos: 'All' } as Record<string, string>,
-    buscado: 'Showing rides that start with',
-    verTodos: 'See all',
-    codigo: 'Code',
-    ciudadCol: 'City',
-    estado: 'Status',
-    desde: 'From',
-    hacia: 'To',
-    precio: 'Price',
+    viajes: 'Rides',
+    // C-MONITOREO-SERVICIOS (Nov 15, 2026): rides are monitored in “Live orders”.
+    enMonitoreo:
+      'Car rides, moto rides, and deliveries are monitored in “Live orders”, with their status light, search, and “Load more”. Each one opens its own page.',
+    verAuto: 'See car rides',
+    verMoto: 'See moto rides',
+    verEnvios: 'See deliveries',
+    verFicha: 'View the ride',
     tarifas: 'Active pricing',
     sinTarifas: 'No city has Moto pricing yet.',
     nueva: 'New pricing (closes the previous one for that city)',
@@ -177,15 +165,8 @@ type Datos = {
  * Divoox Moto · M9: lo que el superadmin vigila y configura. Emergencias abiertas (para atenderlas
  * ya), viajes recientes, y la tarifa de cada ciudad (cada cambio es una versión nueva con motivo).
  */
-export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
+export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
-  const pref = usePreferencias('viajes', { zona: '', estado: 'todos' });
-  const zonaFiltro = pref.valores.zona ?? '';
-  const estadoFiltro = pref.valores.estado ?? 'todos';
-  // C-BUSCADOR-SERIO: el buscador de arriba trae aquí un viaje por su código (?q=…); no se guarda.
-  const [buscado, setBuscado] = useState(
-    () => new URLSearchParams(window.location.search).get('q') ?? '',
-  );
   const campos = new Map(Object.entries(t.campos));
   const [datos, setDatos] = useState<Datos | null>(null);
   const [falla, setFalla] = useState('');
@@ -220,14 +201,12 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
   });
 
   const cargar = useCallback(() => {
-    const p = new URLSearchParams({ estado: estadoFiltro });
-    if (zonaFiltro) p.set('zona', zonaFiltro);
-    if (buscado) p.set('q', buscado);
+    // Solo emergencias y tarifas: la lista de viajes vive en «Pedidos en curso».
     api
-      .pedir<Datos>('GET', `/datos/admin/viajes?${p.toString()}`)
+      .pedir<Datos>('GET', '/datos/admin/viajes?lista=0')
       .then(setDatos)
       .catch((x: unknown) => setFalla(x instanceof ErrorApi ? x.message : String(x)));
-  }, [estadoFiltro, zonaFiltro, buscado]);
+  }, []);
   useEffect(() => {
     cargar();
     const r = setInterval(cargar, 15_000);
@@ -314,7 +293,9 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
               <li key={id}>
                 <strong>{e.rol === 'pasajero' ? t.pasajero : t.conductor}</strong>:{' '}
                 {String(e.nombre)} · {String(e.correo)}{' '}
-                {e.telefono ? `· ${String(e.telefono)}` : ''} · {String(e.creado_en)}
+                {e.telefono ? `· ${String(e.telefono)}` : ''} ·{' '}
+                <Hora fecha={String(e.creado_en)} idioma={idioma} /> ·{' '}
+                <Enlace a={`${base}/rides/${String(e.operacion_id)}`}>{t.verFicha}</Enlace>
                 {e.lat != null ? (
                   <>
                     {' '}
@@ -345,83 +326,20 @@ export function SuperViajes({ idioma }: { base: string; idioma: Idioma }) {
       )}
 
       <h2>{t.viajes}</h2>
-      <div className="super-busqueda super-pedidos-filtros" role="search">
-        <SelectorCiudad
-          zona={zonaFiltro}
-          cambiar={(z) => pref.cambiar('zona', z)}
-          idioma={idioma}
-        />
-        <div className="super-filtros" role="group" aria-label={t.filtroEstado}>
-          {(['vivos', 'cerrados', 'todos'] as const).map((f) => (
-            <button
-              key={f}
-              type="button"
-              aria-pressed={estadoFiltro === f}
-              className={estadoFiltro === f ? 'activa' : undefined}
-              onClick={() => pref.cambiar('estado', f)}
-            >
-              {new Map(Object.entries(t.filtros)).get(f)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <AvisoFiltrosGuardados
-        visible={pref.guardados}
-        idioma={idioma}
-        restablecer={pref.restablecer}
-      />
-      {buscado ? (
-        <p className="super-nota" role="status">
-          {t.buscado} #{buscado.slice(0, 6).toUpperCase()} ·{' '}
-          <button type="button" className="enlace" onClick={() => setBuscado('')}>
-            {t.verTodos}
-          </button>
+      <section className="tarjeta-form">
+        <p>{t.enMonitoreo}</p>
+        <p className="super-acciones">
+          <Enlace a={`${base}/orders?servicio=auto`} className="boton secundario">
+            {t.verAuto}
+          </Enlace>{' '}
+          <Enlace a={`${base}/orders?servicio=moto`} className="boton secundario">
+            {t.verMoto}
+          </Enlace>{' '}
+          <Enlace a={`${base}/orders?servicio=envios`} className="boton secundario">
+            {t.verEnvios}
+          </Enlace>
         </p>
-      ) : null}
-      {!datos?.viajes.length ? (
-        <p>{t.sinViajes}</p>
-      ) : (
-        <div className="tabla-ancha">
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>{t.codigo}</th>
-                <th>{t.estado}</th>
-                <th>{t.ciudadCol}</th>
-                <th>{t.pasajero}</th>
-                <th>{t.conductor}</th>
-                <th>{t.desde}</th>
-                <th>{t.hacia}</th>
-                <th>{t.precio}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datos.viajes.map((v) => (
-                <tr key={String(v.id)}>
-                  <td>
-                    <span className="codigo-pedido">#{String(v.id).slice(0, 6).toUpperCase()}</span>
-                  </td>
-                  <td>{String(v.estado)}</td>
-                  <td>{String(v.ciudad ?? v.zona_id ?? '—')}</td>
-                  <td>{String(v.pasajero ?? '—')}</td>
-                  <td>{String(v.conductor ?? '—')}</td>
-                  <td>{String(v.origen_direccion)}</td>
-                  <td>{String(v.destino_direccion)}</td>
-                  <td>
-                    {v.total != null
-                      ? formatearMonto(
-                          Number(v.total_final_centavos ?? v.total),
-                          String(v.moneda ?? 'USD'),
-                          idioma,
-                        )
-                      : '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      </section>
 
       <h2>{t.tarifas}</h2>
       {!datos?.tarifas.length ? (

@@ -105,3 +105,8 @@ export * from './viajesProgramados';
 export * from './formaDePago';
 export * from './fotoPuerta';
 export * from './busquedaInterna';
+export * from './permisosInternos';
+export * from './rutasAdmin';
+export * from './tiemposOperacion';
+export * from './monitoreoServicios';
+export * from './formatoHora';

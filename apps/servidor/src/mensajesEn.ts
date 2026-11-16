@@ -1,3 +1,5 @@
+import { MENSAJES_EN_EQUIPO } from './mensajesEnEquipo';
+
 /**
  * Los mensajes que el servidor le muestra a la persona, en inglés (el idioma principal de
  * Divoox). El código los escribe en español; al responder se pasan a inglés si la app o el
@@ -5,6 +7,8 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-PERMISOS-FINOS (MON-5): los del equipo interno viven en su propio archivo.
+  ...MENSAJES_EN_EQUIPO,
   // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026, bloque propio)
   [
     'Ya cambiaste las paradas de este viaje muchas veces. Si necesitas otro cambio, díselo a tu conductor.',
@@ -2057,6 +2061,25 @@ export const MENSAJES_EN = new Map<string, string>([
   ['La página pedida no es válida.', 'The requested page isn’t valid.'],
   ['Esa pantalla no guarda filtros.', 'That screen doesn’t save filters.'],
   ['Los filtros guardados son demasiado grandes.', 'The saved filters are too large.'],
+  // C-FICHA-OPERACION y C-MONITOREO-SERVICIOS (15 nov 2026).
+  [
+    'Escribe el código del pedido o del viaje (por ejemplo, 407F2F).',
+    'Type the order or ride code (for example, 407F2F).',
+  ],
+  [
+    'No encontramos un pedido ni un viaje con ese código.',
+    'We couldn’t find an order or a ride with that code.',
+  ],
+  [
+    'Hay varios pedidos o viajes con ese código: escribe más letras del código.',
+    'Several orders or rides match that code: type more of the code.',
+  ],
+  [
+    'No encontramos al cliente de ese pedido o viaje.',
+    'We couldn’t find the customer for that order or ride.',
+  ],
+  ['Escribe el asunto.', 'Type the subject.'],
+  ['Cuenta qué pasó.', 'Tell us what happened.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

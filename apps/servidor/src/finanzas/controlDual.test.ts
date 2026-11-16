@@ -82,7 +82,10 @@ describe('C-CONTROL-DUAL · dinero a mano con dos firmas', () => {
     // Soporte no aprueba dinero.
     const soporte = await aprobar(id, ayuda.token);
     expect(soporte.estado).toBe(403);
-    expect(soporte.datos.error).toMatch(/Total o Finanzas|Full or Finance/);
+    // C-PERMISOS-FINOS: el intermedio frena antes (Soporte no tiene `dinero.aprobar`).
+    expect(soporte.datos.error).toMatch(
+      /Total o Finanzas|Full or Finance|doesn’t include|no incluye/,
+    );
     // Contraseña mala: no.
     expect((await aprobar(id, jefa.token, 'mala')).estado).toBe(403);
 

@@ -1,0 +1,619 @@
+import { LIBRE, type PermisoRuta } from './permisosInternos';
+
+/**
+ * C-PERMISOS-FINOS (MON-5, 15 nov 2026) — todos los países. EL MAPA ruta → permiso, en un solo lugar.
+ *
+ * Cada ruta `/datos/admin/*` declara aquí el permiso que exige, también las de lectura. El intermedio
+ * `permisosInternos` (servidor) lo comprueba en cada petición y la prueba
+ * `apps/servidor/src/rutas/permisosRutas.test.ts` recorre TODAS las rutas registradas bajo
+ * `/datos/admin` y se pone en rojo si una no está aquí. Una ruta nueva sin su línea no se publica.
+ *
+ * Reglas para elegir el permiso (las fija la prueba de compatibilidad con los perfiles viejos):
+ * - Una lectura (GET) usa un permiso de lectura (`*.ver`, `pedidos.fotos`, `repartidores.documentos`,
+ *   `monitoreo.*`) y NUNCA uno que también abra un cambio: así «Solo lectura» sigue viendo todo y
+ *   sin poder cambiar nada.
+ * - Un cambio usa un permiso de acción que solo comparten familias con el mismo perfil viejo
+ *   (Soporte, Finanzas, los dos o solo Total).
+ * - `libre`: cualquier persona activa del equipo (sus propios filtros y avisos, la lista de ciudades).
+ *
+ * La clave es `MÉTODO /admin/...` (sin el `/datos`), tal como se registra en Hono. Cada ruta lleva
+ * además su línea en `ALCANCE_RUTAS_ADMIN` (más abajo): cómo respeta la zona de trabajo.
+ */
+export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
+  // ─── Monitoreo, pedidos y buscador
+  'GET /admin/resumen': 'monitoreo.ver',
+  'GET /admin/tablero': 'monitoreo.ver',
+  'GET /admin/buscar': 'monitoreo.buscar',
+  'GET /admin/informes': 'monitoreo.exportar',
+  'GET /admin/pedidos': 'pedidos.ver',
+  'GET /admin/pedidos/:id': 'pedidos.ver',
+  'GET /admin/pedidos/contadores': 'pedidos.ver',
+  'POST /admin/pedidos/:id/cancelar': 'pedidos.cancelar',
+  'POST /admin/pedidos/:id/soltar-repartidor': 'pedidos.reasignar',
+  'POST /admin/pedidos/:id/autorizar-ubicacion': 'pedidos.autorizar_ubicacion',
+  'POST /admin/pedidos/:id/devolver': 'pedidos.devolver',
+  'GET /admin/cancelaciones': 'pedidos.ver',
+  'POST /admin/cancelaciones/:id/:decision': 'config.editar',
+  // ─── Viajes (Moto, Carro, envíos)
+  'GET /admin/viajes': 'viajes.ver',
+  // La ficha del viaje (paquete 2/3, otra rama): declarada de antemano para que al unir ya exija su permiso.
+  'GET /admin/viajes/:id': 'viajes.ver',
+  // La foto del paquete de un envío (recogida o entrega): como las evidencias de un pedido.
+  'GET /admin/viajes/:id/foto/:tipo': 'pedidos.fotos',
+  'GET /admin/viajes/tarifas': 'viajes.ver',
+  'GET /admin/viajes/ajustes': 'viajes.ver',
+  'GET /admin/viajes/dinamica/:servicio/:zona': 'viajes.ver',
+  'POST /admin/viajes/tarifas': 'viajes.configurar',
+  'POST /admin/viajes/ciudades': 'viajes.configurar',
+  'PUT /admin/viajes/ajustes': 'viajes.configurar',
+  'PUT /admin/viajes/dinamica/:servicio/:zona': 'viajes.configurar',
+  'POST /admin/viajes/emergencias/:id/atender': 'viajes.emergencias',
+  'GET /admin/conductores/:id/pasajeros': 'repartidores.ver',
+  'PUT /admin/conductores/:id/ciudad': 'repartidores.gestionar',
+  // ─── Clientes
+  'GET /admin/clientes': 'clientes.ver',
+  'GET /admin/clientes/:id': 'clientes.ver',
+  'PATCH /admin/usuarios/:id': 'clientes.suspender',
+  'POST /admin/usuarios/:id/borrar': 'clientes.suspender',
+  'GET /admin/datos-personales/:tipo/:id/:campo': 'clientes.datos_personales',
+  // ─── Repartidores, vehículos y papeles
+  'GET /admin/repartidores': 'repartidores.ver',
+  'GET /admin/repartidores/:id': 'repartidores.ver',
+  'PATCH /admin/repartidores/:id': 'repartidores.editar',
+  'GET /admin/vehiculos': 'repartidores.ver',
+  'GET /admin/vehiculos/:id/documentos/:doc/archivo': 'repartidores.documentos',
+  'PUT /admin/vehiculos/:id': 'repartidores.editar',
+  'PUT /admin/vehiculos/:id/categoria': 'repartidores.editar',
+  'PUT /admin/vehiculos/:id/documentos/:doc': 'repartidores.editar',
+  'GET /admin/habilitaciones': 'repartidores.ver',
+  'PUT /admin/habilitaciones/:conductor/:servicio': 'repartidores.habilitar',
+  'PUT /admin/cumplimientos/:conductor/:requisito': 'repartidores.gestionar',
+  'GET /admin/papeles-conductor': 'repartidores.ver',
+  'GET /admin/papeles-conductor/:id/archivo': 'repartidores.documentos',
+  'PUT /admin/papeles-conductor/:id': 'repartidores.gestionar',
+  // ─── Verificaciones
+  'GET /admin/kyc': 'kyc.ver',
+  'GET /admin/kyc/:id': 'kyc.ver',
+  'GET /admin/kyc/:id/control/:cid': 'kyc.ver',
+  'GET /admin/kyc/:id/foto/:pieza': 'repartidores.documentos',
+  'PATCH /admin/kyc/:id': 'kyc.decidir',
+  'PATCH /admin/kyc/:id/control/:cid': 'kyc.decidir',
+  'POST /admin/kyc/:id/liberar-foto': 'kyc.decidir',
+  'POST /admin/kyc/:id/miniatura': 'kyc.decidir',
+  // ─── Tickets
+  'GET /admin/tickets': 'tickets.ver',
+  'GET /admin/tickets/:id': 'tickets.ver',
+  'GET /admin/tickets/plantillas': 'tickets.ver',
+  // El equipo abre un reclamo (por ejemplo, enlazado a un viaje por su código).
+  'POST /admin/tickets': 'tickets.responder',
+  'PATCH /admin/tickets/:id': 'tickets.asignar',
+  'POST /admin/tickets/:id/mensajes': 'tickets.responder',
+  'POST /admin/tickets/plantillas': 'tickets.plantillas',
+  'DELETE /admin/tickets/plantillas/:pid': 'tickets.plantillas',
+  'GET /admin/quejas-config': 'tickets.ver',
+  'PUT /admin/quejas-config': 'tickets.configurar',
+  'GET /admin/lista-espera': 'restaurantes.ver',
+  'GET /admin/errores': 'config.ver',
+  'GET /admin/seguridad': 'auditoria.ver',
+  'GET /admin/solicitudes-franquicia': 'config.ver',
+  // ─── Comercios
+  'GET /admin/restaurantes': 'restaurantes.ver',
+  'GET /admin/restaurantes/:id': 'restaurantes.ver',
+  'PATCH /admin/restaurantes/:id': 'restaurantes.editar',
+  'POST /admin/restaurantes/:id/platos/importar': 'restaurantes.editar',
+  // ─── Dinero
+  'GET /admin/aprobaciones-dinero': LIBRE,
+  'POST /admin/aprobaciones-dinero/:id/aprobar': 'dinero.aprobar',
+  'POST /admin/aprobaciones-dinero/:id/rechazar': 'dinero.solicitar',
+  'PUT /admin/aprobaciones-dinero/umbrales': 'dinero.limites',
+  'GET /admin/bandeja-dinero': 'dinero.ver',
+  'GET /admin/bandeja-dinero/:clave': 'dinero.ver',
+  'POST /admin/bandeja-dinero/:clave/acciones': 'dinero.solicitar',
+  'GET /admin/disputas': 'dinero.ver',
+  'GET /admin/disputas/:id/pruebas': 'dinero.ver',
+  'POST /admin/disputas/:id/pruebas': 'dinero.solicitar',
+  'GET /admin/abonos-fallidos': 'dinero.ver',
+  'PATCH /admin/abonos-fallidos/:id': 'dinero.conciliar',
+  'GET /admin/conciliacion': 'dinero.ver',
+  'GET /admin/conciliacion/excepciones': 'dinero.ver',
+  'POST /admin/conciliacion/excepciones': 'dinero.conciliar',
+  'GET /admin/config-dinero/historial': 'dinero.ver',
+  'PUT /admin/config-dinero': 'dinero.configurar',
+  'PATCH /admin/cuentas-cobro/:id': 'dinero.configurar',
+  'GET /admin/cupones': 'dinero.ver',
+  'POST /admin/cupones': 'dinero.configurar',
+  'PATCH /admin/cupones/:codigo': 'dinero.configurar',
+  'POST /admin/codigos-recarga/:id/anular': 'dinero.reembolsar',
+  'GET /admin/fiscal/1099': 'dinero.ver',
+  'GET /admin/libro/comisiones/:pais': 'dinero.ver',
+  'GET /admin/libro/pedido/:id': 'dinero.ver',
+  'GET /admin/liquidaciones': 'dinero.ver',
+  'POST /admin/liquidaciones/:id/confirmar': 'dinero.conciliar',
+  'POST /admin/liquidaciones/:id/reintentar': 'dinero.conciliar',
+  'GET /admin/paises/:pais': 'dinero.ver',
+  'PUT /admin/paises/:pais': 'dinero.configurar',
+  'GET /admin/puntos-venta': 'dinero.ver',
+  'POST /admin/puntos-venta': 'dinero.reembolsar',
+  'POST /admin/puntos-venta/:id/fondo': 'dinero.reembolsar',
+  'GET /admin/retiros': 'dinero.ver',
+  'PUT /admin/retiros': 'dinero.configurar',
+  'POST /admin/stripe/dominio': 'dinero.configurar',
+  'GET /admin/finanzas/cancelaciones': 'dinero.ver',
+  'POST /admin/finanzas/cancelaciones': 'dinero.configurar',
+  'GET /admin/finanzas/conciliacion': 'dinero.ver',
+  'POST /admin/finanzas/conciliacion': 'dinero.conciliar',
+  'GET /admin/finanzas/empresas': 'dinero.ver',
+  'GET /admin/finanzas/empresas/:eid/movimientos': 'dinero.ver',
+  'POST /admin/finanzas/empresas/:eid/ajuste': 'dinero.reembolsar',
+  'GET /admin/finanzas/politicas': 'dinero.ver',
+  'POST /admin/finanzas/politicas': 'dinero.configurar',
+  'POST /admin/finanzas/politicas/:pid/cerrar': 'dinero.configurar',
+  'POST /admin/finanzas/politicas/:pid/revision-legal': 'dinero.configurar',
+  'GET /admin/finanzas/recargas-config/:pais': 'dinero.ver',
+  'PUT /admin/finanzas/recargas-config/:pais': 'dinero.configurar',
+  'GET /admin/finanzas/recargas-locales': 'dinero.ver',
+  'GET /admin/finanzas/recargas-locales/:rid/comprobante': 'dinero.ver',
+  'GET /admin/finanzas/recargas-locales/config/:pais': 'dinero.ver',
+  'PUT /admin/finanzas/recargas-locales/config/:pais': 'dinero.configurar',
+  'POST /admin/finanzas/recargas-locales/:rid/acreditar': 'dinero.reembolsar',
+  'POST /admin/finanzas/recargas-locales/:rid/rechazar': 'dinero.reembolsar',
+  'POST /admin/finanzas/recargas/:rid/reembolsar': 'dinero.reembolsar',
+  'POST /admin/finanzas/simular-logistico': 'dinero.configurar',
+  // ─── Equipo interno, avisos y auditoría
+  'GET /admin/equipo': 'equipo.ver',
+  'GET /admin/equipo/acciones': 'auditoria.ver',
+  'PUT /admin/equipo/:id': 'equipo.gestionar',
+  'GET /admin/equipo/yo': LIBRE,
+  'GET /admin/equipo/miembros': 'equipo.ver',
+  'GET /admin/equipo/miembros/:id': 'equipo.ver',
+  'PUT /admin/equipo/miembros/:id': 'equipo.gestionar',
+  'POST /admin/equipo/miembros/:id/suspender': 'equipo.gestionar',
+  'POST /admin/equipo/miembros/:id/reactivar': 'equipo.gestionar',
+  'POST /admin/equipo/miembros/:id/quitar': 'equipo.gestionar',
+  'GET /admin/equipo/plantillas': 'equipo.ver',
+  'POST /admin/equipo/plantillas': 'equipo.gestionar',
+  'PUT /admin/equipo/plantillas/:id': 'equipo.gestionar',
+  'DELETE /admin/equipo/plantillas/:id': 'equipo.gestionar',
+  'GET /admin/equipo/invitaciones': 'equipo.ver',
+  'POST /admin/equipo/invitaciones': 'equipo.gestionar',
+  'DELETE /admin/equipo/invitaciones/:id': 'equipo.gestionar',
+  'GET /admin/equipo/registro': 'auditoria.ver',
+  'GET /admin/equipo/ajustes/segundo-factor': 'equipo.ver',
+  'PUT /admin/equipo/ajustes/segundo-factor': 'equipo.gestionar',
+  'GET /admin/mis-avisos': LIBRE,
+  'PUT /admin/mis-avisos': 'avisos.recibir',
+  'GET /admin/preferencias/:pantalla': LIBRE,
+  'PUT /admin/preferencias/:pantalla': LIBRE,
+  'DELETE /admin/preferencias/:pantalla': LIBRE,
+  'GET /admin/auditoria': 'auditoria.ver',
+  'GET /admin/ruta': LIBRE,
+  // C-HORARIO-EMPLEADO: qué hora es en cada ciudad (Configuración → Horario).
+  'GET /admin/horario/ciudades': LIBRE,
+  // ─── Territorio, servicios y configuración
+  'GET /admin/zonas': LIBRE,
+  'GET /admin/ciudades': LIBRE,
+  'PUT /admin/zonas': 'config.editar',
+  'PATCH /admin/zonas/:id': 'config.editar',
+  'GET /admin/zonas/:id/areas': 'config.ver',
+  'POST /admin/zonas/:id/areas': 'config.editar',
+  'PATCH /admin/areas/:id': 'config.editar',
+  'POST /admin/comida/ciudades': 'config.editar',
+  'GET /admin/web/ciudades': 'config.ver',
+  'PUT /admin/web/ciudades/:slug': 'config.editar',
+  'GET /admin/servicios': 'config.ver',
+  'PUT /admin/servicios/:id': 'config.editar',
+  'PUT /admin/servicios/:id/zonas/:zona': 'config.editar',
+  'GET /admin/despacho-catalogo': 'config.ver',
+  'PUT /admin/despacho-catalogo/:zona': 'config.editar',
+  'GET /admin/interruptores-repartidor': 'config.ver',
+  'PUT /admin/interruptores-repartidor': 'config.editar',
+  'GET /admin/ganar-por-tiempo': 'config.ver',
+  'PUT /admin/ganar-por-tiempo': 'config.editar',
+  'GET /admin/pago-pico': 'config.ver',
+  'PUT /admin/pago-pico': 'config.editar',
+  'GET /admin/pasajeros-pais': 'config.ver',
+  'PUT /admin/pasajeros-pais/:pais/:servicio': 'config.editar',
+  'GET /admin/tasas-referencia': 'config.ver',
+  'PUT /admin/tasas-referencia/:pais': 'config.editar',
+  'PUT /admin/tasas-referencia/:pais/modo': 'config.editar',
+  'GET /admin/ciudad-pruebas': 'config.ver',
+  'POST /admin/ciudad-pruebas/encender': 'config.editar',
+  'POST /admin/ciudad-pruebas/apagar': 'config.editar',
+  'POST /admin/ciudad-pruebas/parar': 'config.editar',
+  'POST /admin/ciudad-pruebas/latido': 'config.editar',
+  'GET /admin/piloto': 'config.ver',
+  'GET /admin/piloto/limites': 'config.ver',
+  'GET /admin/piloto/servicios': 'config.ver',
+  'POST /admin/piloto': 'config.editar',
+  'PUT /admin/piloto/limites': 'config.editar',
+  'PUT /admin/piloto/servicios': 'config.editar',
+  'DELETE /admin/piloto/:usuarioId': 'config.editar',
+  'GET /admin/rewards/ajustes': 'config.ver',
+  'GET /admin/rewards/apelaciones': 'config.ver',
+  'GET /admin/rewards/sombra/:repartidorId': 'config.ver',
+  'PUT /admin/rewards/ajustes': 'config.editar',
+  'PUT /admin/rewards/apelaciones/:id': 'config.editar',
+  'POST /admin/rewards/sombra/:repartidorId/calcular': 'config.editar',
+  'GET /admin/anuncios': 'config.ver',
+  'PUT /admin/anuncios': 'config.editar',
+  'GET /admin/promociones': 'config.ver',
+  'PUT /admin/promociones': 'config.editar',
+  'GET /admin/plus': 'config.ver',
+  'PUT /admin/plus': 'config.editar',
+  'GET /admin/referidos': 'config.ver',
+  'PUT /admin/referidos': 'config.editar',
+  'GET /admin/tarjetas-regalo': 'config.ver',
+  'PUT /admin/tarjetas-regalo': 'config.editar',
+  'GET /admin/franquicias/:id': 'config.ver',
+  'POST /admin/franquicias': 'config.editar',
+  'PATCH /admin/franquicias/:id': 'config.editar',
+  'PUT /admin/franquicias/:id/areas': 'config.editar',
+  'POST /admin/franquicias/:id/miembros': 'config.editar',
+  'DELETE /admin/franquicias/:id/miembros/:correo': 'config.editar',
+  'POST /admin/franquicias/desde-solicitud/:ticketId': 'config.editar',
+  'POST /admin/revisores': 'config.editar',
+  'POST /admin/revisores/:rol/clave': 'config.editar',
+};
+
+/**
+ * Rutas declaradas de antemano que todavía no existen en esta rama (las construye otra rama que se
+ * une después). La prueba no las cuenta como sobrantes.
+ */
+// ─────────────────────────────── Alcance de cada ruta ───────────────────────────────
+
+/**
+ * C-PERMISOS-FINOS, alcance por ciudad y servicio (devuelto por el revisor, 15 nov 2026) — todos los
+ * países. CADA ruta del mapa dice aquí cómo respeta la zona de trabajo de quien la usa:
+ * - `ficha`: abre o cambia UN objeto (pedido, viaje, ticket, cliente, repartidor, comercio…). El
+ *   intermedio `permisosInternos` resuelve su ciudad y su servicio y, si no le toca, responde 404
+ *   («no existe o no está en tu zona»), igual que si no existiera. `param` es el trozo de la ruta
+ *   que lleva el id.
+ * - `consulta`: una lista, un buscador, un contador o una ruta que comprueba por dentro: la propia
+ *   ruta pone el alcance EN LA CONSULTA (no filtra después). La prueba de barrido
+ *   (`apps/servidor/src/rutas/alcanceRutas.test.ts`) llama a todas con un empleado de otra zona y
+ *   exige que no vuelva ni una fila ajena.
+ * - `global`: no tiene ciudad, con su motivo. `empresa` = datos de toda la empresa (dinero,
+ *   auditoría, programas y prospectos): sus permisos SOLO valen con alcance total
+ *   (`PERMISOS_SOLO_ALCANCE_TOTAL`, se quitan al calcular el acceso de quien tiene ciudades o servicios
+ *   limitados). `configuracion` = ajustes del negocio sin datos de personas ni pedidos. `propio` =
+ *   solo lo de quien mira.
+ * La prueba del mapa se pone en rojo si una ruta no está aquí.
+ */
+export const OBJETOS_ALCANCE = [
+  'pedido',
+  'viaje',
+  'ticket',
+  'cliente',
+  'repartidor',
+  'restaurante',
+  'persona',
+  'vehiculo',
+  'papel',
+  'emergencia',
+  'cancelacion',
+] as const;
+export type ObjetoAlcance = (typeof OBJETOS_ALCANCE)[number];
+export type ClaseGlobal = 'empresa' | 'configuracion' | 'propio';
+export type AlcanceRuta =
+  | { modo: 'ficha'; objeto: ObjetoAlcance; param: string }
+  | { modo: 'consulta' }
+  | { modo: 'global'; clase: ClaseGlobal; motivo: string };
+
+const ficha = (objeto: ObjetoAlcance, param = 'id'): AlcanceRuta => ({
+  modo: 'ficha',
+  objeto,
+  param,
+});
+const CONSULTA: AlcanceRuta = { modo: 'consulta' };
+const sinCiudad = (clase: ClaseGlobal, motivo: string): AlcanceRuta => ({
+  modo: 'global',
+  clase,
+  motivo,
+});
+const DINERO = sinCiudad(
+  'empresa',
+  'El dinero (libro, conciliación, liquidaciones, disputas, cupones, países) se lleva para toda la empresa.',
+);
+const AUDITORIA = sinCiudad(
+  'empresa',
+  'El registro de auditoría y de seguridad cubre a toda la empresa.',
+);
+const CENTRAL = sinCiudad(
+  'empresa',
+  'Programas y prospectos de toda la empresa (pilotos, Rewards, franquicias, errores del servidor).',
+);
+const CONFIG = sinCiudad(
+  'configuracion',
+  'Configuración del negocio (territorio, servicios, tarifas, promociones, plantillas): sin datos de personas ni pedidos.',
+);
+const EQUIPO = sinCiudad(
+  'configuracion',
+  'El equipo interno es de toda la empresa: cuentas del personal, no de clientes ni de una ciudad.',
+);
+const PROPIO = sinCiudad(
+  'propio',
+  'Solo lo de quien mira: sus avisos, sus filtros, su hora y la lista de ciudades.',
+);
+const PROPIO_DINERO = sinCiudad(
+  'propio',
+  'Sin dinero.ver ni dinero.aprobar (que solo valen con alcance total) solo ve lo que pidió esa persona.',
+);
+
+export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
+  'GET /admin/resumen': CONSULTA,
+  'GET /admin/tablero': CONSULTA,
+  'GET /admin/buscar': CONSULTA,
+  'GET /admin/informes': CONSULTA,
+  'GET /admin/pedidos': CONSULTA,
+  'GET /admin/pedidos/:id': ficha('pedido'),
+  'GET /admin/pedidos/contadores': CONSULTA,
+  'POST /admin/pedidos/:id/cancelar': ficha('pedido'),
+  'POST /admin/pedidos/:id/soltar-repartidor': ficha('pedido'),
+  'POST /admin/pedidos/:id/autorizar-ubicacion': ficha('pedido'),
+  'POST /admin/pedidos/:id/devolver': ficha('pedido'),
+  'GET /admin/cancelaciones': CONSULTA,
+  'POST /admin/cancelaciones/:id/:decision': ficha('cancelacion'),
+  'GET /admin/viajes': CONSULTA,
+  'GET /admin/viajes/:id': ficha('viaje'),
+  'GET /admin/viajes/:id/foto/:tipo': ficha('viaje'),
+  'GET /admin/viajes/tarifas': CONFIG,
+  'GET /admin/viajes/ajustes': CONFIG,
+  'GET /admin/viajes/dinamica/:servicio/:zona': CONFIG,
+  'POST /admin/viajes/tarifas': CONFIG,
+  'POST /admin/viajes/ciudades': CONFIG,
+  'PUT /admin/viajes/ajustes': CONFIG,
+  'PUT /admin/viajes/dinamica/:servicio/:zona': CONFIG,
+  'POST /admin/viajes/emergencias/:id/atender': ficha('emergencia'),
+  'GET /admin/conductores/:id/pasajeros': ficha('repartidor'),
+  'PUT /admin/conductores/:id/ciudad': ficha('repartidor'),
+  'GET /admin/clientes': CONSULTA,
+  'GET /admin/clientes/:id': ficha('cliente'),
+  'PATCH /admin/usuarios/:id': ficha('persona'),
+  'POST /admin/usuarios/:id/borrar': ficha('persona'),
+  'GET /admin/datos-personales/:tipo/:id/:campo': CONSULTA,
+  'GET /admin/repartidores': CONSULTA,
+  'GET /admin/repartidores/:id': ficha('repartidor'),
+  'PATCH /admin/repartidores/:id': ficha('repartidor'),
+  'GET /admin/vehiculos': CONSULTA,
+  'GET /admin/vehiculos/:id/documentos/:doc/archivo': ficha('vehiculo'),
+  'PUT /admin/vehiculos/:id': ficha('vehiculo'),
+  'PUT /admin/vehiculos/:id/categoria': ficha('vehiculo'),
+  'PUT /admin/vehiculos/:id/documentos/:doc': ficha('vehiculo'),
+  'GET /admin/habilitaciones': CONSULTA,
+  'PUT /admin/habilitaciones/:conductor/:servicio': ficha('repartidor', 'conductor'),
+  'PUT /admin/cumplimientos/:conductor/:requisito': ficha('repartidor', 'conductor'),
+  'GET /admin/papeles-conductor': CONSULTA,
+  'GET /admin/papeles-conductor/:id/archivo': ficha('papel'),
+  'PUT /admin/papeles-conductor/:id': ficha('papel'),
+  'GET /admin/kyc': CONSULTA,
+  'GET /admin/kyc/:id': ficha('persona'),
+  'GET /admin/kyc/:id/control/:cid': ficha('persona'),
+  'GET /admin/kyc/:id/foto/:pieza': ficha('persona'),
+  'PATCH /admin/kyc/:id': ficha('persona'),
+  'PATCH /admin/kyc/:id/control/:cid': ficha('persona'),
+  'POST /admin/kyc/:id/liberar-foto': ficha('persona'),
+  'POST /admin/kyc/:id/miniatura': ficha('persona'),
+  'GET /admin/tickets': CONSULTA,
+  'GET /admin/tickets/:id': ficha('ticket'),
+  'GET /admin/tickets/plantillas': CONFIG,
+  'POST /admin/tickets': CONSULTA,
+  'PATCH /admin/tickets/:id': ficha('ticket'),
+  'POST /admin/tickets/:id/mensajes': ficha('ticket'),
+  'POST /admin/tickets/plantillas': CONFIG,
+  'DELETE /admin/tickets/plantillas/:pid': CONFIG,
+  'GET /admin/quejas-config': CONFIG,
+  'PUT /admin/quejas-config': CONFIG,
+  'GET /admin/lista-espera': CONSULTA,
+  'GET /admin/errores': CENTRAL,
+  'GET /admin/seguridad': AUDITORIA,
+  'GET /admin/solicitudes-franquicia': CENTRAL,
+  'GET /admin/restaurantes': CONSULTA,
+  'GET /admin/restaurantes/:id': ficha('restaurante'),
+  'PATCH /admin/restaurantes/:id': ficha('restaurante'),
+  'POST /admin/restaurantes/:id/platos/importar': ficha('restaurante'),
+  'GET /admin/aprobaciones-dinero': PROPIO_DINERO,
+  'POST /admin/aprobaciones-dinero/:id/aprobar': DINERO,
+  'POST /admin/aprobaciones-dinero/:id/rechazar': DINERO,
+  'PUT /admin/aprobaciones-dinero/umbrales': DINERO,
+  'GET /admin/bandeja-dinero': DINERO,
+  'GET /admin/bandeja-dinero/:clave': DINERO,
+  'POST /admin/bandeja-dinero/:clave/acciones': DINERO,
+  'GET /admin/disputas': DINERO,
+  'GET /admin/disputas/:id/pruebas': DINERO,
+  'POST /admin/disputas/:id/pruebas': DINERO,
+  'GET /admin/abonos-fallidos': DINERO,
+  'PATCH /admin/abonos-fallidos/:id': DINERO,
+  'GET /admin/conciliacion': DINERO,
+  'GET /admin/conciliacion/excepciones': DINERO,
+  'POST /admin/conciliacion/excepciones': DINERO,
+  'GET /admin/config-dinero/historial': DINERO,
+  'PUT /admin/config-dinero': DINERO,
+  'PATCH /admin/cuentas-cobro/:id': DINERO,
+  'GET /admin/cupones': DINERO,
+  'POST /admin/cupones': DINERO,
+  'PATCH /admin/cupones/:codigo': DINERO,
+  'POST /admin/codigos-recarga/:id/anular': DINERO,
+  'GET /admin/fiscal/1099': DINERO,
+  'GET /admin/libro/comisiones/:pais': DINERO,
+  'GET /admin/libro/pedido/:id': DINERO,
+  'GET /admin/liquidaciones': DINERO,
+  'POST /admin/liquidaciones/:id/confirmar': DINERO,
+  'POST /admin/liquidaciones/:id/reintentar': DINERO,
+  'GET /admin/paises/:pais': DINERO,
+  'PUT /admin/paises/:pais': DINERO,
+  'GET /admin/puntos-venta': DINERO,
+  'POST /admin/puntos-venta': DINERO,
+  'POST /admin/puntos-venta/:id/fondo': DINERO,
+  'GET /admin/retiros': DINERO,
+  'PUT /admin/retiros': DINERO,
+  'POST /admin/stripe/dominio': DINERO,
+  'GET /admin/finanzas/cancelaciones': DINERO,
+  'POST /admin/finanzas/cancelaciones': DINERO,
+  'GET /admin/finanzas/conciliacion': DINERO,
+  'POST /admin/finanzas/conciliacion': DINERO,
+  'GET /admin/finanzas/empresas': DINERO,
+  'GET /admin/finanzas/empresas/:eid/movimientos': DINERO,
+  'POST /admin/finanzas/empresas/:eid/ajuste': DINERO,
+  'GET /admin/finanzas/politicas': DINERO,
+  'POST /admin/finanzas/politicas': DINERO,
+  'POST /admin/finanzas/politicas/:pid/cerrar': DINERO,
+  'POST /admin/finanzas/politicas/:pid/revision-legal': DINERO,
+  'GET /admin/finanzas/recargas-config/:pais': DINERO,
+  'PUT /admin/finanzas/recargas-config/:pais': DINERO,
+  'GET /admin/finanzas/recargas-locales': DINERO,
+  'GET /admin/finanzas/recargas-locales/:rid/comprobante': DINERO,
+  'GET /admin/finanzas/recargas-locales/config/:pais': DINERO,
+  'PUT /admin/finanzas/recargas-locales/config/:pais': DINERO,
+  'POST /admin/finanzas/recargas-locales/:rid/acreditar': DINERO,
+  'POST /admin/finanzas/recargas-locales/:rid/rechazar': DINERO,
+  'POST /admin/finanzas/recargas/:rid/reembolsar': DINERO,
+  'POST /admin/finanzas/simular-logistico': DINERO,
+  'GET /admin/equipo': EQUIPO,
+  'GET /admin/equipo/acciones': AUDITORIA,
+  'PUT /admin/equipo/:id': EQUIPO,
+  'GET /admin/equipo/yo': PROPIO,
+  'GET /admin/equipo/miembros': EQUIPO,
+  'GET /admin/equipo/miembros/:id': EQUIPO,
+  'PUT /admin/equipo/miembros/:id': EQUIPO,
+  'POST /admin/equipo/miembros/:id/suspender': EQUIPO,
+  'POST /admin/equipo/miembros/:id/reactivar': EQUIPO,
+  'POST /admin/equipo/miembros/:id/quitar': EQUIPO,
+  'GET /admin/equipo/plantillas': EQUIPO,
+  'POST /admin/equipo/plantillas': EQUIPO,
+  'PUT /admin/equipo/plantillas/:id': EQUIPO,
+  'DELETE /admin/equipo/plantillas/:id': EQUIPO,
+  'GET /admin/equipo/invitaciones': EQUIPO,
+  'POST /admin/equipo/invitaciones': EQUIPO,
+  'DELETE /admin/equipo/invitaciones/:id': EQUIPO,
+  'GET /admin/equipo/registro': AUDITORIA,
+  'GET /admin/equipo/ajustes/segundo-factor': EQUIPO,
+  'PUT /admin/equipo/ajustes/segundo-factor': EQUIPO,
+  'GET /admin/mis-avisos': PROPIO,
+  'PUT /admin/mis-avisos': PROPIO,
+  'GET /admin/preferencias/:pantalla': PROPIO,
+  'PUT /admin/preferencias/:pantalla': PROPIO,
+  'DELETE /admin/preferencias/:pantalla': PROPIO,
+  'GET /admin/auditoria': AUDITORIA,
+  'GET /admin/ruta': PROPIO,
+  'GET /admin/horario/ciudades': PROPIO,
+  'GET /admin/zonas': PROPIO,
+  'GET /admin/ciudades': PROPIO,
+  'PUT /admin/zonas': CONFIG,
+  'PATCH /admin/zonas/:id': CONFIG,
+  'GET /admin/zonas/:id/areas': CONFIG,
+  'POST /admin/zonas/:id/areas': CONFIG,
+  'PATCH /admin/areas/:id': CONFIG,
+  'POST /admin/comida/ciudades': CONFIG,
+  'GET /admin/web/ciudades': CONFIG,
+  'PUT /admin/web/ciudades/:slug': CONFIG,
+  'GET /admin/servicios': CONFIG,
+  'PUT /admin/servicios/:id': CONFIG,
+  'PUT /admin/servicios/:id/zonas/:zona': CONFIG,
+  'GET /admin/despacho-catalogo': CONFIG,
+  'PUT /admin/despacho-catalogo/:zona': CONFIG,
+  'GET /admin/interruptores-repartidor': CONFIG,
+  'PUT /admin/interruptores-repartidor': CONFIG,
+  'GET /admin/ganar-por-tiempo': CONFIG,
+  'PUT /admin/ganar-por-tiempo': CONFIG,
+  'GET /admin/pago-pico': CONFIG,
+  'PUT /admin/pago-pico': CONFIG,
+  'GET /admin/pasajeros-pais': CONFIG,
+  'PUT /admin/pasajeros-pais/:pais/:servicio': CONFIG,
+  'GET /admin/tasas-referencia': CONFIG,
+  'PUT /admin/tasas-referencia/:pais': CONFIG,
+  'PUT /admin/tasas-referencia/:pais/modo': CONFIG,
+  'GET /admin/ciudad-pruebas': CONFIG,
+  'POST /admin/ciudad-pruebas/encender': CONFIG,
+  'POST /admin/ciudad-pruebas/apagar': CONFIG,
+  'POST /admin/ciudad-pruebas/parar': CONFIG,
+  'POST /admin/ciudad-pruebas/latido': CONFIG,
+  'GET /admin/piloto': CENTRAL,
+  'GET /admin/piloto/limites': CONFIG,
+  'GET /admin/piloto/servicios': CONFIG,
+  'POST /admin/piloto': CENTRAL,
+  'PUT /admin/piloto/limites': CONFIG,
+  'PUT /admin/piloto/servicios': CONFIG,
+  'DELETE /admin/piloto/:usuarioId': CENTRAL,
+  'GET /admin/rewards/ajustes': CONFIG,
+  'GET /admin/rewards/apelaciones': CENTRAL,
+  'GET /admin/rewards/sombra/:repartidorId': CENTRAL,
+  'PUT /admin/rewards/ajustes': CONFIG,
+  'PUT /admin/rewards/apelaciones/:id': CENTRAL,
+  'POST /admin/rewards/sombra/:repartidorId/calcular': CENTRAL,
+  'GET /admin/anuncios': CONFIG,
+  'PUT /admin/anuncios': CONFIG,
+  'GET /admin/promociones': CONFIG,
+  'PUT /admin/promociones': CONFIG,
+  'GET /admin/plus': CONFIG,
+  'PUT /admin/plus': CONFIG,
+  'GET /admin/referidos': CONFIG,
+  'PUT /admin/referidos': CONFIG,
+  'GET /admin/tarjetas-regalo': CONFIG,
+  'PUT /admin/tarjetas-regalo': CONFIG,
+  'GET /admin/franquicias/:id': CENTRAL,
+  'POST /admin/franquicias': CENTRAL,
+  'PATCH /admin/franquicias/:id': CENTRAL,
+  'PUT /admin/franquicias/:id/areas': CENTRAL,
+  'POST /admin/franquicias/:id/miembros': CENTRAL,
+  'DELETE /admin/franquicias/:id/miembros/:correo': CENTRAL,
+  'POST /admin/franquicias/desde-solicitud/:ticketId': CENTRAL,
+  'POST /admin/revisores': CONFIG,
+  'POST /admin/revisores/:rol/clave': CONFIG,
+};
+
+/**
+ * Los permisos que solo valen con alcance total: los que pide alguna ruta `global: empresa`. Una
+ * persona con ciudades o servicios limitados no los recibe aunque su plantilla los tenga (así una
+ * ruta de toda la empresa nunca le muestra lo de otra ciudad).
+ */
+export const PERMISOS_SOLO_ALCANCE_TOTAL: readonly string[] = [
+  ...new Set(
+    Object.entries(ALCANCE_RUTAS_ADMIN)
+      .filter(([, a]) => a.modo === 'global' && a.clase === 'empresa')
+      .map(([clave]) => new Map(Object.entries(PERMISOS_RUTAS_ADMIN)).get(clave))
+      .filter((p): p is PermisoRuta => !!p && p !== LIBRE),
+  ),
+].sort();
+
+/** El alcance de una ruta ya resuelta (`patron` de `permisoDeRuta`). */
+export function alcanceDeRuta(metodo: string, patron: string): AlcanceRuta | null {
+  const m = metodo === 'HEAD' ? 'GET' : metodo;
+  return ALCANCE_RUTAS_ADMIN[`${m} ${patron}`] ?? null;
+}
+
+export const RUTAS_ADMIN_PREVISTAS = new Set<string>([]);
+
+type Patron = { metodo: string; partes: string[]; literales: number; permiso: PermisoRuta };
+const PATRONES: Patron[] = Object.entries(PERMISOS_RUTAS_ADMIN).map(([clave, permiso]) => {
+  const [metodo = 'GET', ruta = ''] = clave.split(' ');
+  const partes = ruta.split('/').filter(Boolean);
+  return { metodo, partes, literales: partes.filter((p) => !p.startsWith(':')).length, permiso };
+});
+
+/**
+ * El permiso de una petición (`ruta` con o sin `/datos`), o null si la ruta no está declarada.
+ * Si varias encajan, gana la que tiene más partes fijas (como el enrutador: `/tickets/plantillas`
+ * antes que `/tickets/:id`).
+ */
+export function permisoDeRuta(
+  metodo: string,
+  ruta: string,
+): { permiso: PermisoRuta; patron: string } | null {
+  const m = metodo === 'HEAD' ? 'GET' : metodo;
+  const partes = ruta
+    .replace(/^\/datos(?=\/)/, '')
+    .split('/')
+    .filter(Boolean);
+  let mejor: Patron | null = null;
+  for (const p of PATRONES) {
+    if (p.metodo !== m || p.partes.length !== partes.length) continue;
+    const encaja = p.partes.every((x, i) => x.startsWith(':') || x === partes.at(i));
+    if (encaja && (!mejor || p.literales > mejor.literales)) mejor = p;
+  }
+  return mejor ? { permiso: mejor.permiso, patron: `/${mejor.partes.join('/')}` } : null;
+}
+
+/** Las entradas del mapa como pares (para traducir los perfiles viejos y para las pruebas). */
+export const LISTA_RUTAS_ADMIN = Object.entries(PERMISOS_RUTAS_ADMIN) as ReadonlyArray<
+  readonly [string, PermisoRuta]
+>;

@@ -1,5 +1,6 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { RecargasLocalesAdmin } from './flex/RecargaLocal';
+import { Hora } from './horario';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ErrorApi,
@@ -1309,7 +1310,7 @@ function EmpresaFinanzas({ base, idioma, id }: { base: string; idioma: 'es' | 'e
             <span>
               <strong>{x.tipo}</strong>
               <small>
-                {x.creadoEn} · {x.bolsillo}
+                <Hora fecha={x.creadoEn} idioma={idioma} /> · {x.bolsillo}
               </small>
             </span>
             <span>{m(x.monto)}</span>

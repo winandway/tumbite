@@ -45,6 +45,14 @@ import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra'
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
 import { recalcularDinamica } from '../viajesDinamica';
+import {
+  accesoDe,
+  anotarAccesoSensible,
+  anotarAccesoSensibleUnaVez,
+  exigirPedidoEnAlcance,
+  tienePermiso,
+} from '../accesoInterno';
+import { exigirSegundoFactor } from '../segundoFactor';
 import { Hono } from 'hono';
 import { cobertura } from '../territorio';
 import { z } from 'zod';
@@ -1997,11 +2005,13 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     const elegidos = abierta ? candidatos.slice(0, 20) : candidatos.slice(0, 1);
     for (const elegido of elegidos) {
       ocupados.add(elegido.id);
+      // C-TIEMPOS-OPERACION: la distancia al restaurante va en el MISMO INSERT (cero filas de más):
+      // de ahí sale la ida prevista del repartidor en la ficha del superadmin.
       await db
         .prepare(
-          "INSERT OR REPLACE INTO ofertas (pedido_id, repartidor_id, estado) VALUES (?, ?, 'ofrecida')",
+          "INSERT OR REPLACE INTO ofertas (pedido_id, repartidor_id, estado, km) VALUES (?, ?, 'ofrecida', ?)",
         )
-        .bind(p.id, elegido.id)
+        .bind(p.id, elegido.id, Number.isFinite(elegido.km) ? elegido.km : null)
         .run();
       if (env) {
         const rep = await db
@@ -2283,7 +2293,10 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
   await anotarPorTiempo(db, id, u.id);
   await db.batch([
     db
-      .prepare("UPDATE ofertas SET estado = 'aceptada' WHERE pedido_id = ? AND repartidor_id = ?")
+      // C-TIEMPOS-OPERACION: cuándo la aceptó, en la MISMA escritura de siempre.
+      .prepare(
+        "UPDATE ofertas SET estado = 'aceptada', respondida_en = datetime('now') WHERE pedido_id = ? AND repartidor_id = ?",
+      )
       .bind(id, u.id),
     // En la oferta abierta la vieron varios: a los demás se les quita.
     db
@@ -3107,7 +3120,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     nombre: 'fotos',
     critica: false,
     cada: 'hora',
-    escriturasEsperadas: 400,
+    // 200 evidencias + 200 tickets + hasta 200 filas viejas del registro de lo que vio el equipo.
+    escriturasEsperadas: 600,
     correr: (env, db) => (env.BUCKET ? depurarFotos(db, env.BUCKET) : Promise.resolve(0)),
   },
   // C-TASA-BCV-AUTO (Venezuela): la tasa oficial del día, a las 14:00 UTC (y a las 20:00 si no
@@ -3599,6 +3613,31 @@ operacion.post('/repartidor/pedidos/:id/soltar', async (c) => {
   return c.json({ ok: true });
 });
 
+/** C-PERMISOS-FINOS: el equipo ve una foto de evidencia con su permiso, en su zona, y queda anotado. */
+async function permitirFotoAlEquipo(
+  c: Ctx,
+  pedidoId: string,
+  tipo: 'recogida' | 'entrega' | 'ticket',
+) {
+  const acceso = accesoDe(c);
+  if (!tienePermiso(c, 'pedidos.fotos'))
+    throw new ErrorDatos(
+      'Tu acceso del equipo no incluye esto. Pídeselo a quien gestiona el equipo.',
+      'permiso',
+      403,
+    );
+  if (acceso) await exigirSegundoFactor(c, acceso);
+  const db = base(c);
+  await exigirPedidoEnAlcance(c, db, pedidoId);
+  await anotarAccesoSensible(
+    db,
+    c.get('usuario')?.id ?? '',
+    `pedido:${pedidoId}`,
+    `foto_${tipo}`,
+    'pedidos.fotos',
+  );
+}
+
 /** Chat del pedido entre el cliente y el repartidor (y nuestro equipo lee si hay reclamo). */
 async function pedidoDelChat(db: D1Database, id: string, u: { id: string; rol: string }) {
   const p = await db
@@ -3615,6 +3654,19 @@ operacion.get('/pedidos/:id/mensajes', async (c) => {
   const db = base(c);
   const p = await pedidoDelChat(db, c.req.param('id'), u);
   const desde = Number(c.req.query('desde') ?? 0);
+  // C-PERMISOS-FINOS: el equipo lee el chat con `pedidos.chat`, en su zona, y SIEMPRE queda en el
+  // registro de lo que se vio: una fila por persona y pedido cada 30 minutos, sin depender de
+  // `desde` (antes, `desde=0.5` se lo saltaba) y sin escribir en cada refresco.
+  if (u.rol === 'admin') {
+    if (!tienePermiso(c, 'pedidos.chat'))
+      throw new ErrorDatos(
+        'Tu acceso del equipo no incluye esto. Pídeselo a quien gestiona el equipo.',
+        'permiso',
+        403,
+      );
+    await exigirPedidoEnAlcance(c, db, p.id);
+    await anotarAccesoSensibleUnaVez(db, u.id, `pedido:${p.id}`, 'chat_pedido', 'pedidos.chat');
+  }
   const { results } = await db
     .prepare(
       'SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en, m.foto_clave FROM mensajes_pedido m JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.pedido_id = ? AND m.id > ? ORDER BY m.id LIMIT 200',
@@ -3759,6 +3811,11 @@ operacion.get('/pedidos/:id/evidencia/:tipo', async (c) => {
   const tipo = c.req.param('tipo');
   if (tipo !== 'recogida' && tipo !== 'entrega' && tipo !== 'ticket')
     return c.text('No encontrado', 404);
+  // C-PERMISOS-FINOS (MON-5): el equipo ve una foto solo con `pedidos.fotos` (y su segundo factor si
+  // está encendido), dentro de su zona, y cada vista deja una fila en `accesos_sensibles` (sin la
+  // foto). Cliente, repartidor y restaurante siguen como siempre. La foto de la puerta de la casa no
+  // pasa por aquí: el equipo no la ve nunca (C-FOTO-PUERTA).
+  if (u.rol === 'admin') await permitirFotoAlEquipo(c, c.req.param('id'), tipo);
   const f = await base(c)
     .prepare(
       tipo === 'ticket'

@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { verificarClave } from '../cripto';
 import type { Env } from '../env';
-import { perfilDe } from '../rutas/equipo';
+import { PLANTILLAS_SISTEMA } from '@tumbite/compartido';
+import { accesoDe, tienePermiso } from '../accesoInterno';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -49,7 +50,10 @@ export const UMBRALES_INICIALES: Readonly<Record<string, number>> = {
   VES: 4_000_000,
 };
 const CLAVE_CONFIG = 'control_dual_umbrales';
-const PERFILES_APRUEBAN = new Set(['total', 'finanzas']);
+/** C-PERMISOS-FINOS: las plantillas de fábrica que aprueban dinero (con segunda firma). */
+const PLANTILLAS_APRUEBAN = PLANTILLAS_SISTEMA.filter((p) =>
+  p.permisos.includes('dinero.aprobar'),
+).map((p) => p.id);
 
 export async function leerUmbrales(db: D1Database): Promise<Record<string, number>> {
   const f = await db
@@ -74,14 +78,31 @@ export function pasaUmbral(umbrales: Record<string, number>, moneda: string, mon
   return Math.abs(monto) > u;
 }
 
-/** Cuántas OTRAS cuentas activas del equipo pueden aprobar (sin perfil guardado = Total). */
+/**
+ * Cuántas OTRAS cuentas activas del equipo pueden aprobar. C-PERMISOS-FINOS: las que tienen el
+ * permiso `dinero.aprobar` por sus plantillas o como extra; las cuentas sin plantillas nuevas, por su
+ * perfil viejo (sin perfil = Total). Suspendidas, retiradas o con el permiso quitado no cuentan.
+ */
 async function aprobadoresAparte(db: D1Database, usuarioId: string) {
+  const fabrica = PLANTILLAS_APRUEBAN.map(() => '?').join(', ');
   const f = await db
     .prepare(
-      `SELECT COUNT(*) AS n FROM usuarios u LEFT JOIN perfiles_internos p ON p.usuario_id = u.id
-        WHERE u.rol = 'admin' AND u.activo = 1 AND u.id <> ? AND COALESCE(p.perfil, 'total') IN ('total', 'finanzas')`,
+      `SELECT COUNT(*) AS n FROM usuarios u
+         LEFT JOIN perfiles_internos p ON p.usuario_id = u.id
+         LEFT JOIN equipo_cuentas ec ON ec.usuario_id = u.id
+        WHERE u.rol = 'admin' AND u.activo = 1 AND u.id <> ? AND COALESCE(ec.estado, 'activo') = 'activo'
+          AND NOT EXISTS (SELECT 1 FROM permisos_persona q WHERE q.usuario_id = u.id AND q.permiso = 'dinero.aprobar' AND q.tipo = 'quitado')
+          AND (
+            (NOT EXISTS (SELECT 1 FROM asignaciones_internas a WHERE a.usuario_id = u.id)
+              AND COALESCE(p.perfil, 'total') IN ('total', 'finanzas'))
+            OR EXISTS (SELECT 1 FROM permisos_persona q WHERE q.usuario_id = u.id AND q.permiso = 'dinero.aprobar' AND q.tipo = 'extra')
+            OR EXISTS (SELECT 1 FROM asignaciones_internas a LEFT JOIN plantillas_internas t ON t.id = a.plantilla_id
+                        WHERE a.usuario_id = u.id AND (a.vence_en IS NULL OR a.vence_en > datetime('now'))
+                          AND (a.plantilla_id = 'total'
+                               OR (t.id IS NOT NULL AND t.permisos_json LIKE '%"dinero.aprobar"%')
+                               OR (t.id IS NULL AND a.plantilla_id IN (${fabrica})))))`,
     )
-    .bind(usuarioId)
+    .bind(usuarioId, ...PLANTILLAS_APRUEBAN)
     .first<{ n: number }>();
   return Number(f?.n ?? 0);
 }
@@ -258,6 +279,11 @@ export async function hacerOPedirAprobacion(c: Ctx, s: Solicitud) {
   const db = base(c);
   const mm = await monedaYMonto(db, s.tipo, s.objeto, s.monto);
   if (!mm) return c.json(await ejecutarDual(c.env, db, s.tipo, s.datos, u.id));
+  // C-PERMISOS-FINOS: el tope de la persona (por sus plantillas). Por encima, segunda firma aunque
+  // el monto esté bajo el umbral general. Sin tope (perfiles viejos, Finanzas): solo el umbral.
+  const topes = accesoDe(c)?.topes ?? null;
+  if (topes && Math.abs(mm.monto) > (new Map(Object.entries(topes)).get(mm.moneda) ?? 0))
+    return pedirAprobacion(c, u.id, s, mm);
   // SIG-4x: fraccionar no salta el control. Se suma lo que esta persona movió a mano en esta moneda
   // en las últimas 24 h, y lo movido sobre el mismo objeto (por cualquiera), como el límite
   // acumulado de los bancos. Lo aprobado con segunda firma no cuenta: ya lo revisó otra persona.
@@ -380,17 +406,27 @@ controlDual.get('/admin/aprobaciones-dinero', async (c) => {
                  FROM aprobaciones_dinero a
                  LEFT JOIN usuarios pp ON pp.id = a.pedido_por
                  LEFT JOIN usuarios rv ON rv.id = a.revisado_por`;
+  // C-PERMISOS-FINOS: quien no ve el dinero ni aprueba (Soporte nivel 2) ve solo lo que pidió.
+  const veTodo = tienePermiso(c, 'dinero.ver') || tienePermiso(c, 'dinero.aprobar');
+  const solo = veTodo ? '' : ' AND a.pedido_por = ?';
+  const quien = veTodo ? [] : [u.id];
   const [pend, rec] = await Promise.all([
-    db.prepare(`${sel} WHERE a.estado = 'pendiente' ORDER BY a.creado_en LIMIT 200`).all(),
-    db.prepare(`${sel} WHERE a.estado <> 'pendiente' ORDER BY a.revisado_en DESC LIMIT 50`).all(),
+    db
+      .prepare(`${sel} WHERE a.estado = 'pendiente'${solo} ORDER BY a.creado_en LIMIT 200`)
+      .bind(...quien)
+      .all(),
+    db
+      .prepare(`${sel} WHERE a.estado <> 'pendiente'${solo} ORDER BY a.revisado_en DESC LIMIT 50`)
+      .bind(...quien)
+      .all(),
   ]);
-  const miPerfil = await perfilDe(db, u.id);
+  const puedoAprobar = tienePermiso(c, 'dinero.aprobar');
   return c.json({
     pendientes: pend.results,
     recientes: rec.results,
     umbrales: await leerUmbrales(db),
-    miPerfil,
-    puedoAprobar: PERFILES_APRUEBAN.has(miPerfil),
+    miPerfil: tienePermiso(c, 'dinero.limites') ? 'total' : puedoAprobar ? 'finanzas' : 'soporte',
+    puedoAprobar,
     aprobadoresAparte: await aprobadoresAparte(db, u.id),
   });
 });
@@ -413,19 +449,25 @@ async function revisor(c: Ctx, clave: string | null) {
   if (!fila) throw new ErrorDatos('Esa solicitud no existe.', undefined, 404);
   if (fila.estado !== 'pendiente')
     throw new ErrorDatos('Esa solicitud ya la revisó otra persona.', undefined, 409);
-  return { u, db, fila, perfil: await perfilDe(db, u.id) };
+  return {
+    u,
+    db,
+    fila,
+    aprueba: tienePermiso(c, 'dinero.aprobar'),
+    limites: tienePermiso(c, 'dinero.limites'),
+  };
 }
 
 controlDual.post('/admin/aprobaciones-dinero/:id/aprobar', async (c) => {
   const { clave } = await leerCuerpo(c, z.object({ clave: z.string().min(1).max(200) }));
-  const { u, db, fila, perfil } = await revisor(c, clave);
-  if (!PERFILES_APRUEBAN.has(perfil))
+  const { u, db, fila, aprueba, limites } = await revisor(c, clave);
+  if (!aprueba)
     throw new ErrorDatos(
       'Solo una cuenta con perfil Total o Finanzas aprueba dinero.',
       undefined,
       403,
     );
-  if (fila.tipo === 'umbral' && perfil !== 'total')
+  if (fila.tipo === 'umbral' && !limites)
     throw new ErrorDatos(
       'Subir el límite del control dual lo aprueba otra cuenta con perfil Total.',
       undefined,
@@ -476,9 +518,9 @@ controlDual.post('/admin/aprobaciones-dinero/:id/rechazar', async (c) => {
     c,
     z.object({ nota: z.string().trim().min(3, { error: 'Escribe el motivo.' }).max(500) }),
   );
-  const { u, db, fila, perfil } = await revisor(c, null);
-  // Quien lo pidió puede retirarlo; para rechazar lo de otro hace falta perfil Total o Finanzas.
-  if (fila.pedido_por !== u.id && !PERFILES_APRUEBAN.has(perfil))
+  const { u, db, fila, aprueba } = await revisor(c, null);
+  // Quien lo pidió puede retirarlo; para rechazar lo de otro hace falta el permiso de aprobar.
+  if (fila.pedido_por !== u.id && !aprueba)
     throw new ErrorDatos(
       'Solo una cuenta con perfil Total o Finanzas rechaza dinero.',
       undefined,
@@ -498,7 +540,7 @@ controlDual.post('/admin/aprobaciones-dinero/:id/rechazar', async (c) => {
 controlDual.put('/admin/aprobaciones-dinero/umbrales', async (c) => {
   const u = exigir(c, 'admin');
   const db = base(c);
-  if ((await perfilDe(db, u.id)) !== 'total')
+  if (!tienePermiso(c, 'dinero.limites'))
     throw new ErrorDatos(
       'Solo una cuenta con perfil Total cambia el límite del control dual.',
       undefined,

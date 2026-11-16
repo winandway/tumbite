@@ -212,7 +212,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "repartidor_id",
     "estado",
-    "creada_en"
+    "creada_en",
+    "km",
+    "respondida_en"
   ],
   "calificaciones": [
     "pedido_id",
@@ -329,7 +331,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "zona_id",
     "creado_en",
-    "actualizado_en"
+    "actualizado_en",
+    "operacion_id"
   ],
   "respuestas_guardadas": [
     "id",
@@ -874,6 +877,77 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "ruta",
     "estado",
     "creado_en"
+  ],
+  "plantillas_internas": [
+    "id",
+    "nombre_es",
+    "nombre_en",
+    "descripcion_es",
+    "descripcion_en",
+    "permisos_json",
+    "topes_json",
+    "sistema",
+    "creado_por",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "equipo_cuentas": [
+    "usuario_id",
+    "estado",
+    "motivo",
+    "invitado_por",
+    "ultima_entrada_en",
+    "actualizado_por",
+    "actualizado_en",
+    "creado_en"
+  ],
+  "asignaciones_internas": [
+    "usuario_id",
+    "plantilla_id",
+    "alcance_json",
+    "vence_en",
+    "motivo",
+    "asignado_por",
+    "creado_en"
+  ],
+  "permisos_persona": [
+    "usuario_id",
+    "permiso",
+    "tipo",
+    "motivo",
+    "puesto_por",
+    "creado_en"
+  ],
+  "invitaciones_equipo": [
+    "id",
+    "codigo_hash",
+    "correo",
+    "nombre",
+    "plantillas_json",
+    "alcance_json",
+    "vence_acceso_en",
+    "motivo",
+    "idioma",
+    "invitado_por",
+    "expira_en",
+    "aceptada_en",
+    "usuario_id",
+    "cancelada_en",
+    "creado_en"
+  ],
+  "accesos_sensibles": [
+    "id",
+    "usuario_id",
+    "objeto",
+    "tipo",
+    "permiso",
+    "creado_en"
+  ],
+  "segundo_factor_codigos": [
+    "sesion_id",
+    "codigo_hash",
+    "expira_en",
+    "intentos"
   ],
   "preferencias_internas": [
     "usuario_id",
@@ -1583,7 +1657,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "ganancia_centavos",
     "creada_en",
     "expira_en",
-    "respondida_en"
+    "respondida_en",
+    "km"
   ],
   "eventos_operacion": [
     "id",

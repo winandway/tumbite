@@ -4,6 +4,7 @@ import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
 import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
 import { GUIAS_SEMANA } from './semana';
+import { GUIAS_OPERACIONES } from './operaciones';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -26,7 +27,15 @@ export type Guia = {
   descargas?: { texto: string; href: string }[];
 };
 export type SeccionDocs = {
-  id: 'courses' | 'ordering' | 'restaurants' | 'drivers' | 'trust' | 'business' | 'account';
+  id:
+    | 'courses'
+    | 'ordering'
+    | 'restaurants'
+    | 'drivers'
+    | 'trust'
+    | 'business'
+    | 'account'
+    | 'operations';
   titulo: string;
   icono: NombreIcono;
   guias: Guia[];
@@ -10177,7 +10186,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const mismaRuta = MISMA_RUTA_PUBLICADA
     ? [idioma === 'es' ? GUIA_MISMA_RUTA.es : GUIA_MISMA_RUTA.en]
     : [];
-  return secciones.map((s) => {
+  const base = secciones.map((s) => {
     if (s.id === 'ordering')
       return {
         ...s,
@@ -10187,6 +10196,16 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
       return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
     return { ...s, guias: [...s.guias, ...de(s.id)] };
   });
+  // C-DOCS-OPERACIONES (15 nov 2026): la sección del equipo de operaciones, al final del menú.
+  return [
+    ...base,
+    {
+      id: 'operations' as const,
+      titulo: idioma === 'es' ? 'Equipo de operaciones' : 'Operations team',
+      icono: 'resumen' as const,
+      guias: idioma === 'es' ? GUIAS_OPERACIONES.es : GUIAS_OPERACIONES.en,
+    },
+  ];
 }
 
 export const DOCS: Record<Idioma, SeccionDocs[]> = {

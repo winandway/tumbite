@@ -10,6 +10,18 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Monitoreo serio del superadmin (15 nov 2026, orden de Richard) — todos los países
+
+- [x] HECHO 16 nov (MON-1, C-SUPERADMIN-ENLACES, C-BUSCADOR-SERIO, C-FILTROS-GUARDADOS) Enlaces de fichas con cualquier id; buscador global arriba de todo el superadmin (código con o sin numeral, id, cliente, teléfono, correo, restaurante, repartidor, placa, monto, viaje; cerrados, esperando pago y de otra ciudad; todos los repetidos); Pedidos en curso con Vivos/Cerrados/Todos y «Cargar más»; filtros guardados por empleado y pantalla.
+- [x] HECHO 16 nov (MON-2, C-FICHA-OPERACION, C-TIEMPOS-OPERACION) Ficha del pedido con cinco tiempos calculados contra lo estimado (verde/rojo), línea de tiempo única, dónde compró y dónde entregó con fotos borrosas hasta «Ver foto»; ficha nueva del viaje.
+- [x] HECHO 16 nov (MON-3, C-MONITOREO-SERVICIOS) Pestañas Comida, Tiendas, Viajes en auto, Viajes en moto (y Envíos); reclamos enlazados a viajes y filtro por servicio.
+- [x] HECHO 16 nov (MON-4, C-HORARIO-EMPLEADO) Configuración → Horario: 12 h con a. m./p. m. o 24 h, zona por ciudad o fija, hora de cada ciudad; una sola pieza de hora en todo el superadmin.
+- [x] HECHO 16 nov (MON-5, C-PERMISOS-FINOS, C-EQUIPO-INVITACION, C-SEGUNDO-FACTOR-EQUIPO) Equipo interno: invitación de un solo uso, nueve plantillas de puesto, alcance por ciudad y servicio en todas las rutas (ALCANCE_RUTAS_ADMIN), registro de quién vio qué, datos tapados hasta «Ver dato», segundo factor construido y apagado. Nadie pierde acceso.
+- [x] HECHO 16 nov (MON-6, C-DOCS-OPERACIONES) Seis guías en Docs, inglés y español, sección «Operations team». Revisión única con Sonnet: devuelta por tres escapes de alcance, corregidos con pruebas en rojo.
+- [ ] [para: desarrollador] (MON-7) Bandeja de tickets: sigue trayendo 300 sin paginar y ordena recorriendo la tabla; paginar por clave como las demás listas (C-SUPERADMIN-ESCALA).
+- [ ] [para: desarrollador] (MON-8) Mapa de la ficha del pedido: comprobar en el sitio de pruebas con la llave del mapa web que la pieza de mapa sale con los tres puntos (en local solo se vieron las distancias en texto).
+- [!] Decisiones de Richard (ficha del monitoreo, sección 8): quién ve fotos de entrega, quién ve teléfono y correo, segundo factor, código corto, buscar «contiene» en nombres, topes de dinero por plantilla. Aplicado lo recomendado y configurable en CONFIG_PERMISOS.
+
 ## Foto de la puerta (15 nov 2026, orden de Richard) — todos los países
 
 - [x] HECHO 15 nov (C-FOTO-PUERTA, C-CAMARA-COMPUTADORA-APPS, C-APP-DE-PRUEBAS-VISIBLE) Hasta tres fotos del frente, la entrada y la puerta por dirección; el repartidor asignado las ve solo en camino. Unida con el diseño nuevo (f7b2f0edf), 86 comprobaciones en pantalla, guías es/en, en pruebas y producción (9da6850be). Apps de pruebas: cliente iPhone 36 y APK, desde 9da6850be (esta sesión); Driver y Restaurants los compila desde f42eb2432 la sesión del cierre de entrega (Restaurants 21 de esta sesión queda debajo). La 29 de iPhone del Driver, de una versión anterior, se hizo expirar en TestFlight.
