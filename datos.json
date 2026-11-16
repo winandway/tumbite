@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-16T00:10:00-05:00",
+  "actualizado": "2026-11-16T02:15:00-05:00",
   "version": "7b9a5ca",
   "ahora": "15 nov: las tres apps con el diseño nuevo ya están en las tiendas. En Google Play, Divoox Driver (versión 18) y Divoox Restaurants (versión 13) están en revisión; en App Store Connect quedaron las compilaciones 34 del cliente, 28 del Driver y 20 de Restaurants para TestFlight. El sitio de pruebas y divoox.com sirven la misma versión, con el diseño nuevo y la foto de la puerta. 15 nov: la foto de la puerta ya está en vivo. El cliente puede guardar hasta tres fotos del frente, la entrada del edificio y su puerta en cada dirección, con la cámara o desde sus archivos; el repartidor asignado las ve solo mientras lleva el pedido, y nadie más. Probado en pantalla con 86 comprobaciones, con guías en español e inglés. Las tres apps de pruebas ya traen el diseño nuevo y la franja «PRUEBAS». 15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
@@ -821,6 +821,12 @@
     }
   ],
   "incidencias": [
+    {
+      "fecha": "2026-11-16",
+      "titulo": "Las publicaciones se frenaron unas horas por el peso del sitio",
+      "estado": "resuelto",
+      "texto": "El sitio pasó el tope de tamaño de la plataforma porque cada página de Docs repetía unos doscientos íconos dibujados. Ahora cada ícono se dibuja una vez por página: se ve igual, cada página pesa un tercio menos y todo volvió a publicarse."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "El sitio de pruebas dejó de publicarse unas dos horas",
