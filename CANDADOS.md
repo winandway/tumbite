@@ -4930,3 +4930,4 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 
 - `PAISES_PASAJEROS_ABRIBLES` (`apps/servidor/src/pasajerosPais.ts`) incluye `envios` para VE: el superadmin lo abre con `PUT /datos/admin/pasajeros-pais/VE/envios` y desde ahí se enciende por ciudad. Estados Unidos sigue cerrado.
 - Prueba: «C-ENVIOS-POR-PAIS» en `apps/servidor/src/rutas/motoVenezuela.test.ts` (en rojo sin la línea).
+- **Papeles (cambio de C-PAPELES-SOLO-PASAJEROS para Venezuela):** el perfil VE declara `requisitosOtrosServicios: { antecedentes_penales: ['antecedentes'] }`. En Venezuela no hay verificación automática de antecedentes: el certificado que aprueba el equipo cumple también «antecedentes» de Envíos. Estados Unidos no cambia (allá lo verifica el proveedor). Prueba en `motoVenezuelaRevision.test.ts`. Un conductor aprobado ANTES de este cambio necesita que el equipo vuelva a aprobar su certificado para que le cuente para Envíos.

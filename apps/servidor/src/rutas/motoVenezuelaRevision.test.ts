@@ -77,8 +77,8 @@ describe('C-ANTECEDENTES-POR-PAIS: Driver no ofrece el proveedor de antecedentes
   });
 });
 
-describe('C-PAPELES-SOLO-PASAJEROS: el papel venezolano cumple solo lo de pasajeros', () => {
-  it('el certificado de antecedentes no cumple el requisito «antecedentes» de Envíos, Mercado y Farmacia', async () => {
+describe('C-PAPELES-SOLO-PASAJEROS: un papel cumple otros servicios solo si el país lo dice', () => {
+  it('Venezuela lo dice (C-ENVIOS-POR-PAIS): el certificado también cumple «antecedentes» de Envíos', async () => {
     const e = await escenarioVe();
     expect((await abrirCaracas(e)).estado).toBe(201);
     const rep = await e.m.cuenta('repartidor', 'Conductor Caracas');
@@ -91,13 +91,15 @@ describe('C-PAPELES-SOLO-PASAJEROS: el papel venezolano cumple solo lo de pasaje
       e.admin.token,
     );
     expect(ok.estado).toBe(200);
-    expect(ok.datos.requisitos).toEqual(['antecedentes_pasajeros']);
+    // C-ENVIOS-POR-PAIS (16 nov 2026): Venezuela lo dice explícito; el certificado también cumple
+    // «antecedentes» (Envíos de A a B), porque allá no hay verificación automática.
+    expect(ok.datos.requisitos).toEqual(['antecedentes_pasajeros', 'antecedentes']);
     const otros = await e.m.DB.prepare(
       "SELECT 1 FROM cumplimientos WHERE conductor_id = ? AND requisito = 'antecedentes'",
     )
       .bind(rep.id)
       .first();
-    expect(otros).toBeNull();
+    expect(otros).not.toBeNull();
   });
 
   it('un perfil de país que lo diga explícito sí puede cumplir otros servicios', async () => {

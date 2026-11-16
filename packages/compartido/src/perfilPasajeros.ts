@@ -161,7 +161,10 @@ const VENEZUELA: PerfilPasajeros = {
     licencia_conducir: ['licencia', 'historial_manejo'],
     antecedentes_penales: ['antecedentes_pasajeros'],
   },
-  requisitosOtrosServicios: {},
+  // C-ENVIOS-POR-PAIS (16 nov 2026, piloto de El Vigía y Tucaní): en Venezuela no hay verificación
+  // automática de antecedentes; el certificado que revisa el equipo también vale para Envíos de A a B
+  // (y los demás servicios que piden «antecedentes»). Así lo dice el país, explícito.
+  requisitosOtrosServicios: { antecedentes_penales: ['antecedentes'] },
   carro: {
     categorias: {
       // El parque de carros de Venezuela es más viejo: Comfort hasta 12 años y Premium hasta 8 [INF].
