@@ -79,10 +79,9 @@ describe('bandeja de soporte del cobro en mano', () => {
     expect(await screen.findByText(/Customer: Ana/)).toBeInTheDocument();
     expect(screen.getByText('The customer overpaid the driver.')).toBeInTheDocument();
     expect(screen.getByText(/support note, as written/)).toBeInTheDocument();
-    expect(screen.getByAltText('Evidence')).toHaveAttribute(
-      'src',
-      CASO.montos ? `/datos/pedidos/${CASO.pedidoId}/evidencia/ticket` : '',
-    );
+    // C-PERMISOS-FINOS: la foto va borrosa hasta «Ver foto» (sin permiso en esta prueba: no se pide).
+    expect(screen.getByText('Receipt photo')).toBeInTheDocument();
+    expect(screen.queryByAltText('Evidence')).toBeNull();
     await userEvent.type(screen.getByRole('textbox'), 'Returned in cash, receipt photo');
     await userEvent.click(screen.getByRole('button', { name: 'The driver already returned it' }));
     await waitFor(() => {

@@ -12,6 +12,7 @@ import {
   useBorrador,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
+import { VerDato } from './DatoProtegido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { GestionFranquicia, SolicitudesFranquicia } from './GestionFranquicia';
 import { pedir } from './api';
@@ -926,8 +927,21 @@ function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: s
       <h1>{x.asunto}</h1>
       <p>
         <span className="insignia">{t.tipos[x.tipo]}</span> {t.estadosTicket[x.estado]} ·{' '}
-        <strong>{x.nombre}</strong> · <a href={`mailto:${x.correo}`}>{x.correo}</a>
-        {x.telefono ? ` · ${x.telefono}` : ''}
+        <strong>{x.nombre}</strong> ·{' '}
+        {/* C-PERMISOS-FINOS: el contacto va enmascarado; «Ver dato» con su permiso (queda registrado). */}
+        <VerDato tipo="ticket" id={x.id} campo="correo" mascara={x.correo} idioma={idioma} />
+        {x.telefono ? (
+          <>
+            {' · '}
+            <VerDato
+              tipo="ticket"
+              id={x.id}
+              campo="telefono"
+              mascara={x.telefono}
+              idioma={idioma}
+            />
+          </>
+        ) : null}
         {x.ciudad || x.pais ? ` · ${[x.ciudad, x.pais].filter(Boolean).join(', ')}` : ''}
       </p>
       <p>

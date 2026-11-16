@@ -946,6 +946,8 @@ const TABLAS_DATO = {
   repartidor: "SELECT telefono, correo FROM usuarios WHERE id = ? AND rol = 'repartidor'",
   cuenta: "SELECT telefono, correo FROM usuarios WHERE id = ? AND rol != 'admin'",
   ticket: 'SELECT telefono, correo FROM tickets WHERE id = ?',
+  restaurante:
+    'SELECT u.telefono, u.correo FROM restaurantes r JOIN usuarios u ON u.id = r.dueno_id WHERE r.id = ?',
   pedido:
     'SELECT u.telefono, u.correo FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id WHERE p.id = ?',
 } as const;

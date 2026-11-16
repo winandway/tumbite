@@ -208,6 +208,13 @@ describe('C-PERMISOS-FINOS: invitación, plantillas y «nadie da más de lo que 
     expect(
       (await m.llamar('POST', '/datos/admin/pedidos/x/cancelar', { motivo: 'x' }, t)).estado,
     ).toBe(403);
+    // El intento rechazado queda en el registro con su 403.
+    const intento = await m.DB.prepare(
+      "SELECT metodo, ruta, estado FROM acciones_equipo WHERE usuario_id = ? AND ruta LIKE '%/cancelar'",
+    )
+      .bind(ok.datos.usuario.id)
+      .first();
+    expect(intento).toMatchObject({ metodo: 'POST', estado: 403 });
     // Y vuelve a entrar con su contraseña.
     const entrar = await m.llamar('POST', '/datos/cuentas/entrar', {
       correo: inv.correo,

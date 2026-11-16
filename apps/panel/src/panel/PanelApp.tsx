@@ -68,6 +68,12 @@ import { SuperMoto } from './SuperMoto';
 import { SuperCiudad } from './SuperCiudad';
 import { pedir } from './api';
 import { BuscadorSuper } from './BuscadorSuper';
+import {
+  FranjaSegundoFactor,
+  PermisosContexto,
+  filtrarMenu,
+  useAccesoInterno,
+} from './permisosPanel';
 
 /**
  * Sección del superadmin según la parte de la dirección después de su base secreta
@@ -94,6 +100,7 @@ export const PREFIJOS_FICHA = [
   'tickets',
   'verifications',
   'flexfinance',
+  'team',
 ] as const;
 
 /** La ficha que corresponde a /<prefijo>/<id>, o null si la dirección no es de una ficha. */
@@ -117,6 +124,8 @@ function fichaAdmin(sub: string, base: string, idioma: 'es' | 'en'): React.React
       return <SuperKyc base={base} idioma={idioma} id={id} />;
     case 'flexfinance':
       return <SuperFinanzas base={base} idioma={idioma} empresaId={id} />;
+    case 'team':
+      return <SuperEquipo base={base} idioma={idioma} miId="" personaId={id} />;
     default:
       return null;
   }
@@ -134,7 +143,7 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
     return <SuperBandeja base={base} idioma={idioma} clave={decodeURIComponent(caso[1])} />;
   if (sub === '/rides') return <SuperViajes base={base} idioma={idioma} />;
   if (sub === '/moto') return <SuperMoto base={base} idioma={idioma} />;
-  if (sub === '/team') return <SuperEquipo idioma={idioma} miId={usuario.id} />;
+  if (sub === '/team') return <SuperEquipo base={base} idioma={idioma} miId={usuario.id} />;
   if (sub === '/approvals') return <SuperAprobaciones idioma={idioma} miId={usuario.id} />;
   if (sub === '/pilot') return <SuperPiloto idioma={idioma} />;
   // C-CIUDAD-PRUEBAS: solo en el sitio de pruebas y en local (en producción no existe).
@@ -256,11 +265,13 @@ export function PanelApp({ ruta }: { ruta: string }) {
   const esAdmin = usuario?.rol === 'admin';
   const esRestaurante = usuario?.rol === 'restaurante';
   const raizAdmin = esAdmin && baseAdmin ? baseAdmin : '/panel';
+  // C-PERMISOS-FINOS: los permisos efectivos de quien entró (una lectura por sesión del panel).
+  const permisos = useAccesoInterno(esAdmin);
   // C-PANEL-ARMAZON: el menú de cada rol, en grupos y con su ícono (armazon/menus.ts).
   const grupos = !usuario
     ? []
     : esAdmin
-      ? gruposAdmin(t, idioma, raizAdmin, ruta, !enProduccion())
+      ? filtrarMenu(gruposAdmin(t, idioma, raizAdmin, ruta, !enProduccion()), permisos.puedeVer)
       : esRestaurante
         ? gruposRestaurante(t, idioma, ruta, flotaDisponible)
         : gruposCuenta(t, idioma, ruta, miFranquicia);
@@ -463,20 +474,23 @@ export function PanelApp({ ruta }: { ruta: string }) {
 
   return (
     <SesionArmazon.Provider value={sesion}>
-      <div className="pagina panel">
-        <Armazon
-          grupos={grupos}
-          avisos={avisos}
-          buscador={
-            esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
-              <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
-            ) : undefined
-          }
-        >
-          {contenido}
-        </Armazon>
-        {esRestaurante && <AyudaBurbuja idioma={idioma} />}
-      </div>
+      <PermisosContexto.Provider value={permisos}>
+        <div className="pagina panel">
+          <Armazon
+            grupos={grupos}
+            avisos={avisos}
+            buscador={
+              esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
+                <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
+              ) : undefined
+            }
+          >
+            {esAdmin ? <FranjaSegundoFactor idioma={idioma} /> : null}
+            {contenido}
+          </Armazon>
+          {esRestaurante && <AyudaBurbuja idioma={idioma} />}
+        </div>
+      </PermisosContexto.Provider>
     </SesionArmazon.Provider>
   );
 }

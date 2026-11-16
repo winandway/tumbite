@@ -69,12 +69,16 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
       undefined,
       403,
     );
-  if (!puedeVer(acceso, ruta.permiso))
+  if (!puedeVer(acceso, ruta.permiso)) {
+    // Un intento de cambio sin permiso también queda anotado (con su 403): es lo que más importa auditar.
+    if (metodo !== 'GET' && metodo !== 'HEAD')
+      await anotarAccion(db, u.id, acceso, metodo, c.req.path, 403);
     throw new ErrorDatos(
       'Tu acceso del equipo no incluye esto. Pídeselo a quien gestiona el equipo.',
       'permiso',
       403,
     );
+  }
   if (acceso && esDelicado(ruta.permiso)) await exigirSegundoFactor(c, acceso);
   await comprobarAlcanceDeFicha(c, db, ruta.patron);
   await next();
@@ -88,14 +92,25 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
   // C-FILTROS-GUARDADOS: guardar los filtros propios no es una acción sobre el negocio; anotarlo
   // duplicaría cada escritura (la preferencia ya dice quién y cuándo).
   if (c.req.path.startsWith('/datos/admin/preferencias/')) return;
-  await db
+  await anotarAccion(db, u.id, acceso, metodo, c.req.path, c.res.status);
+};
+
+function anotarAccion(
+  db: D1Database,
+  usuarioId: string,
+  acceso: AccesoEnSesion | undefined,
+  metodo: string,
+  ruta: string,
+  estado: number,
+) {
+  return db
     .prepare(
       'INSERT INTO acciones_equipo (usuario_id, perfil, metodo, ruta, estado) VALUES (?, ?, ?, ?, ?)',
     )
-    .bind(u.id, origenCorto(acceso), metodo, c.req.path.slice(0, 300), c.res.status)
+    .bind(usuarioId, origenCorto(acceso), metodo, ruta.slice(0, 300), estado)
     .run()
     .catch((e: unknown) => console.error('equipo: no se pudo anotar la acción', e));
-};
+}
 
 /** Lo que se anota como «perfil» en el registro: el viejo o las plantillas de la persona. */
 function origenCorto(acceso: AccesoEnSesion | undefined): string {

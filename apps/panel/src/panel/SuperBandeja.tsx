@@ -10,6 +10,8 @@ import {
 import { Enlace } from '../Enlace';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
+import { VerFoto } from './DatoProtegido';
+import { usePermisos } from './permisosPanel';
 
 /**
  * C-BANDEJA-DINERO: la bandeja de soporte del cobro en mano. Los casos salen de los pedidos, del
@@ -295,6 +297,10 @@ export function SuperBandeja({
 
 function CasoDinero({ base, idioma, clave }: { base: string; idioma: Idioma; clave: string }) {
   const t = enIdioma(T, idioma);
+  // C-PERMISOS-FINOS: las acciones del caso solo para quien pide movimientos de dinero (el servidor
+  // frena igual). Mientras no se saben los permisos, no se esconde nada.
+  const { acceso, puedeVer } = usePermisos();
+  const actua = !acceso || puedeVer('dinero.solicitar');
   const [d, setD] = useState<Detalle | null>(null);
   const [error, setError] = useState('');
   const b = useBorrador({
@@ -360,12 +366,19 @@ function CasoDinero({ base, idioma, clave }: { base: string; idioma: Idioma; cla
       {d.evidencias.length ? (
         <>
           <h2>{t.evidencias}</h2>
+          {/* C-PERMISOS-FINOS: borrosas hasta «Ver foto» (con su permiso); cada vista queda registrada. */}
           <div className="kyc-fotos">
-            {d.evidencias.map((u) => (
-              <figure key={u}>
-                <img src={u} alt={t.evidencias} loading="lazy" />
-              </figure>
-            ))}
+            {d.evidencias.map((u) => {
+              const m = /^\/datos\/pedidos\/([^/]+)\/evidencia\/(recogida|entrega|ticket)$/.exec(u);
+              return m?.[1] && m[2] ? (
+                <VerFoto
+                  key={u}
+                  pedidoId={decodeURIComponent(m[1])}
+                  tipo={m[2] as 'recogida' | 'entrega' | 'ticket'}
+                  idioma={idioma}
+                />
+              ) : null;
+            })}
           </div>
         </>
       ) : null}
@@ -412,7 +425,7 @@ function CasoDinero({ base, idioma, clave }: { base: string; idioma: Idioma; cla
           </ul>
         </>
       ) : null}
-      {c.estado !== 'resuelto' && (
+      {c.estado !== 'resuelto' && actua && (
         <form className="formulario tarjeta-form" onSubmit={(e) => e.preventDefault()} noValidate>
           <AvisoBorrador
             visible={b.recuperado}
