@@ -95,6 +95,8 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   inicio: 'monitoreo.ver',
   orders: 'pedidos.ver',
   tickets: 'tickets.ver',
+  // C-MODERACION: la bandeja de reportes de mensajes y reseñas.
+  moderation: 'tickets.ver',
   approvals: ['dinero.solicitar', 'dinero.ver', 'dinero.aprobar'],
   verifications: 'kyc.ver',
   customers: 'clientes.ver',

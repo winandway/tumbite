@@ -483,8 +483,26 @@ describe('recorrido completo como en la calle (C-ENSAYO-CALLE)', () => {
   it('pago por aviso de Stripe → restaurante → repartidor → entrega → billeteras → calificación', async () => {
     const { m, dueno, cliente, pedidoPagadoPorStripe, repartidor } = await escenario();
     const rep = await repartidor('Repartidor Calle', 25.7705, -80.1905);
+    // C-AVISOS-IDIOMA: el teléfono del restaurante está en español aunque la cuenta diga inglés.
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const avisosRest: { to: string; title: string }[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { to: string; title: string }[];
+      avisosRest.push(...lote);
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.DB.prepare("UPDATE usuarios SET idioma = 'en' WHERE id = ?").bind(dueno.id).run();
+    await m.DB.prepare(
+      "INSERT INTO dispositivos (token, usuario_id, plataforma, idioma) VALUES ('ExponentPushToken[cocina]', ?, 'android', 'es')",
+    )
+      .bind(dueno.id)
+      .run();
     const { id, desglose, aviso } = await pedidoPagadoPorStripe();
     expect(aviso).toBe(200);
+    expect(avisosRest.find((x) => x.to === 'ExponentPushToken[cocina]')?.title).toMatch(
+      /^Pedido nuevo/,
+    );
+    usarTransporteAvisos(null);
 
     // El restaurante lo ve pagado, lo acepta y al repartidor cercano le llega la oferta.
     const lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);

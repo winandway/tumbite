@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { ErrorApi, deSqlUtc, enIdioma, textoEtiqueta, useBorrador } from '@tumbite/compartido';
-import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion, Text } from '@tumbite/movil';
+import {
+  BotonReportar,
+  C,
+  Campo,
+  alSalirTelefono,
+  almacenTelefono,
+  e,
+  useSesion,
+  Text,
+} from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
 /**
@@ -21,6 +30,7 @@ const T = {
     soloManager: 'Solo el dueño y los managers pueden responder.',
     elogios: 'Lo que más elogian',
     motivos: 'Lo que salió mal',
+    oculta: 'No se ve en público: nuestro equipo la está revisando.',
   },
   en: {
     titulo: 'Reviews',
@@ -34,11 +44,15 @@ const T = {
     soloManager: 'Only the owner and managers can reply.',
     elogios: 'What customers praise most',
     motivos: 'What went wrong',
+    oculta: 'Not shown publicly: our team is reviewing it.',
   },
 };
 
 type Resena = {
   pedidoId: string;
+  /** C-MODERACION: el número para «Reportar» y si no se ve en público. */
+  id?: number;
+  oculta?: boolean;
   cliente: string;
   estrellas: number;
   comentario: string;
@@ -162,6 +176,10 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
             ) : null}
           </Text>
           {r.comentario ? <Text style={{ marginTop: 4 }}>{r.comentario}</Text> : null}
+          {r.oculta ? (
+            <Text style={{ marginTop: 4, color: '#666B73', fontSize: 12 }}>{t.oculta}</Text>
+          ) : null}
+          {r.comentario && r.id && !r.oculta ? <BotonReportar tipo="resena" id={r.id} /> : null}
           {r.etiquetas?.length ? (
             <Text style={{ marginTop: 4, color: '#666B73' }}>
               {r.etiquetas

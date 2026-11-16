@@ -100,6 +100,7 @@ import {
   ChatPedido,
   MenuCuenta,
   OpcionesCuenta,
+  PersonasBloqueadas,
   AjusteMapa,
   VersionInstalada,
   MisCasos,
@@ -2092,6 +2093,8 @@ export function Inicio() {
         />
         {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
         <AjusteMapa />
+        {/* C-MODERACION: a quién bloqueó y «Desbloquear». */}
+        <PersonasBloqueadas />
         {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista. */}
         <OpcionesCuenta />
         {/* C-VERSION-VISIBLE: versión y compilación instaladas, para soporte. */}

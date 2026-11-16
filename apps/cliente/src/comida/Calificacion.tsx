@@ -6,7 +6,7 @@ import {
   deSqlUtc,
   textoCalificacion,
 } from '@tumbite/compartido';
-import { C, useSesion, Text } from '@tumbite/movil';
+import { BotonReportar, C, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-CALIFICACION-PUBLICA: «★ 4.7 (120)» o «Nuevo» en las tarjetas y la ficha del restaurante, como
@@ -42,6 +42,8 @@ export function Calificacion({
 }
 
 type Resena = {
+  /** C-MODERACION: el número para «Reportar». */
+  id?: number;
   cliente: string;
   estrellas: number;
   comentario: string;
@@ -99,13 +101,17 @@ export function ResenasRestaurante({ restauranteId }: { restauranteId: string })
             <Text style={{ color: '#9a9a9a', fontWeight: '400' }}> · {fecha(r.fecha)}</Text>
           </Text>
           <Text style={{ color: '#333', marginTop: 4 }}>{r.comentario}</Text>
+          {r.id ? <BotonReportar tipo="resena" id={r.id} /> : null}
           {r.respuesta ? (
-            <Text style={{ color: '#666B73', marginTop: 6, fontSize: 13 }}>
-              <Text style={{ fontWeight: '700' }}>
-                {idioma === 'en' ? 'Restaurant reply: ' : 'Respuesta del restaurante: '}
+            <>
+              <Text style={{ color: '#666B73', marginTop: 6, fontSize: 13 }}>
+                <Text style={{ fontWeight: '700' }}>
+                  {idioma === 'en' ? 'Restaurant reply: ' : 'Respuesta del restaurante: '}
+                </Text>
+                {r.respuesta}
               </Text>
-              {r.respuesta}
-            </Text>
+              {r.id ? <BotonReportar tipo="respuesta_resena" id={r.id} /> : null}
+            </>
           ) : null}
         </View>
       ))}

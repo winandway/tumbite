@@ -1,6 +1,6 @@
 import { AvisosWebPanel, darDeBajaAlSalir } from './AvisosWebPanel';
 import { Flota } from './Flota';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Armazon, type AvisoArmazon, SesionArmazon } from './armazon/Armazon';
 import { EncabezadoPagina, Metricas, TarjetaMetrica } from './armazon/Piezas';
 import {
@@ -17,6 +17,7 @@ import {
   almacenNavegador,
   borrarBorradoresDe,
   enIdioma,
+  type Idioma,
   entornoDeHost,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
@@ -46,6 +47,7 @@ import { TableroRestaurante } from './TableroRestaurante';
 import { MiEmpresa } from './MiEmpresa';
 import { SuperKyc } from './SuperKyc';
 import { SuperBandeja } from './SuperBandeja';
+import { SuperReportes } from './SuperReportes';
 import { SuperPedido, SuperPedidos } from './SuperPedido';
 import {
   SuperCiudades,
@@ -141,6 +143,8 @@ function fichaAdmin(sub: string, base: string, idioma: 'es' | 'en'): React.React
 export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' | 'en') {
   if (sub === '') return <SuperResumen base={base} idioma={idioma} />;
   if (sub === '/tickets') return <SuperTickets base={base} idioma={idioma} ticketId={null} />;
+  // C-MODERACION: los reportes de mensajes y reseñas.
+  if (sub === '/moderation') return <SuperReportes idioma={idioma} />;
   if (sub === '/franchises') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
   if (sub === '/cities') return <SuperCiudades base={base} idioma={idioma} />;
   if (sub === '/verifications') return <SuperKyc base={base} idioma={idioma} id={null} />;
@@ -201,9 +205,20 @@ function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.Rea
 type Estado = { cargando: true } | { cargando: false; usuario: Usuario | null };
 
 export function PanelApp({ ruta }: { ruta: string }) {
-  const [idioma, cambiar] = useIdioma();
+  const [idioma, cambiarLocal] = useIdioma();
   const t = enIdioma(TEXTOS_PANEL, idioma);
   const [estado, setEstado] = useState<Estado>({ cargando: true });
+  // C-AVISOS-IDIOMA: con sesión, el idioma elegido también va a la cuenta: los avisos del navegador,
+  // los correos y los SMS salen en ese idioma.
+  const conSesion = !estado.cargando && Boolean(estado.usuario);
+  const cambiar = useCallback(
+    (i: Idioma) => {
+      cambiarLocal(i);
+      if (conSesion)
+        void pedir('PUT', '/datos/cuentas/idioma', { idioma: i }).catch(() => undefined);
+    },
+    [cambiarLocal, conSesion],
+  );
 
   useEffect(() => {
     api

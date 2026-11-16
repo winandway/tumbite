@@ -6345,3 +6345,84 @@ body.modo-tableta .cabecera {
   width: 100%;
   object-fit: contain;
 }
+
+/* C-MODERACION: bandeja de reportes del superadmin y «Reportar» en las reseñas del restaurante. */
+.exito-general {
+  color: #0d7a3a;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+.super-reportes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.super-reporte {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.super-reporte-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.super-reporte-cabeza small {
+  color: #5e5e5e;
+  flex: 1;
+  min-width: 160px;
+}
+.super-reporte-texto {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: #f6f6f6;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.super-reporte-quien {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: #333;
+}
+.super-reporte-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reportar-ventana {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.reportar-caja {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.reportar-caja label.radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid #ececec;
+  cursor: pointer;
+}
+.reportar-caja label.radio:first-of-type {
+  border-top: 0;
+}
+.reportar-caja input[type='radio'] {
+  accent-color: #f20d20;
+}

@@ -1,4 +1,5 @@
 import {
+  Flag,
   BadgePercent,
   Bike,
   BookOpen,
@@ -61,6 +62,7 @@ export const ICONOS_MENU = {
   franchise: Building2,
   // Superadmin
   tickets: LifeBuoy,
+  moderation: Flag,
   orders: ShoppingBag,
   franchises: Building2,
   cities: MapPinned,
@@ -219,7 +221,7 @@ export function gruposAdmin(
   return [
     ...armar(
       [
-        [g.operacion, ['inicio', 'orders', 'tickets', 'approvals', 'verifications']],
+        [g.operacion, ['inicio', 'orders', 'tickets', 'moderation', 'approvals', 'verifications']],
         [g.personas, ['customers', 'restaurants', 'drivers']],
         [g.dinero, ['money', 'cash', 'flexfinance', 'reports']],
         [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],

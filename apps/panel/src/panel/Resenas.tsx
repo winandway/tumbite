@@ -10,6 +10,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
+import { ReportarResenaWeb } from './ReportarWeb';
 
 const T = {
   es: {
@@ -26,6 +27,7 @@ const T = {
     tuRespuesta: 'Respondiste',
     culpa: 'El cliente marcó que el repartidor no tuvo la culpa',
     sinComentario: '(sin comentario)',
+    oculta: 'No se ve en público: nuestro equipo la está revisando.',
     pedido: 'Pedido',
     sugeridas: 'Respuestas sugeridas (tócala y edítala si quieres)',
     platos: 'Tus platos según los clientes',
@@ -52,6 +54,7 @@ const T = {
     tuRespuesta: 'You replied',
     culpa: 'The customer marked that the driver wasn’t at fault',
     sinComentario: '(no comment)',
+    oculta: 'Not shown publicly: our team is reviewing it.',
     pedido: 'Order',
     sugeridas: 'Suggested replies (tap one and edit it if you like)',
     platos: 'Your items, according to customers',
@@ -68,6 +71,9 @@ const T = {
 
 type Resena = {
   pedidoId: string;
+  /** C-MODERACION: el número para «Reportar» y si no se ve en público (lo revisa el equipo). */
+  id?: number;
+  oculta?: boolean;
   cliente: string;
   estrellas: number;
   estrellasRepartidor: number | null;
@@ -256,6 +262,10 @@ export function Resenas({ idioma }: { idioma: Idioma }) {
                 </span>
               </strong>
               <span>{r.comentario || t.sinComentario}</span>
+              {r.oculta ? <span className="suave">{t.oculta}</span> : null}
+              {r.comentario && r.id && !r.oculta ? (
+                <ReportarResenaWeb id={r.id} idioma={idioma} />
+              ) : null}
               {r.etiquetas?.length ? (
                 <span className="suave">
                   {r.etiquetas

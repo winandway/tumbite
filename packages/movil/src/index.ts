@@ -13,6 +13,7 @@ export * from './ReportarProblema';
 export * from './AvisoBorrador';
 export * from './FotoPedido';
 export * from './ChatPedido';
+export * from './Moderacion';
 export * from './CodigoQR';
 export * from './CampoDireccion';
 export * from './version';

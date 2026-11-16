@@ -67,6 +67,7 @@ const es = {
   menuAdmin: {
     inicio: 'Resumen',
     tickets: 'Tickets',
+    moderation: 'Reportes',
     orders: 'Pedidos en curso',
     franchises: 'Franquicias',
     cities: 'Ciudades',
@@ -165,6 +166,7 @@ const en: T = {
   menuAdmin: {
     inicio: 'Overview',
     tickets: 'Tickets',
+    moderation: 'Flagged content',
     orders: 'Live orders',
     franchises: 'Franchises',
     cities: 'Cities',

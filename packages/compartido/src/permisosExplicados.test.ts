@@ -16,7 +16,8 @@ describe('permisos explicados antes de pedirlos', () => {
     expect(layout).toContain('<PantallaPermisos');
     const sesion = leer('packages', 'movil', 'src', 'sesion.tsx');
     expect(sesion).toContain(
-      'useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true)',
+      // C-AVISOS-IDIOMA: el idioma de la app va al final; la espera de los permisos no cambia.
+      'useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true, idioma)',
     );
     const avisos = leer('packages', 'movil', 'src', 'avisos.ts');
     expect(avisos).toContain('if (!permiso.granted && !preguntar) return;');
