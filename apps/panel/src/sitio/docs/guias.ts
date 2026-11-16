@@ -3,6 +3,7 @@ import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
 import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
+import { GUIAS_VIAJES_FIJOS, VIAJES_FIJOS_PUBLICADA } from './viajesFijos';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_DOCS } from './guiasDocs';
@@ -10121,16 +10122,31 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const mismaRuta = MISMA_RUTA_PUBLICADA
     ? [idioma === 'es' ? GUIA_MISMA_RUTA.es : GUIA_MISMA_RUTA.en]
     : [];
+  // C-VIAJES-FIJOS: conductor de confianza y viajes fijos (pasajero) y clientes fijos (conductor).
+  const vf = idioma === 'es' ? GUIAS_VIAJES_FIJOS.es : GUIAS_VIAJES_FIJOS.en;
+  const fijosPasajero = VIAJES_FIJOS_PUBLICADA ? [vf.confianza, vf.fijos] : [];
+  const fijosConductor = VIAJES_FIJOS_PUBLICADA ? [vf.conductor] : [];
   // C-ESPERA-VEHICULO: la espera de cada servicio, con sus capturas reales.
   const espera = idioma === 'es' ? GUIA_ESPERA.es : GUIA_ESPERA.en;
   const base = secciones.map((s) => {
     if (s.id === 'ordering')
       return {
         ...s,
-        guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, espera, ...mismaRuta, ...de(s.id)],
+        guias: [
+          ...s.guias,
+          ...moto.pasajero,
+          ...carro.pasajero,
+          espera,
+          ...mismaRuta,
+          ...fijosPasajero,
+          ...de(s.id),
+        ],
       };
     if (s.id === 'drivers')
-      return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
+      return {
+        ...s,
+        guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...fijosConductor, ...de(s.id)],
+      };
     // C-DOCS-LUPA (15 nov 2026): cómo buscar en Docs y ampliar una captura, al final de «Tu cuenta».
     if (s.id === 'account')
       return {
