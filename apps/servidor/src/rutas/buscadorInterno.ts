@@ -550,6 +550,11 @@ export type ParametrosLista = {
   orden: 'recientes' | 'antiguos';
   q: string;
   despues: string;
+  /**
+   * C-PERMISOS-FINOS: el alcance de quien mira (ciudad, país, servicio), ya armado por
+   * `alcancePedidos`. Sin alcance, nada. Va con `+` en las columnas: no cambia el índice elegido.
+   */
+  alcance?: { sql: string; valores: unknown[] };
 };
 
 /** Lee los parámetros de la lista (acepta el viejo `cerrados=1`). */
@@ -639,6 +644,8 @@ const ORDEN_LUZ = new Map([
  */
 export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
   const b = interpretarBusqueda(p.q);
+  const alc = p.alcance?.sql ?? '';
+  const alcValores = p.alcance?.valores ?? [];
   const estados = estadosDelFiltro(p.estado);
   const direccion = p.orden === 'recientes' ? 'DESC' : 'ASC';
 
@@ -652,9 +659,10 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
         condiciones.map(([donde, valores]) =>
           todas(
             db,
-            `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE ${donde}
+            `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE ${donde}${alc}
               ORDER BY +p.creado_en DESC LIMIT ?`,
             ...valores,
+            ...alcValores,
             POR_PAGINA + 1,
           ),
         ),
@@ -733,12 +741,13 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
     filas = await todas(
       db,
       `SELECT ${FILA_LISTA} FROM pedidos p ${UNIONES_LISTA}
-        WHERE (${quien.join(' OR ')}) AND +p.estado IN (${marcas(estados.length)})${zona.replace('p.zona_id', '+p.zona_id')}${tras}
+        WHERE (${quien.join(' OR ')}) AND +p.estado IN (${marcas(estados.length)})${zona.replace('p.zona_id', '+p.zona_id')}${tras}${alc}
         ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
       ...valores,
       ...estados,
       ...zonaValores,
       ...trasValores,
+      ...alcValores,
       POR_PAGINA + 1,
     );
   } else if (p.zona) {
@@ -747,11 +756,12 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
       estados.map((e) =>
         todas(
           db,
-          `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE p.zona_id = ? AND p.estado = ?${tras}
+          `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE p.zona_id = ? AND p.estado = ?${tras}${alc}
             ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
           p.zona,
           e,
           ...trasValores,
+          ...alcValores,
           POR_PAGINA + 1,
         ),
       ),
@@ -761,10 +771,11 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
     // 3b. Vivos de todas las ciudades: son pocos (el Manager cierra los viejos); por el estado.
     const ids = await todas(
       db,
-      `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE p.estado IN (${marcas(estados.length)})${tras}
+      `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE p.estado IN (${marcas(estados.length)})${tras}${alc}
         ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
       ...estados,
       ...trasValores,
+      ...alcValores,
       POR_PAGINA + 1,
     );
     filas = await detalles(db, ids, direccion);
@@ -772,10 +783,11 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
     // 3c. Cerrados o todos, de todas las ciudades: por la fecha (casi todo coincide).
     const ids = await todas(
       db,
-      `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE +p.estado IN (${marcas(estados.length)})${tras}
+      `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE +p.estado IN (${marcas(estados.length)})${tras}${alc}
         ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
       ...estados,
       ...trasValores,
+      ...alcValores,
       POR_PAGINA + 1,
     );
     filas = await detalles(db, ids, direccion);

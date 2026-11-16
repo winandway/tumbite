@@ -1493,6 +1493,92 @@ CREATE TABLE IF NOT EXISTS acciones_equipo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS acciones_equipo_usuario ON acciones_equipo(usuario_id, id);
+-- C-PERMISOS-FINOS (MON-5, 15 nov 2026): permisos con nombre fino agrupados en plantillas de puesto.
+-- Las plantillas de fábrica viven en el código (packages/compartido/src/permisosInternos.ts); aquí
+-- solo las creadas por el equipo y las de fábrica que alguien editó (misma id, sistema = 1).
+CREATE TABLE IF NOT EXISTS plantillas_internas (
+  id TEXT PRIMARY KEY,
+  nombre_es TEXT NOT NULL,
+  nombre_en TEXT NOT NULL,
+  descripcion_es TEXT NOT NULL DEFAULT '',
+  descripcion_en TEXT NOT NULL DEFAULT '',
+  permisos_json TEXT NOT NULL DEFAULT '[]',
+  topes_json TEXT,
+  sistema INTEGER NOT NULL DEFAULT 0,
+  creado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- El estado de cada persona del equipo (sin fila = activa, como siempre). Suspender o retirar
+-- cierra sus sesiones; el dueño (ADMIN_CORREOS) nunca queda fuera.
+CREATE TABLE IF NOT EXISTS equipo_cuentas (
+  usuario_id TEXT PRIMARY KEY REFERENCES usuarios(id),
+  estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'suspendido', 'retirado')),
+  motivo TEXT NOT NULL DEFAULT '',
+  invitado_por TEXT REFERENCES usuarios(id),
+  ultima_entrada_en TEXT,
+  actualizado_por TEXT REFERENCES usuarios(id),
+  actualizado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+-- Una fila por persona y plantilla: alcance (países, ciudades, servicios) y vencimiento opcional.
+CREATE TABLE IF NOT EXISTS asignaciones_internas (
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  plantilla_id TEXT NOT NULL,
+  alcance_json TEXT NOT NULL DEFAULT '{}',
+  vence_en TEXT,
+  motivo TEXT NOT NULL DEFAULT '',
+  asignado_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, plantilla_id)
+) WITHOUT ROWID;
+-- Un permiso de más o de menos para una persona concreta, siempre con su motivo.
+CREATE TABLE IF NOT EXISTS permisos_persona (
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  permiso TEXT NOT NULL,
+  tipo TEXT NOT NULL CHECK (tipo IN ('extra', 'quitado')),
+  motivo TEXT NOT NULL,
+  puesto_por TEXT REFERENCES usuarios(id),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, permiso)
+) WITHOUT ROWID;
+-- Invitaciones de un solo uso para entrar al equipo. Solo se guarda la huella del código.
+CREATE TABLE IF NOT EXISTS invitaciones_equipo (
+  id TEXT PRIMARY KEY,
+  codigo_hash TEXT NOT NULL UNIQUE,
+  correo TEXT NOT NULL COLLATE NOCASE,
+  nombre TEXT NOT NULL,
+  plantillas_json TEXT NOT NULL,
+  alcance_json TEXT NOT NULL DEFAULT '{}',
+  vence_acceso_en TEXT,
+  motivo TEXT NOT NULL,
+  idioma TEXT NOT NULL DEFAULT 'en',
+  invitado_por TEXT NOT NULL REFERENCES usuarios(id),
+  expira_en TEXT NOT NULL,
+  aceptada_en TEXT,
+  usuario_id TEXT REFERENCES usuarios(id),
+  cancelada_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Lo que VIO cada persona del equipo: una foto de evidencia, un teléfono o correo desenmascarado,
+-- el chat de un pedido. Nunca el dato: solo quién, qué objeto, qué tipo, con qué permiso y cuándo.
+-- Se guarda 90 días (la limpieza de fotos borra lo viejo por la llave, sin índice por fecha).
+CREATE TABLE IF NOT EXISTS accesos_sensibles (
+  id INTEGER PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  objeto TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  permiso TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS accesos_sensibles_usuario ON accesos_sensibles(usuario_id, id);
+-- Segundo factor del equipo (apagado de fábrica): el código de un solo uso de cada sesión.
+CREATE TABLE IF NOT EXISTS segundo_factor_codigos (
+  sesion_id TEXT PRIMARY KEY,
+  codigo_hash TEXT NOT NULL,
+  expira_en TEXT NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0
+) WITHOUT ROWID;
 -- C-FILTROS-GUARDADOS (15 nov 2026): los filtros de cada pantalla del superadmin, por empleado
 -- (ciudad, estado, orden…; nunca el texto buscado ni datos personales). Una fila por empleado y
 -- pantalla, WITHOUT ROWID: cambiar un filtro escribe UNA fila y mirar no escribe nada.

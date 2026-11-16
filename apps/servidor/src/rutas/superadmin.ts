@@ -15,6 +15,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { alcancePedidos } from '../accesoInterno';
 
 /**
  * Superadmin a escala (pensado para millones de cuentas): ciudades, repartidores con su ID
@@ -720,10 +721,11 @@ async function kycResumen(db: D1Database, usuarioId: string) {
 superadmin.get('/admin/pedidos', async (c) => {
   exigir(c, 'admin');
   return c.json(
-    await listarPedidosAdmin(
-      base(c),
-      parametrosLista((k) => c.req.query(k)),
-    ),
+    await listarPedidosAdmin(base(c), {
+      ...parametrosLista((k) => c.req.query(k)),
+      // C-PERMISOS-FINOS: solo los pedidos de la zona de trabajo de quien mira.
+      alcance: alcancePedidos(c),
+    }),
   );
 });
 

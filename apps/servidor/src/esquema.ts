@@ -262,6 +262,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['vehiculos', 'con_cajon', 'INTEGER NOT NULL DEFAULT 0'],
   // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
   ...COLUMNAS_RESUMEN_CATALOGO,
+  // C-PERMISOS-FINOS (15 nov 2026): los permisos efectivos del equipo, calculados una vez por sesión
+  // (cargarSesion ya lee la sesión: comprobar un permiso no cuesta lecturas), y cuándo confirmó el
+  // segundo factor esa sesión.
+  ['sesiones', 'permisos_json', 'TEXT'],
+  ['sesiones', 'segundo_factor_en', 'TEXT'],
 ];
 
 /**

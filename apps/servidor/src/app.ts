@@ -58,6 +58,8 @@ import { erroresApp } from './rutas/erroresApp';
 import { referidos } from './referidos';
 import { franquicias } from './rutas/franquicias';
 import { superadmin } from './rutas/superadmin';
+import { equipoInterno } from './rutas/equipoInterno';
+import { segundoFactor } from './segundoFactor';
 import { buscadorInterno } from './rutas/buscadorInterno';
 import { preferenciasInternas } from './rutas/preferenciasInternas';
 import { kyc } from './rutas/kyc';
@@ -235,6 +237,7 @@ app.use('/datos/cuentas/registro', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/cuentas/recuperar', limiteIntentosPersistente(5, 60_000));
 app.use('/datos/cuentas/confirmar/reenviar', limiteIntentos(3, 60_000));
 app.use('/datos/cuentas/restablecer', limiteIntentosPersistente(10, 60_000));
+app.use('/datos/equipo-interno/invitacion/*', limiteIntentosPersistente(10, 60_000));
 app.use('/datos/mi-restaurante/fotos', limiteIntentos(30, 60_000));
 app.use('/datos/viajes/cotizar', limiteIntentos(30, 60_000));
 // C-VIAJE-PARADAS: mirar o cambiar las paradas pide una ruta cada vez (como cotizar).
@@ -614,6 +617,9 @@ app.route('/datos', flota);
 app.route('/datos', cancelaciones);
 app.route('/datos', ciudadesWeb);
 app.route('/datos', equipo);
+// C-PERMISOS-FINOS (MON-5, 15 nov 2026): equipo interno, invitaciones, «Ver dato» y segundo factor.
+app.route('/datos', equipoInterno);
+app.route('/datos', segundoFactor);
 // C-BUSCADOR-SERIO y C-FILTROS-GUARDADOS (15 nov 2026): el buscador y los filtros del superadmin.
 app.route('/datos', buscadorInterno);
 app.route('/datos', preferenciasInternas);

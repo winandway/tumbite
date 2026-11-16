@@ -45,7 +45,8 @@ describe('C-ROLES-INTERNOS', () => {
       ayudante.token,
     );
     expect(dinero.estado).toBe(403);
-    expect(dinero.datos.error).toMatch(/Soporte|Support/);
+    // C-PERMISOS-FINOS: el mensaje dice que su acceso no lo incluye y a quién pedírselo.
+    expect(dinero.datos.error).toMatch(/no incluye|doesn’t include/);
     // Ni el equipo.
     expect(
       (

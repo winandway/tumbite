@@ -21,6 +21,7 @@ import { SOY_CONTACTO, topeReembolsoSinRevision } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { rutaSuperadmin } from '../superadmin';
+import { accesoDe, filtroAlcance, servicioTicketSql } from '../accesoInterno';
 
 /**
  * Tickets (como en YaDominios Cloud): cada formulario abre una conversación. La persona recibe por
@@ -735,6 +736,15 @@ tickets.get('/admin/tickets', async (c) => {
     filtros.push('asignado_a = ?');
     valores.push(u.id);
   } else if (asignado === 'sin') filtros.push('asignado_a IS NULL');
+  // C-PERMISOS-FINOS: solo los tickets de la zona de trabajo y servicios de quien mira.
+  const alc = filtroAlcance(accesoDe(c), {
+    zona: 'zona_id',
+    servicio: servicioTicketSql('tickets'),
+  });
+  if (alc.sql) {
+    filtros.push(alc.sql.replace(/^ AND /, ''));
+    valores.push(...(alc.valores as string[]));
+  }
   const { results } = await base(c)
     .prepare(
       `SELECT id, tipo, estado, nombre, correo, telefono, pais, ciudad, asunto, zona_id AS zonaId, pedido_id AS pedidoId,
@@ -749,7 +759,8 @@ tickets.get('/admin/tickets', async (c) => {
     .bind(...valores)
     .all();
   const { results: totales } = await base(c)
-    .prepare('SELECT estado, COUNT(*) AS n FROM tickets GROUP BY estado')
+    .prepare(`SELECT estado, COUNT(*) AS n FROM tickets WHERE 1 = 1${alc.sql} GROUP BY estado`)
+    .bind(...alc.valores)
     .all<{ estado: string; n: number }>();
   return c.json({
     tickets: results,

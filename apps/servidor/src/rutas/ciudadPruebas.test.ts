@@ -87,7 +87,8 @@ describe('C-CIUDAD-PRUEBAS', () => {
         .datos.estado,
     ).toBe('corriendo');
 
-    // Mirar no escribe ni una fila.
+    // Mirar no escribe ni una fila (la sesión del equipo ya entró con sus permisos calculados).
+    await m.sesionLista(admin.token);
     const contada = contarFilas(m.DB);
     const res = await app.request(
       'https://staging.tumbite.com/datos/admin/ciudad-pruebas',

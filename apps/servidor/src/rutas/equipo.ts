@@ -1,8 +1,30 @@
 import { Hono, type MiddlewareHandler } from 'hono';
 import { z } from 'zod';
-import { PERFILES_INTERNOS, type PerfilInterno, permiteAccionInterna } from '@tumbite/compartido';
+import {
+  PERFILES_INTERNOS,
+  PERMISOS_INTERNOS,
+  type PerfilInterno,
+  type ServicioAlcance,
+  alcanceEsTotal,
+  esDelicado,
+  permisoDeRuta,
+  puedeVer,
+} from '@tumbite/compartido';
 import type { Env } from '../env';
-import { type Variables, base, exigir } from '../sesion';
+import { type Ctx, type Variables, base, exigir } from '../sesion';
+import {
+  type AccesoEnSesion,
+  accesoDe,
+  esDueno,
+  renovarSesionesDe,
+  servicioTicketSql,
+  dentroDelAlcance,
+  enmascararRespuesta,
+  servicioOperacionSql,
+  servicioPedidoSql,
+  tienePermiso,
+} from '../accesoInterno';
+import { exigirSegundoFactor } from '../segundoFactor';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { TIPOS_AVISO_EQUIPO } from '../avisosEquipo';
 
@@ -21,16 +43,15 @@ export async function perfilDe(db: D1Database, usuarioId: string): Promise<Perfi
   return f?.perfil ?? 'total';
 }
 
-const NOMBRE = new Map<PerfilInterno, string>(
-  Object.entries({
-    total: 'Total',
-    soporte: 'Soporte',
-    finanzas: 'Finanzas',
-    lectura: 'Solo lectura',
-  }) as [PerfilInterno, string][],
-);
-
-/** Va delante de todas las rutas /datos/admin/*: frena lo que el perfil no permite y anota los cambios. */
+/**
+ * C-PERMISOS-FINOS (MON-5, 15 nov 2026): va delante de TODAS las rutas /datos/admin/*. Cada ruta
+ * declara su permiso en `PERMISOS_RUTAS_ADMIN` (compartido, un solo lugar), también las lecturas; la
+ * persona lo tiene o recibe 403. Los permisos vienen de la sesión (cero lecturas de más). Además:
+ * - fichas de pedidos, tickets y viajes fuera del alcance (ciudad, país, servicio) → 404;
+ * - con el segundo factor encendido, los permisos delicados piden el código;
+ * - teléfonos y correos salen enmascarados en las respuestas (se ven con «Ver dato» y su permiso);
+ * - cada cambio queda en `acciones_equipo` (C-ROLES-INTERNOS).
+ */
 export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Variables }> = async (
   c,
   next,
@@ -38,16 +59,29 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
   const u = c.get('usuario');
   if (!u || u.rol !== 'admin' || !c.env.DB) return next();
   const db = c.env.DB;
-  const perfil = await perfilDe(db, u.id);
+  const acceso = u.interno;
   const metodo = c.req.method;
-  if (!permiteAccionInterna(perfil, metodo, c.req.path))
+  const ruta = permisoDeRuta(metodo, c.req.path);
+  // Una ruta sin permiso declarado no se abre a nadie (la prueba del mapa la pone en rojo antes).
+  if (!ruta)
     throw new ErrorDatos(
-      `Tu perfil del equipo (${NOMBRE.get(perfil) ?? perfil}) no permite este cambio. Pídeselo a una cuenta con perfil Total.`,
+      'Esta ruta del equipo no tiene permiso declarado. Avísale al equipo técnico.',
       undefined,
       403,
     );
+  if (!puedeVer(acceso, ruta.permiso))
+    throw new ErrorDatos(
+      'Tu acceso del equipo no incluye esto. Pídeselo a quien gestiona el equipo.',
+      'permiso',
+      403,
+    );
+  if (acceso && esDelicado(ruta.permiso)) await exigirSegundoFactor(c, acceso);
+  await comprobarAlcanceDeFicha(c, db, ruta.patron);
   await next();
-  if (metodo === 'GET' || metodo === 'HEAD') return;
+  if (metodo === 'GET' || metodo === 'HEAD') {
+    await enmascararSiToca(c, ruta.patron);
+    return;
+  }
   // C-CIUDAD-JUEGO: el latido de la ciudad de pruebas llega cada pocos segundos mientras la
   // pantalla está abierta; anotarlo sería una fila por latido (encender y apagar sí se anotan).
   if (c.req.path === '/datos/admin/ciudad-pruebas/latido') return;
@@ -58,10 +92,92 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
     .prepare(
       'INSERT INTO acciones_equipo (usuario_id, perfil, metodo, ruta, estado) VALUES (?, ?, ?, ?, ?)',
     )
-    .bind(u.id, perfil, metodo, c.req.path.slice(0, 300), c.res.status)
+    .bind(u.id, origenCorto(acceso), metodo, c.req.path.slice(0, 300), c.res.status)
     .run()
     .catch((e: unknown) => console.error('equipo: no se pudo anotar la acción', e));
 };
+
+/** Lo que se anota como «perfil» en el registro: el viejo o las plantillas de la persona. */
+function origenCorto(acceso: AccesoEnSesion | undefined): string {
+  if (!acceso) return 'total';
+  if (acceso.dueno) return 'total';
+  if (acceso.origen.startsWith('legado:')) return acceso.origen.slice('legado:'.length);
+  const plantillas = new Set(Object.values(acceso.fuentes).flat());
+  return [...plantillas].join('+').slice(0, 60) || 'ninguna';
+}
+
+/** Rutas cuyas respuestas no se enmascaran: las del propio equipo (son cuentas internas). */
+const SIN_ENMASCARAR = [
+  '/admin/equipo',
+  '/admin/mis-avisos',
+  '/admin/preferencias',
+  '/admin/ruta',
+  '/admin/franquicias',
+];
+
+async function enmascararSiToca(c: Ctx, patron: string) {
+  if (SIN_ENMASCARAR.some((p) => patron === p || patron.startsWith(`${p}/`))) return;
+  if (!(c.res.headers.get('content-type') ?? '').includes('application/json')) return;
+  // Quien atiende emergencias de viaje necesita llamar: ve el contacto de quien pidió ayuda.
+  const conservar = new Set<string>(
+    patron === '/admin/viajes' && tienePermiso(c, 'viajes.emergencias') ? ['emergencias'] : [],
+  );
+  let cuerpo: unknown;
+  try {
+    cuerpo = await c.res.clone().json();
+  } catch {
+    return;
+  }
+  const limpio = enmascararRespuesta(cuerpo, conservar);
+  const headers = new Headers(c.res.headers);
+  headers.delete('content-length');
+  c.res = new Response(JSON.stringify(limpio), { status: c.res.status, headers });
+}
+
+/** Ficha de un pedido, ticket o viaje fuera del alcance de la persona: como si no existiera. */
+async function comprobarAlcanceDeFicha(c: Ctx, db: D1Database, patron: string) {
+  const acceso = accesoDe(c);
+  if (!acceso || alcanceEsTotal(acceso.alcance)) return;
+  const partes = c.req.path.split('/').filter(Boolean);
+  const id = partes.at(3) ?? '';
+  let fila: { zona: string | null; pais: string | null; servicio: string | null } | null;
+  if (patron.startsWith('/admin/pedidos/:id'))
+    fila = await db
+      .prepare(
+        `SELECT p.zona_id AS zona, z.pais, ${servicioPedidoSql('r.tipo_comercio')} AS servicio
+           FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
+           LEFT JOIN zonas z ON z.id = p.zona_id WHERE p.id = ?`,
+      )
+      .bind(id)
+      .first();
+  else if (patron.startsWith('/admin/tickets/:id'))
+    fila = await db
+      .prepare(
+        `SELECT t.zona_id AS zona, z.pais, ${servicioTicketSql('t')} AS servicio
+           FROM tickets t LEFT JOIN zonas z ON z.id = t.zona_id WHERE t.id = ?`,
+      )
+      .bind(id)
+      .first();
+  else if (patron.startsWith('/admin/viajes/:id'))
+    fila = await db
+      .prepare(
+        `SELECT o.zona_id AS zona, z.pais, ${servicioOperacionSql('o.servicio_id')} AS servicio
+           FROM operaciones o LEFT JOIN zonas z ON z.id = o.zona_id WHERE o.id = ?`,
+      )
+      .bind(id)
+      .first();
+  else return;
+  // Si no existe, la propia ruta dirá «no existe»; si existe y no le toca, lo mismo.
+  if (
+    fila &&
+    !dentroDelAlcance(acceso, {
+      zona: fila.zona,
+      pais: fila.pais,
+      servicio: (fila.servicio as ServicioAlcance | null) ?? null,
+    })
+  )
+    throw new ErrorDatos('Eso no existe o no está en tu zona de trabajo.', undefined, 404);
+}
 
 equipo.get('/admin/equipo', async (c) => {
   const u = exigir(c, 'admin');
@@ -90,8 +206,8 @@ equipo.get('/admin/equipo/acciones', async (c) => {
 equipo.put('/admin/equipo/:id', async (c) => {
   const u = exigir(c, 'admin');
   const db = base(c);
-  if ((await perfilDe(db, u.id)) !== 'total')
-    throw new ErrorDatos('Solo una cuenta con perfil Total cambia los perfiles.', undefined, 403);
+  // El perfil viejo vale para las cuentas sin plantillas nuevas. Dar «Total» exige tenerlo todo
+  // (nadie da más permisos de los que tiene); el permiso de la ruta ya es `equipo.gestionar`.
   const id = c.req.param('id');
   if (id === u.id)
     throw new ErrorDatos(
@@ -100,18 +216,29 @@ equipo.put('/admin/equipo/:id', async (c) => {
       409,
     );
   const { perfil } = await leerCuerpo(c, z.object({ perfil: z.enum(PERFILES_INTERNOS) }));
+  if (perfil === 'total' && (u.interno?.permisos.length ?? 0) < PERMISOS_INTERNOS.length)
+    throw new ErrorDatos(
+      'No puedes dar más permisos de los que tienes. Pídeselo a una cuenta con acceso Total.',
+      undefined,
+      403,
+    );
   const destino = await db
-    .prepare("SELECT id FROM usuarios WHERE id = ? AND rol = 'admin'")
+    .prepare("SELECT id, correo FROM usuarios WHERE id = ? AND rol = 'admin'")
     .bind(id)
-    .first();
+    .first<{ id: string; correo: string }>();
   if (!destino) throw new ErrorDatos('Esa cuenta no es del equipo.', undefined, 404);
-  await db
-    .prepare(
-      `INSERT INTO perfiles_internos (usuario_id, perfil, actualizado_por) VALUES (?, ?, ?)
-       ON CONFLICT(usuario_id) DO UPDATE SET perfil = excluded.perfil, actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now')`,
-    )
-    .bind(id, perfil, u.id)
-    .run();
+  if (esDueno(c.env, destino.correo))
+    throw new ErrorDatos('La cuenta del dueño siempre tiene acceso Total.', undefined, 409);
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO perfiles_internos (usuario_id, perfil, actualizado_por) VALUES (?, ?, ?)
+         ON CONFLICT(usuario_id) DO UPDATE SET perfil = excluded.perfil, actualizado_por = excluded.actualizado_por, actualizado_en = datetime('now')`,
+      )
+      .bind(id, perfil, u.id),
+    // C-PERMISOS-FINOS: el cambio vale desde su próxima petición, sin esperar a que vuelva a entrar.
+    renovarSesionesDe(db, id),
+  ]);
   return c.json({ ok: true, id, perfil });
 });
 
