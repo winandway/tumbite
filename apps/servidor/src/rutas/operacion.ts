@@ -1,3 +1,4 @@
+import { avisarAutorizacionesPorVencer } from '../autorizacionVencida';
 import { flotasActivas } from './flota';
 import { TAREA_VIAJES_PROGRAMADOS } from './viajesProgramados';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
@@ -3036,6 +3037,16 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   { nombre: 'platos_vuelven', critica: false, correr: (_env, db) => volverPlatosAgotados(db) },
   // C-COBRO-AL-ENTREGAR: termina los cobros de entregas que Stripe no pudo capturar en el momento.
   { nombre: 'liquidaciones', critica: true, correr: (env, db) => liquidarPendientes(env, db) },
+  // C-AUTORIZACION-VENCIDA: avisa al equipo de dinero, UNA vez por pedido, cuando un pedido abierto
+  // lleva 96 horas con la tarjeta autorizada sin capturar (antes de que Stripe la suelte). Como
+  // mucho 25 filas de bitácora por vuelta; una vuelta sin pedidos nuevos no escribe nada.
+  {
+    nombre: 'autorizaciones_por_vencer',
+    critica: false,
+    cada: 'hora',
+    escriturasEsperadas: 25,
+    correr: (env, db) => avisarAutorizacionesPorVencer(env, db),
+  },
   {
     nombre: 'sin_repartidor',
     critica: false,

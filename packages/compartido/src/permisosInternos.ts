@@ -53,6 +53,9 @@ export const PERMISOS_INTERNOS = [
   'dinero.ver',
   'dinero.solicitar',
   'dinero.reembolsar',
+  // C-AUTORIZACION-VENCIDA (16 nov 2026): volver a cobrar o cerrar sin cobro una entrega cuya
+  // autorización de tarjeta venció antes de capturarse.
+  'dinero.resolver_autorizacion',
   'dinero.aprobar',
   'dinero.conciliar',
   'dinero.configurar',
@@ -87,6 +90,7 @@ export const PERMISOS_DELICADOS: readonly PermisoInterno[] = [
   'clientes.datos_personales',
   'dinero.solicitar',
   'dinero.reembolsar',
+  'dinero.resolver_autorizacion',
   'dinero.aprobar',
   'dinero.conciliar',
   'dinero.configurar',
@@ -103,6 +107,7 @@ export const PERMISOS_QUE_MUEVEN_DINERO: readonly string[] = [
   'pedidos.devolver',
   'dinero.reembolsar',
   'dinero.solicitar',
+  'dinero.resolver_autorizacion',
 ];
 export function mueveDinero(permisos: readonly string[]): boolean {
   return permisos.some((p) => PERMISOS_QUE_MUEVEN_DINERO.includes(p));
@@ -177,6 +182,7 @@ const SUPERVISOR: readonly PermisoInterno[] = [
   ...SOPORTE_2,
   'dinero.ver',
   'dinero.aprobar',
+  'dinero.resolver_autorizacion',
   'tickets.configurar',
   'viajes.emergencias',
   'kyc.ver',
@@ -279,6 +285,7 @@ export const PLANTILLAS_SISTEMA: readonly PlantillaSistema[] = [
       'dinero.ver',
       'dinero.solicitar',
       'dinero.reembolsar',
+      'dinero.resolver_autorizacion',
       'dinero.aprobar',
       'dinero.conciliar',
       'dinero.configurar',
@@ -290,8 +297,8 @@ export const PLANTILLAS_SISTEMA: readonly PlantillaSistema[] = [
     id: 'supervisor',
     nombre: { es: 'Supervisor', en: 'Supervisor' },
     descripcion: {
-      es: 'Lo de Soporte nivel 2, más aprobar dinero con segunda firma, emergencias, verificaciones a la vista y el equipo a la vista.',
-      en: 'Support level 2, plus second-signature money approvals, emergencies, verifications and the team in view.',
+      es: 'Lo de Soporte nivel 2, más aprobar dinero con segunda firma, resolver autorizaciones de tarjeta vencidas, emergencias, verificaciones a la vista y el equipo a la vista.',
+      en: 'Support level 2, plus second-signature money approvals, resolving expired card authorizations, emergencies, verifications and the team in view.',
     },
     permisos: conDecisiones('supervisor', SUPERVISOR),
     topes: CONFIG_PERMISOS.topes.supervisor,
@@ -635,6 +642,10 @@ export const NOMBRES_PERMISOS: Record<PermisoInterno, { es: string; en: string }
   'dinero.ver': { es: 'Ver dinero', en: 'See money' },
   'dinero.solicitar': { es: 'Pedir movimientos de dinero', en: 'Request money moves' },
   'dinero.reembolsar': { es: 'Reembolsos y ajustes', en: 'Refunds and adjustments' },
+  'dinero.resolver_autorizacion': {
+    es: 'Resolver autorizaciones de tarjeta vencidas',
+    en: 'Resolve expired card authorizations',
+  },
   'dinero.aprobar': { es: 'Aprobar con segunda firma', en: 'Give the second signature' },
   'dinero.conciliar': { es: 'Conciliar', en: 'Reconcile' },
   'dinero.configurar': { es: 'Configurar dinero y países', en: 'Money and country settings' },

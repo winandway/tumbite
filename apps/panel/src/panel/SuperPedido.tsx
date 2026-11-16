@@ -1,4 +1,5 @@
 import { SolicitudCancelacion } from './SolicitudCancelacion';
+import { ResolverAutorizacion } from './ResolverAutorizacion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ErrorApi,
@@ -340,6 +341,11 @@ export const EVENTOS_PEDIDO = {
     repartidor_solto: 'El repartidor soltó el pedido',
     foto_ticket: 'Foto del ticket del local',
     gps_simulado: 'GPS simulado detectado (no se contó)',
+    autorizacion_por_vencer: 'Aviso: la autorización de la tarjeta está por vencer',
+    autorizacion_cobrada:
+      'Soporte volvió a cobrar con la tarjeta guardada (la autorización venció)',
+    autorizacion_sin_cobro: 'Soporte lo cerró sin cobro (la autorización venció)',
+    cobro_reautorizado: 'La tarjeta se volvió a autorizar con un pago nuevo',
   },
   en: {
     repartidor_acepto: 'The driver accepted the offer',
@@ -365,6 +371,10 @@ export const EVENTOS_PEDIDO = {
     repartidor_solto: 'The driver released the order',
     foto_ticket: 'Photo of the store receipt',
     gps_simulado: 'Simulated GPS detected (not counted)',
+    autorizacion_por_vencer: 'Alert: the card authorization is about to expire',
+    autorizacion_cobrada: 'Support charged the saved card again (the authorization expired)',
+    autorizacion_sin_cobro: 'Support closed it without charging (the authorization expired)',
+    cobro_reautorizado: 'The card was authorized again with a new payment',
   },
 };
 
@@ -429,6 +439,8 @@ type Pedido = {
     confirmadoPor: string | null;
   };
   tickets?: { id: string; asunto: string; estado: string; creadoEn: string }[];
+  /** C-AUTORIZACION-VENCIDA: el cobro de la entrega (capturada, en revisión, sin cobro…). */
+  liquidacion?: { estado: string; error: string | null } | null;
   excepcionUbicacion: {
     motivo: string;
     pedidaEn: string;
@@ -816,6 +828,14 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
           </ul>
         </section>
       </div>
+      {p.liquidacion?.estado === 'revision' ? (
+        <ResolverAutorizacion
+          pedidoId={id}
+          zona={zona}
+          idioma={idioma}
+          alResolver={() => void cargar()}
+        />
+      ) : null}
       {/* C-CANCELAR-LISTO: la cancelación que pidió el restaurante, para aprobar o rechazar. */}
       <SolicitudCancelacion pedidoId={id} idioma={idioma} alResolver={() => void cargar()} />
       {p.estado === 'entregado' || vivo || p.excepcionUbicacion ? (

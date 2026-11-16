@@ -7,6 +7,7 @@ import { crearStripe } from '../stripe';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
 import { liquidacionesParaRevisar, liquidar } from '../liquidaciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
+import { estadoAutorizacion } from '../autorizacionVencida';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const dinero = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -351,6 +352,69 @@ dinero.post('/admin/liquidaciones/:id/confirmar', async (c) => {
     monto: 0,
     motivo: 'Confirmar a mano un cobro en revisión',
     datos: { pedidoId: id },
+  });
+});
+
+/**
+ * C-AUTORIZACION-VENCIDA (16 nov 2026): resolver una entrega cuya autorización de tarjeta venció
+ * antes de capturarse, desde la ficha del pedido. El `:id` es el del pedido. La consulta solo lee;
+ * las dos decisiones pasan por el control dual por encima del límite (C-CONTROL-DUAL), quedan en
+ * `acciones_equipo` (lo anota el intermedio de permisos) y en la bitácora del pedido.
+ */
+dinero.get('/admin/liquidaciones/:id/autorizacion', async (c) => {
+  exigir(c, 'admin');
+  return c.json(await estadoAutorizacion(c.env, base(c), c.req.param('id')));
+});
+
+const esquemaNotaCobro = z.object({ nota: z.string().trim().max(500).optional().default('') });
+const esquemaNotaSinCobro = z.object({
+  nota: z
+    .string()
+    .trim()
+    .min(5, { error: 'Escribe en la nota por qué se cierra sin cobro.' })
+    .max(500),
+});
+
+/** Ya resuelta (otra pestaña, el doble clic): se devuelve como está, sin pedir otra firma. */
+async function resueltaAntes(db: D1Database, id: string, quiere: 'capturada' | 'no_aplica') {
+  const f = await db
+    .prepare('SELECT estado FROM liquidaciones WHERE pedido_id = ?')
+    .bind(id)
+    .first<{ estado: string }>();
+  if (!f) throw new ErrorDatos('Ese pedido no tiene un cobro de entrega.', undefined, 404);
+  if (f.estado === quiere) return { estado: f.estado, yaEstaba: true };
+  if (f.estado !== 'revision')
+    throw new ErrorDatos('Esta entrega no está en revisión.', undefined, 409);
+  return null;
+}
+
+dinero.post('/admin/liquidaciones/:id/autorizacion/cobrar', async (c) => {
+  const u = exigir(c, 'admin');
+  const id = c.req.param('id');
+  const { nota } = await leerCuerpo(c, esquemaNotaCobro);
+  const ya = await resueltaAntes(base(c), id, 'capturada');
+  if (ya) return c.json(ya);
+  return hacerOPedirAprobacion(c, {
+    tipo: 'autorizacion_cobrar',
+    objeto: id,
+    monto: 0,
+    motivo: nota || 'Volver a cobrar con la tarjeta guardada: la autorización venció',
+    datos: { pedidoId: id, nota, pidio: u.id },
+  });
+});
+
+dinero.post('/admin/liquidaciones/:id/autorizacion/sin-cobro', async (c) => {
+  const u = exigir(c, 'admin');
+  const id = c.req.param('id');
+  const { nota } = await leerCuerpo(c, esquemaNotaSinCobro);
+  const ya = await resueltaAntes(base(c), id, 'no_aplica');
+  if (ya) return c.json(ya);
+  return hacerOPedirAprobacion(c, {
+    tipo: 'autorizacion_sin_cobro',
+    objeto: id,
+    monto: 0,
+    motivo: `Cerrar sin cobro: ${nota}`,
+    datos: { pedidoId: id, nota, pidio: u.id },
   });
 });
 

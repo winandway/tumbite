@@ -13,8 +13,9 @@ import { ErrorDatos, leerCuerpo } from '../validar';
  * OTRA persona del equipo, como el «maker-checker» de los bancos y la separación de funciones que
  * pide la ley SOX [DOC]. Lo interno de DoorDash y Uber es [NV].
  *
- * - Cinco movimientos manuales: devolución de un pedido, reembolso de una recarga, ajuste de la
- *   billetera de una empresa, fondo de un punto de venta y confirmación a mano de un cobro.
+ * - Movimientos manuales: devolución de un pedido, reembolso de una recarga, ajuste de la billetera
+ *   de una empresa, fondo de un punto de venta, confirmación a mano de un cobro y la resolución de
+ *   una autorización de tarjeta vencida (volver a cobrar o cerrar sin cobro).
  * - Si el monto (en valor absoluto) pasa el umbral de su moneda, el movimiento NO se hace: queda
  *   «pendiente» en `aprobaciones_dinero` y la respuesta es 202 con el aviso en palabras.
  * - Lo aprueba una cuenta con perfil Total o Finanzas que NO sea quien lo pidió, con su contraseña.
@@ -36,6 +37,10 @@ export const TIPOS_DUAL = [
   'excusa_conciliacion',
   // Flex Fase 7 (C-FLEX-RECARGA-LOCAL): acreditar una recarga de empresa pagada fuera de Stripe.
   'recarga_local',
+  // C-AUTORIZACION-VENCIDA (16 nov 2026): volver a cobrar con la tarjeta guardada una entrega cuya
+  // autorización venció, o cerrarla sin cobro (Divoox asume el monto). Las dos por encima del límite.
+  'autorizacion_cobrar',
+  'autorizacion_sin_cobro',
 ] as const;
 export type TipoDual = (typeof TIPOS_DUAL)[number];
 
@@ -205,6 +210,19 @@ export async function ejecutarDual(
       const { acreditarRecargaLocal } = await import('../flex/recargasLocales');
       return acreditarRecargaLocal(db, texto(d, 'recargaId'), aprobadorId ?? actorId);
     }
+    case 'autorizacion_cobrar':
+    case 'autorizacion_sin_cobro': {
+      const { volverACobrar, cerrarSinCobro } = await import('../autorizacionVencida');
+      const decision = {
+        pedidoId: texto(d, 'pedidoId'),
+        nota: texto(d, 'nota'),
+        actorId,
+        aprobadorId: aprobadorId ?? null,
+      };
+      return tipo === 'autorizacion_cobrar'
+        ? volverACobrar(env, db, decision)
+        : cerrarSinCobro(env, db, decision);
+    }
     case 'umbral': {
       const pedidos = z
         .record(z.string(), z.number().int().min(0))
@@ -240,6 +258,16 @@ async function monedaYMonto(
     const caso = await casoPorClave(db, objeto);
     if (!caso) return null;
     return { moneda: caso.moneda || 'USD', monto: Number(caso.montos.porDevolver ?? 0) };
+  }
+  if (tipo === 'autorizacion_cobrar' || tipo === 'autorizacion_sin_cobro') {
+    // Lo que se cobra (o se deja de cobrar) es el monto de la entrega en revisión, no uno escrito.
+    const l = await db
+      .prepare(
+        "SELECT p.moneda, l.monto FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.estado = 'revision'",
+      )
+      .bind(objeto)
+      .first<{ moneda: string | null; monto: number }>();
+    return l ? { moneda: l.moneda || 'USD', monto: Number(l.monto) } : null;
   }
   const f =
     tipo === 'devolucion_pedido'

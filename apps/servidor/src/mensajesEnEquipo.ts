@@ -113,4 +113,53 @@ export const MENSAJES_EN_EQUIPO: [string, string][] = [
   ['Ese código ya no sirve. Pide uno nuevo.', 'That code no longer works. Ask for a new one.'],
   ['El código no coincide.', 'The code doesn’t match.'],
   ['Escribe los 6 números del código.', 'Enter the 6 digits of the code.'],
+  // C-AUTORIZACION-VENCIDA (16 nov 2026): resolver una autorización de tarjeta vencida.
+  ['Ese pedido no tiene un cobro de entrega.', 'That order has no delivery charge.'],
+  ['Esta entrega ya se resolvió de otra forma.', 'This delivery was already resolved another way.'],
+  ['Esta entrega no está en revisión.', 'This delivery isn’t under review.'],
+  ['Esta entrega no tiene un pago de Stripe.', 'This delivery has no Stripe payment.'],
+  ['Stripe no está configurado.', 'Stripe isn’t set up.'],
+  ['No pudimos consultar el pago en Stripe.', 'We couldn’t check the payment in Stripe.'],
+  [
+    'La autorización de este pago no venció: no hace falta volver a cobrar.',
+    'This payment’s authorization didn’t expire: there’s no need to charge again.',
+  ],
+  ['Este pedido no se pagó con tarjeta.', 'This order wasn’t paid by card.'],
+  [
+    'El cliente no dejó su tarjeta guardada para cobros futuros cuando pagó: no se le puede volver a cobrar sin él.',
+    'The customer didn’t save their card for future charges when paying: they can’t be charged again without them.',
+  ],
+  [
+    'El cliente ya no tiene guardada la tarjeta con la que pagó.',
+    'The customer no longer has the card they paid with saved.',
+  ],
+  [
+    'La tarjeta del pago no es de la cuenta del cliente de este pedido.',
+    'The payment card doesn’t belong to this order’s customer account.',
+  ],
+  ['La tarjeta guardada del cliente ya venció.', 'The customer’s saved card has expired.'],
+  [
+    'Este cobro ya se está haciendo. Espera unos segundos y vuelve a abrir la ficha.',
+    'This charge is already in progress. Wait a few seconds and reopen the order.',
+  ],
+  [
+    'La tarjeta del cliente rechazó el cobro. Ciérralo sin cobro o habla con el cliente.',
+    'The customer’s card declined the charge. Close it without charging or talk to the customer.',
+  ],
+  [
+    'No pudimos cobrar con la tarjeta guardada. Intenta de nuevo en unos minutos.',
+    'We couldn’t charge the saved card. Try again in a few minutes.',
+  ],
+  [
+    'El banco del cliente pide que él confirme el cobro: no se puede cobrar sin él. Ciérralo sin cobro o habla con el cliente.',
+    'The customer’s bank wants them to confirm the charge: it can’t be charged without them. Close it without charging or talk to the customer.',
+  ],
+  [
+    'Escribe en la nota por qué se cierra sin cobro.',
+    'Write in the note why it’s closed without a charge.',
+  ],
+  [
+    'Stripe no muestra este pago como vencido: no se puede cerrar sin cobro.',
+    'Stripe doesn’t show this payment as expired: it can’t be closed without a charge.',
+  ],
 ];

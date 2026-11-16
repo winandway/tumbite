@@ -223,8 +223,12 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
     ).run();
     await DB.exec('DROP TABLE aprobaciones_dinero');
     await DB.exec(
-      // Las tablas viejas de producción tampoco tenían «recarga_local» (Flex Fase 7).
-      APROBACIONES_DINERO_DDL.replace(", 'recarga_local'", '')
+      // Las tablas viejas de producción tampoco tenían «recarga_local» (Flex Fase 7) ni los de
+      // C-AUTORIZACION-VENCIDA (16 nov 2026).
+      APROBACIONES_DINERO_DDL.replace(
+        ", 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro'",
+        '',
+      )
         .replace(", 'excedente_devuelto', 'umbral', 'excusa_conciliacion'", '')
         .replace(/\n/g, ' '),
     );
@@ -249,7 +253,10 @@ describe('C-CONTROL-DUAL · arreglos de la revisión (SIG-4x)', () => {
     ).run();
     await DB.exec('DROP TABLE aprobaciones_dinero');
     await DB.exec(
-      APROBACIONES_DINERO_DDL.replace(", 'recarga_local'", '')
+      APROBACIONES_DINERO_DDL.replace(
+        ", 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro'",
+        '',
+      )
         .replace(", 'excusa_conciliacion'", '')
         .replace(/\n/g, ' '),
     );

@@ -2426,3 +2426,28 @@ body.modo-tableta .pd .pd-contenido {
     text-align: left;
   }
 }
+
+/* C-AUTORIZACION-VENCIDA: las dos salidas de una autorización vencida, lado a lado (una debajo de la
+   otra en el celular). Borde fino gris, sin franjas de color. */
+.resolver-opciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+.resolver-opcion {
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  padding: 14px;
+}
+.resolver-opcion h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.resolver-opcion textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.resolver-opcion .boton {
+  margin-top: 8px;
+}

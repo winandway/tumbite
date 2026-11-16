@@ -130,6 +130,10 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/liquidaciones': 'dinero.ver',
   'POST /admin/liquidaciones/:id/confirmar': 'dinero.conciliar',
   'POST /admin/liquidaciones/:id/reintentar': 'dinero.conciliar',
+  // C-AUTORIZACION-VENCIDA: la ficha del pedido consulta el cobro en Stripe (lectura) y lo resuelve.
+  'GET /admin/liquidaciones/:id/autorizacion': 'pedidos.ver',
+  'POST /admin/liquidaciones/:id/autorizacion/cobrar': 'dinero.resolver_autorizacion',
+  'POST /admin/liquidaciones/:id/autorizacion/sin-cobro': 'dinero.resolver_autorizacion',
   'GET /admin/paises/:pais': 'dinero.ver',
   'PUT /admin/paises/:pais': 'dinero.configurar',
   'GET /admin/puntos-venta': 'dinero.ver',
@@ -439,6 +443,10 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/liquidaciones': DINERO,
   'POST /admin/liquidaciones/:id/confirmar': DINERO,
   'POST /admin/liquidaciones/:id/reintentar': DINERO,
+  // El `:id` de estas tres es el del PEDIDO: se abren solo si el pedido está en la zona de quien mira.
+  'GET /admin/liquidaciones/:id/autorizacion': ficha('pedido'),
+  'POST /admin/liquidaciones/:id/autorizacion/cobrar': ficha('pedido'),
+  'POST /admin/liquidaciones/:id/autorizacion/sin-cobro': ficha('pedido'),
   'GET /admin/paises/:pais': DINERO,
   'PUT /admin/paises/:pais': DINERO,
   'GET /admin/puntos-venta': DINERO,

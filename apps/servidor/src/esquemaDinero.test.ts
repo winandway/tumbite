@@ -11,9 +11,22 @@ import {
  * tipo «recarga_local»: se rehace una sola vez sin perder filas.
  */
 describe('aprobaciones_dinero acepta «recarga_local» sin perder filas', () => {
+  it('la tabla que ya acepta «recarga_local» pero no «autorizacion_sin_cobro» también se rehace', () => {
+    // C-AUTORIZACION-VENCIDA (16 nov 2026): la de producción del 13 nov no acepta los tipos nuevos.
+    const del13 = APROBACIONES_DINERO_DDL.replace(
+      ", 'autorizacion_cobrar', 'autorizacion_sin_cobro'",
+      '',
+    );
+    expect(aprobacionesViejas(del13)).toBe(true);
+    expect(aprobacionesViejas(APROBACIONES_DINERO_DDL)).toBe(false);
+  });
+
   it('rehace la tabla vieja y conserva lo que había', async () => {
     const db = crearBasePruebas();
-    const vieja = APROBACIONES_DINERO_DDL.replace(", 'recarga_local'", '');
+    const vieja = APROBACIONES_DINERO_DDL.replace(
+      ", 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro'",
+      '',
+    );
     expect(aprobacionesViejas(vieja)).toBe(true);
     await db.prepare('DROP TABLE aprobaciones_dinero').run();
     await db.prepare(vieja).run();

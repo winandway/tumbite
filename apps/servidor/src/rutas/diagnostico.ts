@@ -1333,6 +1333,7 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
     detalle: JSON.stringify(libro.detalle),
   });
   const sel = `SELECT p.id, p.stripe_sesion AS pi, p.estado, c.capturado, c.capturado_en, c.cancelado_en,
+       (SELECT l.estado FROM liquidaciones l WHERE l.pedido_id = p.id) AS liquidacion,
        (SELECT COALESCE(SUM(dv.monto), 0) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS devuelto,
        (SELECT COUNT(*) FROM devoluciones dv WHERE dv.pedido_id = p.id) AS ndev
          FROM pedidos p JOIN cobros c ON c.pedido_id = p.id`;
@@ -1357,6 +1358,7 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
     capturado: number | null;
     capturado_en: string | null;
     cancelado_en: string | null;
+    liquidacion: string | null;
   }>();
   const difs: string[] = [];
   for (const f of results) {
@@ -1377,7 +1379,9 @@ diagnostico.post('/interno/diagnostico/conciliacion', async (c) => {
       if (!(rf.data ?? []).some((x) => x.status === 'succeeded' || x.status === 'pending'))
         difs.push(`${f.id}: cancelado y capturado sin reembolso en Stripe`);
     }
-    if (f.estado === 'entregado' && !f.capturado_en) difs.push(`${f.id}: entregado sin captura`);
+    // C-AUTORIZACION-VENCIDA: la entrega que soporte cerró sin cobro (con nota) no espera captura.
+    if (f.estado === 'entregado' && !f.capturado_en && f.liquidacion !== 'no_aplica')
+      difs.push(`${f.id}: entregado sin captura`);
     // LAN-2x · si se cambió la dirección con la tarjeta retenida, la autorización vieja tiene que
     // estar ANULADA en Stripe (si no, el cliente tiene dos retenciones).
     const { results: reaut } = await db

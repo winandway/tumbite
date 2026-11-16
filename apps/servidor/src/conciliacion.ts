@@ -33,7 +33,11 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
       `SELECT COUNT(*) AS n, COALESCE(SUM(total),0) AS total, COALESCE(SUM(pago_restaurante),0) AS rest,
         COALESCE(SUM(pago_repartidor),0) AS rep, COALESCE(SUM(propina),0) AS prop,
         COALESCE(SUM((SELECT b.centavos FROM bonos_pedido b WHERE b.pedido_id = pedidos.id)),0) AS bonos,
-        COALESCE(SUM(CASE WHEN EXISTS (SELECT 1 FROM cobros c WHERE c.pedido_id = pedidos.id) THEN total ELSE 0 END),0) AS total_con_cobro
+        -- C-AUTORIZACION-VENCIDA: una entrega cerrada sin cobro (la autorización venció y soporte la
+        -- cerró con nota) no espera captura en Stripe; su saldo anotado sí sigue en las reglas 1 y 2.
+        COALESCE(SUM(CASE WHEN EXISTS (SELECT 1 FROM cobros c WHERE c.pedido_id = pedidos.id)
+          AND NOT EXISTS (SELECT 1 FROM liquidaciones l WHERE l.pedido_id = pedidos.id AND l.estado = 'no_aplica')
+          THEN total ELSE 0 END),0) AS total_con_cobro
        FROM pedidos WHERE estado = 'entregado' AND date(entregado_en) = ? AND metodo_pago = 'tarjeta'`,
     )
     .bind(dia)
@@ -203,7 +207,8 @@ export async function conciliarPedidos(
       .prepare(
         `SELECT p.id, p.estado, p.metodo_pago, p.total, p.pago_restaurante, p.pago_repartidor,
            (SELECT b.centavos FROM bonos_pedido b WHERE b.pedido_id = p.id) AS bono,
-           (SELECT 1 FROM cobros c WHERE c.pedido_id = p.id) AS con_cobro,
+           (SELECT 1 FROM cobros c WHERE c.pedido_id = p.id
+              AND NOT EXISTS (SELECT 1 FROM liquidaciones l WHERE l.pedido_id = p.id AND l.estado = 'no_aplica')) AS con_cobro,
            (SELECT c.capturado FROM cobros c WHERE c.pedido_id = p.id AND c.capturado_en IS NOT NULL) AS capturado,
            (SELECT COALESCE(SUM(m.monto), 0) FROM movimientos m
              WHERE m.usuario_id = r.dueno_id AND m.pedido_id = p.id AND m.concepto = 'venta') AS venta,

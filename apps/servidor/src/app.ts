@@ -123,6 +123,7 @@ import { estadoRespaldo, fechaUltimoRespaldo, respaldo, ultimoErrorRespaldo } fr
 import { VERSION_SERVIDOR } from './version';
 import { saludTransiciones } from './esquemaPedidos';
 import { saludCobros } from './liquidaciones';
+import { saludAutorizaciones } from './autorizacionVencida';
 import { saludRutas } from './rutaPorCalles';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -414,6 +415,13 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.cobros = await saludCobros(c.env.DB).catch((e: unknown) => {
       console.error('salud: cobros', e);
+      return 'error' as const;
+    });
+  // C-AUTORIZACION-VENCIDA: un pedido abierto con la tarjeta autorizada hace 96 horas o más
+  // («pendiente»: a la vista para que alguien lo entregue o lo cancele antes de que venza).
+  if (c.env.DB)
+    piezas.autorizaciones = await saludAutorizaciones(c.env.DB).catch((e: unknown) => {
+      console.error('salud: autorizaciones', e);
       return 'error' as const;
     });
   // Flex · Fase 4: la última conciliación de las billeteras de empresa no encontró diferencias.

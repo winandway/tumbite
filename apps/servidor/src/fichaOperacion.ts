@@ -104,6 +104,23 @@ export type EvidenciaFicha = {
 
 const VIVOS_PEDIDO = ['pago_pendiente', 'pagado', 'aceptado', 'listo', 'en_camino'];
 
+/** La resolución de una autorización vencida, como la anota `autorizacionVencida.ts`. */
+function resolucionLegible(detalle: string | null) {
+  try {
+    const d = JSON.parse(detalle ?? '{}') as Record<string, unknown>;
+    const por = typeof d.por === 'string' ? d.por : null;
+    const aprobo = typeof d.aprobo === 'string' ? d.aprobo : null;
+    return {
+      cobrada: d.decision === 'cobrado_de_nuevo',
+      quien: por && aprobo ? `${por} + ${aprobo}` : por,
+      nota: typeof d.nota === 'string' && d.nota ? d.nota : null,
+    };
+  } catch {
+    console.error('ficha: resolución de autorización ilegible');
+    return { cobrada: false, quien: null, nota: null };
+  }
+}
+
 /** La ficha completa de un pedido para el superadmin. */
 export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()) {
   const p = await db
@@ -123,49 +140,55 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
   if (!p) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
   const repartidorId = texto(p.repartidor_id);
   const restauranteId = String(p.restaurante_id);
-  const [estados, manager, hitos, evidencias, oferta, excepcion, reclamos] = await Promise.all([
-    todas(
-      db,
-      `SELECT h.estado, h.creado_en, h.actor_id, COALESCE(u.nombre, r.nombre) AS quien, u.rol,
+  const [estados, manager, hitos, evidencias, oferta, excepcion, reclamos, liquidacion] =
+    await Promise.all([
+      todas(
+        db,
+        `SELECT h.estado, h.creado_en, h.actor_id, COALESCE(u.nombre, r.nombre) AS quien, u.rol,
           r.id AS es_restaurante
          FROM historial_estados h LEFT JOIN usuarios u ON u.id = h.actor_id
          LEFT JOIN restaurantes r ON r.id = h.actor_id
         WHERE h.pedido_id = ? ORDER BY h.id`,
-      id,
-    ),
-    todas(
-      db,
-      'SELECT evento, detalle, creado_en FROM bitacora_pedidos WHERE pedido_id = ? ORDER BY id',
-      id,
-    ),
-    todas(db, 'SELECT hito, valor, creado_en FROM hitos_pedido WHERE pedido_id = ?', id),
-    todas(
-      db,
-      `SELECT tipo, clave != '' AS con_foto, lat, lng, distancia_m, modo, nota, creada_en,
+        id,
+      ),
+      todas(
+        db,
+        'SELECT evento, detalle, creado_en FROM bitacora_pedidos WHERE pedido_id = ? ORDER BY id',
+        id,
+      ),
+      todas(db, 'SELECT hito, valor, creado_en FROM hitos_pedido WHERE pedido_id = ?', id),
+      todas(
+        db,
+        `SELECT tipo, clave != '' AS con_foto, lat, lng, distancia_m, modo, nota, creada_en,
           confirmada_en, borrada_en FROM evidencias WHERE pedido_id = ?`,
-      id,
-    ),
-    repartidorId
-      ? db
-          .prepare(
-            'SELECT km, respondida_en FROM ofertas WHERE pedido_id = ? AND repartidor_id = ?',
-          )
-          .bind(id, repartidorId)
-          .first<Fila>()
-      : Promise.resolve(null),
-    db
-      .prepare(
-        'SELECT motivo, creado_en, autorizado_en, autorizado_por FROM excepciones_ubicacion WHERE pedido_id = ?',
-      )
-      .bind(id)
-      .first<Fila>(),
-    // Por el índice parcial tickets_pedido (C-FICHA-OPERACION).
-    todas(
-      db,
-      'SELECT id, asunto, estado, tipo, creado_en FROM tickets WHERE pedido_id = ? ORDER BY creado_en DESC LIMIT 20',
-      id,
-    ),
-  ]);
+        id,
+      ),
+      repartidorId
+        ? db
+            .prepare(
+              'SELECT km, respondida_en FROM ofertas WHERE pedido_id = ? AND repartidor_id = ?',
+            )
+            .bind(id, repartidorId)
+            .first<Fila>()
+        : Promise.resolve(null),
+      db
+        .prepare(
+          'SELECT motivo, creado_en, autorizado_en, autorizado_por FROM excepciones_ubicacion WHERE pedido_id = ?',
+        )
+        .bind(id)
+        .first<Fila>(),
+      // Por el índice parcial tickets_pedido (C-FICHA-OPERACION).
+      todas(
+        db,
+        'SELECT id, asunto, estado, tipo, creado_en FROM tickets WHERE pedido_id = ? ORDER BY creado_en DESC LIMIT 20',
+        id,
+      ),
+      // C-AUTORIZACION-VENCIDA: el estado del cobro de la entrega (por su clave).
+      db
+        .prepare('SELECT estado, error FROM liquidaciones WHERE pedido_id = ?')
+        .bind(id)
+        .first<Fila>(),
+    ]);
 
   /** El papel de quien hizo un cambio de estado. */
   const rolDe = (e: Fila): string | null => {
@@ -293,15 +316,34 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
     // El Manager anota la foto de la recogida también: ya sale como evidencia, no se repite.
     ...manager
       .filter((m) => m.evento !== 'foto_recogida')
-      .map((m) => ({
-        tipo: 'manager' as const,
-        evento: String(m.evento),
-        fecha: String(m.creado_en),
-        quien: null,
-        rol: 'sistema',
-        detalle: texto(m.detalle),
-        capa: 'manager' as const,
-      })),
+      .map((m) => {
+        // C-AUTORIZACION-VENCIDA: la resolución de soporte sale en la línea principal con quién la
+        // decidió (y quién dio la segunda firma) y su nota.
+        if (m.evento === 'autorizacion_resuelta') {
+          const r = resolucionLegible(texto(m.detalle));
+          return {
+            tipo: 'manager' as const,
+            evento: r.cobrada ? 'autorizacion_cobrada' : 'autorizacion_sin_cobro',
+            fecha: String(m.creado_en),
+            quien: r.quien,
+            rol: 'soporte',
+            detalle: r.nota,
+            capa: 'principal' as const,
+          };
+        }
+        return {
+          tipo: 'manager' as const,
+          // LAN-2z: «cobro_reautorizado:<pago>» lleva el pago en el nombre; en la línea es uno solo.
+          evento: String(m.evento).startsWith('cobro_reautorizado:')
+            ? 'cobro_reautorizado'
+            : String(m.evento),
+          fecha: String(m.creado_en),
+          quien: null,
+          rol: 'sistema',
+          detalle: texto(m.detalle),
+          capa: 'manager' as const,
+        };
+      }),
     ...reclamos.map((t) => ({
       tipo: 'ticket' as const,
       evento: 'reclamo_abierto',
@@ -404,6 +446,9 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
       confirmadoPor: texto(p.cobro_confirmado_por),
       conciliacion: String(p.conciliacion_estado ?? 'no_aplica'),
     },
+    liquidacion: liquidacion
+      ? { estado: String(liquidacion.estado), error: texto(liquidacion.error) }
+      : null,
     tickets: reclamos.map((t) => ({
       id: String(t.id),
       asunto: String(t.asunto),

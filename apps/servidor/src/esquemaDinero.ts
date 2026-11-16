@@ -4,7 +4,8 @@
  * bandeja de casos y subir un límite («umbral»). SQLite no cambia un CHECK: si la tabla es la vieja,
  * se rehace con los tipos nuevos sin perder filas (una sola vez; después ya no coincide).
  */
-const TIPOS_NUEVOS = "'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local'";
+const TIPOS_NUEVOS =
+  "'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro'";
 
 export const APROBACIONES_DINERO_DDL = `CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
@@ -33,7 +34,8 @@ const COLUMNAS =
 export function aprobacionesViejas(sql: string | null): boolean {
   // ETP-3 (3 nov 2026): también se rehace la de SIG-4x, que no acepta «excusa_conciliacion».
   // Flex Fase 7 (13 nov 2026): también la que no acepta «recarga_local» (C-FLEX-RECARGA-LOCAL).
-  return Boolean(sql) && !String(sql).includes("'recarga_local'");
+  // C-AUTORIZACION-VENCIDA (16 nov 2026): también la que no acepta «autorizacion_sin_cobro».
+  return Boolean(sql) && !String(sql).includes("'autorizacion_sin_cobro'");
 }
 
 export async function rehacerAprobacionesDinero(db: D1Database): Promise<boolean> {
