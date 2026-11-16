@@ -419,6 +419,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-16",
+      "titulo": "Buscador al instante y repartidor en vivo en la ficha",
+      "texto": "El buscador del panel de operaciones encuentra pedidos y viajes desde la primera letra del código («7», «b4»), con los que están en curso arriba, cuántos hay y «Ver todos»; si no hay nada, sugiere el código bien escrito. La ficha del pedido y del viaje muestra en un mapa de Google al repartidor moviéndose, la ruta y la hora de llegada con tráfico («Llega a las 3:28 p. m. · faltan 9 min»), y avisa si está detenido o sin señal. El cliente ve la misma hora en su app (llega con la próxima versión). Los tramos sin terminar ya no dicen «Tomó 761 h»."
+    },
+    {
+      "fecha": "2026-11-16",
       "titulo": "Reportar, bloquear y avisos en tu idioma",
       "texto": "Cada mensaje del chat y cada reseña llevan «Reportar»; desde el chat se puede bloquear a la otra persona (no se vuelve a emparejar en pedidos ni viajes); un filtro tapa los insultos en español e inglés; el equipo tiene la bandeja «Reportes» en el superadmin. Además, los avisos llegan en el idioma de la app de cada teléfono. Publicado y comprobado en vivo; apps de pruebas nuevas en Android y TestFlight."
     },
