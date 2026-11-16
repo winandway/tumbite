@@ -45,6 +45,28 @@ WHEN OLD.estado IN (${ACTIVOS}) AND NEW.estado NOT IN (${ACTIVOS})
 BEGIN
   DELETE FROM conductor_ocupacion WHERE ruta_id = OLD.id;
 END`,
+  // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): al tomar un bloque de Flex, TODO lo demás se
+  // desconecta solo (comida, envíos de A a B, moto y carro con pasajero: todos cuelgan de
+  // «repartidores.conectado»). En la MISMA sentencia que ocupa al conductor.
+  `CREATE TRIGGER IF NOT EXISTS rutas_flex_desconecta_conductor
+AFTER UPDATE OF estado ON rutas_flex
+WHEN NEW.estado IN ('asignada', 'aceptada') AND OLD.estado IN ('borrador', 'ofrecida')
+BEGIN
+  UPDATE repartidores SET conectado = 0, pausado = 0 WHERE usuario_id = NEW.conductor_id AND conectado = 1;
+END`,
+  // …y mientras dure el bloque no se puede volver a conectar a nada (la base lo rechaza aunque una
+  // app vieja o una llamada directa lo intente).
+  `CREATE TRIGGER IF NOT EXISTS repartidores_no_conecta_en_bloque_flex
+BEFORE UPDATE OF conectado ON repartidores
+WHEN NEW.conectado = 1
+ AND EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = NEW.usuario_id AND tipo = 'ruta_flex')
+BEGIN
+  SELECT RAISE(ABORT, 'conductor_en_bloque_flex');
+END`,
+  // Una sola vez al publicar (corre con el lote que crea los disparadores de arriba): quien ya
+  // estaba en un bloque y seguía conectado queda desconectado.
+  `UPDATE repartidores SET conectado = 0, pausado = 0
+WHERE conectado = 1 AND usuario_id IN (SELECT conductor_id FROM conductor_ocupacion WHERE tipo = 'ruta_flex')`,
   // Con la ruta activa no se cambia de conductor por debajo (habría que soltarla primero).
   `CREATE TRIGGER IF NOT EXISTS rutas_flex_conductor_fijo
 BEFORE UPDATE OF conductor_id ON rutas_flex
@@ -216,6 +238,8 @@ export const RUTAS_FLEX_DDL = `CREATE TABLE IF NOT EXISTS rutas_flex (
   conductor_lng REAL,
   conductor_ubicacion_en TEXT,
   resumen_json TEXT,
+  -- C-FLEX-PAGO-BLOQUE: lo que la empresa le paga al conductor por el bloque (centavos).
+  pago_bloque INTEGER,
   CHECK ((estado = 'borrador' AND conductor_id IS NULL) OR estado = 'cancelada'
       OR (estado NOT IN ('borrador', 'cancelada') AND conductor_id IS NOT NULL))
 )`;

@@ -213,10 +213,12 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
                 paddingHorizontal: 10,
                 borderRadius: 12,
                 borderWidth: motivo === k ? 2 : 1,
-                borderColor: motivo === k ? C.logistica : '#D6D8DC',
+                borderColor: motivo === k ? C.secundario : '#D6D8DC',
               }}
             >
-              <Text style={{ fontWeight: '700', color: motivo === k ? C.logistica : C.secundario }}>
+              <Text
+                style={{ fontWeight: '700', color: motivo === k ? C.secundario : C.secundario }}
+              >
                 {texto}
               </Text>
             </Pressable>

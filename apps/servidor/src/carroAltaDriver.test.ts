@@ -64,7 +64,9 @@ describe('C-CARRO-VIAJE-PASAJERO: el pasajero ve lo de su servicio', () => {
 /** C-VIAJES-HISTORIAL: «Mis viajes» en las dos apps (candado sobre el código). */
 describe('C-VIAJES-HISTORIAL: Mis viajes en las apps', () => {
   it('el pasajero tiene su lista con recibo y ayuda (con borrador); el conductor la suya', () => {
-    expect(leer('apps/cliente/src/app/ride.tsx')).toMatch(/<MisViajes \/>/);
+    // C-MISMA-RUTA: la lista va en Pedir viaje (con repetir) y en su propia pantalla, Mis viajes.
+    expect(leer('apps/cliente/src/app/ride.tsx')).toMatch(/<MisViajes\b/);
+    expect(leer('apps/cliente/src/app/rides.tsx')).toMatch(/<MisViajes\b/);
     const p = leer('apps/cliente/src/viajes/MisViajes.tsx');
     expect(p).toMatch(/useBorrador\(/);
     expect(p).toMatch(/\/datos\/viajes\/\$\{id\}\/ayuda/);

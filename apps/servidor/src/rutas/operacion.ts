@@ -1310,6 +1310,7 @@ operacion.put('/admin/ganar-por-tiempo', async (c) => {
 
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
+  const bloqueFlex = await bloqueFlexDe(db, u.id);
   const activo = await entregaActiva(db, u.id);
   const selfiePendiente = await db
     .prepare('SELECT clave FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
@@ -1375,17 +1376,56 @@ operacion.get('/repartidor/estado', async (c) => {
     agrupados: await agrupadosDe(db, u.id, activo),
     // C-OCUPADO-VISIBLE (BRF-1): si una ruta Flex o un viaje lo ocupa, no le llegan pedidos de
     // comida (C-FLEX-OCUPACION); la app lo dice en vez de «Buscando pedidos cerca de ti…».
-    ocupadoEn:
-      (
-        await db
-          .prepare(
-            "SELECT tipo FROM conductor_ocupacion WHERE conductor_id = ? AND tipo <> 'comida'",
-          )
-          .bind(u.id)
-          .first<{ tipo: 'ruta_flex' | 'operacion' }>()
-      )?.tipo ?? null,
+    // C-FLEX-EXCLUSIVO: el bloque de Flex en curso; la app cambia entera al modo bloque.
+    bloqueFlex,
+    ocupadoEn: bloqueFlex
+      ? 'ruta_flex'
+      : ((
+          await db
+            .prepare(
+              "SELECT tipo FROM conductor_ocupacion WHERE conductor_id = ? AND tipo = 'operacion'",
+            )
+            .bind(u.id)
+            .first<{ tipo: 'operacion' }>()
+        )?.tipo ?? null),
   });
 });
+
+export const MENSAJE_APP_PRUEBAS_VIEJA =
+  'Esta app de pruebas es una versión vieja: guardamos la foto, pero la entrega se cierra deslizando. Instala la app de pruebas nueva desde la página de progreso.';
+
+export const MENSAJE_EN_BLOQUE_FLEX =
+  'Estás haciendo un bloque de Flex. Todo lo demás está desconectado hasta que termines el bloque.';
+
+/** C-FLEX-EXCLUSIVO: el bloque de Flex que ocupa al conductor ahora mismo (o null). */
+export async function bloqueFlexDe(db: D1Database, conductorId: string) {
+  const r = await db
+    .prepare(
+      `SELECT r.id, r.nombre, r.estado, r.bloque_desde, r.bloque_hasta, e.nombre AS empresa
+         FROM conductor_ocupacion c JOIN rutas_flex r ON r.id = c.ruta_id
+         LEFT JOIN empresas e ON e.id = r.empresa_id
+        WHERE c.conductor_id = ? AND c.tipo = 'ruta_flex'`,
+    )
+    .bind(conductorId)
+    .first<{
+      id: string;
+      nombre: string;
+      estado: string;
+      bloque_desde: string | null;
+      bloque_hasta: string | null;
+      empresa: string | null;
+    }>();
+  return r
+    ? {
+        rutaId: r.id,
+        nombre: r.nombre,
+        estado: r.estado,
+        empresa: r.empresa ?? '',
+        bloqueDesde: r.bloque_desde,
+        bloqueHasta: r.bloque_hasta,
+      }
+    : null;
+}
 
 const TEXTO_PAPEL = new Map<FaltaPapel, string>([
   [
@@ -1416,6 +1456,10 @@ operacion.post('/repartidor/conectar', async (c) => {
       lng: z.number().nullable().default(null),
     }),
   );
+  // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): durante un bloque de Flex no se conecta nada más. La
+  // base también lo rechaza (repartidores_no_conecta_en_bloque_flex); aquí se dice en palabras.
+  if (d.conectado && (await bloqueFlexDe(db, u.id)))
+    throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
   // Con el KYC obligatorio encendido, sin verificación aprobada no se reciben pedidos.
   if (d.conectado && c.env.KYC_OBLIGATORIO === '1' && !(await kycAprobado(db, u.id)))
     throw new ErrorDatos(
@@ -1539,7 +1583,13 @@ operacion.post('/repartidor/conectar', async (c) => {
       d.lat != null && d.lng != null ? geohash(d.lat, d.lng) : null,
       u.id,
     )
-    .run();
+    .run()
+    .catch((e: unknown) => {
+      // Si el bloque se tomó justo en medio, la base lo frena (C-FLEX-EXCLUSIVO).
+      if (String((e as { message?: string })?.message ?? e).includes('conductor_en_bloque_flex'))
+        throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
+      throw e;
+    });
   // Al conectarse se sale de la pausa; y si está fuera de cobertura, se le dice (como «no puedes
   // conectarte en esta zona» de Dasher): queda conectado en su ciudad de siempre, sin ofertas aquí.
   if (d.conectado)
@@ -2689,6 +2739,32 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     // C-PIN-SIN-FOTO: la foto no salta el PIN; la de «no apareció» no entrega nada.
     if (!ausente) await sinFotoConPin(db, id);
     foto = await leerFoto(c);
+    // C-DESLIZAR-SIEMPRE (16 nov 2026, pedido 407F de Richard): en el sitio de pruebas la foto de la
+    // puerta sola ya no cierra (solo lo hacía una app de pruebas vieja, sin el deslizador). Se guarda
+    // como la foto de la entrega, sin confirmar, y se pide instalar la app nueva. En producción el
+    // camino viejo sigue hasta que todas las versiones de tienda traigan el deslizador.
+    if (!modoPedido && entornoDe(c.req.url) === 'pruebas') {
+      const casaVieja = comoPunto(p.lat, p.lng);
+      const vieja = await db
+        .prepare("SELECT clave FROM evidencias WHERE pedido_id = ? AND tipo = 'entrega'")
+        .bind(id)
+        .first<{ clave: string }>();
+      await guardarEvidencia(
+        db,
+        foto,
+        id,
+        'entrega',
+        casaVieja ? metrosEntre(foto.donde, casaVieja) : null,
+        false,
+        'puerta',
+        '',
+      );
+      if (vieja?.clave)
+        await foto.bucket
+          .delete(vieja.clave)
+          .catch((e: unknown) => console.error('foto de entrega vieja: no se borró', e));
+      throw new ErrorDatos(MENSAJE_APP_PRUEBAS_VIEJA, 'version', 409);
+    }
     donde = foto.donde;
     modo = ausente ? 'ausente' : modoPedido === 'seguro' ? 'seguro' : 'puerta';
   } else {

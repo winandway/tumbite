@@ -1,26 +1,26 @@
 {
   "variant": "light",
-  "backgroundColor": "#CBDDE8",
+  "backgroundColor": "#EEF0F3",
   "styles": [
     {
       "id": "natural.land",
       "geometry": {
-        "fillColor": "#CBDDE8"
+        "fillColor": "#EEF0F3"
       }
     },
     {
       "id": "infrastructure.urbanArea",
       "geometry": {
-        "fillColor": "#CBDDE8"
+        "fillColor": "#EEF0F3"
       }
     },
     {
       "id": "natural.water",
       "geometry": {
-        "fillColor": "#4FB3D9"
+        "fillColor": "#CFE3F3"
       },
       "label": {
-        "textFillColor": "#0C4A66",
+        "textFillColor": "#8A919C",
         "textStrokeColor": "#FFFFFF"
       }
     },
@@ -37,7 +37,7 @@
       "id": "pointOfInterest.recreation.park",
       "geometry": {
         "visible": true,
-        "fillColor": "#A9DCC0"
+        "fillColor": "#DCEFE0"
       },
       "label": {
         "visible": false
@@ -46,7 +46,7 @@
     {
       "id": "infrastructure.building",
       "geometry": {
-        "fillColor": "#B7CEDC"
+        "fillColor": "#E3E6EA"
       }
     },
     {
@@ -76,21 +76,21 @@
     {
       "id": "political.city",
       "label": {
-        "textFillColor": "#0C2A3B",
+        "textFillColor": "#666B73",
         "textStrokeColor": "#FFFFFF"
       }
     },
     {
       "id": "political.sublocality",
       "label": {
-        "textFillColor": "#1F4D69",
+        "textFillColor": "#8A919C",
         "textStrokeColor": "#FFFFFF"
       }
     },
     {
       "id": "political.neighborhood",
       "label": {
-        "textFillColor": "#1F4D69",
+        "textFillColor": "#8A919C",
         "textStrokeColor": "#FFFFFF"
       }
     },
@@ -98,10 +98,10 @@
       "id": "infrastructure.roadNetwork.road",
       "geometry": {
         "fillColor": "#FFFFFF",
-        "strokeColor": "#5E8CA6"
+        "strokeColor": "#E3E6EA"
       },
       "label": {
-        "textFillColor": "#1F4D69",
+        "textFillColor": "#8A919C",
         "textStrokeColor": "#FFFFFF"
       }
     },
@@ -109,21 +109,21 @@
       "id": "infrastructure.roadNetwork.road.arterial",
       "geometry": {
         "fillColor": "#FFFFFF",
-        "strokeColor": "#1F4D69"
+        "strokeColor": "#E3E6EA"
       },
       "label": {
-        "textFillColor": "#0C2A3B",
+        "textFillColor": "#666B73",
         "textStrokeColor": "#FFFFFF"
       }
     },
     {
       "id": "infrastructure.roadNetwork.road.highway",
       "geometry": {
-        "fillColor": "#1F4D69",
-        "strokeColor": "#1F4D69"
+        "fillColor": "#FFFFFF",
+        "strokeColor": "#E3E6EA"
       },
       "label": {
-        "textFillColor": "#0C2A3B",
+        "textFillColor": "#666B73",
         "textStrokeColor": "#FFFFFF"
       }
     }

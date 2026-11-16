@@ -3,12 +3,13 @@ import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, type OpcionElegida, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { C, e, urlFoto, useSesion, Text } from '@tumbite/movil';
+import { C, Pildora, e, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { fotoDeRelleno } from '../inicio/recursos';
 import { usePedirOtraVez } from '../pedirOtraVez';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 import { conCuenta } from '../ConCuenta';
+import { TEXTOS_MIS_VIAJES } from '../viajes/textos';
 
 const T = {
   es: {
@@ -81,6 +82,7 @@ type Pedido = {
 function Pedidos() {
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
+  const tv = enIdioma(TEXTOS_MIS_VIAJES, idioma);
   const { pedirOtraVez } = usePedirOtraVez(idioma);
   const [pedidos, setPedidos] = useState<Pedido[] | null>(null);
   const [error, setError] = useState('');
@@ -140,6 +142,15 @@ function Pedidos() {
           alignSelf: 'center',
         }}
       >
+        {/* C-MISMA-RUTA: los viajes viven en «Mis viajes», al lado (chips como la pantalla 7). */}
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+          <Pildora
+            texto={tv.chipViajes}
+            alTocar={() => router.replace('/rides')}
+            testID="chip-viajes"
+          />
+          <Pildora texto={tv.chipComidaTiendas} activa alTocar={() => undefined} />
+        </View>
         {error ? (
           <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
             {error}

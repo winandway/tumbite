@@ -21,6 +21,8 @@ export const COLOR = {
   /** Texto secundario: el gris de apoyo de la marca. */
   textoSuave: M.gris,
   textoTenue: '#6B7078',
+  /** Fase cero (16 nov 2026): ícono apagado de la barra de abajo. Nunca para texto. */
+  iconoApagado: '#9AA0A9',
   blanco: '#FFFFFF',
   fondo: '#FFFFFF',
   /** Lienzo gris muy claro para separar bloques, chips y buscador. */
@@ -56,7 +58,11 @@ export const ESPACIO = {
   enorme: 48,
 } as const;
 
-export const RADIO = { s: 8, m: 12, l: 16, hoja: 20, pildora: 999 } as const;
+/** Fase cero: 8 etiquetas, 12 botones y casillas, 16 tarjetas y fotos, 24 hojas que suben. */
+export const RADIO = { s: 8, m: 12, l: 16, hoja: 24, pildora: 999 } as const;
+
+/** Fase cero: margen de pantalla 20; en hojas que suben y sobre el mapa, 16. */
+export const MARGEN = { pantalla: 20, hoja: 16 } as const;
 
 /** Alto mínimo de todo lo que se toca (Apple pide 44, Android 48). */
 export const TACTIL = 48;
@@ -66,7 +72,7 @@ export const ALTO = {
   botonGrande: 56,
   botonOferta: 64,
   campo: 52,
-  buscador: 48,
+  buscador: 50,
   pildora: 36,
   barraInferior: 64,
   encabezado: 56,
@@ -108,6 +114,8 @@ export const LETRA = {
   titular: { fontFamily: FUENTE.titulo, fontSize: 28, lineHeight: 34, color: COLOR.texto },
   titulo: { fontFamily: FUENTE.titulo, fontSize: 22, lineHeight: 28, color: COLOR.texto },
   subtitulo: { fontFamily: FUENTE.tituloMedio, fontSize: 18, lineHeight: 24, color: COLOR.texto },
+  /** Fase cero: nombre en fila o tarjeta («Casa → Oficina», «Carro»). */
+  tarjeta: { fontFamily: FUENTE.tituloMedio, fontSize: 15, lineHeight: 20, color: COLOR.texto },
   cuerpo: { fontFamily: FUENTE.texto, fontSize: 16, lineHeight: 24, color: COLOR.texto },
   cuerpoFuerte: {
     fontFamily: FUENTE.textoFuerte,
@@ -122,7 +130,19 @@ export const LETRA = {
   cifraGrande: { fontFamily: FUENTE.titulo, fontSize: 36, lineHeight: 44, color: COLOR.texto },
 } as const;
 
+/**
+ * Fase cero: las tarjetas NO llevan sombra (borde de 1). Sombra solo en lo que flota: hojas que
+ * suben (`flotante`) y botones sobre el mapa (`sobreMapa`). `tarjeta` queda para piezas flotantes
+ * chicas (globos, menús).
+ */
 export const SOMBRA = {
+  sobreMapa: {
+    shadowColor: '#101010',
+    shadowOpacity: 0.14,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
   tarjeta: {
     shadowColor: '#101010',
     shadowOpacity: 0.08,
@@ -133,19 +153,77 @@ export const SOMBRA = {
   flotante: {
     shadowColor: '#101010',
     shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowRadius: 24,
     shadowOffset: { width: 0, height: -4 },
     elevation: 8,
   },
 } as const;
 
-/** Colores de cada app: el cliente es rojo; el Driver, azul de logística; Restaurants, negro. */
+/**
+ * Fase cero (aprobada por Richard el 16 nov 2026): UN solo color de acción, el rojo de la marca, en
+ * las tres apps. El azul de logística vive solo dentro de Flex y Envíos (C-COLOR-LOGISTICA) y el
+ * negro de Restaurants queda solo como su cabecera. Candado C-UN-SOLO-ROJO.
+ */
 export type AppDelDiseno = 'cliente' | 'repartidor' | 'restaurante';
 
 export function acentoDeApp(app: AppDelDiseno): { fondo: string; texto: string } {
-  if (app === 'repartidor') return { fondo: COLOR.logistica, texto: COLOR.blanco };
-  if (app === 'restaurante') return { fondo: COLOR.negro, texto: COLOR.blanco };
+  // Las tres apps comparten el mismo rojo; el parámetro queda para leer el código por app.
+  void app;
   return { fondo: COLOR.marca, texto: COLOR.blanco };
+}
+
+/** Los cuatro botones del sistema (sección 5): fondo, letra, fondo apretado y borde. */
+export type TipoBoton = 'principal' | 'fuerte' | 'terciario' | 'borde';
+
+export function estiloBoton(
+  tipo: TipoBoton,
+  modo: 'claro' | 'oscuro' = 'claro',
+): { fondo: string; texto: string; apretado: string; borde?: string } {
+  if (tipo === 'principal')
+    return { fondo: COLOR.marca, texto: COLOR.blanco, apretado: COLOR.marcaOscuro };
+  if (tipo === 'fuerte')
+    return modo === 'oscuro'
+      ? { fondo: COLOR_OSCURO.texto, texto: COLOR.negro, apretado: '#E1E1E1' }
+      : { fondo: COLOR.negro, texto: COLOR.blanco, apretado: '#2A2A2A' };
+  if (tipo === 'terciario')
+    return modo === 'oscuro'
+      ? { fondo: COLOR_OSCURO.superficie, texto: COLOR_OSCURO.texto, apretado: '#151517' }
+      : { fondo: COLOR.superficie, texto: COLOR.texto, apretado: '#E3E3E3' };
+  return modo === 'oscuro'
+    ? {
+        fondo: 'transparent',
+        texto: COLOR_OSCURO.texto,
+        apretado: '#151517',
+        borde: COLOR_OSCURO.bordeFuerte,
+      }
+    : { fondo: 'transparent', texto: COLOR.texto, apretado: '#EBEBEB', borde: COLOR.bordeFuerte };
+}
+
+/**
+ * Modo oscuro (sección 2): lo decide el teléfono, como en Uber, Bolt o Grab. Mismas claves que la
+ * paleta clara para lo que cambia; el rojo de la marca no cambia nunca.
+ */
+export const COLOR_OSCURO = {
+  ...COLOR,
+  fondo: '#0F0F10',
+  blanco: '#0F0F10',
+  superficie: '#1A1A1C',
+  superficieFuerte: '#222225',
+  borde: '#2E2E32',
+  bordeFuerte: '#3A3A3F',
+  texto: '#F5F5F5',
+  textoSuave: '#A1A1AA',
+  textoTenue: '#A1A1AA',
+  iconoApagado: '#6E6E76',
+  marcaSuave: '#3A1013',
+  exito: '#3DDC84',
+  exitoSuave: 'rgba(61,220,132,0.14)',
+} as const;
+
+export type Paleta = { [K in keyof typeof COLOR]: string };
+
+export function paletaPara(modo: 'claro' | 'oscuro' | null | undefined): Paleta {
+  return modo === 'oscuro' ? COLOR_OSCURO : COLOR;
 }
 
 /** Píldoras de estado: cada tono con su fondo suave y su texto con contraste suficiente. */

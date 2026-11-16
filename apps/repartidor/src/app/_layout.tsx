@@ -94,7 +94,7 @@ export default function Raiz() {
   if (!fuentes) return null;
   return (
     <SafeAreaProvider>
-      <TemaApp acento="logistica">
+      <TemaApp acento="marca">
         <SesionProvider roles={['repartidor']} explicarPermisos>
           <StatusBar style="dark" />
           {/* C-SOBRE-LOS-BOTONES: nada queda debajo de los botones del teléfono (Android). */}

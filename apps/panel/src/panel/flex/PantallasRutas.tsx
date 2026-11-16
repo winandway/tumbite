@@ -5,6 +5,7 @@ import {
   almacenNavegador,
   enIdioma,
   formatearMonto,
+  montoEscrito,
   perfilFlex,
   useBorrador,
 } from '@tumbite/compartido';
@@ -66,6 +67,8 @@ type Detalle = {
     ofertaVencida: boolean;
     bloqueDesde: string | null;
     bloqueHasta: string | null;
+    pagoBloque?: number | null;
+    moneda?: string;
     iniciadaEn: string | null;
     cerradaEn: string | null;
     conductor: { id: string; nombre: string } | null;
@@ -252,13 +255,21 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
   const [d, setD] = useState<Detalle | null>(null);
   const [error, setError] = useState('');
   const [conductores, setConductores] = useState<Conductor[]>([]);
-  const [asig, setAsig] = useState({
-    conductorId: '',
-    bloqueDesde: '',
-    bloqueHasta: '',
-    minutos: '60',
-    vehiculoId: '',
+  // Lo escrito se guarda solo (regla: ningún formulario pierde lo escrito).
+  const borradorAsig = useBorrador({
+    formulario: `flex-asignar-${empresa.id}-${rutaId}`,
+    inicial: {
+      conductorId: '',
+      bloqueDesde: '',
+      bloqueHasta: '',
+      minutos: '60',
+      vehiculoId: '',
+      pagoBloque: '',
+    },
+    almacen: almacenNavegador,
   });
+  const asig = borradorAsig.valores;
+  const setAsig = (v: typeof asig) => borradorAsig.setValores(v);
   const [confirmarCapacidad, setConfirmarCapacidad] = useState(false);
   const [menu, setMenu] = useState(false);
   const puede = ctx.permisos.includes('lotes.gestionar');
@@ -292,11 +303,10 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
   async function hacer(sub: string, cuerpo: unknown, idem = false) {
     setError('');
     try {
-      const res = idem
-        ? await crear<Detalle>(`${base}/${sub}`, cuerpo)
-        : await pedir<Detalle>('POST', `${base}/${sub}`, cuerpo);
-      if (res?.ruta) cargar();
-      else cargar();
+      if (idem) await crear<Detalle>(`${base}/${sub}`, cuerpo);
+      else await pedir<Detalle>('POST', `${base}/${sub}`, cuerpo);
+      if (sub === 'asignar' || sub === 'ofrecer') await borradorAsig.limpiar();
+      cargar();
     } catch (x) {
       setError(mensajeDe(x));
     }
@@ -321,6 +331,8 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
   const puedeAsignar = elegido && elegido.vinculo !== 'red';
   const puedeOfrecer = elegido && elegido.vinculo !== 'propio';
   const conFecha = (v: string) => (v ? v.replace('T', ' ') : null);
+  // C-FLEX-PAGO-BLOQUE: lo escrito en la moneda de la empresa, a centavos (vacío = sin pago fijado).
+  const centavosDe = (v: string) => (v.trim() ? montoEscrito(v, empresa.moneda) || null : null);
   const reordenable =
     puede && ['borrador', 'ofrecida', 'asignada', 'aceptada', 'en_carga'].includes(r.estado);
   return (
@@ -350,6 +362,12 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
       />
       {r.estado === 'en_carga' ? (
         <Barra valor={r.progreso.cargados} total={r.progreso.total} etiqueta={t.cargadosTexto} />
+      ) : null}
+      {r.pagoBloque != null ? (
+        <p>
+          {t.pagoBloque}:{' '}
+          <strong>{formatearMonto(r.pagoBloque, r.moneda ?? empresa.moneda, ctx.idioma)}</strong>
+        </p>
       ) : null}
       {r.ubicacion ? (
         <p>
@@ -386,6 +404,18 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
                 ))}
               </select>
             </div>
+            {borradorAsig.recuperado && (
+              <p className="aviso-borrador">
+                {t.recuperado}{' '}
+                <button
+                  type="button"
+                  className="enlace"
+                  onClick={() => void borradorAsig.empezarDeNuevo()}
+                >
+                  {t.empezarDeNuevo}
+                </button>
+              </p>
+            )}
             <Campo
               etiqueta={t.bloqueDesde}
               tipo="datetime-local"
@@ -398,6 +428,14 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
               valor={asig.bloqueHasta}
               cambiar={(v) => setAsig({ ...asig, bloqueHasta: v })}
             />
+            <p className="ayuda">{t.bloqueDuracionAyuda}</p>
+            <Campo
+              etiqueta={`${t.pagoBloque} (${empresa.moneda})`}
+              tipo="number"
+              valor={asig.pagoBloque}
+              cambiar={(v) => setAsig({ ...asig, pagoBloque: v })}
+            />
+            <p className="ayuda">{t.pagoBloqueAyuda}</p>
             <CapacidadAlAsignar
               ctx={ctx}
               rutaId={r.id}
@@ -427,6 +465,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
                         conductorId,
                         bloqueDesde: conFecha(asig.bloqueDesde),
                         bloqueHasta: conFecha(asig.bloqueHasta),
+                        pagoBloque: centavosDe(asig.pagoBloque),
                         vehiculoId: asig.vehiculoId || null,
                         confirmarCapacidad,
                       },
@@ -449,6 +488,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
                         minutos: Number(asig.minutos) || 60,
                         bloqueDesde: conFecha(asig.bloqueDesde),
                         bloqueHasta: conFecha(asig.bloqueHasta),
+                        pagoBloque: centavosDe(asig.pagoBloque),
                         vehiculoId: asig.vehiculoId || null,
                         confirmarCapacidad,
                       },

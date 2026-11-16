@@ -79,12 +79,16 @@ for (const app of APPS) {
     android: {
       url: android.artifacts.buildUrl,
       numero: android.appBuildVersion,
+      // C-DESLIZAR-SIEMPRE: dos compilaciones con el MISMO número pueden salir de códigos distintos
+      // (pasó el 15 nov con la 17): la página dice de qué código es cada una.
+      codigo: String(android.gitCommitHash ?? '').slice(0, 7),
       fecha: android.completedAt ?? android.createdAt,
       qr: await qr(android.artifacts.buildUrl),
     },
     iphone: {
       url: testflight,
       numero: iphone.appBuildVersion,
+      codigo: String(iphone.gitCommitHash ?? '').slice(0, 7),
       fecha: iphone.completedAt ?? iphone.createdAt,
       qr: await qr(testflight),
     },

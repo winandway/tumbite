@@ -80,26 +80,70 @@ type FilaLista = {
 const COLUMNAS_LISTA = `o.id, o.servicio_id AS servicio, v.categoria, v.estado, v.origen_direccion AS origen,
   v.destino_direccion AS destino, q.total, q.moneda, v.metodo_pago AS metodoPago, o.creado_en AS creadoEn`;
 
-function pagina(filas: FilaLista[]) {
+function pagina<F extends FilaLista>(filas: F[]) {
   const mas = filas.length > TAMANO_PAGINA;
   const viajes = filas.slice(0, TAMANO_PAGINA);
   return { viajes, siguiente: mas ? (viajes.at(-1)?.creadoEn ?? null) : null };
 }
 
+/**
+ * C-MISMA-RUTA (15 nov 2026) — todos los países. El pasajero recibe además los puntos exactos de su
+ * viaje (recogida, paradas en orden y destino) para dibujar el mapita de la ruta y pedir la misma ruta
+ * otra vez. Solo lectura: dos consultas por página (la lista y sus paradas), nada se escribe.
+ */
+type FilaListaPasajero = FilaLista & {
+  origenLat: number | null;
+  origenLng: number | null;
+  destinoLat: number | null;
+  destinoLng: number | null;
+};
+
 viajesHistorial.get('/viajes/historial', async (c) => {
   const u = exigir(c, 'cliente');
   const q = consultaPagina.catch({}).parse(c.req.query());
-  const { results } = await base(c)
+  const db = base(c);
+  const { results } = await db
     .prepare(
-      `SELECT ${COLUMNAS_LISTA}
+      `SELECT ${COLUMNAS_LISTA}, v.origen_lat AS origenLat, v.origen_lng AS origenLng,
+              v.destino_lat AS destinoLat, v.destino_lng AS destinoLng
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
         WHERE o.cliente_id = ?1 AND o.tipo_operacion = 'viaje_pasajero' AND (?2 IS NULL OR o.creado_en < ?2)
         ORDER BY o.creado_en DESC LIMIT ?3`,
     )
     .bind(u.id, q.antes ?? null, TAMANO_PAGINA + 1)
-    .all<FilaLista>();
-  return c.json(pagina(results));
+    .all<FilaListaPasajero>();
+  const p = pagina(results);
+  const ids = p.viajes.map((v) => v.id);
+  const paradas = new Map<string, { lat: number; lng: number; direccion: string }[]>();
+  if (ids.length) {
+    const { results: filas } = await db
+      .prepare(
+        `SELECT operacion_id AS id, lat, lng, direccion FROM paradas_viaje
+          WHERE operacion_id IN (${ids.map(() => '?').join(', ')}) ORDER BY operacion_id, orden`,
+      )
+      .bind(...ids)
+      .all<{ id: string; lat: number; lng: number; direccion: string }>();
+    for (const f of filas)
+      paradas.set(f.id, [
+        ...(paradas.get(f.id) ?? []),
+        { lat: f.lat, lng: f.lng, direccion: f.direccion },
+      ]);
+  }
+  return c.json({
+    ...p,
+    viajes: p.viajes.map(({ origenLat, origenLng, destinoLat, destinoLng, ...v }) => ({
+      ...v,
+      puntos:
+        origenLat != null && origenLng != null && destinoLat != null && destinoLng != null
+          ? {
+              origen: { lat: origenLat, lng: origenLng },
+              destino: { lat: destinoLat, lng: destinoLng },
+              paradas: paradas.get(v.id) ?? [],
+            }
+          : null,
+    })),
+  });
 });
 
 viajesHistorial.get('/conductor/viajes/historial', async (c) => {

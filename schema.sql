@@ -2156,6 +2156,8 @@ CREATE TABLE IF NOT EXISTS rutas_flex (
   conductor_lng REAL,
   conductor_ubicacion_en TEXT,
   resumen_json TEXT,
+  -- C-FLEX-PAGO-BLOQUE: lo que la empresa le paga al conductor por el bloque (centavos).
+  pago_bloque INTEGER,
   CHECK ((estado = 'borrador' AND conductor_id IS NULL) OR estado = 'cancelada'
       OR (estado NOT IN ('borrador', 'cancelada') AND conductor_id IS NOT NULL))
 );

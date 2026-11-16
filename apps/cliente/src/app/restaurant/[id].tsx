@@ -8,7 +8,6 @@ import {
   ScrollView,
   TextInput,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -73,7 +72,6 @@ export default function MenuRestaurante() {
   const tc = textosComida(idioma);
   const { agregar, vaciar, cantidadTotal, carrito } = useCarrito();
   const bordes = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const [datos, setDatos] = useState<{
     restaurante: Restaurante;
     platos: Plato[];
@@ -223,7 +221,8 @@ export default function MenuRestaurante() {
       idioma,
     );
   const fotoRest = urlFoto(r?.imagen);
-  const altoFoto = Math.min(260, Math.round(Math.min(width, ANCHO_MAX) * 0.62));
+  // Fase cero: la foto del restaurante mide 236 de alto (pantalla 9).
+  const altoFoto = 236;
 
   const detalle = eligiendo;
   const completo = detalle ? activos(detalle).every(grupoCompleto) : true;
@@ -256,38 +255,53 @@ export default function MenuRestaurante() {
               sobreFoto
             />
           </View>
-          {r ? (
+        </View>
+        {r ? (
+          // Fase cero (pantalla 9): nombre, cocina y tres cajitas debajo de la foto, sobre blanco.
+          <View style={{ paddingHorizontal: 20, paddingTop: 16 }} testID="restaurante-cabecera">
+            <Text
+              style={{ fontSize: 28, lineHeight: 34, fontWeight: '700', color: C.secundario }}
+              accessibilityRole="header"
+            >
+              {r.nombre}
+            </Text>
+            <Text style={{ color: '#666B73', fontSize: 14, marginTop: 2 }}>
+              {[
+                r.categoria,
+                r.distanciaKm != null ? distanciaTexto(r.distanciaKm, idioma, r.pais) : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+            <View style={{ marginTop: 4 }}>
+              <Calificacion c={r.calificacion} idioma={idioma} />
+            </View>
             <View
               style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                padding: 16,
-                backgroundColor: 'rgba(25,25,25,0.55)',
+                flexDirection: 'row',
+                marginTop: 14,
+                borderWidth: 1,
+                borderColor: '#E6E7EA',
+                borderRadius: 12,
               }}
             >
-              <Text
-                style={{ color: '#fff', fontSize: 28, fontWeight: '700' }}
-                accessibilityRole="header"
-              >
-                {r.nombre}
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 }}>
-                <Text style={{ color: '#fff', fontSize: 14 }}>
-                  {r.distanciaKm != null
-                    ? `${distanciaTexto(r.distanciaKm, idioma, r.pais)} · `
-                    : ''}
+              <View style={{ flex: 1, padding: 12 }}>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>{tc.entrega}</Text>
+                <Text style={{ fontWeight: '700', fontSize: 15, color: C.secundario }}>
                   {r.tiempoPrepMin + 10}–{r.tiempoPrepMin + 20} min
                 </Text>
-                <Estado abierto={abierto} texto={abierto ? tc.abierto : tc.cerrado} />
               </View>
-              <View style={{ marginTop: 4 }}>
-                <Calificacion c={r.calificacion} idioma={idioma} claro />
+              <View
+                style={{ flex: 1, padding: 12, borderLeftWidth: 1, borderLeftColor: '#E6E7EA' }}
+              >
+                <Text style={{ color: '#666B73', fontSize: 12 }}>{tc.estadoLocal}</Text>
+                <View style={{ marginTop: 2, alignSelf: 'flex-start' }}>
+                  <Estado abierto={abierto} texto={abierto ? tc.abierto : tc.cerrado} />
+                </View>
               </View>
             </View>
-          ) : null}
-        </View>
+          </View>
+        ) : null}
 
         <View style={{ paddingHorizontal: 16 }}>
           {error ? <Text style={[e.error, { marginTop: 12 }]}>{error}</Text> : null}
@@ -574,18 +588,6 @@ export default function MenuRestaurante() {
                             accessibilityRole="button"
                             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 }}
                           >
-                            {foto ? (
-                              <Image
-                                source={{ uri: foto }}
-                                accessibilityIgnoresInvertColors
-                                style={{
-                                  width: 84,
-                                  height: 84,
-                                  borderRadius: 14,
-                                  backgroundColor: '#EEEFF1',
-                                }}
-                              />
-                            ) : null}
                             <View style={{ flex: 1 }}>
                               <Text
                                 style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}
@@ -627,8 +629,33 @@ export default function MenuRestaurante() {
                                 </Text>
                               ) : null}
                             </View>
+                            {/* Fase cero: la foto del plato va a la derecha, de 92 y esquina 16. */}
+                            {foto ? (
+                              <Image
+                                source={{ uri: foto }}
+                                accessibilityIgnoresInvertColors
+                                style={{
+                                  width: 92,
+                                  height: 92,
+                                  borderRadius: 16,
+                                  backgroundColor: '#EEEFF1',
+                                }}
+                              />
+                            ) : null}
                           </Pressable>
-                          <View style={{ alignItems: 'center', gap: 4 }}>
+                          <View
+                            style={
+                              foto
+                                ? // El «+» blanco flota sobre la esquina de la foto, como DoorDash.
+                                  {
+                                    position: 'absolute',
+                                    right: 6,
+                                    bottom: 18,
+                                    alignItems: 'center',
+                                  }
+                                : { alignItems: 'center', gap: 4 }
+                            }
+                          >
                             <BotonRedondo
                               texto="+"
                               alTocar={() => alMas(p)}

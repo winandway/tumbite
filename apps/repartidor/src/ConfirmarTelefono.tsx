@@ -60,7 +60,7 @@ export function ConfirmarTelefono({
   return (
     <View
       testID="confirmar-telefono"
-      style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}
+      style={[e.tarjeta, { borderWidth: 2, borderColor: C.secundario }]}
     >
       <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.titulo}</Text>
       <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 8 }}>

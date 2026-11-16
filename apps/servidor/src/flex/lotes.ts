@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { validarBloque } from './rutasComun';
 import {
   actorDeEmpresa,
   conIdempotencia,
@@ -245,6 +246,7 @@ flexLotes.post('/empresas/:id/rutas', async (c) => {
   const actor = await actorDeEmpresa(c, c.req.param('id'));
   exigirPermiso(actor, 'lotes.gestionar');
   const d = await leerCuerpo(c, esquemaRuta);
+  validarBloque(d.bloqueDesde, d.bloqueHasta);
   const db = base(c);
   await comprobarCentro(db, actor.empresaId, d.centroId);
   if (d.loteId) await loteDe(db, actor.empresaId, d.loteId);

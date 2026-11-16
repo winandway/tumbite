@@ -98,11 +98,11 @@ function Una({
                   paddingHorizontal: 10,
                   borderRadius: 12,
                   borderWidth: motivo === k ? 2 : 1,
-                  borderColor: motivo === k ? C.logistica : '#D6D8DC',
+                  borderColor: motivo === k ? C.secundario : '#D6D8DC',
                 }}
               >
                 <Text
-                  style={{ color: motivo === k ? C.logistica : C.secundario, fontWeight: '700' }}
+                  style={{ color: motivo === k ? C.secundario : C.secundario, fontWeight: '700' }}
                 >
                   {texto}
                 </Text>

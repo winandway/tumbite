@@ -32,6 +32,7 @@ import {
   recalcularParadas,
   resumenRuta,
   rutaPorId,
+  validarBloque,
 } from './rutasComun';
 
 /**
@@ -51,12 +52,14 @@ const esquemaAsignar = z.object({
   vehiculoId: z.string().uuid().nullable().optional(),
   bloqueDesde: fecha.nullable().optional(),
   bloqueHasta: fecha.nullable().optional(),
+  /** C-FLEX-PAGO-BLOQUE: lo que la empresa le paga al conductor por el bloque, en centavos. */
+  pagoBloque: z.number().int().min(1).max(1_000_000).nullable().optional(),
   /** Fase 3: la empresa vio el aviso de capacidad y asigna igual. */
   confirmarCapacidad: z.boolean().optional(),
 });
-const esquemaOfrecer = esquemaAsignar.extend({
-  minutos: z.number().int().min(5).max(1440).default(60),
-});
+const esquemaOfrecer = esquemaAsignar.and(
+  z.object({ minutos: z.number().int().min(5).max(1440).default(60) }),
+);
 const esquemaMotivo = z.object({ motivo: z.string().trim().max(300).default('') });
 const esquemaOrden = z.object({ paradaIds: z.array(z.string().uuid()).min(1).max(150) });
 const esquemaEnvioCambio = z.object({
@@ -284,6 +287,8 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
     await conductorDeEmpresa(db, actor.empresaId, d.conductorId, 'asignacion');
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
+    // C-FLEX-BLOQUE-DURACION: con lo que llega y lo ya guardado, el bloque dura de 1 h 30 min a 5 h.
+    validarBloque(d.bloqueDesde ?? actual.bloque_desde, d.bloqueHasta ?? actual.bloque_hasta);
     await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
     // Fase 4 (C-FIN-RESERVAS): se aparta la comisión ANTES; si la asignación no entra, se devuelve.
     const cobro = await reservarCobroRuta(db, actual, await paquetesDelBorrador(db, actual.id));
@@ -297,6 +302,7 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
           .prepare(
             `UPDATE rutas_flex SET estado = 'asignada', conductor_id = ?, vehiculo_id = ?, modalidad = 'asignacion',
                bloque_desde = COALESCE(?, bloque_desde), bloque_hasta = COALESCE(?, bloque_hasta),
+               pago_bloque = COALESCE(?, pago_bloque),
                asignada_en = ${ahora}, oferta_vence_en = NULL, ultima_clave = ?, actualizado_en = ${ahora}
              WHERE id = ? AND empresa_id = ? AND estado = 'borrador'`,
           )
@@ -305,6 +311,7 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
             d.vehiculoId ?? null,
             d.bloqueDesde ?? null,
             d.bloqueHasta ?? null,
+            d.pagoBloque ?? null,
             clave,
             r.id,
             actor.empresaId,
@@ -366,6 +373,8 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
     await conductorDeEmpresa(db, actor.empresaId, d.conductorId, 'oferta');
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
+    // C-FLEX-BLOQUE-DURACION: con lo que llega y lo ya guardado, el bloque dura de 1 h 30 min a 5 h.
+    validarBloque(d.bloqueDesde ?? actual.bloque_desde, d.bloqueHasta ?? actual.bloque_hasta);
     await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
     // Fase 4 (C-FIN-RESERVAS): se aparta la comisión ANTES; si la asignación no entra, se devuelve.
     const cobro = await reservarCobroRuta(db, actual, await paquetesDelBorrador(db, actual.id));
@@ -379,6 +388,7 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
           .prepare(
             `UPDATE rutas_flex SET estado = 'ofrecida', conductor_id = ?, vehiculo_id = ?, modalidad = 'oferta',
                bloque_desde = COALESCE(?, bloque_desde), bloque_hasta = COALESCE(?, bloque_hasta),
+               pago_bloque = COALESCE(?, pago_bloque),
                oferta_vence_en = datetime('now', '+' || ? || ' minutes'), ultima_clave = ?, actualizado_en = ${ahora}
              WHERE id = ? AND empresa_id = ? AND estado = 'borrador'`,
           )
@@ -387,6 +397,7 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
             d.vehiculoId ?? null,
             d.bloqueDesde ?? null,
             d.bloqueHasta ?? null,
+            d.pagoBloque ?? null,
             d.minutos,
             clave,
             r.id,

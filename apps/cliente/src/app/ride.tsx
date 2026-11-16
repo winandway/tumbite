@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -33,6 +33,9 @@ function PantallaMoto() {
   const [deuda, setDeuda] = useState<{ monto: number; moneda: string | null } | null>(null);
   // C-VIAJE-SEGURIDAD-2: el «¿Todo bien?» si el viaje se sale de la ruta.
   const [alerta, setAlerta] = useState<{ id: string } | null>(null);
+  // C-MISMA-RUTA: «Cambiar algo» deja Pedir viaje escrito; se vuelve a montar para leerlo.
+  const [vueltaPedir, setVueltaPedir] = useState(0);
+  const lista = useRef<ScrollView>(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -88,6 +91,7 @@ function PantallaMoto() {
         etiquetaVolver={tc.volver}
       />
       <ScrollView
+        ref={lista}
         // C-TECLADO-NO-TAPA (31 oct 2026, Richard en TestFlight): el teclado tapaba el formulario y no
         // había cómo esconderlo. La casilla con el cursor sube sola y al deslizar el teclado se esconde.
         keyboardShouldPersistTaps="handled"
@@ -118,13 +122,29 @@ function PantallaMoto() {
         ) : (
           <>
             <PedirMoto
+              key={vueltaPedir}
               servicio={servicio}
               deudaPendiente={deuda}
               alPedir={(id) => setViajeId(id)}
             />
             {servicio !== 'envios' ? <ContactosConfianza /> : null}
             {/* C-VIAJES-HISTORIAL: sus viajes anteriores con el recibo y la ayuda. */}
-            {servicio !== 'envios' ? <MisViajes /> : null}
+            {/* C-MISMA-RUTA: «Pedir la misma ruta» cae aquí mismo en la espera de siempre. */}
+            {servicio !== 'envios' ? (
+              <MisViajes
+                alPedir={(id, otro) =>
+                  otro === servicio
+                    ? setViajeId(id)
+                    : router.replace({ pathname: '/ride', params: { servicio: otro } })
+                }
+                alCambiar={(otro) => {
+                  if (otro !== servicio)
+                    return router.replace({ pathname: '/ride', params: { servicio: otro } });
+                  setVueltaPedir((n) => n + 1);
+                  lista.current?.scrollTo({ y: 0, animated: true });
+                }}
+              />
+            ) : null}
           </>
         )}
       </ScrollView>

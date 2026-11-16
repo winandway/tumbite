@@ -85,7 +85,8 @@ export function BotonGrande({
         backgroundColor: fondo,
         borderWidth: tipo === 'borde' ? 1.5 : 0,
         borderColor: C.primario,
-        borderRadius: 999,
+        // Fase cero: esquina 12, como todos los botones de las tres apps.
+        borderRadius: 12,
         minHeight: 56,
         paddingVertical: 16,
         paddingHorizontal: 16,
@@ -206,7 +207,7 @@ export function Cabecera({
           {t.restaurante}
         </Text>
       </View>
-      {/* El selector va en una píldora negra, el color de Restaurants (el Driver va en azul). */}
+      {/* El selector va en una píldora negra: el negro de Restaurants vive solo en su cabecera. */}
       <View style={{ backgroundColor: COLOR.negro, borderRadius: 999, paddingHorizontal: 4 }}>
         <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
       </View>
@@ -332,7 +333,6 @@ export function BarraInferior({
     <BarraPestanas
       activa={activa}
       alTocar={(p) => alTocar(p as Pestana)}
-      colorActivo={COLOR.negro}
       pestanas={[
         {
           clave: 'inicio',

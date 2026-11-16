@@ -36,7 +36,7 @@ describe('Mi ruta: repaso en el simulador', () => {
     expect(mapa).toContain('const inicial = regionDe(todos);');
   });
   it('la distancia va en la unidad del país de la ruta (C-FLEX-DISTANCIA-PAIS)', () => {
-    expect(servidor).toMatch(/SELECT nombre, pais, config_entrega_json FROM empresas/);
+    expect(servidor).toMatch(/SELECT nombre, pais, moneda, config_entrega_json FROM empresas/);
     expect(servidor).toMatch(/pais: empresa\?\.pais \?\? null/);
     expect(miRuta).toContain('textoDistancia(distanciaKm(a, b), idioma, pais)');
     expect(miRuta).not.toMatch(/\} km \$\{t\.aprox\}/);

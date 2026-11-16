@@ -983,17 +983,23 @@ export async function latido(
           modo: 'mano',
           ...(p.pin ? { pin: p.pin } : {}),
         });
-      else
+      else {
+        // C-DESLIZAR-SIEMPRE: como la app, primero la foto de la puerta y después deslizar.
         await accion(
           ctx,
           rep,
-          'entregar con foto',
+          'foto de la entrega',
           p.id,
           'POST',
-          `${rutaRep('entregado')}?lat=${casa.lat}&lng=${casa.lng}`,
+          `${rutaRep('foto-entrega')}?lat=${casa.lat}&lng=${casa.lng}`,
           undefined,
           FOTO_JUEGO,
         );
+        await accion(ctx, rep, 'deslizar para completar', p.id, 'POST', rutaRep('entregado'), {
+          ...casa,
+          modo: 'puerta',
+        });
+      }
     }
   }
 

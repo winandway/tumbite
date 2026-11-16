@@ -1,9 +1,11 @@
 /**
- * C-MAPA-GOOGLE-WEB y C-MAPA-DIA-NOCHE (14 nov 2026, decisión de Richard) — todos los países.
- * Los DOS estilos del mapa de Divoox, de una sola fuente (las paletas de abajo):
+ * C-MAPA-GOOGLE-WEB y C-MAPA-DIA-NOCHE (14 nov 2026) y sistema de diseño fase cero (aprobado por
+ * Richard el 16 nov 2026, sección 7) — todos los países. Los DOS estilos del mapa de Divoox, de una
+ * sola fuente (las paletas de abajo):
  *
- * - «Día · azul Divoox»: tierra azul claro, calles blancas con borde azul, autopistas en azul petróleo.
- * - «Noche · oscuro con azul»: tierra casi negra, calles grises, autopistas en azul claro.
+ * - «Día»: suelo gris muy claro, manzanas un tono más, calles y avenidas blancas, parques verdes y
+ *   agua celeste suaves, nombres en gris. La ruta en tinta y el destino en rojo resaltan encima.
+ * - «Noche»: grafito (suelo casi negro, calles y avenidas en grises oscuros), nombres en gris.
  *
  * Sin rojo en el mapa base: el rojo #F20D20 es de nuestras marcas y de los problemas. Sin puntos de
  * interés ni transporte (solo los parques, como mancha de color sin rótulo).
@@ -46,39 +48,39 @@ export type PaletaMapa = {
 };
 
 export const PALETA_MAPA_DIA: PaletaMapa = {
-  nombre: 'Día · azul Divoox',
-  tierra: '#CBDDE8',
+  nombre: 'Día · gris Divoox',
+  tierra: '#EEF0F3',
   calle: '#FFFFFF',
-  bordeCalle: '#5E8CA6',
+  bordeCalle: '#E3E6EA',
   avenida: '#FFFFFF',
-  bordeAvenida: '#1F4D69',
-  autopista: '#1F4D69',
-  bordeAutopista: '#1F4D69',
-  agua: '#4FB3D9',
-  parque: '#A9DCC0',
-  edificio: '#B7CEDC',
-  texto: '#1F4D69',
-  textoFuerte: '#0C2A3B',
+  bordeAvenida: '#E3E6EA',
+  autopista: '#FFFFFF',
+  bordeAutopista: '#E3E6EA',
+  agua: '#CFE3F3',
+  parque: '#DCEFE0',
+  edificio: '#E3E6EA',
+  texto: '#8A919C',
+  textoFuerte: '#666B73',
   bordeTexto: '#FFFFFF',
-  textoAgua: '#0C4A66',
+  textoAgua: '#8A919C',
 };
 
 export const PALETA_MAPA_NOCHE: PaletaMapa = {
-  nombre: 'Noche · oscuro con azul',
-  tierra: '#1C1F24',
-  calle: '#4A515C',
-  bordeCalle: '#15171B',
-  avenida: '#737C8A',
-  bordeAvenida: '#15171B',
-  autopista: '#5FB4E5',
-  bordeAutopista: '#15171B',
-  agua: '#0E3F5C',
-  parque: '#1F4030',
-  edificio: '#2B3039',
-  texto: '#C4C9D1',
-  textoFuerte: '#FFFFFF',
-  bordeTexto: '#101010',
-  textoAgua: '#7FC4EA',
+  nombre: 'Noche · grafito Divoox',
+  tierra: '#141416',
+  calle: '#26262A',
+  bordeCalle: '#1B1B1E',
+  avenida: '#303035',
+  bordeAvenida: '#1B1B1E',
+  autopista: '#38383E',
+  bordeAutopista: '#1B1B1E',
+  agua: '#0F1923',
+  parque: '#15201A',
+  edificio: '#1B1B1E',
+  texto: '#6E6E78',
+  textoFuerte: '#A1A1AA',
+  bordeTexto: '#141416',
+  textoAgua: '#6E6E78',
 };
 
 /** El estilo clásico (reglas `featureType` / `elementType` / `stylers`) de una paleta. */

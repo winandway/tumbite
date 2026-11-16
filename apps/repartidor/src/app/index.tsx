@@ -20,7 +20,7 @@ function Portada() {
       />
       <View
         style={{
-          backgroundColor: C.logistica,
+          backgroundColor: C.primario,
           borderRadius: 999,
           paddingHorizontal: 14,
           paddingVertical: 6,
@@ -44,10 +44,10 @@ export default function Entrada() {
           flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: C.logistica,
+          backgroundColor: '#FFFFFF',
         }}
       >
-        <ActivityIndicator color="#FFFFFF" size="large" />
+        <ActivityIndicator color={C.primario} size="large" />
       </View>
     );
   }

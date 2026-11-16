@@ -1,5 +1,5 @@
 import type { Idioma } from '@tumbite/compartido';
-import { BarraPestanas, COLOR } from '@tumbite/movil';
+import { BarraPestanas } from '@tumbite/movil';
 import { textosDriver } from './textos';
 
 export type Pestana = 'inicio' | 'pedidos' | 'ganancias' | 'perfil';
@@ -23,7 +23,6 @@ export function BarraInferior({
     <BarraPestanas
       activa={activa}
       alTocar={(p) => alTocar(p as Pestana)}
-      colorActivo={COLOR.logistica}
       pestanas={[
         { clave: 'inicio', texto: nombre('inicio'), icono: 'home-outline', iconoActivo: 'home' },
         {

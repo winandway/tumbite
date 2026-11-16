@@ -218,6 +218,15 @@ type Estado = {
   agrupados?: Pedido[];
   /** C-OCUPADO-VISIBLE (BRF-1): una ruta Flex o un viaje lo ocupa; no le llegan pedidos de comida. */
   ocupadoEn?: 'ruta_flex' | 'operacion' | null;
+  /** C-FLEX-EXCLUSIVO: el bloque de Flex que lo ocupa; todo lo demás está desconectado. */
+  bloqueFlex?: {
+    rutaId: string;
+    nombre: string;
+    estado: string;
+    empresa: string;
+    bloqueDesde: string | null;
+    bloqueHasta: string | null;
+  } | null;
 };
 type Billetera = DatosBilletera;
 
@@ -644,6 +653,9 @@ export function Inicio() {
         .catch(() => undefined);
       const s = await api.pedir<Estado>('GET', '/datos/repartidor/estado');
       setEstado(s);
+      // C-FLEX-EXCLUSIVO: con un bloque de Flex, el inicio y «Pedidos» pasan a la ruta y se quedan
+      // ahí también al cerrarlo, hasta que el conductor toque «Volver al inicio» (así ve su pago).
+      if (s.bloqueFlex) setVista((v) => (v === 'inicio' || v === 'pedidos' ? 'miRuta' : v));
       if (s.conectado) setConectadoDesde((d) => d ?? Date.now());
       else setConectadoDesde(null);
       if (s.conectado && !s.activo)
@@ -684,6 +696,11 @@ export function Inicio() {
       clearInterval(reloj);
     };
   }, [cargar]);
+
+  // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): con un bloque de Flex, el inicio cambia entero al modo
+  // bloque (la ruta, con la banda «todo lo demás está desconectado»). Comida, envíos y viajes no se
+  // ven ni se pueden conectar hasta terminar el bloque.
+  const enBloque = Boolean(estado?.bloqueFlex);
 
   // C-MAPA-DEMANDA: las zonas con más pedidos de la última hora, cada minuto (como el «Dash Now»).
   const [zonasDemanda, setZonasDemanda] = useState<ZonaDemanda[]>([]);
@@ -1382,7 +1399,7 @@ export function Inicio() {
         </Text>
       ) : null}
       {pideCasco ? (
-        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}>
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.secundario }]}>
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieCasco}</Text>
           <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 6 }}>
             {t.selfieCascoAyuda}
@@ -1402,7 +1419,7 @@ export function Inicio() {
       ) : null}
       {estado?.terminosPorAceptar ? (
         // C-TERMINOS-ACTUALIZADOS (31 oct 2026, como DoorDash): leer, marcar y aceptar.
-        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]} testID="terminos">
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.secundario }]} testID="terminos">
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.terminosTitulo}</Text>
           <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 6 }}>{t.terminosAyuda}</Text>
           <Text
@@ -1426,8 +1443,8 @@ export function Inicio() {
                 height: 22,
                 borderRadius: 4,
                 borderWidth: 2,
-                borderColor: aceptoTerminos ? C.logistica : '#6B7078',
-                backgroundColor: aceptoTerminos ? C.logistica : '#fff',
+                borderColor: aceptoTerminos ? C.primario : '#6B7078',
+                backgroundColor: aceptoTerminos ? C.primario : '#fff',
               }}
             />
             <Text style={{ flex: 1 }}>{t.terminosAcepto}</Text>
@@ -1479,7 +1496,7 @@ export function Inicio() {
         />
       ) : null}
       {estado?.selfieControlPendiente ? (
-        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}>
+        <View style={[e.tarjeta, { borderWidth: 2, borderColor: C.secundario }]}>
           <Text style={{ fontWeight: '800', fontSize: 16 }}>{t.selfieControl}</Text>
           <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 6 }}>
             {t.selfieControlAyuda}
@@ -1783,7 +1800,7 @@ export function Inicio() {
                 paddingHorizontal: 18,
                 paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: periodo === pz ? C.logistica : '#fff',
+                backgroundColor: periodo === pz ? C.secundario : '#fff',
               }}
             >
               <Text style={{ fontWeight: '700', color: periodo === pz ? '#fff' : C.secundario }}>
@@ -1852,9 +1869,11 @@ export function Inicio() {
             key={rutaDelAviso ?? 'lista'}
             api={api}
             idioma={idioma}
-            abrirRutaId={rutaDelAviso}
+            abrirRutaId={rutaDelAviso ?? estado?.bloqueFlex?.rutaId ?? null}
             alSeguridad={() => setVista('seguridad')}
-            alVolver={() => setVista('inicio')}
+            alVolver={enBloque ? undefined : () => setVista('inicio')}
+            alInicio={() => setVista('inicio')}
+            bloque={estado?.bloqueFlex ?? null}
             ponerPie={setPieFlex}
           />
         </ScrollView>
@@ -1970,7 +1989,7 @@ export function Inicio() {
               width: 92,
               height: 92,
               borderRadius: 46,
-              backgroundColor: C.logistica,
+              backgroundColor: C.secundario,
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -2123,7 +2142,7 @@ export function Inicio() {
     return lienzo(
       'inicio',
       <View>
-        <View style={{ backgroundColor: C.logistica, paddingHorizontal: 16, paddingVertical: 14 }}>
+        <View style={{ backgroundColor: C.secundario, paddingHorizontal: 16, paddingVertical: 14 }}>
           <Text style={{ color: '#fff', fontSize: 30, fontWeight: '800' }}>
             {distanciaTexto || (activo.estado === 'en_camino' ? td.entregaEn : td.recogeEn)}
           </Text>
@@ -2655,8 +2674,8 @@ export function Inicio() {
                                     paddingVertical: 8,
                                     borderRadius: 999,
                                     borderWidth: 1,
-                                    borderColor: documento === d ? C.logistica : '#D6D8DC',
-                                    backgroundColor: documento === d ? C.logistica : '#fff',
+                                    borderColor: documento === d ? C.secundario : '#D6D8DC',
+                                    backgroundColor: documento === d ? C.secundario : '#fff',
                                   }}
                                 >
                                   <Text

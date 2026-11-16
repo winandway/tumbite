@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, Share, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  Image,
+  Linking,
+  Platform,
+  Pressable,
+  Share,
+  View,
+} from 'react-native';
 import {
   ErrorApi,
   type Referencia,
@@ -16,12 +26,17 @@ import {
   leerTokenGuardado,
   useSesion,
   Text,
+  COLOR,
+  Icono,
+  LETRA,
 } from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
 import { miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
 import { type ParadaDelViaje, ParadasDelViaje } from './Paradas';
+import { BuscandoConductor } from './BuscandoConductor';
+import { TEXTOS_ESPERA } from './textosEspera';
 
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
 export type ViajePasajero = {
@@ -78,6 +93,59 @@ export type PaqueteCliente = {
 };
 
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
+const BUSCANDO = new Set(['buscando', 'pago_pendiente']);
+
+/** La barra de «buscando»: un tramo rojo del 36 % recorre la barra (quieta con «reducir movimiento»). */
+function BarraBuscando() {
+  const [ancho, setAncho] = useState(0);
+  const [valor] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    let anim: Animated.CompositeAnimation | null = null;
+    let vivo = true;
+    void AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((reducir) => {
+        if (!vivo || reducir) return;
+        anim = Animated.loop(
+          Animated.timing(valor, {
+            toValue: 1,
+            duration: 1600,
+            easing: Easing.bezier(0.4, 0, 0.2, 1),
+            // En la web no hay motor nativo y el bucle se cortaría tras la primera vuelta.
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+        );
+        anim.start();
+      });
+    return () => {
+      vivo = false;
+      anim?.stop();
+    };
+  }, [valor]);
+  const x = valor.interpolate({ inputRange: [0, 1], outputRange: [-0.36 * ancho, ancho] });
+  return (
+    <View
+      onLayout={(ev) => setAncho(ev.nativeEvent.layout.width)}
+      style={{
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLOR.superficieFuerte,
+        overflow: 'hidden',
+        marginTop: 14,
+      }}
+    >
+      <Animated.View
+        style={{
+          width: '36%',
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: COLOR.marca,
+          transform: [{ translateX: x }],
+        }}
+      />
+    </View>
+  );
+}
 
 /**
  * C-CARRO-VIAJE-PASAJERO: la foto del conductor (privada, con la sesión). Sin foto o si no carga, la
@@ -156,6 +224,10 @@ export function ViajeEnCurso({
   const [calificado, setCalificado] = useState(false);
   // C-CHAT-VIAJE: mensajes con el conductor mientras el viaje está activo (sin teléfonos).
   const [verChat, setVerChat] = useState(false);
+  // C-ESPERA-ADELANTE: ancho de la escena animada mientras se busca conductor.
+  const [anchoEscena, setAnchoEscena] = useState(0);
+  const te = enIdioma(TEXTOS_ESPERA, idioma);
+  const buscando = BUSCANDO.has(viaje.estado);
   // C-VIAJE-PROPINA: propina después del viaje, con la tarjeta con la que pagó.
   const [propina, setPropina] = useState<number | null>(null);
   async function darPropina(centavos: number) {
@@ -246,15 +318,56 @@ export function ViajeEnCurso({
 
   return (
     <View testID="viaje-pasajero" style={{ gap: 12 }}>
-      <Text
-        accessibilityRole="header"
-        testID={`viaje-estado-${viaje.estado}`}
-        style={{ fontSize: 24, fontWeight: '700', color: C.secundario }}
-      >
-        {titulo}
-      </Text>
+      {buscando ? (
+        // C-ESPERA-ADELANTE (fase cero): la escena animada, el título, la calma y la barra roja.
+        <View onLayout={(ev) => setAnchoEscena(ev.nativeEvent.layout.width)}>
+          {anchoEscena > 0 ? <BuscandoConductor ancho={anchoEscena} /> : null}
+          <Text
+            accessibilityRole="header"
+            testID={`viaje-estado-${viaje.estado}`}
+            style={[LETRA.titulo, { fontSize: 26, lineHeight: 32, marginTop: 16 }]}
+          >
+            {viaje.servicio === 'envios' ? te.tituloEnvio : te.titulo}
+          </Text>
+          <Text style={[LETRA.secundario, { marginTop: 6 }]}>{te.calma}</Text>
+          <BarraBuscando />
+          <View testID="buscando-lista" style={es.lista}>
+            <View style={es.fila}>
+              <View style={es.recogida} />
+              <Text style={es.filaTexto} numberOfLines={1}>
+                {viaje.origen.direccion}
+              </Text>
+            </View>
+            <View style={es.fila}>
+              <View style={es.destino} />
+              <Text style={es.filaTexto} numberOfLines={1}>
+                {viaje.destino.direccion}
+              </Text>
+            </View>
+            <View style={[es.fila, { borderBottomWidth: 0 }]}>
+              <Icono nombre="card-outline" tamano={18} />
+              <Text style={es.filaTexto} numberOfLines={1}>
+                {nombreVehiculo}
+              </Text>
+              {viaje.total != null ? (
+                <Text style={[LETRA.tarjeta, { fontFamily: 'Poppins_700Bold' }]}>
+                  {monto(viaje.total)}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        </View>
+      ) : (
+        <Text
+          accessibilityRole="header"
+          testID={`viaje-estado-${viaje.estado}`}
+          style={{ fontSize: 24, fontWeight: '700', color: C.secundario }}
+        >
+          {titulo}
+        </Text>
+      )}
 
-      {!FINALES.has(viaje.estado) ? (
+      {!FINALES.has(viaje.estado) && !buscando ? (
         <MapaEntrega
           restaurante={{ lat: viaje.origen.lat, lng: viaje.origen.lng }}
           casa={{ lat: viaje.destino.lat, lng: viaje.destino.lng }}
@@ -391,29 +504,39 @@ export function ViajeEnCurso({
         </Tarjeta>
       ) : null}
 
-      <Tarjeta>
-        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
-        <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.origen.direccion}</Text>
-        <Text style={{ color: '#666B73', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
-        <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.destino.direccion}</Text>
-        {viaje.total != null ? (
-          <Text style={{ marginTop: 8, fontWeight: '700', color: C.secundario }}>
-            {viaje.estado === 'terminado'
-              ? viaje.metodoPago === 'tarjeta'
-                ? t.pagadoTarjeta
-                : viaje.metodoPago === 'pago_movil'
-                  ? t.pagoMovil
-                  : t.pagaEfectivo
-              : t.precioFijo}
-            : {monto(viaje.total)}
-          </Text>
-        ) : null}
-        {viaje.referencia ? (
-          <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>
-            {textoReferencia(viaje.referencia, idioma)}
-          </Text>
-        ) : null}
-      </Tarjeta>
+      {buscando ? (
+        <Boton
+          tipo="terciario"
+          icono="share-social-outline"
+          texto={te.compartir}
+          alTocar={() => void compartir()}
+          testID="buscando-compartir"
+        />
+      ) : (
+        <Tarjeta>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
+          <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.origen.direccion}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
+          <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.destino.direccion}</Text>
+          {viaje.total != null ? (
+            <Text style={{ marginTop: 8, fontWeight: '700', color: C.secundario }}>
+              {viaje.estado === 'terminado'
+                ? viaje.metodoPago === 'tarjeta'
+                  ? t.pagadoTarjeta
+                  : viaje.metodoPago === 'pago_movil'
+                    ? t.pagoMovil
+                    : t.pagaEfectivo
+                : t.precioFijo}
+              : {monto(viaje.total)}
+            </Text>
+          ) : null}
+          {viaje.referencia ? (
+            <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>
+              {textoReferencia(viaje.referencia, idioma)}
+            </Text>
+          ) : null}
+        </Tarjeta>
+      )}
 
       {conConductor ? (
         <View style={{ gap: 8 }}>
@@ -431,17 +554,20 @@ export function ViajeEnCurso({
       ) : null}
       {viaje.cancelacion ? (
         <>
-          <Text style={{ color: '#666B73', textAlign: 'center' }}>
-            {viaje.cancelacion.cargo === 0
-              ? t.cancelarGratis
-              : `${t.cancelarCargo} ${monto(viaje.cancelacion.cargo)}`}
-          </Text>
           <Boton
             texto={paquete ? t.cancelarEnvio : t.cancelar}
             alTocar={() => void cancelar()}
             cargando={cancelando}
-            secundario
+            tipo="borde"
           />
+          {/* Fase cero: la nota va debajo del botón, chica y en gris. */}
+          <Text style={[LETRA.pequeno, { textAlign: 'center', marginTop: -4 }]}>
+            {viaje.cancelacion.cargo === 0
+              ? buscando
+                ? te.cancelarNota
+                : t.cancelarGratis
+              : `${t.cancelarCargo} ${monto(viaje.cancelacion.cargo)}`}
+          </Text>
         </>
       ) : null}
       {['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado) ? (
@@ -522,3 +648,31 @@ export function ViajeEnCurso({
     </View>
   );
 }
+
+const es = {
+  lista: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: COLOR.borde,
+    borderRadius: 12,
+  },
+  fila: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    paddingHorizontal: 14,
+    minHeight: 50,
+    borderBottomWidth: 1,
+    borderBottomColor: COLOR.borde,
+  },
+  filaTexto: { flex: 1, fontSize: 14.5, fontFamily: 'Montserrat_500Medium', color: COLOR.texto },
+  recogida: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 3,
+    borderColor: COLOR.negro,
+    backgroundColor: COLOR.blanco,
+  },
+  destino: { width: 14, height: 14, borderRadius: 3, backgroundColor: COLOR.marca },
+};
