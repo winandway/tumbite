@@ -2,6 +2,7 @@ import { AvisosWebPanel, darDeBajaAlSalir } from './AvisosWebPanel';
 import { Flota } from './Flota';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AyudaInterna } from './AyudaInterna';
+import { BaseAyudaInterna } from './AyudaAqui';
 import { Armazon, type AvisoArmazon, SesionArmazon } from './armazon/Armazon';
 import { EncabezadoPagina, Metricas, TarjetaMetrica } from './armazon/Piezas';
 import {
@@ -510,21 +511,26 @@ export function PanelApp({ ruta }: { ruta: string }) {
       <PermisosContexto.Provider value={permisos}>
         <div className="pagina panel">
           <ConHorario activo={esAdmin}>
-            <Armazon
-              grupos={grupos}
-              avisos={avisos}
-              buscador={
-                esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
-                  <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
-                ) : undefined
-              }
-              ayuda={
-                esAdmin && baseAdmin && baseAdmin !== '/panel' ? `${baseAdmin}/help` : undefined
-              }
+            {/* C-AYUDA-AQUI: los «?» de cada parte solo existen bajo la dirección secreta. */}
+            <BaseAyudaInterna.Provider
+              value={esAdmin && baseAdmin && baseAdmin !== '/panel' ? baseAdmin : null}
             >
-              {esAdmin ? <FranjaSegundoFactor idioma={idioma} /> : null}
-              {contenido}
-            </Armazon>
+              <Armazon
+                grupos={grupos}
+                avisos={avisos}
+                buscador={
+                  esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
+                    <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
+                  ) : undefined
+                }
+                ayuda={
+                  esAdmin && baseAdmin && baseAdmin !== '/panel' ? `${baseAdmin}/help` : undefined
+                }
+              >
+                {esAdmin ? <FranjaSegundoFactor idioma={idioma} /> : null}
+                {contenido}
+              </Armazon>
+            </BaseAyudaInterna.Provider>
           </ConHorario>
           {esRestaurante && <AyudaBurbuja idioma={idioma} />}
         </div>

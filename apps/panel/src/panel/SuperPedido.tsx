@@ -43,6 +43,7 @@ import {
   metrosEntre,
   textoMetros,
 } from './FichaPiezas';
+import { AyudaAqui } from './AyudaAqui';
 
 /** Bitácora de un pedido en el superadmin: quién hizo qué y a qué hora, incluido el Manager. */
 const T = {
@@ -1374,7 +1375,10 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
     (servicio === 'todos' || servicio === 'auto' || servicio === 'moto' || servicio === 'envios');
   return (
     <section className="super">
-      <h1>{t.titulo}</h1>
+      <h1>
+        {t.titulo}
+        <AyudaAqui guia="monitor-live-orders-rides" idioma={idioma} />
+      </h1>
       <p>{t.ayuda}</p>
       <div className="monitoreo-pestanas" role="tablist" aria-label={t.servicio}>
         {pestanas.map((s) => {
@@ -1502,6 +1506,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
             {datos?.siguiente ? '+' : ''}
           </strong>
           {filtro !== 'cerrados' ? ` · ${rojos} ${t.rojos} · ${amarillos} ${t.amarillos}` : ''}
+          <AyudaAqui guia="traffic-light-stuck" idioma={idioma} />
         </p>
       )}
       {lista?.length === 0 &&

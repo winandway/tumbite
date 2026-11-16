@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { MenuTresPuntos } from './MenuTresPuntos';
 import { pedir } from './api';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-MODERACION (16 nov 2026, todos los países): la bandeja de reportes del equipo, como la de Uber,
@@ -173,7 +174,10 @@ export function SuperReportes({ idioma }: { idioma: Idioma }) {
 
   return (
     <section className="super">
-      <h1>{t.titulo}</h1>
+      <h1>
+        {t.titulo}
+        <AyudaAqui guia="flagged-content" idioma={idioma} />
+      </h1>
       <p className="suave">{t.ayuda}</p>
       <div className="super-filtros" role="tablist">
         {(

@@ -76,7 +76,10 @@ describe('C-SUPERADMIN-ENLACES · cada enlace de una lista abre su ficha', () =>
     }
     expect(fichas.size).toBeGreaterThan(5);
     for (const p of fichas)
-      if (p !== 'cash') expect(PREFIJOS_FICHA as readonly string[], p).toContain(p);
+      // «cash» y «help» (C-AYUDA-AQUI: cada guía de la ayuda interna) los resuelve seccionAdmin.
+      if (p === 'cash' || p === 'help')
+        expect(seccionAdmin(`/${p}/abc`, BASE, ADMIN, 'es'), p).not.toBeNull();
+      else expect(PREFIJOS_FICHA as readonly string[], p).toContain(p);
     for (const p of listas) expect(seccionAdmin(`/${p}`, BASE, ADMIN, 'es'), p).not.toBeNull();
   });
 });

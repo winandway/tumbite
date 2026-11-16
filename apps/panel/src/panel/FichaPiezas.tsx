@@ -24,6 +24,7 @@ import {
 } from '@tumbite/compartido/src/mapaWebGoogle';
 import { useHora } from './horario';
 import { usePermisos } from './permisosPanel';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-FICHA-OPERACION (15 nov 2026). Todos los países. Las piezas de la ficha del pedido y de la del
@@ -235,7 +236,10 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
               : t.sinDato;
   return (
     <section className="tarjeta-form ficha-tiempos" aria-labelledby="ficha-tiempos-titulo">
-      <h2 id="ficha-tiempos-titulo">{t.titulo}</h2>
+      <h2 id="ficha-tiempos-titulo">
+        {t.titulo}
+        <AyudaAqui guia="read-order-ride-file" parrafo={0} idioma={idioma} />
+      </h2>
       <ul className="ficha-tramos">
         {tiempos.map((x) => (
           <li key={x.clave} className={`ficha-tramo ficha-tramo-${tono(x.resultado)}`}>

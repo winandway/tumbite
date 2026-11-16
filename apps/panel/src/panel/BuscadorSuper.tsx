@@ -16,6 +16,7 @@ import { pedir } from './api';
 import { useHora } from './horario';
 import { type GrupoMenu, IconoDe } from './armazon/menus';
 import { PAUSA_TECLAS_MS, crearMemoria } from './memoriaBusqueda';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-BUSCADOR-SERIO (15 nov 2026, pedido de Richard). Todos los países. El buscador fijo arriba de
@@ -482,6 +483,7 @@ export function BuscadorSuper({
       <kbd className="bs-atajo" aria-hidden="true">
         /
       </kbd>
+      <AyudaAqui guia="search-orders-rides-people" idioma={idioma} />
       {desplegado ? (
         <div
           className={`pd-flotante pd-buscador-caja bs-caja${anterior ? ' bs-cargando' : ''}`}

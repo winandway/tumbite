@@ -22,6 +22,7 @@ import { GestionFranquicia, SolicitudesFranquicia } from './GestionFranquicia';
 import { pedir } from './api';
 import { EncabezadoPagina, Pastilla } from './armazon/Piezas';
 import { TableroSuper } from './TableroSuper';
+import { AyudaAqui } from './AyudaAqui';
 
 /** Punto 28: el canario de /datos/salud dentro del panel (antes solo se veía por la API). */
 function SaludPiezas() {
@@ -505,7 +506,9 @@ export function SuperResumen({ base, idioma }: { base: string; idioma: Idioma })
   const dinero = (c: number, moneda = 'USD') => formatearMonto(c, moneda, idioma);
   return (
     <section className="super">
-      <EncabezadoPagina titulo={t.resumen} detalle={t.resumenDetalle} />
+      <EncabezadoPagina titulo={t.resumen} detalle={t.resumenDetalle}>
+        <AyudaAqui guia="how-divoox-works" idioma={idioma} />
+      </EncabezadoPagina>
       <TableroSuper
         base={base}
         idioma={idioma}
@@ -788,7 +791,10 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
 
   return (
     <section className="super">
-      <h1>{t.bandeja}</h1>
+      <h1>
+        {t.bandeja}
+        <AyudaAqui guia="link-support-ticket" idioma={idioma} />
+      </h1>
       <AvisoFiltrosGuardados
         visible={pref.guardados}
         idioma={idioma}

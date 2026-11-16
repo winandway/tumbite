@@ -18,6 +18,7 @@ import {
   textosEquipo,
 } from './equipo/textos';
 import './equipo/equipo.css';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-PERMISOS-FINOS y C-EQUIPO-INVITACION (MON-5, 15 nov 2026) — todos los países. «Equipo interno»:
@@ -130,7 +131,9 @@ export function SuperEquipo({
   if (cargando) return <section className="super eq" aria-busy="true" />;
   return (
     <section className="super eq">
-      <EncabezadoPagina titulo={t.titulo} detalle={t.detalle} />
+      <EncabezadoPagina titulo={t.titulo} detalle={t.detalle}>
+        <AyudaAqui guia="add-team-members-permissions" idioma={idioma} />
+      </EncabezadoPagina>
       <div className="super-filtros" role="tablist" aria-label={t.titulo}>
         {pestanas.map((p) => (
           <button

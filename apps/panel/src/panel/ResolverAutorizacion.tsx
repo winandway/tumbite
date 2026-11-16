@@ -12,6 +12,7 @@ import { AvisoBorrador } from './AvisoBorrador';
 import { textoPendiente } from './SuperAprobaciones';
 import { Hora } from './horario';
 import { usePermisos } from './permisosPanel';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-AUTORIZACION-VENCIDA (16 nov 2026) — todos los países con tarjeta. En la ficha del pedido, solo
@@ -262,7 +263,10 @@ export function ResolverAutorizacion({
   const marcas = new Map(Object.entries(MARCAS));
   return (
     <section className="tarjeta-form resolver-autorizacion" aria-labelledby="resolver-aut-titulo">
-      <h2 id="resolver-aut-titulo">{t.titulo}</h2>
+      <h2 id="resolver-aut-titulo">
+        {t.titulo}
+        <AyudaAqui guia="resolve-expired-card-authorization" idioma={idioma} />
+      </h2>
       <p className="ficha-nota">{t.ayuda}</p>
       {aviso ? (
         <p className="ok" role="status">

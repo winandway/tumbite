@@ -14,6 +14,7 @@ import { AvisoBorrador } from './AvisoBorrador';
 import { Campo, CampoClave } from './CampoClave';
 import { pedir } from './api';
 import { detalleEnPalabras } from './detalleConciliacion';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-CONTROL-DUAL (SIG-4, 2 nov 2026): la bandeja «Para aprobar». El dinero hecho a mano por encima
@@ -237,7 +238,10 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
 
   return (
     <section className="super">
-      <h1>{t.titulo}</h1>
+      <h1>
+        {t.titulo}
+        <AyudaAqui guia="two-person-approval" idioma={idioma} />
+      </h1>
       <p className="suave">{t.ayuda}</p>
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {!d.puedoAprobar && <p className="aviso">{t.sinPerfil}</p>}

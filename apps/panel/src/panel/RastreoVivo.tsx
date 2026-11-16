@@ -14,6 +14,7 @@ import { pedir } from './api';
 import { MapaFicha, type PuntoFicha, textoMetros } from './FichaPiezas';
 import { useHora } from './horario';
 import { usePermisos } from './permisosPanel';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-RASTREO-VIVO (16 nov 2026, orden de Richard: «nosotros vivimos del tiempo y de los mapas»).
@@ -169,7 +170,10 @@ export function RastreoVivo({
   if (!permitido)
     return (
       <section className="tarjeta-form ficha-vivo" aria-labelledby="ficha-vivo-titulo">
-        <h2 id="ficha-vivo-titulo">{t.titulo}</h2>
+        <h2 id="ficha-vivo-titulo">
+          {t.titulo}
+          <AyudaAqui guia="read-order-ride-file" parrafo={1} idioma={idioma} />
+        </h2>
         <p className="ficha-nota">{t.sinPermiso}</p>
       </section>
     );
@@ -211,6 +215,7 @@ export function RastreoVivo({
           {d?.fase ? (
             <span className="ficha-vivo-fase"> · {textoFase(d.fase, lengua, d.esEnvio)}</span>
           ) : null}
+          <AyudaAqui guia="read-order-ride-file" parrafo={1} idioma={idioma} />
         </h2>
         {d?.detenido ? (
           <span className="bs-estado bs-problema" data-testid="ficha-detenido">

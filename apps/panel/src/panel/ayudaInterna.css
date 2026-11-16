@@ -220,3 +220,95 @@
     margin-bottom: 0;
   }
 }
+
+/* C-AYUDA-AQUI: el «?» chico al lado de cada parte, y su panel lateral. */
+.ayq-boton {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pd-gris);
+  cursor: pointer;
+  vertical-align: middle;
+  flex: none;
+}
+.ayq-boton:hover,
+.ayq-boton[aria-expanded='true'] {
+  background: var(--pd-fondo, #f4f5f7);
+  color: var(--pd-negro, #101010);
+}
+.ayq-velo {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  border: 0;
+  background: rgb(16 16 16 / 25%);
+}
+.ayq-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 91;
+  width: min(440px, 100vw);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid var(--pd-borde, #e2e5ea);
+  box-shadow: -8px 0 28px rgb(16 16 16 / 12%);
+  padding: 16px 22px 24px;
+  text-align: left;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--pd-negro, #101010);
+}
+.ayq-cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ayq-panel .ayi-guia h2 {
+  font-size: 21px;
+  margin-top: 0;
+}
+.ayq-esta-parte {
+  border: 1px solid var(--pd-borde, #e2e5ea);
+  border-radius: 10px;
+  background: var(--pd-fondo, #f4f5f7);
+  padding: 10px 14px;
+}
+.ayq-esta-parte p {
+  margin: 0;
+}
+.ayq-etiqueta {
+  font-weight: 700;
+  margin-bottom: 4px !important;
+}
+.ayq-completa {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-weight: 600;
+  color: var(--pd-rojo-oscuro, #c20a1a);
+  text-decoration: none;
+}
+.ayq-completa:hover {
+  text-decoration: underline;
+}
+/* En el buscador de la cabecera, el «?» va adentro, antes de la tecla «/». */
+.pd-buscador.bs > .ayq-boton {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+}
+.pd-buscador.bs > input {
+  padding-right: 74px;
+}

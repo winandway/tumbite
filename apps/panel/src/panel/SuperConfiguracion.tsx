@@ -12,6 +12,7 @@ import { pedir } from './api';
 import { useAjustesHorario, useHora } from './horario';
 import { Enlace } from '../Enlace';
 import { usePermisos } from './permisosPanel';
+import { AyudaAqui } from './AyudaAqui';
 
 const T = {
   es: {
@@ -129,7 +130,10 @@ export function SuperConfiguracion({ idioma, base = '' }: { idioma: Idioma; base
       <p>{t.intro}</p>
       {base && (puedeVer('equipo.ver') || puedeVer('avisos.recibir')) ? (
         <section className="tarjeta-form" aria-labelledby="equipo-titulo">
-          <h2 id="equipo-titulo">{t.equipo}</h2>
+          <h2 id="equipo-titulo">
+            {t.equipo}
+            <AyudaAqui guia="add-team-members-permissions" idioma={idioma} />
+          </h2>
           <p className="ficha-nota">{t.equipoAyuda}</p>
           <Enlace a={`${base}/team`} className="boton secundario">
             {t.abrirEquipo}
@@ -137,7 +141,10 @@ export function SuperConfiguracion({ idioma, base = '' }: { idioma: Idioma; base
         </section>
       ) : null}
       <section className="tarjeta-form configuracion-horario" aria-labelledby="horario-titulo">
-        <h2 id="horario-titulo">{t.horario}</h2>
+        <h2 id="horario-titulo">
+          {t.horario}
+          <AyudaAqui guia="time-zone-clock" idioma={idioma} />
+        </h2>
         <p className="ficha-nota">{t.horarioAyuda}</p>
         <fieldset className="configuracion-grupo">
           <legend>{t.formato}</legend>
