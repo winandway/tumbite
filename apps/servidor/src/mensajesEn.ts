@@ -2057,6 +2057,25 @@ export const MENSAJES_EN = new Map<string, string>([
   ['La página pedida no es válida.', 'The requested page isn’t valid.'],
   ['Esa pantalla no guarda filtros.', 'That screen doesn’t save filters.'],
   ['Los filtros guardados son demasiado grandes.', 'The saved filters are too large.'],
+  // C-FICHA-OPERACION y C-MONITOREO-SERVICIOS (15 nov 2026).
+  [
+    'Escribe el código del pedido o del viaje (por ejemplo, 407F2F).',
+    'Type the order or ride code (for example, 407F2F).',
+  ],
+  [
+    'No encontramos un pedido ni un viaje con ese código.',
+    'We couldn’t find an order or a ride with that code.',
+  ],
+  [
+    'Hay varios pedidos o viajes con ese código: escribe más letras del código.',
+    'Several orders or rides match that code: type more of the code.',
+  ],
+  [
+    'No encontramos al cliente de ese pedido o viaje.',
+    'We couldn’t find the customer for that order or ride.',
+  ],
+  ['Escribe el asunto.', 'Type the subject.'],
+  ['Cuenta qué pasó.', 'Tell us what happened.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

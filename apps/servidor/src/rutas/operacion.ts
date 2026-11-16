@@ -2004,11 +2004,13 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
     const elegidos = abierta ? candidatos.slice(0, 20) : candidatos.slice(0, 1);
     for (const elegido of elegidos) {
       ocupados.add(elegido.id);
+      // C-TIEMPOS-OPERACION: la distancia al restaurante va en el MISMO INSERT (cero filas de más):
+      // de ahí sale la ida prevista del repartidor en la ficha del superadmin.
       await db
         .prepare(
-          "INSERT OR REPLACE INTO ofertas (pedido_id, repartidor_id, estado) VALUES (?, ?, 'ofrecida')",
+          "INSERT OR REPLACE INTO ofertas (pedido_id, repartidor_id, estado, km) VALUES (?, ?, 'ofrecida', ?)",
         )
-        .bind(p.id, elegido.id)
+        .bind(p.id, elegido.id, Number.isFinite(elegido.km) ? elegido.km : null)
         .run();
       if (env) {
         const rep = await db
@@ -2288,7 +2290,10 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
   await anotarPorTiempo(db, id, u.id);
   await db.batch([
     db
-      .prepare("UPDATE ofertas SET estado = 'aceptada' WHERE pedido_id = ? AND repartidor_id = ?")
+      // C-TIEMPOS-OPERACION: cuándo la aceptó, en la MISMA escritura de siempre.
+      .prepare(
+        "UPDATE ofertas SET estado = 'aceptada', respondida_en = datetime('now') WHERE pedido_id = ? AND repartidor_id = ?",
+      )
       .bind(id, u.id),
     // En la oferta abierta la vieron varios: a los demás se les quita.
     db

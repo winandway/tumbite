@@ -203,13 +203,25 @@ export const PANTALLAS_PREFERENCIAS = [
   'clientes',
   'repartidores',
   'tickets',
+  // C-HORARIO-EMPLEADO: el reloj y la zona horaria de cada empleado (Configuración → Horario).
+  'horario',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
-export const CLAVES_PREFERENCIAS = ['zona', 'estado', 'orden', 'asignado'] as const;
+export const CLAVES_PREFERENCIAS = [
+  'zona',
+  'estado',
+  'orden',
+  'asignado',
+  // C-MONITOREO-SERVICIOS: la pestaña de servicio (pedidos en curso y tickets).
+  'servicio',
+  // C-HORARIO-EMPLEADO: «auto» o «12»/«24», y «auto» o una zona como «America/New_York».
+  'formato',
+  'zonaHoraria',
+] as const;
 export type ClavePreferencia = (typeof CLAVES_PREFERENCIAS)[number];
 export type Preferencias = Partial<Record<ClavePreferencia, string>>;
-/** Un valor guardable: corto y sin espacios (un id de ciudad, un estado). Un nombre no cabe aquí. */
-export const VALOR_PREFERENCIA = /^[A-Za-z0-9_.:-]{0,60}$/;
+/** Un valor guardable: corto y sin espacios (un id de ciudad, un estado, una zona horaria con «/»). Un nombre no cabe aquí. */
+export const VALOR_PREFERENCIA = /^[A-Za-z0-9_.:/+-]{0,60}$/;
 
 /** Solo las claves conocidas con valores guardables; lo demás se descarta. */
 export function limpiarPreferencias(v: unknown): Preferencias {

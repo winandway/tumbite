@@ -17,7 +17,7 @@ import {
   tipoAdjunto,
 } from '../adjuntosTicket';
 import { pasaTurnstile } from '../turnstile';
-import { SOY_CONTACTO, topeReembolsoSinRevision } from '@tumbite/compartido';
+import { SOY_CONTACTO, rangoPrefijo, topeReembolsoSinRevision } from '@tumbite/compartido';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { rutaSuperadmin } from '../superadmin';
@@ -40,6 +40,19 @@ export type TipoTicket =
   | 'soporte';
 
 const SITIO = 'https://divoox.com';
+
+/**
+ * C-MONITOREO-SERVICIOS: de qué servicio es un reclamo, al leer: el del viaje enlazado (auto, moto o
+ * envío), o comida o tiendas según el comercio del pedido, o «general». Dos búsquedas por llave
+ * primaria por fila; no se guarda nada.
+ */
+const SERVICIO_TICKET_SQL = `COALESCE(
+  (SELECT CASE o.servicio_id WHEN 'carro' THEN 'auto' WHEN 'moto' THEN 'moto' WHEN 'envios' THEN 'envios' END
+     FROM operaciones o WHERE o.id = tickets.operacion_id),
+  (SELECT CASE WHEN r.tipo_comercio = 'restaurante' THEN 'comida' ELSE 'tiendas' END
+     FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE p.id = tickets.pedido_id),
+  'general')`;
+const SERVICIOS_TICKET = ['comida', 'tiendas', 'auto', 'moto', 'envios', 'general'];
 const enlacePublico = (codigo: string) => `${SITIO}/t/${codigo}`;
 
 const NOMBRE_TIPO: Record<TipoTicket, Record<Idioma, string>> = {
@@ -199,6 +212,7 @@ type FilaTicket = {
   asunto: string;
   datos_json: string;
   pedido_id: string | null;
+  operacion_id?: string | null;
   zona_id: string | null;
   creado_en: string;
   actualizado_en: string;
@@ -736,6 +750,12 @@ tickets.get('/admin/tickets', async (c) => {
     filtros.push('asignado_a = ?');
     valores.push(u.id);
   } else if (asignado === 'sin') filtros.push('asignado_a IS NULL');
+  // C-MONITOREO-SERVICIOS: el servicio de cada reclamo, calculado al leer (sin escribir nada).
+  const servicio = c.req.query('servicio');
+  if (servicio && servicio !== 'todos' && SERVICIOS_TICKET.includes(servicio)) {
+    filtros.push(`${SERVICIO_TICKET_SQL} = ?`);
+    valores.push(servicio);
+  }
   // C-PERMISOS-FINOS: solo los tickets de la zona de trabajo y servicios de quien mira.
   const alc = filtroAlcance(accesoDe(c), {
     zona: 'zona_id',
@@ -748,6 +768,7 @@ tickets.get('/admin/tickets', async (c) => {
   const { results } = await base(c)
     .prepare(
       `SELECT id, tipo, estado, nombre, correo, telefono, pais, ciudad, asunto, zona_id AS zonaId, pedido_id AS pedidoId,
+       operacion_id AS operacionId, ${SERVICIO_TICKET_SQL} AS servicio,
        creado_en AS creado, actualizado_en AS actualizado, prioridad, asignado_a AS asignadoA,
        (SELECT nombre FROM usuarios a WHERE a.id = tickets.asignado_a) AS asignadoNombre,
        (SELECT texto FROM ticket_mensajes m WHERE m.ticket_id = tickets.id ORDER BY creado_en DESC, rowid DESC LIMIT 1) AS ultimo
@@ -766,6 +787,115 @@ tickets.get('/admin/tickets', async (c) => {
     tickets: results,
     totales: Object.fromEntries(totales.map((t) => [t.estado, Number(t.n)])),
   });
+});
+
+/**
+ * C-MONITOREO-SERVICIOS (15 nov 2026): un reclamo que abre el equipo desde la ficha de un viaje o
+ * desde la bandeja, enlazado a un pedido o a un viaje (auto, moto o envío) por su código o su id.
+ * El contacto es el cliente de ese pedido o viaje. No se le manda correo al abrirlo: lo recibe
+ * cuando el equipo le responde desde el ticket (con su enlace privado), como cualquier ticket.
+ */
+const esquemaReclamoEquipo = z.object({
+  enlace: z
+    .string()
+    .trim()
+    .min(3, { error: 'Escribe el código del pedido o del viaje (por ejemplo, 407F2F).' })
+    .max(100),
+  asunto: z.string().trim().min(3, { error: 'Escribe el asunto.' }).max(160),
+  mensaje: z.string().trim().min(3, { error: 'Cuenta qué pasó.' }).max(4000),
+  prioridad: z.enum(['urgente', 'alta', 'normal', 'baja']).default('normal'),
+});
+
+/** Busca el pedido o el viaje de un código («#407F2F», «407f2f») o de un id entero. */
+async function enlaceDeReclamo(db: D1Database, enlace: string) {
+  const limpio = enlace.replace(/^#/, '').trim();
+  const id = /^[A-Za-z0-9_-]{9,100}$/.test(limpio) ? limpio : null;
+  const codigo = /^[0-9a-fA-F]{3,8}$/.test(limpio) ? limpio.toLowerCase() : null;
+  if (!id && !codigo)
+    throw new ErrorDatos(
+      'Escribe el código del pedido o del viaje (por ejemplo, 407F2F).',
+      'enlace',
+      422,
+    );
+  const consultas: Promise<{ results: Record<string, unknown>[] }>[] = [];
+  const pedido = `SELECT 'pedido' AS que, p.id, p.cliente_id, p.zona_id FROM pedidos p WHERE `;
+  const viaje = `SELECT 'viaje' AS que, o.id, o.cliente_id, o.zona_id FROM operaciones o WHERE +o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete') AND `;
+  if (id) {
+    consultas.push(db.prepare(`${pedido}p.id = ?`).bind(id).all());
+    consultas.push(db.prepare(`${viaje}o.id = ?`).bind(id).all());
+  }
+  if (codigo) {
+    const [desde, hasta] = rangoPrefijo(codigo);
+    consultas.push(db.prepare(`${pedido}p.id >= ? AND p.id < ? LIMIT 3`).bind(desde, hasta).all());
+    consultas.push(db.prepare(`${viaje}o.id >= ? AND o.id < ? LIMIT 3`).bind(desde, hasta).all());
+  }
+  const filas = (await Promise.all(consultas)).flatMap((r) => r.results);
+  const unicos = [...new Map(filas.map((f) => [`${String(f.que)}:${String(f.id)}`, f])).values()];
+  if (!unicos.length)
+    throw new ErrorDatos('No encontramos un pedido ni un viaje con ese código.', 'enlace', 404);
+  if (unicos.length > 1)
+    throw new ErrorDatos(
+      'Hay varios pedidos o viajes con ese código: escribe más letras del código.',
+      'enlace',
+      409,
+    );
+  return unicos[0] as { que: 'pedido' | 'viaje'; id: string; cliente_id: string; zona_id: string };
+}
+
+tickets.post('/admin/tickets', async (c) => {
+  const u = exigir(c, 'admin');
+  const d = await leerCuerpo(c, esquemaReclamoEquipo);
+  const db = base(c);
+  const destino = await enlaceDeReclamo(db, d.enlace);
+  const persona = await db
+    .prepare(
+      `SELECT u.nombre, u.correo, u.telefono, u.idioma, z.pais, z.nombre AS ciudad FROM usuarios u
+         LEFT JOIN zonas z ON z.id = ? WHERE u.id = ?`,
+    )
+    .bind(destino.zona_id, destino.cliente_id)
+    .first<{
+      nombre: string;
+      correo: string;
+      telefono: string | null;
+      idioma: string | null;
+      pais: string | null;
+      ciudad: string | null;
+    }>();
+  if (!persona)
+    throw new ErrorDatos('No encontramos al cliente de ese pedido o viaje.', 'enlace', 404);
+  const id = nuevoId();
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO tickets (id, codigo, tipo, nombre, correo, telefono, pais, ciudad, idioma, asunto, datos_json,
+           usuario_id, pedido_id, operacion_id, zona_id, prioridad, asignado_a)
+         VALUES (?, ?, 'soporte', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        nuevoToken(),
+        persona.nombre,
+        persona.correo,
+        persona.telefono ?? '',
+        persona.pais ?? '',
+        persona.ciudad ?? '',
+        persona.idioma === 'en' ? 'en' : 'es',
+        d.asunto,
+        JSON.stringify({ origen: 'equipo', abiertoPor: u.id }),
+        destino.cliente_id,
+        destino.que === 'pedido' ? destino.id : null,
+        destino.que === 'viaje' ? destino.id : null,
+        destino.zona_id,
+        d.prioridad,
+        u.id,
+      ),
+    db
+      .prepare(
+        "INSERT INTO ticket_mensajes (id, ticket_id, autor, texto) VALUES (?, ?, 'equipo', ?)",
+      )
+      .bind(nuevoId(), id, d.mensaje),
+  ]);
+  return c.json({ id, enlace: destino }, 201);
 });
 
 // C-TICKETS-EQUIPO: respuestas guardadas (van antes de /admin/tickets/:id para no confundirse).
@@ -829,6 +959,7 @@ tickets.get('/admin/tickets/:id', async (c) => {
       asunto: t.asunto,
       datos: JSON.parse(t.datos_json) as Record<string, unknown>,
       pedidoId: t.pedido_id,
+      operacionId: t.operacion_id ?? null,
       zonaId: t.zona_id,
       prioridad: String(t.prioridad ?? 'normal'),
       asignadoA: t.asignado_a ?? null,

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useHora } from './horario';
 import { type Alcance, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
@@ -14,8 +15,6 @@ import {
   type Plantilla,
   type TextosEquipo,
   alcanceEnPalabras,
-  fecha,
-  fechaHora,
   textosEquipo,
 } from './equipo/textos';
 import './equipo/equipo.css';
@@ -176,6 +175,8 @@ function Personas({
   zonas: ReturnType<typeof useZonas>;
 }) {
   const t = textosEquipo(idioma);
+  // C-HORARIO-EMPLEADO: toda fecha pasa por la pieza única con la preferencia del empleado.
+  const hora = useHora(idioma);
   const { puedeVer } = usePermisos();
   const gestiona = puedeVer('equipo.gestionar');
   const [q, setQ] = useState('');
@@ -281,7 +282,7 @@ function Personas({
                 </span>
                 <span className="eq-fila-dato">{alcanceEnPalabras(i.alcance, zonas, idioma)}</span>
                 <span className="eq-fila-dato">
-                  {t.expira}: {fechaHora(i.expiraEn, idioma)}
+                  {t.expira}: {hora.fecha(i.expiraEn, null)}
                 </span>
                 {gestiona ? (
                   <MenuTresPuntos
@@ -364,10 +365,10 @@ function Personas({
                 </span>
                 <span className="eq-fila-dato">{alcanceEnPalabras(m.alcance, zonas, idioma)}</span>
                 <span className="eq-fila-dato" data-etiqueta={t.columnas.ultima}>
-                  {m.ultimaEntrada ? fechaHora(m.ultimaEntrada, idioma) : t.nunca}
+                  {m.ultimaEntrada ? hora.fecha(m.ultimaEntrada, null) : t.nunca}
                 </span>
                 <span className="eq-fila-dato" data-etiqueta={t.columnas.vence}>
-                  {m.venceEn ? fecha(m.venceEn, idioma) : t.sinVencimiento}
+                  {m.venceEn ? hora.fecha(m.venceEn, null, 'fecha') : t.sinVencimiento}
                 </span>
                 {acciones.length ? (
                   <MenuTresPuntos etiqueta={`${t.masAcciones}: ${m.nombre}`} opciones={acciones} />

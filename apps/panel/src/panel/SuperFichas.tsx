@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { fechaSuper } from './horario';
 import { ImportarMenu } from './ImportarMenu';
 import {
   ErrorApi,
@@ -217,10 +218,9 @@ const T = {
 };
 
 const consulta = () => new URLSearchParams(window.location.search);
+// C-HORARIO-EMPLEADO: con el reloj y la zona del empleado (la misma pieza de todo el superadmin).
 const fechaCorta = (f: string | null | undefined, idioma: Idioma) =>
-  f
-    ? new Date(`${f.replace(' ', 'T')}${f.includes('T') ? '' : 'Z'}`).toLocaleDateString(idioma)
-    : '—';
+  fechaSuper(f, idioma, { estilo: 'fecha' });
 
 const T_SUSPENDER = {
   es: {

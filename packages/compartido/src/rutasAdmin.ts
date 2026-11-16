@@ -26,6 +26,7 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/informes': 'monitoreo.exportar',
   'GET /admin/pedidos': 'pedidos.ver',
   'GET /admin/pedidos/:id': 'pedidos.ver',
+  'GET /admin/pedidos/contadores': 'pedidos.ver',
   'POST /admin/pedidos/:id/cancelar': 'pedidos.cancelar',
   'POST /admin/pedidos/:id/soltar-repartidor': 'pedidos.reasignar',
   'POST /admin/pedidos/:id/autorizar-ubicacion': 'pedidos.autorizar_ubicacion',
@@ -36,6 +37,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/viajes': 'viajes.ver',
   // La ficha del viaje (paquete 2/3, otra rama): declarada de antemano para que al unir ya exija su permiso.
   'GET /admin/viajes/:id': 'viajes.ver',
+  // La foto del paquete de un envío (recogida o entrega): como las evidencias de un pedido.
+  'GET /admin/viajes/:id/foto/:tipo': 'pedidos.fotos',
   'GET /admin/viajes/tarifas': 'viajes.ver',
   'GET /admin/viajes/ajustes': 'viajes.ver',
   'GET /admin/viajes/dinamica/:servicio/:zona': 'viajes.ver',
@@ -80,6 +83,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/tickets': 'tickets.ver',
   'GET /admin/tickets/:id': 'tickets.ver',
   'GET /admin/tickets/plantillas': 'tickets.ver',
+  // El equipo abre un reclamo (por ejemplo, enlazado a un viaje por su código).
+  'POST /admin/tickets': 'tickets.responder',
   'PATCH /admin/tickets/:id': 'tickets.asignar',
   'POST /admin/tickets/:id/mensajes': 'tickets.responder',
   'POST /admin/tickets/plantillas': 'tickets.plantillas',
@@ -181,6 +186,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'DELETE /admin/preferencias/:pantalla': LIBRE,
   'GET /admin/auditoria': 'auditoria.ver',
   'GET /admin/ruta': LIBRE,
+  // C-HORARIO-EMPLEADO: qué hora es en cada ciudad (Configuración → Horario).
+  'GET /admin/horario/ciudades': LIBRE,
   // ─── Territorio, servicios y configuración
   'GET /admin/zonas': LIBRE,
   'GET /admin/ciudades': LIBRE,
@@ -251,7 +258,7 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
  * Rutas declaradas de antemano que todavía no existen en esta rama (las construye otra rama que se
  * une después). La prueba no las cuenta como sobrantes.
  */
-export const RUTAS_ADMIN_PREVISTAS = new Set(['GET /admin/viajes/:id']);
+export const RUTAS_ADMIN_PREVISTAS = new Set<string>([]);
 
 type Patron = { metodo: string; partes: string[]; literales: number; permiso: PermisoRuta };
 const PATRONES: Patron[] = Object.entries(PERMISOS_RUTAS_ADMIN).map(([clave, permiso]) => {

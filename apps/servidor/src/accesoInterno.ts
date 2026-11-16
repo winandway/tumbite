@@ -13,6 +13,7 @@ import {
   type Topes,
   alcanceEsTotal,
   calcularAcceso,
+  servicioAlcanceDeOperacion,
   enmascararCorreo,
   enmascararTelefono,
   puedeVer,
@@ -362,7 +363,7 @@ export const servicioOperacionSql = (servicioId: string) =>
 
 /** El servicio de un ticket: el de su pedido; sin pedido, «otro» (solo lo ve quien no tiene servicio limitado). */
 export const servicioTicketSql = (alias: string) =>
-  `COALESCE((SELECT ${servicioPedidoSql('rt.tipo_comercio')} FROM pedidos pt JOIN restaurantes rt ON rt.id = pt.restaurante_id WHERE pt.id = ${alias}.pedido_id), 'otro')`;
+  `COALESCE((SELECT ${servicioOperacionSql('ot.servicio_id')} FROM operaciones ot WHERE ot.id = ${alias}.operacion_id), (SELECT ${servicioPedidoSql('rt.tipo_comercio')} FROM pedidos pt JOIN restaurantes rt ON rt.id = pt.restaurante_id WHERE pt.id = ${alias}.pedido_id), 'otro')`;
 
 /** ¿Una fila (ciudad, país, servicio) cabe en el alcance? (fichas: se comprueba al abrir). */
 export function dentroDelAlcance(
@@ -389,6 +390,31 @@ export function alcancePedidos(c: Ctx) {
       '(SELECT tipo_comercio FROM restaurantes WHERE id = p.restaurante_id)',
     ),
   });
+}
+
+/**
+ * El alcance para los viajes del monitoreo, como una pregunta por fila (zona y servicio ya vienen
+ * en la fila leída). Solo lee las zonas (tabla chica) si la persona tiene países en su alcance.
+ */
+export async function alcanceViajes(
+  c: Ctx,
+): Promise<((f: Record<string, unknown>) => boolean) | undefined> {
+  const acceso = accesoDe(c);
+  if (!acceso || alcanceEsTotal(acceso.alcance) || !c.env.DB) return undefined;
+  const paises = new Map<string, string>();
+  if (acceso.alcance.paises?.length) {
+    const { results } = await c.env.DB.prepare('SELECT id, pais FROM zonas').all<{
+      id: string;
+      pais: string;
+    }>();
+    for (const z of results) paises.set(z.id, z.pais);
+  }
+  return (f) =>
+    dentroDelAlcance(acceso, {
+      zona: f.zona_id == null ? null : String(f.zona_id),
+      pais: paises.get(String(f.zona_id)) ?? null,
+      servicio: servicioAlcanceDeOperacion(f.servicio_id == null ? null : String(f.servicio_id)),
+    });
 }
 
 /** Un pedido fuera del alcance de la persona del equipo: como si no existiera (404). */

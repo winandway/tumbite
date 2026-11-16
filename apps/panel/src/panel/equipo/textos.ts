@@ -157,6 +157,7 @@ export const TEXTOS_EQUIPO = {
     },
     objetos: {
       pedido: 'Pedido',
+      viaje: 'Viaje',
       cliente: 'Cliente',
       repartidor: 'Repartidor',
       restaurante: 'Comercio',
@@ -332,6 +333,7 @@ export const TEXTOS_EQUIPO = {
     },
     objetos: {
       pedido: 'Order',
+      viaje: 'Ride',
       cliente: 'Customer',
       repartidor: 'Driver',
       restaurante: 'Store',
@@ -440,33 +442,6 @@ export function alcanceEnPalabras(a: Alcance, zonas: Zona[], idioma: Idioma): st
       a.servicios.map((s) => new Map(Object.entries(t.nombresServicio)).get(s) ?? s).join(', '),
     );
   return partes.length ? partes.join(' · ') : t.todo;
-}
-
-/** Fecha y hora cortas en el idioma de la pantalla (la base guarda UTC sin zona): «Nov 15, 10:28 PM». */
-export function fechaHora(v: string | null | undefined, idioma: Idioma): string {
-  if (!v) return '—';
-  const d = new Date(`${v.replace(' ', 'T')}${v.includes('Z') ? '' : 'Z'}`);
-  if (Number.isNaN(d.getTime())) return v;
-  const esteAno = d.getFullYear() === new Date().getFullYear();
-  return d.toLocaleString(idioma === 'es' ? 'es-US' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    ...(esteAno ? {} : { year: 'numeric' }),
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-/** Solo el día (vencimientos: valen hasta el final de ese día). */
-export function fecha(v: string | null | undefined, idioma: Idioma): string {
-  if (!v) return '—';
-  const [a, m, d] = v.slice(0, 10).split('-').map(Number);
-  if (!a || !m || !d) return v;
-  return new Date(a, m - 1, d).toLocaleDateString(idioma === 'es' ? 'es-US' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }
 
 /** «pedido:407f2f…» → «Pedido #407F2F» (el registro guarda el id, nunca el dato). */

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useHora } from '../horario';
 import { type Alcance, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { pedir } from '../api';
@@ -13,8 +14,6 @@ import {
   accionEnPalabras,
   alcanceEnPalabras,
   objetoEnPalabras,
-  fecha,
-  fechaHora,
   nombreArea,
   nombrePermiso,
   porArea,
@@ -58,6 +57,8 @@ export function Ficha({
   zonas: Zona[];
 }) {
   const t = textosEquipo(idioma);
+  // C-HORARIO-EMPLEADO: toda fecha pasa por la pieza única con la preferencia del empleado.
+  const hora = useHora(idioma);
   const { puedeVer, acceso: mio } = usePermisos();
   const gestiona = puedeVer('equipo.gestionar');
   const [d, setD] = useState<DatosFicha | null>(null);
@@ -184,9 +185,9 @@ export function Ficha({
             <dt>{t.columnas.alcance}</dt>
             <dd>{alcanceEnPalabras(d.acceso.alcance, zonas, idioma)}</dd>
             <dt>{t.columnas.vence}</dt>
-            <dd>{m.venceEn ? fecha(m.venceEn, idioma) : t.sinVencimiento}</dd>
+            <dd>{m.venceEn ? hora.fecha(m.venceEn, null, 'fecha') : t.sinVencimiento}</dd>
             <dt>{t.columnas.ultima}</dt>
-            <dd>{m.ultimaEntrada ? fechaHora(m.ultimaEntrada, idioma) : t.nunca}</dd>
+            <dd>{m.ultimaEntrada ? hora.fecha(m.ultimaEntrada, null) : t.nunca}</dd>
           </dl>
           {gestiona && !yo && !m.dueno && !editando ? (
             <button type="button" className="boton secundario" onClick={abrirEdicion}>
@@ -263,7 +264,7 @@ export function Ficha({
                     {a.metodo} {a.ruta.replace('/datos/admin', '')}
                     {a.estado >= 400 ? ` · ${t.rechazado} (${a.estado})` : ''}
                   </span>
-                  <small>{fechaHora(a.creadoEn, idioma)}</small>
+                  <small>{hora.fecha(a.creadoEn, null)}</small>
                 </li>
               ))}
             </ul>
@@ -281,7 +282,7 @@ export function Ficha({
                       {new Map(Object.entries(t.tiposAcceso)).get(a.tipo) ?? a.tipo} ·{' '}
                       {objetoEnPalabras(a.objeto, t)}
                     </span>
-                    <small>{fechaHora(a.creadoEn, idioma)}</small>
+                    <small>{hora.fecha(a.creadoEn, null)}</small>
                   </li>
                 ))}
               </ul>
@@ -298,7 +299,7 @@ export function Ficha({
                   <span>
                     {accionEnPalabras(c.accion, t)} · {c.actor ?? '—'}
                   </span>
-                  <small>{fechaHora(c.creadoEn, idioma)}</small>
+                  <small>{hora.fecha(c.creadoEn, null)}</small>
                 </li>
               ))}
             </ul>

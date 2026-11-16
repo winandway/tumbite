@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useId, useState } from 'react';
+import { useHora } from '../horario';
 import { ErrorApi, type Idioma } from '@tumbite/compartido';
 import { pedir } from '../api';
 import { EstadoVacio } from '../armazon/Piezas';
 import { usePermisos } from '../permisosPanel';
-import { accionEnPalabras, fechaHora, objetoEnPalabras, textosEquipo } from './textos';
+import { accionEnPalabras, objetoEnPalabras, textosEquipo } from './textos';
 
 type Fila = {
   id: number;
@@ -22,6 +23,8 @@ type Tipo = 'acciones' | 'permisos' | 'accesos';
  */
 export function Registro({ idioma }: { idioma: Idioma }) {
   const t = textosEquipo(idioma);
+  // C-HORARIO-EMPLEADO: toda fecha pasa por la pieza única con la preferencia del empleado.
+  const hora = useHora(idioma);
   const id = useId();
   const { puedeVer } = usePermisos();
   const tipos: Tipo[] = [
@@ -169,7 +172,7 @@ export function Registro({ idioma }: { idioma: Idioma }) {
             <tbody>
               {filas.map((f) => (
                 <tr key={f.id}>
-                  <td>{fechaHora(f.creadoEn, idioma)}</td>
+                  <td>{hora.fecha(f.creadoEn, null)}</td>
                   <td>{f.nombre ?? f.usuarioId}</td>
                   <td>{que(f)}</td>
                   <td>{detalle(f)}</td>

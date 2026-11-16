@@ -276,6 +276,10 @@ CREATE TABLE IF NOT EXISTS ofertas (
   repartidor_id TEXT NOT NULL REFERENCES usuarios(id),
   estado TEXT NOT NULL CHECK (estado IN ('ofrecida', 'aceptada', 'rechazada', 'vencida')),
   creada_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-TIEMPOS-OPERACION (15 nov 2026): km del repartidor al restaurante al ofrecérselo y cuándo la
+  -- aceptó. Se escriben en el MISMO INSERT y el MISMO UPDATE de siempre: cero filas de más.
+  km REAL,
+  respondida_en TEXT,
   PRIMARY KEY (pedido_id, repartidor_id)
 );
 CREATE INDEX IF NOT EXISTS ofertas_repartidor ON ofertas(repartidor_id, estado);
@@ -438,7 +442,10 @@ CREATE TABLE IF NOT EXISTS tickets (
   pedido_id TEXT REFERENCES pedidos(id),
   zona_id TEXT REFERENCES zonas(id),
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
-  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- C-MONITOREO-SERVICIOS (15 nov 2026): el viaje (auto, moto o envío) del reclamo. Su índice
+  -- parcial vive en INDICES de esquema.ts (aquí rompería una base donde la columna aún no existe).
+  operacion_id TEXT
 );
 CREATE INDEX IF NOT EXISTS tickets_estado ON tickets(estado, actualizado_en);
 CREATE INDEX IF NOT EXISTS tickets_zona ON tickets(zona_id, estado, actualizado_en);
@@ -2667,6 +2674,8 @@ CREATE TABLE IF NOT EXISTS ofertas_operacion (
   creada_en TEXT NOT NULL DEFAULT (datetime('now')),
   expira_en TEXT NOT NULL,
   respondida_en TEXT,
+  -- C-TIEMPOS-OPERACION (15 nov 2026): km del conductor a la recogida al ofrecérselo (mismo INSERT).
+  km REAL,
   PRIMARY KEY (operacion_id, conductor_id)
 );
 CREATE INDEX IF NOT EXISTS ofertas_operacion_conductor ON ofertas_operacion(conductor_id, estado);

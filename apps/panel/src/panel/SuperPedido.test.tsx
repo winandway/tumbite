@@ -27,25 +27,47 @@ describe('bitácora del pedido en el superadmin (C-MANAGER-1)', () => {
               cliente: { id: 'c1', nombre: 'Ana Cliente' },
               restaurante: { id: 'r1', nombre: 'La Esquina' },
               repartidor: null,
-              bitacora: [
+              // C-FICHA-OPERACION: la línea de tiempo única (la capa del Manager va tenue).
+              linea: [
                 {
+                  tipo: 'estado',
                   evento: 'creado',
                   fecha: '2026-10-12 20:00:00',
                   quien: 'Ana Cliente',
-                  tipo: 'estado',
+                  rol: 'cliente',
+                  detalle: null,
+                  capa: 'principal',
+                  desdeAnteriorS: null,
                 },
                 {
+                  tipo: 'manager',
                   evento: 'recordatorio_1',
                   fecha: '2026-10-12 20:04:00',
-                  quien: '4 min',
-                  tipo: 'manager',
+                  quien: null,
+                  rol: 'sistema',
+                  detalle: '4 min',
+                  capa: 'manager',
+                  desdeAnteriorS: null,
                 },
-                { evento: 'cancelado', fecha: '2026-10-12 20:11:00', quien: null, tipo: 'estado' },
                 {
+                  tipo: 'estado',
+                  evento: 'cancelado',
+                  fecha: '2026-10-12 20:11:00',
+                  quien: null,
+                  rol: 'sistema',
+                  detalle: null,
+                  capa: 'principal',
+                  desdeAnteriorS: 660,
+                },
+                {
+                  tipo: 'manager',
                   evento: 'cancelado_sin_respuesta',
                   fecha: '2026-10-12 20:11:00',
-                  quien: '11 min',
-                  tipo: 'manager',
+                  quien: null,
+                  rol: 'sistema',
+                  detalle: '11 min',
+                  capa: 'manager',
+                  desdeAnteriorS: null,
                 },
               ],
             },
@@ -54,7 +76,7 @@ describe('bitácora del pedido en el superadmin (C-MANAGER-1)', () => {
         ),
     );
     render(<SuperPedido base="/panel/control-x" id={ID} idioma="es" />);
-    expect(await screen.findByText('#111111')).toBeTruthy();
+    expect((await screen.findByRole('heading', { level: 1 })).textContent).toContain('#111111');
     expect(screen.getAllByText('Ana Cliente')[0]?.closest('a')?.getAttribute('href')).toBe(
       '/panel/control-x/customers/c1',
     );

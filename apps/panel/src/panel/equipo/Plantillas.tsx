@@ -4,7 +4,9 @@ import {
   type Idioma,
   PERMISOS_INTERNOS,
   type PermisoInterno,
+  almacenNavegador,
   enIdioma,
+  useBorrador,
 } from '@tumbite/compartido';
 import { pedir } from '../api';
 import { Pastilla } from '../armazon/Piezas';
@@ -13,6 +15,16 @@ import { usePermisos } from '../permisosPanel';
 import { type Plantilla, nombreArea, nombrePermiso, porArea, textosEquipo } from './textos';
 
 const MONEDAS = ['USD', 'MXN', 'COP', 'VES'];
+const CERRADA = {
+  abierta: false,
+  id: null,
+  nombreEs: '',
+  nombreEn: '',
+  descripcionEs: '',
+  descripcionEn: '',
+  permisos: [],
+  topes: {},
+};
 type Edicion = {
   id: string | null;
   nombreEs: string;
@@ -42,11 +54,25 @@ export function Plantillas({
   const { puedeVer, acceso } = usePermisos();
   const gestiona = puedeVer('equipo.gestionar');
   const mios = new Set(acceso?.permisos ?? []);
-  const [ed, setEd] = useState<Edicion | null>(null);
+  // Regla «ningún formulario pierde lo escrito»: la plantilla a medio editar vuelve si se cierra la
+  // ventana (por cuenta); se borra al guardar o al cancelar.
+  const b = useBorrador<Edicion & { abierta: boolean }>({
+    formulario: 'equipo-plantilla',
+    cuenta: acceso?.id,
+    inicial: CERRADA,
+    almacen: almacenNavegador,
+  });
+  const ed = b.valores.abierta ? b.valores : null;
+  const setEd = (x: (Edicion & { abierta?: boolean }) | null) => {
+    if (!x) return void b.limpiar();
+    for (const [k, v] of Object.entries(x))
+      b.cambiar(k as keyof Edicion, v as Edicion[keyof Edicion]);
+  };
   const [error, setError] = useState('');
 
   const abrir = (p: Plantilla | null) =>
-    setEd({
+    b.cargar({
+      abierta: true,
       id: p?.id ?? null,
       nombreEs: p?.nombre.es ?? '',
       nombreEn: p?.nombre.en ?? '',

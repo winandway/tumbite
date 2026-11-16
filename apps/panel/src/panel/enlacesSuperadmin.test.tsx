@@ -9,6 +9,7 @@ import { SuperTickets } from './Superadmin';
 import { SuperKyc } from './SuperKyc';
 import { SuperFinanzas } from './SuperFinanzas';
 import { SuperEquipo } from './SuperEquipo';
+import { SuperViaje } from './SuperViaje';
 
 /**
  * C-SUPERADMIN-ENLACES (15 nov 2026, Richard tocó «Prueba en vivo» en Restaurantes y salió «Esta
@@ -33,6 +34,7 @@ const COMPONENTE: Record<(typeof PREFIJOS_FICHA)[number], unknown> = {
   verifications: SuperKyc,
   flexfinance: SuperFinanzas,
   team: SuperEquipo,
+  rides: SuperViaje,
 };
 const idDe = (e: ReactElement<Record<string, unknown>>) =>
   e.props.id ?? e.props.ticketId ?? e.props.empresaId ?? e.props.personaId;

@@ -556,8 +556,8 @@ export async function repartirOperaciones(
     // el conductor tomó otra cosa, la oferta no se crea.
     const r = await db
       .prepare(
-        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos)
-         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5
+        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos, km)
+         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5, ?6
           WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?2)
             AND NOT EXISTS (SELECT 1 FROM ofertas_operacion WHERE conductor_id = ?2 AND estado = 'ofrecida')
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1 AND estado_general = 'buscando')
@@ -569,6 +569,8 @@ export async function repartirOperaciones(
         elegido.vehiculoId,
         `+${SEGUNDOS_OFERTA_OPERACION} seconds`,
         Math.max(0, ganancia),
+        // C-TIEMPOS-OPERACION: km a la recogida, en el mismo INSERT (la llegada prevista del conductor).
+        Number.isFinite(elegido.km) ? elegido.km : null,
       )
       .run();
     if (!r.meta.changes) continue;

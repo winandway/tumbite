@@ -54,3 +54,64 @@ export function semaforoPedido(p: PedidoParaSemaforo, ahora = Date.now()): Semaf
       return null;
   }
 }
+
+/**
+ * C-MONITOREO-SERVICIOS (15 nov 2026): el mismo semáforo para los viajes de auto, de moto y los
+ * envíos, en el mismo monitoreo que los pedidos. Una emergencia abierta pone el viaje en rojo pase
+ * lo que pase. Los umbrales siguen las reglas del propio viaje: a los 10 minutos buscando, el viaje
+ * queda «sin conductor» (amarillo a los 5, rojo a los 8); el conductor en camino, sobre su llegada
+ * prevista; el pasajero, sobre la espera gratis de la tarifa; el recorrido, sobre la duración
+ * cotizada.
+ */
+export type SemaforoViaje = {
+  luz: Luz;
+  minutos: number;
+  motivo: 'buscando' | 'llegada' | 'pasajero' | 'recorrido' | 'emergencia';
+};
+
+type ViajeParaSemaforo = {
+  estado: string;
+  creadoEn: string;
+  buscandoDesde?: string | null;
+  asignadoEn?: string | null;
+  llegoEn?: string | null;
+  iniciadoEn?: string | null;
+  /** Minutos previstos de la llegada del conductor (si se conocen). */
+  llegadaPrevistaMin?: number | null;
+  /** Espera gratis de la tarifa, en minutos. */
+  esperaGratisMin?: number | null;
+  /** Duración cotizada del recorrido, en minutos. */
+  duracionMin?: number | null;
+  emergenciaAbierta?: boolean;
+};
+
+export function semaforoViaje(v: ViajeParaSemaforo, ahora = Date.now()): SemaforoViaje | null {
+  const desde = (f: string | null | undefined) =>
+    Math.max(0, Math.floor((ahora - fechaBase(f ?? v.creadoEn)) / 60000));
+  const vivo = ['buscando', 'asignado', 'conductor_llego', 'en_curso'].includes(v.estado);
+  if (v.emergenciaAbierta && vivo)
+    return { luz: 'rojo', minutos: desde(v.asignadoEn ?? v.creadoEn), motivo: 'emergencia' };
+  switch (v.estado) {
+    case 'buscando': {
+      const m = desde(v.buscandoDesde);
+      return { luz: luz(m, 5, 8), minutos: m, motivo: 'buscando' };
+    }
+    case 'asignado': {
+      const m = desde(v.asignadoEn);
+      const previsto = v.llegadaPrevistaMin ?? 10;
+      return { luz: luz(m, previsto + 5, previsto + 15), minutos: m, motivo: 'llegada' };
+    }
+    case 'conductor_llego': {
+      const m = desde(v.llegoEn);
+      const gratis = v.esperaGratisMin ?? 5;
+      return { luz: luz(m, gratis, gratis * 2), minutos: m, motivo: 'pasajero' };
+    }
+    case 'en_curso': {
+      const m = desde(v.iniciadoEn);
+      const dura = v.duracionMin ?? 20;
+      return { luz: luz(m, dura + 10, dura + 20), minutos: m, motivo: 'recorrido' };
+    }
+    default:
+      return null;
+  }
+}

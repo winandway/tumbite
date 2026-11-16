@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { fechaSuper } from './horario';
 import type { Idioma } from '@tumbite/compartido';
 import { pedir } from './api';
 import {
@@ -165,12 +166,7 @@ export function TableroSuper({
       .catch(() => setFallo(true));
   }, []);
   const dia = (iso: string) => String(Number(iso.slice(8, 10)));
-  const hora = (fecha: string) => {
-    const d = new Date(`${fecha.replace(' ', 'T')}Z`);
-    return Number.isNaN(d.getTime())
-      ? ''
-      : new Intl.DateTimeFormat(idioma, { day: 'numeric', month: 'short' }).format(d);
-  };
+  const hora = (fecha: string) => fechaSuper(fecha, idioma, { estilo: 'fecha', vacio: '' });
   const diferencia = x ? x.semana.pedidos - x.semana.anterior : 0;
   const avances = x
     ? [

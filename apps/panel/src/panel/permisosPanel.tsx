@@ -5,8 +5,10 @@ import {
   LIBRE,
   type PermisoRuta,
   PERMISOS_DELICADOS,
+  almacenNavegador,
   enIdioma,
   ErrorApi,
+  useBorrador,
 } from '@tumbite/compartido';
 import type { GrupoMenu } from './armazon/menus';
 import { pedir } from './api';
@@ -34,10 +36,14 @@ type ValorPermisos = {
   recargar: () => void;
 };
 
+/**
+ * Fuera del panel del equipo (sin proveedor) no se sabe nada de permisos: no se esconde nada y el
+ * servidor decide. Dentro, `PanelApp` reparte los permisos efectivos de la sesión.
+ */
 const SIN_ACCESO: ValorPermisos = {
   acceso: null,
   cargando: false,
-  puedeVer: () => false,
+  puedeVer: () => true,
   recargar: () => undefined,
 };
 export const PermisosContexto = createContext<ValorPermisos>(SIN_ACCESO);
@@ -160,7 +166,15 @@ export function ConfirmarCodigo({
 }) {
   const t = enIdioma(T2, idioma);
   const [paso, setPaso] = useState<'inicio' | 'enviado'>('inicio');
-  const [codigo, setCodigo] = useState('');
+  // El código es de un solo uso: el borrador lo marca sensible y no lo guarda nunca.
+  const b = useBorrador({
+    formulario: 'equipo-segundo-factor',
+    inicial: { codigo: '' },
+    almacen: almacenNavegador,
+    sensibles: ['codigo'],
+  });
+  const codigo = b.valores.codigo;
+  const setCodigo = (v: string) => b.cambiar('codigo', v);
   const [prueba, setPrueba] = useState('');
   const [error, setError] = useState('');
   async function pedirCodigo() {

@@ -7,7 +7,9 @@ import { correoCanonico, resumenEtiquetas, telefonoCanonico } from '@tumbite/com
 import type { Env } from '../env';
 import { anotarEvento, cancelarConReembolso } from '../manager';
 import { soltarPedido } from './operacion';
-import { listarPedidosAdmin, parametrosLista } from './buscadorInterno';
+import { parametrosLista } from './buscadorInterno';
+import { contadoresMonitoreo, listarMonitoreo } from '../monitoreo';
+import { fichaPedido } from '../fichaOperacion';
 import { conciliar } from '../conciliacion';
 import { crearStripe } from '../stripe';
 import { pruebasDisputa } from '../disputas';
@@ -15,7 +17,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { alcancePedidos } from '../accesoInterno';
+import { alcancePedidos, alcanceViajes } from '../accesoInterno';
 
 /**
  * Superadmin a escala (pensado para millones de cuentas): ciudades, repartidores con su ID
@@ -314,6 +316,27 @@ async function completarRepartidores(db: D1Database) {
 }
 
 // ───────────────────────── Superadmin: ciudades ─────────────────────────
+
+/**
+ * C-HORARIO-EMPLEADO (15 nov 2026): las ciudades activas con su zona horaria, para Configuración →
+ * Horario («qué hora es allá» y el selector de zona). Solo lectura de la tabla de zonas (pequeña).
+ */
+superadmin.get('/admin/horario/ciudades', async (c) => {
+  exigir(c, 'admin');
+  const { results } = await base(c)
+    .prepare(
+      'SELECT id, nombre, pais, zona_horaria FROM zonas WHERE activa = 1 ORDER BY pais, nombre LIMIT 500',
+    )
+    .all<{ id: string; nombre: string; pais: string; zona_horaria: string }>();
+  return c.json({
+    ciudades: results.map((z) => ({
+      id: z.id,
+      nombre: z.nombre,
+      pais: z.pais,
+      zonaHoraria: z.zona_horaria,
+    })),
+  });
+});
 
 superadmin.get('/admin/ciudades', async (c) => {
   exigir(c, 'admin');
@@ -714,109 +737,38 @@ async function kycResumen(db: D1Database, usuarioId: string) {
 // ───────────────────────── Superadmin: pedidos en curso ─────────────────────────
 
 /**
- * «Pedidos en curso»: los pedidos de un estado (Vivos · Cerrados · Todos) y una ciudad, de a 50 con
- * «Cargar más» (paginación por clave). Lo escrito se busca con la misma pieza del buscador de
+ * «Pedidos en curso»: los pedidos y viajes de un estado (Vivos · Cerrados · Todos), una ciudad y un
+ * servicio, de a 50 con «Cargar más» (paginación por clave). Lo escrito se busca con la misma pieza del buscador de
  * arriba (C-BUSCADOR-SERIO): un código encuentra el pedido aunque esté cerrado o en otra ciudad.
  */
 superadmin.get('/admin/pedidos', async (c) => {
   exigir(c, 'admin');
+  // C-MONITOREO-SERVICIOS: pedidos y viajes juntos, con pestaña de servicio y sus contadores.
   return c.json(
-    await listarPedidosAdmin(base(c), {
+    await listarMonitoreo(base(c), {
       ...parametrosLista((k) => c.req.query(k)),
-      // C-PERMISOS-FINOS: solo los pedidos de la zona de trabajo de quien mira.
+      // C-PERMISOS-FINOS: solo los pedidos y viajes de la zona de trabajo de quien mira.
       alcance: alcancePedidos(c),
+      dentroViaje: await alcanceViajes(c),
     }),
   );
 });
 
-// ───────────────────────── Superadmin: bitácora del pedido ─────────────────────────
+/** C-MONITOREO-SERVICIOS: vivos y en problemas de cada pestaña (lecturas acotadas, solo lectura). */
+superadmin.get('/admin/pedidos/contadores', async (c) => {
+  exigir(c, 'admin');
+  return c.json(await contadoresMonitoreo(base(c), (c.req.query('zona') ?? '').slice(0, 60)));
+});
 
-/** Todo lo que le pasó a un pedido, en orden: estados, quién los cambió y lo que hizo el Manager. */
+// ───────────────────────── Superadmin: ficha del pedido ─────────────────────────
+
+/**
+ * C-FICHA-OPERACION (15 nov 2026): la ficha completa del pedido (línea de tiempo única, tiempos
+ * contra lo previsto, dónde compró y dónde entregó con sus fotos, cierre y cobro). Solo lectura.
+ */
 superadmin.get('/admin/pedidos/:id', async (c) => {
   exigir(c, 'admin');
-  const db = base(c);
-  const id = c.req.param('id');
-  const p = await db
-    .prepare(
-      `SELECT p.id, p.estado, p.total, p.propina, p.moneda, p.metodo_pago, p.direccion, p.notas, p.lineas_json, p.creado_en, p.stripe_pago,
-        p.cliente_id, uc.nombre AS cliente, p.restaurante_id, r.nombre AS restaurante,
-        p.repartidor_id, ur.nombre AS repartidor, d.codigo AS repartidor_codigo, z.nombre AS ciudad
-       FROM pedidos p JOIN usuarios uc ON uc.id = p.cliente_id JOIN restaurantes r ON r.id = p.restaurante_id
-       LEFT JOIN usuarios ur ON ur.id = p.repartidor_id LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
-       LEFT JOIN zonas z ON z.id = p.zona_id WHERE p.id = ?`,
-    )
-    .bind(id)
-    .first<Record<string, unknown>>();
-  if (!p) throw new ErrorDatos('Ese pedido no existe.', undefined, 404);
-  const { results: estados } = await db
-    .prepare(
-      `SELECT h.estado AS evento, h.creado_en AS fecha, COALESCE(u.nombre, r.nombre) AS quien, 'estado' AS tipo
-       FROM historial_estados h LEFT JOIN usuarios u ON u.id = h.actor_id LEFT JOIN restaurantes r ON r.id = h.actor_id
-       WHERE h.pedido_id = ? ORDER BY h.id`,
-    )
-    .bind(id)
-    .all<{ evento: string; fecha: string; quien: string | null; tipo: string }>();
-  const { results: manager } = await db
-    .prepare(
-      "SELECT evento, creado_en AS fecha, detalle AS quien, 'manager' AS tipo FROM bitacora_pedidos WHERE pedido_id = ? ORDER BY id",
-    )
-    .bind(id)
-    .all<{ evento: string; fecha: string; quien: string | null; tipo: string }>();
-  const excepcion = await db
-    .prepare(
-      'SELECT motivo, creado_en, autorizado_en, autorizado_por FROM excepciones_ubicacion WHERE pedido_id = ?',
-    )
-    .bind(id)
-    .first<{
-      motivo: string;
-      creado_en: string;
-      autorizado_en: string | null;
-      autorizado_por: string | null;
-    }>();
-  const bitacora = [
-    { evento: 'creado', fecha: String(p.creado_en), quien: String(p.cliente), tipo: 'estado' },
-    ...estados,
-    ...manager,
-  ].sort((a, b) => a.fecha.localeCompare(b.fecha));
-  let lineas: { nombreEs: string; cantidad: number }[] = [];
-  try {
-    lineas = JSON.parse(String(p.lineas_json)) as typeof lineas;
-  } catch {
-    console.error('superadmin: lineas_json ilegible', id);
-  }
-  return c.json({
-    pedido: {
-      id: String(p.id),
-      estado: String(p.estado),
-      total: Number(p.total),
-      propina: Number(p.propina),
-      moneda: String(p.moneda ?? 'USD'),
-      metodoPago: String(p.metodo_pago ?? 'tarjeta'),
-      direccion: String(p.direccion),
-      notas: String(p.notas ?? ''),
-      ciudad: p.ciudad ? String(p.ciudad) : null,
-      pagoStripe: p.stripe_pago ? String(p.stripe_pago) : null,
-      lineas: lineas.map((l) => ({ nombre: l.nombreEs, cantidad: Number(l.cantidad) })),
-      cliente: { id: String(p.cliente_id), nombre: String(p.cliente) },
-      restaurante: { id: String(p.restaurante_id), nombre: String(p.restaurante) },
-      repartidor: p.repartidor_id
-        ? {
-            id: String(p.repartidor_id),
-            nombre: String(p.repartidor),
-            codigo: p.repartidor_codigo ? String(p.repartidor_codigo) : null,
-          }
-        : null,
-      bitacora,
-      excepcionUbicacion: excepcion
-        ? {
-            motivo: excepcion.motivo,
-            pedidaEn: excepcion.creado_en,
-            autorizadaEn: excepcion.autorizado_en,
-            autorizadaPor: excepcion.autorizado_por,
-          }
-        : null,
-    },
-  });
+  return c.json({ pedido: await fichaPedido(base(c), c.req.param('id')) });
 });
 
 /** Soporte autoriza entregar sin la comprobación del GPS; queda quién y cuándo en la bitácora. */

@@ -380,12 +380,12 @@ export function alcanceDentroDe(a: Alcance, b: Alcance): boolean {
 }
 
 /** El servicio de un pedido según el tipo de comercio (comida = restaurante; lo demás, tiendas). */
-export function servicioDePedido(tipoComercio: string | null | undefined): ServicioAlcance {
+export function servicioAlcanceDePedido(tipoComercio: string | null | undefined): ServicioAlcance {
   return !tipoComercio || tipoComercio === 'restaurante' ? 'comida' : 'tiendas';
 }
 
 /** El servicio de una operación (viaje o envío) según `operaciones.servicio_id`. */
-export function servicioDeOperacion(servicioId: string | null | undefined): ServicioAlcance {
+export function servicioAlcanceDeOperacion(servicioId: string | null | undefined): ServicioAlcance {
   if (servicioId === 'carro' || servicioId === 'moto') return servicioId;
   return 'envios';
 }
