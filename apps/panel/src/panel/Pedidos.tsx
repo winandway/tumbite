@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { FotosDelPedido } from './FotosDelPedido';
 import { Icono } from '../sitio/Icono';
 import {
   ErrorApi,
@@ -73,6 +74,7 @@ type Pedido = {
   recogidoEn: string | null;
   tiempoPrepMin: number | null;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
+  fotoEntrega?: { tomadaEn: string } | null;
   repartidor?: RepartidorEnPedido | null;
   ajuste?: {
     platoId: string;
@@ -846,6 +848,16 @@ export function Pedidos({ idioma }: { idioma: Idioma }) {
                   <figcaption>{t.ayudaConfirmar}</figcaption>
                 </figure>
               )}
+              {(p.estado === 'en_camino' || p.estado === 'entregado') &&
+                p.entrega !== 'recoger' && (
+                  <FotosDelPedido
+                    pedidoId={p.id}
+                    recogida={p.fotoRecogida}
+                    entrega={p.fotoEntrega}
+                    entregadoSinFoto={p.estado === 'entregado' && !p.fotoEntrega}
+                    idioma={idioma}
+                  />
+                )}
             </div>
             <div className="fila-botones">
               {p.ajuste?.estado === 'pendiente' && (

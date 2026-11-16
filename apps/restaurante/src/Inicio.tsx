@@ -45,6 +45,7 @@ import {
   C,
   CodigoQR,
   FotoPedido,
+  FotosDelPedido,
   Pantalla,
   TarjetaAvisosWeb,
   TEXTOS_MOVIL,
@@ -97,6 +98,8 @@ type Pedido = {
   aceptadoEn?: string | null;
   tiempoPrepMin: number | null;
   fotoRecogida?: { tomadaEn: string; confirmadaEn: string | null } | null;
+  fotoEntrega?: { tomadaEn: string } | null;
+  entregadoComo?: string | null;
   repartidor?: RepartidorEnPedido | null;
   ajuste?: {
     platoId: string;
@@ -1325,7 +1328,26 @@ export function Inicio() {
             {t.camino}
           </Text>
         ) : null}
-        {t.estados[p.estado] ? (
+        {/* C-FOTOS-AL-COMERCIO: las dos fotos de prueba (al recoger y al entregar), para reclamos. */}
+        {(p.estado === 'en_camino' || p.estado === 'entregado') && p.entrega !== 'recoger' ? (
+          <Tarjeta>
+            {p.estado === 'entregado' ? (
+              <Text
+                testID="pedido-entregado"
+                style={{ color: C.exito, fontWeight: '800', fontSize: 17, marginBottom: 10 }}
+              >
+                {tr.entregadoCliente}
+              </Text>
+            ) : null}
+            <FotosDelPedido
+              pedidoId={p.id}
+              recogida={p.fotoRecogida}
+              entrega={p.fotoEntrega}
+              entregadoSinFoto={p.estado === 'entregado' && !p.fotoEntrega}
+            />
+          </Tarjeta>
+        ) : null}
+        {t.estados[p.estado] && !(p.estado === 'entregado' && p.entrega !== 'recoger') ? (
           <Text style={{ color: '#666B73', textAlign: 'center', marginVertical: 8 }}>
             {t.estados[p.estado]}
           </Text>

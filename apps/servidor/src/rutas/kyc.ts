@@ -296,7 +296,8 @@ kyc.post('/kyc/foto/:pieza', async (c) => {
       u.id,
     )
     .run();
-  return c.json({ ok: true }, 201);
+  // C-FOTO-ENTREGA-IPHONE: la referencia de la foto guardada; las apps viejas la exigían.
+  return c.json({ ok: true, url: clave }, 201);
 });
 
 /**
@@ -616,7 +617,8 @@ kyc.post('/admin/kyc/:id/miniatura', async (c) => {
     .prepare('UPDATE kyc SET selfie_miniatura = ? WHERE usuario_id = ?')
     .bind(clave, id)
     .run();
-  return c.json({ ok: true }, 201);
+  // C-FOTO-ENTREGA-IPHONE: la referencia de la foto guardada; las apps viejas la exigían.
+  return c.json({ ok: true, url: clave }, 201);
 });
 
 kyc.post('/admin/kyc/:id/liberar-foto', async (c) => {

@@ -88,6 +88,7 @@ const PARA_TIENDA = new Map<string, [string, string]>([
   ],
   ['repartidor-en-camino', ['Divoox Driver (repartidor)', '04-en-camino-como-llegar']],
   ['repartidor-llegada', ['Divoox Driver (repartidor)', '05-en-la-puerta-foto-de-la-entrega']],
+  ['driver-entrega-lista', ['Divoox Driver (repartidor)', '05b-foto-lista-desliza-para-completar']],
   ['repartidor-billetera', ['Divoox Driver (repartidor)', '06-billetera']],
   ['repartidor-retiro', ['Divoox Driver (repartidor)', '07-retiro-al-banco']],
   ['restapp-nuevo', ['Divoox Restaurants (restaurante)', '01-pedido-nuevo-y-tiempo-para-aceptar']],
@@ -170,6 +171,15 @@ for (const idioma of ['en', 'es'] as const) {
       );
       if (TIENDA) {
         const destino = PARA_TIENDA.get(nombre);
+        // La tarjeta de avisos «bloqueados en este navegador» es de la versión web: la app de la
+        // tienda los pide con el permiso del teléfono. Se descarta con «Ahora no», como haría el
+        // dueño, antes de la foto de la tienda (15 nov 2026).
+        if (destino) {
+          const ahoraNo = pagina
+            .getByTestId('tarjeta-avisos-web')
+            .getByText(idioma === 'en' ? 'Not now' : 'Ahora no', { exact: true });
+          if (await ahoraNo.isVisible().catch(() => false)) await ahoraNo.click();
+        }
         if (destino) {
           const dir = join(
             RAIZ,
@@ -969,7 +979,8 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(rapp.getByText(/^(On the way|En camino)$/).first()).toBeVisible({
       timeout: 20_000,
     });
-    await Promise.all(restApps.map((p) => p.context().close()));
+    // La del celular sigue abierta: al final ve el pedido entregado con sus dos fotos.
+    await Promise.all(restApps.filter((p) => p !== rapp).map((p) => p.context().close()));
 
     // 9. En camino: «Cómo llegar» mientras está lejos; el cliente ve su pedido sellado.
     // Espera la pantalla de entrega (en la de recogida también hay un «Cómo llegar», al restaurante).
@@ -1079,9 +1090,36 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(rep, 'repartidor-llegada');
     // 11. Sin señal al entregar: la foto se guarda en el celular, «pendiente de confirmar», y se
     // manda sola cuando vuelve la señal. El pedido NO queda entregado hasta entonces.
+    // C-DESLIZAR-ENTREGA (como DoorDash y Uber): la foto no cierra el pedido; se cierra al
+    // deslizar «Desliza para completar». Sin señal, los dos quedan en la cola, en orden.
+    const deslizador = rep.getByTestId('deslizar-completar').filter({ visible: true });
+    await expect(deslizador).toBeVisible({ timeout: 20_000 });
+    await expect(deslizador).toHaveAttribute('aria-label', L.primeroFoto);
+    await deslizador.scrollIntoViewIfNeeded();
+    await foto(rep, 'driver-entrega-foto');
     await repCtx.setOffline(true);
     await tomarFoto(L.fotoEntrega, FOTO_ENTREGA);
     await expect(rep.getByText(`${L.pendientes}: 1`)).toBeVisible({ timeout: 20_000 });
+    await expect(rep.getByText(L.fotoLista).filter({ visible: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(deslizador).toHaveAttribute('aria-label', L.deslizar);
+    expect(sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado).toBe(
+      'en_camino',
+    );
+    await deslizador.scrollIntoViewIfNeeded();
+    await foto(rep, 'driver-entrega-lista');
+    // Deslizar la bola de punta a punta, como con el dedo (la captura mueve la página: se vuelve
+    // a enfocar la barra antes de medirla).
+    await deslizador.scrollIntoViewIfNeeded();
+    const caja = (await deslizador.boundingBox())!;
+    const y = caja.y + caja.height / 2;
+    await rep.mouse.move(caja.x + 30, y);
+    await rep.mouse.down();
+    for (let i = 1; i <= 12; i++)
+      await rep.mouse.move(caja.x + 30 + ((caja.width - 40) * i) / 12, y);
+    await rep.mouse.up();
+    await expect(rep.getByText(`${L.pendientes}: 2`)).toBeVisible({ timeout: 20_000 });
     expect(sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado).toBe(
       'en_camino',
     );
@@ -1093,6 +1131,35 @@ for (const idioma of ['en', 'es'] as const) {
       })
       .toBe('entregado');
     await expect(rep.getByText(`${L.pendientes}: 1`)).toHaveCount(0, { timeout: 20_000 });
+    // C-FOTOS-AL-COMERCIO: el restaurante ve el pedido «Entregado al cliente» con las DOS fotos
+    // (al recoger y al entregar), en su app y en su panel, y la abre en grande.
+    await rapp.reload();
+    await rapp.getByRole('tab', { name: /^(Orders|Pedidos)$/ }).click();
+    await expect(async () => {
+      if (!(await rapp.getByTestId('pedido-entregado').count()))
+        await filaRapp(rapp).first().click();
+      await expect(rapp.getByTestId('pedido-entregado').first()).toBeVisible({ timeout: 3_000 });
+    }).toPass({ timeout: 30_000 });
+    const fotosRapp = rapp.getByTestId('fotos-del-pedido').first();
+    await expect(fotosRapp.getByTestId('foto-al-recoger').getByRole('img')).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(fotosRapp.getByTestId('foto-al-entregar').getByRole('img')).toBeVisible({
+      timeout: 20_000,
+    });
+    await fotosRapp.scrollIntoViewIfNeeded();
+    await foto(rapp, 'restapp-fotos-del-pedido');
+    await fotosRapp.getByTestId('foto-al-entregar').getByRole('img').click();
+    await expect(rapp.getByRole('button', { name: L.cerrar })).toBeVisible({ timeout: 10_000 });
+    await rapp.waitForTimeout(700); // la ventana aparece con un fundido
+    await foto(rapp, 'restapp-foto-en-grande');
+    await rapp.getByRole('button', { name: L.cerrar }).click();
+    await rapp.context().close();
+    await panel.reload();
+    const fotosPanel = panel.getByRole('region', { name: L.fotosDelPedido }).first();
+    await expect(fotosPanel.getByRole('img')).toHaveCount(2, { timeout: 20_000 });
+    await fotosPanel.scrollIntoViewIfNeeded();
+    await foto(panel, 'restaurante-fotos-del-pedido');
     // Propina después de entregar: el cliente deja $2 extra con su tarjeta guardada.
     await cli.goto(`/app/order/${cobro.pedidoId}`);
     const dosDolares = cli.getByRole('button', { name: /\$2\.00/ }).first();

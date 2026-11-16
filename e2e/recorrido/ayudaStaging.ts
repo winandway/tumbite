@@ -186,7 +186,23 @@ export async function repartir(
       { timeout: 90_000, intervals: [3_000], message: 'el GPS lo deja en la puerta' },
     )
     .toBe(true);
-  const entrega = await subir(`/datos/repartidor/pedidos/${pedidoId}/entregado`, destino);
+  // C-FOTO-ENTREGA-IPHONE + C-DESLIZAR-ENTREGA: la foto de la puerta llega como la manda un
+  // iPhone (sin tipo de imagen) por su propio camino y NO cierra el pedido; lo cierra el deslizador.
+  const foto = await x.request.post(
+    `/datos/repartidor/pedidos/${pedidoId}/foto-entrega?lat=${destino.lat}&lng=${destino.lng}`,
+    {
+      headers: { ...x.con(rep.token), 'content-type': 'application/octet-stream' },
+      data: bolsa,
+    },
+  );
+  expect(foto.status(), await foto.text()).toBe(200);
+  expect((await x.sql(`SELECT estado FROM pedidos WHERE id = '${pedidoId}'`))[0]?.estado).toBe(
+    'en_camino',
+  );
+  const entrega = await x.request.post(`/datos/repartidor/pedidos/${pedidoId}/entregado`, {
+    headers: x.con(rep.token),
+    data: { ...destino, modo: 'puerta' },
+  });
   expect(entrega.status(), await entrega.text()).toBe(200);
 }
 

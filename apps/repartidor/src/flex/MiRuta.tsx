@@ -1,6 +1,6 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { comoLlegar } from '../comoLlegar';
-import { enlaceRutaGoogle } from '@tumbite/compartido';
+import { enlaceRutaGoogle, medidasReducidas } from '@tumbite/compartido';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -41,7 +41,8 @@ import {
   validarCobro,
   cumpleFiltro,
 } from '@tumbite/compartido';
-import { Boton as BotonBase, C, e } from '@tumbite/movil';
+import { Boton as BotonBase, C, FOTO_EVIDENCIA, e } from '@tumbite/movil';
+import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 
 /** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
 const Boton = (p: Parameters<typeof BotonBase>[0]) => <BotonBase oscuro {...p} />;
@@ -1879,14 +1880,18 @@ function DetalleParada({
   async function tomarFoto() {
     const permiso = await ImagePicker.requestCameraPermissionsAsync();
     if (!permiso.granted) return;
-    const r = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      quality: 0.5,
-      base64: true,
-    });
+    const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.5 });
     const a = r.canceled ? null : r.assets[0];
     if (a) {
-      setFoto(a.base64 ? `data:${a.mimeType ?? 'image/jpeg'};base64,${a.base64}` : a.uri);
+      // C-FOTO-EVIDENCIA-LIVIANA: la prueba de entrega viaja achicada (1280 px, JPEG 0,6), no en
+      // tamaño completo dentro del mensaje.
+      const { ancho, alto } = medidasReducidas(a.width, a.height, FOTO_EVIDENCIA.lado);
+      const chica = await manipulateAsync(a.uri, [{ resize: { width: ancho, height: alto } }], {
+        compress: FOTO_EVIDENCIA.calidad,
+        format: SaveFormat.JPEG,
+        base64: true,
+      }).catch(() => null);
+      setFoto(chica?.base64 ? `data:image/jpeg;base64,${chica.base64}` : a.uri);
       setAviso('');
     }
   }

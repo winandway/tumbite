@@ -127,12 +127,7 @@ export function Campo({
 
 /** Ojo de línea dibujado con vistas (sin emojis ni librerías nativas). Tachado = ocultar. */
 function Ojo({ tachado }: { tachado: boolean }) {
-  return (
-    <View style={e.ojo}>
-      <View style={e.ojoPupila} />
-      {tachado ? <View style={e.ojoRaya} /> : null}
-    </View>
-  );
+  return <Icono nombre={tachado ? 'eye-off-outline' : 'eye-outline'} color={COLOR.textoSuave} />;
 }
 
 /** Contraseña con ojito. Arranca oculta. Todas las pantallas usan esta. */
@@ -314,23 +309,6 @@ export const e = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     paddingHorizontal: 8,
-  },
-  ojo: {
-    width: 22,
-    height: 14,
-    borderWidth: 2,
-    borderColor: COLOR.textoSuave,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ojoPupila: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLOR.textoSuave },
-  ojoRaya: {
-    position: 'absolute',
-    width: 26,
-    height: 2,
-    backgroundColor: COLOR.textoSuave,
-    transform: [{ rotate: '-35deg' }],
   },
   // Botón píldora de 52 de alto con letra Poppins, como el de Uber Eats y DoorDash.
   boton: {

@@ -77,3 +77,33 @@ export async function subirFotoPuertaApp<F>(
     `${ruta}${ruta.includes('?') ? '&' : '?'}tam=mini`,
   );
 }
+
+/**
+ * C-FOTO-EVIDENCIA-LIVIANA (15 nov 2026, pedido de Richard tras la prueba en Novi: la foto en el
+ * restaurante tardaba mucho en subir). Las fotos de prueba de un pedido (recogida, entrega, chat,
+ * paquetes) se achican EN EL TELÉFONO antes de subir: lado mayor 1280 px y JPEG al 0,6. Una foto de
+ * 12 megapíxeles pasa de cerca de 1 MB (o más) a unos 150-200 KB: sube en uno o dos segundos con
+ * mala señal. Se queda en JPEG para que el correo de la entrega la muestre en cualquier programa.
+ * Si achicar falla (memoria, formato raro), se sube la original: nunca se pierde la foto.
+ */
+export const FOTO_EVIDENCIA = { lado: 1280, calidad: 0.6 } as const;
+
+export async function achicarFotoEvidencia<F>(
+  foto: { uri: string; width?: number; height?: number },
+  manipular: Manipular<F>,
+  jpeg: F,
+): Promise<string> {
+  const { width, height } = foto;
+  if (!width || !height) return foto.uri;
+  try {
+    const { ancho, alto } = medidasReducidas(width, height, FOTO_EVIDENCIA.lado);
+    const r = await manipular(foto.uri, [{ resize: { width: ancho, height: alto } }], {
+      compress: FOTO_EVIDENCIA.calidad,
+      format: jpeg,
+    });
+    return r.uri;
+  } catch (e) {
+    console.warn('foto: no se pudo achicar; se sube la original', e);
+    return foto.uri;
+  }
+}

@@ -206,8 +206,8 @@ export function Cabecera({
           {t.restaurante}
         </Text>
       </View>
-      {/* El selector va sobre fondo oscuro, como en la cabecera roja de siempre. */}
-      <View style={{ backgroundColor: C.primario, borderRadius: 999, paddingHorizontal: 4 }}>
+      {/* El selector va en una píldora negra, el color de Restaurants (el Driver va en azul). */}
+      <View style={{ backgroundColor: COLOR.negro, borderRadius: 999, paddingHorizontal: 4 }}>
         <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
       </View>
     </View>

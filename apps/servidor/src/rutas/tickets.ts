@@ -707,7 +707,8 @@ tickets.post('/quejas/:id/foto', limiteIntentos(10, 60_000), async (c) => {
     .prepare('UPDATE tickets SET datos_json = ? WHERE id = ?')
     .bind(JSON.stringify(datos), t.id)
     .run();
-  return c.json({ ok: true }, 201);
+  // C-FOTO-ENTREGA-IPHONE: la referencia de la foto guardada; las apps viejas la exigían.
+  return c.json({ ok: true, url: clave }, 201);
 });
 
 tickets.get('/quejas/:id/foto', async (c) => {

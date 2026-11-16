@@ -4,6 +4,7 @@
 //   - cualquier secreto dentro del paquete (llaves de Stripe, avisos, tokens de YaDominios…);
 //   - piezas que faltan (_worker.js, schema.sql, las tres apps, el panel).
 //   - una ruta con «@» (la plataforma la redirige con 307; C-RUTAS-SIN-ARROBA).
+//   - un paquete más grande que el tope (C-PAQUETE-TOPE): la plataforma no lo publica y no avisa.
 //   - (con <commit>) una pieza que no lleve grabado el commit de ESTA publicación (C-VERSION-DEL-ARTEFACTO).
 // Uso: node scripts/verificar-paquete.mjs <carpeta> <pruebas|produccion> [commit]
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -16,9 +17,11 @@ if (!carpeta || !['pruebas', 'produccion'].includes(entorno)) {
 }
 const problemas = [];
 const archivos = [];
+let bytes = 0;
 const recorrer = (d) => {
   for (const n of readdirSync(d)) {
     const r = join(d, n);
+    if (!statSync(r).isDirectory()) bytes += statSync(r).size;
     // C-RUTAS-SIN-ARROBA (LAN-6): la plataforma redirige con 307 toda ruta con «@».
     if (n.includes('@'))
       problemas.push(
@@ -114,6 +117,13 @@ if (
 )
   problemas.push('el paquete dice ser de otro entorno');
 
+// C-PAQUETE-TOPE (15 nov 2026): a 133 MB la plataforma falló con «Memory limit exceeded» y el sitio
+// siguió sirviendo la versión anterior sin avisar; a 109 MB publicaba bien. Tope con margen.
+const topeMb = Number(process.env.PAQUETE_TOPE_MB ?? 120);
+if (bytes > topeMb * 1024 * 1024)
+  problemas.push(
+    `el paquete pesa ${(bytes / 1048576).toFixed(1)} MB y el tope es ${topeMb} MB: la plataforma no lo publicaría (mira qué creció: fuentes, imágenes, PDF)`,
+  );
 if (problemas.length) {
   for (const p of problemas) console.error(`::error::${p}`);
   console.error(`El paquete de ${entorno} NO se publica: ${problemas.length} problema(s).`);
