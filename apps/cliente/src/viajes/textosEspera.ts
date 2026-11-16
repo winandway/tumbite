@@ -58,7 +58,7 @@ export const TEXTOS_ESPERA: Record<'es' | 'en', TextosEspera> = {
     },
     recoger: 'Pick up',
     entregar: 'Drop off',
-    queEnvias: 'What you’re sending',
+    queEnvias: 'Your package',
     parada: 'Stop',
     compartir: 'Share',
     cancelarNota: 'Canceling is free while we search',

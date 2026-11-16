@@ -236,7 +236,7 @@ export function ParadasDelViaje({
   const [abiertoCon, setAbiertoCon] = useState(abrirCon);
   if (abrirCon !== abiertoCon) {
     setAbiertoCon(abrirCon);
-    if (abrirCon > 0 && puedeCambiar) abrir();
+    if (abrirCon > 0 && puedeCambiar && !editando) abrir();
   }
 
   if (!paradas.length && !puedeCambiar) return null;

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   CAPAS,
+  copias,
   ESCALA,
   ESCENA,
   GIRO_RUEDA_GRADOS,
@@ -69,6 +70,14 @@ describe('espera: bucle continuo de 4,8 s', () => {
       nubes: { mosaico: 195, ms: 4800 },
     });
     expect(TIEMPOS.ruedaVuelta).toBe(600);
+  });
+
+  it('las copias de cada mosaico cubren la pantalla más su recorrido, sin hueco', () => {
+    for (const ancho of [320, 390, 430, 768, 1280])
+      for (const capa of Object.values(CAPAS))
+        expect(copias(ancho, capa.mosaico) * capa.mosaico).toBeGreaterThanOrEqual(
+          ancho + capa.mosaico,
+        );
   });
 
   it('los retrasos son negativos y se vuelven fases del mismo reloj', () => {

@@ -548,7 +548,11 @@ function EscenaBuscando({
       }),
     );
     bucle.start();
-    return () => bucle.stop();
+    return () => {
+      bucle.stop();
+      // Si se activa «reducir movimiento» a mitad de la vuelta, la escena queda en su cuadro inicial.
+      reloj.setValue(0);
+    };
   }, [animar, reloj]);
 
   const centro = ancho / 2;
@@ -565,12 +569,12 @@ function EscenaBuscando({
     >
       <Svg width={ancho} height={ESCENA.alto} style={StyleSheet.absoluteFill}>
         <Defs>
-          <LinearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+          <LinearGradient id={`cielo-${vehiculo}`} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor="#FFF1F2" />
             <Stop offset="0.92" stopColor={BLANCO} />
           </LinearGradient>
         </Defs>
-        <Rect width={ancho} height={ESCENA.alto} fill="url(#cielo)" />
+        <Rect width={ancho} height={ESCENA.alto} fill={`url(#cielo-${vehiculo})`} />
       </Svg>
       <View style={s.sol} />
       <CapaQueCorre reloj={reloj} capa={CAPAS.nubes} ancho={ancho} estilo={{ top: 74 }}>

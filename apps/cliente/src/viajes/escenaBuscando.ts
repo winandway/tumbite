@@ -97,7 +97,8 @@ export const LIENZO_CON_HAZ = 300;
 /**
  * Qué vehículo se dibuja mientras se busca. En viajes lo decide el servicio; en envíos, el tamaño del
  * paquete: lo grande y lo mediano van en carro (caja amarrada al techo), sobre y pequeño en moto.
- * Lo mismo que dice `vehiculoLlevaPaquete` del compartido: grande solo en carro.
+ * El mediano también cabe en una moto con cajón, pero mientras se busca se dibuja el carro, que lo
+ * lleva siempre (`vehiculoLlevaPaquete` del compartido).
  */
 export function vehiculoDeEspera(
   servicio: string | undefined,

@@ -95,7 +95,8 @@ function BarraBuscando() {
   const reducir = useReducirMovimiento();
   useEffect(() => {
     if (reducir) {
-      valor.setValue(0);
+      // Quieta y visible: el tramo rojo queda en el medio de la barra.
+      valor.setValue(0.5);
       return;
     }
     const anim = Animated.loop(
@@ -557,7 +558,7 @@ export function ViajeEnCurso({
                 testID="buscando-que-envias"
               />
             </View>
-          ) : (viaje.paradasMaximas ?? 0) > 0 ? (
+          ) : viaje.estado === 'buscando' && (viaje.paradasMaximas ?? 0) > 0 ? (
             <View style={{ flex: 1 }}>
               <Boton
                 tipo="terciario"

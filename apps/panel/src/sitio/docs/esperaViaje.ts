@@ -75,7 +75,7 @@ const EN: Guia = {
     'As soon as you request a ride or a delivery, you see a scene with the vehicle you chose, plus the route and the price. It usually takes less than a minute, and canceling is free while we search.',
   explicacion: [
     'When you request, Divoox lets the drivers closest to your pickup know. While someone accepts, the screen shows a calm scene with the vehicle for what you requested: a car for Car, a motorcycle carrying the passenger’s helmet for Moto, a motorcycle with a delivery box if you’re sending a small package, and a car with a box on the roof if you’re sending something medium or large.',
-    'Below it you see what we’re looking for, the pickup, the destination, the vehicle, and the upfront price. On a ride you can add a stop from “Stop”; on a delivery, “What you’re sending” shows the package and who receives it. “Share” sends the trip link to anyone you choose.',
+    'Below it you see what we’re looking for, the pickup, the destination, the vehicle, and the upfront price. On a ride you can add a stop from “Stop”; on a delivery, “Your package” shows the package and who receives it. “Share” sends the trip link to anyone you choose.',
     'If your phone has “reduce motion” turned on, the scene stays still. When a driver accepts, the scene fades into the map with your driver on the way.',
   ],
   capturas: [
@@ -94,7 +94,7 @@ const EN: Guia = {
     foto(
       'moto-envio',
       'en',
-      'The waiting screen for a small delivery: the motorcycle with its delivery box, the title “Finding a courier,” Pick up and Drop off, and the “What you’re sending” button.',
+      'The waiting screen for a small delivery: the motorcycle with its delivery box, the title “Finding a courier,” Pick up and Drop off, and the “Your package” button.',
       'Small delivery: it goes by motorcycle with a delivery box.',
     ),
     foto(
@@ -113,7 +113,7 @@ const EN: Guia = {
   pasos: [
     'Request your ride or delivery as usual and tap the button to confirm it.',
     'Look at the waiting screen: the title says what we’re looking for, and below are the pickup, the destination, and the upfront price.',
-    'If you like, tap “Stop” to add a stop (on a ride) or “What you’re sending” to check your package (on a delivery).',
+    'If you like, tap “Stop” to add a stop (on a ride) or “Your package” to check your package (on a delivery).',
     'Tap “Share” to send someone the trip link.',
     'If you changed your mind, tap “Cancel ride” (or “Cancel delivery”): it’s free while we search.',
   ],
