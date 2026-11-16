@@ -4931,3 +4931,8 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - `PAISES_PASAJEROS_ABRIBLES` (`apps/servidor/src/pasajerosPais.ts`) incluye `envios` para VE: el superadmin lo abre con `PUT /datos/admin/pasajeros-pais/VE/envios` y desde ahí se enciende por ciudad. Estados Unidos sigue cerrado.
 - Prueba: «C-ENVIOS-POR-PAIS» en `apps/servidor/src/rutas/motoVenezuela.test.ts` (en rojo sin la línea).
 - **Papeles (cambio de C-PAPELES-SOLO-PASAJEROS para Venezuela):** el perfil VE declara `requisitosOtrosServicios: { antecedentes_penales: ['antecedentes'] }`. En Venezuela no hay verificación automática de antecedentes: el certificado que aprueba el equipo cumple también «antecedentes» de Envíos. Estados Unidos no cambia (allá lo verifica el proveedor). Prueba en `motoVenezuelaRevision.test.ts`. Un conductor aprobado ANTES de este cambio necesita que el equipo vuelva a aprobar su certificado para que le cuente para Envíos.
+
+## C-PUNTO-VENTA-PANEL — el punto de recarga emite sus códigos desde el panel (16 nov 2026, todos los países)
+
+- Antes los códigos de recarga solo se emitían por la API. `apps/panel/src/panel/MiPuntoVenta.tsx` (en Superadmin → Dinero) muestra el fondo del punto de la cuenta, emite el código (monto en la moneda del punto; al servidor va en centavos) y anula los no canjeados. Una cuenta que no es de un punto no ve nada.
+- Prueba: `apps/panel/src/panel/MiPuntoVenta.test.tsx` (también la pieza del responsable de zona).

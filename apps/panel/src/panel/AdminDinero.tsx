@@ -15,6 +15,7 @@ import {
 import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 import { ControlDinero } from './ControlDinero';
+import { MiPuntoVenta } from './MiPuntoVenta';
 
 const T = {
   es: {
@@ -237,6 +238,7 @@ export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idi
   return (
     <section>
       <h1>{t.titulo}</h1>
+      <MiPuntoVenta idioma={idioma} />
       <ControlDinero idioma={idioma} />
       <p>{t.ayuda}</p>
       <AvisoBorrador
