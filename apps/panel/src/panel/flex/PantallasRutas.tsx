@@ -332,7 +332,7 @@ export function DetalleRutaOperativa({ ctx, rutaId }: { ctx: Contexto; rutaId: s
   const puedeOfrecer = elegido && elegido.vinculo !== 'propio';
   const conFecha = (v: string) => (v ? v.replace('T', ' ') : null);
   // C-FLEX-PAGO-BLOQUE: lo escrito en la moneda de la empresa, a centavos (vacío = sin pago fijado).
-  const centavosDe = (v: string) => (v.trim() ? montoEscrito(v, empresa.moneda) : null);
+  const centavosDe = (v: string) => (v.trim() ? montoEscrito(v, empresa.moneda) || null : null);
   const reordenable =
     puede && ['borrador', 'ofrecida', 'asignada', 'aceptada', 'en_carga'].includes(r.estado);
   return (

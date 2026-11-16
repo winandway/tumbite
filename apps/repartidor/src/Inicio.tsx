@@ -653,6 +653,9 @@ export function Inicio() {
         .catch(() => undefined);
       const s = await api.pedir<Estado>('GET', '/datos/repartidor/estado');
       setEstado(s);
+      // C-FLEX-EXCLUSIVO: con un bloque de Flex, el inicio y «Pedidos» pasan a la ruta y se quedan
+      // ahí también al cerrarlo, hasta que el conductor toque «Volver al inicio» (así ve su pago).
+      if (s.bloqueFlex) setVista((v) => (v === 'inicio' || v === 'pedidos' ? 'miRuta' : v));
       if (s.conectado) setConectadoDesde((d) => d ?? Date.now());
       else setConectadoDesde(null);
       if (s.conectado && !s.activo)
@@ -1848,7 +1851,7 @@ export function Inicio() {
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
   // C-FLEX-PANTALLA-COMPLETA (como Amazon Flex): dentro de la ruta no va la cabecera con el logo; la
   // pantalla entera es para el trabajo, en fondo oscuro, con la franja de Divoox Flex arriba.
-  if (vista === 'miRuta' || (enBloque && (vista === 'inicio' || vista === 'pedidos')))
+  if (vista === 'miRuta')
     return (
       <SafeAreaView
         style={[e.fondo, { backgroundColor: C.logistica }]}

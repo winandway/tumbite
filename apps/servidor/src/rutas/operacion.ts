@@ -1301,6 +1301,7 @@ operacion.put('/admin/ganar-por-tiempo', async (c) => {
 
 operacion.get('/repartidor/estado', async (c) => {
   const { u, db, ficha } = await miFicha(c);
+  const bloqueFlex = await bloqueFlexDe(db, u.id);
   const activo = await entregaActiva(db, u.id);
   const selfiePendiente = await db
     .prepare('SELECT clave FROM selfies_control WHERE usuario_id = ? AND tomada_en IS NULL')
@@ -1367,16 +1368,17 @@ operacion.get('/repartidor/estado', async (c) => {
     // C-OCUPADO-VISIBLE (BRF-1): si una ruta Flex o un viaje lo ocupa, no le llegan pedidos de
     // comida (C-FLEX-OCUPACION); la app lo dice en vez de «Buscando pedidos cerca de ti…».
     // C-FLEX-EXCLUSIVO: el bloque de Flex en curso; la app cambia entera al modo bloque.
-    bloqueFlex: await bloqueFlexDe(db, u.id),
-    ocupadoEn:
-      (
-        await db
-          .prepare(
-            "SELECT tipo FROM conductor_ocupacion WHERE conductor_id = ? AND tipo <> 'comida'",
-          )
-          .bind(u.id)
-          .first<{ tipo: 'ruta_flex' | 'operacion' }>()
-      )?.tipo ?? null,
+    bloqueFlex,
+    ocupadoEn: bloqueFlex
+      ? 'ruta_flex'
+      : ((
+          await db
+            .prepare(
+              "SELECT tipo FROM conductor_ocupacion WHERE conductor_id = ? AND tipo = 'operacion'",
+            )
+            .bind(u.id)
+            .first<{ tipo: 'operacion' }>()
+        )?.tipo ?? null),
   });
 });
 

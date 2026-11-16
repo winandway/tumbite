@@ -330,6 +330,10 @@ for (const idioma of ['es', 'en'] as const)
     await expect(cierre).toContainText(T.yaPuedesConectarte);
     await expect(banda).toHaveCount(0, { timeout: 20_000 });
     await foto('cierre');
+    // El cierre con el pago se queda en pantalla (el estado se consulta cada 5 s): no salta solo al
+    // inicio cuando el bloque ya terminó; sale cuando el conductor toca «Volver al inicio».
+    await p.waitForTimeout(7_000);
+    await expect(cierre).toBeVisible();
     await boton(T.volverInicio).click();
     await expect(visible(D.tocaDisponible)).toBeVisible({ timeout: 20_000 });
     expect((await conectar(true)).estado).toBe(200);

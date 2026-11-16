@@ -137,6 +137,20 @@ export function recalcularParadas(db: D1Database, rutaId: string): D1PreparedSta
   ];
 }
 
+/** C-FLEX-BLOQUE-DURACION (Richard, 16 nov 2026): un bloque dura de 1 h 30 min a 5 horas. */
+export const BLOQUE_MIN_MINUTOS = 90;
+export const BLOQUE_MAX_MINUTOS = 300;
+
+/** Con los dos extremos del horario, exige la duración de un bloque (si falta uno, no hay bloque). */
+export function validarBloque(desde?: string | null, hasta?: string | null) {
+  if (!desde || !hasta) return;
+  const min =
+    (Date.parse(`${hasta.replace(' ', 'T')}Z`) - Date.parse(`${desde.replace(' ', 'T')}Z`)) /
+    60_000;
+  if (!(min >= BLOQUE_MIN_MINUTOS && min <= BLOQUE_MAX_MINUTOS))
+    throw new ErrorDatos('Un bloque dura de 1 h 30 min a 5 horas.', 'bloqueHasta', 400);
+}
+
 export type FilaRuta = {
   id: string;
   empresa_id: string;

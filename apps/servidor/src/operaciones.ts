@@ -648,7 +648,7 @@ export async function saludExclusividad(
   const f = await db
     .prepare(
       `SELECT (SELECT COUNT(*) FROM inconsistencias_operaciones)
-            + (SELECT COUNT(*) FROM conductor_ocupacion c INDEXED BY conductor_ocupacion_ruta
+            + (SELECT COUNT(*) FROM conductor_ocupacion c
                  JOIN repartidores d ON d.usuario_id = c.conductor_id
                 WHERE c.ruta_id IS NOT NULL AND d.conectado = 1) AS n`,
     )

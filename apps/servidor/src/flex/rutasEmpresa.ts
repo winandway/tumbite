@@ -32,6 +32,7 @@ import {
   recalcularParadas,
   resumenRuta,
   rutaPorId,
+  validarBloque,
 } from './rutasComun';
 
 /**
@@ -46,30 +47,16 @@ const fecha = z
   .string()
   // eslint-disable-next-line security/detect-unsafe-regex -- longitud acotada, sin repeticiones anidadas
   .regex(/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$/, 'Fecha con el formato 2026-10-28T09:00');
-/** C-FLEX-BLOQUE-DURACION (Richard, 16 nov 2026): un bloque dura de 1 h 30 min a 5 horas. */
-export const BLOQUE_MIN_MINUTOS = 90;
-export const BLOQUE_MAX_MINUTOS = 300;
-const minutosEntre = (desde: string, hasta: string) =>
-  (Date.parse(`${hasta.replace(' ', 'T')}Z`) - Date.parse(`${desde.replace(' ', 'T')}Z`)) / 60_000;
-const esquemaAsignar = z
-  .object({
-    conductorId: z.string().uuid(),
-    vehiculoId: z.string().uuid().nullable().optional(),
-    bloqueDesde: fecha.nullable().optional(),
-    bloqueHasta: fecha.nullable().optional(),
-    /** C-FLEX-PAGO-BLOQUE: lo que la empresa le paga al conductor por el bloque, en centavos. */
-    pagoBloque: z.number().int().min(0).max(1_000_000).nullable().optional(),
-    /** Fase 3: la empresa vio el aviso de capacidad y asigna igual. */
-    confirmarCapacidad: z.boolean().optional(),
-  })
-  .refine(
-    (d) =>
-      !d.bloqueDesde ||
-      !d.bloqueHasta ||
-      (minutosEntre(d.bloqueDesde, d.bloqueHasta) >= BLOQUE_MIN_MINUTOS &&
-        minutosEntre(d.bloqueDesde, d.bloqueHasta) <= BLOQUE_MAX_MINUTOS),
-    { message: 'Un bloque dura de 1 h 30 min a 5 horas.', path: ['bloqueHasta'] },
-  );
+const esquemaAsignar = z.object({
+  conductorId: z.string().uuid(),
+  vehiculoId: z.string().uuid().nullable().optional(),
+  bloqueDesde: fecha.nullable().optional(),
+  bloqueHasta: fecha.nullable().optional(),
+  /** C-FLEX-PAGO-BLOQUE: lo que la empresa le paga al conductor por el bloque, en centavos. */
+  pagoBloque: z.number().int().min(1).max(1_000_000).nullable().optional(),
+  /** Fase 3: la empresa vio el aviso de capacidad y asigna igual. */
+  confirmarCapacidad: z.boolean().optional(),
+});
 const esquemaOfrecer = esquemaAsignar.and(
   z.object({ minutos: z.number().int().min(5).max(1440).default(60) }),
 );
@@ -300,6 +287,8 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/asignar', async (c) => {
     await conductorDeEmpresa(db, actor.empresaId, d.conductorId, 'asignacion');
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
+    // C-FLEX-BLOQUE-DURACION: con lo que llega y lo ya guardado, el bloque dura de 1 h 30 min a 5 h.
+    validarBloque(d.bloqueDesde ?? actual.bloque_desde, d.bloqueHasta ?? actual.bloque_hasta);
     await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
     // Fase 4 (C-FIN-RESERVAS): se aparta la comisión ANTES; si la asignación no entra, se devuelve.
     const cobro = await reservarCobroRuta(db, actual, await paquetesDelBorrador(db, actual.id));
@@ -384,6 +373,8 @@ flexRutasEmpresa.post('/empresas/:id/rutas/:rutaId/ofrecer', async (c) => {
     await conductorDeEmpresa(db, actor.empresaId, d.conductorId, 'oferta');
     await comprobarVehiculo(db, d.vehiculoId, d.conductorId);
     await rutaLista(db, actual);
+    // C-FLEX-BLOQUE-DURACION: con lo que llega y lo ya guardado, el bloque dura de 1 h 30 min a 5 h.
+    validarBloque(d.bloqueDesde ?? actual.bloque_desde, d.bloqueHasta ?? actual.bloque_hasta);
     await comprobarCapacidad(db, actor.empresaId, actual.id, d.vehiculoId, d.confirmarCapacidad);
     // Fase 4 (C-FIN-RESERVAS): se aparta la comisión ANTES; si la asignación no entra, se devuelve.
     const cobro = await reservarCobroRuta(db, actual, await paquetesDelBorrador(db, actual.id));

@@ -122,8 +122,7 @@ describe('Mi ruta en oscuro y a pantalla completa (Richard, con las capturas de 
     expect(miRuta).toMatch(/ultima \? 'transparent' : hecha \? VERDE : BORDE/);
   });
   it('dentro de la ruta no va la cabecera del logo (C-FLEX-PANTALLA-COMPLETA)', () => {
-    // C-FLEX-EXCLUSIVO: con un bloque de Flex, el inicio y «Pedidos» también se dibujan aquí.
-    const desde = inicio.indexOf("if (vista === 'miRuta' ||");
+    const desde = inicio.indexOf("if (vista === 'miRuta')");
     const bloque = inicio.slice(desde, inicio.indexOf("if (vista === 'alta')", desde));
     expect(bloque).toContain('testID="mi-ruta-completa"');
     expect(bloque).not.toContain('CabeceraDriver');
