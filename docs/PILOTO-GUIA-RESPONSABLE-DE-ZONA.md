@@ -2,13 +2,39 @@
 
 Para la persona que coordina a los mototaxistas en su zona. Corta, en orden, para tenerla en el celular.
 
-## 1. Instalar las apps (Android)
+## 1. Instalar las apps (Android, sin Google Play)
 
-1. En el celular, abre la página de apps de Divoox: **https://divoox-progreso.sitios.dev/apps**
-2. Baja hasta el bloque **«Versión real — para el piloto de El Vigía y Tucaní»**. Solo ese. Los de más abajo dicen «solo para el equipo»: no se usan.
-3. Toca **Divoox Driver** (para los conductores) o **Divoox** (para los pasajeros). Se descarga un archivo.
-4. Ábrelo. Si Android pregunta, toca **Configuración → Permitir desde esta fuente** y vuelve atrás. Toca **Instalar**.
-5. Si el celular ya tenía una versión que dice «PRUEBAS», bórrala primero: es otra app y guarda las cuentas en otro lado.
+Las apps del piloto se bajan directo, como un archivo. No se usa Google Play (allá todavía no salen para Venezuela). El archivo pesa unos 150 megas: mejor con wifi.
+
+1. En el celular, abre en Chrome la página de apps de Divoox: **https://divoox-progreso.sitios.dev/apps**
+2. Arriba está el bloque verde **«Versión real — para el piloto de El Vigía y Tucaní»**. Solo ese. Los de más abajo dicen «solo para el equipo»: no se usan.
+3. Toca **Descargar** en **Divoox Driver** (conductores), **Divoox** (pasajeros) o **Divoox Restaurants** (restaurantes).
+4. Chrome avisa que el archivo «podría ser dañino». Es el aviso normal de cualquier app que no viene de Google Play. Toca **Descargar de todos modos**.
+
+   ![Chrome pide confirmar la descarga](capturas/piloto-instalar/1-chrome-descargar-de-todos-modos.png)
+
+5. Cuando termine, toca el archivo descargado (en la barra de avisos o en **Descargas** de Chrome).
+
+   ![El archivo ya descargado](capturas/piloto-instalar/2-descargado-tocar-el-archivo.png)
+
+6. La primera vez, Android dice que por seguridad no puede instalar aplicaciones desconocidas de esta fuente. Toca **Ajustes**.
+
+   ![Aviso de aplicaciones desconocidas](capturas/piloto-instalar/3-aviso-tocar-ajustes.png)
+
+7. Enciende **Autorizar de esta fuente** y vuelve atrás con la flecha.
+
+   ![Autorizar de esta fuente encendido](capturas/piloto-instalar/4-autorizar-de-esta-fuente.png)
+
+8. Toca **Instalar**.
+
+   ![Instalar la app](capturas/piloto-instalar/5-tocar-instalar.png)
+
+9. Cuando diga **Aplicación instalada**, toca **Abrir**.
+
+   ![Aplicación instalada](capturas/piloto-instalar/6-instalada-abrir.png)
+
+- Si en vez de «instalar» dice **«actualizar»**, ese celular tiene la app de PRUEBAS: cancela, bórrala (mantén el ícono apretado → Desinstalar) y vuelve al paso 5.
+- En algunos Samsung y Xiaomi el permiso se llama **«Instalar apps desconocidas»** o **«Fuentes desconocidas»**, y está en Ajustes → Aplicaciones → Chrome. Es el mismo interruptor.
 
 ## 2. Registrarse como conductor de moto
 
@@ -40,7 +66,7 @@ Los **envíos** (llevar un paquete de A a B) llegan igual que las carreras: reco
 
 ## 5. Si algo falla
 
-- **Botón de pánico:** dentro de la carrera, el botón rojo de emergencia. Le llega un **SMS al responsable de la zona** con el nombre, el teléfono, el enlace del mapa con la ubicación y la carrera. Además da el número de emergencias del país.
+- **Botón de pánico:** dentro de la carrera, el botón rojo de emergencia. Le llega un **aviso al responsable de la zona** (al celular si tiene la app de Divoox con ese número, y por correo al equipo; el SMS se suma cuando esté el proveedor de Venezuela) con el nombre, el teléfono, el enlace del mapa con la ubicación y la carrera. Además da el número de emergencias del país.
 - **No me llegan carreras:** revisa que estés **Conectado**, que tengas **saldo**, GPS encendido y que tus papeles digan **Aprobado**.
 - **El mapa se ve gris o la app no abre:** cierra la app y ábrela otra vez; si sigue, avisa al responsable con una captura.
 - **Papel rechazado:** la app dice por qué. Se toma la foto otra vez y se reenvía.
