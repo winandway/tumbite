@@ -201,6 +201,40 @@ describe('foto de la puerta: el repartidor', () => {
     expect((await ver(`${lista}/1`, rep.token)).estado).toBe(404);
   });
 
+  it('al cambiar la dirección del pedido, el repartidor deja de ver la puerta anterior', async () => {
+    const { m, cliente, guardar, pedir, repartidor, ver } = await escenario();
+    const casaA = (await guardar()).datos.direccion;
+    await m.foto(`/datos/mis-direcciones/${casaA.id}/fotos/1`, cliente.token);
+    const p = await pedir();
+    const id = p.datos.pedidoId as string;
+    const enlace = async () =>
+      (
+        await m.DB.prepare('SELECT direccion_id FROM pedidos WHERE id = ?')
+          .bind(id)
+          .first<{ direccion_id: string | null }>()
+      )?.direccion_id;
+    expect(await enlace()).toBe(casaA.id);
+    // Cambia el destino a una dirección que no tiene guardada: sin enlace y sin fotos.
+    const cambio = await m.llamar(
+      'PATCH',
+      `/datos/pedidos/${id}/direccion`,
+      { direccion: '300 Otra Calle, Miami, FL', lat: 25.78, lng: -80.2, aceptarTotal: true },
+      cliente.token,
+    );
+    expect(cambio.estado, JSON.stringify(cambio.datos)).toBeLessThan(300);
+    expect(await enlace()).toBeNull();
+    const rep = await repartidor('Rita Reparto');
+    await m.DB.prepare(
+      "UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), repartidor_id = ? WHERE id = ?",
+    )
+      .bind(rep.id, id)
+      .run();
+    await llevarA(m.DB, id, 'en_camino');
+    const lista = `/datos/repartidor/pedidos/${id}/puerta`;
+    expect((await ver(lista, rep.token)).datos.fotos).toEqual([]);
+    expect((await ver(`${lista}/1`, rep.token)).estado).toBe(404);
+  });
+
   it('un regalo y un pedido a una dirección sin guardar no se enlazan con ninguna foto', async () => {
     const { m, cliente, guardar, pedir } = await escenario();
     const d = (await guardar()).datos.direccion;

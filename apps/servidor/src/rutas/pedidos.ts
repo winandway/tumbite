@@ -1978,6 +1978,9 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       aceptarTotal: z.boolean().default(false),
     }),
   );
+  // C-FOTO-PUERTA: la dirección tal como se escribió (sin el apartamento) decide de nuevo con qué
+  // dirección guardada queda enlazado el pedido.
+  const direccionSinApto = d.direccion;
   // C-DIRECCION-APTO: el apartamento nuevo se suma a la dirección, como al pedir.
   if (d.apto) d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
   const db = base(c);
@@ -2147,12 +2150,18 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   // no escribe nada, se anula la autorización nueva y se responde 409.
   const escrito = await db
     .prepare(
-      `UPDATE pedidos SET direccion = ?, apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, descuento = ?, pago_repartidor = ?, complemento = ?, ganancia = ?, pago_restaurante = ?,
+      `UPDATE pedidos SET direccion = ?,
+         -- C-FOTO-PUERTA: al cambiar el destino, el pedido deja las fotos de la puerta anterior y toma
+         -- las de la dirección guardada nueva (o ninguna). Un regalo nunca se enlaza.
+         direccion_id = CASE WHEN para_nombre <> '' THEN NULL ELSE (SELECT dc.id FROM direcciones_cliente dc
+           WHERE dc.usuario_id = pedidos.cliente_id AND lower(dc.direccion) = lower(?) LIMIT 1) END,
+         apto = ?, lat = ?, lng = ?, distancia_km = ?, envio = ?, servicio = ?, total = ?, descuento = ?, pago_repartidor = ?, complemento = ?, ganancia = ?, pago_restaurante = ?,
          stripe_pago = COALESCE(?, stripe_pago), stripe_sesion = COALESCE(?, stripe_sesion)
        WHERE id = ? AND (? IS NULL OR stripe_pago = ?)`,
     )
     .bind(
       d.direccion,
+      direccionSinApto.trim(),
       d.apto,
       d.lat,
       d.lng,
