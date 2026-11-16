@@ -171,6 +171,15 @@ for (const idioma of ['en', 'es'] as const) {
       );
       if (TIENDA) {
         const destino = PARA_TIENDA.get(nombre);
+        // La tarjeta de avisos «bloqueados en este navegador» es de la versión web: la app de la
+        // tienda los pide con el permiso del teléfono. Se descarta con «Ahora no», como haría el
+        // dueño, antes de la foto de la tienda (15 nov 2026).
+        if (destino) {
+          const ahoraNo = pagina
+            .getByTestId('tarjeta-avisos-web')
+            .getByText(idioma === 'en' ? 'Not now' : 'Ahora no', { exact: true });
+          if (await ahoraNo.isVisible().catch(() => false)) await ahoraNo.click();
+        }
         if (destino) {
           const dir = join(
             RAIZ,
