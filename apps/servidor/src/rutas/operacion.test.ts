@@ -3379,6 +3379,20 @@ describe('dinero vigilado: conciliación diaria, abono fallido y retención de f
     )
       .bind(rep.id)
       .run();
+    // C-AVISOS-IDIOMA: el aviso llega en el idioma del teléfono (aquí inglés).
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const titulos: string[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { title: string }[];
+      titulos.push(...lote.map((x) => x.title));
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.llamar(
+      'POST',
+      '/datos/cuentas/dispositivo',
+      { token: 'ExponentPushToken[banco-rechaza]', plataforma: 'android', idioma: 'en' },
+      rep.token,
+    );
     const cuerpo = JSON.stringify({
       id: `evt_${crypto.randomUUID()}`,
       type: 'payout.failed',
@@ -3400,6 +3414,8 @@ describe('dinero vigilado: conciliación diaria, abono fallido y retención de f
       .bind('acct_rechazo')
       .first();
     expect(fila).toMatchObject({ usuario_id: rep.id, motivo: 'account_closed' });
+    expect(titulos.join(' ')).toMatch(/payout|\$25\.50/i);
+    usarTransporteAvisos(null);
   });
 });
 
@@ -3553,6 +3569,20 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
         status: 200,
       });
     });
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const avisos: { to: string; body: string }[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { to: string; body: string }[];
+      avisos.push(...lote);
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.llamar(
+      'POST',
+      '/datos/cuentas/dispositivo',
+      { token: 'ExponentPushToken[rep-propina]', plataforma: 'ios' },
+      rep.token,
+      { 'x-idioma': 'es' },
+    );
     const r = await m.llamar(
       'POST',
       `/datos/pedidos/${id}/propina`,
@@ -3560,6 +3590,11 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
       cliente.token,
     );
     expect(r.estado).toBe(200);
+    // C-AVISOS-IDIOMA: el repartidor recibe el aviso de la propina en el idioma de su teléfono.
+    const propina = avisos.find((x) => x.to === 'ExponentPushToken[rep-propina]') as
+      { title?: string } | undefined;
+    expect(propina?.title).toMatch(/^Propina extra/);
+    usarTransporteAvisos(null);
     expect(llamadas.some((x) => x.url.endsWith('/payment_intents') && x.metodo === 'POST')).toBe(
       true,
     );
