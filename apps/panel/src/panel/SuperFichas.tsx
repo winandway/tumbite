@@ -9,6 +9,7 @@ import {
   formatearTotales,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
+import { VerDato } from './DatoProtegido';
 import { ir } from '../ruta';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
@@ -800,9 +801,25 @@ export function SuperRepartidor({
           <h2>{t.datos}</h2>
           <dl className="super-dl">
             <dt>{t.correo}</dt>
-            <dd>{r.correo}</dd>
+            <dd>
+              <VerDato
+                tipo="repartidor"
+                id={id}
+                campo="correo"
+                mascara={r.correo}
+                idioma={idioma}
+              />
+            </dd>
             <dt>{t.telefono}</dt>
-            <dd>{r.telefono || '—'}</dd>
+            <dd>
+              <VerDato
+                tipo="repartidor"
+                id={id}
+                campo="telefono"
+                mascara={r.telefono || '—'}
+                idioma={idioma}
+              />
+            </dd>
             <dt>{t.nacimiento}</dt>
             <dd>{r.fechaNacimiento ?? '—'}</dd>
             <dt>{t.alta}</dt>
@@ -1041,9 +1058,19 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
           <h2>{t.datos}</h2>
           <dl className="super-dl">
             <dt>{t.correo}</dt>
-            <dd>{c.correo}</dd>
+            <dd>
+              <VerDato tipo="cliente" id={id} campo="correo" mascara={c.correo} idioma={idioma} />
+            </dd>
             <dt>{t.telefono}</dt>
-            <dd>{c.telefono || '—'}</dd>
+            <dd>
+              <VerDato
+                tipo="cliente"
+                id={id}
+                campo="telefono"
+                mascara={c.telefono || '—'}
+                idioma={idioma}
+              />
+            </dd>
             <dt>{t.nacimiento}</dt>
             <dd>{c.fechaNacimiento ?? '—'}</dd>
             <dt>{t.ciudad}</dt>
@@ -1214,9 +1241,29 @@ export function SuperRestaurante({
             <dt>{t.nombre}</dt>
             <dd>{r.cuenta.nombre}</dd>
             <dt>{t.correo}</dt>
-            <dd>{r.cuenta.correo}</dd>
+            <dd>
+              <VerDato
+                tipo="restaurante"
+                id={id}
+                campo="correo"
+                mascara={r.cuenta.correo}
+                idioma={idioma}
+              />
+            </dd>
             <dt>{t.telefono}</dt>
-            <dd>{r.cuenta.telefono || r.telefono || '—'}</dd>
+            <dd>
+              {r.cuenta.telefono ? (
+                <VerDato
+                  tipo="restaurante"
+                  id={id}
+                  campo="telefono"
+                  mascara={r.cuenta.telefono}
+                  idioma={idioma}
+                />
+              ) : (
+                r.telefono || '—'
+              )}
+            </dd>
             <dt>{t.direccionFiscal}</dt>
             <dd>{r.direccion || '—'}</dd>
             <dt>{t.alta}</dt>

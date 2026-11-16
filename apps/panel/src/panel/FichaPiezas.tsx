@@ -18,7 +18,7 @@ import {
 } from '@tumbite/compartido';
 import { MapaGoogleBajoDemanda, elegirMapaWeb } from '@tumbite/compartido/src/mapaWebGoogle';
 import { useHora } from './horario';
-import { puedeVer } from './permisosPanel';
+import { usePermisos } from './permisosPanel';
 
 /**
  * C-FICHA-OPERACION (15 nov 2026). Todos los países. Las piezas de la ficha del pedido y de la del
@@ -389,6 +389,8 @@ export function FotoEvidencia({ url, alt, idioma }: { url: string; alt: string; 
   const t = enIdioma(TF, idioma);
   const [abierta, setAbierta] = useState(false);
   const [estado, setEstado] = useState<'' | 'cargando' | 'lista' | 'error'>('');
+  // C-PERMISOS-FINOS: los permisos efectivos de la sesión (el servidor frena igual y anota cada vista).
+  const { puedeVer } = usePermisos();
   if (!puedeVer('pedidos.fotos')) return <p className="ficha-nota">{t.sinPermiso}</p>;
   return (
     <div className="ficha-foto">

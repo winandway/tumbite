@@ -17,6 +17,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { alcancePedidos, alcanceViajes } from '../accesoInterno';
 
 /**
  * Superadmin a escala (pensado para millones de cuentas): ciudades, repartidores con su ID
@@ -744,10 +745,12 @@ superadmin.get('/admin/pedidos', async (c) => {
   exigir(c, 'admin');
   // C-MONITOREO-SERVICIOS: pedidos y viajes juntos, con pestaña de servicio y sus contadores.
   return c.json(
-    await listarMonitoreo(
-      base(c),
-      parametrosLista((k) => c.req.query(k)),
-    ),
+    await listarMonitoreo(base(c), {
+      ...parametrosLista((k) => c.req.query(k)),
+      // C-PERMISOS-FINOS: solo los pedidos y viajes de la zona de trabajo de quien mira.
+      alcance: alcancePedidos(c),
+      dentroViaje: await alcanceViajes(c),
+    }),
   );
 });
 

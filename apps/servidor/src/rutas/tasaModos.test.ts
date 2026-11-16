@@ -117,6 +117,7 @@ describe('C-TASA-MODOS: la tasa por país en una sola pieza', () => {
   it('mirar la tasa no escribe nada en la base', async () => {
     const e = await escenarioVe();
     await oficial(e.m.DB, hoyCaracas(), 900);
+    await e.m.sesionLista(e.admin.token);
     const cambios = async () =>
       Number((await e.m.DB.prepare('SELECT total_changes() AS n').first<{ n: number }>())?.n ?? 0);
     const antes = await cambios();

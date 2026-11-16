@@ -1,3 +1,4 @@
+import { anotarAccesoSensible } from '../accesoInterno';
 import { Hono } from 'hono';
 import type { Env } from '../env';
 import { fichaViaje } from '../fichaOperacion';
@@ -22,9 +23,11 @@ fichaViajeRutas.get('/admin/viajes/:id', async (c) => {
  * mismo registro de lecturas sensibles que `GET /datos/pedidos/:id/evidencia/:tipo`.
  */
 fichaViajeRutas.get('/admin/viajes/:id/foto/:tipo', async (c) => {
-  exigir(c, 'admin');
+  const u = exigir(c, 'admin');
   const tipo = c.req.param('tipo');
   if (tipo !== 'recogida' && tipo !== 'entrega') return c.text('No encontrado', 404);
+  // C-PERMISOS-FINOS: el permiso `pedidos.fotos` lo exige el intermedio (mapa de rutas) y el
+  // alcance de la ficha del viaje también; cada vista deja su fila (sin la foto).
   const f = await base(c)
     .prepare(
       tipo === 'recogida'
@@ -36,6 +39,13 @@ fichaViajeRutas.get('/admin/viajes/:id/foto/:tipo', async (c) => {
   if (!f?.clave || !c.env.BUCKET) return c.text('No encontrado', 404);
   const obj = await c.env.BUCKET.get(f.clave);
   if (!obj) return c.text('No encontrado', 404);
+  await anotarAccesoSensible(
+    base(c),
+    u.id,
+    `viaje:${c.req.param('id')}`,
+    tipo === 'recogida' ? 'foto_recogida' : 'foto_entrega',
+    'pedidos.fotos',
+  );
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
   headers.set('cache-control', 'private, no-store');

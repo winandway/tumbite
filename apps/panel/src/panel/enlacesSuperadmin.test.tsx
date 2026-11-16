@@ -8,6 +8,7 @@ import { SuperCliente, SuperRepartidor, SuperRestaurante } from './SuperFichas';
 import { SuperTickets } from './Superadmin';
 import { SuperKyc } from './SuperKyc';
 import { SuperFinanzas } from './SuperFinanzas';
+import { SuperEquipo } from './SuperEquipo';
 import { SuperViaje } from './SuperViaje';
 
 /**
@@ -32,10 +33,11 @@ const COMPONENTE: Record<(typeof PREFIJOS_FICHA)[number], unknown> = {
   tickets: SuperTickets,
   verifications: SuperKyc,
   flexfinance: SuperFinanzas,
+  team: SuperEquipo,
   rides: SuperViaje,
 };
 const idDe = (e: ReactElement<Record<string, unknown>>) =>
-  e.props.id ?? e.props.ticketId ?? e.props.empresaId;
+  e.props.id ?? e.props.ticketId ?? e.props.empresaId ?? e.props.personaId;
 
 describe('C-SUPERADMIN-ENLACES · cada enlace de una lista abre su ficha', () => {
   for (const prefijo of PREFIJOS_FICHA)

@@ -188,6 +188,7 @@ function etiquetaBoton(url: string, en: boolean): string {
   if (ruta.includes('/confirm-email')) return en ? 'Confirm my email' : 'Confirmar mi correo';
   if (ruta.includes('/reset-password'))
     return en ? 'Reset my password' : 'Restablecer mi contraseña';
+  if (ruta.includes('/team-invite')) return en ? 'Join the team' : 'Unirme al equipo';
   if (ruta.includes('/app/order/')) return en ? 'Follow my order' : 'Seguir mi pedido';
   if (/^\/t\//.test(ruta)) return en ? 'Open the conversation' : 'Ver la conversación';
   if (/\/tickets\//.test(ruta)) return en ? 'Reply in the panel' : 'Responder en el panel';

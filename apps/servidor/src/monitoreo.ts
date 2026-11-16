@@ -195,7 +195,7 @@ export async function listarViajesMonitoreo(
         condiciones.map(([donde, valores]) =>
           todas(
             db,
-            `SELECT o.id, o.rowid AS fila, o.creado_en FROM operaciones o WHERE ${donde}
+            `SELECT o.id, o.rowid AS fila, o.creado_en, o.zona_id, o.servicio_id FROM operaciones o WHERE ${donde}
               AND +o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete') AND +o.servicio_id IN (${marcas(servicios.length)})
               ORDER BY +o.creado_en DESC LIMIT ?`,
             ...valores,
@@ -206,7 +206,12 @@ export async function listarViajesMonitoreo(
       )
     ).flat();
     const vistos = new Set<string>();
-    const unicos = ids.filter((f) => !vistos.has(String(f.id)) && vistos.add(String(f.id)));
+    const unicos = ids.filter(
+      (f) =>
+        (!p.dentroViaje || p.dentroViaje(f)) &&
+        !vistos.has(String(f.id)) &&
+        vistos.add(String(f.id)),
+    );
     return {
       viajes: (await detallesViajes(db, unicos, 'DESC')).map((f) => aFilaViaje(f)),
       siguiente: null,
@@ -217,7 +222,10 @@ export async function listarViajesMonitoreo(
   if (!b.vacia) return { viajes: [], siguiente: null, porCodigo: false };
 
   const enFiltro = (f: Fila) =>
-    servicios.includes(String(f.servicio_id)) && (!p.zona || f.zona_id === p.zona);
+    servicios.includes(String(f.servicio_id)) &&
+    (!p.zona || f.zona_id === p.zona) &&
+    // C-PERMISOS-FINOS: solo los viajes de la zona de trabajo y servicios de quien mira.
+    (!p.dentroViaje || p.dentroViaje(f));
 
   if (p.estado === 'vivos') {
     // Pocos: se juntan todos, se ordenan y se pagina en memoria con la misma clave.
@@ -234,7 +242,8 @@ export async function listarViajesMonitoreo(
     };
   }
   const estados = p.estado === 'cerrados' ? ESTADOS_GENERALES.cerrados : null;
-  const filtrar = Boolean(p.zona) || servicios.length < 3 || Boolean(estados);
+  const filtrar =
+    Boolean(p.zona) || servicios.length < 3 || Boolean(estados) || Boolean(p.dentroViaje);
   const pagina = await paginaPorClave(
     async (cursor, limite) => {
       const [tras, trasValores] = despuesDe(cursor, p.orden, 'o');

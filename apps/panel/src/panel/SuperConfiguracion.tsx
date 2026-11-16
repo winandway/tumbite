@@ -10,6 +10,8 @@ import {
 } from '@tumbite/compartido';
 import { pedir } from './api';
 import { useAjustesHorario, useHora } from './horario';
+import { Enlace } from '../Enlace';
+import { usePermisos } from './permisosPanel';
 
 const T = {
   es: {
@@ -37,6 +39,10 @@ const T = {
     cargando: 'Cargando…',
     guardado: 'Usando tu horario guardado.',
     automaticoTodo: 'Volver a automático',
+    equipo: 'Equipo interno',
+    equipoAyuda:
+      'Quién entra al panel, con qué plantilla de puesto y en qué ciudades; invitaciones, registro de lo que hizo y vio cada persona, y tus avisos por correo.',
+    abrirEquipo: 'Abrir Equipo interno',
   },
   en: {
     titulo: 'Configuration',
@@ -63,6 +69,10 @@ const T = {
     cargando: 'Loading…',
     guardado: 'Using your saved time settings.',
     automaticoTodo: 'Back to automatic',
+    equipo: 'Internal team',
+    equipoAyuda:
+      'Who can sign in to the panel, with which role template and in which cities; invitations, the log of what each person did and viewed, and your email alerts.',
+    abrirEquipo: 'Open Internal team',
   },
 };
 
@@ -89,7 +99,8 @@ const ZONAS_COMUNES = [
  * las ciudades activas con la hora de allá ahora mismo. Se guarda por empleado
  * (`preferencias_internas`, pantalla «horario»). Aquí se sumará «Equipo interno».
  */
-export function SuperConfiguracion({ idioma }: { idioma: Idioma }) {
+export function SuperConfiguracion({ idioma, base = '' }: { idioma: Idioma; base?: string }) {
+  const { puedeVer } = usePermisos();
   const t = enIdioma(T, idioma);
   const { ajustes, cambiar, restablecer, guardados } = useAjustesHorario();
   const h = useHora(idioma);
@@ -116,6 +127,15 @@ export function SuperConfiguracion({ idioma }: { idioma: Idioma }) {
     <section className="super">
       <h1>{t.titulo}</h1>
       <p>{t.intro}</p>
+      {base && (puedeVer('equipo.ver') || puedeVer('avisos.recibir')) ? (
+        <section className="tarjeta-form" aria-labelledby="equipo-titulo">
+          <h2 id="equipo-titulo">{t.equipo}</h2>
+          <p className="ficha-nota">{t.equipoAyuda}</p>
+          <Enlace a={`${base}/team`} className="boton secundario">
+            {t.abrirEquipo}
+          </Enlace>
+        </section>
+      ) : null}
       <section className="tarjeta-form configuracion-horario" aria-labelledby="horario-titulo">
         <h2 id="horario-titulo">{t.horario}</h2>
         <p className="ficha-nota">{t.horarioAyuda}</p>

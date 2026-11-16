@@ -1,3 +1,5 @@
+import { MENSAJES_EN_EQUIPO } from './mensajesEnEquipo';
+
 /**
  * Los mensajes que el servidor le muestra a la persona, en inglés (el idioma principal de
  * Divoox). El código los escribe en español; al responder se pasan a inglés si la app o el
@@ -5,6 +7,8 @@
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-PERMISOS-FINOS (MON-5): los del equipo interno viven en su propio archivo.
+  ...MENSAJES_EN_EQUIPO,
   // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026, bloque propio)
   [
     'Ya cambiaste las paradas de este viaje muchas veces. Si necesitas otro cambio, díselo a tu conductor.',

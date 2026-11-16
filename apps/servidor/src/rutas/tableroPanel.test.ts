@@ -79,6 +79,7 @@ describe('C-PANEL-ARMAZON · tablero y avisos del panel', () => {
   it('leer el tablero y la campana no escribe nada en la base', async () => {
     const { m, admin, dueno, meter } = await armar();
     await meter('p1', 'pagado', '-5 minutes');
+    await m.sesionLista(admin.token);
     const cambios = async () =>
       (await m.DB.prepare('SELECT total_changes() AS n').first<{ n: number }>())?.n ?? 0;
     const antes = await cambios();

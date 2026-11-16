@@ -555,6 +555,13 @@ export type ParametrosLista = {
   orden: 'recientes' | 'antiguos';
   q: string;
   despues: string;
+  /**
+   * C-PERMISOS-FINOS: el alcance de quien mira (ciudad, país, servicio), ya armado por
+   * `alcancePedidos`. Sin alcance, nada. Va con `+` en las columnas: no cambia el índice elegido.
+   */
+  alcance?: { sql: string; valores: unknown[] };
+  /** C-PERMISOS-FINOS: lo mismo para los viajes del monitoreo (se mira en cada fila leída). */
+  dentroViaje?: (f: Record<string, unknown>) => boolean;
   /** C-MONITOREO-SERVICIOS: pestaña de servicio (comida o tiendas filtra; lo demás no). */
   servicio?: ServicioMonitoreo;
 };
@@ -734,6 +741,8 @@ function filtroServicioPedido(s: ServicioMonitoreo | undefined): ((f: Fila) => b
  */
 export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
   const b = interpretarBusqueda(p.q);
+  const alc = p.alcance?.sql ?? '';
+  const alcValores = p.alcance?.valores ?? [];
   const estados = estadosDelFiltro(p.estado);
   const direccion = p.orden === 'recientes' ? 'DESC' : 'ASC';
 
@@ -747,9 +756,10 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
         condiciones.map(([donde, valores]) =>
           todas(
             db,
-            `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE ${donde}
+            `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE ${donde}${alc}
               ORDER BY +p.creado_en DESC LIMIT ?`,
             ...valores,
+            ...alcValores,
             POR_PAGINA + 1,
           ),
         ),
@@ -831,12 +841,13 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
         return todas(
           db,
           `SELECT ${FILA_LISTA} FROM pedidos p ${UNIONES_LISTA}
-            WHERE (${quien.join(' OR ')}) AND +p.estado IN (${marcas(estados.length)})${zona.replace('p.zona_id', '+p.zona_id')}${tras}
+            WHERE (${quien.join(' OR ')}) AND +p.estado IN (${marcas(estados.length)})${zona.replace('p.zona_id', '+p.zona_id')}${tras}${alc}
             ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
           ...valores,
           ...estados,
           ...zonaValores,
           ...trasValores,
+          ...alcValores,
           limite,
         );
       },
@@ -853,11 +864,12 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
             todas(
               db,
               `SELECT p.id, p.rowid AS fila, p.creado_en${filtro ? `, ${TIPO_DE_FILA}` : ''} FROM pedidos p
-                WHERE p.zona_id = ? AND p.estado = ?${tras}
+                WHERE p.zona_id = ? AND p.estado = ?${tras}${alc}
                 ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
               p.zona,
               e,
               ...trasValores,
+              ...alcValores,
               limite,
             ),
           ),
@@ -876,10 +888,11 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
         return todas(
           db,
           `SELECT p.id, p.rowid AS fila, p.creado_en${filtro ? `, ${TIPO_DE_FILA}` : ''} FROM pedidos p
-            WHERE p.estado IN (${marcas(estados.length)})${tras}
+            WHERE p.estado IN (${marcas(estados.length)})${tras}${alc}
             ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
           ...estados,
           ...trasValores,
+          ...alcValores,
           limite,
         );
       },
@@ -902,10 +915,11 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
           db,
           // INDEXED BY: con un lote de 200, SQLite prefería recorrer y ordenar (medido: 6.000 filas).
           `SELECT p.id, p.rowid AS fila, p.creado_en${filtro ? `, ${TIPO_DE_FILA}` : ''} FROM pedidos p INDEXED BY pedidos_creado
-            WHERE +p.estado IN (${marcas(estados.length)})${tras}
+            WHERE +p.estado IN (${marcas(estados.length)})${tras}${alc}
             ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
           ...estados,
           ...trasValores,
+          ...alcValores,
           limite,
         );
       },

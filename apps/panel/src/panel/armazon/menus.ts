@@ -220,12 +220,13 @@ export function gruposAdmin(
     ...armar(
       [
         [g.operacion, ['inicio', 'orders', 'tickets', 'approvals', 'verifications']],
-        [g.personas, ['customers', 'restaurants', 'drivers', 'team']],
+        [g.personas, ['customers', 'restaurants', 'drivers']],
         [g.dinero, ['money', 'cash', 'flexfinance', 'reports']],
         [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],
         [g.territorio, ['franchises', 'cities', 'zones', 'waitlist']],
         // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; luego «Equipo interno»).
-        [g.sistema, ['configuration']],
+        // C-PERMISOS-FINOS: «Equipo interno» cuelga de Configuración.
+        [g.sistema, ['configuration', 'team']],
       ],
       t.menuAdmin,
       raiz,

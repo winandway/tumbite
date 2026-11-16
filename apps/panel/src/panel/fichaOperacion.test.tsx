@@ -491,14 +491,20 @@ describe('C-HORARIO-EMPLEADO · horario de cada empleado', () => {
    */
   it('ninguna pantalla del superadmin formatea fechas por su cuenta', () => {
     const carpeta = __dirname;
-    const archivos = readdirSync(carpeta).filter(
-      (f) =>
-        /^(Super|Tablero|BuscadorSuper|FichaPiezas|NuevoReclamo|SolicitudCancelacion)/.test(f) &&
-        f.endsWith('.tsx') &&
-        !f.includes('.test.') &&
-        // Equipo interno: lo construye otro paquete en paralelo (se pone al día al integrarlo).
-        f !== 'SuperEquipo.tsx',
-    );
+    const archivos = [
+      ...readdirSync(carpeta).filter(
+        (f) =>
+          /^(Super|Tablero|BuscadorSuper|FichaPiezas|NuevoReclamo|SolicitudCancelacion|DatoProtegido)/.test(
+            f,
+          ) &&
+          f.endsWith('.tsx') &&
+          !f.includes('.test.'),
+      ),
+      // C-PERMISOS-FINOS: las pantallas de «Equipo interno» viven en su carpeta.
+      ...readdirSync(join(carpeta, 'equipo'))
+        .filter((f) => /\.tsx?$/.test(f) && !f.includes('.test.'))
+        .map((f) => join('equipo', f)),
+    ];
     expect(archivos.length).toBeGreaterThan(15);
     const malos: string[] = [];
     for (const f of archivos)
