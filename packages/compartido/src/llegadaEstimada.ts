@@ -1,3 +1,4 @@
+import { duracionEnPalabras } from './duracion';
 import { textoHora } from './formatoHora';
 import { type Punto, metrosEntre } from './llegada';
 
@@ -241,18 +242,8 @@ export function textoFase(fase: FaseRastreo, idioma: 'es' | 'en', esEnvio = fals
  * dos días en horas («5 h» o «1 h 20 min»), y después en días («31 días» / «31 days»).
  */
 export function tiempoHumano(segundos: number, idioma: 'es' | 'en'): string {
-  const s = Math.max(0, Math.round(segundos));
-  if (s < 60) return `${s} s`;
-  const min = Math.round(s / 60);
-  if (min < 60) return `${min} min`;
-  const horas = Math.floor(min / 60);
-  if (horas < 48) {
-    const resto = min % 60;
-    return horas < 10 && resto ? `${horas} h ${resto} min` : `${Math.round(min / 60)} h`;
-  }
-  const dias = Math.floor(min / 1440);
-  if (idioma === 'en') return `${dias} ${dias === 1 ? 'day' : 'days'}`;
-  return `${dias} ${dias === 1 ? 'día' : 'días'}`;
+  // C-DURACION-EN-PALABRAS: una sola pieza para todo («31 días», «1 hora y 20 minutos»).
+  return duracionEnPalabras(segundos, idioma);
 }
 
 export function textoUltimaSenal(segundos: number, idioma: 'es' | 'en'): string {

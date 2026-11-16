@@ -108,6 +108,7 @@ export * from './busquedaInterna';
 export * from './ubicacionFresca';
 export * from './permisosInternos';
 export * from './rutasAdmin';
+export * from './duracion';
 export * from './tiemposOperacion';
 export * from './llegadaEstimada';
 export * from './monitoreoServicios';

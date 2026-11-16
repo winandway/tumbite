@@ -1,3 +1,4 @@
+import { MARGEN_ATASCADO_MIN, duracionEnPalabras } from './duracion';
 import { minutosDeViaje } from './despacho';
 import { fechaBase } from './semaforo';
 import { aMasTardarMs, minutosRestauranteACasa } from './seguimientoHonesto';
@@ -28,7 +29,14 @@ import { aMasTardarMs, minutosRestauranteACasa } from './seguimientoHonesto';
  * actividad del pedido o viaje: nadie lo cerró. Se muestra en gris y con su explicación, nunca como
  * «Tomó 761 h».
  */
-export type ResultadoTramo = 'cumplio' | 'se_paso' | 'en_curso' | 'sin_cerrar' | 'sin_dato';
+export type ResultadoTramo =
+  | 'cumplio'
+  | 'se_paso'
+  | 'en_curso'
+  // C-DURACION-EN-PALABRAS: abierto y ya pasó lo previsto más `MARGEN_ATASCADO_MIN`.
+  | 'atascado'
+  | 'sin_cerrar'
+  | 'sin_dato';
 
 /** Un tramo abierto sin actividad hace más de estas horas cuenta como abandonado («Sin cerrar»). */
 export const HORAS_ABANDONO = 12;
@@ -69,6 +77,8 @@ export type Tramo<C extends string = string> = {
   falta: DatoFaltante[];
   /** Lo previsto usó un valor de fábrica porque faltaba un dato (se dice en pantalla). */
   previstoPorDefecto?: boolean;
+  /** C-DURACION-EN-PALABRAS: cuándo empezó un tramo que sigue abierto («desde el 15 oct, 5:09 p. m.»). */
+  desdeEn?: string;
 };
 
 type Punto = { lat: number; lng: number };
@@ -148,7 +158,13 @@ function tramo<C extends string>(
       realS,
       previstoS,
       diferenciaMin: null,
-      resultado: abandonado ? 'sin_cerrar' : 'en_curso',
+      // C-DURACION-EN-PALABRAS: si ya pasó lo previsto más unos minutos, «Atascado» (rojo).
+      resultado: abandonado
+        ? 'sin_cerrar'
+        : previstoS != null && realS > previstoS + MARGEN_ATASCADO_MIN * 60
+          ? 'atascado'
+          : 'en_curso',
+      desdeEn: new Date(inicio).toISOString(),
       falta,
       ...extra,
     };
@@ -403,15 +419,9 @@ export function tiemposViaje(d: DatosTiemposViaje, ahora = Date.now()): Tramo<Cl
 }
 
 /** «12 min», «1 h 05 min» o «45 s»: lo que se lee en la tarjeta de tiempos. */
-export function textoDuracion(segundos: number | null): string {
-  if (segundos == null) return '—';
-  const s = Math.max(0, Math.round(segundos));
-  if (s < 60) return `${s} s`;
-  const min = Math.round(s / 60);
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  const resto = min % 60;
-  return resto ? `${h} h ${String(resto).padStart(2, '0')} min` : `${h} h`;
+export function textoDuracion(segundos: number | null, idioma: 'es' | 'en' = 'es'): string {
+  // C-DURACION-EN-PALABRAS: la misma pieza de todo el panel («1 hora y 20 minutos», «31 días»).
+  return segundos == null ? '—' : duracionEnPalabras(segundos, idioma);
 }
 
 /** «+4 min», «−2 min» o «a tiempo» (diferencia cero). */

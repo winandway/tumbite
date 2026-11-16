@@ -86,6 +86,10 @@ const TT = {
     sePaso: 'Se pasó',
     enCurso: 'En curso',
     sinCerrar: 'Sin cerrar',
+    atascado: 'Atascado',
+    explicaAtascado: (lleva: string, previsto: string) =>
+      `Lleva ${lleva}; lo previsto eran ${previsto}. Necesita atención.`,
+    desde: 'desde el',
     abiertoHace: 'Abierto hace',
     explicaSinCerrar:
       'Nadie cerró este paso y no hubo movimiento en más de 12 horas: no se mide. Revisa si se entregó y ciérralo, o cancélalo.',
@@ -144,6 +148,10 @@ const TT = {
     sePaso: 'Late',
     enCurso: 'In progress',
     sinCerrar: 'Not closed',
+    atascado: 'Stuck',
+    explicaAtascado: (lleva: string, previsto: string) =>
+      `It has taken ${lleva}; ${previsto} was expected. It needs attention.`,
+    desde: 'since',
     abiertoHace: 'Open for',
     explicaSinCerrar:
       'Nobody closed this step and nothing has happened in over 12 hours, so it isn’t measured. Check whether it was delivered and close it, or cancel it.',
@@ -195,7 +203,13 @@ const TT = {
 };
 
 const tono = (r: Tramo['resultado']) =>
-  r === 'cumplio' ? 'exito' : r === 'se_paso' ? 'problema' : r === 'en_curso' ? 'vivo' : 'neutro';
+  r === 'cumplio'
+    ? 'exito'
+    : r === 'se_paso' || r === 'atascado'
+      ? 'problema'
+      : r === 'en_curso'
+        ? 'vivo'
+        : 'neutro';
 
 /** La tarjeta de tiempos de la ficha (arriba de todo). */
 export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: Idioma }) {
@@ -203,6 +217,10 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
   const tramos = new Map(Object.entries(t.tramos));
   const ayudas = new Map(Object.entries(t.ayudas));
   const faltas = new Map(Object.entries(t.faltas));
+  const lengua = idioma === 'en' ? 'en' : 'es';
+  const h = useHora(idioma);
+  const abierto = (r: Tramo['resultado']) =>
+    r === 'en_curso' || r === 'atascado' || r === 'sin_cerrar';
   const resultado = (r: Tramo['resultado']) =>
     r === 'cumplio'
       ? t.cumplio
@@ -210,9 +228,11 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
         ? t.sePaso
         : r === 'en_curso'
           ? t.enCurso
-          : r === 'sin_cerrar'
-            ? t.sinCerrar
-            : t.sinDato;
+          : r === 'atascado'
+            ? t.atascado
+            : r === 'sin_cerrar'
+              ? t.sinCerrar
+              : t.sinDato;
   return (
     <section className="tarjeta-form ficha-tiempos" aria-labelledby="ficha-tiempos-titulo">
       <h2 id="ficha-tiempos-titulo">{t.titulo}</h2>
@@ -226,23 +246,26 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
             <div className="ficha-tramo-cifras">
               <span>
                 <small>
-                  {x.resultado === 'en_curso'
+                  {x.resultado === 'en_curso' || x.resultado === 'atascado'
                     ? t.lleva
                     : x.resultado === 'sin_cerrar'
                       ? t.abiertoHace
                       : t.real}
                 </small>
-                <b>{textoDuracion(x.realS)}</b>
+                <b>{textoDuracion(x.realS, lengua)}</b>
+                {abierto(x.resultado) && x.desdeEn ? (
+                  <small className="ficha-tramo-desde">
+                    {t.desde} {h.fecha(x.desdeEn)}
+                  </small>
+                ) : null}
               </span>
               <span>
                 <small>{t.previsto}</small>
-                <b>{textoDuracion(x.previstoS)}</b>
+                <b>{textoDuracion(x.previstoS, lengua)}</b>
               </span>
               <span className={`bs-estado bs-${tono(x.resultado)}`}>
                 {resultado(x.resultado)}
-                {x.diferenciaMin != null &&
-                x.resultado !== 'en_curso' &&
-                x.resultado !== 'sin_cerrar'
+                {x.diferenciaMin != null && !abierto(x.resultado)
                   ? ` · ${textoDiferencia(x.diferenciaMin, idioma === 'en' ? 'en' : 'es')}`
                   : ''}
               </span>
@@ -253,6 +276,14 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
               </p>
             ) : null}
             {x.previstoPorDefecto ? <p className="ficha-tramo-falta">{t.porDefecto}</p> : null}
+            {x.resultado === 'atascado' && x.realS != null && x.previstoS != null ? (
+              <p className="ficha-tramo-falta ficha-tramo-atascado">
+                {t.explicaAtascado(
+                  textoDuracion(x.realS, lengua),
+                  textoDuracion(x.previstoS, lengua),
+                )}
+              </p>
+            ) : null}
             {x.resultado === 'sin_cerrar' ? (
               <p className="ficha-tramo-falta">{t.explicaSinCerrar}</p>
             ) : null}

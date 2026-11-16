@@ -1,3 +1,4 @@
+import { duracionEnPalabras } from '@tumbite/compartido';
 import { useEffect, useState } from 'react';
 import { fechaHoraLocal } from '@tumbite/compartido';
 import { pedir } from '../api';
@@ -41,11 +42,9 @@ export function textoKm(metros: number, idioma: 'es' | 'en') {
     maximumFractionDigits: 1,
   });
 }
-export function textoDuracion(segundos: number) {
-  const min = Math.round(segundos / 60);
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return h ? `${h} h ${m} min` : `${m} min`;
+/** C-DURACION-EN-PALABRAS: la misma pieza de todo el panel («1 hora y 30 minutos»). */
+export function textoDuracion(segundos: number, idioma: 'es' | 'en' = 'es') {
+  return duracionEnPalabras(Math.round(segundos / 60) * 60, idioma);
 }
 
 export function RecorridoCalles({
@@ -97,7 +96,7 @@ export function RecorridoCalles({
             <strong>
               {textoKm(d.calles.metros, idioma)} {t.km}
             </strong>{' '}
-            · {textoDuracion(d.calles.segundos)} {t.manejo}
+            · {textoDuracion(d.calles.segundos, idioma)} {t.manejo}
           </p>
           <p className="pista">{d.calles.fuente === 'google' ? t.google : t.estimada}</p>
           <details>

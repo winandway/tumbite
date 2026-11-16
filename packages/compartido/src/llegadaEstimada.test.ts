@@ -57,8 +57,8 @@ describe('C-HORA-LLEGADA · tramos', () => {
     expect(textoFase('esperando', 'es')).toBe('Esperando en el restaurante');
     expect(textoFase('llevando', 'en')).toBe('Delivering the order');
     expect(textoFase('en_viaje', 'es', true)).toBe('Llevando el paquete');
-    expect(textoUltimaSenal(190, 'es')).toBe('Última señal hace 3 min');
-    expect(textoUltimaSenal(20, 'en')).toBe('Last signal 20 s ago');
+    expect(textoUltimaSenal(190, 'es')).toBe('Última señal hace 3 minutos');
+    expect(textoUltimaSenal(20, 'en')).toBe('Last signal 20 seconds ago');
     const d = new Date(2026, 10, 16, 15, 28);
     expect(textoHoraLlegada(d.toISOString(), 'es')).toBe('3:28 p. m.');
     expect(textoHoraLlegada(d.toISOString(), 'en')).toBe('3:28 PM');
@@ -133,7 +133,7 @@ describe('C-RASTREO-VIVO · detenido', () => {
   };
   it('quieto más de 3 minutos lejos del local y la casa = detenido', () => {
     expect(detenido(base)).toEqual({ motivo: 'quieto', desdeS: 400 });
-    expect(textoDetenido({ motivo: 'quieto', desdeS: 400 }, 'es')).toBe('Detenido hace 7 min');
+    expect(textoDetenido({ motivo: 'quieto', desdeS: 400 }, 'es')).toBe('Detenido hace 6 minutos');
   });
   it('no es detenido: recién se paró, está junto a un punto, o está esperando en el local', () => {
     expect(detenido({ ...base, ahoraMs: T0 + DETENIDO_S * 1000 })).toBeNull();
@@ -186,19 +186,23 @@ describe('C-HORA-LLEGADA · la misma pieza alimenta las apps del cliente', () =>
   });
 });
 
-describe('C-TIEMPO-HUMANO · cuánto tiempo, en la unidad que se entiende', () => {
-  it('segundos, minutos, horas y días, en español y en inglés', () => {
-    expect(tiempoHumano(40, 'es')).toBe('40 s');
-    expect(tiempoHumano(9 * 60, 'es')).toBe('9 min');
-    expect(tiempoHumano(80 * 60, 'es')).toBe('1 h 20 min');
-    expect(tiempoHumano(5 * 3600, 'es')).toBe('5 h');
-    expect(tiempoHumano(30 * 3600, 'en')).toBe('30 h');
-    expect(tiempoHumano(45805 * 60, 'es')).toBe('31 días');
-    expect(tiempoHumano(45805 * 60, 'en')).toBe('31 days');
-    expect(tiempoHumano(86400 * 2, 'es')).toBe('2 días');
+describe('C-DURACION-EN-PALABRAS · cuánto tiempo, en palabras y en la unidad que corresponde', () => {
+  it('segundos, minutos, horas, días, meses y años, en español y en inglés', () => {
+    expect(tiempoHumano(1, 'es')).toBe('1 segundo');
+    expect(tiempoHumano(40, 'es')).toBe('40 segundos');
+    expect(tiempoHumano(9 * 60, 'es')).toBe('9 minutos');
+    expect(tiempoHumano(60 * 60, 'es')).toBe('1 hora');
+    expect(tiempoHumano(80 * 60, 'es')).toBe('1 hora y 20 minutos');
+    expect(tiempoHumano(80 * 60, 'en')).toBe('1 hour and 20 minutes');
+    expect(tiempoHumano(23 * 3600 + 59 * 60, 'es')).toBe('23 horas y 59 minutos');
+    expect(tiempoHumano(27 * 3600, 'es')).toBe('1 día y 3 horas');
+    expect(tiempoHumano(29 * 86400, 'en')).toBe('29 days');
+    expect(tiempoHumano(31 * 86400, 'es')).toBe('1 mes y 1 día');
+    expect(tiempoHumano(45805 * 60, 'en')).toBe('1 month and 1 day');
+    expect(tiempoHumano(400 * 86400, 'es')).toBe('1 año y 1 mes');
     expect(textoDetenido({ motivo: 'sin_senal', desdeS: 45805 * 60 }, 'es')).toBe(
-      'Sin señal hace 31 días',
+      'Sin señal hace 1 mes y 1 día',
     );
-    expect(textoDetenido({ motivo: 'quieto', desdeS: 240 }, 'en')).toBe('Stopped for 4 min');
+    expect(textoDetenido({ motivo: 'quieto', desdeS: 240 }, 'en')).toBe('Stopped for 4 minutes');
   });
 });

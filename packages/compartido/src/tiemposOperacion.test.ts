@@ -122,7 +122,7 @@ describe('C-TIEMPOS-OPERACION · pedido', () => {
     expect(porClave(t, 'total')?.previstoPorDefecto).toBe(true);
   });
 
-  it('un tramo abierto dice «en curso» con lo que lleva y NO se compara aunque pase lo previsto (16 nov 2026)', () => {
+  it('un tramo abierto dice «en curso» sin compararse en minutos; pasado lo previsto más 5 minutos, «atascado» (16 nov 2026)', () => {
     const ahora = Date.UTC(2026, 10, 15, 18, 30); // minuto 30, en cocina desde el 2
     const t = tiemposPedido(
       {
@@ -137,10 +137,18 @@ describe('C-TIEMPOS-OPERACION · pedido', () => {
     );
     expect(porClave(t, 'preparacion')).toMatchObject({
       realS: 28 * 60,
-      resultado: 'en_curso',
+      // C-DURACION-EN-PALABRAS: 28 minutos con 20 previstos pasa el margen de 5: «Atascado».
+      resultado: 'atascado',
       diferenciaMin: null,
       falta: [],
+      desdeEn: new Date(Date.UTC(2026, 10, 15, 18, 2)).toISOString(),
     });
+    // Dentro del margen (24 minutos con 20 previstos) sigue «en curso».
+    const enMargen = tiemposPedido(
+      { ...entregado, estado: 'aceptado', listoEn: null, recogidoEn: null, entregadoEn: null },
+      Date.UTC(2026, 10, 15, 18, 26),
+    );
+    expect(porClave(enMargen, 'preparacion')?.resultado).toBe('en_curso');
     const vivoATiempo = tiemposPedido(
       { ...entregado, estado: 'aceptado', listoEn: null },
       Date.UTC(2026, 10, 15, 18, 10),
@@ -163,12 +171,13 @@ describe('C-TIEMPOS-OPERACION · pedido', () => {
       expect(porClave(t, c)).toMatchObject({ resultado: 'sin_cerrar', diferenciaMin: null });
     // Los tramos cerrados siguen igual.
     expect(porClave(t, 'preparacion')?.resultado).toBe('cumplio');
-    // Con actividad reciente (el repartidor sigue moviéndose) no es abandono.
+    // Con actividad reciente (el repartidor sigue moviéndose) no es abandono, pero lleva muchísimo
+    // más de lo previsto: «atascado».
     const vivo = tiemposPedido(
       { ...entregado, estado: 'en_camino', entregadoEn: null, ultimaActividadEn: f(60 * 760) },
       ahora,
     );
-    expect(porClave(vivo, 'entrega')?.resultado).toBe('en_curso');
+    expect(porClave(vivo, 'entrega')?.resultado).toBe('atascado');
   });
 
   it('un pedido cancelado dice «cancelado» en lo que no llegó a pasar', () => {
@@ -250,9 +259,12 @@ describe('C-TIEMPOS-OPERACION · viaje', () => {
 
 describe('textos de la tarjeta de tiempos', () => {
   it('duraciones y diferencias', () => {
-    expect(textoDuracion(45)).toBe('45 s');
-    expect(textoDuracion(12 * 60)).toBe('12 min');
-    expect(textoDuracion(65 * 60)).toBe('1 h 05 min');
+    // C-DURACION-EN-PALABRAS: palabras completas, nunca «763 h».
+    expect(textoDuracion(45)).toBe('45 segundos');
+    expect(textoDuracion(12 * 60)).toBe('12 minutos');
+    expect(textoDuracion(65 * 60)).toBe('1 hora y 5 minutos');
+    expect(textoDuracion((763 * 60 + 25) * 60)).toBe('1 mes y 1 día');
+    expect(textoDuracion((763 * 60 + 25) * 60, 'en')).toBe('1 month and 1 day');
     expect(textoDuracion(null)).toBe('—');
     expect(textoDiferencia(4, 'es')).toBe('+4 min');
     expect(textoDiferencia(-2, 'en')).toBe('−2 min');

@@ -1,11 +1,15 @@
-import { type Idioma, enIdioma, semaforoPedido } from '@tumbite/compartido';
+import { type Idioma, duracionEnPalabras, enIdioma, semaforoPedido } from '@tumbite/compartido';
+
+/** C-DURACION-EN-PALABRAS: «hace 31 días» / «31 days ago», nunca «hace 761 h». */
+export const haceTanto = (minutos: number, idioma: Idioma): string =>
+  idioma === 'en'
+    ? `${duracionEnPalabras(minutos * 60, 'en')} ago`
+    : `hace ${duracionEnPalabras(minutos * 60, 'es')}`;
 
 const T = {
   es: {
-    hace: 'hace',
-    min: 'min',
-    h: 'h',
-    luces: { verde: 'A tiempo', amarillo: 'Atrasándose', rojo: 'En problemas' },
+    // C-DURACION-EN-PALABRAS: rojo = pasó lo previsto más unos minutos («Atascado»).
+    luces: { verde: 'A tiempo', amarillo: 'Atrasándose', rojo: 'Atascado' },
     motivos: {
       restaurante: 'sin aceptar (se cancela solo a los 6 min)',
       cocina: 'la cocina pasó el tiempo prometido',
@@ -14,10 +18,7 @@ const T = {
     },
   },
   en: {
-    hace: '',
-    min: 'min ago',
-    h: 'h ago',
-    luces: { verde: 'On time', amarillo: 'Running late', rojo: 'In trouble' },
+    luces: { verde: 'On time', amarillo: 'Running late', rojo: 'Stuck' },
     motivos: {
       restaurante: 'not accepted (auto-cancels at 6 min)',
       cocina: 'kitchen is past the promised time',
@@ -40,8 +41,7 @@ export function LuzSemaforo({ pedido, idioma }: { pedido: Fechas; idioma: Idioma
     <span className={`semaforo semaforo-${s.luz}`} role="status">
       <span className="semaforo-punto" aria-hidden="true" />
       <span>
-        {luz} · {t.hace}{' '}
-        {s.minutos >= 120 ? `${Math.floor(s.minutos / 60)} ${t.h}` : `${s.minutos} ${t.min}`}
+        {luz} · {haceTanto(s.minutos, idioma)}
         {s.luz === 'verde' ? '' : ` · ${motivo}`}
       </span>
     </span>

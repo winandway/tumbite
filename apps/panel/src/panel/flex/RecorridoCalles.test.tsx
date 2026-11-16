@@ -8,8 +8,9 @@ describe('C-FLEX-RUTA-CALLES · panel', () => {
   it('km con un decimal según el idioma y duración en horas y minutos', () => {
     expect(textoKm(18_250, 'es')).toBe('18,3');
     expect(textoKm(18_250, 'en')).toBe('18.3');
-    expect(textoDuracion(2880)).toBe('48 min');
-    expect(textoDuracion(5400)).toBe('1 h 30 min');
+    expect(textoDuracion(2880)).toBe('48 minutos');
+    expect(textoDuracion(5400)).toBe('1 hora y 30 minutos');
+    expect(textoDuracion(5400, 'en')).toBe('1 hour and 30 minutes');
   });
 
   it('«Llegada estimada» numera las paradas una sola vez (la lista ya va numerada)', () => {

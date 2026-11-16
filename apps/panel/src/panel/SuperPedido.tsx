@@ -25,7 +25,7 @@ import { Enlace } from '../Enlace';
 import { pedir } from './api';
 import { RastreoVivo } from './RastreoVivo';
 import { textoPendiente } from './SuperAprobaciones';
-import { LuzSemaforo } from './LuzSemaforo';
+import { LuzSemaforo, haceTanto } from './LuzSemaforo';
 import { SelectorCiudad } from './SuperFichas';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { nombreEstado, tonoEstado } from './BuscadorSuper';
@@ -1184,7 +1184,7 @@ function LuzViaje({ v, idioma }: { v: FilaViaje; idioma: Idioma }) {
     <span className={`semaforo semaforo-${s.luz}`} role="status">
       <span className="semaforo-punto" aria-hidden="true" />
       <span>
-        {luz} · {t.hace} {s.minutos} {t.min}
+        {luz} · {haceTanto(s.minutos, idioma)}
         {s.luz === 'verde' ? '' : ` · ${motivo}`}
       </span>
     </span>

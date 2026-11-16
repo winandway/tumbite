@@ -107,12 +107,45 @@ describe('C-MAPA-LEYENDA · quién es quién en el mapa en vivo', () => {
   });
 });
 
-describe('C-TIEMPO-HUMANO · la señal vieja se dice en días, no en miles de minutos', () => {
-  it('«Sin señal hace 31 días» y «Última señal hace 31 días»', async () => {
+describe('C-DURACION-EN-PALABRAS · la señal vieja se dice en meses o días, no en miles de minutos', () => {
+  it('«Sin señal hace 1 mes y 1 día» y «Última señal hace 1 mes y 1 día»', async () => {
     montar('es', 45805 * 60);
     expect((await screen.findByTestId('ficha-detenido')).textContent).toBe(
-      'Sin señal hace 31 días',
+      'Sin señal hace 1 mes y 1 día',
     );
-    expect(screen.getByTestId('ficha-senal').textContent).toBe('Última señal hace 31 días');
+    expect(screen.getByTestId('ficha-senal').textContent).toBe('Última señal hace 1 mes y 1 día');
+  });
+});
+
+describe('C-DURACION-EN-PALABRAS · la tarjeta «Tiempos» de la ficha', () => {
+  it('un tramo que pasó lo previsto dice «Atascado», cuánto lleva en palabras y desde cuándo', async () => {
+    const { TarjetaTiempos } = await import('./FichaPiezas');
+    render(
+      <ProveedorHorario>
+        <TarjetaTiempos
+          idioma="es"
+          tiempos={[
+            {
+              clave: 'entrega',
+              realS: (763 * 60 + 25) * 60,
+              previstoS: 30 * 60,
+              diferenciaMin: null,
+              resultado: 'atascado',
+              falta: [],
+              desdeEn: '2026-10-15T21:09:00.000Z',
+            },
+          ]}
+        />
+      </ProveedorHorario>,
+    );
+    const tramo = document.querySelector('.ficha-tramo');
+    expect(tramo?.textContent).toContain('Atascado');
+    expect(tramo?.textContent).toContain('1 mes y 1 día');
+    expect(tramo?.textContent).toContain('30 minutos');
+    expect(tramo?.textContent).not.toMatch(/\d{3} h/);
+    expect(tramo?.querySelector('.ficha-tramo-desde')?.textContent).toMatch(/^desde el 15 oct/);
+    expect(tramo?.querySelector('.ficha-tramo-atascado')?.textContent).toBe(
+      'Lleva 1 mes y 1 día; lo previsto eran 30 minutos. Necesita atención.',
+    );
   });
 });

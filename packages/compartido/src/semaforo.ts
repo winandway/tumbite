@@ -1,3 +1,5 @@
+import { MARGEN_ATASCADO_MIN } from './duracion';
+
 /**
  * Semáforo del Manager: dice de un vistazo si un pedido va bien, se está atrasando o ya está en
  * problemas. Las mismas reglas que vigila el servidor (candado C-MANAGER-1), para que la pantalla
@@ -40,7 +42,8 @@ export function semaforoPedido(p: PedidoParaSemaforo, ahora = Date.now()): Semaf
     case 'aceptado': {
       const m = desde(p.aceptadoEn);
       const prep = p.tiempoPrepMin ?? 20;
-      return { luz: luz(m, prep + 1, prep + 10), minutos: m, motivo: 'cocina' };
+      // C-DURACION-EN-PALABRAS: rojo (atascado) a los pocos minutos de pasar lo previsto.
+      return { luz: luz(m, prep + 1, prep + MARGEN_ATASCADO_MIN), minutos: m, motivo: 'cocina' };
     }
     case 'listo': {
       const m = desde(p.listoEn);
@@ -48,7 +51,7 @@ export function semaforoPedido(p: PedidoParaSemaforo, ahora = Date.now()): Semaf
     }
     case 'en_camino': {
       const m = desde(p.recogidoEn);
-      return { luz: luz(m, 30, 45), minutos: m, motivo: 'entrega' };
+      return { luz: luz(m, 30, 30 + MARGEN_ATASCADO_MIN), minutos: m, motivo: 'entrega' };
     }
     default:
       return null;

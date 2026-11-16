@@ -82,8 +82,8 @@ describe('C-RASTREO-VIVO · tarjeta «En vivo» de la ficha', () => {
     expect(llegada).toContain('Llega a las 3:28 p. m.');
     expect(llegada).toContain('faltan 9 min');
     expect(llegada).toContain('3.2 km');
-    expect(screen.getByTestId('ficha-senal').textContent).toBe('Última señal hace 3 min');
-    expect(screen.getByTestId('ficha-detenido').textContent).toBe('Detenido hace 4 min');
+    expect(screen.getByTestId('ficha-senal').textContent).toBe('Última señal hace 3 minutos');
+    expect(screen.getByTestId('ficha-detenido').textContent).toBe('Detenido hace 4 minutos');
   });
 
   it('pregunta cada 5 s solo con la pestaña visible; oculta, se pausa; cerrado, deja de preguntar', async () => {
