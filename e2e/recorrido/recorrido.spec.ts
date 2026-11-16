@@ -1079,9 +1079,32 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(rep, 'repartidor-llegada');
     // 11. Sin señal al entregar: la foto se guarda en el celular, «pendiente de confirmar», y se
     // manda sola cuando vuelve la señal. El pedido NO queda entregado hasta entonces.
+    // C-DESLIZAR-ENTREGA (como DoorDash y Uber): la foto no cierra el pedido; se cierra al
+    // deslizar «Desliza para completar la entrega». Sin señal, los dos quedan en la cola, en orden.
+    const deslizador = rep.getByTestId('deslizar-completar').filter({ visible: true });
+    await expect(deslizador).toBeVisible({ timeout: 20_000 });
+    await expect(deslizador).toHaveAttribute('aria-disabled', 'true');
     await repCtx.setOffline(true);
     await tomarFoto(L.fotoEntrega, FOTO_ENTREGA);
     await expect(rep.getByText(`${L.pendientes}: 1`)).toBeVisible({ timeout: 20_000 });
+    await expect(rep.getByText(L.fotoLista).filter({ visible: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(deslizador).not.toHaveAttribute('aria-disabled', 'true');
+    expect(sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado).toBe(
+      'en_camino',
+    );
+    await deslizador.scrollIntoViewIfNeeded();
+    await foto(rep, 'repartidor-foto-lista');
+    // Deslizar la bola de punta a punta, como con el dedo.
+    const caja = (await deslizador.boundingBox())!;
+    const y = caja.y + caja.height / 2;
+    await rep.mouse.move(caja.x + 30, y);
+    await rep.mouse.down();
+    for (let i = 1; i <= 12; i++)
+      await rep.mouse.move(caja.x + 30 + ((caja.width - 40) * i) / 12, y);
+    await rep.mouse.up();
+    await expect(rep.getByText(`${L.pendientes}: 2`)).toBeVisible({ timeout: 20_000 });
     expect(sql(`SELECT estado FROM pedidos WHERE id = '${cobro.pedidoId}'`)[0]?.estado).toBe(
       'en_camino',
     );
