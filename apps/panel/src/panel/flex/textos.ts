@@ -349,6 +349,10 @@ export const TEXTOS_FLEX = {
     asignarRutaTitulo: 'Asignar la ruta',
     bloqueDesde: 'Bloque desde (opcional)',
     bloqueHasta: 'Bloque hasta (opcional)',
+    bloqueDuracionAyuda: 'Un bloque dura de 1 h 30 min a 5 horas.',
+    pagoBloque: 'Pago al conductor por el bloque',
+    pagoBloqueAyuda:
+      'Lo que tu empresa le paga al conductor por este bloque. Lo ve en la oferta y en el cierre del bloque.',
     retirarRuta: 'Retirar la ruta del conductor',
     cancelarRuta: 'Cancelar la ruta',
     masOpciones: 'Más opciones',
@@ -802,6 +806,10 @@ export const TEXTOS_FLEX = {
     asignarRutaTitulo: 'Assign the route',
     bloqueDesde: 'Block from (optional)',
     bloqueHasta: 'Block to (optional)',
+    bloqueDuracionAyuda: 'A block lasts from 1 h 30 min to 5 hours.',
+    pagoBloque: 'Driver pay for the block',
+    pagoBloqueAyuda:
+      'What your company pays the driver for this block. They see it in the offer and when the block ends.',
     retirarRuta: 'Withdraw the route from the driver',
     cancelarRuta: 'Cancel the route',
     masOpciones: 'More options',

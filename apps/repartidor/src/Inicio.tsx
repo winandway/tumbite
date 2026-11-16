@@ -218,6 +218,15 @@ type Estado = {
   agrupados?: Pedido[];
   /** C-OCUPADO-VISIBLE (BRF-1): una ruta Flex o un viaje lo ocupa; no le llegan pedidos de comida. */
   ocupadoEn?: 'ruta_flex' | 'operacion' | null;
+  /** C-FLEX-EXCLUSIVO: el bloque de Flex que lo ocupa; todo lo demás está desconectado. */
+  bloqueFlex?: {
+    rutaId: string;
+    nombre: string;
+    estado: string;
+    empresa: string;
+    bloqueDesde: string | null;
+    bloqueHasta: string | null;
+  } | null;
 };
 type Billetera = DatosBilletera;
 
@@ -684,6 +693,11 @@ export function Inicio() {
       clearInterval(reloj);
     };
   }, [cargar]);
+
+  // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): con un bloque de Flex, el inicio cambia entero al modo
+  // bloque (la ruta, con la banda «todo lo demás está desconectado»). Comida, envíos y viajes no se
+  // ven ni se pueden conectar hasta terminar el bloque.
+  const enBloque = Boolean(estado?.bloqueFlex);
 
   // C-MAPA-DEMANDA: las zonas con más pedidos de la última hora, cada minuto (como el «Dash Now»).
   const [zonasDemanda, setZonasDemanda] = useState<ZonaDemanda[]>([]);
@@ -1834,7 +1848,7 @@ export function Inicio() {
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
   // C-FLEX-PANTALLA-COMPLETA (como Amazon Flex): dentro de la ruta no va la cabecera con el logo; la
   // pantalla entera es para el trabajo, en fondo oscuro, con la franja de Divoox Flex arriba.
-  if (vista === 'miRuta')
+  if (vista === 'miRuta' || (enBloque && (vista === 'inicio' || vista === 'pedidos')))
     return (
       <SafeAreaView
         style={[e.fondo, { backgroundColor: C.logistica }]}
@@ -1852,9 +1866,11 @@ export function Inicio() {
             key={rutaDelAviso ?? 'lista'}
             api={api}
             idioma={idioma}
-            abrirRutaId={rutaDelAviso}
+            abrirRutaId={rutaDelAviso ?? estado?.bloqueFlex?.rutaId ?? null}
             alSeguridad={() => setVista('seguridad')}
-            alVolver={() => setVista('inicio')}
+            alVolver={enBloque ? undefined : () => setVista('inicio')}
+            alInicio={() => setVista('inicio')}
+            bloque={estado?.bloqueFlex ?? null}
             ponerPie={setPieFlex}
           />
         </ScrollView>
