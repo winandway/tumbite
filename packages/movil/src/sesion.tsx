@@ -227,7 +227,7 @@ export function SesionProvider({
     void almacenTelefono.guardar(llavePermisos, '1');
   }, [llavePermisos]);
   const permisosPorExplicar = Boolean(explicarPermisos && usuario && permisosVistos === false);
-  useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true);
+  useAvisosCelular(api, usuario, !explicarPermisos || permisosVistos === true, idioma);
   // C-AVISOS-WEB: en la versión web, renueva la suscripción si el permiso ya estaba dado.
   useAvisosWebSilencioso(api, usuario);
 

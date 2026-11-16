@@ -6,6 +6,8 @@ import { type Variables, base, exigir } from '../sesion';
 import { limiteIntentos } from '../seguridad';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { sinContacto } from './viajesHistorial';
+import { taparOfensivas } from '../filtroPalabras';
+import { bloqueo, marcarPorFiltro } from './moderacion';
 
 /**
  * C-CHAT-VIAJE (14 nov 2026, todos los países): mensajes entre el pasajero (o quien envía) y su
@@ -59,8 +61,13 @@ chatViaje.get('/viajes/:id/mensajes', async (c) => {
   // Terminado el viaje, pasajero y conductor ya no ven la conversación (el equipo sí).
   if (!abierto && u.rol !== 'admin') return c.json({ abierto: false, mensajes: [] });
   const desde = Number(c.req.query('desde') ?? 0);
+  // C-MODERACION: sin los mensajes de quien bloqueó (?6) ni lo que el equipo ocultó.
   const pareja =
-    u.rol === 'admin' ? '' : ` AND m.de_usuario_id IN (?3, ?4) AND m.creado_en >= COALESCE(?5, '')`;
+    u.rol === 'admin'
+      ? ''
+      : ` AND m.de_usuario_id IN (?3, ?4) AND m.creado_en >= COALESCE(?5, '')
+          AND m.de_usuario_id NOT IN (SELECT bloqueado_id FROM bloqueos_usuario WHERE usuario_id = ?6)
+          AND NOT EXISTS (SELECT 1 FROM contenido_oculto o WHERE o.tipo = 'mensaje_viaje' AND o.ref = CAST(m.id AS TEXT))`;
   const inicio = u.rol === 'admin' ? null : await inicioDeLaPareja(db, v.id, v.conductor_id);
   const consulta = db.prepare(
     `SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en FROM mensajes_viaje m
@@ -71,10 +78,12 @@ chatViaje.get('/viajes/:id/mensajes', async (c) => {
   const { results } = await (
     u.rol === 'admin'
       ? consulta.bind(v.id, desdeId)
-      : consulta.bind(v.id, desdeId, v.cliente_id, v.conductor_id, inicio)
+      : consulta.bind(v.id, desdeId, v.cliente_id, v.conductor_id, inicio, u.id)
   ).all<{ id: number; de: string; nombre: string; texto: string; en: string }>();
+  const otro = u.id === v.cliente_id ? v.conductor_id : v.cliente_id;
   return c.json({
     abierto,
+    bloqueaste: u.rol !== 'admin' && otro ? await bloqueo(db, u.id, otro) : false,
     mensajes: results.map((m) => ({
       ...m,
       nombre: m.nombre.split(' ')[0],
@@ -104,20 +113,29 @@ chatViaje.post('/viajes/:id/mensajes', limiteIntentos(30, 60_000), async (c) => 
       429,
     );
   const { texto } = await leerCuerpo(c, z.object({ texto: z.string().trim().min(1).max(300) }));
-  const limpio = sinContacto(texto);
-  if (!limpio) throw new ErrorDatos('Escribe un mensaje.', 'texto', 422);
-  await db
+  const sinDatos = sinContacto(texto);
+  if (!sinDatos) throw new ErrorDatos('Escribe un mensaje.', 'texto', 422);
+  // C-MODERACION: las palabras ofensivas se tapan y el mensaje queda en la bandeja del equipo.
+  const { texto: limpio, tapado } = taparOfensivas(sinDatos);
+  const nuevo = await db
     .prepare('INSERT INTO mensajes_viaje (operacion_id, de_usuario_id, texto) VALUES (?, ?, ?)')
     .bind(v.id, u.id, limpio)
     .run();
+  if (tapado)
+    await marcarPorFiltro(db, {
+      tipo: 'mensaje_viaje',
+      ref: String(nuevo.meta.last_row_id),
+      objeto: 'viaje',
+      objetoId: v.id,
+      autorId: u.id,
+      texto: sinDatos,
+    });
   const para = u.id === v.cliente_id ? v.conductor_id : v.cliente_id;
-  const destino = await db
-    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-    .bind(para)
-    .first<{ idioma: string }>();
-  await notificar(c.env, db, para, {
-    ...AVISOS.mensaje(destino?.idioma === 'en' ? 'en' : 'es', u.nombre.split(' ')[0] ?? '', limpio),
+  // Si la otra persona lo bloqueó, no recibe el aviso (y quien escribe no se entera).
+  if (await bloqueo(db, para, u.id)) return c.json({ ok: true });
+  await notificar(c.env, db, para, (i) => ({
+    ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', limpio),
     datos: { tipo: 'viaje', viajeId: v.id },
-  }).catch((e: unknown) => console.error('chat del viaje: aviso', e));
+  })).catch((e: unknown) => console.error('chat del viaje: aviso', e));
   return c.json({ ok: true });
 });

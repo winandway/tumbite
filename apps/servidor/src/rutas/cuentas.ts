@@ -18,6 +18,7 @@ import {
 import type { Env } from '../env';
 import { hashClave, nuevoId, nuevoToken, sha256, verificarClave } from '../cripto';
 import { z } from 'zod';
+import { idiomaDeLaApp } from '../avisosWeb';
 import {
   COOKIE_SESION,
   DIAS_SESION,
@@ -82,6 +83,8 @@ const esquemaDispositivo = z.object({
     error: 'Ese token de avisos no es válido.',
   }),
   plataforma: z.enum(['ios', 'android', 'web', 'desconocida']).default('desconocida'),
+  // C-AVISOS-IDIOMA: el idioma de la app en ese teléfono (si no viene, el de la cabecera x-idioma).
+  idioma: z.enum(['es', 'en']).optional(),
 });
 
 const TEXTOS_RECUPERAR = {
@@ -325,13 +328,18 @@ cuentas.post('/dispositivo', async (c) => {
   const db = base(c);
   // Un token solo cambia de dueño si el dueño anterior ya cerró sesión (activo = 0):
   // nadie se queda con los avisos de otro registrando su token.
+  // C-AVISOS-IDIOMA (16 nov 2026): el teléfono guarda el idioma de su app (el elegido en el selector
+  // o, si no eligió, el del teléfono). Las apps ya publicadas lo mandan en la cabecera x-idioma de
+  // cada petición: con eso los avisos salen bien sin esperar una versión nueva.
+  const idioma = idiomaDeLaApp(d.idioma, c.req.header('x-idioma'));
   const r = await db
     .prepare(
-      `INSERT INTO dispositivos (token, usuario_id, plataforma) VALUES (?, ?, ?)
-       ON CONFLICT(token) DO UPDATE SET usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, activo = 1, visto_en = datetime('now')
+      `INSERT INTO dispositivos (token, usuario_id, plataforma, idioma) VALUES (?, ?, ?, ?)
+       ON CONFLICT(token) DO UPDATE SET usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, activo = 1, visto_en = datetime('now'),
+         idioma = COALESCE(excluded.idioma, dispositivos.idioma)
        WHERE dispositivos.usuario_id = excluded.usuario_id OR dispositivos.activo = 0`,
     )
-    .bind(d.token, u.id, d.plataforma)
+    .bind(d.token, u.id, d.plataforma, idioma)
     .run();
   if (!r.meta.changes)
     throw new ErrorDatos(
@@ -339,6 +347,12 @@ cuentas.post('/dispositivo', async (c) => {
       undefined,
       409,
     );
+  // El idioma de la app también es el de la cuenta (correos y SMS). No escribe si ya es ese.
+  if (idioma)
+    await db
+      .prepare('UPDATE usuarios SET idioma = ?1 WHERE id = ?2 AND idioma IS NOT ?1')
+      .bind(idioma, u.id)
+      .run();
   return c.json({ ok: true });
 });
 
@@ -589,6 +603,20 @@ cuentas.patch('/yo', async (c) => {
     )
     .bind(d.nombre, d.telefono || null, d.fechaNacimiento, d.idioma, u.id)
     .run();
+  // C-AVISOS-IDIOMA: el idioma elegido en la cuenta también vale para sus avisos (si cambió).
+  if (d.idioma !== u.idioma) {
+    const db = base(c);
+    await db.batch([
+      db
+        .prepare('UPDATE dispositivos SET idioma = ?1 WHERE usuario_id = ?2 AND idioma IS NOT ?1')
+        .bind(d.idioma, u.id),
+      db
+        .prepare(
+          'UPDATE suscripciones_web SET idioma = ?1 WHERE usuario_id = ?2 AND idioma IS NOT ?1',
+        )
+        .bind(d.idioma, u.id),
+    ]);
+  }
   return c.json({ usuario: { ...usuarioPublico(u), nombre: d.nombre, idioma: d.idioma } });
 });
 
@@ -611,7 +639,22 @@ cuentas.put('/sms', async (c) => {
 cuentas.put('/idioma', async (c) => {
   const u = exigir(c);
   const d = await leerCuerpo(c, z.object({ idioma: z.enum(['es', 'en']) }));
-  await base(c).prepare('UPDATE usuarios SET idioma = ? WHERE id = ?').bind(d.idioma, u.id).run();
+  const db = base(c);
+  // C-AVISOS-IDIOMA: la persona eligió idioma: sus teléfonos y navegadores también lo toman (los
+  // avisos le llegan en ese idioma en todos). No escribe lo que ya está en ese idioma.
+  await db.batch([
+    db
+      .prepare('UPDATE usuarios SET idioma = ?1 WHERE id = ?2 AND idioma IS NOT ?1')
+      .bind(d.idioma, u.id),
+    db
+      .prepare('UPDATE dispositivos SET idioma = ?1 WHERE usuario_id = ?2 AND idioma IS NOT ?1')
+      .bind(d.idioma, u.id),
+    db
+      .prepare(
+        'UPDATE suscripciones_web SET idioma = ?1 WHERE usuario_id = ?2 AND idioma IS NOT ?1',
+      )
+      .bind(d.idioma, u.id),
+  ]);
   return c.json({ idioma: d.idioma });
 });
 

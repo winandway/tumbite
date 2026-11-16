@@ -7,7 +7,9 @@ import {
   StyleSheet,
   TextInput,
   View,
+  type StyleProp,
   type TextInputProps,
+  type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MARCA, enIdioma } from '@tumbite/compartido';
@@ -177,6 +179,32 @@ export function CampoClave({
         </Pressable>
       </View>
       {error ? <Text style={e.error}>{error}</Text> : null}
+    </View>
+  );
+}
+
+/**
+ * C-BOTON-EN-FILA: una casilla con su botón al lado (y, si hace falta, algo más en medio). La
+ * casilla es la que cede (`CASILLA_EN_FILA`: crece y puede encogerse hasta cero); el botón va con
+ * `enFila` y nunca se encoge ni parte su palabra. Sin `minWidth: 0`, en el teléfono la casilla
+ * pedía su ancho natural y empujaba el botón fuera de la tarjeta («Enviar» del chat, 16 nov 2026).
+ */
+export const CASILLA_EN_FILA = { flex: 1, minWidth: 0 } as const;
+export function FilaConBoton({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <View
+      style={[
+        { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'stretch', minWidth: 0 },
+        style,
+      ]}
+    >
+      {children}
     </View>
   );
 }

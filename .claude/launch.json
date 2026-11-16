@@ -100,6 +100,15 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["scripts/recorrido/twilio-simulado.mjs"],
       "port": 12112
+    },
+    {
+      "name": "panel-lupa",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@tumbite/panel"],
+      "env": {
+        "PUERTO_PANEL": "5181"
+      },
+      "port": 5181
     }
   ]
 }

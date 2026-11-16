@@ -58,6 +58,14 @@ import { exigirSegundoFactor } from '../segundoFactor';
 import { Hono } from 'hono';
 import { cobertura } from '../territorio';
 import { z } from 'zod';
+import { taparOfensivas } from '../filtroPalabras';
+import {
+  bloqueo,
+  liberarDelFiltro,
+  marcarPorFiltro,
+  parejasBloqueadas,
+  sqlMensajeVisible,
+} from './moderacion';
 import {
   type Muestra,
   OPCIONES_COCINA_OCUPADA,
@@ -1855,7 +1863,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
   const { results: pendientes } = await db
     .prepare(
       `SELECT p.id, p.zona_id, p.pago_repartidor, p.moneda, p.estado, p.aceptado_en, p.tiempo_prep_min, r.lat, r.lng, r.geohash,
-        p.lat AS e_lat, p.lng AS e_lng, p.restaurante_id, r.flota_modo, r.flota_respaldo, r.dueno_id, p.flota_aviso_en,
+        p.lat AS e_lat, p.lng AS e_lng, p.restaurante_id, r.flota_modo, r.flota_respaldo, r.dueno_id, p.flota_aviso_en, p.cliente_id,
         CAST((julianday(p.programado_para) - julianday('now')) * 1440 AS INTEGER) AS min_franja
       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
       WHERE p.estado IN ('aceptado','listo') AND p.repartidor_id IS NULL
@@ -1883,8 +1891,15 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       flota_respaldo: number | null;
       dueno_id: string;
       flota_aviso_en: string | null;
+      cliente_id: string;
     }>();
   if (!pendientes.length) return;
+  // C-MODERACION: el pedido de un cliente nunca se le ofrece a un repartidor que él bloqueó (ni a
+  // uno que lo bloqueó a él). Una consulta por vuelta.
+  const bloqueadas = await parejasBloqueadas(
+    db,
+    pendientes.map((p) => p.cliente_id),
+  );
   // C-FLOTA-PROPIA: quién reparte solo para su restaurante.
   const flotas = await flotasActivas(db);
   // C-MODO-DESTINO: quien tiene el modo encendido solo recibe entregas que lo acercan a su destino.
@@ -1914,9 +1929,10 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
       minutosParaListo(p.estado, p.aceptado_en, p.tiempo_prep_min),
       p.min_franja == null ? 0 : p.min_franja - 15,
     );
+    const noVa = bloqueadas.get(p.cliente_id);
     const ordenar = (libres: Libre[]) =>
       libres
-        .filter((d) => !excluir.has(d.id) && !ocupados.has(d.id))
+        .filter((d) => !excluir.has(d.id) && !ocupados.has(d.id) && !noVa?.has(d.id))
         .map((d) => ({
           ...d,
           km:
@@ -1966,11 +1982,11 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
             .bind(p.id)
             .run();
           if (env && r.meta.changes > 0)
-            await notificar(env, db, p.dueno_id, {
-              titulo: 'Ningún repartidor tuyo está libre',
-              cuerpo: `El pedido ${p.id.slice(0, 4).toUpperCase()} espera repartidor. Avísale a tu equipo o enciende el respaldo de Divoox.`,
+            // C-AVISOS-IDIOMA: antes salía solo en español.
+            await notificar(env, db, p.dueno_id, (i) => ({
+              ...AVISOS.flotaSinRepartidor(i, p.id.slice(0, 4).toUpperCase()),
               datos: { tipo: 'flota_sin_repartidor', pedidoId: p.id },
-            }).catch((e: unknown) => console.error('flota: no se pudo avisar al restaurante', e));
+            })).catch((e: unknown) => console.error('flota: no se pudo avisar al restaurante', e));
         }
         continue pedidos;
       } else if (!zonasCatalogo.has(String(p.zona_id))) {
@@ -2087,11 +2103,6 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
         .bind(p.id, elegido.id, Number.isFinite(elegido.km) ? elegido.km : null)
         .run();
       if (env) {
-        const rep = await db
-          .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-          .bind(elegido.id)
-          .first<{ idioma: string }>();
-        const i = rep?.idioma === 'en' ? 'en' : 'es';
         const km =
           p.lat != null && p.lng != null
             ? distanciaKm(
@@ -2099,10 +2110,7 @@ export async function repartirOfertas(db: D1Database, env?: Env): Promise<void> 
                 { lat: Number(p.lat), lng: Number(p.lng) },
               )
             : 0;
-        await notificar(
-          env,
-          db,
-          elegido.id,
+        await notificar(env, db, elegido.id, (i) =>
           AVISOS.ofertaNueva(
             i,
             formatearMonto(Number(p.pago_repartidor ?? 0) + bono, String(p.moneda ?? 'USD'), i),
@@ -2131,7 +2139,10 @@ async function avisarAlCliente(
     .first<{ cliente_id: string; idioma: string; telefono: string | null; restaurante: string }>();
   if (!f) return;
   const texto = aviso(f.idioma, { restaurante: f.restaurante });
-  await notificar(env, db, f.cliente_id, { ...texto, datos: { pedidoId } });
+  await notificar(env, db, f.cliente_id, (i) => ({
+    ...aviso(i, { restaurante: f.restaurante }),
+    datos: { pedidoId },
+  }));
   if (smsTipo)
     await enviarSms(env, db, {
       usuarioId: f.cliente_id,
@@ -2156,10 +2167,10 @@ export async function avisarAlRepartidor(
     .bind(pedidoId)
     .first<{ repartidor_id: string; idioma: string; restaurante: string }>();
   if (!f) return;
-  await notificar(env, db, f.repartidor_id, {
-    ...aviso(f.idioma, { restaurante: f.restaurante }),
+  await notificar(env, db, f.repartidor_id, (i) => ({
+    ...aviso(i, { restaurante: f.restaurante }),
     datos: { pedidoId },
-  }).catch((e: unknown) => console.error('aviso al repartidor', e));
+  })).catch((e: unknown) => console.error('aviso al repartidor', e));
 }
 
 function conDatosRestaurante(f: FilaPedido) {
@@ -3777,21 +3788,27 @@ operacion.get('/pedidos/:id/mensajes', async (c) => {
     await exigirPedidoEnAlcance(c, db, p.id);
     await anotarAccesoSensibleUnaVez(db, u.id, `pedido:${p.id}`, 'chat_pedido', 'pedidos.chat');
   }
-  const { results } = await db
-    .prepare(
-      'SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en, m.foto_clave FROM mensajes_pedido m JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.pedido_id = ? AND m.id > ? ORDER BY m.id LIMIT 200',
-    )
-    .bind(p.id, desde)
-    .all<{
+  // C-MODERACION: quien bloqueó a la otra persona deja de ver sus mensajes, y lo que el equipo
+  // ocultó no lo ve nadie del pedido (el equipo sí, para revisar).
+  const visibles = u.rol === 'admin' ? '' : sqlMensajeVisible('mensaje_pedido');
+  const consulta = db.prepare(
+    `SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en, m.foto_clave FROM mensajes_pedido m JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.pedido_id = ? AND m.id > ?${visibles} ORDER BY m.id LIMIT 200`,
+  );
+  const otro = u.id === p.cliente_id ? p.repartidor_id : p.cliente_id;
+  const [{ results }, bloqueaste] = await Promise.all([
+    (u.rol === 'admin' ? consulta.bind(p.id, desde) : consulta.bind(p.id, desde, u.id)).all<{
       id: number;
       de: string;
       nombre: string;
       texto: string;
       en: string;
       foto_clave: string | null;
-    }>();
+    }>(),
+    otro && u.rol !== 'admin' ? bloqueo(db, u.id, otro) : Promise.resolve(false),
+  ]);
   return c.json({
     abierto: ['aceptado', 'listo', 'en_camino'].includes(p.estado) && !!p.repartidor_id,
+    bloqueaste,
     mensajes: results.map(({ foto_clave, ...m }) => ({
       ...m,
       nombre: m.nombre.split(' ')[0],
@@ -3832,15 +3849,11 @@ operacion.post('/pedidos/:id/mensajes/foto', async (c) => {
     .bind(p.id, u.id, clave)
     .run();
   const para = u.id === p.cliente_id ? p.repartidor_id : p.cliente_id;
-  const destino = await db
-    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-    .bind(para)
-    .first<{ idioma: string }>();
-  const en = destino?.idioma === 'en';
-  await notificar(c.env, db, para, {
-    ...AVISOS.mensaje(en ? 'en' : 'es', u.nombre.split(' ')[0] ?? '', en ? 'Photo' : 'Foto'),
-    datos: { pedidoId: p.id },
-  });
+  if (!(await bloqueo(db, para, u.id)))
+    await notificar(c.env, db, para, (i) => ({
+      ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', i === 'en' ? 'Photo' : 'Foto'),
+      datos: { pedidoId: p.id },
+    }));
   // C-FOTO-ENTREGA-IPHONE: con su dirección, para que ninguna versión de la app diga «no se pudo».
   return c.json(
     { ok: true, url: `/datos/pedidos/${p.id}/mensajes/${String(nuevo.meta.last_row_id)}/foto` },
@@ -3853,10 +3866,19 @@ operacion.get('/pedidos/:id/mensajes/:mid/foto', async (c) => {
   const db = base(c);
   const p = await pedidoDelChat(db, c.req.param('id'), u).catch(() => null);
   if (!p || !c.env.BUCKET) return c.text('No encontrado', 404);
-  const f = await db
-    .prepare('SELECT foto_clave FROM mensajes_pedido WHERE id = ? AND pedido_id = ?')
-    .bind(Number(c.req.param('mid')), p.id)
-    .first<{ foto_clave: string | null }>();
+  // C-MODERACION: la foto de alguien que bloqueó, o la que el equipo ocultó, tampoco se abre por
+  // su dirección (el equipo sí la ve, para revisar el reporte).
+  const f = await (
+    u.rol === 'admin'
+      ? db
+          .prepare('SELECT foto_clave FROM mensajes_pedido m WHERE m.id = ? AND m.pedido_id = ?')
+          .bind(Number(c.req.param('mid')), p.id)
+      : db
+          .prepare(
+            `SELECT foto_clave FROM mensajes_pedido m WHERE m.id = ? AND m.pedido_id = ?${sqlMensajeVisible('mensaje_pedido')}`,
+          )
+          .bind(Number(c.req.param('mid')), p.id, u.id)
+  ).first<{ foto_clave: string | null }>();
   if (!f?.foto_clave) return c.text('No encontrado', 404);
   const obj = await c.env.BUCKET.get(f.foto_clave);
   if (!obj) return c.text('No encontrado', 404);
@@ -3873,21 +3895,33 @@ operacion.post('/pedidos/:id/mensajes', async (c) => {
   const p = await pedidoDelChat(db, c.req.param('id'), u);
   if (!['aceptado', 'listo', 'en_camino'].includes(p.estado) || !p.repartidor_id)
     throw new ErrorDatos('Este pedido ya no está activo: el chat se cerró.', undefined, 409);
-  const { texto } = await leerCuerpo(c, z.object({ texto: z.string().trim().min(1).max(500) }));
-  await db
+  const { texto: escrito } = await leerCuerpo(
+    c,
+    z.object({ texto: z.string().trim().min(1).max(500) }),
+  );
+  // C-MODERACION: las palabras ofensivas se tapan y el mensaje queda en la bandeja del equipo.
+  const { texto, tapado } = taparOfensivas(escrito);
+  const nuevo = await db
     .prepare('INSERT INTO mensajes_pedido (pedido_id, de_usuario_id, texto) VALUES (?, ?, ?)')
     .bind(p.id, u.id, texto)
     .run();
+  if (tapado)
+    await marcarPorFiltro(db, {
+      tipo: 'mensaje_pedido',
+      ref: String(nuevo.meta.last_row_id),
+      objeto: 'pedido',
+      objetoId: p.id,
+      autorId: u.id,
+      texto: escrito,
+    });
   const para = u.id === p.cliente_id ? p.repartidor_id : p.cliente_id;
-  const destino = await db
-    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-    .bind(para)
-    .first<{ idioma: string }>();
-  await notificar(c.env, db, para, {
-    ...AVISOS.mensaje(destino?.idioma === 'en' ? 'en' : 'es', u.nombre.split(' ')[0] ?? '', texto),
-    datos: { pedidoId: p.id },
-  });
-  return c.json({ ok: true });
+  // Si la otra persona lo bloqueó, no recibe el aviso (y quien escribe no se entera).
+  if (!(await bloqueo(db, para, u.id)))
+    await notificar(c.env, db, para, (i) => ({
+      ...AVISOS.mensaje(i, u.nombre.split(' ')[0] ?? '', texto),
+      datos: { pedidoId: p.id },
+    }));
+  return c.json({ ok: true, ...(tapado ? { tapado: true } : {}) });
 });
 
 /** La foto de la recogida, de la entrega o del ticket: el cliente, el restaurante (dueño y su equipo), el repartidor y soporte. */
@@ -3983,6 +4017,9 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
     .bind(c.req.param('id'), u.id)
     .first<{ restaurante_id: string; repartidor_id: string | null; lineas_json: string }>();
   if (!p) throw new ErrorDatos('Solo se califican pedidos entregados.', undefined, 409);
+  // C-MODERACION: una reseña con palabras ofensivas se guarda tapada y NO se publica hasta que el
+  // equipo la revise (las estrellas sí cuentan). El texto original queda en la bandeja.
+  const { texto: comentario, tapado } = taparOfensivas(d.comentario);
   await db
     .prepare(
       // Actualizar sin borrar la fila: la respuesta del restaurante y la fecha original se conservan.
@@ -3995,9 +4032,26 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
       d.estrellasRestaurante,
       d.estrellasRepartidor,
       d.culpaRestaurante ? 1 : 0,
-      d.comentario,
+      comentario,
     )
     .run();
+  if (!tapado) await liberarDelFiltro(db, 'resena', c.req.param('id'));
+  if (tapado) {
+    await db
+      .prepare(
+        "INSERT OR IGNORE INTO contenido_oculto (tipo, ref, motivo) VALUES ('resena', ?, 'filtro')",
+      )
+      .bind(c.req.param('id'))
+      .run();
+    await marcarPorFiltro(db, {
+      tipo: 'resena',
+      ref: c.req.param('id'),
+      objeto: 'pedido',
+      objetoId: c.req.param('id'),
+      autorId: u.id,
+      texto: d.comentario,
+    });
+  }
   // Solo cuentan los platos que estaban en este pedido; calificar otra vez reemplaza los votos.
   const delPedido = platosDelPedido(String(p.lineas_json ?? '[]'));
   const votos = d.platos.filter((x) => delPedido.has(x.platoId));

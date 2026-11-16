@@ -483,8 +483,26 @@ describe('recorrido completo como en la calle (C-ENSAYO-CALLE)', () => {
   it('pago por aviso de Stripe → restaurante → repartidor → entrega → billeteras → calificación', async () => {
     const { m, dueno, cliente, pedidoPagadoPorStripe, repartidor } = await escenario();
     const rep = await repartidor('Repartidor Calle', 25.7705, -80.1905);
+    // C-AVISOS-IDIOMA: el teléfono del restaurante está en español aunque la cuenta diga inglés.
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const avisosRest: { to: string; title: string }[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { to: string; title: string }[];
+      avisosRest.push(...lote);
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.DB.prepare("UPDATE usuarios SET idioma = 'en' WHERE id = ?").bind(dueno.id).run();
+    await m.DB.prepare(
+      "INSERT INTO dispositivos (token, usuario_id, plataforma, idioma) VALUES ('ExponentPushToken[cocina]', ?, 'android', 'es')",
+    )
+      .bind(dueno.id)
+      .run();
     const { id, desglose, aviso } = await pedidoPagadoPorStripe();
     expect(aviso).toBe(200);
+    expect(avisosRest.find((x) => x.to === 'ExponentPushToken[cocina]')?.title).toMatch(
+      /^Pedido nuevo/,
+    );
+    usarTransporteAvisos(null);
 
     // El restaurante lo ve pagado, lo acepta y al repartidor cercano le llega la oferta.
     const lista = await m.llamar('GET', '/datos/restaurante/pedidos', undefined, dueno.token);
@@ -1610,6 +1628,20 @@ describe('algo agotado y ajustar el tiempo (C-AGOTADO)', () => {
 
   it('el restaurante marca el plato; el cliente lo quita y se le devuelve esa parte', async () => {
     const { m, dueno, cliente, id, platoId } = await conDosPlatos();
+    // C-AVISOS-IDIOMA: el teléfono del cliente está en inglés; el aviso nombra el plato en inglés.
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const avisosCli: { to: string; body: string }[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { to: string; body: string }[];
+      avisosCli.push(...lote);
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.llamar(
+      'POST',
+      '/datos/cuentas/dispositivo',
+      { token: 'ExponentPushToken[cliente-agotado]', plataforma: 'ios', idioma: 'en' },
+      cliente.token,
+    );
     const antes = (
       await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)
     ).datos.pedido;
@@ -1658,6 +1690,10 @@ describe('algo agotado y ajustar el tiempo (C-AGOTADO)', () => {
     expect(seg.ajuste.estado).toBe('quitado');
     expect(seg.total).toBe(antes.total - falta.datos.devolucion);
     expect(seg.lineas.find((l: { platoId: string }) => l.platoId === platoId)).toBeUndefined();
+    const delCliente = avisosCli.filter((x) => x.to === 'ExponentPushToken[cliente-agotado]');
+    expect(JSON.stringify(delCliente)).toContain('Juice');
+    expect(JSON.stringify(delCliente)).not.toContain('Jugo');
+    usarTransporteAvisos(null);
     const acepta = await m.llamar(
       'POST',
       `/datos/restaurante/pedidos/${id}/aceptar`,
@@ -3379,6 +3415,20 @@ describe('dinero vigilado: conciliación diaria, abono fallido y retención de f
     )
       .bind(rep.id)
       .run();
+    // C-AVISOS-IDIOMA: el aviso llega en el idioma del teléfono (aquí inglés).
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const titulos: string[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { title: string }[];
+      titulos.push(...lote.map((x) => x.title));
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.llamar(
+      'POST',
+      '/datos/cuentas/dispositivo',
+      { token: 'ExponentPushToken[banco-rechaza]', plataforma: 'android', idioma: 'en' },
+      rep.token,
+    );
     const cuerpo = JSON.stringify({
       id: `evt_${crypto.randomUUID()}`,
       type: 'payout.failed',
@@ -3400,6 +3450,8 @@ describe('dinero vigilado: conciliación diaria, abono fallido y retención de f
       .bind('acct_rechazo')
       .first();
     expect(fila).toMatchObject({ usuario_id: rep.id, motivo: 'account_closed' });
+    expect(titulos.join(' ')).toMatch(/payout|\$25\.50/i);
+    usarTransporteAvisos(null);
   });
 });
 
@@ -3553,6 +3605,20 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
         status: 200,
       });
     });
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const avisos: { to: string; body: string }[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { to: string; body: string }[];
+      avisos.push(...lote);
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.llamar(
+      'POST',
+      '/datos/cuentas/dispositivo',
+      { token: 'ExponentPushToken[rep-propina]', plataforma: 'ios' },
+      rep.token,
+      { 'x-idioma': 'es' },
+    );
     const r = await m.llamar(
       'POST',
       `/datos/pedidos/${id}/propina`,
@@ -3560,6 +3626,11 @@ describe('recogida en el local, cambio de dirección, propina después, pedidos 
       cliente.token,
     );
     expect(r.estado).toBe(200);
+    // C-AVISOS-IDIOMA: el repartidor recibe el aviso de la propina en el idioma de su teléfono.
+    const propina = avisos.find((x) => x.to === 'ExponentPushToken[rep-propina]') as
+      { title?: string } | undefined;
+    expect(propina?.title).toMatch(/^Propina extra/);
+    usarTransporteAvisos(null);
     expect(llamadas.some((x) => x.url.endsWith('/payment_intents') && x.metodo === 'POST')).toBe(
       true,
     );

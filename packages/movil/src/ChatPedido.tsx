@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text } from './diseno';
 import { FlatList, Image, Pressable, TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma, unirMensajes } from '@tumbite/compartido';
-import { Boton, C, e } from './ui';
+import { Boton, C, CASILLA_EN_FILA, FilaConBoton, e } from './ui';
 import { useSesion } from './sesion';
+import { BotonReportar, MenuBloquear } from './Moderacion';
 
 type Mensaje = {
   id: number;
@@ -79,6 +80,7 @@ export function ChatPedido({
   pedidoId,
   elegirFoto,
   ruta,
+  nombreOtro,
 }: {
   pedidoId: string;
   /**
@@ -88,12 +90,19 @@ export function ChatPedido({
   ruta?: string;
   /** C-CHAT-FOTOS: la app pasa cómo elegir una foto (cámara o galería). Sin ella, solo texto. */
   elegirFoto?: () => Promise<Blob | null>;
+  /** C-MODERACION: el nombre de pila de la otra persona (para «Bloquear a…»). */
+  nombreOtro?: string;
 }) {
   const { api, idioma } = useSesion();
   const raiz = ruta ?? `/datos/pedidos/${pedidoId}`;
   const t = enIdioma(T, idioma);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [abierto, setAbierto] = useState(true);
+  // C-MODERACION: si quien mira bloqueó a la otra persona (sus mensajes ya no llegan).
+  const [bloqueaste, setBloqueaste] = useState(false);
+  const esViaje = Boolean(ruta?.startsWith('/datos/viajes/'));
+  const tipoMensaje = esViaje ? 'mensaje_viaje' : 'mensaje_pedido';
+  const viajeId = esViaje ? ruta?.split('/')[3] : undefined;
   const [texto, setTexto] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -101,11 +110,12 @@ export function ChatPedido({
 
   const cargar = useCallback(async () => {
     try {
-      const r = await api.pedir<{ abierto: boolean; mensajes: Mensaje[] }>(
+      const r = await api.pedir<{ abierto: boolean; bloqueaste?: boolean; mensajes: Mensaje[] }>(
         'GET',
         `${raiz}/mensajes?desde=${ultimo.current}`,
       );
       setAbierto(r.abierto);
+      setBloqueaste(Boolean(r.bloqueaste));
       if (r.mensajes.length) {
         ultimo.current = Math.max(ultimo.current, r.mensajes[r.mensajes.length - 1]!.id);
         // C-CHAT-SIN-DOBLES: dos consultas cruzadas pueden traer el mismo mensaje.
@@ -159,7 +169,31 @@ export function ChatPedido({
 
   return (
     <View style={e.tarjeta} accessibilityLabel={t.titulo}>
-      <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.titulo}</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 6,
+        }}
+      >
+        <Text style={{ fontWeight: '700' }}>{t.titulo}</Text>
+        {abierto && !bloqueaste ? (
+          <MenuBloquear
+            pedidoId={esViaje ? undefined : pedidoId}
+            viajeId={viajeId}
+            nombre={nombreOtro ?? mensajes.find((m) => !m.mio)?.nombre ?? ''}
+            bloqueaste={false}
+            alBloquear={() => {
+              setBloqueaste(true);
+              setMensajes((m) => m.filter((x) => x.mio));
+            }}
+          />
+        ) : null}
+      </View>
+      {bloqueaste ? (
+        <MenuBloquear nombre={nombreOtro ?? ''} bloqueaste alBloquear={() => undefined} />
+      ) : null}
       {mensajes.length === 0 ? (
         <Text style={{ color: '#666B73' }}>{abierto ? t.vacio : t.cerrado}</Text>
       ) : (
@@ -193,19 +227,21 @@ export function ChatPedido({
               ) : (
                 <Text style={{ color: item.mio ? '#fff' : C.secundario }}>{item.texto}</Text>
               )}
+              {/* C-MODERACION: cada mensaje de la otra persona se puede reportar. */}
+              {!item.mio ? <BotonReportar tipo={tipoMensaje} id={item.id} /> : null}
             </View>
           )}
         />
       )}
       {error ? <Text style={e.error}>{error}</Text> : null}
       {abierto ? (
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8 }}>
+        <FilaConBoton style={{ marginTop: 8 }}>
           <TextInput
             value={texto}
             onChangeText={setTexto}
             placeholder={t.escribe}
             accessibilityLabel={t.escribe}
-            style={[e.input, { flex: 1 }]}
+            style={[e.input, CASILLA_EN_FILA]}
             onSubmitEditing={() => void enviar()}
           />
           {elegirFoto ? (
@@ -219,7 +255,7 @@ export function ChatPedido({
             </Pressable>
           ) : null}
           <Boton texto={t.enviar} alTocar={() => void enviar()} cargando={enviando} exito enFila />
-        </View>
+        </FilaConBoton>
       ) : mensajes.length ? (
         <Text style={{ color: '#666B73', marginTop: 6 }}>{t.cerrado}</Text>
       ) : null}

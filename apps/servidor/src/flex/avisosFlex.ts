@@ -195,13 +195,12 @@ async function mandar(
       .bind(`${clave}:${u.id}`, u.id, tipo, rutaId)
       .run();
     if (!r.meta.changes) continue;
-    const aviso = texto(u.idioma);
-    await notificar(env, db, u.id, {
-      ...aviso,
+    await notificar(env, db, u.id, (i) => ({
+      ...texto(i),
       // C-AVISO-PAQUETE: las ofertas y asignaciones del conductor suenan con su alarma propia.
       ...(clave.startsWith('c:') ? { sonido: SONIDO_CONDUCTOR } : {}),
       datos: { tipo: 'flex', evento: tipo, rutaId },
-    });
+    }));
     enviados++;
   }
   return enviados;
@@ -339,12 +338,12 @@ export async function avisarDestinatarios(
       .bind(`d:${tipo}:${f.id}:${f.usuario}`, f.usuario, `paquete_${tipo}`)
       .run();
     if (!r.meta.changes) continue;
-    await notificar(env, db, f.usuario, {
+    await notificar(env, db, f.usuario, (i) => ({
       // eslint-disable-next-line security/detect-object-injection -- tipo de la lista cerrada
-      ...TEXTOS_AVISO_PAQUETE[tipo](f.idioma, { empresa: f.empresa }),
+      ...TEXTOS_AVISO_PAQUETE[tipo](i, { empresa: f.empresa }),
       sonido: SONIDO_CLIENTE,
       datos: { tipo: 'flex_paquete', evento: tipo, envioId: f.id },
-    });
+    }));
     enviados++;
   }
   return enviados;
@@ -489,15 +488,15 @@ export async function avisarYaLlega(
       .bind(`d:ya_llega:${p.envio_id}:${f.usuario}`, f.usuario, 'paquete_ya_llega', rutaId)
       .run();
     if (!r.meta.changes) continue;
-    await notificar(env, db, f.usuario, {
-      ...textoYaLlega(f.idioma, {
+    await notificar(env, db, f.usuario, (i) => ({
+      ...textoYaLlega(i, {
         conductor,
         vehiculo,
         punto: p.entrega_tipo === 'encuentro' ? p.punto_encuentro : '',
       }),
       sonido: SONIDO_CLIENTE,
       datos: { tipo: 'flex_paquete', evento: 'ya_llega', envioId: p.envio_id },
-    });
+    }));
     enviados++;
   }
   // Y una llamada con voz al teléfono de quien recibe (una vez por envío), si hay Twilio.

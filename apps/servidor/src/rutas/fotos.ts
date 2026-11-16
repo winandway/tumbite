@@ -128,3 +128,25 @@ media.get('/media/fotos/:restaurante/:archivo', async (c) => {
     headers.set('cache-control', 'public, max-age=31536000, immutable');
   return new Response(obj.body, { headers });
 });
+
+/**
+ * C-DOCS-LUPA (15 nov 2026): la versión nítida de cada captura de Docs, para la lupa. Vive en el
+ * almacén del sitio (`docs-grande/<nombre>-<huella>.webp`), no en el paquete: con ellas adentro, el
+ * paquete pasó de 112 a 146 MB y la plataforma no lo pudo publicar («Memory limit exceeded»).
+ * Las sube `scripts/docs/subir-capturas-grandes.mjs`. Solo lee: no escribe nada en la base.
+ */
+const CAPTURA_GRANDE = /^[a-z0-9-]{1,120}-[0-9a-f]{8}\.webp$/;
+
+media.get('/media/docs-grande/:archivo', async (c) => {
+  const { archivo } = c.req.param();
+  if (!CAPTURA_GRANDE.test(archivo)) return c.text('No encontrado', 404);
+  const obj = await almacen(c.env).get(`docs-grande/${archivo}`);
+  if (!obj) return c.text('No encontrado', 404);
+  const headers = new Headers();
+  headers.set('content-type', 'image/webp');
+  headers.set('etag', obj.httpEtag);
+  headers.set('x-content-type-options', 'nosniff');
+  // La huella va en el nombre: si la captura cambia, cambia la dirección.
+  headers.set('cache-control', 'public, max-age=31536000, immutable');
+  return new Response(obj.body, { headers });
+});

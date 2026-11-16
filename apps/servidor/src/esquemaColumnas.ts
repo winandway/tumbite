@@ -2562,5 +2562,34 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "tramos_json",
     "consultas",
     "calculado_en"
+  ],
+  "reportes_contenido": [
+    "id",
+    "tipo",
+    "ref",
+    "objeto",
+    "objeto_id",
+    "autor_id",
+    "reporta_id",
+    "motivo",
+    "nota",
+    "texto",
+    "estado",
+    "accion",
+    "resuelto_por",
+    "resuelto_en",
+    "creado_en"
+  ],
+  "contenido_oculto": [
+    "tipo",
+    "ref",
+    "motivo",
+    "por",
+    "creado_en"
+  ],
+  "bloqueos_usuario": [
+    "usuario_id",
+    "bloqueado_id",
+    "creado_en"
   ]
 };

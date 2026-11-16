@@ -250,15 +250,26 @@ cancelaciones.post('/admin/cancelaciones/:id/:decision', async (c) => {
     .bind(decision === 'aprobar' ? 'aprobada' : 'rechazada', paga, d.nota, admin.id, s.id)
     .run();
   const codigo = s.pedido_id.slice(0, 4).toUpperCase();
-  await notificar(c.env, db, s.dueno_id, {
+  // C-AVISOS-IDIOMA: antes salía solo en español.
+  await notificar(c.env, db, s.dueno_id, (i) => ({
     titulo:
-      decision === 'aprobar' ? `Pedido ${codigo} cancelado` : `El pedido ${codigo} sigue en curso`,
+      i === 'en'
+        ? decision === 'aprobar'
+          ? `Order ${codigo} canceled`
+          : `Order ${codigo} is still active`
+        : decision === 'aprobar'
+          ? `Pedido ${codigo} cancelado`
+          : `El pedido ${codigo} sigue en curso`,
     cuerpo:
-      decision === 'aprobar'
-        ? 'Soporte aprobó la cancelación. El cliente recibe su dinero.'
-        : `Soporte no aprobó la cancelación.${d.nota ? ` ${d.nota}` : ''}`,
+      i === 'en'
+        ? decision === 'aprobar'
+          ? 'Support approved the cancellation. The customer gets their money back.'
+          : `Support didn’t approve the cancellation.${d.nota ? ` ${d.nota}` : ''}`
+        : decision === 'aprobar'
+          ? 'Soporte aprobó la cancelación. El cliente recibe su dinero.'
+          : `Soporte no aprobó la cancelación.${d.nota ? ` ${d.nota}` : ''}`,
     datos: { tipo: 'cancelacion_resuelta', pedidoId: s.pedido_id },
-  }).catch((e: unknown) => console.error('cancelaciones: no se pudo avisar al restaurante', e));
+  })).catch((e: unknown) => console.error('cancelaciones: no se pudo avisar al restaurante', e));
   return c.json({
     ok: true,
     estado: decision === 'aprobar' ? 'aprobada' : 'rechazada',

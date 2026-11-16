@@ -260,10 +260,10 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
       .all<{ id: string; dueno_id: string; idioma_dueno: string }>();
     for (const p of aPreparar)
       if (await anotarEvento(db, p.id, 'programado_preparar'))
-        await notificar(env, db, p.dueno_id, {
-          ...TEXTOS.programadoPreparar(p.idioma_dueno, p.id.slice(0, 6).toUpperCase()),
+        await notificar(env, db, p.dueno_id, (i) => ({
+          ...TEXTOS.programadoPreparar(i, p.id.slice(0, 6).toUpperCase()),
           datos: { pedidoId: p.id },
-        }).catch((e: unknown) => console.error('manager: aviso de programado', p.id, e));
+        })).catch((e: unknown) => console.error('manager: aviso de programado', p.id, e));
   }
   // C-ACEPTAR-SOLO: los pagados de restaurantes con aceptación automática que todavía esperan
   // (un programado cuya ventana ya se abrió, o uno cuyo cliente ya decidió sobre un plato agotado).
@@ -300,26 +300,21 @@ export async function vigilarPedidos(env: Env, db: D1Database, pedidoId?: string
         if (await cancelarConReembolso(env, db, p.id, { desde: ['pagado'], actorId: null })) {
           await anotarEvento(db, p.id, 'cancelado_sin_respuesta', `${p.minutos} min`);
           resumen.cancelados++;
-          await notificar(env, db, p.cliente_id, {
-            ...TEXTOS.canceladoAlCliente(p.idioma_cliente, p.restaurante),
+          await notificar(env, db, p.cliente_id, (i) => ({
+            ...TEXTOS.canceladoAlCliente(i, p.restaurante),
             datos: { pedidoId: p.id },
-          });
-          await notificar(
-            env,
-            db,
-            p.dueno_id,
-            TEXTOS.canceladoAlRestaurante(p.idioma_dueno, corto),
-          );
+          }));
+          await notificar(env, db, p.dueno_id, (i) => TEXTOS.canceladoAlRestaurante(i, corto));
         }
         continue;
       }
       const evento = p.minutos >= REGLAS.recordatorio2 ? 'recordatorio_2' : 'recordatorio_1';
       if (await anotarEvento(db, p.id, evento, `${p.minutos} min`)) {
         resumen.recordatorios++;
-        await notificar(env, db, p.dueno_id, {
-          ...TEXTOS.recordatorio(p.idioma_dueno, corto, p.minutos),
+        await notificar(env, db, p.dueno_id, (i) => ({
+          ...TEXTOS.recordatorio(i, corto, p.minutos),
           datos: { pedidoId: p.id },
-        });
+        }));
       }
     } catch (e) {
       // Un pedido con problema no frena la vuelta: queda en el registro y se reintenta en la próxima.

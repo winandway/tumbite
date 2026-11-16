@@ -387,12 +387,21 @@ viajesHistorial.post('/viajes/:id/ayuda', async (c) => {
   }
   if (d.motivo === 'objeto_olvidado' && f.conductor_id) {
     // Se avisa al conductor; si el aviso no sale, el caso igual queda en su historial y en soporte.
-    await notificar(c.env, db, f.conductor_id, {
-      titulo: 'Objeto olvidado · Lost item',
-      cuerpo:
-        'Un pasajero olvidó algo en tu vehículo. Revisa Mis viajes; nuestro equipo te contacta. · A rider left something in your vehicle. Check My rides; our team will contact you.',
+    // C-AVISOS-IDIOMA: antes salía en los dos idiomas a la vez; ahora en el de su app.
+    await notificar(c.env, db, f.conductor_id, (i) => ({
+      ...(i === 'en'
+        ? {
+            titulo: 'Lost item',
+            cuerpo:
+              'A rider left something in your vehicle. Check My rides; our team will contact you.',
+          }
+        : {
+            titulo: 'Objeto olvidado',
+            cuerpo:
+              'Un pasajero olvidó algo en tu vehículo. Revisa Mis viajes; nuestro equipo te contacta.',
+          }),
       datos: { tipo: 'objeto_olvidado', viajeId: id },
-    }).catch((e: unknown) => console.error('viajes: aviso de objeto olvidado', e));
+    })).catch((e: unknown) => console.error('viajes: aviso de objeto olvidado', e));
   }
   return c.json({ ticketId: t.id, repetido: false }, 201);
 });

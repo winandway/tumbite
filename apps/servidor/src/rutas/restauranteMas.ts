@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { tieneOfensivas } from '../filtroPalabras';
 import { resumenEtiquetas, resumenGusto } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
@@ -58,7 +59,10 @@ restauranteMas.get('/mi-restaurante/resenas', async (c) => {
   const r = await mio(c, db);
   const { results } = await db
     .prepare(
-      `SELECT c.pedido_id, c.estrellas_restaurante, c.estrellas_repartidor, c.culpa_restaurante, c.comentario, c.respuesta, c.respondida_en, c.creado_en, u.nombre AS cliente
+      `SELECT c.rowid AS rid, c.pedido_id, c.estrellas_restaurante,
+              EXISTS (SELECT 1 FROM contenido_oculto o WHERE o.tipo = 'resena' AND o.ref = c.pedido_id) AS oculta,
+              EXISTS (SELECT 1 FROM contenido_oculto o WHERE o.tipo = 'respuesta_resena' AND o.ref = c.pedido_id) AS respuesta_oculta,
+              c.estrellas_repartidor, c.culpa_restaurante, c.comentario, c.respuesta, c.respondida_en, c.creado_en, u.nombre AS cliente
          FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id JOIN usuarios u ON u.id = p.cliente_id
         WHERE p.restaurante_id = ? ORDER BY c.creado_en DESC LIMIT 200`,
     )
@@ -122,6 +126,10 @@ restauranteMas.get('/mi-restaurante/resenas', async (c) => {
     respondidas: Number(resumen?.respondidas ?? 0),
     resenas: results.map((x) => ({
       pedidoId: String(x.pedido_id),
+      // C-MODERACION: el número para «Reportar» y si no se ve en público (revisión del equipo).
+      id: Number(x.rid),
+      oculta: Number(x.oculta) === 1,
+      respuestaOculta: Number(x.respuesta_oculta) === 1,
       // Solo el nombre de pila: privacidad del cliente.
       cliente: String(x.cliente ?? '').split(' ')[0],
       estrellas: Number(x.estrellas_restaurante),
@@ -140,6 +148,13 @@ restauranteMas.post('/mi-restaurante/resenas/:pedidoId/responder', async (c) => 
   const db = base(c);
   const r = await mio(c, db, 'manager');
   const { texto } = await leerCuerpo(c, z.object({ texto: z.string().trim().min(2).max(600) }));
+  // C-MODERACION: una respuesta pública con palabras ofensivas no se guarda.
+  if (tieneOfensivas(texto))
+    throw new ErrorDatos(
+      'Tu respuesta tiene palabras que no se permiten. Escríbela de otra forma.',
+      'texto',
+      422,
+    );
   const ok = await db
     .prepare(
       `UPDATE calificaciones SET respuesta = ?, respondida_en = datetime('now')

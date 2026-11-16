@@ -2159,6 +2159,71 @@ button {
   font-size: 1.1rem;
   padding: 14px 0;
 }
+/* C-DOCS-BUSCADOR-MOTOR (15 nov 2026): la lista de sugerencias que se abre mientras se escribe. */
+.docs-buscador {
+  position: relative;
+}
+.docs-sugerencias {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 14%);
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+}
+.docs-sugerencias[hidden] {
+  display: none;
+}
+.docs-sugerencias li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.docs-sugerencias li + li {
+  border-top: 1px solid #f0f0f0;
+}
+.docs-sugerencias li.activa,
+.docs-sugerencias li:hover {
+  background: #ffecee;
+}
+.docs-sugerencias .icono-guia {
+  flex: none;
+  margin-top: 2px;
+  color: var(--primario);
+}
+.docs-sugerencia-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.docs-sugerencia-titulo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #101010;
+  line-height: 1.35;
+}
+.docs-sugerencia-titulo mark {
+  background: #ffe3e5;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.docs-sugerencia-seccion {
+  font-size: 0.8rem;
+  color: #666b73;
+}
 .docs-seccion {
   margin-top: 24px;
 }
@@ -2418,10 +2483,15 @@ button {
 }
 .pie-oculto {
   position: absolute;
+  /* Pegado a la izquierda: donde caía solo, sus enlaces ensanchaban la página y salía la barra de
+     desplazamiento de lado (15 nov 2026). */
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .pie-columnas {
   display: grid;
@@ -3402,6 +3472,73 @@ button {
   display: block;
   width: 100%;
   height: auto;
+}
+/* C-DOCS-LUPA (15 nov 2026): la captura entera es un botón que la abre en grande. */
+.docs-captura-boton {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.docs-captura-boton:focus-visible {
+  outline: 3px solid var(--primario);
+  outline-offset: -3px;
+}
+.docs-captura-lupa {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgb(16 16 16 / 78%);
+  color: #ffffff;
+}
+.docs-captura-lupa .icono {
+  color: #ffffff;
+}
+/* Por encima de todo, también del botón flotante «¿Preguntas?». */
+div.pswp {
+  z-index: 2147483000;
+}
+/* Con la imagen ampliada, los botones siguen viéndose: fondo oscuro detrás. */
+div.pswp .pswp__top-bar {
+  background: rgb(16 16 16 / 72%);
+}
+div.pswp .pswp__button--arrow .pswp__icn {
+  background: rgb(16 16 16 / 55%);
+  border-radius: 50%;
+}
+.pswp__button--acercar,
+.pswp__button--alejar {
+  color: #ffffff;
+}
+.pswp__button--acercar .pswp__icn,
+.pswp__button--alejar .pswp__icn {
+  top: 14px;
+  left: 9px;
+}
+.pswp__pie {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: min(92%, 760px);
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgb(16 16 16 / 72%);
+  color: #ffffff;
+  font-size: 1rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.pswp__pie:empty {
+  display: none;
 }
 .docs-captura figcaption {
   padding: 10px 12px;
@@ -6344,4 +6481,94 @@ body.modo-tableta .cabecera {
   min-height: 0;
   width: 100%;
   object-fit: contain;
+}
+
+/* C-MODERACION: bandeja de reportes del superadmin y «Reportar» en las reseñas del restaurante. */
+.exito-general {
+  color: #0d7a3a;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+.super-reportes {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.super-reporte {
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+.super-reporte-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.super-reporte-cabeza small {
+  color: #5e5e5e;
+  flex: 1;
+  min-width: 160px;
+}
+.super-reporte-texto {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: #f6f6f6;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.super-reporte-quien {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  color: #333;
+}
+.super-reporte-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reportar-ventana {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.reportar-caja {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.reportar-caja label.radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid #ececec;
+  cursor: pointer;
+}
+.reportar-caja label.radio:first-of-type {
+  border-top: 0;
+}
+.reportar-caja input[type='radio'] {
+  accent-color: #f20d20;
+}
+.super-reporte-foto {
+  display: block;
+  max-width: 260px;
+  max-height: 260px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  object-fit: cover;
 }

@@ -8,6 +8,7 @@ import {
   C,
   MenuCuenta,
   PreferenciaSms,
+  PersonasBloqueadas,
   AjusteMapa,
   MisCasos,
   TEXTOS_MOVIL,
@@ -367,6 +368,10 @@ function MiCuenta() {
         {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
         <View style={{ marginTop: 20 }}>
           <AjusteMapa />
+        </View>
+        {/* C-MODERACION: a quién bloqueó y «Desbloquear». */}
+        <View style={{ marginTop: 20 }}>
+          <PersonasBloqueadas />
         </View>
         <View style={{ marginTop: 20, gap: 8 }}>
           <Boton texto={tm.salir} alTocar={() => void salir()} secundario />

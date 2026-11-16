@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DOCS } from './guias';
 import { GUIAS_OPERACIONES } from './operaciones';
-import { coincide, palabrasDeBusqueda } from './buscar';
+import { buscarGuias } from './buscar';
 import { iconoDeGuia } from './iconosGuia';
 
 /**
@@ -51,7 +51,8 @@ describe('C-DOCS-OPERACIONES: guías del equipo de operaciones', () => {
   it('están en la sección «operations» de Docs, con título en cada idioma', () => {
     for (const i of ['es', 'en'] as const) {
       const s = DOCS[i].find((x) => x.id === 'operations');
-      expect(s?.guias.map((g) => g.id)).toEqual(IDS);
+      // C-MODERACION: la guía de la bandeja de reportes se suma al final (vive en moderacion.ts).
+      expect(s?.guias.map((g) => g.id)).toEqual([...IDS, 'flagged-content']);
     }
     expect(DOCS.en.find((x) => x.id === 'operations')?.titulo).toBe('Operations team');
     expect(DOCS.es.find((x) => x.id === 'operations')?.titulo).toBe('Equipo de operaciones');
@@ -92,7 +93,9 @@ describe('C-DOCS-OPERACIONES: guías del equipo de operaciones', () => {
 
   it('el buscador de Docs las encuentra con palabras normales, y cada una tiene su ícono', () => {
     const busca = (i: 'es' | 'en', q: string) =>
-      GUIAS_OPERACIONES[i].filter((g) => coincide(g, palabrasDeBusqueda(q))).map((g) => g.id);
+      buscarGuias(DOCS[i], q)
+        .map((r) => r.guia.id)
+        .filter((id) => GUIAS_OPERACIONES[i].some((g) => g.id === id));
     expect(busca('en', 'short code')).toContain('search-orders-rides-people');
     expect(busca('en', 'traffic light')).toContain('monitor-live-orders-rides');
     expect(busca('en', 'blurred photo')).toContain('read-order-ride-file');

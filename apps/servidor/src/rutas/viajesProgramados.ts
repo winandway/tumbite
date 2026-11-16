@@ -202,12 +202,13 @@ async function avisar(
   env: Env,
   db: D1Database,
   usuarioId: string,
-  aviso: { titulo: string; cuerpo: string },
+  aviso: (i: 'es' | 'en') => { titulo: string; cuerpo: string },
   id: string,
 ) {
-  await notificar(env, db, usuarioId, { ...aviso, datos: { tipo: 'viaje', viajeId: id } }).catch(
-    (e: unknown) => console.error('viajes programados: aviso', id, e),
-  );
+  await notificar(env, db, usuarioId, (i) => ({
+    ...aviso(i),
+    datos: { tipo: 'viaje', viajeId: id },
+  })).catch((e: unknown) => console.error('viajes programados: aviso', id, e));
 }
 
 /** Lo que el reloj puede activar en una vuelta (cada una escribe unas 8 filas). */
@@ -215,8 +216,7 @@ export const PROGRAMADOS_POR_VUELTA = 20;
 
 /** Activa UNA reserva. Devuelve true si esta vuelta hizo nacer su viaje. */
 async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<boolean> {
-  const { idioma, nombre } = await idiomaDe(db, f.cliente_id);
-  const hora = horaLocal(f.programado_para, f.zona_horaria, idioma);
+  const { nombre } = await idiomaDe(db, f.cliente_id);
   const fallar = async (motivo: string) => {
     const r = await db
       .prepare(
@@ -225,7 +225,14 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
       )
       .bind(motivo, f.id)
       .run();
-    if (r.meta.changes) await avisar(env, db, f.cliente_id, AVISO.fallido(idioma, hora), f.id);
+    if (r.meta.changes)
+      await avisar(
+        env,
+        db,
+        f.cliente_id,
+        (i) => AVISO.fallido(i, horaLocal(f.programado_para, f.zona_horaria, i)),
+        f.id,
+      );
   };
   if ((await estadoServicioEnZona(db, f.servicio_id, f.zona_id, f.cliente_id)) !== 'disponible') {
     await fallar('servicio_cerrado');
@@ -300,7 +307,13 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
         await anularAutorizacionProgramada(env, db, cobro).catch((x: unknown) =>
           console.error('viajes programados: no se pudo soltar la retención', f.id, x),
         );
-      await avisar(env, db, f.cliente_id, AVISO.fallido(idioma, hora), f.id);
+      await avisar(
+        env,
+        db,
+        f.cliente_id,
+        (i) => AVISO.fallido(i, horaLocal(f.programado_para, f.zona_horaria, i)),
+        f.id,
+      );
       return true;
     }
   }
@@ -315,7 +328,13 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
       nombre,
     ).catch((e: unknown) => console.error('viajes programados: aviso a quien recibe', e));
   // El recordatorio: ya casi es la hora y se está buscando conductor.
-  await avisar(env, db, f.cliente_id, AVISO.buscando(idioma, hora, envio), f.id);
+  await avisar(
+    env,
+    db,
+    f.cliente_id,
+    (i) => AVISO.buscando(i, horaLocal(f.programado_para, f.zona_horaria, i), envio),
+    f.id,
+  );
   return true;
 }
 

@@ -745,17 +745,17 @@ flexEmpresas.post('/empresas/:id/conductores/invitaciones', async (c) => {
     .first<{ id: string; idioma: string }>();
   if (yaEsConductor)
     avisos.push(
-      notificar(c.env, db, yaEsConductor.id, {
+      notificar(c.env, db, yaEsConductor.id, (i) => ({
         titulo:
-          yaEsConductor.idioma === 'en'
+          i === 'en'
             ? `${e?.nombre ?? 'A company'} invited you`
             : `${e?.nombre ?? 'Una empresa'} te invitó`,
         cuerpo:
-          yaEsConductor.idioma === 'en'
+          i === 'en'
             ? 'Open Divoox Driver and accept to receive its routes.'
             : 'Abre Divoox Driver y acepta para recibir sus rutas.',
         datos: { tipo: 'flex_invitacion' },
-      }),
+      })),
     );
   // Nunca frena: si el SMS o el correo no salen, la empresa tiene el enlace para mandarlo ella.
   await Promise.allSettled(avisos);

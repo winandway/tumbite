@@ -91,6 +91,10 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'POST /admin/tickets/plantillas': 'tickets.plantillas',
   'DELETE /admin/tickets/plantillas/:pid': 'tickets.plantillas',
   'GET /admin/quejas-config': 'tickets.ver',
+  // C-MODERACION: la bandeja de reportes (mensajes y reseñas). Suspender desde aquí exige además
+  // clientes.suspender (lo comprueba la ruta).
+  'GET /admin/reportes': 'tickets.ver',
+  'POST /admin/reportes/:id/accion': 'tickets.responder',
   'PUT /admin/quejas-config': 'tickets.configurar',
   'GET /admin/lista-espera': 'restaurantes.ver',
   'GET /admin/errores': 'config.ver',
@@ -397,6 +401,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'PATCH /admin/kyc/:id/control/:cid': ficha('persona'),
   'POST /admin/kyc/:id/liberar-foto': ficha('persona'),
   'POST /admin/kyc/:id/miniatura': ficha('persona'),
+  'GET /admin/reportes': CONSULTA,
+  'POST /admin/reportes/:id/accion': CONSULTA,
   'GET /admin/tickets': CONSULTA,
   'GET /admin/tickets/:id': ficha('ticket'),
   'GET /admin/tickets/plantillas': CONFIG,

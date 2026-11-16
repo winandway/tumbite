@@ -7,6 +7,22 @@ import { MENSAJES_EN_EQUIPO } from './mensajesEnEquipo';
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-MODERACION (16 nov 2026): reportar, bloquear y la bandeja del equipo.
+  ['Eso ya no está disponible.', 'That’s no longer available.'],
+  [
+    'Recibimos muchos reportes seguidos. Espera un momento.',
+    'We received many reports in a row. Please wait a moment.',
+  ],
+  ['Todavía no hay nadie asignado a quien bloquear.', 'There’s no one assigned yet to block.'],
+  ['Ese bloqueo no existe.', 'That block doesn’t exist.'],
+  ['Ese reporte no existe.', 'That report doesn’t exist.'],
+  ['Este contenido no tiene autor.', 'This content has no author.'],
+  ['Esa cuenta no se puede suspender desde aquí.', 'That account can’t be suspended from here.'],
+  ['Indica el pedido o el viaje.', 'Say which order or ride.'],
+  [
+    'Tu respuesta tiene palabras que no se permiten. Escríbela de otra forma.',
+    'Your reply has words that aren’t allowed. Please write it another way.',
+  ],
   // C-DESLIZAR-SIEMPRE (16 nov 2026)
   [
     'Esta app de pruebas es una versión vieja: guardamos la foto, pero la entrega se cierra deslizando. Instala la app de pruebas nueva desde la página de progreso.',

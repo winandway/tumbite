@@ -38,6 +38,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['vehiculos', 'acepta_menores', 'INTEGER NOT NULL DEFAULT 1'],
   // C-AVISOS-WEB (14 nov 2026): la sesión que registró la suscripción web (al borrarla, se borra).
   ['suscripciones_web', 'sesion_id', 'TEXT'],
+  // C-AVISOS-IDIOMA (16 nov 2026): cada teléfono y cada navegador guarda el idioma de su app (el
+  // elegido en el selector o, si no eligió, el del teléfono). El aviso sale en ESE idioma.
+  ['dispositivos', 'idioma', 'TEXT'],
+  ['suscripciones_web', 'idioma', 'TEXT'],
   // C-RUTA-POR-CALLES (13 nov 2026): de dónde salió la distancia cobrada en la cotización.
   ['cotizaciones_viaje', 'fuente_distancia', "TEXT NOT NULL DEFAULT 'estimada'"],
   // C-CIUDAD-ERRORES (13 nov 2026): de quién era la sesión del error no controlado (solo el id).

@@ -55,7 +55,13 @@ export async function darDeBajaAvisos(api: Api) {
  * `preguntar` en false: no muestra la ventana del sistema todavía (la app primero explica para qué
  * los quiere, C-PERMISOS-EXPLICADOS); si el permiso ya estaba dado, se registra igual.
  */
-export function useAvisosCelular(api: Api, usuario: Usuario | null, preguntar = true) {
+export function useAvisosCelular(
+  api: Api,
+  usuario: Usuario | null,
+  preguntar = true,
+  /** C-AVISOS-IDIOMA: el idioma de la app (el elegido o el del teléfono); al cambiar, se vuelve a registrar. */
+  idioma?: 'es' | 'en',
+) {
   useEffect(() => {
     if (!usuario || Platform.OS === 'web') return;
     let vivo = true;
@@ -80,7 +86,11 @@ export function useAvisosCelular(api: Api, usuario: Usuario | null, preguntar = 
           );
         const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: proyecto });
         if (!vivo) return;
-        await api.pedir('POST', '/datos/cuentas/dispositivo', { token, plataforma: Platform.OS });
+        await api.pedir('POST', '/datos/cuentas/dispositivo', {
+          token,
+          plataforma: Platform.OS,
+          ...(idioma ? { idioma } : {}),
+        });
       } catch (e) {
         console.warn('avisos: no se pudo registrar el teléfono', e);
       }
@@ -88,7 +98,7 @@ export function useAvisosCelular(api: Api, usuario: Usuario | null, preguntar = 
     return () => {
       vivo = false;
     };
-  }, [api, usuario, preguntar]);
+  }, [api, usuario, preguntar, idioma]);
 }
 
 /**

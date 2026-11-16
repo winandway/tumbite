@@ -49,7 +49,7 @@ describe('pantallas de Comida con el diseño aprobado', () => {
     const pedido = leer(...CLIENTE, 'app', 'order', '[id].tsx');
     expect(pedido).toMatch(/nuevo &&\s*!verSeguimiento/);
     expect(pedido).toMatch(/\/llamar`/);
-    expect(pedido).toMatch(/<ChatPedido pedidoId=\{p\.id\}/);
+    expect(pedido).toMatch(/<ChatPedido\s+pedidoId=\{p\.id\}/);
     expect(pedido).toMatch(/<FotoPedido\s+pedidoId=\{p\.id\}\s+tipo="entrega"/);
     expect(pedido).toMatch(/\/calificar`/);
   });

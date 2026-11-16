@@ -464,6 +464,11 @@
     },
     {
       "fecha": "2026-11-15",
+      "titulo": "Docs: capturas que se abren en grande y un buscador de verdad",
+      "texto": "Cada captura de Docs es ahora un botón: se abre a pantalla completa, en su versión nítida, con su explicación debajo, y se acerca con la rueda, con «+» y «−», con dos dedos o con doble toque; las flechas pasan a la siguiente y Escape o tocar afuera la cierran. El buscador de arriba abre una lista de guías desde la primera letra, con la palabra resaltada, se usa con el teclado, tolera errores de escritura y entiende los dos idiomas (wallet y billetera, tracking y rastreo, top up y recargar). Corre en el navegador con un motor de código libre, sin costo ni servicio externo. Nueva guía «Buscar en Docs y ampliar una captura» en español e inglés. Todos los países."
+    },
+    {
+      "fecha": "2026-11-15",
       "titulo": "La página de Flex en inglés y las guías de Envíos en español, cada una con su país",
       "texto": "La página pública de Divoox Flex en inglés ya no enseña el cobro contra entrega con capturas de Venezuela: dice que en Estados Unidos no se usa y muestra lo que sí hay allá, la recarga de la billetera con tarjeta y la parada del conductor sin nada que cobrar, con capturas tomadas en Novi, Michigan. Se revisaron una por una las demás imágenes en inglés de la web y todas son de Estados Unidos. Del lado del español, las guías de Envíos (enviar un paquete, recibir un paquete y entregar paquetes) ahora se enseñan en El Vigía, en dólares con su equivalente en bolívares y con efectivo o pago móvil. El candado vigila las dos cosas."
     },

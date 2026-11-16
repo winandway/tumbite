@@ -2,6 +2,7 @@ import type { Idioma } from '@tumbite/compartido';
 import type { Captura, Guia, SeccionDocs } from './guias';
 import { GUIAS_FLEX_ENVIOS } from './semanaFlexEnvios';
 import { GUIAS_FOTO_PUERTA } from './fotoPuerta';
+import { GUIAS_MODERACION } from './moderacion';
 import { GUIAS_FLEX_BLOQUE } from './flexBloque';
 import { GUIAS_SERVICIOS_CONECTADOS } from './serviciosConectados';
 
@@ -361,7 +362,16 @@ function juntar(idioma: Idioma): PorSeccion {
   const f = new Map(
     Object.entries(idioma === 'es' ? GUIAS_SERVICIOS_CONECTADOS.es : GUIAS_SERVICIOS_CONECTADOS.en),
   );
-  const ids = new Set([...a.keys(), ...b.keys(), ...c.keys(), ...d.keys(), ...f.keys()]);
+  // C-MODERACION y C-AVISOS-IDIOMA (16 nov 2026).
+  const e = new Map(Object.entries(idioma === 'es' ? GUIAS_MODERACION.es : GUIAS_MODERACION.en));
+  const ids = new Set([
+    ...a.keys(),
+    ...b.keys(),
+    ...c.keys(),
+    ...d.keys(),
+    ...e.keys(),
+    ...f.keys(),
+  ]);
   return Object.fromEntries(
     [...ids].map((id) => [
       id,
@@ -371,6 +381,7 @@ function juntar(idioma: Idioma): PorSeccion {
         ...(b.get(id) ?? []),
         ...(c.get(id) ?? []),
         ...(d.get(id) ?? []),
+        ...(e.get(id) ?? []),
       ],
     ]),
   ) as PorSeccion;

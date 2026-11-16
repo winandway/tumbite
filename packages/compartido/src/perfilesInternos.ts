@@ -27,6 +27,8 @@ const SOPORTE = [
   'auditoria',
   'mis-avisos',
   'seguridad',
+  // C-MODERACION: la bandeja de reportes (mensajes y reseñas) es trabajo de soporte.
+  'reportes',
 ];
 /** Familias de dinero y configuración de países. */
 const FINANZAS = [

@@ -111,10 +111,13 @@ import {
   abrirPanel,
   AvisoDeshacer,
   Boton,
+  CASILLA_EN_FILA,
+  FilaConBoton,
   C,
   ChatPedido,
   MenuCuenta,
   OpcionesCuenta,
+  PersonasBloqueadas,
   AjusteMapa,
   VersionInstalada,
   MisCasos,
@@ -1446,18 +1449,18 @@ export function Inicio() {
             <Boton texto={t.escanear} alTocar={() => void escanear()} exito />
           ) : null}
           <Text style={{ color: '#666B73', fontSize: 13, marginTop: 6 }}>{t.escribirCodigo}</Text>
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <FilaConBoton>
             <TextInput
               value={codigo}
               onChangeText={(x) => setCodigo(x.toUpperCase().slice(0, 4))}
               placeholder="A1B2"
               accessibilityLabel={t.escribirCodigo}
               autoCapitalize="characters"
-              style={[e.input, { flex: 1, minWidth: 0, letterSpacing: 4 }]}
+              style={[e.input, CASILLA_EN_FILA, { letterSpacing: 4 }]}
             />
             {/* C-BOTON-EN-FILA: sin caja de ancho fijo; la palabra nunca se parte. */}
             <Boton texto={t.verificar} alTocar={() => void verificar(codigo)} secundario enFila />
-          </View>
+          </FilaConBoton>
         </>
       )
     ) : null;
@@ -2140,6 +2143,8 @@ export function Inicio() {
         />
         {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
         <AjusteMapa />
+        {/* C-MODERACION: a quién bloqueó y «Desbloquear». */}
+        <PersonasBloqueadas />
         {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista (si
             ya se abrió arriba con los tres puntos, no se repite aquí). */}
         {cuentaArriba ? null : <OpcionesCuenta />}

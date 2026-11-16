@@ -1583,7 +1583,11 @@ function SeguirPedido() {
         ) : null}
         {p.repartidor && ['aceptado', 'listo', 'en_camino'].includes(p.estado) ? (
           <View onLayout={(ev) => (posChat.current = ev.nativeEvent.layout.y)}>
-            <ChatPedido pedidoId={p.id} elegirFoto={elegirFotoQueja(idioma)} />
+            <ChatPedido
+              pedidoId={p.id}
+              elegirFoto={elegirFotoQueja(idioma)}
+              nombreOtro={p.repartidor.nombre.split(' ')[0]}
+            />
           </View>
         ) : null}
 

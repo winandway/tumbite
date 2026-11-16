@@ -224,6 +224,9 @@ const LISTAS_DE_NUMEROS = [
   'GET /admin/pedidos/contadores',
   'GET /admin/datos-personales/:tipo/:id/:campo',
   'POST /admin/tickets',
+  // C-MODERACION: la consulta lleva el alcance (la prueba propia está en moderacion.test.ts).
+  'GET /admin/reportes',
+  'POST /admin/reportes/:id/accion',
 ];
 
 const conIds = (patron: string, valor: (param: string) => string) =>

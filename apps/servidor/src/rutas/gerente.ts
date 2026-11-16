@@ -171,11 +171,12 @@ gerente.post('/gerente/tickets/:id/responder', async (c) => {
   let aviso: 'ok' | 'error' | 'sin_app' = 'sin_app';
   if (t.usuario_id) {
     try {
-      const r = await notificar(c.env, db, t.usuario_id, {
-        titulo: en ? `We replied to your case ${numero}` : `Te respondimos tu caso ${numero}`,
+      const r = await notificar(c.env, db, t.usuario_id, (i) => ({
+        titulo:
+          i === 'en' ? `We replied to your case ${numero}` : `Te respondimos tu caso ${numero}`,
         cuerpo: d.texto.slice(0, 140),
         datos: { tipo: 'ticket', codigo: t.codigo },
-      });
+      }));
       aviso = r.enviados > 0 ? 'ok' : 'sin_app';
     } catch (e) {
       aviso = 'error';
