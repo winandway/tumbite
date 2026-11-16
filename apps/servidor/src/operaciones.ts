@@ -11,6 +11,7 @@ import {
 import { destinosActivos } from './modoDestino';
 import { comisionConductor, devolverReservaViaje } from './finanzas/conductor';
 import { soltarCobroViaje } from './viajesCobro';
+import { parejasBloqueadas } from './rutas/moderacion';
 import { notificar } from './notificaciones';
 
 /**
@@ -315,12 +316,8 @@ async function avisarProgramadoSinConductor(
   operacionId: string,
   clienteId: string,
 ) {
-  const u = await db
-    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-    .bind(clienteId)
-    .first<{ idioma: string | null }>();
-  const aviso =
-    u?.idioma === 'en'
+  await notificar(env, db, clienteId, (i) => ({
+    ...(i === 'en'
       ? {
           titulo: 'No driver for your scheduled ride',
           cuerpo: 'We couldn’t find a driver in time. It was canceled at no charge.',
@@ -328,11 +325,9 @@ async function avisarProgramadoSinConductor(
       : {
           titulo: 'No hubo conductor para tu viaje programado',
           cuerpo: 'No encontramos conductor a tiempo. Se canceló sin cargo.',
-        };
-  await notificar(env, db, clienteId, {
-    ...aviso,
+        }),
     datos: { tipo: 'viaje', viajeId: operacionId },
-  }).catch((e: unknown) => console.error('viajes programados: aviso sin conductor', e));
+  })).catch((e: unknown) => console.error('viajes programados: aviso sin conductor', e));
 }
 
 /** C-ENVIO-TAMANO: el vehículo activo de cada candidato (tipo y si la moto lleva cajón). */
@@ -446,7 +441,7 @@ export async function repartirOperaciones(
       );
   const { results: buscando } = await db
     .prepare(
-      `SELECT o.id, o.servicio_id, o.zona_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais,
+      `SELECT o.id, o.servicio_id, o.zona_id, o.cliente_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais,
               v.metodo_pago, (SELECT p.tamano FROM envios_persona p WHERE p.operacion_id = o.id) AS tamano
          FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
@@ -460,6 +455,7 @@ export async function repartirOperaciones(
       id: string;
       servicio_id: string;
       zona_id: string;
+      cliente_id: string;
       origen_lat: number;
       origen_lng: number;
       destino_lat: number | null;
@@ -472,6 +468,14 @@ export async function repartirOperaciones(
     }>();
   let ofrecidas = 0;
   const yaOfrecidos = new Set<string>();
+  // C-MODERACION: un viaje nunca se le ofrece a un conductor que el pasajero bloqueó (ni a uno que
+  // bloqueó al pasajero). Una consulta por vuelta.
+  const bloqueadas = buscando.length
+    ? await parejasBloqueadas(
+        db,
+        buscando.map((o) => o.cliente_id),
+      )
+    : new Map<string, Set<string>>();
   // C-MODO-DESTINO (BRE-R2): el modo destino vale para todos los servicios, no solo comida: quien
   // lo tiene encendido solo recibe viajes y envíos cuyo destino lo acerca al suyo.
   const destinos = buscando.length ? await destinosActivos(db) : new Map();
@@ -537,6 +541,7 @@ export async function repartirOperaciones(
         : null;
     const elegido = candidatos.find((c) => {
       if (yaOfrecidos.has(c.conductorId)) return false;
+      if (bloqueadas.get(op.cliente_id)?.has(c.conductorId)) return false;
       if (vehiculos && op.tamano) {
         const v = vehiculos.get(c.conductorId);
         if (!v || !vehiculoLlevaPaquete(op.tamano, v)) return false;

@@ -445,21 +445,18 @@ export async function aplicarAjuste(
   );
   // Pedido en mano: la comisión apartada baja con la comida (C-RESERVA-AJUSTE).
   await ajustarReservaDirecta(db, pedidoId);
-  const cli = await db
-    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-    .bind(String(f.cliente_id))
-    .first<{ idioma: string }>();
-  const i = cli?.idioma === 'en' ? 'en' : 'es';
-  const nombreFalta = i === 'en' ? String(f.aj_en || f.aj_es) : String(f.aj_es);
-  await notificar(env, db, String(f.cliente_id), {
-    ...(reemplazo
-      ? AVISOS.platoReemplazado(
-          i,
-          nombreFalta,
-          i === 'en' ? reemplazo.nombreEn || reemplazo.nombreEs : reemplazo.nombreEs,
-        )
-      : AVISOS.platoQuitado(i, nombreFalta, devolucion, String(f.moneda ?? 'USD'))),
-    datos: { pedidoId },
+  await notificar(env, db, String(f.cliente_id), (i) => {
+    const nombreFalta = i === 'en' ? String(f.aj_en || f.aj_es) : String(f.aj_es);
+    return {
+      ...(reemplazo
+        ? AVISOS.platoReemplazado(
+            i,
+            nombreFalta,
+            i === 'en' ? reemplazo.nombreEn || reemplazo.nombreEs : reemplazo.nombreEs,
+          )
+        : AVISOS.platoQuitado(i, nombreFalta, devolucion, String(f.moneda ?? 'USD'))),
+      datos: { pedidoId },
+    };
   });
   return { devolucion, cancelado: false };
 }
@@ -1575,11 +1572,8 @@ pedidos.post('/stripe/aviso', async (c) => {
         duenio?.idioma === 'en' ? 'en' : 'es',
       );
       if (duenio) {
-        await notificar(
-          c.env,
-          db,
-          duenio.usuario_id,
-          AVISOS.abonoFallido(duenio.idioma, monto),
+        await notificar(c.env, db, duenio.usuario_id, (i) =>
+          AVISOS.abonoFallido(i, formatearDolares(Number(obj.amount ?? 0), i)),
         ).catch((e: unknown) => console.error('abono fallido: aviso', e));
         await enviarCorreo(c.env, {
           de: 'avisos',
@@ -1699,13 +1693,10 @@ async function avisosDePedidoPagado(env: Env, db: D1Database, pedidoId: string) 
     moneda: String(f.moneda ?? 'USD'),
   });
   await avisoDeRegalo(env, db, pedidoId);
-  await notificar(env, db, String(f.dueno_id), {
-    ...AVISOS.pedidoNuevo(
-      f.dueno_idioma === 'en' ? 'en' : 'es',
-      pedidoId.slice(0, 8).toUpperCase(),
-    ),
+  await notificar(env, db, String(f.dueno_id), (i) => ({
+    ...AVISOS.pedidoNuevo(i, pedidoId.slice(0, 8).toUpperCase()),
     datos: { pedidoId },
-  });
+  }));
 }
 
 /**
@@ -2243,10 +2234,10 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
     .bind(id)
     .first<{ repartidor_id: string; idioma: string }>();
   if (asignado)
-    await notificar(c.env, db, asignado.repartidor_id, {
-      ...AVISOS.repDireccion(asignado.idioma, d.direccion),
+    await notificar(c.env, db, asignado.repartidor_id, (i) => ({
+      ...AVISOS.repDireccion(i, d.direccion),
       datos: { pedidoId: id },
-    }).catch((e: unknown) => console.error('aviso dirección al repartidor', e));
+    })).catch((e: unknown) => console.error('aviso dirección al repartidor', e));
   return c.json({ ok: true, total: nuevoTotal, envio: desglose.envio });
 });
 
@@ -2363,21 +2354,11 @@ pedidos.post('/pedidos/:id/propina', async (c) => {
       )
       .bind(nuevoId(), String(f.repartidor_id), id, centavos, id),
   ]);
-  const idiomaRep =
-    (
-      await db
-        .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-        .bind(String(f.repartidor_id))
-        .first<{ idioma: string }>()
-    )?.idioma ?? 'es';
-  await notificar(
-    c.env,
-    db,
-    String(f.repartidor_id),
+  await notificar(c.env, db, String(f.repartidor_id), (i) =>
     AVISOS.propinaExtra(
-      idiomaRep,
+      i,
       // C-MONEDA-RECORRIDO: en la moneda del pedido (con tarjeta hoy siempre es USD).
-      formatearMonto(centavos, String(f.moneda ?? 'USD'), idiomaRep === 'en' ? 'en' : 'es'),
+      formatearMonto(centavos, String(f.moneda ?? 'USD'), i),
     ),
   ).catch((e: unknown) => console.error('propina extra: aviso', e));
   return c.json({ ok: true, centavos });

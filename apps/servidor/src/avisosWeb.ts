@@ -232,6 +232,19 @@ export function esServicioDeAvisos(endpoint: string): boolean {
   }
 }
 
+/** C-AVISOS-IDIOMA: el idioma que dice la app (cuerpo o cabecera x-idioma); null si no lo dice. */
+export function idiomaDeLaApp(
+  delCuerpo: string | undefined,
+  cabecera: string | undefined,
+): 'es' | 'en' | null {
+  for (const x of [delCuerpo, cabecera]) {
+    const v = (x ?? '').toLowerCase();
+    if (v.startsWith('es')) return 'es';
+    if (v.startsWith('en')) return 'en';
+  }
+  return null;
+}
+
 export type AvisoWeb = { titulo: string; cuerpo: string; datos?: Record<string, string> };
 
 /** Un envío a UNA suscripción. Devuelve 1 si el servicio lo aceptó. Nunca lanza. */
@@ -302,28 +315,42 @@ export async function notificarWeb(
   env: Env,
   db: D1Database,
   usuarioId: string,
-  aviso: AvisoWeb,
+  aviso: AvisoWeb | ((idioma: 'es' | 'en') => AvisoWeb),
 ): Promise<number> {
   if (!avisosWebConfigurado(env)) return 0;
   try {
+    // C-AVISOS-IDIOMA: cada navegador recibe el aviso en el idioma de su app (si no lo dijo, el de
+    // la cuenta; si nada se sabe, inglés).
     const { results } = await db
       .prepare(
-        `SELECT endpoint, p256dh, auth FROM suscripciones_web WHERE usuario_id = ?
-          ORDER BY creado_en DESC, rowid DESC LIMIT ${avisosWebInterno.MAX_POR_USUARIO}`,
+        `SELECT s.endpoint, s.p256dh, s.auth, s.idioma, u.idioma AS idioma_cuenta FROM suscripciones_web s
+           LEFT JOIN usuarios u ON u.id = s.usuario_id WHERE s.usuario_id = ?
+          ORDER BY s.creado_en DESC, s.rowid DESC LIMIT ${avisosWebInterno.MAX_POR_USUARIO}`,
       )
       .bind(usuarioId)
-      .all<{ endpoint: string; p256dh: string; auth: string }>();
+      .all<{
+        endpoint: string;
+        p256dh: string;
+        auth: string;
+        idioma: string | null;
+        idioma_cuenta: string | null;
+      }>();
     if (!results.length) return 0;
-    const texto = enc.encode(
-      JSON.stringify({
-        titulo: aviso.titulo.slice(0, 200),
-        cuerpo: aviso.cuerpo.slice(0, 600),
-        datos: aviso.datos ?? {},
-      }).slice(0, MAX_TEXTO),
-    );
-    const todo = Promise.all(results.map((s) => enviarUno(env, db, s, texto))).then((r) =>
-      r.reduce<number>((n, x) => n + x, 0),
-    );
+    const textoEn = (i: 'es' | 'en') => {
+      const a = typeof aviso === 'function' ? aviso(i) : aviso;
+      return enc.encode(
+        JSON.stringify({
+          titulo: a.titulo.slice(0, 200),
+          cuerpo: a.cuerpo.slice(0, 600),
+          datos: a.datos ?? {},
+        }).slice(0, MAX_TEXTO),
+      );
+    };
+    const idiomaDe = (x: string | null, cuenta: string | null): 'es' | 'en' =>
+      x === 'es' || x === 'en' ? x : cuenta === 'es' || cuenta === 'en' ? cuenta : 'en';
+    const todo = Promise.all(
+      results.map((s) => enviarUno(env, db, s, textoEn(idiomaDe(s.idioma, s.idioma_cuenta)))),
+    ).then((r) => r.reduce<number>((n, x) => n + x, 0));
     if (env.ESPERAR_DESPUES) {
       try {
         env.ESPERAR_DESPUES(todo);
@@ -367,6 +394,8 @@ const esquemaSuscripcion = z.object({
     auth: z.string().regex(/^[A-Za-z0-9_-]{20,24}$/),
   }),
   app: z.enum(['cliente', 'repartidor', 'restaurante', 'panel']),
+  // C-AVISOS-IDIOMA: el idioma de la app en ese navegador (si no viene, el de la cabecera x-idioma).
+  idioma: z.enum(['es', 'en']).optional(),
 });
 const esquemaBaja = z.object({ endpoint: z.string().max(1000) });
 
@@ -387,6 +416,7 @@ rutasAvisosWeb.post('/suscripcion', async (c) => {
   if (!avisosWebConfigurado(c.env))
     throw new ErrorDatos('Los avisos en el navegador todavía no están encendidos.', undefined, 409);
   const d = await leerCuerpo(c, esquemaSuscripcion);
+  const idioma = idiomaDeLaApp(d.idioma, c.req.header('x-idioma'));
   // La sesión que la registró: al cerrarla, vencer o borrarla, la suscripción se borra con ella
   // (disparador suscripciones_web_sin_sesion), sin depender del navegador.
   const token = leerToken(c);
@@ -395,14 +425,15 @@ rutasAvisosWeb.post('/suscripcion', async (c) => {
   await db.batch([
     db
       .prepare(
-        `INSERT INTO suscripciones_web (endpoint, usuario_id, app, p256dh, auth, sesion_id) VALUES (?, ?, ?, ?, ?, ?)
+        `INSERT INTO suscripciones_web (endpoint, usuario_id, app, p256dh, auth, sesion_id, idioma) VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(endpoint) DO UPDATE SET usuario_id = excluded.usuario_id, app = excluded.app,
-           p256dh = excluded.p256dh, auth = excluded.auth, sesion_id = excluded.sesion_id
+           p256dh = excluded.p256dh, auth = excluded.auth, sesion_id = excluded.sesion_id, idioma = excluded.idioma
          WHERE suscripciones_web.usuario_id != excluded.usuario_id OR suscripciones_web.app != excluded.app
            OR suscripciones_web.p256dh != excluded.p256dh OR suscripciones_web.auth != excluded.auth
-           OR suscripciones_web.sesion_id IS NOT excluded.sesion_id`,
+           OR suscripciones_web.sesion_id IS NOT excluded.sesion_id
+           OR suscripciones_web.idioma IS NOT excluded.idioma`,
       )
-      .bind(d.endpoint, u.id, d.app, d.keys.p256dh, d.keys.auth, sesion),
+      .bind(d.endpoint, u.id, d.app, d.keys.p256dh, d.keys.auth, sesion, idioma),
     // Tope por persona: al pasarlo se borran las más viejas (nadie llena la tabla de destinos).
     db
       .prepare(
@@ -411,6 +442,14 @@ rutasAvisosWeb.post('/suscripcion', async (c) => {
             ORDER BY creado_en DESC, rowid DESC LIMIT ${avisosWebInterno.MAX_POR_USUARIO})`,
       )
       .bind(u.id, u.id),
+    // C-AVISOS-IDIOMA: el idioma de la app también es el de la cuenta (correos y SMS); no escribe si ya es ese.
+    ...(idioma
+      ? [
+          db
+            .prepare('UPDATE usuarios SET idioma = ?1 WHERE id = ?2 AND idioma IS NOT ?1')
+            .bind(idioma, u.id),
+        ]
+      : []),
   ]);
   return c.json({ ok: true });
 });

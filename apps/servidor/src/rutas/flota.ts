@@ -198,14 +198,14 @@ flota.post('/mi-restaurante/flota/invitaciones', async (c) => {
     .first<{ id: string; idioma: string }>();
   if (ya)
     avisos.push(
-      notificar(c.env, db, ya.id, {
-        titulo: ya.idioma === 'en' ? `${nombre} invited you` : `${nombre} te invitó`,
+      notificar(c.env, db, ya.id, (i) => ({
+        titulo: i === 'en' ? `${nombre} invited you` : `${nombre} te invitó`,
         cuerpo:
-          ya.idioma === 'en'
+          i === 'en'
             ? 'Open Divoox Driver and accept to deliver this restaurant’s orders.'
             : 'Abre Divoox Driver y acepta para repartir los pedidos de este restaurante.',
         datos: { tipo: 'flota_invitacion' },
-      }),
+      })),
     );
   // Nunca frena: si el correo no sale, el restaurante tiene el enlace para mandarlo él.
   await Promise.allSettled(avisos);

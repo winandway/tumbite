@@ -31,35 +31,82 @@ export type Aviso = {
 };
 
 /**
+ * C-AVISOS-IDIOMA (16 nov 2026, todos los países): un aviso se pide como una función del idioma
+ * (`(i) => AVISOS.algo(i, …)`) y cada teléfono o navegador lo recibe en el SUYO: el que la persona
+ * eligió en el selector de la app o, si no eligió, el del teléfono (lo manda la app al registrarse);
+ * si ese aparato no lo dijo, el idioma de la cuenta; y si nada se sabe, inglés (el principal).
+ * Un aviso de texto fijo (objeto) sale igual a todos: solo para textos sin idioma. Candado en
+ * `avisosIdioma.test.ts`: ningún `notificar(` del servidor manda un texto fijo.
+ */
+export type Idioma = 'es' | 'en';
+export type AvisoEnIdioma = Aviso | ((idioma: Idioma) => Aviso);
+
+/** El idioma de un aparato: el suyo, si no el de la cuenta, si no inglés. */
+export function idiomaAviso(
+  delAparato: string | null | undefined,
+  deLaCuenta?: string | null,
+): Idioma {
+  if (delAparato === 'es' || delAparato === 'en') return delAparato;
+  if (deLaCuenta === 'es' || deLaCuenta === 'en') return deLaCuenta;
+  return 'en';
+}
+
+/** El aviso en un idioma (memoriza: una vez por idioma, no una por aparato). */
+export function avisoPara(aviso: AvisoEnIdioma): (i: Idioma) => Aviso {
+  if (typeof aviso !== 'function') return () => aviso;
+  const hechos = new Map<Idioma, Aviso>();
+  return (i) => {
+    let a = hechos.get(i);
+    if (!a) {
+      a = aviso(i);
+      hechos.set(i, a);
+    }
+    return a;
+  };
+}
+
+/**
  * Un aviso sale por todos los canales que la persona tenga: la app de la tienda (Expo) y la app
  * instalada desde el navegador (Web Push, C-AVISOS-WEB). Cada canal tiene su propio destino (un
  * token de Expo no es una suscripción web), así que el mismo aviso no llega dos veces al mismo canal.
  */
-export async function notificar(env: Env, db: D1Database, usuarioId: string, aviso: Aviso) {
+export async function notificar(env: Env, db: D1Database, usuarioId: string, aviso: AvisoEnIdioma) {
+  const enIdioma = avisoPara(aviso);
   const [expo, web] = await Promise.all([
-    notificarExpo(env, db, usuarioId, aviso),
-    notificarWeb(env, db, usuarioId, aviso),
+    notificarExpo(env, db, usuarioId, enIdioma),
+    notificarWeb(env, db, usuarioId, enIdioma),
   ]);
   return { enviados: expo.enviados + web };
 }
 
-async function notificarExpo(env: Env, db: D1Database, usuarioId: string, aviso: Aviso) {
+async function notificarExpo(
+  env: Env,
+  db: D1Database,
+  usuarioId: string,
+  enIdioma: (i: Idioma) => Aviso,
+) {
   const { results } = await db
-    .prepare('SELECT token FROM dispositivos WHERE usuario_id = ? AND activo = 1')
+    .prepare(
+      `SELECT d.token, d.idioma, u.idioma AS idioma_cuenta FROM dispositivos d
+         LEFT JOIN usuarios u ON u.id = d.usuario_id WHERE d.usuario_id = ? AND d.activo = 1`,
+    )
     .bind(usuarioId)
-    .all<{ token: string }>();
+    .all<{ token: string; idioma: string | null; idioma_cuenta: string | null }>();
   if (!results.length) return { enviados: 0 };
-  const mensajes = results.map((d) => ({
-    to: d.token,
-    title: aviso.titulo,
-    body: aviso.cuerpo,
-    data: aviso.datos ?? {},
-    sound: aviso.sonido ?? 'default',
-    priority: 'high',
-    // Android: el canal que crea la app (importancia máxima). Sin él, el aviso cae en el canal
-    // genérico de Expo y puede llegar sin sonar ni aparecer arriba (C-AVISOS-CANAL).
-    channelId: 'pedidos',
-  }));
+  const mensajes = results.map((d) => {
+    const aviso = enIdioma(idiomaAviso(d.idioma, d.idioma_cuenta));
+    return {
+      to: d.token,
+      title: aviso.titulo,
+      body: aviso.cuerpo,
+      data: aviso.datos ?? {},
+      sound: aviso.sonido ?? 'default',
+      priority: 'high',
+      // Android: el canal que crea la app (importancia máxima). Sin él, el aviso cae en el canal
+      // genérico de Expo y puede llegar sin sonar ni aparecer arriba (C-AVISOS-CANAL).
+      channelId: 'pedidos',
+    };
+  });
   try {
     const headers: Record<string, string> = {
       'content-type': 'application/json',
@@ -132,6 +179,17 @@ export const AVISOS = {
     i === 'en'
       ? { titulo: 'Delivery address changed', cuerpo: `New address: ${direccion}` }
       : { titulo: 'Cambió la dirección de entrega', cuerpo: `Nueva dirección: ${direccion}` },
+  // C-AVISOS-IDIOMA: al restaurante con flota propia, cuando ninguno de sus repartidores está libre.
+  flotaSinRepartidor: (i: string, codigo: string): Aviso =>
+    i === 'en'
+      ? {
+          titulo: 'None of your couriers is free',
+          cuerpo: `Order ${codigo} is waiting for a courier. Let your team know or turn on Divoox backup.`,
+        }
+      : {
+          titulo: 'Ningún repartidor tuyo está libre',
+          cuerpo: `El pedido ${codigo} espera repartidor. Avísale a tu equipo o enciende el respaldo de Divoox.`,
+        },
   restNoListo: (i: string, codigo: string): Aviso =>
     i === 'en'
       ? {

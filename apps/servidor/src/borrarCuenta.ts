@@ -61,6 +61,10 @@ export async function borrarCuenta(
     db.prepare('DELETE FROM direcciones_cliente WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM suscripciones_web WHERE usuario_id = ?').bind(u.id),
+    // C-MODERACION: sus bloqueos (los que hizo y los que le hicieron) y la nota de sus reportes.
+    db.prepare('DELETE FROM bloqueos_usuario WHERE usuario_id = ?').bind(u.id),
+    db.prepare('DELETE FROM bloqueos_usuario WHERE bloqueado_id = ?').bind(u.id),
+    db.prepare("UPDATE reportes_contenido SET nota = '' WHERE reporta_id = ?").bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),

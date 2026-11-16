@@ -98,6 +98,7 @@ import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
 import { viajesProgramados } from './rutas/viajesProgramados';
 import { chatViaje } from './rutas/chatViaje';
+import { moderacion } from './rutas/moderacion';
 import { paradasViaje } from './rutas/paradasViaje';
 import { dinamicaViaje } from './rutas/dinamicaViaje';
 import { comidaCiudad } from './rutas/comidaCiudad';
@@ -605,6 +606,8 @@ app.route('/datos', viajesHistorial);
 // C-VIAJE-PROGRAMADO: antes que viajesPasajero, para que /viajes/programados no caiga en /viajes/:id.
 app.route('/datos', viajesProgramados);
 app.route('/datos', chatViaje);
+// C-MODERACION: reportar, bloquear y la bandeja de reportes del equipo.
+app.route('/datos', moderacion);
 // C-VIAJE-PARADAS y C-CARRO-DINAMICA (14 nov 2026).
 app.route('/datos', paradasViaje);
 app.route('/datos', dinamicaViaje);

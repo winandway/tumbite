@@ -388,13 +388,20 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
     // (145 al integrar cinco ramas el 14 nov 2026). Esa parte crece con cada tabla nueva que la
     // tenga, así que el tope la suma aparte: 56 filas propias de la ruta + una por clave.
     const clavesAUsuarios = (leer('schema.sql').match(/REFERENCES usuarios\b/g) ?? []).length;
+    // F1 cuenta dos veces los disparadores en `sqlite_master` (una fila por tabla, índice y
+    // disparador): esa parte crece con cada tabla nueva del esquema (C-MODERACION sumó 10 el 16 nov
+    // 2026). El tope la suma aparte: 488 filas propias de la ruta + 2 por objeto del esquema.
+    const objetosEsquema = Number(
+      (await m.DB.prepare('SELECT COUNT(*) AS n FROM sqlite_master').first<{ n: number }>())?.n ??
+        0,
+    );
     const topes: [string, number, unknown?][] = [
       ['s2', 56 + clavesAUsuarios],
       ['s4', 1_600], // 20 × «LIMIT 50» (el medidor nuevo respeta el LIMIT)
       ['s11', 200],
       ['s12', 13_700],
       ['l1', 54_000],
-      ['f1', 2_100],
+      ['f1', 488 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
       ['migraciones-prueba', 3_000],
       ['f2', 76_000],

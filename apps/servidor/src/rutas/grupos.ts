@@ -280,14 +280,15 @@ export async function avisarGruposVencidos(env: Env, db: D1Database) {
       .bind(g.id)
       .run();
     if (!r.meta.changes) continue;
-    const en = g.idioma === 'en';
-    await notificar(env, db, g.anfitrion_id, {
-      titulo: en ? 'Your group order is ready to check out' : 'Tu pedido en grupo ya se cerró',
-      cuerpo: en
-        ? 'It’s closing time: nobody can add more. Review it and pay.'
-        : 'Llegó la hora: ya nadie puede agregar más. Revísalo y paga.',
+    await notificar(env, db, g.anfitrion_id, (i) => ({
+      titulo:
+        i === 'en' ? 'Your group order is ready to check out' : 'Tu pedido en grupo ya se cerró',
+      cuerpo:
+        i === 'en'
+          ? 'It’s closing time: nobody can add more. Review it and pay.'
+          : 'Llegó la hora: ya nadie puede agregar más. Revísalo y paga.',
       datos: { grupo: g.codigo },
-    }).catch((e: unknown) => console.error('pedido en grupo: aviso', g.id, e));
+    })).catch((e: unknown) => console.error('pedido en grupo: aviso', g.id, e));
   }
 }
 

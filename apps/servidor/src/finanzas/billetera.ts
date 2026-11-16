@@ -865,10 +865,10 @@ export async function avisarFinanzas(
       .bind(`fin:${clave}:${u.id}`, u.id, 'finanzas')
       .run();
     if (!r.meta.changes) continue;
-    await notificar(env, db, u.id, {
-      ...texto(u.idioma),
+    await notificar(env, db, u.id, (i) => ({
+      ...texto(i),
       datos: { tipo: 'flex_finanzas', empresaId },
-    }).catch((e: unknown) => console.error('finanzas: aviso', e));
+    })).catch((e: unknown) => console.error('finanzas: aviso', e));
   }
 }
 

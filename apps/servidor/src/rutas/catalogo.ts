@@ -554,13 +554,19 @@ catalogo.get('/restaurantes/:id/resenas', async (c) => {
   if (!calificacion) return c.json({ calificacion: null, resenas: [] });
   const { results } = await db
     .prepare(
-      `SELECT c.estrellas_restaurante AS estrellas, c.comentario, c.respuesta, c.creado_en, u.nombre
+      // C-MODERACION: cada reseña lleva su número (para «Reportar») y no salen las que el equipo o el
+      // filtro ocultaron; una respuesta oculta del restaurante tampoco.
+      `SELECT c.rowid AS id, c.estrellas_restaurante AS estrellas, c.comentario, c.creado_en, u.nombre,
+              CASE WHEN EXISTS (SELECT 1 FROM contenido_oculto o WHERE o.tipo = 'respuesta_resena' AND o.ref = c.pedido_id)
+                   THEN NULL ELSE c.respuesta END AS respuesta
          FROM calificaciones c JOIN pedidos p ON p.id = c.pedido_id JOIN usuarios u ON u.id = p.cliente_id
         WHERE p.restaurante_id = ? AND c.estrellas_restaurante IS NOT NULL AND TRIM(c.comentario) <> ''
+          AND NOT EXISTS (SELECT 1 FROM contenido_oculto o WHERE o.tipo = 'resena' AND o.ref = c.pedido_id)
         ORDER BY c.creado_en DESC LIMIT 20`,
     )
     .bind(f.id)
     .all<{
+      id: number;
       estrellas: number;
       comentario: string;
       respuesta: string | null;
@@ -571,6 +577,7 @@ catalogo.get('/restaurantes/:id/resenas', async (c) => {
   return c.json({
     calificacion,
     resenas: results.map((x) => ({
+      id: Number(x.id),
       cliente: String(x.nombre ?? '').split(' ')[0],
       estrellas: Number(x.estrellas),
       comentario: x.comentario,

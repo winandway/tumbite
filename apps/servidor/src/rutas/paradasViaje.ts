@@ -354,16 +354,12 @@ export async function cambiarParadas(
 }
 
 async function avisarCambio(env: Env, db: D1Database, para: string, viajeId: string) {
-  const u = await db
-    .prepare('SELECT idioma FROM usuarios WHERE id = ?')
-    .bind(para)
-    .first<{ idioma: string }>();
-  const en = u?.idioma === 'en';
-  await notificar(env, db, para, {
-    titulo: en ? 'The trip stops changed' : 'Cambiaron las paradas del viaje',
-    cuerpo: en ? 'Open the trip to see the new route.' : 'Abre el viaje para ver la ruta nueva.',
+  await notificar(env, db, para, (i) => ({
+    titulo: i === 'en' ? 'The trip stops changed' : 'Cambiaron las paradas del viaje',
+    cuerpo:
+      i === 'en' ? 'Open the trip to see the new route.' : 'Abre el viaje para ver la ruta nueva.',
     datos: { tipo: 'viaje', viajeId },
-  }).catch((e: unknown) => console.error('paradas: aviso del cambio', e));
+  })).catch((e: unknown) => console.error('paradas: aviso del cambio', e));
 }
 
 // ---------------------------------------------------------------- pasajero
