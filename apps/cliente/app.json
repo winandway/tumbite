@@ -116,6 +116,7 @@
       "package": "com.windoce.tumbite",
       "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
       "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
@@ -150,6 +151,8 @@
         {
           "locationWhenInUsePermission": "Divoox uses your location to show nearby restaurants and to deliver your order.",
           "locationAlwaysPermission": false,
+          "isAndroidForegroundServiceEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false,
           "locationAlwaysAndWhenInUsePermission": false,
           "motionUsagePermission": "Divoox may use your phone’s motion sensors to turn the map toward the direction you are facing."
         }

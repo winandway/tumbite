@@ -23,10 +23,12 @@ export type DocumentoLegal = {
 const FECHA = { es: 'Actualizado: 18 de octubre de 2026', en: 'Last updated: October 18, 2026' };
 const EMPRESA = 'Windoce, LLC';
 const SITIO = 'https://divoox.com';
-// C-SMS-CONSENTIMIENTO: Privacidad y Términos cambiaron el 9 nov 2026 (sección de SMS).
-const FECHA_SMS = {
-  es: 'Actualizado: 15 de noviembre de 2026',
-  en: 'Last updated: November 15, 2026',
+// C-BORRADO-CHAT: Privacidad, Términos y Borrar cuenta cambiaron el 16 nov 2026 (chat, reportes y
+// bloqueos, ubicación compartida durante el pedido y avisos en el idioma del teléfono). Antes,
+// C-SMS-CONSENTIMIENTO los había cambiado el 15 nov (sección de SMS).
+const FECHA_CHAT = {
+  es: 'Actualizado: 16 de noviembre de 2026',
+  en: 'Last updated: November 16, 2026',
 };
 
 // ─────────────────────────────── Privacidad ───────────────────────────────
@@ -34,7 +36,7 @@ const FECHA_SMS = {
 export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Política de privacidad',
-    actualizado: FECHA_SMS.es,
+    actualizado: FECHA_CHAT.es,
     intro: `Esta política explica qué datos personales recoge Divoox, cómo los usa, con quién los comparte, cuánto tiempo los guarda y cómo puedes borrarlos. Aplica a la app Divoox (clientes), Divoox Driver (repartidores), Divoox para restaurantes, el panel web y ${SITIO}.`,
     secciones: [
       {
@@ -51,9 +53,11 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Datos de tus pedidos: lo que pides, el restaurante, la dirección de entrega, las indicaciones para el repartidor, los importes, la propina, las calificaciones y los comentarios que dejas.',
           'Verificación de identidad (repartidores y dueños de restaurante): una foto de tu documento (frente y reverso) y una foto de tu cara, que toma tu cámara. Si tienes un restaurante, también una foto del local con la ubicación del celular en ese momento, para comprobar que existe en la dirección registrada. Una persona del equipo compara las fotos; no creamos plantillas biométricas de tu cara. Las fotos se guardan en un almacén privado que solo ve el equipo de Divoox y se borran cuando borras tu cuenta.',
           'Fotos de tu puerta (clientes, opcional): en cada dirección guardada puedes agregar hasta tres fotos del frente de tu casa o edificio y de tu puerta, para que tu repartidor te encuentre. Se guardan en un almacén privado, sin los datos de ubicación que el teléfono pone dentro del archivo. Solo las ve el repartidor asignado a tu pedido y solo mientras ese pedido va en camino; ni antes de recogerlo ni después de entregarlo. No las usamos para mercadeo, publicidad ni para entrenar ningún sistema. Puedes cambiarlas o borrarlas cuando quieras, y se borran cuando borras la dirección o tu cuenta.',
+          'Mensajes del chat: mientras un pedido o un viaje está en curso puedes escribirle y mandarle fotos a tu repartidor o conductor (y él a ti) dentro de la app. Guardamos el texto, las fotos y la hora de cada mensaje. Solo los ven las dos personas de ese pedido y, si alguien reporta un mensaje, el equipo de Divoox para revisarlo. El chat se cierra cuando termina el pedido. Lo que tú escribiste y mandaste se borra cuando borras tu cuenta.',
+          'Reportes y bloqueos: si reportas un mensaje, una reseña o una persona, guardamos el motivo, la nota que escribas y una copia del contenido reportado, para que el equipo de Divoox lo revise (respondemos en menos de 24 horas) y tome medidas: ocultarlo, avisar o suspender la cuenta. Si bloqueas a alguien, guardamos ese bloqueo para que no vuelva a escribirte ni a tocarte en un pedido. Un filtro automático tapa las palabras ofensivas en el chat y retiene las reseñas ofensivas para revisión. Puedes desbloquear a una persona cuando quieras en Mi cuenta → Personas bloqueadas.',
           'Ubicación: solo con tu permiso. Ver la sección 4.',
           'Pagos: los procesa Stripe. Nosotros nunca recibimos ni guardamos el número completo de tu tarjeta, el código de seguridad ni tus datos bancarios. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta.',
-          'Datos técnicos: el identificador del teléfono para enviarte avisos (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
+          'Datos técnicos: el identificador del teléfono y su idioma para enviarte avisos en tu idioma (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
           'Lista de espera: si te anotas en divoox.com, tu nombre, correo, ciudad y, si lo das, tu teléfono.',
         ],
       },
@@ -67,7 +71,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '4. Ubicación',
         parrafos: [
-          'App de clientes: con tu permiso, usamos tu ubicación mientras usas la app para mostrarte los restaurantes cercanos y marcar el punto de entrega. Si no das el permiso, puedes escribir tu dirección a mano y la app funciona igual.',
+          'App de clientes: con tu permiso, usamos tu ubicación mientras usas la app para mostrarte los restaurantes cercanos y marcar el punto de entrega. Si no das el permiso, puedes escribir tu dirección a mano y la app funciona igual. El punto de entrega de tu pedido se comparte con el repartidor asignado, solo mientras lo lleva.',
           'App de repartidores: la ubicación es necesaria para recibir y hacer entregas. Se comparte solo mientras estás conectado o tienes una entrega activa, para ofrecerte pedidos cercanos y para que el cliente vea su pedido en el mapa. Guardamos solo tu última posición, no tu recorrido, y se borra al desconectarte o al borrar la cuenta.',
           'Puedes quitar el permiso de ubicación cuando quieras en los ajustes de tu teléfono.',
         ],
@@ -86,7 +90,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. Cuánto tiempo guardamos tus datos',
         parrafos: [
           'Mientras tu cuenta esté abierta, guardamos los datos de tu cuenta y de tus pedidos para darte el servicio.',
-          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, tus direcciones guardadas y las fotos de tu puerta, las fotos y datos de tu verificación de identidad, tu vehículo, licencia y seguro, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones y tu anotación en la lista de espera.',
+          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, tus direcciones guardadas y las fotos de tu puerta, las fotos y datos de tu verificación de identidad, tu vehículo, licencia y seguro, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones, el texto y las fotos de tus mensajes del chat, la nota de tus reportes y la copia de lo que escribiste en los reportes de otros, tus bloqueos y tu anotación en la lista de espera.',
           'Lo que guardamos sin tu nombre: el importe, la fecha y el restaurante de cada pedido, durante siete años, porque lo exigen las leyes de impuestos y contabilidad y para resolver reclamos de pago o fraude. Esos registros ya no te identifican.',
           'Copias de seguridad: guardamos copias diarias durante 30 días. Lo que borres desaparece de ellas cuando caducan, como máximo 30 días después.',
           'Stripe guarda los datos de tus pagos según su propia política y las leyes financieras.',
@@ -147,7 +151,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   },
   en: {
     titulo: 'Privacy Policy',
-    actualizado: FECHA_SMS.en,
+    actualizado: FECHA_CHAT.en,
     intro: `This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Divoox app (customers), Divoox Driver, Divoox for Restaurants, the web dashboard, and ${SITIO}.`,
     secciones: [
       {
@@ -164,9 +168,11 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Order information: what you order, the restaurant, the delivery address, notes for your driver, amounts, tip, and the ratings and comments you leave.',
           'Identity verification (drivers and restaurant owners): a photo of your ID document (front and back) and a photo of your face, taken with your camera. If you own a restaurant, also a photo of the storefront with your phone’s location at that moment, to confirm it exists at the registered address. A person on our team compares the photos; we don’t create biometric templates of your face. The photos are stored privately, only the Divoox team can see them, and they’re deleted when you delete your account.',
           'Photos of your door (customers, optional): for each saved address you can add up to three photos of the front of your house or building and of your door, so your courier can find you. They are stored in a private store, without the location data your phone embeds in the file. Only the courier assigned to your order sees them, and only while that order is on its way; not before pickup and not after delivery. We do not use them for marketing, advertising, or to train any system. You can change or delete them at any time, and they are deleted when you delete the address or your account.',
+          'Chat messages: while an order or a ride is in progress you can text and send photos to your courier or driver (and they to you) inside the app. We store the text, the photos, and the time of each message. Only the two people on that order can see them and, if someone reports a message, the Divoox team, to review it. The chat closes when the order ends. What you wrote and sent is deleted when you delete your account.',
+          'Reports and blocks: if you report a message, a review, or a person, we store the reason, any note you add, and a copy of the reported content, so the Divoox team can review it (we respond within 24 hours) and act on it: hide it, warn, or suspend the account. If you block someone, we store that block so they can’t message you or be matched with you on an order again. An automatic filter masks offensive words in chat and holds offensive reviews for review. You can unblock a person at any time in My account → Blocked people.',
           'Location: only with your permission. See section 4.',
           'Payments: processed by Stripe. We never receive or store your full card number, security code, or bank details. Stripe only sends us a payment ID, the card brand, and its last four digits.',
-          'Technical information: your device token to send you notifications (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
+          'Technical information: your device token and its language, to send you notifications in your language (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
           'Waitlist: if you sign up on divoox.com, your name, email, city, and, if you share it, your phone number.',
         ],
       },
@@ -180,7 +186,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '4. Location',
         parrafos: [
-          'Customer app: with your permission, we use your location while you use the app to show nearby restaurants and set your delivery spot. If you don’t allow it, you can type your address and the app works the same.',
+          'Customer app: with your permission, we use your location while you use the app to show nearby restaurants and set your delivery spot. If you don’t allow it, you can type your address and the app works the same. Your order’s delivery spot is shared with the assigned courier, only while they are delivering it.',
           'Driver app: location is required to receive and complete deliveries. It’s shared only while you’re online or on an active delivery, to offer you nearby orders and let the customer follow the order on a map. We keep only your latest position, not your route, and it’s cleared when you go offline or delete your account.',
           'You can turn off location access at any time in your phone’s settings.',
         ],
@@ -199,7 +205,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. How long we keep your data',
         parrafos: [
           'While your account is open, we keep your account and order data to provide the service.',
-          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, your saved addresses and the photos of your door, your identity verification photos and details, your vehicle, license, and insurance, the addresses, notes, and location of your orders, the text of your ratings, and your waitlist entry.',
+          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, your saved addresses and the photos of your door, your identity verification photos and details, your vehicle, license, and insurance, the addresses, notes, and location of your orders, the text of your ratings, the text and photos of your chat messages, the notes on your reports and the copy of what you wrote in other people’s reports, your blocks, and your waitlist entry.',
           'What we keep without your name: the amount, date, and restaurant of each order, for seven years, as required by tax and accounting laws and to resolve payment disputes or fraud. Those records no longer identify you.',
           'Backups: we keep daily backups for 30 days. Deleted data disappears from them as they expire, at most 30 days later.',
           'Stripe keeps your payment data under its own policy and financial regulations.',
@@ -265,7 +271,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
 export const TERMINOS: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Términos de uso',
-    actualizado: FECHA_SMS.es,
+    actualizado: FECHA_CHAT.es,
     intro: `Estos términos son un acuerdo entre tú y ${EMPRESA} para usar Divoox. Al crear una cuenta o hacer un pedido los aceptas. Los restaurantes y los repartidores tienen además sus propios términos.`,
     secciones: [
       {
@@ -305,7 +311,8 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '6. Calificaciones y comentarios',
         parrafos: [
-          'Puedes calificar al restaurante y al repartidor. Tus comentarios deben ser honestos y respetuosos. Nos das permiso para mostrarlos dentro de Divoox. Podemos quitar los que tengan insultos, datos personales de otros, contenido ilegal o falso. Para reportar un comentario ofensivo, escríbenos y lo revisamos.',
+          'Puedes calificar al restaurante y al repartidor. Tus comentarios deben ser honestos y respetuosos. Nos das permiso para mostrarlos dentro de Divoox. Podemos quitar los que tengan insultos, datos personales de otros, contenido ilegal o falso. Cada reseña y cada mensaje del chat tiene un botón «Reportar» dentro de la app, y puedes bloquear a una persona desde el chat; el equipo revisa cada reporte en menos de 24 horas. También puedes escribirnos.',
+          'Chat y fotos: el chat con tu repartidor o conductor existe solo mientras el pedido o el viaje está en curso y es solo para coordinar la entrega. Está prohibido mandar insultos, acoso, amenazas, contenido sexual o datos personales de otros. Quien lo haga puede perder su cuenta.',
         ],
       },
       {
@@ -346,7 +353,7 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
   },
   en: {
     titulo: 'Terms of Service',
-    actualizado: FECHA_SMS.en,
+    actualizado: FECHA_CHAT.en,
     intro: `These terms are an agreement between you and ${EMPRESA} for using Divoox. By creating an account or placing an order you accept them. Restaurants and drivers also have their own terms.`,
     secciones: [
       {
@@ -386,7 +393,8 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '6. Ratings and comments',
         parrafos: [
-          'You can rate the restaurant and the driver. Your comments must be honest and respectful. You give us permission to display them within Divoox. We may remove those with insults, other people’s personal information, or illegal or false content. To report an offensive comment, email us and we’ll review it.',
+          'You can rate the restaurant and the driver. Your comments must be honest and respectful. You give us permission to display them within Divoox. We may remove those with insults, other people’s personal information, or illegal or false content. Every review and every chat message has a “Report” button in the app, and you can block a person from the chat; our team reviews every report within 24 hours. You can also email us.',
+          'Chat and photos: the chat with your courier or driver exists only while the order or ride is in progress and is only for coordinating the delivery. Insults, harassment, threats, sexual content, or other people’s personal information are not allowed. Anyone who does this may lose their account.',
         ],
       },
       {
@@ -636,7 +644,7 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
 export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Borrar tu cuenta de Divoox',
-    actualizado: FECHA.es,
+    actualizado: FECHA_CHAT.es,
     accion: { texto: 'Borrar mi cuenta ahora', href: '/panel/settings' },
     intro: `Así borras tu cuenta de Divoox (app de clientes, Divoox Driver o Divoox para restaurantes), de ${EMPRESA}. No hace falta tener la app instalada.`,
     secciones: [
@@ -659,7 +667,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
       {
         titulo: 'Qué se borra',
         parrafos: [
-          'Tu nombre, correo, teléfono, fecha de nacimiento y contraseña; tus sesiones abiertas; los identificadores de tus teléfonos para avisos; las direcciones, indicaciones y ubicación de tus pedidos; el texto de tus calificaciones; y tu anotación en la lista de espera. Si eres repartidor, también tu última ubicación, tu vehículo, licencia y seguro. Y las fotos de tu verificación de identidad (documento, cara y local).',
+          'Tu nombre, correo, teléfono, fecha de nacimiento y contraseña; tus sesiones abiertas; los identificadores de tus teléfonos para avisos; tus direcciones guardadas y las fotos de tu puerta; las direcciones, indicaciones y ubicación de tus pedidos; el texto de tus calificaciones; el texto y las fotos de tus mensajes del chat; la nota de tus reportes y la copia de lo que escribiste en los reportes de otros; tus bloqueos; y tu anotación en la lista de espera. Si eres repartidor, también tu última ubicación, tu vehículo, licencia y seguro. Y las fotos de tu verificación de identidad (documento, cara y local).',
         ],
       },
       {
@@ -674,7 +682,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
   },
   en: {
     titulo: 'Delete your Divoox account',
-    actualizado: FECHA.en,
+    actualizado: FECHA_CHAT.en,
     accion: { texto: 'Delete my account now', href: '/panel/settings' },
     intro: `Here’s how to delete your Divoox account (customer app, Divoox Driver, or Divoox for Restaurants), by ${EMPRESA}. You don’t need the app installed.`,
     secciones: [
@@ -697,7 +705,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
       {
         titulo: 'What gets deleted',
         parrafos: [
-          'Your name, email, phone, birthday, and password; your open sessions; your device tokens for notifications; the addresses, notes, and location of your orders; the text of your ratings; and your waitlist entry. If you’re a driver, also your latest location, vehicle, license, and insurance. And your identity verification photos (document, face, and storefront).',
+          'Your name, email, phone, birthday, and password; your open sessions; your device tokens for notifications; your saved addresses and the photos of your door; the addresses, notes, and location of your orders; the text of your ratings; the text and photos of your chat messages; the notes on your reports and the copy of what you wrote in other people’s reports; your blocks; and your waitlist entry. If you’re a driver, also your latest location, vehicle, license, and insurance. And your identity verification photos (document, face, and storefront).',
         ],
       },
       {

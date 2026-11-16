@@ -3817,7 +3817,7 @@ operacion.get('/pedidos/:id/mensajes', async (c) => {
   // ocultó no lo ve nadie del pedido (el equipo sí, para revisar).
   const visibles = u.rol === 'admin' ? '' : sqlMensajeVisible('mensaje_pedido');
   const consulta = db.prepare(
-    `SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en, m.foto_clave FROM mensajes_pedido m JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.pedido_id = ? AND m.id > ?${visibles} ORDER BY m.id LIMIT 200`,
+    `SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en, m.foto_clave FROM mensajes_pedido m JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.pedido_id = ? AND m.id > ? AND (m.texto <> '' OR m.foto_clave IS NOT NULL)${visibles} ORDER BY m.id LIMIT 200`,
   );
   const otro = u.id === p.cliente_id ? p.repartidor_id : p.cliente_id;
   const [{ results }, bloqueaste] = await Promise.all([

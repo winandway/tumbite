@@ -26,6 +26,16 @@ export async function borrarCuenta(
       undefined,
       409,
     );
+  // C-BORRADO-CHAT (16 nov 2026): las claves de las fotos que mandó en los chats, para borrar los
+  // archivos después de vaciar las filas.
+  const fotosChat = (
+    await db
+      .prepare(
+        'SELECT foto_clave FROM mensajes_pedido WHERE de_usuario_id = ? AND foto_clave IS NOT NULL',
+      )
+      .bind(u.id)
+      .all<{ foto_clave: string }>()
+  ).results.map((f) => f.foto_clave);
   await db.batch([
     db
       .prepare(
@@ -65,6 +75,14 @@ export async function borrarCuenta(
     db.prepare('DELETE FROM bloqueos_usuario WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM bloqueos_usuario WHERE bloqueado_id = ?').bind(u.id),
     db.prepare("UPDATE reportes_contenido SET nota = '' WHERE reporta_id = ?").bind(u.id),
+    // C-BORRADO-CHAT (16 nov 2026): el texto y las fotos de sus mensajes del chat (pedidos y viajes)
+    // y la copia de lo que escribió guardada en los reportes de otros. La fila queda vacía para que
+    // el chat de la otra persona no se desordene. Antes se quedaban: Google Play lo dio NO APTO.
+    db
+      .prepare("UPDATE mensajes_pedido SET texto = '', foto_clave = NULL WHERE de_usuario_id = ?")
+      .bind(u.id),
+    db.prepare("UPDATE mensajes_viaje SET texto = '' WHERE de_usuario_id = ?").bind(u.id),
+    db.prepare("UPDATE reportes_contenido SET texto = '' WHERE autor_id = ?").bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
@@ -89,6 +107,11 @@ export async function borrarCuenta(
         cursor = lista.truncated ? lista.cursor : undefined;
       } while (cursor);
     }
+  }
+  // Y los archivos de las fotos que mandó en los chats.
+  if (env.BUCKET && fotosChat.length) {
+    for (let i = 0; i < fotosChat.length; i += 1000)
+      await env.BUCKET.delete(fotosChat.slice(i, i + 1000));
   }
   // Y los archivos de las fotos de la puerta (puertas/<usuario>/…), del almacén privado.
   await borrarPuertasDeUsuario(env, u.id);
