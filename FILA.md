@@ -10,6 +10,12 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Ruta del bloque de Flex y exclusividad (16 nov 2026, orden de Richard por Gerencia) — todos los países
+
+- [x] HECHO 16 nov (C-FLEX-EXCLUSIVO) Al tomar un bloque de Flex, comida, envíos y viajes se desconectan solos y no se puede volver a conectar hasta terminarlo; lo cumple la base (disparadores) y el canario «exclusividad». El inicio del Driver cambia entero al modo bloque con la banda «Estás haciendo un bloque de Flex».
+- [x] HECHO 16 nov (C-FLEX-PAGO-BLOQUE) Duración de 1 h 30 min a 5 horas y pago del bloque que fija la empresa, visibles en la oferta y en el cierre.
+- [x] HECHO 16 nov (C-FLEX-BLOQUE-COMPLETO) «Cómo llegar» a la vista en cada parada; arreglos de la ubicación vieja en la web y de la devolución escrita a mano; recorrido de punta a punta en español e inglés; guía «Tu bloque de Divoox Flex» con capturas.
+
 ## Foto de la puerta (15 nov 2026, orden de Richard) — todos los países
 
 - [x] HECHO 15 nov (C-FOTO-PUERTA, C-CAMARA-COMPUTADORA-APPS, C-APP-DE-PRUEBAS-VISIBLE) Hasta tres fotos del frente, la entrada y la puerta por dirección; el repartidor asignado las ve solo en camino. Unida con el diseño nuevo (f7b2f0edf), 86 comprobaciones en pantalla, guías es/en, en pruebas y producción (9da6850be). Apps de pruebas: cliente iPhone 36 y APK, desde 9da6850be (esta sesión); Driver y Restaurants los compila desde f42eb2432 la sesión del cierre de entrega (Restaurants 21 de esta sesión queda debajo). La 29 de iPhone del Driver, de una versión anterior, se hizo expirar en TestFlight.
@@ -317,6 +323,7 @@
 - [x] HECHO 1 nov: no era la campana; la app se quedaba en la pantalla roja confirmando la sesión con el sitio de pruebas lento (hasta 3 intentos de 8 s) y la prueba solo esperaba 20 s; ahora espera 45 s. De paso, el enlace «¿Una empresa te invitó?» de Driver ya no queda sobre el mapa. (Original:) El recorrido de Comida en inglés del sitio de pruebas falla dos veces seguidas esperando el punto rojo de la campana del cliente (`campana-punto`, recorrido.spec.ts:802) con código que antes pasó: revisar con REA si es carrera o datos acumulados del sitio de pruebas. Todos los países.
 
 - [x] HECHO 13 nov en el archivo (C-FICHA-CONTACTO, rama fase-web-docs): `fichas-google-play.json` lleva el buzón de cada app y el guion lo carga; falta correrlo en Google Play con el APTO del auditor [para: tiendas-lanzamientos]; App Store sigue aparte. Antes: (espera que Google y Apple terminen sus revisiones: cambiar la ficha ahora puede cruzarse con ellas) Correo de contacto de las fichas de Google Play y del App Store al buzón de soporte de cada app (soporte+divoox, soporte+divoox.driver y soporte+divoox.restaurantes @windoce.com). Lo hago yo por la API apenas aprueben. Todos los países.
+- 16 nov 2026, madrugada: ruta del bloque de Flex terminada y exclusiva (C-FLEX-EXCLUSIVO, C-FLEX-PAGO-BLOQUE, C-FLEX-BLOQUE-COMPLETO): al tomar un bloque se desconecta todo lo demás y la base no deja reconectar; duración y pago del bloque en la oferta y el cierre; «Cómo llegar» en cada parada; dos fallos de la web arreglados (ubicación vieja y devolución escrita a mano); recorrido de punta a punta en dos idiomas y guía en Docs. Todos los países.
 
 ## Repaso del 1 nov (docs/REPASO-ROADMAP-2026-11-01.md): construir como el mercado, apagado hasta poner el dinero
 
