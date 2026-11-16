@@ -488,11 +488,26 @@ export function ViajeEnCurso({
         </Tarjeta>
       ) : null}
 
-      {paquete && (!buscando || verPaquete) ? (
+      {/* C-ENVIOS: la tarjeta del paquete con el PIN para quien recibe se ve SIEMPRE, también mientras
+          busca (quien envía se lo pasa a quien recibe). «Qué envías» le suma el tamaño y el valor. */}
+      {paquete ? (
         <Tarjeta>
           <Text style={{ fontWeight: '700', color: C.secundario }}>
             {paquete.descripcion} · {t.paraQuien} {paquete.destinatario}
           </Text>
+          {verPaquete ? (
+            <View testID="envio-detalle" style={{ marginTop: 6, gap: 2 }}>
+              {paquete.tamano ? (
+                <Text style={{ color: '#666B73' }}>
+                  {base.paqueteTamano}:{' '}
+                  {new Map(Object.entries(base.tamanos)).get(paquete.tamano) ?? paquete.tamano}
+                </Text>
+              ) : null}
+              <Text style={{ color: '#666B73' }}>
+                {base.paqueteValor}: {monto(paquete.valorDeclarado)}
+              </Text>
+            </View>
+          ) : null}
           {paquete.pinEntrega ? (
             <>
               <Text style={{ marginTop: 6, color: '#666B73' }}>{t.pinEntrega}</Text>

@@ -23,7 +23,7 @@ const ES: Guia = {
     'Apenas pides un viaje o un envío, ves una escena con el vehículo que pediste y la ruta con el precio. Casi siempre tarda menos de un minuto, y cancelar es gratis mientras buscamos.',
   explicacion: [
     'Al pedir, Divoox les avisa a los conductores más cerca de tu recogida. Mientras alguien acepta, la pantalla te muestra una escena tranquila con el vehículo de lo que pediste: un carro si pediste Carro, una moto con el casco del pasajero si pediste Moto, una moto con su caja de reparto si mandas un paquete pequeño y un carro con una caja en el techo si mandas algo mediano o grande.',
-    'Debajo ves el título de lo que estamos buscando, la recogida, el destino, el vehículo y el precio fijo. En un viaje puedes agregar una parada desde «Parada»; en un envío, «Qué envías» te muestra el paquete y quién lo recibe. «Compartir» manda el enlace del viaje a quien tú quieras.',
+    'Debajo ves el título de lo que estamos buscando, la recogida, el destino, el vehículo y el precio fijo. En un viaje puedes agregar una parada desde «Parada»; en un envío ves el paquete, quién lo recibe y su PIN de entrega, y «Qué envías» suma el tamaño y el valor que declaraste. «Compartir» manda el enlace del viaje a quien tú quieras.',
     'Si tu teléfono tiene activado «reducir movimiento», la escena se queda quieta. Cuando un conductor acepta, la escena se cambia suavemente por el mapa con el conductor en camino.',
   ],
   capturas: [
@@ -75,7 +75,7 @@ const EN: Guia = {
     'As soon as you request a ride or a delivery, you see a scene with the vehicle you chose, plus the route and the price. It usually takes less than a minute, and canceling is free while we search.',
   explicacion: [
     'When you request, Divoox lets the drivers closest to your pickup know. While someone accepts, the screen shows a calm scene with the vehicle for what you requested: a car for Car, a motorcycle carrying the passenger’s helmet for Moto, a motorcycle with a delivery box if you’re sending a small package, and a car with a box on the roof if you’re sending something medium or large.',
-    'Below it you see what we’re looking for, the pickup, the destination, the vehicle, and the upfront price. On a ride you can add a stop from “Stop”; on a delivery, “Your package” shows the package and who receives it. “Share” sends the trip link to anyone you choose.',
+    'Below it you see what we’re looking for, the pickup, the destination, the vehicle, and the upfront price. On a ride you can add a stop from “Stop”; on a delivery you see the package, who receives it, and their delivery PIN, and “Your package” adds the size and the value you declared. “Share” sends the trip link to anyone you choose.',
     'If your phone has “reduce motion” turned on, the scene stays still. When a driver accepts, the scene fades into the map with your driver on the way.',
   ],
   capturas: [

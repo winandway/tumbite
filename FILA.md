@@ -43,7 +43,7 @@
 
 ## Rediseño visual de las tres apps (15 nov 2026) — todos los países
 
-- [ ] [para: desarrollador] Crear la pieza única de tokens de diseño (espacio, radios, alturas de botón, letra, sombras) y aplicarla a cliente, Driver y Restaurants según `docs/investigaciones-rea/2026-11-15-diseno-apps-moviles.md` (sección 7). Motivo: hoy cada pantalla decide sola; ojo al contraste de blanco sobre #F20D20 (4,33:1) y blanco sobre #4AA5DC (2,72:1).
+- [x] (16 nov 2026, fase cero: `packages/movil/src/tokens.ts` con COLOR, COLOR_OSCURO, RADIO, MARGEN, ALTO, LETRA y SOMBRA, usada por las tres apps; un solo rojo de acción C-UN-SOLO-ROJO; el azul de logística quedó solo en Flex y Envíos) [para: desarrollador] Crear la pieza única de tokens de diseño (espacio, radios, alturas de botón, letra, sombras) y aplicarla a cliente, Driver y Restaurants según `docs/investigaciones-rea/2026-11-15-diseno-apps-moviles.md` (sección 7). Motivo: hoy cada pantalla decide sola; ojo al contraste de blanco sobre #F20D20 (4,33:1) y blanco sobre #4AA5DC (2,72:1).
 
 ## Prueba con teléfonos (14 nov 2026, orden de Richard, probando en un Xiaomi con Android 14) — todos los países
 

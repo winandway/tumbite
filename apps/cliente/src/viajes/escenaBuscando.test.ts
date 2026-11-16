@@ -147,6 +147,8 @@ describe('espera: cada servicio con su vehículo', () => {
     expect(f).toContain('vehiculo={vehiculoEspera}');
     expect(f).toContain('te.queEnvias');
     expect(f).toContain('te.recoger');
+    // El PIN para quien recibe se ve también mientras busca (lo pide el recorrido de envíos).
+    expect(f).not.toMatch(/paquete && \(!buscando/);
   });
 });
 
