@@ -4752,3 +4752,11 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Cómo se comprueba:** `PUERTO_RECORRIDO=8795 npx playwright test -c playwright.recorrido.config.ts e2e/recorrido/flexBloque.spec.ts` (con el servidor local del recorrido); en el sitio, `/datos/salud` → `exclusividad: ok`.
 - **No tocar:** no conectar a nadie por SQL mientras tenga una ocupación `ruta_flex` (la base lo rechaza a propósito); no mover los disparadores del bloque a la lista de la Fase 3; la ocupación sigue empezando al asignar o aceptar (C-FLEX-OCUPACION).
 - **Guías públicas:** «Tu bloque de Divoox Flex: de la oferta al pago» (`/docs/drivers/flex-block`, en español bajo `/es/…`, `apps/panel/src/sitio/docs/flexBloque.ts`) con capturas reales `recorrido-flex-bloque-*-{es,en}.webp`; «Mi ruta» al día con la exclusividad y «Cómo llegar».
+
+## C-DOCS-PAGINA-LIVIANA · Los íconos de la barra de Docs se dibujan una vez por página (16 nov 2026) — todos los países
+
+- **Qué pasó:** la publicación se frenó con «el paquete pesa 123,2 MB y el tope es 120 MB» (C-PAQUETE-TOPE): ningún cambio llegaba a pruebas ni a producción.
+- **Causa real:** cada una de las 519 páginas prearmadas de Docs repetía en la barra lateral unos 200 íconos dibujados completos (95 de sus 129 KB), aunque son solo 37 distintos. Las páginas sumaban 50 MB.
+- **Qué se hizo:** `ICONOS_GUIA` y `nombreIconoGuia` en `apps/panel/src/sitio/docs/iconosGuia.ts`; en `Docs.tsx`, `SimbolosIconosGuia` dibuja cada ícono una vez por página como `<symbol>` y `IconoGuia` lo referencia con `<use href="#ig-…">`. Se ve igual. Cada página baja de 129 a 82 KB y el HTML total de 50 a 34 MB (paquete ≈ 107 MB).
+- **Cómo se comprueba:** `apps/panel/src/sitio/docs/docsLiviana.test.tsx` (en rojo sin el cambio) y el tope de `scripts/verificar-paquete.mjs`.
+- **No tocar:** no volver a dibujar el ícono completo en cada guía de la barra.

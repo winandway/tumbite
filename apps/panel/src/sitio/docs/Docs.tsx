@@ -5,7 +5,7 @@ import { ir } from '../../ruta';
 import { conIdioma, enEspanol } from '../../rutaIdioma';
 import { Icono } from '../Icono';
 import { DOCS, type Guia, type SeccionDocs, TEXTOS_DOCS } from './guias';
-import { iconoDeGuia } from './iconosGuia';
+import { ICONOS_GUIA, nombreIconoGuia } from './iconosGuia';
 import { coincide, palabrasDeBusqueda } from './buscar';
 
 /** Navegar a una guía quedándose en el idioma de la página (como Enlace). */
@@ -13,15 +13,36 @@ function irA(a: string) {
   ir(enEspanol(window.location.pathname) ? conIdioma(a, 'es') : a);
 }
 
-/** El ícono propio de cada guía (Docs más amigable, 29 oct 2026). */
+/**
+ * El ícono propio de cada guía (Docs más amigable, 29 oct 2026). C-DOCS-PAGINA-LIVIANA: referencia
+ * el símbolo dibujado una sola vez en la página (SimbolosIconosGuia), en vez de repetir el dibujo.
+ */
 function IconoGuia({ id, tamano }: { id: string; tamano: number }) {
-  // Los íconos son componentes fijos de una lista (no se crean al dibujar).
-  return createElement(iconoDeGuia(id), {
-    size: tamano,
-    strokeWidth: 2,
-    'aria-hidden': true,
-    className: 'icono icono-guia',
-  });
+  return (
+    <svg width={tamano} height={tamano} aria-hidden="true" className="icono icono-guia">
+      <use href={`#ig-${nombreIconoGuia(id)}`} />
+    </svg>
+  );
+}
+
+/** Los dibujos de los íconos de las guías, una sola vez por página, ocultos. */
+function SimbolosIconosGuia() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="0"
+      height="0"
+      style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
+    >
+      <defs>
+        {ICONOS_GUIA.map(([nombre, Dibujo]) => (
+          <symbol key={nombre} id={`ig-${nombre}`} viewBox="0 0 24 24">
+            {createElement(Dibujo, { size: 24, strokeWidth: 2 })}
+          </symbol>
+        ))}
+      </defs>
+    </svg>
+  );
 }
 
 /**
@@ -117,6 +138,7 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
 
   return (
     <div className="docs">
+      <SimbolosIconosGuia />
       <aside className="docs-barra">
         <Enlace a="/docs" className={`docs-inicio${!seccion && !comoHago ? ' activo' : ''}`}>
           <Icono nombre="libro" tamano={18} /> {t.titulo}

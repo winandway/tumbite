@@ -94,3 +94,53 @@ const REGLAS: [RegExp, LucideIcon][] = [
 export function iconoDeGuia(id: string): LucideIcon {
   return REGLAS.find(([r]) => r.test(id))?.[1] ?? FileText;
 }
+
+/**
+ * C-DOCS-PAGINA-LIVIANA (16 nov 2026): cada página de Docs llevaba ~200 íconos dibujados completos
+ * en la barra lateral (95 de sus 129 KB); con 519 páginas el paquete pasó el tope de la plataforma
+ * (120 MB) y nada se publicaba. Ahora cada ícono distinto se dibuja UNA vez por página (un
+ * «símbolo») y cada guía lo referencia por su nombre: se ve igual y la página pesa la mitad.
+ */
+export const ICONOS_GUIA: [string, LucideIcon][] = Object.entries({
+  Bell,
+  Bike,
+  CarTaxiFront,
+  CalendarClock,
+  ChartColumn,
+  CircleHelp,
+  Clock,
+  CreditCard,
+  DoorOpen,
+  FileText,
+  GraduationCap,
+  Handshake,
+  Heart,
+  KeyRound,
+  LifeBuoy,
+  MapPin,
+  MessageCircle,
+  Package,
+  PlugZap,
+  Presentation,
+  Printer,
+  Receipt,
+  Repeat,
+  Search,
+  Share2,
+  ShieldCheck,
+  ShoppingBag,
+  ShoppingBasket,
+  Sparkles,
+  Star,
+  Store,
+  Tag,
+  User,
+  Users,
+  UtensilsCrossed,
+  Wallet,
+});
+
+export function nombreIconoGuia(id: string): string {
+  const icono = iconoDeGuia(id);
+  return ICONOS_GUIA.find(([, c]) => c === icono)?.[0] ?? 'FileText';
+}
