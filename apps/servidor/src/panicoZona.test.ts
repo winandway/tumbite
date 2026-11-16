@@ -140,6 +140,14 @@ describe('C-PANICO-ZONA · el pánico avisa al responsable de la zona', () => {
     expect(alResponsable[1]!.texto).toContain('sin ubicación');
   });
 
+  it('fuera de +1 sale del número internacional si existe (el 866 solo llega a EE. UU. y Canadá)', async () => {
+    const { remitente } = await import('./sms');
+    const e = { ...TWILIO, TWILIO_FROM_INTERNACIONAL: '+15074160000' } as unknown as Env;
+    expect(remitente(e, '+584120000000')).toBe('+15074160000');
+    expect(remitente(e, '+12485550100')).toBe('+13055550000');
+    expect(remitente(TWILIO as unknown as Env, '+584120000000')).toBe('+13055550000');
+  });
+
   it('los demás SMS a Venezuela siguen apagados (solo el pánico sale a +58)', async () => {
     const sms = capturarSms();
     const m = mundo(TWILIO);

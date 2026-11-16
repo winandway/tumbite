@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Apps de prueba · Divoox</title>
+    <title>Apps · Divoox</title>
     <style>
       :root {
         --rojo: #f20d20;
@@ -144,6 +144,15 @@
         padding: 6px 10px;
         font-size: 13px;
       }
+      .real {
+        border: 2px solid #1a7f37;
+        border-radius: 12px;
+        padding: 4px 16px 16px;
+        margin-bottom: 28px;
+      }
+      .real h2 {
+        color: #1a7f37;
+      }
       .aviso {
         border: 1px solid var(--borde);
         border-radius: 10px;
@@ -197,8 +206,20 @@
     </style>
   </head>
   <body>
-    <header>Divoox · Apps de prueba</header>
+    <header>Divoox · Apps</header>
     <main>
+      <section class="real" id="seccion-real">
+        <h2>Versión real — para el piloto de El Vigía y Tucaní</h2>
+        <p>
+          Estas son las apps de verdad: trabajan con divoox.com, con cuentas reales y dinero real.
+          Son las que se instalan los conductores, los pasajeros y los restaurantes del piloto. Se
+          instalan directo en Android, sin Google Play. Si el teléfono tenía una app que dice
+          «PRUEBAS», bórrala primero.
+        </p>
+        <div class="rejilla" id="real"></div>
+      </section>
+
+      <h2>Apps de prueba — solo para el equipo</h2>
       <p>
         Las tres apps de prueba, para Android y para iPhone. Con esta página abierta en la
         computadora, apunta la cámara del teléfono al código de la app que quieres instalar. Si la
@@ -304,6 +325,15 @@
                 `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><div class="par">${lado('Android', a.android, 'Descargar', AVISO_ANDROID)}${lado('iPhone', a.iphone, 'Abrir TestFlight', AVISO_IPHONE)}</div></div>`,
             )
             .join('');
+          const reales = d.real ?? [];
+          el('real').innerHTML = reales.length
+            ? reales
+                .map(
+                  (a) =>
+                    `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><div class="par">${lado('Android · versión real', a.android, 'Descargar', AVISO_ANDROID)}</div></div>`,
+                )
+                .join('')
+            : '<div class="aviso">La versión real se está compilando.</div>';
           el('al-dia').textContent = `Enlaces comprobados el ${dia(d.actualizado)}.`;
         } catch {
           el('apps-msg').innerHTML =

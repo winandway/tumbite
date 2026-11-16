@@ -142,6 +142,15 @@ export async function aceptoSms(db: D1Database, usuarioId: string): Promise<bool
   return Boolean(f?.sms_consentido_en);
 }
 
+/**
+ * C-PANICO-ZONA: el número gratuito (+1 866) solo manda SMS a EE. UU. y Canadá. Fuera de +1 sale
+ * del número internacional si está configurado (TWILIO_FROM_INTERNACIONAL).
+ */
+export const remitente = (env: Env, para: string) =>
+  !para.startsWith('+1') && env.TWILIO_FROM_INTERNACIONAL
+    ? env.TWILIO_FROM_INTERNACIONAL
+    : env.TWILIO_FROM!;
+
 /** Manda un SMS si Twilio está configurado y la persona tiene teléfono. Nunca frena la operación. */
 export async function enviarSms(
   env: Env,
@@ -162,7 +171,7 @@ export async function enviarSms(
   if (!smsSinConsentimientoDelTitular(a.tipo) && !(await aceptoSms(db, a.usuarioId))) return false;
   const id = nuevoId();
   try {
-    await twilio(env, 'Messages', { To: para, From: env.TWILIO_FROM!, Body: a.texto });
+    await twilio(env, 'Messages', { To: para, From: remitente(env, para), Body: a.texto });
     await db
       .prepare(
         "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado) VALUES (?, ?, ?, ?, 'enviado')",

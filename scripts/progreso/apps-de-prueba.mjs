@@ -94,9 +94,29 @@ for (const app of APPS) {
     },
   });
 }
+// C-APPS-VERSION-REAL (16 nov 2026, piloto en vivo de El Vigía y Tucaní): el APK de PRODUCCIÓN
+// (perfil «preview»: habla con divoox.com, sin «PRUEBAS» en el nombre) va en su propia sección,
+// arriba y aparte de las de prueba. Se instala directo; no depende de Google Play.
+const real = [];
+for (const app of APPS) {
+  const b = ultima(app.id, 'android', 'preview');
+  if (!b?.artifacts?.buildUrl) continue;
+  real.push({
+    id: app.id,
+    nombre: app.nombre,
+    para: app.para,
+    android: {
+      url: b.artifacts.buildUrl,
+      numero: b.appBuildVersion,
+      codigo: String(b.gitCommitHash ?? '').slice(0, 7),
+      fecha: b.completedAt ?? b.createdAt,
+      qr: await qr(b.artifacts.buildUrl),
+    },
+  });
+}
 writeFileSync(
   join(raiz, 'progreso', 'apps.json'),
-  JSON.stringify({ actualizado: new Date().toISOString(), apps }, null, 2) + '\n',
+  JSON.stringify({ actualizado: new Date().toISOString(), real, apps }, null, 2) + '\n',
 );
 console.log(
   apps
