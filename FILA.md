@@ -10,6 +10,13 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Foto de la puerta (15 nov 2026, orden de Richard) — todos los países
+
+- [x] HECHO 15 nov (C-FOTO-PUERTA, C-CAMARA-COMPUTADORA-APPS, C-APP-DE-PRUEBAS-VISIBLE) Hasta tres fotos del frente, la entrada y la puerta por dirección; el repartidor asignado las ve solo en camino. Unida con el diseño nuevo (f7b2f0edf), 86 comprobaciones en pantalla, guías es/en, en pruebas y producción (9da6850be). Apps de pruebas: cliente y Restaurants recompiladas desde main; Driver, las de la sesión del cierre de entrega (iPhone 27, APK de 9da6850be).
+- [ ] [para: desarrollador] (FP-1) Dudas menores del revisor: si falla el INSERT después de guardar la foto en el almacén queda un archivo huérfano (borrarlo en el mismo error); si un edificio pasa a casa, la foto 3 queda guardada (borrarla al cambiar el tipo); las subidas de fotos no tienen límite de intentos (agregar el mismo tope de las rutas sensibles). Prueba en rojo por cada una. Todos los países.
+- [ ] [para: desarrollador] (FP-2) Sitio de pruebas: la tabla `direcciones_fotos` nació con la forma vieja (tres filas escritas por foto en vez de una). Migración aparte anotada en CANDADOS.md, sin tocar las cuentas demo de Novi mientras Richard prueba. Solo pruebas.
+- [ ] [para: auditor-tiendas] (FP-3) Antes de la próxima versión de tienda del cliente: textos de permiso de cámara y fotos, módulo `expo-image-manipulator`, etiqueta «Photos or Videos» de Apple y «Fotos» en Seguridad de los datos de Google. Lista completa en `docs/TIENDAS.md`. Todos los países.
+
 ## Rediseño visual de las tres apps (15 nov 2026) — todos los países
 
 - [ ] [para: desarrollador] Crear la pieza única de tokens de diseño (espacio, radios, alturas de botón, letra, sombras) y aplicarla a cliente, Driver y Restaurants según `docs/investigaciones-rea/2026-11-15-diseno-apps-moviles.md` (sección 7). Motivo: hoy cada pantalla decide sola; ojo al contraste de blanco sobre #F20D20 (4,33:1) y blanco sobre #4AA5DC (2,72:1).
