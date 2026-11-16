@@ -140,6 +140,41 @@ describe('C-PANICO-ZONA · el pánico avisa al responsable de la zona', () => {
     expect(alResponsable[1]!.texto).toContain('sin ubicación');
   });
 
+  it('fuera de +1 sale del número internacional si existe (el 866 solo llega a EE. UU. y Canadá)', async () => {
+    const { remitente } = await import('./sms');
+    const e = { ...TWILIO, TWILIO_FROM_INTERNACIONAL: '+15074160000' } as unknown as Env;
+    expect(remitente(e, '+584120000000')).toBe('+15074160000');
+    expect(remitente(e, '+12485550100')).toBe('+13055550000');
+    expect(remitente(TWILIO as unknown as Env, '+584120000000')).toBe('+13055550000');
+  });
+
+  it('tope diario: pasado el tope no sale más pánico, y cada envío queda registrado', async () => {
+    const sms = capturarSms();
+    const m = mundo(TWILIO);
+    const quien = await m.cuenta('repartidor', 'Rita Riesgo');
+    const { TOPE_PANICO_DIA } = await import('./sms');
+    const mandar = () =>
+      enviarSms(TWILIO as unknown as Env, m.DB, {
+        usuarioId: quien.id,
+        pedidoId: null,
+        tipo: 'equipo_panico',
+        telefono: '+584120000000',
+        texto: 'pánico',
+      });
+    expect(await mandar()).toBe(true);
+    await m.DB.prepare(
+      "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado) SELECT 'x' || value, ?, NULL, 'equipo_panico', 'enviado' FROM json_each(?)",
+    )
+      .bind(quien.id, JSON.stringify(Array.from({ length: TOPE_PANICO_DIA }, (_, i) => i)))
+      .run();
+    expect(await mandar()).toBe(false);
+    expect(sms).toHaveLength(1);
+    const n = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM sms_enviados WHERE tipo = 'equipo_panico'",
+    ).first<{ n: number }>();
+    expect(n?.n).toBe(TOPE_PANICO_DIA + 1);
+  });
+
   it('los demás SMS a Venezuela siguen apagados (solo el pánico sale a +58)', async () => {
     const sms = capturarSms();
     const m = mundo(TWILIO);

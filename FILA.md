@@ -14,6 +14,12 @@
 
 - [x] HECHO 16 nov (C-DOCS-SIN-INTERNO, C-AYUDA-INTERNA) Fuera de Docs públicos la sección «Operations team» (7 guías + la bandeja de reportes) y la guía de la doble firma (mostraba «Para aprobar»); sus direcciones y capturas responden 410 y salen del mapa del sitio, `llms.txt`, el buscador y «¿Cómo hago…?». Ayuda interna con «?» junto a la campana del superadmin: 11 guías en/es (dos nuevas: «Así funciona Divoox» y «El semáforo y Atascado»), texto en el servidor y capturas en el almacén, solo con sesión del equipo y noindex. Capturas fuera del repositorio (~/Divoox-privado/ayuda-interna). Regla en CLAUDE.md; candados en rojo comprobados.
 
+## Piloto en vivo El Vigía y Tucaní (16 nov 2026, orden de Richard por Gerencia) — Venezuela
+
+- [ ] [para: desarrollador] (SMS-VE-1) Integrar SMSya cuando llegue su documentación y se resuelva la lista blanca de IP: sumar `SMSYA` como otro `ProveedorSms` en `apps/servidor/src/sms.ts` (C-SMS-PROVEEDOR) y elegirlo para +58. Los eventos que van por SMS y su regla están en `docs/SMS-EVENTOS-VENEZUELA.md` (aprobado por Richard como «importantísimo»): OTP, PIN de entrega, llegada del conductor, destinatario de envíos de A a B, documentos aprobados, recordatorio de bloque Flex, retiro, orden sin aceptar en el restaurante, pánico y «va en camino»; todo lo demás por aviso push gratuito. `enviarSms` debe manejar cada evento por nombre, con tope diario por evento (hoy solo el pánico tiene tope: `TOPE_PANICO_DIA`) y un interruptor por evento en el superadmin. Prueba en rojo y candado.
+- [!] (PIL-1) Teléfonos de los responsables de El Vigía y Tucaní (Superadmin → Zonas → Responsable). Espera a Richard.
+- [!] (PIL-2) Sumar las huellas SHA-1 de los APK de producción a la llave «Divoox Maps Android» en Google Cloud (pide la contraseña de la cuenta). Espera a Richard; croquis en el informe del piloto.
+
 ## Rastreo en vivo y hora de llegada (16 nov 2026, orden de Richard: «nosotros vivimos del tiempo y de los mapas») — todos los países
 
 - [x] HECHO 16 nov (C-RASTREO-VIVO, C-HORA-LLEGADA) Tarjeta «En vivo» en la ficha del pedido y del viaje (mapa de Google con el repartidor que se desliza, ruta, tramo en palabras, «Llega a las… · faltan… · km», detenido o sin señal), insignia «Detenido» en Pedidos en curso, hora de llegada con tráfico en una sola fila por pedido que también ve el cliente (pedido, viaje y envío), tramos abiertos «En curso» y «Sin cerrar». Rama claude/rastreo-vivo, sin publicar.

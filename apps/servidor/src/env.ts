@@ -110,8 +110,18 @@ export const esquemaEnv = z.object({
     .string()
     .regex(/^\+\d{8,15}$/)
     .optional(),
+  /**
+   * C-PANICO-ZONA: número de Twilio para los SMS fuera de EE. UU. y Canadá (el gratuito +1 866 solo
+   * llega a +1). Sin valor, se usa TWILIO_FROM para todo.
+   */
+  TWILIO_FROM_INTERNACIONAL: z
+    .string()
+    .regex(/^\+\d{8,15}$/)
+    .optional(),
   /** Solo para el recorrido: Twilio simulado en localhost (en producción se ignora). */
   TWILIO_API_URL: z.string().optional(),
+  /** C-SMS-PROVEEDOR: por dónde salen los SMS («twilio», el único hoy). */
+  SMS_PROVEEDOR: z.string().optional(),
   /** Prefijos a los que salen SMS y llamadas (C-SMS-PAISES). Sin valor: solo «+1». */
   SMS_PREFIJOS: z.string().optional(),
   /**

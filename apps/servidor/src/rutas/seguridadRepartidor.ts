@@ -67,6 +67,7 @@ seguridadRepartidor.post('/repartidor/emergencia', async (c) => {
   ).catch((e: unknown) => console.error('seguridad: SMS de emergencia', e));
   // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del repartidor.
   await avisarResponsableZona(c.env, db, {
+    usuarioId: u.id,
     zonaId: r?.zona_id,
     rol: 'repartidor',
     nombre: r?.nombre ?? '',

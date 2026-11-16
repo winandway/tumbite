@@ -1236,6 +1236,7 @@ export async function registrarEmergencia(
   }).catch((e: unknown) => console.error('viajes: correo de emergencia', e));
   // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del viaje.
   await avisarResponsableZona(c.env, db, {
+    usuarioId: p.actorId,
     zonaId: f?.zona_id,
     rol: p.rol,
     nombre: f?.nombre ?? '',
