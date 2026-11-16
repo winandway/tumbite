@@ -1424,6 +1424,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Este pedido ya no se puede seguir en vivo.', 'This order can no longer be tracked live.'],
   ['Solo con Stripe en modo prueba.', 'Only with Stripe in test mode.'],
+  ['Ese pago ya se capturó.', 'That payment was already captured.'],
   ['Esa área no existe.', 'That area doesn’t exist.'],
   ['Esa solicitud ya tiene su franquicia.', 'That request already has its franchise.'],
   [

@@ -1246,6 +1246,40 @@ diagnostico.post('/interno/diagnostico/confirmar-pago', async (c) => {
   return c.json({ estado: r.status, autorizado: r.amount_capturable ?? 0 });
 });
 
+/**
+ * C-AUTORIZACION-VENCIDA (16 nov 2026): simula que la autorización de la tarjeta de un pedido venció
+ * en Stripe, ANULANDO de verdad su PaymentIntent en Stripe modo prueba (solo sk_test_, solo en el
+ * sitio de pruebas, solo si todavía está autorizado sin capturar). Stripe no deja adelantar el reloj
+ * de un PaymentIntent suelto, y una retención vencida queda igual: `canceled` y sin nada capturado.
+ * Después la entrega intenta capturar, falla y queda «en revisión» como el pedido 407F.
+ */
+diagnostico.post('/interno/diagnostico/vencer-autorizacion', async (c) => {
+  if (entornoDeHost(new URL(c.req.url).host) !== 'pruebas')
+    throw new ErrorDatos('No encontrado.', undefined, 404);
+  const llave = c.env.STRIPE_SECRET_KEY ?? '';
+  if (!llave.startsWith('sk_test_'))
+    throw new ErrorDatos('Solo con Stripe en modo prueba.', undefined, 409);
+  const { pedidoId } = await leerCuerpo(c, z.object({ pedidoId: z.string().min(1).max(64) }));
+  const p = await base(c)
+    .prepare(
+      'SELECT p.stripe_sesion, c.capturado_en FROM pedidos p LEFT JOIN cobros c ON c.pedido_id = p.id WHERE p.id = ?',
+    )
+    .bind(pedidoId)
+    .first<{ stripe_sesion: string | null; capturado_en: string | null }>();
+  if (!p?.stripe_sesion?.startsWith('pi_')) throw new ErrorDatos('No encontrado.', undefined, 404);
+  if (p.capturado_en) throw new ErrorDatos('Ese pago ya se capturó.', undefined, 409);
+  const stripe = crearStripe(llave)!;
+  const antes = await stripe.get<{ status: string }>(`/payment_intents/${p.stripe_sesion}`);
+  if (antes.status !== 'requires_capture')
+    throw new ErrorDatos(`El pago no está autorizado (${antes.status}).`, undefined, 409);
+  const r = await stripe.post<{ id: string; status: string; cancellation_reason?: string | null }>(
+    `/payment_intents/${p.stripe_sesion}/cancel`,
+    { cancellation_reason: 'abandoned' },
+    `diag-vencer-${pedidoId}`,
+  );
+  return c.json({ pago: r.id, estado: r.status, motivo: r.cancellation_reason ?? null });
+});
+
 /** C-PLUS: paga la primera factura de la suscripción con la tarjeta de prueba (solo sk_test_). El
  * aviso real «invoice.paid» llega después y la activa. */
 diagnostico.post('/interno/diagnostico/pagar-plus', async (c) => {
