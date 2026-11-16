@@ -58,6 +58,8 @@ import { erroresApp } from './rutas/erroresApp';
 import { referidos } from './referidos';
 import { franquicias } from './rutas/franquicias';
 import { superadmin } from './rutas/superadmin';
+import { buscadorInterno } from './rutas/buscadorInterno';
+import { preferenciasInternas } from './rutas/preferenciasInternas';
 import { kyc } from './rutas/kyc';
 import { fotos, media } from './rutas/fotos';
 import { diagnostico } from './rutas/diagnostico';
@@ -612,6 +614,9 @@ app.route('/datos', flota);
 app.route('/datos', cancelaciones);
 app.route('/datos', ciudadesWeb);
 app.route('/datos', equipo);
+// C-BUSCADOR-SERIO y C-FILTROS-GUARDADOS (15 nov 2026): el buscador y los filtros del superadmin.
+app.route('/datos', buscadorInterno);
+app.route('/datos', preferenciasInternas);
 app.route('/datos', piloto);
 app.route('/datos', informes);
 // C-PANEL-ARMAZON: lecturas de los tableros del panel web (nunca escriben).

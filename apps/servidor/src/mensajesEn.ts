@@ -2049,6 +2049,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Pasaron más de 30 días desde este viaje. Escríbenos desde Ayuda.',
     'It’s been more than 30 days since this ride. Write to us from Help.',
   ],
+  // C-BUSCADOR-SERIO y C-FILTROS-GUARDADOS (15 nov 2026).
+  ['La página pedida no es válida.', 'The requested page isn’t valid.'],
+  ['Esa pantalla no guarda filtros.', 'That screen doesn’t save filters.'],
+  ['Los filtros guardados son demasiado grandes.', 'The saved filters are too large.'],
 ]);
 
 /** El idioma que pidió quien llama: «x-idioma» (apps y panel) o, si no viene, el del navegador. */

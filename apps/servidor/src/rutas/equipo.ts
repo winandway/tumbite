@@ -51,6 +51,9 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
   // C-CIUDAD-JUEGO: el latido de la ciudad de pruebas llega cada pocos segundos mientras la
   // pantalla está abierta; anotarlo sería una fila por latido (encender y apagar sí se anotan).
   if (c.req.path === '/datos/admin/ciudad-pruebas/latido') return;
+  // C-FILTROS-GUARDADOS: guardar los filtros propios no es una acción sobre el negocio; anotarlo
+  // duplicaría cada escritura (la preferencia ya dice quién y cuándo).
+  if (c.req.path.startsWith('/datos/admin/preferencias/')) return;
   await db
     .prepare(
       'INSERT INTO acciones_equipo (usuario_id, perfil, metodo, ruta, estado) VALUES (?, ?, ?, ?, ?)',

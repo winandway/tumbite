@@ -3,15 +3,11 @@ import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import {
-  correoCanonico,
-  resumenEtiquetas,
-  semaforoPedido,
-  telefonoCanonico,
-} from '@tumbite/compartido';
+import { correoCanonico, resumenEtiquetas, telefonoCanonico } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { anotarEvento, cancelarConReembolso } from '../manager';
 import { soltarPedido } from './operacion';
+import { listarPedidosAdmin, parametrosLista } from './buscadorInterno';
 import { conciliar } from '../conciliacion';
 import { crearStripe } from '../stripe';
 import { pruebasDisputa } from '../disputas';
@@ -716,56 +712,19 @@ async function kycResumen(db: D1Database, usuarioId: string) {
 
 // ───────────────────────── Superadmin: pedidos en curso ─────────────────────────
 
-/** Todos los pedidos vivos (de una ciudad o de todas), los que están en problemas primero. */
+/**
+ * «Pedidos en curso»: los pedidos de un estado (Vivos · Cerrados · Todos) y una ciudad, de a 50 con
+ * «Cargar más» (paginación por clave). Lo escrito se busca con la misma pieza del buscador de
+ * arriba (C-BUSCADOR-SERIO): un código encuentra el pedido aunque esté cerrado o en otra ciudad.
+ */
 superadmin.get('/admin/pedidos', async (c) => {
   exigir(c, 'admin');
-  const zona = c.req.query('zona') ?? '';
-  // Auditoría final (punto 26): también los pedidos ya cerrados, buscando por número, cliente o restaurante.
-  const cerrados = c.req.query('cerrados') === '1';
-  const q = (c.req.query('q') ?? '').trim().toLowerCase();
-  const { results } = await base(c)
-    .prepare(
-      `SELECT p.id, p.estado, p.total, p.moneda, p.creado_en, p.pagado_en, p.aceptado_en, p.listo_en, p.recogido_en, p.tiempo_prep_min,
-        r.nombre AS restaurante, uc.nombre AS cliente, d.codigo AS repartidor_codigo, z.nombre AS ciudad
-       FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id JOIN usuarios uc ON uc.id = p.cliente_id
-       LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id LEFT JOIN zonas z ON z.id = p.zona_id
-       WHERE p.estado IN (${cerrados ? "'entregado','cancelado'" : "'pagado','aceptado','listo','en_camino'"}) AND (?1 = '' OR p.zona_id = ?1)
-         AND (?2 = '' OR lower(p.id) LIKE ?2 || '%' OR lower(uc.nombre) LIKE '%' || ?2 || '%' OR lower(r.nombre) LIKE '%' || ?2 || '%')
-       ORDER BY p.creado_en ${cerrados ? 'DESC' : ''} LIMIT 300`,
-    )
-    .bind(zona, q)
-    .all<Record<string, unknown>>();
-  const orden = new Map([
-    ['rojo', 0],
-    ['amarillo', 1],
-    ['verde', 2],
-  ]);
-  const pedidos = results
-    .map((f) => {
-      const fechas = {
-        estado: String(f.estado),
-        creadoEn: String(f.creado_en),
-        pagadoEn: (f.pagado_en as string | null) ?? null,
-        aceptadoEn: (f.aceptado_en as string | null) ?? null,
-        listoEn: (f.listo_en as string | null) ?? null,
-        recogidoEn: (f.recogido_en as string | null) ?? null,
-        tiempoPrepMin: f.tiempo_prep_min == null ? null : Number(f.tiempo_prep_min),
-      };
-      return {
-        id: String(f.id),
-        ...fechas,
-        total: Number(f.total),
-        // C-MONEDA-RECORRIDO: cada pedido en su moneda (la lista no suma montos).
-        moneda: String(f.moneda ?? 'USD'),
-        restaurante: String(f.restaurante),
-        cliente: String(f.cliente),
-        repartidorCodigo: f.repartidor_codigo ? String(f.repartidor_codigo) : null,
-        ciudad: f.ciudad ? String(f.ciudad) : null,
-        luz: semaforoPedido(fechas)?.luz ?? 'verde',
-      };
-    })
-    .sort((a, b) => (orden.get(a.luz) ?? 2) - (orden.get(b.luz) ?? 2));
-  return c.json({ pedidos });
+  return c.json(
+    await listarPedidosAdmin(
+      base(c),
+      parametrosLista((k) => c.req.query(k)),
+    ),
+  );
 });
 
 // ───────────────────────── Superadmin: bitácora del pedido ─────────────────────────

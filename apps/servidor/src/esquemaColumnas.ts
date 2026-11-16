@@ -875,6 +875,12 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "estado",
     "creado_en"
   ],
+  "preferencias_internas": [
+    "usuario_id",
+    "pantalla",
+    "valor_json",
+    "actualizado_en"
+  ],
   "avisos_equipo": [
     "usuario_id",
     "tipo",

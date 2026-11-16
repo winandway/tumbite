@@ -1493,6 +1493,16 @@ CREATE TABLE IF NOT EXISTS acciones_equipo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS acciones_equipo_usuario ON acciones_equipo(usuario_id, id);
+-- C-FILTROS-GUARDADOS (15 nov 2026): los filtros de cada pantalla del superadmin, por empleado
+-- (ciudad, estado, orden…; nunca el texto buscado ni datos personales). Una fila por empleado y
+-- pantalla, WITHOUT ROWID: cambiar un filtro escribe UNA fila y mirar no escribe nada.
+CREATE TABLE IF NOT EXISTS preferencias_internas (
+  usuario_id TEXT NOT NULL REFERENCES usuarios(id),
+  pantalla TEXT NOT NULL,
+  valor_json TEXT NOT NULL DEFAULT '{}',
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, pantalla)
+) WITHOUT ROWID;
 
 -- C-AVISOS-EQUIPO (29 oct 2026): qué avisos por correo quiere cada cuenta del equipo, por tipo.
 CREATE TABLE IF NOT EXISTS avisos_equipo (

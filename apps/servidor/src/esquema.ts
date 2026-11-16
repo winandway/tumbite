@@ -12,6 +12,7 @@ import {
   asegurarResumenCatalogo,
 } from './resumenCatalogo';
 import { rehacerConductorDocumentos } from './esquemaPapeles';
+import { INDICES_BUSCADOR } from './buscadorSql';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
  * NO agrega columnas a tablas que ya están en producción. Esto sí, sin tocar datos:
@@ -322,6 +323,8 @@ const INDICES = [
   // activo y se escribe solo cuando ese vehículo cambia: la ubicación, que cambia cada pocos
   // segundos, no lo toca.
   'CREATE INDEX IF NOT EXISTS repartidores_vehiculo_activo ON repartidores(vehiculo_activo_id) WHERE vehiculo_activo_id IS NOT NULL',
+  // C-BUSCADOR-SERIO (15 nov 2026): los índices del buscador del superadmin (buscadorSql.ts).
+  ...INDICES_BUSCADOR,
 ];
 
 /**
