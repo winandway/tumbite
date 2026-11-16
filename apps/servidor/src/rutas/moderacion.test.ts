@@ -256,6 +256,23 @@ describe('C-MODERACION: chat del pedido', () => {
     expect(otraVez.datos.mensajes).toHaveLength(1);
   });
 
+  it('bloquear: la foto del chat de quien bloqueaste tampoco se abre por su dirección', async () => {
+    const { m, cliente, rep, id } = await conChat();
+    const subida = await m.foto(`/datos/pedidos/${id}/mensajes/foto`, rep.token, {
+      lat: 25.78,
+      lng: -80.2,
+    });
+    expect(subida.estado).toBe(201);
+    const chat = await m.llamar('GET', `/datos/pedidos/${id}/mensajes`, undefined, cliente.token);
+    const ruta = `/datos/pedidos/${id}/mensajes/${chat.datos.mensajes[0].id}/foto`;
+    const ver = async (token: string) =>
+      (await m.crudo(ruta, { headers: { authorization: `Bearer ${token}` } })).status;
+    expect(await ver(cliente.token)).toBe(200);
+    await m.llamar('POST', '/datos/bloqueos', { pedidoId: id }, cliente.token);
+    expect(await ver(cliente.token)).toBe(404);
+    expect(await ver(rep.token)).toBe(200);
+  });
+
   it('bloquear: el siguiente pedido del cliente no se le ofrece a ese repartidor, sí a otro', async () => {
     const { m, cliente, rep, id, pedidoPagado, repartidor, ofertas } = await conChat();
     expect(
@@ -388,6 +405,37 @@ describe('C-MODERACION: reseñas', () => {
     const aviso = mandados.slice(antes).find((x) => x.to === 'ExponentPushToken[cliente-2]');
     expect(aviso?.title).toBe('A reminder about our community guidelines');
     expect(JSON.stringify(aviso)).not.toMatch(/Dueño|Soporte|restaurante/i);
+  });
+
+  it('la reseña retenida por el filtro vuelve a verse si se reescribe limpia, y descartar también la libera', async () => {
+    const e = await conResena('Comida de mierda');
+    expect(await publicas(e.m, e.restauranteId)).toHaveLength(0);
+    await e.m.llamar(
+      'POST',
+      `/datos/pedidos/${e.id}/calificar`,
+      { estrellasRestaurante: 2, comentario: 'Llegó fría' },
+      e.cliente.token,
+    );
+    expect(await publicas(e.m, e.restauranteId)).toHaveLength(1);
+    const abiertos = await e.m.llamar('GET', '/datos/admin/reportes', undefined, e.admin.token);
+    expect(abiertos.datos.reportes).toHaveLength(0);
+    // Otra vez con insultos: vuelve a la bandeja; «Descartar» la deja a la vista.
+    await e.m.llamar(
+      'POST',
+      `/datos/pedidos/${e.id}/calificar`,
+      { estrellasRestaurante: 2, comentario: 'Qué mierda' },
+      e.cliente.token,
+    );
+    expect(await publicas(e.m, e.restauranteId)).toHaveLength(0);
+    const otra = await e.m.llamar('GET', '/datos/admin/reportes', undefined, e.admin.token);
+    expect(otra.datos.reportes).toHaveLength(1);
+    await e.m.llamar(
+      'POST',
+      `/datos/admin/reportes/${otra.datos.reportes[0].id}/accion`,
+      { accion: 'descartar' },
+      e.admin.token,
+    );
+    expect(await publicas(e.m, e.restauranteId)).toHaveLength(1);
   });
 
   it('una respuesta del restaurante con insultos no se guarda', async () => {

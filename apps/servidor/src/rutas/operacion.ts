@@ -58,7 +58,13 @@ import { Hono } from 'hono';
 import { cobertura } from '../territorio';
 import { z } from 'zod';
 import { taparOfensivas } from '../filtroPalabras';
-import { bloqueo, marcarPorFiltro, parejasBloqueadas, sqlMensajeVisible } from './moderacion';
+import {
+  bloqueo,
+  liberarDelFiltro,
+  marcarPorFiltro,
+  parejasBloqueadas,
+  sqlMensajeVisible,
+} from './moderacion';
 import {
   type Muestra,
   OPCIONES_COCINA_OCUPADA,
@@ -3838,10 +3844,19 @@ operacion.get('/pedidos/:id/mensajes/:mid/foto', async (c) => {
   const db = base(c);
   const p = await pedidoDelChat(db, c.req.param('id'), u).catch(() => null);
   if (!p || !c.env.BUCKET) return c.text('No encontrado', 404);
-  const f = await db
-    .prepare('SELECT foto_clave FROM mensajes_pedido WHERE id = ? AND pedido_id = ?')
-    .bind(Number(c.req.param('mid')), p.id)
-    .first<{ foto_clave: string | null }>();
+  // C-MODERACION: la foto de alguien que bloqueó, o la que el equipo ocultó, tampoco se abre por
+  // su dirección (el equipo sí la ve, para revisar el reporte).
+  const f = await (
+    u.rol === 'admin'
+      ? db
+          .prepare('SELECT foto_clave FROM mensajes_pedido m WHERE m.id = ? AND m.pedido_id = ?')
+          .bind(Number(c.req.param('mid')), p.id)
+      : db
+          .prepare(
+            `SELECT foto_clave FROM mensajes_pedido m WHERE m.id = ? AND m.pedido_id = ?${sqlMensajeVisible('mensaje_pedido')}`,
+          )
+          .bind(Number(c.req.param('mid')), p.id, u.id)
+  ).first<{ foto_clave: string | null }>();
   if (!f?.foto_clave) return c.text('No encontrado', 404);
   const obj = await c.env.BUCKET.get(f.foto_clave);
   if (!obj) return c.text('No encontrado', 404);
@@ -3998,6 +4013,7 @@ operacion.post('/pedidos/:id/calificar', async (c) => {
       comentario,
     )
     .run();
+  if (!tapado) await liberarDelFiltro(db, 'resena', c.req.param('id'));
   if (tapado) {
     await db
       .prepare(

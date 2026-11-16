@@ -1628,6 +1628,20 @@ describe('algo agotado y ajustar el tiempo (C-AGOTADO)', () => {
 
   it('el restaurante marca el plato; el cliente lo quita y se le devuelve esa parte', async () => {
     const { m, dueno, cliente, id, platoId } = await conDosPlatos();
+    // C-AVISOS-IDIOMA: el teléfono del cliente está en inglés; el aviso nombra el plato en inglés.
+    const { usarTransporteAvisos } = await import('../notificaciones');
+    const avisosCli: { to: string; body: string }[] = [];
+    usarTransporteAvisos(async (_e, init) => {
+      const lote = JSON.parse(String(init.body)) as { to: string; body: string }[];
+      avisosCli.push(...lote);
+      return new Response(JSON.stringify({ data: lote.map(() => ({ status: 'ok' })) }));
+    });
+    await m.llamar(
+      'POST',
+      '/datos/cuentas/dispositivo',
+      { token: 'ExponentPushToken[cliente-agotado]', plataforma: 'ios', idioma: 'en' },
+      cliente.token,
+    );
     const antes = (
       await m.llamar('GET', `/datos/pedidos/${id}/seguimiento`, undefined, cliente.token)
     ).datos.pedido;
@@ -1676,6 +1690,10 @@ describe('algo agotado y ajustar el tiempo (C-AGOTADO)', () => {
     expect(seg.ajuste.estado).toBe('quitado');
     expect(seg.total).toBe(antes.total - falta.datos.devolucion);
     expect(seg.lineas.find((l: { platoId: string }) => l.platoId === platoId)).toBeUndefined();
+    const delCliente = avisosCli.filter((x) => x.to === 'ExponentPushToken[cliente-agotado]');
+    expect(JSON.stringify(delCliente)).toContain('Juice');
+    expect(JSON.stringify(delCliente)).not.toContain('Jugo');
+    usarTransporteAvisos(null);
     const acepta = await m.llamar(
       'POST',
       `/datos/restaurante/pedidos/${id}/aceptar`,

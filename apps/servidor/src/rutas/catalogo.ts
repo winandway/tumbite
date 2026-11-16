@@ -573,7 +573,8 @@ catalogo.get('/restaurantes/:id/resenas', async (c) => {
       creado_en: string;
       nombre: string;
     }>();
-  c.header('cache-control', 'public, max-age=300');
+  // C-MODERACION: una reseña ocultada deja de verse en un minuto como mucho.
+  c.header('cache-control', 'public, max-age=60');
   return c.json({
     calificacion,
     resenas: results.map((x) => ({

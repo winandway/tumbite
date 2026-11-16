@@ -6426,3 +6426,12 @@ body.modo-tableta .cabecera {
 .reportar-caja input[type='radio'] {
   accent-color: #f20d20;
 }
+.super-reporte-foto {
+  display: block;
+  max-width: 260px;
+  max-height: 260px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  object-fit: cover;
+}

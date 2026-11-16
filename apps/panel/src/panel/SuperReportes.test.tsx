@@ -7,6 +7,7 @@ import { ReportarResenaWeb } from './ReportarWeb';
 /** C-MODERACION: la bandeja de reportes del superadmin y «Reportar» en las reseñas del panel. */
 const REPORTE = {
   id: 'r1',
+  ref: '7',
   tipo: 'mensaje_pedido',
   objeto: 'pedido',
   objetoId: 'abcdef123456',

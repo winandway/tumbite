@@ -58,6 +58,15 @@ export async function marcarPorFiltro(
     texto: string;
   },
 ) {
+  // Si el filtro ya lo había marcado (y el equipo lo cerró), vuelve a la bandeja con el texto nuevo.
+  const otraVez = await db
+    .prepare(
+      `UPDATE reportes_contenido SET estado = 'abierto', accion = NULL, resuelto_por = NULL, resuelto_en = NULL,
+         texto = ?, creado_en = datetime('now') WHERE tipo = ? AND ref = ? AND reporta_id IS NULL`,
+    )
+    .bind(r.texto.slice(0, 1000), r.tipo, r.ref)
+    .run();
+  if (otraVez.meta.changes) return;
   await db
     .prepare(
       `INSERT OR IGNORE INTO reportes_contenido (id, tipo, ref, objeto, objeto_id, autor_id, reporta_id, motivo, texto)
@@ -65,6 +74,26 @@ export async function marcarPorFiltro(
     )
     .bind(nuevoId(), r.tipo, r.ref, r.objeto, r.objetoId, r.autorId, r.texto.slice(0, 1000))
     .run();
+}
+
+/**
+ * La reseña se reescribió sin palabras ofensivas: si solo la había retenido el filtro, vuelve a
+ * verse y su marca del filtro se cierra. Lo que ocultó una persona del equipo no se toca.
+ */
+export async function liberarDelFiltro(db: D1Database, tipo: TipoContenido, ref: string) {
+  await db.batch([
+    db
+      .prepare(
+        "DELETE FROM contenido_oculto WHERE tipo = ? AND ref = ? AND motivo = 'filtro' AND por IS NULL",
+      )
+      .bind(tipo, ref),
+    db
+      .prepare(
+        `UPDATE reportes_contenido SET estado = 'resuelto', accion = 'publicar', resuelto_en = datetime('now')
+          WHERE tipo = ? AND ref = ? AND reporta_id IS NULL AND estado = 'abierto'`,
+      )
+      .bind(tipo, ref),
+  ]);
 }
 
 /** ¿`quien` bloqueó a `a`? (una lectura por la llave primaria). */
@@ -87,7 +116,8 @@ export async function parejasBloqueadas(
   personas: string[],
 ): Promise<Map<string, Set<string>>> {
   const r = new Map<string, Set<string>>();
-  const unicas = [...new Set(personas.filter(Boolean))].slice(0, 90);
+  // Cada persona va dos veces en la consulta: 45 × 2 = 90 parámetros (D1 admite 100).
+  const unicas = [...new Set(personas.filter(Boolean))].slice(0, 45);
   if (!unicas.length) return r;
   const marcas = unicas.map(() => '?').join(',');
   const { results } = await db
@@ -256,7 +286,16 @@ moderacion.post('/reportes', limiteIntentos(30, 60_000), async (c) => {
     )
     .run();
   // El equipo se entera en el momento (respuesta a tiempo, como pide Apple). Una vez por reporte.
-  if (r.meta.changes) {
+  // Un correo por tanda: si ya hubo otro reporte de una persona en los últimos 15 minutos, ese
+  // correo ya avisó y la bandeja muestra todos (nadie inunda el buzón del equipo).
+  const tanda = r.meta.changes
+    ? await db
+        .prepare(
+          "SELECT COUNT(*) AS n FROM reportes_contenido WHERE reporta_id IS NOT NULL AND creado_en > datetime('now', '-15 minutes')",
+        )
+        .first<{ n: number }>()
+    : null;
+  if (r.meta.changes && Number(tanda?.n ?? 0) <= 1) {
     const avisos = (await correosEquipo(c.env, 'pedidos')).map((para) =>
       enviarCorreo(c.env, {
         de: 'avisos',
@@ -398,6 +437,7 @@ moderacion.get('/admin/reportes', async (c) => {
     reportes: results.map((f) => ({
       id: String(f.id),
       tipo: String(f.tipo),
+      ref: String(f.ref),
       objeto: String(f.objeto),
       objetoId: String(f.objeto_id),
       motivo: String(f.motivo),
@@ -453,6 +493,15 @@ moderacion.post('/admin/reportes/:id/accion', async (c) => {
     .bind(r.tipo, r.ref, d.nota || d.accion, admin.id);
   const pasos: D1PreparedStatement[] = [];
   if (d.accion === 'ocultar') pasos.push(ocultar);
+  // Descartar: el reporte no tenía razón. Si solo lo retenía el filtro, vuelve a verse.
+  if (d.accion === 'descartar')
+    pasos.push(
+      db
+        .prepare(
+          "DELETE FROM contenido_oculto WHERE tipo = ? AND ref = ? AND motivo = 'filtro' AND por IS NULL",
+        )
+        .bind(r.tipo, r.ref),
+    );
   if (d.accion === 'publicar')
     pasos.push(
       db.prepare('DELETE FROM contenido_oculto WHERE tipo = ? AND ref = ?').bind(r.tipo, r.ref),

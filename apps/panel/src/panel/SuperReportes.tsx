@@ -66,6 +66,7 @@ const T = {
     } as Record<string, string>,
     hecho: 'Listo.',
     masOpciones: 'Más opciones',
+    fotoReportada: 'La foto del chat que se reportó',
   },
   en: {
     titulo: 'Flagged content',
@@ -119,11 +120,13 @@ const T = {
     } as Record<string, string>,
     hecho: 'Done.',
     masOpciones: 'More options',
+    fotoReportada: 'The reported chat photo',
   },
 };
 
 type Reporte = {
   id: string;
+  ref: string;
   tipo: string;
   objeto: string;
   objetoId: string;
@@ -228,7 +231,15 @@ export function SuperReportes({ idioma }: { idioma: Idioma }) {
                 />
               ) : null}
             </div>
-            <blockquote className="super-reporte-texto">{r.texto}</blockquote>
+            {r.texto === '[foto]' && r.tipo === 'mensaje_pedido' ? (
+              <img
+                className="super-reporte-foto"
+                src={`/datos/pedidos/${r.objetoId}/mensajes/${r.ref}/foto`}
+                alt={t.fotoReportada}
+              />
+            ) : (
+              <blockquote className="super-reporte-texto">{r.texto}</blockquote>
+            )}
             <p className="super-reporte-quien">
               {r.autor ? (
                 <>
