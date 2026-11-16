@@ -2265,6 +2265,19 @@ body.modo-tableta .pd .pd-contenido {
   color: var(--pd-gris);
   font-size: 0.86rem;
 }
+
+/* C-RASTREO-VIVO: la tarjeta «En vivo» de la ficha del pedido y del viaje. */
+.ficha-vivo-fase {
+  font-weight: 600;
+  color: var(--pd-gris);
+}
+.ficha-vivo-llegada {
+  margin: 4px 0 8px;
+  font-size: 1.05rem;
+}
+.ficha-vivo-llegada strong {
+  font-size: 1.2rem;
+}
 .ficha-dl {
   margin-top: 10px;
 }

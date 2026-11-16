@@ -1,3 +1,4 @@
+import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
@@ -24,6 +25,7 @@ import {
   tarifaDeMercado,
   distanciaKm,
   estimarRuta,
+  faseDeViaje,
   rangoPrefijo,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
@@ -942,6 +944,16 @@ function minutosEstimados(f: FilaViajeCliente, t: ReturnType<typeof tarifaDeCopi
   return Math.max(1, Math.round(r.duracionS / 60));
 }
 
+/**
+ * C-HORA-LLEGADA: la hora de llegada que calculó el servidor con tráfico (la misma fila que ve el
+ * equipo): con el conductor en camino, la de la recogida; en el viaje, la del destino. Solo con el
+ * viaje en marcha; leer no calcula (una lectura por llave).
+ */
+async function llegadaDelViaje(db: D1Database, id: string, estado: string) {
+  const fase = faseDeViaje(estado);
+  return fase ? llegadaParaMostrar(await leerLlegada(db, `viaje:${id}`), fase) : null;
+}
+
 function viajePublico(f: FilaViajeCliente) {
   const t = tarifaDeCopia(f.tarifa_json);
   const cargo = t ? cargoCancelacionViaje(t, f.estado, f.segundos_asignado) : null;
@@ -1042,6 +1054,7 @@ viajesPasajero.get('/viajes/actual', async (c) => {
         paradas: await paradasDe(db, f.id),
         paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
         referencia: await referenciaLocal(db, f.pais, f.total, f.moneda),
+        llegadaEnVivo: await llegadaDelViaje(db, f.id, f.estado),
       }
     : null;
   return c.json({
@@ -1074,6 +1087,7 @@ viajesPasajero.get('/viajes/:id', async (c) => {
     paradas,
     paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
     referencia: await referenciaLocal(db, f.pais, f.total, f.moneda),
+    llegadaEnVivo: await llegadaDelViaje(db, f.id, f.estado),
   };
   return c.json({
     viaje,

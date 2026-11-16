@@ -1,3 +1,4 @@
+import { depurarLlegadas } from './llegadaEstimada';
 import { correosEquipo } from './avisosEquipo';
 import type { Env } from './env';
 import { enviarCorreo } from './correo';
@@ -423,5 +424,7 @@ export async function depurarFotos(db: D1Database, almacen: R2Bucket): Promise<n
   // C-PERMISOS-FINOS: el registro de lo que vio el equipo se guarda 90 días; lo viejo se borra aquí,
   // en la misma vuelta horaria (sin tarea nueva). Lee como mucho 200 filas por la llave.
   borradas += await depurarAccesosSensibles(db, CONFIG_PERMISOS.diasRegistroAccesos);
+  // C-HORA-LLEGADA: la fila de la llegada (con la línea de la ruta de Google) se guarda 24 horas.
+  borradas += await depurarLlegadas(db);
   return borradas;
 }

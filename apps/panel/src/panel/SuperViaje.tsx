@@ -10,6 +10,7 @@ import {
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
+import { RastreoVivo } from './RastreoVivo';
 import { nombreEstado, tonoEstado } from './BuscadorSuper';
 import { Hora } from './horario';
 import {
@@ -185,6 +186,8 @@ type Viaje = {
   programadoPara: string | null;
   ciudad: string | null;
   zonaHoraria: string | null;
+  pais?: string | null;
+  vivo?: boolean;
   origen: { direccion: string; lugar: Punto };
   destino: { direccion: string; lugar: Punto };
   pasajero: { id: string; nombre: string | null };
@@ -281,6 +284,16 @@ export function SuperViaje({ base, id, idioma }: { base: string; id: string; idi
           ) : null}
         </div>
       </header>
+      {/* C-RASTREO-VIVO: el conductor en el mapa, la hora de llegada y si está detenido. */}
+      <RastreoVivo
+        tipo="viaje"
+        id={v.id}
+        idioma={idioma}
+        zona={zona}
+        pais={v.pais}
+        fijos={puntos}
+        vivo={Boolean(v.vivo) && v.conductor != null}
+      />
       <TarjetaTiempos tiempos={v.tiempos} idioma={idioma} />
       <LineaTiempo
         pasos={v.linea}

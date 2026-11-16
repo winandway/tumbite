@@ -431,6 +431,26 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "clave",
     "n"
   ],
+  "llegadas_estimadas": [
+    "clave",
+    "fase",
+    "duracion_s",
+    "tramo_s",
+    "distancia_m",
+    "fuente",
+    "motivo",
+    "ruta",
+    "desde_lat",
+    "desde_lng",
+    "calculada_en",
+    "ancla_lat",
+    "ancla_lng",
+    "ancla_en",
+    "objetivo_lat",
+    "objetivo_lng",
+    "destino_lat",
+    "destino_lng"
+  ],
   "kyc": [
     "usuario_id",
     "estado",

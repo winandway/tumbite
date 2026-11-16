@@ -1,3 +1,4 @@
+import { actualizarLlegadas, leerLlegada, listoMsDe, llegadaParaMostrar } from '../llegadaEstimada';
 import { avisarAutorizacionesPorVencer } from '../autorizacionVencida';
 import { flotasActivas } from './flota';
 import { TAREA_VIAJES_PROGRAMADOS } from './viajesProgramados';
@@ -146,6 +147,7 @@ import {
 import {
   type FaltaPapel,
   faltaPapel,
+  faseDePedido,
   formatearMonto,
   platosDelPedido,
   etiquetasValidas,
@@ -1697,6 +1699,13 @@ operacion.post('/repartidor/ubicacion', async (c) => {
   );
   // C-MODO-DESTINO: al llegar a su destino, el modo se apaga solo.
   await revisarLlegadaDestino(db, u.id, d);
+  // C-HORA-LLEGADA: la hora de llegada de sus pedidos o viaje en marcha, si toca (como mucho cada
+  // 90 s por pedido). Después de responder: el repartidor no espera a Google.
+  const llegada = actualizarLlegadas(c.env, db, u.id, { lat: d.lat, lng: d.lng }).catch(
+    (e: unknown) => console.error('llegada: no se pudo actualizar', e),
+  );
+  if (c.env.ESPERAR_DESPUES) c.env.ESPERAR_DESPUES(llegada);
+  else await llegada;
   return c.json({ ok: true });
 });
 
@@ -3359,6 +3368,21 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
   });
   const llegadaRango = rangoLlegada(Date.now(), minutosEstimados, llegaAMasTardar);
   const haceSegundos = enRuta ? segundosDesde(f.rep_en as string | null) : null;
+  // C-HORA-LLEGADA: la hora de llegada que calculó el servidor con tráfico (la MISMA fila que ve el
+  // equipo). Solo con el pedido en marcha y con repartidor; leer no calcula (una lectura por llave).
+  const faseLlegada = faseDePedido({
+    estado: String(f.estado),
+    conRepartidor: f.repartidor_id != null,
+    llegoAlRestaurante: f.h_llego_rest != null,
+  });
+  const llegadaEnVivo = faseLlegada
+    ? llegadaParaMostrar(
+        await leerLlegada(base(c), `pedido:${String(f.id)}`),
+        faseLlegada,
+        Date.now(),
+        listoMsDe(f),
+      )
+    : null;
   return c.json({
     pedido: {
       ...aPedido(f),
@@ -3368,6 +3392,7 @@ operacion.get('/pedidos/:id/seguimiento', async (c) => {
       minutosEstimados,
       llegaAMasTardar,
       llegadaRango,
+      llegadaEnVivo,
       // Solo el cliente ve su PIN: se lo da a quien reciba el pedido.
       pin:
         f.cliente_id === u.id

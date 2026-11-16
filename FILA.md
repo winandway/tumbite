@@ -10,6 +10,12 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Rastreo en vivo y hora de llegada (16 nov 2026, orden de Richard: «nosotros vivimos del tiempo y de los mapas») — todos los países
+
+- [x] HECHO 16 nov (C-RASTREO-VIVO, C-HORA-LLEGADA) Tarjeta «En vivo» en la ficha del pedido y del viaje (mapa de Google con el repartidor que se desliza, ruta, tramo en palabras, «Llega a las… · faltan… · km», detenido o sin señal), insignia «Detenido» en Pedidos en curso, hora de llegada con tráfico en una sola fila por pedido que también ve el cliente (pedido, viaje y envío), tramos abiertos «En curso» y «Sin cerrar». Rama claude/rastreo-vivo, sin publicar.
+- [ ] [para: revisor-calidad] Revisar la rama claude/rastreo-vivo (C-RASTREO-VIVO, C-HORA-LLEGADA y el arreglo de C-TIEMPOS-OPERACION): costo en docs/COSTO-MAPA-Y-LLEGADA.md, pruebas en llegadaEstimada.test.ts (servidor y compartido), rastreoVivo.test.tsx y tiemposOperacion.test.ts.
+- [ ] Capturas reales de la tarjeta «En vivo» con el mapa (en y es) en el sitio de pruebas, para la guía «Reading an order or ride file» de Docs (en local el mapa no sale sin la llave web). Todos los países.
+
 ## Reportar, bloquear y avisos en tu idioma (16 nov 2026, orden de Richard por Gerencia) — todos los países
 
 - [x] HECHO 16 nov (C-MODERACION) «Reportar» en cada mensaje del chat (pedido y viaje), en cada reseña y en la respuesta del restaurante; «Bloquear» desde los tres puntos del chat (sin volver a emparejar en pedidos ni viajes); filtro de palabras ES/EN; bandeja «Reportes» del superadmin con ocultar, publicar, avisar, suspender y descartar; «Personas bloqueadas» en la cuenta; guías en Docs con capturas; notas para el revisor de Apple en `docs/tiendas/NOTAS-REVISOR-MODERACION.md`.

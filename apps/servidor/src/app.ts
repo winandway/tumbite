@@ -62,6 +62,7 @@ import { equipoInterno } from './rutas/equipoInterno';
 import { segundoFactor } from './segundoFactor';
 import { buscadorInterno } from './rutas/buscadorInterno';
 import { fichaViajeRutas } from './rutas/fichaViaje';
+import { rastreoVivoRutas } from './rutas/rastreoVivo';
 import { preferenciasInternas } from './rutas/preferenciasInternas';
 import { kyc } from './rutas/kyc';
 import { fotos, media } from './rutas/fotos';
@@ -126,6 +127,7 @@ import { saludTransiciones } from './esquemaPedidos';
 import { saludCobros } from './liquidaciones';
 import { saludAutorizaciones } from './autorizacionVencida';
 import { saludRutas } from './rutaPorCalles';
+import { saludLlegada } from './llegadaEstimada';
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -273,7 +275,8 @@ app.use('/datos/admin/*', permisosInternos);
  * si una pieza se cae, aquí se ve.
  */
 app.get('/datos/salud', async (c) => {
-  const piezas: Record<string, 'ok' | 'error' | 'pendiente' | 'atrasado' | 'estimada'> = {};
+  const piezas: Record<string, 'ok' | 'error' | 'pendiente' | 'atrasado' | 'estimada' | 'tope'> =
+    {};
 
   if (!c.env.DB) {
     piezas.base = 'pendiente';
@@ -438,6 +441,13 @@ app.get('/datos/salud', async (c) => {
     return { estado: 'error' as const, consultasHoy: 0, tope: 0 };
   });
   piezas.rutas = rutas.estado;
+  // C-HORA-LLEGADA: la hora de llegada con tráfico (ok), con la fórmula (estimada: sin llave), al
+  // tope del día (tope: no tumba el sitio; avisa por correo una vez al día) o rota (error). Solo lee.
+  const llegada = await saludLlegada(c.env, c.env.DB).catch((e: unknown) => {
+    console.error('salud: llegada', e);
+    return { estado: 'error' as const, calculosHoy: 0, tope: 0 };
+  });
+  piezas.llegada = llegada.estado;
   let fechaRespaldo: string | null = null;
   if (!c.env.BUCKET) piezas.respaldo = 'pendiente';
   else {
@@ -457,6 +467,7 @@ app.get('/datos/salud', async (c) => {
       ok: !algunError,
       piezas,
       rutas: { consultasHoy: rutas.consultasHoy, tope: rutas.tope },
+      llegada: { calculosHoy: llegada.calculosHoy, tope: llegada.tope },
       ultimoRespaldo: fechaRespaldo,
       version: VERSION_SERVIDOR,
     },
@@ -636,6 +647,8 @@ app.route('/datos', segundoFactor);
 app.route('/datos', buscadorInterno);
 // C-FICHA-OPERACION: después de /admin/viajes/tarifas, /ajustes y /dinamica (rutas fijas de arriba).
 app.route('/datos', fichaViajeRutas);
+// C-RASTREO-VIVO: el mapa en vivo de la ficha del pedido y del viaje (solo lectura).
+app.route('/datos', rastreoVivoRutas);
 app.route('/datos', preferenciasInternas);
 app.route('/datos', piloto);
 app.route('/datos', informes);

@@ -2,6 +2,8 @@ import { SolicitudCancelacion } from './SolicitudCancelacion';
 import { ResolverAutorizacion } from './ResolverAutorizacion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  type Detenido,
+  textoDetenido,
   ErrorApi,
   FILTROS_ESTADO_PEDIDO,
   type FiltroEstadoPedido,
@@ -18,6 +20,7 @@ import {
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
+import { RastreoVivo } from './RastreoVivo';
 import { textoPendiente } from './SuperAprobaciones';
 import { LuzSemaforo } from './LuzSemaforo';
 import { SelectorCiudad } from './SuperFichas';
@@ -411,6 +414,7 @@ type Pedido = {
   notas: string;
   ciudad: string | null;
   zonaHoraria?: string | null;
+  pais?: string | null;
   creadoEn?: string;
   metodoPago?: string;
   pagoStripe: string | null;
@@ -674,6 +678,16 @@ export function SuperPedido({ base, id, idioma }: { base: string; id: string; id
           ) : null}
         </div>
       </header>
+      {/* C-RASTREO-VIVO: el repartidor en el mapa, la hora de llegada y si está detenido. */}
+      <RastreoVivo
+        tipo="pedido"
+        id={p.id}
+        idioma={idioma}
+        zona={zona}
+        pais={p.pais}
+        fijos={puntos.filter((x) => x.id === 'rest' || x.id === 'casa')}
+        vivo={Boolean(p.vivo) && p.repartidor != null}
+      />
       {p.tiempos?.length ? <TarjetaTiempos tiempos={p.tiempos} idioma={idioma} /> : null}
       {p.linea?.length ? (
         <LineaTiempo
@@ -1043,6 +1057,18 @@ const TL = {
   },
 };
 
+/** C-RASTREO-VIVO: la marca de la fila cuando el repartidor o conductor no avanza o no da señal. */
+function MarcaDetenido({ d, idioma }: { d: Detenido; idioma: Idioma }) {
+  return (
+    <>
+      {' '}
+      <span className="bs-estado bs-problema" data-testid="fila-detenido">
+        {textoDetenido(d, idioma === 'en' ? 'en' : 'es')}
+      </span>
+    </>
+  );
+}
+
 type FilaPedido = Parameters<typeof LuzSemaforo>[0]['pedido'] & {
   id: string;
   tipo?: 'pedido';
@@ -1057,6 +1083,8 @@ type FilaPedido = Parameters<typeof LuzSemaforo>[0]['pedido'] & {
   zonaId?: string | null;
   zonaHoraria?: string | null;
   luz: 'verde' | 'amarillo' | 'rojo';
+  /** C-RASTREO-VIVO: detenido o sin señal (lo marca el servidor, solo lectura). */
+  detenido?: Detenido | null;
 };
 type FilaViaje = {
   id: string;
@@ -1076,6 +1104,7 @@ type FilaViaje = {
   emergencia: boolean;
   luz: 'verde' | 'amarillo' | 'rojo';
   semaforo: { luz: string; minutos: number; motivo: string } | null;
+  detenido?: Detenido | null;
 };
 type Fila = FilaPedido | FilaViaje;
 type RespuestaLista = {
@@ -1447,6 +1476,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
                     <span className="bs-estado bs-problema">{t.emergencia}</span>
                   ) : null}{' '}
                   {VIVOS_VIAJE.has(p.estado) ? <LuzViaje v={p} idioma={idioma} /> : null}
+                  {p.detenido ? <MarcaDetenido d={p.detenido} idioma={idioma} /> : null}
                 </span>
               </Enlace>
             </li>
@@ -1479,6 +1509,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
                     {te.estados[p.estado] ?? p.estado}
                   </span>{' '}
                   {VIVOS.has(p.estado) ? <LuzSemaforo pedido={p} idioma={idioma} /> : null}
+                  {p.detenido ? <MarcaDetenido d={p.detenido} idioma={idioma} /> : null}
                 </span>
               </Enlace>
             </li>

@@ -10,6 +10,7 @@ import { soltarPedido } from './operacion';
 import { parametrosLista } from './buscadorInterno';
 import { contadoresMonitoreo, listarMonitoreo } from '../monitoreo';
 import { fichaPedido } from '../fichaOperacion';
+import { conDetenidos } from '../llegadaEstimada';
 import { conciliar } from '../conciliacion';
 import { crearStripe } from '../stripe';
 import { pruebasDisputa } from '../disputas';
@@ -756,14 +757,14 @@ async function kycResumen(db: D1Database, usuarioId: string) {
 superadmin.get('/admin/pedidos', async (c) => {
   exigir(c, 'admin');
   // C-MONITOREO-SERVICIOS: pedidos y viajes juntos, con pestaña de servicio y sus contadores.
-  return c.json(
-    await listarMonitoreo(base(c), {
-      ...parametrosLista((k) => c.req.query(k)),
-      // C-PERMISOS-FINOS: solo los pedidos y viajes de la zona de trabajo de quien mira.
-      alcance: alcancePedidos(c),
-      dentroViaje: await alcanceViajes(c),
-    }),
-  );
+  const lista = await listarMonitoreo(base(c), {
+    ...parametrosLista((k) => c.req.query(k)),
+    // C-PERMISOS-FINOS: solo los pedidos y viajes de la zona de trabajo de quien mira.
+    alcance: alcancePedidos(c),
+    dentroViaje: await alcanceViajes(c),
+  });
+  // C-RASTREO-VIVO: la marca «detenido» o «sin señal» de cada vivo (solo lectura, por llave).
+  return c.json({ ...lista, pedidos: await conDetenidos(base(c), lista.pedidos) });
 });
 
 /** C-MONITOREO-SERVICIOS: vivos y en problemas de cada pestaña (lecturas acotadas, solo lectura). */
