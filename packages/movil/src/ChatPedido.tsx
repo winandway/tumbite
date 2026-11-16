@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text } from './diseno';
 import { FlatList, Image, Pressable, TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma, unirMensajes } from '@tumbite/compartido';
-import { Boton, C, e } from './ui';
+import { Boton, C, CASILLA_EN_FILA, FilaConBoton, e } from './ui';
 import { useSesion } from './sesion';
 import { BotonReportar, MenuBloquear } from './Moderacion';
 
@@ -235,13 +235,13 @@ export function ChatPedido({
       )}
       {error ? <Text style={e.error}>{error}</Text> : null}
       {abierto ? (
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8 }}>
+        <FilaConBoton style={{ marginTop: 8 }}>
           <TextInput
             value={texto}
             onChangeText={setTexto}
             placeholder={t.escribe}
             accessibilityLabel={t.escribe}
-            style={[e.input, { flex: 1 }]}
+            style={[e.input, CASILLA_EN_FILA]}
             onSubmitEditing={() => void enviar()}
           />
           {elegirFoto ? (
@@ -255,7 +255,7 @@ export function ChatPedido({
             </Pressable>
           ) : null}
           <Boton texto={t.enviar} alTocar={() => void enviar()} cargando={enviando} exito enFila />
-        </View>
+        </FilaConBoton>
       ) : mensajes.length ? (
         <Text style={{ color: '#666B73', marginTop: 6 }}>{t.cerrado}</Text>
       ) : null}

@@ -1705,3 +1705,32 @@ export async function saludServicios(
   if (encendidos.some((e) => !abiertoEn(e.servicio, e.pais))) return 'error';
   return 'ok';
 }
+
+// ---------------------------------------------------------------- C-SERVICIOS-CONECTADOS
+
+/**
+ * Los servicios «al momento» (Richard, 16 nov 2026): se conectan varios a la vez mientras espera;
+ * al aceptar uno, los demás quedan en pausa solos. Divoox Flex va aparte: es exclusivo.
+ */
+export const SERVICIOS_AL_MOMENTO = ['comida', 'envios', 'moto', 'carro'] as const;
+const AL_MOMENTO = new Set<string>(SERVICIOS_AL_MOMENTO);
+export const UPSERT_PREFERENCIA = `INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, ?, ?)
+       ON CONFLICT(conductor_id, servicio_id) DO UPDATE SET activa = excluded.activa, actualizado_en = datetime('now')`;
+
+/**
+ * El encendido general de una app vieja conecta todos los aprobados si ninguno está encendido.
+ * Si el repartidor ya eligió (alguno encendido), no toca nada: no escribe en el caso normal.
+ */
+export async function encenderTodosSiNinguno(db: Db, conductorId: string) {
+  const { servicios: lista } = await estadoDelConductor(
+    db,
+    conductorId,
+    false,
+    Number.MAX_SAFE_INTEGER,
+  );
+  const posibles = lista.filter((s) => AL_MOMENTO.has(s.servicioId) && s.puedeActivar);
+  if (!posibles.length || posibles.some((s) => s.preferencia)) return;
+  await db.batch(
+    posibles.map((s) => db.prepare(UPSERT_PREFERENCIA).bind(conductorId, s.servicioId, 1)),
+  );
+}

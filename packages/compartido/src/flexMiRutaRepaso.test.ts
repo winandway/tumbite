@@ -50,10 +50,20 @@ describe('Mi ruta: repaso en el simulador', () => {
  * igual lo pierde vuelve al inicio.
  */
 describe('Desliza para finalizar dentro de una pantalla que se desplaza', () => {
+  // Desde C-SERVICIOS-CONECTADOS (16 nov 2026) el «Desliza para finalizar» de Flex es la pieza común
+  // `Deslizador` (packages/movil): el candado revisa el gesto ahí, donde vive.
   const piezas = leer('repartidor', 'src', 'flex', 'piezas.tsx');
-  const deslizar = piezas.slice(piezas.indexOf('export function Deslizar'));
+  const flex = piezas.slice(piezas.indexOf('export function Deslizar'));
+  const deslizar = readFileSync(
+    join(RAIZ, '..', 'packages', 'movil', 'src', 'Deslizador.tsx'),
+    'utf8',
+  );
+  it('Flex usa la pieza común de deslizar', () => {
+    expect(flex).toContain('<Deslizador');
+    expect(flex).toContain('alConfirmar={alTerminar}');
+  });
   it('toma el gesto al tocar y no se lo cede a la lista', () => {
-    expect(deslizar).toContain('onStartShouldSetPanResponder: () => true');
+    expect(deslizar).toContain('onStartShouldSetPanResponder: () => actual.current.habilitado');
     expect(deslizar).toContain('onPanResponderTerminationRequest: () => false');
   });
   it('al elegir dónde lo dejó se borra el aviso que lo pedía', () => {
@@ -62,9 +72,9 @@ describe('Desliza para finalizar dentro de una pantalla que se desplaza', () => 
     );
   });
   it('el gesto se arma una vez y lee el ancho y la acción actuales', () => {
-    expect(deslizar).toContain('const [gesto] = useState(() => {');
-    expect(deslizar).toContain('actual.current.alTerminar()');
-    expect(deslizar).toContain('actual.current.tope');
+    expect(deslizar).toContain('const [gesto] = useState(() =>');
+    expect(deslizar).toContain('actual.current.confirmar()');
+    expect(deslizar).toContain('actual.current.recorrido');
   });
   it('al firmar o tomar la foto se borra el aviso de lo que faltaba (C-FLEX-AVISO-AL-DAR)', () => {
     expect(miRuta).toMatch(/setPidiendoFirma\(false\);[\s\S]{0,160}setAviso\(''\)/);
@@ -77,7 +87,7 @@ describe('Desliza para finalizar dentro de una pantalla que se desplaza', () => 
   });
   it('si pierde el gesto, la bola vuelve al inicio', () => {
     expect(deslizar).toContain('onPanResponderTerminate: volver');
-    expect(deslizar).toMatch(/const volver = \(\) => Animated\.spring\(x, \{ toValue: 0/);
+    expect(deslizar).toMatch(/const volver = \(\) =>\s*Animated\.timing\(x, \{\s*toValue: 0/);
   });
 });
 
@@ -98,13 +108,17 @@ describe('Mi ruta: el final de la ruta', () => {
 
 describe('Inicio del Driver con una ruta de paquetes (C-FLEX-RUTA-EN-INICIO)', () => {
   const inicio = leer('repartidor', 'src', 'Inicio.tsx');
+  // Desde C-SERVICIOS-CONECTADOS (16 nov 2026) la tarjeta de la ruta vive en el panel de servicios.
+  const panel = leer('repartidor', 'src', 'servicios', 'PanelServicios.tsx');
   it('muestra la ruta activa con su botón para continuar', () => {
     expect(inicio).toContain("'/datos/v1/flex/conductor/rutas'");
-    expect(inicio).toContain('testID="ruta-flex-inicio"');
-    expect(inicio).toContain("onPress={() => setVista('miRuta')}");
+    expect(panel).toContain('testID="ruta-flex-inicio"');
+    expect(panel).toContain('onPress={alAbrirFlex}');
+    expect(inicio).toContain("alAbrirFlex={() => setVista('miRuta')}");
   });
-  it('con la ruta en curso no dice «Buscando pedidos»', () => {
-    expect(inicio).toContain("estado?.conectado && !(rutaFlex && rutaFlex.estado === 'en_curso')");
+  it('con la ruta en curso no dice «Buscando pedidos»: dice que la lleva y lo demás en pausa', () => {
+    expect(inicio).not.toContain('{estado.pausado ? tg.pausa.enPausa : t.buscando}');
+    expect(panel).toMatch(/\{panel\.lleva \? \(\s*<>\s*<AvisoLlevando/);
   });
 });
 

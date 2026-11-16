@@ -267,9 +267,14 @@ try {
       'confirma la recogida',
     );
     await ubicar(CASA);
+    // C-DESLIZAR-SIEMPRE: como la app, la foto de la puerta no cierra; se cierra deslizando.
     ok(
-      await foto(`/datos/repartidor/pedidos/${id}/entregado`, tokens.repartidor, CASA),
+      await foto(`/datos/repartidor/pedidos/${id}/foto-entrega`, tokens.repartidor, CASA),
       'foto de entrega',
+    );
+    ok(
+      await yo('POST', `/datos/repartidor/pedidos/${id}/entregado`, { ...CASA, modo: 'puerta' }),
+      'desliza para entregar',
     );
     return { antes, apartado };
   }

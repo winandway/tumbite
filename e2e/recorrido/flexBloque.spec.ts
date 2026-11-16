@@ -1,6 +1,5 @@
 import { join } from 'node:path';
 import { TEXTOS_RUTA } from '../../apps/repartidor/src/flex/textos';
-import { textosDriver } from '../../apps/repartidor/src/piezas/textos';
 import { type Page, expect, test } from './fixtures';
 import { sqlLocal, sqlLocalTexto } from './sqlLocal';
 
@@ -87,7 +86,6 @@ for (const idioma of ['es', 'en'] as const)
   }) => {
     test.setTimeout(240_000);
     const T = TEXTOS_RUTA[idioma];
-    const D = textosDriver(idioma);
     const L = LUGARES[idioma];
     const CENTRO = { lat: L.centro.lat, lng: L.centro.lng };
     const PARADAS = L.paradas;
@@ -243,7 +241,9 @@ for (const idioma of ['es', 'en'] as const)
     await expect(banda).toBeVisible({ timeout: 60_000 });
     await expect(banda).toContainText(T.modoBloqueAsignadoTitulo);
     await expect(banda).toContainText(T.modoBloqueAsignadoTexto);
-    await expect(p.getByText(D.tocaDisponible)).toHaveCount(0);
+    // C-SERVICIOS-CONECTADOS: sin el panel de servicios; abajo, los servicios con candado.
+    await expect(p.getByTestId('estado-servicios')).toHaveCount(0);
+    await expect(p.getByTestId('servicios-bloqueados')).toBeVisible();
     await abrirRuta(p, L.ruta);
     await expect(visible('$54.00')).toBeVisible();
     await expect(visible('3 h 30 min')).toBeVisible();
@@ -335,7 +335,7 @@ for (const idioma of ['es', 'en'] as const)
     await p.waitForTimeout(7_000);
     await expect(cierre).toBeVisible();
     await boton(T.volverInicio).click();
-    await expect(visible(D.tocaDisponible)).toBeVisible({ timeout: 20_000 });
+    await expect(p.getByTestId('estado-servicios')).toBeVisible({ timeout: 20_000 });
     expect((await conectar(true)).estado).toBe(200);
     expect(conectadoAhora()).toBe(1);
     await ctx.close();

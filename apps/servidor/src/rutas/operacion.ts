@@ -46,6 +46,7 @@ import { volverPlatosAgotados } from './catalogo';
 import { correrSombra, leerAjustes, reputacionVisible } from '../rewards/sombra';
 import { DIAS_FOTO_ENTREGA, correoDeEntrega } from '../avisos';
 import { esConductorOcupado, repartirOperaciones } from '../operaciones';
+import { encenderTodosSiNinguno } from './servicios';
 import { recalcularDinamica } from '../viajesDinamica';
 import {
   accesoDe,
@@ -1194,7 +1195,7 @@ operacion.get('/restaurante/tablero', async (c) => {
 
 // ======================= Repartidor =======================
 
-async function miFicha(c: Ctx) {
+export async function miFicha(c: Ctx) {
   const u = exigir(c, 'repartidor');
   const db = base(c);
   await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
@@ -1466,6 +1467,25 @@ operacion.post('/repartidor/conectar', async (c) => {
       lng: z.number().nullable().default(null),
     }),
   );
+  // C-SERVICIOS-CONECTADOS: el encendido general (app vieja) conecta todos los servicios aprobados
+  // si ninguno quedó encendido; si el repartidor ya eligió los suyos, se respetan.
+  // Solo después de pasar todas las puertas: si una frena, no se escribe nada.
+  const r = await conectarRepartidor(c, u, db, d);
+  if (d.conectado) await encenderTodosSiNinguno(db, u.id);
+  return c.json(r);
+});
+
+/**
+ * El encendido general del repartidor con todas sus comprobaciones (Flex, KYC, papeles, términos,
+ * teléfono, foto de control, cobertura). Lo usan el encendido general y el de cada servicio
+ * (C-SERVICIOS-CONECTADOS), para que conectar un servicio pase por las mismas puertas.
+ */
+export async function conectarRepartidor(
+  c: Ctx,
+  u: { id: string; correo: string },
+  db: D1Database,
+  d: { conectado: boolean; lat: number | null; lng: number | null },
+) {
   // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): durante un bloque de Flex no se conecta nada más. La
   // base también lo rechaza (repartidores_no_conecta_en_bloque_flex); aquí se dice en palabras.
   if (d.conectado && (await bloqueFlexDe(db, u.id)))
@@ -1610,7 +1630,7 @@ operacion.post('/repartidor/conectar', async (c) => {
       console.error('destacado: no se pudo revisar', e),
     );
   // NXT-6x: conectado para otros servicios, pero sin Comida: el porqué, para avisarle.
-  return c.json({
+  return {
     conectado: d.conectado,
     cobertura: aqui.estado,
     // NXT-6y: con el texto en su idioma, para que la app se lo diga sin bloquearlo.
@@ -1623,8 +1643,8 @@ operacion.post('/repartidor/conectar', async (c) => {
           ),
         }
       : {}),
-  });
-});
+  };
+}
 
 /**
  * C-POSICION-SIN-REESCRIBIR (regla «cada escritura tiene presupuesto»): la ficha del repartidor
@@ -1791,7 +1811,8 @@ async function libresEn(
       AND NOT EXISTS (SELECT 1 FROM pedidos p WHERE p.repartidor_id = d.usuario_id AND p.estado IN ('aceptado','listo','en_camino'))
       AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')
       AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = d.usuario_id)
-      AND NOT EXISTS (SELECT 1 FROM ofertas_operacion x WHERE x.conductor_id = d.usuario_id AND x.estado = 'ofrecida')`,
+      AND NOT EXISTS (SELECT 1 FROM ofertas_operacion x WHERE x.conductor_id = d.usuario_id AND x.estado = 'ofrecida')
+      AND NOT EXISTS (SELECT 1 FROM preferencias_servicio ps WHERE ps.conductor_id = d.usuario_id AND ps.servicio_id = 'comida' AND ps.activa = 0)`,
     )
     .bind(flotaDe ?? zonaId, ...(flotaDe ? [] : (celdas ?? [])))
     .all<Libre>();
@@ -1818,6 +1839,7 @@ async function agrupablesPara(db: D1Database, pedidoId: string): Promise<Libre[]
        AND NOT EXISTS (SELECT 1 FROM ofertas o WHERE o.repartidor_id = d.usuario_id AND o.estado = 'ofrecida')
        AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = d.usuario_id AND c.tipo <> 'comida')
        AND NOT EXISTS (SELECT 1 FROM ofertas_operacion x WHERE x.conductor_id = d.usuario_id AND x.estado = 'ofrecida')
+       AND NOT EXISTS (SELECT 1 FROM preferencias_servicio ps WHERE ps.conductor_id = d.usuario_id AND ps.servicio_id = 'comida' AND ps.activa = 0)
        LIMIT 10`,
     )
     .bind(pedidoId)

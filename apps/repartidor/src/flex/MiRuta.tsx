@@ -1,7 +1,7 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { comoLlegar } from '../comoLlegar';
 import { enlaceRutaGoogle, medidasReducidas, posicionFrescaWeb } from '@tumbite/compartido';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -41,7 +41,7 @@ import {
   validarCobro,
   cumpleFiltro,
 } from '@tumbite/compartido';
-import { Boton as BotonBase, C, FOTO_EVIDENCIA, e } from '@tumbite/movil';
+import { Boton as BotonBase, C, FOTO_EVIDENCIA, Icono, e } from '@tumbite/movil';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 
 /** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
@@ -2764,7 +2764,7 @@ export function BandaBloque({
   bloque,
 }: {
   idioma: Idioma;
-  bloque: { estado: string; bloqueHasta: string | null };
+  bloque: { estado: string; bloqueDesde?: string | null; bloqueHasta: string | null };
 }) {
   const t = enIdioma(TEXTOS_RUTA, idioma);
   const porEmpezar = ['asignada', 'ofrecida'].includes(bloque.estado);
@@ -2781,30 +2781,74 @@ export function BandaBloque({
   }, []);
   const fin = bloque.bloqueHasta ? fecha(bloque.bloqueHasta).getTime() : NaN;
   const quedan = Number.isFinite(fin) && ahora != null ? Math.round((fin - ahora) / 60000) : null;
+  // C-SERVICIOS-CONECTADOS (pantalla 03 de DRIVER.md): arriba, en el azul de logística, la etiqueta
+  // «Modo bloque · Flex», el horario y cuánto queda; debajo, la tarjeta blanca con el candado.
   return (
     <View
       testID="banda-bloque"
       accessibilityRole="summary"
-      style={{
-        backgroundColor: C.logisticaAccion,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        gap: 2,
-      }}
+      style={{ backgroundColor: C.logistica, paddingHorizontal: 16, paddingBottom: 16, gap: 10 }}
     >
-      <Text style={{ color: C.logisticaTexto, fontWeight: '800', fontSize: 15 }}>
-        {porEmpezar ? t.modoBloqueAsignadoTitulo : t.modoBloqueTitulo}
-      </Text>
-      <Text style={{ color: C.logisticaTexto, fontSize: 13 }}>
-        {porEmpezar ? t.modoBloqueAsignadoTexto : t.modoBloqueTexto}
-      </Text>
+      <View
+        style={{
+          alignSelf: 'flex-start',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 999,
+          backgroundColor: 'rgba(255,255,255,0.12)',
+        }}
+      >
+        <Icono nombre="cube-outline" tamano={16} color="#FFFFFF" />
+        <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 12, letterSpacing: 1.2 }}>
+          {t.modoBloqueEtiqueta.toUpperCase()}
+        </Text>
+      </View>
+      {bloque.bloqueDesde && bloque.bloqueHasta ? (
+        <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 24, lineHeight: 30 }}>
+          {t.bloqueDe(horaSola(bloque.bloqueDesde, idioma), horaSola(bloque.bloqueHasta, idioma))}
+        </Text>
+      ) : null}
       {quedan != null && !porEmpezar ? (
-        <Text style={{ color: C.logisticaTexto, fontSize: 13, fontWeight: '700' }}>
+        <Text style={{ color: '#D5E3EC', fontSize: 14 }}>
           {quedan > 0
             ? `${t.bloqueQuedan(t.duracion(Math.floor(quedan / 60), quedan % 60))} · ${t.bloqueTermina(horaSola(bloque.bloqueHasta, idioma))}`
             : t.bloqueVencido}
         </Text>
       ) : null}
+      <View
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 16,
+          padding: 14,
+          flexDirection: 'row',
+          gap: 12,
+          alignItems: 'center',
+        }}
+      >
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            backgroundColor: C.logisticaSuave,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icono nombre="lock-closed-outline" tamano={20} color={C.logistica} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ color: '#101010', fontWeight: '800', fontSize: 15, lineHeight: 20 }}>
+            {porEmpezar ? t.modoBloqueAsignadoTitulo : t.modoBloqueTitulo}
+          </Text>
+          <Text style={{ color: '#666B73', fontSize: 13, lineHeight: 18 }}>
+            {porEmpezar ? t.modoBloqueAsignadoTexto : t.modoBloqueTexto}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -2813,10 +2857,13 @@ export function MiRuta({
   alSeguridad,
   alVolver,
   bloque,
+  bloqueados,
   ...props
 }: Parameters<typeof MiRutaContenido>[0] & {
   /** C-FLEX-EXCLUSIVO: el bloque en curso (la banda «todo lo demás está desconectado»). */
-  bloque?: { estado: string; bloqueHasta: string | null } | null;
+  bloque?: { estado: string; bloqueDesde?: string | null; bloqueHasta: string | null } | null;
+  /** C-SERVICIOS-CONECTADOS: los servicios al momento bloqueados, con candado, al pie del bloque. */
+  bloqueados?: ReactNode;
   /** C-SEGURIDAD-A-LA-VISTA: «Ayuda de emergencia» siempre a la vista, como Amazon Flex. */
   alSeguridad?: () => void;
   /** C-FLEX-PANTALLA-COMPLETA: sin la cabecera del logo, la franja lleva la flecha para salir. */
@@ -2871,6 +2918,7 @@ export function MiRuta({
       </View>
       {bloque ? <BandaBloque idioma={props.idioma} bloque={bloque} /> : null}
       <MiRutaContenido {...props} />
+      {bloque && bloqueados ? <View style={{ paddingHorizontal: 16 }}>{bloqueados}</View> : null}
     </View>
   );
 }

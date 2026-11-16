@@ -44,6 +44,34 @@ describe('candado: un botón al lado de una casilla nunca parte su palabra', () 
     expect(ui).not.toMatch(/botonEnFila: \{[^}]*\bwidth:/);
   });
 
+  it('todo botón en fila vive en FilaConBoton y su casilla cede (CASILLA_EN_FILA)', () => {
+    // 16 nov 2026: «Enviar» del chat se salía de la tarjeta en el teléfono porque la casilla, sin
+    // minWidth: 0, pedía su ancho natural. La pieza común lo trae puesto; nadie arma la fila a mano.
+    const malos: string[] = [];
+    let vistos = 0;
+    for (const carpeta of CARPETAS)
+      for (const f of archivos(join(RAIZ, carpeta))) {
+        const codigo = readFileSync(f, 'utf8');
+        for (const m of codigo.matchAll(/<Boton\b[\s\S]*?\/>/g)) {
+          if (!/\benFila\b/.test(m[0])) continue;
+          vistos++;
+          const antes = codigo.slice(0, m.index);
+          const cerca = antes.slice(-900);
+          const abre = antes.lastIndexOf('<FilaConBoton');
+          const cierra = antes.lastIndexOf('</FilaConBoton>');
+          const enPieza = abre > cierra && /CASILLA_EN_FILA/.test(antes.slice(abre));
+          // Con una casilla de texto al lado: siempre la pieza común. Sin casilla: algo que cede.
+          const conCasilla = /<TextInput\b/.test(cerca);
+          if (conCasilla ? !enPieza : !(enPieza || /minWidth: 0/.test(cerca)))
+            malos.push(f.replace(RAIZ, ''));
+        }
+      }
+    expect(malos).toEqual([]);
+    expect(vistos).toBeGreaterThanOrEqual(2); // al menos «Verificar» y «Enviar»: el candado mira algo
+    const ui = readFileSync(join(RAIZ, 'packages/movil/src/ui.tsx'), 'utf8');
+    expect(ui).toMatch(/CASILLA_EN_FILA = \{ flex: 1, minWidth: 0 \}/);
+  });
+
   it('«Verificar» de Driver y «Enviar» del chat usan el botón en fila', () => {
     const driver = readFileSync(join(RAIZ, 'apps/repartidor/src/Inicio.tsx'), 'utf8');
     expect(driver).toMatch(/texto=\{t\.verificar\}[\s\S]{0,160}\benFila\b/);

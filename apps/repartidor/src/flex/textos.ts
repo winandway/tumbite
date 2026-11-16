@@ -265,14 +265,16 @@ export const TEXTOS_RUTA = {
     ultimasParadas: 'Últimas paradas',
     duracion: (h: number, m: number) => (h ? `${h} h ${m} min` : `${m} min`),
     // C-FLEX-EXCLUSIVO y C-FLEX-PAGO-BLOQUE (Richard, 16 nov 2026).
-    modoBloqueTitulo: 'Estás haciendo un bloque de Flex',
-    modoBloqueTexto:
-      'Todo lo demás está desconectado (comida, envíos y viajes) hasta que termines.',
+    // C-SERVICIOS-CONECTADOS (pantalla 03 de DRIVER.md): los textos del diseño aprobado.
+    modoBloqueTitulo: 'Estás haciendo un bloque de Flex. Todo lo demás está desconectado.',
+    modoBloqueTexto: 'Comida, envíos y viajes vuelven cuando termines el bloque.',
+    modoBloqueEtiqueta: 'Modo bloque · Flex',
+    bloqueDe: (d: string, h: string) => `Bloque de ${d} a ${h}`,
     modoBloqueAsignadoTitulo: 'Tienes un bloque de Flex asignado',
     modoBloqueAsignadoTexto:
       'Todo lo demás está desconectado (comida, envíos y viajes). Acéptalo, o recházalo para volver a conectarte.',
     bloqueTermina: (h: string) => `termina a las ${h}`,
-    bloqueQuedan: (t: string) => `Quedan ${t}`,
+    bloqueQuedan: (t: string) => `Te quedan ${t}`,
     bloqueVencido: 'Ya pasó la hora del bloque: termina las entregas y vuelve al centro.',
     duracionBloque: 'Duración',
     pagoBloque: 'Pago del bloque',
@@ -548,8 +550,10 @@ export const TEXTOS_RUTA = {
     ultimasParadas: 'Latest stops',
     duracion: (h: number, m: number) => (h ? `${h} h ${m} min` : `${m} min`),
     // C-FLEX-EXCLUSIVO and C-FLEX-PAGO-BLOQUE (Richard, Nov 16, 2026).
-    modoBloqueTitulo: 'You’re doing a Flex block',
-    modoBloqueTexto: 'Everything else is off (food, deliveries and rides) until you finish.',
+    modoBloqueTitulo: 'You’re on a Flex block. Everything else is offline.',
+    modoBloqueTexto: 'Food, deliveries and rides come back when you finish the block.',
+    modoBloqueEtiqueta: 'Block mode · Flex',
+    bloqueDe: (d: string, h: string) => `Block from ${d} to ${h}`,
     modoBloqueAsignadoTitulo: 'You have a Flex block assigned',
     modoBloqueAsignadoTexto:
       'Everything else is off (food, deliveries and rides). Accept it, or decline it to go back online.',

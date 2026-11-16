@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { type Idioma, formatearMonto } from '@tumbite/compartido';
-import { C, Text } from '@tumbite/movil';
+import { C, FUENTE, Text } from '@tumbite/movil';
 import { textosDriver } from './textos';
 
 /** Tarjeta «Hoy»: ganancias y entregas reales de hoy, y el tiempo conectado en esta sesión. */
@@ -22,42 +22,42 @@ export function ResumenDia({
   const h = Math.floor(segundosConectado / 3600);
   const m = Math.floor((segundosConectado % 3600) / 60);
   const celda = (valor: string, nombre: string) => (
-    <View style={{ flex: 1, alignItems: 'center' }}>
-      <Text style={{ fontSize: 20, fontWeight: '800', color: C.secundario }}>{valor}</Text>
-      <Text style={{ fontSize: 12, color: '#666B73' }}>{nombre}</Text>
+    <View style={{ flex: 1, alignItems: 'center', gap: 2, paddingVertical: 14 }}>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        style={{ fontFamily: FUENTE.titulo, fontSize: 19, lineHeight: 24, color: C.secundario }}
+      >
+        {valor}
+      </Text>
+      <Text style={{ fontSize: 13, lineHeight: 18, color: '#666B73' }}>{nombre}</Text>
     </View>
   );
+  // Fase cero (pantalla 01 de DRIVER.md): borde fino de 1, sin sombra; «Hoy», entregas y en línea.
   return (
     <View
+      testID="resumen-dia"
       style={{
         backgroundColor: '#fff',
-        borderRadius: 18,
-        padding: 12,
-        shadowColor: '#101010',
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 3 },
-        elevation: 3,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#E6E7EA',
+        flexDirection: 'row',
       }}
     >
-      <Text style={{ fontWeight: '800', fontSize: 13, color: C.secundario, marginBottom: 4 }}>
-        {t.hoy}
-      </Text>
-      <View style={{ flexDirection: 'row' }}>
-        {/* Tarjeta (billetera de Stripe, USD) y cobro en mano (su moneda), nunca sumados entre monedas. */}
-        {celda(
-          enMano?.total && enMano.moneda !== 'USD'
-            ? ganancias
-              ? `${formatearMonto(ganancias, 'USD', idioma)} + ${formatearMonto(enMano.total, enMano.moneda, idioma)}`
-              : formatearMonto(enMano.total, enMano.moneda, idioma)
-            : formatearMonto(ganancias + (enMano?.total ?? 0), 'USD', idioma),
-          t.ganancias,
-        )}
-        <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
-        {celda(String(entregas), t.entregas)}
-        <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
-        {celda(`${h}h ${m}m`, t.conectadoTiempo)}
-      </View>
+      {/* Tarjeta (billetera de Stripe, USD) y cobro en mano (su moneda), nunca sumados entre monedas. */}
+      {celda(
+        enMano?.total && enMano.moneda !== 'USD'
+          ? ganancias
+            ? `${formatearMonto(ganancias, 'USD', idioma)} + ${formatearMonto(enMano.total, enMano.moneda, idioma)}`
+            : formatearMonto(enMano.total, enMano.moneda, idioma)
+          : formatearMonto(ganancias + (enMano?.total ?? 0), 'USD', idioma),
+        t.hoy,
+      )}
+      <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
+      {celda(String(entregas), t.entregas)}
+      <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
+      {celda(`${h}h ${m}m`, t.conectadoTiempo)}
     </View>
   );
 }

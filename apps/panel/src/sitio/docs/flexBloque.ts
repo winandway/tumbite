@@ -25,7 +25,7 @@ export const GUIAS_FLEX_BLOQUE: Record<Idioma, PorSeccion> = {
           'Un bloque de Flex es un turno de 1 h 30 min a 5 horas para repartir los paquetes de una empresa siguiendo una ruta. Mientras lo haces, todo lo demás queda desconectado. Al cerrarlo ves tu resumen y tu pago.',
         explicacion: [
           'Una empresa de reparto te asigna u ofrece un bloque. Antes de aceptarlo ves todo: el horario, cuánto dura, el pago del bloque y quién lo paga, el centro donde recoges y cada parada con sus paquetes.',
-          'Un bloque es exclusivo. En cuanto lo tomas, la app te desconecta de todo lo demás (pedidos de comida, envíos y viajes con pasajero) y no te deja volver a conectarte hasta que termines o lo rechaces. Así ninguna oferta de comida te interrumpe en mitad de la ruta. El inicio de la app cambia entero al modo bloque y una banda azul arriba te lo dice siempre: «Estás haciendo un bloque de Flex».',
+          'Un bloque es exclusivo. En cuanto lo tomas, la app te desconecta de todo lo demás (pedidos de comida, envíos y viajes con pasajero) y no te deja volver a conectarte hasta que termines o lo rechaces. Así ninguna oferta de comida te interrumpe en mitad de la ruta. El inicio de la app cambia entero al modo bloque, en azul: arriba dice «Modo bloque · Flex» con el horario del bloque, y una tarjeta con candado te recuerda «Estás haciendo un bloque de Flex. Todo lo demás está desconectado». Abajo, tus otros servicios aparecen con candado hasta que termines.',
           'La misma banda te dice cuánto te queda de bloque y a qué hora termina. Si se pasa la hora, te recuerda terminar las entregas y volver al centro.',
           'Al llegar al centro toca «Llegué al centro» y carga cada paquete: escanea su etiqueta o escribe su código. Con todo cargado, toca «Salir a la ruta».',
           'Las paradas van en orden, en el mapa y en la lista. En cada parada tienes «Cómo llegar» a la vista: abre tu app de mapas (Google Maps, Apple Maps o Waze) con la dirección.',
@@ -51,7 +51,7 @@ export const GUIAS_FLEX_BLOQUE: Record<Idioma, PorSeccion> = {
           foto(
             'ruta',
             'es',
-            'La ruta en curso con el mapa de las paradas y la banda «Estás haciendo un bloque de Flex» con el tiempo que queda.',
+            'La ruta en curso con el mapa de las paradas y el modo bloque en azul con el horario y el tiempo que queda.',
             'Durante el bloque, todo lo demás está desconectado y la banda te dice cuánto queda.',
           ),
           foto(
@@ -110,7 +110,7 @@ export const GUIAS_FLEX_BLOQUE: Record<Idioma, PorSeccion> = {
           'A Flex block is a 1 h 30 min to 5 hour shift to deliver a company’s packages along a route. While you do it, everything else is off. When you close it, you see your summary and your pay.',
         explicacion: [
           'A delivery company assigns or offers you a block. Before you accept, you see everything: the time, how long it lasts, the block pay and who pays it, the station where you pick up, and every stop with its packages.',
-          'A block is exclusive. As soon as you take it, the app takes you offline for everything else (food orders, deliveries and rides) and won’t let you go back online until you finish or decline it. That way no food offer interrupts you in the middle of your route. The app’s home switches entirely to block mode, and a blue band at the top always tells you: “You’re doing a Flex block.”',
+          'A block is exclusive. As soon as you take it, the app takes you offline for everything else (food orders, deliveries and rides) and won’t let you go back online until you finish or decline it. That way no food offer interrupts you in the middle of your route. The app’s home switches entirely to block mode, in blue: the top says “Block mode · Flex” with the block’s hours, and a card with a lock reminds you: “You’re on a Flex block. Everything else is offline.” At the bottom, your other services show a lock until you finish.',
           'The same band tells you how much time is left in the block and when it ends. If the time runs out, it reminds you to finish your deliveries and head back to the station.',
           'At the station, tap “I’m at the hub” and load each package: scan its label or type its code. Once everything is loaded, tap “Start the route.”',
           'Stops are in order, on the map and in the list. Every stop has “Get directions” right there: it opens your maps app (Google Maps, Apple Maps or Waze) with the address.',
@@ -136,7 +136,7 @@ export const GUIAS_FLEX_BLOQUE: Record<Idioma, PorSeccion> = {
           foto(
             'ruta',
             'en',
-            'The route in progress with the stops map and the band “You’re doing a Flex block” with the time left.',
+            'The route in progress with the stops map and block mode in blue with the block’s hours and the time left.',
             'During the block everything else is off, and the band shows how much time is left.',
           ),
           foto(

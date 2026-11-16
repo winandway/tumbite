@@ -534,7 +534,13 @@ for (const P of PAISES) {
           .toBe(true);
       };
       const entregar = async (pid: string) => {
-        const r = await subir(`/datos/repartidor/pedidos/${pid}/entregado`, enCasa);
+        // C-DESLIZAR-SIEMPRE: la foto de la puerta no cierra; se cierra deslizando, como la app.
+        const rFoto = await subir(`/datos/repartidor/pedidos/${pid}/foto-entrega`, enCasa);
+        expect(rFoto.status(), await rFoto.text()).toBe(200);
+        const r = await request.post(`/datos/repartidor/pedidos/${pid}/entregado`, {
+          headers: hdr(paseRep),
+          data: { ...enCasa, modo: 'puerta' },
+        });
         expect(r.status(), await r.text()).toBe(200);
       };
       const recogerYEntregar = async (pid: string) => {

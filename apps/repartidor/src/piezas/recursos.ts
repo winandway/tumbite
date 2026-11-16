@@ -11,6 +11,9 @@ import moto from '../../assets/driver/servicio-moto.png';
 import iconoMapa from '../../assets/driver/icono-mapa.png';
 import iconoLlamar from '../../assets/driver/icono-llamar.png';
 import iconoMensaje from '../../assets/driver/icono-mensaje.png';
+// C-SERVICIOS-CONECTADOS: la flota de la marca (los mismos dibujos de la web) para «Mi vehículo».
+import flotaMoto from '../../assets/driver/flota-moto.webp';
+import flotaCarro from '../../assets/driver/flota-carro.webp';
 
 export const IMG = {
   logo,
@@ -25,4 +28,6 @@ export const IMG = {
   iconoMapa,
   iconoLlamar,
   iconoMensaje,
+  flotaMoto,
+  flotaCarro,
 } as const;
