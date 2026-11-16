@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  diferenciaEnMinutos,
   segundosPorKm,
   textoDiferencia,
   textoDuracion,
@@ -76,6 +77,26 @@ describe('C-TIEMPOS-OPERACION · pedido', () => {
   it('menos de medio minuto de más sigue siendo a tiempo (verde)', () => {
     const t = tiemposPedido({ ...entregado, listoEn: '2026-11-15 18:22:20' });
     expect(porClave(t, 'preparacion')).toMatchObject({ diferenciaMin: 0, resultado: 'cumplio' });
+  });
+
+  it('el borde: medio minuto exacto de más es a tiempo; un segundo más ya se pasó', () => {
+    // Aceptado 18:02 con 20 minutos prometidos: la comida tocaba a las 18:22:00.
+    const justo = tiemposPedido({ ...entregado, listoEn: '2026-11-15 18:22:30' });
+    expect(porClave(justo, 'preparacion')).toMatchObject({
+      diferenciaMin: 0,
+      resultado: 'cumplio',
+    });
+    const tarde = tiemposPedido({ ...entregado, listoEn: '2026-11-15 18:22:31' });
+    expect(porClave(tarde, 'preparacion')).toMatchObject({
+      diferenciaMin: 1,
+      resultado: 'se_paso',
+    });
+    // Hacia los dos lados, el medio minuto va hacia cero.
+    expect(diferenciaEnMinutos(30)).toBe(0);
+    expect(diferenciaEnMinutos(-30)).toBe(0);
+    expect(diferenciaEnMinutos(31)).toBe(1);
+    expect(diferenciaEnMinutos(-90)).toBe(-1);
+    expect(diferenciaEnMinutos(91)).toBe(2);
   });
 
   it('gris y con el dato que falta cuando no se puede medir', () => {

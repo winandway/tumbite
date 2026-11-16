@@ -8,6 +8,14 @@ describe('planillas (C-PLANILLA-GANANCIAS)', () => {
     expect(celdaCsv(-5)).toBe('-5');
   });
 
+  it('un tabulador o un retorno de carro al comienzo también se neutralizan (C-PERMISOS-FINOS)', () => {
+    expect(celdaCsv('\t=1+1')).toBe("'\t=1+1");
+    expect(celdaCsv('\r=1+1')).toBe('"\'\r=1+1"');
+    expect(celdaCsv('+1 313 555 0100')).toBe("'+1 313 555 0100");
+    expect(celdaCsv('@SUMA(A1)')).toBe("'@SUMA(A1)");
+    expect(celdaCsv('Texto normal')).toBe('Texto normal');
+  });
+
   it('las ganancias salen una fila por entrega, con decimales en su moneda', () => {
     const csv = planillaGanancias([
       {

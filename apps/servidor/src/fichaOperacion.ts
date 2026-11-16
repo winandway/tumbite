@@ -497,7 +497,11 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
   try {
     const t = esquemaTarifaViaje.safeParse(JSON.parse(String(o.tarifa_json ?? 'null')));
     if (t.success) tarifa = t.data;
-  } catch {
+    else if (o.tarifa_json != null)
+      console.error('ficha del viaje: tarifa_json no válida', id, t.error);
+  } catch (e) {
+    // Sin la tarifa la ficha sigue (sin la espera gratis ni la velocidad), pero queda en el registro.
+    console.error('ficha del viaje: tarifa_json ilegible', id, e);
     tarifa = null;
   }
   const pasajeroNombre =

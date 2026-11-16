@@ -72,9 +72,20 @@ const ms = (f: Fecha): number | null => {
 };
 
 /**
- * Arma un tramo. Con inicio y fin: tiempo real comparado con lo previsto (por minutos redondeados:
- * menos de medio minuto de más sigue siendo «cumplió»). Con inicio y sin fin, si la operación sigue
- * viva: «en curso» con lo que lleva (y rojo si ya pasó lo previsto). Sin inicio: gris.
+ * La diferencia en minutos, redondeada al minuto más cercano y con el medio minuto exacto hacia
+ * cero: 30 segundos de más son 0 («a tiempo»), 31 segundos de más son 1 («se pasó»). Es LA regla de
+ * «a tiempo» de los tramos: a tiempo si esta diferencia es ≤ 0.
+ */
+export function diferenciaEnMinutos(segundos: number): number {
+  const x = Math.abs(segundos) / 60;
+  const m = Math.ceil(x - 0.5);
+  return m === 0 ? 0 : Math.sign(segundos) * m;
+}
+
+/**
+ * Arma un tramo. Con inicio y fin: tiempo real comparado con lo previsto con `diferenciaEnMinutos`
+ * (hasta medio minuto de más, incluido, sigue siendo «cumplió»). Con inicio y sin fin, si la
+ * operación sigue viva: «en curso» con lo que lleva (y rojo si ya pasó lo previsto). Sin inicio: gris.
  */
 function tramo<C extends string>(
   clave: C,
@@ -115,7 +126,7 @@ function tramo<C extends string>(
       ...extra,
     };
   const realS = Math.max(0, Math.round((hasta - inicio) / 1000));
-  const diferenciaMin = previstoS == null ? null : Math.round((realS - previstoS) / 60);
+  const diferenciaMin = previstoS == null ? null : diferenciaEnMinutos(realS - previstoS);
   let resultado: ResultadoTramo;
   if (fin == null) resultado = diferenciaMin != null && diferenciaMin > 0 ? 'se_paso' : 'en_curso';
   else if (diferenciaMin == null) resultado = 'sin_dato';
