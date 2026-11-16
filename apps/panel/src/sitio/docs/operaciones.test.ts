@@ -51,7 +51,8 @@ describe('C-DOCS-OPERACIONES: guías del equipo de operaciones', () => {
   it('están en la sección «operations» de Docs, con título en cada idioma', () => {
     for (const i of ['es', 'en'] as const) {
       const s = DOCS[i].find((x) => x.id === 'operations');
-      expect(s?.guias.map((g) => g.id)).toEqual(IDS);
+      // C-MODERACION: la guía de la bandeja de reportes se suma al final (vive en moderacion.ts).
+      expect(s?.guias.map((g) => g.id)).toEqual([...IDS, 'flagged-content']);
     }
     expect(DOCS.en.find((x) => x.id === 'operations')?.titulo).toBe('Operations team');
     expect(DOCS.es.find((x) => x.id === 'operations')?.titulo).toBe('Equipo de operaciones');

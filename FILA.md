@@ -10,6 +10,11 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Reportar, bloquear y avisos en tu idioma (16 nov 2026, orden de Richard por Gerencia) — todos los países
+
+- [x] HECHO 16 nov (C-MODERACION) «Reportar» en cada mensaje del chat (pedido y viaje), en cada reseña y en la respuesta del restaurante; «Bloquear» desde los tres puntos del chat (sin volver a emparejar en pedidos ni viajes); filtro de palabras ES/EN; bandeja «Reportes» del superadmin con ocultar, publicar, avisar, suspender y descartar; «Personas bloqueadas» en la cuenta; guías en Docs con capturas; notas para el revisor de Apple en `docs/tiendas/NOTAS-REVISOR-MODERACION.md`.
+- [x] HECHO 16 nov (C-AVISOS-IDIOMA) Cada aviso (celular, navegador) llega en el idioma de la app de ese aparato; si no, el de la cuenta; si no, inglés. Arreglado también para las apps ya publicadas (cabecera x-idioma). Avisos que salían solo en español, traducidos.
+
 ## Ruta del bloque de Flex y exclusividad (16 nov 2026, orden de Richard por Gerencia) — todos los países
 
 - [x] HECHO 16 nov (C-FLEX-EXCLUSIVO) Al tomar un bloque de Flex, comida, envíos y viajes se desconectan solos y no se puede volver a conectar hasta terminarlo; lo cumple la base (disparadores) y el canario «exclusividad». El inicio del Driver cambia entero al modo bloque con la banda «Estás haciendo un bloque de Flex».

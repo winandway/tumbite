@@ -4804,3 +4804,23 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Arreglo:** una sola pieza, `mezclarFavoritos` (`apps/cliente/src/inicio/favoritosEstado.ts`): lo que la persona tocó desde que abrió la pantalla se aplica encima de lo que diga el servidor. Las dos pantallas guardan sus toques en una referencia y la usan al recibir la lista.
 - **Prueba (vista en rojo):** `apps/cliente/src/inicio/favoritosEstado.test.ts`; y el recorrido de punta a punta en inglés y español.
 - **No tocar:** no volver a reemplazar la lista entera con la respuesta del servidor sin aplicar los toques pendientes. Es código de la app del cliente: entra en la próxima compilación; la versión en revisión de Apple no se tocó.
+
+## C-MODERACION · Reportar, bloquear, filtro de palabras y bandeja del equipo (16 nov 2026, todos los países)
+
+- Qué faltaba: el auditor de tiendas señaló que, por tener chat y reseñas públicas, la regla 1.2 de Apple pide reportar, bloquear y filtrar; solo había contacto con soporte.
+- Qué se hizo (como Uber, DoorDash y Rappi):
+  - «Reportar» en cada mensaje de la otra persona (chat del pedido y del viaje), en cada reseña pública y en cada respuesta del restaurante; motivo (ofensivo, acoso, spam, otro) y nota opcional con borrador. Ruta `POST /datos/reportes` (`apps/servidor/src/rutas/moderacion.ts`), tope de 10 por persona y minuto, correo al equipo en el momento.
+  - «Bloquear» desde los tres puntos del chat, con confirmación (`POST /datos/bloqueos`; lista y «Desbloquear» en la cuenta). Quien bloqueó no ve los mensajes del otro ni recibe sus avisos; el despacho de comida (`repartirOfertas`) y el de viajes (`operaciones.ts`) no le ofrecen su pedido o viaje (`parejasBloqueadas`, una consulta por vuelta). El bloqueado no se entera.
+  - Filtro de palabras ES/EN (`apps/servidor/src/filtroPalabras.ts`), con código y sin IA: en el chat tapa la palabra con «•••» y deja el mensaje en la bandeja; la reseña se guarda tapada y no se publica hasta revisión (`contenido_oculto`); la respuesta del restaurante con insultos se rechaza. Sin palabras de doble sentido común («perra», «cono», «huevón», «dick»).
+  - Bandeja «Reportes» del superadmin (`SuperReportes.tsx`, ruta `/moderation`): ocultar, volver a publicar, avisar al autor (aviso de normas, sin decir quién reportó), suspender (dentro de los tres puntos, exige `clientes.suspender`) y descartar. Permisos: ver con `tickets.ver`, actuar con `tickets.responder`; alcance por ciudad y servicio en la consulta. El perfil viejo de Soporte incluye la familia `reportes`.
+  - El reportado nunca ve quién lo reportó: ninguna respuesta fuera del equipo devuelve `reporta_id`.
+- Tablas nuevas: `reportes_contenido`, `contenido_oculto`, `bloqueos_usuario` (sin `REFERENCES usuarios` a propósito: cada llave encarece borrar una cuenta). Borrar la cuenta quita sus bloqueos y la nota de sus reportes.
+- Candado: `apps/servidor/src/rutas/moderacion.test.ts` (9 pruebas). Comprobado en rojo el 16 nov 2026: sin el filtro del despacho, sin tapar palabras, sin cortar el aviso al bloqueador y dejando reportar lo propio, cuatro y una pruebas se ponen en rojo. Pantallas: `apps/panel/src/panel/SuperReportes.test.tsx`. Prueba en pantalla: `node scripts/recorrido/capturas-moderacion.mjs`.
+- No tocar: que la lista de bloqueos devuelva el id de la otra persona; que el aviso de «avisar» diga quién reportó.
+
+## C-AVISOS-IDIOMA · Cada aviso llega en el idioma de cada teléfono (16 nov 2026, todos los países)
+
+- Qué se rompió: a Richard los avisos le llegaban en inglés en su iPhone aunque usa la app en español. Causa: el aviso se armaba con el idioma de la CUENTA (el del registro); el idioma elegido antes de entrar nunca llegaba al servidor.
+- Arreglo: `dispositivos.idioma` y `suscripciones_web.idioma` (llegan por `COLUMNAS`). El teléfono lo guarda al registrarse, del cuerpo o de la cabecera `x-idioma` que las apps ya publicadas mandan en cada petición (por eso se arregla sin versión nueva). `PUT /datos/cuentas/idioma` y el perfil lo pasan a todos sus aparatos. `notificar()` recibe una función del idioma `(i) => …` y arma el aviso para cada aparato: su idioma, si no el de la cuenta, si no inglés. Los avisos que estaban solo en español (flota sin repartidor, cancelación resuelta) o en los dos a la vez (objeto olvidado) quedaron traducidos.
+- Candado: `apps/servidor/src/avisosIdioma.test.ts` recorre TODO el servidor y se pone en rojo si un `notificar(` manda un texto fijo (comprobado en rojo con catorce avisos el 16 nov 2026), más el caso de Richard de punta a punta. El panel web manda su idioma a la cuenta al cambiarlo.
+- No tocar: el orden aparato → cuenta → inglés en `idiomaAviso`.

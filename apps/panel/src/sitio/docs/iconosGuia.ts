@@ -9,6 +9,7 @@ import {
   CreditCard,
   DoorOpen,
   FileText,
+  Flag,
   GraduationCap,
   Handshake,
   Heart,
@@ -62,6 +63,8 @@ const REGLAS: [RegExp, LucideIcon][] = [
   [/ride-moto|drive-moto/, Bike],
   // C-FOTO-PUERTA: la foto de la puerta (cliente y repartidor) con una puerta.
   [/door-photo/, DoorOpen],
+  // C-MODERACION: reportar, bloquear y la bandeja de reportes, con una bandera.
+  [/^report-|flagged/, Flag],
   [/schedule|shift|hours|holiday/, CalendarClock],
   [/reorder|again/, Repeat],
   [/group/, Users],
@@ -114,6 +117,7 @@ export const ICONOS_GUIA: [string, LucideIcon][] = Object.entries({
   CreditCard,
   DoorOpen,
   FileText,
+  Flag,
   GraduationCap,
   Handshake,
   Heart,

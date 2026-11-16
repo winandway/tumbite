@@ -10203,7 +10203,10 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
       id: 'operations' as const,
       titulo: idioma === 'es' ? 'Equipo de operaciones' : 'Operations team',
       icono: 'resumen' as const,
-      guias: idioma === 'es' ? GUIAS_OPERACIONES.es : GUIAS_OPERACIONES.en,
+      guias: [
+        ...(idioma === 'es' ? GUIAS_OPERACIONES.es : GUIAS_OPERACIONES.en),
+        ...de('operations'),
+      ],
     },
   ];
 }
