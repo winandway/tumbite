@@ -45,6 +45,7 @@ function servidor(estado: { activos: boolean }) {
                 },
               ],
               atrasadas: [],
+              absorbidoSinCobro: [{ mes: '2026-11', moneda: 'USD', pedidos: 2, monto: 4600 }],
             }
           : url.includes('/admin/abonos-fallidos')
             ? {
@@ -94,6 +95,10 @@ describe('control de dinero del superadmin (C-SUPER-DINERO)', () => {
     expect(screen.getByText('card_declined')).toBeInTheDocument();
     expect(screen.getByText('account_closed')).toBeInTheDocument();
     expect(screen.getByText('NO cuadra')).toBeInTheDocument();
+    // C-AUTORIZACION-VENCIDA (menor 6): lo que asumió Divoox al cerrar sin cobro, por mes y moneda.
+    expect(screen.getByText('Cerradas sin cobro: lo que asumió Divoox')).toBeInTheDocument();
+    expect(screen.getByText('2026-11')).toBeInTheDocument();
+    expect(screen.getByText('$46.00')).toBeInTheDocument();
     expect(screen.getByText('p-revisi').closest('a')?.getAttribute('href')).toBe(
       '/panel/control-x/orders/p-revision-1',
     );

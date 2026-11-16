@@ -2439,6 +2439,8 @@ body.modo-tableta .pd .pd-contenido {
   border: 1px solid #e2e2e2;
   border-radius: 12px;
   padding: 14px;
+  /* Cada caja a la altura de lo que dice (la de «Volver a cobrar» apagado es una sola línea). */
+  align-self: start;
 }
 .resolver-opcion h3 {
   margin: 0 0 4px;

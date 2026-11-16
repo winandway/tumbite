@@ -3044,7 +3044,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     nombre: 'autorizaciones_por_vencer',
     critica: false,
     cada: 'hora',
-    escriturasEsperadas: 25,
+    // 25 filas de aviso y, si algún correo no sale, UNA línea del registro de errores (2 escrituras).
+    escriturasEsperadas: 27,
     correr: (env, db) => avisarAutorizacionesPorVencer(env, db),
   },
   {

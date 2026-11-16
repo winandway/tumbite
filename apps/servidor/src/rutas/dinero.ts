@@ -7,7 +7,11 @@ import { crearStripe } from '../stripe';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
 import { liquidacionesParaRevisar, liquidar } from '../liquidaciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
-import { estadoAutorizacion } from '../autorizacionVencida';
+import {
+  absorbidoSinCobro,
+  estadoAutorizacion,
+  exigirRecobroEncendido,
+} from '../autorizacionVencida';
 import { ErrorDatos, leerCuerpo } from '../validar';
 
 export const dinero = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -286,7 +290,13 @@ dinero.post('/billetera/retirar', async (c) => {
  */
 dinero.get('/admin/liquidaciones', async (c) => {
   exigir(c, 'admin');
-  return c.json(await liquidacionesParaRevisar(base(c)));
+  const db = base(c);
+  // C-AUTORIZACION-VENCIDA (menor 6): lo que Divoox asumió al cerrar entregas sin cobro, por mes y
+  // moneda. Solo lee (por el índice de estado).
+  return c.json({
+    ...(await liquidacionesParaRevisar(db)),
+    absorbidoSinCobro: await absorbidoSinCobro(db),
+  });
 });
 
 /** Bandera de seguridad de los retiros (Fase 0). La variable RETIROS_APAGADOS=1 manda sobre ella. */
@@ -390,6 +400,9 @@ async function resueltaAntes(db: D1Database, id: string, quiere: 'capturada' | '
 
 dinero.post('/admin/liquidaciones/:id/autorizacion/cobrar', async (c) => {
   const u = exigir(c, 'admin');
+  // B1: «Volver a cobrar» está apagado por defecto (RECOBRO_TARJETA_ACTIVO): ni se cobra ni se pide
+  // la segunda firma.
+  exigirRecobroEncendido(c.env);
   const id = c.req.param('id');
   const { nota } = await leerCuerpo(c, esquemaNotaCobro);
   const ya = await resueltaAntes(base(c), id, 'capturada');

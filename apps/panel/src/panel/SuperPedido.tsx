@@ -346,6 +346,8 @@ export const EVENTOS_PEDIDO = {
       'Soporte volvió a cobrar con la tarjeta guardada (la autorización venció)',
     autorizacion_sin_cobro: 'Soporte lo cerró sin cobro (la autorización venció)',
     cobro_reautorizado: 'La tarjeta se volvió a autorizar con un pago nuevo',
+    recobro_en_curso: 'El banco está procesando el cobro de reemplazo',
+    recobro_intento: 'Un intento de volver a cobrar no se completó',
   },
   en: {
     repartidor_acepto: 'The driver accepted the offer',
@@ -375,6 +377,8 @@ export const EVENTOS_PEDIDO = {
     autorizacion_cobrada: 'Support charged the saved card again (the authorization expired)',
     autorizacion_sin_cobro: 'Support closed it without charging (the authorization expired)',
     cobro_reautorizado: 'The card was authorized again with a new payment',
+    recobro_en_curso: 'The bank is processing the replacement charge',
+    recobro_intento: 'An attempt to charge again didn’t go through',
   },
 };
 

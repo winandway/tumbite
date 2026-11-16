@@ -334,9 +334,11 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
         return {
           tipo: 'manager' as const,
           // LAN-2z: «cobro_reautorizado:<pago>» lleva el pago en el nombre; en la línea es uno solo.
-          evento: String(m.evento).startsWith('cobro_reautorizado:')
-            ? 'cobro_reautorizado'
-            : String(m.evento),
+          // C-AUTORIZACION-VENCIDA: el cobro de reemplazo en curso y cada intento que no se completó
+          // llevan el pago o el número en el nombre; en la línea es uno solo.
+          evento:
+            /^(cobro_reautorizado|recobro_en_curso|recobro_intento):/.exec(String(m.evento))?.[1] ??
+            String(m.evento),
           fecha: String(m.creado_en),
           quien: null,
           rol: 'sistema',

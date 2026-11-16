@@ -135,6 +135,13 @@ export const esquemaEnv = z.object({
    * la llave real no se crea ninguna cuenta conectada (Stripe lo marcó como sospechoso el 5 nov 2026).
    */
   STRIPE_CONNECT_ACTIVO: z.enum(['0', '1']).optional(),
+  /**
+   * C-AUTORIZACION-VENCIDA (16 nov 2026): «1» enciende «Volver a cobrar» (cobrar la tarjeta guardada
+   * cuando la autorización de un pedido entregado venció). APAGADO por defecto, también en pruebas,
+   * hasta que Richard confirme que los términos y la pantalla de pago lo cubren (PENDIENTES.md).
+   * «Cerrar sin cobro» no depende de esta variable.
+   */
+  RECOBRO_TARJETA_ACTIVO: z.enum(['0', '1']).optional(),
   // Fase 2 · Tiempo real (docs/FASE-2-TIEMPO-REAL.md). Sin estas variables todo sigue como hoy:
   // las apps consultan al servidor y mandan la ubicación por la ruta actual.
   /** Llave con la que los Workers externos firman lo que mandan aquí (actual y anterior). */

@@ -1,3 +1,4 @@
+import { recobroDesdeAviso } from '../autorizacionVencida';
 import { direccionDelPedido } from './fotoPuerta';
 import { apartarSaldo, avisoTarjetaRegalo, saldoRegalo } from '../tarjetasRegalo';
 import { avisoPlus, leerPlus, tienePlus } from '../plus';
@@ -1487,7 +1488,12 @@ pedidos.post('/stripe/aviso', async (c) => {
       // Fase 2: recarga del saldo prepago de un repartidor (nunca es un pedido).
       if ((obj.metadata as Record<string, string> | undefined)?.recarga_id)
         await acreditarRecargaStripe(db, obj);
-      const pedidoId = (obj.metadata as Record<string, string> | undefined)?.pedido_id;
+      // C-AUTORIZACION-VENCIDA (menor 3): el cobro de reemplazo de una autorización vencida se
+      // reconoce por su metadata, aunque el pedido siga apuntando al pago viejo («processing»).
+      const recobro = await recobroDesdeAviso(c.env, db, obj);
+      const pedidoId = recobro
+        ? undefined
+        : (obj.metadata as Record<string, string> | undefined)?.pedido_id;
       const pedido = pedidoId
         ? await db
             .prepare('SELECT total, stripe_sesion, estado FROM pedidos WHERE id = ?')

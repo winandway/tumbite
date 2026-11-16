@@ -20,6 +20,7 @@ const ESTADO = {
     tarjeta: { marca: 'visa', ultimos4: '4242', vence: '12/2034' },
   },
   aviso: null,
+  cobroEncendido: true,
   sePuedeResolver: true,
   sePuedeCobrar: true,
   motivoSinCobro: null,
@@ -59,7 +60,9 @@ describe('Resolver autorización vencida (ficha del pedido)', () => {
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
       llamadas.push({ url, metodo: init?.method ?? 'GET', cuerpo: String(init?.body ?? '') });
       return new Response(
-        JSON.stringify(init?.method === 'POST' ? { estado: 'capturada' } : ESTADO),
+        JSON.stringify(
+          init?.method === 'POST' ? { estado: 'capturada', correoCliente: true } : ESTADO,
+        ),
         { status: 200 },
       );
     });
@@ -78,7 +81,11 @@ describe('Resolver autorización vencida (ficha del pedido)', () => {
     // Nada se cobra hasta confirmar.
     expect(llamadas.filter((l) => l.metodo === 'POST')).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: 'Sí, cobrar $34.00' }));
-    expect(await screen.findByText('Cobrado. La entrega salió de revisión.')).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'Cobrado. La entrega salió de revisión y le avisamos al cliente por correo.',
+      ),
+    ).toBeTruthy();
     const post = llamadas.find((l) => l.metodo === 'POST');
     expect(post?.url).toContain('/datos/admin/liquidaciones/p1/autorizacion/cobrar');
     expect(alResolver).toHaveBeenCalled();
@@ -118,6 +125,56 @@ describe('Resolver autorización vencida (ficha del pedido)', () => {
     expect(
       await screen.findByText('Cerrada sin cobro. La entrega salió de revisión.'),
     ).toBeTruthy();
+  });
+
+  it('B1: con «Volver a cobrar» apagado no hay botón de cobrar y se dice por qué; cerrar sin cobro sigue', async () => {
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(JSON.stringify({ ...ESTADO, cobroEncendido: false, sePuedeCobrar: false }), {
+          status: 200,
+        }),
+    );
+    render(
+      conPermisos(
+        ['dinero.resolver_autorizacion'],
+        <ResolverAutorizacion pedidoId="p4" zona={null} idioma="es" alResolver={() => {}} />,
+      ),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Resolver autorización vencida' }));
+    expect(
+      await screen.findByText(
+        'Volver a cobrar está apagado hasta confirmar el texto legal; usa Cerrar sin cobro o habla con el cliente.',
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Cobrar/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Cerrar sin cobro' })).toBeTruthy();
+  });
+
+  it('menor 3: un cobro que el banco procesa se dice «en curso», sin botones', async () => {
+    vi.stubGlobal(
+      'fetch',
+      async () =>
+        new Response(
+          JSON.stringify({
+            ...ESTADO,
+            aviso: 'cobro_en_curso',
+            sePuedeResolver: false,
+            sePuedeCobrar: false,
+          }),
+          { status: 200 },
+        ),
+    );
+    render(
+      conPermisos(
+        ['dinero.resolver_autorizacion'],
+        <ResolverAutorizacion pedidoId="p5" zona={null} idioma="es" alResolver={() => {}} />,
+      ),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Resolver autorización vencida' }));
+    expect(await screen.findByText(/El banco está procesando el cobro de reemplazo/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Cobrar/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cerrar sin cobro' })).toBeNull();
   });
 
   it('quien no tiene el permiso ve el estado pero no los botones, y sabe a quién pedirlo', async () => {

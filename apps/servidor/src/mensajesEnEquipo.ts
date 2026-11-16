@@ -147,10 +147,6 @@ export const MENSAJES_EN_EQUIPO: [string, string][] = [
     'The customer’s card declined the charge. Close it without charging or talk to the customer.',
   ],
   [
-    'No pudimos cobrar con la tarjeta guardada. Intenta de nuevo en unos minutos.',
-    'We couldn’t charge the saved card. Try again in a few minutes.',
-  ],
-  [
     'El banco del cliente pide que él confirme el cobro: no se puede cobrar sin él. Ciérralo sin cobro o habla con el cliente.',
     'The customer’s bank wants them to confirm the charge: it can’t be charged without them. Close it without charging or talk to the customer.',
   ],
@@ -161,5 +157,26 @@ export const MENSAJES_EN_EQUIPO: [string, string][] = [
   [
     'Stripe no muestra este pago como vencido: no se puede cerrar sin cobro.',
     'Stripe doesn’t show this payment as expired: it can’t be closed without a charge.',
+  ],
+  // Revisión de calidad del 16 nov 2026 (C-AUTORIZACION-VENCIDA).
+  [
+    'Volver a cobrar está apagado hasta confirmar el texto legal. Usa «Cerrar sin cobro» o habla con el cliente.',
+    'Charge again is turned off until the legal wording is confirmed. Use «Close without charging» or talk to the customer.',
+  ],
+  [
+    'No pudimos cobrar con la tarjeta guardada. Si no funciona, ciérralo sin cobro o habla con el cliente.',
+    'We couldn’t charge the saved card. If it doesn’t work, close it without charging or talk to the customer.',
+  ],
+  [
+    'Stripe no confirmó el cobro. Vuelve a intentarlo en unos minutos (nunca se cobra dos veces). Si no funciona, ciérralo sin cobro o habla con el cliente.',
+    'Stripe didn’t confirm the charge. Try again in a few minutes (it’s never charged twice). If it doesn’t work, close it without charging or talk to the customer.',
+  ],
+  [
+    'Este pedido ya tiene devoluciones anotadas: no se vuelve a cobrar desde aquí. Ciérralo sin cobro o habla con Finanzas.',
+    'This order already has refunds on record: it isn’t charged again from here. Close it without charging or talk to Finance.',
+  ],
+  [
+    'Ya hay un cobro de reemplazo de este pago, hecho o en curso: no se puede cerrar sin cobro. Vuelve a abrir la ficha.',
+    'There’s already a replacement charge for this payment, done or in progress: it can’t be closed without a charge. Reopen the order.',
   ],
 ];

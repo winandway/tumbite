@@ -48,6 +48,8 @@ const T = {
       sin_pago: 'Esta entrega no tiene un pago con tarjeta.',
       sin_stripe: 'Los pagos con tarjeta no están configurados.',
       stripe_no_responde: 'No pudimos consultar el pago. Intenta de nuevo en un momento.',
+      cobro_en_curso:
+        'El banco está procesando el cobro de reemplazo. Vuelve a abrir la ficha en unos minutos: no lo repitas ni lo cierres sin cobro.',
     } as Record<string, string>,
     motivos: {
       no_es_tarjeta: 'Este pedido no se pagó con tarjeta.',
@@ -70,7 +72,13 @@ const T = {
     nota: 'Nota (obligatoria): por qué se cierra sin cobro',
     notaCorta: 'Escribe una nota de al menos 5 letras.',
     cerrar: 'Cerrar sin cobro',
-    cobradoOk: 'Cobrado. La entrega salió de revisión.',
+    cobroApagado:
+      'Volver a cobrar está apagado hasta confirmar el texto legal; usa Cerrar sin cobro o habla con el cliente.',
+    enCursoOk:
+      'El banco está procesando el cobro. Vuelve a abrir la ficha en unos minutos para ver cómo terminó.',
+    cobradoOk: 'Cobrado. La entrega salió de revisión y le avisamos al cliente por correo.',
+    cobradoSinCorreo:
+      'Cobrado. La entrega salió de revisión, pero el correo al cliente no salió: avísale tú del cobro.',
     cerradoOk: 'Cerrada sin cobro. La entrega salió de revisión.',
     sinPermiso:
       'Resolverla lo hace una cuenta con el permiso «Resolver autorizaciones de tarjeta vencidas» (Finanzas, Supervisor o Total).',
@@ -104,6 +112,8 @@ const T = {
       sin_pago: 'This delivery has no card payment.',
       sin_stripe: 'Card payments aren’t set up.',
       stripe_no_responde: 'We couldn’t check the payment. Try again in a moment.',
+      cobro_en_curso:
+        'The bank is processing the replacement charge. Reopen the order in a few minutes: don’t repeat it or close it without charging.',
     } as Record<string, string>,
     motivos: {
       no_es_tarjeta: 'This order wasn’t paid by card.',
@@ -125,7 +135,13 @@ const T = {
     nota: 'Note (required): why it’s closed without a charge',
     notaCorta: 'Write a note of at least 5 letters.',
     cerrar: 'Close without charging',
-    cobradoOk: 'Charged. The delivery is no longer under review.',
+    cobroApagado:
+      'Charge again is turned off until the legal wording is confirmed; use Close without charging or talk to the customer.',
+    enCursoOk:
+      'The bank is processing the charge. Reopen the order in a few minutes to see how it ended.',
+    cobradoOk: 'Charged. The delivery is no longer under review and we emailed the customer.',
+    cobradoSinCorreo:
+      'Charged. The delivery is no longer under review, but the email to the customer didn’t go out: let them know about the charge.',
     cerradoOk: 'Closed without charging. The delivery is no longer under review.',
     sinPermiso:
       'It’s resolved by an account with the «Resolve expired card authorizations» permission (Finance, Supervisor or Full access).',
@@ -144,6 +160,8 @@ type Estado = {
     tarjeta: { marca: string; ultimos4: string; vence: string } | null;
   } | null;
   aviso: string | null;
+  /** «Volver a cobrar» está detrás de un interruptor del servidor, apagado por defecto. */
+  cobroEncendido: boolean;
   sePuedeResolver: boolean;
   sePuedeCobrar: boolean;
   motivoSinCobro: string | null;
@@ -213,7 +231,17 @@ export function ResolverAutorizacion({
       const pendiente = textoPendiente(r, idioma);
       if (accion === 'sin-cobro') await b.limpiar();
       setConfirmar(false);
-      setAviso(pendiente ?? (accion === 'cobrar' ? t.cobradoOk : t.cerradoOk));
+      const res = (r ?? {}) as { estado?: string; correoCliente?: boolean };
+      setAviso(
+        pendiente ??
+          (res.estado === 'en_curso'
+            ? t.enCursoOk
+            : accion === 'sin-cobro'
+              ? t.cerradoOk
+              : res.correoCliente === false
+                ? t.cobradoSinCorreo
+                : t.cobradoOk),
+      );
       if (!pendiente) alResolver();
     } catch (e) {
       // Lo escrito se queda: el servidor no confirmó (regla «ningún formulario pierde lo escrito»).
@@ -298,7 +326,9 @@ export function ResolverAutorizacion({
             <div className="resolver-opciones">
               <div className="resolver-opcion">
                 <h3>{t.opcionA}</h3>
-                {estado.sePuedeCobrar ? (
+                {!estado.cobroEncendido ? (
+                  <p className="ficha-nota">{t.cobroApagado}</p>
+                ) : estado.sePuedeCobrar ? (
                   <>
                     <p className="ficha-nota">{t.opcionAAyuda}</p>
                     {confirmar ? (

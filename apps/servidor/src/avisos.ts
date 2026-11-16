@@ -75,6 +75,49 @@ export async function reciboDePedido(
   return enviarCorreo(env, { de: 'pedidos', para: p.correo, asunto, texto });
 }
 
+/**
+ * C-AUTORIZACION-VENCIDA (16 nov 2026): cuando soporte vuelve a cobrar con la tarjeta guardada un
+ * pedido ya entregado (la autorización temporal venció antes de la entrega), el cliente recibe en
+ * su idioma qué pedido se cobró, cuánto, con qué tarjeta y por qué. Es el aviso que exigen las
+ * reglas de las tarjetas para un cobro hecho sin el cliente presente.
+ */
+export async function avisoCobroAutorizacionVencida(
+  env: Env,
+  p: {
+    correo: string;
+    nombre: string;
+    idioma: Idioma;
+    pedidoId: string;
+    restaurante: string;
+    entregadoEn: string | null;
+    monto: number;
+    moneda: string;
+    tarjeta: { marca: string; ultimos4: string } | null;
+  },
+) {
+  const corto = p.pedidoId.slice(0, 8).toUpperCase();
+  const en = p.idioma === 'en';
+  const monto = formatearMonto(p.monto, p.moneda, p.idioma);
+  const dia = p.entregadoEn ? String(p.entregadoEn).slice(0, 10) : null;
+  const marca = p.tarjeta?.marca
+    ? p.tarjeta.marca.charAt(0).toUpperCase() + p.tarjeta.marca.slice(1)
+    : '';
+  const tarjeta = p.tarjeta?.ultimos4
+    ? en
+      ? `your ${marca || 'card'} ending in ${p.tarjeta.ultimos4}`
+      : `tu ${marca || 'tarjeta'} terminada en ${p.tarjeta.ultimos4}`
+    : en
+      ? 'the card you saved when paying'
+      : 'la tarjeta que guardaste al pagar';
+  const asunto = en
+    ? `Charge for your Divoox order #${corto}`
+    : `Cobro de tu pedido #${corto} en Divoox`;
+  const texto = en
+    ? `Hi ${p.nombre},\n\nYour order #${corto} from ${p.restaurante}${dia ? `, delivered on ${dia},` : ''} hadn’t been charged yet: the temporary hold on your card expired before delivery. Today we charged ${monto} to ${tarjeta}. It’s the same amount as your order, with no extra fees.\n\nIf you have any questions, just reply to this email and we’ll help.\n\n${sitio(env)}/app/order/${p.pedidoId}`
+    : `Hola, ${p.nombre}.\n\nTu pedido #${corto} de ${p.restaurante}${dia ? `, entregado el ${dia},` : ''} todavía no se había cobrado: la retención temporal de tu tarjeta venció antes de la entrega. Hoy cobramos ${monto} a ${tarjeta}. Es el mismo monto de tu pedido, sin ningún cargo extra.\n\nSi tienes alguna pregunta, responde a este correo y te ayudamos.\n\n${sitio(env)}/app/order/${p.pedidoId}`;
+  return enviarCorreo(env, { de: 'pedidos', para: p.correo, asunto, texto, idioma: p.idioma });
+}
+
 export async function avisoPedidoAlRestaurante(
   env: Env,
   p: {

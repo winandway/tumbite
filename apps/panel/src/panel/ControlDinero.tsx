@@ -28,6 +28,11 @@ const T = {
     porEstado: 'Retiros por estado',
     liquidaciones: 'Cobros en revisión',
     sinLiquidaciones: 'Ningún cobro en revisión ni atrasado.',
+    absorbido: 'Cerradas sin cobro: lo que asumió Divoox',
+    absorbidoAyuda:
+      'Entregas cuya autorización de tarjeta venció y se cerraron sin cobro, por mes y moneda (últimos 12 meses).',
+    mes: 'Mes',
+    moneda: 'Moneda',
     revision: 'En revisión',
     atrasadas: 'Atrasadas (más de 2 horas)',
     pedido: 'Pedido',
@@ -141,6 +146,11 @@ const T = {
     porEstado: 'Withdrawals by status',
     liquidaciones: 'Charges under review',
     sinLiquidaciones: 'No charge under review or delayed.',
+    absorbido: 'Closed without charging: what Divoox covered',
+    absorbidoAyuda:
+      'Deliveries whose card authorization expired and were closed without a charge, by month and currency (last 12 months).',
+    mes: 'Month',
+    moneda: 'Currency',
     revision: 'Under review',
     atrasadas: 'Delayed (over 2 hours)',
     pedido: 'Order',
@@ -255,6 +265,8 @@ type Liquidacion = {
   error: string | null;
   entregadoEn: string | null;
 };
+/** C-AUTORIZACION-VENCIDA (menor 6): lo absorbido por «cerrar sin cobro», por mes y moneda. */
+type Absorbido = { mes: string; moneda: string; pedidos: number; monto: number };
 type Abono = {
   id: string;
   usuarioId: string | null;
@@ -349,9 +361,11 @@ export function propinasDeTexto(texto: string): number[] | null {
 export function ControlDinero({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const [retiros, setRetiros] = useState<Retiros | null>(null);
-  const [liq, setLiq] = useState<{ revision: Liquidacion[]; atrasadas: Liquidacion[] } | null>(
-    null,
-  );
+  const [liq, setLiq] = useState<{
+    revision: Liquidacion[];
+    atrasadas: Liquidacion[];
+    absorbidoSinCobro?: Absorbido[];
+  } | null>(null);
   const [abonos, setAbonos] = useState<Abono[] | null>(null);
   const [conc, setConc] = useState<Conciliacion[] | null>(null);
   const [disputas, setDisputas] = useState<Disputa[] | null>(null);
@@ -437,10 +451,11 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
   const cargar = useCallback(async () => {
     const [r, l, a, c, d, k, q] = await Promise.all([
       pedir<Retiros>('GET', '/datos/admin/retiros').catch(() => null),
-      pedir<{ revision: Liquidacion[]; atrasadas: Liquidacion[] }>(
-        'GET',
-        '/datos/admin/liquidaciones',
-      ).catch(() => null),
+      pedir<{
+        revision: Liquidacion[];
+        atrasadas: Liquidacion[];
+        absorbidoSinCobro?: Absorbido[];
+      }>('GET', '/datos/admin/liquidaciones').catch(() => null),
       pedir<{ abonos: Abono[] }>('GET', '/datos/admin/abonos-fallidos').catch(() => null),
       pedir<{ conciliaciones: Conciliacion[] }>('GET', '/datos/admin/conciliacion').catch(
         () => null,
@@ -605,6 +620,32 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
             </div>
           ) : null,
         )}
+      {liq?.absorbidoSinCobro?.length ? (
+        <div className="tabla-ancha">
+          <h3>{t.absorbido}</h3>
+          <p className="suave">{t.absorbidoAyuda}</p>
+          <table className="tabla">
+            <thead>
+              <tr>
+                <th>{t.mes}</th>
+                <th>{t.moneda}</th>
+                <th>{t.pedidos}</th>
+                <th>{t.monto}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {liq.absorbidoSinCobro.map((a) => (
+                <tr key={`${a.mes}-${a.moneda}`}>
+                  <td>{a.mes}</td>
+                  <td>{a.moneda}</td>
+                  <td>{a.pedidos}</td>
+                  <td>{formatearMonto(a.monto, a.moneda, idioma)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
 
       <h2>{t.abonos}</h2>
       {abonos && !abonos.length ? <p className="suave">{t.sinAbonos}</p> : null}
