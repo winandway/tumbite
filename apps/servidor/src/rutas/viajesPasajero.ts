@@ -24,6 +24,7 @@ import {
   tarifaDeMercado,
   distanciaKm,
   estimarRuta,
+  rangoPrefijo,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import type { Env } from '../env';
@@ -1390,10 +1391,57 @@ viajesPasajero.post('/viajes/:id/calificar', async (c) => {
 // ---------------------------------------------------------------- M9: panel del superadmin
 
 /** Lo que el superadmin vigila de Moto: emergencias abiertas, viajes recientes y tarifas activas. */
+/** C-FILTROS-GUARDADOS: los estados de un viaje para el selector Vivos · Cerrados · Todos. */
+export const ESTADOS_OPERACION = {
+  vivos: ['pago_pendiente', 'buscando', 'asignada', 'en_curso'],
+  cerrados: ['terminada', 'cancelada', 'sin_conductor'],
+} as const;
+
 viajesPasajero.get('/admin/viajes', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
-  const [emergencias, viajes, tarifas] = await Promise.all([
+  // C-FILTROS-GUARDADOS (15 nov 2026): ciudad, estado y código del viaje. Cada tipo de operación
+  // va por su índice (tipo_operacion, creado_en) hacia atrás y se juntan en orden; los filtros de
+  // ciudad y estado no eligen índice (`+`), así la consulta para en cuanto junta 50.
+  const zona = (c.req.query('zona') ?? '').slice(0, 60);
+  const e = c.req.query('estado') ?? 'todos';
+  const estados =
+    e === 'vivos' ? ESTADOS_OPERACION.vivos : e === 'cerrados' ? ESTADOS_OPERACION.cerrados : null;
+  const codigo = (c.req.query('q') ?? '').trim().replace(/^#/, '').toLowerCase();
+  const porCodigo = /^[0-9a-z_-]{3,100}$/.test(codigo) ? rangoPrefijo(codigo) : null;
+  const filtros: string[] = [];
+  const valores: unknown[] = [];
+  if (porCodigo) {
+    filtros.push('o.id >= ? AND o.id < ?');
+    valores.push(...porCodigo);
+  } else {
+    if (zona) {
+      filtros.push('+o.zona_id = ?');
+      valores.push(zona);
+    }
+    if (estados) {
+      filtros.push(`+o.estado_general IN (${estados.map(() => '?').join(', ')})`);
+      valores.push(...estados);
+    }
+  }
+  const unaParte = (tipo: string) =>
+    db
+      .prepare(
+        `SELECT o.id, o.servicio_id, o.zona_id, o.creado_en, o.estado_general, v.estado, v.origen_direccion,
+                v.destino_direccion, v.metodo_pago, v.total_final_centavos, q.total, q.moneda,
+                p.nombre AS pasajero, d.nombre AS conductor, z.nombre AS ciudad
+           FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+           LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+           LEFT JOIN usuarios p ON p.id = o.cliente_id
+           LEFT JOIN usuarios d ON d.id = o.conductor_id
+           LEFT JOIN zonas z ON z.id = o.zona_id
+          WHERE ${porCodigo ? '+o.tipo_operacion' : 'o.tipo_operacion'} = ?${filtros.length ? ` AND ${filtros.join(' AND ')}` : ''}
+          ORDER BY ${porCodigo ? '+o.creado_en' : 'o.creado_en'} DESC LIMIT 50`,
+      )
+      .bind(tipo, ...valores)
+      .all<Record<string, unknown>>();
+  const vivo = new Set<string>(ESTADOS_OPERACION.vivos);
+  const [emergencias, pasajeros, paquetes, tarifas] = await Promise.all([
     db
       .prepare(
         `SELECT e.id, e.operacion_id, e.rol, e.lat, e.lng, e.creado_en, u.nombre, u.correo, u.telefono
@@ -1401,20 +1449,8 @@ viajesPasajero.get('/admin/viajes', async (c) => {
           WHERE e.atendida_en IS NULL ORDER BY e.creado_en DESC LIMIT 50`,
       )
       .all<Record<string, unknown>>(),
-    db
-      .prepare(
-        `SELECT o.id, o.servicio_id, o.zona_id, o.creado_en, v.estado, v.origen_direccion,
-                v.destino_direccion, v.metodo_pago, v.total_final_centavos, q.total, q.moneda,
-                p.nombre AS pasajero, d.nombre AS conductor
-           FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
-           LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
-           LEFT JOIN usuarios p ON p.id = o.cliente_id
-           LEFT JOIN usuarios d ON d.id = o.conductor_id
-          WHERE o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete')
-          ORDER BY o.estado_general IN ('buscando', 'asignada', 'en_curso') DESC, o.creado_en DESC
-          LIMIT 50`,
-      )
-      .all<Record<string, unknown>>(),
+    unaParte('viaje_pasajero'),
+    unaParte('envio_paquete'),
     db
       .prepare(
         `SELECT t.*, z.nombre AS zona_nombre FROM tarifas_viaje t JOIN zonas z ON z.id = t.zona_id
@@ -1422,9 +1458,17 @@ viajesPasajero.get('/admin/viajes', async (c) => {
       )
       .all<FilaTarifa & { zona_nombre: string }>(),
   ]);
+  // Los vivos primero; dentro de cada parte, el más reciente primero.
+  const viajes = [...pasajeros.results, ...paquetes.results]
+    .sort(
+      (a, b) =>
+        Number(vivo.has(String(b.estado_general))) - Number(vivo.has(String(a.estado_general))) ||
+        String(b.creado_en).localeCompare(String(a.creado_en)),
+    )
+    .slice(0, 50);
   return c.json({
     emergencias: emergencias.results,
-    viajes: viajes.results,
+    viajes,
     tarifas: tarifas.results.map((f) => ({ ...tarifaPublica(f), zonaNombre: f.zona_nombre })),
   });
 });

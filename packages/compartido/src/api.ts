@@ -34,6 +34,9 @@ export const TIEMPO_PEDIDO_MS = 30_000;
 /** Una lectura (GET) se corta antes y se repite una vez: una sola respuesta perdida no deja la pantalla en «…». */
 export const TIEMPO_LECTURA_MS = 15_000;
 
+/** C-BUSCADOR-SERIO: una petición cancelada a propósito (`senal`) termina con este estado. */
+export const ESTADO_CANCELADA = -1;
+
 /** Cliente del servidor de Divoox. Lo usan las tres apps y el panel. */
 export function crearApi(op: OpcionesApi) {
   const hacer = op.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
@@ -47,7 +50,11 @@ export function crearApi(op: OpcionesApi) {
     ruta: string,
     cuerpo?: unknown,
     /** Cabeceras extra (p. ej. `Idempotency-Key` en las rutas de Divoox Flex que crean cosas). */
-    extra?: { cabeceras?: Record<string, string> },
+    extra?: {
+      cabeceras?: Record<string, string>;
+      /** Cancela la petición (p. ej. el buscador, al escribir otra letra). No se reintenta. */
+      senal?: AbortSignal;
+    },
   ): Promise<T> {
     const headers: Record<string, string> = { accept: 'application/json', ...extra?.cabeceras };
     if (cuerpo !== undefined) headers['content-type'] = 'application/json';
@@ -64,7 +71,9 @@ export function crearApi(op: OpcionesApi) {
     // C-LECTURA-REINTENTO: una lectura que no responde se repite una vez; un envío nunca se repite.
     const intento = async (ms: number) => {
       const corte = typeof AbortController === 'undefined' ? null : new AbortController();
+      if (extra?.senal?.aborted) throw new Error('cancelada');
       const reloj = corte ? setTimeout(() => corte.abort(), ms) : null;
+      extra?.senal?.addEventListener('abort', () => corte?.abort(), { once: true });
       try {
         const init = {
           method: metodo,
@@ -85,11 +94,13 @@ export function crearApi(op: OpcionesApi) {
     try {
       ({ r: res, reloj } =
         metodo === 'GET'
-          ? await intento(op.tiempoMs ?? TIEMPO_LECTURA_MS).catch(() =>
-              intento(op.tiempoMs ?? TIEMPO_PEDIDO_MS),
-            )
+          ? await intento(op.tiempoMs ?? TIEMPO_LECTURA_MS).catch((e: unknown) => {
+              if (extra?.senal?.aborted) throw e;
+              return intento(op.tiempoMs ?? TIEMPO_PEDIDO_MS);
+            })
           : await intento(op.tiempoMs ?? TIEMPO_PEDIDO_MS));
     } catch {
+      if (extra?.senal?.aborted) throw new ErrorApi('', ESTADO_CANCELADA);
       throw new ErrorApi(
         op.idioma?.() === 'en'
           ? 'No connection. Your info is safe here; try again in a moment.'

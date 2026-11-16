@@ -104,3 +104,4 @@ export * from './comidaVenezuela';
 export * from './viajesProgramados';
 export * from './formaDePago';
 export * from './fotoPuerta';
+export * from './busquedaInterna';

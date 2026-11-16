@@ -55,8 +55,10 @@ export function permiteAccionInterna(perfil: PerfilInterno, metodo: string, ruta
   if (perfil === 'total') return true;
   const lee = metodo === 'GET' || metodo === 'HEAD';
   if (lee) return true;
-  if (perfil === 'lectura') return false;
   const familia = /^\/datos\/admin\/([a-z-]+)/.exec(ruta)?.[1] ?? '';
+  // C-FILTROS-GUARDADOS: cada persona del equipo guarda SUS filtros (no cambia nada del negocio).
+  if (familia === 'preferencias') return true;
+  if (perfil === 'lectura') return false;
   // Los perfiles y el equipo solo los toca una cuenta total.
   if (familia === 'equipo') return false;
   return (perfil === 'soporte' ? SOPORTE : FINANZAS).includes(familia);

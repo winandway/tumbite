@@ -12,7 +12,7 @@ export async function pedir<T>(
   metodo: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   ruta: string,
   cuerpo?: unknown,
-  extra?: { cabeceras?: Record<string, string> },
+  extra?: { cabeceras?: Record<string, string>; senal?: AbortSignal },
 ): Promise<T> {
   return api.pedir<T>(metodo, ruta, cuerpo, extra);
 }
