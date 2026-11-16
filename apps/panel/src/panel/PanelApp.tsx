@@ -256,9 +256,11 @@ export function PanelApp({ ruta }: { ruta: string }) {
   useEffect(() => {
     if (!usuario) return;
     if (usuario.rol === 'admin')
-      void pedir<{ ruta: string | null }>('GET', '/datos/admin/ruta').then((r) =>
-        setBaseAdmin(r.ruta ? `/panel/${r.ruta}` : '/panel'),
-      );
+      // C-PANEL-SIN-RECHAZO-SUELTO (16 nov 2026): sin red, la ruta del superadmin no deja un error
+      // sin atrapar (rompía la verificación del principal de forma intermitente); se queda en /panel.
+      void pedir<{ ruta: string | null }>('GET', '/datos/admin/ruta')
+        .then((r) => setBaseAdmin(r.ruta ? `/panel/${r.ruta}` : '/panel'))
+        .catch((e: unknown) => console.warn('panel: no se pudo leer la ruta del superadmin', e));
     else
       void pedir<{ ruta: string | null }>('GET', '/datos/mi-franquicia')
         .then((r) => setMiFranquicia(r.ruta ? `/panel/${r.ruta}` : null))
