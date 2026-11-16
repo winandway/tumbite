@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { DOCS } from './guias';
 import { GUIAS_OPERACIONES } from './operaciones';
-import { coincide, palabrasDeBusqueda } from './buscar';
+import { buscarGuias } from './buscar';
 import { iconoDeGuia } from './iconosGuia';
 
 /**
@@ -93,7 +93,9 @@ describe('C-DOCS-OPERACIONES: guías del equipo de operaciones', () => {
 
   it('el buscador de Docs las encuentra con palabras normales, y cada una tiene su ícono', () => {
     const busca = (i: 'es' | 'en', q: string) =>
-      GUIAS_OPERACIONES[i].filter((g) => coincide(g, palabrasDeBusqueda(q))).map((g) => g.id);
+      buscarGuias(DOCS[i], q)
+        .map((r) => r.guia.id)
+        .filter((id) => GUIAS_OPERACIONES[i].some((g) => g.id === id));
     expect(busca('en', 'short code')).toContain('search-orders-rides-people');
     expect(busca('en', 'traffic light')).toContain('monitor-live-orders-rides');
     expect(busca('en', 'blurred photo')).toContain('read-order-ride-file');

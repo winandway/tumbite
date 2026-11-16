@@ -6,7 +6,8 @@ import { DOCS } from './guias';
 import { GUIAS_CARRO } from './carro';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_MOTO } from './borradores/moto';
-import { coincide, palabrasDeBusqueda } from './buscar';
+import { buscarGuias, ideasDeBusqueda, palabrasDeBusqueda, resaltar } from './buscar';
+import { SINONIMOS } from './sinonimos';
 import { iconoDeGuia } from './iconosGuia';
 import { TEXTOS_FLEX } from '../Flex';
 import { TEXTOS_SITIO } from '../textos';
@@ -288,9 +289,7 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
 
 describe('C-DOCS-BUSCADOR: el buscador encuentra con palabras normales', () => {
   const buscar = (idioma: 'es' | 'en', q: string) =>
-    DOCS[idioma]
-      .flatMap((s) => s.guias.filter((g) => coincide(g, palabrasDeBusqueda(q))))
-      .map((g) => g.id);
+    buscarGuias(DOCS[idioma], q).map((r) => r.guia.id);
 
   it('sin acentos, sin mayúsculas y por palabras sueltas', () => {
     expect(palabrasDeBusqueda('¿Cómo pago con Pago Móvil?')).toEqual(['pago', 'pago', 'movil']);
@@ -314,5 +313,89 @@ describe('C-DOCS-BUSCADOR: el buscador encuentra con palabras normales', () => {
       expect.arrayContaining(['driver-cash-mobile-payment-venezuela', 'order-not-delivered']),
     );
     expect(buscar('en', 'track package')).toEqual(expect.arrayContaining(['flex-tracking-page']));
+  });
+});
+
+/**
+ * C-DOCS-BUSCADOR-BILINGUE y C-DOCS-BUSCADOR-MOTOR (15 nov 2026), pedido de Richard: «wallet» en
+ * español no encontraba nada. Ahora el buscador busca también las palabras del otro idioma, tolera
+ * errores de escritura, encuentra por el comienzo de la palabra y pone primero lo del título.
+ */
+describe('C-DOCS-BUSCADOR-BILINGUE: palabras del otro idioma, errores y comienzo de palabra', () => {
+  const ids = (idioma: 'es' | 'en', q: string) =>
+    buscarGuias(DOCS[idioma], q).map((r) => r.guia.id);
+  const primeros = (idioma: 'es' | 'en', q: string, n = 5) => ids(idioma, q).slice(0, n);
+
+  it('«wallet» en español y «billetera» en inglés dan la billetera de Flex arriba', () => {
+    expect(primeros('es', 'wallet')).toContain('flex-wallet');
+    // La guía de cómo buscar cita «wallet» como ejemplo, pero no sale primero.
+    expect(ids('es', 'wallet')[0]).not.toBe('search-docs-and-zoom');
+    expect(ids('en', 'billetera')[0]).not.toBe('search-docs-and-zoom');
+    expect(primeros('en', 'billetera')).toContain('flex-wallet');
+    expect(primeros('es', 'billetera')).toContain('flex-wallet');
+    expect(primeros('en', 'wallet')).toContain('flex-wallet');
+  });
+
+  it('un error de escritura («biletera», «wallett») también la encuentra', () => {
+    expect(primeros('es', 'biletera')).toContain('flex-wallet');
+    expect(primeros('en', 'wallett')).toContain('flex-wallet');
+    expect(primeros('en', 'biletera')).toContain('flex-wallet');
+    expect(primeros('en', 'walet')).toContain('flex-wallet');
+  });
+
+  it('tracking ↔ rastreo, top up ↔ recargar, en los dos idiomas', () => {
+    for (const idioma of ['es', 'en'] as const) {
+      for (const q of ['tracking', 'rastreo', 'seguimiento']) {
+        expect(ids(idioma, q), `${idioma}: ${q}`).toContain('flex-tracking-page');
+      }
+      for (const q of ['recargar', 'top up', 'topup']) {
+        expect(ids(idioma, q), `${idioma}: ${q}`).toEqual(
+          expect.arrayContaining(['driver-commission-balance-top-up', 'flex-wallet']),
+        );
+      }
+    }
+  });
+
+  it('moto, pago móvil, Zelle y propina dan guías útiles en los dos idiomas', () => {
+    for (const idioma of ['es', 'en'] as const) {
+      expect(ids(idioma, 'moto').length, `${idioma}: moto`).toBeGreaterThan(3);
+      expect(ids(idioma, 'Zelle'), `${idioma}: Zelle`).toContain('flex-wallet-local-topup');
+      expect(ids(idioma, 'propina').length, `${idioma}: propina`).toBeGreaterThan(2);
+      expect(ids(idioma, 'tip').length, `${idioma}: tip`).toBeGreaterThan(2);
+    }
+    expect(ids('es', 'pago móvil').length).toBeGreaterThan(2);
+    expect(ids('en', 'pago movil').length).toBeGreaterThan(0);
+  });
+
+  it('da sugerencias desde la primera letra y con la palabra a medio escribir', () => {
+    expect(ids('es', 'b').length).toBeGreaterThan(10);
+    expect(primeros('es', 'billet')).toContain('flex-wallet');
+    // A medio escribir en inglés, en la versión en español: «walle» ya trae la billetera.
+    expect(primeros('es', 'walle')).toContain('flex-wallet');
+  });
+
+  it('el título pesa más: «billetera» pone primero guías con billetera en el título', () => {
+    const [primera] = buscarGuias(DOCS.es, 'billetera');
+    expect(primera?.guia.titulo.toLowerCase()).toContain('billetera');
+  });
+
+  it('junta las frases del diccionario y resalta lo que coincidió', () => {
+    expect(ideasDeBusqueda('como hago top up').map((x) => x.escrito)).toEqual(['hago', 'top up']);
+    const [r] = buscarGuias(DOCS.es, 'wallet');
+    expect(r?.terminos.length).toBeGreaterThan(0);
+    const marcados = resaltar('Tu billetera y tu saldo', ['billetera']).filter((t) => t.marca);
+    expect(marcados.map((t) => t.texto)).toEqual(['billetera']);
+  });
+
+  it('el diccionario no repite una palabra en dos grupos (sería ambiguo)', () => {
+    const todas = SINONIMOS.flat();
+    expect(todas.filter((p, i) => todas.indexOf(p) !== i)).toEqual([]);
+    for (const p of todas)
+      expect(p).toBe(
+        p
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase(),
+      );
   });
 });

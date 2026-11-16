@@ -3,8 +3,10 @@ import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
 import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
+import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_OPERACIONES } from './operaciones';
+import { GUIAS_DOCS } from './guiasDocs';
 
 /**
  * Docs de Divoox: cada guía es su propia página (/docs/<seccion>/<guia>), para poder pasarle
@@ -10186,14 +10188,22 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const mismaRuta = MISMA_RUTA_PUBLICADA
     ? [idioma === 'es' ? GUIA_MISMA_RUTA.es : GUIA_MISMA_RUTA.en]
     : [];
+  // C-ESPERA-VEHICULO: la espera de cada servicio, con sus capturas reales.
+  const espera = idioma === 'es' ? GUIA_ESPERA.es : GUIA_ESPERA.en;
   const base = secciones.map((s) => {
     if (s.id === 'ordering')
       return {
         ...s,
-        guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, ...mismaRuta, ...de(s.id)],
+        guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, espera, ...mismaRuta, ...de(s.id)],
       };
     if (s.id === 'drivers')
       return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
+    // C-DOCS-LUPA (15 nov 2026): cómo buscar en Docs y ampliar una captura, al final de «Tu cuenta».
+    if (s.id === 'account')
+      return {
+        ...s,
+        guias: [...s.guias, ...de(s.id), ...(idioma === 'es' ? GUIAS_DOCS.es : GUIAS_DOCS.en)],
+      };
     return { ...s, guias: [...s.guias, ...de(s.id)] };
   });
   // C-DOCS-OPERACIONES (15 nov 2026): la sección del equipo de operaciones, al final del menú.
@@ -10224,6 +10234,7 @@ export const TEXTOS_DOCS = {
     buscar: 'Buscar en Docs',
     atajo: '⌘K',
     sinResultados: 'No encontramos nada con eso. Prueba con otra palabra.',
+    sugerencias: 'Guías que coinciden',
     volver: '← Docs',
     pasos: 'Pasos',
     comoFunciona: 'Cómo funciona',
@@ -10245,6 +10256,7 @@ export const TEXTOS_DOCS = {
     buscar: 'Search Docs',
     atajo: '⌘K',
     sinResultados: 'Nothing matched. Try another word.',
+    sugerencias: 'Matching guides',
     volver: '← Docs',
     pasos: 'Steps',
     comoFunciona: 'How it works',
