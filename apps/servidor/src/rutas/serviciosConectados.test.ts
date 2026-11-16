@@ -189,6 +189,37 @@ describe('C-SERVICIOS-CONECTADOS · varios a la vez, pausa al llevar uno', () =>
   });
 });
 
+describe('C-SERVICIOS-CONECTADOS · agregar un servicio', () => {
+  it('pedir un servicio lo deja en revisión del equipo, nunca aprobado; apagado en la ciudad da 409', async () => {
+    const { m, admin, cond, estadoDe } = await conComidaYEnvios();
+    const pedir = (id: string) =>
+      m.llamar('POST', `/datos/conductor/servicios/${id}/solicitar`, {}, cond.token);
+    // Carro todavía no funciona en la ciudad: no se puede pedir ni se dibuja.
+    expect(await estadoDe('carro')).toBeUndefined();
+    expect((await pedir('carro')).estado).toBe(409);
+    for (const ruta of [
+      '/datos/admin/servicios/carro',
+      '/datos/admin/servicios/carro/zonas/US-FL-MIAMI',
+    ])
+      await m.llamar('PUT', ruta, { estado: 'disponible' }, admin.token);
+    expect(await estadoDe('carro')).toBe('agregar');
+    const r = await pedir('carro');
+    expect(r.estado).toBe(200);
+    expect(await estadoDe('carro')).toBe('en_revision');
+    const h = await m.DB.prepare(
+      "SELECT estado, aprobado_por FROM habilitaciones WHERE conductor_id = ? AND servicio_id = 'carro'",
+    )
+      .bind(cond.id)
+      .first<{ estado: string; aprobado_por: string | null }>();
+    expect(h).toEqual({ estado: 'pendiente', aprobado_por: null });
+    // Pedirlo otra vez no cambia nada; un servicio ya aprobado tampoco se toca.
+    expect((await pedir('carro')).estado).toBe(200);
+    expect((await pedir('envios')).estado).toBe(200);
+    expect(await estadoDe('envios')).toBe('conectado');
+    expect((await pedir('flex')).estado).toBe(404);
+  });
+});
+
 describe('C-SERVICIOS-CONECTADOS · la regla de cada tarjeta', () => {
   const s = (o: Partial<EstadoConductor>): EstadoConductor => ({
     servicioId: 'carro',

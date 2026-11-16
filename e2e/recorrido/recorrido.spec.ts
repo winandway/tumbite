@@ -586,7 +586,9 @@ for (const idioma of ['en', 'es'] as const) {
       .first()
       .click();
     await expect(
-      rep.getByText(/Online: receiving orders|Conectado: recibiendo pedidos/),
+      rep
+        .getByText(/Online for \d+ services?|Conectado a \d+ servicios?/)
+        .filter({ visible: true }),
     ).toBeVisible();
     await foto(rep, 'repartidor-conectado');
     if (CAPTURAS) {

@@ -138,7 +138,7 @@ export const TEXTOS = {
     beneficios: 'Earnings',
     teToca: 'Your payout',
     noGracias: 'No, thanks',
-    buscando: 'Looking for orders near you…',
+    buscando: 'Waiting for your next offer',
   },
   es: {
     panelCrear: '¿Tu restaurante aún no está en Divoox? Crea tu cuenta',
@@ -278,6 +278,6 @@ export const TEXTOS = {
     beneficios: 'Beneficios',
     teToca: 'Te toca',
     noGracias: 'No, gracias',
-    buscando: 'Buscando pedidos cerca de ti…',
+    buscando: 'Esperando la próxima oferta',
   },
 } as const;

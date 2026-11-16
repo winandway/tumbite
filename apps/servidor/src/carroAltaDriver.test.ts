@@ -12,7 +12,10 @@ const leer = (r: string) => readFileSync(join(raiz, r), 'utf8');
 
 describe('C-CARRO-ALTA-DRIVER: el taxista se da de alta en Driver', () => {
   it('el perfil abre «Divoox Carro» con la pieza común de Moto', () => {
-    expect(leer('apps/repartidor/src/Inicio.tsx')).toMatch(/<MiCarro \/>/);
+    // Desde C-SERVICIOS-CONECTADOS (16 nov 2026) el perfil es un acordeón: «Mi vehículo» abre Mi carro.
+    expect(leer('apps/repartidor/src/Inicio.tsx')).toMatch(/<PerfilAcordeon/);
+    expect(leer('apps/repartidor/src/servicios/PerfilAcordeon.tsx')).toMatch(/<MiCarro \/>/);
+    expect(leer('apps/repartidor/src/servicios/PerfilAcordeon.tsx')).toMatch(/<MiMoto \/>/);
     expect(leer('apps/repartidor/src/viajes/MiCarro.tsx')).toMatch(
       /<AltaPasajeros servicio="carro" \/>/,
     );

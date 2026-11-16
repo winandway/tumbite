@@ -1,7 +1,5 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode } from 'react';
 import {
-  Animated,
-  PanResponder,
   Pressable,
   Text as TextoRN,
   View,
@@ -9,7 +7,7 @@ import {
   type TextProps,
   type ViewStyle,
 } from 'react-native';
-import { C, e } from '@tumbite/movil';
+import { C, Deslizador, e } from '@tumbite/movil';
 
 /**
  * Piezas visuales de «Mi ruta» (Divoox Flex): pastillas de estado, barra de progreso en verde,
@@ -364,88 +362,19 @@ export function Banner({
 /**
  * C-FLEX-DESLIZAR (como «Deslice para finalizar» de Amazon Flex): terminar una entrega exige
  * deslizar, no un toque, para no cerrarla por error. Con lector de pantalla, la acción «activar».
+ * Desde C-SERVICIOS-CONECTADOS (16 nov 2026, pantalla 03 de
+ * DRIVER.md) es la pieza común `Deslizador` en el azul de logística: 60 de alto, pulgar blanco con
+ * la flecha, brillo cada 2,4 s, umbral del 85 % y resorte. El gesto se arma una sola vez dentro de la
+ * pieza (C-FLEX-DESLIZAR-SCROLL sigue cumplido).
  */
 export function Deslizar({ texto, alTerminar }: { texto: string; alTerminar: () => void }) {
-  const [ancho, setAncho] = useState(0);
-  const x = useMemo(() => new Animated.Value(0), []);
-  const BOLA = 52;
-  const tope = Math.max(0, ancho - BOLA - 8);
-  // C-FLEX-DESLIZAR-SCROLL: el gesto se arma UNA vez y lee siempre el ancho y la acción actuales. Si
-  // se rearmaba en cada render, el iPhone se quedaba con el primero (ancho 0 y la acción vieja): tras
-  // un primer intento («elige dónde lo dejaste»), deslizar ya no cerraba la entrega.
-  const actual = useRef({ tope, alTerminar });
-  useEffect(() => {
-    actual.current = { tope, alTerminar };
-  });
-  // La referencia solo se lee dentro de los manejadores del toque, nunca al dibujar.
-  // eslint-disable-next-line react-hooks/refs
-  const [gesto] = useState(() => {
-    const volver = () => Animated.spring(x, { toValue: 0, useNativeDriver: false }).start();
-    return PanResponder.create({
-      // La bola toma el gesto al tocarla y no se lo cede a la lista que se desplaza.
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 4,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderMove: (_e, g) => x.setValue(Math.min(Math.max(0, g.dx), actual.current.tope)),
-      onPanResponderRelease: (_e, g) => {
-        const { tope: fin } = actual.current;
-        if (fin > 0 && g.dx >= fin * 0.85)
-          Animated.timing(x, {
-            toValue: fin,
-            duration: 120,
-            useNativeDriver: false,
-          }).start(() => {
-            actual.current.alTerminar();
-            x.setValue(0);
-          });
-        else volver();
-      },
-      // Si igual pierde el gesto, la bola vuelve al inicio (no se queda a medio camino).
-      onPanResponderTerminate: volver,
-    });
-  });
   return (
-    <View
-      onLayout={(e) => setAncho(e.nativeEvent.layout.width)}
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel={texto}
-      accessibilityActions={[{ name: 'activate' }]}
-      onAccessibilityAction={() => alTerminar()}
-      style={{
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: C.logisticaAccion,
-        justifyContent: 'center',
-        padding: 4,
-      }}
-    >
-      <Text
-        style={{
-          position: 'absolute',
-          alignSelf: 'center',
-          color: C.logisticaTexto,
-          fontWeight: '800',
-          fontSize: 16,
-        }}
-      >
-        {texto}
-      </Text>
-      <Animated.View
-        {...gesto.panHandlers}
-        testID="deslizar-bola"
-        style={{
-          width: BOLA,
-          height: BOLA,
-          borderRadius: BOLA / 2,
-          backgroundColor: C.logistica,
-          alignItems: 'center',
-          justifyContent: 'center',
-          transform: [{ translateX: x }],
-        }}
-      >
-        <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 18 }}>›››</Text>
-      </Animated.View>
-    </View>
+    <Deslizador
+      variante="accion"
+      tono="logistica"
+      texto={texto}
+      accionLector={texto}
+      alConfirmar={alTerminar}
+    />
   );
 }

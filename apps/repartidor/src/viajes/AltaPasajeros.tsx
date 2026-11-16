@@ -145,7 +145,7 @@ const COMUN = {
 };
 
 /** Textos propios de cada servicio. */
-const POR_SERVICIO = {
+export const POR_SERVICIO = {
   moto: {
     es: {
       titulo: 'Divoox Moto',
@@ -385,11 +385,13 @@ const deArchivos = async () => {
 const VERDE = '#0D7A3A';
 /** Lee un texto por su clave sin indexar objetos a ciegas (regla de seguridad del lint). */
 const de = (m: Record<string, string>, k: string) => new Map(Object.entries(m)).get(k);
+// C-SERVICIOS-CONECTADOS (DRIVER.md §5): lo rechazado va en el rojo de ERROR, nunca en el de la marca.
+const ROJO_ERROR = '#B3261E';
 const colorEstado = (estado: string) =>
   estado === 'aprobado'
     ? VERDE
     : estado === 'rechazado' || estado === 'vencido'
-      ? C.primario
+      ? ROJO_ERROR
       : '#666B73';
 
 function Fila({
@@ -425,7 +427,7 @@ function Fila({
           {de(t.estados, estado) ?? estado}
         </Text>
         {estado === 'rechazado' && motivo ? (
-          <Text style={{ fontSize: 12, color: C.primario }}>
+          <Text style={{ fontSize: 12, color: ROJO_ERROR }}>
             {t.rechazo}: {motivo}
           </Text>
         ) : null}
@@ -583,7 +585,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
     <View style={{ gap: 12, paddingVertical: 8 }} testID={`alta-${servicio}`}>
       <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
-      {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}
+      {error ? <Text style={{ color: ROJO_ERROR }}>{error}</Text> : null}
 
       {papeles ? (
         <View style={e.tarjeta}>
@@ -648,7 +650,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               {de(tc.estados, vehiculo.estado) ?? vehiculo.estado}
             </Text>
             {vehiculo.estado === 'rechazado' && vehiculo.motivo ? (
-              <Text style={{ color: C.primario, fontSize: 12 }}>
+              <Text style={{ color: ROJO_ERROR, fontSize: 12 }}>
                 {tc.rechazo}: {vehiculo.motivo}
               </Text>
             ) : null}

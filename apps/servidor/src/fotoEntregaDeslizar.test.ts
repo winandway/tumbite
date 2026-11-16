@@ -212,12 +212,16 @@ describe('foto aparte y deslizar para completar (C-DESLIZAR-ENTREGA)', () => {
 describe('las apps: subir fotos sin falsos errores y el deslizador (fuente)', () => {
   const api = readFileSync(join(raiz, 'packages/compartido/src/api.ts'), 'utf8');
   const inicio = readFileSync(join(raiz, 'apps/repartidor/src/Inicio.tsx'), 'utf8');
+  // Desde C-SERVICIOS-CONECTADOS el gesto y la acción del lector viven en la pieza común
+  // `Deslizador`; el cierre de la entrega la usa con sus textos.
   const deslizar = () => {
     try {
-      return readFileSync(
-        join(raiz, 'apps/repartidor/src/piezas/DeslizarParaCompletar.tsx'),
-        'utf8',
-      );
+      return [
+        'apps/repartidor/src/piezas/DeslizarParaCompletar.tsx',
+        'packages/movil/src/Deslizador.tsx',
+      ]
+        .map((f) => readFileSync(join(raiz, f), 'utf8'))
+        .join('\n');
     } catch {
       return '';
     }
@@ -244,5 +248,6 @@ describe('las apps: subir fotos sin falsos errores y el deslizador (fuente)', ()
     expect(deslizar()).toContain('Desliza para completar');
     expect(deslizar()).toContain('Slide to complete delivery');
     expect(deslizar()).toContain("accessibilityActions={[{ name: 'activate'");
+    expect(deslizar()).toContain('<Deslizador');
   });
 });

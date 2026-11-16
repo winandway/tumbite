@@ -54,11 +54,7 @@ import { MiNivel } from './grandes/MiNivel';
 import { Seguridad } from './grandes/Seguridad';
 import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
-import { MisDatos } from './MisDatos';
-import { Verificacion } from './Verificacion';
-import { MiCarro } from './viajes/MiCarro';
 import { MisViajesConductor } from './viajes/MisViajesConductor';
-import { MiMoto } from './viajes/MiMoto';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
 import { InvitacionesFlota } from './InvitacionesFlota';
@@ -84,17 +80,36 @@ import { AyudaPedido } from './grandes/Ayuda';
 import { PagoEnLocal } from './grandes/PagoEnLocal';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
+import {
+  AvisoLlevando,
+  FranjaPausa,
+  PanelServiciosInicio,
+  ServiciosBloqueados,
+  usePanelServicios,
+} from './servicios/PanelServicios';
+import { nombreServicio, textoBloque, type ServicioPanel } from './servicios/logica';
+import { textosServicios } from './servicios/textos';
+import { AgregarServicio } from './servicios/AgregarServicio';
+import { PerfilAcordeon } from './servicios/PerfilAcordeon';
 import { MiRuta } from './flex/MiRuta';
 import { FONDO as FONDO_FLEX } from './flex/piezas';
 
 /** Lo mínimo de una ruta Flex para la tarjeta del inicio. */
-type RutaFlexInicio = { id: string; nombre: string; estado: string; paradas: number };
+type RutaFlexInicio = {
+  id: string;
+  nombre: string;
+  estado: string;
+  paradas: number;
+  bloqueDesde?: string | null;
+  bloqueHasta?: string | null;
+};
 const RUTA_FLEX_ACTIVA = ['ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_curso'];
 import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
 import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
   abrirPagina,
   abrirPanel,
+  AvisoDeshacer,
   Boton,
   C,
   ChatPedido,
@@ -574,7 +589,15 @@ export function Inicio() {
     | 'miRuta'
     | 'turnos'
     | 'seguridad'
+    | 'agregar'
   >('inicio');
+  // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
+  const servicios = usePanelServicios(api, 0);
+  const ts = textosServicios(idioma);
+  const [cambiandoServicio, setCambiandoServicio] = useState<string | null>(null);
+  const [desconectado, setDesconectado] = useState<{ id: string; nombre: string } | null>(null);
+  const [servicioAgregar, setServicioAgregar] = useState<ServicioPanel | null>(null);
+  const [cuentaArriba, setCuentaArriba] = useState(false);
   // Flex · Fase 3: tocar un aviso de ruta abre «Mi ruta» directamente en esa ruta.
   const [rutaDelAviso, setRutaDelAviso] = useState<string | null>(null);
   const alTocarAviso = useCallback((d: Record<string, unknown>) => {
@@ -593,7 +616,6 @@ export function Inicio() {
   const [mostrarChat, setMostrarChat] = useState(true);
   // Desde cuándo está conectado en esta sesión (el servidor no lo guarda).
   const [conectadoDesde, setConectadoDesde] = useState<number | null>(null);
-  const [kycAprobado, setKycAprobado] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   // El error de la recarga automática va aparte: si no, cada recarga borraba el aviso de un botón.
   const [errorCarga, setErrorCarga] = useState('');
@@ -644,7 +666,11 @@ export function Inicio() {
     cargarAccesibilidad(api).catch((x: unknown) => console.warn('accesibilidad', x));
   }, [api]);
 
+  const recargarPanel = servicios.cargar;
   const cargar = useCallback(async () => {
+    // C-SERVICIOS-CONECTADOS: el panel de servicios se lee junto con el estado (cada 5 s y tras
+    // conectar, aceptar o terminar algo).
+    void recargarPanel();
     try {
       // C-FLEX-RUTA-EN-INICIO: la ruta de paquetes activa se ve en el inicio, como en Amazon Flex.
       api
@@ -678,15 +704,11 @@ export function Inicio() {
           : [],
       );
       setBilletera(await api.pedir<Billetera>('GET', '/datos/billetera'));
-      api
-        .pedir<{ kyc: { estado: string } }>('GET', '/datos/kyc')
-        .then((k) => setKycAprobado(k.kyc.estado === 'aprobado'))
-        .catch(() => undefined);
       setErrorCarga('');
     } catch (x) {
       setErrorCarga(x instanceof ErrorApi ? x.message : String(x));
     }
-  }, [api]);
+  }, [api, recargarPanel]);
 
   useEffect(() => {
     const primero = setTimeout(() => void cargar(), 0);
@@ -1101,6 +1123,54 @@ export function Inicio() {
       setError(x instanceof ErrorApi ? x.message : t.ubicacionTarda);
     } finally {
       setCambiando(false);
+    }
+  }
+
+  // C-SERVICIOS-CONECTADOS: conectar UN servicio es un toque (pide la ubicación, como el encendido
+  // general, y pasa por las mismas puertas: identidad, papeles, términos, teléfono, foto de control).
+  async function conectarServicio(id: string): Promise<boolean> {
+    if (cambiandoServicio || cambiando) return false;
+    setError('');
+    setAviso('');
+    setCambiandoServicio(id);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError(t.sinUbicacion);
+        return false;
+      }
+      const p = await ubicacionConLimite();
+      if (!p) {
+        setError(t.ubicacionTarda);
+        return false;
+      }
+      const r = await api.pedir<{ cobertura?: string; avisoComida?: string }>(
+        'POST',
+        `/datos/conductor/servicios/${id}/conexion`,
+        { conectado: true, lat: p.coords.latitude, lng: p.coords.longitude },
+      );
+      if (r.cobertura && r.cobertura !== 'dentro') setAviso(tg.pausa.fueraZona);
+      return true;
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.ubicacionTarda);
+      return false;
+    } finally {
+      setCambiandoServicio(null);
+      await cargar();
+    }
+  }
+
+  // Desconectar UN servicio (después de deslizar). Los demás siguen conectados.
+  async function desconectarServicio(id: string): Promise<boolean> {
+    setError('');
+    try {
+      await api.pedir('POST', `/datos/conductor/servicios/${id}/conexion`, { conectado: false });
+      return true;
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+      return false;
+    } finally {
+      await cargar();
     }
   }
 
@@ -1584,9 +1654,11 @@ export function Inicio() {
       nombre: o.restaurante.nombre,
     }));
   const etiquetasMapa = { yo: td.tuUbicacion, restaurante: t.recoger, casa: t.entregar };
-  const lienzo = (pestana: Pestana, cuerpo: ReactNode, sinScroll = false) => (
+  // Fase cero (C-SERVICIOS-CONECTADOS): el inicio, el perfil y «Agregar un servicio» van en fondo
+  // blanco, como el diseño aprobado; las demás pantallas siguen en el gris de siempre.
+  const lienzo = (pestana: Pestana, cuerpo: ReactNode, sinScroll = false, blanco = false) => (
     <SafeAreaView
-      style={[e.fondo, { backgroundColor: '#F6F6F6' }]}
+      style={[e.fondo, { backgroundColor: blanco ? '#FFFFFF' : '#F6F6F6' }]}
       edges={['top', 'left', 'right']}
     >
       <CabeceraDriver
@@ -1622,18 +1694,33 @@ export function Inicio() {
           ))}
         </View>
       ) : null}
-      {sinScroll ? (
-        <View style={{ flex: 1 }}>{cuerpo}</View>
-      ) : (
-        <ScrollView
-          keyboardDismissMode="interactive"
-          automaticallyAdjustKeyboardInsets
-          contentContainerStyle={{ paddingBottom: 16 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {cuerpo}
-        </ScrollView>
-      )}
+      <View style={{ flex: 1 }}>
+        {sinScroll ? (
+          <View style={{ flex: 1 }}>{cuerpo}</View>
+        ) : (
+          <ScrollView
+            keyboardDismissMode="interactive"
+            automaticallyAdjustKeyboardInsets
+            contentContainerStyle={{ paddingBottom: 16 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {cuerpo}
+          </ScrollView>
+        )}
+        {/* C-SERVICIOS-CONECTADOS: «Comida desconectada. Lo demás sigue conectado. Deshacer». */}
+        <AvisoDeshacer
+          visible={Boolean(desconectado)}
+          titulo={desconectado ? ts.avisoTitulo(desconectado.nombre, desconectado.id) : ''}
+          texto={ts.avisoTexto}
+          deshacer={ts.deshacer}
+          alDeshacer={() => {
+            const d = desconectado;
+            setDesconectado(null);
+            if (d) void conectarServicio(d.id);
+          }}
+          alCerrar={() => setDesconectado(null)}
+        />
+      </View>
       <BarraInferior
         idioma={idioma}
         activa={pestana}
@@ -1874,6 +1961,7 @@ export function Inicio() {
             alVolver={enBloque ? undefined : () => setVista('inicio')}
             alInicio={() => setVista('inicio')}
             bloque={estado?.bloqueFlex ?? null}
+            bloqueados={<ServiciosBloqueados panel={servicios.panel} idioma={idioma} oscuro />}
             ponerPie={setPieFlex}
           />
         </ScrollView>
@@ -1900,6 +1988,26 @@ export function Inicio() {
           setSeccionPerfil(paso === 'datos' ? 'vehiculo' : 'documentos');
         }}
       />,
+    );
+
+  // C-SERVICIOS-CONECTADOS (pantalla 05): agregar un servicio sin repetir lo ya verificado.
+  if (vista === 'agregar' && servicioAgregar)
+    return lienzo(
+      'inicio',
+      <AgregarServicio
+        key={servicioAgregar.servicioId}
+        servicio={
+          servicios.panel?.servicios.find((x) => x.servicioId === servicioAgregar.servicioId) ??
+          servicioAgregar
+        }
+        aprobados={(servicios.panel?.servicios ?? [])
+          .filter((x) => ['conectado', 'desconectado', 'en_pausa', 'haciendo'].includes(x.estado))
+          .map((x) => nombreServicio(x, idioma))}
+        alVolver={() => setVista('inicio')}
+        alCambiar={() => void cargar()}
+      />,
+      false,
+      true,
     );
 
   // ───────── Pedidos: el historial real de entregas ─────────
@@ -1952,12 +2060,6 @@ export function Inicio() {
 
   // ───────── Perfil: datos, vehículo, documentos, idioma, soporte, salir ─────────
   if (vista === 'datos') {
-    const iniciales = (usuario?.nombre ?? '')
-      .split(' ')
-      .slice(0, 2)
-      .map((x) => x[0] ?? '')
-      .join('')
-      .toUpperCase();
     const fila = (nombre: string, alTocar: () => void, abierto = false, detalle?: string) => (
       <Pressable
         onPress={alTocar}
@@ -1983,71 +2085,17 @@ export function Inicio() {
       'perfil',
       <View style={{ padding: 16, gap: 12 }}>
         {mensajes}
-        <View style={{ alignItems: 'center', marginTop: 4 }}>
-          <View
-            style={{
-              width: 92,
-              height: 92,
-              borderRadius: 46,
-              backgroundColor: C.secundario,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 34, fontWeight: '800' }}>{iniciales}</Text>
-          </View>
-          <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario, marginTop: 8 }}>
-            {usuario?.nombre}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-            <Text style={{ color: '#666B73' }}>{td.repartidor}</Text>
-            <View
-              style={{
-                backgroundColor: kycAprobado ? '#E6F4EC' : '#F6F6F6',
-                borderRadius: 999,
-                paddingHorizontal: 10,
-                paddingVertical: 2,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '700',
-                  color: kycAprobado ? C.exito : '#666B73',
-                }}
-              >
-                {kycAprobado ? td.verificado : td.sinVerificar}
-              </Text>
-            </View>
-          </View>
-        </View>
+        {/* C-SERVICIOS-CONECTADOS (pantallas 06 y 07): el perfil en acordeón (Mi vehículo y
+            Documentos); los tres puntos de la cabecera abren cerrar sesión y borrar la cuenta. */}
+        <PerfilAcordeon
+          servicios={servicios.panel?.servicios ?? []}
+          menuCuenta={cuentaArriba ? <OpcionesCuenta /> : null}
+          alMenu={() => setCuentaArriba((x) => !x)}
+          inicial={
+            seccionPerfil === 'vehiculo' || seccionPerfil === 'documentos' ? seccionPerfil : null
+          }
+        />
         <View style={[e.tarjeta, { paddingVertical: 2 }]}>
-          {fila(
-            td.miVehiculo,
-            () => setSeccionPerfil((x) => (x === 'vehiculo' ? null : 'vehiculo')),
-            seccionPerfil === 'vehiculo',
-          )}
-          {seccionPerfil === 'vehiculo' ? <MisDatos /> : null}
-          {fila(
-            td.documentos,
-            () => setSeccionPerfil((x) => (x === 'documentos' ? null : 'documentos')),
-            seccionPerfil === 'documentos',
-          )}
-          {seccionPerfil === 'documentos' ? <Verificacion /> : null}
-          {fila(
-            td.miMoto,
-            () => setSeccionPerfil((x) => (x === 'moto' ? null : 'moto')),
-            seccionPerfil === 'moto',
-            td.miMotoDetalle,
-          )}
-          {seccionPerfil === 'moto' ? <MiMoto /> : null}
-          {fila(
-            td.miCarro,
-            () => setSeccionPerfil((x) => (x === 'carro' ? null : 'carro')),
-            seccionPerfil === 'carro',
-            td.miCarroDetalle,
-          )}
-          {seccionPerfil === 'carro' ? <MiCarro /> : null}
           {fila(
             td.misViajes,
             () => setSeccionPerfil((x) => (x === 'viajes' ? null : 'viajes')),
@@ -2092,11 +2140,14 @@ export function Inicio() {
         />
         {/* C-MAPA-DIA-NOCHE: colores del mapa (automático, claro u oscuro). */}
         <AjusteMapa />
-        {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista. */}
-        <OpcionesCuenta />
+        {/* C-CUENTA-EN-LA-APP: cerrar sesión y borrar la cuenta dentro de la app, a la vista (si
+            ya se abrió arriba con los tres puntos, no se repite aquí). */}
+        {cuentaArriba ? null : <OpcionesCuenta />}
         {/* C-VERSION-VISIBLE: versión y compilación instaladas, para soporte. */}
         <VersionInstalada />
       </View>,
+      false,
+      true,
     );
   }
 
@@ -2104,31 +2155,44 @@ export function Inicio() {
   if (viajeActivo && vista === 'inicio')
     return lienzo(
       'inicio',
-      <ViajeActivo
-        api={{
-          // C-ENVIOS: la foto del paquete al recogerlo.
-          subirFoto: (foto, ruta) => api.subirFoto(foto, ruta),
-          pedir: async (metodo, ruta, cuerpo, extra) => {
-            // Antes de «Llegué», la posición de AHORA (el servidor exige estar en la recogida).
-            if (ruta.endsWith('/llegue')) {
-              const p = await ubicacionConLimite();
-              if (p)
-                await api
-                  .pedir('POST', '/datos/repartidor/ubicacion', {
-                    lat: p.coords.latitude,
-                    lng: p.coords.longitude,
-                    precision: p.coords.accuracy ?? null,
-                    simulada: p.mocked === true,
-                  })
-                  .catch(() => undefined);
-            }
-            return api.pedir(metodo, ruta, cuerpo, extra);
-          },
-        }}
-        idioma={idioma}
-        viaje={viajeActivo}
-        alCambiar={() => void cargar()}
-      />,
+      <View>
+        {/* C-SERVICIOS-CONECTADOS (pantalla 02): lleva un envío o un pasajero; lo demás en pausa. */}
+        {servicios.panel?.lleva ? (
+          <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 10 }}>
+            <AvisoLlevando
+              tipo={servicios.panel.lleva.tipo}
+              servicioId={servicios.panel.lleva.servicioId}
+              idioma={idioma}
+            />
+            <FranjaPausa panel={servicios.panel} idioma={idioma} />
+          </View>
+        ) : null}
+        <ViajeActivo
+          api={{
+            // C-ENVIOS: la foto del paquete al recogerlo.
+            subirFoto: (foto, ruta) => api.subirFoto(foto, ruta),
+            pedir: async (metodo, ruta, cuerpo, extra) => {
+              // Antes de «Llegué», la posición de AHORA (el servidor exige estar en la recogida).
+              if (ruta.endsWith('/llegue')) {
+                const p = await ubicacionConLimite();
+                if (p)
+                  await api
+                    .pedir('POST', '/datos/repartidor/ubicacion', {
+                      lat: p.coords.latitude,
+                      lng: p.coords.longitude,
+                      precision: p.coords.accuracy ?? null,
+                      simulada: p.mocked === true,
+                    })
+                    .catch(() => undefined);
+              }
+              return api.pedir(metodo, ruta, cuerpo, extra);
+            },
+          }}
+          idioma={idioma}
+          viaje={viajeActivo}
+          alCambiar={() => void cargar()}
+        />
+      </View>,
     );
 
   // ───────── Inicio: pedido activo (cabecera roja con distancia, mapa, progreso) o mapa con ofertas ─────────
@@ -2150,16 +2214,20 @@ export function Inicio() {
             {activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.direccion}
           </Text>
         </View>
-        <Mapa
-          yo={aqui}
-          restaurante={restActivo}
-          casa={activo.estado === 'en_camino' ? casaActivo : null}
-          direccionDestino={
-            activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.direccion
-          }
-          alto={220}
-          etiquetas={etiquetasMapa}
-        />
+        {/* C-SERVICIOS-CONECTADOS (pantalla 02): sobre el mapa, «Estás llevando una comida». */}
+        <View>
+          <Mapa
+            yo={aqui}
+            restaurante={restActivo}
+            casa={activo.estado === 'en_camino' ? casaActivo : null}
+            direccionDestino={
+              activo.estado === 'en_camino' ? activo.direccion : activo.restaurante.direccion
+            }
+            alto={220}
+            etiquetas={etiquetasMapa}
+          />
+          <AvisoLlevando tipo="comida" servicioId="comida" idioma={idioma} flotante />
+        </View>
         <View
           style={{
             backgroundColor: '#fff',
@@ -2207,6 +2275,11 @@ export function Inicio() {
               </Text>
             </View>
           </View>
+          {servicios.panel ? (
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+              <FranjaPausa panel={servicios.panel} idioma={idioma} />
+            </View>
+          ) : null}
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 8 }}>
             <BotonRedondo
               glifo="mapa"
@@ -2844,10 +2917,13 @@ export function Inicio() {
     );
   }
 
-  return lienzo(
-    'inicio',
-    <View style={{ flex: 1 }}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 12, zIndex: 2 }}>
+  // C-SERVICIOS-CONECTADOS (pantallas 01 y 04 de DRIVER.md): arriba la tarjeta tinta con el radar,
+  // el resumen de hoy y la lista de servicios al momento; debajo, Divoox Flex y el mapa de demanda.
+  const panelInicio = servicios.panel ? (
+    <PanelServiciosInicio
+      panel={servicios.panel}
+      idioma={idioma}
+      resumen={
         <ResumenDia
           idioma={idioma}
           ganancias={gananciasHoy}
@@ -2855,26 +2931,46 @@ export function Inicio() {
           entregas={entregasHoy}
           segundosConectado={segundosConectado}
         />
-        {estado?.conectado ? (
-          <View
-            style={{
-              alignSelf: 'center',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 8,
-              backgroundColor: '#E6F4EC',
-              borderRadius: 999,
-              paddingHorizontal: 14,
-              paddingVertical: 6,
-              marginTop: 10,
-            }}
-          >
-            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: C.exito }} />
-            <Text style={{ fontWeight: '700', color: C.secundario }}>{td.disponiblePedidos}</Text>
-          </View>
-        ) : null}
+      }
+      rutaFlex={rutaFlex}
+      textoBloqueFlex={
+        rutaFlex?.bloqueDesde && rutaFlex.bloqueHasta ? textoBloque(rutaFlex, idioma) : null
+      }
+      pausado={Boolean(estado?.pausado)}
+      textoPausado={tg.pausa.enPausa}
+      cambiando={cambiando ? 'todo' : cambiandoServicio}
+      alConectarServicio={conectarServicio}
+      alDesconectarServicio={desconectarServicio}
+      alConectarTodo={() => void alternar()}
+      alDesconectarTodo={() => void alternar()}
+      alVerServicio={(sv) => {
+        setServicioAgregar(sv);
+        setVista('agregar');
+      }}
+      alAbrirFlex={() => setVista('miRuta')}
+      alDesconectado={(id, nombre) => setDesconectado({ id, nombre })}
+      debajo={mensajes}
+    />
+  ) : (
+    <>
+      <ResumenDia
+        idioma={idioma}
+        ganancias={gananciasHoy}
+        enMano={enManoHoy}
+        entregas={entregasHoy}
+        segundosConectado={segundosConectado}
+      />
+      {mensajes}
+    </>
+  );
+
+  return lienzo(
+    'inicio',
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 16, zIndex: 2 }}>
+        {panelInicio}
       </View>
-      <View style={{ marginTop: -10 }}>
+      <View>
         <Mapa
           yo={aqui}
           marcadores={marcadoresOfertas}
@@ -2976,32 +3072,7 @@ export function Inicio() {
           </View>
         ) : null}
       </View>
-      <View style={{ padding: 16, gap: 10, marginTop: -24, backgroundColor: 'transparent' }}>
-        {mensajes}
-        {rutaFlex ? (
-          <Pressable
-            onPress={() => setVista('miRuta')}
-            accessibilityRole="button"
-            accessibilityLabel={`${rutaFlex.estado === 'en_curso' || rutaFlex.estado === 'en_carga' || rutaFlex.estado === 'aceptada' ? t.rutaEnCurso : t.rutaPorAceptar}: ${rutaFlex.nombre}`}
-            testID="ruta-flex-inicio"
-            style={[e.tarjeta, { backgroundColor: C.logistica, gap: 6 }]}
-          >
-            <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 16 }}>
-              {['en_curso', 'en_carga', 'aceptada'].includes(rutaFlex.estado)
-                ? t.rutaEnCurso
-                : t.rutaPorAceptar}
-            </Text>
-            <Text style={{ color: '#FFFFFF' }}>
-              {rutaFlex.nombre} · {t.rutaParadas(rutaFlex.paradas)}
-            </Text>
-            <Text style={{ color: C.logisticaAccion, fontWeight: '800', marginTop: 2 }}>
-              {['en_curso', 'en_carga', 'aceptada'].includes(rutaFlex.estado)
-                ? t.continuarRuta
-                : t.verRuta}{' '}
-              →
-            </Text>
-          </Pressable>
-        ) : null}
+      <View style={{ padding: 16, gap: 10, backgroundColor: 'transparent' }}>
         {/* C-AVISOS-WEB: en la versión web, la explicación del permiso al conectarse. */}
         <TarjetaAvisosWeb visible={Boolean(estado?.conectado)} />
         {estado?.conectado && estado.ocupadoEn ? (
@@ -3010,16 +3081,6 @@ export function Inicio() {
             <Text style={{ color: '#666B73' }}>
               {estado.ocupadoEn === 'ruta_flex' ? t.ocupadoRuta : t.ocupadoViaje}
             </Text>
-          </View>
-        ) : estado?.conectado && !(rutaFlex && rutaFlex.estado === 'en_curso') ? (
-          // Como «Buscando ofertas… zonas populares» de DoorDash: dónde y cuándo hay más ofertas.
-          <View style={e.tarjeta}>
-            <Text style={{ fontWeight: '800' }}>
-              {estado.pausado ? tg.pausa.enPausa : t.buscando}
-            </Text>
-            {!estado.pausado ? (
-              <Text style={{ color: '#666B73', marginTop: 4 }}>{t.buscandoAyuda}</Text>
-            ) : null}
           </View>
         ) : estado?.vuelveTrasDias ? (
           // Como «¡Qué bueno verte de nuevo!» de DoorDash al volver después de un tiempo.
@@ -3054,36 +3115,6 @@ export function Inicio() {
             alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertas[0]!.id}/rechazar`)}
           />
         ) : null}
-        {estado && (
-          <Pressable
-            onPress={() => void alternar()}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: estado.conectado }}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              backgroundColor: estado.conectado ? C.exito : '#666B73',
-              borderRadius: 999,
-              padding: 8,
-              paddingRight: 20,
-            }}
-          >
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff' }} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 17 }}>
-                {estado.conectado ? t.conectado : t.desconectado}
-              </Text>
-              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>
-                {cambiando
-                  ? t.buscandoUbicacion
-                  : estado.conectado
-                    ? t.desconectar
-                    : td.tocaDisponible}
-              </Text>
-            </View>
-          </Pressable>
-        )}
         {estado?.conectado && !activo ? (
           <Boton
             texto={estado.pausado ? tg.pausa.reanudar : tg.pausa.pausar}
@@ -3181,5 +3212,7 @@ export function Inicio() {
         )}
       </View>
     </View>,
+    false,
+    true,
   );
 }

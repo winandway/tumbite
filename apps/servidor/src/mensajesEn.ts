@@ -1331,6 +1331,8 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe un celular para llamarte.', 'Enter a mobile number we can call you at.'],
   ['Ese servicio no existe.', 'That service doesn’t exist.'],
   ['Ese servicio no se conecta desde aquí.', 'That service can’t be turned on from here.'],
+  ['Ese servicio no se pide desde aquí.', 'That service can’t be requested from here.'],
+  ['Ese servicio no está disponible en tu ciudad.', 'That service isn’t available in your city.'],
   ['Este servicio todavía no está aprobado para ti.', 'This service isn’t approved for you yet.'],
   ['Este servicio todavía no está disponible para ti.', 'This service isn’t available to you yet.'],
   ['No encontramos ese vehículo.', 'We couldn’t find that vehicle.'],

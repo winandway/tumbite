@@ -179,6 +179,33 @@ serviciosConectados.post('/conductor/servicios/:id/conexion', async (c) => {
   return c.json(await panelDe(db, u.id, idiomaIngles(c), versionDriver(c)));
 });
 
+/**
+ * «Agregar un servicio»: el conductor pide un servicio que funciona en su ciudad y todavía no pidió
+ * (o que se le rechazó). Queda la habilitación en `pendiente` para que el equipo la revise en el
+ * panel; la tarjeta pasa a «en revisión». Nunca aprueba nada: eso lo hace una persona del equipo.
+ */
+serviciosConectados.post('/conductor/servicios/:id/solicitar', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const servicioId = c.req.param('id');
+  if (!(SERVICIOS_AL_MOMENTO as readonly string[]).includes(servicioId))
+    throw new ErrorDatos('Ese servicio no se pide desde aquí.', 'servicioId', 404);
+  const estado = await estadoDelConductor(db, u.id, false, versionDriver(c));
+  const s = estado.servicios.find((x) => x.servicioId === servicioId);
+  if (!s || s.estadoServicio !== 'disponible')
+    throw new ErrorDatos('Ese servicio no está disponible en tu ciudad.', 'servicioId', 409);
+  if (s.habilitacion === 'sin_solicitar' || s.habilitacion === 'rechazada')
+    await db
+      .prepare(
+        `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, motivo) VALUES (?, ?, 'pendiente', '')
+         ON CONFLICT(conductor_id, servicio_id) DO UPDATE SET estado = 'pendiente', motivo = '',
+           actualizado_en = datetime('now') WHERE habilitaciones.estado = 'rechazada'`,
+      )
+      .bind(u.id, servicioId)
+      .run();
+  return c.json(await panelDe(db, u.id, idiomaIngles(c), versionDriver(c)));
+});
+
 /** Nombre de cada papel para la pantalla (español e inglés). */
 const NOMBRE_REQUISITO: Record<string, [string, string]> = {
   identidad: ['Documento de identidad y foto', 'ID and photo'],
