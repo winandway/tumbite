@@ -3,6 +3,7 @@ import type { Captura, Guia, SeccionDocs } from './guias';
 import { GUIAS_FLEX_ENVIOS } from './semanaFlexEnvios';
 import { GUIAS_FOTO_PUERTA } from './fotoPuerta';
 import { GUIAS_FLEX_BLOQUE } from './flexBloque';
+import { GUIAS_SERVICIOS_CONECTADOS } from './serviciosConectados';
 
 /**
  * C-DOCS-SEMANA (14 nov 2026): las guías públicas de lo construido la semana del 9 al 14 de noviembre,
@@ -351,17 +352,26 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
   },
 };
 
-/** Junta las listas por sección: Comida en Venezuela, Flex y Envíos, la foto de la puerta y el bloque de Flex. */
+/** Junta las listas por sección: servicios conectados del Driver, Comida en Venezuela, Flex y Envíos, la foto de la puerta y el bloque de Flex. */
 function juntar(idioma: Idioma): PorSeccion {
   const a = new Map(Object.entries(idioma === 'es' ? COMIDA_VE.es : COMIDA_VE.en));
   const b = new Map(Object.entries(idioma === 'es' ? GUIAS_FLEX_ENVIOS.es : GUIAS_FLEX_ENVIOS.en));
   const c = new Map(Object.entries(idioma === 'es' ? GUIAS_FOTO_PUERTA.es : GUIAS_FOTO_PUERTA.en));
   const d = new Map(Object.entries(idioma === 'es' ? GUIAS_FLEX_BLOQUE.es : GUIAS_FLEX_BLOQUE.en));
-  const ids = new Set([...a.keys(), ...b.keys(), ...c.keys(), ...d.keys()]);
+  const f = new Map(
+    Object.entries(idioma === 'es' ? GUIAS_SERVICIOS_CONECTADOS.es : GUIAS_SERVICIOS_CONECTADOS.en),
+  );
+  const ids = new Set([...a.keys(), ...b.keys(), ...c.keys(), ...d.keys(), ...f.keys()]);
   return Object.fromEntries(
     [...ids].map((id) => [
       id,
-      [...(a.get(id) ?? []), ...(b.get(id) ?? []), ...(c.get(id) ?? []), ...(d.get(id) ?? [])],
+      [
+        ...(f.get(id) ?? []),
+        ...(a.get(id) ?? []),
+        ...(b.get(id) ?? []),
+        ...(c.get(id) ?? []),
+        ...(d.get(id) ?? []),
+      ],
     ]),
   ) as PorSeccion;
 }

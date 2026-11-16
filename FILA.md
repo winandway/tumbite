@@ -10,6 +10,12 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Driver: servicios conectados, perfil compartido y acordeón (16 nov 2026, diseño de Gerencia DRIVER.md) — todos los países
+
+- [x] HECHO 16 nov (C-SERVICIOS-CONECTADOS) Inicio del Driver con la tarjeta del radar, varios servicios conectados a la vez, deslizar para desconectar con «Deshacer», aviso «Estás llevando…» y franja «En pausa», modo bloque de Flex en azul con candado, «Agregar un servicio» con lo ya verificado y lo que falta, perfil en acordeón (Mi vehículo y Documentos), dos guías de Docs en/es con capturas reales y la del bloque de Flex al día. Rama claude/driver-servicios-ca25e5, sin publicar.
+- [ ] [para: revisor-calidad] Revisar la rama claude/driver-servicios-ca25e5 (C-SERVICIOS-CONECTADOS, app Driver): piezas nuevas en packages/movil (Deslizador, TarjetaServicio, AvisoDeshacer, reloj de 4,8 s), apps/repartidor/src/servicios/, ruta nueva POST /datos/conductor/servicios/:id/solicitar (deja la habilitación en pendiente) y los candados movidos del deslizador de Flex y del cierre de entrega a la pieza común.
+- [ ] [para: tiendas-lanzamientos] Compilar el Driver (Android e iPhone) con el panel de servicios cuando se publique la rama; no trae piezas nativas nuevas.
+
 ## Ruta del bloque de Flex y exclusividad (16 nov 2026, orden de Richard por Gerencia) — todos los países
 
 - [x] HECHO 16 nov (C-FLEX-EXCLUSIVO) Al tomar un bloque de Flex, comida, envíos y viajes se desconectan solos y no se puede volver a conectar hasta terminarlo; lo cumple la base (disparadores) y el canario «exclusividad». El inicio del Driver cambia entero al modo bloque con la banda «Estás haciendo un bloque de Flex».

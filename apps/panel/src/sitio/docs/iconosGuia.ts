@@ -43,6 +43,9 @@ import {
  * ayudas de los grandes. Se elige por el tema que dice su dirección; si no encaja, una hoja.
  */
 const REGLAS: [RegExp, LucideIcon][] = [
+  // C-SERVICIOS-CONECTADOS: conectarse a varios servicios y agregar uno con el perfil compartido.
+  [/^online-for-several-services/, PlugZap],
+  [/^add-a-service/, ShieldCheck],
   // C-DOCS-OPERACIONES: las guías del equipo de operaciones, cada una con su dibujo.
   [/^search-orders/, Search],
   [/^monitor-/, ChartColumn],
