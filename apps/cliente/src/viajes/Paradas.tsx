@@ -162,6 +162,8 @@ export function ParadasDelViaje({
   puedeCambiar,
   cerca,
   alCambiar,
+  sinBoton = false,
+  abrirCon = 0,
 }: {
   viajeId: string;
   paradas: readonly ParadaDelViaje[];
@@ -169,6 +171,10 @@ export function ParadasDelViaje({
   puedeCambiar: boolean;
   cerca: { lat: number; lng: number } | null;
   alCambiar: () => void;
+  /** Fase cero: en la espera, el «+ Agregar parada» es el botón «Parada» de afuera. */
+  sinBoton?: boolean;
+  /** Cada vez que sube, se abre el editor (lo toca el botón «Parada» de la espera). */
+  abrirCon?: number;
 }) {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
@@ -226,7 +232,16 @@ export function ParadasDelViaje({
     }
   }
 
+  // El botón «Parada» de la espera abre el editor desde afuera (una vez por toque).
+  const [abiertoCon, setAbiertoCon] = useState(abrirCon);
+  if (abrirCon !== abiertoCon) {
+    setAbiertoCon(abrirCon);
+    if (abrirCon > 0 && puedeCambiar && !editando) abrir();
+  }
+
   if (!paradas.length && !puedeCambiar) return null;
+  // Sin paradas, sin editor abierto y con el botón afuera, no hay nada que mostrar.
+  if (sinBoton && !paradas.length && !editando && !listo) return null;
   const monto = (m: number, moneda: string) => formatearMonto(m, moneda, idioma);
   return (
     <Tarjeta>
@@ -256,7 +271,7 @@ export function ParadasDelViaje({
             {t.paradasCambiadas}
           </Text>
         ) : null}
-        {puedeCambiar && !editando ? (
+        {puedeCambiar && !editando && !sinBoton ? (
           <Pressable
             onPress={abrir}
             accessibilityRole="button"

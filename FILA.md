@@ -31,6 +31,8 @@
 - [x] HECHO 16 nov (MON-5, C-PERMISOS-FINOS, C-EQUIPO-INVITACION, C-SEGUNDO-FACTOR-EQUIPO) Equipo interno: invitación de un solo uso, nueve plantillas de puesto, alcance por ciudad y servicio en todas las rutas (ALCANCE_RUTAS_ADMIN), registro de quién vio qué, datos tapados hasta «Ver dato», segundo factor construido y apagado. Nadie pierde acceso.
 - [x] HECHO 16 nov (MON-6, C-DOCS-OPERACIONES) Seis guías en Docs, inglés y español, sección «Operations team». Revisión única con Sonnet: devuelta por tres escapes de alcance, corregidos con pruebas en rojo.
 - [x] HECHO 16 nov (C-FAVORITOS-SIN-CARRERA) La lista de favoritos que llega tarde ya no pisa el toque del corazón (portada y Comida de la app del cliente); entra en la próxima compilación del cliente.
+- [ ] [para: desarrollador] (MON-10) Guion del recorrido en el sitio de pruebas (`e2e/recorrido/recorrido.spec.ts`, `recogerYEntregar` ~línea 1938, y el de Comida en Venezuela): todavía cierra la entrega mandando la foto directo a «entregado» y el sitio de pruebas lo rechaza con 409 desde C-DESLIZAR-SIEMPRE; ponerlo a foto y luego deslizar. Visto en la corrida pruebas-rama 43835651379, en/es, dos intentos.
+- [!] (MON-9s) «Volver a cobrar» encendido sin probar en el sitio de pruebas: falta encender `RECOBRO_TARJETA_ACTIVO` en las variables del sitio de pruebas (panel de YaDominios) y correr el caso AV-e de `autorizacionVencidaStaging.spec.ts`; además espera el sí legal de Richard.
 - [ ] [para: desarrollador] (MON-7) Bandeja de tickets: sigue trayendo 300 sin paginar y ordena recorriendo la tabla; paginar por clave como las demás listas (C-SUPERADMIN-ESCALA).
 - [ ] [para: desarrollador] (MON-8) Mapa de la ficha del pedido: comprobar en el sitio de pruebas con la llave del mapa web que la pieza de mapa sale con los tres puntos (en local solo se vieron las distancias en texto).
 - [x] HECHO 16 nov (MON-9, C-AUTORIZACION-VENCIDA) Ficha del pedido → «Resolver autorización vencida» (volver a cobrar con la tarjeta guardada si el cliente lo permitió, o cerrar sin cobro con nota; control dual, permiso `dinero.resolver_autorizacion`, 404 fuera de zona) y aviso del reloj a las 96 horas; guía 7 de Docs. Solo Stripe simulado.
@@ -47,7 +49,7 @@
 
 ## Rediseño visual de las tres apps (15 nov 2026) — todos los países
 
-- [ ] [para: desarrollador] Crear la pieza única de tokens de diseño (espacio, radios, alturas de botón, letra, sombras) y aplicarla a cliente, Driver y Restaurants según `docs/investigaciones-rea/2026-11-15-diseno-apps-moviles.md` (sección 7). Motivo: hoy cada pantalla decide sola; ojo al contraste de blanco sobre #F20D20 (4,33:1) y blanco sobre #4AA5DC (2,72:1).
+- [x] (16 nov 2026, fase cero: `packages/movil/src/tokens.ts` con COLOR, COLOR_OSCURO, RADIO, MARGEN, ALTO, LETRA y SOMBRA, usada por las tres apps; un solo rojo de acción C-UN-SOLO-ROJO; el azul de logística quedó solo en Flex y Envíos) [para: desarrollador] Crear la pieza única de tokens de diseño (espacio, radios, alturas de botón, letra, sombras) y aplicarla a cliente, Driver y Restaurants según `docs/investigaciones-rea/2026-11-15-diseno-apps-moviles.md` (sección 7). Motivo: hoy cada pantalla decide sola; ojo al contraste de blanco sobre #F20D20 (4,33:1) y blanco sobre #4AA5DC (2,72:1).
 
 ## Prueba con teléfonos (14 nov 2026, orden de Richard, probando en un Xiaomi con Android 14) — todos los países
 

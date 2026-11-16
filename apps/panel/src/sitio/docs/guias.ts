@@ -3,6 +3,7 @@ import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
 import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
+import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_OPERACIONES } from './operaciones';
 
@@ -10186,11 +10187,13 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const mismaRuta = MISMA_RUTA_PUBLICADA
     ? [idioma === 'es' ? GUIA_MISMA_RUTA.es : GUIA_MISMA_RUTA.en]
     : [];
+  // C-ESPERA-VEHICULO: la espera de cada servicio, con sus capturas reales.
+  const espera = idioma === 'es' ? GUIA_ESPERA.es : GUIA_ESPERA.en;
   const base = secciones.map((s) => {
     if (s.id === 'ordering')
       return {
         ...s,
-        guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, ...mismaRuta, ...de(s.id)],
+        guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, espera, ...mismaRuta, ...de(s.id)],
       };
     if (s.id === 'drivers')
       return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
