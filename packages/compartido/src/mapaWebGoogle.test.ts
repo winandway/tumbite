@@ -97,7 +97,7 @@ describe('opcionesMapaGoogle (mapa vectorial con el estilo de Divoox)', () => {
     expect(dia.colorScheme).toBe('LIGHT');
     expect(noche.colorScheme).toBe('DARK');
     expect(noche.styles).toBeUndefined();
-    expect(noche.backgroundColor).toBe('#1C1F24');
+    expect(noche.backgroundColor).toBe('#141416');
   });
 });
 

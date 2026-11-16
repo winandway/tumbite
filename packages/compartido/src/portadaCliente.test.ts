@@ -43,7 +43,9 @@ describe('portada del cliente como los grandes', () => {
     // (compartido, con su prueba en servicios.test.ts); la portada tiene que usarlo.
     expect(servicios).toContain('serviciosTerminados(');
     expect(servicios).not.toContain('etiquetaServicio');
-    expect(servicios).toContain('horizontal');
+    // Fase cero: mosaicos (Comida y Viajes en grande) con el dibujo de cada servicio.
+    expect(servicios).toContain("GRANDES = new Set(['comida', 'carro'])");
+    expect(servicios).toContain('DIBUJO_SERVICIO');
   });
 
   it('Comida va con pizza, nunca con hamburguesa', () => {
