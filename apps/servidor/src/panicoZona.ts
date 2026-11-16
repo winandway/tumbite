@@ -18,6 +18,8 @@ import { enviarSms, telefonoE164 } from './sms';
 export const TIPO_SMS_PANICO = 'equipo_panico';
 
 export type Panico = {
+  /** Quien tocó el botón (el envío queda registrado a su nombre en sms_enviados). */
+  usuarioId: string;
   zonaId: string | null | undefined;
   rol: 'pasajero' | 'conductor' | 'repartidor';
   nombre: string;
@@ -78,7 +80,7 @@ export async function avisarResponsableZona(env: Env, db: D1Database, p: Panico)
   let enviados = 0;
   if (
     await enviarSms(env, db, {
-      usuarioId: `zona:${zonaId}`,
+      usuarioId: p.usuarioId,
       pedidoId: null,
       tipo: TIPO_SMS_PANICO,
       telefono: para,

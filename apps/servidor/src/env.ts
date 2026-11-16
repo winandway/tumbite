@@ -120,6 +120,8 @@ export const esquemaEnv = z.object({
     .optional(),
   /** Solo para el recorrido: Twilio simulado en localhost (en producción se ignora). */
   TWILIO_API_URL: z.string().optional(),
+  /** C-SMS-PROVEEDOR: por dónde salen los SMS («twilio», el único hoy). */
+  SMS_PROVEEDOR: z.string().optional(),
   /** Prefijos a los que salen SMS y llamadas (C-SMS-PAISES). Sin valor: solo «+1». */
   SMS_PREFIJOS: z.string().optional(),
   /**

@@ -151,6 +151,28 @@ export const remitente = (env: Env, para: string) =>
     ? env.TWILIO_FROM_INTERNACIONAL
     : env.TWILIO_FROM!;
 
+/** C-PANICO-ZONA: como mucho tantos SMS de pánico en 24 horas (todos los países juntos). */
+export const TOPE_PANICO_DIA = 40;
+
+/**
+ * C-SMS-PROVEEDOR (16 nov 2026): el SMS sale por un proveedor intercambiable. Hoy solo Twilio; para
+ * Venezuela se evalúa SMSya (docs de Gerencia, SMSYA-API-EVALUACION). Agregar uno = sumar su pieza
+ * aquí y elegirlo con SMS_PROVEEDOR, sin tocar a quien llama a enviarSms.
+ */
+export type ProveedorSms = {
+  nombre: string;
+  enviar: (env: Env, para: string, texto: string) => Promise<string>;
+};
+const TWILIO_SMS: ProveedorSms = {
+  nombre: 'twilio',
+  enviar: (env, para, texto) =>
+    twilio(env, 'Messages', { To: para, From: remitente(env, para), Body: texto }),
+};
+const PROVEEDORES_SMS = new Map<string, ProveedorSms>([['twilio', TWILIO_SMS]]);
+export function proveedorSms(env: Env): ProveedorSms {
+  return PROVEEDORES_SMS.get(env.SMS_PROVEEDOR ?? 'twilio') ?? TWILIO_SMS;
+}
+
 /** Manda un SMS si Twilio está configurado y la persona tiene teléfono. Nunca frena la operación. */
 export async function enviarSms(
   env: Env,
@@ -169,9 +191,22 @@ export async function enviarSms(
   if (!para || (a.tipo !== 'equipo_panico' && !destinoPermitido(env, para))) return false;
   // C-SMS-CONSENTIMIENTO: sin la casilla marcada, al titular no se le manda nada que no pidió.
   if (!smsSinConsentimientoDelTitular(a.tipo) && !(await aceptoSms(db, a.usuarioId))) return false;
+  // C-PANICO-ZONA: tope diario del SMS de pánico (cada envío queda en sms_enviados).
+  if (a.tipo === 'equipo_panico') {
+    const hoy = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM sms_enviados WHERE tipo = 'equipo_panico' AND creado_en >= datetime('now', '-1 day')",
+      )
+      .first<{ n: number }>()
+      .catch(() => ({ n: 0 }));
+    if (Number(hoy?.n ?? 0) >= TOPE_PANICO_DIA) {
+      console.error(`sms: tope diario de pánico alcanzado (${TOPE_PANICO_DIA})`);
+      return false;
+    }
+  }
   const id = nuevoId();
   try {
-    await twilio(env, 'Messages', { To: para, From: remitente(env, para), Body: a.texto });
+    await proveedorSms(env).enviar(env, para, a.texto);
     await db
       .prepare(
         "INSERT INTO sms_enviados (id, usuario_id, pedido_id, tipo, estado) VALUES (?, ?, ?, ?, 'enviado')",
