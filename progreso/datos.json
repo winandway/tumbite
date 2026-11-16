@@ -1,6 +1,6 @@
 {
-  "actualizado": "2026-11-16T02:15:00-05:00",
-  "version": "7b9a5ca",
+  "actualizado": "2026-11-16T02:45:00-05:00",
+  "version": "fe71f3f",
   "ahora": "15 nov: las tres apps con el diseño nuevo ya están en las tiendas. En Google Play, Divoox Driver (versión 18) y Divoox Restaurants (versión 13) están en revisión; en App Store Connect quedaron las compilaciones 34 del cliente, 28 del Driver y 20 de Restaurants para TestFlight. El sitio de pruebas y divoox.com sirven la misma versión, con el diseño nuevo y la foto de la puerta. 15 nov: la foto de la puerta ya está en vivo. El cliente puede guardar hasta tres fotos del frente, la entrada del edificio y su puerta en cada dirección, con la cámara o desde sus archivos; el repartidor asignado las ve solo mientras lleva el pedido, y nadie más. Probado en pantalla con 86 comprobaciones, con guías en español e inglés. Las tres apps de pruebas ya traen el diseño nuevo y la franja «PRUEBAS». 15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
     {
@@ -248,12 +248,12 @@
     {
       "nombre": "Logística (Divoox Flex)",
       "que": "Empresas que reparten con sus propios conductores",
-      "avance": 95,
+      "avance": 97,
       "estado": "produccion",
       "paises": "Todos",
-      "falta": "Probar la ruta en la calle con las etiquetas.",
+      "falta": "Probar el bloque en la calle con las etiquetas y las apps de prueba nuevas.",
       "quien": "Richard",
-      "docs": ["flex-getting-started", "flex-routes", "flex-tracking"]
+      "docs": ["flex-getting-started", "flex-routes", "flex-tracking", "flex-block"]
     },
     {
       "nombre": "Envíos de A a B",
@@ -401,6 +401,16 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-16",
+      "titulo": "La entrega de pruebas se cierra siempre deslizando y el restaurante demo pasa a Oakland Glens",
+      "texto": "El pedido 407F se cerró solo con la foto porque el teléfono tenía una app de pruebas vieja: dos compilaciones salieron a la vez con el mismo número y una no traía el deslizador. Ahora el sitio de pruebas no cierra una entrega con la foto sola (guarda la foto y pide instalar la app nueva), cada compilación de pruebas sale con un número nuevo y la página de apps dice de qué código es cada una. Pizzería Demo Novi se mudó a 30006 Rousseau Dr, dentro de Oakland Glens, a unos 200 metros de la oficina; un pedido de prueba le llegó al repartidor demo. Apps de prueba nuevas del Driver: Android 19 e iPhone 31."
+    },
+    {
+      "fecha": "2026-11-16",
+      "titulo": "El bloque de Flex, terminado y exclusivo",
+      "texto": "Al tomar un bloque de Divoox Flex, la app desconecta sola la comida, los envíos y los viajes, y no deja volver a conectarse hasta terminarlo; lo cuida la base de datos, no solo la pantalla. El inicio del Driver cambia entero al modo bloque, con una banda azul que dice «Estás haciendo un bloque de Flex», cuánto queda y a qué hora termina. La oferta muestra el horario, la duración (de 1 h 30 min a 5 horas) y el pago del bloque que fija la empresa; cada parada tiene «Cómo llegar» a la vista; y al cerrar se ve el resumen con el pago. Se arreglaron dos fallos de la versión web (la ubicación vieja en la puerta y la devolución escrita a mano). Prueba de punta a punta en español e inglés y guía nueva en Docs."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "Fotos que suben al instante y el restaurante ve las dos fotos del pedido",
