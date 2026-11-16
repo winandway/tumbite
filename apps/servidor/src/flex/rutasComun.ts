@@ -159,6 +159,8 @@ export type FilaRuta = {
   conductor_lng: number | null;
   conductor_ubicacion_en: string | null;
   resumen_json: string | null;
+  /** C-FLEX-PAGO-BLOQUE: lo que la empresa paga al conductor por el bloque, en centavos. */
+  pago_bloque?: number | null;
   creado_en: string;
   actualizado_en: string;
 };
@@ -227,9 +229,14 @@ export async function detalleRuta(
   opciones: { paraConductor: boolean },
 ) {
   const empresa = await db
-    .prepare('SELECT nombre, pais, config_entrega_json FROM empresas WHERE id = ?')
+    .prepare('SELECT nombre, pais, moneda, config_entrega_json FROM empresas WHERE id = ?')
     .bind(r.empresa_id)
-    .first<{ nombre: string; pais: string | null; config_entrega_json: string | null }>();
+    .first<{
+      nombre: string;
+      pais: string | null;
+      moneda: string | null;
+      config_entrega_json: string | null;
+    }>();
   const centro = r.centro_id
     ? await db
         .prepare('SELECT nombre, direccion, lat, lng FROM empresa_centros WHERE id = ?')
@@ -279,6 +286,9 @@ export async function detalleRuta(
       ofertaVencida: ofertaVencida(r),
       bloqueDesde: r.bloque_desde,
       bloqueHasta: r.bloque_hasta,
+      // C-FLEX-PAGO-BLOQUE: el pago del bloque que fijó la empresa (o null) y su moneda.
+      pagoBloque: r.pago_bloque ?? null,
+      moneda: empresa?.moneda ?? 'USD',
       asignadaEn: r.asignada_en,
       aceptadaEn: r.aceptada_en,
       cargaEn: r.carga_en,
@@ -367,5 +377,7 @@ export async function resumenRuta(db: D1Database, r: FilaRuta, cerradaEn: string
     incidencias: c.incidencias,
     paradas: c.paradas,
     conductor: conductor?.nombre ?? null,
+    // C-FLEX-PAGO-BLOQUE: el pago del bloque que fijó la empresa (centavos) para el cierre.
+    pagoBloque: r.pago_bloque ?? null,
   };
 }

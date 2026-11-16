@@ -20,6 +20,8 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-FLEX-PAGO-BLOQUE (16 nov 2026): lo que la empresa le paga al conductor por el bloque (centavos).
+  ['rutas_flex', 'pago_bloque', 'INTEGER'],
   // C-CARRO-CATEGORIAS, C-VIAJE-PARADAS (14 nov 2026): Comfort y Premium, y paradas intermedias.
   ['tarifas_viaje', 'comfort_pb', 'INTEGER'],
   ['tarifas_viaje', 'premium_pb', 'INTEGER'],

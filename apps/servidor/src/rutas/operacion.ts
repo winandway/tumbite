@@ -1366,6 +1366,8 @@ operacion.get('/repartidor/estado', async (c) => {
     agrupados: await agrupadosDe(db, u.id, activo),
     // C-OCUPADO-VISIBLE (BRF-1): si una ruta Flex o un viaje lo ocupa, no le llegan pedidos de
     // comida (C-FLEX-OCUPACION); la app lo dice en vez de «Buscando pedidos cerca de ti…».
+    // C-FLEX-EXCLUSIVO: el bloque de Flex en curso; la app cambia entera al modo bloque.
+    bloqueFlex: await bloqueFlexDe(db, u.id),
     ocupadoEn:
       (
         await db
@@ -1377,6 +1379,39 @@ operacion.get('/repartidor/estado', async (c) => {
       )?.tipo ?? null,
   });
 });
+
+export const MENSAJE_EN_BLOQUE_FLEX =
+  'Estás haciendo un bloque de Flex. Todo lo demás está desconectado hasta que termines el bloque.';
+
+/** C-FLEX-EXCLUSIVO: el bloque de Flex que ocupa al conductor ahora mismo (o null). */
+export async function bloqueFlexDe(db: D1Database, conductorId: string) {
+  const r = await db
+    .prepare(
+      `SELECT r.id, r.nombre, r.estado, r.bloque_desde, r.bloque_hasta, e.nombre AS empresa
+         FROM conductor_ocupacion c JOIN rutas_flex r ON r.id = c.ruta_id
+         LEFT JOIN empresas e ON e.id = r.empresa_id
+        WHERE c.conductor_id = ? AND c.tipo = 'ruta_flex'`,
+    )
+    .bind(conductorId)
+    .first<{
+      id: string;
+      nombre: string;
+      estado: string;
+      bloque_desde: string | null;
+      bloque_hasta: string | null;
+      empresa: string | null;
+    }>();
+  return r
+    ? {
+        rutaId: r.id,
+        nombre: r.nombre,
+        estado: r.estado,
+        empresa: r.empresa ?? '',
+        bloqueDesde: r.bloque_desde,
+        bloqueHasta: r.bloque_hasta,
+      }
+    : null;
+}
 
 const TEXTO_PAPEL = new Map<FaltaPapel, string>([
   [
@@ -1407,6 +1442,10 @@ operacion.post('/repartidor/conectar', async (c) => {
       lng: z.number().nullable().default(null),
     }),
   );
+  // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): durante un bloque de Flex no se conecta nada más. La
+  // base también lo rechaza (repartidores_no_conecta_en_bloque_flex); aquí se dice en palabras.
+  if (d.conectado && (await bloqueFlexDe(db, u.id)))
+    throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
   // Con el KYC obligatorio encendido, sin verificación aprobada no se reciben pedidos.
   if (d.conectado && c.env.KYC_OBLIGATORIO === '1' && !(await kycAprobado(db, u.id)))
     throw new ErrorDatos(
@@ -1530,7 +1569,13 @@ operacion.post('/repartidor/conectar', async (c) => {
       d.lat != null && d.lng != null ? geohash(d.lat, d.lng) : null,
       u.id,
     )
-    .run();
+    .run()
+    .catch((e: unknown) => {
+      // Si el bloque se tomó justo en medio, la base lo frena (C-FLEX-EXCLUSIVO).
+      if (String((e as { message?: string })?.message ?? e).includes('conductor_en_bloque_flex'))
+        throw new ErrorDatos(MENSAJE_EN_BLOQUE_FLEX, 'bloque_flex', 409);
+      throw e;
+    });
   // Al conectarse se sale de la pausa; y si está fuera de cobertura, se le dice (como «no puedes
   // conectarte en esta zona» de Dasher): queda conectado en su ciudad de siempre, sin ofertas aquí.
   if (d.conectado)

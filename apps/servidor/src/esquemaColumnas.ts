@@ -1254,7 +1254,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "conductor_lat",
     "conductor_lng",
     "conductor_ubicacion_en",
-    "resumen_json"
+    "resumen_json",
+    "pago_bloque"
   ],
   "ruta_paradas": [
     "id",
