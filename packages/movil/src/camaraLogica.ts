@@ -36,6 +36,25 @@ export type CamaraApp<F extends FotoTomada = FotoTomada> = {
 
 export type OrigenFoto = 'camara' | 'archivos' | null;
 
+/**
+ * La cámara de la COMPUTADORA (apps abiertas en el navegador de una computadora): la ventanita con
+ * la cámara web y la pregunta «Tomar foto / Subir desde archivos». Se inyecta para poder probarla.
+ */
+export type CamaraComputadora = {
+  disponible: () => boolean;
+  preguntar: (idioma: Idioma) => Promise<OrigenFoto>;
+  tomar: (idioma: Idioma) => Promise<(FotoTomada & { width?: number; height?: number }) | null>;
+};
+/**
+ * Sin computadora (el teléfono, el servidor de pruebas): la pieza de siempre. La app le pasa la de
+ * verdad (`camaraDeComputadora`, en camaraWeb.ts) desde camara.ts; así esta lógica no toca el DOM.
+ */
+export const sinComputadora: CamaraComputadora = {
+  disponible: () => false,
+  preguntar: async () => 'archivos',
+  tomar: async () => null,
+};
+
 /** «Tomar foto» o «Subir desde archivos». En la web no hay ventanita nativa: van los archivos. */
 type Alerta = (
   titulo: string,
@@ -48,8 +67,12 @@ export function preguntarOrigen(
   idioma: Idioma,
   plataforma: string,
   alerta: Alerta,
+  computadora: CamaraComputadora = sinComputadora,
 ): Promise<OrigenFoto> {
-  if (plataforma === 'web') return Promise.resolve('archivos');
+  // En la web: en la computadora, la ventanita con las dos opciones; en el navegador del teléfono,
+  // el selector del propio teléfono (que ya ofrece la cámara y los archivos).
+  if (plataforma === 'web')
+    return computadora.disponible() ? computadora.preguntar(idioma) : Promise.resolve('archivos');
   const t = textosCamara(idioma);
   return new Promise((ok) =>
     alerta(
@@ -65,11 +88,17 @@ export function preguntarOrigen(
   );
 }
 
-/** Pide el permiso y toma la foto. Sin permiso lanza un error con el mensaje en palabras. */
+/**
+ * Pide el permiso y toma la foto. Sin permiso lanza un error con el mensaje en palabras. En la
+ * computadora abre la cámara web en su ventanita (antes caía al selector de archivos).
+ */
 export async function tomarConCamara<F extends FotoTomada>(
   camara: CamaraApp<F>,
   idioma: Idioma,
+  computadora: CamaraComputadora = sinComputadora,
 ): Promise<F | null> {
+  // La foto de la cámara web trae lo mismo que la del teléfono (uri, ancho, alto y nombre).
+  if (computadora.disponible()) return (await computadora.tomar(idioma)) as F | null;
   const permiso = await camara.pedirPermiso();
   if (!permiso.granted) throw new Error(textosCamara(idioma).sinPermiso);
   const r = await camara.tomar();
@@ -85,9 +114,10 @@ export async function fotoDe<F extends FotoTomada>(
   camara: CamaraApp<F>,
   deArchivos: () => Promise<F | null>,
   preguntar: (idioma: Idioma) => Promise<OrigenFoto>,
+  computadora: CamaraComputadora = sinComputadora,
 ): Promise<F | null> {
   const origen = await preguntar(idioma);
-  if (origen === 'camara') return tomarConCamara(camara, idioma);
+  if (origen === 'camara') return tomarConCamara(camara, idioma, computadora);
   if (origen === 'archivos') return deArchivos();
   return null;
 }
@@ -103,12 +133,13 @@ export function capturasDe(
   camara: CamaraApp,
   idioma: Idioma,
   preguntar: (idioma: Idioma) => Promise<OrigenFoto>,
+  computadora: CamaraComputadora = sinComputadora,
 ) {
   return async (maximo: number): Promise<Captura[]> => {
     const origen = await preguntar(idioma);
     if (origen === 'archivos') return deArchivos(maximo);
     if (origen !== 'camara') return [];
-    const foto = await tomarConCamara(camara, idioma);
+    const foto = await tomarConCamara(camara, idioma, computadora);
     return foto ? [{ uri: foto.uri, nombre: foto.fileName || `foto-${Date.now()}.jpg` }] : [];
   };
 }

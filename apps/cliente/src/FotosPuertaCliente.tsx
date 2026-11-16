@@ -8,8 +8,9 @@ import {
   type FotoElegidaPuerta,
   FotosPuerta,
   // La pieza única de la cámara con el origen ya elegido por el botón tocado (los dos botones
-  // están a la vista): pide el permiso y, sin permiso, lo dice en palabras.
-  fotoDe as fotoConCamara,
+  // están a la vista): pide el permiso y, sin permiso, lo dice en palabras; en la computadora,
+  // «Tomar foto» abre la cámara web.
+  fotoConOrigen,
   useSesion,
 } from '@tumbite/movil';
 import { Tarjeta } from './comida/piezas';
@@ -17,7 +18,7 @@ import { Tarjeta } from './comida/piezas';
 /**
  * C-FOTO-PUERTA + C-CAMARA-EN-TODA-SUBIDA — todos los países. La hoja común de las fotos de la
  * puerta con la cámara, los archivos y el convertidor de esta app. «Tomar foto» y «Subir desde
- * archivos» son dos botones visibles: el origen ya viene elegido y pasa por `fotoConCamara`, que
+ * archivos» son dos botones visibles: el origen ya viene elegido y pasa por `fotoConOrigen`, que
  * pide el permiso y, sin permiso, lo dice en palabras (los archivos siguen disponibles).
  */
 const CAMARA = {
@@ -39,7 +40,7 @@ const deArchivos = async () => {
 export const elegirFotoPuerta =
   (idioma: Idioma) =>
   async (origen: 'camara' | 'archivos'): Promise<FotoElegidaPuerta | null> => {
-    const a = await fotoConCamara(idioma, CAMARA, deArchivos, async () => origen);
+    const a = await fotoConOrigen(idioma, CAMARA, deArchivos, origen);
     return a ? { uri: a.uri, width: a.width, height: a.height, fileName: a.fileName } : null;
   };
 

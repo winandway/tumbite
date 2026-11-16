@@ -98,7 +98,10 @@ describe('candado: ninguna casilla de imagen sin cámara', () => {
       .filter((f) => {
         if (f.endsWith('elegirCapturas.ts')) return false;
         const s = readFileSync(f, 'utf8');
-        return /launchImageLibraryAsync/.test(s) && !/fotoConCamara\(|capturasConCamara\(/.test(s);
+        return (
+          /launchImageLibraryAsync/.test(s) &&
+          !/fotoConCamara\(|fotoConOrigen\(|capturasConCamara\(/.test(s)
+        );
       });
     expect(sin.map((f) => f.slice(raiz.length + 1))).toEqual([]);
   });
