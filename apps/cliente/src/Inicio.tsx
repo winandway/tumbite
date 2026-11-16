@@ -206,13 +206,11 @@ export function Inicio() {
           style={{
             backgroundColor: '#FFFFFF',
             paddingTop: 6,
-            borderBottomWidth: 1,
-            borderBottomColor: '#ECEDEF',
+            paddingBottom: 6,
           }}
         >
           <View style={ancho}>
             <Buscador idioma={idioma} alTocar={() => router.push('/search')} />
-            <Filtros idioma={idioma} valor={filtros} cambiar={setFiltros} />
           </View>
         </View>
         <View style={[ancho, { paddingTop: 12 }]}>
@@ -266,6 +264,8 @@ export function Inicio() {
             alTocar={abrirRestaurante}
           />
           <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
+          {/* Fase cero: los filtros van junto a la lista que filtran, no arriba de los servicios. */}
+          <Filtros idioma={idioma} valor={filtros} cambiar={setFiltros} />
           <ListaRestaurantes
             idioma={idioma}
             lista={filtrados}
@@ -290,7 +290,10 @@ export function Inicio() {
             right: 16,
             bottom: 86,
             backgroundColor: C.primario,
-            borderRadius: 999,
+            // Fase cero: carrito flotante de 56 con esquina 12.
+            borderRadius: 12,
+            minHeight: 56,
+            justifyContent: 'center',
             paddingVertical: 14,
             alignItems: 'center',
             shadowColor: '#101010',

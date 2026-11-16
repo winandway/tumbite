@@ -25,6 +25,14 @@ import servicioMoto from '../../assets/inicio/servicio-moto.png';
 import servicioLicores from '../../assets/inicio/servicio-licores.png';
 import servicioCarro from '../../assets/inicio/servicio-carro.png';
 import servicioMas from '../../assets/inicio/servicio-mas.png';
+// Fase cero (16 nov 2026): dibujos de los mosaicos, todos de la misma familia. Carro y moto, de la
+// flota de marca de la web; el resto, generados con Seedream 4 (scripts/marca/generar-ilustraciones-servicio.mjs).
+import flotaCarro from '../../assets/inicio/flota-carro.webp';
+import flotaMoto from '../../assets/inicio/flota-moto.webp';
+import ilustracionComida from '../../assets/inicio/ilustracion-comida.png';
+import ilustracionMercado from '../../assets/inicio/ilustracion-mercado.png';
+import ilustracionFarmacia from '../../assets/inicio/ilustracion-farmacia.png';
+import ilustracionEnvios from '../../assets/inicio/ilustracion-envios.png';
 import rellenoCombo from '../../assets/inicio/relleno-combo-familiar.png';
 import rellenoOfertaHamburguesa from '../../assets/inicio/relleno-oferta-hamburguesa.png';
 import rellenoOfertaSushi from '../../assets/inicio/relleno-oferta-sushi.png';
@@ -77,3 +85,13 @@ export const ICONO_SERVICIO = new Map<keyof typeof IMG.servicios, number>(
 export const ICONO_NAV = new Map<keyof typeof IMG.nav, number>(
   Object.entries(IMG.nav) as [keyof typeof IMG.nav, number][],
 );
+
+/** Fase cero: el dibujo de cada mosaico de servicio (los que no están aquí usan su ícono). */
+export const DIBUJO_SERVICIO = new Map<string, number>([
+  ['comida', ilustracionComida],
+  ['carro', flotaCarro],
+  ['moto', flotaMoto],
+  ['mercado', ilustracionMercado],
+  ['farmacia', ilustracionFarmacia],
+  ['envios', ilustracionEnvios],
+]);
