@@ -20,6 +20,7 @@ import {
   type LineaMapaWeb,
   MapaGoogleBajoDemanda,
   elegirMapaWeb,
+  urlMarcaIsotipo,
 } from '@tumbite/compartido/src/mapaWebGoogle';
 import { useHora } from './horario';
 import { usePermisos } from './permisosPanel';
@@ -464,6 +465,14 @@ export function FotoEvidencia({ url, alt, idioma }: { url: string; alt: string; 
 
 export type PuntoFicha = { id: string; lat: number; lng: number; color: string; etiqueta: string };
 
+/**
+ * C-MAPA-LEYENDA (16 nov 2026, Richard no supo quién era quién en el mapa del #B4290C): la leyenda
+ * fija debajo del mapa en vivo. Cada renglón dice qué es cada marca con su mismo dibujo: el
+ * isotipo = repartidor o conductor; el punto negro = restaurante o recogida; el punto rojo = cliente
+ * o destino. Tocar una marca escribe su nombre debajo del mapa.
+ */
+export type RenglonLeyenda = { texto: string; color?: string; isotipo?: boolean };
+
 /** Mapa pequeño con los puntos de la ficha (solo con la llave del mapa web; se abre al tocar). */
 export function MapaFicha({
   puntos,
@@ -471,6 +480,7 @@ export function MapaFicha({
   etiqueta,
   lineas = [],
   enVivo = false,
+  leyenda,
 }: {
   puntos: (PuntoFicha & { isotipo?: boolean; apagado?: boolean })[];
   idioma: Idioma;
@@ -479,7 +489,10 @@ export function MapaFicha({
   lineas?: LineaMapaWeb[];
   /** C-RASTREO-VIVO: abierto de entrada, más alto y con la marca que se desliza. */
   enVivo?: boolean;
+  /** C-MAPA-LEYENDA: qué es cada marca, siempre visible debajo del mapa. */
+  leyenda?: RenglonLeyenda[];
 }) {
+  const [tocado, setTocado] = useState<string | null>(null);
   const llave = (import.meta.env.VITE_GOOGLE_MAPS_WEB_KEY as string | undefined) ?? '';
   const mapId = (import.meta.env.VITE_GOOGLE_MAPS_WEB_MAP_ID as string | undefined) ?? '';
   if (!puntos.length || elegirMapaWeb({ llave }) !== 'google') return null;
@@ -487,7 +500,8 @@ export function MapaFicha({
     lat: puntos.reduce((s, p) => s + p.lat, 0) / puntos.length,
     lng: puntos.reduce((s, p) => s + p.lng, 0) / puntos.length,
   };
-  return (
+  const marcaTocada = puntos.find((p) => p.id === tocado);
+  const mapa = (
     <MapaGoogleBajoDemanda
       llave={llave}
       mapId={mapId}
@@ -496,11 +510,38 @@ export function MapaFicha({
       zoom={14}
       alto={enVivo ? 340 : 240}
       etiqueta={etiqueta}
-      puntos={puntos.map((p) => ({ ...p, radio: 8 }))}
+      puntos={puntos.map((p) => ({ ...p, radio: 8, alTocar: () => setTocado(p.id) }))}
       lineas={lineas}
       abierto={enVivo}
       deslizar={enVivo}
     />
+  );
+  if (!leyenda?.length) return mapa;
+  return (
+    <div className="ficha-mapa-con-leyenda">
+      {mapa}
+      <ul className="ficha-leyenda" aria-label={idioma === 'en' ? 'Map key' : 'Qué es cada marca'}>
+        {leyenda.map((r) => (
+          <li key={r.texto}>
+            {r.isotipo ? (
+              <img src={urlMarcaIsotipo()} alt="" width={22} height={22} />
+            ) : (
+              <span
+                className="ficha-leyenda-punto"
+                style={{ background: r.color }}
+                aria-hidden="true"
+              />
+            )}
+            {r.texto}
+          </li>
+        ))}
+      </ul>
+      {marcaTocada ? (
+        <p className="ficha-mapa-tocado" role="status" data-testid="mapa-tocado">
+          {marcaTocada.etiqueta}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

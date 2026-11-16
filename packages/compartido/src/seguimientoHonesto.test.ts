@@ -39,6 +39,9 @@ describe('C-SEGUIMIENTO-HONESTO', () => {
 
   it('«Actualizado hace…» en los dos idiomas', () => {
     expect(textoActualizado(8, 'es')).toBe('Actualizado hace 8 s');
+    // C-TIEMPO-HUMANO: una señal de hace un mes se dice en días.
+    expect(textoActualizado(45805 * 60, 'es')).toBe('Actualizado hace 31 días');
+    expect(textoActualizado(3 * 3600, 'en')).toBe('Updated 3 h ago');
     expect(textoActualizado(8, 'en')).toBe('Updated 8 s ago');
     expect(textoActualizado(150, 'es')).toBe('Actualizado hace 2 min');
     expect(textoActualizado(150, 'en')).toBe('Updated 2 min ago');

@@ -2499,3 +2499,32 @@ body.modo-tableta .pd .pd-contenido {
 .resolver-opcion .boton {
   margin-top: 8px;
 }
+
+/* C-MAPA-LEYENDA: qué es cada marca del mapa en vivo, siempre visible. */
+.ficha-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--pd-negro);
+}
+.ficha-leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ficha-leyenda-punto {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.ficha-mapa-tocado {
+  margin: 8px 0 0;
+  font-weight: 600;
+  font-size: 0.88rem;
+}

@@ -1,5 +1,6 @@
 import { distanciaKm } from './catalogo';
 import { minutosDeViaje } from './despacho';
+import { tiempoHumano } from './llegadaEstimada';
 
 /**
  * C-SEGUIMIENTO-HONESTO (BRE-2, 2 nov 2026). Como piden los estudios de Richard
@@ -33,10 +34,18 @@ export function senalPerdida(segundos: number | null | undefined): boolean {
   return segundos != null && segundos > SENAL_PERDIDA_S;
 }
 
-/** «Actualizado hace 8 s» / «Updated 8 s ago»; desde un minuto, en minutos. */
+/**
+ * «Actualizado hace 8 s» / «Updated 8 s ago»; desde un minuto, en minutos, y después en horas o días
+ * (C-TIEMPO-HUMANO: nunca «hace 45805 min»).
+ */
 export function textoActualizado(segundos: number, idioma: 'es' | 'en'): string {
   if (segundos < 1) return idioma === 'en' ? 'Updated just now' : 'Actualizado hace un momento';
-  const cuanto = segundos < 60 ? `${segundos} s` : `${Math.floor(segundos / 60)} min`;
+  const cuanto =
+    segundos < 3600
+      ? segundos < 60
+        ? `${segundos} s`
+        : `${Math.floor(segundos / 60)} min`
+      : tiempoHumano(segundos, idioma);
   return idioma === 'en' ? `Updated ${cuanto} ago` : `Actualizado hace ${cuanto}`;
 }
 

@@ -65,6 +65,11 @@ const T = {
     error: 'No se pudo actualizar el rastreo. Lo intentamos de nuevo en unos segundos.',
     mapa: 'Mapa en vivo del pedido',
     repartidor: 'Repartidor',
+    conductor: 'Conductor',
+    restaurante: 'Restaurante',
+    recogida: 'Recogida',
+    cliente: 'Cliente (destino)',
+    destino: 'Destino',
   },
   en: {
     titulo: 'Live',
@@ -80,6 +85,11 @@ const T = {
     error: 'The tracking couldn’t be updated. We’ll try again in a few seconds.',
     mapa: 'Live map of the order',
     repartidor: 'Driver',
+    conductor: 'Driver',
+    restaurante: 'Restaurant',
+    recogida: 'Pickup',
+    cliente: 'Customer (drop-off)',
+    destino: 'Drop-off',
   },
 };
 
@@ -166,8 +176,17 @@ export function RastreoVivo({
   const d = datos;
   const pos = d?.posicion ?? null;
   const senalVieja = pos != null && pos.haceS > SENAL_VIEJA_S;
+  // C-MAPA-LEYENDA: cada marca dice qué es (al tocarla, debajo del mapa) y la leyenda lo explica.
+  const esViaje = tipo === 'viaje';
+  const nombreLocal = esViaje ? t.recogida : t.restaurante;
+  const nombreDestino = esViaje ? t.destino : t.cliente;
+  const nombreMovil = esViaje && !d?.esEnvio ? t.conductor : t.repartidor;
+  const esLocal = (idPunto: string) => idPunto === 'rest' || idPunto === 'o';
   const puntos = [
-    ...fijos,
+    ...fijos.map((f) => ({
+      ...f,
+      etiqueta: `${esLocal(f.id) ? nombreLocal : nombreDestino}: ${f.etiqueta}`,
+    })),
     ...(pos
       ? [
           {
@@ -175,7 +194,7 @@ export function RastreoVivo({
             lat: pos.lat,
             lng: pos.lng,
             color: '#101010',
-            etiqueta: t.repartidor,
+            etiqueta: nombreMovil,
             isotipo: true,
             apagado: senalVieja,
           },
@@ -234,6 +253,15 @@ export function RastreoVivo({
         idioma={idioma}
         etiqueta={t.mapa}
         lineas={linea.length > 1 ? [{ id: 'ruta', puntos: linea, color: '#F20D20' }] : []}
+        leyenda={[
+          { texto: nombreMovil, isotipo: true },
+          ...(fijos.some((f) => esLocal(f.id))
+            ? [{ texto: nombreLocal, color: fijos.find((f) => esLocal(f.id))?.color }]
+            : []),
+          ...(fijos.some((f) => !esLocal(f.id))
+            ? [{ texto: nombreDestino, color: fijos.find((f) => !esLocal(f.id))?.color }]
+            : []),
+        ]}
         enVivo
       />
     </section>

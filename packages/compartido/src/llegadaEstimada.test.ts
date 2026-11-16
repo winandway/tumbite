@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { TEXTOS_MOTO } from '../../../apps/cliente/src/viajes/textos';
 import {
+  tiempoHumano,
   type CalculoLlegada,
   DETENIDO_S,
   INTERVALO_LLEGADA_S,
@@ -182,5 +183,22 @@ describe('C-HORA-LLEGADA · la misma pieza alimenta las apps del cliente', () =>
       expect(TEXTOS_MOTO[i].destinoALas('3:28 PM', 5)).toContain('5');
       expect(TEXTOS_MOTO[i].envio.destinoALas('3:28 PM', 5)).not.toMatch(/pasajero|rider/i);
     }
+  });
+});
+
+describe('C-TIEMPO-HUMANO · cuánto tiempo, en la unidad que se entiende', () => {
+  it('segundos, minutos, horas y días, en español y en inglés', () => {
+    expect(tiempoHumano(40, 'es')).toBe('40 s');
+    expect(tiempoHumano(9 * 60, 'es')).toBe('9 min');
+    expect(tiempoHumano(80 * 60, 'es')).toBe('1 h 20 min');
+    expect(tiempoHumano(5 * 3600, 'es')).toBe('5 h');
+    expect(tiempoHumano(30 * 3600, 'en')).toBe('30 h');
+    expect(tiempoHumano(45805 * 60, 'es')).toBe('31 días');
+    expect(tiempoHumano(45805 * 60, 'en')).toBe('31 days');
+    expect(tiempoHumano(86400 * 2, 'es')).toBe('2 días');
+    expect(textoDetenido({ motivo: 'sin_senal', desdeS: 45805 * 60 }, 'es')).toBe(
+      'Sin señal hace 31 días',
+    );
+    expect(textoDetenido({ motivo: 'quieto', desdeS: 240 }, 'en')).toBe('Stopped for 4 min');
   });
 });

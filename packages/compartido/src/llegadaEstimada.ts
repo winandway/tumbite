@@ -235,18 +235,37 @@ export function textoFase(fase: FaseRastreo, idioma: 'es' | 'en', esEnvio = fals
 }
 
 /** «Última señal hace 3 min» / «Last signal 3 min ago» (en segundos si es menos de un minuto). */
-export function textoUltimaSenal(segundos: number, idioma: 'es' | 'en'): string {
+/**
+ * C-TIEMPO-HUMANO (16 nov 2026, Richard leyó «Sin señal hace 45805 min»): cuánto tiempo, en la
+ * unidad que se entiende. Menos de un minuto en segundos, menos de una hora en minutos, menos de
+ * dos días en horas («5 h» o «1 h 20 min»), y después en días («31 días» / «31 days»).
+ */
+export function tiempoHumano(segundos: number, idioma: 'es' | 'en'): string {
   const s = Math.max(0, Math.round(segundos));
-  const cuanto = s < 60 ? `${s} s` : `${Math.round(s / 60)} min`;
+  if (s < 60) return `${s} s`;
+  const min = Math.round(s / 60);
+  if (min < 60) return `${min} min`;
+  const horas = Math.floor(min / 60);
+  if (horas < 48) {
+    const resto = min % 60;
+    return horas < 10 && resto ? `${horas} h ${resto} min` : `${Math.round(min / 60)} h`;
+  }
+  const dias = Math.floor(min / 1440);
+  if (idioma === 'en') return `${dias} ${dias === 1 ? 'day' : 'days'}`;
+  return `${dias} ${dias === 1 ? 'día' : 'días'}`;
+}
+
+export function textoUltimaSenal(segundos: number, idioma: 'es' | 'en'): string {
+  const cuanto = tiempoHumano(segundos, idioma);
   return idioma === 'en' ? `Last signal ${cuanto} ago` : `Última señal hace ${cuanto}`;
 }
 
 /** «Detenido hace 4 min» / «Sin señal hace 5 min» para la ficha y la lista del monitoreo. */
 export function textoDetenido(d: Detenido, idioma: 'es' | 'en'): string {
-  const min = Math.max(1, Math.round(d.desdeS / 60));
+  const cuanto = tiempoHumano(Math.max(60, d.desdeS), idioma);
   if (d.motivo === 'sin_senal')
-    return idioma === 'en' ? `No signal for ${min} min` : `Sin señal hace ${min} min`;
-  return idioma === 'en' ? `Stopped for ${min} min` : `Detenido hace ${min} min`;
+    return idioma === 'en' ? `No signal for ${cuanto}` : `Sin señal hace ${cuanto}`;
+  return idioma === 'en' ? `Stopped for ${cuanto}` : `Detenido hace ${cuanto}`;
 }
 
 /** Lo que reciben las apps del cliente y la ficha (`llegadaEnVivo` del servidor). */

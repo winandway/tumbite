@@ -4661,6 +4661,15 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Capturas:** `docs/capturas/monitoreo/buscador-letra-{en,es}.png`, `pedidos-por-codigo-{en,es}.png`, `buscador-sugerencia-{en,es}.png` (y `-movil-`), con `SOLO=buscador-letra-en|es node scripts/recorrido/capturas-monitoreo.mjs`; en Docs, `monitoreo-<nombre>-<en|es>.webp` dentro de la guía «Finding any order, ride or person».
 - **No tocar:** no volver a pedir 3 letras para un código; no leer el rango entero sin `LIMIT` ni ordenar en memoria un rango grande; no sacar el alcance de los vivos; no guardar lo buscado fuera de la memoria de la pestaña.
 
+## C-MAPA-LEYENDA y C-TIEMPO-HUMANO: quién es quién en el mapa en vivo, y el tiempo en la unidad que se entiende (16 nov 2026, Richard en la ficha del #B4290C) — todos los países
+
+- **Qué pasaba:** en el mapa de la tarjeta «En vivo» no se sabía qué era cada marca (al pasar el mouse salía el nombre, al tocar nada). Y la señal vieja se leía «Sin señal hace 45805 min» / «Última señal hace 45805 min», también en «Pedidos en curso».
+- **Arreglo:**
+  - `MapaFicha` (`apps/panel/src/panel/FichaPiezas.tsx`) recibe `leyenda` y la dibuja SIEMPRE debajo del mapa con el mismo dibujo de cada marca: el isotipo = «Repartidor» («Conductor» en viajes de personas), punto negro = «Restaurante» («Recogida» en viajes), punto rojo = «Cliente (destino)» («Destino»), en español e inglés («Driver», «Restaurant», «Customer (drop-off)», «Pickup», «Drop-off»). Cada marca tiene `alTocar`: tocarla escribe debajo del mapa qué es y su nombre («Restaurante: Novi Pizza Co.»). Lo arma `RastreoVivo.tsx`.
+  - `tiempoHumano` (`packages/compartido/src/llegadaEstimada.ts`): segundos, minutos, «1 h 20 min» (menos de 10 h), horas hasta 2 días y después días hacia abajo («31 días» / «31 days»). La usan `textoDetenido` (ficha y fila de «Pedidos en curso») y `textoUltimaSenal`; y `textoActualizado` del seguimiento del cliente desde una hora.
+- **Pruebas (vistas en rojo):** `apps/panel/src/panel/mapaLeyenda.test.tsx` (leyenda en es/en, tocar cada marca, «Sin señal hace 31 días»; rojo sin la leyenda y con los minutos de antes); `packages/compartido/src/llegadaEstimada.test.ts` y `seguimientoHonesto.test.ts` (unidades).
+- **No tocar:** ninguna pantalla escribe minutos sueltos para tiempos largos: se pasa por `tiempoHumano`. El mapa en vivo no va sin su leyenda.
+
 ## C-FILTROS-GUARDADOS: cada empleado encuentra sus filtros como los dejó (15 nov 2026, pedido de Richard) — todos los países
 
 - **Qué pasaba:** al volver a «Pedidos en curso» (o a viajes, clientes, repartidores, tickets) los filtros estaban en blanco; la ciudad solo venía de `?zona=`.
