@@ -4535,7 +4535,7 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 ## C-SIN-VENTANA-ENCIMA: las apps no piden «mostrar encima de otras apps» ni el servicio de ubicación que no usan (16 nov 2026, envío a Google Play) — todos los países
 
 - **Qué estaba mal:** los .aab de producción (cliente 25, Driver 23, Restaurants 16) traían `SYSTEM_ALERT_WINDOW`, que mete React Native y ninguna app usa; y el cliente traía el servicio de ubicación en primer plano de expo-location sin usarlo nunca. El auditor de tiendas los marcó como permisos de más que no se envían.
-- **Arreglo:** `blockedPermissions` de las tres `app.json` incluye `android.permission.SYSTEM_ALERT_WINDOW`; el plugin `expo-location` del cliente lleva `isAndroidForegroundServiceEnabled: false` e `isAndroidBackgroundLocationEnabled: false`.
+- **Arreglo:** `blockedPermissions` de las tres `app.json` incluye `android.permission.SYSTEM_ALERT_WINDOW`; el plugin `expo-location` del cliente lleva `isAndroidForegroundServiceEnabled: false` e `isAndroidBackgroundLocationEnabled: false` (no pide `FOREGROUND_SERVICE_LOCATION` ni ubicación en segundo plano). Ojo: la librería sigue declarando su servicio `LocationTaskService` en el manifiesto; sin ese permiso no se puede encender y Google no pide la declaración de servicio en primer plano. Medido en el .aab del cliente 27 (Driver 25 y Restaurants 18 sin `SYSTEM_ALERT_WINDOW`).
 - **Candado:** `apps/servidor/src/tiendasPermisos.test.ts`, comprobado en rojo antes del arreglo. Y antes de cada envío a Google se mide el manifiesto del .aab con `bundletool dump manifest`.
 
 ## C-BORRADO-CHAT: al borrar la cuenta se van los mensajes y las fotos del chat (16 nov 2026, encargo de Gerencia por el NO APTO de Google Play) — todos los países
