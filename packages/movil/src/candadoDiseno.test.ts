@@ -53,4 +53,24 @@ describe('candado de diseño de las apps', () => {
       expect(readFileSync(join(RAIZ, raiz), 'utf8'), raiz).toContain('useFuentesDivoox');
     }
   });
+
+  // El ojito de la contraseña es el ojo de la familia de íconos (abierto y tachado), no un dibujo
+  // de cajitas: en el celular el dibujo se veía como un interruptor (repaso del 15 nov 2026).
+  it('el ojito de la contraseña usa el ícono de ojo', () => {
+    const ui = readFileSync(join(RAIZ, 'packages/movil/src/ui.tsx'), 'utf8');
+    expect(ui).toContain("'eye-outline'");
+    expect(ui).toContain("'eye-off-outline'");
+    expect(ui).not.toContain('ojoPupila');
+  });
+
+  // Cada app lleva su color también en la píldora del idioma: Driver azul, Restaurants negro y el
+  // cliente rojo. En rojo en las tres, Driver y Restaurants parecían la misma app (auditor de
+  // tiendas, 15 nov 2026: Apple pide que cada app se distinga a primera vista).
+  it('la píldora del idioma lleva el color de cada app', () => {
+    const acceso = readFileSync(join(RAIZ, 'packages/movil/src/Acceso.tsx'), 'utf8');
+    expect(acceso).toContain('fondoIdioma');
+    expect(acceso).not.toMatch(/backgroundColor: C\.primario, borderRadius: 999/);
+    const rest = readFileSync(join(RAIZ, 'apps/restaurante/src/piezas/ui.tsx'), 'utf8');
+    expect(rest).not.toMatch(/backgroundColor: C\.primario, borderRadius: 999/);
+  });
 });

@@ -19,7 +19,8 @@ import { AvisoBorrador } from './AvisoBorrador';
 import { APP_DE_PRUEBAS, FranjaPruebas } from './FranjaPruebas';
 import { DondeFunciona } from './Disponibilidad';
 import { CasillaSms } from './CasillaSms';
-import { Boton, C, Campo, CampoClave, Pantalla, e } from './ui';
+import { Boton, C, Campo, CampoClave, Pantalla, e, useAcentoApp } from './ui';
+import { COLOR } from './tokens';
 import { SelectorIdioma } from './SelectorIdioma';
 import { Turnstile, olvidarPaseTurnstile, useTurnstileSitio } from './Turnstile';
 
@@ -56,6 +57,7 @@ export function Acceso({
   seguirMirando?: () => void;
 }) {
   const { api, idioma, alEntrar, rolesPermitidos, cambiarIdioma } = useSesion();
+  const acento = useAcentoApp();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
   const [modo, setModo] = useState<'entrar' | 'registro'>(modoInicial);
   // C-ENTRAR-CON-SALIDA (14 nov 2026, Richard): el botón de atrás del teléfono también saca de
@@ -143,11 +145,15 @@ export function Acceso({
   const registro = modo === 'registro' && rolRegistro;
   // Inglés sin prefijo, español bajo /es: la misma página legal en el idioma de la app.
   const abrir = (ruta: string) => abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
+  // Cada app con su color en la píldora del idioma: Driver azul, Restaurants (la única sin registro)
+  // negro y el cliente rojo, para que las tres se distingan a primera vista.
+  const fondoIdioma =
+    acento === 'logistica' ? COLOR.logistica : rolRegistro ? C.primario : COLOR.negro;
   const marco = (cuerpo: ReactNode) =>
     portada ? (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 8 }}>
-          <View style={{ backgroundColor: C.primario, borderRadius: 999, paddingHorizontal: 4 }}>
+          <View style={{ backgroundColor: fondoIdioma, borderRadius: 999, paddingHorizontal: 4 }}>
             <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
           </View>
         </View>
