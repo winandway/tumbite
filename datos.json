@@ -1,7 +1,7 @@
 {
   "actualizado": "2026-11-16",
   "version": "fe71f3f",
-  "ahora": "15 nov: las tres apps con el diseño nuevo ya están en las tiendas. En Google Play, Divoox Driver (versión 18) y Divoox Restaurants (versión 13) están en revisión; en App Store Connect quedaron las compilaciones 34 del cliente, 28 del Driver y 20 de Restaurants para TestFlight. El sitio de pruebas y divoox.com sirven la misma versión, con el diseño nuevo y la foto de la puerta. 15 nov: la foto de la puerta ya está en vivo. El cliente puede guardar hasta tres fotos del frente, la entrada del edificio y su puerta en cada dirección, con la cámara o desde sus archivos; el repartidor asignado las ve solo mientras lleva el pedido, y nadie más. Probado en pantalla con 86 comprobaciones, con guías en español e inglés. Las tres apps de pruebas ya traen el diseño nuevo y la franja «PRUEBAS». 15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
+  "ahora": "16 nov: piloto EN VIVO de Divoox en El Vigía y Tucaní. Las dos zonas están activas en divoox.com con mototaxi, comida y envíos en dólares (bolívares a la tasa del BCV). Se probaron en el sitio real un viaje de moto, un pedido de comida y un envío con cuentas del equipo. Las apps de Android de la versión real están en la página de apps.",
   "proximo": [
     {
       "quien": "ia",
@@ -36,7 +36,15 @@
   ],
   "esperando": [
     {
-      "numero": 1,
+      "id": "piloto-telefonos-responsables",
+      "prioridad": "alta",
+      "titulo": "Teléfonos de los responsables de El Vigía y Tucaní",
+      "para": "Cuando un conductor o un pasajero toca el botón de pánico, le llega un aviso al responsable de su zona con quién es, dónde está y la carrera. Hace falta el nombre y el celular (con +58) de la persona de El Vigía y la de Tucaní.",
+      "destraba": "El aviso de pánico al responsable de cada zona.",
+      "numero": 1
+    },
+    {
+      "numero": 2,
       "id": "play-datos-fotos-cliente",
       "prioridad": "alta",
       "titulo": "Autorizar que declaremos las fotos de la puerta en Google Play",
@@ -44,7 +52,7 @@
       "destraba": "Subir la versión de Android del cliente con el diseño nuevo y la foto de la puerta."
     },
     {
-      "numero": 2,
+      "numero": 3,
       "id": "apple-privacidad-fotos-cliente",
       "prioridad": "media",
       "titulo": "Revisar en App Store Connect la privacidad del cliente",
@@ -52,7 +60,7 @@
       "destraba": "Que la revisión de Apple del cliente no se frene por la foto de la puerta."
     },
     {
-      "numero": 3,
+      "numero": 4,
       "id": "flota-propia-dinero",
       "prioridad": "alta",
       "titulo": "Decidir el dinero de la flota propia del restaurante",
@@ -60,7 +68,7 @@
       "destraba": "Encender «Mis repartidores» en producción, empezando por el restaurante de Chile con 14 repartidores."
     },
     {
-      "numero": 4,
+      "numero": 5,
       "id": "chile-cuenta-de-cobro",
       "prioridad": "media",
       "titulo": "Abrir la cuenta de cobro de Chile",
@@ -68,7 +76,7 @@
       "destraba": "Encender Chile: el perfil del país ya está en el código, apagado."
     },
     {
-      "numero": 5,
+      "numero": 6,
       "id": "cancelar-listo-dinero",
       "prioridad": "media",
       "titulo": "Decidir quién paga la comida de un pedido listo que se cancela",
@@ -76,7 +84,7 @@
       "destraba": "Pagarle la comida al restaurante cuando la causa no fue suya, como DoorDash."
     },
     {
-      "numero": 6,
+      "numero": 7,
       "id": "aprobar-portada-p2",
       "prioridad": "alta",
       "titulo": "Mirar la maqueta nueva de la portada (servicios arriba, como Rappi y Grab) y decir si se construye así",
@@ -84,7 +92,7 @@
       "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
     },
     {
-      "numero": 7,
+      "numero": 8,
       "id": "stripe-connect-y-retiros",
       "prioridad": "alta",
       "titulo": "Stripe: activar Connect, crear el aviso de cuentas conectadas y decir cuándo se encienden los retiros",
@@ -92,7 +100,7 @@
       "destraba": "Probar el alta de cobros y un retiro en modo prueba, que es lo único del circuito de pagos que quedó sin probar en el sitio de pruebas."
     },
     {
-      "numero": 8,
+      "numero": 9,
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
       "titulo": "Compra real de 1 dólar con tu tarjeta",
@@ -100,7 +108,7 @@
       "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
     },
     {
-      "numero": 9,
+      "numero": 10,
       "id": "prueba-en-la-calle",
       "prioridad": "alta",
       "titulo": "Prueba en la calle con cliente, restaurante y repartidor",
@@ -108,7 +116,7 @@
       "destraba": "El lanzamiento de Comida."
     },
     {
-      "numero": 10,
+      "numero": 11,
       "id": "sesion-admin-google-play",
       "prioridad": "alta",
       "titulo": "Abrir tu sesión de administrador en el panel de Divoox",
@@ -116,7 +124,7 @@
       "destraba": "Que Google pueda entrar a revisar las apps sin trabas."
     },
     {
-      "numero": 11,
+      "numero": 12,
       "id": "contrasena-expo",
       "prioridad": "alta",
       "titulo": "Cambiar la contraseña de Expo",
@@ -124,7 +132,7 @@
       "destraba": "Cerrar ese riesgo de seguridad."
     },
     {
-      "numero": 12,
+      "numero": 13,
       "id": "montos-para-encender",
       "prioridad": "media",
       "titulo": "Montos para encender las funciones de crecimiento",
@@ -133,7 +141,7 @@
       "docs": ["earn-by-time", "sponsored-listings", "divoox-plus", "gift-cards"]
     },
     {
-      "numero": 13,
+      "numero": 14,
       "id": "prueba-ruta-logistica",
       "prioridad": "media",
       "titulo": "Probar la ruta de logística con las etiquetas impresas",
@@ -142,7 +150,7 @@
       "docs": ["flex-getting-started"]
     },
     {
-      "numero": 14,
+      "numero": 15,
       "id": "tiendas-pais",
       "prioridad": "media",
       "titulo": "Elegir el país donde se encienden Mercado, Farmacia y Licores",
@@ -151,7 +159,7 @@
       "docs": ["shop-stores"]
     },
     {
-      "numero": 15,
+      "numero": 16,
       "id": "moto-carro-legal",
       "prioridad": "media",
       "titulo": "Moto y Carro: país, permiso legal, seguro del pasajero y tarifas",
@@ -159,7 +167,7 @@
       "destraba": "Encender Moto y Carro en el primer país."
     },
     {
-      "numero": 16,
+      "numero": 17,
       "id": "envios-precio",
       "prioridad": "media",
       "titulo": "Envíos de persona a persona: valor máximo, seguro y precio",
@@ -167,7 +175,7 @@
       "destraba": "Abrir Envíos a todo el público."
     },
     {
-      "numero": 17,
+      "numero": 18,
       "id": "caras-proveedor",
       "prioridad": "baja",
       "titulo": "Comparación de caras con IA: proveedor y costo",
@@ -176,7 +184,7 @@
       "docs": ["background-check-and-identity"]
     },
     {
-      "numero": 18,
+      "numero": 19,
       "id": "checkr",
       "prioridad": "baja",
       "titulo": "Cuenta de Checkr para antecedentes de repartidores",
@@ -184,7 +192,7 @@
       "destraba": "El botón de antecedentes en la app del repartidor."
     },
     {
-      "numero": 19,
+      "numero": 20,
       "id": "ley-aplicable-terminos",
       "prioridad": "media",
       "titulo": "Abogado: ley aplicable de los términos",
@@ -192,7 +200,7 @@
       "destraba": "Corregir esa cláusula con el texto que diga el abogado."
     },
     {
-      "numero": 20,
+      "numero": 21,
       "id": "contador-impuesto-promo",
       "prioridad": "media",
       "titulo": "Preguntarle al contador por el impuesto con promoción",
@@ -200,7 +208,7 @@
       "destraba": "Ajustar la cuenta del impuesto en los pedidos con promoción."
     },
     {
-      "numero": 21,
+      "numero": 22,
       "id": "comida-efectivo-eeuu",
       "prioridad": "baja",
       "titulo": "Decidir si en Estados Unidos la comida se podrá pagar en efectivo al recibir",
@@ -208,7 +216,7 @@
       "destraba": "Si dices que sí, se enciende el pago al recibir allá y se actualizan las guías en inglés."
     },
     {
-      "numero": 22,
+      "numero": 23,
       "id": "comision-efectivo-eeuu",
       "prioridad": "media",
       "titulo": "Decidir cómo cobra Divoox su comisión en los viajes en efectivo de Estados Unidos",
@@ -216,7 +224,7 @@
       "destraba": "Abrir Moto o Carro en Estados Unidos con la comisión clara desde el primer viaje."
     },
     {
-      "numero": 23,
+      "numero": 24,
       "id": "flex-recargas-tarjeta-eeuu",
       "prioridad": "baja",
       "titulo": "Confirmar que las empresas de Flex en Estados Unidos recargan con tarjeta",
@@ -224,7 +232,7 @@
       "destraba": "Encender las recargas con tarjeta de Flex para Estados Unidos cuando llegue la primera empresa."
     },
     {
-      "numero": 24,
+      "numero": 25,
       "id": "decisiones-equipo-interno",
       "prioridad": "media",
       "titulo": "Decidir quién ve fotos, teléfonos y si se pide segundo factor al equipo",
@@ -232,7 +240,7 @@
       "destraba": "Dejar fijas las reglas de privacidad del equipo de operaciones y encender el segundo factor si lo quieres."
     },
     {
-      "numero": 25,
+      "numero": 26,
       "id": "texto-legal-volver-a-cobrar",
       "prioridad": "alta",
       "titulo": "Confirmar el texto legal para volver a cobrar una tarjeta cuya retención venció",
@@ -421,6 +429,11 @@
       "fecha": "2026-11-16",
       "titulo": "Docs públicos solo para clientes y terceros",
       "texto": "Por decisión de Richard, las guías que explicaban el panel interno del equipo salieron de Docs públicos: sus direcciones ya no existen y no aparecen en buscadores. Ahora viven en una ayuda interna dentro del panel del equipo, con su botón «?», solo para quien tiene sesión del equipo, en español e inglés y con capturas. Docs sigue con todo lo de clientes, restaurantes, repartidores y empresas."
+    },
+    {
+      "fecha": "2026-11-16",
+      "titulo": "Piloto en vivo de El Vigía y Tucaní",
+      "texto": "Tucaní quedó creada como zona nueva y las dos ciudades tienen encendidos el mototaxi, la comida y los envíos de A a B, con precios en dólares y referencia en bolívares a la tasa del BCV. Se probó en el sitio real, con cuentas del equipo: un viaje de moto de 1,32 dólares (la comisión del 10 % salió del saldo prepago), un pedido de comida de 5,25 dólares cobrado en efectivo y cuadrado, y la recarga de saldo con código desde el punto del equipo. Nuevo: botón de pánico que avisa al responsable de cada zona, pantalla para emitir códigos de recarga, y la versión real de las apps de Android en la página de apps, aparte de las de prueba."
     },
     {
       "fecha": "2026-11-16",
