@@ -122,7 +122,7 @@ describe('C-TIEMPOS-OPERACION · pedido', () => {
     expect(porClave(t, 'total')?.previstoPorDefecto).toBe(true);
   });
 
-  it('un pedido vivo muestra lo que lleva y se pone rojo si ya pasó lo previsto', () => {
+  it('un tramo abierto dice «en curso» con lo que lleva y NO se compara aunque pase lo previsto (16 nov 2026)', () => {
     const ahora = Date.UTC(2026, 10, 15, 18, 30); // minuto 30, en cocina desde el 2
     const t = tiemposPedido(
       {
@@ -137,7 +137,8 @@ describe('C-TIEMPOS-OPERACION · pedido', () => {
     );
     expect(porClave(t, 'preparacion')).toMatchObject({
       realS: 28 * 60,
-      resultado: 'se_paso',
+      resultado: 'en_curso',
+      diferenciaMin: null,
       falta: [],
     });
     const vivoATiempo = tiemposPedido(
@@ -145,6 +146,29 @@ describe('C-TIEMPOS-OPERACION · pedido', () => {
       Date.UTC(2026, 10, 15, 18, 10),
     );
     expect(porClave(vivoATiempo, 'preparacion')).toMatchObject({ resultado: 'en_curso' });
+  });
+
+  it('un pedido abandonado (vivo hace 31 días sin actividad) dice «sin cerrar», nunca «Tomó 761 h»', () => {
+    const ahora = Date.UTC(2026, 10, 15, 18, 0) + 761 * 3_600_000;
+    const t = tiemposPedido(
+      {
+        ...entregado,
+        estado: 'en_camino',
+        entregadoEn: null,
+        ultimaActividadEn: f(30),
+      },
+      ahora,
+    );
+    for (const c of ['entrega', 'total'])
+      expect(porClave(t, c)).toMatchObject({ resultado: 'sin_cerrar', diferenciaMin: null });
+    // Los tramos cerrados siguen igual.
+    expect(porClave(t, 'preparacion')?.resultado).toBe('cumplio');
+    // Con actividad reciente (el repartidor sigue moviéndose) no es abandono.
+    const vivo = tiemposPedido(
+      { ...entregado, estado: 'en_camino', entregadoEn: null, ultimaActividadEn: f(60 * 760) },
+      ahora,
+    );
+    expect(porClave(vivo, 'entrega')?.resultado).toBe('en_curso');
   });
 
   it('un pedido cancelado dice «cancelado» en lo que no llegó a pasar', () => {

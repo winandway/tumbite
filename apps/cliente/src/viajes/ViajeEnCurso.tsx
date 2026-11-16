@@ -2,7 +2,10 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { Animated, Easing, Image, Linking, Platform, Pressable, Share, View } from 'react-native';
 import {
   ErrorApi,
+  type LlegadaEnVivo,
   type Referencia,
+  minutosDeLlegada,
+  textoHoraLlegada,
   enIdioma,
   formatearMonto,
   textoReferencia,
@@ -68,6 +71,8 @@ export type ViajePasajero = {
   referencia?: Referencia | null;
   /** C-VIAJE-PARADAS: las paradas del viaje, en orden, y cuántas admite la ciudad. */
   paradas?: ParadaDelViaje[];
+  /** C-HORA-LLEGADA: la hora calculada con tráfico en el servidor (recogida o destino). */
+  llegadaEnVivo?: LlegadaEnVivo | null;
   paradasMaximas?: number;
   /** C-CARRO-DINAMICA: el multiplicador con que se cotizó (10 000 = precio normal). */
   multiplicadorPb?: number;
@@ -467,7 +472,15 @@ export function ViajeEnCurso({
                 <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>
                   {viaje.conductor.nombre}
                 </Text>
-                {llegada && (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
+                {viaje.llegadaEnVivo &&
+                (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
+                  <Text testID="viaje-llegada" style={{ fontWeight: '700', color: C.exito }}>
+                    {(viaje.estado === 'asignado' ? t.llegaALas : t.destinoALas)(
+                      textoHoraLlegada(viaje.llegadaEnVivo.llegaEn, idioma),
+                      minutosDeLlegada(viaje.llegadaEnVivo.faltanS),
+                    )}
+                  </Text>
+                ) : llegada && (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
                   <Text testID="viaje-llegada" style={{ fontWeight: '700', color: C.exito }}>
                     {viaje.estado === 'asignado' ? t.llegaEn(llegada) : t.destinoEn(llegada)}
                   </Text>

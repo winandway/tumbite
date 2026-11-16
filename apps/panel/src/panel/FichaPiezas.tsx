@@ -16,7 +16,11 @@ import {
   textoDiferencia,
   textoDuracion,
 } from '@tumbite/compartido';
-import { MapaGoogleBajoDemanda, elegirMapaWeb } from '@tumbite/compartido/src/mapaWebGoogle';
+import {
+  type LineaMapaWeb,
+  MapaGoogleBajoDemanda,
+  elegirMapaWeb,
+} from '@tumbite/compartido/src/mapaWebGoogle';
 import { useHora } from './horario';
 import { usePermisos } from './permisosPanel';
 
@@ -80,6 +84,10 @@ const TT = {
     cumplio: 'A tiempo',
     sePaso: 'Se pasó',
     enCurso: 'En curso',
+    sinCerrar: 'Sin cerrar',
+    abiertoHace: 'Abierto hace',
+    explicaSinCerrar:
+      'Nadie cerró este paso y no hubo movimiento en más de 12 horas: no se mide. Revisa si se entregó y ciérralo, o cancélalo.',
     sinDato: 'Sin dato',
     porDefecto: 'previsto de fábrica: faltaba la ubicación o el tiempo del restaurante',
     falta: 'Falta:',
@@ -134,6 +142,10 @@ const TT = {
     cumplio: 'On time',
     sePaso: 'Late',
     enCurso: 'In progress',
+    sinCerrar: 'Not closed',
+    abiertoHace: 'Open for',
+    explicaSinCerrar:
+      'Nobody closed this step and nothing has happened in over 12 hours, so it isn’t measured. Check whether it was delivered and close it, or cancel it.',
     sinDato: 'No data',
     porDefecto: 'default estimate: the location or the restaurant’s time was missing',
     falta: 'Missing:',
@@ -197,7 +209,9 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
         ? t.sePaso
         : r === 'en_curso'
           ? t.enCurso
-          : t.sinDato;
+          : r === 'sin_cerrar'
+            ? t.sinCerrar
+            : t.sinDato;
   return (
     <section className="tarjeta-form ficha-tiempos" aria-labelledby="ficha-tiempos-titulo">
       <h2 id="ficha-tiempos-titulo">{t.titulo}</h2>
@@ -210,7 +224,13 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
             </div>
             <div className="ficha-tramo-cifras">
               <span>
-                <small>{x.resultado === 'en_curso' ? t.lleva : t.real}</small>
+                <small>
+                  {x.resultado === 'en_curso'
+                    ? t.lleva
+                    : x.resultado === 'sin_cerrar'
+                      ? t.abiertoHace
+                      : t.real}
+                </small>
                 <b>{textoDuracion(x.realS)}</b>
               </span>
               <span>
@@ -219,7 +239,9 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
               </span>
               <span className={`bs-estado bs-${tono(x.resultado)}`}>
                 {resultado(x.resultado)}
-                {x.diferenciaMin != null && x.resultado !== 'en_curso'
+                {x.diferenciaMin != null &&
+                x.resultado !== 'en_curso' &&
+                x.resultado !== 'sin_cerrar'
                   ? ` · ${textoDiferencia(x.diferenciaMin, idioma === 'en' ? 'en' : 'es')}`
                   : ''}
               </span>
@@ -230,6 +252,9 @@ export function TarjetaTiempos({ tiempos, idioma }: { tiempos: Tramo[]; idioma: 
               </p>
             ) : null}
             {x.previstoPorDefecto ? <p className="ficha-tramo-falta">{t.porDefecto}</p> : null}
+            {x.resultado === 'sin_cerrar' ? (
+              <p className="ficha-tramo-falta">{t.explicaSinCerrar}</p>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -444,10 +469,16 @@ export function MapaFicha({
   puntos,
   idioma,
   etiqueta,
+  lineas = [],
+  enVivo = false,
 }: {
-  puntos: PuntoFicha[];
+  puntos: (PuntoFicha & { isotipo?: boolean; apagado?: boolean })[];
   idioma: Idioma;
   etiqueta: string;
+  /** C-RASTREO-VIVO: la ruta de Google (solo sobre el mapa de Google). */
+  lineas?: LineaMapaWeb[];
+  /** C-RASTREO-VIVO: abierto de entrada, más alto y con la marca que se desliza. */
+  enVivo?: boolean;
 }) {
   const llave = (import.meta.env.VITE_GOOGLE_MAPS_WEB_KEY as string | undefined) ?? '';
   const mapId = (import.meta.env.VITE_GOOGLE_MAPS_WEB_MAP_ID as string | undefined) ?? '';
@@ -463,9 +494,12 @@ export function MapaFicha({
       idioma={idioma === 'en' ? 'en' : 'es'}
       centro={centro}
       zoom={14}
-      alto={240}
+      alto={enVivo ? 340 : 240}
       etiqueta={etiqueta}
       puntos={puntos.map((p) => ({ ...p, radio: 8 }))}
+      lineas={lineas}
+      abierto={enVivo}
+      deslizar={enVivo}
     />
   );
 }

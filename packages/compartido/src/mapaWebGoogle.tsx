@@ -532,6 +532,35 @@ function firmaFija(puntos: PuntoMapaWeb[], lineas: LineaMapaWeb[], circulos: Cir
   ].join('|');
 }
 
+/** Lo que tarda la marca en deslizarse de un punto al siguiente (C-RASTREO-VIVO). */
+export const DESLIZAR_MS = 1_200;
+
+/** Punto intermedio entre dos posiciones (0 = desde, 1 = hasta). */
+export function puntoIntermedio(desde: LatLng, hasta: LatLng, t: number): LatLng {
+  const k = Math.min(1, Math.max(0, t));
+  return {
+    lat: desde.lat + (hasta.lat - desde.lat) * k,
+    lng: desde.lng + (hasta.lng - desde.lng) * k,
+  };
+}
+
+/** Mueve una marca de `desde` a `hasta` en `DESLIZAR_MS`, cuadro por cuadro (suave, sin saltos). */
+function deslizarMarca(x: Quitable, desde: LatLng, hasta: LatLng) {
+  const raf = globalThis.requestAnimationFrame?.bind(globalThis);
+  if (!raf || (desde.lat === hasta.lat && desde.lng === hasta.lng)) {
+    x.mover?.(hasta);
+    return;
+  }
+  const inicio = performance.now();
+  const paso = (t: number) => {
+    const k = (t - inicio) / DESLIZAR_MS;
+    // Sale rápido y frena al llegar (como las marcas de Uber).
+    x.mover?.(puntoIntermedio(desde, hasta, 1 - (1 - Math.min(1, k)) ** 2));
+    if (k < 1) raf(paso);
+  };
+  raf(paso);
+}
+
 const TEXTOS = {
   es: { ver: 'Ver en el mapa', cargando: 'Abriendo el mapa…', error: 'No pudimos abrir el mapa.' },
   en: { ver: 'See on the map', cargando: 'Opening the map…', error: 'We couldn’t open the map.' },
@@ -640,6 +669,7 @@ export function MapaGoogleBajoDemanda({
   rumbo = 0,
   llegada = null,
   conAjuste = false,
+  deslizar = false,
 }: {
   llave: string;
   mapId?: string | null;
@@ -658,6 +688,11 @@ export function MapaGoogleBajoDemanda({
   llegada?: VistaMapa | null;
   /** Muestra el ajuste de colores del mapa (el panel; en las apps va en la cuenta). */
   conAjuste?: boolean;
+  /**
+   * C-RASTREO-VIVO: cuando solo cambia la posición (el repartidor se movió), la marca se desliza
+   * suave hasta el punto nuevo (`DESLIZAR_MS`) y la cámara NO se vuelve a encuadrar (no salta).
+   */
+  deslizar?: boolean;
 }) {
   const t = TEXTOS[idioma === 'es' ? 'es' : 'en'];
   // Abierto si la pantalla es de viaje o entrega en curso, o si la persona tocó «Ver en el mapa».
@@ -675,6 +710,7 @@ export function MapaGoogleBajoDemanda({
   const fijaDibujada = useRef<string | null>(null);
   const llegadaAplicada = useRef('');
   const centroAplicado = useRef('');
+  const ultimas = useRef(new Map<string, LatLng>());
   const vectorial = mapIdValido(mapId);
   const tema = useTemaMapa(centro);
   const alTocar = useRef(alTocarMapa);
@@ -747,6 +783,16 @@ export function MapaGoogleBajoDemanda({
     const claveLlegada = claveDeLlegada(llegada);
     const cambioLlegada = claveLlegada !== llegadaAplicada.current;
     llegadaAplicada.current = claveLlegada;
+    if (fija === fijaDibujada.current && deslizar) {
+      // C-RASTREO-VIVO: la marca se desliza del punto anterior al nuevo; la cámara queda quieta.
+      for (const p of puntos) {
+        const x = marcasPorId.current.get(p.id);
+        const antes = ultimas.current.get(p.id);
+        if (x?.mover) deslizarMarca(x, antes ?? p, p);
+        ultimas.current.set(p.id, { lat: p.lat, lng: p.lng });
+      }
+      return;
+    }
     if (fija === fijaDibujada.current) {
       // Solo cambiaron posiciones (GPS): se mueven las marcas. En viaje no se vuelve a encuadrar
       // (aplanaría el mapa): solo se corrige el rumbo. Fuera de viaje, se encuadra como siempre.
@@ -770,6 +816,7 @@ export function MapaGoogleBajoDemanda({
     );
     dibujados.current = r.todos;
     marcasPorId.current = r.marcas;
+    ultimas.current = new Map(puntos.map((p) => [p.id, { lat: p.lat, lng: p.lng }]));
     fijaDibujada.current = fija;
     // Se redibuja cuando el mapa queda listo (o se rehace) o cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -581,6 +581,33 @@ CREATE TABLE IF NOT EXISTS contadores (
   n INTEGER NOT NULL DEFAULT 0
 );
 
+-- C-HORA-LLEGADA y C-RASTREO-VIVO (16 nov 2026): la ÚLTIMA hora de llegada calculada de un pedido o
+-- viaje en marcha (clave «pedido:<id>» o «viaje:<id>»), UNA fila que se reescribe como mucho cada
+-- 90 s con una ubicación nueva del repartidor (nunca por mirar) y que leen todos: la ficha del
+-- equipo y la app del cliente. `ruta` es la línea de Google (solo para dibujar sobre mapa de Google,
+-- guardado temporal: se borra a las 24 h). `ancla_*`: último lugar donde se lo vio moverse
+-- (para «detenido»). Solo la llave primaria: ningún índice de más.
+CREATE TABLE IF NOT EXISTS llegadas_estimadas (
+  clave TEXT PRIMARY KEY,
+  fase TEXT NOT NULL,
+  duracion_s INTEGER NOT NULL,
+  tramo_s INTEGER,
+  distancia_m INTEGER NOT NULL,
+  fuente TEXT NOT NULL CHECK (fuente IN ('trafico', 'estimada')),
+  motivo TEXT NOT NULL DEFAULT '',
+  ruta TEXT,
+  desde_lat REAL NOT NULL,
+  desde_lng REAL NOT NULL,
+  calculada_en INTEGER NOT NULL,
+  ancla_lat REAL NOT NULL,
+  ancla_lng REAL NOT NULL,
+  ancla_en INTEGER NOT NULL,
+  objetivo_lat REAL,
+  objetivo_lng REAL,
+  destino_lat REAL,
+  destino_lng REAL
+);
+
 -- KYC (verificación de identidad): repartidores y dueños de restaurante. Las fotos van al almacén
 -- en kyc/<usuario>/… y NUNCA se sirven al público: solo el superadmin las ve, por una ruta propia.
 -- El restaurante además manda una foto del local con la ubicación del celular (para que no haya

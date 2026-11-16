@@ -28,6 +28,9 @@ import {
   textoActualizado,
   textoAtrasado,
   textoRango,
+  type LlegadaEnVivo,
+  minutosDeLlegada,
+  textoHoraLlegada,
   listaEtiquetas,
   type ParaEtiqueta,
   tipoEtiquetas,
@@ -94,6 +97,8 @@ type Pedido = {
   llegaAMasTardar?: string | null;
   /** C-SEGUIMIENTO-HONESTO: la llegada como rango («12:40–12:50»). */
   llegadaRango?: RangoLlegada | null;
+  /** C-HORA-LLEGADA: la hora que calculó el servidor con tráfico (la misma que ve el equipo). */
+  llegadaEnVivo?: LlegadaEnVivo | null;
   pin?: string | null;
   pinRequerido?: boolean;
   /** Fase 2 · cobro directo. */
@@ -222,6 +227,10 @@ const T = {
     minutos: 'min',
     aMasTardar: 'A más tardar a las',
     llegaEntre: 'Llega entre',
+    llegaALas: 'Tu pedido llega a las {h}',
+    estaA: 'Tu repartidor está a {m} min',
+    vaAlLocal: 'Tu repartidor llega al restaurante en {m} min',
+    esperaEnLocal: 'Tu repartidor está esperando tu pedido en el restaurante',
     sinSenal:
       'Perdimos la señal de tu repartidor. En el mapa ves su última ubicación conocida; sigue en camino y la hora puede cambiar.',
     tuPin: 'Tu PIN para recibir',
@@ -368,6 +377,10 @@ const T = {
     minutos: 'min',
     aMasTardar: 'Latest arrival by',
     llegaEntre: 'Arrives between',
+    llegaALas: 'Your order arrives at {h}',
+    estaA: 'Your driver is {m} min away',
+    vaAlLocal: 'Your driver reaches the restaurant in {m} min',
+    esperaEnLocal: 'Your driver is waiting for your order at the restaurant',
     sinSenal:
       'We lost your driver’s signal. The map shows their last known location; they’re still on the way and the time may change.',
     tuPin: 'Your PIN to receive',
@@ -931,7 +944,8 @@ function SeguirPedido() {
                   {numero} · {formatearMonto(p.total, moneda, idioma)}
                 </Text>
               </View>
-              {p.minutosEstimados != null && !(recoge && p.estado === 'listo') ? (
+              {p.llegadaEnVivo && activo && !recoge ? null : p.minutosEstimados != null &&
+                !(recoge && p.estado === 'listo') ? (
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={{ fontSize: 17, fontWeight: '700', color: C.secundario }}>
                     {recoge ? t.listoEn : t.llega} {p.minutosEstimados} {t.minutos}
@@ -1125,7 +1139,29 @@ function SeguirPedido() {
                 ))}
               </View>
             ) : null}
-            {p.llegadaRango && activo && !recoge ? (
+            {/* C-HORA-LLEGADA: con la hora calculada con tráfico, esa manda (como Uber Eats). */}
+            {p.llegadaEnVivo && activo && !recoge ? (
+              <View style={{ marginTop: 10 }} testID="llegada-en-vivo">
+                <Text style={{ color: C.secundario, fontWeight: '700', fontSize: 18 }}>
+                  {t.llegaALas.replace('{h}', textoHoraLlegada(p.llegadaEnVivo.llegaEn, idioma))}
+                </Text>
+                <Text style={{ color: '#666B73', marginTop: 2 }}>
+                  {p.llegadaEnVivo.fase === 'llevando'
+                    ? t.estaA.replace('{m}', String(minutosDeLlegada(p.llegadaEnVivo.faltanS)))
+                    : p.llegadaEnVivo.fase === 'esperando'
+                      ? t.esperaEnLocal
+                      : t.vaAlLocal.replace(
+                          '{m}',
+                          String(
+                            minutosDeLlegada(
+                              p.llegadaEnVivo.tramoFaltanS ?? p.llegadaEnVivo.faltanS,
+                            ),
+                          ),
+                        )}
+                </Text>
+              </View>
+            ) : null}
+            {p.llegadaRango && activo && !recoge && !p.llegadaEnVivo ? (
               <Text style={{ color: C.secundario, fontWeight: '700', marginTop: 10 }}>
                 {p.llegadaRango.atrasado ? `${textoAtrasado(idioma)} · ` : ''}
                 {t.llegaEntre} {textoRango(p.llegadaRango, idioma)}

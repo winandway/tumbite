@@ -109,5 +109,6 @@ export * from './ubicacionFresca';
 export * from './permisosInternos';
 export * from './rutasAdmin';
 export * from './tiemposOperacion';
+export * from './llegadaEstimada';
 export * from './monitoreoServicios';
 export * from './formatoHora';

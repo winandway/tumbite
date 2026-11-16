@@ -81,6 +81,11 @@ export const esquemaEnv = z.object({
     .string()
     .regex(/^\d{1,6}$/)
     .optional(),
+  /** C-HORA-LLEGADA: tope de cálculos de la hora de llegada con tráfico por día (por defecto 160). */
+  TOPE_LLEGADA_DIA: z
+    .string()
+    .regex(/^\d{1,6}$/)
+    .optional(),
   /** Secreto del reloj externo (GitHub Actions llama a /datos/reloj con él cada 5 min). */
   RELOJ_SECRETO: z.string().min(24).optional(),
   // Cuentas de prueba para los revisores de Apple y Google (correos separados por coma): prueban

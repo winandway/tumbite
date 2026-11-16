@@ -22,7 +22,16 @@ import { aMasTardarMs, minutosRestauranteACasa } from './seguimientoHonesto';
  *   tarifa copiada en la cotización, la espera gratis de esa tarifa y la duración cotizada.
  */
 
-export type ResultadoTramo = 'cumplio' | 'se_paso' | 'en_curso' | 'sin_dato';
+/**
+ * `en_curso`: el tramo sigue abierto (lleva X); NO se compara con lo previsto hasta cerrarse.
+ * `sin_cerrar` (16 nov 2026, C-TIEMPOS-OPERACION): abierto hace más de `HORAS_ABANDONO` sin ninguna
+ * actividad del pedido o viaje: nadie lo cerró. Se muestra en gris y con su explicación, nunca como
+ * «Tomó 761 h».
+ */
+export type ResultadoTramo = 'cumplio' | 'se_paso' | 'en_curso' | 'sin_cerrar' | 'sin_dato';
+
+/** Un tramo abierto sin actividad hace más de estas horas cuenta como abandonado («Sin cerrar»). */
+export const HORAS_ABANDONO = 12;
 
 /** Lo que puede faltar para medir un tramo (la pantalla lo dice en palabras). */
 export type DatoFaltante =
@@ -98,6 +107,7 @@ function tramo<C extends string>(
   vivo: boolean,
   ahora: number,
   previstoPorDefecto = false,
+  ultimaActividad: number | null = null,
 ): Tramo<C> {
   const falta: DatoFaltante[] = [];
   if (inicio == null) falta.push(faltaInicio);
@@ -128,8 +138,21 @@ function tramo<C extends string>(
   const realS = Math.max(0, Math.round((hasta - inicio) / 1000));
   const diferenciaMin = previstoS == null ? null : diferenciaEnMinutos(realS - previstoS);
   let resultado: ResultadoTramo;
-  if (fin == null) resultado = diferenciaMin != null && diferenciaMin > 0 ? 'se_paso' : 'en_curso';
-  else if (diferenciaMin == null) resultado = 'sin_dato';
+  if (fin == null) {
+    // Abierto: no se compara hasta cerrar («En curso · lleva X»). Sin actividad hace más de
+    // HORAS_ABANDONO, «Sin cerrar» en gris (y sin diferencia: no hay nada que comparar).
+    const quieto = ahora - Math.max(inicio, ultimaActividad ?? inicio);
+    const abandonado = quieto > HORAS_ABANDONO * 3_600_000;
+    return {
+      clave,
+      realS,
+      previstoS,
+      diferenciaMin: null,
+      resultado: abandonado ? 'sin_cerrar' : 'en_curso',
+      falta,
+      ...extra,
+    };
+  } else if (diferenciaMin == null) resultado = 'sin_dato';
   else resultado = diferenciaMin <= 0 ? 'cumplio' : 'se_paso';
   return { clave, realS, previstoS, diferenciaMin, resultado, falta, ...extra };
 }
@@ -152,6 +175,8 @@ export type DatosTiemposPedido = {
   llegoRestauranteEn?: Fecha;
   restaurante?: Punto | null;
   casa?: Punto | null;
+  /** Lo último que pasó en el pedido (estados, hitos, ubicación): para saber si quedó abandonado. */
+  ultimaActividadEn?: Fecha;
 };
 
 const VIVOS_PEDIDO = new Set(['pagado', 'aceptado', 'listo', 'en_camino']);
@@ -175,6 +200,7 @@ export function tiemposPedido(
   const casa = d.casa ?? null;
   const sinUbicaciones = !restaurante || !casa;
   const fin = (f: DatoFaltante): DatoFaltante => (cancelado ? 'cancelado' : f);
+  const act = ms(d.ultimaActividadEn);
 
   const preparacion = tramo(
     'preparacion',
@@ -186,6 +212,8 @@ export function tiemposPedido(
     'tiempo_prometido',
     vivo,
     ahora,
+    false,
+    act,
   );
   const ida = tramo(
     'ida',
@@ -197,6 +225,8 @@ export function tiemposPedido(
     'distancia_repartidor',
     vivo,
     ahora,
+    false,
+    act,
   );
   // La comida debía estar lista en aceptado + preparación; el repartidor espera lo que faltaba.
   const listoPrometido = aceptado != null && prep != null ? aceptado + prep * 60_000 : null;
@@ -214,6 +244,8 @@ export function tiemposPedido(
     aceptado == null ? 'aceptado' : prep == null ? 'tiempo_prometido' : null,
     vivo,
     ahora,
+    false,
+    act,
   );
   const entrega = tramo(
     'entrega',
@@ -226,6 +258,7 @@ export function tiemposPedido(
     vivo,
     ahora,
     sinUbicaciones,
+    act,
   );
   const aMasTardar =
     aceptado != null ? aMasTardarMs(aceptado, prep ?? 20, restaurante, casa) : null;
@@ -242,6 +275,7 @@ export function tiemposPedido(
     vivo,
     ahora,
     aMasTardar != null && (sinUbicaciones || prep == null),
+    act,
   );
   return [preparacion, ida, espera, entrega, total];
 }
@@ -262,6 +296,8 @@ export type DatosTiemposViaje = {
   tarifa?: { factorCallePb: number; velocidadKmh: number; esperaGratisS: number } | null;
   /** Duración cotizada del recorrido (`cotizaciones_viaje.duracion_s`). */
   duracionCotizadaS?: number | null;
+  /** Lo último que pasó en el viaje (eventos, ubicación): para saber si quedó abandonado. */
+  ultimaActividadEn?: Fecha;
 };
 
 const VIVOS_VIAJE = new Set([
@@ -286,6 +322,7 @@ export function tiemposViaje(d: DatosTiemposViaje, ahora = Date.now()): Tramo<Cl
   const vivo = VIVOS_VIAJE.has(d.estado);
   const cerradoSinTerminar = !vivo && d.estado !== 'terminado';
   const fin = (f: DatoFaltante): DatoFaltante => (cerradoSinTerminar ? 'cancelado' : f);
+  const act = ms(d.ultimaActividadEn);
   const inicio = ms(d.buscandoDesde);
   const asignado = ms(d.asignadoEn);
   const llego = ms(d.llegoEn);
@@ -305,6 +342,8 @@ export function tiemposViaje(d: DatosTiemposViaje, ahora = Date.now()): Tramo<Cl
       null,
       vivo,
       ahora,
+      false,
+      act,
     ),
     tramo(
       'llegada',
@@ -316,6 +355,8 @@ export function tiemposViaje(d: DatosTiemposViaje, ahora = Date.now()): Tramo<Cl
       d.tarifa ? 'distancia_conductor' : 'tarifa',
       vivo,
       ahora,
+      false,
+      act,
     ),
     tramo(
       'espera_pasajero',
@@ -327,6 +368,8 @@ export function tiemposViaje(d: DatosTiemposViaje, ahora = Date.now()): Tramo<Cl
       'tarifa',
       vivo,
       ahora,
+      false,
+      act,
     ),
     tramo(
       'recorrido',
@@ -338,6 +381,8 @@ export function tiemposViaje(d: DatosTiemposViaje, ahora = Date.now()): Tramo<Cl
       'duracion_cotizada',
       vivo,
       ahora,
+      false,
+      act,
     ),
     tramo(
       'total',
@@ -351,6 +396,8 @@ export function tiemposViaje(d: DatosTiemposViaje, ahora = Date.now()): Tramo<Cl
       llegadaPrevista == null ? (d.tarifa ? 'distancia_conductor' : 'tarifa') : 'duracion_cotizada',
       vivo,
       ahora,
+      false,
+      act,
     ),
   ];
 }

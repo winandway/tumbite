@@ -75,6 +75,13 @@ export function ordenarLinea(pasos: Omit<PasoLinea, 'desdeAnteriorS'>[]): PasoLi
   });
 }
 
+/** La fecha más reciente de una lista de pasos (texto de la base, se compara como texto). */
+function ultimaFecha(pasos: { fecha: string }[]): string | null {
+  let ultima: string | null = null;
+  for (const p of pasos) if (p.fecha && (!ultima || p.fecha > ultima)) ultima = p.fecha;
+  return ultima;
+}
+
 /** Cuándo se borra una foto por retención (creada + 30 días), en el formato de la base. */
 function borraEn(creada: string | null): string | null {
   if (!creada) return null;
@@ -374,6 +381,8 @@ export async function fichaPedido(db: D1Database, id: string, ahora = Date.now()
       llegoRestauranteEn: texto(hito('llego_restaurante')?.creado_en),
       restaurante: restaurantePunto,
       casa,
+      // C-TIEMPOS-OPERACION (16 nov 2026): lo último que pasó, para no medir un pedido abandonado.
+      ultimaActividadEn: ultimaFecha(pasos),
     },
     ahora,
   );
@@ -567,6 +576,10 @@ export async function fichaViaje(db: D1Database, id: string, ahora = Date.now())
       kmRecogida: numero(oferta?.km),
       tarifa,
       duracionCotizadaS: numero(o.duracion_s),
+      ultimaActividadEn: ultimaFecha([
+        { fecha: String(o.creado_en) },
+        ...eventos.map((e) => ({ fecha: String(e.creado_en) })),
+      ]),
     },
     ahora,
   );

@@ -27,6 +27,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/informes': 'monitoreo.exportar',
   'GET /admin/pedidos': 'pedidos.ver',
   'GET /admin/pedidos/:id': 'pedidos.ver',
+  // C-RASTREO-VIVO: la posición viva del repartidor en la ficha (solo con el permiso de ubicación).
+  'GET /admin/pedidos/:id/rastreo': 'viajes.ubicacion_en_vivo',
   'GET /admin/pedidos/contadores': 'pedidos.ver',
   'POST /admin/pedidos/:id/cancelar': 'pedidos.cancelar',
   'POST /admin/pedidos/:id/soltar-repartidor': 'pedidos.reasignar',
@@ -38,6 +40,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'GET /admin/viajes': 'viajes.ver',
   // La ficha del viaje (paquete 2/3, otra rama): declarada de antemano para que al unir ya exija su permiso.
   'GET /admin/viajes/:id': 'viajes.ver',
+  // C-RASTREO-VIVO: la posición viva del conductor en la ficha del viaje o envío.
+  'GET /admin/viajes/:id/rastreo': 'viajes.ubicacion_en_vivo',
   // La foto del paquete de un envío (recogida o entrega): como las evidencias de un pedido.
   'GET /admin/viajes/:id/foto/:tipo': 'pedidos.fotos',
   'GET /admin/viajes/tarifas': 'viajes.ver',
@@ -354,6 +358,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/informes': CONSULTA,
   'GET /admin/pedidos': CONSULTA,
   'GET /admin/pedidos/:id': ficha('pedido'),
+  'GET /admin/pedidos/:id/rastreo': ficha('pedido'),
   'GET /admin/pedidos/contadores': CONSULTA,
   'POST /admin/pedidos/:id/cancelar': ficha('pedido'),
   'POST /admin/pedidos/:id/soltar-repartidor': ficha('pedido'),
@@ -363,6 +368,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/cancelaciones/:id/:decision': ficha('cancelacion'),
   'GET /admin/viajes': CONSULTA,
   'GET /admin/viajes/:id': ficha('viaje'),
+  'GET /admin/viajes/:id/rastreo': ficha('viaje'),
   'GET /admin/viajes/:id/foto/:tipo': ficha('viaje'),
   'GET /admin/viajes/tarifas': CONFIG,
   'GET /admin/viajes/ajustes': CONFIG,
