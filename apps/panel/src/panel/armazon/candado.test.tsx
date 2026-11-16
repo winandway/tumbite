@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { PanelApp } from '../PanelApp';
 
 /**
@@ -63,7 +63,12 @@ describe('C-PANEL-ARMAZON: todo panel web usa el armazón único', () => {
     localStorage.clear();
     localStorage.setItem('tumbite.idioma', 'es');
   });
-  afterEach(() => vi.unstubAllGlobals());
+  // Primero se cierra la pantalla y después se quita el servidor de mentira: al revés, una consulta
+  // que quedaba pendiente salía a la red de verdad y fallaba fuera de la prueba («Sin conexión»).
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
 
   it.each(CASOS)('%s se dibuja dentro del armazón', async (_nombre, rol, ruta) => {
     servidor(rol);
