@@ -7,6 +7,11 @@ import { MENSAJES_EN_EQUIPO } from './mensajesEnEquipo';
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-DESLIZAR-SIEMPRE (16 nov 2026)
+  [
+    'Esta app de pruebas es una versión vieja: guardamos la foto, pero la entrega se cierra deslizando. Instala la app de pruebas nueva desde la página de progreso.',
+    'This test app is an old version: we saved the photo, but the delivery is completed by sliding. Install the new test app from the progress page.',
+  ],
   // C-FLEX-EXCLUSIVO (16 nov 2026)
   ['Un bloque dura de 1 h 30 min a 5 horas.', 'A block lasts from 1 h 30 min to 5 hours.'],
   [

@@ -1390,6 +1390,9 @@ operacion.get('/repartidor/estado', async (c) => {
   });
 });
 
+export const MENSAJE_APP_PRUEBAS_VIEJA =
+  'Esta app de pruebas es una versión vieja: guardamos la foto, pero la entrega se cierra deslizando. Instala la app de pruebas nueva desde la página de progreso.';
+
 export const MENSAJE_EN_BLOQUE_FLEX =
   'Estás haciendo un bloque de Flex. Todo lo demás está desconectado hasta que termines el bloque.';
 
@@ -2735,6 +2738,32 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
     // C-PIN-SIN-FOTO: la foto no salta el PIN; la de «no apareció» no entrega nada.
     if (!ausente) await sinFotoConPin(db, id);
     foto = await leerFoto(c);
+    // C-DESLIZAR-SIEMPRE (16 nov 2026, pedido 407F de Richard): en el sitio de pruebas la foto de la
+    // puerta sola ya no cierra (solo lo hacía una app de pruebas vieja, sin el deslizador). Se guarda
+    // como la foto de la entrega, sin confirmar, y se pide instalar la app nueva. En producción el
+    // camino viejo sigue hasta que todas las versiones de tienda traigan el deslizador.
+    if (!modoPedido && entornoDe(c.req.url) === 'pruebas') {
+      const casaVieja = comoPunto(p.lat, p.lng);
+      const vieja = await db
+        .prepare("SELECT clave FROM evidencias WHERE pedido_id = ? AND tipo = 'entrega'")
+        .bind(id)
+        .first<{ clave: string }>();
+      await guardarEvidencia(
+        db,
+        foto,
+        id,
+        'entrega',
+        casaVieja ? metrosEntre(foto.donde, casaVieja) : null,
+        false,
+        'puerta',
+        '',
+      );
+      if (vieja?.clave)
+        await foto.bucket
+          .delete(vieja.clave)
+          .catch((e: unknown) => console.error('foto de entrega vieja: no se borró', e));
+      throw new ErrorDatos(MENSAJE_APP_PRUEBAS_VIEJA, 'version', 409);
+    }
     donde = foto.donde;
     modo = ausente ? 'ausente' : modoPedido === 'seguro' ? 'seguro' : 'puerta';
   } else {

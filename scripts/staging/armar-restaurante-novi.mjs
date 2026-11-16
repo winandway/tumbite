@@ -66,10 +66,11 @@ const datos = await api(
   '/datos/mi-restaurante',
   {
     nombre: 'Pizzería Demo Novi',
-    // 8 nov 2026: a 1 km de la zona de pruebas de Richard, en un centro comercial con estacionamiento.
-    direccion: '31194 Novi Rd, Novi, MI 48377',
-    lat: 42.5253879,
-    lng: -83.4661666,
+    // 16 nov 2026 (Richard): dentro de Oakland Glens, el barrio de la oficina, a unos 500 m de ella.
+    // Coordenadas de Google Places para esta dirección.
+    direccion: '30006 Rousseau Dr, Novi, MI 48377',
+    lat: 42.5152488,
+    lng: -83.4585959,
     categoria: 'Pizza',
     // Número ficticio (555): sin teléfono la lista de activación no deja abrir.
     telefono: '+12485550100',
@@ -115,7 +116,8 @@ const ab = await api('PATCH', '/datos/mi-restaurante/abierto', { abierto: true }
 exigir(ab.estado === 200, `abrir: ${ab.estado} ${ab.d.error ?? ''}`);
 await api('GET', '/datos/restaurante/pedidos', undefined, token); // señal: el panel está escuchando
 
-const lista = await api('GET', '/datos/restaurantes?lat=42.5378&lng=-83.4810');
+// Se comprueba desde Oakland Glens (la oficina), donde se hacen las pruebas.
+const lista = await api('GET', '/datos/restaurantes?lat=42.5160&lng=-83.4610');
 const visto = (lista.d.restaurantes ?? []).find((r) => r.id === rid);
-exigir(visto?.abiertoAhora, 'el restaurante no aparece abierto cerca de Walled Lake');
-console.log(`Pizzería Demo Novi abierta en pruebas (${visto.distanciaKm} km de Walled Lake)`);
+exigir(visto?.abiertoAhora, 'el restaurante no aparece abierto en Oakland Glens');
+console.log(`Pizzería Demo Novi abierta en pruebas (${visto.distanciaKm} km de la oficina)`);

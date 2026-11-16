@@ -26,12 +26,12 @@ afterEach(() => vi.unstubAllGlobals());
 const raiz = join(__dirname, '..', '..', '..');
 const CASA = { lat: 25.78, lng: -80.2 };
 
-async function enCamino() {
+async function enCamino(host?: string) {
   vi.stubGlobal(
     'fetch',
     async () => new Response(JSON.stringify({ id: 'pi_x', client_secret: 'x' }), { status: 200 }),
   );
-  const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' });
+  const m = mundo({ STRIPE_SECRET_KEY: 'sk_test_x' }, host ? { host } : {});
   const dueno = await m.cuenta('restaurante');
   const admin = await m.cuenta('admin');
   const cliente = await m.cuenta('cliente', 'Ana Cliente');
@@ -117,6 +117,31 @@ describe('la foto de la entrega desde un iPhone (C-FOTO-ENTREGA-IPHONE)', () => 
     const datos = (await res.json()) as { url?: string };
     expect(datos.url?.startsWith(`/datos/pedidos/${id}/mensajes/`)).toBe(true);
     expect(datos.url).toMatch(/\/mensajes\/\d+\/foto$/);
+  });
+});
+
+describe('C-DESLIZAR-SIEMPRE · en el sitio de pruebas la foto sola nunca cierra la entrega', () => {
+  // 16 nov 2026, pedido 407F de Richard en el sitio de pruebas: con una app de pruebas vieja (la
+  // compilación 17 hecha desde un código anterior al deslizador) la foto de la puerta cerró el pedido
+  // sola y nunca salió «Desliza para completar». En el sitio de pruebas el camino viejo ya no cierra:
+  // guarda la foto como evidencia y pide instalar la app nueva. En producción sigue aceptado hasta
+  // que todas las versiones de tienda traigan el deslizador.
+  it('la foto directo a «entregado» no cierra el pedido y dice que hay que instalar la app nueva', async () => {
+    const { m, id, rep } = await enCamino('staging.tumbite.com');
+    const res = await fotoIphone(m, `/datos/repartidor/pedidos/${id}/entregado`, rep.token);
+    expect(res.status).toBe(409);
+    const datos = (await res.json()) as { error?: string };
+    expect(datos.error ?? '').toMatch(/app de pruebas|test app/i);
+    expect(await estadoPedido(m, id)).toBe('en_camino');
+    // La foto no se pierde: queda como la de la puerta, y con la app nueva se cierra deslizando.
+    const cierre = await m.llamar(
+      'POST',
+      `/datos/repartidor/pedidos/${id}/entregado`,
+      { ...CASA, modo: 'puerta' },
+      rep.token,
+    );
+    expect(cierre.estado, JSON.stringify(cierre.datos)).toBe(200);
+    expect(await estadoPedido(m, id)).toBe('entregado');
   });
 });
 
