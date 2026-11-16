@@ -1934,7 +1934,19 @@ for (const idioma of ['en', 'es'] as const) {
             ).ok(),
           ).toBe(true);
           await llegarALaPuerta(pid);
-          const r = await subir(`/datos/repartidor/pedidos/${pid}/entregado`, paseRep, enCasa);
+          // C-DESLIZAR-SIEMPRE: como la app, la foto de la puerta queda en verde (no cierra) y
+          // la entrega se cierra deslizando.
+          const rFoto = await subir(
+            `/datos/repartidor/pedidos/${pid}/foto-entrega`,
+            paseRep,
+            enCasa,
+          );
+          expect(rFoto.status(), await rFoto.text()).toBe(200);
+          expect(filaPed(pid)?.estado, 'la foto sola no cierra la entrega').toBe('en_camino');
+          const r = await request.post(`/datos/repartidor/pedidos/${pid}/entregado`, {
+            headers: hdr(paseRep),
+            data: { lat: CASA.latitude, lng: CASA.longitude, modo: 'puerta' },
+          });
           expect(r.status(), await r.text()).toBe(200);
         };
         const llegarALaPuerta = async (pid: string) => {
