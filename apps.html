@@ -297,7 +297,7 @@
         try {
           const d = await (await fetch('/apps.json', { cache: 'no-store' })).json();
           const lado = (titulo, x, texto, aviso) =>
-            `<div class="lado"><strong>${titulo}</strong><span class="qr">${x.qr}</span><small>Número ${esc(x.numero)} · ${esc(dia(x.fecha))}</small><a class="boton" href="${esc(x.url)}">${texto}</a><small class="ojo-corto">${aviso}</small></div>`;
+            `<div class="lado"><strong>${titulo}</strong><span class="qr">${x.qr}</span><small>Número ${esc(x.numero)}${x.codigo ? ` · código ${esc(x.codigo)}` : ''} · ${esc(dia(x.fecha))}</small><a class="boton" href="${esc(x.url)}">${texto}</a><small class="ojo-corto">${aviso}</small></div>`;
           el('apps').innerHTML = d.apps
             .map(
               (a) =>
