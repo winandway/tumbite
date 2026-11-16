@@ -20,6 +20,9 @@
 - [x] HECHO 16 nov (MON-6, C-DOCS-OPERACIONES) Seis guías en Docs, inglés y español, sección «Operations team». Revisión única con Sonnet: devuelta por tres escapes de alcance, corregidos con pruebas en rojo.
 - [ ] [para: desarrollador] (MON-7) Bandeja de tickets: sigue trayendo 300 sin paginar y ordena recorriendo la tabla; paginar por clave como las demás listas (C-SUPERADMIN-ESCALA).
 - [ ] [para: desarrollador] (MON-8) Mapa de la ficha del pedido: comprobar en el sitio de pruebas con la llave del mapa web que la pieza de mapa sale con los tres puntos (en local solo se vieron las distancias en texto).
+- [x] HECHO 16 nov (MON-9, C-AUTORIZACION-VENCIDA) Ficha del pedido → «Resolver autorización vencida» (volver a cobrar con la tarjeta guardada si el cliente lo permitió, o cerrar sin cobro con nota; control dual, permiso `dinero.resolver_autorizacion`, 404 fuera de zona) y aviso del reloj a las 96 horas; guía 7 de Docs. Solo Stripe simulado.
+- [ ] [para: revisor-calidad] (MON-9r) Revisar una vez C-AUTORIZACION-VENCIDA: que volver a cobrar nunca cobre dos veces (clave fija + búsqueda de `recobro_de`), que no se cobre sin `setup_future_usage = off_session`, que cerrar sin cobro exija `canceled` en Stripe, el cambio de `no_aplica` en `conciliar`/`conciliarPedidos`/diagnóstico y el CHECK nuevo de `aprobaciones_dinero`. Todos los países con tarjeta.
+- [ ] [para: desarrollador] (MON-9s) Probar C-AUTORIZACION-VENCIDA en el sitio de pruebas con Stripe en modo prueba (cinco puntos en `VERIFICAR-PAGOS.md`), después de la revisión. Todos los países con tarjeta.
 - [!] Decisiones de Richard (ficha del monitoreo, sección 8): quién ve fotos de entrega, quién ve teléfono y correo, segundo factor, código corto, buscar «contiene» en nombres, topes de dinero por plantilla. Aplicado lo recomendado y configurable en CONFIG_PERMISOS.
 
 ## Foto de la puerta (15 nov 2026, orden de Richard) — todos los países
