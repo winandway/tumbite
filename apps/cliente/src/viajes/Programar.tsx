@@ -7,9 +7,10 @@ import {
   formatearMonto,
   horasParaProgramar,
 } from '@tumbite/compartido';
-import { Boton, C, useSesion, Text } from '@tumbite/movil';
+import { Boton, C, Pildora as Etiqueta, useSesion, Text } from '@tumbite/movil';
 import { Pildora, Tarjeta } from '../comida/piezas';
 import { TEXTOS_MOTO } from './textos';
+import { TEXTOS_FIJOS } from './textosFijos';
 
 /**
  * C-VIAJE-PROGRAMADO (14 nov 2026, todos los países): elegir «Ahora» o «Programar» con día y hora
@@ -122,12 +123,16 @@ type Programado = {
   moneda: string;
   origen: string;
   destino: string;
+  /** C-VIAJES-FIJOS: el viaje fijo del que nace y el menor que lleva. */
+  rutina?: { id: string; nombre: string } | null;
+  menor?: string | null;
 };
 
 /** «Mis viajes programados»: solo aparece si hay alguno. */
 export function MisProgramados({ recargar }: { recargar?: number }) {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
+  const tf = enIdioma(TEXTOS_FIJOS, idioma);
   const [lista, setLista] = useState<Programado[]>([]);
   const [confirmar, setConfirmar] = useState<string | null>(null);
   const [aviso, setAviso] = useState('');
@@ -183,6 +188,17 @@ export function MisProgramados({ recargar }: { recargar?: number }) {
             <Text style={{ fontWeight: '700', color: C.secundario }}>
               {diaYHora(p.programadoPara, idioma)}
             </Text>
+            {p.rutina || p.menor ? (
+              <View
+                style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}
+                testID={`programado-etiquetas-${p.id}`}
+              >
+                {p.rutina ? (
+                  <Etiqueta texto={`${tf.viajeFijo}: ${p.rutina.nombre}`} icono="repeat-outline" />
+                ) : null}
+                {p.menor ? <Etiqueta texto={tf.menor(p.menor)} icono="happy-outline" /> : null}
+              </View>
+            ) : null}
             <Text style={{ color: '#666B73' }} numberOfLines={1}>
               {p.origen} → {p.destino}
             </Text>

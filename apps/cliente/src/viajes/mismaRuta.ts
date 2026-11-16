@@ -27,6 +27,13 @@ export type ViajeHistorial = {
   metodoPago: string;
   creadoEn: string;
   puntos: { origen: PuntoMapa; destino: PuntoMapa; paradas: ParadaHistorial[] } | null;
+  /** C-CONDUCTOR-CONFIANZA: el nombre de pila del conductor de un viaje terminado (o null). */
+  conductor?: string | null;
+  /** Si ese conductor ya es de confianza del pasajero. */
+  deConfianza?: boolean;
+  /** C-VIAJES-FIJOS: de qué viaje fijo nació y el menor que llevó. */
+  rutinaId?: string | null;
+  menor?: string | null;
 };
 
 export type MetodoPagoViaje = 'efectivo' | 'tarjeta' | 'pago_movil';

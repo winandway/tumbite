@@ -29,6 +29,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 import { conCuenta } from '../ConCuenta';
+import { TEXTOS_FIJOS } from '../viajes/textosFijos';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
 const CAMARA = {
@@ -111,6 +112,7 @@ function MiCuenta() {
     if (p === 'favoritos') return router.push('/favorites');
   };
   const t = enIdioma(T, idioma);
+  const tf = enIdioma(TEXTOS_FIJOS, idioma);
   const [pedidos, setPedidos] = useState<Pedido[] | null>(null);
   const [tarjetas, setTarjetas] = useState<Tarjeta[] | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
@@ -236,6 +238,41 @@ function MiCuenta() {
             <Text style={{ fontWeight: '700' }}>›</Text>
           </Pressable>
         ) : null}
+        {/* C-VIAJES-FIJOS y C-CONDUCTOR-CONFIANZA: en la cuenta, como «Saved places» y «Scheduled» de Uber. */}
+        {(
+          [
+            ['/fixed-rides', tf.fijos, tf.entradaFijosDetalle, 'ir-viajes-fijos'],
+            [
+              '/trusted-drivers',
+              tf.conductores,
+              tf.entradaConfianzaDetalle,
+              'ir-conductores-confianza',
+            ],
+          ] as const
+        ).map(([ruta, titulo, detalle, id]) => (
+          <Pressable
+            key={ruta}
+            onPress={() => router.push(ruta)}
+            accessibilityRole="link"
+            accessibilityLabel={`${titulo}. ${detalle}`}
+            testID={id}
+            style={[
+              e.tarjeta,
+              {
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+              },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '700' }}>{titulo}</Text>
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{detalle}</Text>
+            </View>
+            <Text style={{ fontWeight: '700' }}>›</Text>
+          </Pressable>
+        ))}
         {/* Divoox Flex: lo que las empresas me envían (C-FLEX-UBICACION). */}
         <Pressable
           onPress={() => router.push('/packages')}

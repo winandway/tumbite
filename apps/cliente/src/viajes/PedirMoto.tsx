@@ -32,6 +32,7 @@ import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
+import { PedirPrimeroA } from './ConductoresConfianza';
 import { tomarRelleno } from './relleno';
 import { ElegirCuando, MisProgramados, horaCorta } from './Programar';
 import {
@@ -89,6 +90,8 @@ export function PedirMoto({
       sinProhibidos: false,
       // C-VIAJE-PROGRAMADO: '' = ahora; si no, la hora reservada (ISO).
       cuando: '',
+      // C-CONDUCTOR-CONFIANZA: '' = que elija el servidor; 'ninguno' = cualquier conductor; o un id.
+      confianza: '',
     },
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
@@ -242,6 +245,8 @@ export function PedirMoto({
             }
           : {}),
         ...(cuando ? { programadoPara: cuando } : {}),
+        // C-CONDUCTOR-CONFIANZA: solo si la persona eligió («Pedir primero a»).
+        ...(v.confianza ? { confianza: v.confianza } : {}),
       });
       if (r.programado) {
         await b.limpiar();
@@ -258,6 +263,8 @@ export function PedirMoto({
       alPedir(r.viaje.id);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
+      // C-CONDUCTOR-CONFIANZA: si lo quitó en otra pantalla, vuelve a «que elija el servidor».
+      if (x instanceof ErrorApi && x.campo === 'confianza') cambiar('confianza', '');
       // Si el precio venció entre medio, se trae uno nuevo.
       void cotizar();
     } finally {
@@ -349,6 +356,12 @@ export function PedirMoto({
       {servicio === 'moto' ? <Text style={{ color: '#666B73' }}>{t.unPasajero}</Text> : null}
 
       <ElegirCuando valor={cuando} cambiar={(iso) => cambiar('cuando', iso)} />
+      <PedirPrimeroA
+        servicio={servicio}
+        valor={v.confianza}
+        cambiar={(x) => cambiar('confianza', x)}
+        reserva={Boolean(cuando)}
+      />
       {/* C-CARRO-CATEGORIAS: las categorías que ofrece la ciudad, cada una con su precio para este
           trayecto, como la lista de Uber. Al tocar otra, se cotiza con esa. */}
       {cotizacion && servicio === 'carro' && (cotizacion.opciones?.length ?? 0) > 1 ? (

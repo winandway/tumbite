@@ -32,6 +32,7 @@ import {
   sePuedeRepetir,
 } from './mismaRuta';
 import { TEXTOS_MIS_VIAJES } from './textos';
+import { TEXTOS_FIJOS } from './textosFijos';
 
 /**
  * C-VIAJES-HISTORIAL (13 nov 2026) — todos los países. «Mis viajes» del pasajero, como Uber: la lista
@@ -396,21 +397,29 @@ export function TarjetaViaje({
   );
 }
 
-/** Los tres puntos del viaje: recibo y ayuda (los dos abren el recibo, con la ayuda debajo). */
+/**
+ * Los tres puntos del viaje: recibo y ayuda (los dos abren el recibo, con la ayuda debajo) y, en un
+ * viaje terminado con conductor, «Conductor de confianza» para marcarlo o quitarlo (C-CONDUCTOR-
+ * CONFIANZA). Va aquí y no en la tarjeta para no cambiar su tamaño ni su diseño.
+ */
 function OpcionesViaje({
-  abierto,
+  viaje,
   alCerrar,
   alRecibo,
+  alConfianza,
 }: {
-  abierto: boolean;
+  viaje: ViajeHistorial | null;
   alCerrar: () => void;
   alRecibo: () => void;
+  alConfianza: (v: ViajeHistorial) => void;
 }) {
   const { idioma } = useSesion();
   const t = enIdioma(TEXTOS_MIS_VIAJES, idioma);
+  const tf = enIdioma(TEXTOS_FIJOS, idioma);
   const col = useColores();
+  const conConductor = viaje?.estado === 'terminado' && Boolean(viaje.conductor);
   return (
-    <Modal visible={abierto} transparent animationType="fade" onRequestClose={alCerrar}>
+    <Modal visible={viaje != null} transparent animationType="fade" onRequestClose={alCerrar}>
       <Pressable
         style={{ flex: 1, backgroundColor: 'rgba(16,16,16,0.45)' }}
         onPress={alCerrar}
@@ -430,6 +439,24 @@ function OpcionesViaje({
         ]}
         testID="viaje-opciones"
       >
+        {viaje && conConductor ? (
+          <FilaLista
+            titulo={viaje.deConfianza ? tf.esDeConfianza : tf.marcarConfianza}
+            detalle={
+              viaje.deConfianza
+                ? tf.esDeConfianzaDetalle
+                : tf.marcarConfianzaDetalle(viaje.conductor ?? '')
+            }
+            icono={viaje.deConfianza ? 'shield-checkmark' : 'shield-checkmark-outline'}
+            derecha={
+              viaje.deConfianza ? (
+                <Icono nombre="checkmark-circle" tamano={22} color={col.exito} />
+              ) : undefined
+            }
+            alTocar={() => alConfianza(viaje)}
+            testID="viaje-opcion-confianza"
+          />
+        ) : null}
         <FilaLista
           titulo={t.verRecibo}
           icono="receipt-outline"
@@ -464,7 +491,10 @@ export function MisViajes({
 }) {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_MIS_VIAJES, idioma);
+  const tf = enIdioma(TEXTOS_FIJOS, idioma);
   const col = useColores();
+  // C-CONDUCTOR-CONFIANZA: el aviso de «ya es tu conductor de confianza» (verde) o el error del servidor.
+  const [avisoConfianza, setAvisoConfianza] = useState('');
   const [filas, setFilas] = useState<ViajeHistorial[] | null>(null);
   const [siguiente, setSiguiente] = useState<string | null>(null);
   const [abierto, setAbierto] = useState<string | null>(null);
@@ -492,6 +522,22 @@ export function MisViajes({
     void traer(null);
   }, [traer]);
 
+  async function confianza(v: ViajeHistorial) {
+    setOpciones(null);
+    setError('');
+    setAvisoConfianza('');
+    const quitar = Boolean(v.deConfianza);
+    try {
+      await api.pedir(quitar ? 'DELETE' : 'PUT', `/datos/viajes/${v.id}/confianza`);
+      const nombre = v.conductor ?? '';
+      // Solo cambia este viaje: el historial no trae el id del conductor y dos pueden llamarse igual.
+      setFilas((x) => (x ?? []).map((f) => (f.id === v.id ? { ...f, deConfianza: !quitar } : f)));
+      setAvisoConfianza(quitar ? tf.quitado(nombre) : tf.marcado(nombre));
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
   if (abierto) return <Detalle id={abierto} alVolver={() => setAbierto(null)} />;
   const grupos = agruparPorMes(filas ?? [], idioma);
   return (
@@ -508,6 +554,16 @@ export function MisViajes({
         >
           <Icono nombre="alert-circle-outline" color={COLOR.error} tamano={20} />
           <Text style={[LETRA.secundario, { color: COLOR.error, flex: 1 }]}>{error}</Text>
+        </View>
+      ) : null}
+      {avisoConfianza ? (
+        <View
+          accessibilityRole="summary"
+          testID="aviso-confianza"
+          style={{ flexDirection: 'row', gap: ESPACIO.s, alignItems: 'center' }}
+        >
+          <Icono nombre="checkmark-circle-outline" color={col.exito} tamano={20} />
+          <Text style={[LETRA.secundario, { color: col.exito, flex: 1 }]}>{avisoConfianza}</Text>
         </View>
       ) : null}
       {filas && filas.length === 0 ? (
@@ -538,7 +594,8 @@ export function MisViajes({
         />
       ) : null}
       <OpcionesViaje
-        abierto={opciones != null}
+        viaje={(filas ?? []).find((f) => f.id === opciones) ?? null}
+        alConfianza={(v) => void confianza(v)}
         alCerrar={() => setOpciones(null)}
         alRecibo={() => {
           setAbierto(opciones);

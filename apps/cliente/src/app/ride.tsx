@@ -3,7 +3,9 @@ import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { enIdioma } from '@tumbite/compartido';
-import { useSesion } from '@tumbite/movil';
+import { FilaLista, RADIO, useColores, useSesion } from '@tumbite/movil';
+import { View } from 'react-native';
+import { TEXTOS_FIJOS } from '../viajes/textosFijos';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { PedirMoto } from '../viajes/PedirMoto';
@@ -23,6 +25,8 @@ function PantallaMoto() {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
+  const tf = enIdioma(TEXTOS_FIJOS, idioma);
+  const col = useColores();
   // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
   const pedido = useLocalSearchParams<{ servicio?: string }>().servicio;
   const servicio = pedido === 'carro' || pedido === 'envios' ? pedido : 'moto';
@@ -127,6 +131,34 @@ function PantallaMoto() {
               deudaPendiente={deuda}
               alPedir={(id) => setViajeId(id)}
             />
+            {/* C-VIAJES-FIJOS y C-CONDUCTOR-CONFIANZA: los accesos en la pantalla del servicio. */}
+            <View
+              testID="accesos-fijos"
+              style={{
+                borderWidth: 1,
+                borderColor: col.borde,
+                borderRadius: RADIO.l,
+                backgroundColor: col.fondo,
+                marginTop: 16,
+                overflow: 'hidden',
+              }}
+            >
+              <FilaLista
+                titulo={tf.fijos}
+                detalle={tf.entradaFijosDetalle}
+                icono="repeat-outline"
+                alTocar={() => router.push('/fixed-rides')}
+                testID="servicio-viajes-fijos"
+              />
+              <FilaLista
+                titulo={tf.conductores}
+                detalle={tf.entradaConfianzaDetalle}
+                icono="shield-checkmark-outline"
+                alTocar={() => router.push('/trusted-drivers')}
+                testID="servicio-conductores-confianza"
+                ultima
+              />
+            </View>
             {servicio !== 'envios' ? <ContactosConfianza /> : null}
             {/* C-VIAJES-HISTORIAL: sus viajes anteriores con el recibo y la ayuda. */}
             {/* C-MISMA-RUTA: «Pedir la misma ruta» cae aquí mismo en la espera de siempre. */}
