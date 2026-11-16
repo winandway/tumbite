@@ -12,6 +12,7 @@ import {
 } from './armazon/menus';
 import {
   MARCA,
+  PATRON_ID_FICHA,
   type Usuario,
   almacenNavegador,
   borrarBorradoresDe,
@@ -76,16 +77,56 @@ const enProduccion = () =>
   entornoDeHost(window.location.host) !== 'pruebas' &&
   entornoDeHost(window.location.host) !== 'local';
 
+/**
+ * C-SUPERADMIN-ENLACES (15 nov 2026): las fichas del superadmin aceptan CUALQUIER id de la base
+ * (UUID, «zz-vivo-r-…», «vol-p-1»…), con UN solo patrón para todas. Antes cada ficha exigía un UUID
+ * de 36 letras y un restaurante con otro id abría «Esta página no existe».
+ */
+// eslint-disable-next-line security/detect-non-literal-regexp -- patrón fijo del propio código (compartido)
+const FICHA = new RegExp(`^/([a-z]+)/(${PATRON_ID_FICHA})$`);
+export const PREFIJOS_FICHA = [
+  'orders',
+  'pedidos',
+  'customers',
+  'drivers',
+  'restaurants',
+  'tickets',
+  'verifications',
+  'flexfinance',
+] as const;
+
+/** La ficha que corresponde a /<prefijo>/<id>, o null si la dirección no es de una ficha. */
+function fichaAdmin(sub: string, base: string, idioma: 'es' | 'en'): React.ReactNode {
+  const m = FICHA.exec(sub);
+  const id = m?.[2];
+  if (!m || !id) return null;
+  switch (m[1]) {
+    case 'orders':
+    case 'pedidos':
+      return <SuperPedido base={base} id={id} idioma={idioma} />;
+    case 'customers':
+      return <SuperCliente base={base} id={id} idioma={idioma} />;
+    case 'drivers':
+      return <SuperRepartidor base={base} id={id} idioma={idioma} />;
+    case 'restaurants':
+      return <SuperRestaurante base={base} id={id} idioma={idioma} />;
+    case 'tickets':
+      return <SuperTickets base={base} idioma={idioma} ticketId={id} />;
+    case 'verifications':
+      return <SuperKyc base={base} idioma={idioma} id={id} />;
+    case 'flexfinance':
+      return <SuperFinanzas base={base} idioma={idioma} empresaId={id} />;
+    default:
+      return null;
+  }
+}
+
 export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' | 'en') {
   if (sub === '') return <SuperResumen base={base} idioma={idioma} />;
   if (sub === '/tickets') return <SuperTickets base={base} idioma={idioma} ticketId={null} />;
-  const t = /^\/tickets\/([0-9a-f-]{36})$/.exec(sub);
-  if (t?.[1]) return <SuperTickets base={base} idioma={idioma} ticketId={t[1]} />;
   if (sub === '/franchises') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
   if (sub === '/cities') return <SuperCiudades base={base} idioma={idioma} />;
   if (sub === '/verifications') return <SuperKyc base={base} idioma={idioma} id={null} />;
-  const kycId = /^\/verifications\/([0-9a-f-]{36})$/.exec(sub);
-  if (kycId?.[1]) return <SuperKyc base={base} idioma={idioma} id={kycId[1]} />;
   if (sub === '/cash') return <SuperBandeja base={base} idioma={idioma} clave={null} />;
   const caso = /^\/cash\/([^/]+)$/.exec(sub);
   if (caso?.[1])
@@ -100,23 +141,11 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/rewards') return <SuperRewards idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;
   if (sub === '/flexfinance') return <SuperFinanzas base={base} idioma={idioma} empresaId={null} />;
-  const finEmpresa = /^\/flexfinance\/([0-9a-f-]{36})$/.exec(sub);
-  if (finEmpresa?.[1])
-    return <SuperFinanzas base={base} idioma={idioma} empresaId={finEmpresa[1]} />;
   if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;
   if (sub === '/customers') return <SuperClientes base={base} idioma={idioma} />;
   if (sub === '/restaurants') return <AdminRestaurantes idioma={idioma} base={base} />;
   if (sub === '/orders') return <SuperPedidos base={base} idioma={idioma} />;
-  const pedidoId = /^\/(?:orders|pedidos)\/([0-9a-f-]{36})$/.exec(sub);
-  if (pedidoId?.[1]) return <SuperPedido base={base} id={pedidoId[1]} idioma={idioma} />;
-  const ficha = /^\/(drivers|customers|restaurants)\/([0-9a-f-]{36})$/.exec(sub);
-  if (ficha?.[1] === 'drivers' && ficha[2])
-    return <SuperRepartidor base={base} id={ficha[2]} idioma={idioma} />;
-  if (ficha?.[1] === 'customers' && ficha[2])
-    return <SuperCliente base={base} id={ficha[2]} idioma={idioma} />;
-  if (ficha?.[1] === 'restaurants' && ficha[2])
-    return <SuperRestaurante base={base} id={ficha[2]} idioma={idioma} />;
-  return seccion(`/panel${sub}`, usuario, idioma);
+  return fichaAdmin(sub, base, idioma) ?? seccion(`/panel${sub}`, usuario, idioma);
 }
 
 function seccion(ruta: string, usuario: Usuario, idioma: 'es' | 'en'): React.ReactNode {
