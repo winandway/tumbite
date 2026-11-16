@@ -137,9 +137,19 @@ media.get('/media/fotos/:restaurante/:archivo', async (c) => {
  */
 const CAPTURA_GRANDE = /^[a-z0-9-]{1,120}-[0-9a-f]{8}\.webp$/;
 
+/**
+ * C-AYUDA-INTERNA (16 nov 2026): las capturas del panel de operaciones (el superadmin) que alguna vez
+ * estuvieron en Docs. Ya no se sirven al público (410): viven solo en la ayuda interna «?».
+ */
+export const CAPTURA_INTERNA =
+  /^(monitoreo-|recorrido-moderacion-computadora-bandeja-|doble-firma-)/;
+
 media.get('/media/docs-grande/:archivo', async (c) => {
   const { archivo } = c.req.param();
   if (!CAPTURA_GRANDE.test(archivo)) return c.text('No encontrado', 404);
+  // C-AYUDA-INTERNA: las capturas del panel interno ya no son de Docs: no se sirven al público.
+  if (CAPTURA_INTERNA.test(archivo))
+    return c.text('Esta captura ya no existe.', 410, { 'X-Robots-Tag': 'noindex, nofollow' });
   const obj = await almacen(c.env).get(`docs-grande/${archivo}`);
   if (!obj) return c.text('No encontrado', 404);
   const headers = new Headers();

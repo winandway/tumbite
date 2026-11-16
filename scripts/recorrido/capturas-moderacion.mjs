@@ -16,6 +16,7 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
+import { ORIGINALES_PRIVADAS } from '../docs/ayudaPrivada.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -250,7 +251,14 @@ async function pasada(idioma) {
         spam: 'Es spam, publicidad o falsa',
       };
   const captura = (p, nombre, opciones = {}) =>
-    p.screenshot({ path: join(SALIDA, `moderacion-${nombre}-${idioma}.png`), ...opciones });
+    p.screenshot({
+      // C-AYUDA-INTERNA: la bandeja del superadmin va a la carpeta privada, no al repositorio.
+      path: join(
+        nombre === 'computadora-bandeja' ? ORIGINALES_PRIVADAS : SALIDA,
+        `moderacion-${nombre}-${idioma}.png`,
+      ),
+      ...opciones,
+    });
   const { C, dueno, rep, cli, pedido } = await montar(idioma);
   const id = await pedido();
   await pedir('POST', `/datos/pedidos/${id}/mensajes`, { texto: C.mensajes.rep }, rep.token);

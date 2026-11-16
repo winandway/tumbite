@@ -65,7 +65,7 @@ import { fichaViajeRutas } from './rutas/fichaViaje';
 import { rastreoVivoRutas } from './rutas/rastreoVivo';
 import { preferenciasInternas } from './rutas/preferenciasInternas';
 import { kyc } from './rutas/kyc';
-import { fotos, media } from './rutas/fotos';
+import { CAPTURA_INTERNA, fotos, media } from './rutas/fotos';
 import { diagnostico } from './rutas/diagnostico';
 import { ciudadPruebas } from './rutas/ciudadPruebas';
 import { fijarAppCiudad } from './ciudadJuego';
@@ -101,6 +101,7 @@ import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
 import { viajesProgramados } from './rutas/viajesProgramados';
 import { chatViaje } from './rutas/chatViaje';
 import { moderacion } from './rutas/moderacion';
+import { ayudaInterna } from './rutas/ayudaInterna';
 import { paradasViaje } from './rutas/paradasViaje';
 import { dinamicaViaje } from './rutas/dinamicaViaje';
 import { comidaCiudad } from './rutas/comidaCiudad';
@@ -232,7 +233,8 @@ app.use(
   }),
 );
 /** Páginas privadas por enlace (tickets, viaje compartido, entrega): ningún buscador las guarda. */
-export const RUTAS_PRIVADAS = ['/t/', '/ride/', '/deliver/'];
+// C-AYUDA-INTERNA: el panel (y la ayuda del equipo que vive en el superadmin) tampoco se indexa.
+export const RUTAS_PRIVADAS = ['/t/', '/ride/', '/deliver/', '/panel'];
 const limiteGeneral = limiteIntentos(120, 60_000);
 // Los avisos de Stripe llegan de sus servidores y ya vienen firmados: no se frenan por IP.
 app.use('/datos/*', (c, next) =>
@@ -543,6 +545,17 @@ export function conCanonica(res: Response, href: string): Response {
  * (landing, legales, panel) son una sola página: si el archivo no existe, se
  * entrega index.html y el navegador decide qué mostrar.
  */
+/**
+ * C-AYUDA-INTERNA: direcciones de Docs que fueron del equipo interno (la sección «Operations team» y
+ * sus capturas). Responden 410 «ya no existe» para que los buscadores las olviden.
+ */
+export const esDocsInterno = (ruta: string) =>
+  /^(\/es)?\/docs\/operations(\/|$)/.test(ruta) ||
+  (/^\/(docs|media\/docs-grande)\/[^/]+$/.test(ruta) &&
+    CAPTURA_INTERNA.test(ruta.replace(/^.*\//, '')));
+
+const PAGINA_RETIRADA = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Page removed · Divoox</title></head><body style="font-family:system-ui,sans-serif;margin:0;padding:48px 16px;text-align:center;color:#101010;background:#fff"><h1>This page no longer exists</h1><p>Esta página ya no existe.</p><p><a href="/docs" style="color:#C20A1A">Divoox Docs</a></p></body></html>`;
+
 /** A qué raíz cae una ruta de página que no existe como archivo. */
 export function raizDeApp(ruta: string): string {
   // C-ENLACE-INVITACION: los enlaces con que una empresa (Flex) o un restaurante (flota propia)
@@ -564,6 +577,13 @@ app.notFound(async (c) => {
       },
       404,
     );
+  // C-AYUDA-INTERNA (16 nov 2026, Richard): lo que fue la sección pública del equipo de operaciones
+  // ya no existe (410, fuera de los buscadores); esas guías viven solo en la ayuda interna.
+  if (esDocsInterno(c.req.path))
+    return c.html(PAGINA_RETIRADA, 410, {
+      'X-Robots-Tag': 'noindex, nofollow',
+      'Cache-Control': 'public, max-age=300',
+    });
   if (!c.env.ASSETS) return c.text('No encontrado', 404);
   let res = await c.env.ASSETS.fetch(c.req.raw);
   const esPagina =
@@ -621,6 +641,8 @@ app.route('/datos', viajesProgramados);
 app.route('/datos', chatViaje);
 // C-MODERACION: reportar, bloquear y la bandeja de reportes del equipo.
 app.route('/datos', moderacion);
+// C-AYUDA-INTERNA: la ayuda del equipo («?» del superadmin), solo con sesión del equipo.
+app.route('/datos', ayudaInterna);
 // C-VIAJE-PARADAS y C-CARRO-DINAMICA (14 nov 2026).
 app.route('/datos', paradasViaje);
 app.route('/datos', dinamicaViaje);

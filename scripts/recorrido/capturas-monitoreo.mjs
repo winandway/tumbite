@@ -18,11 +18,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
 import sharp from 'sharp';
+import { ORIGINALES_PRIVADAS } from '../docs/ayudaPrivada.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const CARPETA = process.env.CARPETA_RECORRIDO ?? '.simulador';
 const PANEL = process.env.PANEL ?? 'http://localhost:5173';
-const SALIDA = join(RAIZ, 'docs', 'capturas', 'monitoreo');
+// C-AYUDA-INTERNA: fuera del repositorio (es público): la carpeta privada de la ayuda interna.
+const SALIDA = ORIGINALES_PRIVADAS;
 mkdirSync(SALIDA, { recursive: true });
 const datos = JSON.parse(readFileSync(join(RAIZ, CARPETA, 'datos.json'), 'utf8'));
 const tmp = mkdtempSync(join(tmpdir(), 'monitoreo-'));

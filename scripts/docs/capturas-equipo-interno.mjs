@@ -15,12 +15,15 @@ import fs from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
+import { ORIGINALES_PRIVADAS } from './ayudaPrivada.mjs';
 
 const RAIZ = process.cwd();
 const API = process.env.API ?? 'http://localhost:8798';
 const PANEL = process.env.PANEL ?? 'http://localhost:5174';
-const SALIDA = join(RAIZ, 'docs', 'capturas', 'monitoreo');
+// C-AYUDA-INTERNA: fuera del repositorio (es público).
+const SALIDA = ORIGINALES_PRIVADAS;
 const MOVIL = join(RAIZ, '.simulador', 'capturas-movil');
+// eslint-disable-next-line security/detect-non-literal-fs-filename -- carpeta privada fija (ayudaPrivada.mjs)
 fs.mkdirSync(SALIDA, { recursive: true });
 fs.mkdirSync(MOVIL, { recursive: true });
 const datos = JSON.parse(fs.readFileSync(join(RAIZ, '.simulador', 'datos.json'), 'utf8'));

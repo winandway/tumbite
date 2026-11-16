@@ -199,6 +199,9 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'DELETE /admin/preferencias/:pantalla': LIBRE,
   'GET /admin/auditoria': 'auditoria.ver',
   'GET /admin/ruta': LIBRE,
+  // C-AYUDA-INTERNA: la ayuda del equipo («?»), para cualquier persona activa del equipo.
+  'GET /admin/ayuda': LIBRE,
+  'GET /admin/ayuda/captura/:archivo': LIBRE,
   // C-HORARIO-EMPLEADO: qué hora es en cada ciudad (Configuración → Horario).
   'GET /admin/horario/ciudades': LIBRE,
   // ─── Territorio, servicios y configuración
@@ -515,6 +518,8 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'DELETE /admin/preferencias/:pantalla': PROPIO,
   'GET /admin/auditoria': AUDITORIA,
   'GET /admin/ruta': PROPIO,
+  'GET /admin/ayuda': PROPIO,
+  'GET /admin/ayuda/captura/:archivo': PROPIO,
   'GET /admin/horario/ciudades': PROPIO,
   'GET /admin/zonas': PROPIO,
   'GET /admin/ciudades': PROPIO,

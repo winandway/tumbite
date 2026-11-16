@@ -1,6 +1,7 @@
 import { AvisosWebPanel, darDeBajaAlSalir } from './AvisosWebPanel';
 import { Flota } from './Flota';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AyudaInterna } from './AyudaInterna';
 import { Armazon, type AvisoArmazon, SesionArmazon } from './armazon/Armazon';
 import { EncabezadoPagina, Metricas, TarjetaMetrica } from './armazon/Piezas';
 import {
@@ -143,6 +144,9 @@ function fichaAdmin(sub: string, base: string, idioma: 'es' | 'en'): React.React
 export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma: 'es' | 'en') {
   if (sub === '') return <SuperResumen base={base} idioma={idioma} />;
   if (sub === '/tickets') return <SuperTickets base={base} idioma={idioma} ticketId={null} />;
+  // C-AYUDA-INTERNA: la ayuda del equipo («?» de la cabecera), solo bajo la dirección secreta.
+  if (sub === '/help' || sub.startsWith('/help/'))
+    return <AyudaInterna base={base} sub={sub.slice('/help'.length)} idioma={idioma} />;
   // C-MODERACION: los reportes de mensajes y reseñas.
   if (sub === '/moderation') return <SuperReportes idioma={idioma} />;
   if (sub === '/franchises') return <SuperFranquicias usuario={usuario} idioma={idioma} />;
@@ -510,6 +514,9 @@ export function PanelApp({ ruta }: { ruta: string }) {
                 esAdmin && baseAdmin && baseAdmin !== '/panel' ? (
                   <BuscadorSuper base={baseAdmin} idioma={idioma} grupos={grupos} />
                 ) : undefined
+              }
+              ayuda={
+                esAdmin && baseAdmin && baseAdmin !== '/panel' ? `${baseAdmin}/help` : undefined
               }
             >
               {esAdmin ? <FranjaSegundoFactor idioma={idioma} /> : null}
