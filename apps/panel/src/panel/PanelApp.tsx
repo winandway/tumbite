@@ -67,6 +67,7 @@ import { SuperPiloto } from './SuperPiloto';
 import { SuperRewards } from './SuperRewards';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
+import { SuperViajesFijos } from './SuperViajesFijos';
 import { SuperViaje } from './SuperViaje';
 import { SuperConfiguracion } from './SuperConfiguracion';
 import { ProveedorHorario } from './horario';
@@ -157,6 +158,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (caso?.[1])
     return <SuperBandeja base={base} idioma={idioma} clave={decodeURIComponent(caso[1])} />;
   if (sub === '/rides') return <SuperViajes base={base} idioma={idioma} />;
+  // C-VIAJES-FIJOS: la pestaña «Viajes fijos» del monitoreo de viajes.
+  if (sub === '/rides/fixed') return <SuperViajesFijos base={base} idioma={idioma} />;
   // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; «Equipo interno» se suma aquí).
   if (sub === '/configuration') return <SuperConfiguracion idioma={idioma} base={base} />;
   if (sub === '/moto') return <SuperMoto base={base} idioma={idioma} />;

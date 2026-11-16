@@ -14,6 +14,7 @@ import { InterruptoresViaje } from './InterruptoresViaje';
 import { DinamicaCiudad, vecesDe } from './DinamicaCiudad';
 import { Enlace } from '../Enlace';
 import { Hora } from './horario';
+import { PestanasViajes } from './SuperViajesFijos';
 
 const T = {
   es: {
@@ -274,6 +275,7 @@ export function SuperViajes({ base, idioma }: { base: string; idioma: Idioma }) 
   return (
     <section className="super">
       <h1>{t.titulo}</h1>
+      <PestanasViajes base={base} idioma={idioma} activa="viajes" />
       <p>{t.intro}</p>
       {falla && (
         <p className="error-general" role="alert">

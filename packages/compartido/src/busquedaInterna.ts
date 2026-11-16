@@ -223,6 +223,8 @@ export const PANTALLAS_PREFERENCIAS = [
   'tickets',
   // C-HORARIO-EMPLEADO: el reloj y la zona horaria de cada empleado (Configuración → Horario).
   'horario',
+  // C-VIAJES-FIJOS: el monitoreo de viajes fijos (ciudad, estado y solo menores).
+  'viajes-fijos',
 ] as const;
 export type PantallaPreferencias = (typeof PANTALLAS_PREFERENCIAS)[number];
 export const CLAVES_PREFERENCIAS = [
@@ -235,6 +237,8 @@ export const CLAVES_PREFERENCIAS = [
   // C-HORARIO-EMPLEADO: «auto» o «12»/«24», y «auto» o una zona como «America/New_York».
   'formato',
   'zonaHoraria',
+  // C-VIAJES-FIJOS: «1» = solo los viajes fijos con un menor.
+  'menores',
 ] as const;
 export type ClavePreferencia = (typeof CLAVES_PREFERENCIAS)[number];
 export type Preferencias = Partial<Record<ClavePreferencia, string>>;
