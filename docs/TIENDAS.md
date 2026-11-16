@@ -137,7 +137,17 @@ Límites: Apple, nombre y subtítulo 30 caracteres, texto promocional 170, palab
 
 ### Clasificación por edad (Apple y Google, las tres apps)
 
-Sin violencia, sin contenido sexual, sin apuestas, sin compras de alcohol o tabaco dentro de la app (si un restaurante vende alcohol más adelante, se revisa esta respuesta antes), sin chat abierto entre desconocidos. Resultado esperado: **4+ / Everyone**.
+Sin violencia, sin contenido sexual, sin apuestas, sin compras de alcohol o tabaco dentro de la app (si un restaurante vende alcohol más adelante, se revisa esta respuesta antes). Resultado esperado: **4+ / Everyone** (Google: IARC «Everyone» o «Teen» según el cuestionario; se acepta lo que salga).
+
+**Respuestas verdaderas del cuestionario de Google (IARC), actualizadas el 16 nov 2026** por el chat, las reseñas y la ubicación compartida (C-MODERACION, C-BORRADO-CHAT):
+
+| Pregunta del cuestionario                                           | Cliente | Driver | Restaurants | Por qué                                                                                                                                                     |
+| ------------------------------------------------------------------- | ------- | ------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ¿Los usuarios pueden comunicarse o interactuar entre sí?            | Sí      | Sí     | Sí          | Chat solo entre el cliente y el repartidor (o conductor) de un pedido o viaje en curso; se cierra al terminar. El restaurante responde reseñas.             |
+| ¿Hay contenido generado por usuarios que otros ven?                 | Sí      | Sí     | Sí          | Reseñas públicas con comentario, fotos y mensajes del chat. Hay botón «Reportar», bloqueo, filtro de palabras y bandeja del equipo (respuesta en 24 horas). |
+| ¿La app comparte la ubicación del usuario con otros usuarios?       | Sí      | Sí     | No          | El punto de entrega va al repartidor asignado; la posición del repartidor la ve el cliente de ese pedido. Solo mientras dura el pedido.                     |
+| ¿Permite compras digitales?                                         | No      | No     | No          | Comida, entregas y viajes: bienes y servicios físicos, cobrados con Stripe.                                                                                 |
+| Violencia, sexo, lenguaje vulgar, drogas, alcohol, tabaco, apuestas | No      | No     | No          | No hay. El filtro tapa las palabras ofensivas del chat.                                                                                                     |
 
 ### Privacidad de Apple («App Privacy») y Seguridad de los datos de Google
 
@@ -155,8 +165,32 @@ Datos que se recogen, todos **ligados a la cuenta**, **ninguno para rastrear** n
 | Fotos de la puerta (opcionales, en una dirección guardada) | Sí                                                    | Las ve                                               | —                  | Que el repartidor encuentre la puerta; las ve solo el repartidor del pedido en curso; se borran con la dirección o con la cuenta (C-FOTO-PUERTA, C-BORRADO-DIRECCIONES). En Apple: «Fotos o videos», ligadas a la cuenta, sin rastreo. En Google: Fotos, recogidas, opcionales, funcionalidad de la app, se pueden borrar |
 | Identificadores del dispositivo (notificaciones)           | Sí                                                    | Sí                                                   | Sí                 | Avisos del pedido                                                                                                                                                                                                                                                                                                         |
 | Mensajes de soporte                                        | Sí                                                    | Sí                                                   | Sí                 | Atender quejas                                                                                                                                                                                                                                                                                                            |
+| Mensajes del chat (texto y fotos)                          | Sí                                                    | Sí                                                   | —                  | Coordinar la entrega con la otra persona del pedido en curso; los ve esa persona y, si hay reporte, el equipo. Se borran con la cuenta (C-BORRADO-CHAT). En Google: «Mensajes → Otros mensajes en la app» y «Fotos», recogidos, funcionalidad de la app                                                                   |
+| Reseñas, reportes y bloqueos                               | Sí                                                    | Sí                                                   | Sí (respuestas)    | Calificar, y moderar lo que publican otros. En Google: «Actividad en la app → Otro contenido generado por el usuario», recogido, funcionalidad y seguridad                                                                                                                                                                |
+| Idioma del teléfono                                        | Sí                                                    | Sí                                                   | Sí                 | Mandar los avisos en el idioma de cada teléfono (C-AVISOS-IDIOMA). No es un dato que Google pida declarar aparte; va con el identificador del dispositivo                                                                                                                                                                 |
 
 Google, además: los datos viajan cifrados; la persona puede pedir borrarlos (botón dentro de la app y en `https://divoox.com/delete-account`).
+
+**Formulario de Seguridad de los datos de Google, app del cliente (16 nov 2026, dictamen del auditor):** todo «recopilado», cifrado en tránsito Sí, mecanismo de borrado Sí, enlace `https://divoox.com/delete-account`, sin publicidad ni identificador de publicidad.
+
+1. Ubicación: precisa y aproximada. Solo con la app abierta. Funcionalidad. Opcional (se puede escribir la dirección).
+2. Información personal: nombre, correo, teléfono, dirección, ID de usuario. Funcionalidad y gestión de la cuenta.
+3. Información financiera: historial de compras e información de pago (la tarjeta la toma Stripe dentro de la app). Funcionalidad.
+4. Mensajes: «Otros mensajes en la app» (chat con el repartidor). Funcionalidad.
+5. Fotos y videos: Fotos (puerta, pedido dañado, chat). Funcionalidad. Opcional.
+6. Actividad en la app: «Otro contenido generado por el usuario» (reseñas, reportes). Funcionalidad y prevención de fraude y seguridad.
+7. Identificadores del dispositivo u otros: token de avisos. Funcionalidad.
+8. Compartidos: ninguno fuera de proveedores de servicio (Stripe para pagos, Google para mapas y avisos), que según la ayuda de Google sobre el formulario no cuentan como «compartir».
+9. Publicidad: ninguna; «Identificador de publicidad»: no se usa.
+
+**Acceso a la app (Play Console → Contenido de la app → Acceso a la app):** usuario y contraseña de la cuenta de revisión del cliente (están fuera del repositorio, en la carpeta de configuración de la computadora; nunca aquí) y estas instrucciones:
+
+```
+Sign in with the customer account provided (no two-step verification). Test area: Novi, Michigan (address 27500 Novi Rd, Novi, MI 48377). Restaurant: Divoox Review Kitchen (open 24 hours). Payments are for physical goods (food and delivery) and use Stripe, not Google Play Billing; everything up to the payment sheet can be reviewed without a charge.
+User-generated content and safety: chat exists only between the customer and the courier of an active order and closes when it ends. Every message from the other person and every public review has a "Report" button (reason + optional note); our team reviews reports within 24 hours. From the three-dots menu in the chat the user can block the other person; blocked people are listed under Account > Blocked people, with Unblock. An English/Spanish word filter masks offensive words in chat and holds offensive reviews for review. Contact: soporte+divoox@windoce.com.
+Door photos: optional, up to three per saved address (My addresses). Only the courier assigned to an order sees them, only while the order is on its way. They are deleted with the address or the account.
+Account deletion: My account > three dots > Delete my account (in the app), or https://divoox.com/delete-account. Chat messages and photos are deleted with the account.
+```
 
 ### Notas para el revisor (se pegan en «App Review Information»)
 

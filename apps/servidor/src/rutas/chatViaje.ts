@@ -71,7 +71,7 @@ chatViaje.get('/viajes/:id/mensajes', async (c) => {
   const inicio = u.rol === 'admin' ? null : await inicioDeLaPareja(db, v.id, v.conductor_id);
   const consulta = db.prepare(
     `SELECT m.id, m.de_usuario_id AS de, u.nombre, m.texto, m.creado_en AS en FROM mensajes_viaje m
-       JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.operacion_id = ?1 AND m.id > ?2${pareja}
+       JOIN usuarios u ON u.id = m.de_usuario_id WHERE m.operacion_id = ?1 AND m.id > ?2 AND m.texto <> ''${pareja}
       ORDER BY m.id LIMIT 200`,
   );
   const desdeId = Number.isFinite(desde) ? desde : 0;

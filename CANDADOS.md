@@ -4532,6 +4532,14 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Candado:** `apps/servidor/src/borradoDirecciones.test.ts`, comprobado en rojo antes del arreglo (quedaba una dirección). Commit f61a8afa5.
 - **No tocar:** el borrado sigue siendo una sola pieza; nadie más repite sus instrucciones.
 
+## C-BORRADO-CHAT: al borrar la cuenta se van los mensajes y las fotos del chat (16 nov 2026, encargo de Gerencia por el NO APTO de Google Play) — todos los países
+
+- **Qué estaba roto:** «Borrar mi cuenta» dejaba guardados el texto y las fotos que la persona mandó en el chat de sus pedidos (`mensajes_pedido`, con su archivo `chat/<pedido>/…` en el almacén) y de sus viajes (`mensajes_viaje`), y la copia de lo que escribió dentro de los reportes de otros (`reportes_contenido.texto`). Google Play (eliminación de cuenta: hay que borrar los datos de usuario de esa cuenta) lo dio NO APTO el 16 nov (dictamen en la carpeta de auditorías de Gerencia).
+- **Arreglo:** en la pieza única `apps/servidor/src/borrarCuenta.ts` se vacían texto y `foto_clave` de sus mensajes de pedido, el texto de sus mensajes de viaje y el `texto` de los reportes donde es autor, y se borran del almacén los archivos de sus fotos del chat. La fila queda (vacía) para que el chat de la otra persona no se desordene, y las listas del chat (`operacion.ts` y `chatViaje.ts`) ya no devuelven mensajes vacíos.
+- **Lo que dice el público:** privacidad (sección 2: mensajes del chat, reportes y bloqueos; sección 4: el punto de entrega se comparte con el repartidor asignado; sección 6: lo que se borra), términos (sección de calificaciones: botón «Reportar», bloquear y reglas del chat) y `/delete-account`, en `apps/panel/src/sitio/legales.ts`, español e inglés. Si cambia el borrado, cambian esos textos.
+- **Candado:** `apps/servidor/src/borradoChat.test.ts`, comprobado en rojo antes del arreglo (los mensajes seguían con texto). Lo de la otra persona del chat no se toca (lo fija la misma prueba).
+- **No tocar:** el borrado sigue siendo una sola pieza; los mensajes de soporte (`ticket_mensajes`) se conservan como registro de atención, igual que antes.
+
 ## C-FOTO-PUERTA: fotos del frente y de la puerta fijadas a la dirección guardada (15 nov 2026, pedido de Richard) — todos los países
 
 - **Qué es:** el cliente sube hasta tres fotos por dirección guardada, de afuera hacia adentro (casa: frente y puerta; edificio: entrada, paso intermedio y puerta del apartamento). El repartidor asignado las ve mientras lleva el pedido. Precedente: Uber Eats [DOC]. Ficha: `docs/investigaciones-rea/2026-11-15-foto-de-la-puerta.md`.
