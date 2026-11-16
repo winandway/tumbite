@@ -68,6 +68,19 @@ describe('revisor de paquetes antes de publicar', () => {
     });
     expect(revisar(cerrado, 'produccion')).toBe(false);
   });
+  // C-PAQUETE-TOPE (15 nov 2026): con las 36 letras de Poppins y Montserrat en cada app web el
+  // paquete pasó de 109 a 133 MB y la plataforma dejó de publicarlo («Memory limit exceeded»), sin
+  // que nada saliera en rojo. Ahora el revisor frena un paquete por encima del tope.
+  it('frena un paquete más grande que el tope de la plataforma', () => {
+    const d = paquete('pruebas', 'https://staging.tumbite.com');
+    expect(revisar(d, 'pruebas')).toBe(true);
+    process.env.PAQUETE_TOPE_MB = '0.0001';
+    try {
+      expect(revisar(d, 'pruebas')).toBe(false);
+    } finally {
+      delete process.env.PAQUETE_TOPE_MB;
+    }
+  });
   it('frena un secreto dentro del paquete', () => {
     const d = paquete('produccion', 'https://tumbite.com', {
       'x.js': 'const k="whsec_0123456789abcdef"',
