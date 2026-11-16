@@ -25,6 +25,7 @@ import {
   Route,
   Send,
   Settings,
+  SlidersHorizontal,
   ShieldCheck,
   ShoppingBag,
   Smartphone,
@@ -80,6 +81,7 @@ export const ICONOS_MENU = {
   pilot: FlaskConical,
   'test-city': Building,
   rewards: Trophy,
+  configuration: SlidersHorizontal,
   // Restaurante
   restaurant: Store,
   company: Building2,
@@ -142,6 +144,7 @@ const TITULOS = {
     dinero: 'Dinero',
     servicios: 'Servicios',
     territorio: 'Territorio',
+    sistema: 'Sistema',
     negocio: 'Mi negocio',
     crecer: 'Ventas y marketing',
     ajustes: 'Ajustes',
@@ -153,6 +156,7 @@ const TITULOS = {
     dinero: 'Money',
     servicios: 'Services',
     territorio: 'Territory',
+    sistema: 'System',
     negocio: 'My business',
     crecer: 'Sales and marketing',
     ajustes: 'Settings',
@@ -216,10 +220,13 @@ export function gruposAdmin(
     ...armar(
       [
         [g.operacion, ['inicio', 'orders', 'tickets', 'approvals', 'verifications']],
-        [g.personas, ['customers', 'restaurants', 'drivers', 'team']],
+        [g.personas, ['customers', 'restaurants', 'drivers']],
         [g.dinero, ['money', 'cash', 'flexfinance', 'reports']],
         [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],
         [g.territorio, ['franchises', 'cities', 'zones', 'waitlist']],
+        // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; luego «Equipo interno»).
+        // C-PERMISOS-FINOS: «Equipo interno» cuelga de Configuración.
+        [g.sistema, ['configuration', 'team']],
       ],
       t.menuAdmin,
       raiz,

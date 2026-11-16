@@ -1,6 +1,7 @@
 import { enIdioma } from '@tumbite/compartido';
 import { PanelApp } from './panel/PanelApp';
 import { Olvide, Restablecer } from './panel/Restablecer';
+import { AceptarInvitacion } from './panel/AceptarInvitacion';
 import { Confirmar } from './panel/Confirmar';
 import { Docs } from './sitio/docs/Docs';
 import { ComoFunciona } from './sitio/ComoFunciona';
@@ -240,6 +241,13 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Restablecer idioma={idioma} />
+      </Sitio>
+    );
+  // C-EQUIPO-INVITACION: la invitación de un solo uso al equipo interno.
+  if (ruta === '/team-invite')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <AceptarInvitacion idioma={idioma} />
       </Sitio>
     );
 

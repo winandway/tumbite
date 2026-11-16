@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { fechaSuper } from './horario';
 import {
   ErrorApi,
   type Idioma,
@@ -278,18 +279,9 @@ const ORDEN = [
 /** Cada cuánto late la pantalla con la ciudad encendida (los robots avanzan un paso). */
 export const LATIDO_MS = 4_000;
 
-/** Hora local de una fecha de la base (UTC, «AAAA-MM-DD HH:MM:SS» o ISO). */
-const hora = (x: string | null | undefined, idioma: Idioma = 'es') => {
-  if (!x) return '—';
-  const d = new Date(x.includes('T') ? x : `${x.replace(' ', 'T')}Z`);
-  return Number.isNaN(d.getTime())
-    ? '—'
-    : d.toLocaleTimeString(idioma === 'en' ? 'en-US' : 'es-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      });
-};
+/** Hora de una fecha de la base con segundos, con el reloj y la zona del empleado. */
+const hora = (x: string | null | undefined, idioma: Idioma = 'es') =>
+  fechaSuper(x, idioma, { estilo: 'hora_segundos' });
 
 export function SuperCiudad({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
@@ -306,7 +298,7 @@ export function SuperCiudad({ idioma }: { idioma: Idioma }) {
       const r = await pedir<Vivo>('GET', '/datos/admin/ciudad-pruebas');
       setVivo(r);
       setError('');
-      setCuando(new Date().toLocaleTimeString(idioma === 'en' ? 'en-US' : 'es-US'));
+      setCuando(fechaSuper(Date.now(), idioma, { estilo: 'hora_segundos' }));
       return r;
     } catch (x) {
       setError(mensaje(x));

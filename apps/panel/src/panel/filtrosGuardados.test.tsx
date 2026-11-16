@@ -192,7 +192,8 @@ describe('C-BUSCADOR-SERIO · «Pedidos en curso»', () => {
           {
             metodo: 'PUT',
             url: '/datos/admin/preferencias/pedidos',
-            cuerpo: { valor: { zona: '', estado: 'cerrados', orden: '' } },
+            // C-MONITOREO-SERVICIOS: la pestaña de servicio también se guarda (aquí, «todos»).
+            cuerpo: { valor: { zona: '', estado: 'cerrados', orden: '', servicio: 'todos' } },
           },
         ]),
       { timeout: 3000 },

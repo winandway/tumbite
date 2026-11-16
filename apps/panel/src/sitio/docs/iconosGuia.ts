@@ -5,6 +5,7 @@ import {
   CalendarClock,
   ChartColumn,
   CircleHelp,
+  Clock,
   CreditCard,
   DoorOpen,
   FileText,
@@ -42,6 +43,13 @@ import {
  * ayudas de los grandes. Se elige por el tema que dice su dirección; si no encaja, una hoja.
  */
 const REGLAS: [RegExp, LucideIcon][] = [
+  // C-DOCS-OPERACIONES: las guías del equipo de operaciones, cada una con su dibujo.
+  [/^search-orders/, Search],
+  [/^monitor-/, ChartColumn],
+  [/^read-order/, FileText],
+  [/^time-zone/, Clock],
+  [/^add-team/, Users],
+  [/^link-support/, LifeBuoy],
   [/customers-presentation/, ShoppingBag],
   [/restaurants-presentation/, Store],
   [/salespeople-presentation/, Handshake],

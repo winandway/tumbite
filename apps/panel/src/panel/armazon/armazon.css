@@ -2149,3 +2149,280 @@ body.modo-tableta .pd .pd-contenido {
   color: var(--pd-gris);
   font-size: 0.88rem;
 }
+
+/* C-FICHA-OPERACION y C-MONITOREO-SERVICIOS (15 nov 2026): ficha del pedido y del viaje, pestañas
+   por servicio y Configuración → Horario. Sobrio: borde fino, sin franjas de color; el color va solo
+   en la insignia del resultado (verde si cumplió, rojo si se pasó, gris si falta un dato). */
+.ficha-op {
+  display: grid;
+  gap: 16px;
+}
+.ficha-op > .tarjeta-form,
+.ficha-op .ficha-dos > .tarjeta-form {
+  margin: 0;
+}
+.ficha-cabecera h1 {
+  margin-bottom: 6px;
+}
+.ficha-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  color: var(--pd-gris);
+}
+.ficha-chips strong {
+  color: var(--pd-negro);
+}
+.icono-servicio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pd-negro);
+  vertical-align: -3px;
+}
+.hora-zona {
+  color: var(--pd-gris);
+  font-size: 0.82em;
+  font-weight: 600;
+}
+.ficha-tramos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+.ficha-tramo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--pd-borde);
+}
+.ficha-tramo:first-child {
+  border-top: 0;
+}
+.ficha-tramo-nombre {
+  display: grid;
+  gap: 2px;
+}
+.ficha-tramo-nombre small,
+.ficha-tramo-cifras small {
+  color: var(--pd-gris);
+  font-size: 0.78rem;
+}
+.ficha-tramo-cifras {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.ficha-tramo-cifras > span:not(.bs-estado) {
+  display: grid;
+  text-align: right;
+  min-width: 64px;
+}
+.ficha-tramo-falta {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--pd-gris);
+  font-size: 0.82rem;
+}
+.ficha-encabezado-seccion {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ficha-linea .ficha-paso-tenue {
+  opacity: 0.62;
+}
+.ficha-linea .ficha-paso-hito::before,
+.ficha-linea .ficha-paso-evidencia::before {
+  background: var(--pd-negro);
+}
+.ficha-linea .ficha-paso-emergencia::before {
+  background: var(--pd-problema);
+}
+.ficha-desde {
+  color: var(--pd-gris-suave);
+}
+.ficha-dos {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.ficha-lugar-direccion {
+  margin: 0 0 10px;
+  color: var(--pd-gris);
+}
+.ficha-nota {
+  margin: 6px 0;
+  color: var(--pd-gris);
+  font-size: 0.86rem;
+}
+.ficha-dl {
+  margin-top: 10px;
+}
+.ficha-foto {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.ficha-foto-borrosa {
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--pd-borde);
+  border-radius: 10px;
+  background: #e9ebee;
+  display: grid;
+  place-items: center;
+  color: var(--pd-gris);
+}
+.ficha-foto-imagen {
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid var(--pd-borde);
+  border-radius: 10px;
+}
+.ficha-foto-oculta {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.ficha-lista-simple {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.ficha-reclamo,
+.ficha-reclamo-caja {
+  margin: 12px 0;
+  display: grid;
+  gap: 10px;
+  max-width: 560px;
+}
+.monitoreo-pestanas {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: 4px 0 12px;
+  scrollbar-width: thin;
+}
+.monitoreo-pestanas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  border: 1px solid var(--pd-borde-campo);
+  background: #fff;
+  color: var(--pd-negro);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.monitoreo-pestanas button.activa {
+  background: var(--pd-negro);
+  border-color: var(--pd-negro);
+  color: #fff;
+}
+.monitoreo-pestanas button.activa .icono-servicio {
+  color: #fff;
+}
+.monitoreo-cuenta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: inherit;
+  opacity: 0.85;
+}
+.monitoreo-problemas {
+  background: var(--pd-problema);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 7px;
+  line-height: 1.5;
+}
+.configuracion-grupo {
+  border: 1px solid var(--pd-borde);
+  border-radius: 10px;
+  padding: 10px 14px 12px;
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+}
+.configuracion-grupo legend {
+  font-weight: 700;
+  padding: 0 4px;
+}
+.configuracion-opcion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.configuracion-grupo select {
+  max-width: 360px;
+}
+.configuracion-ciudades {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.configuracion-ciudades li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--pd-borde);
+}
+.configuracion-ciudades li:first-child {
+  border-top: 0;
+}
+.configuracion-ciudades small {
+  color: var(--pd-gris);
+}
+.configuracion-hora {
+  font-weight: 700;
+  text-align: right;
+}
+.campo-en-linea {
+  display: inline-grid;
+  gap: 4px;
+  max-width: 260px;
+}
+@media (max-width: 700px) {
+  .ficha-tramo {
+    grid-template-columns: 1fr;
+  }
+  .ficha-tramo-cifras {
+    justify-content: flex-start;
+  }
+  .ficha-tramo-cifras > span:not(.bs-estado) {
+    text-align: left;
+  }
+  .ficha-dos {
+    grid-template-columns: 1fr;
+  }
+  .configuracion-ciudades li {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .configuracion-hora {
+    text-align: left;
+  }
+}

@@ -30,6 +30,7 @@ import {
   clavePasajerosPais,
   paisAbiertoPara,
 } from '../pasajerosPais';
+import { accesoDe, alcanceObjetoSql, alcanceHabilitacionSql } from '../accesoInterno';
 
 const SERVICIOS_VIAJE_SET = new Set<string>(SERVICIOS_VIAJE);
 
@@ -1203,12 +1204,14 @@ servicios.get('/admin/vehiculos', async (c) => {
     .catch('en_revision')
     .parse(c.req.query('estado') ?? 'en_revision');
   const db = base(c);
+  // C-PERMISOS-FINOS: los vehículos de los conductores de su alcance.
+  const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'v.conductor_id');
   const { results } = await db
     .prepare(
       `SELECT v.*, u.nombre AS conductor FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
-        WHERE v.estado = ? ORDER BY v.actualizado_en LIMIT 100`,
+        WHERE v.estado = ?${alc.sql} ORDER BY v.actualizado_en LIMIT 100`,
     )
-    .bind(estado)
+    .bind(estado, ...alc.valores)
     .all<{ id: string }>();
   const ids = results.map((v) => v.id);
   const docs = ids.length
@@ -1355,12 +1358,14 @@ servicios.get('/admin/habilitaciones', async (c) => {
   exigir(c, 'admin');
   const servicio = c.req.query('servicio') ?? '';
   const estado = c.req.query('estado') ?? 'pendiente';
+  // C-PERMISOS-FINOS: conductores de su alcance, y solo las habilitaciones de sus servicios.
+  const alc = alcanceHabilitacionSql(accesoDe(c), 'h');
   const { results } = await base(c)
     .prepare(
       `SELECT h.*, u.nombre AS conductor FROM habilitaciones h JOIN usuarios u ON u.id = h.conductor_id
-        WHERE (? = '' OR h.servicio_id = ?) AND h.estado = ? ORDER BY h.actualizado_en LIMIT 100`,
+        WHERE (? = '' OR h.servicio_id = ?) AND h.estado = ?${alc.sql} ORDER BY h.actualizado_en LIMIT 100`,
     )
-    .bind(servicio, servicio, estado)
+    .bind(servicio, servicio, estado, ...alc.valores)
     .all();
   return c.json({ habilitaciones: results });
 });

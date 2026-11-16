@@ -13,6 +13,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_DOC_BYTES, estadoDelConductor } from './servicios';
 import { paisDelConductor } from '../paisConductor';
+import { accesoDe, alcanceObjetoSql, dentroDelAlcance } from '../accesoInterno';
 
 /**
  * C-PAPELES-CONDUCTOR (13 nov 2026) — Venezuela y todos los países. Los papeles del CONDUCTOR (no de
@@ -195,9 +196,9 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
   );
   const [zona, persona] = await Promise.all([
     db
-      .prepare('SELECT id FROM zonas WHERE id = ? AND activa = 1')
+      .prepare('SELECT id, pais FROM zonas WHERE id = ? AND activa = 1')
       .bind(d.zonaId)
-      .first<{ id: string }>(),
+      .first<{ id: string; pais: string | null }>(),
     db
       .prepare("SELECT id FROM usuarios WHERE id = ? AND rol = 'repartidor'")
       .bind(id)
@@ -205,6 +206,17 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
   ]);
   if (!persona) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
   if (!zona) throw new ErrorDatos('Esa ciudad no está disponible.', 'zonaId', 404);
+  // C-PERMISOS-FINOS: nadie manda a un conductor a una ciudad fuera de su propia zona de trabajo
+  // (la ficha de origen ya la comprueba el intermedio).
+  const acceso = accesoDe(c);
+  if (
+    acceso &&
+    !dentroDelAlcance(
+      { alcance: { ...acceso.alcance, servicios: null } },
+      { zona: zona.id, pais: zona.pais, servicio: null },
+    )
+  )
+    throw new ErrorDatos('Esa ciudad no está en tu zona de trabajo.', 'zonaId', 403);
   const ocupado = await db
     .prepare('SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?')
     .bind(id)
@@ -295,6 +307,8 @@ conductorPapeles.get('/admin/papeles-conductor', async (c) => {
     .enum(['pendiente', 'aprobado', 'rechazado'])
     .catch('pendiente')
     .parse(c.req.query('estado') ?? 'pendiente');
+  // C-PERMISOS-FINOS: los papeles de los conductores de su alcance.
+  const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'd.conductor_id');
   const { results } = await base(c)
     .prepare(
       `SELECT d.id, d.conductor_id AS conductorId, u.nombre AS conductor, d.tipo, d.estado, d.motivo,
@@ -302,9 +316,9 @@ conductorPapeles.get('/admin/papeles-conductor', async (c) => {
               (SELECT z.pais FROM zonas z WHERE z.id = COALESCE(r.zona_id, u.zona_id, 'US-FL-MIAMI')) AS pais
          FROM conductor_documentos d JOIN usuarios u ON u.id = d.conductor_id
          LEFT JOIN repartidores r ON r.usuario_id = d.conductor_id
-        WHERE d.estado = ? ORDER BY d.creado_en LIMIT 100`,
+        WHERE d.estado = ?${alc.sql} ORDER BY d.creado_en LIMIT 100`,
     )
-    .bind(estado)
+    .bind(estado, ...alc.valores)
     .all();
   return c.json({ documentos: results });
 });

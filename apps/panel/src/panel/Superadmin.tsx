@@ -1,3 +1,6 @@
+import { IconoServicio } from './FichaPiezas';
+import { Hora } from './horario';
+import { NuevoReclamo, TEXTO_RECLAMO_ABIERTO } from './NuevoReclamo';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { usePreferencias } from './usePreferencias';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,9 +12,11 @@ import {
   almacenNavegador,
   enIdioma,
   formatearMonto,
+  nombreServicioMonitoreo,
   useBorrador,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
+import { VerDato } from './DatoProtegido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { GestionFranquicia, SolicitudesFranquicia } from './GestionFranquicia';
 import { pedir } from './api';
@@ -124,7 +129,9 @@ function ErroresServidor({ idioma }: { idioma: Idioma }) {
         <tbody>
           {vistos.slice(0, 20).map((e) => (
             <tr key={e.id}>
-              <td>{e.creadoEn}</td>
+              <td>
+                <Hora fecha={e.creadoEn} idioma={idioma} />
+              </td>
               <td>
                 {e.metodo === 'APP'
                   ? `${t.origenes[origenDe(e)]} · ${e.ruta.split(':').slice(1).join(':') || '?'}`
@@ -684,10 +691,28 @@ type FilaTicket = {
   prioridad?: 'urgente' | 'alta' | 'normal' | 'baja';
   asignadoA?: string | null;
   asignadoNombre?: string | null;
+  /** C-MONITOREO-SERVICIOS: de qué servicio es (comida, tiendas, auto, moto, envíos o general). */
+  servicio?: string | null;
+  pedidoId?: string | null;
+  operacionId?: string | null;
 };
+
+/** Los servicios del filtro de la bandeja (los mismos de «Pedidos en curso», más «general»). */
+const SERVICIOS_TICKET = [
+  'todos',
+  'comida',
+  'tiendas',
+  'auto',
+  'moto',
+  'envios',
+  'general',
+] as const;
 
 const TK = {
   es: {
+    servicio: 'Servicio',
+    verViaje: 'Ver el viaje',
+    verPedido: 'Ver el pedido',
     prioridad: 'Prioridad',
     prioridades: { urgente: 'Urgente', alta: 'Alta', normal: 'Normal', baja: 'Baja' },
     asignado: 'A cargo de',
@@ -700,6 +725,9 @@ const TK = {
     tituloPlantilla: 'Título de la respuesta',
   },
   en: {
+    servicio: 'Service',
+    verViaje: 'View the ride',
+    verPedido: 'View the order',
     prioridad: 'Priority',
     prioridades: { urgente: 'Urgent', alta: 'High', normal: 'Normal', baja: 'Low' },
     asignado: 'Assigned to',
@@ -735,7 +763,12 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const filtroTipo = new URLSearchParams(window.location.search).get('tipo') ?? '';
   const tk = enIdioma(TK, idioma);
-  const pref = usePreferencias('tickets', { estado: 'abierto', asignado: '' });
+  const pref = usePreferencias('tickets', { estado: 'abierto', asignado: '', servicio: 'todos' });
+  const servicio = (SERVICIOS_TICKET as readonly string[]).includes(pref.valores.servicio ?? '')
+    ? (pref.valores.servicio ?? 'todos')
+    : 'todos';
+  const [recarga, setRecarga] = useState(0);
+  const [avisoNuevo, setAvisoNuevo] = useState('');
   // «todos» se guarda con nombre; el servidor lo pide sin estado.
   const estado = pref.valores.estado === 'todos' ? '' : (pref.valores.estado ?? 'abierto');
   const asignado = pref.valores.asignado ?? '';
@@ -747,10 +780,11 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
     if (estado) q.set('estado', estado);
     if (filtroTipo) q.set('tipo', filtroTipo);
     if (asignado) q.set('asignado', asignado);
+    if (servicio !== 'todos') q.set('servicio', servicio);
     pedir<{ tickets: FilaTicket[] }>('GET', `/datos/admin/tickets?${q.toString()}`)
       .then((r) => setLista(r.tickets))
       .catch(() => setLista([]));
-  }, [estado, filtroTipo, asignado]);
+  }, [estado, filtroTipo, asignado, servicio, recarga]);
 
   return (
     <section className="super">
@@ -797,6 +831,32 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
           </button>
         ))}
       </div>
+      <div className="super-busqueda super-pedidos-filtros">
+        <label className="campo campo-en-linea">
+          <span>{tk.servicio}</span>
+          <select value={servicio} onChange={(e) => pref.cambiar('servicio', e.target.value)}>
+            {SERVICIOS_TICKET.map((sv) => (
+              <option key={sv} value={sv}>
+                {nombreServicioMonitoreo(sv, idioma === 'en' ? 'en' : 'es')}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="ficha-reclamo-caja">
+        {avisoNuevo ? (
+          <p className="ok" role="status">
+            {avisoNuevo}
+          </p>
+        ) : null}
+        <NuevoReclamo
+          idioma={idioma}
+          alAbrir={() => {
+            setAvisoNuevo(enIdioma(TEXTO_RECLAMO_ABIERTO, idioma).abierto);
+            setRecarga((n) => n + 1);
+          }}
+        />
+      </div>
       {lista === null ? (
         <p role="status">…</p>
       ) : lista.length === 0 ? (
@@ -806,6 +866,7 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
           {lista.map((x) => (
             <li key={x.id}>
               <Enlace a={`${base}/tickets/${x.id}`}>
+                <IconoServicio servicio={x.servicio ?? 'general'} idioma={idioma} />{' '}
                 <span className="insignia">{t.tipos[x.tipo]}</span>{' '}
                 {x.prioridad && x.prioridad !== 'normal' ? (
                   <span
@@ -817,7 +878,8 @@ function BandejaTickets({ base, idioma }: { base: string; idioma: Idioma }) {
                 <strong>{x.asunto}</strong> · {x.nombre}
                 {x.asignadoNombre ? ` · ${tk.asignado}: ${x.asignadoNombre}` : ''}
                 <small>
-                  {t.estadosTicket[x.estado]} · {x.actualizado} · {(x.ultimo ?? '').slice(0, 120)}
+                  {t.estadosTicket[x.estado]} · <Hora fecha={x.actualizado} idioma={idioma} /> ·{' '}
+                  {(x.ultimo ?? '').slice(0, 120)}
                 </small>
               </Enlace>
             </li>
@@ -926,13 +988,40 @@ function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: s
       <h1>{x.asunto}</h1>
       <p>
         <span className="insignia">{t.tipos[x.tipo]}</span> {t.estadosTicket[x.estado]} ·{' '}
-        <strong>{x.nombre}</strong> · <a href={`mailto:${x.correo}`}>{x.correo}</a>
-        {x.telefono ? ` · ${x.telefono}` : ''}
+        <strong>{x.nombre}</strong> ·{' '}
+        {/* C-PERMISOS-FINOS: el contacto va enmascarado; «Ver dato» con su permiso (queda registrado). */}
+        <VerDato tipo="ticket" id={x.id} campo="correo" mascara={x.correo} idioma={idioma} />
+        {x.telefono ? (
+          <>
+            {' · '}
+            <VerDato
+              tipo="ticket"
+              id={x.id}
+              campo="telefono"
+              mascara={x.telefono}
+              idioma={idioma}
+            />
+          </>
+        ) : null}
         {x.ciudad || x.pais ? ` · ${[x.ciudad, x.pais].filter(Boolean).join(', ')}` : ''}
       </p>
       <p>
         {t.enlacePublico}: <a href={x.enlace}>{x.enlace.slice(0, 18)}…</a>
       </p>
+      {x.pedidoId || x.operacionId ? (
+        <p>
+          <IconoServicio servicio={x.servicio ?? 'general'} idioma={idioma} />{' '}
+          {x.operacionId ? (
+            <Enlace a={`${base}/rides/${x.operacionId}`}>
+              {tk.verViaje} #{x.operacionId.slice(0, 6).toUpperCase()}
+            </Enlace>
+          ) : (
+            <Enlace a={`${base}/orders/${x.pedidoId ?? ''}`}>
+              {tk.verPedido} #{(x.pedidoId ?? '').slice(0, 6).toUpperCase()}
+            </Enlace>
+          )}
+        </p>
+      ) : null}
       <div className="flex-inline">
         <label className="campo">
           <span>{tk.prioridad}</span>
@@ -969,7 +1058,7 @@ function SuperTicket({ base, idioma, id }: { base: string; idioma: Idioma; id: s
             className={m.autor === 'equipo' ? 'del-equipo' : 'de-persona'}
           >
             <strong>{m.autor === 'equipo' ? t.equipo : t.persona}</strong>
-            <time dateTime={m.fecha}>{m.fecha}</time>
+            <Hora fecha={m.fecha} idioma={idioma} />
             <p>{m.texto}</p>
           </li>
         ))}

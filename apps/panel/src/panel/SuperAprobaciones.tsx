@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Hora } from './horario';
 import {
   ErrorApi,
   type Idioma,
@@ -271,7 +272,8 @@ export function SuperAprobaciones({ idioma, miId }: { idioma: Idioma; miId: stri
                   <strong>{tipo(s)}</strong> · {formatearMonto(s.monto, s.moneda, idioma)}
                   {s.tipo === 'excusa_conciliacion' ? ` ${t.vendido}` : ''}
                   <p className="suave">
-                    {t.pidio}: {s.pedidoPorNombre ?? '—'} · {s.creadoEn}
+                    {t.pidio}: {s.pedidoPorNombre ?? '—'} ·{' '}
+                    <Hora fecha={s.creadoEn} idioma={idioma} />
                   </p>
                   {s.motivo && (
                     <p>

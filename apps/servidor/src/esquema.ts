@@ -22,6 +22,13 @@ import { INDICES_BUSCADOR } from './buscadorSql';
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-FLEX-PAGO-BLOQUE (16 nov 2026): lo que la empresa le paga al conductor por el bloque (centavos).
   ['rutas_flex', 'pago_bloque', 'INTEGER'],
+  // C-TIEMPOS-OPERACION (15 nov 2026): de dónde salen la ida del repartidor y la llegada del
+  // conductor en la ficha del superadmin (se escriben en el mismo INSERT/UPDATE de la oferta).
+  ['ofertas', 'km', 'REAL'],
+  ['ofertas', 'respondida_en', 'TEXT'],
+  ['ofertas_operacion', 'km', 'REAL'],
+  // C-MONITOREO-SERVICIOS (15 nov 2026): el viaje de un reclamo.
+  ['tickets', 'operacion_id', 'TEXT'],
   // C-CARRO-CATEGORIAS, C-VIAJE-PARADAS (14 nov 2026): Comfort y Premium, y paradas intermedias.
   ['tarifas_viaje', 'comfort_pb', 'INTEGER'],
   ['tarifas_viaje', 'premium_pb', 'INTEGER'],
@@ -264,6 +271,14 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['vehiculos', 'con_cajon', 'INTEGER NOT NULL DEFAULT 0'],
   // C-LECTURAS-CATALOGO (14 nov 2026): el resumen de calificaciones y turnos de cada restaurante.
   ...COLUMNAS_RESUMEN_CATALOGO,
+  // C-PERMISOS-FINOS (15 nov 2026): los permisos efectivos del equipo, calculados una vez por sesión
+  // (cargarSesion ya lee la sesión: comprobar un permiso no cuesta lecturas), y cuándo confirmó el
+  // segundo factor esa sesión.
+  ['sesiones', 'permisos_json', 'TEXT'],
+  ['sesiones', 'segundo_factor_en', 'TEXT'],
+  // C-EQUIPO-INVITACION (15 nov 2026): los permisos y topes concretos que se aprobaron al invitar
+  // (congelados): si la plantilla crece después, la invitación ya no sirve.
+  ['invitaciones_equipo', 'acceso_json', 'TEXT'],
 ];
 
 /**
@@ -327,6 +342,12 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS repartidores_vehiculo_activo ON repartidores(vehiculo_activo_id) WHERE vehiculo_activo_id IS NOT NULL',
   // C-BUSCADOR-SERIO (15 nov 2026): los índices del buscador del superadmin (buscadorSql.ts).
   ...INDICES_BUSCADOR,
+  // C-FICHA-OPERACION y C-MONITOREO-SERVICIOS (15 nov 2026): los reclamos de un pedido y de un viaje
+  // en su ficha (sin esto, cada ficha recorría todos los tickets). Parciales: un ticket sin pedido o
+  // sin viaje no entra; un reclamo enlazado es UNA escritura más al crearlo, y mirar no escribe.
+  // El de pedidos también lo usa la retención de fotos (NOT EXISTS de un reclamo abierto).
+  'CREATE INDEX IF NOT EXISTS tickets_pedido ON tickets(pedido_id) WHERE pedido_id IS NOT NULL',
+  'CREATE INDEX IF NOT EXISTS tickets_operacion ON tickets(operacion_id) WHERE operacion_id IS NOT NULL',
 ];
 
 /**

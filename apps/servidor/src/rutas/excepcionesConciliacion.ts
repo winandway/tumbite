@@ -6,7 +6,7 @@ import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { pedirAprobacion } from '../finanzas/controlDual';
-import { perfilDe } from './equipo';
+import { tienePermiso } from '../accesoInterno';
 
 /**
  * C-DINERO-30-DIAS (NXT-1, 3 nov 2026): la bandeja de los días que no cuadraron en los últimos 30.
@@ -18,12 +18,9 @@ import { perfilDe } from './equipo';
  */
 export const excepcionesConciliacion = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const PERFILES_EXCUSAN = new Set(['total', 'finanzas']);
-
 excepcionesConciliacion.get('/admin/conciliacion/excepciones', async (c) => {
   const u = exigir(c, 'admin');
   const db = base(c);
-  const perfil = await perfilDe(db, u.id);
   // ETP-3: los días con una excusa esperando la segunda firma (el canario sigue en rojo).
   const { results } = await db
     .prepare(
@@ -37,7 +34,7 @@ excepcionesConciliacion.get('/admin/conciliacion/excepciones', async (c) => {
       esperandoFirma: !d.excusado && esperando.has(d.dia),
       pedidoPorMi: esperando.get(d.dia)?.pedido_por === u.id,
     })),
-    puedoExcusar: PERFILES_EXCUSAN.has(perfil),
+    puedoExcusar: tienePermiso(c, 'dinero.conciliar'),
   });
 });
 
@@ -58,7 +55,7 @@ excepcionesConciliacion.post('/admin/conciliacion/excepciones', async (c) => {
       clave: z.string().min(1).max(200),
     }),
   );
-  if (!PERFILES_EXCUSAN.has(await perfilDe(db, u.id)))
+  if (!tienePermiso(c, 'dinero.conciliar'))
     throw new ErrorDatos(
       'Solo una cuenta con perfil Total o Finanzas excusa un día de la conciliación.',
       undefined,

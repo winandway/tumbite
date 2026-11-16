@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Hora } from './horario';
 import {
   CIUDAD_PRUEBAS_VENEZUELA,
   TARIFAS_COMIDA_VENEZUELA,
@@ -8,6 +9,7 @@ import {
   CIUDAD_EL_VIGIA,
   almacenNavegador,
   enIdioma,
+  formatearFechaHora,
   formatearMonto,
   textoAMonto,
   useBorrador,
@@ -1105,7 +1107,7 @@ function FilaPapel({
         </strong>
         <span>
           {d.conductor}
-          {d.pais ? ` · ${d.pais}` : ''} · {t.subido} {d.creadoEn}
+          {d.pais ? ` · ${d.pais}` : ''} · {t.subido} <Hora fecha={d.creadoEn} idioma={idioma} />
           {d.motivo ? ` · ${d.motivo}` : ''}
         </span>
       </div>
@@ -1286,13 +1288,14 @@ const numeroTasa = (n: number, idioma: Idioma) =>
   new Intl.NumberFormat(idioma === 'en' ? 'en-US' : 'es-VE', { maximumFractionDigits: 4 }).format(
     n,
   );
+// La tasa es de un día (sin hora): se escribe ese día, con el año (C-HORARIO-EMPLEADO).
 const fechaTasa = (f: string, idioma: Idioma) =>
-  new Intl.DateTimeFormat(idioma === 'en' ? 'en-US' : 'es-VE', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${f.slice(0, 10)}T12:00:00Z`));
+  formatearFechaHora(`${f.slice(0, 10)} 12:00:00`, {
+    idioma,
+    formato: '24',
+    zona: 'UTC',
+    estilo: 'fecha_larga',
+  });
 const leerNumero = (v: string) => Number(v.trim().replace(',', '.'));
 
 /**
