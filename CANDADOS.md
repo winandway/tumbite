@@ -4457,8 +4457,17 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Arreglo:** la suma de «entrega» y «propina» de la conciliación de pedidos cuenta solo los movimientos con pedido. Además, `conciliarAyer` vuelve a calcular un día que no cuadró, que nadie excusó y que lleva más de una hora en rojo (como mucho una vez por hora; el correo de aviso sale solo la primera vez): si lo que lo descuadró se corrige, el rojo se limpia solo.
 - **Prueba:** `apps/servidor/src/conciliacionSoloPedidos.test.ts` (2). Rojo comprobado: sumando otra vez todo, falla la primera; sin el reintento, falla la segunda.
 - **Cómo se comprueba:** `/datos/salud` del sitio de pruebas con `dinero: ok`; en la tabla `conciliaciones`, el día con `cuadraRepartidores: sí`.
-- **Lo que queda abierto:** el dinero de los viajes con tarjeta (lo capturado en Stripe frente a lo abonado al conductor) todavía no tiene su propia conciliación diaria. Hoy solo existen en el sitio de pruebas. Va antes de encender viajes con tarjeta en producción.
+- **Lo que quedaba abierto (cerrado el 16 nov 2026 por C-CONCILIACION-VIAJES, más abajo):** el dinero de los viajes con tarjeta no tenía su propia conciliación diaria.
 - **No tocar:** no volver a sumar movimientos sin pedido en la conciliación de pedidos.
+
+## C-CONCILIACION-VIAJES · La conciliación diaria también cuenta los viajes con tarjeta (16 nov 2026) — todos los países
+
+- **Qué faltaba y cómo se veía:** la conciliación diaria solo cubría pedidos. Un viaje cobrado con tarjeta (Moto, Carro, Envíos de persona a persona) que no llegara entero al conductor, que dejara la propina sin abonar, que se quedara con la autorización abierta (plata retenida en la tarjeta del pasajero) o que terminara sin capturarse (viaje prestado gratis; pasa si Stripe falla justo después de cerrar el viaje) no la ponía en rojo. Obligatoria antes de encender viajes con tarjeta en producción.
+- **Qué se hizo:** `apps/servidor/src/conciliacionViajes.ts` (`conciliarViajes`) revisa, por cada cobro de viaje tocado ese día (`cobros_viaje.actualizado_en`): (1) capturado ≤ autorizado; (2) capturado = lo abonado al conductor (movimiento «entrega» con referencia `viaje-tarjeta-<viaje>` o `cargo-viaje-<viaje>`); (3) propina cobrada = propina abonada (`propina-viaje-<viaje>`); (4) un viaje cerrado (terminado, cancelado, no se presentó, sin conductor) no deja la autorización en «autorizado»; (5) todo viaje con tarjeta terminado ese día tiene su cobro capturado. `conciliar` lo suma a las tres reglas de pedidos: un viaje descuadrado pone el día en rojo (`cuadra = 0`, `detalle.cuadraViajes = NO` y `viajesDiferencias` con cada viaje) y por eso la pieza `dinero` del canario (`saludDinero`, 30 días) se pone en `error` sola, y el correo de «no cuadra» sale como siempre.
+- **Lecturas:** solo las filas del día, por dos índices nuevos en `schema.sql` (`cobros_viaje_dia` y `viajes_tarjeta_terminados`, este parcial solo de viajes con tarjeta terminados). Sin escrituras nuevas.
+- **Prueba:** `apps/servidor/src/conciliacionViajes.test.ts` (11). Rojo comprobado: sin sumar `viajes.cuadra` al día, sin la regla cobrado = abonado y sin la regla de la autorización abierta fallan cuatro de las pruebas.
+- **Cómo se comprueba:** `/datos/salud` con `dinero: ok`; en la tabla `conciliaciones`, el día con `cuadraViajes: sí`.
+- **No tocar:** no sacar los viajes de la conciliación del día ni volver a contar sus movimientos «entrega» y «propina» (sin pedido) en la conciliación de pedidos.
 
 ## C-CAPTURAS-POR-IDIOMA · En inglés, pantalla y ejemplos de Estados Unidos (15 nov 2026) — EE. UU. y Venezuela
 

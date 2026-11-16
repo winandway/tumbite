@@ -3,6 +3,7 @@ import type { Env } from './env';
 import { enviarCorreo } from './correo';
 import { CONFIG_PERMISOS } from '@tumbite/compartido';
 import { depurarAccesosSensibles } from './accesoInterno';
+import { conciliarViajes } from './conciliacionViajes';
 
 /**
  * Dinero vigilado (de los estudios de Richard): cada día se suma lo vendido, lo cobrado en Stripe,
@@ -103,6 +104,9 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
   const cuadraRest = venta === n(p?.rest);
   const cuadraRep = entrega + propina === n(p?.rep) + n(p?.bonos);
   const cuadraStripe = n(cap?.capturado) === n(p?.total_con_cobro);
+  // C-CONCILIACION-VIAJES (16 nov 2026): los viajes con tarjeta tienen su propia conciliación y entran
+  // en el mismo día: si un viaje cobrado no llegó entero al conductor, el día no cuadra.
+  const viajes = await conciliarViajes(db, dia);
   const r: Conciliacion = {
     dia,
     pedidos: n(p?.n),
@@ -111,7 +115,7 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
     devuelto: n(dev?.total),
     abonado: venta + entrega + propina,
     retirado,
-    cuadra: cuadraRest && cuadraRep && cuadraStripe,
+    cuadra: cuadraRest && cuadraRep && cuadraStripe && viajes.cuadra,
     detalle: {
       restaurantesEsperado: n(p?.rest),
       restaurantesAbonado: venta,
@@ -123,6 +127,7 @@ export async function conciliar(db: D1Database, dia: string): Promise<Conciliaci
       cuadraRepartidores: cuadraRep ? 'sí' : 'NO',
       cuadraStripe: cuadraStripe ? 'sí' : 'NO',
       ...directos,
+      ...viajes.detalle,
     },
   };
   await db
