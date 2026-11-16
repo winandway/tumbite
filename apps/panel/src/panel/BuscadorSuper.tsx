@@ -12,6 +12,7 @@ import {
 } from '@tumbite/compartido';
 import { ir } from '../ruta';
 import { pedir } from './api';
+import { useHora } from './horario';
 import { type GrupoMenu, IconoDe } from './armazon/menus';
 
 /**
@@ -193,17 +194,9 @@ export function tonoEstado(
   return 'vivo';
 }
 
-/** Fecha y hora cortas de una fecha de la base (UTC sin zona), en la hora de esta computadora. */
-export function fechaYHora(fecha: string | null | undefined, idioma: Idioma): string {
-  if (!fecha) return '';
-  const d = new Date(`${fecha.replace(' ', 'T')}${/[zZ]|[+-]\d\d:?\d\d$/.test(fecha) ? '' : 'Z'}`);
-  if (Number.isNaN(d.getTime())) return fecha;
-  return d.toLocaleString(idioma === 'es' ? 'es-US' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+/** El nombre de un estado (pedido, viaje, comercio, ticket) en el idioma de la pantalla. */
+export function nombreEstado(estado: string, idioma: Idioma): string {
+  return new Map(Object.entries(enIdioma(T, idioma).estados)).get(estado) ?? estado;
 }
 
 /** El texto con la parte que coincidió en negrita (sin mirar acentos ni mayúsculas). */
@@ -266,6 +259,8 @@ export function BuscadorSuper({
   grupos?: GrupoMenu[];
 }) {
   const t = enIdioma(T, idioma);
+  // C-HORARIO-EMPLEADO: las fechas con la zona y el reloj del empleado.
+  const h = useHora(idioma);
   const id = useId();
   const casilla = useRef<HTMLInputElement>(null);
   const caja = useRef<HTMLDivElement>(null);
@@ -491,7 +486,7 @@ export function BuscadorSuper({
                                 r.monto != null
                                   ? formatearMonto(r.monto, r.moneda ?? 'USD', idioma)
                                   : null,
-                                r.fecha ? fechaYHora(r.fecha, idioma) : null,
+                                r.fecha ? h.fecha(r.fecha) : null,
                               ]
                                 .filter(Boolean)
                                 .join(' · ')}
