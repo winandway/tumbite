@@ -33,6 +33,8 @@ const es = {
   quitarFavorito: 'Quitar de favoritos',
   buscar: '¿Qué se te antoja hoy?',
   soloAbiertos: 'Solo abiertos',
+  // Fase cero: el mosaico grande del carro se llama «Viajes».
+  viajes: 'Viajes',
   servicios: {
     comida: 'Comida',
     mercado: 'Mercado',
@@ -235,6 +237,7 @@ const en: typeof es = {
   quitarFavorito: 'Remove from favorites',
   buscar: 'What are you craving today?',
   soloAbiertos: 'Open now',
+  viajes: 'Rides',
   servicios: {
     comida: 'Food',
     mercado: 'Grocery',

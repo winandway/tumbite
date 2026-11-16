@@ -227,7 +227,7 @@ export function BotonAncho({
             : exito
               ? C.exito
               : C.primario,
-        borderRadius: 14,
+        borderRadius: 12,
         paddingVertical: 15,
         alignItems: 'center',
         marginTop: 10,

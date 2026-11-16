@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text as TextoNativo,
   View,
+  useColorScheme,
   type StyleProp,
   type TextProps,
   type TextStyle,
@@ -29,12 +30,23 @@ import {
   ESPACIO,
   LETRA,
   RADIO,
-  SOMBRA,
   TACTIL,
   TONO,
   familiaPara,
+  paletaPara,
+  type Paleta,
   type Tono,
 } from './tokens';
+
+/** Fase cero: 'claro' u 'oscuro' según el teléfono (como Uber, Bolt y Grab). */
+export function useModoColor(): 'claro' | 'oscuro' {
+  return useColorScheme() === 'dark' ? 'oscuro' : 'claro';
+}
+
+/** Fase cero: la paleta del modo del teléfono. Las pantallas con modo oscuro leen el color aquí. */
+export function useColores(): Paleta {
+  return paletaPara(useModoColor());
+}
 
 /** Carga Poppins, Montserrat y los íconos. Va UNA vez en la raíz de cada app. */
 export function useFuentesDivoox(): boolean {
@@ -106,7 +118,7 @@ export function Icono({
   );
 }
 
-/** Tarjeta: fondo blanco, borde fino y sombra suave. Sin franjas de color (regla de Richard). */
+/** Tarjeta: fondo blanco y borde fino, SIN sombra (fase cero). Sin franjas de color (regla de Richard). */
 export function Tarjeta({
   children,
   alTocar,
@@ -284,7 +296,7 @@ export function BarraPestanas({
   pestanas,
   activa,
   alTocar,
-  colorActivo = COLOR.marcaOscuro,
+  colorActivo = COLOR.marca,
 }: {
   pestanas: PestanaBarra[];
   activa: string;
@@ -295,7 +307,9 @@ export function BarraPestanas({
     <View style={d.barra} accessibilityRole="tablist">
       {pestanas.map((p) => {
         const esta = p.clave === activa;
-        const color = esta ? colorActivo : COLOR.textoTenue;
+        // Fase cero: ícono relleno y rojo al elegirse; apagado en gris. La letra va en tinta o gris.
+        const color = esta ? colorActivo : COLOR.iconoApagado;
+        const colorTexto = esta ? COLOR.texto : COLOR.textoSuave;
         return (
           <Pressable
             key={p.clave}
@@ -321,7 +335,9 @@ export function BarraPestanas({
                 <View style={d.punto} />
               ) : null}
             </View>
-            <Text style={[d.barraTexto, { color }, esta && { fontWeight: '700' }]}>{p.texto}</Text>
+            <Text style={[d.barraTexto, { color: colorTexto }, esta && { fontWeight: '700' }]}>
+              {p.texto}
+            </Text>
           </Pressable>
         );
       })}
@@ -368,14 +384,14 @@ export function TituloSeccion({ texto, accion }: { texto: string; accion?: React
 }
 
 export const d = StyleSheet.create({
+  // Fase cero: la tarjeta no lleva sombra, lleva borde de 1 y esquina 16.
   tarjeta: {
     backgroundColor: COLOR.blanco,
-    borderRadius: RADIO.m,
+    borderRadius: RADIO.l,
     borderWidth: 1,
     borderColor: COLOR.borde,
     padding: ESPACIO.l,
     marginBottom: ESPACIO.m,
-    ...SOMBRA.tarjeta,
   },
   tarjetaOscura: { backgroundColor: '#161616', borderColor: COLOR.bordeOscuro },
   pildora: {

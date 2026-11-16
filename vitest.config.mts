@@ -49,6 +49,14 @@ export default defineConfig({
       },
       {
         test: {
+          // Fase cero (16 nov 2026): la lógica pura de las tres apps (archivos .ts sin React Native).
+          name: 'apps',
+          include: ['apps/{cliente,repartidor,restaurante}/src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'panel',
           include: ['apps/panel/src/**/*.test.{ts,tsx}'],
           environment: 'jsdom',

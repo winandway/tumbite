@@ -1,36 +1,49 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
 import {
   AvisoBorrador,
   Boton,
   C,
+  COLOR,
   Campo,
+  ESPACIO,
+  EstadoVacio,
+  FilaLista,
+  Icono,
+  LETRA,
+  RADIO,
+  SOMBRA,
   alSalirTelefono,
   almacenTelefono,
+  useColores,
   useSesion,
   Text,
 } from '@tumbite/movil';
 import { Tarjeta } from '../comida/piezas';
+import { ConfirmarMismaRuta } from './ConfirmarMismaRuta';
+import { MapaRuta } from './MapaRuta';
+import {
+  type ViajeHistorial,
+  agruparPorMes,
+  categoriaDe,
+  fechaServidor,
+  puntosEnOrden,
+  sePuedeRepetir,
+} from './mismaRuta';
+import { TEXTOS_MIS_VIAJES } from './textos';
 
 /**
  * C-VIAJES-HISTORIAL (13 nov 2026) — todos los países. «Mis viajes» del pasajero, como Uber: la lista
  * por páginas, el recibo de cada viaje (desglose, forma de pago, distancia, tiempo, conductor y
  * vehículo) y la ayuda con el viaje adjunto, incluida «Olvidé algo en el vehículo». El contacto es por
  * soporte: nunca se muestran teléfonos. El formulario de ayuda guarda lo escrito (borrador).
+ *
+ * C-MISMA-RUTA (15 nov 2026): la lista va agrupada por mes; cada viaje es una tarjeta con el mapita de
+ * su ruta real y «Pedir la misma ruta», que abre la confirmación con el precio de ahora. El recibo y
+ * la ayuda van en los tres puntos. Mirar la lista no escribe en la base.
  */
 
-type Fila = {
-  id: string;
-  servicio: string;
-  categoria: string | null;
-  estado: string;
-  origen: string;
-  destino: string;
-  total: number | null;
-  moneda: string | null;
-  creadoEn: string;
-};
 type Recibo = {
   id: string;
   servicio: string;
@@ -59,125 +72,6 @@ type Recibo = {
 
 const MOTIVOS = ['objeto_olvidado', 'cobro', 'conductor', 'seguridad', 'otro'] as const;
 
-const T = {
-  es: {
-    titulo: 'Mis viajes',
-    vacio: 'Todavía no tienes viajes.',
-    verMas: 'Ver más viajes',
-    volver: 'Volver a mis viajes',
-    recibo: 'Recibo del viaje',
-    servicios: { moto: 'Moto', carro: 'Carro', carro_xl: 'Carro XL', envios: 'Envío' } as Record<
-      string,
-      string
-    >,
-    estados: {
-      terminado: 'Terminado',
-      cancelado: 'Cancelado',
-      sin_conductor: 'Sin conductor',
-      no_show: 'No te encontramos',
-      buscando: 'Buscando conductor',
-      asignado: 'En camino',
-      conductor_llego: 'El conductor llegó',
-      en_curso: 'En curso',
-      pago_pendiente: 'Pago pendiente',
-    } as Record<string, string>,
-    piezas: {
-      base: 'Tarifa base',
-      distancia: 'Distancia',
-      tiempo: 'Tiempo',
-      ajusteMinimo: 'Ajuste a la tarifa mínima',
-      dinamico: 'Alta demanda',
-      cargoFijo: 'Cargo de servicio',
-      redondeo: 'Redondeo',
-    } as Record<string, string>,
-    total: 'Total',
-    propina: 'Propina',
-    pago: 'Forma de pago',
-    pagos: { efectivo: 'Efectivo', tarjeta: 'Tarjeta', pago_movil: 'Pago móvil' } as Record<
-      string,
-      string
-    >,
-    km: (m: number) => `${(m / 1000).toFixed(1)} km`,
-    min: (s: number) => `${Math.max(1, Math.round(s / 60))} min`,
-    conductor: 'Conductor',
-    ayuda: 'Ayuda con este viaje',
-    motivos: {
-      objeto_olvidado: 'Olvidé algo en el vehículo',
-      cobro: 'Problema con el cobro',
-      conductor: 'Problema con el conductor',
-      seguridad: 'Problema de seguridad',
-      otro: 'Otra cosa',
-    } as Record<string, string>,
-    detalle: 'Cuéntanos qué pasó',
-    detalleOlvido: 'Qué olvidaste y dónde lo dejaste',
-    enviar: 'Enviar a soporte',
-    enviado:
-      'Listo: abrimos tu caso con este viaje adjunto. Nuestro equipo te escribe por correo y en Ayuda.',
-    enviadoOlvido:
-      'Listo: le avisamos al conductor y abrimos tu caso. Nuestro equipo coordina la devolución contigo; por seguridad no compartimos teléfonos.',
-    casoAbierto: 'Ya tienes un caso abierto:',
-    faltaDetalle: 'Cuéntanos qué pasó (al menos unas palabras).',
-  },
-  en: {
-    titulo: 'My rides',
-    vacio: 'You don’t have any rides yet.',
-    verMas: 'See more rides',
-    volver: 'Back to my rides',
-    recibo: 'Ride receipt',
-    servicios: { moto: 'Moto', carro: 'Car', carro_xl: 'Car XL', envios: 'Delivery' } as Record<
-      string,
-      string
-    >,
-    estados: {
-      terminado: 'Completed',
-      cancelado: 'Canceled',
-      sin_conductor: 'No driver found',
-      no_show: 'We couldn’t find you',
-      buscando: 'Finding a driver',
-      asignado: 'On the way',
-      conductor_llego: 'Driver arrived',
-      en_curso: 'In progress',
-      pago_pendiente: 'Payment pending',
-    } as Record<string, string>,
-    piezas: {
-      base: 'Base fare',
-      distancia: 'Distance',
-      tiempo: 'Time',
-      ajusteMinimo: 'Minimum fare adjustment',
-      dinamico: 'High demand',
-      cargoFijo: 'Service fee',
-      redondeo: 'Rounding',
-    } as Record<string, string>,
-    total: 'Total',
-    propina: 'Tip',
-    pago: 'Payment method',
-    pagos: { efectivo: 'Cash', tarjeta: 'Card', pago_movil: 'Mobile payment' } as Record<
-      string,
-      string
-    >,
-    km: (m: number) => `${(m / 1609.34).toFixed(1)} mi`,
-    min: (s: number) => `${Math.max(1, Math.round(s / 60))} min`,
-    conductor: 'Driver',
-    ayuda: 'Help with this ride',
-    motivos: {
-      objeto_olvidado: 'I left something in the vehicle',
-      cobro: 'Problem with the charge',
-      conductor: 'Problem with the driver',
-      seguridad: 'Safety issue',
-      otro: 'Something else',
-    } as Record<string, string>,
-    detalle: 'Tell us what happened',
-    detalleOlvido: 'What you left and where',
-    enviar: 'Send to support',
-    enviado:
-      'Done: we opened your case with this ride attached. Our team will email you and reply in Help.',
-    enviadoOlvido:
-      'Done: we let the driver know and opened your case. Our team will arrange the return with you; for safety, we don’t share phone numbers.',
-    casoAbierto: 'You already have an open case:',
-    faltaDetalle: 'Tell us what happened (at least a few words).',
-  },
-};
-
 const de = (m: Record<string, string>, k: string) => new Map(Object.entries(m)).get(k) ?? k;
 const ORDEN_PIEZAS = [
   'base',
@@ -191,7 +85,7 @@ const ORDEN_PIEZAS = [
 
 function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
   const { api, idioma, usuario } = useSesion();
-  const t = enIdioma(T, idioma);
+  const t = enIdioma(TEXTOS_MIS_VIAJES, idioma);
   const [r, setR] = useState<Recibo | null>(null);
   const [ayuda, setAyuda] = useState<{ motivo: string; ticketId: string }[]>([]);
   const [error, setError] = useState('');
@@ -361,18 +255,228 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
   );
 }
 
-export function MisViajes() {
+type Textos = (typeof TEXTOS_MIS_VIAJES)['es'];
+
+/** «Hoy, 8:12 a. m.», «Ayer, 6:40 p. m.» o «12 nov, 9:05 a. m.» (hora del teléfono). */
+function fechaCorta(f: string, idioma: 'es' | 'en', t: Textos): string {
+  const d = fechaServidor(f);
+  const hora = d.toLocaleTimeString(idioma === 'en' ? 'en-US' : 'es', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  const hoy = new Date();
+  const ayer = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+  const mismoDia = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (mismoDia(d, hoy)) return `${t.hoy}, ${hora}`;
+  if (mismoDia(d, ayer)) return `${t.ayer}, ${hora}`;
+  return `${d.toLocaleDateString(idioma === 'en' ? 'en-US' : 'es', { day: 'numeric', month: 'short' })}, ${hora}`;
+}
+
+/** El nombre del vehículo del viaje: Moto, Carro, Carro XL… */
+export function vehiculoDe(v: Pick<ViajeHistorial, 'servicio' | 'categoria'>, t: Textos): string {
+  return de(t.vehiculo, v.servicio === 'moto' ? 'moto' : categoriaDe(v));
+}
+
+export function TarjetaViaje({
+  v,
+  alRepetir,
+  alOpciones,
+}: {
+  v: ViajeHistorial;
+  alRepetir: () => void;
+  alOpciones: () => void;
+}) {
+  const { idioma } = useSesion();
+  const t = enIdioma(TEXTOS_MIS_VIAJES, idioma);
+  const col = useColores();
+  const estado = de(t.estados, v.estado);
+  const ok = v.estado === 'terminado';
+  const malo = ['cancelado', 'sin_conductor', 'no_show'].includes(v.estado);
+  const colorEstado = ok ? col.exito : malo ? COLOR.error : col.textoSuave;
+  return (
+    <View
+      testID={`viaje-${v.id}`}
+      style={{
+        borderWidth: 1,
+        borderColor: col.borde,
+        borderRadius: RADIO.l,
+        backgroundColor: col.fondo,
+        overflow: 'hidden',
+      }}
+    >
+      <MapaRuta puntos={puntosEnOrden(v)} alto={96}>
+        <View
+          style={[
+            {
+              position: 'absolute',
+              top: ESPACIO.s,
+              left: ESPACIO.s,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: RADIO.s,
+              backgroundColor: col.fondo,
+            },
+            SOMBRA.tarjeta,
+          ]}
+        >
+          <Icono
+            nombre={v.servicio === 'moto' ? 'bicycle-outline' : 'car-outline'}
+            tamano={16}
+            color={col.texto}
+          />
+          <Text style={[LETRA.tarjeta, { fontSize: 13, color: col.texto }]}>
+            {vehiculoDe(v, t)}
+          </Text>
+        </View>
+      </MapaRuta>
+      <View style={{ padding: ESPACIO.l, gap: ESPACIO.m }}>
+        <View style={{ flexDirection: 'row', gap: ESPACIO.m, alignItems: 'flex-start' }}>
+          <Text style={[LETRA.tarjeta, { flex: 1, color: col.texto }]} numberOfLines={2}>
+            {v.origen} → {v.destino}
+          </Text>
+          {v.total != null ? (
+            <Text style={[LETRA.cifra, { fontSize: 16, lineHeight: 20, color: col.texto }]}>
+              {formatearMonto(v.total, v.moneda ?? 'USD', idioma)}
+            </Text>
+          ) : null}
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+          <Text style={[LETRA.secundario, { color: col.textoSuave }]}>
+            {fechaCorta(v.creadoEn, idioma, t)} ·
+          </Text>
+          {ok || malo ? (
+            <Icono
+              nombre={ok ? 'checkmark' : 'close-circle-outline'}
+              tamano={16}
+              color={colorEstado}
+            />
+          ) : null}
+          <Text style={[LETRA.secundario, { color: colorEstado, fontWeight: '700' }]}>
+            {estado}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: ESPACIO.s, alignItems: 'center' }}>
+          {sePuedeRepetir(v) ? (
+            <View style={{ flex: 1 }}>
+              <Boton
+                tipo="fuerte"
+                icono="repeat-outline"
+                texto={t.pedirMismaRuta}
+                alTocar={alRepetir}
+                testID={`pedir-misma-ruta-${v.id}`}
+              />
+            </View>
+          ) : (
+            <View style={{ flex: 1 }} />
+          )}
+          <Pressable
+            onPress={alOpciones}
+            accessibilityRole="button"
+            accessibilityLabel={t.masOpciones}
+            testID={`viaje-opciones-${v.id}`}
+            style={({ pressed }) => ({
+              width: 52,
+              height: 52,
+              borderRadius: RADIO.m,
+              borderWidth: 1,
+              borderColor: col.borde,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: pressed ? col.superficie : col.fondo,
+            })}
+          >
+            <Icono nombre="ellipsis-vertical" color={col.texto} />
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** Los tres puntos del viaje: recibo y ayuda (los dos abren el recibo, con la ayuda debajo). */
+function OpcionesViaje({
+  abierto,
+  alCerrar,
+  alRecibo,
+}: {
+  abierto: boolean;
+  alCerrar: () => void;
+  alRecibo: () => void;
+}) {
+  const { idioma } = useSesion();
+  const t = enIdioma(TEXTOS_MIS_VIAJES, idioma);
+  const col = useColores();
+  return (
+    <Modal visible={abierto} transparent animationType="fade" onRequestClose={alCerrar}>
+      <Pressable
+        style={{ flex: 1, backgroundColor: 'rgba(16,16,16,0.45)' }}
+        onPress={alCerrar}
+        accessibilityRole="button"
+        accessibilityLabel={t.cerrar}
+      />
+      <View
+        style={[
+          {
+            backgroundColor: col.fondo,
+            borderTopLeftRadius: RADIO.hoja,
+            borderTopRightRadius: RADIO.hoja,
+            paddingVertical: ESPACIO.s,
+            paddingBottom: ESPACIO.xxxl,
+          },
+          SOMBRA.flotante,
+        ]}
+        testID="viaje-opciones"
+      >
+        <FilaLista
+          titulo={t.verRecibo}
+          icono="receipt-outline"
+          alTocar={alRecibo}
+          testID="viaje-opcion-recibo"
+        />
+        <FilaLista
+          titulo={t.ayuda}
+          icono="help-circle-outline"
+          alTocar={alRecibo}
+          testID="viaje-opcion-ayuda"
+        />
+        <FilaLista titulo={t.cerrar} icono="close" alTocar={alCerrar} ultima />
+      </View>
+    </Modal>
+  );
+}
+
+/**
+ * La lista de «Mis viajes». `alPedir` lleva a la pantalla de espera del viaje nuevo y `alCambiar`
+ * abre Pedir viaje ya lleno (los dos los decide la pantalla que la monta).
+ */
+export function MisViajes({
+  alPedir,
+  alCambiar,
+  conTitulo = true,
+}: {
+  alPedir: (viajeId: string, servicio: string) => void;
+  alCambiar: (servicio: string) => void;
+  /** En «Pedir viaje» va con su título; en la pantalla Mis viajes el título lo pone la pantalla. */
+  conTitulo?: boolean;
+}) {
   const { api, idioma } = useSesion();
-  const t = enIdioma(T, idioma);
-  const [filas, setFilas] = useState<Fila[] | null>(null);
+  const t = enIdioma(TEXTOS_MIS_VIAJES, idioma);
+  const col = useColores();
+  const [filas, setFilas] = useState<ViajeHistorial[] | null>(null);
   const [siguiente, setSiguiente] = useState<string | null>(null);
   const [abierto, setAbierto] = useState<string | null>(null);
+  const [opciones, setOpciones] = useState<string | null>(null);
+  const [repetir, setRepetir] = useState<ViajeHistorial | null>(null);
   const [error, setError] = useState('');
+  const [cargando, setCargando] = useState(false);
 
   const traer = useCallback(
     (antes: string | null) =>
       api
-        .pedir<{ viajes: Fila[]; siguiente: string | null }>(
+        .pedir<{ viajes: ViajeHistorial[]; siguiente: string | null }>(
           'GET',
           `/datos/viajes/historial${antes ? `?antes=${encodeURIComponent(antes)}` : ''}`,
         )
@@ -380,7 +484,8 @@ export function MisViajes() {
           setFilas((x) => (antes ? [...(x ?? []), ...r.viajes] : r.viajes));
           setSiguiente(r.siguiente);
         })
-        .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x))),
+        .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)))
+        .finally(() => setCargando(false)),
     [api],
   );
   useEffect(() => {
@@ -388,44 +493,70 @@ export function MisViajes() {
   }, [traer]);
 
   if (abierto) return <Detalle id={abierto} alVolver={() => setAbierto(null)} />;
+  const grupos = agruparPorMes(filas ?? [], idioma);
   return (
-    <View style={{ gap: 8 }} testID="mis-viajes">
-      <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>{t.titulo}</Text>
-      {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}
-      {filas && filas.length === 0 ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
-      {(filas ?? []).map((f) => (
-        <Pressable key={f.id} onPress={() => setAbierto(f.id)} accessibilityRole="button">
-          <Tarjeta>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontWeight: '700', color: C.secundario }}>
-                {de(
-                  t.servicios,
-                  f.servicio === 'carro' && f.categoria === 'xl' ? 'carro_xl' : f.servicio,
-                )}{' '}
-                · {f.creadoEn.slice(0, 10)}
-              </Text>
-              {f.total != null ? (
-                <Text style={{ fontWeight: '700', color: C.secundario }}>
-                  {formatearMonto(f.total, f.moneda ?? 'USD', idioma)}
-                </Text>
-              ) : null}
-            </View>
-            <Text numberOfLines={1} style={{ color: '#666B73' }}>
-              {f.destino}
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '700',
-                color: f.estado === 'terminado' ? C.exito : '#666B73',
-              }}
-            >
-              {de(t.estados, f.estado)}
-            </Text>
-          </Tarjeta>
-        </Pressable>
+    <View style={{ gap: ESPACIO.l }} testID="mis-viajes">
+      {conTitulo ? (
+        <Text style={[LETRA.titulo, { color: col.texto }]} accessibilityRole="header">
+          {t.titulo}
+        </Text>
+      ) : null}
+      {error ? (
+        <View
+          accessibilityRole="alert"
+          style={{ flexDirection: 'row', gap: ESPACIO.s, alignItems: 'center' }}
+        >
+          <Icono nombre="alert-circle-outline" color={COLOR.error} tamano={20} />
+          <Text style={[LETRA.secundario, { color: COLOR.error, flex: 1 }]}>{error}</Text>
+        </View>
+      ) : null}
+      {filas && filas.length === 0 ? (
+        <EstadoVacio icono="car-outline" titulo={t.titulo} texto={t.vacio} />
+      ) : null}
+      {grupos.map((g) => (
+        <View key={g.clave} style={{ gap: ESPACIO.m }}>
+          <Text style={[LETRA.cuerpoFuerte, { color: col.textoSuave }]}>{g.titulo}</Text>
+          {g.viajes.map((v) => (
+            <TarjetaViaje
+              key={v.id}
+              v={v}
+              alRepetir={() => setRepetir(v)}
+              alOpciones={() => setOpciones(v.id)}
+            />
+          ))}
+        </View>
       ))}
-      {siguiente ? <Boton texto={t.verMas} alTocar={() => void traer(siguiente)} /> : null}
+      {siguiente ? (
+        <Boton
+          tipo="terciario"
+          texto={t.verMas}
+          alTocar={() => {
+            setCargando(true);
+            void traer(siguiente);
+          }}
+          cargando={cargando}
+        />
+      ) : null}
+      <OpcionesViaje
+        abierto={opciones != null}
+        alCerrar={() => setOpciones(null)}
+        alRecibo={() => {
+          setAbierto(opciones);
+          setOpciones(null);
+        }}
+      />
+      <ConfirmarMismaRuta
+        viaje={repetir}
+        alCerrar={() => setRepetir(null)}
+        alPedir={(id, servicio) => {
+          setRepetir(null);
+          alPedir(id, servicio);
+        }}
+        alCambiar={(servicio) => {
+          setRepetir(null);
+          alCambiar(servicio);
+        }}
+      />
     </View>
   );
 }

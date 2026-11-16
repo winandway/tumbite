@@ -159,12 +159,17 @@ describe('los dos estilos del mapa (una sola fuente)', () => {
     expect(ESTILO_NUBE_DIA.variant).toBe('light');
     expect(ESTILO_NUBE_NOCHE.variant).toBe('dark');
   });
-  it('de noche las autopistas van en azul claro y de día en azul petróleo', () => {
+  // Fase cero (16 nov 2026, sección 7): mapa neutro; el color lo ponen la ruta (tinta) y el destino (rojo).
+  it('de día las autopistas van blancas sobre gris claro; de noche, grafito; nunca azul ni rojo', () => {
     const autopista = (tema: 'dia' | 'noche') =>
       estiloMapaDe(tema).find(
         (r) => r.featureType === 'road.highway' && r.elementType === 'geometry',
       )?.stylers[0]?.color;
-    expect(autopista('dia')).toBe('#1F4D69');
-    expect(autopista('noche')).toBe('#5FB4E5');
+    expect(autopista('dia')).toBe('#FFFFFF');
+    expect(autopista('noche')).toBe('#38383E');
+    for (const tema of ['dia', 'noche'] as const)
+      for (const r of estiloMapaDe(tema))
+        for (const st of r.stylers)
+          expect(String(st.color ?? '').toUpperCase()).not.toMatch(/1F4D69|5FB4E5|F20D20/);
   });
 });

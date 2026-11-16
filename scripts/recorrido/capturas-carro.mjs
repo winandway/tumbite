@@ -570,7 +570,9 @@ async function correr(M, idiomas) {
     await arribaDe(h.getByTestId('mis-viajes'));
     await espera(800);
     await foto(h, 'pasajero-mis-viajes', idioma);
-    await h.getByTestId('mis-viajes').getByRole('button').first().click();
+    // C-MISMA-RUTA: el recibo y la ayuda van en los tres puntos de cada viaje.
+    await h.locator('[data-testid^="viaje-opciones-"]').first().click();
+    await h.getByTestId('viaje-opcion-recibo').click();
     await h.getByTestId('recibo-viaje').waitFor({ timeout: 30_000 });
     await arribaDe(h.getByTestId('recibo-viaje'));
     await espera(800);

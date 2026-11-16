@@ -63,7 +63,7 @@ export function CabeceraDriver({
         <Text
           style={{
             fontWeight: '700',
-            color: C.logistica,
+            color: C.secundario,
             fontSize: 12,
             marginTop: -4,
             letterSpacing: 0.5,

@@ -1,7 +1,6 @@
-import { Text } from '@tumbite/movil';
-import { Image, Pressable, View } from 'react-native';
+import { Icono, Text } from '@tumbite/movil';
+import { Pressable, View } from 'react-native';
 import type { Idioma } from '@tumbite/compartido';
-import { IMG } from './recursos';
 import { textosInicio } from './textos';
 
 /**
@@ -18,23 +17,19 @@ export function Buscador({ idioma, alTocar }: { idioma: Idioma; alTocar: () => v
       accessibilityLabel={t.buscarInicio}
       testID="abrir-busqueda"
       style={{
-        marginHorizontal: 16,
+        // Fase cero: buscador de 50, esquina 12, margen de pantalla 20.
+        marginHorizontal: 20,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#F6F6F6',
-        borderRadius: 999,
-        paddingHorizontal: 14,
-        height: 46,
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        height: 50,
       }}
     >
-      <Image
-        source={IMG.iconoLupa}
-        style={{ width: 18, height: 20 }}
-        resizeMode="contain"
-        accessibilityIgnoresInvertColors
-      />
+      <Icono nombre="search-outline" tamano={22} color="#666B73" />
       <View style={{ flex: 1, marginLeft: 10 }}>
-        <Text style={{ fontSize: 15, color: '#666B73' }} numberOfLines={1}>
+        <Text style={{ fontSize: 16, color: '#666B73' }} numberOfLines={1}>
           {t.buscarInicio}
         </Text>
       </View>

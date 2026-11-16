@@ -2,6 +2,7 @@ import type { Idioma } from '@tumbite/compartido';
 import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
+import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
 import { GUIAS_SEMANA } from './semana';
 import { GUIAS_OPERACIONES } from './operaciones';
 
@@ -10181,9 +10182,16 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const carro = idioma === 'es' ? GUIAS_CARRO.es : GUIAS_CARRO.en;
   const extras = new Map(Object.entries(idioma === 'es' ? GUIAS_SEMANA.es : GUIAS_SEMANA.en));
   const de = (id: SeccionDocs['id']) => extras.get(id) ?? [];
+  // C-MISMA-RUTA: entra en Docs cuando sus capturas reales existen (ver mismaRuta.ts).
+  const mismaRuta = MISMA_RUTA_PUBLICADA
+    ? [idioma === 'es' ? GUIA_MISMA_RUTA.es : GUIA_MISMA_RUTA.en]
+    : [];
   const base = secciones.map((s) => {
     if (s.id === 'ordering')
-      return { ...s, guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, ...de(s.id)] };
+      return {
+        ...s,
+        guias: [...s.guias, ...moto.pasajero, ...carro.pasajero, ...mismaRuta, ...de(s.id)],
+      };
     if (s.id === 'drivers')
       return { ...s, guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...de(s.id)] };
     return { ...s, guias: [...s.guias, ...de(s.id)] };

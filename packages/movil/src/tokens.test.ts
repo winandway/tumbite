@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { COLOR, FUENTE, ALTO, TACTIL, TONO, acentoDeApp, contraste, familiaPara } from './tokens';
+import {
+  ALTO,
+  COLOR,
+  COLOR_OSCURO,
+  FUENTE,
+  TACTIL,
+  TONO,
+  acentoDeApp,
+  contraste,
+  estiloBoton,
+  familiaPara,
+  paletaPara,
+} from './tokens';
 
 // C-APPS-DISENO: la capa de diseño única de las tres apps del celular.
 describe('tokens de diseño de las apps', () => {
@@ -30,14 +42,54 @@ describe('tokens de diseño de las apps', () => {
       expect(ALTO[k]).toBeGreaterThanOrEqual(TACTIL);
   });
 
-  it('cada app con su color: cliente rojo, Driver azul de logística, Restaurants negro', () => {
-    expect(acentoDeApp('cliente').fondo).toBe('#F20D20');
-    expect(acentoDeApp('repartidor').fondo).toBe('#1F4D69');
-    expect(acentoDeApp('restaurante').fondo).toBe('#101010');
+  // C-UN-SOLO-ROJO (fase cero, 16 nov 2026): un solo color de acción en las tres apps.
+  it('las tres apps usan el rojo de la marca como acción', () => {
+    for (const app of ['cliente', 'repartidor', 'restaurante'] as const)
+      expect(acentoDeApp(app).fondo, app).toBe('#F20D20');
+  });
+
+  it('los cuatro botones del sistema se leen en claro y en oscuro', () => {
+    expect(estiloBoton('principal').fondo).toBe('#F20D20');
+    expect(estiloBoton('principal').apretado).toBe('#C20A1A');
+    expect(estiloBoton('fuerte').fondo).toBe('#101010');
+    expect(estiloBoton('fuerte', 'oscuro').fondo).toBe('#F5F5F5');
+    for (const modo of ['claro', 'oscuro'] as const)
+      for (const tipo of ['fuerte', 'terciario'] as const) {
+        const b = estiloBoton(tipo, modo);
+        expect(contraste(b.texto, b.fondo), `${tipo} ${modo}`).toBeGreaterThanOrEqual(7);
+      }
+    expect(contraste(estiloBoton('borde').texto, COLOR.fondo)).toBeGreaterThanOrEqual(7);
+    expect(
+      contraste(estiloBoton('borde', 'oscuro').texto, COLOR_OSCURO.fondo),
+    ).toBeGreaterThanOrEqual(7);
+  });
+
+  it('modo oscuro: tabla de la sección 2 y contraste AA', () => {
+    expect(paletaPara('oscuro').fondo).toBe('#0F0F10');
+    expect(paletaPara('claro').fondo).toBe('#FFFFFF');
+    expect(COLOR_OSCURO.marca).toBe(COLOR.marca);
+    expect(contraste(COLOR_OSCURO.texto, COLOR_OSCURO.fondo)).toBeGreaterThanOrEqual(7);
+    expect(contraste(COLOR_OSCURO.textoSuave, COLOR_OSCURO.fondo)).toBeGreaterThanOrEqual(7);
+    expect(contraste(COLOR_OSCURO.textoSuave, COLOR_OSCURO.superficie)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('nada de amarillo ni morado en las paletas clara y oscura', () => {
+    for (const v of [...Object.values(COLOR), ...Object.values(COLOR_OSCURO)]) {
+      if (!v.startsWith('#')) continue;
+      const n = v.replace('#', '');
+      const [r, g, b] = [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16)) as [
+        number,
+        number,
+        number,
+      ];
+      const amarillo = r > 180 && g > 160 && b < 90;
+      expect(amarillo, v).toBe(false);
+    }
   });
 
   it('nada de morado en la paleta', () => {
-    for (const v of Object.values(COLOR)) {
+    for (const v of [...Object.values(COLOR), ...Object.values(COLOR_OSCURO)]) {
+      if (!v.startsWith('#')) continue;
       const n = v.replace('#', '');
       const [r, g, b] = [0, 2, 4].map((i) => parseInt(n.slice(i, i + 2), 16)) as [
         number,

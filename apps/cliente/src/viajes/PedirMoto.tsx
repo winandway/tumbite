@@ -32,6 +32,7 @@ import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
+import { tomarRelleno } from './relleno';
 import { ElegirCuando, MisProgramados, horaCorta } from './Programar';
 import {
   EditorParadas,
@@ -93,6 +94,8 @@ export function PedirMoto({
     alSalir: alSalirTelefono,
   });
   const { valores: v, cambiar } = b;
+  // C-MISMA-RUTA: lo escrito vino de «Cambiar algo» en un viaje anterior (no es un borrador perdido).
+  const [rellenado] = useState(() => tomarRelleno(servicio));
   // C-ENVIO-TAMANO: «Mediano · 15 kg» (en libras en inglés).
   const textoTamano = (x: TamanoPaquete) => {
     const kg = new Map(Object.entries(PAQUETE_MAX_KG)).get(x) ?? 0;
@@ -129,7 +132,8 @@ export function PedirMoto({
 
   // La recogida arranca en la ubicación de ahora (se puede mover en el mapa de recogida).
   useEffect(() => {
-    if (v.recogidaLat) return;
+    // Con un viaje anterior escrito, la recogida es la de ese viaje: no se pisa con la de ahora.
+    if (v.recogidaLat || rellenado) return;
     void miUbicacion().then((p) => {
       if (!p) return;
       cambiar('recogidaLat', String(p.lat));
@@ -263,7 +267,11 @@ export function PedirMoto({
 
   return (
     <View style={{ gap: 12 }}>
-      <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
+      <AvisoBorrador
+        visible={b.recuperado && !rellenado}
+        idioma={idioma}
+        empezar={b.empezarDeNuevo}
+      />
       {reservado ? (
         <Tarjeta>
           <View testID="viaje-reservado" style={{ gap: 4 }}>

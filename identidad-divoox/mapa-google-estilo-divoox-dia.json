@@ -3,7 +3,7 @@
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#CBDDE8"
+        "color": "#EEF0F3"
       }
     ]
   },
@@ -19,7 +19,7 @@
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#1F4D69"
+        "color": "#8A919C"
       }
     ]
   },
@@ -39,7 +39,7 @@
     "elementType": "geometry.stroke",
     "stylers": [
       {
-        "color": "#5E8CA6"
+        "color": "#E3E6EA"
       }
     ]
   },
@@ -56,7 +56,7 @@
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#0C2A3B"
+        "color": "#666B73"
       }
     ]
   },
@@ -93,7 +93,7 @@
         "visibility": "on"
       },
       {
-        "color": "#A9DCC0"
+        "color": "#DCEFE0"
       }
     ]
   },
@@ -111,7 +111,7 @@
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#B7CEDC"
+        "color": "#E3E6EA"
       }
     ]
   },
@@ -129,7 +129,7 @@
     "elementType": "geometry.stroke",
     "stylers": [
       {
-        "color": "#5E8CA6"
+        "color": "#E3E6EA"
       }
     ]
   },
@@ -138,7 +138,7 @@
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#1F4D69"
+        "color": "#8A919C"
       }
     ]
   },
@@ -156,7 +156,7 @@
     "elementType": "geometry.stroke",
     "stylers": [
       {
-        "color": "#1F4D69"
+        "color": "#E3E6EA"
       }
     ]
   },
@@ -165,7 +165,7 @@
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#0C2A3B"
+        "color": "#666B73"
       }
     ]
   },
@@ -174,7 +174,7 @@
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#1F4D69"
+        "color": "#FFFFFF"
       }
     ]
   },
@@ -183,7 +183,7 @@
     "elementType": "geometry.stroke",
     "stylers": [
       {
-        "color": "#1F4D69"
+        "color": "#E3E6EA"
       }
     ]
   },
@@ -192,7 +192,7 @@
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#0C2A3B"
+        "color": "#666B73"
       }
     ]
   },
@@ -209,7 +209,7 @@
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#4FB3D9"
+        "color": "#CFE3F3"
       }
     ]
   },
@@ -218,7 +218,7 @@
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#0C4A66"
+        "color": "#8A919C"
       }
     ]
   }

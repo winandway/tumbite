@@ -29,30 +29,33 @@ export function Cabecera({
   const t = textosInicio(idioma);
   return (
     <View
-      style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 6, paddingBottom: 4 }}
+      style={{ backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}
     >
       {/* C-LOGO-PORTADA (3 nov 2026, Richard): el logo de Divoox arriba, en chico. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ flex: 1 }}>
           <Image
             source={IMG.logo}
-            style={{ width: 106, height: 26 }}
+            style={{ width: 124, height: 30 }}
             resizeMode="contain"
             accessibilityRole="image"
             accessibilityLabel="Divoox"
             testID="inicio-logo"
           />
         </View>
+        <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
         <Pressable
           onPress={alCampana}
           accessibilityRole="button"
           accessibilityLabel={pendientes ? `${t.campana} (${pendientes})` : t.campana}
           hitSlop={6}
+          // Fase cero: botón cuadrado de 44, esquina 12 y borde fino (zona de toque de 48 con el margen).
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: '#F6F6F6',
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#E6E7EA',
             alignItems: 'center',
             justifyContent: 'center',
           }}
@@ -80,7 +83,6 @@ export function Cabecera({
             </View>
           ) : null}
         </Pressable>
-        <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
       </View>
       <Pressable
         onPress={alDireccion}
@@ -88,18 +90,18 @@ export function Cabecera({
         accessibilityLabel={`${t.cambiarDireccion}: ${direccion}`}
         testID="inicio-direccion"
         hitSlop={6}
-        style={{ marginTop: 6 }}
+        style={{ marginTop: 12 }}
       >
-        <Text style={{ fontSize: 12, color: '#666B73', fontWeight: '600' }}>{t.entregarEn}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Icono nombre="location-sharp" tamano={16} color={C.primario} />
+        <Text style={{ fontSize: 13, color: '#666B73' }}>{t.entregarEn}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+          <Icono nombre="location-outline" tamano={20} color={C.primario} />
           <Text
-            style={{ fontSize: 16, fontWeight: '700', color: C.secundario, flexShrink: 1 }}
+            style={{ fontSize: 18, fontWeight: '600', color: C.secundario, flexShrink: 1 }}
             numberOfLines={1}
           >
             {direccion}
           </Text>
-          <Icono nombre="chevron-down" tamano={16} />
+          <Icono nombre="chevron-down" tamano={16} color={C.primario} />
         </View>
       </Pressable>
     </View>
