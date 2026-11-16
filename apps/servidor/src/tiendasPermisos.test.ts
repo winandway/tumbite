@@ -46,6 +46,27 @@ describe('permisos de las apps para las tiendas', () => {
     }
   });
 
+  // C-SIN-VENTANA-ENCIMA (16 nov 2026): React Native mete SYSTEM_ALERT_WINDOW («mostrar encima de
+  // otras apps») en el manifiesto; ninguna app lo usa y el auditor de Google Play lo marcó como
+  // permiso de más que no se envía. Visto en el .aab de producción (cliente 25, Driver 23,
+  // Restaurants 16) antes de bloquearlo.
+  it('ninguna app pide mostrarse encima de otras apps ni almacenamiento', () => {
+    for (const app of ['cliente', 'repartidor', 'restaurante']) {
+      const bloqueados = leer(app, 'app.json').expo.android.blockedPermissions as string[];
+      for (const p of [
+        'android.permission.SYSTEM_ALERT_WINDOW',
+        'android.permission.READ_EXTERNAL_STORAGE',
+        'android.permission.WRITE_EXTERNAL_STORAGE',
+      ])
+        expect(bloqueados, `${app}: ${p}`).toContain(p);
+    }
+    // El cliente no sigue la ubicación con la app cerrada: sin servicio de ubicación en primer plano.
+    expect(plugin(leer('cliente', 'app.json').expo, 'expo-location')?.[1]).toMatchObject({
+      isAndroidForegroundServiceEnabled: false,
+      isAndroidBackgroundLocationEnabled: false,
+    });
+  });
+
   it('el repartidor explica la cámara (verificación de identidad) en los dos idiomas', () => {
     const e = leer('repartidor', 'app.json').expo;
     expect(e.ios.infoPlist.NSCameraUsageDescription).toMatch(/camera/);

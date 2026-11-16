@@ -4532,6 +4532,12 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Candado:** `apps/servidor/src/borradoDirecciones.test.ts`, comprobado en rojo antes del arreglo (quedaba una dirección). Commit f61a8afa5.
 - **No tocar:** el borrado sigue siendo una sola pieza; nadie más repite sus instrucciones.
 
+## C-SIN-VENTANA-ENCIMA: las apps no piden «mostrar encima de otras apps» ni el servicio de ubicación que no usan (16 nov 2026, envío a Google Play) — todos los países
+
+- **Qué estaba mal:** los .aab de producción (cliente 25, Driver 23, Restaurants 16) traían `SYSTEM_ALERT_WINDOW`, que mete React Native y ninguna app usa; y el cliente traía el servicio de ubicación en primer plano de expo-location sin usarlo nunca. El auditor de tiendas los marcó como permisos de más que no se envían.
+- **Arreglo:** `blockedPermissions` de las tres `app.json` incluye `android.permission.SYSTEM_ALERT_WINDOW`; el plugin `expo-location` del cliente lleva `isAndroidForegroundServiceEnabled: false` e `isAndroidBackgroundLocationEnabled: false`.
+- **Candado:** `apps/servidor/src/tiendasPermisos.test.ts`, comprobado en rojo antes del arreglo. Y antes de cada envío a Google se mide el manifiesto del .aab con `bundletool dump manifest`.
+
 ## C-BORRADO-CHAT: al borrar la cuenta se van los mensajes y las fotos del chat (16 nov 2026, encargo de Gerencia por el NO APTO de Google Play) — todos los países
 
 - **Qué estaba roto:** «Borrar mi cuenta» dejaba guardados el texto y las fotos que la persona mandó en el chat de sus pedidos (`mensajes_pedido`, con su archivo `chat/<pedido>/…` en el almacén) y de sus viajes (`mensajes_viaje`), y la copia de lo que escribió dentro de los reportes de otros (`reportes_contenido.texto`). Google Play (eliminación de cuenta: hay que borrar los datos de usuario de esa cuenta) lo dio NO APTO el 16 nov (dictamen en la carpeta de auditorías de Gerencia).
