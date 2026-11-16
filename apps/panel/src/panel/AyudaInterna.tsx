@@ -187,7 +187,7 @@ export function AyudaInterna({ base, sub, idioma }: { base: string; sub: string;
 
   const buscador = (
     <form
-      className="ayi-buscador"
+      className="ayi-buscador pd-en-linea"
       role="search"
       onSubmit={(e) => {
         e.preventDefault();

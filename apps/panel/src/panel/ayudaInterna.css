@@ -15,28 +15,22 @@
   max-height: calc(100vh - 120px);
   overflow-y: auto;
 }
+/* La casilla toma el estilo de los campos del panel; la lupa va adentro, a la izquierda. */
 .ayi-buscador {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--pd-borde-campo);
-  border-radius: 10px;
-  padding: 0 10px;
+  position: relative;
+  display: block;
   margin-bottom: 12px;
+}
+.ayi-buscador svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--pd-gris);
-  background: #fff;
+  pointer-events: none;
 }
-.ayi-buscador input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  outline: none;
-  padding: 10px 0;
-  font: inherit;
-  background: transparent;
-}
-.ayi-buscador:focus-within {
-  border-color: var(--pd-negro);
+.pd-contenido .ayi-buscador input {
+  padding-left: 38px !important;
 }
 .ayi-seccion + .ayi-seccion {
   margin-top: 12px;
