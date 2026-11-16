@@ -3254,6 +3254,11 @@ CREATE TABLE IF NOT EXISTS cobros_viaje (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- C-CONCILIACION-VIAJES (16 nov 2026): la conciliación diaria de viajes con tarjeta lee solo las filas
+-- del día, por estos dos índices (el segundo solo guarda los viajes con tarjeta ya terminados).
+CREATE INDEX IF NOT EXISTS cobros_viaje_dia ON cobros_viaje(actualizado_en);
+CREATE INDEX IF NOT EXISTS viajes_tarjeta_terminados ON viajes(terminado_en)
+  WHERE metodo_pago = 'tarjeta' AND estado = 'terminado';
 
 -- C-IDENTIDAD-UNICA (29 oct 2026, pedido de Richard): correos y teléfonos de cuentas cerradas por mala
 -- conducta. Quien se registre con uno de ellos (escrito de cualquier forma) no entra. Nunca se borra.
