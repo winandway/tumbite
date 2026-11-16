@@ -7,6 +7,7 @@ import {
   type FiltroEstadoPedido,
   FILTROS_ESTADO_PEDIDO,
   ESTADOS_PEDIDO_CERRADOS,
+  ESTADOS_PEDIDO_VIVOS,
   type Usuario,
   correoCanonico,
   enmascararCorreo,
@@ -19,6 +20,8 @@ import {
   type ServicioMonitoreo,
   esServicioMonitoreo,
   servicioDePedido,
+  SERVICIOS_DE_VIAJE,
+  servicioIdDeOperacion,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { TELEFONO_DIEZ } from '../esquema';
@@ -32,6 +35,8 @@ import {
   filtroAlcance,
   servicioOperacionSql,
 } from '../accesoInterno';
+// C-BUSCADOR-INSTANTANEO: la misma pieza de viajes por código que «Pedidos en curso».
+import { viajesPorCodigo } from '../monitoreo';
 
 /**
  * C-BUSCADOR-SERIO (15 nov 2026, pedido de Richard: buscó «407F» y no apareció). Todos los países.
@@ -310,28 +315,38 @@ const PEDIDO_UNIONES = `LEFT JOIN restaurantes r ON r.id = p.restaurante_id
 export const nombreCliente = (f: Fila): string | null =>
   f.cliente == null || Number(f.cliente_activo ?? 1) === 0 ? null : String(f.cliente);
 
+/** Un grupo del buscador de arriba con cuántos hay en total (solo pedidos y viajes por código). */
+type GrupoConTotal = { resultados: ResultadoBusqueda[]; total?: number; totalMas?: boolean };
+
+const aResultadoPedido = (f: Fila, coincide: string): ResultadoBusqueda => ({
+  id: String(f.id),
+  titulo: `#${String(f.id).slice(0, 6).toUpperCase()}`,
+  detalle: [texto(f.restaurante), nombreCliente(f)].filter(Boolean).join(' · '),
+  estado: texto(f.estado),
+  ciudad: texto(f.ciudad),
+  enlace: `/orders/${String(f.id)}`,
+  coincide,
+  fecha: texto(f.creado_en),
+  monto: f.total == null ? null : Number(f.total),
+  moneda: texto(f.moneda) ?? 'USD',
+});
+
 async function grupoPedidos(
   db: D1Database,
   b: BusquedaInterna,
   acceso: AccesoInterno | null,
-): Promise<ResultadoBusqueda[]> {
+): Promise<GrupoConTotal> {
   // C-PERMISOS-FINOS: el alcance va EN cada consulta, antes del LIMIT (con `+`: no cambia el índice).
   const al = alcancePedidosDe(acceso);
-  // Primero los ids (por la llave primaria o la fecha), después los datos de esos pocos: así las
-  // uniones con restaurante, cliente y ciudad corren para 5 filas y no para todas las que empiezan así.
-  const partes = await Promise.all([
+  // C-BUSCADOR-INSTANTANEO: por código desde la primera letra, vivos (en problemas) primero, y
+  // cuántos hay en total para «Ver todos».
+  const [exacto, porCodigo, porMonto] = await Promise.all([
     b.id
       ? todas(db, `SELECT p.id FROM pedidos p WHERE p.id = ?${al.sql}`, b.id, ...al.valores)
       : [],
     b.codigo
-      ? todas(
-          db,
-          `SELECT p.id FROM pedidos p WHERE p.id >= ? AND p.id < ?${al.sql} ORDER BY +p.creado_en DESC LIMIT ?`,
-          ...rangoPrefijo(b.codigo),
-          ...al.valores,
-          POR_GRUPO,
-        )
-      : [],
+      ? pedidosPorCodigo(db, b.codigo, { alcance: al, limite: POR_GRUPO, cursor: '' })
+      : null,
     b.monto !== undefined
       ? todas(
           db,
@@ -342,8 +357,16 @@ async function grupoPedidos(
         )
       : [],
   ]);
-  const ids = [...new Set(partes.flat().map((f) => String(f.id)))].slice(0, POR_GRUPO);
-  if (!ids.length) return [];
+  // Los pocos que se muestran, con su restaurante, cliente y ciudad (una consulta por la llave).
+  const ids = [
+    ...new Set([
+      ...exacto.map((f) => String(f.id)),
+      ...(porCodigo ? [...porCodigo.vivos, ...porCodigo.cerrados].map((x) => x.id) : []),
+      ...porMonto.map((f) => String(f.id)),
+    ]),
+  ].slice(0, POR_GRUPO);
+  if (!ids.length)
+    return { resultados: [], total: porCodigo?.total, totalMas: porCodigo?.totalMas };
   const porId = new Map(
     (
       await todas(
@@ -353,80 +376,51 @@ async function grupoPedidos(
       )
     ).map((f) => [String(f.id), f]),
   );
-  const filas = ids.flatMap((id) => {
+  const resultados = ids.flatMap((id) => {
     const f = porId.get(id);
-    return f ? [f] : [];
+    return f ? [aResultadoPedido(f, b.codigo ?? (b.id ? String(f.id).slice(0, 6) : ''))] : [];
   });
-  const vistos = new Set<string>();
-  return filas
-    .filter((f) => !vistos.has(String(f.id)) && vistos.add(String(f.id)))
-    .slice(0, POR_GRUPO)
-    .map((f) => ({
-      id: String(f.id),
-      titulo: `#${String(f.id).slice(0, 6).toUpperCase()}`,
-      detalle: [texto(f.restaurante), nombreCliente(f)].filter(Boolean).join(' · '),
-      estado: texto(f.estado),
-      ciudad: texto(f.ciudad),
-      enlace: `/orders/${String(f.id)}`,
-      coincide: b.codigo ?? (b.id ? String(f.id).slice(0, 6) : ''),
-      fecha: texto(f.creado_en),
-      monto: f.total == null ? null : Number(f.total),
-      moneda: texto(f.moneda) ?? 'USD',
-    }));
+  return porCodigo
+    ? {
+        resultados,
+        total: Math.max(porCodigo.total, resultados.length),
+        totalMas: porCodigo.totalMas,
+      }
+    : { resultados };
 }
 
 async function grupoViajes(
   db: D1Database,
   b: BusquedaInterna,
   acceso: AccesoInterno | null,
-): Promise<ResultadoBusqueda[]> {
+): Promise<GrupoConTotal> {
+  if (!b.codigo && !b.id) return { resultados: [] };
   const al = filtroAlcance(acceso, {
     zona: '+o.zona_id',
     servicio: servicioOperacionSql('o.servicio_id'),
   });
-  const condiciones: [string, unknown[]][] = [];
-  if (b.id) condiciones.push(['o.id = ?', [b.id]]);
-  if (b.codigo) condiciones.push(['o.id >= ? AND o.id < ?', rangoPrefijo(b.codigo)]);
-  const filas = (
-    await Promise.all(
-      condiciones.map(([donde, valores]) =>
-        todas(
-          db,
-          `SELECT o.id, o.servicio_id, o.estado_general, o.creado_en, v.estado, q.total, q.moneda,
-              pu.nombre AS pasajero, pu.activo AS pasajero_activo, d.nombre AS conductor, z.nombre AS ciudad
-             FROM operaciones o LEFT JOIN viajes v ON v.operacion_id = o.id
-             LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
-             LEFT JOIN usuarios pu ON pu.id = o.cliente_id LEFT JOIN usuarios d ON d.id = o.conductor_id
-             LEFT JOIN zonas z ON z.id = o.zona_id
-            WHERE ${donde} AND +o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete')${al.sql}
-            ORDER BY +o.creado_en DESC LIMIT ?`,
-          ...valores,
-          ...al.valores,
-          POR_GRUPO,
-        ),
-      ),
-    )
-  ).flat();
-  const vistos = new Set<string>();
-  return filas
-    .filter((f) => !vistos.has(String(f.id)) && vistos.add(String(f.id)))
-    .slice(0, POR_GRUPO)
-    .map((f) => ({
-      id: String(f.id),
-      titulo: `#${String(f.id).slice(0, 6).toUpperCase()}`,
-      clase: texto(f.servicio_id),
-      detalle: [Number(f.pasajero_activo ?? 1) === 0 ? null : texto(f.pasajero), texto(f.conductor)]
-        .filter(Boolean)
-        .join(' · '),
-      estado: texto(f.estado ?? f.estado_general),
-      ciudad: texto(f.ciudad),
-      // C-FICHA-OPERACION: cada viaje abre su propia ficha.
-      enlace: `/rides/${String(f.id)}`,
-      coincide: b.codigo ?? String(f.id).slice(0, 6),
-      fecha: texto(f.creado_en),
-      monto: f.total == null ? null : Number(f.total),
-      moneda: texto(f.moneda) ?? 'USD',
-    }));
+  // C-BUSCADOR-INSTANTANEO: la MISMA pieza que «Pedidos en curso» (vivos primero, total).
+  const r = await viajesPorCodigo(db, b, {
+    servicios: SERVICIOS_DE_VIAJE.map((x) => servicioIdDeOperacion(x) ?? '').filter(Boolean),
+    alcanceSql: al,
+    limite: POR_GRUPO,
+    cursor: '',
+  });
+  const resultados = [...r.vivos, ...r.cerrados].slice(0, POR_GRUPO).map((v) => ({
+    id: v.id,
+    titulo: `#${v.id.slice(0, 6).toUpperCase()}`,
+    clase: servicioIdDeOperacion(v.servicio) ?? null,
+    detalle: [v.pasajero, v.conductor].filter(Boolean).join(' · '),
+    estado: v.estado,
+    ciudad: v.ciudad,
+    // C-FICHA-OPERACION: cada viaje abre su propia ficha.
+    enlace: `/rides/${v.id}`,
+    coincide: b.codigo ?? v.id.slice(0, 6),
+    fecha: v.creadoEn,
+    monto: v.total,
+    moneda: v.moneda,
+  }));
+  return { resultados, total: Math.max(r.total, resultados.length), totalMas: r.totalMas };
 }
 
 async function grupoCuentas(
@@ -615,7 +609,10 @@ export async function buscarEnSuperadmin(
   const permisos = new Map(Object.entries(PERMISO_GRUPO));
   const toca = (g: GrupoBusqueda) =>
     !acceso || (permisos.get(g) ?? []).some((p) => puedeVer(acceso, p));
-  const si = <T>(g: GrupoBusqueda, f: () => Promise<T[]>) => (toca(g) ? f() : Promise.resolve([]));
+  const si = (g: GrupoBusqueda, f: () => Promise<ResultadoBusqueda[] | GrupoConTotal>) =>
+    toca(g)
+      ? f().then((x) => (Array.isArray(x) ? { resultados: x } : x))
+      : Promise.resolve<GrupoConTotal>({ resultados: [] });
   const [pedidos, viajes, clientes, repartidores, restaurantes, vehiculos, tickets] =
     await Promise.all([
       si('pedidos', () => grupoPedidos(db, b, acceso)),
@@ -635,8 +632,13 @@ export async function buscarEnSuperadmin(
     vehiculos,
     tickets,
   })
-    .filter(([, resultados]) => resultados.length > 0)
-    .map(([tipo, resultados]) => ({ tipo: tipo as GrupoBusqueda, resultados }));
+    .filter(([, g]) => g.resultados.length > 0)
+    .map(([tipo, g]) => ({
+      tipo: tipo as GrupoBusqueda,
+      resultados: g.resultados,
+      // C-BUSCADOR-INSTANTANEO: cuántos hay (pedidos y viajes por código) para «Ver todos».
+      ...(g.total !== undefined ? { total: g.total, totalMas: Boolean(g.totalMas) } : {}),
+    }));
   // Un id completo que existe: se salta directo a su ficha (si es uno solo).
   const exactos = b.id ? grupos.flatMap((g) => g.resultados.filter((r) => r.id === b.id)) : [];
   return {
@@ -670,6 +672,8 @@ export type ParametrosLista = {
   dentroViaje?: (f: Record<string, unknown>) => boolean;
   /** C-MONITOREO-SERVICIOS: pestaña de servicio (comida o tiendas filtra; lo demás no). */
   servicio?: ServicioMonitoreo;
+  /** C-BUSCADOR-INSTANTANEO: cuántos cerrados por página al buscar por código (el buscador de arriba pide 5). */
+  limite?: number;
 };
 
 /** Lee los parámetros de la lista (acepta el viejo `cerrados=1`). */
@@ -823,6 +827,11 @@ function aFilaLista(f: Fila) {
       cerrado || fechas.estado === 'pago_pendiente'
         ? ('verde' as const)
         : (semaforoPedido(fechas)?.luz ?? ('verde' as const)),
+    /**
+     * C-BUSCADOR-INSTANTANEO: al buscar por código, los vivos (y el id exacto) van fijos arriba de
+     * la primera página; lo demás sigue el orden por clave de «Cargar más».
+     */
+    fijo: false,
   };
 }
 export type FilaListaPedido = ReturnType<typeof aFilaLista>;
@@ -852,32 +861,31 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
   const estados = estadosDelFiltro(p.estado);
   const direccion = p.orden === 'recientes' ? 'DESC' : 'ASC';
 
-  // 1. Por código o id: todos, de cualquier estado y ciudad, el más reciente primero.
+  // 1. Por código o id: todos, de cualquier estado y ciudad. Desde la PRIMERA letra del código
+  // (C-BUSCADOR-INSTANTANEO): los vivos primero (en problemas arriba), después los cerrados del más
+  // reciente al más viejo, con «Cargar más» y cuántos hay en total.
   if (b.codigo || b.id) {
-    const condiciones: [string, unknown[]][] = [];
-    if (b.id) condiciones.push(['p.id = ?', [b.id]]);
-    if (b.codigo) condiciones.push(['p.id >= ? AND p.id < ?', rangoPrefijo(b.codigo)]);
-    const ids = (
-      await Promise.all(
-        condiciones.map(([donde, valores]) =>
-          todas(
+    const limite = p.limite ?? POR_PAGINA;
+    const [exacto, porCodigo] = await Promise.all([
+      b.id && !p.despues
+        ? todas(
             db,
-            `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE ${donde}${alc}
-              ORDER BY +p.creado_en DESC LIMIT ?`,
-            ...valores,
+            `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE p.id = ?${alc}`,
+            b.id,
             ...alcValores,
-            POR_PAGINA + 1,
-          ),
-        ),
-      )
-    ).flat();
-    const vistos = new Set<string>();
-    const unicos = await detalles(
-      db,
-      ids.filter((f) => !vistos.has(String(f.id)) && vistos.add(String(f.id))),
-      'DESC',
-    );
-    const pedidos = unicos.slice(0, POR_PAGINA).map(aFilaLista);
+          ).then((ids) => detalles(db, ids, 'DESC'))
+        : Promise.resolve([] as Fila[]),
+      b.codigo
+        ? pedidosPorCodigo(db, b.codigo, { alcance: p.alcance, limite, cursor: p.despues })
+        : Promise.resolve(null),
+    ]);
+    const exactos = exacto.map((f) => ({ ...aFilaLista(f), fijo: true }));
+    const yaEsta = new Set(exactos.map((x) => x.id));
+    const vivos = (porCodigo?.vivos ?? [])
+      .filter((x) => !yaEsta.has(x.id))
+      .map((x) => ({ ...x, fijo: true }));
+    const cerrados = (porCodigo?.cerrados ?? []).filter((x) => !yaEsta.has(x.id));
+    const pedidos = [...exactos, ...vivos, ...cerrados];
     const fuera = pedidos.filter((x) => !estados.includes(x.estado));
     const otrasCiudades = [
       ...new Set(
@@ -886,9 +894,11 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
     ].filter(Boolean);
     return {
       pedidos,
-      siguiente: null,
+      siguiente: porCodigo?.siguiente ?? null,
       porCodigo: true,
-      masCoincidencias: unicos.length > POR_PAGINA,
+      masCoincidencias: false,
+      total: porCodigo ? porCodigo.total : exactos.length,
+      totalMas: porCodigo?.totalMas ?? false,
       encontrado: {
         cerrados: fuera.some((x) =>
           (ESTADOS_PEDIDO_CERRADOS as readonly string[]).includes(x.estado),
@@ -938,6 +948,8 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
         siguiente: null,
         porCodigo: false,
         masCoincidencias: false,
+        total: 0,
+        totalMas: false,
         encontrado: null,
         avisoMonto: false,
       };
@@ -1045,25 +1057,217 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
     siguiente: pagina.siguiente,
     porCodigo: false,
     masCoincidencias: false,
+    total: null as number | null,
+    totalMas: false,
     encontrado: null,
     avisoMonto: b.monto !== undefined,
   };
 }
 
-/** Trae los datos de una página de ids ya ordenada (una consulta por la llave primaria). */
-async function detalles(db: D1Database, ids: Fila[], direccion: 'ASC' | 'DESC'): Promise<Fila[]> {
+/**
+ * Trae los datos de una página de ids ya ordenada (por la llave primaria). D1 acepta como mucho
+ * 100 valores por consulta: con más ids se pide en tandas de `TANDA_IDS`.
+ */
+async function detalles(
+  db: D1Database,
+  ids: Fila[],
+  direccion: 'ASC' | 'DESC',
+  tope = POR_PAGINA + 1,
+): Promise<Fila[]> {
   const elegidos = ordenarPorClave(ids, direccion)
-    .slice(0, POR_PAGINA + 1)
+    .slice(0, tope)
     .map((f) => String(f.id));
   if (!elegidos.length) return [];
-  const filas = await todas(
-    db,
-    `SELECT ${FILA_LISTA} FROM pedidos p ${UNIONES_LISTA} WHERE p.id IN (${marcas(elegidos.length)})`,
-    ...elegidos,
-  );
+  const tandas: string[][] = [];
+  for (let i = 0; i < elegidos.length; i += TANDA_IDS)
+    tandas.push(elegidos.slice(i, i + TANDA_IDS));
+  const filas = (
+    await Promise.all(
+      tandas.map((t) =>
+        todas(
+          db,
+          `SELECT ${FILA_LISTA} FROM pedidos p ${UNIONES_LISTA} WHERE p.id IN (${marcas(t.length)})`,
+          ...t,
+        ),
+      ),
+    )
+  ).flat();
   const porId = new Map(filas.map((f) => [String(f.id), f]));
   return elegidos.flatMap((id) => {
     const f = porId.get(id);
     return f ? [f] : [];
   });
+}
+/** Ids por consulta `IN (…)`: por debajo del límite de 100 valores de D1. */
+export const TANDA_IDS = 80;
+
+// ───────────────────────── Código desde la primera letra (C-BUSCADOR-INSTANTANEO) ─────────────────────────
+
+/**
+ * C-BUSCADOR-INSTANTANEO (16 nov 2026, pedido de Richard: escribió «7», «73» y «b4» y no salió
+ * nada). Todos los países. El código de un pedido o de un viaje se busca DESDE LA PRIMERA LETRA.
+ * Con una o dos letras coinciden muchos (1 de cada 16 con una letra), así que:
+ * - Cuántos hay: un conteo por la llave primaria con tope (`TOPE_CUENTA_CODIGO`; después, «1000+»).
+ *   Es un recorrido del índice dentro del rango, nunca de la tabla, y para en el tope.
+ * - Primero los vivos (con los que están en problemas arriba): por el índice del estado (los vivos
+ *   son pocos) y con el comienzo del código como filtro.
+ * - Después los cerrados, el más reciente primero, con «Cargar más» por clave:
+ *   - si el rango tiene pocos (≤ `UMBRAL_RANGO_CODIGO`, lo normal desde 3 letras), se leen por la
+ *     llave primaria y se ordenan en memoria;
+ *   - si tiene muchos (una o dos letras), se lee hacia atrás por el índice de la fecha con el
+ *     comienzo como filtro: como 1 de cada 16 (o de 256) coincide, para enseguida en el LIMIT.
+ * Mirar no escribe nada. Lo fija la prueba de presupuesto de `buscadorInterno.test.ts`.
+ */
+export const TOPE_CUENTA_CODIGO = 1000;
+export const UMBRAL_RANGO_CODIGO = 60;
+/** Vivos que entran como mucho en la primera página de una búsqueda por código. */
+const TOPE_VIVOS_CODIGO = 200;
+
+/** Cuántos empiezan así (hasta el tope), con una consulta por el índice del rango. */
+export async function contarPorCodigo(
+  db: D1Database,
+  sqlDesde: string,
+  valores: unknown[],
+  yaContados = 0,
+): Promise<{ total: number; totalMas: boolean }> {
+  const resto = TOPE_CUENTA_CODIGO + 1 - yaContados;
+  const fila = await db
+    .prepare(`SELECT count(*) AS n FROM (SELECT 1 ${sqlDesde} LIMIT ${Math.max(resto, 0)})`)
+    .bind(...valores)
+    .first<{ n: number }>();
+  const n = yaContados + Number(fila?.n ?? 0);
+  return { total: Math.min(n, TOPE_CUENTA_CODIGO), totalMas: n > TOPE_CUENTA_CODIGO };
+}
+
+/** Los cerrados de una página en memoria, después del cursor, el más reciente primero. */
+export function paginaEnMemoria(
+  filas: Fila[],
+  cursor: string,
+  limite: number,
+): { filas: Fila[]; siguiente: string | null } {
+  const orden = ordenarPorClave(filas, 'DESC');
+  const [fecha = '', fila = '0'] = cursor ? cursor.split('~') : [];
+  const resto = cursor
+    ? orden.filter(
+        (f) =>
+          String(f.creado_en) < fecha ||
+          (String(f.creado_en) === fecha && Number(f.fila) < Number(fila)),
+      )
+    : orden;
+  const pagina = resto.slice(0, limite);
+  const ultima = pagina.at(-1);
+  return { filas: pagina, siguiente: resto.length > limite && ultima ? cursorDe(ultima) : null };
+}
+
+export type PedidosPorCodigo = {
+  vivos: FilaListaPedido[];
+  cerrados: FilaListaPedido[];
+  siguiente: string | null;
+  total: number;
+  totalMas: boolean;
+};
+
+/**
+ * Pedidos cuyo código empieza por `codigo` (hexadecimal en minúscula, desde UNA letra): vivos
+ * primero (en problemas arriba) y después los cerrados, de a `limite`, el más reciente primero.
+ * `cursor` vacío = primera página (con los vivos); con cursor, solo cerrados después de esa fila.
+ */
+export async function pedidosPorCodigo(
+  db: D1Database,
+  codigo: string,
+  opciones: { alcance?: { sql: string; valores: unknown[] }; limite: number; cursor: string },
+): Promise<PedidosPorCodigo> {
+  const [desde, hasta] = rangoPrefijo(codigo);
+  const alc = opciones.alcance?.sql ?? '';
+  const alcValores = opciones.alcance?.valores ?? [];
+  const vivosSql = marcas(ESTADOS_PEDIDO_VIVOS.length);
+  const esVivo = (f: Fila) =>
+    (ESTADOS_PEDIDO_VIVOS as readonly string[]).includes(String(f.estado));
+  // Primero, el rango por la llave primaria con tope: lo normal (desde 3 letras) es que traiga
+  // pocos y con esa sola lectura ya se tiene todo (cuántos, vivos y cerrados).
+  const enRango = await todas(
+    db,
+    `SELECT p.id, p.rowid AS fila, p.creado_en, p.estado FROM pedidos p
+      WHERE p.id >= ? AND p.id < ?${alc} ORDER BY p.id LIMIT ?`,
+    desde,
+    hasta,
+    ...alcValores,
+    UMBRAL_RANGO_CODIGO + 1,
+  );
+  let cuenta: { total: number; totalMas: boolean };
+  let vivosIds: Fila[];
+  let cerrados: { filas: Fila[]; siguiente: string | null };
+  if (enRango.length <= UMBRAL_RANGO_CODIGO) {
+    cuenta = { total: enRango.length, totalMas: false };
+    vivosIds = opciones.cursor ? [] : enRango.filter(esVivo);
+    cerrados = paginaEnMemoria(
+      enRango.filter((f) => !esVivo(f)),
+      opciones.cursor,
+      opciones.limite,
+    );
+  } else {
+    // Muchos (una o dos letras): cuántos con tope, los vivos por el índice del estado (pocos) y los
+    // cerrados hacia atrás por la fecha con el comienzo del código como filtro (1 de cada 16).
+    const [tras, trasValores] = opciones.cursor
+      ? despuesDe(opciones.cursor, 'recientes')
+      : [' AND p.creado_en <= ?', ['9999-12-31 23:59:59']];
+    const [c, v, filas] = await Promise.all([
+      // Cuántos más hay después de los ya leídos (sigue el rango desde el último, sin releerlos).
+      contarPorCodigo(
+        db,
+        `FROM pedidos p WHERE p.id > ? AND p.id < ?${alc}`,
+        [String(enRango.at(-1)?.id ?? desde), hasta, ...alcValores],
+        enRango.length,
+      ),
+      opciones.cursor
+        ? Promise.resolve([] as Fila[])
+        : todas(
+            db,
+            // `+p.id` para que use el índice del estado y no el rango del código.
+            `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p
+              WHERE p.estado IN (${vivosSql}) AND +p.id >= ? AND +p.id < ?${alc} LIMIT ?`,
+            ...ESTADOS_PEDIDO_VIVOS,
+            desde,
+            hasta,
+            ...alcValores,
+            TOPE_VIVOS_CODIGO,
+          ),
+      todas(
+        db,
+        `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p INDEXED BY pedidos_creado
+          WHERE +p.id >= ? AND +p.id < ? AND +p.estado NOT IN (${vivosSql})${tras}${alc}
+          ORDER BY p.creado_en DESC, p.rowid DESC LIMIT ?`,
+        desde,
+        hasta,
+        ...ESTADOS_PEDIDO_VIVOS,
+        ...trasValores,
+        ...alcValores,
+        opciones.limite + 1,
+      ),
+    ]);
+    cuenta = c;
+    vivosIds = v;
+    const pagina = filas.slice(0, opciones.limite);
+    const ultima = pagina.at(-1);
+    cerrados = {
+      filas: pagina,
+      siguiente: filas.length > opciones.limite && ultima ? cursorDe(ultima) : null,
+    };
+  }
+  const [vivosDet, cerradosDet] = await Promise.all([
+    detalles(db, vivosIds, 'DESC', TOPE_VIVOS_CODIGO),
+    detalles(db, cerrados.filas, 'DESC'),
+  ]);
+  const vivos = vivosDet
+    .map(aFilaLista)
+    .sort(
+      (a, b) =>
+        (ORDEN_LUZ.get(a.luz) ?? 2) - (ORDEN_LUZ.get(b.luz) ?? 2) || b.clave.localeCompare(a.clave),
+    );
+  return {
+    vivos,
+    cerrados: cerradosDet.map(aFilaLista),
+    siguiente: cerrados.siguiente,
+    ...cuenta,
+  };
 }

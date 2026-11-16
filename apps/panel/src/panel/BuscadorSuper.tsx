@@ -7,6 +7,7 @@ import {
   NOMBRES_COMERCIO,
   enIdioma,
   formatearMonto,
+  quisoDecirCodigo,
   textoPlano,
   tramoCoincidente,
 } from '@tumbite/compartido';
@@ -14,6 +15,7 @@ import { ir } from '../ruta';
 import { pedir } from './api';
 import { useHora } from './horario';
 import { type GrupoMenu, IconoDe } from './armazon/menus';
+import { PAUSA_TECLAS_MS, crearMemoria } from './memoriaBusqueda';
 
 /**
  * C-BUSCADOR-SERIO (15 nov 2026, pedido de Richard). Todos los países. El buscador fijo arriba de
@@ -21,8 +23,13 @@ import { type GrupoMenu, IconoDe } from './armazon/menus';
  * (y las secciones del menú), agrupados, con lo que coincidió resaltado. Atajos «/» y Ctrl/Cmd+K;
  * flechas, Enter y Escape. Sugiere desde la primera letra, con una pausa de 200 ms entre teclas y
  * cancelando la petición anterior. Lo escrito no se guarda en ningún lado.
+ *
+ * C-BUSCADOR-INSTANTANEO (16 nov 2026): el código desde UNA letra («7», «b4»), con cuántos hay y
+ * «Ver todos»; la pausa baja a 120 ms; lo ya buscado sale al instante de la memoria de la pestaña;
+ * mientras llega lo nuevo se deja ver lo anterior (sin parpadeo); y si no hay nada se dice qué se
+ * buscó y se sugiere («¿Quisiste decir #B4290C?»).
  */
-export const PAUSA_BUSCAR_MS = 200;
+export const PAUSA_BUSCAR_MS = PAUSA_TECLAS_MS;
 
 const T = {
   es: {
@@ -32,6 +39,12 @@ const T = {
     buscando: 'Buscando…',
     sinResultados:
       'No encontramos nada con eso. Prueba con el código del pedido, un teléfono o un correo.',
+    noEncontramos: (q: string) => `No encontramos «${q}».`,
+    pista:
+      'Busca por el código (desde la primera letra), el nombre, el teléfono, el correo, la placa o el monto.',
+    quisoDecir: '¿Quisiste decir',
+    verTodos: (n: string) => `Ver los ${n} en Pedidos en curso`,
+    enLista: 'Buscar en Pedidos en curso, con los cerrados',
     avisoMonto: 'Los montos se buscan solo en los últimos 30 días.',
     irDirecto: 'Enter abre la ficha',
     grupos: {
@@ -96,6 +109,11 @@ const T = {
     atajo: 'Shortcut: / or Ctrl+K',
     buscando: 'Searching…',
     sinResultados: 'Nothing matches that. Try the order code, a phone number, or an email.',
+    noEncontramos: (q: string) => `We couldn't find "${q}".`,
+    pista: 'Search by code (from the first character), name, phone, email, plate, or amount.',
+    quisoDecir: 'Did you mean',
+    verTodos: (n: string) => `See all ${n} in Live orders`,
+    enLista: 'Search Live orders, including closed ones',
     avisoMonto: 'Amounts are searched in the last 30 days only.',
     irDirecto: 'Press Enter to open it',
     grupos: {
@@ -228,7 +246,8 @@ type Resultado = {
 };
 type Respuesta = {
   q: string;
-  grupos: { tipo: string; resultados: Resultado[] }[];
+  /** C-BUSCADOR-INSTANTANEO: pedidos y viajes por código dicen cuántos hay en total. */
+  grupos: { tipo: string; resultados: Resultado[]; total?: number; totalMas?: boolean }[];
   salto: string | null;
   avisoMonto: boolean;
 };
@@ -239,7 +258,12 @@ type Opcion = {
   resultado?: Resultado;
   icono?: string;
   texto?: string;
+  /** «Ver todos» al pie de un grupo con más de los que se muestran. */
+  verTodos?: string;
 };
+
+/** Lo ya buscado, en la memoria de esta pestaña (C-BUSCADOR-INSTANTANEO). */
+const MEMORIA = crearMemoria<Respuesta>();
 
 const escribiendoEn = (e: EventTarget | null) => {
   const x = e as HTMLElement | null;
@@ -297,7 +321,8 @@ export function BuscadorSuper({
     return () => document.removeEventListener('mousedown', fuera);
   }, [abierto]);
 
-  // Buscar con una pausa entre teclas; la petición anterior se cancela.
+  // Buscar con una pausa entre teclas; la petición anterior se cancela. Lo ya buscado sale al
+  // instante de la memoria; si ya no está vigente, se muestra igual y se pide de nuevo por detrás.
   const q = texto.trim();
   useEffect(() => {
     corte.current?.abort();
@@ -305,28 +330,37 @@ export function BuscadorSuper({
       corte.current = null;
       return;
     }
+    // Lo guardado se dibuja directo (ver `enMemoria`); si está vigente, no se pide nada.
+    const guardada = MEMORIA.leer(q);
+    if (guardada?.vigente) {
+      corte.current = null;
+      return;
+    }
     const control = new AbortController();
     corte.current = control;
-    const reloj = setTimeout(() => {
-      setBuscando(true);
-      pedir<Respuesta>('GET', `/datos/admin/buscar?q=${encodeURIComponent(q)}`, undefined, {
-        senal: control.signal,
-      })
-        .then((r) => {
-          if (control.signal.aborted) return;
-          setRespuesta(r);
-          setError('');
-          setMarcado(0);
+    const reloj = setTimeout(
+      () => {
+        setBuscando(true);
+        pedir<Respuesta>('GET', `/datos/admin/buscar?q=${encodeURIComponent(q)}`, undefined, {
+          senal: control.signal,
         })
-        .catch((e: unknown) => {
-          if (control.signal.aborted || (e instanceof ErrorApi && e.estado === ESTADO_CANCELADA))
-            return;
-          setError(e instanceof ErrorApi ? e.message : String(e));
-        })
-        .finally(() => {
-          if (!control.signal.aborted) setBuscando(false);
-        });
-    }, PAUSA_BUSCAR_MS);
+          .then((r) => {
+            if (control.signal.aborted) return;
+            MEMORIA.guardar(q, r);
+            setRespuesta(r);
+            setError('');
+          })
+          .catch((e: unknown) => {
+            if (control.signal.aborted || (e instanceof ErrorApi && e.estado === ESTADO_CANCELADA))
+              return;
+            setError(e instanceof ErrorApi ? e.message : String(e));
+          })
+          .finally(() => {
+            if (!control.signal.aborted) setBuscando(false);
+          });
+      },
+      guardada ? 0 : PAUSA_BUSCAR_MS,
+    );
     return () => {
       clearTimeout(reloj);
       control.abort();
@@ -342,7 +376,16 @@ export function BuscadorSuper({
       .slice(0, 5);
   }, [grupos, q]);
 
-  const vigente = respuesta && respuesta.q === q ? respuesta : null;
+  const enMemoria = q ? (MEMORIA.leer(q)?.valor ?? null) : null;
+  const vigente = respuesta && respuesta.q === q ? respuesta : enMemoria;
+  // Mientras llega lo nuevo se deja ver lo anterior, atenuado (sin parpadear a «Buscando…»).
+  const mostrada = vigente ?? (q && respuesta ? respuesta : null);
+  const anterior = !vigente && mostrada !== null;
+  const cifra = useCallback(
+    (g: { total?: number; totalMas?: boolean }) =>
+      `${(g.total ?? 0).toLocaleString(idioma === 'en' ? 'en-US' : 'es-US')}${g.totalMas ? '+' : ''}`,
+    [idioma],
+  );
   const opciones: Opcion[] = useMemo(
     () => [
       ...secciones.map((s) => ({
@@ -352,17 +395,30 @@ export function BuscadorSuper({
         icono: s.clave,
         texto: s.texto,
       })),
-      ...(vigente?.grupos ?? []).flatMap((g) =>
-        g.resultados.map((r) => ({
+      ...(mostrada?.grupos ?? []).flatMap((g) => [
+        ...g.resultados.map((r) => ({
           clave: `${g.tipo}-${r.id}`,
           grupo: g.tipo,
           a: `${base}${r.enlace}`,
           resultado: r,
         })),
-      ),
+        // C-BUSCADOR-INSTANTANEO: «Ver todos» si hay más de los que caben aquí.
+        ...(g.total !== undefined && (g.totalMas || g.total > g.resultados.length)
+          ? [
+              {
+                clave: `${g.tipo}-ver-todos`,
+                grupo: g.tipo,
+                a: `${base}/orders?q=${encodeURIComponent(mostrada?.q ?? q)}`,
+                verTodos: t.verTodos(cifra(g)),
+              },
+            ]
+          : []),
+      ]),
     ],
-    [secciones, vigente, base],
+    [secciones, mostrada, base, q, t, cifra],
   );
+  const totalDe = new Map((mostrada?.grupos ?? []).map((g) => [g.tipo, g]));
+  const sugerencia = quisoDecirCodigo(q);
 
   const elegir = useCallback((a: string) => {
     corte.current?.abort();
@@ -410,6 +466,8 @@ export function BuscadorSuper({
             setMarcado((m) => (m - 1 + opciones.length) % opciones.length);
           } else if (e.key === 'Enter') {
             e.preventDefault();
+            // Lo anterior que se deja ver mientras llega lo nuevo no se abre con Enter.
+            if (anterior) return;
             if (vigente?.salto) elegir(`${base}${vigente.salto}`);
             else {
               const o = opciones.at(marcado) ?? opciones[0];
@@ -425,7 +483,10 @@ export function BuscadorSuper({
         /
       </kbd>
       {desplegado ? (
-        <div className="pd-flotante pd-buscador-caja bs-caja">
+        <div
+          className={`pd-flotante pd-buscador-caja bs-caja${anterior ? ' bs-cargando' : ''}`}
+          aria-busy={buscando}
+        >
           {error ? (
             <p className="pd-flotante-vacio error-general" role="alert">
               {error}
@@ -434,9 +495,40 @@ export function BuscadorSuper({
           {vigente?.avisoMonto ? <p className="bs-aviso">{t.avisoMonto}</p> : null}
           {vigente?.salto ? <p className="bs-aviso">{t.irDirecto}</p> : null}
           {opciones.length === 0 && !error ? (
-            <p className="pd-flotante-vacio" role="status">
-              {buscando || !vigente ? t.buscando : t.sinResultados}
-            </p>
+            buscando || !vigente ? (
+              <p className="pd-flotante-vacio" role="status">
+                {t.buscando}
+              </p>
+            ) : (
+              <div className="pd-flotante-vacio bs-vacio" role="status">
+                <p>
+                  <strong>{t.noEncontramos(q)}</strong>
+                </p>
+                {sugerencia ? (
+                  <p>
+                    {t.quisoDecir}{' '}
+                    <button
+                      type="button"
+                      className="bs-sugerencia"
+                      onClick={() => setTexto(sugerencia)}
+                    >
+                      {sugerencia}
+                    </button>
+                    ?
+                  </p>
+                ) : null}
+                <p>{t.pista}</p>
+                <p>
+                  <button
+                    type="button"
+                    className="bs-sugerencia"
+                    onClick={() => elegir(`${base}/orders?q=${encodeURIComponent(q)}`)}
+                  >
+                    {t.enLista}
+                  </button>
+                </p>
+              </div>
+            )
           ) : null}
           {opciones.length > 0 ? (
             <ul role="listbox" id={id} aria-label={t.buscar}>
@@ -449,18 +541,23 @@ export function BuscadorSuper({
                     {titulo ? (
                       <li role="presentation" className="bs-grupo">
                         {t.grupos[o.grupo] ?? o.grupo}
+                        {totalDe.get(o.grupo)?.total !== undefined ? (
+                          <span className="bs-total"> · {cifra(totalDe.get(o.grupo) ?? {})}</span>
+                        ) : null}
                       </li>
                     ) : null}
                     <li
                       id={idOpcion(yo)}
                       role="option"
                       aria-selected={yo === marcado}
-                      className={`bs-opcion${r ? '' : ' bs-seccion'}${yo === marcado ? ' pd-opcion-activa' : ''}`}
+                      className={`bs-opcion${r ? '' : ' bs-seccion'}${o.verTodos ? ' bs-ver-todos' : ''}${yo === marcado ? ' pd-opcion-activa' : ''}`}
                       onMouseEnter={() => setMarcado(yo)}
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => elegir(o.a)}
                     >
-                      {r ? (
+                      {o.verTodos ? (
+                        <span>{o.verTodos} →</span>
+                      ) : r ? (
                         <>
                           <span className="bs-principal">
                             <strong>

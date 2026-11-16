@@ -2095,6 +2095,39 @@ body.modo-tableta .pd .pd-contenido {
   color: var(--pd-gris);
   font-size: 0.8rem;
 }
+/* C-BUSCADOR-INSTANTANEO: total del grupo, «Ver todos», lo anterior atenuado y el vacío con sugerencia. */
+.bs-caja .bs-total {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.bs-caja li.bs-opcion.bs-ver-todos {
+  justify-content: flex-start;
+  color: var(--pd-negro);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.bs-caja.bs-cargando ul {
+  opacity: 0.55;
+  transition: opacity 120ms;
+}
+.bs-vacio p {
+  margin: 0 0 6px;
+}
+.bs-vacio p:last-child {
+  margin-bottom: 0;
+}
+.bs-sugerencia {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pd-negro);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
 @media (max-width: 700px) {
   .bs-atajo {
     display: none;

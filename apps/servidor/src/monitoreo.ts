@@ -16,10 +16,14 @@ import {
 import {
   ORDEN_LUZ,
   type ParametrosLista,
+  TANDA_IDS,
+  UMBRAL_RANGO_CODIGO,
+  contarPorCodigo,
   cursorDe,
   despuesDe,
   listarPedidosAdmin,
   ordenarPorClave,
+  paginaEnMemoria,
   paginaPorClave,
 } from './rutas/buscadorInterno';
 
@@ -121,6 +125,8 @@ export function aFilaViaje(f: Fila, ahora = Date.now()) {
     emergencia: Number(f.emergencia) === 1,
     luz: s?.luz ?? ('verde' as const),
     semaforo: s,
+    /** C-BUSCADOR-INSTANTANEO: fijo arriba de la primera página al buscar por código (los vivos). */
+    fijo: false,
   };
 }
 export type FilaListaViaje = ReturnType<typeof aFilaViaje>;
@@ -167,11 +173,21 @@ async function idsViajesVivos(db: D1Database): Promise<Fila[]> {
 async function detallesViajes(db: D1Database, ids: Fila[], direccion: 'ASC' | 'DESC') {
   const elegidos = ordenarPorClave(ids, direccion).map((f) => String(f.id));
   if (!elegidos.length) return [];
-  const filas = await todas(
-    db,
-    `SELECT ${COLUMNAS_VIAJE} FROM operaciones o ${UNIONES_VIAJE} WHERE o.id IN (${marcas(elegidos.length)})`,
-    ...elegidos,
-  );
+  // D1 acepta como mucho 100 valores por consulta: en tandas.
+  const tandas: string[][] = [];
+  for (let i = 0; i < elegidos.length; i += TANDA_IDS)
+    tandas.push(elegidos.slice(i, i + TANDA_IDS));
+  const filas = (
+    await Promise.all(
+      tandas.map((t) =>
+        todas(
+          db,
+          `SELECT ${COLUMNAS_VIAJE} FROM operaciones o ${UNIONES_VIAJE} WHERE o.id IN (${marcas(t.length)})`,
+          ...t,
+        ),
+      ),
+    )
+  ).flat();
   const porId = new Map(filas.map((f) => [String(f.id), f]));
   return elegidos.flatMap((id) => {
     const f = porId.get(id);
@@ -179,47 +195,211 @@ async function detallesViajes(db: D1Database, ids: Fila[], direccion: 'ASC' | 'D
   });
 }
 
+/** De estas filas de viajes, las que entran en el alcance dado en SQL (en tandas, por la llave). */
+async function permitidos(db: D1Database, filas: Fila[], alc: string, valores: unknown[]) {
+  const ok = new Set<string>();
+  for (let i = 0; i < filas.length; i += TANDA_IDS) {
+    const t = filas.slice(i, i + TANDA_IDS).map((f) => String(f.id));
+    for (const f of await todas(
+      db,
+      `SELECT o.id FROM operaciones o WHERE o.id IN (${marcas(t.length)})${alc}`,
+      ...t,
+      ...valores,
+    ))
+      ok.add(String(f.id));
+  }
+  return filas.filter((f) => ok.has(String(f.id)));
+}
+
+/** Los tipos de operación que son viajes y envíos (lo demás, como las rutas de Flex, no entra). */
+const TIPOS_VIAJE = ['viaje_pasajero', 'envio_paquete'] as const;
+
+/**
+ * C-BUSCADOR-INSTANTANEO: viajes cuyo código empieza por lo escrito (desde UNA letra), o el id
+ * exacto. Misma regla que `pedidosPorCodigo`: cuántos hay (tope), los vivos primero (de los índices
+ * parciales de vivos, pocos) con los que están en problemas arriba, y los cerrados del más reciente
+ * al más viejo: por la llave primaria si el rango es chico; si no, hacia atrás por
+ * `operaciones_viaje_creado` con el comienzo del código como filtro.
+ */
+export async function viajesPorCodigo(
+  db: D1Database,
+  b: { codigo?: string; id?: string },
+  o: {
+    servicios: string[];
+    dentroViaje?: (f: Fila) => boolean;
+    /** El alcance como SQL (el buscador de arriba); el monitoreo usa `dentroViaje`. */
+    alcanceSql?: { sql: string; valores: unknown[] };
+    limite: number;
+    cursor: string;
+  },
+): Promise<{
+  vivos: FilaListaViaje[];
+  cerrados: FilaListaViaje[];
+  siguiente: string | null;
+  total: number;
+  totalMas: boolean;
+}> {
+  const vacio = { vivos: [], cerrados: [], siguiente: null, total: 0, totalMas: false };
+  if (!o.servicios.length) return vacio;
+  const alc = o.alcanceSql?.sql ?? '';
+  const alcValores = o.alcanceSql?.valores ?? [];
+  const tipos = `+o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete') AND +o.servicio_id IN (${marcas(o.servicios.length)})`;
+  const dentro = (f: Fila) =>
+    o.servicios.includes(String(f.servicio_id)) && (!o.dentroViaje || o.dentroViaje(f));
+  const cols = 'o.id, o.rowid AS fila, o.creado_en, o.zona_id, o.servicio_id';
+
+  const exacto =
+    b.id && !o.cursor
+      ? (
+          await todas(
+            db,
+            `SELECT ${cols} FROM operaciones o WHERE o.id = ? AND ${tipos}${alc}`,
+            b.id,
+            ...o.servicios,
+            ...alcValores,
+          )
+        ).filter(dentro)
+      : [];
+  if (!b.codigo) {
+    const det = await detallesViajes(db, exacto, 'DESC');
+    return {
+      ...vacio,
+      vivos: det.map((f) => ({ ...aFilaViaje(f), fijo: true })),
+      total: det.length,
+    };
+  }
+  const [desde, hasta] = rangoPrefijo(b.codigo);
+  const enRango = (f: Fila) => String(f.id) >= desde && String(f.id) < hasta;
+  // El rango por la llave primaria con tope (lo normal desde 3 letras: pocos, y basta esta lectura)
+  // y los vivos de los índices parciales (pocos).
+  const [rango, todosVivos] = await Promise.all([
+    todas(
+      db,
+      `SELECT ${cols} FROM operaciones o WHERE o.id >= ? AND o.id < ? AND ${tipos}${alc} ORDER BY o.id LIMIT ?`,
+      desde,
+      hasta,
+      ...o.servicios,
+      ...alcValores,
+      UMBRAL_RANGO_CODIGO + 1,
+    ),
+    idsViajesVivos(db),
+  ]);
+  const idsVivos = new Set(todosVivos.map((f) => String(f.id)));
+  const candidatos = o.cursor ? [] : todosVivos.filter((f) => enRango(f) && dentro(f));
+  // C-PERMISOS-FINOS: los vivos salen de los índices de vivos, sin el alcance; si quien busca tiene
+  // un alcance en SQL (el buscador de arriba), se comprueba aquí, por la llave, antes de mostrarlos.
+  const vivosIds =
+    alc && candidatos.length ? await permitidos(db, candidatos, alc, alcValores) : candidatos;
+  let cuenta: { total: number; totalMas: boolean };
+  let cerrados: { filas: Fila[]; siguiente: string | null };
+  if (rango.length <= UMBRAL_RANGO_CODIGO) {
+    const visibles = rango.filter(dentro);
+    cuenta = { total: visibles.length, totalMas: false };
+    cerrados = paginaEnMemoria(
+      visibles.filter((f) => !idsVivos.has(String(f.id))),
+      o.cursor,
+      o.limite,
+    );
+  } else {
+    // Muchos (una o dos letras): cuántos con tope, y hacia atrás por la fecha de cada tipo con el
+    // código como filtro.
+    const [tras, trasValores] = despuesDe(o.cursor, 'recientes', 'o');
+    const [c, partes] = await Promise.all([
+      contarPorCodigo(
+        db,
+        `FROM operaciones o WHERE o.id > ? AND o.id < ? AND ${tipos}${alc}`,
+        [String(rango.at(-1)?.id ?? desde), hasta, ...o.servicios, ...alcValores],
+        rango.length,
+      ),
+      Promise.all(
+        TIPOS_VIAJE.map((tipo) =>
+          todas(
+            db,
+            `SELECT ${cols} FROM operaciones o
+              WHERE o.tipo_operacion = ? AND +o.id >= ? AND +o.id < ? AND +o.servicio_id IN (${marcas(o.servicios.length)})${tras}${alc}
+              ORDER BY o.creado_en DESC, o.rowid DESC LIMIT ?`,
+            tipo,
+            desde,
+            hasta,
+            ...o.servicios,
+            ...trasValores,
+            ...alcValores,
+            o.limite + 1,
+          ),
+        ),
+      ),
+    ]);
+    cuenta = c;
+    const juntos = ordenarPorClave(partes.flat(), 'DESC').slice(0, o.limite + 1);
+    const pagina = juntos.slice(0, o.limite);
+    const ultima = pagina.at(-1);
+    cerrados = {
+      filas: pagina.filter((f) => dentro(f) && !idsVivos.has(String(f.id))),
+      siguiente: juntos.length > o.limite && ultima ? cursorDe(ultima) : null,
+    };
+  }
+  const yaEsta = new Set(exacto.map((f) => String(f.id)));
+  const [detExacto, detVivos, detCerrados] = await Promise.all([
+    detallesViajes(db, exacto, 'DESC'),
+    detallesViajes(
+      db,
+      vivosIds.filter((f) => !yaEsta.has(String(f.id))),
+      'DESC',
+    ),
+    detallesViajes(
+      db,
+      cerrados.filas.filter((f) => !yaEsta.has(String(f.id))),
+      'DESC',
+    ),
+  ]);
+  const vivos = [
+    ...detExacto.map((f) => ({ ...aFilaViaje(f), fijo: true })),
+    ...detVivos
+      .map((f) => ({ ...aFilaViaje(f), fijo: true }))
+      .sort(
+        (x, y) =>
+          (ORDEN_LUZ.get(x.luz) ?? 2) - (ORDEN_LUZ.get(y.luz) ?? 2) || -compararElementos(x, y),
+      ),
+  ];
+  return {
+    vivos,
+    cerrados: detCerrados.map((f) => aFilaViaje(f)),
+    siguiente: cerrados.siguiente,
+    ...cuenta,
+  };
+}
+
 /** Una página de viajes del monitoreo (vivos en memoria; cerrados y todos por el índice de fecha). */
 export async function listarViajesMonitoreo(
   db: D1Database,
   p: ParametrosLista,
-): Promise<{ viajes: FilaListaViaje[]; siguiente: string | null; porCodigo: boolean }> {
+): Promise<{
+  viajes: FilaListaViaje[];
+  siguiente: string | null;
+  porCodigo: boolean;
+  total?: number;
+  totalMas?: boolean;
+}> {
   const servicios = serviciosIdDe(p.servicio);
   if (!servicios.length) return { viajes: [], siguiente: null, porCodigo: false };
   const direccion = p.orden === 'recientes' ? 'DESC' : 'ASC';
   const b = interpretarBusqueda(p.q);
 
-  // Por código o id: todos, de cualquier estado y ciudad.
+  // Por código o id: todos, de cualquier estado y ciudad, desde la PRIMERA letra
+  // (C-BUSCADOR-INSTANTANEO): vivos primero, después los cerrados con «Cargar más».
   if (b.codigo || b.id) {
-    const condiciones: [string, unknown[]][] = [];
-    if (b.id) condiciones.push(['o.id = ?', [b.id]]);
-    if (b.codigo) condiciones.push(['o.id >= ? AND o.id < ?', rangoPrefijo(b.codigo)]);
-    const ids = (
-      await Promise.all(
-        condiciones.map(([donde, valores]) =>
-          todas(
-            db,
-            `SELECT o.id, o.rowid AS fila, o.creado_en, o.zona_id, o.servicio_id FROM operaciones o WHERE ${donde}
-              AND +o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete') AND +o.servicio_id IN (${marcas(servicios.length)})
-              ORDER BY +o.creado_en DESC LIMIT ?`,
-            ...valores,
-            ...servicios,
-            POR_PAGINA,
-          ),
-        ),
-      )
-    ).flat();
-    const vistos = new Set<string>();
-    const unicos = ids.filter(
-      (f) =>
-        (!p.dentroViaje || p.dentroViaje(f)) &&
-        !vistos.has(String(f.id)) &&
-        vistos.add(String(f.id)),
-    );
+    const r = await viajesPorCodigo(db, b, {
+      servicios,
+      dentroViaje: p.dentroViaje,
+      limite: p.limite ?? POR_PAGINA,
+      cursor: p.despues,
+    });
     return {
-      viajes: (await detallesViajes(db, unicos, 'DESC')).map((f) => aFilaViaje(f)),
-      siguiente: null,
+      viajes: [...r.vivos, ...r.cerrados],
+      siguiente: r.siguiente,
       porCodigo: true,
+      total: r.total,
+      totalMas: r.totalMas,
     };
   }
   // Lo escrito que no es un código (nombre, teléfono…) se busca en pedidos; los viajes no salen.
@@ -389,41 +569,45 @@ export async function listarMonitoreo(db: D1Database, p: ParametrosLista) {
       ? listarViajesMonitoreo(db, { ...p, despues: cursorV })
       : Promise.resolve(null),
   ]);
-  const signo = p.orden === 'recientes' ? -1 : 1;
+  const porCodigo = Boolean(pedidos?.porCodigo || viajes?.porCodigo);
+  // Por código, los cerrados van siempre del más reciente al más viejo (C-BUSCADOR-INSTANTANEO).
+  const signo = porCodigo || p.orden === 'recientes' ? -1 : 1;
   const enOrden = <T extends ConClave>(xs: T[]) =>
     [...xs].sort((a, b) => signo * compararElementos(a, b));
-  const listaP = enOrden(pedidos?.pedidos ?? []);
-  const listaV = enOrden(viajes?.viajes ?? []);
-  const porCodigo = Boolean(pedidos?.porCodigo || viajes?.porCodigo);
-  type Elemento = (typeof listaP)[number] | (typeof listaV)[number];
-  let juntos: Elemento[] = porCodigo
-    ? [...listaP, ...listaV].sort((a, b) => -compararElementos(a, b))
-    : enOrden<Elemento>([...listaP, ...listaV]);
-  if (!porCodigo) {
-    // Si una fuente tiene más páginas, solo se muestra hasta su último elemento: lo que venga
-    // después en la otra fuente podría ir intercalado con la página siguiente de la primera.
-    const topes = [
-      pedidos?.siguiente ? listaP.at(-1) : undefined,
-      viajes?.siguiente ? listaV.at(-1) : undefined,
-    ].filter((x): x is Elemento => Boolean(x));
-    const tope = topes.sort((a, b) => signo * compararElementos(a, b))[0];
-    if (tope) juntos = juntos.filter((x) => signo * compararElementos(x, tope) <= 0);
-  }
-  juntos = juntos.slice(0, POR_PAGINA);
+  const todosP = pedidos?.pedidos ?? [];
+  const todosV = viajes?.viajes ?? [];
+  type Elemento = (typeof todosP)[number] | (typeof todosV)[number];
+  // Por código: los vivos (y el id exacto) fijos arriba, en problemas primero; fuera de la paginación.
+  const fijos: Elemento[] = [...todosP.filter((x) => x.fijo), ...todosV.filter((x) => x.fijo)].sort(
+    (a, b) => (ORDEN_LUZ.get(a.luz) ?? 2) - (ORDEN_LUZ.get(b.luz) ?? 2) || -compararElementos(a, b),
+  );
+  const listaP = enOrden(todosP.filter((x) => !x.fijo));
+  const listaV = enOrden(todosV.filter((x) => !x.fijo));
+  let juntos: Elemento[] = enOrden<Elemento>([...listaP, ...listaV]);
+  // Si una fuente tiene más páginas, solo se muestra hasta su último elemento: lo que venga
+  // después en la otra fuente podría ir intercalado con la página siguiente de la primera.
+  const topes = [
+    pedidos?.siguiente ? listaP.at(-1) : undefined,
+    viajes?.siguiente ? listaV.at(-1) : undefined,
+  ].filter((x): x is Elemento => Boolean(x));
+  const tope = topes.sort((a, b) => signo * compararElementos(a, b))[0];
+  if (tope) juntos = juntos.filter((x) => signo * compararElementos(x, tope) <= 0);
+  juntos = juntos.slice(0, p.limite ?? POR_PAGINA);
   const siguienteP = siguienteDe(cursorP, pedidos?.siguiente ?? null, listaP, juntos, conPedidos);
   const siguienteV = siguienteDe(cursorV, viajes?.siguiente ?? null, listaV, juntos, conViajes);
   // C-MANAGER-1: entre los vivos, los que están en problemas primero.
   if (p.estado === 'vivos' && !porCodigo)
     juntos = [...juntos].sort((a, b) => (ORDEN_LUZ.get(a.luz) ?? 2) - (ORDEN_LUZ.get(b.luz) ?? 2));
   const siguiente =
-    porCodigo || (siguienteP === 'fin' && siguienteV === 'fin')
-      ? null
-      : `p:${siguienteP}|v:${siguienteV}`;
+    siguienteP === 'fin' && siguienteV === 'fin' ? null : `p:${siguienteP}|v:${siguienteV}`;
   return {
-    pedidos: juntos,
+    pedidos: [...fijos, ...juntos],
     siguiente,
     porCodigo,
     masCoincidencias: pedidos?.masCoincidencias ?? false,
+    /** C-BUSCADOR-INSTANTANEO: cuántos empiezan así entre pedidos y viajes (null si no es por código). */
+    total: porCodigo ? (pedidos?.total ?? 0) + (viajes?.total ?? 0) : null,
+    totalMas: Boolean(pedidos?.totalMas || viajes?.totalMas),
     encontrado: pedidos?.encontrado ?? null,
     avisoMonto: pedidos?.avisoMonto ?? false,
   };

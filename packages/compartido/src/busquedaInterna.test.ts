@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  quisoDecirCodigo,
   enmascararCorreo,
   enmascararTelefono,
   esIdFicha,
@@ -19,8 +20,14 @@ describe('C-BUSCADOR-SERIO · enrutador del buscador interno', () => {
     expect(interpretarBusqueda('# 407F').codigo).toBe('407f');
     // Comienzo de un UUID con su guion.
     expect(interpretarBusqueda('407f2f1c-12').codigo).toBe('407f2f1c-12');
-    // Dos letras no bastan para un código (serían miles de pedidos).
-    expect(interpretarBusqueda('40').codigo).toBeUndefined();
+    // C-BUSCADOR-INSTANTANEO: desde la PRIMERA letra («7», «73», «b4», «B»), con o sin «#».
+    expect(interpretarBusqueda('7').codigo).toBe('7');
+    expect(interpretarBusqueda('73').codigo).toBe('73');
+    expect(interpretarBusqueda('b4')).toMatchObject({ codigo: 'b4', nombre: 'b4' });
+    expect(interpretarBusqueda('B').codigo).toBe('b');
+    expect(interpretarBusqueda('#7').codigo).toBe('7');
+    // Una letra que no es hexadecimal no es código (sí puede ser un nombre).
+    expect(interpretarBusqueda('g').codigo).toBeUndefined();
     // «4821» es a la vez un código y el final de un teléfono.
     expect(interpretarBusqueda('4821')).toMatchObject({ codigo: '4821', telefono: '4821' });
   });
@@ -99,5 +106,18 @@ describe('C-BUSCADOR-SERIO · enrutador del buscador interno', () => {
       }),
     ).toEqual({ zona: 'US-FL-MIAMI', estado: 'cerrados' });
     expect(limpiarPreferencias(null)).toEqual({});
+  });
+});
+
+describe('C-BUSCADOR-INSTANTANEO · ¿quisiste decir…?', () => {
+  it('corrige las letras que se confunden con números y los espacios', () => {
+    expect(quisoDecirCodigo('B429OC')).toBe('#B4290C');
+    expect(quisoDecirCodigo('#73C2E8')).toBeNull();
+    expect(quisoDecirCodigo('73 c2')).toBe('#73C2');
+    expect(quisoDecirCodigo('4O7F')).toBe('#407F');
+    expect(quisoDecirCodigo('l07f')).toBe('#107F');
+    // Un nombre de verdad no se «corrige» a código.
+    expect(quisoDecirCodigo('Olivia')).toBeNull();
+    expect(quisoDecirCodigo('')).toBeNull();
   });
 });

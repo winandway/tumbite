@@ -86,7 +86,9 @@ export type BusquedaInterna = {
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CODIGO = /^[0-9a-f]{3,8}$/i;
+// C-BUSCADOR-INSTANTANEO (16 nov 2026): el código se reconoce DESDE LA PRIMERA LETRA («7», «b4»).
+// Antes pedía 3 y Richard escribió «7», «73» y «b4» sin que saliera nada.
+const CODIGO = /^[0-9a-f]{1,8}$/i;
 const CODIGO_LARGO = /^[0-9a-f]{8}-[0-9a-f-]{0,27}$/i;
 // eslint-disable-next-line security/detect-unsafe-regex -- cuantificadores acotados sobre un texto de 80 letras como mucho
 const REPARTIDOR = /^[a-z]{2}-(?:[a-z]{1,4}(?:-\d{0,6})?)?$/i;
@@ -144,6 +146,22 @@ export function interpretarBusqueda(entrada: string): BusquedaInterna {
     b.placa = placa.toUpperCase();
   if (LETRA.test(texto)) b.nombre = textoPlano(texto);
   return b;
+}
+
+/**
+ * C-BUSCADOR-INSTANTANEO: «¿quisiste decir…?» para un código mal escrito. Las letras que la gente
+ * confunde con números (O y o → 0; I, i, l y L → 1) y los espacios o guiones de más. Solo propone
+ * algo si lo escrito NO es ya un código y la corrección sí lo es (hexadecimal, de 1 a 8 letras).
+ * Devuelve el código sugerido en mayúsculas con «#», o null.
+ */
+export function quisoDecirCodigo(entrada: string): string | null {
+  const limpio = entrada.trim().replace(/^#\s*/, '');
+  if (!limpio || CODIGO.test(limpio)) return null;
+  const corregido = limpio
+    .replace(/[\s-]/g, '')
+    .replace(/[oO]/g, '0')
+    .replace(/[iIlL]/g, '1');
+  return corregido !== limpio && CODIGO.test(corregido) ? `#${corregido.toUpperCase()}` : null;
 }
 
 /**

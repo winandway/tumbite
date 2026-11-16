@@ -204,10 +204,12 @@ describe('C-BUSCADOR-SERIO · el buscador de arriba del superadmin', () => {
       expect(
         pedidos.map((p) => p.id),
         q,
-      ).toEqual([P_ESPERA, P_VIVO, P_NOVI, P_BORRADO]);
+      ).toEqual([P_VIVO, P_ESPERA, P_NOVI, P_BORRADO]);
+      // C-BUSCADOR-INSTANTANEO: los vivos primero (el que está en problemas arriba), después los
+      // cerrados del más reciente al más viejo.
       expect(pedidos.map((p) => p.estado)).toEqual([
-        'pago_pendiente',
         'pagado',
+        'pago_pendiente',
         'entregado',
         'cancelado',
       ]);
@@ -340,7 +342,7 @@ describe('C-BUSCADOR-SERIO · «Pedidos en curso» con la misma lógica', () => 
     const { lista } = await escenario();
     const r = await lista('estado=vivos&zona=US-FL-MIAMI&q=%23407F');
     expect(r.porCodigo).toBe(true);
-    expect(r.pedidos.map((p) => p.id)).toEqual([P_ESPERA, P_VIVO, P_NOVI, P_BORRADO]);
+    expect(r.pedidos.map((p) => p.id)).toEqual([P_VIVO, P_ESPERA, P_NOVI, P_BORRADO]);
     expect(r.encontrado).toEqual({ cerrados: true, vivos: false, otrasCiudades: ['Novi'] });
     const cada = r.pedidos.find((p) => p.id === P_VIVO);
     expect(cada).toMatchObject({
@@ -418,6 +420,120 @@ describe('C-BUSCADOR-SERIO · «Pedidos en curso» con la misma lógica', () => 
       admin.token,
     );
     expect(mal.estado).toBe(400);
+  });
+});
+
+/**
+ * C-BUSCADOR-INSTANTANEO (16 nov 2026, Richard en el sitio de pruebas: «7» y «73» no mostraban
+ * #73C2E8 y «b4» decía «No encontramos nada» hasta escribir «b4290»). Todos los países.
+ */
+describe('C-BUSCADOR-INSTANTANEO · el código sugiere desde la primera letra', () => {
+  const P_73 = ID(31, '73c2e800');
+  const P_B4 = ID(32, 'b4290c00');
+  const P_7A = ID(33, '7a000000');
+  const V_7 = ID(34, '7bbbb000');
+
+  async function conCodigos() {
+    const e = await escenario();
+    await pedido(e.m.DB, P_73, 'entregado', { hace: '-1 days' });
+    await pedido(e.m.DB, P_B4, 'en_camino', { repartidor: 'r-carla', hace: '-20 minutes' });
+    await pedido(e.m.DB, P_7A, 'cancelado', { hace: '-3 days' });
+    await correr(
+      e.m.DB,
+      `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, creado_en)
+       VALUES (?, 'moto', 'viaje_pasajero', 'c-ana', 'US-FL-MIAMI', 'terminada', datetime('now', '-2 hours'))`,
+      V_7,
+    );
+    await correr(
+      e.m.DB,
+      `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultima_clave, origen_lat, origen_lng, origen_direccion,
+         destino_lat, destino_lng, destino_direccion, pin_recogida)
+       VALUES (?, 'terminado', 'sistema', 'k2', 25.7, -80.2, 'Origen', 25.8, -80.1, 'Destino', '1234')`,
+      V_7,
+    );
+    return e;
+  }
+
+  it('con una o dos letras ya aparecen los pedidos y viajes cuyo código empieza así', async () => {
+    const { buscar, grupo } = await conCodigos();
+    for (const q of ['7', '73', '#7', '#73']) {
+      const r = await buscar(q);
+      expect(
+        grupo(r, 'pedidos').map((p) => p.id),
+        q,
+      ).toContain(P_73);
+      for (const p of grupo(r, 'pedidos')) expect(String(p.id).startsWith('7'), q).toBe(true);
+    }
+    expect(grupo(await buscar('7'), 'pedidos').map((p) => p.id)).toEqual([P_73, P_7A]);
+    expect(grupo(await buscar('7'), 'viajes').map((v) => v.id)).toEqual([V_7]);
+    expect(grupo(await buscar('73'), 'pedidos').map((p) => p.id)).toEqual([P_73]);
+    for (const q of ['b', 'B', 'b4', 'B4', '#b4', '#B4'])
+      expect(
+        grupo(await buscar(q), 'pedidos').map((p) => p.id),
+        q,
+      ).toContain(P_B4);
+    // El vivo primero aunque haya cerrados más nuevos con la misma letra.
+    expect(grupo(await buscar('b'), 'pedidos')[0]?.id).toBe(P_B4);
+    expect(grupo(await buscar('b4'), 'pedidos').map((p) => p.id)).toEqual([P_B4]);
+  });
+
+  it('dice cuántos hay en total en cada grupo (para «Ver todos»)', async () => {
+    const { buscar } = await conCodigos();
+    const r = (await buscar('7')) as unknown as {
+      grupos: { tipo: string; total?: number; totalMas?: boolean }[];
+    };
+    expect(r.grupos.find((g) => g.tipo === 'pedidos')).toMatchObject({ total: 2, totalMas: false });
+    expect(r.grupos.find((g) => g.tipo === 'viajes')).toMatchObject({ total: 1, totalMas: false });
+  });
+
+  it('con cientos que empiezan igual: vivos arriba, total con tope y «Cargar más» sin repetidos ni saltos', async () => {
+    const { m, buscar, grupo, lista } = await conCodigos();
+    // 450 pedidos cerrados cuyo código empieza por 7 (pasa el umbral de 300) y tres vivos.
+    await m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 450)
+       INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio,
+         cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia,
+         plan, direccion, lat, lng, zona_id, creado_en, pagado_en)
+       SELECT printf('7%07x-0000-4000-8000-%012d', i, i), 'c-ana', ?, 'entregado', '[]', 2000, 300, 200, 0,
+         300, 2800, 400, 1600, 600, 0, 200, 'basico', 'Calle 1', 25.78, -80.2, 'US-FL-MIAMI',
+         datetime('now', '-' || (i / 2 + 60) || ' minutes'), datetime('now', '-' || (i / 2 + 60) || ' minutes')
+         FROM n`,
+    )
+      .bind(RESTAURANTE_RARO)
+      .run();
+    const vivos = [ID(41, '7e000001'), ID(42, '7e000002'), ID(43, '7e000003')];
+    for (const [i, id] of vivos.entries())
+      await pedido(m.DB, id, 'aceptado', { hace: `-${i + 1} days` });
+    // Arriba: los vivos (el buscador de arriba muestra 5).
+    const arriba = grupo(await buscar('7'), 'pedidos').map((p) => p.id);
+    expect(arriba.slice(0, 3).sort()).toEqual([...vivos].sort());
+    const total = (
+      (await buscar('7')) as unknown as { grupos: { tipo: string; total: number }[] }
+    ).grupos.find((g) => g.tipo === 'pedidos')?.total;
+    expect(total).toBe(455);
+    // «Pedidos en curso» con «7»: los vivos fijos arriba de la primera página, y todo lo demás en
+    // páginas por clave hasta el final, sin repetir ni saltar ninguno.
+    let r = await lista('estado=vivos&q=7');
+    expect(
+      r.pedidos
+        .slice(0, 3)
+        .map((p) => p.id)
+        .sort(),
+    ).toEqual([...vivos].sort());
+    expect((r as unknown as { total: number }).total).toBe(456);
+    const vistos = r.pedidos.map((p) => String(p.id));
+    let vueltas = 0;
+    while (r.siguiente && vueltas++ < 20) {
+      r = await lista(`estado=vivos&q=7&despues=${encodeURIComponent(r.siguiente)}`);
+      vistos.push(...r.pedidos.map((p) => String(p.id)));
+    }
+    expect(new Set(vistos).size).toBe(vistos.length);
+    // 455 pedidos y el viaje: todos los que empiezan por 7, y ninguno más.
+    expect(vistos).toHaveLength(456);
+    for (const id of vistos) expect(id.startsWith('7')).toBe(true);
+    // Los cerrados, del más reciente al más viejo.
+    const cerrados = vistos.filter((id) => !vivos.includes(id));
+    expect(cerrados.indexOf(V_7)).toBeLessThan(cerrados.indexOf(P_7A));
   });
 });
 
@@ -671,6 +787,12 @@ describe('C-BUSCADOR-SERIO · lecturas estimadas por búsqueda', () => {
       ['/datos/admin/buscar?q=c0ffee', 500],
       ['/datos/admin/buscar?q=4821', 500],
       ['/datos/admin/buscar?q=a', 100],
+      // C-BUSCADOR-INSTANTANEO: una y dos letras de código.
+      ['/datos/admin/buscar?q=7', 100],
+      ['/datos/admin/buscar?q=b4', 100],
+      ['/datos/admin/buscar?q=40', 150],
+      ['/datos/admin/pedidos?estado=vivos&q=7', 100],
+      ['/datos/admin/pedidos?estado=vivos&q=b4', 100],
       ['/datos/admin/buscar?q=persona%2012', 100],
       ['/datos/admin/buscar?q=restaurante%204', 100],
       ['/datos/admin/buscar?q=(305)%20555', 150],
@@ -702,6 +824,59 @@ describe('C-BUSCADOR-SERIO · lecturas estimadas por búsqueda', () => {
             .map(
               (l) =>
                 `  ${l.filas} (${l.escaneos.join(', ')}): ${l.sql.replace(/\s+/g, ' ').slice(0, 220)}`,
+            )
+            .join('\n')}`,
+        );
+    }
+    expect(informe, informe.join('\n')).toEqual([]);
+  });
+});
+
+describe('C-BUSCADOR-INSTANTANEO · lecturas con una letra y miles de pedidos', () => {
+  /**
+   * 6.000 pedidos del volumen del sitio de pruebas más 4.000 con código hexadecimal al azar (como los
+   * de verdad): «7» coincide con ~250. Las lecturas quedan acotadas por el tope del conteo
+   * (`TOPE_CUENTA_CODIGO`) y la página, nunca por el tamaño de la tabla, y ninguna consulta recorre
+   * una tabla grande.
+   */
+  it('«7», «b» y «7a» leen poco y por índice', async () => {
+    let medidor!: ReturnType<typeof medidorDeLecturas>;
+    const m = mundo({}, { envolver: (db) => (medidor = medidorDeLecturas(db)).db });
+    await sembrarVolumen(m.DB);
+    const admin = await m.cuenta('admin');
+    await sembrar(m.DB);
+    await m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 4000)
+       INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio,
+         cargo_pequeno, propina, total, comision, pago_restaurante, pago_repartidor, complemento, ganancia,
+         plan, direccion, lat, lng, zona_id, creado_en, pagado_en)
+       SELECT lower(hex(randomblob(4))) || printf('-0000-4000-8000-%012d', i), 'c-ana', ?,
+         CASE WHEN i % 50 = 0 THEN 'en_camino' ELSE 'entregado' END, '[]', 2000, 300, 200, 0, 300, 2800,
+         400, 1600, 600, 0, 200, 'basico', 'Calle 1', 25.78, -80.2, 'US-FL-MIAMI',
+         datetime('now', '-' || i || ' minutes'), datetime('now', '-' || i || ' minutes') FROM n`,
+    )
+      .bind(RESTAURANTE_RARO)
+      .run();
+    const informe: string[] = [];
+    for (const [ruta, tope] of [
+      ['/datos/admin/buscar?q=7', 1_600],
+      ['/datos/admin/buscar?q=b', 1_600],
+      ['/datos/admin/buscar?q=7a', 300],
+      ['/datos/admin/pedidos?estado=vivos&q=7', 1_600],
+      ['/datos/admin/pedidos?estado=vivos&q=7a', 300],
+    ] as const) {
+      const r = await medidor.medir(() => m.llamar('GET', ruta, undefined, admin.token));
+      expect(r.resultado.estado, ruta).toBe(200);
+      const recorridos = r.lecturas.filter((l) =>
+        l.escaneos.some((e) => /^(pedidos|operaciones) \(\d+\)$/.test(e)),
+      );
+      if (r.total > tope || recorridos.length)
+        informe.push(
+          `${ruta} leyó ${r.total} (tope ${tope}):\n${r.lecturas
+            .filter((l) => l.filas > 20)
+            .map(
+              (l) =>
+                `  ${l.filas} (${l.escaneos.join(', ')}): ${l.sql.replace(/\s+/g, ' ').slice(0, 200)}`,
             )
             .join('\n')}`,
         );

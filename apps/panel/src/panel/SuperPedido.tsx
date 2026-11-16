@@ -15,6 +15,9 @@ import {
   type ServicioMonitoreo,
   esServicioMonitoreo,
   nombreServicioMonitoreo,
+  ESTADO_CANCELADA,
+  interpretarBusqueda,
+  quisoDecirCodigo,
 } from '@tumbite/compartido';
 import { Enlace } from '../Enlace';
 import { pedir } from './api';
@@ -24,6 +27,7 @@ import { SelectorCiudad } from './SuperFichas';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { nombreEstado, tonoEstado } from './BuscadorSuper';
 import { usePreferencias } from './usePreferencias';
+import { PAUSA_TECLAS_MS, crearMemoria } from './memoriaBusqueda';
 import { Hora, useHora } from './horario';
 import {
   FotoEvidencia,
@@ -953,6 +957,12 @@ const TL = {
       'Pedidos de comida y de tiendas, viajes en auto y en moto, de la ciudad, el estado y el servicio que elijas, los que están en problemas primero. Se actualiza solo cada 15 segundos.',
     vacio: 'No hay nada con estos filtros.',
     vacioBusqueda: 'No encontramos pedidos ni viajes con eso.',
+    noEncontramos: (q: string) => `No encontramos pedidos ni viajes con «${q}».`,
+    quisoDecir: '¿Quisiste decir',
+    pistaCodigo:
+      'El código se busca desde la primera letra, en todos los estados, ciudades y servicios.',
+    totalCodigo: (n: string, q: string) =>
+      `${n} ${n === '1' ? 'pedido o viaje empieza' : 'pedidos y viajes empiezan'} por «${q}»: los que están en curso arriba, después del más reciente al más viejo.`,
     estado: 'Estado',
     estados: { vivos: 'Vivos', cerrados: 'Cerrados', todos: 'Todos' } as Record<string, string>,
     servicio: 'Servicio',
@@ -1001,6 +1011,12 @@ const TL = {
       'Food and store orders, car and moto rides, for the city, status, and service you choose, the ones in trouble first. Refreshes every 15 seconds.',
     vacio: 'Nothing matches these filters.',
     vacioBusqueda: 'No orders or rides match that.',
+    noEncontramos: (q: string) => `We couldn't find orders or rides for "${q}".`,
+    quisoDecir: 'Did you mean',
+    pistaCodigo:
+      'Codes are searched from the first character, across every status, city, and service.',
+    totalCodigo: (n: string, q: string) =>
+      `${n} ${n === '1' ? 'order or ride starts' : 'orders and rides start'} with "${q}": live ones on top, then newest to oldest.`,
     estado: 'Status',
     estados: { vivos: 'Live', cerrados: 'Closed', todos: 'All' } as Record<string, string>,
     servicio: 'Service',
@@ -1082,6 +1098,9 @@ type RespuestaLista = {
   pedidos: Fila[];
   siguiente?: string | null;
   porCodigo?: boolean;
+  /** C-BUSCADOR-INSTANTANEO: cuántos empiezan así (pedidos y viajes), con tope. */
+  total?: number | null;
+  totalMas?: boolean;
   masCoincidencias?: boolean;
   encontrado?: { cerrados: boolean; vivos: boolean; otrasCiudades: string[] } | null;
   avisoMonto?: boolean;
@@ -1094,17 +1113,33 @@ type Contadores = {
 
 const VIVOS = new Set(['pagado', 'aceptado', 'listo', 'en_camino']);
 const VIVOS_VIAJE = new Set(['buscando', 'asignado', 'conductor_llego', 'en_curso']);
-const PAUSA_TEXTO_MS = 300;
+const PAUSA_TEXTO_MS = PAUSA_TECLAS_MS;
+/** C-BUSCADOR-INSTANTANEO: la primera página de cada búsqueda, en la memoria de esta pestaña. */
+const MEMORIA_LISTA = crearMemoria<RespuestaLista>();
 const PESTANAS: ServicioMonitoreo[] = ['todos', 'comida', 'tiendas', 'auto', 'moto', 'envios'];
 const esViaje = (f: Fila): f is FilaViaje => f.tipo === 'viaje';
 
-/** El código del pedido: 6 letras, las 4 primeras (las que muestran las apps) resaltadas. */
-function CodigoPedido({ id }: { id: string }) {
+/**
+ * El código del pedido: 6 letras, las 4 primeras (las que muestran las apps) en negrita, y lo que
+ * coincidió con lo buscado subrayado (C-BUSCADOR-INSTANTANEO).
+ */
+function CodigoPedido({ id, buscado = '' }: { id: string; buscado?: string }) {
   const c = codigoCorto(id);
+  const largo = Math.min(buscado.length, c.length);
+  const coincide = largo > 0 && c.startsWith(buscado.toUpperCase().slice(0, largo)) ? largo : 0;
+  const tramo = (desde: number, hasta: number) => {
+    const corte = Math.min(Math.max(coincide, desde), hasta);
+    return (
+      <>
+        {corte > desde ? <mark>{c.slice(desde, corte)}</mark> : null}
+        {c.slice(corte, hasta)}
+      </>
+    );
+  };
   return (
     <span className="codigo-pedido">
-      #<b>{c.slice(0, LETRAS_CODIGO_APPS)}</b>
-      {c.slice(LETRAS_CODIGO_APPS)}
+      #<b>{tramo(0, LETRAS_CODIGO_APPS)}</b>
+      {tramo(LETRAS_CODIGO_APPS, c.length)}
     </span>
   );
 }
@@ -1164,8 +1199,11 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
     ? (pref.valores.estado as FiltroEstadoPedido)
     : 'vivos';
   const orden = pref.valores.orden ?? '';
-  const [texto, setTexto] = useState('');
-  const [q, setQ] = useState('');
+  // «Ver todos» del buscador de arriba llega con ?q= (C-BUSCADOR-INSTANTANEO).
+  const [texto, setTexto] = useState(
+    () => new URLSearchParams(window.location.search).get('q')?.slice(0, 80) ?? '',
+  );
+  const [q, setQ] = useState(() => texto.trim());
   useEffect(() => {
     const r = setTimeout(() => setQ(texto.trim()), PAUSA_TEXTO_MS);
     return () => clearTimeout(r);
@@ -1201,15 +1239,24 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
 
   const clave = consulta();
   // Lo que se ve es de estos filtros: si cambiaron, se muestra «Cargando…» hasta que llegue.
-  const datos = guardados?.clave === clave ? guardados : null;
+  const enMemoria = MEMORIA_LISTA.leer(clave)?.valor;
+  const datos = guardados?.clave === clave ? guardados : enMemoria ? { ...enMemoria, clave } : null;
 
   useEffect(() => {
     let vivo = true;
     const url = consulta();
-    const cargar = (refresco: boolean) =>
-      pedir<RespuestaLista>('GET', url)
+    // C-BUSCADOR-INSTANTANEO: lo ya pedido sale al instante; la petición anterior se cancela.
+    // Lo guardado se dibuja directo (ver `datos`); si está vigente, no se pide hasta el refresco.
+    const guardada = MEMORIA_LISTA.leer(url);
+    let control: AbortController | null = null;
+    const cargar = (refresco: boolean) => {
+      control?.abort();
+      const este = new AbortController();
+      control = este;
+      return pedir<RespuestaLista>('GET', url, undefined, { senal: este.signal })
         .then((r) => {
-          if (!vivo) return;
+          if (!vivo || este.signal.aborted) return;
+          if (!refresco) MEMORIA_LISTA.guardar(url, r);
           setError('');
           setDatos((antes) => {
             if (!refresco || !antes || antes.clave !== url) {
@@ -1230,11 +1277,17 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
             };
           });
         })
-        .catch((e: unknown) => vivo && setError(e instanceof ErrorApi ? e.message : String(e)));
-    void cargar(false);
+        .catch((e: unknown) => {
+          if (!vivo || este.signal.aborted) return;
+          if (e instanceof ErrorApi && e.estado === ESTADO_CANCELADA) return;
+          setError(e instanceof ErrorApi ? e.message : String(e));
+        });
+    };
+    if (!guardada?.vigente) void cargar(false);
     const reloj = setInterval(() => void cargar(true), 15000);
     return () => {
       vivo = false;
+      control?.abort();
       clearInterval(reloj);
     };
   }, [consulta]);
@@ -1262,13 +1315,12 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
     setCargandoMas(true);
     try {
       const r = await pedir<RespuestaLista>('GET', consulta(datos.siguiente));
-      setDatos((antes) => {
-        const ya = new Set((antes?.pedidos ?? []).map((x) => x.id));
-        return {
-          ...r,
-          clave,
-          pedidos: [...(antes?.pedidos ?? []), ...r.pedidos.filter((x) => !ya.has(x.id))],
-        };
+      // Sobre lo que se ve (puede venir de la memoria), no sobre lo último guardado en el estado.
+      const ya = new Set(datos.pedidos.map((x) => x.id));
+      setDatos({
+        ...r,
+        clave,
+        pedidos: [...datos.pedidos, ...r.pedidos.filter((x) => !ya.has(x.id))],
       });
     } catch (e) {
       setError(e instanceof ErrorApi ? e.message : String(e));
@@ -1278,6 +1330,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
   }
 
   const lista = datos?.pedidos;
+  const codigoBuscado = datos?.porCodigo ? (interpretarBusqueda(q).codigo ?? '') : '';
   const vivoFila = (f: Fila) => (esViaje(f) ? VIVOS_VIAJE.has(f.estado) : VIVOS.has(f.estado));
   const rojos = lista?.filter((p) => vivoFila(p) && p.luz === 'rojo').length ?? 0;
   const amarillos = lista?.filter((p) => vivoFila(p) && p.luz === 'amarillo').length ?? 0;
@@ -1385,7 +1438,16 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
           {error}
         </p>
       )}
-      {datos?.porCodigo ? <p className="super-nota">{t.porCodigo}</p> : null}
+      {datos?.porCodigo ? (
+        <p className="super-nota" role="status">
+          {datos.total != null
+            ? t.totalCodigo(
+                `${datos.total.toLocaleString(idioma === 'en' ? 'en-US' : 'es-US')}${datos.totalMas ? '+' : ''}`,
+                q.replace(/^#\s*/, '').toUpperCase(),
+              )
+            : t.porCodigo}
+        </p>
+      ) : null}
       {textoBuscado ? <p className="super-nota">{t.soloPedidos}</p> : null}
       {encontrado &&
       (encontrado.cerrados || encontrado.vivos || encontrado.otrasCiudades.length) ? (
@@ -1413,15 +1475,39 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
           {filtro !== 'cerrados' ? ` · ${rojos} ${t.rojos} · ${amarillos} ${t.amarillos}` : ''}
         </p>
       )}
-      {lista?.length === 0 && <p>{q ? t.vacioBusqueda : t.vacio}</p>}
+      {lista?.length === 0 &&
+        (q ? (
+          <div className="super-nota super-vacio-busqueda" role="status">
+            <p>
+              <strong>{t.noEncontramos(q)}</strong>
+            </p>
+            {quisoDecirCodigo(q) ? (
+              <p>
+                {t.quisoDecir}{' '}
+                <button
+                  type="button"
+                  className="bs-sugerencia"
+                  onClick={() => setTexto(quisoDecirCodigo(q) ?? '')}
+                >
+                  {quisoDecirCodigo(q)}
+                </button>
+                ?
+              </p>
+            ) : null}
+            <p>{t.pistaCodigo}</p>
+          </div>
+        ) : (
+          <p>{t.vacio}</p>
+        ))}
       <ul className="super-bandeja super-encurso">
         {lista?.map((p) =>
           esViaje(p) ? (
             <li key={p.id}>
               <Enlace a={`${base}/rides/${p.id}`}>
                 <strong>
-                  <IconoServicio servicio={p.servicio} idioma={idioma} /> <CodigoPedido id={p.id} />{' '}
-                  · {p.origen} → {p.destino} · {formatearMonto(p.total, p.moneda, idioma)}
+                  <IconoServicio servicio={p.servicio} idioma={idioma} />{' '}
+                  <CodigoPedido id={p.id} buscado={codigoBuscado} /> · {p.origen} → {p.destino} ·{' '}
+                  {formatearMonto(p.total, p.moneda, idioma)}
                 </strong>
                 <span>
                   {p.pasajero ?? t.cuentaEliminada}
@@ -1455,7 +1541,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
               <Enlace a={`${base}/orders/${p.id}`}>
                 <strong>
                   <IconoServicio servicio={p.servicio ?? 'comida'} idioma={idioma} />{' '}
-                  <CodigoPedido id={p.id} /> · {p.restaurante} ·{' '}
+                  <CodigoPedido id={p.id} buscado={codigoBuscado} /> · {p.restaurante} ·{' '}
                   {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
                 </strong>
                 <span>
