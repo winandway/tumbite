@@ -4796,3 +4796,11 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Qué se hizo:** `ICONOS_GUIA` y `nombreIconoGuia` en `apps/panel/src/sitio/docs/iconosGuia.ts`; en `Docs.tsx`, `SimbolosIconosGuia` dibuja cada ícono una vez por página como `<symbol>` y `IconoGuia` lo referencia con `<use href="#ig-…">`. Se ve igual. Cada página baja de 129 a 82 KB y el HTML total de 50 a 34 MB (paquete ≈ 107 MB).
 - **Cómo se comprueba:** `apps/panel/src/sitio/docs/docsLiviana.test.tsx` (en rojo sin el cambio) y el tope de `scripts/verificar-paquete.mjs`.
 - **No tocar:** no volver a dibujar el ícono completo en cada guía de la barra.
+
+## C-FAVORITOS-SIN-CARRERA: la lista de favoritos que llega tarde no pisa el toque del corazón (16 nov 2026) — todos los países
+
+- **Qué se rompió y cómo se veía:** la verificación de `e523392f5` falló en «recorrido completo de un pedido (es)»: después de tocar el corazón de «Pizza Bella», el servidor guardó el favorito (PUT 200), pero el corazón volvió a vacío.
+- **Causa real (vista en el rastro de la prueba):** al abrir la pantalla, la app pide `GET /datos/favoritos`. Esa respuesta tardó 146 ms; el toque salió antes de que llegara (PUT a los 115 ms) y, al llegar, `setIds(new Set(r.ids))` reemplazó todo con la lista vieja. Con internet lento le pasa a cualquier cliente, en la portada (`useFavoritos.ts`) y en Comida (`app/restaurants.tsx`).
+- **Arreglo:** una sola pieza, `mezclarFavoritos` (`apps/cliente/src/inicio/favoritosEstado.ts`): lo que la persona tocó desde que abrió la pantalla se aplica encima de lo que diga el servidor. Las dos pantallas guardan sus toques en una referencia y la usan al recibir la lista.
+- **Prueba (vista en rojo):** `apps/cliente/src/inicio/favoritosEstado.test.ts`; y el recorrido de punta a punta en inglés y español.
+- **No tocar:** no volver a reemplazar la lista entera con la respuesta del servidor sin aplicar los toques pendientes. Es código de la app del cliente: entra en la próxima compilación; la versión en revisión de Apple no se tocó.

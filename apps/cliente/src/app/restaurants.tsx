@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { recordarAnuncio } from '../comida/anuncioTocado';
 import { FlatList, Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { useRestaurantes } from '../comida/useRestaurantes';
 import { EstadoCatalogo } from '../comida/EstadoCatalogo';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
 import { IMG, fotoDeRelleno } from '../inicio/recursos';
+import { mezclarFavoritos } from '../inicio/favoritosEstado';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { MapaLocales } from '../comida/MapaLocales';
@@ -50,13 +51,15 @@ export default function Restaurantes() {
   );
   // Favoritos reales (auditoría final, punto 13): los ids vienen del servidor; el corazón los alterna.
   const [favoritos, setFavoritos] = useState<Set<string>>(new Set());
+  // C-FAVORITOS-SIN-CARRERA: lo que la persona tocó mientras cargaba la lista manda sobre ella.
+  const cambiosFavoritos = useRef(new Map<string, boolean>());
   useEffect(() => {
     if (!usuario) return;
     let vivo = true;
     api
       .pedir<{ ids: string[] }>('GET', '/datos/favoritos')
       .then((r) => {
-        if (vivo) setFavoritos(new Set(r.ids));
+        if (vivo) setFavoritos(mezclarFavoritos(r.ids, cambiosFavoritos.current));
       })
       .catch(() => undefined);
     return () => {
@@ -70,6 +73,7 @@ export default function Restaurantes() {
       return;
     }
     const era = favoritos.has(id);
+    cambiosFavoritos.current.set(id, !era);
     setFavoritos((f) => {
       const n = new Set(f);
       if (era) n.delete(id);
@@ -79,6 +83,7 @@ export default function Restaurantes() {
     try {
       await api.pedir(era ? 'DELETE' : 'PUT', `/datos/favoritos/${id}`);
     } catch {
+      cambiosFavoritos.current.set(id, era);
       setFavoritos((f) => {
         const n = new Set(f);
         if (era) n.add(id);
