@@ -479,6 +479,47 @@ historial(P.vigiaVivo, [
 ]);
 
 // Viajes: auto terminado, moto en curso con una emergencia abierta, un envío y una moto en El Vigía.
+// C-BUSCADOR-INSTANTANEO (16 nov 2026): pedidos cerrados que comparten la PRIMERA letra del código,
+// para mostrar que con una sola letra ya salen, con cuántos hay y «Ver todos». En inglés, «b» y todos
+// de Novi (junto al vivo b51d07aa); en español, «f» y todos de El Vigía (junto al vivo f17b20c3).
+const letraDe = (idioma) => (idioma === 'en' ? 'b' : 'f');
+for (let i = 0; i < 7; i++) {
+  const enNovi = {
+    id: uuid(`b${String(i + 2).repeat(2)}e${i}0a1`.slice(0, 8), 60 + i),
+    cliente: 'mon-c-morgan',
+    rest: 'mon-r-pizza',
+    rep: 'mon-d-jordan',
+    estado: i === 3 ? 'cancelado' : 'entregado',
+    total: 1890 + i * 215,
+    zona: ZONAS.novi.id,
+    ...CASA_NOVI,
+    lineas: [{ nombreEs: 'Pepperoni pizza', cantidad: 1 }],
+    t:
+      i === 3
+        ? { creado: -1500 - i * 600, pagado: -1499 - i * 600, cancelado: -1490 - i * 600 }
+        : {
+            creado: -1500 - i * 600,
+            pagado: -1499 - i * 600,
+            aceptado: -1497 - i * 600,
+            listo: -1482 - i * 600,
+            recogido: -1478 - i * 600,
+            entregado: -1460 - i * 600,
+          },
+  };
+  pedido(enNovi);
+  pedido({
+    ...enNovi,
+    id: uuid(`f${String(i + 2).repeat(2)}a${i}0c4`.slice(0, 8), 70 + i),
+    cliente: 'mon-c-maria',
+    rest: 'mon-r-plaza',
+    rep: 'mon-d-carlos',
+    total: 1250 + i * 140,
+    zona: ZONAS.vigia.id,
+    ...CASA_VIGIA,
+    lineas: [{ nombreEs: 'Pizza margarita mediana', cantidad: 1 }],
+  });
+}
+
 const V = {
   auto: uuid('a7c4d2e1', 11),
   moto: uuid('9be1c0d4', 12),
@@ -779,6 +820,43 @@ for (const idioma of ['en', 'es']) {
     await captura('pestanas-moto', `${BASE}/orders?servicio=moto&zona=${zona}`, idioma);
     await captura('bandeja-tickets', `${BASE}/tickets`, idioma);
     await captura('horario', `${BASE}/configuration`, idioma);
+  }
+  if (todo || solo === `buscador-letra-${idioma}`) {
+    // C-BUSCADOR-INSTANTANEO: con UNA letra ya sugiere, dice cuántos hay y ofrece «Ver todos».
+    await captura('buscador-letra', `${BASE}/orders?zona=${zona}`, idioma, async (p) => {
+      await p
+        .getByPlaceholder(
+          idioma === 'en'
+            ? 'Order, customer, phone, or plate'
+            : 'Pedido, cliente, teléfono o placa',
+        )
+        .click();
+      await p.keyboard.type(letraDe(idioma), { delay: 60 });
+      await p.waitForSelector('.bs-ver-todos');
+      await p.waitForTimeout(500);
+    });
+    // «Ver todos» lleva a «Pedidos en curso» con lo buscado: el total y el comienzo del código subrayado.
+    await captura(
+      'pedidos-por-codigo',
+      `${BASE}/orders?q=${letraDe(idioma)}`,
+      idioma,
+      async (p) => {
+        await p.waitForSelector('.codigo-pedido mark');
+      },
+    );
+    // Sin resultados: dice qué se buscó y sugiere el código bien escrito.
+    await captura('buscador-sugerencia', `${BASE}/orders?zona=${zona}`, idioma, async (p) => {
+      await p
+        .getByPlaceholder(
+          idioma === 'en'
+            ? 'Order, customer, phone, or plate'
+            : 'Pedido, cliente, teléfono o placa',
+        )
+        .click();
+      await p.keyboard.type(idioma === 'en' ? 'B51DO7' : 'F17B2OC', { delay: 60 });
+      await p.waitForSelector('.bs-vacio');
+      await p.waitForTimeout(400);
+    });
   }
   if (todo || solo === `buscador-${idioma}`)
     // En inglés, el ejemplo es de Novi y el código se repite entre dos pedidos de Novi; en español, de El Vigía.
