@@ -234,4 +234,19 @@ describe('NXT-7 · C-FOTOS-LIVIANAS: tres tamaños en WebP', () => {
       expect(textoServido, tam).not.toContain('xmpmeta');
     }
   });
+
+  // C-DOCS-LUPA (15 nov 2026): la captura nítida de Docs se sirve desde el almacén.
+  it('sirve la captura nítida de Docs desde el almacén, y nada con nombres raros', async () => {
+    const r2 = crearAlmacenPruebas();
+    const m = mundo({ BUCKET: r2.bucket });
+    await r2.bucket.put('docs-grande/flex-billetera-es-0a1b2c3d.webp', WEBP);
+    const ver = (url: string) => app.request(url, {}, { DB: m.DB, BUCKET: r2.bucket });
+    const ok = await ver('/media/docs-grande/flex-billetera-es-0a1b2c3d.webp');
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get('content-type')).toBe('image/webp');
+    expect(ok.headers.get('cache-control')).toContain('immutable');
+    expect((await ver('/media/docs-grande/no-existe-0a1b2c3d.webp')).status).toBe(404);
+    expect((await ver('/media/docs-grande/..%2Fsecreto-0a1b2c3d.webp')).status).toBe(404);
+    expect((await ver('/media/docs-grande/sin-huella.webp')).status).toBe(404);
+  });
 });
