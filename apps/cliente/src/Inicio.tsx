@@ -32,6 +32,7 @@ import { Filtros, type FiltrosInicio } from './inicio/Filtros';
 import { Ofertas, type PromoReal } from './inicio/Ofertas';
 import { FilaRestaurantes, ListaRestaurantes } from './inicio/Restaurantes';
 import { Servicios } from './inicio/Servicios';
+import { RepetirUltimoViaje } from './inicio/RepetirUltimoViaje';
 import { useServicios } from './inicio/useServicios';
 import { useAvisos } from './inicio/useAvisos';
 import { useFavoritos } from './inicio/useFavoritos';
@@ -217,6 +218,8 @@ export function Inicio() {
           {/* C-MIRAR-SIN-CUENTA y C-CORREO-OBLIGATORIO: entrar sin bloquear, o confirmar el correo. */}
           {usuario ? <AvisoCorreo /> : <EntrarInvitado idioma={idioma} />}
           <Servicios idioma={idioma} catalogo={servicios?.servicios ?? null} alTocar={servicio} />
+          {/* C-MISMA-RUTA (fase cero): el último viaje con «Repetir», debajo de los servicios. */}
+          <RepetirUltimoViaje />
           <AvisoPago
             idioma={idioma}
             centavos={carritoCentavos}
