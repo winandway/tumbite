@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ComponentProps, type ReactNode } from 'react';
 import { Text } from './diseno';
 import {
   ActivityIndicator,
@@ -15,13 +15,13 @@ import { SelectorIdioma } from './SelectorIdioma';
 import { useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { Icono } from './diseno';
-import { ALTO, COLOR, ESPACIO, FUENTE, RADIO, SOMBRA } from './tokens';
+import { ALTO, COLOR, ESPACIO, FUENTE, RADIO, estiloBoton, type TipoBoton } from './tokens';
 
 export const C = MARCA.colores;
 
 /**
- * C-APPS-DISENO: el color de acción de cada app. El Driver va con el azul de logística (su color);
- * el cliente y Restaurants, con el rojo de la marca. Lo pone la raíz de cada app.
+ * C-APPS-DISENO + fase cero (16 nov 2026): el color de acción. Las tres apps van con el rojo de la
+ * marca (C-UN-SOLO-ROJO); 'logistica' existe solo para envolver pantallas de Flex y Envíos.
  */
 const AcentoApp = createContext<'marca' | 'logistica'>('marca');
 export function TemaApp({
@@ -190,6 +190,9 @@ export function Boton({
   logistica,
   oscuro,
   enFila,
+  tipo,
+  icono,
+  testID,
 }: {
   texto: string;
   alTocar: () => void;
@@ -207,47 +210,68 @@ export function Boton({
    * como «Verifica» y «r»). PROHIBIDO meter un Boton en una caja de ancho fijo: se usa esto.
    */
   enFila?: boolean;
+  /**
+   * Fase cero (sección 5 del sistema de diseño): 'principal' rojo (uno por pantalla), 'fuerte' tinta
+   * («Pedir la misma ruta», «Repetir»), 'terciario' gris («Agregar parada», «Cambiar algo») y 'borde'
+   * para las salidas («Cancelar el viaje»). `secundario` equivale a 'borde'.
+   */
+  tipo?: TipoBoton;
+  /** Ícono de línea a la izquierda del texto. */
+  icono?: ComponentProps<typeof Icono>['nombre'];
+  testID?: string;
 }) {
   const acento = useAcentoApp();
-  const azul = acento === 'logistica' && !exito && !logistica && !secundario;
+  const clase: TipoBoton = tipo ?? (secundario ? 'borde' : 'principal');
+  const est = estiloBoton(clase);
+  const plano = clase === 'principal' && !exito && !logistica;
+  const azul = acento === 'logistica' && plano;
   return (
     <Pressable
       onPress={alTocar}
       disabled={cargando}
       accessibilityRole="button"
       accessibilityLabel={texto}
+      testID={testID}
       style={({ pressed }) => [
         e.boton,
         enFila && e.botonEnFila,
-        secundario && e.botonSecundario,
-        exito && !secundario && { backgroundColor: C.exito },
-        logistica && !secundario && !exito && { backgroundColor: C.logisticaAccion },
+        clase !== 'principal' && {
+          backgroundColor: est.fondo,
+          borderWidth: est.borde ? 1.5 : 0,
+          borderColor: est.borde,
+        },
+        pressed && { backgroundColor: azul ? COLOR.logistica : est.apretado },
+        exito && clase === 'principal' && { backgroundColor: C.exito },
+        logistica && clase === 'principal' && !exito && { backgroundColor: C.logisticaAccion },
         azul && { backgroundColor: COLOR.logistica },
         oscuro &&
-          secundario && {
+          clase === 'borde' && {
             backgroundColor: 'transparent',
             borderColor: C.logisticaAccion,
             borderWidth: 1.5,
           },
-        pressed && { opacity: 0.85 },
+        pressed && (!plano || azul) && { opacity: 0.92 },
       ]}
     >
       {cargando ? (
-        <ActivityIndicator color={secundario ? COLOR.texto : '#fff'} />
+        <ActivityIndicator color={est.texto} />
       ) : (
-        <Text
-          // En fila: una sola línea, con el ancho que pida la palabra (también en inglés y con
-          // letra grande del sistema); la casilla de al lado es la que cede.
-          numberOfLines={enFila ? 1 : undefined}
-          style={[
-            e.botonTexto,
-            secundario && { color: C.secundario },
-            oscuro && secundario && { color: C.logisticaAccion },
-            logistica && !secundario && !exito && { color: C.logisticaTexto },
-          ]}
-        >
-          {texto}
-        </Text>
+        <View style={e.botonFila}>
+          {icono ? <Icono nombre={icono} tamano={20} color={est.texto} /> : null}
+          <Text
+            // En fila: una sola línea, con el ancho que pida la palabra (también en inglés y con
+            // letra grande del sistema); la casilla de al lado es la que cede.
+            numberOfLines={enFila ? 1 : undefined}
+            style={[
+              e.botonTexto,
+              { color: est.texto },
+              oscuro && clase === 'borde' && { color: C.logisticaAccion },
+              logistica && clase === 'principal' && !exito && { color: C.logisticaTexto },
+            ]}
+          >
+            {texto}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
@@ -310,10 +334,10 @@ export const e = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
-  // Botón píldora de 52 de alto con letra Poppins, como el de Uber Eats y DoorDash.
+  // Fase cero: botón de 52 de alto, esquina 12 y letra Poppins 600 de 16.
   boton: {
     backgroundColor: COLOR.marca,
-    borderRadius: RADIO.pildora,
+    borderRadius: RADIO.m,
     minHeight: ALTO.boton,
     paddingHorizontal: ESPACIO.xl,
     paddingVertical: 14,
@@ -327,6 +351,7 @@ export const e = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLOR.bordeFuerte,
   },
+  botonFila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   botonTexto: { color: COLOR.blanco, fontFamily: FUENTE.tituloMedio, fontSize: 16, lineHeight: 20 },
   // Sin franja gruesa al costado (regla de diseño de Richard, 12 oct 2026): borde fino y esquinas suaves.
   aviso: {
@@ -357,6 +382,5 @@ export const e = StyleSheet.create({
     borderColor: COLOR.borde,
     padding: ESPACIO.l,
     marginBottom: ESPACIO.m,
-    ...SOMBRA.tarjeta,
   },
 });
