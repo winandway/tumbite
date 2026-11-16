@@ -351,7 +351,7 @@ async function vehiculosConMenores(db: D1Database, vehiculos: string[]): Promise
   if (!vehiculos.length) return new Set();
   const { results } = await db
     .prepare(
-      `SELECT id FROM vehiculos WHERE acepta_menores = 1 AND id IN (${vehiculos.map(() => '?').join(',')})`,
+      `SELECT id FROM vehiculos WHERE lleva_menores = 1 AND id IN (${vehiculos.map(() => '?').join(',')})`,
     )
     .bind(...vehiculos)
     .all<{ id: string }>();
@@ -409,7 +409,7 @@ export async function turnoDeConfianza(
   // Elegible para este servicio y ciudad, con señal reciente y libre (sin ocupación ni oferta abierta).
   const e = await db
     .prepare(
-      `SELECT e.conductor_id, e.vehiculo_id, e.lat, e.lng, h.acepta_menores FROM conductores_elegibles e
+      `SELECT e.conductor_id, e.vehiculo_id, e.lat, e.lng, h.lleva_menores FROM conductores_elegibles e
          JOIN vehiculos h ON h.id = e.vehiculo_id
         WHERE e.conductor_id = ?1 AND e.servicio_id = ?2 AND e.zona_id = ?3 AND e.lat IS NOT NULL
           AND e.ubicacion_en > datetime('now', ?4)
@@ -424,10 +424,10 @@ export async function turnoDeConfianza(
       vehiculo_id: string;
       lat: number;
       lng: number;
-      acepta_menores: number;
+      lleva_menores: number;
     }>();
   if (!e) return noEsta;
-  if (op.menor_nombre && e.acepta_menores !== 1) return 'libre';
+  if (op.menor_nombre && e.lleva_menores !== 1) return 'libre';
   const km = distanciaKm({ lat: e.lat, lng: e.lng }, { lat: op.origen_lat, lng: op.origen_lng });
   if (km > CONFIANZA.kmMaximo) return noEsta;
   if (op.tamano === 'mediano' || op.tamano === 'grande') {

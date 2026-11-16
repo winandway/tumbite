@@ -24,6 +24,9 @@ describe('Driver: clientes fijos, oferta y viaje en curso', () => {
   });
   it('el conductor de Moto puede decir si lleva menores', () => {
     expect(leer('AltaPasajeros.tsx')).toContain('moto-acepta-menores');
+    // C-VIAJES-FIJOS: su propia ruta (nace apagado), nunca el interruptor de categorías de Carro.
+    expect(leer('AltaPasajeros.tsx')).toContain('/lleva-menores`');
+    expect(leer('AltaPasajeros.tsx')).toContain('vehiculo.llevaMenores === true');
   });
   it('se llega desde el menú y desde el perfil', () => {
     const i = readFileSync(join(__dirname, '..', 'Inicio.tsx'), 'utf8');

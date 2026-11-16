@@ -509,7 +509,7 @@ servicios.get('/conductor/vehiculos', async (c) => {
   const [{ results: vehiculos }, { results: docs }, rep] = await Promise.all([
     db
       .prepare(
-        "SELECT id, tipo, marca, modelo, anio, color, placa, placa_estado AS placaEstado, plazas, estado, motivo, categoria, acepta_menores AS aceptaMenores FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado' ORDER BY creado_en",
+        "SELECT id, tipo, marca, modelo, anio, color, placa, placa_estado AS placaEstado, plazas, estado, motivo, categoria, acepta_menores AS aceptaMenores, lleva_menores AS llevaMenores FROM vehiculos WHERE conductor_id = ? AND estado != 'retirado' ORDER BY creado_en",
       )
       .bind(u.id)
       .all<{
@@ -613,6 +613,24 @@ servicios.put('/conductor/vehiculos/:id/categorias-menores', async (c) => {
     .bind(acepta ? 1 : 0, v.id, acepta ? 1 : 0)
     .run();
   return c.json({ aceptaMenores: acepta });
+});
+
+/**
+ * C-VIAJES-FIJOS: el conductor decide si lleva menores en este vehículo (viajes fijos de un menor,
+ * con PIN). Nace apagado; sin encenderlo, nunca recibe el viaje de un menor.
+ */
+servicios.put('/conductor/vehiculos/:id/lleva-menores', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const v = await miVehiculo(db, u.id, c.req.param('id'));
+  const { acepta } = await leerCuerpo(c, z.object({ acepta: z.boolean() }));
+  await db
+    .prepare(
+      "UPDATE vehiculos SET lleva_menores = ?, actualizado_en = datetime('now') WHERE id = ? AND lleva_menores != ?",
+    )
+    .bind(acepta ? 1 : 0, v.id, acepta ? 1 : 0)
+    .run();
+  return c.json({ llevaMenores: acepta });
 });
 
 /** El equipo cambia la categoría de un carro ya aprobado (sube a Premium, baja a económico). */

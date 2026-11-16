@@ -47,6 +47,7 @@ type Vehiculo = {
   /** C-CARRO-CATEGORIAS: estandar, comfort o premium, y si también recibe los viajes de abajo. */
   categoria?: string;
   aceptaMenores?: boolean;
+  llevaMenores?: boolean;
 };
 type Papeles = {
   ciudad: { id: string; nombre: string; pais: string };
@@ -712,7 +713,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                 ) : null}
               </View>
             ) : null}
-            {servicio === 'moto' && vehiculo.estado === 'aprobado' ? (
+            {(servicio === 'moto' || servicio === 'carro') && vehiculo.estado === 'aprobado' ? (
               // C-VIAJES-FIJOS: el conductor de Moto decide si lleva menores (viajes fijos con PIN).
               <View testID="moto-menores" style={{ gap: 2 }}>
                 <View
@@ -729,12 +730,12 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                   <Switch
                     testID="moto-acepta-menores"
                     accessibilityLabel={t.llevaMenores}
-                    value={vehiculo.aceptaMenores !== false}
+                    value={vehiculo.llevaMenores === true}
                     onValueChange={(acepta) =>
                       void hacer(() =>
                         api.pedir(
                           'PUT',
-                          `/datos/conductor/vehiculos/${vehiculo.id}/categorias-menores`,
+                          `/datos/conductor/vehiculos/${vehiculo.id}/lleva-menores`,
                           { acepta },
                         ),
                       )

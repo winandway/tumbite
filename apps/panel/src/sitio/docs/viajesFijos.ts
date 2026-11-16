@@ -12,7 +12,7 @@ import type { Captura, Guia } from './guias';
  * las guías entran en Docs SOLO cuando `VIAJES_FIJOS_PUBLICADA` es true; `viajesFijos.test.ts` se
  * pone en rojo si las capturas existen y la guía no está publicada, o al revés.
  */
-export const VIAJES_FIJOS_PUBLICADA = false;
+export const VIAJES_FIJOS_PUBLICADA = true;
 
 export const CAPTURAS_VIAJES_FIJOS = [
   'confianza-marcar',

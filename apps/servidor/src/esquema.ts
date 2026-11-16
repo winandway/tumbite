@@ -293,6 +293,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['viajes', 'conductor_preferido_id', 'TEXT'],
   ['viajes', 'rutina_id', 'TEXT'],
   ['viajes', 'menor_nombre', 'TEXT'],
+  // C-VIAJES-FIJOS: el conductor decide si lleva menores en ESE vehículo (nace apagado). No es
+  // `acepta_menores`, que en Carro significa «recibir también los viajes de categorías de abajo».
+  ['vehiculos', 'lleva_menores', 'INTEGER NOT NULL DEFAULT 0'],
 ];
 
 /**

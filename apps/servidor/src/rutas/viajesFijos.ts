@@ -159,7 +159,7 @@ viajesFijos.get('/confianza', async (c) => {
   const { results } = await base(c)
     .prepare(
       `SELECT k.conductor_id, k.creado_en, us.nombre, h.tipo, h.marca, h.modelo, h.color, h.placa,
-              h.acepta_menores,
+              h.lleva_menores,
               (SELECT 1 FROM kyc ky WHERE ky.usuario_id = k.conductor_id AND ky.estado = 'aprobado'
                  AND ky.selfie_miniatura IS NOT NULL) AS foto,
               (d.ubicacion_en > datetime('now', '-10 minutes') AND COALESCE(d.pausado, 0) = 0) AS conectado,
@@ -182,7 +182,7 @@ viajesFijos.get('/confianza', async (c) => {
       foto: f.foto === 1,
       conectado: f.conectado === 1,
       viajes: Number(f.viajes ?? 0),
-      aceptaMenores: f.acepta_menores === 1,
+      aceptaMenores: f.lleva_menores === 1,
       servicios: String(f.servicios ?? '')
         .split(',')
         .filter(Boolean),
@@ -197,6 +197,32 @@ viajesFijos.get('/confianza', async (c) => {
         : null,
       desde: String(f.creado_en),
     })),
+  });
+});
+
+/**
+ * La foto del conductor de confianza: solo la miniatura aprobada (C-FOTO-CONDUCTOR-MINIATURA), y
+ * solo para un cliente que lo tiene de confianza.
+ */
+viajesFijos.get('/confianza/:conductorId/foto', async (c) => {
+  const u = exigir(c, 'cliente');
+  const f = await base(c)
+    .prepare(
+      `SELECT ky.selfie_miniatura FROM conductores_confianza k
+         JOIN kyc ky ON ky.usuario_id = k.conductor_id AND ky.estado = 'aprobado'
+        WHERE k.cliente_id = ? AND k.conductor_id = ?`,
+    )
+    .bind(u.id, c.req.param('conductorId'))
+    .first<{ selfie_miniatura: string | null }>();
+  const obj =
+    f?.selfie_miniatura && c.env.BUCKET ? await c.env.BUCKET.get(f.selfie_miniatura) : null;
+  if (!obj) throw new ErrorDatos('No hay foto para mostrar.', undefined, 404);
+  return new Response(obj.body, {
+    headers: {
+      'content-type': 'image/webp',
+      'cache-control': 'private, no-store',
+      'x-content-type-options': 'nosniff',
+    },
   });
 });
 
@@ -428,20 +454,20 @@ async function validarRutina(env: Env, db: D1Database, clienteId: string, d: Dat
   if (d.conductorId) {
     const k = await db
       .prepare(
-        `SELECT h.acepta_menores FROM conductores_confianza k
+        `SELECT h.lleva_menores FROM conductores_confianza k
            LEFT JOIN repartidores r ON r.usuario_id = k.conductor_id
            LEFT JOIN vehiculos h ON h.id = r.vehiculo_activo_id
           WHERE k.cliente_id = ? AND k.conductor_id = ?`,
       )
       .bind(clienteId, d.conductorId)
-      .first<{ acepta_menores: number | null }>();
+      .first<{ lleva_menores: number | null }>();
     if (!k)
       throw new ErrorDatos(
         'Ese conductor no está entre tus conductores de confianza.',
         'conductorId',
         409,
       );
-    if (d.menor && k.acepta_menores !== 1)
+    if (d.menor && k.lleva_menores !== 1)
       throw new ErrorDatos(
         'Tu conductor no tiene activado «Acepto llevar menores». Pídele que lo active en su app.',
         'conductorId',

@@ -155,6 +155,15 @@ describe('C-CONDUCTOR-CONFIANZA', () => {
     expect(
       (await e.m.llamar('PUT', `/datos/viajes/${id}/confianza`, {}, e.cliente.token)).estado,
     ).toBe(200);
+    // La foto: solo para quien lo tiene de confianza.
+    const otraCuenta = await e.m.cuenta('cliente', 'Otra Persona');
+    const foto = await e.m.llamar(
+      'GET',
+      `/datos/confianza/${cond.id}/foto`,
+      undefined,
+      otraCuenta.token,
+    );
+    expect(foto.estado).toBe(404);
     const lista = await e.m.llamar('GET', '/datos/confianza', undefined, e.cliente.token);
     expect(lista.datos.conductores).toHaveLength(1);
     expect(lista.datos.conductores[0]).toMatchObject({
@@ -339,10 +348,7 @@ describe('C-VIAJES-FIJOS', () => {
     const v = await viajeCompleto(e, fiel);
     await e.m.llamar('PUT', `/datos/viajes/${v}/confianza`, {}, e.cliente.token);
     const menor = { nombre: 'Sofía', pin: '2580' };
-    // Con su moto sin «acepto menores», no se puede.
-    await e.m.DB.prepare('UPDATE vehiculos SET acepta_menores = 0 WHERE id = ?')
-      .bind(fiel.vehiculo)
-      .run();
+    // «Acepto llevar menores» nace APAGADO (no es el interruptor de categorías de Carro): no se puede.
     const no = await e.m.llamar(
       'POST',
       '/datos/rutinas',
@@ -350,9 +356,14 @@ describe('C-VIAJES-FIJOS', () => {
       e.cliente.token,
     );
     expect(no.estado).toBe(409);
-    await e.m.DB.prepare('UPDATE vehiculos SET acepta_menores = 1 WHERE id = ?')
-      .bind(fiel.vehiculo)
-      .run();
+    // El conductor lo enciende desde su app.
+    const enc = await e.m.llamar(
+      'PUT',
+      `/datos/conductor/vehiculos/${fiel.vehiculo}/lleva-menores`,
+      { acepta: true },
+      fiel.token,
+    );
+    expect(enc.estado).toBe(200);
     const r = await e.m.llamar(
       'POST',
       '/datos/rutinas',
@@ -368,7 +379,8 @@ describe('C-VIAJES-FIJOS', () => {
       .first<{ id: string }>();
     // Otro conductor más cerca, con moto que NO acepta menores.
     const otro = await conductorDeMoto(e.m, ORIGEN);
-    await e.m.DB.prepare('UPDATE vehiculos SET acepta_menores = 0 WHERE id = ?')
+    // Trae `acepta_menores` = 1 (categorías de Carro), que NO cuenta para llevar menores.
+    await e.m.DB.prepare('UPDATE vehiculos SET acepta_menores = 1 WHERE id = ?')
       .bind(otro.vehiculo)
       .run();
     // Faltan 25 minutos: nace (con conductor de confianza, 30 minutos antes) y se le ofrece a él.
