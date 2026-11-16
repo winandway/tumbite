@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { Api, Idioma } from '@tumbite/compartido';
-import { C, e } from '@tumbite/movil';
+import { C, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 import { type Elogio, Elogios } from './Elogios';
 
@@ -89,8 +89,8 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
           {valor}
         </Text>
       </View>
-      <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }}>{ayuda}</Text>
-      <Text style={{ color: '#8A8A8A', fontSize: 12, marginTop: 2 }}>
+      <Text style={{ color: '#666B73', fontSize: 13, marginTop: 4 }}>{ayuda}</Text>
+      <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 2 }}>
         {t.referencia}: {referencia}
       </Text>
     </View>
@@ -99,7 +99,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
     <View style={{ padding: 16, gap: 12 }} testID="calificaciones">
       <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       {!d ? null : d.entregasTotales === 0 && d.aceptacion.de === 0 ? (
-        <Text style={{ color: '#5E5E5E' }}>{t.sinDatos}</Text>
+        <Text style={{ color: '#666B73' }}>{t.sinDatos}</Text>
       ) : (
         <>
           {fila(
@@ -144,7 +144,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
               >
                 {td.titulo}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{d.destacado ? td.si : td.no}</Text>
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{d.destacado ? td.si : td.no}</Text>
               {d.requisitos.map((r) => (
                 <View
                   key={r.clave}
@@ -153,7 +153,7 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
                   <Text style={{ color: C.secundario }}>
                     {r.ok ? '✓' : '·'} {td.nombres[r.clave] ?? r.clave}
                   </Text>
-                  <Text style={{ fontWeight: '700', color: r.ok ? C.exito : '#5E5E5E' }}>
+                  <Text style={{ fontWeight: '700', color: r.ok ? C.exito : '#666B73' }}>
                     {r.valor == null ? '—' : String(r.valor)} / {metaTexto(r.clave, r.meta)}
                   </Text>
                 </View>
@@ -165,13 +165,13 @@ export function Calificaciones({ api, idioma }: { api: Api; idioma: Idioma }) {
               <Text style={{ fontWeight: '800', fontSize: 22, color: C.secundario }}>
                 {d.entregas30Dias}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.treinta}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>{t.treinta}</Text>
             </View>
             <View style={{ flex: 1, alignItems: 'center' }}>
               <Text style={{ fontWeight: '800', fontSize: 22, color: C.secundario }}>
                 {d.entregasTotales}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.totales}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>{t.totales}</Text>
             </View>
           </View>
         </>

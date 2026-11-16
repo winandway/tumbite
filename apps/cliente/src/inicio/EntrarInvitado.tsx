@@ -1,7 +1,7 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -39,7 +39,7 @@ export function EntrarInvitado({ idioma }: { idioma: Idioma }) {
       }}
     >
       <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E' }}>{t.detalle}</Text>
+      <Text style={{ color: '#666B73' }}>{t.detalle}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <Pressable
           accessibilityRole="button"

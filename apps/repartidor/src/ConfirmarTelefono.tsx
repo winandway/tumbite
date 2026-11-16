@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, useSesion } from '@tumbite/movil';
+import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-TELEFONO-VUELTA (D8, 1 nov 2026, como DoorDash al volver a la app): tras 14 días sin
@@ -60,10 +60,10 @@ export function ConfirmarTelefono({
   return (
     <View
       testID="confirmar-telefono"
-      style={[e.tarjeta, { borderWidth: 2, borderColor: C.primario }]}
+      style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}
     >
       <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 8 }}>
+      <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 8 }}>
         {t.ayuda} {ultimos}.
       </Text>
       {enviado ? (

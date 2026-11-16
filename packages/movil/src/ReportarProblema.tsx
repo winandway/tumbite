@@ -1,6 +1,7 @@
 import { abrirPagina } from './PaginaEnApp';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
@@ -179,7 +180,7 @@ export function ReportarProblema({
   return (
     <View style={e.tarjeta}>
       <Text style={{ fontWeight: '700', fontSize: 17, marginBottom: 4 }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.ayuda}</Text>
+      <Text style={{ color: '#666B73', marginBottom: 8 }}>{t.ayuda}</Text>
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {pedidoId ? (
         <>
@@ -197,7 +198,7 @@ export function ReportarProblema({
                   paddingVertical: 8,
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: motivo === clave ? '#F20D20' : '#DADADA',
+                  borderColor: motivo === clave ? '#F20D20' : '#D6D8DC',
                   backgroundColor: motivo === clave ? '#F20D20' : '#fff',
                 }}
               >
@@ -239,7 +240,7 @@ export function ReportarProblema({
                         height: 20,
                         borderRadius: 5,
                         borderWidth: 2,
-                        borderColor: marcado ? '#F20D20' : '#8A8A8A',
+                        borderColor: marcado ? '#F20D20' : '#6B7078',
                         backgroundColor: marcado ? '#F20D20' : '#fff',
                       }}
                     />

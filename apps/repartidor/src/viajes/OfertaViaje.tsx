@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, Text, Vibration, View } from 'react-native';
+import { Modal, Pressable, Vibration, View } from 'react-native';
 import { type Idioma, enIdioma, formatearMonto, textoMultiplicador } from '@tumbite/compartido';
 import { vibracionOferta } from '../grandes/accesibilidad';
-import { Boton, C } from '@tumbite/movil';
+import { Boton, C, Text } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 import { sonarOferta } from '../sonidoOferta';
 
@@ -94,7 +94,7 @@ export function OfertaViajeModal({
               accessibilityRole="timer"
               accessibilityLabel={`${quedan} ${t.segundos}`}
               style={{
-                backgroundColor: quedan <= 10 ? C.primario : '#F2F3F5',
+                backgroundColor: quedan <= 10 ? C.primario : '#F6F6F6',
                 borderRadius: 999,
                 paddingHorizontal: 12,
                 paddingVertical: 4,
@@ -107,7 +107,7 @@ export function OfertaViajeModal({
             </View>
           </View>
           <View
-            style={{ height: 4, borderRadius: 2, backgroundColor: '#ECECEC', overflow: 'hidden' }}
+            style={{ height: 4, borderRadius: 2, backgroundColor: '#E6E7EA', overflow: 'hidden' }}
           >
             <View
               style={{
@@ -150,10 +150,10 @@ export function OfertaViajeModal({
                 {textos.oferta.dinamica}{' '}
                 {textoMultiplicador(oferta.multiplicadorPb ?? 10_000, idioma)}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{textos.oferta.dinamicaAyuda}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>{textos.oferta.dinamicaAyuda}</Text>
             </View>
           ) : null}
-          <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.ganas}</Text>
+          <Text style={{ color: '#666B73', fontWeight: '600' }}>{t.ganas}</Text>
           <Text style={{ fontSize: 40, fontWeight: '800', color: C.secundario, lineHeight: 44 }}>
             {formatearMonto(oferta.gananciaCentavos, oferta.moneda ?? 'USD', idioma)}
           </Text>
@@ -169,7 +169,7 @@ export function OfertaViajeModal({
             ) : null}
           </View>
           <View style={{ marginTop: 6 }}>
-            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.recoger}</Text>
+            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.recoger}</Text>
             <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
               {oferta.origen}
             </Text>
@@ -177,7 +177,7 @@ export function OfertaViajeModal({
           {oferta.paradas?.length ? (
             // C-VIAJE-PARADAS: por dónde para el viaje antes del destino.
             <View testID="oferta-viaje-paradas">
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>
                 {textos.oferta.conParadas(oferta.paradas.length)}
               </Text>
               {oferta.paradas.map((d, i) => (
@@ -188,7 +188,7 @@ export function OfertaViajeModal({
             </View>
           ) : null}
           <View>
-            <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.llevar}</Text>
+            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.llevar}</Text>
             <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
               {oferta.destino}
             </Text>
@@ -199,11 +199,11 @@ export function OfertaViajeModal({
             accessibilityRole="button"
             accessibilityLabel={t.rechazar}
           >
-            <Text style={{ textAlign: 'center', color: '#5E5E5E', fontWeight: '700', padding: 8 }}>
+            <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
               {t.rechazar}
             </Text>
           </Pressable>
-          <Text style={{ color: '#8A8A8A', fontSize: 12, textAlign: 'center' }}>
+          <Text style={{ color: '#6B7078', fontSize: 12, textAlign: 'center' }}>
             {t.sinCastigo}
           </Text>
         </View>
@@ -216,13 +216,13 @@ const Dato = ({ valor, nombre }: { valor: string; nombre: string }) => (
   <View
     style={{
       flex: 1,
-      backgroundColor: '#F4F6F9',
+      backgroundColor: '#F6F6F6',
       borderRadius: 12,
       paddingVertical: 8,
       alignItems: 'center',
     }}
   >
     <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 16 }}>{valor}</Text>
-    <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{nombre}</Text>
+    <Text style={{ color: '#666B73', fontSize: 12 }}>{nombre}</Text>
   </View>
 );

@@ -1,4 +1,5 @@
-import { Modal, ScrollView, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Modal, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Boton, C } from './ui';
@@ -59,14 +60,14 @@ export function PantallaPermisos({
           >
             {t.titulo}
           </Text>
-          <Text style={{ color: '#5E5E5E' }}>{t.sub}</Text>
+          <Text style={{ color: '#666B73' }}>{t.sub}</Text>
           {permisos.map((p) => (
             <View
               key={p.titulo}
-              style={{ borderBottomWidth: 1, borderBottomColor: '#ECECEC', paddingVertical: 10 }}
+              style={{ borderBottomWidth: 1, borderBottomColor: '#E6E7EA', paddingVertical: 10 }}
             >
               <Text style={{ fontWeight: '700', color: C.secundario }}>{p.titulo}</Text>
-              <Text style={{ color: '#5E5E5E', marginTop: 2 }}>{p.porque}</Text>
+              <Text style={{ color: '#666B73', marginTop: 2 }}>{p.porque}</Text>
             </View>
           ))}
         </ScrollView>

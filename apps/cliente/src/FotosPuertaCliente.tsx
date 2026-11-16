@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 import { type Idioma, type TipoLugar, rutaFotoPuerta } from '@tumbite/compartido';
@@ -11,6 +11,7 @@ import {
   // están a la vista): pide el permiso y, sin permiso, lo dice en palabras; en la computadora,
   // «Tomar foto» abre la cámara web.
   fotoConOrigen,
+  Text,
   useSesion,
 } from '@tumbite/movil';
 import { Tarjeta } from './comida/piezas';

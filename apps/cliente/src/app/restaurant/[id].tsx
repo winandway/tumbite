@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
   TextInput,
   View,
   useWindowDimensions,
@@ -34,7 +33,7 @@ import {
   type PromocionRestaurante,
   insigniaPromocion,
 } from '@tumbite/compartido';
-import { C, e, urlFoto, useSesion } from '@tumbite/movil';
+import { C, e, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { TEXTOS, distanciaTexto } from '../../textos';
 import { fotoDeRelleno } from '../../inicio/recursos';
@@ -247,7 +246,7 @@ export default function MenuRestaurante() {
         <View>
           <Image
             source={fotoRest ? { uri: fotoRest } : fotoDeRelleno(r?.categoria ?? '', 2)}
-            style={{ width: '100%', height: altoFoto, backgroundColor: '#f1f1f1' }}
+            style={{ width: '100%', height: altoFoto, backgroundColor: '#EEEFF1' }}
             accessibilityIgnoresInvertColors
           />
           <View style={{ position: 'absolute', top: 10, left: 10 }}>
@@ -322,7 +321,7 @@ export default function MenuRestaurante() {
             <Text
               key={v.categoria}
               testID="fuera-de-horario"
-              style={{ color: '#5E5E5E', marginTop: 10, fontSize: 13 }}
+              style={{ color: '#666B73', marginTop: 10, fontSize: 13 }}
             >
               {tc.fueraDeHorario
                 .replace('{categoria}', v.categoria)
@@ -365,7 +364,7 @@ export default function MenuRestaurante() {
             style={{
               flexDirection: 'row',
               borderBottomWidth: 1,
-              borderBottomColor: '#EFEFEF',
+              borderBottomColor: '#E6E7EA',
               marginTop: 8,
             }}
             accessibilityRole="tablist"
@@ -390,7 +389,7 @@ export default function MenuRestaurante() {
                     style={{
                       fontWeight: '700',
                       fontSize: 15,
-                      color: activa ? C.acento : '#5E5E5E',
+                      color: activa ? C.acento : '#666B73',
                     }}
                   >
                     {k === 'menu' ? tc.menu : tc.informacion}
@@ -408,13 +407,13 @@ export default function MenuRestaurante() {
               {r.direccion ? (
                 <View>
                   <Text style={{ fontWeight: '700', color: C.secundario }}>{tc.direccion}</Text>
-                  <Text style={{ color: '#5E5E5E' }}>{r.direccion}</Text>
+                  <Text style={{ color: '#666B73' }}>{r.direccion}</Text>
                 </View>
               ) : null}
               {r.telefono ? (
                 <View>
                   <Text style={{ fontWeight: '700', color: C.secundario }}>{tc.telefono}</Text>
-                  <Text style={{ color: '#5E5E5E' }}>{r.telefono}</Text>
+                  <Text style={{ color: '#666B73' }}>{r.telefono}</Text>
                 </View>
               ) : null}
               <View>
@@ -424,13 +423,13 @@ export default function MenuRestaurante() {
                     const turnos = (r.horarios ?? []).filter((h) => h.dia === i);
                     if (!turnos.length) return null;
                     return (
-                      <Text key={dia} style={{ color: '#5E5E5E' }}>
+                      <Text key={dia} style={{ color: '#666B73' }}>
                         {dia}: {turnos.map((h) => `${h.abre}–${h.cierra}`).join(', ')}
                       </Text>
                     );
                   })
                 ) : (
-                  <Text style={{ color: '#5E5E5E' }}>{tc.sinHorario}</Text>
+                  <Text style={{ color: '#666B73' }}>{tc.sinHorario}</Text>
                 )}
               </View>
             </View>
@@ -492,7 +491,7 @@ export default function MenuRestaurante() {
                               width: 150,
                               height: 104,
                               borderRadius: 14,
-                              backgroundColor: '#f1f1f1',
+                              backgroundColor: '#EEEFF1',
                               overflow: 'hidden',
                             }}
                           >
@@ -522,7 +521,7 @@ export default function MenuRestaurante() {
                           >
                             {nombrePlato(p, idioma)}
                           </Text>
-                          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                          <Text style={{ color: '#666B73', fontSize: 13 }}>
                             {formatearMonto(p.precioCentavos, moneda, idioma)}
                           </Text>
                         </Pressable>
@@ -583,7 +582,7 @@ export default function MenuRestaurante() {
                                   width: 84,
                                   height: 84,
                                   borderRadius: 14,
-                                  backgroundColor: '#f1f1f1',
+                                  backgroundColor: '#EEEFF1',
                                 }}
                               />
                             ) : null}
@@ -599,7 +598,7 @@ export default function MenuRestaurante() {
                                 </Text>
                               ) : null}
                               {descripcion(p, idioma) ? (
-                                <Text style={{ color: '#5E5E5E', fontSize: 13 }} numberOfLines={2}>
+                                <Text style={{ color: '#666B73', fontSize: 13 }} numberOfLines={2}>
                                   {descripcion(p, idioma)}
                                 </Text>
                               ) : null}
@@ -616,13 +615,13 @@ export default function MenuRestaurante() {
                                 {formatearMonto(p.precioCentavos, moneda, idioma)}
                                 {p.calorias != null ? (
                                   // C-CALORIAS: como Uber Eats, «· 520 cal» junto al precio.
-                                  <Text style={{ fontWeight: '400', color: '#5E5E5E' }}>
+                                  <Text style={{ fontWeight: '400', color: '#666B73' }}>
                                     {` · ${p.calorias} cal`}
                                   </Text>
                                 ) : null}
                               </Text>
                               {datos.gustoPlatos?.[p.id] ? (
-                                <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
+                                <Text style={{ color: '#666B73', fontSize: 12, marginTop: 2 }}>
                                   {idioma === 'en' ? 'Liked by ' : 'Le gustó al '}
                                   {textoGusto(datos.gustoPlatos[p.id]!, idioma)}
                                 </Text>
@@ -706,7 +705,7 @@ export default function MenuRestaurante() {
                   {urlFoto(detalle.imagen) ? (
                     <Image
                       source={{ uri: urlFoto(detalle.imagen) ?? undefined }}
-                      style={{ width: '100%', height: altoFoto, backgroundColor: '#f1f1f1' }}
+                      style={{ width: '100%', height: altoFoto, backgroundColor: '#EEEFF1' }}
                       accessibilityIgnoresInvertColors
                     />
                   ) : (
@@ -733,7 +732,7 @@ export default function MenuRestaurante() {
                     {nombrePlato(detalle, idioma)}
                   </Text>
                   {descripcion(detalle, idioma) ? (
-                    <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
+                    <Text style={{ color: '#666B73', marginTop: 4 }}>
                       {descripcion(detalle, idioma)}
                     </Text>
                   ) : null}
@@ -758,7 +757,7 @@ export default function MenuRestaurante() {
                           marginLeft: 12,
                           paddingLeft: 12,
                           borderLeftWidth: 1,
-                          borderLeftColor: '#D6D6D6',
+                          borderLeftColor: '#D6D8DC',
                         },
                       ]}
                     >
@@ -766,7 +765,7 @@ export default function MenuRestaurante() {
                         {nombrePlato(g, idioma)}
                         <Text
                           style={{
-                            color: g.minimo > 0 ? C.primario : '#5E5E5E',
+                            color: g.minimo > 0 ? C.primario : '#666B73',
                             fontWeight: '600',
                             fontSize: 13,
                           }}
@@ -797,14 +796,14 @@ export default function MenuRestaurante() {
                                     paddingVertical: 12,
                                     borderRadius: 14,
                                     borderWidth: marcada ? 2 : 1,
-                                    borderColor: marcada ? C.primario : '#D6D6D6',
+                                    borderColor: marcada ? C.primario : '#D6D8DC',
                                   }}
                                 >
                                   <Text style={{ fontWeight: '700', color: C.secundario }}>
                                     {nombrePlato(o, idioma)}
                                   </Text>
                                   {o.precioCentavos ? (
-                                    <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                                    <Text style={{ color: '#666B73', fontSize: 13 }}>
                                       + {formatearMonto(o.precioCentavos, moneda, idioma)}
                                     </Text>
                                   ) : null}
@@ -816,7 +815,7 @@ export default function MenuRestaurante() {
                         <View
                           style={{
                             borderWidth: 1,
-                            borderColor: '#EFEFEF',
+                            borderColor: '#E6E7EA',
                             borderRadius: 14,
                             marginTop: 8,
                           }}
@@ -839,7 +838,7 @@ export default function MenuRestaurante() {
                                     paddingVertical: 12,
                                     paddingHorizontal: 12,
                                     borderTopWidth: i ? 1 : 0,
-                                    borderTopColor: '#EFEFEF',
+                                    borderTopColor: '#E6E7EA',
                                   }}
                                 >
                                   <View
@@ -865,7 +864,7 @@ export default function MenuRestaurante() {
                                   <Text style={{ flex: 1, color: C.secundario }}>
                                     {nombrePlato(o, idioma)}
                                   </Text>
-                                  <Text style={{ color: '#5E5E5E' }}>
+                                  <Text style={{ color: '#666B73' }}>
                                     {o.precioCentavos
                                       ? `+ ${formatearMonto(o.precioCentavos, moneda, idioma)}`
                                       : ''}
@@ -895,7 +894,7 @@ export default function MenuRestaurante() {
                         style={{
                           marginTop: 8,
                           borderWidth: 1,
-                          borderColor: '#D6D6D6',
+                          borderColor: '#D6D8DC',
                           borderRadius: 10,
                           padding: 12,
                           minHeight: 64,

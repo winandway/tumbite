@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Platform, Pressable, View } from 'react-native';
 import {
   activarAvisosWeb,
   appDeRuta,

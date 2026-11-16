@@ -1,12 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import {
-  Image,
-  type ImageSourcePropType,
-  Pressable,
-  Text,
-  View,
-  useColorScheme,
-} from 'react-native';
+import { Text } from './diseno';
+import { Image, type ImageSourcePropType, Pressable, View, useColorScheme } from 'react-native';
 import { estiloMapaDe } from '@tumbite/compartido/src/estiloMapaDivoox';
 import {
   AJUSTES_TEMA_MAPA,
@@ -127,7 +121,7 @@ export function AjusteMapa() {
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={t.titulo}
-        style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#D0D0D0', borderRadius: 10 }}
+        style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#D6D8DC', borderRadius: 10 }}
       >
         {AJUSTES_TEMA_MAPA.map((a) => {
           const activa = ajuste === a;
@@ -153,7 +147,7 @@ export function AjusteMapa() {
           );
         })}
       </View>
-      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.ayuda}</Text>
+      <Text style={{ color: '#666B73', fontSize: 13 }}>{t.ayuda}</Text>
     </View>
   );
 }

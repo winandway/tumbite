@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Pressable, Switch, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {
   DOCUMENTOS_VEHICULO_PASAJEROS,
@@ -18,6 +18,7 @@ import {
   e,
   fotoConCamara,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 
 /**
@@ -389,7 +390,7 @@ const colorEstado = (estado: string) =>
     ? VERDE
     : estado === 'rechazado' || estado === 'vencido'
       ? C.primario
-      : '#5E5E5E';
+      : '#666B73';
 
 function Fila({
   nombre,
@@ -415,7 +416,7 @@ function Fila({
         gap: 8,
         paddingVertical: 10,
         borderTopWidth: 1,
-        borderTopColor: '#EEF0F3',
+        borderTopColor: '#E6E7EA',
       }}
     >
       <View style={{ flex: 1 }}>
@@ -581,12 +582,12 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   return (
     <View style={{ gap: 12, paddingVertical: 8 }} testID={`alta-${servicio}`}>
       <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E' }}>{t.ayuda}</Text>
+      <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
       {error ? <Text style={{ color: C.primario }}>{error}</Text> : null}
 
       {papeles ? (
         <View style={e.tarjeta}>
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tc.ciudad}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{tc.ciudad}</Text>
           <Text style={{ fontWeight: '800', color: C.secundario }}>{papeles.ciudad.nombre}</Text>
           {papeles.cambioCiudad?.puedeCambiar !== false ? (
             <Pressable
@@ -600,7 +601,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
             </Pressable>
           ) : null}
           {papeles.cambioCiudad?.elegida ? (
-            <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 4 }}>{tc.reglaCiudad}</Text>
+            <Text style={{ color: '#666B73', fontSize: 12, marginTop: 4 }}>{tc.reglaCiudad}</Text>
           ) : null}
           {verCiudades
             ? papeles.ciudades.map((z) => (
@@ -660,7 +661,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                   {de(t.categorias, vehiculo.categoria ?? 'estandar') ?? t.categorias.estandar}
                 </Text>
                 {(vehiculo.categoria ?? 'estandar') === 'estandar' && aniosComfort != null ? (
-                  <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                  <Text style={{ color: '#666B73', fontSize: 12 }}>
                     {t.categoriaPide(aniosComfort)}
                   </Text>
                 ) : null}
@@ -692,7 +693,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                         }
                       />
                     </View>
-                    <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.menoresAyuda}</Text>
+                    <Text style={{ color: '#666B73', fontSize: 12 }}>{t.menoresAyuda}</Text>
                   </View>
                 ) : null}
               </View>
@@ -724,7 +725,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               : null}
             {servicio === 'carro' ? (
               <View>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tc.plazas}</Text>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>{tc.plazas}</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
                   {PLAZAS_CARRO.map((n) => {
                     const elegido = b.valores.plazas === String(n);
@@ -767,7 +768,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
                     height: 24,
                     borderRadius: 6,
                     borderWidth: 2,
-                    borderColor: b.valores.cajon === 'si' ? C.exito : '#8A8A8A',
+                    borderColor: b.valores.cajon === 'si' ? C.exito : '#6B7078',
                     backgroundColor: b.valores.cajon === 'si' ? C.exito : '#fff',
                   }}
                 />
@@ -782,7 +783,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       {vehiculo ? (
         <View style={e.tarjeta}>
           <Text style={{ fontWeight: '800', color: C.secundario }}>{t.papelesVehiculo}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.ayudaPasajero}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.ayudaPasajero}</Text>
           {docsVehiculo.map((tipo) => {
             const d = docVehiculo(tipo);
             return (
@@ -832,7 +833,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               />
             );
           })}
-          <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 6 }}>{tc.identidad}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12, marginTop: 6 }}>{tc.identidad}</Text>
         </View>
       ) : null}
 
@@ -848,7 +849,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
           </Text>
           {estado.requisitosFaltantes.length ? (
             <View style={{ marginTop: 6 }}>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{tc.falta}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>{tc.falta}</Text>
               {estado.requisitosFaltantes.map((r) => (
                 <Text key={r} style={{ color: C.secundario }}>
                   · {de(t.requisitos, r) ?? r}

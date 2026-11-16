@@ -1,4 +1,4 @@
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 import {
   type GrupoForm,
   type Idioma,
@@ -6,7 +6,7 @@ import {
   leerFormularioGrupos,
   montoATexto,
 } from '@tumbite/compartido';
-import { C, Campo } from '@tumbite/movil';
+import { C, Campo, Text } from '@tumbite/movil';
 import { Pildora, Tarjeta } from './piezas/ui';
 
 /**
@@ -114,7 +114,7 @@ export function EditorOpciones({
           {g.opciones.map((o, oi) => (
             <View
               key={oi}
-              style={{ borderTopWidth: 1, borderTopColor: '#ECECEC', paddingTop: 8, marginTop: 4 }}
+              style={{ borderTopWidth: 1, borderTopColor: '#E6E7EA', paddingTop: 8, marginTop: 4 }}
             >
               <Campo
                 etiqueta={`${t.opcion} ${gi + 1}.${oi + 1}`}
@@ -141,12 +141,12 @@ export function EditorOpciones({
                   value={o.disponible}
                   onValueChange={(x) => enOpcion(gi, oi, { disponible: x })}
                   accessibilityLabel={`${t.disponible} ${gi + 1}.${oi + 1}`}
-                  trackColor={{ true: C.exito, false: '#D6D6D6' }}
+                  trackColor={{ true: C.exito, false: '#D6D8DC' }}
                 />
               </View>
               {grupos.length > 1 ? (
                 <View style={{ marginTop: 6 }}>
-                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.abre}</Text>
+                  <Text style={{ color: '#666B73', fontSize: 13 }}>{t.abre}</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                     <Pildora
                       texto={t.nada}
@@ -171,7 +171,7 @@ export function EditorOpciones({
                 onPress={() => enGrupo(gi, { opciones: g.opciones.filter((_, k) => k !== oi) })}
                 style={{ paddingVertical: 6 }}
               >
-                <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.quitar}</Text>
+                <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.quitar}</Text>
               </Pressable>
             </View>
           ))}
@@ -195,7 +195,7 @@ export function EditorOpciones({
               accessibilityLabel={`${t.quitar} · ${t.grupo} ${gi + 1}`}
               onPress={() => poner(grupos.filter((_, j) => j !== gi))}
             >
-              <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.quitar}</Text>
+              <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.quitar}</Text>
             </Pressable>
           </View>
         </Tarjeta>

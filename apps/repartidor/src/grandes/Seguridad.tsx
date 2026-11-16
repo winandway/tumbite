@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  Linking,
-  Platform,
-  Pressable,
-  Share,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Linking, Platform, Pressable, Share, Switch, TextInput, View } from 'react-native';
 import * as Location from 'expo-location';
 import { type Api, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e } from '@tumbite/movil';
+import { Boton, C, e, Text } from '@tumbite/movil';
 import { cargarAccesibilidad, fijarAuditiva } from './accesibilidad';
 
 /**
@@ -189,7 +179,7 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
         >
           <Text style={{ color: '#fff', fontWeight: '800', fontSize: 18 }}>{t.emergencia}</Text>
         </Pressable>
-        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.emergenciaAyuda}</Text>
+        <Text style={{ color: '#666B73', fontSize: 13 }}>{t.emergenciaAyuda}</Text>
         {numero ? (
           <Boton texto={t.llamar(numero)} alTocar={() => void Linking.openURL(`tel:${numero}`)} />
         ) : null}
@@ -203,11 +193,11 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
             accessibilityLabel={t.auditiva}
           />
         </View>
-        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.auditivaAyuda}</Text>
+        <Text style={{ color: '#666B73', fontSize: 13 }}>{t.auditivaAyuda}</Text>
       </View>
       <View style={[e.tarjeta, { gap: 6 }]}>
         <Boton texto={t.compartir} alTocar={() => void compartir()} secundario />
-        <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.compartirAyuda}</Text>
+        <Text style={{ color: '#666B73', fontSize: 13 }}>{t.compartirAyuda}</Text>
       </View>
       <View style={[e.tarjeta, { gap: 8 }]}>
         <Text style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}>{t.incidente}</Text>
@@ -223,10 +213,10 @@ export function Seguridad({ api, idioma }: { api: Api; idioma: Idioma }) {
                 paddingHorizontal: 10,
                 borderRadius: 12,
                 borderWidth: motivo === k ? 2 : 1,
-                borderColor: motivo === k ? C.primario : '#DADADA',
+                borderColor: motivo === k ? C.logistica : '#D6D8DC',
               }}
             >
-              <Text style={{ fontWeight: '700', color: motivo === k ? C.primario : C.secundario }}>
+              <Text style={{ fontWeight: '700', color: motivo === k ? C.logistica : C.secundario }}>
                 {texto}
               </Text>
             </Pressable>

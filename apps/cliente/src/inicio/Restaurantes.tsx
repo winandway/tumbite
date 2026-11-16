@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import {
   CONFIG_DINERO_INICIAL,
   type Idioma,
@@ -9,7 +9,7 @@ import {
   insigniaPromocion,
 } from '@tumbite/compartido';
 import { router } from 'expo-router';
-import { C, urlFoto } from '@tumbite/movil';
+import { C, urlFoto, Text } from '@tumbite/movil';
 import { IMG, fotoDeRelleno } from './recursos';
 import { textosInicio } from './textos';
 import { distanciaTexto } from '../textos';
@@ -80,7 +80,7 @@ function TarjetaRestaurante({
             width: ancho,
             height: Math.round(ancho * 0.5),
             borderRadius: 14,
-            backgroundColor: '#F2F3F5',
+            backgroundColor: '#F6F6F6',
           }}
           resizeMode="cover"
           accessibilityIgnoresInvertColors

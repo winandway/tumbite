@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, C, e, useSesion } from '@tumbite/movil';
+import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-VIAJES-HISTORIAL (13 nov 2026) — todos los países. «Mis viajes» del conductor de Moto y Carro: la
@@ -145,10 +145,10 @@ export function MisViajesConductor() {
               · {o.detalle}
             </Text>
           ))}
-          <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 4 }}>{t.olvidadosAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12, marginTop: 4 }}>{t.olvidadosAyuda}</Text>
         </View>
       ) : null}
-      {filas && filas.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
+      {filas && filas.length === 0 ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
       {(filas ?? []).map((f) => (
         <Pressable key={f.id} onPress={() => abrir(f.id)} accessibilityRole="button">
           <View style={e.tarjeta}>
@@ -162,14 +162,14 @@ export function MisViajesConductor() {
                 </Text>
               ) : null}
             </View>
-            <Text numberOfLines={1} style={{ color: '#5E5E5E' }}>
+            <Text numberOfLines={1} style={{ color: '#666B73' }}>
               {f.destino}
             </Text>
             <Text
               style={{
                 fontSize: 12,
                 fontWeight: '700',
-                color: f.estado === 'terminado' ? C.exito : '#5E5E5E',
+                color: f.estado === 'terminado' ? C.exito : '#666B73',
               }}
             >
               {de(t.estados, f.estado)} · {de(t.pagos, f.metodoPago)}
@@ -177,7 +177,7 @@ export function MisViajesConductor() {
             {abierto?.id === f.id && abierto.recibo ? (
               <View style={{ marginTop: 6 }}>
                 <Text style={{ color: C.secundario }}>{abierto.recibo.origen}</Text>
-                <Text style={{ color: '#5E5E5E' }}>
+                <Text style={{ color: '#666B73' }}>
                   {abierto.recibo.distanciaM ? t.km(abierto.recibo.distanciaM) : ''}
                   {abierto.recibo.duracionS != null ? ` · ${t.min(abierto.recibo.duracionS)}` : ''}
                   {abierto.recibo.propina > 0

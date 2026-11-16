@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { elegirUnidadDistancia, enIdioma } from '@tumbite/compartido';
-import { C, e, useSesion } from '@tumbite/movil';
+import { C, e, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-UNIDAD-ELEGIDA (1 nov 2026, pedido de Richard): el repartidor elige con un toque si ve las
@@ -53,7 +53,7 @@ export function UnidadDistancia({
       <Text style={{ fontWeight: '700', fontSize: 15 }}>{t.titulo}</Text>
       <View
         accessibilityRole="radiogroup"
-        style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#D0D0D0', borderRadius: 10 }}
+        style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#D6D8DC', borderRadius: 10 }}
       >
         {(['mi', 'km'] as const).map((u) => {
           const activa = actual === u;

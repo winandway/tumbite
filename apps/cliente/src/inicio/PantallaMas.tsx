@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import {
   type Idioma,
@@ -6,7 +6,7 @@ import {
   type ServicioCatalogo,
   serviciosTerminados,
 } from '@tumbite/compartido';
-import { C } from '@tumbite/movil';
+import { C, Text } from '@tumbite/movil';
 import { ANCHO_MAX } from '../comida/piezas';
 import { ICONO_SERVICIO, IMG } from './recursos';
 import type { Servicio } from './Servicios';

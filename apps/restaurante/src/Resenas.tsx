@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { ErrorApi, deSqlUtc, enIdioma, textoEtiqueta, useBorrador } from '@tumbite/compartido';
-import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion } from '@tumbite/movil';
+import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion, Text } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
 /**
@@ -127,7 +127,7 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
       </Text>
       {error ? <Text style={e.error}>{error}</Text> : null}
       {datos && datos.total > 0 ? (
-        <Text style={{ color: '#5E5E5E', marginBottom: 10 }}>
+        <Text style={{ color: '#666B73', marginBottom: 10 }}>
           {t.resumen((datos.promedio ?? 0).toFixed(1), datos.total, datos.respondidas)}
         </Text>
       ) : null}
@@ -144,7 +144,7 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
         ) : null,
       )}
       {datos && !datos.resenas.length ? (
-        <Text style={{ color: '#5E5E5E' }}>{t.sinResenas}</Text>
+        <Text style={{ color: '#666B73' }}>{t.sinResenas}</Text>
       ) : null}
       {(datos?.resenas ?? []).map((r) => (
         <Tarjeta key={r.pedidoId}>
@@ -163,7 +163,7 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
           </Text>
           {r.comentario ? <Text style={{ marginTop: 4 }}>{r.comentario}</Text> : null}
           {r.etiquetas?.length ? (
-            <Text style={{ marginTop: 4, color: '#5E5E5E' }}>
+            <Text style={{ marginTop: 4, color: '#666B73' }}>
               {r.etiquetas
                 .map((x) => textoEtiqueta('restaurante', x, idioma === 'en' ? 'en' : 'es'))
                 .filter(Boolean)
@@ -171,7 +171,7 @@ export function Resenas({ alVolver }: { alVolver: () => void }) {
             </Text>
           ) : null}
           {r.respuesta ? (
-            <Text style={{ marginTop: 6, color: '#5E5E5E' }}>
+            <Text style={{ marginTop: 6, color: '#666B73' }}>
               <Text style={{ fontWeight: '800' }}>{t.tuRespuesta}: </Text>
               {r.respuesta}
             </Text>

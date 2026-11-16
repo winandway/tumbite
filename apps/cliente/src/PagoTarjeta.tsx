@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text } from 'react-native';
+
 import { initPaymentSheet, initStripe, presentPaymentSheet } from '@stripe/stripe-react-native';
-import { Boton, e } from '@tumbite/movil';
+import { Boton, e, Text } from '@tumbite/movil';
 import type { PropsPago } from './pagoTipos';
 
 /**

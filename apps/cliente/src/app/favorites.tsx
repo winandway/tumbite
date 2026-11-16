@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { type Restaurante, enIdioma } from '@tumbite/compartido';
-import { C, urlFoto, useSesion } from '@tumbite/movil';
+import { C, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { useRestaurantes } from '../comida/useRestaurantes';
 import { ANCHO_MAX, Encabezado, sombra } from '../comida/piezas';
 import { BarraInferior, type Pestana } from '../inicio/BarraInferior';
@@ -66,7 +66,7 @@ function Favoritos() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={t.titulo}
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
@@ -81,7 +81,7 @@ function Favoritos() {
           alignSelf: 'center',
         }}
       >
-        {lista && !lista.length ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
+        {lista && !lista.length ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
         {lista?.map((r, index) => (
           <Pressable
             key={r.id}
@@ -106,7 +106,7 @@ function Favoritos() {
                   ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
                   : fotoDeRelleno(r.categoria, index)
               }
-              style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+              style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
               accessibilityIgnoresInvertColors
             />
             <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -116,7 +116,7 @@ function Favoritos() {
               >
                 {r.nombre}
               </Text>
-              <Text style={{ color: '#5E5E5E', marginTop: 2 }}>
+              <Text style={{ color: '#666B73', marginTop: 2 }}>
                 {r.categoria ? `${r.categoria} · ` : ''}
                 <Text
                   style={

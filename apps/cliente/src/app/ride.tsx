@@ -79,7 +79,7 @@ function PantallaMoto() {
   }, [cargar, viajeId, viaje]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={
           servicio === 'carro' ? t.tituloCarro : servicio === 'envios' ? t.tituloEnvios : t.titulo

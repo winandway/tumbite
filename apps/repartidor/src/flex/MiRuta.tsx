@@ -2510,7 +2510,7 @@ function DetalleParada({
                       height: 22,
                       borderRadius: 11,
                       borderWidth: 2,
-                      borderColor: lugar === k ? C.logistica : '#8A8A8A',
+                      borderColor: lugar === k ? C.logistica : '#6B7078',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
@@ -2620,7 +2620,7 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
         height: 20,
         borderRadius: cuadrada ? 4 : 10,
         borderWidth: 2,
-        borderColor: marcada ? C.logistica : '#8A8A8A',
+        borderColor: marcada ? C.logistica : '#6B7078',
         alignItems: 'center',
         justifyContent: 'center',
       }}

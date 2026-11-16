@@ -41,6 +41,14 @@ export default defineConfig({
       },
       {
         test: {
+          // C-APPS-DISENO: tokens y candados de las apps del celular (sin React Native).
+          name: 'movil',
+          include: ['packages/movil/src/**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        test: {
           name: 'panel',
           include: ['apps/panel/src/**/*.test.{ts,tsx}'],
           environment: 'jsdom',

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, Campo, CampoDireccion, useSesion } from '@tumbite/movil';
+import { Boton, C, Campo, CampoDireccion, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { ElegirEnMapa } from '../ElegirEnMapa';
@@ -185,7 +185,7 @@ function MisPaquetes() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={t.titulo}
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
@@ -204,7 +204,7 @@ function MisPaquetes() {
           gap: 12,
         }}
       >
-        <Text style={{ color: '#5E5E5E' }}>{t.intro}</Text>
+        <Text style={{ color: '#666B73' }}>{t.intro}</Text>
         <RastrearPaquete estados={estados} alVincular={() => void cargar()} />
         {aviso ? <Text style={{ color: C.exito, fontWeight: '700' }}>{aviso}</Text> : null}
         {error ? (
@@ -218,7 +218,7 @@ function MisPaquetes() {
               <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>
                 {t.casaTitulo}
               </Text>
-              <Text style={{ color: '#5E5E5E' }}>{t.casaAyuda}</Text>
+              <Text style={{ color: '#666B73' }}>{t.casaAyuda}</Text>
               <ElegirEnMapa
                 punto={casa}
                 cambiarPunto={setCasa}
@@ -259,17 +259,17 @@ function MisPaquetes() {
                 {t.de} {p.empresa}
               </Text>
               <Text
-                style={{ color: p.estado === 'entregado' ? C.exito : '#5E5E5E', fontWeight: '700' }}
+                style={{ color: p.estado === 'entregado' ? C.exito : '#666B73', fontWeight: '700' }}
               >
                 {estados.get(p.estado) ?? p.estado}
               </Text>
               {p.codigo ? (
-                <Text style={{ color: '#5E5E5E' }}>
+                <Text style={{ color: '#666B73' }}>
                   {t.seguimiento}: {p.codigo}
                 </Text>
               ) : null}
               <Text style={{ color: C.secundario }}>{p.direccion}</Text>
-              {p.referencias ? <Text style={{ color: '#5E5E5E' }}>{p.referencias}</Text> : null}
+              {p.referencias ? <Text style={{ color: '#666B73' }}>{p.referencias}</Text> : null}
               <Text
                 style={{
                   fontWeight: '700',
@@ -296,7 +296,7 @@ function MisPaquetes() {
                   </Text>
                 </Pressable>
               ) : (
-                <Text style={{ color: '#5E5E5E' }}>{t.yaSalio}</Text>
+                <Text style={{ color: '#666B73' }}>{t.yaSalio}</Text>
               )}
               {abierto === p.envioId ? (
                 <View style={{ gap: 8 }}>
@@ -320,11 +320,11 @@ function MisPaquetes() {
                       }}
                     >
                       <Text style={{ fontWeight: '700' }}>{d.etiqueta || d.direccion}</Text>
-                      <Text style={{ color: '#5E5E5E' }}>{d.direccion}</Text>
+                      <Text style={{ color: '#666B73' }}>{d.direccion}</Text>
                       <Text style={{ color: C.primario, fontWeight: '700' }}>{t.usarGuardada}</Text>
                     </Pressable>
                   ))}
-                  <Text style={{ color: '#5E5E5E' }}>{t.oMarca}</Text>
+                  <Text style={{ color: '#666B73' }}>{t.oMarca}</Text>
                   <ElegirEnMapa
                     punto={punto}
                     cambiarPunto={setPunto}

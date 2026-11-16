@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Image, Text, View } from 'react-native';
-import { C, useSesion } from '@tumbite/movil';
+import { Image, View } from 'react-native';
+import { C, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-FOTO-VERIFICADA (29 oct 2026), como Uber y DoorDash: la foto del repartidor aprobada contra su
@@ -30,7 +30,7 @@ export function FotoRepartidor({
     return (
       <Image
         source={{ uri }}
-        style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f1f1f1' }}
+        style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#EEEFF1' }}
         accessibilityLabel={nombre}
         accessibilityIgnoresInvertColors
       />

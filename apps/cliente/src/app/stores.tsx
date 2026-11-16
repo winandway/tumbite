@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { formatearMonto } from '@tumbite/compartido';
-import { C, useSesion } from '@tumbite/movil';
+import { C, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Estado, Flecha, Tarjeta, sombra } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { puntoGps, puntoGuardado } from '../comida/useRestaurantes';
@@ -142,7 +142,7 @@ export default function Tiendas() {
       >
         {nombreServicio}
       </Text>
-      <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 2, marginBottom: 12 }}>
+      <Text style={{ color: '#666B73', fontSize: 14, marginTop: 2, marginBottom: 12 }}>
         {resultados ? '' : t.tiendasCerca}
       </Text>
     </View>
@@ -155,22 +155,22 @@ export default function Tiendas() {
       </Text>
     </Pressable>
   ) : tiendas ? (
-    <Text style={{ color: '#5E5E5E', textAlign: 'center', marginTop: 24 }}>
+    <Text style={{ color: '#666B73', textAlign: 'center', marginTop: 24 }}>
       {fuera ? t.fueraDeZona : t.sinTiendas}
     </Text>
   ) : (
-    <Text style={{ color: '#8A8A8A', textAlign: 'center', marginTop: 24 }}>…</Text>
+    <Text style={{ color: '#6B7078', textAlign: 'center', marginTop: 24 }}>…</Text>
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       {resultados ? (
         <FlatList
           data={resultados}
           keyExtractor={(r) => `${r.tiendaId}:${r.id}`}
           ListHeaderComponent={cabecera}
           ListEmptyComponent={
-            <Text style={{ color: '#5E5E5E', textAlign: 'center', marginTop: 24 }}>
+            <Text style={{ color: '#666B73', textAlign: 'center', marginTop: 24 }}>
               {t.sinResultados}
             </Text>
           }
@@ -201,7 +201,7 @@ export default function Tiendas() {
                         width: 56,
                         height: 56,
                         borderRadius: 10,
-                        backgroundColor: '#f1f1f1',
+                        backgroundColor: '#EEEFF1',
                       }}
                       accessibilityIgnoresInvertColors
                     />
@@ -209,11 +209,11 @@ export default function Tiendas() {
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontWeight: '700', color: C.secundario }}>{r.nombre}</Text>
                     {detalleProducto(r, idioma) ? (
-                      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                      <Text style={{ color: '#666B73', fontSize: 13 }}>
                         {detalleProducto(r, idioma)}
                       </Text>
                     ) : null}
-                    <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 2 }}>
+                    <Text style={{ color: '#666B73', fontSize: 13, marginTop: 2 }}>
                       {t.enTienda.replace('{tienda}', r.tienda)}
                       {r.distanciaKm != null ? ` · ${distanciaTexto(r.distanciaKm, idioma)}` : ''}
                     </Text>
@@ -252,7 +252,7 @@ export default function Tiendas() {
                   </Text>
                   <Estado abierto={s.abierto} texto={s.abierto ? t.abierta : t.cerrada} />
                 </View>
-                <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 4 }}>
+                <Text style={{ color: '#666B73', fontSize: 14, marginTop: 4 }}>
                   {[
                     t.productos.replace('{n}', String(s.productos)),
                     s.distanciaKm != null ? distanciaTexto(s.distanciaKm, idioma) : null,

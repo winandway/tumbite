@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Modal, Platform, Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { C } from './ui';

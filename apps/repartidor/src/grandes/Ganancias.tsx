@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Share, Text, View } from 'react-native';
+import { Pressable, Share, View } from 'react-native';
 import { type Api, type Idioma, formatearMonto, planillaGanancias } from '@tumbite/compartido';
-import { C, e } from '@tumbite/movil';
+import { C, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 type PedidoGanado = {
@@ -65,7 +65,7 @@ export function Ganancias({
   const linea = (nombre: string, valor: number, moneda: string, fuerte = false) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
       <Text
-        style={{ color: fuerte ? C.secundario : '#5E5E5E', fontWeight: fuerte ? '800' : '500' }}
+        style={{ color: fuerte ? C.secundario : '#666B73', fontWeight: fuerte ? '800' : '500' }}
       >
         {nombre}
       </Text>
@@ -83,7 +83,7 @@ export function Ganancias({
             {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
             {linea(t.propinas, x.propinas, x.moneda)}
             {linea(`${t.total} · ${x.entregas} ${t.entregas}`, x.total, x.moneda, true)}
-            <Text style={{ color: '#8A8A8A', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
+            <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
           </View>
         ),
       )}
@@ -103,7 +103,7 @@ export function Ganancias({
         </Pressable>
       ) : null}
       {d.pedidos.length === 0 ? (
-        <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text>
+        <Text style={{ color: '#666B73' }}>{t.sin}</Text>
       ) : (
         d.pedidos.map((p) => (
           <Pressable
@@ -118,7 +118,7 @@ export function Ganancias({
                 <Text style={{ fontWeight: '800', color: C.secundario }}>
                   #{p.codigo} · {p.restaurante}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>
                   {new Date(`${p.entregadoEn.replace(' ', 'T')}Z`).toLocaleString(
                     idioma === 'en' ? 'en-US' : 'es-US',
                     { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
@@ -130,7 +130,7 @@ export function Ganancias({
               </Text>
             </View>
             {abierto === p.pedidoId ? (
-              <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: '#EEF0F3' }}>
+              <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: '#E6E7EA' }}>
                 {linea(t.base, p.base, p.moneda ?? 'USD')}
                 {p.bono ? linea(t.bonos, p.bono, p.moneda ?? 'USD') : null}
                 {linea(t.propinas, p.propina, p.moneda ?? 'USD')}

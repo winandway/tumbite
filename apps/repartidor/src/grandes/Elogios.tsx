@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { type Api, type Idioma } from '@tumbite/compartido';
-import { C, e } from '@tumbite/movil';
+import { C, e, Text } from '@tumbite/movil';
 
 export type Elogio = { etiqueta: string; n: number; es: string; en: string };
 
@@ -52,7 +52,7 @@ export function Elogios({
   return (
     <View style={[e.tarjeta, { gap: 8 }]} testID="elogios">
       <Text style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{lista.length ? t.ayuda : t.vacio}</Text>
+      <Text style={{ color: '#666B73', fontSize: 13 }}>{lista.length ? t.ayuda : t.vacio}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {lista.map((x) => (
           <View
@@ -64,7 +64,7 @@ export function Elogios({
               paddingVertical: 6,
               borderRadius: 999,
               borderWidth: 1,
-              borderColor: '#D9D9D9',
+              borderColor: '#D6D8DC',
             }}
           >
             <Text style={{ color: C.secundario, fontWeight: '700' }}>

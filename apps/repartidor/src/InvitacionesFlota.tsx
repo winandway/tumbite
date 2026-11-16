@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, useSesion } from '@tumbite/movil';
+import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-FLOTA-PROPIA (10 nov 2026) — Chile y todos los países. El restaurante invitó a este repartidor
@@ -69,14 +69,14 @@ export function InvitacionesFlota({ alAceptar }: { alAceptar: (aviso: string) =>
         <View style={e.tarjeta} testID="mi-flota">
           <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.miFlota(flota.restaurante)}</Text>
           {flota.exclusiva ? (
-            <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 4 }}>{t.exclusiva}</Text>
+            <Text style={{ color: '#666B73', fontSize: 13, marginTop: 4 }}>{t.exclusiva}</Text>
           ) : null}
         </View>
       ) : null}
       {lista.map((i) => (
         <View key={i.id} style={[e.tarjeta, { borderWidth: 1, borderColor: '#2a2a2a' }]}>
           <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.titulo(i.restaurante)}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginVertical: 6 }}>{t.ayuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginVertical: 6 }}>{t.ayuda}</Text>
           <View style={{ gap: 8 }}>
             <Boton texto={t.aceptar} exito alTocar={() => void responder(i, 'aceptar')} />
             <Boton texto={t.rechazar} secundario alTocar={() => void responder(i, 'rechazar')} />

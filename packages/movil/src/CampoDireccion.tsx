@@ -1,4 +1,5 @@
-import { Pressable, Text, View, type TextInputProps } from 'react-native';
+import { Text } from './diseno';
+import { Pressable, View, type TextInputProps } from 'react-native';
 import { type DireccionElegida, useSugerenciasDireccion } from '@tumbite/compartido';
 import { useSesion } from './sesion';
 import { Campo } from './ui';
@@ -73,7 +74,7 @@ export function CampoDireccion({
               style={({ pressed }) => ({
                 paddingVertical: 12,
                 paddingHorizontal: 14,
-                backgroundColor: pressed ? '#f1f1f1' : '#fff',
+                backgroundColor: pressed ? '#EEEFF1' : '#fff',
                 borderTopWidth: i ? 1 : 0,
                 borderTopColor: '#eee',
               })}

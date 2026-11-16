@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import {
   ErrorApi,
   type Idioma,
@@ -15,6 +15,7 @@ import {
   almacenTelefono,
   e,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 
 /**
@@ -121,7 +122,7 @@ export function PedirCancelacion({
               </>
             ) : (
               <>
-                <Text style={{ color: '#5E5E5E', fontSize: 14 }}>{t.intro}</Text>
+                <Text style={{ color: '#666B73', fontSize: 14 }}>{t.intro}</Text>
                 <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
                 {MOTIVOS_CANCELACION.map((m) => {
                   const activo = v.motivo === m.id;
@@ -136,7 +137,7 @@ export function PedirCancelacion({
                         alignItems: 'center',
                         gap: 10,
                         borderWidth: 1,
-                        borderColor: activo ? '#101010' : '#D0D0D0',
+                        borderColor: activo ? '#101010' : '#D6D8DC',
                         borderRadius: 12,
                         paddingHorizontal: 12,
                         paddingVertical: 12,
@@ -159,7 +160,7 @@ export function PedirCancelacion({
                   );
                 })}
                 {elegido ? (
-                  <Text testID="quien-paga" style={{ color: '#5E5E5E', fontSize: 14 }}>
+                  <Text testID="quien-paga" style={{ color: '#666B73', fontSize: 14 }}>
                     {idioma === 'en'
                       ? TEXTO_PAGA_COMIDA[elegido.paga].en
                       : TEXTO_PAGA_COMIDA[elegido.paga].es}

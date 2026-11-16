@@ -1,5 +1,5 @@
-import { ActivityIndicator, Image, Text, View } from 'react-native';
-import { Acceso, C, useSesion } from '@tumbite/movil';
+import { ActivityIndicator, Image, View } from 'react-native';
+import { Acceso, C, useSesion, Text } from '@tumbite/movil';
 import { Inicio } from '../Inicio';
 import { IMG } from '../piezas/recursos';
 

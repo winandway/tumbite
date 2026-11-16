@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Image, Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, tituloCaso, useBorrador } from '@tumbite/compartido';
 import { alSalirTelefono, almacenTelefono } from './almacen';
 import { useSesion } from './sesion';
@@ -75,7 +76,7 @@ export function MisCasos({ elegirCapturas }: { elegirCapturas?: ElegirCapturas }
   return (
     <View testID="mis-casos" style={[e.tarjeta, { gap: 8 }]}>
       <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.titulo}</Text>
-      {casos.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text> : null}
+      {casos.length === 0 ? <Text style={{ color: '#666B73' }}>{t.sin}</Text> : null}
       {casos.map((c) =>
         abierto === c.codigo ? (
           <ChatCaso
@@ -90,12 +91,12 @@ export function MisCasos({ elegirCapturas }: { elegirCapturas?: ElegirCapturas }
             key={c.codigo}
             accessibilityRole="button"
             onPress={() => setAbierto(c.codigo)}
-            style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#EEE' }}
+            style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#E6E7EA' }}
           >
             <Text style={{ fontWeight: '700', color: C.secundario }}>
               {t.caso} {c.numero} · {tituloCaso(c.asunto, idioma)}
             </Text>
-            <Text style={{ color: c.estado === 'respondido' ? C.exito : '#5E5E5E' }}>
+            <Text style={{ color: c.estado === 'respondido' ? C.exito : '#666B73' }}>
               {t.estados[c.estado] ?? c.estado}
             </Text>
           </Pressable>
@@ -186,7 +187,7 @@ function ChatCaso({
   return (
     <View
       testID="chat-caso"
-      style={{ gap: 6, borderTopWidth: 1, borderTopColor: '#EEE', paddingTop: 8 }}
+      style={{ gap: 6, borderTopWidth: 1, borderTopColor: '#E6E7EA', paddingTop: 8 }}
     >
       <Text style={{ fontWeight: '700', color: C.secundario }}>
         {t.caso} {caso.numero} · {tituloCaso(caso.asunto, idioma)}
@@ -202,7 +203,7 @@ function ChatCaso({
             padding: 8,
           }}
         >
-          <Text style={{ fontSize: 12, fontWeight: '700', color: '#5E5E5E' }}>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: '#666B73' }}>
             {m.autor === 'persona' ? t.tu : t.soporte}
           </Text>
           {m.texto ? <Text>{m.texto}</Text> : null}
@@ -216,7 +217,7 @@ function ChatCaso({
                 accessibilityLabel={a.nombre}
               />
             ) : (
-              <Text key={a.id} style={{ color: '#5E5E5E', marginTop: 4 }}>
+              <Text key={a.id} style={{ color: '#666B73', marginTop: 4 }}>
                 {a.nombre}
               </Text>
             ),
@@ -255,7 +256,7 @@ function ChatCaso({
                     hitSlop={6}
                   >
                     <Text
-                      style={{ color: '#5E5E5E', fontSize: 12, textDecorationLine: 'underline' }}
+                      style={{ color: '#666B73', fontSize: 12, textDecorationLine: 'underline' }}
                     >
                       {t.quitar}
                     </Text>

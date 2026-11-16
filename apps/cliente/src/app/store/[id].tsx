@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, Image, Platform, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Image, Platform, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { type Plato, formatearMonto } from '@tumbite/compartido';
-import { C, useSesion } from '@tumbite/movil';
+import { C, useSesion, Text } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import {
   ANCHO_MAX,
@@ -216,7 +216,7 @@ export default function Tienda() {
             </Text>
             <Estado abierto={ficha.abierto} texto={ficha.abierto ? t.abierta : t.cerrada} />
           </View>
-          <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 2 }}>{ficha.direccion}</Text>
+          <Text style={{ color: '#666B73', fontSize: 14, marginTop: 2 }}>{ficha.direccion}</Text>
           {/* C-PEDIDO-GRUPO-TIENDA: como en los restaurantes, el pedido en grupo sale de aquí. */}
           {grupo ? (
             <View style={{ marginTop: 8, gap: 4 }}>
@@ -268,7 +268,7 @@ export default function Tienda() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <FlatList
         data={productos ?? []}
         keyExtractor={(p) => p.id}
@@ -276,7 +276,7 @@ export default function Tienda() {
         ListHeaderComponent={cabecera}
         ListEmptyComponent={
           productos ? (
-            <Text style={{ color: '#5E5E5E', textAlign: 'center', marginTop: 24 }}>
+            <Text style={{ color: '#666B73', textAlign: 'center', marginTop: 24 }}>
               {t.sinResultados}
             </Text>
           ) : null
@@ -318,7 +318,7 @@ export default function Tienda() {
                 style={{
                   height: 110,
                   borderRadius: 12,
-                  backgroundColor: '#F2F3F5',
+                  backgroundColor: '#F6F6F6',
                   alignItems: 'center',
                   justifyContent: 'center',
                   overflow: 'hidden',
@@ -349,7 +349,7 @@ export default function Tienda() {
                 {p.precioAntes ? (
                   <Text
                     accessibilityLabel={`${t.antes} ${formatearMonto(p.precioAntes, moneda, idioma)}`}
-                    style={{ color: '#8A8A8A', fontSize: 13, textDecorationLine: 'line-through' }}
+                    style={{ color: '#6B7078', fontSize: 13, textDecorationLine: 'line-through' }}
                   >
                     {formatearMonto(p.precioAntes, moneda, idioma)}
                   </Text>
@@ -362,7 +362,7 @@ export default function Tienda() {
                 {p.nombre}
               </Text>
               {detalleProducto(p, idioma) ? (
-                <Text style={{ color: '#5E5E5E', fontSize: 12 }} numberOfLines={1}>
+                <Text style={{ color: '#666B73', fontSize: 12 }} numberOfLines={1}>
                   {detalleProducto(p, idioma)}
                 </Text>
               ) : null}
@@ -370,12 +370,12 @@ export default function Tienda() {
                 // C-ALCOHOL-HORARIO: fuera de la hora legal del estado no se puede agregar.
                 <Text
                   testID="alcohol-desde"
-                  style={{ color: '#5E5E5E', fontSize: 11, marginTop: 2, fontWeight: '600' }}
+                  style={{ color: '#666B73', fontSize: 11, marginTop: 2, fontWeight: '600' }}
                 >
                   {t.alcoholDesde} {ficha?.alcohol?.abre}
                 </Text>
               ) : p.restriccion === 'alcohol' || p.restriccion === 'tobacco' ? (
-                <Text style={{ color: '#5E5E5E', fontSize: 11, marginTop: 2 }}>{t.edad}</Text>
+                <Text style={{ color: '#666B73', fontSize: 11, marginTop: 2 }}>{t.edad}</Text>
               ) : null}
               {n > 0 ? (
                 // Ya en el carrito = salió bien: verde (C-VERDE-EXITO).

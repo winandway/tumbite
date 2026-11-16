@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
@@ -11,6 +11,7 @@ import {
   almacenTelefono,
   e,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
@@ -138,7 +139,7 @@ function TarjetasRegalo() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f6' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }}>
       <Encabezado titulo={t.titulo} alVolver={() => router.back()} etiquetaVolver="‹" />
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -158,9 +159,9 @@ function TarjetasRegalo() {
               empezar={() => void b.empezarDeNuevo()}
             />
             <Tarjeta>
-              <Text style={{ color: '#5E5E5E' }}>{t.saldo}</Text>
+              <Text style={{ color: '#666B73' }}>{t.saldo}</Text>
               <Text style={{ fontSize: 24, fontWeight: '700' }}>{dinero(estado.saldo)}</Text>
-              <Text style={{ color: '#5E5E5E' }}>{t.usarlo}</Text>
+              <Text style={{ color: '#666B73' }}>{t.usarlo}</Text>
             </Tarjeta>
             <Tarjeta>
               <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.canjear}</Text>

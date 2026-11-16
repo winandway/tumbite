@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { type Api, ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, useSesion, abrirPagina } from '@tumbite/movil';
+import { Boton, C, e, useSesion, abrirPagina, Text } from '@tumbite/movil';
 
 const T = {
   es: {
@@ -272,7 +272,7 @@ export function Verificacion() {
       {k.estado === 'aprobado' ? <MiFotoVerificada api={api} texto={t.fotoPerfil} /> : null}
       {!listo ? (
         <>
-          <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.ayuda}</Text>
+          <Text style={{ color: '#666B73', marginBottom: 8 }}>{t.ayuda}</Text>
           <Text style={{ fontWeight: '700', marginBottom: 6 }}>{t.doc}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
             {(Object.keys(t.docs) as (keyof typeof t.docs)[]).map((d) => (
@@ -286,7 +286,7 @@ export function Verificacion() {
                   paddingVertical: 8,
                   borderRadius: 999,
                   borderWidth: 1,
-                  borderColor: docTipo === d ? C.secundario : '#D6D6D6',
+                  borderColor: docTipo === d ? C.secundario : '#D6D8DC',
                   backgroundColor: docTipo === d ? C.secundario : '#FFFFFF',
                 }}
               >
@@ -300,7 +300,7 @@ export function Verificacion() {
             <View
               style={{
                 borderWidth: 1,
-                borderColor: '#D6D6D6',
+                borderColor: '#D6D8DC',
                 borderRadius: 12,
                 padding: 10,
                 marginBottom: 10,
@@ -320,9 +320,9 @@ export function Verificacion() {
                 {etiqueta} {new Map(Object.entries(k.tiene)).get(pieza) ? `· ${t.lista}` : ''}
               </Text>
               {pieza === 'selfie' ? (
-                <Text style={{ color: '#5E5E5E' }}>{t.selfieAyuda}</Text>
+                <Text style={{ color: '#666B73' }}>{t.selfieAyuda}</Text>
               ) : null}
-              {pieza === 'giro_1' ? <Text style={{ color: '#5E5E5E' }}>{t.giroAyuda}</Text> : null}
+              {pieza === 'giro_1' ? <Text style={{ color: '#666B73' }}>{t.giroAyuda}</Text> : null}
               <Boton
                 texto={new Map(Object.entries(k.tiene)).get(pieza) ? t.otra : t.tomar}
                 alTocar={() => void tomar(pieza)}
@@ -341,10 +341,10 @@ export function Verificacion() {
       ) : null}
       {conProveedor ? (
         <View
-          style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: '#E6E6E6', paddingTop: 8 }}
+          style={{ marginTop: 14, borderTopWidth: 1, borderTopColor: '#E6E7EA', paddingTop: 8 }}
         >
           <Text style={{ fontWeight: '800' }}>{t.antecedentes}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.antecedentesAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13 }}>{t.antecedentesAyuda}</Text>
           <Text
             style={{
               marginTop: 4,
@@ -387,11 +387,11 @@ function MiFotoVerificada({ api, texto }: { api: Api; texto: string }) {
       {uri ? (
         <Image
           source={{ uri }}
-          style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#f1f1f1' }}
+          style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#EEEFF1' }}
           accessibilityIgnoresInvertColors
         />
       ) : null}
-      <Text style={{ flex: 1, color: '#5E5E5E' }}>{texto}</Text>
+      <Text style={{ flex: 1, color: '#666B73' }}>{texto}</Text>
     </View>
   );
 }

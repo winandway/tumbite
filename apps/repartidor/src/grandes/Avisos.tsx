@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { type Api, type Idioma, formatearMonto } from '@tumbite/compartido';
-import { C, e } from '@tumbite/movil';
+import { C, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 export type AvisoRep = {
@@ -37,14 +37,14 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
   return (
     <View style={{ padding: 16, gap: 12 }} testID="avisos-repartidor">
       <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
-      {d && d.avisos.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.sin}</Text> : null}
+      {d && d.avisos.length === 0 ? <Text style={{ color: '#666B73' }}>{t.sin}</Text> : null}
       {(d?.avisos ?? []).map((a, i) => (
         <View key={`${a.tipo}-${a.pedidoId ?? i}-${a.en}`} style={e.tarjeta}>
           <Text style={{ fontWeight: '800', color: C.secundario }}>
             {titulos.get(a.tipo) ?? a.tipo}
             {a.codigo ? ` · #${a.codigo}` : ''}
           </Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 2 }}>
+          <Text style={{ color: '#666B73', fontSize: 13, marginTop: 2 }}>
             {a.restaurante ?? ''}
             {a.tipo === 'direccion_cambiada' && a.detalle ? ` · ${a.detalle}` : ''}
             {a.tipo === 'ofertas_vencidas' ? ` ${a.detalle}` : ''}
@@ -53,7 +53,7 @@ export function Avisos({ api, idioma }: { api: Api; idioma: Idioma }) {
               ? ` · ${t.quedasLibre}`
               : ''}
           </Text>
-          <Text style={{ color: '#8A8A8A', fontSize: 11, marginTop: 2 }}>
+          <Text style={{ color: '#6B7078', fontSize: 11, marginTop: 2 }}>
             {new Date(`${a.en.replace(' ', 'T')}Z`).toLocaleString(
               idioma === 'en' ? 'en-US' : 'es-US',
               { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },

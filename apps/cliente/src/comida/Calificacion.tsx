@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import {
   type CalificacionPublica,
   type Idioma,
   deSqlUtc,
   textoCalificacion,
 } from '@tumbite/compartido';
-import { C, useSesion } from '@tumbite/movil';
+import { C, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-CALIFICACION-PUBLICA: «★ 4.7 (120)» o «Nuevo» en las tarjetas y la ficha del restaurante, como
@@ -100,7 +100,7 @@ export function ResenasRestaurante({ restauranteId }: { restauranteId: string })
           </Text>
           <Text style={{ color: '#333', marginTop: 4 }}>{r.comentario}</Text>
           {r.respuesta ? (
-            <Text style={{ color: '#5E5E5E', marginTop: 6, fontSize: 13 }}>
+            <Text style={{ color: '#666B73', marginTop: 6, fontSize: 13 }}>
               <Text style={{ fontWeight: '700' }}>
                 {idioma === 'en' ? 'Restaurant reply: ' : 'Respuesta del restaurante: '}
               </Text>

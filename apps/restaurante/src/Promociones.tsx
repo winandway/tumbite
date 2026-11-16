@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
   ErrorApi,
   type TipoPromocion,
@@ -11,7 +11,7 @@ import {
   useBorrador,
   diaDeHoyLocal,
 } from '@tumbite/compartido';
-import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion } from '@tumbite/movil';
+import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion, Text } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
 /**
@@ -180,7 +180,7 @@ export function Promociones({ alVolver }: { alVolver: () => void }) {
       >
         {t.titulo}
       </Text>
-      <Text style={{ color: '#5E5E5E', marginBottom: 10 }}>{t.ayuda}</Text>
+      <Text style={{ color: '#666B73', marginBottom: 10 }}>{t.ayuda}</Text>
       {error ? (
         <Text style={e.error} accessibilityRole="alert">
           {error}
@@ -203,7 +203,7 @@ export function Promociones({ alVolver }: { alVolver: () => void }) {
                     paddingHorizontal: 12,
                     borderRadius: 18,
                     borderWidth: 1,
-                    borderColor: v.tipo === k ? C.primario : '#D0D0D0',
+                    borderColor: v.tipo === k ? C.primario : '#D6D8DC',
                     backgroundColor: v.tipo === k ? '#FFF4F1' : '#fff',
                   }}
                 >
@@ -262,11 +262,11 @@ export function Promociones({ alVolver }: { alVolver: () => void }) {
               <Text style={{ fontWeight: '800', color: C.secundario }}>
                 {insigniaPromocion(p, moneda, idioma)}
               </Text>
-              <Text style={{ color: p.vigente ? C.exito : '#5E5E5E', fontWeight: '700' }}>
+              <Text style={{ color: p.vigente ? C.exito : '#666B73', fontWeight: '700' }}>
                 {p.vigente ? t.activa : t.sinEfecto} · {p.iniciaEn.slice(0, 10)} →{' '}
                 {p.venceEn.slice(0, 10)}
               </Text>
-              <Text style={{ color: '#5E5E5E' }}>
+              <Text style={{ color: '#666B73' }}>
                 {t.costo(p.usos, formatearMonto(p.costoCentavos, moneda, idioma))}
               </Text>
               {p.vigente ? (

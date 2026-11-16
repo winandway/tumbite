@@ -1,11 +1,20 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { Idioma } from '@tumbite/compartido';
-import { C, SelectorIdioma } from '@tumbite/movil';
+import { C, SelectorIdioma, Text } from '@tumbite/movil';
 import { IMG } from './recursos';
 import { textosDriver } from './textos';
 
 /** Cabecera blanca del diseño: menú, logotipo con «Driver», campana y el selector de idioma. */
+const redondo = {
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  backgroundColor: '#F6F6F6',
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+};
+
 export function CabeceraDriver({
   idioma,
   cambiarIdioma,
@@ -29,8 +38,8 @@ export function CabeceraDriver({
         justifyContent: 'space-between',
         paddingHorizontal: 14,
         paddingVertical: 8,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEF0F3',
+        borderBottomWidth: 0.5,
+        borderBottomColor: '#D6D8DC',
       }}
     >
       <Pressable
@@ -38,20 +47,11 @@ export function CabeceraDriver({
         accessibilityRole="button"
         accessibilityLabel={t.menu}
         hitSlop={8}
-        style={{ padding: 6 }}
+        style={{ padding: 0 }}
       >
-        {[0, 1, 2].map((i) => (
-          <View
-            key={i}
-            style={{
-              width: 22,
-              height: 3,
-              borderRadius: 2,
-              backgroundColor: C.secundario,
-              marginVertical: 2.5,
-            }}
-          />
-        ))}
+        <View style={redondo}>
+          <Ionicons name="menu" size={24} color={C.secundario} />
+        </View>
       </Pressable>
       <View style={{ alignItems: 'center' }}>
         <Image
@@ -60,7 +60,15 @@ export function CabeceraDriver({
           resizeMode="contain"
           accessibilityLabel="Divoox"
         />
-        <Text style={{ fontWeight: '800', color: C.secundario, fontSize: 13, marginTop: -4 }}>
+        <Text
+          style={{
+            fontWeight: '700',
+            color: C.logistica,
+            fontSize: 12,
+            marginTop: -4,
+            letterSpacing: 0.5,
+          }}
+        >
           {t.driver}
         </Text>
       </View>
@@ -80,9 +88,7 @@ export function CabeceraDriver({
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: 20,
-              borderWidth: 1,
-              borderColor: '#E3E3E3',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#F6F6F6',
             }}
           >
             <Ionicons name="notifications-outline" size={24} color={C.secundario} />
@@ -101,9 +107,7 @@ export function CabeceraDriver({
             />
           ) : null}
         </Pressable>
-        <View style={{ backgroundColor: C.primario, borderRadius: 999 }}>
-          <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} />
-        </View>
+        <SelectorIdioma idioma={idioma} cambiar={cambiarIdioma} sobreClaro />
       </View>
     </View>
   );

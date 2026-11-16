@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { router } from 'expo-router';
@@ -23,6 +23,7 @@ import {
   alSalirTelefono,
   almacenTelefono,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Pildora, Tarjeta } from '../comida/piezas';
 import { conCuenta } from '../ConCuenta';
@@ -273,12 +274,12 @@ function PantallaEmpresas() {
                     <Text style={{ fontWeight: '700', color: C.secundario, fontSize: 16 }}>
                       {titulo}
                     </Text>
-                    <Text style={{ color: '#5E5E5E', lineHeight: 20 }}>{ayuda}</Text>
+                    <Text style={{ color: '#666B73', lineHeight: 20 }}>{ayuda}</Text>
                   </View>
                 </View>
               ))}
             </Tarjeta>
-            <Text style={{ color: '#5E5E5E', lineHeight: 20 }}>{t.paraQuien}</Text>
+            <Text style={{ color: '#666B73', lineHeight: 20 }}>{t.paraQuien}</Text>
             {avisoError}
             {empresas.length ? (
               <Tarjeta>
@@ -384,7 +385,7 @@ function PantallaEmpresas() {
             <Text style={{ fontSize: 20, fontWeight: '700', color: C.secundario, marginTop: 12 }}>
               {t.centro}
             </Text>
-            <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>{t.centroAyuda}</Text>
+            <Text style={{ color: '#666B73', marginBottom: 6 }}>{t.centroAyuda}</Text>
             <Campo
               etiqueta={t.centroNombre}
               value={v.centroNombre}
@@ -423,7 +424,7 @@ function PantallaEmpresas() {
                   height: 24,
                   borderRadius: 6,
                   borderWidth: 2,
-                  borderColor: v.acepto ? C.exito : '#8A8A8A',
+                  borderColor: v.acepto ? C.exito : '#6B7078',
                   backgroundColor: v.acepto ? C.exito : '#fff',
                   alignItems: 'center',
                   justifyContent: 'center',

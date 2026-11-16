@@ -1,4 +1,5 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Text } from '@tumbite/movil';
+import { Image, Pressable, View } from 'react-native';
 import type { Idioma } from '@tumbite/compartido';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
@@ -20,7 +21,7 @@ export function Buscador({ idioma, alTocar }: { idioma: Idioma; alTocar: () => v
         marginHorizontal: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F2F3F5',
+        backgroundColor: '#F6F6F6',
         borderRadius: 999,
         paddingHorizontal: 14,
         height: 46,

@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 // El saldo y los movimientos son de Stripe, que hoy solo cobra en dólares (C-MONEDA-RECORRIDO).
 import {
   ErrorApi,
@@ -25,6 +25,7 @@ import {
   useSesion,
   abrirPanel,
   capturasConCamara,
+  Text,
 } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
@@ -288,7 +289,7 @@ function MiRestauranteApp({ t }: { t: Textos }) {
           />
           <Text style={e.etiqueta}>{t.direccion}</Text>
           <Text style={{ color: C.secundario }}>{rest.direccion}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 10 }}>
+          <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 10 }}>
             {t.direccionAyuda}
           </Text>
           <BotonGrande texto={t.guardar} alTocar={() => void guardar()} />
@@ -317,7 +318,7 @@ function Ganancias({ t }: { t: Textos }) {
       {d ? (
         <>
           <Tarjeta>
-            <Text style={{ color: '#5E5E5E' }}>{t.saldo}</Text>
+            <Text style={{ color: '#666B73' }}>{t.saldo}</Text>
             <Text style={{ fontSize: 30, fontWeight: '800', color: C.exito }}>
               {formatearMonto(d.saldo, 'USD', idioma)}
             </Text>
@@ -327,7 +328,7 @@ function Ganancias({ t }: { t: Textos }) {
               {t.movimientos}
             </Text>
             {d.movimientos.length === 0 ? (
-              <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text>
+              <Text style={{ color: '#666B73' }}>{t.vacio}</Text>
             ) : (
               d.movimientos.slice(0, 50).map((m) => (
                 <View
@@ -337,13 +338,13 @@ function Ganancias({ t }: { t: Textos }) {
                     justifyContent: 'space-between',
                     paddingVertical: 8,
                     borderTopWidth: 1,
-                    borderTopColor: '#EEE',
+                    borderTopColor: '#E6E7EA',
                     gap: 8,
                   }}
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: C.secundario }}>{m.concepto}</Text>
-                    <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{m.fecha.slice(0, 16)}</Text>
+                    <Text style={{ color: '#666B73', fontSize: 12 }}>{m.fecha.slice(0, 16)}</Text>
                   </View>
                   <Text style={{ fontWeight: '800', color: m.monto >= 0 ? C.exito : C.secundario }}>
                     {formatearMonto(m.monto, 'USD', idioma)}
@@ -352,7 +353,7 @@ function Ganancias({ t }: { t: Textos }) {
               ))
             )}
           </Tarjeta>
-          <Text style={{ color: '#5E5E5E', marginBottom: 6 }}>{t.cobrosAyuda}</Text>
+          <Text style={{ color: '#666B73', marginBottom: 6 }}>{t.cobrosAyuda}</Text>
           <BotonGrande
             texto={t.cobros}
             tipo="claro"
@@ -430,12 +431,12 @@ function Equipo({ t }: { t: Textos }) {
           {d.equipo.map((m) => (
             <View
               key={m.usuarioId}
-              style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#EEE' }}
+              style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#E6E7EA' }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '800', color: C.secundario }}>{m.nombre}</Text>
-                  <Text style={{ color: '#5E5E5E' }}>
+                  <Text style={{ color: '#666B73' }}>
                     {m.correo} · {new Map(Object.entries(t.roles)).get(m.rol) ?? m.rol}
                   </Text>
                 </View>
@@ -474,7 +475,7 @@ function Equipo({ t }: { t: Textos }) {
             value={b.valores.correo}
             onChangeText={(x) => b.cambiar('correo', x)}
           />
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 8 }}>{t.correoAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 8 }}>{t.correoAyuda}</Text>
           <Text style={e.etiqueta}>{t.rol}</Text>
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
             {(['manager', 'staff'] as const).map((r) => (

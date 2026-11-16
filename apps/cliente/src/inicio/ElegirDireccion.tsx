@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Alert, Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Idioma } from '@tumbite/compartido';
-import { C, CampoDireccion, MenuTresPuntos, useSesion } from '@tumbite/movil';
+import { C, CampoDireccion, MenuTresPuntos, useSesion, Text } from '@tumbite/movil';
 import type { DireccionEntrega } from '../comida/useRestaurantes';
 import { type DireccionGuardada, HojaFotosPuerta } from '../FotosPuertaCliente';
 import { textosInicio } from './textos';

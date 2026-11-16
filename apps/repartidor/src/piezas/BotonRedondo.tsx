@@ -1,5 +1,5 @@
-import { Image, Pressable, Text, View } from 'react-native';
-import { C } from '@tumbite/movil';
+import { Image, Pressable, View } from 'react-native';
+import { C, Text } from '@tumbite/movil';
 import { IMG } from './recursos';
 
 /** Botón redondo con el ícono del diseño y el nombre debajo: mapa, llamar, mensaje. */
@@ -27,7 +27,7 @@ export function BotonRedondo({
           height: 48,
           borderRadius: 24,
           overflow: 'hidden',
-          backgroundColor: '#F4F5F7',
+          backgroundColor: '#F6F6F6',
         }}
       >
         <Image

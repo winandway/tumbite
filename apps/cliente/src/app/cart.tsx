@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { anuncioPara } from '../comida/anuncioTocado';
 import type React from 'react';
-import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -40,6 +40,7 @@ import {
   urlFoto,
   useSesion,
   CampoDireccion,
+  Text,
 } from '@tumbite/movil';
 import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
@@ -691,7 +692,7 @@ function PantallaCarrito() {
 
   const volver = () => (router.canGoBack() ? router.back() : router.replace('/'));
   const marco = (cuerpo: React.ReactNode) => (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado titulo={tc.tuCarrito} alVolver={volver} etiquetaVolver={tc.volver} />
       <ScrollView
         keyboardDismissMode="interactive"
@@ -715,7 +716,7 @@ function PantallaCarrito() {
       // Carrito vacío como los grandes: un mensaje claro y el botón para ir a buscar comida.
       <Tarjeta style={{ alignItems: 'center', paddingVertical: 28, gap: 8 }}>
         <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario }}>{t.vacio}</Text>
-        <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>
+        <Text style={{ color: '#666B73', textAlign: 'center' }}>
           {idioma === 'en'
             ? 'Add something from a restaurant or store and it shows up here.'
             : 'Agrega algo de un restaurante o una tienda y aparece aquí.'}
@@ -734,7 +735,7 @@ function PantallaCarrito() {
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 3 }}>
       <Text
         style={
-          fuerte ? { fontWeight: '700', fontSize: 19, color: C.secundario } : { color: '#5E5E5E' }
+          fuerte ? { fontWeight: '700', fontSize: 19, color: C.secundario } : { color: '#666B73' }
         }
       >
         {texto}
@@ -766,7 +767,7 @@ function PantallaCarrito() {
   // C-EDAD-EN-MANO: con alcohol o tabaco no se deja en la puerta (el servidor también lo cambia).
   return marco(
     <>
-      <Text style={{ fontWeight: '700', fontSize: 15, color: '#5E5E5E', marginBottom: 8 }}>
+      <Text style={{ fontWeight: '700', fontSize: 15, color: '#666B73', marginBottom: 8 }}>
         {carrito.restauranteNombre}
       </Text>
       {carrito.lineas.map((l) => {
@@ -777,7 +778,7 @@ function PantallaCarrito() {
               {foto ? (
                 <Image
                   source={{ uri: foto }}
-                  style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+                  style={{ width: 64, height: 64, borderRadius: 12, backgroundColor: '#EEEFF1' }}
                   accessibilityIgnoresInvertColors
                 />
               ) : null}
@@ -809,14 +810,14 @@ function PantallaCarrito() {
             {carrito.esTienda ? (
               <View style={{ marginTop: 8 }}>
                 {l.pesable ? (
-                  <Text style={{ color: '#5E5E5E', fontSize: 12, marginBottom: 6 }}>
+                  <Text style={{ color: '#666B73', fontSize: 12, marginBottom: 6 }}>
                     {tt.porPeso}
                   </Text>
                 ) : null}
                 <View
                   style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}
                 >
-                  <Text style={{ color: '#5E5E5E', fontSize: 13, fontWeight: '700' }}>
+                  <Text style={{ color: '#666B73', fontSize: 13, fontWeight: '700' }}>
                     {tt.siNoHay}
                   </Text>
                   {SUSTITUCIONES.map((op) => {
@@ -834,7 +835,7 @@ function PantallaCarrito() {
                           paddingHorizontal: 10,
                           borderRadius: 999,
                           borderWidth: 1,
-                          borderColor: activo ? C.secundario : '#D6D6D6',
+                          borderColor: activo ? C.secundario : '#D6D8DC',
                           backgroundColor: activo ? C.secundario : '#fff',
                         }}
                       >
@@ -884,7 +885,7 @@ function PantallaCarrito() {
                 padding: 12,
                 borderRadius: 14,
                 borderWidth: activo ? 2 : 1,
-                borderColor: activo ? C.primario : '#DADADA',
+                borderColor: activo ? C.primario : '#D6D8DC',
                 backgroundColor: '#fff',
               }}
             >
@@ -897,7 +898,7 @@ function PantallaCarrito() {
                       : franjaElegida.es
                     : te.programar}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
+              <Text style={{ color: '#666B73', fontSize: 12, marginTop: 2 }}>
                 {modo === 'ahora' ? te.ahoraAyuda : te.programarAyuda}
               </Text>
             </Pressable>
@@ -924,7 +925,7 @@ function PantallaCarrito() {
                     borderRadius: 999,
                     backgroundColor: dia === diaActivo ? C.secundario : '#fff',
                     borderWidth: 1,
-                    borderColor: dia === diaActivo ? C.secundario : '#DADADA',
+                    borderColor: dia === diaActivo ? C.secundario : '#D6D8DC',
                   }}
                 >
                   <Text
@@ -954,7 +955,7 @@ function PantallaCarrito() {
                         paddingHorizontal: 12,
                         borderRadius: 12,
                         borderWidth: activa ? 2 : 1,
-                        borderColor: activa ? C.primario : '#DADADA',
+                        borderColor: activa ? C.primario : '#D6D8DC',
                         backgroundColor: '#fff',
                       }}
                     >
@@ -969,7 +970,7 @@ function PantallaCarrito() {
             </View>
           </View>
         ) : (
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 12 }}>{te.sinFranjas}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 12 }}>{te.sinFranjas}</Text>
         )
       ) : null}
 
@@ -995,7 +996,7 @@ function PantallaCarrito() {
                 padding: 12,
                 borderRadius: 14,
                 borderWidth: activo ? 2 : 1,
-                borderColor: activo ? C.primario : '#DADADA',
+                borderColor: activo ? C.primario : '#D6D8DC',
                 backgroundColor: '#fff',
                 opacity: apagado ? 0.45 : 1,
               }}
@@ -1003,7 +1004,7 @@ function PantallaCarrito() {
               <Text style={{ fontWeight: '700', color: activo ? C.acento : C.secundario }}>
                 {modo === 'recoger' ? te.recoger : modo === 'mano' ? te.mano : te.puerta}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>
+              <Text style={{ color: '#666B73', fontSize: 12, marginTop: 2 }}>
                 {modo === 'recoger'
                   ? te.recogerAyuda
                   : modo === 'mano'
@@ -1015,7 +1016,7 @@ function PantallaCarrito() {
         })}
       </View>
       {conEdad ? (
-        <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: -4, marginBottom: 12 }}>
+        <Text style={{ color: '#666B73', fontSize: 13, marginTop: -4, marginBottom: 12 }}>
           {te.edadAviso}
         </Text>
       ) : null}
@@ -1023,13 +1024,13 @@ function PantallaCarrito() {
         <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontWeight: '700' }}>{te.pinTitulo}</Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{te.pinAyuda}</Text>
+            <Text style={{ color: '#666B73', fontSize: 13 }}>{te.pinAyuda}</Text>
           </View>
           <Switch
             value={b.valores.pin !== 'no'}
             onValueChange={(v) => b.cambiar('pin', v ? 'si' : 'no')}
             accessibilityLabel={te.pinTitulo}
-            trackColor={{ true: C.exito, false: '#D6D6D6' }}
+            trackColor={{ true: C.exito, false: '#D6D8DC' }}
           />
         </Tarjeta>
       ) : null}
@@ -1040,7 +1041,7 @@ function PantallaCarrito() {
             <Text style={{ fontWeight: '700' }}>
               {idioma === 'en' ? 'Use my gift card balance' : 'Usar mi saldo de regalo'}
             </Text>
-            <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+            <Text style={{ color: '#666B73', fontSize: 13 }}>
               {formatearMonto(saldoRegaloCli, 'USD', idioma)}
             </Text>
           </View>
@@ -1051,7 +1052,7 @@ function PantallaCarrito() {
             accessibilityLabel={
               idioma === 'en' ? 'Use my gift card balance' : 'Usar mi saldo de regalo'
             }
-            trackColor={{ true: C.exito, false: '#D6D6D6' }}
+            trackColor={{ true: C.exito, false: '#D6D8DC' }}
           />
         </Tarjeta>
       ) : null}
@@ -1086,14 +1087,14 @@ function PantallaCarrito() {
                       padding: 12,
                       borderRadius: 14,
                       borderWidth: activo ? 2 : 1,
-                      borderColor: activo ? C.primario : '#DADADA',
+                      borderColor: activo ? C.primario : '#D6D8DC',
                       backgroundColor: '#fff',
                     }}
                   >
                     <Text style={{ fontWeight: '700', color: activo ? C.acento : C.secundario }}>
                       {etiqueta}
                     </Text>
-                    <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 2 }}>{ayuda}</Text>
+                    <Text style={{ color: '#666B73', fontSize: 12, marginTop: 2 }}>{ayuda}</Text>
                   </Pressable>
                 );
               })}
@@ -1119,7 +1120,7 @@ function PantallaCarrito() {
                       paddingVertical: 8,
                       borderRadius: 999,
                       borderWidth: 1,
-                      borderColor: activa ? C.primario : '#DADADA',
+                      borderColor: activa ? C.primario : '#D6D8DC',
                       backgroundColor: activa ? C.primario : '#fff',
                       maxWidth: '100%',
                     }}
@@ -1182,7 +1183,7 @@ function PantallaCarrito() {
               value={b.valores.guardarDireccion === 'si'}
               onValueChange={(v) => b.cambiar('guardarDireccion', v ? 'si' : 'no')}
               accessibilityLabel={te.guardar}
-              trackColor={{ true: C.exito, false: '#D6D6D6' }}
+              trackColor={{ true: C.exito, false: '#D6D8DC' }}
             />
           </Tarjeta>
           {b.valores.guardarDireccion === 'si' ? (
@@ -1225,13 +1226,13 @@ function PantallaCarrito() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontWeight: '700' }}>{t.regaloTitulo}</Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{t.regaloAyuda}</Text>
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{t.regaloAyuda}</Text>
             </View>
             <Switch
               value={comoRegalo}
               onValueChange={(v) => b.cambiar('esRegalo', v ? 'si' : 'no')}
               accessibilityLabel={t.regaloTitulo}
-              trackColor={{ true: C.exito, false: '#D6D6D6' }}
+              trackColor={{ true: C.exito, false: '#D6D8DC' }}
               testID="carrito-regalo"
             />
           </View>
@@ -1274,7 +1275,7 @@ function PantallaCarrito() {
         testID="carrito-alergias"
       />
       {b.valores.alergias.trim() ? (
-        <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: -4, marginBottom: 8 }}>
+        <Text style={{ color: '#666B73', fontSize: 13, marginTop: -4, marginBottom: 8 }}>
           {t.alergiasNota}
         </Text>
       ) : null}
@@ -1295,7 +1296,7 @@ function PantallaCarrito() {
               paddingVertical: 10,
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: propinaPb === pb ? C.primario : '#DADADA',
+              borderColor: propinaPb === pb ? C.primario : '#D6D8DC',
               backgroundColor: propinaPb === pb ? C.primario : '#fff',
             }}
           >
@@ -1314,7 +1315,7 @@ function PantallaCarrito() {
           placeholder={montoATexto(0, moneda)}
         />
       )}
-      <Text style={{ color: '#5E5E5E', fontSize: 13, marginBottom: 12 }}>
+      <Text style={{ color: '#666B73', fontSize: 13, marginBottom: 12 }}>
         {recogidaElegida ? t.propinaNotaRecoger : t.propinaNota}
       </Text>
 
@@ -1414,7 +1415,7 @@ function PantallaCarrito() {
           <View style={{ borderTopWidth: 1, borderTopColor: '#eee', marginTop: 6, paddingTop: 8 }}>
             {fila(t.total, d.totalCliente, true)}
             {referenciaConTasa(d.totalCliente, tarifasListas?.tasaReferencia) ? (
-              <Text testID="carrito-total-bs" style={{ color: '#5E5E5E', fontSize: 13 }}>
+              <Text testID="carrito-total-bs" style={{ color: '#666B73', fontSize: 13 }}>
                 {textoReferencia(
                   referenciaConTasa(d.totalCliente, tarifasListas?.tasaReferencia),
                   idioma,
@@ -1426,7 +1427,7 @@ function PantallaCarrito() {
           {carrito.esTienda &&
           metodoPago === 'tarjeta' &&
           margenPesables(carrito.lineas, d.totalCliente, d.subtotal) > 0 ? (
-            <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 6 }}>
+            <Text style={{ color: '#666B73', fontSize: 12, marginTop: 6 }}>
               {tt.retencion.replace(
                 '{monto}',
                 formatearMonto(
@@ -1450,11 +1451,11 @@ function PantallaCarrito() {
                 height: 18,
                 borderRadius: 9,
                 borderWidth: 1,
-                borderColor: '#5E5E5E',
+                borderColor: '#666B73',
                 textAlign: 'center',
                 fontSize: 12,
                 lineHeight: 16,
-                color: '#5E5E5E',
+                color: '#666B73',
               }}
             >
               i
@@ -1468,7 +1469,7 @@ function PantallaCarrito() {
           {verTarifas ? (
             <View style={{ marginTop: 8, gap: 8 }} accessibilityLiveRegion="polite">
               {explicarTarifas(config, moneda, idioma).map((x) => (
-                <Text key={x.clave} style={{ color: '#5E5E5E', fontSize: 13, lineHeight: 19 }}>
+                <Text key={x.clave} style={{ color: '#666B73', fontSize: 13, lineHeight: 19 }}>
                   {x.texto}
                 </Text>
               ))}

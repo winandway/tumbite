@@ -1,5 +1,5 @@
-import { Image, Pressable, Text, View } from 'react-native';
-import { C, SelectorIdioma } from '@tumbite/movil';
+import { Image, Pressable, View } from 'react-native';
+import { C, Icono, SelectorIdioma, Text } from '@tumbite/movil';
 import type { Idioma } from '@tumbite/compartido';
 import { IMG } from './recursos';
 import { textosInicio } from './textos';
@@ -52,17 +52,12 @@ export function Cabecera({
             width: 40,
             height: 40,
             borderRadius: 20,
-            backgroundColor: '#F2F3F5',
+            backgroundColor: '#F6F6F6',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Image
-            source={IMG.iconoCampana}
-            style={{ width: 40, height: 40, borderRadius: 20 }}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-          />
+          <Icono nombre="notifications-outline" tamano={22} />
           {pendientes > 0 ? (
             <View
               testID="campana-punto"
@@ -97,13 +92,14 @@ export function Cabecera({
       >
         <Text style={{ fontSize: 12, color: '#666B73', fontWeight: '600' }}>{t.entregarEn}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Icono nombre="location-sharp" tamano={16} color={C.primario} />
           <Text
             style={{ fontSize: 16, fontWeight: '700', color: C.secundario, flexShrink: 1 }}
             numberOfLines={1}
           >
             {direccion}
           </Text>
-          <Text style={{ fontSize: 12, color: C.secundario }}>▾</Text>
+          <Icono nombre="chevron-down" tamano={16} />
         </View>
       </Pressable>
     </View>

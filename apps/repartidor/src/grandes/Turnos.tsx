@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, View } from 'react-native';
 import {
   type Api,
   ErrorApi,
@@ -9,7 +9,7 @@ import {
   enIdioma,
   inicioDelDia,
 } from '@tumbite/compartido';
-import { Boton, C, e } from '@tumbite/movil';
+import { Boton, C, e, Text } from '@tumbite/movil';
 
 /**
  * C-TURNOS-REPARTIDOR (29 oct 2026), como el «Schedule» de DoorDash: reservas tus horas hasta 7
@@ -97,7 +97,7 @@ function Chip({ texto, activo, alTocar }: { texto: string; activo: boolean; alTo
         paddingHorizontal: 12,
         borderRadius: 12,
         borderWidth: activo ? 2 : 1,
-        borderColor: activo ? C.primario : '#DADADA',
+        borderColor: activo ? C.primario : '#D6D8DC',
         backgroundColor: '#fff',
       }}
     >
@@ -182,10 +182,10 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
   return (
     <View style={{ padding: 16, gap: 12 }}>
       <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E' }}>{t.ayuda}</Text>
+      <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
       {error ? <Text style={e.error}>{error}</Text> : null}
       {ok ? <Text style={{ color: C.exito, fontWeight: '700' }}>{ok}</Text> : null}
-      {lista && !lista.length ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
+      {lista && !lista.length ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
       {[...proximos, ...pasados].map((x) => (
         <View key={x.id} style={[e.tarjeta, { gap: 4 }]}>
           <Text style={{ fontWeight: '800', color: C.secundario }}>{rango(x)}</Text>
@@ -196,7 +196,7 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
                   ? C.primario
                   : x.estado === 'cumplido' || x.estado === 'activo'
                     ? C.exito
-                    : '#5E5E5E',
+                    : '#666B73',
             }}
           >
             {t.estados[x.estado] ?? x.estado}
@@ -210,7 +210,7 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
       ))}
       <View style={[e.tarjeta, { gap: 10 }]}>
         <Text style={{ fontWeight: '800', fontSize: 17, color: C.secundario }}>{t.nuevo}</Text>
-        <Text style={{ color: '#5E5E5E' }}>{t.dia}</Text>
+        <Text style={{ color: '#666B73' }}>{t.dia}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {Array.from({ length: TURNO.dias }, (_, n) => (
             <Chip
@@ -224,13 +224,13 @@ export function Turnos({ api, idioma }: { api: Api; idioma: Idioma }) {
             />
           ))}
         </View>
-        <Text style={{ color: '#5E5E5E' }}>{t.empieza}</Text>
+        <Text style={{ color: '#666B73' }}>{t.empieza}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {opciones.map((ms) => (
             <Chip key={ms} texto={hora(ms)} activo={inicio === ms} alTocar={() => setInicio(ms)} />
           ))}
         </View>
-        <Text style={{ color: '#5E5E5E' }}>{t.dura}</Text>
+        <Text style={{ color: '#666B73' }}>{t.dura}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {DURACIONES.map((h) => (
             <Chip key={h} texto={t.horas(h)} activo={horas === h} alTocar={() => setHoras(h)} />

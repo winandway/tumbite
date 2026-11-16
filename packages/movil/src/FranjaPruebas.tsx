@@ -1,4 +1,5 @@
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { Text } from './diseno';
 import { enIdioma, esAppDePruebas } from '@tumbite/compartido';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';

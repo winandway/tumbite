@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, TextInput, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, useSesion } from '@tumbite/movil';
+import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
 import { Tarjeta } from './comida/piezas';
 
 /**
@@ -101,7 +101,7 @@ export function RastrearPaquete({
     <Tarjeta>
       <View testID="rastrear-paquete" style={{ gap: 8 }}>
         <Text style={{ fontWeight: '700', fontSize: 17, color: C.secundario }}>{t.titulo}</Text>
-        <Text style={{ color: '#5E5E5E' }}>{t.ayuda}</Text>
+        <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
         <TextInput
           value={codigo}
           onChangeText={setCodigo}
@@ -138,12 +138,12 @@ export function RastrearPaquete({
                   gap: 8,
                   paddingVertical: 8,
                   borderTopWidth: 1,
-                  borderTopColor: '#EEE',
+                  borderTopColor: '#E6E7EA',
                 }}
               >
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '700', color: C.secundario }}>{s.codigo}</Text>
-                  <Text style={{ color: s.final ? C.exito : '#5E5E5E' }}>
+                  <Text style={{ color: s.final ? C.exito : '#666B73' }}>
                     {estados.get(s.estado) ?? s.estado} · {t.de} {s.empresa}
                   </Text>
                 </View>
@@ -157,7 +157,7 @@ export function RastrearPaquete({
                   accessibilityLabel={`${t.quitar} ${s.codigo}`}
                   hitSlop={8}
                 >
-                  <Text style={{ color: '#5E5E5E', fontWeight: '600' }}>{t.quitar}</Text>
+                  <Text style={{ color: '#666B73', fontWeight: '600' }}>{t.quitar}</Text>
                 </Pressable>
               </View>
             ))}

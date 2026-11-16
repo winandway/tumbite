@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import {
   ErrorApi,
   type Idioma,
@@ -7,7 +7,7 @@ import {
   formatearMonto,
   horasParaProgramar,
 } from '@tumbite/compartido';
-import { Boton, C, useSesion } from '@tumbite/movil';
+import { Boton, C, useSesion, Text } from '@tumbite/movil';
 import { Pildora, Tarjeta } from '../comida/piezas';
 import { TEXTOS_MOTO } from './textos';
 
@@ -91,7 +91,7 @@ export function ElegirCuando({
               ))}
             </View>
           </ScrollView>
-          <Text style={{ color: '#5E5E5E' }}>{t.eligeHora}</Text>
+          <Text style={{ color: '#666B73' }}>{t.eligeHora}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup">
               {horas
@@ -183,13 +183,13 @@ export function MisProgramados({ recargar }: { recargar?: number }) {
             <Text style={{ fontWeight: '700', color: C.secundario }}>
               {diaYHora(p.programadoPara, idioma)}
             </Text>
-            <Text style={{ color: '#5E5E5E' }} numberOfLines={1}>
+            <Text style={{ color: '#666B73' }} numberOfLines={1}>
               {p.origen} → {p.destino}
             </Text>
             <Text style={{ color: C.secundario }}>
               {t.precioReservado}: {formatearMonto(p.total, p.moneda, idioma)}
             </Text>
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {t.cancelaGratis} {horaCorta(p.cancelacionGratisHasta, idioma)}
             </Text>
             <Boton

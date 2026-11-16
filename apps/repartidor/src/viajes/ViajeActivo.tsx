@@ -1,6 +1,6 @@
 import { comoLlegar } from '../comoLlegar';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, Switch, TextInput, View } from 'react-native';
 import {
   ErrorApi,
   type Idioma,
@@ -10,7 +10,7 @@ import {
   textoReferencia,
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
-import { Boton, C, ChatPedido, fotoConCamara } from '@tumbite/movil';
+import { Boton, C, ChatPedido, fotoConCamara, Text } from '@tumbite/movil';
 
 /** C-ENVIO-FOTO-ENTREGA: la cámara y los archivos para la pieza común de fotos. */
 const CAMARA_ENTREGA = {
@@ -246,14 +246,14 @@ export function ViajeActivo({
             testID="viaje-cobra-efectivo"
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
           >
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
             </Text>
             <Text style={{ fontSize: 34, fontWeight: '800', color: C.exito }}>
               {formatearMonto(totalFinal ?? viaje.total ?? 0, viaje.moneda ?? 'USD', idioma)}
             </Text>
             {(referenciaFinal ?? viaje.referencia) ? (
-              <Text testID="viaje-cobra-bs" style={{ color: '#5E5E5E', fontWeight: '700' }}>
+              <Text testID="viaje-cobra-bs" style={{ color: '#666B73', fontWeight: '700' }}>
                 {textoReferencia(referenciaFinal ?? viaje.referencia, idioma)}
               </Text>
             ) : null}
@@ -327,12 +327,12 @@ export function ViajeActivo({
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
         {viaje.metodo_pago === 'efectivo' && viaje.total != null ? (
-          <Text style={{ color: '#5E5E5E', marginTop: 4 }}>
+          <Text style={{ color: '#666B73', marginTop: 4 }}>
             {t.cobra}: {formatearMonto(viaje.total, viaje.moneda ?? 'USD', idioma)}
           </Text>
         ) : null}
         {viaje.referencia ? (
-          <Text testID="viaje-bs" style={{ color: '#5E5E5E' }}>
+          <Text testID="viaje-bs" style={{ color: '#666B73' }}>
             {textoReferencia(viaje.referencia, idioma)}
           </Text>
         ) : null}
@@ -340,7 +340,7 @@ export function ViajeActivo({
       {parada ? (
         // C-VIAJE-PARADAS: qué sigue después de esta parada (las demás paradas y el destino).
         <View testID="viaje-paradas" style={{ gap: 2 }}>
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.despues}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.despues}</Text>
           {paradas.slice(indiceParada + 1).map((p, i) => (
             <Text key={p.orden} style={{ color: C.secundario }} numberOfLines={1}>
               {indiceParada + 2 + i}. {p.direccion}
@@ -366,7 +366,7 @@ export function ViajeActivo({
             onPress={() => void paso('liberar', { motivo: 'conductor_suelta' })}
             accessibilityRole="button"
           >
-            <Text style={{ textAlign: 'center', color: '#5E5E5E', fontWeight: '700', padding: 8 }}>
+            <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
               {t.soltar}
             </Text>
           </Pressable>
@@ -377,9 +377,9 @@ export function ViajeActivo({
         <>
           <View
             testID="viaje-espera"
-            style={{ backgroundColor: '#F4F6F9', borderRadius: 12, padding: 12 }}
+            style={{ backgroundColor: '#F6F6F6', borderRadius: 12, padding: 12 }}
           >
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {quedaGratis > 0 ? t.esperaGratis : t.esperaTerminada}
             </Text>
             <Text style={{ fontSize: 28, fontWeight: '800', color: C.secundario }}>
@@ -397,7 +397,7 @@ export function ViajeActivo({
                 />
                 <Text style={{ flex: 1, color: C.secundario, fontWeight: '700' }}>{t.casco}</Text>
               </View>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.cascoAviso}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>{t.cascoAviso}</Text>
             </>
           ) : null}
           {conCodigo ? (
@@ -420,7 +420,7 @@ export function ViajeActivo({
                   textAlign: 'center',
                 }}
               />
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>
                 {t.codigoAyuda} ({viaje.intentos_pin_quedan} {t.intentos})
               </Text>
             </>
@@ -477,7 +477,7 @@ export function ViajeActivo({
               textAlign: 'center',
             }}
           />
-          <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
           <Text style={{ fontWeight: '700', color: C.secundario }}>
             {fotoEntregaLista ? t.fotoEntregaLista : t.fotoEntrega}
           </Text>
@@ -565,7 +565,7 @@ export function ViajeActivo({
             accessibilityRole="button"
             testID="viaje-parada-saltar"
           >
-            <Text style={{ textAlign: 'center', color: '#5E5E5E', fontWeight: '700', padding: 8 }}>
+            <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
               {saltar ? t.saltarConfirmar : t.saltarParada}
             </Text>
           </Pressable>
@@ -577,7 +577,7 @@ export function ViajeActivo({
             testID="viaje-parada-espera"
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}
           >
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {quedaParada > 0 ? t.esperaParada : t.esperaParadaTerminada}
             </Text>
             <Text style={{ fontSize: 28, fontWeight: '800', color: C.secundario }}>
@@ -619,7 +619,7 @@ export function ViajeActivo({
             .then((r) => Linking.openURL(`tel:${r.numero}`))
         }
       />
-      <Text style={{ color: '#8A8A8A', fontSize: 12 }}>{t.soporte}</Text>
+      <Text style={{ color: '#6B7078', fontSize: 12 }}>{t.soporte}</Text>
     </View>
   );
 }

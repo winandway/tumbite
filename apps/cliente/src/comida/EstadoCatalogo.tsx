@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { EstadoLista, Idioma } from '@tumbite/compartido';
-import { AvisameCuandoLlegue, Boton, e, useSesion } from '@tumbite/movil';
+import { AvisameCuandoLlegue, Boton, e, useSesion, Text } from '@tumbite/movil';
 
 /** Lo que dice el servidor de una dirección fuera de cobertura (C-TERRITORIO). */
 type Cobertura = {
@@ -91,7 +91,7 @@ export function EstadoCatalogo({
       accessibilityRole="summary"
       testID={`catalogo-${catalogo.estado}${catalogo.error ? '-con-error' : ''}`}
     >
-      <Text style={conReintentar ? e.error : { color: '#5E5E5E', fontSize: 15 }}>{mensaje}</Text>
+      <Text style={conReintentar ? e.error : { color: '#666B73', fontSize: 15 }}>{mensaje}</Text>
       {fuera && cob ? <DetalleCobertura cob={cob} t={t} /> : null}
       {/* C-DISPONIBLE-MUNDO: a quien todavía no le llega, se le ofrece anotarse aquí mismo. */}
       {fuera ? <AvisameCuandoLlegue idioma={idioma} punto={catalogo.punto ?? null} /> : null}
@@ -103,7 +103,7 @@ export function EstadoCatalogo({
 }
 
 function DetalleCobertura({ cob, t }: { cob: Cobertura; t: ReturnType<typeof textosCatalogo> }) {
-  const suave = { color: '#5E5E5E', fontSize: 14 };
+  const suave = { color: '#666B73', fontSize: 14 };
   const area = cob.area?.nombre ?? '';
   const lineas = [
     cob.estado === 'proximamente' && cob.area

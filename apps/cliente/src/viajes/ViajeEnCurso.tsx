@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Image, Linking, Pressable, Share, Text, View } from 'react-native';
+import { Image, Linking, Pressable, Share, View } from 'react-native';
 import {
   ErrorApi,
   type Referencia,
@@ -15,6 +15,7 @@ import {
   URL_SERVIDOR,
   leerTokenGuardado,
   useSesion,
+  Text,
 } from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
@@ -104,7 +105,7 @@ function FotoConductor({
           width: lado,
           height: lado,
           borderRadius: lado / 2,
-          backgroundColor: '#EEF0F3',
+          backgroundColor: '#E6E7EA',
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -319,7 +320,7 @@ export function ViajeEnCurso({
                 ) : null}
               </View>
             </View>
-            <Text style={{ color: '#5E5E5E' }}>
+            <Text style={{ color: '#666B73' }}>
               {nombreVehiculo}:{' '}
               {[moto?.marca, moto?.modelo, moto?.color].filter(Boolean).join(' · ')}
               {viaje.servicio === 'carro' && moto?.plazas ? ` · ${t.plazas(moto.plazas)}` : ''}
@@ -340,14 +341,14 @@ export function ViajeEnCurso({
           </Text>
           {paquete.pinEntrega ? (
             <>
-              <Text style={{ marginTop: 6, color: '#5E5E5E' }}>{t.pinEntrega}</Text>
+              <Text style={{ marginTop: 6, color: '#666B73' }}>{t.pinEntrega}</Text>
               <Text
                 testID="envio-pin"
                 style={{ fontSize: 30, fontWeight: '700', letterSpacing: 8, color: C.secundario }}
               >
                 {paquete.pinEntrega}
               </Text>
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>{t.pinEntregaAyuda}</Text>
             </>
           ) : null}
         </Tarjeta>
@@ -355,13 +356,13 @@ export function ViajeEnCurso({
       {viaje.pin && viaje.estado !== 'buscando' ? (
         <Tarjeta>
           <View testID="viaje-codigo" style={{ alignItems: 'center', gap: 4 }}>
-            <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.codigo}</Text>
+            <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.codigo}</Text>
             <Text
               style={{ fontSize: 40, fontWeight: '700', letterSpacing: 10, color: C.secundario }}
             >
               {viaje.pin}
             </Text>
-            <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>{t.codigoAyuda}</Text>
+            <Text style={{ color: '#666B73', textAlign: 'center' }}>{t.codigoAyuda}</Text>
           </View>
         </Tarjeta>
       ) : null}
@@ -369,7 +370,7 @@ export function ViajeEnCurso({
       {viaje.pagoMovil?.datos ? (
         <Tarjeta>
           <View testID="viaje-pago-movil" style={{ gap: 2 }}>
-            <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.pagoMovilDatos}</Text>
+            <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.pagoMovilDatos}</Text>
             {viaje.pagoMovil.datos.banco ? (
               <Text style={{ color: C.secundario }}>{viaje.pagoMovil.datos.banco}</Text>
             ) : null}
@@ -384,16 +385,16 @@ export function ViajeEnCurso({
             ) : viaje.pagoMovil.confirmado === 'no_recibido' ? (
               <Text style={{ color: C.primario }}>{t.pagoMovilNoLlego}</Text>
             ) : (
-              <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.pagoMovilAyuda}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>{t.pagoMovilAyuda}</Text>
             )}
           </View>
         </Tarjeta>
       ) : null}
 
       <Tarjeta>
-        <Text style={{ color: '#5E5E5E', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
         <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.origen.direccion}</Text>
-        <Text style={{ color: '#5E5E5E', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
+        <Text style={{ color: '#666B73', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
         <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.destino.direccion}</Text>
         {viaje.total != null ? (
           <Text style={{ marginTop: 8, fontWeight: '700', color: C.secundario }}>
@@ -408,7 +409,7 @@ export function ViajeEnCurso({
           </Text>
         ) : null}
         {viaje.referencia ? (
-          <Text testID="viaje-precio-bs" style={{ color: '#5E5E5E' }}>
+          <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>
             {textoReferencia(viaje.referencia, idioma)}
           </Text>
         ) : null}
@@ -418,19 +419,19 @@ export function ViajeEnCurso({
         <View style={{ gap: 8 }}>
           <Boton texto={t.compartir} alTocar={() => void compartir()} secundario />
           <Boton texto={t.emergencia} alTocar={() => void emergencia()} />
-          <Text style={{ color: '#5E5E5E', fontSize: 12, textAlign: 'center' }}>
+          <Text style={{ color: '#666B73', fontSize: 12, textAlign: 'center' }}>
             {t.emergenciaAyuda}
           </Text>
         </View>
       ) : null}
       {cargoCobrado ? (
-        <Text style={{ color: '#5E5E5E' }}>
+        <Text style={{ color: '#666B73' }}>
           {t.cargoCobrado} {monto(cargoCobrado)}
         </Text>
       ) : null}
       {viaje.cancelacion ? (
         <>
-          <Text style={{ color: '#5E5E5E', textAlign: 'center' }}>
+          <Text style={{ color: '#666B73', textAlign: 'center' }}>
             {viaje.cancelacion.cargo === 0
               ? t.cancelarGratis
               : `${t.cancelarCargo} ${monto(viaje.cancelacion.cargo)}`}
@@ -506,7 +507,7 @@ export function ViajeEnCurso({
       {/* C-VIAJE-PROPINA-MANO: con efectivo o pago móvil la propina se da en mano (inDrive, Ridery);
           la app no la cobra, pero lo dice en vez de callarse. */}
       {viaje.estado === 'terminado' && viaje.metodoPago !== 'tarjeta' ? (
-        <Text testID="viaje-propina-mano" style={{ color: '#5E5E5E' }}>
+        <Text testID="viaje-propina-mano" style={{ color: '#666B73' }}>
           {t.propinaEnMano}
         </Text>
       ) : null}

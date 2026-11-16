@@ -7,7 +7,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -19,7 +18,7 @@ import {
   textoRolPuerta,
   textosFotoPuerta,
 } from '@tumbite/compartido';
-import { C, useSesion } from '@tumbite/movil';
+import { C, Text, useSesion } from '@tumbite/movil';
 
 /**
  * C-FOTO-PUERTA (15 nov 2026) — todos los países. Lo que ve el repartidor: cuando el pedido va

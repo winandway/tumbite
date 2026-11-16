@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, type Turno, enIdioma, useBorrador } from '@tumbite/compartido';
-import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion } from '@tumbite/movil';
+import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion, Text } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
 /**
@@ -92,7 +92,7 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
             return (
               <Tarjeta key={nombre}>
                 <Text style={{ fontWeight: '800', color: C.secundario }}>{nombre}</Text>
-                {!delDia.length ? <Text style={{ color: '#5E5E5E' }}>{t.cerrado}</Text> : null}
+                {!delDia.length ? <Text style={{ color: '#666B73' }}>{t.cerrado}</Text> : null}
                 {delDia.map(([x, i]) => (
                   <View key={i} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
                     <View style={{ flex: 1 }}>
@@ -121,7 +121,7 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
                       // A la altura de la casilla (el Campo deja 14 de margen abajo).
                       style={{ paddingVertical: 14, marginBottom: 14 }}
                     >
-                      <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.quitar}</Text>
+                      <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.quitar}</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -153,7 +153,7 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
       <Text style={{ fontSize: 18, fontWeight: '800', color: C.secundario, marginTop: 18 }}>
         {t.cierres}
       </Text>
-      <Text style={{ color: '#5E5E5E', marginBottom: 8 }}>{t.cierresAyuda}</Text>
+      <Text style={{ color: '#666B73', marginBottom: 8 }}>{t.cierresAyuda}</Text>
       {cierres.map((x) => (
         <Tarjeta key={x.id}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -171,7 +171,7 @@ export function Horario({ alVolver }: { alVolver: () => void }) {
                   .catch(fallo)
               }
             >
-              <Text style={{ color: '#5E5E5E', fontWeight: '700' }}>{t.quitar}</Text>
+              <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.quitar}</Text>
             </Pressable>
           </View>
         </Tarjeta>

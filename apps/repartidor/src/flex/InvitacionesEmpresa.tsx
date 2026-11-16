@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, useSesion } from '@tumbite/movil';
+import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
 
 /**
  * C-FLEX-INVITAR-CONDUCTOR (1 nov 2026, como Onfleet y Spoke): la empresa invitó a este conductor
@@ -112,7 +112,7 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
             hitSlop={8}
             style={{ marginTop: 16, paddingVertical: 4 }}
           >
-            <Text style={{ color: '#5E5E5E', fontWeight: '600', textDecorationLine: 'underline' }}>
+            <Text style={{ color: '#666B73', fontWeight: '600', textDecorationLine: 'underline' }}>
               {t.tengoEnlace}
             </Text>
           </Pressable>
@@ -121,7 +121,7 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
       {lista.map((i) => (
         <View key={i.id} style={[e.tarjeta, { borderWidth: 2, borderColor: C.logistica }]}>
           <Text style={{ fontWeight: '700', fontSize: 16 }}>{t.titulo(i.empresa)}</Text>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginVertical: 6 }}>{t.ayuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginVertical: 6 }}>{t.ayuda}</Text>
           <View style={{ gap: 8 }}>
             <Boton texto={t.aceptar} logistica alTocar={() => void responder(i, 'aceptar')} />
             <Boton texto={t.rechazar} secundario alTocar={() => void responder(i, 'rechazar')} />

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { recordarAnuncio } from '../comida/anuncioTocado';
-import { FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { FlatList, Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -9,7 +9,7 @@ import {
   insigniaPromocion,
   textoNoDisponible,
 } from '@tumbite/compartido';
-import { C, urlFoto, useSesion } from '@tumbite/movil';
+import { C, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { distanciaTexto } from '../textos';
 import { useRestaurantes } from '../comida/useRestaurantes';
 import { EstadoCatalogo } from '../comida/EstadoCatalogo';
@@ -181,7 +181,7 @@ export default function Restaurantes() {
         >
           {t.restaurantes}
         </Text>
-        <Text style={{ color: '#5E5E5E', fontSize: 14, marginTop: 2 }}>
+        <Text style={{ color: '#666B73', fontSize: 14, marginTop: 2 }}>
           {/* Sin ubicación todavía no se dice «cerca de ti» (no sabemos dónde está). */}
           {catalogo.punto ? t.cercaDeTi : t.enTuZona}
           {lista
@@ -200,7 +200,7 @@ export default function Restaurantes() {
       </View>
       {recoger ? (
         <>
-          <Text style={{ color: '#5E5E5E', fontSize: 13, marginTop: 8 }}>{t.recogerAyuda}</Text>
+          <Text style={{ color: '#666B73', fontSize: 13, marginTop: 8 }}>{t.recogerAyuda}</Text>
           <View style={{ marginTop: 10 }}>
             <MapaLocales locales={locales} alElegir={abrirLocal} />
           </View>
@@ -269,7 +269,7 @@ export default function Restaurantes() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <FlatList
         data={filtrados}
         keyExtractor={(r) => r.id}
@@ -284,7 +284,7 @@ export default function Restaurantes() {
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           lista && lista.length && (busqueda || categoria || soloAbiertos) ? (
-            <Text style={{ color: '#5E5E5E', marginTop: 12 }}>{t.sinResultados}</Text>
+            <Text style={{ color: '#666B73', marginTop: 12 }}>{t.sinResultados}</Text>
           ) : null
         }
         renderItem={({ item: r, index }) => (
@@ -316,7 +316,7 @@ export default function Restaurantes() {
                     ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
                     : fotoDeRelleno(r.categoria, index)
                 }
-                style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+                style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>
@@ -328,7 +328,7 @@ export default function Restaurantes() {
                     {r.nombre}
                   </Text>
                   {r.patrocinado ? (
-                    <Text testID="patrocinado" style={{ fontSize: 11, color: '#5E5E5E' }}>
+                    <Text testID="patrocinado" style={{ fontSize: 11, color: '#666B73' }}>
                       {idioma === 'en' ? 'Sponsored' : 'Patrocinado'}
                     </Text>
                   ) : null}
@@ -346,7 +346,7 @@ export default function Restaurantes() {
                 ) : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Calificacion c={r.calificacion} idioma={idioma} />
-                  <Text style={{ color: '#5E5E5E', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>
+                  <Text style={{ color: '#666B73', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>
                     · {r.categoria}
                   </Text>
                 </View>
@@ -360,7 +360,7 @@ export default function Restaurantes() {
                     rowGap: 4,
                   }}
                 >
-                  <Text style={{ color: '#5E5E5E', fontSize: 13 }}>
+                  <Text style={{ color: '#666B73', fontSize: 13 }}>
                     {r.distanciaKm != null
                       ? `${distanciaTexto(r.distanciaKm, idioma, r.pais)} · `
                       : ''}

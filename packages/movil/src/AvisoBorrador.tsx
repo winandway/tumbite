@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { Text } from './diseno';
+import { Pressable, View } from 'react-native';
 import { enIdioma, type Idioma } from '@tumbite/compartido';
 import { e } from './ui';
 import { TEXTOS_MOVIL } from './textos';

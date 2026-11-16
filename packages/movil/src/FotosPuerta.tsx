@@ -7,7 +7,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,6 +22,7 @@ import { useSesion } from './sesion';
 import { textosCamara } from './camaraLogica';
 import { subirFotoPuertaApp } from './fotoLiviana';
 import { C } from './ui';
+import { Text } from './diseno';
 
 /**
  * C-FOTO-PUERTA (15 nov 2026) — todos los países. «Ayuda a tu repartidor a encontrarte»: la hoja

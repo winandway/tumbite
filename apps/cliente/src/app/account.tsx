@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
 import {
@@ -20,6 +20,7 @@ import {
   abrirPanel,
   VersionInstalada,
   capturasConCamara,
+  Text,
 } from '@tumbite/movil';
 import { fotoDeRelleno } from '../inicio/recursos';
 import { ScrollView } from 'react-native';
@@ -171,7 +172,7 @@ function MiCuenta() {
 
   return (
     // Mismo armazón que Favoritos y Pedidos (antes la cabecera roja vieja con «← Volver»).
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={t.titulo}
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
@@ -190,7 +191,7 @@ function MiCuenta() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={{ fontWeight: '700' }}>{usuario?.nombre}</Text>
-        <Text style={{ color: '#5E5E5E', marginBottom: 16 }}>{usuario?.correo}</Text>
+        <Text style={{ color: '#666B73', marginBottom: 16 }}>{usuario?.correo}</Text>
         {error ? (
           <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
             {error}
@@ -255,7 +256,7 @@ function MiCuenta() {
             p.estado === 'entregado'
               ? { fondo: '#E6F4EC', texto: C.exito }
               : p.estado === 'cancelado'
-                ? { fondo: '#F1F1F2', texto: '#5E5E5E' }
+                ? { fondo: '#F1F1F2', texto: '#666B73' }
                 : { fondo: '#E7F0F7', texto: '#1F5F8B' };
           const foto = urlFoto(p.restauranteImagen ?? null, 'miniatura');
           return (
@@ -267,14 +268,14 @@ function MiCuenta() {
             >
               <Image
                 source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '', i)}
-                style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#f1f1f1' }}
+                style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors
               />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ fontWeight: '700' }} numberOfLines={1}>
                   {p.restauranteNombre}
                 </Text>
-                <Text style={{ color: '#5E5E5E', fontSize: 13 }}>{fecha(p.creadoEn)}</Text>
+                <Text style={{ color: '#666B73', fontSize: 13 }}>{fecha(p.creadoEn)}</Text>
                 <View
                   style={{
                     alignSelf: 'flex-start',
@@ -304,7 +305,7 @@ function MiCuenta() {
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ flex: 1, fontWeight: '700' }}>
                 {x.marca.toUpperCase()} •••• {x.ultimos4}{' '}
-                <Text style={{ fontWeight: '400', color: '#5E5E5E' }}>
+                <Text style={{ fontWeight: '400', color: '#666B73' }}>
                   {t.vence} {x.vence}
                 </Text>
               </Text>

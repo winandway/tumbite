@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import type { Api, Idioma } from '@tumbite/compartido';
-import { C, e } from '@tumbite/movil';
+import { C, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
 type Paso = { id: 'datos' | 'documentos' | 'antecedentes' | 'banco'; estado: string };
@@ -77,7 +77,7 @@ export function Alta({
   return (
     <View style={{ padding: 16, gap: 12 }} testID="alta-guiada">
       <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
-      <Text style={{ color: '#5E5E5E' }}>{todo ? t.completo : t.intro}</Text>
+      <Text style={{ color: '#666B73' }}>{todo ? t.completo : t.intro}</Text>
       {(pasos ?? []).map((p, i) => {
         const listo = p.estado === 'listo';
         return (
@@ -106,7 +106,7 @@ export function Alta({
               <Text style={{ fontWeight: '800', color: C.secundario }}>{nombres.get(p.id)}</Text>
               <Text
                 style={{
-                  color: listo ? C.exito : p.estado === 'rechazado' ? C.primario : '#5E5E5E',
+                  color: listo ? C.exito : p.estado === 'rechazado' ? C.primario : '#666B73',
                   fontSize: 13,
                   fontWeight: '700',
                 }}

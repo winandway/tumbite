@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, type OpcionElegida, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { C, e, urlFoto, useSesion } from '@tumbite/movil';
+import { C, e, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { fotoDeRelleno } from '../inicio/recursos';
 import { usePedirOtraVez } from '../pedirOtraVez';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
@@ -125,7 +125,7 @@ function Pedidos() {
     idioma === 'en' ? l.nombreEn || l.nombreEs : l.nombreEs;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F3F6FB' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
       <Encabezado
         titulo={t.titulo}
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
@@ -146,11 +146,11 @@ function Pedidos() {
           </Text>
         ) : null}
         {aviso ? (
-          <Text style={{ color: '#5E5E5E', marginBottom: 8 }} accessibilityLiveRegion="polite">
+          <Text style={{ color: '#666B73', marginBottom: 8 }} accessibilityLiveRegion="polite">
             {aviso}
           </Text>
         ) : null}
-        {pedidos?.length === 0 ? <Text style={{ color: '#5E5E5E' }}>{t.vacio}</Text> : null}
+        {pedidos?.length === 0 ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
         {pedidos?.map((p, i) => {
           // C-MIS-PEDIDOS-MINIATURA (1 nov 2026, pedido de Richard): como la lista de pedidos de los
           // grandes: miniatura del local, estado con color (verde = entregado) y botones compactos.
@@ -161,7 +161,7 @@ function Pedidos() {
             : p.estado === 'entregado'
               ? { fondo: '#E6F4EC', texto: C.exito }
               : p.estado === 'cancelado'
-                ? { fondo: '#F1F1F2', texto: '#5E5E5E' }
+                ? { fondo: '#F1F1F2', texto: '#666B73' }
                 : { fondo: '#E7F0F7', texto: '#1F5F8B' };
           const articulos = p.lineas.reduce((n, l) => n + l.cantidad, 0);
           const foto = urlFoto(p.restauranteImagen ?? null, 'miniatura');
@@ -175,7 +175,7 @@ function Pedidos() {
               >
                 <Image
                   source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '', i)}
-                  style={{ width: 64, height: 64, borderRadius: 14, backgroundColor: '#f1f1f1' }}
+                  style={{ width: 64, height: 64, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                   accessibilityIgnoresInvertColors
                 />
                 <View style={{ flex: 1, minWidth: 0 }}>
@@ -190,7 +190,7 @@ function Pedidos() {
                       {formatearMonto(p.total, p.moneda ?? 'USD', idioma)}
                     </Text>
                   </View>
-                  <Text style={{ color: '#5E5E5E', marginTop: 2, fontSize: 13 }} numberOfLines={1}>
+                  <Text style={{ color: '#666B73', marginTop: 2, fontSize: 13 }} numberOfLines={1}>
                     {fecha(p.creadoEn)} · {t.articulos(articulos)}
                   </Text>
                   <View
@@ -209,7 +209,7 @@ function Pedidos() {
                   </View>
                 </View>
               </Pressable>
-              <Text style={{ color: '#5E5E5E', marginTop: 10, fontSize: 13 }} numberOfLines={1}>
+              <Text style={{ color: '#666B73', marginTop: 10, fontSize: 13 }} numberOfLines={1}>
                 {p.lineas.map((l) => `${l.cantidad} × ${nombre(l)}`).join(' · ')}
               </Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
@@ -240,7 +240,7 @@ function Pedidos() {
                         paddingVertical: 10,
                         borderRadius: 999,
                         borderWidth: 1,
-                        borderColor: '#D6D6D6',
+                        borderColor: '#D6D8DC',
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: '#fff',

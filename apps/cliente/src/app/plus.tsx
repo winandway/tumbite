@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ErrorApi, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, e, useSesion } from '@tumbite/movil';
+import { Boton, e, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
@@ -149,7 +149,7 @@ function Plus() {
   const dinero = (c: number) => formatearMonto(c, 'USD', idioma);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f6f6' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }}>
       <Encabezado titulo={t.titulo} alVolver={() => router.back()} etiquetaVolver="‹" />
       <ScrollView
         contentContainerStyle={{
@@ -165,7 +165,7 @@ function Plus() {
             <Text style={{ fontWeight: '700', fontSize: 18, marginBottom: 6 }}>{t.intro}</Text>
             <Text>{t.envio}</Text>
             <Text>{t.servicio(estado.servicioDescuentoPct)}</Text>
-            <Text style={{ color: '#5E5E5E' }}>{t.minimo(dinero(estado.minimoSubtotal))}</Text>
+            <Text style={{ color: '#666B73' }}>{t.minimo(dinero(estado.minimoSubtotal))}</Text>
             <Text style={{ marginTop: 8, fontWeight: '700' }}>
               {t.precio(dinero(estado.centavosMes))}
             </Text>
