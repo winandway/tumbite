@@ -181,14 +181,14 @@ export function PestanasViajes({
     <nav className="super-filtros viajes-pestanas" aria-label={t.titulo}>
       <Enlace
         a={`${base}/rides`}
-        className={`boton secundario${activa === 'viajes' ? ' activa' : ''}`}
+        className={activa === 'viajes' ? 'activa' : undefined}
         actual={activa === 'viajes'}
       >
         {t.pestanaViajes}
       </Enlace>
       <Enlace
         a={`${base}/rides/fixed`}
-        className={`boton secundario${activa === 'fijos' ? ' activa' : ''}`}
+        className={activa === 'fijos' ? 'activa' : undefined}
         actual={activa === 'fijos'}
       >
         {t.pestanaFijos}
@@ -263,7 +263,7 @@ export function SuperViajesFijos({ base, idioma }: { base: string; idioma: Idiom
         ))}
       </ul>
 
-      <div className="super-busqueda" role="search">
+      <div className="fijos-filtros" role="search">
         <SelectorCiudad zona={zona} cambiar={(z) => pref.cambiar('zona', z)} idioma={idioma} />
         <label className="fijo-casilla">
           <input

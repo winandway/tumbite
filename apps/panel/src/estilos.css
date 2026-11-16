@@ -6574,14 +6574,30 @@ body.modo-tableta .cabecera {
 }
 
 /* C-VIAJES-FIJOS (16 nov 2026): pestañas del monitoreo de viajes y estado de cada viaje fijo. */
-.viajes-pestanas a.boton {
+.viajes-pestanas a {
+  border: 1px solid #d6d6d6;
+  background: #fff;
+  color: #101010;
   border-radius: 999px;
   padding: 6px 14px;
+  text-decoration: none;
 }
-.viajes-pestanas a.boton.activa {
+.viajes-pestanas a.activa {
   background: #101010;
   color: #fff;
   border-color: #101010;
+}
+.fijos-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+.fijos-filtros select {
+  width: auto;
+  min-width: 220px;
+  max-width: 100%;
 }
 .fijo-casilla {
   display: inline-flex;
