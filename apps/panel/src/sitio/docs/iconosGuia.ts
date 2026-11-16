@@ -50,6 +50,8 @@ const REGLAS: [RegExp, LucideIcon][] = [
   [/^time-zone/, Clock],
   [/^add-team/, Users],
   [/^link-support/, LifeBuoy],
+  // C-AUTORIZACION-VENCIDA: la tarjeta cuya autorización venció.
+  [/^resolve-expired-card/, CreditCard],
   [/customers-presentation/, ShoppingBag],
   [/restaurants-presentation/, Store],
   [/salespeople-presentation/, Handshake],

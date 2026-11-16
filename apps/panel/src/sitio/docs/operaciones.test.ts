@@ -20,6 +20,7 @@ const IDS = [
   'link-support-ticket',
   'time-zone-clock',
   'add-team-members-permissions',
+  'resolve-expired-card-authorization',
 ];
 const PROHIBIDAS = [
   /superadmin/i,
@@ -39,7 +40,7 @@ const PROHIBIDAS = [
 const AJENO_EN_INGLES = [/vigía/i, /bolívar/i, /venezuela/i, /caracas/i];
 
 describe('C-DOCS-OPERACIONES: guías del equipo de operaciones', () => {
-  it('son seis, con direcciones en inglés y los mismos ids en los dos idiomas', () => {
+  it('son siete, con direcciones en inglés y los mismos ids en los dos idiomas', () => {
     for (const i of ['es', 'en'] as const) {
       expect(GUIAS_OPERACIONES[i].map((g) => g.id)).toEqual(IDS);
       for (const g of GUIAS_OPERACIONES[i])
@@ -101,6 +102,8 @@ describe('C-DOCS-OPERACIONES: guías del equipo de operaciones', () => {
     expect(busca('es', 'foto borrosa')).toContain('read-order-ride-file');
     expect(busca('es', 'zona horaria')).toContain('time-zone-clock');
     const iconos = IDS.map((id) => iconoDeGuia(id));
-    expect(new Set(iconos).size).toBe(6);
+    expect(busca('en', 'expired authorization')).toContain('resolve-expired-card-authorization');
+    expect(busca('es', 'autorización vencida')).toContain('resolve-expired-card-authorization');
+    expect(new Set(iconos).size).toBe(IDS.length);
   });
 });

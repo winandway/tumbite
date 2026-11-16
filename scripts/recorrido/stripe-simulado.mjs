@@ -7,6 +7,8 @@
 // estado de UN intento de pago, y la consulta de ese intento (`GET /v1/payment_intents/<id>`)
 // responde con él. Así un pedido que nadie pagó se ve sin pagar, como en Stripe de verdad
 // (C-PENDIENTE-ABANDONADO). Sin anotación, todo sigue respondiendo «exitoso» como siempre.
+// C-AUTORIZACION-VENCIDA (16 nov 2026): `extra` (opcional) suma campos a la respuesta de ese intento
+// (por ejemplo `setup_future_usage` o la tarjeta guardada), para ver una autorización vencida.
 import { createServer } from 'node:http';
 
 const puerto = Number(process.env.PUERTO_STRIPE ?? 12111);
@@ -19,8 +21,9 @@ createServer((req, res) => {
     n++;
     if (req.method === 'POST' && req.url === '/__simulador/estado') {
       try {
-        const { id, status } = JSON.parse(cuerpo);
-        if (typeof id === 'string' && typeof status === 'string') estados.set(id, status);
+        const { id, status, extra } = JSON.parse(cuerpo);
+        if (typeof id === 'string' && typeof status === 'string')
+          estados.set(id, { status, extra: extra && typeof extra === 'object' ? extra : {} });
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end('{"ok":true}');
       } catch {
@@ -43,8 +46,9 @@ createServer((req, res) => {
         charges_enabled: true,
         payouts_enabled: true,
         details_submitted: true,
-        status: anotado ?? 'succeeded',
+        status: anotado?.status ?? 'succeeded',
         payment_method: 'pm_simulado',
+        ...(anotado?.extra ?? {}),
       }),
     );
   });
