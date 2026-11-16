@@ -1,6 +1,6 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { comoLlegar } from '../comoLlegar';
-import { enlaceRutaGoogle, medidasReducidas } from '@tumbite/compartido';
+import { enlaceRutaGoogle, medidasReducidas, posicionFrescaWeb } from '@tumbite/compartido';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -142,6 +142,11 @@ type Ruta = {
   /** País de la empresa (millas o kilómetros). */
   pais?: string | null;
   ofertaVenceEn: string | null;
+  /** C-FLEX-PAGO-BLOQUE: el bloque (horario y pago que fijó la empresa, en centavos). */
+  bloqueDesde?: string | null;
+  bloqueHasta?: string | null;
+  pagoBloque?: number | null;
+  moneda?: string;
   iniciadaEn: string | null;
   cerradaEn: string | null;
   centro: { nombre: string; direccion: string; lat: number | null; lng: number | null } | null;
@@ -164,6 +169,8 @@ type Fila = {
   ofertaVenceEn: string | null;
   bloqueDesde?: string | null;
   bloqueHasta?: string | null;
+  pagoBloque?: number | null;
+  moneda?: string;
   cerradaEn?: string | null;
   paradas: number;
   paquetes: number;
@@ -183,6 +190,12 @@ async function ubicacion(): Promise<{ lat: number; lng: number } | null> {
   try {
     const permiso = await Location.requestForegroundPermissionsAsync();
     if (!permiso.granted) return null;
+    // C-FLEX-UBICACION-FRESCA: en la web, una posición nueva (no la primera que guardó el navegador).
+    if (Platform.OS === 'web')
+      return await posicionFrescaWeb(
+        (globalThis as { navigator?: { geolocation?: Parameters<typeof posicionFrescaWeb>[0] } })
+          .navigator?.geolocation,
+      );
     const tope = new Promise<null>((ok) => setTimeout(() => ok(null), 10000));
     const p = await Promise.race([
       Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
@@ -212,6 +225,67 @@ const horaSola = (f: string | null | undefined, idioma: Idioma) =>
   f
     ? fecha(f).toLocaleTimeString(idioma === 'en' ? 'en-US' : 'es-US', { timeStyle: 'short' })
     : '—';
+
+/** C-FLEX-BLOQUE-DURACION: minutos del bloque (de su horario), o null si no tiene horario completo. */
+export function minutosBloque(desde?: string | null, hasta?: string | null): number | null {
+  if (!desde || !hasta) return null;
+  const m = Math.round((fecha(hasta).getTime() - fecha(desde).getTime()) / 60000);
+  return Number.isFinite(m) && m > 0 ? m : null;
+}
+
+/** C-FLEX-PAGO-BLOQUE: el horario, la duración y el pago del bloque, como la oferta de Amazon Flex. */
+function DatosBloque({
+  t,
+  idioma,
+  r,
+}: {
+  t: Textos;
+  idioma: Idioma;
+  r: {
+    bloqueDesde?: string | null;
+    bloqueHasta?: string | null;
+    pagoBloque?: number | null;
+    moneda?: string;
+    empresa: string;
+  };
+}) {
+  const min = minutosBloque(r.bloqueDesde, r.bloqueHasta);
+  if (!r.bloqueDesde && r.pagoBloque == null) return null;
+  return (
+    <View testID="datos-bloque" style={{ gap: 8 }}>
+      {r.bloqueDesde ? (
+        <View style={{ flexDirection: 'row', gap: 16 }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ color: GRIS, fontSize: 12, fontWeight: '700' }}>{t.horario}</Text>
+            <Text style={{ color: TEXTO, fontWeight: '600' }}>
+              {hora(r.bloqueDesde, idioma)}
+              {r.bloqueHasta ? ` – ${horaSola(r.bloqueHasta, idioma)}` : ''}
+            </Text>
+          </View>
+          {min != null ? (
+            <View style={{ gap: 2 }}>
+              <Text style={{ color: GRIS, fontSize: 12, fontWeight: '700' }}>
+                {t.duracionBloque}
+              </Text>
+              <Text style={{ color: TEXTO, fontWeight: '600' }}>
+                {t.duracion(Math.floor(min / 60), min % 60)}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+      {r.pagoBloque != null ? (
+        <View style={{ gap: 2 }}>
+          <Text style={{ color: GRIS, fontSize: 12, fontWeight: '700' }}>{t.pagoBloque}</Text>
+          <Text testID="pago-bloque" style={{ color: VERDE, fontWeight: '800', fontSize: 22 }}>
+            {formatearMonto(r.pagoBloque, r.moneda ?? 'USD', idioma)}
+          </Text>
+          <Text style={{ color: GRIS, fontSize: 13 }}>{t.pagaEmpresa(r.empresa)}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
 
 /** Punto de una parada o del centro (solo si tiene coordenadas). */
 const coord = (x: { lat: number | null; lng: number | null } | null | undefined): Punto | null =>
@@ -259,9 +333,12 @@ function MiRutaContenido({
   idioma,
   abrirRutaId = null,
   ponerPie,
+  alInicio,
 }: {
   api: Api;
   idioma: Idioma;
+  /** C-FLEX-EXCLUSIVO: al cerrar el bloque, «Volver al inicio». */
+  alInicio?: () => void;
   /** Fase 3: la ruta del aviso que tocó el conductor (se abre directo). */
   abrirRutaId?: string | null;
   /** C-FLEX-PARADA-ACTUAL: el botón fijo de abajo lo dibuja la pantalla, fuera de lo que se desplaza. */
@@ -462,10 +539,16 @@ function MiRutaContenido({
         ruta: `${B}/${ruta.id}/devolucion/entregar`,
         cuerpo: { codigo: texto, ...(p ?? {}) },
       });
+      // C-FLEX-DEVOLUCION-CODIGO: vale la etiqueta (el escáner) o el número de seguimiento que el
+      // conductor escribe a mano (el que ve en la lista); antes solo se marcaba con la etiqueta.
+      const leido = leerCodigoEscaneado(texto);
       setDevoluciones(
         (d) =>
           d?.map((x) =>
-            x.codigoEtiqueta === texto.replace(/^dvx:/i, '').toUpperCase()
+            leido &&
+            (leido.tipo === 'etiqueta'
+              ? x.codigoEtiqueta === leido.codigo
+              : x.codigoSeguimiento === leido.codigo)
               ? { ...x, entregadoAlCentro: true }
               : x,
           ) ?? d,
@@ -788,6 +871,11 @@ function MiRutaContenido({
               {t.venceA}: {hora(ruta.ofertaVenceEn, idioma)}
             </Text>
           ) : null}
+          {ruta.bloqueDesde || ruta.pagoBloque != null ? (
+            <View style={[tarjeta, { gap: 6 }]}>
+              <DatosBloque t={t} idioma={idioma} r={ruta} />
+            </View>
+          ) : null}
           {tarjetaCentro(false)}
           <View style={[tarjeta, { gap: 10 }]}>
             {ruta.paradas.map((p) => (
@@ -802,6 +890,9 @@ function MiRutaContenido({
               </View>
             ))}
           </View>
+          <Text testID="aviso-exclusivo" style={{ color: TEXTO, fontWeight: '600' }}>
+            {t.avisoExclusivo}
+          </Text>
           <Boton
             texto={t.aceptar}
             exito
@@ -1115,6 +1206,7 @@ function MiRutaContenido({
         <>
           <ResumenRuta {...{ t, idioma, ruta }} />
           <EfectivoEnMano {...{ t, idioma, ruta }} />
+          {alInicio ? <Boton texto={t.volverInicio} logistica alTocar={alInicio} /> : null}
         </>
       ) : null}
     </View>
@@ -1186,15 +1278,7 @@ function TarjetaRuta({
         <Text style={{ fontWeight: '700', color: TEXTO }}>{r.empresa}</Text>
         <Text style={{ color: GRIS }}>{t.resumenCorto(r.paquetes, r.paradas)}</Text>
       </View>
-      {r.bloqueDesde ? (
-        <View style={{ gap: 2 }}>
-          <Text style={{ color: GRIS, fontSize: 12, fontWeight: '700' }}>{t.horario}</Text>
-          <Text style={{ color: TEXTO, fontWeight: '600' }}>
-            {hora(r.bloqueDesde, idioma)}
-            {r.bloqueHasta ? ` – ${horaSola(r.bloqueHasta, idioma)}` : ''}
-          </Text>
-        </View>
-      ) : null}
+      <DatosBloque t={t} idioma={idioma} r={r} />
       {r.estado === 'ofrecida' && r.ofertaVenceEn ? (
         <Text style={{ color: C.logistica, fontWeight: '700' }}>
           {t.venceA}: {hora(r.ofertaVenceEn, idioma)}
@@ -1704,6 +1788,20 @@ function ResumenRuta({ t, idioma, ruta }: { t: Textos; idioma: Idioma; ruta: Rut
         titulo={bien ? t.rutaCompletada : t.rutaConIncidencias}
         ayuda={bien ? t.rutaCompletadaAyuda : t.rutaConIncidenciasAyuda}
       />
+      {/* C-FLEX-EXCLUSIVO: el bloque terminó y todo lo demás vuelve a estar disponible. */}
+      <View testID="bloque-terminado" style={[tarjeta, { gap: 6 }]}>
+        <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>{t.bloqueTerminado}</Text>
+        <Text style={{ color: GRIS }}>{t.yaPuedesConectarte}</Text>
+        {ruta.pagoBloque != null ? (
+          <View style={{ gap: 2, marginTop: 6 }}>
+            <Text style={{ color: GRIS, fontSize: 12, fontWeight: '700' }}>{t.ganasteBloque}</Text>
+            <Text testID="pago-cierre" style={{ color: VERDE, fontWeight: '800', fontSize: 26 }}>
+              {formatearMonto(ruta.pagoBloque, ruta.moneda ?? 'USD', idioma)}
+            </Text>
+            <Text style={{ color: GRIS, fontSize: 13 }}>{t.pagaEmpresa(ruta.empresa)}</Text>
+          </View>
+        ) : null}
+      </View>
       <View style={[tarjeta, { gap: 0 }]}>
         <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO, marginBottom: 6 }}>
           {t.resumen}
@@ -2276,6 +2374,15 @@ function DetalleParada({
       ) : null}
       {modo === 'ver' && enCamino.length ? (
         <>
+          {/* C-FLEX-COMO-LLEGAR (como «Navigate» de Amazon Flex): a la vista en cada parada, sin
+              tener que abrir «Detalles». Abre la app de mapas que elija el conductor. */}
+          {parada.estado === 'pendiente' && !parada.sinCoordenadas ? (
+            <Boton
+              texto={t.comoLlegar}
+              logistica
+              alTocar={() => navegar(parada.lat, parada.lng, parada.direccion, t)}
+            />
+          ) : null}
           {parada.estado === 'pendiente' ? (
             <Boton
               texto={t.llegue}
@@ -2648,11 +2755,68 @@ function Marca({ marcada, cuadrada }: { marcada: boolean; cuadrada?: boolean }) 
  * C-COLOR-LOGISTICA: «Mi ruta» lleva arriba la franja de Divoox Flex en el color de logística, para
  * reconocer de un vistazo una captura de logística frente a una de comida.
  */
+/**
+ * C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): mientras dura un bloque de Flex, una banda fija dice que
+ * todo lo demás está desconectado, y cuánto falta para que termine el bloque.
+ */
+export function BandaBloque({
+  idioma,
+  bloque,
+}: {
+  idioma: Idioma;
+  bloque: { estado: string; bloqueHasta: string | null };
+}) {
+  const t = enIdioma(TEXTOS_RUTA, idioma);
+  const porEmpezar = ['asignada', 'ofrecida'].includes(bloque.estado);
+  // La hora de ahora se lee en el reloj (cada 30 s), nunca al dibujar.
+  const [ahora, setAhora] = useState<number | null>(null);
+  useEffect(() => {
+    const leer = () => setAhora(Date.now());
+    const primero = setTimeout(leer, 0);
+    const reloj = setInterval(leer, 30_000);
+    return () => {
+      clearTimeout(primero);
+      clearInterval(reloj);
+    };
+  }, []);
+  const fin = bloque.bloqueHasta ? fecha(bloque.bloqueHasta).getTime() : NaN;
+  const quedan = Number.isFinite(fin) && ahora != null ? Math.round((fin - ahora) / 60000) : null;
+  return (
+    <View
+      testID="banda-bloque"
+      accessibilityRole="summary"
+      style={{
+        backgroundColor: C.logisticaAccion,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        gap: 2,
+      }}
+    >
+      <Text style={{ color: C.logisticaTexto, fontWeight: '800', fontSize: 15 }}>
+        {porEmpezar ? t.modoBloqueAsignadoTitulo : t.modoBloqueTitulo}
+      </Text>
+      <Text style={{ color: C.logisticaTexto, fontSize: 13 }}>
+        {porEmpezar ? t.modoBloqueAsignadoTexto : t.modoBloqueTexto}
+      </Text>
+      {quedan != null && !porEmpezar ? (
+        <Text style={{ color: C.logisticaTexto, fontSize: 13, fontWeight: '700' }}>
+          {quedan > 0
+            ? `${t.bloqueQuedan(t.duracion(Math.floor(quedan / 60), quedan % 60))} · ${t.bloqueTermina(horaSola(bloque.bloqueHasta, idioma))}`
+            : t.bloqueVencido}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 export function MiRuta({
   alSeguridad,
   alVolver,
+  bloque,
   ...props
 }: Parameters<typeof MiRutaContenido>[0] & {
+  /** C-FLEX-EXCLUSIVO: el bloque en curso (la banda «todo lo demás está desconectado»). */
+  bloque?: { estado: string; bloqueHasta: string | null } | null;
   /** C-SEGURIDAD-A-LA-VISTA: «Ayuda de emergencia» siempre a la vista, como Amazon Flex. */
   alSeguridad?: () => void;
   /** C-FLEX-PANTALLA-COMPLETA: sin la cabecera del logo, la franja lleva la flecha para salir. */
@@ -2705,6 +2869,7 @@ export function MiRuta({
           </Pressable>
         ) : null}
       </View>
+      {bloque ? <BandaBloque idioma={props.idioma} bloque={bloque} /> : null}
       <MiRutaContenido {...props} />
     </View>
   );

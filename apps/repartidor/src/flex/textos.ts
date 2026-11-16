@@ -264,6 +264,26 @@ export const TEXTOS_RUTA = {
     tiempoTotal: 'Tiempo total',
     ultimasParadas: 'Últimas paradas',
     duracion: (h: number, m: number) => (h ? `${h} h ${m} min` : `${m} min`),
+    // C-FLEX-EXCLUSIVO y C-FLEX-PAGO-BLOQUE (Richard, 16 nov 2026).
+    modoBloqueTitulo: 'Estás haciendo un bloque de Flex',
+    modoBloqueTexto:
+      'Todo lo demás está desconectado (comida, envíos y viajes) hasta que termines.',
+    modoBloqueAsignadoTitulo: 'Tienes un bloque de Flex asignado',
+    modoBloqueAsignadoTexto:
+      'Todo lo demás está desconectado (comida, envíos y viajes). Acéptalo, o recházalo para volver a conectarte.',
+    bloqueTermina: (h: string) => `termina a las ${h}`,
+    bloqueQuedan: (t: string) => `Quedan ${t}`,
+    bloqueVencido: 'Ya pasó la hora del bloque: termina las entregas y vuelve al centro.',
+    duracionBloque: 'Duración',
+    pagoBloque: 'Pago del bloque',
+    pagaEmpresa: (e: string) => `Te lo paga ${e}`,
+    avisoExclusivo:
+      'Al aceptar, todo lo demás se desconecta (comida, envíos y viajes) hasta que termines el bloque.',
+    comoLlegar: 'Cómo llegar',
+    bloqueTerminado: 'Bloque terminado',
+    yaPuedesConectarte: 'Ya puedes conectarte de nuevo a comida, envíos y viajes.',
+    ganasteBloque: 'Pago de este bloque',
+    volverInicio: 'Volver al inicio',
   },
   en: {
     titulo: 'My route',
@@ -527,5 +547,24 @@ export const TEXTOS_RUTA = {
     tiempoTotal: 'Total time',
     ultimasParadas: 'Latest stops',
     duracion: (h: number, m: number) => (h ? `${h} h ${m} min` : `${m} min`),
+    // C-FLEX-EXCLUSIVO and C-FLEX-PAGO-BLOQUE (Richard, Nov 16, 2026).
+    modoBloqueTitulo: 'You’re doing a Flex block',
+    modoBloqueTexto: 'Everything else is off (food, deliveries and rides) until you finish.',
+    modoBloqueAsignadoTitulo: 'You have a Flex block assigned',
+    modoBloqueAsignadoTexto:
+      'Everything else is off (food, deliveries and rides). Accept it, or decline it to go back online.',
+    bloqueTermina: (h: string) => `ends at ${h}`,
+    bloqueQuedan: (t: string) => `${t} left`,
+    bloqueVencido: 'The block time is over: finish your deliveries and head back to the station.',
+    duracionBloque: 'Length',
+    pagoBloque: 'Block pay',
+    pagaEmpresa: (e: string) => `Paid by ${e}`,
+    avisoExclusivo:
+      'When you accept, everything else goes offline (food, deliveries and rides) until you finish the block.',
+    comoLlegar: 'Get directions',
+    bloqueTerminado: 'Block finished',
+    yaPuedesConectarte: 'You can go back online for food, deliveries and rides.',
+    ganasteBloque: 'Pay for this block',
+    volverInicio: 'Back to home',
   },
 };

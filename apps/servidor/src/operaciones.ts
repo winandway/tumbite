@@ -614,24 +614,46 @@ export const DISPARADORES_EXCLUSIVIDAD = [
   'repartidores_vehiculo_fijo_en_operacion',
 ] as const;
 
+/**
+ * C-FLEX-EXCLUSIVO (16 nov 2026): los disparadores del bloque de Flex (esquemaFlex.ts). Aparte de
+ * los de la Fase 3 porque su vuelta atrás (docs/fase-3/revertir.sql) no los toca; la salud de la
+ * exclusividad exige los dos grupos.
+ */
+export const DISPARADORES_BLOQUE_FLEX = [
+  'rutas_flex_conductor_libre',
+  'rutas_flex_ocupa_conductor',
+  'rutas_flex_libera_conductor',
+  'rutas_flex_conductor_fijo',
+  'rutas_flex_desconecta_conductor',
+  'repartidores_no_conecta_en_bloque_flex',
+] as const;
+
 /** Pieza «exclusividad» de la salud: todos los disparadores puestos y cero inconsistencias. */
 export async function saludExclusividad(
   db: D1Database,
   /** C-LECTURAS-SALUD: los disparadores ya leídos por el canario (una sola lectura de sqlite_master). */
   presentes?: Set<string>,
 ): Promise<'ok' | 'error'> {
+  const todos = [...DISPARADORES_EXCLUSIVIDAD, ...DISPARADORES_BLOQUE_FLEX];
   const hay = presentes
-    ? cuantosHay(presentes, DISPARADORES_EXCLUSIVIDAD)
+    ? cuantosHay(presentes, todos)
     : await db
         .prepare(
-          `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${DISPARADORES_EXCLUSIVIDAD.map(() => '?').join(',')})`,
+          `SELECT COUNT(*) AS n FROM sqlite_master WHERE type = 'trigger' AND name IN (${todos.map(() => '?').join(',')})`,
         )
-        .bind(...DISPARADORES_EXCLUSIVIDAD)
+        .bind(...todos)
         .first<{ n: number }>()
         .then((d) => Number(d?.n));
-  if (hay !== DISPARADORES_EXCLUSIVIDAD.length) return 'error';
+  if (hay !== todos.length) return 'error';
+  // C-FLEX-EXCLUSIVO: además, nadie conectado mientras hace un bloque de Flex (las vistas ya
+  // existen en producción y «CREATE VIEW IF NOT EXISTS» no las cambia: va en la misma consulta).
   const f = await db
-    .prepare('SELECT COUNT(*) AS n FROM inconsistencias_operaciones')
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM inconsistencias_operaciones)
+            + (SELECT COUNT(*) FROM conductor_ocupacion c
+                 JOIN repartidores d ON d.usuario_id = c.conductor_id
+                WHERE c.ruta_id IS NOT NULL AND d.conectado = 1) AS n`,
+    )
     .first<{ n: number }>();
   return Number(f?.n ?? 0) === 0 ? 'ok' : 'error';
 }

@@ -158,7 +158,7 @@ flexConductor.get('/conductor/rutas', async (c) => {
   const u = conductor(c);
   const { results } = await base(c)
     .prepare(
-      `SELECT r.*, e.nombre AS empresa,
+      `SELECT r.*, e.nombre AS empresa, e.moneda AS moneda,
               (SELECT COUNT(*) FROM ruta_paradas rp WHERE rp.ruta_id = r.id) AS paradas,
               (SELECT COUNT(*) FROM ruta_paquetes rq WHERE rq.ruta_id = r.id AND rq.excluido_en IS NULL) AS paquetes
          FROM rutas_flex r JOIN empresas e ON e.id = r.empresa_id
@@ -169,7 +169,9 @@ flexConductor.get('/conductor/rutas', async (c) => {
                  WHEN 'asignada' THEN 3 WHEN 'ofrecida' THEN 4 ELSE 5 END, r.creado_en DESC LIMIT 30`,
     )
     .bind(u.id)
-    .all<FilaRuta & { empresa: string; paradas: number; paquetes: number }>();
+    .all<
+      FilaRuta & { empresa: string; moneda: string | null; paradas: number; paquetes: number }
+    >();
   return c.json({
     rutas: results
       .filter((r) => !ofertaVencida(r))
@@ -182,6 +184,9 @@ flexConductor.get('/conductor/rutas', async (c) => {
         ofertaVenceEn: r.oferta_vence_en,
         bloqueDesde: r.bloque_desde,
         bloqueHasta: r.bloque_hasta,
+        // C-FLEX-PAGO-BLOQUE: lo que paga la empresa por el bloque (centavos) y su moneda.
+        pagoBloque: r.pago_bloque ?? null,
+        moneda: r.moneda ?? 'USD',
         paradas: r.paradas,
         paquetes: r.paquetes,
         cerradaEn: r.cerrada_en,
