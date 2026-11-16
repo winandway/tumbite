@@ -238,7 +238,7 @@ export function AdminDinero({ usuario, idioma }: { usuario: Usuario; idioma: Idi
   return (
     <section>
       <h1>{t.titulo}</h1>
-      <MiPuntoVenta idioma={idioma} />
+      <MiPuntoVenta idioma={idioma} cuenta={usuario.id} />
       <ControlDinero idioma={idioma} />
       <p>{t.ayuda}</p>
       <AvisoBorrador

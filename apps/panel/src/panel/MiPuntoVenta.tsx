@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  type Idioma,
+  almacenNavegador,
+  enIdioma,
+  useBorrador,
+} from '@tumbite/compartido';
+import { AvisoBorrador } from './AvisoBorrador';
 import { pedir } from './api';
 
 /**
@@ -45,10 +52,17 @@ type Datos = {
   codigos: { id: string; monto: number; estado: string; creadoEn: string }[];
 };
 
-export function MiPuntoVenta({ idioma }: { idioma: Idioma }) {
+export function MiPuntoVenta({ idioma, cuenta = '' }: { idioma: Idioma; cuenta?: string }) {
   const t = enIdioma(T, idioma);
   const [datos, setDatos] = useState<Datos | null>(null);
-  const [monto, setMonto] = useState('');
+  const b = useBorrador({
+    formulario: 'punto-venta-codigo',
+    cuenta,
+    inicial: { monto: '' },
+    almacen: almacenNavegador,
+  });
+  const monto = b.valores.monto;
+  const setMonto = (v: string) => b.cambiar('monto', v);
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState('');
   const cargar = () =>
@@ -73,7 +87,7 @@ export function MiPuntoVenta({ idioma }: { idioma: Idioma }) {
         monto: enteros ? Math.round(n) : Math.round(n * 100),
       });
       setCodigo(r.codigo);
-      setMonto('');
+      await b.limpiar();
       await cargar();
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
@@ -99,6 +113,11 @@ export function MiPuntoVenta({ idioma }: { idioma: Idioma }) {
         {t.fondo}: <strong>{ver(datos.fondo)}</strong>
       </p>
       <form onSubmit={emitir} className="formulario">
+        <AvisoBorrador
+          visible={b.recuperado}
+          idioma={idioma}
+          empezar={() => void b.empezarDeNuevo()}
+        />
         <label className="campo">
           <span>
             {t.monto} ({datos.punto.moneda})
