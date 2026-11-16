@@ -26,6 +26,7 @@ import {
   base,
   exigir,
   leerToken,
+  usuarioPublico,
 } from '../sesion';
 import { pasaTurnstile } from '../turnstile';
 import { leerAccesoInterno } from '../accesoInterno';
@@ -529,7 +530,7 @@ cuentas.delete('/yo', async (c) => {
   return c.json({ ok: true });
 });
 
-cuentas.get('/yo', (c) => c.json({ usuario: exigir(c) }));
+cuentas.get('/yo', (c) => c.json({ usuario: usuarioPublico(exigir(c)) }));
 
 // ---------- Configuración de la cuenta ----------
 
@@ -588,7 +589,7 @@ cuentas.patch('/yo', async (c) => {
     )
     .bind(d.nombre, d.telefono || null, d.fechaNacimiento, d.idioma, u.id)
     .run();
-  return c.json({ usuario: { ...u, nombre: d.nombre, idioma: d.idioma } });
+  return c.json({ usuario: { ...usuarioPublico(u), nombre: d.nombre, idioma: d.idioma } });
 });
 
 /**
@@ -648,7 +649,7 @@ cuentas.post('/correo', async (c) => {
     .first<{ clave_hash: string }>();
   if (!f || !(await verificarClave(d.clave, f.clave_hash)))
     throw new ErrorDatos('La contraseña no es correcta.', 'clave', 401);
-  if (d.correo === u.correo.toLowerCase()) return c.json({ usuario: u });
+  if (d.correo === u.correo.toLowerCase()) return c.json({ usuario: usuarioPublico(u) });
   const existe = await db.prepare('SELECT 1 FROM usuarios WHERE correo = ?').bind(d.correo).first();
   if (existe) throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);
   await db
@@ -661,7 +662,7 @@ cuentas.post('/correo', async (c) => {
     correo: d.correo,
     idioma: u.idioma,
   });
-  return c.json({ usuario: { ...u, correo: d.correo } });
+  return c.json({ usuario: { ...usuarioPublico(u), correo: d.correo } });
 });
 
 /**

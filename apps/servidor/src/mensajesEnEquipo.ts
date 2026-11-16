@@ -3,6 +3,28 @@
  * inglés. Viven aparte y se suman a MENSAJES_EN (candado C-INGLES-PRINCIPAL).
  */
 export const MENSAJES_EN_EQUIPO: [string, string][] = [
+  ['Esa ciudad no está en tu zona de trabajo.', 'That city isn’t in your work area.'],
+  ['Ese dato no está en tu zona de trabajo.', 'That information isn’t in your work area.'],
+  [
+    'La persona que te invitó ya no tiene acceso al equipo, así que esta invitación no sirve. Pide una nueva a quien gestiona el equipo.',
+    'The person who invited you no longer has team access, so this invitation doesn’t work. Ask whoever manages the team for a new one.',
+  ],
+  [
+    'El puesto de esta invitación ya no existe. Pide una invitación nueva.',
+    'The role in this invitation no longer exists. Ask for a new invitation.',
+  ],
+  [
+    'Esta invitación está dañada. Pide una invitación nueva.',
+    'This invitation is damaged. Ask for a new invitation.',
+  ],
+  [
+    'El puesto cambió después de que te invitaron. Pide una invitación nueva para revisar lo que vas a poder hacer.',
+    'The role changed after you were invited. Ask for a new invitation to review what you’ll be able to do.',
+  ],
+  [
+    'La persona que te invitó ya no puede dar este acceso, así que esta invitación no sirve. Pide una nueva a quien gestiona el equipo.',
+    'The person who invited you can no longer grant this access, so this invitation doesn’t work. Ask whoever manages the team for a new one.',
+  ],
   [
     'Tu acceso del equipo no incluye esto. Pídeselo a quien gestiona el equipo.',
     'Your team access doesn’t include this. Ask whoever manages the team.',

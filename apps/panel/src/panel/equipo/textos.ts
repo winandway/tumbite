@@ -113,6 +113,9 @@ export const TEXTOS_EQUIPO = {
     guardarAcceso: 'Guardar acceso',
     permisosEfectivos: 'Permisos efectivos',
     deDonde: 'Viene de',
+    sinEfecto: 'No aplican con su zona de trabajo',
+    sinEfectoNota:
+      'Su acceso está limitado a ciertas ciudades o servicios. Estos permisos son de toda la empresa (dinero, auditoría, configuración), así que solo valen con acceso a todas las ciudades.',
     extra: 'Permiso extra',
     loQueHizo: 'Lo que hizo',
     loQueVio: 'Lo que vio',
@@ -291,6 +294,9 @@ export const TEXTOS_EQUIPO = {
     guardarAcceso: 'Save access',
     permisosEfectivos: 'Effective permissions',
     deDonde: 'From',
+    sinEfecto: 'Not active with their work area',
+    sinEfectoNota:
+      'Their access is limited to certain cities or services. These permissions cover the whole company (money, audit, settings), so they only apply with access to every city.',
     extra: 'Extra permission',
     loQueHizo: 'What they did',
     loQueVio: 'What they viewed',

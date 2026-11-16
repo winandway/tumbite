@@ -19,6 +19,16 @@ export type UsuarioSesion = Usuario & {
   sesionId?: string;
 };
 export type Variables = { usuario: UsuarioSesion | null };
+
+/**
+ * C-PERMISOS-FINOS: lo que una respuesta devuelve de la persona de la sesión, y nada más: los cinco
+ * campos del esquema público (`esquemaUsuario`, lo que usan las apps y el panel). Nunca los permisos
+ * calculados, el segundo factor ni la huella de la sesión de una cuenta del equipo (sus permisos van
+ * por `GET /datos/admin/equipo/yo`).
+ */
+export function usuarioPublico(u: UsuarioSesion): Usuario {
+  return { id: u.id, nombre: u.nombre, correo: u.correo, rol: u.rol, idioma: u.idioma };
+}
 export type Ctx = Context<{ Bindings: Env; Variables: Variables }>;
 
 function leerToken(c: Context): string | null {

@@ -407,6 +407,11 @@ export type AccesoInterno = {
   topes: Topes | null;
   /** Cuándo vence la primera asignación (para recalcular la sesión ese día). */
   revisarEn: string | null;
+  /**
+   * Permisos de sus plantillas que NO valen porque su alcance está limitado a ciudades o servicios
+   * y son de toda la empresa (`PERMISOS_SOLO_ALCANCE_TOTAL`): la ficha del empleado los muestra.
+   */
+  sinEfecto?: PermisoInterno[];
 };
 
 /**
@@ -463,6 +468,8 @@ export function calcularAcceso(entrada: {
   ajustes: AjustePersona[];
   rutas: ReadonlyArray<readonly [string, PermisoRuta]>;
   ahora?: Date;
+  /** Permisos que solo valen con alcance total (los de las rutas de toda la empresa). */
+  soloAlcanceTotal?: readonly string[];
 }): AccesoInterno {
   if (entrada.dueno)
     return {
@@ -525,6 +532,11 @@ export function calcularAcceso(entrada: {
   }
   for (const a of entrada.ajustes) if (a.tipo === 'extra') anotar(a.permiso, 'extra');
   for (const a of entrada.ajustes) if (a.tipo === 'quitado') fuentes.delete(a.permiso);
+  // C-PERMISOS-FINOS (alcance): con ciudades o servicios limitados, lo de toda la empresa no vale.
+  const sinEfecto: PermisoInterno[] = [];
+  if (!alcanceEsTotal(alcance))
+    for (const p of entrada.soloAlcanceTotal ?? [])
+      if (esPermisoInterno(p) && fuentes.delete(p)) sinEfecto.push(p);
   const permisos = PERMISOS_INTERNOS.filter((p) => fuentes.has(p));
   return {
     estado: 'activo',
@@ -535,6 +547,9 @@ export function calcularAcceso(entrada: {
     alcance,
     topes,
     revisarEn,
+    ...(sinEfecto.length
+      ? { sinEfecto: PERMISOS_INTERNOS.filter((p) => sinEfecto.includes(p)) }
+      : {}),
   };
 }
 

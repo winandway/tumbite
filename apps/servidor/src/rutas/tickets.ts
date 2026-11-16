@@ -3,7 +3,7 @@ import { topesDeZona } from '../internacional/tarifas';
 import { devolverParcial, leerConfigQuejas } from '../devoluciones';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import type { Idioma } from '@tumbite/compartido';
+import type { AccesoInterno, Idioma } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken } from '../cripto';
 import { enviarCorreo, type Remitente } from '../correo';
@@ -21,7 +21,13 @@ import { SOY_CONTACTO, rangoPrefijo, topeReembolsoSinRevision } from '@tumbite/c
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { rutaSuperadmin } from '../superadmin';
-import { accesoDe, filtroAlcance, servicioTicketSql } from '../accesoInterno';
+import {
+  accesoDe,
+  alcancePedidosDe,
+  filtroAlcance,
+  servicioOperacionSql,
+  servicioTicketSql,
+} from '../accesoInterno';
 
 /**
  * Tickets (como en YaDominios Cloud): cada formulario abre una conversación. La persona recibe por
@@ -807,7 +813,17 @@ const esquemaReclamoEquipo = z.object({
 });
 
 /** Busca el pedido o el viaje de un código («#407F2F», «407f2f») o de un id entero. */
-async function enlaceDeReclamo(db: D1Database, enlace: string) {
+/**
+ * El pedido o viaje de un reclamo que abre el equipo. C-PERMISOS-FINOS: el alcance de quien lo
+ * abre va EN cada consulta, así lo de otra ciudad o servicio responde exactamente igual que lo que
+ * no existe (ni por el comienzo del código se sabe si hay algo fuera de su zona).
+ */
+async function enlaceDeReclamo(db: D1Database, enlace: string, acceso: AccesoInterno | null) {
+  const alP = alcancePedidosDe(acceso);
+  const alV = filtroAlcance(acceso, {
+    zona: '+o.zona_id',
+    servicio: servicioOperacionSql('o.servicio_id'),
+  });
   const limpio = enlace.replace(/^#/, '').trim();
   const id = /^[A-Za-z0-9_-]{9,100}$/.test(limpio) ? limpio : null;
   const codigo = /^[0-9a-fA-F]{3,8}$/.test(limpio) ? limpio.toLowerCase() : null;
@@ -821,13 +837,33 @@ async function enlaceDeReclamo(db: D1Database, enlace: string) {
   const pedido = `SELECT 'pedido' AS que, p.id, p.cliente_id, p.zona_id FROM pedidos p WHERE `;
   const viaje = `SELECT 'viaje' AS que, o.id, o.cliente_id, o.zona_id FROM operaciones o WHERE +o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete') AND `;
   if (id) {
-    consultas.push(db.prepare(`${pedido}p.id = ?`).bind(id).all());
-    consultas.push(db.prepare(`${viaje}o.id = ?`).bind(id).all());
+    consultas.push(
+      db
+        .prepare(`${pedido}p.id = ?${alP.sql}`)
+        .bind(id, ...alP.valores)
+        .all(),
+    );
+    consultas.push(
+      db
+        .prepare(`${viaje}o.id = ?${alV.sql}`)
+        .bind(id, ...alV.valores)
+        .all(),
+    );
   }
   if (codigo) {
     const [desde, hasta] = rangoPrefijo(codigo);
-    consultas.push(db.prepare(`${pedido}p.id >= ? AND p.id < ? LIMIT 3`).bind(desde, hasta).all());
-    consultas.push(db.prepare(`${viaje}o.id >= ? AND o.id < ? LIMIT 3`).bind(desde, hasta).all());
+    consultas.push(
+      db
+        .prepare(`${pedido}p.id >= ? AND p.id < ?${alP.sql} LIMIT 3`)
+        .bind(desde, hasta, ...alP.valores)
+        .all(),
+    );
+    consultas.push(
+      db
+        .prepare(`${viaje}o.id >= ? AND o.id < ?${alV.sql} LIMIT 3`)
+        .bind(desde, hasta, ...alV.valores)
+        .all(),
+    );
   }
   const filas = (await Promise.all(consultas)).flatMap((r) => r.results);
   const unicos = [...new Map(filas.map((f) => [`${String(f.que)}:${String(f.id)}`, f])).values()];
@@ -846,7 +882,7 @@ tickets.post('/admin/tickets', async (c) => {
   const u = exigir(c, 'admin');
   const d = await leerCuerpo(c, esquemaReclamoEquipo);
   const db = base(c);
-  const destino = await enlaceDeReclamo(db, d.enlace);
+  const destino = await enlaceDeReclamo(db, d.enlace, accesoDe(c));
   const persona = await db
     .prepare(
       `SELECT u.nombre, u.correo, u.telefono, u.idioma, z.pais, z.nombre AS ciudad FROM usuarios u

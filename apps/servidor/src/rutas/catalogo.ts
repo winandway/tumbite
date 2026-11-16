@@ -51,6 +51,7 @@ import { topesDeZona } from '../internacional/tarifas';
 import { propinasDePais, tarifasDeZona } from '../internacional/tarifas';
 import { tasaVigente } from './tasasReferencia';
 import { leerConfigDinero } from './dinero';
+import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
 
 export const catalogo = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -1218,6 +1219,12 @@ catalogo.get('/admin/restaurantes', async (c) => {
   if (q) {
     filtros.push('r.nombre LIKE ?');
     valores.push(`${q}%`);
+  }
+  // C-PERMISOS-FINOS: solo los comercios de la zona y los servicios de quien mira, en la consulta.
+  const alc = alcanceObjetoSql(accesoDe(c), 'restaurante', 'r.id');
+  if (alc.sql) {
+    filtros.push(alc.sql.replace(/^ AND /, ''));
+    valores.push(...(alc.valores as string[]));
   }
   const { results } = await base(c)
     .prepare(

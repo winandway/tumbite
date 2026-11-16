@@ -48,6 +48,7 @@ import { recalcularDinamica } from '../viajesDinamica';
 import {
   accesoDe,
   anotarAccesoSensible,
+  anotarAccesoSensibleUnaVez,
   exigirPedidoEnAlcance,
   tienePermiso,
 } from '../accesoInterno';
@@ -3587,8 +3588,9 @@ operacion.get('/pedidos/:id/mensajes', async (c) => {
   const db = base(c);
   const p = await pedidoDelChat(db, c.req.param('id'), u);
   const desde = Number(c.req.query('desde') ?? 0);
-  // C-PERMISOS-FINOS: el equipo lee el chat con `pedidos.chat`, en su zona; abrirlo (no cada
-  // refresco, que pide desde el último mensaje) deja una fila en el registro de lo que se vio.
+  // C-PERMISOS-FINOS: el equipo lee el chat con `pedidos.chat`, en su zona, y SIEMPRE queda en el
+  // registro de lo que se vio: una fila por persona y pedido cada 30 minutos, sin depender de
+  // `desde` (antes, `desde=0.5` se lo saltaba) y sin escribir en cada refresco.
   if (u.rol === 'admin') {
     if (!tienePermiso(c, 'pedidos.chat'))
       throw new ErrorDatos(
@@ -3597,8 +3599,7 @@ operacion.get('/pedidos/:id/mensajes', async (c) => {
         403,
       );
     await exigirPedidoEnAlcance(c, db, p.id);
-    if (!desde)
-      await anotarAccesoSensible(db, u.id, `pedido:${p.id}`, 'chat_pedido', 'pedidos.chat');
+    await anotarAccesoSensibleUnaVez(db, u.id, `pedido:${p.id}`, 'chat_pedido', 'pedidos.chat');
   }
   const { results } = await db
     .prepare(

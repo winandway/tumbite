@@ -29,6 +29,8 @@ type DatosFicha = {
     topes: Record<string, number> | null;
     origen: string;
     dueno: boolean;
+    /** Permisos de sus plantillas que no valen con su alcance limitado (son de toda la empresa). */
+    sinEfecto?: string[];
   };
   asignaciones: { plantillaId: string; alcance: Alcance; venceEn: string | null; motivo: string }[];
   acciones: { id: number; metodo: string; ruta: string; estado: number; creadoEn: string }[];
@@ -252,6 +254,19 @@ export function Ficha({
               </ul>
             </div>
           ))}
+          {d.acceso.sinEfecto?.length ? (
+            <div className="eq-area">
+              <h3>{t.sinEfecto}</h3>
+              <p className="eq-nota">{t.sinEfectoNota}</p>
+              <ul>
+                {d.acceso.sinEfecto.map((p) => (
+                  <li key={p}>
+                    <span>{nombrePermiso(p, idioma)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </Tarjeta>
       </div>
       <div className="eq-rejilla">

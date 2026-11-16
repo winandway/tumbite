@@ -75,7 +75,11 @@ export function aFilaViaje(f: Fila, ahora = Date.now()) {
   try {
     const t = esquemaTarifaViaje.safeParse(JSON.parse(String(f.tarifa_json ?? 'null')));
     if (t.success) tarifa = t.data;
-  } catch {
+    else if (f.tarifa_json != null)
+      console.error('monitoreo: tarifa_json no válida', String(f.id), t.error);
+  } catch (e) {
+    // El semáforo sigue sin la tarifa (usa los valores de siempre), pero queda en el registro.
+    console.error('monitoreo: tarifa_json ilegible', String(f.id), e);
     tarifa = null;
   }
   const km = numero(f.km);
@@ -286,7 +290,12 @@ const TOPE_CONTADOR = 50;
  * índices parciales). Si un estado tiene más, la respuesta dice `limitado` y la pantalla escribe
  * «50+» en vez de inventar un número. Es su propia ruta (la pantalla la pide cada 30 segundos).
  */
-export async function contadoresMonitoreo(db: D1Database, zona: string) {
+export async function contadoresMonitoreo(
+  db: D1Database,
+  zona: string,
+  alcance: Pick<ParametrosLista, 'alcance' | 'dentroViaje'> = {},
+) {
+  const alc = alcance.alcance ?? { sql: '', valores: [] };
   const [porEstado, viajesIds, envio] = await Promise.all([
     Promise.all(
       ESTADOS_PEDIDO_VIVOS.map((estado) =>
@@ -294,9 +303,10 @@ export async function contadoresMonitoreo(db: D1Database, zona: string) {
           db,
           `SELECT p.estado, p.creado_en, p.pagado_en, p.aceptado_en, p.listo_en, p.recogido_en, p.tiempo_prep_min,
               (SELECT r.tipo_comercio FROM restaurantes r WHERE r.id = p.restaurante_id) AS tipo_comercio
-             FROM pedidos p WHERE ${zona ? 'p.zona_id = ? AND ' : ''}p.estado = ? LIMIT ?`,
+             FROM pedidos p WHERE ${zona ? 'p.zona_id = ? AND ' : ''}p.estado = ?${alc.sql} LIMIT ?`,
           ...(zona ? [zona] : []),
           estado,
+          ...alc.valores,
           TOPE_CONTADOR + 1,
         ),
       ),
@@ -337,7 +347,7 @@ export async function contadoresMonitoreo(db: D1Database, zona: string) {
   const viajes = (
     await detallesViajes(
       db,
-      viajesIds.filter((f) => !zona || f.zona_id === zona),
+      viajesIds.filter((f) => (!zona || f.zona_id === zona) && (alcance.dentroViaje?.(f) ?? true)),
       'ASC',
     )
   ).map((f) => aFilaViaje(f));

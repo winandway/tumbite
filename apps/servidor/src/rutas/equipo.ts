@@ -4,7 +4,7 @@ import {
   PERFILES_INTERNOS,
   PERMISOS_INTERNOS,
   type PerfilInterno,
-  type ServicioAlcance,
+  alcanceDeRuta,
   alcanceEsTotal,
   esDelicado,
   permisoDeRuta,
@@ -17,14 +17,12 @@ import {
   accesoDe,
   esDueno,
   renovarSesionesDe,
-  servicioTicketSql,
-  dentroDelAlcance,
   enmascararRespuesta,
-  servicioOperacionSql,
-  servicioPedidoSql,
+  exigirObjetoEnAlcance,
   tienePermiso,
 } from '../accesoInterno';
 import { exigirSegundoFactor } from '../segundoFactor';
+import { guardarError } from '../errores';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { TIPOS_AVISO_EQUIPO } from '../avisosEquipo';
 
@@ -80,7 +78,7 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
     );
   }
   if (acceso && esDelicado(ruta.permiso)) await exigirSegundoFactor(c, acceso);
-  await comprobarAlcanceDeFicha(c, db, ruta.patron);
+  await comprobarAlcanceDeFicha(c, db, metodo, ruta.patron);
   await next();
   if (metodo === 'GET' || metodo === 'HEAD') {
     await enmascararSiToca(c, ruta.patron);
@@ -95,7 +93,7 @@ export const permisosInternos: MiddlewareHandler<{ Bindings: Env; Variables: Var
   await anotarAccion(db, u.id, acceso, metodo, c.req.path, c.res.status);
 };
 
-function anotarAccion(
+export function anotarAccion(
   db: D1Database,
   usuarioId: string,
   acceso: AccesoEnSesion | undefined,
@@ -109,7 +107,14 @@ function anotarAccion(
     )
     .bind(usuarioId, origenCorto(acceso), metodo, ruta.slice(0, 300), estado)
     .run()
-    .catch((e: unknown) => console.error('equipo: no se pudo anotar la acción', e));
+    .catch(async (e: unknown) => {
+      // C-PERMISOS-FINOS: un registro de acciones que falla no puede quedar solo en la consola:
+      // va a los errores del servidor, que el canario muestra («errores: pendiente»).
+      console.error('equipo: no se pudo anotar la acción', e);
+      await guardarError(db, metodo, `equipo:acciones:${ruta}`, e, usuarioId).catch((x: unknown) =>
+        console.error('equipo: tampoco se pudo guardar el error', x),
+      );
+    });
 }
 
 /** Lo que se anota como «perfil» en el registro: el viejo o las plantillas de la persona. */
@@ -122,16 +127,18 @@ function origenCorto(acceso: AccesoEnSesion | undefined): string {
 }
 
 /** Rutas cuyas respuestas no se enmascaran: las del propio equipo (son cuentas internas). */
-const SIN_ENMASCARAR = [
-  '/admin/equipo',
-  '/admin/mis-avisos',
-  '/admin/preferencias',
-  '/admin/ruta',
-  '/admin/franquicias',
-];
+const SIN_ENMASCARAR = ['/admin/equipo', '/admin/mis-avisos', '/admin/preferencias', '/admin/ruta'];
 
 async function enmascararSiToca(c: Ctx, patron: string) {
   if (SIN_ENMASCARAR.some((p) => patron === p || patron.startsWith(`${p}/`))) return;
+  // Los correos de los gerentes de franquicia son datos personales como cualquier otro: se ven
+  // completos solo con `clientes.datos_personales` o con el permiso que gestiona las franquicias
+  // (`config.editar`: agregar y quitar miembros va por su correo). El resto los ve enmascarados.
+  if (
+    patron.startsWith('/admin/franquicias') &&
+    (tienePermiso(c, 'clientes.datos_personales') || tienePermiso(c, 'config.editar'))
+  )
+    return;
   if (!(c.res.headers.get('content-type') ?? '').includes('application/json')) return;
   // Quien atiende emergencias de viaje necesita llamar: ve el contacto de quien pidió ayuda.
   const conservar = new Set<string>(
@@ -149,49 +156,24 @@ async function enmascararSiToca(c: Ctx, patron: string) {
   c.res = new Response(JSON.stringify(limpio), { status: c.res.status, headers });
 }
 
-/** Ficha de un pedido, ticket o viaje fuera del alcance de la persona: como si no existiera. */
-async function comprobarAlcanceDeFicha(c: Ctx, db: D1Database, patron: string) {
+/**
+ * Una ficha (o un cambio sobre UN objeto) fuera del alcance de la persona: como si no existiera. El
+ * objeto y el trozo de la ruta con su id salen de `ALCANCE_RUTAS_ADMIN` (un solo lugar): una ruta
+ * nueva sobre un pedido, un viaje, un ticket, una persona o un comercio queda cubierta al declararla.
+ */
+async function comprobarAlcanceDeFicha(c: Ctx, db: D1Database, metodo: string, patron: string) {
   const acceso = accesoDe(c);
   if (!acceso || alcanceEsTotal(acceso.alcance)) return;
-  const partes = c.req.path.split('/').filter(Boolean);
-  const id = partes.at(3) ?? '';
-  let fila: { zona: string | null; pais: string | null; servicio: string | null } | null;
-  if (patron.startsWith('/admin/pedidos/:id'))
-    fila = await db
-      .prepare(
-        `SELECT p.zona_id AS zona, z.pais, ${servicioPedidoSql('r.tipo_comercio')} AS servicio
-           FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-           LEFT JOIN zonas z ON z.id = p.zona_id WHERE p.id = ?`,
-      )
-      .bind(id)
-      .first();
-  else if (patron.startsWith('/admin/tickets/:id'))
-    fila = await db
-      .prepare(
-        `SELECT t.zona_id AS zona, z.pais, ${servicioTicketSql('t')} AS servicio
-           FROM tickets t LEFT JOIN zonas z ON z.id = t.zona_id WHERE t.id = ?`,
-      )
-      .bind(id)
-      .first();
-  else if (patron.startsWith('/admin/viajes/:id'))
-    fila = await db
-      .prepare(
-        `SELECT o.zona_id AS zona, z.pais, ${servicioOperacionSql('o.servicio_id')} AS servicio
-           FROM operaciones o LEFT JOIN zonas z ON z.id = o.zona_id WHERE o.id = ?`,
-      )
-      .bind(id)
-      .first();
-  else return;
+  const a = alcanceDeRuta(metodo, patron);
+  if (a?.modo !== 'ficha') return;
+  const partesPatron = patron.split('/').filter(Boolean);
+  const partesRuta = c.req.path
+    .replace(/^\/datos(?=\/)/, '')
+    .split('/')
+    .filter(Boolean);
+  const id = decodeURIComponent(partesRuta.at(partesPatron.indexOf(`:${a.param}`)) ?? '');
   // Si no existe, la propia ruta dirá «no existe»; si existe y no le toca, lo mismo.
-  if (
-    fila &&
-    !dentroDelAlcance(acceso, {
-      zona: fila.zona,
-      pais: fila.pais,
-      servicio: (fila.servicio as ServicioAlcance | null) ?? null,
-    })
-  )
-    throw new ErrorDatos('Eso no existe o no está en tu zona de trabajo.', undefined, 404);
+  await exigirObjetoEnAlcance(db, acceso, a.objeto, id);
 }
 
 equipo.get('/admin/equipo', async (c) => {

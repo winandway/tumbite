@@ -274,6 +274,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // segundo factor esa sesión.
   ['sesiones', 'permisos_json', 'TEXT'],
   ['sesiones', 'segundo_factor_en', 'TEXT'],
+  // C-EQUIPO-INVITACION (15 nov 2026): los permisos y topes concretos que se aprobaron al invitar
+  // (congelados): si la plantilla crece después, la invitación ya no sirve.
+  ['invitaciones_equipo', 'acceso_json', 'TEXT'],
 ];
 
 /**

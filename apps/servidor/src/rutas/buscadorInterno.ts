@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
 import {
+  type AccesoInterno,
   type BusquedaInterna,
+  type PermisoInterno,
+  puedeVer,
   type FiltroEstadoPedido,
   FILTROS_ESTADO_PEDIDO,
   ESTADOS_PEDIDO_CERRADOS,
@@ -22,6 +25,13 @@ import { TELEFONO_DIEZ } from '../esquema';
 import { CON_TELEFONO, NOMBRE_PLANO, TELEFONO_DIGITOS, TELEFONO_FINAL } from '../buscadorSql';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
+import {
+  accesoDe,
+  alcanceObjetoSql,
+  alcancePedidosDe,
+  filtroAlcance,
+  servicioOperacionSql,
+} from '../accesoInterno';
 
 /**
  * C-BUSCADOR-SERIO (15 nov 2026, pedido de Richard: buscó «407F» y no apareció). Todos los países.
@@ -95,6 +105,7 @@ const todas = (db: D1Database, sql: string, ...valores: unknown[]) =>
     .bind(...valores)
     .all<Fila>()
     .then((r) => r.results);
+const todasSinAlcance = todas;
 
 // ───────────────────────── Personas: clientes, repartidores, comercios ─────────────────────────
 
@@ -104,7 +115,32 @@ async function idsDeCuentas(
   rol: 'cliente' | 'repartidor',
   b: BusquedaInterna,
   tope: number,
+  acceso: AccesoInterno | null = null,
 ): Promise<string[]> {
+  // C-PERMISOS-FINOS: con alcance, cada consulta lleva la condición de la persona (por su llave),
+  // antes del LIMIT: el tope de 5 se llena con gente de su zona, no se recorta después.
+  const objeto = rol === 'cliente' ? 'cliente' : 'repartidor';
+  const al = (id: string) => alcanceObjetoSql(acceso, objeto, id);
+  const todas = (db: D1Database, sql: string, ...valores: unknown[]) => {
+    const tabla = /FROM (\w+)/.exec(sql)?.[1] ?? 'usuarios';
+    const id =
+      tabla === 'repartidores' || tabla === 'repartidor_datos'
+        ? `${tabla}.usuario_id`
+        : tabla === 'vehiculos'
+          ? 'vehiculos.conductor_id'
+          : 'usuarios.id';
+    const a = al(id);
+    if (!a.sql) return todasSinAlcance(db, sql, ...valores);
+    // El alcance va justo antes del ORDER BY o del LIMIT final (si hay LIMIT, el último valor es
+    // el tope): así cuenta antes de cortar en 5.
+    const conTope = sql.endsWith(' LIMIT ?');
+    const orden = sql.lastIndexOf(' ORDER BY ');
+    const corte = orden >= 0 ? orden : conTope ? sql.length - ' LIMIT ?'.length : sql.length;
+    const conAlcance = `${sql.slice(0, corte)}${a.sql}${sql.slice(corte)}`;
+    const tope = conTope ? valores.slice(-1) : [];
+    const resto = conTope ? valores.slice(0, -1) : valores;
+    return todasSinAlcance(db, conAlcance, ...resto, ...a.valores, ...tope);
+  };
   const consultas: Promise<Fila[]>[] = [];
   if (b.nombre) {
     const [desde, hasta] = rangoPrefijo(b.nombre);
@@ -232,21 +268,31 @@ async function idsDeCuentas(
   return [...new Set(listas.flat().map((f) => String(f.id)))].slice(0, tope);
 }
 
-async function idsDeComercios(db: D1Database, b: BusquedaInterna, tope: number) {
+async function idsDeComercios(
+  db: D1Database,
+  b: BusquedaInterna,
+  tope: number,
+  acceso: AccesoInterno | null = null,
+) {
+  const al = alcanceObjetoSql(acceso, 'restaurante', 'restaurantes.id');
   const consultas: Promise<Fila[]>[] = [];
   if (b.nombre) {
     const [desde, hasta] = rangoPrefijo(b.nombre);
     consultas.push(
       todas(
         db,
-        `SELECT id FROM restaurantes WHERE ${NOMBRE_PLANO} >= ? AND ${NOMBRE_PLANO} < ? LIMIT ?`,
+        `SELECT id FROM restaurantes WHERE ${NOMBRE_PLANO} >= ? AND ${NOMBRE_PLANO} < ?${al.sql} LIMIT ?`,
         desde,
         hasta,
+        ...al.valores,
         tope,
       ),
     );
   }
-  if (b.id) consultas.push(todas(db, 'SELECT id FROM restaurantes WHERE id = ?', b.id));
+  if (b.id)
+    consultas.push(
+      todas(db, `SELECT id FROM restaurantes WHERE id = ?${al.sql}`, b.id, ...al.valores),
+    );
   const listas = await Promise.all(consultas);
   return [...new Set(listas.flat().map((f) => String(f.id)))].slice(0, tope);
 }
@@ -264,24 +310,34 @@ const PEDIDO_UNIONES = `LEFT JOIN restaurantes r ON r.id = p.restaurante_id
 export const nombreCliente = (f: Fila): string | null =>
   f.cliente == null || Number(f.cliente_activo ?? 1) === 0 ? null : String(f.cliente);
 
-async function grupoPedidos(db: D1Database, b: BusquedaInterna): Promise<ResultadoBusqueda[]> {
+async function grupoPedidos(
+  db: D1Database,
+  b: BusquedaInterna,
+  acceso: AccesoInterno | null,
+): Promise<ResultadoBusqueda[]> {
+  // C-PERMISOS-FINOS: el alcance va EN cada consulta, antes del LIMIT (con `+`: no cambia el índice).
+  const al = alcancePedidosDe(acceso);
   // Primero los ids (por la llave primaria o la fecha), después los datos de esos pocos: así las
   // uniones con restaurante, cliente y ciudad corren para 5 filas y no para todas las que empiezan así.
   const partes = await Promise.all([
-    b.id ? todas(db, 'SELECT p.id FROM pedidos p WHERE p.id = ?', b.id) : [],
+    b.id
+      ? todas(db, `SELECT p.id FROM pedidos p WHERE p.id = ?${al.sql}`, b.id, ...al.valores)
+      : [],
     b.codigo
       ? todas(
           db,
-          'SELECT p.id FROM pedidos p WHERE p.id >= ? AND p.id < ? ORDER BY +p.creado_en DESC LIMIT ?',
+          `SELECT p.id FROM pedidos p WHERE p.id >= ? AND p.id < ?${al.sql} ORDER BY +p.creado_en DESC LIMIT ?`,
           ...rangoPrefijo(b.codigo),
+          ...al.valores,
           POR_GRUPO,
         )
       : [],
     b.monto !== undefined
       ? todas(
           db,
-          "SELECT p.id FROM pedidos p WHERE p.creado_en >= datetime('now', '-30 days') AND p.total = ? ORDER BY p.creado_en DESC LIMIT ?",
+          `SELECT p.id FROM pedidos p WHERE p.creado_en >= datetime('now', '-30 days') AND p.total = ?${al.sql} ORDER BY p.creado_en DESC LIMIT ?`,
           b.monto,
+          ...al.valores,
           POR_GRUPO,
         )
       : [],
@@ -319,7 +375,15 @@ async function grupoPedidos(db: D1Database, b: BusquedaInterna): Promise<Resulta
     }));
 }
 
-async function grupoViajes(db: D1Database, b: BusquedaInterna): Promise<ResultadoBusqueda[]> {
+async function grupoViajes(
+  db: D1Database,
+  b: BusquedaInterna,
+  acceso: AccesoInterno | null,
+): Promise<ResultadoBusqueda[]> {
+  const al = filtroAlcance(acceso, {
+    zona: '+o.zona_id',
+    servicio: servicioOperacionSql('o.servicio_id'),
+  });
   const condiciones: [string, unknown[]][] = [];
   if (b.id) condiciones.push(['o.id = ?', [b.id]]);
   if (b.codigo) condiciones.push(['o.id >= ? AND o.id < ?', rangoPrefijo(b.codigo)]);
@@ -334,9 +398,10 @@ async function grupoViajes(db: D1Database, b: BusquedaInterna): Promise<Resultad
              LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
              LEFT JOIN usuarios pu ON pu.id = o.cliente_id LEFT JOIN usuarios d ON d.id = o.conductor_id
              LEFT JOIN zonas z ON z.id = o.zona_id
-            WHERE ${donde} AND +o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete')
+            WHERE ${donde} AND +o.tipo_operacion IN ('viaje_pasajero', 'envio_paquete')${al.sql}
             ORDER BY +o.creado_en DESC LIMIT ?`,
           ...valores,
+          ...al.valores,
           POR_GRUPO,
         ),
       ),
@@ -369,8 +434,9 @@ async function grupoCuentas(
   quien: Usuario,
   rol: 'cliente' | 'repartidor',
   b: BusquedaInterna,
+  acceso: AccesoInterno | null,
 ): Promise<ResultadoBusqueda[]> {
-  const ids = await idsDeCuentas(db, rol, b, POR_GRUPO);
+  const ids = await idsDeCuentas(db, rol, b, POR_GRUPO, acceso);
   if (!ids.length) return [];
   const filas = await todas(
     db,
@@ -411,8 +477,12 @@ async function grupoCuentas(
   });
 }
 
-async function grupoComercios(db: D1Database, b: BusquedaInterna): Promise<ResultadoBusqueda[]> {
-  const ids = await idsDeComercios(db, b, POR_GRUPO);
+async function grupoComercios(
+  db: D1Database,
+  b: BusquedaInterna,
+  acceso: AccesoInterno | null,
+): Promise<ResultadoBusqueda[]> {
+  const ids = await idsDeComercios(db, b, POR_GRUPO, acceso);
   if (!ids.length) return [];
   const filas = await todas(
     db,
@@ -440,17 +510,23 @@ async function grupoComercios(db: D1Database, b: BusquedaInterna): Promise<Resul
   });
 }
 
-async function grupoVehiculos(db: D1Database, b: BusquedaInterna): Promise<ResultadoBusqueda[]> {
+async function grupoVehiculos(
+  db: D1Database,
+  b: BusquedaInterna,
+  acceso: AccesoInterno | null,
+): Promise<ResultadoBusqueda[]> {
   if (!b.placa) return [];
   const [desde, hasta] = rangoPrefijo(b.placa);
+  const al = alcanceObjetoSql(acceso, 'repartidor', 'vehiculos.conductor_id');
   const filas = await todas(
     db,
     `SELECT x.id, x.placa, x.tipo, x.estado, x.marca, x.modelo, x.conductor_id, u.nombre AS dueno
        FROM (SELECT id, placa, tipo, estado, marca, modelo, conductor_id FROM vehiculos
-              WHERE placa != '' AND upper(placa) >= ? AND upper(placa) < ? LIMIT ?) x
+              WHERE placa != '' AND upper(placa) >= ? AND upper(placa) < ?${al.sql} LIMIT ?) x
        LEFT JOIN usuarios u ON u.id = x.conductor_id`,
     desde,
     hasta,
+    ...al.valores,
     POR_GRUPO,
   );
   return filas.map((f) => ({
@@ -471,7 +547,9 @@ async function grupoTickets(
   db: D1Database,
   quien: Usuario,
   b: BusquedaInterna,
+  acceso: AccesoInterno | null,
 ): Promise<ResultadoBusqueda[]> {
+  const al = alcanceObjetoSql(acceso, 'ticket', 'tickets.id');
   const consultas: [string, unknown[]][] = [];
   if (b.id) consultas.push(['id = ?', [b.id]]);
   if (b.codigo) consultas.push(['id >= ? AND id < ?', rangoPrefijo(b.codigo)]);
@@ -482,8 +560,9 @@ async function grupoTickets(
         todas(
           db,
           `SELECT id, asunto, estado, tipo, correo, actualizado_en, ciudad FROM tickets
-            WHERE ${donde} ORDER BY +actualizado_en DESC LIMIT ?`,
+            WHERE ${donde}${al.sql} ORDER BY +actualizado_en DESC LIMIT ?`,
           ...valores,
+          ...al.valores,
           POR_GRUPO,
         ),
       ),
@@ -506,19 +585,46 @@ async function grupoTickets(
     }));
 }
 
-/** Todo el buscador de arriba: grupos con tope de 5, y el salto directo si lo escrito es un id. */
-export async function buscarEnSuperadmin(db: D1Database, quien: Usuario, q: string) {
+/**
+ * El permiso de lectura que pide cada grupo (además de `monitoreo.buscar`, que pide la ruta): nadie
+ * encuentra en el buscador lo que no podría abrir. Los pedidos, con `pedidos.ver` o `monitoreo.ver`.
+ */
+export const PERMISO_GRUPO: Record<GrupoBusqueda, readonly PermisoInterno[]> = {
+  pedidos: ['pedidos.ver', 'monitoreo.ver'],
+  viajes: ['viajes.ver'],
+  clientes: ['clientes.ver'],
+  repartidores: ['repartidores.ver'],
+  restaurantes: ['restaurantes.ver'],
+  vehiculos: ['repartidores.ver'],
+  tickets: ['tickets.ver'],
+};
+
+/**
+ * Todo el buscador de arriba: grupos con tope de 5, y el salto directo si lo escrito es un id.
+ * C-PERMISOS-FINOS: cada grupo exige su permiso de lectura y lleva el alcance (ciudad, país,
+ * servicio) de quien busca EN la consulta. `acceso` null = sin límites (solo pruebas internas).
+ */
+export async function buscarEnSuperadmin(
+  db: D1Database,
+  quien: Usuario,
+  q: string,
+  acceso: AccesoInterno | null = null,
+) {
   const b = interpretarBusqueda(q);
   if (b.vacia) return { q: b.texto, grupos: [], salto: null, avisoMonto: false };
+  const permisos = new Map(Object.entries(PERMISO_GRUPO));
+  const toca = (g: GrupoBusqueda) =>
+    !acceso || (permisos.get(g) ?? []).some((p) => puedeVer(acceso, p));
+  const si = <T>(g: GrupoBusqueda, f: () => Promise<T[]>) => (toca(g) ? f() : Promise.resolve([]));
   const [pedidos, viajes, clientes, repartidores, restaurantes, vehiculos, tickets] =
     await Promise.all([
-      grupoPedidos(db, b),
-      grupoViajes(db, b),
-      grupoCuentas(db, quien, 'cliente', b),
-      grupoCuentas(db, quien, 'repartidor', b),
-      grupoComercios(db, b),
-      grupoVehiculos(db, b),
-      grupoTickets(db, quien, b),
+      si('pedidos', () => grupoPedidos(db, b, acceso)),
+      si('viajes', () => grupoViajes(db, b, acceso)),
+      si('clientes', () => grupoCuentas(db, quien, 'cliente', b, acceso)),
+      si('repartidores', () => grupoCuentas(db, quien, 'repartidor', b, acceso)),
+      si('restaurantes', () => grupoComercios(db, b, acceso)),
+      si('vehiculos', () => grupoVehiculos(db, b, acceso)),
+      si('tickets', () => grupoTickets(db, quien, b, acceso)),
     ]);
   const grupos = Object.entries({
     pedidos,
@@ -544,7 +650,7 @@ export async function buscarEnSuperadmin(db: D1Database, quien: Usuario, q: stri
 buscadorInterno.get('/admin/buscar', async (c) => {
   const u = exigir(c, 'admin');
   const q = (c.req.query('q') ?? '').slice(0, 80);
-  return c.json(await buscarEnSuperadmin(base(c), u, q));
+  return c.json(await buscarEnSuperadmin(base(c), u, q, accesoDe(c)));
 });
 
 // ───────────────────────── «Pedidos en curso» con la misma lógica ─────────────────────────

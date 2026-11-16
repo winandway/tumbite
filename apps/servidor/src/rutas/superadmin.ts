@@ -17,7 +17,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { borrarCuenta } from '../borrarCuenta';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { alcancePedidos, alcanceViajes } from '../accesoInterno';
+import { accesoDe, alcanceObjetoSql, alcancePedidos, alcanceViajes } from '../accesoInterno';
 
 /**
  * Superadmin a escala (pensado para millones de cuentas): ciudades, repartidores con su ID
@@ -404,6 +404,12 @@ superadmin.get('/admin/repartidores', async (c) => {
     filtros.push('d.codigo > ?');
     valores.push(despues);
   }
+  // C-PERMISOS-FINOS: solo los de la zona (y los servicios) de trabajo de quien mira, en la consulta.
+  const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'u.id');
+  if (alc.sql) {
+    filtros.push(alc.sql.replace(/^ AND /, ''));
+    valores.push(...alc.valores);
+  }
   const { results } = await db
     .prepare(
       `SELECT u.id, u.nombre, u.correo, u.telefono, d.codigo, d.zona_id AS zonaId, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
@@ -629,6 +635,12 @@ superadmin.get('/admin/clientes', async (c) => {
     filtros.push('u.id > ?');
     valores.push(despues);
   }
+  // C-PERMISOS-FINOS: solo los clientes de su alcance (regla en `condCliente`), en la consulta.
+  const alc = alcanceObjetoSql(accesoDe(c), 'cliente', 'u.id');
+  if (alc.sql) {
+    filtros.push(alc.sql.replace(/^ AND /, ''));
+    valores.push(...alc.valores);
+  }
   const { results } = await base(c)
     .prepare(
       `SELECT u.id, u.nombre, u.correo, u.telefono, u.zona_id AS zonaId, u.creado_en AS alta
@@ -757,7 +769,13 @@ superadmin.get('/admin/pedidos', async (c) => {
 /** C-MONITOREO-SERVICIOS: vivos y en problemas de cada pestaña (lecturas acotadas, solo lectura). */
 superadmin.get('/admin/pedidos/contadores', async (c) => {
   exigir(c, 'admin');
-  return c.json(await contadoresMonitoreo(base(c), (c.req.query('zona') ?? '').slice(0, 60)));
+  // C-PERMISOS-FINOS: los números cuentan solo lo de la zona y los servicios de quien mira.
+  return c.json(
+    await contadoresMonitoreo(base(c), (c.req.query('zona') ?? '').slice(0, 60), {
+      alcance: alcancePedidos(c),
+      dentroViaje: await alcanceViajes(c),
+    }),
+  );
 });
 
 // ───────────────────────── Superadmin: ficha del pedido ─────────────────────────

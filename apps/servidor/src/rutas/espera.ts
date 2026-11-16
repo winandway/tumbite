@@ -8,6 +8,7 @@ import { pasaTurnstile } from '../turnstile';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { zonaPara } from './zonas';
 import { crearTicket } from './tickets';
+import { accesoDe, filtroAlcance } from '../accesoInterno';
 
 export const espera = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -117,21 +118,27 @@ espera.post('/lista-espera', limiteIntentos(5, 60_000), async (c) => {
 espera.get('/admin/lista-espera', async (c) => {
   exigir(c, 'admin');
   const tipo = c.req.query('tipo');
+  // C-PERMISOS-FINOS: con alcance limitado, solo quien pidió en una de sus ciudades (o países). La
+  // lista de espera es la del reparto de comida (comensales, restaurantes y repartidores): cuenta
+  // como servicio «comida» para quien tiene servicios limitados.
+  const alc = filtroAlcance(accesoDe(c), { zona: 'zona_id', servicio: "'comida'" });
   const { results } = await base(c)
     .prepare(
       `SELECT id, tipo, zona_id AS zonaId, nombre, correo, telefono, ciudad, codigo_postal AS codigoPostal, negocio, vehiculo, idioma, pais, origen, creado_en AS fecha
-       FROM lista_espera ${tipo ? 'WHERE tipo = ?' : ''} ORDER BY creado_en DESC LIMIT 500`,
+       FROM lista_espera WHERE ${tipo ? 'tipo = ?' : '1'}${alc.sql} ORDER BY creado_en DESC LIMIT 500`,
     )
-    .bind(...(tipo ? [tipo] : []))
+    .bind(...(tipo ? [tipo] : []), ...alc.valores)
     .all();
   const { results: totales } = await base(c)
-    .prepare('SELECT tipo, COUNT(*) AS n FROM lista_espera GROUP BY tipo')
+    .prepare(`SELECT tipo, COUNT(*) AS n FROM lista_espera WHERE 1${alc.sql} GROUP BY tipo`)
+    .bind(...alc.valores)
     .all<{ tipo: string; n: number }>();
   // De qué países nos están pidiendo: decide a dónde se abre después.
   const { results: paises } = await base(c)
     .prepare(
-      "SELECT pais, COUNT(*) AS n FROM lista_espera WHERE pais <> '' GROUP BY pais ORDER BY n DESC",
+      `SELECT pais, COUNT(*) AS n FROM lista_espera WHERE pais <> ''${alc.sql} GROUP BY pais ORDER BY n DESC`,
     )
+    .bind(...alc.valores)
     .all<{ pais: string; n: number }>();
   return c.json({
     personas: results,

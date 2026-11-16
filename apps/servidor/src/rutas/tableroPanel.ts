@@ -1,6 +1,13 @@
 import { Hono } from 'hono';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
+import {
+  accesoDe,
+  alcanceObjetoSql,
+  alcancePedidos,
+  filtroAlcance,
+  servicioOperacionSql,
+} from '../accesoInterno';
 
 /**
  * C-PANEL-ARMAZON (14 nov 2026): lo que leen los tableros del panel web. SOLO LECTURA: ninguna de
@@ -22,33 +29,54 @@ const suma = (filas: Fila[], cumple: (f: Fila) => boolean) =>
 tableroPanel.get('/admin/tablero', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
+  // C-PERMISOS-FINOS: con alcance limitado, todo el tablero cuenta solo su zona y sus servicios.
+  const acceso = accesoDe(c);
+  const alP = alcancePedidos(c);
+  const alV = filtroAlcance(acceso, {
+    zona: '+o.zona_id',
+    servicio: servicioOperacionSql('o.servicio_id'),
+  });
+  const alC = alcanceObjetoSql(acceso, 'cliente', 'u.id');
+  const alR = alcanceObjetoSql(acceso, 'restaurante', 'r.id');
+  const alD = alcanceObjetoSql(acceso, 'repartidor', 'd.usuario_id');
+  const alT = alcanceObjetoSql(acceso, 'ticket', 't.id');
   // UNA lectura por tabla, por el índice de la fecha (pedidos_creado y operaciones_viaje_creado):
   // 30 días agrupados por día y estado; de ahí salen la serie, los estados y la comparación.
   const { results: pedidos } = await db
     .prepare(
-      `SELECT date(creado_en) AS dia, estado, COUNT(*) AS n FROM pedidos
-        WHERE creado_en >= datetime('now', 'start of day', '-29 days') AND estado <> 'pago_pendiente'
-        GROUP BY date(creado_en), estado`,
+      `SELECT date(p.creado_en) AS dia, p.estado, COUNT(*) AS n FROM pedidos p
+        WHERE p.creado_en >= datetime('now', 'start of day', '-29 days') AND p.estado <> 'pago_pendiente'${alP.sql}
+        GROUP BY date(p.creado_en), p.estado`,
     )
+    .bind(...alP.valores)
     .all<Fila>();
   const { results: viajes } = await db
     .prepare(
-      `SELECT date(creado_en) AS dia, estado_general AS estado, COUNT(*) AS n FROM operaciones
-        WHERE tipo_operacion = 'viaje_pasajero'
-          AND creado_en >= datetime('now', 'start of day', '-29 days')
-          AND estado_general <> 'pago_pendiente'
-        GROUP BY date(creado_en), estado_general`,
+      `SELECT date(o.creado_en) AS dia, o.estado_general AS estado, COUNT(*) AS n FROM operaciones o
+        WHERE o.tipo_operacion = 'viaje_pasajero'
+          AND o.creado_en >= datetime('now', 'start of day', '-29 days')
+          AND o.estado_general <> 'pago_pendiente'${alV.sql}
+        GROUP BY date(o.creado_en), o.estado_general`,
     )
+    .bind(...alV.valores)
     .all<Fila>();
   const gente = await db
     .prepare(
       `SELECT
-         (SELECT COUNT(*) FROM usuarios WHERE rol = 'cliente' AND activo = 1) AS clientes,
-         (SELECT COUNT(*) FROM restaurantes WHERE estado = 'aprobado') AS restaurantes,
-         (SELECT COUNT(*) FROM restaurantes WHERE estado = 'aprobado' AND abierto = 1) AS abiertos,
-         (SELECT COUNT(*) FROM restaurantes WHERE estado = 'pendiente') AS por_aprobar,
-         (SELECT COUNT(*) FROM repartidores) AS repartidores,
-         (SELECT COUNT(*) FROM repartidores WHERE conectado = 1) AS conectados`,
+         (SELECT COUNT(*) FROM usuarios u WHERE u.rol = 'cliente' AND u.activo = 1${alC.sql}) AS clientes,
+         (SELECT COUNT(*) FROM restaurantes r WHERE r.estado = 'aprobado'${alR.sql}) AS restaurantes,
+         (SELECT COUNT(*) FROM restaurantes r WHERE r.estado = 'aprobado' AND r.abierto = 1${alR.sql}) AS abiertos,
+         (SELECT COUNT(*) FROM restaurantes r WHERE r.estado = 'pendiente'${alR.sql}) AS por_aprobar,
+         (SELECT COUNT(*) FROM repartidores d WHERE 1${alD.sql}) AS repartidores,
+         (SELECT COUNT(*) FROM repartidores d WHERE d.conectado = 1${alD.sql}) AS conectados`,
+    )
+    .bind(
+      ...alC.valores,
+      ...alR.valores,
+      ...alR.valores,
+      ...alR.valores,
+      ...alD.valores,
+      ...alD.valores,
     )
     .first<Record<string, number | null>>();
   // Los últimos tickets: ocho por estado por el índice (estado, actualizado_en) y se mezclan aquí.
@@ -64,10 +92,10 @@ tableroPanel.get('/admin/tablero', async (c) => {
   for (const estado of ['abierto', 'respondido', 'cerrado']) {
     const { results } = await db
       .prepare(
-        `SELECT id, codigo, tipo, estado, asunto, actualizado_en AS fecha FROM tickets
-          WHERE estado = ? ORDER BY actualizado_en DESC LIMIT 8`,
+        `SELECT t.id, t.codigo, t.tipo, t.estado, t.asunto, t.actualizado_en AS fecha FROM tickets t
+          WHERE t.estado = ?${alT.sql} ORDER BY t.actualizado_en DESC LIMIT 8`,
       )
-      .bind(estado)
+      .bind(estado, ...alT.valores)
       .all<Ticket>();
     ultimos.push(...results);
   }

@@ -241,6 +241,11 @@
   font-size: 14px;
   margin: 12px 0 6px;
 }
+.eq-area .eq-nota {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #666b73;
+}
 .eq-area ul,
 .eq-registro,
 .eq-plantilla-permisos {

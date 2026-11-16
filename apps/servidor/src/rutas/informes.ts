@@ -5,6 +5,7 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
 import { celdaCsv, montoATexto } from '@tumbite/compartido';
 import { mio } from './restauranteMas';
+import { alcancePedidos } from '../accesoInterno';
 
 /**
  * C-INFORMES (29 oct 2026): informe del superadmin por rango de fechas, por ciudad y moneda
@@ -27,7 +28,10 @@ type FilaInforme = {
   plataforma: number;
 };
 
-async function informe(db: D1Database, desde: string, hasta: string) {
+type Alcance = { sql: string; valores: unknown[] };
+const SIN_ALCANCE: Alcance = { sql: '', valores: [] };
+
+async function informe(db: D1Database, desde: string, hasta: string, alc: Alcance = SIN_ALCANCE) {
   const { results } = await db
     .prepare(
       `SELECT p.zona_id AS zona, COALESCE(z.nombre, p.zona_id) AS ciudad, p.moneda AS moneda,
@@ -39,10 +43,10 @@ async function informe(db: D1Database, desde: string, hasta: string) {
           SUM(CASE WHEN p.estado = 'entregado' THEN p.propina ELSE 0 END) AS propinas,
           SUM(CASE WHEN p.estado = 'entregado' THEN p.ganancia ELSE 0 END) AS plataforma
          FROM pedidos p LEFT JOIN zonas z ON z.id = p.zona_id
-        WHERE p.estado <> 'pago_pendiente' AND date(p.creado_en) BETWEEN ? AND ?
+        WHERE p.estado <> 'pago_pendiente' AND date(p.creado_en) BETWEEN ? AND ?${alc.sql}
         GROUP BY p.zona_id, p.moneda ORDER BY ciudad, moneda`,
     )
-    .bind(desde, hasta)
+    .bind(desde, hasta, ...alc.valores)
     .all<FilaInforme>();
   return results.map((r) => ({
     ...r,
@@ -60,16 +64,21 @@ async function informe(db: D1Database, desde: string, hasta: string) {
  * C-EMBUDO (29 oct 2026), como el embudo de conversión de los grandes: de los pedidos que se
  * empezaron a pagar en el rango, cuántos se pagaron, cuántos aceptó el restaurante y cuántos llegaron.
  */
-export async function embudo(db: D1Database, desde: string, hasta: string) {
+export async function embudo(
+  db: D1Database,
+  desde: string,
+  hasta: string,
+  alc: Alcance = SIN_ALCANCE,
+) {
   const f = await db
     .prepare(
       `SELECT COUNT(*) AS iniciados,
           SUM(CASE WHEN pagado_en IS NOT NULL THEN 1 ELSE 0 END) AS pagados,
           SUM(CASE WHEN aceptado_en IS NOT NULL THEN 1 ELSE 0 END) AS aceptados,
           SUM(CASE WHEN estado = 'entregado' THEN 1 ELSE 0 END) AS entregados
-         FROM pedidos WHERE date(creado_en) BETWEEN ? AND ?`,
+         FROM pedidos p WHERE date(p.creado_en) BETWEEN ? AND ?${alc.sql}`,
     )
-    .bind(desde, hasta)
+    .bind(desde, hasta, ...alc.valores)
     .first<{
       iniciados: number | null;
       pagados: number | null;
@@ -102,7 +111,10 @@ informes.get('/admin/informes', async (c) => {
     throw new ErrorDatos('Elige la fecha inicial y la final.', 'desde', 400);
   if (d.data > h.data)
     throw new ErrorDatos('La fecha final va después de la inicial.', 'hasta', 400);
-  const filas = await informe(base(c), d.data, h.data);
+  // C-PERMISOS-FINOS: el informe y el CSV cuentan solo los pedidos de la zona y los servicios de
+  // quien lo pide (sin alcance limitado, todos).
+  const alc = alcancePedidos(c);
+  const filas = await informe(base(c), d.data, h.data, alc);
   if (c.req.query('formato') === 'csv') {
     const cab = [
       'zona',
@@ -144,7 +156,7 @@ informes.get('/admin/informes', async (c) => {
     desde: d.data,
     hasta: h.data,
     filas,
-    embudo: await embudo(base(c), d.data, h.data),
+    embudo: await embudo(base(c), d.data, h.data, alc),
   });
 });
 

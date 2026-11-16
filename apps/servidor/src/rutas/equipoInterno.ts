@@ -17,6 +17,7 @@ import {
   textoPlano,
   topesDentroDe,
   unirAlcances,
+  type ObjetoAlcance,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import {
@@ -31,7 +32,9 @@ import {
   leerAlcance,
   plantillaDeFila,
   renovarSesionesDe,
+  objetoFueraDeAlcance,
 } from '../accesoInterno';
+import { anotarAccion } from './equipo';
 import { NOMBRE_PLANO } from '../buscadorSql';
 import { enviarCorreo } from '../correo';
 import { hashClave, nuevoId, nuevoToken, sha256 } from '../cripto';
@@ -498,6 +501,8 @@ async function cambiarEstado(c: Ctx, estado: 'suspendido' | 'activo' | 'retirado
     ),
     // Suspender o quitar: fuera al instante en todos sus aparatos. Reactivar: recalcula al entrar.
     estado === 'activo' ? renovarSesionesDe(db, f.id) : cerrarSesionesDe(db, f.id),
+    // Y sus invitaciones pendientes se cancelan: nadie entra con el acceso de quien ya no está.
+    ...(estado === 'activo' ? [] : [cancelarInvitacionesDe(db, f.id)]),
   ]);
   return c.json({ ok: true, estado });
 }
@@ -719,8 +724,8 @@ equipoInterno.post('/admin/equipo/invitaciones', async (c) => {
       .bind(d.correo),
     db
       .prepare(
-        `INSERT INTO invitaciones_equipo (id, codigo_hash, correo, nombre, plantillas_json, alcance_json, vence_acceso_en, motivo, idioma, invitado_por, expira_en)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', ?))`,
+        `INSERT INTO invitaciones_equipo (id, codigo_hash, correo, nombre, plantillas_json, alcance_json, vence_acceso_en, motivo, idioma, invitado_por, expira_en, acceso_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', ?), ?)`,
       )
       .bind(
         id,
@@ -734,6 +739,7 @@ equipoInterno.post('/admin/equipo/invitaciones', async (c) => {
         d.idioma,
         u.id,
         `+${CONFIG_PERMISOS.diasInvitacion} days`,
+        JSON.stringify(accesoCongelado(plantillas)),
       ),
     db
       .prepare(
@@ -790,11 +796,105 @@ equipoInterno.delete('/admin/equipo/invitaciones/:id', async (c) => {
 });
 
 // La invitación desde el enlace (sin sesión): ver y aceptar. El código nunca se guarda, solo su huella.
+/** Lo concreto que se aprueba al invitar: la suma de permisos de las plantillas y sus topes. */
+function accesoCongelado(plantillas: PlantillaLeida[]) {
+  return {
+    permisos: [...new Set(plantillas.flatMap((p) => p.permisos))].sort(),
+    topes: plantillas.filter((p) => mueveDinero(p.permisos)).map((p) => p.topes),
+  };
+}
+
+function cancelarInvitacionesDe(db: D1Database, usuarioId: string) {
+  return db
+    .prepare(
+      "UPDATE invitaciones_equipo SET cancelada_en = datetime('now') WHERE invitado_por = ? AND aceptada_en IS NULL AND cancelada_en IS NULL",
+    )
+    .bind(usuarioId);
+}
+
+const esquemaCongelado = z.object({
+  permisos: z.array(z.string()).max(200),
+  topes: z.array(z.record(z.string(), z.number().int().min(0)).nullable()).max(20),
+});
+
+/**
+ * Al aceptar: quien invitó sigue activo y todavía puede dar lo que dio (permisos, ciudades y
+ * topes), y las plantillas no crecieron desde la invitación (lo aprobado quedó congelado en
+ * `acceso_json`). Si algo falla, la invitación se cancela y la persona lee por qué, en palabras.
+ */
+async function revalidarInvitacion(
+  c: Ctx,
+  db: D1Database,
+  inv: {
+    id: string;
+    plantillas_json: string;
+    alcance_json: string;
+    invitado_por: string;
+    acceso_json: string | null;
+  },
+) {
+  const anular = async (mensaje: string) => {
+    await db
+      .prepare(
+        "UPDATE invitaciones_equipo SET cancelada_en = datetime('now') WHERE id = ? AND cancelada_en IS NULL",
+      )
+      .bind(inv.id)
+      .run();
+    throw new ErrorDatos(mensaje, undefined, 410);
+  };
+  const invitador = await db
+    .prepare("SELECT id, correo, activo FROM usuarios WHERE id = ? AND rol = 'admin'")
+    .bind(inv.invitado_por)
+    .first<{ id: string; correo: string; activo: number }>();
+  const suAcceso =
+    invitador && Number(invitador.activo) === 1
+      ? await leerAccesoInterno(db, c.env, invitador)
+      : null;
+  if (!suAcceso || suAcceso.estado !== 'activo')
+    return anular(
+      'La persona que te invitó ya no tiene acceso al equipo, así que esta invitación no sirve. Pide una nueva a quien gestiona el equipo.',
+    );
+  const plantillas = await plantillasPorId(db, JSON.parse(inv.plantillas_json) as string[]).catch(
+    () => null,
+  );
+  if (!plantillas)
+    return anular('El puesto de esta invitación ya no existe. Pide una invitación nueva.');
+  const hoy = accesoCongelado(plantillas);
+  let aprobado = hoy;
+  if (inv.acceso_json) {
+    try {
+      aprobado = esquemaCongelado.parse(JSON.parse(inv.acceso_json));
+    } catch (e) {
+      console.error('equipo: acceso congelado de la invitación no válido; se anula', e);
+      return anular('Esta invitación está dañada. Pide una invitación nueva.');
+    }
+  }
+  const crecio =
+    permisosFuera(hoy.permisos, aprobado.permisos).length > 0 ||
+    hoy.topes.some((t, i) => JSON.stringify(t) !== JSON.stringify(aprobado.topes.at(i) ?? null));
+  if (crecio)
+    return anular(
+      'El puesto cambió después de que te invitaron. Pide una invitación nueva para revisar lo que vas a poder hacer.',
+    );
+  try {
+    await noDarMasDeLoQueTengo(db, suAcceso, {
+      permisos: aprobado.permisos,
+      alcances: [leerAlcance(inv.alcance_json)],
+      topes: aprobado.topes,
+    });
+  } catch (e) {
+    if (!(e instanceof ErrorDatos)) throw e;
+    return anular(
+      'La persona que te invitó ya no puede dar este acceso, así que esta invitación no sirve. Pide una nueva a quien gestiona el equipo.',
+    );
+  }
+}
+
 async function invitacionVigente(db: D1Database, codigo: string) {
   const f = await db
     .prepare(
       `SELECT i.id, i.correo, i.nombre, i.plantillas_json, i.alcance_json, i.vence_acceso_en, i.idioma,
-              i.invitado_por, i.expira_en, u.nombre AS invitado_por_nombre
+              i.invitado_por, i.expira_en, i.acceso_json, u.nombre AS invitado_por_nombre
          FROM invitaciones_equipo i LEFT JOIN usuarios u ON u.id = i.invitado_por
         WHERE i.codigo_hash = ? AND i.aceptada_en IS NULL AND i.cancelada_en IS NULL AND i.expira_en > datetime('now')`,
     )
@@ -809,6 +909,7 @@ async function invitacionVigente(db: D1Database, codigo: string) {
       idioma: string;
       invitado_por: string;
       expira_en: string;
+      acceso_json: string | null;
       invitado_por_nombre: string | null;
     }>();
   if (!f)
@@ -863,6 +964,9 @@ equipoInterno.post('/equipo-interno/invitacion/aceptar', async (c) => {
   );
   const db = base(c);
   const inv = await invitacionVigente(db, d.codigo);
+  // C-EQUIPO-INVITACION: lo que se aprobó al invitar se vuelve a comprobar ahora, contra lo que
+  // quien invitó puede dar HOY. Si ya no se puede, la invitación queda cancelada (no sirve más).
+  await revalidarInvitacion(c, db, inv);
   if (!nombreCumpleSoporte(inv.correo, d.nombre))
     throw new ErrorDatos(
       'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',
@@ -951,6 +1055,15 @@ const TABLAS_DATO = {
   pedido:
     'SELECT u.telefono, u.correo FROM pedidos p JOIN usuarios u ON u.id = p.cliente_id WHERE p.id = ?',
 } as const;
+/** El objeto de cada tipo de dato, para el alcance (una cuenta suelta: según su rol). */
+const OBJETO_DATO: Record<keyof typeof TABLAS_DATO, ObjetoAlcance> = {
+  cliente: 'cliente',
+  repartidor: 'repartidor',
+  cuenta: 'persona',
+  ticket: 'ticket',
+  restaurante: 'restaurante',
+  pedido: 'pedido',
+};
 
 equipoInterno.get('/admin/datos-personales/:tipo/:id/:campo', async (c) => {
   const u = exigir(c, 'admin');
@@ -959,8 +1072,15 @@ equipoInterno.get('/admin/datos-personales/:tipo/:id/:campo', async (c) => {
   if (campo !== 'telefono' && campo !== 'correo')
     throw new ErrorDatos('Ese dato no existe.', undefined, 404);
   const sql = new Map(Object.entries(TABLAS_DATO)).get(tipo);
-  if (!sql) throw new ErrorDatos('Ese dato no existe.', undefined, 404);
+  const objeto = new Map(Object.entries(OBJETO_DATO)).get(tipo);
+  if (!sql || !objeto) throw new ErrorDatos('Ese dato no existe.', undefined, 404);
   const db = base(c);
+  // C-PERMISOS-FINOS: el dato de alguien fuera de su zona o sus servicios no se muestra NI se anota
+  // como visto; el intento rechazado queda en el registro de acciones (como cualquier 403).
+  if (await objetoFueraDeAlcance(db, accesoDe(c), objeto, c.req.param('id'))) {
+    await anotarAccion(db, u.id, accesoDe(c) ?? undefined, 'GET', c.req.path, 403);
+    throw new ErrorDatos('Ese dato no está en tu zona de trabajo.', 'alcance', 403);
+  }
   const f = await db
     .prepare(sql)
     .bind(c.req.param('id'))

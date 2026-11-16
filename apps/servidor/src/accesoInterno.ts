@@ -2,10 +2,13 @@ import {
   type AccesoInterno,
   type Alcance,
   type AsignacionInterna,
+  type ObjetoAlcance,
   type AjustePersona,
   ALCANCE_TOTAL,
+  ALCANCE_RUTAS_ADMIN,
   LISTA_RUTAS_ADMIN,
   PERFILES_INTERNOS,
+  PERMISOS_SOLO_ALCANCE_TOTAL,
   type PerfilInterno,
   PLANTILLAS_SISTEMA,
   SERVICIOS_ALCANCE,
@@ -33,7 +36,7 @@ import { ErrorDatos } from './validar';
 
 /** Cambia si cambia el mapa de rutas o las plantillas de fábrica: los cálculos viejos se rehacen. */
 export const HUELLA_PERMISOS = (() => {
-  const texto = JSON.stringify([LISTA_RUTAS_ADMIN, PLANTILLAS_SISTEMA]);
+  const texto = JSON.stringify([LISTA_RUTAS_ADMIN, PLANTILLAS_SISTEMA, ALCANCE_RUTAS_ADMIN]);
   let h = 0;
   for (let i = 0; i < texto.length; i++) h = (Math.imul(31, h) + texto.charCodeAt(i)) | 0;
   return `p1-${(h >>> 0).toString(36)}`;
@@ -207,6 +210,7 @@ export async function leerAccesoInterno(
     asignaciones: lista,
     ajustes: (ajustes?.results ?? []) as AjustePersona[],
     rutas: LISTA_RUTAS_ADMIN,
+    soloAlcanceTotal: PERMISOS_SOLO_ALCANCE_TOTAL,
   });
   return { ...acceso, huella: HUELLA_PERMISOS };
 }
@@ -298,6 +302,46 @@ export async function anotarAccesoSensible(
   }
 }
 
+/** Lo ya anotado en este proceso (usuario·objeto·tipo → hora): evita leer la base en cada refresco. */
+const anotadosRecientes = new Map<string, number>();
+/** Para las pruebas: olvida lo anotado en memoria (como un proceso nuevo). */
+export function olvidarAnotadosRecientes() {
+  anotadosRecientes.clear();
+}
+
+/**
+ * Como `anotarAccesoSensible`, pero UNA vez por persona, objeto y tipo en cada ventana (30 minutos
+ * por defecto), sin depender de lo que mande la pantalla: lo usa el chat del pedido, que se
+ * refresca cada pocos segundos. Primero mira la memoria del proceso; si no está, mira las últimas 50
+ * filas de esa persona (por su índice) y solo escribe si no hay una dentro de la ventana. Así nunca
+ * falta la fila, y refrescar no escribe nada (presupuesto de filas).
+ */
+export async function anotarAccesoSensibleUnaVez(
+  db: D1Database,
+  usuarioId: string,
+  objeto: string,
+  tipo: TipoAccesoSensible,
+  permiso: string,
+  ventanaMin = 30,
+  ahora = Date.now(),
+) {
+  const clave = `${usuarioId}|${objeto}|${tipo}`;
+  const ventana = ventanaMin * 60_000;
+  const antes = anotadosRecientes.get(clave);
+  if (antes !== undefined && ahora - antes < ventana) return;
+  const reciente = await db
+    .prepare(
+      `SELECT 1 AS hay FROM (SELECT objeto, tipo, creado_en FROM accesos_sensibles
+          WHERE usuario_id = ? ORDER BY id DESC LIMIT 50)
+        WHERE objeto = ? AND tipo = ? AND creado_en >= datetime(?, 'unixepoch') LIMIT 1`,
+    )
+    .bind(usuarioId, objeto.slice(0, 120), tipo, Math.floor((ahora - ventana) / 1000))
+    .first<{ hay: number }>();
+  if (!reciente) await anotarAccesoSensible(db, usuarioId, objeto, tipo, permiso);
+  if (anotadosRecientes.size > 2000) anotadosRecientes.clear();
+  anotadosRecientes.set(clave, ahora);
+}
+
 /**
  * Retención de 90 días, dentro de la limpieza de fotos que ya corre cada hora (sin tarea nueva).
  * Las filas entran en orden de tiempo, así que se mira el comienzo por la llave (como mucho 200
@@ -323,7 +367,15 @@ export async function depurarAccesosSensibles(db: D1Database, dias: number): Pro
  */
 export function filtroAlcance(
   acceso: Pick<AccesoInterno, 'alcance'> | null,
-  columnas: { zona: string; servicio?: string },
+  columnas: {
+    zona: string;
+    servicio?: string;
+    /**
+     * En vez de una expresión, una condición sobre la LISTA de servicios permitidos (para lo que
+     * tiene varios servicios: un cliente, un conductor). Recibe la lista ya armada, «(?, ?)».
+     */
+    servicioEn?: (lista: string) => string;
+  },
 ): { sql: string; valores: unknown[] } {
   if (!acceso || alcanceEsTotal(acceso.alcance)) return { sql: '', valores: [] };
   const a = acceso.alcance;
@@ -343,7 +395,16 @@ export function filtroAlcance(
     }
     partes.push(donde.length ? `(${donde.join(' OR ')})` : '0');
   }
-  if (a.servicios !== null && columnas.servicio) {
+  if (a.servicios !== null && columnas.servicioEn) {
+    if (!a.servicios.length) partes.push('0');
+    else {
+      const marca = '\u0000SERVICIOS\u0000';
+      const cond = columnas.servicioEn(marca);
+      const veces = cond.split(marca).length - 1;
+      partes.push(cond.split(marca).join(`(${a.servicios.map(() => '?').join(', ')})`));
+      for (let i = 0; i < veces; i++) valores.push(...a.servicios);
+    }
+  } else if (a.servicios !== null && columnas.servicio) {
     partes.push(
       a.servicios.length
         ? `${columnas.servicio} IN (${a.servicios.map(() => '?').join(', ')})`
@@ -382,9 +443,242 @@ export function dentroDelAlcance(
   return true;
 }
 
+// ───────────────────── Alcance de cualquier objeto (fichas, listas, «Ver dato») ─────────────────────
+
+type Condicion = { sql: string; valores: unknown[] };
+
+/** El servicio de un conductor: el de cada habilitación (comida también vale para tiendas). */
+const servicioHabilitacion = (h: string) =>
+  `(CASE WHEN ${h}.servicio_id IN ('carro', 'moto', 'comida') THEN ${h}.servicio_id ELSE 'envios' END)`;
+
+function condPedido(a: AccesoInterno, id: string): Condicion {
+  const f = filtroAlcance(a, {
+    zona: 'apd.zona_id',
+    servicio: servicioPedidoSql('apr.tipo_comercio'),
+  });
+  return {
+    sql: `EXISTS (SELECT 1 FROM pedidos apd JOIN restaurantes apr ON apr.id = apd.restaurante_id WHERE apd.id = ${id}${f.sql})`,
+    valores: f.valores,
+  };
+}
+function condViaje(a: AccesoInterno, id: string): Condicion {
+  const f = filtroAlcance(a, {
+    zona: 'avo.zona_id',
+    servicio: servicioOperacionSql('avo.servicio_id'),
+  });
+  return {
+    sql: `EXISTS (SELECT 1 FROM operaciones avo WHERE avo.id = ${id}${f.sql})`,
+    valores: f.valores,
+  };
+}
+function condTicket(a: AccesoInterno, id: string): Condicion {
+  const f = filtroAlcance(a, { zona: 'atk.zona_id', servicio: servicioTicketSql('atk') });
+  return {
+    sql: `EXISTS (SELECT 1 FROM tickets atk WHERE atk.id = ${id}${f.sql})`,
+    valores: f.valores,
+  };
+}
+function condRestaurante(a: AccesoInterno, id: string): Condicion {
+  const f = filtroAlcance(a, {
+    zona: 'ars.zona_id',
+    servicio: servicioPedidoSql('ars.tipo_comercio'),
+  });
+  return {
+    sql: `EXISTS (SELECT 1 FROM restaurantes ars WHERE ars.id = ${id}${f.sql})`,
+    valores: f.valores,
+  };
+}
+/**
+ * Un cliente (regla decidida, la más estricta que sigue dejando trabajar): se ve si tiene al menos
+ * un pedido o un viaje dentro del alcance (ciudad Y servicio), o — solo para quien no tiene
+ * servicios limitados — si la ciudad de su cuenta es una de las suyas. Un cliente sin pedidos ni
+ * ciudad no lo ve nadie con alcance limitado.
+ */
+function condCliente(a: AccesoInterno, id: string): Condicion {
+  const p = filtroAlcance(a, {
+    zona: 'acp.zona_id',
+    servicio: servicioPedidoSql('acr.tipo_comercio'),
+  });
+  const o = filtroAlcance(a, {
+    zona: 'aco.zona_id',
+    servicio: servicioOperacionSql('aco.servicio_id'),
+  });
+  const partes = [
+    `EXISTS (SELECT 1 FROM pedidos acp JOIN restaurantes acr ON acr.id = acp.restaurante_id WHERE acp.cliente_id = ${id}${p.sql})`,
+    `EXISTS (SELECT 1 FROM operaciones aco WHERE aco.cliente_id = ${id}${o.sql})`,
+  ];
+  const valores = [...p.valores, ...o.valores];
+  if (a.alcance.servicios === null) {
+    const z = filtroAlcance(a, { zona: 'acu.zona_id' });
+    partes.push(`EXISTS (SELECT 1 FROM usuarios acu WHERE acu.id = ${id}${z.sql})`);
+    valores.push(...z.valores);
+  }
+  return { sql: `(${partes.join(' OR ')})`, valores };
+}
+/**
+ * Un repartidor o conductor: su ciudad (la de repartidor, o la de su cuenta) y, si la persona tiene
+ * servicios limitados, al menos una habilitación en uno de ellos.
+ */
+function condRepartidor(a: AccesoInterno, id: string): Condicion {
+  const f = filtroAlcance(a, {
+    zona: 'COALESCE(ard.zona_id, aru.zona_id)',
+    servicioEn: (lista) =>
+      `EXISTS (SELECT 1 FROM habilitaciones arh WHERE arh.conductor_id = aru.id AND (${servicioHabilitacion('arh')} IN ${lista} OR (arh.servicio_id = 'comida' AND 'tiendas' IN ${lista})))`,
+  });
+  return {
+    sql: `EXISTS (SELECT 1 FROM usuarios aru LEFT JOIN repartidores ard ON ard.usuario_id = aru.id WHERE aru.id = ${id}${f.sql})`,
+    valores: f.valores,
+  };
+}
+/** Una cuenta cualquiera: según su rol (el dueño de un comercio, por su comercio). */
+function condPersona(a: AccesoInterno, id: string): Condicion {
+  const c = condCliente(a, 'apu.id');
+  const r = condRepartidor(a, 'apu.id');
+  const n = filtroAlcance(a, {
+    zona: 'apn.zona_id',
+    servicio: servicioPedidoSql('apn.tipo_comercio'),
+  });
+  return {
+    sql: `EXISTS (SELECT 1 FROM usuarios apu WHERE apu.id = ${id} AND ((apu.rol = 'cliente' AND ${c.sql}) OR (apu.rol = 'repartidor' AND ${r.sql}) OR (apu.rol = 'restaurante' AND EXISTS (SELECT 1 FROM restaurantes apn WHERE apn.dueno_id = apu.id${n.sql}))))`,
+    valores: [...c.valores, ...r.valores, ...n.valores],
+  };
+}
+
+/** De qué tabla sale cada objeto y cómo se decide si está en el alcance. */
+const OBJETOS: Record<
+  ObjetoAlcance,
+  { tabla: string; cond: (a: AccesoInterno, id: string) => Condicion }
+> = {
+  pedido: { tabla: 'pedidos', cond: condPedido },
+  viaje: { tabla: 'operaciones', cond: condViaje },
+  ticket: { tabla: 'tickets', cond: condTicket },
+  cliente: { tabla: 'usuarios', cond: condCliente },
+  repartidor: { tabla: 'usuarios', cond: condRepartidor },
+  restaurante: { tabla: 'restaurantes', cond: condRestaurante },
+  persona: { tabla: 'usuarios', cond: condPersona },
+  vehiculo: {
+    tabla: 'vehiculos',
+    cond: (a, id) => {
+      const r = condRepartidor(a, 'avh.conductor_id');
+      return {
+        sql: `EXISTS (SELECT 1 FROM vehiculos avh WHERE avh.id = ${id} AND ${r.sql})`,
+        valores: r.valores,
+      };
+    },
+  },
+  papel: {
+    tabla: 'conductor_documentos',
+    cond: (a, id) => {
+      const r = condRepartidor(a, 'apl.conductor_id');
+      return {
+        sql: `EXISTS (SELECT 1 FROM conductor_documentos apl WHERE apl.id = ${id} AND ${r.sql})`,
+        valores: r.valores,
+      };
+    },
+  },
+  emergencia: {
+    tabla: 'emergencias_viaje',
+    cond: (a, id) => {
+      const v = condViaje(a, 'aem.operacion_id');
+      return {
+        sql: `EXISTS (SELECT 1 FROM emergencias_viaje aem WHERE aem.id = ${id} AND ${v.sql})`,
+        valores: v.valores,
+      };
+    },
+  },
+  cancelacion: {
+    tabla: 'solicitudes_cancelacion',
+    cond: (a, id) => {
+      const p = condPedido(a, 'acn.pedido_id');
+      return {
+        sql: `EXISTS (SELECT 1 FROM solicitudes_cancelacion acn WHERE acn.id = ${id} AND ${p.sql})`,
+        valores: p.valores,
+      };
+    },
+  },
+};
+
+/** Una habilitación (conductor + servicio): la del conductor Y el servicio de la propia fila. */
+export function alcanceHabilitacionSql(acceso: AccesoInterno | null, h: string): Condicion {
+  if (!acceso || alcanceEsTotal(acceso.alcance)) return { sql: '', valores: [] };
+  const r = condRepartidor(acceso, `${h}.conductor_id`);
+  const s = filtroAlcance(
+    { alcance: { paises: null, zonas: null, servicios: acceso.alcance.servicios } },
+    {
+      zona: '',
+      servicioEn: (lista) =>
+        `(${servicioHabilitacion(h)} IN ${lista} OR (${h}.servicio_id = 'comida' AND 'tiendas' IN ${lista}))`,
+    },
+  );
+  return { sql: ` AND ${r.sql}${s.sql}`, valores: [...r.valores, ...s.valores] };
+}
+
+const OBJETOS_MAPA = new Map(
+  Object.entries(OBJETOS) as [ObjetoAlcance, (typeof OBJETOS)[ObjetoAlcance]][],
+);
+function objetoDe(objeto: ObjetoAlcance) {
+  const o = OBJETOS_MAPA.get(objeto);
+  if (!o) throw new Error(`alcance: objeto desconocido ${objeto}`);
+  return o;
+}
+
+/**
+ * El alcance de un objeto como condición de una consulta: `idExpr` es la columna con su id
+ * (`u.id`, `r.id`, `t.pedido_id`…). Devuelve « AND (…)» listo para pegar, o nada con alcance total.
+ * Cada parte va por la llave del objeto (o el índice por cliente o por conductor): ninguna recorre
+ * una tabla.
+ */
+export function alcanceObjetoSql(
+  acceso: AccesoInterno | null,
+  objeto: ObjetoAlcance,
+  idExpr: string,
+): Condicion {
+  if (!acceso || alcanceEsTotal(acceso.alcance)) return { sql: '', valores: [] };
+  const c = objetoDe(objeto).cond(acceso, idExpr);
+  return { sql: ` AND ${c.sql}`, valores: c.valores };
+}
+
+/**
+ * ¿Ese objeto existe y está fuera del alcance? Una lectura (dos subconsultas por la llave). Lo usan
+ * las fichas (el intermedio, desde `ALCANCE_RUTAS_ADMIN`) y «Ver dato».
+ */
+export async function objetoFueraDeAlcance(
+  db: D1Database,
+  acceso: AccesoInterno | null,
+  objeto: ObjetoAlcance,
+  id: string,
+): Promise<boolean> {
+  if (!acceso || alcanceEsTotal(acceso.alcance)) return false;
+  const o = objetoDe(objeto);
+  const c = o.cond(acceso, 'ob.id');
+  const f = await db
+    .prepare(
+      `WITH ob(id) AS (SELECT ?)
+       SELECT EXISTS (SELECT 1 FROM ${o.tabla} t, ob WHERE t.id = ob.id) AS existe,
+              (SELECT ${c.sql} FROM ob) AS dentro`,
+    )
+    .bind(id, ...c.valores)
+    .first<{ existe: number; dentro: number | null }>();
+  return Number(f?.existe ?? 0) === 1 && Number(f?.dentro ?? 0) !== 1;
+}
+
+/** Un objeto fuera del alcance: como si no existiera (404, la misma respuesta que «no existe»). */
+export async function exigirObjetoEnAlcance(
+  db: D1Database,
+  acceso: AccesoInterno | null,
+  objeto: ObjetoAlcance,
+  id: string,
+) {
+  if (await objetoFueraDeAlcance(db, acceso, objeto, id))
+    throw new ErrorDatos('Eso no existe o no está en tu zona de trabajo.', undefined, 404);
+}
+
 /** El alcance para las listas de pedidos (columnas con `+`: no cambia el índice de la consulta). */
 export function alcancePedidos(c: Ctx) {
-  return filtroAlcance(accesoDe(c), {
+  return alcancePedidosDe(accesoDe(c));
+}
+export function alcancePedidosDe(acceso: AccesoInterno | null) {
+  return filtroAlcance(acceso, {
     zona: '+p.zona_id',
     servicio: servicioPedidoSql(
       '(SELECT tipo_comercio FROM restaurantes WHERE id = p.restaurante_id)',
@@ -419,18 +713,7 @@ export async function alcanceViajes(
 
 /** Un pedido fuera del alcance de la persona del equipo: como si no existiera (404). */
 export async function exigirPedidoEnAlcance(c: Ctx, db: D1Database, pedidoId: string) {
-  const acceso = accesoDe(c);
-  if (!acceso || alcanceEsTotal(acceso.alcance)) return;
-  const f = await db
-    .prepare(
-      `SELECT p.zona_id AS zona, z.pais, ${servicioPedidoSql('r.tipo_comercio')} AS servicio
-         FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id
-         LEFT JOIN zonas z ON z.id = p.zona_id WHERE p.id = ?`,
-    )
-    .bind(pedidoId)
-    .first<{ zona: string | null; pais: string | null; servicio: ServicioAlcance | null }>();
-  if (f && !dentroDelAlcance(acceso, f))
-    throw new ErrorDatos('Eso no existe o no está en tu zona de trabajo.', undefined, 404);
+  await exigirObjetoEnAlcance(db, accesoDe(c), 'pedido', pedidoId);
 }
 
 // ─────────────────────────────── Datos personales enmascarados ───────────────────────────────

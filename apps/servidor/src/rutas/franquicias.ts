@@ -6,6 +6,7 @@ import { leerPoligono } from '../territorio';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { paisDeZona } from '../internacional/paises';
+import { accesoDe, alcanceObjetoSql, filtroAlcance } from '../accesoInterno';
 
 /**
  * Franquicias y superadmin (C-FRANQUICIAS, C-TERRITORIO). Una ciudad puede tener VARIAS franquicias;
@@ -236,8 +237,27 @@ async function correoConfirmado(db: D1Database, usuarioId: string): Promise<bool
 franquicias.get('/admin/resumen', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
+  // C-PERMISOS-FINOS: con alcance limitado, solo sus ciudades (las franquicias y las métricas de
+  // pedidos de esas ciudades) y los tickets de su alcance.
+  // El resumen es el del reparto de comida y tiendas (franquicias, restaurantes, repartidores): quien
+  // trabaja solo en otros servicios (Moto, Carro, envíos) no lo ve.
+  const acceso = accesoDe(c);
+  const veResumen =
+    !acceso ||
+    acceso.alcance.servicios === null ||
+    acceso.alcance.servicios.some((x) => x === 'comida' || x === 'tiendas');
+  const enZona = (col: string) => {
+    const f = filtroAlcance(acceso && { alcance: { ...acceso.alcance, servicios: null } }, {
+      zona: col,
+    });
+    return veResumen ? f : { sql: `${f.sql} AND 0`, valores: f.valores };
+  };
+  const alF = enZona('f.zona_id');
+  const alZ = enZona('z.id');
+  const alT = alcanceObjetoSql(acceso, 'ticket', 't.id');
   const { results: lista } = await db
-    .prepare(`${SELECT_FRANQUICIA} ORDER BY z.nombre, f.nombre`)
+    .prepare(`${SELECT_FRANQUICIA} WHERE 1${alF.sql} ORDER BY z.nombre, f.nombre`)
+    .bind(...alF.valores)
     .all<FilaFranquicia>();
   const filas: (ReturnType<typeof publica> & { metricas: Metricas; areas: number })[] = [];
   for (const f of lista) {
@@ -252,8 +272,9 @@ franquicias.get('/admin/resumen', async (c) => {
         (SELECT COUNT(*) FROM areas a WHERE a.zona_id = z.id AND a.estado <> 'cerrada') AS areas,
         (SELECT COUNT(*) FROM areas a WHERE a.zona_id = z.id AND a.estado <> 'cerrada'
            AND NOT EXISTS (SELECT 1 FROM franquicia_areas fa WHERE fa.area_id = a.id)) AS areas_libres
-       FROM zonas z ORDER BY z.activa DESC, z.nombre`,
+       FROM zonas z WHERE 1${alZ.sql} ORDER BY z.activa DESC, z.nombre`,
     )
+    .bind(...alZ.valores)
     .all<{
       id: string;
       nombre: string;
@@ -277,10 +298,14 @@ franquicias.get('/admin/resumen', async (c) => {
     });
   const cuenta = (e: string) => filas.filter((f) => f.estado === e).length;
   const leads = await db
-    .prepare("SELECT COUNT(*) AS n FROM tickets WHERE tipo = 'franquicia' AND estado <> 'cerrado'")
+    .prepare(
+      `SELECT COUNT(*) AS n FROM tickets t WHERE t.tipo = 'franquicia' AND t.estado <> 'cerrado'${alT.sql}`,
+    )
+    .bind(...alT.valores)
     .first<{ n: number }>();
   const abiertos = await db
-    .prepare("SELECT COUNT(*) AS n FROM tickets WHERE estado = 'abierto'")
+    .prepare(`SELECT COUNT(*) AS n FROM tickets t WHERE t.estado = 'abierto'${alT.sql}`)
+    .bind(...alT.valores)
     .first<{ n: number }>();
   return c.json({
     totales: {

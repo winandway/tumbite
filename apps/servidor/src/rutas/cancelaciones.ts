@@ -15,6 +15,7 @@ import { avisarAlRepartidor } from './operacion';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { crearTicket } from './tickets';
+import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
 
 /**
  * C-CANCELAR-LISTO (10 nov 2026, punto D1) — todos los países.
@@ -166,13 +167,15 @@ cancelaciones.get('/admin/cancelaciones', async (c) => {
     .catch('pendiente')
     .parse(c.req.query('estado'));
   const pedido = c.req.query('pedido');
+  // C-PERMISOS-FINOS: solo las solicitudes de pedidos de su alcance.
+  const alc = alcanceObjetoSql(accesoDe(c), 'pedido', 's.pedido_id');
   const { results } = await base(c)
     .prepare(
       `SELECT s.*, r.nombre AS restaurante FROM solicitudes_cancelacion s
        JOIN restaurantes r ON r.id = s.restaurante_id
-       WHERE ${pedido ? 's.pedido_id = ?' : 's.estado = ?'} ORDER BY s.creado_en DESC LIMIT 100`,
+       WHERE ${pedido ? 's.pedido_id = ?' : 's.estado = ?'}${alc.sql} ORDER BY s.creado_en DESC LIMIT 100`,
     )
-    .bind(pedido ?? estado)
+    .bind(pedido ?? estado, ...alc.valores)
     .all<Fila>();
   return c.json({ solicitudes: results.map(aSolicitud) });
 });

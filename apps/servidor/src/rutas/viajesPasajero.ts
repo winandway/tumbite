@@ -49,7 +49,7 @@ import { zonaPara } from './zonas';
 import { REUSO_RUTA_MINUTOS, REUSO_RUTA_RADIO_M, rutaParaCotizar } from '../rutaPorCalles';
 import { multiplicadorVigente } from '../viajesDinamica';
 import { paradasDe } from './paradasViaje';
-import { accesoDe, filtroAlcance, servicioOperacionSql } from '../accesoInterno';
+import { accesoDe, filtroAlcance, servicioOperacionSql, tienePermiso } from '../accesoInterno';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -1482,8 +1482,13 @@ viajesPasajero.get('/admin/viajes', async (c) => {
         String(b.creado_en).localeCompare(String(a.creado_en)),
     )
     .slice(0, 50);
+  // C-PERMISOS-FINOS: el punto donde estaba quien pidió ayuda es la «ubicación en vivo» del viaje
+  // para el equipo: solo con `viajes.ubicacion_en_vivo` (la tiene la plantilla «Emergencias»).
+  const conUbicacion = tienePermiso(c, 'viajes.ubicacion_en_vivo');
   return c.json({
-    emergencias: emergencias.results,
+    emergencias: conUbicacion
+      ? emergencias.results
+      : emergencias.results.map((e) => ({ ...e, lat: null, lng: null })),
     viajes,
     tarifas: tarifas.results.map((f) => ({ ...tarifaPublica(f), zonaNombre: f.zona_nombre })),
   });

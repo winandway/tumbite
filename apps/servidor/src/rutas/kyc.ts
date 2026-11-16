@@ -26,6 +26,7 @@ import {
   procesarAvisoCheckr,
 } from '../antecedentes';
 import { guardarDecision, motorEncendido, pedirDecision, textoMotivos } from '../verificacionAuto';
+import { accesoDe, alcanceObjetoSql } from '../accesoInterno';
 
 /**
  * KYC: verificación de identidad de repartidores y dueños de restaurante, hecha por Divoox.
@@ -400,19 +401,22 @@ kyc.get('/admin/kyc', async (c) => {
   exigir(c, 'admin');
   const estado = c.req.query('estado') || 'pendiente';
   const despues = c.req.query('despues') ?? '';
+  // C-PERMISOS-FINOS: las verificaciones de las personas de su alcance (también los totales).
+  const alc = alcanceObjetoSql(accesoDe(c), 'persona', 'k.usuario_id');
   const { results } = await base(c)
     .prepare(
       `SELECT k.usuario_id AS id, k.estado, k.doc_tipo AS docTipo, k.enviado_en AS enviado, k.local_distancia_m AS distancia,
         k.proxima_revision AS proxima, u.nombre, u.correo, u.rol, d.codigo, r.nombre AS restaurante
        FROM kyc k JOIN usuarios u ON u.id = k.usuario_id
        LEFT JOIN repartidores d ON d.usuario_id = k.usuario_id LEFT JOIN restaurantes r ON r.dueno_id = k.usuario_id
-       WHERE k.estado = ? ${despues ? 'AND k.enviado_en > ?' : ''} ORDER BY k.enviado_en LIMIT 51`,
+       WHERE k.estado = ? ${despues ? 'AND k.enviado_en > ?' : ''}${alc.sql} ORDER BY k.enviado_en LIMIT 51`,
     )
-    .bind(estado, ...(despues ? [despues] : []))
+    .bind(estado, ...(despues ? [despues] : []), ...alc.valores)
     .all<Record<string, unknown>>();
   const pagina = results.slice(0, 50);
   const { results: totales } = await base(c)
-    .prepare('SELECT estado, COUNT(*) AS n FROM kyc GROUP BY estado')
+    .prepare(`SELECT estado, COUNT(*) AS n FROM kyc k WHERE 1${alc.sql} GROUP BY estado`)
+    .bind(...alc.valores)
     .all<{ estado: string; n: number }>();
   return c.json({
     solicitudes: pagina.map((x) => ({
