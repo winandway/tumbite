@@ -204,6 +204,7 @@
 - [Linking a support ticket to an order or ride · Divoox](https://divoox.com/docs/operations/link-support-ticket): Open a claim from a ride file or from the Tickets inbox, linked to the order or ride by its code, and filter the inbox by service.
 - [Time zone and 12/24-hour clock · Divoox](https://divoox.com/docs/operations/time-zone-clock): In Configuration, choose how you read times: 12 or 24 hours, and the time zone of each city or one fixed zone for everything.
 - [Adding team members and permissions · Divoox](https://divoox.com/docs/operations/add-team-members-permissions): Invite a new person to the operations panel with a role template, a scope by city and service, and an optional expiry date, and see everything they did and
+- [Resolving an expired card authorization · Divoox](https://divoox.com/docs/operations/resolve-expired-card-authorization): When a card authorization expires before delivery, the charge goes under review. From the order file you check the real payment status and close it without
 
 ## Countries
 
