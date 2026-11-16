@@ -11,7 +11,11 @@ const destino = join(raiz, 'apps', 'panel', 'public', 'docs');
 let n = 0;
 for (const archivo of readdirSync(origen).filter((f) => f.endsWith('.png'))) {
   // Las del panel del restaurante y las páginas web (web-…) quedan a su ancho.
-  const celular = !archivo.startsWith('restaurante-') && !archivo.startsWith('web-');
+  // Y las tomadas en una computadora (`-computadora-`), como la cámara web de la foto de la puerta.
+  const celular =
+    !archivo.startsWith('restaurante-') &&
+    !archivo.startsWith('web-') &&
+    !archivo.includes('-computadora-');
   execFileSync('cwebp', [
     '-quiet',
     '-q',

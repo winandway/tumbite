@@ -1,6 +1,7 @@
 import type { Idioma } from '@tumbite/compartido';
 import type { Captura, Guia, SeccionDocs } from './guias';
 import { GUIAS_FLEX_ENVIOS } from './semanaFlexEnvios';
+import { GUIAS_FOTO_PUERTA } from './fotoPuerta';
 
 /**
  * C-DOCS-SEMANA (14 nov 2026): las guías públicas de lo construido la semana del 9 al 14 de noviembre,
@@ -349,13 +350,14 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
   },
 };
 
-/** Junta las listas por sección: Comida en Venezuela y luego Flex y Envíos. */
+/** Junta las listas por sección: Comida en Venezuela, Flex y Envíos, y la foto de la puerta. */
 function juntar(idioma: Idioma): PorSeccion {
   const a = new Map(Object.entries(idioma === 'es' ? COMIDA_VE.es : COMIDA_VE.en));
   const b = new Map(Object.entries(idioma === 'es' ? GUIAS_FLEX_ENVIOS.es : GUIAS_FLEX_ENVIOS.en));
-  const ids = new Set([...a.keys(), ...b.keys()]);
+  const c = new Map(Object.entries(idioma === 'es' ? GUIAS_FOTO_PUERTA.es : GUIAS_FOTO_PUERTA.en));
+  const ids = new Set([...a.keys(), ...b.keys(), ...c.keys()]);
   return Object.fromEntries(
-    [...ids].map((id) => [id, [...(a.get(id) ?? []), ...(b.get(id) ?? [])]]),
+    [...ids].map((id) => [id, [...(a.get(id) ?? []), ...(b.get(id) ?? []), ...(c.get(id) ?? [])]]),
   ) as PorSeccion;
 }
 

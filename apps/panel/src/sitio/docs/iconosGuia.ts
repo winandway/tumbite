@@ -6,6 +6,7 @@ import {
   ChartColumn,
   CircleHelp,
   CreditCard,
+  DoorOpen,
   FileText,
   GraduationCap,
   Handshake,
@@ -49,6 +50,8 @@ const REGLAS: [RegExp, LucideIcon][] = [
   // C-DOCS-SEMANA: el taxi y la moto con su propio dibujo.
   [/ride-car|drive-car/, CarTaxiFront],
   [/ride-moto|drive-moto/, Bike],
+  // C-FOTO-PUERTA: la foto de la puerta (cliente y repartidor) con una puerta.
+  [/door-photo/, DoorOpen],
   [/schedule|shift|hours|holiday/, CalendarClock],
   [/reorder|again/, Repeat],
   [/group/, Users],
