@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-16",
+  "actualizado": "2026-11-16T23:23:17Z",
   "version": "fe71f3f",
   "ahora": "16 nov: piloto EN VIVO de Divoox en El Vigía y Tucaní. Las dos zonas están activas en divoox.com con mototaxi, comida y envíos en dólares (bolívares a la tasa del BCV). Se probaron en el sitio real un viaje de moto, un pedido de comida y un envío con cuentas del equipo. Las apps de Android de la versión real están en la página de apps.",
   "proximo": [
@@ -433,6 +433,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-16",
+      "titulo": "Conductor de confianza y viajes fijos",
+      "texto": "El cliente marca a su conductor de confianza desde «Mis viajes» y, al pedir Moto, Carro o un envío, el viaje le llega primero a él durante un minuto; si no lo toma, pasa a los demás. Nuevos «Viajes fijos»: la escuela, el trabajo o cualquier viaje que se repite, con días, ida y vuelta, pausa y saltar un día; cada viaje se reserva solo un día antes. Viajes de menores con PIN, solo con conductores que aceptan llevar menores, y avisos al responsable al recoger y al dejar. En Driver, «Clientes fijos» con la agenda de la semana y «No puedo». En el panel, la pestaña «Viajes fijos». Publicado en divoox.com, con guías en Docs en español e inglés."
+    },
     {
       "fecha": "2026-11-16",
       "titulo": "Docs públicos solo para clientes y terceros",
