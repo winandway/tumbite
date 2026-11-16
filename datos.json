@@ -435,6 +435,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-16",
+      "titulo": "Docs públicos solo para clientes y terceros",
+      "texto": "Por decisión de Richard, las guías que explicaban el panel interno del equipo salieron de Docs públicos: sus direcciones ya no existen y no aparecen en buscadores. Ahora viven en una ayuda interna dentro del panel del equipo, con su botón «?», solo para quien tiene sesión del equipo, en español e inglés y con capturas. Docs sigue con todo lo de clientes, restaurantes, repartidores y empresas."
+    },
+    {
+      "fecha": "2026-11-16",
       "titulo": "Piloto en vivo de El Vigía y Tucaní",
       "texto": "Tucaní quedó creada como zona nueva y las dos ciudades tienen encendidos el mototaxi, la comida y los envíos de A a B, con precios en dólares y referencia en bolívares a la tasa del BCV. Se probó en el sitio real, con cuentas del equipo: un viaje de moto de 1,32 dólares (la comisión del 10 % salió del saldo prepago), un pedido de comida de 5,25 dólares cobrado en efectivo y cuadrado, y la recarga de saldo con código desde el punto del equipo. Nuevo: botón de pánico que avisa al responsable de cada zona, pantalla para emitir códigos de recarga, y la versión real de las apps de Android en la página de apps, aparte de las de prueba. Envíos de A a B también probado en el sitio real (1,32 dólares, foto al recoger y al entregar, cierre con el PIN de quien recibe). Las tres apps de Android de la versión real (Driver 22, cliente 24, Restaurants 15) se bajan directo, sin Google Play, desde la página de apps. Falta: sumar la firma de esos archivos a la llave del mapa de Google (sin eso el mapa sale gris) y los teléfonos de los responsables de zona."
     },
