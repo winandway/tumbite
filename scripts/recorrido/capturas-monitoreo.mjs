@@ -242,6 +242,8 @@ const P = {
   cancelado: uuid('e93c5a07', 5),
   vigia: uuid('a7c3e9b2', 6),
   vigiaVivo: uuid('f17b20c3', 7),
+  // Mismo código corto que `completo` (A7C3E1), también de Novi: la búsqueda en inglés muestra los dos.
+  repetido: uuid('a7c3e1b4', 8),
 };
 const CASA_NOVI = { dir: '41200 Ten Mile Rd, Novi, MI', lat: 42.4705, lng: -83.452 };
 pedido({
@@ -390,6 +392,25 @@ historial(P.cancelado, [
 sql.push(
   `INSERT OR IGNORE INTO bitacora_pedidos (pedido_id, evento, detalle, creado_en) VALUES (${q(P.cancelado)}, 'cancelado_sin_respuesta', '6 min', ${m(-293)});`,
 );
+
+// Un pedido cerrado de Novi con el MISMO código corto que el entregado (A7C3E1): así el ejemplo del
+// buscador en inglés muestra un código repetido sin salir de Novi. Cerrado: no cambia lo que está vivo.
+pedido({
+  id: P.repetido,
+  cliente: 'mon-c-morgan',
+  rest: 'mon-r-pizza',
+  rep: null,
+  estado: 'cancelado',
+  total: 2150,
+  zona: ZONAS.novi.id,
+  ...CASA_NOVI,
+  lineas: [{ nombreEs: 'Pepperoni pizza', cantidad: 1 }],
+  t: { creado: -420, pagado: -419, cancelado: -412 },
+});
+historial(P.repetido, [
+  ['pagado', -419, 'mon-c-morgan'],
+  ['cancelado', -412, null],
+]);
 
 // El Vigía (español).
 const CASA_VIGIA = { dir: 'Calle 5 con Av. 15, El Vigía, Mérida', lat: 8.6105, lng: -71.644 };
@@ -735,34 +756,48 @@ for (const idioma of ['en', 'es']) {
   const pedidoFicha = idioma === 'en' ? P.completo : P.vigia;
   const viajeFicha = idioma === 'en' ? V.auto : V.motoVigia;
   const zona = idioma === 'en' ? ZONAS.novi.id : ZONAS.vigia.id;
-  await captura('ficha-pedido', `${BASE}/orders/${pedidoFicha}`, idioma, async (p) => {
-    await p
-      .getByRole('button', { name: idioma === 'en' ? 'View photo' : 'Ver foto' })
-      .first()
-      .click();
-    await p.waitForSelector('img.ficha-foto-imagen:not(.ficha-foto-oculta)');
-  });
-  await captura('ficha-viaje', `${BASE}/rides/${viajeFicha}`, idioma);
-  if (idioma === 'en') {
-    await captura('ficha-viaje-emergencia', `${BASE}/rides/${V.moto}`, idioma);
-    await captura('ficha-envio', `${BASE}/rides/${V.envio}`, idioma, async (p) => {
-      await p.getByRole('button', { name: 'View photo' }).first().click();
+  // SOLO=buscador-en rehace únicamente esa captura (las demás no cambian).
+  const solo = process.env.SOLO;
+  const todo = !solo;
+  if (todo) {
+    await captura('ficha-pedido', `${BASE}/orders/${pedidoFicha}`, idioma, async (p) => {
+      await p
+        .getByRole('button', { name: idioma === 'en' ? 'View photo' : 'Ver foto' })
+        .first()
+        .click();
       await p.waitForSelector('img.ficha-foto-imagen:not(.ficha-foto-oculta)');
     });
+    await captura('ficha-viaje', `${BASE}/rides/${viajeFicha}`, idioma);
+    if (idioma === 'en') {
+      await captura('ficha-viaje-emergencia', `${BASE}/rides/${V.moto}`, idioma);
+      await captura('ficha-envio', `${BASE}/rides/${V.envio}`, idioma, async (p) => {
+        await p.getByRole('button', { name: 'View photo' }).first().click();
+        await p.waitForSelector('img.ficha-foto-imagen:not(.ficha-foto-oculta)');
+      });
+    }
+    await captura('pestanas-servicio', `${BASE}/orders?zona=${zona}`, idioma);
+    await captura('pestanas-moto', `${BASE}/orders?servicio=moto&zona=${zona}`, idioma);
+    await captura('bandeja-tickets', `${BASE}/tickets`, idioma);
+    await captura('horario', `${BASE}/configuration`, idioma);
   }
-  await captura('pestanas-servicio', `${BASE}/orders?zona=${zona}`, idioma);
-  await captura('pestanas-moto', `${BASE}/orders?servicio=moto&zona=${zona}`, idioma);
-  await captura('bandeja-tickets', `${BASE}/tickets`, idioma);
-  await captura('horario', `${BASE}/configuration`, idioma);
-  await captura('buscador', `${BASE}/orders`, idioma, async (p) => {
-    await p
-      .getByPlaceholder(
-        idioma === 'en' ? 'Order, customer, phone, or plate' : 'Pedido, cliente, teléfono o placa',
-      )
-      .click();
-    await p.keyboard.type('a7c', { delay: 60 });
-    await p.waitForTimeout(900);
-  });
+  if (todo || solo === `buscador-${idioma}`)
+    // En inglés, el ejemplo es de Novi y el código se repite entre dos pedidos de Novi; en español, de El Vigía.
+    await captura(
+      'buscador',
+      idioma === 'en' ? `${BASE}/orders?zona=${zona}` : `${BASE}/orders`,
+      idioma,
+      async (p) => {
+        await p
+          .getByPlaceholder(
+            idioma === 'en'
+              ? 'Order, customer, phone, or plate'
+              : 'Pedido, cliente, teléfono o placa',
+          )
+          .click();
+        await p.keyboard.type(idioma === 'en' ? 'a7c3e1' : 'a7c', { delay: 60 });
+        await p.waitForTimeout(900);
+      },
+    );
 }
 await navegador.close();
 console.log(`capturas: ${comprobaciones.length} en ${SALIDA}`);

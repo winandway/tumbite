@@ -48,6 +48,7 @@ const REGLAS: [RegExp, LucideIcon][] = [
   [/^monitor-/, ChartColumn],
   [/^read-order/, FileText],
   [/^time-zone/, Clock],
+  [/^add-team/, Users],
   [/^link-support/, LifeBuoy],
   [/customers-presentation/, ShoppingBag],
   [/restaurants-presentation/, Store],
