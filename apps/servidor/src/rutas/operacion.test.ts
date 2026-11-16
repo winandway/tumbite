@@ -725,7 +725,7 @@ describe('Manager con reglas y cancelación del cliente (C-MANAGER-1)', () => {
     const admin = await m.cuenta('admin');
     const r = await m.llamar('GET', `/datos/admin/pedidos/${id}`, undefined, admin.token);
     expect(r.estado).toBe(200);
-    const eventos = r.datos.pedido.bitacora.map((b: { evento: string }) => b.evento);
+    const eventos = r.datos.pedido.linea.map((b: { evento: string }) => b.evento);
     expect(eventos[0]).toBe('creado');
     expect(eventos).toContain('cancelado');
     expect(eventos).toContain('cancelado_por_cliente');
@@ -2588,7 +2588,7 @@ describe('GPS serio: llegada con dos lecturas, saltos imposibles y excepción de
     ).toBe(200);
     const ficha2 = await m.llamar('GET', `/datos/admin/pedidos/${id}`, undefined, admin.token);
     expect(ficha2.datos.pedido.excepcionUbicacion.autorizadaPor).toBe('Soporte Divoox');
-    expect(ficha2.datos.pedido.bitacora.map((b: { evento: string }) => b.evento)).toEqual(
+    expect(ficha2.datos.pedido.linea.map((b: { evento: string }) => b.evento)).toEqual(
       expect.arrayContaining(['ubicacion_sin_confirmar', 'ubicacion_autorizada']),
     );
   });

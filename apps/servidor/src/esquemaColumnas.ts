@@ -212,7 +212,9 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "repartidor_id",
     "estado",
-    "creada_en"
+    "creada_en",
+    "km",
+    "respondida_en"
   ],
   "calificaciones": [
     "pedido_id",
@@ -329,7 +331,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "pedido_id",
     "zona_id",
     "creado_en",
-    "actualizado_en"
+    "actualizado_en",
+    "operacion_id"
   ],
   "respuestas_guardadas": [
     "id",
@@ -1583,7 +1586,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "ganancia_centavos",
     "creada_en",
     "expira_en",
-    "respondida_en"
+    "respondida_en",
+    "km"
   ],
   "eventos_operacion": [
     "id",

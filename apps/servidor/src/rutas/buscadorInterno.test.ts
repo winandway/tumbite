@@ -225,7 +225,7 @@ describe('C-BUSCADOR-SERIO · el buscador de arriba del superadmin', () => {
     const { buscar } = await escenario();
     expect((await buscar(P_NOVI.toUpperCase())).salto).toBe(`/orders/${P_NOVI}`);
     expect((await buscar(RESTAURANTE_RARO)).salto).toBe(`/restaurants/${RESTAURANTE_RARO}`);
-    expect((await buscar(VIAJE)).salto).toBe(`/rides?q=${VIAJE}`);
+    expect((await buscar(VIAJE)).salto).toBe(`/rides/${VIAJE}`);
   });
 
   it('nombres sin acentos ni mayúsculas, desde la primera letra', async () => {
@@ -313,11 +313,24 @@ describe('C-BUSCADOR-SERIO · «Pedidos en curso» con la misma lógica', () => 
       estado: 'pago_pendiente',
       luz: 'verde',
     });
-    const cerrados = await lista('estado=cerrados');
+    const cerrados = await lista('estado=cerrados&servicio=comida');
     expect(cerrados.pedidos.map((p) => p.id)).toEqual([P_NOVI, P_MONTO, P_BORRADO, P_MONTO_VIEJO]);
     expect(cerrados.pedidos.find((p) => p.id === P_BORRADO)?.cliente).toBeNull();
-    expect((await lista('cerrados=1')).pedidos).toHaveLength(4);
-    expect((await lista('estado=todos')).pedidos).toHaveLength(6);
+    expect((await lista('cerrados=1&servicio=comida')).pedidos).toHaveLength(4);
+    expect((await lista('estado=todos&servicio=comida')).pedidos).toHaveLength(6);
+    // C-MONITOREO-SERVICIOS: con «Todos» los servicios, el viaje en moto entra en la misma lista.
+    const juntos = await lista('estado=cerrados');
+    expect(juntos.pedidos.map((p) => p.id)).toEqual([
+      VIAJE,
+      P_NOVI,
+      P_MONTO,
+      P_BORRADO,
+      P_MONTO_VIEJO,
+    ]);
+    expect(juntos.pedidos.find((p) => p.id === VIAJE)).toMatchObject({
+      tipo: 'viaje',
+      servicio: 'moto',
+    });
     expect((await lista('estado=todos&zona=US-MI-NOVI')).pedidos.map((p) => p.id)).toEqual([
       P_NOVI,
     ]);
@@ -370,7 +383,16 @@ describe('C-BUSCADOR-SERIO · «Pedidos en curso» con la misma lógica', () => 
          '[]', 1, 1, 1, 0, 0, 3, 0, 0, 0, 0, 0, 'basico', 'x', 'US-FL-MIAMI', datetime('now', '-' || (i / 2) || ' hours')
        FROM n`,
     ).run();
-    for (const filtro of ['estado=cerrados&zona=US-FL-MIAMI', 'estado=cerrados', 'estado=todos']) {
+    // C-MONITOREO-SERVICIOS: solo comida (los pedidos) y con todos los servicios (el viaje en moto de
+    // Miami entra una vez, en su lugar, sin repetirse ni saltarse en ninguna página).
+    for (const filtro of [
+      'estado=cerrados&zona=US-FL-MIAMI&servicio=comida',
+      'estado=cerrados&servicio=comida',
+      'estado=todos&servicio=comida',
+      'estado=cerrados&zona=US-FL-MIAMI',
+      'estado=cerrados',
+      'estado=todos',
+    ]) {
       const vistos: string[] = [];
       let despues = '';
       for (let vuelta = 0; vuelta < 10; vuelta++) {
@@ -382,7 +404,10 @@ describe('C-BUSCADOR-SERIO · «Pedidos en curso» con la misma lógica', () => 
         if (!r.siguiente) break;
         despues = r.siguiente;
       }
-      const esperados = filtro.includes('MIAMI') ? 123 : filtro.includes('todos') ? 126 : 124;
+      const conViaje = filtro.includes('comida') ? 0 : 1;
+      const esperados =
+        (filtro.includes('MIAMI') ? 123 : filtro.includes('todos') ? 126 : 124) + conViaje;
+      if (conViaje) expect(vistos, filtro).toContain(VIAJE);
       expect(vistos, filtro).toHaveLength(esperados);
       expect(new Set(vistos).size, filtro).toBe(esperados);
     }
@@ -560,6 +585,20 @@ describe('C-BUSCADOR-SERIO · presupuesto (la nube no se come el dinero)', () =>
     expect(
       (await m.llamar('GET', '/datos/admin/viajes?q=c0ffee', undefined, admin.token)).estado,
     ).toBe(200);
+    // C-MONITOREO-SERVICIOS y C-FICHA-OPERACION: pestañas, contadores y las dos fichas, igual de
+    // cuidadas (ninguna escribe, ninguna recorre una tabla grande).
+    for (const ruta of [
+      '/datos/admin/pedidos?estado=vivos&servicio=comida',
+      '/datos/admin/pedidos?estado=cerrados&servicio=tiendas',
+      '/datos/admin/pedidos?estado=todos&servicio=moto',
+      '/datos/admin/pedidos?estado=vivos&servicio=auto&zona=US-FL-MIAMI',
+      '/datos/admin/pedidos?estado=cerrados&servicio=envios&orden=antiguos',
+      '/datos/admin/pedidos/contadores',
+      '/datos/admin/pedidos/contadores?zona=US-FL-MIAMI',
+      `/datos/admin/pedidos/${P_VIVO}`,
+      `/datos/admin/viajes/${VIAJE}`,
+    ])
+      expect((await m.llamar('GET', ruta, undefined, admin.token)).estado, ruta).toBe(200);
     g.anotar(false);
     // Mirar no escribe: ni el buscador, ni la lista, ni la sesión, ni el registro del equipo.
     expect(await cambios()).toBe(antes);
@@ -645,6 +684,12 @@ describe('C-BUSCADOR-SERIO · lecturas estimadas por búsqueda', () => {
       ['/datos/admin/pedidos?estado=vivos&zona=US-FL-MIAMI', 1_200],
       ['/datos/admin/pedidos?estado=todos&q=persona%201', 400],
       ['/datos/admin/pedidos?estado=todos&q=407f', 500],
+      // C-MONITOREO-SERVICIOS: pestañas, viajes y contadores, con el mismo cuidado.
+      ['/datos/admin/pedidos?estado=cerrados&servicio=tiendas', 1_500],
+      ['/datos/admin/pedidos?estado=vivos&servicio=moto', 200],
+      ['/datos/admin/pedidos?estado=cerrados&servicio=auto&zona=US-FL-MIAMI', 1_500],
+      ['/datos/admin/pedidos/contadores?zona=US-FL-MIAMI', 600],
+      ['/datos/admin/pedidos/contadores', 600],
     ];
     const informe: string[] = [];
     for (const [ruta, tope] of topes) {

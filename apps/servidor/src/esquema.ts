@@ -20,6 +20,13 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-TIEMPOS-OPERACION (15 nov 2026): de dónde salen la ida del repartidor y la llegada del
+  // conductor en la ficha del superadmin (se escriben en el mismo INSERT/UPDATE de la oferta).
+  ['ofertas', 'km', 'REAL'],
+  ['ofertas', 'respondida_en', 'TEXT'],
+  ['ofertas_operacion', 'km', 'REAL'],
+  // C-MONITOREO-SERVICIOS (15 nov 2026): el viaje de un reclamo.
+  ['tickets', 'operacion_id', 'TEXT'],
   // C-CARRO-CATEGORIAS, C-VIAJE-PARADAS (14 nov 2026): Comfort y Premium, y paradas intermedias.
   ['tarifas_viaje', 'comfort_pb', 'INTEGER'],
   ['tarifas_viaje', 'premium_pb', 'INTEGER'],
@@ -325,6 +332,12 @@ const INDICES = [
   'CREATE INDEX IF NOT EXISTS repartidores_vehiculo_activo ON repartidores(vehiculo_activo_id) WHERE vehiculo_activo_id IS NOT NULL',
   // C-BUSCADOR-SERIO (15 nov 2026): los índices del buscador del superadmin (buscadorSql.ts).
   ...INDICES_BUSCADOR,
+  // C-FICHA-OPERACION y C-MONITOREO-SERVICIOS (15 nov 2026): los reclamos de un pedido y de un viaje
+  // en su ficha (sin esto, cada ficha recorría todos los tickets). Parciales: un ticket sin pedido o
+  // sin viaje no entra; un reclamo enlazado es UNA escritura más al crearlo, y mirar no escribe.
+  // El de pedidos también lo usa la retención de fotos (NOT EXISTS de un reclamo abierto).
+  'CREATE INDEX IF NOT EXISTS tickets_pedido ON tickets(pedido_id) WHERE pedido_id IS NOT NULL',
+  'CREATE INDEX IF NOT EXISTS tickets_operacion ON tickets(operacion_id) WHERE operacion_id IS NOT NULL',
 ];
 
 /**

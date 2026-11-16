@@ -12,6 +12,10 @@ import {
   interpretarBusqueda,
   rangoPrefijo,
   semaforoPedido,
+  type ServicioConcreto,
+  type ServicioMonitoreo,
+  esServicioMonitoreo,
+  servicioDePedido,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { TELEFONO_DIEZ } from '../esquema';
@@ -351,7 +355,8 @@ async function grupoViajes(db: D1Database, b: BusquedaInterna): Promise<Resultad
         .join(' · '),
       estado: texto(f.estado ?? f.estado_general),
       ciudad: texto(f.ciudad),
-      enlace: `/rides?q=${String(f.id)}`,
+      // C-FICHA-OPERACION: cada viaje abre su propia ficha.
+      enlace: `/rides/${String(f.id)}`,
       coincide: b.codigo ?? String(f.id).slice(0, 6),
       fecha: texto(f.creado_en),
       monto: f.total == null ? null : Number(f.total),
@@ -550,6 +555,8 @@ export type ParametrosLista = {
   orden: 'recientes' | 'antiguos';
   q: string;
   despues: string;
+  /** C-MONITOREO-SERVICIOS: pestaña de servicio (comida o tiendas filtra; lo demás no). */
+  servicio?: ServicioMonitoreo;
 };
 
 /** Lee los parámetros de la lista (acepta el viejo `cerrados=1`). */
@@ -562,14 +569,19 @@ export function parametrosLista(consulta: (k: string) => string | undefined): Pa
   const orden =
     o === 'recientes' || o === 'antiguos' ? o : estado === 'vivos' ? 'antiguos' : 'recientes';
   const despues = consulta('despues') ?? '';
-  if (despues && !/^[0-9: -]{10,19}~\d{1,19}$/.test(despues))
+  // Una clave «fecha~fila», o la doble del monitoreo «p:<clave|fin>|v:<clave|fin>».
+  const clave = '(?:[0-9: -]{10,19}~\\d{1,19}|fin)?';
+  const doble = new RegExp(`^p:${clave}\\|v:${clave}$`);
+  if (despues && !/^[0-9: -]{10,19}~\d{1,19}$/.test(despues) && !doble.test(despues))
     throw new ErrorDatos('La página pedida no es válida.', 'despues', 400);
+  const sv = consulta('servicio');
   return {
     zona: (consulta('zona') ?? '').slice(0, 60),
     estado,
     orden,
     q: (consulta('q') ?? '').slice(0, 80),
     despues,
+    servicio: esServicioMonitoreo(sv) ? sv : 'todos',
   };
 }
 
@@ -578,20 +590,92 @@ export function parametrosLista(consulta: (k: string) => string | undefined): Pa
  * número de fila (rowid). Los índices por fecha ya guardan el rowid al final, así que el orden
  * (fecha, rowid) sale del índice sin ordenar nada y la consulta para al juntar la página.
  */
-function despuesDe(cursor: string, orden: 'recientes' | 'antiguos'): [string, unknown[]] {
+export function despuesDe(
+  cursor: string,
+  orden: 'recientes' | 'antiguos',
+  t = 'p',
+): [string, unknown[]] {
   if (!cursor) return ['', []];
   const [fecha = '', fila = '0'] = cursor.split('~');
   return orden === 'recientes'
-    ? [' AND p.creado_en <= ? AND (p.creado_en < ? OR p.rowid < ?)', [fecha, fecha, Number(fila)]]
-    : [' AND p.creado_en >= ? AND (p.creado_en > ? OR p.rowid > ?)', [fecha, fecha, Number(fila)]];
+    ? [
+        ` AND ${t}.creado_en <= ? AND (${t}.creado_en < ? OR ${t}.rowid < ?)`,
+        [fecha, fecha, Number(fila)],
+      ]
+    : [
+        ` AND ${t}.creado_en >= ? AND (${t}.creado_en > ? OR ${t}.rowid > ?)`,
+        [fecha, fecha, Number(fila)],
+      ];
+}
+
+export const cursorDe = (f: Fila) => `${String(f.creado_en)}~${Number(f.fila)}`;
+
+/** Ordena filas por (fecha, rowid) en la dirección pedida. */
+export function ordenarPorClave(filas: Fila[], direccion: 'ASC' | 'DESC'): Fila[] {
+  return [...filas].sort((a, b) => {
+    const c =
+      String(a.creado_en).localeCompare(String(b.creado_en)) || Number(a.fila) - Number(b.fila);
+    return direccion === 'ASC' ? c : -c;
+  });
+}
+
+/** Cuántas filas se leen por vuelta y cuántas vueltas como mucho cuando hay un filtro que el índice no ve. */
+const LOTE_FILTRADO = 200;
+const VUELTAS_FILTRADO = 5;
+
+/**
+ * C-MONITOREO-SERVICIOS: una página por clave con un filtro que el índice no ve (el servicio).
+ * Sin filtro, una sola consulta de 51 (lo de siempre). Con filtro, se leen lotes de 200 en orden
+ * hasta juntar 51 o hasta cinco lotes: así nunca se recorre la historia entera por una pestaña con
+ * pocos pedidos, y si se paró por el tope, «Cargar más» sigue desde la última fila MIRADA (nunca
+ * hay un tope mudo: la siguiente página empieza justo donde se dejó de mirar).
+ */
+export async function paginaPorClave(
+  traer: (cursor: string, limite: number) => Promise<Fila[]>,
+  cursor: string,
+  filtro: ((f: Fila) => boolean) | null,
+): Promise<{ filas: Fila[]; siguiente: string | null }> {
+  if (!filtro) {
+    const filas = await traer(cursor, POR_PAGINA + 1);
+    const pagina = filas.slice(0, POR_PAGINA);
+    const ultima = pagina.at(-1);
+    return {
+      filas: pagina,
+      siguiente: filas.length > POR_PAGINA && ultima ? cursorDe(ultima) : null,
+    };
+  }
+  const elegidas: Fila[] = [];
+  let mirada = cursor;
+  let agotado = false;
+  for (let vuelta = 0; vuelta < VUELTAS_FILTRADO && elegidas.length <= POR_PAGINA; vuelta++) {
+    const lote = await traer(mirada, LOTE_FILTRADO);
+    for (const f of lote) {
+      mirada = cursorDe(f);
+      if (filtro(f)) elegidas.push(f);
+      if (elegidas.length > POR_PAGINA) break;
+    }
+    if (lote.length < LOTE_FILTRADO) {
+      agotado = elegidas.length <= POR_PAGINA;
+      break;
+    }
+  }
+  if (elegidas.length > POR_PAGINA) {
+    const pagina = elegidas.slice(0, POR_PAGINA);
+    return { filas: pagina, siguiente: cursorDe(pagina[POR_PAGINA - 1] as Fila) };
+  }
+  return { filas: elegidas, siguiente: agotado ? null : mirada };
 }
 
 const FILA_LISTA = `p.id, p.rowid AS fila, p.estado, p.total, p.moneda, p.creado_en, p.pagado_en, p.aceptado_en, p.listo_en,
-  p.recogido_en, p.tiempo_prep_min, p.zona_id, r.nombre AS restaurante, uc.nombre AS cliente,
-  uc.activo AS cliente_activo, ur.nombre AS repartidor, d.codigo AS repartidor_codigo, z.nombre AS ciudad`;
+  p.recogido_en, p.tiempo_prep_min, p.zona_id, r.nombre AS restaurante, r.tipo_comercio, uc.nombre AS cliente,
+  uc.activo AS cliente_activo, ur.nombre AS repartidor, d.codigo AS repartidor_codigo, z.nombre AS ciudad,
+  z.zona_horaria`;
 const UNIONES_LISTA = `LEFT JOIN restaurantes r ON r.id = p.restaurante_id
   LEFT JOIN usuarios uc ON uc.id = p.cliente_id LEFT JOIN usuarios ur ON ur.id = p.repartidor_id
   LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id LEFT JOIN zonas z ON z.id = p.zona_id`;
+/** El tipo de comercio de la fila, por la llave primaria del restaurante (para filtrar por servicio). */
+const TIPO_DE_FILA =
+  '(SELECT r2.tipo_comercio FROM restaurantes r2 WHERE r2.id = p.restaurante_id) AS tipo_comercio';
 
 function aFilaLista(f: Fila) {
   const fechas = {
@@ -606,6 +690,10 @@ function aFilaLista(f: Fila) {
   const cerrado = (ESTADOS_PEDIDO_CERRADOS as readonly string[]).includes(fechas.estado);
   return {
     id: String(f.id),
+    /** La clave de la paginación («fecha~fila»): la usa el monitoreo para seguir donde se dejó. */
+    clave: cursorDe(f),
+    tipo: 'pedido' as const,
+    servicio: servicioDePedido(texto(f.tipo_comercio)) as ServicioConcreto,
     ...fechas,
     total: Number(f.total),
     // C-MONEDA-RECORRIDO: cada pedido en su moneda (la lista no suma montos).
@@ -617,6 +705,7 @@ function aFilaLista(f: Fila) {
     repartidorCodigo: texto(f.repartidor_codigo),
     ciudad: texto(f.ciudad),
     zonaId: texto(f.zona_id),
+    zonaHoraria: texto(f.zona_horaria),
     luz:
       cerrado || fechas.estado === 'pago_pendiente'
         ? ('verde' as const)
@@ -625,17 +714,23 @@ function aFilaLista(f: Fila) {
 }
 export type FilaListaPedido = ReturnType<typeof aFilaLista>;
 
-const ORDEN_LUZ = new Map([
+export const ORDEN_LUZ = new Map([
   ['rojo', 0],
   ['amarillo', 1],
   ['verde', 2],
 ]);
 
+/** El filtro de servicio sobre filas de pedidos (null = sin filtro). */
+function filtroServicioPedido(s: ServicioMonitoreo | undefined): ((f: Fila) => boolean) | null {
+  if (s !== 'comida' && s !== 'tiendas') return null;
+  return (f) => servicioDePedido(texto(f.tipo_comercio)) === s;
+}
+
 /**
  * La lista de «Pedidos en curso» del superadmin. Tres formas, según lo escrito:
- * 1. Código o id: se busca sin importar el estado ni la ciudad, y se dice dónde se encontró.
- * 2. Persona, comercio o monto: sus pedidos con el estado y la ciudad elegidos.
- * 3. Nada escrito: la lista del estado y la ciudad elegidos, de a 50 con «Cargar más».
+ * 1. Código o id: se busca sin importar el estado, la ciudad ni el servicio, y se dice dónde se encontró.
+ * 2. Persona, comercio o monto: sus pedidos con el estado, la ciudad y el servicio elegidos.
+ * 3. Nada escrito: la lista del estado, la ciudad y el servicio elegidos, de a 50 con «Cargar más».
  */
 export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
   const b = interpretarBusqueda(p.q);
@@ -691,10 +786,10 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
     };
   }
 
-  const [tras, trasValores] = despuesDe(p.despues, p.orden);
   const zona = p.zona ? ' AND p.zona_id = ?' : '';
   const zonaValores = p.zona ? [p.zona] : [];
-  let filas: Fila[];
+  const filtro = filtroServicioPedido(p.servicio);
+  let pagina: { filas: Fila[]; siguiente: string | null };
 
   if (!b.vacia) {
     // 2. Por persona, comercio o monto: sus pedidos, con los filtros elegidos.
@@ -730,60 +825,96 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
         encontrado: null,
         avisoMonto: false,
       };
-    filas = await todas(
-      db,
-      `SELECT ${FILA_LISTA} FROM pedidos p ${UNIONES_LISTA}
-        WHERE (${quien.join(' OR ')}) AND +p.estado IN (${marcas(estados.length)})${zona.replace('p.zona_id', '+p.zona_id')}${tras}
-        ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
-      ...valores,
-      ...estados,
-      ...zonaValores,
-      ...trasValores,
-      POR_PAGINA + 1,
+    pagina = await paginaPorClave(
+      (cursor, limite) => {
+        const [tras, trasValores] = despuesDe(cursor, p.orden);
+        return todas(
+          db,
+          `SELECT ${FILA_LISTA} FROM pedidos p ${UNIONES_LISTA}
+            WHERE (${quien.join(' OR ')}) AND +p.estado IN (${marcas(estados.length)})${zona.replace('p.zona_id', '+p.zona_id')}${tras}
+            ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
+          ...valores,
+          ...estados,
+          ...zonaValores,
+          ...trasValores,
+          limite,
+        );
+      },
+      p.despues,
+      filtro,
     );
   } else if (p.zona) {
     // 3a. Una ciudad: cada estado por su índice (zona, estado, fecha) y se juntan en orden.
-    const partes = await Promise.all(
-      estados.map((e) =>
-        todas(
-          db,
-          `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE p.zona_id = ? AND p.estado = ?${tras}
-            ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
-          p.zona,
-          e,
-          ...trasValores,
-          POR_PAGINA + 1,
-        ),
-      ),
+    pagina = await paginaPorClave(
+      async (cursor, limite) => {
+        const [tras, trasValores] = despuesDe(cursor, p.orden);
+        const partes = await Promise.all(
+          estados.map((e) =>
+            todas(
+              db,
+              `SELECT p.id, p.rowid AS fila, p.creado_en${filtro ? `, ${TIPO_DE_FILA}` : ''} FROM pedidos p
+                WHERE p.zona_id = ? AND p.estado = ?${tras}
+                ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
+              p.zona,
+              e,
+              ...trasValores,
+              limite,
+            ),
+          ),
+        );
+        return ordenarPorClave(partes.flat(), direccion).slice(0, limite);
+      },
+      p.despues,
+      filtro,
     );
-    filas = await detalles(db, partes.flat(), direccion);
+    pagina.filas = await detalles(db, pagina.filas, direccion);
   } else if (p.estado === 'vivos') {
     // 3b. Vivos de todas las ciudades: son pocos (el Manager cierra los viejos); por el estado.
-    const ids = await todas(
-      db,
-      `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE p.estado IN (${marcas(estados.length)})${tras}
-        ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
-      ...estados,
-      ...trasValores,
-      POR_PAGINA + 1,
+    pagina = await paginaPorClave(
+      (cursor, limite) => {
+        const [tras, trasValores] = despuesDe(cursor, p.orden);
+        return todas(
+          db,
+          `SELECT p.id, p.rowid AS fila, p.creado_en${filtro ? `, ${TIPO_DE_FILA}` : ''} FROM pedidos p
+            WHERE p.estado IN (${marcas(estados.length)})${tras}
+            ORDER BY +p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
+          ...estados,
+          ...trasValores,
+          limite,
+        );
+      },
+      p.despues,
+      filtro,
     );
-    filas = await detalles(db, ids, direccion);
+    pagina.filas = await detalles(db, pagina.filas, direccion);
   } else {
-    // 3c. Cerrados o todos, de todas las ciudades: por la fecha (casi todo coincide).
-    const ids = await todas(
-      db,
-      `SELECT p.id, p.rowid AS fila, p.creado_en FROM pedidos p WHERE +p.estado IN (${marcas(estados.length)})${tras}
-        ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
-      ...estados,
-      ...trasValores,
-      POR_PAGINA + 1,
+    // 3c. Cerrados o todos, de todas las ciudades: por la fecha (casi todo coincide). La primera
+    // página lleva un rango abierto sobre la fecha («hasta el fin de los tiempos»): no cambia nada
+    // de lo que trae, pero deja el plan como búsqueda por rango que para en el LIMIT.
+    pagina = await paginaPorClave(
+      (cursor, limite) => {
+        const [tras, trasValores] = cursor
+          ? despuesDe(cursor, p.orden)
+          : p.orden === 'recientes'
+            ? [' AND p.creado_en <= ?', ['9999-12-31 23:59:59']]
+            : [' AND p.creado_en >= ?', ['0000-01-01 00:00:00']];
+        return todas(
+          db,
+          // INDEXED BY: con un lote de 200, SQLite prefería recorrer y ordenar (medido: 6.000 filas).
+          `SELECT p.id, p.rowid AS fila, p.creado_en${filtro ? `, ${TIPO_DE_FILA}` : ''} FROM pedidos p INDEXED BY pedidos_creado
+            WHERE +p.estado IN (${marcas(estados.length)})${tras}
+            ORDER BY p.creado_en ${direccion}, p.rowid ${direccion} LIMIT ?`,
+          ...estados,
+          ...trasValores,
+          limite,
+        );
+      },
+      p.despues,
+      filtro,
     );
-    filas = await detalles(db, ids, direccion);
+    pagina.filas = await detalles(db, pagina.filas, direccion);
   }
-  const hayMas = filas.length > POR_PAGINA;
-  const pagina = filas.slice(0, POR_PAGINA);
-  const ultima = pagina.at(-1);
-  let pedidos = pagina.map(aFilaLista);
+  let pedidos = pagina.filas.map(aFilaLista);
   // C-MANAGER-1: entre los vivos, los que están en problemas primero.
   if (p.estado === 'vivos')
     pedidos = [...pedidos].sort(
@@ -791,7 +922,7 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
     );
   return {
     pedidos,
-    siguiente: hayMas && ultima ? `${String(ultima.creado_en)}~${Number(ultima.fila)}` : null,
+    siguiente: pagina.siguiente,
     porCodigo: false,
     masCoincidencias: false,
     encontrado: null,
@@ -799,14 +930,11 @@ export async function listarPedidosAdmin(db: D1Database, p: ParametrosLista) {
   };
 }
 
-/** Ordena los ids de una página y trae sus datos (una consulta por la llave primaria). */
+/** Trae los datos de una página de ids ya ordenada (una consulta por la llave primaria). */
 async function detalles(db: D1Database, ids: Fila[], direccion: 'ASC' | 'DESC'): Promise<Fila[]> {
-  const orden = [...ids].sort((a, b) => {
-    const c =
-      String(a.creado_en).localeCompare(String(b.creado_en)) || Number(a.fila) - Number(b.fila);
-    return direccion === 'ASC' ? c : -c;
-  });
-  const elegidos = orden.slice(0, POR_PAGINA + 1).map((f) => String(f.id));
+  const elegidos = ordenarPorClave(ids, direccion)
+    .slice(0, POR_PAGINA + 1)
+    .map((f) => String(f.id));
   if (!elegidos.length) return [];
   const filas = await todas(
     db,

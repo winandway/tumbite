@@ -59,6 +59,7 @@ import { referidos } from './referidos';
 import { franquicias } from './rutas/franquicias';
 import { superadmin } from './rutas/superadmin';
 import { buscadorInterno } from './rutas/buscadorInterno';
+import { fichaViajeRutas } from './rutas/fichaViaje';
 import { preferenciasInternas } from './rutas/preferenciasInternas';
 import { kyc } from './rutas/kyc';
 import { fotos, media } from './rutas/fotos';
@@ -616,6 +617,8 @@ app.route('/datos', ciudadesWeb);
 app.route('/datos', equipo);
 // C-BUSCADOR-SERIO y C-FILTROS-GUARDADOS (15 nov 2026): el buscador y los filtros del superadmin.
 app.route('/datos', buscadorInterno);
+// C-FICHA-OPERACION: después de /admin/viajes/tarifas, /ajustes y /dinamica (rutas fijas de arriba).
+app.route('/datos', fichaViajeRutas);
 app.route('/datos', preferenciasInternas);
 app.route('/datos', piloto);
 app.route('/datos', informes);

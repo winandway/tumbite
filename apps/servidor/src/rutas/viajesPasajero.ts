@@ -1441,6 +1441,10 @@ viajesPasajero.get('/admin/viajes', async (c) => {
       .bind(tipo, ...valores)
       .all<Record<string, unknown>>();
   const vivo = new Set<string>(ESTADOS_OPERACION.vivos);
+  // C-MONITOREO-SERVICIOS: la pantalla de emergencias y tarifas pide `lista=0` (la lista de viajes
+  // vive en «Pedidos en curso», paginada por clave); así no se leen viajes que nadie mira.
+  const conLista = c.req.query('lista') !== '0';
+  const vacia = Promise.resolve({ results: [] as Record<string, unknown>[] });
   const [emergencias, pasajeros, paquetes, tarifas] = await Promise.all([
     db
       .prepare(
@@ -1449,8 +1453,8 @@ viajesPasajero.get('/admin/viajes', async (c) => {
           WHERE e.atendida_en IS NULL ORDER BY e.creado_en DESC LIMIT 50`,
       )
       .all<Record<string, unknown>>(),
-    unaParte('viaje_pasajero'),
-    unaParte('envio_paquete'),
+    conLista ? unaParte('viaje_pasajero') : vacia,
+    conLista ? unaParte('envio_paquete') : vacia,
     db
       .prepare(
         `SELECT t.*, z.nombre AS zona_nombre FROM tarifas_viaje t JOIN zonas z ON z.id = t.zona_id

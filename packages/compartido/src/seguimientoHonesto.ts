@@ -105,11 +105,38 @@ export function estimacionLlegada(p: {
   const viaje = km == null ? null : Math.max(5, Math.round((km / 25) * 60));
   const cocina = p.estado === 'pagado' || p.estado === 'aceptado' ? prep : 0;
   const minutosEstimados = terminado || viaje == null ? null : cocina + viaje;
-  const viajeRestCasa =
-    p.restaurante && p.casa ? minutosDeViaje(distanciaKm(p.restaurante, p.casa)) : 15;
   const llegaAMasTardar =
     p.aceptadoMs != null && !terminado
-      ? new Date(p.aceptadoMs + (prep + viajeRestCasa + 10) * 60_000).toISOString()
+      ? new Date(aMasTardarMs(p.aceptadoMs, prep, p.restaurante, p.casa)).toISOString()
       : null;
   return { minutosEstimados, llegaAMasTardar };
+}
+
+/** Margen que se suma al «a más tardar» (minutos) sobre la cocina y el viaje a la casa. */
+export const MARGEN_A_MAS_TARDAR_MIN = 10;
+/** Sin las dos ubicaciones, el viaje del restaurante a la casa se estima en esto (minutos). */
+export const VIAJE_REST_CASA_POR_DEFECTO_MIN = 15;
+
+/**
+ * Minutos del viaje del restaurante a la casa con la misma cuenta del despacho; sin las dos
+ * ubicaciones, el valor de fábrica. La usan el seguimiento y los tiempos del superadmin
+ * (`tiemposOperacion.ts`), así lo prometido y lo medido salen de la misma fórmula.
+ */
+export function minutosRestauranteACasa(restaurante: Punto | null, casa: Punto | null): number {
+  return restaurante && casa
+    ? minutosDeViaje(distanciaKm(restaurante, casa))
+    : VIAJE_REST_CASA_POR_DEFECTO_MIN;
+}
+
+/** El «a más tardar» (en ms): aceptado + cocina + viaje a la casa + margen. */
+export function aMasTardarMs(
+  aceptadoMs: number,
+  prepMin: number,
+  restaurante: Punto | null,
+  casa: Punto | null,
+): number {
+  return (
+    aceptadoMs +
+    (prepMin + minutosRestauranteACasa(restaurante, casa) + MARGEN_A_MAS_TARDAR_MIN) * 60_000
+  );
 }
