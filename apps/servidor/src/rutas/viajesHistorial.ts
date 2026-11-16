@@ -96,6 +96,10 @@ type FilaListaPasajero = FilaLista & {
   origenLng: number | null;
   destinoLat: number | null;
   destinoLng: number | null;
+  conductorNombre: string | null;
+  deConfianza: number;
+  rutinaId: string | null;
+  menor: string | null;
 };
 
 viajesHistorial.get('/viajes/historial', async (c) => {
@@ -105,7 +109,12 @@ viajesHistorial.get('/viajes/historial', async (c) => {
   const { results } = await db
     .prepare(
       `SELECT ${COLUMNAS_LISTA}, v.origen_lat AS origenLat, v.origen_lng AS origenLng,
-              v.destino_lat AS destinoLat, v.destino_lng AS destinoLng
+              v.destino_lat AS destinoLat, v.destino_lng AS destinoLng,
+              -- C-CONDUCTOR-CONFIANZA: con quién viajó y si ya es de confianza (para marcarlo desde aquí).
+              (SELECT nombre FROM usuarios cu WHERE cu.id = o.conductor_id AND v.estado = 'terminado') AS conductorNombre,
+              EXISTS (SELECT 1 FROM conductores_confianza k WHERE k.cliente_id = o.cliente_id
+                        AND k.conductor_id = o.conductor_id) AS deConfianza,
+              v.rutina_id AS rutinaId, v.menor_nombre AS menor
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
         WHERE o.cliente_id = ?1 AND o.tipo_operacion = 'viaje_pasajero' AND (?2 IS NULL OR o.creado_en < ?2)
@@ -132,17 +141,22 @@ viajesHistorial.get('/viajes/historial', async (c) => {
   }
   return c.json({
     ...p,
-    viajes: p.viajes.map(({ origenLat, origenLng, destinoLat, destinoLng, ...v }) => ({
-      ...v,
-      puntos:
-        origenLat != null && origenLng != null && destinoLat != null && destinoLng != null
-          ? {
-              origen: { lat: origenLat, lng: origenLng },
-              destino: { lat: destinoLat, lng: destinoLng },
-              paradas: paradas.get(v.id) ?? [],
-            }
-          : null,
-    })),
+    viajes: p.viajes.map(
+      ({ origenLat, origenLng, destinoLat, destinoLng, conductorNombre, deConfianza, ...v }) => ({
+        ...v,
+        // Solo el nombre de pila del conductor de un viaje terminado: es lo que se marca de confianza.
+        conductor: conductorNombre ? (conductorNombre.split(' ')[0] ?? '') : null,
+        deConfianza: deConfianza === 1,
+        puntos:
+          origenLat != null && origenLng != null && destinoLat != null && destinoLng != null
+            ? {
+                origen: { lat: origenLat, lng: origenLng },
+                destino: { lat: destinoLat, lng: destinoLng },
+                paradas: paradas.get(v.id) ?? [],
+              }
+            : null,
+      }),
+    ),
   });
 });
 

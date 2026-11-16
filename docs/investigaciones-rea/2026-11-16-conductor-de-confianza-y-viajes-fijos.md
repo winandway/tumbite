@@ -50,18 +50,18 @@ Fuentes (URL completas, para el archivo; no se leen en el chat):
 
 ### 3.2 Viajes programados y repetidos
 
-| Plataforma | Programar | Repetir (días/hora/ida y vuelta) | Asignación y aviso |
-|---|---|---|---|
-| Uber (ayuda) | De 30 min a 30 días antes [DOC]; Reserve hasta 90 días y 15 min de espera incluida [DOC, varía por país] | Sin viajes recurrentes propios [OBS secundaria, fuente vieja]. [NV] hoy | La app envía la solicitud antes de la hora; avisa con notificación cuando hay conductor y cuando está cerca; no garantiza conductor; si no consigue, avisa («raro») [DOC] |
-| Lyft | Hasta 90 días [DOC]; pide mínimo no publicado | Sin repetición publicada [NV] | «Se emparejan primero»; cancelar o editar hasta 1 h antes; el conductor espera si llegas tarde [DOC] |
-| Bolt | Programar con fecha y hora; Kenia 72 h [OBS prensa] | Dubái: escuelas con reservas por día, semana o mes [DOC prensa, aclara que lo permiten las autoridades] | 20 % de descuento en zonas escolares [DOC prensa] |
-| Gojek | De 7 días a 15 min antes; recargo Rp 3.000 moto y Rp 10.000 carro; un solo viaje programado a la vez [DOC] | No; no se puede editar, se cancela y se vuelve a pedir [DOC] | Recordatorio 10 min antes [DOC]; qué pasa sin conductor [NV] |
-| Cabify | Mínimo 1 h antes [DOC]; cancelar con menos de 45 min cuesta (Zaragoza) y con menos de 20 min (Buenos Aires) [DOC] | [NV] | [NV] |
-| Hopp (Canadá) | Hasta 7 días; el conductor acepta la reserva en su lista; si no está en línea a la hora, pasa a otro; se recomienda conectarse 45 min antes; el pasajero tiene 5 min de espera [DOC] | [NV] | Cobro automático por no presentarse o cancelar con menos de 1 h [DOC] |
-| HopSkipDrive (niños) | Un viaje suelto hasta 6 u 8 horas antes (dos páginas dicen cosas distintas) [DOC] | **Sí: el padre toca los días y se repite cada semana** [DOC] | Avisos al padre en cada paso [DOC] |
-| inDrive | Viajes entre ciudades con fecha y hora; las ofertas llegan en un minuto [DOC] | [NV] | El pasajero acepta una oferta y contacta al conductor [DOC] |
-| Grab | Reserva anticipada, con vuelo para aeropuerto [DOC] | [NV] | [NV] |
-| DiDi, Yango, Rapido | No se halló función oficial de programar en la fuente leída [NV] | [NV] | [NV] |
+| Plataforma           | Programar                                                                                                                                                                            | Repetir (días/hora/ida y vuelta)                                                                        | Asignación y aviso                                                                                                                                                        |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Uber (ayuda)         | De 30 min a 30 días antes [DOC]; Reserve hasta 90 días y 15 min de espera incluida [DOC, varía por país]                                                                             | Sin viajes recurrentes propios [OBS secundaria, fuente vieja]. [NV] hoy                                 | La app envía la solicitud antes de la hora; avisa con notificación cuando hay conductor y cuando está cerca; no garantiza conductor; si no consigue, avisa («raro») [DOC] |
+| Lyft                 | Hasta 90 días [DOC]; pide mínimo no publicado                                                                                                                                        | Sin repetición publicada [NV]                                                                           | «Se emparejan primero»; cancelar o editar hasta 1 h antes; el conductor espera si llegas tarde [DOC]                                                                      |
+| Bolt                 | Programar con fecha y hora; Kenia 72 h [OBS prensa]                                                                                                                                  | Dubái: escuelas con reservas por día, semana o mes [DOC prensa, aclara que lo permiten las autoridades] | 20 % de descuento en zonas escolares [DOC prensa]                                                                                                                         |
+| Gojek                | De 7 días a 15 min antes; recargo Rp 3.000 moto y Rp 10.000 carro; un solo viaje programado a la vez [DOC]                                                                           | No; no se puede editar, se cancela y se vuelve a pedir [DOC]                                            | Recordatorio 10 min antes [DOC]; qué pasa sin conductor [NV]                                                                                                              |
+| Cabify               | Mínimo 1 h antes [DOC]; cancelar con menos de 45 min cuesta (Zaragoza) y con menos de 20 min (Buenos Aires) [DOC]                                                                    | [NV]                                                                                                    | [NV]                                                                                                                                                                      |
+| Hopp (Canadá)        | Hasta 7 días; el conductor acepta la reserva en su lista; si no está en línea a la hora, pasa a otro; se recomienda conectarse 45 min antes; el pasajero tiene 5 min de espera [DOC] | [NV]                                                                                                    | Cobro automático por no presentarse o cancelar con menos de 1 h [DOC]                                                                                                     |
+| HopSkipDrive (niños) | Un viaje suelto hasta 6 u 8 horas antes (dos páginas dicen cosas distintas) [DOC]                                                                                                    | **Sí: el padre toca los días y se repite cada semana** [DOC]                                            | Avisos al padre en cada paso [DOC]                                                                                                                                        |
+| inDrive              | Viajes entre ciudades con fecha y hora; las ofertas llegan en un minuto [DOC]                                                                                                        | [NV]                                                                                                    | El pasajero acepta una oferta y contacta al conductor [DOC]                                                                                                               |
+| Grab                 | Reserva anticipada, con vuelo para aeropuerto [DOC]                                                                                                                                  | [NV]                                                                                                    | [NV]                                                                                                                                                                      |
+| DiDi, Yango, Rapido  | No se halló función oficial de programar en la fuente leída [NV]                                                                                                                     | [NV]                                                                                                    | [NV]                                                                                                                                                                      |
 
 Conclusión de mercado: **los grandes de transporte general programan pero casi ninguno repite**. Quien sí repite es HopSkipDrive, porque es transporte de niños con conductor consistente. [INF] Ese es nuestro caso de la escuela.
 
@@ -155,14 +155,14 @@ Lo que ya existe en el código (leído, no modificado):
 
 Brechas:
 
-| Necesidad del piloto | Estado en Divoox | Brecha |
-|---|---|---|
-| Conductor de confianza | No existe | Tabla de vínculos y oferta exclusiva |
-| Viaje fijo (rutina repetida) | No existe; solo programados sueltos | Molde de rutina + generador de ocurrencias |
-| Menores con responsable | Solo bandera `acepta_menores` | Perfil de responsable, avisos, PIN de menor, seguimiento |
-| Reemplazo si el fijo falla | No existe | Apertura a otros a T-20 min |
-| Pago semanal o mensual | No existe | Liquidación semanal visible; nada de dinero real sin orden de Richard |
-| Evitar saltarse la app | Teléfono visible tras aceptar, según el flujo actual [INF] | Reglas de comisión y ocultar el número de teléfono hasta aceptar |
+| Necesidad del piloto         | Estado en Divoox                                           | Brecha                                                                |
+| ---------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| Conductor de confianza       | No existe                                                  | Tabla de vínculos y oferta exclusiva                                  |
+| Viaje fijo (rutina repetida) | No existe; solo programados sueltos                        | Molde de rutina + generador de ocurrencias                            |
+| Menores con responsable      | Solo bandera `acepta_menores`                              | Perfil de responsable, avisos, PIN de menor, seguimiento              |
+| Reemplazo si el fijo falla   | No existe                                                  | Apertura a otros a T-20 min                                           |
+| Pago semanal o mensual       | No existe                                                  | Liquidación semanal visible; nada de dinero real sin orden de Richard |
+| Evitar saltarse la app       | Teléfono visible tras aceptar, según el flujo actual [INF] | Reglas de comisión y ocultar el número de teléfono hasta aceptar      |
 
 ## 6. Decisión recomendada
 
@@ -204,3 +204,18 @@ Todas se escriben primero en rojo (Vitest en `apps/servidor` y `packages/compart
 - Edad mínima exacta de las cuentas para adolescentes de Uber (13 o 14). [NV]
 - Comisión reducida para favoritos y sanciones por evasión específicas a favoritos. [NV]
 - Corrida de REA con hash sobre las webs públicas: pendiente de abrir un navegador con puerto de depuración.
+
+## 9. Evidencia REA (corrida el 16 nov 2026, después de la primera versión de la ficha)
+
+REA se corrió de verdad con `capture_browser_scenario` (Chromium 159 de Playwright, sin cuenta, como visitante, árbol de accesibilidad de la página pública). Paquete: `docs/investigaciones-rea/evidencia-rea-2026-11-16-conductor-confianza.json` (SHA-256 del archivo `3dd8187ba259406dd50af2b2c90818674db142c5a74d50f7de880e32c7a068c2`).
+
+- [REA] Uber for Teens (uber.com/us/en/ride/teens, evidencia `ev_69b8016e…`, árbol `6bd2f316…`): «live trip and delivery tracking», «real-time status updates», viajes de adolescentes con destino bloqueado (solo el adolescente lo cambia), y «PIN verification and RideCheck™ … always automatically turned on and cannot be turned off». Edad: «They must be at least 13 years old». El 911 que marca el padre muestra la ubicación del padre.
+- [REA] La dirección pública de Uber Reserve (uber.com/us/en/ride/uberreserve, evidencia `ev_9447dde4…`) hoy responde «página no encontrada»; la reserva vive en la app («Schedule a ride» → m.uber.com/go/reserve). Lo de Reserve queda como [DOC] de la ficha.
+
+## 10. Lo que se construyó (decisión aplicada)
+
+- **Conductor de confianza:** hasta 3, se marca desde un viaje terminado con él. Al pedir para ya, el viaje se le ofrece SOLO a él por **60 segundos** si está conectado (señal de los últimos 10 minutos) y a 15 km o menos; si lo rechaza, se le vence o no está, pasa a los demás de una vez. En un viaje programado o fijo nace **30 minutos antes** y se le guarda solo a él hasta **5 minutos antes**; después, a los demás. Si el pasajero o el conductor se bloquearon, nunca se le ofrece.
+- **Viajes fijos:** días de la semana, ida y vuelta opcional, a la hora local de la ciudad (con horario de verano). Cada salida nace como viaje programado **24 horas antes** (precio fijo; cancelación gratis hasta 60 minutos antes, como los programados). Pausa con o sin fecha, saltar un día, borrar. Hasta 10 por cliente.
+- **Conductor:** agenda de 7 días, aviso al crearle un viaje fijo, aviso previo **30 minutos antes**, «No puedo» (ese viaje va a cualquiera y el cliente lo sabe) y «Dejar este viaje fijo».
+- **Menores:** PIN **fijo de 4 dígitos** que el responsable le enseña al menor (adaptación de la palabra clave de HopSkipDrive [DOC]: en El Vigía los niños no tienen teléfono para recibir un PIN por viaje como en Uber [INF]); obligatorio aunque la ciudad no pida PIN; bloqueo a los 5 fallos (el de siempre); solo vehículos con «Acepto llevar menores»; avisos al responsable al aceptar, al llegar, al recogerlo, al dejarlo y si no salió.
+- **Pendiente de decisión de negocio (Richard):** pago semanal o mensual y comisión rebajada para viajes de confianza. Hoy se paga cada viaje como siempre.

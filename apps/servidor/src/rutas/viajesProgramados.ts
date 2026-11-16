@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import {
   type PaqueteEnvio,
+  RUTINA,
   VIAJE_PROGRAMADO,
   cancelacionProgramadaGratis,
 } from '@tumbite/compartido';
@@ -43,14 +44,20 @@ type FilaProgramado = {
   origen_direccion: string;
   destino_direccion: string;
   zona_horaria: string | null;
+  rutina_id: string | null;
+  conductor_preferido_id: string | null;
+  rutina_nombre: string | null;
+  menor_nombre: string | null;
+  pin_menor: string | null;
 };
 
 const COLUMNAS = `p.id, p.cliente_id, p.cotizacion_id, p.servicio_id, p.zona_id, p.programado_para, p.metodo_pago,
   p.metodo_pago_ref, p.paquete_json, p.estado, q.total, q.moneda, q.tarifa_json, q.categoria,
-  q.origen_direccion, q.destino_direccion, z.zona_horaria`;
+  q.origen_direccion, q.destino_direccion, z.zona_horaria, p.rutina_id, p.conductor_preferido_id,
+  r.nombre AS rutina_nombre, r.menor_nombre, r.pin_menor`;
 
 const FROM = `FROM viajes_programados p JOIN cotizaciones_viaje q ON q.id = p.cotizacion_id
-  LEFT JOIN zonas z ON z.id = p.zona_id`;
+  LEFT JOIN zonas z ON z.id = p.zona_id LEFT JOIN rutinas_viaje r ON r.id = p.rutina_id`;
 
 /** «2026-11-14 15:30:00» (UTC) → Date. */
 const deSql = (s: string) => new Date(`${s.replace(' ', 'T')}Z`);
@@ -84,6 +91,9 @@ function publico(f: FilaProgramado) {
     origen: f.origen_direccion,
     destino: f.destino_direccion,
     estado: f.estado,
+    // C-VIAJES-FIJOS: de qué viaje fijo nace (null si se reservó a mano).
+    rutina: f.rutina_id ? { id: f.rutina_id, nombre: f.rutina_nombre ?? '' } : null,
+    menor: f.menor_nombre,
   };
 }
 
@@ -255,6 +265,9 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
     pinEntrega,
     exigirSinActivo: false,
     programadoPara: f.programado_para,
+    conductorPreferidoId: f.conductor_preferido_id,
+    rutinaId: f.rutina_id,
+    menor: f.menor_nombre && f.pin_menor ? { nombre: f.menor_nombre, pin: f.pin_menor } : null,
     reserva: {
       estado: 'activado',
       cambio: db
@@ -266,7 +279,8 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
     },
   });
   if (!tomada) return false;
-  if (envio || !(await pinParaViajeNuevo(db, f.servicio_id, f.zona_id)))
+  // C-VIAJES-FIJOS: el viaje de un menor SIEMPRE lleva PIN, aunque la ciudad no lo pida.
+  if (envio || (!f.menor_nombre && !(await pinParaViajeNuevo(db, f.servicio_id, f.zona_id))))
     await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(f.id).run();
   if (tarjeta) {
     const cliente = await db
@@ -348,7 +362,10 @@ export async function activarViajesProgramados(env: Env, db: D1Database) {
       `SELECT ${COLUMNAS} ${FROM}
          LEFT JOIN ajustes_viaje_zona a ON a.zona_id = p.zona_id AND a.servicio_id = p.servicio_id
         WHERE p.estado = 'programado' AND p.programado_para <= datetime('now', '+${VIAJE_PROGRAMADO.despachoAntesMaximo} minutes')
-          AND p.programado_para <= datetime('now', '+' || COALESCE(a.programado_antes_min, ${VIAJE_PROGRAMADO.despachoAntesMin}) || ' minutes')
+          -- C-CONDUCTOR-CONFIANZA: con conductor de confianza, el viaje nace antes (30 minutos) para
+          -- que él lo acepte con tiempo; los demás lo ven recién 5 minutos antes de la hora.
+          AND p.programado_para <= datetime('now', '+' || MAX(COALESCE(a.programado_antes_min, ${VIAJE_PROGRAMADO.despachoAntesMin}),
+                CASE WHEN p.conductor_preferido_id IS NOT NULL THEN ${RUTINA.avisoConductorMin} ELSE 0 END) || ' minutes')
         ORDER BY p.programado_para LIMIT ${PROGRAMADOS_POR_VUELTA}`,
     )
     .all<FilaProgramado>();

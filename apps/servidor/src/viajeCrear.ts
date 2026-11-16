@@ -46,6 +46,11 @@ export type NuevoViaje = {
    */
   exigirSinActivo: boolean;
   programadoPara?: string | null;
+  /** C-CONDUCTOR-CONFIANZA: a quién se le ofrece primero (uno de los de confianza del cliente). */
+  conductorPreferidoId?: string | null;
+  /** C-VIAJES-FIJOS: el viaje fijo de donde nace y, si lleva a un menor, su nombre y su PIN fijo. */
+  rutinaId?: string | null;
+  menor?: { nombre: string; pin: string } | null;
   /**
    * C-VIAJE-PROGRAMADO: el viaje nace en el MISMO lote que cambia la reserva (tomarla o cancelarla
    * tarde), y solo si la reserva quedó en ese estado. Así un corte a la mitad nunca deja una reserva
@@ -90,9 +95,10 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
       .prepare(
         `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultimo_actor_id, ultima_clave,
            origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
-           pasajeros, pin_recogida, metodo_pago, cotizacion_id, categoria, programado_para)
+           pasajeros, pin_recogida, metodo_pago, cotizacion_id, categoria, programado_para,
+           conductor_preferido_id, rutina_id, menor_nombre)
          SELECT ?1, ?6, 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
-                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria, ?7
+                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria, ?7, ?8, ?9, ?10
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1
             AND NOT EXISTS (SELECT 1 FROM viajes WHERE operacion_id = ?1)
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1)${conReserva}`,
@@ -101,10 +107,14 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
         v.op,
         v.cotizacionId,
         `pedir:${v.cotizacionId}`,
-        pinNuevo(),
+        // C-VIAJES-FIJOS: el menor usa el PIN fijo que le enseñó su responsable.
+        v.menor?.pin ?? pinNuevo(),
         v.metodoPago,
         v.estado,
         v.programadoPara ?? null,
+        v.conductorPreferidoId ?? null,
+        v.rutinaId ?? null,
+        v.menor?.nombre ?? null,
       ),
     // C-VIAJE-PARADAS: las paradas de la cotización nacen con el viaje, en su orden.
     db
@@ -167,6 +177,10 @@ export type Programar = {
   metodoPago: string;
   paquete: PaqueteEnvio | null;
   programadoPara: Date;
+  /** C-VIAJES-FIJOS: la salida de un viaje fijo (no cuenta para el tope de 5 reservas a mano). */
+  rutinaId?: string | null;
+  /** C-CONDUCTOR-CONFIANZA: a quién se le ofrece primero cuando llegue la hora. */
+  conductorPreferidoId?: string | null;
 };
 
 /**
@@ -185,11 +199,11 @@ export async function programarViaje(env: Env, db: D1Database, u: { id: string }
     );
   const pendientes = await db
     .prepare(
-      "SELECT COUNT(*) AS n FROM viajes_programados WHERE cliente_id = ? AND estado = 'programado'",
+      "SELECT COUNT(*) AS n FROM viajes_programados WHERE cliente_id = ? AND estado = 'programado' AND rutina_id IS NULL",
     )
     .bind(u.id)
     .first<{ n: number }>();
-  if (Number(pendientes?.n ?? 0) >= VIAJE_PROGRAMADO.maxPendientes)
+  if (!p.rutinaId && Number(pendientes?.n ?? 0) >= VIAJE_PROGRAMADO.maxPendientes)
     throw new ErrorDatos(
       'Puedes tener hasta 5 viajes programados a la vez.',
       'programadoPara',
@@ -218,8 +232,8 @@ export async function programarViaje(env: Env, db: D1Database, u: { id: string }
     db
       .prepare(
         `INSERT INTO viajes_programados (id, cliente_id, cotizacion_id, servicio_id, zona_id, programado_para,
-           metodo_pago, metodo_pago_ref, paquete_json)
-         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9
+           metodo_pago, metodo_pago_ref, paquete_json, rutina_id, conductor_preferido_id)
+         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11
           WHERE EXISTS (SELECT 1 FROM cotizaciones_viaje WHERE id = ?3 AND operacion_id = ?1)`,
       )
       .bind(
@@ -232,6 +246,8 @@ export async function programarViaje(env: Env, db: D1Database, u: { id: string }
         p.metodoPago,
         ref,
         p.paquete ? JSON.stringify(p.paquete) : null,
+        p.rutinaId ?? null,
+        p.conductorPreferidoId ?? null,
       ),
   ]);
   if (!r[0]?.meta.changes) {

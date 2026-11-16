@@ -5,6 +5,7 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { referenciaLocal } from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { type MomentoMenor, avisarResponsableMenor } from './viajesFijos';
 import { revisarSelfieCasco } from './ajustesViaje';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
@@ -109,8 +110,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
       `SELECT f.operacion_id, f.vehiculo_id, f.ganancia_centavos, f.expira_en, o.servicio_id,
               v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
-              v.categoria, q.multiplicador_pb, q.paradas_json,
-              d.lat AS yo_lat, d.lng AS yo_lng
+              v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
+              v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -155,6 +156,11 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
           f.programado_para == null
             ? null
             : new Date(`${String(f.programado_para).replace(' ', 'T')}Z`).toISOString(),
+        // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: la oferta dice que es de un cliente que lo eligió de
+        // confianza (solo para él, por un minuto), si es un viaje fijo y si lleva a un menor.
+        deConfianza: f.conductor_preferido_id === u.id,
+        viajeFijo: f.rutina_id != null,
+        menor: f.menor_nombre == null ? null : String(f.menor_nombre),
       };
     }),
   });
@@ -178,7 +184,7 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               p.nombre AS pasajero,
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
               e.foto_recogida IS NOT NULL AS paquete_foto, e.foto_entrega IS NOT NULL AS paquete_foto_entrega,
-              e.tamano AS paquete_tamano
+              e.tamano AS paquete_tamano, v.menor_nombre, v.rutina_id IS NOT NULL AS viaje_fijo
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -265,8 +271,11 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
     vehiculoId: oferta.vehiculo_id,
     clave,
   });
-  if (r.resultado === 'tomada' || r.resultado === 'ya_es_tuya')
+  if (r.resultado === 'tomada' || r.resultado === 'ya_es_tuya') {
+    // C-VIAJES-FIJOS: el responsable del menor sabe quién va por él.
+    if (r.resultado === 'tomada') await avisarResponsableMenor(c.env, base(c), id, 'aceptado');
     return c.json({ ok: true, operacionId: r.operacionId, version: r.version });
+  }
   // No se lo quedó: lo apartado vuelve al prepago.
   await devolverReservaViaje(base(c), id, u.id, 'no_aceptado');
   if (r.resultado === 'ocupado')
@@ -312,6 +321,13 @@ viajes.post('/conductor/operaciones/:id/liberar', async (c) => {
   );
   return c.json({ ok: true });
 });
+
+const MOMENTO_MENOR = new Map<string, MomentoMenor>([
+  ['llegue', 'llego'],
+  ['iniciar', 'recogido'],
+  ['terminar', 'dejado'],
+  ['no-se-presento', 'no_se_presento'],
+]);
 
 const PASOS = new Map([
   ['llegue', { desde: 'asignado', hacia: 'conductor_llego' }],
@@ -407,6 +423,9 @@ viajes.post(
       if (op.estado === paso.hacia) return c.json({ ok: true, estado: op.estado }); // reintento
       throw new ErrorDatos('Este paso ya no corresponde. Actualiza la pantalla.', undefined, 409);
     }
+    // C-VIAJES-FIJOS: cada paso del viaje de un menor le llega a su responsable (nunca frena).
+    const momento = MOMENTO_MENOR.get(nombre);
+    if (momento) await avisarResponsableMenor(c.env, db, id, momento);
     // C-VIAJE-SEGURIDAD-2: al empezar, los contactos de confianza reciben el viaje (nunca frena).
     if (nombre === 'iniciar')
       await avisarContactos(c, id).catch((e: unknown) =>

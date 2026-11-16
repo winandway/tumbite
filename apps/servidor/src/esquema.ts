@@ -286,6 +286,13 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-EQUIPO-INVITACION (15 nov 2026): los permisos y topes concretos que se aprobaron al invitar
   // (congelados): si la plantilla crece después, la invitación ya no sirve.
   ['invitaciones_equipo', 'acceso_json', 'TEXT'],
+  // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS (16 nov 2026): a quién se le ofrece primero el viaje, de
+  // qué viaje fijo nace y, si lleva a un menor, su nombre (el responsable recibe los avisos).
+  ['viajes_programados', 'rutina_id', 'TEXT'],
+  ['viajes_programados', 'conductor_preferido_id', 'TEXT'],
+  ['viajes', 'conductor_preferido_id', 'TEXT'],
+  ['viajes', 'rutina_id', 'TEXT'],
+  ['viajes', 'menor_nombre', 'TEXT'],
 ];
 
 /**

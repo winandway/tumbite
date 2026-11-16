@@ -2611,5 +2611,50 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "usuario_id",
     "bloqueado_id",
     "creado_en"
+  ],
+  "conductores_confianza": [
+    "cliente_id",
+    "conductor_id",
+    "creado_en"
+  ],
+  "rutinas_viaje": [
+    "id",
+    "cliente_id",
+    "nombre",
+    "servicio_id",
+    "zona_id",
+    "categoria",
+    "origen_lat",
+    "origen_lng",
+    "origen_direccion",
+    "destino_lat",
+    "destino_lng",
+    "destino_direccion",
+    "dias",
+    "hora_ida",
+    "hora_vuelta",
+    "metodo_pago",
+    "conductor_id",
+    "menor_nombre",
+    "pin_menor",
+    "paquete_json",
+    "estado",
+    "pausada_hasta",
+    "proxima_revision_en",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "rutina_salidas": [
+    "rutina_id",
+    "fecha",
+    "sentido",
+    "hora",
+    "estado",
+    "programado_id",
+    "conductor_id",
+    "conductor_no_puede_en",
+    "motivo",
+    "aviso_conductor_en",
+    "creado_en"
   ]
 };

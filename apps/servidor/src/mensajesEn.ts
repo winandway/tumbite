@@ -1090,6 +1090,50 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe el nombre.', 'Enter the name.'],
   ['Ese número no parece un celular.', 'That number doesn’t look like a mobile number.'],
   ['Puedes tener hasta 5 contactos de confianza.', 'You can have up to 5 trusted contacts.'],
+  // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS (16 nov 2026).
+  [
+    'Solo puedes elegir de confianza a un conductor con quien ya viajaste.',
+    'You can only choose a driver you’ve already ridden with as your trusted driver.',
+  ],
+  ['No puedes elegir a este conductor.', 'You can’t choose this driver.'],
+  ['Ese viaje no tiene conductor.', 'That ride has no driver.'],
+  [
+    'Ese conductor ya no está entre los tuyos.',
+    'That driver is no longer one of your trusted drivers.',
+  ],
+  [
+    'Puedes tener hasta 3 conductores de confianza. Quita uno primero.',
+    'You can have up to 3 trusted drivers. Remove one first.',
+  ],
+  [
+    'Para un viaje fijo con tarjeta, primero paga un viaje con tarjeta en la app (queda guardada).',
+    'To pay a regular ride by card, first pay for one ride by card in the app (it gets saved).',
+  ],
+  [
+    'Ese conductor no está entre tus conductores de confianza.',
+    'That driver isn’t one of your trusted drivers.',
+  ],
+  [
+    'Tu conductor no tiene activado «Acepto llevar menores». Pídele que lo active en su app.',
+    'Your driver hasn’t turned on “I accept minors.” Ask them to turn it on in their app.',
+  ],
+  ['Puedes tener hasta 10 viajes fijos.', 'You can have up to 10 regular rides.'],
+  ['Ese viaje fijo no existe.', 'That regular ride doesn’t exist.'],
+  ['Elige una fecha de hoy hasta 90 días.', 'Choose a date from today up to 90 days ahead.'],
+  [
+    'Falta menos de una hora para ese viaje: cancélalo desde la pantalla del viaje.',
+    'That ride is less than an hour away: cancel it from the ride screen.',
+  ],
+  ['Este viaje fijo no lleva a un menor.', 'This regular ride isn’t for a minor.'],
+  ['Ese viaje fijo ya no es tuyo.', 'That regular ride is no longer yours.'],
+  [
+    'Ese viaje todavía no está en tu agenda de hoy y mañana.',
+    'That ride isn’t in your schedule for today and tomorrow yet.',
+  ],
+  ['La vuelta tiene que ser después de la ida.', 'The return has to be after the outbound ride.'],
+  ['Falta qué envías.', 'Tell us what you’re sending.'],
+  ['Un envío no lleva pasajero.', 'A delivery doesn’t carry a passenger.'],
+  ['Un envío va solo de ida.', 'A delivery is one-way only.'],
   ['Ese número ya está en tus contactos.', 'That number is already in your contacts.'],
   ['Ese aviso ya no está abierto.', 'That alert is no longer open.'],
   ['Carro XL todavía no está disponible en tu ciudad.', 'Car XL isn’t available in your city yet.'],

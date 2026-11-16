@@ -113,3 +113,4 @@ export * from './tiemposOperacion';
 export * from './llegadaEstimada';
 export * from './monitoreoServicios';
 export * from './formatoHora';
+export * from './rutinas';

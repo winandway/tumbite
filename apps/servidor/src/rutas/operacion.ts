@@ -2,6 +2,7 @@ import { actualizarLlegadas, leerLlegada, listoMsDe, llegadaParaMostrar } from '
 import { avisarAutorizacionesPorVencer } from '../autorizacionVencida';
 import { flotasActivas } from './flota';
 import { TAREA_VIAJES_PROGRAMADOS } from './viajesProgramados';
+import { TAREA_VIAJES_FIJOS } from './viajesFijos';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
@@ -3261,6 +3262,9 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // C-VIAJE-PROGRAMADO (todos los países): los viajes reservados empiezan a buscar conductor unos
   // minutos antes de su hora. Lee solo el índice de pendientes; sin ninguna que venza, no escribe.
   TAREA_VIAJES_PROGRAMADOS,
+  // C-VIAJES-FIJOS (todos los países): cada salida de un viaje fijo nace 24 horas antes y el conductor
+  // de confianza recibe su aviso 30 minutos antes. Lee solo los índices parciales de lo que vence.
+  TAREA_VIAJES_FIJOS,
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
   ...TAREAS_FLEX,
   // Flex · Fase 4: conciliación y recuperación de las billeteras, recarga automática y alertas.

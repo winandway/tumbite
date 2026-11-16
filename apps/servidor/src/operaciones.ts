@@ -2,6 +2,7 @@ import { cuantosHay } from './canarioLecturas';
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
 import {
+  CONFIANZA,
   PLAZAS_XL,
   type TamanoPaquete,
   acercaAlDestino,
@@ -345,6 +346,165 @@ async function vehiculosActivos(db: D1Database, conductores: string[]) {
   return mapa;
 }
 
+/** C-VIAJES-FIJOS: de estos vehículos, los que aceptan llevar menores. */
+async function vehiculosConMenores(db: D1Database, vehiculos: string[]): Promise<Set<string>> {
+  if (!vehiculos.length) return new Set();
+  const { results } = await db
+    .prepare(
+      `SELECT id FROM vehiculos WHERE acepta_menores = 1 AND id IN (${vehiculos.map(() => '?').join(',')})`,
+    )
+    .bind(...vehiculos)
+    .all<{ id: string }>();
+  return new Set(results.map((r) => r.id));
+}
+
+/** Minutos de ubicación que le valen al conductor de confianza (puede tener la app en segundo plano). */
+const MINUTOS_UBICACION_CONFIANZA = 10;
+
+type OpConfianza = {
+  id: string;
+  servicio_id: string;
+  zona_id: string;
+  cliente_id: string;
+  origen_lat: number;
+  origen_lng: number;
+  total: number | null;
+  moneda: string | null;
+  pais: string | null;
+  metodo_pago: string | null;
+  tamano: TamanoPaquete | null;
+  conductor_preferido_id: string | null;
+  programado_para: string | null;
+  menor_nombre: string | null;
+};
+
+/**
+ * C-CONDUCTOR-CONFIANZA (16 nov 2026, todos los países): el turno del conductor de confianza.
+ * - «ofrecida»: se le acaba de ofrecer, solo a él, por un minuto.
+ * - «esperar»: no está libre ahora, pero es un viaje programado o fijo y todavía falta para la hora:
+ *   se le guarda hasta 5 minutos antes (nadie más lo ve).
+ * - «libre»: ya se le ofreció (lo rechazó o se le venció), o no está y es para ya: pasa a los demás.
+ * Copiado de Uber (favorito primero en los programados; si no acepta, pasa a otros sin castigo) [DOC].
+ */
+export async function turnoDeConfianza(
+  env: Env | undefined,
+  db: D1Database,
+  op: OpConfianza,
+  bloqueadas: Map<string, Set<string>>,
+  yaOfrecidos: Set<string>,
+  hacer: typeof fetch = fetch,
+): Promise<'ofrecida' | 'esperar' | 'libre'> {
+  const pref = op.conductor_preferido_id;
+  if (!pref) return 'libre';
+  const ya = await db
+    .prepare('SELECT 1 FROM ofertas_operacion WHERE operacion_id = ? AND conductor_id = ?')
+    .bind(op.id, pref)
+    .first();
+  if (ya) return 'libre';
+  const hora = op.programado_para ? new Date(`${op.programado_para.replace(' ', 'T')}Z`) : null;
+  const guardar =
+    hora != null && hora.getTime() - Date.now() > CONFIANZA.guardarHastaMinAntes * 60_000;
+  const noEsta = guardar ? 'esperar' : 'libre';
+  if (yaOfrecidos.has(pref) || bloqueadas.get(op.cliente_id)?.has(pref)) return noEsta;
+  // Elegible para este servicio y ciudad, con señal reciente y libre (sin ocupación ni oferta abierta).
+  const e = await db
+    .prepare(
+      `SELECT e.conductor_id, e.vehiculo_id, e.lat, e.lng, h.acepta_menores FROM conductores_elegibles e
+         JOIN vehiculos h ON h.id = e.vehiculo_id
+        WHERE e.conductor_id = ?1 AND e.servicio_id = ?2 AND e.zona_id = ?3 AND e.lat IS NOT NULL
+          AND e.ubicacion_en > datetime('now', ?4)
+          AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = ?1)
+          AND NOT EXISTS (SELECT 1 FROM ofertas_operacion o WHERE o.conductor_id = ?1 AND o.estado = 'ofrecida')
+          AND NOT EXISTS (SELECT 1 FROM ofertas f WHERE f.repartidor_id = ?1 AND f.estado = 'ofrecida')
+        LIMIT 1`,
+    )
+    .bind(pref, op.servicio_id, op.zona_id, `-${MINUTOS_UBICACION_CONFIANZA} minutes`)
+    .first<{
+      conductor_id: string;
+      vehiculo_id: string;
+      lat: number;
+      lng: number;
+      acepta_menores: number;
+    }>();
+  if (!e) return noEsta;
+  if (op.menor_nombre && e.acepta_menores !== 1) return 'libre';
+  const km = distanciaKm({ lat: e.lat, lng: e.lng }, { lat: op.origen_lat, lng: op.origen_lng });
+  if (km > CONFIANZA.kmMaximo) return noEsta;
+  if (op.tamano === 'mediano' || op.tamano === 'grande') {
+    const v = (await vehiculosActivos(db, [pref])).get(pref);
+    if (!v || !vehiculoLlevaPaquete(op.tamano, v)) return 'libre';
+  }
+  const comision =
+    op.total != null && op.moneda && op.pais
+      ? ((
+          await comisionConductor(db, {
+            servicio: SERVICIO_FINANCIERO.get(op.servicio_id) ?? 'ride',
+            pais: op.pais,
+            ciudad: op.zona_id,
+            moneda: op.moneda,
+            valor: op.total,
+          }).catch(() => null)
+        )?.monto ?? 0)
+      : 0;
+  if (comision > 0 && op.pais && op.moneda) {
+    const sin = await sinSaldoPara(db, [pref], op.pais, op.moneda, comision);
+    if (sin.has(pref)) return noEsta;
+  }
+  if (op.metodo_pago === 'pago_movil' && op.pais) {
+    const con = await conductoresConPagoMovil(db, [pref], op.pais);
+    if (!con.has(pref)) return 'libre';
+  }
+  const r = await db
+    .prepare(
+      `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos, km)
+       SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5, ?6
+        WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?2)
+          AND NOT EXISTS (SELECT 1 FROM ofertas_operacion WHERE conductor_id = ?2 AND estado = 'ofrecida')
+          AND NOT EXISTS (SELECT 1 FROM ofertas_operacion WHERE operacion_id = ?1 AND estado = 'ofrecida')
+          AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1 AND estado_general = 'buscando')
+       ON CONFLICT(operacion_id, conductor_id) DO NOTHING`,
+    )
+    .bind(
+      op.id,
+      pref,
+      e.vehiculo_id,
+      `+${CONFIANZA.segundosOfertaExclusiva} seconds`,
+      Math.max(0, (op.total ?? 0) - comision),
+      Number.isFinite(km) ? km : null,
+    )
+    .run();
+  if (!r.meta.changes) return noEsta;
+  yaOfrecidos.add(pref);
+  if (env) {
+    await avisarTiempoReal(
+      env,
+      op.zona_id,
+      [
+        {
+          id: `oferta-op:${op.id}:${pref}`,
+          para: { usuarios: [pref] },
+          datos: { tipo: 'oferta_operacion', operacionId: op.id, km, fuente: 'confianza' },
+        },
+      ],
+      hacer,
+    );
+    // Un aviso al teléfono también: puede tener la app en segundo plano.
+    await notificar(env, db, pref, (i) => ({
+      ...(i === 'en'
+        ? {
+            titulo: 'Your regular rider requested you',
+            cuerpo: 'You have 1 minute to accept before it goes to other drivers.',
+          }
+        : {
+            titulo: 'Tu cliente de confianza te pidió un viaje',
+            cuerpo: 'Tienes 1 minuto para aceptarlo antes de que pase a otros conductores.',
+          }),
+      datos: { tipo: 'oferta_operacion', operacionId: op.id },
+    })).catch((x: unknown) => console.error('confianza: aviso al conductor', x));
+  }
+  return 'ofrecida';
+}
+
 export async function repartirOperaciones(
   env: Env | undefined,
   db: D1Database,
@@ -442,7 +602,8 @@ export async function repartirOperaciones(
   const { results: buscando } = await db
     .prepare(
       `SELECT o.id, o.servicio_id, o.zona_id, o.cliente_id, v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng, q.total, q.moneda, z.pais,
-              v.metodo_pago, (SELECT p.tamano FROM envios_persona p WHERE p.operacion_id = o.id) AS tamano
+              v.metodo_pago, (SELECT p.tamano FROM envios_persona p WHERE p.operacion_id = o.id) AS tamano,
+              v.conductor_preferido_id, v.programado_para, v.menor_nombre
          FROM operaciones o
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -465,6 +626,9 @@ export async function repartirOperaciones(
       pais: string | null;
       metodo_pago: string | null;
       tamano: TamanoPaquete | null;
+      conductor_preferido_id: string | null;
+      programado_para: string | null;
+      menor_nombre: string | null;
     }>();
   let ofrecidas = 0;
   const yaOfrecidos = new Set<string>();
@@ -480,6 +644,15 @@ export async function repartirOperaciones(
   // lo tiene encendido solo recibe viajes y envíos cuyo destino lo acerca al suyo.
   const destinos = buscando.length ? await destinosActivos(db) : new Map();
   for (const op of buscando) {
+    // C-CONDUCTOR-CONFIANZA: primero, y solo a él, el conductor de confianza del cliente.
+    const confianza = op.conductor_preferido_id
+      ? await turnoDeConfianza(env, db, op, bloqueadas, yaOfrecidos, hacer)
+      : 'libre';
+    if (confianza === 'ofrecida') {
+      ofrecidas++;
+      continue;
+    }
+    if (confianza === 'esperar') continue;
     const { candidatos, fuente } = await candidatosParaOperacion(
       env,
       db,
@@ -539,8 +712,16 @@ export async function repartirOperaciones(
             candidatos.map((c) => c.conductorId),
           )
         : null;
+    // C-VIAJES-FIJOS: el viaje de un menor solo va a un vehículo que acepta menores.
+    const conMenores = op.menor_nombre
+      ? await vehiculosConMenores(
+          db,
+          candidatos.map((c) => c.vehiculoId),
+        )
+      : null;
     const elegido = candidatos.find((c) => {
       if (yaOfrecidos.has(c.conductorId)) return false;
+      if (conMenores && !conMenores.has(c.vehiculoId)) return false;
       if (bloqueadas.get(op.cliente_id)?.has(c.conductorId)) return false;
       if (vehiculos && op.tamano) {
         const v = vehiculos.get(c.conductorId);

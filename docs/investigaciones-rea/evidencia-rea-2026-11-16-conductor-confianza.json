@@ -1,0 +1,404 @@
+{
+  "artifacts": [],
+  "captures": [],
+  "environments": [
+    {
+      "architecture": "unknown",
+      "id": "Chromium@159.0.8154.6",
+      "isolation": "process",
+      "platform": "unknown"
+    }
+  ],
+  "providers": [
+    {
+      "id": "rea-playwright-browser-scenario",
+      "name": "REA Playwright browser scenario capture provider",
+      "version": "1"
+    }
+  ],
+  "records": [
+    {
+      "analysis_profile": null,
+      "authority": "controlled-replay",
+      "confidence": "observed",
+      "environment": {
+        "architecture": "unknown",
+        "id": "Chromium@159.0.8154.6",
+        "isolation": "process",
+        "platform": "unknown"
+      },
+      "evidence_id": "ev_69b8016eb47c56404877ec1fd4fb24a784fcbbf0ab7c2e6af9f5be030d9fd46c",
+      "evidence_links": [],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "locations": [],
+      "normalized_result": {
+        "browser": {
+          "cleanup": "terminated-owned-process",
+          "mode": "launch",
+          "process_ownership": "provider-owned",
+          "product": "Chromium",
+          "version": "159.0.8154.6"
+        },
+        "completeness": {
+          "equality_eligible": true,
+          "missing_sections": [],
+          "status": "complete",
+          "truncated_sections": []
+        },
+        "duration_ms": 6970,
+        "events": { "dropped": 0, "items": [], "retained": 0 },
+        "limitations": [
+          "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+          "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+          "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+          "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+          "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+          "Storage values are hashed only after declared-secret redaction."
+        ],
+        "scenario": {
+          "action_count": 1,
+          "event_families": [],
+          "network_content": {
+            "header_values": false,
+            "request_body": false,
+            "response_body": false
+          },
+          "secret_references": [],
+          "start_origin": "https://www.uber.com"
+        },
+        "steps": [
+          {
+            "action": "goto_start",
+            "after_url": {
+              "origin": "https://www.uber.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.uber.com/us/en/ride/teens/"
+            },
+            "artifacts": {
+              "accessibility": { "state": "not_requested" },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": { "state": "not_requested" },
+              "storage": { "state": "not_requested" },
+              "url": { "state": "not_requested" }
+            },
+            "before_url": {
+              "origin": null,
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "about:blank"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 3870,
+            "error": null,
+            "event_sequence_end": 0,
+            "event_sequence_start": 1,
+            "status": "completed",
+            "step_id": "scenario_start",
+            "step_index": 0
+          },
+          {
+            "action": "wait_for_timeout",
+            "after_url": {
+              "origin": "https://www.uber.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.uber.com/us/en/ride/teens/"
+            },
+            "artifacts": {
+              "accessibility": {
+                "state": "captured",
+                "value": {
+                  "bytes": 15868,
+                  "sha256": "6bd2f31627e70d3b6653fe51553acd1a51e5497ebaebc93f412f4ccefa9538ce",
+                  "text": "- document:\n  - link \"Skip to main content\":\n    - /url: \"#main\"\n  - navigation:\n    - link \"Uber homepage\":\n      - /url: https://www.uber.com/\n      - text: Uber\n    - list:\n      - listitem:\n        - link \"Ride — Request a ride\":\n          - /url: https://m.uber.com/looking\n          - text: Ride\n      - listitem:\n        - link \"Earn\":\n          - /url: https://drivers.uber.com/\n      - listitem:\n        - link \"Travel\":\n          - /url: https://www.uber.com/us/en/city-hub/\n      - listitem:\n        - link \"Business\":\n          - /url: https://www.uber.com/us/en/business/\n      - listitem:\n        - link \"Uber Eats\":\n          - /url: https://www.ubereats.com/\n      - listitem:\n        - button \"About\"\n    - list:\n      - listitem:\n        - button \"EN - Change language\": EN\n      - listitem:\n        - link \"Help\":\n          - /url: https://help.uber.com/\n      - listitem:\n        - link \"Log in\":\n          - /url: https://m.uber.com/login-redirect/\n      - listitem:\n        - link \"Sign up to ride, drive, and get delivery\":\n          - /url: https://m.uber.com/login-redirect/\n          - text: Sign up\n  - navigation:\n    - list:\n      - listitem:\n        - button \"Teen accounts on Uber\"\n    - list:\n      - listitem:\n        - link \"Anchor link to a brief overview on Uber for teens\":\n          - /url: https://www.uber.com/us/en/ride/teens/#overview\n          - text: Overview\n      - listitem:\n        - link \"Anchor link to the different features for teens and parents/guardians\":\n          - /url: https://www.uber.com/us/en/ride/teens/#features-and-benefits\n          - text: Features and benefits\n      - listitem:\n        - link \"Anchor link to the how-to section of the page\":\n          - /url: https://www.uber.com/us/en/ride/teens/#how-to\n          - text: Set up teen account\n      - listitem:\n        - link \"Anchor link to a section of frequently asked questions\":\n          - /url: https://www.uber.com/us/en/ride/teens/#frequently-asked-questions\n          - text: FAQ\n  - main:\n    - link \"Ready to add your teen? Set up in the app\":\n      - /url: https://www.youtube.com/watch?v=1iZILZusQ4E\n    - heading \"Peace of mind for you. Freedom for them.\" [level=2]\n    - text: Between school, practice, the mall, and friends, your teen has places they need to be—and so do you.\n    - button \"Watch now\"\n    - heading \"Get to know teen accounts\" [level=1]\n    - paragraph: Teen accounts give your teenager the freedom to request their own rides and order their own meals, all under your supervision. Plus, with live safety features and real-time updates, you can follow along from pickup to dropoff.\n    - paragraph: Together, we can help them go anywhere and get (almost) anything they need.\n    - heading \"Rides and meals at their fingertips\" [level=2]\n    - paragraph: With the power to request a ride or a meal anytime, your teen will always have a reliable way to find rides, go where they need to go, order food, and get home to you. Additionally, age-restricted items that your teen is not old enough to buy—such as alcohol and some medications—will be filtered out.\n    - img \"A teen is outside, smiling as she holds her phone, with the simplified UI of the app's homescreen floating to the left of her.\"\n    - heading \"Highly rated drivers and couriers\" [level=2]\n    - paragraph: Your teen will always be matched with highly rated and experienced drivers and couriers. Before anyone can drive with Uber, they must undergo a thorough background check—and they’re rescreened every year.¹\n    - img \"Teen-Accounts_LP-Highly-Rated-Drivers\"\n    - heading \"Live trip and delivery tracking\" [level=2]\n    - paragraph: When your teen requests a ride or places an order, you can follow along in the app with live trip and delivery tracking. You’ll also get real-time status updates. Additionally, teen trips are destination-locked, meaning drivers cannot change the destination of the trip—only your teen can.\n    - button \"Learn more\"\n    - img \"A teen is wearing a yellow cardigan and is holding her phone, waiting for her ride to arrive. A notification is floating over the photo that says that her trip is automatically shared with her parent.\"\n    - heading \"Always-on safety features\" [level=2]\n    - paragraph: All the rideshare safety features you know and love, like PIN verification and RideCheck™, will always be automatically turned on and cannot be turned off. If your teen chooses to set it up, the Audio Recording feature will also be automatically turned on for every trip. In addition, they’ll always have access to our on-trip safety features, such as being able to call 911, contact Support, or report an issue through the app.\n    - button \"Learn more\"\n    - img \"Teen-Accounts_LP-Safety\"\n    - heading \"Here's what families are saying\" [level=1]\n    - list:\n      - listitem:\n        - heading \"❝ Being able to follow along from across town makes me feel like I’m with him.\" [level=2]\n        - heading \"Jenni B.\" [level=3]\n        - img \"Youtube\"\n    - text: 1/3\n    - button \"Return to previous gallery item\" [disabled]:\n      - img\n    - button \"Advance to next gallery item\":\n      - img\n    - heading \"How to add a teen account\" [level=1]\n    - paragraph: \"Follow these 3 steps to get your teen’s account set up:\"\n    - img \"Family profile app grab\"\n    - list:\n      - listitem: Tap Account > Family and teens to create a Family profile.\n    - img \"Teens_LP_Add-02\"\n    - list:\n      - listitem: Tap Invite family > Teen > Choose contact and select their name from your contacts. (They must be at least 13 years old.)\n    - img \"Teens_LP-Add-03\"\n    - list:\n      - listitem: Make sure your payment information is up to date before your teen requests their first ride.\n    - img \"Teens-Invite-2\"\n    - paragraph: After that, your teen will receive an invite by text and will need to complete a mandatory safety onboarding. Once they’re done, they’ll be ready for their first ride.\n    - link \"Watch to learn more\":\n      - /url: https://www.youtube.com/embed/1iZILZusQ4E?si=ROe_EiEA_ZJimI65\n    - heading \"Meet some of our partners\" [level=1]\n    - paragraph:\n      - text: We’ve teamed up with\n      - link \"National PTA³\":\n        - /url: https://pta.org\n      - text: and\n      - link \"Safe Kids worldwide\":\n        - /url: https://www.safekids.org/\n      - text: ®, which are both dedicated to helping keep families, children, and communities safe. Together, we’ve created the following safety tips for parents and teens (ages 13-17) to reference while on the road.\n    - link \"View safety tips\":\n      - /url: https://drive.google.com/file/d/1UKWBkFvFVgChTqA1hmy6hV__vbjIE3QA/view?usp=sharing\n    - img \"PTA\"\n    - paragraph:\n      - link \"PTA\":\n        - /url: https://www.pta.org/home/family-resources/safety/teen-transportation-safety\n      - text: \"'s mission is to make every child’s potential a reality by engaging and empowering families and communities to advocate for all children.\"\n    - img \"Safe kids worldwide\"\n    - paragraph:\n      - link \"Safe Kids Worldwide\":\n        - /url: https://www.safekids.org/\n      - text: ® is a nonprofit organization working to help families and communities keep kids safe from injuries.\n    - img \"life360 logo\"\n    - paragraph:\n      - link \"Life360\":\n        - /url: https://www.life360.com/\n      - text: \"'s mission is to enhance family safety and connection by providing a comprehensive platform for location sharing, communication, and security.\"\n    - heading \"Frequently asked questions\" [level=2]\n    - group: Where can teens take trips?\n    - group: Where are teen accounts available?\n    - group: How do teens pay for rides and meals?\n    - group: Can guardians book rides for teenagers?\n    - group: Can guardians monitor teen rides and delivery orders?\n    - group: Can teens bring other riders?\n    - group: Can teens turn off the safety features?\n    - group: How can I contact my teen’s driver?\n    - group: How will you prevent teens from ordering alcohol and other age-restricted items?\n    - group: What happens to my teen’s account when they turn 18?\n    - group: Where can I get help setting up a teen account?\n    - link \"Link to our Family Profiles page\":\n      - /url: https://www.uber.com/us/en/ride/how-it-works/family-profiles/\n      - heading \"Family Profiles\" [level=3]\n    - link \"Link to our Safety page\":\n      - /url: https://www.uber.com/us/en/safety/\n      - heading \"Safety\" [level=3]\n    - paragraph:\n      - text: By creating a teen account with Uber, you attest that, as your teen’s guardian, you have legal authority to act on your child’s behalf, that your child is between the ages of 13 and 17, and that you have conferred with any other parent or legal guardian of your teen. Use of Uber for teens is further governed by these specific\n      - link \"Terms of Use\":\n        - /url: https://www.uber.com/legal/document/?name=uber-teens-terms-of-use---parents-or-guardians\n      - text: .\n    - paragraph: In the event that you need to place a 911 emergency call on behalf of your teen, the dispatcher you’re connected with will see your location, not your teen’s.\n    - paragraph: \"*Notifications may be subject to your device settings, LTE or internet connectivity, or any software that can restrict messaging.\"\n    - paragraph: ¹Annual driving history reruns do not apply in NYC.\n    - paragraph: ²Teen accounts will generally be eligible for trips within the broader metropolitan area for each city. Please check the app to confirm whether your teen will be able to take their planned trip.\n    - paragraph: ³National PTA does not endorse any commercial entity, product, or service. No endorsement is implied.\n    - paragraph:\n      - text: See more about how Uber is committed to helping ensure the safety of teens on our platform\n      - link \"here\":\n        - /url: https://www.uber.com/us/en/ride/teens/safeguarding-policy/\n      - text: .\n  - contentinfo:\n    - link \"Uber\":\n      - /url: https://www.uber.com/\n    - link \"Visit Help Center\":\n      - /url: https://help.uber.com/\n      - paragraph: Visit Help Center\n    - link \"Do not sell or share my personal information\":\n      - /url: https://privacy.uber.com/privacy/us\n      - paragraph: Do not sell or share my personal information\n    - link \"Google Data Policy\":\n      - /url: https://www.uber.com/google-disclosure/\n      - paragraph: Google Data Policy\n    - heading \"Company\" [level=2]\n    - list:\n      - listitem:\n        - link \"About us\":\n          - /url: https://www.uber.com/us/en/about/\n          - paragraph: About us\n      - listitem:\n        - link \"Our offerings, apps, and products\":\n          - /url: https://www.uber.com/us/en/about/uber-offerings/\n          - paragraph: Our offerings\n      - listitem:\n        - link \"Newsroom\":\n          - /url: https://www.uber.com/us/en/newsroom/\n          - paragraph: Newsroom\n      - listitem:\n        - link \"Investors\":\n          - /url: https://investor.uber.com/\n          - paragraph: Investors\n      - listitem:\n        - link \"Blog\":\n          - /url: https://www.uber.com/us/en/blog/\n          - paragraph: Blog\n      - listitem:\n        - link \"Careers\":\n          - /url: https://jobs.uber.com/en/\n          - paragraph: Careers\n      - listitem:\n        - link \"Uber One\":\n          - /url: https://www.uber.com/us/en/uber-one/\n          - paragraph: Uber One\n    - heading \"Products\" [level=2]\n    - list:\n      - listitem:\n        - link \"Ride with Uber\":\n          - /url: https://www.uber.com/us/en/ride/\n          - paragraph: Ride\n      - listitem:\n        - link \"Drive\":\n          - /url: https://www.uber.com/us/en/drive/\n          - paragraph: Drive\n      - listitem:\n        - link \"Deliver\":\n          - /url: https://www.uber.com/us/en/deliver/\n          - paragraph: Deliver\n      - listitem:\n        - link \"Eat\":\n          - /url: https://www.ubereats.com/\n          - paragraph: Eat\n      - listitem:\n        - link \"Uber for Business\":\n          - /url: https://www.uber.com/us/en/business/\n          - paragraph: Uber for Business\n      - listitem:\n        - link \"Uber Freight\":\n          - /url: https://www.uberfreight.com/\n          - paragraph: Uber Freight\n      - listitem:\n        - link \"Gift cards to redeem and buy\":\n          - /url: https://www.uber.com/us/en/gift-cards/\n          - paragraph: Gift cards\n      - listitem:\n        - link \"Uber Health\":\n          - /url: https://www.uberhealth.com/\n          - paragraph: Uber Health\n      - listitem:\n        - link \"Uber Advertising\":\n          - /url: https://www.uber.com/us/en/advertising/\n          - paragraph: Uber Advertising\n      - listitem:\n        - link \"Merchants\":\n          - /url: https://merchants.ubereats.com/\n          - paragraph: Merchants\n    - heading \"Global citizenship\" [level=2]\n    - list:\n      - listitem:\n        - link \"Safety\":\n          - /url: https://www.uber.com/us/en/safety/\n          - paragraph: Safety\n      - listitem:\n        - link \"Sustainability\":\n          - /url: https://www.uber.com/us/en/about/sustainability/\n          - paragraph: Sustainability\n    - heading \"Travel\" [level=2]\n    - list:\n      - listitem:\n        - link \"Reserve\":\n          - /url: https://rides.sng.link/Aw5zn/o42y?_dl=uber%3A%2F%2Freserve&_smtype=3&_forward_params=1&_fallback_redirect=http%3A%2F%2Fm.uber.com%2Freserve&pcn=ubercom-footer&mvid=[marketing-visitor-id]\n          - paragraph: Reserve\n      - listitem:\n        - link \"Airports\":\n          - /url: https://www.uber.com/us/en/airports/\n          - paragraph: Airports\n      - listitem:\n        - link \"Hotels\":\n          - /url: https://www.uber.com/us/en/hotels/\n          - paragraph: Hotels\n      - listitem:\n        - link \"Cities\":\n          - /url: https://www.uber.com/us/en/r/cities/\n          - paragraph: Cities\n    - list:\n      - listitem:\n        - link \"linkedin\":\n          - /url: https://www.linkedin.com/company/1815218\n          - img \"linkedin\"\n      - listitem:\n        - link \"youtube\":\n          - /url: https://www.youtube.com/channel/UCgnxoUwDmmyzeigmmcf0hZA\n          - img \"youtube\"\n      - listitem:\n        - link \"instagram\":\n          - /url: https://instagram.com/uber/\n          - img \"instagram\"\n      - listitem:\n        - link \"twitter\":\n          - /url: https://twitter.com/uber\n          - img \"twitter\"\n    - list:\n      - listitem:\n        - 'button \"Current language: English\"': English\n      - listitem:\n        - 'button \"Seeing information for this city: Detroit\"': Detroit\n    - link \"Download the Uber app on Google Play\":\n      - /url: https://rides.sng.link/Bw5zn/vz1k?_dl=uber%3A%2F%2F&pcn=uber-com-footer&mvid=[marketing-visitor-id]\n    - link \"Download the Uber app on the App Store\":\n      - /url: https://rides.sng.link/Cw5zn/564k?_dl=uber%3A%2F%2F&_smtype=3&pcn=uber-com-footer&mvid=[marketing-visitor-id]\n    - paragraph: © 2026 Uber Technologies Inc.\n    - list:\n      - listitem:\n        - link \"Privacy\":\n          - /url: https://www.uber.com/legal/document/?name=privacy-notice\n          - paragraph: Privacy\n      - listitem:\n        - link \"Accessibility\":\n          - /url: https://www.uber.com/us/en/about/accessibility/\n          - paragraph: Accessibility\n      - listitem:\n        - link \"Terms and Conditions\":\n          - /url: https://www.uber.com/legal/document/?name=general-terms-of-use\n          - paragraph: Terms\n  - dialog:\n    - paragraph:\n      - text: This website uses third party cookies to serve you relevant ads and provide personalization by remembering your location. You may opt out from these cookies by selecting the \"Opt out\" button below. If you have an Uber account, you may opt out of the \"sale\" or \"sharing\" of your data\n      - link \"here\":\n        - /url: https://privacy.uber.com/us\n      - text: .\n    - button \"Opt out\"\n    - button \"Got it\""
+                }
+              },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": { "state": "not_requested" },
+              "storage": { "state": "not_requested" },
+              "url": {
+                "state": "captured",
+                "value": {
+                  "origin": "https://www.uber.com",
+                  "query_parameter_names": [],
+                  "redacted": false,
+                  "url": "https://www.uber.com/us/en/ride/teens/"
+                }
+              }
+            },
+            "before_url": {
+              "origin": "https://www.uber.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.uber.com/us/en/ride/teens/"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 3022,
+            "error": null,
+            "event_sequence_end": 0,
+            "event_sequence_start": 1,
+            "status": "completed",
+            "step_id": "esperar",
+            "step_index": 1
+          }
+        ]
+      },
+      "operation": "capture_browser_scenario",
+      "parameters": {
+        "actions": [{ "action": "wait_for_timeout", "duration_ms": 3000, "step_id": "esperar" }],
+        "browser": {
+          "executable_path": "/Users/windocellc/Library/Caches/ms-playwright/chromium-1255/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+          "headless": true,
+          "mode": "launch"
+        },
+        "capture": {
+          "after_each_step": [],
+          "at_end": ["url", "accessibility"],
+          "events": [],
+          "network": { "header_values": false, "request_body": false, "response_body": false }
+        },
+        "environment": {
+          "color_scheme": "light",
+          "locale": "en-US",
+          "reduced_motion": "reduce",
+          "service_workers": "block",
+          "timezone": "UTC",
+          "viewport": { "device_scale_factor": 1, "height": 720, "width": 1280 }
+        },
+        "scenario_sha256": "9515b5cc2ec47c48efff51f387b9e1b74f5475c799098901a87bbbc48a0beaaf",
+        "secrets": [],
+        "start_url": { "query": [], "url": "https://www.uber.com/us/en/ride/teens/" },
+        "storage": { "cookies": [], "local_storage": [], "session_storage": [] }
+      },
+      "predicate_type": "rea.browser-scenario-capture",
+      "provider": {
+        "id": "rea-playwright-browser-scenario",
+        "name": "REA Playwright browser scenario capture provider",
+        "version": "1"
+      },
+      "raw_result": null,
+      "relationship_coverage": null,
+      "subject": null
+    },
+    {
+      "analysis_profile": null,
+      "authority": "controlled-replay",
+      "confidence": "observed",
+      "environment": {
+        "architecture": "unknown",
+        "id": "Chromium@159.0.8154.6",
+        "isolation": "process",
+        "platform": "unknown"
+      },
+      "evidence_id": "ev_9447dde4dfa90aa37187f5f0c91d82144411e360387611346e738c63f81c69bf",
+      "evidence_links": [],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "locations": [],
+      "normalized_result": {
+        "browser": {
+          "cleanup": "terminated-owned-process",
+          "mode": "launch",
+          "process_ownership": "provider-owned",
+          "product": "Chromium",
+          "version": "159.0.8154.6"
+        },
+        "completeness": {
+          "equality_eligible": true,
+          "missing_sections": [],
+          "status": "complete",
+          "truncated_sections": []
+        },
+        "duration_ms": 4244,
+        "events": { "dropped": 0, "items": [], "retained": 0 },
+        "limitations": [
+          "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+          "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+          "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+          "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+          "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+          "Storage values are hashed only after declared-secret redaction."
+        ],
+        "scenario": {
+          "action_count": 1,
+          "event_families": [],
+          "network_content": {
+            "header_values": false,
+            "request_body": false,
+            "response_body": false
+          },
+          "secret_references": [],
+          "start_origin": "https://www.uber.com"
+        },
+        "steps": [
+          {
+            "action": "goto_start",
+            "after_url": {
+              "origin": "https://www.uber.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.uber.com/us/en/ride/uberreserve/"
+            },
+            "artifacts": {
+              "accessibility": { "state": "not_requested" },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": { "state": "not_requested" },
+              "storage": { "state": "not_requested" },
+              "url": { "state": "not_requested" }
+            },
+            "before_url": {
+              "origin": null,
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "about:blank"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 1153,
+            "error": null,
+            "event_sequence_end": 0,
+            "event_sequence_start": 1,
+            "status": "completed",
+            "step_id": "scenario_start",
+            "step_index": 0
+          },
+          {
+            "action": "wait_for_timeout",
+            "after_url": {
+              "origin": "https://www.uber.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.uber.com/us/en/ride/uberreserve/"
+            },
+            "artifacts": {
+              "accessibility": {
+                "state": "captured",
+                "value": {
+                  "bytes": 9597,
+                  "sha256": "288a72512e1849ec75d6b698a81174424d0487d6b72d5d35d509064a51abf982",
+                  "text": "- document:\n  - link \"Skip to main content\":\n    - /url: \"#main\"\n  - navigation:\n    - link \"Uber homepage\":\n      - /url: https://www.uber.com/\n      - text: Uber\n    - list:\n      - listitem:\n        - link \"Ride — Request a ride\":\n          - /url: https://m.uber.com/looking\n          - text: Ride\n      - listitem:\n        - link \"Earn\":\n          - /url: https://drivers.uber.com/\n      - listitem:\n        - link \"Travel\":\n          - /url: https://www.uber.com/us/en/city-hub/\n      - listitem:\n        - link \"Business\":\n          - /url: https://www.uber.com/us/en/business/\n      - listitem:\n        - link \"Uber Eats\":\n          - /url: https://www.ubereats.com/\n      - listitem:\n        - button \"About\"\n    - list:\n      - listitem:\n        - button \"EN - Change language\": EN\n      - listitem:\n        - link \"Help\":\n          - /url: https://help.uber.com/\n      - listitem:\n        - link \"Log in\":\n          - /url: https://m.uber.com/login-redirect/\n      - listitem:\n        - link \"Sign up to ride, drive, and get delivery\":\n          - /url: https://m.uber.com/login-redirect/\n          - text: Sign up\n  - main:\n    - heading \"Signals got crossed, and we can’t find your page\" [level=1]\n    - paragraph: Let’s get you where you want to go. Please check your URL or select one of the destinations below.\n    - 'link \"Button: go back to home page\"':\n      - /url: https://www.uber.com/\n      - text: Go to Uber’s homepage\n    - img \"Illustration of a traffic light\"\n    - heading \"Popular rider pages\" [level=3]\n    - paragraph:\n      - link \"Request a ride\":\n        - /url: https://m.uber.com/looking\n    - paragraph:\n      - link \"Schedule a ride\":\n        - /url: https://m.uber.com/go/reserve\n    - paragraph:\n      - link \"Ride overview\":\n        - /url: https://www.uber.com/us/en/ride/\n    - paragraph:\n      - link \"Ride receipts\":\n        - /url: https://help.uber.com/h/b6c5098a-e696-44d4-b2c3-18f3ec0a6c12\n    - heading \"Popular driver pages\" [level=3]\n    - paragraph:\n      - link \"Get started\":\n        - /url: https://drivers.uber.com\n    - paragraph:\n      - link \"Driving overview\":\n        - /url: https://www.uber.com/us/en/drive/\n    - paragraph:\n      - link \"Driving requirements\":\n        - /url: https://www.uber.com/us/en/drive/requirements/\n    - paragraph:\n      - link \"Contact support\":\n        - /url: https://help.uber.com/driving-and-delivering\n    - heading \"Popular delivery pages\" [level=3]\n    - paragraph:\n      - link \"Order delivery\":\n        - /url: https://www.ubereats.com\n    - paragraph:\n      - link \"Add your restaurant\":\n        - /url: https://merchants.ubereats.com/us/en/s/signup/\n    - paragraph:\n      - link \"Sign up to deliver\":\n        - /url: https://drivers.uber.com\n    - heading \"More helpful links\" [level=3]\n    - paragraph:\n      - link \"Uber One\":\n        - /url: https://www.uber.com/us/en/u/uber-one/\n    - paragraph:\n      - link \"Uber for Business\":\n        - /url: https://www.uber.com/us/en/business/\n    - paragraph:\n      - link \"Help Center\":\n        - /url: https://help.uber.com\n    - heading \"It’s easier in the apps\" [level=2]\n    - link \"Download the Uber app Scan to download\":\n      - /url: https://rides.sng.link/Aw5zn/o42y?_dl=uber%3A%2F%2F&_smtype=3&pcn=uber-com-homepage-block&mvid=[marketing-visitor-id]\n      - heading \"Download the Uber app\" [level=3]\n      - paragraph: Scan to download\n    - link \"Download the Driver app Scan to download\":\n      - /url: https://earn.sng.link/A3ir4p/mf0l?_dl=uberdriver%3A%2F%2F&_smtype=3&pcn=uber-com-homepage-block&mvid=[marketing-visitor-id]\n      - heading \"Download the Driver app\" [level=3]\n      - paragraph: Scan to download\n  - contentinfo:\n    - link \"Uber\":\n      - /url: https://www.uber.com/\n    - link \"Visit Help Center\":\n      - /url: https://help.uber.com/\n      - paragraph: Visit Help Center\n    - link \"Do not sell or share my personal information\":\n      - /url: https://privacy.uber.com/privacy/us\n      - paragraph: Do not sell or share my personal information\n    - link \"Google Data Policy\":\n      - /url: https://www.uber.com/google-disclosure/\n      - paragraph: Google Data Policy\n    - heading \"Company\" [level=2]\n    - list:\n      - listitem:\n        - link \"About us\":\n          - /url: https://www.uber.com/us/en/about/\n          - paragraph: About us\n      - listitem:\n        - link \"Our offerings, apps, and products\":\n          - /url: https://www.uber.com/us/en/about/uber-offerings/\n          - paragraph: Our offerings\n      - listitem:\n        - link \"Newsroom\":\n          - /url: https://www.uber.com/us/en/newsroom/\n          - paragraph: Newsroom\n      - listitem:\n        - link \"Investors\":\n          - /url: https://investor.uber.com/\n          - paragraph: Investors\n      - listitem:\n        - link \"Blog\":\n          - /url: https://www.uber.com/us/en/blog/\n          - paragraph: Blog\n      - listitem:\n        - link \"Careers\":\n          - /url: https://jobs.uber.com/en/\n          - paragraph: Careers\n      - listitem:\n        - link \"Uber One\":\n          - /url: https://www.uber.com/us/en/uber-one/\n          - paragraph: Uber One\n    - heading \"Products\" [level=2]\n    - list:\n      - listitem:\n        - link \"Ride with Uber\":\n          - /url: https://www.uber.com/us/en/ride/\n          - paragraph: Ride\n      - listitem:\n        - link \"Drive\":\n          - /url: https://www.uber.com/us/en/drive/\n          - paragraph: Drive\n      - listitem:\n        - link \"Deliver\":\n          - /url: https://www.uber.com/us/en/deliver/\n          - paragraph: Deliver\n      - listitem:\n        - link \"Eat\":\n          - /url: https://www.ubereats.com/\n          - paragraph: Eat\n      - listitem:\n        - link \"Uber for Business\":\n          - /url: https://www.uber.com/us/en/business/\n          - paragraph: Uber for Business\n      - listitem:\n        - link \"Uber Freight\":\n          - /url: https://www.uberfreight.com/\n          - paragraph: Uber Freight\n      - listitem:\n        - link \"Gift cards to redeem and buy\":\n          - /url: https://www.uber.com/us/en/gift-cards/\n          - paragraph: Gift cards\n      - listitem:\n        - link \"Uber Health\":\n          - /url: https://www.uberhealth.com/\n          - paragraph: Uber Health\n      - listitem:\n        - link \"Uber Advertising\":\n          - /url: https://www.uber.com/us/en/advertising/\n          - paragraph: Uber Advertising\n      - listitem:\n        - link \"Merchants\":\n          - /url: https://merchants.ubereats.com/\n          - paragraph: Merchants\n    - heading \"Global citizenship\" [level=2]\n    - list:\n      - listitem:\n        - link \"Safety\":\n          - /url: https://www.uber.com/us/en/safety/\n          - paragraph: Safety\n      - listitem:\n        - link \"Sustainability\":\n          - /url: https://www.uber.com/us/en/about/sustainability/\n          - paragraph: Sustainability\n    - heading \"Travel\" [level=2]\n    - list:\n      - listitem:\n        - link \"Reserve\":\n          - /url: https://rides.sng.link/Aw5zn/o42y?_dl=uber%3A%2F%2Freserve&_smtype=3&_forward_params=1&_fallback_redirect=http%3A%2F%2Fm.uber.com%2Freserve&pcn=ubercom-footer&mvid=[marketing-visitor-id]\n          - paragraph: Reserve\n      - listitem:\n        - link \"Airports\":\n          - /url: https://www.uber.com/us/en/airports/\n          - paragraph: Airports\n      - listitem:\n        - link \"Hotels\":\n          - /url: https://www.uber.com/us/en/hotels/\n          - paragraph: Hotels\n      - listitem:\n        - link \"Cities\":\n          - /url: https://www.uber.com/us/en/r/cities/\n          - paragraph: Cities\n    - list:\n      - listitem:\n        - link \"linkedin\":\n          - /url: https://www.linkedin.com/company/1815218\n          - img \"linkedin\"\n      - listitem:\n        - link \"youtube\":\n          - /url: https://www.youtube.com/channel/UCgnxoUwDmmyzeigmmcf0hZA\n          - img \"youtube\"\n      - listitem:\n        - link \"instagram\":\n          - /url: https://instagram.com/uber/\n          - img \"instagram\"\n      - listitem:\n        - link \"twitter\":\n          - /url: https://twitter.com/uber\n          - img \"twitter\"\n    - list:\n      - listitem:\n        - 'button \"Current language: English\"': English\n      - listitem:\n        - 'button \"Seeing information for this city: Detroit\"': Detroit\n    - link \"Download the Uber app on Google Play\":\n      - /url: https://rides.sng.link/Bw5zn/vz1k?_dl=uber%3A%2F%2F&pcn=uber-com-footer&mvid=[marketing-visitor-id]\n    - link \"Download the Uber app on the App Store\":\n      - /url: https://rides.sng.link/Cw5zn/564k?_dl=uber%3A%2F%2F&_smtype=3&pcn=uber-com-footer&mvid=[marketing-visitor-id]\n    - paragraph: © 2026 Uber Technologies Inc.\n    - list:\n      - listitem:\n        - link \"Privacy\":\n          - /url: https://www.uber.com/legal/document/?name=privacy-notice\n          - paragraph: Privacy\n      - listitem:\n        - link \"Accessibility\":\n          - /url: https://www.uber.com/us/en/about/accessibility/\n          - paragraph: Accessibility\n      - listitem:\n        - link \"Terms and Conditions\":\n          - /url: https://www.uber.com/legal/document/?name=general-terms-of-use\n          - paragraph: Terms\n  - dialog:\n    - paragraph:\n      - text: This website uses third party cookies to serve you relevant ads and provide personalization by remembering your location. You may opt out from these cookies by selecting the \"Opt out\" button below. If you have an Uber account, you may opt out of the \"sale\" or \"sharing\" of your data\n      - link \"here\":\n        - /url: https://privacy.uber.com/us\n      - text: .\n    - button \"Opt out\"\n    - button \"Got it\""
+                }
+              },
+              "dom": { "state": "not_requested" },
+              "history": { "state": "not_requested" },
+              "screenshot": { "state": "not_requested" },
+              "storage": { "state": "not_requested" },
+              "url": {
+                "state": "captured",
+                "value": {
+                  "origin": "https://www.uber.com",
+                  "query_parameter_names": [],
+                  "redacted": false,
+                  "url": "https://www.uber.com/us/en/ride/uberreserve/"
+                }
+              }
+            },
+            "before_url": {
+              "origin": "https://www.uber.com",
+              "query_parameter_names": [],
+              "redacted": false,
+              "url": "https://www.uber.com/us/en/ride/uberreserve/"
+            },
+            "completeness": {
+              "equality_eligible": true,
+              "missing_sections": [],
+              "status": "complete",
+              "truncated_sections": []
+            },
+            "elapsed_ms": 3015,
+            "error": null,
+            "event_sequence_end": 0,
+            "event_sequence_start": 1,
+            "status": "completed",
+            "step_id": "esperar",
+            "step_index": 1
+          }
+        ]
+      },
+      "operation": "capture_browser_scenario",
+      "parameters": {
+        "actions": [{ "action": "wait_for_timeout", "duration_ms": 3000, "step_id": "esperar" }],
+        "browser": {
+          "executable_path": "/Users/windocellc/Library/Caches/ms-playwright/chromium-1255/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+          "headless": true,
+          "mode": "launch"
+        },
+        "capture": {
+          "after_each_step": [],
+          "at_end": ["url", "accessibility"],
+          "events": [],
+          "network": { "header_values": false, "request_body": false, "response_body": false }
+        },
+        "environment": {
+          "color_scheme": "light",
+          "locale": "en-US",
+          "reduced_motion": "reduce",
+          "service_workers": "block",
+          "timezone": "UTC",
+          "viewport": { "device_scale_factor": 1, "height": 720, "width": 1280 }
+        },
+        "scenario_sha256": "271a7294f2db72cca6f57d01cd7dcedd8bdbebef46ebf21c6021f062b5f258a6",
+        "secrets": [],
+        "start_url": { "query": [], "url": "https://www.uber.com/us/en/ride/uberreserve/" },
+        "storage": { "cookies": [], "local_storage": [], "session_storage": [] }
+      },
+      "predicate_type": "rea.browser-scenario-capture",
+      "provider": {
+        "id": "rea-playwright-browser-scenario",
+        "name": "REA Playwright browser scenario capture provider",
+        "version": "1"
+      },
+      "raw_result": null,
+      "relationship_coverage": null,
+      "subject": null
+    }
+  ],
+  "scenarios": [
+    {
+      "authority": "controlled-replay",
+      "evidence_id": "ev_69b8016eb47c56404877ec1fd4fb24a784fcbbf0ab7c2e6af9f5be030d9fd46c",
+      "operation": "capture_browser_scenario"
+    },
+    {
+      "authority": "controlled-replay",
+      "evidence_id": "ev_9447dde4dfa90aa37187f5f0c91d82144411e360387611346e738c63f81c69bf",
+      "operation": "capture_browser_scenario"
+    }
+  ],
+  "unknowns": []
+}

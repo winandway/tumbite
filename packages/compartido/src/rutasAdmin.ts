@@ -38,6 +38,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'POST /admin/cancelaciones/:id/:decision': 'config.editar',
   // ─── Viajes (Moto, Carro, envíos)
   'GET /admin/viajes': 'viajes.ver',
+  // C-VIAJES-FIJOS: los viajes fijos y los conductores de confianza en el monitoreo.
+  'GET /admin/viajes-fijos': 'viajes.ver',
   // La ficha del viaje (paquete 2/3, otra rama): declarada de antemano para que al unir ya exija su permiso.
   'GET /admin/viajes/:id': 'viajes.ver',
   // C-RASTREO-VIVO: la posición viva del conductor en la ficha del viaje o envío.
@@ -370,6 +372,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'GET /admin/cancelaciones': CONSULTA,
   'POST /admin/cancelaciones/:id/:decision': ficha('cancelacion'),
   'GET /admin/viajes': CONSULTA,
+  'GET /admin/viajes-fijos': CONSULTA,
   'GET /admin/viajes/:id': ficha('viaje'),
   'GET /admin/viajes/:id/rastreo': ficha('viaje'),
   'GET /admin/viajes/:id/foto/:tipo': ficha('viaje'),

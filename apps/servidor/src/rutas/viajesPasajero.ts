@@ -13,6 +13,7 @@ import {
   esquemaTarifaViaje,
   esquemaPaqueteEnvio,
   type PaqueteEnvio,
+  type PedidoCotizacion,
   telefonoCanonico,
   VALOR_MAXIMO_ENVIO_POR_DEFECTO,
   tarifaDeCategoria,
@@ -53,6 +54,7 @@ import { REUSO_RUTA_MINUTOS, REUSO_RUTA_RADIO_M, rutaParaCotizar } from '../ruta
 import { multiplicadorVigente } from '../viajesDinamica';
 import { paradasDe } from './paradasViaje';
 import { accesoDe, filtroAlcance, servicioOperacionSql, tienePermiso } from '../accesoInterno';
+import { conductorDeConfianzaParaPedir } from './viajesFijos';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -493,17 +495,26 @@ export async function exigirParadasValidas(
 
 viajesPasajero.post('/viajes/cotizar', async (c) => {
   const u = exigir(c, 'cliente');
-  const db = base(c);
   const d = await leerCuerpo(c, esquemaCotizarViaje);
+  return c.json({ cotizacion: await cotizarParaCliente(c.env, base(c), u.id, d) }, 201);
+});
+
+/**
+ * La cotización de un viaje para un cliente: precio fijo por 5 minutos. La usan la app (arriba) y el
+ * reloj al hacer nacer cada salida de un viaje fijo (C-VIAJES-FIJOS), con las MISMAS reglas.
+ */
+export async function cotizarParaCliente(
+  env: Env,
+  db: D1Database,
+  clienteId: string,
+  d: PedidoCotizacion,
+) {
   const zona = await zonaPara(db, d.origen.lat, d.origen.lng);
   if (!zona) throw new ErrorDatos('Todavía no llegamos a esa dirección.', 'origen', 409);
   const zonaDestino = await zonaPara(db, d.destino.lat, d.destino.lng);
   if (zonaDestino?.id !== zona.id)
     throw new ErrorDatos('El destino queda fuera de la ciudad del viaje.', 'destino', 422);
-  if (
-    (await estadoServicioEnZona(db, d.servicio, zona.id, c.get('usuario')?.id ?? null)) !==
-    'disponible'
-  )
+  if ((await estadoServicioEnZona(db, d.servicio, zona.id, clienteId)) !== 'disponible')
     throw new ErrorDatos('Este servicio todavía no está disponible en tu ciudad.', 'servicio', 409);
   const fila = await tarifaActiva(db, d.servicio, zona.id);
   if (!fila)
@@ -519,7 +530,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   await exigirParadasValidas(db, d.servicio, zona, d.paradas);
   // C-RUTA-POR-CALLES: distancia y tiempo reales por calles (Google Routes, sin tráfico); si no se
   // puede, la fórmula de siempre, sin error para el pasajero. Solo para el precio.
-  const ruta = await rutaParaCotizar(c.env, db, u.id, tarifa, d.origen, d.destino, d.paradas);
+  const ruta = await rutaParaCotizar(env, db, clienteId, tarifa, d.origen, d.destino, d.paradas);
   if (ruta.distanciaM < 200)
     throw new ErrorDatos('El destino está demasiado cerca del punto de recogida.', 'destino', 422);
   if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[d.servicio] * 1000)
@@ -540,7 +551,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   // C-RUTA-POR-CALLES: si el pasajero ya veía un precio para este mismo trayecto y cambió, se dice.
   const anterior = await cotizacionAnteriorMismoTrayecto(
     db,
-    u.id,
+    clienteId,
     d.servicio,
     d.categoria,
     d.origen,
@@ -559,7 +570,7 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
     )
     .bind(
       id,
-      u.id,
+      clienteId,
       d.servicio,
       zona.id,
       fila.id,
@@ -606,8 +617,8 @@ viajesPasajero.post('/viajes/cotizar', async (c) => {
   };
   // C-BS-REFERENCIA: el equivalente en bolívares, solo informativo (null sin tasa vigente).
   const referencia = await referenciaLocal(db, zona.pais, desglose.total, fila.moneda);
-  return c.json({ cotizacion: { ...cotizacion, referencia, opciones } }, 201);
-});
+  return { ...cotizacion, referencia, opciones };
+}
 
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
 
@@ -638,11 +649,14 @@ viajesPasajero.post('/viajes', async (c) => {
       paquete: esquemaPaqueteEnvio.optional(),
       // C-VIAJE-PROGRAMADO: la hora reservada (desde 30 minutos hasta 7 días).
       programadoPara: z.iso.datetime().optional(),
+      // C-CONDUCTOR-CONFIANZA: a cuál de sus conductores de confianza se le ofrece primero
+      // (sin el campo: el más cercano que está conectado; «ninguno»: a cualquiera).
+      confianza: z.string().min(7).max(64).optional(),
     }),
   );
   const cot = await db
     .prepare(
-      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, total, moneda, tarifa_json, vence_en > datetime('now') AS vigente
+      `SELECT id, servicio_id, zona_id, usada_en, operacion_id, total, moneda, tarifa_json, origen_lat, origen_lng, vence_en > datetime('now') AS vigente
          FROM cotizaciones_viaje WHERE id = ? AND cliente_id = ?`,
     )
     .bind(d.cotizacionId, u.id)
@@ -655,6 +669,8 @@ viajesPasajero.post('/viajes', async (c) => {
       total: number;
       moneda: string;
       tarifa_json: string | null;
+      origen_lat: number;
+      origen_lng: number;
       vigente: number;
     }>();
   if (!cot) throw new ErrorDatos('Esa cotización no existe.', 'cotizacionId', 404);
@@ -688,6 +704,12 @@ viajesPasajero.post('/viajes', async (c) => {
       throw new ErrorDatos('El celular de quien recibe no parece válido.', 'telefono', 422);
   }
   const op = nuevoId();
+  const conductorPreferidoId = await conductorDeConfianzaParaPedir(
+    db,
+    u.id,
+    { servicioId: cot.servicio_id, zonaId: cot.zona_id, lat: cot.origen_lat, lng: cot.origen_lng },
+    d.programadoPara && !d.confianza ? 'auto-programado' : d.confianza,
+  );
   // C-VIAJE-PROGRAMADO: con hora reservada, la cotización queda apartada (precio fijo) y el viaje
   // nace a la hora de buscar conductor (el reloj); hasta entonces se cancela gratis.
   if (d.programadoPara)
@@ -700,6 +722,7 @@ viajesPasajero.post('/viajes', async (c) => {
         metodoPago: d.metodoPago,
         paquete: d.paquete ?? null,
         programadoPara: new Date(d.programadoPara),
+        conductorPreferidoId,
       }),
       201,
     );
@@ -715,6 +738,7 @@ viajesPasajero.post('/viajes', async (c) => {
     paquete: esEnvio ? (d.paquete ?? null) : null,
     pinEntrega,
     exigirSinActivo: true,
+    conductorPreferidoId,
   });
   // C-MOTO-CIUDAD: el código para empezar según la ciudad y la hora (se decide al pedir).
   // C-ENVIOS: un envío no lleva código al recoger (lleva foto); el PIN es de quien recibe.

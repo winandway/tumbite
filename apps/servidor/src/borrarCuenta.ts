@@ -70,6 +70,33 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare('DELETE FROM direcciones_cliente WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
+    // C-VIAJES-FIJOS (16 nov 2026): sus conductores de confianza (y si es conductor, sus clientes
+    // fijos) y sus viajes fijos: direcciones de casa, escuela y trabajo, el nombre y el PIN del menor.
+    db
+      .prepare('DELETE FROM conductores_confianza WHERE cliente_id = ?1 OR conductor_id = ?1')
+      .bind(u.id),
+    db
+      .prepare(
+        `UPDATE rutinas_viaje SET estado = 'borrada', nombre = '', origen_direccion = '', destino_direccion = '',
+           origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0, menor_nombre = NULL,
+           pin_menor = NULL, paquete_json = NULL, proxima_revision_en = NULL WHERE cliente_id = ?`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        "UPDATE rutinas_viaje SET conductor_id = NULL WHERE conductor_id = ? AND estado != 'borrada'",
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        "UPDATE viajes_programados SET estado = 'cancelado', motivo = 'cuenta_borrada', resuelto_en = datetime('now') WHERE cliente_id = ? AND estado = 'programado'",
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        'UPDATE viajes SET menor_nombre = NULL WHERE menor_nombre IS NOT NULL AND operacion_id IN (SELECT id FROM operaciones WHERE cliente_id = ?)',
+      )
+      .bind(u.id),
     db.prepare('DELETE FROM suscripciones_web WHERE usuario_id = ?').bind(u.id),
     // C-MODERACION: sus bloqueos (los que hizo y los que le hicieron) y la nota de sus reportes.
     db.prepare('DELETE FROM bloqueos_usuario WHERE usuario_id = ?').bind(u.id),

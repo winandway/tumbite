@@ -106,6 +106,7 @@ async function ciudadA(m: Mundo, adminToken: string) {
   const emergencia = crypto.randomUUID();
   const ticket = crypto.randomUUID();
   const cancelacion = crypto.randomUUID();
+  const rutina = crypto.randomUUID();
   await m.DB.batch([
     m.DB.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(zona, rep.id),
     m.DB.prepare(
@@ -146,6 +147,12 @@ async function ciudadA(m: Mundo, adminToken: string) {
     m.DB.prepare(
       "INSERT INTO lista_espera (id, tipo, zona_id, nombre, correo) VALUES (?, 'comensal', ?, 'Zeta Espera Ajena', 'zeta.espera@ejemplo.com')",
     ).bind(crypto.randomUUID(), zona),
+    // C-VIAJES-FIJOS: un viaje fijo de la ciudad A.
+    m.DB.prepare(
+      `INSERT INTO rutinas_viaje (id, cliente_id, nombre, servicio_id, zona_id, origen_lat, origen_lng, origen_direccion,
+         destino_lat, destino_lng, destino_direccion, dias, hora_ida)
+       VALUES (?, ?, 'Zeta escuela', 'carro', ?, 25.78, -80.2, 'Origen Zeta', 25.79, -80.21, 'Destino Zeta', '1,2,3,4,5', '07:00')`,
+    ).bind(rutina, cliente.id, zona),
   ]);
   const ids = {
     pedido,
@@ -159,6 +166,7 @@ async function ciudadA(m: Mundo, adminToken: string) {
     papel,
     emergencia,
     cancelacion,
+    rutina,
   };
   return { ids, zona, otraZona, dueno };
 }
@@ -206,6 +214,7 @@ const LISTAS_CON_FILAS = [
   'GET /admin/pedidos',
   'GET /admin/cancelaciones',
   'GET /admin/viajes',
+  'GET /admin/viajes-fijos',
   'GET /admin/clientes',
   'GET /admin/repartidores',
   'GET /admin/vehiculos',
