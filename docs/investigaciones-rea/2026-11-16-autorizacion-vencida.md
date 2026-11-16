@@ -64,3 +64,7 @@ entregar ──► liquidación ──► capturar ──► OK ──► captur
 ## 7. Sin probar
 
 Nada con Stripe de prueba real en el sitio de pruebas todavía (ver VERIFICAR-PAGOS.md, sección C-AUTORIZACION-VENCIDA).
+
+## 8. Revisión de calidad (16 nov 2026)
+
+El revisor devolvió el paquete. Decisión: «Volver a cobrar» queda detrás de `RECOBRO_TARJETA_ACTIVO`, APAGADO hasta que Richard confirme que los términos y la pantalla de pago cubren cobrar la tarjeta guardada cuando una retención vence (las reglas de las tarjetas piden permiso previo y aviso al cliente en un cobro sin el cliente presente [INF sobre lo que exigiría un banco; el texto exacto se confirma con abogado]). Encendido, el cliente recibe un correo con el cobro. También: clave de idempotencia con contador de intentos, cobro «processing» en curso reconocido por el aviso de Stripe, carrera cobrar/cerrar resuelta a favor del dinero, bloqueo con devoluciones, cifra de lo absorbido y aviso de 96 h que no se da por hecho si el correo no sale. Detalle y pruebas en CANDADOS.md.
