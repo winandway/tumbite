@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  Image,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Svg, { Defs, G, LinearGradient, Path, Rect, Stop, Circle, Line } from 'react-native-svg';
 import { COLOR } from '@tumbite/movil';
 import { IMG_COMIDA } from '../comida/recursos';
@@ -26,9 +34,15 @@ const TINTA = '#101010';
 const ESCALA = CARRO.ancho / CARRO.lienzo;
 const ALTO_CARRO = CARRO.alto * ESCALA;
 
+/**
+ * En la web el «motor nativo» de animación no existe y React Native Web corta el bucle después de
+ * la primera vuelta si se le pide; ahí se anima con JavaScript (C-ESPERA-ADELANTE).
+ */
+const NATIVO = Platform.OS !== 'web';
+
 function bucle(valor: Animated.Value, ms: number, curva = Easing.linear) {
   return Animated.loop(
-    Animated.timing(valor, { toValue: 1, duration: ms, easing: curva, useNativeDriver: true }),
+    Animated.timing(valor, { toValue: 1, duration: ms, easing: curva, useNativeDriver: NATIVO }),
   );
 }
 

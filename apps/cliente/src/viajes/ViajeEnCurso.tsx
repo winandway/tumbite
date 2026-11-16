@@ -5,6 +5,7 @@ import {
   Easing,
   Image,
   Linking,
+  Platform,
   Pressable,
   Share,
   View,
@@ -110,7 +111,8 @@ function BarraBuscando() {
             toValue: 1,
             duration: 1600,
             easing: Easing.bezier(0.4, 0, 0.2, 1),
-            useNativeDriver: true,
+            // En la web no hay motor nativo y el bucle se cortaría tras la primera vuelta.
+            useNativeDriver: Platform.OS !== 'web',
           }),
         );
         anim.start();
