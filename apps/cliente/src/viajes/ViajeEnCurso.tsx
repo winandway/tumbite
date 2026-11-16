@@ -1,15 +1,5 @@
-import { useEffect, useState } from 'react';
-import {
-  AccessibilityInfo,
-  Animated,
-  Easing,
-  Image,
-  Linking,
-  Platform,
-  Pressable,
-  Share,
-  View,
-} from 'react-native';
+import { type ReactNode, useEffect, useState } from 'react';
+import { Animated, Easing, Image, Linking, Platform, Pressable, Share, View } from 'react-native';
 import {
   ErrorApi,
   type Referencia,
@@ -35,7 +25,8 @@ import { Tarjeta } from '../comida/piezas';
 import { miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
 import { type ParadaDelViaje, ParadasDelViaje } from './Paradas';
-import { BuscandoConductor } from './BuscandoConductor';
+import { BuscandoConductor, useReducirMovimiento } from './BuscandoConductor';
+import { TIEMPOS, vehiculoDeEspera } from './escenaBuscando';
 import { TEXTOS_ESPERA } from './textosEspera';
 
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
@@ -90,6 +81,8 @@ export type PaqueteCliente = {
   pinEntrega: string | null;
   recogido: boolean;
   entregado: boolean;
+  /** C-ESPERA-VEHICULO: sobre, pequeño, mediano o grande (decide el vehículo de la espera). */
+  tamano?: string;
 };
 
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
@@ -99,29 +92,24 @@ const BUSCANDO = new Set(['buscando', 'pago_pendiente']);
 function BarraBuscando() {
   const [ancho, setAncho] = useState(0);
   const [valor] = useState(() => new Animated.Value(0));
+  const reducir = useReducirMovimiento();
   useEffect(() => {
-    let anim: Animated.CompositeAnimation | null = null;
-    let vivo = true;
-    void AccessibilityInfo.isReduceMotionEnabled()
-      .catch(() => false)
-      .then((reducir) => {
-        if (!vivo || reducir) return;
-        anim = Animated.loop(
-          Animated.timing(valor, {
-            toValue: 1,
-            duration: 1600,
-            easing: Easing.bezier(0.4, 0, 0.2, 1),
-            // En la web no hay motor nativo y el bucle se cortaría tras la primera vuelta.
-            useNativeDriver: Platform.OS !== 'web',
-          }),
-        );
-        anim.start();
-      });
-    return () => {
-      vivo = false;
-      anim?.stop();
-    };
-  }, [valor]);
+    if (reducir) {
+      valor.setValue(0);
+      return;
+    }
+    const anim = Animated.loop(
+      Animated.timing(valor, {
+        toValue: 1,
+        duration: TIEMPOS.barra,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        // En la web no hay motor nativo y el bucle se cortaría tras la primera vuelta.
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [valor, reducir]);
   const x = valor.interpolate({ inputRange: [0, 1], outputRange: [-0.36 * ancho, ancho] });
   return (
     <View
@@ -144,6 +132,34 @@ function BarraBuscando() {
         }}
       />
     </View>
+  );
+}
+
+/**
+ * C-ESPERA-FUNDIDO (fase cero): cuando aparece el conductor, la escena se cambia por el mapa con un
+ * fundido de 300 ms. Solo si venía de la espera, y nunca con «reducir movimiento».
+ */
+function Fundido({ activo, children }: { activo: boolean; children: ReactNode }) {
+  const reducir = useReducirMovimiento();
+  const [opacidad] = useState(() => new Animated.Value(activo ? 0 : 1));
+  useEffect(() => {
+    if (!activo || reducir) {
+      opacidad.setValue(1);
+      return;
+    }
+    const a = Animated.timing(opacidad, {
+      toValue: 1,
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: Platform.OS !== 'web',
+    });
+    a.start();
+    return () => a.stop();
+  }, [activo, reducir, opacidad]);
+  return (
+    <Animated.View style={{ opacity: opacidad }} testID="viaje-fundido">
+      {children}
+    </Animated.View>
   );
 }
 
@@ -228,6 +244,15 @@ export function ViajeEnCurso({
   const [anchoEscena, setAnchoEscena] = useState(0);
   const te = enIdioma(TEXTOS_ESPERA, idioma);
   const buscando = BUSCANDO.has(viaje.estado);
+  // C-ESPERA-VEHICULO: cada servicio espera con su vehículo (y el envío, según el tamaño del paquete).
+  const vehiculoEspera = vehiculoDeEspera(viaje.servicio, paquete?.tamano);
+  const esEnvio = viaje.servicio === 'envios';
+  // «Parada» y «Qué envías» abren lo suyo debajo, sin salir de la espera.
+  const [abrirParadas, setAbrirParadas] = useState(0);
+  const [verPaquete, setVerPaquete] = useState(false);
+  // C-ESPERA-FUNDIDO: cuando aparece el conductor, el mapa entra con un fundido de 300 ms.
+  const [vioBuscar, setVioBuscar] = useState(buscando);
+  if (buscando && !vioBuscar) setVioBuscar(true);
   // C-VIAJE-PROPINA: propina después del viaje, con la tarjeta con la que pagó.
   const [propina, setPropina] = useState<number | null>(null);
   async function darPropina(centavos: number) {
@@ -321,33 +346,43 @@ export function ViajeEnCurso({
       {buscando ? (
         // C-ESPERA-ADELANTE (fase cero): la escena animada, el título, la calma y la barra roja.
         <View onLayout={(ev) => setAnchoEscena(ev.nativeEvent.layout.width)}>
-          {anchoEscena > 0 ? <BuscandoConductor ancho={anchoEscena} /> : null}
+          {anchoEscena > 0 ? (
+            <BuscandoConductor ancho={anchoEscena} vehiculo={vehiculoEspera} />
+          ) : null}
           <Text
             accessibilityRole="header"
             testID={`viaje-estado-${viaje.estado}`}
             style={[LETRA.titulo, { fontSize: 26, lineHeight: 32, marginTop: 16 }]}
           >
-            {viaje.servicio === 'envios' ? te.tituloEnvio : te.titulo}
+            {new Map(Object.entries(te.titulo)).get(vehiculoEspera)}
           </Text>
-          <Text style={[LETRA.secundario, { marginTop: 6 }]}>{te.calma}</Text>
+          <Text style={[LETRA.secundario, { marginTop: 6 }]}>
+            {new Map(Object.entries(te.calma)).get(vehiculoEspera)}
+          </Text>
           <BarraBuscando />
           <View testID="buscando-lista" style={es.lista}>
             <View style={es.fila}>
               <View style={es.recogida} />
               <Text style={es.filaTexto} numberOfLines={1}>
-                {viaje.origen.direccion}
+                {esEnvio ? `${te.recoger} · ${viaje.origen.direccion}` : viaje.origen.direccion}
               </Text>
             </View>
             <View style={es.fila}>
               <View style={es.destino} />
               <Text style={es.filaTexto} numberOfLines={1}>
-                {viaje.destino.direccion}
+                {esEnvio ? `${te.entregar} · ${viaje.destino.direccion}` : viaje.destino.direccion}
               </Text>
             </View>
             <View style={[es.fila, { borderBottomWidth: 0 }]}>
               <Icono nombre="card-outline" tamano={18} />
               <Text style={es.filaTexto} numberOfLines={1}>
-                {nombreVehiculo}
+                {esEnvio
+                  ? `${vehiculoEspera === 'carro-envio' ? te.envioEn.carro : te.envioEn.moto}${
+                      paquete?.tamano
+                        ? ` · ${(new Map(Object.entries(base.tamanos)).get(paquete.tamano) ?? '').toLowerCase()}`
+                        : ''
+                    }`
+                  : nombreVehiculo}
               </Text>
               {viaje.total != null ? (
                 <Text style={[LETRA.tarjeta, { fontFamily: 'Poppins_700Bold' }]}>
@@ -368,34 +403,36 @@ export function ViajeEnCurso({
       )}
 
       {!FINALES.has(viaje.estado) && !buscando ? (
-        <MapaEntrega
-          restaurante={{ lat: viaje.origen.lat, lng: viaje.origen.lng }}
-          casa={{ lat: viaje.destino.lat, lng: viaje.destino.lng }}
-          repartidor={viaje.conductor?.ubicacion ?? null}
-          nombreRepartidor={viaje.conductor?.nombre}
-          // C-MAPA-LLEGADA: mientras viene a buscarte el mapa se acerca a la recogida; ya en viaje, al destino.
-          meta={
-            viaje.estado === 'asignado' || viaje.estado === 'conductor_llego'
-              ? 'restaurante'
-              : 'casa'
-          }
-          direccion={
-            viaje.estado === 'asignado' || viaje.estado === 'conductor_llego'
-              ? viaje.origen.direccion
-              : viaje.destino.direccion
-          }
-          etiquetas={{
-            restaurante: t.etiquetaRecogida,
-            casa: t.etiquetaDestino,
-            repartidor: t.etiquetaConductor,
-          }}
-          // C-VIAJE-PARADAS: las paradas que faltan o en las que está, numeradas en el mapa.
-          paradas={(viaje.paradas ?? []).map((p, i) => ({
-            lat: p.lat,
-            lng: p.lng,
-            etiqueta: `${base.parada(i + 1)} · ${p.direccion}`,
-          }))}
-        />
+        <Fundido activo={vioBuscar}>
+          <MapaEntrega
+            restaurante={{ lat: viaje.origen.lat, lng: viaje.origen.lng }}
+            casa={{ lat: viaje.destino.lat, lng: viaje.destino.lng }}
+            repartidor={viaje.conductor?.ubicacion ?? null}
+            nombreRepartidor={viaje.conductor?.nombre}
+            // C-MAPA-LLEGADA: mientras viene a buscarte el mapa se acerca a la recogida; ya en viaje, al destino.
+            meta={
+              viaje.estado === 'asignado' || viaje.estado === 'conductor_llego'
+                ? 'restaurante'
+                : 'casa'
+            }
+            direccion={
+              viaje.estado === 'asignado' || viaje.estado === 'conductor_llego'
+                ? viaje.origen.direccion
+                : viaje.destino.direccion
+            }
+            etiquetas={{
+              restaurante: t.etiquetaRecogida,
+              casa: t.etiquetaDestino,
+              repartidor: t.etiquetaConductor,
+            }}
+            // C-VIAJE-PARADAS: las paradas que faltan o en las que está, numeradas en el mapa.
+            paradas={(viaje.paradas ?? []).map((p, i) => ({
+              lat: p.lat,
+              lng: p.lng,
+              etiqueta: `${base.parada(i + 1)} · ${p.direccion}`,
+            }))}
+          />
+        </Fundido>
       ) : null}
 
       {/* C-VIAJE-PARADAS: las paradas del viaje y, mientras no termine, cambiarlas viendo el precio. */}
@@ -410,6 +447,9 @@ export function ViajeEnCurso({
           }
           cerca={{ lat: viaje.origen.lat, lng: viaje.origen.lng }}
           alCambiar={alCambiar}
+          // Mientras busca, el «+ Agregar parada» vive en el botón «Parada» de la espera.
+          sinBoton={buscando}
+          abrirCon={abrirParadas}
         />
       ) : null}
 
@@ -447,7 +487,7 @@ export function ViajeEnCurso({
         </Tarjeta>
       ) : null}
 
-      {paquete ? (
+      {paquete && (!buscando || verPaquete) ? (
         <Tarjeta>
           <Text style={{ fontWeight: '700', color: C.secundario }}>
             {paquete.descripcion} · {t.paraQuien} {paquete.destinatario}
@@ -505,13 +545,39 @@ export function ViajeEnCurso({
       ) : null}
 
       {buscando ? (
-        <Boton
-          tipo="terciario"
-          icono="share-social-outline"
-          texto={te.compartir}
-          alTocar={() => void compartir()}
-          testID="buscando-compartir"
-        />
+        // Fase cero: «Parada» (o «Qué envías» en un envío) y «Compartir», lado a lado.
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          {esEnvio ? (
+            <View style={{ flex: 1 }}>
+              <Boton
+                tipo="terciario"
+                icono="cube-outline"
+                texto={te.queEnvias}
+                alTocar={() => setVerPaquete((x) => !x)}
+                testID="buscando-que-envias"
+              />
+            </View>
+          ) : (viaje.paradasMaximas ?? 0) > 0 ? (
+            <View style={{ flex: 1 }}>
+              <Boton
+                tipo="terciario"
+                icono="add"
+                texto={te.parada}
+                alTocar={() => setAbrirParadas((n) => n + 1)}
+                testID="buscando-parada"
+              />
+            </View>
+          ) : null}
+          <View style={{ flex: 1 }}>
+            <Boton
+              tipo="terciario"
+              icono="share-social-outline"
+              texto={te.compartir}
+              alTocar={() => void compartir()}
+              testID="buscando-compartir"
+            />
+          </View>
+        </View>
       ) : (
         <Tarjeta>
           <Text style={{ color: '#666B73', fontSize: 12 }}>{t.etiquetaRecogida}</Text>
