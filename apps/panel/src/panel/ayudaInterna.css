@@ -1,0 +1,228 @@
+/* C-AYUDA-INTERNA: la ayuda del equipo dentro del superadmin, con la forma de Docs (Wikipedia). */
+.ayi-cuerpo {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.ayi-lateral {
+  position: sticky;
+  top: 16px;
+  background: #fff;
+  border: 1px solid var(--pd-borde);
+  border-radius: 12px;
+  padding: 14px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.ayi-buscador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--pd-borde-campo);
+  border-radius: 10px;
+  padding: 0 10px;
+  margin-bottom: 12px;
+  color: var(--pd-gris);
+  background: #fff;
+}
+.ayi-buscador input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  padding: 10px 0;
+  font: inherit;
+  background: transparent;
+}
+.ayi-buscador:focus-within {
+  border-color: var(--pd-negro);
+}
+.ayi-seccion + .ayi-seccion {
+  margin-top: 12px;
+}
+.ayi-seccion-titulo {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pd-gris-suave);
+}
+.ayi-item {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--pd-negro);
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.ayi-item:hover {
+  background: var(--pd-fondo);
+}
+.ayi-item.activo {
+  background: var(--pd-problema-suave);
+  color: var(--pd-rojo-oscuro);
+  font-weight: 600;
+}
+.ayi-contenido {
+  background: #fff;
+  border: 1px solid var(--pd-borde);
+  border-radius: 12px;
+  padding: 24px 28px;
+  min-width: 0;
+}
+.ayi-guia h2 {
+  margin: 4px 0 8px;
+  font-size: 26px;
+  line-height: 1.25;
+}
+.ayi-guia h3 {
+  margin: 24px 0 8px;
+  font-size: 18px;
+}
+.ayi-guia p,
+.ayi-guia li {
+  line-height: 1.6;
+  color: #2a2d33;
+}
+.ayi-migas {
+  margin: 0;
+  font-size: 13px;
+  color: var(--pd-gris);
+}
+.ayi-resumen {
+  font-size: 17px;
+}
+.ayi-volver {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--pd-gris);
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+.ayi-responde {
+  border: 1px solid var(--pd-borde);
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: var(--pd-fondo);
+}
+.ayi-responde p {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.ayi-responde ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.ayi-captura {
+  margin: 20px 0;
+}
+.ayi-captura img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--pd-borde);
+  border-radius: 10px;
+  cursor: zoom-in;
+}
+.ayi-captura figcaption {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--pd-gris);
+}
+.ayi-pasos li + li {
+  margin-top: 4px;
+}
+.ayi-nota {
+  border-left: 3px solid var(--pd-gris-suave);
+  padding: 6px 12px;
+  background: var(--pd-fondo);
+  border-radius: 0 8px 8px 0;
+}
+.ayi-pasar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+  border-top: 1px solid var(--pd-borde);
+  padding-top: 16px;
+}
+.ayi-pasar a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--pd-negro);
+  text-decoration: none;
+  max-width: 48%;
+}
+.ayi-pasar small {
+  display: block;
+  color: var(--pd-gris);
+}
+.ayi-siguiente {
+  text-align: right;
+  margin-left: auto;
+}
+.ayi-indice + .ayi-indice {
+  margin-top: 20px;
+}
+.ayi-indice h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+.ayi-indice ul,
+.ayi-resultados {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.ayi-indice a,
+.ayi-resultados a {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--pd-borde);
+  border-radius: 10px;
+  color: var(--pd-negro);
+  text-decoration: none;
+}
+.ayi-indice a:hover,
+.ayi-resultados a:hover {
+  border-color: var(--pd-negro);
+}
+.ayi-indice span,
+.ayi-resultados span,
+.ayi-resultados small {
+  color: var(--pd-gris);
+  font-size: 14px;
+}
+.ayi-vacio {
+  color: var(--pd-gris);
+}
+@media (max-width: 860px) {
+  .ayi-cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ayi-lateral {
+    position: static;
+    max-height: none;
+  }
+  .ayi-contenido {
+    padding: 18px 16px;
+  }
+  .ayi-volver {
+    display: inline-flex;
+  }
+  /* En el celular, con una guía abierta, la lista se pliega: «← Ayuda» vuelve al índice. */
+  .ayi-cuerpo.con-guia .ayi-lateral nav {
+    display: none;
+  }
+  .ayi-cuerpo.con-guia .ayi-lateral .ayi-buscador {
+    margin-bottom: 0;
+  }
+}

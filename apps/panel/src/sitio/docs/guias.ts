@@ -5,7 +5,6 @@ import { GUIAS_CARRO } from './carro';
 import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
-import { GUIAS_OPERACIONES } from './operaciones';
 import { GUIAS_DOCS } from './guiasDocs';
 
 /**
@@ -29,15 +28,7 @@ export type Guia = {
   descargas?: { texto: string; href: string }[];
 };
 export type SeccionDocs = {
-  id:
-    | 'courses'
-    | 'ordering'
-    | 'restaurants'
-    | 'drivers'
-    | 'trust'
-    | 'business'
-    | 'account'
-    | 'operations';
+  id: 'courses' | 'ordering' | 'restaurants' | 'drivers' | 'trust' | 'business' | 'account';
   titulo: string;
   icono: NombreIcono;
   guias: Guia[];
@@ -3417,35 +3408,6 @@ const es: SeccionDocs[] = [
     titulo: 'Cómo cuidamos cada pedido',
     icono: 'listo',
     guias: [
-      {
-        id: 'two-person-approval',
-        titulo: 'Doble aprobación para el dinero que se mueve a mano',
-        resumen:
-          'Una devolución, un reembolso o un ajuste grande hecho a mano nunca lo decide una sola persona: lo pide una y lo aprueba otra del equipo de Divoox.',
-        explicacion: [
-          'Casi todo el dinero en Divoox se mueve solo: el cobro del pedido, el pago al restaurante, la ganancia del repartidor. A veces hace falta mover dinero a mano: devolverle a un cliente un pedido que salió mal, reembolsar una recarga, corregir el saldo de una empresa de Flex o fondear un punto de venta.',
-          'Cuando ese movimiento pasa de un límite, no se hace al momento. Queda esperando en la bandeja «Para aprobar» del equipo, con el monto, el motivo y el nombre de quien lo pidió.',
-          'Otra persona del equipo, con permiso de finanzas, lo revisa y lo aprueba con su contraseña, o lo rechaza con un motivo. Nadie puede aprobar lo que pidió. Así trabajan los bancos, y así evitamos errores y abusos con tu dinero.',
-          'Mientras espera, no se mueve nada: tu saldo y tus cuentas siguen exactamente igual. Cada paso queda registrado: quién lo pidió, quién lo aprobó y cuándo.',
-          'Lo mismo vale para el control diario del dinero: cada día comparamos lo cobrado con lo pagado a restaurantes y repartidores. Si un día no cuadra y la diferencia tiene explicación (por ejemplo, una compra de prueba), darlo por explicado también lo pide una persona y lo aprueba otra. Mientras tanto, la alarma del dinero sigue encendida.',
-        ],
-        capturas: [
-          {
-            src: '/docs/doble-firma-es.webp',
-            alt: 'La bandeja «Para aprobar» del equipo de Divoox con un ajuste de billetera y una devolución esperando la segunda firma, cada uno con su monto, su motivo y quién lo pidió.',
-            pie: 'Cada movimiento grande espera la firma de una segunda persona del equipo.',
-          },
-        ],
-        preguntas: [
-          '¿Quién aprueba una devolución grande en Divoox?',
-          '¿Por qué mi reembolso dice que está en revisión?',
-        ],
-        pasos: [
-          'Pides la devolución o el ajuste a soporte y explicas el motivo.',
-          'Si el monto es grande, una segunda persona del equipo lo revisa.',
-          'Al aprobarse, el dinero se mueve y te avisamos; si se rechaza, te explicamos por qué.',
-        ],
-      },
       {
         id: 'no-signal-delivery',
         titulo: 'Si te quedas sin señal al entregar',
@@ -8475,35 +8437,6 @@ const en: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
-        id: 'two-person-approval',
-        titulo: 'Two-person approval for money moved by hand',
-        resumen:
-          'A large refund, reimbursement or balance adjustment made by hand is never decided by one person: one team member requests it and another one at Divoox approves it.',
-        explicacion: [
-          'Almost all money on Divoox moves on its own: the order charge, the restaurant payout, the driver’s earnings. Sometimes money has to be moved by hand: refunding a customer for an order that went wrong, refunding a top-up, correcting a Flex business balance or funding a sales point.',
-          'When that movement is above a limit, it doesn’t happen right away. It waits in the team’s «Approvals» inbox, with the amount, the reason and the name of whoever requested it.',
-          'Another team member with finance permissions reviews it and approves it with their password, or rejects it with a reason. Nobody can approve their own request. That’s how banks work, and it’s how we prevent mistakes and abuse with your money.',
-          'While it waits, nothing moves: your balance and your accounts stay exactly the same. Every step is recorded: who requested it, who approved it and when.',
-          'The same goes for our daily money check: every day we compare what was charged with what was paid to restaurants and drivers. If a day doesn’t balance and the difference has an explanation (for example, a test purchase), marking it as explained is also requested by one person and approved by another. Until then, the money alarm stays on.',
-        ],
-        capturas: [
-          {
-            src: '/docs/doble-firma-en.webp',
-            alt: 'The Divoox team’s «Approvals» inbox with a wallet adjustment and an order refund waiting for the second signature, each with its amount, reason and requester.',
-            pie: 'Every large movement waits for a second team member’s signature.',
-          },
-        ],
-        preguntas: [
-          'Who approves a large refund at Divoox?',
-          'Why does my refund say it’s under review?',
-        ],
-        pasos: [
-          'You ask support for the refund or adjustment and explain why.',
-          'If the amount is large, a second team member reviews it.',
-          'Once approved, the money moves and we let you know; if it’s rejected, we explain why.',
-        ],
-      },
-      {
         id: 'no-signal-delivery',
         titulo: 'If you lose signal when delivering',
         resumen:
@@ -10206,19 +10139,9 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
       };
     return { ...s, guias: [...s.guias, ...de(s.id)] };
   });
-  // C-DOCS-OPERACIONES (15 nov 2026): la sección del equipo de operaciones, al final del menú.
-  return [
-    ...base,
-    {
-      id: 'operations' as const,
-      titulo: idioma === 'es' ? 'Equipo de operaciones' : 'Operations team',
-      icono: 'resumen' as const,
-      guias: [
-        ...(idioma === 'es' ? GUIAS_OPERACIONES.es : GUIAS_OPERACIONES.en),
-        ...de('operations'),
-      ],
-    },
-  ];
+  // C-AYUDA-INTERNA (16 nov 2026, Richard): Docs es solo para clientes y terceros. Las guías del
+  // panel de operaciones (el superadmin) viven en la ayuda interna «?», no aquí.
+  return base;
 }
 
 export const DOCS: Record<Idioma, SeccionDocs[]> = {

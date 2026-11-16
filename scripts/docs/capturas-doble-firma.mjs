@@ -8,10 +8,13 @@ import fs from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { chromium } from 'playwright';
+import { CAPTURAS_PRIVADAS, ORIGINALES_PRIVADAS } from './ayudaPrivada.mjs';
 
 const RAIZ = process.cwd();
-const ORIGINALES = join(RAIZ, 'docs', 'capturas', 'funciones');
-const WEB = join(RAIZ, 'apps', 'panel', 'public', 'docs');
+// C-AYUDA-INTERNA: la bandeja «Para aprobar» es del superadmin: va a la carpeta privada.
+const ORIGINALES = ORIGINALES_PRIVADAS;
+const WEB = CAPTURAS_PRIVADAS;
+// eslint-disable-next-line security/detect-non-literal-fs-filename -- carpeta privada fija (ayudaPrivada.mjs)
 fs.mkdirSync(ORIGINALES, { recursive: true });
 const PUERTO = 4319;
 

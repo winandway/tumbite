@@ -73,6 +73,19 @@ describe('armazón del panel', () => {
     expect(salir).toHaveBeenCalled();
   });
 
+  it('C-AYUDA-INTERNA: el «?» junto a la campana abre la ayuda del equipo, y solo si se la pasan', () => {
+    montar({ ayuda: '/panel/control-abc/help' });
+    const boton = screen.getByRole('link', { name: 'Ayuda del equipo' });
+    expect(boton).toHaveAttribute('href', '/panel/control-abc/help');
+    // Va junto a la campana, en la cabecera (no en el menú lateral).
+    expect(boton.closest('.pd-cabecera-derecha')).not.toBeNull();
+  });
+
+  it('C-AYUDA-INTERNA: sin dirección de ayuda (restaurante, Flex, franquicia) no hay «?»', () => {
+    montar();
+    expect(screen.queryByTestId('ayuda-interna')).toBeNull();
+  });
+
   it('la salida también está al final del menú lateral (C-SALIR-A-LA-VISTA)', async () => {
     const { salir } = montar();
     await userEvent.click(screen.getByTestId('menu-salir'));

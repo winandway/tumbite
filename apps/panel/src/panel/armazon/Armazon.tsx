@@ -1,5 +1,14 @@
 import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Bell, ChevronDown, LogOut, Menu as IconoMenu, Search, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bell,
+  ChevronDown,
+  CircleHelp,
+  LogOut,
+  Menu as IconoMenu,
+  Search,
+  X,
+} from 'lucide-react';
 import { type Idioma, MARCA, type Usuario } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { SelectorIdioma } from '../../SelectorIdioma';
@@ -52,6 +61,7 @@ const T = {
     flexNombre: 'Divoox Flex',
     flexLema: 'Logística de paquetes para empresas',
     inicioSitio: 'Ir al inicio de Divoox',
+    ayuda: 'Ayuda del equipo',
   },
   en: {
     menu: 'Dashboard',
@@ -69,6 +79,7 @@ const T = {
     flexNombre: 'Divoox Flex',
     flexLema: 'Package logistics for businesses',
     inicioSitio: 'Go to the Divoox home page',
+    ayuda: 'Team help',
   },
 };
 
@@ -299,6 +310,7 @@ export function Armazon({
   volver,
   nombreMenu,
   buscador,
+  ayuda,
   children,
 }: {
   grupos: GrupoMenu[];
@@ -313,6 +325,11 @@ export function Armazon({
   nombreMenu?: string;
   /** C-BUSCADOR-SERIO: otro buscador en la cabecera (el del superadmin busca datos, no solo secciones). */
   buscador?: React.ReactNode;
+  /**
+   * C-AYUDA-INTERNA (16 nov 2026, Richard): la dirección de la ayuda del equipo. Solo la pasa el
+   * superadmin (vive bajo su dirección secreta): el «?» junto a la campana. Los demás paneles no.
+   */
+  ayuda?: string;
   children: React.ReactNode;
 }) {
   const sesion = useContext(SesionArmazon);
@@ -435,6 +452,22 @@ export function Armazon({
           ) : null}
           {buscador ?? <Buscador grupos={grupos} idioma={idioma} />}
           <div className="pd-cabecera-derecha">
+            {ayuda ? (
+              <a
+                href={ayuda}
+                className="pd-icono-boton pd-ayuda"
+                aria-label={t.ayuda}
+                title={t.ayuda}
+                data-testid="ayuda-interna"
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                  e.preventDefault();
+                  ir(ayuda);
+                }}
+              >
+                <CircleHelp size={20} aria-hidden="true" />
+              </a>
+            ) : null}
             <Campana avisos={avisos ?? []} idioma={idioma} />
             <SelectorIdioma idioma={idioma} cambiar={sesion.cambiar} />
             <Cuenta sesion={sesion} logistica={logistica} />

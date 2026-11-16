@@ -47,15 +47,6 @@ const REGLAS: [RegExp, LucideIcon][] = [
   // C-SERVICIOS-CONECTADOS: conectarse a varios servicios y agregar uno con el perfil compartido.
   [/^online-for-several-services/, PlugZap],
   [/^add-a-service/, ShieldCheck],
-  // C-DOCS-OPERACIONES: las guías del equipo de operaciones, cada una con su dibujo.
-  [/^search-orders/, Search],
-  [/^monitor-/, ChartColumn],
-  [/^read-order/, FileText],
-  [/^time-zone/, Clock],
-  [/^add-team/, Users],
-  [/^link-support/, LifeBuoy],
-  // C-AUTORIZACION-VENCIDA: la tarjeta cuya autorización venció.
-  [/^resolve-expired-card/, CreditCard],
   [/customers-presentation/, ShoppingBag],
   [/restaurants-presentation/, Store],
   [/salespeople-presentation/, Handshake],

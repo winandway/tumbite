@@ -3,7 +3,8 @@ import type { Captura, Guia, SeccionDocs } from './guias';
 
 /**
  * C-MODERACION y C-AVISOS-IDIOMA (16 nov 2026) — todos los países. Guías públicas de reportar,
- * bloquear, el filtro de palabras, la bandeja del equipo y los avisos en tu idioma, con capturas
+ * bloquear, el filtro de palabras y los avisos en tu idioma (la bandeja del equipo vive en la ayuda
+ * interna «?», C-AYUDA-INTERNA), con capturas
  * REALES tomadas por `scripts/recorrido/capturas-moderacion.mjs` (inglés en Novi, Michigan; español
  * en Miami). Nada privado: la dirección del superadmin no aparece.
  */
@@ -153,32 +154,6 @@ export const GUIAS_MODERACION: Record<Idioma, PorSeccion> = {
         ],
       },
     ],
-    operations: [
-      {
-        id: 'flagged-content',
-        titulo: 'Revisar los reportes de mensajes y reseñas',
-        resumen:
-          'La bandeja «Reportes» junta lo que alguien reportó y lo que marcó el filtro de palabras. El equipo de soporte lo revisa en menos de 24 horas y decide qué hacer.',
-        explicacion: [
-          'Cada tarjeta muestra el texto reportado, quién lo escribió, quién lo reportó (o si lo marcó el filtro), el motivo, la nota y cuántas veces se reportó.',
-          'Las acciones: «Ocultar» (deja de verse; no se borra), «Volver a publicar», «Avisar a quien lo escribió» (le llega un recordatorio de las normas, sin decir quién reportó) y «Descartar». Suspender la cuenta vive dentro de los tres puntos y pide confirmación; solo lo ve quien tiene el permiso de suspender cuentas.',
-          'Cada persona del equipo ve los reportes de su ciudad y de sus servicios.',
-        ],
-        capturas: [
-          foto(
-            'computadora-bandeja',
-            'es',
-            'La bandeja Reportes con una reseña reportada como spam y un mensaje del chat reportado como acoso, cada uno con Ocultar, Avisar a quien lo escribió y Descartar.',
-            'La bandeja «Reportes», con su texto, el motivo y las acciones.',
-          ),
-        ],
-        preguntas: ['¿Qué hago con un mensaje o una reseña reportada?'],
-        pasos: [
-          'Abre «Reportes» en el menú de Operación y lee el texto, el motivo y la nota.',
-          'Elige la acción. Todos los reportes sobre ese mismo contenido se cierran juntos.',
-        ],
-      },
-    ],
   },
   en: {
     trust: [
@@ -314,32 +289,6 @@ export const GUIAS_MODERACION: Record<Idioma, PorSeccion> = {
         pasos: [
           'Tap the language selector at the top of the home screen.',
           'Pick “English - EN” or “español - ES”: from then on, your notifications arrive in that language.',
-        ],
-      },
-    ],
-    operations: [
-      {
-        id: 'flagged-content',
-        titulo: 'Reviewing reported messages and reviews',
-        resumen:
-          'The “Flagged content” inbox gathers what someone reported and what the word filter flagged. The support team reviews it within 24 hours and decides what to do.',
-        explicacion: [
-          'Each card shows the reported text, who wrote it, who reported it (or whether the filter flagged it), the reason, the note and how many times it was reported.',
-          'The actions: “Hide” (no longer shown; nothing is deleted), “Publish again,” “Warn the author” (they get a reminder of the guidelines, without saying who reported) and “Dismiss.” Suspending the account lives inside the three dots and asks for confirmation; only people allowed to suspend accounts see it.',
-          'Each team member sees the reports for their city and services.',
-        ],
-        capturas: [
-          foto(
-            'computadora-bandeja',
-            'en',
-            'The Flagged content inbox with a review reported as spam and a chat message reported as harassment, each with Hide, Warn the author and Dismiss.',
-            'The “Flagged content” inbox, with the text, the reason and the actions.',
-          ),
-        ],
-        preguntas: ['What do I do with a reported message or review?'],
-        pasos: [
-          'Open “Flagged content” in the Operations menu and read the text, the reason and the note.',
-          'Pick an action. All reports about that same content are closed together.',
         ],
       },
     ],

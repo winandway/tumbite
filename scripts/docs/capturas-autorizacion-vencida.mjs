@@ -19,13 +19,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
 import sharp from 'sharp';
+import { CAPTURAS_PRIVADAS, ORIGINALES_PRIVADAS } from './ayudaPrivada.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const CARPETA = process.env.CARPETA_RECORRIDO ?? '.simulador';
 const PANEL = process.env.PANEL ?? 'http://localhost:5173';
 const STRIPE_SIM = process.env.STRIPE_SIM ?? 'http://localhost:12111';
-const ORIGINALES = join(RAIZ, 'docs', 'capturas', 'monitoreo');
-const DOCS = join(RAIZ, 'apps', 'panel', 'public', 'docs');
+// C-AYUDA-INTERNA: originales y WebP en la carpeta privada; nunca en el repositorio ni en /public.
+const ORIGINALES = ORIGINALES_PRIVADAS;
+const DOCS = CAPTURAS_PRIVADAS;
 mkdirSync(ORIGINALES, { recursive: true });
 const datos = JSON.parse(readFileSync(join(RAIZ, CARPETA, 'datos.json'), 'utf8'));
 

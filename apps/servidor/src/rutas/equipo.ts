@@ -127,7 +127,14 @@ function origenCorto(acceso: AccesoEnSesion | undefined): string {
 }
 
 /** Rutas cuyas respuestas no se enmascaran: las del propio equipo (son cuentas internas). */
-const SIN_ENMASCARAR = ['/admin/equipo', '/admin/mis-avisos', '/admin/preferencias', '/admin/ruta'];
+const SIN_ENMASCARAR = [
+  '/admin/equipo',
+  '/admin/mis-avisos',
+  '/admin/preferencias',
+  '/admin/ruta',
+  // C-AYUDA-INTERNA: texto de las guías, sin datos de nadie (los ejemplos ya vienen tapados).
+  '/admin/ayuda',
+];
 
 async function enmascararSiToca(c: Ctx, patron: string) {
   if (SIN_ENMASCARAR.some((p) => patron === p || patron.startsWith(`${p}/`))) return;

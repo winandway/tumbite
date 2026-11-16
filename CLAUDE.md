@@ -286,6 +286,14 @@ La auditoría de seguridad cubre servidor, panel y compartido; los avisos de las
 - El texto de la web se refuerza con información precisa de lo que la app ya hace; nunca promete lo que no existe (lo que viene se dice «muy pronto»).
 - Las capturas de las tiendas (App Store y Google Play) salen de las mismas originales, y solo se suben cuando las pantallas estén cerradas (ver `docs/AUDITORIA-FINAL-*.md`).
 
+## DOCS PÚBLICOS SOLO PARA CLIENTES Y TERCEROS; EL SUPERADMIN, EN LA AYUDA INTERNA «?» (REGLA PRINCIPAL, Richard, 16 nov 2026)
+
+> Sus palabras: _«solo se pone en público lo necesario para nuestros clientes o terceros; nosotros como empresa y nuestros datos importantes no se ponen en público, y menos cómo funciona nuestro panel de control»_.
+
+- Docs públicos (`/docs`) explican solo lo que usan clientes, restaurantes (su app y su panel), repartidores y conductores, y empresas (Divoox Flex, `/panel/business`), y franquicias.
+- **Nada del panel de operaciones (el superadmin) va a Docs**: ni sus pantallas, ni su buscador, ni sus bandejas (tickets, reportes, «Para aprobar»), ni cómo se monitorea, ni el equipo y sus permisos. Eso va en la **ayuda interna**: el botón «?» junto a la campana del superadmin, detrás de su dirección secreta y de la sesión del equipo (`apps/servidor/src/ayudaInterna/guias.ts`, capturas en `~/Divoox-privado/ayuda-interna`, subidas con `node scripts/docs/subir-ayuda-interna.mjs`). Escrita para novatos del equipo, en español e inglés, con capturas.
+- Candados C-DOCS-SIN-INTERNO y C-AYUDA-INTERNA en `CANDADOS.md`.
+
 ## Docs públicos de cada función (dictado por Richard, 12 oct 2026)
 
-- Toda función nueva visible lleva su guía en `/docs` (`apps/panel/src/sitio/docs/guias.ts`), en español e inglés, para el público (cliente, restaurante, repartidor, vendedor), con capturas en `apps/panel/public/docs/`. Nada técnico ni privado (nunca la dirección del superadmin). Regla global «TODO LO NUEVO SE EXPLICA AL PÚBLICO EN DOCS».
+- Toda función nueva visible **para clientes y terceros** lleva su guía en `/docs` (`apps/panel/src/sitio/docs/guias.ts`), en español e inglés, para el público (cliente, restaurante, repartidor, vendedor, empresa), con capturas en `apps/panel/public/docs/`. Nada técnico ni privado (nunca la dirección del superadmin). Lo del superadmin lleva su guía en la ayuda interna «?», no aquí (regla de arriba).
