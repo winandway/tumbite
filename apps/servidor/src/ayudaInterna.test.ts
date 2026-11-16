@@ -101,6 +101,8 @@ describe('C-AYUDA-INTERNA: la ayuda del equipo es solo para el equipo', () => {
       '/docs/operations',
       '/docs/operations/search-orders-rides-people',
       '/es/docs/operations/monitor-live-orders-rides',
+      '/docs/trust/two-person-approval',
+      '/es/docs/trust/two-person-approval',
       '/docs/monitoreo-buscador-en.webp',
       '/docs/doble-firma-es.webp',
       '/docs/recorrido-moderacion-computadora-bandeja-en.webp',

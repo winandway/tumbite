@@ -551,6 +551,8 @@ export function conCanonica(res: Response, href: string): Response {
  */
 export const esDocsInterno = (ruta: string) =>
   /^(\/es)?\/docs\/operations(\/|$)/.test(ruta) ||
+  // La guía de la doble firma mostraba la bandeja «Para aprobar» del equipo (estaba en «trust»).
+  /^(\/es)?\/docs\/(trust\/)?two-person-approval$/.test(ruta) ||
   (/^\/(docs|media\/docs-grande)\/[^/]+$/.test(ruta) &&
     CAPTURA_INTERNA.test(ruta.replace(/^.*\//, '')));
 
