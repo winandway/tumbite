@@ -1173,7 +1173,7 @@ for (const idioma of ['en', 'es'] as const) {
     await repCtx.setGeolocation(MIAMI);
 
     // El repartidor termina su turno: así no se queda «libre» para el recorrido siguiente.
-    await rep.getByText(L.desconectarme).filter({ visible: true }).click();
+    await rep.getByText(L.desconectarme, { exact: true }).filter({ visible: true }).click();
 
     // 11. El cliente lo ve entregado y califica.
     await cli.reload();
@@ -1738,7 +1738,7 @@ for (const idioma of ['en', 'es'] as const) {
       `SELECT repartidor_id AS r FROM pedidos WHERE id = '${otro.pedidoId}'`,
     )[0]?.r;
     expect(sinRepartidor ?? null, 'el pedido rechazado no se le asigna').toBeNull();
-    await rep.getByText(L.desconectarme).filter({ visible: true }).click();
+    await rep.getByText(L.desconectarme, { exact: true }).filter({ visible: true }).click();
     // Nadie más lo toma: el restaurante lo rechaza y el cliente recibe su dinero. Así no queda
     // ningún pedido colgado para la corrida siguiente.
     await rechazarEnPanel(otro.pedidoId);
@@ -2274,7 +2274,7 @@ for (const idioma of ['en', 'es'] as const) {
         // Ya libre, el repartidor se desconecta (así no se lleva ofertas de la corrida siguiente).
         await rep.goto('/driver/');
         await rep
-          .getByText(L.desconectarme)
+          .getByText(L.desconectarme, { exact: true })
           .filter({ visible: true })
           .click({ timeout: 20_000 })
           .catch(() => undefined);
