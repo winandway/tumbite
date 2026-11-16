@@ -64,6 +64,7 @@ import { InvitacionesFlota } from './InvitacionesFlota';
 import { UnidadDistancia, useUnidadDistancia } from './piezas/UnidadDistancia';
 import { ModoPago } from './piezas/ModoPago';
 import { ModoDestino } from './piezas/ModoDestino';
+import { DeslizarParaCompletar } from './piezas/DeslizarParaCompletar';
 import { BarraInferior, type Pestana } from './piezas/BarraInferior';
 import { BotonRedondo } from './piezas/BotonRedondo';
 import { CabeceraDriver } from './piezas/CabeceraDriver';
@@ -157,6 +158,8 @@ type Pedido = {
   verificado?: boolean;
   llegoRestaurante?: boolean;
   llegoCliente?: boolean;
+  /** C-DESLIZAR-ENTREGA: la foto de la puerta ya está en el servidor; falta deslizar. */
+  fotoEntregaLista?: boolean;
   distanciaAlLocalKm?: number | null;
   distanciaTotalKm?: number | null;
   minutosEstimados?: number | null;
@@ -286,6 +289,8 @@ const T = {
       'Soporte está revisando tu caso. Mientras tanto, si el GPS te confirma, el botón aparece solo.',
     autorizado: 'Soporte autorizó la entrega sin la confirmación del GPS.',
     fotoEntrega: 'Tomar foto de la entrega',
+    fotoLista: 'Foto de la entrega lista',
+    otraFoto: 'Tomar otra foto',
     bono: 'Incluye un bono de',
     llamarCliente: 'Llamar al cliente (número oculto)',
     selfieControl: 'Foto de control: confirma que eres tú',
@@ -425,6 +430,8 @@ const T = {
       'Support is reviewing your case. Meanwhile, if GPS confirms you, the button appears on its own.',
     autorizado: 'Support authorized the delivery without GPS confirmation.',
     fotoEntrega: 'Take the delivery photo',
+    fotoLista: 'Delivery photo ready',
+    otraFoto: 'Retake photo',
     bono: 'Includes a bonus of',
     llamarCliente: 'Call the customer (masked number)',
     selfieControl: 'Identity check photo: confirm it’s you',
@@ -602,6 +609,8 @@ export function Inicio() {
   const [gpsSimulado, setGpsSimulado] = useState(false);
   const [motivoGps, setMotivoGps] = useState('');
   const [subiendo, setSubiendo] = useState(false);
+  // C-DESLIZAR-ENTREGA: la foto de la puerta tomada en este celular (aunque espere señal para subir).
+  const [fotoTomada, setFotoTomada] = useState<Record<string, string>>({});
   // Verificar el pedido en el restaurante (QR o número), soltarlo, y la entrega en la puerta.
   const [escaneando, setEscaneando] = useState(false);
   // C-QR-UNA-VEZ: la cámara dispara la lectura varias veces seguidas; se verifica una sola.
@@ -882,23 +891,32 @@ export function Inicio() {
     return a ? (await fetch(a.uri)).blob() : null;
   }
 
-  /** Foto con la cámara + la ubicación de ese momento: así se prueba dónde y qué se entregó. */
-  async function tomarFoto(ruta: string, frontal = false) {
-    if (subiendo) return;
+  /**
+   * Foto con la cámara + la ubicación de ese momento: así se prueba dónde y qué se entregó.
+   * Devuelve la foto si quedó subida (o guardada para subir apenas haya señal).
+   */
+  async function tomarFoto(ruta: string, frontal = false): Promise<string | null> {
+    if (subiendo) return null;
     setError('');
     try {
       const permiso = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permiso.granted) return setError(t.permisoCamara);
+      if (!permiso.granted) {
+        setError(t.permisoCamara);
+        return null;
+      }
       const r = await ImagePicker.launchCameraAsync({
         mediaTypes: ['images'],
         quality: 0.5,
         ...(frontal ? { cameraType: ImagePicker.CameraType.front } : {}),
       });
       const foto = r.canceled ? null : r.assets[0];
-      if (!foto) return;
+      if (!foto) return null;
       setSubiendo(true);
       const p = await ubicacionConLimite();
-      if (!p) return setError(t.ubicacionTarda);
+      if (!p) {
+        setError(t.ubicacionTarda);
+        return null;
+      }
       setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
       const blob = await (await fetch(foto.uri)).blob();
       const rutaCompleta = `${ruta}${ruta.includes('?') ? '&' : '?'}lat=${p.coords.latitude}&lng=${p.coords.longitude}`;
@@ -906,7 +924,7 @@ export function Inicio() {
         await api.subirFoto(blob, rutaCompleta);
       } catch (x) {
         // Solo la entrega se guarda sin señal (la recogida la confirma el restaurante en persona).
-        const esEntrega = ruta.includes('/entregado');
+        const esEntrega = ruta.includes('/entregado') || ruta.includes('/foto-entrega');
         if (
           !esEntrega ||
           !(await guardarSiSinSenal(x, {
@@ -918,12 +936,109 @@ export function Inicio() {
           throw x;
       }
       await cargar();
+      return foto.uri;
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
       await cargar();
+      return null;
     } finally {
       setSubiendo(false);
     }
+  }
+
+  /** C-DESLIZAR-ENTREGA: la foto de la puerta se sube sola, como evidencia; no cierra el pedido. */
+  async function tomarFotoEntrega(pedidoId: string) {
+    const uri = await tomarFoto(`/datos/repartidor/pedidos/${pedidoId}/foto-entrega`);
+    if (uri) setFotoTomada((m) => ({ ...m, [pedidoId]: uri }));
+  }
+
+  /**
+   * C-DESLIZAR-ENTREGA: el deslizador cierra la entrega en la puerta con la foto ya tomada. El
+   * servidor confirma la foto y que el GPS esté en la dirección. Sin señal, queda en la cola
+   * detrás de la foto (la cola manda en orden) y se reintenta sola.
+   */
+  async function completarEnPuerta(pedidoId: string) {
+    setError('');
+    try {
+      const p = await ubicacionConLimite();
+      if (!p) return setError(t.ubicacionTarda);
+      setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+      const ruta = `/datos/repartidor/pedidos/${pedidoId}/entregado`;
+      const cuerpo = { lat: p.coords.latitude, lng: p.coords.longitude, modo: 'puerta' };
+      try {
+        await api.pedir('POST', ruta, cuerpo);
+      } catch (x) {
+        if (!(await guardarSiSinSenal(x, { ruta, tipo: 'json', cuerpo: JSON.stringify(cuerpo) })))
+          throw x;
+      }
+      setFotoTomada((m) => Object.fromEntries(Object.entries(m).filter(([k]) => k !== pedidoId)));
+      await cargar();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
+    }
+  }
+
+  /** La foto de la puerta y el deslizador (el pedido principal y los agrupados). */
+  function cierrePuerta(p: Pedido, conFotoPrincipal: boolean) {
+    const local = fotoTomada[p.id];
+    const lista = Boolean(p.fotoEntregaLista) || Boolean(local);
+    return (
+      <View style={{ gap: 6 }} testID="cierre-puerta">
+        {lista ? (
+          <View
+            testID="foto-entrega-lista"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              borderWidth: 1,
+              borderColor: '#2a2a2a',
+              borderRadius: 12,
+              padding: 10,
+              backgroundColor: '#fff',
+            }}
+          >
+            {local ? (
+              <Image
+                source={{ uri: local }}
+                style={{ width: 64, height: 64, borderRadius: 8 }}
+                accessibilityLabel={t.fotoLista}
+              />
+            ) : null}
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={{ fontWeight: '800', color: C.exito }}>{t.fotoLista}</Text>
+              <Pressable
+                onPress={() => void tomarFotoEntrega(p.id)}
+                accessibilityRole="button"
+                accessibilityLabel={t.otraFoto}
+                hitSlop={8}
+              >
+                <Text style={{ fontWeight: '700', textDecorationLine: 'underline' }}>
+                  {subiendo ? t.subiendo : t.otraFoto}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Boton
+            texto={subiendo ? t.subiendo : t.fotoEntrega}
+            alTocar={() => void tomarFotoEntrega(p.id)}
+            cargando={subiendo}
+            exito={conFotoPrincipal}
+            secundario={!conFotoPrincipal}
+          />
+        )}
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.sinCaras}</Text>
+        {conFotoPrincipal || lista ? (
+          <DeslizarParaCompletar
+            idioma={idioma}
+            listo={lista}
+            ocupado={subiendo}
+            alCompletar={() => completarEnPuerta(p.id)}
+          />
+        ) : null}
+      </View>
+    );
   }
 
   // Nunca en silencio: mientras busca la ubicación lo dice, y si algo falla se ve en pantalla.
@@ -1322,8 +1437,9 @@ export function Inicio() {
           alCambiar={() => void cargar()}
         />
       ) : null}
-      {/* C-MODO-DESTINO (BRE-6): solo pedidos que lo acercan a su destino, dos veces al día. */}
-      <ModoDestino cerca={aqui} />
+      {/* C-MODO-DESTINO (BRE-6): solo pedidos que lo acercan a su destino, dos veces al día.
+          Con un pedido en curso no se muestra (C-DESLIZAR-ENTREGA): como Uber, se elige entre pedidos. */}
+      {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}
       {/* C-FLOTA-PROPIA: el restaurante que lo invitó a su equipo, y para quién reparte. */}
       <InvitacionesFlota
         alAceptar={(texto) => {
@@ -2167,9 +2283,9 @@ export function Inicio() {
                       idioma={idioma}
                       pedidoId={activo.id}
                       alRegistrar={() => void cargar()}
-                      fotoTicket={() =>
-                        tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-ticket`)
-                      }
+                      fotoTicket={async () => {
+                        await tomarFoto(`/datos/repartidor/pedidos/${activo.id}/foto-ticket`);
+                      }}
                     />
                   ) : null}
                   {activo.estado === 'listo' && activo.fotoRecogida ? (
@@ -2464,27 +2580,16 @@ export function Inicio() {
                           </View>
                         ) : null}
                         {/* C-PIN-SIN-FOTO: con PIN, la foto no salta el PIN; se entrega en mano. */}
-                        {!activo.pinRequerido ? (
-                          <>
-                            <Boton
-                              texto={subiendo ? t.subiendo : t.fotoEntrega}
-                              alTocar={() =>
-                                void tomarFoto(`/datos/repartidor/pedidos/${activo.id}/entregado`)
-                              }
-                              cargando={subiendo}
-                              exito={!enMano}
-                              secundario={enMano}
-                            />
-                            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.sinCaras}</Text>
-                          </>
-                        ) : (
+                        {!activo.pinRequerido && !activo.requiereEdad ? (
+                          cierrePuerta(activo, !enMano)
+                        ) : activo.pinRequerido ? (
                           <Text
                             style={{ color: '#666B73', fontSize: 12 }}
                             testID="con-pin-sin-foto"
                           >
                             {t.conPinSinFoto}
                           </Text>
-                        )}
+                        ) : null}
                         {activo.pinRequerido ? (
                           <TextInput
                             value={pinEntrega}
@@ -2678,17 +2783,7 @@ export function Inicio() {
                   <Text>{g.direccion}</Text>
                   {g.estado === 'en_camino' ? (
                     enPuertaG ? (
-                      <>
-                        <Boton
-                          texto={subiendo ? t.subiendo : t.fotoEntrega}
-                          alTocar={() =>
-                            void tomarFoto(`/datos/repartidor/pedidos/${g.id}/entregado`)
-                          }
-                          cargando={subiendo}
-                          exito
-                        />
-                        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.sinCaras}</Text>
-                      </>
+                      cierrePuerta(g, true)
                     ) : (
                       <>
                         <Boton

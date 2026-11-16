@@ -150,7 +150,8 @@ export type FilaPedido = Record<string, unknown>;
 /** Para sumar a un SELECT con el pedido como «p»: si hay foto de recogida y de entrega. */
 export const CON_EVIDENCIAS = `(SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'recogida') AS ev_recogida,
   (SELECT confirmada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'recogida') AS ev_recogida_ok,
-  (SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega' AND e.clave <> '') AS ev_entrega,
+  (SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega' AND e.clave <> '' AND e.confirmada_en IS NOT NULL) AS ev_entrega,
+  (SELECT creada_en FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega' AND e.clave <> '') AS ev_entrega_foto,
   (SELECT modo FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_modo,
   (SELECT nota FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS ev_entrega_nota,
   (SELECT modo FROM preferencias_entrega pe WHERE pe.pedido_id = p.id) AS entrega,

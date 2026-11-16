@@ -2101,6 +2101,8 @@ function conDatosRestaurante(f: FilaPedido) {
     verificado: f.h_verificado != null,
     llegoRestaurante: f.h_llego_rest != null,
     llegoCliente: f.h_llego_cli != null,
+    // C-DESLIZAR-ENTREGA: la foto de la puerta ya está en el servidor (falta deslizar para cerrar).
+    fotoEntregaLista: f.ev_entrega_foto != null,
     noApareceEn: (f.h_no_aparece as string | null) ?? null,
     excepcionUbicacion: (f.excepcion_ubicacion as 'pedida' | 'autorizada' | null) ?? null,
     // Para que el repartidor sepa cuánto falta en cocina (0 = ya está listo).
@@ -2589,6 +2591,42 @@ operacion.post('/repartidor/pedidos/:id/no-puedo-confirmar', async (c) => {
   return c.json({ ok: true, estado: 'pedida' });
 });
 
+/**
+ * C-DESLIZAR-ENTREGA (15 nov 2026, como DoorDash Dasher y Uber Driver): la foto de la puerta se
+ * sube sola y queda como evidencia de la entrega, SIN cerrar el pedido. El cierre es el
+ * deslizador «Desliza para completar la entrega» (POST …/entregado con modo «puerta»), que exige
+ * esta foto y la llegada confirmada por el GPS. Si la vuelve a tomar, reemplaza la anterior.
+ */
+operacion.post('/repartidor/pedidos/:id/foto-entrega', async (c) => {
+  const { u, db } = await miFicha(c);
+  const id = c.req.param('id');
+  const p = await db
+    .prepare(
+      "SELECT p.*, (SELECT clave FROM evidencias e WHERE e.pedido_id = p.id AND e.tipo = 'entrega') AS clave_vieja FROM pedidos p WHERE p.id = ? AND p.repartidor_id = ? AND p.estado = 'en_camino'",
+    )
+    .bind(id, u.id)
+    .first<Record<string, unknown>>();
+  if (!p) throw new ErrorDatos('Este pedido no está en camino contigo.', undefined, 409);
+  if (lineasConEdad(p))
+    throw new ErrorDatos(
+      'Este pedido tiene productos para mayores de 21: entrégalo en mano y revisa el documento.',
+      'edad',
+      409,
+    );
+  await sinFotoConPin(db, id);
+  const foto = await leerFoto(c);
+  const casa = comoPunto(p.lat, p.lng);
+  const metros = casa ? metrosEntre(foto.donde, casa) : null;
+  await guardarEvidencia(db, foto, id, 'entrega', metros, false, 'puerta', '');
+  // La foto anterior (si la volvió a tomar) no se queda huérfana en el almacén.
+  const vieja = String(p.clave_vieja ?? '');
+  if (vieja)
+    await foto.bucket
+      .delete(vieja)
+      .catch((e: unknown) => console.error('foto de entrega vieja: no se borró', e));
+  return c.json({ ok: true, url: `/datos/pedidos/${id}/evidencia/entrega`, metros });
+});
+
 operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   const { u, db } = await miFicha(c);
   const id = c.req.param('id');
@@ -2614,7 +2652,9 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
   const requiereEdad = lineasConEdad(p);
   // En la puerta: con foto. En mano: sin foto (el cliente lo recibió). En lugar seguro: foto y nota,
   // después de avisar que el cliente no aparece y esperar 5 minutos.
-  const esFoto = (c.req.header('content-type') ?? '').startsWith('image/');
+  // C-FOTO-ENTREGA-IPHONE: en el iPhone la foto sale de la cámara sin tipo y llega como
+  // «application/octet-stream». Todo lo que no es JSON es la foto; leerFoto revisa sus bytes.
+  const esFoto = !(c.req.header('content-type') ?? '').toLowerCase().includes('json');
   const modoPedido = String(c.req.query('modo') ?? '');
   // C-CLIENTE-AUSENTE: «el cliente no apareció» se cierra con una foto del lugar como constancia;
   // la comida no se deja (con PIN, con edad o en efectivo nunca se deja sin entregar).
@@ -2643,7 +2683,8 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       z.object({
         lat: z.number().min(-90).max(90),
         lng: z.number().min(-180).max(180),
-        modo: z.literal('mano'),
+        /** «mano»: lo recibió el cliente. «puerta»: el deslizador, con la foto ya subida (C-DESLIZAR-ENTREGA). */
+        modo: z.enum(['mano', 'puerta']),
         nota: z.string().trim().max(300).default(''),
         pin: z.string().trim().optional(),
         /** El repartidor revisó el documento y la persona es mayor de 21 (solo si el pedido lo exige). */
@@ -2669,8 +2710,26 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
         'edad',
         409,
       );
+    if (d.modo === 'puerta') {
+      // C-DESLIZAR-ENTREGA (como DoorDash y Uber): primero la foto en la puerta, después deslizar.
+      if (requiereEdad)
+        throw new ErrorDatos(
+          'Este pedido tiene productos para mayores de 21: entrégalo en mano y revisa el documento.',
+          'edad',
+          409,
+        );
+      await sinFotoConPin(db, id);
+      const ya = await db
+        .prepare(
+          "SELECT 1 FROM evidencias WHERE pedido_id = ? AND tipo = 'entrega' AND clave <> ''",
+        )
+        .bind(id)
+        .first();
+      if (!ya)
+        throw new ErrorDatos('Primero toma la foto de la entrega en la puerta.', 'foto', 409);
+    }
     donde = { lat: d.lat, lng: d.lng };
-    modo = 'mano';
+    modo = d.modo;
     nota = requiereEdad
       ? `${d.nota ? `${d.nota} · ` : ''}ID ${d.documento} ••${d.documentoUltimos4} · recibió ${d.nombreRecibe}`
       : d.nota;
@@ -2729,6 +2788,13 @@ operacion.post('/repartidor/pedidos/:id/entregado', async (c) => {
       throw new ErrorDatos('Escribe dónde dejaste el pedido.', 'nota', 422);
   }
   if (foto) await guardarEvidencia(db, foto, id, 'entrega', metros, true, modo, nota);
+  else if (modo === 'puerta')
+    await db
+      .prepare(
+        "UPDATE evidencias SET modo = 'puerta', nota = ?, distancia_m = ?, confirmada_en = datetime('now') WHERE pedido_id = ? AND tipo = 'entrega' AND clave <> ''",
+      )
+      .bind(nota, metros, id)
+      .run();
   else
     await db
       .prepare(
@@ -3597,7 +3663,7 @@ operacion.post('/pedidos/:id/mensajes/foto', async (c) => {
     );
   const clave = `chat/${p.id}/${nuevoId()}`;
   await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
-  await db
+  const nuevo = await db
     .prepare(
       "INSERT INTO mensajes_pedido (pedido_id, de_usuario_id, texto, foto_clave) VALUES (?, ?, '', ?)",
     )
@@ -3613,7 +3679,11 @@ operacion.post('/pedidos/:id/mensajes/foto', async (c) => {
     ...AVISOS.mensaje(en ? 'en' : 'es', u.nombre.split(' ')[0] ?? '', en ? 'Photo' : 'Foto'),
     datos: { pedidoId: p.id },
   });
-  return c.json({ ok: true }, 201);
+  // C-FOTO-ENTREGA-IPHONE: con su dirección, para que ninguna versión de la app diga «no se pudo».
+  return c.json(
+    { ok: true, url: `/datos/pedidos/${p.id}/mensajes/${String(nuevo.meta.last_row_id)}/foto` },
+    201,
+  );
 });
 
 operacion.get('/pedidos/:id/mensajes/:mid/foto', async (c) => {

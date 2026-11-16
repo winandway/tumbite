@@ -1191,6 +1191,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t confirm you’re a person. Reload the page and try again.',
   ],
   ['No pudimos leer los datos enviados.', 'We couldn’t read the information sent.'],
+  [
+    'Primero toma la foto de la entrega en la puerta.',
+    'First take the delivery photo at the door.',
+  ],
   ['No se pudo completar.', 'It couldn’t be completed.'],
   [
     'No se pudo devolver el dinero ahora mismo. Intenta otra vez en un momento o escríbenos.',

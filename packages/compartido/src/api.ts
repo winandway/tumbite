@@ -169,7 +169,9 @@ export function crearApi(op: OpcionesApi) {
   ): Promise<{ url: string }> {
     const headers: Record<string, string> = {
       accept: 'application/json',
-      'content-type': foto.type || 'application/octet-stream',
+      // C-FOTO-ENTREGA-IPHONE: en el iPhone la foto de la cámara sale sin tipo; es una foto, y el
+      // servidor igual revisa sus bytes.
+      'content-type': foto.type || 'image/jpeg',
     };
     const idioma = op.idioma?.();
     if (idioma) headers['x-idioma'] = idioma;
@@ -196,7 +198,9 @@ export function crearApi(op: OpcionesApi) {
       error?: string;
       campo?: string;
     } | null;
-    if (!res.ok || !datos?.url)
+    // C-FOTO-ENTREGA-IPHONE: si el servidor dijo que sí, la foto subió (algunas rutas no devuelven
+    // su dirección); antes eso salía como «No se pudo subir la foto.» con la foto ya guardada.
+    if (!res.ok)
       throw new ErrorApi(
         datos?.error ??
           (op.idioma?.() === 'es'
@@ -205,7 +209,7 @@ export function crearApi(op: OpcionesApi) {
         res.status,
         datos?.campo,
       );
-    return { url: datos.url };
+    return { url: datos?.url ?? '' };
   }
 
   /**

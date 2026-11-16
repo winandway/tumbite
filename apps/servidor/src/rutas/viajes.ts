@@ -751,7 +751,8 @@ viajes.post('/conductor/operaciones/:id/foto-paquete', async (c) => {
     )
     .bind(clave, id)
     .run();
-  return c.json({ ok: true }, 201);
+  // C-FOTO-ENTREGA-IPHONE: la referencia de la foto guardada; las apps viejas la exigían.
+  return c.json({ ok: true, url: clave }, 201);
 });
 
 /** M8: el conductor califica al pasajero al terminar. */

@@ -15,9 +15,8 @@ describe('app del repartidor: con PIN no se entrega con foto (C-PIN-SIN-FOTO)', 
   };
 
   it('el botón de foto de la entrega va condicionado a que no haya PIN', () => {
-    expect(antesDe('texto={subiendo ? t.subiendo : t.fotoEntrega}')).toContain(
-      '!activo.pinRequerido',
-    );
+    // C-DESLIZAR-ENTREGA: la foto y el deslizador viven en cierrePuerta(); se ofrecen sin PIN.
+    expect(antesDe('cierrePuerta(activo, !enMano)', 120)).toContain('!activo.pinRequerido');
   });
 
   it('el lugar seguro con foto tampoco se ofrece con PIN, y se explica', () => {
