@@ -78,7 +78,9 @@ export function Deslizador(
 ) {
   const habilitado = props.habilitado !== false;
   // Mientras se cierra la acción (subiendo, completando) no se vuelve a deslizar.
-  const activo = habilitado && !(props.variante === 'accion' && props.ocupado);
+  // Y mientras espera la red tras confirmar (las dos variantes): nunca dos desconexiones seguidas.
+  const [esperando, setEsperando] = useState(false);
+  const activo = habilitado && !esperando && !(props.variante === 'accion' && props.ocupado);
   const [ancho, setAncho] = useState(0);
   const [arrastrando, setArrastrando] = useState(false);
   const [x] = useState(() => new Animated.Value(0));
@@ -104,19 +106,24 @@ export function Deslizador(
     }).start(() => vivo.current && setArrastrando(false));
 
   async function confirmar() {
+    if (actual.current.enCurso) return;
+    actual.current.enCurso = true;
+    setEsperando(true);
     try {
       await props.alConfirmar();
     } finally {
+      actual.current.enCurso = false;
       if (vivo.current) {
         x.setValue(0);
         setArrastrando(false);
+        setEsperando(false);
       }
     }
   }
 
   // Lo que el gesto lee cambia con cada render; el gesto se arma UNA vez y lo lee de aquí
   // (C-FLEX-DESLIZAR-SCROLL: si se rearmaba, el iPhone se quedaba con el ancho 0 del primero).
-  const actual = useRef({ habilitado: activo, recorrido, confirmar, ultimo: 0 });
+  const actual = useRef({ habilitado: activo, recorrido, confirmar, ultimo: 0, enCurso: false });
   useEffect(() => {
     actual.current = { ...actual.current, habilitado: activo, recorrido, confirmar };
   });
@@ -184,7 +191,7 @@ export function Deslizador(
         accessibilityLabel={props.accionLector}
         accessibilityActions={[{ name: 'desconectar', label: props.accionLector }]}
         onAccessibilityAction={(ev) => {
-          if (ev.nativeEvent.actionName !== 'desconectar') return;
+          if (ev.nativeEvent.actionName !== 'desconectar' || !activo) return;
           void confirmarConSistema(
             props.confirmar.pregunta,
             props.confirmar.si,

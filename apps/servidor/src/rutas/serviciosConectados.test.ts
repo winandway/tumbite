@@ -260,3 +260,56 @@ describe('C-SERVICIOS-CONECTADOS · la regla de cada tarjeta', () => {
     expect(estadoTarjeta({ ...base, conectadoGeneral: false, s: s({}) })).toBe('desconectado');
   });
 });
+
+describe('C-SERVICIOS-CONECTADOS · puertas y solicitudes', () => {
+  it('si una puerta frena el encendido general, no se escribe ninguna preferencia', async () => {
+    const { m, cond, conexion } = await conComidaYEnvios();
+    await conexion('comida', false);
+    await conexion('envios', false);
+    await m.DB.prepare("INSERT INTO selfies_control (id, usuario_id) VALUES ('sc-1', ?)")
+      .bind(cond.id)
+      .run();
+    const r = await m.llamar(
+      'POST',
+      '/datos/repartidor/conectar',
+      { conectado: true, lat: 25.7617, lng: -80.1918 },
+      cond.token,
+    );
+    expect(r.estado).toBe(409);
+    const { results } = await m.DB.prepare(
+      'SELECT activa FROM preferencias_servicio WHERE conductor_id = ? AND activa = 1',
+    )
+      .bind(cond.id)
+      .all();
+    expect(results).toHaveLength(0);
+  });
+
+  it('un servicio rechazado se vuelve a pedir como mucho una vez al día y conserva el motivo', async () => {
+    const { m, cond, admin } = await conComidaYEnvios();
+    for (const ruta of [
+      '/datos/admin/servicios/moto',
+      '/datos/admin/servicios/moto/zonas/US-FL-MIAMI',
+    ])
+      await m.llamar('PUT', ruta, { estado: 'disponible' }, admin.token);
+    await m.DB.prepare(
+      "INSERT INTO habilitaciones (conductor_id, servicio_id, estado, motivo) VALUES (?, 'moto', 'rechazada', 'Falta el casco')",
+    )
+      .bind(cond.id)
+      .run();
+    const pedir = () =>
+      m.llamar('POST', '/datos/conductor/servicios/moto/solicitar', {}, cond.token);
+    expect((await pedir()).estado).toBe(409); // recién rechazado
+    await m.DB.prepare(
+      "UPDATE habilitaciones SET actualizado_en = datetime('now','-2 days') WHERE conductor_id = ? AND servicio_id = 'moto'",
+    )
+      .bind(cond.id)
+      .run();
+    expect((await pedir()).estado).toBe(200);
+    const h = await m.DB.prepare(
+      "SELECT estado, motivo FROM habilitaciones WHERE conductor_id = ? AND servicio_id = 'moto'",
+    )
+      .bind(cond.id)
+      .first<{ estado: string; motivo: string }>();
+    expect(h).toEqual({ estado: 'pendiente', motivo: 'Falta el casco' });
+  });
+});

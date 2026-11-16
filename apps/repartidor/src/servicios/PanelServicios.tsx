@@ -39,7 +39,7 @@ import { textosServicios } from './textos';
  * El panel de servicios del servidor, leído al entrar, cada `cadaMs` (5 s) y cuando algo cambia.
  * Con `cadaMs` en 0 no se lee solo: lo lee quien lo usa (el inicio, junto con su estado).
  */
-export function usePanelServicios(api: Api, cadaMs = 5000) {
+export function usePanelServicios(api: Api, cadaMs = 10_000) {
   const [panel, setPanel] = useState<Panel | null>(null);
   const cargar = useCallback(async () => {
     try {
@@ -256,17 +256,8 @@ export function PanelServiciosInicio({
         ) : null}
         {servicios.length ? (
           <View style={{ gap: 8 }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                gap: 8,
-                marginBottom: 4,
-              }}
-            >
+            <View style={{ gap: 2, marginBottom: 4 }}>
               <Text
-                numberOfLines={1}
                 style={{
                   fontFamily: FUENTE.titulo,
                   fontSize: 17,
@@ -278,11 +269,7 @@ export function PanelServiciosInicio({
                 {t.serviciosAlMomento}
               </Text>
               {conectado ? (
-                <Text
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  style={{ flexShrink: 1, fontSize: 13, lineHeight: 18, color: COLOR.textoSuave }}
-                >
+                <Text style={{ fontSize: 13, lineHeight: 18, color: COLOR.textoSuave }}>
                   {t.pista}
                 </Text>
               ) : null}

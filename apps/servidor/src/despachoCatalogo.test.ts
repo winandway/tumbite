@@ -394,3 +394,36 @@ describe('NXT-6x · conectarse con los servicios que sí tiene', () => {
     expect(app).toMatch(/else if \(r\.avisoComida\) setAviso\(r\.avisoComida\)/);
   });
 });
+
+describe('C-SERVICIOS-CONECTADOS · Comida apagada a mano no recibe pedidos', () => {
+  it('con Comida desconectada no le llega la oferta: va al siguiente con Comida conectada', async () => {
+    const { q, pedidoListo, repartidor, ofertas } = await escenario();
+    const cerca = await repartidor('Rep Sin Comida', 25.771);
+    const lejos = await repartidor('Rep Con Comida', 25.79);
+    await q(
+      "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'comida', 0)",
+      cerca.id,
+    );
+    const id = await pedidoListo();
+    expect((await ofertas(cerca.token)).map((o) => o.id)).not.toContain(id);
+    expect((await ofertas(lejos.token))[0]?.id).toBe(id);
+  });
+
+  it('con Comida desconectada tampoco se le agrupa un segundo pedido del mismo local', async () => {
+    for (const comida of [1, 0]) {
+      const { q, pedidoListo, repartidor, ofertas } = await escenario();
+      const rep = await repartidor('Rep Agrupa', 25.771);
+      await q(
+        "INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES (?, 'comida', ?)",
+        rep.id,
+        comida,
+      );
+      const primero = await pedidoListo();
+      await q("UPDATE ofertas SET estado = 'vencida' WHERE pedido_id = ?", primero);
+      await q('UPDATE pedidos SET repartidor_id = ? WHERE id = ?', rep.id, primero);
+      const segundo = await pedidoListo();
+      const lista = (await ofertas(rep.token)).map((o) => o.id);
+      expect(lista.includes(segundo), `comida=${comida}`).toBe(comida === 1);
+    }
+  });
+});

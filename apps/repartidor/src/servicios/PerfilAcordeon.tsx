@@ -394,12 +394,10 @@ export function PerfilAcordeon({
           .pedir<{ kyc: { estado: string; motivo: string } }>('GET', '/datos/kyc')
           .catch(() => null),
         ...lista.map((id) =>
-          api
-            .pedir<{ verificados: PapelReq[]; faltan: PapelReq[] }>(
-              'GET',
-              `/datos/conductor/servicios/${id}/requisitos`,
-            )
-            .catch(() => ({ verificados: [], faltan: [] })),
+          api.pedir<{ verificados: PapelReq[]; faltan: PapelReq[] }>(
+            'GET',
+            `/datos/conductor/servicios/${id}/requisitos`,
+          ),
         ),
       ]);
       setVehiculos(v.vehiculos.filter((x) => x.estado !== 'retirado'));

@@ -194,15 +194,32 @@ serviciosConectados.post('/conductor/servicios/:id/solicitar', async (c) => {
   const s = estado.servicios.find((x) => x.servicioId === servicioId);
   if (!s || s.estadoServicio !== 'disponible')
     throw new ErrorDatos('Ese servicio no está disponible en tu ciudad.', 'servicioId', 409);
-  if (s.habilitacion === 'sin_solicitar' || s.habilitacion === 'rechazada')
+  if (s.habilitacion === 'sin_solicitar')
     await db
       .prepare(
         `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, motivo) VALUES (?, ?, 'pendiente', '')
-         ON CONFLICT(conductor_id, servicio_id) DO UPDATE SET estado = 'pendiente', motivo = '',
-           actualizado_en = datetime('now') WHERE habilitaciones.estado = 'rechazada'`,
+         ON CONFLICT(conductor_id, servicio_id) DO NOTHING`,
       )
       .bind(u.id, servicioId)
       .run();
+  if (s.habilitacion === 'rechazada') {
+    // Un rechazo se vuelve a pedir una vez al día como mucho, y el motivo del equipo se conserva
+    // (queda en el historial) para que quien revise vea por qué se rechazó antes.
+    const r = await db
+      .prepare(
+        `UPDATE habilitaciones SET estado = 'pendiente', actualizado_en = datetime('now')
+          WHERE conductor_id = ? AND servicio_id = ? AND estado = 'rechazada'
+            AND actualizado_en <= datetime('now', '-1 day')`,
+      )
+      .bind(u.id, servicioId)
+      .run();
+    if (!r.meta.changes)
+      throw new ErrorDatos(
+        'Ya lo pediste hace poco. Corrige lo que te indicamos y vuelve a pedirlo mañana.',
+        'servicioId',
+        409,
+      );
+  }
   return c.json(await panelDe(db, u.id, idiomaIngles(c), versionDriver(c)));
 });
 
@@ -314,7 +331,11 @@ serviciosConectados.get('/conductor/servicios/:id/requisitos', async (c) => {
           : doc?.estado === 'pendiente' || c1?.estado === 'pendiente'
             ? 'pendiente'
             : 'falta';
-    const nombre = NOMBRE_REQUISITO[r.requisito] ?? [r.requisito, r.requisito];
+    // Un papel nuevo sin nombre en la lista nunca sale con su clave interna.
+    const nombre = NOMBRE_REQUISITO[r.requisito] ?? [
+      'Otro papel requerido',
+      'Other required document',
+    ];
     return {
       requisito: r.requisito,
       grupo: r.nivel === 'conductor' ? ('perfil' as const) : ('vehiculo' as const),

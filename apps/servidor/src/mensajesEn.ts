@@ -1330,6 +1330,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Escribe el nombre de tu restaurante.', 'Enter your restaurant’s name.'],
   ['Escribe un celular para llamarte.', 'Enter a mobile number we can call you at.'],
   ['Ese servicio no existe.', 'That service doesn’t exist.'],
+  [
+    'Ya lo pediste hace poco. Corrige lo que te indicamos y vuelve a pedirlo mañana.',
+    'You asked recently. Fix what we pointed out and ask again tomorrow.',
+  ],
   ['Ese servicio no se conecta desde aquí.', 'That service can’t be turned on from here.'],
   ['Ese servicio no se pide desde aquí.', 'That service can’t be requested from here.'],
   ['Ese servicio no está disponible en tu ciudad.', 'That service isn’t available in your city.'],
