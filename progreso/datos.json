@@ -1,6 +1,6 @@
 {
-  "actualizado": "2026-11-16T00:10:00-05:00",
-  "version": "7b9a5ca",
+  "actualizado": "2026-11-16T03:30:00-05:00",
+  "version": "ef1c068",
   "ahora": "15 nov: las tres apps con el diseño nuevo ya están en las tiendas. En Google Play, Divoox Driver (versión 18) y Divoox Restaurants (versión 13) están en revisión; en App Store Connect quedaron las compilaciones 34 del cliente, 28 del Driver y 20 de Restaurants para TestFlight. El sitio de pruebas y divoox.com sirven la misma versión, con el diseño nuevo y la foto de la puerta. 15 nov: la foto de la puerta ya está en vivo. El cliente puede guardar hasta tres fotos del frente, la entrada del edificio y su puerta en cada dirección, con la cámara o desde sus archivos; el repartidor asignado las ve solo mientras lleva el pedido, y nadie más. Probado en pantalla con 86 comprobaciones, con guías en español e inglés. Las tres apps de pruebas ya traen el diseño nuevo y la franja «PRUEBAS». 15 nov: Divoox Carro ya tiene categorías (Carro, Comfort, Premium y XL, cada una con su precio), paradas en el camino (al pedir y con el viaje en marcha) y tarifa dinámica por ciudad con tope. Probado de punta a punta en el sitio de pruebas; en producción Carro sigue apagado hasta la orden legal. 14 nov: la marca Divoox quedó presentada en Estados Unidos (número de serie 50218051, clase de transporte y reparto). Hay hasta el 14 de mayo de 2027 para presentarla en Venezuela conservando esta fecha. Los mapas de la web ya son los de Google con el estilo de Divoox y los avisos del navegador están encendidos. Además, todos los mapas cambian solos entre «Día · azul Divoox» y «Noche · oscuro con azul», con un ajuste en la cuenta, y el repartidor o conductor se ve con el símbolo de Divoox: en vivo en la web; en las apps instaladas, con la próxima compilación.",
   "proximo": [
     {
@@ -222,6 +222,14 @@
       "titulo": "Confirmar que las empresas de Flex en Estados Unidos recargan con tarjeta",
       "para": "Las guías en inglés de Flex enseñan la recarga con tarjeta, que en producción sigue apagada.",
       "destraba": "Encender las recargas con tarjeta de Flex para Estados Unidos cuando llegue la primera empresa."
+    },
+    {
+      "numero": 24,
+      "id": "decisiones-equipo-interno",
+      "prioridad": "media",
+      "titulo": "Decidir quién ve fotos, teléfonos y si se pide segundo factor al equipo",
+      "para": "Hoy aplicamos lo recomendado: fotos de entrega desde Soporte nivel 1, teléfono y correo completos desde Soporte nivel 2, segundo factor construido pero apagado, y el código corto del pedido sin cambiar. Faltan también los topes de dinero por puesto. Si estás de acuerdo, márcalo hecho; si no, dinos qué cambiar.",
+      "destraba": "Dejar fijas las reglas de privacidad del equipo de operaciones y encender el segundo factor si lo quieres."
     }
   ],
   "terceros": [
@@ -401,6 +409,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-16",
+      "titulo": "El superadmin ya es una herramienta seria de monitoreo",
+      "texto": "Buscador arriba de todo el panel que encuentra cualquier pedido, viaje o persona desde la primera letra (también cerrados, esperando pago y de otra ciudad, y todos los que repiten el mismo código corto). Pedidos en curso con pestañas de comida, tiendas, viajes en auto y en moto, y filtros que se guardan por empleado. Ficha del pedido con cinco tiempos calculados contra lo previsto, en verde o en rojo, la foto de recogida y la de entrega con quién confirmó, y la línea de tiempo; ficha nueva del viaje. Horario por empleado con 12 o 24 horas y la hora de cada ciudad. Equipo interno: alta por invitación, nueve puestos con sus permisos, zona por ciudad y servicio, fotos y datos tapados hasta abrirlos y registro de quién vio qué. Seis guías nuevas en Docs, en inglés y en español. Publicado y comprobado en pruebas y en el sitio real."
+    },
     {
       "fecha": "2026-11-15",
       "titulo": "Fotos que suben al instante y el restaurante ve las dos fotos del pedido",
