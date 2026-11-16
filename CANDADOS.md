@@ -4761,3 +4761,11 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Candado:** `apps/servidor/src/fotoEntregaDeslizar.test.ts` («C-DESLIZAR-SIEMPRE»), visto en rojo antes del arreglo (el pedido quedaba entregado).
 - **Número nuevo en cada compilación de pruebas:** el perfil `pruebas` (APK) de las tres apps tiene `autoIncrement` (antes solo `pruebas-tienda`): la del 16 nov salió otra vez con el 18 de la anterior. Candado `apps/servidor/src/numeroCompilacionPruebas.test.ts`, visto en rojo.
 - **No tocar:** no compilar dos versiones de pruebas de la misma app a la vez desde códigos distintos; antes de pasarle una app a Richard, mirar en la página el código de la compilación.
+
+## C-DOCS-PAGINA-LIVIANA · Los íconos de la barra de Docs se dibujan una vez por página (16 nov 2026) — todos los países
+
+- **Qué pasó:** la publicación se frenó con «el paquete pesa 123,2 MB y el tope es 120 MB» (C-PAQUETE-TOPE): ningún cambio llegaba a pruebas ni a producción.
+- **Causa real:** cada una de las 519 páginas prearmadas de Docs repetía en la barra lateral unos 200 íconos dibujados completos (95 de sus 129 KB), aunque son solo 37 distintos. Las páginas sumaban 50 MB.
+- **Qué se hizo:** `ICONOS_GUIA` y `nombreIconoGuia` en `apps/panel/src/sitio/docs/iconosGuia.ts`; en `Docs.tsx`, `SimbolosIconosGuia` dibuja cada ícono una vez por página como `<symbol>` y `IconoGuia` lo referencia con `<use href="#ig-…">`. Se ve igual. Cada página baja de 129 a 82 KB y el HTML total de 50 a 34 MB (paquete ≈ 107 MB).
+- **Cómo se comprueba:** `apps/panel/src/sitio/docs/docsLiviana.test.tsx` (en rojo sin el cambio) y el tope de `scripts/verificar-paquete.mjs`.
+- **No tocar:** no volver a dibujar el ícono completo en cada guía de la barra.
