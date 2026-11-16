@@ -141,6 +141,7 @@
 - [Delivering packages with Divoox Delivery](https://divoox.com/docs/drivers/drive-delivery): Pick up the package, take a photo of it and deliver it with the recipient’s PIN.
 - [Packages by size and delivery photo · Divoox](https://divoox.com/docs/drivers/driver-package-size-photo): You get deliveries that fit your vehicle, and you can leave a photo at drop-off.
 - [Check the door photo before you arrive · Divoox](https://divoox.com/docs/drivers/door-photo-for-drivers): When the customer saved photos of their entrance, you see them on the order card while you’re on the way: find the right door without calling.
+- [Your Divoox Flex block: from offer to pay](https://divoox.com/docs/drivers/flex-block): A Flex block is a 1 h 30 min to 5 hour shift to deliver a company’s packages along a route. While you do it, everything else is off. When you close it, you
 - [How we look after every order · Divoox](https://divoox.com/docs/trust): ⌘K← Docs How we look after every orderTwo-person approval for money moved by handA large refund, reimbursement or balance adjustment made by hand is never 
 - [Two-person approval for money moved by hand · Divoox](https://divoox.com/docs/trust/two-person-approval): A large refund, reimbursement or balance adjustment made by hand is never decided by one person: one team member requests it and another one at Divoox appr
 - [If you lose signal when delivering · Divoox](https://divoox.com/docs/trust/no-signal-delivery): The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.
@@ -158,6 +159,7 @@
 - [Background check with Checkr and the identity check photo · Divoox](https://divoox.com/docs/trust/background-check-and-identity): Like the big platforms: we check criminal records and driving history with a provider, and every so often we ask for a photo of your face before you go onl
 - [Two orders in one trip and the age check · Divoox](https://divoox.com/docs/trust/grouped-orders-and-age-check): If you already have an order you haven’t picked up and another comes in from the same restaurant with a nearby delivery, we offer it to you for the same tr
 - [How we know you reached the door (and what to do if GPS fails) · Divoox](https://divoox.com/docs/trust/gps-arrival): The deliver button appears once GPS confirms you’re at the address. If a building or garage throws it off, request the exception and support authorizes you
+- [Each order’s photos: at pickup and at drop-off · Divoox](https://divoox.com/docs/trust/order-photos): In each order’s details, your restaurant sees both photos the driver takes: the sealed order leaving your place and the food at the customer’s door. Use th
 - [Photo at pickup, delivery at the door · Divoox](https://divoox.com/docs/trust/pickup-and-delivery-photos): Every order leaves two photos: the closed order as it leaves the restaurant, confirmed by the restaurant, and the delivery at the door.
 - [An order from start to finish · Divoox](https://divoox.com/docs/trust/order-journey): What happens from the moment the customer pays until the food reaches the door, who does what at each step, and how the money is split.
 - [The Manager: no order gets forgotten · Divoox](https://divoox.com/docs/trust/manager): An automatic watcher follows every order from payment to the door, and steps in only when something runs late.
@@ -195,6 +197,13 @@
 - [Delete your account · Divoox](https://divoox.com/docs/account/delete): From the three dots in “My account,” without leaving the app. Your personal data is removed.
 - [How to send a screenshot to support · Divoox](https://divoox.com/docs/account/send-screenshot-to-support): In “My help cases” you can attach up to three screenshots per message, so our team sees exactly what you see.
 - [Help from a real person, with your own link · Divoox](https://divoox.com/docs/account/support): Report a problem from the app or write to us: every case gets its own private conversation, and we email you every time we reply.
+- [Operations team · Divoox](https://divoox.com/docs/operations): ⌘K← Docs Operations teamFinding any order, ride or personThe search bar at the top of the operations panel finds an order, a ride, a customer, a driver, a 
+- [Finding any order, ride or person · Divoox](https://divoox.com/docs/operations/search-orders-rides-people): The search bar at the top of the operations panel finds an order, a ride, a customer, a driver, a restaurant, a vehicle or a ticket from the first letter y
+- [Monitoring live orders and rides · Divoox](https://divoox.com/docs/operations/monitor-live-orders-rides): Live orders puts food, store orders, car rides, moto rides and deliveries in one list, with a traffic light that shows what is in trouble first.
+- [Reading an order or ride file · Divoox](https://divoox.com/docs/operations/read-order-ride-file): Every order and ride has a file with the real time of each step against what was expected, a timeline, where it was picked up and delivered, and the closin
+- [Linking a support ticket to an order or ride · Divoox](https://divoox.com/docs/operations/link-support-ticket): Open a claim from a ride file or from the Tickets inbox, linked to the order or ride by its code, and filter the inbox by service.
+- [Time zone and 12/24-hour clock · Divoox](https://divoox.com/docs/operations/time-zone-clock): In Configuration, choose how you read times: 12 or 24 hours, and the time zone of each city or one fixed zone for everything.
+- [Adding team members and permissions · Divoox](https://divoox.com/docs/operations/add-team-members-permissions): Invite a new person to the operations panel with a role template, a scope by city and service, and an optional expiry date, and see everything they did and
 
 ## Countries
 
