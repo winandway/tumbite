@@ -552,10 +552,40 @@ describe('C-MOTO-POR-PAIS: la compuerta de producción por país (hoy cerrada)',
     expect(lista.datos.paises).toEqual([
       { servicio: 'moto', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
       { servicio: 'carro', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
+      // C-ENVIOS-POR-PAIS: Envíos de A a B en Venezuela, por la misma compuerta (nace cerrado).
+      { servicio: 'envios', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
     ]);
     expect((await abrirCaracas(e)).estado).toBe(409);
     const { saludServicios } = await import('./servicios');
     expect(await saludServicios(e.m.DB, 'produccion')).toBe('ok');
+  });
+
+  it('C-ENVIOS-POR-PAIS: Envíos se abre solo en Venezuela y entonces se enciende en sus ciudades', async () => {
+    const e = await escenario('divoox.com');
+    const zonaVe = () =>
+      e.m.llamar(
+        'PUT',
+        `/datos/admin/servicios/envios/zonas/${CCS.id}`,
+        { estado: 'disponible' },
+        e.admin.token,
+      );
+    expect((await abrirCaracas(e)).estado).toBe(409);
+    const envios = (pais: string) =>
+      e.m.llamar(
+        'PUT',
+        `/datos/admin/pasajeros-pais/${pais}/envios`,
+        { abierto: true, confirmo: true },
+        e.admin.token,
+      );
+    expect((await envios('US')).estado).toBe(409);
+    expect((await envios('VE')).estado).toBe(200);
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/zonas',
+      { id: CCS.id, nombre: CCS.nombre, pais: 'VE', lat: CCS.lat, lng: CCS.lng, activa: false },
+      e.admin.token,
+    );
+    expect((await zonaVe()).estado).toBe(200);
   });
 
   it('abrir exige el país permitido y una sola confirmación; ya no pide contraseña ni el número de la marca', async () => {

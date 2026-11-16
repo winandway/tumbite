@@ -11,6 +11,7 @@ import {
 import { type Disponibilidad, nombrePais } from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
 import { cobertura, leerPoligono, recalcularAreasCiudad } from '../territorio';
+import { telefonoE164 } from '../sms';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -108,6 +109,9 @@ zonas.get('/admin/zonas', async (c) => {
       enEspera: Number(f.en_espera),
       // C-FOTO-PUERTA: si en esta zona la primera foto de la puerta es obligatoria para pedir.
       fotoPuertaObligatoria: Number(f.foto_puerta_obligatoria ?? 0) === 1,
+      // C-PANICO-ZONA: solo el superadmin los ve; la lista pública de zonas no los lleva.
+      responsableNombre: String(f.responsable_nombre ?? ''),
+      responsableTelefono: String(f.responsable_telefono ?? ''),
     })),
   });
 });
@@ -156,18 +160,41 @@ zonas.patch('/admin/zonas/:id', async (c) => {
   const d = await leerCuerpo(
     c,
     z
-      .object({ activa: z.boolean().optional(), fotoPuertaObligatoria: z.boolean().optional() })
-      .refine((x) => x.activa !== undefined || x.fotoPuertaObligatoria !== undefined, {
-        error: 'No llegó ningún cambio.',
-      }),
+      .object({
+        activa: z.boolean().optional(),
+        fotoPuertaObligatoria: z.boolean().optional(),
+        // C-PANICO-ZONA: la persona responsable de la zona (recibe el SMS de pánico).
+        responsableNombre: z.string().trim().max(60).optional(),
+        responsableTelefono: z.string().trim().max(30).optional(),
+      })
+      .refine(
+        (x) =>
+          x.activa !== undefined ||
+          x.fotoPuertaObligatoria !== undefined ||
+          x.responsableNombre !== undefined ||
+          x.responsableTelefono !== undefined,
+        { error: 'No llegó ningún cambio.' },
+      ),
   );
+  let telefono: string | null = null;
+  if (d.responsableTelefono !== undefined && d.responsableTelefono !== '') {
+    telefono = telefonoE164(d.responsableTelefono);
+    if (!telefono || !d.responsableTelefono.startsWith('+'))
+      throw new ErrorDatos(
+        'Escribe el celular con el código del país, por ejemplo +58 412 0000000.',
+        'responsableTelefono',
+      );
+  } else if (d.responsableTelefono === '') telefono = '';
   const r = await base(c)
     .prepare(
-      'UPDATE zonas SET activa = COALESCE(?, activa), foto_puerta_obligatoria = COALESCE(?, foto_puerta_obligatoria) WHERE id = ?',
+      `UPDATE zonas SET activa = COALESCE(?, activa), foto_puerta_obligatoria = COALESCE(?, foto_puerta_obligatoria),
+        responsable_nombre = COALESCE(?, responsable_nombre), responsable_telefono = COALESCE(?, responsable_telefono) WHERE id = ?`,
     )
     .bind(
       d.activa === undefined ? null : d.activa ? 1 : 0,
       d.fotoPuertaObligatoria === undefined ? null : d.fotoPuertaObligatoria ? 1 : 0,
+      d.responsableNombre ?? null,
+      telefono,
       c.req.param('id'),
     )
     .run();

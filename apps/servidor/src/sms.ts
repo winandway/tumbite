@@ -156,7 +156,8 @@ export async function enviarSms(
 ): Promise<boolean> {
   if (!smsConfigurado(env)) return false;
   const para = telefonoE164(a.telefono);
-  if (!para || !destinoPermitido(env, para)) return false;
+  // C-PANICO-ZONA: el SMS de pánico al responsable de la zona sale a cualquier país (también +58).
+  if (!para || (a.tipo !== 'equipo_panico' && !destinoPermitido(env, para))) return false;
   // C-SMS-CONSENTIMIENTO: sin la casilla marcada, al titular no se le manda nada que no pidió.
   if (!smsSinConsentimientoDelTitular(a.tipo) && !(await aceptoSms(db, a.usuarioId))) return false;
   const id = nuevoId();

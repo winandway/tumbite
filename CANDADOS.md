@@ -4917,3 +4917,16 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Pruebas (vistas en rojo):** `apps/servidor/src/llegadaEstimada.test.ts` (Google simulado: con tráfico y máscara exacta; rojo quitando `hayQueRecalcular` —llama de nuevo antes de los 90 s—; rojo quitando el tope —llama a Google con el tope alcanzado—; 10 miradas = 0 escrituras; 403 sin `viajes.ubicacion_en_vivo`, rojo poniendo `pedidos.ver`; cerrado sin posición; detenido en la ficha y en la lista; viaje a la recogida; borrado a las 24 h). `packages/compartido/src/llegadaEstimada.test.ts` (tramos, intervalo, lo que falta, detenido, la línea de Google, textos de las apps). `packages/compartido/src/tiemposOperacion.test.ts` (rojo con la versión anterior: «Se pasó» en curso y «Tomó 761 h»). `apps/panel/src/panel/rastreoVivo.test.tsx` (hora, faltan, última señal, detenido; cada 5 s y pausa con la pestaña oculta —rojo sin la pausa—; sin permiso no pide nada; «Sin cerrar» —rojo con `FichaPiezas.tsx` anterior—).
 - **No tocar:** no calcular por mirar ni por cada movimiento; no bajar el intervalo ni subir el tope sin rehacer `docs/COSTO-MAPA-Y-LLEGADA.md`; no dibujar la ruta de Google sobre un mapa que no sea de Google; no devolver la posición de un pedido cerrado; no quitar el permiso de las rutas `/rastreo`.
 - **Capturas:** en local el mapa no se ve sin la llave web (solo el texto); las capturas de la tarjeta «En vivo» con el mapa se toman en el sitio de pruebas.
+
+## C-PANICO-ZONA — el pánico avisa por SMS al responsable de la zona (16 nov 2026, todos los países)
+
+- **Qué hace:** cuando un pasajero, un conductor (viaje) o un repartidor toca el botón de pánico, además del correo al equipo sale un SMS al responsable de ESA zona (`zonas.responsable_nombre` y `zonas.responsable_telefono`) con quién es, su teléfono, el enlace de Google Maps con su ubicación y el viaje o pedido. Si ese número es también el de una cuenta de Divoox con la app instalada, le llega además el aviso al celular. Sin zona guardada se usa la zona del lugar donde tocó el botón.
+- **Dónde:** `apps/servidor/src/panicoZona.ts`; se llama desde `registrarEmergencia` (viajes) y `/repartidor/emergencia`. El superadmin carga el responsable en Zonas (`ResponsableZona.tsx`, `PATCH /datos/admin/zonas/:id`), con el número en formato internacional (+58…). La lista pública de zonas no lo muestra y el panel lo enmascara.
+- **La excepción de país:** el SMS de tipo `equipo_panico` sale a cualquier país aunque `SMS_PREFIJOS` no lo tenga (en `enviarSms`). Los demás SMS a Venezuela siguen apagados por costo; la verificación del teléfono por SMS sigue apagada.
+- **Prueba:** `apps/servidor/src/panicoZona.test.ts` (comprobada en rojo quitando la excepción de país).
+- **No tocar:** no quitar la excepción `equipo_panico`; no agregar el teléfono del responsable a `aZona` (la lista pública).
+
+## C-ENVIOS-POR-PAIS — Envíos de A a B se abre en Venezuela por la compuerta por país (16 nov 2026, Venezuela)
+
+- `PAISES_PASAJEROS_ABRIBLES` (`apps/servidor/src/pasajerosPais.ts`) incluye `envios` para VE: el superadmin lo abre con `PUT /datos/admin/pasajeros-pais/VE/envios` y desde ahí se enciende por ciudad. Estados Unidos sigue cerrado.
+- Prueba: «C-ENVIOS-POR-PAIS» en `apps/servidor/src/rutas/motoVenezuela.test.ts` (en rojo sin la línea).

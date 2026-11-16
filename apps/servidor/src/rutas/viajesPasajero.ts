@@ -29,6 +29,7 @@ import {
   rangoPrefijo,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
+import { avisarResponsableZona } from '../panicoZona';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
@@ -1216,11 +1217,11 @@ export async function registrarEmergencia(
   const db = base(c);
   const f = await db
     .prepare(
-      `SELECT z.pais, u.nombre FROM operaciones o JOIN zonas z ON z.id = o.zona_id
+      `SELECT z.pais, o.zona_id, u.nombre, u.telefono FROM operaciones o JOIN zonas z ON z.id = o.zona_id
          JOIN usuarios u ON u.id = ? WHERE o.id = ?`,
     )
     .bind(p.actorId, p.operacionId)
-    .first<{ pais: string; nombre: string }>();
+    .first<{ pais: string; zona_id: string; nombre: string; telefono: string | null }>();
   await db
     .prepare(
       'INSERT INTO emergencias_viaje (id, operacion_id, actor_id, rol, lat, lng) VALUES (?, ?, ?, ?, ?, ?)',
@@ -1233,6 +1234,16 @@ export async function registrarEmergencia(
     nombre: f?.nombre ?? '',
     donde: p.lat != null && p.lng != null ? `${p.lat},${p.lng}` : 'sin ubicación',
   }).catch((e: unknown) => console.error('viajes: correo de emergencia', e));
+  // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del viaje.
+  await avisarResponsableZona(c.env, db, {
+    zonaId: f?.zona_id,
+    rol: p.rol,
+    nombre: f?.nombre ?? '',
+    telefono: f?.telefono,
+    lat: p.lat,
+    lng: p.lng,
+    referencia: `Viaje ${p.operacionId}`,
+  }).catch((e: unknown) => console.error('viajes: pánico al responsable de la zona', e));
   return { numero: numeroEmergencia(f?.pais) };
 }
 

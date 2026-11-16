@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { numeroEmergencia } from '@tumbite/compartido';
+import { avisarResponsableZona } from '../panicoZona';
 import type { Env } from '../env';
 import { nuevoId, nuevoToken, sha256 } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
@@ -24,7 +25,7 @@ const lugar = {
 async function datosRepartidor(db: D1Database, id: string) {
   return db
     .prepare(
-      `SELECT u.nombre, u.telefono, d.codigo, z.pais FROM usuarios u LEFT JOIN repartidores d ON d.usuario_id = u.id
+      `SELECT u.nombre, u.telefono, d.codigo, d.zona_id, z.pais FROM usuarios u LEFT JOIN repartidores d ON d.usuario_id = u.id
          LEFT JOIN zonas z ON z.id = d.zona_id WHERE u.id = ?`,
     )
     .bind(id)
@@ -32,6 +33,7 @@ async function datosRepartidor(db: D1Database, id: string) {
       nombre: string;
       telefono: string | null;
       codigo: string | null;
+      zona_id: string | null;
       pais: string | null;
     }>();
 }
@@ -63,6 +65,16 @@ seguridadRepartidor.post('/repartidor/emergencia', async (c) => {
     'sistema',
     `Divoox EMERGENCIA: ${r?.nombre ?? ''} (${r?.codigo ?? ''}, tel. ${r?.telefono ?? 'sin teléfono'}) tocó el botón de emergencia. ${donde}`,
   ).catch((e: unknown) => console.error('seguridad: SMS de emergencia', e));
+  // C-PANICO-ZONA: SMS (y aviso al celular) a la persona responsable de la zona del repartidor.
+  await avisarResponsableZona(c.env, db, {
+    zonaId: r?.zona_id,
+    rol: 'repartidor',
+    nombre: r?.nombre ?? '',
+    telefono: r?.telefono,
+    lat: d.lat,
+    lng: d.lng,
+    referencia: d.pedidoId ? `Pedido ${d.pedidoId}` : '',
+  }).catch((e: unknown) => console.error('seguridad: pánico al responsable de la zona', e));
   return c.json({ numero: numeroEmergencia(r?.pais) }, 201);
 });
 

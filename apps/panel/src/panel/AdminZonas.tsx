@@ -11,6 +11,7 @@ import {
 import { AreasCiudad } from './AreasCiudad';
 import { AvisoBorrador } from './AvisoBorrador';
 import { CiudadesWeb } from './CiudadesWeb';
+import { ResponsableZona } from './ResponsableZona';
 import { pedir } from './api';
 
 type Zona = {
@@ -25,6 +26,8 @@ type Zona = {
   repartidores: number;
   enEspera: number;
   fotoPuertaObligatoria: boolean;
+  responsableNombre?: string;
+  responsableTelefono?: string;
 };
 type Persona = {
   id: string;
@@ -224,6 +227,7 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
               </span>
               <span>{t.fotoPuertaAyuda}</span>
             </label>
+            <ResponsableZona zona={z} cuenta={usuario.id} idioma={idioma} alGuardar={cargar} />
             {conAreas === z.id && <AreasCiudad zona={z} usuario={usuario} idioma={idioma} />}
           </li>
         ))}

@@ -10,6 +10,10 @@ export const MENSAJES_EN = new Map<string, string>([
   // C-MODERACION (16 nov 2026): reportar, bloquear y la bandeja del equipo.
   ['Eso ya no está disponible.', 'That’s no longer available.'],
   [
+    'Escribe el celular con el código del país, por ejemplo +58 412 0000000.',
+    'Enter the cell phone with the country code, for example +1 248 000 0000.',
+  ],
+  [
     'Recibimos muchos reportes seguidos. Espera un momento.',
     'We received many reports in a row. Please wait a moment.',
   ],

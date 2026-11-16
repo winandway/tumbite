@@ -127,6 +127,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['direcciones_cliente', 'tipo_lugar', "TEXT NOT NULL DEFAULT ''"],
   ['pedidos', 'direccion_id', 'TEXT'],
   ['zonas', 'foto_puerta_obligatoria', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-PANICO-ZONA (16 nov 2026): la persona responsable de la zona que recibe el SMS de pánico.
+  ['zonas', 'responsable_nombre', "TEXT NOT NULL DEFAULT ''"],
+  ['zonas', 'responsable_telefono', "TEXT NOT NULL DEFAULT ''"],
   // C-OPCIONES-ANIDADAS: la opción abre otro grupo del mismo plato (combo → bebida → tamaño).
   ['opciones', 'abre_grupo_id', 'TEXT'],
   // C-CHAT-FOTOS: foto dentro del chat del pedido (privada, en chat/<pedido>/…).

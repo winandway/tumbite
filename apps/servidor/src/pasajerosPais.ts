@@ -17,6 +17,9 @@ export const PAISES_PASAJEROS_ABRIBLES: ReadonlyMap<string, ReadonlySet<string>>
   // C-CARRO-POR-PAIS (13 nov 2026, orden de Richard): Carro (taxi) en Venezuela por la MISMA compuerta
   // (una confirmación de lo legal y el seguro). Nace cerrada.
   ['carro', new Set(['VE'])],
+  // C-ENVIOS-POR-PAIS (16 nov 2026, piloto en vivo de El Vigía y Tucaní): Envíos de A a B (un paquete
+  // en moto) por la MISMA compuerta, para el piloto en Venezuela. Estados Unidos sigue cerrado.
+  ['envios', new Set(['VE'])],
 ]);
 
 /**
