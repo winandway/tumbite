@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { medidorDeLecturas, sembrarVolumen } from '../pruebas/lecturas';
+import { listarMonitoreo } from '../monitoreo';
 
 /**
  * C-BUSCADOR-SERIO y C-SUPERADMIN-ENLACES (15 nov 2026, Richard buscó «407F» en el superadmin y no
@@ -882,5 +883,30 @@ describe('C-BUSCADOR-INSTANTANEO · lecturas con una letra y miles de pedidos', 
         );
     }
     expect(informe, informe.join('\n')).toEqual([]);
+  });
+});
+
+describe('C-BUSCADOR-INSTANTANEO · el total respeta la zona de quien mira', () => {
+  it('con una letra y muchos viajes de otra ciudad, el total solo cuenta los de su zona', async () => {
+    const { m } = await escenario();
+    // 90 viajes de Novi y 3 de Miami cuyo código empieza por 7 (pasa el umbral del rango).
+    await m.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 93)
+       INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, creado_en)
+       SELECT printf('7%07x-0000-4000-8000-%012d', i, i), 'moto', 'viaje_pasajero', 'c-ana',
+         CASE WHEN i <= 3 THEN 'US-FL-MIAMI' ELSE 'US-MI-NOVI' END, 'terminada',
+         datetime('now', '-' || i || ' minutes') FROM n`,
+    ).run();
+    const r = await listarMonitoreo(m.DB, {
+      zona: '',
+      estado: 'vivos',
+      orden: 'recientes',
+      q: '7',
+      despues: '',
+      servicio: 'moto',
+      dentroViaje: (f) => f.zona_id === 'US-FL-MIAMI',
+    });
+    expect(r.total).toBe(3);
+    expect(r.pedidos.every((x) => x.zonaId === 'US-FL-MIAMI')).toBe(true);
   });
 });

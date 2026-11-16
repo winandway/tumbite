@@ -577,6 +577,9 @@ export { INTERVALO_LLEGADA_S };
  * ficha del repartidor), sin escribir nada. La posición es la de la ficha del repartidor (se renueva
  * cada minuto mientras tiene señal): basta para un umbral de 3 minutos.
  */
+/** Valores por consulta `IN (…)`: por debajo del límite de 100 de D1. */
+export const TANDA_IN = 80;
+
 export async function conDetenidos<T extends { id: string; tipo?: string; estado: string }>(
   db: D1Database,
   elementos: T[],
@@ -596,36 +599,40 @@ export async function conDetenidos<T extends { id: string; tipo?: string; estado
   const viajes = vivos.filter((e) => e.tipo === 'viaje').map((e) => e.id);
   const huecos = (n: number) => Array.from({ length: n }, () => '?').join(',');
   const claves = [...pedidos.map((id) => `pedido:${id}`), ...viajes.map((id) => `viaje:${id}`)];
+  // D1 acepta como mucho 100 valores por consulta: cada `IN (…)` va en tandas (la primera página
+  // de una búsqueda por una letra puede traer cientos de vivos).
+  const enTandas = async (ids: string[], sql: (h: string) => string): Promise<Fila[]> => {
+    const partes: Promise<Fila[]>[] = [];
+    for (let i = 0; i < ids.length; i += TANDA_IN) {
+      const t = ids.slice(i, i + TANDA_IN);
+      partes.push(
+        db
+          .prepare(sql(huecos(t.length)))
+          .bind(...t)
+          .all<Fila>()
+          .then((r) => r.results),
+      );
+    }
+    return (await Promise.all(partes)).flat();
+  };
   const [filas, posP, posV] = await Promise.all([
-    db
-      .prepare(`SELECT * FROM llegadas_estimadas WHERE clave IN (${huecos(claves.length)})`)
-      .bind(...claves)
-      .all<Fila>()
-      .then((r) => new Map(r.results.map((f) => [String(f.clave), aFilaLlegada(f)]))),
-    pedidos.length
-      ? db
-          .prepare(
-            `SELECT p.id, p.estado, d.lat, d.lng, d.ubicacion_en,
+    enTandas(claves, (h) => `SELECT * FROM llegadas_estimadas WHERE clave IN (${h})`).then(
+      (r) => new Map(r.map((f) => [String(f.clave), aFilaLlegada(f)])),
+    ),
+    enTandas(
+      pedidos,
+      (h) => `SELECT p.id, p.estado, d.lat, d.lng, d.ubicacion_en,
                 EXISTS (SELECT 1 FROM hitos_pedido h WHERE h.pedido_id = p.id AND h.hito = 'llego_restaurante') AS llego
                FROM pedidos p LEFT JOIN repartidores d ON d.usuario_id = p.repartidor_id
-              WHERE p.id IN (${huecos(pedidos.length)}) AND p.repartidor_id IS NOT NULL`,
-          )
-          .bind(...pedidos)
-          .all<Fila>()
-          .then((r) => r.results)
-      : Promise.resolve([] as Fila[]),
-    viajes.length
-      ? db
-          .prepare(
-            `SELECT o.id, v.estado, d.lat, d.lng, d.ubicacion_en
+              WHERE p.id IN (${h}) AND p.repartidor_id IS NOT NULL`,
+    ),
+    enTandas(
+      viajes,
+      (h) => `SELECT o.id, v.estado, d.lat, d.lng, d.ubicacion_en
                FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
                LEFT JOIN repartidores d ON d.usuario_id = o.conductor_id
-              WHERE o.id IN (${huecos(viajes.length)}) AND o.conductor_id IS NOT NULL`,
-          )
-          .bind(...viajes)
-          .all<Fila>()
-          .then((r) => r.results)
-      : Promise.resolve([] as Fila[]),
+              WHERE o.id IN (${h}) AND o.conductor_id IS NOT NULL`,
+    ),
   ]);
   const marca = new Map<string, Detenido | null>();
   const posDe = (f: Fila) => {

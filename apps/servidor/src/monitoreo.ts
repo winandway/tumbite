@@ -17,6 +17,7 @@ import {
   ORDEN_LUZ,
   type ParametrosLista,
   TANDA_IDS,
+  TOPE_CUENTA_CODIGO,
   UMBRAL_RANGO_CODIGO,
   contarPorCodigo,
   cursorDe,
@@ -305,12 +306,30 @@ export async function viajesPorCodigo(
     // código como filtro.
     const [tras, trasValores] = despuesDe(o.cursor, 'recientes', 'o');
     const [c, partes] = await Promise.all([
-      contarPorCodigo(
-        db,
-        `FROM operaciones o WHERE o.id > ? AND o.id < ? AND ${tipos}${alc}`,
-        [String(rango.at(-1)?.id ?? desde), hasta, ...o.servicios, ...alcValores],
-        rango.length,
-      ),
+      // Con un alcance que solo se mira por fila (`dentroViaje`), se cuenta leyendo las filas del
+      // rango (con el mismo tope) y mirando cada una: el total nunca incluye otra zona.
+      o.dentroViaje
+        ? todas(
+            db,
+            `SELECT ${cols} FROM operaciones o WHERE o.id > ? AND o.id < ? AND ${tipos}${alc} ORDER BY o.id LIMIT ?`,
+            String(rango.at(-1)?.id ?? desde),
+            hasta,
+            ...o.servicios,
+            ...alcValores,
+            TOPE_CUENTA_CODIGO + 1 - rango.length,
+          ).then((resto) => {
+            const n = [...rango, ...resto].filter(dentro).length;
+            return {
+              total: Math.min(n, TOPE_CUENTA_CODIGO),
+              totalMas: rango.length + resto.length > TOPE_CUENTA_CODIGO,
+            };
+          })
+        : contarPorCodigo(
+            db,
+            `FROM operaciones o WHERE o.id > ? AND o.id < ? AND ${tipos}${alc}`,
+            [String(rango.at(-1)?.id ?? desde), hasta, ...o.servicios, ...alcValores],
+            rango.length,
+          ),
       Promise.all(
         TIPOS_VIAJE.map((tipo) =>
           todas(

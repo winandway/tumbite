@@ -3,6 +3,7 @@ import { RESTAURANTE_BASE, mundo } from './pruebas/ayuda';
 import { contarFilas, type CuentaFilas } from './presupuestoFilas';
 import {
   claveContadorLlegada,
+  conDetenidos,
   cuerpoLlegada,
   depurarLlegadas,
   reiniciarEstadoLlegada,
@@ -387,5 +388,20 @@ describe('C-HORA-LLEGADA · viajes: la recogida y después el destino', () => {
     const r = await m.llamar('GET', `/datos/admin/viajes/${id}/rastreo`, undefined, admin.token);
     expect(r.datos).toMatchObject({ vivo: true, fase: 'a_recogida', esEnvio: false });
     expect(r.datos.posicion).toMatchObject({ lat: 25.756 });
+  });
+});
+
+describe('C-RASTREO-VIVO · «detenido» con cientos de vivos', () => {
+  it('marca la lista aunque traiga más de 100 vivos (D1 acepta 100 valores por consulta)', async () => {
+    const m = mundo();
+    await m.cuenta('admin'); // arma el esquema
+    const muchos = Array.from({ length: 230 }, (_, i) => ({
+      id: `7${String(i).padStart(7, '0')}-0000-4000-8000-000000000000`,
+      tipo: i % 3 === 0 ? 'viaje' : 'pedido',
+      estado: i % 3 === 0 ? 'en_curso' : 'en_camino',
+    }));
+    const r = await conDetenidos(m.DB, muchos);
+    expect(r).toHaveLength(230);
+    expect(r.every((x) => x.detenido === null)).toBe(true);
   });
 });
