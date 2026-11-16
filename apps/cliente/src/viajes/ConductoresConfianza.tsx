@@ -130,13 +130,12 @@ function TarjetaConductor({ c, alOpciones }: { c: ConductorConfianza; alOpciones
           >
             {c.conectado ? t.conectado : t.desconectado}
           </Text>
-          <Text style={[LETRA.pequeno, { color: col.textoSuave }]}>
-            · {t.viajesJuntos(c.viajes)}
-          </Text>
         </View>
-        {c.aceptaMenores ? (
-          <Text style={[LETRA.pequeno, { color: col.textoSuave }]}>{t.llevaMenores}</Text>
-        ) : null}
+        <Text style={[LETRA.pequeno, { color: col.textoSuave }]}>
+          {[t.viajesJuntos(c.viajes), c.aceptaMenores ? t.llevaMenores : '']
+            .filter(Boolean)
+            .join(' · ')}
+        </Text>
       </View>
       <Pressable
         onPress={alOpciones}

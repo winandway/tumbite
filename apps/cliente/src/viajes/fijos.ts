@@ -146,6 +146,7 @@ export function diaYHoraEn(iso: string, tz: string, i: Idioma): string {
   try {
     return new Intl.DateTimeFormat(i === 'en' ? 'en-US' : 'es', {
       weekday: 'short',
+      month: 'short',
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',

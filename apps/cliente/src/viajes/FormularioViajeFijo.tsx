@@ -85,6 +85,9 @@ function Interruptor({
         accessibilityLabel={texto}
         testID={testID}
         trackColor={{ true: COLOR.exito, false: COLOR.bordeFuerte }}
+        thumbColor={COLOR.blanco}
+        // En la web el interruptor pinta su bolita aparte.
+        {...{ activeThumbColor: COLOR.blanco }}
       />
     </View>
   );
@@ -245,7 +248,7 @@ export function FormularioViajeFijo({
   if (cargando) return <Text style={[LETRA.secundario, { color: col.textoSuave }]}>…</Text>;
 
   return (
-    <View style={{ gap: ESPACIO.xl }} testID="formulario-viaje-fijo">
+    <View style={{ gap: ESPACIO.l }} testID="formulario-viaje-fijo">
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       <Campo
         etiqueta={t.nombre}
