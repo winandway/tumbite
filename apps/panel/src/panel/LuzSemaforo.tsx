@@ -9,7 +9,8 @@ export const haceTanto = (minutos: number, idioma: Idioma): string =>
 const T = {
   es: {
     // C-DURACION-EN-PALABRAS: rojo = pasó lo previsto más unos minutos («Atascado»).
-    luces: { verde: 'A tiempo', amarillo: 'Atrasándose', rojo: 'Atascado' },
+    luces: { verde: 'A tiempo', amarillo: 'Atrasándose', rojo: 'En problemas' },
+    atascado: 'Atascado',
     motivos: {
       restaurante: 'sin aceptar (se cancela solo a los 6 min)',
       cocina: 'la cocina pasó el tiempo prometido',
@@ -18,7 +19,8 @@ const T = {
     },
   },
   en: {
-    luces: { verde: 'On time', amarillo: 'Running late', rojo: 'Stuck' },
+    luces: { verde: 'On time', amarillo: 'Running late', rojo: 'In trouble' },
+    atascado: 'Stuck',
     motivos: {
       restaurante: 'not accepted (auto-cancels at 6 min)',
       cocina: 'kitchen is past the promised time',
@@ -31,11 +33,24 @@ const T = {
 type Fechas = Parameters<typeof semaforoPedido>[0];
 
 /** Punto de color del Manager con los minutos y, si no va bien, el porqué. Candado C-MANAGER-1. */
-export function LuzSemaforo({ pedido, idioma }: { pedido: Fechas; idioma: Idioma }) {
+/**
+ * `atascado` (superadmin, C-DURACION-EN-PALABRAS): el rojo se llama «Atascado», como el tramo de la
+ * ficha. El panel del restaurante sigue diciendo «En problemas» (sus guías y capturas lo muestran así).
+ */
+export function LuzSemaforo({
+  pedido,
+  idioma,
+  atascado = false,
+}: {
+  pedido: Fechas;
+  idioma: Idioma;
+  atascado?: boolean;
+}) {
   const s = semaforoPedido(pedido);
   if (!s) return null;
   const t = enIdioma(T, idioma);
-  const luz = new Map(Object.entries(t.luces)).get(s.luz);
+  const luz =
+    atascado && s.luz === 'rojo' ? t.atascado : new Map(Object.entries(t.luces)).get(s.luz);
   const motivo = new Map(Object.entries(t.motivos)).get(s.motivo);
   return (
     <span className={`semaforo semaforo-${s.luz}`} role="status">

@@ -166,7 +166,7 @@ describe('pedidos en curso y semáforo (C-MANAGER-1)', () => {
         ),
     );
     render(<Pedidos idioma="es" />);
-    expect(await screen.findByText(/Atascado · hace 35 minutos · la cocina pasó/)).toBeTruthy();
+    expect(await screen.findByText(/En problemas · hace 35 minutos · la cocina pasó/)).toBeTruthy();
   });
 
   it('soporte puede cancelar con devolución y quitar al repartidor desde la ficha (C-SUPER-OPERACION)', async () => {

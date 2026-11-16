@@ -1594,7 +1594,7 @@ export function SuperPedidos({ base, idioma }: { base: string; idioma: Idioma })
                   <span className={`bs-estado bs-${tonoEstado(p.estado)}`}>
                     {te.estados[p.estado] ?? p.estado}
                   </span>{' '}
-                  {VIVOS.has(p.estado) ? <LuzSemaforo pedido={p} idioma={idioma} /> : null}
+                  {VIVOS.has(p.estado) ? <LuzSemaforo pedido={p} idioma={idioma} atascado /> : null}
                   {p.detenido ? <MarcaDetenido d={p.detenido} idioma={idioma} /> : null}
                 </span>
               </Enlace>
