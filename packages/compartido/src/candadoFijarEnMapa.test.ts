@@ -34,6 +34,8 @@ describe('C-FIJAR-EN-MAPA', () => {
     const s = leer('packages/movil/src/CampoDireccion.tsx');
     expect(s).toMatch(/enMapa\?:/);
     expect(s).toMatch(/testID=\{enMapa\.testID/);
+    // Contraste AA (el recorrido de accesibilidad lo exige): el texto nunca en el rojo vivo.
+    expect(s).toMatch(/enMapa\.marcado \? C\.exito : C\.acento/);
   });
 
   it('Moto, Carro y Envíos: sin tarjetas gemelas, una fila por casilla', () => {

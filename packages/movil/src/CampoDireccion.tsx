@@ -121,7 +121,8 @@ export function CampoDireccion({
           />
           <View style={{ flex: 1 }}>
             <Text
-              style={{ fontWeight: '700', color: enMapa.marcado ? C.exito : C.primario }}
+              // Contraste AA: el rojo oscuro de la marca (el rojo vivo no llega sobre el gris de fondo).
+              style={{ fontWeight: '700', color: enMapa.marcado ? C.exito : C.acento }}
               numberOfLines={1}
             >
               {enMapa.texto}
