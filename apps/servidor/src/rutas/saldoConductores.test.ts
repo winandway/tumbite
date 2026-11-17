@@ -49,6 +49,17 @@ describe('C-SALDO-CONDUCTOR: conductores por ciudad y carga manual', () => {
     const ana = r.datos.ciudad.conductores.find((x: { id: string }) => x.id === a.id);
     expect(ana).toMatchObject({ saldo: 500, carreras: 0, conectado: true });
     expect(r.datos.topes).toEqual(TOPES_SALDO);
+    // Una ciudad sin conductores también se puede elegir (para preparar su regalo de arranque).
+    await e.m.DB.prepare(
+      "INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa) VALUES ('VE-MER-TUCANI', 'Tucaní', 'VE', 'USD', 'America/Caracas', 8.97, -71.27, 10, 1)",
+    ).run();
+    const t = await e.m.llamar(
+      'GET',
+      '/datos/admin/conductores-ciudad?zona=VE-MER-TUCANI',
+      undefined,
+      e.admin.token,
+    );
+    expect(t.datos.ciudad).toMatchObject({ zonaId: 'VE-MER-TUCANI', total: 0 });
   });
 
   it('la carga queda en el libro con su autor, su motivo y su comprobante; nada fuera del tope', async () => {

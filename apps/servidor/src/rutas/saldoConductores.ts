@@ -25,9 +25,10 @@ saldoConductores.get('/admin/conductores-ciudad', async (c) => {
   const db = base(c);
   const { results: zonas } = await db
     .prepare(
+      // Todas las ciudades activas, aunque todavía no tengan conductores (se les puede preparar el
+      // regalo de arranque antes de que llegue el primero).
       `SELECT z.id, z.nombre, z.pais, z.moneda FROM zonas z
-        WHERE z.activa = 1 AND EXISTS (SELECT 1 FROM repartidores r WHERE r.zona_id = z.id)
-        ORDER BY z.pais DESC, z.nombre LIMIT 200`,
+        WHERE z.activa = 1 ORDER BY z.pais DESC, z.nombre LIMIT 200`,
     )
     .all<{ id: string; nombre: string; pais: string; moneda: string }>();
   const pedida = c.req.query('zona');
