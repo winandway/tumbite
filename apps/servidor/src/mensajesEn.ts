@@ -1225,6 +1225,16 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Los pagos no están disponibles ahora.', 'Payments aren’t available right now.'],
   [
+    'Los cobros a tu cuenta bancaria todavía no están disponibles en tu país. Tu saldo está a salvo.',
+    'Payouts to your bank account aren’t available in your country yet. Your balance is safe.',
+  ],
+  [
+    'Los cobros a tu cuenta bancaria están en pausa por revisión. Tu saldo está a salvo.',
+    'Payouts to your bank account are paused for review. Your balance is safe.',
+  ],
+  ['No existe ese restaurante o repartidor.', 'That restaurant or driver doesn’t exist.'],
+  ['Este enlace ya no sirve.', 'This link is no longer valid.'],
+  [
     'Los cobros a tu cuenta bancaria todavía no están activados. Tu saldo está a salvo y te avisamos en cuanto puedas conectar tu banco.',
     'Payouts to your bank account aren’t active yet. Your balance is safe, and we’ll let you know as soon as you can connect your bank.',
   ],

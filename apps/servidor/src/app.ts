@@ -97,6 +97,7 @@ import { modoDestino } from './modoDestino';
 import { plus } from './plus';
 import { tarjetasRegalo } from './tarjetasRegalo';
 import { stripeAvisos } from './rutas/stripeAvisos';
+import { saludConnect } from './connectPaises';
 import { saludLibro } from './internacional/libro';
 import { viajes } from './rutas/viajes';
 import { saludViajes, viajesPasajero } from './rutas/viajesPasajero';
@@ -342,6 +343,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.retiros = await saludRetiros(c.env, c.env.DB, presentes).catch((e: unknown) => {
       console.error('salud: retiros', e);
+      return 'error' as const;
+    });
+  // C-CONNECT-UN-INTENTO: si Stripe rechazó una cuenta conectada, el freno queda a la vista.
+  if (c.env.DB)
+    piezas.connect = await saludConnect(c.env, c.env.DB).catch((e: unknown) => {
+      console.error('salud: connect', e);
       return 'error' as const;
     });
   // Fase 1: catálogo de servicios (Moto y Carro apagados, disparadores puestos). Moto se admite
