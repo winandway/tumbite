@@ -591,6 +591,52 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'exact-spot',
+        titulo: 'El punto exacto: «Estoy aquí», el pin fijo y tu punto de referencia',
+        resumen:
+          'En avenidas largas, la dirección sola no basta. Mueve el mapa hasta tu puerta, toca «Estoy aquí» si ya estás en el lugar y escribe un punto de referencia: el repartidor o el conductor llega directo.',
+        explicacion: [
+          'Cuando eliges una dirección, Divoox te muestra el mapa con un pin fijo en el centro, como las grandes apps de reparto y de viajes. No hace falta tocar el pin: mueves el mapa con el dedo hasta que la punta quede justo en tu puerta. Arriba ves la dirección de ese punto, que se actualiza sola.',
+          'Si ya estás en el lugar, toca el botón grande «Estoy aquí» y el mapa salta a donde estás. Si el teléfono no tiene permiso para saber tu ubicación, te lo decimos en palabras y puedes mover el mapa a mano.',
+          'Debajo del mapa hay dos casillas opcionales: «Punto de referencia» (por ejemplo, «portón negro frente a la panadería») y «Casa o apartamento». Las dos le llegan al repartidor o al conductor junto con la dirección.',
+          'Al tocar «Confirmar este punto», la app te ofrece guardar fotos de tu puerta. Si tocas «Ahora no», vuelves a la pantalla de inicio con tu dirección lista: nunca te quedas en una pantalla vacía.',
+          'El mismo pin fijo está al pedir comida, al marcar dónde te recoge una moto o un carro, el destino del viaje, los envíos de paquetes y la página web donde confirmas dónde recibes un paquete.',
+        ],
+        capturas: [
+          {
+            src: '/docs/punto-exacto-buscar-es.webp',
+            alt: 'Hoja «¿A dónde te lo llevamos?» de la app de Divoox con la casilla de dirección y el botón «Estoy aquí».',
+            pie: 'Escribe tu dirección o toca «Estoy aquí».',
+          },
+          {
+            src: '/docs/punto-exacto-pin-es.webp',
+            alt: 'Pantalla «Confirma el punto de entrega»: arriba la dirección del punto, el mapa con el pin fijo en la avenida, el botón «Estoy aquí», el punto de referencia y «Confirmar este punto».',
+            pie: 'Mueve el mapa hasta tu puerta y agrega un punto de referencia.',
+          },
+          {
+            src: '/docs/punto-exacto-fotos-es.webp',
+            alt: 'Paso «Ayuda a tu repartidor a encontrarte» con las opciones Casa, Edificio o conjunto y «Ahora no».',
+            pie: 'Puedes agregar fotos de tu puerta o tocar «Ahora no».',
+          },
+          {
+            src: '/docs/punto-exacto-web-es.webp',
+            alt: 'Página web «Confirma dónde recibes tu paquete» con el botón «Estoy aquí», el mapa con el pin fijo y «Punto exacto marcado» en verde.',
+            pie: 'En la web de envíos funciona igual: el pin queda fijo y mueves el mapa.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo marco mi puerta exacta en el mapa?',
+          '¿Qué pongo en el punto de referencia?',
+          '¿Para qué sirve el botón «Estoy aquí»?',
+        ],
+        pasos: [
+          'Toca «Entregar en» arriba en el inicio y escribe tu dirección, o toca «Estoy aquí».',
+          'Mueve el mapa hasta que la punta del pin quede en tu puerta.',
+          'Escribe un punto de referencia y, si hace falta, tu casa o apartamento.',
+          'Toca «Confirmar este punto».',
+        ],
+      },
+      {
         id: 'gift-cards',
         titulo: 'Tarjetas de regalo: regala Divoox y canjea un código',
         resumen:
@@ -5634,6 +5680,52 @@ const en: SeccionDocs[] = [
           'Type the address in the cart and tap the suggestion that matches yours; add the notes.',
           'Turn on “Save this address for next time” and name it.',
           'Next time, tap it under “Your addresses”.',
+        ],
+      },
+      {
+        id: 'exact-spot',
+        titulo: 'The exact spot: “I’m here,” the fixed pin and your landmark',
+        resumen:
+          'On long avenues, an address alone isn’t enough. Move the map to your door, tap “I’m here” if you’re already there, and add a landmark: the driver comes straight to you.',
+        explicacion: [
+          'When you pick an address, Divoox shows a map with a pin fixed in the center, like the big delivery and ride apps. You don’t tap the pin: you drag the map until its tip sits right on your door. The address of that spot appears at the top and updates on its own.',
+          'If you’re already there, tap the big “I’m here” button and the map jumps to where you are. If your phone doesn’t let us know your location, we tell you in plain words and you can still move the map by hand.',
+          'Under the map there are two optional fields: “Landmark” (for example, “black gate across from the bakery”) and “House or apartment.” Both reach the driver together with the address.',
+          'When you tap “Confirm this spot,” the app offers to save photos of your door. If you tap “Not now,” you go back to the home screen with your address ready: you never get stuck on an empty screen.',
+          'The same fixed pin is used when you order food, mark where a ride picks you up, set your trip destination, send packages, and on the web page where you confirm where you receive a package.',
+        ],
+        capturas: [
+          {
+            src: '/docs/punto-exacto-buscar-en.webp',
+            alt: 'The “Where should we deliver?” sheet in the Divoox app with the address field and the “I’m here” button.',
+            pie: 'Type your address or tap “I’m here.”',
+          },
+          {
+            src: '/docs/punto-exacto-pin-en.webp',
+            alt: '“Confirm the drop-off spot” screen in Novi, Michigan: the spot’s address at the top, the map with the fixed pin, the “I’m here” button, the landmark field and “Confirm this spot.”',
+            pie: 'Drag the map to your door and add a landmark.',
+          },
+          {
+            src: '/docs/punto-exacto-fotos-en.webp',
+            alt: '“Help your courier find you” step with the options House, Building or complex and “Not now.”',
+            pie: 'Add photos of your door, or tap “Not now.”',
+          },
+          {
+            src: '/docs/punto-exacto-web-en.webp',
+            alt: '“Confirm where you receive your package” web page with the “I’m here” button, the map with the fixed pin and “Exact spot marked” in green.',
+            pie: 'The package web page works the same way: the pin stays put and you move the map.',
+          },
+        ],
+        preguntas: [
+          'How do I mark my exact door on the map?',
+          'What should I write as a landmark?',
+          'What does the “I’m here” button do?',
+        ],
+        pasos: [
+          'Tap “Deliver to” at the top of the home screen and type your address, or tap “I’m here.”',
+          'Drag the map until the tip of the pin is on your door.',
+          'Add a landmark and, if needed, your house or apartment.',
+          'Tap “Confirm this spot.”',
         ],
       },
       {

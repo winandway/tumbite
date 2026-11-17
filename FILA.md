@@ -10,6 +10,10 @@
 > - Freno manual: crear el archivo `.fabrica-pausa` en la raíz (o que Richard diga «para»).
 > - El orden sale de `docs/ROADMAP-DIVOOX.md` (plan maestro del 29 oct). Al vaciarse una etapa, se pasa a la siguiente de ese plan.
 
+## Pantalla blanca al guardar una dirección y punto exacto (16 nov 2026, orden de Richard por Gerencia) — todos los países
+
+- [x] HECHO 16 nov (C-NUNCA-EN-BLANCO, C-PUNTO-EXACTO) La hoja de fotos de la puerta ya no se abre encima de la de dirección (era la pantalla blanca al tocar «Ahora no»); punto exacto con pin fijo, «Estoy aquí» y punto de referencia en entrega, encuentro, destino, envíos, «Mis paquetes» y la web pública; guía «El punto exacto» en Docs (es/en).
+
 ## Docs públicos sin lo interno; ayuda del equipo «?» en el superadmin (16 nov 2026, orden de Richard) — todos los países
 
 - [x] HECHO 16 nov (C-DOCS-SIN-INTERNO, C-AYUDA-INTERNA) Fuera de Docs públicos la sección «Operations team» (7 guías + la bandeja de reportes) y la guía de la doble firma (mostraba «Para aprobar»); sus direcciones y capturas responden 410 y salen del mapa del sitio, `llms.txt`, el buscador y «¿Cómo hago…?». Ayuda interna con «?» junto a la campana del superadmin: 11 guías en/es (dos nuevas: «Así funciona Divoox» y «El semáforo y Atascado»), texto en el servidor y capturas en el almacén, solo con sesión del equipo y noindex. Capturas fuera del repositorio (~/Divoox-privado/ayuda-interna). Regla en CLAUDE.md; candados en rojo comprobados.

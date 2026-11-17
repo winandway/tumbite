@@ -5019,6 +5019,10 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
   **Cómo se comprueba:** en el iPhone, «Entregar en» → escribir una avenida → elegirla → se abre el mapa con el pin fijo → «Confirmar este punto» → «Ahora no» en las fotos: la hoja se cierra y vuelve el inicio.
   **Qué NO tocar:** no volver a abrir una hoja encima de otra; no importar `Modal` de react-native; no quitar la referencia del texto de la dirección del pedido.
 
+- **Segunda parte (16 nov, noche):** «Mis paquetes» (el destinatario de Divoox Flex marca su casa y cada envío) usa `PuntoExacto` tipo `envio` en una sola hoja; la página pública «Confirma dónde recibes tu paquete» y el panel de envíos usan `ElegirPunto` con pin fijo (`PinFijoWeb`): el mapa avisa al soltarlo (`alMoverCentro` en `MapaGoogleBajoDemanda`, `dragstart` + `moveend` en Leaflet) y abrir el mapa NO marca nada. «Estoy aquí» es el botón grande de arriba y «Punto exacto marcado» sale en verde. La app lee la calle al abrir con «Estoy aquí» y en EE. UU. y Canadá escribe el número antes de la calle («43407 Grand River Ave»).
+  **Candados:** `packages/compartido/src/candadoPuntoExactoPantallas.test.ts` (rojo comprobado: ninguna pantalla con `ElegirEnMapa`, la web con pin fijo y sin «tocar el mapa»), pruebas de arrastre en `ElegirPunto.test.tsx` y `MapaGoogleBajoDemanda.test.tsx`, y la del orden de EE. UU. en `puntoExacto.test.ts` (rojo comprobado).
+  **Qué NO tocar:** el pin web vive encima de las capas de Leaflet (`zIndex` 650): bajarlo lo esconde debajo de los mosaicos.
+
 ## C-RECORRIDO-TANDAS — el recorrido completo corre en tres tandas en paralelo y avisa al 70 % de su tiempo (16 nov 2026, Gerencia) — todos los países
 
 - **Qué se rompió:** el paso «Recorrido completo de un pedido» de la verificación del principal se pasó de su límite de 20 minutos tres veces seguidas (corridas 43977684230, 43998038483 y 44005126278), y producción no avanzaba. No fallaba ninguna prueba.
