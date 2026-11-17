@@ -13,6 +13,7 @@
 ## Docs públicos sin lo interno; ayuda del equipo «?» en el superadmin (16 nov 2026, orden de Richard) — todos los países
 
 - [x] HECHO 16 nov (C-DOCS-SIN-INTERNO, C-AYUDA-INTERNA) Fuera de Docs públicos la sección «Operations team» (7 guías + la bandeja de reportes) y la guía de la doble firma (mostraba «Para aprobar»); sus direcciones y capturas responden 410 y salen del mapa del sitio, `llms.txt`, el buscador y «¿Cómo hago…?». Ayuda interna con «?» junto a la campana del superadmin: 11 guías en/es (dos nuevas: «Así funciona Divoox» y «El semáforo y Atascado»), texto en el servidor y capturas en el almacén, solo con sesión del equipo y noindex. Capturas fuera del repositorio (~/Divoox-privado/ayuda-interna). Regla en CLAUDE.md; candados en rojo comprobados.
+- [x] HECHO 16 nov (C-AYUDA-AQUI) El «?» al lado de cada parte del superadmin con explicación (buscador, Pedidos en curso y su semáforo, Tiempos, En vivo, Horario, Equipo, Tickets, Resumen, Reportes, Para aprobar, autorización vencida): abre esa parte en un panel lateral con enlace a la guía completa. Una sola pieza `AyudaAqui`; candado `ayudaAqui.test.tsx` visto en rojo.
 
 ## Piloto en vivo El Vigía y Tucaní (16 nov 2026, orden de Richard por Gerencia) — Venezuela
 
