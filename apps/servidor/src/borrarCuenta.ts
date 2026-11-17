@@ -57,6 +57,20 @@ export async function borrarCuenta(
       .all<{ clave: string }>()
   ).results.map((f) => f.clave);
   const comoPasajero = 'SELECT id FROM operaciones WHERE cliente_id = ?1';
+  // C-BORRADO-SERVICIOS, tercera vuelta: el correo y el teléfono canónicos, para encontrar las
+  // invitaciones de empresas y restaurantes que lo nombran aunque no las haya aceptado.
+  const canon = await db
+    .prepare('SELECT correo_canonico, telefono_canonico FROM usuarios WHERE id = ?')
+    .bind(u.id)
+    .first<{ correo_canonico: string | null; telefono_canonico: string | null }>();
+  const fotosQueja = (
+    await db
+      .prepare(
+        'SELECT clave FROM ticket_adjuntos WHERE ticket_id IN (SELECT id FROM tickets WHERE usuario_id = ?1 OR correo = ?2)',
+      )
+      .bind(u.id, u.correo)
+      .all<{ clave: string }>()
+  ).results.map((f) => f.clave);
   // C-BORRADO-CHAT (16 nov 2026): las claves de las fotos que mandó en los chats, para borrar los
   // archivos después de vaciar las filas.
   const fotosChat = (
@@ -243,6 +257,35 @@ export async function borrarCuenta(
         "UPDATE tickets SET nombre = 'Cuenta borrada', correo = ?1, telefono = '', datos_json = '{}' WHERE usuario_id = ?2 OR correo = ?3",
       )
       .bind(`borrada-${u.id}@tumbite.invalid`, u.id, u.correo),
+    // C-BORRADO-SERVICIOS, tercera vuelta (17 nov 2026): apartamento, referencia y alergias de sus
+    // pedidos; su nombre en los pedidos en grupo; las fotos de sus quejas; las invitaciones que lo
+    // nombran; su posición en las rutas Flex (dónde escaneó cada paquete se guarda: los eventos del
+    // paquete son inmutables, comprobante para la empresa, y se declara en la privacidad); su accesibilidad auditiva y
+    // el código de teléfono sin usar.
+    db
+      .prepare("UPDATE pedidos SET apto = '', referencia = '', alergias = '' WHERE cliente_id = ?")
+      .bind(u.id),
+    db.prepare("UPDATE pedidos_grupo_items SET nombre = '—' WHERE participante_id = ?").bind(u.id),
+    db
+      .prepare(
+        'DELETE FROM ticket_adjuntos WHERE ticket_id IN (SELECT id FROM tickets WHERE usuario_id = ?1 OR correo = ?2)',
+      )
+      .bind(u.id, u.correo),
+    ...['invitaciones_conductor', 'invitaciones_flota'].map((t) =>
+      db
+        .prepare(
+          `UPDATE ${t} SET nombre = '', telefono_canonico = NULL, correo_canonico = NULL
+           WHERE usuario_id = ?1 OR (?2 IS NOT NULL AND correo_canonico = ?2) OR (?3 IS NOT NULL AND telefono_canonico = ?3)`,
+        )
+        .bind(u.id, canon?.correo_canonico ?? null, canon?.telefono_canonico ?? null),
+    ),
+    db
+      .prepare(
+        'UPDATE rutas_flex SET conductor_lat = NULL, conductor_lng = NULL WHERE conductor_id = ?',
+      )
+      .bind(u.id),
+    db.prepare('DELETE FROM accesibilidad_repartidor WHERE usuario_id = ?').bind(u.id),
+    db.prepare('DELETE FROM codigos_telefono WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
@@ -278,6 +321,8 @@ export async function borrarCuenta(
     for (let i = 0; i < fotosChat.length; i += 1000)
       await env.BUCKET.delete(fotosChat.slice(i, i + 1000));
   }
+  // Y las fotos que adjuntó a sus quejas.
+  if (env.BUCKET && fotosQueja.length) await env.BUCKET.delete(fotosQueja);
   // C-BORRADO-SERVICIOS: y los archivos de las fotos de recogida, entrega y selfies.
   if (env.BUCKET && fotosServicios.length) {
     for (let i = 0; i < fotosServicios.length; i += 1000)

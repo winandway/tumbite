@@ -316,6 +316,72 @@ describe('borrar la cuenta borra los datos de viajes, envíos y fotos de entrega
     expect(Object.values(emp ?? {}).every((v) => v === '')).toBe(true);
   });
 
+  it('tercera vuelta: apto, referencia y alergias, grupo, fotos de queja, invitaciones, Flex, accesibilidad y código', async () => {
+    const { almacen, m, sql, filas, pedido } = await preparar();
+    const cli = await m.cuenta('cliente');
+    const rep = await m.cuenta('repartidor');
+    await pedido('ped-t', cli.id, 'r1', null);
+    await sql(
+      "UPDATE pedidos SET apto = '3B', referencia = 'Frente al parque', alergias = 'Maní' WHERE id = 'ped-t'",
+    );
+    await sql(
+      "INSERT INTO pedidos_grupo_items (id, grupo_id, participante_id, nombre, plato_id, cantidad) VALUES ('gi-1', 'g1', ?, 'Ana', 'p1', 1)",
+      cli.id,
+    );
+    await sql(
+      "INSERT INTO tickets (id, codigo, tipo, nombre, correo, asunto, usuario_id) VALUES ('tk-q', 'TKQ', 'queja', 'Ana', 'a@ejemplo.com', 'Queja', ?)",
+      cli.id,
+    );
+    await almacen.bucket.put('quejas/tk-q/f1', new Uint8Array([1]));
+    await sql(
+      "INSERT INTO ticket_adjuntos (id, ticket_id, clave, nombre, tipo, bytes) VALUES ('ad-1', 'tk-q', 'quejas/tk-q/f1', 'foto.jpg', 'image/jpeg', 1)",
+    );
+    // Conductor: invitaciones (una aceptada y otra pendiente por su correo), Flex, accesibilidad y código.
+    const [yo] = await filas('SELECT correo_canonico FROM usuarios WHERE id = ?', rep.id);
+    await sql(
+      `INSERT INTO invitaciones_conductor (id, empresa_id, nombre, telefono_canonico, correo_canonico, vinculo, token_hash, estado, usuario_id)
+       VALUES ('ic-1', 'e1', 'José Ruiz', '+584140000000', 'jose@ejemplo.com', 'propio', 'h1', 'aceptada', ?)`,
+      rep.id,
+    );
+    await sql(
+      `INSERT INTO invitaciones_flota (id, restaurante_id, nombre, correo_canonico, telefono_canonico, token_hash)
+       VALUES ('if-1', 'r1', 'José Ruiz', ?, '+584140000000', 'h2')`,
+      yo?.correo_canonico,
+    );
+    await sql(
+      "INSERT INTO rutas_flex (id, empresa_id, conductor_id, estado, conductor_lat, conductor_lng) VALUES ('rf-1', 'e1', ?, 'cancelada', 8.6, -71.6)",
+      rep.id,
+    );
+    await sql('INSERT INTO accesibilidad_repartidor (usuario_id, auditiva) VALUES (?, 1)', rep.id);
+    await sql(
+      "INSERT INTO codigos_telefono (usuario_id, telefono, codigo_hash) VALUES (?, '+584140000000', 'x')",
+      rep.id,
+    );
+
+    for (const u of [cli, rep])
+      expect((await m.llamar('DELETE', '/datos/cuentas/yo', undefined, u.token)).estado).toBe(200);
+
+    const [p] = await filas("SELECT apto, referencia, alergias FROM pedidos WHERE id = 'ped-t'");
+    expect(p).toEqual({ apto: '', referencia: '', alergias: '' });
+    const [g] = await filas("SELECT nombre FROM pedidos_grupo_items WHERE id = 'gi-1'");
+    expect(g?.nombre).toBe('—');
+    expect(await filas("SELECT 1 FROM ticket_adjuntos WHERE ticket_id = 'tk-q'")).toEqual([]);
+    expect(almacen.datos.has('quejas/tk-q/f1')).toBe(false);
+    const inv = await filas(
+      "SELECT nombre, telefono_canonico, correo_canonico FROM invitaciones_conductor WHERE id = 'ic-1' UNION ALL SELECT nombre, telefono_canonico, correo_canonico FROM invitaciones_flota WHERE id = 'if-1'",
+    );
+    expect(inv).toEqual([
+      { nombre: '', telefono_canonico: null, correo_canonico: null },
+      { nombre: '', telefono_canonico: null, correo_canonico: null },
+    ]);
+    const rf = await filas("SELECT conductor_lat, conductor_lng FROM rutas_flex WHERE id = 'rf-1'");
+    expect(rf).toEqual([{ conductor_lat: null, conductor_lng: null }]);
+    expect(
+      await filas('SELECT 1 FROM accesibilidad_repartidor WHERE usuario_id = ?', rep.id),
+    ).toEqual([]);
+    expect(await filas('SELECT 1 FROM codigos_telefono WHERE usuario_id = ?', rep.id)).toEqual([]);
+  });
+
   it('con un viaje en curso no deja borrar la cuenta (409)', async () => {
     for (const [rol, col] of [
       ['cliente', 'cliente_id'],
