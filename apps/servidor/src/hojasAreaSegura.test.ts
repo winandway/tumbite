@@ -27,7 +27,10 @@ const archivos = execFileSync(
   { cwd: raiz, encoding: 'utf8' },
 )
   .split('\n')
-  .filter((f) => f && !f.includes('.test.'));
+  .filter((f) => f && !f.includes('.test.'))
+  // C-NUNCA-EN-BLANCO (16 nov 2026): Hoja.tsx es el envoltorio que pasa las props tal cual (también
+  // presentationStyle) al Modal de react-native; las pantallas que lo usan son las que se revisan.
+  .filter((f) => f !== 'packages/movil/src/Hoja.tsx');
 
 describe('C-HOJAS-AREA-SEGURA', () => {
   it.each(archivos)('%s: cada ventana de pantalla completa abre como hoja', (archivo) => {

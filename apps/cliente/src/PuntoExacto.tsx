@@ -9,6 +9,7 @@ import {
   limpiarDetalles,
   seMovio,
   textosPuntoExacto,
+  tituloPuntoExacto,
 } from '@tumbite/compartido';
 import { Boton, C, Campo, Icono, Text, usePropsMapaDivoox, useSesion } from '@tumbite/movil';
 import { useCentroParaElegir } from './centroMapa';
@@ -134,7 +135,7 @@ export function PuntoExacto({
           accessibilityRole="header"
           style={{ flex: 1, fontSize: 18, fontWeight: '700', color: C.secundario }}
         >
-          {t.titulo[tipo]}
+          {tituloPuntoExacto(idioma, tipo)}
         </Text>
       </View>
       <View style={{ paddingHorizontal: 16, paddingVertical: 10, gap: 2 }}>

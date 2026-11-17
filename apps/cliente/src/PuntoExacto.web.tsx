@@ -5,6 +5,7 @@ import {
   type TipoPunto,
   limpiarDetalles,
   textosPuntoExacto,
+  tituloPuntoExacto,
 } from '@tumbite/compartido';
 import { Boton, C, Campo, Icono, Text, useSesion } from '@tumbite/movil';
 import { ElegirEnMapa } from './ElegirEnMapa';
@@ -64,7 +65,7 @@ export function PuntoExacto({
           <Icono nombre="arrow-back" tamano={24} color={C.secundario} />
         </Pressable>
         <Text accessibilityRole="header" style={{ fontSize: 18, fontWeight: '700' }}>
-          {t.titulo[tipo]}
+          {tituloPuntoExacto(idioma, tipo)}
         </Text>
       </View>
       <View style={{ gap: 2 }}>

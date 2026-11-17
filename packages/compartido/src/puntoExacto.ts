@@ -140,6 +140,21 @@ const T = {
 
 export const textosPuntoExacto = (idioma: Idioma) => (idioma === 'en' ? T.en : T.es);
 
+/** El título de la pantalla según para qué es el punto (entrega, encuentro, destino o envío). */
+export function tituloPuntoExacto(idioma: Idioma, tipo: TipoPunto) {
+  const t = textosPuntoExacto(idioma).titulo;
+  switch (tipo) {
+    case 'encuentro':
+      return t.encuentro;
+    case 'destino':
+      return t.destino;
+    case 'envio':
+      return t.envio;
+    default:
+      return t.entrega;
+  }
+}
+
 /** Cómo lo ve el repartidor o el conductor: la referencia y la casa juntas, en una línea. */
 export function lineaReferencia(d: { referencia?: string | null; apto?: string | null }) {
   return [d.apto, d.referencia]

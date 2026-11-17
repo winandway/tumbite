@@ -1,36 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
-import { type Idioma, enIdioma } from '@tumbite/compartido';
+import { type Idioma, enIdioma, textosPuntoExacto } from '@tumbite/compartido';
 import { api } from '../panel/api';
-import { MapaGoogleBajoDemanda, elegirMapaWeb } from '@tumbite/compartido/src/mapaWebGoogle';
+import {
+  MapaGoogleBajoDemanda,
+  PinFijoWeb,
+  elegirMapaWeb,
+} from '@tumbite/compartido/src/mapaWebGoogle';
 import { seguirTemaEnLeaflet } from '@tumbite/compartido/src/temaMapa';
 
 type Punto = { lat: number; lng: number };
 
 const T = {
   es: {
-    ayuda: 'Toca el mapa justo donde se entrega (la puerta de tu casa o tu negocio).',
-    miUbicacion: 'Usar mi ubicación actual',
-    buscando: 'Buscando tu ubicación…',
-    sinPermiso: 'No pudimos leer tu ubicación. Toca el mapa para marcar el punto.',
     buscar: 'Buscar la dirección',
-    sinResultados: 'Sin resultados. Marca el punto en el mapa.',
-    marcado: 'Punto marcado',
+    sinResultados: 'Sin resultados. Mueve el mapa hasta tu puerta.',
   },
   en: {
-    ayuda: 'Tap the map exactly where the delivery goes (your front door or business).',
-    miUbicacion: 'Use my current location',
-    buscando: 'Finding your location…',
-    sinPermiso: 'We couldn’t read your location. Tap the map to mark the spot.',
     buscar: 'Search for the address',
-    sinResultados: 'No results. Mark the spot on the map.',
-    marcado: 'Spot marked',
+    sinResultados: 'No results. Drag the map to your door.',
   },
 };
 
+/** Redondeo a ~10 cm: el mismo punto no se vuelve a guardar por un decimal de diferencia. */
+const fino = (p: Punto): Punto => ({
+  lat: Math.round(p.lat * 1e6) / 1e6,
+  lng: Math.round(p.lng * 1e6) / 1e6,
+});
+
 /**
- * Divoox Flex (todos los países): marcar el punto EXACTO de entrega (C-FLEX-UBICACION). Se toca el
- * mapa, se usa la ubicación del teléfono o, si la búsqueda de Google está encendida, se elige una
- * sugerencia. Lo que manda siempre es el pin: es lo que más se acerca a la puerta en Venezuela.
+ * C-PUNTO-EXACTO en la web (16 nov 2026) — todos los países. El mismo flujo que las apps: el pin
+ * queda FIJO en el centro y la persona arrastra el mapa hasta su puerta (como Uber, DiDi y Rappi);
+ * «Estoy aquí» es el botón grande de arriba y, si la búsqueda de Google está encendida, se elige
+ * una sugerencia y el mapa salta ahí para afinar. Abrir el mapa no marca nada: solo cuenta lo que
+ * la persona arrastró, su ubicación o la sugerencia que eligió. La referencia la pide la pantalla
+ * que usa la pieza (C-FLEX-UBICACION).
  */
 export function ElegirPunto({
   punto,
@@ -48,14 +51,19 @@ export function ElegirPunto({
   alDireccion?: (texto: string) => void;
 }) {
   const t = enIdioma(T, idioma);
+  const tp = textosPuntoExacto(idioma);
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<import('leaflet').Map | null>(null);
-  const marca = useRef<import('leaflet').CircleMarker | null>(null);
-  const L = useRef<typeof import('leaflet') | null>(null);
-  const alCambiar = useRef(cambiar);
+  const alCambiar = useRef((p: Punto) => cambiar(fino(p)));
   useEffect(() => {
-    alCambiar.current = cambiar;
+    alCambiar.current = (p: Punto) => cambiar(fino(p));
   }, [cambiar]);
+  // Hacia dónde mueve el mapa la pantalla (al abrir, «Estoy aquí» o una sugerencia). Lo que la
+  // persona arrastra NO lo cambia: así el mapa nunca salta de vuelta.
+  const [vista, setVista] = useState<{ centro: Punto; zoom: number }>(() => ({
+    centro: punto ?? centro,
+    zoom: punto ? 17 : 12,
+  }));
   const [estadoGps, setEstadoGps] = useState('');
   const [busqueda, setBusqueda] = useState<boolean | null>(null);
   const [q, setQ] = useState('');
@@ -84,18 +92,25 @@ export function ElegirPunto({
       const leaflet = await import('leaflet');
       await import('leaflet/dist/leaflet.css');
       if (!vivo || !caja.current) return;
-      L.current = leaflet;
-      const inicio = punto ?? centro;
-      const m = leaflet.map(caja.current).setView([inicio.lat, inicio.lng], punto ? 17 : 12);
+      const inicio = vista.centro;
+      const m = leaflet.map(caja.current).setView([inicio.lat, inicio.lng], vista.zoom);
       leaflet
         .tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '© OpenStreetMap',
         })
         .addTo(m);
-      m.on('click', (e: import('leaflet').LeafletMouseEvent) =>
-        alCambiar.current({ lat: e.latlng.lat, lng: e.latlng.lng }),
-      );
+      // C-PUNTO-EXACTO: el punto es lo que queda bajo el pin al soltar el mapa arrastrado.
+      let arrastrado = false;
+      m.on('dragstart', () => {
+        arrastrado = true;
+      });
+      m.on('moveend', () => {
+        if (!arrastrado) return;
+        arrastrado = false;
+        const c = m.getCenter();
+        alCambiar.current({ lat: c.lat, lng: c.lng });
+      });
       // C-MAPA-DIA-NOCHE: el mapa de respaldo sigue el mismo ajuste de día y noche.
       m.on('unload', seguirTemaEnLeaflet(m, inicio));
       mapa.current = m;
@@ -105,38 +120,29 @@ export function ElegirPunto({
       mapa.current?.remove();
       mapa.current = null;
     };
-    // El centro solo importa al abrir.
+    // La vista solo importa al abrir; después la sigue el efecto de abajo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proveedor]);
 
-  // El pin sigue al punto elegido.
+  // «Estoy aquí» o una sugerencia: el mapa de respaldo va a ese punto.
   useEffect(() => {
-    const leaflet = L.current;
-    const m = mapa.current;
-    if (!leaflet || !m || !punto) return;
-    marca.current?.remove();
-    marca.current = leaflet
-      .circleMarker([punto.lat, punto.lng], {
-        radius: 10,
-        color: '#101010',
-        weight: 3,
-        fillColor: '#F20D20',
-        fillOpacity: 1,
-      })
-      .bindTooltip(t.marcado)
-      .addTo(m);
-    m.setView([punto.lat, punto.lng], Math.max(m.getZoom(), 17));
-  }, [punto, t.marcado]);
+    mapa.current?.setView([vista.centro.lat, vista.centro.lng], vista.zoom);
+  }, [vista]);
 
-  function usarGps() {
-    if (!('geolocation' in navigator)) return setEstadoGps(t.sinPermiso);
-    setEstadoGps(t.buscando);
+  function irA(p: Punto) {
+    setVista({ centro: p, zoom: 17 });
+    alCambiar.current(p);
+  }
+
+  function estoyAqui() {
+    if (!('geolocation' in navigator)) return setEstadoGps(tp.sinPermiso);
+    setEstadoGps(tp.buscandote);
     navigator.geolocation.getCurrentPosition(
       (p) => {
         setEstadoGps('');
-        cambiar({ lat: p.coords.latitude, lng: p.coords.longitude });
+        irA({ lat: p.coords.latitude, lng: p.coords.longitude });
       },
-      () => setEstadoGps(t.sinPermiso),
+      () => setEstadoGps(tp.sinPermiso),
       { enableHighAccuracy: true, timeout: 15_000 },
     );
   }
@@ -162,7 +168,7 @@ export function ElegirPunto({
         'GET',
         `/datos/lugares/punto/${encodeURIComponent(id)}?sesion=${sesion}`,
       );
-      cambiar(r.punto);
+      irA(r.punto);
       alDireccion?.(r.direccion);
     } catch {
       setEstadoGps(t.sinResultados);
@@ -188,36 +194,43 @@ export function ElegirPunto({
           )}
         </label>
       )}
-      <p className="pista">{t.ayuda}</p>
+      <button type="button" className="boton" onClick={estoyAqui} data-testid="estoy-aqui">
+        {tp.estoyAqui}
+      </button>
+      {estadoGps && <p role="status">{estadoGps}</p>}
+      <p className="pista">{tp.ayuda}</p>
       {proveedor === 'google' ? (
         <MapaGoogleBajoDemanda
           llave={llave}
           mapId={mapId}
           idioma={idioma}
-          centro={punto ?? centro}
-          zoom={punto ? 17 : 12}
+          centro={vista.centro}
+          zoom={vista.zoom}
           alto={320}
-          etiqueta={t.ayuda}
-          puntos={
-            punto
-              ? [{ id: 'punto', ...punto, color: '#F20D20', radio: 10, etiqueta: t.marcado }]
-              : []
-          }
-          alTocarMapa={(p) => alCambiar.current(p)}
+          etiqueta={tp.mapa}
+          puntos={[]}
+          alMoverCentro={(p) => alCambiar.current(p)}
           conAjuste
         />
       ) : (
-        <div
-          ref={caja}
-          role="application"
-          aria-label={t.ayuda}
-          style={{ height: 320, borderRadius: 12, overflow: 'hidden', border: '1px solid #2a2a2a' }}
-        />
+        <div style={{ position: 'relative' }}>
+          <PinFijoWeb alto={320} />
+          <div
+            ref={caja}
+            role="application"
+            aria-label={tp.mapa}
+            style={{
+              height: 320,
+              borderRadius: 12,
+              overflow: 'hidden',
+              border: '1px solid #2a2a2a',
+            }}
+          />
+        </div>
       )}
-      <button type="button" className="boton secundario" onClick={usarGps}>
-        {t.miUbicacion}
-      </button>
-      {estadoGps && <p role="status">{estadoGps}</p>}
+      <p className={punto ? 'aviso-exito' : 'pista'} role="status" data-testid="estado-punto">
+        {punto ? tp.puntoMarcado : tp.sinMarcar}
+      </p>
     </div>
   );
 }

@@ -201,7 +201,21 @@ export function PedirMoto({
         setTrabajando(false);
       }
     },
-    [api, recogida, destino, v.recogida, v.destino, t, servicio, categoria, paradas, cambiar],
+    [
+      api,
+      recogida,
+      destino,
+      v.recogida,
+      v.recogidaRef,
+      v.destino,
+      v.destinoApto,
+      v.destinoRef,
+      t,
+      servicio,
+      categoria,
+      paradas,
+      cambiar,
+    ],
   );
 
   // Volver a cotizar sola 20 segundos antes de que venza el precio.

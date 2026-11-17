@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, Campo, CampoDireccion, useSesion, Text } from '@tumbite/movil';
+import { ErrorApi, enIdioma, lineaReferencia } from '@tumbite/compartido';
+import { Boton, C, CampoDireccion, Modal, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
-import { ElegirEnMapa } from '../ElegirEnMapa';
+import { PuntoExacto } from '../PuntoExacto';
+import { ResumenPunto } from '../ResumenPunto';
 import type { Punto } from '../ubicacion';
 import { RastrearPaquete } from '../RastrearPaquete';
 import { conCuenta } from '../ConCuenta';
@@ -125,13 +126,14 @@ function MisPaquetes() {
   const [paquetes, setPaquetes] = useState<Paquete[] | null>(null);
   const [direcciones, setDirecciones] = useState<Direccion[]>([]);
   const [abierto, setAbierto] = useState<string | null>(null);
-  const [punto, setPunto] = useState<Punto | null>(null);
-  const [referencias, setReferencias] = useState('');
+  // C-PUNTO-EXACTO: qué punto se está marcando con el pin fijo («casa» o el id del paquete).
+  const [marcando, setMarcando] = useState<string | null>(null);
   const [aviso, setAviso] = useState('');
   const [error, setError] = useState('');
   const [casa, setCasa] = useState<Punto | null>(null);
   const [casaDir, setCasaDir] = useState('');
   const [casaRefs, setCasaRefs] = useState('');
+  const [casaApto, setCasaApto] = useState('');
 
   const cargar = useCallback(() => {
     api
@@ -158,7 +160,7 @@ function MisPaquetes() {
         direccion: casaDir.trim() || (idioma === 'en' ? 'My home' : 'Mi casa'),
         lat: casa.lat,
         lng: casa.lng,
-        instrucciones: casaRefs.trim(),
+        instrucciones: lineaReferencia({ referencia: casaRefs, apto: casaApto }),
       });
       setAviso(t.casaGuardada);
       cargar();
@@ -219,27 +221,24 @@ function MisPaquetes() {
                 {t.casaTitulo}
               </Text>
               <Text style={{ color: '#666B73' }}>{t.casaAyuda}</Text>
-              <ElegirEnMapa
-                punto={casa}
-                cambiarPunto={setCasa}
-                cambiarDireccion={(d) => {
-                  if (!casaDir.trim()) setCasaDir(d);
-                }}
-                textos={{ ayuda: t.ayuda, buscando: t.buscando, pin: t.pin }}
-              />
-              {/* C-DIRECCION-SUGERENCIAS: al elegir una dirección real, el pin va a ese punto. */}
+              {/* C-DIRECCION-SUGERENCIAS: al elegir una dirección real, se abre el pin fijo en ese
+                  punto para dejarlo justo en la puerta (C-PUNTO-EXACTO). */}
               <CampoDireccion
                 etiqueta={t.casaDireccion}
                 valor={casaDir}
                 cambiar={setCasaDir}
-                alElegir={(d) => setCasa(d.punto)}
+                alElegir={(d) => {
+                  setCasa(d.punto);
+                  setMarcando('casa');
+                }}
                 cerca={casa}
               />
-              <Campo
-                etiqueta={t.referencias}
-                placeholder={t.referenciasEj}
-                value={casaRefs}
-                onChangeText={setCasaRefs}
+              <ResumenPunto
+                punto={casa}
+                direccion={casaDir}
+                referencia={lineaReferencia({ referencia: casaRefs, apto: casaApto })}
+                abrir={() => setMarcando('casa')}
+                testID="casa-punto"
               />
               {casa ? (
                 <Boton texto={t.casaGuardar} alTocar={() => void guardarCasa()} exito />
@@ -284,11 +283,7 @@ function MisPaquetes() {
               </Text>
               {p.puedeCambiar ? (
                 <Pressable
-                  onPress={() => {
-                    setAbierto(abierto === p.envioId ? null : p.envioId);
-                    setPunto(p.punto);
-                    setReferencias(p.referencias);
-                  }}
+                  onPress={() => setAbierto(abierto === p.envioId ? null : p.envioId)}
                   accessibilityRole="button"
                 >
                   <Text style={{ color: C.primario, fontWeight: '700', paddingVertical: 6 }}>
@@ -307,7 +302,7 @@ function MisPaquetes() {
                         void guardar(
                           p,
                           { lat: d.lat ?? 0, lng: d.lng ?? 0 },
-                          d.instrucciones || referencias || d.etiqueta,
+                          d.instrucciones || d.etiqueta,
                           d.direccion,
                         )
                       }
@@ -325,31 +320,57 @@ function MisPaquetes() {
                     </Pressable>
                   ))}
                   <Text style={{ color: '#666B73' }}>{t.oMarca}</Text>
-                  <ElegirEnMapa
-                    punto={punto}
-                    cambiarPunto={setPunto}
-                    cambiarDireccion={() => undefined}
-                    textos={{ ayuda: t.ayuda, buscando: t.buscando, pin: t.pin }}
+                  <ResumenPunto
+                    punto={p.punto}
+                    direccion={p.direccion}
+                    referencia={p.referencias}
+                    abrir={() => setMarcando(p.envioId)}
+                    testID={`paquete-punto-${p.envioId}`}
                   />
-                  <Campo
-                    etiqueta={t.referencias}
-                    placeholder={t.referenciasEj}
-                    value={referencias}
-                    onChangeText={setReferencias}
-                  />
-                  {punto ? (
-                    <Boton
-                      texto={t.guardar}
-                      alTocar={() => void guardar(p, punto, referencias)}
-                      exito
-                    />
-                  ) : null}
                 </View>
               ) : null}
             </View>
           </Tarjeta>
         ))}
       </ScrollView>
+      {/* C-PUNTO-EXACTO + C-NUNCA-EN-BLANCO: una sola hoja con el pin fijo, nunca otra encima. */}
+      <Modal
+        visible={marcando != null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setMarcando(null)}
+        testID="paquetes-punto-exacto"
+      >
+        {marcando === 'casa' ? (
+          <PuntoExacto
+            tipo="envio"
+            inicial={{ punto: casa, direccion: casaDir, referencia: casaRefs, apto: casaApto }}
+            volver={() => setMarcando(null)}
+            confirmar={(c) => {
+              setCasa(c.punto);
+              setCasaDir(c.direccion);
+              setCasaRefs(c.referencia);
+              setCasaApto(c.apto);
+              setMarcando(null);
+            }}
+          />
+        ) : marcando ? (
+          <PuntoExacto
+            tipo="envio"
+            inicial={{
+              punto: paquetes?.find((x) => x.envioId === marcando)?.punto ?? null,
+              direccion: paquetes?.find((x) => x.envioId === marcando)?.direccion,
+              referencia: paquetes?.find((x) => x.envioId === marcando)?.referencias,
+            }}
+            volver={() => setMarcando(null)}
+            confirmar={(c) => {
+              const p = paquetes?.find((x) => x.envioId === marcando);
+              setMarcando(null);
+              if (p) void guardar(p, c.punto, lineaReferencia(c), c.direccion);
+            }}
+          />
+        ) : null}
+      </Modal>
     </SafeAreaView>
   );
 }

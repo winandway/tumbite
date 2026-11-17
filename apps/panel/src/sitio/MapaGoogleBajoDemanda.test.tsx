@@ -36,6 +36,7 @@ const registro = vi.hoisted(() => ({
   centros: [] as { lat: number; lng: number }[],
   zooms: [] as number[],
   clic: null as null | ((e: { latLng?: { lat(): number; lng(): number } }) => void),
+  arrastre: null as null | (() => void),
 }));
 
 class MapaFalso {
@@ -58,12 +59,16 @@ class MapaFalso {
   getZoom() {
     return 15;
   }
+  getCenter() {
+    return { lat: () => 8.62, lng: () => -71.65 };
+  }
   fitBounds() {
     registro.encuadres += 1;
   }
   addListener(evento: string, cb: Clic) {
     if (evento === 'idle') registro.idle = cb as () => void;
-    else registro.clic = cb;
+    else if (evento === 'click') registro.clic = cb;
+    else if (evento === 'dragstart') registro.arrastre = cb as () => void;
     return { remove() {} };
   }
 }
@@ -144,6 +149,7 @@ describe('MapaGoogleBajoDemanda', () => {
     registro.centros = [];
     registro.zooms = [];
     registro.clic = null;
+    registro.arrastre = null;
     olvidarCargaGoogleMaps();
     window.localStorage.clear();
     olvidarAjusteTemaMapa();
@@ -174,6 +180,28 @@ describe('MapaGoogleBajoDemanda', () => {
     expect(screen.getByRole('application', { name: 'Delivery map' })).toBeInTheDocument();
     registro.clic?.({ latLng: { lat: () => 1, lng: () => 2 } });
     expect(alTocar).toHaveBeenCalledWith({ lat: 1, lng: 2 });
+  });
+
+  it('C-PUNTO-EXACTO: con pin fijo, abrir no avisa y al soltar el mapa arrastrado avisa el centro', async () => {
+    (window as { google?: unknown }).google = { maps: API };
+    const alMover = vi.fn();
+    render(
+      <MapaGoogleBajoDemanda
+        llave="AIzaSyEjemploDeLlaveDeNavegador_0123"
+        idioma="en"
+        centro={{ lat: 8.6, lng: -71.6 }}
+        puntos={[]}
+        etiqueta="Delivery map"
+        alMoverCentro={alMover}
+        abierto
+      />,
+    );
+    await waitFor(() => expect(screen.getByTestId('pin-fijo')).toBeInTheDocument());
+    registro.idle?.();
+    expect(alMover).not.toHaveBeenCalled();
+    registro.arrastre?.();
+    registro.idle?.();
+    expect(alMover).toHaveBeenCalledWith({ lat: 8.62, lng: -71.65 });
   });
 
   it('si Google no carga, lo dice en palabras', async () => {

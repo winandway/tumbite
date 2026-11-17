@@ -8,9 +8,20 @@ import { olvidarCargaGoogleMaps } from '@tumbite/compartido/src/mapaWebGoogle';
  * búsqueda de direcciones de Google está encendida y existe la llave del navegador, el mapa es el
  * de Google y se carga solo al tocar «Ver en el mapa». Sin llave, Leaflet como siempre.
  */
-const leaflet = vi.hoisted(() => ({ creados: 0 }));
+const leaflet = vi.hoisted(() => ({
+  creados: 0,
+  eventos: {} as Record<string, () => void>,
+}));
 vi.mock('leaflet', () => {
-  const mapa = { setView: () => mapa, on: () => mapa, remove: () => undefined };
+  const mapa = {
+    setView: () => mapa,
+    on: (ev: string, cb: () => void) => {
+      leaflet.eventos[ev] = cb;
+      return mapa;
+    },
+    getCenter: () => ({ lat: 8.6201234567, lng: -71.6512345678 }),
+    remove: () => undefined,
+  };
   return {
     map: () => {
       leaflet.creados += 1;
@@ -93,5 +104,26 @@ describe('ElegirPunto: qué mapa se usa (C-MAPA-GOOGLE-WEB)', () => {
     await waitFor(() => expect(leaflet.creados).toBe(1));
     expect(screen.queryByRole('button', { name: 'Ver en el mapa' })).toBeNull();
     expect(scriptsDeGoogle()).toHaveLength(0);
+  });
+
+  it('C-PUNTO-EXACTO: pin fijo; abrir no marca nada y arrastrar marca lo que queda bajo el pin', async () => {
+    const cambiar = vi.fn();
+    render(
+      <ElegirPunto
+        punto={null}
+        cambiar={cambiar}
+        centro={{ lat: 8.6, lng: -71.6 }}
+        pais="VE"
+        idioma="es"
+      />,
+    );
+    await waitFor(() => expect(leaflet.creados).toBe(1));
+    expect(screen.getByTestId('pin-fijo')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Estoy aquí' })).toBeInTheDocument();
+    leaflet.eventos.moveend?.();
+    expect(cambiar).not.toHaveBeenCalled();
+    leaflet.eventos.dragstart?.();
+    leaflet.eventos.moveend?.();
+    expect(cambiar).toHaveBeenCalledWith({ lat: 8.620123, lng: -71.651235 });
   });
 });

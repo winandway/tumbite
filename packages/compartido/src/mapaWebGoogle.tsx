@@ -145,6 +145,7 @@ export type MapaG = {
   setCenter(p: LatLng): void;
   setZoom(z: number): void;
   getZoom(): number | undefined;
+  getCenter?(): { lat(): number; lng(): number } | undefined;
   fitBounds(b: unknown, relleno?: number): void;
   setTilt?(t: number): void;
   setHeading?(h: number): void;
@@ -651,6 +652,8 @@ export function AjusteTemaMapaWeb({ idioma }: { idioma: 'es' | 'en' }) {
  * `conAjuste`, debajo del mapa va el ajuste de tres posiciones.
  * C-MAPA-ABRE-DONDE-ESTAS: sin puntos dibujados, si `centro` cambia (llegó el GPS de la persona) el
  * mapa se mueve ahí.
+ * C-PUNTO-EXACTO: con `alMoverCentro` el mapa lleva un pin FIJO en el centro (como Uber y Rappi) y,
+ * cada vez que la persona termina de arrastrarlo, avisa el punto que quedó debajo del pin.
  */
 export function MapaGoogleBajoDemanda({
   llave,
@@ -670,6 +673,7 @@ export function MapaGoogleBajoDemanda({
   llegada = null,
   conAjuste = false,
   deslizar = false,
+  alMoverCentro,
 }: {
   llave: string;
   mapId?: string | null;
@@ -693,6 +697,8 @@ export function MapaGoogleBajoDemanda({
    * suave hasta el punto nuevo (`DESLIZAR_MS`) y la cámara NO se vuelve a encuadrar (no salta).
    */
   deslizar?: boolean;
+  /** C-PUNTO-EXACTO: pin fijo en el centro; recibe el punto bajo el pin al soltar el mapa. */
+  alMoverCentro?: (p: LatLng) => void;
 }) {
   const t = TEXTOS[idioma === 'es' ? 'es' : 'en'];
   // Abierto si la pantalla es de viaje o entrega en curso, o si la persona tocó «Ver en el mapa».
@@ -717,6 +723,10 @@ export function MapaGoogleBajoDemanda({
   useEffect(() => {
     alTocar.current = alTocarMapa;
   }, [alTocarMapa]);
+  const alMover = useRef(alMoverCentro);
+  useEffect(() => {
+    alMover.current = alMoverCentro;
+  }, [alMoverCentro]);
 
   useEffect(() => {
     if (!abierto || mapa.current) return;
@@ -738,6 +748,19 @@ export function MapaGoogleBajoDemanda({
         m.addListener('click', (e) => {
           if (e.latLng) alTocar.current?.({ lat: e.latLng.lat(), lng: e.latLng.lng() });
         });
+        // C-PUNTO-EXACTO: solo cuenta lo que la persona arrastró (abrir el mapa no marca nada).
+        if (alMover.current) {
+          let arrastrado = false;
+          m.addListener('dragstart', () => {
+            arrastrado = true;
+          });
+          m.addListener('idle', () => {
+            const c = m.getCenter?.();
+            if (!arrastrado || !c) return;
+            arrastrado = false;
+            alMover.current?.({ lat: c.lat(), lng: c.lng() });
+          });
+        }
         mapa.current = m;
         centroAplicado.current = `${centro.lat},${centro.lng},${zoom}`;
         setEstado('listo');
@@ -857,7 +880,8 @@ export function MapaGoogleBajoDemanda({
       </button>
     );
   return (
-    <div style={{ marginBottom: 12 }}>
+    <div style={{ marginBottom: 12, position: 'relative' }}>
+      {alMoverCentro && estado === 'listo' ? <PinFijoWeb alto={alto} /> : null}
       <div
         // De día a noche el mapa se rehace sobre una caja nueva.
         key={tema}
@@ -879,5 +903,38 @@ export function MapaGoogleBajoDemanda({
       {estado === 'error' ? <p role="alert">{t.error}</p> : null}
       {conAjuste && estado !== 'error' ? <AjusteTemaMapaWeb idioma={idioma} /> : null}
     </div>
+  );
+}
+
+/**
+ * C-PUNTO-EXACTO: el pin fijo de la web, dibujado encima del mapa en el centro exacto de la caja del
+ * mapa (la punta del pin es el punto). No recibe toques: se arrastra el mapa por debajo.
+ */
+export function PinFijoWeb({ alto }: { alto: number }) {
+  return (
+    <svg
+      data-testid="pin-fijo"
+      aria-hidden="true"
+      width={36}
+      height={48}
+      viewBox="0 0 36 48"
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: alto / 2 - 48,
+        transform: 'translateX(-50%)',
+        zIndex: 2,
+        pointerEvents: 'none',
+        filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.35))',
+      }}
+    >
+      <path
+        d="M18 1C8.6 1 1 8.6 1 18c0 12.4 15.2 27.4 15.9 28a1.6 1.6 0 0 0 2.2 0C19.8 45.4 35 30.4 35 18 35 8.6 27.4 1 18 1z"
+        fill="#F20D20"
+        stroke="#FFFFFF"
+        strokeWidth={2}
+      />
+      <circle cx={18} cy={18} r={6} fill="#FFFFFF" />
+    </svg>
   );
 }

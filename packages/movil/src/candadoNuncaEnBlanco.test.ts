@@ -48,9 +48,7 @@ describe('C-NUNCA-EN-BLANCO', () => {
 
   it('las tres apps enganchan el atrapador global al arrancar', () => {
     for (const app of ['cliente', 'repartidor', 'restaurante'])
-      expect(leer(`apps/${app}/src/app/_layout.tsx`)).toMatch(
-        new RegExp(`registrarAtrapaFallos\\('${app}'\\)`),
-      );
+      expect(leer(`apps/${app}/src/app/_layout.tsx`)).toContain(`registrarAtrapaFallos('${app}')`);
   });
 
   it('la hoja de dirección no abre la de las fotos como otra ventana encima', () => {
