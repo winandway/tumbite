@@ -209,6 +209,40 @@ export async function borrarCuenta(
            (SELECT p.id FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE r.dueno_id = ?)`,
       )
       .bind(u.id),
+    // C-BORRADO-SERVICIOS, segunda vuelta (16 nov 2026, auditor de tiendas): cotizaciones de viaje,
+    // pedido como regalo, calificaciones escritas de viajes y de clientes, papeles del conductor,
+    // modo destino, historial de la cuenta de cobro, contactos del dueño y del manager, y tickets.
+    db
+      .prepare(
+        `UPDATE cotizaciones_viaje SET origen_direccion = 'Dirección borrada', destino_direccion = 'Dirección borrada',
+           origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0, paradas_json = '[]' WHERE cliente_id = ?`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        "UPDATE pedidos SET para_nombre = '', para_telefono = '', para_mensaje = '' WHERE cliente_id = ?",
+      )
+      .bind(u.id),
+    db.prepare("UPDATE calificaciones_viaje SET comentario = '' WHERE autor_id = ?").bind(u.id),
+    db
+      .prepare("UPDATE calificaciones_cliente SET comentario = '' WHERE repartidor_id = ?")
+      .bind(u.id),
+    db.prepare("UPDATE conductor_documentos SET clave = '' WHERE conductor_id = ?").bind(u.id),
+    db.prepare('DELETE FROM modo_destino WHERE repartidor_id = ?').bind(u.id),
+    db.prepare('DELETE FROM usos_modo_destino WHERE repartidor_id = ?').bind(u.id),
+    db.prepare("UPDATE cuentas_cobro_historial SET cambio = '' WHERE usuario_id = ?").bind(u.id),
+    db
+      .prepare(
+        `UPDATE restaurante_empresa SET dueno_nombre = '', dueno_telefono = '', dueno_correo = '',
+           manager_nombre = '', manager_telefono = '', manager_correo = ''
+         WHERE restaurante_id IN (SELECT id FROM restaurantes WHERE dueno_id = ?)`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        "UPDATE tickets SET nombre = 'Cuenta borrada', correo = ?1, telefono = '', datos_json = '{}' WHERE usuario_id = ?2 OR correo = ?3",
+      )
+      .bind(`borrada-${u.id}@tumbite.invalid`, u.id, u.correo),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
@@ -225,7 +259,12 @@ export async function borrarCuenta(
   ]);
   // Y las fotos del documento, la cara y el local, del almacén privado.
   if (env.BUCKET) {
-    for (const prefix of [`kyc/${u.id}/`, `vehiculos/${u.id}/`, `casco/${u.id}/`]) {
+    for (const prefix of [
+      `kyc/${u.id}/`,
+      `vehiculos/${u.id}/`,
+      `casco/${u.id}/`,
+      `conductores/${u.id}/`,
+    ]) {
       let cursor: string | undefined;
       do {
         const lista = await env.BUCKET.list({ prefix, cursor });

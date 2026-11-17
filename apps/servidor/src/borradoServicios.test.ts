@@ -202,6 +202,120 @@ describe('borrar la cuenta borra los datos de viajes, envíos y fotos de entrega
     expect(cal).toEqual({ comentario: 'Rico', respuesta: null });
   });
 
+  it('segunda vuelta: cotizaciones, regalo, calificaciones, papeles, modo destino, cobro, empresa y soporte', async () => {
+    const { almacen, m, sql, filas, pedido } = await preparar();
+    const cli = await m.cuenta('cliente');
+    const rep = await m.cuenta('repartidor');
+    const res = await m.cuenta('restaurante');
+    // Cliente: cotización de viaje, pedido como regalo, calificación de viaje y un ticket de soporte.
+    await sql(
+      `INSERT INTO cotizaciones_viaje (id, cliente_id, servicio_id, zona_id, tarifa_id, origen_lat, origen_lng,
+         origen_direccion, destino_lat, destino_lng, destino_direccion, distancia_m, duracion_s, desglose_json,
+         total, moneda, vence_en, paradas_json)
+       VALUES ('cot-1', ?, 'moto', 'z', 't', 8.6, -71.6, 'Calle 5 casa 12', 8.7, -71.7, 'Liceo', 100, 60, '{}',
+         500, 'USD', datetime('now'), '[{"direccion":"Casa de la abuela"}]')`,
+      cli.id,
+    );
+    await pedido('ped-r', cli.id, 'r1', null);
+    await sql(
+      "UPDATE pedidos SET para_nombre = 'Ana', para_telefono = '+13135550000', para_mensaje = 'Feliz día' WHERE id = 'ped-r'",
+    );
+    await sql(
+      "INSERT INTO calificaciones_viaje (operacion_id, de, autor_id, estrellas, comentario) VALUES ('op-c', 'pasajero', ?, 5, 'Muy amable')",
+      cli.id,
+    );
+    await sql(
+      `INSERT INTO tickets (id, codigo, tipo, nombre, correo, telefono, asunto, datos_json, usuario_id)
+       VALUES ('tk-1', 'TK1', 'soporte', 'Ana Ruiz', 'ana@ejemplo.com', '+13135550000', 'Mi pedido', '{"x":1}', ?)`,
+      cli.id,
+    );
+    // Conductor: licencia, modo destino, calificaciones que escribió y el historial de su cuenta de cobro.
+    await almacen.bucket.put(`conductores/${rep.id}/doc.jpg`, new Uint8Array([1]));
+    await sql(
+      "INSERT INTO conductor_documentos (id, conductor_id, tipo, clave) VALUES ('cd-1', ?, 'antecedentes_penales', ?)",
+      rep.id,
+      `conductores/${rep.id}/doc.jpg`,
+    );
+    await sql(
+      "INSERT INTO modo_destino (repartidor_id, direccion, lat, lng) VALUES (?, 'Mi casa, calle 9', 8.6, -71.6)",
+      rep.id,
+    );
+    await sql(
+      "INSERT INTO usos_modo_destino (repartidor_id, dia, usos) VALUES (?, '2026-11-16', 1)",
+      rep.id,
+    );
+    await sql(
+      "INSERT INTO calificaciones_viaje (operacion_id, de, autor_id, estrellas, comentario) VALUES ('op-c', 'conductor', ?, 4, 'Llegó tarde')",
+      rep.id,
+    );
+    await sql(
+      "INSERT INTO calificaciones_cliente (pedido_id, repartidor_id, cliente_id, estrellas, comentario) VALUES ('ped-r', ?, 'c-x', 3, 'No salió')",
+      rep.id,
+    );
+    await sql(
+      "INSERT INTO cuentas_cobro_historial (id, cuenta_id, usuario_id, cambio) VALUES ('h1', 'cc-x', ?, 'titular José Ruiz')",
+      rep.id,
+    );
+    // Restaurante: datos del dueño y del manager.
+    await sql(
+      "INSERT OR IGNORE INTO restaurantes (id, dueno_id, nombre) VALUES ('r-emp', ?, 'Local')",
+      res.id,
+    );
+    const [r] = await filas('SELECT id FROM restaurantes WHERE dueno_id = ?', res.id);
+    await sql(
+      `INSERT INTO restaurante_empresa (restaurante_id, dueno_nombre, dueno_telefono, dueno_correo, manager_nombre,
+         manager_telefono, manager_correo) VALUES (?, 'Luis', '+1313', 'l@ejemplo.com', 'Eva', '+1314', 'e@ejemplo.com')`,
+      r?.id,
+    );
+
+    for (const u of [cli, rep, res])
+      expect((await m.llamar('DELETE', '/datos/cuentas/yo', undefined, u.token)).estado).toBe(200);
+
+    const [cot] = await filas(
+      "SELECT origen_direccion, destino_direccion, origen_lat, paradas_json FROM cotizaciones_viaje WHERE id = 'cot-1'",
+    );
+    expect(cot).toEqual({
+      origen_direccion: 'Dirección borrada',
+      destino_direccion: 'Dirección borrada',
+      origen_lat: 0,
+      paradas_json: '[]',
+    });
+    const [reg] = await filas(
+      "SELECT para_nombre, para_telefono, para_mensaje FROM pedidos WHERE id = 'ped-r'",
+    );
+    expect(reg).toEqual({ para_nombre: '', para_telefono: '', para_mensaje: '' });
+    expect(
+      await filas("SELECT comentario FROM calificaciones_viaje WHERE comentario != ''"),
+    ).toEqual([]);
+    const [cc] = await filas(
+      "SELECT comentario FROM calificaciones_cliente WHERE pedido_id = 'ped-r'",
+    );
+    expect(cc?.comentario).toBe('');
+    const [tk] = await filas(
+      "SELECT nombre, correo, telefono, datos_json FROM tickets WHERE id = 'tk-1'",
+    );
+    expect(tk).toEqual({
+      nombre: 'Cuenta borrada',
+      correo: `borrada-${cli.id}@tumbite.invalid`,
+      telefono: '',
+      datos_json: '{}',
+    });
+    const [doc] = await filas("SELECT clave FROM conductor_documentos WHERE id = 'cd-1'");
+    expect(doc?.clave).toBe('');
+    expect(almacen.datos.has(`conductores/${rep.id}/doc.jpg`)).toBe(false);
+    expect(await filas('SELECT 1 FROM modo_destino WHERE repartidor_id = ?', rep.id)).toEqual([]);
+    expect(await filas('SELECT 1 FROM usos_modo_destino WHERE repartidor_id = ?', rep.id)).toEqual(
+      [],
+    );
+    const [h] = await filas("SELECT cambio FROM cuentas_cobro_historial WHERE id = 'h1'");
+    expect(h?.cambio).toBe('');
+    const [emp] = await filas(
+      'SELECT dueno_nombre, dueno_telefono, dueno_correo, manager_nombre, manager_telefono, manager_correo FROM restaurante_empresa WHERE restaurante_id = ?',
+      r?.id,
+    );
+    expect(Object.values(emp ?? {}).every((v) => v === '')).toBe(true);
+  });
+
   it('con un viaje en curso no deja borrar la cuenta (409)', async () => {
     for (const [rol, col] of [
       ['cliente', 'cliente_id'],
