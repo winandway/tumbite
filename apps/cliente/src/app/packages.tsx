@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ErrorApi, enIdioma, lineaReferencia } from '@tumbite/compartido';
+import {
+  ErrorApi,
+  enIdioma,
+  lineaReferencia,
+  textoFijarEnMapa,
+  textosPuntoExacto,
+} from '@tumbite/compartido';
 import { Boton, C, CampoDireccion, Modal, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado, Tarjeta } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
@@ -134,6 +140,8 @@ function MisPaquetes() {
   const [casaDir, setCasaDir] = useState('');
   const [casaRefs, setCasaRefs] = useState('');
   const [casaApto, setCasaApto] = useState('');
+  // C-FIJAR-EN-MAPA: la casa ya tiene su punto en el mapa y su dirección.
+  const casaFijada = casa != null && casaDir.trim().length > 0;
 
   const cargar = useCallback(() => {
     api
@@ -232,13 +240,15 @@ function MisPaquetes() {
                   setMarcando('casa');
                 }}
                 cerca={casa}
-              />
-              <ResumenPunto
-                punto={casa}
-                direccion={casaDir}
-                referencia={lineaReferencia({ referencia: casaRefs, apto: casaApto })}
-                abrir={() => setMarcando('casa')}
-                testID="casa-punto"
+                // C-FIJAR-EN-MAPA: «Fijar mi casa en el mapa», dentro de la casilla.
+                enMapa={{
+                  texto: textoFijarEnMapa(idioma, 'casa', casaFijada),
+                  marcado: casaFijada,
+                  detalle: lineaReferencia({ referencia: casaRefs, apto: casaApto }),
+                  ajustar: textosPuntoExacto(idioma).ajustar,
+                  abrir: () => setMarcando('casa'),
+                  testID: 'casa-punto',
+                }}
               />
               {casa ? (
                 <Boton texto={t.casaGuardar} alTocar={() => void guardarCasa()} exito />

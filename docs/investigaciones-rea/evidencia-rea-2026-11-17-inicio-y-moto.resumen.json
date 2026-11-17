@@ -1,0 +1,15 @@
+{
+  "descripcion": "Resumen del paquete de evidencia REA del 17 nov 2026 (inicio de superapps y pedir moto). El paquete crudo trae el código público de esas webs, con claves de sus servicios, y por eso vive fuera del repositorio en ~/Divoox-privado/estudios/.",
+  "sha256_paquete_crudo": "f7f606932d45492fe749721b464501c41e9b2efde729838de3cdcde681a44968",
+  "bytes": 2696677,
+  "registros": [
+    "Uber Moto: inspección y captura de la página pública",
+    "DiDi: página pública",
+    "Yummy: página pública",
+    "inDrive: 403 de CloudFront, no se saltó",
+    "Rappi Venezuela: REA lo rechazó (target_not_allowed)"
+  ],
+  "incognitas": [],
+  "sha256_al_exportar": "8a022b2073ef309924e2c90228164bdeae67f89f8d362a90801ac0bd7f328231",
+  "nota_huella": "La huella al exportar es la de la ficha. El archivo guardado en ~/Divoox-privado/estudios/ quedó reformateado (mismo contenido, otros espacios), por eso su huella es la de sha256_paquete_crudo."
+}

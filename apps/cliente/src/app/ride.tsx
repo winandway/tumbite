@@ -3,7 +3,7 @@ import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { enIdioma } from '@tumbite/compartido';
-import { FilaLista, RADIO, useColores, useSesion } from '@tumbite/movil';
+import { COLOR, FilaLista, RADIO, useSesion } from '@tumbite/movil';
 import { View } from 'react-native';
 import { TEXTOS_FIJOS } from '../viajes/textosFijos';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
@@ -26,7 +26,6 @@ function PantallaMoto() {
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
   const tf = enIdioma(TEXTOS_FIJOS, idioma);
-  const col = useColores();
   // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
   const pedido = useLocalSearchParams<{ servicio?: string }>().servicio;
   const servicio = pedido === 'carro' || pedido === 'envios' ? pedido : 'moto';
@@ -131,14 +130,16 @@ function PantallaMoto() {
               deudaPendiente={deuda}
               alPedir={(id) => setViajeId(id)}
             />
-            {/* C-VIAJES-FIJOS y C-CONDUCTOR-CONFIANZA: los accesos en la pantalla del servicio. */}
+            {/* C-VIAJES-FIJOS y C-CONDUCTOR-CONFIANZA: los accesos en la pantalla del servicio.
+                C-FILA-SIN-MODO-OSCURO: la pantalla es siempre clara (fondo #F6F6F6) y FilaLista
+                escribe en negro: la tarjeta va blanca fija, nunca con el fondo del modo oscuro. */}
             <View
               testID="accesos-fijos"
               style={{
                 borderWidth: 1,
-                borderColor: col.borde,
+                borderColor: COLOR.borde,
                 borderRadius: RADIO.l,
-                backgroundColor: col.fondo,
+                backgroundColor: COLOR.fondo,
                 marginTop: 16,
                 overflow: 'hidden',
               }}

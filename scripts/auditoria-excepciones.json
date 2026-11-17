@@ -1,0 +1,9 @@
+[
+  {
+    "aviso": "GHSA-fc5q-39xc-vjpf",
+    "paquete": "picomatch",
+    "motivo": "ReDoS con extglobs. Ninguna versión corregida existe (4.0.7 es la última y el aviso cubre <= 4.0.7; actualizado por GitHub el 17 nov 2026). picomatch, fdir y tinyglobby solo los usan herramientas de compilación y pruebas (vite, vitest, lint-staged, expo): no viajan en el servidor ni en el panel publicado. Sin esta excepción ningún cambio podía publicarse.",
+    "anotado": "2026-11-17",
+    "revisarAntesDe": "2026-12-15"
+  }
+]

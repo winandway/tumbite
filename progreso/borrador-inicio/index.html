@@ -1,0 +1,1381 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Divoox · Borrador del inicio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --rojo: #f20d20;
+        --rojo-osc: #c20a1a;
+        --rojo-suave: #fdecee;
+        --negro: #101010;
+        --gris: #666b73;
+        --borde: #e6e7ea;
+        --borde-f: #2a2a2a;
+        --fondo: #f6f6f6;
+        --blanco: #ffffff;
+        --verde: #0d7a3a;
+        --verde-suave: #e6f2ea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: #edeef0;
+        color: var(--negro);
+        font-family: Montserrat, system-ui, sans-serif;
+        font-size: 15px;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        text-align: left;
+      }
+      h1,
+      h2,
+      h3,
+      .t {
+        font-family: Poppins, system-ui, sans-serif;
+        margin: 0;
+      }
+
+      /* ---------- Página que envuelve el teléfono ---------- */
+      .pagina {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 32px;
+        align-items: start;
+      }
+      .lateral h1 {
+        font-size: 22px;
+        line-height: 1.2;
+      }
+      .lateral p {
+        color: var(--gris);
+        line-height: 1.5;
+        margin: 8px 0 16px;
+      }
+      .nota {
+        border: 1px solid var(--borde);
+        background: #fff;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--gris);
+        line-height: 1.45;
+      }
+      .lista-pantallas {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 16px 0;
+      }
+      .lista-pantallas button {
+        border: 1px solid var(--borde);
+        background: #fff;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-weight: 600;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .lista-pantallas button .n {
+        width: 24px;
+        height: 24px;
+        border-radius: 12px;
+        background: var(--fondo);
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        flex: none;
+      }
+      .lista-pantallas button[aria-current='true'] {
+        border-color: var(--negro);
+      }
+      .lista-pantallas button[aria-current='true'] .n {
+        background: var(--negro);
+        color: #fff;
+      }
+      .escenario {
+        display: flex;
+        justify-content: center;
+      }
+      .telefono {
+        width: 390px;
+        height: 844px;
+        background: var(--blanco);
+        border-radius: 44px;
+        border: 10px solid var(--negro);
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      body.captura {
+        background: #fff;
+      }
+      body.captura .pagina {
+        display: block;
+        padding: 0;
+        max-width: none;
+      }
+      body.captura .lateral {
+        display: none;
+      }
+      body.captura .telefono {
+        border: 0;
+        border-radius: 0;
+        width: 390px;
+        height: 844px;
+      }
+      @media (max-width: 820px) {
+        .pagina {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        .telefono {
+          width: 100%;
+          max-width: 390px;
+          height: 780px;
+          border-width: 8px;
+          border-radius: 36px;
+        }
+      }
+
+      /* ---------- Selector de idioma (estilo Amazon) ---------- */
+      .idioma {
+        position: relative;
+      }
+      .idioma-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+      }
+      .idioma-btn:hover,
+      .idioma.abierto .idioma-btn {
+        border-color: var(--negro);
+      }
+      .idioma-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        background: #fff;
+        border: 1px solid #d5d9d9;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(15, 17, 17, 0.15);
+        width: 210px;
+        padding: 12px 14px;
+        z-index: 30;
+      }
+      .idioma.abierto .idioma-menu {
+        display: block;
+      }
+      .idioma-menu:before {
+        content: '';
+        position: absolute;
+        top: -7px;
+        right: 18px;
+        width: 12px;
+        height: 12px;
+        background: #fff;
+        border-left: 1px solid #d5d9d9;
+        border-top: 1px solid #d5d9d9;
+        transform: rotate(45deg);
+      }
+      .idioma-menu .tit {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .idioma-op {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 9px 0;
+        font-size: 14px;
+      }
+      .idioma-op + .idioma-op {
+        border-top: 1px solid #e7e7e7;
+      }
+      .radio {
+        width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        border: 1px solid #888c8c;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .radio.si {
+        border-color: #e77600;
+      }
+      .radio.si:after {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 4px;
+        background: #e77600;
+      }
+      .bandera {
+        width: 20px;
+        height: 14px;
+        border-radius: 2px;
+        flex: none;
+        display: block;
+      }
+
+      /* ---------- Dentro del teléfono ---------- */
+      .estado {
+        height: 44px;
+        flex: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 26px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .pantalla {
+        display: none;
+        flex: 1;
+        min-height: 0;
+        flex-direction: column;
+        position: relative;
+      }
+      .pantalla.activa {
+        display: flex;
+      }
+      .desliza {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      .cab {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 16px 10px;
+      }
+      .cab img {
+        height: 26px;
+      }
+      .cab-der {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .icono-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 20px;
+        display: grid;
+        place-items: center;
+      }
+      .icono-btn:hover {
+        background: var(--fondo);
+      }
+      .entregar {
+        padding: 0 16px 10px;
+        font-size: 13px;
+        color: var(--gris);
+      }
+      .entregar b {
+        color: var(--negro);
+      }
+
+      .buscador {
+        margin: 4px 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--fondo);
+        border-radius: 28px;
+        padding: 14px 16px;
+        font-family: Poppins;
+        font-weight: 600;
+        font-size: 17px;
+        width: calc(100% - 32px);
+      }
+      .buscador .ahora {
+        margin-left: auto;
+        background: #fff;
+        border-radius: 16px;
+        padding: 6px 10px;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        border: 1px solid var(--borde);
+      }
+      .atajos {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .atajos::-webkit-scrollbar {
+        display: none;
+      }
+      .atajo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--borde);
+        border-radius: 20px;
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        flex: none;
+      }
+      .atajo .ico {
+        width: 24px;
+        height: 24px;
+        border-radius: 12px;
+        background: var(--fondo);
+        display: grid;
+        place-items: center;
+      }
+
+      .sec {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 20px 16px 10px;
+      }
+      .sec h2 {
+        font-size: 18px;
+      }
+      .sec .ver {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--negro);
+        text-decoration: underline;
+      }
+
+      .carrusel {
+        display: flex;
+        gap: 10px;
+        padding: 0 16px 4px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+      .carrusel::-webkit-scrollbar {
+        display: none;
+      }
+      .serv {
+        flex: none;
+        width: 76px;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+      .serv .caja {
+        width: 76px;
+        height: 68px;
+        border-radius: 16px;
+        background: var(--fondo);
+        display: grid;
+        place-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .serv .caja img {
+        max-width: 62px;
+        max-height: 50px;
+        object-fit: contain;
+      }
+      .serv .nom {
+        font-size: 12.5px;
+        font-weight: 600;
+        text-align: center;
+        line-height: 1.15;
+      }
+      .serv.destacado .caja {
+        background: var(--rojo-suave);
+        outline: 1.5px solid var(--rojo);
+      }
+      .serv .marca {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        background: var(--rojo);
+        color: #fff;
+        font-size: 9.5px;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 2px 5px;
+        font-family: Poppins;
+      }
+      .puntos {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        padding: 8px 0 0;
+      }
+      .puntos i {
+        width: 6px;
+        height: 6px;
+        border-radius: 3px;
+        background: #d6d8dc;
+      }
+      .puntos i.on {
+        width: 16px;
+        background: var(--negro);
+      }
+
+      .tarjeta-moto {
+        margin: 16px 16px 0;
+        border: 1px solid var(--borde);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        width: calc(100% - 32px);
+      }
+      .tarjeta-moto img {
+        width: 92px;
+        flex: none;
+      }
+      .tarjeta-moto .t {
+        font-size: 17px;
+        line-height: 1.2;
+      }
+      .tarjeta-moto p {
+        margin: 4px 0 10px;
+        color: var(--gris);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      .boton-chico {
+        display: inline-block;
+        background: var(--negro);
+        color: #fff;
+        border-radius: 18px;
+        padding: 8px 14px;
+        font-size: 13px;
+        font-weight: 700;
+        font-family: Poppins;
+      }
+
+      .recientes {
+        padding: 0 16px;
+      }
+      .fila {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        width: 100%;
+      }
+      .fila + .fila {
+        border-top: 1px solid var(--borde);
+      }
+      .fila .ico {
+        width: 38px;
+        height: 38px;
+        border-radius: 19px;
+        background: var(--fondo);
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .fila .tx {
+        flex: 1;
+        min-width: 0;
+      }
+      .fila .tx b {
+        display: block;
+        font-size: 14.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .fila .tx span {
+        display: block;
+        font-size: 12.5px;
+        color: var(--gris);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .platos {
+        display: flex;
+        gap: 10px;
+        padding: 0 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .platos::-webkit-scrollbar {
+        display: none;
+      }
+      .plato {
+        flex: none;
+        width: 150px;
+        border: 1px solid var(--borde);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .plato .foto {
+        height: 84px;
+        background: var(--fondo);
+        display: grid;
+        place-items: center;
+      }
+      .plato .foto img {
+        height: 60px;
+      }
+      .plato div.d {
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+      .plato div.d b {
+        display: block;
+        font-size: 13.5px;
+      }
+      .plato div.d span {
+        color: var(--gris);
+        font-size: 12px;
+      }
+
+      .barra {
+        flex: none;
+        height: 76px;
+        border-top: 1px solid var(--borde);
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-start;
+        padding-top: 8px;
+        background: #fff;
+      }
+      .barra button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--gris);
+        width: 70px;
+      }
+      .barra button.on {
+        color: var(--negro);
+      }
+
+      /* Pantalla de servicio / mapa */
+      .mapa {
+        position: relative;
+        background: #e9ebee;
+        overflow: hidden;
+      }
+      .mapa svg.calles {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .volver {
+        position: absolute;
+        top: 10px;
+        left: 14px;
+        width: 42px;
+        height: 42px;
+        border-radius: 21px;
+        background: #fff;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        z-index: 3;
+      }
+      .hoja {
+        background: #fff;
+        border-radius: 20px 20px 0 0;
+        margin-top: -18px;
+        position: relative;
+        z-index: 2;
+        padding: 10px 16px 16px;
+        flex: 1;
+        overflow-y: auto;
+      }
+      .agarre {
+        width: 40px;
+        height: 5px;
+        border-radius: 3px;
+        background: #d6d8dc;
+        margin: 0 auto 12px;
+      }
+      .hoja h1 {
+        font-size: 22px;
+        margin-bottom: 12px;
+      }
+      .campo-viaje {
+        border: 1px solid var(--borde-f);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .campo-viaje .linea {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+      }
+      .campo-viaje .linea + .linea {
+        border-top: 1px solid var(--borde);
+      }
+      .campo-viaje .linea .lab {
+        font-size: 11.5px;
+        color: var(--gris);
+        font-weight: 600;
+      }
+      .campo-viaje .linea .val {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .campo-viaje .linea .val.vacio {
+        color: #9a9ea5;
+        font-weight: 500;
+      }
+      .campo-viaje .linea.activa {
+        background: #fafafa;
+        box-shadow: inset 3px 0 0 var(--negro);
+      }
+      .punto-r {
+        width: 12px;
+        height: 12px;
+        border-radius: 6px;
+        border: 3px solid var(--negro);
+        flex: none;
+      }
+      .punto-d {
+        width: 12px;
+        height: 12px;
+        background: var(--rojo);
+        flex: none;
+      }
+      .fijar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 2px;
+        width: 100%;
+        color: var(--rojo-osc);
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .fijar .fl {
+        margin-left: auto;
+        color: var(--gris);
+      }
+      .sug-tit {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--gris);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 10px 0 0;
+      }
+
+      .opciones {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .opcion {
+        border: 1px solid var(--borde);
+        border-radius: 14px;
+        padding: 12px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+      }
+      .opcion.sel {
+        border: 2px solid var(--negro);
+        padding: 11px;
+      }
+      .opcion img {
+        width: 66px;
+        flex: none;
+      }
+      .opcion .tx {
+        flex: 1;
+      }
+      .opcion .tx b {
+        font-family: Poppins;
+        font-size: 16px;
+      }
+      .opcion .tx span {
+        display: block;
+        font-size: 12.5px;
+        color: var(--gris);
+      }
+      .opcion .pr {
+        text-align: right;
+      }
+      .opcion .pr b {
+        font-family: Poppins;
+        font-size: 17px;
+        display: block;
+      }
+      .opcion .pr span {
+        font-size: 12px;
+        color: var(--gris);
+      }
+      .pago {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 2px;
+        border-top: 1px solid var(--borde);
+        margin-top: 12px;
+        font-weight: 600;
+        width: 100%;
+      }
+      .pago .fl {
+        margin-left: auto;
+        color: var(--gris);
+        font-size: 13px;
+      }
+      .boton {
+        display: block;
+        width: 100%;
+        background: var(--rojo);
+        color: #fff;
+        border-radius: 14px;
+        padding: 16px;
+        text-align: center;
+        font-family: Poppins;
+        font-weight: 700;
+        font-size: 17px;
+      }
+      .boton:hover {
+        background: var(--rojo-osc);
+      }
+      .boton.sec2 {
+        background: #fff;
+        color: var(--negro);
+        border: 1px solid var(--borde-f);
+      }
+      .casco {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 12.5px;
+        color: var(--gris);
+        margin: 10px 2px 12px;
+        line-height: 1.35;
+      }
+
+      .pulso {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .pulso i {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 40px;
+        height: 40px;
+        margin: -20px 0 0 -20px;
+        border-radius: 50%;
+        border: 2px solid var(--rojo);
+        animation: onda 2.4s infinite;
+        opacity: 0;
+      }
+      .pulso i:nth-child(2) {
+        animation-delay: 0.8s;
+      }
+      .pulso i:nth-child(3) {
+        animation-delay: 1.6s;
+      }
+      @keyframes onda {
+        0% {
+          transform: scale(0.6);
+          opacity: 0.9;
+        }
+        100% {
+          transform: scale(5);
+          opacity: 0;
+        }
+      }
+      .pin {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -100%);
+        z-index: 2;
+      }
+      .motito {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        border-radius: 15px;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+        display: grid;
+        place-items: center;
+      }
+      .progreso-busq {
+        height: 4px;
+        background: var(--fondo);
+        border-radius: 2px;
+        overflow: hidden;
+        margin: 4px 0 14px;
+      }
+      .progreso-busq i {
+        display: block;
+        height: 100%;
+        width: 40%;
+        background: var(--negro);
+        border-radius: 2px;
+        animation: barra 1.6s infinite ease-in-out;
+      }
+      @keyframes barra {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(260%);
+        }
+      }
+      .resumen {
+        border: 1px solid var(--borde);
+        border-radius: 14px;
+        padding: 4px 14px;
+        margin-bottom: 12px;
+      }
+      .ok {
+        color: var(--verde);
+        font-weight: 700;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 13px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pulso i,
+        .progreso-busq i {
+          animation: none;
+          opacity: 0.4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pagina">
+      <aside class="lateral">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+          "
+        >
+          <img src="img/logo.webp" alt="Divoox" style="height: 26px" />
+          <div class="idioma" id="idioma-pagina"></div>
+        </div>
+        <h1 data-t="titulo"></h1>
+        <p data-t="intro"></p>
+        <div class="lista-pantallas" id="lista"></div>
+        <div class="nota" data-t="nota"></div>
+      </aside>
+
+      <div class="escenario">
+        <div class="telefono" id="telefono">
+          <div class="estado">
+            <span>9:41</span
+            ><span style="display: flex; gap: 6px; align-items: center">
+              <svg width="18" height="12" viewBox="0 0 18 12">
+                <rect x="0" y="8" width="3" height="4" rx="1" />
+                <rect x="5" y="5" width="3" height="7" rx="1" />
+                <rect x="10" y="2" width="3" height="10" rx="1" />
+                <rect x="15" y="0" width="3" height="12" rx="1" />
+              </svg>
+              <svg width="26" height="12" viewBox="0 0 26 12">
+                <rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="#101010" />
+                <rect x="2" y="2" width="17" height="8" rx="2" />
+                <rect x="24" y="4" width="2" height="4" rx="1" /></svg
+            ></span>
+          </div>
+
+          <!-- 1 y 2: INICIO (normal y con «más usados») -->
+          <section class="pantalla" data-p="inicio"></section>
+          <section class="pantalla" data-p="usados"></section>
+          <!-- 3: MOTO -->
+          <section class="pantalla" data-p="moto"></section>
+          <!-- 4: RECOGIDA Y DESTINO -->
+          <section class="pantalla" data-p="ruta"></section>
+          <!-- 5: PRECIO -->
+          <section class="pantalla" data-p="precio"></section>
+          <!-- 6: BUSCANDO -->
+          <section class="pantalla" data-p="buscando"></section>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Borrador de diseño (no es la app): el inicio de Divoox y el flujo de pedir una moto.
+      // Todo el texto es de ejemplo. Cada pantalla se abre con #p=<pantalla>&l=<es|en>.
+      const SVG = {
+        campana:
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
+        lupa: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+        reloj:
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+        casa: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>',
+        maleta:
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>',
+        historial:
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>',
+        pinG: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+        pinR: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F20D20" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+        flecha:
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666B73" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+        atras:
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#101010" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+        baja: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+        efectivo:
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D7A3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
+        casco:
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666B73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a8 8 0 0 1 16 0v2H4z"/><path d="M12 7v4"/></svg>',
+        check:
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0D7A3A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>',
+        ini: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>',
+        ped: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
+        cor: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>',
+        cue: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+      };
+      const BANDERA = {
+        es: '<svg class="bandera" viewBox="0 0 750 500"><rect width="750" height="500" fill="#AA151B"/><rect y="125" width="750" height="250" fill="#F1BF00"/></svg>',
+        en: '<svg class="bandera" viewBox="0 0 190 100"><rect width="190" height="100" fill="#B22234"/><g fill="#fff"><rect y="7.7" width="190" height="7.7"/><rect y="23.1" width="190" height="7.7"/><rect y="38.5" width="190" height="7.7"/><rect y="53.8" width="190" height="7.7"/><rect y="69.2" width="190" height="7.7"/><rect y="84.6" width="190" height="7.7"/></g><rect width="76" height="53.8" fill="#3C3B6E"/></svg>',
+      };
+
+      const T = {
+        es: {
+          titulo: 'Borrador del inicio y de pedir una moto',
+          intro:
+            'Pantallas de prueba para decidir el diseño antes de construirlo en la app. Toca los botones dentro del teléfono o elige una pantalla aquí.',
+          nota: 'Es un borrador: los nombres, lugares y precios son de ejemplo. No está en la app. Cuando esté aprobado, se construye igual en el iPhone, en Android y en la web.',
+          pantallas: {
+            inicio: 'Inicio (primera vez)',
+            usados: 'Inicio con tus más usados',
+            moto: 'Moto',
+            ruta: 'Recogida y destino',
+            precio: 'Precio',
+            buscando: 'Buscando conductor',
+          },
+          cambiar: 'Cambiar idioma',
+          entregar: 'Estás en',
+          ciudad: 'Centro, El Vigía',
+          adonde: '¿A dónde vas?',
+          ahora: 'Ahora',
+          casa: 'Casa',
+          trabajo: 'Trabajo',
+          ultimo: 'Terminal de pasajeros',
+          servicios: 'Servicios',
+          verTodos: 'Ver todos',
+          tusUsados: 'Tus más usados',
+          s: {
+            moto: 'Moto',
+            comida: 'Comida',
+            carro: 'Carro',
+            envios: 'Envíos',
+            mercado: 'Mercado',
+            farmacia: 'Farmacia',
+            licores: 'Licores',
+          },
+          nuevo: 'Nuevo',
+          motoTit: 'Pide tu primera moto',
+          motoTxt: 'Llega en minutos. Pagas en efectivo o pago móvil.',
+          motoBtn: 'Pedir moto',
+          recientesTit: 'Viajes recientes',
+          r1: 'Terminal de pasajeros',
+          r1b: 'Av. Bolívar · hace 2 días',
+          r2: 'Hospital del centro',
+          r2b: 'Calle 5 · la semana pasada',
+          comidaTit: 'Comida cerca de ti',
+          p1: 'Pizzería de ejemplo',
+          p1b: '25–35 min · $1 de envío',
+          p2: 'Arepera de ejemplo',
+          p2b: '20–30 min · envío gratis',
+          nav: { inicio: 'Inicio', pedidos: 'Pedidos', favoritos: 'Favoritos', cuenta: 'Cuenta' },
+          hojaMoto: '¿A dónde vas en moto?',
+          recogidaEn: 'Te recogemos en',
+          tuUbic: 'Tu ubicación actual',
+          casco: 'El casco es obligatorio. Tu conductor lleva uno para ti.',
+          recogida: 'Punto de recogida',
+          destino: '¿A dónde vas?',
+          fijarR: 'Fijar recogida en el mapa',
+          fijarD: 'Fijar destino en el mapa',
+          escribiendo: 'Terminal',
+          sugerencias: 'Sugerencias',
+          s1: 'Terminal de pasajeros',
+          s1b: 'Av. Bolívar, El Vigía',
+          s2: 'Terminal de carga',
+          s2b: 'Zona industrial, El Vigía',
+          s3: 'Plaza Bolívar',
+          s3b: 'Centro, El Vigía',
+          elige: 'Elige tu viaje',
+          minutos: 'min',
+          llega: 'Llega en',
+          o1: 'Moto',
+          o1b: '1 pasajero · casco incluido',
+          o2: 'Carro',
+          o2b: 'Hasta 4 pasajeros',
+          precio1: '$1,50',
+          precio1b: '≈ Bs 60',
+          precio2: '$3,00',
+          precio2b: '≈ Bs 120',
+          pago: 'Efectivo',
+          pagoAlt: 'Cambiar · pago móvil',
+          pedir: 'Pedir moto',
+          buscandoTit: 'Buscando tu moto',
+          buscandoTxt:
+            '4 conductores cerca ven tu viaje. Normalmente responde uno en menos de un minuto.',
+          deA: 'Centro, El Vigía → Terminal de pasajeros',
+          precioRes: '$1,50 en efectivo',
+          precioFijo: 'Precio fijo, sin sorpresas',
+          cancelar: 'Cancelar viaje',
+        },
+        en: {
+          titulo: 'Draft of the home screen and ordering a moto',
+          intro:
+            'Test screens to settle the design before we build it in the app. Tap the buttons inside the phone or pick a screen here.',
+          nota: 'This is a draft: names, places and prices are examples. It is not in the app. Once approved, it is built the same way on iPhone, Android and the web.',
+          pantallas: {
+            inicio: 'Home (first time)',
+            usados: 'Home with your most used',
+            moto: 'Moto',
+            ruta: 'Pickup and destination',
+            precio: 'Price',
+            buscando: 'Finding a driver',
+          },
+          cambiar: 'Change language',
+          entregar: 'You’re in',
+          ciudad: 'Downtown Novi',
+          adonde: 'Where to?',
+          ahora: 'Now',
+          casa: 'Home',
+          trabajo: 'Work',
+          ultimo: 'Novi Public Library',
+          servicios: 'Services',
+          verTodos: 'See all',
+          tusUsados: 'Your most used',
+          s: {
+            moto: 'Moto',
+            comida: 'Food',
+            carro: 'Car',
+            envios: 'Delivery',
+            mercado: 'Grocery',
+            farmacia: 'Pharmacy',
+            licores: 'Liquor',
+          },
+          nuevo: 'New',
+          motoTit: 'Get your first moto ride',
+          motoTxt: 'Arrives in minutes. Pay with cash or card.',
+          motoBtn: 'Get a moto',
+          recientesTit: 'Recent trips',
+          r1: 'Novi Public Library',
+          r1b: 'Ten Mile Rd · 2 days ago',
+          r2: 'Medical center',
+          r2b: 'Grand River Ave · last week',
+          comidaTit: 'Food near you',
+          p1: 'Sample Pizzeria',
+          p1b: '25–35 min · $1 delivery',
+          p2: 'Sample Grill',
+          p2b: '20–30 min · free delivery',
+          nav: { inicio: 'Home', pedidos: 'Orders', favoritos: 'Favorites', cuenta: 'Account' },
+          hojaMoto: 'Where are you going by moto?',
+          recogidaEn: 'Pickup at',
+          tuUbic: 'Your current location',
+          casco: 'Helmets are required. Your driver carries one for you.',
+          recogida: 'Pickup point',
+          destino: 'Where to?',
+          fijarR: 'Set pickup on map',
+          fijarD: 'Set destination on map',
+          escribiendo: 'Library',
+          sugerencias: 'Suggestions',
+          s1: 'Novi Public Library',
+          s1b: 'Ten Mile Rd, Novi, MI',
+          s2: 'Library parking lot',
+          s2b: 'Taft Rd, Novi, MI',
+          s3: 'Main Street',
+          s3b: 'Downtown Novi, MI',
+          elige: 'Choose a ride',
+          minutos: 'min',
+          llega: 'Arrives in',
+          o1: 'Moto',
+          o1b: '1 rider · helmet included',
+          o2: 'Car',
+          o2b: 'Up to 4 riders',
+          precio1: '$6.50',
+          precio1b: 'Fixed price',
+          precio2: '$11.00',
+          precio2b: 'Fixed price',
+          pago: 'Cash',
+          pagoAlt: 'Change · card',
+          pedir: 'Get a moto',
+          buscandoTit: 'Finding your moto',
+          buscandoTxt: '4 drivers nearby can see your trip. One usually accepts in under a minute.',
+          deA: 'Downtown Novi → Novi Public Library',
+          precioRes: '$6.50 cash',
+          precioFijo: 'Fixed price, no surprises',
+          cancelar: 'Cancel trip',
+        },
+      };
+      const ORDEN = ['inicio', 'usados', 'moto', 'ruta', 'precio', 'buscando'];
+      let L = 'es',
+        P = 'inicio';
+
+      function leerHash() {
+        const h = new URLSearchParams(location.hash.slice(1));
+        if (h.get('l') === 'en' || h.get('l') === 'es') L = h.get('l');
+        else {
+          try {
+            const g = localStorage.getItem('borrador.idioma');
+            if (g === 'en' || g === 'es') L = g;
+          } catch {}
+        }
+        if (ORDEN.includes(h.get('p'))) P = h.get('p');
+        if (h.get('captura') === '1') document.body.classList.add('captura');
+      }
+      function ir(p) {
+        P = p;
+        history.replaceState(
+          null,
+          '',
+          '#p=' + P + '&l=' + L + (document.body.classList.contains('captura') ? '&captura=1' : ''),
+        );
+        pintar();
+        document.querySelector('.pantalla.activa .desliza, .pantalla.activa .hoja')?.scrollTo(0, 0);
+      }
+      function idioma(l) {
+        L = l;
+        try {
+          localStorage.setItem('borrador.idioma', l);
+        } catch {}
+        ir(P);
+      }
+
+      function selector(contenedor) {
+        const t = T[L];
+        contenedor.innerHTML = `<button class="idioma-btn" aria-haspopup="true" aria-label="${t.cambiar}">${BANDERA[L]} ${L.toUpperCase()} ${SVG.baja}</button>
+  <div class="idioma-menu" role="dialog"><div class="tit">${t.cambiar}</div>
+   <button class="idioma-op" data-l="en"><span class="radio ${L === 'en' ? 'si' : ''}"></span>${BANDERA.en} English - EN</button>
+   <button class="idioma-op" data-l="es"><span class="radio ${L === 'es' ? 'si' : ''}"></span>${BANDERA.es} español - ES</button></div>`;
+        contenedor.querySelector('.idioma-btn').onclick = (e) => {
+          e.stopPropagation();
+          contenedor.classList.toggle('abierto');
+        };
+        contenedor.querySelectorAll('.idioma-op').forEach(
+          (b) =>
+            (b.onclick = () => {
+              contenedor.classList.remove('abierto');
+              idioma(b.dataset.l);
+            }),
+        );
+      }
+      document.addEventListener('click', () =>
+        document.querySelectorAll('.idioma.abierto').forEach((x) => x.classList.remove('abierto')),
+      );
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape')
+          document
+            .querySelectorAll('.idioma.abierto')
+            .forEach((x) => x.classList.remove('abierto'));
+      });
+
+      const mapa = (alto, extra = '') => `<div class="mapa" style="height:${alto}px">
+  <svg class="calles" viewBox="0 0 390 ${alto}" preserveAspectRatio="xMidYMid slice">
+   <rect width="390" height="${alto}" fill="#E9EBEE"/>
+   <rect x="250" y="20" width="110" height="70" rx="6" fill="#DDEBDD"/>
+   <rect x="20" y="${alto - 110}" width="90" height="60" rx="6" fill="#DDEBDD"/>
+   <g stroke="#fff" stroke-linecap="round">
+    <path d="M-10 ${alto * 0.35} L400 ${alto * 0.28}" stroke-width="14"/>
+    <path d="M-10 ${alto * 0.72} L400 ${alto * 0.78}" stroke-width="10"/>
+    <path d="M120 -10 L150 ${alto + 10}" stroke-width="12"/>
+    <path d="M290 -10 L260 ${alto + 10}" stroke-width="8"/>
+    <path d="M40 -10 L20 ${alto + 10}" stroke-width="6"/>
+    <path d="M-10 ${alto * 0.12} L400 ${alto * 0.16}" stroke-width="6"/>
+   </g></svg>${extra}</div>`;
+
+      const pinGrande =
+        '<svg class="pin" width="34" height="46" viewBox="0 0 34 46"><path d="M17 45S2 27 2 16a15 15 0 0 1 30 0c0 11-15 29-15 29z" fill="#101010"/><circle cx="17" cy="16" r="6" fill="#fff"/></svg>';
+      const motito = (x, y) =>
+        `<div class="motito" style="left:${x}px;top:${y}px"><img src="img/moto.webp" alt="" style="width:24px"></div>`;
+
+      function servicio(id, destacado) {
+        const t = T[L];
+        return `<button class="serv ${destacado ? 'destacado' : ''}" data-ir="${id === 'moto' ? 'moto' : ''}"><span class="caja">${destacado ? `<span class="marca">${t.nuevo}</span>` : ''}<img src="img/${id}.webp" alt=""></span><span class="nom">${t.s[id]}</span></button>`;
+      }
+      function barra() {
+        const t = T[L];
+        return `<nav class="barra"><button class="on">${SVG.ini}${t.nav.inicio}</button><button>${SVG.ped}${t.nav.pedidos}</button><button>${SVG.cor}${t.nav.favoritos}</button><button>${SVG.cue}${t.nav.cuenta}</button></nav>`;
+      }
+      function cabecera() {
+        return `<div class="cab"><img src="img/logo.webp" alt="Divoox"><div class="cab-der"><div class="idioma idioma-app"></div><button class="icono-btn" aria-label="Avisos">${SVG.campana}</button></div></div>`;
+      }
+      function buscador() {
+        const t = T[L];
+        return `<button class="buscador" data-ir="moto">${SVG.lupa}<span>${t.adonde}</span><span class="ahora">${SVG.reloj}${t.ahora}</span></button>`;
+      }
+
+      function pintar() {
+        const t = T[L];
+        document.documentElement.lang = L;
+        document.title = L === 'es' ? 'Divoox · Borrador del inicio' : 'Divoox · Home screen draft';
+        document.querySelectorAll('[data-t]').forEach((n) => (n.textContent = t[n.dataset.t]));
+        document.getElementById('lista').innerHTML = ORDEN.map(
+          (p, i) =>
+            `<button data-ir="${p}" aria-current="${p === P}"><span class="n">${i + 1}</span>${t.pantallas[p]}</button>`,
+        ).join('');
+        selector(document.getElementById('idioma-pagina'));
+
+        // 1. Inicio, primera vez: la moto primero y destacada (Venezuela arranca con moto).
+        document.querySelector('[data-p=inicio]').innerHTML = `<div class="desliza">${cabecera()}
+    <div class="entregar">${t.entregar} <b>${t.ciudad}</b></div>
+    ${buscador()}
+    <div class="sec"><h2>${t.servicios}</h2><button class="ver">${t.verTodos}</button></div>
+    <div class="carrusel">${servicio('moto', true)}${['comida', 'carro', 'envios', 'mercado', 'farmacia', 'licores'].map((s) => servicio(s)).join('')}</div>
+    <div class="puntos"><i class="on"></i><i></i></div>
+    <button class="tarjeta-moto" data-ir="moto"><img src="img/moto.webp" alt=""><span><span class="t" style="display:block">${t.motoTit}</span><p>${t.motoTxt}</p><span class="boton-chico">${t.motoBtn}</span></span></button>
+    <div class="sec"><h2>${t.comidaTit}</h2></div>
+    <div class="platos"><div class="plato"><div class="foto"><img src="img/comida.webp" alt=""></div><div class="d"><b>${t.p1}</b><span>${t.p1b}</span></div></div><div class="plato"><div class="foto"><img src="img/comida.webp" alt=""></div><div class="d"><b>${t.p2}</b><span>${t.p2b}</span></div></div></div>
+    <div style="height:20px"></div></div>${barra()}`;
+
+        // 2. Inicio con «más usados»: el orden sale de lo que más pide la persona.
+        document.querySelector('[data-p=usados]').innerHTML = `<div class="desliza">${cabecera()}
+    <div class="entregar">${t.entregar} <b>${t.ciudad}</b></div>
+    ${buscador()}
+    <div class="atajos"><button class="atajo" data-ir="precio"><span class="ico">${SVG.casa}</span>${t.casa}</button><button class="atajo" data-ir="precio"><span class="ico">${SVG.maleta}</span>${t.trabajo}</button><button class="atajo" data-ir="precio"><span class="ico">${SVG.historial}</span>${t.ultimo}</button></div>
+    <div class="sec"><h2>${t.tusUsados}</h2><button class="ver">${t.verTodos}</button></div>
+    <div class="carrusel">${['moto', 'comida', 'envios', 'carro', 'mercado', 'farmacia', 'licores'].map((s) => servicio(s)).join('')}</div>
+    <div class="puntos"><i class="on"></i><i></i></div>
+    <div class="sec"><h2>${t.recientesTit}</h2></div>
+    <div class="recientes">
+      <button class="fila" data-ir="precio"><span class="ico">${SVG.historial}</span><span class="tx"><b>${t.r1}</b><span>${t.r1b}</span></span>${SVG.flecha}</button>
+      <button class="fila" data-ir="precio"><span class="ico">${SVG.historial}</span><span class="tx"><b>${t.r2}</b><span>${t.r2b}</span></span>${SVG.flecha}</button>
+    </div>
+    <div class="sec"><h2>${t.comidaTit}</h2></div>
+    <div class="platos"><div class="plato"><div class="foto"><img src="img/comida.webp" alt=""></div><div class="d"><b>${t.p1}</b><span>${t.p1b}</span></div></div><div class="plato"><div class="foto"><img src="img/comida.webp" alt=""></div><div class="d"><b>${t.p2}</b><span>${t.p2b}</span></div></div></div>
+    <div style="height:20px"></div></div>${barra()}`;
+
+        // 3. Moto: el mapa con tu ubicación y una sola pregunta, «¿A dónde vas?».
+        document.querySelector('[data-p=moto]').innerHTML =
+          `${mapa(330, pinGrande + motito(70, 60) + motito(270, 210) + motito(200, 90))}
+    <button class="volver" data-ir="inicio" aria-label="Volver">${SVG.atras}</button>
+    <div class="hoja"><div class="agarre"></div><h1>${t.hojaMoto}</h1>
+      <div class="campo-viaje">
+        <div class="linea"><span class="punto-r"></span><span><span class="lab" style="display:block">${t.recogidaEn}</span><span class="val">${t.tuUbic}</span></span></div>
+        <button class="linea" data-ir="ruta" style="width:100%"><span class="punto-d"></span><span class="val vacio">${t.adonde}</span></button>
+      </div>
+      <div class="recientes" style="padding:6px 0 0">
+        <button class="fila" data-ir="precio"><span class="ico">${SVG.casa}</span><span class="tx"><b>${t.casa}</b><span>${t.r1b.split('·')[0]}</span></span>${SVG.flecha}</button>
+        <button class="fila" data-ir="precio"><span class="ico">${SVG.historial}</span><span class="tx"><b>${t.r1}</b><span>${t.r1b}</span></span>${SVG.flecha}</button>
+      </div>
+      <div class="casco">${SVG.casco}<span>${t.casco}</span></div>
+    </div>`;
+
+        // 4. Recogida y destino: cada casilla con su propio «Fijar en el mapa» y sugerencias.
+        document.querySelector('[data-p=ruta]').innerHTML =
+          `<div class="desliza" style="padding:4px 16px 16px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><button class="icono-btn" data-ir="moto" aria-label="Volver">${SVG.atras}</button><h1 style="font-size:20px">${t.o1}</h1></div>
+    <div class="campo-viaje">
+      <div class="linea"><span class="punto-r"></span><span><span class="lab" style="display:block">${t.recogida}</span><span class="val">${t.tuUbic}</span></span></div>
+    </div>
+    <button class="fijar">${SVG.pinR}${t.fijarR}<span class="fl">${SVG.flecha}</span></button>
+    <div class="campo-viaje">
+      <div class="linea activa"><span class="punto-d"></span><span><span class="lab" style="display:block">${t.destino}</span><span class="val">${t.escribiendo}<span style="display:inline-block;width:2px;height:18px;background:#101010;vertical-align:-3px;margin-left:1px"></span></span></span></div>
+    </div>
+    <button class="fijar">${SVG.pinR}${t.fijarD}<span class="fl">${SVG.flecha}</span></button>
+    <div class="sug-tit">${t.sugerencias}</div>
+    <div class="recientes" style="padding:0">
+      <button class="fila" data-ir="precio"><span class="ico">${SVG.pinG}</span><span class="tx"><b>${t.s1}</b><span>${t.s1b}</span></span></button>
+      <button class="fila" data-ir="precio"><span class="ico">${SVG.pinG}</span><span class="tx"><b>${t.s2}</b><span>${t.s2b}</span></span></button>
+      <button class="fila" data-ir="precio"><span class="ico">${SVG.pinG}</span><span class="tx"><b>${t.s3}</b><span>${t.s3b}</span></span></button>
+    </div></div>`;
+
+        // 5. Precio: tarjetas de vehículo con precio fijo, minutos de llegada y cómo pagas.
+        const ruta = `<svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 390 300"><path d="M90 220 C140 200 150 120 210 110 S300 70 310 60" fill="none" stroke="#101010" stroke-width="4" stroke-linecap="round"/><circle cx="90" cy="220" r="7" fill="#fff" stroke="#101010" stroke-width="4"/><rect x="303" y="53" width="14" height="14" fill="#F20D20"/></svg>`;
+        document.querySelector('[data-p=precio]').innerHTML = `${mapa(260, ruta)}
+    <button class="volver" data-ir="ruta" aria-label="Volver">${SVG.atras}</button>
+    <div class="hoja"><div class="agarre"></div><h1 style="font-size:20px">${t.elige}</h1>
+      <div class="opciones">
+        <button class="opcion sel"><img src="img/moto.webp" alt=""><span class="tx"><b>${t.o1}</b><span>${t.llega} 3 ${t.minutos} · ${t.o1b}</span></span><span class="pr"><b>${t.precio1}</b><span>${t.precio1b}</span></span></button>
+        <button class="opcion"><img src="img/carro.webp" alt=""><span class="tx"><b>${t.o2}</b><span>${t.llega} 6 ${t.minutos} · ${t.o2b}</span></span><span class="pr"><b>${t.precio2}</b><span>${t.precio2b}</span></span></button>
+      </div>
+      <button class="pago">${SVG.efectivo}${t.pago}<span class="fl">${t.pagoAlt}</span></button>
+      <button class="boton" data-ir="buscando">${t.pedir}</button>
+    </div>`;
+
+        // 6. Buscando conductor: el mapa vivo, cuántos ven el viaje y «Cancelar» siempre a la vista.
+        document.querySelector('[data-p=buscando]').innerHTML =
+          `${mapa(380, '<div class="pulso"><i></i><i></i><i></i></div>' + pinGrande + motito(80, 90) + motito(285, 250) + motito(240, 70) + motito(120, 300))}
+    <div class="hoja"><div class="agarre"></div>
+      <h1 style="font-size:21px;margin-bottom:6px">${t.buscandoTit}</h1>
+      <div class="progreso-busq"><i></i></div>
+      <p style="margin:0 0 14px;color:#666B73;font-size:13.5px;line-height:1.4">${t.buscandoTxt}</p>
+      <div class="resumen">
+        <div class="fila"><span class="ico"><img src="img/moto.webp" alt="" style="width:28px"></span><span class="tx"><b>${t.deA}</b><span>${t.precioRes}</span></span></div>
+      </div>
+      <div class="ok" style="margin-bottom:14px">${SVG.check}${t.precioFijo}</div>
+      <button class="boton sec2" data-ir="precio">${t.cancelar}</button>
+    </div>`;
+
+        document
+          .querySelectorAll('.pantalla')
+          .forEach((s) => s.classList.toggle('activa', s.dataset.p === P));
+        document.querySelectorAll('.pantalla.activa .idioma-app').forEach(selector);
+        document.querySelectorAll('[data-ir]').forEach((b) => {
+          if (b.dataset.ir)
+            b.onclick = (e) => {
+              e.stopPropagation();
+              ir(b.dataset.ir);
+            };
+        });
+      }
+      leerHash();
+      pintar();
+      window.addEventListener('hashchange', () => {
+        leerHash();
+        pintar();
+      });
+    </script>
+  </body>
+</html>

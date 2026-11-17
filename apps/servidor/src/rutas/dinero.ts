@@ -4,6 +4,7 @@ import { CONFIG_DINERO_INICIAL, type ConfigDinero, retiroMinimo } from '@tumbite
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { crearStripe } from '../stripe';
+import { crearCuentaConnect, paisDeCobros } from '../connectPaises';
 import { pedirRetiro, procesarRetiro, retirosActivos } from '../retiros';
 import { liquidacionesParaRevisar, liquidar } from '../liquidaciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
@@ -166,18 +167,10 @@ async function cuentaDeCobros(
     .bind(u.id)
     .first<{ stripe_cuenta: string }>();
   if (!fila) {
-    const cuenta = await stripe.post<{ id: string }>(
-      '/accounts',
-      {
-        type: 'express',
-        country: 'US',
-        email: u.correo,
-        capabilities: { transfers: { requested: true } },
-        business_type: u.rol === 'repartidor' ? 'individual' : undefined,
-        metadata: { usuario_id: u.id, rol: u.rol },
-      },
-      `cuenta-${u.id}`,
-    );
+    // C-CONNECT-PAIS y C-CONNECT-UN-INTENTO: la cuenta nace con el país de su zona, y el primer
+    // rechazo de Stripe frena todo intento siguiente.
+    const id = await crearCuentaConnect(db, stripe, u, await paisDeCobros(db, u));
+    const cuenta = { id };
     await db
       .prepare('INSERT INTO cuentas_stripe (usuario_id, stripe_cuenta) VALUES (?, ?)')
       .bind(u.id, cuenta.id)

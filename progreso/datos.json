@@ -443,6 +443,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-17",
+      "titulo": "Moto y Carro: «Fijar en el mapa» dentro de cada casilla, y borrador del inicio nuevo",
+      "texto": "En Moto, Carro y Envíos ya no salen dos tarjetas iguales de «Marcar mi puerta en el mapa»: cada casilla trae su propio enlace, «Fijar recogida en el mapa» y «Fijar destino en el mapa», como Uber y DiDi; en el carrito de comida dice «Fijar entrega en el mapa». De paso, «Viajes fijos» y «Conductores de confianza» ya se leen en teléfonos con modo oscuro. Y queda un borrador navegable del inicio nuevo y del flujo de pedir una moto (página «borrador-inicio»), para cambiarlo ahí antes de construirlo en la app."
+    },
+    {
+      "fecha": "2026-11-17",
       "titulo": "Regalos de Divoox: cupones con presupuesto para el piloto",
       "texto": "Divoox ya puede regalar viajes, envíos y comida. El equipo crea un cupón con su presupuesto total, ciudades, servicios y vencimiento; nace apagado y se apaga solo al gastarse. El cliente agrega el código en la app y paga en mano solo la diferencia; el conductor ve «Cobra X · Divoox te paga Y» y lo del regalo entra a su saldo. Un regalo por cuenta, por celular y por teléfono; el conductor no puede usar regalos en sus propios viajes y tiene un tope diario. Guía en Docs en español e inglés."
     },

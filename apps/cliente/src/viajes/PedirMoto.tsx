@@ -13,7 +13,9 @@ import {
   pagaEnMano,
   textoReferencia,
   textoAMonto,
+  textoFijarEnMapa,
   textoMultiplicador,
+  textosPuntoExacto,
   useBorrador,
 } from '@tumbite/compartido';
 import {
@@ -29,7 +31,6 @@ import {
   Text,
 } from '@tumbite/movil';
 import { PuntoExacto } from '../PuntoExacto';
-import { ResumenPunto } from '../ResumenPunto';
 import { Pildora, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
@@ -165,6 +166,9 @@ export function PedirMoto({
     () => (v.destinoLat ? { lat: Number(v.destinoLat), lng: Number(v.destinoLng) } : null),
     [v.destinoLat, v.destinoLng],
   );
+  // C-FIJAR-EN-MAPA: la casilla ya tiene su punto en el mapa y su dirección.
+  const recogidaFijada = recogida != null && v.recogida.trim().length > 0;
+  const destinoFijado = destino != null && v.destino.trim().length > 0;
 
   const cotizar = useCallback(
     async (otraCategoria?: CategoriaViaje) => {
@@ -347,6 +351,15 @@ export function PedirMoto({
         }}
         cerca={recogida}
         testID="moto-recogida"
+        // C-FIJAR-EN-MAPA: «Fijar recogida en el mapa», dentro de su casilla (como Uber y DiDi).
+        enMapa={{
+          texto: textoFijarEnMapa(idioma, 'recogida', recogidaFijada),
+          marcado: recogidaFijada,
+          detalle: v.recogidaRef,
+          ajustar: textosPuntoExacto(idioma).ajustar,
+          abrir: () => setMarcando('recogida'),
+          testID: 'moto-fijar-recogida',
+        }}
       />
       <CampoDireccion
         etiqueta={servicio === 'envios' ? t.destinoEnvio : t.destino}
@@ -364,6 +377,14 @@ export function PedirMoto({
         }}
         cerca={recogida}
         testID="moto-destino"
+        enMapa={{
+          texto: textoFijarEnMapa(idioma, 'destino', destinoFijado),
+          marcado: destinoFijado,
+          detalle: [v.destinoApto, v.destinoRef].filter(Boolean).join(' · '),
+          ajustar: textosPuntoExacto(idioma).ajustar,
+          abrir: () => setMarcando('destino'),
+          testID: 'moto-fijar-destino',
+        }}
       />
       {/* C-VIAJE-PARADAS: paradas intermedias, antes de ver el precio (Moto y Carro). */}
       {servicio !== 'envios' ? (
@@ -374,21 +395,6 @@ export function PedirMoto({
           cerca={recogida}
         />
       ) : null}
-      {/* C-PUNTO-EXACTO: el punto de encuentro y el destino, cada uno marcado en el mapa. */}
-      <ResumenPunto
-        punto={recogida}
-        direccion={v.recogida}
-        referencia={v.recogidaRef}
-        abrir={() => setMarcando('recogida')}
-        testID="moto-punto-recogida"
-      />
-      <ResumenPunto
-        punto={destino}
-        direccion={v.destino}
-        referencia={[v.destinoApto, v.destinoRef].filter(Boolean).join(' · ')}
-        abrir={() => setMarcando('destino')}
-        testID="moto-punto-destino"
-      />
       <Modal
         visible={marcando != null}
         animationType="slide"
