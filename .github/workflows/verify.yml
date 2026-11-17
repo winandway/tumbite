@@ -30,15 +30,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - run: npx playwright test
-      # El recorrido completo en el navegador (restaurante, cliente, repartidor, pago simulado,
-      # entrega y calificación, en inglés y en español). Si se rompe, no se publica.
+
+  # C-RECORRIDO-TANDAS (16 nov 2026): el recorrido completo en el navegador (restaurante, cliente,
+  # repartidor, pago simulado, entrega y calificación, en inglés y en español), en TRES tandas a la vez,
+  # cada una en su máquina y con su propia base. En un solo carril pasaba de 20 minutos y frenaba la
+  # publicación. Las tandas salen de scripts/recorrido/tandas.mjs (por tiempo medido; la 3 es «todo lo
+  # demás»). Cada tanda avisa en la corrida si pasa del 70 % de su límite. Si una se rompe, no se publica.
+  recorrido:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tanda: [1, 2, 3]
+    name: recorrido (tanda ${{ matrix.tanda }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - name: Recorrido completo de un pedido
-        run: npm run recorrido
+        run: >-
+          node scripts/recorrido/con-tiempo.mjs 20 "Recorrido, tanda ${{ matrix.tanda }}" --
+          npm run recorrido -- $(node scripts/recorrido/tandas.mjs ${{ matrix.tanda }})
         timeout-minutes: 20
       - name: Rastros del recorrido si falló
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: recorrido-rastros
+          name: recorrido-rastros-${{ matrix.tanda }}
           path: test-results/
           retention-days: 7
