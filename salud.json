@@ -25,6 +25,7 @@
     "reloj": "ok",
     "transiciones": "ok",
     "libro": "ok",
+    "regalos": "ok",
     "disputas": "ok",
     "errores": "ok",
     "bandeja": "ok",
@@ -35,5 +36,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-17T05:05:03.855598+00:00"
+  "medido": "2026-11-17T17:31:29.216769+00:00"
 }
