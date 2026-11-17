@@ -3779,7 +3779,7 @@ CREATE TABLE IF NOT EXISTS autorizaciones_pedido (
 -- aquí esperando que OTRA persona del equipo (perfil Total o Finanzas) lo apruebe. Nunca se borra.
 CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
-  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('devolucion_pedido', 'reembolso_recarga', 'ajuste_billetera', 'fondo_punto', 'confirmar_liquidacion', 'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor')),
   objeto TEXT NOT NULL,
   monto INTEGER NOT NULL,
   moneda TEXT NOT NULL,
@@ -4175,3 +4175,32 @@ CREATE TABLE IF NOT EXISTS alertas_regalo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS alertas_regalo_fecha ON alertas_regalo(creado_en);
+
+-- C-SALDO-CONDUCTOR (17 nov 2026, piloto de El Vigía y Tucaní): el equipo le carga saldo prepago a un
+-- conductor a mano (regalo de arranque, pagó por pago móvil) y el saldo de regalo para conductores
+-- nuevos por ciudad, con presupuesto. Cada carga entra al libro (bolsillo prepago) con su autor; el
+-- monto pasa por la doble firma del dinero (control dual) y por el tope del código.
+CREATE TABLE IF NOT EXISTS cargas_saldo_conductor (
+  id TEXT PRIMARY KEY,
+  conductor_id TEXT NOT NULL,
+  zona_id TEXT,
+  pais TEXT NOT NULL,
+  moneda TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  tipo TEXT NOT NULL CHECK (tipo IN ('manual', 'regalo_nuevo', 'regalo_a_saldo')),
+  motivo TEXT NOT NULL DEFAULT '',
+  comprobante TEXT NOT NULL DEFAULT '',
+  autor_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS cargas_saldo_conductor_quien ON cargas_saldo_conductor(conductor_id, creado_en);
+-- Un solo regalo de arranque por conductor, para siempre.
+CREATE UNIQUE INDEX IF NOT EXISTS cargas_saldo_regalo_nuevo ON cargas_saldo_conductor(conductor_id) WHERE tipo = 'regalo_nuevo';
+CREATE TABLE IF NOT EXISTS regalo_conductor_nuevo (
+  zona_id TEXT PRIMARY KEY,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  presupuesto INTEGER NOT NULL CHECK (presupuesto > 0),
+  activo INTEGER NOT NULL DEFAULT 0,
+  actualizado_por TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
