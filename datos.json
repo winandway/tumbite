@@ -435,6 +435,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-16",
+      "titulo": "Un «?» en cada parte del panel del equipo",
+      "texto": "En el panel interno del equipo, cada parte que tiene explicación lleva su signo de interrogación al lado. Al tocarlo se abre a un costado la explicación de esa parte, sin salir de la pantalla, con el enlace a la guía completa con capturas."
+    },
+    {
+      "fecha": "2026-11-16",
       "titulo": "Conductor de confianza y viajes fijos",
       "texto": "El cliente marca a su conductor de confianza desde «Mis viajes» y, al pedir Moto, Carro o un envío, el viaje le llega primero a él durante un minuto; si no lo toma, pasa a los demás. Nuevos «Viajes fijos»: la escuela, el trabajo o cualquier viaje que se repite, con días, ida y vuelta, pausa y saltar un día; cada viaje se reserva solo un día antes. Viajes de menores con PIN, solo con conductores que aceptan llevar menores, y avisos al responsable al recoger y al dejar. En Driver, «Clientes fijos» con la agenda de la semana y «No puedo». En el panel, la pestaña «Viajes fijos». Publicado en divoox.com, con guías en Docs en español e inglés."
     },
