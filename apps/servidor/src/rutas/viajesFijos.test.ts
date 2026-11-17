@@ -111,14 +111,35 @@ const ofertaDe = async (e: E, operacionId: string) =>
     .bind(operacionId)
     .first<{ conductor_id: string; s: number }>()) ?? null;
 
-/** La hora local de Miami dentro de `min` minutos, «HH:MM». */
-function horaMiami(min: number) {
+/** La hora local de Miami de un instante, «HH:MM». */
+function horaMiamiDe(instante: Date) {
   return new Intl.DateTimeFormat('en-GB', {
     timeZone: 'America/New_York',
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-  }).format(new Date(Date.now() + min * 60_000));
+  }).format(instante);
+}
+
+/** La hora local de Miami dentro de `min` minutos, «HH:MM». */
+function horaMiami(min: number, ahora = new Date()) {
+  return horaMiamiDe(new Date(ahora.getTime() + min * 60_000));
+}
+
+/**
+ * C-VIAJES-FIJOS-HORA (16 nov 2026): ida y vuelta de un viaje fijo para las pruebas, sacadas de UN
+ * solo instante y siempre en el mismo día local (la vuelta, un minuto después de la ida). Antes la
+ * vuelta se leía aparte, cuatro horas después: entre las 20:00 y las 21:00 de Miami caía al día
+ * siguiente, quedaba «antes» que la ida y la prueba fallaba con 400 (frenaba los empujes de noche).
+ * La ida va a 3 horas (dentro de las 24 horas y lejos del mínimo de anticipación); si justo cae a
+ * las 23:59, las dos se corren un minuto antes.
+ */
+export function idaYVuelta(ahora = new Date()) {
+  const ida = horaMiami(180, ahora) === '23:59' ? horaMiami(179, ahora) : horaMiami(180, ahora);
+  const [h = 0, m = 0] = ida.split(':').map(Number);
+  const total = h * 60 + m + 1;
+  const vuelta = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  return { ida, vuelta };
 }
 
 const rutinaBase = (extra: Record<string, unknown> = {}) => ({
@@ -130,6 +151,18 @@ const rutinaBase = (extra: Record<string, unknown> = {}) => ({
   horaIda: horaMiami(180),
   metodoPago: 'efectivo',
   ...extra,
+});
+
+describe('C-VIAJES-FIJOS-HORA: las pruebas no dependen de la hora a la que corren', () => {
+  it('a cualquier minuto del día, la vuelta queda después de la ida el mismo día', () => {
+    // Un día entero de Miami, minuto a minuto (incluye 20:00-21:00, cuando fallaba).
+    const inicio = Date.parse('2026-11-16T05:00:00Z'); // 00:00 en Miami
+    for (let i = 0; i < 24 * 60; i++) {
+      const { ida, vuelta } = idaYVuelta(new Date(inicio + i * 60_000));
+      expect(vuelta > ida, `${i}: ida ${ida}, vuelta ${vuelta}`).toBe(true);
+      expect(vuelta <= '23:59').toBe(true);
+    }
+  });
 });
 
 describe('C-CONDUCTOR-CONFIANZA', () => {
@@ -448,7 +481,7 @@ describe('C-VIAJES-FIJOS', () => {
       '/datos/rutinas',
       rutinaBase({
         conductorId: fiel.id,
-        horaVuelta: horaMiami(181) < horaMiami(180) ? null : horaMiami(240),
+        ...(({ ida, vuelta }) => ({ horaIda: ida, horaVuelta: vuelta }))(idaYVuelta()),
       }),
       e.cliente.token,
     );
