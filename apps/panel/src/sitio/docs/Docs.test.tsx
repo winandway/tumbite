@@ -160,11 +160,7 @@ describe('Docs', { timeout: 30_000 }, () => {
     expect(opciones.length).toBeLessThanOrEqual(20);
     // «wallet» en español trae la billetera, con la palabra resaltada.
     expect(opciones.slice(0, 5).some((o) => /billetera/i.test(o.textContent ?? ''))).toBe(true);
-    // C-SALDO-CONDUCTOR: con la guía del saldo del conductor, «billetera» puede no ser la primera
-    // palabra resaltada; tiene que estar resaltada en la lista.
-    expect(
-      [...lista.querySelectorAll('mark')].some((m) => /billetera/i.test(m.textContent ?? '')),
-    ).toBe(true);
+    expect(lista.querySelector('mark')).toHaveTextContent(/billetera/i);
     // Flecha abajo marca la primera y Enter la abre.
     await userEvent.keyboard('{ArrowDown}');
     expect(opciones[0]).toHaveAttribute('aria-selected', 'true');

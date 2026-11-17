@@ -213,7 +213,10 @@ const comoEscrita: SearchOptions = {
 /** Los equivalentes del diccionario van completos (sin comienzo: «tip» no debe traer «tipo»). */
 const comoEquivalente: SearchOptions = {
   prefix: false,
-  fuzzy: (t) => (t.length >= 6 ? 0.15 : false),
+  // C-SALDO-CONDUCTOR (17 nov 2026): un error solo en las palabras de 8 letras o más (el plural de
+  // «billetera»). Antes «cartera», equivalente de «wallet», traía «carrera» y la guía del saldo
+  // del conductor le ganaba a la de la billetera.
+  fuzzy: (t) => (t.length >= 8 ? 1 : false),
   // Lo escrito tal cual pesa más que su equivalente del otro idioma.
   boost: Object.fromEntries(Object.entries(PESOS).map(([k, v]) => [k, v * 0.6])),
 };
