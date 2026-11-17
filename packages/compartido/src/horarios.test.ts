@@ -26,6 +26,21 @@ describe('horarios del restaurante (C-HORARIOS)', () => {
     expect(abiertoPorHorario([], MIAMI, miercoles3pm)).toBe(true);
   });
 
+  it('C-HORARIO-2359: «cierra 23:59» es abierto hasta el final del día, también en el último minuto', () => {
+    // Miércoles 14 oct 2026, 11:59:30 p. m. en Miami (03:59:30 UTC del jueves).
+    const ultimoMinuto = new Date('2026-10-15T03:59:30Z');
+    const todoElDia = [0, 1, 2, 3, 4, 5, 6].map((dia) => ({ dia, abre: '00:00', cierra: '23:59' }));
+    expect(abiertoPorHorario(todoElDia, MIAMI, ultimoMinuto)).toBe(true);
+    expect(
+      abiertoPorHorario([{ dia: 3, abre: '18:00', cierra: '23:59' }], MIAMI, ultimoMinuto),
+    ).toBe(true);
+    // Y a las 12:00 a. m. del jueves ya es el turno del jueves, no el del miércoles.
+    const jueves = new Date('2026-10-15T04:00:30Z');
+    expect(abiertoPorHorario([{ dia: 3, abre: '18:00', cierra: '23:59' }], MIAMI, jueves)).toBe(
+      false,
+    );
+  });
+
   it('un turno que cierra después de medianoche sigue abierto en la madrugada', () => {
     const martesNoche = [{ dia: 2, abre: '18:00', cierra: '02:00' }];
     const miercoles1am = new Date('2026-10-14T05:00:00Z');

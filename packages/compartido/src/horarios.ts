@@ -36,7 +36,10 @@ export function abiertoPorHorario(
   const ayer = (dia + 6) % 7;
   return turnos.some((t) => {
     const a = minutos(t.abre);
-    const c = minutos(t.cierra);
+    // C-HORARIO-2359: «23:59» es la última hora que se puede escribir y quiere decir «hasta el final
+    // del día»; si no, ese último minuto quedaba cerrado (un local abierto todo el día rechazaba
+    // pedidos a las 11:59 p. m.).
+    const c = t.cierra === '23:59' ? 24 * 60 : minutos(t.cierra);
     if (c > a) return t.dia === dia && m >= a && m < c;
     // Cierra después de medianoche: hoy desde «abre», o la madrugada de hoy si el turno es de ayer.
     return (t.dia === dia && m >= a) || (t.dia === ayer && m < c);

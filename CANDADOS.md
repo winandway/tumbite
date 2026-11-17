@@ -5032,3 +5032,11 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **El aviso al 70 %:** `scripts/recorrido/con-tiempo.mjs` envuelve cada tanda. Si tarda más del 70 % de su límite (14 de 20 minutos), deja una advertencia en la corrida («Tiempo del recorrido») y en el resumen, antes de que el límite la corte.
 - **Candado (visto en rojo sacando `sesion.spec.ts` de la tanda 3):** `apps/servidor/src/recorridoTandas.test.ts` falla si una prueba del recorrido queda sin tanda o en dos, si la corrida pierde las tres tandas en paralelo, si el límite del aviso no es el mismo que el corte, si el recorrido vuelve a correr entero en un solo carril, o si el aviso no sale al pasar el 70 %.
 - **Cuando salte el aviso:** se pasa un archivo pesado de la tanda 3 a la 1 o la 2 (o se agrega una cuarta tanda en `tandas.mjs` y en la lista de la corrida), con lo que diga el tiempo medido. Subir el límite solo como último recurso, y midiendo antes.
+
+## C-HORARIO-2359 — «cierra 23:59» es abierto hasta el final del día (17 nov 2026) — todos los países
+
+- **Qué se rompió:** la verificación del principal falló a las 11:59 p. m. de Miami: el restaurante de prueba, abierto «00:00 a 23:59» todos los días, rechazó el pedido con «el restaurante está cerrado a esta hora». Le pasaba igual a cualquier restaurante real con ese horario durante el último minuto del día (y a las franjas del menú).
+- **Causa real:** `abiertoPorHorario` (`packages/compartido/src/horarios.ts`) trataba «23:59» como cierre exacto a las 23:59, y 23:59 es la última hora que se puede escribir.
+- **Arreglo:** «23:59» cuenta como fin del día (minuto 1440). Las demás horas no cambian.
+- **Candado (visto en rojo):** «C-HORARIO-2359» en `packages/compartido/src/horarios.test.ts` (11:59:30 p. m. abierto; las 12:00 a. m. ya son del día siguiente).
+- **No tocar:** no volver a comparar «23:59» como un cierre normal.
