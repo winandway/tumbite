@@ -1364,6 +1364,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'Tienes un pedido en curso. Espera a que termine para borrar tu cuenta.',
     'You have an order in progress. Wait until it’s done to delete your account.',
   ],
+  [
+    'Tienes un viaje o un envío en curso. Espera a que termine para borrar tu cuenta.',
+    'You have a ride or a package delivery in progress. Wait until it’s done to delete your account.',
+  ],
   ['Tu carrito está vacío.', 'Your cart is empty.'],
   ['Tu cuenta no tiene permiso para esto.', 'Your account doesn’t have permission for this.'],
   [

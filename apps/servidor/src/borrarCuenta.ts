@@ -26,6 +26,37 @@ export async function borrarCuenta(
       undefined,
       409,
     );
+  // C-BORRADO-SERVICIOS (16 nov 2026): tampoco con un viaje o un envío en curso, como pasajero o
+  // como conductor. Antes el 409 solo miraba los pedidos de comida.
+  const viajeActivo = await db
+    .prepare(
+      "SELECT 1 FROM operaciones WHERE (cliente_id = ?1 OR conductor_id = ?1) AND estado_general IN ('buscando','asignada','en_curso')",
+    )
+    .bind(u.id)
+    .first();
+  if (viajeActivo)
+    throw new ErrorDatos(
+      'Tienes un viaje o un envío en curso. Espera a que termine para borrar tu cuenta.',
+      undefined,
+      409,
+    );
+  // C-BORRADO-SERVICIOS: las claves de las fotos de recogida y de entrega de sus pedidos (como
+  // cliente o como repartidor) y de sus envíos, y de su selfie con casco, para borrar los archivos.
+  const misPedidos = 'SELECT id FROM pedidos WHERE cliente_id = ?1 OR repartidor_id = ?1';
+  const misOperaciones = 'SELECT id FROM operaciones WHERE cliente_id = ?1 OR conductor_id = ?1';
+  const fotosServicios = (
+    await db
+      .prepare(
+        `SELECT clave FROM evidencias WHERE clave != '' AND pedido_id IN (${misPedidos})
+         UNION SELECT foto_recogida FROM envios_persona WHERE foto_recogida IS NOT NULL AND operacion_id IN (${misOperaciones})
+         UNION SELECT foto_entrega FROM envios_persona WHERE foto_entrega IS NOT NULL AND operacion_id IN (${misOperaciones})
+         UNION SELECT clave FROM selfies_casco WHERE usuario_id = ?1
+         UNION SELECT clave FROM selfies_control WHERE usuario_id = ?1 AND clave != ''`,
+      )
+      .bind(u.id)
+      .all<{ clave: string }>()
+  ).results.map((f) => f.clave);
+  const comoPasajero = 'SELECT id FROM operaciones WHERE cliente_id = ?1';
   // C-BORRADO-CHAT (16 nov 2026): las claves de las fotos que mandó en los chats, para borrar los
   // archivos después de vaciar las filas.
   const fotosChat = (
@@ -110,6 +141,74 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare("UPDATE mensajes_viaje SET texto = '' WHERE de_usuario_id = ?").bind(u.id),
     db.prepare("UPDATE reportes_contenido SET texto = '' WHERE autor_id = ?").bind(u.id),
+    // C-BORRADO-SERVICIOS (16 nov 2026): lo que dejan los viajes, los envíos y las fotos de entrega.
+    // Origen, destino y paradas de sus viajes como pasajero, el enlace en vivo que compartió y sus
+    // contactos de confianza. Los importes se guardan (contabilidad), sin lugares.
+    db
+      .prepare(
+        `UPDATE viajes SET origen_direccion = 'Dirección borrada', destino_direccion = 'Dirección borrada',
+           origen_lat = 0, origen_lng = 0, destino_lat = 0, destino_lng = 0 WHERE operacion_id IN (${comoPasajero})`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        `UPDATE paradas_viaje SET direccion = 'Dirección borrada', lat = 0, lng = 0 WHERE operacion_id IN (${comoPasajero})`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        `UPDATE cambios_viaje SET paradas_json = '[]' WHERE operacion_id IN (${comoPasajero})`,
+      )
+      .bind(u.id),
+    db.prepare('DELETE FROM viajes_compartidos WHERE creado_por = ?').bind(u.id),
+    db.prepare('DELETE FROM contactos_confianza WHERE cliente_id = ?').bind(u.id),
+    db.prepare('DELETE FROM ubicaciones_recientes WHERE usuario_id = ?').bind(u.id),
+    // Envíos de persona a persona que mandó: qué era y quién lo recibía (nombre y teléfono).
+    db
+      .prepare(
+        `UPDATE envios_persona SET descripcion = '', destinatario_nombre = '', destinatario_telefono = ''
+         WHERE operacion_id IN (${comoPasajero})`,
+      )
+      .bind(u.id),
+    // Fotos de recogida y de entrega (de sus pedidos y envíos, como cliente o como quien las tomó):
+    // primero la ubicación sacada de cada foto, después la referencia y el punto de entrega.
+    db
+      .prepare(
+        `DELETE FROM fotos_gps WHERE clave IN (SELECT clave FROM evidencias WHERE pedido_id IN (${misPedidos}))
+           OR clave IN (SELECT foto_recogida FROM envios_persona WHERE operacion_id IN (${misOperaciones}))
+           OR clave IN (SELECT foto_entrega FROM envios_persona WHERE operacion_id IN (${misOperaciones}))`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        `UPDATE evidencias SET clave = '', lat = NULL, lng = NULL, nota = '' WHERE pedido_id IN (${misPedidos})`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        `UPDATE envios_persona SET foto_recogida = NULL, foto_entrega = NULL WHERE operacion_id IN (${misOperaciones})`,
+      )
+      .bind(u.id),
+    db
+      .prepare(
+        'DELETE FROM fotos_entrega_publicas WHERE pedido_id IN (SELECT id FROM pedidos WHERE cliente_id = ?)',
+      )
+      .bind(u.id),
+    // Conductor: su cuenta de cobro (banco, titular, pago móvil) y sus selfies con casco y de control.
+    db
+      .prepare(
+        "UPDATE cuentas_cobro SET banco = '', titular = 'Cuenta borrada', identificador = '', activa = 0 WHERE usuario_id = ?",
+      )
+      .bind(u.id),
+    db.prepare('DELETE FROM selfies_casco WHERE usuario_id = ?').bind(u.id),
+    db.prepare("UPDATE selfies_control SET clave = '' WHERE usuario_id = ?").bind(u.id),
+    // Restaurante: sus respuestas públicas a las reseñas (la reseña es del cliente y se queda).
+    db
+      .prepare(
+        `UPDATE calificaciones SET respuesta = NULL, respondida_en = NULL WHERE pedido_id IN
+           (SELECT p.id FROM pedidos p JOIN restaurantes r ON r.id = p.restaurante_id WHERE r.dueno_id = ?)`,
+      )
+      .bind(u.id),
     db.prepare('DELETE FROM confirmaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM recuperaciones WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM lista_espera WHERE correo = ?').bind(u.correo),
@@ -126,7 +225,7 @@ export async function borrarCuenta(
   ]);
   // Y las fotos del documento, la cara y el local, del almacén privado.
   if (env.BUCKET) {
-    for (const prefix of [`kyc/${u.id}/`, `vehiculos/${u.id}/`]) {
+    for (const prefix of [`kyc/${u.id}/`, `vehiculos/${u.id}/`, `casco/${u.id}/`]) {
       let cursor: string | undefined;
       do {
         const lista = await env.BUCKET.list({ prefix, cursor });
@@ -139,6 +238,11 @@ export async function borrarCuenta(
   if (env.BUCKET && fotosChat.length) {
     for (let i = 0; i < fotosChat.length; i += 1000)
       await env.BUCKET.delete(fotosChat.slice(i, i + 1000));
+  }
+  // C-BORRADO-SERVICIOS: y los archivos de las fotos de recogida, entrega y selfies.
+  if (env.BUCKET && fotosServicios.length) {
+    for (let i = 0; i < fotosServicios.length; i += 1000)
+      await env.BUCKET.delete(fotosServicios.slice(i, i + 1000));
   }
   // Y los archivos de las fotos de la puerta (puertas/<usuario>/…), del almacén privado.
   await borrarPuertasDeUsuario(env, u.id);
