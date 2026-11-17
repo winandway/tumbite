@@ -21,12 +21,14 @@ import {
   C,
   Campo,
   CampoDireccion,
+  Modal,
   alSalirTelefono,
   almacenTelefono,
   useSesion,
   Text,
 } from '@tumbite/movil';
-import { ElegirEnMapa } from '../ElegirEnMapa';
+import { PuntoExacto } from '../PuntoExacto';
+import { ResumenPunto } from '../ResumenPunto';
 import { Pildora, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
@@ -74,6 +76,10 @@ export function PedirMoto({
       destinoLng: '',
       recogidaLat: '',
       recogidaLng: '',
+      // C-PUNTO-EXACTO: punto de referencia del punto de encuentro y del destino (opcionales).
+      recogidaRef: '',
+      destinoRef: '',
+      destinoApto: '',
       // C-VIAJE-TARJETA: cómo paga el viaje.
       metodo: 'efectivo',
       // C-CARRO-CATEGORIAS: en Carro, económico, Comfort, Premium o XL (lo que ofrezca la ciudad).
@@ -97,6 +103,8 @@ export function PedirMoto({
     alSalir: alSalirTelefono,
   });
   const { valores: v, cambiar } = b;
+  // C-PUNTO-EXACTO: qué punto se está marcando en el mapa con el pin fijo.
+  const [marcando, setMarcando] = useState<'recogida' | 'destino' | null>(null);
   // C-MISMA-RUTA: lo escrito vino de «Cambiar algo» en un viaje anterior (no es un borrador perdido).
   const [rellenado] = useState(() => tomarRelleno(servicio));
   // C-ENVIO-TAMANO: «Mediano · 15 kg» (en libras en inglés).
@@ -170,9 +178,17 @@ export function PedirMoto({
           {
             servicio,
             categoria: servicio === 'carro' ? (otraCategoria ?? categoria) : 'estandar',
-            origen: { ...recogida, direccion: v.recogida.trim() || t.recogida },
+            origen: {
+              ...recogida,
+              direccion: v.recogida.trim() || t.recogida,
+              referencia: v.recogidaRef,
+            },
             ...(intermedias.length ? { paradas: intermedias } : {}),
-            destino: { ...destino, direccion: v.destino.trim() },
+            destino: {
+              ...destino,
+              direccion: v.destino.trim(),
+              referencia: [v.destinoApto, v.destinoRef].filter((x) => x.trim()).join(' · '),
+            },
           },
         );
         setCotizacion(r.cotizacion);
@@ -307,6 +323,8 @@ export function PedirMoto({
           cambiar('recogidaLat', String(d.punto.lat));
           cambiar('recogidaLng', String(d.punto.lng));
           setCotizacion(null);
+          // C-PUNTO-EXACTO: una calle o avenida no basta: se marca el punto de encuentro.
+          setMarcando('recogida');
         }}
         cerca={recogida}
         testID="moto-recogida"
@@ -323,6 +341,7 @@ export function PedirMoto({
           cambiar('destinoLat', String(d.punto.lat));
           cambiar('destinoLng', String(d.punto.lng));
           setCotizacion(null);
+          setMarcando('destino');
         }}
         cerca={recogida}
         testID="moto-destino"
@@ -336,19 +355,60 @@ export function PedirMoto({
           cerca={recogida}
         />
       ) : null}
-      <ElegirEnMapa
-        punto={destino}
-        cambiarPunto={(p) => {
-          cambiar('destinoLat', String(p.lat));
-          cambiar('destinoLng', String(p.lng));
-          setCotizacion(null);
-        }}
-        cambiarDireccion={(d) => {
-          if (!v.destino.trim()) cambiar('destino', d);
-        }}
-        cerca={recogida}
-        textos={{ ayuda: t.destinoAyuda, buscando: t.buscandoCalle, pin: t.pinDestino }}
+      {/* C-PUNTO-EXACTO: el punto de encuentro y el destino, cada uno marcado en el mapa. */}
+      <ResumenPunto
+        punto={recogida}
+        direccion={v.recogida}
+        referencia={v.recogidaRef}
+        abrir={() => setMarcando('recogida')}
+        testID="moto-punto-recogida"
       />
+      <ResumenPunto
+        punto={destino}
+        direccion={v.destino}
+        referencia={[v.destinoApto, v.destinoRef].filter(Boolean).join(' · ')}
+        abrir={() => setMarcando('destino')}
+        testID="moto-punto-destino"
+      />
+      <Modal
+        visible={marcando != null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setMarcando(null)}
+        testID="moto-punto-exacto"
+      >
+        {marcando ? (
+          <PuntoExacto
+            key={marcando}
+            tipo={
+              marcando === 'destino' ? 'destino' : servicio === 'envios' ? 'envio' : 'encuentro'
+            }
+            conApto={marcando === 'destino' && servicio === 'envios'}
+            inicial={
+              marcando === 'recogida'
+                ? { punto: recogida, direccion: v.recogida, referencia: v.recogidaRef }
+                : {
+                    punto: destino,
+                    direccion: v.destino,
+                    referencia: v.destinoRef,
+                    apto: v.destinoApto,
+                  }
+            }
+            cerca={recogida}
+            volver={() => setMarcando(null)}
+            confirmar={(p) => {
+              const de = marcando;
+              cambiar(`${de}Lat`, String(p.punto.lat));
+              cambiar(`${de}Lng`, String(p.punto.lng));
+              if (p.direccion) cambiar(de, p.direccion);
+              cambiar(de === 'recogida' ? 'recogidaRef' : 'destinoRef', p.referencia);
+              if (de === 'destino') cambiar('destinoApto', p.apto);
+              setCotizacion(null);
+              setMarcando(null);
+            }}
+          />
+        ) : null}
+      </Modal>
       {/* C-TEXTOS-POR-SERVICIO: cada servicio dice lo suyo. */}
       <Text style={{ color: '#666B73' }}>
         {servicio === 'carro' ? t.avisoCarro : servicio === 'envios' ? t.avisoEnvio : t.casco}

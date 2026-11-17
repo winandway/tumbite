@@ -538,3 +538,50 @@ describe('apartamento, piso o edificio', () => {
     expect(l.datos.direcciones[0].apto).toBe('Piso 3');
   });
 });
+
+// C-PUNTO-EXACTO (16 nov 2026): una avenida larga no basta. El punto de referencia («frente a la
+// panadería») se guarda con la dirección y se suma a la que leen el repartidor y el restaurante.
+describe('punto exacto y punto de referencia', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('el pedido guarda la referencia y la dirección del repartidor la muestra', async () => {
+    stripeFalso();
+    const { m, cliente, pedidoBase } = await escenario();
+    const r = await m.llamar(
+      'POST',
+      '/datos/pedidos',
+      { ...pedidoBase, apto: 'Casa 12', referencia: '  frente a la   panadería ' },
+      cliente.token,
+    );
+    expect(r.estado).toBe(201);
+    const f = await m.DB.prepare('SELECT direccion, referencia FROM pedidos WHERE id = ?')
+      .bind(r.datos.pedidoId)
+      .first();
+    expect(f).toEqual({
+      direccion: '200 Calle Prueba, Miami · Casa 12 · Ref.: frente a la panadería',
+      referencia: 'frente a la   panadería',
+    });
+  });
+
+  it('la dirección guardada recuerda el punto exacto y la referencia', async () => {
+    const { m, cliente } = await escenario();
+    const g = await m.llamar(
+      'POST',
+      '/datos/mis-direcciones',
+      {
+        direccion: 'Av. Don Pepe Rojas, El Vigía, Mérida',
+        lat: 8.6195,
+        lng: -71.6505,
+        referencia: 'Frente a la panadería',
+      },
+      cliente.token,
+    );
+    expect(g.estado).toBe(201);
+    const l = await m.llamar('GET', '/datos/mis-direcciones', undefined, cliente.token);
+    expect(l.datos.direcciones[0]).toMatchObject({
+      lat: 8.6195,
+      lng: -71.6505,
+      referencia: 'Frente a la panadería',
+    });
+  });
+});

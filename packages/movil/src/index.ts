@@ -40,3 +40,4 @@ export * from './movimiento';
 export * from './Deslizador';
 export * from './TarjetaServicio';
 export * from './AvisoDeshacer';
+export * from './Hoja';

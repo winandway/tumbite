@@ -1,5 +1,6 @@
+import { Modal } from './Hoja';
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { ErrorApi, enIdioma, useBorrador } from '@tumbite/compartido';
 import { Text } from './diseno';
 import { alSalirTelefono, almacenTelefono } from './almacen';

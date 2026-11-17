@@ -1,9 +1,9 @@
+import { Modal } from './Hoja';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -217,10 +217,19 @@ type Props<F> = {
   elegir: (origen: 'camara' | 'archivos') => Promise<FotoElegidaPuerta | null>;
   manipular: Manipular<F>;
   webp: F;
+  /**
+   * C-NUNCA-EN-BLANCO: dentro de otra hoja va «en línea», como un paso más de la misma ventana.
+   * En el iPhone, una ventana encima de otra que se cierran juntas dejaba la de abajo en blanco.
+   */
+  enLinea?: boolean;
 };
 
 export function FotosPuerta<F>(props: Props<F>) {
-  const { visible, direccion, cerrar } = props;
+  const { visible, direccion, cerrar, enLinea } = props;
+  if (enLinea)
+    return visible && direccion ? (
+      <ContenidoFotosPuerta key={direccion.id} {...props} direccion={direccion} />
+    ) : null;
   return (
     <Modal
       presentationStyle="pageSheet"

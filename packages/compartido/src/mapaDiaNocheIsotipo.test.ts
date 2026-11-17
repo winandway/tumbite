@@ -34,6 +34,7 @@ describe('día y noche en todos los mapas', () => {
     expect(nativos.map(([r]) => r).sort()).toEqual([
       'apps/cliente/src/ElegirEnMapa.tsx',
       'apps/cliente/src/MapaEntrega.tsx',
+      'apps/cliente/src/PuntoExacto.tsx',
       'apps/cliente/src/comida/MapaLocales.tsx',
       'apps/repartidor/src/flex/MapaRuta.tsx',
       'apps/repartidor/src/piezas/Mapa.tsx',

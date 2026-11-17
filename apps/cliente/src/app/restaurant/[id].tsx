@@ -1,14 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Image, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
@@ -32,7 +23,7 @@ import {
   type PromocionRestaurante,
   insigniaPromocion,
 } from '@tumbite/compartido';
-import { C, e, urlFoto, useSesion, Text } from '@tumbite/movil';
+import { C, e, urlFoto, useSesion, Text, Modal } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { TEXTOS, distanciaTexto } from '../../textos';
 import { fotoDeRelleno } from '../../inicio/recursos';

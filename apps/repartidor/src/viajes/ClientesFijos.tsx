@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { type Api, ErrorApi, type Idioma, enIdioma } from '@tumbite/compartido';
 import {
   Boton,
@@ -12,8 +12,7 @@ import {
   Pildora,
   RADIO,
   SOMBRA,
-  Text,
-} from '@tumbite/movil';
+  Text, Modal } from '@tumbite/movil';
 import {
   type ClientesFijos as Datos,
   type RutinaConductor,

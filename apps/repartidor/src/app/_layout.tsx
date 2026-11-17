@@ -8,9 +8,13 @@ import {
   SobreLosBotones,
   useSesion,
   PantallaConFallo,
+  registrarAtrapaFallos,
   useFuentesDivoox,
   TemaApp,
 } from '@tumbite/movil';
+
+// C-NUNCA-EN-BLANCO: todo error de la app llega al registro, con la app y la versión.
+registrarAtrapaFallos('repartidor');
 
 /**
  * C-PERMISOS-EXPLICADOS (31 oct 2026, como DoorDash): la primera vez que entra, el repartidor ve para

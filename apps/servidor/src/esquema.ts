@@ -20,6 +20,9 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-PUNTO-EXACTO (16 nov 2026): el punto de referencia de la dirección guardada y del pedido.
+  ['direcciones_cliente', 'referencia', "TEXT NOT NULL DEFAULT ''"],
+  ['pedidos', 'referencia', "TEXT NOT NULL DEFAULT ''"],
   // C-FLEX-PAGO-BLOQUE (16 nov 2026): lo que la empresa le paga al conductor por el bloque (centavos).
   ['rutas_flex', 'pago_bloque', 'INTEGER'],
   // C-TIEMPOS-OPERACION (15 nov 2026): de dónde salen la ida del repartidor y la llegada del

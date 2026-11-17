@@ -1,6 +1,7 @@
+import { Modal } from './Hoja';
 import { useEffect, useState } from 'react';
 import { Text } from './diseno';
-import { ActivityIndicator, Linking, Modal, Platform, Pressable, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { C } from './ui';

@@ -1,5 +1,6 @@
+import { Modal } from './Hoja';
 import { Text } from './diseno';
-import { Modal, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { Boton, C } from './ui';

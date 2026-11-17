@@ -1,15 +1,5 @@
 import { type ReactNode, type RefObject, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Modal,
-  PanResponder,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { ActivityIndicator, Image, PanResponder, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   type Idioma,
@@ -18,7 +8,7 @@ import {
   textoRolPuerta,
   textosFotoPuerta,
 } from '@tumbite/compartido';
-import { C, Text, useSesion } from '@tumbite/movil';
+import { C, Text, useSesion, Modal } from '@tumbite/movil';
 
 /**
  * C-FOTO-PUERTA (15 nov 2026) — todos los países. Lo que ve el repartidor: cuando el pedido va

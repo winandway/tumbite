@@ -17,8 +17,15 @@ describe('carrito: una sola «Dirección de entrega»', () => {
     expect(casilla.slice(0, 200)).toContain('etiqueta={t.direccionCampo}');
   });
   it('el mapa sigue al punto elegido y llena la casilla vacía', () => {
-    expect(carrito).toContain('direccionVacia={!b.valores.direccion.trim()}');
     expect(mapa).toContain('animateToRegion');
     expect(mapa).toMatch(/direccionVacia[\s\S]*leerCalle\(punto\)/);
+  });
+  // C-PUNTO-EXACTO (16 nov 2026): al elegir una calle o avenida se abre el mapa con el pin fijo, y
+  // lo confirmado (punto, dirección, referencia y casa) vuelve al carrito.
+  it('al elegir una sugerencia se abre el punto exacto y lo confirmado vuelve al carrito', () => {
+    const casilla = carrito.slice(carrito.indexOf('<CampoDireccion'));
+    expect(casilla.slice(0, casilla.indexOf('/>'))).toContain('setMarcando(true)');
+    expect(carrito).toMatch(/<PuntoExacto[\s\S]*b\.cambiar\('referencia', p\.referencia\)/);
+    expect(carrito).toContain('testID="carrito-referencia"');
   });
 });

@@ -5,8 +5,12 @@ import {
   SesionProvider,
   SobreLosBotones,
   PantallaConFallo,
+  registrarAtrapaFallos,
   useFuentesDivoox,
 } from '@tumbite/movil';
+
+// C-NUNCA-EN-BLANCO: todo error de la app llega al registro, con la app y la versión.
+registrarAtrapaFallos('restaurante');
 
 /**
  * C-APP-SIN-CIERRES: si una pantalla falla, la app no se cierra; se ve el aviso con «Volver» (vuelve

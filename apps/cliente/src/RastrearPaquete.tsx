@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, Pressable, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { ErrorApi, enIdioma } from '@tumbite/compartido';
-import { Boton, C, e, useSesion, Text } from '@tumbite/movil';
+import { Boton, C, e, useSesion, Text, Modal } from '@tumbite/movil';
 import { Tarjeta } from './comida/piezas';
 
 /**

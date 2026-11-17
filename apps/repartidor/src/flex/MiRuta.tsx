@@ -2,17 +2,7 @@
 import { comoLlegar } from '../comoLlegar';
 import { enlaceRutaGoogle, medidasReducidas, posicionFrescaWeb } from '@tumbite/compartido';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Image, Linking, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -41,7 +31,7 @@ import {
   validarCobro,
   cumpleFiltro,
 } from '@tumbite/compartido';
-import { Boton as BotonBase, C, FOTO_EVIDENCIA, Icono, e } from '@tumbite/movil';
+import { Boton as BotonBase, C, FOTO_EVIDENCIA, Icono, e, Modal } from '@tumbite/movil';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 
 /** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */

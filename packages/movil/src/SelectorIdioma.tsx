@@ -1,6 +1,7 @@
+import { Modal } from './Hoja';
 import { useState } from 'react';
 import { Text } from './diseno';
-import { Modal, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IDIOMAS, type Idioma } from '@tumbite/compartido';
 

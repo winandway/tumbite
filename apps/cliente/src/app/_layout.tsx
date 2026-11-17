@@ -5,10 +5,14 @@ import {
   SesionProvider,
   SobreLosBotones,
   PantallaConFallo,
+  registrarAtrapaFallos,
   useFuentesDivoox,
 } from '@tumbite/movil';
 import { AbrirAvisos } from '../AbrirAvisos';
 import { CarritoProvider } from '../carrito';
+
+// C-NUNCA-EN-BLANCO: todo error de la app llega al registro, con la app y la versión.
+registrarAtrapaFallos('cliente');
 
 /**
  * C-APP-SIN-CIERRES: si una pantalla falla, la app no se cierra; se ve el aviso con «Volver» (vuelve

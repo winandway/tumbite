@@ -40,6 +40,7 @@ import {
   urlFoto,
   useSesion,
   CampoDireccion,
+  Modal,
   Text,
 } from '@tumbite/movil';
 import { ANCHO_MAX, BotonRedondo, Encabezado, Tarjeta } from '../comida/piezas';
@@ -51,11 +52,13 @@ import {
   armarCuerpoPedido,
   huellaPedido,
   margenPesables,
+  textosPuntoExacto,
 } from '@tumbite/compartido';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
-import { ElegirEnMapa } from '../ElegirEnMapa';
+import { PuntoExacto } from '../PuntoExacto';
+import { ResumenPunto } from '../ResumenPunto';
 import { guardarUbicacion } from '../comida/useRestaurantes';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
@@ -211,6 +214,9 @@ function PantallaCarrito() {
     };
   }, [api, ridPais]);
   const [punto, setPunto] = useState<Punto | null>(null);
+  // C-PUNTO-EXACTO: la hoja del mapa con el pin fijo.
+  const [marcando, setMarcando] = useState(false);
+  const tp = textosPuntoExacto(idioma);
   const [propinaEntregaPb, setPropinaEntregaPb] = useState<number | 'otra'>(2000);
   // BRE-7b: como el «Pickup» de DoorDash y Uber Eats, en la recogida la propina va al restaurante,
   // es opcional y arranca en 0 %; cada forma de recibir recuerda la suya.
@@ -231,6 +237,8 @@ function PantallaCarrito() {
     inicial: {
       direccion: '',
       apto: '',
+      // C-PUNTO-EXACTO: punto de referencia («frente a la panadería»).
+      referencia: '',
       notas: '',
       alergias: '',
       // C-REGALAR-PEDIDO: enviar como regalo a otra persona.
@@ -408,6 +416,7 @@ function PantallaCarrito() {
       etiqueta: b.valores.etiquetaDireccion,
       direccion: b.valores.direccion,
       apto: b.valores.apto,
+      referencia: b.valores.referencia,
       lat: punto?.lat ?? null,
       lng: punto?.lng ?? null,
       instrucciones: b.valores.notas,
@@ -431,6 +440,7 @@ function PantallaCarrito() {
   function usarDireccion(dir: Direccion) {
     b.cambiar('direccion', dir.direccion);
     b.cambiar('apto', dir.apto ?? '');
+    b.cambiar('referencia', dir.referencia ?? '');
     if (dir.instrucciones) b.cambiar('notas', dir.instrucciones);
     b.cambiar('entrega', dir.entrega ?? 'puerta');
     if (dir.lat != null && dir.lng != null) {
@@ -1137,18 +1147,40 @@ function PantallaCarrito() {
               })}
             </View>
           ) : null}
-          <ElegirEnMapa
+          {/* C-PUNTO-EXACTO: el punto exacto en el mapa con el pin fijo, en su propia hoja. */}
+          <ResumenPunto
             punto={punto}
-            cambiarPunto={(p) => {
-              setPunto(p);
-              // Hito 1: la dirección elegida también ordena la lista de restaurantes al volver.
-              if (p) void guardarUbicacion(p);
-            }}
-            cambiarDireccion={(x) => b.cambiar('direccion', x)}
-            direccionVacia={!b.valores.direccion.trim()}
-            cerca={local}
-            textos={{ ayuda: t.mapaAyuda, buscando: t.mapaBuscando, pin: t.mapaPin }}
+            direccion={b.valores.direccion}
+            referencia={b.valores.referencia}
+            abrir={() => setMarcando(true)}
           />
+          <Modal
+            visible={marcando}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setMarcando(false)}
+            testID="carrito-punto-exacto"
+          >
+            <PuntoExacto
+              tipo="entrega"
+              inicial={{
+                punto,
+                direccion: b.valores.direccion,
+                referencia: b.valores.referencia,
+                apto: b.valores.apto,
+              }}
+              cerca={local}
+              volver={() => setMarcando(false)}
+              confirmar={(p) => {
+                setPunto(p.punto);
+                void guardarUbicacion(p.punto);
+                if (p.direccion) b.cambiar('direccion', p.direccion);
+                b.cambiar('referencia', p.referencia);
+                b.cambiar('apto', p.apto);
+                setMarcando(false);
+              }}
+            />
+          </Modal>
           {/* C-DIRECCION-SUGERENCIAS: direcciones reales mientras se escribe; al elegir, el pin va ahí.
               C-CARRITO-UNA-DIRECCION: la casilla no repite el título de la sección. */}
           <CampoDireccion
@@ -1158,6 +1190,8 @@ function PantallaCarrito() {
             alElegir={(d) => {
               setPunto(d.punto);
               void guardarUbicacion(d.punto);
+              // C-PUNTO-EXACTO: una calle o avenida no basta: se abre el mapa para marcar la puerta.
+              setMarcando(true);
             }}
             cerca={
               punto ??
@@ -1176,6 +1210,15 @@ function PantallaCarrito() {
             placeholder={t.aptoAyuda}
             maxLength={60}
             testID="carrito-apto"
+          />
+          {/* C-PUNTO-EXACTO: punto de referencia, opcional (en Venezuela se usa mucho). */}
+          <Campo
+            etiqueta={tp.referencia}
+            value={b.valores.referencia}
+            onChangeText={(x) => b.cambiar('referencia', x)}
+            placeholder={tp.referenciaEjemplo}
+            maxLength={160}
+            testID="carrito-referencia"
           />
           <Tarjeta style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Text style={{ flex: 1, fontWeight: '700' }}>{te.guardar}</Text>

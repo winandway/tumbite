@@ -1,6 +1,7 @@
+import { Modal } from './Hoja';
 import { useState } from 'react';
 import { Text } from './diseno';
-import { Modal, Pressable, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { enIdioma } from '@tumbite/compartido';
 import { useSesion } from './sesion';
 import { Boton, C, e } from './ui';

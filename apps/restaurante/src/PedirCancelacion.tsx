@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import {
   ErrorApi,
   type Idioma,
@@ -15,8 +15,7 @@ import {
   almacenTelefono,
   e,
   useSesion,
-  Text,
-} from '@tumbite/movil';
+  Text, Modal } from '@tumbite/movil';
 
 /**
  * C-CANCELAR-LISTO (10 nov 2026) — todos los países. Un pedido ya listo no se cancela con un

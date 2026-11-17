@@ -1,5 +1,6 @@
+import { Modal } from './Hoja';
 import { useEffect, useState } from 'react';
-import { Image, Modal, Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { enIdioma } from '@tumbite/compartido';
 import { Text } from './diseno';
 import { useSesion } from './sesion';

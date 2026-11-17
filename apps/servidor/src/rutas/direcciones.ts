@@ -18,6 +18,8 @@ const aDireccion = (r: Record<string, unknown>, fotos: number[] = []) => ({
   lng: r.lng == null ? null : Number(r.lng),
   instrucciones: String(r.instrucciones ?? ''),
   apto: String(r.apto ?? ''),
+  // C-PUNTO-EXACTO: «frente a la panadería».
+  referencia: String(r.referencia ?? ''),
   entrega: String(r.entrega ?? 'puerta') as 'puerta' | 'mano',
   usadaEn: String(r.usada_en),
   // C-FOTO-PUERTA: casa o edificio («» si todavía no lo dijo) y qué fotos de la puerta tiene.
@@ -51,6 +53,8 @@ direcciones.post('/mis-direcciones', async (c) => {
       instrucciones: z.string().trim().max(300).default(''),
       // C-DIRECCION-APTO: apartamento, piso o edificio.
       apto: z.string().trim().max(60).default(''),
+      // C-PUNTO-EXACTO: punto de referencia (opcional).
+      referencia: z.string().trim().max(160).default(''),
       entrega: z.enum(['puerta', 'mano']).default('puerta'),
     }),
   );
@@ -66,9 +70,9 @@ direcciones.post('/mis-direcciones', async (c) => {
   if (igual)
     await db
       .prepare(
-        "UPDATE direcciones_cliente SET etiqueta = ?, lat = ?, lng = ?, instrucciones = ?, entrega = ?, apto = ?, usada_en = datetime('now') WHERE id = ?",
+        "UPDATE direcciones_cliente SET etiqueta = ?, lat = ?, lng = ?, instrucciones = ?, entrega = ?, apto = ?, referencia = ?, usada_en = datetime('now') WHERE id = ?",
       )
-      .bind(d.etiqueta, d.lat, d.lng, d.instrucciones, d.entrega, d.apto, id)
+      .bind(d.etiqueta, d.lat, d.lng, d.instrucciones, d.entrega, d.apto, d.referencia, id)
       .run();
   else {
     const n = await db
@@ -83,9 +87,9 @@ direcciones.post('/mis-direcciones', async (c) => {
       );
     await db
       .prepare(
-        'INSERT INTO direcciones_cliente (id, usuario_id, etiqueta, direccion, lat, lng, instrucciones, entrega, apto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO direcciones_cliente (id, usuario_id, etiqueta, direccion, lat, lng, instrucciones, entrega, apto, referencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       )
-      .bind(id, u.id, d.etiqueta, d.direccion, d.lat, d.lng, d.instrucciones, d.entrega, d.apto)
+      .bind(id, u.id, d.etiqueta, d.direccion, d.lat, d.lng, d.instrucciones, d.entrega, d.apto, d.referencia)
       .run();
   }
   const r = (await db

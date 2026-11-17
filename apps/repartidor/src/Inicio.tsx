@@ -1,18 +1,6 @@
 import { comoLlegar } from './comoLlegar';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Linking,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  Switch,
-  TextInput,
-  View,
-  useWindowDimensions,
-} from 'react-native';
+import { Alert, Image, Linking, Platform, Pressable, ScrollView, Switch, TextInput, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
@@ -131,8 +119,7 @@ import {
   URL_SERVIDOR,
   capturasConCamara,
   achicarFotoEvidencia,
-  Text,
-} from '@tumbite/movil';
+  Text, Modal } from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
 const CAMARA = {

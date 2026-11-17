@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, Vibration, View } from 'react-native';
+import { Pressable, Vibration, View } from 'react-native';
 import { type Idioma, formatearMonto, textoDistancia } from '@tumbite/compartido';
 import { vibracionOferta } from './accesibilidad';
-import { Boton, C, Text } from '@tumbite/movil';
+import { Boton, C, Text, Modal } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 import { sonarOferta } from '../sonidoOferta';
 

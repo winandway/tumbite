@@ -1,5 +1,5 @@
-import { Modal, Pressable, View } from 'react-native';
-import { Boton, C, Text } from '@tumbite/movil';
+import { Pressable, View } from 'react-native';
+import { Boton, C, Text, Modal } from '@tumbite/movil';
 import { textosInicio } from './textos';
 import type { Idioma } from '@tumbite/compartido';
 

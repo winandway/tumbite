@@ -23,6 +23,8 @@ export interface DatosCuerpoPedido {
   valores: {
     direccion: string;
     apto: string;
+    /** C-PUNTO-EXACTO: punto de referencia (puede faltar en borradores viejos). */
+    referencia?: string;
     notas: string;
     alergias: string;
     entrega?: string;
@@ -59,6 +61,7 @@ export function armarCuerpoPedido(d: DatosCuerpoPedido) {
     usarSaldoRegalo: d.usarSaldoRegalo,
     direccion: v.direccion,
     apto: v.apto,
+    referencia: v.referencia ?? '',
     notas: v.notas,
     alergias: v.alergias,
     paraOtro: d.comoRegalo

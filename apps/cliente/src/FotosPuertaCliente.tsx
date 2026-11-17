@@ -52,20 +52,27 @@ export type DireccionGuardada = DireccionConFotos & {
   lng: number | null;
   instrucciones?: string;
   entrega?: 'puerta' | 'mano';
+  /** C-PUNTO-EXACTO: «frente a la panadería». */
+  referencia?: string;
+  apto?: string;
 };
 
 export function HojaFotosPuerta({
   direccion,
   cerrar,
   alCambiar,
+  enLinea,
 }: {
   direccion: DireccionConFotos | null;
   cerrar: () => void;
   alCambiar?: (d: { id: string; tipoLugar: TipoLugar | ''; fotos: number[] }) => void;
+  /** C-NUNCA-EN-BLANCO: como un paso dentro de otra hoja, nunca como otra ventana encima. */
+  enLinea?: boolean;
 }) {
   const { idioma } = useSesion();
   return (
     <FotosPuerta
+      enLinea={enLinea}
       visible={!!direccion}
       idioma={idioma}
       direccion={direccion}

@@ -14,6 +14,38 @@ import { VERSION_APP } from './version';
  */
 export type AppDivoox = 'cliente' | 'repartidor' | 'restaurante';
 
+let appActual: AppDivoox = 'cliente';
+/** Qué app es esta (la fija `registrarAtrapaFallos` al arrancar): la usan las ventanas al avisar. */
+export const appDivooxActual = () => appActual;
+
+type ManejadorGlobal = (error: unknown, fatal?: boolean) => void;
+type UtilidadesError = {
+  getGlobalHandler: () => ManejadorGlobal;
+  setGlobalHandler: (m: ManejadorGlobal) => void;
+};
+
+/**
+ * C-NUNCA-EN-BLANCO: cada app lo llama una vez en su `_layout.tsx`. Fija qué app es y engancha el
+ * atrapador global de React Native: TODO error (también los de una promesa o un botón, que no pasan
+ * por la pantalla) queda en el registro de errores del servidor con la app y la versión, y después
+ * sigue al manejador de siempre.
+ */
+export function registrarAtrapaFallos(app: AppDivoox) {
+  appActual = app;
+  const ut = (globalThis as { ErrorUtils?: UtilidadesError }).ErrorUtils;
+  if (!ut || (globalThis as { __divooxAtrapa?: boolean }).__divooxAtrapa) return;
+  (globalThis as { __divooxAtrapa?: boolean }).__divooxAtrapa = true;
+  const antes = ut.getGlobalHandler();
+  ut.setGlobalHandler((error, fatal) => {
+    avisarFalloApp(
+      app,
+      error instanceof Error ? error : new Error(String(error)),
+      fatal ? 'fatal' : 'global',
+    );
+    antes(error, fatal);
+  });
+}
+
 const T = {
   es: {
     titulo: 'Algo falló en esta pantalla',

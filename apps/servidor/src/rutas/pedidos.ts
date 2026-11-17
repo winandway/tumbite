@@ -48,6 +48,7 @@ import {
   margenPesables,
   type LineaPesable,
   huellaPedido,
+  direccionConReferencia,
 } from '@tumbite/compartido';
 import { liquidarDesdeAviso } from '../liquidaciones';
 import { minutosPausa } from '../pausa';
@@ -112,6 +113,8 @@ export const esquemaNuevoPedido = z.object({
   direccion: z.string().trim().max(200).default(''),
   // C-DIRECCION-APTO: apartamento, piso o edificio (se suma a la dirección que ve el repartidor).
   apto: z.string().trim().max(60).default(''),
+  // C-PUNTO-EXACTO: punto de referencia («frente a la panadería»); lo ven el repartidor y el local.
+  referencia: z.string().trim().max(160).default(''),
   notas: z.string().trim().max(300).default(''),
   // C-ALERGIAS: lo que el cliente no puede comer; el restaurante lo ve resaltado y en el ticket.
   alergias: z.string().trim().max(200).default(''),
@@ -863,7 +866,12 @@ pedidos.post('/pedidos', async (c) => {
   const direccionEscrita = d.direccion;
   if (!recogida && d.direccion.length >= 5 && d.apto)
     d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
-  if (recogida) d.apto = '';
+  if (!recogida && d.direccion.length >= 5)
+    d.direccion = direccionConReferencia(d.direccion, d.referencia);
+  if (recogida) {
+    d.apto = '';
+    d.referencia = '';
+  }
   // C-REGALAR-PEDIDO: un regalo se lleva a la puerta de otra persona; no hay regalo para recoger.
   if (d.paraOtro && recogida)
     throw new ErrorDatos('Un regalo se entrega a domicilio, no se recoge.', 'paraOtro', 422);
@@ -1093,8 +1101,8 @@ pedidos.post('/pedidos', async (c) => {
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, alergias, para_nombre, para_telefono, para_mensaje, direccion_id)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, referencia, alergias, para_nombre, para_telefono, para_mensaje, direccion_id)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -1129,6 +1137,7 @@ pedidos.post('/pedidos', async (c) => {
       moneda,
       JSON.stringify(config),
       d.apto,
+      d.referencia,
       d.alergias.replace(/\s+/g, ' '),
       d.paraOtro?.nombre ?? '',
       d.paraOtro?.telefono ?? '',
@@ -1973,6 +1982,7 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
       lat: z.number().min(-90).max(90).nullable().default(null),
       lng: z.number().min(-180).max(180).nullable().default(null),
       apto: z.string().trim().max(60).default(''),
+      referencia: z.string().trim().max(160).default(''),
       aceptarTotal: z.boolean().default(false),
     }),
   );
@@ -1981,6 +1991,8 @@ pedidos.patch('/pedidos/:id/direccion', async (c) => {
   const direccionSinApto = d.direccion;
   // C-DIRECCION-APTO: el apartamento nuevo se suma a la dirección, como al pedir.
   if (d.apto) d.direccion = `${d.direccion} · ${d.apto.replace(/\s+/g, ' ')}`;
+  // C-PUNTO-EXACTO: y la referencia, igual.
+  d.direccion = direccionConReferencia(d.direccion, d.referencia);
   const db = base(c);
   const id = c.req.param('id');
   const f = await db

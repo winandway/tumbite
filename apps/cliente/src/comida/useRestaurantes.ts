@@ -57,7 +57,13 @@ async function gpsReciente(): Promise<Punto | null> {
  * sola). Se guarda en el teléfono con su texto, para mostrarla arriba al volver.
  */
 const LLAVE_DIRECCION = 'tumbite.direccionEntrega';
-export type DireccionEntrega = { texto: string; punto: Punto };
+export type DireccionEntrega = {
+  texto: string;
+  punto: Punto;
+  /** C-PUNTO-EXACTO: «frente a la panadería» y la casa o apartamento, opcionales. */
+  referencia?: string;
+  apto?: string;
+};
 
 async function direccionGuardada(): Promise<DireccionEntrega | null> {
   try {

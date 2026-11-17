@@ -206,6 +206,8 @@ const punto = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   direccion: z.string().trim().min(3).max(200),
+  /** C-PUNTO-EXACTO: punto de referencia del punto de encuentro o del destino (opcional). */
+  referencia: z.string().trim().max(160).optional(),
 });
 /**
  * C-CARRO-CATEGORIAS: las categorías de un viaje. «estandar» es el económico; «comfort» y «premium»

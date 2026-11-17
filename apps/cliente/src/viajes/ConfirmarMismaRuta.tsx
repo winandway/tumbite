@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import {
   type CotizacionViaje,
   ErrorApi,
@@ -19,8 +19,7 @@ import {
   Text,
   almacenTelefono,
   useColores,
-  useSesion,
-} from '@tumbite/movil';
+  useSesion, Modal } from '@tumbite/movil';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { MapaRuta } from './MapaRuta';

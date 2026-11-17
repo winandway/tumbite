@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
 import {
   AvisoBorrador,
@@ -18,8 +18,7 @@ import {
   almacenTelefono,
   useColores,
   useSesion,
-  Text,
-} from '@tumbite/movil';
+  Text, Modal } from '@tumbite/movil';
 import { Tarjeta } from '../comida/piezas';
 import { ConfirmarMismaRuta } from './ConfirmarMismaRuta';
 import { MapaRuta } from './MapaRuta';
