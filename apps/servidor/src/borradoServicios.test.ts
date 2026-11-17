@@ -382,6 +382,34 @@ describe('borrar la cuenta borra los datos de viajes, envíos y fotos de entrega
     expect(await filas('SELECT 1 FROM codigos_telefono WHERE usuario_id = ?', rep.id)).toEqual([]);
   });
 
+  it('cuarta vuelta: la foto de una queja (datos_json.foto) y los adjuntos de un caso hallado por correo', async () => {
+    const { almacen, m, sql, filas } = await preparar();
+    const cli = await m.cuenta('cliente');
+    const [yo] = await filas('SELECT correo FROM usuarios WHERE id = ?', cli.id);
+    // Queja con foto, como la guarda la app (POST /datos/quejas/<ticket>/foto).
+    await almacen.bucket.put('quejas/tk-f/f1', new Uint8Array([1]));
+    await sql(
+      `INSERT INTO tickets (id, codigo, tipo, nombre, correo, asunto, datos_json, usuario_id)
+       VALUES ('tk-f', 'TKF', 'queja', 'Ana', 'otro@ejemplo.com', 'Queja', '{"foto":"quejas/tk-f/f1"}', ?)`,
+      cli.id,
+    );
+    // Caso de soporte sin usuario, hallado solo por su correo, con un adjunto.
+    await almacen.bucket.put('soporte/tk-c/a1', new Uint8Array([2]));
+    await sql(
+      "INSERT INTO tickets (id, codigo, tipo, nombre, correo, asunto) VALUES ('tk-c', 'TKC', 'soporte', 'Ana', ?, 'Ayuda')",
+      yo?.correo,
+    );
+    await sql(
+      "INSERT INTO ticket_adjuntos (id, ticket_id, clave, nombre, tipo, bytes) VALUES ('ad-c', 'tk-c', 'soporte/tk-c/a1', 'a.jpg', 'image/jpeg', 1)",
+    );
+
+    expect((await m.llamar('DELETE', '/datos/cuentas/yo', undefined, cli.token)).estado).toBe(200);
+
+    expect(almacen.datos.has('quejas/tk-f/f1')).toBe(false);
+    expect(await filas("SELECT 1 FROM ticket_adjuntos WHERE ticket_id = 'tk-c'")).toEqual([]);
+    expect(almacen.datos.has('soporte/tk-c/a1')).toBe(false);
+  });
+
   it('con un viaje en curso no deja borrar la cuenta (409)', async () => {
     for (const [rol, col] of [
       ['cliente', 'cliente_id'],

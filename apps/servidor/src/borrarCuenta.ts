@@ -63,14 +63,35 @@ export async function borrarCuenta(
     .prepare('SELECT correo_canonico, telefono_canonico FROM usuarios WHERE id = ?')
     .bind(u.id)
     .first<{ correo_canonico: string | null; telefono_canonico: string | null }>();
-  const fotosQueja = (
+  // C-BORRADO-SERVICIOS, cuarta vuelta: sus casos de soporte (por usuario o por su correo) se listan
+  // ANTES del lote, porque el lote les cambia el correo y les vacía datos_json, donde la queja guarda
+  // su foto (datos_json.foto, archivo quejas/<ticket>/…). Con esta lista se borran adjuntos y archivos.
+  const misTickets = (
     await db
-      .prepare(
-        'SELECT clave FROM ticket_adjuntos WHERE ticket_id IN (SELECT id FROM tickets WHERE usuario_id = ?1 OR correo = ?2)',
-      )
+      .prepare('SELECT id, datos_json FROM tickets WHERE usuario_id = ?1 OR correo = ?2')
       .bind(u.id, u.correo)
-      .all<{ clave: string }>()
-  ).results.map((f) => f.clave);
+      .all<{ id: string; datos_json: string }>()
+  ).results;
+  const idsTickets = JSON.stringify(misTickets.map((t) => t.id));
+  const fotosQueja = [
+    ...(
+      await db
+        .prepare(
+          'SELECT clave FROM ticket_adjuntos WHERE ticket_id IN (SELECT value FROM json_each(?))',
+        )
+        .bind(idsTickets)
+        .all<{ clave: string }>()
+    ).results.map((f) => f.clave),
+    ...misTickets
+      .map((t) => {
+        try {
+          return (JSON.parse(t.datos_json || '{}') as { foto?: unknown }).foto;
+        } catch {
+          return undefined; // datos_json dañado: igual se borra la carpeta quejas/<ticket>/ abajo
+        }
+      })
+      .filter((f): f is string => typeof f === 'string' && f !== ''),
+  ];
   // C-BORRADO-CHAT (16 nov 2026): las claves de las fotos que mandó en los chats, para borrar los
   // archivos después de vaciar las filas.
   const fotosChat = (
@@ -267,10 +288,8 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare("UPDATE pedidos_grupo_items SET nombre = '—' WHERE participante_id = ?").bind(u.id),
     db
-      .prepare(
-        'DELETE FROM ticket_adjuntos WHERE ticket_id IN (SELECT id FROM tickets WHERE usuario_id = ?1 OR correo = ?2)',
-      )
-      .bind(u.id, u.correo),
+      .prepare('DELETE FROM ticket_adjuntos WHERE ticket_id IN (SELECT value FROM json_each(?))')
+      .bind(idsTickets),
     ...['invitaciones_conductor', 'invitaciones_flota'].map((t) =>
       db
         .prepare(
@@ -322,7 +341,13 @@ export async function borrarCuenta(
       await env.BUCKET.delete(fotosChat.slice(i, i + 1000));
   }
   // Y las fotos que adjuntó a sus quejas.
-  if (env.BUCKET && fotosQueja.length) await env.BUCKET.delete(fotosQueja);
+  if (env.BUCKET) {
+    if (fotosQueja.length) await env.BUCKET.delete(fotosQueja);
+    for (const t of misTickets) {
+      const lista = await env.BUCKET.list({ prefix: `quejas/${t.id}/` });
+      if (lista.objects.length) await env.BUCKET.delete(lista.objects.map((o) => o.key));
+    }
+  }
   // C-BORRADO-SERVICIOS: y los archivos de las fotos de recogida, entrega y selfies.
   if (env.BUCKET && fotosServicios.length) {
     for (let i = 0; i < fotosServicios.length; i += 1000)
