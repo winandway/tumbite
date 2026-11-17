@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowRight, CircleHelp, X } from 'lucide-react';
 import { type Idioma, enIdioma } from '@tumbite/compartido';
 import { ir } from '../ruta';
@@ -142,75 +143,79 @@ export function AyudaAqui({
       >
         <CircleHelp size={17} aria-hidden="true" />
       </button>
-      {abierto ? (
-        <>
-          <button
-            type="button"
-            className="ayq-velo"
-            tabIndex={-1}
-            aria-hidden="true"
-            onClick={cerrar}
-          />
-          <aside className="ayq-panel" role="dialog" aria-labelledby={idTitulo}>
-            <div className="ayq-cabeza">
-              <p className="ayi-migas">{datos?.seccion ?? ''}</p>
+      {/* En su propia capa (body): no hereda la letra del título donde está el «?» ni entra en su nombre. */}
+      {abierto
+        ? createPortal(
+            <>
               <button
                 type="button"
-                ref={cerrarBoton}
-                className="pd-icono-boton"
-                aria-label={t.cerrar}
+                className="ayq-velo"
+                tabIndex={-1}
+                aria-hidden="true"
                 onClick={cerrar}
-              >
-                <X size={20} aria-hidden="true" />
-              </button>
-            </div>
-            {error ? (
-              <p role="alert">{t.error}</p>
-            ) : !g ? (
-              <p>{t.cargando}</p>
-            ) : (
-              <div className="ayi-guia">
-                <h2 id={idTitulo}>{g.titulo}</h2>
-                {destacado ? (
-                  <div className="ayq-esta-parte">
-                    <p className="ayq-etiqueta">{t.estaParte}</p>
-                    <p>{destacado}</p>
-                  </div>
+              />
+              <aside className="ayq-panel" role="dialog" aria-labelledby={idTitulo}>
+                <div className="ayq-cabeza">
+                  <p className="ayi-migas">{datos?.seccion ?? ''}</p>
+                  <button
+                    type="button"
+                    ref={cerrarBoton}
+                    className="pd-icono-boton"
+                    aria-label={t.cerrar}
+                    onClick={cerrar}
+                  >
+                    <X size={20} aria-hidden="true" />
+                  </button>
+                </div>
+                {error ? (
+                  <p role="alert">{t.error}</p>
+                ) : !g ? (
+                  <p>{t.cargando}</p>
                 ) : (
-                  <p className="ayi-resumen">{g.resumen}</p>
+                  <div className="ayi-guia">
+                    <h2 id={idTitulo}>{g.titulo}</h2>
+                    {destacado ? (
+                      <div className="ayq-esta-parte">
+                        <p className="ayq-etiqueta">{t.estaParte}</p>
+                        <p>{destacado}</p>
+                      </div>
+                    ) : (
+                      <p className="ayi-resumen">{g.resumen}</p>
+                    )}
+                    {resto.length ? (
+                      <>
+                        <h3>{t.comoFunciona}</h3>
+                        {resto.map((p) => (
+                          <p key={p}>{p}</p>
+                        ))}
+                      </>
+                    ) : null}
+                    <h3>{t.pasos}</h3>
+                    <ol className="ayi-pasos">
+                      {g.pasos.map((p) => (
+                        <li key={p}>{p}</li>
+                      ))}
+                    </ol>
+                  </div>
                 )}
-                {resto.length ? (
-                  <>
-                    <h3>{t.comoFunciona}</h3>
-                    {resto.map((p) => (
-                      <p key={p}>{p}</p>
-                    ))}
-                  </>
-                ) : null}
-                <h3>{t.pasos}</h3>
-                <ol className="ayi-pasos">
-                  {g.pasos.map((p) => (
-                    <li key={p}>{p}</li>
-                  ))}
-                </ol>
-              </div>
-            )}
-            <a
-              className="ayq-completa"
-              href={`${base}/help/${guia}`}
-              onClick={(e) => {
-                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-                e.preventDefault();
-                setAbierto(false);
-                ir(`${base}/help/${guia}`);
-              }}
-            >
-              {t.completa}
-              <ArrowRight size={16} aria-hidden="true" />
-            </a>
-          </aside>
-        </>
-      ) : null}
+                <a
+                  className="ayq-completa"
+                  href={`${base}/help/${guia}`}
+                  onClick={(e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                    e.preventDefault();
+                    setAbierto(false);
+                    ir(`${base}/help/${guia}`);
+                  }}
+                >
+                  {t.completa}
+                  <ArrowRight size={16} aria-hidden="true" />
+                </a>
+              </aside>
+            </>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
