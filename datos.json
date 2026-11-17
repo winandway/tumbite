@@ -1,7 +1,7 @@
 {
   "actualizado": "2026-11-17",
   "version": "fe71f3f",
-  "ahora": "16 nov: piloto EN VIVO de Divoox en El Vigía y Tucaní. Las dos zonas están activas en divoox.com con mototaxi, comida y envíos en dólares (bolívares a la tasa del BCV). Se probaron en el sitio real un viaje de moto, un pedido de comida y un envío con cuentas del equipo. Las apps de Android de la versión real están en la página de apps.",
+  "ahora": "17 nov: regalos de Divoox listos para el piloto de El Vigía y Tucaní. El cupón VIGIA (100 dólares de presupuesto, viaje gratis hasta 1,50 dólares por persona en moto, envíos y comida) está creado y APAGADO: lo enciende Richard desde Superadmin, Regalos Divoox. El cliente paga en mano solo la diferencia y el conductor recibe el regalo en su saldo.",
   "proximo": [
     {
       "quien": "ia",
@@ -36,12 +36,20 @@
   ],
   "esperando": [
     {
+      "id": "encender-cupon-vigia",
+      "prioridad": "alta",
+      "titulo": "Encender el cupón VIGIA cuando quieras arrancar los regalos",
+      "para": "El cupón de regalos de El Vigía y Tucaní está creado con 100 dólares de presupuesto y apagado. Se enciende en Superadmin, menú Dinero, Regalos Divoox, botón Encender. Al agotarse el presupuesto se apaga solo.",
+      "destraba": "Que los primeros usuarios viajen gratis (hasta 1,50 dólares) y prueben la app.",
+      "numero": 1
+    },
+    {
       "id": "piloto-telefonos-responsables",
       "prioridad": "alta",
       "titulo": "Teléfonos de los responsables de El Vigía y Tucaní",
       "para": "Cuando un conductor o un pasajero toca el botón de pánico, le llega un aviso al responsable de su zona con quién es, dónde está y la carrera. Hace falta el nombre y el celular (con +58) de la persona de El Vigía y la de Tucaní.",
       "destraba": "El aviso de pánico al responsable de cada zona.",
-      "numero": 1
+      "numero": 2
     },
     {
       "id": "piloto-huella-mapa",
@@ -49,10 +57,10 @@
       "titulo": "Sumar la firma de las apps del piloto a la llave del mapa de Google",
       "para": "En las apps que se bajan directo el mapa sale gris: la llave «Divoox Maps Android» solo acepta la firma de Google Play. Hay que agregar dos líneas (paquete y huella) en Google Cloud → Credenciales. Pide la contraseña de la cuenta de Google, por eso es tuyo. El croquis exacto está en el informe del piloto.",
       "destraba": "El mapa dentro de Divoox Driver y Divoox en los teléfonos del piloto.",
-      "numero": 2
+      "numero": 3
     },
     {
-      "numero": 3,
+      "numero": 4,
       "id": "play-datos-fotos-cliente",
       "prioridad": "alta",
       "titulo": "Autorizar que declaremos las fotos de la puerta en Google Play",
@@ -60,7 +68,7 @@
       "destraba": "Subir la versión de Android del cliente con el diseño nuevo y la foto de la puerta."
     },
     {
-      "numero": 4,
+      "numero": 5,
       "id": "apple-privacidad-fotos-cliente",
       "prioridad": "media",
       "titulo": "Revisar en App Store Connect la privacidad del cliente",
@@ -68,7 +76,7 @@
       "destraba": "Que la revisión de Apple del cliente no se frene por la foto de la puerta."
     },
     {
-      "numero": 5,
+      "numero": 6,
       "id": "flota-propia-dinero",
       "prioridad": "alta",
       "titulo": "Decidir el dinero de la flota propia del restaurante",
@@ -76,7 +84,7 @@
       "destraba": "Encender «Mis repartidores» en producción, empezando por el restaurante de Chile con 14 repartidores."
     },
     {
-      "numero": 6,
+      "numero": 7,
       "id": "chile-cuenta-de-cobro",
       "prioridad": "media",
       "titulo": "Abrir la cuenta de cobro de Chile",
@@ -84,7 +92,7 @@
       "destraba": "Encender Chile: el perfil del país ya está en el código, apagado."
     },
     {
-      "numero": 7,
+      "numero": 8,
       "id": "cancelar-listo-dinero",
       "prioridad": "media",
       "titulo": "Decidir quién paga la comida de un pedido listo que se cancela",
@@ -92,7 +100,7 @@
       "destraba": "Pagarle la comida al restaurante cuando la causa no fue suya, como DoorDash."
     },
     {
-      "numero": 8,
+      "numero": 9,
       "id": "aprobar-portada-p2",
       "prioridad": "alta",
       "titulo": "Mirar la maqueta nueva de la portada (servicios arriba, como Rappi y Grab) y decir si se construye así",
@@ -100,7 +108,7 @@
       "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
     },
     {
-      "numero": 9,
+      "numero": 10,
       "id": "stripe-connect-y-retiros",
       "prioridad": "alta",
       "titulo": "Stripe: activar Connect, crear el aviso de cuentas conectadas y decir cuándo se encienden los retiros",
@@ -108,7 +116,7 @@
       "destraba": "Probar el alta de cobros y un retiro en modo prueba, que es lo único del circuito de pagos que quedó sin probar en el sitio de pruebas."
     },
     {
-      "numero": 10,
+      "numero": 11,
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
       "titulo": "Compra real de 1 dólar con tu tarjeta",
@@ -116,7 +124,7 @@
       "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
     },
     {
-      "numero": 11,
+      "numero": 12,
       "id": "prueba-en-la-calle",
       "prioridad": "alta",
       "titulo": "Prueba en la calle con cliente, restaurante y repartidor",
@@ -124,7 +132,7 @@
       "destraba": "El lanzamiento de Comida."
     },
     {
-      "numero": 12,
+      "numero": 13,
       "id": "sesion-admin-google-play",
       "prioridad": "alta",
       "titulo": "Abrir tu sesión de administrador en el panel de Divoox",
@@ -132,7 +140,7 @@
       "destraba": "Que Google pueda entrar a revisar las apps sin trabas."
     },
     {
-      "numero": 13,
+      "numero": 14,
       "id": "contrasena-expo",
       "prioridad": "alta",
       "titulo": "Cambiar la contraseña de Expo",
@@ -140,43 +148,34 @@
       "destraba": "Cerrar ese riesgo de seguridad."
     },
     {
-      "numero": 14,
+      "numero": 15,
       "id": "montos-para-encender",
       "prioridad": "media",
       "titulo": "Montos para encender las funciones de crecimiento",
       "para": "Tarifa por hora de Ganar por tiempo, precio por pedido de los anuncios, cuota de Divoox Plus y montos de las tarjetas de regalo. Se ponen en el superadmin, en Rewards.",
       "destraba": "Encenderlas: ya están construidas y probadas.",
-      "docs": [
-        "earn-by-time",
-        "sponsored-listings",
-        "divoox-plus",
-        "gift-cards"
-      ]
+      "docs": ["earn-by-time", "sponsored-listings", "divoox-plus", "gift-cards"]
     },
     {
-      "numero": 15,
+      "numero": 16,
       "id": "prueba-ruta-logistica",
       "prioridad": "media",
       "titulo": "Probar la ruta de logística con las etiquetas impresas",
       "para": "Cargar y repartir la ruta de demostración en la calle.",
       "destraba": "Dar Divoox Flex por probado de punta a punta.",
-      "docs": [
-        "flex-getting-started"
-      ]
+      "docs": ["flex-getting-started"]
     },
     {
-      "numero": 16,
+      "numero": 17,
       "id": "tiendas-pais",
       "prioridad": "media",
       "titulo": "Elegir el país donde se encienden Mercado, Farmacia y Licores",
       "para": "Ya están construidas y la compra de prueba está hecha.",
       "destraba": "Encender las tiendas.",
-      "docs": [
-        "shop-stores"
-      ]
+      "docs": ["shop-stores"]
     },
     {
-      "numero": 17,
+      "numero": 18,
       "id": "moto-carro-legal",
       "prioridad": "media",
       "titulo": "Moto y Carro: país, permiso legal, seguro del pasajero y tarifas",
@@ -184,7 +183,7 @@
       "destraba": "Encender Moto y Carro en el primer país."
     },
     {
-      "numero": 18,
+      "numero": 19,
       "id": "envios-precio",
       "prioridad": "media",
       "titulo": "Envíos de persona a persona: valor máximo, seguro y precio",
@@ -192,18 +191,16 @@
       "destraba": "Abrir Envíos a todo el público."
     },
     {
-      "numero": 19,
+      "numero": 20,
       "id": "caras-proveedor",
       "prioridad": "baja",
       "titulo": "Comparación de caras con IA: proveedor y costo",
       "para": "Verificar que el repartidor es quien dice ser. El abogado aprueba el consentimiento.",
       "destraba": "La verificación automática de identidad.",
-      "docs": [
-        "background-check-and-identity"
-      ]
+      "docs": ["background-check-and-identity"]
     },
     {
-      "numero": 20,
+      "numero": 21,
       "id": "checkr",
       "prioridad": "baja",
       "titulo": "Cuenta de Checkr para antecedentes de repartidores",
@@ -211,7 +208,7 @@
       "destraba": "El botón de antecedentes en la app del repartidor."
     },
     {
-      "numero": 21,
+      "numero": 22,
       "id": "ley-aplicable-terminos",
       "prioridad": "media",
       "titulo": "Abogado: ley aplicable de los términos",
@@ -219,7 +216,7 @@
       "destraba": "Corregir esa cláusula con el texto que diga el abogado."
     },
     {
-      "numero": 22,
+      "numero": 23,
       "id": "contador-impuesto-promo",
       "prioridad": "media",
       "titulo": "Preguntarle al contador por el impuesto con promoción",
@@ -227,7 +224,7 @@
       "destraba": "Ajustar la cuenta del impuesto en los pedidos con promoción."
     },
     {
-      "numero": 23,
+      "numero": 24,
       "id": "comida-efectivo-eeuu",
       "prioridad": "baja",
       "titulo": "Decidir si en Estados Unidos la comida se podrá pagar en efectivo al recibir",
@@ -235,7 +232,7 @@
       "destraba": "Si dices que sí, se enciende el pago al recibir allá y se actualizan las guías en inglés."
     },
     {
-      "numero": 24,
+      "numero": 25,
       "id": "comision-efectivo-eeuu",
       "prioridad": "media",
       "titulo": "Decidir cómo cobra Divoox su comisión en los viajes en efectivo de Estados Unidos",
@@ -243,7 +240,7 @@
       "destraba": "Abrir Moto o Carro en Estados Unidos con la comisión clara desde el primer viaje."
     },
     {
-      "numero": 25,
+      "numero": 26,
       "id": "flex-recargas-tarjeta-eeuu",
       "prioridad": "baja",
       "titulo": "Confirmar que las empresas de Flex en Estados Unidos recargan con tarjeta",
@@ -251,7 +248,7 @@
       "destraba": "Encender las recargas con tarjeta de Flex para Estados Unidos cuando llegue la primera empresa."
     },
     {
-      "numero": 26,
+      "numero": 27,
       "id": "decisiones-equipo-interno",
       "prioridad": "media",
       "titulo": "Decidir quién ve fotos, teléfonos y si se pide segundo factor al equipo",
@@ -259,7 +256,7 @@
       "destraba": "Dejar fijas las reglas de privacidad del equipo de operaciones y encender el segundo factor si lo quieres."
     },
     {
-      "numero": 27,
+      "numero": 28,
       "id": "texto-legal-volver-a-cobrar",
       "prioridad": "alta",
       "titulo": "Confirmar el texto legal para volver a cobrar una tarjeta cuya retención venció",
@@ -286,11 +283,7 @@
       "paises": "EE. UU.",
       "falta": "Compra real de 1 dólar, activar Stripe Connect y retiros, prueba en la calle y encender Miami en la web.",
       "quien": "Richard",
-      "docs": [
-        "first-order",
-        "ordering",
-        "track-order"
-      ]
+      "docs": ["first-order", "ordering", "track-order"]
     },
     {
       "nombre": "Logística (Divoox Flex)",
@@ -300,12 +293,7 @@
       "paises": "Todos",
       "falta": "Probar el bloque en la calle con las etiquetas y las apps de prueba nuevas.",
       "quien": "Richard",
-      "docs": [
-        "flex-getting-started",
-        "flex-routes",
-        "flex-tracking",
-        "flex-block"
-      ]
+      "docs": ["flex-getting-started", "flex-routes", "flex-tracking", "flex-block"]
     },
     {
       "nombre": "Envíos de A a B",
@@ -315,9 +303,7 @@
       "paises": "EE. UU. (Miami y Novi)",
       "falta": "Valor máximo, seguro del paquete y precio.",
       "quien": "Richard",
-      "docs": [
-        "services"
-      ]
+      "docs": ["services"]
     },
     {
       "nombre": "Mercado, Farmacia y Licores",
@@ -327,11 +313,7 @@
       "paises": "Todos",
       "falta": "Elegir el país y que se registren tiendas reales.",
       "quien": "Richard",
-      "docs": [
-        "shop-stores",
-        "store-catalog",
-        "store-orders"
-      ]
+      "docs": ["shop-stores", "store-catalog", "store-orders"]
     },
     {
       "nombre": "Moto y Carro",
@@ -341,11 +323,7 @@
       "paises": "Todos",
       "falta": "Permiso legal y seguro del pasajero. En Carro ya están las categorías, las paradas y la tarifa dinámica; faltan peajes y agregar paradas con tarjeta en pleno viaje.",
       "quien": "Richard",
-      "docs": [
-        "ride-car",
-        "ride-car-categories",
-        "ride-car-stops"
-      ]
+      "docs": ["ride-car", "ride-car-categories", "ride-car-stops"]
     },
     {
       "nombre": "Pagos al repartidor",
@@ -355,11 +333,7 @@
       "paises": "Todos",
       "falta": "Poner los montos en el superadmin.",
       "quien": "Richard",
-      "docs": [
-        "rewards",
-        "busy-areas",
-        "earn-by-time"
-      ]
+      "docs": ["rewards", "busy-areas", "earn-by-time"]
     },
     {
       "nombre": "Crecimiento",
@@ -369,11 +343,7 @@
       "paises": "EE. UU.",
       "falta": "Poner los precios. Plus y las tarjetas: mirar la hoja de pago en el celular antes de cobrar con dinero real.",
       "quien": "Richard",
-      "docs": [
-        "sponsored-listings",
-        "divoox-plus",
-        "gift-cards"
-      ]
+      "docs": ["sponsored-listings", "divoox-plus", "gift-cards"]
     },
     {
       "nombre": "Soporte",
@@ -383,10 +353,7 @@
       "paises": "Todos",
       "falta": "Poner los correos de soporte en las fichas de las tiendas cuando terminen las revisiones.",
       "quien": "Divoox",
-      "docs": [
-        "support",
-        "send-screenshot-to-support"
-      ]
+      "docs": ["support", "send-screenshot-to-support"]
     },
     {
       "nombre": "Identidad de repartidores",
@@ -396,10 +363,7 @@
       "paises": "Todos",
       "falta": "Proveedor de comparación de caras y cuenta de Checkr.",
       "quien": "Richard",
-      "docs": [
-        "background-check-and-identity",
-        "verify"
-      ]
+      "docs": ["background-check-and-identity", "verify"]
     },
     {
       "nombre": "Apps en las tiendas",
@@ -477,6 +441,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-17",
+      "titulo": "Regalos de Divoox: cupones con presupuesto para el piloto",
+      "texto": "Divoox ya puede regalar viajes, envíos y comida. El equipo crea un cupón con su presupuesto total, ciudades, servicios y vencimiento; nace apagado y se apaga solo al gastarse. El cliente agrega el código en la app y paga en mano solo la diferencia; el conductor ve «Cobra X · Divoox te paga Y» y lo del regalo entra a su saldo. Un regalo por cuenta, por celular y por teléfono; el conductor no puede usar regalos en sus propios viajes y tiene un tope diario. Guía en Docs en español e inglés."
+    },
     {
       "fecha": "2026-11-17",
       "titulo": "Las tres apps de Divoox, a producción de Google Play",
@@ -809,9 +778,7 @@
       "titulo": "Puerta de contacto en divoox.com",
       "texto": "Página «Contacto», botón «¿Preguntas?» en toda la web y formulario en Soporte: cada mensaje abre una conversación real con enlace privado. Nueva guía «¿Quién me paga y cuándo me llega?». La empresa aparece como Windoce, LLC, de Delaware con oficinas en Novi, Michigan.",
       "paises": "Todos",
-      "docs": [
-        "who-pays-me"
-      ]
+      "docs": ["who-pays-me"]
     },
     {
       "fecha": "2026-11-02",
@@ -819,9 +786,7 @@
       "titulo": "Brechas frente a los grandes",
       "texto": "GPS más estricto con aviso de ubicación simulada, edad mínima por estado y vehículo, licencia y seguro vigentes para repartir en carro o moto (apagado hasta encenderlo) y resumen anual 1099 en el superadmin (emisión apagada).",
       "paises": "EE. UU.",
-      "docs": [
-        "verify"
-      ]
+      "docs": ["verify"]
     },
     {
       "fecha": "2026-11-01",
@@ -836,9 +801,7 @@
       "titulo": "«Mis pedidos» renovado",
       "texto": "Foto del local, estado con color (verde si se entregó) y botones claros: «Ver recibo» y «Pedir otra vez».",
       "paises": "Todos",
-      "docs": [
-        "my-orders-and-reorder"
-      ]
+      "docs": ["my-orders-and-reorder"]
     },
     {
       "fecha": "2026-11-01",
@@ -867,9 +830,7 @@
       "titulo": "El mapa de zonas se ve antes de conectarse",
       "texto": "En Divoox Driver el mapa de zonas con más pedidos solo aparecía estando conectado. Ahora se ve antes, como en Dasher, que es cuando sirve para decidir adónde ir.",
       "paises": "Todos",
-      "docs": [
-        "busy-areas"
-      ]
+      "docs": ["busy-areas"]
     },
     {
       "fecha": "2026-11-01",
@@ -906,9 +867,7 @@
       "titulo": "Respuestas de soporte con plantillas nuevas",
       "texto": "El gerente de correo ya puede usar plantillas a partir de la número 10, como la de «cuándo sale la app».",
       "paises": "Todos",
-      "docs": [
-        "support"
-      ]
+      "docs": ["support"]
     },
     {
       "fecha": "2026-11-01",
@@ -930,10 +889,7 @@
       "titulo": "Divoox Plus y tarjetas de regalo",
       "texto": "Construidas, probadas con Stripe en modo prueba y publicadas apagadas.",
       "paises": "EE. UU.",
-      "docs": [
-        "divoox-plus",
-        "gift-cards"
-      ]
+      "docs": ["divoox-plus", "gift-cards"]
     },
     {
       "fecha": "2026-11-01",
@@ -941,10 +897,7 @@
       "titulo": "Anuncios patrocinados y Ganar por tiempo",
       "texto": "El restaurante paga solo por pedido que llega del anuncio; el repartidor puede cobrar por hora activa. Publicados apagados.",
       "paises": "Todos",
-      "docs": [
-        "sponsored-listings",
-        "earn-by-time"
-      ]
+      "docs": ["sponsored-listings", "earn-by-time"]
     },
     {
       "fecha": "2026-11-01",
@@ -959,9 +912,7 @@
       "titulo": "Logística ordenada de punta a punta",
       "texto": "Invitación de conductores, primeros pasos, menú por grupos y tutorial con pantallas reales.",
       "paises": "Todos",
-      "docs": [
-        "flex-getting-started"
-      ]
+      "docs": ["flex-getting-started"]
     },
     {
       "fecha": "2026-11-01",
@@ -969,9 +920,7 @@
       "titulo": "Mis casos de ayuda con capturas",
       "texto": "En las tres apps: el cliente, el repartidor y el restaurante ven sus casos y mandan capturas.",
       "paises": "Todos",
-      "docs": [
-        "send-screenshot-to-support"
-      ]
+      "docs": ["send-screenshot-to-support"]
     },
     {
       "fecha": "2026-11-01",
@@ -1133,9 +1082,7 @@
     },
     {
       "quien": "Franquicias",
-      "funciones": [
-        "Panel de la franquicia con su territorio y su equipo"
-      ]
+      "funciones": ["Panel de la franquicia con su territorio y su equipo"]
     },
     {
       "quien": "El equipo de Divoox",
