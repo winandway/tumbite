@@ -41,6 +41,8 @@ export const TIPOS_DUAL = [
   // autorización venció, o cerrarla sin cobro (Divoox asume el monto). Las dos por encima del límite.
   'autorizacion_cobrar',
   'autorizacion_sin_cobro',
+  // C-SALDO-CONDUCTOR (17 nov 2026): cargarle saldo prepago a mano a un conductor.
+  'saldo_conductor',
 ] as const;
 export type TipoDual = (typeof TIPOS_DUAL)[number];
 
@@ -181,6 +183,16 @@ export async function ejecutarDual(
           actorId,
         }),
       };
+    case 'saldo_conductor': {
+      const { cargarSaldoConductor } = await import('../saldoConductores');
+      return cargarSaldoConductor(db, {
+        conductorId: texto(d, 'conductorId'),
+        monto: numero(d, 'monto'),
+        motivo: texto(d, 'motivo'),
+        comprobante: texto(d, 'comprobante'),
+        autorId: aprobadorId ?? actorId,
+      });
+    }
     case 'fondo_punto':
       return {
         fondo: await fondearPunto(db, {
@@ -280,9 +292,13 @@ async function monedaYMonto(
             ? await una('SELECT moneda FROM empresas WHERE id = ?')
             : tipo === 'fondo_punto'
               ? await una('SELECT moneda FROM puntos_venta WHERE id = ?')
-              : await una(
-                  "SELECT p.moneda, l.monto FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.estado <> 'capturada'",
-                );
+              : tipo === 'saldo_conductor'
+                ? await una(
+                    "SELECT z.moneda FROM usuarios u JOIN repartidores r ON r.usuario_id = u.id JOIN zonas z ON z.id = r.zona_id WHERE u.id = ? AND u.rol = 'repartidor'",
+                  )
+                : await una(
+                    "SELECT p.moneda, l.monto FROM liquidaciones l JOIN pedidos p ON p.id = l.pedido_id WHERE l.pedido_id = ? AND l.estado <> 'capturada'",
+                  );
   if (!f) return null;
   return {
     moneda: f.moneda || 'USD',

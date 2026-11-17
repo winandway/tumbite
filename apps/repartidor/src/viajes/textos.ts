@@ -101,7 +101,8 @@ export const TEXTOS_VIAJE = {
       entregar: 'Entregar el paquete',
       permisoCamara: 'Necesitamos permiso para usar la cámara.',
       cobra: 'Cobra en efectivo',
-      divooxTePaga: 'Divoox te paga {monto} por el regalo del pasajero. Va a tu saldo al terminar.',
+      divooxTePaga:
+        'Divoox te paga {monto} por el regalo del pasajero. Va a tus ganancias al terminar.',
       pagoMovilPregunta: '¿Te llegó el pago móvil del pasajero? Monto del viaje:',
       pagoMovilSi: 'Sí, me llegó',
       pagoMovilNo: 'No me llegó',
@@ -215,7 +216,7 @@ export const TEXTOS_VIAJE = {
       permisoCamara: 'We need permission to use the camera.',
       cobra: 'Collect in cash',
       divooxTePaga:
-        'Divoox pays you {monto} for the rider’s gift. It goes to your balance when you finish.',
+        'Divoox pays you {monto} for the rider’s gift. It goes to your earnings when you finish.',
       pagoMovilPregunta: 'Did the rider’s mobile payment arrive? Ride amount:',
       pagoMovilSi: 'Yes, it arrived',
       pagoMovilNo: 'It didn’t arrive',

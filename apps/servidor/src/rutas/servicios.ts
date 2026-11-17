@@ -1,4 +1,5 @@
 import { cuantosHay } from '../canarioLecturas';
+import { darRegaloConductorNuevo } from '../saldoConductores';
 import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { esConductorOcupado } from '../operaciones';
@@ -1447,6 +1448,11 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     .prepare('SELECT * FROM habilitaciones WHERE conductor_id = ? AND servicio_id = ?')
     .bind(conductor, servicio)
     .first();
+  // C-SALDO-CONDUCTOR: al aprobarlo, el regalo de arranque de su ciudad (una vez en la vida).
+  if (d.estado === 'aprobada')
+    await darRegaloConductorNuevo(db, conductor).catch((e: unknown) =>
+      console.error('saldo: regalo de arranque', e),
+    );
   await auditar(
     db,
     admin.id,

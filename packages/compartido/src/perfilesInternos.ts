@@ -46,6 +46,9 @@ const FINANZAS = [
   'cupones',
   // C-CUPON-DIVOOX: los regalos que paga Divoox (presupuesto y pago al conductor) son de finanzas.
   'regalos-divoox',
+  // C-SALDO-CONDUCTOR: el saldo de los conductores y el regalo de arranque.
+  'conductores-ciudad',
+  'regalo-conductor-nuevo',
   'stripe',
   'bandeja-dinero',
   'aprobaciones-dinero',

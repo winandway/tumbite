@@ -81,4 +81,17 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
     'Tu regalo de Divoox ya no está disponible. Revisa el total.',
     'Your Divoox gift is no longer available. Check the total.',
   ],
+  // C-SALDO-CONDUCTOR (17 nov 2026)
+  ['No encontramos a ese conductor.', 'We couldn’t find that driver.'],
+  ['Ese conductor todavía no tiene ciudad.', 'That driver doesn’t have a city yet.'],
+  [
+    'Esa carga pasa el máximo permitido de Divoox por carga.',
+    'That top-up is over the Divoox maximum per top-up.',
+  ],
+  ['Escribe el motivo de la carga.', 'Enter the reason for the top-up.'],
+  [
+    'Ese regalo pasa el máximo permitido de Divoox por conductor.',
+    'That gift is over the Divoox maximum per driver.',
+  ],
+  ['No tienes regalos por pasar a tu saldo.', 'You have no gifts to move to your balance.'],
 ];

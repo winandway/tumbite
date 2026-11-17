@@ -5,7 +5,7 @@
  * se rehace con los tipos nuevos sin perder filas (una sola vez; después ya no coincide).
  */
 const TIPOS_NUEVOS =
-  "'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro'";
+  "'excedente_devuelto', 'umbral', 'excusa_conciliacion', 'recarga_local', 'autorizacion_cobrar', 'autorizacion_sin_cobro', 'saldo_conductor'";
 
 export const APROBACIONES_DINERO_DDL = `CREATE TABLE IF NOT EXISTS aprobaciones_dinero (
   id TEXT PRIMARY KEY,
@@ -35,7 +35,8 @@ export function aprobacionesViejas(sql: string | null): boolean {
   // ETP-3 (3 nov 2026): también se rehace la de SIG-4x, que no acepta «excusa_conciliacion».
   // Flex Fase 7 (13 nov 2026): también la que no acepta «recarga_local» (C-FLEX-RECARGA-LOCAL).
   // C-AUTORIZACION-VENCIDA (16 nov 2026): también la que no acepta «autorizacion_sin_cobro».
-  return Boolean(sql) && !String(sql).includes("'autorizacion_sin_cobro'");
+  // C-SALDO-CONDUCTOR (17 nov 2026): también la que no acepta «saldo_conductor».
+  return Boolean(sql) && !String(sql).includes("'saldo_conductor'");
 }
 
 export async function rehacerAprobacionesDinero(db: D1Database): Promise<boolean> {

@@ -2880,14 +2880,54 @@ const es: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'driver-balance',
+        titulo:
+          'Tu saldo en Divoox Driver: cómo funciona, cómo recargar y qué se descuenta por carrera',
+        resumen:
+          'En las ciudades donde el pasajero te paga todo en mano, la comisión de Divoox sale de un saldo que recargas por adelantado. Sin saldo no recibes carreras. Aquí te contamos cómo funciona y cómo recargarlo.',
+        explicacion: [
+          'Tienes dos billeteras. Tu «saldo» es el dinero que recargas para pagar la comisión de Divoox. Tus «ganancias» son lo que Divoox te debe, por ejemplo lo que cubren los regalos de tus pasajeros.',
+          'El pasajero te paga la carrera completa en mano, en efectivo o por pago móvil. Divoox no toca ese dinero.',
+          'Al aceptar una carrera, la comisión de Divoox se aparta de tu saldo. Al terminar, se descuenta. Si la carrera se cancela, no se hace o la sueltas, lo apartado vuelve a tu saldo entero. Nunca se cobra dos veces.',
+          'La comisión es un porcentaje del precio de la carrera. Por ejemplo, con una comisión del 10 %, en una carrera de 2,00 dólares se descuentan 0,20. En Ganancias, «Saldo para comisiones», ves cuánto tienes y para cuántas carreras te alcanza.',
+          'Sin saldo para la comisión no te llegan carreras. Cuando te queda poco, la app te avisa.',
+          'Para recargar: compra un código en un punto de venta autorizado y canjéalo en Ganancias, «Saldo para comisiones». También puedes pagarle al equipo de Divoox de tu ciudad por pago móvil: el equipo te carga el saldo y lo ves en «Cargas y regalos de saldo».',
+          'Al empezar, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez.',
+          'Si tu pasajero usó un regalo de Divoox, te paga menos en mano y Divoox te paga la diferencia en tus ganancias. Desde Ganancias puedes pasarlo a tu saldo con «Pasar a mi saldo», o Divoox te lo paga por pago móvil.',
+        ],
+        capturas: [
+          {
+            src: '/docs/regalos-divoox-conductor-saldo-es.webp',
+            alt: 'Ganancias en Divoox Driver con el saldo para comisiones, lo apartado, los regalos de pasajeros por cobrar con el botón «Pasar a mi saldo» y las cargas de saldo.',
+            pie: 'Tu saldo, lo apartado, los regalos por cobrar y tus cargas de saldo.',
+          },
+          {
+            src: '/docs/regalos-divoox-conductor-viaje-es.webp',
+            alt: 'Carrera en Divoox Driver con «Cobra en efectivo» y lo que paga Divoox por el regalo del pasajero.',
+            pie: 'En cada carrera ves cuánto cobras en mano.',
+          },
+        ],
+        preguntas: [
+          '¿Por qué no me llegan carreras?',
+          '¿Cuánto me descuentan por carrera?',
+          '¿Cómo recargo mi saldo?',
+        ],
+        pasos: [
+          'Abre Ganancias y mira «Saldo para comisiones».',
+          'Si te queda poco, recarga con un código o pídele al equipo de tu ciudad que te cargue el saldo.',
+          'Acepta la carrera: la comisión se aparta. Al terminar, se descuenta.',
+          'Si tienes regalos por cobrar, toca «Pasar a mi saldo».',
+        ],
+      },
+      {
         id: 'divoox-gift-trips',
         titulo: 'Viajes con regalo de Divoox: cobras la diferencia y Divoox te paga el resto',
         resumen:
-          'Cuando el pasajero trae un regalo de Divoox, cobras en mano solo la diferencia. Lo que cubre el regalo te lo paga Divoox: entra a tu saldo al terminar el viaje.',
+          'Cuando el pasajero trae un regalo de Divoox, cobras en mano solo la diferencia. Lo que cubre el regalo te lo paga Divoox: entra a tus ganancias al terminar el viaje.',
         explicacion: [
           'En la oferta verás «Con regalo de Divoox» y cuánto te paga Divoox. Lo que ganas es lo mismo que en cualquier viaje.',
           'Durante el viaje, la app te dice «Cobra en efectivo» con el monto que te paga el pasajero, y debajo, en verde, «Divoox te paga» con lo que cubre el regalo.',
-          'Al terminar, lo que pagó Divoox entra a tu saldo prepago y te sirve para tus comisiones. Si prefieres el dinero, pídeselo a soporte: te lo pagamos por pago móvil.',
+          'Al terminar, lo que pagó Divoox entra a tus ganancias. Divoox te lo paga por pago móvil, o lo pasas a tu saldo con un toque en Ganancias, «Pasar a mi saldo», para tus próximas comisiones.',
           'En los pedidos de comida es igual: el monto a cobrar ya descuenta el regalo y la app te dice cuánto te paga Divoox. Se acredita al cerrar el cobro.',
           'Para cuidar los regalos: no puedes tomar un viaje con regalo pedido desde tu propia cuenta o tu propio teléfono, y hay un máximo de viajes con regalo por día. Si llegas al máximo, el viaje pasa a otro conductor.',
         ],
@@ -2906,7 +2946,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Acepta la oferta: dice si trae regalo de Divoox.',
           'Cobra en mano el monto que dice «Cobra en efectivo».',
-          'Termina el viaje: lo que cubrió el regalo entra a tu saldo.',
+          'Termina el viaje: lo que cubrió el regalo entra a tus ganancias.',
         ],
       },
       {
@@ -8038,14 +8078,54 @@ const en: SeccionDocs[] = [
     icono: 'moto',
     guias: [
       {
+        id: 'driver-balance',
+        titulo:
+          'Your balance in Divoox Driver: how it works, how to top up and what each trip takes off',
+        resumen:
+          'In cities where the rider pays you everything in person, the Divoox commission comes out of a balance you top up in advance. Without balance you don’t get trips. Here’s how it works and how to top it up.',
+        explicacion: [
+          'You have two wallets. Your “balance” is the money you top up to pay the Divoox commission. Your “earnings” are what Divoox owes you, for example what your riders’ gifts cover.',
+          'The rider pays you the full trip in person. Divoox never touches that money.',
+          'When you accept a trip, the Divoox commission is set aside from your balance. When you finish, it’s charged. If the trip is canceled, doesn’t happen or you drop it, what was set aside goes back to your balance in full. It’s never charged twice.',
+          'The commission is a percentage of the trip price. For example, with a 10% commission, a 2.00-dollar trip takes off 0.20. Under Earnings, “Balance for fees,” you see how much you have and how many trips it covers.',
+          'Without balance for the commission you don’t get trips. When you’re running low, the app tells you.',
+          'To top up: buy a code at an authorized sales point and redeem it under Earnings, “Balance for fees.” The Divoox team in your city can also add balance for you, and you see it under “Balance top-ups and gifts.”',
+          'When you start, Divoox may give you a starter gift: balance for your first trips. It’s given only once.',
+          'If your rider used a Divoox gift, they pay you less in person and Divoox pays you the difference in your earnings. From Earnings you can move it to your balance with “Move to my balance,” or Divoox pays it out to you.',
+        ],
+        capturas: [
+          {
+            src: '/docs/regalos-divoox-conductor-saldo-en.webp',
+            alt: 'Earnings in Divoox Driver with the balance for fees, the amount set aside, rider gifts to collect with the “Move to my balance” button, and balance top-ups.',
+            pie: 'Your balance, what’s set aside, gifts to collect and your top-ups.',
+          },
+          {
+            src: '/docs/regalos-divoox-conductor-viaje-en.webp',
+            alt: 'Trip in Divoox Driver with “Collect in cash” and what Divoox pays for the rider’s gift.',
+            pie: 'On every trip you see how much you collect in person.',
+          },
+        ],
+        preguntas: [
+          'Why am I not getting trips?',
+          'How much is taken off per trip?',
+          'How do I top up my balance?',
+        ],
+        pasos: [
+          'Open Earnings and check “Balance for fees.”',
+          'If you’re running low, top up with a code or ask your city team to add balance.',
+          'Accept the trip: the commission is set aside. When you finish, it’s charged.',
+          'If you have gifts to collect, tap “Move to my balance.”',
+        ],
+      },
+      {
         id: 'divoox-gift-trips',
         titulo: 'Trips with a Divoox gift: collect the difference and Divoox pays the rest',
         resumen:
-          'When the rider has a Divoox gift, you collect in person only the difference. Divoox pays you what the gift covers: it goes to your balance when the trip ends.',
+          'When the rider has a Divoox gift, you collect in person only the difference. Divoox pays you what the gift covers: it goes to your earnings when the trip ends.',
         explicacion: [
           'The offer shows “With a Divoox gift” and how much Divoox pays you. What you earn is the same as on any trip.',
           'During the trip, the app shows “Collect in cash” with the amount the rider pays you and, in green below it, “Divoox pays you” with what the gift covers.',
-          'When you finish, what Divoox paid goes into your prepaid balance and covers your commissions. If you prefer the money, ask support and we pay it out to you.',
+          'When you finish, what Divoox paid goes into your earnings. Divoox pays it out to you, or you move it to your balance with one tap in Earnings, “Move to my balance,” for your next commissions.',
           'Food orders work the same: the amount to collect already takes off the gift and the app tells you how much Divoox pays you. It’s credited once the payment is closed.',
           'To protect gifts: you can’t take a gift trip requested from your own account or phone, and there’s a daily limit of gift trips. If you reach it, the trip goes to another driver.',
         ],
@@ -8064,7 +8144,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Accept the offer: it says if it has a Divoox gift.',
           'Collect in person the amount shown in “Collect in cash.”',
-          'Finish the trip: what the gift covered goes to your balance.',
+          'Finish the trip: what the gift covered goes to your earnings.',
         ],
       },
       {

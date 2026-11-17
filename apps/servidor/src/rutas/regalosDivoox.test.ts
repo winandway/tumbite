@@ -86,6 +86,16 @@ async function recargar(e: E, cuenta: string, monto: number) {
     .bind(crypto.randomUUID(), cuenta, monto, `recarga-prueba:${cuenta}:${monto}:${Math.random()}`)
     .run();
 }
+const ganancias = async (e: E, cuenta: string) =>
+  Number(
+    (
+      await e.m.DB.prepare(
+        'SELECT COALESCE(SUM(monto), 0) AS s FROM movimientos WHERE usuario_id = ?',
+      )
+        .bind(cuenta)
+        .first<{ s: number }>()
+    )?.s,
+  );
 const bolsillo = async (e: E, cuenta: string, b: string) =>
   Number(
     (
@@ -203,13 +213,15 @@ describe('C-CUPON-DIVOOX: el pasajero agrega el código y paga en mano solo la d
     const fin = await hacerViaje(e, cond, p, id);
     expect(fin.regaloDivoox).toBe(300);
     expect(fin.cobrarEnMano).toBe(fin.totalFinal - 300);
-    // Lo que pagó Divoox entra al prepago del conductor; la comisión salió como siempre.
+    // Lo que pagó Divoox entra a las GANANCIAS del conductor (recibió menos efectivo); la comisión
+    // salió de su saldo como siempre.
     const comision = Math.round(cot.total / 10);
-    expect(await bolsillo(e, cond.id, 'prepago')).toBe(10_000 - comision + 300);
+    expect(await bolsillo(e, cond.id, 'prepago')).toBe(10_000 - comision);
+    expect(await ganancias(e, cond.id)).toBe(300);
     expect(await bolsillo(e, 'tumbite', 'comisiones')).toBe(comision - 300);
     // Repetir «terminar» no acredita dos veces.
     await cond.paso(id, 'terminar');
-    expect(await bolsillo(e, cond.id, 'prepago')).toBe(10_000 - comision + 300);
+    expect(await ganancias(e, cond.id)).toBe(300);
     const lista = await e.m.llamar('GET', '/datos/admin/regalos-divoox', undefined, e.admin.token);
     expect(lista.datos.cupones[0]).toMatchObject({
       gastado: 300,
@@ -425,7 +437,7 @@ describe('C-CUPON-DIVOOX: liquidación al conductor y el reloj', () => {
     await recargar(e, cond.id, 10_000);
     const { id } = await pedirViaje(e, p);
     await hacerViaje(e, cond, p, id);
-    const antes = await bolsillo(e, cond.id, 'prepago');
+    const antes = await ganancias(e, cond.id);
     const pagar = (monto: number, referencia: string) =>
       e.m.llamar(
         'POST',
@@ -436,7 +448,7 @@ describe('C-CUPON-DIVOOX: liquidación al conductor y el reloj', () => {
     expect((await pagar(301, 'REF-0001')).estado).toBe(409);
     expect((await pagar(300, 'REF-0001')).estado).toBe(201);
     expect((await pagar(1, 'REF-0001')).estado).toBe(409);
-    expect(await bolsillo(e, cond.id, 'prepago')).toBe(antes - 300);
+    expect(await ganancias(e, cond.id)).toBe(antes - 300);
     const r = await e.m.llamar('GET', '/datos/admin/regalos-divoox', undefined, e.admin.token);
     expect(r.datos.conductores[0]).toMatchObject({
       acreditado: 300,

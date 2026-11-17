@@ -419,7 +419,7 @@ export async function cerrarRegalo(
       .bind(
         crypto.randomUUID(),
         cuenta,
-        cuenta === CUENTA_TUMBITE ? 'comisiones' : 'prepago',
+        'comisiones',
         u.pais,
         u.moneda,
         valor,
@@ -435,7 +435,15 @@ export async function cerrarRegalo(
         "UPDATE usos_cupon_divoox SET estado = 'cobrado', monto = ?, conductor_id = ?, tomado_en = COALESCE(tomado_en, datetime('now')), cerrado_en = datetime('now') WHERE id = ? AND estado = 'apartado'",
       )
       .bind(monto, p.conductorId, u.id),
-    libro(p.conductorId, monto, 'regalo_divoox', ref),
+    // C-SALDO-CONDUCTOR: el conductor recibió menos efectivo; lo del regalo va a sus GANANCIAS.
+    // Divoox se lo paga por pago móvil, o él lo pasa a su saldo con un toque.
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO movimientos (id, usuario_id, monto, concepto, referencia)
+         SELECT ?, ?, ?, 'regalo', ? WHERE EXISTS (SELECT 1 FROM usos_cupon_divoox WHERE id = ? AND estado = 'cobrado' AND conductor_id = ?)
+           AND NOT EXISTS (SELECT 1 FROM movimientos WHERE referencia = ?)`,
+      )
+      .bind(nuevoId(), p.conductorId, monto, ref, u.id, p.conductorId, ref),
     libro(CUENTA_TUMBITE, -monto, 'regalo_divoox_pagado', `${ref}:divoox`),
   ]);
   if (!cierre?.meta.changes) return 0;
@@ -559,7 +567,8 @@ export async function saludRegalos(db: D1Database): Promise<'ok' | 'error'> {
       `SELECT
          (SELECT COUNT(*) FROM cupones_divoox c WHERE ${SQL_GASTADO} > c.presupuesto) AS pasados,
          (SELECT COUNT(*) FROM usos_cupon_divoox u WHERE u.estado = 'cobrado'
-            AND NOT EXISTS (SELECT 1 FROM libro l WHERE l.referencia = 'regalo-divoox:' || u.id)) AS sin_credito,
+            AND u.cerrado_en > datetime('now', '-7 days')
+            AND NOT EXISTS (SELECT 1 FROM movimientos m WHERE m.usuario_id = u.conductor_id AND m.referencia = 'regalo-divoox:' || u.id)) AS sin_credito,
          (SELECT COUNT(*) FROM usos_cupon_divoox u
             LEFT JOIN operaciones o ON o.id = u.operacion_id LEFT JOIN pedidos p ON p.id = u.operacion_id
            WHERE u.estado = 'apartado' AND (
@@ -667,7 +676,8 @@ export async function liquidacionConductores(db: D1Database) {
     .prepare(
       `SELECT x.conductor_id, x.moneda, x.pais, x.acreditado, x.viajes, us.nombre,
               COALESCE((SELECT SUM(monto) FROM pagos_regalo_conductor p WHERE p.conductor_id = x.conductor_id AND p.moneda = x.moneda), 0) AS pagado,
-              COALESCE((SELECT SUM(l.monto) FROM libro l WHERE l.cuenta_id = x.conductor_id AND l.bolsillo = 'prepago' AND l.moneda = x.moneda AND l.pais = x.pais), 0) AS saldo
+              COALESCE((SELECT SUM(monto) FROM pagos_regalo_conductor p WHERE p.conductor_id = x.conductor_id AND p.moneda = x.moneda AND p.referencia LIKE 'saldo:%'), 0) AS a_saldo,
+              COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = x.conductor_id), 0) AS saldo
          FROM (SELECT conductor_id, moneda, pais, SUM(monto) AS acreditado, COUNT(*) AS viajes
                  FROM usos_cupon_divoox WHERE estado = 'cobrado' GROUP BY conductor_id, moneda, pais) x
          LEFT JOIN usuarios us ON us.id = x.conductor_id
@@ -681,6 +691,7 @@ export async function liquidacionConductores(db: D1Database) {
       viajes: number;
       nombre: string | null;
       pagado: number;
+      a_saldo: number;
       saldo: number;
     }>();
   return results.map((r) => ({
@@ -690,8 +701,10 @@ export async function liquidacionConductores(db: D1Database) {
     pais: r.pais,
     viajes: Number(r.viajes),
     acreditado: Number(r.acreditado),
-    pagadoPagoMovil: Number(r.pagado),
-    /** Lo que todavía está en su saldo y se le puede pagar por pago móvil. */
+    pagadoPagoMovil: Number(r.pagado) - Number(r.a_saldo),
+    /** Lo que el conductor pasó a su saldo con un toque. */
+    pasadoASaldo: Number(r.a_saldo),
+    /** Lo que todavía está en sus ganancias y se le puede pagar por pago móvil o pasar a su saldo. */
     porPagar: Math.max(0, Math.min(Number(r.acreditado) - Number(r.pagado), Number(r.saldo))),
   }));
 }
@@ -720,22 +733,13 @@ export async function pagarRegaloConductor(
         'INSERT OR IGNORE INTO pagos_regalo_conductor (id, conductor_id, monto, moneda, pais, referencia, pagado_por) VALUES (?, ?, ?, ?, ?, ?, ?)',
       )
       .bind(id, p.conductorId, p.monto, p.moneda, fila.pais, p.referencia, p.autorId),
+    // Sale de sus ganancias: Divoox ya se lo pagó por pago móvil.
     db
       .prepare(
-        `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia, autor_id)
-         SELECT ?, ?, 'prepago', ?, ?, ?, 'regalo_pagado_pago_movil', ?, ?
-          WHERE EXISTS (SELECT 1 FROM pagos_regalo_conductor WHERE id = ?)`,
+        `INSERT OR IGNORE INTO movimientos (id, usuario_id, monto, concepto, referencia)
+         SELECT ?, ?, ?, 'retiro', ? WHERE EXISTS (SELECT 1 FROM pagos_regalo_conductor WHERE id = ?)`,
       )
-      .bind(
-        crypto.randomUUID(),
-        p.conductorId,
-        fila.pais,
-        p.moneda,
-        -p.monto,
-        `regalo-pago:${id}`,
-        p.autorId,
-        id,
-      ),
+      .bind(nuevoId(), p.conductorId, -p.monto, `regalo-pago:${id}`, id),
   ]);
   if (!pago?.meta.changes)
     throw new ErrorDatos('Esa referencia de pago ya está registrada.', 'referencia', 409);
@@ -814,4 +818,10 @@ export async function regaloDeCodigo(
     .bind(p.clienteId, r.c.codigo)
     .run();
   return aRegalo(r.c, r.monto);
+}
+
+/** Lo que Divoox le debe a un conductor por regalos (en ganancias, sin pagar ni pasar al saldo). */
+export async function porCobrarRegalos(db: D1Database, conductorId: string) {
+  const fila = (await liquidacionConductores(db)).find((x) => x.conductorId === conductorId);
+  return fila ? { monto: fila.porPagar, moneda: fila.moneda, pais: fila.pais } : null;
 }

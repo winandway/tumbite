@@ -4,7 +4,7 @@
 
 ## 🟡 Regalos de Divoox en pagos en mano (C-CUPON-DIVOOX, 17 nov 2026): Venezuela (piloto) y todos los países en mano
 
-- **Probado:** en las pruebas del servidor (viaje de moto en efectivo con regalo, comida en efectivo en El Vigía con regalo, presupuesto, antifraude, pago móvil al conductor) y en el recorrido local de las apps web (es El Vigía, en Novi): el cliente paga en mano la diferencia y el conductor recibe el regalo en su prepago una sola vez.
+- **Probado:** en las pruebas del servidor (viaje de moto en efectivo con regalo, comida en efectivo en El Vigía con regalo, presupuesto, antifraude, pago móvil al conductor) y en el recorrido local de las apps web (es El Vigía, en Novi): el cliente paga en mano la diferencia y el conductor recibe el regalo en sus ganancias una sola vez (y lo puede pasar a su saldo). Carga manual de saldo y regalo de arranque probados en `saldoConductores.test.ts` y en el recorrido local.
 - **🔴 Sin probar con dinero real:** el cupón VIGIA queda creado y APAGADO en producción; lo enciende Richard. La primera semana se revisa el reporte de Superadmin → Regalos Divoox (gastado, por pagar, alertas).
 - **Con tarjeta no se aplica** (el servidor lo rechaza).
 

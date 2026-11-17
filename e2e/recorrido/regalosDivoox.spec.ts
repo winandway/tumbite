@@ -259,7 +259,7 @@ for (const idioma of ['es', 'en'] as const) {
     await expect(pr.getByTestId('viaje-divoox-paga')).toBeVisible({ timeout: 30_000 });
     if (CAPTURAS) await pr.screenshot({ path: join(CARPETA, `conductor-viaje-${idioma}.png`) });
 
-    // Termina el viaje: el regalo entra al saldo del conductor una vez.
+    // Termina el viaje: el regalo entra a las ganancias del conductor una vez.
     expect((await paso('llegue')).status()).toBe(200);
     const pin = String(
       sql(`SELECT pin_recogida FROM viajes WHERE operacion_id = '${op}'`)[0]?.pin_recogida,
@@ -277,10 +277,29 @@ for (const idioma of ['es', 'en'] as const) {
     expect(
       Number(
         sql(
-          `SELECT COUNT(*) AS n FROM libro WHERE cuenta_id = '${c}' AND concepto = 'regalo_divoox'`,
+          `SELECT COUNT(*) AS n FROM movimientos WHERE usuario_id = '${c}' AND concepto = 'regalo'`,
         )[0]?.n,
       ),
     ).toBe(1);
+
+    // C-SALDO-CONDUCTOR: el equipo le carga saldo (regalo de arranque) y el conductor ve en
+    // Ganancias su saldo, sus regalos por cobrar y sus cargas.
+    const carga = await request.post(`/datos/admin/conductores-ciudad/${c}/saldo`, {
+      headers: h(admin.token),
+      data: { monto: 500, motivo: idioma === 'es' ? 'Regalo de arranque' : 'Starter gift' },
+    });
+    expect(carga.ok(), await carga.text()).toBe(true);
+    await pr.goto('/driver');
+    await pr
+      .getByText(idioma === 'es' ? 'Ganancias' : 'Earnings', { exact: true })
+      .last()
+      .click();
+    const saldoBloque = pr.getByTestId('saldo-prepago');
+    await expect(saldoBloque).toBeVisible({ timeout: 30_000 });
+    await expect(pr.getByTestId('regalos-por-cobrar')).toBeVisible();
+    await expect(pr.getByTestId('cargas-saldo')).toBeVisible();
+    if (CAPTURAS)
+      await saldoBloque.screenshot({ path: join(CARPETA, `conductor-saldo-${idioma}.png`) });
 
     // El superadmin: el cupón con su gasto en vivo y el crédito del conductor.
     const { ruta } = (await (
@@ -310,6 +329,30 @@ for (const idioma of ['es', 'en'] as const) {
           path: join(CARPETA, `super-conductores-${idioma}.png`),
         });
     }
+    // C-SALDO-CONDUCTOR: la vista de conductores por ciudad y la carga con revisión.
+    await sp.goto(`/panel${ruta ? `/${ruta}` : ''}/driver-balance`);
+    await sp.getByRole('tab', { name: z.nombre }).click();
+    const tabla = sp.getByTestId('saldo-tabla');
+    await expect(tabla).toContainText(C.conductor, { timeout: 30_000 });
+    if (CAPTURAS)
+      await sp.getByTestId('super-saldo-conductores').screenshot({
+        path: join(CARPETA, `super-saldo-${idioma}.png`),
+      });
+    await tabla.getByRole('button').first().click();
+    await sp.getByTestId('saldo-carga').locator('input[type="number"]').fill('5');
+    await sp
+      .getByRole('button', { name: idioma === 'es' ? 'Revisar la carga' : 'Review the top-up' })
+      .click();
+    await expect(sp.getByTestId('saldo-confirmar-texto')).toBeVisible();
+    if (CAPTURAS)
+      await sp.getByTestId('saldo-carga').screenshot({
+        path: join(CARPETA, `super-saldo-carga-${idioma}.png`),
+      });
+    await sp
+      .getByRole('button', { name: idioma === 'es' ? 'Confirmar la carga' : 'Confirm the top-up' })
+      .click();
+    await expect(sp.getByRole('status')).toBeVisible({ timeout: 30_000 });
+
     // Al terminar, se deja como estaba: el cupón apagado y Moto en construcción.
     await request.patch(`/datos/admin/regalos-divoox/${C.codigo}`, {
       headers: h(admin.token),

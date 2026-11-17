@@ -67,6 +67,7 @@ import { SuperAprobaciones } from './SuperAprobaciones';
 import { SuperPiloto } from './SuperPiloto';
 import { SuperRewards } from './SuperRewards';
 import { SuperRegalosDivoox } from './SuperRegalosDivoox';
+import { SuperSaldoConductores } from './SuperSaldoConductores';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
 import { SuperViajesFijos } from './SuperViajesFijos';
@@ -173,6 +174,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/rewards') return <SuperRewards idioma={idioma} />;
   // C-CUPON-DIVOOX: crear cupones, presupuesto en vivo, reporte y pago al conductor.
   if (sub === '/gift-codes') return <SuperRegalosDivoox idioma={idioma} />;
+  // C-SALDO-CONDUCTOR: conductores por ciudad, carga de saldo y regalo de arranque.
+  if (sub === '/driver-balance') return <SuperSaldoConductores idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;
   if (sub === '/flexfinance') return <SuperFinanzas base={base} idioma={idioma} empresaId={null} />;
   if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;

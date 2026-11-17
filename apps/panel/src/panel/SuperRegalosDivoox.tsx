@@ -20,7 +20,7 @@ const T = {
   es: {
     titulo: 'Regalos Divoox',
     ayuda:
-      'Cupones que paga Divoox, no el conductor: el cliente paga en mano solo la diferencia y lo que cubre el regalo se le acredita al conductor en su saldo. Cada cupón tiene un presupuesto total; al agotarse se apaga solo. Un uso por cuenta, por teléfono y por aparato.',
+      'Cupones que paga Divoox, no el conductor: el cliente paga en mano solo la diferencia y lo que cubre el regalo se le acredita al conductor en sus ganancias. Cada cupón tiene un presupuesto total; al agotarse se apaga solo. Un uso por cuenta, por teléfono y por aparato.',
     topes: (v: string, p: string, g: string) =>
       `Topes fijos de Divoox: hasta ${v} por uso, ${p} por cupón y ${g} sumando todos los cupones vigentes.`,
     cupones: 'Cupones',
@@ -78,12 +78,13 @@ const T = {
     guardado: 'Guardado.',
     conductores: 'Lo acreditado a cada conductor',
     conductoresAyuda:
-      'Lo que pagó Divoox con los regalos entra al saldo prepago del conductor y le sirve para sus comisiones. Si prefiere el dinero, pásaselo por pago móvil y regístralo aquí con la referencia del banco: sale de su saldo.',
+      'Lo que pagó Divoox con los regalos entra a las ganancias del conductor. Se lo pagas por pago móvil y lo registras aquí con la referencia del banco, o él lo pasa a su saldo con un toque desde su app.',
     sinConductores: 'Todavía no hay regalos cobrados.',
     conductor: 'Conductor',
     viajes: 'Viajes',
     acreditado: 'Acreditado',
     pagado: 'Pagado por pago móvil',
+    aSaldo: 'Pasado a su saldo',
     porPagar: 'Se le puede pagar',
     monto: 'Monto (dólares)',
     referencia: 'Referencia del pago móvil',
@@ -100,7 +101,7 @@ const T = {
   en: {
     titulo: 'Divoox gifts',
     ayuda:
-      'Promo codes paid by Divoox, not by the driver: the customer pays in person only the difference, and what the gift covers is credited to the driver’s balance. Each code has a total budget; when it runs out, it turns off on its own. One use per account, per phone and per device.',
+      'Promo codes paid by Divoox, not by the driver: the customer pays in person only the difference, and what the gift covers is credited to the driver’s earnings. Each code has a total budget; when it runs out, it turns off on its own. One use per account, per phone and per device.',
     topes: (v: string, p: string, g: string) =>
       `Fixed Divoox limits: up to ${v} per use, ${p} per code and ${g} across all active codes.`,
     cupones: 'Codes',
@@ -158,12 +159,13 @@ const T = {
     guardado: 'Saved.',
     conductores: 'What each driver was credited',
     conductoresAyuda:
-      'What Divoox paid with gifts goes into the driver’s prepaid balance and covers their commissions. If they prefer the money, send it by mobile payment and record it here with the bank reference: it comes out of their balance.',
+      'What Divoox paid with gifts goes into the driver’s earnings. Send it by mobile payment and record it here with the bank reference, or the driver moves it to their balance with one tap in their app.',
     sinConductores: 'No paid gifts yet.',
     conductor: 'Driver',
     viajes: 'Trips',
     acreditado: 'Credited',
     pagado: 'Paid by mobile payment',
+    aSaldo: 'Moved to their balance',
     porPagar: 'Can be paid',
     monto: 'Amount (dollars)',
     referencia: 'Mobile payment reference',
@@ -206,6 +208,7 @@ type Conductor = {
   viajes: number;
   acreditado: number;
   pagadoPagoMovil: number;
+  pasadoASaldo: number;
   porPagar: number;
 };
 type Alerta = {
@@ -347,10 +350,10 @@ export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
   const nombreZona = new Map(datos.zonas.map((z) => [z.id, z.nombre]));
   return (
     <div className="super" data-testid="super-regalos-divoox">
-      <div className="flex-inline">
-        <h2>{t.titulo}</h2>
+      <h2>
+        {t.titulo}
         <AyudaAqui guia="create-divoox-gift-code" idioma={idioma} />
-      </div>
+      </h2>
       <p className="pista">{t.ayuda}</p>
       <p className="pista" data-testid="regalos-topes">
         {t.topes(
@@ -529,6 +532,7 @@ export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
                 <th>{t.viajes}</th>
                 <th>{t.acreditado}</th>
                 <th>{t.pagado}</th>
+                <th>{t.aSaldo}</th>
                 <th>{t.porPagar}</th>
                 <th>{t.registrarPago}</th>
               </tr>
@@ -769,6 +773,7 @@ function FilaConductor({
       <td>{x.viajes}</td>
       <td>{dinero(x.acreditado, x.moneda)}</td>
       <td>{dinero(x.pagadoPagoMovil, x.moneda)}</td>
+      <td>{dinero(x.pasadoASaldo, x.moneda)}</td>
       <td>{dinero(x.porPagar, x.moneda)}</td>
       <td>
         {x.porPagar > 0 ? (

@@ -1266,7 +1266,11 @@ export function Inicio() {
     comisionTipicaComida?: number;
     pedidosAlcanzan?: number | null;
     sinSaldoComida?: boolean;
+    /** C-SALDO-CONDUCTOR: lo que Divoox le debe por regalos y las cargas de saldo. */
+    regalosPorCobrar?: number;
+    cargas?: { id: string; monto: number; tipo: string; motivo: string; creadoEn: string }[];
   } | null>(null);
+  const [regalosMensaje, setRegalosMensaje] = useState('');
   // Pedidos cobrados en mano de hoy: no pasan por la billetera de Stripe, así que «Hoy» los suma
   // desde Ganancias (C-MONEDA-RECORRIDO). Solo donde el país tiene el cobro en mano encendido.
   const [enManoHoy, setEnManoHoy] = useState<{ total: number; entregas: number; moneda: string }>({
@@ -1795,7 +1799,10 @@ export function Inicio() {
         (prepago.efectivoActivo ||
           prepago.transferenciaActiva ||
           prepago.recargasPuntoVenta ||
-          (prepago.comisionTipica ?? 0) > 0) ? (
+          (prepago.comisionTipica ?? 0) > 0 ||
+          // C-SALDO-CONDUCTOR: con regalos por cobrar o cargas de saldo, también se ve.
+          (prepago.regalosPorCobrar ?? 0) > 0 ||
+          (prepago.cargas?.length ?? 0) > 0) ? (
           <View
             style={{
               borderWidth: 1,
@@ -1869,6 +1876,65 @@ export function Inicio() {
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.saldoBajo}</Text>
             ) : prepago.disponible <= 0 ? (
               <Text style={{ color: C.primario, fontSize: 12 }}>{tg.prepago.sinSaldo}</Text>
+            ) : null}
+            {(prepago.regalosPorCobrar ?? 0) > 0 ? (
+              <View testID="regalos-por-cobrar" style={{ gap: 6 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={{ color: C.secundario }}>{tg.prepago.regalosPorCobrar}</Text>
+                  <Text style={{ fontWeight: '800', color: '#0D7A3A' }}>
+                    {formatearMonto(prepago.regalosPorCobrar ?? 0, prepago.moneda, idioma)}
+                  </Text>
+                </View>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>{tg.prepago.regalosAyuda}</Text>
+                <Boton
+                  texto={tg.prepago.regalosASaldo}
+                  exito
+                  alTocar={() =>
+                    void (async () => {
+                      try {
+                        const r = await api.pedir<{ monto: number }>(
+                          'POST',
+                          '/datos/repartidor/regalos/a-saldo',
+                          {},
+                        );
+                        setRegalosMensaje(
+                          tg.prepago.regalosPasados(
+                            formatearMonto(r.monto, prepago.moneda, idioma),
+                          ),
+                        );
+                        await cargarPrepago();
+                      } catch (x) {
+                        setError(x instanceof Error ? x.message : String(x));
+                      }
+                    })()
+                  }
+                />
+              </View>
+            ) : null}
+            {regalosMensaje ? (
+              <Text accessibilityRole="alert" style={{ color: '#0D7A3A', fontWeight: '700' }}>
+                {regalosMensaje}
+              </Text>
+            ) : null}
+            {prepago.cargas?.length ? (
+              <View testID="cargas-saldo" style={{ gap: 4 }}>
+                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                  {tg.prepago.cargasTitulo}
+                </Text>
+                {prepago.cargas.slice(0, 5).map((k) => (
+                  <View
+                    key={k.id}
+                    style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}
+                  >
+                    <Text style={{ color: '#666B73', flex: 1 }}>
+                      {new Map(Object.entries(tg.prepago.tipoCarga)).get(k.tipo) ?? k.motivo}
+                    </Text>
+                    <Text style={{ fontWeight: '700', color: '#0D7A3A' }}>
+                      +{formatearMonto(k.monto, prepago.moneda, idioma)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
             ) : null}
             {prepago.recargasPuntoVenta ? (
               <>

@@ -1150,13 +1150,13 @@ const regalosDivoox: Record<IdiomaAyuda, Guia> = {
     resumen:
       'Cómo crear un cupón que paga Divoox, encenderlo, ver en vivo cuánto se gastó y cuánto queda, y pagarle al conductor lo acreditado.',
     explicacion: [
-      'Un regalo de Divoox lo paga Divoox, no el conductor. El cliente paga en mano solo la diferencia y lo que cubre el regalo se le acredita al conductor en su saldo prepago al terminar (sirve para sus comisiones).',
+      'Un regalo de Divoox lo paga Divoox, no el conductor. El cliente paga en mano solo la diferencia y lo que cubre el regalo se le acredita al conductor en sus ganancias al terminar.',
       'Cada cupón tiene un presupuesto total en dólares. Lo apartado en viajes en curso más lo ya cobrado nunca lo pasa: lo comprueba el servidor en el mismo paso que aparta cada uso. Al agotarse, el cupón se apaga solo; si un viaje se cancela, el dinero vuelve al presupuesto y el cupón se enciende otra vez.',
       'Los topes fijos de Divoox están en el código y el panel no los puede pasar: hasta 20 dólares por uso, 500 por cupón y 1 000 sumando todos los cupones vigentes, y como máximo 20 viajes con regalo por conductor al día.',
       'Antifraude: un uso por cuenta, por número de celular y por teléfono. El conductor no puede tomar un viaje con regalo pedido desde su propia cuenta o teléfono. Las alertas (intentos frenados, tope diario, el mismo cliente con el mismo conductor una y otra vez) salen al final de la pantalla.',
       'Un cupón de bienvenida no lleva código: se aplica solo en la primera operación de cada persona en esas ciudades. Uno con código lo agrega el cliente en la app («¿Tienes un código de regalo?») o en la casilla de cupón del carrito.',
       'Todo cupón nace APAGADO. Revísalo y enciéndelo cuando el equipo de la ciudad esté listo.',
-      'Lo acreditado a cada conductor sale en la tabla de abajo. Si el conductor prefiere el dinero, pásaselo por pago móvil y regístralo con la referencia del banco: se descuenta de su saldo, una vez por referencia y nunca más de lo acreditado.',
+      'Lo acreditado a cada conductor sale en la tabla de abajo. Pásaselo por pago móvil y regístralo con la referencia del banco (sale de sus ganancias, una vez por referencia y nunca más de lo acreditado), o el conductor lo pasa a su saldo con un toque desde su app.',
     ],
     capturas: [
       capRegalo(
@@ -1198,13 +1198,13 @@ const regalosDivoox: Record<IdiomaAyuda, Guia> = {
     resumen:
       'How to create a code paid by Divoox, turn it on, see live how much was spent and how much is left, and pay drivers what was credited.',
     explicacion: [
-      'A Divoox gift is paid by Divoox, not by the driver. The customer pays in person only the difference, and what the gift covers is credited to the driver’s prepaid balance when the trip ends (it covers their commissions).',
+      'A Divoox gift is paid by Divoox, not by the driver. The customer pays in person only the difference, and what the gift covers is credited to the driver’s earnings when the trip ends.',
       'Each code has a total budget in dollars. What is set aside in trips in progress plus what was already paid never goes over it: the server checks it in the same step that sets aside each use. When it runs out, the code turns off on its own; if a trip is canceled, the money goes back to the budget and the code turns on again.',
       'Divoox’s fixed limits live in the code and the panel can’t go over them: up to 20 dollars per use, 500 per code and 1,000 across all active codes, and at most 20 gift trips per driver per day.',
       'Anti-fraud: one use per account, per cell number and per phone. A driver can’t take a gift trip requested from their own account or phone. Alerts (blocked attempts, daily limit, the same customer with the same driver again and again) show at the bottom of the screen.',
       'A welcome code needs no code entry: it applies on its own on each person’s first trip or order in those cities. A code with a name is added by the customer in the app (“Have a gift code?”) or in the cart’s coupon field.',
       'Every code is created OFF. Review it and turn it on when the city team is ready.',
-      'What was credited to each driver is in the table below. If the driver prefers the money, send it by mobile payment and record it with the bank reference: it comes out of their balance, once per reference and never more than was credited.',
+      'What was credited to each driver is in the table below. Send it by mobile payment and record it with the bank reference (it comes out of their earnings, once per reference and never more than was credited), or the driver moves it to their balance with one tap in their app.',
     ],
     capturas: [
       capRegalo(
@@ -1238,6 +1238,97 @@ const regalosDivoox: Record<IdiomaAyuda, Guia> = {
       'Enter the total budget (for example 100) and the daily limit per driver. Tap “Create (off).”',
       'Review the code card and tap “Turn on” when everything is ready.',
       'Watch spending live on the card and the alerts at the bottom of the screen.',
+    ],
+  },
+};
+
+// ───────────────────── Saldo de conductores (C-SALDO-CONDUCTOR, 17 nov 2026) ─────────────────────
+
+const capSaldo = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `saldo-conductores-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const saldoConductores: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'driver-balance-top-up',
+    titulo: 'Saldo de conductores: ver por ciudad, cargar saldo y regalo de arranque',
+    resumen:
+      'Cómo ver los conductores de cada ciudad con su saldo y sus carreras, cargarle saldo a mano a uno y encender el regalo de arranque para conductores nuevos.',
+    explicacion: [
+      'El conductor tiene dos billeteras: su saldo (lo recarga él y de ahí sale la comisión de Divoox de cada carrera; sin saldo no recibe carreras) y sus ganancias (lo que Divoox le debe, por ejemplo por los regalos de sus pasajeros).',
+      'La comisión se aparta al aceptar y se descuenta al terminar. El porcentaje está en Flex · Dinero, Políticas, por país y, si hace falta, por ciudad. Hoy en Venezuela es el 10 % (aprobado por Richard el 2 de noviembre).',
+      'En «Saldo de conductores» eliges la ciudad y ves cuántos conductores hay, cuántos están activos (conectados o con carreras en los últimos 7 días), cuántos no tienen saldo, y el saldo, lo apartado, las ganancias y las carreras de cada uno.',
+      'Cargar saldo a mano: toca «Cargar saldo» en su fila, escribe el monto, elige el motivo («Regalo de arranque», «Pagó por pago móvil» o «Corrección del equipo») y, si hay, la referencia del banco. Toca «Revisar la carga», lee el resumen y toca «Confirmar la carga». Queda en el libro con tu nombre.',
+      'Topes: hasta 50 dólares por carga (fijo en el código). Si con esa carga pasas tu límite del día, no se mueve nada: queda en «Para aprobar» para que otra persona del equipo la firme.',
+      'Regalo de arranque: en la misma pantalla, por ciudad, pones cuánto saldo recibe cada conductor nuevo y el presupuesto total, y lo enciendes. Cada conductor lo recibe una sola vez, al aprobarlo. Al gastarse el presupuesto se apaga solo.',
+    ],
+    capturas: [
+      capSaldo(
+        'super-saldo',
+        'es',
+        'Pantalla «Saldo de conductores» con la ciudad elegida, los totales y la tabla de conductores con su saldo, ganancias y carreras.',
+        'Los conductores de la ciudad con su saldo y sus carreras.',
+      ),
+      capSaldo(
+        'super-saldo-carga',
+        'es',
+        'Paso de confirmación de una carga de saldo con el resumen y el botón «Confirmar la carga».',
+        'Antes de cargar, revisas el resumen y confirmas.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo le cargo saldo a un conductor que me pagó por pago móvil?',
+      '¿Por qué un conductor no recibe carreras?',
+      '¿Cómo enciendo el regalo de arranque de una ciudad?',
+    ],
+    pasos: [
+      'Abre «Saldo de conductores» en el menú de Dinero y elige la ciudad.',
+      'Busca al conductor y toca «Cargar saldo».',
+      'Escribe el monto, elige el motivo y la referencia si la hay; toca «Revisar la carga».',
+      'Lee el resumen y toca «Confirmar la carga».',
+      'Para el regalo de arranque, llena el monto y el presupuesto abajo, marca «Encendido» y guarda.',
+    ],
+  },
+  en: {
+    id: 'driver-balance-top-up',
+    titulo: 'Driver balances: see by city, top up and starter gift',
+    resumen:
+      'How to see each city’s drivers with their balance and trips, top up one by hand and turn on the starter gift for new drivers.',
+    explicacion: [
+      'Drivers have two wallets: their balance (they top it up and the Divoox commission for each trip comes out of it; without balance they get no trips) and their earnings (what Divoox owes them, for example for their riders’ gifts).',
+      'The commission is set aside when they accept and charged when they finish. The percentage lives in Flex · Money, Policies, by country and, if needed, by city.',
+      'In “Driver balances” you pick the city and see how many drivers there are, how many are active (online or with trips in the last 7 days), how many have no balance, and each one’s balance, amount set aside, earnings and trips.',
+      'Top up by hand: tap “Top up” on their row, enter the amount, choose the reason and, if there is one, the bank reference. Tap “Review the top-up,” read the summary and tap “Confirm the top-up.” It’s recorded in the ledger under your name.',
+      'Limits: up to 50 dollars per top-up (fixed in the code). If that top-up takes you over your daily limit, nothing moves: it waits in “To approve” for another team member to sign off.',
+      'Starter gift: on the same screen, per city, set how much balance each new driver gets and the total budget, and turn it on. Each driver gets it once, when approved. When the budget runs out, it turns off on its own.',
+    ],
+    capturas: [
+      capSaldo(
+        'super-saldo',
+        'en',
+        'The “Driver balances” screen with the chosen city, the totals and the drivers table with their balance, earnings and trips.',
+        'The city’s drivers with their balance and trips.',
+      ),
+      capSaldo(
+        'super-saldo-carga',
+        'en',
+        'Confirmation step of a balance top-up with the summary and the “Confirm the top-up” button.',
+        'Before topping up, you review the summary and confirm.',
+      ),
+    ],
+    preguntas: [
+      'How do I top up a driver’s balance?',
+      'Why isn’t a driver getting trips?',
+      'How do I turn on a city’s starter gift?',
+    ],
+    pasos: [
+      'Open “Driver balances” in the Money menu and pick the city.',
+      'Find the driver and tap “Top up.”',
+      'Enter the amount, choose the reason and add the reference if there is one; tap “Review the top-up.”',
+      'Read the summary and tap “Confirm the top-up.”',
+      'For the starter gift, fill in the amount and budget below, check “On” and save.',
     ],
   },
 };
@@ -1277,7 +1368,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     {
       id: 'money',
       titulo: esp ? 'Dinero' : 'Money',
-      guias: [de(regalosDivoox)],
+      guias: [de(regalosDivoox), de(saldoConductores)],
     },
     {
       id: 'settings',

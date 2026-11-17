@@ -27,6 +27,7 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperAprobaciones.tsx', 'two-person-approval'],
   ['ResolverAutorizacion.tsx', 'resolve-expired-card-authorization'],
   ['SuperRegalosDivoox.tsx', 'create-divoox-gift-code'],
+  ['SuperSaldoConductores.tsx', 'driver-balance-top-up'],
 ];
 const fuente = (archivo: string) => readFileSync(join(AQUI, archivo), 'utf8');
 

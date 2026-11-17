@@ -2720,5 +2720,26 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "conductor_id",
     "detalle",
     "creado_en"
+  ],
+  "cargas_saldo_conductor": [
+    "id",
+    "conductor_id",
+    "zona_id",
+    "pais",
+    "moneda",
+    "monto",
+    "tipo",
+    "motivo",
+    "comprobante",
+    "autor_id",
+    "creado_en"
+  ],
+  "regalo_conductor_nuevo": [
+    "zona_id",
+    "monto",
+    "presupuesto",
+    "activo",
+    "actualizado_por",
+    "actualizado_en"
   ]
 };

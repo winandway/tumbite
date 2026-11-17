@@ -5,7 +5,7 @@ import { EL_VIGIA, abrirComida, escenarioVe, restauranteVe } from '../pruebas/co
 /**
  * C-CUPON-DIVOOX (17 nov 2026) — Venezuela. Un pedido de comida en efectivo en El Vigía con el regalo
  * VIGIA: el cliente paga en mano solo la diferencia, el repartidor ve lo que paga Divoox y, al
- * conciliar, se le acredita en su saldo prepago una sola vez. Con tarjeta el regalo no se usa.
+ * conciliar, se le acredita en sus ganancias una sola vez (y lo puede pasar a su saldo). Con tarjeta el regalo no se usa.
  */
 const CASA = { lat: 8.6235, lng: -71.649 };
 const APARATO = { 'x-aparato': 'aparato-cliente-el-vigia-1' };
@@ -125,6 +125,16 @@ describe('C-CUPON-DIVOOX: comida en mano con el regalo de Divoox', () => {
     expect((await e.m.entregar(id, rep.token)).estado).toBe(200);
     const enMano = Number(f?.total) - Number(f?.propina);
     const antes = await saldoLibro(e.m.DB, rep.id, 'prepago', 'VE', 'USD');
+    const ganado = async () =>
+      Number(
+        (
+          await e.m.DB.prepare(
+            "SELECT COALESCE(SUM(monto), 0) AS s FROM movimientos WHERE usuario_id = ? AND concepto = 'regalo'",
+          )
+            .bind(rep.id)
+            .first<{ s: number }>()
+        )?.s,
+      );
     const cobre = await e.m.llamar(
       'POST',
       `/datos/repartidor/pedidos/${id}/cobre`,
@@ -136,11 +146,23 @@ describe('C-CUPON-DIVOOX: comida en mano con el regalo de Divoox', () => {
       .bind(id)
       .first<{ conciliacion_estado: string }>();
     expect(fin?.conciliacion_estado).toBe('conciliado');
-    // Los 2,00 del regalo entran a su prepago, una vez.
-    expect(await saldoLibro(e.m.DB, rep.id, 'prepago', 'VE', 'USD')).toBe(antes + 200);
+    // Los 2,00 del regalo entran a sus ganancias, una vez.
+    expect(await ganado()).toBe(200);
     const { conciliarPedidoDirecto } = await import('../internacional/cobroDirecto');
     await conciliarPedidoDirecto(e.m.DB, id);
+    expect(await ganado()).toBe(200);
+    // Con un toque los pasa a su saldo; un segundo toque no pasa nada más.
+    const pasa = await e.m.llamar('POST', '/datos/repartidor/regalos/a-saldo', {}, rep.token);
+    expect(pasa.estado).toBe(200);
+    expect(pasa.datos.monto).toBe(200);
     expect(await saldoLibro(e.m.DB, rep.id, 'prepago', 'VE', 'USD')).toBe(antes + 200);
+    expect(
+      (await e.m.llamar('POST', '/datos/repartidor/regalos/a-saldo', {}, rep.token)).estado,
+    ).toBe(409);
+    expect(await saldoLibro(e.m.DB, rep.id, 'prepago', 'VE', 'USD')).toBe(antes + 200);
+    const saldo = await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, rep.token);
+    expect(saldo.datos.regalosPorCobrar).toBe(0);
+    expect(saldo.datos.cargas[0]).toMatchObject({ tipo: 'regalo_a_saldo', monto: 200 });
     const lista = await e.m.llamar('GET', '/datos/admin/regalos-divoox', undefined, e.admin.token);
     expect(lista.datos.cupones[0]).toMatchObject({ gastado: 200, apartado: 0, usos: 1 });
     // Ya lo usó: otro pedido con el mismo código no lo trae.

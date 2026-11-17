@@ -104,7 +104,7 @@ const es = {
     propinaAparte: 'La propina en efectivo es tuya y no se cuenta aquí.',
     // C-CUPON-DIVOOX: el cliente usó un regalo que paga Divoox (el monto a cobrar ya lo descuenta).
     divooxTePaga:
-      'Divoox te paga {monto} por el regalo del cliente. Va a tu saldo al cerrar el cobro.',
+      'Divoox te paga {monto} por el regalo del cliente. Va a tus ganancias al cerrar el cobro.',
     transferPendiente: 'La transferencia aún no me llega',
     transferPendienteOk:
       'Quedó anotado. Puedes entregar; cuando la veas en tu banco, confirma lo que llegó (o 0 si no llegó).',
@@ -157,11 +157,22 @@ const es = {
   prepago: {
     titulo: 'Saldo para comisiones',
     ayuda:
-      'Las comisiones de los pedidos que cobras en mano salen de este saldo. Se aparta al aceptar y se cobra al entregar. Recarga en un punto de venta y canjea el código aquí.',
+      'La comisión de Divoox de las carreras y los pedidos que cobras en mano sale de este saldo. Se aparta al aceptar y se cobra al terminar; sin saldo no te llegan. Recarga con un código de un punto de venta o con el equipo de Divoox de tu ciudad.',
     disponible: 'Disponible',
-    reservado: 'Apartado en pedidos',
+    reservado: 'Apartado en carreras y pedidos',
     codigo: 'Código de recarga',
     canjear: 'Recargar con el código',
+    // C-SALDO-CONDUCTOR: lo que Divoox le debe por los regalos de sus pasajeros, y su historial.
+    regalosPorCobrar: 'Regalos de pasajeros por cobrar',
+    regalosAyuda: 'Divoox te los paga por pago móvil, o pásalos a tu saldo ahora.',
+    regalosASaldo: 'Pasar a mi saldo',
+    regalosPasados: (m: string) => `Listo: ${m} pasaron a tu saldo.`,
+    cargasTitulo: 'Cargas y regalos de saldo',
+    tipoCarga: {
+      manual: 'Carga del equipo de Divoox',
+      regalo_nuevo: 'Regalo de arranque',
+      regalo_a_saldo: 'Regalos pasados a tu saldo',
+    } as Record<string, string>,
     canjeado: 'Recarga acreditada.',
     sinSaldo: 'Sin saldo no recibes pedidos en efectivo.',
     // C-SALDO-CARRERAS (13 nov 2026): el aproximado se dice como aproximado.
@@ -317,7 +328,7 @@ const en: T = {
     cobroOk: 'Payment recorded. You confirmed it; if it was a transfer, check it in your bank.',
     propinaAparte: 'A cash tip is yours and isn’t counted here.',
     divooxTePaga:
-      'Divoox pays you {monto} for the customer’s gift. It goes to your balance once the payment is closed.',
+      'Divoox pays you {monto} for the customer’s gift. It goes to your earnings once the payment is closed.',
     transferPendiente: 'The transfer hasn’t reached me yet',
     transferPendienteOk:
       'Noted. You can deliver; when you see it in your bank, confirm what arrived (or 0 if it didn’t).',
@@ -369,11 +380,21 @@ const en: T = {
   prepago: {
     titulo: 'Balance for fees',
     ayuda:
-      'Fees for orders you collect in person come out of this balance. It’s reserved when you accept and charged when you deliver. Top up at a sales point and redeem the code here.',
+      'The Divoox fee for the trips and orders you collect in person comes out of this balance. It’s set aside when you accept and charged when you finish; without balance you don’t get them. Top up with a sales point code or through the Divoox team in your city.',
     disponible: 'Available',
-    reservado: 'Reserved in orders',
+    reservado: 'Set aside in trips and orders',
     codigo: 'Top-up code',
     canjear: 'Top up with the code',
+    regalosPorCobrar: 'Rider gifts to collect',
+    regalosAyuda: 'Divoox pays them by mobile payment, or move them to your balance now.',
+    regalosASaldo: 'Move to my balance',
+    regalosPasados: (m: string) => `Done: ${m} moved to your balance.`,
+    cargasTitulo: 'Balance top-ups and gifts',
+    tipoCarga: {
+      manual: 'Top-up from the Divoox team',
+      regalo_nuevo: 'Starter gift',
+      regalo_a_saldo: 'Gifts moved to your balance',
+    } as Record<string, string>,
     canjeado: 'Top-up credited.',
     sinSaldo: 'Without balance you won’t get cash orders.',
     carreras: (n: number) =>

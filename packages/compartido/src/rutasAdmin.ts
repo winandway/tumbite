@@ -135,6 +135,11 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PATCH /admin/cupones/:codigo': 'dinero.configurar',
   // C-CUPON-DIVOOX: regalos que paga Divoox (presupuesto, reporte y pago al conductor).
   'GET /admin/regalos-divoox': 'dinero.ver',
+  // C-SALDO-CONDUCTOR: conductores por ciudad, carga manual de saldo y regalo de arranque.
+  'GET /admin/conductores-ciudad': 'dinero.ver',
+  'GET /admin/conductores-ciudad/:id/cargas': 'dinero.ver',
+  'POST /admin/conductores-ciudad/:id/saldo': 'dinero.reembolsar',
+  'PUT /admin/regalo-conductor-nuevo/:zona': 'dinero.configurar',
   'POST /admin/regalos-divoox': 'dinero.configurar',
   'PATCH /admin/regalos-divoox/:codigo': 'dinero.configurar',
   'GET /admin/regalos-divoox/:codigo/usos': 'dinero.ver',
@@ -461,6 +466,10 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/cupones': DINERO,
   'PATCH /admin/cupones/:codigo': DINERO,
   'GET /admin/regalos-divoox': DINERO,
+  'GET /admin/conductores-ciudad': DINERO,
+  'GET /admin/conductores-ciudad/:id/cargas': DINERO,
+  'POST /admin/conductores-ciudad/:id/saldo': DINERO,
+  'PUT /admin/regalo-conductor-nuevo/:zona': DINERO,
   'POST /admin/regalos-divoox': DINERO,
   'PATCH /admin/regalos-divoox/:codigo': DINERO,
   'GET /admin/regalos-divoox/:codigo/usos': DINERO,
