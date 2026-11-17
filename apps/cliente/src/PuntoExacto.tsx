@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { type Region } from 'react-native-maps';
@@ -73,6 +73,16 @@ export function PuntoExacto({
       if (n === pedido.current) setLeyendo(false);
     }
   }
+
+  // Se abre sobre un punto sin su calle («Estoy aquí» de la hoja, un punto guardado sin texto): se
+  // lee de una vez, sin esperar a que la persona mueva el mapa.
+  useEffect(() => {
+    if (!inicial.punto || inicial.direccion?.trim()) return;
+    const r = setTimeout(() => void leerCalle(inicial.punto as Punto), 0);
+    return () => clearTimeout(r);
+    // Solo al abrir.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const alMover = (r: Region) => {
     const p = { lat: r.latitude, lng: r.longitude };

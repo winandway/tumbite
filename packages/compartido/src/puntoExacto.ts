@@ -30,7 +30,11 @@ export type SitioGeocodificado = {
   subregion?: string | null;
   region?: string | null;
   country?: string | null;
+  isoCountryCode?: string | null;
 };
+
+/** Donde el número de la casa va ANTES de la calle («43407 Grand River Ave»). */
+const NUMERO_PRIMERO = new Set(['US', 'CA']);
 
 /** Un «plus code» de Google (CQPG+7F2): no es una dirección para una persona. */
 const PLUS_CODE = /^[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,3}\b/i;
@@ -51,7 +55,10 @@ export function direccionDelSitio(s: SitioGeocodificado | null | undefined): str
   const calle = limpio(s.street);
   const numero = limpio(s.streetNumber);
   const nombre = limpio(s.name);
-  const primera = calle ? [calle, numero].filter(Boolean).join(' ') : nombre;
+  const numeroPrimero = NUMERO_PRIMERO.has((s.isoCountryCode ?? '').trim().toUpperCase());
+  const primera = calle
+    ? (numeroPrimero ? [numero, calle] : [calle, numero]).filter(Boolean).join(' ')
+    : nombre;
   const partes = [
     primera,
     limpio(s.district),

@@ -923,7 +923,8 @@ export function PinFijoWeb({ alto }: { alto: number }) {
         left: '50%',
         top: alto / 2 - 48,
         transform: 'translateX(-50%)',
-        zIndex: 2,
+        // Encima de las capas de Leaflet (mosaicos 200, marcas 600) y debajo de sus botones (800).
+        zIndex: 650,
         pointerEvents: 'none',
         filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.35))',
       }}

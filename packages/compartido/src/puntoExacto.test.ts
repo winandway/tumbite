@@ -32,6 +32,26 @@ describe('C-PUNTO-EXACTO', () => {
     expect(direccionDelSitio(null)).toBe('');
   });
 
+  it('en Estados Unidos y Canadá el número va antes de la calle (como lo escribe el correo de allá)', () => {
+    expect(
+      direccionDelSitio({
+        street: 'Grand River Ave',
+        streetNumber: '43407',
+        city: 'Novi',
+        region: 'MI',
+        isoCountryCode: 'US',
+      }),
+    ).toBe('43407 Grand River Ave, Novi, MI');
+    expect(
+      direccionDelSitio({
+        street: 'Calle 5',
+        streetNumber: '12',
+        city: 'El Vigía',
+        isoCountryCode: 'VE',
+      }),
+    ).toBe('Calle 5 12, El Vigía');
+  });
+
   it('solo vuelve a leer la calle si el mapa se movió de verdad', () => {
     expect(seMovio(null, { lat: 1, lng: 1 })).toBe(true);
     expect(seMovio({ lat: 1, lng: 1 }, { lat: 1.00001, lng: 1 })).toBe(false);

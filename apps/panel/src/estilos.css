@@ -5147,6 +5147,12 @@ div.pswp .pswp__button--arrow .pswp__icn {
   gap: 8px;
   margin-bottom: 12px;
 }
+/* C-PUNTO-EXACTO: el punto ya marcado se dice en verde (lo que salió bien va en verde). */
+.elegir-punto .punto-marcado {
+  color: #0d7a3a;
+  font-weight: 700;
+  margin: 0;
+}
 .elegir-punto .sugerencias {
   list-style: none;
   margin: 4px 0 0;

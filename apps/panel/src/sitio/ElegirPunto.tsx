@@ -54,9 +54,17 @@ export function ElegirPunto({
   const tp = textosPuntoExacto(idioma);
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<import('leaflet').Map | null>(null);
-  const alCambiar = useRef((p: Punto) => cambiar(fino(p)));
+  // ¿El mapa ya está puesto sobre un punto? Lo que marca la persona cuenta como sí.
+  const yaCentrado = useRef(punto != null);
+  const alCambiar = useRef((p: Punto) => {
+    yaCentrado.current = true;
+    cambiar(fino(p));
+  });
   useEffect(() => {
-    alCambiar.current = (p: Punto) => cambiar(fino(p));
+    alCambiar.current = (p: Punto) => {
+      yaCentrado.current = true;
+      cambiar(fino(p));
+    };
   }, [cambiar]);
   // Hacia dónde mueve el mapa la pantalla (al abrir, «Estoy aquí» o una sugerencia). Lo que la
   // persona arrastra NO lo cambia: así el mapa nunca salta de vuelta.
@@ -64,6 +72,13 @@ export function ElegirPunto({
     centro: punto ?? centro,
     zoom: punto ? 17 : 12,
   }));
+  // El punto llegó después de abrir (lo escrito se recuperó, regla de los formularios): el mapa va ahí.
+  useEffect(() => {
+    if (!punto || yaCentrado.current) return;
+    yaCentrado.current = true;
+    const r = setTimeout(() => setVista({ centro: punto, zoom: 17 }), 0);
+    return () => clearTimeout(r);
+  }, [punto]);
   const [estadoGps, setEstadoGps] = useState('');
   const [busqueda, setBusqueda] = useState<boolean | null>(null);
   const [q, setQ] = useState('');
@@ -228,7 +243,7 @@ export function ElegirPunto({
           />
         </div>
       )}
-      <p className={punto ? 'aviso-exito' : 'pista'} role="status" data-testid="estado-punto">
+      <p className={punto ? 'punto-marcado' : 'pista'} role="status" data-testid="estado-punto">
         {punto ? tp.puntoMarcado : tp.sinMarcar}
       </p>
     </div>
