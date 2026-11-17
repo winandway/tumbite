@@ -1,5 +1,5 @@
 {
-  "ok": true,
+  "ok": false,
   "piezas": {
     "base": "ok",
     "almacen": "ok",
@@ -17,6 +17,7 @@
     "sms": "ok",
     "dinero": "ok",
     "retiros": "pendiente",
+    "connect": "error",
     "servicios": "ok",
     "viajes": "ok",
     "comidaPaises": "ok",
@@ -36,5 +37,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-17T17:09:26.255514+00:00"
+  "medido": "2026-11-17T18:13:56.554919+00:00"
 }

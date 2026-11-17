@@ -444,7 +444,7 @@
     {
       "fecha": "2026-11-17",
       "titulo": "Moto y Carro: «Fijar en el mapa» dentro de cada casilla, y borrador del inicio nuevo",
-      "texto": "En Moto, Carro y Envíos ya no salen dos tarjetas iguales de «Marcar mi puerta en el mapa»: cada casilla trae su propio enlace, «Fijar recogida en el mapa» y «Fijar destino en el mapa», como Uber y DiDi; en el carrito de comida dice «Fijar entrega en el mapa». De paso, «Viajes fijos» y «Conductores de confianza» ya se leen en teléfonos con modo oscuro. Y queda un borrador navegable del inicio nuevo y del flujo de pedir una moto (página «borrador-inicio»), para cambiarlo ahí antes de construirlo en la app."
+      "texto": "En Moto, Carro y Envíos ya no salen dos tarjetas iguales de «Marcar mi puerta en el mapa»: cada casilla trae su propio enlace, «Fijar recogida en el mapa» y «Fijar destino en el mapa», como Uber y DiDi; en el carrito de comida dice «Fijar entrega en el mapa». De paso, «Viajes fijos» y «Conductores de confianza» ya se leen en teléfonos con modo oscuro. Y queda un borrador navegable del inicio nuevo y del flujo de pedir una moto (página «borrador-inicio»), para cambiarlo ahí antes de construirlo en la app. Apps de pruebas del cliente con el arreglo: iPhone 47 (TestFlight interno) y Android 32 (instalación directa); no van a revisión de las tiendas."
     },
     {
       "fecha": "2026-11-17",
