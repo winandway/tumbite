@@ -2656,5 +2656,69 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "motivo",
     "aviso_conductor_en",
     "creado_en"
+  ],
+  "cupones_divoox": [
+    "codigo",
+    "nombre_es",
+    "nombre_en",
+    "tipo",
+    "valor",
+    "moneda",
+    "servicios",
+    "zonas",
+    "vence_en",
+    "presupuesto",
+    "bienvenida",
+    "tope_diario_conductor",
+    "activo",
+    "apagado_motivo",
+    "agotado_en",
+    "creado_por",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "cupones_divoox_guardados": [
+    "cliente_id",
+    "codigo",
+    "guardado_en"
+  ],
+  "usos_cupon_divoox": [
+    "id",
+    "codigo",
+    "cliente_id",
+    "telefono",
+    "aparato",
+    "servicio",
+    "zona_id",
+    "pais",
+    "operacion_id",
+    "conductor_id",
+    "monto",
+    "moneda",
+    "estado",
+    "creado_en",
+    "tomado_en",
+    "cerrado_en",
+    "motivo"
+  ],
+  "pagos_regalo_conductor": [
+    "id",
+    "conductor_id",
+    "monto",
+    "moneda",
+    "pais",
+    "referencia",
+    "pagado_por",
+    "creado_en"
+  ],
+  "alertas_regalo": [
+    "id",
+    "tipo",
+    "codigo",
+    "operacion_id",
+    "cliente_id",
+    "conductor_id",
+    "detalle",
+    "creado_en"
   ]
 };

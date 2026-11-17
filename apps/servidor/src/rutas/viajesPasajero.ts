@@ -56,6 +56,8 @@ import { multiplicadorVigente } from '../viajesDinamica';
 import { paradasDe } from './paradasViaje';
 import { accesoDe, filtroAlcance, servicioOperacionSql, tienePermiso } from '../accesoInterno';
 import { conductorDeConfianzaParaPedir } from './viajesFijos';
+import { aparatoDe } from './regalosDivoox';
+import { apartarRegalo, conRegalo, liberarRegalo, regaloParaCliente } from '../regalosDivoox';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -497,7 +499,9 @@ export async function exigirParadasValidas(
 viajesPasajero.post('/viajes/cotizar', async (c) => {
   const u = exigir(c, 'cliente');
   const d = await leerCuerpo(c, esquemaCotizarViaje);
-  return c.json({ cotizacion: await cotizarParaCliente(c.env, base(c), u.id, d) }, 201);
+  // C-CUPON-DIVOOX: con el aparato de la app, la cotización dice el regalo que se aplicaría.
+  const aparato = await aparatoDe(c);
+  return c.json({ cotizacion: await cotizarParaCliente(c.env, base(c), u.id, d, aparato) }, 201);
 });
 
 /**
@@ -509,6 +513,8 @@ export async function cotizarParaCliente(
   db: D1Database,
   clienteId: string,
   d: PedidoCotizacion,
+  /** C-CUPON-DIVOOX: la huella del aparato (sin ella no se calcula regalo: viajes fijos del reloj). */
+  aparato: string | null = null,
 ) {
   const zona = await zonaPara(db, d.origen.lat, d.origen.lng);
   if (!zona) throw new ErrorDatos('Todavía no llegamos a esa dirección.', 'origen', 409);
@@ -619,7 +625,18 @@ export async function cotizarParaCliente(
   };
   // C-BS-REFERENCIA: el equivalente en bolívares, solo informativo (null sin tasa vigente).
   const referencia = await referenciaLocal(db, zona.pais, desglose.total, fila.moneda);
-  return { ...cotizacion, referencia, opciones };
+  // C-CUPON-DIVOOX: el regalo que pagaría Divoox si el viaje se paga en mano (se aparta al pedir).
+  const regalo = aparato
+    ? await regaloParaCliente(db, {
+        clienteId,
+        servicio: d.servicio,
+        zonaId: zona.id,
+        moneda: fila.moneda,
+        base: desglose.total,
+        aparato,
+      })
+    : null;
+  return { ...cotizacion, referencia, opciones, regalo };
 }
 
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
@@ -654,6 +671,8 @@ viajesPasajero.post('/viajes', async (c) => {
       // C-CONDUCTOR-CONFIANZA: a cuál de sus conductores de confianza se le ofrece primero
       // (sin el campo: el más cercano que está conectado; «ninguno»: a cualquiera).
       confianza: z.string().min(7).max(64).optional(),
+      // C-CUPON-DIVOOX: el regalo que la persona vio en la cotización (si ya no está, se le avisa).
+      regalo: z.string().trim().max(30).optional(),
     }),
   );
   const cot = await db
@@ -706,6 +725,26 @@ viajesPasajero.post('/viajes', async (c) => {
       throw new ErrorDatos('El celular de quien recibe no parece válido.', 'telefono', 422);
   }
   const op = nuevoId();
+  // C-CUPON-DIVOOX: el regalo se aparta ANTES de crear el viaje, contra el presupuesto, en un solo
+  // paso. Si la persona lo vio y ya no está (otro lo gastó, se apagó), no se pide a ciegas.
+  const regalo = conRegalo(d.metodoPago)
+    ? await apartarRegalo(db, {
+        clienteId: u.id,
+        servicio: cot.servicio_id,
+        zonaId: cot.zona_id,
+        moneda: cot.moneda,
+        base: Number(cot.total),
+        aparato: await aparatoDe(c),
+        operacionId: op,
+        pais: paisViaje?.pais ?? 'US',
+      })
+    : null;
+  if (d.regalo && conRegalo(d.metodoPago) && !regalo)
+    throw new ErrorDatos(
+      'Tu regalo de Divoox ya no está disponible. Revisa el precio antes de pedir.',
+      'regalo',
+      409,
+    );
   const conductorPreferidoId = await conductorDeConfianzaParaPedir(
     db,
     u.id,
@@ -714,20 +753,22 @@ viajesPasajero.post('/viajes', async (c) => {
   );
   // C-VIAJE-PROGRAMADO: con hora reservada, la cotización queda apartada (precio fijo) y el viaje
   // nace a la hora de buscar conductor (el reloj); hasta entonces se cancela gratis.
-  if (d.programadoPara)
-    return c.json(
-      await programarViaje(c.env, db, u, {
-        op,
-        cotizacionId: cot.id,
-        servicioId: cot.servicio_id,
-        zonaId: cot.zona_id,
-        metodoPago: d.metodoPago,
-        paquete: d.paquete ?? null,
-        programadoPara: new Date(d.programadoPara),
-        conductorPreferidoId,
-      }),
-      201,
-    );
+  if (d.programadoPara) {
+    const programado = await programarViaje(c.env, db, u, {
+      op,
+      cotizacionId: cot.id,
+      servicioId: cot.servicio_id,
+      zonaId: cot.zona_id,
+      metodoPago: d.metodoPago,
+      paquete: d.paquete ?? null,
+      programadoPara: new Date(d.programadoPara),
+      conductorPreferidoId,
+    }).catch(async (e: unknown) => {
+      if (regalo) await liberarRegalo(db, op, 'no_programado');
+      throw e;
+    });
+    return c.json(programado, 201);
+  }
   const inicial = d.metodoPago === 'tarjeta' ? 'pago_pendiente' : 'buscando';
   const pinEntrega = pinNuevo();
   const creado = await crearViajeDeCotizacion(db, {
@@ -747,6 +788,7 @@ viajesPasajero.post('/viajes', async (c) => {
   if (creado && (esEnvio || !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id))))
     await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(op).run();
   if (!creado) {
+    if (regalo) await liberarRegalo(db, op, 'no_creado');
     const otra = await db
       .prepare('SELECT operacion_id FROM cotizaciones_viaje WHERE id = ? AND usada_en IS NOT NULL')
       .bind(cot.id)
@@ -898,6 +940,8 @@ type FilaViajeCliente = {
   pm_titular: string | null;
   pm_identificador: string | null;
   pm_estado: string | null;
+  regalo_monto: number | null;
+  regalo_codigo: string | null;
   pais: string | null;
   categoria: string | null;
   multiplicador_pb: number | null;
@@ -924,7 +968,9 @@ async function viajeDelCliente(
               (SELECT 1 FROM kyc ky WHERE ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
                  AND ky.selfie_miniatura IS NOT NULL) AS conductor_foto,
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
-              pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais
+              pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
+              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto,
+              (SELECT rg.codigo FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_codigo
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
          LEFT JOIN usuarios u ON u.id = o.conductor_id
@@ -1002,6 +1048,11 @@ function viajePublico(f: FilaViajeCliente) {
     destino: { direccion: f.destino_direccion, lat: f.destino_lat, lng: f.destino_lng },
     total: f.total,
     moneda: f.moneda,
+    // C-CUPON-DIVOOX: lo que paga Divoox y lo que el pasajero paga en mano.
+    regalo:
+      f.regalo_monto != null
+        ? { codigo: f.regalo_codigo ?? '', monto: Number(f.regalo_monto) }
+        : null,
     conductor:
       conConductor && f.conductor_nombre
         ? {
@@ -1194,6 +1245,8 @@ viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
   });
   if (!ok) throw new ErrorDatos('El viaje cambió. Actualiza la pantalla.', undefined, 409);
   await devolverReservasViaje(db, id, 'cancelado_por_pasajero');
+  // C-CUPON-DIVOOX: el regalo apartado vuelve al presupuesto del cupón.
+  await liberarRegalo(db, id, 'cancelado_por_pasajero');
   // C-VIAJE-TARJETA: con tarjeta, el cargo se cobra de la autorización (o se anula si no hay cargo).
   if (f.metodo_pago === 'tarjeta') {
     const cobrado = await soltarCobroViaje(c.env, db, id, cargo);

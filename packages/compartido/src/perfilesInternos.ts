@@ -44,6 +44,8 @@ const FINANZAS = [
   'puntos-venta',
   'codigos-recarga',
   'cupones',
+  // C-CUPON-DIVOOX: los regalos que paga Divoox (presupuesto y pago al conductor) son de finanzas.
+  'regalos-divoox',
   'stripe',
   'bandeja-dinero',
   'aprobaciones-dinero',

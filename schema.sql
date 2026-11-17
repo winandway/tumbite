@@ -4090,3 +4090,88 @@ CREATE TABLE IF NOT EXISTS rutina_salidas (
 CREATE INDEX IF NOT EXISTS rutina_salidas_avisar ON rutina_salidas(hora) WHERE estado = 'creada' AND aviso_conductor_en IS NULL AND conductor_id IS NOT NULL;
 -- La agenda del conductor.
 CREATE INDEX IF NOT EXISTS rutina_salidas_conductor ON rutina_salidas(conductor_id, hora) WHERE conductor_id IS NOT NULL;
+
+-- C-CUPON-DIVOOX (17 nov 2026, piloto de El Vigía y Tucaní, como el código de bienvenida y el «tu
+-- primer viaje gratis» de Uber, DiDi, inDrive y Rappi): regalos que PAGA DIVOOX, no el conductor.
+-- El cliente paga en mano solo la diferencia; lo que cubre el regalo se le acredita al conductor en
+-- su saldo prepago. Cada cupón tiene un PRESUPUESTO total: lo apartado más lo cobrado nunca lo pasa
+-- (se comprueba en la misma sentencia que aparta el uso) y al agotarse se apaga solo. Topes del
+-- código en apps/servidor/src/regalosDivoox.ts (TOPES_REGALO), nunca solo en el panel.
+CREATE TABLE IF NOT EXISTS cupones_divoox (
+  codigo TEXT PRIMARY KEY,
+  nombre_es TEXT NOT NULL DEFAULT '',
+  nombre_en TEXT NOT NULL DEFAULT '',
+  tipo TEXT NOT NULL CHECK (tipo IN ('monto', 'gratis')),
+  valor INTEGER NOT NULL CHECK (valor > 0),
+  moneda TEXT NOT NULL DEFAULT 'USD',
+  servicios TEXT NOT NULL DEFAULT '[]',
+  zonas TEXT NOT NULL DEFAULT '[]',
+  vence_en TEXT,
+  presupuesto INTEGER NOT NULL CHECK (presupuesto > 0),
+  bienvenida INTEGER NOT NULL DEFAULT 0,
+  tope_diario_conductor INTEGER NOT NULL DEFAULT 6,
+  activo INTEGER NOT NULL DEFAULT 0,
+  apagado_motivo TEXT,
+  agotado_en TEXT,
+  creado_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Los códigos que el cliente agregó a su cuenta («Agregar código»): se aplican solos.
+CREATE TABLE IF NOT EXISTS cupones_divoox_guardados (
+  cliente_id TEXT NOT NULL,
+  codigo TEXT NOT NULL REFERENCES cupones_divoox(codigo),
+  guardado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (cliente_id, codigo)
+) WITHOUT ROWID;
+-- Cada uso: apartado al pedir, cobrado al terminar (y acreditado al conductor) o liberado si no
+-- hubo viaje. telefono y aparato van en huella (sha-256), nunca en claro.
+CREATE TABLE IF NOT EXISTS usos_cupon_divoox (
+  id TEXT PRIMARY KEY,
+  codigo TEXT NOT NULL REFERENCES cupones_divoox(codigo),
+  cliente_id TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  aparato TEXT NOT NULL,
+  servicio TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  operacion_id TEXT NOT NULL UNIQUE,
+  conductor_id TEXT,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'apartado' CHECK (estado IN ('apartado', 'cobrado', 'liberado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  tomado_en TEXT,
+  cerrado_en TEXT,
+  motivo TEXT
+);
+CREATE INDEX IF NOT EXISTS usos_cupon_divoox_codigo ON usos_cupon_divoox(codigo, estado);
+CREATE INDEX IF NOT EXISTS usos_cupon_divoox_conductor ON usos_cupon_divoox(conductor_id, tomado_en) WHERE conductor_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS usos_cupon_divoox_abiertos ON usos_cupon_divoox(creado_en) WHERE estado = 'apartado';
+-- Un uso por cupón y por cuenta, por teléfono y por aparato (los liberados no cuentan).
+CREATE UNIQUE INDEX IF NOT EXISTS usos_cupon_divoox_cliente ON usos_cupon_divoox(codigo, cliente_id) WHERE estado <> 'liberado';
+CREATE UNIQUE INDEX IF NOT EXISTS usos_cupon_divoox_telefono ON usos_cupon_divoox(codigo, telefono) WHERE estado <> 'liberado';
+CREATE UNIQUE INDEX IF NOT EXISTS usos_cupon_divoox_aparato ON usos_cupon_divoox(codigo, aparato) WHERE estado <> 'liberado';
+-- Lo que Divoox le pagó al conductor por pago móvil de lo acreditado por regalos (sale de su prepago).
+CREATE TABLE IF NOT EXISTS pagos_regalo_conductor (
+  id TEXT PRIMARY KEY,
+  conductor_id TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  referencia TEXT NOT NULL UNIQUE,
+  pagado_por TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Antifraude: cada intento frenado y cada patrón raro, para el reporte del superadmin.
+CREATE TABLE IF NOT EXISTS alertas_regalo (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  codigo TEXT,
+  operacion_id TEXT,
+  cliente_id TEXT,
+  conductor_id TEXT,
+  detalle TEXT NOT NULL DEFAULT '',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS alertas_regalo_fecha ON alertas_regalo(creado_en);

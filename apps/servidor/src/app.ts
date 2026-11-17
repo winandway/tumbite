@@ -86,6 +86,8 @@ import { internacional } from './rutas/internacional';
 import { favoritos } from './rutas/favoritos';
 import { flex } from './flex';
 import { cupones } from './rutas/cupones';
+import { regalosDivoox } from './rutas/regalosDivoox';
+import { saludRegalos } from './regalosDivoox';
 import { direcciones } from './rutas/direcciones';
 import { fotoPuerta } from './rutas/fotoPuerta';
 import { restauranteMas } from './rutas/restauranteMas';
@@ -401,6 +403,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: libro', e);
       return 'error' as const;
     });
+  // C-CUPON-DIVOOX: ningún cupón gasta más que su presupuesto y todo regalo cobrado llega al conductor.
+  if (c.env.DB)
+    piezas.regalos = await saludRegalos(c.env.DB).catch((e: unknown) => {
+      console.error('salud: regalos', e);
+      return 'error' as const;
+    });
   // Disputas (contracargos) sin responder que vencen pronto: rojo para que alguien las atienda.
   if (c.env.DB)
     piezas.disputas = await saludDisputas(c.env.DB).catch((e: unknown) => {
@@ -694,6 +702,7 @@ app.route('/datos', superadmin);
 app.route('/datos', internacional);
 app.route('/datos', favoritos);
 app.route('/datos', cupones);
+app.route('/datos', regalosDivoox);
 app.route('/datos', direcciones);
 app.route('/datos', fotoPuerta);
 app.route('/datos', restauranteMas);

@@ -1,4 +1,5 @@
 import { MENSAJES_EN_EQUIPO } from './mensajesEnEquipo';
+import { MENSAJES_EN_REGALOS } from './mensajesEnRegalos';
 
 /**
  * Los mensajes que el servidor le muestra a la persona, en inglés (el idioma principal de
@@ -40,6 +41,7 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   // C-PERMISOS-FINOS (MON-5): los del equipo interno viven en su propio archivo.
   ...MENSAJES_EN_EQUIPO,
+  ...MENSAJES_EN_REGALOS,
   // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS (14 nov 2026, bloque propio)
   [
     'Ya cambiaste las paradas de este viaje muchas veces. Si necesitas otro cambio, díselo a tu conductor.',

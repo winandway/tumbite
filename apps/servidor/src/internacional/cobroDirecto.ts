@@ -1,5 +1,6 @@
 import { calcularPedido, porcentajeDe } from '@tumbite/compartido';
 import { anotarEvento } from '../manager';
+import { cerrarRegalo } from '../regalosDivoox';
 import { ErrorDatos } from '../validar';
 import {
   anotarLibro,
@@ -36,12 +37,13 @@ type FilaPedidoDirecto = {
   monto_recibido: number | null;
   conciliacion_estado: string;
   entregado_en: string | null;
+  descuento: number | null;
 };
 
 async function filaDirecta(db: D1Database, pedidoId: string) {
   return db
     .prepare(
-      'SELECT id, estado, zona_id, subtotal, total, propina, ganancia, pago_restaurante, cliente_id, repartidor_id, metodo_pago, cobro_estado, monto_recibido, conciliacion_estado, entregado_en FROM pedidos WHERE id = ?',
+      'SELECT id, estado, zona_id, subtotal, total, propina, ganancia, pago_restaurante, cliente_id, repartidor_id, metodo_pago, cobro_estado, monto_recibido, conciliacion_estado, entregado_en, descuento FROM pedidos WHERE id = ?',
     )
     .bind(pedidoId)
     .first<FilaPedidoDirecto>();
@@ -445,6 +447,14 @@ export async function conciliarPedidoDirecto(db: D1Database, pedidoId: string) {
   ]);
   if (!resultados.at(-1)?.meta.changes) return null;
   await anotarEvento(db, pedidoId, 'conciliado', `${estado} · recibido ${recibido} de ${esperado}`);
+  // C-CUPON-DIVOOX: lo que pagó Divoox con el regalo (el cliente pagó en mano solo el resto) se le
+  // acredita al repartidor en su saldo prepago, una vez. Si se corta aquí, el reloj lo retoma.
+  await cerrarRegalo(db, {
+    operacionId: pedidoId,
+    conductorId: f.repartidor_id,
+    maximo: Number(f.descuento ?? 0),
+    pedidoId,
+  });
   return estado;
 }
 

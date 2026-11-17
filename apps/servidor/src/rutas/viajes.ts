@@ -31,6 +31,15 @@ import {
 } from '../operaciones';
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
 import { capturarCobroViaje, soltarCobroViaje } from '../viajesCobro';
+import { pagaEnMano } from '@tumbite/compartido';
+import { aparatoDe } from './regalosDivoox';
+import {
+  cerrarRegalo,
+  liberarRegalo,
+  regaloDeOperacion,
+  soltarRegaloConductor,
+  tomarRegaloConductor,
+} from '../regalosDivoox';
 import {
   MINUTOS_CORREGIR_PAGO_MOVIL,
   SQL_A_TIEMPO,
@@ -111,7 +120,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
               v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
-              v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng
+              v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng,
+              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -144,6 +154,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         viajeS: f.duracion_s == null ? null : Number(f.duracion_s),
         metodoPago: String(f.metodo_pago ?? 'efectivo'),
         pasajeros: Number(f.pasajeros),
+        // C-CUPON-DIVOOX: parte del viaje la paga Divoox (el conductor cobra en mano solo el resto).
+        regaloDivoox: f.regalo_monto == null ? 0 : Number(f.regalo_monto),
         // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS: la oferta dice la categoría del
         // viaje, si lleva tarifa dinámica (ya incluida en lo que gana) y por dónde para.
         categoria: String(f.categoria ?? 'estandar'),
@@ -184,7 +196,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               p.nombre AS pasajero,
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
               e.foto_recogida IS NOT NULL AS paquete_foto, e.foto_entrega IS NOT NULL AS paquete_foto_entrega,
-              e.tamano AS paquete_tamano, v.menor_nombre, v.rutina_id IS NOT NULL AS viaje_fijo
+              e.tamano AS paquete_tamano, v.menor_nombre, v.rutina_id IS NOT NULL AS viaje_fijo,
+              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -194,14 +207,20 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
     .bind(u.id)
     .first<Record<string, unknown>>();
   if (!f) return c.json({ operacion: null });
+  // C-CUPON-DIVOOX: «Cobra X · Divoox te paga Y».
+  const regaloDivoox = f.regalo_monto == null ? 0 : Number(f.regalo_monto);
+  const cobrarEnMano =
+    f.total == null ? null : pagaEnMano(Number(f.total), { monto: regaloDivoox });
   return c.json({
     operacion: {
       ...f,
+      regalo_divoox: regaloDivoox,
+      cobrar_en_mano: cobrarEnMano,
       // C-BS-REFERENCIA: lo que cobra en mano, con su equivalente en bolívares (informativo).
       referencia: await referenciaLocal(
         base(c),
         f.pais == null ? null : String(f.pais),
-        f.total == null ? null : Number(f.total),
+        cobrarEnMano,
         f.moneda == null ? null : String(f.moneda),
       ),
       pasajero: String(f.pasajero ?? '').split(' ')[0] ?? '',
@@ -231,6 +250,9 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   await revisarHorasAlVolante(base(c), u.id);
   // C-MOTO-CIUDAD: donde la ciudad lo pide, la selfie con el casco puesto de las últimas 12 horas.
   await revisarSelfieCasco(base(c), u.id, id);
+  // C-CUPON-DIVOOX: un viaje con regalo no lo toma quien lo pidió (su cuenta, teléfono o aparato) ni
+  // quien ya llegó al tope de viajes con regalo del día.
+  await tomarRegaloConductor(base(c), id, u.id, await aparatoDe(c));
   // M7 (C-VIAJE-COMISION): si en ese mercado rige el prepago, la comisión prevista se aparta ANTES
   // de aceptar; si el saldo no alcanza, no se acepta.
   const info = await base(c)
@@ -278,6 +300,7 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   }
   // No se lo quedó: lo apartado vuelve al prepago.
   await devolverReservaViaje(base(c), id, u.id, 'no_aceptado');
+  await soltarRegaloConductor(base(c), id, u.id);
   if (r.resultado === 'ocupado')
     throw new ErrorDatos('Termina tu entrega actual antes de aceptar otra.', undefined, 409);
   if (r.resultado === 'otro_conductor')
@@ -306,7 +329,10 @@ viajes.post('/conductor/operaciones/:id/liberar', async (c) => {
   const clave = claveDe(c, 'liberar', id);
   const { motivo } = await leerCuerpo(c, z.object({ motivo: z.string().max(200).default('') }));
   const ok = await liberarViaje(base(c), { operacionId: id, conductorId: u.id, motivo, clave });
-  if (ok) await devolverReservaViaje(base(c), id, u.id, 'soltado');
+  if (ok) {
+    await devolverReservaViaje(base(c), id, u.id, 'soltado');
+    await soltarRegaloConductor(base(c), id, u.id);
+  }
   if (!ok) {
     // Reintento de una liberación que ya se hizo: la misma respuesta.
     const hecho = await base(c)
@@ -435,6 +461,13 @@ viajes.post(
       const totalFinal = await cerrarCuentaViaje(c, id, u.id);
       // C-VIAJE-TARJETA: con tarjeta, se cobra al terminar (nunca más de lo autorizado).
       if (totalFinal != null) await capturarCobroViaje(c.env, db, id, u.id, totalFinal);
+      // C-CUPON-DIVOOX: lo que cubre el regalo se cierra y se le acredita al conductor; él cobra en
+      // mano solo el resto.
+      const regaloDivoox =
+        totalFinal != null
+          ? await cerrarRegalo(db, { operacionId: id, conductorId: u.id, maximo: totalFinal })
+          : 0;
+      const cobrarEnMano = totalFinal == null ? null : totalFinal - regaloDivoox;
       // C-BS-REFERENCIA: en la pantalla de cobro, el equivalente en bolívares (solo informativo).
       const donde = await db
         .prepare(
@@ -444,10 +477,20 @@ viajes.post(
         )
         .bind(id)
         .first<{ pais: string; moneda: string | null }>();
-      const referencia = await referenciaLocal(db, donde?.pais, totalFinal, donde?.moneda);
-      return c.json({ ok: true, estado: paso.hacia, totalFinal, referencia });
+      const referencia = await referenciaLocal(db, donde?.pais, cobrarEnMano, donde?.moneda);
+      return c.json({
+        ok: true,
+        estado: paso.hacia,
+        totalFinal,
+        regaloDivoox,
+        cobrarEnMano,
+        referencia,
+      });
     }
-    if (nombre === 'no-se-presento') await devolverReservaViaje(db, id, u.id, 'no_se_presento');
+    if (nombre === 'no-se-presento') {
+      await devolverReservaViaje(db, id, u.id, 'no_se_presento');
+      await liberarRegalo(db, id, 'no_se_presento');
+    }
     // M2: el pasajero que no se presentó debe el cargo de la tarifa copiada; en efectivo queda como
     // deuda para su próximo viaje (una sola por viaje).
     // C-VIAJE-TARJETA: con tarjeta, el cargo se cobra de la autorización en vez de quedar como deuda.
@@ -523,7 +566,15 @@ viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
       `INSERT OR IGNORE INTO viajes_pago_movil (operacion_id, conductor_id, estado, referencia, monto, moneda)
        VALUES (?, ?, ?, ?, ?, ?)`,
     )
-    .bind(id, u.id, d.recibido ? 'recibido' : 'no_recibido', d.referencia, f.total, f.moneda)
+    // C-CUPON-DIVOOX: el pago móvil esperado es lo que paga el pasajero (sin lo que cubre el regalo).
+    .bind(
+      id,
+      u.id,
+      d.recibido ? 'recibido' : 'no_recibido',
+      d.referencia,
+      f.total == null ? null : pagaEnMano(f.total, await regaloDeOperacion(db, id)),
+      f.moneda,
+    )
     .run();
   if (!r.meta.changes) {
     const ya = await db

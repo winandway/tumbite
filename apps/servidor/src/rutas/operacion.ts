@@ -3,6 +3,13 @@ import { avisarAutorizacionesPorVencer } from '../autorizacionVencida';
 import { flotasActivas } from './flota';
 import { TAREA_VIAJES_PROGRAMADOS } from './viajesProgramados';
 import { TAREA_VIAJES_FIJOS } from './viajesFijos';
+import {
+  TAREA_REGALOS,
+  regaloDeOperacion,
+  soltarRegaloConductor,
+  tomarRegaloConductor,
+} from '../regalosDivoox';
+import { aparatoDe } from './regalosDivoox';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
@@ -1372,6 +1379,9 @@ operacion.get('/repartidor/estado', async (c) => {
       ? {
           ...conDatosRestaurante(activo),
           esperaAusenteMin: minutosEsperaAusente(c.env),
+          // C-CUPON-DIVOOX: parte del pedido la pagó Divoox con un regalo (el total ya lo descuenta):
+          // la app dice «Divoox te paga Y» y se le acredita al conciliar.
+          regaloDivoox: (await regaloDeOperacion(db, String(activo.id)))?.monto ?? 0,
           // C-COMIDA-VENEZUELA: lo que cobra en mano (sin propina), en bolívares de referencia.
           referenciaCobro:
             activo.moneda === 'USD' &&
@@ -2366,10 +2376,19 @@ operacion.post('/repartidor/ofertas/:id/aceptar', async (c) => {
   }
   // La comisión se aparta en el libro; si entre la comprobación y aquí otro canje la consumió,
   // el pedido vuelve a la fila y el repartidor recibe el aviso claro.
+  // C-CUPON-DIVOOX: un pedido con regalo de Divoox no lo toma quien lo pidió (su cuenta, teléfono o
+  // aparato) ni quien llegó al tope del día; el pedido vuelve a la fila.
+  try {
+    await tomarRegaloConductor(db, id, u.id, await aparatoDe(c));
+  } catch (e) {
+    await soltarPedido(db, id, u.id, 'regalo de Divoox: no puede tomarlo');
+    throw e;
+  }
   try {
     await reservarAlAceptar(db, id, u.id);
   } catch (e) {
     await soltarPedido(db, id, u.id, 'sin saldo para la comisión');
+    await soltarRegaloConductor(db, id, u.id);
     throw e;
   }
   if (grupo && activa) {
@@ -3265,6 +3284,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   // C-VIAJES-FIJOS (todos los países): cada salida de un viaje fijo nace 24 horas antes y el conductor
   // de confianza recibe su aviso 30 minutos antes. Lee solo los índices parciales de lo que vence.
   TAREA_VIAJES_FIJOS,
+  // C-CUPON-DIVOOX: libera los regalos de lo que no se hizo y cierra los que se cortaron.
+  TAREA_REGALOS,
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
   ...TAREAS_FLEX,
   // Flex · Fase 4: conciliación y recuperación de las billeteras, recarga automática y alertas.

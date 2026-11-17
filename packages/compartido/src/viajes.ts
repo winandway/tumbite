@@ -450,6 +450,8 @@ export type CotizacionViaje = {
    */
   precioCambio?: boolean;
   totalAnterior?: number;
+  /** C-CUPON-DIVOOX: el regalo que paga Divoox en este viaje si se paga en mano (o null). */
+  regalo?: import('./regaloDivoox').RegaloDivoox | null;
 };
 
 /**

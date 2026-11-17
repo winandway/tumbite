@@ -24,6 +24,8 @@ export type OpcionesApi = {
   pase?: () => string | null | undefined;
   /** Nombre y versión de la app («cliente/0.1.0»): el servidor puede pedir actualizar (426). */
   app?: () => string | null | undefined;
+  /** C-CUPON-DIVOOX: el identificador del aparato (antifraude de los regalos); solo en las apps. */
+  aparato?: () => string | null | undefined;
   fetch?: typeof fetch;
   /** Cuánto se espera una respuesta antes de darla por perdida (C-PEDIDO-CON-LIMITE). */
   tiempoMs?: number;
@@ -67,6 +69,8 @@ export function crearApi(op: OpcionesApi) {
     if (pase) headers['cf-turnstile-response'] = pase;
     const app = op.app?.();
     if (app) headers['x-tumbite-app'] = app;
+    const aparato = op.aparato?.();
+    if (aparato) headers['x-aparato'] = aparato;
     // Sin límite, una petición sin respuesta dejaba la pantalla cargando para siempre.
     // C-LECTURA-REINTENTO: una lectura que no responde se repite una vez; un envío nunca se repite.
     const intento = async (ms: number) => {

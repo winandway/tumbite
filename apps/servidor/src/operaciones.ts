@@ -1,4 +1,5 @@
 import { cuantosHay } from './canarioLecturas';
+import { liberarRegalo } from './regalosDivoox';
 import type { Env } from './env';
 import { candidatosCercanos, avisarTiempoReal } from './rutas/interno';
 import {
@@ -570,6 +571,8 @@ export async function repartirOperaciones(
         motivo: 'sin_conductor',
       })
     ) {
+      // C-CUPON-DIVOOX: el regalo apartado vuelve al presupuesto del cupón.
+      await liberarRegalo(db, v.id, 'sin_conductor');
       // C-VIAJE-TARJETA: sin conductor, la autorización de la tarjeta se anula entera.
       await (env ? soltarCobroViaje(env, db, v.id, 0) : Promise.resolve(0)).catch((e: unknown) =>
         console.error('viajes: anular cobro sin conductor', v.id, e),

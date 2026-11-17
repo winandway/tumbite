@@ -73,6 +73,8 @@ import { ErrorDatos, leerCuerpo } from '../validar';
 import { leerConfigDinero } from './dinero';
 import { tarifasDeZona, tarifasDelPedido, topesDeZona } from '../internacional/tarifas';
 import { paisDeZona } from '../internacional/paises';
+import { aparatoDe } from './regalosDivoox';
+import { apartarRegalo, esCodigoRegalo, regaloDeCodigo } from '../regalosDivoox';
 import { referenciaLocal } from './tasasReferencia';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
@@ -943,7 +945,31 @@ pedidos.post('/pedidos', async (c) => {
       ? await cobroVigenteMismosDatos(c.env, db, u.id, huellaCuerpo, d.totalEsperado)
       : null;
   await cerrarPendientesSinPagar(c.env, db, u.id, vigente?.id ?? null);
-  if (d.cupon) {
+  // C-CUPON-DIVOOX: un código de regalo de Divoox va por su propio camino (lo paga Divoox, se cobra
+  // en mano y tiene presupuesto). Se aparta después de crear el pedido.
+  const codigoRegalo = d.cupon ? await esCodigoRegalo(db, d.cupon) : null;
+  const aparato = codigoRegalo ? await aparatoDe(c) : null;
+  if (codigoRegalo) {
+    if (d.metodoPago === 'tarjeta')
+      throw new ErrorDatos(
+        'El regalo de Divoox se usa pagando en mano: en efectivo o por transferencia al repartidor.',
+        'cupon',
+        409,
+      );
+    const r = await regaloDeCodigo(
+      db,
+      {
+        clienteId: u.id,
+        servicio: 'comida',
+        zonaId: String(rest.zona_id ?? ZONA_INICIAL),
+        moneda,
+        base: previo.totalCliente - previo.propina,
+        aparato,
+      },
+      codigoRegalo,
+    );
+    cupon = { codigo: r.codigo, descuento: r.monto, tipo: 'regalo_divoox' };
+  } else if (d.cupon) {
     const v = await validarCupon(db, {
       codigo: d.cupon,
       usuarioId: u.id,
@@ -1155,6 +1181,35 @@ pedidos.post('/pedidos', async (c) => {
       .prepare('INSERT INTO autorizaciones_pedido (pedido_id, autorizado, margen) VALUES (?, ?, ?)')
       .bind(id, autorizado, margen)
       .run();
+  // C-CUPON-DIVOOX: el regalo se aparta contra el presupuesto del cupón, en un solo paso. Si otro
+  // pedido gastó lo último, este no sale con un descuento que ya no existe.
+  if (
+    cupon?.tipo === 'regalo_divoox' &&
+    !(await apartarRegalo(db, {
+      clienteId: u.id,
+      servicio: 'comida',
+      zonaId: String(rest.zona_id ?? ZONA_INICIAL),
+      moneda,
+      base: cupon.descuento,
+      aparato,
+      operacionId: id,
+      pais: (await paisDeZona(db, String(rest.zona_id ?? ZONA_INICIAL))).pais,
+      codigo: cupon.codigo,
+      exacto: true,
+    }))
+  ) {
+    await db
+      .prepare(
+        "UPDATE pedidos SET estado = 'cancelado', cancelado_en = datetime('now') WHERE id = ? AND estado = 'pago_pendiente'",
+      )
+      .bind(id)
+      .run();
+    throw new ErrorDatos(
+      'Tu regalo de Divoox ya no está disponible. Revisa el total.',
+      'cupon',
+      409,
+    );
+  }
   // BRE-5d: el uso de la promoción se reserva antes que todo lo demás; si otro pedido gastó el
   // último, este no se cobra con un descuento que ya no existe y el cliente revisa el total.
   if (!(await anotarPromocion(db, id, String(rest.id), promo, desglose.descuentoRestaurante))) {
@@ -1183,7 +1238,7 @@ pedidos.post('/pedidos', async (c) => {
       )
       .bind(id, u.id, descPlus)
       .run();
-  if (cupon)
+  if (cupon && cupon.tipo !== 'regalo_divoox')
     await db
       .prepare(
         'INSERT OR IGNORE INTO usos_cupon (pedido_id, codigo, usuario_id, descuento) VALUES (?, ?, ?, ?)',

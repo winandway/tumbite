@@ -1,4 +1,6 @@
 import { paisDeZona } from '../internacional/paises';
+import { aparatoDe } from './regalosDivoox';
+import { esCodigoRegalo, regaloDeCodigo } from '../regalosDivoox';
 import { topesDePais } from '../internacional/tarifas';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -140,6 +142,8 @@ cupones.post('/cupones/validar', async (c) => {
       restauranteId: z.string().min(1),
       subtotal: z.number().int().min(0),
       envio: z.number().int().min(0).default(0),
+      // C-CUPON-DIVOOX: lo que se pagaría en mano sin el regalo (sin la propina).
+      base: z.number().int().min(0).optional(),
     }),
   );
   const db = base(c);
@@ -148,6 +152,23 @@ cupones.post('/cupones/validar', async (c) => {
     .bind(d.restauranteId)
     .first<{ zona_id: string }>();
   const zonaId = rest?.zona_id ?? 'US-FL-MIAMI';
+  // C-CUPON-DIVOOX: un código de regalo de Divoox (se usa pagando en mano).
+  const codigoRegalo = await esCodigoRegalo(db, d.codigo);
+  if (codigoRegalo) {
+    const r = await regaloDeCodigo(
+      db,
+      {
+        clienteId: u.id,
+        servicio: 'comida',
+        zonaId,
+        moneda: (await paisDeZona(db, zonaId)).moneda,
+        base: d.base ?? d.subtotal + d.envio,
+        aparato: await aparatoDe(c),
+      },
+      codigoRegalo,
+    );
+    return c.json({ codigo: r.codigo, descuento: r.monto, tipo: 'regalo_divoox', regalo: r });
+  }
   // La misma condición que al crear el pedido: Plus vigente, en dólares y con envío que cubrir.
   const plusCubreEnvio =
     d.envio > 0 &&
@@ -241,7 +262,13 @@ cupones.post('/admin/cupones', async (c) => {
   }
   const codigo = normalizarCupon(d.codigo);
   const db = base(c);
-  const existe = await db.prepare('SELECT 1 FROM cupones WHERE codigo = ?').bind(codigo).first();
+  // C-CUPON-DIVOOX: un código no puede ser a la vez cupón de comida y regalo de Divoox.
+  const existe = await db
+    .prepare(
+      'SELECT 1 FROM cupones WHERE codigo = ?1 UNION ALL SELECT 1 FROM cupones_divoox WHERE codigo = ?1',
+    )
+    .bind(codigo)
+    .first();
   if (existe) throw new ErrorDatos('Ya existe un cupón con ese código.', 'codigo', 409);
   await db
     .prepare(

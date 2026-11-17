@@ -26,6 +26,7 @@ import {
 } from '@tumbite/compartido';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
+import { idAparato, prepararAparato } from './aparato';
 import { darDeBajaAvisos, useAvisosCelular, useAvisosWebSilencioso } from './avisos';
 import { LLAVE_MARCA, guardarLocal } from '@tumbite/compartido/src/avisosWeb';
 
@@ -111,6 +112,7 @@ export function SesionProvider({
         idioma: () => idioma,
         pase: paseTurnstile,
         app: () => `${roles[0] ?? 'cliente'}/${versionApp()}`,
+        aparato: idAparato,
       }),
     [token, idioma, roles],
   );
@@ -145,6 +147,11 @@ export function SesionProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+
+  // C-CUPON-DIVOOX: la huella del aparato se prepara al abrir (las peticiones la llevan en cuanto está).
+  useEffect(() => {
+    void prepararAparato();
+  }, []);
 
   useEffect(() => {
     (async () => {
