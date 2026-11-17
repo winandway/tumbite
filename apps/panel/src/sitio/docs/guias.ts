@@ -601,6 +601,7 @@ const es: SeccionDocs[] = [
           'Debajo del mapa hay dos casillas opcionales: «Punto de referencia» (por ejemplo, «portón negro frente a la panadería») y «Casa o apartamento». Las dos le llegan al repartidor o al conductor junto con la dirección.',
           'Al tocar «Confirmar este punto», la app te ofrece guardar fotos de tu puerta. Si tocas «Ahora no», vuelves a la pantalla de inicio con tu dirección lista: nunca te quedas en una pantalla vacía.',
           'El mismo pin fijo está al pedir comida, al marcar dónde te recoge una moto o un carro, el destino del viaje, los envíos de paquetes y la página web donde confirmas dónde recibes un paquete.',
+          'En Moto, Carro y Envíos, cada casilla trae debajo su propio enlace, como en las grandes apps de viajes: «Fijar recogida en el mapa» bajo el punto de recogida y «Fijar destino en el mapa» bajo el destino. En el carrito de comida dice «Fijar entrega en el mapa». Cuando el punto ya está marcado, la línea se pone en verde y puedes tocar «Ajustar el punto».',
         ],
         capturas: [
           {
@@ -612,6 +613,11 @@ const es: SeccionDocs[] = [
             src: '/docs/punto-exacto-pin-es.webp',
             alt: 'Pantalla «Confirma el punto de entrega»: arriba la dirección del punto, el mapa con el pin fijo en la avenida, el botón «Estoy aquí», el punto de referencia y «Confirmar este punto».',
             pie: 'Mueve el mapa hasta tu puerta y agrega un punto de referencia.',
+          },
+          {
+            src: '/docs/punto-exacto-fijar-es.webp',
+            alt: 'Pantalla Moto de la app de Divoox: casilla «Punto de recogida» con «Fijar recogida en el mapa» debajo, y casilla «¿A dónde vas?» con «Fijar destino en el mapa» debajo.',
+            pie: 'Cada casilla tiene su propio «Fijar en el mapa».',
           },
           {
             src: '/docs/punto-exacto-fotos-es.webp',
@@ -5767,6 +5773,7 @@ const en: SeccionDocs[] = [
           'Under the map there are two optional fields: “Landmark” (for example, “black gate across from the bakery”) and “House or apartment.” Both reach the driver together with the address.',
           'When you tap “Confirm this spot,” the app offers to save photos of your door. If you tap “Not now,” you go back to the home screen with your address ready: you never get stuck on an empty screen.',
           'The same fixed pin is used when you order food, mark where a ride picks you up, set your trip destination, send packages, and on the web page where you confirm where you receive a package.',
+          'In Moto, Car and Delivery, each field has its own link right below it, like the big ride apps: “Set pickup on map” under the pickup point and “Set destination on map” under the destination. In the food cart it says “Set drop-off on map.” Once the spot is marked, the line turns green and you can tap “Adjust the spot.”',
         ],
         capturas: [
           {
@@ -5778,6 +5785,11 @@ const en: SeccionDocs[] = [
             src: '/docs/punto-exacto-pin-en.webp',
             alt: '“Confirm the drop-off spot” screen in Novi, Michigan: the spot’s address at the top, the map with the fixed pin, the “I’m here” button, the landmark field and “Confirm this spot.”',
             pie: 'Drag the map to your door and add a landmark.',
+          },
+          {
+            src: '/docs/punto-exacto-fijar-en.webp',
+            alt: 'Divoox app Moto screen: “Pickup point” field with “Set pickup on map” below it, and “Where to?” field with “Set destination on map” below it.',
+            pie: 'Each field has its own “Set on map.”',
           },
           {
             src: '/docs/punto-exacto-fotos-en.webp',

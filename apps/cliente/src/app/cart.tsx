@@ -53,13 +53,13 @@ import {
   armarCuerpoPedido,
   huellaPedido,
   margenPesables,
+  textoFijarEnMapa,
   textosPuntoExacto,
 } from '@tumbite/compartido';
 import { useCarrito } from '../carrito';
 import { TEXTOS } from '../textos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { PuntoExacto } from '../PuntoExacto';
-import { ResumenPunto } from '../ResumenPunto';
 import { guardarUbicacion } from '../comida/useRestaurantes';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
@@ -262,6 +262,8 @@ function PantallaCarrito() {
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
+  // C-FIJAR-EN-MAPA: la entrega ya tiene su punto en el mapa y su dirección.
+  const entregaFijada = punto != null && b.valores.direccion.trim().length > 0;
   const comoRegalo = b.valores.esRegalo === 'si' && b.valores.entrega !== 'recoger';
   // C-RECOGER-MAPA: si eligió el local desde «Recoger», el carrito arranca en recoger (una vez).
   const { cambiar: cambiarEntrega } = b;
@@ -1198,12 +1200,6 @@ function PantallaCarrito() {
             </View>
           ) : null}
           {/* C-PUNTO-EXACTO: el punto exacto en el mapa con el pin fijo, en su propia hoja. */}
-          <ResumenPunto
-            punto={punto}
-            direccion={b.valores.direccion}
-            referencia={b.valores.referencia}
-            abrir={() => setMarcando(true)}
-          />
           <Modal
             visible={marcando}
             animationType="slide"
@@ -1251,6 +1247,15 @@ function PantallaCarrito() {
             }
             placeholder={t.direccionAyuda}
             testID="carrito-direccion"
+            // C-FIJAR-EN-MAPA: «Fijar entrega en el mapa», dentro de la casilla (como Uber y DiDi).
+            enMapa={{
+              texto: textoFijarEnMapa(idioma, 'entrega', entregaFijada),
+              marcado: entregaFijada,
+              detalle: b.valores.referencia,
+              ajustar: tp.ajustar,
+              abrir: () => setMarcando(true),
+              testID: 'carrito-fijar-entrega',
+            }}
           />
           {/* C-DIRECCION-APTO: apartamento, piso o edificio en su propia casilla, como DoorDash. */}
           <Campo

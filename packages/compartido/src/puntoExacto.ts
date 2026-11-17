@@ -113,6 +113,19 @@ const T = {
     ajustar: 'Ajustar el punto',
     sinMarcar: 'Marca tu puerta en el mapa para que te encuentren rápido.',
     puntoMarcado: 'Punto exacto marcado',
+    // C-FIJAR-EN-MAPA: la fila de cada casilla de dirección, con su propio texto.
+    fijar: {
+      recogida: 'Fijar recogida en el mapa',
+      destino: 'Fijar destino en el mapa',
+      entrega: 'Fijar entrega en el mapa',
+      casa: 'Fijar mi casa en el mapa',
+    },
+    fijado: {
+      recogida: 'Recogida fijada en el mapa',
+      destino: 'Destino fijado en el mapa',
+      entrega: 'Entrega fijada en el mapa',
+      casa: 'Casa fijada en el mapa',
+    },
   },
   en: {
     titulo: {
@@ -142,10 +155,43 @@ const T = {
     ajustar: 'Adjust the spot',
     sinMarcar: 'Mark your door on the map so we find you fast.',
     puntoMarcado: 'Exact spot marked',
+    fijar: {
+      recogida: 'Set pickup on map',
+      destino: 'Set destination on map',
+      entrega: 'Set drop-off on map',
+      casa: 'Set my home on map',
+    },
+    fijado: {
+      recogida: 'Pickup set on map',
+      destino: 'Destination set on map',
+      entrega: 'Drop-off set on map',
+      casa: 'Home set on map',
+    },
   },
 } as const;
 
 export const textosPuntoExacto = (idioma: Idioma) => (idioma === 'en' ? T.en : T.es);
+
+/** C-FIJAR-EN-MAPA: para qué casilla es la fila «Fijar en el mapa». */
+export type CasillaEnMapa = 'recogida' | 'destino' | 'entrega' | 'casa';
+
+/**
+ * C-FIJAR-EN-MAPA: el texto de la fila «Fijar en el mapa» de cada casilla (como Uber y DiDi): sin
+ * marcar, «Fijar recogida en el mapa»; ya marcado, «Recogida fijada en el mapa». Nunca dos iguales.
+ */
+export function textoFijarEnMapa(idioma: Idioma, casilla: CasillaEnMapa, marcado: boolean) {
+  const t = marcado ? textosPuntoExacto(idioma).fijado : textosPuntoExacto(idioma).fijar;
+  switch (casilla) {
+    case 'recogida':
+      return t.recogida;
+    case 'destino':
+      return t.destino;
+    case 'casa':
+      return t.casa;
+    default:
+      return t.entrega;
+  }
+}
 
 /** El título de la pantalla según para qué es el punto (entrega, encuentro, destino o envío). */
 export function tituloPuntoExacto(idioma: Idioma, tipo: TipoPunto) {

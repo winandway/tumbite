@@ -5051,3 +5051,13 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Arreglo:** «23:59» cuenta como fin del día (minuto 1440). Las demás horas no cambian.
 - **Candado (visto en rojo):** «C-HORARIO-2359» en `packages/compartido/src/horarios.test.ts` (11:59:30 p. m. abierto; las 12:00 a. m. ya son del día siguiente).
 - **No tocar:** no volver a comparar «23:59» como un cierre normal.
+
+## C-FIJAR-EN-MAPA y C-FILA-SIN-MODO-OSCURO — «Fijar en el mapa» dentro de cada casilla (17 nov 2026) — todos los países
+
+- **Qué se rompió:** en el iPhone de Richard (cliente 44), en Moto y Carro, debajo de «Punto de recogida» y «¿A dónde vas?» salían dos tarjetas iguales «Marcar mi puerta en el mapa — Marca tu puerta en el mapa para que te encuentren rápido». Parecía un botón repetido y «mi puerta» no sirve para un destino. Lo mismo en Envíos.
+- **Causa real:** `PedirMoto.tsx` pintaba dos `ResumenPunto` (recogida y destino) y esa tarjeta solo tenía un texto, el de la puerta de la entrega de comida.
+- **Arreglo (como Uber y DiDi):** la casilla de dirección (`packages/movil/src/CampoDireccion.tsx`) trae su propia fila `enMapa` pegada debajo, con el texto de ESA casilla: «Fijar recogida en el mapa», «Fijar destino en el mapa», «Fijar entrega en el mapa» (carrito) y «Fijar mi casa en el mapa» («Mis paquetes»); ya marcada, sale en verde («Recogida fijada en el mapa») con «Ajustar el punto». Textos en `textoFijarEnMapa` (`packages/compartido/src/puntoExacto.ts`), en español e inglés. `ResumenPunto` queda solo para la tarjeta de cada paquete en «Mis paquetes» (una por paquete, sin casilla al lado).
+- **De paso (C-FILA-SIN-MODO-OSCURO):** en la misma pantalla, «Viajes fijos» y «Conductores de confianza» salían con el título invisible en un teléfono en modo oscuro: la tarjeta tomaba el fondo negro del modo oscuro y `FilaLista` escribe en negro. La pantalla del servicio es siempre clara: la tarjeta va con `COLOR.fondo` fijo.
+- **Candado (visto en rojo con el código de antes, las 5 pruebas):** `packages/compartido/src/candadoFijarEnMapa.test.ts` (textos distintos por casilla y sin «puerta» en el destino, la fila dentro de la casilla, sin `ResumenPunto` en Moto/Carro/Envíos ni en el carrito, la tarjeta de accesos sin `useColores`).
+- **Cómo se comprueba:** abrir Moto: debajo de cada casilla, una línea roja con su propio texto; tocarla abre «Confirma el punto de encuentro» o «Confirma el destino». En inglés: «Set pickup on map» y «Set destination on map».
+- **Qué NO tocar:** no volver a poner tarjetas de punto sueltas debajo de las casillas; no usar el texto de la puerta para un destino.

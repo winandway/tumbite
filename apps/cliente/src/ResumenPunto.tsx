@@ -4,8 +4,9 @@ import { C, Icono, Text, useSesion } from '@tumbite/movil';
 import type { Punto } from './ubicacion';
 
 /**
- * C-PUNTO-EXACTO: la tarjeta del punto exacto en el carrito, el viaje y los envíos. Dice si la puerta
+ * C-PUNTO-EXACTO: la tarjeta del punto exacto de cada paquete en «Mis paquetes». Dice si la puerta
  * ya está marcada en el mapa, con su referencia, y abre la pantalla del pin fijo («Ajustar el punto»).
+ * Donde hay una casilla de dirección se usa su fila «Fijar … en el mapa» (C-FIJAR-EN-MAPA), no esta.
  */
 export function ResumenPunto({
   punto,
