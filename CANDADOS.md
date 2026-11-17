@@ -5070,3 +5070,10 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **C-CONNECT-PASIVO:** `GET /datos/interno-stripe/plataforma` (secreto del reloj) solo LEE: capacidades y requisitos de la plataforma, cuentas conectadas (sin correos) y saldo. `POST /datos/interno-stripe/connect/alta {usuarioId, pais?}` hace UN alta supervisada y devuelve un enlace estable `https://<sitio>/datos/connect/continuar/<token>` que siempre abre un enlace de alta fresco de Stripe (los de Stripe caducan en minutos). El alta interna NO depende de `STRIPE_CONNECT_ACTIVO`: es la puerta del equipo para la primera cuenta de cada país.
 - **Pruebas:** `connectPaises.test.ts` (8). Rojo comprobado el 17 nov quitando el freno y el acuerdo recipient: 3 fallan.
 - **Qué NO tocar:** no reintentar una creación rechazada; no quitar el freno sin leer el motivo; no agregar países a `PERFILES_CONNECT` sin su prueba con dinero real.
+
+## C-AUDITORIA-EXCEPCIONES — la auditoría de dependencias con excepciones anotadas una por una (17 nov 2026) — todos los países
+
+- **Qué pasó:** GitHub actualizó el 17 nov el aviso GHSA-fc5q-39xc-vjpf de `picomatch` (ReDoS) para cubrir hasta la 4.0.7, que es la última versión: no existe arreglo. `npm audit` se puso en rojo y frenaba TODO push y la publicación, aunque `picomatch`, `fdir` y `tinyglobby` solo los usan vite, vitest, lint-staged y expo (no viajan en el servidor ni en el panel publicado).
+- **Arreglo:** `npm run audit` ahora es `scripts/auditoria.mjs`: corre el mismo `npm audit --omit=dev` de los cuatro espacios y falla con cualquier aviso alto o crítico, salvo los anotados en `scripts/auditoria-excepciones.json` por su número de aviso exacto, con motivo y fecha `revisarAntesDe`. Una excepción vencida vuelve a fallar.
+- **Rojo comprobado:** sin la excepción sale con código 1 (tinyglobby y picomatch); con la fecha vencida, código 1; vigente, código 0.
+- **Qué NO tocar:** no se agregan excepciones por paquete entero ni sin fecha; cuando salga `picomatch` corregido se actualiza y se borra la excepción.
