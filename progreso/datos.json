@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-16T23:23:17Z",
+  "actualizado": "2026-11-17T04:39:21Z",
   "version": "fe71f3f",
   "ahora": "16 nov: piloto EN VIVO de Divoox en El Vigía y Tucaní. Las dos zonas están activas en divoox.com con mototaxi, comida y envíos en dólares (bolívares a la tasa del BCV). Se probaron en el sitio real un viaje de moto, un pedido de comida y un envío con cuentas del equipo. Las apps de Android de la versión real están en la página de apps.",
   "proximo": [
@@ -433,6 +433,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-16",
+      "titulo": "Se acabó la pantalla en blanco al guardar una dirección, y el punto exacto con «Estoy aquí»",
+      "texto": "Al guardar una dirección y tocar «Ahora no» en las fotos de la puerta, la app del iPhone quedaba en blanco y sin salida: ya no pasa, todo va en una sola hoja. Además, en avenidas largas se marca el punto exacto: el pin queda fijo en el centro y se mueve el mapa hasta la puerta, con un botón grande «Estoy aquí» y una casilla de punto de referencia. Vale en comida, mototaxi, carro, envíos, «Mis paquetes» y la página web donde se confirma dónde se recibe un paquete. Guía nueva en Docs, en español e inglés."
+    },
     {
       "fecha": "2026-11-16",
       "titulo": "Un «?» en cada parte del panel del equipo",
