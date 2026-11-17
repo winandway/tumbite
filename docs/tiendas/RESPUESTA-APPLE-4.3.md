@@ -56,7 +56,7 @@ Hello, and thank you for the review. As your message asks, we are replying here 
 
 3. The gap it addresses. Pay shown before each offer, earnings per order and per day, the driver's choice of navigation app, and business package routes in the same app as food orders.
 
-4. Beta testing. Every build is tested by our team on TestFlight against our staging server, with test drivers, plus an automated end-to-end test of a full delivery on every release. Changes since your review: the app has its own blue icon, and in our current test build (24) "How to get there" lets the driver choose Google Maps, Waze or Apple Maps.
+4. Beta testing. Every build is tested by our team on TestFlight against our staging server, with test drivers, plus an automated end-to-end test of a full delivery on every release. Changes since your review: the app has its own blue icon, and in our current test build (35) "How to get there" lets the driver choose Google Maps, Waze or Apple Maps.
 
 5. Standalone or suite. Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps because a delivery marketplace has three people with three different jobs, the same structure as DoorDash, Dasher and DoorDash Merchant: Divoox for customers who order, Divoox Driver for drivers who deliver, and Divoox Restaurants for restaurants that prepare the orders. Divoox Driver is only for drivers; nobody can order food or manage a restaurant in it. What it does that the customer app does not: go online and offline, accept or decline paid offers, a full-screen driver map, background location during a delivery, handover by code or photo, earnings, ratings and package routes. Its icon is also different: blue since build 23, while the customer app is red and the restaurant app black. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
 
@@ -68,7 +68,7 @@ Hello, and thank you for the review. As your message asks, we are replying here 
 
 9. Built for a client? No. Divoox is owned and operated by Windoce LLC, the account holder. The concept, brand, content and service are ours, and we run the backend, the restaurant and driver agreements and customer support ourselves.
 
-We have not resubmitted this app. Version 1.0 still has the older build 7 attached. Build 24 is an internal test build on our staging server and will not be submitted. Once you confirm, we will attach a current production build and resubmit.
+We have not resubmitted this app. Version 1.0 still has the older build 7 attached. Build 35 is an internal test build on our staging server and will not be submitted. Once you confirm, we will attach a current production build and resubmit.
 
 Thank you. We're happy to provide test accounts for the three apps and, after your reply, to join a call to show how they work together on one order (Eastern Time, Michigan; English or Spanish).
 
@@ -86,7 +86,7 @@ Hello, and thank you for the review. As your message asks, we are replying here 
 
 3. The gap it addresses. An alarm for each new order, a kitchen ticket with every option and note, items marked sold out in one tap, and promotions the restaurant creates itself.
 
-4. Beta testing. Every build is tested by our team on TestFlight against our staging server, with test restaurants, plus an automated end-to-end test where a restaurant receives, prepares and hands over a full order on every release. Changes since your review: the app has its own black icon and prints the kitchen ticket, and in our current test build (18) menu photos can also be taken with the camera.
+4. Beta testing. Every build is tested by our team on TestFlight against our staging server, with test restaurants, plus an automated end-to-end test where a restaurant receives, prepares and hands over a full order on every release. Changes since your review: the app has its own black icon and prints the kitchen ticket, and in our current test build (24) menu photos can also be taken with the camera.
 
 5. Standalone or suite. Divoox is a standalone product with its own brand, domain (divoox.com), account system and backend. It is made of three apps because a delivery marketplace has three people with three different jobs, the same structure as DoorDash, Dasher and DoorDash Merchant: Divoox for customers who order, Divoox Driver for drivers who deliver, and Divoox Restaurants for restaurants that prepare the orders. Divoox Restaurants is only for restaurants; nobody can order food or deliver in it. What it does that the customer app does not: receive and accept orders with an alarm, print kitchen tickets, mark orders ready, edit the menu, options, hours and promotions, mark items sold out, and see sales and reviews. It has no map. Its icon is also different: black since build 15, while the customer app is red and the driver app blue. Windoce LLC is a software company that also publishes other, unrelated products under its developer account. Divoox shares no accounts, features or data with them.
 
@@ -98,6 +98,6 @@ Hello, and thank you for the review. As your message asks, we are replying here 
 
 9. Built for a client? No. Divoox is owned and operated by Windoce LLC, the account holder. The concept, brand, content and service are ours, and we run the backend, the restaurant and driver agreements and customer support ourselves.
 
-We have not resubmitted this app. Version 1.0 still has the older build 2 attached. Build 18 is an internal test build on our staging server and will not be submitted. Once you confirm, we will attach a current production build and resubmit.
+We have not resubmitted this app. Version 1.0 still has the older build 2 attached. Build 24 is an internal test build on our staging server and will not be submitted. Once you confirm, we will attach a current production build and resubmit.
 
 Thank you. We're happy to provide test accounts for the three apps and, after your reply, to join a call to show how they work together on one order (Eastern Time, Michigan; English or Spanish).
