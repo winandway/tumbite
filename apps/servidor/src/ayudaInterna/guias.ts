@@ -1130,6 +1130,118 @@ const es: Guia[] = [
   },
 ];
 
+// ───────────────────────── Regalos Divoox (C-CUPON-DIVOOX, 17 nov 2026) ─────────────────────────
+
+const capRegalo = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({
+  archivo: `regalos-divoox-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const regalosDivoox: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'create-divoox-gift-code',
+    titulo: 'Crear un regalo de Divoox (cupón con presupuesto)',
+    resumen:
+      'Cómo crear un cupón que paga Divoox, encenderlo, ver en vivo cuánto se gastó y cuánto queda, y pagarle al conductor lo acreditado.',
+    explicacion: [
+      'Un regalo de Divoox lo paga Divoox, no el conductor. El cliente paga en mano solo la diferencia y lo que cubre el regalo se le acredita al conductor en su saldo prepago al terminar (sirve para sus comisiones).',
+      'Cada cupón tiene un presupuesto total en dólares. Lo apartado en viajes en curso más lo ya cobrado nunca lo pasa: lo comprueba el servidor en el mismo paso que aparta cada uso. Al agotarse, el cupón se apaga solo; si un viaje se cancela, el dinero vuelve al presupuesto y el cupón se enciende otra vez.',
+      'Los topes fijos de Divoox están en el código y el panel no los puede pasar: hasta 20 dólares por uso, 500 por cupón y 1 000 sumando todos los cupones vigentes, y como máximo 20 viajes con regalo por conductor al día.',
+      'Antifraude: un uso por cuenta, por número de celular y por teléfono. El conductor no puede tomar un viaje con regalo pedido desde su propia cuenta o teléfono. Las alertas (intentos frenados, tope diario, el mismo cliente con el mismo conductor una y otra vez) salen al final de la pantalla.',
+      'Un cupón de bienvenida no lleva código: se aplica solo en la primera operación de cada persona en esas ciudades. Uno con código lo agrega el cliente en la app («¿Tienes un código de regalo?») o en la casilla de cupón del carrito.',
+      'Todo cupón nace APAGADO. Revísalo y enciéndelo cuando el equipo de la ciudad esté listo.',
+      'Lo acreditado a cada conductor sale en la tabla de abajo. Si el conductor prefiere el dinero, pásaselo por pago móvil y regístralo con la referencia del banco: se descuenta de su saldo, una vez por referencia y nunca más de lo acreditado.',
+    ],
+    capturas: [
+      capRegalo(
+        'super-crear',
+        'es',
+        'Formulario «Crear un cupón» con código, nombres, qué regala, monto, servicios, ciudades, vencimiento, presupuesto y tope diario.',
+        'El formulario para crear un cupón. Nace apagado.',
+      ),
+      capRegalo(
+        'super-cupon',
+        'es',
+        'Tarjeta del cupón VIGIA encendido con presupuesto, gastado, en viajes en curso y lo que queda, y su barra verde.',
+        'El presupuesto en vivo: gastado, apartado y lo que queda.',
+      ),
+      capRegalo(
+        'super-conductores',
+        'es',
+        'Tabla de lo acreditado a cada conductor, lo pagado por pago móvil y lo que se le puede pagar.',
+        'Lo acreditado a cada conductor y el registro del pago móvil.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo creo el cupón de 100 dólares para El Vigía y Tucaní?',
+      '¿Qué pasa cuando se acaba el presupuesto?',
+      '¿Cómo le pago al conductor lo que cubrió el regalo?',
+    ],
+    pasos: [
+      'Abre «Regalos Divoox» en el menú de Dinero.',
+      'En «Crear un cupón» escribe el código (por ejemplo VIGIA), los nombres en español y en inglés, «Un monto por uso» y el monto (por ejemplo 1).',
+      'Marca los servicios (Moto, Envíos, Comida) y las ciudades (El Vigía y Tucaní).',
+      'Escribe el presupuesto total (por ejemplo 100) y el tope diario por conductor. Toca «Crear apagado».',
+      'Revisa la tarjeta del cupón y toca «Encender» cuando todo esté listo.',
+      'Mira el gasto en vivo en la tarjeta y las alertas al final de la pantalla.',
+    ],
+  },
+  en: {
+    id: 'create-divoox-gift-code',
+    titulo: 'Create a Divoox gift (promo code with a budget)',
+    resumen:
+      'How to create a code paid by Divoox, turn it on, see live how much was spent and how much is left, and pay drivers what was credited.',
+    explicacion: [
+      'A Divoox gift is paid by Divoox, not by the driver. The customer pays in person only the difference, and what the gift covers is credited to the driver’s prepaid balance when the trip ends (it covers their commissions).',
+      'Each code has a total budget in dollars. What is set aside in trips in progress plus what was already paid never goes over it: the server checks it in the same step that sets aside each use. When it runs out, the code turns off on its own; if a trip is canceled, the money goes back to the budget and the code turns on again.',
+      'Divoox’s fixed limits live in the code and the panel can’t go over them: up to 20 dollars per use, 500 per code and 1,000 across all active codes, and at most 20 gift trips per driver per day.',
+      'Anti-fraud: one use per account, per cell number and per phone. A driver can’t take a gift trip requested from their own account or phone. Alerts (blocked attempts, daily limit, the same customer with the same driver again and again) show at the bottom of the screen.',
+      'A welcome code needs no code entry: it applies on its own on each person’s first trip or order in those cities. A code with a name is added by the customer in the app (“Have a gift code?”) or in the cart’s coupon field.',
+      'Every code is created OFF. Review it and turn it on when the city team is ready.',
+      'What was credited to each driver is in the table below. If the driver prefers the money, send it by mobile payment and record it with the bank reference: it comes out of their balance, once per reference and never more than was credited.',
+    ],
+    capturas: [
+      capRegalo(
+        'super-crear',
+        'en',
+        'The “Create a code” form with code, names, what it gives, amount, services, cities, expiration, budget and daily limit.',
+        'The form to create a code. It is created off.',
+      ),
+      capRegalo(
+        'super-cupon',
+        'en',
+        'The NOVIRIDE code card turned on, with budget, spent, in trips in progress and what is left, and its green bar.',
+        'The live budget: spent, set aside and what is left.',
+      ),
+      capRegalo(
+        'super-conductores',
+        'en',
+        'Table with what was credited to each driver, what was paid by mobile payment and what can be paid.',
+        'What each driver was credited and the payment record.',
+      ),
+    ],
+    preguntas: [
+      'How do I create a 100-dollar code for a city?',
+      'What happens when the budget runs out?',
+      'How do I pay a driver what the gift covered?',
+    ],
+    pasos: [
+      'Open “Divoox gifts” in the Money menu.',
+      'In “Create a code,” enter the code, the names in Spanish and English, “An amount per use” and the amount (for example 1).',
+      'Check the services (Moto, Deliveries, Food) and the cities.',
+      'Enter the total budget (for example 100) and the daily limit per driver. Tap “Create (off).”',
+      'Review the code card and tap “Turn on” when everything is ready.',
+      'Watch spending live on the card and the alerts at the bottom of the screen.',
+    ],
+  },
+};
+
 const porId = (lista: Guia[]) => new Map(lista.map((g) => [g.id, g]));
 
 /** Las secciones de la ayuda, en el orden del menú lateral. */
@@ -1161,6 +1273,11 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
       ],
+    },
+    {
+      id: 'money',
+      titulo: esp ? 'Dinero' : 'Money',
+      guias: [de(regalosDivoox)],
     },
     {
       id: 'settings',

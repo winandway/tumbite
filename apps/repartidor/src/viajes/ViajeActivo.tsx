@@ -67,6 +67,9 @@ export type ViajeConductor = {
   total: number | null;
   moneda: string | null;
   pasajero: string;
+  /** C-CUPON-DIVOOX: lo que cobra en mano y lo que le paga Divoox por el regalo del pasajero. */
+  cobrar_en_mano?: number | null;
+  regalo_divoox?: number;
   /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
   referencia?: Referencia | null;
   /** C-VIAJE-PARADAS: las paradas del viaje, en orden, con su estado y su espera. */
@@ -180,6 +183,19 @@ export function ViajeActivo({
   const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
   // M7: lo que cobra al terminar (precio fijo + espera + lo que el pasajero debía), del servidor.
   const [totalFinal, setTotalFinal] = useState<number | null>(null);
+  const [regaloFinal, setRegaloFinal] = useState<number | null>(null);
+  // C-CUPON-DIVOOX: «Cobra X · Divoox te paga Y». Sin regalo, X es el precio de siempre.
+  const enMano = viaje.cobrar_en_mano ?? viaje.total;
+  const regaloDivoox = regaloFinal ?? viaje.regalo_divoox ?? 0;
+  const lineaRegalo =
+    regaloDivoox > 0 ? (
+      <Text testID="viaje-divoox-paga" style={{ color: C.exito, fontWeight: '700' }}>
+        {t.divooxTePaga.replace(
+          '{monto}',
+          formatearMonto(regaloDivoox, viaje.moneda ?? 'USD', idioma),
+        )}
+      </Text>
+    ) : null;
   const [referenciaFinal, setReferenciaFinal] = useState<Referencia | null>(null);
   const [estrellas, setEstrellas] = useState(0);
   /** M8: el conductor califica al pasajero (una vez); después vuelve al inicio. */
@@ -209,13 +225,17 @@ export function ViajeActivo({
       setEnviando(true);
       setError('');
       try {
-        const r = await api.pedir<{ totalFinal?: number | null; referencia?: Referencia | null }>(
-          'POST',
-          `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`,
-          cuerpo,
-          { cabeceras: { 'idempotency-key': clave() } },
-        );
-        if (r?.totalFinal != null) setTotalFinal(r.totalFinal);
+        const r = await api.pedir<{
+          totalFinal?: number | null;
+          cobrarEnMano?: number | null;
+          regaloDivoox?: number;
+          referencia?: Referencia | null;
+        }>('POST', `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`, cuerpo, {
+          cabeceras: { 'idempotency-key': clave() },
+        });
+        // C-CUPON-DIVOOX: lo que cobra en mano ya descuenta el regalo que paga Divoox.
+        if (r?.totalFinal != null) setTotalFinal(r.cobrarEnMano ?? r.totalFinal);
+        if (r?.regaloDivoox != null) setRegaloFinal(r.regaloDivoox);
         if (r?.referencia) setReferenciaFinal(r.referencia);
         if (final) setCierre(final);
         else alCambiar();
@@ -252,7 +272,7 @@ export function ViajeActivo({
         </Text>
         {cierre === 'terminado' &&
         (viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
-        (totalFinal ?? viaje.total) != null ? (
+        (totalFinal ?? enMano) != null ? (
           <View
             testID="viaje-cobra-efectivo"
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
@@ -261,8 +281,9 @@ export function ViajeActivo({
               {viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
             </Text>
             <Text style={{ fontSize: 34, fontWeight: '800', color: C.exito }}>
-              {formatearMonto(totalFinal ?? viaje.total ?? 0, viaje.moneda ?? 'USD', idioma)}
+              {formatearMonto(totalFinal ?? enMano ?? 0, viaje.moneda ?? 'USD', idioma)}
             </Text>
+            {lineaRegalo}
             {(referenciaFinal ?? viaje.referencia) ? (
               <Text testID="viaje-cobra-bs" style={{ color: '#666B73', fontWeight: '700' }}>
                 {textoReferencia(referenciaFinal ?? viaje.referencia, idioma)}
@@ -353,11 +374,12 @@ export function ViajeActivo({
       ) : null}
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
-        {viaje.metodo_pago === 'efectivo' && viaje.total != null ? (
+        {viaje.metodo_pago === 'efectivo' && enMano != null ? (
           <Text style={{ color: '#666B73', marginTop: 4 }}>
-            {t.cobra}: {formatearMonto(viaje.total, viaje.moneda ?? 'USD', idioma)}
+            {t.cobra}: {formatearMonto(enMano, viaje.moneda ?? 'USD', idioma)}
           </Text>
         ) : null}
+        {lineaRegalo}
         {viaje.referencia ? (
           <Text testID="viaje-bs" style={{ color: '#666B73' }}>
             {textoReferencia(viaje.referencia, idioma)}
@@ -555,9 +577,7 @@ export function ViajeActivo({
             <>
               <Text style={{ color: C.secundario }}>
                 {t.pagoMovilPregunta}{' '}
-                {viaje.total != null
-                  ? formatearMonto(viaje.total, viaje.moneda ?? 'USD', idioma)
-                  : ''}
+                {enMano != null ? formatearMonto(enMano, viaje.moneda ?? 'USD', idioma) : ''}
                 {viaje.referencia ? ` ${textoReferencia(viaje.referencia, idioma)}` : ''}
               </Text>
               <Boton

@@ -10,6 +10,7 @@ import {
   type Idioma,
   enIdioma,
   formatearMonto,
+  pagaEnMano,
   textoReferencia,
   textoAMonto,
   textoMultiplicador,
@@ -34,6 +35,7 @@ import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { type Punto, miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
+import { AgregarCodigoRegalo, LineaRegalo, TEXTOS_REGALO } from '../RegaloDivoox';
 import { PedirPrimeroA } from './ConductoresConfianza';
 import { tomarRelleno } from './relleno';
 import { ElegirCuando, MisProgramados, horaCorta } from './Programar';
@@ -66,6 +68,7 @@ export function PedirMoto({
 }) {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
+  const textosRegalo = enIdioma(TEXTOS_REGALO, idioma);
   const b = useBorrador({
     formulario: servicio,
     cuenta: usuario?.id,
@@ -277,6 +280,8 @@ export function PedirMoto({
         ...(cuando ? { programadoPara: cuando } : {}),
         // C-CONDUCTOR-CONFIANZA: solo si la persona eligió («Pedir primero a»).
         ...(v.confianza ? { confianza: v.confianza } : {}),
+        // C-CUPON-DIVOOX: el regalo que vio; si ya no está, el servidor avisa en vez de pedir a ciegas.
+        ...(cotizacion.regalo && !tarjeta ? { regalo: cotizacion.regalo.codigo } : {}),
       });
       if (r.programado) {
         await b.limpiar();
@@ -491,9 +496,32 @@ export function PedirMoto({
             <Text style={{ color: '#666B73', fontWeight: '700' }}>
               {cotizacion.dePrueba ? t.precioPrueba : t.precioFijo}
             </Text>
+            {/* C-CUPON-DIVOOX: con regalo y pago en mano, el precio de siempre tachado y lo que paga. */}
+            {cotizacion.regalo && !tarjeta ? (
+              <Text style={{ color: '#666B73', fontSize: 16, textDecorationLine: 'line-through' }}>
+                {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
+              </Text>
+            ) : null}
             <Text style={{ fontSize: 34, fontWeight: '700', color: C.secundario }}>
-              {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
+              {formatearMonto(
+                cotizacion.regalo && !tarjeta
+                  ? pagaEnMano(cotizacion.total, cotizacion.regalo)
+                  : cotizacion.total,
+                cotizacion.moneda,
+                idioma,
+              )}
             </Text>
+            {cotizacion.regalo && !tarjeta ? (
+              <LineaRegalo
+                regalo={cotizacion.regalo}
+                total={cotizacion.total}
+                moneda={cotizacion.moneda}
+                idioma={idioma}
+              />
+            ) : null}
+            {cotizacion.regalo && tarjeta ? (
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{textosRegalo.soloEnMano}</Text>
+            ) : null}
             {(cotizacion.multiplicadorPb ?? 10_000) > 10_000 ? (
               // C-CARRO-DINAMICA: se dice antes de pedir, con el multiplicador, como el mercado.
               <View testID="moto-dinamica" style={{ gap: 2, marginVertical: 4 }}>
@@ -550,6 +578,8 @@ export function PedirMoto({
                 {formatearMonto(deudaPendiente.monto, deudaPendiente.moneda ?? 'USD', idioma)}
               </Text>
             ) : null}
+            {/* C-CUPON-DIVOOX: el código se agrega a la cuenta y el precio se vuelve a calcular. */}
+            {cotizacion.regalo ? null : <AgregarCodigoRegalo alAgregar={() => void cotizar()} />}
           </View>
         </Tarjeta>
       ) : null}

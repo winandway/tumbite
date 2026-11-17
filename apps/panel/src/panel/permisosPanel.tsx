@@ -107,6 +107,7 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   money: 'dinero.ver',
   cash: 'dinero.ver',
   flexfinance: 'dinero.ver',
+  'gift-codes': 'dinero.ver',
   reports: 'monitoreo.exportar',
   rides: 'viajes.ver',
   moto: 'viajes.ver',

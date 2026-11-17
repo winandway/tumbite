@@ -26,6 +26,7 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperReportes.tsx', 'flagged-content'],
   ['SuperAprobaciones.tsx', 'two-person-approval'],
   ['ResolverAutorizacion.tsx', 'resolve-expired-card-authorization'],
+  ['SuperRegalosDivoox.tsx', 'create-divoox-gift-code'],
 ];
 const fuente = (archivo: string) => readFileSync(join(AQUI, archivo), 'utf8');
 
@@ -44,7 +45,7 @@ describe('C-AYUDA-AQUI: cada parte con guía lleva su «?»', () => {
       'utf8',
     );
     const ids = new Set([...guias.matchAll(/^\s+id: '([a-z0-9-]+)',$/gm)].map((m) => m[1]));
-    for (const id of ['start', 'monitoring', 'support', 'settings']) ids.delete(id);
+    for (const id of ['start', 'monitoring', 'support', 'money', 'settings']) ids.delete(id);
     expect(ids.size).toBeGreaterThanOrEqual(11);
     const cubiertas = new Set(MAPA.map(([, g]) => g));
     for (const id of ids) expect(cubiertas.has(id ?? ''), `guía ${id} sin «?»`).toBe(true);

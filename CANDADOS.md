@@ -2,6 +2,15 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CUPON-DIVOOX · Regalos que paga Divoox, con presupuesto (17 nov 2026) — todos los países, piloto Venezuela
+
+- **Qué es:** cupones y regalo de bienvenida que paga Divoox (no el conductor). El cliente paga en mano solo la diferencia; lo que cubre el regalo se le acredita al conductor en su prepago (libro `regalo_divoox`, contrapartida `regalo_divoox_pagado` en la cuenta de Divoox). Piezas: `apps/servidor/src/regalosDivoox.ts` (lógica y topes), `rutas/regalosDivoox.ts` (cliente y superadmin), tablas `cupones_divoox`, `cupones_divoox_guardados`, `usos_cupon_divoox`, `pagos_regalo_conductor`, `alertas_regalo`.
+- **El candado del dinero:** `apartarRegalo` aparta el uso con UNA sentencia que exige `lo apartado + lo cobrado + este uso <= presupuesto`; el último uso toma solo lo que queda y el cupón se apaga solo. Los topes (`TOPES_REGALO`: 20 USD por uso, 500 por cupón, 1 000 sumando los vigentes, 20 viajes con regalo por conductor al día) están en el código; el panel no los pasa. Prueba en rojo comprobada (17 nov): quitando la condición del presupuesto, `rutas/regalosDivoox.test.ts` («ni un centavo más que el presupuesto», 20 apartados a la vez) se pone en rojo.
+- **Antifraude:** índices únicos por cupón y cuenta, huella del teléfono y huella del aparato (cabecera `x-aparato` de las apps, `packages/movil/src/aparato.ts`; el servidor guarda solo sha-256). `tomarRegaloConductor` frena al conductor que pidió desde su cuenta, teléfono o aparato y al que pasó el tope diario; las alertas van a `alertas_regalo`.
+- **Canario:** pieza `regalos` de `/datos/salud` en rojo si un cupón gastó más que su presupuesto, si un regalo cobrado no llegó al saldo del conductor o si un uso quedó apartado en una operación cerrada hace más de una hora. El reloj (`regalos_divoox`) libera y cierra lo que se cortó.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/rutas/regalosDivoox*.test.ts` (16 pruebas) y el recorrido `e2e/recorrido/regalosDivoox.spec.ts` (es con El Vigía, en con Novi).
+- **Qué NO tocar:** no quitar la condición del presupuesto de la sentencia; no aplicar el regalo con tarjeta; no subir los topes sin orden de Richard por escrito.
+
 ## C-IDIOMA-1 · Bandera del español = España
 
 - Qué: el selector usa 🇪🇸 para español y 🇺🇸 para inglés (regla de Richard).

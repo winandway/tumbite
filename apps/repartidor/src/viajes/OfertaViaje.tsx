@@ -19,6 +19,8 @@ export type OfertaViaje = {
   viajeM: number | null;
   viajeS: number | null;
   metodoPago: string;
+  /** C-CUPON-DIVOOX: lo que paga Divoox por el regalo del pasajero (0 sin regalo). */
+  regaloDivoox?: number;
   /** C-CARRO-PRUEBAS: «moto» o «carro». */
   servicioId?: string;
   /** C-VIAJE-PROGRAMADO: si es una reserva, para cuándo (ISO). */
@@ -165,6 +167,19 @@ export function OfertaViajeModal({
               style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
             >
               <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
+            </View>
+          ) : null}
+          {(oferta.regaloDivoox ?? 0) > 0 ? (
+            <View
+              testID="oferta-viaje-regalo"
+              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+            >
+              <Text style={{ fontWeight: '800', color: C.exito }}>
+                {t.regaloOferta.replace(
+                  '{monto}',
+                  formatearMonto(oferta.regaloDivoox ?? 0, oferta.moneda ?? 'USD', idioma),
+                )}
+              </Text>
             </View>
           ) : null}
           {(oferta.multiplicadorPb ?? 10_000) > 10_000 ? (

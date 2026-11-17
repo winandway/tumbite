@@ -179,10 +179,13 @@ regalosDivoox.post('/regalos-divoox/aplicable', async (c) => {
 
 const fechaSql = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}(:\d{2})?)?$/, {
-    error: 'Escribe la fecha como AAAA-MM-DD.',
-  })
-  .transform((s) => (s.length === 10 ? `${s} 23:59:59` : s.length === 16 ? `${s}:00` : s));
+  .refine(
+    (s) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(s.slice(0, 10)) &&
+      (s.length === 10 || /^ \d{2}:\d{2}:\d{2}$/.test(s.slice(10))),
+    { error: 'Escribe la fecha como AAAA-MM-DD.' },
+  )
+  .transform((s) => (s.length === 10 ? `${s} 23:59:59` : s));
 
 /** Los campos de un cupón, sin valores por defecto (así el cambio parcial no pisa lo guardado). */
 const camposCupon = {

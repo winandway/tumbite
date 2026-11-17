@@ -2,6 +2,12 @@
 
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
 
+## 🟡 Regalos de Divoox en pagos en mano (C-CUPON-DIVOOX, 17 nov 2026): Venezuela (piloto) y todos los países en mano
+
+- **Probado:** en las pruebas del servidor (viaje de moto en efectivo con regalo, comida en efectivo en El Vigía con regalo, presupuesto, antifraude, pago móvil al conductor) y en el recorrido local de las apps web (es El Vigía, en Novi): el cliente paga en mano la diferencia y el conductor recibe el regalo en su prepago una sola vez.
+- **🔴 Sin probar con dinero real:** el cupón VIGIA queda creado y APAGADO en producción; lo enciende Richard. La primera semana se revisa el reporte de Superadmin → Regalos Divoox (gastado, por pagar, alertas).
+- **Con tarjeta no se aplica** (el servidor lo rechaza).
+
 ## 🟡 Circuito de pagos de COMIDA con tarjeta, EE. UU. (punto A2): PROBADO de punta a punta el 10 nov 2026 en el sitio de pruebas con Stripe en MODO PRUEBA · 🔴 nada con dinero real
 
 **Cómo se probó:** corrida 42924950320 del flujo `pruebas-rama` (rama `fase-pagos-a2`), prueba `e2e/recorrido/circuitoPagosStaging.spec.ts`, contra staging.tumbite.com con la llave de prueba de Stripe y la tarjeta de prueba `pm_card_visa` (la 4242). Todo por la API, como lo hacen las apps, con cuentas de la corrida en Miami (restaurante, cliente, repartidor y una cuenta de soporte). Cada paso se comprobó en la base del sitio de pruebas y contra Stripe (la conciliación de diagnóstico le pregunta a Stripe el estado de cada pago). La prueba queda fija: se repite en cada publicación de rama.

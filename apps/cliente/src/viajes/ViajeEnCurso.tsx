@@ -1,3 +1,4 @@
+import { LineaRegalo } from '../RegaloDivoox';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Animated, Easing, Image, Linking, Platform, Pressable, Share, View } from 'react-native';
 import {
@@ -8,6 +9,7 @@ import {
   textoHoraLlegada,
   enIdioma,
   formatearMonto,
+  pagaEnMano,
   textoReferencia,
 } from '@tumbite/compartido';
 import {
@@ -45,6 +47,8 @@ export type ViajePasajero = {
   destino: { direccion: string; lat: number; lng: number };
   total: number | null;
   moneda: string | null;
+  /** C-CUPON-DIVOOX: lo que paga Divoox con el regalo (el pasajero paga en mano el resto). */
+  regalo?: { codigo: string; monto: number } | null;
   conductor: {
     nombre: string;
     ubicacion: { lat: number; lng: number } | null;
@@ -392,7 +396,7 @@ export function ViajeEnCurso({
               </Text>
               {viaje.total != null ? (
                 <Text style={[LETRA.tarjeta, { fontFamily: 'Poppins_700Bold' }]}>
-                  {monto(viaje.total)}
+                  {monto(viaje.regalo ? pagaEnMano(viaje.total, viaje.regalo) : viaje.total)}
                 </Text>
               ) : null}
             </View>
@@ -624,6 +628,14 @@ export function ViajeEnCurso({
                 : t.precioFijo}
               : {monto(viaje.total)}
             </Text>
+          ) : null}
+          {viaje.total != null && viaje.regalo ? (
+            <LineaRegalo
+              regalo={{ ...viaje.regalo, nombreEs: '', nombreEn: '' }}
+              total={viaje.total}
+              moneda={viaje.moneda ?? 'USD'}
+              idioma={idioma}
+            />
           ) : null}
           {viaje.referencia ? (
             <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>

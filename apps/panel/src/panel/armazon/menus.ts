@@ -72,6 +72,8 @@ export const ICONOS_MENU = {
   restaurants: UtensilsCrossed,
   money: Wallet,
   flexfinance: Landmark,
+  // C-CUPON-DIVOOX: los regalos que paga Divoox.
+  'gift-codes': Gift,
   approvals: ClipboardCheck,
   rides: Navigation,
   moto: Bike,
@@ -223,7 +225,7 @@ export function gruposAdmin(
       [
         [g.operacion, ['inicio', 'orders', 'tickets', 'moderation', 'approvals', 'verifications']],
         [g.personas, ['customers', 'restaurants', 'drivers']],
-        [g.dinero, ['money', 'cash', 'flexfinance', 'reports']],
+        [g.dinero, ['money', 'cash', 'gift-codes', 'flexfinance', 'reports']],
         [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],
         [g.territorio, ['franchises', 'cities', 'zones', 'waitlist']],
         // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; luego «Equipo interno»).

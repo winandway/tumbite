@@ -1,6 +1,17 @@
 import { comoLlegar } from './comoLlegar';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Image, Linking, Platform, Pressable, ScrollView, Switch, TextInput, View, useWindowDimensions } from 'react-native';
+import {
+  Alert,
+  Image,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  Switch,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
@@ -119,7 +130,9 @@ import {
   URL_SERVIDOR,
   capturasConCamara,
   achicarFotoEvidencia,
-  Text, Modal } from '@tumbite/movil';
+  Text,
+  Modal,
+} from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
 const CAMARA = {
@@ -188,6 +201,8 @@ type Pedido = {
   total?: number;
   /** C-COMIDA-VENEZUELA: lo que cobra en mano, en bolívares de referencia (tasa del día). */
   referenciaCobro?: Referencia | null;
+  /** C-CUPON-DIVOOX: lo que paga Divoox por el regalo del cliente (0 sin regalo). */
+  regaloDivoox?: number;
   lineas: {
     platoId: string;
     nombreEs: string;
@@ -2623,6 +2638,21 @@ export function Inicio() {
                                     style={{ color: '#666B73', fontWeight: '700' }}
                                   >
                                     {textoReferencia(activo.referenciaCobro, idioma)}
+                                  </Text>
+                                ) : null}
+                                {(activo.regaloDivoox ?? 0) > 0 ? (
+                                  <Text
+                                    testID="cobro-divoox-paga"
+                                    style={{ color: C.exito, fontWeight: '700' }}
+                                  >
+                                    {tg.pedido.divooxTePaga.replace(
+                                      '{monto}',
+                                      formatearMonto(
+                                        activo.regaloDivoox ?? 0,
+                                        activo.moneda,
+                                        idioma,
+                                      ),
+                                    )}
                                   </Text>
                                 ) : null}
                                 <Text style={{ color: '#666B73', fontSize: 12 }}>

@@ -20,6 +20,9 @@ export const TEXTOS_VIAJE = {
       viaje: 'de viaje',
       minutos: 'min',
       enEfectivo: 'Cobras en efectivo al terminar',
+      // C-CUPON-DIVOOX: el pasajero trae un regalo que paga Divoox.
+      regaloOferta:
+        'Con regalo de Divoox: el pasajero paga menos en mano y Divoox te paga {monto}.',
       recoger: 'Recoger en',
       llevar: 'Llevar a',
       aceptar: 'Aceptar viaje',
@@ -98,6 +101,7 @@ export const TEXTOS_VIAJE = {
       entregar: 'Entregar el paquete',
       permisoCamara: 'Necesitamos permiso para usar la cámara.',
       cobra: 'Cobra en efectivo',
+      divooxTePaga: 'Divoox te paga {monto} por el regalo del pasajero. Va a tu saldo al terminar.',
       pagoMovilPregunta: '¿Te llegó el pago móvil del pasajero? Monto del viaje:',
       pagoMovilSi: 'Sí, me llegó',
       pagoMovilNo: 'No me llegó',
@@ -133,6 +137,8 @@ export const TEXTOS_VIAJE = {
       viaje: 'trip',
       minutos: 'min',
       enEfectivo: 'You collect cash at the end',
+      regaloOferta:
+        'With a Divoox gift: the rider pays less in person and Divoox pays you {monto}.',
       recoger: 'Pick up at',
       llevar: 'Drop off at',
       aceptar: 'Accept ride',
@@ -208,6 +214,8 @@ export const TEXTOS_VIAJE = {
       entregar: 'Deliver the package',
       permisoCamara: 'We need permission to use the camera.',
       cobra: 'Collect in cash',
+      divooxTePaga:
+        'Divoox pays you {monto} for the rider’s gift. It goes to your balance when you finish.',
       pagoMovilPregunta: 'Did the rider’s mobile payment arrive? Ride amount:',
       pagoMovilSi: 'Yes, it arrived',
       pagoMovilNo: 'It didn’t arrive',

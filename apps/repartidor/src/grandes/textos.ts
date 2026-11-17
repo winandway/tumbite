@@ -102,6 +102,9 @@ const es = {
       '¿Seguro? El pedido se cancela, el cliente queda con deuda y tu comisión apartada vuelve a tu saldo. Lleva la comida de vuelta al restaurante.',
     cobroOk: 'Cobro registrado. Lo confirmaste tú; si fue transferencia, revísala en tu banco.',
     propinaAparte: 'La propina en efectivo es tuya y no se cuenta aquí.',
+    // C-CUPON-DIVOOX: el cliente usó un regalo que paga Divoox (el monto a cobrar ya lo descuenta).
+    divooxTePaga:
+      'Divoox te paga {monto} por el regalo del cliente. Va a tu saldo al cerrar el cobro.',
     transferPendiente: 'La transferencia aún no me llega',
     transferPendienteOk:
       'Quedó anotado. Puedes entregar; cuando la veas en tu banco, confirma lo que llegó (o 0 si no llegó).',
@@ -313,6 +316,8 @@ const en: T = {
       'Are you sure? The order is canceled, the customer gets a debt and your reserved fee goes back to your balance. Take the food back to the restaurant.',
     cobroOk: 'Payment recorded. You confirmed it; if it was a transfer, check it in your bank.',
     propinaAparte: 'A cash tip is yours and isn’t counted here.',
+    divooxTePaga:
+      'Divoox pays you {monto} for the customer’s gift. It goes to your balance once the payment is closed.',
     transferPendiente: 'The transfer hasn’t reached me yet',
     transferPendienteOk:
       'Noted. You can deliver; when you see it in your bank, confirm what arrived (or 0 if it didn’t).',

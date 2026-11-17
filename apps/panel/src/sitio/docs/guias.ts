@@ -637,6 +637,50 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'gift-codes',
+        titulo: 'Regalos de Divoox: agrega tu código y paga menos en mano',
+        resumen:
+          'Divoox te puede regalar parte de tu viaje, envío o pedido. Agrega el código en la app una sola vez: se aplica solo y pagas en mano únicamente la diferencia. El regalo lo paga Divoox, no tu conductor.',
+        explicacion: [
+          'Un regalo de Divoox es un código (por ejemplo, el que te comparte Divoox al llegar a tu ciudad) o un regalo de bienvenida que se aplica solo en tu primer viaje o pedido, sin escribir nada.',
+          'Para agregar un código: en Moto, Carro o Envíos, toca «Ver precio» y luego «¿Tienes un código de regalo?». Escríbelo y toca «Agregar». El código queda en tu cuenta y el precio se vuelve a calcular.',
+          'Con el regalo aplicado verás el precio de siempre tachado, el regalo en verde y la línea «Pagas en mano» con lo que de verdad le pagas al conductor. Si el regalo cubre todo, dice «Gratis».',
+          'En la comida pasa lo mismo: al pagar en efectivo o por transferencia al repartidor, el carrito aplica tu regalo solo y lo muestra como «Regalo de Divoox». También puedes escribir el código en la casilla de cupón.',
+          'El regalo se usa pagando en mano (efectivo o pago móvil). Con tarjeta no se aplica.',
+          'Cada regalo se usa una sola vez por persona, por número de celular y por teléfono. Necesitas tener tu número de celular en tu cuenta.',
+          'Si cancelas el viaje o el pedido no sale, el regalo vuelve a quedar disponible para la próxima vez. Los regalos tienen un presupuesto: cuando se acaba, el código deja de funcionar.',
+          'Tu conductor recibe lo que cubrió el regalo directamente de Divoox: no pierde nada por llevarte.',
+        ],
+        capturas: [
+          {
+            src: '/docs/regalos-divoox-cliente-codigo-es.webp',
+            alt: 'Tarjeta del precio del viaje en moto con la casilla «Código de regalo» y el botón «Agregar».',
+            pie: 'Toca «¿Tienes un código de regalo?», escríbelo y toca «Agregar».',
+          },
+          {
+            src: '/docs/regalos-divoox-cliente-precio-es.webp',
+            alt: 'Precio del viaje con el precio de siempre tachado, el regalo de Divoox en verde y la línea «Pagas en mano».',
+            pie: 'El precio de siempre tachado, el regalo en verde y lo que pagas en mano.',
+          },
+          {
+            src: '/docs/regalos-divoox-cliente-viaje-es.webp',
+            alt: 'Pantalla del viaje en curso con el conductor asignado, el regalo de Divoox y lo que se paga en mano.',
+            pie: 'Durante el viaje sigues viendo cuánto pagas en mano.',
+          },
+        ],
+        preguntas: [
+          '¿Dónde escribo mi código de regalo?',
+          '¿Por qué no se aplicó mi regalo?',
+          '¿Quién paga el regalo, el conductor o Divoox?',
+        ],
+        pasos: [
+          'Abre Moto, Carro o Envíos, escribe a dónde vas y toca «Ver precio».',
+          'Toca «¿Tienes un código de regalo?», escribe el código y toca «Agregar».',
+          'Revisa el precio: el regalo en verde y «Pagas en mano».',
+          'Elige efectivo o pago móvil y pide. Le pagas al conductor solo la diferencia.',
+        ],
+      },
+      {
         id: 'gift-cards',
         titulo: 'Tarjetas de regalo: regala Divoox y canjea un código',
         resumen:
@@ -2829,6 +2873,36 @@ const es: SeccionDocs[] = [
     titulo: 'Para repartidores',
     icono: 'moto',
     guias: [
+      {
+        id: 'divoox-gift-trips',
+        titulo: 'Viajes con regalo de Divoox: cobras la diferencia y Divoox te paga el resto',
+        resumen:
+          'Cuando el pasajero trae un regalo de Divoox, cobras en mano solo la diferencia. Lo que cubre el regalo te lo paga Divoox: entra a tu saldo al terminar el viaje.',
+        explicacion: [
+          'En la oferta verás «Con regalo de Divoox» y cuánto te paga Divoox. Lo que ganas es lo mismo que en cualquier viaje.',
+          'Durante el viaje, la app te dice «Cobra en efectivo» con el monto que te paga el pasajero, y debajo, en verde, «Divoox te paga» con lo que cubre el regalo.',
+          'Al terminar, lo que pagó Divoox entra a tu saldo prepago y te sirve para tus comisiones. Si prefieres el dinero, pídeselo a soporte: te lo pagamos por pago móvil.',
+          'En los pedidos de comida es igual: el monto a cobrar ya descuenta el regalo y la app te dice cuánto te paga Divoox. Se acredita al cerrar el cobro.',
+          'Para cuidar los regalos: no puedes tomar un viaje con regalo pedido desde tu propia cuenta o tu propio teléfono, y hay un máximo de viajes con regalo por día. Si llegas al máximo, el viaje pasa a otro conductor.',
+        ],
+        capturas: [
+          {
+            src: '/docs/regalos-divoox-conductor-viaje-es.webp',
+            alt: 'Pantalla de Divoox Driver con «Ve a recoger a María», «Cobra en efectivo» y, en verde, «Divoox te paga» por el regalo del pasajero.',
+            pie: 'Cobras en mano la diferencia; Divoox te paga el regalo.',
+          },
+        ],
+        preguntas: [
+          '¿Cuánto cobro si el pasajero tiene un regalo?',
+          '¿Cuándo me paga Divoox el regalo?',
+          '¿Por qué no pude tomar un viaje con regalo?',
+        ],
+        pasos: [
+          'Acepta la oferta: dice si trae regalo de Divoox.',
+          'Cobra en mano el monto que dice «Cobra en efectivo».',
+          'Termina el viaje: lo que cubrió el regalo entra a tu saldo.',
+        ],
+      },
       {
         id: 'destination-mode',
         titulo: 'Modo destino: pedidos de camino a casa',
@@ -5729,6 +5803,50 @@ const en: SeccionDocs[] = [
         ],
       },
       {
+        id: 'gift-codes',
+        titulo: 'Divoox gifts: add your code and pay less in person',
+        resumen:
+          'Divoox can gift you part of your ride, delivery or order. Add the code in the app once: it applies on its own and you pay in person only the difference. Divoox pays the gift, not your driver.',
+        explicacion: [
+          'A Divoox gift is a code (for example, one Divoox shares when it arrives in your city) or a welcome gift that applies on its own on your first ride or order, without typing anything.',
+          'To add a code: in Moto, Car or Deliveries, tap “See price” and then “Have a gift code?”. Type it and tap “Add”. The code is saved to your account and the price is calculated again.',
+          'With the gift applied you see the usual price crossed out, the gift in green and the “You pay in person” line with what you actually pay your driver. If the gift covers everything, it says “Free.”',
+          'Food works the same way: when you pay the courier in cash, the cart applies your gift on its own and shows it as “Divoox gift.” You can also type the code in the coupon field.',
+          'The gift is used when you pay your driver in cash. It doesn’t apply to card payments.',
+          'Each gift can be used once per person, per cell number and per phone. You need your cell number in your account.',
+          'If you cancel the ride or the order doesn’t go through, the gift is available again next time. Gifts have a budget: when it runs out, the code stops working.',
+          'Your driver gets what the gift covered straight from Divoox: they lose nothing by taking you.',
+        ],
+        capturas: [
+          {
+            src: '/docs/regalos-divoox-cliente-codigo-en.webp',
+            alt: 'Moto ride price card with the “Gift code” field and the “Add” button.',
+            pie: 'Tap “Have a gift code?”, type it and tap “Add.”',
+          },
+          {
+            src: '/docs/regalos-divoox-cliente-precio-en.webp',
+            alt: 'Ride price with the usual price crossed out, the Divoox gift in green and the “You pay in person” line.',
+            pie: 'The usual price crossed out, the gift in green and what you pay in person.',
+          },
+          {
+            src: '/docs/regalos-divoox-cliente-viaje-en.webp',
+            alt: 'Ride in progress screen with the assigned driver, the Divoox gift and what is paid in person.',
+            pie: 'During the ride you still see what you pay in person.',
+          },
+        ],
+        preguntas: [
+          'Where do I enter my gift code?',
+          'Why wasn’t my gift applied?',
+          'Who pays for the gift, the driver or Divoox?',
+        ],
+        pasos: [
+          'Open Moto, Car or Deliveries, enter where you’re going and tap “See price.”',
+          'Tap “Have a gift code?”, type the code and tap “Add.”',
+          'Check the price: the gift in green and “You pay in person.”',
+          'Choose cash and request. You pay your driver only the difference.',
+        ],
+      },
+      {
         id: 'gift-cards',
         titulo: 'Gift cards: give Divoox and redeem a code',
         resumen:
@@ -7907,6 +8025,36 @@ const en: SeccionDocs[] = [
     titulo: 'For drivers',
     icono: 'moto',
     guias: [
+      {
+        id: 'divoox-gift-trips',
+        titulo: 'Trips with a Divoox gift: collect the difference and Divoox pays the rest',
+        resumen:
+          'When the rider has a Divoox gift, you collect in person only the difference. Divoox pays you what the gift covers: it goes to your balance when the trip ends.',
+        explicacion: [
+          'The offer shows “With a Divoox gift” and how much Divoox pays you. What you earn is the same as on any trip.',
+          'During the trip, the app shows “Collect in cash” with the amount the rider pays you and, in green below it, “Divoox pays you” with what the gift covers.',
+          'When you finish, what Divoox paid goes into your prepaid balance and covers your commissions. If you prefer the money, ask support and we pay it out to you.',
+          'Food orders work the same: the amount to collect already takes off the gift and the app tells you how much Divoox pays you. It’s credited once the payment is closed.',
+          'To protect gifts: you can’t take a gift trip requested from your own account or phone, and there’s a daily limit of gift trips. If you reach it, the trip goes to another driver.',
+        ],
+        capturas: [
+          {
+            src: '/docs/regalos-divoox-conductor-viaje-en.webp',
+            alt: 'Divoox Driver screen with the pickup, “Collect in cash” and, in green, “Divoox pays you” for the rider’s gift.',
+            pie: 'You collect the difference in person; Divoox pays you the gift.',
+          },
+        ],
+        preguntas: [
+          'How much do I collect if the rider has a gift?',
+          'When does Divoox pay me the gift?',
+          'Why couldn’t I take a gift trip?',
+        ],
+        pasos: [
+          'Accept the offer: it says if it has a Divoox gift.',
+          'Collect in person the amount shown in “Collect in cash.”',
+          'Finish the trip: what the gift covered goes to your balance.',
+        ],
+      },
       {
         id: 'destination-mode',
         titulo: 'Destination mode: orders on your way home',

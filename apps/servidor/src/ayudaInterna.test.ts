@@ -38,7 +38,13 @@ describe('C-AYUDA-INTERNA: la ayuda del equipo es solo para el equipo', () => {
       id: string;
       guias: { id: string; capturas: { src: string }[] }[];
     }[];
-    expect(secciones.map((s) => s.id)).toEqual(['start', 'monitoring', 'support', 'settings']);
+    expect(secciones.map((s) => s.id)).toEqual([
+      'start',
+      'monitoring',
+      'support',
+      'money',
+      'settings',
+    ]);
     const ids = secciones.flatMap((s) => s.guias.map((g) => g.id));
     expect(ids).toContain('search-orders-rides-people');
     expect(ids).toContain('flagged-content');

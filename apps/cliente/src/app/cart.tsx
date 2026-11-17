@@ -13,6 +13,7 @@ import {
   referenciaConTasa,
   textoReferencia,
   type PromocionRestaurante,
+  type RegaloDivoox,
   calcularConPromocion,
   calcularPedido,
   insigniaPromocion,
@@ -63,6 +64,7 @@ import { guardarUbicacion } from '../comida/useRestaurantes';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { conCuenta } from '../ConCuenta';
+import { TEXTOS_REGALO } from '../RegaloDivoox';
 import { type DireccionGuardada, TarjetaFotosPuerta } from '../FotosPuertaCliente';
 
 const TE = {
@@ -165,6 +167,7 @@ function PantallaCarrito() {
   const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
   const te = idioma === 'en' ? TE.en : TE.es;
+  const textosRegalo = enIdioma(TEXTOS_REGALO, idioma);
   const tc = textosComida(idioma);
   const { carrito, cambiarCantidad, cambiarSustitucion, vaciar, recoger, marcarRecoger } =
     useCarrito();
@@ -501,8 +504,15 @@ function PantallaCarrito() {
           restauranteId: carrito.restauranteId,
           subtotal,
           envio: d?.envio ?? 0,
+          // C-CUPON-DIVOOX: lo que se pagaría en mano sin descuento (sin la propina).
+          ...(previo ? { base: previo.totalCliente - previo.propina } : {}),
         },
       );
+      if (r.tipo === 'regalo_divoox' && metodoPago === 'tarjeta') {
+        setCupon(null);
+        setCuponError(textosRegalo.soloEnMano);
+        return;
+      }
       setCupon(r);
     } catch (x) {
       setCupon(null);
@@ -593,6 +603,39 @@ function PantallaCarrito() {
           : primeroDirecto
       : 'tarjeta'
   ) as 'tarjeta' | 'efectivo' | 'transferencia_repartidor';
+
+  // C-CUPON-DIVOOX: pagando en mano, el regalo de Divoox se aplica solo (el de bienvenida o un código
+  // que la persona agregó). Con tarjeta no se usa. Se vuelve a pedir si cambia lo que se paga.
+  const baseRegalo = previo ? previo.totalCliente - previo.propina : 0;
+  const esRegalo = cupon?.tipo === 'regalo_divoox';
+  useEffect(() => {
+    // Con tarjeta no hay regalo (al elegir tarjeta se quita en el mismo toque).
+    if (metodoPago === 'tarjeta') return;
+    if (!carrito.restauranteId || baseRegalo <= 0 || (cupon && !esRegalo)) return;
+    let vivo = true;
+    void api
+      .pedir<{ regalo: RegaloDivoox | null }>('POST', '/datos/regalos-divoox/aplicable', {
+        servicio: 'comida',
+        restauranteId: carrito.restauranteId,
+        base: baseRegalo,
+      })
+      .then((r) => {
+        if (!vivo) return;
+        if (r.regalo) {
+          setCupon({ codigo: r.regalo.codigo, descuento: r.regalo.monto, tipo: 'regalo_divoox' });
+          b.cambiar('cupon', r.regalo.codigo);
+        } else if (esRegalo) {
+          setCupon(null);
+          b.cambiar('cupon', '');
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+    // Solo cuando cambia la forma de pago, el restaurante o lo que se paga.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metodoPago, carrito.restauranteId, baseRegalo]);
 
   // C-COBRO-MISMOS-DATOS: el cuerpo del pedido tal como se manda (sin el total) y su huella. El
   // cobro ya creado solo se reutiliza si TODOS estos datos siguen iguales.
@@ -1088,7 +1131,14 @@ function PantallaCarrito() {
                 return (
                   <Pressable
                     key={valor}
-                    onPress={() => b.cambiar('metodoPago', valor)}
+                    onPress={() => {
+                      b.cambiar('metodoPago', valor);
+                      // C-CUPON-DIVOOX: el regalo de Divoox no se usa con tarjeta.
+                      if (valor === 'tarjeta' && esRegalo) {
+                        setCupon(null);
+                        b.cambiar('cupon', '');
+                      }
+                    }}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: activo }}
                     aria-checked={activo}
@@ -1430,7 +1480,9 @@ function PantallaCarrito() {
         >
           {cuponSinEfecto
             ? te.cuponConPlus
-            : te.cuponOk.replace('{monto}', formatearMonto(cupon.descuento, moneda, idioma))}
+            : esRegalo
+              ? `${textosRegalo.regalo}: −${formatearMonto(cupon.descuento, moneda, idioma)}`
+              : te.cuponOk.replace('{monto}', formatearMonto(cupon.descuento, moneda, idioma))}
         </Text>
       ) : null}
       {cuponError ? (
@@ -1443,7 +1495,10 @@ function PantallaCarrito() {
           {fila(carrito.esTienda ? t.subtotalTienda : t.subtotal, d.subtotal)}
           {regalo > 0 && fila(idioma === 'en' ? 'Gift' : 'Regalo', -regalo)}
           {d.descuento - descPlus - usoRegalo > 0 &&
-            fila(te.descuento, -(d.descuento - descPlus - usoRegalo))}
+            fila(
+              esRegalo ? textosRegalo.regalo : te.descuento,
+              -(d.descuento - descPlus - usoRegalo),
+            )}
           {/* C-PROMO-RESTAURANTE: la paga el restaurante; se ve con su insignia. */}
           {promo &&
             d.descuentoRestaurante > 0 &&
