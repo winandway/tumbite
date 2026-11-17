@@ -23,6 +23,8 @@ export type DocumentoLegal = {
 const FECHA = { es: 'Actualizado: 18 de octubre de 2026', en: 'Last updated: October 18, 2026' };
 const EMPRESA = 'Windoce, LLC';
 const SITIO = 'https://divoox.com';
+// C-BORRADO-SERVICIOS: el mismo 16 nov 2026 Privacidad, Borrar cuenta, Términos para repartidores y
+// para restaurantes contaron viajes, envíos, fotos de entrega, cobro del conductor y selfie con casco.
 // C-BORRADO-CHAT: Privacidad, Términos y Borrar cuenta cambiaron el 16 nov 2026 (chat, reportes y
 // bloqueos, ubicación compartida durante el pedido y avisos en el idioma del teléfono). Antes,
 // C-SMS-CONSENTIMIENTO los había cambiado el 15 nov (sección de SMS).
@@ -55,8 +57,12 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Fotos de tu puerta (clientes, opcional): en cada dirección guardada puedes agregar hasta tres fotos del frente de tu casa o edificio y de tu puerta, para que tu repartidor te encuentre. Se guardan en un almacén privado, sin los datos de ubicación que el teléfono pone dentro del archivo. Solo las ve el repartidor asignado a tu pedido y solo mientras ese pedido va en camino; ni antes de recogerlo ni después de entregarlo. No las usamos para mercadeo, publicidad ni para entrenar ningún sistema. Puedes cambiarlas o borrarlas cuando quieras, y se borran cuando borras la dirección o tu cuenta.',
           'Mensajes del chat: mientras un pedido o un viaje está en curso puedes escribirle y mandarle fotos a tu repartidor o conductor (y él a ti) dentro de la app. Guardamos el texto, las fotos y la hora de cada mensaje. Solo los ven las dos personas de ese pedido y, si alguien reporta un mensaje, el equipo de Divoox para revisarlo. El chat se cierra cuando termina el pedido. Lo que tú escribiste y mandaste se borra cuando borras tu cuenta.',
           'Reportes y bloqueos: si reportas un mensaje, una reseña o una persona, guardamos el motivo, la nota que escribas y una copia del contenido reportado, para que el equipo de Divoox lo revise (respondemos en menos de 24 horas) y tome medidas: ocultarlo, avisar o suspender la cuenta. Si bloqueas a alguien, guardamos ese bloqueo para que no vuelva a escribirte ni a tocarte en un pedido. Un filtro automático tapa las palabras ofensivas en el chat y retiene las reseñas ofensivas para revisión. Puedes desbloquear a una persona cuando quieras en Mi cuenta → Personas bloqueadas.',
+          'Viajes y envíos (donde están disponibles, como Divoox Moto, Carro y los envíos de persona a persona): las direcciones y los puntos de recogida y de destino, las paradas, el PIN de recogida, el precio, la forma de pago y las horas del viaje. Si mandas un paquete: qué es, su valor declarado y el nombre y el teléfono de quien lo recibe, que recibe por mensaje de texto un PIN de entrega y un enlace de seguimiento. Si guardas contactos de confianza, guardamos su nombre y su teléfono para que puedas compartirles el viaje en vivo.',
+          'Fotos de recogida y de entrega: cuando un repartidor o conductor recoge o entrega un pedido o un paquete, la app le pide una foto. Guardamos la foto (sin los datos que el teléfono pone dentro del archivo) y, aparte, el lugar donde se tomó y su distancia a la dirección de entrega, como prueba de la entrega. La ven el cliente de ese pedido, el repartidor o conductor que la tomó y el equipo de Divoox para resolver reclamos. Se guardan mientras las cuentas están abiertas y se borran cuando el cliente o el repartidor borra su cuenta.',
+          'Repartidores y conductores, cómo cobras: en Estados Unidos escribes tus datos bancarios en la pantalla de Stripe y Divoox no los ve. En los países donde el cliente o el pasajero te paga directamente en efectivo o por pago móvil (por ejemplo, Venezuela), escribes el nombre de tu banco, el titular y tu identificador de pago móvil (teléfono o cédula); los guardamos y se los mostramos al cliente o al pasajero de tu viaje para que te pague, y guardamos el número de referencia que escribes al confirmar un pago. Donde el servicio funciona con saldo prepago, guardamos tu saldo, sus movimientos (recargas y la comisión que se descuenta de cada viaje) y los códigos de recarga que canjeas.',
+          'Selfie con casco y selfies de control (conductores): en las ciudades que lo exigen, el conductor de Divoox Moto se toma una selfie con el casco puesto antes de conectarse; vale 12 horas. También podemos pedirte una selfie al azar para confirmar que eres tú quien maneja. Una persona del equipo puede revisarlas; no creamos plantillas biométricas. Se guardan en un almacén privado y se borran cuando borras tu cuenta.',
           'Ubicación: solo con tu permiso. Ver la sección 4.',
-          'Pagos: los procesa Stripe. Nosotros nunca recibimos ni guardamos el número completo de tu tarjeta, el código de seguridad ni tus datos bancarios. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta.',
+          'Pagos con tarjeta: los procesa Stripe. Nunca recibimos ni guardamos el número completo de tu tarjeta ni el código de seguridad. Solo recibimos de Stripe un identificador del pago, la marca y los últimos cuatro números de la tarjeta. Los pagos a restaurantes y repartidores en Estados Unidos van por Stripe Connect, donde los datos bancarios se escriben en la pantalla de Stripe.',
           'Datos técnicos: el identificador del teléfono y su idioma para enviarte avisos en tu idioma (si los permites), la dirección IP y la fecha de cada acceso, que usamos para la seguridad de tu cuenta y para frenar abusos.',
           'Lista de espera: si te anotas en divoox.com, tu nombre, correo, ciudad y, si lo das, tu teléfono.',
         ],
@@ -64,23 +70,23 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '3. Para qué usamos tus datos',
         parrafos: [
-          'Para tomar, preparar, entregar y cobrar tus pedidos; pagar a restaurantes y repartidores; darte soporte; enviarte avisos del estado de tu pedido y correos de tu cuenta (confirmar correo, recuperar contraseña, recibos); darte los beneficios de fidelidad (sellos, regalo de cumpleaños, niveles); prevenir fraudes y abusos; y cumplir la ley, incluidas las obligaciones de impuestos.',
+          'Para tomar, preparar, entregar y cobrar tus pedidos, viajes y envíos; pagar a restaurantes, repartidores y conductores; cuidar la seguridad de pasajeros, destinatarios y conductores (viaje compartido en vivo, PIN y fotos de entrega); darte soporte; enviarte avisos del estado de tu pedido y correos de tu cuenta (confirmar correo, recuperar contraseña, recibos); darte los beneficios de fidelidad (sellos, regalo de cumpleaños, niveles); prevenir fraudes y abusos; y cumplir la ley, incluidas las obligaciones de impuestos.',
           'No usamos tus datos para publicidad de terceros, no te rastreamos en otras apps o sitios web y no vendemos ni alquilamos tus datos personales. Si algún día quisiéramos usar tus datos para algo distinto de lo que dice esta política, te pediremos permiso antes.',
         ],
       },
       {
         titulo: '4. Ubicación',
         parrafos: [
-          'App de clientes: con tu permiso, usamos tu ubicación mientras usas la app para mostrarte los restaurantes cercanos y marcar el punto de entrega. Si no das el permiso, puedes escribir tu dirección a mano y la app funciona igual. El punto de entrega de tu pedido se comparte con el repartidor asignado, solo mientras lo lleva.',
-          'App de repartidores: la ubicación es necesaria para recibir y hacer entregas. Se comparte solo mientras estás conectado o tienes una entrega activa, para ofrecerte pedidos cercanos y para que el cliente vea su pedido en el mapa. Guardamos solo tu última posición, no tu recorrido, y se borra al desconectarte o al borrar la cuenta.',
+          'App de clientes: con tu permiso, usamos tu ubicación mientras usas la app para mostrarte los restaurantes cercanos y marcar el punto de entrega. Si no das el permiso, puedes escribir tu dirección a mano y la app funciona igual. El punto de entrega de tu pedido se comparte con el repartidor asignado, solo mientras lo lleva. En un viaje usamos tus puntos de recogida y de destino; mientras el viaje está en curso, tu conductor ve tu punto de recogida y tú ves su posición en el mapa. Si compartes el viaje, tus contactos de confianza lo siguen con el enlace hasta que termina.',
+          'App de repartidores y conductores: la ubicación es necesaria para recibir y hacer entregas y viajes. Se comparte solo mientras estás conectado o tienes una entrega o un viaje activo, para ofrecerte solicitudes cercanas y para que el cliente o el pasajero te siga en el mapa. Guardamos solo tu última posición, no tu recorrido, y se borra al desconectarte o al borrar la cuenta. Además guardamos el lugar donde se tomó cada foto de recogida o de entrega (ver la sección 2).',
           'Puedes quitar el permiso de ubicación cuando quieras en los ajustes de tu teléfono.',
         ],
       },
       {
         titulo: '5. Con quién compartimos tus datos',
         parrafos: [
-          'Con el restaurante y el repartidor de cada pedido, solo lo necesario para prepararlo y entregarlo: tu nombre, lo que pediste, la dirección y las indicaciones de entrega.',
-          'Con los proveedores que nos ayudan a operar, y solo para eso: Stripe (pagos y pagos a restaurantes y repartidores), YaDominios Cloud (servidores, base de datos y correo electrónico), Expo, Apple y Google (avisos al celular) y los servicios de mapas de Apple y Google. Les exigimos por contrato una protección de tus datos igual o mayor a la que describe esta política, y no les permitimos usarlos para sus propios fines.',
+          'Con el restaurante y el repartidor de cada pedido, y con el conductor de cada viaje o envío, solo lo necesario: tu nombre, lo que pediste o lo que mandas, las direcciones de recogida y de entrega y las indicaciones. El cliente o el pasajero de un viaje ve el nombre del conductor, su vehículo, su placa y su posición y, en los países donde le paga directamente, sus datos de pago móvil. Quien recibe un paquete recibe por mensaje de texto un enlace de seguimiento y un PIN de entrega.',
+          'Con los proveedores que nos ayudan a operar, y solo para eso: Stripe (pagos y pagos a restaurantes y repartidores), YaDominios Cloud (servidores, base de datos y correo electrónico), Twilio (mensajes de texto y llamadas), Expo, Apple y Google (avisos al celular) y los servicios de mapas de Apple y Google. Les exigimos por contrato una protección de tus datos igual o mayor a la que describe esta política, y no les permitimos usarlos para sus propios fines.',
           'Con las autoridades, cuando una ley, una orden judicial o la protección de la seguridad de alguien lo exija.',
           'Si la empresa se vende o se fusiona, tus datos pasarían a la nueva dueña con esta misma política, y te avisaríamos antes.',
         ],
@@ -90,8 +96,9 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. Cuánto tiempo guardamos tus datos',
         parrafos: [
           'Mientras tu cuenta esté abierta, guardamos los datos de tu cuenta y de tus pedidos para darte el servicio.',
-          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, tus direcciones guardadas y las fotos de tu puerta, las fotos y datos de tu verificación de identidad, tu vehículo, licencia y seguro, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones, el texto y las fotos de tus mensajes del chat, la nota de tus reportes y la copia de lo que escribiste en los reportes de otros, tus bloqueos y tu anotación en la lista de espera.',
-          'Lo que guardamos sin tu nombre: el importe, la fecha y el restaurante de cada pedido, durante siete años, porque lo exigen las leyes de impuestos y contabilidad y para resolver reclamos de pago o fraude. Esos registros ya no te identifican.',
+          'Cuando borras tu cuenta, borramos de inmediato tu nombre, correo, teléfono, fecha de nacimiento, contraseña, sesiones, los identificadores de tus teléfonos, tus direcciones guardadas y las fotos de tu puerta, las fotos y datos de tu verificación de identidad, tu vehículo, licencia y seguro, las direcciones, indicaciones y ubicación de tus pedidos, el texto de tus calificaciones, el texto y las fotos de tus mensajes del chat, la nota de tus reportes y la copia de lo que escribiste en los reportes de otros, la recogida, el destino y las paradas de tus viajes, los enlaces de viaje que compartiste y tus contactos de confianza, lo que mandaste y el nombre y teléfono de quien recibía tus paquetes, las fotos de recogida y de entrega de tus pedidos y paquetes y el lugar donde se tomaron, tus bloqueos y tu anotación en la lista de espera. Si eres conductor o repartidor, también tu cuenta de cobro (banco, titular e identificador de pago móvil) y tus selfies con casco y de control. Si eres restaurante, tus respuestas públicas a las reseñas.',
+          'Lo que guardamos sin tu nombre: el importe, la fecha y el restaurante o el servicio de cada pedido, viaje o envío, el número de referencia de los pagos en efectivo o por pago móvil y los movimientos de tu saldo prepago, durante siete años, porque lo exigen las leyes de impuestos y contabilidad y para resolver reclamos de pago o fraude. Esos registros ya no te identifican.',
+          'Los avisos de emergencia y de seguridad hechos durante un viaje se guardan hasta siete años, para proteger a las personas involucradas y responder a las autoridades.',
           'Copias de seguridad: guardamos copias diarias durante 30 días. Lo que borres desaparece de ellas cuando caducan, como máximo 30 días después.',
           'Stripe guarda los datos de tus pagos según su propia política y las leyes financieras.',
         ],
@@ -170,8 +177,12 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
           'Photos of your door (customers, optional): for each saved address you can add up to three photos of the front of your house or building and of your door, so your courier can find you. They are stored in a private store, without the location data your phone embeds in the file. Only the courier assigned to your order sees them, and only while that order is on its way; not before pickup and not after delivery. We do not use them for marketing, advertising, or to train any system. You can change or delete them at any time, and they are deleted when you delete the address or your account.',
           'Chat messages: while an order or a ride is in progress you can text and send photos to your courier or driver (and they to you) inside the app. We store the text, the photos, and the time of each message. Only the two people on that order can see them and, if someone reports a message, the Divoox team, to review it. The chat closes when the order ends. What you wrote and sent is deleted when you delete your account.',
           'Reports and blocks: if you report a message, a review, or a person, we store the reason, any note you add, and a copy of the reported content, so the Divoox team can review it (we respond within 24 hours) and act on it: hide it, warn, or suspend the account. If you block someone, we store that block so they can’t message you or be matched with you on an order again. An automatic filter masks offensive words in chat and holds offensive reviews for review. You can unblock a person at any time in My account → Blocked people.',
+          'Rides and package deliveries (where available, such as Divoox Moto, Car, and person-to-person deliveries): the pickup and drop-off addresses and points, any stops, the pickup PIN, the price, the payment method, and the times of the trip. For a package you send: what it is, its declared value, and the name and phone number of the person receiving it, who gets a delivery PIN and a tracking link by text message. If you save trusted contacts, we store their name and phone number so you can share a live link of your ride with them.',
+          'Pickup and delivery photos: when a courier or driver picks up or delivers an order or a package, the app asks them to take a photo. We store the photo (without the data the phone embeds in the file) and, separately, the location where it was taken and its distance from the delivery address, as proof of delivery. The customer of that order, the courier or driver who took it, and the Divoox team (to resolve claims) can see it. These photos are kept while the accounts are open and are deleted when the customer or the courier deletes their account.',
+          'Drivers and couriers, how you get paid: in the United States you enter your bank details on Stripe’s screen and Divoox doesn’t see them. In countries where customers and passengers pay you directly in cash or by mobile payment (for example, pago móvil in Venezuela), you enter your bank name, account holder name, and mobile payment ID (phone or national ID number); we store them and show them to the customer or passenger of your trip so they can pay you, and we store the reference number you enter when you confirm a payment. Where the service runs on a prepaid balance, we store your balance, its movements (top-ups and the commission deducted from each trip), and the top-up codes you redeem.',
+          'Helmet selfie and identity check selfies (drivers): in cities that require it, Divoox Moto drivers take a selfie with their helmet on before going online; it’s valid for 12 hours. We may also ask for a selfie at random to confirm it’s you driving. A person on our team may review them; we don’t create biometric templates. They’re stored privately and deleted when you delete your account.',
           'Location: only with your permission. See section 4.',
-          'Payments: processed by Stripe. We never receive or store your full card number, security code, or bank details. Stripe only sends us a payment ID, the card brand, and its last four digits.',
+          'Card payments: processed by Stripe. We never receive or store your full card number or security code. Stripe only sends us a payment ID, the card brand, and its last four digits. Payouts to restaurants and drivers in the United States go through Stripe Connect, where bank details are entered on Stripe’s screen.',
           'Technical information: your device token and its language, to send you notifications in your language (if you allow them), and your IP address and the time of each sign-in, which we use to protect your account and prevent abuse.',
           'Waitlist: if you sign up on divoox.com, your name, email, city, and, if you share it, your phone number.',
         ],
@@ -179,23 +190,23 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '3. How we use your data',
         parrafos: [
-          'To take, prepare, deliver, and charge for your orders; pay restaurants and drivers; support you; send order status notifications and account emails (email confirmation, password reset, receipts); provide loyalty benefits (punch card, birthday gift, levels); prevent fraud and abuse; and comply with the law, including tax obligations.',
+          'To take, prepare, deliver, and charge for your orders, rides, and package deliveries; pay restaurants, couriers, and drivers; keep passengers, recipients, and drivers safe (live trip sharing, PINs, and delivery photos); support you; send order status notifications and account emails (email confirmation, password reset, receipts); provide loyalty benefits (punch card, birthday gift, levels); prevent fraud and abuse; and comply with the law, including tax obligations.',
           'We don’t use your data for third-party advertising, we don’t track you across other apps or websites, and we don’t sell or rent your personal data. If we ever want to use your data for something not described in this policy, we’ll ask for your permission first.',
         ],
       },
       {
         titulo: '4. Location',
         parrafos: [
-          'Customer app: with your permission, we use your location while you use the app to show nearby restaurants and set your delivery spot. If you don’t allow it, you can type your address and the app works the same. Your order’s delivery spot is shared with the assigned courier, only while they are delivering it.',
-          'Driver app: location is required to receive and complete deliveries. It’s shared only while you’re online or on an active delivery, to offer you nearby orders and let the customer follow the order on a map. We keep only your latest position, not your route, and it’s cleared when you go offline or delete your account.',
+          'Customer app: with your permission, we use your location while you use the app to show nearby restaurants and set your delivery spot. If you don’t allow it, you can type your address and the app works the same. Your order’s delivery spot is shared with the assigned courier, only while they are delivering it. For a ride, we use your pickup and drop-off points; while the ride is in progress, your driver sees your pickup point and you see their position on the map. If you share your ride, your trusted contacts can follow it with the link until it ends.',
+          'Driver app: location is required to receive and complete deliveries and rides. It’s shared only while you’re online or on an active delivery or ride, to offer you nearby requests and let the customer or passenger follow you on a map. We keep only your latest position, not your route, and it’s cleared when you go offline or delete your account. We also record where each pickup or delivery photo was taken (see section 2).',
           'You can turn off location access at any time in your phone’s settings.',
         ],
       },
       {
         titulo: '5. Who we share your data with',
         parrafos: [
-          'The restaurant and driver for each order, only what they need to prepare and deliver it: your name, what you ordered, the address, and delivery notes.',
-          'Service providers that help us operate, and only for that purpose: Stripe (payments and payouts to restaurants and drivers), YaDominios Cloud (servers, database, and email), Expo, Apple, and Google (push notifications), and Apple and Google map services. We require them by contract to protect your data at least as well as this policy does, and we don’t allow them to use it for their own purposes.',
+          'The restaurant and courier for each order, and the driver for each ride or package, only what they need: your name, what you ordered or what you’re sending, the pickup and drop-off addresses, and delivery notes. The customer or passenger of a trip sees the driver’s name, vehicle, plate, and position and, in countries where they pay the driver directly, the driver’s mobile payment details. The person receiving a package gets a tracking link and a delivery PIN by text message.',
+          'Service providers that help us operate, and only for that purpose: Stripe (payments and payouts to restaurants and drivers), YaDominios Cloud (servers, database, and email), Twilio (text messages and calls), Expo, Apple, and Google (push notifications), and Apple and Google map services. We require them by contract to protect your data at least as well as this policy does, and we don’t allow them to use it for their own purposes.',
           'Authorities, when required by law, a court order, or to protect someone’s safety.',
           'If the company is sold or merged, your data would pass to the new owner under this same policy, and we would notify you first.',
         ],
@@ -205,8 +216,9 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
         titulo: '6. How long we keep your data',
         parrafos: [
           'While your account is open, we keep your account and order data to provide the service.',
-          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, your saved addresses and the photos of your door, your identity verification photos and details, your vehicle, license, and insurance, the addresses, notes, and location of your orders, the text of your ratings, the text and photos of your chat messages, the notes on your reports and the copy of what you wrote in other people’s reports, your blocks, and your waitlist entry.',
-          'What we keep without your name: the amount, date, and restaurant of each order, for seven years, as required by tax and accounting laws and to resolve payment disputes or fraud. Those records no longer identify you.',
+          'When you delete your account, we immediately delete your name, email, phone, birthday, password, sessions, device tokens, your saved addresses and the photos of your door, your identity verification photos and details, your vehicle, license, and insurance, the addresses, notes, and location of your orders, the text of your ratings, the text and photos of your chat messages, the notes on your reports and the copy of what you wrote in other people’s reports, the pickup, drop-off, and stops of your rides, the trip links you shared and your trusted contacts, what you sent and the name and phone number of the recipient of your packages, the pickup and delivery photos of your orders and packages and the location where they were taken, your blocks, and your waitlist entry. If you’re a driver or courier, also your payout account details (bank, account holder, and mobile payment ID) and your helmet and identity check selfies. If you’re a restaurant, your public replies to reviews.',
+          'What we keep without your name: the amount, date, and restaurant or service of each order, ride, or package delivery, the reference numbers of cash and mobile payments, and your prepaid balance movements, for seven years, as required by tax and accounting laws and to resolve payment disputes or fraud. Those records no longer identify you.',
+          'Emergency and safety alerts made during a ride are kept for up to seven years, to protect the people involved and to respond to authorities.',
           'Backups: we keep daily backups for 30 days. Deleted data disappears from them as they expire, at most 30 days later.',
           'Stripe keeps your payment data under its own policy and financial regulations.',
         ],
@@ -440,7 +452,7 @@ export const TERMINOS: Record<Idioma, DocumentoLegal> = {
 export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Términos para restaurantes',
-    actualizado: FECHA.es,
+    actualizado: FECHA_CHAT.es,
     intro: `Estos términos se suman a los Términos de uso y aplican a los negocios que venden en Divoox. Al registrar tu restaurante los aceptas en nombre del negocio.`,
     secciones: [
       {
@@ -487,11 +499,17 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
           'Puedes pausar o cerrar tu restaurante cuando quieras. Podemos pausarlo o darlo de baja por problemas de seguridad alimentaria, fraude, quejas graves y repetidas o incumplimiento de estos términos. El saldo que te deban se te paga igual.',
         ],
       },
+      {
+        titulo: '8. Reseñas y tus respuestas',
+        parrafos: [
+          'Puedes responder en público a las reseñas de tus clientes. Tus respuestas deben ser respetuosas, no pueden llevar datos personales del cliente y siguen las reglas de contenido de los Términos de uso. Cada reseña tiene un botón «Reportar» para avisarnos de una que rompa esas reglas; el equipo la revisa en menos de 24 horas. Tus respuestas se borran cuando borras tu cuenta.',
+        ],
+      },
     ],
   },
   en: {
     titulo: 'Restaurant Terms',
-    actualizado: FECHA.en,
+    actualizado: FECHA_CHAT.en,
     intro:
       'These terms add to the Terms of Service and apply to businesses selling on Divoox. By registering your restaurant you accept them on behalf of the business.',
     secciones: [
@@ -539,6 +557,12 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
           'You can pause or close your restaurant at any time. We may pause or remove it for food safety issues, fraud, serious repeated complaints, or breach of these terms. Any balance owed to you is still paid out.',
         ],
       },
+      {
+        titulo: '8. Reviews and your replies',
+        parrafos: [
+          'You can reply publicly to your customers’ reviews. Replies must be respectful, can’t include the customer’s personal information, and follow the content rules in the Terms of Service. Every review has a “Report” button to flag one that breaks those rules; our team reviews it within 24 hours. Your replies are deleted when you delete your account.',
+        ],
+      },
     ],
   },
 };
@@ -548,9 +572,9 @@ export const TERMINOS_RESTAURANTES: Record<Idioma, DocumentoLegal> = {
 export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Términos para repartidores',
-    actualizado: FECHA.es,
+    actualizado: FECHA_CHAT.es,
     intro:
-      'Estos términos se suman a los Términos de uso y aplican a quienes hacen entregas con Divoox Driver. Al crear tu cuenta de repartidor los aceptas.',
+      'Estos términos se suman a los Términos de uso y aplican a quienes hacen entregas de pedidos y paquetes o llevan pasajeros con Divoox Driver. Al crear tu cuenta de repartidor o conductor los aceptas.',
     secciones: [
       {
         titulo: '1. Eres independiente',
@@ -561,20 +585,24 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Requisitos',
         parrafos: [
-          'Debes tener al menos 18 años, poder trabajar legalmente en Estados Unidos y, si usas un vehículo con motor, licencia de conducir y seguro vigentes según la ley de tu estado. Debes respetar las leyes de tránsito y manejar la comida con higiene.',
+          'Debes tener al menos 18 años, poder trabajar legalmente en el país donde manejas y, si usas un vehículo con motor, licencia de conducir y seguro vigentes según la ley del lugar. Debes respetar las leyes de tránsito y manejar la comida con higiene.',
+          'En las ciudades que lo exigen, el conductor de Divoox Moto se toma una selfie con el casco puesto antes de conectarse (vale 12 horas), y podemos pedirte una selfie al azar para confirmar que eres tú quien maneja.',
         ],
       },
       {
         titulo: '3. Lo que ganas',
         parrafos: [
-          'Antes de aceptar cada pedido ves lo que vas a ganar. Ganas el envío más el 100 % de la propina. Si eso no llega al mínimo por pedido que muestra la app, Divoox completa la diferencia.',
-          'Lo que ganas se acredita en tu billetera al entregar el pedido. Retiras a tu banco a través de Stripe Connect; tus datos bancarios los escribes en la pantalla de Stripe y Divoox nunca los ve. Eres responsable de declarar y pagar tus impuestos; Stripe emite los formularios que correspondan.',
+          'Antes de aceptar cada solicitud ves lo que vas a ganar. En las entregas de comida ganas el envío más el 100 % de la propina; si eso no llega al mínimo por pedido que muestra la app, Divoox completa la diferencia.',
+          'Cómo cobras depende de tu país. En Estados Unidos lo que ganas se acredita en tu billetera al entregar y retiras a tu banco a través de Stripe Connect; tus datos bancarios los escribes en la pantalla de Stripe y Divoox no los ve, y Stripe emite los formularios de impuestos que correspondan.',
+          'Donde el cliente o el pasajero te paga directamente en efectivo o por pago móvil (por ejemplo, Venezuela), registras el nombre de tu banco, el titular y tu identificador de pago móvil (teléfono o cédula). Divoox los guarda y se los muestra al cliente o al pasajero de tu viaje para que te pague, y tú confirmas cada cobro en la app (con su número de referencia si es pago móvil). En esos países la comisión de Divoox se descuenta de tu saldo prepago, que recargas con códigos; la app te muestra tu saldo y cada movimiento.',
+          'Eres responsable de declarar y pagar tus impuestos.',
         ],
       },
       {
         titulo: '4. Ubicación',
         parrafos: [
-          'Mientras estás conectado o con una entrega activa, la app usa tu ubicación para ofrecerte pedidos cercanos y para que el cliente vea su pedido en el mapa. Al desconectarte deja de compartirse. Guardamos solo tu última posición, no tu recorrido.',
+          'Mientras estás conectado o con una entrega o un viaje activo, la app usa tu ubicación para ofrecerte solicitudes cercanas y para que el cliente o el pasajero te siga en el mapa. Al desconectarte deja de compartirse. Guardamos solo tu última posición, no tu recorrido.',
+          'Al recoger y al entregar, la app te pide una foto. La guardamos con el lugar donde la tomaste, como prueba de la entrega; la ven el cliente de ese pedido y el equipo de Divoox para resolver reclamos.',
         ],
       },
       {
@@ -589,13 +617,19 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
           'Tu seguridad va primero: nunca uses el celular mientras manejas, y si una entrega te parece peligrosa, no la hagas y avísanos. Eres responsable de los daños que causes por manejar de forma imprudente.',
         ],
       },
+      {
+        titulo: '7. Viajes y paquetes',
+        parrafos: [
+          'En un viaje, confirma el PIN de recogida antes de empezar. En un envío, toma la foto de recogida y pide el PIN de entrega a quien recibe. Trata con respeto a pasajeros y destinatarios: las reglas del chat de los Términos de uso aplican, y cada chat tiene «Reportar» y bloquear.',
+        ],
+      },
     ],
   },
   en: {
     titulo: 'Driver Terms',
-    actualizado: FECHA.en,
+    actualizado: FECHA_CHAT.en,
     intro:
-      'These terms add to the Terms of Service and apply to anyone delivering with Divoox Driver. By creating a driver account you accept them.',
+      'These terms add to the Terms of Service and apply to anyone delivering orders and packages or giving rides with Divoox Driver. By creating a courier or driver account you accept them.',
     secciones: [
       {
         titulo: '1. You’re independent',
@@ -606,20 +640,24 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '2. Requirements',
         parrafos: [
-          'You must be at least 18, legally able to work in the United States, and, if you use a motor vehicle, hold a valid driver’s license and insurance as your state requires. You must follow traffic laws and handle food hygienically.',
+          'You must be at least 18, legally able to work in the country where you drive, and, if you use a motor vehicle, hold a valid driver’s license and insurance as local law requires. You must follow traffic laws and handle food hygienically.',
+          'In cities that require it, Divoox Moto drivers take a selfie with their helmet on before going online (valid for 12 hours), and we may ask for a selfie at random to confirm it’s you driving.',
         ],
       },
       {
         titulo: '3. What you earn',
         parrafos: [
-          'Before accepting each order you see what you’ll earn. You earn the delivery fee plus 100% of the tip. If that falls short of the per-order minimum shown in the app, Divoox makes up the difference.',
-          'Earnings are credited to your wallet when you deliver the order. You withdraw to your bank through Stripe Connect; you enter your bank details on Stripe’s screen and Divoox never sees them. You’re responsible for reporting and paying your taxes; Stripe issues any required tax forms.',
+          'Before accepting each request you see what you’ll earn. For food deliveries you earn the delivery fee plus 100% of the tip; if that falls short of the per-order minimum shown in the app, Divoox makes up the difference.',
+          'How you get paid depends on your country. In the United States, earnings are credited to your wallet when you deliver and you withdraw to your bank through Stripe Connect; you enter your bank details on Stripe’s screen and Divoox doesn’t see them, and Stripe issues any required tax forms.',
+          'Where customers or passengers pay you directly in cash or by mobile payment (for example, Venezuela), you register your bank name, account holder name, and mobile payment ID (phone or national ID number). Divoox stores them and shows them to the customer or passenger of your trip so they can pay you, and you confirm each payment in the app (with its reference number for mobile payments). In those countries, Divoox’s commission is deducted from your prepaid balance, which you top up with codes; the app shows your balance and every movement.',
+          'You’re responsible for reporting and paying your taxes.',
         ],
       },
       {
         titulo: '4. Location',
         parrafos: [
-          'While you’re online or on an active delivery, the app uses your location to offer you nearby orders and let the customer follow the order on a map. When you go offline it stops being shared. We keep only your latest position, not your route.',
+          'While you’re online or on an active delivery or ride, the app uses your location to offer you nearby requests and let the customer or passenger follow you on a map. When you go offline it stops being shared. We keep only your latest position, not your route.',
+          'When you pick up and deliver, the app asks you for a photo. We store it with the place where you took it, as proof of delivery; the customer of that order and the Divoox team (to resolve claims) can see it.',
         ],
       },
       {
@@ -632,6 +670,12 @@ export const TERMINOS_REPARTIDORES: Record<Idioma, DocumentoLegal> = {
         titulo: '6. Safety',
         parrafos: [
           'Your safety comes first: never use your phone while driving, and if a delivery feels unsafe, don’t do it and let us know. You’re responsible for damage you cause by driving recklessly.',
+        ],
+      },
+      {
+        titulo: '7. Rides and packages',
+        parrafos: [
+          'On a ride, confirm the pickup PIN before you start. On a package delivery, take the pickup photo and ask the recipient for the delivery PIN. Treat passengers and recipients with respect: the chat rules in the Terms of Service apply, and every chat has Report and Block.',
         ],
       },
     ],
@@ -655,7 +699,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
           'En la app de clientes: «Mi cuenta» → los tres puntos (debajo de «Cerrar sesión») → «Borrar mi cuenta» → escribe BORRAR → «Borrar mi cuenta». Todo pasa dentro de la app y te dice «Tu cuenta quedó borrada».',
           'Sin la app: toca el botón «Borrar mi cuenta ahora» de esta página.',
           'Entra con el correo y la contraseña de tu cuenta. En Configuración, toca los tres puntos junto al título → «Borrar mi cuenta» y escribe BORRAR para confirmar.',
-          'Si tienes un pedido en camino, espera a que termine: después ya puedes borrarla.',
+          'Si tienes un pedido, un viaje o un envío en curso, espera a que termine: después ya puedes borrarla.',
         ],
       },
       {
@@ -667,13 +711,14 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
       {
         titulo: 'Qué se borra',
         parrafos: [
-          'Tu nombre, correo, teléfono, fecha de nacimiento y contraseña; tus sesiones abiertas; los identificadores de tus teléfonos para avisos; tus direcciones guardadas y las fotos de tu puerta; las direcciones, indicaciones y ubicación de tus pedidos; el texto de tus calificaciones; el texto y las fotos de tus mensajes del chat; la nota de tus reportes y la copia de lo que escribiste en los reportes de otros; tus bloqueos; y tu anotación en la lista de espera. Si eres repartidor, también tu última ubicación, tu vehículo, licencia y seguro. Y las fotos de tu verificación de identidad (documento, cara y local).',
+          'Tu nombre, correo, teléfono, fecha de nacimiento y contraseña; tus sesiones abiertas; los identificadores de tus teléfonos para avisos; tus direcciones guardadas y las fotos de tu puerta; las direcciones, indicaciones y ubicación de tus pedidos; el texto de tus calificaciones; el texto y las fotos de tus mensajes del chat; la nota de tus reportes y la copia de lo que escribiste en los reportes de otros; la recogida, el destino y las paradas de tus viajes, los enlaces de viaje que compartiste y tus contactos de confianza; lo que mandaste y el nombre y teléfono de quien recibía tus paquetes; las fotos de recogida y de entrega de tus pedidos y paquetes y el lugar donde se tomaron; tus bloqueos; y tu anotación en la lista de espera. Si eres repartidor o conductor, también tu última ubicación, tu vehículo, licencia y seguro, tu cuenta de cobro (banco, titular e identificador de pago móvil) y tus selfies con casco y de control. Si eres restaurante, tus respuestas públicas a las reseñas. Y las fotos de tu verificación de identidad (documento, cara y local).',
         ],
       },
       {
         titulo: 'Qué se guarda y por cuánto tiempo',
         parrafos: [
-          'El importe, la fecha y el restaurante de cada pedido, sin tu nombre, durante siete años, porque lo exigen las leyes de impuestos y contabilidad y para resolver reclamos de pago o fraude.',
+          'El importe, la fecha y el restaurante o el servicio de cada pedido, viaje o envío, el número de referencia de los pagos en efectivo o por pago móvil y los movimientos del saldo prepago, sin tu nombre, durante siete años, porque lo exigen las leyes de impuestos y contabilidad y para resolver reclamos de pago o fraude.',
+          'Los avisos de emergencia y de seguridad hechos durante un viaje, hasta siete años, para proteger a las personas involucradas y responder a las autoridades.',
           'Las copias de seguridad diarias caducan a los 30 días: lo borrado desaparece de ellas en ese plazo.',
           'Stripe guarda los datos de tus pagos según su propia política. Si eras restaurante o repartidor con saldo, te lo pagamos antes de cerrar.',
         ],
@@ -693,7 +738,7 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
           'In the customer app: “My account” → the three dots (below “Sign out”) → “Delete my account” → type DELETE → “Delete my account.” It all happens inside the app, which tells you “Your account was deleted.”',
           'Without the app: tap the “Delete my account now” button on this page.',
           'Sign in with your account’s email and password. In Settings, tap the three dots next to the title → “Delete my account” and type DELETE to confirm.',
-          'If you have an order on its way, wait until it’s done: then you can delete it.',
+          'If you have an order, ride, or package delivery in progress, wait until it’s done: then you can delete it.',
         ],
       },
       {
@@ -705,13 +750,14 @@ export const BORRAR_CUENTA: Record<Idioma, DocumentoLegal> = {
       {
         titulo: 'What gets deleted',
         parrafos: [
-          'Your name, email, phone, birthday, and password; your open sessions; your device tokens for notifications; your saved addresses and the photos of your door; the addresses, notes, and location of your orders; the text of your ratings; the text and photos of your chat messages; the notes on your reports and the copy of what you wrote in other people’s reports; your blocks; and your waitlist entry. If you’re a driver, also your latest location, vehicle, license, and insurance. And your identity verification photos (document, face, and storefront).',
+          'Your name, email, phone, birthday, and password; your open sessions; your device tokens for notifications; your saved addresses and the photos of your door; the addresses, notes, and location of your orders; the text of your ratings; the text and photos of your chat messages; the notes on your reports and the copy of what you wrote in other people’s reports; the pickup, drop-off, and stops of your rides, the trip links you shared, and your trusted contacts; what you sent and the name and phone number of the recipient of your packages; the pickup and delivery photos of your orders and packages and the location where they were taken; your blocks; and your waitlist entry. If you’re a courier or driver, also your latest location, vehicle, license, and insurance, your payout account details (bank, account holder, and mobile payment ID), and your helmet and identity check selfies. If you’re a restaurant, your public replies to reviews. And your identity verification photos (document, face, and storefront).',
         ],
       },
       {
         titulo: 'What we keep and for how long',
         parrafos: [
-          'The amount, date, and restaurant of each order, without your name, for seven years, as required by tax and accounting laws and to resolve payment disputes or fraud.',
+          'The amount, date, and restaurant or service of each order, ride, or package delivery, the reference numbers of cash and mobile payments, and prepaid balance movements, without your name, for seven years, as required by tax and accounting laws and to resolve payment disputes or fraud.',
+          'Emergency and safety alerts made during a ride, for up to seven years, to protect the people involved and to respond to authorities.',
           'Daily backups expire after 30 days: deleted data disappears from them within that time.',
           'Stripe keeps your payment data under its own policy. If you were a restaurant or driver with a balance, we pay it out before closing.',
         ],
