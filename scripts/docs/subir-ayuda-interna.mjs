@@ -30,6 +30,9 @@ for (const [, nombre, idioma] of guias.matchAll(/\bfoto\(\s*'([a-z0-9-]+)',\s*'(
   archivos.add(`monitoreo-${nombre}-${idioma}.webp`);
 for (const [, nombre, idioma] of guias.matchAll(/fotoModeracion\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`recorrido-moderacion-${nombre}-${idioma}.webp`);
+// C-CUPON-DIVOOX: las de «Regalos Divoox» (capRegalo).
+for (const [, nombre, idioma] of guias.matchAll(/capRegalo\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`regalos-divoox-${nombre}-${idioma}.webp`);
 for (const [, archivo] of guias.matchAll(/archivo: '([a-z0-9-]+\.webp)'/g)) archivos.add(archivo);
 const faltan = [...archivos].filter((a) => !existsSync(join(CAPTURAS_PRIVADAS, a)));
 if (faltan.length) {
