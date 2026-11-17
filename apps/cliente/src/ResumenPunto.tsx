@@ -27,7 +27,8 @@ export function ResumenPunto({
     <Pressable
       onPress={abrir}
       accessibilityRole="button"
-      accessibilityLabel={listo ? t.ajustar : t.marcar}
+      // Sin nombre propio: el lector lee lo que se ve (título, dirección y «Ajustar el punto»),
+      // así el nombre del botón siempre contiene su texto visible (WCAG 2.5.3, la prueba de accesibilidad).
       testID={testID}
       style={({ pressed }) => ({
         flexDirection: 'row',
