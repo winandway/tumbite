@@ -22,4 +22,14 @@ describe('permisos explicados antes de pedirlos', () => {
     const avisos = leer('packages', 'movil', 'src', 'avisos.ts');
     expect(avisos).toContain('if (!permiso.granted && !preguntar) return;');
   });
+  // Tercera auditoría de tiendas (18 nov 2026, ubicación en segundo plano de Google Play): la
+  // primera pantalla pide la ubicación, y después de darla ya no sale la otra explicación. Por eso
+  // ESTA pantalla dice que se usa con la pantalla apagada o en segundo plano, y cuándo deja de usarse.
+  it('el Driver avisa ANTES del permiso que la ubicación sigue en segundo plano', () => {
+    const layout = leer('apps', 'repartidor', 'src', 'app', '_layout.tsx');
+    expect(layout).toContain('con la pantalla apagada o la app en segundo plano');
+    expect(layout).toContain('with the screen off or the app in the background');
+    expect(layout).toContain('Al desconectarte y sin un trabajo en curso, deja de usarse.');
+    expect(layout).toContain('When you go offline with no job in progress, it stops.');
+  });
 });

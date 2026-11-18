@@ -25,7 +25,7 @@ const PERMISOS = {
     {
       titulo: 'Ubicación',
       porque:
-        'Para ofrecerte pedidos cerca de ti, guiarte al restaurante y que el cliente vea que vas en camino.',
+        'Para ofrecerte pedidos y viajes cerca de ti, guiarte y que el cliente vea que vas en camino. Mientras estás conectado o tienes un trabajo en curso, Divoox usa tu ubicación también con la pantalla apagada o la app en segundo plano, y verás un aviso fijo. Al desconectarte y sin un trabajo en curso, deja de usarse.',
     },
     {
       titulo: 'Avisos',
@@ -40,7 +40,7 @@ const PERMISOS = {
     {
       titulo: 'Location',
       porque:
-        'To offer you nearby orders, guide you to the restaurant, and let the customer see you’re on the way.',
+        'To offer you nearby orders and rides, guide you, and let the customer see you’re on the way. While you’re online or have a job in progress, Divoox uses your location even with the screen off or the app in the background, and you’ll see an ongoing notification. When you go offline with no job in progress, it stops.',
     },
     {
       titulo: 'Notifications',
