@@ -382,6 +382,26 @@ describe('C-CAMILA-HERRAMIENTAS: atadas a la persona, el dinero solo dentro de s
     expect(await cargas(e, b.id)).toEqual([]);
   });
 
+  it('sin IA entiende las formas comunes de preguntar cómo empezar, en los dos idiomas, sin abrir un caso', async () => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    const preguntar = async (t: string, idioma: string, n: string) =>
+      (
+        await e.m.llamar('POST', '/datos/camila/mensaje', { texto: t }, undefined, {
+          'x-camila-visita': n.padEnd(40, 'e'),
+          'x-idioma': idioma,
+        })
+      ).datos.respuesta as string;
+    expect(await preguntar('how do I start driving with Divoox?', 'en', 'en1')).toMatch(
+      /download Divoox Driver and create your account/,
+    );
+    expect(await preguntar('¿cómo empiezo a manejar con Divoox?', 'es', 'es1')).toMatch(
+      /descarga Divoox Driver y crea tu cuenta/,
+    );
+    expect(
+      (await e.m.DB.prepare('SELECT COUNT(*) AS n FROM camila_casos').first<{ n: number }>())?.n,
+    ).toBe(0);
+  });
+
   it('una ficha anónima del chat no puede ver ninguna cuenta', async () => {
     const e = await escenario({ GEMINI_API_KEY: undefined });
     const visita = { 'x-camila-visita': 'v'.repeat(40) };
