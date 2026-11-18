@@ -18,6 +18,8 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
+import { deslizar } from './deslizar.mjs';
+import { abrirAlta, abrirDocumentos } from './altaDriver.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -329,9 +331,7 @@ async function correr(M, idiomas) {
     const ctxD = await telefono(tokens.conductor, IDS.conductor, idioma);
     const d = await ctxD.newPage();
     await d.goto('/driver/');
-    await d.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
-    await d.getByText('Divoox Moto', { exact: true }).first().click();
-    await d.getByTestId('alta-moto').waitFor({ timeout: 30_000 });
+    await abrirAlta(d, 'moto', en);
     await espera(1_200);
     await d.getByTestId('alta-moto').evaluate((x) => x.scrollIntoView({ block: 'start' }));
     await espera(800);
@@ -351,11 +351,7 @@ async function correr(M, idiomas) {
     await espera(600);
     await foto(d, 'driver-moto-papeles', idioma);
     // La identidad verificada, en «Documentos» del mismo perfil.
-    await d.getByText('Divoox Moto', { exact: true }).first().click();
-    await d
-      .getByText(en ? 'Documents' : 'Documentos', { exact: true })
-      .first()
-      .click();
+    await abrirDocumentos(d, en);
     await espera(1_500);
     await d
       .getByText(en ? 'Documents' : 'Documentos', { exact: true })
@@ -441,7 +437,7 @@ async function correr(M, idiomas) {
     await foto(c, 'cliente-contactos', idioma);
     await c.getByTestId('moto-precio').scrollIntoViewIfNeeded();
     await c
-      .getByRole('button', { name: en ? /Request/ : /Pedir/ })
+      .getByRole('button', { name: en ? /Request/ : /Pedir|Solicitar/ })
       .last()
       .click();
     await espera(2_500);
@@ -495,10 +491,7 @@ async function correr(M, idiomas) {
     if (M.pagoMovil) {
       await d.getByTestId('viaje-pago-movil').waitFor({ timeout: 60_000 });
       await d.getByTestId('viaje-pago-movil').scrollIntoViewIfNeeded();
-    } else
-      await d
-        .getByText(en ? 'End ride' : 'Terminar viaje', { exact: true })
-        .waitFor({ timeout: 60_000 });
+    } else await d.getByTestId('viaje-terminar').waitFor({ timeout: 60_000 });
     await espera(800);
     await foto(d, M.pagoMovil ? 'driver-viaje-pago-movil' : 'driver-viaje', idioma);
     await d
@@ -511,7 +504,7 @@ async function correr(M, idiomas) {
       await d.getByTestId('viaje-pago-movil').scrollIntoViewIfNeeded();
       await d.getByText(en ? 'Yes, it arrived' : 'Sí, me llegó', { exact: true }).click();
     }
-    await d.getByText(en ? 'End ride' : 'Terminar viaje', { exact: true }).click();
+    await deslizar(d, 'viaje-terminar');
     await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
     await espera(800);
     await foto(d, M.pagoMovil ? 'driver-cobro-pago-movil' : 'driver-cobro-efectivo', idioma);
@@ -526,9 +519,7 @@ async function correr(M, idiomas) {
         pin: (await pasajero('GET', `/datos/viajes/${v2.id}`)).viaje.pin,
       });
       await d.reload();
-      await d
-        .getByText(en ? 'End ride' : 'Terminar viaje', { exact: true })
-        .click({ timeout: 60_000 });
+      await deslizar(d, 'viaje-terminar');
       await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
       await espera(800);
       await foto(d, 'driver-cobro-efectivo', idioma);

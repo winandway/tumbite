@@ -183,6 +183,7 @@ const es = {
   avisoPedido: 'Tu pedido en {restaurante}',
   estadoPedido: {
     pagado: 'Pagado: el restaurante lo va a confirmar.',
+    enviado: 'Enviado: el restaurante lo va a confirmar.',
     aceptado: 'En preparación.',
     listo: 'Listo: esperando al repartidor.',
     en_camino: 'En camino hacia ti.',
@@ -372,6 +373,7 @@ const en: typeof es = {
   avisoPedido: 'Your order at {restaurante}',
   estadoPedido: {
     pagado: 'Paid: the restaurant will confirm it.',
+    enviado: 'Sent: the restaurant will confirm it.',
     aceptado: 'Being prepared.',
     listo: 'Ready: waiting for the driver.',
     en_camino: 'On its way to you.',

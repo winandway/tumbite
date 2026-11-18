@@ -272,31 +272,18 @@ export type AjustesCamila = {
   ia: boolean;
   /** Tope diario de gasto de IA, en centavos de dólar (máximo TOPE_MAXIMO_CENTAVOS). */
   topeDiarioCentavos: number;
-  /** Países donde la ley pide avisar desde el primer mensaje que es una asistente virtual. */
-  avisoIaPaises: string[];
   /** Cuántos regalos de arranque puede dar Camila al día como mucho (además del presupuesto). */
   regalosPorDia: number;
 };
 
 /**
- * C-CAMILA-AVISO (18 nov 2026, decisión de Gerencia dentro de lo que aprobó Richard: «donde la ley lo
- * pida»). En estos países Camila avisa DESDE EL PRIMER MENSAJE que es una asistente virtual: Estados
- * Unidos y los 27 de la Unión Europea (Ley de IA). Van fijos en el código: el superadmin puede sumar
- * países, pero no apagar estos. Venezuela y los demás quedan apagados; la firma no cambia.
+ * C-CAMILA-SIN-AVISO (18 nov 2026, regla de Richard para todo Divoox): Camila NUNCA dice por su cuenta
+ * que es una asistente virtual, en ningún país y en ningún canal. No hay aviso de primer mensaje ni
+ * interruptor para encenderlo. Si se lo preguntan, dice la verdad (identidad.ts, VERDAD).
  */
-export const PAISES_AVISO_OBLIGATORIO: readonly string[] = [
-  'US',
-  ...['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE'],
-  ...['IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'],
-];
-const conObligatorios = (paises: string[]) => [
-  ...new Set([...PAISES_AVISO_OBLIGATORIO, ...paises]),
-];
-
 export const AJUSTES_CAMILA_INICIALES: AjustesCamila = {
   ia: true,
   topeDiarioCentavos: TOPE_DIARIO_CENTAVOS,
-  avisoIaPaises: [...PAISES_AVISO_OBLIGATORIO],
   regalosPorDia: 20,
 };
 
@@ -316,11 +303,6 @@ export async function leerAjustes(db: D1Database): Promise<AjustesCamila> {
         Math.max(0, Number(v.topeDiarioCentavos ?? TOPE_DIARIO_CENTAVOS)),
         TOPE_MAXIMO_CENTAVOS,
       ),
-      avisoIaPaises: conObligatorios(
-        Array.isArray(v.avisoIaPaises)
-          ? v.avisoIaPaises.filter((p) => /^[A-Z]{2}$/.test(String(p)))
-          : [],
-      ),
       regalosPorDia: Math.min(Math.max(0, Number(v.regalosPorDia ?? 20)), REGALOS_POR_DIA_MAXIMO),
     };
   } catch (e) {
@@ -335,7 +317,13 @@ export async function guardarAjustes(db: D1Database, a: AjustesCamila) {
       `INSERT INTO config (clave, valor) VALUES ('camila', ?)
        ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
     )
-    .bind(JSON.stringify(a))
+    .bind(
+      JSON.stringify({
+        ia: a.ia,
+        topeDiarioCentavos: a.topeDiarioCentavos,
+        regalosPorDia: a.regalosPorDia,
+      }),
+    )
     .run();
 }
 

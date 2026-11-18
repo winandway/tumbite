@@ -102,7 +102,16 @@ dinero.get('/billetera', async (c) => {
   const db = base(c);
   const { results } = await db
     .prepare(
-      'SELECT id, pedido_id AS pedidoId, monto, concepto, creado_en AS fecha FROM movimientos WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT 100',
+      // Robot (18 nov 2026, C-GANANCIAS-CARRERAS): cada movimiento dice su viaje (el cobro con
+      // tarjeta o el regalo de Divoox que lo pagó), para contar el viaje como UNA carrera.
+      `SELECT m.id, m.pedido_id AS pedidoId, m.monto, m.concepto, m.creado_en AS fecha,
+              CASE
+                WHEN m.referencia LIKE 'viaje-tarjeta-%' THEN substr(m.referencia, 15)
+                WHEN m.referencia LIKE 'regalo-divoox:%' THEN
+                  (SELECT u.operacion_id FROM usos_cupon_divoox u
+                    WHERE u.id = substr(m.referencia, 15) AND u.servicio <> 'comida')
+              END AS operacionId
+         FROM movimientos m WHERE m.usuario_id = ? ORDER BY m.creado_en DESC LIMIT 100`,
     )
     .bind(u.id)
     .all();

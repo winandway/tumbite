@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { claveEstadoPedido } from '../pedidoAlRecibir';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -25,6 +26,7 @@ const T = {
     enCurso: 'En curso',
     estados: {
       pagado: 'Pagado',
+      enviado: 'Enviado',
       aceptado: 'En cocina',
       listo: 'Listo',
       en_camino: 'En camino',
@@ -47,6 +49,7 @@ const T = {
     enCurso: 'In progress',
     estados: {
       pagado: 'Paid',
+      enviado: 'Sent',
       aceptado: 'Cooking',
       listo: 'Ready',
       en_camino: 'On the way',
@@ -60,6 +63,8 @@ const T = {
 type Pedido = {
   id: string;
   estado: string;
+  /** Con pago al recibir, «pagado» todavía no está pagado. */
+  metodoPago?: string;
   /** C-CLIENTE-AUSENTE: «ausente» = se cerró sin entregar porque no estabas. */
   entregadoComo?: string | null;
   restauranteId: string;
@@ -167,7 +172,9 @@ function Pedidos() {
           // C-MIS-PEDIDOS-MINIATURA (1 nov 2026, pedido de Richard): como la lista de pedidos de los
           // grandes: miniatura del local, estado con color (verde = entregado) y botones compactos.
           const ausente = p.estado === 'entregado' && p.entregadoComo === 'ausente';
-          const textoEstado = ausente ? t.noEntregado : (t.estados[p.estado] ?? p.estado);
+          const textoEstado = ausente
+            ? t.noEntregado
+            : (t.estados[claveEstadoPedido(p.estado, p.metodoPago)] ?? p.estado);
           const estado = ausente
             ? { fondo: '#FDECEC', texto: C.primario }
             : p.estado === 'entregado'

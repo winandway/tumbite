@@ -20,10 +20,13 @@ import {
   TEXTOS_FALLO,
   TIPOS_FALLO,
   claveDeCaptura,
+  abrirPorCaptura,
+  capturaAdelantada,
   completarConCaptura,
   limpiarDato,
   reporteEnCurso,
 } from '../camila/fallos';
+import { segun } from '../camila/identidad';
 import { type Persona, personaPorId, sentenciaMensaje } from '../camila/memoria';
 
 /**
@@ -47,10 +50,14 @@ export function usarPersonaDelChat(f: PersonaDelChat) {
 
 camilaFallos.post('/camila/fallos/captura', limiteIntentos(10, 60_000), async (c) => {
   const db = base(c);
-  const p = await personaDelChat(c, false);
-  const r = p ? await reporteEnCurso(db, p.id) : null;
-  if (!p || !r || r.estado !== 'captura')
-    throw new ErrorDatos('No hay un reporte esperando una captura.', undefined, 409);
+  // C-CAMILA-ADJUNTAR: la captura se puede mandar en cualquier momento desde el chat. Si Camila no la
+  // estaba esperando, abre el reporte ahí mismo y después hace sus preguntas.
+  const p = await personaDelChat(c, true);
+  if (!p)
+    throw new ErrorDatos('No pudimos abrir tu conversación. Intenta de nuevo.', undefined, 409);
+  const enCurso = await reporteEnCurso(db, p.id);
+  if (enCurso?.captura_clave)
+    throw new ErrorDatos('Ya recibimos una captura de este reporte.', 'adjunto', 409);
   if (!c.env.BUCKET)
     throw new ErrorDatos(
       'El almacén de fotos no está disponible en este momento. Intenta más tarde.',
@@ -73,10 +80,27 @@ camilaFallos.post('/camila/fallos/captura', limiteIntentos(10, 60_000), async (c
       'adjunto',
       429,
     );
+  const r =
+    enCurso ??
+    (await abrirPorCaptura(db, p, {
+      app: c.req.header('x-tumbite-app'),
+      aparato: c.req.header('user-agent'),
+    }));
+  if (!r) throw new ErrorDatos('No pudimos guardar la captura. Intenta de nuevo.', undefined, 409);
   const clave = claveDeCaptura(r.id);
   await guardarFoto(c.env.BUCKET, clave, bytes, tipo, { cacheControl: 'private, no-store' });
-  const codigo = await completarConCaptura(db, p, r.id, clave, tipo).catch(() => null);
-  if (!codigo) {
+  const en = p.idioma === 'en';
+  let respuesta: string | null = null;
+  if (r.estado === 'preguntando') {
+    // Captura adelantada: queda puesta y Camila sigue (o empieza) con las preguntas.
+    const pregunta = await capturaAdelantada(db, p, r.id, clave, tipo).catch(() => null);
+    if (pregunta !== null)
+      respuesta = `${segun(enCurso ? TEXTOS_FALLO.capturaEnMedio : TEXTOS_FALLO.capturaPrimero, en ? 'en' : 'es')}${enCurso ? ' ' : '\n\n'}${pregunta}`;
+  } else {
+    const codigo = await completarConCaptura(db, p, r.id, clave, tipo).catch(() => null);
+    if (codigo) respuesta = TEXTOS_FALLO.listo(codigo, en ? 'en' : 'es');
+  }
+  if (!respuesta) {
     // El reporte se cerró o se canceló mientras subía: el archivo no queda huérfano en el almacén.
     const sigue = await db
       .prepare('SELECT 1 FROM camila_reportes_fallo WHERE id = ? AND captura_clave = ?')
@@ -85,8 +109,6 @@ camilaFallos.post('/camila/fallos/captura', limiteIntentos(10, 60_000), async (c
     if (!sigue) await c.env.BUCKET.delete(clave);
     throw new ErrorDatos('No hay un reporte esperando una captura.', undefined, 409);
   }
-  const en = p.idioma === 'en';
-  const respuesta = TEXTOS_FALLO.listo(codigo, en ? 'en' : 'es');
   await db.batch([
     sentenciaMensaje(db, {
       personaId: p.id,

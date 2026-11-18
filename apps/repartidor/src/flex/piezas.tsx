@@ -367,13 +367,23 @@ export function Banner({
  * la flecha, brillo cada 2,4 s, umbral del 85 % y resorte. El gesto se arma una sola vez dentro de la
  * pieza (C-FLEX-DESLIZAR-SCROLL sigue cumplido).
  */
-export function Deslizar({ texto, alTerminar }: { texto: string; alTerminar: () => void }) {
+export function Deslizar({
+  texto,
+  alTerminar,
+  confirmar,
+}: {
+  texto: string;
+  alTerminar: () => void;
+  /** Revisor (18 nov 2026): con lector de pantalla, terminar pregunta antes. */
+  confirmar: { pregunta: string; si: string; no: string };
+}) {
   return (
     <Deslizador
       variante="accion"
       tono="logistica"
       texto={texto}
       accionLector={texto}
+      confirmar={confirmar}
       alConfirmar={alTerminar}
     />
   );

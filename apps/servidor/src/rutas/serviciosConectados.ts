@@ -111,6 +111,8 @@ async function panelDe(db: Db, conductorId: string, ingles: boolean, version: nu
       }),
       motivo: s.motivo,
       requisitosFaltantes: s.requisitosFaltantes,
+      // C-CAMBIAR-VEHICULO: el vehículo con el que este servicio sí se puede activar.
+      cambiarA: s.cambiarA ?? null,
     }))
     .filter((s) => s.estado !== null);
   return {

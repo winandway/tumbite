@@ -10,6 +10,7 @@ import {
   enIdioma,
   enIdiomaDireccion,
   nombreAutorCamila,
+  trozosDeMensaje,
   cronometroDeEscritura,
   problemaDeCaptura,
   useBorrador,
@@ -65,6 +66,8 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
   const [hilo, setHilo] = useState<HiloCamila | null>(null);
   const [cargando, setCargando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  // C-CAMILA-ADJUNTAR: la persona abrió el bloque de la captura con el botón fijo del chat.
+  const [adjuntar, setAdjuntar] = useState(false);
   const [pendiente, setPendiente] = useState<MensajeCamila | null>(null);
   const [error, setError] = useState('');
   const [unir, setUnir] = useState(false);
@@ -172,6 +175,7 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
       await esperar(r.respuesta);
       setHilo({
         pideCaptura: r.pideCaptura,
+        capturaPuesta: r.capturaPuesta,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
         mensajes: r.mensajes,
@@ -251,7 +255,24 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
                 data-testid={`chat-mensaje-${m.autor}`}
               >
                 <span className="chat-soporte-autor">{nombreAutorCamila(m.autor, idioma)}</span>
-                <span className="chat-soporte-texto">{m.texto}</span>
+                {trozosDeMensaje(m.texto).map((trozo, i) =>
+                  'url' in trozo ? (
+                    <a
+                      key={i}
+                      className="chat-soporte-guia"
+                      href={trozo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="chat-enlace-guia"
+                    >
+                      {trozo.etiqueta}
+                    </a>
+                  ) : (
+                    <span key={i} className="chat-soporte-texto">
+                      {trozo.texto}
+                    </span>
+                  ),
+                )}
                 {m.autor === 'camila' ? (
                   m.reportado ? (
                     <span className="chat-soporte-reportada" role="status">
@@ -285,15 +306,31 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               </li>
             ) : null}
           </ol>
-          {hilo?.pideCaptura ? (
+          {hilo?.pideCaptura || adjuntar ? (
             <BloqueCaptura
               idioma={idioma}
               cabeceras={cabeceras}
               ocupado={enviando}
-              alSubir={() => cargar(true)}
-              alNoTener={() => void enviar(t.mensajeSinCaptura)}
+              voluntaria={!hilo?.pideCaptura}
+              alSubir={async () => {
+                setAdjuntar(false);
+                guardarConverso();
+                await cargar(true);
+              }}
+              alNoTener={() =>
+                hilo?.pideCaptura ? void enviar(t.mensajeSinCaptura) : setAdjuntar(false)
+              }
             />
-          ) : null}
+          ) : hilo?.equipoAtendiendo || hilo?.capturaPuesta ? null : (
+            <button
+              type="button"
+              className="enlace chat-soporte-adjuntar"
+              data-testid="chat-adjuntar"
+              onClick={() => setAdjuntar(true)}
+            >
+              <Icono nombre="foto" tamano={16} /> {t.adjuntar}
+            </button>
+          )}
           {hilo?.equipoAtendiendo ? (
             <p className="chat-soporte-aviso" role="status" data-testid="chat-equipo-atiende">
               {t.equipoAtiende}
@@ -489,12 +526,15 @@ function BloqueCaptura({
   idioma,
   cabeceras,
   ocupado,
+  voluntaria = false,
   alSubir,
   alNoTener,
 }: {
   idioma: Idioma;
   cabeceras: Record<string, string>;
   ocupado: boolean;
+  /** La persona la abrió con «Adjuntar captura» (Camila no la pidió): el botón de abajo solo cierra. */
+  voluntaria?: boolean;
   alSubir: () => Promise<void>;
   alNoTener: () => void;
 }) {
@@ -574,7 +614,7 @@ function BloqueCaptura({
         disabled={quieto}
         onClick={alNoTener}
       >
-        {t.sinCaptura}
+        {voluntaria ? t.cancelarCaptura : t.sinCaptura}
       </button>
       <small className="pista">{t.capturaPrivada}</small>
     </div>

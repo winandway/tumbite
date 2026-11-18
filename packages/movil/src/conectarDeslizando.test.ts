@@ -104,3 +104,41 @@ describe('lo que pidió el revisor sobre el deslizador (18 nov 2026)', () => {
     expect(leer('packages/movil/src/Deslizador.tsx')).toMatch(/height: alto,/);
   });
 });
+
+// C-CERRAR-DESLIZANDO (robot de Android, 18 nov 2026): «Entregar el paquete» cerraba un envío con
+// un toque. Entregar un envío y terminar un viaje se deslizan, como el cierre de la comida.
+describe('ningún toque cierra una entrega ni un viaje', () => {
+  const v = leer('apps/repartidor/src/viajes/ViajeActivo.tsx');
+  it('terminar y entregar van en el deslizador', () => {
+    expect(v).toMatch(/<Deslizador[\s\S]{0,200}testID="viaje-terminar"/);
+    expect(v).not.toMatch(/<Boton\s+texto=\{esEnvio \? t\.entregar : t\.terminar\}/);
+    expect(v).not.toMatch(/alTocar=\{[^}]*paso\('terminar'/);
+  });
+  it('la comida sigue cerrándose con la foto y «Desliza para completar»', () => {
+    expect(leer('apps/repartidor/src/Inicio.tsx')).toMatch(/<DeslizarParaCompletar/);
+  });
+});
+
+// Revisor B4 (18 nov 2026): con VoiceOver o TalkBack, la acción «activar» de un deslizador cerraba
+// el viaje o la entrega (y cobraba) sin preguntar. Todo deslizador de acción de Driver pregunta.
+describe('con lector de pantalla, todo deslizador que hace algo pregunta antes', () => {
+  const archivos = [
+    'apps/repartidor/src/Inicio.tsx',
+    'apps/repartidor/src/servicios/PanelServicios.tsx',
+    'apps/repartidor/src/viajes/ViajeActivo.tsx',
+    'apps/repartidor/src/flex/piezas.tsx',
+    'apps/repartidor/src/piezas/DeslizarParaCompletar.tsx',
+  ];
+  it('cada <Deslizador variante="accion"> lleva confirmar', () => {
+    for (const f of archivos) {
+      const s = leer(f);
+      for (const m of s.matchAll(/<Deslizador\s+variante="accion"[\s\S]*?\/>/g))
+        expect(m[0], f).toMatch(/confirmar=\{/);
+    }
+  });
+  it('la pieza de Flex exige el texto de confirmar a quien la usa', () => {
+    expect(leer('apps/repartidor/src/flex/MiRuta.tsx')).toMatch(
+      /<Deslizar[\s\S]{0,120}confirmar=\{t\.confirmarFinalizar\}/,
+    );
+  });
+});

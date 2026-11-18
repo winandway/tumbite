@@ -3,6 +3,7 @@ import { Animated, Easing, Image, Pressable, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { DOCUMENTOS_VEHICULO_PASAJEROS, ErrorApi, type Idioma } from '@tumbite/compartido';
 import {
+  Boton,
   COLOR,
   FUENTE,
   Icono,
@@ -360,7 +361,10 @@ export function PerfilAcordeon({
   menuCuenta,
   alMenu,
   inicial = null,
+  alCambiarVehiculo,
 }: {
+  /** C-CAMBIAR-VEHICULO: al cambiar el vehículo activo, el inicio vuelve a leer sus servicios. */
+  alCambiarVehiculo?: () => void;
   /** La sección que se abre al llegar (desde «Completar mi alta»). */
   inicial?: 'vehiculo' | 'documentos' | null;
   /** Los servicios del panel (para saber dónde sirve cada papel y qué vehículos ofrecer). */
@@ -382,6 +386,8 @@ export function PerfilAcordeon({
   const [foto, setFoto] = useState<string | null>(null);
   // C-AVATAR-SIN-LINEA: una foto que no carga o es diminuta no se estira: van las iniciales.
   const [fotoMala, setFotoMala] = useState(false);
+  // C-CAMBIAR-VEHICULO: el vehículo con el que trabaja ahora (se cambia desde «Mi vehículo»).
+  const [activoId, setActivoId] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState('');
   const [error, setError] = useState('');
   const ids = servicios.map((s) => s.servicioId).join(',');
@@ -390,7 +396,10 @@ export function PerfilAcordeon({
     try {
       const lista = ids ? ids.split(',') : [];
       const [v, p, k, ...reqs] = await Promise.all([
-        api.pedir<{ vehiculos: Vehiculo[] }>('GET', '/datos/conductor/vehiculos'),
+        api.pedir<{ vehiculos: Vehiculo[]; vehiculoActivoId?: string | null }>(
+          'GET',
+          '/datos/conductor/vehiculos',
+        ),
         api.pedir<Papeles>('GET', '/datos/conductor/papeles').catch(() => null),
         api
           .pedir<{ kyc: { estado: string; motivo: string } }>('GET', '/datos/kyc')
@@ -403,6 +412,7 @@ export function PerfilAcordeon({
         ),
       ]);
       setVehiculos(v.vehiculos.filter((x) => x.estado !== 'retirado'));
+      setActivoId(v.vehiculoActivoId ?? null);
       setPapeles(p);
       setKyc(k?.kyc ?? null);
       setRequisitos(
@@ -448,6 +458,17 @@ export function PerfilAcordeon({
       setError(x instanceof ErrorApi ? x.message : String(x));
     } finally {
       setSubiendo('');
+    }
+  }
+
+  async function usarVehiculo(id: string) {
+    setError('');
+    try {
+      await api.pedir('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: id });
+      await cargar();
+      alCambiarVehiculo?.();
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : String(x));
     }
   }
 
@@ -776,6 +797,11 @@ export function PerfilAcordeon({
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={{ fontFamily: FUENTE.tituloMedio, fontSize: 17 }}>
                           {de(t.vehiculoDe, v.tipo) ?? v.tipo}
+                          {v.id === activoId ? (
+                            <Text style={{ color: COLOR.exito, fontSize: 13 }}>
+                              {'  '}· {t.vehiculoEnUso}
+                            </Text>
+                          ) : null}
                         </Text>
                         <Text style={LETRA.secundario} numberOfLines={2}>
                           {abiertaTarjeta
@@ -812,6 +838,24 @@ export function PerfilAcordeon({
                               }
                             />
                           ))}
+                          {v.estado === 'aprobado' && v.id !== activoId ? (
+                            // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): elegir el vehículo con el que
+                            // trabajar, como «Vehicles» de Uber Driver.
+                            <View
+                              style={{
+                                padding: 12,
+                                borderTopWidth: 1,
+                                borderTopColor: COLOR.borde,
+                              }}
+                            >
+                              <Boton
+                                texto={t.usarEsteVehiculo}
+                                exito
+                                testID={`usar-vehiculo-${v.tipo}`}
+                                alTocar={() => void usarVehiculo(v.id)}
+                              />
+                            </View>
+                          ) : null}
                           {/* Borrar un vehículo: solo dentro de sus tres puntos (regla de la casa). */}
                           <View
                             style={{

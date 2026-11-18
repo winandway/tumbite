@@ -1,3 +1,4 @@
+import { deslizar } from './deslizar';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
@@ -189,7 +190,8 @@ test('un envío de punta a punta: PIN para quien recibe, foto y entrega con el P
   await expect(campo).toBeVisible({ timeout: 30_000 });
   await campo.fill(pin);
   await pr.screenshot({ path: join(RAIZ, 'docs', 'capturas', 'envio-driver-pin-es.png') });
-  await pr.getByText('Entregar el paquete').click();
+  // C-CERRAR-DESLIZANDO: entregar el paquete se desliza (un toque no lo cierra).
+  await deslizar(pr, 'viaje-terminar');
   await expect
     .poll(
       () =>

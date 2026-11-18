@@ -2,7 +2,7 @@ import type { Env } from '../env';
 import { correosEquipo } from '../avisosEquipo';
 import { enviarCorreo } from '../correo';
 import { enviarPorCanal } from './canales';
-import { buscarGuias, respuestaDeGuia } from './buscadorDocs';
+import { conEnlacesDeGuia, buscarGuias, respuestaDeGuia } from './buscadorDocs';
 import { type ContextoPeticion, pasoDeFallo } from './fallos';
 import { buscarAprobadas, buscarEnDocs, enlaceGuia, normalizar } from './conocimiento';
 import {
@@ -17,7 +17,10 @@ import {
   type Contexto,
 } from './herramientas';
 import {
-  AVISO_PRIMER_MENSAJE,
+  COMO_ADJUNTAR,
+  quiereAdjuntar,
+  respuestaCortesia,
+  cortesiaDe,
   FIRMA,
   PASO_A_PERSONA,
   ENTIENDO_TU_MOLESTIA,
@@ -111,15 +114,19 @@ const OFRECE_PERSONA =
   /\b(hablar con una persona|persona del equipo|alguien del equipo|un agente|con un humano|pasarte con|talk to a person|person on (the|our) team|someone on (the|our) team|a human|an agent)\b/i;
 const SALUDO = /^\s*(¡?hola|buen(os|as) (d[ií]as|tardes|noches)|hi|hello|hey)\b[^.!?\n]*[.!?]?\s*/i;
 export function cuidarTono(texto: string, op: { yaEmpezo: boolean; puedePasar: boolean }) {
-  const frases = texto.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])|\n/);
-  const limpias = frases.filter(
-    (f) =>
-      !SE_PRESENTA.test(f) && !DICE_ASISTENTE.test(f) && (op.puedePasar || !OFRECE_PERSONA.test(f)),
-  );
-  let salida = (limpias.length ? limpias : frases)
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  const sobra = (f: string) =>
+    SE_PRESENTA.test(f) || DICE_ASISTENTE.test(f) || (!op.puedePasar && OFRECE_PERSONA.test(f));
+  // Renglón por renglón, para no romper las listas: «1. Abre la app» es un solo paso (el punto del
+  // número no parte la frase) y cada paso sigue en su renglón.
+  const renglones = texto.split('\n').flatMap((renglon) => {
+    if (!renglon.trim()) return [''];
+    const quedan = renglon
+      .split(/(?<=[.!?])(?<!^\s*\d{1,2}\.)\s+(?=[A-ZÁÉÍÓÚÑ¿¡])/)
+      .filter((f) => !sobra(f));
+    return quedan.length ? [quedan.join(' ')] : [];
+  });
+  const limpio = renglones.join('\n').trim();
+  let salida = (limpio || texto).replace(/\n{3,}/g, '\n\n').trim();
   if (op.yaEmpezo) {
     const sinSaludo = salida.replace(SALUDO, '').trim();
     // Quitado el saludo, la frase que queda empieza con mayúscula.
@@ -174,6 +181,9 @@ async function porReglas(c: Contexto): Promise<string> {
     return (await darRegaloArranque(c)).texto;
   if (tiene('mi equipo', 'mis registrados', 'cuantos registre', 'my team', 'lider', 'leader'))
     return (await miEquipo(c)).texto;
+  // El estado de la cuenta es del conductor. «¿Cómo borro mi cuenta?» es otra pregunta, y al cliente
+  // con cuenta se le contesta primero con su guía si la hay.
+  const prefiere = c.rol === 'repartidor' ? 'drivers' : 'ordering';
   if (
     tiene(
       'mi cuenta',
@@ -189,27 +199,24 @@ async function porReglas(c: Contexto): Promise<string> {
       'activate',
       'approved',
       'no funciona',
-    )
+    ) &&
+    !tiene('borrar', 'borro', 'eliminar', 'elimino', 'delete', 'close my account') &&
+    (c.rol === 'repartidor' || !c.rol || !buscarGuias(c.pregunta, c.idioma, 1, prefiere)[0])
   )
     return (await estadoCuenta(c)).texto;
   if (c.rol === 'repartidor' && tiene('recargar', 'recarga', 'recargo', 'top up', 'reload')) {
     const r = buscarEnDocs('recargar recarga', c.idioma, 1)[0];
-    if (r?.guia) return `${r.texto}\n${enlaceGuia(r.guia, c.idioma)}`;
+    if (r?.guia) return `${r.texto}\n\n${enlaceGuia(r.guia, c.idioma)}`;
   }
   if (c.rol === 'repartidor' && tiene('saldo', 'comision', 'balance', 'commission'))
     return (await explicarSaldo(c)).texto;
   const aprobada = (await buscarAprobadas(c.db, c.pregunta, c.idioma))[0];
   if (aprobada) return aprobada.texto;
   // Todas las guías públicas de Docs, primero las que le tocan a quien pregunta.
-  const guia = buscarGuias(
-    c.pregunta,
-    c.idioma,
-    1,
-    c.rol === 'repartidor' ? 'drivers' : 'ordering',
-  )[0];
+  const guia = buscarGuias(c.pregunta, c.idioma, 1, prefiere)[0];
   if (guia) return respuestaDeGuia(guia.guia, c.idioma);
   const curada = buscarEnDocs(c.pregunta, c.idioma, 1)[0];
-  if (curada?.guia) return `${curada.texto}\n${enlaceGuia(curada.guia, c.idioma)}`;
+  if (curada?.guia) return `${curada.texto}\n\n${enlaceGuia(curada.guia, c.idioma)}`;
   c.noSupo = true;
   return '';
 }
@@ -337,10 +344,21 @@ export async function recibirMensaje(
   // C-CAMILA-FALLOS: si el mensaje abre o continúa un reporte de fallo, lo lleva la máquina de pasos
   // (sin IA y sin herramientas: lo que la persona escribe solo se guarda).
   const fallo =
-    preguntaSiEsHumana(texto) || pideHumano(texto) || molesta
+    preguntaSiEsHumana(texto) || pideHumano(texto) || molesta || quiereAdjuntar(texto)
       ? null
       : await pasoDeFallo(db, persona, texto, opciones.peticion ?? {}, canal);
-  if (preguntaSiEsHumana(texto)) respuesta = segun(VERDAD, idioma);
+  // C-CAMILA-CORTESIA: un saludo se contesta con un saludo, salvo en medio de un reporte de fallo
+  // (ahí «ok» o «gracias» son la respuesta a lo que Camila preguntó).
+  const cortesia = !fallo || fallo.dejaPasar ? cortesiaDe(texto) : null;
+  if (cortesia) {
+    // Si venía de un «no entendí», esa marca se conserva: saludar en medio no borra el intento
+    // anterior ni cuenta como otro.
+    respuesta = respuestaCortesia(cortesia, idioma);
+    marca = previa?.herramienta === 'no_supo' ? 'no_supo' : null;
+  } else if (quiereAdjuntar(texto) && (canal === 'web' || canal === 'app')) {
+    // C-CAMILA-ADJUNTAR: no da un tutorial; señala el botón del chat.
+    respuesta = segun(COMO_ADJUNTAR, idioma);
+  } else if (preguntaSiEsHumana(texto)) respuesta = segun(VERDAD, idioma);
   else if (pideHumano(texto)) {
     await abrirCaso(c, texto, 'pide_persona');
     respuesta = segun(PASO_A_PERSONA, idioma);
@@ -404,17 +422,12 @@ export async function recibirMensaje(
         if (!respuesta || modo === 'reglas') respuesta = segun(NO_ENTENDI, idioma);
       }
     }
+    // C-CAMILA-ENLACE-GUIA: lo que sale de una guía termina con el enlace a esa guía (dos como mucho),
+    // en el idioma de la persona; y ningún enlace de Docs que no exista sale de aquí.
+    respuesta = conEnlacesDeGuia(respuesta, idioma, modo === 'ia' && !c.noSupo ? c.guias : []);
   }
   // El reporte de fallo se cerró y este mensaje era otra cosa: va el aviso del reporte y la respuesta.
   if (fallo?.dejaPasar) respuesta = `${fallo.respuesta}\n\n${respuesta}`;
-  // Aviso de asistente virtual desde el primer mensaje, solo en los países que lo exigen.
-  if (!persona.aviso_ia_dado && persona.pais && ajustes.avisoIaPaises.includes(persona.pais)) {
-    respuesta = `${segun(AVISO_PRIMER_MENSAJE, idioma)}\n\n${respuesta}`;
-    await db
-      .prepare('UPDATE camila_personas SET aviso_ia_dado = 1 WHERE id = ?')
-      .bind(persona.id)
-      .run();
-  }
   await sentenciaMensaje(db, {
     personaId: persona.id,
     canal,

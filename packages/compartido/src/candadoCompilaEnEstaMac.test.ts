@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -19,6 +19,9 @@ interface Guardia {
     ahora?: Date;
   }): { local: number; nube: number; total: number };
   contarDelDia(ahora?: Date): { local: number; nube: number; total: number };
+  entornoLocal(base?: Record<string, string | undefined>): Record<string, string | undefined>;
+  llevaRelleno(bytes: Uint8Array): boolean;
+  RELLENO_MAPA: string;
 }
 const cargar = async (): Promise<Guardia> => {
   const ruta = join(GUIONES, 'guardia-nube.mjs');
@@ -74,5 +77,39 @@ describe('C-COMPILA-EN-ESTA-MAC', () => {
     expect(lanzan.length).toBeGreaterThan(0);
     for (const f of lanzan)
       expect(readFileSync(join(GUIONES, f), 'utf8'), f).toContain('autorizarCompilacion');
+  });
+
+  // El 18 nov las primeras compilaciones locales salieron SIN mapa y SIN avisos: la nube de Expo
+  // ponía sola la llave del mapa y el archivo de avisos, y esta Mac no.
+  it('en esta Mac no se compila sin la llave del mapa y el archivo de avisos', async () => {
+    const g = await cargar();
+    const dir = mkdtempSync(join(tmpdir(), 'divoox-config-'));
+    expect(() => g.entornoLocal({ DIVOOX_CONFIG_DIR: dir })).toThrow(/No se compila/);
+    writeFileSync(join(dir, 'expo-token'), 'ficha-de-prueba');
+    writeFileSync(join(dir, 'google-services.json'), '{}');
+    writeFileSync(join(dir, 'google-maps-android-key'), 'no-es-una-llave');
+    expect(() => g.entornoLocal({ DIVOOX_CONFIG_DIR: dir })).toThrow(/no parece una llave/);
+    writeFileSync(join(dir, 'google-maps-android-key'), `AIza${'x'.repeat(35)}\n`);
+    const env = g.entornoLocal({ DIVOOX_CONFIG_DIR: dir });
+    expect(env.GOOGLE_MAPS_ANDROID_KEY).toBe(`AIza${'x'.repeat(35)}`);
+    expect(env.GOOGLE_SERVICES_JSON).toBe(join(dir, 'google-services.json'));
+    expect(env.EXPO_TOKEN).toBe('ficha-de-prueba');
+  });
+
+  it('reconoce un archivo compilado que salió con el relleno en vez de la llave', async () => {
+    const g = await cargar();
+    expect(g.llevaRelleno(Buffer.from(`<meta ${g.RELLENO_MAPA}>`, 'utf8'))).toBe(true);
+    expect(g.llevaRelleno(Buffer.from(`<meta ${g.RELLENO_MAPA}>`, 'utf16le'))).toBe(true);
+    expect(g.llevaRelleno(Buffer.from('<meta AIzaLlaveDeVerdad>', 'utf16le'))).toBe(false);
+  });
+
+  it('los guiones que compilan aquí usan ese entorno y comprueban el archivo', () => {
+    const general = readFileSync(join(GUIONES, 'compilar.mjs'), 'utf8');
+    expect(general).toContain('entornoLocal()');
+    expect(general).toContain('llevaRelleno(');
+    const android = readFileSync(join(GUIONES, 'compilar-local-y-subir.sh'), 'utf8');
+    expect(android).toContain('GOOGLE_MAPS_ANDROID_KEY');
+    expect(android).toContain('GOOGLE_SERVICES_JSON');
+    expect(android).toContain('PON_AQUI_LA_LLAVE');
   });
 });

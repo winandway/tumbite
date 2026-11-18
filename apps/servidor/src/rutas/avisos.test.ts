@@ -86,6 +86,22 @@ describe('GET /datos/mis-avisos', () => {
     expect(fin.datos.avisos.filter((a: { tipo: string }) => a.tipo === 'pedido')).toHaveLength(0);
   });
 
+  // Robot (18 nov 2026): con pago al recibir, «pagado» todavía no está pagado.
+  it('un pedido en efectivo sin entregar sale «enviado», no «pagado»', async () => {
+    const e = await escenario();
+    const { m, cliente } = e;
+    const id = await pedidoPagado(e);
+    await m.DB.prepare("UPDATE pedidos SET metodo_pago = 'efectivo' WHERE id = ?").bind(id).run();
+    const r = await m.llamar('GET', '/datos/mis-avisos', undefined, cliente.token);
+    // Revisor B3: `estado` queda como lo entiende el cliente 27 publicado; lo nuevo va aparte.
+    expect(r.datos.avisos[0]).toMatchObject({
+      tipo: 'pedido',
+      pedidoId: id,
+      estado: 'pagado',
+      estadoVisible: 'enviado',
+    });
+  });
+
   it('la tarjeta de sellos del restaurante donde ya compró aparece como regalo en camino', async () => {
     const e = await escenario();
     const { m, cliente, rid } = e;

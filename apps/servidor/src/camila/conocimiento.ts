@@ -1,3 +1,4 @@
+import { enlaceDeGuia } from './buscadorDocs';
 import type { IdiomaCamila } from './identidad';
 
 /**
@@ -136,8 +137,8 @@ export const CONOCIMIENTO_DOCS: readonly EntradaDocs[] = [
         'how do i drive',
       ],
     ],
-    es: 'Para empezar: descarga Divoox Driver y crea tu cuenta. En Perfil, «Empieza a repartir», ves los pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación y tu cuenta para cobrar. Cada paso se abre con un toque. Cuando el equipo aprueba tu cuenta, deslizas «Desliza para conectarte» y empiezas a recibir carreras. No hay horarios ni mínimos.',
-    en: 'To get started: download Divoox Driver and create your account. In Profile, “Start driving,” you see the steps and which one is missing: your details and vehicle, your document and photo, verification and your payout account. Each step opens with one tap. Once the team approves your account, slide “Slide to go online” and you start getting trips. No schedules or minimums.',
+    es: 'Para empezar: descarga Divoox Driver y crea tu cuenta. En Perfil, «Empieza a repartir», ves los pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación y tu cuenta para cobrar. Cada paso se abre con un toque. Cuando el equipo aprueba tu cuenta, deslizas para conectarte y empiezas a recibir carreras. No hay horarios ni mínimos.',
+    en: 'To get started: download Divoox Driver and create your account. In Profile, “Start driving,” you see the steps and which one is missing: your details and vehicle, your document and photo, verification and your payout account. Each step opens with one tap. Once the team approves your account, slide to go online and you start getting trips. No schedules or minimums.',
   },
   {
     id: 'verificar-identidad',
@@ -242,6 +243,5 @@ export async function buscarAprobadas(
     .slice(0, max);
 }
 
-/** La dirección pública de la guía, en el idioma de la persona. */
-export const enlaceGuia = (guia: string, idioma: IdiomaCamila) =>
-  `https://divoox.com${idioma === 'es' ? '/es' : ''}/docs/${guia}`;
+/** El enlace de la guía, en el idioma de la persona (C-CAMILA-ENLACE-GUIA). */
+export const enlaceGuia = (guia: string, idioma: IdiomaCamila) => enlaceDeGuia(guia, idioma);

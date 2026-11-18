@@ -27,6 +27,11 @@ function servidor(
       metodo,
       cuerpo: init?.body ? JSON.parse(String(init.body)) : undefined,
     });
+    if (u.includes('/ciudades-destino'))
+      return responder({
+        actual: { zonaId: 'VE-MER-ELVIGIA', pais: 'VE' },
+        ciudades: [{ id: 'VE-MCB-CENTRO', nombre: 'Maracaibo', pais: 'VE' }],
+      });
     if (metodo === 'POST' && u.endsWith('/datos/admin/comida/ciudades'))
       return responder(
         { zona: { id: 'VE-MER-ELVIGIA', pais: 'VE', moneda: 'USD' }, estado: 'disponible' },
@@ -439,10 +444,15 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
     render(<SuperMoto base="/panel/control-x" idioma="es" />);
     const fila = await screen.findByTestId('papel-doc1');
     await userEvent.click(within(fila).getByRole('button', { name: 'Ver lo que le falta' }));
-    const form = await screen.findByTestId('cambiar-ciudad-conductor');
-    await userEvent.type(within(form).getByLabelText('Código de la nueva ciudad'), 've-mcb-centro');
-    await userEvent.type(within(form).getByLabelText('Motivo del cambio'), 'Se mudó');
-    await userEvent.click(within(form).getByRole('button', { name: 'Cambiar la ciudad' }));
+    // C-CAMBIAR-CIUDAD-ADMIN: la misma pieza que la ficha del repartidor (lista del servidor).
+    const form = await screen.findByTestId('cambiar-ciudad-repartidor');
+    await waitFor(() =>
+      expect(within(form).getByRole('option', { name: /Maracaibo/ })).toBeTruthy(),
+    );
+    await userEvent.selectOptions(within(form).getByLabelText('Ciudad nueva'), 'VE-MCB-CENTRO');
+    await userEvent.type(within(form).getByLabelText(/Motivo/), 'Se mudó');
+    await userEvent.click(within(form).getByRole('button', { name: 'Revisar el cambio' }));
+    await userEvent.click(within(form).getByRole('button', { name: 'Sí, cambiar la ciudad' }));
     await waitFor(() =>
       expect(llamadas.find((l) => l.url.endsWith('/admin/conductores/c1/ciudad'))).toEqual({
         url: expect.stringContaining('/datos/admin/conductores/c1/ciudad'),
@@ -450,7 +460,7 @@ describe('C-MOTO-PANEL: la sección Moto del superadmin', () => {
         cuerpo: { zonaId: 'VE-MCB-CENTRO', motivo: 'Se mudó' },
       }),
     );
-    expect(await screen.findByText('Ciudad cambiada.')).toBeTruthy();
+    expect(await screen.findByText(/Listo\. Su código nuevo es/)).toBeTruthy();
   });
 
   it('C-TASA-MODOS: muestra la tasa en uso y su fuente aunque nadie la haya escrito, y guarda el modo', async () => {

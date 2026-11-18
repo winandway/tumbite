@@ -53,11 +53,14 @@ export function OfertaViajeModal({
   idioma,
   alAceptar,
   alRechazar,
+  alVencer,
 }: {
   oferta: OfertaViaje;
   idioma: Idioma;
   alAceptar: () => void;
   alRechazar: () => void;
+  /** C-OFERTA-VENCIDA-SE-CIERRA: en 0 s la tarjeta se cierra sola. */
+  alVencer: () => void;
 }) {
   const textos = enIdioma(TEXTOS_VIAJE, idioma);
   // C-ENVIO-TEXTOS: la oferta de un envío dice «envío de paquete», no «viaje».
@@ -82,6 +85,10 @@ export function OfertaViajeModal({
     alRechazar();
   };
   const quedan = Math.max(0, Math.ceil((vence - ahora) / 1000));
+  useEffect(() => {
+    if (quedan === 0) alVencer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quedan]);
   // C-CONDUCTOR-CONFIANZA: la oferta exclusiva al conductor de confianza dura un minuto.
   const total = oferta.deConfianza ? 60 : 30;
   const lineas = textoOfertaConfianza(oferta, idioma === 'en' ? 'en' : 'es');

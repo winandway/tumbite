@@ -96,6 +96,7 @@ describe('la oferta de viaje se muestra con su tiempo real', () => {
   it('la cuenta atrás usa los segundos que da el servidor, no el reloj del teléfono', () => {
     const s = leer('apps/repartidor/src/viajes/OfertaViaje.tsx');
     expect(s).toContain('venceOferta(oferta, Date.now())');
-    expect(leer('apps/repartidor/src/Inicio.tsx')).toContain('key={ofertasViaje[0].operacionId}');
+    // C-OFERTA-VENCIDA-SE-CIERRA: la llave es viaje + vencimiento (la reoferta arranca de cero).
+    expect(leer('apps/repartidor/src/Inicio.tsx')).toContain('key={claveOferta(ofertaViaje)}');
   });
 });

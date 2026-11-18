@@ -3,6 +3,7 @@ import { comoLlegar } from './comoLlegar';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  AppState,
   Image,
   Linking,
   Platform,
@@ -111,6 +112,8 @@ type RutaFlexInicio = {
 };
 const RUTA_FLEX_ACTIVA = ['ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_curso'];
 import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
+import { claveOferta, ofertaParaMostrar } from './viajes/ofertaTiempo';
+import { pararAlarmaOferta } from './sonidoOferta';
 import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
   abrirPagina,
@@ -747,6 +750,40 @@ export function Inicio() {
   // lo que pasara, también con la sesión vencida).
   // Estado y ofertas no pueden llegar tarde: con fallos, como mucho cada 20 s.
   useSondeo(cargar, 5000, true, true, { topeMs: ESPERA_MAXIMA_CRITICA_MS });
+  // C-OFERTA-VENCIDA-SE-CIERRA (robot, 18 nov 2026): al volver la app al frente (el conductor estaba
+  // en otra app) se pregunta YA: una oferta no puede aparecer con la cuenta atrás ya gastada.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (e) => {
+      if (e === 'active') void cargar();
+    });
+    return () => sub.remove();
+  }, [cargar]);
+  // Las ofertas que este teléfono vio llegar a 0 s: la tarjeta se cierra sola y no vuelve a salir
+  // (la reoferta del mismo viaje trae otro vencimiento: es otra tarjeta).
+  // C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026): el conductor nuevo que todavía no se conectó ni
+  // eligió ciudad quedaba en Miami; su primera ubicación del mapa fija su ciudad (una vez por sesión).
+  const zonaPedida = useRef(false);
+  // C-OFERTA-SUENA-EN-BUCLE: al cerrar sesión (el inicio se desmonta) nunca queda sonando.
+  useEffect(() => () => pararAlarmaOferta('sesion'), []);
+  useEffect(() => {
+    if (!aqui || zonaPedida.current) return;
+    zonaPedida.current = true;
+    void api
+      .pedir<{ cambio: boolean }>('POST', '/datos/conductor/zona-por-ubicacion', aqui)
+      .then((r) => {
+        if (r.cambio) {
+          void recargarPanel();
+          void cargar();
+        }
+      })
+      .catch((e: unknown) => console.warn('zona por ubicación', e));
+  }, [aqui, api, cargar, recargarPanel]);
+  const [vencidasAqui, setVencidasAqui] = useState<ReadonlySet<string>>(() => new Set());
+  const vencer = (clave: string) =>
+    setVencidasAqui((v) => (v.has(clave) ? v : new Set([...v, clave].slice(-50))));
+  const ofertaViaje = ofertaParaMostrar(ofertasViaje, vencidasAqui);
+  // Revisor (18 nov 2026): si la primera venció aquí, pasa a la siguiente.
+  const ofertaComida = ofertas.find((o) => !vencidasAqui.has(`comida@${o.id}`)) ?? null;
 
   // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): con un bloque de Flex, el inicio cambia entero al modo
   // bloque (la ruta, con la banda «todo lo demás está desconectado»). Comida, envíos y viajes no se
@@ -2217,6 +2254,7 @@ export function Inicio() {
             Documentos); los tres puntos de la cabecera abren cerrar sesión y borrar la cuenta. */}
         <PerfilAcordeon
           servicios={servicios.panel?.servicios ?? []}
+          alCambiarVehiculo={() => void recargarPanel()}
           menuCuenta={cuentaArriba ? <OpcionesCuenta /> : null}
           alMenu={() => setCuentaArriba((x) => !x)}
           inicial={
@@ -3271,30 +3309,30 @@ export function Inicio() {
             <Text style={{ color: '#666B73', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
           </View>
         ) : null}
-        {ofertasViaje[0] && !ofertas[0] ? (
+        {ofertaViaje && !ofertaComida ? (
           <OfertaViajeModal
-            // Una oferta nueva arranca su cuenta atrás desde cero (C-OFERTA-TIEMPO-REAL).
-            key={ofertasViaje[0].operacionId}
-            oferta={ofertasViaje[0]}
+            // Una oferta nueva (o la reoferta del mismo viaje, con otro vencimiento) arranca su
+            // cuenta atrás y su sonido desde cero (C-OFERTA-TIEMPO-REAL, C-OFERTA-VENCIDA-SE-CIERRA).
+            key={claveOferta(ofertaViaje)}
+            oferta={ofertaViaje}
             idioma={idioma}
             alAceptar={() =>
-              void accionViaje(
-                `/datos/conductor/operaciones/${ofertasViaje[0]!.operacionId}/aceptar`,
-              )
+              void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`)
             }
             alRechazar={() =>
-              void accionViaje(
-                `/datos/conductor/operaciones/${ofertasViaje[0]!.operacionId}/rechazar`,
-              )
+              void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/rechazar`)
             }
+            alVencer={() => vencer(claveOferta(ofertaViaje))}
           />
         ) : null}
-        {ofertas[0] ? (
+        {ofertaComida ? (
           <Oferta
-            oferta={ofertas[0]}
+            key={ofertaComida.id}
+            oferta={ofertaComida}
             idioma={idioma}
-            alAceptar={() => void accion(`/datos/repartidor/ofertas/${ofertas[0]!.id}/aceptar`)}
-            alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertas[0]!.id}/rechazar`)}
+            alAceptar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/aceptar`)}
+            alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/rechazar`)}
+            alVencer={() => vencer(`comida@${ofertaComida.id}`)}
           />
         ) : null}
         {/* C-CONECTAR-DESLIZANDO: volver de la pausa trae ofertas: se desliza, nunca se toca.

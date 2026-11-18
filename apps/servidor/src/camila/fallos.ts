@@ -181,6 +181,19 @@ export const TEXTOS_FALLO = {
     es: 'Gracias por avisar. Voy a reportarle esto al equipo técnico para que lo arreglen. Te hago unas preguntas cortas para que lo encuentren rápido. Si prefieres no seguir, escribe «cancelar».',
     en: 'Thanks for letting us know. I am going to report this to the technical team so they can fix it. I will ask you a few short questions so they can find it fast. If you would rather not continue, write “cancel.”',
   },
+  /** C-CAMILA-ADJUNTAR: la persona adjuntó una captura desde el chat, sin que Camila la pidiera. */
+  capturaPrimero: {
+    es: 'Recibí tu captura, gracias. Se la paso al equipo técnico para que lo arreglen. Te hago unas preguntas cortas para que lo encuentren rápido. Si prefieres no seguir, escribe «cancelar».',
+    en: 'I got your screenshot, thank you. I will pass it to the technical team so they can fix it. I will ask you a few short questions so they can find it fast. If you would rather not continue, write “cancel.”',
+  },
+  capturaEnMedio: {
+    es: 'Recibí tu captura, gracias. Sigamos con la pregunta:',
+    en: 'I got your screenshot, thank you. Let us continue with the question:',
+  },
+  inicialPorCaptura: {
+    es: 'Adjuntó una captura de pantalla desde el chat.',
+    en: 'Attached a screenshot from the chat.',
+  },
   captura: {
     es: 'Última cosa: ¿me mandas una captura de pantalla de lo que viste? Antes de mandarla, tapa cualquier contraseña o número de tarjeta que aparezca. Si no tienes una, escribe «sin captura».',
     en: 'Last thing: can you send me a screenshot of what you saw? Before sending it, cover any password or card number that shows. If you do not have one, write “no screenshot.”',
@@ -322,6 +335,8 @@ type Reporte = {
   inicial: string;
   preguntas_json: string;
   respuestas_json: string;
+  /** La captura ya llegó (se adjuntó desde el chat antes de terminar las preguntas). */
+  captura_clave: string | null;
 };
 
 /** Un reporte sin movimiento en este rato se cierra solo: nunca secuestra el chat normal. */
@@ -334,7 +349,7 @@ export const MINUTOS_REPORTE_ABIERTO = 30;
 export async function reporteEnCurso(db: D1Database, personaId: string) {
   const r = await db
     .prepare(
-      `SELECT id, tipo, estado, paso, inicial, preguntas_json, respuestas_json,
+      `SELECT id, tipo, estado, paso, inicial, preguntas_json, respuestas_json, captura_clave,
          actualizado_en > datetime('now', '-${MINUTOS_REPORTE_ABIERTO} minutes') AS vivo
          FROM camila_reportes_fallo WHERE persona_id = ? AND estado IN ('preguntando', 'captura')`,
     )
@@ -518,9 +533,62 @@ export async function pasoDeFallo(
     )
     .bind(r.paso + 1, JSON.stringify(respuestas), siguiente ? 'preguntando' : 'captura', r.id)
     .run();
-  return siguiente
-    ? { respuesta: texto(siguiente, i), pideCaptura: false }
-    : { respuesta: segun(TEXTOS_FALLO.captura, i), pideCaptura: true };
+  if (siguiente) return { respuesta: texto(siguiente, i), pideCaptura: false };
+  // C-CAMILA-ADJUNTAR: si la captura ya llegó (la adjuntó al empezar), no se vuelve a pedir.
+  if (r.captura_clave)
+    return {
+      respuesta: TEXTOS_FALLO.listo(await completar(db, r, p.id, respuestas), i),
+      pideCaptura: false,
+    };
+  return { respuesta: segun(TEXTOS_FALLO.captura, i), pideCaptura: true };
+}
+
+/**
+ * C-CAMILA-ADJUNTAR (18 nov 2026, Richard: «pensé que desde el mismo chat se podía adjuntar la
+ * captura»). La persona adjunta una captura sin que Camila se la pida: si no tenía un reporte
+ * abierto, se abre uno aquí (tipo «otro») y la captura queda puesta; después Camila hace las
+ * preguntas de técnico y, al terminar, el reporte se cierra sin volver a pedirla.
+ */
+export async function abrirPorCaptura(db: D1Database, p: Persona, pet: ContextoPeticion) {
+  const i: IdiomaCamila = p.idioma === 'en' ? 'en' : 'es';
+  const preguntas = await preguntasDe(db, 'otro');
+  const contexto = await contextoAutomatico(db, p, pet);
+  await db
+    .prepare(
+      'INSERT OR IGNORE INTO camila_reportes_fallo (id, persona_id, tipo, inicial, preguntas_json, contexto_json) VALUES (?, ?, ?, ?, ?, ?)',
+    )
+    .bind(
+      nuevoId(),
+      p.id,
+      'otro',
+      segun(TEXTOS_FALLO.inicialPorCaptura, i),
+      JSON.stringify(preguntas),
+      JSON.stringify(contexto),
+    )
+    .run();
+  return reporteEnCurso(db, p.id);
+}
+
+/** Guarda la captura adelantada en un reporte que todavía está en las preguntas. Null si ya tenía una. */
+export async function capturaAdelantada(
+  db: D1Database,
+  p: Persona,
+  reporteId: string,
+  clave: string,
+  tipo: string,
+) {
+  const i: IdiomaCamila = p.idioma === 'en' ? 'en' : 'es';
+  const r = await db
+    .prepare(
+      `UPDATE camila_reportes_fallo SET captura_clave = ?, captura_tipo = ?, actualizado_en = datetime('now')
+        WHERE id = ? AND persona_id = ? AND estado = 'preguntando' AND captura_clave IS NULL
+        RETURNING paso, preguntas_json`,
+    )
+    .bind(clave, tipo, reporteId, p.id)
+    .first<{ paso: number; preguntas_json: string }>();
+  if (!r) return null;
+  const pregunta = (JSON.parse(r.preguntas_json) as PreguntaDiagnostico[]).at(r.paso);
+  return pregunta ? texto(pregunta, i) : '';
 }
 
 /** La persona mandó la captura: se guarda su clave y se cierra el reporte. Devuelve el código, o null. */

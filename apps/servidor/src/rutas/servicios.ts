@@ -1,4 +1,11 @@
 import { cuantosHay } from '../canarioLecturas';
+import { ALTA_REPARTIDOR } from '../zonaConductor';
+import {
+  type RequisitoServicio,
+  type VehiculoConductor,
+  nombreVehiculo,
+  vehiculoQueSirve,
+} from '../vehiculoQueSirve';
 import { darRegaloConductorNuevo } from '../saldoConductores';
 import { alActivarseConductor } from '../camila/bienvenida';
 import { guardarFoto } from '../fotoLimpia';
@@ -272,6 +279,8 @@ export type EstadoConductor = {
   preferencia: boolean;
   puedeActivar: boolean;
   motivo: string;
+  /** C-CAMBIAR-VEHICULO: otro vehículo aprobado suyo que cumple todo lo de este servicio. */
+  cambiarA?: { id: string; nombre: string; tipo: string } | null;
 };
 
 /**
@@ -445,6 +454,65 @@ export async function estadoDelConductor(
       ingles,
     }),
   );
+  // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): si un servicio no se puede activar con el vehículo
+  // activo pero SÍ con otro vehículo aprobado del conductor, se dice cuál (como «Vehicles» de Uber
+  // Driver). Solo se consulta con un servicio aprobado que no se puede activar (lecturas pequeñas).
+  const pendientes = serviciosConductor.filter(
+    (x) =>
+      !x.puedeActivar &&
+      x.habilitacion === 'aprobada' &&
+      x.estadoServicio === 'disponible' &&
+      (x.motivo === 'requisitos_faltantes' || x.motivo === 'vehiculo_incompatible'),
+  );
+  if (pendientes.length) {
+    const [vehs, reqs, cumplidos] = await Promise.all([
+      db
+        .prepare(
+          "SELECT id, tipo, marca, modelo, anio FROM vehiculos WHERE conductor_id = ? AND estado = 'aprobado'",
+        )
+        .bind(conductorId)
+        .all<VehiculoConductor>(),
+      db
+        .prepare(
+          `SELECT sr.servicio_id, sr.requisito, rd.nivel, NULL AS vehiculo_tipo FROM servicio_requisitos sr
+             JOIN requisitos_def rd ON rd.requisito = sr.requisito WHERE sr.obligatorio = 1
+           UNION ALL
+           SELECT svr.servicio_id, svr.requisito, rd.nivel, svr.vehiculo_tipo FROM servicio_vehiculo_requisitos svr
+             JOIN requisitos_def rd ON rd.requisito = svr.requisito`,
+        )
+        .all<RequisitoServicio>(),
+      db
+        .prepare(
+          `SELECT requisito, vehiculo_id FROM cumplimientos WHERE conductor_id = ? AND estado = 'aprobado'
+             AND (vence_en IS NULL OR vence_en > datetime('now'))`,
+        )
+        .bind(conductorId)
+        .all<{ requisito: string; vehiculo_id: string }>(),
+    ]);
+    const hechos = new Set(cumplidos.results.map((x) => `${x.requisito}|${x.vehiculo_id}`));
+    for (const x of pendientes) {
+      const otro = vehiculoQueSirve({
+        servicioId: x.servicioId,
+        activoId: vehiculo?.id ?? null,
+        vehiculos: vehs.results,
+        tiposCompatibles: compat.results
+          .filter((c) => c.servicio_id === x.servicioId)
+          .map((c) => c.vehiculo_tipo),
+        anioMinimo: new Map(
+          compat.results
+            .filter((c) => c.servicio_id === x.servicioId)
+            .map((c) => [c.vehiculo_tipo, c.anio_minimo]),
+        ),
+        requisitos: reqs.results,
+        cumplidos: hechos,
+      });
+      if (otro) {
+        x.cambiarA = { id: otro.id, nombre: nombreVehiculo(otro), tipo: otro.tipo };
+        // Revisor (18 nov 2026): `motivo` NO cambia: la Driver 25 publicada espera los de siempre
+        // («vehiculo_incompatible» trae su botón «Usar este vehículo»). La app nueva mira `cambiarA`.
+      }
+    }
+  }
   return { vehiculoActivo: vehiculo ?? null, servicios: serviciosConductor };
 }
 
@@ -912,12 +980,21 @@ servicios.put('/conductor/vehiculo-activo', async (c) => {
       undefined,
       409,
     );
+  // Revisor (18 nov 2026): conectado con la moto, pasar al carro dejaba encendidos servicios que el
+  // carro no cubre y podían llegarle ofertas del servicio equivocado. Como en Uber Driver: el
+  // vehículo se cambia desconectado.
+  const conectado = await db
+    .prepare('SELECT conectado FROM repartidores WHERE usuario_id = ?')
+    .bind(u.id)
+    .first<{ conectado: number }>();
+  if (Number(conectado?.conectado) === 1)
+    throw new ErrorDatos('Desconéctate antes de cambiar de vehículo.', undefined, 409);
   if (vehiculoId) {
     const v = await miVehiculo(db, u.id, vehiculoId);
     if (v.estado !== 'aprobado')
       throw new ErrorDatos('Ese vehículo todavía no está aprobado.', 'vehiculoId', 409);
   }
-  await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
+  await db.prepare(ALTA_REPARTIDOR).bind(u.id).run();
   // Una sola sentencia: solo cambia si el vehículo sigue aprobado y es suyo en ese instante.
   // Fase 3: la base además lo impide con un pedido u operación en curso (aunque llegue a la vez).
   let r: D1Result;

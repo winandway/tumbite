@@ -19,11 +19,46 @@ export type MensajeCamila = {
 export type HiloCamila = {
   /** C-CAMILA-FALLOS: Camila está esperando la captura de pantalla de un reporte de fallo. */
   pideCaptura?: boolean;
+  /** C-CAMILA-ADJUNTAR: el reporte en curso ya tiene su captura. */
+  capturaPuesta?: boolean;
   verificada: boolean;
   equipoAtendiendo: boolean;
   mensajes: MensajeCamila[];
 };
 export type RespuestaCamila = HiloCamila & { respuesta: string | null };
+
+/**
+ * C-CAMILA-ENLACE-GUIA (18 nov 2026, Richard) — todos los países. Toda respuesta de Camila que sale
+ * de una guía de Docs termina con el enlace a esa guía. En el texto viaja como una línea
+ * «Ver la guía con capturas → https://…»; el chat de la web y el de Divoox Driver la pintan como un
+ * enlace que se toca (solo la etiqueta, nunca la dirección larga) y el correo como su botón.
+ */
+export const ETIQUETA_GUIA = {
+  es: 'Ver la guía con capturas →',
+  en: 'See the guide with screenshots →',
+} as const;
+const LINEA_GUIA =
+  /^(Ver la guía con capturas →|See the guide with screenshots →) (https:\/\/divoox\.com\/(?:es\/)?docs\/[a-z0-9/-]+)$/;
+export type TrozoMensaje = { texto: string } | { etiqueta: string; url: string };
+/** Parte el texto de un mensaje en párrafos de texto y enlaces a guías, en su orden. */
+export function trozosDeMensaje(texto: string): TrozoMensaje[] {
+  const trozos: TrozoMensaje[] = [];
+  let parrafo: string[] = [];
+  const cerrar = () => {
+    const t = parrafo.join('\n').trim();
+    if (t) trozos.push({ texto: t });
+    parrafo = [];
+  };
+  for (const linea of texto.split('\n')) {
+    const m = LINEA_GUIA.exec(linea.trim());
+    if (m?.[1] && m[2]) {
+      cerrar();
+      trozos.push({ etiqueta: m[1], url: m[2] });
+    } else parrafo.push(linea);
+  }
+  cerrar();
+  return trozos;
+}
 
 const CHAT_ES = {
   burbuja: 'Habla con nuestro equipo de soporte',
@@ -66,6 +101,9 @@ const CHAT_ES = {
   subirArchivos: 'Subir desde archivos',
   tomarFoto: 'Tomar foto',
   sinCaptura: 'No tengo captura',
+  // C-CAMILA-ADJUNTAR: el botón fijo del chat para mandar una captura sin que Camila la pida.
+  adjuntar: 'Adjuntar captura',
+  cancelarCaptura: 'Cancelar',
   /** Lo que se manda por el chat cuando la persona no tiene captura (Camila lo entiende así). */
   mensajeSinCaptura: 'sin captura',
   subiendo: 'Subiendo la captura…',
@@ -111,6 +149,8 @@ const CHAT_EN: typeof CHAT_ES = {
   subirArchivos: 'Upload from files',
   tomarFoto: 'Take photo',
   sinCaptura: 'I don’t have a screenshot',
+  adjuntar: 'Attach screenshot',
+  cancelarCaptura: 'Cancel',
   mensajeSinCaptura: 'no screenshot',
   subiendo: 'Uploading the screenshot…',
   capturaGrande: 'The screenshot is too large. The maximum is 10 MB.',

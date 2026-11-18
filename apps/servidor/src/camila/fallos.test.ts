@@ -186,7 +186,9 @@ describe('C-CAMILA-FALLOS: detectar y preguntar como un técnico', () => {
     expect(
       (await e.m.DB.prepare('SELECT COUNT(*) AS n FROM camila_fallos').first<{ n: number }>())?.n,
     ).toBe(0);
-    expect((await e.decir(a.token, 'hola')).datos.respuesta).toBe('respuesta con IA');
+    expect((await e.decir(a.token, 'necesito ayuda con la app')).datos.respuesta).toBe(
+      'respuesta con IA',
+    );
   });
 });
 
@@ -300,10 +302,18 @@ describe('C-CAMILA-FALLOS: la bitácora', () => {
 });
 
 describe('C-CAMILA-FALLOS: la captura es privada y se borra', () => {
-  it('se sube solo cuando Camila la pidió, queda privada y solo la ve el equipo', async () => {
+  it('lo que no es una imagen no entra; la captura queda privada y solo la ve el equipo', async () => {
     const e = await escenario();
     const a = await e.conductor('Ana Conductora');
-    expect((await e.subir(a.token)).status).toBe(409); // nadie la pidió
+    // Sin sesión ni ficha de visita no hay a quién guardársela.
+    expect(
+      (
+        await e.m.crudo('/datos/camila/fallos/captura', {
+          method: 'POST',
+          body: FOTO_PRUEBA as BodyInit,
+        })
+      ).status,
+    ).toBeGreaterThanOrEqual(400);
     await e.decir(a.token, 'la app no me deja recargar el saldo');
     for (const t of ['Abrí Ganancias', 'Recargar', 'Un error rojo', 'Siempre'])
       await e.decir(a.token, t);
@@ -800,5 +810,74 @@ describe('C-CAMILA-FALLOS: revisión de calidad del 18 nov', () => {
         ).first<{ captura_clave: string | null }>()
       )?.captura_clave,
     ).toBe('camila-fallos/viejo');
+  });
+});
+
+describe('C-CAMILA-ADJUNTAR: la captura se manda desde el mismo chat, sin esperar a que Camila la pida', () => {
+  const reportes = (e: Awaited<ReturnType<typeof escenario>>) =>
+    e.m.DB.prepare(
+      'SELECT estado, tipo, inicial, captura_clave, respuestas_json FROM camila_reportes_fallo ORDER BY creado_en',
+    ).all<{
+      estado: string;
+      tipo: string;
+      inicial: string;
+      captura_clave: string | null;
+      respuestas_json: string;
+    }>();
+
+  it('«¿cómo puedo enviar una captura de pantalla de un error?» no da un tutorial ni abre un reporte: señala el botón del chat', async () => {
+    const e = await escenario();
+    const a = await e.conductor('Diego Conductor');
+    const r = await e.decir(a.token, 'como puedo enviar una captura de pantalla de un error?');
+    expect(r.datos.respuesta).toMatch(/toca «Adjuntar captura», aquí abajo/);
+    expect(r.datos.respuesta).not.toMatch(/Mis casos de ayuda|divoox\.com/);
+    expect((await reportes(e)).results).toHaveLength(0);
+    expect(e.llamadasIa).toHaveLength(0);
+  });
+
+  it('adjunta la captura de una vez: se abre el reporte con la captura puesta, Camila hace las cuatro preguntas y al final NO la vuelve a pedir', async () => {
+    const e = await escenario();
+    const a = await e.conductor('Diego Conductor');
+    const sub = await e.subir(a.token);
+    expect(sub.status).toBe(201);
+    const cuerpo = (await sub.json()) as { respuesta: string };
+    expect(cuerpo.respuesta).toMatch(
+      /^Recibí tu captura, gracias\.[\s\S]*\n\n¿Qué estabas haciendo/,
+    );
+    let r = (await reportes(e)).results;
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ estado: 'preguntando', tipo: 'otro' });
+    expect(r[0]!.captura_clave).toMatch(/^camila-fallos\//);
+    // Una segunda captura del mismo reporte no pisa la primera.
+    expect((await e.subir(a.token)).status).toBe(409);
+    await e.decir(a.token, 'Abrí Ganancias y toqué Recargar');
+    await e.decir(a.token, 'Que me cargara el saldo');
+    await e.decir(a.token, 'Salió un aviso rojo que decía error de red');
+    const fin = await e.decir(a.token, 'Siempre');
+    expect(fin.datos.respuesta).toMatch(/Quedó reportado al equipo técnico con el número F-/);
+    expect(fin.datos.pideCaptura).toBeFalsy();
+    r = (await reportes(e)).results;
+    expect(r[0]).toMatchObject({ estado: 'completo' });
+    expect(r[0]!.captura_clave).toMatch(/^camila-fallos\//);
+    expect(JSON.parse(r[0]!.respuestas_json)).toHaveLength(4);
+    // Nada de esto pasa por la IA.
+    expect(e.llamadasIa).toHaveLength(0);
+  });
+
+  it('en medio de las preguntas también: la captura queda puesta y Camila repite la pregunta pendiente', async () => {
+    const e = await escenario();
+    const a = await e.conductor('Diego Conductor');
+    await e.decir(a.token, 'la app no me deja recargar el saldo');
+    await e.decir(a.token, 'Abrí Ganancias y toqué Recargar');
+    const sub = await e.subir(a.token);
+    expect(sub.status).toBe(201);
+    expect(((await sub.json()) as { respuesta: string }).respuesta).toMatch(
+      /^Recibí tu captura, gracias\. Sigamos con la pregunta: ¿Qué esperabas/,
+    );
+    await e.decir(a.token, 'Que me cargara el saldo');
+    await e.decir(a.token, 'Un aviso rojo');
+    const fin = await e.decir(a.token, 'Siempre');
+    expect(fin.datos.respuesta).toMatch(/Quedó reportado/);
+    expect((await reportes(e)).results[0]).toMatchObject({ estado: 'completo', tipo: 'pago' });
   });
 });

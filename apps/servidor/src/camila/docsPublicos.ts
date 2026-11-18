@@ -735,7 +735,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Abre Divoox y toca «Moto».",
    "Confirma el punto de recogida (puedes moverlo en el mapa) y escribe tu destino.",
    "Mira el precio fijo y elige cómo pagas: la app te muestra los métodos de tu ciudad (en Venezuela, efectivo o pago móvil).",
-   "Toca «Pedir». Cuando el conductor acepte, verás sus datos y su ubicación.",
+   "Toca «Solicitar moto». Cuando el conductor acepte, verás sus datos y su ubicación.",
    "Al subirte, comprueba la placa y, si la app te muestra un código, díselo al conductor."
   ],
   "cuerpo": "Divoox Moto te lleva rápido por la ciudad. Está disponible en las ciudades donde Divoox Moto esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo. El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares. Al confirmar buscamos al conductor más cercano. Cuando acepta, ves su nombre, su moto, el color y la placa, y lo sigues en el mapa. Para empezar el viaje, en las ciudades donde se usa, le dices al conductor tu código de cuatro números. Así sabes que te subes con la persona correcta."
@@ -1078,7 +1078,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Tu invitado escribe tu código al crear su cuenta.",
    "Cuando complete sus carreras, el saldo entra solo."
   ],
-  "cuerpo": "Abre Perfil → «Mi equipo e invitaciones». Ahí está tu código, tu QR y el botón «Compartir mi enlace» para mandarlo por WhatsApp. Tu invitado abre el enlace, baja Divoox Driver y escribe tu código en «Código de invitación» al crear su cuenta. Si se le olvidó, lo escribe después en «Mi equipo e invitaciones» → «¿Te invitaron?», antes de su primera carrera. Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones. Tu invitado recibe el regalo de arranque de su ciudad, si está encendido. Las carreras que tú le pidas a tu invitado (o él a ti) no cuentan, nadie puede invitarse a sí mismo con otra cuenta o el mismo teléfono, y hay un máximo de premios por persona al mes. Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan."
+  "cuerpo": "Abre Perfil → «Mi equipo e invitaciones». Ahí está tu código, tu QR y el botón «Compartir mi enlace» para mandarlo por WhatsApp. Tu invitado abre el enlace, baja Divoox Driver y escribe tu código en «Código de invitación» al crear su cuenta. Si se le olvidó, lo escribe después en «Mi equipo e invitaciones» → «¿Te invitaron?», antes de su primera carrera. Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones. Tu invitado recibe el regalo de arranque de su ciudad, si está encendido. Las carreras que tú le pidas a tu invitado (o él a ti) no cuentan, nadie puede invitarse a sí mismo con otra cuenta o el mismo teléfono, y hay un máximo de premios por persona al mes. Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan. Y cada miembro ve ahí, arriba, a qué equipo pertenece y quién es su líder."
  },
  {
   "idioma": "es",
@@ -1537,7 +1537,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Cuando llegue la oferta, revisa la ganancia y la ruta, y toca «Aceptar viaje».",
    "Ve a la recogida y toca «Llegué».",
    "Pídele al pasajero su código, escríbelo y toca «Iniciar viaje».",
-   "Si paga por pago móvil, confirma si te llegó. Al llegar al destino, toca «Terminar viaje» y, si es en efectivo, cobra lo que te dice la app."
+   "Si paga por pago móvil, confirma si te llegó. Al llegar al destino, desliza «Desliza para terminar el viaje» y, si es en efectivo, cobra lo que te dice la app."
   ],
   "cuerpo": "Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino. Al llegar a la recogida tocas «Llegué». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero. Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar. En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias."
  },
@@ -1574,7 +1574,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Revisa la oferta: la ganancia, las paradas y si hay tarifa dinámica. Toca «Aceptar viaje».",
    "Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, toca «Llegué a la parada».",
    "Cuando tu pasajero vuelva, toca «Seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.",
-   "Con todas las paradas hechas, lleva a tu pasajero al destino y toca «Terminar viaje»."
+   "Con todas las paradas hechas, lleva a tu pasajero al destino y desliza «Desliza para terminar el viaje»."
   ],
   "cuerpo": "Un pasajero puede agregar paradas al pedir o con el viaje en marcha. La oferta te dice cuántas son y dónde quedan, y lo que ganas ya cuenta todo el recorrido. Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar tocas «Llegué a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, tocas «Seguir el viaje». Si tu pasajero ya no quiere parar, toca «Saltar parada» dos veces. El precio se recalcula y nunca sube por saltarla. Mientras quede una parada por hacer, la app no te deja terminar el viaje. Si el pasajero agrega o quita una parada en el camino, te llega un aviso y la pantalla te muestra la ruta nueva. La comisión se ajusta sola al precio nuevo. Cuando hay tarifa dinámica en tu ciudad, la oferta lo dice con su multiplicador. Ya está incluida en lo que ganas."
  },
@@ -1635,7 +1635,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Espera la revisión de nuestro equipo: te avisamos cuando esté aprobado.",
    "Cuando esté listo, desliza la tarjeta de ese servicio para conectarte."
   ],
-  "cuerpo": "Tus datos se separan en dos grupos. Los del perfil (tu foto, tu nombre, tu documento de identidad y tus antecedentes) se piden una sola vez y sirven para todos los servicios. Los del vehículo (licencia, registro, seguro y fotos) van con cada moto o carro que registras. En el inicio, los servicios que funcionan en tu ciudad y todavía no tienes aparecen con «Agregar este servicio». Tócalo. Arriba ves, en verde, todo lo que ya está verificado: «Ya verificado, no se vuelve a pedir». Debajo, «Falta para este servicio», con solo los pasos nuevos, numerados. Toca «Empezar» o cualquier paso. Se abre la pantalla de ese papel: cada foto se puede tomar con la cámara o subir desde tus archivos, y lo que escribes se guarda solo aunque cierres la app. Si nuestro equipo rechaza un papel, ves el motivo escrito como instrucción, por ejemplo: «Tómala de día, de frente y a un paso de distancia». Vuelves a tomar la foto desde ahí mismo. En «Perfil» tienes todo ordenado en dos secciones que se abren y se cierran: «Mi vehículo», con una tarjeta por cada vehículo y sus papeles (aprobado, pendiente o rechazado), y «Documentos», con los papeles de tu perfil y en qué servicios sirve cada uno. Cuando todo está aprobado, el servicio aparece en tu inicio con «Desliza → para conectar»."
+  "cuerpo": "Tus datos se separan en dos grupos. Los del perfil (tu foto, tu nombre, tu documento de identidad y tus antecedentes) se piden una sola vez y sirven para todos los servicios. Los del vehículo (licencia, registro, seguro y fotos) van con cada moto o carro que registras. En el inicio, los servicios que funcionan en tu ciudad y todavía no tienes aparecen con «Agregar este servicio». Tócalo. Arriba ves, en verde, todo lo que ya está verificado: «Ya verificado, no se vuelve a pedir». Debajo, «Falta para este servicio», con solo los pasos nuevos, numerados. Toca «Empezar» o cualquier paso. Se abre la pantalla de ese papel: cada foto se puede tomar con la cámara o subir desde tus archivos, y lo que escribes se guarda solo aunque cierres la app. Si nuestro equipo rechaza un papel, ves el motivo escrito como instrucción, por ejemplo: «Tómala de día, de frente y a un paso de distancia». Vuelves a tomar la foto desde ahí mismo. En «Perfil» tienes todo ordenado en dos secciones que se abren y se cierran: «Mi vehículo», con una tarjeta por cada vehículo y sus papeles (aprobado, pendiente o rechazado), y «Documentos», con los papeles de tu perfil y en qué servicios sirve cada uno. Cuando todo está aprobado, el servicio aparece en tu inicio con «Desliza → para conectar». Si tienes moto y carro, trabajas con uno a la vez, como en las apps de viajes más grandes. Cuando un servicio funciona con tu otro vehículo, su tarjeta lo dice («Usa tu Toyota Corolla»): tócala y toca «Usar mi Toyota Corolla». También puedes cambiarlo en Perfil → «Mi vehículo» → abre el vehículo → «Usar este vehículo». E…"
  },
  {
   "idioma": "es",
@@ -1685,10 +1685,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Acepta la oferta y ve a la recogida.",
    "Toca «Llegué», recibe el paquete y toma su foto.",
    "Toca «Iniciar viaje» y llévalo a la dirección de entrega.",
-   "Pide el PIN de entrega, escríbelo y toca «Entregar el paquete».",
+   "Pide el PIN de entrega, escríbelo y desliza «Desliza para entregar el paquete».",
    "Si quien recibe no tiene el PIN, llama a soporte desde la app."
   ],
-  "cuerpo": "La oferta te muestra lo que ganas, cómo cobras, la distancia hasta la recogida y del recorrido, el tiempo estimado, dónde recoges y a dónde llevas el paquete. Si no respondes a tiempo, pasa al siguiente conductor. Al llegar a la recogida, toca «Llegué», recibe el paquete y toma su foto: sin la foto no puedes empezar. Luego toca «Iniciar viaje» y llévalo a la dirección de entrega. Al llegar, pídele el PIN de entrega a quien recibe, escríbelo y toca «Entregar el paquete». Si el envío es en efectivo, la app te dice cuánto cobrar."
+  "cuerpo": "La oferta te muestra lo que ganas, cómo cobras, la distancia hasta la recogida y del recorrido, el tiempo estimado, dónde recoges y a dónde llevas el paquete. Si no respondes a tiempo, pasa al siguiente conductor. Al llegar a la recogida, toca «Llegué», recibe el paquete y toma su foto: sin la foto no puedes empezar. Luego toca «Iniciar viaje» y llévalo a la dirección de entrega. Al llegar, pídele el PIN de entrega a quien recibe, escríbelo y desliza «Desliza para entregar el paquete». Si el envío es en efectivo, la app te dice cuánto cobrar."
  },
  {
   "idioma": "es",
@@ -1703,7 +1703,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Registra tu moto y marca si tiene cajón.",
    "Acepta el envío y toma la foto del paquete al recogerlo.",
    "Al llegar, escribe el PIN de quien recibe y, si quieres, deja una foto de la entrega.",
-   "Toca «Entregar el paquete»."
+   "Desliza «Desliza para entregar el paquete»."
   ],
   "cuerpo": "Cada envío tiene un tamaño. Con moto recibes sobres y paquetes pequeños; si tu moto tiene cajón o baúl, también medianos. Con carro recibes todos. Para recibir medianos en moto, marca «Mi moto tiene cajón o baúl» al registrar tu moto. Al entregar, pide el PIN a quien recibe. Si quieres dejar constancia, toca «Agregar foto de la entrega» y elige «Tomar foto» o «Subir desde archivos» antes de terminar."
  },
@@ -1764,9 +1764,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Si quieres hablar con alguien del equipo, escribe «hablar con una persona».",
    "Por correo, responde cualquier correo de Camila: sigue la misma conversación.",
    "Si una respuesta de Camila no te parece correcta, toca «Reportar respuesta» debajo de ella: el equipo la revisa.",
-   "Si algo falla, cuéntaselo a Camila, responde sus cuatro preguntas y manda la captura (o toca «No tengo captura»)."
+   "Si algo falla, cuéntaselo a Camila, responde sus cuatro preguntas y manda la captura (o toca «No tengo captura»).",
+   "También puedes mandar la captura primero: toca «Adjuntar captura» en el chat, elige la imagen o toma la foto, y Camila te hace sus preguntas después."
   ],
-  "cuerpo": "Camila Campos es la asistente virtual del equipo de soporte de Divoox. Te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse. Si le preguntas si es una persona, siempre te dice la verdad: es la asistente virtual de Divoox. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación. Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números. Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña. Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó. Si eres líder de un equipo de conductores, tu enlace y tu código QR están en Divoox Driver, «Mi equipo». Camila te manda el plan para registrar a tu gente y te avisa cada vez que alguien se registra y cada vez que alguien queda aprobado, con cuántos llevas. Si algo de la app falla (no carga, se cierra, no te deja pagar o recargar), cuéntaselo a Camila. Ella lo reporta al equipo técnico y te hace cuatro preguntas cortas: qué estabas haciendo, qué esperabas que pasara, qué viste en la pantalla y si…"
+  "cuerpo": "Camila Campos, del equipo de soporte de Divoox, te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse. Si le preguntas si es una persona, siempre te dice la verdad. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación. Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números. Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña. Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó. Si eres líder de un equipo de conductores, tu enlace y tu código QR están en Divoox Driver, «Mi equipo». Camila te manda el plan para registrar a tu gente y te avisa cada vez que alguien se registra y cada vez que alguien queda aprobado, con cuántos llevas. Si algo de la app falla (no carga, se cierra, no te deja pagar o recargar), cuéntaselo a Camila. Ella lo reporta al equipo técnico y te hace cuatro preguntas cortas: qué estabas haciendo, qué esperabas que pasara, qué viste en la pantalla y si te pasa siempre. Al final te pide una captura de pantalla…"
  },
  {
   "idioma": "es",
@@ -3068,7 +3069,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Open Divoox and tap “Moto”.",
    "Confirm your pickup point (you can move it on the map) and enter your destination.",
    "Check the upfront price and choose how to pay: the app shows the methods available in your city (in the United States, cash or card).",
-   "Tap “Request”. When a driver accepts, you’ll see their details and location.",
+   "Tap “Request moto”. When a driver accepts, you’ll see their details and location.",
    "When you get on, check the plate and, if the app shows a code, tell it to the driver."
   ],
   "cuerpo": "Divoox Moto gets you across the city fast. It’s available in the cities where Divoox Moto is open; if it isn’t open in yours yet, the app won’t let you request it. The price is upfront: you see it before you request and it doesn’t change with traffic. In the United States the price is in US dollars, and the app shows it next to the distance and the time of your ride, so you know what you’ll pay before you get on. When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map. To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person."
@@ -3411,7 +3412,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Your invitee enters your code when creating their account.",
    "When they complete their trips, the balance goes in on its own."
   ],
-  "cuerpo": "Open Profile → “My team and invitations.” There you’ll find your code, your QR and the “Share my link” button. Your invitee opens the link, gets Divoox Driver and enters your code in “Invitation code” when creating their account. If they forgot, they enter it later in “My team and invitations” → “Were you invited?”, before their first trip. You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions. Your invitee gets their city’s starter gift, if it’s on. Trips you request from your invitee (or they from you) don’t count, nobody can invite themselves with another account or the same phone, and there’s a monthly limit of rewards per person. Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done."
+  "cuerpo": "Open Profile → “My team and invitations.” There you’ll find your code, your QR and the “Share my link” button. Your invitee opens the link, gets Divoox Driver and enters your code in “Invitation code” when creating their account. If they forgot, they enter it later in “My team and invitations” → “Were you invited?”, before their first trip. You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions. Your invitee gets their city’s starter gift, if it’s on. Trips you request from your invitee (or they from you) don’t count, nobody can invite themselves with another account or the same phone, and there’s a monthly limit of rewards per person. Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done. Each member sees there, at the top, which team they’re on and who their leader is."
  },
  {
   "idioma": "en",
@@ -3815,7 +3816,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Before you accept, check the top of the offer: it says whether you collect cash at the end.",
    "During the ride, the amount to collect stays on screen under the destination.",
-   "When you tap “End ride,” collect the amount shown under “Collect in cash.”",
+   "When you slide “Slide to end the ride,” collect the amount shown under “Collect in cash.”",
    "Rate your rider and tap “Done” to get your next offer."
   ],
   "cuerpo": "Every offer tells you how the rider pays before you accept. On a cash ride you collect the full upfront price from the rider when you arrive: the app shows “Collect in cash” with the exact amount during the ride and again when it ends. On a card ride there is nothing to collect: the rider pays in the app and the fare is added to your earnings. In some countries drivers work with a prepaid fee balance that they top up with a code at a sales point. That balance isn’t used in the United States, so there is nothing to top up before you drive here."
@@ -3869,7 +3870,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "When an offer arrives, check the earnings and route, and tap “Accept ride.”",
    "Go to the pickup and tap “I’ve arrived.”",
    "Ask the rider for their code, enter it, and tap “Start ride.”",
-   "At the destination, tap “End ride” and, if it’s cash, collect what the app tells you."
+   "At the destination, slide “Slide to end the ride” and, if it’s cash, collect what the app tells you."
   ],
   "cuerpo": "Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination. When you reach the pickup, tap “I’ve arrived.” The ride starts only when you enter the four-digit code the rider gives you. During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived. In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings."
  },
@@ -3906,7 +3907,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Check the offer: the earnings, the stops, and whether there’s dynamic pricing. Tap “Accept ride.”",
    "Start the ride as usual. The app takes you to the first stop: when you get there, tap “I’m at the stop.”",
    "When your rider is back, tap “Continue the ride.” If they no longer want to stop, tap “Skip stop” twice.",
-   "With every stop done, take your rider to the destination and tap “End ride.”"
+   "With every stop done, take your rider to the destination and slide “Slide to end the ride.”"
   ],
   "cuerpo": "A rider can add stops when requesting or with the ride underway. The offer tells you how many there are and where, and what you earn already counts the whole trip. With the ride in progress, the app takes you to the next stop. When you get there, tap “I’m at the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, tap “Continue the ride.” If your rider no longer wants to stop, tap “Skip stop” twice. The price is recalculated and never goes up for skipping it. While there’s a stop left to make, the app won’t let you end the ride. If the rider adds or removes a stop along the way, you get a notification and the screen shows the new route. The commission adjusts on its own to the new price. When there’s dynamic pricing in your city, the offer says so with its multiplier. It’s already included in what you earn."
  },
@@ -3967,7 +3968,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Wait for our team’s review: we’ll let you know when it’s approved.",
    "When it’s ready, slide that service’s card to go online."
   ],
-  "cuerpo": "Your info is split into two groups. Profile info (your photo, your name, your ID and your background check) is asked for once and works for every service. Vehicle info (license, registration, insurance and photos) goes with each motorcycle or car you register. On the home screen, services that work in your city but you don’t have yet show “Add this service.” Tap it. At the top you see, in green, everything that’s already verified: “Already verified · we won’t ask again.” Below it, “Still needed for this service,” with only the new steps, numbered. Tap “Start” or any step. That document’s screen opens: every photo can be taken with your camera or uploaded from your files, and whatever you type is saved automatically, even if you close the app. If our team rejects a document, you see the reason written as an instruction, for example: “Take it in daylight, straight on, one step away.” You can retake the photo right there. Under “Profile,” everything is organized in two sections that open and close: “My vehicle,” with a card for each vehicle and its documents (approved, pending or rejected), and “Documents,” with your profile documents and which services each one counts for. Once everything is approved, the service shows up on your home screen with “Slide → to go online.”"
+  "cuerpo": "Your info is split into two groups. Profile info (your photo, your name, your ID and your background check) is asked for once and works for every service. Vehicle info (license, registration, insurance and photos) goes with each motorcycle or car you register. On the home screen, services that work in your city but you don’t have yet show “Add this service.” Tap it. At the top you see, in green, everything that’s already verified: “Already verified · we won’t ask again.” Below it, “Still needed for this service,” with only the new steps, numbered. Tap “Start” or any step. That document’s screen opens: every photo can be taken with your camera or uploaded from your files, and whatever you type is saved automatically, even if you close the app. If our team rejects a document, you see the reason written as an instruction, for example: “Take it in daylight, straight on, one step away.” You can retake the photo right there. Under “Profile,” everything is organized in two sections that open and close: “My vehicle,” with a card for each vehicle and its documents (approved, pending or rejected), and “Documents,” with your profile documents and which services each one counts for. Once everything is approved, the service shows up on your home screen with “Slide → to go online.” If you have a moto and a car, you work with one at a time, just like the biggest ride apps. When a service works with your other vehicle, its card says so (“Use your Toyota Corolla”): tap it and tap “Use my Toyota Corolla.” You can also switch in Profile → “My vehicle” → open the vehicle → “Use this vehicle.”…"
  },
  {
   "idioma": "en",
@@ -4017,10 +4018,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Accept the offer and go to the pickup.",
    "Tap “I’ve arrived”, get the package and take its photo.",
    "Tap “Start ride” and take it to the drop-off address.",
-   "Ask for the delivery PIN, enter it and tap “Deliver the package”.",
+   "Ask for the delivery PIN, enter it and slide “Slide to deliver the package”.",
    "If the recipient doesn’t have the PIN, call support from the app."
   ],
-  "cuerpo": "The offer shows what you earn, how you get paid, the distance to the pickup and of the trip, the estimated time, where you pick up and where you take the package. If you don’t respond in time, it goes to the next driver. At pickup, tap “I’ve arrived”, get the package and take its photo: you can’t start without it. Then tap “Start ride” and take it to the drop-off address. When you get there, ask the recipient for the delivery PIN, enter it and tap “Deliver the package”. If the delivery is paid in cash, the app tells you how much to collect."
+  "cuerpo": "The offer shows what you earn, how you get paid, the distance to the pickup and of the trip, the estimated time, where you pick up and where you take the package. If you don’t respond in time, it goes to the next driver. At pickup, tap “I’ve arrived”, get the package and take its photo: you can’t start without it. Then tap “Start ride” and take it to the drop-off address. When you get there, ask the recipient for the delivery PIN, enter it and slide “Slide to deliver the package”. If the delivery is paid in cash, the app tells you how much to collect."
  },
  {
   "idioma": "en",
@@ -4035,7 +4036,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Register your motorcycle and check whether it has a delivery box.",
    "Accept the delivery and take the package photo at pickup.",
    "When you arrive, enter the recipient’s PIN and, if you want, leave a delivery photo.",
-   "Tap “Deliver the package.”"
+   "Slide “Slide to deliver the package.”"
   ],
   "cuerpo": "Every delivery has a size. On a motorcycle you get envelopes and small packages; if your motorcycle has a delivery box, medium ones too. By car you get all sizes. To get medium packages on a motorcycle, check “My motorcycle has a delivery box” when you register it. At drop-off, ask the recipient for the PIN. To keep a record, tap “Add a delivery photo” and choose “Take photo” or “Upload from files” before finishing."
  },
@@ -4096,9 +4097,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "If you want to talk to someone on the team, write “talk to a person.”",
    "By email, reply to any email from Camila: it continues the same conversation.",
    "If a reply from Camila doesn’t seem right, tap “Report reply” under it: our team reviews it.",
-   "If something is broken, tell Camila, answer her four questions and send the screenshot (or tap “I don’t have a screenshot”)."
+   "If something is broken, tell Camila, answer her four questions and send the screenshot (or tap “I don’t have a screenshot”).",
+   "You can also send the screenshot first: tap “Attach screenshot” in the chat, choose the image or take the photo, and Camila asks her questions afterward."
   ],
-  "cuerpo": "Camila Campos is the virtual assistant of the Divoox support team. She helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated. If you ask whether she is a person, she always tells you the truth: she is the Divoox virtual assistant. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation. There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code. To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password. Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved. If you lead a team of drivers, your link and QR code are in Divoox Driver, “My team.” Camila sends you the plan to sign up your people and tells you every time someone signs up and every time someone is approved, with how many you have. If something in the app is broken (it won’t load, it closes, it won’t let you pay or top up), tell Camila. She reports it to the technical team and asks you four short questions: what you were doing, what you expected to happen, what you saw on the scree…"
+  "cuerpo": "Camila Campos, from the Divoox support team, helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated. If you ask whether she is a person, she always tells you the truth. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation. There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code. To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password. Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved. If you lead a team of drivers, your link and QR code are in Divoox Driver, “My team.” Camila sends you the plan to sign up your people and tells you every time someone signs up and every time someone is approved, with how many you have. If something in the app is broken (it won’t load, it closes, it won’t let you pay or top up), tell Camila. She reports it to the technical team and asks you four short questions: what you were doing, what you expected to happen, what you saw on the screen and whether it happens every time. At the end she asks for a…"
  },
  {
   "idioma": "en",

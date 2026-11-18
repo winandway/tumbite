@@ -25,6 +25,8 @@ export type Aviso =
       tipo: 'pedido';
       pedidoId: string;
       estado: string;
+      /** Lo que se le muestra al cliente (la app nueva): «enviado» con pago al recibir. */
+      estadoVisible: string;
       restauranteId: string;
       restauranteNombre: string;
       creadoEn: string;
@@ -48,7 +50,7 @@ avisos.get('/mis-avisos', async (c) => {
 
   const pedidos = await db
     .prepare(
-      `SELECT p.id, p.estado, p.restaurante_id, p.creado_en, r.nombre FROM pedidos p
+      `SELECT p.id, p.estado, p.metodo_pago, p.restaurante_id, p.creado_en, r.nombre FROM pedidos p
          JOIN restaurantes r ON r.id = p.restaurante_id
         WHERE p.cliente_id = ? AND p.estado IN (${EN_CURSO.map((e) => `'${e}'`).join(',')})
         ORDER BY p.creado_en DESC LIMIT 10`,
@@ -57,6 +59,7 @@ avisos.get('/mis-avisos', async (c) => {
     .all<{
       id: string;
       estado: string;
+      metodo_pago: string | null;
       restaurante_id: string;
       creado_en: string;
       nombre: string;
@@ -65,7 +68,13 @@ avisos.get('/mis-avisos', async (c) => {
     lista.push({
       tipo: 'pedido',
       pedidoId: p.id,
+      // Revisor B3 (18 nov 2026): `estado` queda como lo entiende el cliente 27 publicado; con pago
+      // al recibir, «pagado» todavía no está pagado y la app nueva lee `estadoVisible` («enviado»).
       estado: p.estado,
+      estadoVisible:
+        p.estado === 'pagado' && p.metodo_pago && p.metodo_pago !== 'tarjeta'
+          ? 'enviado'
+          : p.estado,
       restauranteId: p.restaurante_id,
       restauranteNombre: p.nombre,
       creadoEn: p.creado_en,

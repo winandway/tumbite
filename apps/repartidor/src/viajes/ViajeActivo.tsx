@@ -11,7 +11,15 @@ import {
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
-import { Boton, C, ChatPedido, achicarFotoEvidencia, fotoConCamara, Text } from '@tumbite/movil';
+import {
+  Boton,
+  C,
+  ChatPedido,
+  Deslizador,
+  achicarFotoEvidencia,
+  fotoConCamara,
+  Text,
+} from '@tumbite/movil';
 
 /** C-ENVIO-FOTO-ENTREGA: la cámara y los archivos para la pieza común de fotos. */
 const CAMARA_ENTREGA = {
@@ -640,11 +648,18 @@ export function ViajeActivo({
         </>
       ) : null}
       {viaje.estado === 'en_curso' && !parada && (!esEnvio || pinEntrega.length === 4) ? (
-        <Boton
+        // C-CERRAR-DESLIZANDO (robot, 18 nov 2026): entregar un envío o terminar un viaje se
+        // desliza, como el cierre de la entrega de comida: un toque accidental no lo cierra.
+        <Deslizador
+          variante="accion"
+          tono="exito"
+          testID="viaje-terminar"
           texto={esEnvio ? t.entregar : t.terminar}
-          alTocar={() => void paso('terminar', esEnvio ? { pinEntrega } : {}, 'terminado')}
-          cargando={enviando}
-          exito
+          accionLector={esEnvio ? t.entregar : t.terminar}
+          ocupado={enviando}
+          // Revisor (18 nov 2026): con lector de pantalla, cerrar pregunta antes.
+          confirmar={esEnvio ? t.confirmarEntregar : t.confirmarTerminar}
+          alConfirmar={() => paso('terminar', esEnvio ? { pinEntrega } : {}, 'terminado')}
         />
       ) : null}
 

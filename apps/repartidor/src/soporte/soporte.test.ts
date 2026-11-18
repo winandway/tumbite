@@ -49,7 +49,10 @@ describe('C-CAMILA-CHAT en Driver', () => {
 
   it('C-CAMILA-FALLOS: el bloque de la captura con los dos botones, el aviso y «No tengo captura»', () => {
     const chat = leer('soporte', 'ChatSoporteApp.tsx');
-    expect(chat).toContain('hilo?.pideCaptura ? (');
+    expect(chat).toContain('hilo?.pideCaptura || adjuntar ? (');
+    // C-CAMILA-ADJUNTAR: el botón fijo «Adjuntar captura» abre el mismo bloque sin esperar a Camila.
+    expect(chat).toContain('testID="chat-adjuntar"');
+    expect(chat).toContain('{t.adjuntar}');
     // Regla de la cámara: «Subir desde archivos» y «Tomar foto», con la pieza única.
     expect(chat).toContain("elegir('archivos')");
     expect(chat).toContain("elegir('camara')");

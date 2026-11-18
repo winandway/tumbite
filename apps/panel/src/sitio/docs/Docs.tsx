@@ -52,7 +52,7 @@ function SimbolosIconosGuia() {
 /**
  * Docs estilo Wikipedia: barra lateral con secciones e íconos que NUNCA se pierde, buscador
  * (⌘K) que filtra mientras se escribe, y cada guía en su propia dirección /docs/<seccion>/<guia>.
- * En celular la barra va plegada y arriba del contenido va «← Docs».
+ * En celular el contenido va primero (C-DOCS-AL-GRANO), arriba va «← Docs» y el menú queda debajo.
  */
 export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const t = enIdioma(TEXTOS_DOCS, idioma);
@@ -218,37 +218,6 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   return (
     <div className="docs">
       <SimbolosIconosGuia />
-      <aside className="docs-barra">
-        <Enlace a="/docs" className={`docs-inicio${!seccion && !comoHago ? ' activo' : ''}`}>
-          <Icono nombre="libro" tamano={18} /> {t.titulo}
-        </Enlace>
-        <Enlace a="/docs/how-to" className={`docs-inicio${comoHago ? ' activo' : ''}`}>
-          <Icono nombre="soporte" tamano={18} /> {t.comoHago}
-        </Enlace>
-        <nav aria-label={t.menu}>
-          {secciones.map((s) => (
-            <details key={s.id} open={(!seccion && !comoHago) || s.id === seccion?.id}>
-              <summary className={s.id === seccion?.id ? 'activo' : undefined}>
-                <Icono nombre={s.icono} tamano={18} /> {s.titulo}
-              </summary>
-              <ul>
-                {s.guias.map((g) => (
-                  <li key={g.id}>
-                    <Enlace
-                      a={`/docs/${s.id}/${g.id}`}
-                      className={g.id === guia?.id && s.id === seccion?.id ? 'activo' : undefined}
-                    >
-                      <IconoGuia id={g.id} tamano={15} />
-                      <span>{g.titulo}</span>
-                    </Enlace>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ))}
-        </nav>
-      </aside>
-
       <main className="docs-contenido">
         {/* El buscador vive siempre en el mismo sitio: si se moviera, perdería el foco al escribir. */}
         <div className={!seccion && !resultados ? 'docs-buscador-grande' : undefined}>
@@ -338,6 +307,38 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
           </>
         )}
       </main>
+      {/* C-DOCS-AL-GRANO: el menú va DESPUÉS del contenido en la página (el celular y Google llegan
+          directo a la guía); en pantallas anchas se ve a la izquierda, como siempre. */}
+      <aside className="docs-barra">
+        <Enlace a="/docs" className={`docs-inicio${!seccion && !comoHago ? ' activo' : ''}`}>
+          <Icono nombre="libro" tamano={18} /> {t.titulo}
+        </Enlace>
+        <Enlace a="/docs/how-to" className={`docs-inicio${comoHago ? ' activo' : ''}`}>
+          <Icono nombre="soporte" tamano={18} /> {t.comoHago}
+        </Enlace>
+        <nav aria-label={t.menu}>
+          {secciones.map((s) => (
+            <details key={s.id} open={(!seccion && !comoHago) || s.id === seccion?.id}>
+              <summary className={s.id === seccion?.id ? 'activo' : undefined}>
+                <Icono nombre={s.icono} tamano={18} /> {s.titulo}
+              </summary>
+              <ul>
+                {s.guias.map((g) => (
+                  <li key={g.id}>
+                    <Enlace
+                      a={`/docs/${s.id}/${g.id}`}
+                      className={g.id === guia?.id && s.id === seccion?.id ? 'activo' : undefined}
+                    >
+                      <IconoGuia id={g.id} tamano={15} />
+                      <span>{g.titulo}</span>
+                    </Enlace>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </nav>
+      </aside>
     </div>
   );
 }
@@ -407,12 +408,15 @@ function PaginaGuia({
         <IconoGuia id={guia.id} tamano={30} /> {guia.titulo}
       </h1>
       <p className="docs-resumen">{guia.resumen}</p>
-      {guia.explicacion && (
+      {/* C-DOCS-AL-GRANO: primero el paso a paso; después las capturas y la explicación larga. */}
+      {guia.pasos.length > 0 && (
         <>
-          <h2>{t.comoFunciona}</h2>
-          {guia.explicacion.map((p) => (
-            <p key={p}>{p}</p>
-          ))}
+          <h2>{t.pasos}</h2>
+          <ol>
+            {guia.pasos.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ol>
         </>
       )}
       {guia.capturas && guia.capturas.length > 0 && (
@@ -429,14 +433,12 @@ function PaginaGuia({
           ))}
         </ul>
       )}
-      {guia.pasos.length > 0 && (
+      {guia.explicacion && (
         <>
-          <h2>{t.pasos}</h2>
-          <ol>
-            {guia.pasos.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ol>
+          <h2>{t.comoFunciona}</h2>
+          {guia.explicacion.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
         </>
       )}
       {guia.nota && <p className="docs-nota">{guia.nota}</p>}

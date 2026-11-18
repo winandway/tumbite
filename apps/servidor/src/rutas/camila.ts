@@ -14,7 +14,6 @@ import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
 import {
   type AjustesCamila,
   type Persona,
-  PAISES_AVISO_OBLIGATORIO,
   REGALOS_POR_DIA_MAXIMO,
   anotarPais,
   guardarAjustes,
@@ -110,6 +109,8 @@ async function hiloPublico(db: D1Database, p: Persona) {
   return {
     // C-CAMILA-FALLOS: Camila está esperando la captura de pantalla de un reporte de fallo.
     pideCaptura: reporte?.estado === 'captura',
+    // C-CAMILA-ADJUNTAR: el reporte en curso ya tiene su captura (el botón de adjuntar se guarda).
+    capturaPuesta: Boolean(reporte?.captura_clave),
     verificada: Boolean(p.usuario_id || p.correo),
     equipoAtendiendo: humanoActivo(p),
     mensajes: results.reverse().map((m) => ({ ...m, reportado: Number(m.reportado) === 1 })),
@@ -541,8 +542,6 @@ camila.get('/admin/camila/ajustes', async (c) => {
       topeMaximoCentavos: TOPE_MAXIMO_CENTAVOS,
       regalosPorDiaMaximo: REGALOS_POR_DIA_MAXIMO,
     },
-    // Los países donde el aviso va fijo por ley (no se pueden apagar desde el superadmin).
-    avisoObligatorio: PAISES_AVISO_OBLIGATORIO,
     modelos: { normal: MODELOS_CAMILA.normal.id, dificil: MODELOS_CAMILA.dificil.id },
     iaConectada: Boolean(c.env.GEMINI_API_KEY),
   });
@@ -558,7 +557,6 @@ camila.put('/admin/camila/ajustes', async (c) => {
       topeDiarioCentavos: z.number().int().min(0).max(TOPE_MAXIMO_CENTAVOS, {
         error: 'El tope diario no puede pasar de 5 dólares.',
       }),
-      avisoIaPaises: z.array(z.string().regex(/^[A-Z]{2}$/)).max(60),
       regalosPorDia: z.number().int().min(0).max(REGALOS_POR_DIA_MAXIMO),
     }),
   );

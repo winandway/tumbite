@@ -9,12 +9,14 @@ import {
   TEXTOS_CHAT_SOPORTE,
   enIdioma,
   nombreAutorCamila,
+  trozosDeMensaje,
   cronometroDeEscritura,
   problemaDeCaptura,
   useBorrador,
 } from '@tumbite/compartido';
 import {
   AvisoBorrador,
+  abrirPagina,
   Boton,
   C,
   CASILLA_EN_FILA,
@@ -60,6 +62,8 @@ export function ChatSoporteApp() {
   const [hilo, setHilo] = useState<HiloCamila | null>(null);
   const [pendiente, setPendiente] = useState<MensajeCamila | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // C-CAMILA-ADJUNTAR: la persona abrió el bloque de la captura con el botón fijo del chat.
+  const [adjuntar, setAdjuntar] = useState(false);
   const [error, setError] = useState('');
   const lista = useRef<ScrollView>(null);
   // Los tres puntitos de «Camila está escribiendo», uno tras otro.
@@ -110,6 +114,7 @@ export function ChatSoporteApp() {
       await esperar(r.respuesta);
       setHilo({
         pideCaptura: r.pideCaptura,
+        capturaPuesta: r.capturaPuesta,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
         mensajes: r.mensajes,
@@ -159,9 +164,35 @@ export function ChatSoporteApp() {
         <Text style={{ fontSize: 12, fontWeight: '700', color: mio ? '#D0D2D6' : '#666B73' }}>
           {nombreAutorCamila(m.autor, idioma)}
         </Text>
-        <Text style={{ color: mio ? '#FFFFFF' : C.secundario, fontSize: 15, lineHeight: 21 }}>
-          {m.texto}
-        </Text>
+        {trozosDeMensaje(m.texto).map((trozo, i) =>
+          'url' in trozo ? (
+            <Pressable
+              key={i}
+              testID="chat-enlace-guia"
+              accessibilityRole="link"
+              onPress={() => abrirPagina(trozo.url)}
+              style={{ paddingVertical: 6 }}
+            >
+              <Text
+                style={{
+                  color: '#C20A1A',
+                  fontSize: 15,
+                  fontWeight: '700',
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {trozo.etiqueta}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text
+              key={i}
+              style={{ color: mio ? '#FFFFFF' : C.secundario, fontSize: 15, lineHeight: 21 }}
+            >
+              {trozo.texto}
+            </Text>
+          ),
+        )}
         {m.autor === 'camila' && m.id !== 'saludo' ? (
           m.reportado ? (
             <Text testID="chat-reportada" style={{ color: '#666B73', fontSize: 12, marginTop: 4 }}>
@@ -223,15 +254,31 @@ export function ChatSoporteApp() {
           <Text style={{ color: '#666B73', marginTop: 4 }}>{t.cargando}</Text>
         ) : null}
       </ScrollView>
-      {hilo?.pideCaptura ? (
+      {hilo?.pideCaptura || adjuntar ? (
         <BloqueCapturaApp
           ocupado={enviando}
+          voluntaria={!hilo?.pideCaptura}
           alSubir={async () => {
+            setAdjuntar(false);
             await cargar();
           }}
-          alNoTener={() => void enviar(t.mensajeSinCaptura)}
+          alNoTener={() =>
+            hilo?.pideCaptura ? void enviar(t.mensajeSinCaptura) : setAdjuntar(false)
+          }
         />
-      ) : null}
+      ) : hilo?.equipoAtendiendo || hilo?.capturaPuesta ? null : (
+        <Pressable
+          onPress={() => setAdjuntar(true)}
+          accessibilityRole="button"
+          testID="chat-adjuntar"
+          hitSlop={8}
+          style={{ alignSelf: 'flex-start', paddingVertical: 6 }}
+        >
+          <Text style={{ color: C.secundario, fontWeight: '700', textDecorationLine: 'underline' }}>
+            {t.adjuntar}
+          </Text>
+        </Pressable>
+      )}
       {hilo?.equipoAtendiendo ? (
         <Text
           testID="chat-equipo-atiende"
@@ -273,10 +320,13 @@ type FotoElegida = { uri: string; mimeType?: string | null; fileSize?: number | 
  */
 function BloqueCapturaApp({
   ocupado,
+  voluntaria = false,
   alSubir,
   alNoTener,
 }: {
   ocupado: boolean;
+  /** La persona la abrió con «Adjuntar captura»: el botón de abajo solo cierra. */
+  voluntaria?: boolean;
   alSubir: () => Promise<void>;
   alNoTener: () => void;
 }) {
@@ -360,7 +410,7 @@ function BloqueCapturaApp({
         style={{ alignSelf: 'flex-start', paddingVertical: 6 }}
       >
         <Text style={{ color: C.secundario, fontWeight: '700', textDecorationLine: 'underline' }}>
-          {t.sinCaptura}
+          {voluntaria ? t.cancelarCaptura : t.sinCaptura}
         </Text>
       </Pressable>
       <Text style={{ color: '#666B73', fontSize: 12 }}>{t.capturaPrivada}</Text>

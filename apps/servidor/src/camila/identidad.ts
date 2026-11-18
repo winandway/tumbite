@@ -5,8 +5,8 @@
  * en el mismo hilo también contestan personas del equipo. Pero NUNCA engaña: si alguien pregunta si
  * habla con una persona, la respuesta es SIEMPRE la verdad (es la asistente virtual de Divoox) y ofrece
  * pasarlo con alguien del equipo. Esa respuesta sale del código, no del modelo, para que ninguna
- * conversación pueda torcerla. Y donde una ley pide avisarlo desde el primer mensaje, el interruptor
- * por país (ajustes de Camila) lo dice al empezar.
+ * conversación pueda torcerla. Y NUNCA lo dice por su cuenta (C-CAMILA-SIN-AVISO, regla de Richard del
+ * 18 nov 2026 para todo Divoox): si nadie pregunta, no usa las palabras «asistente virtual».
  */
 export type IdiomaCamila = 'es' | 'en';
 
@@ -21,12 +21,6 @@ export const FIRMA = {
 export const VERDAD = {
   es: 'Te soy sincera: soy la asistente virtual de Divoox, no una persona. Te ayudo con todo lo que pueda, y si prefieres hablar con alguien del equipo, escribe «hablar con una persona» y te paso con ellos.',
   en: 'To be honest with you: I am the Divoox virtual assistant, not a person. I will help with everything I can, and if you would rather talk to someone on the team, write «talk to a person» and I will pass you to them.',
-} as const;
-
-/** El aviso del primer mensaje donde la ley lo pide (interruptor por país). */
-export const AVISO_PRIMER_MENSAJE = {
-  es: 'Hola, soy Camila, la asistente virtual de Divoox.',
-  en: 'Hi, I am Camila, the Divoox virtual assistant.',
 } as const;
 
 /** No entendió (primer intento): pide que se lo digan de otra forma, sin pasar a nadie todavía. */
@@ -65,6 +59,97 @@ const contiene = (t: string, frases: readonly string[]) => {
   const x = plano(t);
   return frases.some((f) => x.includes(` ${f} `));
 };
+
+/**
+ * C-CAMILA-CORTESIA (18 nov 2026, Richard: escribió «Hola» y Camila le contestó «no estoy segura de
+ * haberte entendido»). Un saludo, un «gracias», un «ok» o una despedida se contestan con calidez,
+ * desde el código (con IA y sin ella): nunca con «no te entendí», y nunca cuentan como un intento
+ * fallido. Solo cuando el mensaje ENTERO es eso; «hola, ¿cómo pido una moto?» sigue su camino.
+ */
+const CORTESIAS = {
+  saludo: [
+    ...['hola', 'holaa', 'holaaa', 'ola', 'buenas', 'buenos dias', 'buen dia', 'buenas tardes'],
+    ...['buenas noches', 'saludos', 'que tal', 'como estas', 'hola que tal', 'hola como estas'],
+    ...['hola buenas', 'hola buenos dias', 'hola buenas tardes', 'hola buenas noches', 'epa'],
+    ...['hi', 'hello', 'hey', 'hi there', 'hello there', 'good morning', 'good afternoon'],
+    ...['good evening', 'how are you', 'hi how are you', 'hello how are you'],
+  ],
+  gracias: [
+    ...[
+      'gracias',
+      'muchas gracias',
+      'mil gracias',
+      'ok gracias',
+      'listo gracias',
+      'gracias camila',
+    ],
+    ...['vale gracias', 'perfecto gracias', 'bueno gracias', 'gracias por todo', 'muy amable'],
+    ...['thanks', 'thank you', 'thanks a lot', 'thank you so much', 'thank you very much'],
+    ...['ok thanks', 'ok thank you', 'great thanks', 'perfect thanks'],
+  ],
+  ok: [
+    ...['ok', 'okey', 'okay', 'oki', 'vale', 'listo', 'perfecto', 'entendido', 'bueno', 'bien'],
+    ...['dale', 'de acuerdo', 'esta bien', 'ah ok', 'excelente', 'genial'],
+    ...['got it', 'great', 'perfect', 'alright', 'all right', 'sounds good', 'understood', 'cool'],
+  ],
+  despedida: [
+    ...['chao', 'chau', 'adios', 'hasta luego', 'nos vemos', 'hasta pronto', 'bye', 'goodbye'],
+    ...['bye bye', 'see you', 'see you later', 'chao gracias', 'gracias chao', 'hasta manana'],
+  ],
+} as const;
+export type Cortesia = keyof typeof CORTESIAS;
+const POR_FRASE = new Map<string, Cortesia>(
+  Object.entries(CORTESIAS).flatMap(([tipo, frases]) =>
+    frases.map((f) => [f, tipo as Cortesia] as const),
+  ),
+);
+/** ¿El mensaje entero es un saludo, un agradecimiento, un «ok» o una despedida? */
+export function cortesiaDe(t: string): Cortesia | null {
+  const limpio = plano(t)
+    .replace(/ camila /g, ' ')
+    .trim();
+  return POR_FRASE.get(limpio) ?? null;
+}
+const RESPUESTAS_CORTESIA = new Map<Cortesia, { es: string; en: string }>([
+  ['saludo', { es: '¡Hola! ¿En qué te puedo ayudar?', en: 'Hi! How can I help you?' }],
+  [
+    'gracias',
+    {
+      es: 'Con mucho gusto. Si necesitas algo más, aquí estoy.',
+      en: 'You are welcome. If you need anything else, I am here.',
+    },
+  ],
+  [
+    'ok',
+    {
+      es: 'Perfecto. Si necesitas algo más, escríbeme.',
+      en: 'Great. If you need anything else, just write to me.',
+    },
+  ],
+  ['despedida', { es: '¡Hasta luego! Que te vaya muy bien.', en: 'Bye! Take care.' }],
+]);
+export const respuestaCortesia = (c: Cortesia, idioma: IdiomaCamila) => {
+  const r = RESPUESTAS_CORTESIA.get(c) ?? { es: '', en: '' };
+  return idioma === 'en' ? r.en : r.es;
+};
+
+/**
+ * C-CAMILA-ADJUNTAR: pregunta cómo mandar una captura o una foto de lo que ve. La respuesta no es un
+ * tutorial: el chat tiene su botón «Adjuntar captura» y Camila lo señala.
+ */
+const QUIERE_ADJUNTAR = [
+  ...['enviar una captura', 'mandar una captura', 'adjuntar una captura', 'subir una captura'],
+  ...['enviar captura', 'mandar captura', 'adjuntar captura', 'enviarte una captura'],
+  ...['mandarte una captura', 'enviar un pantallazo', 'mandar un pantallazo', 'enviar una foto'],
+  ...['mandar una foto', 'adjuntar una foto', 'enviar la captura', 'mandar la captura'],
+  ...['send a screenshot', 'attach a screenshot', 'send you a screenshot', 'upload a screenshot'],
+  ...['send a picture', 'send a photo', 'attach a photo', 'send the screenshot'],
+];
+export const quiereAdjuntar = (t: string) => contiene(t, QUIERE_ADJUNTAR);
+export const COMO_ADJUNTAR = {
+  es: 'Claro. Mándamela por aquí mismo: toca «Adjuntar captura», aquí abajo, y elige la imagen o toma la foto.',
+  en: 'Sure. Send it right here: tap “Attach screenshot,” just below, and choose the image or take the photo.',
+} as const;
 
 /** ¿Pregunta si habla con una persona o con una máquina? */
 const PREGUNTA_HUMANO = [

@@ -2377,6 +2377,8 @@ button {
   .docs-barra {
     position: sticky;
     top: 84px;
+    /* En la página el menú va después del contenido (C-DOCS-AL-GRANO); aquí se ve a la izquierda. */
+    order: -1;
   }
   .docs-volver {
     display: none;
@@ -5689,6 +5691,15 @@ body.modo-tableta .cabecera {
   font-size: 0.95rem;
   line-height: 1.4;
 }
+.chat-soporte-guia {
+  align-self: flex-start;
+  margin-top: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--rojo-oscuro, #c20a1a);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .chat-soporte-reportar {
   align-self: flex-start;
   margin-top: 4px;
@@ -5800,6 +5811,15 @@ body.modo-tableta .cabecera {
 .chat-soporte-casilla .boton {
   flex: 0 0 auto;
   white-space: nowrap;
+}
+.chat-soporte-adjuntar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin: 0 14px 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 .chat-soporte-unir {
   margin: 0 16px 4px;
@@ -7139,17 +7159,6 @@ body.modo-tableta .cabecera {
   font-size: 12px;
   overflow-wrap: anywhere;
 }
-.camila-paises {
-  border: 1px solid #d0d2d6;
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin: 10px 0;
-}
-.camila-paises legend {
-  font-weight: 700;
-  padding: 0 6px;
-}
-
 /* C-CAMILA-FALLOS (18 nov 2026): «Fallos reportados» y «Preguntas de diagnóstico» del buzón. */
 .camila-contador {
   display: inline-flex;

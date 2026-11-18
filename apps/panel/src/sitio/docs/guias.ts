@@ -2889,7 +2889,7 @@ const es: SeccionDocs[] = [
           'Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones.',
           'Tu invitado recibe el regalo de arranque de su ciudad, si está encendido.',
           'Las carreras que tú le pidas a tu invitado (o él a ti) no cuentan, nadie puede invitarse a sí mismo con otra cuenta o el mismo teléfono, y hay un máximo de premios por persona al mes.',
-          'Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan.',
+          'Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan. Y cada miembro ve ahí, arriba, a qué equipo pertenece y quién es su líder.',
         ],
         capturas: [
           {
@@ -3627,8 +3627,8 @@ const es: SeccionDocs[] = [
         resumen:
           'Escríbenos por el chat de divoox.com, por el chat de Divoox Driver o por correo. Es la misma conversación por cualquier camino, te responde Camila Campos, del equipo de soporte, y una persona del equipo cuando lo pidas.',
         explicacion: [
-          'Camila Campos es la asistente virtual del equipo de soporte de Divoox. Te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse.',
-          'Si le preguntas si es una persona, siempre te dice la verdad: es la asistente virtual de Divoox. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación.',
+          'Camila Campos, del equipo de soporte de Divoox, te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse.',
+          'Si le preguntas si es una persona, siempre te dice la verdad. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación.',
           'Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números.',
           'Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña.',
           'Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó.',
@@ -3680,6 +3680,7 @@ const es: SeccionDocs[] = [
           'Por correo, responde cualquier correo de Camila: sigue la misma conversación.',
           'Si una respuesta de Camila no te parece correcta, toca «Reportar respuesta» debajo de ella: el equipo la revisa.',
           'Si algo falla, cuéntaselo a Camila, responde sus cuatro preguntas y manda la captura (o toca «No tengo captura»).',
+          'También puedes mandar la captura primero: toca «Adjuntar captura» en el chat, elige la imagen o toma la foto, y Camila te hace sus preguntas después.',
         ],
       },
       {
@@ -8194,7 +8195,7 @@ const en: SeccionDocs[] = [
           'You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions.',
           'Your invitee gets their city’s starter gift, if it’s on.',
           'Trips you request from your invitee (or they from you) don’t count, nobody can invite themselves with another account or the same phone, and there’s a monthly limit of rewards per person.',
-          'Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done.',
+          'Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done. Each member sees there, at the top, which team they’re on and who their leader is.',
         ],
         capturas: [
           {
@@ -8928,8 +8929,8 @@ const en: SeccionDocs[] = [
         resumen:
           'Write to us through the chat on divoox.com, the chat in Divoox Driver or by email. It is the same conversation on every channel, Camila Campos from the support team replies, and a person on the team does whenever you ask.',
         explicacion: [
-          'Camila Campos is the virtual assistant of the Divoox support team. She helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated.',
-          'If you ask whether she is a person, she always tells you the truth: she is the Divoox virtual assistant. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation.',
+          'Camila Campos, from the Divoox support team, helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated.',
+          'If you ask whether she is a person, she always tells you the truth. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation.',
           'There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code.',
           'To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password.',
           'Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved.',
@@ -8981,6 +8982,7 @@ const en: SeccionDocs[] = [
           'By email, reply to any email from Camila: it continues the same conversation.',
           'If a reply from Camila doesn’t seem right, tap “Report reply” under it: our team reviews it.',
           'If something is broken, tell Camila, answer her four questions and send the screenshot (or tap “I don’t have a screenshot”).',
+          'You can also send the screenshot first: tap “Attach screenshot” in the chat, choose the image or take the photo, and Camila asks her questions afterward.',
         ],
       },
       {

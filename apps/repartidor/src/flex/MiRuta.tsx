@@ -2639,7 +2639,11 @@ function DetalleParada({
                 </Pressable>
               ))}
             </View>
-            <Deslizar texto={t.deslizarFinalizar} alTerminar={() => void entregar()} />
+            <Deslizar
+              texto={t.deslizarFinalizar}
+              confirmar={t.confirmarFinalizar}
+              alTerminar={() => void entregar()}
+            />
             <Boton
               texto={t.registrarIncidenciaBoton}
               secundario

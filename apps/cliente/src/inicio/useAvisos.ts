@@ -7,6 +7,8 @@ export type Aviso =
       tipo: 'pedido';
       pedidoId: string;
       estado: string;
+      /** Revisor B3: el estado a mostrar («enviado» con pago al recibir); los servidores viejos no lo traen. */
+      estadoVisible?: string;
       restauranteId: string;
       restauranteNombre: string;
       creadoEn: string;

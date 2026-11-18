@@ -1,4 +1,5 @@
 import { rutaSinIds } from '../errores';
+import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { Hono } from 'hono';
@@ -160,7 +161,7 @@ function aDatos(f: FilaDatos | null) {
 superadmin.get('/repartidor/datos', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
-  await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
+  await db.prepare(ALTA_REPARTIDOR).bind(u.id).run();
   const codigo = await asegurarCodigoRepartidor(db, u.id);
   const f = await db
     .prepare('SELECT * FROM repartidor_datos WHERE usuario_id = ?')
@@ -581,7 +582,7 @@ superadmin.patch('/admin/repartidores/:id', async (c) => {
     .bind(id)
     .first();
   if (!existe) throw new ErrorDatos('Ese repartidor no existe.', undefined, 404);
-  await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(id).run();
+  await db.prepare(ALTA_REPARTIDOR).bind(id).run();
   await asegurarCodigoRepartidor(db, id);
   if (d.tipo)
     await db
@@ -1286,7 +1287,7 @@ superadmin.post('/admin/revisores', async (c) => {
         .bind(r.correo, r.rol),
     );
     if (r.rol === 'repartidor') {
-      lote.push(db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(id));
+      lote.push(db.prepare(ALTA_REPARTIDOR).bind(id));
       lote.push(
         db.prepare(
           "INSERT INTO contadores (clave, n) VALUES ('repartidor:US-REV', 1) ON CONFLICT(clave) DO UPDATE SET n = n + 1",

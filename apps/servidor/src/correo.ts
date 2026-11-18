@@ -188,6 +188,9 @@ function etiquetaBoton(url: string, en: boolean): string {
   if (ruta.includes('/confirm-email')) return en ? 'Confirm my email' : 'Confirmar mi correo';
   if (ruta.includes('/reset-password'))
     return en ? 'Reset my password' : 'Restablecer mi contraseña';
+  // C-CAMILA-ENLACE-GUIA: el enlace a una guía de Docs lleva el mismo texto que en el chat.
+  if (/^\/(es\/)?docs\//.test(ruta))
+    return en ? 'See the guide with screenshots' : 'Ver la guía con capturas';
   if (ruta.includes('/team-invite')) return en ? 'Join the team' : 'Unirme al equipo';
   if (ruta.includes('/app/order/')) return en ? 'Follow my order' : 'Seguir mi pedido';
   if (/^\/t\//.test(ruta)) return en ? 'Open the conversation' : 'Ver la conversación';
@@ -250,7 +253,11 @@ export function aHtml(
         texto.push(linea);
         continue;
       }
-      const resto = linea.replace(/https?:\/\/\S+/g, '').trim();
+      const resto = linea
+        .replace(/https?:\/\/\S+/g, '')
+        // La etiqueta del enlace a una guía ya va en su botón: no se repite encima.
+        .replace(/(Ver la guía con capturas|See the guide with screenshots) →/g, '')
+        .trim();
       if (resto) texto.push(resto);
       html += parrafo(texto);
       texto = [];

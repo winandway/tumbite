@@ -42,7 +42,11 @@ function Avisos() {
         >
           <Tarjeta>
             <Titulo texto={llenar(t.avisoPedido, { restaurante: a.restauranteNombre })} punto />
-            <Texto texto={t.estadoPedido[a.estado] ?? a.estado} />
+            <Texto
+              texto={
+                t.estadoPedido[a.estadoVisible ?? a.estado] ?? t.estadoPedido[a.estado] ?? a.estado
+              }
+            />
           </Tarjeta>
         </Pressable>
       );

@@ -87,6 +87,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'Si nuestro equipo rechaza un papel, ves el motivo escrito como instrucción, por ejemplo: «Tómala de día, de frente y a un paso de distancia». Vuelves a tomar la foto desde ahí mismo.',
           'En «Perfil» tienes todo ordenado en dos secciones que se abren y se cierran: «Mi vehículo», con una tarjeta por cada vehículo y sus papeles (aprobado, pendiente o rechazado), y «Documentos», con los papeles de tu perfil y en qué servicios sirve cada uno.',
           'Cuando todo está aprobado, el servicio aparece en tu inicio con «Desliza → para conectar».',
+          'Si tienes moto y carro, trabajas con uno a la vez, como en las apps de viajes más grandes. Cuando un servicio funciona con tu otro vehículo, su tarjeta lo dice («Usa tu Toyota Corolla»): tócala y toca «Usar mi Toyota Corolla». También puedes cambiarlo en Perfil → «Mi vehículo» → abre el vehículo → «Usar este vehículo». El que estás usando dice «En uso». El vehículo se cambia desconectado: desliza «Desliza para desconectarte» primero.',
         ],
         capturas: [
           foto(
@@ -213,6 +214,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'If our team rejects a document, you see the reason written as an instruction, for example: “Take it in daylight, straight on, one step away.” You can retake the photo right there.',
           'Under “Profile,” everything is organized in two sections that open and close: “My vehicle,” with a card for each vehicle and its documents (approved, pending or rejected), and “Documents,” with your profile documents and which services each one counts for.',
           'Once everything is approved, the service shows up on your home screen with “Slide → to go online.”',
+          'If you have a moto and a car, you work with one at a time, just like the biggest ride apps. When a service works with your other vehicle, its card says so (“Use your Toyota Corolla”): tap it and tap “Use my Toyota Corolla.” You can also switch in Profile → “My vehicle” → open the vehicle → “Use this vehicle.” The one you’re using says “In use.” You switch vehicles while offline: slide “Slide to go offline” first.',
         ],
         capturas: [
           foto(

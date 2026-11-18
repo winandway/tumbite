@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { claveEstadoPedido } from '../pedidoAlRecibir';
 import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
@@ -56,6 +57,7 @@ const T = {
     ayuda: 'Ayuda',
     estados: {
       pagado: 'Pagado',
+      enviado: 'Enviado',
       aceptado: 'En cocina',
       listo: 'Listo',
       en_camino: 'En camino',
@@ -81,6 +83,7 @@ const T = {
     ayuda: 'Help',
     estados: {
       pagado: 'Paid',
+      enviado: 'Sent',
       aceptado: 'Cooking',
       listo: 'Ready',
       en_camino: 'On the way',
@@ -93,6 +96,8 @@ const T = {
 type Pedido = {
   id: string;
   estado: string;
+  /** Con pago al recibir, «pagado» todavía no está pagado. */
+  metodoPago?: string;
   restauranteNombre?: string;
   restauranteImagen?: string;
   restauranteCategoria?: string;
@@ -326,7 +331,7 @@ function MiCuenta() {
                   }}
                 >
                   <Text style={{ color: estado.texto, fontWeight: '700', fontSize: 12 }}>
-                    {t.estados[p.estado] ?? p.estado}
+                    {t.estados[claveEstadoPedido(p.estado, p.metodoPago)] ?? p.estado}
                   </Text>
                 </View>
               </View>

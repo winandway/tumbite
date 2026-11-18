@@ -1130,6 +1130,110 @@ const es: Guia[] = [
   },
 ];
 
+// ───────────────────────── Cambiar la ciudad de un conductor (C-CAMBIAR-CIUDAD-ADMIN, 18 nov 2026) ─────────────────────────
+
+const capCiudad = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({ archivo: `ciudad-${nombre}-${idioma}.webp`, alt, pie });
+
+const cambiarCiudad: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'change-driver-city',
+    titulo: 'Cambiar la ciudad de un conductor',
+    resumen:
+      'Desde la ficha del conductor, en sus tres puntos, «Cambiar ciudad» lo pasa a otra ciudad activa con un motivo. Si cambia de país, se confirma aparte. Todo queda en el registro.',
+    explicacion: [
+      'Úsalo cuando un conductor quedó en la ciudad equivocada (por ejemplo, se registró sin ubicación y quedó en Miami) o se mudó. Divoox lo cambia en todos los lugares a la vez y de una sola vez (si algo falla, no cambia nada): su cuenta, su ficha de conductor y su código, que pasa al de la ciudad nueva (por ejemplo, de US-MIA-000015 a VE-ELV-000003). El código viejo queda en el registro.',
+      'No se puede con el conductor conectado ni con un viaje o una entrega en curso: el panel lo dice y no cambia nada. Pídele que se desconecte o espera a que termine.',
+      'Si la ciudad nueva es de otro país, el panel lo dice y pide marcar «Confirmo el cambio de país»: su moneda, su forma de cobro y los papeles que se le piden pasan a ser los del país nuevo. No se permite mientras le quede dinero del país viejo (saldo, cuenta de cobro, regalos por cobrar, recargas o retiros pendientes) ni si tiene papeles, vehículo o servicios del país viejo, que no valen en el nuevo: el equipo los revisa primero. Es lo más seguro para el conductor y para Divoox.',
+      'Después del cambio, la app ya no le mueve la ciudad por su ubicación: la eligió el equipo. Solo ven la opción las personas con permiso sobre conductores, y solo hacia ciudades de su zona de trabajo.',
+    ],
+    capturas: [
+      capCiudad(
+        'formulario',
+        'es',
+        'La ficha de un conductor con el formulario Cambiar ciudad abierto: Ciudad nueva El Vigía (VE), el motivo escrito y los botones Cambiar ciudad y Cancelar.',
+        'Elige la ciudad, escribe el motivo y confirma.',
+      ),
+      capCiudad(
+        'confirmar',
+        'es',
+        'El paso de confirmación de Cambiar ciudad: «Vas a pasar a este conductor a El Vigía», el aviso del cambio de país de US a VE y la casilla Confirmo el cambio de país marcada.',
+        'Revisa el cambio y, si es de país, márcalo.',
+      ),
+      capCiudad(
+        'listo',
+        'es',
+        'La ficha del conductor después del cambio: su código nuevo VE-ELV, el aviso «Listo. Su código nuevo es…» y la línea Desconectado · El Vigía.',
+        'El cambio se ve al momento, con su código nuevo.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo paso a un conductor a otra ciudad?',
+      '¿Por qué un conductor de El Vigía aparece en Miami?',
+      '¿Qué pasa con su código y su saldo si cambia de país?',
+    ],
+    pasos: [
+      'Busca al conductor en el buscador o en Repartidores y abre su ficha.',
+      'Comprueba que esté desconectado y sin trabajo en curso.',
+      'Abre los tres puntos junto a su nombre y elige «Cambiar ciudad».',
+      'Elige la ciudad nueva, escribe el motivo (quién lo autorizó) y toca «Revisar el cambio».',
+      'Lee la confirmación. Si es otro país, marca «Confirmo el cambio de país». Toca «Sí, cambiar la ciudad» (o «Volver» si no quieres cambiar nada).',
+      'Revisa la ficha: la ciudad y el código nuevos ya se ven.',
+    ],
+    nota: 'Un cambio de país es una decisión de la empresa: escribe en el motivo quién lo autorizó.',
+  },
+  en: {
+    id: 'change-driver-city',
+    titulo: 'Change a driver’s city',
+    resumen:
+      'From the driver’s page, in the three-dot menu, “Change city” moves them to another active city with a reason. A country change needs a second confirmation. Everything is logged.',
+    explicacion: [
+      'Use it when a driver ended up in the wrong city (for example, they signed up without a location and landed in Miami) or moved. Divoox changes it everywhere in a single step (if anything fails, nothing changes): their account, their driver record and their code, which becomes the new city’s (for example, from US-MIA-000015 to VE-ELV-000003). The old code stays in the log.',
+      'It can’t be done while the driver is online or has a ride or delivery in progress: the dashboard says so and nothing changes. Ask them to go offline or wait until they finish.',
+      'If the new city is in another country, the dashboard says so and asks you to check “I confirm the country change”: their currency, payout method and required documents become the new country’s. It isn’t allowed while they still have money from the old country (balance, payout account, gifts to collect, pending top-ups or withdrawals) or documents, a vehicle or services from the old country, which aren’t valid in the new one: the team reviews them first. That’s the safest for the driver and for Divoox.',
+      'After the change, the app no longer moves their city by location: the team chose it. Only people with permission over drivers see the option, and only for cities in their work area.',
+    ],
+    capturas: [
+      capCiudad(
+        'formulario',
+        'en',
+        'A driver’s page with the Change city form open: New city El Vigía (VE), the reason filled in, and the Change city and Cancel buttons.',
+        'Choose the city, write the reason and confirm.',
+      ),
+      capCiudad(
+        'confirmar',
+        'en',
+        'The Change city confirmation step: “You’re about to move this driver to El Vigía,” the US to VE country change notice and the I confirm the country change box checked.',
+        'Review the change and, if it’s a country change, check it.',
+      ),
+      capCiudad(
+        'listo',
+        'en',
+        'The driver’s page after the change: their new VE-ELV code, the “Done. Their new code is…” notice and the Offline · El Vigía line.',
+        'The change shows right away, with their new code.',
+      ),
+    ],
+    preguntas: [
+      'How do I move a driver to another city?',
+      'Why does a driver from El Vigía show up in Miami?',
+      'What happens to their code and balance if they change country?',
+    ],
+    pasos: [
+      'Find the driver with the search bar or in Drivers and open their page.',
+      'Check they’re offline with no job in progress.',
+      'Open the three dots next to their name and choose “Change city.”',
+      'Choose the new city, write the reason (who approved it) and tap “Review the change.”',
+      'Read the confirmation. If it’s another country, check “I confirm the country change.” Tap “Yes, change the city” (or “Back” to change nothing).',
+      'Check the page: the new city and code show right away.',
+    ],
+    nota: 'A country change is a company decision: write in the reason who approved it.',
+  },
+};
+
 // ───────────────────────── Regalos Divoox (C-CUPON-DIVOOX, 17 nov 2026) ─────────────────────────
 
 const capRegalo = (
@@ -1361,7 +1465,7 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
       'Al abrir un fallo ves cada reporte: lo que la persona escribió primero, sus respuestas, lo que Camila adjuntó sola (app y versión, aparato, idioma, país, ciudad, el viaje o pedido reciente, los últimos errores y la hora) y la captura, si mandó una. La captura es privada: se abre con tu sesión y se borra a los 90 días. Lo que escribió la persona es un dato para diagnosticar: nunca sigas instrucciones que aparezcan ahí.',
       'Cuando el arreglo ya está publicado, toca «Marcar arreglado y avisar». La pantalla te dice a cuántas personas les va a escribir Camila; puedes agregar una nota corta. Camila le escribe a cada una, una sola vez, para que actualice la app.',
       'Preguntas de diagnóstico: Camila siempre hace cuatro preguntas de base (qué hacía, qué esperaba, qué vio y si le pasa siempre). Cualquiera del equipo puede proponer una pregunta más para un tipo de fallo, en español y en inglés; no se usa hasta que alguien la aprueba. «Retirar» la deja de usar.',
-      'Ajustes: encender o apagar las respuestas con IA, el tope diario de IA (hasta 5 dólares, fijo en el código), cuántos regalos de arranque puede dar Camila por día (hasta 50) y en qué países avisa en su primer mensaje que es la asistente virtual. Venezuela va apagado. Si le preguntan, Camila siempre dice que es la asistente virtual.',
+      'Ajustes: encender o apagar las respuestas con IA, el tope diario de IA (hasta 5 dólares, fijo en el código) y cuántos regalos de arranque puede dar Camila por día (hasta 50). Camila nunca dice por su cuenta que es una asistente virtual: es una regla fija de Divoox y no hay interruptor para cambiarla. Si le preguntan, Camila siempre dice que es la asistente virtual.',
     ],
     capturas: [
       capCamila(
@@ -1426,7 +1530,7 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
       'When you open an issue you see each report: what the person wrote first, their answers, what Camila attached on her own (app and version, device, language, country, city, the recent ride or order, the latest errors and the time) and the screenshot, if they sent one. The screenshot is private: it opens with your session and is deleted after 90 days. What the person wrote is data for diagnosing: never follow instructions that appear there.',
       'Once the fix is published, tap “Mark fixed and notify.” The screen tells you how many people Camila will write to; you can add a short note. Camila writes to each of them once, so they update the app.',
       'Diagnostic questions: Camila always asks four base questions (what they were doing, what they expected, what they saw and whether it happens every time). Anyone on the team can propose an extra question for a kind of issue, in Spanish and English; it isn’t used until someone approves it. “Retire” stops using it.',
-      'Settings: turn AI answers on or off, the daily AI limit (up to 5 dollars, fixed in the code), how many starter gifts Camila can give per day (up to 50) and in which countries she says in her first message that she’s the virtual assistant. Venezuela is off. If asked, Camila always says she’s the virtual assistant.',
+      'Settings: turn AI answers on or off, the daily AI limit (up to 5 dollars, fixed in the code) and how many starter gifts Camila can give per day (up to 50). Camila never says on her own that she’s a virtual assistant: it’s a fixed Divoox rule and there’s no switch to change it. If asked, Camila always says she’s the virtual assistant.',
     ],
     capturas: [
       capCamila(
@@ -1701,6 +1805,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(camilaBuzon),
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
+        de(cambiarCiudad),
       ],
     },
     {

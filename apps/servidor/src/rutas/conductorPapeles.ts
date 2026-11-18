@@ -13,6 +13,11 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_DOC_BYTES, estadoDelConductor } from './servicios';
 import { paisDelConductor } from '../paisConductor';
+import { codigoCiudad } from './superadmin';
+import { porCobrarRegalos } from '../regalosDivoox';
+import { entornoDeHost } from '@tumbite/compartido';
+import { cobertura } from '../territorio';
+import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { accesoDe, alcanceObjetoSql, dentroDelAlcance } from '../accesoInterno';
 
 /**
@@ -112,6 +117,43 @@ async function eleccionCiudad(db: D1Database, conductorId: string): Promise<Elec
     .first<Eleccion>();
 }
 
+/**
+ * C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026; todos los países): el conductor nuevo que todavía no
+ * se conectó ni eligió ciudad (y no vino invitado) quedaba en Miami y veía los servicios de Miami.
+ * Al abrir Driver, su ubicación (la del mapa del inicio) fija su ciudad UNA vez: solo si está dentro
+ * de una zona de Divoox y su ciudad todavía no salió de una ubicación real ni de su elección.
+ */
+conductorPapeles.post('/conductor/zona-por-ubicacion', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const { lat, lng } = await leerCuerpo(
+    c,
+    z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }),
+  );
+  const ficha = await db
+    .prepare(
+      'SELECT zona_id, ubicacion_en, ciudad_elegida_en FROM repartidores WHERE usuario_id = ?',
+    )
+    .bind(u.id)
+    .first<{ zona_id: string; ubicacion_en: string | null; ciudad_elegida_en: string | null }>();
+  if (ficha?.ubicacion_en || ficha?.ciudad_elegida_en)
+    return c.json({ zonaId: ficha.zona_id, cambio: false });
+  const aqui = await cobertura(db, lat, lng);
+  const zona = aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null;
+  if (!zona || zona === ficha?.zona_id)
+    return c.json({ zonaId: ficha?.zona_id ?? null, cambio: false });
+  await db.batch([
+    db.prepare(ALTA_REPARTIDOR).bind(u.id),
+    db
+      .prepare(
+        'UPDATE repartidores SET zona_id = ? WHERE usuario_id = ? AND ubicacion_en IS NULL AND ciudad_elegida_en IS NULL',
+      )
+      .bind(zona, u.id),
+    db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ? AND zona_id IS NULL').bind(zona, u.id),
+  ]);
+  return c.json({ zonaId: zona, cambio: true });
+});
+
 conductorPapeles.put('/conductor/ciudad', async (c) => {
   const u = exigir(c, 'repartidor');
   const db = base(c);
@@ -182,7 +224,49 @@ conductorPapeles.put('/conductor/ciudad', async (c) => {
   return c.json({ zonaId: zona.id });
 });
 
-/** El equipo cambia la ciudad de un conductor (también de país), con motivo y en la auditoría. */
+/**
+ * C-CAMBIAR-CIUDAD-ADMIN (piloto, 18 nov 2026; todos los países): el equipo cambia la ciudad de un
+ * conductor desde su ficha. Revisión del 18 nov:
+ * - ATÓMICO: el código nuevo se calcula antes (contador de su ciudad) y cuenta, fila de repartidor
+ *   (ciudad, código, `ciudad_elegida_en`, área en blanco) y auditoría van en UN solo lote. Si algo
+ *   falla, nada cambia y se ve el error. Sin código nuevo posible, no se cambia nada.
+ * - Nunca conectado ni con trabajo en curso: la condición va en el mismo UPDATE (sin carrera) y
+ *   sin filas cambiadas responde 409.
+ * - Misma ciudad: se rechaza (no regenera el código).
+ * - País nuevo: pide `cambioPais: true` y se niega si queda dinero del país viejo (billetera, libro,
+ *   cuenta de cobro, regalos por cobrar, recargas o retiros pendientes) o si tiene papeles, vehículo
+ *   o habilitaciones del país viejo (no valen en el nuevo: el equipo decide primero). Lo más seguro.
+ * - En producción no se ofrecen ni aceptan zonas internas de prueba (C-DISPONIBLE-MUNDO).
+ */
+const ZONA_DE_PRUEBA = /\((pruebas|test)\)/i;
+const enProduccion = (c: { req: { url: string } }) =>
+  entornoDeHost(new URL(c.req.url).host) === 'produccion';
+
+/** Las ciudades a las que el equipo puede pasar a este conductor (activas, de su alcance). */
+conductorPapeles.get('/admin/conductores/:id/ciudades-destino', async (c) => {
+  exigir(c, 'admin');
+  const db = base(c);
+  const id = c.req.param('id');
+  const actual = await paisDelConductor(db, id);
+  const { results } = await db
+    .prepare('SELECT id, nombre, pais FROM zonas WHERE activa = 1 ORDER BY pais, nombre')
+    .all<{ id: string; nombre: string; pais: string | null }>();
+  const acceso = accesoDe(c);
+  const ciudades = results
+    .filter((z) => z.id !== actual.zona_id)
+    .filter((z) => !(enProduccion(c) && ZONA_DE_PRUEBA.test(z.nombre)))
+    .filter(
+      (z) =>
+        !acceso ||
+        dentroDelAlcance(
+          { alcance: { ...acceso.alcance, servicios: null } },
+          { zona: z.id, pais: z.pais, servicio: null },
+        ),
+    )
+    .map((z) => ({ id: z.id, nombre: z.nombre, pais: z.pais ?? 'US' }));
+  return c.json({ actual: { zonaId: actual.zona_id, pais: actual.pais }, ciudades });
+});
+
 conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
   const admin = exigir(c, 'admin');
   const db = base(c);
@@ -192,20 +276,25 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
     z.object({
       zonaId: z.string().trim().min(5).max(40),
       motivo: z.string().trim().min(3).max(200),
+      cambioPais: z.boolean().optional(),
     }),
   );
   const [zona, persona] = await Promise.all([
     db
-      .prepare('SELECT id, pais FROM zonas WHERE id = ? AND activa = 1')
+      .prepare('SELECT id, pais, nombre, codigo_ciudad FROM zonas WHERE id = ? AND activa = 1')
       .bind(d.zonaId)
-      .first<{ id: string; pais: string | null }>(),
+      .first<{ id: string; pais: string | null; nombre: string; codigo_ciudad: string | null }>(),
     db
-      .prepare("SELECT id FROM usuarios WHERE id = ? AND rol = 'repartidor'")
+      .prepare(
+        `SELECT u.id, r.conectado, r.codigo FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id
+          WHERE u.id = ? AND u.rol = 'repartidor'`,
+      )
       .bind(id)
-      .first<{ id: string }>(),
+      .first<{ id: string; conectado: number | null; codigo: string | null }>(),
   ]);
   if (!persona) throw new ErrorDatos('No encontramos a esa persona.', undefined, 404);
-  if (!zona) throw new ErrorDatos('Esa ciudad no está disponible.', 'zonaId', 404);
+  if (!zona || (enProduccion(c) && ZONA_DE_PRUEBA.test(zona.nombre)))
+    throw new ErrorDatos('Esa ciudad no está disponible.', 'zonaId', 404);
   // C-PERMISOS-FINOS: nadie manda a un conductor a una ciudad fuera de su propia zona de trabajo
   // (la ficha de origen ya la comprueba el intermedio).
   const acceso = accesoDe(c);
@@ -217,35 +306,124 @@ conductorPapeles.put('/admin/conductores/:id/ciudad', async (c) => {
     )
   )
     throw new ErrorDatos('Esa ciudad no está en tu zona de trabajo.', 'zonaId', 403);
+  const antes = await paisDelConductor(db, id);
+  if (antes.zona_id === zona.id) throw new ErrorDatos('Ya está en esa ciudad.', 'zonaId', 409);
+  if (Number(persona.conectado) === 1)
+    throw new ErrorDatos(
+      'Está conectado: tiene que desconectarse antes de cambiar de ciudad.',
+      undefined,
+      409,
+    );
   const ocupado = await db
     .prepare('SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?')
     .bind(id)
     .first();
   if (ocupado)
     throw new ErrorDatos('Tiene un viaje en curso: cámbiala cuando termine.', undefined, 409);
-  const antes = await paisDelConductor(db, id);
-  await db.batch([
-    db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(zona.id, id),
-    db
+  const paisNuevo = (zona.pais ?? 'US').toUpperCase();
+  if (paisNuevo !== antes.pais) {
+    if (!d.cambioPais)
+      throw new ErrorDatos(
+        `Es un cambio de país (de ${antes.pais} a ${paisNuevo}): confírmalo para seguir.`,
+        'cambioPais',
+        409,
+      );
+    const queda = await db
       .prepare(
-        `INSERT INTO repartidores (usuario_id, zona_id, ciudad_elegida_en) VALUES (?, ?, datetime('now'))
-         ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id, conectado = 0,
-           ciudad_elegida_en = excluded.ciudad_elegida_en`,
+        `SELECT
+           (SELECT COALESCE(SUM(monto), 0) FROM movimientos WHERE usuario_id = ?1) AS billetera,
+           (SELECT COALESCE(SUM(ABS(t.s)), 0) FROM (SELECT SUM(monto) AS s FROM libro
+              WHERE cuenta_id = ?1 AND pais = ?2 GROUP BY bolsillo, moneda) t) AS libro,
+           EXISTS (SELECT 1 FROM cuentas_stripe WHERE usuario_id = ?1) AS cobro,
+           EXISTS (SELECT 1 FROM recargas WHERE usuario_id = ?1 AND estado = 'pendiente') AS recarga,
+           EXISTS (SELECT 1 FROM retiros WHERE usuario_id = ?1
+                    AND estado IN ('pendiente', 'enviando', 'reintentar', 'revision')) AS retiro,
+           (EXISTS (SELECT 1 FROM conductor_documentos WHERE conductor_id = ?1 AND estado != 'reemplazado')
+            OR EXISTS (SELECT 1 FROM vehiculos WHERE conductor_id = ?1 AND estado != 'retirado')
+            OR EXISTS (SELECT 1 FROM habilitaciones WHERE conductor_id = ?1)) AS papeles`,
       )
-      .bind(id, zona.id),
-    db
-      .prepare(
-        'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
-      )
-      .bind(
-        admin.id,
-        'conductor.ciudad',
-        `conductor:${id}`,
-        JSON.stringify({ zonaId: antes.zona_id }),
-        JSON.stringify({ zonaId: zona.id, motivo: d.motivo }),
-      ),
-  ]);
-  return c.json({ zonaId: zona.id });
+      .bind(id, antes.pais)
+      .first<{
+        billetera: number;
+        libro: number;
+        cobro: number;
+        recarga: number;
+        retiro: number;
+        papeles: number;
+      }>();
+    const regalos = await porCobrarRegalos(db, id);
+    if (
+      Number(queda?.billetera) ||
+      Number(queda?.libro) ||
+      Number(queda?.cobro) ||
+      Number(queda?.recarga) ||
+      Number(queda?.retiro) ||
+      (regalos?.monto ?? 0) > 0
+    )
+      throw new ErrorDatos(
+        `Tiene saldo o una cuenta de cobro en ${antes.pais}: ciérralos antes de cambiarlo de país.`,
+        'cambioPaisDinero',
+        409,
+      );
+    if (Number(queda?.papeles))
+      throw new ErrorDatos(
+        `Tiene papeles, vehículo o servicios de ${antes.pais}, que no valen en ${paisNuevo}: el equipo tiene que revisarlos antes de cambiarlo de país.`,
+        'cambioPaisPapeles',
+        409,
+      );
+  }
+  // El código nuevo, ANTES del lote (el contador de la ciudad nueva sube aunque luego falle: solo
+  // queda un número sin usar). Si no se puede, no se cambia nada.
+  const prefijo = `${paisNuevo.slice(0, 2)}-${codigoCiudad({ codigo_ciudad: zona.codigo_ciudad, nombre: zona.nombre })}`;
+  const n = await db
+    .prepare(
+      'INSERT INTO contadores (clave, n) VALUES (?, 1) ON CONFLICT(clave) DO UPDATE SET n = n + 1 RETURNING n',
+    )
+    .bind(`repartidor:${prefijo}`)
+    .first<{ n: number }>();
+  if (!n?.n)
+    throw new ErrorDatos('No se pudo preparar su código nuevo. Intenta otra vez.', undefined, 503);
+  const codigo = `${prefijo}-${String(n.n).padStart(6, '0')}`;
+  // UN lote: la fila (solo si sigue desconectado y sin trabajo), y la cuenta y la auditoría SOLO si
+  // la fila cambió (miran la fila ya cambiada). Un código repetido hace fallar el lote entero.
+  const [fila] = await db
+    .batch([
+      db.prepare(ALTA_REPARTIDOR).bind(id),
+      db
+        .prepare(
+          `UPDATE repartidores SET zona_id = ?1, codigo = ?2, area_id = NULL, ciudad_elegida_en = datetime('now')
+          WHERE usuario_id = ?3 AND conectado = 0
+            AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?3)`,
+        )
+        .bind(zona.id, codigo, id),
+      db
+        .prepare(
+          'UPDATE usuarios SET zona_id = ?1 WHERE id = ?2 AND EXISTS (SELECT 1 FROM repartidores WHERE usuario_id = ?2 AND codigo = ?3)',
+        )
+        .bind(zona.id, id, codigo),
+      db
+        .prepare(
+          `INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json)
+         SELECT ?1, 'conductor.ciudad', ?2, ?3, ?4
+          WHERE EXISTS (SELECT 1 FROM repartidores WHERE usuario_id = ?5 AND codigo = ?6)`,
+        )
+        .bind(
+          admin.id,
+          `conductor:${id}`,
+          JSON.stringify({ zonaId: antes.zona_id, pais: antes.pais, codigo: persona.codigo }),
+          JSON.stringify({ zonaId: zona.id, pais: paisNuevo, codigo, motivo: d.motivo }),
+          id,
+          codigo,
+        ),
+    ])
+    .then((r) => [r[1]]);
+  if (!Number(fila?.meta.changes))
+    throw new ErrorDatos(
+      'Se conectó o empezó un trabajo mientras tanto: no se cambió nada. Intenta otra vez cuando esté desconectado.',
+      undefined,
+      409,
+    );
+  return c.json({ zonaId: zona.id, codigo });
 });
 
 conductorPapeles.post('/conductor/papeles', async (c) => {

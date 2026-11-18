@@ -24,6 +24,8 @@ export type ServicioPanel = {
   estado: EstadoTarjetaServidor;
   motivo: string;
   requisitosFaltantes: string[];
+  /** C-CAMBIAR-VEHICULO: el vehículo aprobado suyo con el que este servicio sí funciona. */
+  cambiarA?: { id: string; nombre: string; tipo: string } | null;
 };
 export type BloqueFlex = {
   rutaId: string;
@@ -79,6 +81,7 @@ export function detalleServicio(s: ServicioPanel, idioma: Idioma): string {
       return t.agregar;
     case 'en_revision':
       if (s.motivo === 'actualizar_app') return t.actualizarApp;
+      if (s.cambiarA) return t.usaTuVehiculo(s.cambiarA.nombre || t.tuOtroVehiculo);
       if (s.requisitosFaltantes.length) return t.faltan(s.requisitosFaltantes.length);
       return t.enRevision;
     default:

@@ -36,4 +36,20 @@ describe('C-GANANCIAS-COHERENTES: el total del periodo en Ganancias', () => {
     expect(textoTrabajos(3, 0, 'en')).toBe('3 deliveries');
     expect(textoTrabajos(0, 0, 'es')).toBe('0 entregas');
   });
+
+  // Robot de Android (18 nov 2026): un viaje de moto pagado ENTERO con regalo (1,13 de regalo, 0 del
+  // pasajero) salía «0 entregas». El regalo es el pago de un viaje real: ese viaje es 1 carrera, una
+  // vez (también si además hubo cobro con tarjeta del mismo viaje).
+  it('un viaje pagado con regalo cuenta como 1 carrera, una sola vez', () => {
+    expect(
+      resumenPeriodo([{ id: 'g1', monto: 113, concepto: 'regalo', operacionId: 'op-1' }]),
+    ).toEqual({ total: 113, entregas: 0, carreras: 1, regalos: 113 });
+    const mixto = resumenPeriodo([
+      { id: 'v1', monto: 300, concepto: 'entrega', operacionId: 'op-2' },
+      { id: 'g2', monto: 100, concepto: 'regalo', operacionId: 'op-2' },
+      { id: 'g3', monto: 100, concepto: 'regalo' },
+    ]);
+    expect(mixto.carreras).toBe(1);
+    expect(mixto.regalos).toBe(200);
+  });
 });

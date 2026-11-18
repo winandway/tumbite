@@ -36,6 +36,15 @@ export const MENSAJES_EN_CAMILA: [string, string][] = [
     'To continue the conversation, link this chat to your email or sign in with your account.',
   ],
   ['No hay un reporte esperando una captura.', 'There’s no report waiting for a screenshot.'],
+  [
+    'No pudimos abrir tu conversación. Intenta de nuevo.',
+    'We couldn’t open your conversation. Please try again.',
+  ],
+  ['Ya recibimos una captura de este reporte.', 'We already got a screenshot for this report.'],
+  [
+    'No pudimos guardar la captura. Intenta de nuevo.',
+    'We couldn’t save the screenshot. Please try again.',
+  ],
   ['No encontramos ese fallo.', 'We couldn’t find that issue.'],
   ['Esa captura ya no está disponible.', 'That screenshot is no longer available.'],
   [

@@ -562,6 +562,24 @@ export async function vincularConductor(db: D1Database, invitadoId: string, escr
             .bind(invitadoId, c.equipoId),
         ]
       : []),
+    // C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026): el conductor nuevo invitado en El Vigía quedaba
+    // en Miami (el valor por defecto de la tabla) hasta conectarse con GPS: veía los servicios de
+    // Miami y no los de su ciudad. La ciudad de la invitación es la suya mientras no tenga una
+    // ubicación real ni haya elegido ciudad.
+    ...(c.zonaId
+      ? [
+          db
+            .prepare('UPDATE usuarios SET zona_id = ? WHERE id = ? AND zona_id IS NULL')
+            .bind(c.zonaId, invitadoId),
+          db
+            .prepare(
+              `INSERT INTO repartidores (usuario_id, zona_id) VALUES (?, ?)
+               ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id
+                WHERE repartidores.ubicacion_en IS NULL AND repartidores.ciudad_elegida_en IS NULL`,
+            )
+            .bind(invitadoId, c.zonaId),
+        ]
+      : []),
     db
       .prepare(
         'INSERT OR IGNORE INTO referidos_conductor (invitado_id, invitador_id, equipo_id, zona_id, estado, motivo) VALUES (?, ?, ?, ?, ?, ?)',
@@ -1064,7 +1082,25 @@ export async function misInvitaciones(
   const equipo = equipos.results[0]
     ? (await listarEquipos(db, { equipoId: equipos.results[0].id }))[0]
     : null;
+  // Robot (18 nov 2026): el miembro ve a qué equipo pertenece y quién lo lidera, y si ya quedó
+  // registrado como invitado (aunque el referido no cuente, por ejemplo por el mismo aparato).
+  const miEquipo = await db
+    .prepare(
+      `SELECT e.nombre, u.nombre AS lider FROM miembros_equipo m
+         JOIN equipos e ON e.id = m.equipo_id JOIN usuarios u ON u.id = e.lider_id
+        WHERE m.usuario_id = ? ORDER BY m.creado_en DESC LIMIT 1`,
+    )
+    .bind(usuario.id)
+    .first<{ nombre: string; lider: string }>();
+  const invitado = await db
+    .prepare('SELECT 1 AS si FROM referidos_conductor WHERE invitado_id = ? LIMIT 1')
+    .bind(usuario.id)
+    .first<{ si: number }>();
   return {
+    miEquipo: miEquipo
+      ? { nombre: miEquipo.nombre, lider: String(miEquipo.lider).split(' ')[0] ?? '' }
+      : null,
+    yaInvitado: Boolean(miEquipo || invitado),
     codigo,
     enlace: `${sitio}/join/${codigo}`,
     ganado: Number(ganado?.s ?? 0),

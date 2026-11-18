@@ -21,6 +21,11 @@ export type MovimientoGanancia = {
   monto: number;
   concepto: string;
   pedidoId?: string | null;
+  /**
+   * El viaje (Moto, Carro, Envíos) al que pertenece el movimiento: su cobro con tarjeta o el regalo
+   * de Divoox que lo pagó. Un viaje es UNA carrera aunque tenga varios movimientos.
+   */
+  operacionId?: string | null;
 };
 
 export function resumenPeriodo(movs: MovimientoGanancia[]): {
@@ -32,7 +37,14 @@ export function resumenPeriodo(movs: MovimientoGanancia[]): {
   const ganado = movs.filter((m) => m.concepto !== 'retiro' && m.monto > 0);
   const deTrabajo = ganado.filter((m) => m.concepto === 'entrega');
   const entregados = new Set(deTrabajo.filter((m) => m.pedidoId).map((m) => m.pedidoId));
-  const carreras = new Set(deTrabajo.filter((m) => !m.pedidoId).map((m) => m.id));
+  // Robot (18 nov 2026): un viaje pagado entero con regalo no tiene «entrega»; su regalo dice el
+  // viaje. Cada viaje cuenta una vez; una «entrega» sin pedido ni viaje (servidor viejo), por su id.
+  const carreras = new Set([
+    ...ganado
+      .filter((m) => (m.concepto === 'entrega' || m.concepto === 'regalo') && m.operacionId)
+      .map((m) => `v:${m.operacionId}`),
+    ...deTrabajo.filter((m) => !m.pedidoId && !m.operacionId).map((m) => `m:${m.id}`),
+  ]);
   return {
     total: ganado.reduce((x, m) => x + m.monto, 0),
     entregas: entregados.size,

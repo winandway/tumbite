@@ -77,6 +77,11 @@ export const TEXTOS_RUTA = {
     faltaLugar: 'Elige dónde dejaste el paquete.',
     fotoConsejo: 'Que se vea bien dónde quedó el paquete y que no salgan personas en la foto.',
     deslizarFinalizar: 'Desliza para finalizar',
+    confirmarFinalizar: {
+      pregunta: '¿Finalizar esta entrega?',
+      si: 'Finalizar',
+      no: 'Cancelar',
+    },
     fueraDeArea: (distancia: string) =>
       `Estás fuera del área de entrega (a ${distancia}). Acércate a la dirección para entregar.`,
     cancelar: 'Cancelar',
@@ -364,6 +369,7 @@ export const TEXTOS_RUTA = {
     faltaLugar: 'Choose where you left the package.',
     fotoConsejo: 'Make sure the spot is clear and no people show in the photo.',
     deslizarFinalizar: 'Slide to finish',
+    confirmarFinalizar: { pregunta: 'Finish this delivery?', si: 'Finish', no: 'Cancel' },
     fueraDeArea: (distancia: string) =>
       `You’re outside the delivery area (${distancia} away). Get closer to the address to deliver.`,
     cancelar: 'Cancel',
