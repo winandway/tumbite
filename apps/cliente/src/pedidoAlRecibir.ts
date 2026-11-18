@@ -24,3 +24,12 @@ export function textoPedidoSinCobrar(
   const t = idioma === 'en' ? TEXTOS.en : TEXTOS.es;
   return esTienda ? t.tienda : t.restaurante;
 }
+
+/**
+ * La clave del estado para las listas de pedidos (Mis pedidos, Mi cuenta): con pago al recibir,
+ * «pagado» todavía no está pagado; se dice «Enviado» hasta que se cobre (robot, 18 nov 2026).
+ */
+export function claveEstadoPedido(estado: string, metodoPago: string | undefined): string {
+  if (estado === 'pagado' && metodoPago && metodoPago !== 'tarjeta') return 'enviado';
+  return estado;
+}
