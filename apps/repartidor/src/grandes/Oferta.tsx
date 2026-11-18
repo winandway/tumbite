@@ -40,11 +40,14 @@ export function Oferta({
   idioma,
   alAceptar,
   alRechazar,
+  alVencer,
 }: {
   oferta: OfertaCompleta;
   idioma: Idioma;
   alAceptar: () => void;
   alRechazar: () => void;
+  /** C-OFERTA-VENCIDA-SE-CIERRA: en 0 s la tarjeta se cierra sola. */
+  alVencer?: () => void;
 }) {
   const t = textosGrandes(idioma).oferta;
   const [ahora, setAhora] = useState(() => Date.now());
@@ -68,6 +71,10 @@ export function Oferta({
     alRechazar();
   };
   const quedan = desde != null ? Math.max(0, total - Math.floor((ahora - desde) / 1000)) : total;
+  useEffect(() => {
+    if (quedan === 0) alVencer?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quedan]);
   const n = oferta.articulos ?? 0;
   return (
     <Modal visible transparent animationType="slide" onRequestClose={rechazar}>
