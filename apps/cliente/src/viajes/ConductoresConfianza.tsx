@@ -13,7 +13,9 @@ import {
   SOMBRA,
   Text,
   useColores,
-  useSesion, Modal } from '@tumbite/movil';
+  useSesion,
+  Modal,
+} from '@tumbite/movil';
 import { FotoRepartidor } from '../FotoRepartidor';
 import { type ConductorConfianza, type RespuestaConfianza, textoVehiculo } from './fijos';
 import { TEXTOS_FIJOS } from './textosFijos';

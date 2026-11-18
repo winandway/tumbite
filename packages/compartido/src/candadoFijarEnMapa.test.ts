@@ -43,7 +43,14 @@ describe('C-FIJAR-EN-MAPA', () => {
     expect(s).not.toMatch(/<ResumenPunto\b/);
     expect(s).toMatch(/textoFijarEnMapa\(idioma, 'recogida'/);
     expect(s).toMatch(/textoFijarEnMapa\(idioma, 'destino'/);
-    expect((s.match(/enMapa=\{/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    // C-INICIO-NUEVO (17 nov 2026): la ruta abre «¿A dónde vas?»; «Fijar … en el mapa» va debajo
+    // de la casilla de búsqueda y en la ruta, cada uno con su propio texto.
+    expect(s).toContain('testID="moto-fijar-recogida"');
+    expect(s).toContain('testID="moto-fijar-destino"');
+    const b = leer('apps/cliente/src/viajes/BuscarDestino.tsx');
+    expect(b).toContain('testID="destino-fijar-mapa"');
+    expect(b).toMatch(/modo === 'destino' \? t\.fijarDestino : t\.fijarRecogida/);
+    expect(b).toMatch(/color=\{C\.acento\}/);
   });
 
   it('comida (carrito) y la casa de «Mis paquetes» también fijan desde su casilla', () => {
@@ -64,6 +71,10 @@ describe('C-FILA-SIN-MODO-OSCURO', () => {
   it('la tarjeta de accesos de la pantalla del servicio no usa el fondo del modo oscuro', () => {
     const s = leer('apps/cliente/src/app/ride.tsx');
     expect(s).not.toMatch(/useColores\(\)/);
-    expect(s).toMatch(/backgroundColor: COLOR\.fondo/);
+    // C-INICIO-NUEVO: los accesos (Viajes fijos, Conductores de confianza) viven en la hoja «Más
+    // servicios» del inicio, que es siempre blanca (#FFFFFF fijo, nunca el fondo del modo oscuro).
+    const hoja = leer('apps/cliente/src/inicio/HojaAbajo.tsx');
+    expect(hoja).not.toMatch(/useColores\(\)/);
+    expect(hoja).toContain("backgroundColor: '#FFFFFF'");
   });
 });

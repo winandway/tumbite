@@ -4308,3 +4308,4 @@ CREATE TABLE IF NOT EXISTS banners (
 );
 -- Sin índice extra: la tabla es chica y la ruta pública la lee una vez por minuto (caché en memoria).
 -- El tope diario de imágenes con IA vive en `config` (claves ia_banners:<día>), sin tabla propia.
+

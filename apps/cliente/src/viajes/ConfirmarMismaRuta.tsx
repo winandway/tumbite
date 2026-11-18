@@ -19,7 +19,9 @@ import {
   Text,
   almacenTelefono,
   useColores,
-  useSesion, Modal } from '@tumbite/movil';
+  useSesion,
+  Modal,
+} from '@tumbite/movil';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
 import { MapaRuta } from './MapaRuta';

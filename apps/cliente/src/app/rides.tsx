@@ -23,6 +23,7 @@ function PantallaMisViajes() {
     if (p === 'inicio') return router.replace('/');
     if (p === 'pedidos') return router.replace('/orders');
     if (p === 'favoritos') return router.push('/favorites');
+    if (p === 'wallet') return router.push('/gift-cards');
     if (p === 'cuenta') return router.push('/account');
   };
   const aViaje = (servicio: string) => router.push({ pathname: '/ride', params: { servicio } });

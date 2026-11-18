@@ -110,6 +110,7 @@ function MiCuenta() {
     if (p === 'inicio') return router.replace('/');
     if (p === 'pedidos') return router.push('/orders');
     if (p === 'favoritos') return router.push('/favorites');
+    if (p === 'wallet') return router.push('/gift-cards');
   };
   const t = enIdioma(T, idioma);
   const tf = enIdioma(TEXTOS_FIJOS, idioma);

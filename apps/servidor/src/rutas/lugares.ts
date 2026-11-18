@@ -1,7 +1,9 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
-import type { Variables } from '../sesion';
+import { type Variables, base, exigir } from '../sesion';
+import { partirDireccion } from '@tumbite/compartido';
+import { zonaPara } from './zonas';
 import { ErrorDatos } from '../validar';
 
 /**
@@ -34,7 +36,8 @@ function llave(env: Env): string {
 lugares.get('/lugares/sugerencias', async (c) => {
   const q = z
     .object({
-      q: z.string().trim().min(3).max(120),
+      // C-DESTINO-RESULTADOS: «¿A dónde vas?» busca desde la segunda letra.
+      q: z.string().trim().min(2).max(120),
       pais: PAIS.optional(),
       sesion: z
         .string()
@@ -67,6 +70,8 @@ lugares.get('/lugares/sugerencias', async (c) => {
           : {}),
       languageCode: (c.req.header('x-idioma') ?? 'es').startsWith('en') ? 'en' : 'es',
       ...(q.sesion ? { sessionToken: q.sesion } : {}),
+      // C-DESTINO-RESULTADOS: con la ubicación de la persona, Google da la distancia de cada lugar.
+      ...(q.lat != null && q.lng != null ? { origin: { latitude: q.lat, longitude: q.lng } } : {}),
       ...(cerca
         ? {
             locationBias: {
@@ -88,15 +93,29 @@ lugares.get('/lugares/sugerencias', async (c) => {
       503,
     );
   }
-  const d = (await r.json()) as {
-    suggestions?: { placePrediction?: { placeId: string; text?: { text: string } } }[];
+  type Prediccion = {
+    placeId: string;
+    text?: { text: string };
+    structuredFormat?: { mainText?: { text: string }; secondaryText?: { text: string } };
+    distanceMeters?: number;
   };
+  const d = (await r.json()) as { suggestions?: { placePrediction?: Prediccion }[] };
   return c.json({
     sugerencias: (d.suggestions ?? [])
       .map((x) => x.placePrediction)
-      .filter((x): x is { placeId: string; text?: { text: string } } => Boolean(x?.placeId))
+      .filter((x): x is Prediccion => Boolean(x?.placeId))
       .slice(0, 6)
-      .map((x) => ({ id: x.placeId, texto: x.text?.text ?? '' })),
+      .map((x) => ({
+        id: x.placeId,
+        texto: x.text?.text ?? '',
+        ...(x.structuredFormat?.mainText?.text
+          ? {
+              principal: x.structuredFormat.mainText.text,
+              secundario: x.structuredFormat.secondaryText?.text ?? '',
+            }
+          : {}),
+        ...(typeof x.distanceMeters === 'number' ? { distanciaM: x.distanceMeters } : {}),
+      })),
   });
 });
 
@@ -144,4 +163,153 @@ export function puntoDeLaConexion(req: Request): { lat: number; lng: number } | 
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
     return null;
   return { lat, lng };
+}
+
+// ───────────────────── «¿A dónde vas?»: Recientes y Populares (17 nov 2026) ─────────────────────
+
+/**
+ * C-DESTINO-RECIENTES: los destinos de los viajes propios (90 días, 60 como mucho), con la fecha. El
+ * orden por hora y día lo hace la app con la hora del teléfono (ordenarRecientes, sin IA). Solo lee.
+ */
+lugares.get('/lugares/recientes', async (c) => {
+  const u = exigir(c, 'cliente');
+  const { results } = await base(c)
+    .prepare(
+      `SELECT v.destino_direccion AS direccion, v.destino_lat AS lat, v.destino_lng AS lng, o.creado_en AS en
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+        WHERE o.cliente_id = ? AND o.creado_en >= datetime('now', '-90 days') AND v.estado <> 'pago_pendiente'
+        ORDER BY o.creado_en DESC LIMIT 60`,
+    )
+    .bind(u.id)
+    .all<{ direccion: string; lat: number; lng: number; en: string }>();
+  c.header('cache-control', 'private, no-store');
+  return c.json({
+    destinos: results.map((x) => ({
+      direccion: x.direccion,
+      lat: Number(x.lat),
+      lng: Number(x.lng),
+      en: `${String(x.en).replace(' ', 'T')}Z`,
+    })),
+  });
+});
+
+/** Mínimo de clientes distintos para que un lugar sea «popular» (nunca la casa de nadie). */
+export const MIN_CLIENTES_POPULAR = 5;
+const DIA_MS = 86_400_000;
+type Popular = { titulo: string; detalle: string; lat: number; lng: number };
+
+/**
+ * C-DESTINO-POPULARES: lo más pedido en la ciudad por varias personas distintas (5 o más en 90 días),
+ * con el punto redondeado a unos 100 metros. Ciudad nueva sin datos: lugares conocidos cercanos del
+ * mapa (terminal, hospital, plaza, centro comercial, universidad). Se calcula una vez al día por
+ * ciudad y se guarda en `config` (clave `populares:<zona>`, sin tabla nueva): mirar no escribe
+ * (una fila por ciudad y día).
+ */
+lugares.get('/lugares/populares', async (c) => {
+  const q = z
+    .object({
+      lat: z.coerce.number().min(-90).max(90),
+      lng: z.coerce.number().min(-180).max(180),
+    })
+    .safeParse(c.req.query());
+  if (!q.success) return c.json({ origen: 'ninguno', lugares: [] });
+  const db = base(c);
+  const zona = await zonaPara(db, q.data.lat, q.data.lng);
+  if (!zona) return c.json({ origen: 'ninguno', lugares: [] });
+  const clave = `populares:${zona.id}`;
+  const guardado = await db
+    .prepare('SELECT valor, actualizado_en FROM config WHERE clave = ?')
+    .bind(clave)
+    .first<{ valor: string; actualizado_en: string }>();
+  if (
+    guardado &&
+    Date.now() - Date.parse(`${guardado.actualizado_en.replace(' ', 'T')}Z`) < DIA_MS
+  ) {
+    const g = JSON.parse(guardado.valor) as { origen: string; lugares: Popular[] };
+    c.header('cache-control', 'public, max-age=600');
+    return c.json(g);
+  }
+  const { results } = await db
+    .prepare(
+      `SELECT ROUND(v.destino_lat, 3) AS lat, ROUND(v.destino_lng, 3) AS lng,
+              COUNT(DISTINCT o.cliente_id) AS clientes, MAX(v.destino_direccion) AS direccion
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+        WHERE o.zona_id = ? AND o.creado_en >= datetime('now', '-90 days') AND v.estado = 'terminado'
+        GROUP BY 1, 2 HAVING clientes >= ? ORDER BY clientes DESC LIMIT 5`,
+    )
+    .bind(zona.id, MIN_CLIENTES_POPULAR)
+    .all<{ lat: number; lng: number; clientes: number; direccion: string }>();
+  let origen = 'ciudad';
+  let lista: Popular[] = results.map((x) => ({
+    ...partirDireccion(String(x.direccion)),
+    lat: Number(x.lat),
+    lng: Number(x.lng),
+  }));
+  if (!lista.length) {
+    origen = 'mapa';
+    lista = await conocidosDelMapa(
+      c.env,
+      { lat: zona.lat, lng: zona.lng },
+      c.req.header('x-idioma'),
+    );
+    if (!lista.length) origen = 'ninguno';
+  }
+  // Sin la llave del mapa no se guarda nada: así, el día que se enciende, la ciudad nueva ya sale.
+  if (origen !== 'ninguno')
+    await db
+      .prepare(
+        "INSERT INTO config (clave, valor, actualizado_en) VALUES (?, ?, datetime('now')) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = excluded.actualizado_en",
+      )
+      .bind(clave, JSON.stringify({ origen, lugares: lista }))
+      .run();
+  return c.json({ origen, lugares: lista });
+});
+
+/** Lugares conocidos cerca del centro de la ciudad (Google Places, búsqueda cercana por tipo). */
+async function conocidosDelMapa(
+  env: Env,
+  centro: { lat: number; lng: number },
+  idioma: string | undefined,
+): Promise<Popular[]> {
+  if (!env.GOOGLE_PLACES_KEY) return [];
+  const r = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'X-Goog-Api-Key': env.GOOGLE_PLACES_KEY,
+      'X-Goog-FieldMask': 'places.displayName,places.shortFormattedAddress,places.location',
+    },
+    body: JSON.stringify({
+      includedTypes: ['bus_station', 'hospital', 'shopping_mall', 'university', 'park'],
+      maxResultCount: 5,
+      rankPreference: 'POPULARITY',
+      languageCode: (idioma ?? 'es').startsWith('en') ? 'en' : 'es',
+      locationRestriction: {
+        circle: { center: { latitude: centro.lat, longitude: centro.lng }, radius: 8_000 },
+      },
+    }),
+    signal: AbortSignal.timeout(TIEMPO_MS),
+  }).catch((e: unknown) => {
+    console.error('lugares: Google no respondió (populares)', e);
+    return null;
+  });
+  if (!r?.ok) {
+    if (r) console.error('lugares: Google respondió (populares)', r.status);
+    return [];
+  }
+  const d = (await r.json()) as {
+    places?: {
+      displayName?: { text: string };
+      shortFormattedAddress?: string;
+      location?: { latitude: number; longitude: number };
+    }[];
+  };
+  return (d.places ?? [])
+    .filter((p) => p.displayName?.text && p.location)
+    .map((p) => ({
+      titulo: p.displayName!.text,
+      detalle: p.shortFormattedAddress ?? '',
+      lat: Math.round(p.location!.latitude * 1000) / 1000,
+      lng: Math.round(p.location!.longitude * 1000) / 1000,
+    }));
 }

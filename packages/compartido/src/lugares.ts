@@ -7,13 +7,37 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * y cualquier casilla futura. Una sola pieza: la web y las apps usan este hook; cada plataforma solo
  * dibuja la lista.
  */
-export type SugerenciaDireccion = { id: string; texto: string };
+export type SugerenciaDireccion = {
+  id: string;
+  texto: string;
+  /** C-DESTINO-RESULTADOS: nombre del lugar y su zona por separado, y la distancia a la persona. */
+  principal?: string;
+  secundario?: string;
+  distanciaM?: number;
+};
 export type DireccionElegida = { punto: { lat: number; lng: number }; direccion: string };
 export type PedirLugares = <R>(metodo: 'GET', ruta: string) => Promise<R>;
 
 /** Lo mínimo para pedir sugerencias: 3 letras. */
 export const MINIMO_SUGERENCIAS = 3;
 const ESPERA_MS = 300;
+/**
+ * C-DESTINO-RESULTADOS: tope diario de búsquedas del mapa por teléfono (además de los topes del
+ * proyecto en Google Cloud). Al pasarlo quedan los recientes, los populares y «Fijar en el mapa».
+ */
+export const TOPE_BUSQUEDAS_DIA = 150;
+const usoDelDia = { dia: '', n: 0 };
+/** Cuenta una búsqueda y dice si todavía quedan las de hoy. */
+export function quedanBusquedas(ahora = new Date()): boolean {
+  const dia = ahora.toISOString().slice(0, 10);
+  if (usoDelDia.dia !== dia) {
+    usoDelDia.dia = dia;
+    usoDelDia.n = 0;
+  }
+  if (usoDelDia.n >= TOPE_BUSQUEDAS_DIA) return false;
+  usoDelDia.n++;
+  return true;
+}
 
 /** Token de sesión de Google (agrupa lo escrito y lo elegido en un solo cobro). */
 export function nuevaSesionLugares(): string {
@@ -42,8 +66,12 @@ export function useSugerenciasDireccion(op: {
   pedir: PedirLugares;
   pais?: string | null;
   cerca?: { lat: number; lng: number } | null;
+  /** Desde cuántas letras se busca (3 por defecto; «¿A dónde vas?» desde la segunda). */
+  minimo?: number;
 }) {
   const [sugerencias, setSugerencias] = useState<SugerenciaDireccion[]>([]);
+  const [agotado, setAgotado] = useState(false);
+  const [buscando, setBuscando] = useState(false);
   const sesion = useRef(nuevaSesionLugares());
   const reloj = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ultima = useRef('');
@@ -62,11 +90,19 @@ export function useSugerenciasDireccion(op: {
   const buscar = useCallback((texto: string) => {
     ultima.current = texto;
     if (reloj.current) clearTimeout(reloj.current);
-    if (texto.trim().length < MINIMO_SUGERENCIAS) {
+    if (texto.trim().length < (opRef.current.minimo ?? MINIMO_SUGERENCIAS)) {
       setSugerencias([]);
+      setBuscando(false);
       return;
     }
+    setBuscando(true);
     reloj.current = setTimeout(() => {
+      if (!quedanBusquedas()) {
+        setAgotado(true);
+        setSugerencias([]);
+        setBuscando(false);
+        return;
+      }
       const { pedir, pais, cerca } = opRef.current;
       pedir<{ sugerencias: SugerenciaDireccion[] }>(
         'GET',
@@ -76,7 +112,10 @@ export function useSugerenciasDireccion(op: {
           // Solo si sigue siendo lo último escrito (una respuesta vieja no pisa la nueva).
           if (ultima.current === texto) setSugerencias(r.sugerencias);
         })
-        .catch(() => setSugerencias([]));
+        .catch(() => setSugerencias([]))
+        .finally(() => {
+          if (ultima.current === texto) setBuscando(false);
+        });
     }, ESPERA_MS);
   }, []);
 
@@ -97,5 +136,5 @@ export function useSugerenciasDireccion(op: {
   }, []);
 
   const cerrar = useCallback(() => setSugerencias([]), []);
-  return { sugerencias, buscar, elegir, cerrar };
+  return { sugerencias, buscar, elegir, cerrar, agotado, buscando };
 }

@@ -62,6 +62,7 @@ function Favoritos() {
   const pestana = (p: Pestana) => {
     if (p === 'inicio') return router.replace('/');
     if (p === 'pedidos') return router.push('/orders');
+    if (p === 'wallet') return router.push('/gift-cards');
     if (p === 'cuenta') return router.push('/account');
   };
 

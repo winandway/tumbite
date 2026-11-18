@@ -139,6 +139,7 @@ export default function Restaurantes() {
     if (p === 'inicio') return router.replace('/');
     if (p === 'favoritos') return router.push('/favorites');
     if (p === 'pedidos') return router.push('/orders');
+    if (p === 'wallet') return router.push('/gift-cards');
     router.push('/account');
   };
 

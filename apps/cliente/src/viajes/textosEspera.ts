@@ -14,6 +14,8 @@ type TextosEspera = {
   compartir: string;
   cancelarNota: string;
   envioEn: { moto: string; carro: string };
+  /** C-INICIO-NUEVO (borrador aprobado): el precio fijo se dice en verde mientras busca. */
+  precioFijo: string;
 };
 
 export const TEXTOS_ESPERA: Record<'es' | 'en', TextosEspera> = {
@@ -40,6 +42,7 @@ export const TEXTOS_ESPERA: Record<'es' | 'en', TextosEspera> = {
     compartir: 'Compartir',
     cancelarNota: 'Cancelar es gratis mientras buscamos',
     envioEn: { moto: 'Envío en moto', carro: 'Envío en carro' },
+    precioFijo: 'El precio no cambia al llegar',
   },
   en: {
     titulo: {
@@ -63,5 +66,6 @@ export const TEXTOS_ESPERA: Record<'es' | 'en', TextosEspera> = {
     compartir: 'Share',
     cancelarNota: 'Canceling is free while we search',
     envioEn: { moto: 'Delivery by motorcycle', carro: 'Delivery by car' },
+    precioFijo: 'The price won’t change when you arrive',
   },
 };

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { ICONOS_LUGAR } from '@tumbite/compartido';
 import { borrarFotosDeDireccion, fotosPorDireccion } from './fotoPuerta';
 
 /** Direcciones guardadas del cliente (auditoría final, punto 14): casa, trabajo, con instrucciones. */
@@ -21,6 +22,8 @@ const aDireccion = (r: Record<string, unknown>, fotos: number[] = []) => ({
   // C-PUNTO-EXACTO: «frente a la panadería».
   referencia: String(r.referencia ?? ''),
   entrega: String(r.entrega ?? 'puerta') as 'puerta' | 'mano',
+  // C-LUGARES-GUARDADOS: el ícono del lugar («» = el de su nombre).
+  icono: String(r.icono ?? ''),
   usadaEn: String(r.usada_en),
   // C-FOTO-PUERTA: casa o edificio («» si todavía no lo dijo) y qué fotos de la puerta tiene.
   tipoLugar: String(r.tipo_lugar ?? '') as '' | 'casa' | 'edificio',
@@ -41,25 +44,26 @@ direcciones.get('/mis-direcciones', async (c) => {
   return c.json({ direcciones: results.map((r) => aDireccion(r, fotos.get(String(r.id)) ?? [])) });
 });
 
+const esquemaDireccion = z.object({
+  etiqueta: z.string().trim().max(30).default(''),
+  direccion: z.string().trim().min(5, { error: 'Escribe la dirección de entrega.' }).max(200),
+  lat: z.number().min(-90).max(90).nullable().default(null),
+  lng: z.number().min(-180).max(180).nullable().default(null),
+  instrucciones: z.string().trim().max(300).default(''),
+  // C-DIRECCION-APTO: apartamento, piso o edificio.
+  apto: z.string().trim().max(60).default(''),
+  // C-PUNTO-EXACTO: punto de referencia (opcional).
+  referencia: z.string().trim().max(160).default(''),
+  entrega: z.enum(['puerta', 'mano']).default('puerta'),
+  // C-LUGARES-GUARDADOS: uno de los ocho íconos, o vacío.
+  icono: z.union([z.enum(ICONOS_LUGAR), z.literal('')]).default(''),
+});
+
 direcciones.post('/mis-direcciones', async (c) => {
   const u = exigir(c, 'cliente');
-  const d = await leerCuerpo(
-    c,
-    z.object({
-      etiqueta: z.string().trim().max(30).default(''),
-      direccion: z.string().trim().min(5, { error: 'Escribe la dirección de entrega.' }).max(200),
-      lat: z.number().min(-90).max(90).nullable().default(null),
-      lng: z.number().min(-180).max(180).nullable().default(null),
-      instrucciones: z.string().trim().max(300).default(''),
-      // C-DIRECCION-APTO: apartamento, piso o edificio.
-      apto: z.string().trim().max(60).default(''),
-      // C-PUNTO-EXACTO: punto de referencia (opcional).
-      referencia: z.string().trim().max(160).default(''),
-      entrega: z.enum(['puerta', 'mano']).default('puerta'),
-    }),
-  );
+  const d = await leerCuerpo(c, esquemaDireccion);
   const db = base(c);
-  // La misma dirección (texto) se actualiza en vez de duplicarse.
+  // La misma dirección (texto) se actualiza en vez de duplicarse (C-CUPONES-DIRECCIONES).
   const igual = await db
     .prepare(
       'SELECT id FROM direcciones_cliente WHERE usuario_id = ? AND lower(direccion) = lower(?)',
@@ -70,9 +74,21 @@ direcciones.post('/mis-direcciones', async (c) => {
   if (igual)
     await db
       .prepare(
-        "UPDATE direcciones_cliente SET etiqueta = ?, lat = ?, lng = ?, instrucciones = ?, entrega = ?, apto = ?, referencia = ?, usada_en = datetime('now') WHERE id = ?",
+        "UPDATE direcciones_cliente SET etiqueta = CASE WHEN ? = '' THEN etiqueta ELSE ? END, lat = ?, lng = ?, instrucciones = ?, entrega = ?, apto = ?, referencia = ?, icono = CASE WHEN ? = '' THEN icono ELSE ? END, usada_en = datetime('now') WHERE id = ?",
       )
-      .bind(d.etiqueta, d.lat, d.lng, d.instrucciones, d.entrega, d.apto, d.referencia, id)
+      .bind(
+        d.etiqueta,
+        d.etiqueta,
+        d.lat,
+        d.lng,
+        d.instrucciones,
+        d.entrega,
+        d.apto,
+        d.referencia,
+        d.icono,
+        d.icono,
+        id,
+      )
       .run();
   else {
     const n = await db
@@ -87,9 +103,21 @@ direcciones.post('/mis-direcciones', async (c) => {
       );
     await db
       .prepare(
-        'INSERT INTO direcciones_cliente (id, usuario_id, etiqueta, direccion, lat, lng, instrucciones, entrega, apto, referencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO direcciones_cliente (id, usuario_id, etiqueta, direccion, lat, lng, instrucciones, entrega, apto, referencia, icono) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       )
-      .bind(id, u.id, d.etiqueta, d.direccion, d.lat, d.lng, d.instrucciones, d.entrega, d.apto, d.referencia)
+      .bind(
+        id,
+        u.id,
+        d.etiqueta,
+        d.direccion,
+        d.lat,
+        d.lng,
+        d.instrucciones,
+        d.entrega,
+        d.apto,
+        d.referencia,
+        d.icono,
+      )
       .run();
   }
   const r = (await db
@@ -98,6 +126,39 @@ direcciones.post('/mis-direcciones', async (c) => {
     .first<Record<string, unknown>>())!;
   const fotos = igual ? await fotosPorDireccion(db, u.id) : new Map<string, number[]>();
   return c.json({ direccion: aDireccion(r, fotos.get(id) ?? []) }, igual ? 200 : 201);
+});
+
+/** C-LUGARES-GUARDADOS: editar un lugar por su id (nombre, ícono, dirección y punto exacto). */
+direcciones.put('/mis-direcciones/:id', async (c) => {
+  const u = exigir(c, 'cliente');
+  const d = await leerCuerpo(c, esquemaDireccion);
+  const db = base(c);
+  const id = c.req.param('id');
+  const r = await db
+    .prepare(
+      "UPDATE direcciones_cliente SET etiqueta = ?, direccion = ?, lat = ?, lng = ?, instrucciones = ?, entrega = ?, apto = ?, referencia = ?, icono = ?, usada_en = datetime('now') WHERE id = ? AND usuario_id = ?",
+    )
+    .bind(
+      d.etiqueta,
+      d.direccion,
+      d.lat,
+      d.lng,
+      d.instrucciones,
+      d.entrega,
+      d.apto,
+      d.referencia,
+      d.icono,
+      id,
+      u.id,
+    )
+    .run();
+  if (!r.meta.changes) throw new ErrorDatos('Ese lugar no existe.', undefined, 404);
+  const fila = (await db
+    .prepare('SELECT * FROM direcciones_cliente WHERE id = ?')
+    .bind(id)
+    .first<Record<string, unknown>>())!;
+  const fotos = await fotosPorDireccion(db, u.id);
+  return c.json({ direccion: aDireccion(fila, fotos.get(id) ?? []) });
 });
 
 direcciones.delete('/mis-direcciones/:id', async (c) => {

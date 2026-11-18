@@ -2,7 +2,7 @@ import type { Idioma } from '@tumbite/compartido';
 import { BarraPestanas, COLOR } from '@tumbite/movil';
 import { textosInicio } from './textos';
 
-export type Pestana = 'inicio' | 'pedidos' | 'favoritos' | 'cuenta';
+export type Pestana = 'inicio' | 'pedidos' | 'favoritos' | 'wallet' | 'cuenta';
 
 const nombrePestana = (n: Record<Pestana, string>, p: Pestana) =>
   new Map(Object.entries(n) as [Pestana, string][]).get(p) ?? p;
@@ -47,6 +47,13 @@ export function BarraInferior({
           texto: nombrePestana(t.nav, 'favoritos'),
           icono: 'heart-outline',
           iconoActivo: 'heart',
+        },
+        // C-INICIO-NUEVO (borrador aprobado): Wallet (saldo, tarjetas de regalo y regalos de Divoox).
+        {
+          clave: 'wallet',
+          texto: nombrePestana(t.nav, 'wallet'),
+          icono: 'wallet-outline',
+          iconoActivo: 'wallet',
         },
         {
           clave: 'cuenta',

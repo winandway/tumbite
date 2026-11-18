@@ -20,7 +20,7 @@ describe('Envíos y la app del cliente, como los vio Richard en TestFlight', () 
   it('«Enviar» avisa junto al botón qué falta (casilla de prohibidos, datos de quien recibe)', () => {
     expect(pedir).toContain('if (!v.sinProhibidos) return setError(t.faltaProhibidos);');
     expect(pedir).toMatch(
-      /\{error \? \([\s\S]{0,200}\{error\}[\s\S]{0,120}<Boton\s+texto=\{servicio === 'envios'/,
+      /\{error \? \([\s\S]{0,200}\{error\}[\s\S]{0,120}<BotonGrande\s+texto=\{textoBoton\}/,
     );
     expect(pedir).toContain('accessibilityRole="checkbox"');
   });
@@ -30,7 +30,8 @@ describe('Envíos y la app del cliente, como los vio Richard en TestFlight', () 
     expect(ride).toContain('automaticallyAdjustKeyboardInsets');
   });
   it('«Bloque de logística» abre una pantalla de la app, no la web', () => {
-    const servicio = leer('apps', 'cliente', 'src', 'app', 'service', '[id].tsx');
+    // C-INICIO-NUEVO: Envíos abre directo su pantalla; «Multipaquete (Flex)» lleva a /business.
+    const servicio = leer('apps', 'cliente', 'src', 'viajes', 'PedirMoto.tsx');
     expect(servicio).toContain("router.push('/business')");
     expect(servicio).not.toContain('Linking.openURL');
     expect(leer('apps', 'cliente', 'src', 'app', 'business.tsx')).toContain('<WebView');
@@ -70,8 +71,8 @@ describe('rastrear un paquete en la app del cliente (C-FLEX-RASTREAR, LG3)', () 
     const r = leer('apps', 'cliente', 'src', 'RastrearPaquete.tsx');
     expect(r).toContain("'/datos/v1/flex/mis-paquetes/seguir'");
     expect(r).toContain('<CameraView');
-    expect(leer('apps', 'cliente', 'src', 'app', 'service', '[id].tsx')).toContain(
-      't.envioRastrear',
+    expect(leer('apps', 'cliente', 'src', 'viajes', 'PedirMoto.tsx')).toContain(
+      "router.push('/packages')",
     );
   });
 });

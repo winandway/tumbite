@@ -3,9 +3,7 @@ import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { enIdioma } from '@tumbite/compartido';
-import { COLOR, FilaLista, RADIO, useSesion } from '@tumbite/movil';
-import { View } from 'react-native';
-import { TEXTOS_FIJOS } from '../viajes/textosFijos';
+import { useSesion } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { PedirMoto } from '../viajes/PedirMoto';
@@ -25,7 +23,6 @@ function PantallaMoto() {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
-  const tf = enIdioma(TEXTOS_FIJOS, idioma);
   // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
   const pedido = useLocalSearchParams<{ servicio?: string }>().servicio;
   const servicio = pedido === 'carro' || pedido === 'envios' ? pedido : 'moto';
@@ -85,7 +82,10 @@ function PantallaMoto() {
   }, [cargar, viajeId, viaje]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F6F6F6' }} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: viaje ? '#F6F6F6' : '#FFFFFF' }}
+      edges={['top', 'left', 'right']}
+    >
       <Encabezado
         titulo={
           servicio === 'carro' ? t.tituloCarro : servicio === 'envios' ? t.tituloEnvios : t.titulo
@@ -93,25 +93,24 @@ function PantallaMoto() {
         alVolver={() => (router.canGoBack() ? router.back() : router.replace('/'))}
         etiquetaVolver={tc.volver}
       />
-      <ScrollView
-        ref={lista}
-        // C-TECLADO-NO-TAPA (31 oct 2026, Richard en TestFlight): el teclado tapaba el formulario y no
-        // había cómo esconderlo. La casilla con el cursor sube sola y al deslizar el teclado se esconde.
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: 32,
-          width: '100%',
-          maxWidth: ANCHO_MAX,
-          alignSelf: 'center',
-        }}
-      >
-        {viaje && alerta ? (
-          <PreguntaTodoBien viajeId={viaje.id} alResponder={() => void cargar()} />
-        ) : null}
-        {viaje ? (
+      {viaje ? (
+        <ScrollView
+          ref={lista}
+          // C-TECLADO-NO-TAPA (31 oct 2026): el teclado no tapa el formulario y se esconde al deslizar.
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: 32,
+            width: '100%',
+            maxWidth: ANCHO_MAX,
+            alignSelf: 'center',
+          }}
+        >
+          {alerta ? (
+            <PreguntaTodoBien viajeId={viaje.id} alResponder={() => void cargar()} />
+          ) : null}
           <ViajeEnCurso
             viaje={viaje}
             paquete={paquete}
@@ -122,65 +121,37 @@ function PantallaMoto() {
               void cargar();
             }}
           />
-        ) : (
-          <>
-            <PedirMoto
-              key={vueltaPedir}
-              servicio={servicio}
-              deudaPendiente={deuda}
-              alPedir={(id) => setViajeId(id)}
-            />
-            {/* C-VIAJES-FIJOS y C-CONDUCTOR-CONFIANZA: los accesos en la pantalla del servicio.
-                C-FILA-SIN-MODO-OSCURO: la pantalla es siempre clara (fondo #F6F6F6) y FilaLista
-                escribe en negro: la tarjeta va blanca fija, nunca con el fondo del modo oscuro. */}
-            <View
-              testID="accesos-fijos"
-              style={{
-                borderWidth: 1,
-                borderColor: COLOR.borde,
-                borderRadius: RADIO.l,
-                backgroundColor: COLOR.fondo,
-                marginTop: 16,
-                overflow: 'hidden',
-              }}
-            >
-              <FilaLista
-                titulo={tf.fijos}
-                detalle={tf.entradaFijosDetalle}
-                icono="repeat-outline"
-                alTocar={() => router.push('/fixed-rides')}
-                testID="servicio-viajes-fijos"
-              />
-              <FilaLista
-                titulo={tf.conductores}
-                detalle={tf.entradaConfianzaDetalle}
-                icono="shield-checkmark-outline"
-                alTocar={() => router.push('/trusted-drivers')}
-                testID="servicio-conductores-confianza"
-                ultima
-              />
-            </View>
-            {servicio !== 'envios' ? <ContactosConfianza /> : null}
-            {/* C-VIAJES-HISTORIAL: sus viajes anteriores con el recibo y la ayuda. */}
-            {/* C-MISMA-RUTA: «Pedir la misma ruta» cae aquí mismo en la espera de siempre. */}
-            {servicio !== 'envios' ? (
-              <MisViajes
-                alPedir={(id, otro) =>
-                  otro === servicio
-                    ? setViajeId(id)
-                    : router.replace({ pathname: '/ride', params: { servicio: otro } })
-                }
-                alCambiar={(otro) => {
-                  if (otro !== servicio)
-                    return router.replace({ pathname: '/ride', params: { servicio: otro } });
-                  setVueltaPedir((n) => n + 1);
-                  lista.current?.scrollTo({ y: 0, animated: true });
-                }}
-              />
-            ) : null}
-          </>
-        )}
-      </ScrollView>
+        </ScrollView>
+      ) : (
+        // C-INICIO-NUEVO (borrador aprobado): el formulario tiene su propio scroll y el botón fijo
+        // abajo. Viajes fijos y Conductores de confianza viven en «Más servicios» del inicio.
+        <PedirMoto
+          key={vueltaPedir}
+          servicio={servicio}
+          deudaPendiente={deuda}
+          alPedir={(id) => setViajeId(id)}
+          extras={
+            servicio !== 'envios' ? (
+              <>
+                <ContactosConfianza />
+                {/* C-VIAJES-HISTORIAL y C-MISMA-RUTA: los viajes anteriores con «Pedir la misma ruta». */}
+                <MisViajes
+                  alPedir={(id, otro) =>
+                    otro === servicio
+                      ? setViajeId(id)
+                      : router.replace({ pathname: '/ride', params: { servicio: otro } })
+                  }
+                  alCambiar={(otro) => {
+                    if (otro !== servicio)
+                      return router.replace({ pathname: '/ride', params: { servicio: otro } });
+                    setVueltaPedir((n) => n + 1);
+                  }}
+                />
+              </>
+            ) : null
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

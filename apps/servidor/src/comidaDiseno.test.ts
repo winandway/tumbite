@@ -15,8 +15,12 @@ describe('pantallas de Comida con el diseño aprobado', () => {
       existsSync(join(__dirname, '..', '..', 'cliente', 'src', 'app', 'restaurants.tsx')),
     ).toBe(true);
     // Desde el 18 oct (inicio «como los grandes»): Comida disponible abre los restaurantes.
-    expect(leer(...CLIENTE, 'Inicio.tsx')).toMatch(
-      /s\.id === 'comida' && \(s\.accion === 'abrir' \|\| !servicios\)\)\s*return router\.push\('\/restaurants'\)/,
+    // C-INICIO-NUEVO (17 nov 2026): Comida abre directo los restaurantes; «Ver todos» también.
+    expect(leer('packages', 'compartido', 'src', 'inicioNuevo.ts')).toContain(
+      "if (id === 'comida') return { pathname: '/restaurants' };",
+    );
+    expect(leer(...CLIENTE, 'Inicio.tsx')).toContain(
+      "verTodos={() => router.push('/restaurants')}",
     );
     expect(leer(...CLIENTE, 'inicio', 'Restaurantes.tsx')).toMatch(
       /router\.push\('\/restaurants'\)/,

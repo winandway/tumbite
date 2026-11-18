@@ -1978,6 +1978,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t search for the address. Mark the spot on the map.',
   ],
   ['Esa dirección no existe.', 'That address doesn’t exist.'],
+  ['Ese lugar no existe.', 'That place doesn’t exist.'],
   // Divoox Moto · M1 (cotización de viajes).
   ['Esa emergencia ya fue atendida.', 'That emergency was already handled.'],
   ['Solo se califica un viaje terminado.', 'Only completed rides can be rated.'],

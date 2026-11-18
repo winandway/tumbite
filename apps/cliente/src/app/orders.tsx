@@ -114,6 +114,7 @@ function Pedidos() {
   const pestana = (p: Pestana) => {
     if (p === 'inicio') return router.replace('/');
     if (p === 'favoritos') return router.push('/favorites');
+    if (p === 'wallet') return router.push('/gift-cards');
     if (p === 'cuenta') return router.push('/account');
   };
   const fecha = (f: string) =>

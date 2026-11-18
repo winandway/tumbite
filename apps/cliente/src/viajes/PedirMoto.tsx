@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { type ReactNode } from 'react';
+import { Image, Pressable, ScrollView, View } from 'react-native';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   type CategoriaViaje,
   type CotizacionViaje,
@@ -20,15 +23,15 @@ import {
 } from '@tumbite/compartido';
 import {
   AvisoBorrador,
-  Boton,
   C,
   Campo,
-  CampoDireccion,
   Modal,
   alSalirTelefono,
   almacenTelefono,
   useSesion,
   Text,
+  COLOR,
+  Icono,
 } from '@tumbite/movil';
 import { PuntoExacto } from '../PuntoExacto';
 import { Pildora, Tarjeta } from '../comida/piezas';
@@ -39,7 +42,12 @@ import { TEXTOS_MOTO } from './textos';
 import { AgregarCodigoRegalo, LineaRegalo, TEXTOS_REGALO } from '../RegaloDivoox';
 import { PedirPrimeroA } from './ConductoresConfianza';
 import { tomarRelleno } from './relleno';
-import { ElegirCuando, MisProgramados, horaCorta } from './Programar';
+import { ElegirCuando, MisProgramados, Segmentos, horaCorta } from './Programar';
+import { IMG_NUEVO } from '../inicio/recursosNuevo';
+import { BotonGrande } from './BotonGrande';
+import { BuscarDestino } from './BuscarDestino';
+import { LugaresFila } from './LugaresFila';
+import { useLugares } from './useLugares';
 import {
   EditorParadas,
   PARADAS_SIN_SABER,
@@ -61,7 +69,10 @@ export function PedirMoto({
   deudaPendiente,
   alPedir,
   servicio = 'moto',
+  extras,
 }: {
+  /** Lo que va debajo del formulario (viajes anteriores…), dentro del mismo scroll. */
+  extras?: ReactNode;
   /** C-CARRO-PRUEBAS / C-ENVIOS: el mismo formulario pide Moto, Carro o un Envío. */
   servicio?: 'moto' | 'carro' | 'envios';
   deudaPendiente: { monto: number; moneda: string | null } | null;
@@ -131,9 +142,6 @@ export function PedirMoto({
     cambiar('paradas', JSON.stringify(nuevas));
     setCotizacion(null);
   };
-  // C-VIAJE-PROGRAMADO: con hora elegida, el botón dice «Reservar».
-  const textoPedir = v.cuando ? t.reservar : textoPedirViaje;
-  const textoEnviar = v.cuando ? t.reservar : t.pedirEnvio;
   const [cotizacion, setCotizacion] = useState<CotizacionViaje | null>(null);
   const [error, setError] = useState('');
   const [trabajando, setTrabajando] = useState(false);
@@ -311,212 +319,448 @@ export function PedirMoto({
     }
   }
 
+  // C-INICIO-NUEVO (borrador aprobado): «¿A dónde vas?» en su pantalla, lugares guardados en la fila
+  // y el precio se pide solo apenas hay destino (Moto en 3 toques: Moto → Casa → Solicitar).
+  const tn = textosPedirNuevo(idioma, servicio);
+  const lugares = useLugares(api, Boolean(usuario));
+  const [buscando, setBuscando] = useState<'destino' | 'recogida' | null>(null);
+  const [claveDestino, setClaveDestino] = useState<string | null>(null);
+  const ponerPunto = (de: 'recogida' | 'destino', p: Punto, direccion: string) => {
+    cambiar(`${de}Lat`, String(p.lat));
+    cambiar(`${de}Lng`, String(p.lng));
+    cambiar(de, direccion);
+    if (de === 'destino') {
+      cambiar('destinoRef', '');
+      cambiar('destinoApto', '');
+    } else cambiar('recogidaRef', '');
+    setCotizacion(null);
+    setError('');
+  };
+  const intentado = useRef('');
+  const claveRuta = `${v.recogidaLat},${v.recogidaLng}>${v.destinoLat},${v.destinoLng}|${v.paradas}|${categoria}`;
+  useEffect(() => {
+    if (!recogida || !destino || cotizacion || trabajando || cobro) return;
+    if (intentado.current === claveRuta) return;
+    intentado.current = claveRuta;
+    void cotizar();
+  }, [recogida, destino, cotizacion, trabajando, cobro, cotizar, claveRuta]);
+  const imagenServicio =
+    servicio === 'envios'
+      ? (IMG_NUEVO.servicios.envios ?? 0)
+      : servicio === 'carro'
+        ? (new Map(Object.entries(IMG_NUEVO.carros)).get(categoria) ??
+          IMG_NUEVO.carros.estandar ??
+          0)
+        : (IMG_NUEVO.servicios.moto ?? 0);
+  const sinDestino = !destinoFijado;
+  const textoBoton = sinDestino
+    ? tn.eligeDestino
+    : cuando
+      ? t.reservar
+      : servicio === 'envios'
+        ? tn.solicitarEnvio
+        : servicio === 'carro'
+          ? textoPedirViaje
+          : tn.solicitar(categoria);
+  const alBoton = () => {
+    if (sinDestino) return setBuscando('destino');
+    if (!cotizacion) return void cotizar();
+    void pedir();
+  };
+
   return (
-    <View style={{ gap: 12 }}>
-      <AvisoBorrador
-        visible={b.recuperado && !rellenado}
-        idioma={idioma}
-        empezar={b.empezarDeNuevo}
-      />
-      {reservado ? (
-        <Tarjeta>
-          <View testID="viaje-reservado" style={{ gap: 4 }}>
-            <Text style={{ color: C.exito, fontWeight: '700', fontSize: 18 }}>
-              {servicio === 'envios' ? t.reservadoEnvio : t.reservado}
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: 32,
+          width: '100%',
+          maxWidth: 640,
+          alignSelf: 'center',
+          gap: 12,
+        }}
+        testID="pedir-viaje"
+      >
+        <AvisoBorrador
+          visible={b.recuperado && !rellenado}
+          idioma={idioma}
+          empezar={() => {
+            // «Empezar de nuevo»: sin el aviso viejo y con la recogida otra vez en la ubicación de ahora.
+            setError('');
+            setCotizacion(null);
+            setClaveDestino(null);
+            void b
+              .empezarDeNuevo()
+              .then(() => miUbicacion())
+              .then((p) => {
+                if (p) ponerPunto('recogida', p, '');
+              });
+          }}
+        />
+        {/* El encabezado del servicio: dibujo, titular y una frase. */}
+        <View
+          style={{
+            backgroundColor: COLOR.superficie,
+            borderRadius: 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 16,
+            minHeight: 120,
+          }}
+          testID="pedir-heroe"
+        >
+          <Image
+            source={imagenServicio}
+            style={{ width: 120, height: 96 }}
+            resizeMode="contain"
+            accessibilityIgnoresInvertColors
+          />
+          <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            <Text
+              accessibilityRole="header"
+              style={{ fontSize: 22, fontWeight: '700', color: C.secundario, textAlign: 'right' }}
+            >
+              {tn.heroe}
             </Text>
-            <Text style={{ color: C.secundario }}>{t.reservadoAyuda}</Text>
-            <Text style={{ color: '#666B73' }}>
-              {t.cancelaGratis}{' '}
-              {horaCorta(new Date(Date.parse(reservado) - 60 * 60_000).toISOString(), idioma)}
+            <Text style={{ color: COLOR.textoSuave, textAlign: 'right', marginTop: 2 }}>
+              {tn.heroeTexto}
             </Text>
           </View>
-        </Tarjeta>
-      ) : null}
-      <MisProgramados recargar={vueltaLista} />
-      {/* C-DIRECCION-SUGERENCIAS: recogida y destino con direcciones reales y su punto exacto. */}
-      <CampoDireccion
-        etiqueta={t.recogida}
-        placeholder={servicio === 'envios' ? t.recogidaEnvio : t.recogidaAyuda}
-        valor={v.recogida}
-        cambiar={(x) => {
-          cambiar('recogida', x);
-          setCotizacion(null);
-        }}
-        alElegir={(d) => {
-          cambiar('recogidaLat', String(d.punto.lat));
-          cambiar('recogidaLng', String(d.punto.lng));
-          setCotizacion(null);
-          // C-PUNTO-EXACTO: una calle o avenida no basta: se marca el punto de encuentro.
-          setMarcando('recogida');
-        }}
-        cerca={recogida}
-        testID="moto-recogida"
-        // C-FIJAR-EN-MAPA: «Fijar recogida en el mapa», dentro de su casilla (como Uber y DiDi).
-        enMapa={{
-          texto: textoFijarEnMapa(idioma, 'recogida', recogidaFijada),
-          marcado: recogidaFijada,
-          detalle: v.recogidaRef,
-          ajustar: textosPuntoExacto(idioma).ajustar,
-          abrir: () => setMarcando('recogida'),
-          testID: 'moto-fijar-recogida',
-        }}
-      />
-      <CampoDireccion
-        etiqueta={servicio === 'envios' ? t.destinoEnvio : t.destino}
-        placeholder={servicio === 'envios' ? t.destinoEnvio : t.destino}
-        valor={v.destino}
-        cambiar={(x) => {
-          cambiar('destino', x);
-          setCotizacion(null);
-        }}
-        alElegir={(d) => {
-          cambiar('destinoLat', String(d.punto.lat));
-          cambiar('destinoLng', String(d.punto.lng));
-          setCotizacion(null);
-          setMarcando('destino');
-        }}
-        cerca={recogida}
-        testID="moto-destino"
-        enMapa={{
-          texto: textoFijarEnMapa(idioma, 'destino', destinoFijado),
-          marcado: destinoFijado,
-          detalle: [v.destinoApto, v.destinoRef].filter(Boolean).join(' · '),
-          ajustar: textosPuntoExacto(idioma).ajustar,
-          abrir: () => setMarcando('destino'),
-          testID: 'moto-fijar-destino',
-        }}
-      />
-      {/* C-VIAJE-PARADAS: paradas intermedias, antes de ver el precio (Moto y Carro). */}
-      {servicio !== 'envios' ? (
-        <EditorParadas
-          paradas={paradas}
-          cambiar={ponerParadas}
-          maximo={cotizacion?.paradasMaximas ?? PARADAS_SIN_SABER}
-          cerca={recogida}
-        />
-      ) : null}
-      <Modal
-        visible={marcando != null}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setMarcando(null)}
-        testID="moto-punto-exacto"
-      >
-        {marcando ? (
-          <PuntoExacto
-            key={marcando}
-            tipo={
-              marcando === 'destino' ? 'destino' : servicio === 'envios' ? 'envio' : 'encuentro'
-            }
-            conApto={marcando === 'destino' && servicio === 'envios'}
-            inicial={
-              marcando === 'recogida'
-                ? { punto: recogida, direccion: v.recogida, referencia: v.recogidaRef }
-                : {
-                    punto: destino,
-                    direccion: v.destino,
-                    referencia: v.destinoRef,
-                    apto: v.destinoApto,
-                  }
-            }
-            cerca={recogida}
-            volver={() => setMarcando(null)}
-            confirmar={(p) => {
-              const de = marcando;
-              cambiar(`${de}Lat`, String(p.punto.lat));
-              cambiar(`${de}Lng`, String(p.punto.lng));
-              if (p.direccion) cambiar(de, p.direccion);
-              cambiar(de === 'recogida' ? 'recogidaRef' : 'destinoRef', p.referencia);
-              if (de === 'destino') cambiar('destinoApto', p.apto);
-              setCotizacion(null);
-              setMarcando(null);
+        </View>
+        {servicio === 'envios' ? (
+          // C-ENVIOS-DOS-TIPOS: A → B (Express) aquí mismo; Multipaquete (Flex) es para empresas
+          // (C-BLOQUE-EN-LA-APP: se explica y se registra dentro de la app).
+          <Segmentos
+            opciones={[
+              { clave: 'express', texto: tn.express },
+              { clave: 'flex', texto: tn.flex },
+            ]}
+            activa="express"
+            cambiar={(k) => {
+              if (k === 'flex') router.push('/business');
             }}
+            testID="envios-tipos"
           />
         ) : null}
-      </Modal>
-      {/* C-TEXTOS-POR-SERVICIO: cada servicio dice lo suyo. */}
-      <Text style={{ color: '#666B73' }}>
-        {servicio === 'carro' ? t.avisoCarro : servicio === 'envios' ? t.avisoEnvio : t.casco}
-      </Text>
-      {servicio === 'moto' ? <Text style={{ color: '#666B73' }}>{t.unPasajero}</Text> : null}
-
-      <ElegirCuando valor={cuando} cambiar={(iso) => cambiar('cuando', iso)} />
-      <PedirPrimeroA
-        servicio={servicio}
-        valor={v.confianza}
-        cambiar={(x) => cambiar('confianza', x)}
-        reserva={Boolean(cuando)}
-      />
-      {/* C-CARRO-CATEGORIAS: las categorías que ofrece la ciudad, cada una con su precio para este
-          trayecto, como la lista de Uber. Al tocar otra, se cotiza con esa. */}
-      {cotizacion && servicio === 'carro' && (cotizacion.opciones?.length ?? 0) > 1 ? (
-        <View style={{ gap: 8 }} accessibilityRole="radiogroup" testID="carro-categorias">
-          <Text style={{ fontWeight: '700', color: C.secundario, fontSize: 16 }}>
-            {t.eligeCarro}
-          </Text>
-          {(cotizacion.opciones ?? []).map((o) => {
-            const elegida = (cotizacion.categoria ?? 'estandar') === o.categoria;
-            return (
-              <Pressable
-                key={o.categoria}
-                onPress={() => {
-                  if (elegida) return;
-                  cambiar('categoria', o.categoria);
-                  void cotizar(o.categoria);
-                }}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: elegida }}
-                testID={`carro-categoria-${o.categoria}`}
+        <ElegirCuando valor={cuando} cambiar={(iso) => cambiar('cuando', iso)} />
+        {reservado ? (
+          <Tarjeta>
+            <View testID="viaje-reservado" style={{ gap: 4 }}>
+              <Text style={{ color: C.exito, fontWeight: '700', fontSize: 18 }}>
+                {servicio === 'envios' ? t.reservadoEnvio : t.reservado}
+              </Text>
+              <Text style={{ color: C.secundario }}>{t.reservadoAyuda}</Text>
+              <Text style={{ color: '#666B73' }}>
+                {t.cancelaGratis}{' '}
+                {horaCorta(new Date(Date.parse(reservado) - 60 * 60_000).toISOString(), idioma)}
+              </Text>
+            </View>
+          </Tarjeta>
+        ) : null}
+        {/* La ruta: recogida (con «centrar» en la ubicación de ahora) y «¿A dónde vas?». */}
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: COLOR.borde,
+            borderRadius: 16,
+            backgroundColor: '#FFFFFF',
+          }}
+          testID="pedir-ruta"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}>
+            <View
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: 8,
+                borderWidth: 4,
+                borderColor: C.secundario,
+              }}
+            />
+            <Pressable
+              style={{ flex: 1 }}
+              onPress={() => setBuscando('recogida')}
+              accessibilityRole="button"
+              testID="moto-recogida"
+            >
+              <Text style={{ fontSize: 13, color: COLOR.textoSuave, fontWeight: '600' }}>
+                {tn.recogerEn}
+              </Text>
+              <Text
+                numberOfLines={1}
+                style={{ fontSize: 16, fontWeight: '700', color: C.secundario }}
+              >
+                {v.recogida.trim() || (recogida ? tn.ubicacionActual : tn.eligeRecogida)}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() =>
+                void miUbicacion().then((p) => {
+                  if (p) ponerPunto('recogida', p, '');
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={tn.centrar}
+              testID="moto-centrar"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: COLOR.superficie,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icono nombre="locate-outline" tamano={20} color={C.secundario} />
+            </Pressable>
+          </View>
+          <View style={{ height: 1, backgroundColor: COLOR.borde }} />
+          <Pressable
+            onPress={() => setBuscando('destino')}
+            accessibilityRole="button"
+            testID="moto-destino"
+            style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 }}
+          >
+            <View style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: C.primario }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, color: COLOR.textoSuave, fontWeight: '600' }}>
+                {servicio === 'envios' ? tn.entregarEn : t.destino}
+              </Text>
+              <Text
+                numberOfLines={1}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  paddingVertical: 12,
-                  paddingHorizontal: 14,
-                  borderRadius: 12,
-                  borderWidth: elegida ? 2 : 1,
-                  borderColor: elegida ? C.secundario : '#D5D8DD',
-                  backgroundColor: '#fff',
-                  minHeight: 64,
+                  fontSize: 16,
+                  fontWeight: destinoFijado ? '700' : '400',
+                  color: destinoFijado ? C.secundario : COLOR.textoSuave,
                 }}
               >
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
-                    {t.categorias[o.categoria]}
-                  </Text>
-                  <Text style={{ color: '#666B73', fontSize: 13 }}>
-                    {t.categoriasAyuda[o.categoria]}
-                  </Text>
-                </View>
-                <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>
-                  {formatearMonto(o.total, cotizacion.moneda, idioma)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-      {cotizacion ? (
-        <Tarjeta>
-          <View testID="moto-precio" style={{ gap: 4 }}>
-            <Text style={{ color: '#666B73', fontWeight: '700' }}>
-              {cotizacion.dePrueba ? t.precioPrueba : t.precioFijo}
-            </Text>
-            {/* C-CUPON-DIVOOX: con regalo y pago en mano, el precio de siempre tachado y lo que paga. */}
-            {cotizacion.regalo && !tarjeta ? (
-              <Text style={{ color: '#666B73', fontSize: 16, textDecorationLine: 'line-through' }}>
-                {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
+                {destinoFijado ? v.destino : tn.buscarDestino}
               </Text>
-            ) : null}
-            <Text style={{ fontSize: 34, fontWeight: '700', color: C.secundario }}>
-              {formatearMonto(
-                cotizacion.regalo && !tarjeta
-                  ? pagaEnMano(cotizacion.total, cotizacion.regalo)
-                  : cotizacion.total,
-                cotizacion.moneda,
-                idioma,
-              )}
+            </View>
+          </Pressable>
+        </View>
+        {/* C-FIJAR-EN-MAPA: «Fijar … en el mapa» de cada punto, con su propio texto. */}
+        <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
+          <Pressable
+            onPress={() => setMarcando('recogida')}
+            accessibilityRole="button"
+            testID="moto-fijar-recogida"
+            hitSlop={6}
+          >
+            <Text style={{ color: recogidaFijada ? C.exito : C.acento, fontWeight: '700' }}>
+              {textoFijarEnMapa(idioma, 'recogida', recogidaFijada)}
             </Text>
+          </Pressable>
+          {destinoFijado ? (
+            <Pressable
+              onPress={() => setMarcando('destino')}
+              accessibilityRole="button"
+              testID="moto-fijar-destino"
+              hitSlop={6}
+            >
+              <Text style={{ color: C.exito, fontWeight: '700' }}>
+                {textoFijarEnMapa(idioma, 'destino', true)} · {textosPuntoExacto(idioma).ajustar}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <LugaresFila
+          lista={lugares.lista}
+          elegido={claveDestino}
+          alElegir={(l, f) => {
+            if (l.lat == null || l.lng == null) return;
+            ponerPunto('destino', { lat: l.lat, lng: l.lng }, l.direccion);
+            if (l.referencia) cambiar('destinoRef', l.referencia);
+            if (l.apto) cambiar('destinoApto', l.apto);
+            setClaveDestino(f.clave);
+          }}
+          guardar={lugares.guardar}
+          borrar={lugares.borrar}
+          cerca={recogida}
+        />
+        {/* C-VIAJE-PARADAS: paradas intermedias, antes de ver el precio (Moto y Carro). */}
+        {servicio !== 'envios' && destinoFijado ? (
+          <EditorParadas
+            paradas={paradas}
+            cambiar={ponerParadas}
+            maximo={cotizacion?.paradasMaximas ?? PARADAS_SIN_SABER}
+            cerca={recogida}
+          />
+        ) : null}
+        <Modal
+          visible={buscando != null}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setBuscando(null)}
+          testID="moto-buscar-destino"
+        >
+          {buscando ? (
+            <BuscarDestino
+              modo={buscando}
+              cerca={recogida}
+              lugares={lugares.lista}
+              guardar={lugares.guardar}
+              borrar={lugares.borrar}
+              volver={() => setBuscando(null)}
+              elegir={(d) => {
+                ponerPunto(buscando, d.punto, d.direccion);
+                if (buscando === 'destino') setClaveDestino(d.clave ?? null);
+                setBuscando(null);
+              }}
+              enMapa={() => {
+                const de = buscando;
+                setBuscando(null);
+                setMarcando(de);
+              }}
+            />
+          ) : null}
+        </Modal>
+        <Modal
+          visible={marcando != null}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setMarcando(null)}
+          testID="moto-punto-exacto"
+        >
+          {marcando ? (
+            <PuntoExacto
+              key={marcando}
+              tipo={
+                marcando === 'destino' ? 'destino' : servicio === 'envios' ? 'envio' : 'encuentro'
+              }
+              conApto={marcando === 'destino' && servicio === 'envios'}
+              inicial={
+                marcando === 'recogida'
+                  ? { punto: recogida, direccion: v.recogida, referencia: v.recogidaRef }
+                  : {
+                      punto: destino,
+                      direccion: v.destino,
+                      referencia: v.destinoRef,
+                      apto: v.destinoApto,
+                    }
+              }
+              cerca={recogida}
+              volver={() => setMarcando(null)}
+              confirmar={(p) => {
+                const de = marcando;
+                cambiar(`${de}Lat`, String(p.punto.lat));
+                cambiar(`${de}Lng`, String(p.punto.lng));
+                if (p.direccion) cambiar(de, p.direccion);
+                cambiar(de === 'recogida' ? 'recogidaRef' : 'destinoRef', p.referencia);
+                if (de === 'destino') cambiar('destinoApto', p.apto);
+                setCotizacion(null);
+                setMarcando(null);
+              }}
+            />
+          ) : null}
+        </Modal>
+
+        {/* «Tipo de viaje»: Moto, o las categorías de Carro que ofrece la ciudad con su precio
+            (C-CARRO-CATEGORIAS); en Envíos, el tamaño del paquete (C-ENVIO-TAMANO). */}
+        <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario, marginTop: 4 }}>
+          {servicio === 'carro'
+            ? tn.tipoCarro
+            : servicio === 'envios'
+              ? tn.tipoEnvio
+              : tn.tipoViaje}
+        </Text>
+        {servicio === 'carro' && cotizacion && (cotizacion.opciones?.length ?? 0) > 1 ? (
+          <View style={{ gap: 8 }} accessibilityRole="radiogroup" testID="carro-categorias">
+            {(cotizacion.opciones ?? []).map((o) => {
+              const elegida = (cotizacion.categoria ?? 'estandar') === o.categoria;
+              return (
+                <TarjetaTipo
+                  key={o.categoria}
+                  imagen={
+                    new Map(Object.entries(IMG_NUEVO.carros)).get(o.categoria) ?? imagenServicio
+                  }
+                  titulo={t.categorias[o.categoria]}
+                  detalle={t.categoriasAyuda[o.categoria]}
+                  precio={formatearMonto(o.total, cotizacion.moneda, idioma)}
+                  elegida={elegida}
+                  alTocar={() => {
+                    if (elegida) return;
+                    cambiar('categoria', o.categoria);
+                    void cotizar(o.categoria);
+                  }}
+                  testID={`carro-categoria-${o.categoria}`}
+                />
+              );
+            })}
+          </View>
+        ) : servicio === 'envios' ? (
+          <View style={{ gap: 6 }}>
+            <View
+              style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}
+              accessibilityRole="radiogroup"
+              testID="envio-tamano"
+            >
+              {TAMANOS_PAQUETE.map((x) => (
+                <Pildora
+                  key={x}
+                  texto={textoTamano(x)}
+                  activa={(v.paqueteTamano || 'pequeno') === x}
+                  alTocar={() => cambiar('paqueteTamano', x)}
+                  rol="radio"
+                />
+              ))}
+            </View>
+            <Text style={{ color: '#666B73', fontSize: 13 }}>
+              {new Map(Object.entries(t.tamanoAyuda)).get(v.paqueteTamano || 'pequeno') ?? ''}
+            </Text>
+          </View>
+        ) : (
+          <TarjetaTipo
+            imagen={imagenServicio}
+            titulo={
+              servicio === 'carro'
+                ? (new Map(Object.entries(t.categorias)).get(categoria) ?? t.tituloCarro)
+                : t.titulo
+            }
+            detalle={
+              servicio === 'carro'
+                ? (new Map(Object.entries(t.categoriasAyuda)).get(categoria) ?? '')
+                : tn.motoDetalle
+            }
+            precio={cotizacion ? formatearMonto(cotizacion.total, cotizacion.moneda, idioma) : ''}
+            elegida
+            alTocar={() => undefined}
+            testID="tipo-viaje"
+          />
+        )}
+
+        {cotizacion ? (
+          <View
+            testID="moto-precio"
+            style={{ backgroundColor: COLOR.superficie, borderRadius: 16, padding: 16, gap: 4 }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ flex: 1, color: '#666B73', fontWeight: '700' }}>
+                {cotizacion.dePrueba ? t.precioPrueba : t.precioFijo}
+              </Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                {/* C-CUPON-DIVOOX: con regalo y pago en mano, el precio de siempre tachado. */}
+                {cotizacion.regalo && !tarjeta ? (
+                  <Text
+                    style={{ color: '#666B73', fontSize: 15, textDecorationLine: 'line-through' }}
+                  >
+                    {formatearMonto(cotizacion.total, cotizacion.moneda, idioma)}
+                  </Text>
+                ) : null}
+                <Text style={{ fontSize: 26, fontWeight: '700', color: C.secundario }}>
+                  {formatearMonto(
+                    cotizacion.regalo && !tarjeta
+                      ? pagaEnMano(cotizacion.total, cotizacion.regalo)
+                      : cotizacion.total,
+                    cotizacion.moneda,
+                    idioma,
+                  )}
+                </Text>
+              </View>
+            </View>
             {cotizacion.regalo && !tarjeta ? (
               <LineaRegalo
                 regalo={cotizacion.regalo}
@@ -555,7 +799,7 @@ export function PedirMoto({
               {Math.max(1, Math.round(cotizacion.duracionS / 60))} {t.min}
             </Text>
             <View
-              style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}
+              style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}
               accessibilityRole="radiogroup"
             >
               {/* C-PAGO-MOVIL-VIAJE: solo los métodos del país de la ciudad (Venezuela: pago móvil). */}
@@ -587,127 +831,245 @@ export function PedirMoto({
             {/* C-CUPON-DIVOOX: el código se agrega a la cuenta y el precio se vuelve a calcular. */}
             {cotizacion.regalo ? null : <AgregarCodigoRegalo alAgregar={() => void cotizar()} />}
           </View>
-        </Tarjeta>
-      ) : null}
+        ) : null}
 
-      {error && !cotizacion ? (
-        <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
-          {error}
-        </Text>
-      ) : null}
-      {cobro?.clavePublica ? (
-        <PagoTarjeta
-          cobro={cobro}
-          clavePublica={cobro.clavePublica}
-          idioma={idioma}
-          textos={{
-            pagar: `${t.pagarViaje} ${cotizacion ? formatearMonto(cotizacion.total, cotizacion.moneda, idioma) : ''}`,
-            cargando: t.cargandoTarjeta,
-            sinFormulario: t.pagoNoDisponible,
-            reintentar: t.reintentarPago,
-          }}
-          alPagar={() => {
-            void b.limpiar();
-            alPedir(cobro.viajeId);
-          }}
-        />
-      ) : cotizacion ? (
-        <>
-          {servicio === 'envios' ? (
-            <View style={{ gap: 4 }}>
-              <Campo
-                etiqueta={t.paqueteQue}
-                value={v.paqueteDescripcion}
-                onChangeText={(x) => cambiar('paqueteDescripcion', x)}
-                returnKeyType="done"
-                placeholder={t.paqueteQueEjemplo}
-              />
-              <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.paqueteTamano}</Text>
-              <View
-                style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}
-                accessibilityRole="radiogroup"
-                testID="envio-tamano"
-              >
-                {TAMANOS_PAQUETE.map((x) => (
-                  <Pildora
-                    key={x}
-                    texto={textoTamano(x)}
-                    activa={(v.paqueteTamano || 'pequeno') === x}
-                    alTocar={() => cambiar('paqueteTamano', x)}
-                    rol="radio"
-                  />
-                ))}
-              </View>
-              <Text style={{ color: '#666B73', fontSize: 13 }}>
-                {new Map(Object.entries(t.tamanoAyuda)).get(v.paqueteTamano || 'pequeno') ?? ''}
-              </Text>
-              <Campo
-                etiqueta={t.paqueteValor}
-                value={v.paqueteValor}
-                onChangeText={(x) => cambiar('paqueteValor', x)}
-                keyboardType="decimal-pad"
-              />
-              <Campo
-                etiqueta={t.destinatarioNombre}
-                value={v.destinatarioNombre}
-                onChangeText={(x) => cambiar('destinatarioNombre', x)}
-                returnKeyType="done"
-                autoComplete="name"
-              />
-              <Campo
-                etiqueta={t.destinatarioTelefono}
-                value={v.destinatarioTelefono}
-                onChangeText={(x) => cambiar('destinatarioTelefono', x)}
-                keyboardType="phone-pad"
-                placeholder={idioma === 'en' ? 'Mobile number' : 'Número de celular'}
-              />
-              <Pressable
-                onPress={() => cambiar('sinProhibidos', !v.sinProhibidos)}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: v.sinProhibidos }}
-                style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 }}
-                testID="envio-prohibidos"
-              >
-                <View
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 6,
-                    borderWidth: 2,
-                    borderColor: v.sinProhibidos ? C.exito : '#6B7078',
-                    backgroundColor: v.sinProhibidos ? C.exito : '#fff',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {v.sinProhibidos ? (
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>✓</Text>
-                  ) : null}
-                </View>
-                <Text style={{ flex: 1, color: C.secundario }}>{t.sinProhibidos}</Text>
-              </Pressable>
-            </View>
-          ) : null}
-          {error ? (
-            <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
-              {error}
+        {/* C-TEXTOS-POR-SERVICIO: cada servicio dice lo suyo. */}
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+          <Icono nombre="information-circle-outline" tamano={18} color={COLOR.textoSuave} />
+          <Text style={{ color: '#666B73', flex: 1 }}>
+            {servicio === 'carro' ? t.avisoCarro : servicio === 'envios' ? t.avisoEnvio : t.casco}
+          </Text>
+        </View>
+
+        {servicio === 'envios' ? (
+          <View style={{ gap: 4 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: C.secundario, marginTop: 4 }}>
+              {tn.detalles}
             </Text>
-          ) : null}
-          <Boton
-            texto={servicio === 'envios' ? textoEnviar : textoPedir}
-            alTocar={() => void pedir()}
-            cargando={trabajando}
-            exito
-          />
-        </>
-      ) : (
-        <Boton
-          texto={t.verPrecio}
-          alTocar={() => void cotizar()}
-          cargando={trabajando}
-          logistica={servicio === 'envios'}
+            <Campo
+              etiqueta={t.paqueteQue}
+              value={v.paqueteDescripcion}
+              onChangeText={(x) => cambiar('paqueteDescripcion', x)}
+              returnKeyType="done"
+              placeholder={t.paqueteQueEjemplo}
+            />
+            <Campo
+              etiqueta={t.paqueteValor}
+              value={v.paqueteValor}
+              onChangeText={(x) => cambiar('paqueteValor', x)}
+              keyboardType="decimal-pad"
+            />
+            <Campo
+              etiqueta={t.destinatarioNombre}
+              value={v.destinatarioNombre}
+              onChangeText={(x) => cambiar('destinatarioNombre', x)}
+              returnKeyType="done"
+              autoComplete="name"
+            />
+            <Campo
+              etiqueta={t.destinatarioTelefono}
+              value={v.destinatarioTelefono}
+              onChangeText={(x) => cambiar('destinatarioTelefono', x)}
+              keyboardType="phone-pad"
+              placeholder={idioma === 'en' ? 'Mobile number' : 'Número de celular'}
+            />
+            <Pressable
+              onPress={() => cambiar('sinProhibidos', !v.sinProhibidos)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: v.sinProhibidos }}
+              style={{ flexDirection: 'row', gap: 10, alignItems: 'center', paddingVertical: 8 }}
+              testID="envio-prohibidos"
+            >
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: v.sinProhibidos ? C.exito : '#6B7078',
+                  backgroundColor: v.sinProhibidos ? C.exito : '#fff',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {v.sinProhibidos ? (
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>✓</Text>
+                ) : null}
+              </View>
+              <Text style={{ flex: 1, color: C.secundario }}>{t.sinProhibidos}</Text>
+            </Pressable>
+            {/* C-FLEX-RASTREAR: quien espera una caja la sigue con su número de seguimiento. */}
+            <Pressable
+              onPress={() => router.push('/packages')}
+              accessibilityRole="button"
+              testID="envios-rastrear"
+            >
+              <Text style={{ color: C.acento, fontWeight: '700', paddingVertical: 8 }}>
+                {tn.rastrear}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        <PedirPrimeroA
+          servicio={servicio}
+          valor={v.confianza}
+          cambiar={(x) => cambiar('confianza', x)}
+          reserva={Boolean(cuando)}
         />
+        <MisProgramados recargar={vueltaLista} />
+        {cobro?.clavePublica ? (
+          <PagoTarjeta
+            cobro={cobro}
+            clavePublica={cobro.clavePublica}
+            idioma={idioma}
+            textos={{
+              pagar: `${t.pagarViaje} ${cotizacion ? formatearMonto(cotizacion.total, cotizacion.moneda, idioma) : ''}`,
+              cargando: t.cargandoTarjeta,
+              sinFormulario: t.pagoNoDisponible,
+              reintentar: t.reintentarPago,
+            }}
+            alPagar={() => {
+              void b.limpiar();
+              alPedir(cobro.viajeId);
+            }}
+          />
+        ) : null}
+        {extras}
+      </ScrollView>
+      {cobro?.clavePublica ? null : (
+        <SafeAreaView
+          edges={['bottom']}
+          style={{ borderTopWidth: 1, borderColor: COLOR.borde, backgroundColor: '#FFFFFF' }}
+        >
+          <View
+            style={{
+              padding: 16,
+              paddingBottom: 8,
+              width: '100%',
+              maxWidth: 640,
+              alignSelf: 'center',
+              gap: 8,
+            }}
+          >
+            {error ? (
+              <Text accessibilityRole="alert" style={{ color: C.acento, fontWeight: '700' }}>
+                {error}
+              </Text>
+            ) : null}
+            <BotonGrande
+              texto={textoBoton}
+              alTocar={alBoton}
+              cargando={trabajando}
+              testID="pedir-boton"
+            />
+          </View>
+        </SafeAreaView>
       )}
     </View>
   );
+}
+
+/** Tarjeta de «Tipo de viaje»: dibujo, nombre, detalle y precio; la elegida con borde rojo. */
+function TarjetaTipo({
+  imagen,
+  titulo,
+  detalle,
+  precio,
+  elegida,
+  alTocar,
+  testID,
+}: {
+  imagen: number;
+  titulo: string;
+  detalle: string;
+  precio: string;
+  elegida: boolean;
+  alTocar: () => void;
+  testID?: string;
+}) {
+  return (
+    <Pressable
+      onPress={alTocar}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: elegida }}
+      testID={testID}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        padding: 12,
+        borderRadius: 16,
+        borderWidth: elegida ? 2 : 1,
+        borderColor: elegida ? C.primario : COLOR.borde,
+        backgroundColor: '#FFFFFF',
+        minHeight: 72,
+      }}
+    >
+      <Image
+        source={imagen}
+        style={{ width: 64, height: 48 }}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>{titulo}</Text>
+        <Text style={{ color: '#666B73', fontSize: 13 }}>{detalle}</Text>
+      </View>
+      {precio ? (
+        <Text style={{ fontWeight: '700', fontSize: 16, color: C.secundario }}>{precio}</Text>
+      ) : null}
+    </Pressable>
+  );
+}
+
+/** C-INICIO-NUEVO: textos del borrador aprobado para Moto, Carro y Envíos. */
+function textosPedirNuevo(idioma: Idioma, servicio: 'moto' | 'carro' | 'envios') {
+  const en = idioma === 'en';
+  const heroes = new Map(
+    Object.entries({
+      moto: en
+        ? ['Ride by moto', 'Fast, safe and affordable']
+        : ['Viaja en moto', 'Rápido, seguro y económico'],
+      carro: en
+        ? ['Ride by car', 'Comfortable and safe for you and your family']
+        : ['Viaja en carro', 'Cómodo y seguro para ti y tu familia'],
+      envios: en
+        ? ['Send or receive what you need', 'Fast, safe and tracked']
+        : ['Envía o recibe lo que necesites', 'Rápido, seguro y con seguimiento'],
+    }),
+  );
+  const heroe = heroes.get(servicio) ?? [];
+  return {
+    heroe: heroe[0] ?? '',
+    heroeTexto: heroe[1] ?? '',
+    express: 'A → B (Express)',
+    flex: en ? 'Multi-package (Flex)' : 'Multipaquete (Flex)',
+    recogerEn: en ? 'Pick up at' : 'Recoger en',
+    entregarEn: en ? 'Deliver to' : 'Entregar en',
+    ubicacionActual: en ? 'Your current location' : 'Tu ubicación actual',
+    eligeRecogida: en ? 'Choose the pickup' : 'Elige dónde te recogemos',
+    buscarDestino: en ? 'Search address or place' : 'Buscar dirección o lugar',
+    centrar: en ? 'Use my current location' : 'Usar mi ubicación actual',
+    tipoViaje: en ? 'Ride type' : 'Tipo de viaje',
+    tipoCarro: en ? 'Car type' : 'Tipo de carro',
+    tipoEnvio: en ? 'Package type' : 'Tipo de envío',
+    motoDetalle: en ? '1 rider · helmet included' : '1 pasajero · casco incluido',
+    detalles: en ? 'Package details' : 'Detalles del paquete',
+    rastrear: en ? 'Track a package' : 'Rastrear un paquete',
+    eligeDestino: en ? 'Choose your destination' : 'Elige tu destino',
+    solicitarEnvio: en ? 'Request delivery' : 'Solicitar envío',
+    solicitar: (c: CategoriaViaje) =>
+      servicio === 'carro'
+        ? c === 'xl'
+          ? en
+            ? 'Request Car XL'
+            : 'Solicitar carro XL'
+          : en
+            ? 'Request car'
+            : 'Solicitar carro'
+        : en
+          ? 'Request moto'
+          : 'Solicitar moto',
+  };
 }

@@ -20,6 +20,8 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-LUGARES-GUARDADOS (17 nov 2026): el ícono del lugar guardado (casa, trabajo, escuela…).
+  ['direcciones_cliente', 'icono', "TEXT NOT NULL DEFAULT ''"],
   // C-PUNTO-EXACTO (16 nov 2026): el punto de referencia de la dirección guardada y del pedido.
   ['direcciones_cliente', 'referencia', "TEXT NOT NULL DEFAULT ''"],
   ['pedidos', 'referencia', "TEXT NOT NULL DEFAULT ''"],

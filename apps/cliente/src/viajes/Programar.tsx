@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import {
   ErrorApi,
   type Idioma,
@@ -59,24 +59,20 @@ export function ElegirCuando({
         : d.toLocaleDateString(local(idioma), { weekday: 'short', day: 'numeric' });
   return (
     <View style={{ gap: 8 }} testID="viaje-cuando">
-      <Text style={{ color: C.secundario, fontWeight: '700' }}>{t.cuando}</Text>
-      <View style={{ flexDirection: 'row', gap: 8 }} accessibilityRole="radiogroup">
-        <Pildora
-          texto={t.ahora}
-          activa={!programar}
-          alTocar={() => {
-            setProgramar(false);
-            cambiar('');
-          }}
-          rol="radio"
-        />
-        <Pildora
-          texto={t.programar}
-          activa={programar}
-          alTocar={() => setProgramar(true)}
-          rol="radio"
-        />
-      </View>
+      {/* C-INICIO-NUEVO (borrador aprobado): «Ahora | Programar» como control de dos partes. */}
+      <Segmentos
+        opciones={[
+          { clave: 'ahora', texto: t.ahora },
+          { clave: 'programar', texto: t.programar },
+        ]}
+        activa={programar ? 'programar' : 'ahora'}
+        cambiar={(k) => {
+          if (k === 'programar') return setProgramar(true);
+          setProgramar(false);
+          cambiar('');
+        }}
+        etiqueta={t.cuando}
+      />
       {programar ? (
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -216,6 +212,61 @@ export function MisProgramados({ recargar }: { recargar?: number }) {
           </View>
         </Tarjeta>
       ))}
+    </View>
+  );
+}
+
+/** Control de dos (o más) partes del borrador: la elegida en rojo con letra blanca. */
+export function Segmentos<K extends string>({
+  opciones,
+  activa,
+  cambiar,
+  etiqueta,
+  testID,
+}: {
+  opciones: { clave: K; texto: string }[];
+  activa: K;
+  cambiar: (k: K) => void;
+  etiqueta?: string;
+  testID?: string;
+}) {
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={etiqueta}
+      testID={testID}
+      style={{ flexDirection: 'row', backgroundColor: '#F6F6F6', borderRadius: 14, padding: 4 }}
+    >
+      {opciones.map((o) => {
+        const si = o.clave === activa;
+        return (
+          <Pressable
+            key={o.clave}
+            onPress={() => cambiar(o.clave)}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: si }}
+            testID={testID ? `${testID}-${o.clave}` : undefined}
+            style={{
+              flex: 1,
+              minHeight: 44,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: si ? C.primario : 'transparent',
+              paddingHorizontal: 6,
+            }}
+          >
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              style={{ fontWeight: '700', fontSize: 16, color: si ? '#FFFFFF' : '#666B73' }}
+            >
+              {o.texto}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }

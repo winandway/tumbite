@@ -401,6 +401,15 @@ export function ViajeEnCurso({
               ) : null}
             </View>
           </View>
+          {viaje.total != null && !esEnvio ? (
+            <View
+              testID="buscando-precio-fijo"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}
+            >
+              <Icono nombre="checkmark" tamano={18} color={C.exito} />
+              <Text style={{ color: C.exito, fontWeight: '700' }}>{te.precioFijo}</Text>
+            </View>
+          ) : null}
         </View>
       ) : (
         <Text

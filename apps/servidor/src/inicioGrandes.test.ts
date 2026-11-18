@@ -17,24 +17,23 @@ describe('inicio del cliente como los grandes', () => {
     for (const id of ['comida', 'moto', 'carro', 'envios', 'mercado', 'farmacia', 'licores', 'mas'])
       expect(schema).toContain(`('${id}',`);
   });
-  it('cada servicio abre su pantalla con la franja, no el modal «Muy pronto»', () => {
+  // C-SIN-PANTALLAS-INTERMEDIAS (17 nov 2026, borrador aprobado): cada servicio abre directo su
+  // pantalla; ya no hay pantalla con «Abrir» ni modal «Muy pronto» (lo que no funciona no se muestra).
+  it('cada servicio abre directo su pantalla, sin pantallas intermedias ni «Muy pronto»', () => {
     const inicio = leer(...CLIENTE, 'Inicio.tsx');
-    expect(inicio).toMatch(/router\.push\(`\/service\/\$\{s\.id\}`\)/);
-    expect(existsSync(join(raiz, ...CLIENTE, 'app', 'service', '[id].tsx'))).toBe(true);
+    expect(inicio).toContain('rutaDeServicio(s.id)');
+    expect(inicio).toContain('serviciosDelInicio(');
+    expect(inicio).not.toContain('ModalMuyPronto');
     const pantalla = leer(...CLIENTE, 'app', 'service', '[id].tsx');
-    expect(pantalla).toContain('<FranjaEstado');
-    expect(pantalla).not.toContain('ModalMuyPronto');
-    expect(pantalla).not.toMatch(/<Modal\b/);
-    // La cuadrícula ya no decide sola: pinta lo que manda el servidor, en el orden fijo.
-    const servicios = leer(...CLIENTE, 'inicio', 'Servicios.tsx');
-    expect(servicios).toContain('ORDEN_SERVICIOS');
-    expect(servicios).not.toContain('const ORDEN: Servicio[]');
+    expect(pantalla).toContain('<Redirect');
+    expect(pantalla).not.toContain('abrirServicio');
   });
   it('el buscador y la campana abren pantallas reales', () => {
     const inicio = leer(...CLIENTE, 'Inicio.tsx');
     expect(inicio).toMatch(/alTocar=\{\(\) => router\.push\('\/search'\)\}/);
     expect(inicio).toMatch(/alCampana=\{\(\) => router\.push\('\/notifications'\)\}/);
-    expect(inicio).toMatch(/alCupon=\{\(\) => router\.push\('\/notifications\?tab=regalos'\)\}/);
+    // Los regalos, desde «Más servicios» (C-INICIO-NUEVO).
+    expect(inicio).toMatch(/pathname: '\/notifications', params: \{ tab: 'regalos' \}/);
     expect(existsSync(join(raiz, ...CLIENTE, 'app', 'search.tsx'))).toBe(true);
     expect(existsSync(join(raiz, ...CLIENTE, 'app', 'notifications.tsx'))).toBe(true);
     // El buscador pregunta al servidor (no filtra solo la lista cargada) con espera corta.

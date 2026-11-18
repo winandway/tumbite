@@ -18,7 +18,9 @@ import {
   almacenTelefono,
   useColores,
   useSesion,
-  Text, Modal } from '@tumbite/movil';
+  Text,
+  Modal,
+} from '@tumbite/movil';
 import { Tarjeta } from '../comida/piezas';
 import { ConfirmarMismaRuta } from './ConfirmarMismaRuta';
 import { MapaRuta } from './MapaRuta';

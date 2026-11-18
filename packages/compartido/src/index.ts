@@ -116,3 +116,5 @@ export * from './monitoreoServicios';
 export * from './formatoHora';
 export * from './rutinas';
 export * from './puntoExacto';
+export * from './inicioNuevo';
+export * from './lugaresGuardados';

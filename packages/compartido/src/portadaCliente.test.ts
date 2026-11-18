@@ -15,12 +15,20 @@ const CLIENTE = ['apps', 'cliente', 'src'];
 describe('portada del cliente como los grandes', () => {
   const inicio = leer(...CLIENTE, 'Inicio.tsx');
 
-  it('un solo scroll con el buscador y los filtros pegados arriba', () => {
-    expect(inicio).toContain('stickyHeaderIndices={[0]}');
-    expect(inicio).toMatch(/<Buscador[\s\S]*<Filtros/);
-    expect(inicio).toContain('<ListaRestaurantes');
-    expect(inicio).toContain('ti.masRapidos');
-    expect(inicio).toContain('<Categorias');
+  // C-INICIO-NUEVO (17 nov 2026, borrador aprobado por Richard): cuatro cuerpos en un solo scroll.
+  it('portada, «Entregar en» y buscador, servicios, promociones y restaurantes cerca, en ese orden', () => {
+    const orden = [
+      '<PortadaRotativa',
+      '<TarjetaEntregarEn',
+      '<Buscador',
+      '<CuadriculaServicios',
+      '<CarruselPromos',
+      '<RestaurantesCerca',
+    ].map((x) => inicio.indexOf(x));
+    expect(orden.every((x) => x > 0)).toBe(true);
+    expect([...orden].sort((a, b) => a - b)).toEqual(orden);
+    expect(inicio).toContain('<BarraInferior');
+    expect(leer(...CLIENTE, 'inicio', 'BarraInferior.tsx')).toContain("clave: 'wallet'");
   });
 
   it('«Entregar en» abre la casilla de dirección de siempre', () => {

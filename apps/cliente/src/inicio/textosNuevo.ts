@@ -1,0 +1,68 @@
+import type { Idioma } from '@tumbite/compartido';
+
+/** C-INICIO-NUEVO: textos del inicio aprobado (borrador del 17 nov 2026), en español e inglés. */
+const ES = {
+  entregarEn: 'Entregar en',
+  ubicacionActual: 'Ubicación actual',
+  elegirDireccion: 'Elige tu dirección',
+  buscar: 'Buscar comida, tiendas, productos…',
+  ordenUso: 'Ordenado por lo que más usas',
+  servicios: {
+    comida: ['Comida', ''],
+    mercado: ['Mercado', ''],
+    farmacia: ['Farmacia', ''],
+    licores: ['Licores', ''],
+    carro: ['Viajes', '(Carro)'],
+    moto: ['Moto', ''],
+    envios: ['Envíos', '(Express)'],
+    mas: ['Más servicios', ''],
+  } as Record<string, [string, string]>,
+  ofertaDelDia: 'Oferta del día',
+  codigo: 'Código',
+  cerca: 'Restaurantes cerca de ti',
+  verTodos: 'Ver todos ›',
+  envioGratis: 'Entrega gratis',
+  masTitulo: 'Más servicios',
+  masItems: {
+    regalos: 'Regalos de Divoox',
+    fijos: 'Viajes fijos',
+    confianza: 'Conductores de confianza',
+    paquetes: 'Paquetes para mí',
+    empresas: 'Divoox Flex para empresas',
+  },
+  campana: 'Avisos',
+  portada: 'Portada',
+};
+const EN: typeof ES = {
+  entregarEn: 'Deliver to',
+  ubicacionActual: 'Current location',
+  elegirDireccion: 'Choose your address',
+  buscar: 'Search food, stores, products…',
+  ordenUso: 'Sorted by what you use most',
+  servicios: {
+    comida: ['Food', ''],
+    mercado: ['Grocery', ''],
+    farmacia: ['Pharmacy', ''],
+    licores: ['Liquor', ''],
+    carro: ['Rides', '(Car)'],
+    moto: ['Moto', ''],
+    envios: ['Delivery', '(Express)'],
+    mas: ['More services', ''],
+  },
+  ofertaDelDia: 'Deal of the day',
+  codigo: 'Code',
+  cerca: 'Restaurants near you',
+  verTodos: 'See all ›',
+  envioGratis: 'Free delivery',
+  masTitulo: 'More services',
+  masItems: {
+    regalos: 'Divoox gifts',
+    fijos: 'Regular rides',
+    confianza: 'Trusted drivers',
+    paquetes: 'Packages for me',
+    empresas: 'Divoox Flex for business',
+  },
+  campana: 'Notifications',
+  portada: 'Banner',
+};
+export const textosInicioNuevo = (i: Idioma) => (i === 'en' ? EN : ES);

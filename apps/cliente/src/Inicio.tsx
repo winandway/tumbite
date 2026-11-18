@@ -1,83 +1,87 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-  Pressable,
-  ScrollView,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
+  type BannerInicio,
   type Restaurante,
   type ServicioCatalogo,
+  destinoDeBanner,
   enIdioma,
-  recomendarRestaurantes,
+  formatearMonto,
+  leerBanner,
+  ordenarPorUso,
+  portadaRespaldo,
+  rutaBanners,
+  rutaDeServicio,
+  serviciosDelInicio,
 } from '@tumbite/compartido';
-import { AvisoCorreo, C, useSesion, Text } from '@tumbite/movil';
+import { AvisoCorreo, C, almacenTelefono, useSesion, Text } from '@tumbite/movil';
 import { EntrarInvitado } from './inicio/EntrarInvitado';
 import { useCarrito } from './carrito';
 import { TEXTOS } from './textos';
 import { useRestaurantes } from './comida/useRestaurantes';
 import { adelantarFichas } from './comida/fichaRestaurante';
 import { recordarAnuncio } from './comida/anuncioTocado';
-import { EstadoCatalogo } from './comida/EstadoCatalogo';
 import { AvisoPago } from './inicio/AvisoPago';
 import { BarraInferior, type Pestana } from './inicio/BarraInferior';
 import { Buscador } from './inicio/Buscador';
-import { Cabecera } from './inicio/Cabecera';
-import { Categorias } from './inicio/Categorias';
 import { ElegirDireccion } from './inicio/ElegirDireccion';
-import { Filtros, type FiltrosInicio } from './inicio/Filtros';
-import { Ofertas, type PromoReal } from './inicio/Ofertas';
-import { FilaRestaurantes, ListaRestaurantes } from './inicio/Restaurantes';
-import { Servicios } from './inicio/Servicios';
-import { RepetirUltimoViaje } from './inicio/RepetirUltimoViaje';
+import type { PromoReal } from './inicio/Ofertas';
 import { useServicios } from './inicio/useServicios';
 import { useAvisos } from './inicio/useAvisos';
-import { useFavoritos } from './inicio/useFavoritos';
-import { RegalosEnMarcha } from './inicio/RegalosEnMarcha';
-import { textosInicio } from './inicio/textos';
-import { PedirOtraVezInicio } from './inicio/PedirOtraVezInicio';
+import {
+  CarruselPromos,
+  CuadriculaServicios,
+  HojaMasServicios,
+  PortadaRotativa,
+  RestaurantesCerca,
+  TarjetaEntregarEn,
+} from './inicio/PiezasInicio';
+import { textosInicioNuevo } from './inicio/textosNuevo';
+import { useVolverAlViaje } from './viajes/useVolverAlViaje';
 
-/** Cuántos restaurantes salen por tanda en «Todos los restaurantes». */
-const TANDA = 25;
 const ANCHO_PORTADA = 640;
+const LLAVE_USOS = 'inicio-usos-servicios';
+const LLAVE_PORTADA = 'inicio-ultima-portada';
+
+/** Un cupón destacado real convertido en promoción del carrusel. */
+function promoDeCupon(p: PromoReal, idioma: 'es' | 'en'): BannerInicio {
+  const valor =
+    p.tipo === 'porcentaje'
+      ? `${p.valor} %`
+      : p.tipo === 'envio_gratis'
+        ? ''
+        : formatearMonto(p.valor, p.moneda ?? 'USD', idioma);
+  const descripcion = idioma === 'en' ? p.descripcionEn || p.descripcionEs : p.descripcionEs;
+  return {
+    id: `cupon-${p.codigo}`,
+    titulo: descripcion || (valor ? `-${valor}` : p.codigo),
+    texto: '',
+    imagen: '',
+    destino: { tipo: 'cupon', valor: p.codigo },
+    codigo: p.codigo,
+  };
+}
 
 /**
- * POR-1 (2 nov 2026): la portada del cliente como DoorDash y Uber Eats, en UN solo scroll:
- * «Entregar en ▾» con la dirección, campana e idioma; buscador y filtros (quedan pegados arriba al
- * bajar); servicios disponibles en chips (lo que viene vive en «Más»); banner de cupones reales;
- * categorías reales en círculos; «Más rápidos cerca de ti»; y «Todos los restaurantes» en lista
- * vertical, por tandas. Sin «Cerrar sesión» aquí: vive en Mi cuenta. Todos los datos son reales.
+ * C-INICIO-NUEVO (17 nov 2026, borrador aprobado por Richard): el inicio en cuatro cuerpos. Portada
+ * rotativa (administrador de banners) con «Entregar en» montada encima y el buscador; ocho servicios
+ * en cuatro columnas (solo los que funcionan en la ciudad, C-SOLO-LO-TERMINADO); el carrusel de
+ * promociones reales; y los restaurantes cerca. Abajo: Inicio, Pedidos, Favoritos, Wallet y Mi
+ * cuenta. Cada servicio abre su pantalla directa (sin pantallas intermedias con «Abrir»).
  */
 export function Inicio() {
   const { api, idioma, usuario, cambiarIdioma } = useSesion();
   const t = enIdioma(TEXTOS, idioma);
-  const ti = textosInicio(idioma);
-  const { carrito, cantidadTotal, marcarRecoger } = useCarrito();
-  const [filtros, setFiltros] = useState<FiltrosInicio>({
-    recoger: false,
-    ofertas: false,
-    abiertos: false,
-  });
-  const [cuantos, setCuantos] = useState(TANDA);
+  const ti = textosInicioNuevo(idioma);
+  const { carrito, cantidadTotal } = useCarrito();
   const [cambiandoDireccion, setCambiandoDireccion] = useState(false);
-  // Promociones reales destacadas (cupones del superadmin) para el banner.
-  const [promos, setPromos] = useState<PromoReal[]>([]);
-  useEffect(() => {
-    let vivo = true;
-    api
-      .pedir<{ cupones: PromoReal[] }>('GET', '/datos/cupones/destacados')
-      .then((r) => {
-        if (vivo) setPromos(r.cupones);
-      })
-      .catch((e: unknown) => console.warn('inicio: no se pudieron cargar los cupones', e));
-    return () => {
-      vivo = false;
-    };
-  }, [api]);
-  // La portada de divoox.com puede mandar la ubicación por la dirección (?lat=&lng=).
+  const [mas, setMas] = useState(false);
+  // C-VOLVER-AL-VIAJE: con un viaje en curso, al abrir la app se vuelve a ese viaje.
+  useVolverAlViaje(api, Boolean(usuario));
+
   const params = useLocalSearchParams<{ lat?: string; lng?: string }>();
   const deUrl = useMemo(
     () =>
@@ -86,203 +90,180 @@ export function Inicio() {
         : null,
     [params.lat, params.lng],
   );
-  // C-CATALOGO-ESTABLE: una sola lista compartida con «Comida»; ni respuestas viejas que pisan a
-  // las nuevas ni consultas repetidas (comida/useRestaurantes).
   const catalogo = useRestaurantes(api, deUrl);
-  const lista =
-    catalogo.estado === 'cargando' && !catalogo.restaurantes.length ? null : catalogo.restaurantes;
   const punto = catalogo.punto;
-  const favoritos = useFavoritos(api, Boolean(usuario));
+  const servicios = useServicios(api, punto);
+  const zona = servicios?.zona?.id ?? null;
+  const avisos = useAvisos(api, punto).datos;
 
-  // Filtros rápidos (Entrega/Recoger, Ofertas, Abiertos) sobre la lista real.
-  const abierto = (r: Restaurante) => r.abiertoAhora ?? r.abierto;
-  const filtrados = useMemo(() => {
-    const l = (lista ?? []).filter(
-      (r) => (!filtros.abiertos || abierto(r)) && (!filtros.ofertas || Boolean(r.promocion)),
-    );
-    // En «Recoger», lo más cerca primero (como Uber Eats).
-    return filtros.recoger
-      ? [...l].sort((a, b) => (a.distanciaKm ?? 1e9) - (b.distanciaKm ?? 1e9))
-      : l;
-  }, [lista, filtros]);
-  // «Más rápidos cerca de ti»: abiertos, por tiempo de preparación más el camino.
-  const masRapidos = useMemo(
-    () =>
-      filtrados
-        .filter(abierto)
-        .map((r) => ({ r, min: r.tiempoPrepMin + (r.distanciaKm ?? 3) * 3 }))
-        .sort((a, b) => a.min - b.min)
-        .slice(0, 8)
-        .map((x) => x.r),
-    [filtrados],
+  // «Ordenado por lo que más usas» (pantalla 2 del borrador): cuántas veces tocó cada servicio.
+  const [usos, setUsos] = useState<Record<string, number>>({});
+  useEffect(() => {
+    void Promise.resolve(almacenTelefono.leer(LLAVE_USOS))
+      .then((x) => x && setUsos(JSON.parse(x) as Record<string, number>))
+      .catch(() => undefined);
+  }, []);
+  const visibles = useMemo(() => serviciosDelInicio(servicios?.servicios ?? null), [servicios]);
+  const { lista: grilla, ordenado } = useMemo(
+    () => ordenarPorUso(visibles, usos),
+    [visibles, usos],
   );
-  // C-MENU-RAPIDO: los primeros que ve la persona ya quedan pedidos; al tocarlos abren al instante.
+  const disponible = (id: string) => visibles.some((s) => s.id === id);
+
+  // La portada: la del administrador de banners; si no hay, la de respaldo (una distinta cada vez).
+  const [vez, setVez] = useState(0);
+  const [portada, setPortada] = useState<BannerInicio | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    void (async () => {
+      const ultima = await Promise.resolve(almacenTelefono.leer(LLAVE_PORTADA)).catch(() => null);
+      const n = Number((ultima ?? '').split('|')[1] ?? 0) + 1;
+      if (vivo) setVez(n);
+      const r = await api
+        .pedir<{ banner: unknown }>(
+          'GET',
+          rutaBanners('cabecera', { ciudad: zona, idioma, excluir: (ultima ?? '').split('|')[0] }),
+        )
+        .catch(() => null);
+      const b = leerBanner(r?.banner);
+      if (!vivo) return;
+      setPortada(b);
+      void Promise.resolve(almacenTelefono.guardar(LLAVE_PORTADA, `${b?.id ?? ''}|${n}`)).catch(
+        () => undefined,
+      );
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [api, zona, idioma]);
+  const cabecera = portada ?? portadaRespaldo(idioma, vez, disponible);
+
+  // Las promociones: las del administrador de banners; si no hay, los cupones destacados reales.
+  const [promos, setPromos] = useState<BannerInicio[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    void (async () => {
+      const r = await api
+        .pedir<{ banners: unknown[] }>('GET', rutaBanners('promociones', { ciudad: zona, idioma }))
+        .catch(() => null);
+      const lista = (r?.banners ?? []).map(leerBanner).filter((x): x is BannerInicio => !!x);
+      if (lista.length) return vivo && setPromos(lista);
+      const c = await api
+        .pedir<{ cupones: PromoReal[] }>('GET', '/datos/cupones/destacados')
+        .catch(() => null);
+      if (vivo) setPromos((c?.cupones ?? []).map((p) => promoDeCupon(p, idioma)));
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [api, zona, idioma]);
+
+  // Restaurantes cerca: abiertos y por cercanía.
+  const cerca = useMemo(
+    () =>
+      [...catalogo.restaurantes]
+        .filter((r) => r.abiertoAhora ?? r.abierto)
+        .sort((a, b) => (a.distanciaKm ?? 1e9) - (b.distanciaKm ?? 1e9)),
+    [catalogo.restaurantes],
+  );
   useEffect(() => {
     adelantarFichas(
       api,
-      [...masRapidos, ...filtrados.slice(0, 3)].map((r) => r.id),
+      cerca.slice(0, 4).map((r) => r.id),
     );
-  }, [api, masRapidos, filtrados]);
+  }, [api, cerca]);
 
-  // C-TE-PUEDE-GUSTAR: lo que ya pidió decide qué tipo de comida recomendar.
-  const [yaPedidos, setYaPedidos] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    if (!usuario) return;
-    api
-      .pedir<{ pedidos: { estado: string; restauranteId: string }[] }>('GET', '/datos/mis-pedidos')
-      .then((r) =>
-        setYaPedidos(
-          new Set(r.pedidos.filter((p) => p.estado === 'entregado').map((p) => p.restauranteId)),
-        ),
-      )
-      .catch(() => setYaPedidos(new Set()));
-  }, [api, usuario]);
-  const recomendados = useMemo(
-    () => recomendarRestaurantes(lista ?? [], yaPedidos),
-    [lista, yaPedidos],
-  );
-
-  // Lo único que es un monto real pendiente: el carrito armado y sin pagar.
   const carritoCentavos = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
 
-  // Catálogo de servicios de la ciudad (orden fijo, estado del servidor) y los avisos reales.
-  const servicios = useServicios(api, punto);
-  const avisos = useAvisos(api, punto).datos;
-  const regalos = (avisos?.avisos ?? []).filter((a) => a.tipo === 'regalo');
-  const servicio = (s: ServicioCatalogo) => {
-    // «Comida» disponible abre los restaurantes; todo lo demás abre la pantalla del servicio,
-    // con su franja de estado (nunca una ventana encima).
-    if (s.id === 'comida' && (s.accion === 'abrir' || !servicios))
-      return router.push('/restaurants');
-    router.push(`/service/${s.id}`);
+  const abrirServicio = (s: ServicioCatalogo) => {
+    const nuevos = { ...usos, [s.id]: (usos[s.id] ?? 0) + 1 };
+    if (s.id !== 'mas') {
+      setUsos(nuevos);
+      void Promise.resolve(almacenTelefono.guardar(LLAVE_USOS, JSON.stringify(nuevos))).catch(
+        () => undefined,
+      );
+    }
+    const ruta = rutaDeServicio(s.id);
+    if (!ruta) return setMas(true);
+    router.push(ruta as never);
+  };
+  const abrirBanner = (b: BannerInicio) => {
+    const ruta = destinoDeBanner(b);
+    if (ruta) router.push(ruta as never);
   };
   const pestana = (p: Pestana) => {
     if (p === 'inicio') return;
     if (p === 'favoritos') return router.push('/favorites');
     if (p === 'pedidos') return router.push('/orders');
+    if (p === 'wallet') return router.push('/gift-cards');
     router.push('/account');
   };
   const abrirRestaurante = (r: Restaurante) => {
     recordarAnuncio(api, r);
-    marcarRecoger(filtros.recoger);
     router.push(`/restaurant/${r.id}`);
   };
-  // La dirección de arriba: la elegida a mano (primera parte), o la ubicación actual.
   const direccion = catalogo.direccion
     ? (catalogo.direccion.texto.split(',')[0] ?? catalogo.direccion.texto)
     : punto
       ? ti.ubicacionActual
       : ti.elegirDireccion;
-  // Carga al bajar: cerca del final se suma otra tanda de restaurantes.
-  const alBajar = (ev: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = ev.nativeEvent;
-    if (
-      filtrados.length > cuantos &&
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - 800
-    )
-      setCuantos((c) => c + TANDA);
-  };
   const ancho = { width: '100%', maxWidth: ANCHO_PORTADA, alignSelf: 'center' } as const;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['top', 'left', 'right']}>
-      <Cabecera
-        idioma={idioma}
-        cambiarIdioma={cambiarIdioma}
-        direccion={direccion}
-        alDireccion={() => setCambiandoDireccion(true)}
-        alCampana={() => router.push('/notifications')}
-        pendientes={avisos?.pendientes ?? 0}
-      />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }} edges={['left', 'right']}>
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{ paddingBottom: cantidadTotal > 0 ? 96 : 28 }}
         keyboardShouldPersistTaps="handled"
-        stickyHeaderIndices={[0]}
-        onScroll={alBajar}
-        scrollEventThrottle={200}
         testID="portada-cliente"
       >
-        {/* Pegado arriba al bajar: el buscador y los filtros, como DoorDash. */}
-        <View
-          style={{
-            backgroundColor: '#FFFFFF',
-            paddingTop: 6,
-            paddingBottom: 6,
-          }}
-        >
+        <View style={{ backgroundColor: '#1A0607' }}>
+          <SafeAreaView edges={['top']} style={{ backgroundColor: '#3A0A0E' }} />
           <View style={ancho}>
-            <Buscador idioma={idioma} alTocar={() => router.push('/search')} />
+            <PortadaRotativa
+              idioma={idioma}
+              cambiarIdioma={cambiarIdioma}
+              banner={cabecera}
+              pendientes={avisos?.pendientes ?? 0}
+              alCampana={() => router.push('/notifications')}
+              alTocar={abrirBanner}
+            />
           </View>
         </View>
-        <View style={[ancho, { paddingTop: 12 }]}>
-          {/* C-MIRAR-SIN-CUENTA y C-CORREO-OBLIGATORIO: entrar sin bloquear, o confirmar el correo. */}
+        <View style={ancho}>
+          <TarjetaEntregarEn
+            idioma={idioma}
+            direccion={direccion}
+            alTocar={() => setCambiandoDireccion(true)}
+          />
+          <View style={{ marginTop: 12 }}>
+            <Buscador idioma={idioma} alTocar={() => router.push('/search')} />
+          </View>
           {usuario ? <AvisoCorreo /> : <EntrarInvitado idioma={idioma} />}
-          <Servicios idioma={idioma} catalogo={servicios?.servicios ?? null} alTocar={servicio} />
-          {/* C-MISMA-RUTA (fase cero): el último viaje con «Repetir», debajo de los servicios. */}
-          <RepetirUltimoViaje />
+          <CuadriculaServicios
+            idioma={idioma}
+            lista={grilla}
+            ordenado={ordenado}
+            alTocar={abrirServicio}
+          />
           <AvisoPago
             idioma={idioma}
             centavos={carritoCentavos}
             moneda={carrito.moneda ?? 'USD'}
             alPagar={() => router.push('/cart')}
           />
-          <Ofertas
-            idioma={idioma}
-            reales={promos}
-            alTocarReal={() => router.push('/restaurants')}
-            alCupon={() => router.push('/notifications?tab=regalos')}
-          />
-          {regalos.length ? (
-            <RegalosEnMarcha
+          <CarruselPromos idioma={idioma} promos={promos} alTocar={abrirBanner} />
+          {disponible('comida') ? (
+            <RestaurantesCerca
               idioma={idioma}
-              regalos={regalos}
-              alVer={() => router.push('/notifications?tab=regalos')}
+              lista={cerca}
+              alTocar={abrirRestaurante}
+              verTodos={() => router.push('/restaurants')}
             />
           ) : null}
-          {!punto && (
-            <Text style={{ color: '#666B73', marginHorizontal: 16, marginTop: 14 }}>
-              {ti.sinUbicacion}
-            </Text>
-          )}
-          <PedirOtraVezInicio idioma={idioma} />
-          <Categorias
-            idioma={idioma}
-            lista={lista ?? []}
-            alTocar={(c) => router.push({ pathname: '/restaurants', params: { categoria: c } })}
-          />
-          <FilaRestaurantes
-            idioma={idioma}
-            lista={masRapidos}
-            titulo={ti.masRapidos}
-            testID="mas-rapidos"
-            favoritos={favoritos}
-            alTocar={abrirRestaurante}
-          />
-          <FilaRestaurantes
-            idioma={idioma}
-            lista={recomendados}
-            titulo={idioma === 'en' ? 'You might like' : 'Te puede gustar'}
-            testID="te-puede-gustar"
-            favoritos={favoritos}
-            alTocar={abrirRestaurante}
-          />
-          <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
-          {/* Fase cero: los filtros van junto a la lista que filtran, no arriba de los servicios. */}
-          <Filtros idioma={idioma} valor={filtros} cambiar={setFiltros} />
-          <ListaRestaurantes
-            idioma={idioma}
-            lista={filtrados}
-            cuantos={cuantos}
-            verMas={() => setCuantos((c) => c + TANDA)}
-            cargando={lista === null}
-            favoritos={favoritos}
-            alTocar={abrirRestaurante}
-            vacio={lista?.length ? ti.sinFiltro : undefined}
-          />
         </View>
       </ScrollView>
       {cantidadTotal > 0 ? (
-        // El carrito flota sobre la barra de abajo, como en los grandes.
         <Pressable
           onPress={() => router.push('/cart')}
           accessibilityRole="button"
@@ -293,7 +274,6 @@ export function Inicio() {
             right: 16,
             bottom: 86,
             backgroundColor: C.primario,
-            // Fase cero: carrito flotante de 56 con esquina 12.
             borderRadius: 12,
             minHeight: 56,
             justifyContent: 'center',
@@ -318,6 +298,47 @@ export function Inicio() {
         cerca={punto}
         cerrar={() => setCambiandoDireccion(false)}
         elegir={(d) => void catalogo.elegirDireccion(d)}
+      />
+      <HojaMasServicios
+        idioma={idioma}
+        visible={mas}
+        cerrar={() => setMas(false)}
+        items={[
+          {
+            clave: 'regalos',
+            texto: ti.masItems.regalos,
+            icono: 'gift-outline',
+            alTocar: () => router.push({ pathname: '/notifications', params: { tab: 'regalos' } }),
+          },
+          ...(disponible('moto') || disponible('carro')
+            ? [
+                {
+                  clave: 'fijos',
+                  texto: ti.masItems.fijos,
+                  icono: 'repeat-outline' as const,
+                  alTocar: () => router.push('/fixed-rides'),
+                },
+                {
+                  clave: 'confianza',
+                  texto: ti.masItems.confianza,
+                  icono: 'shield-checkmark-outline' as const,
+                  alTocar: () => router.push('/trusted-drivers'),
+                },
+              ]
+            : []),
+          {
+            clave: 'paquetes',
+            texto: ti.masItems.paquetes,
+            icono: 'cube-outline',
+            alTocar: () => router.push('/packages'),
+          },
+          {
+            clave: 'empresas',
+            texto: ti.masItems.empresas,
+            icono: 'business-outline',
+            alTocar: () => router.push('/business'),
+          },
+        ]}
       />
     </SafeAreaView>
   );

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { llegadaConfiable, saltoImposible } from './gps';
 
-
 const casa = { lat: 25.7725, lng: -80.187 };
 const t0 = 1_000_000_000;
 const en = (lat: number, lng: number, precisionM: number, s: number) => ({
@@ -56,7 +55,6 @@ describe('llegada confiable (C-GPS-SERIO)', () => {
     expect(saltoImposible(en(25.7725, -80.187, 9, 0), en(25.9, -80.3, 9, 5))).toBe(true);
     expect(saltoImposible(en(25.7725, -80.187, 9, 0), en(25.7735, -80.188, 9, 5))).toBe(false);
   });
-
 });
 
 describe('GPS como los estudios (G2: 30 m, unos 80 m y ubicación simulada)', () => {

@@ -61,8 +61,11 @@ describe('Mis viajes no cambia su tarjeta', () => {
 });
 
 describe('se encuentran', () => {
-  it('desde la cuenta y desde la pantalla del servicio', () => {
-    for (const codigo of [app('account.tsx'), app('ride.tsx')]) {
+  it('desde la cuenta y desde «Más servicios» del inicio (C-INICIO-NUEVO)', () => {
+    for (const codigo of [
+      app('account.tsx'),
+      readFileSync(join(__dirname, '..', 'Inicio.tsx'), 'utf8'),
+    ]) {
       expect(codigo).toContain("'/fixed-rides'");
       expect(codigo).toContain("'/trusted-drivers'");
     }
