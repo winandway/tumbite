@@ -8,6 +8,7 @@ import { buscarGuias, conEnlacesDeGuia } from './buscadorDocs';
 import { buscarEnDocs } from './conocimiento';
 import { cuidarTono } from './cerebro';
 import { DOCS_PUBLICOS } from './docsPublicos';
+import { cortesiaDe } from './identidad';
 import { type LlamadaModelo, usarModeloCamila } from './modelo';
 
 /**
@@ -192,7 +193,7 @@ describe('C-CAMILA-TONO: la conversación que leyó Richard, arreglada', () => {
       entrada: 10,
       salida: 10,
     }));
-    const primero = (await e.decir('hola')).datos.respuesta as string;
+    const primero = (await e.decir('hola, necesito ayuda con la app')).datos.respuesta as string;
     // En el primer mensaje puede saludar, pero no presentarse (el encabezado ya lo dice).
     expect(primero).toMatch(/^Hola, Carla\./);
     expect(primero).not.toMatch(/Soy Camila|del equipo de soporte/);
@@ -386,5 +387,62 @@ describe('C-CAMILA-ENLACE-GUIA: toda respuesta que sale de una guía termina con
             r.guia,
           ).toBe(true);
     expect(DOCS_PUBLICOS.some((g) => g.ruta === 'drivers/driver-balance')).toBe(true);
+  });
+});
+
+describe('C-CAMILA-CORTESIA: un saludo se contesta con un saludo, nunca con «no te entendí»', () => {
+  const NO =
+    /No estoy segura|not sure I understood|asistente virtual|virtual assistant|persona del equipo|someone on the team/i;
+  const CASOS: [string, 'es' | 'en', RegExp][] = [
+    ['Hola', 'es', /^¡Hola! ¿En qué te puedo ayudar\?$/],
+    ['hola camila', 'es', /^¡Hola! ¿En qué te puedo ayudar\?$/],
+    ['buenas', 'es', /^¡Hola! ¿En qué te puedo ayudar\?$/],
+    ['Buenos días', 'es', /^¡Hola! ¿En qué te puedo ayudar\?$/],
+    ['buenas tardes!', 'es', /^¡Hola!/],
+    ['gracias', 'es', /^Con mucho gusto\./],
+    ['Muchas gracias, Camila', 'es', /^Con mucho gusto\./],
+    ['ok', 'es', /^Perfecto\./],
+    ['listo', 'es', /^Perfecto\./],
+    ['chao', 'es', /^¡Hasta luego!/],
+    ['Hello', 'en', /^Hi! How can I help you\?$/],
+    ['good morning', 'en', /^Hi! How can I help you\?$/],
+    ['thanks', 'en', /^You are welcome\./],
+    ['ok', 'en', /^Great\./],
+    ['bye', 'en', /^Bye!/],
+  ];
+  it.each(CASOS)('sin IA: «%s» (%s)', async (texto, idioma, espera) => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    const r = (await e.decir(texto, undefined, idioma)).datos.respuesta as string;
+    expect(r).toMatch(espera);
+    expect(r).not.toMatch(NO);
+    expect(await e.casos()).toBe(0);
+  });
+  it.each(CASOS)(
+    'con IA: «%s» (%s) sale igual y no gasta una llamada',
+    async (texto, idioma, espera) => {
+      const e = await escenario();
+      let llamadas = 0;
+      modelo(async () => {
+        llamadas += 1;
+        return {
+          partes: [{ text: 'No estoy segura de haberte entendido.' }],
+          entrada: 1,
+          salida: 1,
+        };
+      });
+      const r = (await e.decir(texto, undefined, idioma)).datos.respuesta as string;
+      expect(r).toMatch(espera);
+      expect(r).not.toMatch(NO);
+      expect(llamadas).toBe(0);
+    },
+  );
+  it('saludar no cuenta como intento fallido ni abre un caso; y un saludo con pregunta sigue a la guía', async () => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    for (const t of ['hola', 'buenas', 'ok', 'gracias', 'chao', 'hola'])
+      expect((await e.decir(t)).datos.respuesta).not.toMatch(NO);
+    expect(await e.casos()).toBe(0);
+    expect((await e.decir('Hola, ¿cómo pido una moto?')).datos.respuesta).toMatch(/Solicitar moto/);
+    expect(cortesiaDe('hola necesito ayuda con mi cuenta')).toBeNull();
+    expect(cortesiaDe('¡¡Hola!!')).toBe('saludo');
   });
 });

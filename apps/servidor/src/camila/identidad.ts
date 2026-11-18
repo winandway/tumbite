@@ -66,6 +66,79 @@ const contiene = (t: string, frases: readonly string[]) => {
   return frases.some((f) => x.includes(` ${f} `));
 };
 
+/**
+ * C-CAMILA-CORTESIA (18 nov 2026, Richard: escribió «Hola» y Camila le contestó «no estoy segura de
+ * haberte entendido»). Un saludo, un «gracias», un «ok» o una despedida se contestan con calidez,
+ * desde el código (con IA y sin ella): nunca con «no te entendí», y nunca cuentan como un intento
+ * fallido. Solo cuando el mensaje ENTERO es eso; «hola, ¿cómo pido una moto?» sigue su camino.
+ */
+const CORTESIAS = {
+  saludo: [
+    ...['hola', 'holaa', 'holaaa', 'ola', 'buenas', 'buenos dias', 'buen dia', 'buenas tardes'],
+    ...['buenas noches', 'saludos', 'que tal', 'como estas', 'hola que tal', 'hola como estas'],
+    ...['hola buenas', 'hola buenos dias', 'hola buenas tardes', 'hola buenas noches', 'epa'],
+    ...['hi', 'hello', 'hey', 'hi there', 'hello there', 'good morning', 'good afternoon'],
+    ...['good evening', 'how are you', 'hi how are you', 'hello how are you'],
+  ],
+  gracias: [
+    ...[
+      'gracias',
+      'muchas gracias',
+      'mil gracias',
+      'ok gracias',
+      'listo gracias',
+      'gracias camila',
+    ],
+    ...['vale gracias', 'perfecto gracias', 'bueno gracias', 'gracias por todo', 'muy amable'],
+    ...['thanks', 'thank you', 'thanks a lot', 'thank you so much', 'thank you very much'],
+    ...['ok thanks', 'ok thank you', 'great thanks', 'perfect thanks'],
+  ],
+  ok: [
+    ...['ok', 'okey', 'okay', 'oki', 'vale', 'listo', 'perfecto', 'entendido', 'bueno', 'bien'],
+    ...['dale', 'de acuerdo', 'esta bien', 'ah ok', 'excelente', 'genial'],
+    ...['got it', 'great', 'perfect', 'alright', 'all right', 'sounds good', 'understood', 'cool'],
+  ],
+  despedida: [
+    ...['chao', 'chau', 'adios', 'hasta luego', 'nos vemos', 'hasta pronto', 'bye', 'goodbye'],
+    ...['bye bye', 'see you', 'see you later', 'chao gracias', 'gracias chao', 'hasta manana'],
+  ],
+} as const;
+export type Cortesia = keyof typeof CORTESIAS;
+const POR_FRASE = new Map<string, Cortesia>(
+  Object.entries(CORTESIAS).flatMap(([tipo, frases]) =>
+    frases.map((f) => [f, tipo as Cortesia] as const),
+  ),
+);
+/** ¿El mensaje entero es un saludo, un agradecimiento, un «ok» o una despedida? */
+export function cortesiaDe(t: string): Cortesia | null {
+  const limpio = plano(t)
+    .replace(/ camila /g, ' ')
+    .trim();
+  return POR_FRASE.get(limpio) ?? null;
+}
+const RESPUESTAS_CORTESIA = new Map<Cortesia, { es: string; en: string }>([
+  ['saludo', { es: '¡Hola! ¿En qué te puedo ayudar?', en: 'Hi! How can I help you?' }],
+  [
+    'gracias',
+    {
+      es: 'Con mucho gusto. Si necesitas algo más, aquí estoy.',
+      en: 'You are welcome. If you need anything else, I am here.',
+    },
+  ],
+  [
+    'ok',
+    {
+      es: 'Perfecto. Si necesitas algo más, escríbeme.',
+      en: 'Great. If you need anything else, just write to me.',
+    },
+  ],
+  ['despedida', { es: '¡Hasta luego! Que te vaya muy bien.', en: 'Bye! Take care.' }],
+]);
+export const respuestaCortesia = (c: Cortesia, idioma: IdiomaCamila) => {
+  const r = RESPUESTAS_CORTESIA.get(c) ?? { es: '', en: '' };
+  return idioma === 'en' ? r.en : r.es;
+};
+
 /** ¿Pregunta si habla con una persona o con una máquina? */
 const PREGUNTA_HUMANO = [
   'eres una persona',

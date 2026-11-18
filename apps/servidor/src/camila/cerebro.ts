@@ -16,6 +16,8 @@ import {
   type Contexto,
 } from './herramientas';
 import {
+  respuestaCortesia,
+  cortesiaDe,
   AVISO_PRIMER_MENSAJE,
   FIRMA,
   PASO_A_PERSONA,
@@ -331,7 +333,13 @@ export async function recibirMensaje(
   let respuesta: string;
   let modo: ResultadoCerebro['modo'] = 'fija';
   let marca: string | null = null;
-  if (preguntaSiEsHumana(texto)) respuesta = segun(VERDAD, idioma);
+  const cortesia = cortesiaDe(texto);
+  if (cortesia) {
+    // C-CAMILA-CORTESIA: un saludo se contesta con un saludo. Si venía de un «no entendí», esa marca
+    // se conserva: saludar en medio no borra el intento anterior ni cuenta como otro.
+    respuesta = respuestaCortesia(cortesia, idioma);
+    marca = previa?.herramienta === 'no_supo' ? 'no_supo' : null;
+  } else if (preguntaSiEsHumana(texto)) respuesta = segun(VERDAD, idioma);
   else if (pideHumano(texto)) {
     await abrirCaso(c, texto, 'pide_persona');
     respuesta = segun(PASO_A_PERSONA, idioma);

@@ -5345,6 +5345,13 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Cómo se comprueba:** en el chat, «Hola Camila, ¿cómo pido una moto?» responde con la guía de Moto y su enlace, sin presentarse y sin ofrecer una persona.
 - **Qué NO tocar:** no editar `docsPublicos.ts` a mano; no volver a poner la presentación ni la oferta de persona en el saludo; no quitar el freno de `abrir_caso`.
 
+## C-CAMILA-CORTESIA — un saludo se contesta con un saludo (18 nov 2026, Richard) — todos los países
+
+- **Qué pasó:** Richard escribió «Hola» en el chat de divoox.com y Camila contestó «No estoy segura de haberte entendido». Sin IA, un saludo no coincidía con ninguna guía y caía en «no supo».
+- **Cómo quedó:** `cortesiaDe` (`camila/identidad.ts`) reconoce cuando el mensaje ENTERO es un saludo, un «gracias», un «ok» o una despedida (español e inglés, con o sin «Camila») y `recibirMensaje` responde desde el código, antes del modelo: «¡Hola! ¿En qué te puedo ayudar?», «Con mucho gusto…», «Perfecto…», «¡Hasta luego!…». Igual con IA y sin ella (no gasta una llamada). No cuenta como intento fallido ni abre caso. «Hola, ¿cómo pido una moto?» sigue a la guía.
+- **Candado (visto en rojo el 18 nov apagando `cortesiaDe`: 31 pruebas):** `tono.test.ts`, bloque C-CAMILA-CORTESIA.
+- **Qué NO tocar:** no meter en la lista palabras que pueden ser una respuesta de verdad («sí», «ya»).
+
 ## C-CAMILA-ENLACE-GUIA — toda respuesta que sale de una guía termina con su enlace (18 nov 2026, Richard) — todos los países
 
 - **Qué pidió Richard:** le gustó que la respuesta de la moto terminara con el enlace a la guía y lo volvió regla: toda respuesta de Camila que sale de una guía de Docs termina con el enlace a esa guía, en el idioma de la persona, en el chat de la web, el de Divoox Driver y el correo; como texto que se toca («Ver la guía con capturas →»), no como dirección larga; dos guías, dos enlaces; nunca un enlace inventado.
