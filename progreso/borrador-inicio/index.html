@@ -1093,6 +1093,224 @@
         gap: 8px;
         align-items: center;
       }
+      .telefono.osc .estado {
+        background: #3a0a0e;
+        color: #fff;
+      }
+      .telefono.osc .estado svg rect {
+        fill: #fff;
+      }
+      .telefono.osc .estado svg rect[fill='none'] {
+        fill: none;
+        stroke: #fff;
+      }
+      .portada {
+        background: linear-gradient(160deg, #3a0a0e 0%, #1a0607 55%, #101010 100%);
+        color: #fff;
+        padding-bottom: 34px;
+        position: relative;
+        display: block;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+      }
+      .cab-osc img {
+        height: 30px;
+      }
+      .circ.osc {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+      .circ.osc .punto {
+        border-color: #3a0a0e;
+      }
+      .portada-cuerpo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 16px 0 18px;
+        min-height: 128px;
+      }
+      .portada-cuerpo h1 {
+        font-size: 24px;
+        line-height: 1.12;
+        max-width: 200px;
+      }
+      .portada .idioma-btn {
+        color: var(--negro);
+      }
+      .portada-cuerpo img {
+        width: 170px;
+        height: 128px;
+        object-fit: contain;
+        filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+      }
+      .puntos-cab {
+        display: flex;
+        gap: 4px;
+        padding: 8px 18px 0;
+      }
+      .puntos-cab i,
+      .puntos-promo i {
+        width: 6px;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.35);
+      }
+      .puntos-cab i.on {
+        width: 16px;
+        background: #fff;
+      }
+      .entregar-en {
+        margin: -26px 16px 0;
+        width: calc(100% - 32px);
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(16, 16, 16, 0.12);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        position: relative;
+        z-index: 2;
+      }
+      .entregar-en small {
+        display: block;
+        font-size: 11.5px;
+        color: var(--gris);
+        font-weight: 600;
+      }
+      .entregar-en b {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 15px;
+      }
+      .grilla4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 14px 16px 0;
+      }
+      .serv4 {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow:
+          0 2px 8px rgba(16, 16, 16, 0.1),
+          0 0 0 1px rgba(16, 16, 16, 0.04);
+        height: 84px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+      .serv4:active {
+        transform: scale(0.96);
+      }
+      .serv4 img {
+        height: 40px;
+        max-width: 58px;
+        object-fit: contain;
+      }
+      .serv4 .nm {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-align: center;
+        line-height: 1.1;
+      }
+      .serv4 .nm small {
+        display: block;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--gris);
+      }
+      .mas4.chico {
+        width: 36px;
+        height: 36px;
+        gap: 3px;
+      }
+      .promos {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 0;
+        margin: 16px 16px 0;
+        border-radius: 16px;
+        scrollbar-width: none;
+      }
+      .promos::-webkit-scrollbar {
+        display: none;
+      }
+      .promo {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        height: 104px;
+        background: var(--rojo);
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 16px;
+        border-radius: 16px;
+      }
+      .promo img.foto {
+        position: absolute;
+        right: -30px;
+        top: 0;
+        height: 104px;
+        width: 230px;
+        object-fit: cover;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%);
+        mask-image: linear-gradient(90deg, transparent, #000 35%);
+      }
+      .promo img.obj {
+        position: absolute;
+        right: 10px;
+        top: 8px;
+        height: 88px;
+        width: 120px;
+        object-fit: contain;
+        filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.3));
+      }
+      .promo b {
+        font-family: Poppins;
+        font-size: 13px;
+        position: relative;
+      }
+      .promo strong {
+        font-family: Poppins;
+        font-size: 20px;
+        line-height: 1.15;
+        position: relative;
+        max-width: 200px;
+      }
+      .promo .cod {
+        position: relative;
+        margin-top: 8px;
+        align-self: flex-start;
+        background: #fff;
+        color: var(--negro);
+        border-radius: 12px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .puntos-promo {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        padding-top: 8px;
+      }
+      .puntos-promo i {
+        background: #d6d8dc;
+      }
+      .puntos-promo i.on {
+        width: 16px;
+        background: var(--negro);
+      }
       .nota-bloque {
         margin: 2px 0 2px;
         font-size: 12px;
@@ -1525,6 +1743,7 @@
         <p data-t="intro"></p>
         <div class="lista" id="lista"></div>
         <div class="toques" id="toques"></div>
+        <div class="nota" id="nota-banners" style="margin-top: 12px"></div>
         <div class="nota" data-t="nota" style="margin-top: 12px"></div>
       </aside>
       <div class="escenario">
@@ -1642,6 +1861,33 @@
           },
           cambiar: 'Cambiar idioma',
           hola: 'Hola, Alex',
+          entregarEn: 'Entregar en',
+          ubicActual: 'Ubicación actual',
+          cabeceras: [
+            ['Tu carrera, te llevamos a donde quieras', 'heroe-moto', 'moto', 'El Vigía'],
+            ['Tus pedidos favoritos, más cerca', 'heroe-comida', 'comida', ''],
+            ['Tu mercado en casa, en minutos', 'heroe-mercado', '', ''],
+          ],
+          promos: [
+            [
+              'Oferta del día',
+              '-$3,00 en tu pedido',
+              'Código: BIENVENIDO3',
+              'oferta-pizza',
+              'comida',
+            ],
+            [
+              'Tu primer viaje en moto',
+              '50 % de descuento',
+              'Código: MOTO50',
+              'heroe-moto',
+              'moto',
+            ],
+            ['Mercado', 'Envío gratis desde $15', 'Sin código', 'heroe-mercado', ''],
+          ],
+          inicioNombres: { carro: ['Viajes', 'Carro'], envios: ['Envíos', 'Express'] },
+          notaBanners:
+            'La portada de arriba y las promociones se cambian desde el superadmin, por ciudad, país y fechas. La portada cambia cada vez que se abre la app; las promociones pasan solas.',
           que: '¿Qué necesitas hoy?',
           buscar: 'Buscar comida, tiendas, productos…',
           s: {
@@ -1853,6 +2099,21 @@
           },
           cambiar: 'Change language',
           hola: 'Hi, Alex',
+          entregarEn: 'Deliver to',
+          ubicActual: 'Current location',
+          cabeceras: [
+            ['Your ride, anywhere you want to go', 'heroe-moto', 'moto', ''],
+            ['Your favorite orders, closer', 'heroe-comida', 'comida', ''],
+            ['Your groceries at home, in minutes', 'heroe-mercado', '', ''],
+          ],
+          promos: [
+            ['Deal of the day', '$3.00 off your order', 'Code: WELCOME3', 'oferta-pizza', 'comida'],
+            ['Your first moto ride', '50% off', 'Code: MOTO50', 'heroe-moto', 'moto'],
+            ['Grocery', 'Free delivery over $15', 'No code needed', 'heroe-mercado', ''],
+          ],
+          inicioNombres: { carro: ['Rides', 'Car'], envios: ['Delivery', 'Express'] },
+          notaBanners:
+            'The top banner and the promotions are managed from the super admin, by city, country and dates. The top banner changes every time the app opens; promotions rotate on their own.',
           que: 'What do you need today?',
           buscar: 'Search food, stores, products…',
           s: {
@@ -2063,7 +2324,16 @@
         ],
         h: null,
         aviso: '',
+        banner: 0,
       };
+      // La portada cambia cada vez que se abre la página (como en la app al abrir o refrescar).
+      try {
+        const n = Number(localStorage.getItem('borrador.banner') || '0') + 1;
+        localStorage.setItem('borrador.banner', String(n));
+        E.banner = n % 3;
+      } catch (e) {
+        E.banner = Math.floor(Math.random() * 3);
+      }
       window.__toques = 0;
 
       function leerHash() {
@@ -2081,6 +2351,7 @@
         if (h.get('d')) E.destino = h.get('d');
         if (h.get('e') === 'flex') E.envio = 'flex';
         E.q = h.get('q') || '';
+        if (h.get('b')) E.banner = Number(h.get('b')) || 0;
         if (h.get('g') === '1' && !E.lugares.some((x) => x.id === 'nuevo'))
           E.lugares.push({ id: 'nuevo', base: 'nuevoEj', ico: 'escuela', dir: true, ref: true });
         if (h.get('g') === '1') E.aviso = 'guardado';
@@ -2211,17 +2482,58 @@
         }[id];
         return `<button class="serv" ${ir ? `data-ir="${ir}"` : ''} data-serv="${id}"><img src="img/${id}.webp" alt=""><span>${t.s[id]}${t.sSub[id] ? `<small>${t.sSub[id]}</small>` : ''}</span></button>`;
       }
+      // Inicio según 2-inicio-propuesto de Richard: portada administrable, ubicación y buscador,
+      // servicios en 4 columnas, promociones en carrusel y restaurantes cerca.
+      function cabeceraActual() {
+        const t = T[E.L];
+        return t.cabeceras[E.banner % t.cabeceras.length];
+      }
+      function tileInicio(id) {
+        const t = T[E.L];
+        if (id === 'mas')
+          return `<button class="serv4" data-velo="1"><span class="mas4 chico"><i></i><i></i><i></i><i></i></span><span class="nm">${t.s.mas}</span></button>`;
+        const ir = { moto: 'moto', carro: 'carro', comida: 'comida', envios: 'envios' }[id];
+        const nm = t.inicioNombres[id];
+        return `<button class="serv4" ${ir ? `data-ir="${ir}"` : ''} data-serv="${id}"><img src="img/${id}.webp" alt=""><span class="nm">${nm ? nm[0] : t.s[id]}${nm ? `<small>(${nm[1]})</small>` : ''}</span></button>`;
+      }
       function inicio(orden, conOrden) {
         const t = T[E.L];
-        return `<div class="desliza">${cabecera()}
-   <div class="saludo"><h1>${t.hola}</h1><p>${t.que}</p></div>
+        const c = cabeceraActual();
+        return `<div class="desliza">
+   <div class="portada" ${c[2] ? `data-ir="${c[2]}"` : ''}>
+     <div class="cab cab-osc"><img src="img/logo-oscuro.svg" alt="Divoox"><div class="cab-der"><button class="circ osc" aria-label="Avisos">${I(P.campana, 20, '#fff')}<span class="punto"></span></button><div class="idioma idioma-app"></div></div></div>
+     <div class="portada-cuerpo"><h1>${c[0]}</h1><img src="img/${c[1]}.webp" alt=""></div>
+     <div class="puntos-cab">${t.cabeceras.map((_, i) => `<i class="${i === E.banner % t.cabeceras.length ? 'on' : ''}"></i>`).join('')}</div>
+   </div>
+   <button class="entregar-en">${I(P.pin, 20, '#C20A1A', 2.2)}<span><small>${t.entregarEn}</small><b>${t.ubicActual} ${I(P.baja, 14, '#101010', 3)}</b></span></button>
    <button class="buscar">${I(P.lupa, 18, '#666B73')}${t.buscar}</button>
    ${conOrden ? `<div class="orden">${I(P.repetir, 14, '#666B73')}${t.ordenUso}</div>` : ''}
-   <div class="grilla" style="${conOrden ? 'padding-top:8px' : ''}">${orden.map(tile).join('')}</div>
-   <div class="oferta"><img src="img/oferta-pizza.webp" alt=""><b>${t.ofertaA}</b><strong>${t.ofertaB}</strong><span class="cod">${t.codigo}</span></div>
+   <div class="grilla4">${orden.map(tileInicio).join('')}</div>
+   <div class="promos" id="promos">${t.promos.map((p) => `<button class="promo" ${p[4] ? `data-ir="${p[4]}"` : ''}><img class="${p[3] === 'oferta-pizza' ? 'foto' : 'obj'}" src="img/${p[3]}.webp" alt=""><b>${p[0]}</b><strong>${p[1]}</strong><span class="cod">${p[2]}</span></button>`).join('')}</div>
+   <div class="puntos-promo">${t.promos.map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('')}</div>
    <div class="sec"><h2>${t.cerca}</h2><a>${t.verTodos}</a></div>
    <div class="carril">${t.r.map((r) => `<div class="rest"><img src="img/${r[3]}.webp" alt=""><div><b>${r[0]}</b><span><span class="estrella">★</span> ${r[1]} · ${r[2]}</span></div></div>`).join('')}</div>
    <div style="height:18px"></div></div>${barra()}`;
+      }
+      let relojPromos = null;
+      function carruselPromos() {
+        clearInterval(relojPromos);
+        const c = document.querySelector('.pantalla.activa #promos');
+        if (!c) return;
+        const puntos = () => c.parentElement.querySelectorAll('.puntos-promo i');
+        const marcar = () => {
+          const i = Math.round(c.scrollLeft / c.clientWidth);
+          puntos().forEach((p, j) => p.classList.toggle('on', j === i));
+        };
+        c.onscroll = marcar;
+        if (document.body.classList.contains('captura')) return;
+        relojPromos = setInterval(() => {
+          const n = c.children.length;
+          const i = (Math.round(c.scrollLeft / c.clientWidth) + 1) % n;
+          c.style.scrollBehavior = 'smooth';
+          c.scrollLeft = i * c.clientWidth;
+          marcar();
+        }, 3500);
       }
       function textoDestino() {
         const t = T[E.L];
@@ -2436,11 +2748,11 @@
         selector(document.getElementById('idioma-pagina'));
 
         document.querySelector('[data-p=inicio]').innerHTML = inicio(
-          ['comida', 'mercado', 'farmacia', 'moto', 'carro', 'envios', 'flex', 'licores', 'mas'],
+          ['comida', 'mercado', 'farmacia', 'licores', 'carro', 'moto', 'envios', 'mas'],
           false,
         );
         document.querySelector('[data-p=usados]').innerHTML = inicio(
-          ['moto', 'envios', 'comida', 'carro', 'mercado', 'farmacia', 'flex', 'licores', 'mas'],
+          ['moto', 'envios', 'comida', 'carro', 'mercado', 'farmacia', 'licores', 'mas'],
           true,
         );
 
@@ -2564,6 +2876,19 @@
           document.getElementById('telefono').appendChild(a);
         }
         pintarHoja();
+        document
+          .getElementById('telefono')
+          .classList.toggle('osc', E.P === 'inicio' || E.P === 'usados');
+        document.querySelectorAll('.pantalla.activa .portada[data-ir]').forEach((x) => {
+          x.onclick = (e) => {
+            if (e.target.closest('.cab-der')) return;
+            window.__toques++;
+            ir(x.dataset.ir);
+          };
+        });
+        const nb = document.getElementById('nota-banners');
+        if (nb) nb.textContent = t.notaBanners;
+        carruselPromos();
         document.querySelectorAll('.pantalla.activa .idioma-app').forEach(selector);
         conectar();
       }
