@@ -232,7 +232,7 @@ export async function cambiarParadas(
   if (actor.tipo === 'cliente') {
     const hechos = await db
       .prepare(
-        "SELECT COUNT(*) AS n FROM cambios_viaje WHERE operacion_id = ? AND actor = 'cliente'",
+        "SELECT COUNT(*) AS n FROM cambios_viaje WHERE operacion_id = ? AND actor = 'cliente' AND tipo = 'paradas'",
       )
       .bind(v.id)
       .first<{ n: number }>();

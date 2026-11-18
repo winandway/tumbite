@@ -2135,6 +2135,30 @@ export const MENSAJES_EN = new Map<string, string>([
     'Too many attempts with the code. Call support from the app.',
   ],
   ['Todavía no llegamos a esa dirección.', 'We don’t serve that address yet.'],
+  // C-SUBIR-TARIFA
+  ['Este viaje ya no está buscando conductor.', 'This ride is no longer looking for a driver.'],
+  ['En tu ciudad no se puede subir la tarifa.', 'Raising the fare isn’t available in your city.'],
+  [
+    'Espera unos segundos: estamos ofreciendo tu viaje a los conductores.',
+    'Wait a few seconds: we’re offering your ride to drivers.',
+  ],
+  [
+    'Tu viaje cambió mientras subías la tarifa. Vuelve a intentarlo.',
+    'Your ride changed while you were raising the fare. Try again.',
+  ],
+  ['Elige uno de los montos que te mostramos.', 'Choose one of the amounts we showed you.'],
+  [
+    'Ya subiste la tarifa de este viaje las veces permitidas.',
+    'You’ve already raised this ride’s fare the maximum number of times.',
+  ],
+  [
+    'La tarifa ya está en el máximo para este viaje.',
+    'The fare is already at the maximum for this ride.',
+  ],
+  [
+    'Con tarjeta no se puede subir la tarifa de este viaje.',
+    'You can’t raise the fare on this ride when paying by card.',
+  ],
   [
     'El destino queda fuera de la ciudad del viaje.',
     'The destination is outside the city of this ride.',

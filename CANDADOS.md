@@ -2,6 +2,15 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-SUBIR-TARIFA · El pasajero sube la tarifa cuando nadie acepta (servidor, 18 nov 2026) — todos los países; Venezuela primero
+
+- **Qué es:** si en unos segundos nadie acepta, el pasajero sube la tarifa con un toque (montos fijos por ciudad). El viaje no se cancela: se vuelve a ofrecer en el acto con el precio nuevo, también a quien lo dejó vencer o lo rechazó. Ficha: `docs/investigaciones-rea/2026-11-18-subir-tarifa.md`.
+- **Cómo funciona (`apps/servidor/src/rutas/subirTarifa.ts`):** `POST /datos/viajes/:id/subir-tarifa {monto, clave}`. El ajuste vive en `ajustes_viaje_zona` (`subida_pasos_json`, `subida_espera_s`, `subida_max_veces`, `subida_tope_pb`; sin pasos, APAGADO) y se pone en el superadmin, «Interruptores por ciudad». `validarSubida` (centavos enteros): monto de la lista, veces, tope (múltiplo de la cotización original) y, con tarjeta, nunca más de lo autorizado. En un solo lote: `cambios_viaje` (tipo `subida`, id `subida:<viaje>:<clave>`, solo si el precio no cambió y sigue buscando), la cotización (`total` y `desglose.subidaPasajero`), `eventos_operacion` «subida_tarifa» (quién, cuánto, antes y después) y la oferta abierta a «retirada». Después, `repartirOperaciones`. `vuelveAOfrecerse` (operaciones.ts): una oferta anterior a la última subida no impide reofrecer, aunque haya llegado al tope de reofertas (C-REOFERTA-TOPE); con el precio nuevo la cuenta de intentos vuelve a 1 (y el aviso al celular vuelve a salir). `GET /viajes/actual` y `/viajes/:id` traen `subida` (montos, en cuántos segundos, cuántas quedan); la oferta del conductor trae `tarifaSubida`.
+- **Dinero:** la comisión, la ganancia de la oferta, el cobro en mano y el recibo salen de la cotización: todos con el precio nuevo. El regalo de Divoox no cambia (la subida se paga en mano). Con tarjeta, solo hasta lo autorizado: en EE. UU. queda apagado. Las subidas no cuentan como cambios de paradas (`tipo = 'paradas'`).
+- **Cómo se comprueba:** `subirTarifa.test.ts` (12, vista en rojo sin la ruta) y `pasosSubida.test.ts`.
+- **Qué NO tocar:** no reescribir los rechazos a «vencida» para reofrecer (cambia la tasa de aceptación); no subir sin la clave (idempotencia); no encender en una ciudad con tarjeta sin una autorización nueva.
+- **Falta (versión siguiente, rama `subir-tarifa-app`):** los botones en «Buscando…» del cliente, la etiqueta «Tarifa subida por el pasajero» en Driver, la línea del recibo, las guías de Docs y la ayuda del «?» con capturas.
+
 ## C-TEXTO-ENTERO y C-FOTO-QUE-CORRESPONDE · Textos cortados y fotos ajenas en el inicio del cliente (auditor de tiendas, 18 nov 2026) — todos los países
 
 - **Qué se veía:** «Bella I…» y «15–25 m…» en las tarjetas de restaurantes cercanos, «Pollo I…» en las categorías, «Top rat…» y el «+» de «4,5+» cortados en las píldoras de filtro, y restaurantes sin foto propia con una pizza, hamburguesa o sushi que no les correspondía.

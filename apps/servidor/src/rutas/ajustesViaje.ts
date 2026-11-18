@@ -7,6 +7,7 @@ import { nuevoId } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
+import { ajusteSubida, esquemaAjusteSubida } from './subirTarifa';
 
 /**
  * C-MOTO-CIUDAD (30 oct 2026): interruptores por ciudad de cada servicio de viajes, como los pone Uber
@@ -73,10 +74,38 @@ ajustesViaje.get('/admin/viajes/ajustes', async (c) => {
   exigir(c, 'admin');
   const { results } = await base(c)
     .prepare(
-      'SELECT zona_id AS zona, servicio_id AS servicio, pin, selfie_casco AS selfieCasco, programado_antes_min AS programadoAntesMin, actualizado_en AS actualizado FROM ajustes_viaje_zona ORDER BY zona_id, servicio_id',
+      `SELECT zona_id AS zona, servicio_id AS servicio, pin, selfie_casco AS selfieCasco, programado_antes_min AS programadoAntesMin,
+              subida_pasos_json, subida_espera_s, subida_max_veces, subida_tope_pb, actualizado_en AS actualizado
+         FROM ajustes_viaje_zona ORDER BY zona_id, servicio_id`,
     )
-    .all();
-  return c.json({ ajustes: results.map((r) => ({ ...r, selfieCasco: Boolean(r.selfieCasco) })) });
+    .all<Record<string, unknown>>();
+  return c.json({
+    ajustes: results.map(
+      ({ subida_pasos_json, subida_espera_s, subida_max_veces, subida_tope_pb, ...r }) => {
+        // C-SUBIR-TARIFA: el ajuste de subida (null = apagado).
+        const pasos = (() => {
+          try {
+            return JSON.parse(String(subida_pasos_json ?? 'null')) as number[] | null;
+          } catch {
+            return null;
+          }
+        })();
+        return {
+          ...r,
+          selfieCasco: Boolean(r.selfieCasco),
+          subida:
+            pasos && pasos.length
+              ? {
+                  pasos,
+                  esperaS: subida_espera_s ?? 40,
+                  maxVeces: subida_max_veces ?? 3,
+                  topePb: subida_tope_pb ?? 15_000,
+                }
+              : null,
+        };
+      },
+    ),
+  });
 });
 
 ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
@@ -95,12 +124,19 @@ ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
         .min(VIAJE_PROGRAMADO.despachoAntesMinimo)
         .max(VIAJE_PROGRAMADO.despachoAntesMaximo)
         .optional(),
+      // C-SUBIR-TARIFA: los botones de «Subir la tarifa» de la ciudad; null lo apaga y sin la
+      // casilla queda como estaba.
+      subida: esquemaAjusteSubida.optional(),
     }),
   );
   const db = base(c);
   if (!(await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(d.zona).first()))
     throw new ErrorDatos('Esa ciudad no existe.', 'zona', 404);
-  const antes = await ajustesDe(db, d.servicio, d.zona);
+  const antes = {
+    ...(await ajustesDe(db, d.servicio, d.zona)),
+    subida: await ajusteSubida(db, d.servicio, d.zona),
+  };
+  const tocaSubida = d.subida !== undefined;
   await db.batch([
     db
       .prepare(
@@ -117,6 +153,23 @@ ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
         admin.id,
         d.programadoAntesMin ?? null,
       ),
+    ...(tocaSubida
+      ? [
+          db
+            .prepare(
+              `UPDATE ajustes_viaje_zona SET subida_pasos_json = ?, subida_espera_s = ?, subida_max_veces = ?,
+                 subida_tope_pb = ? WHERE zona_id = ? AND servicio_id = ?`,
+            )
+            .bind(
+              d.subida ? JSON.stringify(d.subida.pasos) : null,
+              d.subida?.esperaS ?? null,
+              d.subida?.maxVeces ?? null,
+              d.subida?.topePb ?? null,
+              d.zona,
+              d.servicio,
+            ),
+        ]
+      : []),
     db
       .prepare(
         'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
@@ -130,6 +183,7 @@ ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
           pin: d.pin,
           selfieCasco: d.selfieCasco,
           programadoAntesMin: d.programadoAntesMin ?? null,
+          ...(tocaSubida ? { subida: d.subida ?? null } : {}),
         }),
       ),
   ]);

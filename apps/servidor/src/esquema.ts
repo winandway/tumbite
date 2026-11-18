@@ -20,6 +20,13 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-SUBIR-TARIFA (18 nov 2026): «Subir la tarifa» por ciudad y servicio (sin pasos, apagado) y el
+  // tipo de cada cambio de precio de un viaje (paradas o subida del pasajero).
+  ['ajustes_viaje_zona', 'subida_pasos_json', 'TEXT'],
+  ['ajustes_viaje_zona', 'subida_espera_s', 'INTEGER'],
+  ['ajustes_viaje_zona', 'subida_max_veces', 'INTEGER'],
+  ['ajustes_viaje_zona', 'subida_tope_pb', 'INTEGER'],
+  ['cambios_viaje', 'tipo', "TEXT NOT NULL DEFAULT 'paradas'"],
   // C-REOFERTA-TOPE (18 nov 2026): cuántas veces se le ofreció el viaje a ese conductor (tope 3).
   ['ofertas_operacion', 'intentos', 'INTEGER NOT NULL DEFAULT 1'],
   // C-REFERIDOS-SIN-TRAMPA (18 nov 2026): por qué un referido de cliente pendiente ya no da premio.

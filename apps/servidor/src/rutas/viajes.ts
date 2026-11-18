@@ -156,6 +156,7 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
               v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng,
+              EXISTS (SELECT 1 FROM cambios_viaje sc WHERE sc.operacion_id = o.id AND sc.tipo = 'subida') AS subida,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
@@ -211,6 +212,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         deConfianza: f.conductor_preferido_id === u.id,
         viajeFijo: f.rutina_id != null,
         menor: f.menor_nombre == null ? null : String(f.menor_nombre),
+        // C-SUBIR-TARIFA: «Tarifa subida por el pasajero» (la ganancia ya es con el precio nuevo).
+        tarifaSubida: Number(f.subida) === 1,
       };
     }),
   });

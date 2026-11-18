@@ -118,6 +118,7 @@ import { chatViaje } from './rutas/chatViaje';
 import { moderacion } from './rutas/moderacion';
 import { ayudaInterna } from './rutas/ayudaInterna';
 import { paradasViaje } from './rutas/paradasViaje';
+import { subirTarifa } from './rutas/subirTarifa';
 import { dinamicaViaje } from './rutas/dinamicaViaje';
 import { comidaCiudad } from './rutas/comidaCiudad';
 import { pruebasComidaVe } from './rutas/pruebasComidaVe';
@@ -699,6 +700,7 @@ app.route('/datos', moderacion);
 app.route('/datos', ayudaInterna);
 // C-VIAJE-PARADAS y C-CARRO-DINAMICA (14 nov 2026).
 app.route('/datos', paradasViaje);
+app.route('/datos', subirTarifa);
 app.route('/datos', dinamicaViaje);
 app.route('/datos', viajesPasajero);
 app.route('/datos', comidaCiudad);

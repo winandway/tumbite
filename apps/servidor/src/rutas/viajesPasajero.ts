@@ -49,6 +49,7 @@ import { pinParaViajeNuevo } from './ajustesViaje';
 import { ESTADOS_ACTIVOS, crearViajeDeCotizacion, pinNuevo, programarViaje } from '../viajeCrear';
 import { revisarDesvio } from './seguridadViaje';
 import { enviarSms } from '../sms';
+import { estadoSubida } from './subirTarifa';
 import { encenderServicioEnZona, estadoServicioEnZona, exigirPuedeEncender } from './servicios';
 import { leerConfigPais, MONEDA_POR_PAIS, paisIncompleto } from '../internacional/paises';
 import { zonaPara } from './zonas';
@@ -1160,6 +1161,8 @@ viajesPasajero.get('/viajes/actual', async (c) => {
         })
       : null,
     deudaPendiente: deuda?.monto ? { monto: deuda.monto, moneda: deuda.moneda } : null,
+    // C-SUBIR-TARIFA: los botones de «Subir la tarifa» mientras busca (null si no aplica).
+    subida: viaje ? await estadoSubida(db, viaje.id, u.id) : null,
   });
 });
 
@@ -1188,6 +1191,8 @@ viajesPasajero.get('/viajes/:id', async (c) => {
       paradas,
       conductor: viaje.conductor?.ubicacion ?? null,
     }),
+    // C-SUBIR-TARIFA: los botones de «Subir la tarifa» mientras busca (null si no aplica).
+    subida: await estadoSubida(db, viaje.id, u.id),
   });
 });
 

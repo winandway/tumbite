@@ -8,6 +8,7 @@ import {
 } from '@tumbite/compartido';
 import { api } from './api';
 import { AvisoBorrador } from './AvisoBorrador';
+import { pasosDeTexto } from './pasosSubida';
 
 /**
  * C-MOTO-CIUDAD (30 oct 2026): los interruptores de cada ciudad, como Uber en cada mercado: el código
@@ -25,6 +26,16 @@ const T = {
     guardar: 'Guardar interruptores',
     guardado: 'Interruptores guardados. Los viajes nuevos ya los usan.',
     si: 'selfie con casco',
+    servicio: 'Servicio',
+    servicios: { moto: 'Moto', carro: 'Carro', envios: 'Envíos' },
+    subida: 'Subir la tarifa (si nadie acepta)',
+    subidaModos: { igual: 'Dejar como está', encender: 'Encender', apagar: 'Apagar' },
+    pasos: 'Botones, en la moneda de la ciudad, separados por coma (por ejemplo 0.25, 0.50, 1.00)',
+    espera: 'Segundos buscando antes de ofrecerlo',
+    veces: 'Veces que se puede subir un viaje',
+    tope: 'Precio máximo (veces la cotización original, por ejemplo 1.5)',
+    pasosMal: 'Escribe de 1 a 3 montos mayores que cero, separados por coma.',
+    subidaSi: (p: string) => `subir la tarifa: ${p}`,
   },
   en: {
     titulo: 'Switches by city',
@@ -38,20 +49,48 @@ const T = {
     guardar: 'Save switches',
     guardado: 'Switches saved. New rides use them now.',
     si: 'helmet selfie',
+    servicio: 'Service',
+    servicios: { moto: 'Moto', carro: 'Car', envios: 'Deliveries' },
+    subida: 'Raise the fare (when nobody accepts)',
+    subidaModos: { igual: 'Leave as is', encender: 'Turn on', apagar: 'Turn off' },
+    pasos: 'Buttons, in the city’s currency, separated by commas (for example 0.25, 0.50, 1.00)',
+    espera: 'Seconds searching before offering it',
+    veces: 'Times a ride can be raised',
+    tope: 'Maximum price (times the original quote, for example 1.5)',
+    pasosMal: 'Enter 1 to 3 amounts above zero, separated by commas.',
+    subidaSi: (p: string) => `raise the fare: ${p}`,
   },
 };
 
-type Ajuste = { zona: string; servicio: string; pin: string; selfieCasco: boolean };
+type Ajuste = {
+  zona: string;
+  servicio: string;
+  pin: string;
+  selfieCasco: boolean;
+  subida?: { pasos: number[]; esperaS: number; maxVeces: number; topePb: number } | null;
+};
 
 export function InterruptoresViaje({ idioma }: { idioma: Idioma }) {
   const t = enIdioma(T, idioma);
   const modos = new Map(Object.entries(t.modos));
+  const servicios = new Map(Object.entries(t.servicios));
+  const modosSubida = new Map(Object.entries(t.subidaModos));
   const [ajustes, setAjustes] = useState<Ajuste[]>([]);
   const [falla, setFalla] = useState('');
   const [aviso, setAviso] = useState('');
   const b = useBorrador({
     formulario: 'interruptores-moto',
-    inicial: { zona: '', pin: 'siempre', selfieCasco: false },
+    inicial: {
+      zona: '',
+      servicio: 'moto',
+      pin: 'siempre',
+      selfieCasco: false,
+      subida: 'igual',
+      pasos: '0.25, 0.50, 1.00',
+      espera: '40',
+      veces: '3',
+      tope: '1.5',
+    },
     almacen: almacenNavegador,
   });
   const cargar = useCallback(() => {
@@ -66,12 +105,26 @@ export function InterruptoresViaje({ idioma }: { idioma: Idioma }) {
     e.preventDefault();
     setFalla('');
     setAviso('');
+    const v = b.valores;
+    const pasos = v.subida === 'encender' ? pasosDeTexto(v.pasos) : null;
+    if (v.subida === 'encender' && !pasos) return setFalla(t.pasosMal);
     try {
       await api.pedir('PUT', '/datos/admin/viajes/ajustes', {
-        zona: b.valores.zona.trim().toUpperCase(),
-        servicio: 'moto',
-        pin: b.valores.pin,
-        selfieCasco: b.valores.selfieCasco,
+        zona: v.zona.trim().toUpperCase(),
+        servicio: v.servicio,
+        pin: v.pin,
+        selfieCasco: v.selfieCasco,
+        ...(v.subida === 'apagar' ? { subida: null } : {}),
+        ...(v.subida === 'encender' && pasos
+          ? {
+              subida: {
+                pasos,
+                esperaS: Number(v.espera),
+                maxVeces: Number(v.veces),
+                topePb: Math.round(Number(v.tope) * 10_000),
+              },
+            }
+          : {}),
       });
       await b.limpiar();
       setAviso(t.guardado);
@@ -95,8 +148,12 @@ export function InterruptoresViaje({ idioma }: { idioma: Idioma }) {
         <ul className="tarjetas">
           {ajustes.map((a) => (
             <li key={`${a.zona}-${a.servicio}`}>
-              <strong>{a.zona}</strong> · {t.codigo}: {modos.get(a.pin) ?? a.pin}
+              <strong>{a.zona}</strong> · {servicios.get(a.servicio) ?? a.servicio} · {t.codigo}:{' '}
+              {modos.get(a.pin) ?? a.pin}
               {a.selfieCasco ? ` · ${t.si}` : ''}
+              {a.subida
+                ? ` · ${t.subidaSi(a.subida.pasos.map((x) => (x / 100).toFixed(2)).join(', '))}`
+                : ''}
             </li>
           ))}
         </ul>
@@ -112,6 +169,19 @@ export function InterruptoresViaje({ idioma }: { idioma: Idioma }) {
         <label className="campo">
           <span>{t.ciudad}</span>
           <input value={b.valores.zona} onChange={(e) => b.cambiar('zona', e.target.value)} />
+        </label>
+        <label className="campo">
+          <span>{t.servicio}</span>
+          <select
+            value={b.valores.servicio}
+            onChange={(e) => b.cambiar('servicio', e.target.value)}
+          >
+            {[...servicios].map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="campo">
           <span>{t.codigo}</span>
@@ -133,6 +203,48 @@ export function InterruptoresViaje({ idioma }: { idioma: Idioma }) {
             {t.casco}
           </span>
         </label>
+        <label className="campo">
+          <span>{t.subida}</span>
+          <select value={b.valores.subida} onChange={(e) => b.cambiar('subida', e.target.value)}>
+            {[...modosSubida].map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </label>
+        {b.valores.subida === 'encender' ? (
+          <>
+            <label className="campo">
+              <span>{t.pasos}</span>
+              <input value={b.valores.pasos} onChange={(e) => b.cambiar('pasos', e.target.value)} />
+            </label>
+            <label className="campo">
+              <span>{t.espera}</span>
+              <input
+                inputMode="numeric"
+                value={b.valores.espera}
+                onChange={(e) => b.cambiar('espera', e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span>{t.veces}</span>
+              <input
+                inputMode="numeric"
+                value={b.valores.veces}
+                onChange={(e) => b.cambiar('veces', e.target.value)}
+              />
+            </label>
+            <label className="campo">
+              <span>{t.tope}</span>
+              <input
+                inputMode="decimal"
+                value={b.valores.tope}
+                onChange={(e) => b.cambiar('tope', e.target.value)}
+              />
+            </label>
+          </>
+        ) : null}
         <button type="submit" className="boton">
           {t.guardar}
         </button>
