@@ -27,14 +27,16 @@ const CHAT_ES = {
   burbuja: 'Habla con nuestro equipo de soporte',
   titulo: 'Soporte de Divoox',
   camila: 'Camila Campos, del equipo de soporte de Divoox',
+  // En cada mensaje va solo el nombre: quién es ya lo dice el encabezado (no se repite).
+  camilaCorto: 'Camila',
   equipo: 'Equipo de soporte de Divoox',
   tu: 'Tú',
-  saludo:
-    'Hola. Soy Camila Campos, del equipo de soporte de Divoox. Escríbeme tu pregunta y te ayudo. Si prefieres hablar con una persona del equipo, escribe «hablar con una persona».',
+  // Un solo saludo, corto, y solo cuando la conversación está vacía.
+  saludo: 'Hola. ¿En qué te ayudo?',
   escribe: 'Escribe tu mensaje…',
   enviar: 'Enviar',
   enviando: 'Enviando…',
-  escribiendo: 'Camila está escribiendo…',
+  escribiendo: 'Camila está escribiendo',
   equipoAtiende: 'Una persona del equipo te va a responder aquí.',
   cerrar: 'Cerrar',
   unir: '¿Ya tienes cuenta? Une este chat a tu correo',
@@ -60,14 +62,14 @@ const CHAT_EN: typeof CHAT_ES = {
   burbuja: 'Talk to our support team',
   titulo: 'Divoox Support',
   camila: 'Camila Campos, Divoox Support Team',
+  camilaCorto: 'Camila',
   equipo: 'Divoox Support Team',
   tu: 'You',
-  saludo:
-    'Hi. I’m Camila Campos, from the Divoox Support Team. Write your question and I’ll help. If you’d rather talk to a person on our team, write “talk to a person.”',
+  saludo: 'Hi. How can I help?',
   escribe: 'Write your message…',
   enviar: 'Send',
   enviando: 'Sending…',
-  escribiendo: 'Camila is typing…',
+  escribiendo: 'Camila is typing',
   equipoAtiende: 'A person on our team will reply to you here.',
   cerrar: 'Close',
   unir: 'Already have an account? Link this chat to your email',
@@ -94,7 +96,33 @@ export const TEXTOS_CHAT_SOPORTE = { es: CHAT_ES, en: CHAT_EN };
 /** El nombre que va encima de cada mensaje, en el idioma de la pantalla. */
 export function nombreAutorCamila(autor: AutorCamila, idioma: Idioma): string {
   const t = idioma === 'en' ? TEXTOS_CHAT_SOPORTE.en : TEXTOS_CHAT_SOPORTE.es;
-  return autor === 'camila' ? t.camila : autor === 'equipo' ? t.equipo : t.tu;
+  return autor === 'camila' ? t.camilaCorto : autor === 'equipo' ? t.equipo : t.tu;
+}
+
+/**
+ * C-CAMILA-TONO (18 nov 2026, Richard): Camila no contesta al instante, como una máquina. Entre que
+ * llega la respuesta y se muestra, el chat enseña «Camila está escribiendo» con tres puntitos, de 2
+ * a 4 segundos según el largo de lo que va a decir.
+ */
+let espera = (texto: string) => Math.min(4000, Math.max(2000, 2000 + texto.length * 8));
+export const esperaDeEscrituraMs = (texto: string) => espera(texto);
+/** Pruebas: sin espera (null vuelve a la de verdad). */
+export function usarEsperaDeEscritura(f: ((texto: string) => number) | null) {
+  espera = f ?? ((texto: string) => Math.min(4000, Math.max(2000, 2000 + texto.length * 8)));
+}
+/** Lo que falta esperar para que la respuesta salga con su ritmo, contando lo que ya tardó el servidor. */
+export const pausaDeEscritura = (texto: string | null, desdeMs: number, ahoraMs: number) =>
+  new Promise<void>((listo) =>
+    setTimeout(listo, texto ? Math.max(0, esperaDeEscrituraMs(texto) - (ahoraMs - desdeMs)) : 0),
+  );
+
+/**
+ * Se llama al mandar el mensaje; devuelve la función que, con la respuesta ya en la mano, espera lo
+ * que falte para que salga con su ritmo.
+ */
+export function cronometroDeEscritura() {
+  const inicio = Date.now();
+  return (texto: string | null) => pausaDeEscritura(texto, inicio, Date.now());
 }
 
 /** La ficha anónima del navegador (cabecera x-camila-visita): 32 a 80 letras, números, - o _. */

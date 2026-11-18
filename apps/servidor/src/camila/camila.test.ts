@@ -183,13 +183,14 @@ describe('C-CAMILA-AVISO: donde la ley lo pide, avisa desde el primer mensaje', 
       });
     const us = await decir('us', 'US');
     expect(us.datos.respuesta).toMatch(
-      /^Hola, soy Camila, la asistente virtual de Divoox\. Si en algún momento prefieres hablar con una persona del equipo, solo dímelo\.\n\n/,
+      // UNA vez, corto, y sin ofrecer una persona.
+      /^Hola, soy Camila, la asistente virtual de Divoox\.\n\n(?![\s\S]*persona del equipo)/,
     );
     // Solo en el primer mensaje.
     expect((await decir('us', 'US')).datos.respuesta).not.toMatch(/asistente virtual/);
     const en = await decir('us-en', 'US', 'en');
     expect(en.datos.respuesta).toMatch(
-      /^Hi, I am Camila, the Divoox virtual assistant\. If at any point you would rather talk to a person on the team, just tell me\.\n\n/,
+      /^Hi, I am Camila, the Divoox virtual assistant\.\n\n(?![\s\S]*person on the team)/,
     );
     expect((await decir('de', 'DE')).datos.respuesta).toMatch(
       /^Hola, soy Camila, la asistente virtual/,
@@ -449,8 +450,13 @@ describe('C-CAMILA-APRENDE: solo lo aprobado', () => {
     const e = await escenario({ GEMINI_API_KEY: undefined });
     const a = await e.conductor();
     const pregunta = '¿Dónde queda la oficina de Divoox en El Vigía?';
+    // Primer intento: pide que se lo cuenten de otra forma (no pasa a nadie todavía).
     const r = await e.decir(a.token, pregunta);
-    expect(r.datos.respuesta).toMatch(/Anoté tu pregunta/);
+    expect(r.datos.respuesta).toBe(
+      'No estoy segura de haberte entendido. ¿Me lo cuentas con otras palabras?',
+    );
+    // Segundo intento seguido: lo anota y se lo pasa al equipo.
+    expect((await e.decir(a.token, pregunta)).datos.respuesta).toMatch(/Ya les pasé tu pregunta/);
     expect(
       (await e.m.llamar('POST', '/datos/admin/camila/aprendizaje/armar', {}, e.admin.token)).datos
         .creadas,
@@ -606,6 +612,7 @@ describe('Revisión de calidad del 18 nov: borrado, fallo del modelo y chat anó
     const e = await escenario({ GEMINI_API_KEY: undefined });
     const a = await e.conductor('Ana Borrada');
     await e.decir(a.token, 'quiero hablar con una persona');
+    await e.decir(a.token, '¿dónde queda la oficina de Divoox en El Vigía?');
     await e.decir(a.token, '¿dónde queda la oficina de Divoox en El Vigía?');
     const contar = async () =>
       (

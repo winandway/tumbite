@@ -21,7 +21,7 @@ import { anotarPais, leerAjustes, personaDeUsuario } from './memoria';
 export function textoBienvenida(nombre: string, idioma: 'es' | 'en', lider?: string | null) {
   const primer = nombre.split(' ')[0] ?? nombre;
   return idioma === 'en'
-    ? `Hi ${primer}, welcome to Divoox. I am Camila, from the support team, and I will walk you through it.${lider ? ` You signed up on ${lider}'s team.` : ''}
+    ? `Hi ${primer}, welcome to Divoox. I will walk you through it.${lider ? ` You signed up on ${lider}'s team.` : ''}
 
 Your steps to start:
 1. In Divoox Driver, open Profile, “Start driving.”
@@ -30,7 +30,7 @@ Your steps to start:
 4. When you are approved, top up your balance for fees and tap “Go online.”
 
 If you get stuck on any step, write to me here. I am here to help.`
-    : `Hola, ${primer}, bienvenido a Divoox. Soy Camila, del equipo de soporte, y te acompaño en todo el proceso.${lider ? ` Te registraste en el equipo de ${lider}.` : ''}
+    : `Hola, ${primer}, te doy la bienvenida a Divoox. Te acompaño en todo el proceso.${lider ? ` Te registraste en el equipo de ${lider}.` : ''}
 
 Tus pasos para empezar:
 1. En Divoox Driver, abre Perfil, «Empieza a repartir».

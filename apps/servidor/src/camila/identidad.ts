@@ -25,8 +25,26 @@ export const VERDAD = {
 
 /** El aviso del primer mensaje donde la ley lo pide (interruptor por país). */
 export const AVISO_PRIMER_MENSAJE = {
-  es: 'Hola, soy Camila, la asistente virtual de Divoox. Si en algún momento prefieres hablar con una persona del equipo, solo dímelo.',
-  en: 'Hi, I am Camila, the Divoox virtual assistant. If at any point you would rather talk to a person on the team, just tell me.',
+  es: 'Hola, soy Camila, la asistente virtual de Divoox.',
+  en: 'Hi, I am Camila, the Divoox virtual assistant.',
+} as const;
+
+/** No entendió (primer intento): pide que se lo digan de otra forma, sin pasar a nadie todavía. */
+export const NO_ENTENDI = {
+  es: 'No estoy segura de haberte entendido. ¿Me lo cuentas con otras palabras?',
+  en: 'I am not sure I understood. Could you tell me in other words?',
+} as const;
+
+/** Segundo intento sin poder resolver: ahí sí lo ve una persona del equipo. */
+export const LO_VE_EL_EQUIPO = {
+  es: 'Esto prefiero que lo vea alguien del equipo. Ya les pasé tu pregunta y te responden por aquí.',
+  en: 'I would rather have someone on the team look at this. I passed them your question and they will reply here.',
+} as const;
+
+/** La persona está molesta: disculpa corta y pasa a una persona. */
+export const ENTIENDO_TU_MOLESTIA = {
+  es: 'Entiendo tu molestia y lo siento. Ya le pasé tu caso a una persona del equipo; te escribe por aquí.',
+  en: 'I understand you are upset, and I am sorry. I passed your case to a person on the team; they will write to you here.',
 } as const;
 
 export const PASO_A_PERSONA = {
@@ -134,6 +152,41 @@ const PIDE_HUMANO = [
   'a representative',
 ] as const;
 export const pideHumano = (t: string) => contiene(t, PIDE_HUMANO);
+
+/** ¿Está molesta? (insultos, «estafa», «pésimo servicio»…). Entonces sí pasa a una persona. */
+const ENOJO = [
+  ...[
+    'estafa',
+    'estafadores',
+    'ladrones',
+    'me robaron',
+    'pesimo',
+    'pesima',
+    'horrible',
+    'inservible',
+  ],
+  ...[
+    'basura',
+    'porqueria',
+    'mierda',
+    'harto',
+    'harta',
+    'indignado',
+    'indignada',
+    'los voy a denunciar',
+  ],
+  ...[
+    'que mal servicio',
+    'mal servicio',
+    'no sirven para nada',
+    'scam',
+    'useless',
+    'awful',
+    'terrible',
+  ],
+  ...['i am angry', 'im angry', 'furious', 'worst service', 'rip off'],
+] as const;
+export const estaMolesta = (t: string) => contiene(t, ENOJO);
 
 /** Elige el texto del idioma (sin índices dinámicos). */
 export const segun = <T>(par: { es: T; en: T }, idioma: IdiomaCamila): T =>

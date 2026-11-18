@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LLAVE_VISITA_CAMILA, esVisitaCamila } from '@tumbite/compartido';
+import {
+  LLAVE_VISITA_CAMILA,
+  esVisitaCamila,
+  esperaDeEscrituraMs,
+  usarEsperaDeEscritura,
+} from '@tumbite/compartido';
 import { ChatSoporte } from './ChatSoporte';
 
 /**
@@ -49,8 +54,14 @@ const HILO = {
 };
 
 describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
-  beforeEach(() => localStorage.clear());
-  afterEach(() => vi.unstubAllGlobals());
+  beforeEach(() => {
+    localStorage.clear();
+    usarEsperaDeEscritura(() => 0);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    usarEsperaDeEscritura(null);
+  });
 
   it('cerrada no pide nada; abierta sin haber conversado tampoco lee el hilo (mirar no escribe)', async () => {
     const llamadas = servidor((l) => (l.url.endsWith('/cuentas/yo') ? json({}, 401) : json(HILO)));
@@ -63,7 +74,11 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
     const chat = screen.getByRole('dialog', { name: 'Soporte de Divoox' });
-    expect(chat).toHaveTextContent('Soy Camila Campos, del equipo de soporte de Divoox');
+    // El encabezado dice quién es; el saludo es corto, no se presenta ni ofrece una persona.
+    expect(chat).toHaveTextContent('Camila Campos, del equipo de soporte de Divoox');
+    expect(chat).toHaveTextContent('Hola. ¿En qué te ayudo?');
+    expect(chat).not.toHaveTextContent('Soy Camila');
+    expect(chat).not.toHaveTextContent('hablar con una persona');
     await waitFor(() => expect(llamadas.some((l) => l.url.endsWith('/cuentas/yo'))).toBe(true));
     expect(llamadas.some((l) => l.url.includes('/camila/hilo'))).toBe(false);
   });
@@ -87,9 +102,11 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     const visita = envio.cabeceras.get('x-camila-visita');
     expect(esVisitaCamila(visita)).toBe(true);
     expect(localStorage.getItem(LLAVE_VISITA_CAMILA)).toBe(visita);
-    expect(
-      screen.getAllByText('Camila Campos, del equipo de soporte de Divoox').length,
-    ).toBeGreaterThan(1);
+    // La etiqueta larga va UNA vez (el encabezado); cada mensaje lleva solo «Camila».
+    expect(screen.getAllByText('Camila Campos, del equipo de soporte de Divoox')).toHaveLength(1);
+    expect(screen.getAllByText('Camila').length).toBeGreaterThan(0);
+    // Con conversación, el saludo fijo ya no aparece.
+    expect(screen.queryByText('Hola. ¿En qué te ayudo?')).toBeNull();
     // Enviado, la casilla queda vacía.
     await waitFor(() =>
       expect((screen.getByLabelText('Escribe tu mensaje…') as HTMLTextAreaElement).value).toBe(''),
@@ -130,6 +147,31 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     expect(await screen.findByText('Respuesta reportada. El equipo la va a revisar.')).toBeTruthy();
     expect(llamadas.some((l) => l.url.endsWith('/datos/camila/mensajes/m2/reportar'))).toBe(true);
     expect(screen.queryByRole('button', { name: 'Reportar respuesta' })).toBeNull();
+  });
+
+  it('C-CAMILA-TONO: mientras llega la respuesta se ve «Camila está escribiendo» con sus tres puntitos, y espera de 2 a 4 segundos', async () => {
+    usarEsperaDeEscritura(null);
+    expect(esperaDeEscrituraMs('Sí.')).toBeGreaterThanOrEqual(2000);
+    expect(esperaDeEscrituraMs('x'.repeat(2000))).toBe(4000);
+    usarEsperaDeEscritura(null);
+    expect(esperaDeEscrituraMs('Hola')).toBeGreaterThanOrEqual(2000);
+    expect(esperaDeEscrituraMs('Hola')).toBeLessThanOrEqual(4000);
+    usarEsperaDeEscritura(() => 150);
+    servidor((l) => {
+      if (l.url.endsWith('/cuentas/yo')) return json({}, 401);
+      if (l.url.endsWith('/camila/mensaje')) return json({ respuesta: 'Claro.', ...HILO });
+      return json(HILO);
+    });
+    render(<ChatSoporte idioma="es" />);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
+    );
+    await userEvent.type(screen.getByLabelText('Escribe tu mensaje…'), 'hola');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+    const escribiendo = await screen.findByTestId('chat-escribiendo');
+    expect(escribiendo).toHaveTextContent('Camila está escribiendo');
+    expect(escribiendo.querySelectorAll('.chat-soporte-puntos i')).toHaveLength(3);
+    await waitFor(() => expect(screen.queryByTestId('chat-escribiendo')).toBeNull());
   });
 
   it('si falla el envío, lo escrito se queda en la casilla', async () => {

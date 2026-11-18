@@ -10,6 +10,7 @@ import {
   enIdioma,
   enIdiomaDireccion,
   nombreAutorCamila,
+  cronometroDeEscritura,
   useBorrador,
   visitaCamila,
 } from '@tumbite/compartido';
@@ -150,6 +151,7 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
       texto,
       creado_en: new Date().toISOString(),
     });
+    const esperar = cronometroDeEscritura();
     try {
       const r = await pedir<RespuestaCamila>(
         'POST',
@@ -158,6 +160,8 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
         { cabeceras },
       );
       guardarConverso();
+      // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
+      await esperar(r.respuesta);
       setHilo({
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
@@ -225,10 +229,13 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
             aria-live="polite"
             aria-label={t.titulo}
           >
-            <li className="chat-soporte-mensaje de-camila">
-              <span className="chat-soporte-autor">{t.camila}</span>
-              <span className="chat-soporte-texto">{t.saludo}</span>
-            </li>
+            {/* Un solo saludo, corto, y solo si la conversación está vacía (el encabezado ya dice quién es). */}
+            {mensajes.length === 0 && !cargando ? (
+              <li className="chat-soporte-mensaje de-camila">
+                <span className="chat-soporte-autor">{t.camilaCorto}</span>
+                <span className="chat-soporte-texto">{t.saludo}</span>
+              </li>
+            ) : null}
             {mensajes.map((m) => (
               <li
                 key={m.id}
@@ -255,8 +262,13 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               </li>
             ))}
             {enviando && !hilo?.equipoAtendiendo ? (
-              <li className="chat-soporte-escribiendo" role="status">
+              <li className="chat-soporte-escribiendo" role="status" data-testid="chat-escribiendo">
                 {t.escribiendo}
+                <span className="chat-soporte-puntos" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
               </li>
             ) : null}
             {cargando ? (

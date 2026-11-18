@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import {
   ErrorApi,
@@ -8,6 +8,7 @@ import {
   TEXTOS_CHAT_SOPORTE,
   enIdioma,
   nombreAutorCamila,
+  cronometroDeEscritura,
   useBorrador,
 } from '@tumbite/compartido';
 import {
@@ -40,6 +41,13 @@ export function ChatSoporteApp() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
   const lista = useRef<ScrollView>(null);
+  // Los tres puntitos de «Camila está escribiendo», uno tras otro.
+  const [puntos, setPuntos] = useState(1);
+  useEffect(() => {
+    if (!enviando) return;
+    const reloj = setInterval(() => setPuntos((n) => (n % 3) + 1), 400);
+    return () => clearInterval(reloj);
+  }, [enviando]);
   const b = useBorrador({
     formulario: 'chat-soporte-app',
     cuenta: usuario?.id,
@@ -67,11 +75,14 @@ export function ChatSoporteApp() {
     setError('');
     setEnviando(true);
     setPendiente({ id: 'pendiente', autor: 'persona', texto, creado_en: new Date().toISOString() });
+    const esperar = cronometroDeEscritura();
     try {
       const r = await api.pedir<RespuestaCamila>('POST', '/datos/camila/mensaje', {
         texto,
         canal: 'app',
       });
+      // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
+      await esperar(r.respuesta);
       setHilo({
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
@@ -168,11 +179,19 @@ export function ChatSoporteApp() {
         accessibilityLiveRegion="polite"
         nestedScrollEnabled
       >
-        {burbuja({ id: 'saludo', autor: 'camila', texto: t.saludo })}
+        {/* Un solo saludo, corto, y solo si la conversación está vacía. */}
+        {hilo !== null && mensajes.length === 0
+          ? burbuja({ id: 'saludo', autor: 'camila', texto: t.saludo })
+          : null}
         {mensajes.map(burbuja)}
         {enviando && !hilo?.equipoAtendiendo ? (
-          <Text style={{ color: '#666B73', fontStyle: 'italic', marginTop: 4 }}>
+          <Text
+            testID="chat-escribiendo"
+            accessibilityLiveRegion="polite"
+            style={{ color: '#666B73', fontStyle: 'italic', marginTop: 4 }}
+          >
             {t.escribiendo}
+            {'.'.repeat(puntos)}
           </Text>
         ) : null}
         {hilo === null && !error ? (

@@ -6,6 +6,7 @@ import { saldoLibro } from '../internacional/libro';
 import { darRegaloConductorNuevo } from '../saldoConductores';
 import { estadoDelConductor } from '../rutas/servicios';
 import { formatearMonto } from '@tumbite/compartido';
+import { buscarGuias, respuestaDeGuia } from './buscadorDocs';
 import { buscarAprobadas, buscarEnDocs, enlaceGuia } from './conocimiento';
 import { TOPE_CORREOS_CASO_DIA, contarDelDia, gastoDeHoy, hoy } from './modelo';
 import type { AjustesCamila, Persona } from './memoria';
@@ -32,7 +33,12 @@ export type Contexto = {
   idioma: IdiomaCamila;
   ajustes: AjustesCamila;
   /** La última pregunta de la persona (para anotarla si no se supo responder). */
-  pregunta: string;
+  pregunta: string; /** Quién pregunta, para buscar primero en las guías que le tocan. */
+  rol?: 'cliente' | 'repartidor' | 'restaurante' | 'admin' | null;
+  /** Solo se pasa a una persona si la pidió, si está molesta o si ya van dos intentos sin resolver. */
+  puedePasar?: boolean;
+  /** El modelo dijo que no sabe (queda marcado en la respuesta para contar los intentos). */
+  noSupo?: boolean;
 };
 
 export type ResultadoHerramienta = { ok: boolean; texto: string; datos?: Record<string, unknown> };
@@ -291,17 +297,20 @@ export async function abrirCaso(
 
 export async function buscarRespuesta(c: Contexto, tema: string): Promise<ResultadoHerramienta> {
   const q = `${tema} ${c.pregunta}`;
-  const encontradas = [...(await buscarAprobadas(c.db, q, c.idioma)), ...buscarEnDocs(q, c.idioma)];
-  if (!encontradas.length)
+  const aprobadas = await buscarAprobadas(c.db, q, c.idioma);
+  // Todas las guías públicas de Docs (cliente y conductor), primero las que le tocan a quien pregunta.
+  const guias = buscarGuias(q, c.idioma, 3, c.rol === 'repartidor' ? 'drivers' : 'ordering');
+  if (!aprobadas.length && !guias.length)
     return {
       ok: false,
       texto: t(c.idioma, 'No hay nada sobre eso en Docs.', 'There is nothing about that in Docs.'),
     };
   return {
     ok: true,
-    texto: encontradas
-      .map((e) => (e.guia ? `${e.texto}\n(${enlaceGuia(e.guia, c.idioma)})` : e.texto))
-      .join('\n\n'),
+    texto: [
+      ...aprobadas.map((e) => e.texto),
+      ...guias.map((g) => `${g.guia.titulo}\n${respuestaDeGuia(g.guia, c.idioma, 6)}`),
+    ].join('\n\n'),
   };
 }
 
@@ -362,7 +371,7 @@ export const HERRAMIENTAS_MODELO: Herramienta[] = [
   {
     name: 'abrir_caso',
     description:
-      'Abre un caso para el equipo humano de soporte cuando no puedes resolverlo o la persona lo pide.',
+      'Pasa la conversación a una persona del equipo. SOLO si la persona lo pide, está molesta o ya van dos intentos sin poder resolver.',
     parameters: {
       type: 'object',
       properties: {
@@ -403,10 +412,18 @@ export async function ejecutar(c: Contexto, nombre: string, args: Record<string,
     case 'dar_regalo_arranque':
       return darRegaloArranque(c);
     case 'abrir_caso':
+      // Solo pasa a una persona si la pidió, si está molesta o tras dos intentos sin resolver.
+      if (!c.puedePasar)
+        return {
+          ok: false,
+          texto:
+            'Todavía no se pasa a una persona. Intenta resolverlo tú: busca en Docs con otras palabras o pídele que te lo explique de otra forma.',
+        };
       return abrirCaso(c, texto('resumen'));
     case 'buscar_respuesta':
       return buscarRespuesta(c, texto('tema'));
     case 'no_se':
+      c.noSupo = true;
       return anotarSinRespuesta(c, texto('pregunta'));
     case 'mi_equipo':
       return miEquipo(c);

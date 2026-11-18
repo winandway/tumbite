@@ -5709,6 +5709,44 @@ body.modo-tableta .cabecera {
   font-size: 0.75rem;
   color: #666b73;
 }
+/* C-CAMILA-TONO: los tres puntitos de «Camila está escribiendo». */
+.chat-soporte-puntos {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.chat-soporte-puntos i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #666b73;
+  animation: chat-soporte-punto 1.2s infinite ease-in-out;
+}
+.chat-soporte-puntos i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.chat-soporte-puntos i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes chat-soporte-punto {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-soporte-puntos i {
+    animation: none;
+    opacity: 0.7;
+  }
+}
 .chat-soporte-escribiendo {
   color: #666b73;
   font-size: 0.85rem;

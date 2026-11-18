@@ -13,10 +13,9 @@ import {
  */
 describe('C-CAMILA-CHAT', () => {
   it('cada autor con su nombre en los dos idiomas', () => {
-    expect(nombreAutorCamila('camila', 'es')).toBe(
-      'Camila Campos, del equipo de soporte de Divoox',
-    );
-    expect(nombreAutorCamila('camila', 'en')).toBe('Camila Campos, Divoox Support Team');
+    // En cada mensaje va solo «Camila»: quién es ya lo dice el encabezado (no se repite).
+    expect(nombreAutorCamila('camila', 'es')).toBe('Camila');
+    expect(nombreAutorCamila('camila', 'en')).toBe('Camila');
     expect(nombreAutorCamila('equipo', 'es')).toBe('Equipo de soporte de Divoox');
     expect(nombreAutorCamila('equipo', 'en')).toBe('Divoox Support Team');
     expect(nombreAutorCamila('persona', 'es')).toBe('Tú');

@@ -14,3 +14,4 @@ apps/servidor/src/esquemaColumnas.ts
 out-pruebas
 out-produccion
 out-deploy
+apps/servidor/src/camila/docsPublicos.ts
