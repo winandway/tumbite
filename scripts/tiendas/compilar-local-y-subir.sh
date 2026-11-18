@@ -18,6 +18,7 @@ SALIDA="$(mktemp -d)"
 APPS="${*:-cliente repartidor restaurante}"
 for a in $APPS; do
   {
+    node --input-type=module -e "import('./scripts/tiendas/guardia-nube.mjs').then((g) => g.autorizarCompilacion({ donde: 'local', app: '$a', plataforma: 'android', perfil: 'production' }))"
     (cd "apps/$a" && npx eas-cli build --local --platform android --profile production --non-interactive --output "$SALIDA/$a.aab")
     node scripts/tiendas/publicar-google-play.mjs "$(paquete "$a")" "$SALIDA/$a.aab" "local $(date +%Y-%m-%d)"
   }

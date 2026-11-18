@@ -3,7 +3,9 @@
 // Connect guardada UNA vez en ~/.config/tumbite/apple-asc/ (AuthKey.p8, key-id, issuer-id, team-id).
 // Ojo: la primera compilación de cada app necesitó responder a mano las preguntas de credenciales
 // de EAS (ya quedaron guardadas en Expo); desde ahora corre sin preguntas.
-// Uso: node scripts/tiendas/compilar-ios.mjs [--solo-enviar] [--local] [cliente|repartidor|restaurante ...]
+// Uso: node scripts/tiendas/compilar-ios.mjs [--solo-enviar] [--nube] [cliente|repartidor|restaurante ...]
+// Desde el 18 nov 2026 compila SIEMPRE en esta Mac (C-COMPILA-EN-ESTA-MAC); la nube de Expo solo con
+// --nube, que se cobra y se avisa a Gerencia.
 // --solo-enviar: no compila; envía a App Store Connect la última compilación ya terminada.
 // --pruebas (11 nov 2026, pedido de Richard para probar con sus iPhone): compila con el perfil
 // «pruebas-tienda», que habla con el SITIO DE PRUEBAS (Stripe en modo prueba, tarjeta 4242), y la
@@ -14,11 +16,12 @@ import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { autorizarCompilacion, pidioNube } from './guardia-nube.mjs';
 
 const APPS = ['cliente', 'repartidor', 'restaurante'];
 const soloEnviar = process.argv.includes('--solo-enviar');
-// --local: compila en esta Mac (no gasta compilaciones de la nube de Expo) y envía ese archivo.
-const local = process.argv.includes('--local');
+// Por defecto compila en esta Mac (gratis) y envía ese archivo; --nube pide la nube de Expo.
+const local = !pidioNube();
 const pruebas = process.argv.includes('--pruebas');
 const perfil = pruebas ? 'pruebas-tienda' : 'production';
 const archivo = (app) =>
@@ -57,6 +60,8 @@ for (const app of apps) {
   // que se acaba de hacer, por su id, nunca «la última» (que puede ser una ya enviada).
   let idCompilacion = null;
   let numeroNube = null;
+  if (!soloEnviar)
+    autorizarCompilacion({ donde: local ? 'local' : 'nube', app, plataforma: 'ios', perfil });
   if (!soloEnviar && !local) {
     const salida = execFileSync(
       'npx',

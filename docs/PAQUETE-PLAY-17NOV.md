@@ -103,3 +103,7 @@ Pregunta del piloto: «¿qué pasa si nadie toma la oferta porque el precio es m
 - **Mapa:** resuelto. Gerencia autorizó las cuatro huellas; comprobado en el cliente firmado por Play (39) y en el de pruebas (40). Driver se confirma en el próximo robot. Restaurants no usa mapa en Android.
 - **Robot de Android, tercera vuelta: NO LIMPIO.** Ofertas que no vuelven tras vencer y sin aviso al celular (emergencia del piloto, arreglo en d05dcc890e, publicándose), envíos sin tarifa en pruebas (creada), códigos de mapa a la vista y menores (en arreglo).
 - **Auditoría de tiendas, tercera: NO APTO**, por ficha y capturas en inglés con servicios no abiertos en Estados Unidos. Corregidas las fichas, las capturas (7 y 8 del cliente, 4 y 4 de Driver), la privacidad y la seguridad de los datos (salud y fecha de nacimiento, opcionales). Falta la cuarta auditoría.
+
+## Compilar en esta Mac (18 nov)
+
+Expo marcó 317 dólares en compilaciones en el período. Regla de Richard: desde ya, todas las compilaciones del paquete y las siguientes se hacen en esta Mac (`eas build --local`, gratis), con C-COMPILA-EN-ESTA-MAC: `scripts/tiendas/guardia-nube.mjs` niega la nube de Expo sin la bandera `--nube` y cuenta las compilaciones de cada día. Las apps de pruebas cliente 41 y Driver 37 fueron las últimas hechas en la nube.

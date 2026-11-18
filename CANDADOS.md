@@ -5281,3 +5281,16 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **De qué depende:** Xcode 27 exige el ciclo de escenas de UIKit; lo pone `plugins/escenas-ios`, que las tres apps cargan. Sin él, la app se cierra al abrir en iOS 27.
 - **Cómo se comprueba:** `packages/compartido/src/candadoCompilaConLoUltimo.test.ts` (visto en rojo sin las imágenes). En el registro de cada compilación de Expo, sección «Spin up build environment», debe decir Xcode 27.
 - **Qué no tocar:** no quitar `image` de ningún perfil ni volver a `auto`. Cuando Expo publique una imagen más nueva, o al subir de SDK de Expo, se actualizan las dos líneas en los tres archivos (lista oficial: la página de infraestructura de compilación de Expo).
+
+## C-COMPILA-EN-ESTA-MAC — las apps se compilan en esta Mac; la nube de Expo solo con bandera (18 nov 2026, todos los países)
+
+- **Qué pasó:** Expo marcó 317 dólares en compilaciones en un período (113 de iPhone y 91 de Android) contra 45 incluidos en el plan. Cada compilación en su nube se cobra aparte.
+- **Regla de Richard (vía Gerencia):** toda compilación se hace en esta Mac con `eas build --local`, que es gratis: aquí están Xcode 27 y el SDK de Android, y las credenciales de firma salen de Expo como siempre. La nube de Expo solo si lo local falla, y avisando a Gerencia.
+- **La puerta única:** `scripts/tiendas/guardia-nube.mjs`. `autorizarCompilacion` se llama antes de lanzar cualquier compilación: en esta Mac pasa siempre; en la nube se NIEGA con un error salvo que el comando lleve la bandera `--nube`. Todo lo que pasa se anota en `~/.config/tumbite/compilaciones/AAAA-MM-DD.txt` y se dice la cuenta del día (en esta Mac y en la nube).
+- **Cómo se compila ahora:**
+  - Cualquier app y perfil: `node scripts/tiendas/compilar.mjs <cliente|repartidor|restaurante> <android|ios> <perfil>` (deja el archivo en `apks-pruebas/`).
+  - iPhone a TestFlight: `node scripts/tiendas/compilar-ios.mjs [--pruebas] <app…>` (compila aquí y envía el archivo).
+  - Android de producción y subida a Play: `bash scripts/tiendas/compilar-local-y-subir.sh <app…>`.
+  - `scripts/tiendas/compilar-y-subir.mjs` es el camino de la nube: sin `--nube` se niega.
+- **Cómo se comprueba:** `packages/compartido/src/candadoCompilaEnEstaMac.test.ts` (visto en rojo quitando la negativa y quitando la puerta de un guion): la nube se niega sin bandera, las dos se cuentan por día, y ningún guion de `scripts/tiendas` lanza una compilación sin pasar por la puerta.
+- **Qué no tocar:** no escribir a mano `npx eas-cli build` sin `--local`; no agregar un guion que compile sin llamar a `autorizarCompilacion`. La imagen fijada en `eas.json` (C-COMPILA-CON-LO-ULTIMO) solo vale para la nube: en esta Mac manda el Xcode instalado, que debe ser 27 o más nuevo.

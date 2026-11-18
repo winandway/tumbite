@@ -7,13 +7,15 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { autorizarCompilacion } from './guardia-nube.mjs';
 
 const PAQUETES = {
   cliente: 'com.windoce.tumbite',
   repartidor: 'com.windoce.tumbite.driver',
   restaurante: 'com.windoce.tumbite.restaurants',
 };
-const apps = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(PAQUETES);
+const pedidas = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const apps = pedidas.length ? pedidas : Object.keys(PAQUETES);
 const env = {
   ...process.env,
   EXPO_TOKEN: readFileSync(join(homedir(), '.config', 'tumbite', 'expo-token'), 'utf8').trim(),
@@ -32,6 +34,10 @@ for (const app of apps) {
   const paquete = new Map(Object.entries(PAQUETES)).get(app);
   if (!paquete) throw new Error(`App desconocida: ${app}`);
   const ya = process.env[`BUILD_${app.toUpperCase()}`];
+  // C-COMPILA-EN-ESTA-MAC: este guion compila en la NUBE de Expo (se cobra). Sin --nube se niega;
+  // lo normal es compilar-local-y-subir.sh o compilar.mjs, en esta Mac.
+  if (!ya)
+    autorizarCompilacion({ donde: 'nube', app, plataforma: 'android', perfil: 'production' });
   const build = ya
     ? eas(app, ['build:view', ya])
     : eas(app, [
