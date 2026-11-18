@@ -116,8 +116,13 @@ export async function estadoCuenta(c: Contexto): Promise<ResultadoHerramienta> {
       ),
     );
   for (const s of visibles.filter((x) => !x.puedeActivar)) {
-    const falta =
-      s.motivo === 'pendiente_aprobacion'
+    const falta = s.cambiarA
+      ? t(
+          c.idioma,
+          `para este servicio usa tu ${s.cambiarA.nombre}: en Divoox Driver, toca el servicio y luego «Usar mi ${s.cambiarA.nombre}»`,
+          `use your ${s.cambiarA.nombre} for this service: in Divoox Driver, tap the service and then “Use my ${s.cambiarA.nombre}”`,
+        )
+      : s.motivo === 'pendiente_aprobacion'
         ? t(
             c.idioma,
             'ya enviaste todo y el equipo lo está revisando',
@@ -129,29 +134,23 @@ export async function estadoCuenta(c: Contexto): Promise<ResultadoHerramienta> {
               `te falta ${s.requisitosFaltantes.map((r) => requisito(r, c.idioma)).join(', ')}`,
               `you are missing ${s.requisitosFaltantes.map((r) => requisito(r, c.idioma)).join(', ')}`,
             )
-          : s.motivo === 'cambiar_vehiculo' && s.cambiarA
+          : s.motivo === 'vehiculo_incompatible'
             ? t(
                 c.idioma,
-                `para este servicio usa tu ${s.cambiarA.nombre}: en Divoox Driver, toca el servicio y luego «Usar mi ${s.cambiarA.nombre}»`,
-                `use your ${s.cambiarA.nombre} for this service: in Divoox Driver, tap the service and then “Use my ${s.cambiarA.nombre}”`,
+                'falta registrar y aprobar un vehículo que sirva para este servicio',
+                'you need a registered, approved vehicle for this service',
               )
-            : s.motivo === 'vehiculo_incompatible'
+            : s.motivo === 'actualizar_app'
               ? t(
                   c.idioma,
-                  'falta registrar y aprobar un vehículo que sirva para este servicio',
-                  'you need a registered, approved vehicle for this service',
+                  'tienes que actualizar la app Divoox Driver',
+                  'you need to update the Divoox Driver app',
                 )
-              : s.motivo === 'actualizar_app'
-                ? t(
-                    c.idioma,
-                    'tienes que actualizar la app Divoox Driver',
-                    'you need to update the Divoox Driver app',
-                  )
-                : t(
-                    c.idioma,
-                    'todavía no lo has solicitado: en Perfil, «Empieza a repartir», tocas el servicio',
-                    'you have not requested it yet: in Profile, “Start driving,” tap the service',
-                  );
+              : t(
+                  c.idioma,
+                  'todavía no lo has solicitado: en Perfil, «Empieza a repartir», tocas el servicio',
+                  'you have not requested it yet: in Profile, “Start driving,” tap the service',
+                );
     lineas.push(`${s.nombre}: ${falta}.`);
   }
   if (!lineas.length)

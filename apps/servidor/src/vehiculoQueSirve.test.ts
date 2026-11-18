@@ -118,6 +118,14 @@ describe('C-CAMBIAR-VEHICULO de punta a punta: panel de servicios y cambio', () 
       c.vehiculo,
       c.id,
     );
+    // Revisor (18 nov 2026): la Driver 25 publicada lee `motivo` (espera «vehiculo_incompatible» o
+    // «requisitos_faltantes»); el campo nuevo `cambiarA` no lo cambia.
+    const estado = await m.llamar('GET', '/datos/conductor/servicios', undefined, c.token);
+    const carroViejo = (
+      estado.datos.servicios as { servicioId: string; motivo: string; cambiarA?: unknown }[]
+    ).find((s) => s.servicioId === 'carro');
+    expect(['requisitos_faltantes', 'vehiculo_incompatible']).toContain(carroViejo?.motivo);
+    expect(carroViejo?.cambiarA).toMatchObject({ id: carro });
     type Tarjeta = { servicioId: string; cambiarA?: unknown; estado: string };
     const tarjeta = async () =>
       (

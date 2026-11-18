@@ -156,7 +156,7 @@ describe('C-ULTIMO-SERVICIO: el aviso al desconectar dice la verdad', () => {
 describe('la tarjeta dice con qué vehículo funciona el servicio', () => {
   it('«Usa tu Toyota Corolla» en vez de «Falta 1 papel»', () => {
     const carro = s('carro', 'en_revision', {
-      motivo: 'cambiar_vehiculo',
+      motivo: 'requisitos_faltantes',
       requisitosFaltantes: ['inspeccion_vehiculo'],
       cambiarA: { id: 'v1', nombre: 'Toyota Corolla', tipo: 'carro' },
     });

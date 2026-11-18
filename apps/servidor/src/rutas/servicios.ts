@@ -508,7 +508,8 @@ export async function estadoDelConductor(
       });
       if (otro) {
         x.cambiarA = { id: otro.id, nombre: nombreVehiculo(otro), tipo: otro.tipo };
-        x.motivo = 'cambiar_vehiculo';
+        // Revisor (18 nov 2026): `motivo` NO cambia: la Driver 25 publicada espera los de siempre
+        // («vehiculo_incompatible» trae su botón «Usar este vehículo»). La app nueva mira `cambiarA`.
       }
     }
   }
