@@ -10,6 +10,7 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Permisos del Driver:** la pantalla de permisos (la primera vez) dice ANTES de pedir la ubicación que se usa con la pantalla apagada o en segundo plano y cuándo deja de usarse (`permisosExplicados.test.ts`, en rojo). Hacía falta: esa pantalla pide la ubicación y la otra explicación ya no sale después.
 - **Privacidad (C-LEGALES-COHERENTES):** chat de soporte con la asistente y sus reportes, alergias y dificultad auditiva como datos opcionales, ubicación con la pantalla apagada, casillas de dirección a Google y códigos de invitación en el borrado (`legales.test.tsx`, en rojo).
 - **Qué NO tocar:** no fotografiar para la ficha un servicio que no está abierto en ese país; no volver a nombres de archivo con número fijo en FRASES.
+
 ## C-REOFERTA-VENCIDA y C-OFERTA-AVISO · Una oferta de viaje perdida vuelve, y cada oferta llega al celular (18 nov 2026) — todos los países
 
 - **Qué se rompió y cómo se veía (robot de Android, staging, El Vigía):** el conductor demo aceptó tarde la primera oferta de Moto («Esta oferta ya no está disponible») y después no recibió nada más: cuatro viajes pedidos, desconectar y reconectar Moto, cerrar y abrir Driver; el pasajero quedó «Buscando tu moto» más de 7 minutos.
@@ -5245,3 +5246,12 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
   - El freno 429 de quien insiste con una llave que no sirve en `/datos/repartidor/*` y `/datos/conductor/*` es `frenoLlaveVencida` (C-SESION-TERMINADA, mismo día, otro agente): convive con esto, porque una sesión rescatada o renovada ya no da 401 y el freno nunca toca a quien tiene sesión.
 - **Cómo se comprueba:** `apps/servidor/src/sesionSeRenueva.test.ts` (8 pruebas): usada a diario no vence; clientes y restaurantes también; la cookie de la web se alarga; una sola escritura en diez peticiones; el equipo no se alarga ni se rescata; rescate de menos de 7 días sí y de 8 no; tope de 180 días; salir, cambio de clave y suspensión siguen cerrando. Vistas en ROJO con el código anterior (5 fallan) y por mutación (quitar el freno del equipo, la condición de una vez al día, el tope, o el `activo = 1`: cada una pone en rojo su prueba).
 - **Qué NO tocar:** no renovar en cada petición (regla de la nube: una escritura al día por sesión); no cerrar una sesión dejándola vencida (rompería el rescate): siempre `DELETE`; no alargar ni rescatar al rol `admin`.
+
+## C-COMPILA-CON-LO-ULTIMO — las apps se compilan con la imagen más nueva (18 nov 2026, todos los países)
+
+- **Qué pasó:** Apple mandó el aviso ITMS-90725 para el cliente 49 y el Driver 41: estaban compilados con el SDK de iOS 26.5. Los perfiles de `eas.json` no fijaban imagen, y Expo elegía sola la de este SDK de Expo (Xcode 26.6).
+- **Regla de Richard:** todo se compila con lo último.
+- **Qué se hizo:** en `apps/cliente/eas.json`, `apps/repartidor/eas.json` y `apps/restaurante/eas.json`, CADA perfil fija `ios.image: macos-tahoe-26.6-xcode-27.2` (la más nueva de Expo al 18 nov, Xcode 27.2, SDK de iOS 27) y `android.image: ubuntu-26.04-jdk-17-ndk-r27b-sdk-57` (la que Expo marca `latest`; la `sdk-58` es para el SDK 58 de Expo y no se usa hasta subir de SDK).
+- **De qué depende:** Xcode 27 exige el ciclo de escenas de UIKit; lo pone `plugins/escenas-ios`, que las tres apps cargan. Sin él, la app se cierra al abrir en iOS 27.
+- **Cómo se comprueba:** `packages/compartido/src/candadoCompilaConLoUltimo.test.ts` (visto en rojo sin las imágenes). En el registro de cada compilación de Expo, sección «Spin up build environment», debe decir Xcode 27.
+- **Qué no tocar:** no quitar `image` de ningún perfil ni volver a `auto`. Cuando Expo publique una imagen más nueva, o al subir de SDK de Expo, se actualizan las dos líneas en los tres archivos (lista oficial: la página de infraestructura de compilación de Expo).

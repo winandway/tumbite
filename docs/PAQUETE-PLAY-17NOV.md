@@ -82,3 +82,7 @@ Pedido de Richard (vía Gerencia, 18 nov): que el saldo para comisiones se vea s
 - Botón «Recargar» que abre: canjear un código o pedir carga al equipo.
 - El aviso de saldo bajo va en esa misma tarjeta.
 - Orden: primero en el borrador HTML para que Richard lo vea y apruebe; después en la app (Android y iPhone iguales, es/en).
+
+## Compilar con lo último (18 nov)
+
+Apple avisó (ITMS-90725) que el cliente 49 y el Driver 41 de iPhone se compilaron con el SDK de iOS 26.5. Regla de Richard: todo se compila con lo último. Desde C-COMPILA-CON-LO-ULTIMO, los tres `eas.json` fijan la imagen de iPhone con Xcode 27.2 y la de Android más nueva para este SDK de Expo. Las compilaciones de iPhone de este paquete salen con el SDK de iOS 27; se comprueba en el registro de Expo que diga Xcode 27.

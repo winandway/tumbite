@@ -10,7 +10,13 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://divoox.com"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.2"
+      },
+      "android": {
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
+      }
     },
     "preview": {
       "distribution": "internal",
@@ -18,16 +24,26 @@
         "EXPO_PUBLIC_API_URL": "https://divoox.com"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.2"
+      }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://divoox.com"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.2"
+      },
+      "android": {
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
+      }
     },
     "pruebas": {
       "autoIncrement": true,
@@ -36,26 +52,40 @@
         "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.2"
+      }
     },
     "simulador": {
       "distribution": "internal",
       "ios": {
-        "simulator": true
+        "simulator": true,
+        "image": "macos-tahoe-26.6-xcode-27.2"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "android": {
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
+      }
     },
     "pruebas-tienda": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://staging.tumbite.com"
       },
-      "node": "24.15.0"
+      "node": "24.15.0",
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.2"
+      },
+      "android": {
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
+      }
     }
   },
   "submit": {
