@@ -63,3 +63,22 @@ La salida va completa y sin errores: Camila entra sí o sí y el corte se mueve 
 
 - **Primera auditoría (18 nov): NO APTO.** Google Play no exige avisar desde el primer mensaje que se habla con una IA; sí exige poder reportar dentro de la app (hecho: «Reportar respuesta»). Pendientes: capturas de la tienda con el diseño nuevo (cliente y Driver), seguridad de los datos en la consola (mensajes en la app, historial de búsquedas, lugares guardados, referidos). Hechos: ficha de Driver («te responde nuestra asistente virtual o una persona del equipo») y política de privacidad en los dos idiomas (d5cc41c9f3; falta comprobarla en vivo).
 - Decisión de Gerencia: el chat de Camila se borra con la cuenta; solo se conservan los casos con dinero o reclamos el tiempo que exija la ley.
+
+## Estado al 18 nov (mañana)
+
+- **Punta del paquete: 0f5881eb4d**, en vivo en pruebas y producción, salud en verde.
+- **Sesión:** la sesión vencida cierra la app una sola vez (solo con la marca `sesion_terminada`, también en el freno 429) y la sesión se renueva sola con el uso (30 días desde el último uso, tope 180). Revisor de calidad: APTO en 5070ca5 y sus dos importantes cerrados en 0f5881e. Verificación con 3.714 pruebas y recorrido completo en verde (70 bien, 14 saltadas).
+- **Apps de pruebas desde la punta:** Android cliente 40 y Driver 36. Robot completo de Android en curso (tercera vuelta).
+- **Envíos:** abierto en producción en El Vigía y Tucaní; en pruebas se encendió en El Vigía para el robot.
+- **Tienda:** piezas rehechas en 1080x1920 (8 del cliente y 6 de Driver por idioma, sin el chat ni el retiro al banco). Tercera auditoría en curso.
+- **Bloqueante abierto:** mapa gris con la firma de Play; falta autorizar las huellas en la llave del mapa (solo Richard, en Google Cloud).
+- **Cuentas de los revisores:** `revisor.cliente@` y `revisor.driver@` del dominio de la empresa, solo de revisión; no se cambian.
+
+## Para la PRÓXIMA versión de Driver (no entra en este paquete)
+
+Pedido de Richard (vía Gerencia, 18 nov): que el saldo para comisiones se vea solo, sin confundirse con «ganancias» ni con una billetera.
+
+- Tarjeta propia en el INICIO de Driver: «Tu saldo: $X · alcanza para N carreras».
+- Botón «Recargar» que abre: canjear un código o pedir carga al equipo.
+- El aviso de saldo bajo va en esa misma tarjeta.
+- Orden: primero en el borrador HTML para que Richard lo vea y apruebe; después en la app (Android y iPhone iguales, es/en).
