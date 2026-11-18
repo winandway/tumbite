@@ -136,3 +136,26 @@ export const TAREA_CAMILA_SEMANAL = {
     return ya ? 0 : armarListaSemanal(db, ahora);
   },
 };
+
+/**
+ * La limpieza diaria de Camila (una vez al día, a las 07:00 UTC, en la vuelta de cada hora): borra
+ * los contadores de códigos de días anteriores y los códigos vencidos hace más de un día.
+ */
+export async function limpiarCamila(db: D1Database, ahora = new Date()) {
+  const [dias, codigos] = await db.batch([
+    db
+      .prepare('DELETE FROM camila_codigos_dia WHERE dia < ?')
+      .bind(ahora.toISOString().slice(0, 10)),
+    db.prepare("DELETE FROM camila_codigos WHERE vence_en < datetime('now', '-1 day')"),
+  ]);
+  return (dias?.meta.changes ?? 0) + (codigos?.meta.changes ?? 0);
+}
+
+export const TAREA_CAMILA_LIMPIEZA = {
+  nombre: 'camila_limpieza',
+  critica: false,
+  cada: 'hora' as const,
+  escriturasEsperadas: 5000,
+  correr: async (_env: unknown, db: D1Database) =>
+    new Date().getUTCHours() === 7 ? limpiarCamila(db) : 0,
+};

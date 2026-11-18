@@ -4402,7 +4402,7 @@ CREATE TABLE IF NOT EXISTS camila_gasto (
   error TEXT
 ) WITHOUT ROWID;
 -- Cuántos códigos se mandaron HOY a cada dirección de destino (tope por dirección y por día: nadie usa
--- «unir el chat a tu correo» para llenarle el buzón a un tercero). Se depura sola (filas de otros días).
+-- «unir el chat a tu correo» para llenarle el buzón a un tercero). La tarea diaria `camila_limpieza` del reloj borra los días anteriores.
 CREATE TABLE IF NOT EXISTS camila_codigos_dia (
   correo TEXT NOT NULL COLLATE NOCASE,
   dia TEXT NOT NULL,

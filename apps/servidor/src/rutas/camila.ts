@@ -152,27 +152,37 @@ camila.post('/camila/mensajes/:id/reportar', async (c) => {
   const db = base(c);
   const p = await personaDelChat(c, false);
   if (!p) throw new ErrorDatos('No encontramos esa respuesta.', undefined, 404);
+  const id = c.req.param('id');
   const m = await db
     .prepare(
-      `UPDATE camila_mensajes SET reportado_en = datetime('now')
-        WHERE id = ? AND persona_id = ? AND autor = 'camila' AND reportado_en IS NULL RETURNING texto`,
+      "SELECT texto, reportado_en FROM camila_mensajes WHERE id = ? AND persona_id = ? AND autor = 'camila'",
     )
-    .bind(c.req.param('id'), p.id)
-    .first<{ texto: string }>();
-  if (m) {
-    await db
-      .prepare(
-        "INSERT INTO camila_casos (id, persona_id, resumen, motivo) VALUES (?, ?, ?, 'respuesta_reportada')",
-      )
-      .bind(nuevoId(), p.id, `Respuesta reportada: ${m.texto.replace(/\s+/g, ' ').slice(0, 130)}`)
-      .run();
-  } else {
-    const existe = await db
-      .prepare("SELECT 1 FROM camila_mensajes WHERE id = ? AND persona_id = ? AND autor = 'camila'")
-      .bind(c.req.param('id'), p.id)
-      .first();
-    if (!existe) throw new ErrorDatos('No encontramos esa respuesta.', undefined, 404);
-  }
+    .bind(id, p.id)
+    .first<{ texto: string; reportado_en: string | null }>();
+  if (!m) throw new ErrorDatos('No encontramos esa respuesta.', undefined, 404);
+  // La marca y el caso van en UN lote: o quedan los dos o ninguno. El caso nace solo si la respuesta
+  // todavía no estaba reportada (la misma condición en las dos sentencias; el caso va primero).
+  if (!m.reportado_en)
+    await db.batch([
+      db
+        .prepare(
+          `INSERT INTO camila_casos (id, persona_id, resumen, motivo)
+           SELECT ?1, persona_id, ?2, 'respuesta_reportada' FROM camila_mensajes
+            WHERE id = ?3 AND persona_id = ?4 AND autor = 'camila' AND reportado_en IS NULL`,
+        )
+        .bind(
+          nuevoId(),
+          `Respuesta reportada: ${m.texto.replace(/\s+/g, ' ').slice(0, 130)}`,
+          id,
+          p.id,
+        ),
+      db
+        .prepare(
+          `UPDATE camila_mensajes SET reportado_en = datetime('now')
+            WHERE id = ? AND persona_id = ? AND autor = 'camila' AND reportado_en IS NULL`,
+        )
+        .bind(id, p.id),
+    ]);
   return c.json({ ok: true });
 });
 
@@ -216,7 +226,7 @@ camila.post('/camila/verificar', async (c) => {
     .bind(p.id, d.correo, await sha256(`${p.id}:${codigo}`))
     .run();
   const en = idiomaDe(c) === 'en';
-  await enviarCorreo(c.env, {
+  const envio = await enviarCorreo(c.env, {
     de: 'soporte',
     para: d.correo,
     idioma: en ? 'en' : 'es',
@@ -225,6 +235,15 @@ camila.post('/camila/verificar', async (c) => {
       ? `Your code to continue the chat with Divoox Support is ${codigo}. It is valid for 15 minutes. If you did not ask for it, ignore this email.`
       : `Tu código para seguir el chat con el soporte de Divoox es ${codigo}. Vale por 15 minutos. Si no lo pediste, ignora este correo.`,
   });
+  // Si el correo no salió, el cupo del día de esa dirección se devuelve: un fallo nuestro no le quita
+  // intentos a la persona.
+  if (!envio.ok)
+    await db
+      .prepare(
+        'UPDATE camila_codigos_dia SET enviados = enviados - 1 WHERE correo = ? AND dia = ? AND enviados > 0',
+      )
+      .bind(destino, hoy())
+      .run();
   return c.json({ ok: true });
 });
 

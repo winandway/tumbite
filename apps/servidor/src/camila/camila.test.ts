@@ -607,6 +607,60 @@ describe('Revisión de calidad del 18 nov: borrado, fallo del modelo y chat anó
     expect(aLaVictima()).toBe(3);
   });
 
+  it('si el correo del código no sale, el cupo del día de esa dirección se devuelve', async () => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    usarTransporteCorreo(async () => new Response('fallo', { status: 500 }), {
+      omitirDePrueba: false,
+    });
+    const cab = { 'x-camila-visita': 'falla'.padEnd(40, 'q') };
+    await e.m.llamar('POST', '/datos/camila/mensaje', { texto: 'hola' }, undefined, cab);
+    await e.m.llamar(
+      'POST',
+      '/datos/camila/verificar',
+      { correo: 'ana@conductores.test' },
+      undefined,
+      cab,
+    );
+    const f = await e.m.DB.prepare(
+      "SELECT enviados FROM camila_codigos_dia WHERE correo = 'ana@conductores.test'",
+    ).first<{ enviados: number }>();
+    expect(f?.enviados).toBe(0);
+  });
+
+  it('la limpieza diaria borra los contadores de días anteriores y los códigos vencidos', async () => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    await e.m.DB.batch([
+      e.m.DB.prepare(
+        "INSERT INTO camila_codigos_dia (correo, dia, enviados) VALUES ('a@conductores.test', '2026-01-01', 3), ('a@conductores.test', ?, 1)",
+      ).bind(hoy()),
+      e.m.DB.prepare(
+        "INSERT INTO camila_codigos (persona_id, correo, codigo_hash, vence_en) VALUES ('viejo', 'a@conductores.test', 'x', datetime('now', '-3 days')), ('nuevo', 'a@conductores.test', 'y', datetime('now', '+10 minutes'))",
+      ),
+    ]);
+    const { limpiarCamila, TAREA_CAMILA_LIMPIEZA } = await import('./aprendizaje');
+    expect(await limpiarCamila(e.m.DB)).toBe(2);
+    const dias = await e.m.DB.prepare('SELECT dia FROM camila_codigos_dia').all<{ dia: string }>();
+    expect(dias.results.map((d) => d.dia)).toEqual([hoy()]);
+    const codigos = await e.m.DB.prepare('SELECT persona_id FROM camila_codigos').all<{
+      persona_id: string;
+    }>();
+    expect(codigos.results.map((c) => c.persona_id)).toEqual(['nuevo']);
+    const { TAREAS_RELOJ } = await import('../rutas/operacion');
+    expect(TAREAS_RELOJ).toContain(TAREA_CAMILA_LIMPIEZA);
+  });
+
+  it('el reporte marca la respuesta y abre el caso en un mismo lote', () => {
+    const rutas = readFileSync(join(__dirname, '..', 'rutas', 'camila.ts'), 'utf8');
+    const tramo = rutas.slice(
+      rutas.indexOf("'/camila/mensajes/:id/reportar'"),
+      rutas.indexOf("camila.post('/camila/verificar'"),
+    );
+    expect(tramo).toMatch(
+      /db\.batch\(\[[\s\S]*INSERT INTO camila_casos[\s\S]*UPDATE camila_mensajes SET reportado_en/,
+    );
+    expect(tramo.match(/\.run\(\)/g)).toBeNull();
+  });
+
   it('una ficha que solo tiene el teléfono de la persona también se borra con su cuenta', async () => {
     const e = await escenario({ GEMINI_API_KEY: undefined });
     const a = await e.conductor('Ana Telefono');
