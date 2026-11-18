@@ -15,6 +15,7 @@ import {
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
+import { subidaEncendida } from '../operaciones';
 import { reajustarReservaViaje, servicioFinancieroViaje } from '../finanzas/conductor';
 import { notificar } from '../notificaciones';
 import { rutaParaCotizar } from '../rutaPorCalles';
@@ -210,16 +211,20 @@ export async function cambiarParadas(
     throw new ErrorDatos('Con esas paradas el viaje queda demasiado largo.', 'paradas', 422);
   // C-SUBIR-TARIFA (revisor, B1): lo que subió el pasajero se conserva al recalcular por las paradas
   // (antes el precio volvía al original y la subida desaparecía del desglose).
-  const subida = Number(
-    (
-      await db
-        .prepare(
-          "SELECT COALESCE(SUM(total_despues - total_antes), 0) AS s FROM cambios_viaje WHERE operacion_id = ? AND tipo = 'subida'",
-        )
-        .bind(v.id)
-        .first<{ s: number }>()
-    )?.s ?? 0,
-  );
+  // M5: sin ninguna ciudad encendida, no se leen columnas nuevas.
+  const conSubida = await subidaEncendida(db);
+  const subida = !conSubida
+    ? 0
+    : Number(
+        (
+          await db
+            .prepare(
+              "SELECT COALESCE(SUM(total_despues - total_antes), 0) AS s FROM cambios_viaje WHERE operacion_id = ? AND tipo = 'subida'",
+            )
+            .bind(v.id)
+            .first<{ s: number }>()
+        )?.s ?? 0,
+      );
   const calculado = cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb));
   const desglose = subida
     ? { ...calculado, subidaPasajero: subida, total: calculado.total + subida }
@@ -247,7 +252,7 @@ export async function cambiarParadas(
   if (actor.tipo === 'cliente') {
     const hechos = await db
       .prepare(
-        "SELECT COUNT(*) AS n FROM cambios_viaje WHERE operacion_id = ? AND actor = 'cliente' AND tipo = 'paradas'",
+        `SELECT COUNT(*) AS n FROM cambios_viaje WHERE operacion_id = ? AND actor = 'cliente'${conSubida ? " AND tipo = 'paradas'" : ''}`,
       )
       .bind(v.id)
       .first<{ n: number }>();

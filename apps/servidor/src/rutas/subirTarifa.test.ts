@@ -604,3 +604,52 @@ describe('C-SUBIR-TARIFA · regalo de Divoox (revisor, I5)', () => {
     expect(fin.cobrarEnMano).toBe(nuevo - 300);
   });
 });
+
+describe('C-SUBIR-TARIFA · viaje fijo y blindaje (revisor, I5 y M5)', () => {
+  it('un viaje fijo también se sube y le llega con el precio nuevo a quien lo rechazó', async () => {
+    const e = await listo();
+    const a = await conductorDeMoto(e.m, ORIGEN);
+    const { id, total: antes } = await pedir(e);
+    await e.m.DB.prepare("UPDATE viajes SET rutina_id = 'rutina-prueba' WHERE operacion_id = ?")
+      .bind(id)
+      .run();
+    expect(await a.paso(id, 'rechazar')).toBe(200);
+    await esperar(e, id);
+    expect((await subir(e, id, 25, 'k1')).estado).toBe(200);
+    const o = (await e.m.llamar('GET', '/datos/conductor/operaciones/ofertas', undefined, a.token))
+      .datos.ofertas as { gananciaCentavos: number; tarifaSubida: boolean; viajeFijo: boolean }[];
+    expect(o[0]).toMatchObject({
+      gananciaCentavos: antes + 25,
+      tarifaSubida: true,
+      viajeFijo: true,
+    });
+  });
+
+  it('M5: sin ninguna ciudad encendida, el despacho y la oferta no leen las columnas nuevas', async () => {
+    const e = await listo(null);
+    const consultas: string[] = [];
+    const real = e.m.DB.prepare.bind(e.m.DB);
+    (e.m.DB as unknown as { prepare: (sql: string) => D1PreparedStatement }).prepare = (
+      sql: string,
+    ) => {
+      consultas.push(sql);
+      return real(sql);
+    };
+    const a = await conductorDeMoto(e.m, ORIGEN);
+    const { id } = await pedir(e);
+    await e.m.llamar('GET', '/datos/conductor/operaciones/ofertas', undefined, a.token);
+    await e.m.DB.prepare(
+      "UPDATE ofertas_operacion SET expira_en = datetime('now', '-40 seconds') WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    await e.m.llamar('GET', '/datos/conductor/operaciones/ofertas', undefined, a.token);
+    expect(await a.paso(id, 'aceptar')).toBe(200);
+    const nuevas = consultas.filter(
+      (q) =>
+        /subida_n|sc\.tipo|tipo = 'subida'|tipo = 'paradas'/.test(q) &&
+        !/ajustes_viaje_zona/.test(q),
+    );
+    expect(nuevas, nuevas.join('\n---\n')).toEqual([]);
+  });
+});

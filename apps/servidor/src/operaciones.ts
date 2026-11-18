@@ -55,9 +55,27 @@ export const AVISOS_POR_CONDUCTOR = 2;
  * SQL: «este conductor puede recibir (otra vez) la oferta de esta operación». Una «ofrecida» ya
  * vencida cuenta como vencida: sin reloj, nadie la marcó todavía.
  */
-export function puedeRecibirOferta(op: string, conductor: string): string {
+export function puedeRecibirOferta(op: string, conductor: string, conSubida = false): string {
   return `NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ${op} AND v.conductor_id = ${conductor}
-     AND NOT (${vuelveAOfrecerse('v')}))`;
+     AND NOT (${vuelveAOfrecerse('v', conSubida)}))`;
+}
+/**
+ * C-SUBIR-TARIFA (revisor, M5): ¿alguna ciudad tiene encendida «Subir la tarifa»? Mientras no, el
+ * despacho usa exactamente las consultas de antes de la pieza y no lee ninguna columna nueva (si la
+ * migración de columnas hubiera fallado, el despacho sigue igual; la salud lo dice en «esquema»).
+ * Una lectura de una tabla de pocas filas por vuelta del despacho.
+ */
+export async function subidaEncendida(db: D1Database): Promise<boolean> {
+  try {
+    return Boolean(
+      await db
+        .prepare('SELECT 1 FROM ajustes_viaje_zona WHERE subida_pasos_json IS NOT NULL LIMIT 1')
+        .first(),
+    );
+  } catch (e) {
+    console.error('subir tarifa: no se pudo leer si está encendida (¿columnas sin migrar?)', e);
+    return false;
+  }
 }
 /**
  * SQL: cuántas veces subió la tarifa el pasajero del viaje `op` (C-SUBIR-TARIFA). Cada oferta guarda
@@ -72,7 +90,10 @@ export const subidasDelViaje = (op: string) =>
  * ofertas. C-SUBIR-TARIFA: nació antes de la última subida del pasajero (con precio nuevo es una
  * oferta nueva, también para quien la rechazó; la cuenta de intentos vuelve a empezar).
  */
-export function vuelveAOfrecerse(a: string): string {
+export function vuelveAOfrecerse(a: string, conSubida = true): string {
+  if (!conSubida)
+    return `${a}.estado IN ('vencida', 'ofrecida') AND ${a}.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
+              AND ${a}.intentos < ${OFERTAS_POR_CONDUCTOR}`;
   return `(${a}.estado IN ('vencida', 'ofrecida') AND ${a}.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
            AND ${a}.intentos < ${OFERTAS_POR_CONDUCTOR})
      OR (${a}.estado IN ('vencida', 'rechazada', 'retirada') AND ${a}.subida_n < ${subidasDelViaje(`${a}.operacion_id`)})`;
@@ -81,7 +102,11 @@ export function vuelveAOfrecerse(a: string): string {
  * La misma regla para reabrir la fila al ofrecer (ON CONFLICT … WHERE). Sin subidas es idéntica a la
  * de antes de la pieza (revisor, M2): solo una fila «vencida» pasado el respiro y bajo el tope.
  */
-export function vuelveAOfrecerseUpsert(a: string): string {
+export function vuelveAOfrecerseUpsert(a: string, conSubida = true): string {
+  if (!conSubida)
+    return `${a}.estado = 'vencida'
+           AND ${a}.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
+           AND ${a}.intentos < ${OFERTAS_POR_CONDUCTOR}`;
   return `(${a}.estado = 'vencida' AND ${a}.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
            AND ${a}.intentos < ${OFERTAS_POR_CONDUCTOR})
      OR (${a}.estado IN ('vencida', 'rechazada', 'retirada') AND ${a}.subida_n < ${subidasDelViaje(`${a}.operacion_id`)})`;
@@ -253,6 +278,7 @@ export async function candidatosParaOperacion(
   db: D1Database,
   op: { id: string; servicioId: string; zonaId: string; lat: number; lng: number },
   hacer: typeof fetch = fetch,
+  conSubida = false,
 ): Promise<{ candidatos: Candidato[]; fuente: 'tiempo_real' | 'base' }> {
   const { results } = await db
     .prepare(
@@ -265,7 +291,7 @@ export async function candidatosParaOperacion(
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion o WHERE o.conductor_id = e.conductor_id AND o.estado = 'ofrecida')
           AND NOT EXISTS (SELECT 1 FROM ofertas f WHERE f.repartidor_id = e.conductor_id AND f.estado = 'ofrecida')
           -- C-REOFERTA-VENCIDA: fuera quien la rechazó o la tiene; vuelve quien la dejó vencer.
-          AND ${puedeRecibirOferta('?', 'e.conductor_id')}
+          AND ${puedeRecibirOferta('?', 'e.conductor_id', conSubida)}
           -- C-CARRO-XL: un viaje XL solo va a un carro de 6 plazas o más.
           AND (COALESCE((SELECT x.categoria FROM viajes x WHERE x.operacion_id = ?), 'estandar') <> 'xl'
                OR (SELECT h.plazas FROM vehiculos h WHERE h.id = e.vehiculo_id) >= ?)
@@ -738,6 +764,8 @@ export async function repartirOperaciones(
   // C-MODO-DESTINO (BRE-R2): el modo destino vale para todos los servicios, no solo comida: quien
   // lo tiene encendido solo recibe viajes y envíos cuyo destino lo acerca al suyo.
   const destinos = buscando.length ? await destinosActivos(db) : new Map();
+  // C-SUBIR-TARIFA (revisor, M5): sin ninguna ciudad encendida, las consultas de siempre.
+  const conSubida = buscando.length ? await subidaEncendida(db) : false;
   for (const op of buscando) {
     // C-CONDUCTOR-CONFIANZA: primero, y solo a él, el conductor de confianza del cliente.
     const confianza = op.conductor_preferido_id
@@ -759,6 +787,7 @@ export async function repartirOperaciones(
         lng: op.origen_lng,
       },
       hacer,
+      conSubida,
     );
     // M3 (C-OFERTA-COMPLETA): el conductor ve cuánto gana antes de aceptar, como en Uber: el
     // precio fijo del viaje menos la comisión de la política de Divoox que rija (si rige).
@@ -837,8 +866,8 @@ export async function repartirOperaciones(
     // el conductor tomó otra cosa, la oferta no se crea.
     const r = await db
       .prepare(
-        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos, km, subida_n)
-         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5, ?6, ${subidasDelViaje('?1')}
+        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos, km${conSubida ? ', subida_n' : ''})
+         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5, ?6${conSubida ? `, ${subidasDelViaje('?1')}` : ''}
           WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?2)
             AND NOT EXISTS (SELECT 1 FROM ofertas_operacion WHERE conductor_id = ?2 AND estado = 'ofrecida')
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1 AND estado_general = 'buscando')
@@ -847,10 +876,14 @@ export async function repartirOperaciones(
            estado = 'ofrecida', vehiculo_id = excluded.vehiculo_id, expira_en = excluded.expira_en,
            ganancia_centavos = excluded.ganancia_centavos, km = excluded.km,
            creada_en = datetime('now'), respondida_en = NULL,
-           intentos = CASE WHEN ofertas_operacion.subida_n < excluded.subida_n
+           ${
+             conSubida
+               ? `intentos = CASE WHEN ofertas_operacion.subida_n < excluded.subida_n
                            THEN 1 ELSE ofertas_operacion.intentos + 1 END,
-           subida_n = excluded.subida_n
-         WHERE ${vuelveAOfrecerseUpsert('ofertas_operacion')}
+           subida_n = excluded.subida_n`
+               : 'intentos = ofertas_operacion.intentos + 1'
+           }
+         WHERE ${vuelveAOfrecerseUpsert('ofertas_operacion', conSubida)}
          RETURNING intentos`,
       )
       .bind(

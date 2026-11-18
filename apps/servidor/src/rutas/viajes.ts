@@ -28,6 +28,7 @@ import {
   cambiarEstadoViaje,
   liberarViaje,
   puedeRecibirOferta,
+  subidaEncendida,
   subidasDelViaje,
   repartirOperaciones,
 } from '../operaciones';
@@ -114,7 +115,7 @@ async function miOperacion(c: Ctx, id: string, conductorId: string) {
 /** C-SIN-PLUS-CODE: una dirección guardada, para mostrar al conductor. */
 const paraMostrar = (x: unknown) => sinPlusCode(String(x ?? '')) || String(x ?? '');
 
-async function moverDespachoSiToca(c: Ctx, conductorId: string) {
+async function moverDespachoSiToca(c: Ctx, conductorId: string, conSubida: boolean) {
   const db = base(c);
   const hay = await db
     .prepare(
@@ -124,7 +125,7 @@ async function moverDespachoSiToca(c: Ctx, conductorId: string) {
           AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion x WHERE x.conductor_id = ?1)
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion a WHERE a.conductor_id = ?1 AND a.estado = 'ofrecida' AND a.expira_en > datetime('now'))
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion f WHERE f.operacion_id = o.id AND f.estado = 'ofrecida' AND f.expira_en > datetime('now'))
-          AND ${puedeRecibirOferta('o.id', '?1')}
+          AND ${puedeRecibirOferta('o.id', '?1', conSubida)}
         LIMIT 1`,
     )
     .bind(conductorId)
@@ -148,7 +149,9 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
   // C-REOFERTA-VENCIDA: sin reloj (o entre vuelta y vuelta), el sondeo del conductor también mueve
   // el despacho, pero solo si es ELEGIBLE para un viaje buscando de su ciudad, sin oferta abierta, que puede
   // recibir (no lo rechazó). Una lectura con LIMIT 1; sin eso, nada más (cero escrituras de más).
-  await moverDespachoSiToca(c, u.id);
+  // C-SUBIR-TARIFA (revisor, M5): sin ninguna ciudad encendida, las consultas de siempre.
+  const conSubida = await subidaEncendida(base(c));
+  await moverDespachoSiToca(c, u.id, conSubida);
   const { results } = await base(c)
     .prepare(
       `SELECT f.operacion_id, f.vehiculo_id, f.ganancia_centavos, f.expira_en, o.servicio_id,
@@ -157,7 +160,7 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
               v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng,
-              EXISTS (SELECT 1 FROM cambios_viaje sc WHERE sc.operacion_id = o.id AND sc.tipo = 'subida') AS subida,
+              ${conSubida ? "EXISTS (SELECT 1 FROM cambios_viaje sc WHERE sc.operacion_id = o.id AND sc.tipo = 'subida')" : '0'} AS subida,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
@@ -283,9 +286,10 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   const u = exigir(c, 'repartidor');
   const id = c.req.param('id');
   const clave = claveDe(c, 'aceptar', id);
+  const conSubida = await subidaEncendida(base(c));
   const oferta = await base(c)
     .prepare(
-      `SELECT vehiculo_id, estado, subida_n < ${subidasDelViaje('?1')} AS vieja
+      `SELECT vehiculo_id, estado, ${conSubida ? `subida_n < ${subidasDelViaje('?1')}` : '0'} AS vieja
          FROM ofertas_operacion WHERE operacion_id = ?1 AND conductor_id = ?2`,
     )
     .bind(id, u.id)

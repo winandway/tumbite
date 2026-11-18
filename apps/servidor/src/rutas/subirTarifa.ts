@@ -194,7 +194,12 @@ export async function estadoSubida(
         WHERE o.id = ? AND o.cliente_id = ?`,
     )
     .bind(op, cliente)
-    .first();
+    .first()
+    .catch((e: unknown) => {
+      // M5: si las columnas no se migraron, el viaje sigue sin botones (y la salud lo dice).
+      console.error('subir tarifa: estado', e);
+      return null;
+    });
   if (!encendido) return null;
   const v = await viajeParaSubir(db, op, cliente);
   if (!v || v.estado !== 'buscando') return null;
