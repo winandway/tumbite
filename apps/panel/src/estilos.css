@@ -7108,13 +7108,3 @@ body.modo-tableta .cabecera {
   font-size: 12px;
   overflow-wrap: anywhere;
 }
-.camila-paises {
-  border: 1px solid #d0d2d6;
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin: 10px 0;
-}
-.camila-paises legend {
-  font-weight: 700;
-  padding: 0 6px;
-}

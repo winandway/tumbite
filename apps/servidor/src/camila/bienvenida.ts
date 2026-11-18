@@ -7,7 +7,7 @@ import {
   marcarAvisoActivo,
   textoBienvenidaLider,
 } from './lideres';
-import { anotarPais, exigeAviso, leerAjustes, personaDeUsuario } from './memoria';
+import { anotarPais, personaDeUsuario } from './memoria';
 
 /**
  * C-CAMILA-BIENVENIDA (17 nov 2026) — todos los países. Lo que Camila hace sola, sin que nadie escriba:
@@ -18,19 +18,13 @@ import { anotarPais, exigeAviso, leerAjustes, personaDeUsuario } from './memoria
  * Nunca frena el registro ni la aprobación: cualquier fallo queda en el registro de errores.
  */
 /**
- * La bienvenida se presenta UNA sola vez: «Soy Camila, del equipo de soporte». Donde la ley pide el
- * aviso (C-CAMILA-AVISO: California y la Unión Europea), esa misma línea dice «la asistente virtual
- * de Divoox», y no se repite. Nunca ofrece por sí sola hablar con una persona.
+ * La bienvenida se presenta UNA sola vez: «Soy Camila, del equipo de soporte». Nunca dice «asistente
+ * virtual» (C-CAMILA-SIN-AVISO) y nunca ofrece por sí sola hablar con una persona.
  */
-export function textoBienvenida(
-  nombre: string,
-  idioma: 'es' | 'en',
-  lider?: string | null,
-  conAviso = false,
-) {
+export function textoBienvenida(nombre: string, idioma: 'es' | 'en', lider?: string | null) {
   const primer = nombre.split(' ')[0] ?? nombre;
   return idioma === 'en'
-    ? `Hi ${primer}, welcome to Divoox. I am Camila, ${conAviso ? 'the Divoox virtual assistant' : 'from the support team'}, and I will walk you through it.${lider ? ` You signed up on ${lider}'s team.` : ''}
+    ? `Hi ${primer}, welcome to Divoox. I am Camila, from the support team, and I will walk you through it.${lider ? ` You signed up on ${lider}'s team.` : ''}
 
 Your steps to start:
 1. In Divoox Driver, open Profile, “Start driving.”
@@ -39,7 +33,7 @@ Your steps to start:
 4. When you are approved, top up your balance for fees and slide to go online.
 
 If you get stuck on any step, write to me here.`
-    : `Hola, ${primer}, te doy la bienvenida a Divoox. Soy Camila, ${conAviso ? 'la asistente virtual de Divoox' : 'del equipo de soporte'}, y te acompaño en todo el proceso.${lider ? ` Te registraste en el equipo de ${lider}.` : ''}
+    : `Hola, ${primer}, te doy la bienvenida a Divoox. Soy Camila, del equipo de soporte, y te acompaño en todo el proceso.${lider ? ` Te registraste en el equipo de ${lider}.` : ''}
 
 Tus pasos para empezar:
 1. En Divoox Driver, abre Perfil, «Empieza a repartir».
@@ -86,8 +80,6 @@ export async function alRegistrarseConductor(
   u: { id: string; nombre: string; idioma: 'es' | 'en' },
   /** El país desde donde se registra (cabecera de Cloudflare), si su cuenta todavía no tiene ciudad. */
   paisPeticion?: string,
-  /** Y el estado (California), solo para saber si la ley pide el aviso. */
-  regionPeticion?: string,
 ) {
   try {
     const liderId = await liderDe(db, u.id);
@@ -98,19 +90,11 @@ export async function alRegistrarseConductor(
           .first<{ nombre: string }>()
       : null;
     const persona = await anotarPais(db, await personaDeUsuario(db, u.id), paisPeticion);
-    // C-CAMILA-AVISO: donde la ley lo pide, la presentación de esta bienvenida ya dice que es una
-    // asistente virtual (una vez, en la misma línea), y queda anotado para no repetirlo.
-    const avisa = exigeAviso(await leerAjustes(db), persona, regionPeticion);
-    if (avisa)
-      await db
-        .prepare('UPDATE camila_personas SET aviso_ia_dado = 1 WHERE id = ?')
-        .bind(persona.id)
-        .run();
     await mensajeDeCamila(
       env,
       db,
       persona,
-      textoBienvenida(u.nombre, u.idioma, lider?.nombre.split(' ')[0] ?? null, avisa),
+      textoBienvenida(u.nombre, u.idioma, lider?.nombre.split(' ')[0] ?? null),
       ['app', 'correo'],
       u.idioma === 'en' ? 'Welcome to Divoox Driver' : 'Bienvenido a Divoox Driver',
     );

@@ -4,7 +4,6 @@ import {
   type Idioma,
   almacenNavegador,
   enIdioma,
-  nombrePais,
   useBorrador,
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -112,10 +111,6 @@ const T = {
     regalosDia: 'Regalos de arranque por día',
     regalosAyuda: (n: number) =>
       `Cuántos regalos de arranque puede entregar Camila en un día (hasta ${n}).`,
-    avisoIa: 'Aviso de asistente virtual por lugar',
-    avisoIaAyuda:
-      'Encendido, Camila dice una sola vez, al empezar la conversación, que es la asistente virtual de Divoox. Va fijo en California y en la Unión Europea, donde la ley lo pide; en el resto de Estados Unidos, en Venezuela y en lo demás va apagado. Siempre dice la verdad si se lo preguntan.',
-    avisoFijo: 'fijo por ley',
     guardar: 'Guardar los ajustes',
     guardado: 'Ajustes guardados.',
     topeMalo: (m: string) => `El tope diario va de 0 a ${m}.`,
@@ -207,10 +202,6 @@ const T = {
       `Up to ${m} a day. At the limit, Camila keeps going without AI and alerts you.`,
     regalosDia: 'Starter gifts per day',
     regalosAyuda: (n: number) => `How many starter gifts Camila can give in a day (up to ${n}).`,
-    avisoIa: 'Virtual assistant notice by place',
-    avisoIaAyuda:
-      'On, Camila says once, at the start of the conversation, that she’s Divoox’s virtual assistant. It’s fixed in California and in the European Union, where the law requires it; in the rest of the United States, in Venezuela and everywhere else it’s off. She always tells the truth if asked.',
-    avisoFijo: 'required by law',
     guardar: 'Save settings',
     guardado: 'Settings saved.',
     topeMalo: (m: string) => `The daily limit goes from 0 to ${m}.`,
@@ -288,7 +279,6 @@ type Propuesta = {
 type Ajustes = {
   ia: boolean;
   topeDiarioCentavos: number;
-  avisoIaPaises: string[];
   regalosPorDia: number;
 };
 
@@ -923,10 +913,8 @@ function AjustesCamila({ t, idioma }: { t: Textos; idioma: Idioma }) {
   const [datos, setDatos] = useState<{
     ajustes: Ajustes;
     limites: { topeMaximoCentavos: number; regalosPorDiaMaximo: number };
-    avisoObligatorio?: string[];
     iaConectada: boolean;
   } | null>(null);
-  const [paises, setPaises] = useState<string[]>([]);
   const [error, setError] = useState('');
   useEffect(() => {
     let vivo = true;
@@ -937,10 +925,6 @@ function AjustesCamila({ t, idioma }: { t: Textos; idioma: Idioma }) {
     }>('GET', '/datos/admin/camila/ajustes')
       .then((d) => vivo && setDatos(d))
       .catch((x: unknown) => vivo && setError(mensajeDe(x)));
-    // Los países donde Divoox tiene ciudades (sin la lista, igual salen los del piloto).
-    pedir<{ zonas: { pais: string }[] }>('GET', '/datos/admin/zonas')
-      .then((d) => vivo && setPaises([...new Set(d.zonas.map((z) => z.pais).filter(Boolean))]))
-      .catch(() => undefined);
     return () => {
       vivo = false;
     };
@@ -953,9 +937,7 @@ function AjustesCamila({ t, idioma }: { t: Textos; idioma: Idioma }) {
       idioma={idioma}
       ajustes={datos.ajustes}
       limites={datos.limites}
-      obligatorios={datos.avisoObligatorio ?? []}
       iaConectada={datos.iaConectada}
-      paises={[...new Set(['US', 'VE', ...paises, ...datos.ajustes.avisoIaPaises])].sort()}
     />
   );
 }
@@ -965,17 +947,13 @@ function FormAjustes({
   idioma,
   ajustes,
   limites,
-  obligatorios,
   iaConectada,
-  paises,
 }: {
   t: Textos;
   idioma: Idioma;
   ajustes: Ajustes;
   limites: { topeMaximoCentavos: number; regalosPorDiaMaximo: number };
-  obligatorios: string[];
   iaConectada: boolean;
-  paises: string[];
 }) {
   const b = useBorrador({
     formulario: 'camila-ajustes',
@@ -984,7 +962,6 @@ function FormAjustes({
       ia: ajustes.ia,
       tope: String(ajustes.topeDiarioCentavos / 100),
       regalos: String(ajustes.regalosPorDia),
-      avisoIaPaises: ajustes.avisoIaPaises,
     },
     almacen: almacenNavegador,
   });
@@ -1008,7 +985,6 @@ function FormAjustes({
       await pedir('PUT', '/datos/admin/camila/ajustes', {
         ia: v.ia,
         topeDiarioCentavos: tope,
-        avisoIaPaises: v.avisoIaPaises,
         regalosPorDia: regalos,
       });
       await b.limpiar();
@@ -1063,34 +1039,6 @@ function FormAjustes({
         />
       </label>
       <p className="pista">{t.regalosAyuda(limites.regalosPorDiaMaximo)}</p>
-      <fieldset className="camila-paises">
-        <legend>{t.avisoIa}</legend>
-        <p className="pista">{t.avisoIaAyuda}</p>
-        {paises.map((p) => (
-          <label key={p} className="casilla-fila">
-            <input
-              type="checkbox"
-              role="switch"
-              checked={obligatorios.includes(p) || v.avisoIaPaises.includes(p)}
-              disabled={obligatorios.includes(p)}
-              onChange={(e) =>
-                b.cambiar(
-                  'avisoIaPaises',
-                  e.target.checked
-                    ? [...v.avisoIaPaises, p]
-                    : v.avisoIaPaises.filter((x) => x !== p),
-                )
-              }
-            />
-            {p === 'US-CA'
-              ? idioma === 'en'
-                ? 'California (United States)'
-                : 'California (Estados Unidos)'
-              : nombrePais(p, idioma)}
-            {obligatorios.includes(p) ? ` (${t.avisoFijo})` : ''}
-          </label>
-        ))}
-      </fieldset>
       <Mensajes error={error} ok={ok} />
       <button type="submit" className="boton" disabled={enviando}>
         {t.guardar}

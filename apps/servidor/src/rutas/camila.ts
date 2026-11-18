@@ -12,18 +12,15 @@ import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
 import {
   type AjustesCamila,
   type Persona,
-  PAISES_AVISO_OBLIGATORIO,
   REGALOS_POR_DIA_MAXIMO,
   anotarPais,
   guardarAjustes,
   humanoActivo,
   leerAjustes,
-  esLugar,
   personaDeCorreo,
   personaDeUsuario,
   personaDeVisitante,
   personaPorId,
-  regionDePeticion,
   sentenciaMensaje,
   unirConCorreo,
 } from '../camila/memoria';
@@ -142,10 +139,7 @@ camila.post('/camila/mensaje', async (c) => {
       'verificar',
       429,
     );
-  const r = await recibirMensaje(c.env, db, p, d.canal, d.texto, {
-    // El estado de la petición (California): solo para saber si la ley pide el aviso.
-    region: regionDePeticion(c),
-  });
+  const r = await recibirMensaje(c.env, db, p, d.canal, d.texto);
   const fresca = (await personaPorId(db, p.id)) ?? p;
   return c.json({ respuesta: r.respuesta, ...(await hiloPublico(db, fresca)) });
 });
@@ -535,8 +529,6 @@ camila.get('/admin/camila/ajustes', async (c) => {
       topeMaximoCentavos: TOPE_MAXIMO_CENTAVOS,
       regalosPorDiaMaximo: REGALOS_POR_DIA_MAXIMO,
     },
-    // Los países donde el aviso va fijo por ley (no se pueden apagar desde el superadmin).
-    avisoObligatorio: PAISES_AVISO_OBLIGATORIO,
     modelos: { normal: MODELOS_CAMILA.normal.id, dificil: MODELOS_CAMILA.dificil.id },
     iaConectada: Boolean(c.env.GEMINI_API_KEY),
   });
@@ -552,7 +544,6 @@ camila.put('/admin/camila/ajustes', async (c) => {
       topeDiarioCentavos: z.number().int().min(0).max(TOPE_MAXIMO_CENTAVOS, {
         error: 'El tope diario no puede pasar de 5 dólares.',
       }),
-      avisoIaPaises: z.array(z.string().max(6).refine(esLugar)).max(80),
       regalosPorDia: z.number().int().min(0).max(REGALOS_POR_DIA_MAXIMO),
     }),
   );

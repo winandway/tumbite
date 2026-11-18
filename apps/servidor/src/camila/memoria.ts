@@ -261,62 +261,18 @@ export type AjustesCamila = {
   ia: boolean;
   /** Tope diario de gasto de IA, en centavos de dólar (máximo TOPE_MAXIMO_CENTAVOS). */
   topeDiarioCentavos: number;
-  /** Países donde la ley pide avisar desde el primer mensaje que es una asistente virtual. */
-  avisoIaPaises: string[];
   /** Cuántos regalos de arranque puede dar Camila al día como mucho (además del presupuesto). */
   regalosPorDia: number;
 };
 
 /**
- * C-CAMILA-AVISO (18 nov 2026, Gerencia dentro de lo que aprobó Richard: «donde la ley lo pida»). En
- * estos lugares Camila dice UNA vez, al empezar la conversación y en una línea corta, que es una
- * asistente virtual: California (Estados Unidos) y los 27 países de la Unión Europea. Van fijos en
- * el código: el superadmin puede sumar lugares, pero no apagar estos. En el resto de Estados Unidos
- * (Michigan incluido), en Venezuela y en todo lo demás, APAGADO. Un lugar es un país («ES») o un
- * país con su estado («US-CA»).
+ * C-CAMILA-SIN-AVISO (18 nov 2026, regla de Richard para todo Divoox): Camila NUNCA dice por su cuenta
+ * que es una asistente virtual, en ningún país y en ningún canal. No hay aviso de primer mensaje ni
+ * interruptor para encenderlo. Si se lo preguntan, dice la verdad (identidad.ts, VERDAD).
  */
-export const PAISES_AVISO_OBLIGATORIO: readonly string[] = [
-  'US-CA',
-  ...['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE'],
-  ...['IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'],
-];
-/** Un lugar: un país («ES») o un país con su estado («US-CA»). */
-export const esLugar = (p: string) => /^[A-Z]{2}$/.test(p) || /^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(p);
-const conObligatorios = (paises: string[]) => [
-  ...new Set([...PAISES_AVISO_OBLIGATORIO, ...paises]),
-];
-
-/**
- * ¿En el lugar de esta persona hay que avisar? Hay dos señales del estado: el de su ciudad (las
- * ciudades se llaman PAÍS-ESTADO-CIUDAD, por ejemplo US-MI-NOVI) y el de la petición. Basta con que
- * UNA diga un lugar de la lista: una cuenta de Michigan que escribe desde California recibe el aviso.
- * Sin lugar conocido no se avisa (orden de Richard del 18 nov: fuera de California y la Unión
- * Europea, apagado).
- */
-export function exigeAviso(ajustes: AjustesCamila, p: Persona, regionPeticion?: string) {
-  if (!p.pais) return false;
-  const deZona = p.zona_id?.split('-');
-  const regiones = [deZona && deZona.length >= 3 ? deZona[1] : '', regionPeticion]
-    .map((r) => r?.toUpperCase() ?? '')
-    .filter(Boolean);
-  return (
-    ajustes.avisoIaPaises.includes(p.pais) ||
-    regiones.some((r) => ajustes.avisoIaPaises.includes(`${p.pais}-${r}`))
-  );
-}
-
-/** El estado desde donde llega la petición (lo pone Cloudflare), por ejemplo «CA» o «MI». */
-export const regionDePeticion = (c: {
-  req: { raw: Request; header(nombre: string): string | undefined };
-}) =>
-  ((c.req.raw as { cf?: { regionCode?: string } }).cf?.regionCode ?? c.req.header('cf-region-code'))
-    ?.toUpperCase()
-    .slice(0, 3);
-
 export const AJUSTES_CAMILA_INICIALES: AjustesCamila = {
   ia: true,
   topeDiarioCentavos: TOPE_DIARIO_CENTAVOS,
-  avisoIaPaises: [...PAISES_AVISO_OBLIGATORIO],
   regalosPorDia: 20,
 };
 
@@ -329,22 +285,12 @@ export async function leerAjustes(db: D1Database): Promise<AjustesCamila> {
     .catch(() => null);
   if (!f) return AJUSTES_CAMILA_INICIALES;
   try {
-    const v = JSON.parse(f.valor) as Partial<AjustesCamila> & { avisoIaLugares?: string[] };
+    const v = JSON.parse(f.valor) as Partial<AjustesCamila>;
     return {
       ia: v.ia !== false,
       topeDiarioCentavos: Math.min(
         Math.max(0, Number(v.topeDiarioCentavos ?? TOPE_DIARIO_CENTAVOS)),
         TOPE_MAXIMO_CENTAVOS,
-      ),
-      // Los lugares se guardan en `avisoIaLugares`. Lo guardado antes en `avisoIaPaises` traía todo
-      // Estados Unidos (se había encendido de más): ese «US» suelto ya no cuenta.
-      avisoIaPaises: conObligatorios(
-        (Array.isArray(v.avisoIaLugares)
-          ? v.avisoIaLugares
-          : Array.isArray(v.avisoIaPaises)
-            ? v.avisoIaPaises.filter((p) => p !== 'US')
-            : []
-        ).filter((p) => esLugar(String(p))),
       ),
       regalosPorDia: Math.min(Math.max(0, Number(v.regalosPorDia ?? 20)), REGALOS_POR_DIA_MAXIMO),
     };
@@ -360,7 +306,13 @@ export async function guardarAjustes(db: D1Database, a: AjustesCamila) {
       `INSERT INTO config (clave, valor) VALUES ('camila', ?)
        ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
     )
-    .bind(JSON.stringify({ ...a, avisoIaPaises: undefined, avisoIaLugares: a.avisoIaPaises }))
+    .bind(
+      JSON.stringify({
+        ia: a.ia,
+        topeDiarioCentavos: a.topeDiarioCentavos,
+        regalosPorDia: a.regalosPorDia,
+      }),
+    )
     .run();
 }
 

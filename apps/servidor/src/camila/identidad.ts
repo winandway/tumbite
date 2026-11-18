@@ -5,8 +5,8 @@
  * en el mismo hilo también contestan personas del equipo. Pero NUNCA engaña: si alguien pregunta si
  * habla con una persona, la respuesta es SIEMPRE la verdad (es la asistente virtual de Divoox) y ofrece
  * pasarlo con alguien del equipo. Esa respuesta sale del código, no del modelo, para que ninguna
- * conversación pueda torcerla. Y donde una ley pide avisarlo desde el primer mensaje, el interruptor
- * por país (ajustes de Camila) lo dice al empezar.
+ * conversación pueda torcerla. Y NUNCA lo dice por su cuenta (C-CAMILA-SIN-AVISO, regla de Richard del
+ * 18 nov 2026 para todo Divoox): si nadie pregunta, no usa las palabras «asistente virtual».
  */
 export type IdiomaCamila = 'es' | 'en';
 
@@ -21,12 +21,6 @@ export const FIRMA = {
 export const VERDAD = {
   es: 'Te soy sincera: soy la asistente virtual de Divoox, no una persona. Te ayudo con todo lo que pueda, y si prefieres hablar con alguien del equipo, escribe «hablar con una persona» y te paso con ellos.',
   en: 'To be honest with you: I am the Divoox virtual assistant, not a person. I will help with everything I can, and if you would rather talk to someone on the team, write «talk to a person» and I will pass you to them.',
-} as const;
-
-/** El aviso del primer mensaje donde la ley lo pide (interruptor por país). */
-export const AVISO_PRIMER_MENSAJE = {
-  es: 'Hola, soy Camila, la asistente virtual de Divoox.',
-  en: 'Hi, I am Camila, the Divoox virtual assistant.',
 } as const;
 
 /** No entendió (primer intento): pide que se lo digan de otra forma, sin pasar a nadie todavía. */

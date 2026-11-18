@@ -108,7 +108,7 @@ function servidor(extra: Record<string, unknown> = {}) {
     if (ruta.endsWith('/camila/ajustes') && metodo === 'PUT') return json({ ok: true });
     if (ruta.endsWith('/camila/ajustes'))
       return json({
-        ajustes: { ia: true, topeDiarioCentavos: 100, avisoIaPaises: ['US'], regalosPorDia: 20 },
+        ajustes: { ia: true, topeDiarioCentavos: 100, regalosPorDia: 20 },
         limites: { topeMaximoCentavos: 500, regalosPorDiaMaximo: 50 },
         modelos: {},
         iaConectada: true,
@@ -204,30 +204,26 @@ describe('C-CAMILA-BUZON: el buzón de Camila', () => {
     });
   });
 
-  it('los ajustes guardan en centavos, respetan el tope y prenden el aviso por país', async () => {
+  it('los ajustes guardan en centavos y respetan el tope; no hay interruptor de aviso de asistente virtual (C-CAMILA-SIN-AVISO)', async () => {
     const llamadas = servidor();
     window.history.replaceState(null, '', '/panel/control-x/camila?view=ajustes');
     render(<SuperCamila idioma="es" />);
     const form = await screen.findByTestId('camila-ajustes');
     const tope = within(form).getByLabelText('Tope diario de IA (dólares)');
     await waitFor(() => expect((tope as HTMLInputElement).value).toBe('1'));
-    // Venezuela sale en la lista y nace apagado (no estaba en los ajustes).
-    const venezuela = await within(form).findByRole('switch', { name: 'Venezuela' });
-    expect(venezuela).not.toBeChecked();
-    expect(within(form).getByRole('switch', { name: 'Estados Unidos' })).toBeChecked();
+    expect(within(form).queryByRole('switch', { name: 'Estados Unidos' })).toBeNull();
+    expect(form.textContent).not.toMatch(/asistente virtual/i);
     await userEvent.clear(tope);
     await userEvent.type(tope, '9');
     await userEvent.click(within(form).getByRole('button', { name: 'Guardar los ajustes' }));
     expect(await within(form).findByRole('alert')).toHaveTextContent('El tope diario va de 0 a');
     await userEvent.clear(tope);
     await userEvent.type(tope, '2.5');
-    await userEvent.click(within(form).getByRole('switch', { name: 'Estados Unidos' }));
     await userEvent.click(within(form).getByRole('button', { name: 'Guardar los ajustes' }));
     await within(form).findByText('Ajustes guardados.');
     expect(llamadas.find((l) => l.metodo === 'PUT')?.cuerpo).toEqual({
       ia: true,
       topeDiarioCentavos: 250,
-      avisoIaPaises: [],
       regalosPorDia: 20,
     });
   });

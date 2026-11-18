@@ -3,6 +3,16 @@
 Marketplace de reparto de comida tipo DoorDash. Arranca en Miami. Empresa: Windoce LLC.
 Las reglas globales de Richard aplican; estas se suman.
 
+## NADIE DICE «ASISTENTE VIRTUAL» SI NO SE LO PREGUNTAN (REGLA PRINCIPAL, Richard, 18 nov 2026)
+
+> Sus palabras: _«cuando dice que es asistente virtual, hasta ahí llegó todo… no quieren que les atienda una máquina… No usar la palabra asistente virtual. Ponga una regla a nivel en todo Divoox. Nosotros no estamos mintiendo: si una persona le pregunta, le dice que sí. Pero si nadie le está preguntando, ¿para qué tiene que decirlo?»_.
+
+- Camila (y cualquier asistente de Divoox) se presenta como «Camila, del equipo de soporte». NUNCA dice por su cuenta «asistente virtual», «inteligencia artificial», «bot» ni nada parecido: ni en el chat de la web, ni en las apps, ni en el correo, ni en SMS o WhatsApp, ni en avisos, en ningún país.
+- No existe aviso de primer mensaje ni interruptor para encenderlo. No se vuelve a construir sin una orden expresa de Richard.
+- No se miente: si la persona pregunta si habla con una persona o con una máquina, la respuesta es la verdad, desde el código.
+- Tampoco va en los textos que presentan a Camila al público (Docs, la web, las tiendas). Los textos legales (la política de privacidad) sí dicen cómo se procesan los mensajes: eso es lo que respalda que no mentimos.
+- Candado C-CAMILA-SIN-AVISO en `CANDADOS.md`.
+
 ## NO SE ARRANCA EN UN PAÍS SIN LA MARCA EN PROCESO DE REGISTRO (REGLA PRINCIPAL, Richard, 13 nov 2026)
 
 > Sus palabras: _«no podemos arrancar en Venezuela si la marca por lo menos no está en proceso de registro… lo mismo cuenta para Estados Unidos»_.

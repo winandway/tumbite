@@ -18,7 +18,6 @@ import {
 import {
   respuestaCortesia,
   cortesiaDe,
-  AVISO_PRIMER_MENSAJE,
   FIRMA,
   PASO_A_PERSONA,
   ENTIENDO_TU_MOLESTIA,
@@ -35,7 +34,6 @@ import {
 import {
   type Canal,
   type Persona,
-  exigeAviso,
   humanoActivo,
   leerAjustes,
   sentenciaMensaje,
@@ -288,7 +286,7 @@ export async function recibirMensaje(
   persona: Persona,
   canal: Canal,
   textoCrudo: string,
-  opciones: { asunto?: string; region?: string } = {},
+  opciones: { asunto?: string } = {},
 ): Promise<ResultadoCerebro> {
   const texto = textoCrudo.split(String.fromCharCode(0)).join('').trim().slice(0, 2000);
   const idioma: IdiomaCamila = persona.idioma === 'en' ? 'en' : 'es';
@@ -403,14 +401,6 @@ export async function recibirMensaje(
     // C-CAMILA-ENLACE-GUIA: lo que sale de una guía termina con el enlace a esa guía (dos como mucho),
     // en el idioma de la persona; y ningún enlace de Docs que no exista sale de aquí.
     respuesta = conEnlacesDeGuia(respuesta, idioma, modo === 'ia' && !c.noSupo ? c.guias : []);
-  }
-  // Aviso de asistente virtual, una sola vez y en una línea, solo donde la ley lo pide.
-  if (!persona.aviso_ia_dado && exigeAviso(ajustes, persona, opciones.region)) {
-    respuesta = `${segun(AVISO_PRIMER_MENSAJE, idioma)}\n\n${respuesta}`;
-    await db
-      .prepare('UPDATE camila_personas SET aviso_ia_dado = 1 WHERE id = ?')
-      .bind(persona.id)
-      .run();
   }
   await sentenciaMensaje(db, {
     personaId: persona.id,
