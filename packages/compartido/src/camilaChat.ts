@@ -8,7 +8,14 @@ import type { Idioma } from './idiomas';
  * para las tres pantallas.
  */
 export type AutorCamila = 'persona' | 'camila' | 'equipo';
-export type MensajeCamila = { id: string; autor: AutorCamila; texto: string; creado_en: string };
+export type MensajeCamila = {
+  id: string;
+  autor: AutorCamila;
+  texto: string;
+  creado_en: string;
+  /** C-CAMILA-REPORTAR: la persona ya reportó esta respuesta de Camila. */
+  reportado?: boolean;
+};
 export type HiloCamila = {
   verificada: boolean;
   equipoAtendiendo: boolean;
@@ -46,6 +53,8 @@ const CHAT_ES = {
   sinRed: 'No pudimos conectar. Revisa tu internet e inténtalo otra vez.',
   reintentar: 'Reintentar',
   cargando: 'Cargando la conversación…',
+  reportar: 'Reportar respuesta',
+  reportada: 'Respuesta reportada. El equipo la va a revisar.',
 };
 const CHAT_EN: typeof CHAT_ES = {
   burbuja: 'Talk to our support team',
@@ -77,6 +86,8 @@ const CHAT_EN: typeof CHAT_ES = {
   sinRed: 'We couldn’t connect. Check your internet and try again.',
   reintentar: 'Try again',
   cargando: 'Loading the conversation…',
+  reportar: 'Report reply',
+  reportada: 'Reply reported. Our team will review it.',
 };
 export const TEXTOS_CHAT_SOPORTE = { es: CHAT_ES, en: CHAT_EN };
 

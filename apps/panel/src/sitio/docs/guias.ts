@@ -3657,6 +3657,7 @@ const es: SeccionDocs[] = [
           'Escribe tu pregunta como se la dirías a una persona.',
           'Si quieres hablar con alguien del equipo, escribe «hablar con una persona».',
           'Por correo, responde cualquier correo de Camila: sigue la misma conversación.',
+          'Si una respuesta de Camila no te parece correcta, toca «Reportar respuesta» debajo de ella: el equipo la revisa.',
         ],
       },
       {
@@ -8935,6 +8936,7 @@ const en: SeccionDocs[] = [
           'Write your question the way you would ask a person.',
           'If you want to talk to someone on the team, write “talk to a person.”',
           'By email, reply to any email from Camila: it continues the same conversation.',
+          'If a reply from Camila doesn’t seem right, tap “Report reply” under it: our team reviews it.',
         ],
       },
       {

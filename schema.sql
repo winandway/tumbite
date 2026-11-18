@@ -4348,6 +4348,8 @@ CREATE TABLE IF NOT EXISTS camila_mensajes (
   autor_id TEXT,
   texto TEXT NOT NULL,
   herramienta TEXT,
+  -- C-CAMILA-REPORTAR: la persona reportó esta respuesta de Camila (contenido generado por IA).
+  reportado_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS camila_mensajes_hilo ON camila_mensajes(persona_id, creado_en);

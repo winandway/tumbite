@@ -5689,6 +5689,26 @@ body.modo-tableta .cabecera {
   font-size: 0.95rem;
   line-height: 1.4;
 }
+.chat-soporte-reportar {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #666b73;
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.chat-soporte-reportar:hover,
+.chat-soporte-reportar:focus-visible {
+  color: #101010;
+}
+.chat-soporte-reportada {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #666b73;
+}
 .chat-soporte-escribiendo {
   color: #666b73;
   font-size: 0.85rem;

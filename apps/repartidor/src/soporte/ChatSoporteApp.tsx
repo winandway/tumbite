@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import {
   ErrorApi,
   type HiloCamila,
@@ -92,7 +92,21 @@ export function ChatSoporteApp() {
   }
 
   const mensajes = [...(hilo?.mensajes ?? []), ...(pendiente ? [pendiente] : [])];
-  const burbuja = (m: Pick<MensajeCamila, 'id' | 'autor' | 'texto'>) => {
+  /** C-CAMILA-REPORTAR: reportar una respuesta de Camila sin salir de la app. */
+  async function reportar(id: string) {
+    try {
+      await api.pedir('POST', `/datos/camila/mensajes/${id}/reportar`, {});
+      setHilo((h) =>
+        h
+          ? { ...h, mensajes: h.mensajes.map((m) => (m.id === id ? { ...m, reportado: true } : m)) }
+          : h,
+      );
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.sinRed);
+    }
+  }
+
+  const burbuja = (m: Pick<MensajeCamila, 'id' | 'autor' | 'texto' | 'reportado'>) => {
     const mio = m.autor === 'persona';
     return (
       <View
@@ -116,6 +130,26 @@ export function ChatSoporteApp() {
         <Text style={{ color: mio ? '#FFFFFF' : C.secundario, fontSize: 15, lineHeight: 21 }}>
           {m.texto}
         </Text>
+        {m.autor === 'camila' && m.id !== 'saludo' ? (
+          m.reportado ? (
+            <Text testID="chat-reportada" style={{ color: '#666B73', fontSize: 12, marginTop: 4 }}>
+              {t.reportada}
+            </Text>
+          ) : (
+            <Pressable
+              testID="chat-reportar"
+              accessibilityRole="button"
+              accessibilityLabel={t.reportar}
+              onPress={() => void reportar(m.id)}
+              hitSlop={10}
+              style={{ alignSelf: 'flex-start', marginTop: 4, paddingVertical: 4 }}
+            >
+              <Text style={{ color: '#666B73', fontSize: 12, textDecorationLine: 'underline' }}>
+                {t.reportar}
+              </Text>
+            </Pressable>
+          )
+        ) : null}
       </View>
     );
   };

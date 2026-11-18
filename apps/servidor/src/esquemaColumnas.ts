@@ -2848,6 +2848,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "autor_id",
     "texto",
     "herramienta",
+    "reportado_en",
     "creado_en"
   ],
   "camila_casos": [

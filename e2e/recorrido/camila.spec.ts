@@ -163,6 +163,9 @@ for (const idioma of ['es', 'en'] as const) {
       timeout: 30_000,
     });
     if (CAPTURAS) await pr.screenshot({ path: join(CARPETA, `camila-driver-chat-${idioma}.png`) });
+    // C-CAMILA-REPORTAR: la respuesta de Camila se reporta sin salir de la app y queda marcada.
+    await pr.getByTestId('chat-reportar').last().click();
+    await expect(pr.getByTestId('chat-reportada')).toHaveCount(1, { timeout: 15_000 });
     // Es la misma conversación por la app: el canal queda «app».
     expect(
       String(

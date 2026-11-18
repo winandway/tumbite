@@ -173,6 +173,20 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
     }
   }
 
+  /** C-CAMILA-REPORTAR: reportar una respuesta de Camila sin salir del chat. */
+  async function reportar(id: string) {
+    try {
+      await pedir('POST', `/datos/camila/mensajes/${id}/reportar`, {}, { cabeceras });
+      setHilo((h) =>
+        h
+          ? { ...h, mensajes: h.mensajes.map((m) => (m.id === id ? { ...m, reportado: true } : m)) }
+          : h,
+      );
+    } catch (x) {
+      setError(x instanceof Error ? x.message : t.sinRed);
+    }
+  }
+
   const mensajes = [...(hilo?.mensajes ?? []), ...(pendiente ? [pendiente] : [])];
   return (
     <>
@@ -223,6 +237,21 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               >
                 <span className="chat-soporte-autor">{nombreAutorCamila(m.autor, idioma)}</span>
                 <span className="chat-soporte-texto">{m.texto}</span>
+                {m.autor === 'camila' ? (
+                  m.reportado ? (
+                    <span className="chat-soporte-reportada" role="status">
+                      {t.reportada}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="chat-soporte-reportar"
+                      onClick={() => void reportar(m.id)}
+                    >
+                      {t.reportar}
+                    </button>
+                  )
+                ) : null}
               </li>
             ))}
             {enviando && !hilo?.equipoAtendiendo ? (

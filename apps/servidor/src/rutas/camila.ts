@@ -2,7 +2,7 @@ import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
-import { sha256 } from '../cripto';
+import { nuevoId, sha256 } from '../cripto';
 import { limiteIntentos } from '../seguridad';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -93,15 +93,15 @@ const personaQueEscribe = async (c: Ctx) => (await personaDelChat(c)) as Persona
 async function hiloPublico(db: D1Database, p: Persona) {
   const { results } = await db
     .prepare(
-      `SELECT id, autor, texto, creado_en FROM camila_mensajes WHERE persona_id = ?
+      `SELECT id, autor, texto, creado_en, reportado_en IS NOT NULL AS reportado FROM camila_mensajes WHERE persona_id = ?
         ORDER BY creado_en DESC, rowid DESC LIMIT 60`,
     )
     .bind(p.id)
-    .all<{ id: string; autor: string; texto: string; creado_en: string }>();
+    .all<{ id: string; autor: string; texto: string; creado_en: string; reportado: number }>();
   return {
     verificada: Boolean(p.usuario_id || p.correo),
     equipoAtendiendo: humanoActivo(p),
-    mensajes: results.reverse(),
+    mensajes: results.reverse().map((m) => ({ ...m, reportado: Number(m.reportado) === 1 })),
   };
 }
 
@@ -138,6 +138,40 @@ camila.post('/camila/mensaje', async (c) => {
   const r = await recibirMensaje(c.env, db, p, d.canal, d.texto);
   const fresca = (await personaPorId(db, p.id)) ?? p;
   return c.json({ respuesta: r.respuesta, ...(await hiloPublico(db, fresca)) });
+});
+
+/**
+ * C-CAMILA-REPORTAR (18 nov 2026, política de contenido generado por IA de Google Play): la persona
+ * reporta una respuesta de Camila desde el mismo chat, sin salir de la app. El reporte queda marcado
+ * en el mensaje y como caso en la bandeja del equipo. Solo las respuestas de Camila de su propio hilo,
+ * y una sola vez cada una.
+ */
+camila.post('/camila/mensajes/:id/reportar', async (c) => {
+  const db = base(c);
+  const p = await personaDelChat(c, false);
+  if (!p) throw new ErrorDatos('No encontramos esa respuesta.', undefined, 404);
+  const m = await db
+    .prepare(
+      `UPDATE camila_mensajes SET reportado_en = datetime('now')
+        WHERE id = ? AND persona_id = ? AND autor = 'camila' AND reportado_en IS NULL RETURNING texto`,
+    )
+    .bind(c.req.param('id'), p.id)
+    .first<{ texto: string }>();
+  if (m) {
+    await db
+      .prepare(
+        "INSERT INTO camila_casos (id, persona_id, resumen, motivo) VALUES (?, ?, ?, 'respuesta_reportada')",
+      )
+      .bind(nuevoId(), p.id, `Respuesta reportada: ${m.texto.replace(/\s+/g, ' ').slice(0, 130)}`)
+      .run();
+  } else {
+    const existe = await db
+      .prepare("SELECT 1 FROM camila_mensajes WHERE id = ? AND persona_id = ? AND autor = 'camila'")
+      .bind(c.req.param('id'), p.id)
+      .first();
+    if (!existe) throw new ErrorDatos('No encontramos esa respuesta.', undefined, 404);
+  }
+  return c.json({ ok: true });
 });
 
 /** Unir el chat anónimo a un correo: se manda un código de 6 dígitos a ese correo. */

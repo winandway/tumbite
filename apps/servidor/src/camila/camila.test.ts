@@ -619,6 +619,57 @@ describe('Revisión de calidad del 18 nov: borrado, fallo del modelo y chat anó
   });
 });
 
+describe('C-CAMILA-REPORTAR: cada respuesta de Camila se puede reportar desde el chat', () => {
+  it('el reporte marca la respuesta, deja un caso en la bandeja y solo vale para respuestas de Camila del propio hilo', async () => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    const a = await e.conductor();
+    const b = await e.conductor('Beto Conductor');
+    const r = await e.decir(a.token, '¿cómo recargo mi saldo?');
+    const mensajes = r.datos.mensajes as { id: string; autor: string; reportado: boolean }[];
+    const deCamila = mensajes.filter((m) => m.autor === 'camila').pop()!;
+    const mio = mensajes.find((m) => m.autor === 'persona')!;
+    expect(deCamila.reportado).toBe(false);
+    const reportar = (id: string, token: string) =>
+      e.m.llamar('POST', `/datos/camila/mensajes/${id}/reportar`, {}, token);
+    // Ni el mensaje propio ni la respuesta de otra persona.
+    expect((await reportar(mio.id, a.token)).estado).toBe(404);
+    expect((await reportar(deCamila.id, b.token)).estado).toBe(404);
+    expect((await reportar(deCamila.id, a.token)).estado).toBe(200);
+    expect((await reportar(deCamila.id, a.token)).estado).toBe(200); // dos veces: un solo caso
+    const hilo = await e.m.llamar('GET', '/datos/camila/hilo', undefined, a.token);
+    expect(hilo.datos.mensajes.find((m: { id: string }) => m.id === deCamila.id).reportado).toBe(
+      true,
+    );
+    const bandeja = await e.m.llamar(
+      'GET',
+      '/datos/admin/camila/bandeja',
+      undefined,
+      e.admin.token,
+    );
+    const casos = bandeja.datos.casos.filter(
+      (k: { motivo: string }) => k.motivo === 'respuesta_reportada',
+    );
+    expect(casos).toHaveLength(1);
+    expect(casos[0].resumen).toMatch(/^Respuesta reportada: Para recargar tu saldo/);
+  });
+
+  it('el botón está en el chat de Driver y en el de la web, en los dos idiomas', async () => {
+    const { TEXTOS_CHAT_SOPORTE } = await import('@tumbite/compartido');
+    expect(TEXTOS_CHAT_SOPORTE.es.reportar).toBe('Reportar respuesta');
+    expect(TEXTOS_CHAT_SOPORTE.en.reportar).toBe('Report reply');
+    const raiz = join(__dirname, '..', '..', '..');
+    for (const f of [
+      join(raiz, 'repartidor', 'src', 'soporte', 'ChatSoporteApp.tsx'),
+      join(raiz, 'panel', 'src', 'sitio', 'ChatSoporte.tsx'),
+    ]) {
+      const codigo = readFileSync(f, 'utf8');
+      expect(codigo, f).toContain('/reportar');
+      expect(codigo, f).toContain('t.reportar');
+      expect(codigo, f).toContain('t.reportada');
+    }
+  });
+});
+
 describe('C-CAMILA-LIDER: Camila acompaña al líder sobre la pieza única de equipos', () => {
   it('al crear su equipo recibe el plan; cada registro y cada aprobación le llegan con el contador', async () => {
     const e = await escenario({ GEMINI_API_KEY: undefined });

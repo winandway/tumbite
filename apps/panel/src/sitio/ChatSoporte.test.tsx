@@ -96,6 +96,42 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     );
   });
 
+  it('C-CAMILA-REPORTAR: cada respuesta de Camila trae «Reportar respuesta» y queda marcada', async () => {
+    const hilo = {
+      verificada: false,
+      equipoAtendiendo: false,
+      mensajes: [
+        { id: 'm1', autor: 'persona', texto: 'hola', creado_en: '2026-11-18 01:00:00' },
+        {
+          id: 'm2',
+          autor: 'camila',
+          texto: 'Hola, te ayudo.',
+          creado_en: '2026-11-18 01:00:01',
+          reportado: false,
+        },
+      ],
+    };
+    const llamadas = servidor((l) => {
+      if (l.url.endsWith('/cuentas/yo')) return json({}, 401);
+      if (l.url.endsWith('/camila/mensaje')) return json({ respuesta: 'Hola, te ayudo.', ...hilo });
+      if (l.url.endsWith('/reportar')) return json({ ok: true });
+      return json(hilo);
+    });
+    render(<ChatSoporte idioma="es" />);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
+    );
+    await userEvent.type(screen.getByLabelText('Escribe tu mensaje…'), 'hola');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar' }));
+    // Solo la respuesta de Camila del hilo lleva el botón (ni el saludo fijo ni lo que escribió la persona).
+    const botones = await screen.findAllByRole('button', { name: 'Reportar respuesta' });
+    expect(botones).toHaveLength(1);
+    await userEvent.click(botones[0]!);
+    expect(await screen.findByText('Respuesta reportada. El equipo la va a revisar.')).toBeTruthy();
+    expect(llamadas.some((l) => l.url.endsWith('/datos/camila/mensajes/m2/reportar'))).toBe(true);
+    expect(screen.queryByRole('button', { name: 'Reportar respuesta' })).toBeNull();
+  });
+
   it('si falla el envío, lo escrito se queda en la casilla', async () => {
     servidor((l) =>
       l.url.endsWith('/camila/mensaje')
