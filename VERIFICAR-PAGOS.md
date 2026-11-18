@@ -45,6 +45,12 @@
 
 > **19 oct (tarde), publicado en 26649f68:** cobro en mano (efectivo y transferencia al repartidor) probado de punta a punta en staging con las cuentas de la corrida y en simulación; bandeja de soporte del cobro en mano; recarga que no cuadra abre incidencia. **Nada de esto se probó con dinero real** y el cobro en mano sigue **apagado** en todos los países. La tarjeta en EE. UU. sigue sin compra real (`docs/SOLICITUD-AUTORIZACIONES-2026-10-19.md`, fila 8).
 
+> 🟡 **18 nov 2026 · Stripe Connect en producción: STRIPE ACEPTÓ la primera cuenta conectada. Connect sigue APAGADO y los retiros siguen SIN PROBAR. Nada que anunciar.** (EE. UU.)
+>
+> - Revisión pasiva, 18 nov 19:31 UTC: plataforma con cobros, pagos al banco y transferencias activos, sin freno (otra sesión ya había borrado `config.connect_frenado` para destrabar la salud; no hubo reintento intermedio: seguía habiendo una sola cuenta conectada, la de Colombia de 2023).
+> - Único intento, 18 nov 19:32 UTC (`POST /datos/interno-stripe/connect/alta`, Pizzería Novi, dueño `7b269776…`): **201**, cuenta `acct_1UdEb7LOQZfkb7Zm` (Express, EE. UU.). El enlace estable de alta responde 302 hacia Stripe (el enlace no se escribe aquí: el repositorio es público; lo tiene Richard). A la cuenta le faltan los datos del negocio, la cuenta bancaria y la aceptación de términos: los escribe Richard en ese enlace.
+> - **Sin hacer, por la ventana quieta de Gerencia del 18 nov (paquete de Google Play):** `STRIPE_CONNECT_ACTIVO=1` y republicar, aviso de cuentas conectadas (`POST /datos/interno-stripe/avisos/conectadas` → `STRIPE_WEBHOOK_SECRET_CONECTADAS`), encender retiros, y las altas del repartidor «Soporte Cobros Conductor EE. UU.» (`8eee15fb…`) y de «Soporte Cobros Colombia» (`35160ad0…`, `pais: "CO"`). Se hacen al terminar la ventana. Después: 👤 Richard completa el alta en Stripe y paga el pedido de 1 dólar; entrega, retiro y comprobación en Stripe y en Divoox.
+
 > 🔴 **17 nov 2026 · Stripe Connect en producción: STRIPE RECHAZÓ el alta. Retiros NO probados. Nada que anunciar.** (EE. UU. y Colombia)
 >
 > - Revisión pasiva (`GET /datos/interno-stripe/plataforma`, solo lectura): plataforma Windoce `acct_1Mf9ZyLDByFATg8R` con cobros, pagos al banco y transferencias activos; una sola cuenta conectada (la de Colombia de 2023, `platform_paused` a propósito); saldo disponible 0 USD.
