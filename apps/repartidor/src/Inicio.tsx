@@ -78,6 +78,7 @@ import { Oferta } from './grandes/Oferta';
 import { Calificaciones } from './grandes/Calificaciones';
 import { MiEquipo } from './grandes/MiEquipo';
 import { Ganancias } from './grandes/Ganancias';
+import { resumenPeriodo } from './grandes/resumenPeriodo';
 import { Avisos } from './grandes/Avisos';
 import { AyudaPedido } from './grandes/Ayuda';
 import { AyudaDriver } from './soporte/AyudaDriver';
@@ -1791,13 +1792,8 @@ export function Inicio() {
           ? fechaDe(m) >= inicioSemana
           : fechaDe(m) >= inicioMes,
     );
-    const total = enPeriodo.reduce((x, m) => x + m.monto, 0);
-    const porPedido = new Map<string, { monto: number; fecha: string }>();
-    for (const m of enPeriodo) {
-      const k = m.pedidoId ?? m.id;
-      const prev = porPedido.get(k);
-      porPedido.set(k, { monto: (prev?.monto ?? 0) + m.monto, fecha: prev?.fecha ?? m.fecha });
-    }
+    // C-GANANCIAS-COHERENTES: un regalo de Divoox suma al total, no es una entrega.
+    const { total, entregas, regalos } = resumenPeriodo(enPeriodo);
     return lienzo(
       'ganancias',
       <View style={{ padding: 16, gap: 12 }}>
@@ -1993,11 +1989,16 @@ export function Inicio() {
           </Text>
           <Text style={{ color: '#666B73' }}>
             {/* C-PLURAL: «1 entrega», no «1 entregas». */}
-            {contar(porPedido.size, 'entrega', idioma)}
+            {contar(entregas, 'entrega', idioma)}
             {periodo === 'hoy' && segundosConectado
               ? ` · ${Math.floor(segundosConectado / 3600)}h ${Math.floor((segundosConectado % 3600) / 60)}m`
               : ''}
           </Text>
+          {regalos > 0 ? (
+            <Text style={{ color: '#666B73' }} testID="ganancias-incluye-regalos">
+              {td.incluyeRegalos.replace('{monto}', formatearMonto(regalos, 'USD', idioma))}
+            </Text>
+          ) : null}
         </View>
         <Ganancias api={api} idioma={idioma} periodo={periodo} />
         <ResumenAnual api={api} idioma={idioma} />
