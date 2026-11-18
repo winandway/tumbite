@@ -949,6 +949,32 @@
         font-size: 12.5px;
         color: var(--gris);
       }
+      .nota-bloque {
+        margin: 2px 0 2px;
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--gris);
+      }
+      .dist {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--gris);
+        white-space: nowrap;
+      }
+      .entrada input {
+        border: 0;
+        outline: 0;
+        flex: 1;
+        min-width: 0;
+        font: inherit;
+        font-weight: 600;
+        background: transparent;
+        color: var(--negro);
+      }
+      .entrada input::placeholder {
+        color: var(--gris);
+        font-weight: 500;
+      }
       .sug-tit {
         font-size: 12px;
         font-weight: 700;
@@ -1405,6 +1431,9 @@
         centrar: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
         pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
         flecha: '<path d="m9 6 6 6-6 6"/>',
+        reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        estrellaL:
+          '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
         baja: '<path d="m6 9 6 6 6-6"/>',
         check: '<path d="m5 12 5 5 9-10"/>',
         efectivo:
@@ -1444,7 +1473,8 @@
             inicio: 'Inicio',
             usados: 'Inicio con tus más usados',
             moto: 'Moto',
-            destino: '¿A dónde vas?',
+            destino: '¿A dónde vas? (vacía)',
+            escribiendo: '¿A dónde vas? (escribiendo)',
             carro: 'Carro',
             comida: 'Comida',
             envios: 'Envíos (Express y Flex)',
@@ -1518,6 +1548,38 @@
             ['Terminal de carga', 'Zona industrial'],
             ['Plaza Bolívar', 'Centro'],
           ],
+          escribe: 'Escribe a dónde vas',
+          recientes: 'Recientes',
+          recientesNota: 'Tu historial, ordenado por lo que sueles pedir a esta hora y este día.',
+          recientesEj: [
+            ['Trabajo', 'Edificio Torre Norte', 'Lunes a esta hora'],
+            ['Colegio del centro', 'Calle 3', 'Entre semana, por la mañana'],
+            ['Mercado municipal', 'Av. Libertad', 'Sábados'],
+          ],
+          populares: 'Populares cerca de ti',
+          popularesNota:
+            'Lo más pedido en tu ciudad por muchas personas distintas. En una ciudad nueva, lugares conocidos cercanos del mapa.',
+          popularesEj: [
+            ['Terminal de pasajeros', 'Av. Bolívar'],
+            ['Hospital central', 'Av. Principal'],
+            ['Centro comercial', 'Zona norte'],
+            ['Universidad', 'Sector universitario'],
+          ],
+          resultados: 'Resultados',
+          resultadosNota:
+            'Lugares del mapa cerca de ti, primero lo más cercano. Casa y Trabajo salen solo si coinciden con lo que escribes.',
+          lugares: [
+            ['Plaza Bolívar', 'Centro', '0,6 km'],
+            ['Terminal de pasajeros', 'Av. Bolívar', '1,2 km'],
+            ['Hospital central', 'Av. Principal', '2,1 km'],
+            ['Centro comercial', 'Zona norte', '2,9 km'],
+            ['Terminal de carga', 'Zona industrial', '3,8 km'],
+            ['Universidad', 'Sector universitario', '4,4 km'],
+            ['Terminal de autobuses interurbanos', 'Salida sur', '9,5 km'],
+          ],
+          sinResultados: 'No encontramos ese lugar. Prueba con otra palabra o fíjalo en el mapa.',
+          costo:
+            'Buscador de mapas: se cobra por búsqueda. Se usan sesiones de búsqueda, se espera unos 300 ms entre teclas y hay un tope diario en código.',
           carro: 'Carro',
           viajaCarro: 'Viaja en carro',
           carroTx: 'Cómodo y seguro para ti y tu familia',
@@ -1583,7 +1645,8 @@
             inicio: 'Home',
             usados: 'Home with your most used',
             moto: 'Moto',
-            destino: 'Where to?',
+            destino: 'Where to? (empty)',
+            escribiendo: 'Where to? (typing)',
             carro: 'Car',
             comida: 'Food',
             envios: 'Delivery (Express and Flex)',
@@ -1646,12 +1709,45 @@
           casco: 'Helmets are required. Your driver carries one for you.',
           fijarD: 'Set destination on map',
           sugerencias: 'Suggestions',
-          escrito: 'Libr',
+          escrito: 'Term',
           sug: [
             ['Public library', 'Ten Mile Rd'],
             ['Library parking lot', 'Taft Rd'],
             ['City park', 'Downtown'],
           ],
+          escribe: 'Type where you’re going',
+          recientes: 'Recent',
+          recientesNota:
+            'Your history, sorted by what you usually request at this time and on this day.',
+          recientesEj: [
+            ['Work', 'North Tower Building', 'Mondays at this time'],
+            ['Downtown school', '3rd St', 'Weekday mornings'],
+            ['Farmers market', 'Liberty Ave', 'Saturdays'],
+          ],
+          populares: 'Popular near you',
+          popularesNota:
+            'The most requested places in your city, by many different people. In a new city, well-known nearby places from the map.',
+          popularesEj: [
+            ['Bus terminal', 'Main St'],
+            ['General hospital', 'Grand Ave'],
+            ['Shopping mall', 'North side'],
+            ['University', 'Campus area'],
+          ],
+          resultados: 'Results',
+          resultadosNota:
+            'Places from the map near you, closest first. Home and Work show up only if they match what you type.',
+          lugares: [
+            ['City park', 'Downtown', '0.4 mi'],
+            ['Bus terminal', 'Main St', '0.8 mi'],
+            ['General hospital', 'Grand Ave', '1.3 mi'],
+            ['Shopping mall', 'North side', '1.8 mi'],
+            ['Terminal parking lot', 'Main St', '0.9 mi'],
+            ['University', 'Campus area', '2.7 mi'],
+            ['Airport terminal', 'Airport Rd', '14 mi'],
+          ],
+          sinResultados: 'We couldn’t find that place. Try another word or set it on the map.',
+          costo:
+            'Map search is billed per search. We use search sessions, wait about 300 ms between keystrokes and keep a daily cap in code.',
           carro: 'Car',
           viajaCarro: 'Ride by car',
           carroTx: 'Comfortable and safe for you and your family',
@@ -1726,6 +1822,7 @@
         envio: 'express',
         cat: 0,
         filtro: -1,
+        q: '',
       };
       window.__toques = 0;
 
@@ -1743,6 +1840,7 @@
         if (ORDEN.includes(h.get('p'))) E.P = h.get('p');
         if (h.get('d')) E.destino = h.get('d');
         if (h.get('e') === 'flex') E.envio = 'flex';
+        E.q = h.get('q') || '';
         if (h.get('captura') === '1') document.body.classList.add('captura');
       }
       function hash() {
@@ -1753,6 +1851,7 @@
           E.L +
           (E.destino ? '&d=' + E.destino : '') +
           (E.envio === 'flex' ? '&e=flex' : '') +
+          (E.q && E.P === 'destino' ? '&q=' + encodeURIComponent(E.q) : '') +
           (document.body.classList.contains('captura') ? '&captura=1' : '')
         );
       }
@@ -1882,10 +1981,24 @@
           E.L === 'es' ? 'Divoox · Borrador del inicio' : 'Divoox · Home screen draft';
         document.querySelectorAll('[data-t]').forEach((n) => (n.textContent = t[n.dataset.t]));
         document.getElementById('toques').innerHTML = t.toques;
-        document.getElementById('lista').innerHTML = ORDEN.map(
-          (p, i) =>
-            `<button data-lista="${p}" aria-current="${p === E.P}"><span class="n">${i + 1}</span>${t.pant[p]}</button>`,
-        ).join('');
+        const LISTA = [
+          'inicio',
+          'usados',
+          'moto',
+          'destino',
+          'escribiendo',
+          'carro',
+          'comida',
+          'envios',
+          'buscando',
+          'seguimiento',
+        ];
+        const actual = E.P === 'destino' && E.q ? 'escribiendo' : E.P;
+        document.getElementById('lista').innerHTML =
+          LISTA.map(
+            (p, i) =>
+              `<button data-lista="${p}" aria-current="${p === actual}"><span class="n">${i + 1}</span>${t.pant[p]}</button>`,
+          ).join('') + `<p class="nota-bloque" style="margin-top:8px">${t.costo}</p>`;
         selector(document.getElementById('idioma-pagina'));
 
         document.querySelector('[data-p=inicio]').innerHTML = inicio(
@@ -1914,13 +2027,17 @@
         document.querySelector('[data-p=destino]').innerHTML = `
    <div class="tope"><button class="atras" data-ir="moto" aria-label="Volver">${I(P.atras, 22)}</button><h1>${t.adonde}</h1></div>
    <div class="desliza" style="padding:4px 16px 16px">
-    <div class="entrada">${I(P.lupa, 18)}<span>${t.escrito}<span class="cursor"></span></span></div>
+    <label class="entrada">${I(P.lupa, 18)}<input id="q" autocomplete="off" placeholder="${t.escribe}" value="${E.q.replace(/"/g, '&quot;')}" aria-label="${t.adonde}"></label>
     <button class="fijar">${I(P.pin, 18, '#C20A1A')}${t.fijarD}<span class="fl">${I(P.flecha, 16, '#666B73')}</span></button>
-    <div class="sug-tit">${t.sugerencias}</div>
-    <div class="lista-sug">${t.sug.map((s) => `<button class="fila" data-dest="sug" data-ir="moto"><span class="ic">${I(P.pin, 18)}</span><span><b>${s[0]}</b><span>${s[1]}</span></span></button>`).join('')}
-     <button class="fila" data-dest="casa" data-ir="moto"><span class="ic">${I(P.casa, 18)}</span><span><b>${t.casa}</b><span>${t.casaDir}</span></span></button>
-     <button class="fila" data-dest="trabajo" data-ir="moto"><span class="ic">${I(P.maleta, 18)}</span><span><b>${t.trabajo}</b><span>${t.trabajoDir}</span></span></button></div>
+    <div id="bloques">${bloquesDestino()}</div>
    </div>`;
+        const q = document.getElementById('q');
+        q.oninput = () => {
+          E.q = q.value;
+          history.replaceState(null, '', hash());
+          document.getElementById('bloques').innerHTML = bloquesDestino();
+          conectar();
+        };
 
         document.querySelector('[data-p=carro]').innerHTML = `
    <div class="tope"><button class="atras" data-ir="inicio" aria-label="Volver">${I(P.atras, 22)}</button><h1>${t.carro}</h1></div>
@@ -2013,6 +2130,51 @@
       function cerrarVelo() {
         document.getElementById('velo').classList.remove('on');
       }
+      // C-BUSCAR-DESTINO (borrador): casilla vacía = atajos + Recientes + Populares; con texto = Resultados.
+      const norm = (x) =>
+        x
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase();
+      const filaLugar = (ic, n, d, extra = '', dest = 'sug') =>
+        `<button class="fila" data-dest="${dest}" data-ir="moto"><span class="ic">${I(ic, 18)}</span><span style="flex:1;min-width:0"><b>${n}</b><span>${d}</span></span>${extra}</button>`;
+      function bloquesDestino() {
+        const t = T[E.L];
+        const q = norm(E.q.trim());
+        if (!q) {
+          return `<div class="atajos" style="margin-top:12px">
+            <button class="atajo" data-dest="casa" data-ir="moto">${I(P.casa, 16)}${t.casa}</button>
+            <button class="atajo" data-dest="trabajo" data-ir="moto">${I(P.maleta, 16)}${t.trabajo}</button>
+            <button class="atajo">${I(P.mas, 16)}${t.agregar}</button></div>
+           <div class="sug-tit">${t.recientes}</div><p class="nota-bloque">${t.recientesNota}</p>
+           <div class="lista-sug">${t.recientesEj.map((r, i) => filaLugar(P.reloj, r[0], `${r[1]} · ${r[2]}`, '', i === 0 ? 'trabajo' : 'sug')).join('')}</div>
+           <div class="sug-tit">${t.populares}</div><p class="nota-bloque">${t.popularesNota}</p>
+           <div class="lista-sug">${t.popularesEj.map((r) => filaLugar(P.estrellaL, r[0], r[1])).join('')}</div>`;
+        }
+        const propios = [
+          [t.casa, t.casaDir, 'casa', P.casa],
+          [t.trabajo, t.trabajoDir, 'trabajo', P.maleta],
+        ].filter(
+          (x) =>
+            norm(x[0] + ' ' + x[1])
+              .split(/\s+/)
+              .some((w) => w.startsWith(q)) || norm(x[0]).startsWith(q),
+        );
+        const km = (x) => parseFloat(x.replace(',', '.'));
+        const lugares = t.lugares
+          .filter((l) =>
+            norm(l[0] + ' ' + l[1])
+              .split(/\s+/)
+              .some((w) => w.startsWith(q)),
+          )
+          .sort((a, b) => km(a[2]) - km(b[2]));
+        const filas = [
+          ...propios.map((x) => filaLugar(x[3], x[0], x[1], '', x[2])),
+          ...lugares.map((l) => filaLugar(P.pin, l[0], l[1], `<span class="dist">${l[2]}</span>`)),
+        ];
+        return `<div class="sug-tit">${t.resultados}</div><p class="nota-bloque">${t.resultadosNota}</p>
+          <div class="lista-sug">${filas.length ? filas.join('') : `<p class="nota-bloque" style="padding:12px 0">${t.sinResultados}</p>`}</div>`;
+      }
       function conectar() {
         document.querySelectorAll('#telefono .pantalla.activa button').forEach((b) => {
           if (b.closest('.idioma')) return;
@@ -2042,7 +2204,8 @@
             (b.onclick = () => {
               const p = b.dataset.lista;
               if (p === 'inicio' || p === 'usados' || p === 'moto') E.destino = null;
-              ir(p);
+              E.q = p === 'escribiendo' ? T[E.L].escrito : '';
+              ir(p === 'escribiendo' ? 'destino' : p);
             }),
         );
       }
