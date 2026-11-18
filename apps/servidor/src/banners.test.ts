@@ -132,6 +132,18 @@ describe('C-BANNERS · tope diario de imágenes con IA', () => {
     await reservarImagenes(m.DB, 30, 30, AHORA);
     expect(await saludBanners(env, m.DB, AHORA)).toBe('tope');
   });
+
+  // Revisión de calidad del 18 nov: una generación con IA fallida no es una caída del sitio. Como
+  // saludConnect, el canario dice «atrasado» y /datos/salud no responde 503 ni frena publicaciones.
+  it('una generación fallida deja el canario «atrasado», nunca «error»', async () => {
+    const m = mundo();
+    const env = { FAL_KEY: 'key-de-prueba-0000000000' } as unknown as Env;
+    const dia = new Date(AHORA).toISOString().slice(0, 10);
+    await m.DB.prepare('INSERT INTO config (clave, valor) VALUES (?, ?)')
+      .bind(`ia_banners_error:${dia}`, 'fal no respondió')
+      .run();
+    expect(await saludBanners(env, m.DB, AHORA)).toBe('atrasado');
+  });
 });
 
 /** fal de mentira: devuelve `n` imágenes y entrega bytes PNG al descargarlas. */
@@ -365,6 +377,8 @@ describe('C-BANNERS · generar con IA', () => {
     expect(r.estado).toBe(503);
     expect(f).toHaveBeenCalledTimes(1);
     expect(String((f.mock.calls[0] as unknown[])[0])).toBe(`https://fal.run/${MODELO_BANNERS}`);
-    expect((await m.llamar('GET', '/datos/salud')).datos.piezas.banners).toBe('error');
+    // Se ve en la salud, pero como «atrasado»: no tumba el sitio (revisión del 18 nov).
+    const salud = await m.llamar('GET', '/datos/salud');
+    expect(salud.datos.piezas.banners).toBe('atrasado');
   });
 });

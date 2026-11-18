@@ -42,6 +42,7 @@ const ES = {
   sinDireccion: 'Sin dirección todavía',
   mantener: 'Mantén presionado un lugar para editarlo o borrarlo.',
   noSeGuardo: 'No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.',
+  noSeBorro: 'No se pudo borrar. Revisa tu conexión y vuelve a intentarlo.',
   iconos: {
     casa: 'Casa',
     trabajo: 'Trabajo',
@@ -93,6 +94,7 @@ const EN: typeof ES = {
   sinDireccion: 'No address yet',
   mantener: 'Press and hold a place to edit or delete it.',
   noSeGuardo: 'It couldn’t be saved. Check your connection and try again.',
+  noSeBorro: 'It couldn’t be deleted. Check your connection and try again.',
   iconos: {
     casa: 'Home',
     trabajo: 'Work',

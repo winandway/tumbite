@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { C, Modal, Text } from '@tumbite/movil';
+import { C, Modal, Text, useSesion } from '@tumbite/movil';
 
 /**
  * C-INICIO-NUEVO: hoja que sube desde abajo con su asa, como el borrador («Más servicios», «Nuevo
@@ -21,6 +21,7 @@ export function HojaAbajo({
   children: ReactNode;
 }) {
   const borde = useSafeAreaInsets().bottom;
+  const { idioma } = useSesion();
   return (
     <Modal
       visible={visible}
@@ -36,7 +37,7 @@ export function HojaAbajo({
         <Pressable
           onPress={alCerrar}
           accessibilityRole="button"
-          accessibilityLabel="Cerrar"
+          accessibilityLabel={idioma === 'en' ? 'Close' : 'Cerrar'}
           style={{
             position: 'absolute',
             top: 0,

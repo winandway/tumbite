@@ -384,13 +384,13 @@ export async function generarOpciones(
 }
 
 /**
- * Canario de /datos/salud (una lectura por clave primaria): pendiente sin la llave de fal, error si
- * la última generación de hoy falló, «tope» si hoy ya se usaron todas, ok en lo demás.
+ * Canario de /datos/salud (una lectura por clave primaria): pendiente sin la llave de fal, «atrasado»
+ * si la última generación de hoy falló (no es una caída: no da 503 ni frena publicaciones, como Connect), «tope» si hoy ya se usaron todas, ok en lo demás.
  */
 export async function saludBanners(env: Env, db: D1Database, ahoraMs = Date.now()) {
   if (!env.FAL_KEY) return 'pendiente' as const;
   const hoy = await imagenesDeHoy(db, ahoraMs);
-  if (hoy.ultimoError) return 'error' as const;
+  if (hoy.ultimoError) return 'atrasado' as const;
   if (hoy.imagenes >= topeImagenes(env)) return 'tope' as const;
   return 'ok' as const;
 }

@@ -113,7 +113,10 @@ export function Inicio() {
   // La portada: la del administrador de banners; si no hay, la de respaldo (una distinta cada vez).
   const [vez, setVez] = useState(0);
   const [portada, setPortada] = useState<BannerInicio | null>(null);
+  // Una sola vez por ciudad: se espera a saber la ciudad (catálogo de servicios) antes de pedirla,
+  // así no cambia un segundo después de abrir (revisión del 18 nov).
   useEffect(() => {
+    if (!servicios) return;
     let vivo = true;
     void (async () => {
       const ultima = await Promise.resolve(almacenTelefono.leer(LLAVE_PORTADA)).catch(() => null);
@@ -135,7 +138,8 @@ export function Inicio() {
     return () => {
       vivo = false;
     };
-  }, [api, zona, idioma]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo hace falta saber que ya cargó
+  }, [api, zona, idioma, Boolean(servicios)]);
   const cabecera = portada ?? portadaRespaldo(idioma, vez, disponible);
 
   // Las promociones: las del administrador de banners; si no hay, los cupones destacados reales.

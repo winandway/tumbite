@@ -194,8 +194,32 @@ lugares.get('/lugares/recientes', async (c) => {
 });
 
 /** Mínimo de clientes distintos para que un lugar sea «popular» (nunca la casa de nadie). */
-export const MIN_CLIENTES_POPULAR = 5;
+export const MIN_CLIENTES_POPULAR = 10;
 const DIA_MS = 86_400_000;
+/** «Ninguno» (sin datos ni buscador del mapa) se guarda una hora: no repite la consulta en cada apertura. */
+const HORA_MS = 3_600_000;
+
+/**
+ * El nombre de un lugar popular, sin el número de ninguna casa (revisión del 18 nov): «43381 Grand
+ * River Ave» → «Grand River Ave»; «Av. Bolívar #25» → «Av. Bolívar». La segunda parte (zona o ciudad)
+ * solo si no lleva números.
+ */
+export function nombreSinNumero(direccion: string): { titulo: string; detalle: string } {
+  const { titulo, detalle } = partirDireccion(direccion);
+  // Por palabras (sin expresiones que puedan atascarse): fuera el número del principio («43381 …») y
+  // el del final con su marca («# 25», «No. 25», «25-10»).
+  const esNumero = (x: string) => /^\d+[A-Za-z]?$/.test(x) || /^\d+-\d+$/.test(x);
+  const marca = new Set(['#', 'no', 'no.', 'nro', 'nro.', 'n°']);
+  const p = titulo.split(/\s+/).filter(Boolean);
+  if (p.length > 1 && esNumero(p[0] ?? '')) p.shift();
+  const ultimo = p.at(-1) ?? '';
+  if (p.length > 1 && /^#\d/.test(ultimo)) p.pop();
+  else if (p.length > 2 && esNumero(ultimo) && marca.has((p.at(-2) ?? '').toLowerCase()))
+    p.splice(-2);
+  else if (p.length > 1 && /^\d+-\d+$/.test(ultimo)) p.pop();
+  const limpio = p.join(' ').trim();
+  return { titulo: limpio || titulo, detalle: /\d/.test(detalle) ? '' : detalle };
+}
 type Popular = { titulo: string; detalle: string; lat: number; lng: number };
 
 /**
@@ -221,11 +245,15 @@ lugares.get('/lugares/populares', async (c) => {
     .prepare('SELECT valor, actualizado_en FROM config WHERE clave = ?')
     .bind(clave)
     .first<{ valor: string; actualizado_en: string }>();
+  const g = guardado
+    ? (JSON.parse(guardado.valor) as { origen: string; lugares: Popular[] })
+    : null;
   if (
     guardado &&
-    Date.now() - Date.parse(`${guardado.actualizado_en.replace(' ', 'T')}Z`) < DIA_MS
+    g &&
+    Date.now() - Date.parse(`${guardado.actualizado_en.replace(' ', 'T')}Z`) <
+      (g.origen === 'ninguno' ? HORA_MS : DIA_MS)
   ) {
-    const g = JSON.parse(guardado.valor) as { origen: string; lugares: Popular[] };
     c.header('cache-control', 'public, max-age=600');
     return c.json(g);
   }
@@ -241,7 +269,7 @@ lugares.get('/lugares/populares', async (c) => {
     .all<{ lat: number; lng: number; clientes: number; direccion: string }>();
   let origen = 'ciudad';
   let lista: Popular[] = results.map((x) => ({
-    ...partirDireccion(String(x.direccion)),
+    ...nombreSinNumero(String(x.direccion)),
     lat: Number(x.lat),
     lng: Number(x.lng),
   }));
@@ -254,14 +282,13 @@ lugares.get('/lugares/populares', async (c) => {
     );
     if (!lista.length) origen = 'ninguno';
   }
-  // Sin la llave del mapa no se guarda nada: así, el día que se enciende, la ciudad nueva ya sale.
-  if (origen !== 'ninguno')
-    await db
-      .prepare(
-        "INSERT INTO config (clave, valor, actualizado_en) VALUES (?, ?, datetime('now')) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = excluded.actualizado_en",
-      )
-      .bind(clave, JSON.stringify({ origen, lugares: lista }))
-      .run();
+  // «Ninguno» también se guarda, pero solo una hora (el día que se enciende el mapa, sale pronto).
+  await db
+    .prepare(
+      "INSERT INTO config (clave, valor, actualizado_en) VALUES (?, ?, datetime('now')) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = excluded.actualizado_en",
+    )
+    .bind(clave, JSON.stringify({ origen, lugares: lista }))
+    .run();
   return c.json({ origen, lugares: lista });
 });
 
