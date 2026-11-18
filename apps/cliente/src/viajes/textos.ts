@@ -11,7 +11,7 @@ export const TEXTOS_MOTO = {
       xl: 'Carro XL',
     },
     categoriasAyuda: {
-      estandar: 'El de siempre, al mejor precio',
+      estandar: 'El de siempre, para el día a día',
       comfort: 'Carros más nuevos y con más espacio',
       premium: 'Carros de alta gama',
       xl: 'Hasta 6 personas',
@@ -217,7 +217,7 @@ export const TEXTOS_MOTO = {
       xl: 'Car XL',
     },
     categoriasAyuda: {
-      estandar: 'The everyday ride, at the best price',
+      estandar: 'The everyday ride for daily trips',
       comfort: 'Newer cars with extra room',
       premium: 'High-end cars',
       xl: 'Up to 6 people',

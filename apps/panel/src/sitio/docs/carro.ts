@@ -135,7 +135,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       resumen:
         'Mira el precio de cada categoría para tu mismo viaje y elige la que quieras antes de pedir.',
       explicacion: [
-        'Divoox Carro tiene categorías, como las apps de viajes más conocidas. Carro es el de siempre, al mejor precio. Carro Comfort son carros más nuevos y con más espacio. Carro Premium son carros de alta gama, aprobados uno por uno por nuestro equipo. Carro XL lleva hasta seis personas.',
+        'Divoox Carro tiene categorías, como las apps de viajes más conocidas. Carro es el de siempre, para el día a día. Carro Comfort son carros más nuevos y con más espacio. Carro Premium son carros de alta gama, aprobados uno por uno por nuestro equipo. Carro XL lleva hasta seis personas.',
         'Cada ciudad ofrece las categorías que tiene disponibles: la app solo te muestra las que puedes pedir ahí.',
         'Cuando tocas «Ver precio», en «Elige tu carro» ves el precio fijo de cada categoría para ese mismo recorrido. Tocas otra y el precio de abajo cambia al de esa categoría. El botón te dice qué estás pidiendo: «Pedir Carro Comfort», por ejemplo.',
         'Un viaje Comfort o Premium solo se le ofrece a un conductor con un carro de esa categoría o de una mejor. Al asignarte conductor ves qué carro viene, su color, sus plazas y su placa.',
@@ -573,7 +573,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       resumen:
         'See each category’s price for your same ride and pick the one you want before you request.',
       explicacion: [
-        'Divoox Car has categories, like the best-known ride apps. Car is the everyday ride, at the best price. Car Comfort means newer cars with extra room. Car Premium means high-end cars, approved one by one by our team. Car XL fits up to six people.',
+        'Divoox Car has categories, like the best-known ride apps. Car is the everyday ride for daily trips. Car Comfort means newer cars with extra room. Car Premium means high-end cars, approved one by one by our team. Car XL fits up to six people.',
         'Each city offers the categories it has available: the app only shows the ones you can request there.',
         'When you tap “See price,” under “Choose your car” you see each category’s fixed price for that same trip. Tap another one and the price below changes to that category’s. The button tells you what you’re requesting: “Request Car Comfort,” for example.',
         'A Comfort or Premium ride is only offered to a driver whose car is in that category or a higher one. Once a driver is assigned, you see which car is coming, its color, its seats, and its plate.',
