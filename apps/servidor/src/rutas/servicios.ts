@@ -980,6 +980,15 @@ servicios.put('/conductor/vehiculo-activo', async (c) => {
       undefined,
       409,
     );
+  // Revisor (18 nov 2026): conectado con la moto, pasar al carro dejaba encendidos servicios que el
+  // carro no cubre y podían llegarle ofertas del servicio equivocado. Como en Uber Driver: el
+  // vehículo se cambia desconectado.
+  const conectado = await db
+    .prepare('SELECT conectado FROM repartidores WHERE usuario_id = ?')
+    .bind(u.id)
+    .first<{ conectado: number }>();
+  if (Number(conectado?.conectado) === 1)
+    throw new ErrorDatos('Desconéctate antes de cambiar de vehículo.', undefined, 409);
   if (vehiculoId) {
     const v = await miVehiculo(db, u.id, vehiculoId);
     if (v.estado !== 'aprobado')

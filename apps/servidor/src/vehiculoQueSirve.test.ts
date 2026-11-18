@@ -137,6 +137,22 @@ describe('C-CAMBIAR-VEHICULO de punta a punta: panel de servicios y cambio', () 
       nombre: 'Toyota Corolla',
       tipo: 'carro',
     });
+    // Revisor (18 nov 2026): conectado no se cambia de vehículo (no quedan encendidos servicios
+    // que el nuevo no cubre ni le llegan ofertas del servicio equivocado).
+    await q('UPDATE repartidores SET conectado = 1 WHERE usuario_id = ?', c.id);
+    const conectado = await m.llamar(
+      'PUT',
+      '/datos/conductor/vehiculo-activo',
+      { vehiculoId: carro },
+      c.token,
+    );
+    expect(conectado.estado).toBe(409);
+    const sigue = await m.DB.prepare(
+      'SELECT vehiculo_activo_id FROM repartidores WHERE usuario_id = ?',
+    )
+      .bind(c.id)
+      .first<{ vehiculo_activo_id: string }>();
+    expect(sigue?.vehiculo_activo_id).toBe(c.vehiculo);
     await q('UPDATE repartidores SET conectado = 0 WHERE usuario_id = ?', c.id);
     const r = await m.llamar(
       'PUT',

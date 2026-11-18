@@ -2054,6 +2054,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'The test driver has an open ride: close it first.',
   ],
   ['Desconéctate antes de cambiar de ciudad.', 'Go offline before changing your city.'],
+  ['Desconéctate antes de cambiar de vehículo.', 'Go offline before changing your vehicle.'],
   [
     'En este país los viajes no necesitan tasa de referencia.',
     'Rides in this country don’t need a reference rate.',

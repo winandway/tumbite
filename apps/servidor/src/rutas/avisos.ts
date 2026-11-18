@@ -25,6 +25,8 @@ export type Aviso =
       tipo: 'pedido';
       pedidoId: string;
       estado: string;
+      /** Lo que se le muestra al cliente (la app nueva): «enviado» con pago al recibir. */
+      estadoVisible: string;
       restauranteId: string;
       restauranteNombre: string;
       creadoEn: string;
@@ -66,8 +68,10 @@ avisos.get('/mis-avisos', async (c) => {
     lista.push({
       tipo: 'pedido',
       pedidoId: p.id,
-      // Robot (18 nov 2026): con pago al recibir, «pagado» todavía no está pagado: «enviado».
-      estado:
+      // Revisor B3 (18 nov 2026): `estado` queda como lo entiende el cliente 27 publicado; con pago
+      // al recibir, «pagado» todavía no está pagado y la app nueva lee `estadoVisible` («enviado»).
+      estado: p.estado,
+      estadoVisible:
         p.estado === 'pagado' && p.metodo_pago && p.metodo_pago !== 'tarjeta'
           ? 'enviado'
           : p.estado,
