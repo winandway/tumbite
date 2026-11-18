@@ -18,5 +18,11 @@ describe('nombreSinNumero', () => {
     expect(nombreSinNumero('Brickell Ave Suite 300').titulo).toBe('Brickell Ave');
     expect(nombreSinNumero('Av. Libertador Apto 5-2').titulo).toBe('Av. Libertador');
     expect(nombreSinNumero('Torre Norte Piso 8').titulo).toBe('Torre Norte');
+    // Tercera revisión: las palabras completas también.
+    expect(nombreSinNumero('Av. Andrés Bello Apartamento 3').titulo).toBe('Av. Andrés Bello');
+    expect(nombreSinNumero('Lake St Apartment 7').titulo).toBe('Lake St');
+    expect(nombreSinNumero('Main St Floor 2').titulo).toBe('Main St');
+    expect(nombreSinNumero('Calle Bolívar Dept 4').titulo).toBe('Calle Bolívar');
+    expect(nombreSinNumero('Calle Bolívar Depto 4').titulo).toBe('Calle Bolívar');
   });
 });

@@ -232,6 +232,17 @@ export function nombreSinNumero(direccion: string): { titulo: string; detalle: s
     'depto.',
     'dpto',
     'dpto.',
+    'dept',
+    'dept.',
+    'apartamento',
+    'apartment',
+    'departamento',
+    'floor',
+    'fl',
+    'fl.',
+    'room',
+    'rm',
+    'casa',
   ]);
   const corte = p.findIndex(
     (x, i) => i > 0 && unidad.has(x.toLowerCase()) && esNumero(p[i + 1] ?? ''),

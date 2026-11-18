@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { C, Modal, Text } from '@tumbite/movil';
+import { C, Icono, Modal, Text, useSesion } from '@tumbite/movil';
 
 /**
  * C-INICIO-NUEVO: hoja que sube desde abajo con su asa, como el borrador («Más servicios», «Nuevo
@@ -21,6 +21,16 @@ export function HojaAbajo({
   children: ReactNode;
 }) {
   const borde = useSafeAreaInsets().bottom;
+  const { idioma } = useSesion();
+  // Un solo botón para cerrar, con nombre propio de esta hoja (no choca con otros «Cerrar»).
+  const etiquetaCerrar =
+    idioma === 'en'
+      ? titulo
+        ? `Close ${titulo}`
+        : 'Close options'
+      : titulo
+        ? `Cerrar ${titulo}`
+        : 'Cerrar las opciones';
   return (
     <Modal
       visible={visible}
@@ -49,6 +59,9 @@ export function HojaAbajo({
           }}
         />
         <View
+          // VoiceOver: el gesto de «escape» (dos dedos en Z) cierra la hoja; el foco queda dentro.
+          onAccessibilityEscape={alCerrar}
+          accessibilityViewIsModal
           style={{
             backgroundColor: '#FFFFFF',
             borderTopLeftRadius: 24,
@@ -72,14 +85,35 @@ export function HojaAbajo({
               marginBottom: 12,
             }}
           />
-          {titulo ? (
-            <Text
-              accessibilityRole="header"
-              style={{ fontSize: 22, fontWeight: '700', color: C.secundario, marginBottom: 12 }}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              {titulo ? (
+                <Text
+                  accessibilityRole="header"
+                  style={{ fontSize: 22, fontWeight: '700', color: C.secundario, marginBottom: 12 }}
+                >
+                  {titulo}
+                </Text>
+              ) : null}
+            </View>
+            <Pressable
+              onPress={alCerrar}
+              accessibilityRole="button"
+              accessibilityLabel={etiquetaCerrar}
+              hitSlop={8}
+              testID="hoja-cerrar"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: '#F6F6F6',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              {titulo}
-            </Text>
-          ) : null}
+              <Icono nombre="close" tamano={20} color={C.secundario} />
+            </Pressable>
+          </View>
           <ScrollView keyboardShouldPersistTaps="handled" bounces={false}>
             {children}
           </ScrollView>

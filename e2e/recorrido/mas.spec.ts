@@ -82,6 +82,14 @@ for (const idioma of ['en', 'es'] as const)
     await expect(p.getByText(en ? 'More services' : 'Más servicios').last()).toBeVisible();
     await expect(p.getByTestId('mas-moto')).toHaveCount(0);
     await p.screenshot({ path: join(RAIZ, 'docs', 'capturas', `mas-servicios-${idioma}.png`) });
+    // La hoja se cierra con su propio botón (también con el lector de pantalla), traducido.
+    await p
+      .getByRole('button', {
+        name: en ? 'Close More services' : 'Cerrar Más servicios',
+        exact: true,
+      })
+      .click();
+    await expect(p.getByTestId('mas-regalos')).toBeHidden({ timeout: 10_000 });
     // C-SIN-PANTALLAS-INTERMEDIAS: los enlaces viejos de /service/<id> llevan directo a su pantalla.
     await p.goto('/app/service/carro');
     await expect(p).toHaveURL(/ride\?servicio=carro/, { timeout: 30_000 });

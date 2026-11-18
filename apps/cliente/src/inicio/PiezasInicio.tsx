@@ -65,6 +65,32 @@ export function PortadaRotativa({
         </Defs>
         <Rect x="0" y="0" width="100" height="100" fill="url(#g)" />
       </Svg>
+      {/* C-PORTADA-FUNDIDA (18 nov 2026): la imagen ocupa la mitad derecha a sangre, de arriba abajo,
+          y se desvanece hacia la izquierda en el degradado, como la tarjeta de promociones. Así
+          también una foto del administrador de banners con su propio fondo se integra. */}
+      <View style={p.imagenPortada} pointerEvents="none" testID="portada-imagen">
+        <Image
+          source={fuente}
+          style={banner.imagen ? p.fotoPortada : p.dibujoPortada}
+          resizeMode={banner.imagen ? 'cover' : 'contain'}
+          accessibilityIgnoresInvertColors
+        />
+        <Svg style={StyleSheet.absoluteFill} preserveAspectRatio="none" viewBox="0 0 100 100">
+          <Defs>
+            <LinearGradient id="fundido" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor="#1C0708" stopOpacity={1} />
+              <Stop offset="0.45" stopColor="#1C0708" stopOpacity={banner.imagen ? 0.35 : 0} />
+              <Stop offset="1" stopColor="#1C0708" stopOpacity={0} />
+            </LinearGradient>
+            <LinearGradient id="fundidoAbajo" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0.7" stopColor="#120506" stopOpacity={0} />
+              <Stop offset="1" stopColor="#120506" stopOpacity={banner.imagen ? 0.85 : 0} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100" height="100" fill="url(#fundido)" />
+          <Rect x="0" y="0" width="100" height="100" fill="url(#fundidoAbajo)" />
+        </Svg>
+      </View>
       <View style={p.cabeza}>
         <Image
           source={IMG_NUEVO.logoOscuro}
@@ -103,14 +129,6 @@ export function PortadaRotativa({
         >
           {banner.titulo}
         </Text>
-        {/* La foto del administrador de banners va recortada con esquinas redondas; el dibujo del
-            respaldo, recortado sobre el fondo oscuro. */}
-        <Image
-          source={fuente}
-          style={banner.imagen ? p.heroeFoto : p.heroe}
-          resizeMode={banner.imagen ? 'cover' : 'contain'}
-          accessibilityIgnoresInvertColors
-        />
       </Pressable>
     </View>
   );
@@ -450,23 +468,23 @@ const p = StyleSheet.create({
     borderColor: '#3A0A0E',
   },
   cuerpo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
     paddingLeft: 18,
     paddingRight: 12,
     paddingTop: 6,
     minHeight: 132,
   },
   titular: {
-    flex: 1,
+    maxWidth: '56%',
     color: '#FFFFFF',
     fontSize: 24,
     lineHeight: 28,
     fontWeight: '700',
     fontFamily: 'Poppins_700Bold',
   },
-  heroe: { width: 160, height: 124 },
-  heroeFoto: { width: 150, height: 116, borderRadius: 16 },
+  imagenPortada: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '58%' },
+  fotoPortada: { width: '100%', height: '100%' },
+  dibujoPortada: { position: 'absolute', right: 10, bottom: 36, width: '88%', height: '62%' },
   entregar: {
     marginTop: -28,
     marginHorizontal: 16,
