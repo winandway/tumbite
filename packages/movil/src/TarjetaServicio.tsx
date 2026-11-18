@@ -17,11 +17,20 @@ import { COLOR, FUENTE, RADIO } from './tokens';
 /**
  * C-SERVICIOS-CONECTADOS (DRIVER.md §3): la tarjeta de un servicio del Driver en sus estados:
  * conectado (verde, con luz viva y flechas, se desliza para desconectar), en pausa, haciendo,
- * desconectado (botón «Conectar»), bloqueado por Flex, en revisión («Ver») y agregar (punteada).
+ * desconectado (se desliza para conectar: C-CONECTAR-DESLIZANDO), bloqueado por Flex, en revisión
+ * («Ver») y agregar (punteada).
  * 68 de alto, esquina 16; pulgar de 56 × 56 con esquina 12.
  */
 export type TextosTarjeta = {
-  conectar: string;
+  /** «Desliza → para conectar» (C-CONECTAR-DESLIZANDO: conectar nunca es un toque). */
+  deslizarConectar: string;
+  /** «Suelta para conectar». */
+  soltarConectar: string;
+  /** «Conectar Comida» (lector de pantalla). */
+  conectarLector: (nombre: string) => string;
+  /** «¿Conectar Comida?» (confirmación del lector de pantalla). */
+  confirmarConectar: (nombre: string) => string;
+  siConectar: string;
   ver: string;
   soltar: string;
   /** «Desconectar Comida» (lector de pantalla). */
@@ -193,6 +202,7 @@ export function TarjetaServicio({
   nombre,
   detalle,
   icono,
+  dibujo,
   indice = 0,
   textos,
   alConectar,
@@ -207,10 +217,12 @@ export function TarjetaServicio({
   /** El texto de estado de la segunda línea («Esperando pedidos», «Desconectado»…). */
   detalle: string;
   icono: NombreIcono;
+  /** C-ICONOS-SERVICIO: el dibujo del servicio (el mismo del cliente); si viene, va en vez del ícono. */
+  dibujo?: ReactNode;
   /** Posición en la lista: el barrido de cada tarjeta va desfasado 0,8 s. */
   indice?: number;
   textos: TextosTarjeta;
-  alConectar?: () => void;
+  alConectar?: () => unknown;
   alVer?: () => void;
   alAgregar?: () => void;
   alDesconectar?: () => unknown;
@@ -231,7 +243,7 @@ export function TarjetaServicio({
         accionLector={textos.desconectar(nombre)}
         confirmar={{ pregunta: textos.confirmar(nombre), si: textos.si, no: textos.no }}
         alConfirmar={alDesconectar}
-        pulgar={<Icono nombre={icono} tamano={24} color={est.icono} />}
+        pulgar={dibujo ?? <Icono nombre={icono} tamano={24} color={est.icono} />}
         contenido={(arrastrando) => (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ flex: 1, gap: 2 }}>
@@ -248,6 +260,38 @@ export function TarjetaServicio({
       />
     );
 
+  if (accion === 'conectar' && alConectar)
+    return (
+      <Deslizador
+        variante="tarjeta"
+        sentido="conectar"
+        testID={testID}
+        fondo={est.fondo}
+        borde={est.borde}
+        habilitado={!cargando}
+        accionLector={textos.conectarLector(nombre)}
+        confirmar={{
+          pregunta: textos.confirmarConectar(nombre),
+          si: textos.siConectar,
+          no: textos.no,
+        }}
+        alConfirmar={alConectar}
+        pulgar={dibujo ?? <Icono nombre={icono} tamano={24} color={est.icono} />}
+        contenido={(arrastrando) => (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Nombre texto={nombre} />
+              <Detalle
+                texto={arrastrando ? textos.soltarConectar : textos.deslizarConectar}
+                color={arrastrando ? COLOR.exito : est.textoEstado}
+              />
+            </View>
+            {!arrastrando ? <Flechas color={COLOR.texto} /> : null}
+          </View>
+        )}
+      />
+    );
+
   const pulgar = (
     <View
       style={{
@@ -259,7 +303,11 @@ export function TarjetaServicio({
         justifyContent: 'center',
       }}
     >
-      <Icono nombre={estado === 'agregar' ? 'add' : icono} tamano={24} color={est.icono} />
+      {estado === 'agregar' || !dibujo ? (
+        <Icono nombre={estado === 'agregar' ? 'add' : icono} tamano={24} color={est.icono} />
+      ) : (
+        dibujo
+      )}
     </View>
   );
   const antes =
@@ -275,16 +323,7 @@ export function TarjetaServicio({
         <Nombre texto={nombre} />
         <Detalle texto={detalle} color={est.textoEstado} antes={antes} />
       </View>
-      {accion === 'conectar' ? (
-        <BotonChico
-          texto={textos.conectar}
-          oscuro
-          alTocar={alConectar}
-          cargando={cargando}
-          etiqueta={`${textos.conectar} ${nombre}`}
-          testID={testID ? `${testID}-conectar` : undefined}
-        />
-      ) : accion === 'ver' ? (
+      {accion === 'ver' ? (
         <BotonChico texto={textos.ver} alTocar={alVer} etiqueta={`${textos.ver} ${nombre}`} />
       ) : accion === 'agregar' ? (
         <Icono nombre="chevron-forward" tamano={22} color={COLOR.texto} />

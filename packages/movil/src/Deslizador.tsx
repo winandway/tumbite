@@ -24,6 +24,11 @@ import { COLOR, FUENTE, RADIO } from './tokens';
  * Si se suelta antes del 85 %, vuelve con un resorte de 300 ms. Vibra corto al cruzar el 85 %. Con
  * lector de pantalla, la acción personalizada hace lo mismo (en la tarjeta, después de confirmar):
  * el gesto nunca es la única vía.
+ *
+ * C-CONECTAR-DESLIZANDO (Richard, 18 nov 2026): conectarse también se desliza, nunca se toca (un
+ * toque en el bolsillo conectaba sin querer). La tarjeta lleva `sentido` («conectar»: lo recorrido se
+ * pinta de verde y dice «Suelta para conectar») y la acción, `confirmar` para el lector de pantalla
+ * («Conectarme» pide confirmar antes).
  */
 export const ALTO_TARJETA = 68;
 const PULGAR_TARJETA = 56;
@@ -67,12 +72,17 @@ export function Deslizador(
           borde: string;
           /** Barrido verde abajo y su desfase (índice de la tarjeta). */
           barrido?: { indice: number };
+          /** C-CONECTAR-DESLIZANDO: «desconectar» (por defecto) o «conectar». */
+          sentido?: 'desconectar' | 'conectar';
         }
       | {
           variante: 'accion';
           texto: string;
-          tono?: 'marca' | 'logistica';
+          /** «exito» (verde): conectarse. «neutro» (negro): desconectarse. */
+          tono?: 'marca' | 'logistica' | 'exito' | 'neutro';
           ocupado?: boolean;
+          /** Con lector de pantalla, antes de hacerlo se pregunta (conectar y desconectar). */
+          confirmar?: { pregunta: string; si: string; no: string };
         }
     ),
 ) {
@@ -189,9 +199,9 @@ export function Deslizador(
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel={props.accionLector}
-        accessibilityActions={[{ name: 'desconectar', label: props.accionLector }]}
+        accessibilityActions={[{ name: props.sentido ?? 'desconectar', label: props.accionLector }]}
         onAccessibilityAction={(ev) => {
-          if (ev.nativeEvent.actionName !== 'desconectar' || !activo) return;
+          if (ev.nativeEvent.actionName !== (props.sentido ?? 'desconectar') || !activo) return;
           void confirmarConSistema(
             props.confirmar.pregunta,
             props.confirmar.si,
@@ -219,7 +229,12 @@ export function Deslizador(
             top: 0,
             bottom: 0,
             width: Animated.add(relleno, pulgar + margen * 2),
-            backgroundColor: arrastrando ? COLOR.superficieFuerte : 'transparent',
+            // Al conectar, lo recorrido se pinta de verde (el éxito va en verde); al desconectar, gris.
+            backgroundColor: arrastrando
+              ? props.sentido === 'conectar'
+                ? COLOR.exitoBorde
+                : COLOR.superficieFuerte
+              : 'transparent',
           }}
         />
         {/* Al arrastrar, el pulgar deja su sitio y el texto pasa al borde izquierdo (pantalla 04). */}
@@ -281,7 +296,11 @@ export function Deslizador(
     ? COLOR.superficieFuerte
     : props.tono === 'logistica'
       ? COLOR.logistica
-      : COLOR.marca;
+      : props.tono === 'exito'
+        ? COLOR.exito
+        : props.tono === 'neutro'
+          ? COLOR.negro
+          : COLOR.marca;
   const colorTexto = !habilitado ? COLOR.textoSuave : COLOR.blanco;
   const brilloX = faseDe(reloj, MOVIMIENTO.brillo, 0, -120, Math.max(1, ancho));
   return (
@@ -294,7 +313,12 @@ export function Deslizador(
       accessibilityState={{ disabled: !habilitado, busy: Boolean(props.ocupado) }}
       accessibilityActions={[{ name: 'activate', label: props.accionLector }]}
       onAccessibilityAction={(ev) => {
-        if (ev.nativeEvent.actionName === 'activate' && activo) void confirmar();
+        if (ev.nativeEvent.actionName !== 'activate' || !activo) return;
+        const c = props.confirmar;
+        if (!c) return void confirmar();
+        void confirmarConSistema(c.pregunta, c.si, c.no).then((si) => {
+          if (si) void confirmar();
+        });
       }}
       style={{
         height: ALTO_ACCION,
@@ -352,13 +376,7 @@ export function Deslizador(
         <Icono
           nombre="chevron-forward"
           tamano={24}
-          color={
-            !habilitado
-              ? COLOR.iconoApagado
-              : props.tono === 'logistica'
-                ? COLOR.logistica
-                : COLOR.marca
-          }
+          color={!habilitado ? COLOR.iconoApagado : fondo}
         />
       </Animated.View>
     </View>

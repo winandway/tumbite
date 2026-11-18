@@ -44,9 +44,10 @@ export type PanelServicios = {
 /** Ícono (Ionicons, de línea) de cada servicio. */
 export function iconoServicio(
   id: string,
-): 'bag-handle-outline' | 'cube-outline' | 'bicycle-outline' | 'car-outline' {
+): 'bag-handle-outline' | 'cube-outline' | 'speedometer-outline' | 'car-outline' {
+  // C-ICONOS-SERVICIO: en pantalla va el dibujo del cliente (IconoServicio); esto es el respaldo.
   if (id === 'comida') return 'bag-handle-outline';
-  if (id === 'moto') return 'bicycle-outline';
+  if (id === 'moto') return 'speedometer-outline';
   if (id === 'carro') return 'car-outline';
   return 'cube-outline';
 }

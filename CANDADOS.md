@@ -2,6 +2,17 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CONECTAR-DESLIZANDO, C-ICONOS-SERVICIO y la invitación entera · En Driver conectarse es deslizar (Richard, 18 nov 2026) — todos los países
+
+- **Qué pidió Richard:** en Divoox Driver uno se conectaba con un toque («Conectarme», el botón de cada servicio, «Reanudar ofertas») y el celular en el bolsillo podía conectarlo sin querer. Ahora conectarse es deslizar de izquierda a derecha hasta el final, como «Desliza para completar» de la entrega.
+- **Qué se hizo:** una sola pieza, `Deslizador` (`packages/movil/src/Deslizador.tsx`). Variante `accion` con `tono` (`exito` para conectar y reanudar, `neutro` para desconectar) y `confirmar`; variante `tarjeta` con `sentido: 'conectar'` (relleno verde) en `TarjetaServicio`. Puntos: «Desliza para conectarte» y «Desliza para desconectarte» (`PanelServicios.tsx`, testID `conectarme` / `desconectarme`), cada tarjeta de servicio («Desliza → para conectar») y «Desliza para reanudar ofertas» (`Inicio.tsx`, testID `reanudar-ofertas`). Pausar sigue siendo botón (no conecta). «Deshacer» tras desconectarse sigue siendo un toque de pocos segundos (vuelve al estado anterior).
+- **Lector de pantalla:** la acción accesible pregunta antes («¿Conectarte a …?» con Sí/No): nadie se conecta con un doble toque suelto.
+- **C-ICONOS-SERVICIO:** la moto de Driver era una bicicleta. Ahora cada servicio lleva el MISMO dibujo que el cliente: `apps/repartidor/assets/servicios/*.webp` son copias byte a byte de `apps/cliente/assets/inicio-nuevo/*.webp`, con `IconoServicio.tsx`. La prueba compara el sha256 de cada par y falla si alguien cambia uno sin el otro o vuelve a un glifo.
+- **Invitación entera:** «¿Una empresa o un restaurante te invitó? Pega su enlace» se cortaba abajo (`InvitacionesEmpresa.tsx`): `textBreakStrategy="simple"`, `flexShrink: 1`, `lineHeight` 22 y relleno inferior.
+- **Cómo se comprueba:** `packages/movil/src/conectarDeslizando.test.ts` (un toque no conecta, medio camino no conecta, completo sí; vista en rojo), `apps/repartidor/src/servicios/iconosServicio.test.ts` (vista en rojo), y en el recorrido `e2e/recorrido/conectarDeslizando.spec.ts` (es y en; también sus capturas de Docs con `CAPTURAS=1`) y `serviciosConectados.spec.ts`. Los guiones deslizan con `e2e/recorrido/deslizar.ts`.
+- **Docs:** «Empezar a repartir» lleva las tres capturas `recorrido-conectar-{desconectado,a-medio-deslizar,conectado}-{es,en}.webp`; los textos de conectarse, la pausa y la foto de identidad dicen «desliza».
+- **Qué NO tocar:** no volver a un `Pressable`/botón para conectarse ni reanudar; no cambiar un dibujo de servicio en una sola app.
+
 ## C-TEXTO-ENTERO y C-FOTO-QUE-CORRESPONDE · Textos cortados y fotos ajenas en el inicio del cliente (auditor de tiendas, 18 nov 2026) — todos los países
 
 - **Qué se veía:** «Bella I…» y «15–25 m…» en las tarjetas de restaurantes cercanos, «Pollo I…» en las categorías, «Top rat…» y el «+» de «4,5+» cortados en las píldoras de filtro, y restaurantes sin foto propia con una pizza, hamburguesa o sushi que no les correspondía.

@@ -1,3 +1,4 @@
+import { deslizar } from './deslizar';
 import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -561,11 +562,7 @@ for (const idioma of ['en', 'es'] as const) {
     await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
     // Identidad continua: al intentar conectarse, la app le pide una foto de control (en el
     // recorrido se pide siempre). La toma y recién ahí se conecta.
-    await rep
-      .getByRole('switch')
-      .or(rep.getByRole('button', { name: L.conectarme }))
-      .first()
-      .click();
+    await deslizar(rep, 'conectarme');
     await expect(rep.getByRole('button', { name: L.tomarSelfie })).toBeVisible({ timeout: 20_000 });
     await foto(rep, 'repartidor-foto-identidad');
     const [selectorSelfie] = await Promise.all([
@@ -580,11 +577,7 @@ for (const idioma of ['en', 'es'] as const) {
     ]);
     await selectorGiro.setFiles(FOTO_RECOGIDA);
     await expect(rep.getByText(L.selfieLista)).toBeVisible({ timeout: 20_000 });
-    await rep
-      .getByRole('switch')
-      .or(rep.getByRole('button', { name: L.conectarme }))
-      .first()
-      .click();
+    await deslizar(rep, 'conectarme');
     await expect(
       rep
         .getByText(/Online for \d+ services?|Conectado a \d+ servicios?/)
@@ -630,7 +623,9 @@ for (const idioma of ['en', 'es'] as const) {
     // La hoja sube deslizándose: la foto, cuando ya terminó de subir.
     await cli.waitForTimeout(CAPTURAS ? 800 : 0);
     await foto(cli, 'cliente-inicio-direccion');
-    await cli.getByRole('button', { name: idioma === 'en' ? 'Close' : 'Cerrar', exact: true }).click();
+    await cli
+      .getByRole('button', { name: idioma === 'en' ? 'Close' : 'Cerrar', exact: true })
+      .click();
     await expect(cli.getByTestId('inicio-direccion-casilla')).toBeHidden({ timeout: 10_000 });
     if (CAPTURAS) {
       await cli.getByTestId('lista-restaurantes').scrollIntoViewIfNeeded();
@@ -1174,7 +1169,7 @@ for (const idioma of ['en', 'es'] as const) {
     await repCtx.setGeolocation(MIAMI);
 
     // El repartidor termina su turno: así no se queda «libre» para el recorrido siguiente.
-    await rep.getByText(L.desconectarme, { exact: true }).filter({ visible: true }).click();
+    await deslizar(rep, 'desconectarme');
 
     // 11. El cliente lo ve entregado y califica.
     await cli.reload();
@@ -1710,11 +1705,7 @@ for (const idioma of ['en', 'es'] as const) {
 
     // 17. Rechazar una oferta no castiga: la oferta se va y el repartidor sigue buscando.
     await rep.goto('/driver/');
-    await rep
-      .getByRole('switch')
-      .or(rep.getByRole('button', { name: L.conectarme }))
-      .first()
-      .click();
+    await deslizar(rep, 'conectarme');
     const otro = await pedirYPagar([plato.pizza]);
     await panel.getByRole('link', { name: L.pedidos, exact: true }).click();
     await panel
@@ -1739,7 +1730,7 @@ for (const idioma of ['en', 'es'] as const) {
       `SELECT repartidor_id AS r FROM pedidos WHERE id = '${otro.pedidoId}'`,
     )[0]?.r;
     expect(sinRepartidor ?? null, 'el pedido rechazado no se le asigna').toBeNull();
-    await rep.getByText(L.desconectarme, { exact: true }).filter({ visible: true }).click();
+    await deslizar(rep, 'desconectarme');
     // Nadie más lo toma: el restaurante lo rechaza y el cliente recibe su dinero. Así no queda
     // ningún pedido colgado para la corrida siguiente.
     await rechazarEnPanel(otro.pedidoId);
@@ -1844,11 +1835,7 @@ for (const idioma of ['en', 'es'] as const) {
           `UPDATE pedidos SET aceptado_en = datetime('now','-9 minutes') WHERE id = '${directo.pedidoId}'`,
         );
         await rep.goto('/driver/');
-        await rep
-          .getByRole('switch')
-          .or(rep.getByRole('button', { name: L.conectarme }))
-          .first()
-          .click();
+        await deslizar(rep, 'conectarme');
         await expect(rep.getByRole('button', { name: L.aceptarOferta, exact: true })).toBeVisible({
           timeout: 30_000,
         });
@@ -2274,11 +2261,7 @@ for (const idioma of ['en', 'es'] as const) {
         await repCtx.setGeolocation(MIAMI);
         // Ya libre, el repartidor se desconecta (así no se lleva ofertas de la corrida siguiente).
         await rep.goto('/driver/');
-        await rep
-          .getByText(L.desconectarme, { exact: true })
-          .filter({ visible: true })
-          .click({ timeout: 20_000 })
-          .catch(() => undefined);
+        await deslizar(rep, 'desconectarme').catch(() => undefined);
       } finally {
         await ponerPais(false);
       }

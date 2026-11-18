@@ -4,6 +4,7 @@ import { type Api, ErrorApi, type Idioma } from '@tumbite/compartido';
 import {
   COLOR,
   ConRelojBucle,
+  Deslizador,
   FUENTE,
   Icono,
   LETRA,
@@ -28,6 +29,7 @@ import {
   type TipoLleva,
 } from './logica';
 import { textosServicios } from './textos';
+import { IconoServicio } from './IconoServicio';
 
 /**
  * C-SERVICIOS-CONECTADOS (Richard, 16 nov 2026; diseño en DRIVER.md de Gerencia, pantallas 01, 02
@@ -115,57 +117,6 @@ function TarjetaEstado({
   );
 }
 
-/** Botón ancho (52 de alto): negro «Conectarme» o terciario «Desconectarme». */
-function BotonAncho({
-  texto,
-  alTocar,
-  fuerte,
-  cargando,
-  testID,
-}: {
-  texto: string;
-  alTocar: () => void;
-  fuerte?: boolean;
-  cargando?: boolean;
-  testID?: string;
-}) {
-  return (
-    <Pressable
-      onPress={alTocar}
-      disabled={cargando}
-      accessibilityRole="button"
-      accessibilityLabel={texto}
-      accessibilityState={{ busy: Boolean(cargando) }}
-      testID={testID}
-      style={({ pressed }) => ({
-        height: 52,
-        borderRadius: RADIO.m,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: fuerte
-          ? pressed
-            ? '#2A2A2A'
-            : COLOR.negro
-          : pressed
-            ? '#E3E3E3'
-            : COLOR.superficie,
-        opacity: cargando ? 0.7 : 1,
-      })}
-    >
-      <Text
-        style={{
-          fontFamily: FUENTE.tituloMedio,
-          fontSize: 16,
-          lineHeight: 20,
-          color: fuerte ? COLOR.blanco : COLOR.texto,
-        }}
-      >
-        {texto}
-      </Text>
-    </Pressable>
-  );
-}
-
 export type RutaFlexPanel = {
   id: string;
   nombre: string;
@@ -205,8 +156,8 @@ export function PanelServiciosInicio({
   cambiando: string | null;
   alConectarServicio: (id: string) => Promise<boolean>;
   alDesconectarServicio: (id: string) => Promise<boolean>;
-  alConectarTodo: () => void;
-  alDesconectarTodo: () => void;
+  alConectarTodo: () => unknown;
+  alDesconectarTodo: () => unknown;
   alVerServicio: (s: ServicioPanel) => void;
   alAbrirFlex: () => void;
   /** Al desconectar uno: la pantalla muestra abajo «Comida desconectada… Deshacer». */
@@ -243,11 +194,15 @@ export function PanelServiciosInicio({
         )}
         {resumen}
         {!conectado && hayAprobados ? (
-          <BotonAncho
-            texto={cambiando === 'todo' ? t.buscandoUbicacion : t.conectarme}
-            fuerte
-            cargando={cambiando === 'todo'}
-            alTocar={alConectarTodo}
+          // C-CONECTAR-DESLIZANDO: conectarse se desliza (un toque en el bolsillo no conecta).
+          <Deslizador
+            variante="accion"
+            tono="exito"
+            texto={cambiando === 'todo' ? t.buscandoUbicacion : t.deslizarConectarme}
+            ocupado={cambiando === 'todo'}
+            accionLector={t.conectarme}
+            confirmar={{ pregunta: t.confirmarConectarme, si: t.siConectar, no: t.no }}
+            alConfirmar={alConectarTodo}
             testID="conectarme"
           />
         ) : null}
@@ -281,10 +236,15 @@ export function PanelServiciosInicio({
                   nombre={nombre}
                   detalle={detalleServicio(s, idioma)}
                   icono={iconoServicio(s.servicioId)}
+                  dibujo={<IconoServicio id={s.servicioId} tamano={40} />}
                   indice={i}
                   cargando={cambiando === s.servicioId}
                   textos={{
-                    conectar: t.conectar,
+                    deslizarConectar: t.deslizarConectar,
+                    soltarConectar: t.soltarConectar,
+                    conectarLector: t.accionConectar,
+                    confirmarConectar: t.confirmarConectar,
+                    siConectar: t.siConectar,
                     ver: t.ver,
                     soltar: t.soltar,
                     desconectar: t.accionDesconectar,
@@ -292,7 +252,7 @@ export function PanelServiciosInicio({
                     si: t.si,
                     no: t.no,
                   }}
-                  alConectar={() => void alConectarServicio(s.servicioId)}
+                  alConectar={() => alConectarServicio(s.servicioId)}
                   alVer={() => alVerServicio(s)}
                   alAgregar={() => alVerServicio(s)}
                   alDesconectar={async () => {
@@ -306,10 +266,14 @@ export function PanelServiciosInicio({
             })}
             {conectado ? (
               <View style={{ marginTop: 8 }}>
-                <BotonAncho
-                  texto={t.desconectarme}
-                  cargando={cambiando === 'todo'}
-                  alTocar={alDesconectarTodo}
+                <Deslizador
+                  variante="accion"
+                  tono="neutro"
+                  texto={t.deslizarDesconectarme}
+                  ocupado={cambiando === 'todo'}
+                  accionLector={t.desconectarme}
+                  confirmar={{ pregunta: t.confirmarDesconectarme, si: t.si, no: t.no }}
+                  alConfirmar={alDesconectarTodo}
                   testID="desconectarme"
                 />
               </View>
@@ -437,11 +401,7 @@ export function AvisoLlevando({
           justifyContent: 'center',
         }}
       >
-        <Icono
-          nombre={servicioId === 'flex' ? 'cube-outline' : iconoServicio(servicioId)}
-          tamano={22}
-          color={COLOR.blanco}
-        />
+        <IconoServicio id={servicioId} tamano={30} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text
@@ -488,7 +448,7 @@ export function FranjaPausa({ panel, idioma }: { panel: Panel; idioma: Idioma })
               justifyContent: 'center',
             }}
           >
-            <Icono nombre={iconoServicio(s.servicioId)} tamano={17} color={COLOR.textoSuave} />
+            <IconoServicio id={s.servicioId} tamano={22} />
           </View>
         ))}
       </View>
@@ -535,11 +495,7 @@ export function ServiciosBloqueados({
               justifyContent: 'center',
             }}
           >
-            <Icono
-              nombre={iconoServicio(id)}
-              tamano={16}
-              color={oscuro ? '#A9B9C6' : COLOR.iconoApagado}
-            />
+            <IconoServicio id={id} tamano={22} />
           </View>
         ))}
       </View>

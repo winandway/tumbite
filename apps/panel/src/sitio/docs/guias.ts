@@ -3314,9 +3314,19 @@ const es: SeccionDocs[] = [
             pie: 'Creas tu cuenta en la app con tu nombre, correo, celular y una contraseña.',
           },
           {
-            src: '/docs/recorrido-repartidor-conectado-es.webp',
-            alt: 'App de repartidores de Divoox conectada: «Conectado: recibiendo pedidos», con el nivel y el saldo.',
-            pie: 'Te conectas cuando quieres trabajar y te desconectas cuando quieres.',
+            src: '/docs/recorrido-conectar-desconectado-es.webp',
+            alt: 'Inicio de Divoox Driver desconectado: el deslizador verde «Desliza para conectarte» y, debajo, cada servicio con «Desliza → para conectar».',
+            pie: 'Para conectarte, desliza de izquierda a derecha hasta el final: un toque no te conecta.',
+          },
+          {
+            src: '/docs/recorrido-conectar-a-medio-deslizar-es.webp',
+            alt: 'El círculo del deslizador a medio camino: si se suelta ahí, vuelve al inicio sin conectar.',
+            pie: 'Si sueltas a medio camino, vuelve al inicio y no te conecta.',
+          },
+          {
+            src: '/docs/recorrido-conectar-conectado-es.webp',
+            alt: 'Divoox Driver conectado: «Conectado a 3 servicios», las tarjetas en verde y «Desliza para desconectarte» abajo.',
+            pie: 'Conectado, en verde. Para desconectarte también deslizas.',
           },
         ],
         preguntas: [
@@ -3328,7 +3338,7 @@ const es: SeccionDocs[] = [
           'Descarga la app de Divoox para repartidores y crea tu cuenta.',
           'En Perfil → «Empieza a repartir» ves los cuatro pasos y cuál te falta: tus datos y vehículo, tu documento y foto, la verificación de antecedentes y tu cuenta para cobrar. Cada paso se abre con un toque.',
           'Conecta tu banco desde tu billetera con «Conectar mi cuenta bancaria» (Stripe, una sola vez) para poder retirar tus ganancias.',
-          'Toca «Conectarme» cuando quieras trabajar. La app usa tu ubicación solo mientras estás conectado.',
+          'Cuando quieras trabajar, desliza «Desliza para conectarte» de izquierda a derecha hasta el final. Un toque no te conecta (así no te conectas sin querer con el celular en el bolsillo); si sueltas a medio camino, vuelve al inicio. La app usa tu ubicación solo mientras estás conectado.',
           'No hay horarios ni mínimos: te conectas y desconectas cuando quieras.',
         ],
       },
@@ -3367,7 +3377,7 @@ const es: SeccionDocs[] = [
           'Para recibir pedidos de Comida, tu cuenta tiene que estar activada para Comida y, si repartes en carro o moto, con tu vehículo aprobado y tu licencia y seguro al día. Si algo falta, la app te lo dice al conectarte.',
         explicacion: [
           'Como en las grandes apps de reparto, cada pedido de Comida se ofrece solo a repartidores activados para Comida. Si repartes a pie o en bicicleta, con tu cuenta verificada basta. Si repartes en carro o en moto, además tu vehículo tiene que estar aprobado y tu licencia y tu seguro, revisados y vigentes.',
-          'Si algo falta (una activación en revisión, un papel por aprobar, un vehículo sin aprobar o tu cuenta en pausa), no te llegan ofertas de Comida, para que nunca aceptes un pedido que luego no podrías llevar. Si no puedes repartir ningún servicio, al tocar «Conectarme» la app te dice exactamente qué falta y dónde arreglarlo. Si repartes otros servicios, como Envíos, te conectas igual y te siguen llegando esos pedidos.',
+          'Si algo falta (una activación en revisión, un papel por aprobar, un vehículo sin aprobar o tu cuenta en pausa), no te llegan ofertas de Comida, para que nunca aceptes un pedido que luego no podrías llevar. Si no puedes repartir ningún servicio, al deslizar para conectarte la app te dice exactamente qué falta y dónde arreglarlo. Si repartes otros servicios, como Envíos, te conectas igual y te siguen llegando esos pedidos.',
           'Divoox lo va encendiendo ciudad por ciudad. Donde todavía no está encendido, el reparto sigue igual que siempre.',
         ],
         capturas: [
@@ -3387,7 +3397,7 @@ const es: SeccionDocs[] = [
           '¿Qué necesito para repartir en carro o en moto?',
         ],
         pasos: [
-          'Abre la app de repartidores y toca «Conectarme».',
+          'Abre la app de repartidores y desliza «Desliza para conectarte» hasta el final.',
           'Si la app te dice que falta algo, entra al menú, a «Mis datos y vehículo», y completa lo que te pide: tu verificación, tu vehículo, tu licencia o tu seguro.',
           'Cuando el equipo lo apruebe, vuelve a conectarte: las ofertas de Comida te llegan como siempre.',
           'Si tu cuenta está en pausa, escríbenos desde Ayuda y lo revisamos contigo.',
@@ -3505,7 +3515,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Avisos que te llegan al celular y quedan en la campana: el restaurante terminó tu pedido («Pedido listo para recoger»), el restaurante o el cliente cancelaron (quedas libre para el siguiente), el cliente cambió la dirección de entrega (con la nueva dirección), soporte autorizó tu entrega sin GPS, una propina que llegó después de entregar, ofertas que se te vencieron hoy y la foto de control pendiente.',
           'Los avisos llegan en el idioma que tienes en la app: si la cambias a inglés, también cambian.',
-          'Pausa: si estás conectado y sin pedido, «Pausar ofertas» te deja conectado (nuestro equipo te ve) pero no te manda ofertas, por ejemplo para comer o cargar gasolina. «Reanudar ofertas» te devuelve a la fila. Al volver a conectarte, la pausa se quita sola.',
+          'Pausa: si estás conectado y sin pedido, «Pausar ofertas» te deja conectado (nuestro equipo te ve) pero no te manda ofertas, por ejemplo para comer o cargar gasolina. deslizar «Desliza para reanudar ofertas» te devuelve a la fila. Al volver a conectarte, la pausa se quita sola.',
           'Si te conectas fuera de nuestra zona de cobertura, la app te lo dice: quedas conectado, pero ahí no llegan ofertas.',
         ],
         capturas: [
@@ -3523,7 +3533,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'Toca la campana arriba a la derecha para ver tus avisos.',
           'En el inicio, conectado y sin pedido, toca «Pausar ofertas» cuando necesites un descanso.',
-          'Toca «Reanudar ofertas» para volver a recibir.',
+          'Desliza «Desliza para reanudar ofertas» hasta el final para volver a recibir.',
         ],
       },
       {
@@ -4017,7 +4027,7 @@ const es: SeccionDocs[] = [
           'Como en las grandes plataformas: revisamos antecedentes penales y récord de manejo con un proveedor, y de vez en cuando te pedimos una foto de tu cara antes de conectarte.',
         explicacion: [
           'Antecedentes: en «Mis datos y vehículo» toca «Iniciar la verificación de antecedentes». Se abre el formulario de Checkr, un proveedor especializado, donde escribes tus datos sensibles (nunca en Divoox). Suele tardar de 1 a 3 días. Cuando el resultado es limpio, tu cuenta queda aprobada sola; si hay algo que revisar, lo mira nuestro equipo.',
-          'Foto de control: de vez en cuando (no más de una vez por semana, al azar), al tocar «Conectarme» la app te pide una foto de tu cara. Es rápida: de frente y con buena luz. Nuestro equipo la compara con la foto de tu registro para confirmar que quien reparte eres tú.',
+          'Foto de control: de vez en cuando (no más de una vez por semana, al azar), al deslizar para conectarte la app te pide una foto de tu cara. Es rápida: de frente y con buena luz. Nuestro equipo la compara con la foto de tu registro para confirmar que quien reparte eres tú.',
           'Mientras la foto de control esté pendiente, no puedes conectarte. Apenas la envías, puedes seguir.',
           'Al volver después de 14 días o más sin conectarte, además confirmas tu teléfono: toca «Enviar el código», te llega un SMS con seis números y lo escribes en la app. El código vence a los 10 minutos. Así nadie puede usar tu cuenta con otro número.',
           'Estas dos medidas protegen a los clientes, a los restaurantes y a ti: nadie puede repartir con la cuenta de otro.',
@@ -4036,7 +4046,7 @@ const es: SeccionDocs[] = [
         pasos: [
           'En «Mis datos y vehículo», toca «Iniciar la verificación de antecedentes» y completa el formulario de Checkr.',
           'Si al conectarte aparece «Foto de control», toca «Tomarme la foto ahora».',
-          'Enviada la foto, toca «Conectarme» otra vez.',
+          'Enviada la foto, desliza otra vez para conectarte.',
         ],
       },
       {
@@ -8593,9 +8603,19 @@ const en: SeccionDocs[] = [
             pie: 'You create your account in the app with your name, email, phone, and a password.',
           },
           {
-            src: '/docs/recorrido-repartidor-conectado-en.webp',
-            alt: 'Divoox driver app online: “Online: receiving orders,” with the level and the balance.',
-            pie: 'Go online when you want to work, and offline whenever you like.',
+            src: '/docs/recorrido-conectar-desconectado-en.webp',
+            alt: 'Divoox Driver home while offline: the green “Slide to go online” slider and, below, each service with “Slide → to go online.”',
+            pie: 'To go online, slide from left to right all the way: a tap won’t do it.',
+          },
+          {
+            src: '/docs/recorrido-conectar-a-medio-deslizar-en.webp',
+            alt: 'The slider’s circle halfway: if you let go there, it slides back without going online.',
+            pie: 'If you let go halfway, it slides back and you stay offline.',
+          },
+          {
+            src: '/docs/recorrido-conectar-conectado-en.webp',
+            alt: 'Divoox Driver online: “Online for 3 services,” the cards in green and “Slide to go offline” below.',
+            pie: 'Online, in green. Going offline is a slide too.',
           },
         ],
         preguntas: [
@@ -8606,7 +8626,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Download the Divoox driver app and create your account.',
           'Connect your bank from your wallet with “Connect my bank account” (Stripe, once) so you can cash out your earnings.',
-          'Tap “Go online” when you want to work. The app uses your location only while you’re online.',
+          'When you want to work, slide “Slide to go online” from left to right all the way. A tap doesn’t take you online (so your phone can’t do it from your pocket); if you let go halfway, it slides back. The app uses your location only while you’re online.',
           'No schedules, no minimums: go online and offline whenever you like.',
         ],
       },
@@ -8645,7 +8665,7 @@ const en: SeccionDocs[] = [
           'To get Food orders, your account has to be activated for Food and, if you deliver by car or motorcycle, have an approved vehicle and a current license and insurance. If something is missing, the app tells you when you go online.',
         explicacion: [
           'Like the big delivery apps, every Food order is offered only to drivers activated for Food. If you deliver on foot or by bike, a verified account is enough. If you deliver by car or motorcycle, your vehicle also has to be approved and your license and insurance reviewed and current.',
-          'If something is missing (an activation under review, a document pending approval, a vehicle not yet approved, or a paused account), you don’t get Food offers, so you never accept an order you couldn’t deliver. If you can’t deliver any service, when you tap “Go online” the app tells you exactly what’s missing and where to fix it. If you deliver other services, like Delivery, you still go online and keep getting those orders.',
+          'If something is missing (an activation under review, a document pending approval, a vehicle not yet approved, or a paused account), you don’t get Food offers, so you never accept an order you couldn’t deliver. If you can’t deliver any service, when you slide to go online the app tells you exactly what’s missing and where to fix it. If you deliver other services, like Delivery, you still go online and keep getting those orders.',
           'Divoox turns this on city by city. Where it isn’t on yet, dispatch works as always.',
         ],
         capturas: [
@@ -8665,7 +8685,7 @@ const en: SeccionDocs[] = [
           'What do I need to deliver by car or motorcycle?',
         ],
         pasos: [
-          'Open the driver app and tap “Go online.”',
+          'Open the driver app and slide “Slide to go online” all the way.',
           'If the app says something is missing, open the menu, go to “My details and vehicle,” and complete what it asks for: your verification, your vehicle, your license, or your insurance.',
           'Once our team approves it, go online again: Food offers come in as usual.',
           'If your account is paused, write to us from Help and we’ll review it with you.',
@@ -8784,7 +8804,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Notifications that reach your phone and stay in the bell: the restaurant finished your order (“Order ready for pickup”), the restaurant or the customer canceled (you’re free for the next one), the customer changed the delivery address (with the new address), support approved your delivery without GPS, a tip that came after delivery, offers that expired on you today, and a pending check-in photo.',
           'Notifications arrive in the language you have in the app: switch to English and they switch too.',
-          'Pause: when you’re online with no order, “Pause offers” keeps you online (our team sees you) but sends no offers, for example to eat or get gas. “Resume offers” puts you back in line. Going online again clears the pause.',
+          'Pause: when you’re online with no order, “Pause offers” keeps you online (our team sees you) but sends no offers, for example to eat or get gas. sliding “Slide to resume offers” puts you back in line. Going online again clears the pause.',
           'If you go online outside our coverage area, the app tells you: you’re online, but no offers arrive there.',
         ],
         capturas: [
@@ -8802,7 +8822,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Tap the bell at the top right to see your notifications.',
           'On the home screen, online with no order, tap “Pause offers” when you need a break.',
-          'Tap “Resume offers” to receive again.',
+          'Slide “Slide to resume offers” all the way to receive again.',
         ],
       },
       {
@@ -9298,7 +9318,7 @@ const en: SeccionDocs[] = [
           'Like the big platforms: we check criminal records and driving history with a provider, and every so often we ask for a photo of your face before you go online.',
         explicacion: [
           'Background check: under “My details and vehicle,” tap “Start the background check.” The Checkr form opens, a specialized provider, where you enter your sensitive details (never in Divoox). It usually takes 1 to 3 days. When the result is clear, your account is approved automatically; if something needs review, our team looks at it.',
-          'Identity check photo: every so often (no more than once a week, at random), when you tap “Go online” the app asks for a photo of your face. It’s quick: face the camera in good light. Our team compares it with the photo on file to confirm the person delivering is you.',
+          'Identity check photo: every so often (no more than once a week, at random), when you slide to go online the app asks for a photo of your face. It’s quick: face the camera in good light. Our team compares it with the photo on file to confirm the person delivering is you.',
           'While the check photo is pending, you can’t go online. As soon as you send it, you can continue.',
           'When you come back after 14 days or more without going online, you also confirm your phone: tap “Send the code,” you’ll get a text with six digits, and you type it in the app. The code expires in 10 minutes. That way nobody can use your account with another number.',
           'These two measures protect customers, restaurants and you: nobody can deliver using someone else’s account.',
@@ -9317,7 +9337,7 @@ const en: SeccionDocs[] = [
         pasos: [
           'Under “My details and vehicle,” tap “Start the background check” and complete the Checkr form.',
           'If “Identity check photo” shows up when going online, tap “Take my photo now.”',
-          'Once the photo is sent, tap “Go online” again.',
+          'Once the photo is sent, slide again to go online.',
         ],
       },
       {

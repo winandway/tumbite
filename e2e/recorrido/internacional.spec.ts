@@ -1,3 +1,4 @@
+import { deslizar } from './deslizar';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -326,12 +327,7 @@ for (const P of PAISES) {
       await rep.getByRole('checkbox').first().click(); // acepta los términos
       await rep.getByRole('button', { name: L.crearCuenta }).click();
       await rep.getByRole('button', { name: L.permisosListo }).click({ timeout: 20_000 });
-      const conectar = () =>
-        rep
-          .getByRole('switch')
-          .or(rep.getByRole('button', { name: L.conectarme }))
-          .first()
-          .click();
+      const conectar = () => deslizar(rep, 'conectarme');
       await conectar();
       await expect(rep.getByRole('button', { name: L.tomarSelfie })).toBeVisible({
         timeout: 20_000,

@@ -139,6 +139,7 @@ import {
   achicarFotoEvidencia,
   Text,
   Modal,
+  Deslizador,
 } from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
@@ -3125,8 +3126,8 @@ export function Inicio() {
       cambiando={cambiando ? 'todo' : cambiandoServicio}
       alConectarServicio={conectarServicio}
       alDesconectarServicio={desconectarServicio}
-      alConectarTodo={() => void alternar()}
-      alDesconectarTodo={() => void alternar()}
+      alConectarTodo={() => alternar()}
+      alDesconectarTodo={() => alternar()}
       alVerServicio={(sv) => {
         setServicioAgregar(sv);
         setVista('agregar');
@@ -3301,10 +3302,22 @@ export function Inicio() {
             alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertas[0]!.id}/rechazar`)}
           />
         ) : null}
-        {estado?.conectado && !activo ? (
+        {/* C-CONECTAR-DESLIZANDO: volver de la pausa trae ofertas: se desliza, nunca se toca.
+            Pausar (dejar de recibir) sigue siendo un botón. */}
+        {estado?.conectado && !activo && estado.pausado ? (
+          <Deslizador
+            variante="accion"
+            tono="exito"
+            texto={tg.pausa.deslizarReanudar}
+            accionLector={tg.pausa.reanudar}
+            confirmar={{ pregunta: tg.pausa.confirmarReanudar, si: tg.pausa.reanudar, no: ts.no }}
+            alConfirmar={() => accion('/datos/repartidor/pausar', { pausado: false })}
+            testID="reanudar-ofertas"
+          />
+        ) : estado?.conectado && !activo ? (
           <Boton
-            texto={estado.pausado ? tg.pausa.reanudar : tg.pausa.pausar}
-            alTocar={() => void accion('/datos/repartidor/pausar', { pausado: !estado.pausado })}
+            texto={tg.pausa.pausar}
+            alTocar={() => void accion('/datos/repartidor/pausar', { pausado: true })}
             secundario
           />
         ) : null}

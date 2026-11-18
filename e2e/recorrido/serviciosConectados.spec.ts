@@ -1,3 +1,4 @@
+import { deslizar, tocarPulgar } from './deslizar';
 import { textosServicios } from '../../apps/repartidor/src/servicios/textos';
 import { type Page, expect, test } from './fixtures';
 import { sqlLocal, sqlLocalTexto } from './sqlLocal';
@@ -226,9 +227,23 @@ for (const idioma of ['es', 'en'] as const)
     await expect(aviso).toBeVisible({ timeout: 20_000 });
     await expect(aviso).toContainText(t.avisoTitulo(idioma === 'en' ? 'Food' : 'Comida', 'comida'));
     await expect(estado).toContainText(t.conectadoA(2), { timeout: 20_000 });
-    await expect(p.getByTestId('servicio-comida-conectar')).toBeVisible();
+    // C-CONECTAR-DESLIZANDO: la tarjeta desconectada se conecta deslizando, nunca con un toque.
+    await expect(tarjeta).toContainText(t.deslizarConectar);
     await foto('deshacer');
     await p.getByTestId('aviso-deshacer-boton').click();
+    await expect(estado).toContainText(t.conectadoA(3), { timeout: 20_000 });
+    expect((await panel()).conectados).toBe(3);
+    // Otra vez fuera: un toque no la conecta, soltar a medio camino tampoco; deslizar entero, sí.
+    await deslizar(p, 'servicio-comida');
+    await expect(estado).toContainText(t.conectadoA(2), { timeout: 20_000 });
+    await expect(tarjeta).toContainText(t.deslizarConectar);
+    await tocarPulgar(p, 'servicio-comida');
+    await p.waitForTimeout(800);
+    expect((await panel()).conectados).toBe(2);
+    await deslizar(p, 'servicio-comida', 0.5);
+    await p.waitForTimeout(800);
+    expect((await panel()).conectados).toBe(2);
+    await deslizar(p, 'servicio-comida');
     await expect(estado).toContainText(t.conectadoA(3), { timeout: 20_000 });
     expect((await panel()).conectados).toBe(3);
 

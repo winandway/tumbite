@@ -57,9 +57,7 @@ describe('texto de pausa según lo que lleva', () => {
     expect(
       franjaPausa({ ...panel, lleva: { servicioId: 'envios', tipo: 'envio' } }, 'es')!.texto,
     ).toBe('No te llegan ofertas hasta entregar este envío.');
-    expect(franjaPausa(panel, 'en')!.titulo).toBe(
-      'Paused: Deliveries by motorcycle and Moto rides',
-    );
+    expect(franjaPausa(panel, 'en')!.titulo).toBe('Paused: Deliveries by moto and Moto rides');
   });
 
   it('sin nada que lleve o sin servicios en pausa, no hay franja', () => {

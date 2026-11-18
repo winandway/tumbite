@@ -110,9 +110,20 @@ export function InvitacionesEmpresa({ alAceptar }: { alAceptar: (aviso: string) 
             accessibilityRole="button"
             onPress={() => setConEnlace(true)}
             hitSlop={8}
-            style={{ marginTop: 16, paddingVertical: 4 }}
+            style={{ marginTop: 16, paddingTop: 4, paddingBottom: 12, alignSelf: 'stretch' }}
           >
-            <Text style={{ color: '#666B73', fontWeight: '600', textDecorationLine: 'underline' }}>
+            {/* C-TEXTO-ENTERO (Richard, 18 nov 2026): «… Pega su enlace» se cortaba; ocupa lo que
+                haga falta, también a 360 de ancho y con letra grande. */}
+            <Text
+              textBreakStrategy="simple"
+              style={{
+                flexShrink: 1,
+                color: '#666B73',
+                fontWeight: '600',
+                textDecorationLine: 'underline',
+                lineHeight: 22,
+              }}
+            >
               {t.tengoEnlace}
             </Text>
           </Pressable>

@@ -1,3 +1,4 @@
+import { IconoServicio } from './IconoServicio';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { ErrorApi } from '@tumbite/compartido';
@@ -19,7 +20,6 @@ import { AltaPasajeros } from '../viajes/AltaPasajeros';
 import { IMG } from '../piezas/recursos';
 import {
   destinoDePaso,
-  iconoServicio,
   nombreServicio,
   unirLista,
   type Destino,
@@ -182,7 +182,7 @@ export function AgregarServicio({
               accessibilityIgnoresInvertColors
             />
           ) : (
-            <Icono nombre={iconoServicio(servicio.servicioId)} tamano={28} />
+            <IconoServicio id={servicio.servicioId} tamano={40} />
           )}
         </View>
         <View style={{ flex: 1, gap: 4 }}>

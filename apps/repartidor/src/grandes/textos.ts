@@ -76,6 +76,9 @@ const es = {
   pausa: {
     pausar: 'Pausar ofertas',
     reanudar: 'Reanudar ofertas',
+    // C-CONECTAR-DESLIZANDO: volver de la pausa también se desliza.
+    deslizarReanudar: 'Desliza para reanudar ofertas',
+    confirmarReanudar: '¿Reanudar? Te volverán a llegar ofertas.',
     enPausa: 'En pausa: conectado, sin recibir ofertas',
     fueraZona:
       'Estás fuera de nuestra zona de cobertura. Quedaste conectado, pero aquí no llegan ofertas.',
@@ -302,6 +305,8 @@ const en: T = {
   pausa: {
     pausar: 'Pause offers',
     reanudar: 'Resume offers',
+    deslizarReanudar: 'Slide to resume offers',
+    confirmarReanudar: 'Resume? Offers will start coming in again.',
     enPausa: 'Paused: online, not receiving offers',
     fueraZona: 'You’re outside our coverage area. You’re online, but no offers arrive here.',
   },
