@@ -319,7 +319,11 @@ for (const idioma of ['es', 'en'] as const) {
       await expect(pr.getByTestId('cargas-saldo')).toBeVisible();
       if (CAPTURAS)
         await saldoBloque.screenshot({ path: join(CARPETA, `conductor-saldo-${idioma}.png`) });
-      if (TIENDA) {
+      // El saldo y los regalos son el modelo de Venezuela: van SOLO en la ficha en español (tercera
+      // auditoría de tiendas, 18 nov 2026); el total de hoy ya no cuenta el regalo como una entrega
+      // (C-GANANCIAS-COHERENTES).
+      await expect(pr.getByTestId('ganancias-incluye-regalos')).toBeVisible();
+      if (TIENDA && idioma === 'es') {
         // Auditor de tiendas (18 nov 2026): en la ficha nada que parezca una promesa de ingresos
         // («te alcanza para unas 124 carreras»); el saldo, los regalos y las cargas, arriba.
         await pr.evaluate(() => {
@@ -332,7 +336,7 @@ for (const idioma of ['es', 'en'] as const) {
             ?.scrollIntoView({ block: 'start' });
         });
         await pr.waitForTimeout(800);
-        await pr.screenshot({ path: tiendaDriver(idioma, '08-saldo-y-regalos.png') });
+        await pr.screenshot({ path: tiendaDriver(idioma, '05-saldo-y-regalos.png') });
       }
 
       // El superadmin: el cupón con su gasto en vivo y el crédito del conductor.

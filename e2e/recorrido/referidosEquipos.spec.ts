@@ -23,21 +23,10 @@ const CARPETA = join(RAIZ, 'docs', 'capturas', 'referidos');
 if (CAPTURAS) mkdirSync(CARPETA, { recursive: true });
 const sql = sqlLocal;
 
-/** Capturas de la ficha de Google Play del Driver (CAPTURAS_TIENDA=1, fuera de git). */
-const TIENDA = process.env.CAPTURAS_TIENDA === '1';
-const tiendaDriver = (idioma: 'es' | 'en', nombre: string) => {
-  const carpeta = join(
-    process.env.CARPETA_TIENDAS ?? '/Users/windocellc/Divoox/capturas-tiendas',
-    'Divoox Driver (repartidor)',
-    'Google Play',
-    idioma === 'es' ? 'Español' : 'English',
-    'Celular',
-  );
-  mkdirSync(carpeta, { recursive: true });
-  return join(carpeta, nombre);
-};
+// «Mi equipo» NO va en la ficha de las tiendas (tercera auditoría, 18 nov 2026): los programas de
+// referidos están apagados en producción y la pantalla habla de ganar saldo.
 
-// Nombres neutros (auditor de tiendas, 18 nov 2026): la captura 09 de la ficha sale de aquí.
+// Nombres neutros (auditor de tiendas, 18 nov 2026).
 const CIUDADES = {
   es: {
     zona: {
@@ -164,10 +153,6 @@ for (const idioma of ['es', 'en'] as const) {
     const lideres = pr.getByTestId('mi-equipo-lider');
     await expect(lideres).toBeVisible({ timeout: 30_000 });
     await expect(lideres).toContainText(C.equipo);
-    if (TIENDA) {
-      await pr.waitForTimeout(800);
-      await pr.screenshot({ path: tiendaDriver(idioma, '09-mi-equipo.png') });
-    }
     if (CAPTURAS)
       await pr
         .getByTestId('mi-equipo')

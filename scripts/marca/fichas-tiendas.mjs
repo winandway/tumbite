@@ -4,7 +4,7 @@
 // arma cada imagen al MISMO tamaño exacto de la tienda: el fondo del color de cada app, arriba
 // para quién es, la frase en blanco con una palabra resaltada y la pantalla real debajo, sin estirarla.
 // Salen en capturas-tiendas-con-titulo/ (misma estructura de carpetas).
-// Uso: node scripts/marca/fichas-tiendas.mjs
+// Uso: node scripts/marca/fichas-tiendas.mjs   (SOLO_TIENDA='Google Play' para una sola tienda)
 import { chromium } from '@playwright/test';
 import { mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
@@ -13,38 +13,45 @@ const RAIZ = join(import.meta.dirname, '..', '..');
 const ORIGEN = join(RAIZ, 'capturas-tiendas');
 const DESTINO = join(RAIZ, 'capturas-tiendas-con-titulo');
 
-// Frase de cada pantalla, por el prefijo del archivo. [inglés, español]; *palabra* va en rojo.
+// Frase de cada pantalla, por el nombre del archivo SIN su número (así cada idioma ordena sus
+// capturas como quiera). [inglés, español]; *palabra* va en rojo. Tercera auditoría de tiendas
+// (18 nov 2026): las frases dicen solo lo que muestra la captura; en inglés, solo Comida (lo único
+// abierto hoy en Estados Unidos): nada de viajes ni de «todo en una app».
 const FRASES = {
   'Divoox (cliente)': {
-    // 18 nov 2026: el inicio nuevo y los viajes (C-INICIO-NUEVO).
-    '00-': ['Food, rides and delivery in *one app*', 'Comida, viajes y envíos en *una sola app*'],
-    // En inglés la captura es de Carro (Moto no está abierta en Novi): la frase no dice «moto».
-    '00b-': ['Your ride in *3 taps*', 'Tu moto en *3 toques*'],
-    '00c-': ['Your usual places, *first*', 'Tus lugares de siempre, *primero*'],
-    '00d-': ['A driver nearby, *in seconds*', 'Un conductor cerca, *en segundos*'],
-    '00e-': ['Follow your ride *live*', 'Sigue tu viaje *en vivo*'],
-    '00f-': ['Home, work and *your places*', 'Casa, trabajo y *tus lugares*'],
-    '01-': ['Your favorite *local* restaurants', 'Tus restaurantes *favoritos*, cerca'],
-    '02-': ['Order in a *few taps*', 'Pide en *pocos toques*'],
-    '03-': ['See the *full price* before you pay', 'Ves el *precio completo* antes de pagar'],
-    '05-': ['Follow your order *live*', 'Sigue tu pedido *en vivo*'],
-    '08-': ['Delivered, with *photo proof*', 'Entregado, *con foto*'],
+    inicio: ['Local food, *delivered*', 'Comida, viajes y envíos en *una sola app*'],
+    'restaurantes-cercanos': ['Restaurants *near you*', 'Restaurantes *cerca de ti*'],
+    'menu-del-restaurante': ['Order in a *few taps*', 'Pide en *pocos toques*'],
+    'elige-tamano-y-extras': ['Pick the size and *extras*', 'Elige el tamaño y los *extras*'],
+    'carrito-con-el-precio-completo': [
+      'See the *full price* before you pay',
+      'Ves el *precio completo* antes de pagar',
+    ],
+    'moto-con-destino-y-precio': ['Your ride in *3 taps*', 'Tu moto en *3 toques*'],
+    'seguimiento-del-viaje': ['Follow your ride *live*', 'Sigue tu viaje *en vivo*'],
+    'pedido-en-vivo-en-el-mapa': ['Follow your order *live*', 'Sigue tu pedido *en vivo*'],
+    'direcciones-guardadas': ['Home, work and *your places*', 'Casa, trabajo y *tus lugares*'],
   },
   'Divoox Driver (repartidor)': {
-    '02-': ['See your *pay* before you accept', 'Ves cuánto *ganas* antes de aceptar'],
-    '01-': ['Go online *whenever* you want', 'Conéctate *cuando quieras*'],
-    '04-': ['Directions in *one tap*', 'Cómo llegar, con *un toque*'],
-    '06-': ['Keep *100%* of your tips', 'El *100 %* de la propina es tuyo'],
-    '07-': ['Cash out to your *bank*', 'Retira a tu *banco*'],
-    // 18 nov 2026: saldo, equipo y soporte.
-    '08-': ['Your balance and *gifts*', 'Tu saldo y tus *regalos*'],
-    '09-': ['Grow *your team*', 'Haz crecer *tu equipo*'],
-    '10-': ['Support, *right in the app*', 'Soporte, *dentro de la app*'],
+    'conectado-buscando-pedidos': ['Go online *whenever* you want', 'Conéctate *cuando quieras*'],
+    'oferta-con-el-pago-antes-de-aceptar': [
+      'See your *pay* before you accept',
+      'Ves cuánto *ganas* antes de aceptar',
+    ],
+    'en-camino-como-llegar': ['Directions in *one tap*', 'Cómo llegar, con *un toque*'],
+    ganancias: ['Your earnings, *order by order*', 'Tus ganancias, *pedido por pedido*'],
+    'saldo-y-regalos': ['Your balance and *gifts*', 'Tu saldo y tus *regalos*'],
   },
   'Divoox Restaurants (restaurante)': {
-    '01-': ['Never miss an *order*', 'No se te pasa ningún *pedido*'],
-    '02-': ['Every order *on time*', 'Cada pedido *a tiempo*'],
-    '03-': ['Hand off with *photo proof*', 'Entrega al repartidor *con foto*'],
+    'pedido-nuevo-y-tiempo-para-aceptar': [
+      'Never miss an *order*',
+      'No se te pasa ningún *pedido*',
+    ],
+    'pedido-en-preparacion': ['Every order *on time*', 'Cada pedido *a tiempo*'],
+    'confirmar-con-la-foto-del-repartidor': [
+      'Hand off with *photo proof*',
+      'Entrega al repartidor *con foto*',
+    ],
   },
 };
 
@@ -93,7 +100,10 @@ for (const ruta of archivos(ORIGEN).sort()) {
   const partes = relative(ORIGEN, ruta).split('/');
   const [app, , idioma, formato, nombre] = partes;
   const lista = new Map(Object.entries(new Map(Object.entries(FRASES)).get(app) ?? {}));
-  const clave = [...lista.keys()].find((k) => nombre?.startsWith(k));
+  // `SOLO_TIENDA=Google Play` arma solo las piezas de esa tienda (las de Apple no se tocan).
+  if (process.env.SOLO_TIENDA && partes[1] !== process.env.SOLO_TIENDA) continue;
+  const sinNumero = (nombre ?? '').replace(/^\d+[a-z]?-/, '').replace(/\.png$/, '');
+  const clave = [...lista.keys()].find((k) => sinNumero === k);
   if (!clave) continue;
   const [en, es] = lista.get(clave);
   const tema = new Map(Object.entries(TEMAS)).get(app) ?? TEMAS['Divoox Restaurants (restaurante)'];
