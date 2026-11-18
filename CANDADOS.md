@@ -2,6 +2,17 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-OFERTA-VENCIDA-SE-CIERRA, C-GANANCIAS-CARRERAS (regalo), «Enviado», Mi equipo, C-CAMBIAR-VEHICULO y C-CERRAR-DESLIZANDO · Cuarta vuelta del robot de Android (18 nov 2026) — todos los países
+
+- **Reoferta «no vista» (lo más importante):** en la base de pruebas cada viaje se ofreció 3 veces al conductor demo (30 s de oferta, 30 s de respiro, tope `OFERTAS_POR_CONDUCTOR`), y el monitor del robot muestra la pantalla cambiando justo en cada ventana: el servidor reofreció bien; el detector del robot miraba un píxel fijo. Fallo real de la app: la tarjeta se quedaba en «0 s» hasta el siguiente sondeo y llevaba la llave del viaje (una reoferta del mismo viaje habría heredado la cuenta vieja). Ahora: en 0 s se cierra sola (viajes y comida), la llave es viaje + vencimiento (`claveOferta`), la de comida lleva su id, y al volver la app al frente el inicio pregunta ya. Prueba: `apps/repartidor/src/viajes/ofertaVencida.test.ts`.
+- **Ganancias con regalo:** un viaje pagado entero con regalo de Divoox salía «0 entregas». `/datos/billetera` dice el viaje de cada movimiento (`viaje-tarjeta-…` y `regalo-divoox:<uso>` → `usos_cupon_divoox.operacion_id`, salvo comida) y `resumenPeriodo` cuenta cada viaje UNA vez. Pruebas: `resumenPeriodo.test.ts`, `billeteraCarreras.test.ts`.
+- **«Pagado» con pago al recibir:** Mis pedidos, Mi cuenta y la campana dicen «Enviado» hasta que se cobre (`claveEstadoPedido`, y `mis-avisos` manda `enviado`). Pruebas: `pedidoAlRecibir.test.ts`, `rutas/avisos.test.ts`.
+- **Mi equipo:** el conductor registrado con el código de un equipo SÍ quedaba en `miembros_equipo` (su referido se rechazó por «misma_persona»: mismo aparato que el líder, antifraude correcto), pero la pantalla no lo decía. `/repartidor/invitaciones` da `miEquipo` y `yaInvitado`; la pantalla dice «Perteneces al equipo X · Líder: Y» y ya no pide el código. Pruebas: `rutas/programaReferidos.test.ts`, `grandes/miEquipo.test.ts`.
+- **C-CAMBIAR-VEHICULO:** con la moto activa, Carro decía «Falta 1 papel» (la inspección, que el Corolla tenía). `vehiculoQueSirve` (servidor) dice con qué vehículo aprobado funciona el servicio si cumple TODO; la tarjeta dice «Usa tu Toyota Corolla», «Ver» ofrece «Usar mi Toyota Corolla» y Perfil → Mi vehículo tiene «Usar este vehículo» y «En uso». Pruebas: `vehiculoQueSirve.test.ts` (de punta a punta), `servicios/logica.test.ts`.
+- **C-CERRAR-DESLIZANDO:** entregar un envío y terminar un viaje se deslizan (testID `viaje-terminar`), como el cierre de comida. Los guiones usan `e2e/recorrido/deslizar.ts` y `scripts/recorrido/deslizar.mjs`. Prueba: `packages/movil/src/conectarDeslizando.test.ts`.
+- **No eran fallos de código:** el avatar con rayas es la foto que tomó la cámara simulada del emulador (la selfie guardada del conductor demo); «Mapa de Google» y «Mi ubicación» los pone el SDK de Google Maps en el idioma del teléfono, no de la app.
+- **Qué NO tocar:** no volver a la llave por viaje en la tarjeta de oferta; no contar carreras sin mirar el viaje del movimiento; no mostrar «Pagado» con pago al recibir; no cerrar entregas ni viajes con un toque.
+
 ## C-OFERTA-SUENA-EN-BUCLE · La oferta suena fuerte y en bucle hasta responder (Richard, 18 nov 2026) — todos los países
 
 - **Qué pasaba:** la oferta de Divoox Driver vibraba una vez y, en el celular, no sonaba con la app abierta; el aviso del celular era un tono de menos de un segundo. Se perdía si el teléfono estaba en el bolsillo.
