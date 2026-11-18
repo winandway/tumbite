@@ -139,6 +139,24 @@ describe('C-CONNECT-UN-INTENTO: un rechazo de Stripe frena todo intento siguient
     const salud = (await m.llamar('GET', '/datos/salud')).datos as { piezas: { connect: string } };
     expect(salud.piezas.connect).toBe('error');
   });
+
+  it('con Connect apagado, el freno se ve como «atrasado» y no tumba la salud (503)', async () => {
+    stripeFalso(true);
+    const m = mundo({
+      STRIPE_SECRET_KEY: 'sk_live_x',
+      RELOJ_SECRETO: SECRETO,
+      SITIO_URL: 'https://divoox.test',
+    });
+    const rita = await m.cuenta('restaurante', 'Soporte Freno');
+    await m.crudo('/datos/interno-stripe/connect/alta', {
+      method: 'POST',
+      headers: { 'x-reloj-secreto': SECRETO, 'content-type': 'application/json' },
+      body: JSON.stringify({ usuarioId: rita.id }),
+    });
+    const salud = await m.llamar('GET', '/datos/salud');
+    expect((salud.datos as { piezas: { connect: string } }).piezas.connect).toBe('atrasado');
+    expect(salud.estado).not.toBe(503);
+  });
 });
 
 describe('rutas internas de Connect (solo con el secreto del reloj)', () => {

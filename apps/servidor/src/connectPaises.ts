@@ -117,12 +117,17 @@ export async function crearCuentaConnect(
   }
 }
 
-/** Para la salud: con Connect encendido, un freno puesto es un error visible. */
+/**
+ * Para la salud. Con el freno puesto y Connect apagado para el público, «atrasado»: se ve, pero no
+ * tumba la salud ni frena las publicaciones (17 nov 2026, el 503 frenó todo). Con Connect encendido,
+ * el freno sí deja a restaurantes y repartidores sin poder cobrar: «error».
+ */
 export async function saludConnect(
   env: Env,
   db: D1Database,
-): Promise<'ok' | 'error' | 'pendiente'> {
-  if (await connectFrenado(db)) return 'error';
+): Promise<'ok' | 'error' | 'pendiente' | 'atrasado'> {
   const llave = env.STRIPE_SECRET_KEY ?? '';
-  return env.STRIPE_CONNECT_ACTIVO === '1' || llave.startsWith('sk_test_') ? 'ok' : 'pendiente';
+  const activo = env.STRIPE_CONNECT_ACTIVO === '1' || llave.startsWith('sk_test_');
+  if (await connectFrenado(db)) return activo ? 'error' : 'atrasado';
+  return activo ? 'ok' : 'pendiente';
 }
