@@ -68,6 +68,7 @@ import { SuperPiloto } from './SuperPiloto';
 import { SuperRewards } from './SuperRewards';
 import { SuperRegalosDivoox } from './SuperRegalosDivoox';
 import { SuperSaldoConductores } from './SuperSaldoConductores';
+import { SuperReferidosEquipos } from './SuperReferidosEquipos';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
 import { SuperViajesFijos } from './SuperViajesFijos';
@@ -176,6 +177,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/gift-codes') return <SuperRegalosDivoox idioma={idioma} />;
   // C-SALDO-CONDUCTOR: conductores por ciudad, carga de saldo y regalo de arranque.
   if (sub === '/driver-balance') return <SuperSaldoConductores idioma={idioma} />;
+  // C-REFERIDOS-EQUIPOS: programas de referidos y equipos con su líder.
+  if (sub === '/referrals') return <SuperReferidosEquipos idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;
   if (sub === '/flexfinance') return <SuperFinanzas base={base} idioma={idioma} empresaId={null} />;
   if (sub === '/drivers') return <SuperRepartidores base={base} idioma={idioma} />;

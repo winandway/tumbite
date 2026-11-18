@@ -6664,3 +6664,22 @@ body.modo-tableta .cabecera {
   border-color: #0d7a3a;
   color: #0d7a3a;
 }
+
+/* C-REFERIDOS-EQUIPOS: la página del enlace de invitación. */
+.invitacion {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  text-align: left;
+}
+.invitacion h1,
+.invitacion h2 {
+  text-align: center;
+}
+.invitacion .fila-botones {
+  margin: 12px 0;
+}
+.invitacion ol {
+  padding-left: 20px;
+  line-height: 1.6;
+}

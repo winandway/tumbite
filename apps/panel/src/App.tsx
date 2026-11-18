@@ -17,6 +17,7 @@ import { Seguimiento } from './sitio/Seguimiento';
 import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { Flex } from './sitio/Flex';
 import { Descargas } from './sitio/Descargas';
+import { Invitacion } from './sitio/Invitacion';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
@@ -192,6 +193,13 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Flex idioma={idioma} />
+      </Sitio>
+    );
+  // C-REFERIDOS-EQUIPOS: el enlace de invitación de un líder o de una persona.
+  if (ruta.startsWith('/join/'))
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <Invitacion idioma={idioma} codigo={ruta.slice('/join/'.length)} />
       </Sitio>
     );
   if (ruta === '/franchise')

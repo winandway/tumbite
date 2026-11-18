@@ -31,6 +31,8 @@ const INICIAL = {
   fechaNacimiento: '',
   clave: '',
   sms: false,
+  // C-REFERIDOS-EQUIPOS: el código con el que lo invitaron (opcional).
+  invitacion: '',
 };
 
 /**
@@ -122,6 +124,7 @@ export function Acceso({
               // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar.
               smsConsentimiento: v.sms,
               canal: 'app',
+              ...(v.invitacion.trim() ? { invitacion: v.invitacion.trim().toUpperCase() } : {}),
             });
       if (!rolesPermitidos.includes(r.usuario.rol)) {
         setError({ mensaje: t.rolEquivocado });
@@ -231,6 +234,17 @@ export function Acceso({
           autoComplete="tel"
           placeholder={t.telefono}
           error={errorDe('telefono')}
+        />
+      )}
+      {registro && (
+        <Campo
+          etiqueta={t.invitacion}
+          value={v.invitacion}
+          onChangeText={(x) => cambiar('invitacion', x.toUpperCase())}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          placeholder={t.invitacionAyuda}
+          testID="registro-invitacion"
         />
       )}
       {registro && pideCumple && (

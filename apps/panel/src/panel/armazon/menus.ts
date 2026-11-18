@@ -23,6 +23,7 @@ import {
   Navigation,
   Package,
   PiggyBank,
+  UserPlus,
   Plug,
   Route,
   Send,
@@ -77,6 +78,8 @@ export const ICONOS_MENU = {
   'gift-codes': Gift,
   // C-SALDO-CONDUCTOR: el saldo de los conductores por ciudad.
   'driver-balance': PiggyBank,
+  // C-REFERIDOS-EQUIPOS: referidos y equipos.
+  referrals: UserPlus,
   approvals: ClipboardCheck,
   rides: Navigation,
   moto: Bike,
@@ -228,7 +231,10 @@ export function gruposAdmin(
       [
         [g.operacion, ['inicio', 'orders', 'tickets', 'moderation', 'approvals', 'verifications']],
         [g.personas, ['customers', 'restaurants', 'drivers']],
-        [g.dinero, ['money', 'cash', 'driver-balance', 'gift-codes', 'flexfinance', 'reports']],
+        [
+          g.dinero,
+          ['money', 'cash', 'driver-balance', 'referrals', 'gift-codes', 'flexfinance', 'reports'],
+        ],
         [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],
         [g.territorio, ['franchises', 'cities', 'zones', 'waitlist']],
         // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; luego «Equipo interno»).

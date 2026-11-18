@@ -1333,6 +1333,107 @@ const saldoConductores: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ───────────────────── Referidos y equipos (C-REFERIDOS-EQUIPOS, 17 nov 2026) ─────────────────────
+
+const capRef = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `referidos-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const referidosEquipos: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'referrals-and-teams',
+    titulo: 'Referidos y equipos: encender un programa y crear el equipo de una línea',
+    resumen:
+      'Cómo encender los programas de referidos de conductores y de clientes, cambiar sus números por país o ciudad, y crear el equipo de una línea con su líder, su enlace y su QR.',
+    explicacion: [
+      'Conductores: quien invita gana saldo cuando su invitado completa N carreras en X días. Por defecto en Venezuela: 1 dólar de saldo después de 10 carreras en 30 días (se paga solo con el 10 % de comisión de esas carreras). El invitado recibe el regalo de arranque de su ciudad.',
+      'Clientes: el invitado recibe un regalo de Divoox y quien invitó gana un premio cuando el invitado completa N pedidos o viajes pagados y gasta un mínimo. Por defecto en Venezuela: primer viaje gratis hasta 1,50 y 1,50 para quien invitó tras 3 pedidos o viajes; en Estados Unidos, 5 dólares cuando el invitado gasta 40. El premio siempre tiene que ser menor que lo que gasta o deja el invitado; si no, el panel no lo guarda.',
+      'Todo nace apagado con esos números listos. Para encender, marca «Encendido» en la tarjeta del programa y toca «Guardar». Cada programa tiene su presupuesto: lo dado nunca lo pasa y al gastarse no se da nada más. Los topes fijos del código: hasta 10 dólares por premio, 500 por programa y 30 premios por persona al mes.',
+      'Antifraude: nadie se invita a sí mismo (mismo teléfono, aparato o cuenta de cobro), las carreras entre el que invita y su invitado no cuentan y cada persona tiene su tope de premios al mes. Las alertas salen al final de la pantalla.',
+      'Equipos: escribe el nombre (por ejemplo «Jehová Jireh»), elige la ciudad y escribe el correo o el celular con el que el líder entra a Divoox Driver. El equipo recibe un código, un enlace y un QR. Quien se registra con ese código queda en el equipo para siempre, con fecha, y también cuenta como invitado del líder.',
+      'En la tabla de equipos filtras por ciudad y ves registrados, aprobados, activos en 7 días y carreras. «Ver» abre la ficha con el QR, el enlace y la lista de miembros. El líder ve los mismos números en su app, en Perfil → «Mi equipo e invitaciones».',
+    ],
+    capturas: [
+      capRef(
+        'super-programa',
+        'es',
+        'Tarjeta del programa de conductores de Venezuela con su presupuesto, lo dado, los números y la casilla Encendido.',
+        'Un programa: sus números, su presupuesto y el interruptor.',
+      ),
+      capRef(
+        'super-crear-equipo',
+        'es',
+        'Formulario «Crear un equipo» con nombre, ciudad y líder.',
+        'Para crear el equipo de una línea.',
+      ),
+      capRef(
+        'super-ficha-equipo',
+        'es',
+        'Ficha del equipo con el QR, el código, el enlace del líder y la lista de miembros con su fecha.',
+        'La ficha del equipo con su QR y sus miembros.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo creo el equipo «Jehová Jireh»?',
+      '¿Cómo enciendo los referidos de conductores?',
+      '¿Cuánto se gana por invitar?',
+    ],
+    pasos: [
+      'Abre «Referidos y equipos» en el menú de Dinero.',
+      'Para un programa: revisa los números, marca «Encendido» y toca «Guardar».',
+      'Para un equipo: en «Crear un equipo» escribe el nombre, elige la ciudad y escribe el correo o celular del líder; toca «Crear el equipo».',
+      'Toca «Ver» en la fila del equipo y compártele al líder el enlace o el QR.',
+    ],
+  },
+  en: {
+    id: 'referrals-and-teams',
+    titulo: 'Referrals and teams: turn on a program and create a group’s team',
+    resumen:
+      'How to turn on the driver and customer referral programs, change their numbers by country or city, and create a group’s team with its leader, link and QR.',
+    explicacion: [
+      'Drivers: the inviter earns balance when their invitee completes N trips within X days. The invitee gets their city’s starter gift.',
+      'Customers: the invitee gets a Divoox gift and the inviter earns a reward when the invitee completes N paid orders or rides and spends a minimum. Default in the United States: 5 dollars once the invitee spends 40. The reward must always be less than what the invitee spends or brings in; otherwise the panel won’t save it.',
+      'Everything starts off with those numbers ready. To turn one on, check “On” on the program card and tap “Save.” Each program has its budget: what’s given never goes over it, and when it runs out nothing else is given. Fixed code limits: up to 10 dollars per reward, 500 per program and 30 rewards per person per month.',
+      'Anti-fraud: nobody can invite themselves (same phone, device or payout account), trips between inviter and invitee don’t count, and each person has a monthly limit. Alerts show at the bottom of the screen.',
+      'Teams: enter the name, pick the city and enter the email or cell phone the leader uses in Divoox Driver. The team gets a code, a link and a QR. Whoever signs up with that code stays on the team for good, with the date, and also counts as the leader’s invitee.',
+      'In the teams table you filter by city and see signed up, approved, active in 7 days and trips. “View” opens the file with the QR, the link and the members list. The leader sees the same numbers in their app, under Profile → “My team and invitations.”',
+    ],
+    capturas: [
+      capRef(
+        'super-programa',
+        'en',
+        'Driver program card with its budget, amount given, the numbers and the On checkbox.',
+        'A program: its numbers, budget and switch.',
+      ),
+      capRef(
+        'super-crear-equipo',
+        'en',
+        'The “Create a team” form with name, city and leader.',
+        'To create a group’s team.',
+      ),
+      capRef(
+        'super-ficha-equipo',
+        'en',
+        'Team file with the QR, the code, the leader’s link and the members list with their date.',
+        'The team file with its QR and members.',
+      ),
+    ],
+    preguntas: [
+      'How do I create a team for a group of drivers?',
+      'How do I turn on driver referrals?',
+      'How much do people earn for inviting?',
+    ],
+    pasos: [
+      'Open “Referrals and teams” in the Money menu.',
+      'For a program: check the numbers, check “On” and tap “Save.”',
+      'For a team: in “Create a team” enter the name, pick the city and enter the leader’s email or cell phone; tap “Create the team.”',
+      'Tap “View” on the team’s row and share the link or QR with the leader.',
+    ],
+  },
+};
+
 const porId = (lista: Guia[]) => new Map(lista.map((g) => [g.id, g]));
 
 /** Las secciones de la ayuda, en el orden del menú lateral. */
@@ -1368,7 +1469,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     {
       id: 'money',
       titulo: esp ? 'Dinero' : 'Money',
-      guias: [de(regalosDivoox), de(saldoConductores)],
+      guias: [de(regalosDivoox), de(saldoConductores), de(referidosEquipos)],
     },
     {
       id: 'settings',

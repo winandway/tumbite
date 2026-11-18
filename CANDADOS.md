@@ -2,6 +2,15 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-REFERIDOS-EQUIPOS · Referidos de conductores y clientes, y equipos con su líder (17 nov 2026) — todos los países, piloto Venezuela
+
+- **Qué es:** `apps/servidor/src/programaReferidos.ts` + `rutas/programaReferidos.ts`; pantalla Superadmin → Dinero → «Referidos y equipos» (`SuperReferidosEquipos.tsx`); Driver → Perfil → «Mi equipo e invitaciones» (`grandes/MiEquipo.tsx`); página pública `/join/<código>` (`sitio/Invitacion.tsx`); casilla «Código de invitación» al registrarse (`packages/movil/src/Acceso.tsx`, campo `invitacion` del registro). Tablas: `programas_referido`, `premios_referido`, `referidos_conductor`, `equipos`, `miembros_equipo`, `aparatos_usuario`; los referidos de clientes siguen en `referidos` (con montos en cero: los da el programa).
+- **Valores por defecto (apagados), en `PROGRAMAS_POR_DEFECTO`:** conductor VE 1 USD de saldo tras 10 carreras en 30 días (10 al mes, 50 USD); cliente VE primer viaje gratis hasta 1,50 y 1,50 para quien invita tras 3 pedidos o viajes y 4,50 de gasto (10 al mes, 100 USD); cliente US 5 USD tras gastar 40 (500 USD). Topes del código `TOPES_REFERIDOS` (10 USD por premio, 500 por programa, 30 al mes).
+- **El candado del dinero:** `darPremio` crea el premio con UNA sentencia que exige presupuesto y tope del mes; un premio por invitado y por papel (índice único). Prueba en rojo comprobada el 17 nov (sin la condición del presupuesto, `programaReferidos.test.ts` falla). El premio del cliente en un país en mano es un cupón personal del motor de regalos (`creado_por = 'referidos'`, no sale en la lista de cupones ni cuenta en el tope global); en EE. UU., saldo de regalo; del conductor, saldo prepago (`premio_referido`).
+- **Antifraude:** misma persona por teléfono, huella de aparato (`aparatos_usuario`, se anota al registrarse y al entrar) o cuenta de cobro → referido `rechazado` y alerta; carreras entre los dos no cuentan; alertas `referido_*` en `alertas_regalo`.
+- **El «Invita a un amigo» viejo** (config `referidos`) solo actúa si está encendido y la ciudad no tiene programa encendido.
+- **Qué NO tocar:** no quitar la condición del presupuesto ni del tope del mes; no dar premios fuera de `darPremio`.
+
 ## C-SALDO-CONDUCTOR · Saldo de conductores: vista por ciudad, carga manual y regalo de arranque (17 nov 2026) — todos los países con prepago, piloto Venezuela
 
 - **Qué es:** `apps/servidor/src/saldoConductores.ts` + `rutas/saldoConductores.ts`; pantalla Superadmin → Dinero → «Saldo de conductores» (`SuperSaldoConductores.tsx`). Dos billeteras del conductor: saldo (bolsillo `prepago` del libro, de donde sale la comisión) y ganancias (`movimientos`). Sin motor nuevo: la carga escribe en el mismo libro.

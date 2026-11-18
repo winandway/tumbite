@@ -23,33 +23,34 @@ import { conCuenta } from '../ConCuenta';
 const T = {
   es: {
     titulo: 'Invita a un amigo',
-    explica: (amigo: string, tu: string) =>
-      `Tu amigo recibe ${amigo} para su primer pedido y tú recibes ${tu} cuando se lo entreguemos.`,
+    // C-REFERIDOS-EQUIPOS: lo que pide el programa de tu ciudad (pedidos o viajes pagados y el gasto).
+    explica: (amigo: string, tu: string, n: number, gasto: string | null) =>
+      `${amigo ? `Tu amigo recibe ${amigo} de regalo. ` : ''}Tú recibes ${tu} cuando complete ${n === 1 ? 'su primer pedido o viaje pagado' : `${n} pedidos o viajes pagados`}${gasto ? ` y gaste ${gasto}` : ''}.`,
     tuCodigo: 'Tu código',
     compartir: 'Compartir mi código',
     mensaje: (codigo: string, amigo: string) =>
       `Te regalo ${amigo} en Divoox para tu primer pedido. Usa mi código ${codigo} en la app: https://divoox.com`,
-    invitados: (n: number, p: number) => `Amigos que lo usaron: ${n} · con su primer pedido: ${p}`,
+    invitados: (n: number, p: number) => `Amigos que lo usaron: ${n} · ya cumplieron: ${p}`,
     teInvitaron: '¿Te invitaron?',
     codigo: 'Código de invitación',
     usar: 'Usar el código',
-    listo: (m: string) => `Listo: ${m} en tu saldo de regalo para tu primer pedido.`,
+    listo: (m: string) => `Listo: tu regalo de ${m} quedó en tu cuenta y se aplica solo.`,
     yaUsaste: 'Ya usaste un código de invitación.',
     pronto: 'Las invitaciones llegan muy pronto.',
   },
   en: {
     titulo: 'Invite a friend',
-    explica: (amigo: string, tu: string) =>
-      `Your friend gets ${amigo} off their first order, and you get ${tu} once we deliver it.`,
+    explica: (amigo: string, tu: string, n: number, gasto: string | null) =>
+      `${amigo ? `Your friend gets a ${amigo} gift. ` : ''}You get ${tu} once they complete ${n === 1 ? 'their first paid order or ride' : `${n} paid orders or rides`}${gasto ? ` and spend ${gasto}` : ''}.`,
     tuCodigo: 'Your code',
     compartir: 'Share my code',
     mensaje: (codigo: string, amigo: string) =>
       `Here’s ${amigo} off your first Divoox order. Use my code ${codigo} in the app: https://divoox.com`,
-    invitados: (n: number, p: number) => `Friends who used it: ${n} · with a first order: ${p}`,
+    invitados: (n: number, p: number) => `Friends who used it: ${n} · already qualified: ${p}`,
     teInvitaron: 'Got an invite?',
     codigo: 'Invite code',
     usar: 'Use code',
-    listo: (m: string) => `Done: ${m} added to your gift balance for your first order.`,
+    listo: (m: string) => `Done: your ${m} gift is saved to your account and applies on its own.`,
     yaUsaste: 'You already used an invite code.',
     pronto: 'Invites are coming very soon.',
   },
@@ -63,6 +64,8 @@ type Estado = {
   invitados: number;
   premiados: number;
   yaUsoUnCodigo: boolean;
+  operaciones?: number;
+  gastoMinimo?: number;
 };
 
 function InvitarAmigo() {
@@ -123,7 +126,12 @@ function InvitarAmigo() {
           <>
             <Tarjeta>
               <Text style={{ color: '#666B73', marginBottom: 8 }}>
-                {t.explica(dinero(estado.paraAmigo), dinero(estado.paraQuienInvita))}
+                {t.explica(
+                  estado.paraAmigo > 0 ? dinero(estado.paraAmigo) : '',
+                  dinero(estado.paraQuienInvita),
+                  estado.operaciones ?? 1,
+                  (estado.gastoMinimo ?? 0) > 0 ? dinero(estado.gastoMinimo ?? 0) : null,
+                )}
               </Text>
               <Text style={{ color: '#666B73' }}>{t.tuCodigo}</Text>
               <Text

@@ -727,12 +727,13 @@ const es: SeccionDocs[] = [
         id: 'invite-a-friend',
         titulo: 'Invita a un amigo: crédito para los dos',
         resumen:
-          'Comparte tu código personal. Tu amigo recibe crédito para su primer pedido y tú recibes el tuyo cuando se lo entregamos.',
+          'Comparte tu código personal o tu enlace. Tu amigo recibe un regalo y tú recibes tu premio cuando él completa sus primeros pedidos o viajes pagados.',
         explicacion: [
           'Cuando las invitaciones están disponibles, aparecen en Mi cuenta → Invita a un amigo. Ahí ves tu código, cuánto recibe tu amigo y cuánto recibes tú.',
           'Toca «Compartir mi código» y mándalo por WhatsApp, mensaje o correo, como prefieras.',
-          'Tu amigo crea su cuenta, entra a Mi cuenta → Invita a un amigo y escribe tu código en «¿Te invitaron?» antes de hacer su primer pedido. El crédito le llega al momento como saldo de regalo y se usa en el carrito con «Usar mi saldo de regalo».',
-          'Cuando entregamos ese primer pedido, tu crédito aparece en tu saldo de regalo. En la misma pantalla ves cuántos amigos usaron tu código y cuántos ya hicieron su primer pedido.',
+          'Tu amigo escribe tu código en «Código de invitación» al crear su cuenta, o después en Mi cuenta → Invita a un amigo, antes de su primer pedido o viaje. Su regalo le llega al momento: en las ciudades donde se paga en mano, su primer viaje gratis hasta el monto del programa; con tarjeta, saldo de regalo.',
+          'Tú recibes tu premio cuando tu amigo completa los pedidos o viajes pagados que pide el programa de tu ciudad (por ejemplo, 3 en El Vigía) y, si aplica, el gasto mínimo. La pantalla te dice exactamente qué hace falta. En la misma pantalla ves cuántos amigos usaron tu código y cuántos ya cumplieron.',
+          'Los viajes o pedidos que tu amigo hace contigo como conductor no cuentan, y cada persona tiene un máximo de premios al mes.',
           'Cada amigo usa un solo código, una sola vez, y antes de su primer pedido. No puedes usar tu propio código.',
           'El saldo de regalo paga la comida, el envío, el servicio y el impuesto; la propina se paga con tu tarjeta.',
         ],
@@ -2879,6 +2880,43 @@ const es: SeccionDocs[] = [
     titulo: 'Para repartidores',
     icono: 'moto',
     guias: [
+      {
+        id: 'invite-drivers-and-teams',
+        titulo: 'Invita conductores y arma tu equipo: gana saldo por cada uno',
+        resumen:
+          'Con tu código o tu enlace invitas a otros conductores. Cuando tu invitado completa sus primeras carreras, ganas saldo. Si eres líder de una línea, tu equipo queda unido a ti y ves cuántos están registrados, aprobados y activos.',
+        explicacion: [
+          'Abre Perfil → «Mi equipo e invitaciones». Ahí está tu código, tu QR y el botón «Compartir mi enlace» para mandarlo por WhatsApp.',
+          'Tu invitado abre el enlace, baja Divoox Driver y escribe tu código en «Código de invitación» al crear su cuenta. Si se le olvidó, lo escribe después en «Mi equipo e invitaciones» → «¿Te invitaron?», antes de su primera carrera.',
+          'Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones.',
+          'Tu invitado recibe el regalo de arranque de su ciudad, si está encendido.',
+          'Las carreras que tú le pidas a tu invitado (o él a ti) no cuentan, nadie puede invitarse a sí mismo con otra cuenta o el mismo teléfono, y hay un máximo de premios por persona al mes.',
+          'Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan.',
+        ],
+        capturas: [
+          {
+            src: '/docs/referidos-driver-equipo-es.webp',
+            alt: 'Mi equipo e invitaciones en Divoox Driver: el equipo con registrados, aprobados, activos y carreras, el QR, el código y el botón Compartir mi enlace.',
+            pie: 'Tu equipo, tu QR y tu código para invitar.',
+          },
+          {
+            src: '/docs/referidos-enlace-es.webp',
+            alt: 'Página del enlace de invitación: quién te invitó, a qué equipo, el código y los botones para bajar las apps.',
+            pie: 'Lo que ve tu invitado al abrir tu enlace.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo invito a otros conductores?',
+          '¿Cuándo gano el saldo por invitar?',
+          '¿Cómo veo a los conductores de mi equipo?',
+        ],
+        pasos: [
+          'Abre Perfil → «Mi equipo e invitaciones».',
+          'Toca «Compartir mi enlace» o muestra tu QR.',
+          'Tu invitado escribe tu código al crear su cuenta.',
+          'Cuando complete sus carreras, el saldo entra solo.',
+        ],
+      },
       {
         id: 'driver-balance',
         titulo:
@@ -5939,13 +5977,14 @@ const en: SeccionDocs[] = [
         id: 'invite-a-friend',
         titulo: 'Invite a friend: credit for both of you',
         resumen:
-          'Share your personal code. Your friend gets credit for their first order, and you get yours once we deliver it.',
+          'Share your personal code or link. Your friend gets a gift, and you get your reward once they complete their first paid orders or rides.',
         explicacion: [
           'When invites are available, they show in My account → Invite a friend. There you see your code, what your friend gets and what you get.',
           'Tap “Share my code” and send it by WhatsApp, text or email, whichever you like.',
-          'Your friend creates an account, goes to My account → Invite a friend and enters your code under “Got an invite?” before placing their first order. The credit lands right away as gift balance and is used in the cart with “Use my gift card balance.”',
-          'When we deliver that first order, your credit shows up in your gift balance. On the same screen you see how many friends used your code and how many have placed their first order.',
-          'Each friend can use one code, once, before their first order. You can’t use your own code.',
+          'Your friend enters your code in “Invitation code” when creating their account, or later in My account → Invite a friend, before their first order or ride. Their gift lands right away as gift balance, used in the cart with “Use my gift card balance.”',
+          'You get your reward once your friend completes the paid orders or rides your city’s program asks for and, if it applies, a minimum spend (for example, 5 dollars once they spend 40). The screen tells you exactly what’s needed, and how many friends used your code and already qualified.',
+          'Orders or rides your friend takes with you as their driver don’t count, and each person has a monthly limit of rewards.',
+          'Each friend can use one code, once, before their first order. You can’t use your own code, or one from your same phone.',
           'Gift balance pays for food, delivery, service and tax; the tip is paid with your card.',
         ],
         capturas: [
@@ -8077,6 +8116,43 @@ const en: SeccionDocs[] = [
     titulo: 'For drivers',
     icono: 'moto',
     guias: [
+      {
+        id: 'invite-drivers-and-teams',
+        titulo: 'Invite drivers and build your team: earn balance for each one',
+        resumen:
+          'With your code or link you invite other drivers. When your invitee completes their first trips, you earn balance. If you lead a group, your team stays linked to you and you see how many are signed up, approved and active.',
+        explicacion: [
+          'Open Profile → “My team and invitations.” There you’ll find your code, your QR and the “Share my link” button.',
+          'Your invitee opens the link, gets Divoox Driver and enters your code in “Invitation code” when creating their account. If they forgot, they enter it later in “My team and invitations” → “Were you invited?”, before their first trip.',
+          'You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions.',
+          'Your invitee gets their city’s starter gift, if it’s on.',
+          'Trips you request from your invitee (or they from you) don’t count, nobody can invite themselves with another account or the same phone, and there’s a monthly limit of rewards per person.',
+          'Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done.',
+        ],
+        capturas: [
+          {
+            src: '/docs/referidos-driver-equipo-en.webp',
+            alt: 'My team and invitations in Divoox Driver: the team with signed up, approved, active and trips, the QR, the code and the Share my link button.',
+            pie: 'Your team, your QR and your code to invite.',
+          },
+          {
+            src: '/docs/referidos-enlace-en.webp',
+            alt: 'Invitation link page: who invited you, which team, the code and the buttons to get the apps.',
+            pie: 'What your invitee sees when they open your link.',
+          },
+        ],
+        preguntas: [
+          'How do I invite other drivers?',
+          'When do I earn the balance for inviting?',
+          'How do I see the drivers on my team?',
+        ],
+        pasos: [
+          'Open Profile → “My team and invitations.”',
+          'Tap “Share my link” or show your QR.',
+          'Your invitee enters your code when creating their account.',
+          'When they complete their trips, the balance goes in on its own.',
+        ],
+      },
       {
         id: 'driver-balance',
         titulo:

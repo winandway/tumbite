@@ -74,6 +74,7 @@ import { IMG } from './piezas/recursos';
 import { textosDriver } from './piezas/textos';
 import { Oferta } from './grandes/Oferta';
 import { Calificaciones } from './grandes/Calificaciones';
+import { MiEquipo } from './grandes/MiEquipo';
 import { Ganancias } from './grandes/Ganancias';
 import { Avisos } from './grandes/Avisos';
 import { AyudaPedido } from './grandes/Ayuda';
@@ -597,6 +598,7 @@ export function Inicio() {
     | 'seguridad'
     | 'agregar'
     | 'clientesFijos'
+    | 'miEquipo'
   >('inicio');
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
   const servicios = usePanelServicios(api, 0);
@@ -2006,6 +2008,12 @@ export function Inicio() {
   if (vista === 'calificaciones')
     return lienzo('perfil', <Calificaciones api={api} idioma={idioma} />);
   if (vista === 'avisos') return lienzo('inicio', <Avisos api={api} idioma={idioma} />);
+  // C-REFERIDOS-EQUIPOS: su código, sus invitados y, si es líder, su equipo.
+  if (vista === 'miEquipo')
+    return lienzo(
+      'perfil',
+      <MiEquipo api={api} idioma={idioma} moneda={prepago?.moneda ?? 'USD'} />,
+    );
   // C-TURNOS-REPARTIDOR: reservar horas, como el «Schedule» de DoorDash.
   if (vista === 'turnos') return lienzo('inicio', <Turnos api={api} idioma={idioma} />);
   // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: la agenda de sus clientes fijos y «No puedo».
@@ -2188,6 +2196,14 @@ export function Inicio() {
             idioma === 'en'
               ? 'Riders who picked you and your next regular rides'
               : 'Quién te eligió de confianza y tus próximos viajes fijos',
+          )}
+          {fila(
+            idioma === 'en' ? 'My team and invitations' : 'Mi equipo e invitaciones',
+            () => setVista('miEquipo'),
+            false,
+            idioma === 'en'
+              ? 'Invite drivers with your code and earn balance'
+              : 'Invita conductores con tu código y gana saldo',
           )}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}
