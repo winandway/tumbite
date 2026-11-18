@@ -113,6 +113,7 @@ type RutaFlexInicio = {
 const RUTA_FLEX_ACTIVA = ['ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_curso'];
 import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
 import { claveOferta, ofertaParaMostrar } from './viajes/ofertaTiempo';
+import { pararAlarmaOferta } from './sonidoOferta';
 import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
   abrirPagina,
@@ -762,6 +763,8 @@ export function Inicio() {
   // C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026): el conductor nuevo que todavía no se conectó ni
   // eligió ciudad quedaba en Miami; su primera ubicación del mapa fija su ciudad (una vez por sesión).
   const zonaPedida = useRef(false);
+  // C-OFERTA-SUENA-EN-BUCLE: al cerrar sesión (el inicio se desmonta) nunca queda sonando.
+  useEffect(() => () => pararAlarmaOferta('sesion'), []);
   useEffect(() => {
     if (!aqui || zonaPedida.current) return;
     zonaPedida.current = true;
@@ -779,8 +782,8 @@ export function Inicio() {
   const vencer = (clave: string) =>
     setVencidasAqui((v) => (v.has(clave) ? v : new Set([...v, clave].slice(-50))));
   const ofertaViaje = ofertaParaMostrar(ofertasViaje, vencidasAqui);
-  const ofertaComida =
-    ofertas[0] && !vencidasAqui.has(`comida@${ofertas[0].id}`) ? ofertas[0] : null;
+  // Revisor (18 nov 2026): si la primera venció aquí, pasa a la siguiente.
+  const ofertaComida = ofertas.find((o) => !vencidasAqui.has(`comida@${o.id}`)) ?? null;
 
   // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): con un bloque de Flex, el inicio cambia entero al modo
   // bloque (la ruta, con la banda «todo lo demás está desconectado»). Comida, envíos y viajes no se

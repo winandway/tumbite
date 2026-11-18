@@ -18,11 +18,13 @@ const T = {
     deslizar: 'Desliza para completar',
     primeroFoto: 'Primero toma la foto',
     completando: 'Completando…',
+    confirmar: { pregunta: '¿Completar la entrega?', si: 'Completar', no: 'Cancelar' },
   },
   en: {
     deslizar: 'Slide to complete delivery',
     primeroFoto: 'Take the photo first',
     completando: 'Completing…',
+    confirmar: { pregunta: 'Complete the delivery?', si: 'Complete', no: 'Cancel' },
   },
 };
 
@@ -69,6 +71,8 @@ export function DeslizarParaCompletar({
         accionLector={t.deslizar}
         habilitado={listo}
         ocupado={ocupado || cerrando}
+        // Revisor (18 nov 2026): con lector de pantalla, cerrar (y cobrar) pregunta antes.
+        confirmar={t.confirmar}
         alConfirmar={completar}
       />
     </View>

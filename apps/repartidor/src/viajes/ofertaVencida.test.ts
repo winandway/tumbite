@@ -30,6 +30,16 @@ describe('la oferta vencida se cierra y la reoferta es otra tarjeta', () => {
     expect(leer('viajes/OfertaViaje.tsx')).toMatch(/if \(quedan === 0\) alVencer\(\)/);
     expect(leer('grandes/Oferta.tsx')).toMatch(/if \(quedan === 0\) alVencer\?\.\(\)/);
   });
+  // Revisor (18 nov 2026): la de comida sin `ofertaEn` nunca llegaba a 0; si la primera vencía
+  // aquí, la siguiente no salía; y nadie paraba la alarma al cerrar sesión.
+  it('comida: cuenta hasta 0 aunque no venga su hora, pasa a la siguiente y la alarma se para al salir', () => {
+    expect(leer('grandes/Oferta.tsx')).toMatch(
+      /const quedan = Math\.max\(0, Math\.ceil\(\(vence - ahora\) \/ 1000\)\)/,
+    );
+    const inicio = leer('Inicio.tsx');
+    expect(inicio).toMatch(/ofertas\.find\(\(o\) => !vencidasAqui\.has\(`comida@\$\{o\.id\}`\)\)/);
+    expect(inicio).toMatch(/useEffect\(\(\) => \(\) => pararAlarmaOferta\('sesion'\), \[\]\)/);
+  });
   it('al volver la app al frente, el inicio pregunta ya (no espera la vuelta del sondeo)', () => {
     expect(leer('Inicio.tsx')).toMatch(
       /AppState\.addEventListener\('change'[\s\S]{0,160}void cargar\(\)/,

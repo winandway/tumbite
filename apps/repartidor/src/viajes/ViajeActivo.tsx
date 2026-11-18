@@ -657,6 +657,8 @@ export function ViajeActivo({
           texto={esEnvio ? t.entregar : t.terminar}
           accionLector={esEnvio ? t.entregar : t.terminar}
           ocupado={enviando}
+          // Revisor (18 nov 2026): con lector de pantalla, cerrar pregunta antes.
+          confirmar={esEnvio ? t.confirmarEntregar : t.confirmarTerminar}
           alConfirmar={() => paso('terminar', esEnvio ? { pinEntrega } : {}, 'terminado')}
         />
       ) : null}

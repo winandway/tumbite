@@ -70,7 +70,8 @@ export function Oferta({
     callar('rechazada');
     alRechazar();
   };
-  const quedan = desde != null ? Math.max(0, total - Math.floor((ahora - desde) / 1000)) : total;
+  // Revisor (18 nov 2026): sin `ofertaEn`, cuenta desde que llegó (antes nunca llegaba a 0).
+  const quedan = Math.max(0, Math.ceil((vence - ahora) / 1000));
   useEffect(() => {
     if (quedan === 0) alVencer?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
