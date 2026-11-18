@@ -32,6 +32,7 @@ import {
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
 import { capturarCobroViaje, soltarCobroViaje } from '../viajesCobro';
 import { pagaEnMano } from '@tumbite/compartido';
+import { revisarReferidos } from '../programaReferidos';
 import { aparatoDe } from './regalosDivoox';
 import {
   cerrarRegalo,
@@ -468,6 +469,16 @@ viajes.post(
           ? await cerrarRegalo(db, { operacionId: id, conductorId: u.id, maximo: totalFinal })
           : 0;
       const cobrarEnMano = totalFinal == null ? null : totalFinal - regaloDivoox;
+      // C-REFERIDOS-EQUIPOS: si el conductor o el pasajero son invitados, se revisa su premio (nunca frena).
+      const cliente = await db
+        .prepare('SELECT cliente_id FROM operaciones WHERE id = ?')
+        .bind(id)
+        .first<{ cliente_id: string }>();
+      for (const quien of [u.id, cliente?.cliente_id])
+        if (quien)
+          await revisarReferidos(db, quien).catch((e: unknown) =>
+            console.error('viajes: premio de referidos', e),
+          );
       // C-BS-REFERENCIA: en la pantalla de cobro, el equivalente en bolívares (solo informativo).
       const donde = await db
         .prepare(

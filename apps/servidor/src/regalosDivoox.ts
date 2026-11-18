@@ -617,7 +617,7 @@ export async function revisarTopes(
   const otros = await db
     .prepare(
       `SELECT COALESCE(SUM(presupuesto), 0) AS s FROM cupones_divoox
-        WHERE codigo <> ? AND (vence_en IS NULL OR vence_en > datetime('now'))`,
+        WHERE codigo <> ? AND COALESCE(creado_por, '') <> 'referidos' AND (vence_en IS NULL OR vence_en > datetime('now'))`,
     )
     .bind(codigoEditado ?? '')
     .first<{ s: number }>();
@@ -664,7 +664,8 @@ export async function listarCupones(db: D1Database) {
          (SELECT COALESCE(SUM(monto), 0) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado = 'cobrado') AS gastado,
          (SELECT COALESCE(SUM(monto), 0) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado = 'apartado') AS apartado,
          (SELECT COUNT(*) FROM usos_cupon_divoox u WHERE u.codigo = c.codigo AND u.estado = 'cobrado') AS usos
-         FROM cupones_divoox c ORDER BY c.activo DESC, c.creado_en DESC LIMIT 100`,
+         FROM cupones_divoox c WHERE COALESCE(c.creado_por, '') <> 'referidos'
+         ORDER BY c.activo DESC, c.creado_en DESC LIMIT 100`,
     )
     .all<FilaCuponDivoox>();
   return results.map(aCuponAdmin);

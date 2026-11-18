@@ -28,6 +28,8 @@ export const esquemaRegistro = z
     // C-SMS-CONSENTIMIENTO: la casilla de SMS, aparte y sin marcar. No marcarla no impide registrarse.
     smsConsentimiento: z.boolean().default(false),
     canal: z.enum(['web', 'app']).optional(),
+    // C-REFERIDOS-EQUIPOS: el código con el que lo invitaron (de un equipo o de una persona).
+    invitacion: z.string().trim().max(20).optional(),
   })
   .refine((d) => !d.correo.endsWith('@windoce.com') || /soporte/i.test(d.nombre), {
     error: 'Las cuentas de nuestro equipo deben llevar «Soporte» en el nombre.',

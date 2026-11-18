@@ -83,10 +83,26 @@ export async function miCodigo(db: D1Database, usuarioId: string, nombre: string
   throw new ErrorDatos('No pudimos crear tu código. Intenta de nuevo.', undefined, 503);
 }
 
+/** C-REFERIDOS-EQUIPOS: el programa de la ciudad del cliente, si está encendido. */
+async function programaDelCliente(db: D1Database, usuarioId: string) {
+  const { programaVigente, zonaDeUsuario } = await import('./programaReferidos');
+  const zona = await zonaDeUsuario(db, usuarioId);
+  const p = await programaVigente(db, 'cliente', zona);
+  return p?.activo ? { programa: p, zona } : null;
+}
+
 referidos.get('/referidos', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
-  const a = await leerReferidos(db);
+  const viejo = await leerReferidos(db);
+  // El programa de la ciudad manda sobre el «Invita a un amigo» viejo (EE. UU., saldo de regalo).
+  const nuevo = await programaDelCliente(db, u.id);
+  const reglas = nuevo?.programa.reglas as
+    | { regaloInvitado: number; premioInvitador: number; operaciones: number; gastoMinimo: number }
+    | undefined;
+  const a = reglas
+    ? { activos: true, paraAmigo: reglas.regaloInvitado, paraQuienInvita: reglas.premioInvitador }
+    : viejo;
   const { results } = await db
     .prepare('SELECT estado FROM referidos WHERE invitador_id = ?')
     .bind(u.id)
@@ -103,6 +119,9 @@ referidos.get('/referidos', async (c) => {
     invitados: results.length,
     premiados: results.filter((r) => r.estado === 'premiado').length,
     yaUsoUnCodigo: Boolean(usado),
+    // C-REFERIDOS-EQUIPOS: cuándo gana quien invita (con el programa de su ciudad).
+    operaciones: reglas?.operaciones ?? 1,
+    gastoMinimo: reglas?.gastoMinimo ?? 0,
   });
 });
 
@@ -111,6 +130,15 @@ referidos.post('/referidos/canjear', limiteIntentos(10, 60_000), async (c) => {
   const u = exigir(c, 'cliente');
   const d = await leerCuerpo(c, z.object({ codigo: z.string().trim().min(4).max(20) }));
   const db = base(c);
+  // C-REFERIDOS-EQUIPOS: con el programa de la ciudad (del cliente o, si es nuevo, de quien invita).
+  const { programaVigente, resolverCodigo, vincularCliente, zonaDeUsuario } =
+    await import('./programaReferidos');
+  const zona =
+    (await zonaDeUsuario(db, u.id)) ?? (await resolverCodigo(db, d.codigo))?.zonaId ?? null;
+  if ((await programaVigente(db, 'cliente', zona))?.activo) {
+    const r = await vincularCliente(db, u.id, d.codigo, zona);
+    return c.json({ ok: true, credito: r.regalo }, 201);
+  }
   const a = await leerReferidos(db);
   if (!a.activos) throw new ErrorDatos('Las invitaciones no están activas.', undefined, 409);
   const dueno = await db
@@ -150,7 +178,9 @@ referidos.post('/referidos/canjear', limiteIntentos(10, 60_000), async (c) => {
 export async function premiarReferido(db: D1Database, clienteId: string): Promise<boolean> {
   const r = await db
     .prepare(
-      "UPDATE referidos SET estado = 'premiado', premiado_en = datetime('now') WHERE invitado_id = ? AND estado = 'pendiente' RETURNING id, invitador_id, para_quien_invita",
+      // Solo las invitaciones del «Invita a un amigo» viejo (con su monto); las del programa las cierra
+      // revisarReferidos (C-REFERIDOS-EQUIPOS).
+      "UPDATE referidos SET estado = 'premiado', premiado_en = datetime('now') WHERE invitado_id = ? AND estado = 'pendiente' AND para_quien_invita > 0 RETURNING id, invitador_id, para_quien_invita",
     )
     .bind(clienteId)
     .first<{ id: string; invitador_id: string; para_quien_invita: number }>();
@@ -208,5 +238,9 @@ export async function premiarReferidoDelPedido(db: D1Database, pedidoId: string)
     .prepare('SELECT cliente_id FROM pedidos WHERE id = ?')
     .bind(pedidoId)
     .first<{ cliente_id: string }>();
-  if (f) await premiarReferido(db, f.cliente_id);
+  if (!f) return;
+  // C-REFERIDOS-EQUIPOS: el programa de la ciudad (cuenta pedidos y viajes pagados y el gasto).
+  const { revisarReferidos } = await import('./programaReferidos');
+  await revisarReferidos(db, f.cliente_id);
+  if ((await leerReferidos(db)).activos) await premiarReferido(db, f.cliente_id);
 }

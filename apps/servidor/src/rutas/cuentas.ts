@@ -6,6 +6,8 @@ import {
   entornoDeHost,
   telefonoCanonico,
 } from '@tumbite/compartido';
+import { anotarAparato, vincularCliente, vincularConductor } from '../programaReferidos';
+import { huellaAparato } from '../regalosDivoox';
 import { Hono } from 'hono';
 import {
   PAGINAS,
@@ -250,6 +252,21 @@ cuentas.post('/registro', async (c) => {
   // C-SMS-CONSENTIMIENTO: solo si marcó la casilla de SMS (aparte de los términos y sin marcar).
   if (d.smsConsentimiento) await guardarConsentimientoSms(db, id, true, d.canal ?? 'web');
   const token = await abrirSesion(db, id);
+  // C-REFERIDOS-EQUIPOS: la huella del aparato (antifraude) y el código con el que lo invitaron. Un
+  // código que no sirve nunca frena el registro: la persona lo puede escribir después.
+  await anotarAparato(db, id, await huellaAparato(c.req.header('x-aparato'))).catch((e: unknown) =>
+    console.error('registro: aparato', e),
+  );
+  if (d.invitacion)
+    await (
+      rol === 'repartidor'
+        ? vincularConductor(db, id, d.invitacion)
+        : rol === 'cliente'
+          ? vincularCliente(db, id, d.invitacion, null)
+          : Promise.resolve(null)
+    ).catch((e: unknown) => {
+      if (!(e instanceof ErrorDatos)) console.error('registro: invitación', e);
+    });
   await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
   c.header('Set-Cookie', cookie(token));
@@ -294,6 +311,9 @@ cuentas.post('/entrar', async (c) => {
   if (fila.rol === 'repartidor')
     await db.prepare('DELETE FROM sesiones WHERE usuario_id = ?').bind(fila.id).run();
   const token = await abrirSesion(db, fila.id, acceso ? JSON.stringify(acceso) : null);
+  await anotarAparato(db, fila.id, await huellaAparato(c.req.header('x-aparato'))).catch(
+    (e: unknown) => console.error('entrar: aparato', e),
+  );
   const usuario: Usuario = {
     id: fila.id,
     nombre: fila.nombre,

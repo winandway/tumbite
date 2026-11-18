@@ -48,6 +48,9 @@ const FINANZAS = [
   'regalos-divoox',
   // C-SALDO-CONDUCTOR: el saldo de los conductores y el regalo de arranque.
   'conductores-ciudad',
+  // C-REFERIDOS-EQUIPOS: los programas de referidos y los equipos.
+  'referidos-programas',
+  'equipos',
   'regalo-conductor-nuevo',
   'stripe',
   'bandeja-dinero',

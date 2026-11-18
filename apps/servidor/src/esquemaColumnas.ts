@@ -2741,5 +2741,58 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "activo",
     "actualizado_por",
     "actualizado_en"
+  ],
+  "programas_referido": [
+    "tipo",
+    "ambito",
+    "activo",
+    "reglas",
+    "presupuesto",
+    "actualizado_por",
+    "actualizado_en"
+  ],
+  "premios_referido": [
+    "id",
+    "tipo",
+    "ambito",
+    "rol",
+    "beneficiario_id",
+    "invitado_id",
+    "monto",
+    "moneda",
+    "pais",
+    "forma",
+    "referencia",
+    "creado_en"
+  ],
+  "referidos_conductor": [
+    "invitado_id",
+    "invitador_id",
+    "equipo_id",
+    "zona_id",
+    "estado",
+    "motivo",
+    "creado_en",
+    "cerrado_en"
+  ],
+  "equipos": [
+    "id",
+    "nombre",
+    "zona_id",
+    "lider_id",
+    "codigo",
+    "activo",
+    "creado_por",
+    "creado_en"
+  ],
+  "miembros_equipo": [
+    "usuario_id",
+    "equipo_id",
+    "creado_en"
+  ],
+  "aparatos_usuario": [
+    "usuario_id",
+    "huella",
+    "visto_en"
   ]
 };

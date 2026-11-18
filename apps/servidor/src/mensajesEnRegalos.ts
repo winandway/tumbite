@@ -94,4 +94,22 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
     'That gift is over the Divoox maximum per driver.',
   ],
   ['No tienes regalos por pasar a tu saldo.', 'You have no gifts to move to your balance.'],
+  // C-REFERIDOS-EQUIPOS (17 nov 2026)
+  [
+    'El premio tiene que ser menor que lo que deja el invitado en comisiones.',
+    'The reward must be less than what the invited driver brings in commissions.',
+  ],
+  [
+    'El premio tiene que ser menor que lo que gasta el invitado.',
+    'The reward must be less than what the invited person spends.',
+  ],
+  ['Ese premio pasa el máximo permitido de Divoox.', 'That reward is over the Divoox maximum.'],
+  [
+    'No encontramos a ese líder. Tiene que estar registrado en Divoox Driver con ese correo o celular.',
+    'We couldn’t find that leader. They must be registered in Divoox Driver with that email or cell phone.',
+  ],
+  [
+    'El código es solo para conductores que todavía no hicieron carreras.',
+    'The code is only for drivers who haven’t done any trips yet.',
+  ],
 ];

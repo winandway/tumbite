@@ -10,6 +10,7 @@ import {
   tomarRegaloConductor,
 } from '../regalosDivoox';
 import { aparatoDe } from './regalosDivoox';
+import { TAREA_REFERIDOS } from '../programaReferidos';
 import { anotarGpsFoto, guardarFoto } from '../fotoLimpia';
 import { destinosActivos, revisarLlegadaDestino } from '../modoDestino';
 import { premiarReferidoDelPedido } from '../referidos';
@@ -3286,6 +3287,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   TAREA_VIAJES_FIJOS,
   // C-CUPON-DIVOOX: libera los regalos de lo que no se hizo y cierra los que se cortaron.
   TAREA_REGALOS,
+  // C-REFERIDOS-EQUIPOS: los premios de referidos que ya se ganaron y los vencidos.
+  TAREA_REFERIDOS,
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
   ...TAREAS_FLEX,
   // Flex · Fase 4: conciliación y recuperación de las billeteras, recarga automática y alertas.
