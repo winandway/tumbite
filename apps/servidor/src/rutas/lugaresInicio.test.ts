@@ -207,6 +207,36 @@ describe('Recientes y Populares de «¿A dónde vas?»', () => {
     expect(fila && JSON.parse(fila.valor).origen).toBe('ninguno');
   });
 
+  // C-SIN-PLUS-CODE (18 nov 2026): una lista guardada ANTES del arreglo (con «J86Q+CHP, …») se
+  // limpia al leerla; ninguna ciudad muestra códigos de mapa aunque su lista sea vieja.
+  it('una lista guardada con códigos de mapa sale limpia al leerla', async () => {
+    const m = mundo();
+    await m.llamar('GET', `/datos/lugares/populares?lat=${MIAMI.lat}&lng=${MIAMI.lng}`);
+    await m.DB.prepare(
+      "UPDATE config SET valor = ?, actualizado_en = datetime('now') WHERE clave LIKE 'populares:%'",
+    )
+      .bind(
+        JSON.stringify({
+          origen: 'mapa',
+          lugares: [
+            {
+              titulo: 'Junior Mall',
+              detalle: 'J86Q+CHP, Avenida Don Pepe Rojas',
+              lat: 8.6,
+              lng: -71.6,
+            },
+            { titulo: 'Universidad', detalle: 'J9JJ+FWM, La Blanca', lat: 8.61, lng: -71.61 },
+          ],
+        }),
+      )
+      .run();
+    const r = await m.llamar('GET', `/datos/lugares/populares?lat=${MIAMI.lat}&lng=${MIAMI.lng}`);
+    expect(r.datos.lugares.map((l: { detalle: string }) => l.detalle)).toEqual([
+      'Avenida Don Pepe Rojas',
+      'La Blanca',
+    ]);
+  });
+
   it('ciudad sin datos y sin buscador de mapas: lista vacía, sin error', async () => {
     const m = mundo();
     const r = await m.llamar('GET', `/datos/lugares/populares?lat=${MIAMI.lat}&lng=${MIAMI.lng}`);

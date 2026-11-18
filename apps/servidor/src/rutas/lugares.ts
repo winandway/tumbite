@@ -292,7 +292,11 @@ lugares.get('/lugares/populares', async (c) => {
       (g.origen === 'ninguno' ? HORA_MS : DIA_MS)
   ) {
     c.header('cache-control', 'public, max-age=600');
-    return c.json(g);
+    // C-SIN-PLUS-CODE: una lista guardada antes del arreglo también sale sin códigos de mapa.
+    return c.json({
+      ...g,
+      lugares: g.lugares.map((l) => ({ ...l, detalle: sinPlusCode(String(l.detalle ?? '')) })),
+    });
   }
   const { results } = await db
     .prepare(
