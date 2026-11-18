@@ -2235,6 +2235,7 @@ export function Inicio() {
             Documentos); los tres puntos de la cabecera abren cerrar sesión y borrar la cuenta. */}
         <PerfilAcordeon
           servicios={servicios.panel?.servicios ?? []}
+          alCambiarVehiculo={() => void recargarPanel()}
           menuCuenta={cuentaArriba ? <OpcionesCuenta /> : null}
           alMenu={() => setCuentaArriba((x) => !x)}
           inicial={

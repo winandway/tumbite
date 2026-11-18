@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { ErrorApi } from '@tumbite/compartido';
 import {
+  Boton,
   COLOR,
   FUENTE,
   Icono,
@@ -159,6 +160,17 @@ export function AgregarServicio({
     .join(' ');
   const primero = faltan[0];
 
+  async function usarVehiculo(vehiculoId: string) {
+    setError('');
+    try {
+      await api.pedir('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId });
+      alCambiar();
+      alVolver();
+    } catch (e) {
+      setError(e instanceof ErrorApi ? e.message : String(e));
+    }
+  }
+
   return (
     <View style={{ padding: 16, gap: 16 }} testID="agregar-servicio">
       <Cabecera titulo={t.agregarTitulo} volver={t.volver} alVolver={alVolver} />
@@ -197,6 +209,35 @@ export function AgregarServicio({
         <Text style={{ color: COLOR.error }} accessibilityRole="alert">
           {error}
         </Text>
+      ) : null}
+
+      {servicio.cambiarA ? (
+        // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): el servicio funciona con otro vehículo aprobado
+        // suyo: se dice cuál y se cambia aquí mismo (como «Vehicles» de Uber Driver).
+        <View
+          testID="cambiar-vehiculo"
+          style={{
+            borderWidth: 1,
+            borderColor: COLOR.borde,
+            borderRadius: RADIO.l,
+            padding: 16,
+            gap: 12,
+            backgroundColor: COLOR.blanco,
+          }}
+        >
+          <Text style={LETRA.cuerpo}>
+            {t.cambiarVehiculoAyuda(
+              servicio.cambiarA.nombre || t.tuOtroVehiculo,
+              t.tuVehiculoActual,
+            )}
+          </Text>
+          <Boton
+            texto={t.usarMiVehiculo(servicio.cambiarA.nombre || t.tuOtroVehiculo)}
+            exito
+            testID="usar-vehiculo"
+            alTocar={() => void usarVehiculo(servicio.cambiarA!.id)}
+          />
+        </View>
       ) : null}
 
       {identidadOk || verificados.length ? (

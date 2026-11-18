@@ -129,23 +129,29 @@ export async function estadoCuenta(c: Contexto): Promise<ResultadoHerramienta> {
               `te falta ${s.requisitosFaltantes.map((r) => requisito(r, c.idioma)).join(', ')}`,
               `you are missing ${s.requisitosFaltantes.map((r) => requisito(r, c.idioma)).join(', ')}`,
             )
-          : s.motivo === 'vehiculo_incompatible'
+          : s.motivo === 'cambiar_vehiculo' && s.cambiarA
             ? t(
                 c.idioma,
-                'falta registrar y aprobar un vehículo que sirva para este servicio',
-                'you need a registered, approved vehicle for this service',
+                `para este servicio usa tu ${s.cambiarA.nombre}: en Divoox Driver, toca el servicio y luego «Usar mi ${s.cambiarA.nombre}»`,
+                `use your ${s.cambiarA.nombre} for this service: in Divoox Driver, tap the service and then “Use my ${s.cambiarA.nombre}”`,
               )
-            : s.motivo === 'actualizar_app'
+            : s.motivo === 'vehiculo_incompatible'
               ? t(
                   c.idioma,
-                  'tienes que actualizar la app Divoox Driver',
-                  'you need to update the Divoox Driver app',
+                  'falta registrar y aprobar un vehículo que sirva para este servicio',
+                  'you need a registered, approved vehicle for this service',
                 )
-              : t(
-                  c.idioma,
-                  'todavía no lo has solicitado: en Perfil, «Empieza a repartir», tocas el servicio',
-                  'you have not requested it yet: in Profile, “Start driving,” tap the service',
-                );
+              : s.motivo === 'actualizar_app'
+                ? t(
+                    c.idioma,
+                    'tienes que actualizar la app Divoox Driver',
+                    'you need to update the Divoox Driver app',
+                  )
+                : t(
+                    c.idioma,
+                    'todavía no lo has solicitado: en Perfil, «Empieza a repartir», tocas el servicio',
+                    'you have not requested it yet: in Profile, “Start driving,” tap the service',
+                  );
     lineas.push(`${s.nombre}: ${falta}.`);
   }
   if (!lineas.length)

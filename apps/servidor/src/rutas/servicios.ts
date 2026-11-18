@@ -1,4 +1,10 @@
 import { cuantosHay } from '../canarioLecturas';
+import {
+  type RequisitoServicio,
+  type VehiculoConductor,
+  nombreVehiculo,
+  vehiculoQueSirve,
+} from '../vehiculoQueSirve';
 import { darRegaloConductorNuevo } from '../saldoConductores';
 import { alActivarseConductor } from '../camila/bienvenida';
 import { guardarFoto } from '../fotoLimpia';
@@ -272,6 +278,8 @@ export type EstadoConductor = {
   preferencia: boolean;
   puedeActivar: boolean;
   motivo: string;
+  /** C-CAMBIAR-VEHICULO: otro vehículo aprobado suyo que cumple todo lo de este servicio. */
+  cambiarA?: { id: string; nombre: string; tipo: string } | null;
 };
 
 /**
@@ -445,6 +453,64 @@ export async function estadoDelConductor(
       ingles,
     }),
   );
+  // C-CAMBIAR-VEHICULO (robot, 18 nov 2026): si un servicio no se puede activar con el vehículo
+  // activo pero SÍ con otro vehículo aprobado del conductor, se dice cuál (como «Vehicles» de Uber
+  // Driver). Solo se consulta con un servicio aprobado que no se puede activar (lecturas pequeñas).
+  const pendientes = serviciosConductor.filter(
+    (x) =>
+      !x.puedeActivar &&
+      x.habilitacion === 'aprobada' &&
+      x.estadoServicio === 'disponible' &&
+      (x.motivo === 'requisitos_faltantes' || x.motivo === 'vehiculo_incompatible'),
+  );
+  if (pendientes.length) {
+    const [vehs, reqs, cumplidos] = await Promise.all([
+      db
+        .prepare(
+          "SELECT id, tipo, marca, modelo, anio FROM vehiculos WHERE conductor_id = ? AND estado = 'aprobado'",
+        )
+        .bind(conductorId)
+        .all<VehiculoConductor>(),
+      db
+        .prepare(
+          `SELECT sr.servicio_id, sr.requisito, rd.nivel, NULL AS vehiculo_tipo FROM servicio_requisitos sr
+             JOIN requisitos_def rd ON rd.requisito = sr.requisito WHERE sr.obligatorio = 1
+           UNION ALL
+           SELECT svr.servicio_id, svr.requisito, rd.nivel, svr.vehiculo_tipo FROM servicio_vehiculo_requisitos svr
+             JOIN requisitos_def rd ON rd.requisito = svr.requisito`,
+        )
+        .all<RequisitoServicio>(),
+      db
+        .prepare(
+          `SELECT requisito, vehiculo_id FROM cumplimientos WHERE conductor_id = ? AND estado = 'aprobado'
+             AND (vence_en IS NULL OR vence_en > datetime('now'))`,
+        )
+        .bind(conductorId)
+        .all<{ requisito: string; vehiculo_id: string }>(),
+    ]);
+    const hechos = new Set(cumplidos.results.map((x) => `${x.requisito}|${x.vehiculo_id}`));
+    for (const x of pendientes) {
+      const otro = vehiculoQueSirve({
+        servicioId: x.servicioId,
+        activoId: vehiculo?.id ?? null,
+        vehiculos: vehs.results,
+        tiposCompatibles: compat.results
+          .filter((c) => c.servicio_id === x.servicioId)
+          .map((c) => c.vehiculo_tipo),
+        anioMinimo: new Map(
+          compat.results
+            .filter((c) => c.servicio_id === x.servicioId)
+            .map((c) => [c.vehiculo_tipo, c.anio_minimo]),
+        ),
+        requisitos: reqs.results,
+        cumplidos: hechos,
+      });
+      if (otro) {
+        x.cambiarA = { id: otro.id, nombre: nombreVehiculo(otro), tipo: otro.tipo };
+        x.motivo = 'cambiar_vehiculo';
+      }
+    }
+  }
   return { vehiculoActivo: vehiculo ?? null, servicios: serviciosConductor };
 }
 
