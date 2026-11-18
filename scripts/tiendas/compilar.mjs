@@ -36,7 +36,11 @@ const salida = join(raiz, 'apks-pruebas', `${app}-${perfil}.${extension}`);
 mkdirSync(join(raiz, 'apks-pruebas'), { recursive: true });
 const nube = pidioNube();
 autorizarCompilacion({ donde: nube ? 'nube' : 'local', app, plataforma, perfil });
-const env = entornoLocal();
+// iPhone para teléfonos reales, aquí: el complemento firma-ios-local fija el certificado por huella.
+const env = {
+  ...entornoLocal(),
+  ...(plataforma === 'ios' && !nube && extension === 'ipa' ? { DIVOOX_FIRMA_IOS_LOCAL: '1' } : {}),
+};
 execFileSync(
   'npx',
   [

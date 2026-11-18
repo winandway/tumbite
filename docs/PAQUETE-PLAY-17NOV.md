@@ -142,3 +142,19 @@ Pedido de Richard, que ya había hecho antes: conectarse en Driver es DESLIZANTE
 - **Países:** no se tocó la lista de países de la pista de producción (178).
 - **Candados** `~/.config/tumbite/play-en-revision/`: actualizados a 46 y 42. Mientras Google revisa, NO se sube otra versión.
 - **Falta:** robot de iPhone y TestFlight interno con la misma punta (no va a revisión de Apple); versión siguiente: «Subir la tarifa», tarjeta de saldo en el inicio de Driver, «sensible al tiempo» en iPhone, elegir tono, y la autorreparación de Camila.
+
+## Después de la subida (18 nov, noche)
+
+- **Google Play:** las dos apps pasaron las verificaciones rápidas y están «en proceso de revisión» (cliente 46, Driver 42).
+- **Robot de iPhone** (simulador iPhone 18 Pro, iOS 27, apps compiladas aquí con Xcode 27): limpio en dos partes. Hallazgo para el paquete siguiente: Driver se cierra al tocar «Tomar foto del paquete» cuando el aparato no tiene cámara (simulador); debe comprobar la cámara y avisar. Probar en un iPhone real.
+- **TestFlight interno:** NO actualizado. La compilación local de iPhone para teléfonos reales falla: el llavero de esta Mac tiene un certificado «Apple Distribution: Windoce LLC» distinto del que Expo usa en el perfil de firma, y Xcode elige el del llavero. Salidas: apartar ese certificado del llavero, rehacer el perfil en Apple para incluirlo, o compilar iPhone en la nube con `--nube`. Decide Gerencia.
+
+## Paquete siguiente (se arma ahora; nada de esto se sube a las tiendas mientras Google revisa)
+
+1. «Subir la tarifa»: servidor listo y blindado en `subir-tarifa-servidor`; app en `subir-tarifa-app`; Docs y ayuda.
+2. Tarjeta de saldo en el inicio de Driver («Tu saldo: $X · alcanza para N carreras», «Recargar»): primero en el borrador para Richard.
+3. iPhone: aviso «sensible al tiempo» para las ofertas (activar la capacidad en la firma); elegir el tono de la oferta si sale barato.
+4. Driver iPhone: no cerrarse cuando no hay cámara al tomar la foto del paquete.
+5. Camila: reportes de fallo, «Adjuntar captura» y los dos menores del chat (rama `camila-etapa-1`).
+6. Menores que dejó el revisor: prueba del caso central de «no mover de ciudad», ignorar ubicaciones muy imprecisas al fijar la ciudad, deshabilitar «Usar este vehículo» estando conectado, la etiqueta «Entregas» del inicio de Driver que ahora cuenta carreras.
+7. Tienda: fotos de restaurantes de muestra que no corresponden en las capturas 02, quitar «fast/rápido» del gráfico destacado, «Rápido, seguro y económico» de la captura de moto.
