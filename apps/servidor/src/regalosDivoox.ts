@@ -671,6 +671,13 @@ export async function listarCupones(db: D1Database) {
   return results.map(aCuponAdmin);
 }
 
+/**
+ * C-REGALO-HEREDADO: los regalos cobrados el 17 nov con la primera versión se acreditaron directo en
+ * el saldo prepago (libro, concepto `regalo_divoox`, referencia `regalo-divoox:<uso>`). Esos ya están
+ * pagados: nunca cuentan como «por cobrar» ni se pasan otra vez al saldo.
+ */
+export const SIN_HEREDADOS = `AND NOT EXISTS (SELECT 1 FROM libro l WHERE l.referencia = 'regalo-divoox:' || usos_cupon_divoox.id AND l.concepto = 'regalo_divoox')`;
+
 /** Lo acreditado a cada conductor por regalos, lo que ya se le pagó por pago móvil y lo pendiente. */
 export async function liquidacionConductores(db: D1Database) {
   const { results } = await db
@@ -680,7 +687,7 @@ export async function liquidacionConductores(db: D1Database) {
               COALESCE((SELECT SUM(monto) FROM pagos_regalo_conductor p WHERE p.conductor_id = x.conductor_id AND p.moneda = x.moneda AND p.referencia LIKE 'saldo:%'), 0) AS a_saldo,
               COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = x.conductor_id), 0) AS saldo
          FROM (SELECT conductor_id, moneda, pais, SUM(monto) AS acreditado, COUNT(*) AS viajes
-                 FROM usos_cupon_divoox WHERE estado = 'cobrado' GROUP BY conductor_id, moneda, pais) x
+                 FROM usos_cupon_divoox WHERE estado = 'cobrado' ${SIN_HEREDADOS} GROUP BY conductor_id, moneda, pais) x
          LEFT JOIN usuarios us ON us.id = x.conductor_id
         ORDER BY x.acreditado DESC LIMIT 200`,
     )
@@ -831,7 +838,7 @@ export async function porCobrarRegalos(db: D1Database, conductorId: string) {
               COALESCE((SELECT SUM(monto) FROM pagos_regalo_conductor p WHERE p.conductor_id = ?1 AND p.moneda = x.moneda), 0) AS pagado,
               COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = ?1), 0) AS saldo
          FROM (SELECT moneda, pais, SUM(monto) AS acreditado FROM usos_cupon_divoox
-                WHERE conductor_id = ?1 AND estado = 'cobrado' GROUP BY moneda, pais) x
+                WHERE conductor_id = ?1 AND estado = 'cobrado' ${SIN_HEREDADOS} GROUP BY moneda, pais) x
         ORDER BY x.acreditado DESC LIMIT 1`,
     )
     .bind(conductorId)

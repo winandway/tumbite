@@ -349,7 +349,7 @@ export async function cargasDeConductor(db: D1Database, conductorId: string) {
  * más de lo que tiene por cobrar de regalos.
  */
 export async function regalosASaldo(db: D1Database, conductorId: string) {
-  const { porCobrarRegalos } = await import('./regalosDivoox');
+  const { porCobrarRegalos, SIN_HEREDADOS } = await import('./regalosDivoox');
   const pendiente = await porCobrarRegalos(db, conductorId);
   if (!pendiente || pendiente.monto <= 0)
     throw new ErrorDatos('No tienes regalos por pasar a tu saldo.', undefined, 409);
@@ -363,7 +363,7 @@ export async function regalosASaldo(db: D1Database, conductorId: string) {
       .prepare(
         `INSERT OR IGNORE INTO cargas_saldo_conductor (id, conductor_id, zona_id, pais, moneda, monto, tipo, motivo, autor_id)
          SELECT ?1, ?2, ?3, ?4, ?5, ?6, 'regalo_a_saldo', 'Regalos de pasajeros pasados al saldo', ?2
-          WHERE (SELECT COALESCE(SUM(monto), 0) FROM usos_cupon_divoox WHERE conductor_id = ?2 AND estado = 'cobrado' AND moneda = ?5)
+          WHERE (SELECT COALESCE(SUM(monto), 0) FROM usos_cupon_divoox WHERE conductor_id = ?2 AND estado = 'cobrado' AND moneda = ?5 ${SIN_HEREDADOS})
               - (SELECT COALESCE(SUM(monto), 0) FROM pagos_regalo_conductor WHERE conductor_id = ?2 AND moneda = ?5) >= ?6`,
       )
       .bind(id, conductorId, cuenta.zonaId, pendiente.pais, pendiente.moneda, m),

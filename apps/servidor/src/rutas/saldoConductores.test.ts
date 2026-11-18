@@ -208,3 +208,34 @@ describe('C-REFERIDOS-SIN-TRAMPA: los regalos por cobrar se miran por conductor'
     });
   });
 });
+
+describe('C-REGALO-HEREDADO: un regalo ya acreditado en el saldo con la versión vieja no se cobra otra vez', () => {
+  it('el uso con crédito regalo_divoox en el libro no cuenta como por cobrar ni se pasa al saldo', async () => {
+    const { e, conductor } = await mundo();
+    const { porCobrarRegalos, liquidacionConductores } = await import('../regalosDivoox');
+    const { regalosASaldo } = await import('../saldoConductores');
+    const yo = await conductor('Conductor Heredado');
+    await e.m.DB.prepare('PRAGMA foreign_keys = OFF').run();
+    await e.m.DB.batch([
+      // Cobrado el 17 nov con la versión vieja: el crédito fue directo a su saldo prepago (libro).
+      e.m.DB.prepare(
+        `INSERT INTO usos_cupon_divoox (id, codigo, cliente_id, telefono, aparato, servicio, zona_id, pais, operacion_id, conductor_id, monto, moneda, estado)
+         VALUES ('viejo', 'PRUEBA', 'c', 't', 'a', 'moto', ?, 'VE', 'op-viejo', ?, 150, 'USD', 'cobrado')`,
+      ).bind(EL_VIGIA.id, yo.id),
+      e.m.DB.prepare(
+        "INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('l-viejo', ?, 'prepago', 'VE', 'USD', 150, 'regalo_divoox', 'regalo-divoox:viejo')",
+      ).bind(yo.id),
+      // Y además tiene otras ganancias (una entrega): con eso el código viejo lo ofrecía otra vez.
+      e.m.DB.prepare(
+        "INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia) VALUES ('m-otra', ?, 300, 'entrega', 'otra-ganancia')",
+      ).bind(yo.id),
+    ]);
+    await e.m.DB.prepare('PRAGMA foreign_keys = ON').run();
+    expect((await porCobrarRegalos(e.m.DB, yo.id))?.monto ?? 0).toBe(0);
+    await expect(regalosASaldo(e.m.DB, yo.id)).rejects.toThrow();
+    expect(await saldoLibro(e.m.DB, yo.id, 'prepago', 'VE', 'USD')).toBe(150);
+    expect(
+      (await liquidacionConductores(e.m.DB)).find((x) => x.conductorId === yo.id)?.porPagar ?? 0,
+    ).toBe(0);
+  });
+});

@@ -17,6 +17,14 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Cómo se comprueba:** abrir la app: portada oscura que cambia al volver a abrir, «Entregar en» encima, ocho servicios (o menos si la ciudad no los tiene), promociones que pasan solas y restaurantes cerca. Tocar Moto → Casa → «Solicitar moto». Mantener presionado un lugar → tres puntos → «Borrar lugar» → confirmación. Pedir una moto y cerrar la app: al abrir sale «Buscando tu moto».
 - **Qué NO tocar:** no volver a poner pantallas intermedias con «Abrir»; no mostrar servicios que no funcionan en la ciudad; no poner códigos de descuento en el respaldo; no bajar el mínimo de diez clientes distintos de Populares ni devolver números de casa ni guardar puntos sin redondear; no listas de lugares duplicadas fuera de `direcciones_cliente`.
 
+## C-REGALO-HEREDADO · Un regalo ya acreditado en el saldo con la versión vieja no se cobra dos veces (18 nov 2026) — todos los países
+
+- **Qué pasaba:** la primera versión de `cerrarRegalo` (17 nov, commit 057b358bd2) acreditaba el regalo directo en el saldo prepago (libro, concepto `regalo_divoox`, referencia `regalo-divoox:<uso>`). La versión actual lo acredita en ganancias (`movimientos`). Un uso cobrado con la vieja contaba igual como «por cobrar» y, si el conductor tenía otras ganancias, `regalosASaldo` lo habría acreditado otra vez.
+- **Cómo quedó:** el fragmento `SIN_HEREDADOS` (`regalosDivoox.ts`) excluye esos usos de `porCobrarRegalos`, de `liquidacionConductores` (y por eso del pago móvil) y de la condición de `regalosASaldo`.
+- **Prueba (vista en rojo):** `rutas/saldoConductores.test.ts`, «C-REGALO-HEREDADO», con una fila heredada.
+- **En producción el 18 nov:** cero usos cobrados; no había ninguna fila heredada. El candado es por si aparece una en pruebas o en una copia restaurada.
+- **No tocar:** no quitar `SIN_HEREDADOS` de ninguna de las tres consultas.
+
 ## C-REFERIDOS-SIN-TRAMPA · Arreglos del dictamen del revisor a referidos y regalos (18 nov 2026) — todos los países
 
 - **Qué estaba mal (dictamen NO APTO, antes de compilar producción):** (1) un cliente que se invitaba a sí mismo (mismo teléfono o aparato) quedaba «pendiente»: solo perdía la bienvenida y después el reloj le pagaba el premio a quien invita; (2) el premio y su acreditación iban en sentencias aparte: si fallaba en medio, el premio quedaba gastado y la persona no cobraba nunca; (3) con el presupuesto agotado el referido seguía pendiente y el reloj dejaba una alerta por hora por cada uno, y con más de cien pendientes los nuevos no se revisaban; (4) los regalos por cobrar de un conductor se buscaban en la lista del equipo (200 primeros): el que quedaba fuera veía cero; (5) el código personal servía para cualquier tipo de cuenta; (6) un texto decía «cupón» donde era «regalo»; (7) un código inválido al registrarse se ignoraba sin avisar.
