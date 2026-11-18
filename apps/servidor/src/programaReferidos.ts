@@ -1064,7 +1064,25 @@ export async function misInvitaciones(
   const equipo = equipos.results[0]
     ? (await listarEquipos(db, { equipoId: equipos.results[0].id }))[0]
     : null;
+  // Robot (18 nov 2026): el miembro ve a qué equipo pertenece y quién lo lidera, y si ya quedó
+  // registrado como invitado (aunque el referido no cuente, por ejemplo por el mismo aparato).
+  const miEquipo = await db
+    .prepare(
+      `SELECT e.nombre, u.nombre AS lider FROM miembros_equipo m
+         JOIN equipos e ON e.id = m.equipo_id JOIN usuarios u ON u.id = e.lider_id
+        WHERE m.usuario_id = ? ORDER BY m.creado_en DESC LIMIT 1`,
+    )
+    .bind(usuario.id)
+    .first<{ nombre: string; lider: string }>();
+  const invitado = await db
+    .prepare('SELECT 1 AS si FROM referidos_conductor WHERE invitado_id = ? LIMIT 1')
+    .bind(usuario.id)
+    .first<{ si: number }>();
   return {
+    miEquipo: miEquipo
+      ? { nombre: miEquipo.nombre, lider: String(miEquipo.lider).split(' ')[0] ?? '' }
+      : null,
+    yaInvitado: Boolean(miEquipo || invitado),
     codigo,
     enlace: `${sitio}/join/${codigo}`,
     ganado: Number(ganado?.s ?? 0),

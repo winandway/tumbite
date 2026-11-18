@@ -2889,7 +2889,7 @@ const es: SeccionDocs[] = [
           'Ganas saldo cuando tu invitado completa las carreras que pide el programa de tu ciudad dentro del plazo (por ejemplo, 1 dólar de saldo después de 10 carreras en 30 días). El saldo entra solo y te sirve para tus comisiones.',
           'Tu invitado recibe el regalo de arranque de su ciudad, si está encendido.',
           'Las carreras que tú le pidas a tu invitado (o él a ti) no cuentan, nadie puede invitarse a sí mismo con otra cuenta o el mismo teléfono, y hay un máximo de premios por persona al mes.',
-          'Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan.',
+          'Líderes de línea: el equipo de Divoox crea tu equipo con tu nombre y tu ciudad. Quien se registra con el código de tu equipo queda en él para siempre, con fecha. En «Mi equipo e invitaciones» ves cuántos están registrados, aprobados, activos y cuántas carreras llevan. Y cada miembro ve ahí, arriba, a qué equipo pertenece y quién es su líder.',
         ],
         capturas: [
           {
@@ -8182,7 +8182,7 @@ const en: SeccionDocs[] = [
           'You earn balance when your invitee completes the trips your city’s program asks for within the time limit. The balance goes in on its own and covers your commissions.',
           'Your invitee gets their city’s starter gift, if it’s on.',
           'Trips you request from your invitee (or they from you) don’t count, nobody can invite themselves with another account or the same phone, and there’s a monthly limit of rewards per person.',
-          'Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done.',
+          'Group leaders: the Divoox team creates your team with your name and city. Whoever signs up with your team code stays in it for good, with the date. In “My team and invitations” you see how many are signed up, approved, active and how many trips they’ve done. Each member sees there, at the top, which team they’re on and who their leader is.',
         ],
         capturas: [
           {

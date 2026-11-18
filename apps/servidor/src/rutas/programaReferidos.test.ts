@@ -179,6 +179,38 @@ describe('C-REFERIDOS-EQUIPOS: equipos con su líder', () => {
     const mio = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, lider.token);
     expect(mio.datos.equipo).toMatchObject({ nombre: 'Jehová Jireh', registrados: 2, carreras: 1 });
     expect(mio.datos.invitados).toHaveLength(2);
+    // Robot (18 nov 2026): el miembro ve a qué equipo pertenece y quién lo invitó; no le vuelve a
+    // pedir el código.
+    const suyo = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, a.token);
+    expect(suyo.datos.miEquipo).toMatchObject({ nombre: 'Jehová Jireh', lider: 'Presidente' });
+    expect(suyo.datos.yaInvitado).toBe(true);
+    const solo = await registrar('repartidor', 'Sin Equipo Dos');
+    const nada = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, solo.token);
+    expect(nada.datos.miEquipo).toBeNull();
+    expect(nada.datos.yaInvitado).toBe(false);
+  });
+
+  // Robot (18 nov 2026): con el MISMO aparato que el líder el referido se rechaza (antifraude), pero
+  // la persona igual queda en el equipo: la pantalla tiene que decirlo.
+  it('quien se registra con el código del equipo desde el aparato del líder igual ve su equipo', async () => {
+    const { e, registrar } = await mundo();
+    const lider = await registrar('repartidor', 'Líder Prueba', { aparato: 'aparato-compartido' });
+    const correo = (await e.m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(lider.id)
+      .first<{ correo: string }>())!.correo;
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/admin/equipos',
+      { nombre: 'Equipo Prueba', zonaId: EL_VIGIA.id, lider: correo },
+      e.admin.token,
+    );
+    const nuevo = await registrar('repartidor', 'Conductor Nuevo', {
+      invitacion: r.datos.equipo.codigo as string,
+      aparato: 'aparato-compartido',
+    });
+    const suyo = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, nuevo.token);
+    expect(suyo.datos.miEquipo).toMatchObject({ nombre: 'Equipo Prueba' });
+    expect(suyo.datos.yaInvitado).toBe(true);
   });
 });
 

@@ -38,6 +38,8 @@ const T = {
     usar: 'Usar el código',
     listo: (n: string) => `Listo: quedaste registrado como invitado de ${n}.`,
     cargando: 'Cargando…',
+    perteneces: 'Perteneces al equipo',
+    lider: (n: string) => `Líder: ${n}`,
   },
   en: {
     titulo: 'My team and invitations',
@@ -68,10 +70,16 @@ const T = {
     usar: 'Use the code',
     listo: (n: string) => `Done: you’re signed up as ${n}’s invitee.`,
     cargando: 'Loading…',
+    perteneces: 'You’re on the team',
+    lider: (n: string) => `Leader: ${n}`,
   },
 };
 
 type Datos = {
+  /** Robot (18 nov 2026): el equipo al que pertenece (si entró con el código de un equipo). */
+  miEquipo?: { nombre: string; lider: string } | null;
+  /** Ya quedó registrado como invitado: no se le vuelve a pedir el código. */
+  yaInvitado?: boolean;
   codigo: string;
   enlace: string;
   ganado: number;
@@ -153,6 +161,17 @@ export function MiEquipo({
     <View style={{ padding: 16, gap: 12 }} testID="mi-equipo">
       <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{t.titulo}</Text>
       <Text style={{ color: '#666B73' }}>{t.ayuda}</Text>
+      {datos.miEquipo ? (
+        <View style={estiloTarjeta} testID="mi-equipo-miembro">
+          <Text style={{ color: '#666B73' }}>{t.perteneces}</Text>
+          <Text style={{ fontWeight: '800', fontSize: 18, color: C.secundario }}>
+            {datos.miEquipo.nombre}
+          </Text>
+          {datos.miEquipo.lider ? (
+            <Text style={{ color: '#666B73' }}>{t.lider(datos.miEquipo.lider)}</Text>
+          ) : null}
+        </View>
+      ) : null}
       {datos.equipo ? (
         <View style={estiloTarjeta} testID="mi-equipo-lider">
           <Text style={{ fontWeight: '800', color: C.secundario }}>
@@ -218,24 +237,26 @@ export function MiEquipo({
           </View>
         ))}
       </View>
-      <View style={estiloTarjeta}>
-        <Text style={{ fontWeight: '800', color: C.secundario }}>{t.meInvitaron}</Text>
-        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.meInvitaronAyuda}</Text>
-        <Campo
-          etiqueta={t.codigo}
-          value={codigoInvito}
-          onChangeText={(x) => setCodigoInvito(x.toUpperCase())}
-          autoCapitalize="characters"
-          autoCorrect={false}
-        />
-        <Boton texto={t.usar} alTocar={() => void usar()} secundario />
-        {mensaje ? <Text style={{ color: C.exito, fontWeight: '700' }}>{mensaje}</Text> : null}
-        {error ? (
-          <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
-            {error}
-          </Text>
-        ) : null}
-      </View>
+      {datos.yaInvitado ? null : (
+        <View style={estiloTarjeta}>
+          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.meInvitaron}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.meInvitaronAyuda}</Text>
+          <Campo
+            etiqueta={t.codigo}
+            value={codigoInvito}
+            onChangeText={(x) => setCodigoInvito(x.toUpperCase())}
+            autoCapitalize="characters"
+            autoCorrect={false}
+          />
+          <Boton texto={t.usar} alTocar={() => void usar()} secundario />
+          {mensaje ? <Text style={{ color: C.exito, fontWeight: '700' }}>{mensaje}</Text> : null}
+          {error ? (
+            <Text accessibilityRole="alert" style={{ color: C.primario, fontWeight: '700' }}>
+              {error}
+            </Text>
+          ) : null}
+        </View>
+      )}
     </View>
   );
 }
