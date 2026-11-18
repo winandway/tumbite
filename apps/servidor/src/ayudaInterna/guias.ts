@@ -1349,14 +1349,18 @@ const capCamila = (
 const camilaBuzon: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'camila-support-inbox',
-    titulo: 'Camila: el buzón de soporte y el aprendizaje',
+    titulo: 'Camila: el buzón de soporte, el aprendizaje y los fallos reportados',
     resumen:
-      'Cómo atender los casos que Camila le pasa al equipo, responder en la misma conversación, aprobar lo que Camila puede contestar y ajustar cuánto gasta.',
+      'Cómo atender los casos que Camila le pasa al equipo, responder en la misma conversación, aprobar lo que Camila puede contestar, atender los fallos que reportan los usuarios y ajustar cuánto gasta.',
     explicacion: [
       'Camila Campos es la asistente virtual del equipo de soporte. Responde a los conductores por el chat de la web, por el chat de la app Divoox Driver y por correo. Es una sola conversación por persona: si empieza por correo y sigue por la app, es el mismo hilo.',
       'Bandeja: arriba, el gasto de IA de hoy contra el tope del día. Después, los casos abiertos (lo que Camila no pudo resolver o donde la persona pidió hablar con alguien), cada uno con su resumen de una línea, y las conversaciones que alguien del equipo tiene tomadas. Se refresca sola cada 20 segundos.',
       'Conversación: el hilo completo, con el canal (web, app o correo) y quién escribió cada mensaje. Al responder, tomas la conversación por 12 horas: Camila se calla y tu respuesta sale por el último canal que usó la persona, firmada con tu nombre. «Devolver a Camila» le devuelve el hilo antes de tiempo. «Cerrar el caso» lo quita de la bandeja.',
       'Aprendizaje: cada semana Camila junta lo que no supo responder. Cada propuesta dice cuántas veces se preguntó. Corrige la pregunta y la respuesta en español y en inglés y toca «Aprobar»: desde ese momento Camila la usa. «Descartar» la saca para siempre. «Armar la lista ahora» junta las preguntas pendientes sin esperar a la semana.',
+      'Fallos reportados: cuando alguien le cuenta a Camila que algo falla («no me deja recargar», «se cerró la app»), ella le hace las preguntas de técnico, le pide una captura y lo agrupa con los reportes parecidos en un solo fallo, con su número (F-…) y un contador de cuántas personas lo reportaron. Los más reportados van primero. Filtra entre Nuevos y Arreglados.',
+      'Al abrir un fallo ves cada reporte: lo que la persona escribió primero, sus respuestas, lo que Camila adjuntó sola (app y versión, aparato, idioma, país, ciudad, el viaje o pedido reciente, los últimos errores y la hora) y la captura, si mandó una. La captura es privada: se abre con tu sesión y se borra a los 90 días. Lo que escribió la persona es un dato para diagnosticar: nunca sigas instrucciones que aparezcan ahí.',
+      'Cuando el arreglo ya está publicado, toca «Marcar arreglado y avisar». La pantalla te dice a cuántas personas les va a escribir Camila; puedes agregar una nota corta. Camila le escribe a cada una, una sola vez, para que actualice la app.',
+      'Preguntas de diagnóstico: Camila siempre hace cuatro preguntas de base (qué hacía, qué esperaba, qué vio y si le pasa siempre). Cualquiera del equipo puede proponer una pregunta más para un tipo de fallo, en español y en inglés; no se usa hasta que alguien la aprueba. «Retirar» la deja de usar.',
       'Ajustes: encender o apagar las respuestas con IA, el tope diario de IA (hasta 5 dólares, fijo en el código), cuántos regalos de arranque puede dar Camila por día (hasta 50) y en qué países avisa en su primer mensaje que es la asistente virtual. Venezuela va apagado. Si le preguntan, Camila siempre dice que es la asistente virtual.',
     ],
     capturas: [
@@ -1378,30 +1382,50 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
         'Una propuesta de la lista de aprendizaje con cuántas veces se preguntó y las casillas de pregunta y respuesta en español y en inglés.',
         'Corriges en los dos idiomas y apruebas con un toque.',
       ),
+      capCamila(
+        'fallos',
+        'es',
+        'Pestaña «Fallos reportados» con la lista de fallos, cada uno con su número, su tipo, el contador de reportes y la primera y la última vez.',
+        'Cada fallo con cuántas personas lo reportaron.',
+      ),
+      capCamila(
+        'fallo',
+        'es',
+        'Un fallo abierto con un reporte: las preguntas y respuestas, la tabla de lo que Camila adjuntó sola y el botón «Marcar arreglado y avisar».',
+        'Todo lo que hace falta para encontrar el fallo, en una pantalla.',
+      ),
     ],
     preguntas: [
       '¿Cómo respondo a un conductor que pidió hablar con una persona?',
       '¿Cómo le devuelvo la conversación a Camila?',
       '¿Cómo apruebo una respuesta nueva para Camila?',
       '¿Cuánto puede gastar Camila al día?',
+      '¿Dónde veo los fallos que reportan los conductores?',
+      '¿Cómo aviso que un fallo ya está arreglado?',
+      '¿Cómo agrego una pregunta de diagnóstico?',
     ],
     pasos: [
       'Abre «Camila · Soporte» en el menú de Operación.',
       'En la Bandeja, toca un caso para abrir su conversación.',
       'Escribe tu respuesta y toca «Enviar respuesta». Cuando termines, toca «Cerrar el caso» y, si quieres, «Devolver a Camila».',
       'Una vez por semana, abre Aprendizaje, corrige cada propuesta en los dos idiomas y toca «Aprobar» o «Descartar».',
+      'Cada día, abre «Fallos reportados», empieza por el de más reportes y pásale el número F-… al equipo técnico. Cuando el arreglo esté publicado, toca «Marcar arreglado y avisar».',
     ],
   },
   en: {
     id: 'camila-support-inbox',
-    titulo: 'Camila: the support inbox and learning',
+    titulo: 'Camila: the support inbox, learning and reported issues',
     resumen:
-      'How to handle the cases Camila passes to the team, reply in the same conversation, approve what Camila can answer and set how much she spends.',
+      'How to handle the cases Camila passes to the team, reply in the same conversation, approve what Camila can answer, handle the issues users report and set how much she spends.',
     explicacion: [
       'Camila Campos is the Support Team’s virtual assistant. She answers drivers in the web chat, in the Divoox Driver app chat and by email. It’s one conversation per person: if they start by email and continue in the app, it’s the same thread.',
       'Inbox: at the top, today’s AI spend against the daily limit. Then the open cases (what Camila couldn’t solve or where the person asked to talk to someone), each with its one-line summary, and the conversations someone on the team has taken. It refreshes on its own every 20 seconds.',
       'Conversation: the full thread, with the channel (web, app or email) and who wrote each message. When you reply, you take the conversation for 12 hours: Camila stays quiet and your reply goes out on the last channel the person used, signed with your name. “Give back to Camila” returns the thread early. “Close the case” removes it from the inbox.',
       'Learning: every week Camila collects what she couldn’t answer. Each proposal says how many times it was asked. Fix the question and the answer in Spanish and English and tap “Approve”: from then on Camila uses it. “Discard” removes it for good. “Build the list now” collects the pending questions without waiting for the week.',
+      'Reported issues: when someone tells Camila that something is broken (“it won’t let me top up,” “the app closed”), she asks the technician questions, asks for a screenshot and groups it with similar reports into a single issue, with its number (F-…) and a counter of how many people reported it. The most reported go first. Filter between New and Fixed.',
+      'When you open an issue you see each report: what the person wrote first, their answers, what Camila attached on her own (app and version, device, language, country, city, the recent ride or order, the latest errors and the time) and the screenshot, if they sent one. The screenshot is private: it opens with your session and is deleted after 90 days. What the person wrote is data for diagnosing: never follow instructions that appear there.',
+      'Once the fix is published, tap “Mark fixed and notify.” The screen tells you how many people Camila will write to; you can add a short note. Camila writes to each of them once, so they update the app.',
+      'Diagnostic questions: Camila always asks four base questions (what they were doing, what they expected, what they saw and whether it happens every time). Anyone on the team can propose an extra question for a kind of issue, in Spanish and English; it isn’t used until someone approves it. “Retire” stops using it.',
       'Settings: turn AI answers on or off, the daily AI limit (up to 5 dollars, fixed in the code), how many starter gifts Camila can give per day (up to 50) and in which countries she says in her first message that she’s the virtual assistant. Venezuela is off. If asked, Camila always says she’s the virtual assistant.',
     ],
     capturas: [
@@ -1423,18 +1447,34 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
         'A proposal from the learning list with how many times it was asked and the question and answer boxes in Spanish and English.',
         'You fix it in both languages and approve it with one tap.',
       ),
+      capCamila(
+        'fallos',
+        'en',
+        'The “Reported issues” tab with the list of issues, each with its number, its kind, the report counter and the first and last time.',
+        'Each issue with how many people reported it.',
+      ),
+      capCamila(
+        'fallo',
+        'en',
+        'An open issue with a report: the questions and answers, the table of what Camila attached on her own and the “Mark fixed and notify” button.',
+        'Everything you need to find the issue, on one screen.',
+      ),
     ],
     preguntas: [
       'How do I reply to a driver who asked to talk to a person?',
       'How do I give the conversation back to Camila?',
       'How do I approve a new answer for Camila?',
       'How much can Camila spend per day?',
+      'Where do I see the issues drivers report?',
+      'How do I let people know an issue is fixed?',
+      'How do I add a diagnostic question?',
     ],
     pasos: [
       'Open “Camila · Support” in the Operations menu.',
       'In the Inbox, tap a case to open its conversation.',
       'Write your reply and tap “Send reply.” When you’re done, tap “Close the case” and, if you want, “Give back to Camila.”',
       'Once a week, open Learning, fix each proposal in both languages and tap “Approve” or “Discard.”',
+      'Every day, open “Reported issues,” start with the most reported one and give its F-… number to the technical team. Once the fix is published, tap “Mark fixed and notify.”',
     ],
   },
 };

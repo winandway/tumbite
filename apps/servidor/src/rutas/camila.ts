@@ -7,6 +7,8 @@ import { limiteIntentos } from '../seguridad';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { recibirMensaje } from '../camila/cerebro';
+import { reporteEnCurso } from '../camila/fallos';
+import { usarPersonaDelChat } from './camilaFallos';
 import { enviarPorCanal } from '../camila/canales';
 import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
 import {
@@ -93,6 +95,8 @@ async function personaDelChat(c: Ctx, crear = true): Promise<Persona | null> {
   return personaDeVisitante(db, huella, idiomaDe(c));
 }
 const personaQueEscribe = async (c: Ctx) => (await personaDelChat(c)) as Persona;
+// C-CAMILA-FALLOS: la ruta de la captura usa la misma regla para saber de quién es el chat.
+usarPersonaDelChat(personaDelChat);
 
 async function hiloPublico(db: D1Database, p: Persona) {
   const { results } = await db
@@ -102,7 +106,10 @@ async function hiloPublico(db: D1Database, p: Persona) {
     )
     .bind(p.id)
     .all<{ id: string; autor: string; texto: string; creado_en: string; reportado: number }>();
+  const reporte = await reporteEnCurso(db, p.id);
   return {
+    // C-CAMILA-FALLOS: Camila está esperando la captura de pantalla de un reporte de fallo.
+    pideCaptura: reporte?.estado === 'captura',
     verificada: Boolean(p.usuario_id || p.correo),
     equipoAtendiendo: humanoActivo(p),
     mensajes: results.reverse().map((m) => ({ ...m, reportado: Number(m.reportado) === 1 })),
@@ -112,7 +119,8 @@ async function hiloPublico(db: D1Database, p: Persona) {
 camila.get('/camila/hilo', async (c) => {
   const p = await personaDelChat(c, false);
   c.header('cache-control', 'private, no-store');
-  if (!p) return c.json({ verificada: false, equipoAtendiendo: false, mensajes: [] });
+  if (!p)
+    return c.json({ pideCaptura: false, verificada: false, equipoAtendiendo: false, mensajes: [] });
   return c.json(await hiloPublico(base(c), p));
 });
 
@@ -140,7 +148,10 @@ camila.post('/camila/mensaje', async (c) => {
       'verificar',
       429,
     );
-  const r = await recibirMensaje(c.env, db, p, d.canal, d.texto);
+  const r = await recibirMensaje(c.env, db, p, d.canal, d.texto, {
+    // Lo que Camila adjunta sola a un reporte de fallo: la app y su versión, y el aparato.
+    peticion: { app: c.req.header('x-tumbite-app'), aparato: c.req.header('user-agent') },
+  });
   const fresca = (await personaPorId(db, p.id)) ?? p;
   return c.json({ respuesta: r.respuesta, ...(await hiloPublico(db, fresca)) });
 });

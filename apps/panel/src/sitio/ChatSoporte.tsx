@@ -11,10 +11,12 @@ import {
   enIdiomaDireccion,
   nombreAutorCamila,
   cronometroDeEscritura,
+  problemaDeCaptura,
   useBorrador,
   visitaCamila,
 } from '@tumbite/compartido';
 import { api, pedir } from '../panel/api';
+import { BotonCamara } from '../panel/camara';
 import { Icono } from './Icono';
 
 /**
@@ -27,6 +29,8 @@ import { Icono } from './Icono';
  * - Lo escrito se guarda solo y vuelve al recargar; se borra al enviarse bien. Si falla, se queda.
  * - Si una persona del equipo tomó la conversación, Camila no contesta y se dice en pantalla.
  * - Sin cuenta, se ofrece discreto unir el chat al correo con un código de seis números.
+ * - C-CAMILA-FALLOS: cuando Camila pide la captura de un reporte de fallo, aparece su bloque con
+ *   «Subir desde archivos», «Tomar foto» (la pieza única de la cámara) y «No tengo captura».
  */
 const LLAVE_CONVERSO = 'divoox.camila.converso';
 
@@ -140,8 +144,9 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
     if (el) el.scrollTop = el.scrollHeight;
   }, [cuantos, abierto, enviando]);
 
-  async function enviar() {
-    const texto = b.valores.texto.trim();
+  /** Manda lo escrito, o un texto fijo (por ejemplo «sin captura») sin tocar lo escrito. */
+  async function enviar(fijo?: string) {
+    const texto = (fijo ?? b.valores.texto).trim();
     if (!texto || enviando) return;
     setError('');
     setEnviando(true);
@@ -162,10 +167,11 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
       guardarConverso();
       // El mensaje ya llegó: la casilla se vacía AHORA, antes de la espera. Lo que la persona escriba
       // mientras Camila «escribe» es su siguiente mensaje y no se borra.
-      await b.limpiar();
+      if (fijo === undefined) await b.limpiar();
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
       setHilo({
+        pideCaptura: r.pideCaptura,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
         mensajes: r.mensajes,
@@ -279,6 +285,15 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               </li>
             ) : null}
           </ol>
+          {hilo?.pideCaptura ? (
+            <BloqueCaptura
+              idioma={idioma}
+              cabeceras={cabeceras}
+              ocupado={enviando}
+              alSubir={() => cargar(true)}
+              alNoTener={() => void enviar(t.mensajeSinCaptura)}
+            />
+          ) : null}
           {hilo?.equipoAtendiendo ? (
             <p className="chat-soporte-aviso" role="status" data-testid="chat-equipo-atiende">
               {t.equipoAtiende}
@@ -462,5 +477,106 @@ function UnirCorreo({
         </button>
       </div>
     </form>
+  );
+}
+
+/**
+ * C-CAMILA-FALLOS: el bloque de la captura de un reporte de fallo. Dos botones a la vista (regla de la
+ * cámara: «Subir desde archivos» y «Tomar foto»), el aviso de tapar contraseñas y tarjetas, y «No
+ * tengo captura». Mientras sube, se ve; si falla, se dice por qué y se puede volver a intentar.
+ */
+function BloqueCaptura({
+  idioma,
+  cabeceras,
+  ocupado,
+  alSubir,
+  alNoTener,
+}: {
+  idioma: Idioma;
+  cabeceras: Record<string, string>;
+  ocupado: boolean;
+  alSubir: () => Promise<void>;
+  alNoTener: () => void;
+}) {
+  const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
+  const entrada = useRef<HTMLInputElement>(null);
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState('');
+  const [fallida, setFallida] = useState<File | null>(null);
+  async function subir(archivo: File) {
+    setError('');
+    const problema = problemaDeCaptura(archivo, idioma);
+    if (problema) return setError(problema);
+    setSubiendo(true);
+    try {
+      await api.subirFoto(archivo, '/datos/camila/fallos/captura', cabeceras);
+      setFallida(null);
+      await alSubir();
+    } catch (x) {
+      setFallida(archivo);
+      setError(x instanceof ErrorApi ? x.message : t.sinRed);
+    } finally {
+      setSubiendo(false);
+    }
+  }
+  const quieto = subiendo || ocupado;
+  return (
+    <div className="chat-soporte-captura" data-testid="chat-captura">
+      <strong>{t.capturaTitulo}</strong>
+      <p className="chat-soporte-captura-aviso">{t.capturaAviso}</p>
+      <div className="chat-soporte-captura-botones">
+        <button
+          type="button"
+          className="boton secundario"
+          disabled={quieto}
+          onClick={() => entrada.current?.click()}
+        >
+          {t.subirArchivos}
+        </button>
+        {/* C-CAMARA-EN-TODA-SUBIDA: la misma captura, tomada con la cámara. */}
+        <BotonCamara
+          idioma={idioma}
+          alTomar={(archivo) => void subir(archivo)}
+          alFallar={setError}
+          deshabilitado={quieto}
+        />
+      </div>
+      <input
+        ref={entrada}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/heic"
+        className="oculto"
+        aria-label={t.subirArchivos}
+        onChange={(e) => {
+          const archivo = e.target.files?.[0];
+          e.target.value = '';
+          if (archivo) void subir(archivo);
+        }}
+      />
+      {subiendo ? (
+        <p className="chat-soporte-captura-estado" role="status">
+          {t.subiendo}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="chat-soporte-error chat-soporte-captura-error" role="alert">
+          {error}{' '}
+          {fallida ? (
+            <button type="button" className="enlace" onClick={() => void subir(fallida)}>
+              {t.reintentarCaptura}
+            </button>
+          ) : null}
+        </p>
+      ) : null}
+      <button
+        type="button"
+        className="enlace chat-soporte-captura-no"
+        disabled={quieto}
+        onClick={alNoTener}
+      >
+        {t.sinCaptura}
+      </button>
+      <small className="pista">{t.capturaPrivada}</small>
+    </div>
   );
 }

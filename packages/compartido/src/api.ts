@@ -217,8 +217,11 @@ export function crearApi(op: OpcionesApi) {
   async function subirFoto(
     foto: Blob,
     ruta = '/datos/mi-restaurante/fotos',
+    /** Cabeceras de más (C-CAMILA-FALLOS: la ficha del chat de la web, x-camila-visita). */
+    cabeceras: Record<string, string> = {},
   ): Promise<{ url: string }> {
     const headers: Record<string, string> = {
+      ...cabeceras,
       accept: 'application/json',
       // C-FOTO-ENTREGA-IPHONE: en el iPhone la foto de la cámara sale sin tipo; es una foto, y el
       // servidor igual revisa sus bytes.

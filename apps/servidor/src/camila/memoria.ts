@@ -356,6 +356,8 @@ export function sentenciasBorrarDeCamila(
     de('camila_mensajes'),
     de('camila_casos'),
     de('camila_sin_respuesta'),
+    // C-CAMILA-FALLOS: sus reportes de fallo (las capturas se borran del almacén aparte).
+    de('camila_reportes_fallo'),
     de('camila_codigos'),
     db
       .prepare('DELETE FROM camila_codigos WHERE correo = ?1 OR correo = ?2')
@@ -377,4 +379,21 @@ export async function anotarPais(db: D1Database, p: Persona, pais: string | unde
     .bind(codigo, p.id)
     .run();
   return { ...p, pais: codigo };
+}
+
+/** Las capturas de pantalla de los reportes de fallo de una persona, para borrarlas del almacén. */
+export async function capturasDeCamila(
+  db: D1Database,
+  usuarioId: string,
+  correo: string,
+  telefono: string | null,
+) {
+  const { results } = await db
+    .prepare(
+      `SELECT captura_clave FROM camila_reportes_fallo WHERE captura_clave IS NOT NULL AND persona_id IN (
+         SELECT id FROM camila_personas WHERE usuario_id = ?1 OR correo = ?2 OR correo = ?3 OR telefono = ?4)`,
+    )
+    .bind(usuarioId, correo, correoCanonico(correo), telefono ?? '-')
+    .all<{ captura_clave: string }>();
+  return results.map((r) => r.captura_clave);
 }

@@ -53,3 +53,24 @@ describe('C-CAMILA-CHAT', () => {
     expect(esVisitaCamila(visitaCamila(null))).toBe(true);
   });
 });
+
+describe('C-CAMILA-FALLOS: la captura antes de subirla', () => {
+  it('acepta imágenes de hasta 10 MB y dice en palabras por qué no', async () => {
+    const { problemaDeCaptura, TEXTOS_CHAT_SOPORTE } = await import('./camilaChat');
+    expect(problemaDeCaptura({ size: 500_000, type: 'image/png' }, 'es')).toBeNull();
+    expect(problemaDeCaptura({ size: 500_000, type: 'image/HEIC' }, 'en')).toBeNull();
+    // El iPhone a veces no dice el tipo: el servidor revisa los bytes.
+    expect(problemaDeCaptura({ size: 500_000, type: '' }, 'es')).toBeNull();
+    expect(problemaDeCaptura({ size: 11 * 1024 * 1024, type: 'image/jpeg' }, 'es')).toBe(
+      'La captura pesa demasiado. El máximo es 10 MB.',
+    );
+    expect(problemaDeCaptura({ size: 100, type: 'application/pdf' }, 'en')).toBe(
+      'Send a JPG, PNG, WebP or HEIC image.',
+    );
+    expect(Object.keys(TEXTOS_CHAT_SOPORTE.en).sort()).toEqual(
+      Object.keys(TEXTOS_CHAT_SOPORTE.es).sort(),
+    );
+    expect(TEXTOS_CHAT_SOPORTE.es.mensajeSinCaptura).toBe('sin captura');
+    expect(TEXTOS_CHAT_SOPORTE.en.mensajeSinCaptura).toBe('no screenshot');
+  });
+});

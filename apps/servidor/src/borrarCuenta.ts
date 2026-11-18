@@ -1,7 +1,7 @@
 import type { Env } from './env';
 import { borrarPuertasDeUsuario } from './rutas/fotoPuerta';
 import { ErrorDatos } from './validar';
-import { sentenciasBorrarDeCamila } from './camila/memoria';
+import { capturasDeCamila, sentenciasBorrarDeCamila } from './camila/memoria';
 
 /**
  * C-BORRAR-DESDE-SUPERADMIN (4 nov 2026): el borrado de una cuenta, en UNA sola pieza. Lo usan la app
@@ -103,6 +103,13 @@ export async function borrarCuenta(
       .bind(u.id)
       .all<{ foto_clave: string }>()
   ).results.map((f) => f.foto_clave);
+  // C-CAMILA-FALLOS: las capturas de sus reportes de fallo se listan antes del lote (que borra las filas).
+  const capturasCamila = await capturasDeCamila(
+    db,
+    u.id,
+    u.correo,
+    canon?.telefono_canonico ?? null,
+  );
   await db.batch([
     // C-CAMILA-BORRADO: sus conversaciones con soporte (Camila) se borran enteras.
     ...sentenciasBorrarDeCamila(db, u.id, u.correo, canon?.telefono_canonico ?? null),
@@ -328,6 +335,7 @@ export async function borrarCuenta(
       )
       .bind(u.id),
   ]);
+  if (env.BUCKET && capturasCamila.length) await env.BUCKET.delete(capturasCamila);
   // Y las fotos del documento, la cara y el local, del almacén privado.
   if (env.BUCKET) {
     for (const prefix of [

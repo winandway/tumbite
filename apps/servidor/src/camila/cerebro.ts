@@ -3,6 +3,7 @@ import { correosEquipo } from '../avisosEquipo';
 import { enviarCorreo } from '../correo';
 import { enviarPorCanal } from './canales';
 import { buscarGuias, respuestaDeGuia } from './buscadorDocs';
+import { type ContextoPeticion, pasoDeFallo } from './fallos';
 import { buscarAprobadas, buscarEnDocs, enlaceGuia, normalizar } from './conocimiento';
 import {
   HERRAMIENTAS_MODELO,
@@ -68,6 +69,8 @@ export type ResultadoCerebro = {
   /** Por qué Camila no contestó (una persona del equipo tiene el hilo). */
   silencio?: 'equipo';
   modo: 'ia' | 'reglas' | 'fija' | 'silencio';
+  /** C-CAMILA-FALLOS: Camila acaba de pedir la captura de pantalla del fallo. */
+  pideCaptura?: boolean;
 };
 
 const DIFICIL =
@@ -285,7 +288,7 @@ export async function recibirMensaje(
   persona: Persona,
   canal: Canal,
   textoCrudo: string,
-  opciones: { asunto?: string } = {},
+  opciones: { asunto?: string; peticion?: ContextoPeticion } = {},
 ): Promise<ResultadoCerebro> {
   const texto = textoCrudo.split(String.fromCharCode(0)).join('').trim().slice(0, 2000);
   const idioma: IdiomaCamila = persona.idioma === 'en' ? 'en' : 'es';
@@ -330,6 +333,13 @@ export async function recibirMensaje(
   let respuesta: string;
   let modo: ResultadoCerebro['modo'] = 'fija';
   let marca: string | null = null;
+  let pideCaptura = false;
+  // C-CAMILA-FALLOS: si el mensaje abre o continúa un reporte de fallo, lo lleva la máquina de pasos
+  // (sin IA y sin herramientas: lo que la persona escribe solo se guarda).
+  const fallo =
+    preguntaSiEsHumana(texto) || pideHumano(texto) || molesta
+      ? null
+      : await pasoDeFallo(db, persona, texto, opciones.peticion ?? {});
   if (preguntaSiEsHumana(texto)) respuesta = segun(VERDAD, idioma);
   else if (pideHumano(texto)) {
     await abrirCaso(c, texto, 'pide_persona');
@@ -337,6 +347,9 @@ export async function recibirMensaje(
   } else if (molesta) {
     await abrirCaso(c, texto, 'molesta');
     respuesta = segun(ENTIENDO_TU_MOLESTIA, idioma);
+  } else if (fallo) {
+    respuesta = fallo.respuesta;
+    pideCaptura = fallo.pideCaptura;
   } else {
     // C-CAMILA-ANONIMOS: la IA es solo para personas verificadas (cuenta o correo verificado). El chat
     // anónimo de la web se contesta con Docs y lo aprobado: así nadie gasta el tope del día con
@@ -410,7 +423,7 @@ export async function recibirMensaje(
   if (canal !== 'web' && canal !== 'app')
     await enviarPorCanal(env, db, persona, canal, respuesta, { asunto: opciones.asunto });
   await actualizarResumen(db, persona);
-  return { respuesta, modo };
+  return { respuesta, modo, pideCaptura };
 }
 
 /**

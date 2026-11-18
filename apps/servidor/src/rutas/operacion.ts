@@ -1,4 +1,8 @@
-import { TAREA_CAMILA_LIMPIEZA, TAREA_CAMILA_SEMANAL } from '../camila/aprendizaje';
+import {
+  TAREA_CAMILA_LIMPIEZA,
+  TAREA_CAMILA_RESUMEN_FALLOS,
+  TAREA_CAMILA_SEMANAL,
+} from '../camila/aprendizaje';
 import { actualizarLlegadas, leerLlegada, listoMsDe, llegadaParaMostrar } from '../llegadaEstimada';
 import { avisarAutorizacionesPorVencer } from '../autorizacionVencida';
 import { flotasActivas } from './flota';
@@ -3295,6 +3299,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
   TAREA_CAMILA_SEMANAL,
   // C-CAMILA: una vez al día borra los contadores de códigos de días anteriores y los códigos vencidos.
   TAREA_CAMILA_LIMPIEZA,
+  // C-CAMILA-FALLOS: el resumen diario de fallos reportados, por correo al equipo.
+  TAREA_CAMILA_RESUMEN_FALLOS,
   // Divoox Flex · Fase 3: ofertas vencidas, avisos por vencer, integraciones y limpieza (mismo reloj).
   ...TAREAS_FLEX,
   // Flex · Fase 4: conciliación y recuperación de las billeteras, recarga automática y alertas.

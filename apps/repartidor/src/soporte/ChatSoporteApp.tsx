@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import {
   ErrorApi,
   type HiloCamila,
@@ -9,6 +10,7 @@ import {
   enIdioma,
   nombreAutorCamila,
   cronometroDeEscritura,
+  problemaDeCaptura,
   useBorrador,
 } from '@tumbite/compartido';
 import {
@@ -21,6 +23,7 @@ import {
   alSalirTelefono,
   almacenTelefono,
   e,
+  fotoConOrigen,
   useSesion,
   useSondeo,
 } from '@tumbite/movil';
@@ -30,8 +33,26 @@ import {
  * Ayuda: la misma conversación de la web y del correo, con la cuenta del conductor (canal «app»).
  * Lo escrito se guarda solo y vuelve si la app se cierra; se borra al enviarse bien. Si una persona
  * del equipo tomó la conversación, se dice en pantalla y Camila no contesta.
+ *
+ * C-CAMILA-FALLOS: cuando Camila pide la captura de un reporte de fallo, aparece su bloque con
+ * «Subir desde archivos» y «Tomar foto» (la pieza única de la cámara) y «No tengo captura».
  */
 const ESPERA_RECARGA_MS = 8_000;
+
+const CAMARA = {
+  pedirPermiso: () => ImagePicker.requestCameraPermissionsAsync(),
+  tomar: () => ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 }),
+};
+const deArchivos = async () => {
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    // En el iPhone, la versión compatible (JPEG).
+    preferredAssetRepresentationMode:
+      ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+    quality: 0.7,
+  });
+  return r.canceled ? null : (r.assets[0] ?? null);
+};
 
 export function ChatSoporteApp() {
   const { api, idioma, usuario } = useSesion();
@@ -69,8 +90,9 @@ export function ChatSoporteApp() {
   // C-SESION-TERMINADA: cada 8 s; si falla, espera cada vez más.
   useSondeo(cargar, ESPERA_RECARGA_MS);
 
-  async function enviar() {
-    const texto = b.valores.texto.trim();
+  /** Manda lo escrito, o un texto fijo (por ejemplo «sin captura») sin tocar lo escrito. */
+  async function enviar(fijo?: string) {
+    const texto = (fijo ?? b.valores.texto).trim();
     if (!texto || enviando) return;
     setError('');
     setEnviando(true);
@@ -83,10 +105,11 @@ export function ChatSoporteApp() {
       });
       // El mensaje ya llegó: la casilla se vacía AHORA, antes de la espera. Lo que la persona escriba
       // mientras Camila «escribe» es su siguiente mensaje y no se borra.
-      await b.limpiar();
+      if (fijo === undefined) await b.limpiar();
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
       setHilo({
+        pideCaptura: r.pideCaptura,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
         mensajes: r.mensajes,
@@ -200,6 +223,13 @@ export function ChatSoporteApp() {
           <Text style={{ color: '#666B73', marginTop: 4 }}>{t.cargando}</Text>
         ) : null}
       </ScrollView>
+      {hilo?.pideCaptura ? (
+        <BloqueCapturaApp
+          ocupado={enviando}
+          alSubir={cargar}
+          alNoTener={() => void enviar(t.mensajeSinCaptura)}
+        />
+      ) : null}
       {hilo?.equipoAtendiendo ? (
         <Text
           testID="chat-equipo-atiende"
@@ -228,6 +258,110 @@ export function ChatSoporteApp() {
         />
         <Boton texto={t.enviar} alTocar={() => void enviar()} cargando={enviando} enFila />
       </FilaConBoton>
+    </View>
+  );
+}
+
+type FotoElegida = { uri: string; mimeType?: string | null; fileSize?: number | null };
+
+/**
+ * C-CAMILA-FALLOS: el bloque de la captura en Driver. Los dos botones a la vista (regla de la
+ * cámara), el aviso de tapar contraseñas y tarjetas, y «No tengo captura». Sin cámara o sin permiso,
+ * se dice en palabras y queda «Subir desde archivos». Si la subida falla, se puede volver a intentar.
+ */
+function BloqueCapturaApp({
+  ocupado,
+  alSubir,
+  alNoTener,
+}: {
+  ocupado: boolean;
+  alSubir: () => Promise<void>;
+  alNoTener: () => void;
+}) {
+  const { api, idioma } = useSesion();
+  const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
+  const [subiendo, setSubiendo] = useState(false);
+  const [error, setError] = useState('');
+  const [fallida, setFallida] = useState<FotoElegida | null>(null);
+  async function subir(foto: FotoElegida) {
+    setError('');
+    setSubiendo(true);
+    try {
+      const blob = await (await fetch(foto.uri)).blob();
+      const problema = problemaDeCaptura(
+        { size: foto.fileSize ?? blob.size, type: foto.mimeType ?? blob.type },
+        idioma,
+      );
+      if (problema) {
+        setError(problema);
+        return;
+      }
+      await api.subirFoto(blob, '/datos/camila/fallos/captura');
+      setFallida(null);
+      await alSubir();
+    } catch (x) {
+      setFallida(foto);
+      setError(x instanceof ErrorApi ? x.message : t.sinRed);
+    } finally {
+      setSubiendo(false);
+    }
+  }
+  async function elegir(origen: 'camara' | 'archivos') {
+    setError('');
+    try {
+      const f = await fotoConOrigen(idioma, CAMARA, deArchivos, origen);
+      if (f) await subir(f);
+    } catch (x) {
+      // Sin cámara o sin permiso: el motivo en palabras; «Subir desde archivos» sigue ahí.
+      setFallida(null);
+      setError(x instanceof Error ? x.message : String(x));
+    }
+  }
+  const quieto = subiendo || ocupado;
+  return (
+    <View style={[e.tarjeta, { gap: 8 }]} testID="chat-captura">
+      <Text style={{ fontWeight: '800', color: C.secundario }}>{t.capturaTitulo}</Text>
+      <Text style={{ color: C.secundario, fontWeight: '600', fontSize: 13 }}>{t.capturaAviso}</Text>
+      <Boton
+        texto={t.subirArchivos}
+        alTocar={() => void elegir('archivos')}
+        secundario
+        cargando={quieto}
+        testID="captura-archivos"
+      />
+      <Boton
+        texto={t.tomarFoto}
+        alTocar={() => void elegir('camara')}
+        secundario
+        cargando={quieto}
+        testID="captura-camara"
+      />
+      {subiendo ? (
+        <Text accessibilityRole="alert" style={{ color: '#666B73' }}>
+          {t.subiendo}
+        </Text>
+      ) : null}
+      {error ? (
+        <Text style={e.error} accessibilityRole="alert" testID="captura-error">
+          {error}
+        </Text>
+      ) : null}
+      {error && fallida ? (
+        <Boton texto={t.reintentarCaptura} alTocar={() => void subir(fallida)} secundario />
+      ) : null}
+      <Pressable
+        onPress={alNoTener}
+        disabled={quieto}
+        accessibilityRole="button"
+        testID="captura-no-tengo"
+        hitSlop={8}
+        style={{ alignSelf: 'flex-start', paddingVertical: 6 }}
+      >
+        <Text style={{ color: C.secundario, fontWeight: '700', textDecorationLine: 'underline' }}>
+          {t.sinCaptura}
+        </Text>
+      </Pressable>
+      <Text style={{ color: '#666B73', fontSize: 12 }}>{t.capturaPrivada}</Text>
     </View>
   );
 }

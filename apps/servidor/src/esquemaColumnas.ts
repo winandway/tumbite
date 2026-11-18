@@ -2908,5 +2908,47 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "codigo_hash",
     "intentos",
     "vence_en"
+  ],
+  "camila_fallos": [
+    "id",
+    "huella",
+    "codigo",
+    "tipo",
+    "titulo",
+    "estado",
+    "reportes",
+    "primera_vez",
+    "ultima_vez",
+    "entregados",
+    "arreglado_en",
+    "arreglado_por",
+    "nota_arreglo"
+  ],
+  "camila_reportes_fallo": [
+    "id",
+    "persona_id",
+    "fallo_id",
+    "tipo",
+    "estado",
+    "paso",
+    "inicial",
+    "preguntas_json",
+    "respuestas_json",
+    "contexto_json",
+    "captura_clave",
+    "captura_tipo",
+    "avisado_arreglo",
+    "creado_en",
+    "completo_en"
+  ],
+  "camila_preguntas": [
+    "id",
+    "tipo",
+    "pregunta_es",
+    "pregunta_en",
+    "estado",
+    "propuesta_por",
+    "decidido_por",
+    "creado_en"
   ]
 };

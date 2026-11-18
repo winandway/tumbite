@@ -27,6 +27,8 @@ export const esquemaEnv = z.object({
   GERENTE_SECRETO: z.string().min(40).optional(),
   /** C-CAMILA-TOPE: llave de Gemini (prepago) de Camila. Sin ella, Camila contesta sin IA (Docs y lo aprobado). */
   GEMINI_API_KEY: z.string().min(20).optional(),
+  /** C-CAMILA-FALLOS: el token con el que las sesiones de desarrollo leen los fallos reportados. */
+  CAMILA_FALLOS_TOKEN: z.string().min(40).optional(),
   /** C-CASOS-CAPTURAS: llave para firmar los enlaces de las capturas de los casos de ayuda. */
   ARCHIVOS_FIRMA: z.string().min(40).optional(),
   /** Llave publicable de Stripe (pk_…): la usa la app para el pago dentro de la pantalla. */

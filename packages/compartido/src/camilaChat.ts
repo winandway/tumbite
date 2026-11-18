@@ -17,6 +17,8 @@ export type MensajeCamila = {
   reportado?: boolean;
 };
 export type HiloCamila = {
+  /** C-CAMILA-FALLOS: Camila está esperando la captura de pantalla de un reporte de fallo. */
+  pideCaptura?: boolean;
   verificada: boolean;
   equipoAtendiendo: boolean;
   mensajes: MensajeCamila[];
@@ -57,6 +59,19 @@ const CHAT_ES = {
   cargando: 'Cargando la conversación…',
   reportar: 'Reportar respuesta',
   reportada: 'Respuesta reportada. El equipo la va a revisar.',
+  // C-CAMILA-FALLOS: el bloque de la captura de pantalla de un reporte de fallo.
+  capturaTitulo: 'Manda tu captura de pantalla',
+  capturaAviso: 'Antes de mandarla, tapa cualquier contraseña o número de tarjeta.',
+  capturaPrivada: 'Solo la ve el equipo de Divoox. Se borra a los 90 días.',
+  subirArchivos: 'Subir desde archivos',
+  tomarFoto: 'Tomar foto',
+  sinCaptura: 'No tengo captura',
+  /** Lo que se manda por el chat cuando la persona no tiene captura (Camila lo entiende así). */
+  mensajeSinCaptura: 'sin captura',
+  subiendo: 'Subiendo la captura…',
+  capturaGrande: 'La captura pesa demasiado. El máximo es 10 MB.',
+  capturaTipo: 'Manda una imagen JPG, PNG, WebP o HEIC.',
+  reintentarCaptura: 'Volver a intentar',
 };
 const CHAT_EN: typeof CHAT_ES = {
   burbuja: 'Talk to our support team',
@@ -90,6 +105,17 @@ const CHAT_EN: typeof CHAT_ES = {
   cargando: 'Loading the conversation…',
   reportar: 'Report reply',
   reportada: 'Reply reported. Our team will review it.',
+  capturaTitulo: 'Send your screenshot',
+  capturaAviso: 'Before sending it, cover any password or card number.',
+  capturaPrivada: 'Only the Divoox team sees it. It’s deleted after 90 days.',
+  subirArchivos: 'Upload from files',
+  tomarFoto: 'Take photo',
+  sinCaptura: 'I don’t have a screenshot',
+  mensajeSinCaptura: 'no screenshot',
+  subiendo: 'Uploading the screenshot…',
+  capturaGrande: 'The screenshot is too large. The maximum is 10 MB.',
+  capturaTipo: 'Send a JPG, PNG, WebP or HEIC image.',
+  reintentarCaptura: 'Try again',
 };
 export const TEXTOS_CHAT_SOPORTE = { es: CHAT_ES, en: CHAT_EN };
 
@@ -163,4 +189,20 @@ export function visitaCamila(
     /* sin almacenamiento: la conversación vive mientras dure la página */
   }
   return nueva;
+}
+
+/** C-CAMILA-FALLOS: la captura de un reporte de fallo, como la recibe el servidor. */
+export const CAPTURA_MAX_BYTES = 10 * 1024 * 1024;
+export const TIPOS_CAPTURA = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+
+/** Revisa la captura antes de subirla. Devuelve el motivo para no subirla, o null si sirve. */
+export function problemaDeCaptura(
+  archivo: { size: number; type: string },
+  idioma: Idioma,
+): string | null {
+  const t = idioma === 'en' ? TEXTOS_CHAT_SOPORTE.en : TEXTOS_CHAT_SOPORTE.es;
+  if (archivo.size > CAPTURA_MAX_BYTES) return t.capturaGrande;
+  // Sin tipo (el iPhone a veces lo deja vacío) se deja pasar: el servidor revisa los bytes.
+  if (archivo.type && !TIPOS_CAPTURA.includes(archivo.type.toLowerCase())) return t.capturaTipo;
+  return null;
 }

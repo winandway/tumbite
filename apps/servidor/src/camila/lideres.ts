@@ -92,7 +92,7 @@ Your link:
 ${enlaceLider(env, codigo, 'en')}
 
 If anyone gets stuck, they can write to me in the Divoox Driver chat (Help, “Talk to support”). I am here to help.`
-    : `Hola, ${primer}, bienvenido al equipo de líderes de Divoox.
+    : `Hola, ${primer}, te doy la bienvenida al equipo de líderes de Divoox.
 
 El código de tu equipo es ${codigo}. Todos los que se registren con él quedan en tu equipo y yo te llevo la cuenta.
 

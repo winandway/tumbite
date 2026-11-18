@@ -1,6 +1,9 @@
 import { nuevoId } from '../cripto';
 import { ErrorDatos } from '../validar';
 import { normalizar } from './conocimiento';
+import type { Env } from '../env';
+import { depurarCapturas } from './fallos';
+import { resumenDiarioDeFallos } from '../rutas/camilaFallos';
 
 /**
  * C-CAMILA-APRENDE (17 nov 2026) — todos los países. Camila aprende SOLO con aprobación.
@@ -141,14 +144,24 @@ export const TAREA_CAMILA_SEMANAL = {
  * La limpieza diaria de Camila (una vez al día, a las 07:00 UTC, en la vuelta de cada hora): borra
  * los contadores de códigos de días anteriores y los códigos vencidos hace más de un día.
  */
-export async function limpiarCamila(db: D1Database, ahora = new Date()) {
+export async function limpiarCamila(
+  db: D1Database,
+  ahora = new Date(),
+  env: Pick<Env, 'BUCKET'> = {},
+) {
   const [dias, codigos] = await db.batch([
     db
       .prepare('DELETE FROM camila_codigos_dia WHERE dia < ?')
       .bind(ahora.toISOString().slice(0, 10)),
     db.prepare("DELETE FROM camila_codigos WHERE vence_en < datetime('now', '-1 day')"),
+    // Un reporte de fallo que la persona dejó a medias hace más de un día se cierra solo.
+    db.prepare(
+      "UPDATE camila_reportes_fallo SET estado = 'cancelado' WHERE estado IN ('preguntando', 'captura') AND creado_en < datetime('now', '-1 day')",
+    ),
   ]);
-  return (dias?.meta.changes ?? 0) + (codigos?.meta.changes ?? 0);
+  // C-CAMILA-FALLOS: las capturas de pantalla viven 90 días.
+  const capturas = await depurarCapturas(env, db);
+  return (dias?.meta.changes ?? 0) + (codigos?.meta.changes ?? 0) + capturas;
 }
 
 export const TAREA_CAMILA_LIMPIEZA = {
@@ -156,6 +169,17 @@ export const TAREA_CAMILA_LIMPIEZA = {
   critica: false,
   cada: 'hora' as const,
   escriturasEsperadas: 5000,
-  correr: async (_env: unknown, db: D1Database) =>
-    new Date().getUTCHours() === 7 ? limpiarCamila(db) : 0,
+  correr: async (env: Env, db: D1Database) =>
+    new Date().getUTCHours() === 7 ? limpiarCamila(db, new Date(), env) : 0,
+};
+
+/** C-CAMILA-FALLOS: el resumen diario de fallos por correo al equipo, a las 12:00 UTC. */
+export const TAREA_CAMILA_RESUMEN_FALLOS = {
+  nombre: 'camila_resumen_fallos',
+  critica: false,
+  cada: 'hora' as const,
+  // Solo lee y manda un correo; se declara una por si el envío deja su marca.
+  escriturasEsperadas: 1,
+  correr: async (env: Env, db: D1Database) =>
+    new Date().getUTCHours() === 12 ? resumenDiarioDeFallos(env, db) : 0,
 };

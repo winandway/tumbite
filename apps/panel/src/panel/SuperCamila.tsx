@@ -9,6 +9,7 @@ import {
 } from '@tumbite/compartido';
 import { AvisoBorrador } from './AvisoBorrador';
 import { AyudaAqui } from './AyudaAqui';
+import { FallosReportados, PreguntasDiagnostico } from './SuperCamilaFallos';
 import { pedir } from './api';
 
 /**
@@ -27,6 +28,8 @@ const T = {
       bandeja: 'Bandeja',
       conversacion: 'Conversación',
       aprendizaje: 'Aprendizaje',
+      fallos: 'Fallos reportados',
+      preguntas: 'Preguntas de diagnóstico',
       ajustes: 'Ajustes',
     },
     casos: 'Casos abiertos',
@@ -130,6 +133,8 @@ const T = {
       bandeja: 'Inbox',
       conversacion: 'Conversation',
       aprendizaje: 'Learning',
+      fallos: 'Reported issues',
+      preguntas: 'Diagnostic questions',
       ajustes: 'Settings',
     },
     casos: 'Open cases',
@@ -220,8 +225,15 @@ const T = {
 };
 type Textos = (typeof T)['es'];
 
-type Vista = 'bandeja' | 'conversacion' | 'aprendizaje' | 'ajustes';
-const VISTAS: Vista[] = ['bandeja', 'conversacion', 'aprendizaje', 'ajustes'];
+type Vista = 'bandeja' | 'conversacion' | 'aprendizaje' | 'fallos' | 'preguntas' | 'ajustes';
+const VISTAS: Vista[] = [
+  'bandeja',
+  'conversacion',
+  'aprendizaje',
+  'fallos',
+  'preguntas',
+  'ajustes',
+];
 
 type Caso = {
   id: string;
@@ -316,6 +328,7 @@ const dolares = (centavos: number, idioma: Idioma) =>
 function leerVista(): { vista: Vista; persona: string } {
   const q = new URLSearchParams(window.location.search);
   const v = q.get('view') as Vista | null;
+  // «person» guarda la conversación abierta y, en «Fallos reportados», el fallo abierto.
   return { vista: v && VISTAS.includes(v) ? v : 'bandeja', persona: q.get('person') ?? '' };
 }
 
@@ -365,6 +378,11 @@ export function SuperCamila({ idioma }: { idioma: Idioma }) {
         />
       ) : null}
       {vista === 'aprendizaje' ? <Aprendizaje t={t} idioma={idioma} /> : null}
+      {/* C-CAMILA-FALLOS: los fallos que reportaron los usuarios y las preguntas de diagnóstico. */}
+      {vista === 'fallos' ? (
+        <FallosReportados idioma={idioma} fallo={persona} elegir={(f) => ir('fallos', f)} />
+      ) : null}
+      {vista === 'preguntas' ? <PreguntasDiagnostico idioma={idioma} /> : null}
       {vista === 'ajustes' ? <AjustesCamila t={t} idioma={idioma} /> : null}
     </div>
   );

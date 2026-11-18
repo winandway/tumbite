@@ -53,9 +53,25 @@ const CIUDADES = {
       enviarRespuesta: 'Enviar respuesta',
       aprendizaje: 'Aprendizaje',
       ajustes: 'Ajustes',
+      fallos: 'Fallos reportados',
+      marcar: 'Marcar arreglado y avisar',
+      siMarcar: 'Sí, marcar arreglado y avisar',
       conversacion: 'Conversación',
     },
     preguntaDriver: '¿Cómo recargo mi saldo para recibir carreras?',
+    fallo: {
+      inicial: 'La app no me deja recargar el saldo',
+      respuestas: [
+        'Abrí la app, toqué Ganancias y toqué Recargar',
+        'Que se abriera la pantalla para poner el código',
+        'Sale un mensaje que dice «Intenta otra vez» y no pasa nada',
+        'Me pasa siempre desde ayer',
+      ],
+      aviso: 'Antes de mandarla, tapa cualquier contraseña o número de tarjeta.',
+      tipo: 'Pagos y cobros',
+      aUno: /Camila le va a escribir a \d+ persona/,
+      avisada: /Camila avisó a \d+ persona/,
+    },
     preguntaWeb: '¿Qué necesito para manejar con Divoox en El Vigía?',
     rara: '¿Puedo llevar un pasajero con una mascota pequeña?',
     persona: 'Quiero hablar con una persona, por favor.',
@@ -84,9 +100,25 @@ const CIUDADES = {
       enviarRespuesta: 'Send reply',
       aprendizaje: 'Learning',
       ajustes: 'Settings',
+      fallos: 'Reported issues',
+      marcar: 'Mark fixed and notify',
+      siMarcar: 'Yes, mark fixed and notify',
       conversacion: 'Conversation',
     },
     preguntaDriver: 'How do I top up my balance to get trips?',
+    fallo: {
+      inicial: 'The app won’t let me top up my balance',
+      respuestas: [
+        'I opened the app, tapped Earnings and tapped Top up',
+        'That the screen to enter the code would open',
+        'A message says “Try again” and nothing happens',
+        'It happens every time since yesterday',
+      ],
+      aviso: 'Before sending it, cover any password or card number.',
+      tipo: 'Payments',
+      aUno: /Camila will write to \d+ (person|people)/,
+      avisada: /Camila notified \d+ (person|people)/,
+    },
     preguntaWeb: 'What do I need to drive with Divoox in Novi?',
     rara: 'Can I take a rider with a small pet?',
     persona: 'I want to talk to a person, please.',
@@ -174,6 +206,40 @@ for (const idioma of ['es', 'en'] as const) {
         )[0]?.canal,
       ),
     ).toBe('app');
+
+    // C-CAMILA-FALLOS: el conductor cuenta un fallo; Camila hace las cuatro preguntas de técnico,
+    // pide la captura (el bloque con sus dos botones) y, sin captura, le da el número F-….
+    const responder = async (texto: string) => {
+      const camilas = await pr.getByTestId('chat-mensaje-camila').count();
+      await pr.getByTestId('chat-soporte-casilla').fill(texto);
+      await pr.getByText(C.textos.enviar, { exact: true }).click();
+      await expect(pr.getByTestId('chat-mensaje-camila')).toHaveCount(camilas + 1, {
+        timeout: 30_000,
+      });
+    };
+    await responder(C.fallo.inicial);
+    for (const r of C.fallo.respuestas) await responder(r);
+    const bloque = pr.getByTestId('chat-captura');
+    await expect(bloque).toBeVisible({ timeout: 30_000 });
+    await expect(bloque.getByTestId('captura-archivos')).toBeVisible();
+    await expect(bloque.getByTestId('captura-camara')).toBeVisible();
+    await expect(bloque).toContainText(C.fallo.aviso);
+    if (CAPTURAS) {
+      await bloque.scrollIntoViewIfNeeded();
+      await pr.screenshot({ path: join(CARPETA, `camila-driver-captura-${idioma}.png`) });
+    }
+    const camilasAntes = await pr.getByTestId('chat-mensaje-camila').count();
+    await bloque.getByTestId('captura-no-tengo').click();
+    await expect(pr.getByTestId('chat-mensaje-camila')).toHaveCount(camilasAntes + 1, {
+      timeout: 30_000,
+    });
+    await expect(pr.getByTestId('chat-mensaje-camila').last()).toContainText(/F-[A-Z0-9]{3,}/);
+    await expect(pr.getByTestId('chat-captura')).toHaveCount(0);
+    const codigoFallo = String(
+      /F-[A-Z0-9]{3,}/.exec(
+        (await pr.getByTestId('chat-mensaje-camila').last().textContent()) ?? '',
+      )?.[0],
+    );
 
     // La web: una visita sin cuenta escribe en la burbuja y pide una persona.
     const ctxWeb = await browser.newContext({
@@ -280,6 +346,39 @@ for (const idioma of ['es', 'en'] as const) {
       await sp
         .getByTestId('camila-ajustes')
         .screenshot({ path: join(PRIVADA, `ajustes-${idioma}.png`) });
+
+    // C-CAMILA-FALLOS: el fallo aparece con su contador (los reportes parecidos de otras corridas
+    // se suman al mismo fallo); se marca arreglado y Camila avisa.
+    await sp.getByRole('tab', { name: C.textos.fallos }).click();
+    const listaFallos = sp.getByTestId('camila-lista-fallos');
+    await expect(listaFallos).toContainText(codigoFallo, { timeout: 30_000 });
+    await expect(listaFallos).toContainText(C.fallo.tipo);
+    if (CAPTURAS)
+      await sp
+        .getByTestId('super-camila')
+        .screenshot({ path: join(PRIVADA, `fallos-${idioma}.png`) });
+    await listaFallos.getByText(codigoFallo).click();
+    const ficha = sp.getByTestId('camila-ficha-fallo');
+    await expect(ficha).toContainText(C.fallo.respuestas[0]!, { timeout: 30_000 });
+    await ficha.getByRole('button', { name: C.textos.marcar }).click();
+    await expect(sp.getByTestId('camila-confirmar-arreglo')).toContainText(C.fallo.aUno);
+    if (CAPTURAS) {
+      // La ficha arriba (el fallo, la confirmación y el primer reporte), a lo ancho de la pantalla.
+      await sp.evaluate(() => window.scrollTo(0, 0));
+      await sp.screenshot({ path: join(PRIVADA, `fallo-${idioma}.png`) });
+    }
+    await sp
+      .getByTestId('camila-confirmar-arreglo')
+      .getByRole('button', { name: C.textos.siMarcar })
+      .click();
+    await expect(ficha.getByRole('status')).toContainText(C.fallo.avisada, { timeout: 30_000 });
+    expect(
+      Number(
+        sql(
+          `SELECT COUNT(*) AS n FROM camila_mensajes m JOIN camila_personas p ON p.id = m.persona_id WHERE p.usuario_id = '${conductor.usuario.id}' AND m.autor = 'camila' AND m.texto LIKE '%${codigoFallo}%'`,
+        )[0]?.n,
+      ),
+    ).toBe(2);
 
     // Se deja como estaba: la conversación vuelve a Camila y el caso se cierra.
     await request.post(`/datos/admin/camila/hilos/${visita}/devolver`, { headers: h(admin.token) });

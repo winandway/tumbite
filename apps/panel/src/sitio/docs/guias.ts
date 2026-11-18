@@ -3633,6 +3633,10 @@ const es: SeccionDocs[] = [
           'Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña.',
           'Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó.',
           'Si eres líder de un equipo de conductores, tu enlace y tu código QR están en Divoox Driver, «Mi equipo». Camila te manda el plan para registrar a tu gente y te avisa cada vez que alguien se registra y cada vez que alguien queda aprobado, con cuántos llevas.',
+          'Si algo de la app falla (no carga, se cierra, no te deja pagar o recargar), cuéntaselo a Camila. Ella lo reporta al equipo técnico y te hace cuatro preguntas cortas: qué estabas haciendo, qué esperabas que pasara, qué viste en la pantalla y si te pasa siempre.',
+          'Al final te pide una captura de pantalla de lo que viste. Tócala en «Subir desde archivos» o en «Tomar foto». Antes de mandarla, tapa cualquier contraseña o número de tarjeta. Si no tienes una, toca «No tengo captura».',
+          'Camila te da un número de reporte (empieza por F-). Cuando el equipo lo arregle, Camila te escribe por el mismo chat para que actualices la app.',
+          'Tus capturas son privadas: solo las ve el equipo de Divoox, se borran solas a los 90 días y también al borrar tu cuenta.',
         ],
         capturas: [
           {
@@ -3655,12 +3659,19 @@ const es: SeccionDocs[] = [
             alt: 'Chat «Habla con soporte» en Divoox Driver con una pregunta sobre el saldo y la respuesta de Camila Campos, del equipo de soporte.',
             pie: 'Escribe tu pregunta y Camila te responde en la misma pantalla.',
           },
+          {
+            src: '/docs/camila-driver-captura-es.webp',
+            alt: 'Chat «Habla con soporte» en Divoox Driver con el reporte de un fallo y el bloque para mandar la captura: «Subir desde archivos», «Tomar foto», el aviso de tapar contraseñas y tarjetas y «No tengo captura».',
+            pie: 'Para reportar un fallo, Camila te pide una captura y te avisa cuando esté arreglado.',
+          },
         ],
         preguntas: [
           '¿Cómo hablo con soporte de Divoox?',
           '¿Camila es una persona?',
           '¿Cómo hablo con una persona del equipo?',
           '¿Cómo registro a mi equipo de conductores?',
+          '¿Cómo reporto un fallo de la app?',
+          '¿Qué pasa con la captura que mando?',
         ],
         pasos: [
           'En la app Divoox Driver, abre el menú y toca «Ayuda», «Habla con soporte». En la web, toca «Habla con nuestro equipo de soporte» abajo a la derecha.',
@@ -3668,6 +3679,7 @@ const es: SeccionDocs[] = [
           'Si quieres hablar con alguien del equipo, escribe «hablar con una persona».',
           'Por correo, responde cualquier correo de Camila: sigue la misma conversación.',
           'Si una respuesta de Camila no te parece correcta, toca «Reportar respuesta» debajo de ella: el equipo la revisa.',
+          'Si algo falla, cuéntaselo a Camila, responde sus cuatro preguntas y manda la captura (o toca «No tengo captura»).',
         ],
       },
       {
@@ -8922,6 +8934,10 @@ const en: SeccionDocs[] = [
           'To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password.',
           'Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved.',
           'If you lead a team of drivers, your link and QR code are in Divoox Driver, “My team.” Camila sends you the plan to sign up your people and tells you every time someone signs up and every time someone is approved, with how many you have.',
+          'If something in the app is broken (it won’t load, it closes, it won’t let you pay or top up), tell Camila. She reports it to the technical team and asks you four short questions: what you were doing, what you expected to happen, what you saw on the screen and whether it happens every time.',
+          'At the end she asks for a screenshot of what you saw. Tap “Upload from files” or “Take photo.” Before sending it, cover any password or card number. If you don’t have one, tap “I don’t have a screenshot.”',
+          'Camila gives you a report number (it starts with F-). When the team fixes it, Camila writes to you in the same chat so you can update the app.',
+          'Your screenshots are private: only the Divoox team sees them, and they’re deleted automatically after 90 days and when you delete your account.',
         ],
         capturas: [
           {
@@ -8944,12 +8960,19 @@ const en: SeccionDocs[] = [
             alt: 'The “Talk to support” chat in Divoox Driver with a question about the balance and the answer from Camila Campos of the Support Team.',
             pie: 'Write your question and Camila answers on the same screen.',
           },
+          {
+            src: '/docs/camila-driver-captura-en.webp',
+            alt: 'The “Talk to support” chat in Divoox Driver with an issue report and the box to send the screenshot: “Upload from files,” “Take photo,” the notice to cover passwords and cards, and “I don’t have a screenshot.”',
+            pie: 'To report an issue, Camila asks for a screenshot and tells you when it’s fixed.',
+          },
         ],
         preguntas: [
           'How do I contact Divoox support?',
           'Is Camila a person?',
           'How do I talk to a person on the team?',
           'How do I sign up my team of drivers?',
+          'How do I report a problem with the app?',
+          'What happens to the screenshot I send?',
         ],
         pasos: [
           'In the Divoox Driver app, open the menu and tap “Help,” “Talk to support.” On the web, tap “Talk to our support team” at the bottom right.',
@@ -8957,6 +8980,7 @@ const en: SeccionDocs[] = [
           'If you want to talk to someone on the team, write “talk to a person.”',
           'By email, reply to any email from Camila: it continues the same conversation.',
           'If a reply from Camila doesn’t seem right, tap “Report reply” under it: our team reviews it.',
+          'If something is broken, tell Camila, answer her four questions and send the screenshot (or tap “I don’t have a screenshot”).',
         ],
       },
       {

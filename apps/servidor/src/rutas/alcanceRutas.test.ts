@@ -251,6 +251,14 @@ const LISTAS_DE_NUMEROS = [
   // C-CAMILA: la ficha y las acciones comprueban la ciudad de la persona por dentro; lo de toda la
   // empresa (ajustes, aprendizaje) exige alcance total (prueba propia en camila.test.ts).
   'GET /admin/camila/hilos/:persona',
+  // C-CAMILA-FALLOS: de toda la empresa, exigen alcance total por dentro (camila/fallos.test.ts).
+  'GET /admin/camila/fallos',
+  'GET /admin/camila/fallos/:id',
+  'GET /admin/camila/fallos/:id/captura/:reporte',
+  'POST /admin/camila/fallos/:id/arreglado',
+  'GET /admin/camila/preguntas',
+  'POST /admin/camila/preguntas',
+  'POST /admin/camila/preguntas/:id/:decision',
   'POST /admin/camila/hilos/:persona/responder',
   'POST /admin/camila/hilos/:persona/devolver',
   'POST /admin/camila/casos/:id/cerrar',
@@ -411,6 +419,33 @@ describe('C-PERMISOS-FINOS: barrido de alcance sobre TODAS las rutas con datos',
     const cAqui = await m.llamar('GET', '/datos/admin/pedidos/contadores', undefined, aqui.token);
     expect(cAqui.datos.contadores.todos.vivos).toBeGreaterThan(0);
   }, 120_000);
+});
+
+describe('C-CAMILA: lo de toda la empresa exige alcance total', () => {
+  it('quien trabaja una sola ciudad no ve los fallos reportados ni cambia los ajustes ni lo que Camila aprende', async () => {
+    const m = mundo();
+    const total = await m.cuenta('admin', 'Soporte Total');
+    const { zona } = await ciudadA(m, total.token);
+    const aqui = await empleado(m, total.token, ['total'], { alcance: { zonas: [zona] } });
+    for (const [metodo, ruta] of [
+      ['GET', '/datos/admin/camila/fallos'],
+      ['GET', '/datos/admin/camila/preguntas'],
+      ['POST', '/datos/admin/camila/fallos/x/arreglado'],
+      ['POST', '/datos/admin/camila/aprendizaje/armar'],
+      ['PUT', '/datos/admin/camila/ajustes'],
+    ] as const) {
+      const cuerpo =
+        metodo === 'PUT'
+          ? { ia: false, topeDiarioCentavos: 0, avisoIaPaises: [], regalosPorDia: 0 }
+          : metodo === 'POST'
+            ? {}
+            : undefined;
+      expect((await m.llamar(metodo, ruta, cuerpo, aqui.token)).estado, ruta).toBe(403);
+    }
+    expect(
+      (await m.llamar('GET', '/datos/admin/camila/fallos', undefined, total.token)).estado,
+    ).toBe(200);
+  });
 });
 
 describe('C-PERMISOS-FINOS: el buscador de arriba', () => {

@@ -46,4 +46,21 @@ describe('C-CAMILA-CHAT en Driver', () => {
       chat.indexOf('await esperar(r.respuesta);'),
     );
   });
+
+  it('C-CAMILA-FALLOS: el bloque de la captura con los dos botones, el aviso y «No tengo captura»', () => {
+    const chat = leer('soporte', 'ChatSoporteApp.tsx');
+    expect(chat).toContain('hilo?.pideCaptura ? (');
+    // Regla de la cámara: «Subir desde archivos» y «Tomar foto», con la pieza única.
+    expect(chat).toContain("elegir('archivos')");
+    expect(chat).toContain("elegir('camara')");
+    expect(chat).toContain('fotoConOrigen(idioma, CAMARA, deArchivos, origen)');
+    expect(chat).toContain('t.capturaAviso');
+    expect(chat).toContain("'/datos/camila/fallos/captura'");
+    expect(chat).toContain('problemaDeCaptura(');
+    // «No tengo captura» manda el texto que Camila entiende, sin borrar lo escrito.
+    expect(chat).toContain('enviar(t.mensajeSinCaptura)');
+    expect(chat).toContain('if (fijo === undefined) await b.limpiar();');
+    // Si falla, se ve el motivo y se puede volver a intentar.
+    expect(chat).toContain('t.reintentarCaptura');
+  });
 });

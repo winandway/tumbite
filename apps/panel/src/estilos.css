@@ -5822,6 +5822,46 @@ body.modo-tableta .cabecera {
   align-items: center;
   gap: 10px;
 }
+/* C-CAMILA-FALLOS: el bloque de la captura de un reporte de fallo, debajo de los mensajes. */
+.chat-soporte-captura {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 1px solid #e3e6eb;
+  background: #fff;
+}
+.chat-soporte-captura-aviso {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #101010;
+}
+.chat-soporte-captura-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chat-soporte-captura-botones .boton {
+  white-space: nowrap;
+}
+.chat-soporte-captura-estado {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666b73;
+}
+.chat-soporte-captura-error {
+  border-top: 0;
+  padding: 0;
+}
+.chat-soporte-captura-no {
+  align-self: flex-start;
+  font-size: 0.88rem;
+}
+.chat-soporte-captura .pista {
+  font-size: 0.78rem;
+}
 .chat-soporte-pie {
   margin: 0;
   padding: 4px 16px 10px;
@@ -7108,4 +7148,75 @@ body.modo-tableta .cabecera {
 .camila-paises legend {
   font-weight: 700;
   padding: 0 6px;
+}
+
+/* C-CAMILA-FALLOS (18 nov 2026): «Fallos reportados» y «Preguntas de diagnóstico» del buzón. */
+.camila-contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #101010;
+  color: #fff;
+  font:
+    700 1rem Poppins,
+    sans-serif;
+}
+.camila-ficha-titulo {
+  margin: 0;
+}
+.camila-chip.aprobada {
+  border-color: #0d7a3a;
+  color: #0d7a3a;
+  background: #fff;
+}
+.camila-reporte h4 {
+  margin: 0 0 6px;
+}
+.camila-reporte h5 {
+  margin: 12px 0 6px;
+  font-size: 0.95rem;
+}
+.camila-dato {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.camila-respuestas {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.camila-respuestas dt {
+  font-weight: 700;
+  color: #2a2a2a;
+}
+.camila-respuestas dd {
+  margin: 2px 0 0;
+}
+.camila-contexto th {
+  width: 180px;
+  text-align: left;
+  vertical-align: top;
+}
+.camila-captura {
+  display: block;
+  max-width: min(360px, 100%);
+  height: auto;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+}
+.camila-confirmar {
+  border: 1px solid #d0d2d6;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.camila-base {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
 }
