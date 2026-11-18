@@ -1,7 +1,7 @@
 /**
  * C-CAMILA-IDENTIDAD (17 nov 2026, decisión de Richard) — todos los países.
  *
- * Camila Montes firma como «del equipo de soporte de Divoox», sin pie de «asistente virtual», porque
+ * Camila Campos firma como «del equipo de soporte de Divoox», sin pie de «asistente virtual», porque
  * en el mismo hilo también contestan personas del equipo. Pero NUNCA engaña: si alguien pregunta si
  * habla con una persona, la respuesta es SIEMPRE la verdad (es la asistente virtual de Divoox) y ofrece
  * pasarlo con alguien del equipo. Esa respuesta sale del código, no del modelo, para que ninguna
@@ -10,11 +10,11 @@
  */
 export type IdiomaCamila = 'es' | 'en';
 
-export const NOMBRE_CAMILA = 'Camila Montes';
+export const NOMBRE_CAMILA = 'Camila Campos';
 
 export const FIRMA = {
-  es: 'Camila Montes, del equipo de soporte de Divoox',
-  en: 'Camila Montes, Divoox Support Team',
+  es: 'Camila Campos, del equipo de soporte de Divoox',
+  en: 'Camila Campos, Divoox Support Team',
 } as const;
 
 /** Lo que dice cuando le preguntan si es una persona. Siempre la verdad. */

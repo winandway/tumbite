@@ -3615,9 +3615,9 @@ const es: SeccionDocs[] = [
         id: 'talk-to-support',
         titulo: 'Habla con nuestro equipo de soporte',
         resumen:
-          'Escríbenos por el chat de divoox.com, por el chat de Divoox Driver o por correo. Es la misma conversación por cualquier camino, te responde Camila Montes, del equipo de soporte, y una persona del equipo cuando lo pidas.',
+          'Escríbenos por el chat de divoox.com, por el chat de Divoox Driver o por correo. Es la misma conversación por cualquier camino, te responde Camila Campos, del equipo de soporte, y una persona del equipo cuando lo pidas.',
         explicacion: [
-          'Camila Montes es la asistente virtual del equipo de soporte de Divoox. Te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse.',
+          'Camila Campos es la asistente virtual del equipo de soporte de Divoox. Te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse.',
           'Si le preguntas si es una persona, siempre te dice la verdad: es la asistente virtual de Divoox. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación.',
           'Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números.',
           'Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña.',
@@ -3642,7 +3642,7 @@ const es: SeccionDocs[] = [
           },
           {
             src: '/docs/camila-driver-chat-es.webp',
-            alt: 'Chat «Habla con soporte» en Divoox Driver con una pregunta sobre el saldo y la respuesta de Camila Montes, del equipo de soporte.',
+            alt: 'Chat «Habla con soporte» en Divoox Driver con una pregunta sobre el saldo y la respuesta de Camila Campos, del equipo de soporte.',
             pie: 'Escribe tu pregunta y Camila te responde en la misma pantalla.',
           },
         ],
@@ -8894,9 +8894,9 @@ const en: SeccionDocs[] = [
         id: 'talk-to-support',
         titulo: 'Talk to our support team',
         resumen:
-          'Write to us through the chat on divoox.com, the chat in Divoox Driver or by email. It is the same conversation on every channel, Camila Montes from the support team replies, and a person on the team does whenever you ask.',
+          'Write to us through the chat on divoox.com, the chat in Divoox Driver or by email. It is the same conversation on every channel, Camila Campos from the support team replies, and a person on the team does whenever you ask.',
         explicacion: [
-          'Camila Montes is the virtual assistant of the Divoox support team. She helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated.',
+          'Camila Campos is the virtual assistant of the Divoox support team. She helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated.',
           'If you ask whether she is a person, she always tells you the truth: she is the Divoox virtual assistant. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation.',
           'There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code.',
           'To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password.',
@@ -8921,7 +8921,7 @@ const en: SeccionDocs[] = [
           },
           {
             src: '/docs/camila-driver-chat-en.webp',
-            alt: 'The “Talk to support” chat in Divoox Driver with a question about the balance and the answer from Camila Montes of the Support Team.',
+            alt: 'The “Talk to support” chat in Divoox Driver with a question about the balance and the answer from Camila Campos of the Support Team.',
             pie: 'Write your question and Camila answers on the same screen.',
           },
         ],

@@ -26,11 +26,11 @@ export type RespuestaCamila = HiloCamila & { respuesta: string | null };
 const CHAT_ES = {
   burbuja: 'Habla con nuestro equipo de soporte',
   titulo: 'Soporte de Divoox',
-  camila: 'Camila Montes, del equipo de soporte de Divoox',
+  camila: 'Camila Campos, del equipo de soporte de Divoox',
   equipo: 'Equipo de soporte de Divoox',
   tu: 'Tú',
   saludo:
-    'Hola. Soy Camila Montes, del equipo de soporte de Divoox. Escríbeme tu pregunta y te ayudo. Si prefieres hablar con una persona del equipo, escribe «hablar con una persona».',
+    'Hola. Soy Camila Campos, del equipo de soporte de Divoox. Escríbeme tu pregunta y te ayudo. Si prefieres hablar con una persona del equipo, escribe «hablar con una persona».',
   escribe: 'Escribe tu mensaje…',
   enviar: 'Enviar',
   enviando: 'Enviando…',
@@ -59,11 +59,11 @@ const CHAT_ES = {
 const CHAT_EN: typeof CHAT_ES = {
   burbuja: 'Talk to our support team',
   titulo: 'Divoox Support',
-  camila: 'Camila Montes, Divoox Support Team',
+  camila: 'Camila Campos, Divoox Support Team',
   equipo: 'Divoox Support Team',
   tu: 'You',
   saludo:
-    'Hi. I’m Camila Montes, from the Divoox Support Team. Write your question and I’ll help. If you’d rather talk to a person on our team, write “talk to a person.”',
+    'Hi. I’m Camila Campos, from the Divoox Support Team. Write your question and I’ll help. If you’d rather talk to a person on our team, write “talk to a person.”',
   escribe: 'Write your message…',
   enviar: 'Send',
   enviando: 'Sending…',

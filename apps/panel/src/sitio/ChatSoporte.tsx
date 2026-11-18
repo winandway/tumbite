@@ -18,7 +18,7 @@ import { Icono } from './Icono';
 
 /**
  * C-CAMILA-CHAT (17 nov 2026) — todos los países. La burbuja «Habla con nuestro equipo de soporte»
- * de las páginas públicas (reemplaza al viejo «¿Preguntas?»). Abre el chat con Camila Montes, del
+ * de las páginas públicas (reemplaza al viejo «¿Preguntas?»). Abre el chat con Camila Campos, del
  * equipo de soporte: una sola conversación por persona, la misma que sigue por la app y por correo.
  *
  * - Sin cuenta, el navegador lleva su ficha anónima (cabecera x-camila-visita). Mirar no escribe: el

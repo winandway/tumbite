@@ -117,8 +117,8 @@ export async function correoBienvenidaLider(
 ) {
   const firma =
     l.idioma === 'en'
-      ? 'Camila Montes, Divoox Support Team'
-      : 'Camila Montes, del equipo de soporte de Divoox';
+      ? 'Camila Campos, Divoox Support Team'
+      : 'Camila Campos, del equipo de soporte de Divoox';
   const r = await enviarCorreo(env, {
     de: 'soporte',
     para: l.correo,

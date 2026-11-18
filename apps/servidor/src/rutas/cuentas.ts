@@ -281,7 +281,12 @@ cuentas.post('/registro', async (c) => {
   // C-CAMILA-BIENVENIDA: Camila le da la bienvenida al conductor y, si vino con el código de un
   // líder, le avisa al líder con el contador. Nunca frena el registro.
   if (rol === 'repartidor')
-    await alRegistrarseConductor(c.env, db, { id, nombre: d.nombre, idioma: d.idioma });
+    await alRegistrarseConductor(
+      c.env,
+      db,
+      { id, nombre: d.nombre, idioma: d.idioma },
+      c.req.header('cf-ipcountry'),
+    );
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
   c.header('Set-Cookie', cookie(token));
   return c.json({ token, usuario }, 201);

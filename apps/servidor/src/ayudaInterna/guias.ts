@@ -1353,7 +1353,7 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
     resumen:
       'Cómo atender los casos que Camila le pasa al equipo, responder en la misma conversación, aprobar lo que Camila puede contestar y ajustar cuánto gasta.',
     explicacion: [
-      'Camila Montes es la asistente virtual del equipo de soporte. Responde a los conductores por el chat de la web, por el chat de la app Divoox Driver y por correo. Es una sola conversación por persona: si empieza por correo y sigue por la app, es el mismo hilo.',
+      'Camila Campos es la asistente virtual del equipo de soporte. Responde a los conductores por el chat de la web, por el chat de la app Divoox Driver y por correo. Es una sola conversación por persona: si empieza por correo y sigue por la app, es el mismo hilo.',
       'Bandeja: arriba, el gasto de IA de hoy contra el tope del día. Después, los casos abiertos (lo que Camila no pudo resolver o donde la persona pidió hablar con alguien), cada uno con su resumen de una línea, y las conversaciones que alguien del equipo tiene tomadas. Se refresca sola cada 20 segundos.',
       'Conversación: el hilo completo, con el canal (web, app o correo) y quién escribió cada mensaje. Al responder, tomas la conversación por 12 horas: Camila se calla y tu respuesta sale por el último canal que usó la persona, firmada con tu nombre. «Devolver a Camila» le devuelve el hilo antes de tiempo. «Cerrar el caso» lo quita de la bandeja.',
       'Aprendizaje: cada semana Camila junta lo que no supo responder. Cada propuesta dice cuántas veces se preguntó. Corrige la pregunta y la respuesta en español y en inglés y toca «Aprobar»: desde ese momento Camila la usa. «Descartar» la saca para siempre. «Armar la lista ahora» junta las preguntas pendientes sin esperar a la semana.',
@@ -1398,7 +1398,7 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
     resumen:
       'How to handle the cases Camila passes to the team, reply in the same conversation, approve what Camila can answer and set how much she spends.',
     explicacion: [
-      'Camila Montes is the Support Team’s virtual assistant. She answers drivers in the web chat, in the Divoox Driver app chat and by email. It’s one conversation per person: if they start by email and continue in the app, it’s the same thread.',
+      'Camila Campos is the Support Team’s virtual assistant. She answers drivers in the web chat, in the Divoox Driver app chat and by email. It’s one conversation per person: if they start by email and continue in the app, it’s the same thread.',
       'Inbox: at the top, today’s AI spend against the daily limit. Then the open cases (what Camila couldn’t solve or where the person asked to talk to someone), each with its one-line summary, and the conversations someone on the team has taken. It refreshes on its own every 20 seconds.',
       'Conversation: the full thread, with the channel (web, app or email) and who wrote each message. When you reply, you take the conversation for 12 hours: Camila stays quiet and your reply goes out on the last channel the person used, signed with your name. “Give back to Camila” returns the thread early. “Close the case” removes it from the inbox.',
       'Learning: every week Camila collects what she couldn’t answer. Each proposal says how many times it was asked. Fix the question and the answer in Spanish and English and tap “Approve”: from then on Camila uses it. “Discard” removes it for good. “Build the list now” collects the pending questions without waiting for the week.',

@@ -7,7 +7,8 @@ import {
   marcarAvisoActivo,
   textoBienvenidaLider,
 } from './lideres';
-import { personaDeUsuario } from './memoria';
+import { AVISO_PRIMER_MENSAJE, segun } from './identidad';
+import { anotarPais, leerAjustes, personaDeUsuario } from './memoria';
 
 /**
  * C-CAMILA-BIENVENIDA (17 nov 2026) — todos los países. Lo que Camila hace sola, sin que nadie escriba:
@@ -74,6 +75,8 @@ export async function alRegistrarseConductor(
   env: Env,
   db: D1Database,
   u: { id: string; nombre: string; idioma: 'es' | 'en' },
+  /** El país desde donde se registra (cabecera de Cloudflare), si su cuenta todavía no tiene ciudad. */
+  paisPeticion?: string,
 ) {
   try {
     const liderId = await liderDe(db, u.id);
@@ -83,12 +86,21 @@ export async function alRegistrarseConductor(
           .bind(liderId)
           .first<{ nombre: string }>()
       : null;
-    const persona = await personaDeUsuario(db, u.id);
+    const persona = await anotarPais(db, await personaDeUsuario(db, u.id), paisPeticion);
+    // C-CAMILA-AVISO: donde la ley lo pide, el primer mensaje (esta bienvenida) ya dice que es una
+    // asistente virtual.
+    const avisa = (await leerAjustes(db)).avisoIaPaises.includes(persona.pais);
+    if (avisa)
+      await db
+        .prepare('UPDATE camila_personas SET aviso_ia_dado = 1 WHERE id = ?')
+        .bind(persona.id)
+        .run();
+    const bienvenida = textoBienvenida(u.nombre, u.idioma, lider?.nombre.split(' ')[0] ?? null);
     await mensajeDeCamila(
       env,
       db,
       persona,
-      textoBienvenida(u.nombre, u.idioma, lider?.nombre.split(' ')[0] ?? null),
+      avisa ? `${segun(AVISO_PRIMER_MENSAJE, u.idioma)}\n\n${bienvenida}` : bienvenida,
       ['app', 'correo'],
       u.idioma === 'en' ? 'Welcome to Divoox Driver' : 'Bienvenido a Divoox Driver',
     );

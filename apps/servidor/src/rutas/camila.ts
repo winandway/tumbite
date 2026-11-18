@@ -12,7 +12,9 @@ import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
 import {
   type AjustesCamila,
   type Persona,
+  PAISES_AVISO_OBLIGATORIO,
   REGALOS_POR_DIA_MAXIMO,
+  anotarPais,
   guardarAjustes,
   humanoActivo,
   leerAjustes,
@@ -123,7 +125,8 @@ camila.post('/camila/mensaje', async (c) => {
     }),
   );
   const db = base(c);
-  let p = await personaQueEscribe(c);
+  // C-CAMILA-AVISO: una ficha sin país toma el de la petición (para saber si la ley pide el aviso).
+  let p = await anotarPais(db, await personaQueEscribe(c), c.req.header('cf-ipcountry'));
   // El idioma sigue al de la pantalla (si alguien cambia de idioma, Camila también).
   const idioma = idiomaDe(c);
   if (p.idioma !== idioma) {
@@ -527,6 +530,8 @@ camila.get('/admin/camila/ajustes', async (c) => {
       topeMaximoCentavos: TOPE_MAXIMO_CENTAVOS,
       regalosPorDiaMaximo: REGALOS_POR_DIA_MAXIMO,
     },
+    // Los países donde el aviso va fijo por ley (no se pueden apagar desde el superadmin).
+    avisoObligatorio: PAISES_AVISO_OBLIGATORIO,
     modelos: { normal: MODELOS_CAMILA.normal.id, dificil: MODELOS_CAMILA.dificil.id },
     iaConectada: Boolean(c.env.GEMINI_API_KEY),
   });

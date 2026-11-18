@@ -63,7 +63,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
       screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
     );
     const chat = screen.getByRole('dialog', { name: 'Soporte de Divoox' });
-    expect(chat).toHaveTextContent('Soy Camila Montes, del equipo de soporte de Divoox');
+    expect(chat).toHaveTextContent('Soy Camila Campos, del equipo de soporte de Divoox');
     await waitFor(() => expect(llamadas.some((l) => l.url.endsWith('/cuentas/yo'))).toBe(true));
     expect(llamadas.some((l) => l.url.includes('/camila/hilo'))).toBe(false);
   });
@@ -88,7 +88,7 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     expect(esVisitaCamila(visita)).toBe(true);
     expect(localStorage.getItem(LLAVE_VISITA_CAMILA)).toBe(visita);
     expect(
-      screen.getAllByText('Camila Montes, del equipo de soporte de Divoox').length,
+      screen.getAllByText('Camila Campos, del equipo de soporte de Divoox').length,
     ).toBeGreaterThan(1);
     // Enviado, la casilla queda vacía.
     await waitFor(() =>

@@ -14,9 +14,9 @@ import {
 describe('C-CAMILA-CHAT', () => {
   it('cada autor con su nombre en los dos idiomas', () => {
     expect(nombreAutorCamila('camila', 'es')).toBe(
-      'Camila Montes, del equipo de soporte de Divoox',
+      'Camila Campos, del equipo de soporte de Divoox',
     );
-    expect(nombreAutorCamila('camila', 'en')).toBe('Camila Montes, Divoox Support Team');
+    expect(nombreAutorCamila('camila', 'en')).toBe('Camila Campos, Divoox Support Team');
     expect(nombreAutorCamila('equipo', 'es')).toBe('Equipo de soporte de Divoox');
     expect(nombreAutorCamila('equipo', 'en')).toBe('Divoox Support Team');
     expect(nombreAutorCamila('persona', 'es')).toBe('Tú');

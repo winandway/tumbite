@@ -13,7 +13,7 @@ import { pedir } from './api';
 
 /**
  * C-CAMILA-BUZON (17 nov 2026) — todos los países, primero El Vigía y Tucaní. El buzón de Camila
- * Montes, la asistente de soporte de Divoox, en el superadmin: los casos que Camila le pasó al
+ * Campos, la asistente de soporte de Divoox, en el superadmin: los casos que Camila le pasó al
  * equipo, las conversaciones que una persona del equipo está atendiendo, el gasto de IA del día, la
  * conversación completa (responder en el mismo hilo, devolvérsela a Camila, cerrar el caso), la lista
  * semanal de aprendizaje (el equipo aprueba lo que Camila puede responder) y los ajustes. Los topes viven en el código del servidor: aquí no se pueden pasar.
@@ -22,7 +22,7 @@ const T = {
   es: {
     titulo: 'Camila',
     ayuda:
-      'Camila Montes es la asistente virtual del equipo de soporte. Responde a los conductores y a los líderes de equipo por la web, por la app Divoox Driver y por correo, en una sola conversación por persona. Lo que no puede resolver te llega aquí.',
+      'Camila Campos es la asistente virtual del equipo de soporte. Responde a los conductores y a los líderes de equipo por la web, por la app Divoox Driver y por correo, en una sola conversación por persona. Lo que no puede resolver te llega aquí.',
     pestanas: {
       bandeja: 'Bandeja',
       conversacion: 'Conversación',
@@ -115,6 +115,7 @@ const T = {
     avisoIa: 'Aviso de asistente virtual por país',
     avisoIaAyuda:
       'Encendido, Camila dice en su primer mensaje que es la asistente virtual de Divoox. Siempre dice la verdad si se lo preguntan.',
+    avisoFijo: 'fijo por ley',
     guardar: 'Guardar los ajustes',
     guardado: 'Ajustes guardados.',
     topeMalo: (m: string) => `El tope diario va de 0 a ${m}.`,
@@ -124,7 +125,7 @@ const T = {
   en: {
     titulo: 'Camila',
     ayuda:
-      'Camila Montes is the Support Team’s virtual assistant. She answers drivers and team leaders on the web, in the Divoox Driver app and by email, in one conversation per person. What she can’t solve comes to you here.',
+      'Camila Campos is the Support Team’s virtual assistant. She answers drivers and team leaders on the web, in the Divoox Driver app and by email, in one conversation per person. What she can’t solve comes to you here.',
     pestanas: {
       bandeja: 'Inbox',
       conversacion: 'Conversation',
@@ -209,6 +210,7 @@ const T = {
     avisoIa: 'Virtual assistant notice by country',
     avisoIaAyuda:
       'On, Camila says in her first message that she’s Divoox’s virtual assistant. She always tells the truth if asked.',
+    avisoFijo: 'required by law',
     guardar: 'Save settings',
     guardado: 'Settings saved.',
     topeMalo: (m: string) => `The daily limit goes from 0 to ${m}.`,
@@ -921,6 +923,7 @@ function AjustesCamila({ t, idioma }: { t: Textos; idioma: Idioma }) {
   const [datos, setDatos] = useState<{
     ajustes: Ajustes;
     limites: { topeMaximoCentavos: number; regalosPorDiaMaximo: number };
+    avisoObligatorio?: string[];
     iaConectada: boolean;
   } | null>(null);
   const [paises, setPaises] = useState<string[]>([]);
@@ -950,6 +953,7 @@ function AjustesCamila({ t, idioma }: { t: Textos; idioma: Idioma }) {
       idioma={idioma}
       ajustes={datos.ajustes}
       limites={datos.limites}
+      obligatorios={datos.avisoObligatorio ?? []}
       iaConectada={datos.iaConectada}
       paises={[...new Set(['US', 'VE', ...paises, ...datos.ajustes.avisoIaPaises])].sort()}
     />
@@ -961,6 +965,7 @@ function FormAjustes({
   idioma,
   ajustes,
   limites,
+  obligatorios,
   iaConectada,
   paises,
 }: {
@@ -968,6 +973,7 @@ function FormAjustes({
   idioma: Idioma;
   ajustes: Ajustes;
   limites: { topeMaximoCentavos: number; regalosPorDiaMaximo: number };
+  obligatorios: string[];
   iaConectada: boolean;
   paises: string[];
 }) {
@@ -1065,7 +1071,8 @@ function FormAjustes({
             <input
               type="checkbox"
               role="switch"
-              checked={v.avisoIaPaises.includes(p)}
+              checked={obligatorios.includes(p) || v.avisoIaPaises.includes(p)}
+              disabled={obligatorios.includes(p)}
               onChange={(e) =>
                 b.cambiar(
                   'avisoIaPaises',
@@ -1076,6 +1083,7 @@ function FormAjustes({
               }
             />
             {nombrePais(p, idioma)}
+            {obligatorios.includes(p) ? ` (${t.avisoFijo})` : ''}
           </label>
         ))}
       </fieldset>
