@@ -91,6 +91,8 @@ const es = {
     pilot: 'Piloto',
     'test-city': 'Ciudad de pruebas',
     rewards: 'Rewards',
+    // C-BANNERS: el administrador de banners del inicio de la app.
+    banners: 'Banners de la app',
     configuration: 'Configuración',
   },
   bienvenidaRest: 'Desde aquí manejas tu restaurante en Divoox.',
@@ -193,6 +195,7 @@ const en: T = {
     pilot: 'Pilot',
     'test-city': 'Test city',
     rewards: 'Rewards',
+    banners: 'App banners',
     configuration: 'Configuration',
   },
   bienvenidaRest: 'Manage your restaurant on Divoox from here.',

@@ -1434,6 +1434,96 @@ const referidosEquipos: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ───────────────────────── Banners de la app (C-BANNERS, 17 nov 2026) ─────────────────────────
+
+const capBanners = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({ archivo: `banners-${nombre}-${idioma}.webp`, alt, pie });
+
+const banners: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'app-banners',
+    titulo: 'Banners de la app: crear, generar con IA, aprobar y publicar',
+    resumen:
+      'Cómo se arma un banner del inicio de la app del cliente (la cabecera o el carrusel de promociones), cómo se crean opciones de imagen con IA y cómo se aprueba para que salga en una ciudad o en un país.',
+    explicacion: [
+      'Hay dos lugares. La cabecera es el banner grande de arriba, con fondo oscuro, el titular grande y la imagen del producto a la derecha: cada vez que alguien abre o refresca el inicio sale uno distinto, y el de más peso sale más veces. Promociones es el carrusel de tarjetas rojas con titular y código: salen todos los vigentes, en el orden que les pongas.',
+      'Cada banner lleva su imagen, el titular y el texto en español y en inglés, a dónde lleva al tocarlo (un servicio, un restaurante, una tienda o un cupón), en qué países o ciudades sale, desde cuándo y hasta cuándo, y su peso y su orden. Sin marcar países ni ciudades, sale en todas partes; un país incluye todas sus ciudades.',
+      'La imagen se sube desde archivos, se toma con la cámara o se crea con IA: escribes la idea, eliges dos o tres opciones y tocas «Elegir esta». La IA usa solo el modelo económico aprobado y tiene un tope de imágenes por día para todo Divoox; el panel te dice cuántas van. Si se llega al tope, se sube la imagen a mano.',
+      'Todo banner nace en borrador y no lo ve nadie fuera del equipo. Sale al público solo cuando tocas «Aprobar y publicar»; la app lo muestra en menos de un minuto. Si cambias un banner publicado, vuelve a borrador hasta que lo apruebes otra vez. «Pausar» lo quita de la app sin borrarlo; borrar está en los tres puntos y pide confirmación.',
+    ],
+    capturas: [
+      capBanners(
+        'lista',
+        'es',
+        'La pantalla «Banners de la app» con la cabecera y las promociones, cada banner con su miniatura, su estado y los botones Editar y Aprobar y publicar.',
+        'Los banners de cada lugar con su estado.',
+      ),
+      capBanners(
+        'editor',
+        'es',
+        'El formulario de un banner con la imagen, las opciones creadas con IA, los titulares en los dos idiomas y la vista previa del teléfono a la derecha.',
+        'Mientras escribes, la vista previa muestra cómo se verá en el teléfono.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo pongo un banner solo en una ciudad?',
+      '¿Por qué no sale mi banner en la app?',
+      '¿Cuántas imágenes con IA puedo crear por día?',
+    ],
+    pasos: [
+      'Abre «Banners de la app» en el menú y toca «Nuevo banner».',
+      'Elige el lugar (cabecera o promociones) y pon la imagen: súbela, tómala con la cámara o escribe la idea y toca «Generar opciones», y luego «Elegir esta».',
+      'Escribe el titular y el texto en español y en inglés, elige a dónde lleva al tocarlo y marca los países o las ciudades.',
+      'Pon las fechas, el peso y el orden si hace falta, y revisa la vista previa en los dos idiomas.',
+      'Toca «Guardar y aprobar», o guarda el borrador y apruébalo después con «Aprobar y publicar».',
+    ],
+    nota: 'Si un banner no sale: revisa que diga «Publicado», que la fecha de inicio ya haya llegado y la de fin no haya pasado, y que la ciudad del cliente esté marcada.',
+  },
+  en: {
+    id: 'app-banners',
+    titulo: 'App banners: create, generate with AI, approve, and publish',
+    resumen:
+      'How to build a banner for the customer app home screen (the header or the promotions carousel), how to create image options with AI, and how to approve it so it shows in a city or a country.',
+    explicacion: [
+      'There are two placements. The header is the large banner at the top, with a dark background, a big headline, and the product image on the right: each time someone opens or refreshes the home screen a different one shows, and the one with more weight shows more often. Promotions is the carousel of red cards with a headline and a code: every active one shows, in the order you set.',
+      'Each banner has its image, the headline and text in Spanish and English, where tapping it leads (a service, a restaurant, a store, or a coupon), which countries or cities it shows in, its start and end, and its weight and order. With no countries or cities checked, it shows everywhere; a country includes all its cities.',
+      'The image is uploaded from files, taken with the camera, or created with AI: write the idea, pick two or three options, and tap “Pick this one.” AI uses only the approved low-cost model and has a daily image limit for all of Divoox; the panel shows how many are used. If the limit is reached, upload the image by hand.',
+      'Every banner starts as a draft and nobody outside the team sees it. It goes live only when you tap “Approve and publish”; the app shows it in less than a minute. If you change a published banner, it goes back to draft until you approve it again. “Pause” removes it from the app without deleting it; delete is in the three-dot menu and asks for confirmation.',
+    ],
+    capturas: [
+      capBanners(
+        'lista',
+        'en',
+        'The “App banners” screen with the header and promotions, each banner with its thumbnail, its status, and the Edit and Approve and publish buttons.',
+        'The banners in each placement with their status.',
+      ),
+      capBanners(
+        'editor',
+        'en',
+        'The banner form with the image, the AI-created options, the headlines in both languages, and the phone preview on the right.',
+        'As you type, the preview shows how it will look on the phone.',
+      ),
+    ],
+    preguntas: [
+      'How do I show a banner in just one city?',
+      'Why isn’t my banner showing in the app?',
+      'How many AI images can I create per day?',
+    ],
+    pasos: [
+      'Open “App banners” in the menu and tap “New banner.”',
+      'Choose the placement (header or promotions) and add the image: upload it, take it with the camera, or write the idea and tap “Generate options,” then “Pick this one.”',
+      'Write the headline and text in Spanish and English, choose where tapping it leads, and check the countries or cities.',
+      'Set the dates, weight, and order if needed, and check the preview in both languages.',
+      'Tap “Save and approve,” or save the draft and approve it later with “Approve and publish.”',
+    ],
+    nota: 'If a banner isn’t showing: check that it says “Published,” that its start date has arrived and its end date hasn’t passed, and that the customer’s city is checked.',
+  },
+};
+
 const porId = (lista: Guia[]) => new Map(lista.map((g) => [g.id, g]));
 
 /** Las secciones de la ayuda, en el orden del menú lateral. */
@@ -1474,7 +1564,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     {
       id: 'settings',
       titulo: esp ? 'Configuración y equipo' : 'Settings and team',
-      guias: tomar(['time-zone-clock', 'add-team-members-permissions']),
+      guias: [...tomar(['time-zone-clock', 'add-team-members-permissions']), de(banners)],
     },
   ];
 }

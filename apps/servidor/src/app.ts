@@ -94,6 +94,8 @@ import { direcciones } from './rutas/direcciones';
 import { fotoPuerta } from './rutas/fotoPuerta';
 import { restauranteMas } from './rutas/restauranteMas';
 import { anuncios } from './rutas/anuncios';
+import { banners } from './rutas/banners';
+import { saludBanners } from './banners';
 import { promociones } from './rutas/promociones';
 import { modoDestino } from './modoDestino';
 import { plus } from './plus';
@@ -457,6 +459,12 @@ app.get('/datos/salud', async (c) => {
     });
   // C-RUTA-POR-CALLES: Google Routes respondiendo (ok), sin llave o sin la API (estimada: se usa la
   // fórmula) o roto (error), y cuántas consultas van hoy contra el tope. Solo lee.
+  // C-BANNERS: la llave de fal, el tope diario de imágenes con IA y el último error (una lectura).
+  if (c.env.DB)
+    piezas.banners = await saludBanners(c.env, c.env.DB).catch((e: unknown) => {
+      console.error('salud: banners', e);
+      return 'error' as const;
+    });
   const rutas = await saludRutas(c.env, c.env.DB).catch((e: unknown) => {
     console.error('salud: rutas', e);
     return { estado: 'error' as const, consultasHoy: 0, tope: 0 };
@@ -718,6 +726,8 @@ app.route('/datos', direcciones);
 app.route('/datos', fotoPuerta);
 app.route('/datos', restauranteMas);
 app.route('/datos', anuncios);
+// C-BANNERS: los banners del inicio de la app (lectura pública) y su administrador.
+app.route('/datos', banners);
 app.route('/datos', promociones);
 app.route('/datos', modoDestino);
 app.route('/datos', plus);

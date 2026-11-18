@@ -1,0 +1,379 @@
+/* C-BANNERS: el administrador de banners. Sobrio: borde fino gris, sombra suave, colores de Divoox. */
+.super-banners {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.banners-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.banners-encabezado h2 {
+  margin: 0 0 4px;
+}
+.banners-editor,
+.banners-lugar {
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(16, 16, 16, 0.06);
+  padding: 20px;
+}
+.banners-editor h3,
+.banners-lugar h3 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+.banners-editor-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .banners-editor-cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.banners-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.banners-grupo {
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.banners-grupo legend {
+  font-weight: 700;
+  padding: 0 4px;
+}
+.banners-radios {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.banners-radio,
+.banners-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.banners-radio input,
+.banners-check input {
+  accent-color: #f20d20;
+}
+.banners-dos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .banners-dos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.banners-imagen img,
+.banners-imagen-vacia {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e3e3e3;
+}
+.banners-imagen-vacia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #666b73;
+  background: #f6f6f6;
+}
+.banners-ia {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid #ededed;
+  padding-top: 10px;
+}
+.banners-ia small,
+.banners-grupo small,
+.banners-form > small {
+  color: #666b73;
+}
+.banners-ia-fila {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.banners-ia-opciones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.banners-ia-opciones li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid #e3e3e3;
+  border-radius: 10px;
+  padding: 6px;
+}
+.banners-ia-opciones li.elegida {
+  border-color: #0d7a3a;
+  box-shadow: 0 0 0 2px rgba(13, 122, 58, 0.25);
+}
+.banners-ia-opciones img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.banners-pais {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+  border-top: 1px solid #f0f0f0;
+}
+.banners-check-pais {
+  font-weight: 700;
+}
+.banners-ciudades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding-left: 22px;
+}
+.boton-texto {
+  background: none;
+  border: none;
+  color: #101010;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Vista previa en el teléfono */
+.banners-vista {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.banners-vista-cabeza {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.banners-idiomas {
+  display: inline-flex;
+  border: 1px solid #d6d6d6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.banners-idiomas button {
+  border: none;
+  background: #fff;
+  padding: 4px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.banners-idiomas button[aria-pressed='true'] {
+  background: #101010;
+  color: #fff;
+}
+.banners-telefono {
+  width: 300px;
+  max-width: 100%;
+  border: 10px solid #101010;
+  border-radius: 34px;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
+  box-shadow: 0 6px 18px rgba(16, 16, 16, 0.18);
+}
+.banners-telefono-barra {
+  height: 22px;
+  background: #101010;
+}
+.banners-cabecera {
+  position: relative;
+  background: #101010;
+  color: #fff;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+/* El texto va a la izquierda y la imagen ocupa el fondo, con el producto a la derecha (las opciones
+   con IA se piden así: espacio libre a la izquierda para el titular). */
+.banners-cabecera-texto,
+.banners-promo-texto {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  max-width: 58%;
+}
+.banners-cabecera-texto strong {
+  font-family: Poppins, system-ui, sans-serif;
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+.banners-cabecera-texto span,
+.banners-promo-texto span {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.banners-cabecera > img,
+.banners-promo > img,
+.banners-cabecera > .banners-sin-imagen,
+.banners-promo > .banners-sin-imagen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
+}
+.banners-promo {
+  position: relative;
+  margin: 14px;
+  background: #f20d20;
+  color: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  min-height: 140px;
+}
+.banners-promo-texto strong {
+  font-family: Poppins, system-ui, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+.banners-promo-texto em {
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.75rem;
+  background: #fff;
+  color: #c20a1a;
+  border-radius: 6px;
+  padding: 2px 8px;
+  width: fit-content;
+  letter-spacing: 0.04em;
+}
+.banners-sin-imagen {
+  background: transparent;
+}
+.banners-telefono-relleno {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+.banners-telefono-relleno span {
+  height: 54px;
+  border-radius: 10px;
+  background: #f2f2f2;
+}
+
+/* Lista */
+.banners-cuenta {
+  font-weight: 600;
+  color: #666b73;
+  font-size: 0.9rem;
+}
+.banners-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.banners-fila {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid #f0f0f0;
+}
+.banners-fila:first-child {
+  border-top: none;
+}
+@media (max-width: 720px) {
+  .banners-fila {
+    grid-template-columns: 90px minmax(0, 1fr);
+  }
+  .banners-fila-acciones {
+    grid-column: 1 / -1;
+  }
+}
+.banners-mini {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e3e3e3;
+}
+.banners-mini.banners-sin-imagen {
+  background: #f3f3f3;
+}
+.banners-fila-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.banners-fila-datos small {
+  color: #666b73;
+}
+.banners-fila-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.banners-confirmar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #f3c2c6;
+  border-radius: 8px;
+  background: #fff6f6;
+}
+.banners-confirmar .boton.peligro {
+  background: #c20a1a;
+  border-color: #c20a1a;
+  color: #fff;
+}
+.banners-form .boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

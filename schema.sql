@@ -4276,3 +4276,35 @@ CREATE TABLE IF NOT EXISTS aparatos_usuario (
   PRIMARY KEY (usuario_id, huella)
 ) WITHOUT ROWID;
 CREATE INDEX IF NOT EXISTS aparatos_usuario_huella ON aparatos_usuario(huella);
+-- C-BANNERS (17 nov 2026, Richard) — todos los países. El administrador de banners del inicio de la app:
+-- dos lugares (cabecera y promociones), sin límite de banners. Nada sale al público sin «Aprobar y
+-- publicar» (estado publicado). Destino al tocar, ciudades y países, fechas, peso y orden. La app los
+-- lee por GET /datos/banners (solo lectura, con caché corta: mirar no escribe).
+CREATE TABLE IF NOT EXISTS banners (
+  id TEXT PRIMARY KEY,
+  lugar TEXT NOT NULL CHECK (lugar IN ('cabecera', 'promociones')),
+  estado TEXT NOT NULL DEFAULT 'borrador' CHECK (estado IN ('borrador', 'publicado', 'pausado')),
+  imagen TEXT NOT NULL DEFAULT '',
+  titulo_es TEXT NOT NULL DEFAULT '',
+  titulo_en TEXT NOT NULL DEFAULT '',
+  texto_es TEXT NOT NULL DEFAULT '',
+  texto_en TEXT NOT NULL DEFAULT '',
+  destino_tipo TEXT NOT NULL DEFAULT 'servicio' CHECK (destino_tipo IN ('servicio', 'restaurante', 'tienda', 'cupon')),
+  destino_valor TEXT NOT NULL DEFAULT '',
+  codigo TEXT NOT NULL DEFAULT '',
+  -- Listas en JSON: ids de zonas (ciudades) y códigos de país. Las dos vacías = sale en todas partes.
+  zonas TEXT NOT NULL DEFAULT '[]',
+  paises TEXT NOT NULL DEFAULT '[]',
+  inicio TEXT,
+  fin TEXT,
+  peso INTEGER NOT NULL DEFAULT 1 CHECK (peso BETWEEN 1 AND 100),
+  orden INTEGER NOT NULL DEFAULT 0,
+  idea TEXT NOT NULL DEFAULT '',
+  creado_por TEXT,
+  aprobado_por TEXT,
+  aprobado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Sin índice extra: la tabla es chica y la ruta pública la lee una vez por minuto (caché en memoria).
+-- El tope diario de imágenes con IA vive en `config` (claves ia_banners:<día>), sin tabla propia.

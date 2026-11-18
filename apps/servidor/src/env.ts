@@ -76,6 +76,16 @@ export const esquemaEnv = z.object({
    * viaje. Si falta, se usa GOOGLE_PLACES_KEY (la misma llave del servidor con Routes habilitada).
    */
   GOOGLE_ROUTES_KEY: z.string().min(20).optional(),
+  /**
+   * C-BANNERS: llave de fal.ai para generar opciones de imagen de los banners (solo el modelo barato
+   * aprobado, por modeloGuard). Sin ella, «Generar con IA» se apaga y se sube la imagen a mano.
+   */
+  FAL_KEY: z.string().min(20).optional(),
+  /** C-BANNERS: tope propio de imágenes con IA por día (por defecto y como máximo 30). */
+  TOPE_BANNERS_IA_DIA: z
+    .string()
+    .regex(/^\d{1,3}$/)
+    .optional(),
   /** C-RUTA-POR-CALLES: tope propio de consultas a Google Routes por día (por defecto 320). */
   TOPE_RUTAS_CALLES_DIA: z
     .string()

@@ -10,6 +10,7 @@ import {
   FileUp,
   FlaskConical,
   Gift,
+  GalleryHorizontal,
   HandCoins,
   Hourglass,
   IdCard,
@@ -91,6 +92,8 @@ export const ICONOS_MENU = {
   pilot: FlaskConical,
   'test-city': Building,
   rewards: Trophy,
+  // C-BANNERS: los banners del inicio de la app.
+  banners: GalleryHorizontal,
   configuration: SlidersHorizontal,
   // Restaurante
   restaurant: Store,
@@ -236,6 +239,7 @@ export function gruposAdmin(
           ['money', 'cash', 'driver-balance', 'referrals', 'gift-codes', 'flexfinance', 'reports'],
         ],
         [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],
+        [g.crecer, ['banners']],
         [g.territorio, ['franchises', 'cities', 'zones', 'waitlist']],
         // C-HORARIO-EMPLEADO: Configuración del superadmin (Horario; luego «Equipo interno»).
         // C-PERMISOS-FINOS: «Equipo interno» cuelga de Configuración.

@@ -2794,5 +2794,30 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "usuario_id",
     "huella",
     "visto_en"
+  ],
+  "banners": [
+    "id",
+    "lugar",
+    "estado",
+    "imagen",
+    "titulo_es",
+    "titulo_en",
+    "texto_es",
+    "texto_en",
+    "destino_tipo",
+    "destino_valor",
+    "codigo",
+    "zonas",
+    "paises",
+    "inicio",
+    "fin",
+    "peso",
+    "orden",
+    "idea",
+    "creado_por",
+    "aprobado_por",
+    "aprobado_en",
+    "creado_en",
+    "actualizado_en"
   ]
 };

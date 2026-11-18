@@ -66,6 +66,7 @@ import { SuperEquipo } from './SuperEquipo';
 import { SuperAprobaciones } from './SuperAprobaciones';
 import { SuperPiloto } from './SuperPiloto';
 import { SuperRewards } from './SuperRewards';
+import { SuperBanners } from './SuperBanners';
 import { SuperRegalosDivoox } from './SuperRegalosDivoox';
 import { SuperSaldoConductores } from './SuperSaldoConductores';
 import { SuperReferidosEquipos } from './SuperReferidosEquipos';
@@ -173,6 +174,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   // C-CIUDAD-PRUEBAS: solo en el sitio de pruebas y en local (en producción no existe).
   if (sub === '/test-city' && !enProduccion()) return <SuperCiudad idioma={idioma} />;
   if (sub === '/rewards') return <SuperRewards idioma={idioma} />;
+  // C-BANNERS: el administrador de banners del inicio de la app.
+  if (sub === '/banners') return <SuperBanners idioma={idioma} />;
   // C-CUPON-DIVOOX: crear cupones, presupuesto en vivo, reporte y pago al conductor.
   if (sub === '/gift-codes') return <SuperRegalosDivoox idioma={idioma} />;
   // C-SALDO-CONDUCTOR: conductores por ciudad, carga de saldo y regalo de arranque.

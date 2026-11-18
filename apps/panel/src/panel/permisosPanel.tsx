@@ -114,6 +114,7 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   rides: 'viajes.ver',
   moto: 'viajes.ver',
   rewards: 'config.ver',
+  banners: 'config.ver',
   pilot: 'config.ver',
   'test-city': 'config.ver',
   franchises: 'config.ver',
