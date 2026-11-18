@@ -20,6 +20,8 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-REOFERTA-TOPE (18 nov 2026): cuántas veces se le ofreció el viaje a ese conductor (tope 3).
+  ['ofertas_operacion', 'intentos', 'INTEGER NOT NULL DEFAULT 1'],
   // C-REFERIDOS-SIN-TRAMPA (18 nov 2026): por qué un referido de cliente pendiente ya no da premio.
   ['referidos', 'cierre', 'TEXT'],
   // C-LUGARES-GUARDADOS (17 nov 2026): el ícono del lugar guardado (casa, trabajo, escuela…).

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
+import { medidorDeLecturas } from '../pruebas/lecturas';
 
 /**
  * C-REOFERTA-VENCIDA y C-OFERTA-AVISO (18 nov 2026, todos los países). Lo que encontró el robot de
@@ -170,6 +171,82 @@ describe('C-OFERTA-AVISO: la oferta de viaje llega al celular del conductor', ()
     await vencer(e, op, a.id, 40);
     await ofertas(e, a.token);
     expect(alConductor()).toHaveLength(2);
+  });
+});
+
+describe('C-REOFERTA-TOPE (revisor, 18 nov 2026): con un conductor que ignora, no se insiste sin fin', () => {
+  it('como mucho tres ofertas por viaje y conductor, y aviso al celular solo en la primera y la primera vuelta', async () => {
+    const avisos: { to: string }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (String(url).includes('exp.host')) {
+        const cuerpo = JSON.parse(String(init?.body)) as { to: string }[];
+        avisos.push(...cuerpo);
+        return new Response(JSON.stringify({ data: cuerpo.map(() => ({ status: 'ok' })) }), {
+          status: 200,
+        });
+      }
+      return new Response('{}', { status: 200 });
+    });
+    const e = await listo();
+    const a = await conductorDeMoto(e.m, ORIGEN);
+    await e.m.DB.prepare(
+      "INSERT INTO dispositivos (token, usuario_id, plataforma) VALUES ('ExponentPushToken[ignora]', ?, 'android')",
+    )
+      .bind(a.id)
+      .run();
+    const op = await pedir(e);
+    let vistas = 1;
+    for (let i = 0; i < 5; i++) {
+      await vencer(e, op, a.id, 40);
+      if ((await ofertas(e, a.token)).length) vistas++;
+    }
+    expect(vistas).toBe(3);
+    expect(avisos.filter((x) => x.to === 'ExponentPushToken[ignora]')).toHaveLength(2);
+  });
+});
+
+describe('C-REOFERTA-LECTURAS (revisor, 18 nov 2026): el sondeo que no puede recibir el viaje no mueve el despacho', () => {
+  it('un repartidor solo de comida conectado en la ciudad no dispara el despacho de un viaje de Moto', async () => {
+    let medidor!: ReturnType<typeof medidorDeLecturas>;
+    const m = mundo(
+      {},
+      { host: 'staging.tumbite.com', envolver: (db) => (medidor = medidorDeLecturas(db)).db },
+    );
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const cliente = await m.cuenta('cliente', 'Pasajero Uno');
+    await m.llamar('PUT', '/datos/admin/servicios/moto', { estado: 'disponible' }, admin.token);
+    await m.llamar(
+      'PUT',
+      `/datos/admin/servicios/moto/zonas/${ZONA}`,
+      { estado: 'disponible' },
+      admin.token,
+    );
+    await m.llamar(
+      'POST',
+      '/datos/admin/viajes/tarifas',
+      {
+        servicio: 'moto',
+        zona: ZONA,
+        tarifa: { base: 150, porKm: 60, porMinuto: 12, minimo: 400 },
+        motivo: 'Tarifa de prueba',
+      },
+      admin.token,
+    );
+    const e = { m, cliente } as unknown as Awaited<ReturnType<typeof listo>>;
+    await pedir(e);
+    const comida = await m.cuenta('repartidor', 'Repartidor Comida');
+    await m.DB.prepare(
+      "INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES (?, 1, ?, ?, datetime('now'), ?)",
+    )
+      .bind(comida.id, ORIGEN.lat, ORIGEN.lng, ZONA)
+      .run();
+    const r = await medidor.medir(() =>
+      m.llamar('GET', '/datos/conductor/operaciones/ofertas', undefined, comida.token),
+    );
+    expect(r.resultado.estado).toBe(200);
+    const despacho = r.lecturas.filter((l) => /SET estado = 'vencida'/.test(l.sql));
+    expect(despacho, 'el sondeo corrió el despacho completo').toHaveLength(0);
+    expect(r.total).toBeLessThanOrEqual(40);
   });
 });
 

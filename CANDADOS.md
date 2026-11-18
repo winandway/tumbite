@@ -2,6 +2,14 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-REOFERTA-TOPE, C-REOFERTA-LECTURAS y C-GANANCIAS-CARRERAS · Lo que pidió el revisor sobre 0f5881e..20d295d (18 nov 2026) — todos los países
+
+- **Reoferta sin tope:** un conductor que ignoraba la oferta la recibía cada minuto los 10 minutos de búsqueda, con sonido. Ahora `ofertas_operacion.intentos` (columna nueva por `COLUMNAS` de esquema.ts, por defecto 1) cuenta las veces; como mucho `OFERTAS_POR_CONDUCTOR` = 3 por viaje y conductor (la primera y dos vueltas: `puedeRecibirOferta` y el `ON CONFLICT … WHERE intentos < 3 RETURNING intentos`), y el aviso al celular solo hasta `AVISOS_POR_CONDUCTOR` = 2.
+- **Sondeo que despachaba de más:** `moverDespachoSiToca` (rutas/viajes.ts) miraba solo zona y conectado; cualquier conductor conectado (también uno solo de comida) corría el despacho completo en cada sondeo. Ahora mira `conductores_elegibles` para el servicio y la zona del viaje: solo dispara quien de verdad puede recibirlo, y con el tope de arriba el ciclo termina.
+- **Ganancias de Driver:** `resumenPeriodo` contaba solo entregas con pedido; lo que pagó con tarjeta un pasajero de Moto, Carro o Envíos llega como «entrega» sin pedido (viajesCobro.ts) y salía «Total $X · 0 entregas». Ahora cuenta entregas (pedidos) y carreras (viajes) y lo dice como es: `textoTrabajos` («1 entrega · 2 carreras», «2 trips»). La tarjeta Hoy del inicio suma las dos (antes todos los viajes sin pedido se juntaban en uno). La billetera es siempre en USD: `movimientos` no lleva moneda y todo lo que escribe en ella es en dólares.
+- **Cómo se comprueba:** `reofertaVencida.test.ts` («como mucho tres ofertas…», «un repartidor solo de comida… no dispara el despacho», con el medidor de lecturas) y `resumenPeriodo.test.ts` (vistas en rojo).
+- **Driver 25 publicada:** no descarta ofertas por `operacionId` (leído en el código de main del 17 nov antes de su compilación, e96d0f3): pinta `ofertasViaje[0]` cuando el servidor la da y cuenta desde `expiraEn`, que la reoferta renueva. La reoferta se ve.
+
 ## C-FICHA-REAL, C-GANANCIAS-COHERENTES y la privacidad al día · Tercera auditoría de Google Play (18 nov 2026) — todos los países
 
 - **Qué estaba mal (auditor de tiendas, NO APTO):** las capturas en inglés mostraban servicios que no existen en Estados Unidos (Carro, súper, farmacia, licores, «at the best price»), el español usaba pedidos de Miami, había direcciones de edificios reales, «24 orders in the last hour», «Mi equipo» con programas apagados y, en Ganancias, «Total de hoy $1.00 · 1 entregas» encima de «Total · 0 entregas».
@@ -10,6 +18,7 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 - **Permisos del Driver:** la pantalla de permisos (la primera vez) dice ANTES de pedir la ubicación que se usa con la pantalla apagada o en segundo plano y cuándo deja de usarse (`permisosExplicados.test.ts`, en rojo). Hacía falta: esa pantalla pide la ubicación y la otra explicación ya no sale después.
 - **Privacidad (C-LEGALES-COHERENTES):** chat de soporte con la asistente y sus reportes, alergias y dificultad auditiva como datos opcionales, ubicación con la pantalla apagada, casillas de dirección a Google y códigos de invitación en el borrado (`legales.test.tsx`, en rojo).
 - **Qué NO tocar:** no fotografiar para la ficha un servicio que no está abierto en ese país; no volver a nombres de archivo con número fijo en FRASES.
+
 ## C-SERVICIO-SIN-TARIFA, C-SIN-PLUS-CODE (completo), C-RECIENTES-CIUDAD y los menores del robot (18 nov 2026) — todos los países
 
 - **Qué se rompió (robot de Android, staging, El Vigía):** (B) Envíos salía disponible sin tarifa en la ciudad: al cotizar, «Este servicio todavía no tiene precio en tu ciudad.» con «Solicitar envío» activo. (C) Al elegir «Terminal de Pasajeros de El Vigía» el destino quedaba «J85P+QQ2 Terminal de Pasajeros, …», también en la oferta del conductor, en el viaje y en Recientes; y Recientes mostraba en Novi un lugar de Venezuela. (D) Con pago al recibir el pedido decía «Pago recibido»; al desconectar el ÚLTIMO servicio, «Lo demás sigue conectado»; «Modo destino» en Inicio, Perfil y Ganancias; avatar con una línea suelta; «Pedir otra vez» con dos toques; «Mexicana» y «Hamburguesas» sin traducir; avisos y favoritos con 401 sin sesión; «Buscando tu ubicación…» unos 3 minutos.

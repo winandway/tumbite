@@ -117,8 +117,9 @@ async function moverDespachoSiToca(c: Ctx, conductorId: string) {
   const db = base(c);
   const hay = await db
     .prepare(
-      `SELECT 1 FROM repartidores d JOIN operaciones o ON o.zona_id = d.zona_id
-        WHERE d.usuario_id = ?1 AND d.conectado = 1 AND o.estado_general = 'buscando'
+      `SELECT 1 FROM conductores_elegibles e JOIN operaciones o
+           ON o.zona_id = e.zona_id AND o.servicio_id = e.servicio_id
+        WHERE e.conductor_id = ?1 AND o.estado_general = 'buscando'
           AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion x WHERE x.conductor_id = ?1)
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion a WHERE a.conductor_id = ?1 AND a.estado = 'ofrecida' AND a.expira_en > datetime('now'))
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion f WHERE f.operacion_id = o.id AND f.estado = 'ofrecida' AND f.expira_en > datetime('now'))
@@ -144,7 +145,7 @@ async function moverDespachoSiToca(c: Ctx, conductorId: string) {
 viajes.get('/conductor/operaciones/ofertas', async (c) => {
   const u = exigir(c, 'repartidor');
   // C-REOFERTA-VENCIDA: sin reloj (o entre vuelta y vuelta), el sondeo del conductor también mueve
-  // el despacho, pero solo si en SU ciudad hay un viaje buscando, sin oferta abierta, que ÉL puede
+  // el despacho, pero solo si es ELEGIBLE para un viaje buscando de su ciudad, sin oferta abierta, que puede
   // recibir (no lo rechazó). Una lectura con LIMIT 1; sin eso, nada más (cero escrituras de más).
   await moverDespachoSiToca(c, u.id);
   const { results } = await base(c)

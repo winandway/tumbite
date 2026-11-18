@@ -46,7 +46,6 @@ import {
   tocaMandarSegunModo,
   type Referencia,
   textoReferencia,
-  contar,
   ESPERA_MAXIMA_CRITICA_MS,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
@@ -79,7 +78,7 @@ import { Oferta } from './grandes/Oferta';
 import { Calificaciones } from './grandes/Calificaciones';
 import { MiEquipo } from './grandes/MiEquipo';
 import { Ganancias } from './grandes/Ganancias';
-import { resumenPeriodo } from './grandes/resumenPeriodo';
+import { resumenPeriodo, textoTrabajos } from './grandes/resumenPeriodo';
 import { Avisos } from './grandes/Avisos';
 import { AyudaPedido } from './grandes/Ayuda';
 import { AyudaDriver } from './soporte/AyudaDriver';
@@ -1665,9 +1664,9 @@ export function Inicio() {
   const gananciasHoy = deHoy
     .filter((m) => m.concepto !== 'retiro' && m.monto > 0)
     .reduce((x, m) => x + m.monto, 0);
-  const entregasHoy =
-    new Set(deHoy.filter((m) => m.concepto === 'entrega').map((m) => m.pedidoId)).size +
-    enManoHoy.entregas;
+  // C-GANANCIAS-CARRERAS: un viaje con tarjeta no tiene pedido; antes todos se juntaban en uno.
+  const trabajosHoy = resumenPeriodo(deHoy);
+  const entregasHoy = trabajosHoy.entregas + trabajosHoy.carreras + enManoHoy.entregas;
   const segundosConectado =
     estado?.conectado && conectadoDesde
       ? Math.max(0, Math.floor((tic - conectadoDesde) / 1000))
@@ -1820,7 +1819,7 @@ export function Inicio() {
           : fechaDe(m) >= inicioMes,
     );
     // C-GANANCIAS-COHERENTES: un regalo de Divoox suma al total, no es una entrega.
-    const { total, entregas, regalos } = resumenPeriodo(enPeriodo);
+    const { total, entregas, carreras, regalos } = resumenPeriodo(enPeriodo);
     return lienzo(
       'ganancias',
       <View style={{ padding: 16, gap: 12 }}>
@@ -2015,8 +2014,8 @@ export function Inicio() {
             {formatearMonto(total, 'USD', idioma)}
           </Text>
           <Text style={{ color: '#666B73' }}>
-            {/* C-PLURAL: «1 entrega», no «1 entregas». */}
-            {contar(entregas, 'entrega', idioma)}
+            {/* C-PLURAL y C-GANANCIAS-CARRERAS: «1 entrega», «2 carreras» o las dos. */}
+            {textoTrabajos(entregas, carreras, idioma)}
             {periodo === 'hoy' && segundosConectado
               ? ` · ${Math.floor(segundosConectado / 3600)}h ${Math.floor((segundosConectado % 3600) / 60)}m`
               : ''}

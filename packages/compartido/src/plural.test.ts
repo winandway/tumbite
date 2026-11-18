@@ -36,6 +36,7 @@ describe('las pantallas no ponen un número delante de una palabra en plural fij
     it(archivo, () => {
       const s = readFileSync(join(raiz, archivo), 'utf8');
       expect(s).not.toMatch(mal);
-      expect(s).toContain('contar(');
+      // C-GANANCIAS-CARRERAS: Ganancias cuenta con textoTrabajos (que usa contar por dentro).
+      expect(s).toMatch(/contar\(|textoTrabajos\(/);
     });
 });

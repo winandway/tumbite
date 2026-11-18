@@ -44,12 +44,21 @@ export const SEGUNDOS_OFERTA_OPERACION = 30;
  */
 export const SEGUNDOS_RESPIRO_REOFERTA = 30;
 /**
+ * C-REOFERTA-TOPE (revisor, 18 nov 2026): como mucho tres ofertas del mismo viaje al mismo
+ * conductor (la primera y dos vueltas). Sin tope, un conductor que ignora la oferta la recibía cada
+ * minuto durante los 10 minutos de búsqueda, con sonido. El aviso al celular va solo en la primera
+ * y en la primera vuelta (`AVISOS_POR_CONDUCTOR`).
+ */
+export const OFERTAS_POR_CONDUCTOR = 3;
+export const AVISOS_POR_CONDUCTOR = 2;
+/**
  * SQL: «este conductor puede recibir (otra vez) la oferta de esta operación». Una «ofrecida» ya
  * vencida cuenta como vencida: sin reloj, nadie la marcó todavía.
  */
 export function puedeRecibirOferta(op: string, conductor: string): string {
   return `NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ${op} AND v.conductor_id = ${conductor}
-     AND NOT (v.estado IN ('vencida', 'ofrecida') AND v.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')))`;
+     AND NOT (v.estado IN ('vencida', 'ofrecida') AND v.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
+              AND v.intentos < ${OFERTAS_POR_CONDUCTOR}))`;
 }
 /** El servicio del catálogo en la capa financiera (C-FIN-POLITICAS). */
 const SERVICIO_FINANCIERO = new Map<string, 'ride' | 'car'>([
@@ -811,9 +820,12 @@ export async function repartirOperaciones(
          ON CONFLICT(operacion_id, conductor_id) DO UPDATE SET
            estado = 'ofrecida', vehiculo_id = excluded.vehiculo_id, expira_en = excluded.expira_en,
            ganancia_centavos = excluded.ganancia_centavos, km = excluded.km,
-           creada_en = datetime('now'), respondida_en = NULL
+           creada_en = datetime('now'), respondida_en = NULL,
+           intentos = ofertas_operacion.intentos + 1
          WHERE ofertas_operacion.estado = 'vencida'
-           AND ofertas_operacion.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')`,
+           AND ofertas_operacion.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
+           AND ofertas_operacion.intentos < ${OFERTAS_POR_CONDUCTOR}
+         RETURNING intentos`,
       )
       .bind(
         op.id,
@@ -824,8 +836,9 @@ export async function repartirOperaciones(
         // C-TIEMPOS-OPERACION: km a la recogida, en el mismo INSERT (la llegada prevista del conductor).
         Number.isFinite(elegido.km) ? elegido.km : null,
       )
-      .run();
-    if (!r.meta.changes) continue;
+      .all<{ intentos: number }>();
+    const intentos = r.results[0]?.intentos;
+    if (intentos == null) continue;
     yaOfrecidos.add(elegido.conductorId);
     ofrecidas++;
     if (env)
@@ -844,7 +857,8 @@ export async function repartirOperaciones(
     // C-OFERTA-AVISO (18 nov 2026, todos los países): la oferta también llega al celular, como la
     // de comida (y como DoorDash y Uber): con la app en segundo plano el sondeo no corre y el tiempo
     // real puede no estar. Sin esto el conductor no se enteraba y la oferta vencía en silencio.
-    if (env)
+    // C-REOFERTA-TOPE: al celular, solo la primera oferta y la primera vuelta.
+    if (env && Number(intentos) <= AVISOS_POR_CONDUCTOR)
       await notificar(env, db, elegido.conductorId, (i) =>
         avisoOfertaOperacion(
           i,
