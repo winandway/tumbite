@@ -4311,7 +4311,7 @@ CREATE TABLE IF NOT EXISTS banners (
 -- Sin índice extra: la tabla es chica y la ruta pública la lee una vez por minuto (caché en memoria).
 -- El tope diario de imágenes con IA vive en `config` (claves ia_banners:<día>), sin tabla propia.
 
--- C-CAMILA (17 nov 2026, piloto de El Vigía y Tucaní, después el mundo): «Camila Montes», la
+-- C-CAMILA (17 nov 2026, piloto de El Vigía y Tucaní, después el mundo): «Camila Campos», la
 -- asistente de soporte de Divoox para conductores y líderes de equipo. UN cerebro y UNA memoria por
 -- persona (tablas WITHOUT ROWID: sin índice aparte de su llave, para que el canario lea poco): la persona se une por su cuenta, su correo verificado o su teléfono verificado, venga por
 -- el chat de la web, el de la app Driver o el correo (SMS y WhatsApp quedan listos y apagados).
