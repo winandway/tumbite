@@ -81,6 +81,9 @@ export function ChatSoporteApp() {
         texto,
         canal: 'app',
       });
+      // El mensaje ya llegó: la casilla se vacía AHORA, antes de la espera. Lo que la persona escriba
+      // mientras Camila «escribe» es su siguiente mensaje y no se borra.
+      await b.limpiar();
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
       setHilo({
@@ -88,7 +91,6 @@ export function ChatSoporteApp() {
         equipoAtendiendo: r.equipoAtendiendo,
         mensajes: r.mensajes,
       });
-      await b.limpiar();
     } catch (x) {
       // Lo escrito se queda en la casilla para reintentar.
       setError(x instanceof ErrorApi ? x.message : t.sinRed);

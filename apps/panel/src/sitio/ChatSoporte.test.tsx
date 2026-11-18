@@ -174,6 +174,27 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     await waitFor(() => expect(screen.queryByTestId('chat-escribiendo')).toBeNull());
   });
 
+  it('lo que la persona escribe mientras Camila «escribe» no se borra al llegar la respuesta', async () => {
+    usarEsperaDeEscritura(() => 400);
+    servidor((l) => {
+      if (l.url.endsWith('/cuentas/yo')) return json({}, 401);
+      if (l.url.endsWith('/camila/mensaje')) return json({ respuesta: 'Claro.', ...HILO });
+      return json(HILO);
+    });
+    render(<ChatSoporte idioma="es" />);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Habla con nuestro equipo de soporte' }),
+    );
+    const casilla = screen.getByLabelText('Escribe tu mensaje…') as HTMLTextAreaElement;
+    await userEvent.type(casilla, 'hola');
+    await userEvent.click(screen.getByRole('button', { name: /Enviar/ }));
+    await screen.findByTestId('chat-escribiendo');
+    await waitFor(() => expect(casilla.value).toBe(''));
+    await userEvent.type(casilla, 'y otra cosa');
+    await waitFor(() => expect(screen.queryByTestId('chat-escribiendo')).toBeNull());
+    expect(casilla.value).toBe('y otra cosa');
+  });
+
   it('si falla el envío, lo escrito se queda en la casilla', async () => {
     servidor((l) =>
       l.url.endsWith('/camila/mensaje')

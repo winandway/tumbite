@@ -38,4 +38,12 @@ describe('C-CAMILA-CHAT en Driver', () => {
     // El botón va en fila y no parte su palabra.
     expect(chat).toMatch(/<Boton[\s\S]*?enFila\s*\/>/);
   });
+
+  it('la casilla se vacía antes de la espera de «escribiendo»: lo que se escribe mientras tanto no se borra', () => {
+    const chat = leer('soporte', 'ChatSoporteApp.tsx');
+    expect(chat.indexOf('await b.limpiar();')).toBeGreaterThan(-1);
+    expect(chat.indexOf('await b.limpiar();')).toBeLessThan(
+      chat.indexOf('await esperar(r.respuesta);'),
+    );
+  });
 });
