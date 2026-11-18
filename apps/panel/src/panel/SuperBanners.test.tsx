@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TOPES_BANNER } from '@tumbite/compartido';
 import { SuperBanners, aCasilla, deCasilla } from './SuperBanners';
 
 /**
@@ -135,6 +136,22 @@ describe('C-BANNERS en el panel', () => {
     });
     expect(llamadas.some((l) => l.url.endsWith('/publicar'))).toBe(false);
     expect(await screen.findByRole('status')).toHaveTextContent('Guardado como borrador');
+  });
+
+  // C-BANNER-SIN-CORTES (18 nov 2026): el titular y el texto tienen tope de caracteres y un contador
+  // que avisa antes de que no quepa bien en el teléfono.
+  it('el titular y el texto llevan contador y tope', async () => {
+    servidor();
+    render(<SuperBanners idioma="es" />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo banner' }));
+    const titular = screen.getByLabelText('Titular en español');
+    expect(titular).toHaveAttribute('maxLength', String(TOPES_BANNER.titulo));
+    expect(screen.getByLabelText('Texto en inglés')).toHaveAttribute(
+      'maxLength',
+      String(TOPES_BANNER.texto),
+    );
+    await userEvent.type(titular, 'Tu súper en minutos');
+    expect(screen.getByTestId('contador-tituloEs')).toHaveTextContent(`19/${TOPES_BANNER.titulo}`);
   });
 
   it('lo escrito no se pierde: al volver, el formulario sale con lo que había', async () => {

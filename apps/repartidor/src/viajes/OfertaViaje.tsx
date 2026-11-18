@@ -13,6 +13,8 @@ export type OfertaViaje = {
   gananciaCentavos: number;
   moneda: string | null;
   expiraEn: string;
+  /** C-OFERTA-TIEMPO-REAL: los segundos que le quedan, contados por el servidor. */
+  segundosRestantes?: number;
   origen: string;
   destino: string;
   recogidaM: number | null;
@@ -72,7 +74,13 @@ export function OfertaViajeModal({
       Vibration.cancel();
     };
   }, [oferta.operacionId]);
-  const vence = new Date(`${oferta.expiraEn.replace(' ', 'T')}Z`).getTime();
+  // C-OFERTA-TIEMPO-REAL: el vencimiento se cuenta desde que llegó la oferta con los segundos que
+  // dio el servidor; el reloj del teléfono (a veces corrido) no la da por vencida antes de tiempo.
+  const [vence] = useState(() =>
+    oferta.segundosRestantes != null
+      ? Date.now() + oferta.segundosRestantes * 1000
+      : new Date(`${oferta.expiraEn.replace(' ', 'T')}Z`).getTime(),
+  );
   const quedan = Math.max(0, Math.ceil((vence - ahora) / 1000));
   // C-CONDUCTOR-CONFIANZA: la oferta exclusiva al conductor de confianza dura un minuto.
   const total = oferta.deConfianza ? 60 : 30;

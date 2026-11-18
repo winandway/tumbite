@@ -210,6 +210,10 @@ describe('C-CUPON-DIVOOX: el pasajero agrega el código y paga en mano solo la d
       cond.token,
     );
     expect(ofertas.datos.ofertas[0].regaloDivoox).toBe(300);
+    // C-OFERTA-TIEMPO-REAL: los segundos que le quedan a la oferta los cuenta el servidor (el reloj
+    // del teléfono puede estar corrido y mostrarla vencida cuando sigue viva).
+    expect(ofertas.datos.ofertas[0].segundosRestantes).toBeGreaterThan(25);
+    expect(ofertas.datos.ofertas[0].segundosRestantes).toBeLessThanOrEqual(30);
     const fin = await hacerViaje(e, cond, p, id);
     expect(fin.regaloDivoox).toBe(300);
     expect(fin.cobrarEnMano).toBe(fin.totalFinal - 300);

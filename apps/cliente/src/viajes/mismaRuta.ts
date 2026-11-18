@@ -227,3 +227,35 @@ export function agruparPorMes<V extends { creadoEn: string }>(
   }
   return grupos;
 }
+
+/**
+ * C-PEDIR-OTRA-VEZ (18 nov 2026): «Pedir otra vez» desde la pantalla de un viaje terminado o
+ * cancelado deja escrito el formulario con ESE viaje: recogida, destino, paradas, categoría y forma
+ * de pago (antes el formulario abría con el destino o la recogida vacíos). Sin coordenadas, nada.
+ */
+export function rellenoDeEsteViaje(v: {
+  servicio: string;
+  categoria?: string | null;
+  metodoPago: string;
+  origen: { direccion: string; lat: number; lng: number };
+  destino: { direccion: string; lat: number; lng: number };
+  paradas?: { lat: number; lng: number; direccion: string }[];
+}) {
+  const valido = (p: { lat: number; lng: number }) =>
+    Number.isFinite(p.lat) && Number.isFinite(p.lng);
+  if (!valido(v.origen) || !valido(v.destino)) return null;
+  return {
+    recogida: v.origen.direccion,
+    recogidaLat: String(v.origen.lat),
+    recogidaLng: String(v.origen.lng),
+    destino: v.destino.direccion,
+    destinoLat: String(v.destino.lat),
+    destinoLng: String(v.destino.lng),
+    paradas: JSON.stringify(
+      (v.paradas ?? []).map((p) => ({ direccion: p.direccion, lat: p.lat, lng: p.lng })),
+    ),
+    categoria: categoriaDe({ servicio: v.servicio, categoria: v.categoria ?? null }),
+    metodo: METODOS.find((m) => m === v.metodoPago) ?? 'efectivo',
+    cuando: '',
+  };
+}

@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Pressable, Share, View } from 'react-native';
-import { type Api, type Idioma, formatearMonto, planillaGanancias } from '@tumbite/compartido';
+import {
+  type Api,
+  type Idioma,
+  formatearMonto,
+  planillaGanancias,
+  contar,
+} from '@tumbite/compartido';
 import { C, e, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 
@@ -82,7 +88,12 @@ export function Ganancias({
             {linea(t.base, x.base, x.moneda)}
             {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
             {linea(t.propinas, x.propinas, x.moneda)}
-            {linea(`${t.total} · ${x.entregas} ${t.entregas}`, x.total, x.moneda, true)}
+            {linea(
+              `${t.total} · ${contar(x.entregas, 'entrega', idioma)}`,
+              x.total,
+              x.moneda,
+              true,
+            )}
             <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
           </View>
         ),

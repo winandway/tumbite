@@ -1,3 +1,4 @@
+import { TOPES_BANNER } from '@tumbite/compartido';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -96,10 +97,10 @@ const esquemaBanner = z.object({
   lugar: z.enum(LUGARES),
   // Vacía, o una imagen guardada por el administrador de banners en el almacén del sitio.
   imagen: z.string().max(300).refine(imagenDeBanners),
-  tituloEs: z.string().trim().max(80),
-  tituloEn: z.string().trim().max(80),
-  textoEs: z.string().trim().max(140),
-  textoEn: z.string().trim().max(140),
+  tituloEs: z.string().trim().max(TOPES_BANNER.titulo),
+  tituloEn: z.string().trim().max(TOPES_BANNER.titulo),
+  textoEs: z.string().trim().max(TOPES_BANNER.texto),
+  textoEn: z.string().trim().max(TOPES_BANNER.texto),
   destinoTipo: z.enum(DESTINOS),
   destinoValor: z.string().trim().max(80),
   codigo: z

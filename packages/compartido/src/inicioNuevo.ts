@@ -140,6 +140,13 @@ export function destinoDeBanner(b: BannerInicio): RutaApp | null {
  * ciudad (o sin red): las tres del borrador. Sin descuentos ni códigos: el respaldo no promete nada
  * que no exista; las promociones salen solo de lo real (banners o cupones destacados).
  */
+/**
+ * C-BANNER-SIN-CORTES (18 nov 2026): lo más largo que cabe bien en la portada y en el carrusel de
+ * promociones de un teléfono de 360 (dos o tres renglones). El superadmin no deja escribir más y
+ * muestra el contador; el servidor tampoco lo acepta.
+ */
+export const TOPES_BANNER = { titulo: 45, texto: 70 } as const;
+
 export const BANNERS_RESPALDO: Record<Idioma, BannerInicio[]> = {
   es: [
     {

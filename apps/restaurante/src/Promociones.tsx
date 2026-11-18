@@ -10,6 +10,7 @@ import {
   textoAMonto,
   useBorrador,
   diaDeHoyLocal,
+  contar,
 } from '@tumbite/compartido';
 import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion, Text } from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
@@ -42,7 +43,7 @@ const T = {
     terminar: 'Terminar',
     activa: 'Activa',
     sinEfecto: 'Sin efecto',
-    costo: (n: number, c: string) => `${n} pedidos · te costó ${c}`,
+    costo: (n: number, c: string) => `${contar(n, 'pedido', 'es')} · te costó ${c}`,
     volver: 'Volver',
   },
   en: {
@@ -68,7 +69,7 @@ const T = {
     terminar: 'End',
     activa: 'Active',
     sinEfecto: 'Not running',
-    costo: (n: number, c: string) => `${n} orders · cost to you ${c}`,
+    costo: (n: number, c: string) => `${contar(n, 'pedido', 'en')} · cost to you ${c}`,
     volver: 'Back',
   },
 };

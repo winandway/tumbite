@@ -54,6 +54,44 @@ for (const idioma of ['en', 'es'] as const)
       estado: accion === 'abrir' ? 'disponible' : 'proximamente',
       accion,
     });
+    // C-BANNER-SIN-CORTES (18 nov 2026, ficha de Play): títulos largos de verdad, en los dos idiomas.
+    const largo = {
+      es: [
+        'Tu súper sin salir de casa, con todo lo que necesitas hoy',
+        'Frutas, pan, carnes y mucho más en minutos.',
+      ],
+      en: [
+        'Your groceries without leaving home, with everything you need',
+        'Fruit, bread, meat and much more in minutes.',
+      ],
+    }[idioma];
+    await p.route('**/datos/banners?*', (ruta) => {
+      const promo = ruta.request().url().includes('lugar=promociones');
+      return ruta.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify(
+          promo
+            ? {
+                lugar: 'promociones',
+                banners: [
+                  {
+                    id: 'b-largo',
+                    lugar: 'promociones',
+                    titulo: largo[0],
+                    texto: largo[1],
+                    imagen: '',
+                    destino: { tipo: 'servicio', valor: 'comida' },
+                    codigo: null,
+                    peso: 1,
+                    orden: 1,
+                    fin: null,
+                  },
+                ],
+              }
+            : { lugar: 'cabecera', banner: null },
+        ),
+      });
+    });
     await p.route('**/datos/servicios*', (ruta) =>
       ruta.fulfill({
         json: {
@@ -88,6 +126,25 @@ for (const idioma of ['en', 'es'] as const)
             .some((d) => d.scrollWidth > d.clientWidth + 1 || d.scrollHeight > d.clientHeight + 1),
         );
       expect(cortado, `servicio-${s} cortado a 360`).toBe(false);
+    }
+    // Ni el título ni el texto del banner de promociones ni el titular de la portada se cortan.
+    await expect(p.getByTestId('inicio-promos')).toBeVisible({ timeout: 30_000 });
+    for (const id of ['inicio-promos', 'inicio-portada']) {
+      const cortados = await p.getByTestId(id).evaluate((el) =>
+        [...el.querySelectorAll('div[dir], div')]
+          .filter((d) => d.childElementCount === 0 && (d.textContent ?? '').trim())
+          .filter((d) => {
+            const cs = getComputedStyle(d);
+            return (
+              cs.textOverflow === 'ellipsis' ||
+              cs.webkitLineClamp !== 'none' ||
+              // Unos píxeles de tinta (las colas de las letras) no son un corte; un renglón sí.
+              d.scrollHeight > d.clientHeight + 6
+            );
+          })
+          .map((d) => d.textContent),
+      );
+      expect(cortados, `${id} cortado a 360`).toEqual([]);
     }
     await p.screenshot({ path: join(RAIZ, 'test-results', `servicios-360-${idioma}.png`) });
     await p.setViewportSize({ width: 412, height: 915 });

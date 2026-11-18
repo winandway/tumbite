@@ -45,6 +45,29 @@ export const TIEMPO_LECTURA_MS = 15_000;
 /** C-BUSCADOR-SERIO: una petición cancelada a propósito (`senal`) termina con este estado. */
 export const ESTADO_CANCELADA = -1;
 
+/**
+ * C-SESION-TERMINADA (revisor, 18 nov 2026): solo cierra la sesión un 401 marcado sin dudas por el
+ * servidor (código `sesion_terminada` o cabecera `x-sesion: terminada`), o con el mensaje exacto de
+ * sesión terminada (respuestas de un servidor anterior a la marca). Un 401 por otra cosa (una
+ * contraseña mal escrita en un servidor viejo, una llave de API) nunca saca a la persona.
+ */
+const MENSAJES_SESION_TERMINADA = new Set([
+  'Tu sesión terminó. Vuelve a entrar.',
+  'Your session ended. Please sign in again.',
+]);
+export function esSesionTerminada(
+  res: { status: number; headers?: { get(n: string): string | null } },
+  datos: unknown,
+): boolean {
+  if (res.status !== 401) return false;
+  if (res.headers?.get('x-sesion') === 'terminada') return true;
+  const d = (datos ?? {}) as { codigo?: unknown; error?: unknown };
+  return (
+    d.codigo === 'sesion_terminada' ||
+    (typeof d.error === 'string' && MENSAJES_SESION_TERMINADA.has(d.error))
+  );
+}
+
 /** Cliente del servidor de Divoox. Lo usan las tres apps y el panel. */
 export function crearApi(op: OpcionesApi) {
   const hacer = op.fetch ?? ((...a: Parameters<typeof fetch>) => fetch(...a));
@@ -121,7 +144,7 @@ export function crearApi(op: OpcionesApi) {
     const datos: unknown = await res.json().catch(() => null);
     if (reloj) clearTimeout(reloj);
     if (!res.ok) {
-      if (res.status === 401 && token) op.alSesionTerminada?.(token);
+      if (token && esSesionTerminada(res, datos)) op.alSesionTerminada?.(token);
       const d = (datos ?? {}) as { error?: string; campo?: string };
       throw new ErrorApi(
         d.error ??
@@ -172,7 +195,7 @@ export function crearApi(op: OpcionesApi) {
     }
     const datos = (await res.json().catch(() => null)) as
       (T & { error?: string; campo?: string }) | null;
-    if (!res.ok && res.status === 401 && token) op.alSesionTerminada?.(token);
+    if (token && esSesionTerminada(res, datos)) op.alSesionTerminada?.(token);
     if (!res.ok)
       throw new ErrorApi(
         datos?.error ??
@@ -223,7 +246,7 @@ export function crearApi(op: OpcionesApi) {
     } | null;
     // C-FOTO-ENTREGA-IPHONE: si el servidor dijo que sí, la foto subió (algunas rutas no devuelven
     // su dirección); antes eso salía como «No se pudo subir la foto.» con la foto ya guardada.
-    if (!res.ok && res.status === 401 && token) op.alSesionTerminada?.(token);
+    if (token && esSesionTerminada(res, datos)) op.alSesionTerminada?.(token);
     if (!res.ok)
       throw new ErrorApi(
         datos?.error ??
@@ -248,7 +271,7 @@ export function crearApi(op: OpcionesApi) {
       headers,
       credentials: credenciales,
     } as Parameters<typeof fetch>[1]);
-    if (res.status === 401 && token) op.alSesionTerminada?.(token);
+    if (token && esSesionTerminada(res, null)) op.alSesionTerminada?.(token);
     if (!res.ok) throw new ErrorApi('', res.status);
     const blob = await res.blob();
     // FileReader existe en el celular y en el navegador (no en el servidor, que nunca lo usa).

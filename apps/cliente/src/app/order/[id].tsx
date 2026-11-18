@@ -39,6 +39,7 @@ import {
   type Referencia,
   textoReferencia,
   nombreFormaPago,
+  ESPERA_MAXIMA_CRITICA_MS,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -759,7 +760,7 @@ function SeguirPedido() {
         }),
     [api, id, nuevo, vaciar],
   );
-  useSondeo(cargarSeguimiento, 5000);
+  useSondeo(cargarSeguimiento, 5000, true, true, { topeMs: ESPERA_MAXIMA_CRITICA_MS });
 
   // Cuatro pasos como en el diseño: Confirmado, En preparación, En camino, Entregado.
   const recoge = p?.entrega === 'recoger';

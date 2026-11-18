@@ -123,13 +123,8 @@ export function PortadaRotativa({
         testID={`portada-${banner.id}`}
         style={p.cuerpo}
       >
-        <Text
-          style={p.titular}
-          numberOfLines={3}
-          adjustsFontSizeToFit
-          minimumFontScale={0.8}
-          maxFontSizeMultiplier={1.2}
-        >
+        {/* C-BANNER-SIN-CORTES: el titular nunca se corta; ocupa los renglones que necesite. */}
+        <Text style={p.titular} maxFontSizeMultiplier={1.2}>
           {banner.titulo}
         </Text>
       </Pressable>
@@ -300,10 +295,11 @@ export function CarruselPromos({
               accessibilityIgnoresInvertColors
             />
             <View style={p.promoVelo} />
-            <Text style={p.promoEtiqueta} numberOfLines={1}>
+            {/* C-BANNER-SIN-CORTES: título y texto completos; la tarjeta crece si hace falta. */}
+            <Text style={p.promoEtiqueta} maxFontSizeMultiplier={1.2}>
               {b.texto || t.ofertaDelDia}
             </Text>
-            <Text style={p.promoTitulo} numberOfLines={2} maxFontSizeMultiplier={1.2}>
+            <Text style={p.promoTitulo} maxFontSizeMultiplier={1.2}>
               {b.titulo}
             </Text>
             {b.codigo ? (
@@ -524,14 +520,15 @@ const p = StyleSheet.create({
   mas: { width: 36, height: 36, flexDirection: 'row', flexWrap: 'wrap', gap: 3, marginBottom: 2 },
   masCuadro: { width: 16.5, height: 16.5, borderRadius: 5 },
   promo: {
-    height: 108,
+    minHeight: 108,
+    paddingVertical: 12,
     backgroundColor: '#F20D20',
     borderRadius: 16,
     overflow: 'hidden',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
-  promoFoto: { position: 'absolute', right: -20, top: 0, height: 108, width: '62%' },
+  promoFoto: { position: 'absolute', right: -20, top: 0, bottom: 0, width: '62%' },
   promoVelo: {
     position: 'absolute',
     left: 0,
@@ -540,13 +537,13 @@ const p = StyleSheet.create({
     width: '50%',
     backgroundColor: 'rgba(242,13,32,0.55)',
   },
-  promoEtiqueta: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  promoEtiqueta: { color: '#FFFFFF', fontWeight: '700', fontSize: 13, maxWidth: '60%' },
   promoTitulo: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 20,
+    fontSize: 19,
     lineHeight: 24,
-    maxWidth: '56%',
+    maxWidth: '62%',
   },
   promoCodigo: {
     marginTop: 6,

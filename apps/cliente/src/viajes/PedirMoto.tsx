@@ -37,7 +37,7 @@ import { PuntoExacto } from '../PuntoExacto';
 import { Pildora, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
-import { type Punto, calleDelPunto, miUbicacion } from '../ubicacion';
+import { type Punto, calleDelPunto, miUbicacion, ultimaUbicacionConocida } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
 import { AgregarCodigoRegalo, LineaRegalo, TEXTOS_REGALO } from '../RegaloDivoox';
 import { PedirPrimeroA } from './ConductoresConfianza';
@@ -157,8 +157,16 @@ export function PedirMoto({
   useEffect(() => {
     // Con un viaje anterior escrito, la recogida es la de ese viaje: no se pisa con la de ahora.
     if (v.recogidaLat || rellenado) return;
+    // C-PEDIR-OTRA-VEZ: al instante la última ubicación conocida; después, la lectura nueva.
+    let afinada = false;
+    void ultimaUbicacionConocida().then((p) => {
+      if (!p || afinada) return;
+      cambiar('recogidaLat', String(p.lat));
+      cambiar('recogidaLng', String(p.lng));
+    });
     void miUbicacion().then((p) => {
       if (!p) return;
+      afinada = true;
       cambiar('recogidaLat', String(p.lat));
       cambiar('recogidaLng', String(p.lng));
     });
@@ -427,12 +435,19 @@ export function PedirMoto({
             setError('');
             setCotizacion(null);
             setClaveDestino(null);
-            void b
-              .empezarDeNuevo()
-              .then(() => miUbicacion())
-              .then((p) => {
-                if (p) ponerPunto('recogida', p, '');
+            void b.empezarDeNuevo().then(() => {
+              // C-PEDIR-OTRA-VEZ: la recogida se llena AL INSTANTE con la última ubicación conocida
+              // y después se afina con la lectura nueva (antes tardaba unos 5 s).
+              let afinada = false;
+              void ultimaUbicacionConocida().then((p) => {
+                if (p && !afinada) ponerPunto('recogida', p, '');
               });
+              void miUbicacion().then((p) => {
+                if (!p) return;
+                afinada = true;
+                ponerPunto('recogida', p, '');
+              });
+            });
           }}
         />
         {/* El encabezado del servicio: dibujo, titular y una frase. */}

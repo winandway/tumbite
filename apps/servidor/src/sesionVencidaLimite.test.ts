@@ -30,3 +30,39 @@ describe('las llaves vencidas no martillan las rutas del conductor', () => {
     expect((await pedir(m, rep.token)).status).toBe(200);
   });
 });
+
+/**
+ * C-SESION-TERMINADA (revisor, 18 nov 2026): las apps solo cierran la sesión cuando el servidor lo
+ * marca sin dudas. «Contraseña actual equivocada» ya no es 401 (la sesión sigue buena).
+ */
+describe('el servidor dice sin dudas cuándo terminó la sesión', () => {
+  it('sesión vencida: 401 con código y cabecera de sesión terminada', async () => {
+    const m = mundo();
+    const r = await m.crudo('/datos/repartidor/estado', {
+      headers: { authorization: 'Bearer llave-vencida', 'cf-connecting-ip': '10.77.2.1' },
+    });
+    expect(r.status).toBe(401);
+    expect(r.headers.get('x-sesion')).toBe('terminada');
+    expect(((await r.json()) as { codigo?: string }).codigo).toBe('sesion_terminada');
+  });
+  it('contraseña actual equivocada: 403, sin código, y la sesión sigue buena', async () => {
+    const m = mundo();
+    const u = await m.cuenta('cliente');
+    const clave = await m.llamar(
+      'POST',
+      '/datos/cuentas/clave',
+      { actual: 'Equivocada99!', nueva: 'OtraClave2026!' },
+      u.token,
+    );
+    expect(clave.estado).toBe(403);
+    expect(clave.datos.codigo).toBeUndefined();
+    const correo = await m.llamar(
+      'POST',
+      '/datos/cuentas/correo',
+      { correo: 'nuevo@ejemplo.com', clave: 'Equivocada99!' },
+      u.token,
+    );
+    expect(correo.estado).toBe(403);
+    expect((await m.llamar('GET', '/datos/cuentas/yo', undefined, u.token)).estado).toBe(200);
+  });
+});

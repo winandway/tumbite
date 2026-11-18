@@ -109,7 +109,10 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
 function fallo(cuerpo: ReturnType<typeof cuerpoUbicacion>) {
   cola.guardar(cuerpo);
   fallosEnvio += 1;
-  proximoIntento = Date.now() + esperaSondeo(15_000, fallosEnvio);
+  // Con un pedido, viaje o ruta en curso el cliente no puede dejar de ver al conductor: tope de
+  // 30 s. Conectado sin trabajo, hasta 2 min.
+  proximoIntento =
+    Date.now() + esperaSondeo(15_000, fallosEnvio, modoActual === 'activo' ? 30_000 : undefined);
 }
 
 /** Como Dasher: antes del cuadro del sistema, una explicación de para qué se usa la ubicación. */

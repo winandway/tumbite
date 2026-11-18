@@ -146,9 +146,12 @@ export const cargarSesion: MiddlewareHandler<{ Bindings: Env; Variables: Variabl
   await next();
 };
 
+/** C-SESION-TERMINADA: el mensaje (y la marca) de una sesión que ya no sirve. */
+export const SESION_TERMINADA = 'Tu sesión terminó. Vuelve a entrar.';
+
 export function exigir(c: Ctx, ...roles: Rol[]): UsuarioSesion {
   const u = c.get('usuario');
-  if (!u) throw new ErrorDatos('Tu sesión terminó. Vuelve a entrar.', undefined, 401);
+  if (!u) throw new ErrorDatos(SESION_TERMINADA, undefined, 401);
   if (roles.length && !roles.includes(u.rol))
     throw new ErrorDatos('Tu cuenta no tiene permiso para esto.', undefined, 403);
   return u;

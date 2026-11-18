@@ -20,9 +20,11 @@ describe('la sesión que termina se cierra una vez', () => {
     expect(leer('packages/movil/src/Acceso.tsx')).toContain('sesionTerminada');
   });
   it('el sondeo de la app espera cada vez más cuando falla y se corta al desmontar', () => {
+    // El comportamiento se prueba con relojes de mentira en compartido/sondeoMotor.test.ts.
     const s = leer('packages/movil/src/useSondeo.ts');
-    expect(s).toContain('esperaSondeo(');
-    expect(s).toContain('clearTimeout');
+    expect(s).toContain('crearSondeo(');
+    expect(s).toContain('s.detener()');
+    expect(s).toContain("if (e === 'active') reanudarSondeos();");
   });
 });
 
@@ -39,6 +41,7 @@ describe('ningún sondeo de red pregunta a ritmo fijo', () => {
     'apps/cliente/src/app/order/[id].tsx',
     'apps/cliente/src/app/group/[codigo].tsx',
     'packages/movil/src/ChatPedido.tsx',
+    'apps/restaurante/src/Inicio.tsx',
   ];
   for (const a of archivos)
     it(a, () => {
@@ -57,6 +60,8 @@ describe('la ubicación de fondo no insiste', () => {
   it('si el servidor falla, el reintento espera cada vez más (no en cada lectura de 15 s)', () => {
     expect(s).toContain('esperaSondeo(');
     expect(s).toContain('proximoIntento');
+    // Con un pedido o viaje en curso, el tope es de 30 s (el cliente no deja de ver al conductor).
+    expect(s).toContain("modoActual === 'activo' ? 30_000 : undefined");
   });
   it('el inicio la apaga al desmontarse', () => {
     expect(leer('apps/repartidor/src/Inicio.tsx')).toMatch(
@@ -70,5 +75,25 @@ describe('el reloj del inicio de Driver no pinta todo cada segundo', () => {
     const s = leer('apps/repartidor/src/Inicio.tsx');
     expect(s).toContain('relojSegundos ? 1000 : 30_000');
     expect(s).not.toContain('setInterval(() => setTic(Date.now()), 1000)');
+  });
+});
+
+describe('lo crítico no espera más de 20 s', () => {
+  it('estado y ofertas de Driver, viaje del cliente y seguimiento del pedido', () => {
+    for (const a of [
+      'apps/repartidor/src/Inicio.tsx',
+      'apps/cliente/src/app/ride.tsx',
+      'apps/cliente/src/app/order/[id].tsx',
+      'apps/restaurante/src/Inicio.tsx',
+    ])
+      expect(leer(a), a).toContain('topeMs: ESPERA_MAXIMA_CRITICA_MS');
+  });
+});
+
+describe('la oferta de viaje se muestra con su tiempo real', () => {
+  it('la cuenta atrás usa los segundos que da el servidor, no el reloj del teléfono', () => {
+    const s = leer('apps/repartidor/src/viajes/OfertaViaje.tsx');
+    expect(s).toContain('oferta.segundosRestantes * 1000');
+    expect(leer('apps/repartidor/src/Inicio.tsx')).toContain('key={ofertasViaje[0].operacionId}');
   });
 });

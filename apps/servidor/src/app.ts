@@ -28,7 +28,7 @@ import {
   limiteIntentos,
   limiteIntentosPersistente,
 } from './seguridad';
-import { type Variables, cargarSesion } from './sesion';
+import { SESION_TERMINADA, type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
 import {
   asegurarEsquema,
@@ -769,8 +769,22 @@ app.route('/datos', rewardsSombra);
 app.onError(async (err, c) => {
   // Cada mensaje sale en el idioma de quien pidió (el inglés es el principal).
   const idioma = idiomaDeLaPeticion((n) => c.req.header(n));
-  if (err instanceof ErrorDatos)
+  if (err instanceof ErrorDatos) {
+    // C-SESION-TERMINADA: la sesión vencida va marcada sin dudas (código y cabecera): las apps solo
+    // salen con esta marca; cualquier otro 401 (llave de una API, firma) no cierra una sesión.
+    if (err.estado === 401 && err.message === SESION_TERMINADA) {
+      c.header('x-sesion', 'terminada');
+      return c.json(
+        {
+          error: enIdiomaDePeticion(err.message, idioma),
+          campo: err.campo,
+          codigo: 'sesion_terminada',
+        },
+        401,
+      );
+    }
     return c.json({ error: enIdiomaDePeticion(err.message, idioma), campo: err.campo }, err.estado);
+  }
   console.error('error no controlado', err);
   // C-ERRORES-VISIBLES: queda escrito para poder diagnosticarlo después (si la base responde).
   if (c.env.DB)

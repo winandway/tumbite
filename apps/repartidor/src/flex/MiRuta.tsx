@@ -1,6 +1,6 @@
 /* eslint-disable security/detect-object-injection -- índices sobre los textos fijos de la pantalla */
 import { comoLlegar } from '../comoLlegar';
-import { enlaceRutaGoogle, medidasReducidas, posicionFrescaWeb } from '@tumbite/compartido';
+import { enlaceRutaGoogle, medidasReducidas, posicionFrescaWeb, contar } from '@tumbite/compartido';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -1039,7 +1039,7 @@ function MiRutaContenido({
           ) : vistaRuta === 'linea' ? (
             <LineaRuta {...{ t, idioma, ruta, siguiente }} abrir={setParadaId} />
           ) : vistaRuta === 'resumen' ? (
-            <TrabajoRestante t={t} ruta={ruta} />
+            <TrabajoRestante t={t} ruta={ruta} idioma={idioma} />
           ) : (
             // C-FLEX-LISTA-UNIDA (como la lista del itinerario de Amazon Flex): las paradas van unidas
             // por una línea, para que se entienda que es un recorrido; la línea y el número se ponen en
@@ -2935,7 +2935,7 @@ function horaLocal(f: string, idioma: Idioma) {
  * C-FLEX-RESUMEN (30 oct 2026, como «Resumen de itinerario» de Amazon Flex): lo que falta con su
  * barra y las paradas Pendientes, Correcto y Problemas.
  */
-function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
+function TrabajoRestante({ t, ruta, idioma }: { t: Textos; ruta: Ruta; idioma: Idioma }) {
   const total = ruta.paradas.length;
   const correcto = ruta.paradas.filter((p) => p.estado === 'entregada').length;
   const problemas = ruta.paradas.filter((p) => p.estado === 'fallida').length;
@@ -2947,11 +2947,11 @@ function TrabajoRestante({ t, ruta }: { t: Textos; ruta: Ruta }) {
       <Text style={{ fontSize: 20, fontWeight: '800', color: TEXTO }}>{t.trabajoRestante}</Text>
       <Barra
         valor={total ? (total - pendientes) / total : 0}
-        etiqueta={`${pendientes} ${t.restantes.paradas}`}
+        etiqueta={contar(pendientes, 'parada', idioma)}
       />
       <Barra
         valor={paquetes.length ? paquetesHechos / paquetes.length : 0}
-        etiqueta={`${paquetes.length - paquetesHechos} ${t.restantes.paquetes}`}
+        etiqueta={contar(paquetes.length - paquetesHechos, 'paquete', idioma)}
       />
       {(
         [

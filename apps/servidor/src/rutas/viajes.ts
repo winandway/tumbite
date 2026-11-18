@@ -118,6 +118,7 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
   const { results } = await base(c)
     .prepare(
       `SELECT f.operacion_id, f.vehiculo_id, f.ganancia_centavos, f.expira_en, o.servicio_id,
+              CAST(ROUND((julianday(f.expira_en) - julianday('now')) * 86400) AS INTEGER) AS segundos_restantes,
               v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
@@ -146,6 +147,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         gananciaCentavos: Number(f.ganancia_centavos),
         moneda: f.moneda == null ? null : String(f.moneda),
         expiraEn: String(f.expira_en),
+        // C-OFERTA-TIEMPO-REAL: lo que le queda, contado por el servidor (no por el reloj del teléfono).
+        segundosRestantes: Math.max(0, Number(f.segundos_restantes ?? 0)),
         origen: String(f.origen_direccion),
         destino: String(f.destino_direccion),
         origenPunto: origen,

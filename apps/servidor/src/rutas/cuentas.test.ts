@@ -298,7 +298,8 @@ describe('configuración de la cuenta', () => {
           u.token,
         )
       ).estado,
-    ).toBe(401);
+      // C-SESION-TERMINADA: 403, no 401 (la sesión es buena; un 401 hace que la app salga).
+    ).toBe(403);
     expect(
       (
         await m.llamar(

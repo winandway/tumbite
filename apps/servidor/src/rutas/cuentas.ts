@@ -707,7 +707,8 @@ cuentas.post('/clave', async (c) => {
     .bind(u.id)
     .first<{ clave_hash: string }>();
   if (!f || !(await verificarClave(d.actual, f.clave_hash)))
-    throw new ErrorDatos('La contraseña actual no es correcta.', 'actual', 401);
+    // C-SESION-TERMINADA: 403, no 401 (la sesión es buena; 401 hace que la app salga).
+    throw new ErrorDatos('La contraseña actual no es correcta.', 'actual', 403);
   const token = leerToken(c);
   await db.batch([
     db
@@ -730,7 +731,7 @@ cuentas.post('/correo', async (c) => {
     .bind(u.id)
     .first<{ clave_hash: string }>();
   if (!f || !(await verificarClave(d.clave, f.clave_hash)))
-    throw new ErrorDatos('La contraseña no es correcta.', 'clave', 401);
+    throw new ErrorDatos('La contraseña no es correcta.', 'clave', 403);
   if (d.correo === u.correo.toLowerCase()) return c.json({ usuario: usuarioPublico(u) });
   const existe = await db.prepare('SELECT 1 FROM usuarios WHERE correo = ?').bind(d.correo).first();
   if (existe) throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);

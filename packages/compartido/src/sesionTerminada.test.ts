@@ -9,10 +9,15 @@ import { ESPERA_MAXIMA_SONDEO_MS, esperaSondeo } from './sondeo';
  * La API avisa UNA vez que la sesión terminó; los sondeos que fallan esperan cada vez más.
  */
 const respuesta = (estado: number) =>
-  new Response(JSON.stringify(estado === 200 ? { ok: true } : { error: 'Tu sesión terminó.' }), {
-    status: estado,
-    headers: { 'content-type': 'application/json' },
-  });
+  new Response(
+    JSON.stringify(
+      estado === 200 ? { ok: true } : { error: 'Tu sesión terminó. Vuelve a entrar.' },
+    ),
+    {
+      status: estado,
+      headers: { 'content-type': 'application/json' },
+    },
+  );
 
 describe('la API avisa cuando la sesión terminó', () => {
   it('un 401 con sesión avisa (y sigue lanzando el error de siempre)', async () => {
@@ -38,6 +43,38 @@ describe('la API avisa cuando la sesión terminó', () => {
     });
     await expect(api.pedir('POST', '/datos/cuentas/entrar', {})).rejects.toBeTruthy();
     expect(aviso).not.toHaveBeenCalled();
+  });
+  it('un 401 que no es de sesión (contraseña mal escrita en un servidor viejo, llave de API) no avisa', async () => {
+    const aviso = vi.fn();
+    const api = crearApi({
+      base: 'http://x',
+      token: () => 't',
+      alSesionTerminada: aviso,
+      fetch: async () =>
+        new Response(
+          JSON.stringify({ error: 'La contraseña actual no es correcta.', campo: 'actual' }),
+          {
+            status: 401,
+          },
+        ),
+    });
+    await expect(api.pedir('POST', '/datos/cuentas/clave', {})).rejects.toBeTruthy();
+    expect(aviso).not.toHaveBeenCalled();
+  });
+  it('con la marca nueva del servidor (código o cabecera) avisa', async () => {
+    const aviso = vi.fn();
+    const api = crearApi({
+      base: 'http://x',
+      token: () => 't',
+      alSesionTerminada: aviso,
+      fetch: async () =>
+        new Response(JSON.stringify({ error: 'Session ended.', codigo: 'sesion_terminada' }), {
+          status: 401,
+          headers: { 'x-sesion': 'terminada' },
+        }),
+    });
+    await expect(api.pedir('GET', '/datos/x')).rejects.toBeTruthy();
+    expect(aviso).toHaveBeenCalledTimes(1);
   });
   it('otros errores no avisan', async () => {
     const aviso = vi.fn();

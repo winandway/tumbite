@@ -45,6 +45,8 @@ import {
   tocaMandarSegunModo,
   type Referencia,
   textoReferencia,
+  contar,
+  ESPERA_MAXIMA_CRITICA_MS,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
 import { Turnos } from './grandes/Turnos';
@@ -732,7 +734,8 @@ export function Inicio() {
 
   // C-SESION-TERMINADA: el estado cada 5 s; si falla, cada vez más espaciado (antes cada 5 s pasara
   // lo que pasara, también con la sesión vencida).
-  useSondeo(cargar, 5000);
+  // Estado y ofertas no pueden llegar tarde: con fallos, como mucho cada 20 s.
+  useSondeo(cargar, 5000, true, true, { topeMs: ESPERA_MAXIMA_CRITICA_MS });
 
   // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): con un bloque de Flex, el inicio cambia entero al modo
   // bloque (la ruta, con la banda «todo lo demás está desconectado»). Comida, envíos y viajes no se
@@ -1989,7 +1992,8 @@ export function Inicio() {
             {formatearMonto(total, 'USD', idioma)}
           </Text>
           <Text style={{ color: '#666B73' }}>
-            {porPedido.size} {td.entregas.toLowerCase()}
+            {/* C-PLURAL: «1 entrega», no «1 entregas». */}
+            {contar(porPedido.size, 'entrega', idioma)}
             {periodo === 'hoy' && segundosConectado
               ? ` · ${Math.floor(segundosConectado / 3600)}h ${Math.floor((segundosConectado % 3600) / 60)}m`
               : ''}
@@ -3236,6 +3240,8 @@ export function Inicio() {
         ) : null}
         {ofertasViaje[0] && !ofertas[0] ? (
           <OfertaViajeModal
+            // Una oferta nueva arranca su cuenta atrás desde cero (C-OFERTA-TIEMPO-REAL).
+            key={ofertasViaje[0].operacionId}
             oferta={ofertasViaje[0]}
             idioma={idioma}
             alAceptar={() =>

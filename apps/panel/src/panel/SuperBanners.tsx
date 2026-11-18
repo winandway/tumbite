@@ -5,6 +5,7 @@ import {
   almacenNavegador,
   enIdioma,
   useBorrador,
+  TOPES_BANNER,
 } from '@tumbite/compartido';
 import { Icono } from '../sitio/Icono';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -735,38 +736,50 @@ export function SuperBanners({ idioma }: { idioma: Idioma }) {
               </fieldset>
 
               <div className="banners-dos">
-                <label className="campo">
-                  {t.tituloEs}
-                  <input
-                    maxLength={80}
-                    value={v.tituloEs}
-                    onChange={(e) => b.cambiar('tituloEs', e.target.value)}
-                  />
-                </label>
-                <label className="campo">
-                  {t.tituloEn}
-                  <input
-                    maxLength={80}
-                    value={v.tituloEn}
-                    onChange={(e) => b.cambiar('tituloEn', e.target.value)}
-                  />
-                </label>
-                <label className="campo">
-                  {t.textoEs}
-                  <input
-                    maxLength={140}
-                    value={v.textoEs}
-                    onChange={(e) => b.cambiar('textoEs', e.target.value)}
-                  />
-                </label>
-                <label className="campo">
-                  {t.textoEn}
-                  <input
-                    maxLength={140}
-                    value={v.textoEn}
-                    onChange={(e) => b.cambiar('textoEn', e.target.value)}
-                  />
-                </label>
+                <div className="campo-contado">
+                  <label className="campo">
+                    {t.tituloEs}
+                    <input
+                      maxLength={TOPES_BANNER.titulo}
+                      value={v.tituloEs}
+                      onChange={(e) => b.cambiar('tituloEs', e.target.value)}
+                    />
+                  </label>
+                  <Contador n={v.tituloEs.length} tope={TOPES_BANNER.titulo} id="tituloEs" />
+                </div>
+                <div className="campo-contado">
+                  <label className="campo">
+                    {t.tituloEn}
+                    <input
+                      maxLength={TOPES_BANNER.titulo}
+                      value={v.tituloEn}
+                      onChange={(e) => b.cambiar('tituloEn', e.target.value)}
+                    />
+                  </label>
+                  <Contador n={v.tituloEn.length} tope={TOPES_BANNER.titulo} id="tituloEn" />
+                </div>
+                <div className="campo-contado">
+                  <label className="campo">
+                    {t.textoEs}
+                    <input
+                      maxLength={TOPES_BANNER.texto}
+                      value={v.textoEs}
+                      onChange={(e) => b.cambiar('textoEs', e.target.value)}
+                    />
+                  </label>
+                  <Contador n={v.textoEs.length} tope={TOPES_BANNER.texto} id="textoEs" />
+                </div>
+                <div className="campo-contado">
+                  <label className="campo">
+                    {t.textoEn}
+                    <input
+                      maxLength={TOPES_BANNER.texto}
+                      value={v.textoEn}
+                      onChange={(e) => b.cambiar('textoEn', e.target.value)}
+                    />
+                  </label>
+                  <Contador n={v.textoEn.length} tope={TOPES_BANNER.texto} id="textoEn" />
+                </div>
               </div>
 
               <div className="banners-dos">
@@ -1056,5 +1069,22 @@ export function SuperBanners({ idioma }: { idioma: Idioma }) {
           );
         })}
     </div>
+  );
+}
+
+/**
+ * C-BANNER-SIN-CORTES: cuántos caracteres van y cuántos caben bien en el teléfono (el titular y el
+ * texto nunca se cortan en la app; aquí se avisa antes de que pasen de dos o tres renglones).
+ */
+function Contador({ n, tope, id }: { n: number; tope: number; id: string }) {
+  const cerca = n >= tope - 5;
+  return (
+    <small
+      data-testid={`contador-${id}`}
+      aria-live="polite"
+      style={{ color: cerca ? '#B45309' : '#666B73', textAlign: 'right' }}
+    >
+      {n}/{tope}
+    </small>
   );
 }

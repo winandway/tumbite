@@ -39,6 +39,7 @@ import {
   textoActivacion,
   OPCIONES_COCINA_OCUPADA,
   type OpcionMas,
+  ESPERA_MAXIMA_CRITICA_MS,
 } from '@tumbite/compartido';
 import {
   Boton,
@@ -53,6 +54,7 @@ import {
   urlFoto,
   useSesion,
   Text,
+  useSondeo,
 } from '@tumbite/movil';
 import { Estadisticas } from './Estadisticas';
 import { MiMenu } from './MiMenu';
@@ -408,19 +410,20 @@ export function Inicio() {
       setError('');
     } catch (x) {
       if (x instanceof ErrorApi && x.estado === 404) setRest(null);
-      else setError(x instanceof ErrorApi ? x.message : String(x));
+      else {
+        setError(x instanceof ErrorApi ? x.message : String(x));
+        return false;
+      }
     }
   }, [api]);
 
   useEffect(() => {
     void setAudioModeAsync({ playsInSilentMode: true });
-    const primero = setTimeout(() => void cargar(), 0);
-    const reloj = setInterval(() => void cargar(), 5000);
-    return () => {
-      clearTimeout(primero);
-      clearInterval(reloj);
-    };
-  }, [cargar]);
+  }, []);
+  // C-SESION-TERMINADA: los pedidos nuevos cada 5 s con la red bien (no se retrasan); si falla,
+  // cada vez más espaciado con tope de 20 s (un pedido nuevo no espera más); con la sesión vencida,
+  // la app sale sola y el sondeo se detiene.
+  useSondeo(cargar, 5000, true, true, { topeMs: ESPERA_MAXIMA_CRITICA_MS });
 
   const nuevos = pedidos.filter((p) => p.estado === 'pagado');
   // La alarma suena sin parar mientras haya un pedido sin aceptar.

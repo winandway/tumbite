@@ -130,3 +130,20 @@ export async function permisoUbicacion(): Promise<'concedido' | 'preguntar' | 'b
     return 'preguntar';
   }
 }
+
+/**
+ * C-PEDIR-OTRA-VEZ (18 nov 2026): la última ubicación que el teléfono ya conoce, AL INSTANTE (sin
+ * esperar una lectura nueva del GPS, que tarda unos segundos). Solo con el permiso ya dado; si no
+ * hay o es de hace más de 10 minutos, null. Después se afina con `miUbicacion`.
+ */
+export async function ultimaUbicacionConocida(): Promise<Punto | null> {
+  try {
+    const { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== 'granted') return null;
+    const p = await Location.getLastKnownPositionAsync({ maxAge: 10 * 60_000 });
+    return p ? { lat: p.coords.latitude, lng: p.coords.longitude } : null;
+  } catch (e) {
+    console.warn('ubicación: no hay una última conocida', e);
+    return null;
+  }
+}

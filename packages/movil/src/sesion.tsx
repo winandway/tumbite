@@ -18,6 +18,7 @@ import {
   type Usuario,
   borrarBorradoresDe,
   confirmarSesionConReintentos,
+  cierreUnico,
   crearApi,
   elegirServidor,
   esIdioma,
@@ -112,13 +113,18 @@ export function SesionProvider({
   // La API anota con qué llave le dijeron 401; si es la llave de ahora, se sale una sola vez (una
   // respuesta vieja, de antes de volver a entrar, no cierra la sesión nueva).
   const [llaveVencida, setLlaveVencida] = useState<string | null>(null);
-  const terminarSesion = useCallback((tokenUsado: string) => {
-    setLlaveVencida(tokenUsado);
-    // La llave guardada se borra solo si es la que venció.
-    void Promise.resolve(llavero.leer(LLAVE_TOKEN))
-      .then((g) => (g === tokenUsado ? llavero.borrar(LLAVE_TOKEN) : undefined))
-      .catch(() => undefined);
-  }, []);
+  // Varios 401 a la vez (estado, ofertas, panel): se cierra UNA vez por llave.
+  const terminarSesion = useMemo(
+    () =>
+      cierreUnico((tokenUsado: string) => {
+        setLlaveVencida(tokenUsado);
+        // La llave guardada se borra solo si es la que venció.
+        void Promise.resolve(llavero.leer(LLAVE_TOKEN))
+          .then((g) => (g === tokenUsado ? llavero.borrar(LLAVE_TOKEN) : undefined))
+          .catch(() => undefined);
+      }),
+    [],
+  );
   if (llaveVencida && llaveVencida === token) {
     console.warn('sesión: el servidor dijo que terminó; se pide entrar otra vez');
     setLlaveVencida(null);

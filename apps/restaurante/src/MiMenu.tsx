@@ -70,7 +70,7 @@ export function MiMenu({
   moneda = 'USD',
 }: {
   platos: Plato[];
-  recargar: () => Promise<void>;
+  recargar: () => Promise<unknown>;
   moneda?: string;
 }) {
   const { api, idioma } = useSesion();
@@ -306,7 +306,7 @@ function FormPlato({
 }: {
   plato: Plato | null;
   cerrar: () => void;
-  recargar: () => Promise<void>;
+  recargar: () => Promise<unknown>;
   moneda: string;
 }) {
   const { api, idioma, usuario } = useSesion();

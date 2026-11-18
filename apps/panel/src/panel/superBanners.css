@@ -377,3 +377,10 @@
   align-items: center;
   gap: 6px;
 }
+
+/* C-BANNER-SIN-CORTES: la casilla con su contador debajo, a la derecha. */
+.campo-contado {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}

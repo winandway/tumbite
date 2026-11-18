@@ -1,9 +1,11 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { enIdioma } from '@tumbite/compartido';
-import { useSesion, useSondeo } from '@tumbite/movil';
+import { enIdioma, ESPERA_MAXIMA_CRITICA_MS, llaveBorrador } from '@tumbite/compartido';
+import { almacenTelefono, useSesion, useSondeo } from '@tumbite/movil';
+import { rellenoDeEsteViaje } from '../viajes/mismaRuta';
+import { marcarRelleno } from '../viajes/relleno';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { PedirMoto } from '../viajes/PedirMoto';
@@ -20,7 +22,7 @@ const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
  * pocos segundos, como el seguimiento de Comida); si no, el formulario para pedir.
  */
 function PantallaMoto() {
-  const { api, idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = enIdioma(TEXTOS_MOTO, idioma);
   const tc = textosComida(idioma);
   // C-CARRO-PRUEBAS: la misma pantalla pide Moto o Carro.
@@ -76,15 +78,22 @@ function PantallaMoto() {
   // viaje nuevo, el efecto se rearmaba y volvía a preguntar AL INSTANTE: un bucle de peticiones sin
   // pausa mientras la pantalla estaba abierta.
   const primeraVez = useRef(true);
-  const terminado = Boolean(viaje && FINALES.has(viaje.estado));
+  // Si terminó se lee en el momento (no en las dependencias): cambiar de estado no rearma el
+  // sondeo ni pide una vez de más.
+  const terminado = useRef(false);
+  const terminadoAhora = Boolean(viaje && FINALES.has(viaje.estado));
+  useEffect(() => {
+    terminado.current = terminadoAhora;
+  }, [terminadoAhora]);
   const vuelta = useCallback(() => {
     if (primeraVez.current) {
       primeraVez.current = false;
       return cargar();
     }
-    return viajeId && !terminado ? cargar() : true;
-  }, [cargar, viajeId, terminado]);
-  useSondeo(vuelta, 4_000);
+    return viajeId && !terminado.current ? cargar() : true;
+  }, [cargar, viajeId]);
+  // El viaje no puede llegar tarde (el conductor llegó): con fallos, como mucho cada 20 s.
+  useSondeo(vuelta, 4_000, true, true, { topeMs: ESPERA_MAXIMA_CRITICA_MS });
 
   return (
     <SafeAreaView
@@ -120,7 +129,25 @@ function PantallaMoto() {
             viaje={viaje}
             paquete={paquete}
             alCambiar={() => void cargar()}
-            alTerminar={() => {
+            alTerminar={async () => {
+              // C-PEDIR-OTRA-VEZ: el formulario abre con ESTE viaje escrito (recogida, destino,
+              // paradas, categoría y pago), como «Cambiar algo» de Mis viajes.
+              const relleno = rellenoDeEsteViaje({
+                ...viaje,
+                servicio: viaje.servicio ?? servicio,
+              });
+              if (relleno) {
+                await Promise.resolve(
+                  almacenTelefono.guardar(
+                    llaveBorrador(viaje.servicio ?? servicio, usuario?.id),
+                    JSON.stringify(relleno),
+                  ),
+                ).catch((e: unknown) =>
+                  console.warn('pedir otra vez: no se pudo dejar escrito', e),
+                );
+                marcarRelleno(viaje.servicio ?? servicio);
+                setVueltaPedir((n) => n + 1);
+              }
               setViaje(null);
               setViajeId(null);
               void cargar();
