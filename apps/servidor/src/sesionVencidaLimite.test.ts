@@ -66,3 +66,23 @@ describe('el servidor dice sin dudas cuándo terminó la sesión', () => {
     expect((await m.llamar('GET', '/datos/cuentas/yo', undefined, u.token)).estado).toBe(200);
   });
 });
+
+describe('el freno 429 lleva la marca de sesión terminada (revisor, 18 nov)', () => {
+  it('así la app nueva sale enseguida aunque su IP esté frenada', async () => {
+    const m = mundo();
+    let r = await pedir(m, 'llave-vencida');
+    for (let i = 0; i < 25; i++) r = await pedir(m, 'llave-vencida');
+    expect(r.status).toBe(429);
+    expect(r.headers.get('x-sesion')).toBe('terminada');
+    expect(((await r.json()) as { codigo?: string }).codigo).toBe('sesion_terminada');
+  });
+  it('el 401 de equipo interno y del segundo factor usan el mismo mensaje marcado', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    for (const f of ['rutas/equipoInterno.ts', 'segundoFactor.ts']) {
+      const s = readFileSync(join(__dirname, f), 'utf8');
+      expect(s, f).toContain('SESION_TERMINADA');
+      expect(s, f).not.toContain("'Tu sesión terminó. Vuelve a entrar.'");
+    }
+  });
+});

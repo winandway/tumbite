@@ -39,9 +39,9 @@ describe('GPS en segundo plano del repartidor (C-GPS-FONDO)', () => {
     expect(tarea).toContain('/datos/repartidor/ubicacion');
     // Sin sesión o con la sesión vencida, el servicio se apaga solo (no queda encendido tras salir).
     expect(tarea).toContain('if (!token) return detenerUbicacionFondo();');
-    // C-SESION-TERMINADA: con 401 se apaga y queda apagada.
+    // C-SESION-TERMINADA: con la marca de sesión terminada se apaga y queda apagada.
     expect(tarea).toMatch(
-      /r\.status === 401\) \{\s*\/\/[^\n]*\n\s*fijarModoRastreo\('apagado'\);\s*await detenerUbicacionFondo\(\);/,
+      /esSesionTerminada\(r, datos\)\)[\s\S]{0,250}fijarModoRastreo\('apagado'\);\s*await detenerUbicacionFondo\(\);/,
     );
     const inicio = leer('apps/repartidor/src/Inicio.tsx');
     expect(inicio).toContain('iniciarUbicacionFondo(');

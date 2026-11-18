@@ -109,3 +109,17 @@ describe('un sondeo que falla espera cada vez más', () => {
     expect(llamadas).toBeLessThanOrEqual(4);
   });
 });
+
+describe('un 429 con la marca de sesión terminada también cierra (revisor, 18 nov)', () => {
+  it('429 con código o cabecera: sale; 429 sin marca (demasiados intentos): no', async () => {
+    const { esSesionTerminada } = await import('./api');
+    const h = (v: string | null) => ({ get: (n: string) => (n === 'x-sesion' ? v : null) });
+    expect(esSesionTerminada({ status: 429, headers: h('terminada') }, null)).toBe(true);
+    expect(
+      esSesionTerminada({ status: 429, headers: h(null) }, { codigo: 'sesion_terminada' }),
+    ).toBe(true);
+    expect(
+      esSesionTerminada({ status: 429, headers: h(null) }, { error: 'Demasiados intentos.' }),
+    ).toBe(false);
+  });
+});

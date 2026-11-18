@@ -55,7 +55,9 @@ describe('ningún sondeo de red pregunta a ritmo fijo', () => {
 describe('la ubicación de fondo no insiste', () => {
   const s = leer('apps/repartidor/src/ubicacionFondo.ts');
   it('con la sesión vencida se apaga y queda apagada', () => {
-    expect(s).toMatch(/status === 401\)[\s\S]{0,120}fijarModoRastreo\('apagado'\)/);
+    expect(s).toMatch(/esSesionTerminada\(r, datos\)\)[\s\S]{0,250}fijarModoRastreo\('apagado'\)/);
+    // Un 429 (freno) no pierde la lectura: queda en la cola para reintentar.
+    expect(s).toContain('r.status >= 500 || r.status === 429) fallo(cuerpo)');
   });
   it('si el servidor falla, el reintento espera cada vez más (no en cada lectura de 15 s)', () => {
     expect(s).toContain('esperaSondeo(');
@@ -93,7 +95,7 @@ describe('lo crítico no espera más de 20 s', () => {
 describe('la oferta de viaje se muestra con su tiempo real', () => {
   it('la cuenta atrás usa los segundos que da el servidor, no el reloj del teléfono', () => {
     const s = leer('apps/repartidor/src/viajes/OfertaViaje.tsx');
-    expect(s).toContain('oferta.segundosRestantes * 1000');
+    expect(s).toContain('venceOferta(oferta, Date.now())');
     expect(leer('apps/repartidor/src/Inicio.tsx')).toContain('key={ofertasViaje[0].operacionId}');
   });
 });

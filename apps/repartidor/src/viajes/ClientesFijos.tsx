@@ -12,7 +12,9 @@ import {
   Pildora,
   RADIO,
   SOMBRA,
-  Text, Modal } from '@tumbite/movil';
+  Text,
+  Modal,
+} from '@tumbite/movil';
 import {
   type ClientesFijos as Datos,
   type RutinaConductor,

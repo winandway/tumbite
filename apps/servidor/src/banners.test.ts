@@ -382,3 +382,17 @@ describe('C-BANNERS · generar con IA', () => {
     expect(salud.datos.piezas.banners).toBe('atrasado');
   });
 });
+
+describe('C-BANNER-SIN-CORTES · título demasiado largo', () => {
+  it('el servidor lo rechaza con un 400 en palabras claras (lo muestra el superadmin)', async () => {
+    const { m, admin, nuevo } = await preparar();
+    const r = await m.llamar(
+      'POST',
+      '/datos/admin/banners',
+      nuevo({ tituloEs: 'x'.repeat(60) }),
+      admin.token,
+    );
+    expect(r.estado).toBe(400);
+    expect(r.datos.error).toMatch(/45 caracteres/);
+  });
+});

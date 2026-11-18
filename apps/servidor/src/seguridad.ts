@@ -130,12 +130,15 @@ export function frenoLlaveVencida(maximo = 20, ventanaMs = 10 * 60_000): Middlew
     const r = registro.get(ip);
     if (conLlave && r && r.cuenta >= maximo && ahora - r.desde < ventanaMs) {
       c.header('retry-after', String(Math.ceil((r.desde + ventanaMs - ahora) / 1000)));
+      // La misma marca que el 401: la app nueva sale enseguida aunque esta IP esté frenada.
+      c.header('x-sesion', 'terminada');
       return c.json(
         {
           error: enIdiomaDePeticion(
             'Tu sesión terminó. Vuelve a entrar.',
             idiomaDeLaPeticion((n) => c.req.header(n)),
           ),
+          codigo: 'sesion_terminada',
         },
         429,
       );

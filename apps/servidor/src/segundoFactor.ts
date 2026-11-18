@@ -7,7 +7,7 @@ import { enviarCorreo } from './correo';
 import { sha256 } from './cripto';
 import { entornoDe } from './entorno';
 import { limiteIntentos } from './seguridad';
-import { type Ctx, type Variables, base, exigir } from './sesion';
+import { type Ctx, type Variables, base, exigir, SESION_TERMINADA } from './sesion';
 import { ErrorDatos, leerCuerpo } from './validar';
 
 /**
@@ -78,7 +78,7 @@ export const segundoFactor = new Hono<{ Bindings: Env; Variables: Variables }>()
 segundoFactor.post('/equipo-interno/segundo-factor/pedir', limiteIntentos(5, 60_000), async (c) => {
   const u = exigir(c, 'admin');
   const db = base(c);
-  if (!u.sesionId) throw new ErrorDatos('Tu sesión terminó. Vuelve a entrar.', undefined, 401);
+  if (!u.sesionId) throw new ErrorDatos(SESION_TERMINADA, undefined, 401);
   const codigo = String(100_000 + ((crypto.getRandomValues(new Uint32Array(1))[0] ?? 0) % 900_000));
   await db
     .prepare(
@@ -127,7 +127,7 @@ segundoFactor.post(
           .regex(/^\d{6}$/, { error: 'Escribe los 6 números del código.' }),
       }),
     );
-    if (!u.sesionId) throw new ErrorDatos('Tu sesión terminó. Vuelve a entrar.', undefined, 401);
+    if (!u.sesionId) throw new ErrorDatos(SESION_TERMINADA, undefined, 401);
     const f = await db
       .prepare(
         "SELECT codigo_hash, intentos, expira_en > datetime('now') AS vigente FROM segundo_factor_codigos WHERE sesion_id = ?",

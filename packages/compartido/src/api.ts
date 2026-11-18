@@ -1,3 +1,4 @@
+import { avisarRed } from './sondeo';
 import type { DatosEntrar, DatosRegistro, RespuestaSesion, Usuario } from './esquemas';
 
 /** Error del servidor contado en palabras claras, con el campo que falló si lo hay. */
@@ -59,12 +60,13 @@ export function esSesionTerminada(
   res: { status: number; headers?: { get(n: string): string | null } },
   datos: unknown,
 ): boolean {
-  if (res.status !== 401) return false;
+  // El 429 del freno de llaves vencidas también lleva la marca (pero un 429 cualquiera, no).
+  if (res.status !== 401 && res.status !== 429) return false;
   if (res.headers?.get('x-sesion') === 'terminada') return true;
   const d = (datos ?? {}) as { codigo?: unknown; error?: unknown };
+  if (d.codigo === 'sesion_terminada') return true;
   return (
-    d.codigo === 'sesion_terminada' ||
-    (typeof d.error === 'string' && MENSAJES_SESION_TERMINADA.has(d.error))
+    res.status === 401 && typeof d.error === 'string' && MENSAJES_SESION_TERMINADA.has(d.error)
   );
 }
 
@@ -134,6 +136,7 @@ export function crearApi(op: OpcionesApi) {
           : await intento(op.tiempoMs ?? TIEMPO_PEDIDO_MS));
     } catch {
       if (extra?.senal?.aborted) throw new ErrorApi('', ESTADO_CANCELADA);
+      avisarRed(false);
       throw new ErrorApi(
         op.idioma?.() === 'en'
           ? 'No connection. Your info is safe here; try again in a moment.'
@@ -143,6 +146,8 @@ export function crearApi(op: OpcionesApi) {
     }
     const datos: unknown = await res.json().catch(() => null);
     if (reloj) clearTimeout(reloj);
+    // Hubo respuesta: si venía de un rato sin red, los sondeos que esperaban preguntan ya.
+    avisarRed(true);
     if (!res.ok) {
       if (token && esSesionTerminada(res, datos)) op.alSesionTerminada?.(token);
       const d = (datos ?? {}) as { error?: string; campo?: string };

@@ -64,22 +64,6 @@ describe('el motor del sondeo', () => {
     expect(s.fallos()).toBe(0);
     s.detener();
   });
-  it('un sondeo que vuelve a salir bien despierta a los otros que esperaban', async () => {
-    let red = false;
-    const a = vi.fn(async () => red);
-    const b = vi.fn(async () => red);
-    const sa = crearSondeo({ fn: a, cadaMs: 5_000, topeMs: 20_000 });
-    const sb = crearSondeo({ fn: b, cadaMs: 60_000 });
-    await vi.advanceTimersByTimeAsync(3 * 60_000);
-    red = true;
-    const antesB = cuantas(b);
-    // A pregunta antes de 20 s, sale bien y despierta a B (que si no esperaría hasta el minuto 4).
-    await vi.advanceTimersByTimeAsync(20_000);
-    expect(cuantas(b)).toBeGreaterThan(antesB);
-    expect(sb.fallos()).toBe(0);
-    sa.detener();
-    sb.detener();
-  });
   it('detenido, no pregunta más', async () => {
     const fn = vi.fn(async () => true);
     const s = crearSondeo({ fn, cadaMs: 5_000 });
@@ -98,5 +82,40 @@ describe('varios 401 a la vez cierran la sesión una sola vez', () => {
     expect(cerrar).toHaveBeenCalledTimes(1);
     al401('llave-b');
     expect(cerrar).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('al volver la red solo despiertan los que fallaron por la red (revisor, 18 nov)', () => {
+  it('uno que falla por otra causa (500) sigue con su espera; uno sin red pregunta ya', async () => {
+    const { avisarRed } = await import('./sondeo');
+    const otraCausa = vi.fn(async () => false);
+    const sinRed = vi.fn(async () => false);
+    avisarRed(true);
+    const a = crearSondeo({ fn: otraCausa, cadaMs: 60_000 });
+    await vi.advanceTimersByTimeAsync(0);
+    avisarRed(false);
+    const b = crearSondeo({ fn: sinRed, cadaMs: 60_000 });
+    await vi.advanceTimersByTimeAsync(0);
+    const antesA = cuantas(otraCausa);
+    const antesB = cuantas(sinRed);
+    avisarRed(true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(cuantas(sinRed)).toBe(antesB + 1);
+    expect(cuantas(otraCausa)).toBe(antesA);
+    a.detener();
+    b.detener();
+  });
+  it('avisa en la consola cuando una vuelta falla', async () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const s = crearSondeo({
+      fn: async () => {
+        throw new Error('caída');
+      },
+      cadaMs: 5_000,
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(aviso).toHaveBeenCalled();
+    aviso.mockRestore();
+    s.detener();
   });
 });

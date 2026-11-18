@@ -39,7 +39,15 @@ import { NOMBRE_PLANO } from '../buscadorSql';
 import { enviarCorreo } from '../correo';
 import { hashClave, nuevoId, nuevoToken, sha256 } from '../cripto';
 import { entornoDe } from '../entorno';
-import { COOKIE_SESION, DIAS_SESION, type Ctx, type Variables, base, exigir } from '../sesion';
+import {
+  COOKIE_SESION,
+  DIAS_SESION,
+  type Ctx,
+  type Variables,
+  base,
+  exigir,
+  SESION_TERMINADA,
+} from '../sesion';
 import { segundoFactorActivo, segundoFactorVigente } from '../segundoFactor';
 import { pasaTurnstile } from '../turnstile';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -63,7 +71,7 @@ const texto = (v: unknown) => (v == null ? null : String(v));
 
 function mio(c: Ctx): AccesoEnSesion {
   const a = accesoDe(c);
-  if (!a) throw new ErrorDatos('Tu sesión terminó. Vuelve a entrar.', undefined, 401);
+  if (!a) throw new ErrorDatos(SESION_TERMINADA, undefined, 401);
   return a;
 }
 

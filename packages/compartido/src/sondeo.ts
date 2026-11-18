@@ -34,18 +34,35 @@ export type Sondeo = {
   detener: () => void;
   /** Fallos seguidos (para pruebas y diagnóstico). */
   fallos: () => number;
+  /** Si la última vuelta falló mientras no había red. */
+  fallaPorRed: () => boolean;
 };
 
 const activos = new Set<Sondeo>();
+// Lo marca la API (`avisarRed`): sin respuesta del servidor = sin red.
+let sinRed = false;
 
 /**
- * Todos los sondeos vivos vuelven a preguntar YA con los fallos en cero: al volver la app al
- * primer plano, al volver la red (un sondeo que falló y vuelve a salir bien avisa a los demás) o al
- * tocar «Reintentar». Así, tras un rato sin señal, la oferta o el conductor se ven enseguida y no
- * después de la espera larga.
+ * Los sondeos vivos que fallaban vuelven a preguntar YA con los fallos en cero. `'todo'`: al volver
+ * la app al primer plano o al tocar «Reintentar». `'red'`: al volver la red, solo los que fallaron
+ * por falta de red (uno que falla por otra causa, un 500, sigue con su espera).
  */
-export function reanudarSondeos() {
-  for (const s of activos) if (s.fallos() > 0) s.ya();
+export function reanudarSondeos(motivo: 'todo' | 'red' = 'todo') {
+  for (const s of activos) if (s.fallos() > 0 && (motivo === 'todo' || s.fallaPorRed())) s.ya();
+}
+
+/**
+ * La API avisa si hubo respuesta del servidor (`true`) o no (`false`, sin red). La primera respuesta
+ * después de un rato sin red despierta a los sondeos que fallaron por eso.
+ */
+export function avisarRed(hubo: boolean) {
+  if (!hubo) {
+    sinRed = true;
+    return;
+  }
+  if (!sinRed) return;
+  sinRed = false;
+  reanudarSondeos('red');
 }
 
 /** El motor del sondeo, sin React (se prueba con relojes de mentira). Nunca se superponen vueltas. */
@@ -53,6 +70,7 @@ export function crearSondeo(op: OpcionesSondeo): Sondeo {
   let vivo = true;
   let fallos = 0;
   let corriendo = false;
+  let porRed = false;
   let repetir = false;
   let reloj: ReturnType<typeof setTimeout> | null = null;
   const programar = (ms: number) => {
@@ -70,19 +88,19 @@ export function crearSondeo(op: OpcionesSondeo): Sondeo {
     let ok: boolean;
     try {
       ok = (await op.fn()) !== false;
-    } catch {
+    } catch (e) {
       ok = false;
+      console.warn('sondeo: falló', e);
     }
     corriendo = false;
     if (!vivo) return;
-    const habiaFallos = fallos > 0;
     fallos = ok ? 0 : fallos + 1;
+    porRed = !ok && sinRed;
+    if (!ok) console.warn(`sondeo: ${fallos} fallos seguidos${porRed ? ' (sin red)' : ''}`);
     if (repetir) {
       repetir = false;
       programar(0);
     } else programar(esperaSondeo(op.cadaMs, fallos, op.topeMs));
-    // La red volvió: los demás sondeos que esperaban también preguntan ya.
-    if (ok && habiaFallos) reanudarSondeos();
   };
   const s: Sondeo = {
     ya: () => {
@@ -96,6 +114,7 @@ export function crearSondeo(op: OpcionesSondeo): Sondeo {
       activos.delete(s);
     },
     fallos: () => fallos,
+    fallaPorRed: () => porRed,
   };
   activos.add(s);
   programar(op.primeraYa === false ? op.cadaMs : 0);

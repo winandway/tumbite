@@ -7,6 +7,7 @@ import {
   colaUbicacion,
   cuerpoUbicacion,
   esperaSondeo,
+  esSesionTerminada,
   marcarRecibida,
   modoGuardadoAlArrancar,
   paraEnviarUbicacion,
@@ -91,15 +92,19 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
       // C-LATIDO-UBICACION: con la hora de la lectura; una lectura de la cola ya vieja no cuenta.
       body: JSON.stringify(paraEnviarUbicacion(cuerpo)),
     });
-    if (r.status === 401) {
-      // Sesión vencida: se apaga y queda apagada (si el sistema relanza la tarea, no se rearma).
+    const datos: unknown = r.ok ? null : await r.json().catch(() => null);
+    if (esSesionTerminada(r, datos)) {
+      // Sesión vencida (401 o 429 con la marca del servidor): se apaga y queda apagada (si el
+      // sistema relanza la tarea, no se rearma).
       fijarModoRastreo('apagado');
       await detenerUbicacionFondo();
     } else if (r.ok) {
       ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };
       fallosEnvio = 0;
       proximoIntento = 0;
-    } else if (r.status >= 500) fallo(cuerpo);
+    } else if (r.status >= 500 || r.status === 429) fallo(cuerpo);
+    else
+      console.warn(`ubicación de fondo: el servidor respondió ${r.status}; la lectura se descarta`);
   } catch {
     // Sin señal: se guarda la última lectura (cola corta) y se reintenta más tarde.
     fallo(cuerpo);

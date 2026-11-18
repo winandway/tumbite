@@ -154,6 +154,20 @@ describe('C-BANNERS en el panel', () => {
     expect(screen.getByTestId('contador-tituloEs')).toHaveTextContent(`19/${TOPES_BANNER.titulo}`);
   });
 
+  it('un banner viejo con titular largo: al guardar, el error del servidor sale en palabras', async () => {
+    const aviso = 'El titular puede tener hasta 45 caracteres para que quepa en el teléfono.';
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if ((init?.method ?? 'GET') === 'POST' && url === '/datos/admin/banners')
+        return Response.json({ error: aviso, campo: 'tituloEs' }, { status: 400 });
+      return Response.json(RESPUESTA);
+    });
+    render(<SuperBanners idioma="es" />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo banner' }));
+    await userEvent.type(screen.getByLabelText('Titular en español'), 'Tu súper');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar borrador' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(aviso);
+  });
+
   it('lo escrito no se pierde: al volver, el formulario sale con lo que había', async () => {
     servidor();
     const { unmount } = render(<SuperBanners idioma="es" />);

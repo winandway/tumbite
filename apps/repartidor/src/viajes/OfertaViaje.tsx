@@ -6,6 +6,7 @@ import { Boton, C, Text, Modal } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 import { textoOfertaConfianza } from './agendaFijos';
 import { sonarOferta } from '../sonidoOferta';
+import { venceOferta } from './ofertaTiempo';
 
 /** Lo que manda GET /datos/conductor/operaciones/ofertas (C-OFERTA-COMPLETA). */
 export type OfertaViaje = {
@@ -76,11 +77,7 @@ export function OfertaViajeModal({
   }, [oferta.operacionId]);
   // C-OFERTA-TIEMPO-REAL: el vencimiento se cuenta desde que llegó la oferta con los segundos que
   // dio el servidor; el reloj del teléfono (a veces corrido) no la da por vencida antes de tiempo.
-  const [vence] = useState(() =>
-    oferta.segundosRestantes != null
-      ? Date.now() + oferta.segundosRestantes * 1000
-      : new Date(`${oferta.expiraEn.replace(' ', 'T')}Z`).getTime(),
-  );
+  const [vence] = useState(() => venceOferta(oferta, Date.now()));
   const quedan = Math.max(0, Math.ceil((vence - ahora) / 1000));
   // C-CONDUCTOR-CONFIANZA: la oferta exclusiva al conductor de confianza dura un minuto.
   const total = oferta.deConfianza ? 60 : 30;

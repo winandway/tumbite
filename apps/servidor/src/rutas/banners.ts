@@ -97,10 +97,30 @@ const esquemaBanner = z.object({
   lugar: z.enum(LUGARES),
   // Vacía, o una imagen guardada por el administrador de banners en el almacén del sitio.
   imagen: z.string().max(300).refine(imagenDeBanners),
-  tituloEs: z.string().trim().max(TOPES_BANNER.titulo),
-  tituloEn: z.string().trim().max(TOPES_BANNER.titulo),
-  textoEs: z.string().trim().max(TOPES_BANNER.texto),
-  textoEn: z.string().trim().max(TOPES_BANNER.texto),
+  tituloEs: z
+    .string()
+    .trim()
+    .max(TOPES_BANNER.titulo, {
+      error: `El titular puede tener hasta ${TOPES_BANNER.titulo} caracteres para que quepa en el teléfono.`,
+    }),
+  tituloEn: z
+    .string()
+    .trim()
+    .max(TOPES_BANNER.titulo, {
+      error: `El titular puede tener hasta ${TOPES_BANNER.titulo} caracteres para que quepa en el teléfono.`,
+    }),
+  textoEs: z
+    .string()
+    .trim()
+    .max(TOPES_BANNER.texto, {
+      error: `El texto puede tener hasta ${TOPES_BANNER.texto} caracteres para que quepa en el teléfono.`,
+    }),
+  textoEn: z
+    .string()
+    .trim()
+    .max(TOPES_BANNER.texto, {
+      error: `El texto puede tener hasta ${TOPES_BANNER.texto} caracteres para que quepa en el teléfono.`,
+    }),
   destinoTipo: z.enum(DESTINOS),
   destinoValor: z.string().trim().max(80),
   codigo: z
