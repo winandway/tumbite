@@ -15,6 +15,7 @@
 // Uso: node scripts/recorrido/capturas-envios.mjs
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { deslizar } from './deslizar.mjs';
 import { chromium, devices } from '@playwright/test';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
@@ -393,10 +394,7 @@ async function correr(M, idiomas) {
     await campo.evaluate((x) => x.scrollIntoView({ block: 'center' }));
     await espera(600);
     await foto(d, 'driver-pin', idioma);
-    await d
-      .getByText(en ? /Deliver the package/i : 'Entregar el paquete')
-      .first()
-      .click();
+    await deslizar(d, 'viaje-terminar');
     for (let i = 0; i < 30; i++) {
       const f = await sql(
         `SELECT entregado_en IS NOT NULL AS ok FROM envios_persona WHERE operacion_id = '${op}'`,

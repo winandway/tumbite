@@ -19,6 +19,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { deslizar } from './deslizar.mjs';
 import { chromium, devices } from '@playwright/test';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
@@ -537,15 +538,12 @@ async function correr(M, idiomas) {
     if (M.pagoMovil) {
       await d.getByTestId('viaje-pago-movil').waitFor({ timeout: 60_000 });
       await d.getByTestId('viaje-pago-movil').scrollIntoViewIfNeeded();
-    } else
-      await d
-        .getByText(en ? 'End ride' : 'Terminar viaje', { exact: true })
-        .waitFor({ timeout: 60_000 });
+    } else await d.getByTestId('viaje-terminar').waitFor({ timeout: 60_000 });
     await espera(800);
     await foto(d, 'driver-viaje', idioma);
     if (M.pagoMovil)
       await d.getByText(en ? 'Yes, it arrived' : 'Sí, me llegó', { exact: true }).click();
-    await d.getByText(en ? 'End ride' : 'Terminar viaje', { exact: true }).click();
+    await deslizar(d, 'viaje-terminar');
     await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
     await espera(800);
     await foto(d, 'driver-cobro', idioma);
@@ -605,9 +603,7 @@ async function correr(M, idiomas) {
       pin: (await pasajero('GET', `/datos/viajes/${v2.id}`)).viaje.pin,
     });
     await d.reload();
-    await d
-      .getByText(en ? 'End ride' : 'Terminar viaje', { exact: true })
-      .click({ timeout: 60_000 });
+    await deslizar(d, 'viaje-terminar');
     await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
     await espera(800);
     await foto(d, 'driver-cobro-efectivo', idioma);

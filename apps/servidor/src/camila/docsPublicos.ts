@@ -1537,7 +1537,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Cuando llegue la oferta, revisa la ganancia y la ruta, y toca «Aceptar viaje».",
    "Ve a la recogida y toca «Llegué».",
    "Pídele al pasajero su código, escríbelo y toca «Iniciar viaje».",
-   "Si paga por pago móvil, confirma si te llegó. Al llegar al destino, toca «Terminar viaje» y, si es en efectivo, cobra lo que te dice la app."
+   "Si paga por pago móvil, confirma si te llegó. Al llegar al destino, desliza «Desliza para terminar el viaje» y, si es en efectivo, cobra lo que te dice la app."
   ],
   "cuerpo": "Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino. Al llegar a la recogida tocas «Llegué». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero. Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar. En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias."
  },
@@ -1574,7 +1574,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Revisa la oferta: la ganancia, las paradas y si hay tarifa dinámica. Toca «Aceptar viaje».",
    "Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, toca «Llegué a la parada».",
    "Cuando tu pasajero vuelva, toca «Seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.",
-   "Con todas las paradas hechas, lleva a tu pasajero al destino y toca «Terminar viaje»."
+   "Con todas las paradas hechas, lleva a tu pasajero al destino y desliza «Desliza para terminar el viaje»."
   ],
   "cuerpo": "Un pasajero puede agregar paradas al pedir o con el viaje en marcha. La oferta te dice cuántas son y dónde quedan, y lo que ganas ya cuenta todo el recorrido. Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar tocas «Llegué a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, tocas «Seguir el viaje». Si tu pasajero ya no quiere parar, toca «Saltar parada» dos veces. El precio se recalcula y nunca sube por saltarla. Mientras quede una parada por hacer, la app no te deja terminar el viaje. Si el pasajero agrega o quita una parada en el camino, te llega un aviso y la pantalla te muestra la ruta nueva. La comisión se ajusta sola al precio nuevo. Cuando hay tarifa dinámica en tu ciudad, la oferta lo dice con su multiplicador. Ya está incluida en lo que ganas."
  },
@@ -1685,10 +1685,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Acepta la oferta y ve a la recogida.",
    "Toca «Llegué», recibe el paquete y toma su foto.",
    "Toca «Iniciar viaje» y llévalo a la dirección de entrega.",
-   "Pide el PIN de entrega, escríbelo y toca «Entregar el paquete».",
+   "Pide el PIN de entrega, escríbelo y desliza «Desliza para entregar el paquete».",
    "Si quien recibe no tiene el PIN, llama a soporte desde la app."
   ],
-  "cuerpo": "La oferta te muestra lo que ganas, cómo cobras, la distancia hasta la recogida y del recorrido, el tiempo estimado, dónde recoges y a dónde llevas el paquete. Si no respondes a tiempo, pasa al siguiente conductor. Al llegar a la recogida, toca «Llegué», recibe el paquete y toma su foto: sin la foto no puedes empezar. Luego toca «Iniciar viaje» y llévalo a la dirección de entrega. Al llegar, pídele el PIN de entrega a quien recibe, escríbelo y toca «Entregar el paquete». Si el envío es en efectivo, la app te dice cuánto cobrar."
+  "cuerpo": "La oferta te muestra lo que ganas, cómo cobras, la distancia hasta la recogida y del recorrido, el tiempo estimado, dónde recoges y a dónde llevas el paquete. Si no respondes a tiempo, pasa al siguiente conductor. Al llegar a la recogida, toca «Llegué», recibe el paquete y toma su foto: sin la foto no puedes empezar. Luego toca «Iniciar viaje» y llévalo a la dirección de entrega. Al llegar, pídele el PIN de entrega a quien recibe, escríbelo y desliza «Desliza para entregar el paquete». Si el envío es en efectivo, la app te dice cuánto cobrar."
  },
  {
   "idioma": "es",
@@ -1703,7 +1703,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Registra tu moto y marca si tiene cajón.",
    "Acepta el envío y toma la foto del paquete al recogerlo.",
    "Al llegar, escribe el PIN de quien recibe y, si quieres, deja una foto de la entrega.",
-   "Toca «Entregar el paquete»."
+   "Desliza «Desliza para entregar el paquete»."
   ],
   "cuerpo": "Cada envío tiene un tamaño. Con moto recibes sobres y paquetes pequeños; si tu moto tiene cajón o baúl, también medianos. Con carro recibes todos. Para recibir medianos en moto, marca «Mi moto tiene cajón o baúl» al registrar tu moto. Al entregar, pide el PIN a quien recibe. Si quieres dejar constancia, toca «Agregar foto de la entrega» y elige «Tomar foto» o «Subir desde archivos» antes de terminar."
  },
@@ -3812,7 +3812,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Before you accept, check the top of the offer: it says whether you collect cash at the end.",
    "During the ride, the amount to collect stays on screen under the destination.",
-   "When you tap “End ride,” collect the amount shown under “Collect in cash.”",
+   "When you slide “Slide to end the ride,” collect the amount shown under “Collect in cash.”",
    "Rate your rider and tap “Done” to get your next offer."
   ],
   "cuerpo": "Every offer tells you how the rider pays before you accept. On a cash ride you collect the full upfront price from the rider when you arrive: the app shows “Collect in cash” with the exact amount during the ride and again when it ends. On a card ride there is nothing to collect: the rider pays in the app and the fare is added to your earnings. In some countries drivers work with a prepaid fee balance that they top up with a code at a sales point. That balance isn’t used in the United States, so there is nothing to top up before you drive here."
@@ -3866,7 +3866,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "When an offer arrives, check the earnings and route, and tap “Accept ride.”",
    "Go to the pickup and tap “I’ve arrived.”",
    "Ask the rider for their code, enter it, and tap “Start ride.”",
-   "At the destination, tap “End ride” and, if it’s cash, collect what the app tells you."
+   "At the destination, slide “Slide to end the ride” and, if it’s cash, collect what the app tells you."
   ],
   "cuerpo": "Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination. When you reach the pickup, tap “I’ve arrived.” The ride starts only when you enter the four-digit code the rider gives you. During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived. In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings."
  },
@@ -3903,7 +3903,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Check the offer: the earnings, the stops, and whether there’s dynamic pricing. Tap “Accept ride.”",
    "Start the ride as usual. The app takes you to the first stop: when you get there, tap “I’m at the stop.”",
    "When your rider is back, tap “Continue the ride.” If they no longer want to stop, tap “Skip stop” twice.",
-   "With every stop done, take your rider to the destination and tap “End ride.”"
+   "With every stop done, take your rider to the destination and slide “Slide to end the ride.”"
   ],
   "cuerpo": "A rider can add stops when requesting or with the ride underway. The offer tells you how many there are and where, and what you earn already counts the whole trip. With the ride in progress, the app takes you to the next stop. When you get there, tap “I’m at the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, tap “Continue the ride.” If your rider no longer wants to stop, tap “Skip stop” twice. The price is recalculated and never goes up for skipping it. While there’s a stop left to make, the app won’t let you end the ride. If the rider adds or removes a stop along the way, you get a notification and the screen shows the new route. The commission adjusts on its own to the new price. When there’s dynamic pricing in your city, the offer says so with its multiplier. It’s already included in what you earn."
  },
@@ -4014,10 +4014,10 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Accept the offer and go to the pickup.",
    "Tap “I’ve arrived”, get the package and take its photo.",
    "Tap “Start ride” and take it to the drop-off address.",
-   "Ask for the delivery PIN, enter it and tap “Deliver the package”.",
+   "Ask for the delivery PIN, enter it and slide “Slide to deliver the package”.",
    "If the recipient doesn’t have the PIN, call support from the app."
   ],
-  "cuerpo": "The offer shows what you earn, how you get paid, the distance to the pickup and of the trip, the estimated time, where you pick up and where you take the package. If you don’t respond in time, it goes to the next driver. At pickup, tap “I’ve arrived”, get the package and take its photo: you can’t start without it. Then tap “Start ride” and take it to the drop-off address. When you get there, ask the recipient for the delivery PIN, enter it and tap “Deliver the package”. If the delivery is paid in cash, the app tells you how much to collect."
+  "cuerpo": "The offer shows what you earn, how you get paid, the distance to the pickup and of the trip, the estimated time, where you pick up and where you take the package. If you don’t respond in time, it goes to the next driver. At pickup, tap “I’ve arrived”, get the package and take its photo: you can’t start without it. Then tap “Start ride” and take it to the drop-off address. When you get there, ask the recipient for the delivery PIN, enter it and slide “Slide to deliver the package”. If the delivery is paid in cash, the app tells you how much to collect."
  },
  {
   "idioma": "en",
@@ -4032,7 +4032,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Register your motorcycle and check whether it has a delivery box.",
    "Accept the delivery and take the package photo at pickup.",
    "When you arrive, enter the recipient’s PIN and, if you want, leave a delivery photo.",
-   "Tap “Deliver the package.”"
+   "Slide “Slide to deliver the package.”"
   ],
   "cuerpo": "Every delivery has a size. On a motorcycle you get envelopes and small packages; if your motorcycle has a delivery box, medium ones too. By car you get all sizes. To get medium packages on a motorcycle, check “My motorcycle has a delivery box” when you register it. At drop-off, ask the recipient for the PIN. To keep a record, tap “Add a delivery photo” and choose “Take photo” or “Upload from files” before finishing."
  },

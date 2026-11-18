@@ -357,7 +357,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Cuando llegue la oferta, revisa la ganancia y la ruta, y toca «Aceptar viaje».',
         'Ve a la recogida y toca «Llegué».',
         'Pídele al pasajero su código, escríbelo y toca «Iniciar viaje».',
-        'Si paga por pago móvil, confirma si te llegó. Al llegar al destino, toca «Terminar viaje» y, si es en efectivo, cobra lo que te dice la app.',
+        'Si paga por pago móvil, confirma si te llegó. Al llegar al destino, desliza «Desliza para terminar el viaje» y, si es en efectivo, cobra lo que te dice la app.',
       ],
     },
     {
@@ -447,7 +447,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Revisa la oferta: la ganancia, las paradas y si hay tarifa dinámica. Toca «Aceptar viaje».',
         'Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, toca «Llegué a la parada».',
         'Cuando tu pasajero vuelva, toca «Seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.',
-        'Con todas las paradas hechas, lleva a tu pasajero al destino y toca «Terminar viaje».',
+        'Con todas las paradas hechas, lleva a tu pasajero al destino y desliza «Desliza para terminar el viaje».',
       ],
     },
   ],
@@ -775,7 +775,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-viaje',
           'en',
-          'The ride in progress with the destination, the amount to collect in cash, and the “End ride” button.',
+          'The ride in progress with the destination, the amount to collect in cash, and the “Slide to end the ride” slider.',
           'During the ride you see the destination and what to collect.',
         ),
         foto(
@@ -795,7 +795,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'When an offer arrives, check the earnings and route, and tap “Accept ride.”',
         'Go to the pickup and tap “I’ve arrived.”',
         'Ask the rider for their code, enter it, and tap “Start ride.”',
-        'At the destination, tap “End ride” and, if it’s cash, collect what the app tells you.',
+        'At the destination, slide “Slide to end the ride” and, if it’s cash, collect what the app tells you.',
       ],
     },
     {
@@ -885,7 +885,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'Check the offer: the earnings, the stops, and whether there’s dynamic pricing. Tap “Accept ride.”',
         'Start the ride as usual. The app takes you to the first stop: when you get there, tap “I’m at the stop.”',
         'When your rider is back, tap “Continue the ride.” If they no longer want to stop, tap “Skip stop” twice.',
-        'With every stop done, take your rider to the destination and tap “End ride.”',
+        'With every stop done, take your rider to the destination and slide “Slide to end the ride.”',
       ],
     },
   ],

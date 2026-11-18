@@ -104,3 +104,17 @@ describe('lo que pidió el revisor sobre el deslizador (18 nov 2026)', () => {
     expect(leer('packages/movil/src/Deslizador.tsx')).toMatch(/height: alto,/);
   });
 });
+
+// C-CERRAR-DESLIZANDO (robot de Android, 18 nov 2026): «Entregar el paquete» cerraba un envío con
+// un toque. Entregar un envío y terminar un viaje se deslizan, como el cierre de la comida.
+describe('ningún toque cierra una entrega ni un viaje', () => {
+  const v = leer('apps/repartidor/src/viajes/ViajeActivo.tsx');
+  it('terminar y entregar van en el deslizador', () => {
+    expect(v).toMatch(/<Deslizador[\s\S]{0,200}testID="viaje-terminar"/);
+    expect(v).not.toMatch(/<Boton\s+texto=\{esEnvio \? t\.entregar : t\.terminar\}/);
+    expect(v).not.toMatch(/alTocar=\{[^}]*paso\('terminar'/);
+  });
+  it('la comida sigue cerrándose con la foto y «Desliza para completar»', () => {
+    expect(leer('apps/repartidor/src/Inicio.tsx')).toMatch(/<DeslizarParaCompletar/);
+  });
+});

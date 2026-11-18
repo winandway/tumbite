@@ -319,7 +319,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         pasos: [
           'Before you accept, check the top of the offer: it says whether you collect cash at the end.',
           'During the ride, the amount to collect stays on screen under the destination.',
-          'When you tap “End ride,” collect the amount shown under “Collect in cash.”',
+          'When you slide “Slide to end the ride,” collect the amount shown under “Collect in cash.”',
           'Rate your rider and tap “Done” to get your next offer.',
         ],
         nota: 'Collect only the amount the app shows. A tip is the rider’s choice, and it’s all yours.',
@@ -422,7 +422,7 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
         'driver-viaje-pago-movil',
         'es',
         'El viaje en curso con el destino y la pregunta del pago móvil.',
-        'Durante el viaje confirmas el pago y luego tocas «Terminar viaje».',
+        'Durante el viaje confirmas el pago y luego deslizas «Desliza para terminar el viaje».',
       ),
       foto(
         'driver-cobro-efectivo',
@@ -501,7 +501,7 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'driver-emergencia',
         'es',
-        'El viaje en curso del conductor con el botón rojo «Emergencia» debajo de «Terminar viaje».',
+        'El viaje en curso del conductor con el botón rojo «Emergencia» debajo de «Desliza para terminar el viaje».',
         'En cada viaje tienes el botón «Emergencia».',
       ),
       foto(
@@ -563,8 +563,8 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'driver-viaje',
         'en',
-        'The ride in progress with the rider’s name, the destination, the amount to collect in cash, and the “End ride” button.',
-        'During the ride you see where you’re going and what to collect, then tap “End ride.”',
+        'The ride in progress with the rider’s name, the destination, the amount to collect in cash, and the “Slide to end the ride” slider.',
+        'During the ride you see where you’re going and what to collect, then slide “Slide to end the ride.”',
       ),
       foto(
         'driver-cobro-efectivo',
@@ -643,7 +643,7 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'driver-emergencia',
         'en',
-        'The driver’s ride in progress with the red “Emergency” button below “End ride.”',
+        'The driver’s ride in progress with the red “Emergency” button below “Slide to end the ride.”',
         'Every ride has the “Emergency” button.',
       ),
       foto(
