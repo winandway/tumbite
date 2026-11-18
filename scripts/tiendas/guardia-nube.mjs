@@ -56,3 +56,44 @@ export function autorizarCompilacion({ donde, app, plataforma, perfil, argumento
     console.log('AVISO: esta compilación va a la nube de Expo y se cobra. Avisa a Gerencia.');
   return cuenta;
 }
+
+/**
+ * Lo que la nube de Expo le pone a cada compilación y esta Mac no tiene sola: el archivo de avisos
+ * de Android (google-services.json) y la llave del mapa. Sin ellos la app compila, pero sale SIN
+ * mapa (queda el texto de relleno en el manifiesto) y SIN avisos al celular: pasó el 18 nov con las
+ * primeras compilaciones locales. Se leen de ~/.config/tumbite y, si falta alguno, NO se compila.
+ */
+export function entornoLocal(base = process.env) {
+  const dir = base.DIVOOX_CONFIG_DIR ?? join(homedir(), '.config', 'tumbite');
+  const servicios = join(dir, 'google-services.json');
+  const llave = join(dir, 'google-maps-android-key');
+  for (const f of [servicios, llave, join(dir, 'expo-token')])
+    if (!existsSync(f))
+      throw new Error(
+        `Falta ${f}: sin ese archivo la app saldría sin mapa o sin avisos. No se compila.`,
+      );
+  const mapa = readFileSync(llave, 'utf8').trim();
+  if (!/^AIza[0-9A-Za-z_-]{20,}$/.test(mapa))
+    throw new Error(`La llave del mapa guardada en ${llave} no parece una llave de Google.`);
+  return {
+    ...base,
+    EXPO_TOKEN: readFileSync(join(dir, 'expo-token'), 'utf8').trim(),
+    GOOGLE_SERVICES_JSON: servicios,
+    GOOGLE_MAPS_ANDROID_KEY: mapa,
+    JAVA_HOME: base.JAVA_HOME ?? '/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home',
+    ANDROID_HOME: base.ANDROID_HOME ?? join(homedir(), 'Library', 'Android', 'sdk'),
+    EXPO_NO_CAPABILITY_SYNC: '1',
+  };
+}
+
+/** El texto de relleno que queda en el manifiesto cuando la app se compiló sin la llave del mapa. */
+export const RELLENO_MAPA = 'PON_AQUI_LA_LLAVE_DE_GOOGLE_MAPS';
+
+/** ¿El archivo compilado de Android lleva el relleno en vez de la llave? (APK o AAB, ya en memoria). */
+export function llevaRelleno(bytesDelManifiesto) {
+  const b = Buffer.from(bytesDelManifiesto);
+  return (
+    b.includes(Buffer.from(RELLENO_MAPA, 'utf8')) ||
+    b.includes(Buffer.from(RELLENO_MAPA, 'utf16le'))
+  );
+}

@@ -5,10 +5,9 @@
 // Deja el archivo en apks-pruebas/<app>-<perfil>.<apk|aab|ipa|tar.gz> y dice la ruta al final.
 // Subir a las tiendas es aparte: publicar-google-play.mjs / subir-google-play.mjs / compilar-ios.mjs.
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { mkdirSync, readFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
-import { autorizarCompilacion, pidioNube } from './guardia-nube.mjs';
+import { autorizarCompilacion, entornoLocal, llevaRelleno, pidioNube } from './guardia-nube.mjs';
 
 const APPS = ['cliente', 'repartidor', 'restaurante'];
 const [app, plataforma, perfil] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
@@ -37,14 +36,7 @@ const salida = join(raiz, 'apks-pruebas', `${app}-${perfil}.${extension}`);
 mkdirSync(join(raiz, 'apks-pruebas'), { recursive: true });
 const nube = pidioNube();
 autorizarCompilacion({ donde: nube ? 'nube' : 'local', app, plataforma, perfil });
-const env = {
-  ...process.env,
-  EXPO_TOKEN: readFileSync(join(homedir(), '.config', 'tumbite', 'expo-token'), 'utf8').trim(),
-  JAVA_HOME:
-    process.env.JAVA_HOME ?? '/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home',
-  ANDROID_HOME: process.env.ANDROID_HOME ?? join(homedir(), 'Library', 'Android', 'sdk'),
-  EXPO_NO_CAPABILITY_SYNC: '1',
-};
+const env = entornoLocal();
 execFileSync(
   'npx',
   [
@@ -59,4 +51,24 @@ execFileSync(
   ],
   { cwd: join(raiz, 'apps', app), env, stdio: 'inherit' },
 );
+// Comprobación del archivo de Android: si salió con el relleno en vez de la llave del mapa, no sirve.
+if (!nube && plataforma === 'android') {
+  const manifiesto = execFileSync(
+    'unzip',
+    [
+      '-p',
+      salida,
+      extension === 'aab' ? 'base/manifest/AndroidManifest.xml' : 'AndroidManifest.xml',
+    ],
+    { maxBuffer: 20 * 1024 * 1024 },
+  );
+  if (llevaRelleno(manifiesto)) {
+    renameSync(salida, `${salida}.SIN-MAPA`);
+    console.error(
+      `\nLa compilación salió SIN la llave del mapa. Quedó apartada: ${salida}.SIN-MAPA`,
+    );
+    process.exit(1);
+  }
+  console.log('Comprobado: el archivo lleva la llave del mapa, no el relleno.');
+}
 console.log(nube ? '\nListo en la nube de Expo.' : `\nListo: ${salida}`);
