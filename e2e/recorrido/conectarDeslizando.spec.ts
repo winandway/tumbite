@@ -166,12 +166,45 @@ for (const idioma of ['es', 'en'] as const)
     await p.mouse.up();
     await p.waitForTimeout(1500);
     expect(await conectado()).toBe(false);
+    // Revisor (18 nov 2026): si el servidor falla, el círculo vuelve al inicio, se ve el mensaje y
+    // sigue desconectado.
+    const ERROR = idioma === 'en' ? 'Server down for a moment.' : 'El servidor no respondió.';
+    let pedidos = 0;
+    await p.route('**/datos/repartidor/conectar', async (r) => {
+      if (r.request().method() !== 'POST') return r.continue();
+      pedidos++;
+      await r.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: ERROR }),
+      });
+    });
+    await deslizar(p, 'conectarme');
+    await expect(p.getByText(ERROR)).toBeVisible({ timeout: 20_000 });
+    await expect
+      .poll(async () => (await p.getByTestId('conectarme-pulgar').boundingBox())!.x)
+      .toBeLessThan(pulgar.x + 4);
+    expect(await conectado()).toBe(false);
+    expect(pedidos).toBe(1);
+    await p.unroute('**/datos/repartidor/conectar');
+    // Dos deslizamientos seguidos mientras espera la red mandan UNA sola petición.
+    pedidos = 0;
+    await p.route('**/datos/repartidor/conectar', async (r) => {
+      if (r.request().method() === 'POST') {
+        pedidos++;
+        await new Promise((listo) => setTimeout(listo, 2500));
+      }
+      await r.continue();
+    });
     // Deslizar completo SÍ: queda conectado (en verde).
     await deslizar(p, 'conectarme');
+    await deslizar(p, 'conectarme').catch(() => undefined);
     await expect(p.getByTestId('estado-servicios')).toContainText(/Online for|Conectado a/, {
       timeout: 30_000,
     });
     expect(await conectado()).toBe(true);
+    expect(pedidos).toBe(1);
+    await p.unroute('**/datos/repartidor/conectar');
     await p.waitForTimeout(600);
     await foto('conectado');
     // Y desconectarse también se desliza.

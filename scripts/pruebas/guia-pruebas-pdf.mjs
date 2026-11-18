@@ -147,7 +147,7 @@ const paginas = [
     </div></section>`,
   `<section><h2>Prueba A · El repartidor entrega (1 de 2)</h2>
     <div class="pasos">
-      ${paso(9, T2, 'Conéctate como repartidor', `En el iPhone abre una pestaña nueva de Safari con <span class="mono">${PRUEBAS}/driver/</span> y entra con la cuenta de repartidor. Toma la foto de control que pide y toca «Conectarme».`, 'repartidor-conectado')}
+      ${paso(9, T2, 'Conéctate como repartidor', `En el iPhone abre una pestaña nueva de Safari con <span class="mono">${PRUEBAS}/driver/</span> y entra con la cuenta de repartidor. Toma la foto de control que pide y desliza «Desliza para conectarte» hasta el final.`, 'repartidor-conectado')}
       ${paso(10, T2, 'Acepta la oferta', 'Llega la oferta con lo que ganas y la distancia. Tócala para aceptarla.', 'repartidor-oferta')}
       ${paso(11, T2, 'Recoge en el restaurante', 'Toca «Llegué», toma la foto del pedido y confirma la recogida.', 'repartidor-foto-recogida')}
     </div></section>`,

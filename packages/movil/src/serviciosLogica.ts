@@ -207,3 +207,13 @@ export function tramosBucle(
   salida.push(valor(fase === 0 ? 1 : fase));
   return { inputRange: entrada, outputRange: salida };
 }
+
+/**
+ * Revisor (18 nov 2026): la tarjeta de servicio medía 68 fijos y, con la letra grande del teléfono,
+ * el nombre y el detalle (20 + 17 de alto de línea) se cortaban. Crece con la letra, hasta el tope
+ * de 1,6 que usa `Text` (maxFontSizeMultiplier).
+ */
+export function altoTarjetaServicio(escalaLetra: number, base = 68): number {
+  const escala = Math.min(Math.max(escalaLetra || 1, 1), 1.6);
+  return Math.max(base, Math.ceil((20 + 17) * escala + 16));
+}

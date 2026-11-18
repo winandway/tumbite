@@ -453,7 +453,7 @@ export function PerfilAcordeon({
 
   async function retirar(id: string) {
     setMenuVehiculo(null);
-    if (!(await confirmarConSistema(t.confirmarRetirar, t.retirarVehiculo, t.no))) return;
+    if (!(await confirmarConSistema(t.confirmarRetirar, t.retirarVehiculo, t.no, true))) return;
     try {
       await api.pedir('POST', `/datos/conductor/vehiculos/${id}/retirar`, {});
       await cargar();

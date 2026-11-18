@@ -7,11 +7,12 @@ import {
   Platform,
   Vibration,
   View,
+  useWindowDimensions,
   type LayoutChangeEvent,
 } from 'react-native';
 import { Icono, Text } from './diseno';
 import { faseDe, useReducirMovimiento, useRelojBucle } from './movimiento';
-import { MOVIMIENTO, cruzaUmbral, debeConfirmar } from './serviciosLogica';
+import { MOVIMIENTO, altoTarjetaServicio, cruzaUmbral, debeConfirmar } from './serviciosLogica';
 import { COLOR, FUENTE, RADIO } from './tokens';
 
 /**
@@ -34,16 +35,27 @@ export const ALTO_TARJETA = 68;
 const PULGAR_TARJETA = 56;
 const ALTO_ACCION = 60;
 const PULGAR_ACCION = 52;
-const MARGEN = 6;
+/**
+ * Revisor (18 nov 2026): en Android con navegación por gestos, deslizar desde el borde izquierdo es
+ * «atrás». El pulgar arranca a 10 dp del borde del riel; con el margen de 16 dp de las pantallas queda
+ * a 26 dp del borde de la pantalla, fuera de la franja del gesto (candado en conectarDeslizando.test).
+ */
+export const MARGEN_PULGAR = 10;
 
 /** Pregunta sí/no con la ventana del sistema (en la web, la del navegador). */
-export function confirmarConSistema(pregunta: string, si: string, no: string): Promise<boolean> {
+export function confirmarConSistema(
+  pregunta: string,
+  si: string,
+  no: string,
+  /** En rojo solo lo que apaga (desconectar); conectar o reanudar van con el estilo normal. */
+  destructivo = false,
+): Promise<boolean> {
   if (Platform.OS === 'web')
     return Promise.resolve(typeof window !== 'undefined' ? window.confirm(pregunta) : false);
   return new Promise((resolver) =>
     Alert.alert('Divoox', pregunta, [
       { text: no, style: 'cancel', onPress: () => resolver(false) },
-      { text: si, style: 'destructive', onPress: () => resolver(true) },
+      { text: si, style: destructivo ? 'destructive' : 'default', onPress: () => resolver(true) },
     ]),
   );
 }
@@ -87,6 +99,8 @@ export function Deslizador(
     ),
 ) {
   const habilitado = props.habilitado !== false;
+  const { fontScale } = useWindowDimensions();
+  const alto = altoTarjetaServicio(fontScale, ALTO_TARJETA);
   // Mientras se cierra la acción (subiendo, completando) no se vuelve a deslizar.
   // Y mientras espera la red tras confirmar (las dos variantes): nunca dos desconexiones seguidas.
   const [esperando, setEsperando] = useState(false);
@@ -97,7 +111,7 @@ export function Deslizador(
   const reducir = useReducirMovimiento();
   const reloj = useRelojBucle(!reducir && habilitado);
   const pulgar = props.variante === 'tarjeta' ? PULGAR_TARJETA : PULGAR_ACCION;
-  const margen = props.variante === 'tarjeta' ? MARGEN : 4;
+  const margen = MARGEN_PULGAR;
   const recorrido = Math.max(0, ancho - pulgar - margen * 2);
   const vivo = useRef(true);
   useEffect(
@@ -206,12 +220,13 @@ export function Deslizador(
             props.confirmar.pregunta,
             props.confirmar.si,
             props.confirmar.no,
+            props.sentido !== 'conectar',
           ).then((si) => {
             if (si) void confirmar();
           });
         }}
         style={{
-          height: ALTO_TARJETA,
+          height: alto,
           borderRadius: RADIO.l,
           backgroundColor: props.fondo,
           borderWidth: 1.5,
@@ -316,7 +331,7 @@ export function Deslizador(
         if (ev.nativeEvent.actionName !== 'activate' || !activo) return;
         const c = props.confirmar;
         if (!c) return void confirmar();
-        void confirmarConSistema(c.pregunta, c.si, c.no).then((si) => {
+        void confirmarConSistema(c.pregunta, c.si, c.no, props.tono === 'neutro').then((si) => {
           if (si) void confirmar();
         });
       }}

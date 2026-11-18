@@ -3515,7 +3515,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Avisos que te llegan al celular y quedan en la campana: el restaurante terminó tu pedido («Pedido listo para recoger»), el restaurante o el cliente cancelaron (quedas libre para el siguiente), el cliente cambió la dirección de entrega (con la nueva dirección), soporte autorizó tu entrega sin GPS, una propina que llegó después de entregar, ofertas que se te vencieron hoy y la foto de control pendiente.',
           'Los avisos llegan en el idioma que tienes en la app: si la cambias a inglés, también cambian.',
-          'Pausa: si estás conectado y sin pedido, «Pausar ofertas» te deja conectado (nuestro equipo te ve) pero no te manda ofertas, por ejemplo para comer o cargar gasolina. deslizar «Desliza para reanudar ofertas» te devuelve a la fila. Al volver a conectarte, la pausa se quita sola.',
+          'Pausa: si estás conectado y sin pedido, «Pausar ofertas» te deja conectado (nuestro equipo te ve) pero no te manda ofertas, por ejemplo para comer o cargar gasolina. Deslizar «Desliza para reanudar ofertas» te devuelve a la fila. Al volver a conectarte, la pausa se quita sola.',
           'Si te conectas fuera de nuestra zona de cobertura, la app te lo dice: quedas conectado, pero ahí no llegan ofertas.',
         ],
         capturas: [
@@ -8804,7 +8804,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'Notifications that reach your phone and stay in the bell: the restaurant finished your order (“Order ready for pickup”), the restaurant or the customer canceled (you’re free for the next one), the customer changed the delivery address (with the new address), support approved your delivery without GPS, a tip that came after delivery, offers that expired on you today, and a pending check-in photo.',
           'Notifications arrive in the language you have in the app: switch to English and they switch too.',
-          'Pause: when you’re online with no order, “Pause offers” keeps you online (our team sees you) but sends no offers, for example to eat or get gas. sliding “Slide to resume offers” puts you back in line. Going online again clears the pause.',
+          'Pause: when you’re online with no order, “Pause offers” keeps you online (our team sees you) but sends no offers, for example to eat or get gas. Sliding “Slide to resume offers” puts you back in line. Going online again clears the pause.',
           'If you go online outside our coverage area, the app tells you: you’re online, but no offers arrive there.',
         ],
         capturas: [

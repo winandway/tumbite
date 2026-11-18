@@ -6,9 +6,11 @@ import { MOVIMIENTO } from './serviciosLogica';
 import { COLOR, FUENTE, RADIO, SOMBRA } from './tokens';
 
 /**
- * C-SERVICIOS-CONECTADOS (DRIVER.md §3): el aviso tinta de abajo al desconectar un servicio:
- * «Comida desconectada. Lo demás sigue conectado. Deshacer». Sin tapar nada, por 5 s; «Deshacer»
- * lo vuelve a conectar. Se anuncia al lector de pantalla.
+ * C-SERVICIOS-CONECTADOS (DRIVER.md §3): el aviso tinta de abajo al desconectar un servicio. Sin
+ * tapar nada, por 5 s, y se anuncia al lector de pantalla.
+ * C-CONECTAR-DESLIZANDO (revisor, 18 nov 2026): en Driver es SOLO informativo («Comida desconectada.
+ * Lo demás sigue conectado. Para volver, desliza su tarjeta.»): un «Deshacer» de un toque reconectaba
+ * con el celular en el bolsillo. El botón existe solo si quien lo usa pasa `alDeshacer`.
  */
 export function AvisoDeshacer({
   visible,
@@ -24,8 +26,8 @@ export function AvisoDeshacer({
   titulo: string;
   /** «Lo demás sigue conectado.» */
   texto: string;
-  deshacer: string;
-  alDeshacer: () => void;
+  deshacer?: string;
+  alDeshacer?: () => void;
   alCerrar: () => void;
   testID?: string;
 }) {
@@ -67,24 +69,26 @@ export function AvisoDeshacer({
         <Text style={{ fontFamily: FUENTE.textoNegrita, color: COLOR.blanco }}>{titulo}</Text>{' '}
         {texto}
       </Text>
-      <Pressable
-        onPress={alDeshacer}
-        accessibilityRole="button"
-        accessibilityLabel={deshacer}
-        hitSlop={10}
-        testID={`${testID}-boton`}
-      >
-        <Text
-          style={{
-            fontFamily: FUENTE.tituloMedio,
-            fontSize: 15,
-            color: COLOR.blanco,
-            textDecorationLine: 'underline',
-          }}
+      {alDeshacer && deshacer ? (
+        <Pressable
+          onPress={alDeshacer}
+          accessibilityRole="button"
+          accessibilityLabel={deshacer}
+          hitSlop={10}
+          testID={`${testID}-boton`}
         >
-          {deshacer}
-        </Text>
-      </Pressable>
+          <Text
+            style={{
+              fontFamily: FUENTE.tituloMedio,
+              fontSize: 15,
+              color: COLOR.blanco,
+              textDecorationLine: 'underline',
+            }}
+          >
+            {deshacer}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

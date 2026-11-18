@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { debeConfirmar } from './serviciosLogica';
+import { altoTarjetaServicio, debeConfirmar } from './serviciosLogica';
 
 /**
  * C-CONECTAR-DESLIZANDO (Richard, 18 nov 2026; todos los países). En Driver, conectarse es deslizar
@@ -44,9 +44,63 @@ describe('ningún punto de conexión de Driver se toca: todos deslizan', () => {
     expect(s).not.toMatch(/texto=\{estado\.pausado \? tg\.pausa\.reanudar : tg\.pausa\.pausar\}/);
     expect(s).toMatch(/<Deslizador[\s\S]{0,300}tg\.pausa\.reanudar/);
   });
+  // Revisor (18 nov 2026): «Deshacer» tras desconectar reconectaba con UN toque (el escenario del
+  // bolsillo: se desliza, se desconecta y el toque siguiente reconecta). El aviso ahora solo informa.
+  it('ningún toque reconecta: el aviso tras desconectar solo informa', () => {
+    const inicio = leer('apps/repartidor/src/Inicio.tsx');
+    const aviso = inicio.match(/<AvisoDeshacer[\s\S]*?\/>/)?.[0] ?? '';
+    expect(aviso).not.toBe('');
+    expect(aviso).not.toMatch(/alDeshacer|conectar/);
+    expect(aviso).toMatch(/avisoVolver/);
+    // Ningún manejador de toque (onPress, alTocar, alDeshacer) llama a conectar o reanudar.
+    const archivos = [
+      'apps/repartidor/src/Inicio.tsx',
+      'apps/repartidor/src/servicios/PanelServicios.tsx',
+      'packages/movil/src/TarjetaServicio.tsx',
+    ];
+    const conecta =
+      /(conectarServicio\(|alConectarServicio\(|alConectarTodo|alConectar\b|alternar\(\)|pausado: false|conectado: true)/g;
+    for (const f of archivos) {
+      const s = leer(f);
+      for (const m of s.matchAll(conecta)) {
+        const antes = s.slice(Math.max(0, (m.index ?? 0) - 160), m.index);
+        const ultimaEtiqueta = antes.lastIndexOf('<');
+        const tramo = antes.slice(ultimaEtiqueta);
+        expect(tramo, `${f}: «${m[0]}» cuelga de un toque`).not.toMatch(
+          /(onPress|alTocar|alDeshacer)=\{[^}]*$/,
+        );
+      }
+    }
+  });
   it('con lector de pantalla, conectar pide confirmar', () => {
     const s = leer('packages/movil/src/Deslizador.tsx');
     expect(s).toMatch(/confirmarConSistema/);
     expect(s).toMatch(/sentido/);
+  });
+});
+
+describe('lo que pidió el revisor sobre el deslizador (18 nov 2026)', () => {
+  it('el pulgar arranca lejos del borde del gesto «atrás» de Android (≥ 24 dp de la pantalla)', () => {
+    const s = leer('packages/movil/src/Deslizador.tsx');
+    const margen = Number(s.match(/export const MARGEN_PULGAR = (\d+);/)?.[1]);
+    // Las pantallas de Driver dejan 16 dp a cada lado; el pulgar suma su margen dentro del riel.
+    expect(16 + margen).toBeGreaterThanOrEqual(24);
+    expect(s).toMatch(/const margen = MARGEN_PULGAR;/);
+    expect(leer('apps/repartidor/src/servicios/PanelServicios.tsx')).toMatch(
+      /paddingHorizontal: 16/,
+    );
+  });
+  it('el «Sí» de conectar o reanudar no sale en rojo; solo lo que apaga', () => {
+    const s = leer('packages/movil/src/Deslizador.tsx');
+    expect(s).toMatch(/style: destructivo \? 'destructive' : 'default'/);
+    expect(s).toMatch(/props\.sentido !== 'conectar'/);
+    expect(s).toMatch(/props\.tono === 'neutro'/);
+  });
+  it('la tarjeta crece con la letra grande y no corta el nombre ni el detalle', () => {
+    expect(altoTarjetaServicio(1)).toBe(68);
+    // Nombre (20) y detalle (17) a 1,6 veces, más el relleno.
+    expect(altoTarjetaServicio(1.6)).toBeGreaterThanOrEqual(Math.ceil(37 * 1.6) + 16);
+    expect(altoTarjetaServicio(3)).toBe(altoTarjetaServicio(1.6));
+    expect(leer('packages/movil/src/Deslizador.tsx')).toMatch(/height: alto,/);
   });
 });

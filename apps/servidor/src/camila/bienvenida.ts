@@ -27,7 +27,7 @@ Your steps to start:
 1. In Divoox Driver, open Profile, “Start driving.”
 2. Send your document and a photo of your face (top-left menu, “My details and vehicle”).
 3. Add your motorcycle details. The team reviews everything.
-4. When you are approved, top up your balance for fees and tap “Go online.”
+4. When you are approved, top up your balance for fees and slide “Slide to go online.”
 
 If you get stuck on any step, write to me here. I am here to help.`
     : `Hola, ${primer}, te doy la bienvenida a Divoox. Te acompaño en todo el proceso.${lider ? ` Te registraste en el equipo de ${lider}.` : ''}
@@ -36,7 +36,7 @@ Tus pasos para empezar:
 1. En Divoox Driver, abre Perfil, «Empieza a repartir».
 2. Manda tu documento y la foto de tu cara (menú de arriba a la izquierda, «Mis datos y vehículo»).
 3. Agrega los datos de tu moto. El equipo lo revisa todo.
-4. Cuando te aprueben, recarga tu saldo para comisiones y toca «Conectarme».
+4. Cuando te aprueben, recarga tu saldo para comisiones y desliza «Desliza para conectarte».
 
 Si te trabas en algún paso, escríbeme por aquí. Aquí estoy para ayudarte.`;
 }

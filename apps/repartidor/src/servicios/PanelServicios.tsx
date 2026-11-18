@@ -160,7 +160,7 @@ export function PanelServiciosInicio({
   alDesconectarTodo: () => unknown;
   alVerServicio: (s: ServicioPanel) => void;
   alAbrirFlex: () => void;
-  /** Al desconectar uno: la pantalla muestra abajo «Comida desconectada… Deshacer». */
+  /** Al desconectar uno: la pantalla muestra abajo «Comida desconectada… Para volver, desliza su tarjeta.» */
   /** `texto`: C-ULTIMO-SERVICIO, «Lo demás sigue conectado» solo si queda otro conectado. */
   alDesconectado: (id: string, nombre: string, texto: string) => void;
   /** Lo que va debajo de la lista (errores y avisos del inicio), dentro del mismo bloque. */

@@ -53,7 +53,7 @@ const es = {
     `${s} ${id === 'comida' || id === 'moto' ? 'desconectada' : id === 'envios' ? 'desconectados' : 'desconectado'}.`,
   avisoTexto: 'Lo demás sigue conectado.',
   avisoTextoUltimo: 'Ya no te llegan ofertas.',
-  deshacer: 'Deshacer',
+  avisoVolver: 'Para volver, desliza su tarjeta.',
   nombres: {
     comida: 'Comida',
     envios: 'Envíos',
@@ -221,7 +221,7 @@ const en: typeof es = {
   avisoTitulo: (s: string, id = '') => `${s} ${id === 'envios' ? 'are' : 'is'} offline.`,
   avisoTexto: 'Everything else is still on.',
   avisoTextoUltimo: 'You won’t get offers now.',
-  deshacer: 'Undo',
+  avisoVolver: 'To go back online, slide its card.',
   nombres: {
     comida: 'Food',
     envios: 'Deliveries',

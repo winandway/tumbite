@@ -26,13 +26,13 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
         explicacion: [
           'Más servicios conectados es menos tiempo esperando. Por eso, cuando te conectas, quedas disponible para todos los servicios que tienes aprobados en tu ciudad, como en las apps de reparto y de viajes más grandes.',
           'Arriba ves una tarjeta oscura con una luz verde que late: «Conectado a 3 servicios. Esperando la próxima oferta». Debajo, tus ganancias de hoy y la lista de tus servicios. Cada servicio conectado va en verde, con su luz y tres flechas que te indican hacia dónde deslizar.',
-          'Para conectar un servicio, toca «Conectar» en su tarjeta. La primera vez de la sesión la app te pide tu ubicación. Si quieres conectarte a todo de una, toca «Conectarme».',
+          'Para conectar un servicio, desliza su tarjeta de izquierda a derecha hasta el final («Desliza → para conectar»). La primera vez de la sesión la app te pide tu ubicación. Si quieres conectarte a todo de una, desliza «Desliza para conectarte». Un toque no te conecta y, si sueltas a medio camino, el círculo vuelve al inicio: así no te conectas sin querer con el teléfono en el bolsillo.',
           'Para desconectar un servicio, arrastra su ícono hacia la derecha hasta el final y suéltalo. Si lo sueltas antes, la tarjeta vuelve a su lugar y sigues conectado: así un toque sin querer, con el teléfono en el bolsillo o en el soporte de la moto, no te desconecta.',
-          'Al desconectarlo aparece abajo un aviso por unos segundos: «Comida desconectada. Lo demás sigue conectado». Si fue sin querer, toca «Deshacer».',
+          'Al desconectarlo aparece abajo un aviso por unos segundos: «Comida desconectada. Lo demás sigue conectado. Para volver, desliza su tarjeta.» Si fue sin querer, vuelve a deslizar la tarjeta de ese servicio.',
           'Cuando aceptas una oferta, los demás servicios quedan en pausa: no te llega nada más hasta que entregues. Arriba lo dice siempre («Estás llevando una comida») y una franja gris te muestra qué está en pausa. Al terminar, todo vuelve solo, sin tocar nada.',
           'Los servicios que todavía no tienes salen con «Agregar este servicio», y los que están en revisión dicen cuánto falta. Nada de eso te llega como oferta hasta que esté aprobado.',
           'Un bloque de Divoox Flex es distinto: es exclusivo. Mientras lo haces, todo lo demás está desconectado y con candado hasta que termines el bloque.',
-          'Para dejar de trabajar, toca «Desconectarme»: se apagan todos tus servicios a la vez.',
+          'Para dejar de trabajar, desliza «Desliza para desconectarte»: se apagan todos tus servicios a la vez.',
         ],
         capturas: [
           foto(
@@ -50,8 +50,8 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           foto(
             'deshacer',
             'es',
-            'Comida desconectada con su botón «Conectar» y el aviso de abajo «Comida desconectada. Lo demás sigue conectado. Deshacer».',
-            'Lo demás sigue conectado. Si fue sin querer, toca «Deshacer».',
+            'Comida desconectada, con «Desliza → para conectar» en su tarjeta y el aviso de abajo «Comida desconectada. Lo demás sigue conectado. Para volver, desliza su tarjeta.»',
+            'Lo demás sigue conectado. Si fue sin querer, vuelve a deslizar su tarjeta.',
           ),
           foto(
             'en-pausa',
@@ -67,11 +67,11 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           '¿Cómo vuelvo a conectar un servicio que desconecté sin querer?',
         ],
         pasos: [
-          'Abre Divoox Driver y toca «Conectarme», o «Conectar» en el servicio que quieras.',
+          'Abre Divoox Driver y desliza «Desliza para conectarte», o desliza la tarjeta del servicio que quieras.',
           'Espera tus ofertas: te llegan de todos los servicios conectados.',
           'Para desconectar uno, arrastra su ícono hacia la derecha hasta el final.',
-          'Si fue sin querer, toca «Deshacer» en el aviso de abajo.',
-          'Para terminar el día, toca «Desconectarme».',
+          'Si fue sin querer, vuelve a deslizar la tarjeta de ese servicio.',
+          'Para terminar el día, desliza «Desliza para desconectarte».',
         ],
       },
       {
@@ -86,7 +86,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'Toca «Empezar» o cualquier paso. Se abre la pantalla de ese papel: cada foto se puede tomar con la cámara o subir desde tus archivos, y lo que escribes se guarda solo aunque cierres la app.',
           'Si nuestro equipo rechaza un papel, ves el motivo escrito como instrucción, por ejemplo: «Tómala de día, de frente y a un paso de distancia». Vuelves a tomar la foto desde ahí mismo.',
           'En «Perfil» tienes todo ordenado en dos secciones que se abren y se cierran: «Mi vehículo», con una tarjeta por cada vehículo y sus papeles (aprobado, pendiente o rechazado), y «Documentos», con los papeles de tu perfil y en qué servicios sirve cada uno.',
-          'Cuando todo está aprobado, el servicio aparece en tu inicio con su botón «Conectar».',
+          'Cuando todo está aprobado, el servicio aparece en tu inicio con «Desliza → para conectar».',
         ],
         capturas: [
           foto(
@@ -137,7 +137,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'Revisa lo que ya está verificado y lo que falta.',
           'Toca «Empezar» y completa cada paso con «Tomar foto» o «Subir archivo».',
           'Espera la revisión de nuestro equipo: te avisamos cuando esté aprobado.',
-          'Cuando esté listo, toca «Conectar» en ese servicio.',
+          'Cuando esté listo, desliza la tarjeta de ese servicio para conectarte.',
         ],
       },
     ],
@@ -152,19 +152,19 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
         explicacion: [
           'More services online means less time waiting. When you go online, you’re available for every service you’re approved for in your city, just like the biggest delivery and rideshare apps.',
           'At the top you see a dark card with a pulsing green light: “Online for 3 services. Waiting for your next offer.” Below it are today’s earnings and your list of services. Each service that’s online shows in green, with its light and three arrows that point the way to swipe.',
-          'To turn a service on, tap “Go online” on its card. The first time in a session, the app asks for your location. To turn everything on at once, tap “Go online” at the top.',
+          'To turn a service on, slide its card from left to right all the way (“Slide → to go online”). The first time in a session, the app asks for your location. To turn everything on at once, slide “Slide to go online.” A tap won’t take you online, and if you let go halfway the circle slides back, so your phone can’t go online from your pocket.',
           'To turn a service off, drag its icon all the way to the right and let go. If you let go early, the card slides back and you stay online, so an accidental tap with the phone in your pocket or on the bike mount won’t take you offline.',
-          'When it goes offline, a notice shows at the bottom for a few seconds: “Food is offline. Everything else is still on.” If it was an accident, tap “Undo.”',
+          'When it goes offline, a notice shows at the bottom for a few seconds: “Food is offline. Everything else is still on. To go back online, slide its card.” If it was an accident, slide that service’s card again.',
           'When you accept an offer, your other services pause: nothing else comes in until you drop off. The top of the screen always says so (“You’re delivering a food order”), and a gray strip shows what’s paused. When you finish, everything comes back on by itself.',
           'Services you don’t have yet show “Add this service,” and the ones under review tell you what’s missing. None of them send you offers until they’re approved.',
           'A Divoox Flex block is different: it’s exclusive. While you’re on it, everything else is offline and locked until the block ends.',
-          'To stop working, tap “Go offline”: all your services turn off at once.',
+          'To stop working, slide “Slide to go offline”: all your services turn off at once.',
         ],
         capturas: [
           foto(
             'conectados',
             'en',
-            'The Divoox Driver home screen with the “Online for 3 services” card, today’s earnings, and Food, Deliveries by motorcycle and Moto rides online in green.',
+            'The Divoox Driver home screen with the “Online for 3 services” card, today’s earnings, and Food, Deliveries by moto and Moto rides online in green.',
             'Online for several services at once: each one in green, with its live light.',
           ),
           foto(
@@ -176,13 +176,13 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           foto(
             'deshacer',
             'en',
-            'Food offline with its “Go online” button and the notice at the bottom: “Food is offline. Everything else is still on. Undo.”',
-            'Everything else stays on. If it was an accident, tap “Undo.”',
+            'Food offline, with “Slide → to go online” on its card and the notice at the bottom: “Food is offline. Everything else is still on. To go back online, slide its card.”',
+            'Everything else stays on. If it was an accident, slide its card again.',
           ),
           foto(
             'en-pausa',
             'en',
-            'The “You’re delivering a food order” notice and the “Paused: Deliveries by motorcycle and Moto rides” strip.',
+            'The “You’re delivering a food order” notice and the “Paused: Deliveries by moto and Moto rides” strip.',
             'When you accept an offer, the rest pause and come back when you drop off.',
           ),
         ],
@@ -193,11 +193,11 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'How do I turn a service back on if I turned it off by accident?',
         ],
         pasos: [
-          'Open Divoox Driver and tap “Go online,” or “Go online” on the service you want.',
+          'Open Divoox Driver and slide “Slide to go online,” or slide the card of the service you want.',
           'Wait for offers: they come from every service that’s online.',
           'To turn one off, drag its icon all the way to the right.',
-          'If it was an accident, tap “Undo” in the notice at the bottom.',
-          'To end your day, tap “Go offline.”',
+          'If it was an accident, slide that service’s card again.',
+          'To end your day, slide “Slide to go offline.”',
         ],
       },
       {
@@ -212,7 +212,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'Tap “Start” or any step. That document’s screen opens: every photo can be taken with your camera or uploaded from your files, and whatever you type is saved automatically, even if you close the app.',
           'If our team rejects a document, you see the reason written as an instruction, for example: “Take it in daylight, straight on, one step away.” You can retake the photo right there.',
           'Under “Profile,” everything is organized in two sections that open and close: “My vehicle,” with a card for each vehicle and its documents (approved, pending or rejected), and “Documents,” with your profile documents and which services each one counts for.',
-          'Once everything is approved, the service shows up on your home screen with its “Go online” button.',
+          'Once everything is approved, the service shows up on your home screen with “Slide → to go online.”',
         ],
         capturas: [
           foto(
@@ -263,7 +263,7 @@ export const GUIAS_SERVICIOS_CONECTADOS: Record<Idioma, PorSeccion> = {
           'Review what’s already verified and what’s still needed.',
           'Tap “Start” and complete each step with “Take photo” or “Upload file.”',
           'Wait for our team’s review: we’ll let you know when it’s approved.',
-          'When it’s ready, tap “Go online” on that service.',
+          'When it’s ready, slide that service’s card to go online.',
         ],
       },
     ],

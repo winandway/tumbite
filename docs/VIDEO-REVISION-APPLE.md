@@ -29,7 +29,7 @@ Para terminar, toca la barrita roja de arriba y «Detener». El video queda en F
 
 1. Abre la app desde la pantalla de inicio.
 2. Entra con la cuenta del revisor del Driver.
-3. Muestra el mapa, toca «Conectarse» y espera unos segundos con «Buscando pedidos».
+3. Muestra el mapa, desliza «Slide to go online» de izquierda a derecha hasta el final y espera unos segundos con «Buscando pedidos».
 4. Toca Pedidos → «Mi ruta (paquetes)», luego Ganancias, y el escudo de Seguridad.
 5. Menú de la cuenta → Configuración → muestra «Borrar la cuenta» sin confirmar.
 6. Desconéctate y cierra sesión. Detén la grabación.

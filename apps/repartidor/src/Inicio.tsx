@@ -1170,7 +1170,7 @@ export function Inicio() {
     }
   }
 
-  // C-SERVICIOS-CONECTADOS: conectar UN servicio es un toque (pide la ubicación, como el encendido
+  // C-SERVICIOS-CONECTADOS: conectar UN servicio (se desliza, C-CONECTAR-DESLIZANDO; pide la ubicación, como el encendido
   // general, y pasa por las mismas puertas: identidad, papeles, términos, teléfono, foto de control).
   async function conectarServicio(id: string): Promise<boolean> {
     if (cambiandoServicio || cambiando) return false;
@@ -1756,17 +1756,12 @@ export function Inicio() {
             {cuerpo}
           </ScrollView>
         )}
-        {/* C-SERVICIOS-CONECTADOS: «Comida desconectada. Lo demás sigue conectado. Deshacer». */}
+        {/* C-SERVICIOS-CONECTADOS y C-CONECTAR-DESLIZANDO: el aviso solo informa; ningún toque
+            reconecta (para volver, se desliza la tarjeta). */}
         <AvisoDeshacer
           visible={Boolean(desconectado)}
           titulo={desconectado ? ts.avisoTitulo(desconectado.nombre, desconectado.id) : ''}
-          texto={desconectado?.texto ?? ts.avisoTexto}
-          deshacer={ts.deshacer}
-          alDeshacer={() => {
-            const d = desconectado;
-            setDesconectado(null);
-            if (d) void conectarServicio(d.id);
-          }}
+          texto={`${desconectado?.texto ?? ts.avisoTexto} ${ts.avisoVolver}`}
           alCerrar={() => setDesconectado(null)}
         />
       </View>

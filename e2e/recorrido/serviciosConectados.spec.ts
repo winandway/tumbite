@@ -218,7 +218,7 @@ for (const idioma of ['es', 'en'] as const)
     expect((await panel()).conectados).toBe(3);
     await expect(tarjeta).toContainText(t.esperandoDe.comida!);
 
-    // Deslizar hasta el final sí desconecta Comida; lo demás sigue conectado y sale «Deshacer».
+    // Deslizar hasta el final sí desconecta Comida; lo demás sigue conectado y sale el aviso.
     await p.mouse.move(x0, y);
     await p.mouse.down();
     for (let i = 1; i <= 14; i++) await p.mouse.move(x0 + (recorrido * i) / 12, y);
@@ -230,7 +230,13 @@ for (const idioma of ['es', 'en'] as const)
     // C-CONECTAR-DESLIZANDO: la tarjeta desconectada se conecta deslizando, nunca con un toque.
     await expect(tarjeta).toContainText(t.deslizarConectar);
     await foto('deshacer');
-    await p.getByTestId('aviso-deshacer-boton').click();
+    // C-CONECTAR-DESLIZANDO (revisor): el aviso solo informa; ningún toque reconecta.
+    await expect(aviso).toContainText(t.avisoVolver);
+    await expect(p.getByTestId('aviso-deshacer-boton')).toHaveCount(0);
+    await aviso.click();
+    await p.waitForTimeout(800);
+    expect((await panel()).conectados).toBe(2);
+    await deslizar(p, 'servicio-comida');
     await expect(estado).toContainText(t.conectadoA(3), { timeout: 20_000 });
     expect((await panel()).conectados).toBe(3);
     // Otra vez fuera: un toque no la conecta, soltar a medio camino tampoco; deslizar entero, sí.

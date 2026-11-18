@@ -56,7 +56,7 @@ Las apps del piloto se bajan directo, como un archivo. No se usa Google Play (al
 
 ## 4. Recibir carreras
 
-1. En Driver, toca **Conectarme**. Deja el GPS encendido y la app abierta o en segundo plano.
+1. En Driver, desliza **Desliza para conectarte** de izquierda a derecha hasta el final. Deja el GPS encendido y la app abierta o en segundo plano.
 2. Cuando entra una carrera suena y aparece la oferta con el precio y el recorrido: **Aceptar**.
 3. Ve a la recogida y toca **Llegué**. Pídele al pasajero su **código de 4 números** y escríbelo para **Iniciar**.
 4. Al llegar al destino, **Terminar**. Cobra lo que dice la pantalla (en dólares; los bolívares son solo referencia a la tasa del BCV).
