@@ -107,6 +107,31 @@ describe('la privacidad no se contradice', () => {
     expect(seccion('es', 6)).toContain('tu posición en vivo en las rutas de Divoox Flex');
     expect(seccion('en', 6)).toContain('your live position on Divoox Flex routes');
   });
+  // Tercera auditoría de tiendas (18 nov 2026): lo que la app recoge y la Data safety declara.
+  it('sección 2: el chat de soporte con la asistente virtual y los reportes de sus respuestas', () => {
+    expect(seccion('es', 2)).toContain('Chat de soporte con nuestra asistente virtual');
+    expect(seccion('es', 2)).toContain('reportas una respuesta de la asistente');
+    expect(seccion('en', 2)).toContain('Support chat with our virtual assistant');
+    expect(seccion('en', 2)).toContain('report one of the assistant’s replies');
+  });
+  it('sección 2: alergias y dificultad auditiva como datos opcionales que da la persona', () => {
+    expect(seccion('es', 2)).toMatch(/opcional[^.]*alergias|alergias[^.]*opcional/);
+    expect(seccion('es', 2)).toMatch(/opcional[^.]*dificultad auditiva/);
+    expect(seccion('en', 2)).toMatch(/optional[^.]*allerg|allerg[^.]*optional/);
+    expect(seccion('en', 2)).toMatch(/optional[^.]*hearing/);
+  });
+  it('sección 4: la ubicación del conductor sigue con la pantalla apagada o en segundo plano', () => {
+    expect(seccion('es', 4)).toContain('con la pantalla apagada o la app en segundo plano');
+    expect(seccion('en', 4)).toContain('with the screen off or the app in the background');
+  });
+  it('sección 5: lo que se escribe en las casillas de dirección va a Google', () => {
+    expect(seccion('es', 5)).toContain('lo que escribes en las casillas de dirección');
+    expect(seccion('en', 5)).toContain('what you type in address fields');
+  });
+  it('sección 6: el borrado incluye los códigos de invitación, igual que borrar la cuenta', () => {
+    expect(seccion('es', 6)).toContain('tus códigos de invitación');
+    expect(seccion('en', 6)).toContain('your invite codes');
+  });
   it('Stripe: se borra lo que escribiste para cobrar; de Stripe solo guardamos la referencia', () => {
     expect(seccion('es', 6)).toContain('la referencia de tu cuenta de Stripe');
     expect(seccion('en', 6)).toContain('the reference to your Stripe account');
