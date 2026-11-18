@@ -37,6 +37,7 @@ const tiendaDriver = (idioma: 'es' | 'en', nombre: string) => {
   return join(carpeta, nombre);
 };
 
+// Nombres neutros (auditor de tiendas, 18 nov 2026): la captura 09 de la ficha sale de aquí.
 const CIUDADES = {
   es: {
     zona: {
@@ -47,9 +48,9 @@ const CIUDADES = {
       lng: -71.6506,
       tz: 'America/Caracas',
     },
-    equipo: 'Jehová Jireh',
-    lider: 'Presidente Línea',
-    miembros: ['José Mototaxi', 'Luis Mototaxi', 'Pedro Mototaxi'],
+    equipo: 'Equipo Centro',
+    lider: 'Jorge Líder',
+    miembros: ['Carlos R.', 'Ana M.', 'Luis P.'],
     tel: '+58414777',
   },
   en: {
@@ -61,9 +62,9 @@ const CIUDADES = {
       lng: -83.4755,
       tz: 'America/Detroit',
     },
-    equipo: 'Novi Riders',
-    lider: 'Team Leader',
-    miembros: ['Michael Driver', 'James Driver', 'Robert Driver'],
+    equipo: 'Downtown Team',
+    lider: 'John Leader',
+    miembros: ['Michael B.', 'Sarah K.', 'David L.'],
     tel: '+1248777',
   },
 } as const;

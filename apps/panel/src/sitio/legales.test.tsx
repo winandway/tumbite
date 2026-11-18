@@ -83,3 +83,48 @@ describe('términos para cada público, en los dos idiomas', () => {
     expect(texto(TERMINOS_REPARTIDORES.en)).toMatch(/independent contractor/);
   });
 });
+
+/**
+ * C-LEGALES-COHERENTES (18 nov 2026, auditor de tiendas): la política no se contradice entre
+ * secciones y dice lo que el código hace de verdad.
+ */
+describe('la privacidad no se contradice', () => {
+  const seccion = (idioma: 'es' | 'en', n: number) =>
+    (PRIVACIDAD[idioma].secciones.find((s) => s.titulo.startsWith(`${n}.`))?.parrafos ?? []).join(
+      ' ',
+    );
+  it('la contraseña: hash de una vía en la sección 2 y en la 9, nunca «cifrada»', () => {
+    expect(seccion('es', 2)).toContain('hash de una vía');
+    expect(seccion('es', 9)).toContain('hash de una vía');
+    expect(seccion('es', 2)).not.toContain('la guardamos cifrada');
+    expect(seccion('en', 2)).toContain('one-way hash');
+    expect(seccion('en', 9)).toContain('one-way hash');
+    expect(seccion('en', 2)).not.toContain('stored encrypted');
+  });
+  it('Flex: lo que se guarda tras borrar la cuenta lo dicen igual la sección 2 y la 6', () => {
+    expect(seccion('es', 6)).toMatch(/Divoox Flex[^.]*siete años/);
+    expect(seccion('en', 6)).toMatch(/Divoox Flex[^.]*seven years/);
+    expect(seccion('es', 6)).toContain('tu posición en vivo en las rutas de Divoox Flex');
+    expect(seccion('en', 6)).toContain('your live position on Divoox Flex routes');
+  });
+  it('Stripe: se borra lo que escribiste para cobrar; de Stripe solo guardamos la referencia', () => {
+    expect(seccion('es', 6)).toContain('la referencia de tu cuenta de Stripe');
+    expect(seccion('en', 6)).toContain('the reference to your Stripe account');
+  });
+});
+
+describe('borrar la cuenta lista todo lo que se borra', () => {
+  const que = (idioma: 'es' | 'en') =>
+    (
+      BORRAR_CUENTA[idioma].secciones.find((s) => /Qué se borra|What gets deleted/.test(s.titulo))
+        ?.parrafos ?? []
+    ).join(' ');
+  it('el chat con la asistente virtual, los lugares guardados y los códigos de invitación', () => {
+    expect(que('es')).toContain('el chat con nuestra asistente virtual');
+    expect(que('es')).toContain('tus lugares guardados');
+    expect(que('es')).toContain('tus códigos de invitación');
+    expect(que('en')).toContain('the chat with our virtual assistant');
+    expect(que('en')).toContain('your saved places');
+    expect(que('en')).toContain('your invite codes');
+  });
+});

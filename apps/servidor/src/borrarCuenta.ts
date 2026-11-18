@@ -270,6 +270,9 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare("UPDATE conductor_documentos SET clave = '' WHERE conductor_id = ?").bind(u.id),
     db.prepare('DELETE FROM modo_destino WHERE repartidor_id = ?').bind(u.id),
+    // C-LEGALES-COHERENTES: su código de invitación (lleva parte de su nombre). Los vínculos de quién
+    // invitó a quién quedan por id, sin nombre, para el antifraude de los premios.
+    db.prepare('DELETE FROM codigos_referido WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM usos_modo_destino WHERE repartidor_id = ?').bind(u.id),
     db.prepare("UPDATE cuentas_cobro_historial SET cambio = '' WHERE usuario_id = ?").bind(u.id),
     db

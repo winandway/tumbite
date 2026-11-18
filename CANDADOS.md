@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-LEGALES-COHERENTES · La privacidad no se contradice y dice lo que hace el código (18 nov 2026) — todos los países
+
+- **Qué estaba mal (auditor de tiendas):** la contraseña «cifrada» en la sección 2 y «hash de una vía» en la 9; Flex se guardaba «hasta siete años aunque borres tu cuenta» en la 2 pero la 6 solo nombraba «tu posición en las rutas» entre lo que se borra; con Stripe no quedaba claro qué se guarda; la página de borrar la cuenta no nombraba el chat con la asistente, los lugares guardados ni los códigos de invitación.
+- **Qué se hizo:** «hash de una vía: no la podemos leer» en las dos secciones (es y en); Flex igual en la 2 y la 6 (el registro de escaneos se guarda hasta siete años, sin tu nombre; se borra tu posición en vivo); de Stripe solo guardamos la referencia de tu cuenta, nunca números; la página de borrar la cuenta nombra el chat con la asistente virtual, los lugares guardados y los códigos de invitación. Para que esto último sea verdad, `borrarCuenta` ahora borra la fila de `codigos_referido` (el código lleva parte del nombre); los vínculos de quién invitó a quién quedan por id, sin nombre.
+- **Cómo se comprueba:** `apps/panel/src/sitio/legales.test.tsx` («la privacidad no se contradice», «borrar la cuenta lista todo») y «el código de invitación de la cuenta se borra con ella» en `apps/servidor/src/borradoServicios.test.ts` (vistas en rojo).
+- **Qué NO tocar:** no prometer en la política un borrado que `borrarCuenta` no hace; antes de cambiar una frase de borrado, mirar el código.
+
 ## C-CALLE-CON-LIMITE y C-ABRIR-AJUSTES · Lo que pidió el revisor sobre ee39dd5696 (18 nov 2026) — todos los países
 
 - **Qué podía romperse:** si el geocodificador del teléfono no contestaba (Android sin red, pasa en Venezuela), «leyendo la calle» quedaba para siempre y el pedido de Moto, Carro o Envíos no cotizaba, sin mensaje. Un viaje cancelado con el regalo devuelto salía en «Mis viajes» como «Gratis» aunque nadie viajó. Con el permiso negado para siempre la app solo lo decía en texto. La espera del primer plano dejaba su oyente colgado si la app no volvía.

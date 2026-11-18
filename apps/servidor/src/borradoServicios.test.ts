@@ -427,4 +427,16 @@ describe('borrar la cuenta borra los datos de viajes, envíos y fotos de entrega
       expect(r.estado).toBe(409);
     }
   });
+
+  // C-LEGALES-COHERENTES (18 nov 2026): el código de invitación lleva parte del nombre («JEHOVALV2»)
+  // y la página de borrar la cuenta dice que se borra.
+  it('el código de invitación de la cuenta se borra con ella', async () => {
+    const { m, sql, filas } = await preparar();
+    const u = await m.cuenta('repartidor');
+    await sql("INSERT INTO codigos_referido (usuario_id, codigo) VALUES (?, 'ANARUIZ7')", u.id);
+    expect((await m.llamar('DELETE', '/datos/cuentas/yo', undefined, u.token)).estado).toBe(200);
+    expect(await filas('SELECT codigo FROM codigos_referido WHERE usuario_id = ?', u.id)).toEqual(
+      [],
+    );
+  });
 });

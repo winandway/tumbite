@@ -320,7 +320,17 @@ for (const idioma of ['es', 'en'] as const) {
       if (CAPTURAS)
         await saldoBloque.screenshot({ path: join(CARPETA, `conductor-saldo-${idioma}.png`) });
       if (TIENDA) {
-        await saldoBloque.scrollIntoViewIfNeeded();
+        // Auditor de tiendas (18 nov 2026): en la ficha nada que parezca una promesa de ingresos
+        // («te alcanza para unas 124 carreras»); el saldo, los regalos y las cargas, arriba.
+        await pr.evaluate(() => {
+          for (const id of ['carreras-alcanzan', 'pedidos-alcanzan'])
+            document.querySelectorAll<HTMLElement>(`[data-testid="${id}"]`).forEach((e) => {
+              e.style.display = 'none';
+            });
+          document
+            .querySelector('[data-testid="saldo-prepago"]')
+            ?.scrollIntoView({ block: 'start' });
+        });
         await pr.waitForTimeout(800);
         await pr.screenshot({ path: tiendaDriver(idioma, '08-saldo-y-regalos.png') });
       }

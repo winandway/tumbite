@@ -24,6 +24,8 @@ const DATOS = ACTIVO
 const DESTINO = process.env.CARPETA_TIENDAS ?? '/Users/windocellc/Divoox/capturas-tiendas';
 const sql = sqlLocal;
 const FOTOS = 'https://divoox-progreso.sitios.dev/borrador-inicio/img';
+// La foto del banner del súper (la misma del administrador de banners del sitio de pruebas).
+const BANNER_MERCADO = 'https://staging.tumbite.com/media/fotos/banners/demo-banner-mercado.webp';
 
 const CIUDADES = {
   es: {
@@ -63,6 +65,10 @@ const CIUDADES = {
       { titulo: 'Centro comercial', detalle: 'Zona norte', lat: 8.64, lng: -71.655 },
       { titulo: 'Universidad', detalle: 'Sector universitario', lat: 8.633, lng: -71.67 },
     ],
+    // Lo que de verdad está abierto en el sitio de pruebas en esa ciudad (auditor de tiendas, 18 nov).
+    servicios: ['comida', 'carro', 'moto'],
+    viaje: 'moto',
+    portada: 'moto',
     pasajero: 'Alex Rivera',
     conductor: 'Carlos Méndez',
     telefono: '+584145550188',
@@ -99,13 +105,17 @@ const CIUDADES = {
       { titulo: 'Shopping mall', detalle: 'North side', lat: 42.494, lng: -83.47 },
       { titulo: 'City park', detalle: 'Downtown', lat: 42.476, lng: -83.48 },
     ],
+    // En Novi no hay Moto ni Envíos: la ficha en inglés muestra Carro y una portada de comida.
+    servicios: ['comida', 'carro', 'mercado', 'farmacia', 'licores'],
+    viaje: 'carro',
+    portada: 'comida',
     pasajero: 'Alex Turner',
     conductor: 'Michael Brooks',
     telefono: '+12485550188',
   },
 } as const;
 
-const SERVICIOS = ['comida', 'mercado', 'farmacia', 'licores', 'carro', 'moto', 'envios'];
+const TODOS = ['comida', 'mercado', 'farmacia', 'licores', 'carro', 'moto', 'envios'];
 
 for (const idioma of ['es', 'en'] as const)
   test(`capturas de la tienda del cliente (${idioma})`, async ({ browser, request }) => {
@@ -137,14 +147,16 @@ for (const idioma of ['es', 'en'] as const)
     sql(`UPDATE usuarios SET rol = 'admin' WHERE id = '${admin.usuario.id}'`);
     sql(`INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa, idioma)
          VALUES ('${z.id}', '${z.nombre}', '${z.pais}', 'USD', '${z.tz}', ${z.lat}, ${z.lng}, 15, 1, '${idioma}')`);
-    for (const s of SERVICIOS) {
+    const SERVICIOS: readonly string[] = C.servicios;
+    for (const s of TODOS) {
+      const abierto = SERVICIOS.includes(s);
       sql(
         `INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('${s}', 1)`,
       );
-      sql(`UPDATE servicios SET estado = 'disponible' WHERE id = '${s}'`);
+      if (abierto) sql(`UPDATE servicios SET estado = 'disponible' WHERE id = '${s}'`);
       sql(`DELETE FROM servicios_zona WHERE servicio_id = '${s}' AND zona_id = '${z.id}'`);
       sql(
-        `INSERT INTO servicios_zona (servicio_id, zona_id, estado) VALUES ('${s}', '${z.id}', 'disponible')`,
+        `INSERT INTO servicios_zona (servicio_id, zona_id, estado) VALUES ('${s}', '${z.id}', '${abierto ? 'disponible' : 'no_disponible'}')`,
       );
     }
     for (const s of ['moto', 'carro', 'envios']) {
@@ -161,11 +173,12 @@ for (const idioma of ['es', 'en'] as const)
       expect(t.ok(), await t.text()).toBe(true);
     }
 
-    // Una promoción destacada de la ciudad, para que el carrusel del inicio se vea (como en el borrador).
-    const cupon = idioma === 'es' ? 'BIENVENIDO3' : 'WELCOME3';
+    // El carrusel del inicio con una promoción SIN precio ni código (Google Play no admite ofertas en
+    // las capturas): el banner del súper, como el del administrador de banners del sitio de pruebas.
     sql(`DELETE FROM cupones WHERE destacado = 1`);
-    sql(`INSERT OR REPLACE INTO cupones (codigo, tipo, valor, descripcion_es, descripcion_en, zona_id, destacado, activo)
-         VALUES ('${cupon}', 'monto', 300, '-$3,00 en tu pedido', '$3.00 off your order', '${z.id}', 1, 1)`);
+    sql(`INSERT OR REPLACE INTO banners (id, lugar, estado, imagen, titulo_es, titulo_en, texto_es, texto_en, destino_tipo, destino_valor, zonas, orden)
+         VALUES ('tienda-banner-mercado', 'promociones', 'publicado', '${BANNER_MERCADO}', 'Tu súper sin salir de casa', 'Your groceries without leaving home',
+                 'Frutas, pan y más en minutos.', 'Fruit, bread and more in minutes.', 'servicio', 'mercado', '[]', 1)`);
     // Restaurantes con nombres neutros, abiertos todo el día, cerca de la persona.
     for (const [i, [nombre, categoria, foto]] of C.restaurantes.entries()) {
       const duenio = await cuenta('restaurante', nombre);
@@ -186,25 +199,25 @@ for (const idioma of ['es', 'en'] as const)
     const v = `veh-tienda-${id}`;
     // Aquí se toman fotos, no se prueba el alta del conductor (como en regalosDivoox).
     const requisitos = sql(
-      `SELECT servicio_id, requisito, obligatorio FROM servicio_requisitos WHERE servicio_id = 'moto'`,
+      `SELECT servicio_id, requisito, obligatorio FROM servicio_requisitos WHERE servicio_id = '${C.viaje}'`,
     );
-    sql(`DELETE FROM servicio_requisitos WHERE servicio_id = 'moto'`);
+    sql(`DELETE FROM servicio_requisitos WHERE servicio_id = '${C.viaje}'`);
     try {
       sql(`UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = '${z.id}'`);
       sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${c}', 1, ${z.lat + 0.004}, ${z.lng - 0.003}, datetime('now'), '${z.id}')
          ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);
       sql(`INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
-         VALUES ('${v}', '${c}', 'moto', 'Vespa', 'Primavera', '${idioma === 'es' ? 'Roja' : 'Red'}', '${idioma === 'es' ? 'AB123CD' : 'ABC1234'}', '', 2023, 1, 'aprobado')`);
+         VALUES ('${v}', '${c}', '${C.viaje}', '${C.viaje === 'moto' ? 'Vespa' : 'Toyota'}', '${C.viaje === 'moto' ? 'Primavera' : 'Corolla'}', '${idioma === 'es' ? 'Roja' : 'Silver'}', '${idioma === 'es' ? 'AB123CD' : 'ABC1234'}', '', 2023, ${C.viaje === 'moto' ? 1 : 4}, 'aprobado')`);
       sql(`UPDATE repartidores SET vehiculo_activo_id = '${v}' WHERE usuario_id = '${c}'`);
       for (const t of ['registro', 'seguro', 'seguro_pasajeros'])
         sql(
           `INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en) VALUES ('doc-${t}-${id}', '${v}', '${t}', 'doc', 'aprobado', datetime('now', '+1 year'))`,
         );
       sql(
-        `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en) VALUES ('${c}', 'moto', 'aprobada', '${admin.usuario.id}', datetime('now'))`,
+        `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en) VALUES ('${c}', '${C.viaje}', 'aprobada', '${admin.usuario.id}', datetime('now'))`,
       );
       sql(
-        `INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES ('${c}', 'moto', 1)`,
+        `INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES ('${c}', '${C.viaje}', 1)`,
       );
       sql(
         `INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('recarga-${id}', '${c}', 'prepago', '${z.pais}', 'USD', 2000, 'recarga_recorrido', 'recarga-${id}')`,
@@ -236,7 +249,7 @@ for (const idioma of ['es', 'en'] as const)
           .replace('T', ' ')
           .slice(0, 19);
         sql(
-          `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, creado_en) VALUES ('${op}', 'moto', 'viaje_pasajero', '${cli.usuario.id}', '${z.id}', 'terminada', '${en}')`,
+          `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, creado_en) VALUES ('${op}', '${C.viaje}', 'viaje_pasajero', '${cli.usuario.id}', '${z.id}', 'terminada', '${en}')`,
         );
         sql(`INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultima_clave, origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion, pin_recogida)
            VALUES ('${op}', 'terminado', 'sistema', 'alta:${op}', ${z.lat}, ${z.lng}, '${z.nombre}', ${lat}, ${lng}, '${dir.replace(/'/g, "''")}', '4321')`);
@@ -258,8 +271,8 @@ for (const idioma of ['es', 'en'] as const)
         ([pase, idi]) => {
           localStorage.setItem('tumbite.idioma', idi);
           localStorage.setItem('tumbite.sesion', pase);
-          // La portada de respaldo que toca al abrir: la de la moto.
-          localStorage.setItem('inicio-ultima-portada', '|2');
+          // La portada de respaldo que toca al abrir: la moto en El Vigía; en Novi (sin moto), comida.
+          localStorage.setItem('inicio-ultima-portada', '|1');
         },
         [cli.token, idioma] as const,
       );
@@ -272,10 +285,13 @@ for (const idioma of ['es', 'en'] as const)
       await p.goto('/app/');
       for (const s of [...SERVICIOS, 'mas'])
         await expect(p.getByTestId(`servicio-${s}`)).toBeVisible({ timeout: 30_000 });
-      await expect(p.getByTestId('portada-respaldo-moto')).toBeVisible();
+      await expect(p.getByTestId(`portada-respaldo-${C.portada}`)).toBeVisible();
+      await expect(p.getByTestId('inicio-promos')).toBeVisible({ timeout: 30_000 });
+      for (const s of TODOS.filter((x) => !SERVICIOS.includes(x)))
+        await expect(p.getByTestId(`servicio-${s}`)).toHaveCount(0);
       await foto('00-inicio-todos-los-servicios.png');
 
-      await p.getByTestId('servicio-moto').click();
+      await p.getByTestId(`servicio-${C.viaje}`).click();
       await expect(p.getByTestId('lugar-gimnasio').or(p.getByText(C.gimnasio.nombre))).toBeVisible({
         timeout: 30_000,
       });
