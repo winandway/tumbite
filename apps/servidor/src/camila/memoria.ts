@@ -287,16 +287,21 @@ const conObligatorios = (paises: string[]) => [
 ];
 
 /**
- * ¿En el lugar de esta persona hay que avisar? Su estado sale de su ciudad (las ciudades se llaman
- * PAÍS-ESTADO-CIUDAD, por ejemplo US-MI-NOVI) o, si todavía no tiene, del de la petición.
+ * ¿En el lugar de esta persona hay que avisar? Hay dos señales del estado: el de su ciudad (las
+ * ciudades se llaman PAÍS-ESTADO-CIUDAD, por ejemplo US-MI-NOVI) y el de la petición. Basta con que
+ * UNA diga un lugar de la lista: una cuenta de Michigan que escribe desde California recibe el aviso.
+ * Sin lugar conocido no se avisa (orden de Richard del 18 nov: fuera de California y la Unión
+ * Europea, apagado).
  */
 export function exigeAviso(ajustes: AjustesCamila, p: Persona, regionPeticion?: string) {
   if (!p.pais) return false;
   const deZona = p.zona_id?.split('-');
-  const region = (deZona && deZona.length >= 3 ? deZona[1] : regionPeticion)?.toUpperCase() ?? '';
+  const regiones = [deZona && deZona.length >= 3 ? deZona[1] : '', regionPeticion]
+    .map((r) => r?.toUpperCase() ?? '')
+    .filter(Boolean);
   return (
     ajustes.avisoIaPaises.includes(p.pais) ||
-    (region !== '' && ajustes.avisoIaPaises.includes(`${p.pais}-${region}`))
+    regiones.some((r) => ajustes.avisoIaPaises.includes(`${p.pais}-${r}`))
   );
 }
 

@@ -7,7 +7,12 @@ import { CANALES_ENCENDIDOS } from './canales';
 import { CONOCIMIENTO_DOCS } from './conocimiento';
 import { HERRAMIENTAS_MODELO } from './herramientas';
 import { VERDAD, diceSerHumana, pideHumano, preguntaSiEsHumana } from './identidad';
-import { PRESUPUESTO_MENSAJE } from './memoria';
+import {
+  AJUSTES_CAMILA_INICIALES,
+  PAISES_AVISO_OBLIGATORIO,
+  PRESUPUESTO_MENSAJE,
+  exigeAviso,
+} from './memoria';
 import {
   MODELOS_CAMILA,
   TOPE_MAXIMO_CENTAVOS,
@@ -211,6 +216,17 @@ describe('C-CAMILA-AVISO: solo donde la ley lo pide (California y la Unión Euro
     expect((await decir('de', 'DE')).datos.respuesta).toMatch(
       /^Hola, soy Camila, la asistente virtual/,
     );
+  });
+
+  it('basta una señal: una cuenta con ciudad en Michigan que escribe desde California recibe el aviso; y una de California lo recibe aunque escriba desde Michigan', () => {
+    const ajustes = { ...AJUSTES_CAMILA_INICIALES, avisoIaPaises: [...PAISES_AVISO_OBLIGATORIO] };
+    const persona = (zona: string | null) =>
+      ({ pais: 'US', zona_id: zona }) as Parameters<typeof exigeAviso>[1];
+    expect(exigeAviso(ajustes, persona('US-MI-NOVI'), 'CA')).toBe(true);
+    expect(exigeAviso(ajustes, persona('US-CA-LOSANGELES'), 'MI')).toBe(true);
+    expect(exigeAviso(ajustes, persona('US-MI-NOVI'), 'MI')).toBe(false);
+    expect(exigeAviso(ajustes, persona('US-MI-NOVI'))).toBe(false);
+    expect(exigeAviso(ajustes, persona(null))).toBe(false);
   });
 
   it('el superadmin no puede apagar los que van por ley y sí sumar otros; un «US» guardado de antes ya no cuenta', async () => {
