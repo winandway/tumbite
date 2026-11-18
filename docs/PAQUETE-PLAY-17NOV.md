@@ -86,3 +86,20 @@ Pedido de Richard (vía Gerencia, 18 nov): que el saldo para comisiones se vea s
 ## Compilar con lo último (18 nov)
 
 Apple avisó (ITMS-90725) que el cliente 49 y el Driver 41 de iPhone se compilaron con el SDK de iOS 26.5. Regla de Richard: todo se compila con lo último. Desde C-COMPILA-CON-LO-ULTIMO, los tres `eas.json` fijan la imagen de iPhone con Xcode 27.2 y la de Android más nueva para este SDK de Expo. Las compilaciones de iPhone de este paquete salen con el SDK de iOS 27; se comprueba en el registro de Expo que diga Xcode 27.
+
+## Pieza nueva pedida por los mototaxistas del piloto: «Subir la tarifa» (18 nov)
+
+Pregunta del piloto: «¿qué pasa si nadie toma la oferta porque el precio es muy bajo?». Como inDrive y DiDi («Aumentar tarifa»). Venezuela primero; valores por ciudad.
+
+- Si en 30 a 45 segundos nadie acepta, «Buscando tu moto» sugiere subir la tarifa con botones de un toque: +0,25, +0,50 y +1,00 en Venezuela (+1, +2 y +3 en EE. UU.), configurables por ciudad.
+- Subir NO cancela el viaje: se vuelve a ofrecer en el acto, con el precio nuevo, a todos los conductores cercanos, también a los que lo dejaron pasar.
+- El conductor ve «Tarifa subida por el pasajero». La comisión se recalcula sobre el precio nuevo. Con cupón, el regalo no crece: la subida la paga el pasajero en mano.
+- Tope de subidas por viaje y precio máximo razonable. Todo queda en el registro.
+- Prueba en rojo, bilingüe, guía en Docs (cliente y conductor) y ayuda en el «?».
+- **Orden:** servidor ya; la app en este mismo paquete si alcanza, y si no en la próxima versión. Estado: en cola del desarrollador, detrás del arreglo de las ofertas y de los fallos del robot.
+
+## Estado al 18 nov, 10:00 (hora del este)
+
+- **Mapa:** resuelto. Gerencia autorizó las cuatro huellas; comprobado en el cliente firmado por Play (39) y en el de pruebas (40). Driver se confirma en el próximo robot. Restaurants no usa mapa en Android.
+- **Robot de Android, tercera vuelta: NO LIMPIO.** Ofertas que no vuelven tras vencer y sin aviso al celular (emergencia del piloto, arreglo en d05dcc890e, publicándose), envíos sin tarifa en pruebas (creada), códigos de mapa a la vista y menores (en arreglo).
+- **Auditoría de tiendas, tercera: NO APTO**, por ficha y capturas en inglés con servicios no abiertos en Estados Unidos. Corregidas las fichas, las capturas (7 y 8 del cliente, 4 y 4 de Driver), la privacidad y la seguridad de los datos (salud y fecha de nacimiento, opcionales). Falta la cuarta auditoría.
