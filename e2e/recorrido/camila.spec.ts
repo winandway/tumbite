@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
+import { DOCS_PUBLICOS } from '../../apps/servidor/src/camila/docsPublicos';
 
 /**
  * C-CAMILA-CHAT y C-CAMILA-BUZON (17 nov 2026) en el navegador, de punta a punta y solo en esta
@@ -54,6 +55,7 @@ const CIUDADES = {
       aprendizaje: 'Aprendizaje',
       ajustes: 'Ajustes',
       conversacion: 'Conversación',
+      verGuia: 'Ver la guía con capturas →',
     },
     preguntaDriver: '¿Cómo recargo mi saldo para recibir carreras?',
     preguntaWeb: '¿Qué necesito para manejar con Divoox en El Vigía?',
@@ -85,6 +87,7 @@ const CIUDADES = {
       aprendizaje: 'Learning',
       ajustes: 'Settings',
       conversacion: 'Conversation',
+      verGuia: 'See the guide with screenshots →',
     },
     preguntaDriver: 'How do I top up my balance to get trips?',
     preguntaWeb: 'What do I need to drive with Divoox in Novi?',
@@ -162,6 +165,10 @@ for (const idioma of ['es', 'en'] as const) {
     await expect(pr.getByTestId('chat-mensaje-camila')).toHaveCount(antes + 1, {
       timeout: 30_000,
     });
+    // C-CAMILA-ENLACE-GUIA: la respuesta sale de una guía y termina con su enlace, como texto que se
+    // toca (nunca la dirección larga).
+    await expect(pr.getByTestId('chat-enlace-guia').last()).toHaveText(C.textos.verGuia);
+    await expect(pr.getByTestId('chat-soporte-app')).not.toContainText('divoox.com');
     if (CAPTURAS) await pr.screenshot({ path: join(CARPETA, `camila-driver-chat-${idioma}.png`) });
     // C-CAMILA-REPORTAR: la respuesta de Camila se reporta sin salir de la app y queda marcada.
     await pr.getByTestId('chat-reportar').last().click();
@@ -288,5 +295,82 @@ for (const idioma of ['es', 'en'] as const) {
     await ctxWeb.close();
     await ctxWebMovil.close();
     await panel.close();
+  });
+}
+
+/**
+ * C-CAMILA-ENLACE-GUIA (18 nov 2026, Richard): toda respuesta que sale de una guía termina con el
+ * enlace a esa guía, como texto que se toca, y ningún enlace de Camila lleva a una página que no
+ * existe. Camila solo arma enlaces con las rutas de DOCS_PUBLICOS: aquí se pide cada una (200) y se
+ * abre una muestra en el navegador para ver que es la guía de verdad, con su título (el sitio es una
+ * sola página y contesta 200 a cualquier dirección: por eso el 200 solo no alcanza).
+ */
+for (const idioma of ['es', 'en'] as const) {
+  test(`Camila: el enlace a la guía se toca y abre la guía (${idioma})`, async ({
+    browser,
+    request,
+  }) => {
+    test.setTimeout(300_000);
+    const pre = idioma === 'es' ? '/es' : '';
+    const guias = DOCS_PUBLICOS.filter((g) => g.idioma === idioma);
+    expect(guias.length).toBeGreaterThan(100);
+    for (const g of guias) {
+      const r = await request.get(`${pre}/docs/${g.ruta}`);
+      expect(r.status(), g.ruta).toBe(200);
+    }
+    const ctx = await browser.newContext({
+      viewport: { width: 1280, height: 860 },
+      baseURL: DATOS!.url,
+    });
+    await ctx.addInitScript((idi) => localStorage.setItem('tumbite.idioma', idi), idioma);
+    const p = await ctx.newPage();
+    // Una de cada doce guías, y siempre la de la moto: la página muestra el título de ESA guía.
+    const muestra = guias.filter((g, i) => i % 12 === 0 || g.ruta === 'ordering/ride-moto');
+    for (const g of muestra) {
+      await p.goto(`${pre}/docs/${g.ruta}`);
+      await expect(p.getByRole('heading', { level: 1 }), g.ruta).toHaveText(g.titulo, {
+        timeout: 30_000,
+      });
+    }
+    // En el chat de la web: saludo corto, la respuesta de la moto y su enlace tocable.
+    await p.goto(`${pre}/how-it-works`);
+    const T =
+      idioma === 'es'
+        ? {
+            burbuja: 'Habla con nuestro equipo de soporte',
+            escribe: 'Escribe tu mensaje…',
+            enviar: 'Enviar',
+            pregunta: 'Hola Camila, ¿cómo pido una moto?',
+            guia: 'Ver la guía con capturas →',
+            boton: '«Solicitar moto»',
+          }
+        : {
+            burbuja: 'Talk to our support team',
+            escribe: 'Write your message…',
+            enviar: 'Send',
+            pregunta: 'Hi Camila, how do I order a moto ride?',
+            guia: 'See the guide with screenshots →',
+            boton: '“Request moto”',
+          };
+    await p.getByRole('button', { name: T.burbuja }).click();
+    const chat = p.getByTestId('chat-soporte');
+    await expect(chat).toBeVisible();
+    await expect(chat).not.toContainText(/asistente virtual|virtual assistant/i);
+    await expect(chat).not.toContainText(/hablar con una persona|talk to a person/i);
+    if (CAPTURAS) await p.screenshot({ path: join(CARPETA, `camila-web-saludo-${idioma}.png`) });
+    await chat.getByLabel(T.escribe).fill(T.pregunta);
+    await chat.getByRole('button', { name: T.enviar, exact: true }).click();
+    const enlace = chat.getByTestId('chat-enlace-guia');
+    await expect(enlace).toHaveCount(1, { timeout: 30_000 });
+    await expect(enlace).toHaveText(T.guia);
+    await expect(enlace).toHaveAttribute(
+      'href',
+      `https://divoox.com${pre}/docs/ordering/ride-moto`,
+    );
+    await expect(chat.getByTestId('chat-mensaje-camila').last()).toContainText(T.boton);
+    // La dirección larga no se ve en el chat.
+    await expect(chat).not.toContainText('divoox.com');
+    if (CAPTURAS) await p.screenshot({ path: join(CARPETA, `camila-web-guia-${idioma}.png`) });
+    await ctx.close();
   });
 }

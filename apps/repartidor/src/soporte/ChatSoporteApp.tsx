@@ -8,11 +8,13 @@ import {
   TEXTOS_CHAT_SOPORTE,
   enIdioma,
   nombreAutorCamila,
+  trozosDeMensaje,
   cronometroDeEscritura,
   useBorrador,
 } from '@tumbite/compartido';
 import {
   AvisoBorrador,
+  abrirPagina,
   Boton,
   C,
   CASILLA_EN_FILA,
@@ -136,9 +138,35 @@ export function ChatSoporteApp() {
         <Text style={{ fontSize: 12, fontWeight: '700', color: mio ? '#D0D2D6' : '#666B73' }}>
           {nombreAutorCamila(m.autor, idioma)}
         </Text>
-        <Text style={{ color: mio ? '#FFFFFF' : C.secundario, fontSize: 15, lineHeight: 21 }}>
-          {m.texto}
-        </Text>
+        {trozosDeMensaje(m.texto).map((trozo, i) =>
+          'url' in trozo ? (
+            <Pressable
+              key={i}
+              testID="chat-enlace-guia"
+              accessibilityRole="link"
+              onPress={() => abrirPagina(trozo.url)}
+              style={{ paddingVertical: 6 }}
+            >
+              <Text
+                style={{
+                  color: '#C20A1A',
+                  fontSize: 15,
+                  fontWeight: '700',
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {trozo.etiqueta}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text
+              key={i}
+              style={{ color: mio ? '#FFFFFF' : C.secundario, fontSize: 15, lineHeight: 21 }}
+            >
+              {trozo.texto}
+            </Text>
+          ),
+        )}
         {m.autor === 'camila' && m.id !== 'saludo' ? (
           m.reportado ? (
             <Text testID="chat-reportada" style={{ color: '#666B73', fontSize: 12, marginTop: 4 }}>

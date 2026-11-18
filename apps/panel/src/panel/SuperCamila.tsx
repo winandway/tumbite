@@ -112,9 +112,9 @@ const T = {
     regalosDia: 'Regalos de arranque por día',
     regalosAyuda: (n: number) =>
       `Cuántos regalos de arranque puede entregar Camila en un día (hasta ${n}).`,
-    avisoIa: 'Aviso de asistente virtual por país',
+    avisoIa: 'Aviso de asistente virtual por lugar',
     avisoIaAyuda:
-      'Encendido, Camila dice en su primer mensaje que es la asistente virtual de Divoox. Siempre dice la verdad si se lo preguntan.',
+      'Encendido, Camila dice una sola vez, al empezar la conversación, que es la asistente virtual de Divoox. Va fijo en California y en la Unión Europea, donde la ley lo pide; en el resto de Estados Unidos, en Venezuela y en lo demás va apagado. Siempre dice la verdad si se lo preguntan.',
     avisoFijo: 'fijo por ley',
     guardar: 'Guardar los ajustes',
     guardado: 'Ajustes guardados.',
@@ -207,9 +207,9 @@ const T = {
       `Up to ${m} a day. At the limit, Camila keeps going without AI and alerts you.`,
     regalosDia: 'Starter gifts per day',
     regalosAyuda: (n: number) => `How many starter gifts Camila can give in a day (up to ${n}).`,
-    avisoIa: 'Virtual assistant notice by country',
+    avisoIa: 'Virtual assistant notice by place',
     avisoIaAyuda:
-      'On, Camila says in her first message that she’s Divoox’s virtual assistant. She always tells the truth if asked.',
+      'On, Camila says once, at the start of the conversation, that she’s Divoox’s virtual assistant. It’s fixed in California and in the European Union, where the law requires it; in the rest of the United States, in Venezuela and everywhere else it’s off. She always tells the truth if asked.',
     avisoFijo: 'required by law',
     guardar: 'Save settings',
     guardado: 'Settings saved.',
@@ -1082,7 +1082,11 @@ function FormAjustes({
                 )
               }
             />
-            {nombrePais(p, idioma)}
+            {p === 'US-CA'
+              ? idioma === 'en'
+                ? 'California (United States)'
+                : 'California (Estados Unidos)'
+              : nombrePais(p, idioma)}
             {obligatorios.includes(p) ? ` (${t.avisoFijo})` : ''}
           </label>
         ))}

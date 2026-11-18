@@ -735,7 +735,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Abre Divoox y toca «Moto».",
    "Confirma el punto de recogida (puedes moverlo en el mapa) y escribe tu destino.",
    "Mira el precio fijo y elige cómo pagas: la app te muestra los métodos de tu ciudad (en Venezuela, efectivo o pago móvil).",
-   "Toca «Pedir». Cuando el conductor acepte, verás sus datos y su ubicación.",
+   "Toca «Solicitar moto». Cuando el conductor acepte, verás sus datos y su ubicación.",
    "Al subirte, comprueba la placa y, si la app te muestra un código, díselo al conductor."
   ],
   "cuerpo": "Divoox Moto te lleva rápido por la ciudad. Está disponible en las ciudades donde Divoox Moto esté abierto; si en la tuya todavía no lo está, la app no te deja pedirlo. El precio es fijo: lo ves antes de pedir y no cambia por el tráfico. En Venezuela el precio va en dólares y, al lado, ves su equivalente en bolívares con la tasa del día. La tasa es, por defecto, la oficial del Banco Central de Venezuela, que se actualiza sola cada día hábil; al lado ves de qué día es. Es solo de referencia: el precio se fija en dólares. Al confirmar buscamos al conductor más cercano. Cuando acepta, ves su nombre, su moto, el color y la placa, y lo sigues en el mapa. Para empezar el viaje, en las ciudades donde se usa, le dices al conductor tu código de cuatro números. Así sabes que te subes con la persona correcta."
@@ -3065,7 +3065,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Open Divoox and tap “Moto”.",
    "Confirm your pickup point (you can move it on the map) and enter your destination.",
    "Check the upfront price and choose how to pay: the app shows the methods available in your city (in the United States, cash or card).",
-   "Tap “Request”. When a driver accepts, you’ll see their details and location.",
+   "Tap “Request moto”. When a driver accepts, you’ll see their details and location.",
    "When you get on, check the plate and, if the app shows a code, tell it to the driver."
   ],
   "cuerpo": "Divoox Moto gets you across the city fast. It’s available in the cities where Divoox Moto is open; if it isn’t open in yours yet, the app won’t let you request it. The price is upfront: you see it before you request and it doesn’t change with traffic. In the United States the price is in US dollars, and the app shows it next to the distance and the time of your ride, so you know what you’ll pay before you get on. When you confirm, we find the nearest driver. Once they accept, you see their name, motorcycle, color and plate, and you can follow them on the map. To start the ride, in cities that use it, you tell the driver your four-digit code. That way you know you’re getting on with the right person."

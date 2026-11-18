@@ -18,10 +18,12 @@ import {
   guardarAjustes,
   humanoActivo,
   leerAjustes,
+  esLugar,
   personaDeCorreo,
   personaDeUsuario,
   personaDeVisitante,
   personaPorId,
+  regionDePeticion,
   sentenciaMensaje,
   unirConCorreo,
 } from '../camila/memoria';
@@ -140,7 +142,10 @@ camila.post('/camila/mensaje', async (c) => {
       'verificar',
       429,
     );
-  const r = await recibirMensaje(c.env, db, p, d.canal, d.texto);
+  const r = await recibirMensaje(c.env, db, p, d.canal, d.texto, {
+    // El estado de la petición (California): solo para saber si la ley pide el aviso.
+    region: regionDePeticion(c),
+  });
   const fresca = (await personaPorId(db, p.id)) ?? p;
   return c.json({ respuesta: r.respuesta, ...(await hiloPublico(db, fresca)) });
 });
@@ -547,7 +552,7 @@ camila.put('/admin/camila/ajustes', async (c) => {
       topeDiarioCentavos: z.number().int().min(0).max(TOPE_MAXIMO_CENTAVOS, {
         error: 'El tope diario no puede pasar de 5 dólares.',
       }),
-      avisoIaPaises: z.array(z.string().regex(/^[A-Z]{2}$/)).max(60),
+      avisoIaPaises: z.array(z.string().max(6).refine(esLugar)).max(80),
       regalosPorDia: z.number().int().min(0).max(REGALOS_POR_DIA_MAXIMO),
     }),
   );

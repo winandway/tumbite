@@ -170,53 +170,81 @@ describe('C-CAMILA-IDENTIDAD: nunca dice que es humana', () => {
   });
 });
 
-describe('C-CAMILA-AVISO: donde la ley lo pide, avisa desde el primer mensaje', () => {
-  it('Estados Unidos y la Unión Europea van fijos; Venezuela sigue apagado; la firma no cambia', async () => {
+describe('C-CAMILA-AVISO: solo donde la ley lo pide (California y la Unión Europea), una vez y corto', () => {
+  const OFRECE_PERSONA =
+    /hablar con una persona|persona del equipo|alguien del equipo|talk to a person|person on the team|someone on the team/i;
+  const ASISTENTE = /asistente virtual|virtual assistant/i;
+
+  it('en Michigan, en el resto de Estados Unidos, en Venezuela y en todo lo demás NO sale «asistente virtual» ni la oferta de persona; en California y la Unión Europea sale una vez', async () => {
     const e = await escenario({ GEMINI_API_KEY: undefined });
-    const pais = (c: string) => ({ 'cf-ipcountry': c, 'x-idioma': 'es' });
     const visita = (n: string) => ({ 'x-camila-visita': n.padEnd(40, 'p') });
-    const decir = (n: string, c: string, idioma = 'es') =>
+    const decir = (n: string, pais: string, region = '', idioma = 'es') =>
       e.m.llamar('POST', '/datos/camila/mensaje', { texto: '¿cómo empiezo?' }, undefined, {
         ...visita(n),
-        ...pais(c),
+        'cf-ipcountry': pais,
+        ...(region ? { 'cf-region-code': region } : {}),
         'x-idioma': idioma,
       });
-    const us = await decir('us', 'US');
-    expect(us.datos.respuesta).toMatch(
-      // UNA vez, corto, y sin ofrecer una persona.
-      /^Hola, soy Camila, la asistente virtual de Divoox\.\n\n(?![\s\S]*persona del equipo)/,
+    for (const [n, pais, region] of [
+      ['mi', 'US', 'MI'],
+      ['tx', 'US', 'TX'],
+      ['us', 'US', ''],
+      ['ve', 'VE', ''],
+      ['co', 'CO', ''],
+      // «CA» suelto es Canadá, no California.
+      ['ca', 'CA', 'ON'],
+    ] as const) {
+      const r = (await decir(n, pais, region)).datos.respuesta as string;
+      expect(r, `${pais}-${region}`).not.toMatch(ASISTENTE);
+      expect(r, `${pais}-${region}`).not.toMatch(OFRECE_PERSONA);
+    }
+    const california = await decir('cal', 'US', 'CA');
+    expect(california.datos.respuesta).toMatch(
+      // UNA línea corta, una vez, y sin ofrecer una persona.
+      /^Hola, soy Camila, la asistente virtual de Divoox\.\n\n/,
     );
-    // Solo en el primer mensaje.
-    expect((await decir('us', 'US')).datos.respuesta).not.toMatch(/asistente virtual/);
-    const en = await decir('us-en', 'US', 'en');
-    expect(en.datos.respuesta).toMatch(
-      /^Hi, I am Camila, the Divoox virtual assistant\.\n\n(?![\s\S]*person on the team)/,
-    );
+    expect(california.datos.respuesta).not.toMatch(OFRECE_PERSONA);
+    expect((await decir('cal', 'US', 'CA')).datos.respuesta).not.toMatch(ASISTENTE);
+    const en = await decir('cal-en', 'US', 'CA', 'en');
+    expect(en.datos.respuesta).toMatch(/^Hi, I am Camila, the Divoox virtual assistant\.\n\n/);
+    expect(en.datos.respuesta).not.toMatch(OFRECE_PERSONA);
     expect((await decir('de', 'DE')).datos.respuesta).toMatch(
-      /^Hola, soy Camila, la asistente virtual/,
-    );
-    expect((await decir('ve', 'VE')).datos.respuesta).not.toMatch(/asistente virtual/);
-    // El superadmin no puede apagar los que van por ley, y sí sumar otros.
-    await e.m.llamar(
-      'PUT',
-      '/datos/admin/camila/ajustes',
-      { ia: true, topeDiarioCentavos: 100, avisoIaPaises: ['CO'], regalosPorDia: 20 },
-      e.admin.token,
-    );
-    const a = await e.m.llamar('GET', '/datos/admin/camila/ajustes', undefined, e.admin.token);
-    expect(a.datos.ajustes.avisoIaPaises).toEqual(
-      expect.arrayContaining(['US', 'ES', 'FR', 'DE', 'CO']),
-    );
-    expect(a.datos.ajustes.avisoIaPaises).not.toContain('VE');
-    expect(a.datos.avisoObligatorio).toHaveLength(28);
-    expect((await decir('us2', 'US')).datos.respuesta).toMatch(
       /^Hola, soy Camila, la asistente virtual/,
     );
   });
 
-  it('la bienvenida de un conductor que se registra en Estados Unidos ya lo dice; en Venezuela no', async () => {
+  it('el superadmin no puede apagar los que van por ley y sí sumar otros; un «US» guardado de antes ya no cuenta', async () => {
     const e = await escenario({ GEMINI_API_KEY: undefined });
-    const registrar = async (nombre: string, c: string) => {
+    // Lo que quedó guardado cuando el aviso se encendió para todo Estados Unidos.
+    await e.m.DB.prepare(
+      "INSERT INTO config (clave, valor) VALUES ('camila', ?) ON CONFLICT (clave) DO UPDATE SET valor = excluded.valor",
+    )
+      .bind(JSON.stringify({ ia: true, topeDiarioCentavos: 100, avisoIaPaises: ['US', 'CO'] }))
+      .run();
+    const antes = await e.m.llamar('GET', '/datos/admin/camila/ajustes', undefined, e.admin.token);
+    expect(antes.datos.ajustes.avisoIaPaises).not.toContain('US');
+    expect(antes.datos.ajustes.avisoIaPaises).toEqual(
+      expect.arrayContaining(['US-CA', 'ES', 'FR', 'DE', 'CO']),
+    );
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/camila/ajustes',
+      { ia: true, topeDiarioCentavos: 100, avisoIaPaises: ['PE'], regalosPorDia: 20 },
+      e.admin.token,
+    );
+    const a = await e.m.llamar('GET', '/datos/admin/camila/ajustes', undefined, e.admin.token);
+    expect(a.datos.ajustes.avisoIaPaises).toEqual(
+      expect.arrayContaining(['US-CA', 'ES', 'FR', 'DE', 'PE']),
+    );
+    expect(a.datos.ajustes.avisoIaPaises).not.toContain('VE');
+    expect(a.datos.ajustes.avisoIaPaises).not.toContain('US');
+    expect(a.datos.avisoObligatorio).toHaveLength(28);
+    expect(a.datos.avisoObligatorio).toContain('US-CA');
+  });
+
+  it('el correo y el chat de bienvenida: en Michigan y Venezuela se presenta UNA vez («del equipo de soporte»), sin «asistente virtual» y sin ofrecer una persona; en California lo dice en esa misma línea', async () => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    const registrar = async (nombre: string, pais: string, region: string, idioma: 'es' | 'en') => {
       const correo = `${nombre.toLowerCase()}-${Math.random().toString(36).slice(2)}@conductores.test`;
       const r = await e.m.llamar(
         'POST',
@@ -226,10 +254,10 @@ describe('C-CAMILA-AVISO: donde la ley lo pide, avisa desde el primer mensaje', 
           correo,
           clave: 'clave-segura-1',
           rol: 'repartidor',
-          idioma: 'en',
+          idioma,
         },
         undefined,
-        { 'cf-ipcountry': c },
+        { 'cf-ipcountry': pais, ...(region ? { 'cf-region-code': region } : {}) },
       );
       const hilo = await e.m.llamar(
         'GET',
@@ -237,19 +265,42 @@ describe('C-CAMILA-AVISO: donde la ley lo pide, avisa desde el primer mensaje', 
         undefined,
         r.datos.token as string,
       );
-      return { correo, primero: hilo.datos.mensajes[0].texto as string };
+      const carta = e.enviados.find(
+        (x) => x.para === correo && /Welcome|Bienvenido/.test(x.asunto),
+      );
+      return { chat: hilo.datos.mensajes[0].texto as string, correo: carta?.texto ?? '' };
     };
-    const us = await registrar('Michael', 'US');
-    expect(us.primero).toMatch(
-      /^Hi, I am Camila, the Divoox virtual assistant[\s\S]*Hi Michael, welcome to Divoox/,
+    const veces = (t: string, r: RegExp) => (t.match(r) ?? []).length;
+    const michigan = await registrar('Michael', 'US', 'MI', 'en');
+    const venezuela = await registrar('Carmen', 'VE', '', 'es');
+    for (const b of [michigan, venezuela])
+      for (const t of [b.chat, b.correo]) {
+        expect(t).not.toBe('');
+        expect(t).not.toMatch(ASISTENTE);
+        expect(t).not.toMatch(OFRECE_PERSONA);
+        // Se presenta una sola vez (en el correo, además, va la firma al pie).
+        expect(veces(t, /Soy Camila|I am Camila/g)).toBe(1);
+      }
+    expect(venezuela.correo).toMatch(
+      /^Hola, Carmen, te doy la bienvenida a Divoox\. Soy Camila, del equipo de soporte, y te acompaño/,
     );
-    expect(e.enviados.find((x) => x.para === us.correo && /Welcome/.test(x.asunto))?.texto).toMatch(
-      /virtual assistant[\s\S]*Camila Campos, Divoox Support Team$/,
-    );
-    const ve = await registrar('Carmen', 'VE');
-    expect(ve.primero).not.toMatch(/virtual assistant/);
+    expect(venezuela.correo).toMatch(/desliza para conectarte\./);
+    expect(venezuela.correo).not.toMatch(/Conectarme/);
+    expect(venezuela.correo).toMatch(/Camila Campos, del equipo de soporte de Divoox$/);
+    expect(michigan.correo).toMatch(/I am Camila, from the support team/);
+    expect(michigan.correo).toMatch(/slide to go online\./);
+    const california = await registrar('Sarah', 'US', 'CA', 'en');
+    for (const t of [california.chat, california.correo]) {
+      expect(veces(t, ASISTENTE_G)).toBe(1);
+      expect(veces(t, /I am Camila/g)).toBe(1);
+      expect(t).toMatch(
+        /^Hi Sarah, welcome to Divoox\. I am Camila, the Divoox virtual assistant,/,
+      );
+      expect(t).not.toMatch(OFRECE_PERSONA);
+    }
   });
 });
+const ASISTENTE_G = /asistente virtual|virtual assistant/gi;
 
 describe('C-CAMILA-TOPE: tope diario de IA en código', () => {
   it('con el tope del día alcanzado no llama al modelo, contesta sin IA y avisa UNA vez', async () => {

@@ -10,6 +10,7 @@ import {
   enIdioma,
   enIdiomaDireccion,
   nombreAutorCamila,
+  trozosDeMensaje,
   cronometroDeEscritura,
   useBorrador,
   visitaCamila,
@@ -245,7 +246,24 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
                 data-testid={`chat-mensaje-${m.autor}`}
               >
                 <span className="chat-soporte-autor">{nombreAutorCamila(m.autor, idioma)}</span>
-                <span className="chat-soporte-texto">{m.texto}</span>
+                {trozosDeMensaje(m.texto).map((trozo, i) =>
+                  'url' in trozo ? (
+                    <a
+                      key={i}
+                      className="chat-soporte-guia"
+                      href={trozo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="chat-enlace-guia"
+                    >
+                      {trozo.etiqueta}
+                    </a>
+                  ) : (
+                    <span key={i} className="chat-soporte-texto">
+                      {trozo.texto}
+                    </span>
+                  ),
+                )}
                 {m.autor === 'camila' ? (
                   m.reportado ? (
                     <span className="chat-soporte-reportada" role="status">

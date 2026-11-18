@@ -5689,6 +5689,15 @@ body.modo-tableta .cabecera {
   font-size: 0.95rem;
   line-height: 1.4;
 }
+.chat-soporte-guia {
+  align-self: flex-start;
+  margin-top: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--rojo-oscuro, #c20a1a);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .chat-soporte-reportar {
   align-self: flex-start;
   margin-top: 4px;

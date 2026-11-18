@@ -1,9 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { usarTransporteCorreo } from '../correo';
+import { aHtml, usarTransporteCorreo } from '../correo';
 import { mundo } from '../pruebas/ayuda';
-import { buscarGuias } from './buscadorDocs';
+import { trozosDeMensaje } from '@tumbite/compartido';
+import { buscarGuias, conEnlacesDeGuia } from './buscadorDocs';
+import { buscarEnDocs } from './conocimiento';
 import { cuidarTono } from './cerebro';
 import { DOCS_PUBLICOS } from './docsPublicos';
 import { type LlamadaModelo, usarModeloCamila } from './modelo';
@@ -150,9 +152,9 @@ async function escenario(extra: Record<string, unknown> = {}) {
     ...extra,
   });
   const cliente = await m.cuenta('cliente', 'Carla Cliente');
-  const decir = (t: string, token = cliente.token) =>
+  const decir = (t: string, token = cliente.token, idioma: 'es' | 'en' = 'es') =>
     m.llamar('POST', '/datos/camila/mensaje', { texto: t, canal: 'web' }, token, {
-      'x-idioma': 'es',
+      'x-idioma': idioma,
       'cf-ipcountry': 'VE',
     });
   const casos = async () =>
@@ -167,7 +169,12 @@ describe('C-CAMILA-TONO: la conversación que leyó Richard, arreglada', () => {
     const r = await e.decir('Hola Camila, ¿cómo pido una moto?');
     const texto = r.datos.respuesta as string;
     expect(texto).toMatch(/moto/i);
-    expect(texto).toContain('https://divoox.com/es/docs/ordering/ride-moto');
+    // C-CAMILA-ENLACE-GUIA: termina con el enlace a la guía, como texto que se toca.
+    expect(texto).toMatch(
+      /\n\nVer la guía con capturas → https:\/\/divoox\.com\/es\/docs\/ordering\/ride-moto$/,
+    );
+    // La guía dice el botón como está hoy en la app.
+    expect(texto).toContain('«Solicitar moto»');
     expect(texto).not.toMatch(
       /Todavía no tengo esa respuesta|Soy Camila|asistente virtual|hablar con una persona|persona del equipo/i,
     );
@@ -267,5 +274,117 @@ describe('C-CAMILA-TONO: la conversación que leyó Richard, arreglada', () => {
     }
     expect(nombreAutorCamila('camila', 'es')).toBe('Camila');
     expect(TEXTOS_CHAT_SOPORTE.es.camila).toBe('Camila Campos, del equipo de soporte de Divoox');
+  });
+});
+
+describe('C-CAMILA-ENLACE-GUIA: toda respuesta que sale de una guía termina con su enlace', () => {
+  const rutasDe = (t: string) =>
+    [...t.matchAll(/https:\/\/divoox\.com(?:\/es)?\/docs\/([a-z0-9/-]+)/g)].map((m) => m[1]);
+
+  it.each(TREINTA)(
+    '«%s» termina con el enlace de su guía, en su idioma',
+    async (pregunta, idioma, quien) => {
+      const e = await escenario({ GEMINI_API_KEY: undefined });
+      const token =
+        quien === 'conductor'
+          ? (await e.m.cuenta('repartidor', 'Diego Conductor')).token
+          : undefined;
+      const texto = (await e.decir(pregunta, token, idioma)).datos.respuesta as string;
+      const ultima = texto.split('\n').at(-1) ?? '';
+      // Lo que no sale de una guía (el estado de la cuenta del conductor) no lleva enlace.
+      if (quien === 'conductor' && !texto.includes('divoox.com')) return;
+      expect(ultima).toMatch(
+        idioma === 'es'
+          ? /^Ver la guía con capturas → https:\/\/divoox\.com\/es\/docs\/[a-z0-9/-]+$/
+          : /^See the guide with screenshots → https:\/\/divoox\.com\/docs\/[a-z0-9/-]+$/,
+      );
+      // Nunca inventa un enlace: todos son guías que existen en Docs, en ese idioma.
+      for (const ruta of rutasDe(texto))
+        expect(DOCS_PUBLICOS.some((g) => g.idioma === idioma && g.ruta === ruta)).toBe(true);
+      // Y la dirección va una sola vez, al final (no suelta en medio del texto).
+      expect(texto.split('\n').slice(0, -1).join('\n')).not.toMatch(/divoox\.com/);
+    },
+  );
+
+  it('con IA: quita los enlaces inventados, pone el de la guía usada, en el idioma de la persona, y dos si usó dos', async () => {
+    expect(
+      conEnlacesDeGuia(
+        'Abre Moto y elige tu destino. Mira https://divoox.com/docs/ordering/no-existe y también divoox.com/docs/ordering/ride-moto.',
+        'es',
+      ),
+    ).toBe(
+      'Abre Moto y elige tu destino.\n\nVer la guía con capturas → https://divoox.com/es/docs/ordering/ride-moto',
+    );
+    // Sin enlace en el texto: el de la guía de la que salió la respuesta.
+    expect(conEnlacesDeGuia('Toca «Solicitar moto».', 'en', ['ordering/ride-moto'])).toBe(
+      'Toca «Solicitar moto».\n\nSee the guide with screenshots → https://divoox.com/docs/ordering/ride-moto',
+    );
+    // Dos guías: las dos, una por línea. Tres: solo dos.
+    const dos = conEnlacesDeGuia(
+      'Paga en mano.\nGuía completa: https://divoox.com/es/docs/ordering/ride-moto-pago\n[Cupones](https://divoox.com/es/docs/ordering/coupons)\nhttps://divoox.com/es/docs/ordering/ride-moto',
+      'es',
+    );
+    expect(dos.split('\n').slice(-2)).toEqual([
+      'Ver la guía con capturas → https://divoox.com/es/docs/ordering/ride-moto-pago',
+      'Ver la guía con capturas → https://divoox.com/es/docs/ordering/coupons',
+    ]);
+    expect(dos.startsWith('Paga en mano.\n\nVer la guía')).toBe(true);
+    // Una guía que no existe y ninguna usada: sin enlace (nunca uno inventado).
+    expect(conEnlacesDeGuia('Listo. https://divoox.com/docs/x/y', 'es')).toBe('Listo.');
+    expect(conEnlacesDeGuia('Gracias a ti.', 'es')).toBe('Gracias a ti.');
+
+    const e = await escenario();
+    modelo(async (_env, pedido) => {
+      const yaBusco = JSON.stringify(pedido).includes('functionResponse');
+      return yaBusco
+        ? {
+            partes: [{ text: 'Abre Moto, elige tu destino y toca «Solicitar moto».' }],
+            entrada: 10,
+            salida: 10,
+          }
+        : {
+            partes: [{ functionCall: { name: 'buscar_respuesta', args: { tema: 'pedir moto' } } }],
+            entrada: 10,
+            salida: 10,
+          };
+    });
+    const r = (await e.decir('¿cómo pido una moto?')).datos.respuesta as string;
+    expect(r).toBe(
+      'Abre Moto, elige tu destino y toca «Solicitar moto».\n\nVer la guía con capturas → https://divoox.com/es/docs/ordering/ride-moto',
+    );
+  });
+
+  it('el chat la pinta como enlace que se toca y el correo como su botón, sin repetir la etiqueta', () => {
+    const texto =
+      'Abre Moto.\n1. Elige tu destino.\n\nVer la guía con capturas → https://divoox.com/es/docs/ordering/ride-moto';
+    expect(trozosDeMensaje(texto)).toEqual([
+      { texto: 'Abre Moto.\n1. Elige tu destino.' },
+      {
+        etiqueta: 'Ver la guía con capturas →',
+        url: 'https://divoox.com/es/docs/ordering/ride-moto',
+      },
+    ]);
+    // Una dirección de otro sitio no se vuelve enlace de guía.
+    expect(trozosDeMensaje('Ver la guía con capturas → https://otro.com/docs/x')).toEqual([
+      { texto: 'Ver la guía con capturas → https://otro.com/docs/x' },
+    ]);
+    const html = aHtml(texto, 'es');
+    expect(html).toContain('>Ver la guía con capturas</a>');
+    expect(html).toContain('href="https://divoox.com/es/docs/ordering/ride-moto"');
+    expect(html).not.toContain('Ver la guía con capturas →');
+    expect(
+      aHtml(texto.replace('Ver la guía con capturas', 'See the guide with screenshots'), 'en'),
+    ).toContain('>See the guide with screenshots</a>');
+  });
+
+  it('las respuestas curadas y la del saldo solo apuntan a guías que existen', () => {
+    for (const idioma of ['es', 'en'] as const)
+      for (const r of buscarEnDocs('saldo comision recargar empezar verificar soporte', idioma, 50))
+        if (r.guia)
+          expect(
+            DOCS_PUBLICOS.some((g) => g.ruta === r.guia),
+            r.guia,
+          ).toBe(true);
+    expect(DOCS_PUBLICOS.some((g) => g.ruta === 'drivers/driver-balance')).toBe(true);
   });
 });

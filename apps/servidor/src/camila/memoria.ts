@@ -268,19 +268,45 @@ export type AjustesCamila = {
 };
 
 /**
- * C-CAMILA-AVISO (18 nov 2026, decisión de Gerencia dentro de lo que aprobó Richard: «donde la ley lo
- * pida»). En estos países Camila avisa DESDE EL PRIMER MENSAJE que es una asistente virtual: Estados
- * Unidos y los 27 de la Unión Europea (Ley de IA). Van fijos en el código: el superadmin puede sumar
- * países, pero no apagar estos. Venezuela y los demás quedan apagados; la firma no cambia.
+ * C-CAMILA-AVISO (18 nov 2026, Gerencia dentro de lo que aprobó Richard: «donde la ley lo pida»). En
+ * estos lugares Camila dice UNA vez, al empezar la conversación y en una línea corta, que es una
+ * asistente virtual: California (Estados Unidos) y los 27 países de la Unión Europea. Van fijos en
+ * el código: el superadmin puede sumar lugares, pero no apagar estos. En el resto de Estados Unidos
+ * (Michigan incluido), en Venezuela y en todo lo demás, APAGADO. Un lugar es un país («ES») o un
+ * país con su estado («US-CA»).
  */
 export const PAISES_AVISO_OBLIGATORIO: readonly string[] = [
-  'US',
+  'US-CA',
   ...['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE'],
   ...['IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'],
 ];
+/** Un lugar: un país («ES») o un país con su estado («US-CA»). */
+export const esLugar = (p: string) => /^[A-Z]{2}$/.test(p) || /^[A-Z]{2}-[A-Z0-9]{1,3}$/.test(p);
 const conObligatorios = (paises: string[]) => [
   ...new Set([...PAISES_AVISO_OBLIGATORIO, ...paises]),
 ];
+
+/**
+ * ¿En el lugar de esta persona hay que avisar? Su estado sale de su ciudad (las ciudades se llaman
+ * PAÍS-ESTADO-CIUDAD, por ejemplo US-MI-NOVI) o, si todavía no tiene, del de la petición.
+ */
+export function exigeAviso(ajustes: AjustesCamila, p: Persona, regionPeticion?: string) {
+  if (!p.pais) return false;
+  const deZona = p.zona_id?.split('-');
+  const region = (deZona && deZona.length >= 3 ? deZona[1] : regionPeticion)?.toUpperCase() ?? '';
+  return (
+    ajustes.avisoIaPaises.includes(p.pais) ||
+    (region !== '' && ajustes.avisoIaPaises.includes(`${p.pais}-${region}`))
+  );
+}
+
+/** El estado desde donde llega la petición (lo pone Cloudflare), por ejemplo «CA» o «MI». */
+export const regionDePeticion = (c: {
+  req: { raw: Request; header(nombre: string): string | undefined };
+}) =>
+  ((c.req.raw as { cf?: { regionCode?: string } }).cf?.regionCode ?? c.req.header('cf-region-code'))
+    ?.toUpperCase()
+    .slice(0, 3);
 
 export const AJUSTES_CAMILA_INICIALES: AjustesCamila = {
   ia: true,
@@ -298,17 +324,22 @@ export async function leerAjustes(db: D1Database): Promise<AjustesCamila> {
     .catch(() => null);
   if (!f) return AJUSTES_CAMILA_INICIALES;
   try {
-    const v = JSON.parse(f.valor) as Partial<AjustesCamila>;
+    const v = JSON.parse(f.valor) as Partial<AjustesCamila> & { avisoIaLugares?: string[] };
     return {
       ia: v.ia !== false,
       topeDiarioCentavos: Math.min(
         Math.max(0, Number(v.topeDiarioCentavos ?? TOPE_DIARIO_CENTAVOS)),
         TOPE_MAXIMO_CENTAVOS,
       ),
+      // Los lugares se guardan en `avisoIaLugares`. Lo guardado antes en `avisoIaPaises` traía todo
+      // Estados Unidos (se había encendido de más): ese «US» suelto ya no cuenta.
       avisoIaPaises: conObligatorios(
-        Array.isArray(v.avisoIaPaises)
-          ? v.avisoIaPaises.filter((p) => /^[A-Z]{2}$/.test(String(p)))
-          : [],
+        (Array.isArray(v.avisoIaLugares)
+          ? v.avisoIaLugares
+          : Array.isArray(v.avisoIaPaises)
+            ? v.avisoIaPaises.filter((p) => p !== 'US')
+            : []
+        ).filter((p) => esLugar(String(p))),
       ),
       regalosPorDia: Math.min(Math.max(0, Number(v.regalosPorDia ?? 20)), REGALOS_POR_DIA_MAXIMO),
     };
@@ -324,7 +355,7 @@ export async function guardarAjustes(db: D1Database, a: AjustesCamila) {
       `INSERT INTO config (clave, valor) VALUES ('camila', ?)
        ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor`,
     )
-    .bind(JSON.stringify(a))
+    .bind(JSON.stringify({ ...a, avisoIaPaises: undefined, avisoIaLugares: a.avisoIaPaises }))
     .run();
 }
 

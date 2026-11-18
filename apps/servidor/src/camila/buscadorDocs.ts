@@ -1,3 +1,4 @@
+import { ETIQUETA_GUIA } from '@tumbite/compartido';
 import { DOCS_PUBLICOS, type GuiaPublica } from './docsPublicos';
 import type { IdiomaCamila } from './identidad';
 
@@ -445,9 +446,59 @@ export function buscarGuias(
 export const guiaPorRuta = (ruta: string, idioma: IdiomaCamila) =>
   DOCS_PUBLICOS.find((g) => g.idioma === idioma && g.ruta === ruta) ?? null;
 
-/** La respuesta corta de una guía: de qué se trata y los primeros pasos, con su enlace. */
+/**
+ * C-CAMILA-ENLACE-GUIA: la línea con el enlace de una guía, en el idioma de la persona. Es la ÚNICA
+ * forma en que Camila escribe un enlace de Docs (el chat la pinta tocable y el correo como botón).
+ */
+export const enlaceDeGuia = (ruta: string, idioma: IdiomaCamila) =>
+  `${ETIQUETA_GUIA[idioma === 'en' ? 'en' : 'es']} https://divoox.com${idioma === 'es' ? '/es' : ''}/docs/${ruta}`;
+
+const URL_DOCS = /divoox\.com(?:\/es)?\/docs\/([a-z0-9/-]+)/gi;
+/**
+ * Deja los enlaces de Docs de una respuesta como manda la regla: fuera las direcciones sueltas (las
+ * que escribió el modelo o las de una guía), y al final, una línea por guía (dos como mucho) con el
+ * enlace en el idioma de la persona. Un enlace a una guía que no existe en Docs se quita y no vuelve:
+ * Camila nunca inventa un enlace. `usadas` son las guías de las que salió la respuesta cuando el
+ * texto no trae ninguna.
+ */
+export function conEnlacesDeGuia(texto: string, idioma: IdiomaCamila, usadas: string[] = []) {
+  const rutas: string[] = [];
+  const anotar = (ruta: string) => {
+    const r = ruta.toLowerCase().replace(/\/$/, '');
+    if (guiaPorRuta(r, idioma) && !rutas.includes(r)) rutas.push(r);
+  };
+  for (const m of texto.matchAll(URL_DOCS)) if (m[1]) anotar(m[1]);
+  if (!rutas.length) for (const r of usadas.slice(0, 1)) anotar(r);
+  const conEnlace = /divoox\.com(\/es)?\/docs\//i;
+  const cuerpo = texto
+    .split('\n')
+    .map((linea) =>
+      conEnlace.test(linea)
+        ? // Fuera la frase que traía la dirección («Guía completa: …», «Mira … y también …»).
+          linea
+            .split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡[]|https?:|divoox\.com)/)
+            .filter((frase) => !conEnlace.test(frase))
+            .join(' ')
+            .trim()
+        : linea,
+    )
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  if (!rutas.length) return cuerpo;
+  return `${cuerpo}\n\n${rutas
+    .slice(0, 2)
+    .map((r) => enlaceDeGuia(r, idioma))
+    .join('\n')}`;
+}
+
+/** La respuesta corta de una guía: de qué se trata y los primeros pasos, con su enlace al final. */
 export function respuestaDeGuia(g: GuiaPublica, idioma: IdiomaCamila, pasos = 4) {
   const lista = g.pasos.slice(0, pasos).map((p, i) => `${i + 1}. ${p}`);
-  const enlace = `https://divoox.com${idioma === 'es' ? '/es' : ''}/docs/${g.ruta}`;
-  return [g.resumen, ...(lista.length ? ['', ...lista] : []), '', enlace].join('\n');
+  return [
+    g.resumen,
+    ...(lista.length ? ['', ...lista] : []),
+    '',
+    enlaceDeGuia(g.ruta, idioma),
+  ].join('\n');
 }

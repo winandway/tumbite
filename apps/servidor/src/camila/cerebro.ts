@@ -2,7 +2,7 @@ import type { Env } from '../env';
 import { correosEquipo } from '../avisosEquipo';
 import { enviarCorreo } from '../correo';
 import { enviarPorCanal } from './canales';
-import { buscarGuias, respuestaDeGuia } from './buscadorDocs';
+import { conEnlacesDeGuia, buscarGuias, respuestaDeGuia } from './buscadorDocs';
 import { buscarAprobadas, buscarEnDocs, enlaceGuia, normalizar } from './conocimiento';
 import {
   HERRAMIENTAS_MODELO,
@@ -33,6 +33,7 @@ import {
 import {
   type Canal,
   type Persona,
+  exigeAviso,
   humanoActivo,
   leerAjustes,
   sentenciaMensaje,
@@ -171,6 +172,9 @@ async function porReglas(c: Contexto): Promise<string> {
     return (await darRegaloArranque(c)).texto;
   if (tiene('mi equipo', 'mis registrados', 'cuantos registre', 'my team', 'lider', 'leader'))
     return (await miEquipo(c)).texto;
+  // El estado de la cuenta es del conductor. «¿Cómo borro mi cuenta?» es otra pregunta, y al cliente
+  // con cuenta se le contesta primero con su guía si la hay.
+  const prefiere = c.rol === 'repartidor' ? 'drivers' : 'ordering';
   if (
     tiene(
       'mi cuenta',
@@ -186,27 +190,24 @@ async function porReglas(c: Contexto): Promise<string> {
       'activate',
       'approved',
       'no funciona',
-    )
+    ) &&
+    !tiene('borrar', 'borro', 'eliminar', 'elimino', 'delete', 'close my account') &&
+    (c.rol === 'repartidor' || !c.rol || !buscarGuias(c.pregunta, c.idioma, 1, prefiere)[0])
   )
     return (await estadoCuenta(c)).texto;
   if (c.rol === 'repartidor' && tiene('recargar', 'recarga', 'recargo', 'top up', 'reload')) {
     const r = buscarEnDocs('recargar recarga', c.idioma, 1)[0];
-    if (r?.guia) return `${r.texto}\n${enlaceGuia(r.guia, c.idioma)}`;
+    if (r?.guia) return `${r.texto}\n\n${enlaceGuia(r.guia, c.idioma)}`;
   }
   if (c.rol === 'repartidor' && tiene('saldo', 'comision', 'balance', 'commission'))
     return (await explicarSaldo(c)).texto;
   const aprobada = (await buscarAprobadas(c.db, c.pregunta, c.idioma))[0];
   if (aprobada) return aprobada.texto;
   // Todas las guías públicas de Docs, primero las que le tocan a quien pregunta.
-  const guia = buscarGuias(
-    c.pregunta,
-    c.idioma,
-    1,
-    c.rol === 'repartidor' ? 'drivers' : 'ordering',
-  )[0];
+  const guia = buscarGuias(c.pregunta, c.idioma, 1, prefiere)[0];
   if (guia) return respuestaDeGuia(guia.guia, c.idioma);
   const curada = buscarEnDocs(c.pregunta, c.idioma, 1)[0];
-  if (curada?.guia) return `${curada.texto}\n${enlaceGuia(curada.guia, c.idioma)}`;
+  if (curada?.guia) return `${curada.texto}\n\n${enlaceGuia(curada.guia, c.idioma)}`;
   c.noSupo = true;
   return '';
 }
@@ -285,7 +286,7 @@ export async function recibirMensaje(
   persona: Persona,
   canal: Canal,
   textoCrudo: string,
-  opciones: { asunto?: string } = {},
+  opciones: { asunto?: string; region?: string } = {},
 ): Promise<ResultadoCerebro> {
   const texto = textoCrudo.split(String.fromCharCode(0)).join('').trim().slice(0, 2000);
   const idioma: IdiomaCamila = persona.idioma === 'en' ? 'en' : 'es';
@@ -391,9 +392,12 @@ export async function recibirMensaje(
         if (!respuesta || modo === 'reglas') respuesta = segun(NO_ENTENDI, idioma);
       }
     }
+    // C-CAMILA-ENLACE-GUIA: lo que sale de una guía termina con el enlace a esa guía (dos como mucho),
+    // en el idioma de la persona; y ningún enlace de Docs que no exista sale de aquí.
+    respuesta = conEnlacesDeGuia(respuesta, idioma, modo === 'ia' && !c.noSupo ? c.guias : []);
   }
-  // Aviso de asistente virtual desde el primer mensaje, solo en los países que lo exigen.
-  if (!persona.aviso_ia_dado && persona.pais && ajustes.avisoIaPaises.includes(persona.pais)) {
+  // Aviso de asistente virtual, una sola vez y en una línea, solo donde la ley lo pide.
+  if (!persona.aviso_ia_dado && exigeAviso(ajustes, persona, opciones.region)) {
     respuesta = `${segun(AVISO_PRIMER_MENSAJE, idioma)}\n\n${respuesta}`;
     await db
       .prepare('UPDATE camila_personas SET aviso_ia_dado = 1 WHERE id = ?')

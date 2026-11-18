@@ -39,6 +39,8 @@ export type Contexto = {
   puedePasar?: boolean;
   /** El modelo dijo que no sabe (queda marcado en la respuesta para contar los intentos). */
   noSupo?: boolean;
+  /** C-CAMILA-ENLACE-GUIA: las guías de Docs que las herramientas le dieron al modelo. */
+  guias?: string[];
 };
 
 export type ResultadoHerramienta = { ok: boolean; texto: string; datos?: Record<string, unknown> };
@@ -163,7 +165,8 @@ export async function estadoCuenta(c: Contexto): Promise<ResultadoHerramienta> {
 
 export async function explicarSaldo(c: Contexto): Promise<ResultadoHerramienta> {
   const docs = buscarEnDocs('saldo comision', c.idioma, 1)[0];
-  const base = `${docs?.texto ?? ''}\n${t(c.idioma, 'Guía completa', 'Full guide')}: ${enlaceGuia('drivers/driver-balance', c.idioma)}`;
+  c.guias = ['drivers/driver-balance'];
+  const base = `${docs?.texto ?? ''}\n${enlaceGuia('drivers/driver-balance', c.idioma)}`;
   const d = await conductorDe(c);
   if (!d?.pais || !d.moneda) return { ok: true, texto: base };
   const saldo = await saldoLibro(c.db, d.id, 'prepago', d.pais, d.moneda);
@@ -300,6 +303,7 @@ export async function buscarRespuesta(c: Contexto, tema: string): Promise<Result
   const aprobadas = await buscarAprobadas(c.db, q, c.idioma);
   // Todas las guías públicas de Docs (cliente y conductor), primero las que le tocan a quien pregunta.
   const guias = buscarGuias(q, c.idioma, 3, c.rol === 'repartidor' ? 'drivers' : 'ordering');
+  if (guias.length) c.guias = guias.map((g) => g.guia.ruta);
   if (!aprobadas.length && !guias.length)
     return {
       ok: false,

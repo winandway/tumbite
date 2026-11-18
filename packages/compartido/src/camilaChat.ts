@@ -23,6 +23,39 @@ export type HiloCamila = {
 };
 export type RespuestaCamila = HiloCamila & { respuesta: string | null };
 
+/**
+ * C-CAMILA-ENLACE-GUIA (18 nov 2026, Richard) — todos los países. Toda respuesta de Camila que sale
+ * de una guía de Docs termina con el enlace a esa guía. En el texto viaja como una línea
+ * «Ver la guía con capturas → https://…»; el chat de la web y el de Divoox Driver la pintan como un
+ * enlace que se toca (solo la etiqueta, nunca la dirección larga) y el correo como su botón.
+ */
+export const ETIQUETA_GUIA = {
+  es: 'Ver la guía con capturas →',
+  en: 'See the guide with screenshots →',
+} as const;
+const LINEA_GUIA =
+  /^(Ver la guía con capturas →|See the guide with screenshots →) (https:\/\/divoox\.com\/(?:es\/)?docs\/[a-z0-9/-]+)$/;
+export type TrozoMensaje = { texto: string } | { etiqueta: string; url: string };
+/** Parte el texto de un mensaje en párrafos de texto y enlaces a guías, en su orden. */
+export function trozosDeMensaje(texto: string): TrozoMensaje[] {
+  const trozos: TrozoMensaje[] = [];
+  let parrafo: string[] = [];
+  const cerrar = () => {
+    const t = parrafo.join('\n').trim();
+    if (t) trozos.push({ texto: t });
+    parrafo = [];
+  };
+  for (const linea of texto.split('\n')) {
+    const m = LINEA_GUIA.exec(linea.trim());
+    if (m?.[1] && m[2]) {
+      cerrar();
+      trozos.push({ etiqueta: m[1], url: m[2] });
+    } else parrafo.push(linea);
+  }
+  cerrar();
+  return trozos;
+}
+
 const CHAT_ES = {
   burbuja: 'Habla con nuestro equipo de soporte',
   titulo: 'Soporte de Divoox',

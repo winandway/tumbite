@@ -1,4 +1,5 @@
 import { alRegistrarseConductor } from '../camila/bienvenida';
+import { regionDePeticion } from '../camila/memoria';
 import {
   CAPACIDAD_OFERTAS_BUCLE,
   CANALES_CONSENTIMIENTO_SMS,
@@ -292,6 +293,7 @@ cuentas.post('/registro', async (c) => {
       db,
       { id, nombre: d.nombre, idioma: d.idioma },
       c.req.header('cf-ipcountry'),
+      regionDePeticion(c),
     );
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
   c.header('Set-Cookie', cookie(token));
