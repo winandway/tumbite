@@ -503,6 +503,54 @@ describe('C-REFERIDOS-SIN-TRAMPA', () => {
     expect(await saldoLibro(e.m.DB, invita.id, 'prepago', 'VE', 'USD')).toBe(300);
   });
 
+  it('el tope del mes no cierra el referido: queda pendiente y cobra cuando el tope lo permite', async () => {
+    const { e, registrar, carrera, programa } = await mundo();
+    const reglas = { premio: 100, carreras: 1, dias: 30, topeMes: 1 };
+    await programa('conductor', 'VE', { activo: true, presupuesto: 5_000, reglas });
+    const invita = await registrar('repartidor', 'Ana');
+    const codigo = (
+      await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
+    ).datos.codigo as string;
+    const cli = await registrar('cliente', 'Pasajero');
+    for (let i = 0; i < 2; i++) {
+      const c = await registrar('repartidor', `Invitado ${i}`, { invitacion: codigo });
+      await carrera(c.id, cli.id);
+    }
+    expect(await revisarReferidos(e.m.DB)).toBe(1);
+    expect(await revisarReferidos(e.m.DB)).toBe(0);
+    const pendientes = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM referidos_conductor WHERE estado = 'pendiente'",
+    ).first<{ n: number }>();
+    expect(pendientes?.n).toBe(1);
+    // El mes siguiente (aquí, el premio anterior ya tiene más de treinta días) sí cobra.
+    await e.m.DB.prepare(
+      "UPDATE premios_referido SET creado_en = datetime('now', '-31 days')",
+    ).run();
+    expect(await revisarReferidos(e.m.DB)).toBe(1);
+    expect(await saldoLibro(e.m.DB, invita.id, 'prepago', 'VE', 'USD')).toBe(200);
+  });
+
+  it('un programa con premio en cero cierra el referido en vez de dejarlo pendiente para siempre', async () => {
+    const { e, registrar, carrera, programa } = await mundo();
+    await programa('cliente', 'VE', {
+      activo: true,
+      presupuesto: 10_000,
+      reglas: { ...PROGRAMAS_POR_DEFECTO['cliente:VE']!.reglas, premioInvitador: 0 },
+    });
+    const ana = await registrar('cliente', 'Ana');
+    const codigo = (await e.m.llamar('GET', '/datos/referidos', undefined, ana.token)).datos
+      .codigo as string;
+    const bea = await registrar('cliente', 'Bea', { invitacion: codigo });
+    const cond = await registrar('repartidor', 'Conductor');
+    for (let i = 0; i < 3; i++) await carrera(cond.id, bea.id, 200);
+    expect(await revisarReferidos(e.m.DB)).toBe(0);
+    expect(
+      await e.m.DB.prepare('SELECT cierre FROM referidos WHERE invitado_id = ?')
+        .bind(bea.id)
+        .first(),
+    ).toEqual({ cierre: 'sin_premio' });
+  });
+
   it('un código que no sirve se le dice a la persona al registrarse, y no se crea la cuenta', async () => {
     const { e, registrar } = await mundo();
     const cliente = await registrar('cliente', 'Ana Cliente');

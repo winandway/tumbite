@@ -643,7 +643,7 @@ export async function vincularCliente(
 /** Por qué un premio se dio o no se dio. */
 type Premio = {
   monto: number;
-  motivo: 'dado' | 'ya_dado' | 'sin_presupuesto' | 'tope_mes' | 'sin_zona';
+  motivo: 'dado' | 'ya_dado' | 'sin_presupuesto' | 'tope_mes' | 'sin_ciudad' | 'sin_premio';
 };
 
 /**
@@ -670,7 +670,8 @@ async function darPremio(
     tipoCupon: 'monto' | 'gratis';
   },
 ): Promise<Premio> {
-  if (!p.zonaId || p.monto <= 0) return { monto: 0, motivo: 'sin_zona' };
+  if (p.monto <= 0) return { monto: 0, motivo: 'sin_premio' };
+  if (!p.zonaId) return { monto: 0, motivo: 'sin_ciudad' };
   const { pais, moneda } = await paisDeZona(db, p.zonaId);
   const topeMes = Math.min(
     (p.programa.reglas as { topeMes: number }).topeMes,
@@ -811,7 +812,8 @@ function turnoDe(pendientes: number) {
  *
  * C-REFERIDOS-SIN-TRAMPA: antes de premiar se vuelve a comprobar que no sean la misma persona (el
  * aparato o la cuenta de cobro pueden coincidir después del registro); un premio que no se puede dar
- * (sin presupuesto o tope del mes) cierra el referido en vez de quedarse pendiente para siempre.
+ * (sin presupuesto, premio en cero o sin ciudad) cierra el referido en vez de quedarse pendiente para
+ * siempre; el tope del mes lo deja pendiente, para que cobre cuando el tope lo permita.
  */
 export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
   let dados = 0;
@@ -931,7 +933,8 @@ export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
       if (premio.motivo === 'dado') dados++;
       if (premio.motivo === 'dado' || premio.motivo === 'ya_dado')
         await cerrarConductor(r.invitado_id, 'premiado', null);
-      else if (premio.motivo !== 'sin_zona')
+      // El tope del mes no cierra nada: el referido sigue pendiente y cobra cuando el tope lo permita.
+      else if (premio.motivo !== 'tope_mes')
         await cerrarConductor(r.invitado_id, 'rechazado', premio.motivo);
     } else if (Number(f?.vencido ?? 0) === 1) {
       await cerrarConductor(r.invitado_id, 'vencido', null);
@@ -1020,7 +1023,7 @@ export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
         )
         .bind(r.id)
         .run();
-    else if (premio.motivo !== 'sin_zona') await cerrarCliente(r.id, premio.motivo);
+    else if (premio.motivo !== 'tope_mes') await cerrarCliente(r.id, premio.motivo);
   }
   return dados;
 }
