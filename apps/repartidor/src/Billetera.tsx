@@ -8,6 +8,8 @@ export type Movimiento = {
   monto: number;
   concepto: 'venta' | 'entrega' | 'propina' | 'retiro' | 'ajuste' | 'regalo';
   fecha: string;
+  /** El viaje del movimiento (cobro con tarjeta o regalo que lo pagó): una carrera por viaje. */
+  operacionId?: string | null;
 };
 export type DatosBilletera = {
   saldo: number;
