@@ -134,11 +134,17 @@ export function Pildora({
         paddingHorizontal: 16,
         paddingVertical: 9,
         borderRadius: 999,
+        // C-TEXTO-ENTERO (auditor de tiendas, 18 nov 2026): en una fila que se desliza, la píldora
+        // no se encoge («Top rat…», el «+» de «4,5+» cortado en Android).
+        flexShrink: 0,
         // El rojo oscuro de la marca: 4,5:1 con el texto blanco (el rojo principal da 4,3:1).
         backgroundColor: activa ? C.acento : '#F6F6F6',
       }}
     >
-      <Text style={{ color: activa ? '#fff' : C.secundario, fontWeight: '700', fontSize: 14 }}>
+      <Text
+        textBreakStrategy="simple"
+        style={{ color: activa ? '#fff' : C.secundario, fontWeight: '700', fontSize: 14 }}
+      >
         {texto}
       </Text>
     </Pressable>

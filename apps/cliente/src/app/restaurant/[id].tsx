@@ -236,7 +236,7 @@ export default function MenuRestaurante() {
       >
         <View>
           <Image
-            source={fotoRest ? { uri: fotoRest } : fotoDeRelleno(r?.categoria ?? '', 2)}
+            source={fotoRest ? { uri: fotoRest } : fotoDeRelleno(r?.categoria ?? '')}
             style={{ width: '100%', height: altoFoto, backgroundColor: '#EEEFF1' }}
             accessibilityIgnoresInvertColors
           />

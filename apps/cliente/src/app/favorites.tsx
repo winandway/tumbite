@@ -87,7 +87,7 @@ function Favoritos() {
         }}
       >
         {lista && !lista.length ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
-        {lista?.map((r, index) => (
+        {lista?.map((r) => (
           <Pressable
             key={r.id}
             onPress={() => router.push(`/restaurant/${r.id}`)}
@@ -109,7 +109,7 @@ function Favoritos() {
               source={
                 urlFoto(r.imagen, 'tarjeta')
                   ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
-                  : fotoDeRelleno(r.categoria, index)
+                  : fotoDeRelleno(r.categoria)
               }
               style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
               accessibilityIgnoresInvertColors

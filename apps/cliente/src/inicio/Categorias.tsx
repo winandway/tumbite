@@ -37,14 +37,14 @@ export function Categorias({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 16 }}
       >
-        {categorias.map(([c, r], i) => (
+        {categorias.map(([c, r]) => (
           <Pressable
             key={c}
             onPress={() => alTocar(c)}
             accessibilityRole="button"
             accessibilityLabel={`${t.categorias}: ${categoriaRestaurante(c, idioma)}`}
             style={({ pressed }) => ({
-              width: 68,
+              width: 76,
               alignItems: 'center',
               opacity: pressed ? 0.7 : 1,
             })}
@@ -53,7 +53,7 @@ export function Categorias({
               source={
                 urlFoto(r.imagen, 'tarjeta')
                   ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
-                  : fotoDeRelleno(c, i)
+                  : fotoDeRelleno(c)
               }
               style={{
                 width: 64,
@@ -66,9 +66,17 @@ export function Categorias({
               resizeMode="cover"
               accessibilityIgnoresInvertColors
             />
+            {/* C-TEXTO-ENTERO (auditor de tiendas): «Pollo I…» no; hasta dos renglones. */}
             <Text
-              numberOfLines={1}
-              style={{ marginTop: 6, fontSize: 13, fontWeight: '600', color: C.secundario }}
+              numberOfLines={2}
+              textBreakStrategy="simple"
+              style={{
+                marginTop: 6,
+                fontSize: 13,
+                fontWeight: '600',
+                color: C.secundario,
+                textAlign: 'center',
+              }}
             >
               {categoriaRestaurante(c, idioma)}
             </Text>

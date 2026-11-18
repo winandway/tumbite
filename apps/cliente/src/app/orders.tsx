@@ -163,7 +163,7 @@ function Pedidos() {
           </Text>
         ) : null}
         {pedidos?.length === 0 ? <Text style={{ color: '#666B73' }}>{t.vacio}</Text> : null}
-        {pedidos?.map((p, i) => {
+        {pedidos?.map((p) => {
           // C-MIS-PEDIDOS-MINIATURA (1 nov 2026, pedido de Richard): como la lista de pedidos de los
           // grandes: miniatura del local, estado con color (verde = entregado) y botones compactos.
           const ausente = p.estado === 'entregado' && p.entregadoComo === 'ausente';
@@ -186,7 +186,7 @@ function Pedidos() {
                 style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}
               >
                 <Image
-                  source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '', i)}
+                  source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '')}
                   style={{ width: 64, height: 64, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                   accessibilityIgnoresInvertColors
                 />

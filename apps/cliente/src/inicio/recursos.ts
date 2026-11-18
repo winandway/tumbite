@@ -69,13 +69,18 @@ export const IMG = {
   },
 } as const;
 
-/** Foto de muestra según la categoría del restaurante (cuando no subió la suya). */
-export function fotoDeRelleno(categoria: string, indice: number) {
+/**
+ * Foto de muestra según la categoría del restaurante (cuando no subió la suya). C-FOTO-QUE-CORRESPONDE
+ * (auditor de tiendas, 18 nov 2026): una categoría sin foto propia (pollo, arepas, café…) llevaba
+ * por turnos una hamburguesa, un sushi o una pizza: una foto que no corresponde. Ahora lleva la
+ * ilustración neutra de comida.
+ */
+export function fotoDeRelleno(categoria: string) {
   const c = categoria.toLowerCase();
   if (/pizza/.test(c)) return rellenoRestPizza;
-  if (/sushi|japon|asi/.test(c)) return rellenoRestSushi;
-  if (/hamburg|burger|americ/.test(c)) return rellenoRestHamburguesas;
-  return IMG.relleno.restaurantes.at(indice % 3) ?? rellenoRestHamburguesas;
+  if (/sushi|japon/.test(c)) return rellenoRestSushi;
+  if (/hamburg|burger/.test(c)) return rellenoRestHamburguesas;
+  return ilustracionComida;
 }
 
 /** Ícono de cada servicio y de cada pestaña (mapas, para no indexar objetos con texto). */

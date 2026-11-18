@@ -19,6 +19,7 @@ import {
 import { C, COLOR, Icono, type NombreIcono, SelectorIdioma, Text } from '@tumbite/movil';
 import { HojaAbajo } from './HojaAbajo';
 import { IMG_NUEVO } from './recursosNuevo';
+import { fotoDeRelleno } from './recursos';
 import { textosInicioNuevo } from './textosNuevo';
 
 const SOMBRA = {
@@ -367,16 +368,26 @@ export function RestaurantesCerca({
               style={p.rest}
             >
               <Image
-                source={r.imagen ? { uri: r.imagen } : IMG_NUEVO.fotoPizza}
+                source={r.imagen ? { uri: r.imagen } : fotoDeRelleno(r.categoria)}
                 style={{ width: '100%', height: 92 }}
                 resizeMode="cover"
                 accessibilityIgnoresInvertColors
               />
               <View style={{ padding: 10, paddingTop: 8 }}>
-                <Text numberOfLines={1} style={{ fontWeight: '700', fontSize: 14 }}>
+                {/* C-TEXTO-ENTERO (auditor de tiendas): el nombre y el tiempo no se cortan
+                    («Bella I…», «15–25 m…»): hasta dos renglones. */}
+                <Text
+                  numberOfLines={2}
+                  textBreakStrategy="simple"
+                  style={{ fontWeight: '700', fontSize: 14 }}
+                >
                   {r.nombre}
                 </Text>
-                <Text numberOfLines={1} style={{ color: COLOR.textoSuave, fontSize: 12 }}>
+                <Text
+                  numberOfLines={2}
+                  textBreakStrategy="simple"
+                  style={{ color: COLOR.textoSuave, fontSize: 12 }}
+                >
                   {nota != null
                     ? `★ ${nota.toFixed(1).replace('.', idioma === 'en' ? '.' : ',')} · `
                     : ''}

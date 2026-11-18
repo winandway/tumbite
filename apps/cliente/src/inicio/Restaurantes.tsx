@@ -39,14 +39,12 @@ const envioDe = (r: Restaurante, idioma: Idioma) =>
  */
 function TarjetaRestaurante({
   r,
-  i,
   ancho,
   idioma,
   favoritos,
   alTocar,
 }: {
   r: Restaurante;
-  i: number;
   ancho: number;
   idioma: Idioma;
   favoritos: Favoritos;
@@ -75,7 +73,7 @@ function TarjetaRestaurante({
           source={
             urlFoto(r.imagen, 'tarjeta')
               ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
-              : fotoDeRelleno(r.categoria, i)
+              : fotoDeRelleno(r.categoria)
           }
           style={{
             width: ancho,
@@ -221,11 +219,10 @@ export function FilaRestaurantes({
         decelerationRate="fast"
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, gap: 14 }}
       >
-        {lista.map((r, i) => (
+        {lista.map((r) => (
           <TarjetaRestaurante
             key={r.id}
             r={r}
-            i={i}
             ancho={ancho}
             idioma={idioma}
             favoritos={favoritos}
@@ -269,11 +266,10 @@ export function ListaRestaurantes({
     <View style={{ marginTop: 22 }} testID="lista-restaurantes">
       <Titulo texto={t.todos} />
       <View style={{ paddingHorizontal: 16, paddingTop: 12, gap: 22 }}>
-        {vistos.map((r, i) => (
+        {vistos.map((r) => (
           <TarjetaRestaurante
             key={r.id}
             r={r}
-            i={i}
             ancho={ancho}
             idioma={idioma}
             favoritos={favoritos}

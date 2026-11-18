@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-TEXTO-ENTERO y C-FOTO-QUE-CORRESPONDE · Textos cortados y fotos ajenas en el inicio del cliente (auditor de tiendas, 18 nov 2026) — todos los países
+
+- **Qué se veía:** «Bella I…» y «15–25 m…» en las tarjetas de restaurantes cercanos, «Pollo I…» en las categorías, «Top rat…» y el «+» de «4,5+» cortados en las píldoras de filtro, y restaurantes sin foto propia con una pizza, hamburguesa o sushi que no les correspondía.
+- **Qué se hizo:** nombre y tiempo de las tarjetas cercanas (`PiezasInicio.tsx`) y nombre de las categorías (`Categorias.tsx`, 76 de ancho) hasta en dos renglones con `textBreakStrategy="simple"`; `Pildora` (`comida/piezas.tsx`) con `flexShrink: 0` y medición simple, y las filas de filtros con aire al final (`paddingRight: 16`). `fotoDeRelleno`: pizza, sushi y hamburguesa solo para esas cocinas; cualquier otra lleva la ilustración neutra de comida (antes rotaba por índice), y la tarjeta cercana sin foto usa `fotoDeRelleno` (antes, siempre pizza).
+- **Cómo se comprueba:** `apps/cliente/src/textoEntero.test.ts` (vista en rojo).
+- **Datos de muestra:** los restaurantes de muestra con foto que no corresponde son datos del guion de capturas (otra sesión); con una foto subida que no corresponde la app no puede saberlo.
+
 ## C-REOFERTA-TOPE, C-REOFERTA-LECTURAS y C-GANANCIAS-CARRERAS · Lo que pidió el revisor sobre 0f5881e..20d295d (18 nov 2026) — todos los países
 
 - **Reoferta sin tope:** un conductor que ignoraba la oferta la recibía cada minuto los 10 minutos de búsqueda, con sonido. Ahora `ofertas_operacion.intentos` (columna nueva por `COLUMNAS` de esquema.ts, por defecto 1) cuenta las veces; como mucho `OFERTAS_POR_CONDUCTOR` = 3 por viaje y conductor (la primera y dos vueltas: `puedeRecibirOferta` y el `ON CONFLICT … WHERE intentos < 3 RETURNING intentos`), y el aviso al celular solo hasta `AVISOS_POR_CONDUCTOR` = 2.

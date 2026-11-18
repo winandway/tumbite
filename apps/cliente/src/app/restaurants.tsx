@@ -218,7 +218,7 @@ export default function Restaurantes() {
         data={[null, ...categorias]}
         keyExtractor={(c) => c ?? '_todos'}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingVertical: 14 }}
+        contentContainerStyle={{ gap: 8, paddingVertical: 14, paddingRight: 16 }}
         renderItem={({ item }) => (
           <Pildora
             texto={item ? categoriaRestaurante(item, idioma) : t.todos}
@@ -230,7 +230,7 @@ export default function Restaurantes() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, marginBottom: 10 }}
+        contentContainerStyle={{ gap: 8, marginBottom: 10, paddingRight: 16 }}
       >
         <Pildora
           texto={t.soloAbiertos}
@@ -294,7 +294,7 @@ export default function Restaurantes() {
             <Text style={{ color: '#666B73', marginTop: 12 }}>{t.sinResultados}</Text>
           ) : null
         }
-        renderItem={({ item: r, index }) => (
+        renderItem={({ item: r }) => (
           // C-ACCESIBILIDAD-WEB: la tarjeta y el corazón van lado a lado (nunca un botón dentro de
           // otro); la tarjeta se nombra con lo que se ve.
           <View>
@@ -321,7 +321,7 @@ export default function Restaurantes() {
                 source={
                   urlFoto(r.imagen, 'tarjeta')
                     ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
-                    : fotoDeRelleno(r.categoria, index)
+                    : fotoDeRelleno(r.categoria)
                 }
                 style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors

@@ -301,7 +301,7 @@ export default function Buscar() {
             maxWidth: ANCHO_MAX,
             alignSelf: 'center',
           }}
-          renderItem={({ item: r, index }) => (
+          renderItem={({ item: r }) => (
             <Pressable
               onPress={() => {
                 recordar();
@@ -315,7 +315,7 @@ export default function Buscar() {
                 source={
                   urlFoto(r.imagen, 'tarjeta')
                     ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
-                    : fotoDeRelleno(r.categoria, index)
+                    : fotoDeRelleno(r.categoria)
                 }
                 style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors
@@ -349,7 +349,7 @@ export default function Buscar() {
             maxWidth: ANCHO_MAX,
             alignSelf: 'center',
           }}
-          renderItem={({ item: p, index }) => (
+          renderItem={({ item: p }) => (
             <Pressable
               onPress={() => {
                 recordar();
@@ -363,7 +363,7 @@ export default function Buscar() {
                 source={
                   urlFoto(p.imagen, 'miniatura')
                     ? { uri: urlFoto(p.imagen, 'miniatura') ?? undefined }
-                    : fotoDeRelleno('', index)
+                    : fotoDeRelleno('')
                 }
                 style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors

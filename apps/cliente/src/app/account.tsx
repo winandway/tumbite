@@ -289,7 +289,7 @@ function MiCuenta() {
 
         <Text style={estilos.subtitulo}>{t.pedidos}</Text>
         {pedidos?.length === 0 ? <Text style={e.tarjeta}>{t.sinPedidos}</Text> : null}
-        {pedidos?.map((p, i) => {
+        {pedidos?.map((p) => {
           // C-MIS-PEDIDOS-MINIATURA: la misma tarjeta que «Mis pedidos»: miniatura y estado con color.
           const estado =
             p.estado === 'entregado'
@@ -306,7 +306,7 @@ function MiCuenta() {
               style={[e.tarjeta, { flexDirection: 'row', alignItems: 'center', gap: 12 }]}
             >
               <Image
-                source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '', i)}
+                source={foto ? { uri: foto } : fotoDeRelleno(p.restauranteCategoria ?? '')}
                 style={{ width: 52, height: 52, borderRadius: 12, backgroundColor: '#EEEFF1' }}
                 accessibilityIgnoresInvertColors
               />
