@@ -142,10 +142,19 @@ referidos.post('/referidos/canjear', limiteIntentos(10, 60_000), async (c) => {
   const a = await leerReferidos(db);
   if (!a.activos) throw new ErrorDatos('Las invitaciones no están activas.', undefined, 409);
   const dueno = await db
-    .prepare('SELECT usuario_id FROM codigos_referido WHERE codigo = ?')
+    .prepare(
+      'SELECT c.usuario_id, u.rol FROM codigos_referido c JOIN usuarios u ON u.id = c.usuario_id WHERE c.codigo = ?',
+    )
     .bind(d.codigo.toUpperCase())
-    .first<{ usuario_id: string }>();
+    .first<{ usuario_id: string; rol: string }>();
   if (!dueno) throw new ErrorDatos('Ese código no existe.', 'codigo', 404);
+  // C-REFERIDOS-SIN-TRAMPA: el código personal de un conductor no sirve para un cliente.
+  if (dueno.rol !== 'cliente')
+    throw new ErrorDatos(
+      'Ese código es para conductores. Pídele su código a un amigo que ya use Divoox.',
+      'codigo',
+      409,
+    );
   if (dueno.usuario_id === u.id)
     throw new ErrorDatos('No puedes usar tu propio código.', 'codigo', 409);
   const yaPidio = await db

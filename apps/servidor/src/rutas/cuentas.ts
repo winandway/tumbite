@@ -7,7 +7,12 @@ import {
   entornoDeHost,
   telefonoCanonico,
 } from '@tumbite/compartido';
-import { anotarAparato, vincularCliente, vincularConductor } from '../programaReferidos';
+import {
+  anotarAparato,
+  codigoPara,
+  vincularCliente,
+  vincularConductor,
+} from '../programaReferidos';
 import { huellaAparato } from '../regalosDivoox';
 import { Hono } from 'hono';
 import {
@@ -227,6 +232,10 @@ cuentas.post('/registro', async (c) => {
   }
   // Nadie se vuelve administrador al registrarse: eso se hace aparte, con la semilla secreta.
   const rol: Rol = d.rol;
+  // C-REFERIDOS-SIN-TRAMPA: un código de invitación que no existe o que es de otro tipo de cuenta se
+  // dice ANTES de crear la cuenta, en su casilla; la persona lo corrige o lo borra y sigue.
+  if (d.invitacion && (rol === 'repartidor' || rol === 'cliente'))
+    await codigoPara(db, rol, d.invitacion, 'invitacion');
   const id = nuevoId();
   await db
     .prepare(
@@ -253,8 +262,8 @@ cuentas.post('/registro', async (c) => {
   // C-SMS-CONSENTIMIENTO: solo si marcó la casilla de SMS (aparte de los términos y sin marcar).
   if (d.smsConsentimiento) await guardarConsentimientoSms(db, id, true, d.canal ?? 'web');
   const token = await abrirSesion(db, id);
-  // C-REFERIDOS-EQUIPOS: la huella del aparato (antifraude) y el código con el que lo invitaron. Un
-  // código que no sirve nunca frena el registro: la persona lo puede escribir después.
+  // C-REFERIDOS-EQUIPOS: la huella del aparato (antifraude) y el código con el que lo invitaron. El
+  // código ya se comprobó arriba; lo que falle aquí no frena el registro, pero queda en el registro de errores.
   await anotarAparato(db, id, await huellaAparato(c.req.header('x-aparato'))).catch((e: unknown) =>
     console.error('registro: aparato', e),
   );
@@ -266,7 +275,7 @@ cuentas.post('/registro', async (c) => {
           ? vincularCliente(db, id, d.invitacion, null)
           : Promise.resolve(null)
     ).catch((e: unknown) => {
-      if (!(e instanceof ErrorDatos)) console.error('registro: invitación', e);
+      console.error('registro: invitación', e instanceof ErrorDatos ? e.message : e);
     });
   await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
   // C-CAMILA-BIENVENIDA: Camila le da la bienvenida al conductor y, si vino con el código de un

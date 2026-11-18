@@ -109,6 +109,18 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
     'We couldn’t find that leader. They must be registered in Divoox Driver with that email or cell phone.',
   ],
   [
+    'Ese código es de un cliente. Pídele su código a tu líder o a otro conductor.',
+    'That code belongs to a customer. Ask your team leader or another driver for their code.',
+  ],
+  [
+    'Ese código es para conductores. Pídele su código a un amigo que ya use Divoox.',
+    'That code is for drivers. Ask a friend who already uses Divoox for their code.',
+  ],
+  [
+    'Este regalo no tiene presupuesto. Súbele el presupuesto para encenderlo.',
+    'This gift has no budget. Raise the budget to turn it on.',
+  ],
+  [
     'El código es solo para conductores que todavía no hicieron carreras.',
     'The code is only for drivers who haven’t done any trips yet.',
   ],

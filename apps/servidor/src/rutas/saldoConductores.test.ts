@@ -179,3 +179,32 @@ describe('C-SALDO-CONDUCTOR: regalo de arranque por ciudad, con presupuesto', ()
     expect(await darRegaloConductorNuevo(e.m.DB, a.id)).toBe(0);
   });
 });
+
+describe('C-REFERIDOS-SIN-TRAMPA: los regalos por cobrar se miran por conductor', () => {
+  it('con más de doscientos conductores con regalos, el que menos tiene también ve lo suyo', async () => {
+    const { e, conductor } = await mundo();
+    const { porCobrarRegalos } = await import('../regalosDivoox');
+    const yo = await conductor('Conductor Chico');
+    await e.m.DB.prepare('PRAGMA foreign_keys = OFF').run();
+    const uso = (id: string, conductorId: string, monto: number) =>
+      e.m.DB.prepare(
+        `INSERT INTO usos_cupon_divoox (id, codigo, cliente_id, telefono, aparato, servicio, zona_id, pais, operacion_id, conductor_id, monto, moneda, estado)
+         VALUES (?1, 'PRUEBA', 'c-' || ?1, 't-' || ?1, 'a-' || ?1, 'moto', ?2, 'VE', 'op-' || ?1, ?3, ?4, 'USD', 'cobrado')`,
+      ).bind(id, EL_VIGIA.id, conductorId, monto);
+    await e.m.DB.batch(
+      Array.from({ length: 205 }, (_, i) => uso(`u${i}`, `otro-conductor-${i}`, 500)),
+    );
+    await e.m.DB.batch([
+      uso('mio', yo.id, 150),
+      e.m.DB.prepare(
+        "INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia) VALUES ('m-mio', ?, 150, 'regalo', 'regalo-divoox:mio')",
+      ).bind(yo.id),
+    ]);
+    await e.m.DB.prepare('PRAGMA foreign_keys = ON').run();
+    expect(await porCobrarRegalos(e.m.DB, yo.id)).toEqual({
+      monto: 150,
+      moneda: 'USD',
+      pais: 'VE',
+    });
+  });
+});

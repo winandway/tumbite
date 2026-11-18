@@ -823,6 +823,23 @@ export async function regaloDeCodigo(
 
 /** Lo que Divoox le debe a un conductor por regalos (en ganancias, sin pagar ni pasar al saldo). */
 export async function porCobrarRegalos(db: D1Database, conductorId: string) {
-  const fila = (await liquidacionConductores(db)).find((x) => x.conductorId === conductorId);
-  return fila ? { monto: fila.porPagar, moneda: fila.moneda, pais: fila.pais } : null;
+  // C-REFERIDOS-SIN-TRAMPA: se consulta por conductor (índice usos_cupon_divoox_conductor), no en la
+  // lista del equipo, que solo trae los 200 con más regalos: el que quedaba fuera veía 0.
+  const r = await db
+    .prepare(
+      `SELECT x.moneda, x.pais, x.acreditado,
+              COALESCE((SELECT SUM(monto) FROM pagos_regalo_conductor p WHERE p.conductor_id = ?1 AND p.moneda = x.moneda), 0) AS pagado,
+              COALESCE((SELECT SUM(m.monto) FROM movimientos m WHERE m.usuario_id = ?1), 0) AS saldo
+         FROM (SELECT moneda, pais, SUM(monto) AS acreditado FROM usos_cupon_divoox
+                WHERE conductor_id = ?1 AND estado = 'cobrado' GROUP BY moneda, pais) x
+        ORDER BY x.acreditado DESC LIMIT 1`,
+    )
+    .bind(conductorId)
+    .first<{ moneda: string; pais: string; acreditado: number; pagado: number; saldo: number }>();
+  if (!r) return null;
+  return {
+    monto: Math.max(0, Math.min(Number(r.acreditado) - Number(r.pagado), Number(r.saldo))),
+    moneda: r.moneda,
+    pais: r.pais,
+  };
 }

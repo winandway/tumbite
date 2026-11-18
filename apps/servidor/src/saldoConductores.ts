@@ -252,7 +252,7 @@ export async function guardarRegaloConductorNuevo(
     );
   if (p.activo && p.presupuesto - dado <= 0)
     throw new ErrorDatos(
-      'Este cupón no tiene presupuesto. Súbele el presupuesto para encenderlo.',
+      'Este regalo no tiene presupuesto. Súbele el presupuesto para encenderlo.',
       'presupuesto',
       409,
     );

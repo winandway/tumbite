@@ -2431,7 +2431,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "para_amigo",
     "para_quien_invita",
     "creado_en",
-    "premiado_en"
+    "premiado_en",
+    "cierre"
   ],
   "creditos_regalo": [
     "id",

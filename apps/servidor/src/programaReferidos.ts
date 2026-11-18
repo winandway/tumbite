@@ -228,6 +228,16 @@ export async function guardarPrograma(
     )
     .bind(p.tipo, p.ambito, p.activo ? 1 : 0, JSON.stringify(p.reglas), p.presupuesto, p.autorId)
     .run();
+  // C-REFERIDOS-SIN-TRAMPA: si ahora hay presupuesto, los referidos que se cerraron por falta de
+  // presupuesto vuelven a la fila (el reloj los revisa de nuevo; el que no alcance se cierra otra vez).
+  if (p.presupuesto > gastado)
+    await db
+      .prepare(
+        p.tipo === 'conductor'
+          ? "UPDATE referidos_conductor SET estado = 'pendiente', motivo = NULL, cerrado_en = NULL WHERE estado = 'rechazado' AND motivo = 'sin_presupuesto'"
+          : "UPDATE referidos SET cierre = NULL WHERE estado = 'pendiente' AND cierre = 'sin_presupuesto'",
+      )
+      .run();
   return programaDe(db, p.tipo, p.ambito);
 }
 
@@ -275,6 +285,25 @@ async function alertaReferido(
   await db
     .prepare(
       'INSERT INTO alertas_regalo (id, tipo, cliente_id, conductor_id, detalle) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(nuevoId(), tipo, clienteId, conductorId, detalle.slice(0, 300))
+    .run();
+}
+
+/** La misma alerta (tipo y detalle) sale una sola vez al día: el reloj no la repite cada hora. */
+async function alertaUnaVez(
+  db: D1Database,
+  tipo: string,
+  clienteId: string | null,
+  conductorId: string | null,
+  detalle: string,
+) {
+  await db
+    .prepare(
+      `INSERT INTO alertas_regalo (id, tipo, cliente_id, conductor_id, detalle)
+       SELECT ?1, ?2, ?3, ?4, ?5
+        WHERE NOT EXISTS (SELECT 1 FROM alertas_regalo WHERE tipo = ?2 AND detalle = ?5
+                            AND creado_en > datetime('now', '-1 day'))`,
     )
     .bind(nuevoId(), tipo, clienteId, conductorId, detalle.slice(0, 300))
     .run();
@@ -441,14 +470,15 @@ export async function resolverCodigo(db: D1Database, escrito: string) {
       nombre: equipo.lider.split(' ')[0] ?? '',
       ciudad: equipo.ciudad,
       zonaId: equipo.zona_id,
+      rol: 'repartidor',
     };
   const p = await db
     .prepare(
-      `SELECT c.usuario_id, u.nombre, COALESCE(r.zona_id, u.zona_id) AS zona_id FROM codigos_referido c
+      `SELECT c.usuario_id, u.nombre, u.rol, COALESCE(r.zona_id, u.zona_id) AS zona_id FROM codigos_referido c
          JOIN usuarios u ON u.id = c.usuario_id LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE c.codigo = ?`,
     )
     .bind(codigo)
-    .first<{ usuario_id: string; nombre: string; zona_id: string | null }>();
+    .first<{ usuario_id: string; nombre: string; rol: string; zona_id: string | null }>();
   if (!p) return null;
   return {
     codigo,
@@ -458,7 +488,36 @@ export async function resolverCodigo(db: D1Database, escrito: string) {
     nombre: p.nombre.split(' ')[0] ?? '',
     ciudad: null as string | null,
     zonaId: p.zona_id ?? (await zonaDeUsuario(db, p.usuario_id)),
+    rol: p.rol,
   };
+}
+
+/**
+ * C-REFERIDOS-SIN-TRAMPA: el código tiene que existir y ser del mismo tipo de cuenta. Un conductor
+ * entra con el código de un equipo o de otro conductor; un cliente, con el de otro cliente. Se
+ * comprueba ANTES de crear la cuenta, para decírselo a la persona en la casilla del código.
+ */
+export async function codigoPara(
+  db: D1Database,
+  rol: 'repartidor' | 'cliente',
+  escrito: string,
+  campo = 'codigo',
+) {
+  const c = await resolverCodigo(db, escrito);
+  if (!c) throw new ErrorDatos('Ese código no existe.', campo, 404);
+  if (rol === 'repartidor' && c.rol !== 'repartidor')
+    throw new ErrorDatos(
+      'Ese código es de un cliente. Pídele su código a tu líder o a otro conductor.',
+      campo,
+      409,
+    );
+  if (rol === 'cliente' && (c.equipoId || c.rol !== 'cliente'))
+    throw new ErrorDatos(
+      'Ese código es para conductores. Pídele su código a un amigo que ya use Divoox.',
+      campo,
+      409,
+    );
+  return c;
 }
 
 /**
@@ -466,8 +525,7 @@ export async function resolverCodigo(db: D1Database, escrito: string) {
  * fecha) y como referido de quien invitó, salvo que sea la misma persona (queda la alerta).
  */
 export async function vincularConductor(db: D1Database, invitadoId: string, escrito: string) {
-  const c = await resolverCodigo(db, escrito);
-  if (!c) throw new ErrorDatos('Ese código no existe.', 'codigo', 404);
+  const c = await codigoPara(db, 'repartidor', escrito);
   if (c.invitadorId === invitadoId)
     throw new ErrorDatos('No puedes usar tu propio código.', 'codigo', 409);
   const ya = await db
@@ -527,8 +585,7 @@ export async function vincularCliente(
   escrito: string,
   zonaId: string | null,
 ) {
-  const c = await resolverCodigo(db, escrito);
-  if (!c) throw new ErrorDatos('Ese código no existe.', 'codigo', 404);
+  const c = await codigoPara(db, 'cliente', escrito);
   if (c.invitadorId === invitadoId)
     throw new ErrorDatos('No puedes usar tu propio código.', 'codigo', 409);
   const yaPidio = await db
@@ -545,10 +602,11 @@ export async function vincularCliente(
   const id = nuevoId();
   const r = await db
     .prepare(
-      'INSERT OR IGNORE INTO referidos (id, invitado_id, invitador_id, estado, para_amigo, para_quien_invita) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT OR IGNORE INTO referidos (id, invitado_id, invitador_id, estado, para_amigo, para_quien_invita, cierre) VALUES (?, ?, ?, ?, ?, ?, ?)',
     )
     // Los montos van en cero: los da el programa (premios_referido), no el «Invita a un amigo» viejo.
-    .bind(id, invitadoId, c.invitadorId, 'pendiente', 0, 0)
+    // C-REFERIDOS-SIN-TRAMPA: si es la misma persona, el vínculo nace cerrado y nunca da premio.
+    .bind(id, invitadoId, c.invitadorId, 'pendiente', 0, 0, propio ? 'misma_persona' : null)
     .run();
   if (!r.meta.changes) throw new ErrorDatos('Ya usaste un código de invitación.', 'codigo', 409);
   if (propio) {
@@ -565,7 +623,7 @@ export async function vincularCliente(
   if (programa?.activo && programa.tipo === 'cliente') {
     const reglas = programa.reglas as ReglasCliente;
     if (reglas.regaloInvitado > 0)
-      regalo = await darPremio(db, {
+      ({ monto: regalo } = await darPremio(db, {
         programa,
         rol: 'invitado',
         beneficiarioId: invitadoId,
@@ -575,18 +633,28 @@ export async function vincularCliente(
         nombreEs: 'Tu primer viaje gratis por invitación',
         nombreEn: 'Your first ride free by invitation',
         tipoCupon: 'gratis',
-      });
+      }));
   }
   return { ...c, regalo };
 }
 
 // ───────────────────────── Premios ─────────────────────────
 
+/** Por qué un premio se dio o no se dio. */
+type Premio = {
+  monto: number;
+  motivo: 'dado' | 'ya_dado' | 'sin_presupuesto' | 'tope_mes' | 'sin_zona';
+};
+
 /**
  * Da un premio contra el presupuesto del programa: la fila del premio nace SOLO si lo dado más este
  * premio no pasa el presupuesto y si el beneficiario no pasó su tope del mes (en la misma sentencia).
  * Conductor: saldo prepago. Cliente en un país en mano: un regalo de Divoox personal (un cupón de un
  * solo uso, guardado en su cuenta). Cliente con tarjeta (EE. UU.): saldo de regalo.
+ *
+ * C-REFERIDOS-SIN-TRAMPA: el premio, su acreditación y el gasto de Divoox van en UN solo lote. La
+ * acreditación está condicionada a que la fila del premio haya nacido en ese mismo lote; si algo
+ * falla, no queda nada escrito y el premio se puede reintentar.
  */
 async function darPremio(
   db: D1Database,
@@ -601,8 +669,8 @@ async function darPremio(
     nombreEn: string;
     tipoCupon: 'monto' | 'gratis';
   },
-): Promise<number> {
-  if (!p.zonaId || p.monto <= 0) return 0;
+): Promise<Premio> {
+  if (!p.zonaId || p.monto <= 0) return { monto: 0, motivo: 'sin_zona' };
   const { pais, moneda } = await paisDeZona(db, p.zonaId);
   const topeMes = Math.min(
     (p.programa.reglas as { topeMes: number }).topeMes,
@@ -611,6 +679,68 @@ async function darPremio(
   const monto = Math.min(p.monto, TOPES_REFERIDOS.premioMaximo);
   const forma = p.programa.tipo === 'conductor' ? 'saldo' : pais === 'US' ? 'credito' : 'cupon';
   const id = nuevoId();
+  const ref = `premio-referido:${id}`;
+  const nacio = 'EXISTS (SELECT 1 FROM premios_referido WHERE id = ?)';
+  const acreditar: D1PreparedStatement[] = [];
+  if (forma === 'saldo') {
+    acreditar.push(
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia)
+           SELECT ?, ?, 'prepago', ?, ?, ?, 'premio_referido', ? WHERE ${nacio}`,
+        )
+        .bind(crypto.randomUUID(), p.beneficiarioId, pais, moneda, monto, ref, id),
+    );
+  } else if (forma === 'credito') {
+    acreditar.push(
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO creditos_regalo (id, usuario_id, centavos, motivo, referencia)
+           SELECT ?, ?, ?, ?, ? WHERE ${nacio}`,
+        )
+        .bind(
+          nuevoId(),
+          p.beneficiarioId,
+          monto,
+          p.rol === 'invitado' ? 'referido_amigo' : 'referido_invita',
+          ref,
+          id,
+        ),
+    );
+  } else {
+    // Un regalo de Divoox personal: un cupón de un solo uso por el monto exacto, en las ciudades del
+    // país, guardado en la cuenta de la persona. Lo paga Divoox y lo cierra el mismo motor de regalos.
+    const { results: zonas } = await db
+      .prepare('SELECT id FROM zonas WHERE pais = ? AND activa = 1')
+      .bind(pais)
+      .all<{ id: string }>();
+    const codigo = `PREMIO${(await sha256(id)).slice(0, 10).toUpperCase()}`;
+    acreditar.push(
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO cupones_divoox (codigo, nombre_es, nombre_en, tipo, valor, moneda, servicios, zonas, vence_en, presupuesto, bienvenida, tope_diario_conductor, activo, creado_por)
+           SELECT ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+90 days'), ?, 0, 6, 1, 'referidos' WHERE ${nacio}`,
+        )
+        .bind(
+          codigo,
+          p.nombreEs,
+          p.nombreEn,
+          p.tipoCupon,
+          monto,
+          moneda,
+          JSON.stringify(['moto', 'carro', 'envios', 'comida']),
+          JSON.stringify(zonas.map((z) => z.id)),
+          monto,
+          id,
+        ),
+      db
+        .prepare(
+          `INSERT OR IGNORE INTO cupones_divoox_guardados (cliente_id, codigo) SELECT ?, ? WHERE ${nacio}`,
+        )
+        .bind(p.beneficiarioId, codigo, id),
+      db.prepare('UPDATE premios_referido SET referencia = ? WHERE id = ?').bind(codigo, id),
+    );
+  }
   const [ins] = await db.batch([
     db
       .prepare(
@@ -634,85 +764,43 @@ async function darPremio(
         p.programa.presupuesto,
         topeMes,
       ),
-  ]);
-  if (!ins?.meta.changes) {
-    const yaDado = await db
-      .prepare('SELECT 1 FROM premios_referido WHERE tipo = ? AND rol = ? AND invitado_id = ?')
-      .bind(p.programa.tipo, p.rol, p.invitadoId)
-      .first();
-    if (!yaDado)
-      await alertaReferido(
-        db,
-        'referido_sin_premio',
-        p.programa.tipo === 'cliente' ? p.beneficiarioId : null,
-        p.programa.tipo === 'conductor' ? p.beneficiarioId : null,
-        'Un premio de referidos no se dio: el programa se quedó sin presupuesto o la persona llegó a su tope del mes.',
-      );
-    return 0;
-  }
-  if (forma === 'saldo') {
-    await db
+    ...acreditar,
+    // El gasto de Divoox en referidos, en su libro (contrapartida), una vez por premio.
+    db
       .prepare(
         `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia)
-         VALUES (?, ?, 'prepago', ?, ?, ?, 'premio_referido', ?)`,
+         SELECT ?, ?, 'comisiones', ?, ?, ?, 'premio_referido_pagado', ? WHERE ${nacio}`,
       )
-      .bind(crypto.randomUUID(), p.beneficiarioId, pais, moneda, monto, `premio-referido:${id}`)
-      .run();
-  } else if (forma === 'credito') {
-    await db
-      .prepare(
-        'INSERT OR IGNORE INTO creditos_regalo (id, usuario_id, centavos, motivo, referencia) VALUES (?, ?, ?, ?, ?)',
-      )
-      .bind(
-        nuevoId(),
-        p.beneficiarioId,
-        monto,
-        p.rol === 'invitado' ? 'referido_amigo' : 'referido_invita',
-        `premio-referido:${id}`,
-      )
-      .run();
-  } else {
-    // Un regalo de Divoox personal: un cupón de un solo uso por el monto exacto, en las ciudades del
-    // país, guardado en la cuenta de la persona. Lo paga Divoox y lo cierra el mismo motor de regalos.
-    const { results: zonas } = await db
-      .prepare('SELECT id FROM zonas WHERE pais = ? AND activa = 1')
-      .bind(pais)
-      .all<{ id: string }>();
-    const codigo = `PREMIO${(await sha256(id)).slice(0, 10).toUpperCase()}`;
-    await db.batch([
-      db
-        .prepare(
-          `INSERT OR IGNORE INTO cupones_divoox (codigo, nombre_es, nombre_en, tipo, valor, moneda, servicios, zonas, vence_en, presupuesto, bienvenida, tope_diario_conductor, activo, creado_por)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+90 days'), ?, 0, 6, 1, 'referidos')`,
-        )
-        .bind(
-          codigo,
-          p.nombreEs,
-          p.nombreEn,
-          p.tipoCupon,
-          monto,
-          moneda,
-          JSON.stringify(['moto', 'carro', 'envios', 'comida']),
-          JSON.stringify(zonas.map((z) => z.id)),
-          monto,
-        ),
-      db
-        .prepare(
-          'INSERT OR IGNORE INTO cupones_divoox_guardados (cliente_id, codigo) VALUES (?, ?)',
-        )
-        .bind(p.beneficiarioId, codigo),
-      db.prepare('UPDATE premios_referido SET referencia = ? WHERE id = ?').bind(codigo, id),
-    ]);
-  }
-  // El gasto de Divoox en referidos, en su libro (contrapartida), una vez por premio.
-  await db
+      .bind(crypto.randomUUID(), CUENTA_TUMBITE, pais, moneda, -monto, `${ref}:divoox`, id),
+  ]);
+  if (ins?.meta.changes) return { monto, motivo: 'dado' };
+  const f = await db
     .prepare(
-      `INSERT OR IGNORE INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia)
-       VALUES (?, ?, 'comisiones', ?, ?, ?, 'premio_referido_pagado', ?)`,
+      `SELECT EXISTS (SELECT 1 FROM premios_referido WHERE tipo = ?1 AND rol = ?2 AND invitado_id = ?3) AS ya,
+              (SELECT COALESCE(SUM(monto), 0) FROM premios_referido WHERE tipo = ?1 AND ambito = ?4) AS gastado`,
     )
-    .bind(crypto.randomUUID(), CUENTA_TUMBITE, pais, moneda, -monto, `premio-referido:${id}:divoox`)
-    .run();
-  return monto;
+    .bind(p.programa.tipo, p.rol, p.invitadoId, p.programa.ambito)
+    .first<{ ya: number; gastado: number }>();
+  if (Number(f?.ya ?? 0) === 1) return { monto: 0, motivo: 'ya_dado' };
+  const motivo =
+    Number(f?.gastado ?? 0) + monto > p.programa.presupuesto ? 'sin_presupuesto' : 'tope_mes';
+  // Una alerta por programa y por día, no una por referido ni una por hora.
+  await alertaUnaVez(
+    db,
+    'referido_sin_premio',
+    null,
+    null,
+    motivo === 'sin_presupuesto'
+      ? `El programa de referidos ${p.programa.tipo} · ${p.programa.ambito} se quedó sin presupuesto: hay premios que no se dieron. Súbele el presupuesto para que vuelvan a contar.`
+      : `En el programa de referidos ${p.programa.tipo} · ${p.programa.ambito} alguien llegó a su tope de premios del mes.`,
+  );
+  return { monto: 0, motivo };
+}
+
+/** Desde qué fila revisa el reloj: rota de a cien por hora para que nadie se quede sin revisar. */
+function turnoDe(pendientes: number) {
+  if (pendientes <= 100) return 0;
+  return (Math.floor(Date.now() / 3_600_000) * 100) % pendientes;
 }
 
 /**
@@ -720,21 +808,40 @@ async function darPremio(
  * quien lo invitó) y clientes (N pedidos o viajes pagados y el gasto mínimo, sin contar los que hizo
  * con quien lo invitó). Da los premios y cierra los vencidos. Idempotente; lo corre el reloj y la
  * entrega o el fin de un viaje.
+ *
+ * C-REFERIDOS-SIN-TRAMPA: antes de premiar se vuelve a comprobar que no sean la misma persona (el
+ * aparato o la cuenta de cobro pueden coincidir después del registro); un premio que no se puede dar
+ * (sin presupuesto o tope del mes) cierra el referido en vez de quedarse pendiente para siempre.
  */
 export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
   let dados = 0;
+  const solo = soloInvitado ?? '';
+  const cuenta = async (sql: string) =>
+    solo ? 0 : Number((await db.prepare(sql).first<{ n: number }>())?.n ?? 0);
   const { results: conductores } = await db
     .prepare(
       `SELECT invitado_id, invitador_id, zona_id, creado_en FROM referidos_conductor
-        WHERE estado = 'pendiente' AND (?1 = '' OR invitado_id = ?1) LIMIT 100`,
+        WHERE estado = 'pendiente' AND (?1 = '' OR invitado_id = ?1) ORDER BY creado_en, invitado_id LIMIT 100 OFFSET ?2`,
     )
-    .bind(soloInvitado ?? '')
+    .bind(
+      solo,
+      turnoDe(
+        await cuenta("SELECT COUNT(*) AS n FROM referidos_conductor WHERE estado = 'pendiente'"),
+      ),
+    )
     .all<{
       invitado_id: string;
       invitador_id: string;
       zona_id: string | null;
       creado_en: string;
     }>();
+  const cerrarConductor = (invitadoId: string, estado: string, motivo: string | null) =>
+    db
+      .prepare(
+        "UPDATE referidos_conductor SET estado = ?, motivo = ?, cerrado_en = datetime('now') WHERE invitado_id = ? AND estado = 'pendiente'",
+      )
+      .bind(estado, motivo, invitadoId)
+      .run();
   for (const r of conductores) {
     const zona =
       r.zona_id ??
@@ -799,7 +906,18 @@ export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
           'La mitad o más de las carreras del invitado son con el mismo pasajero.',
         );
       if (!programa.activo) continue;
-      const monto = await darPremio(db, {
+      if (await esLaMismaPersona(db, r.invitado_id, r.invitador_id)) {
+        await cerrarConductor(r.invitado_id, 'rechazado', 'misma_persona');
+        await alertaReferido(
+          db,
+          'referido_propio',
+          null,
+          r.invitado_id,
+          'Un conductor invitado resultó ser la misma persona que quien lo invitó (mismo teléfono, aparato o cuenta de cobro). No se dio el premio.',
+        );
+        continue;
+      }
+      const premio = await darPremio(db, {
         programa,
         rol: 'invitador',
         beneficiarioId: r.invitador_id,
@@ -810,31 +928,35 @@ export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
         nombreEn: '',
         tipoCupon: 'monto',
       });
-      if (monto > 0) {
-        dados++;
-        await db
-          .prepare(
-            "UPDATE referidos_conductor SET estado = 'premiado', cerrado_en = datetime('now') WHERE invitado_id = ? AND estado = 'pendiente'",
-          )
-          .bind(r.invitado_id)
-          .run();
-      }
+      if (premio.motivo === 'dado') dados++;
+      if (premio.motivo === 'dado' || premio.motivo === 'ya_dado')
+        await cerrarConductor(r.invitado_id, 'premiado', null);
+      else if (premio.motivo !== 'sin_zona')
+        await cerrarConductor(r.invitado_id, 'rechazado', premio.motivo);
     } else if (Number(f?.vencido ?? 0) === 1) {
-      await db
-        .prepare(
-          "UPDATE referidos_conductor SET estado = 'vencido', cerrado_en = datetime('now') WHERE invitado_id = ? AND estado = 'pendiente'",
-        )
-        .bind(r.invitado_id)
-        .run();
+      await cerrarConductor(r.invitado_id, 'vencido', null);
     }
   }
   const { results: clientes } = await db
     .prepare(
       `SELECT r.id, r.invitado_id, r.invitador_id, u.zona_id FROM referidos r JOIN usuarios u ON u.id = r.invitado_id
-        WHERE r.estado = 'pendiente' AND (?1 = '' OR r.invitado_id = ?1) LIMIT 100`,
+        WHERE r.estado = 'pendiente' AND r.cierre IS NULL AND (?1 = '' OR r.invitado_id = ?1)
+        ORDER BY r.creado_en, r.id LIMIT 100 OFFSET ?2`,
     )
-    .bind(soloInvitado ?? '')
+    .bind(
+      solo,
+      turnoDe(
+        await cuenta(
+          "SELECT COUNT(*) AS n FROM referidos WHERE estado = 'pendiente' AND cierre IS NULL",
+        ),
+      ),
+    )
     .all<{ id: string; invitado_id: string; invitador_id: string; zona_id: string | null }>();
+  const cerrarCliente = (id: string, cierre: string) =>
+    db
+      .prepare("UPDATE referidos SET cierre = ? WHERE id = ? AND estado = 'pendiente'")
+      .bind(cierre, id)
+      .run();
   for (const r of clientes) {
     // La ciudad del cliente: la de su última operación o pedido.
     const zona =
@@ -868,7 +990,18 @@ export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
       Number(f?.gasto ?? 0) < reglas.gastoMinimo
     )
       continue;
-    const monto = await darPremio(db, {
+    if (await esLaMismaPersona(db, r.invitado_id, r.invitador_id)) {
+      await cerrarCliente(r.id, 'misma_persona');
+      await alertaReferido(
+        db,
+        'referido_propio',
+        r.invitado_id,
+        null,
+        'Un cliente invitado resultó ser la misma persona que quien lo invitó (mismo teléfono o aparato). No se dio el premio.',
+      );
+      continue;
+    }
+    const premio = await darPremio(db, {
       programa,
       rol: 'invitador',
       beneficiarioId: r.invitador_id,
@@ -879,15 +1012,15 @@ export async function revisarReferidos(db: D1Database, soloInvitado?: string) {
       nombreEn: 'Reward for inviting a friend',
       tipoCupon: 'monto',
     });
-    if (monto > 0) {
-      dados++;
+    if (premio.motivo === 'dado') dados++;
+    if (premio.motivo === 'dado' || premio.motivo === 'ya_dado')
       await db
         .prepare(
           "UPDATE referidos SET estado = 'premiado', premiado_en = datetime('now') WHERE id = ? AND estado = 'pendiente'",
         )
         .bind(r.id)
         .run();
-    }
+    else if (premio.motivo !== 'sin_zona') await cerrarCliente(r.id, premio.motivo);
   }
   return dados;
 }

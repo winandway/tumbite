@@ -351,3 +351,186 @@ describe('C-REFERIDOS-EQUIPOS: referido de cliente', () => {
     expect(await saldoRegalo(e.m.DB, ana.id)).toBe(500);
   });
 });
+
+/**
+ * C-REFERIDOS-SIN-TRAMPA (18 nov 2026, dictamen del revisor): quien se invita a sí mismo no cobra nunca,
+ * el premio y su acreditación van juntos o no van, un programa sin presupuesto cierra el referido en
+ * vez de avisar cada hora, y un código que no sirve se le dice a la persona al registrarse.
+ */
+describe('C-REFERIDOS-SIN-TRAMPA', () => {
+  const cuponesDe = async (db: D1Database, clienteId: string) =>
+    Number(
+      (
+        await db
+          .prepare('SELECT COUNT(*) AS n FROM cupones_divoox_guardados WHERE cliente_id = ?')
+          .bind(clienteId)
+          .first<{ n: number }>()
+      )?.n ?? 0,
+    );
+
+  it('el cliente que se invita a sí mismo no le da premio a quien invita, ni al vincular ni después', async () => {
+    const { e, registrar, carrera, programa } = await mundo();
+    await programa('cliente', 'VE', {
+      activo: true,
+      presupuesto: 10_000,
+      reglas: PROGRAMAS_POR_DEFECTO['cliente:VE']!.reglas,
+    });
+    const ana = await registrar('cliente', 'Ana', { aparato: 'aparato-de-ana-0001' });
+    const codigo = (await e.m.llamar('GET', '/datos/referidos', undefined, ana.token)).datos
+      .codigo as string;
+    // La segunda cuenta de Ana: mismo aparato desde el registro.
+    const ana2 = await registrar('cliente', 'Ana Dos', {
+      invitacion: codigo,
+      aparato: 'aparato-de-ana-0001',
+    });
+    // La tercera: se registra con otro aparato y después entra con el de Ana.
+    const ana3 = await registrar('cliente', 'Ana Tres', { invitacion: codigo });
+    await e.m.DB.prepare(
+      'INSERT INTO aparatos_usuario (usuario_id, huella) SELECT ?, huella FROM aparatos_usuario WHERE usuario_id = ?',
+    )
+      .bind(ana3.id, ana.id)
+      .run();
+    const cond = await registrar('repartidor', 'Conductor');
+    for (const c of [ana2, ana3]) for (let i = 0; i < 3; i++) await carrera(cond.id, c.id, 200);
+    expect(await revisarReferidos(e.m.DB)).toBe(0);
+    expect(await revisarReferidos(e.m.DB)).toBe(0);
+    expect(await cuponesDe(e.m.DB, ana.id)).toBe(0);
+    expect(await cuponesDe(e.m.DB, ana2.id)).toBe(0);
+    const { results } = await e.m.DB.prepare(
+      'SELECT estado, cierre FROM referidos WHERE invitador_id = ? ORDER BY creado_en, id',
+    )
+      .bind(ana.id)
+      .all<{ estado: string; cierre: string | null }>();
+    expect(results.map((r) => r.cierre)).toEqual(['misma_persona', 'misma_persona']);
+    // Una sola alerta por intento, no una por hora.
+    const alertas = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM alertas_regalo WHERE tipo = 'referido_propio'",
+    ).first<{ n: number }>();
+    expect(alertas?.n).toBe(2);
+  });
+
+  it('el conductor que resulta ser la misma persona después de vincularse tampoco cobra', async () => {
+    const { e, registrar, carrera, programa } = await mundo();
+    await programa('conductor', 'VE', {
+      activo: true,
+      presupuesto: 5_000,
+      reglas: { premio: 100, carreras: 1, dias: 30, topeMes: 10 },
+    });
+    const invita = await registrar('repartidor', 'Ana');
+    const codigo = (
+      await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
+    ).datos.codigo as string;
+    const otro = await registrar('repartidor', 'Ana Otra', { invitacion: codigo });
+    await e.m.DB.prepare(
+      'INSERT INTO aparatos_usuario (usuario_id, huella) SELECT ?, huella FROM aparatos_usuario WHERE usuario_id = ?',
+    )
+      .bind(otro.id, invita.id)
+      .run();
+    const cli = await registrar('cliente', 'Pasajero');
+    await carrera(otro.id, cli.id);
+    expect(await revisarReferidos(e.m.DB)).toBe(0);
+    expect(await saldoLibro(e.m.DB, invita.id, 'prepago', 'VE', 'USD')).toBe(0);
+    expect(
+      await e.m.DB.prepare('SELECT estado, motivo FROM referidos_conductor WHERE invitado_id = ?')
+        .bind(otro.id)
+        .first(),
+    ).toEqual({ estado: 'rechazado', motivo: 'misma_persona' });
+  });
+
+  it('si la acreditación falla, el premio no queda gastado: se reintenta y la persona cobra', async () => {
+    const { e, registrar, carrera, programa } = await mundo();
+    await programa('conductor', 'VE', {
+      activo: true,
+      presupuesto: 5_000,
+      reglas: { premio: 100, carreras: 1, dias: 30, topeMes: 10 },
+    });
+    const invita = await registrar('repartidor', 'Ana');
+    const codigo = (
+      await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
+    ).datos.codigo as string;
+    const nuevo = await registrar('repartidor', 'Beto', { invitacion: codigo });
+    const cli = await registrar('cliente', 'Pasajero');
+    await carrera(nuevo.id, cli.id);
+    // La base falla justo al acreditar el saldo.
+    await e.m.DB.exec(
+      "CREATE TRIGGER falla_premio BEFORE INSERT ON libro WHEN NEW.concepto = 'premio_referido' BEGIN SELECT RAISE(ABORT, 'fallo de prueba'); END",
+    );
+    await expect(revisarReferidos(e.m.DB)).rejects.toThrow();
+    const premios = () =>
+      e.m.DB.prepare('SELECT COUNT(*) AS n FROM premios_referido').first<{ n: number }>();
+    expect((await premios())?.n).toBe(0);
+    await e.m.DB.exec('DROP TRIGGER falla_premio');
+    expect(await revisarReferidos(e.m.DB)).toBe(1);
+    expect((await premios())?.n).toBe(1);
+    expect(await saldoLibro(e.m.DB, invita.id, 'prepago', 'VE', 'USD')).toBe(100);
+  });
+
+  it('sin presupuesto: el referido se cierra, la alerta sale una sola vez y al subir el presupuesto vuelve a contar', async () => {
+    const { e, registrar, carrera, programa } = await mundo();
+    const reglas = { premio: 100, carreras: 1, dias: 30, topeMes: 10 };
+    await programa('conductor', 'VE', { activo: true, presupuesto: 100, reglas });
+    const invita = await registrar('repartidor', 'Ana');
+    const codigo = (
+      await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, invita.token)
+    ).datos.codigo as string;
+    const cli = await registrar('cliente', 'Pasajero');
+    for (let i = 0; i < 3; i++) {
+      const c = await registrar('repartidor', `Invitado ${i}`, { invitacion: codigo });
+      await carrera(c.id, cli.id);
+    }
+    expect(await revisarReferidos(e.m.DB)).toBe(1);
+    for (let i = 0; i < 3; i++) expect(await revisarReferidos(e.m.DB)).toBe(0);
+    const estados = async () =>
+      (
+        await e.m.DB.prepare(
+          "SELECT estado || ':' || COALESCE(motivo, '') AS x FROM referidos_conductor ORDER BY x",
+        ).all<{ x: string }>()
+      ).results.map((r) => r.x);
+    expect(await estados()).toEqual([
+      'premiado:',
+      'rechazado:sin_presupuesto',
+      'rechazado:sin_presupuesto',
+    ]);
+    const alertas = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM alertas_regalo WHERE tipo = 'referido_sin_premio'",
+    ).first<{ n: number }>();
+    expect(alertas?.n).toBe(1);
+    // El equipo sube el presupuesto: los que se quedaron sin premio vuelven a la fila.
+    expect(
+      (await programa('conductor', 'VE', { activo: true, presupuesto: 500, reglas })).estado,
+    ).toBe(200);
+    expect(await revisarReferidos(e.m.DB)).toBe(2);
+    expect(await saldoLibro(e.m.DB, invita.id, 'prepago', 'VE', 'USD')).toBe(300);
+  });
+
+  it('un código que no sirve se le dice a la persona al registrarse, y no se crea la cuenta', async () => {
+    const { e, registrar } = await mundo();
+    const cliente = await registrar('cliente', 'Ana Cliente');
+    const codigoCliente = (await e.m.llamar('GET', '/datos/referidos', undefined, cliente.token))
+      .datos.codigo as string | null;
+    const conductor = await registrar('repartidor', 'Beto Conductor');
+    const codigoConductor = (
+      await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, conductor.token)
+    ).datos.codigo as string;
+    const intento = (rol: string, invitacion: string, correo: string) =>
+      e.m.llamar('POST', '/datos/cuentas/registro', {
+        nombre: 'Persona Nueva',
+        correo,
+        clave: 'clave-segura-1',
+        rol,
+        telefono: `+58414666${String(Math.floor(Math.random() * 9000) + 1000)}`,
+        invitacion,
+      });
+    const noExiste = await intento('repartidor', 'NOEXISTE99', 'nuevo-a@ejemplo.com');
+    expect(noExiste.estado).toBe(404);
+    expect(noExiste.datos.campo).toBe('invitacion');
+    // El código personal de un conductor no sirve para un cliente, ni al revés.
+    expect((await intento('cliente', codigoConductor, 'nuevo-b@ejemplo.com')).estado).toBe(409);
+    if (codigoCliente)
+      expect((await intento('repartidor', codigoCliente, 'nuevo-c@ejemplo.com')).estado).toBe(409);
+    const creadas = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM usuarios WHERE correo LIKE 'nuevo-%@ejemplo.com'",
+    ).first<{ n: number }>();
+    expect(creadas?.n).toBe(0);
+  });
+});

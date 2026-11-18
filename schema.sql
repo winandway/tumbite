@@ -3747,6 +3747,8 @@ CREATE TABLE IF NOT EXISTS referidos (
   para_quien_invita INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   premiado_en TEXT,
+  -- C-REFERIDOS-SIN-TRAMPA: por qué un vínculo pendiente ya no puede dar premio (misma_persona, sin_presupuesto, tope_mes).
+  cierre TEXT,
   CHECK (invitado_id <> invitador_id)
 );
 CREATE INDEX IF NOT EXISTS referidos_invitador ON referidos(invitador_id);
