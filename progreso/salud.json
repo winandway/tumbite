@@ -30,7 +30,7 @@
     "regalos": "ok",
     "camila": "ok",
     "disputas": "ok",
-    "errores": "ok",
+    "errores": "pendiente",
     "bandeja": "ok",
     "cobros": "ok",
     "autorizaciones": "ok",
@@ -40,5 +40,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-18T22:23:03.555942+00:00"
+  "medido": "2026-11-18T23:15:40.686567+00:00"
 }
