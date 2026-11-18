@@ -224,17 +224,13 @@ export function CuadriculaServicios({
                   accessibilityIgnoresInvertColors
                 />
               )}
-              <Text
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-                maxFontSizeMultiplier={1.2}
-                style={p.servNombre}
-              >
+              {/* Ningún nombre se corta: hasta dos renglones centrados (también en la web y en un
+                  teléfono de 360 con letra grande), nunca puntos suspensivos. */}
+              <Text numberOfLines={2} maxFontSizeMultiplier={1.15} style={p.servNombre}>
                 {nombre}
               </Text>
               {sub ? (
-                <Text numberOfLines={1} maxFontSizeMultiplier={1.2} style={p.servSub}>
+                <Text maxFontSizeMultiplier={1.15} style={p.servSub}>
                   {sub}
                 </Text>
               ) : null}
@@ -503,7 +499,8 @@ const p = StyleSheet.create({
     flexBasis: '22%',
     flexGrow: 1,
     maxWidth: '24%',
-    height: 88,
+    minHeight: 88,
+    paddingVertical: 8,
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     alignItems: 'center',
@@ -511,8 +508,19 @@ const p = StyleSheet.create({
     gap: 2,
     paddingHorizontal: 4,
   },
-  servNombre: { fontSize: 12, fontWeight: '700', color: C.secundario, textAlign: 'center' },
-  servSub: { fontSize: 10, fontWeight: '600', color: COLOR.textoSuave, marginTop: -2 },
+  servNombre: {
+    fontSize: 11.5,
+    lineHeight: 14,
+    fontWeight: '700',
+    color: C.secundario,
+    textAlign: 'center',
+  },
+  servSub: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLOR.textoSuave,
+    textAlign: 'center',
+  },
   mas: { width: 36, height: 36, flexDirection: 'row', flexWrap: 'wrap', gap: 3, marginBottom: 2 },
   masCuadro: { width: 16.5, height: 16.5, borderRadius: 5 },
   promo: {

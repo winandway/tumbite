@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -119,6 +119,7 @@ export function Inicio() {
 
   // La portada: la del administrador de banners; si no hay, la de respaldo (una distinta cada vez).
   const [vez, setVez] = useState(0);
+  const vezAbierta = useRef<number | null>(null);
   const [portada, setPortada] = useState<BannerInicio | null>(null);
   // Una sola vez por ciudad: se espera a saber la ciudad (catálogo de servicios) antes de pedirla,
   // así no cambia un segundo después de abrir (revisión del 18 nov).
@@ -127,7 +128,10 @@ export function Inicio() {
     let vivo = true;
     void (async () => {
       const ultima = await Promise.resolve(almacenTelefono.leer(LLAVE_PORTADA)).catch(() => null);
-      const n = Number((ultima ?? '').split('|')[1] ?? 0) + 1;
+      // La vuelta de la portada se cuenta UNA vez por apertura: si la ciudad cambia después (la
+      // ubicación llega más tarde), se pide de nuevo pero no salta a la siguiente.
+      const n = vezAbierta.current ?? Number((ultima ?? '').split('|')[1] ?? 0) + 1;
+      vezAbierta.current = n;
       if (vivo) setVez(n);
       const r = await api
         .pedir<{ banner: unknown }>(
@@ -310,16 +314,19 @@ export function Inicio() {
                 alTocar={abrirRestaurante}
               />
               <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
-              <ListaRestaurantes
-                idioma={idioma}
-                lista={catalogo.restaurantes}
-                cuantos={cuantos}
-                verMas={() => setCuantos((n) => n + TANDA)}
-                cargando={catalogo.estado === 'cargando' && !catalogo.restaurantes.length}
-                favoritos={favoritos}
-                alTocar={abrirRestaurante}
-                vacio={catalogo.restaurantes.length ? textosInicio(idioma).sinFiltro : undefined}
-              />
+              {/* «Todos los restaurantes» solo cuando hay alguno (sin título suelto en una zona vacía). */}
+              {catalogo.restaurantes.length ? (
+                <ListaRestaurantes
+                  idioma={idioma}
+                  lista={catalogo.restaurantes}
+                  cuantos={cuantos}
+                  verMas={() => setCuantos((n) => n + TANDA)}
+                  cargando={catalogo.estado === 'cargando' && !catalogo.restaurantes.length}
+                  favoritos={favoritos}
+                  alTocar={abrirRestaurante}
+                  vacio={catalogo.restaurantes.length ? textosInicio(idioma).sinFiltro : undefined}
+                />
+              ) : null}
             </>
           ) : null}
         </View>

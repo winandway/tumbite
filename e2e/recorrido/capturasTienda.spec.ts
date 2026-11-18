@@ -13,6 +13,8 @@ import { sqlLocal } from './sqlLocal';
 const RAIZ = join(__dirname, '..', '..');
 const ACTIVO = process.env.CAPTURAS_TIENDA === '1' && !process.env.RECORRIDO_URL;
 test.skip(!ACTIVO, 'solo con CAPTURAS_TIENDA=1, en esta computadora');
+// Una ciudad tras otra: la base local no aguanta las dos a la vez.
+test.describe.configure({ mode: 'serial' });
 const DATOS = ACTIVO
   ? (JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8')) as {
       url: string;
@@ -159,6 +161,11 @@ for (const idioma of ['es', 'en'] as const)
       expect(t.ok(), await t.text()).toBe(true);
     }
 
+    // Una promoción destacada de la ciudad, para que el carrusel del inicio se vea (como en el borrador).
+    const cupon = idioma === 'es' ? 'BIENVENIDO3' : 'WELCOME3';
+    sql(`DELETE FROM cupones WHERE destacado = 1`);
+    sql(`INSERT OR REPLACE INTO cupones (codigo, tipo, valor, descripcion_es, descripcion_en, zona_id, destacado, activo)
+         VALUES ('${cupon}', 'monto', 300, '-$3,00 en tu pedido', '$3.00 off your order', '${z.id}', 1, 1)`);
     // Restaurantes con nombres neutros, abiertos todo el día, cerca de la persona.
     for (const [i, [nombre, categoria, foto]] of C.restaurantes.entries()) {
       const duenio = await cuenta('restaurante', nombre);
@@ -177,116 +184,151 @@ for (const idioma of ['es', 'en'] as const)
     const cond = await cuenta('repartidor', C.conductor);
     const c = cond.usuario.id;
     const v = `veh-tienda-${id}`;
-    sql(`UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = '${z.id}'`);
-    sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${c}', 0, ${z.lat + 0.004}, ${z.lng - 0.003}, datetime('now'), '${z.id}')
-         ON CONFLICT(usuario_id) DO UPDATE SET lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);
-    sql(`INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
+    // Aquí se toman fotos, no se prueba el alta del conductor (como en regalosDivoox).
+    const requisitos = sql(
+      `SELECT servicio_id, requisito, obligatorio FROM servicio_requisitos WHERE servicio_id = 'moto'`,
+    );
+    sql(`DELETE FROM servicio_requisitos WHERE servicio_id = 'moto'`);
+    try {
+      sql(`UPDATE repartidores SET conectado = 0 WHERE conectado = 1 AND zona_id = '${z.id}'`);
+      sql(`INSERT INTO repartidores (usuario_id, conectado, lat, lng, ubicacion_en, zona_id) VALUES ('${c}', 1, ${z.lat + 0.004}, ${z.lng - 0.003}, datetime('now'), '${z.id}')
+         ON CONFLICT(usuario_id) DO UPDATE SET conectado = 1, lat = excluded.lat, lng = excluded.lng, ubicacion_en = excluded.ubicacion_en, zona_id = excluded.zona_id`);
+      sql(`INSERT INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, plazas, estado)
          VALUES ('${v}', '${c}', 'moto', 'Vespa', 'Primavera', '${idioma === 'es' ? 'Roja' : 'Red'}', '${idioma === 'es' ? 'AB123CD' : 'ABC1234'}', '', 2023, 1, 'aprobado')`);
-    sql(`UPDATE repartidores SET vehiculo_activo_id = '${v}' WHERE usuario_id = '${c}'`);
-
-    // El pasajero, con Casa, Trabajo y Gimnasio, viajes anteriores (Recientes) y Populares de la ciudad.
-    const cli = await cuenta('cliente', C.pasajero, { telefono: C.telefono });
-    for (const [etiqueta, icono, d] of [
-      [idioma === 'es' ? 'Casa' : 'Home', 'casa', C.casa],
-      [idioma === 'es' ? 'Trabajo' : 'Work', 'trabajo', C.trabajo],
-      [C.gimnasio.nombre, 'gimnasio', C.gimnasio],
-    ] as const) {
-      const r = await request.post('/datos/mis-direcciones', {
-        headers: h(cli.token),
-        data: { etiqueta, icono, direccion: d.direccion, lat: d.lat, lng: d.lng },
-      });
-      expect(r.ok(), await r.text()).toBe(true);
-    }
-    const ahora = new Date();
-    const viajes: [string, number, number, number][] = [
-      [C.trabajo.direccion, C.trabajo.lat, C.trabajo.lng, 7],
-      [C.trabajo.direccion, C.trabajo.lat, C.trabajo.lng, 14],
-      [C.recientes[0]![0], C.recientes[0]![1], C.recientes[0]![2], 3],
-      [C.recientes[1]![0], C.recientes[1]![1], C.recientes[1]![2], 2],
-    ];
-    for (const [i, [dir, lat, lng, dias]] of viajes.entries()) {
-      const op = `op-tienda-${id}-${i}`;
-      const en = new Date(ahora.getTime() - dias * 86_400_000)
-        .toISOString()
-        .replace('T', ' ')
-        .slice(0, 19);
+      sql(`UPDATE repartidores SET vehiculo_activo_id = '${v}' WHERE usuario_id = '${c}'`);
+      for (const t of ['registro', 'seguro', 'seguro_pasajeros'])
+        sql(
+          `INSERT INTO vehiculo_documentos (id, vehiculo_id, tipo, clave, estado, vence_en) VALUES ('doc-${t}-${id}', '${v}', '${t}', 'doc', 'aprobado', datetime('now', '+1 year'))`,
+        );
       sql(
-        `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, creado_en) VALUES ('${op}', 'moto', 'viaje_pasajero', '${cli.usuario.id}', '${z.id}', 'terminada', '${en}')`,
+        `INSERT INTO habilitaciones (conductor_id, servicio_id, estado, aprobado_por, aprobado_en) VALUES ('${c}', 'moto', 'aprobada', '${admin.usuario.id}', datetime('now'))`,
       );
-      sql(`INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultima_clave, origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion, pin_recogida)
+      sql(
+        `INSERT INTO preferencias_servicio (conductor_id, servicio_id, activa) VALUES ('${c}', 'moto', 1)`,
+      );
+      sql(
+        `INSERT INTO libro (id, cuenta_id, bolsillo, pais, moneda, monto, concepto, referencia) VALUES ('recarga-${id}', '${c}', 'prepago', '${z.pais}', 'USD', 2000, 'recarga_recorrido', 'recarga-${id}')`,
+      );
+      // El pasajero, con Casa, Trabajo y Gimnasio, viajes anteriores (Recientes) y Populares de la ciudad.
+      const cli = await cuenta('cliente', C.pasajero, { telefono: C.telefono });
+      for (const [etiqueta, icono, d] of [
+        [idioma === 'es' ? 'Casa' : 'Home', 'casa', C.casa],
+        [idioma === 'es' ? 'Trabajo' : 'Work', 'trabajo', C.trabajo],
+        [C.gimnasio.nombre, 'gimnasio', C.gimnasio],
+      ] as const) {
+        const r = await request.post('/datos/mis-direcciones', {
+          headers: h(cli.token),
+          data: { etiqueta, icono, direccion: d.direccion, lat: d.lat, lng: d.lng },
+        });
+        expect(r.ok(), await r.text()).toBe(true);
+      }
+      const ahora = new Date();
+      const viajes: [string, number, number, number][] = [
+        [C.trabajo.direccion, C.trabajo.lat, C.trabajo.lng, 7],
+        [C.trabajo.direccion, C.trabajo.lat, C.trabajo.lng, 14],
+        [C.recientes[0]![0], C.recientes[0]![1], C.recientes[0]![2], 3],
+        [C.recientes[1]![0], C.recientes[1]![1], C.recientes[1]![2], 2],
+      ];
+      for (const [i, [dir, lat, lng, dias]] of viajes.entries()) {
+        const op = `op-tienda-${id}-${i}`;
+        const en = new Date(ahora.getTime() - dias * 86_400_000)
+          .toISOString()
+          .replace('T', ' ')
+          .slice(0, 19);
+        sql(
+          `INSERT INTO operaciones (id, servicio_id, tipo_operacion, cliente_id, zona_id, estado_general, creado_en) VALUES ('${op}', 'moto', 'viaje_pasajero', '${cli.usuario.id}', '${z.id}', 'terminada', '${en}')`,
+        );
+        sql(`INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultima_clave, origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion, pin_recogida)
            VALUES ('${op}', 'terminado', 'sistema', 'alta:${op}', ${z.lat}, ${z.lng}, '${z.nombre}', ${lat}, ${lng}, '${dir.replace(/'/g, "''")}', '4321')`);
-    }
-    sql(`INSERT INTO config (clave, valor, actualizado_en) VALUES ('populares:${z.id}', '${JSON.stringify({ origen: 'ciudad', lugares: C.populares }).replace(/'/g, "''")}', datetime('now'))
+      }
+      sql(`INSERT INTO config (clave, valor, actualizado_en) VALUES ('populares:${z.id}', '${JSON.stringify({ origen: 'ciudad', lugares: C.populares }).replace(/'/g, "''")}', datetime('now'))
          ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor, actualizado_en = excluded.actualizado_en`);
 
-    // El teléfono: iPhone de 402 × 874 puntos a 3× (1206 × 2622), en la ciudad.
-    const ctx = await browser.newContext({
-      viewport: { width: 402, height: 874 },
-      deviceScaleFactor: 3,
-      isMobile: true,
-      hasTouch: true,
-      baseURL: DATOS!.url,
-      geolocation: { latitude: z.lat, longitude: z.lng },
-      permissions: ['geolocation'],
-    });
-    await ctx.addInitScript(
-      ([pase, idi]) => {
-        localStorage.setItem('tumbite.idioma', idi);
-        localStorage.setItem('tumbite.sesion', pase);
-        // La portada de respaldo que toca al abrir: la de la moto.
-        localStorage.setItem('inicio-ultima-portada', '|2');
-      },
-      [cli.token, idioma] as const,
-    );
-    const p = await ctx.newPage();
-    const foto = async (nombre: string) => {
-      await p.waitForTimeout(1_200);
-      await p.screenshot({ path: join(carpeta, nombre) });
-    };
+      // El teléfono: iPhone de 402 × 874 puntos a 3× (1206 × 2622), en la ciudad.
+      const ctx = await browser.newContext({
+        viewport: { width: 402, height: 874 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+        baseURL: DATOS!.url,
+        geolocation: { latitude: z.lat, longitude: z.lng },
+        permissions: ['geolocation'],
+      });
+      await ctx.addInitScript(
+        ([pase, idi]) => {
+          localStorage.setItem('tumbite.idioma', idi);
+          localStorage.setItem('tumbite.sesion', pase);
+          // La portada de respaldo que toca al abrir: la de la moto.
+          localStorage.setItem('inicio-ultima-portada', '|2');
+        },
+        [cli.token, idioma] as const,
+      );
+      const p = await ctx.newPage();
+      const foto = async (nombre: string) => {
+        await p.waitForTimeout(1_200);
+        await p.screenshot({ path: join(carpeta, nombre) });
+      };
 
-    await p.goto('/app/');
-    for (const s of [...SERVICIOS, 'mas'])
-      await expect(p.getByTestId(`servicio-${s}`)).toBeVisible({ timeout: 30_000 });
-    await expect(p.getByTestId('portada-respaldo-moto')).toBeVisible();
-    await foto('00-inicio-todos-los-servicios.png');
+      await p.goto('/app/');
+      for (const s of [...SERVICIOS, 'mas'])
+        await expect(p.getByTestId(`servicio-${s}`)).toBeVisible({ timeout: 30_000 });
+      await expect(p.getByTestId('portada-respaldo-moto')).toBeVisible();
+      await foto('00-inicio-todos-los-servicios.png');
 
-    await p.getByTestId('servicio-moto').click();
-    await expect(p.getByTestId('lugar-gimnasio').or(p.getByText(C.gimnasio.nombre))).toBeVisible({
-      timeout: 30_000,
-    });
-    await foto('00f-lugares-guardados.png');
+      await p.getByTestId('servicio-moto').click();
+      await expect(p.getByTestId('lugar-gimnasio').or(p.getByText(C.gimnasio.nombre))).toBeVisible({
+        timeout: 30_000,
+      });
+      await foto('00f-lugares-guardados.png');
 
-    await p.getByTestId('moto-destino').click();
-    await expect(p.getByText(idioma === 'es' ? 'Recientes' : 'Recent')).toBeVisible({
-      timeout: 30_000,
-    });
-    await expect(p.getByText(C.populares[0]!.titulo)).toBeVisible({ timeout: 30_000 });
-    await p.getByTestId('destino-casilla').blur();
-    await foto('00c-a-donde-vas.png');
-    await p.getByRole('button', { name: idioma === 'es' ? 'Volver' : 'Back' }).click();
+      await p.getByTestId('moto-destino').click();
+      await expect(p.getByText(idioma === 'es' ? 'Recientes' : 'Recent')).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(p.getByText(C.populares[0]!.titulo)).toBeVisible({ timeout: 30_000 });
+      await p.getByTestId('destino-casilla').blur();
+      await foto('00c-a-donde-vas.png');
+      await p
+        .getByRole('button', { name: idioma === 'es' ? 'Volver' : 'Back', exact: true })
+        .last()
+        .click();
 
-    await p.getByTestId('lugar-casa').click();
-    await expect(p.getByTestId('moto-precio')).toBeVisible({ timeout: 30_000 });
-    await foto('00b-moto-con-destino-y-precio.png');
+      await p.getByTestId('lugar-casa').click();
+      await expect(p.getByTestId('moto-precio')).toBeVisible({ timeout: 30_000 });
+      await foto('00b-moto-con-destino-y-precio.png');
 
-    await p.getByTestId('pedir-boton').click();
-    await expect(p.getByTestId('viaje-estado-buscando')).toBeVisible({ timeout: 30_000 });
-    await foto('00d-buscando-tu-moto.png');
+      await p.getByTestId('pedir-boton').click();
+      await expect(p.getByTestId('viaje-estado-buscando')).toBeVisible({ timeout: 30_000 });
+      await foto('00d-buscando-tu-moto.png');
 
-    // El conductor acepta (en la base local): el seguimiento con su moto, su placa y el mapa.
-    const op = String(
-      sql(
-        `SELECT o.id FROM operaciones o WHERE o.cliente_id = '${cli.usuario.id}' AND o.estado_general = 'buscando'`,
-      )[0]?.id ?? '',
-    );
-    expect(op).not.toBe('');
-    sql(
-      `UPDATE operaciones SET estado_general = 'asignada', conductor_id = '${c}', vehiculo_id = '${v}' WHERE id = '${op}'`,
-    );
-    sql(
-      `UPDATE viajes SET estado = 'asignado', ultimo_actor = 'conductor', ultimo_actor_id = '${c}', ultima_clave = 'tienda:${op}', asignado_en = datetime('now') WHERE operacion_id = '${op}'`,
-    );
-    await expect(p.getByTestId('viaje-conductor')).toBeVisible({ timeout: 30_000 });
-    await foto('00e-seguimiento-del-viaje.png');
-    await ctx.close();
+      // El conductor acepta (en la base local): el seguimiento con su moto, su placa y el mapa.
+      const op = String(
+        sql(
+          `SELECT o.id FROM operaciones o WHERE o.cliente_id = '${cli.usuario.id}' AND o.estado_general = 'buscando'`,
+        )[0]?.id ?? '',
+      );
+      expect(op).not.toBe('');
+      await expect
+        .poll(
+          async () =>
+            (
+              await request.post(`/datos/conductor/operaciones/${op}/aceptar`, {
+                headers: { ...h(cond.token), 'idempotency-key': `tienda-aceptar-${id}` },
+                data: {},
+              })
+            ).status(),
+          { timeout: 30_000 },
+        )
+        .toBe(200);
+      // Como al volver a abrir la app con el viaje en curso: entra directo al seguimiento.
+      await p.goto('/app/');
+      await expect(p.getByTestId('viaje-conductor')).toBeVisible({ timeout: 30_000 });
+      await foto('00e-seguimiento-del-viaje.png');
+      await ctx.close();
+    } finally {
+      for (const r of requisitos)
+        sql(
+          `INSERT OR IGNORE INTO servicio_requisitos (servicio_id, requisito, obligatorio) VALUES ('${String(r.servicio_id)}', '${String(r.requisito)}', ${Number(r.obligatorio)})`,
+        );
+    }
   });

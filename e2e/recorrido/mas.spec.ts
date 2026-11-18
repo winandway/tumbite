@@ -76,6 +76,21 @@ for (const idioma of ['en', 'es'] as const)
     for (const s of ['moto', 'carro', 'comida', 'envios'])
       await expect(p.getByTestId(`servicio-${s}`)).toBeVisible({ timeout: 30_000 });
     await expect(p.getByTestId('servicio-farmacia')).toHaveCount(0);
+    // Ningún nombre de servicio se corta, tampoco en un teléfono angosto de 360 con letra grande.
+    await p.setViewportSize({ width: 360, height: 780 });
+    await p.addStyleTag({ content: 'html { font-size: 120% }' });
+    for (const s of ['moto', 'carro', 'comida', 'envios', 'mas']) {
+      const cortado = await p
+        .getByTestId(`servicio-${s}`)
+        .evaluate((el) =>
+          [...el.querySelectorAll('div[dir], div')]
+            .filter((d) => d.childElementCount === 0 && (d.textContent ?? '').trim())
+            .some((d) => d.scrollWidth > d.clientWidth + 1 || d.scrollHeight > d.clientHeight + 1),
+        );
+      expect(cortado, `servicio-${s} cortado a 360`).toBe(false);
+    }
+    await p.screenshot({ path: join(RAIZ, 'test-results', `servicios-360-${idioma}.png`) });
+    await p.setViewportSize({ width: 412, height: 915 });
     await expect(p.getByText(/^(Pronto|Soon)$/)).toHaveCount(0);
     await p.getByTestId('servicio-mas').click();
     await expect(p.getByTestId('mas-regalos')).toBeVisible({ timeout: 30_000 });

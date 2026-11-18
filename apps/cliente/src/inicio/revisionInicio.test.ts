@@ -18,7 +18,7 @@ describe('revisión del inicio nuevo', () => {
 
   it('la portada se pide una sola vez, con la ciudad ya conocida', () => {
     const f = leer('Inicio.tsx');
-    expect(f).toMatch(/if \(!servicios\) return;[\s\S]{0,400}rutaBanners\('cabecera'/);
+    expect(f).toMatch(/if \(!servicios\) return;[\s\S]{0,900}rutaBanners\('cabecera'/);
   });
 
   it('la hoja se cierra con su botón propio y con el gesto de escape de VoiceOver', () => {
@@ -52,5 +52,18 @@ describe('revisión del inicio nuevo', () => {
     expect(f).toMatch(/imagenPortada: \{ position: 'absolute', top: 0, right: 0, bottom: 0/);
     expect(f).toMatch(/LinearGradient id="fundido" x1="0" y1="0" x2="1" y2="0"/);
     expect(f).not.toMatch(/heroeFoto/);
+  });
+
+  // Ningún texto se corta: «Más servicios» salía «Más servic…» (web y teléfono angosto).
+  it('el nombre del servicio cabe en dos renglones, sin puntos suspensivos ni alto fijo', () => {
+    const f = leer('inicio', 'PiezasInicio.tsx');
+    const mosaico = f.slice(
+      f.indexOf('style={p.servNombre}') - 260,
+      f.indexOf('style={p.servNombre}'),
+    );
+    expect(mosaico).not.toMatch(/numberOfLines=\{1\}/);
+    expect(mosaico).toMatch(/numberOfLines=\{2\}/);
+    expect(f).toMatch(/serv: \{[^}]*minHeight: 88/);
+    expect(f).not.toMatch(/serv: \{[^}]*\n {4}height: 88/);
   });
 });
