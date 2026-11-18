@@ -18,7 +18,8 @@ const FRASES = {
   'Divoox (cliente)': {
     // 18 nov 2026: el inicio nuevo y los viajes (C-INICIO-NUEVO).
     '00-': ['Food, rides and delivery in *one app*', 'Comida, viajes y envíos en *una sola app*'],
-    '00b-': ['Your moto ride in *3 taps*', 'Tu moto en *3 toques*'],
+    // En inglés la captura es de Carro (Moto no está abierta en Novi): la frase no dice «moto».
+    '00b-': ['Your ride in *3 taps*', 'Tu moto en *3 toques*'],
     '00c-': ['Your usual places, *first*', 'Tus lugares de siempre, *primero*'],
     '00d-': ['A driver nearby, *in seconds*', 'Un conductor cerca, *en segundos*'],
     '00e-': ['Follow your ride *live*', 'Sigue tu viaje *en vivo*'],
@@ -97,8 +98,14 @@ for (const ruta of archivos(ORIGEN).sort()) {
   const [en, es] = lista.get(clave);
   const tema = new Map(Object.entries(TEMAS)).get(app) ?? TEMAS['Divoox Restaurants (restaurante)'];
   const etiqueta = tema.etiqueta[idioma === 'Español' ? 1 : 0];
-  const { width: w, height: h } = imageSize(readFileSync(ruta));
+  const origen = imageSize(readFileSync(ruta));
   const tableta = formato === 'Tableta';
+  // Google Play rechaza capturas cuyo lado largo pase del doble del corto. Las capturas nuevas de
+  // teléfono (1206x2622, 1082x2202) pasan de eso: la pieza de celular de Google Play sale SIEMPRE
+  // en 1080x1920 (9:16) y la pantalla se encaja adentro sin estirarla.
+  const fija = partes[1] === 'Google Play' && !tableta;
+  const w = fija ? 1080 : origen.width;
+  const h = fija ? 1920 : origen.height;
   const datos = `data:image/png;base64,${readFileSync(ruta).toString('base64')}`;
   // Celular: la pantalla ocupa el 74 % del alto; tableta: el 76 %. Nunca se estira.
   const alto = Math.round(h * (tableta ? 0.76 : 0.74));
