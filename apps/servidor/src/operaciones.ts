@@ -59,19 +59,32 @@ export function puedeRecibirOferta(op: string, conductor: string): string {
   return `NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ${op} AND v.conductor_id = ${conductor}
      AND NOT (${vuelveAOfrecerse('v')}))`;
 }
-/** SQL: la última subida de tarifa del viaje de la fila `a` (o vacío si no hubo). */
-const ultimaSubida = (a: string) =>
-  `COALESCE((SELECT MAX(sc.creado_en) FROM cambios_viaje sc WHERE sc.operacion_id = ${a}.operacion_id AND sc.tipo = 'subida'), '')`;
+/**
+ * SQL: cuántas veces subió la tarifa el pasajero del viaje `op` (C-SUBIR-TARIFA). Cada oferta guarda
+ * con qué número de subida nació (`subida_n`); se comparan enteros, nunca horas (revisor, B2: por
+ * segundos, la oferta nacida en el mismo segundo que la subida contaba como anterior).
+ */
+export const subidasDelViaje = (op: string) =>
+  `(SELECT COUNT(*) FROM cambios_viaje sc WHERE sc.operacion_id = ${op} AND sc.tipo = 'subida')`;
 /**
  * SQL sobre la fila `a` de ofertas_operacion: esa oferta ya no impide volver a ofrecerle el viaje.
  * C-REOFERTA-VENCIDA y C-REOFERTA-TOPE: la dejó vencer, pasó el respiro y no llegó al tope de
- * ofertas. C-SUBIR-TARIFA: el pasajero subió la tarifa después de esa oferta (con precio nuevo es una
+ * ofertas. C-SUBIR-TARIFA: nació antes de la última subida del pasajero (con precio nuevo es una
  * oferta nueva, también para quien la rechazó; la cuenta de intentos vuelve a empezar).
  */
 export function vuelveAOfrecerse(a: string): string {
   return `(${a}.estado IN ('vencida', 'ofrecida') AND ${a}.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
            AND ${a}.intentos < ${OFERTAS_POR_CONDUCTOR})
-     OR (${a}.estado IN ('vencida', 'rechazada', 'retirada') AND ${a}.creada_en <= ${ultimaSubida(a)})`;
+     OR (${a}.estado IN ('vencida', 'rechazada', 'retirada') AND ${a}.subida_n < ${subidasDelViaje(`${a}.operacion_id`)})`;
+}
+/**
+ * La misma regla para reabrir la fila al ofrecer (ON CONFLICT … WHERE). Sin subidas es idéntica a la
+ * de antes de la pieza (revisor, M2): solo una fila «vencida» pasado el respiro y bajo el tope.
+ */
+export function vuelveAOfrecerseUpsert(a: string): string {
+  return `(${a}.estado = 'vencida' AND ${a}.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')
+           AND ${a}.intentos < ${OFERTAS_POR_CONDUCTOR})
+     OR (${a}.estado IN ('vencida', 'rechazada', 'retirada') AND ${a}.subida_n < ${subidasDelViaje(`${a}.operacion_id`)})`;
 }
 /** El servicio del catálogo en la capa financiera (C-FIN-POLITICAS). */
 const SERVICIO_FINANCIERO = new Map<string, 'ride' | 'car'>([
@@ -824,8 +837,8 @@ export async function repartirOperaciones(
     // el conductor tomó otra cosa, la oferta no se crea.
     const r = await db
       .prepare(
-        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos, km)
-         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5, ?6
+        `INSERT INTO ofertas_operacion (operacion_id, conductor_id, vehiculo_id, estado, expira_en, ganancia_centavos, km, subida_n)
+         SELECT ?1, ?2, ?3, 'ofrecida', datetime('now', ?4), ?5, ?6, ${subidasDelViaje('?1')}
           WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?2)
             AND NOT EXISTS (SELECT 1 FROM ofertas_operacion WHERE conductor_id = ?2 AND estado = 'ofrecida')
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1 AND estado_general = 'buscando')
@@ -834,9 +847,10 @@ export async function repartirOperaciones(
            estado = 'ofrecida', vehiculo_id = excluded.vehiculo_id, expira_en = excluded.expira_en,
            ganancia_centavos = excluded.ganancia_centavos, km = excluded.km,
            creada_en = datetime('now'), respondida_en = NULL,
-           intentos = CASE WHEN ofertas_operacion.creada_en <= ${ultimaSubida('ofertas_operacion')}
-                           THEN 1 ELSE ofertas_operacion.intentos + 1 END
-         WHERE ${vuelveAOfrecerse('ofertas_operacion')}
+           intentos = CASE WHEN ofertas_operacion.subida_n < excluded.subida_n
+                           THEN 1 ELSE ofertas_operacion.intentos + 1 END,
+           subida_n = excluded.subida_n
+         WHERE ${vuelveAOfrecerseUpsert('ofertas_operacion')}
          RETURNING intentos`,
       )
       .bind(

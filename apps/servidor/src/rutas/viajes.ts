@@ -28,6 +28,7 @@ import {
   cambiarEstadoViaje,
   liberarViaje,
   puedeRecibirOferta,
+  subidasDelViaje,
   repartirOperaciones,
 } from '../operaciones';
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
@@ -284,11 +285,20 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   const clave = claveDe(c, 'aceptar', id);
   const oferta = await base(c)
     .prepare(
-      'SELECT vehiculo_id FROM ofertas_operacion WHERE operacion_id = ? AND conductor_id = ?',
+      `SELECT vehiculo_id, estado, subida_n < ${subidasDelViaje('?1')} AS vieja
+         FROM ofertas_operacion WHERE operacion_id = ?1 AND conductor_id = ?2`,
     )
     .bind(id, u.id)
-    .first<{ vehiculo_id: string }>();
+    .first<{ vehiculo_id: string; estado: string; vieja: number }>();
   if (!oferta) throw new ErrorDatos('Esta oferta ya no está disponible.', undefined, 409);
+  // C-SUBIR-TARIFA (revisor, M4): la oferta al precio viejo se retiró porque el pasajero subió la
+  // tarifa; la nueva le llega enseguida.
+  if (oferta.estado === 'retirada' && Number(oferta.vieja) === 1)
+    throw new ErrorDatos(
+      'El pasajero subió la tarifa: te llega la oferta con el precio nuevo.',
+      undefined,
+      409,
+    );
   // C-VIAJE-SEGURIDAD-2: con 12 horas al volante en 24, primero descansa.
   await revisarHorasAlVolante(base(c), u.id);
   // C-MOTO-CIUDAD: donde la ciudad lo pide, la selfie con el casco puesto de las últimas 12 horas.

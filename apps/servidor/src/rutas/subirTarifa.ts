@@ -72,9 +72,27 @@ function leerPasos(json: string | null): number[] {
 }
 
 /** El esquema del ajuste que pone el superadmin (null lo apaga). */
+/**
+ * Revisor, I4: el botón más grande que se acepta, en la unidad menor de la moneda de la ciudad
+ * (10 dólares; en pesos y bolívares, su equivalente redondo). Sin moneda conocida, no se enciende.
+ */
+export const TOPE_PASO_SUBIDA = new Map<string, number>([
+  ['USD', 1_000],
+  ['COP', 40_000],
+  ['VES', 100_000],
+  ['MXN', 20_000],
+  ['CLP', 10_000],
+]);
+
 export const esquemaAjusteSubida = z
   .object({
-    pasos: z.array(z.number().int().min(1).max(100_000)).min(1).max(3),
+    pasos: z
+      .array(z.number().int().min(1).max(10_000_000))
+      .min(1)
+      .max(3)
+      .refine((p) => p.every((x, i) => i === 0 || x > (p[i - 1] ?? 0)), {
+        message: 'Los montos van de menor a mayor y sin repetirse.',
+      }),
     esperaS: z.number().int().min(15).max(600).default(SUBIDA_POR_DEFECTO.esperaS),
     maxVeces: z.number().int().min(1).max(5).default(SUBIDA_POR_DEFECTO.maxVeces),
     topePb: z.number().int().min(10_500).max(30_000).default(SUBIDA_POR_DEFECTO.topePb),
@@ -100,8 +118,8 @@ export function validarSubida(e: {
   if (e.hechas >= e.maxVeces) return { ok: false, motivo: 'veces' };
   const nuevo = e.actual + e.monto;
   if (nuevo > Math.floor((e.original * e.topePb) / 10_000)) return { ok: false, motivo: 'tope' };
-  if (e.metodoPago === 'tarjeta' && (e.autorizado == null || nuevo > e.autorizado))
-    return { ok: false, motivo: 'tarjeta' };
+  // Revisor, I2: con tarjeta NUNCA (subir obligaría a una autorización nueva con el pasajero).
+  if (e.metodoPago === 'tarjeta') return { ok: false, motivo: 'tarjeta' };
   return { ok: true, nuevo };
 }
 
@@ -164,7 +182,20 @@ export async function estadoSubida(
   db: D1Database,
   op: string,
   cliente: string,
+  estado: string,
 ): Promise<{ pasos: number[]; enSegundos: number; quedan: number; moneda: string } | null> {
+  // Revisor, I1: corre en cada sondeo del pasajero. Fuera de «buscando», nada; con la pieza apagada
+  // en su ciudad, una sola lectura.
+  if (estado !== 'buscando') return null;
+  const encendido = await db
+    .prepare(
+      `SELECT 1 FROM operaciones o JOIN ajustes_viaje_zona a
+          ON a.zona_id = o.zona_id AND a.servicio_id = o.servicio_id AND a.subida_pasos_json IS NOT NULL
+        WHERE o.id = ? AND o.cliente_id = ?`,
+    )
+    .bind(op, cliente)
+    .first();
+  if (!encendido) return null;
   const v = await viajeParaSubir(db, op, cliente);
   if (!v || v.estado !== 'buscando') return null;
   const a = await ajusteSubida(db, v.servicio_id, v.zona_id);
@@ -248,21 +279,22 @@ subirTarifa.post('/viajes/:id/subir-tarifa', async (c) => {
     // La subida nace solo si nada se movió: mismo precio y el viaje sigue buscando.
     db
       .prepare(
-        `INSERT INTO cambios_viaje (id, operacion_id, actor, actor_id, total_antes, total_despues, tipo)
+        `INSERT OR IGNORE INTO cambios_viaje (id, operacion_id, actor, actor_id, total_antes, total_despues, tipo)
          SELECT ?1, ?2, 'cliente', ?3, ?4, ?5, 'subida'
           WHERE EXISTS (SELECT 1 FROM cotizaciones_viaje q JOIN viajes w ON w.cotizacion_id = q.id
                          WHERE q.id = ?6 AND q.total = ?4 AND w.operacion_id = ?2 AND w.estado = 'buscando')`,
       )
       .bind(id, op, u.id, actual, r.nuevo, v.cot_id),
     db
+      // Revisor, I3: solo si el precio sigue siendo el de antes (dos toques a la vez: suma una vez).
       .prepare(
-        `UPDATE cotizaciones_viaje SET total = ?, desglose_json = ? WHERE id = ? AND ${hecho}`,
+        `UPDATE cotizaciones_viaje SET total = ?, desglose_json = ? WHERE id = ? AND total = ? AND ${hecho}`,
       )
-      .bind(r.nuevo, JSON.stringify(desglose), v.cot_id, id),
+      .bind(r.nuevo, JSON.stringify(desglose), v.cot_id, actual, id),
     // El registro del viaje: quién, cuánto y cuándo.
     db
       .prepare(
-        `INSERT INTO eventos_operacion (operacion_id, tipo, actor_id, actor_rol, datos_json, idempotencia)
+        `INSERT OR IGNORE INTO eventos_operacion (operacion_id, tipo, actor_id, actor_rol, datos_json, idempotencia)
          SELECT ?, 'subida_tarifa', ?, 'cliente', ?, ? WHERE ${hecho}`,
       )
       .bind(

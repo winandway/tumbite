@@ -1162,7 +1162,7 @@ viajesPasajero.get('/viajes/actual', async (c) => {
       : null,
     deudaPendiente: deuda?.monto ? { monto: deuda.monto, moneda: deuda.moneda } : null,
     // C-SUBIR-TARIFA: los botones de «Subir la tarifa» mientras busca (null si no aplica).
-    subida: viaje ? await estadoSubida(db, viaje.id, u.id) : null,
+    subida: viaje ? await estadoSubida(db, viaje.id, u.id, viaje.estado) : null,
   });
 });
 
@@ -1192,7 +1192,7 @@ viajesPasajero.get('/viajes/:id', async (c) => {
       conductor: viaje.conductor?.ubicacion ?? null,
     }),
     // C-SUBIR-TARIFA: los botones de «Subir la tarifa» mientras busca (null si no aplica).
-    subida: await estadoSubida(db, viaje.id, u.id),
+    subida: await estadoSubida(db, viaje.id, u.id, viaje.estado),
   });
 });
 

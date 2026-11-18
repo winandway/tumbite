@@ -208,7 +208,22 @@ export async function cambiarParadas(
   const ruta = await rutaParaCotizar(env, db, v.cliente_id, tarifa, origen, destino, todas);
   if (ruta.distanciaM > DISTANCIA_MAXIMA_KM[v.servicio_id as ServicioViaje] * 1000)
     throw new ErrorDatos('Con esas paradas el viaje queda demasiado largo.', 'paradas', 422);
-  const desglose = cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb));
+  // C-SUBIR-TARIFA (revisor, B1): lo que subió el pasajero se conserva al recalcular por las paradas
+  // (antes el precio volvía al original y la subida desaparecía del desglose).
+  const subida = Number(
+    (
+      await db
+        .prepare(
+          "SELECT COALESCE(SUM(total_despues - total_antes), 0) AS s FROM cambios_viaje WHERE operacion_id = ? AND tipo = 'subida'",
+        )
+        .bind(v.id)
+        .first<{ s: number }>()
+    )?.s ?? 0,
+  );
+  const calculado = cotizarViaje(tarifa, ruta, Number(v.multiplicador_pb));
+  const desglose = subida
+    ? { ...calculado, subidaPasajero: subida, total: calculado.total + subida }
+    : calculado;
   const totalActual = Number(v.total);
   const sube = desglose.total > totalActual;
   const conTarjeta = v.metodo_pago === 'tarjeta';

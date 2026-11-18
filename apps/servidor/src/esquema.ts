@@ -27,6 +27,8 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['ajustes_viaje_zona', 'subida_max_veces', 'INTEGER'],
   ['ajustes_viaje_zona', 'subida_tope_pb', 'INTEGER'],
   ['cambios_viaje', 'tipo', "TEXT NOT NULL DEFAULT 'paradas'"],
+  // Con qué número de subida nació cada oferta (revisor, B2: se comparan enteros, no horas).
+  ['ofertas_operacion', 'subida_n', 'INTEGER NOT NULL DEFAULT 0'],
   // C-REOFERTA-TOPE (18 nov 2026): cuántas veces se le ofreció el viaje a ese conductor (tope 3).
   ['ofertas_operacion', 'intentos', 'INTEGER NOT NULL DEFAULT 1'],
   // C-REFERIDOS-SIN-TRAMPA (18 nov 2026): por qué un referido de cliente pendiente ya no da premio.

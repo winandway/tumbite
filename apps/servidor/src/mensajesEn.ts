@@ -2136,6 +2136,18 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Todavía no llegamos a esa dirección.', 'We don’t serve that address yet.'],
   // C-SUBIR-TARIFA
+  [
+    'Los montos van de menor a mayor y sin repetirse.',
+    'Amounts go from lowest to highest, with no repeats.',
+  ],
+  [
+    'El pasajero subió la tarifa: te llega la oferta con el precio nuevo.',
+    'The rider raised the fare: the offer with the new price is on its way.',
+  ],
+  [
+    'Ese monto es demasiado alto para la moneda de la ciudad.',
+    'That amount is too high for the city’s currency.',
+  ],
   ['Este viaje ya no está buscando conductor.', 'This ride is no longer looking for a driver.'],
   ['En tu ciudad no se puede subir la tarifa.', 'Raising the fare isn’t available in your city.'],
   [

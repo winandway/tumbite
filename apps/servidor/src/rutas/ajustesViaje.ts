@@ -7,7 +7,7 @@ import { nuevoId } from '../cripto';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
-import { ajusteSubida, esquemaAjusteSubida } from './subirTarifa';
+import { TOPE_PASO_SUBIDA, ajusteSubida, esquemaAjusteSubida } from './subirTarifa';
 
 /**
  * C-MOTO-CIUDAD (30 oct 2026): interruptores por ciudad de cada servicio de viajes, como los pone Uber
@@ -130,8 +130,21 @@ ajustesViaje.put('/admin/viajes/ajustes', async (c) => {
     }),
   );
   const db = base(c);
-  if (!(await db.prepare('SELECT 1 FROM zonas WHERE id = ?').bind(d.zona).first()))
-    throw new ErrorDatos('Esa ciudad no existe.', 'zona', 404);
+  const zona = await db
+    .prepare('SELECT moneda FROM zonas WHERE id = ?')
+    .bind(d.zona)
+    .first<{ moneda: string }>();
+  if (!zona) throw new ErrorDatos('Esa ciudad no existe.', 'zona', 404);
+  // C-SUBIR-TARIFA (revisor, I4): los botones van en la moneda de la ciudad y con su tope.
+  if (d.subida) {
+    const tope = TOPE_PASO_SUBIDA.get(zona.moneda);
+    if (!tope || d.subida.pasos.some((x) => x > tope))
+      throw new ErrorDatos(
+        'Ese monto es demasiado alto para la moneda de la ciudad.',
+        'subida',
+        422,
+      );
+  }
   const antes = {
     ...(await ajustesDe(db, d.servicio, d.zona)),
     subida: await ajusteSubida(db, d.servicio, d.zona),
