@@ -27,4 +27,12 @@ export const MENSAJES_EN_CAMILA: [string, string][] = [
     'Esto es de toda la empresa: lo cambia alguien con alcance total.',
     'This covers the whole company: someone with full scope changes it.',
   ],
+  [
+    'El chat está muy ocupado en este momento. Escríbenos por correo o entra con tu cuenta.',
+    'The chat is very busy right now. Email us or sign in with your account.',
+  ],
+  [
+    'Para seguir la conversación, une este chat a tu correo o entra con tu cuenta.',
+    'To continue the conversation, link this chat to your email or sign in with your account.',
+  ],
 ];

@@ -167,3 +167,32 @@ export async function marcarAvisoTope(db: D1Database) {
     .run();
   return (r.meta.changes ?? 0) > 0;
 }
+
+/** El modelo falló (caído, modelo retirado, sin saldo): queda anotado para que el canario lo vea. */
+export async function anotarErrorModelo(db: D1Database, e: unknown) {
+  const texto = (e instanceof Error ? e.message : String(e)).slice(0, 300);
+  await db
+    .prepare(
+      `INSERT INTO camila_gasto (dia, error_en, error) VALUES (?, datetime('now'), ?)
+       ON CONFLICT(dia) DO UPDATE SET error_en = excluded.error_en, error = excluded.error`,
+    )
+    .bind(hoy(), texto)
+    .run();
+}
+
+/** Topes del día que no son de IA: fichas anónimas nuevas y correos de «caso nuevo» al equipo. */
+export const TOPE_ANONIMOS_DIA = 1500;
+export const TOPE_CORREOS_CASO_DIA = 40;
+export const MENSAJES_POR_ANONIMO = 40;
+
+/** Suma uno al contador del día si todavía no llegó a su tope. Falso = tope alcanzado. */
+export async function contarDelDia(db: D1Database, cual: 'anonimos' | 'casos', tope: number) {
+  const sql =
+    cual === 'anonimos'
+      ? `INSERT INTO camila_gasto (dia, anonimos) VALUES (?1, 1)
+         ON CONFLICT(dia) DO UPDATE SET anonimos = anonimos + 1 WHERE camila_gasto.anonimos < ?2`
+      : `INSERT INTO camila_gasto (dia, casos) VALUES (?1, 1)
+         ON CONFLICT(dia) DO UPDATE SET casos = casos + 1 WHERE camila_gasto.casos < ?2`;
+  const r = await db.prepare(sql).bind(hoy(), tope).run();
+  return (r.meta.changes ?? 0) > 0;
+}

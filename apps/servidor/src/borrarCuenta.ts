@@ -1,6 +1,7 @@
 import type { Env } from './env';
 import { borrarPuertasDeUsuario } from './rutas/fotoPuerta';
 import { ErrorDatos } from './validar';
+import { sentenciasBorrarDeCamila } from './camila/memoria';
 
 /**
  * C-BORRAR-DESDE-SUPERADMIN (4 nov 2026): el borrado de una cuenta, en UNA sola pieza. Lo usan la app
@@ -103,6 +104,8 @@ export async function borrarCuenta(
       .all<{ foto_clave: string }>()
   ).results.map((f) => f.foto_clave);
   await db.batch([
+    // C-CAMILA-BORRADO: sus conversaciones con soporte (Camila) se borran enteras.
+    ...sentenciasBorrarDeCamila(db, u.id, u.correo),
     db
       .prepare(
         "UPDATE usuarios SET correo = ?, nombre = 'Cuenta borrada', telefono = NULL, fecha_nacimiento = NULL, clave_hash = 'borrada', activo = 0, correo_canonico = NULL, telefono_canonico = NULL WHERE id = ?",

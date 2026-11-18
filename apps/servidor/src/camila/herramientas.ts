@@ -7,7 +7,7 @@ import { darRegaloConductorNuevo } from '../saldoConductores';
 import { estadoDelConductor } from '../rutas/servicios';
 import { formatearMonto } from '@tumbite/compartido';
 import { buscarAprobadas, buscarEnDocs, enlaceGuia } from './conocimiento';
-import { gastoDeHoy, hoy } from './modelo';
+import { TOPE_CORREOS_CASO_DIA, contarDelDia, gastoDeHoy, hoy } from './modelo';
 import type { AjustesCamila, Persona } from './memoria';
 import { contadorDelLider } from './lideres';
 import type { Herramienta } from './modelo';
@@ -262,7 +262,10 @@ export async function abrirCaso(
       .bind(nuevoId(), c.persona.id, linea, motivo.slice(0, 30))
       .run();
     const nombre = c.persona.nombre || c.persona.correo || 'Persona sin nombre';
-    const destinos = await correosEquipo(c.env, 'sistema');
+    // Un correo por caso, y con tope por día: el caso siempre queda en la bandeja.
+    const destinos = (await contarDelDia(c.db, 'casos', TOPE_CORREOS_CASO_DIA))
+      ? await correosEquipo(c.env, 'sistema')
+      : [];
     const base = (c.env.SITIO_URL ?? 'https://divoox.com').replace(/\/$/, '');
     await Promise.all(
       destinos.map((para) =>

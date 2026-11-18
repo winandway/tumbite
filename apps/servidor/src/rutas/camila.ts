@@ -25,7 +25,15 @@ import {
 } from '../camila/memoria';
 import { accesoDe, filtroAlcance } from '../accesoInterno';
 import { alcanceEsTotal } from '@tumbite/compartido';
-import { MODELOS_CAMILA, TOPE_MAXIMO_CENTAVOS, gastoDeHoy, topeEnMicro } from '../camila/modelo';
+import {
+  MENSAJES_POR_ANONIMO,
+  MODELOS_CAMILA,
+  TOPE_ANONIMOS_DIA,
+  TOPE_MAXIMO_CENTAVOS,
+  contarDelDia,
+  gastoDeHoy,
+  topeEnMicro,
+} from '../camila/modelo';
 
 /**
  * C-CAMILA (17 nov 2026) — todos los países. Las puertas de Camila:
@@ -34,10 +42,17 @@ import { MODELOS_CAMILA, TOPE_MAXIMO_CENTAVOS, gastoDeHoy, topeEnMicro } from '.
  * - el correo entrante llega por la puerta del gerente de correo (rutas/gerente.ts);
  * - el superadmin: /admin/camila/* (bandeja, hilos, aprendizaje y ajustes).
  */
+const limiteLectura = limiteIntentos(300, 60_000);
+const limiteEscritura = limiteIntentos(30, 60_000);
+
 export const camila = new Hono<{ Bindings: Env; Variables: Variables }>();
 type Ctx = Context<{ Bindings: Env; Variables: Variables }>;
 
-camila.use('/camila/*', limiteIntentos(40, 60_000));
+// Leer el hilo (Driver lo consulta cada pocos segundos, y varios conductores comparten una red) tiene
+// un límite amplio; escribir, uno corto.
+camila.use('/camila/*', (c, next) =>
+  (c.req.method === 'GET' ? limiteLectura : limiteEscritura)(c, next),
+);
 camila.use('/camila/verificar', limiteIntentos(5, 10 * 60_000));
 camila.use('/camila/verificar/*', limiteIntentos(10, 10 * 60_000));
 
@@ -60,6 +75,17 @@ async function personaDelChat(c: Ctx, crear = true): Promise<Persona | null> {
       .bind(huella)
       .first<{ id: string }>()
       .then((f) => (f ? personaPorId(db, f.id) : null));
+  const ya = await db
+    .prepare('SELECT 1 FROM camila_personas WHERE visitante_hash = ?')
+    .bind(huella)
+    .first();
+  // C-CAMILA-ANONIMOS: tope diario de fichas anónimas nuevas (identificadores de visita inventados).
+  if (!ya && !(await contarDelDia(db, 'anonimos', TOPE_ANONIMOS_DIA)))
+    throw new ErrorDatos(
+      'El chat está muy ocupado en este momento. Escríbenos por correo o entra con tu cuenta.',
+      undefined,
+      429,
+    );
   return personaDeVisitante(db, huella, idiomaDe(c));
 }
 const personaQueEscribe = async (c: Ctx) => (await personaDelChat(c)) as Persona;
@@ -102,6 +128,13 @@ camila.post('/camila/mensaje', async (c) => {
     await db.prepare('UPDATE camila_personas SET idioma = ? WHERE id = ?').bind(idioma, p.id).run();
     p = { ...p, idioma };
   }
+  // C-CAMILA-ANONIMOS: una ficha anónima tiene un máximo de mensajes; después, que una su correo.
+  if (!p.usuario_id && !p.correo && p.mensajes >= MENSAJES_POR_ANONIMO)
+    throw new ErrorDatos(
+      'Para seguir la conversación, une este chat a tu correo o entra con tu cuenta.',
+      'verificar',
+      429,
+    );
   const r = await recibirMensaje(c.env, db, p, d.canal, d.texto);
   const fresca = (await personaPorId(db, p.id)) ?? p;
   return c.json({ respuesta: r.respuesta, ...(await hiloPublico(db, fresca)) });
@@ -115,6 +148,22 @@ camila.post('/camila/verificar', async (c) => {
   );
   const p = await personaQueEscribe(c);
   if (p.usuario_id) return c.json({ ok: true, yaVerificada: true });
+  // Límite por dirección de destino: nadie usa esta puerta para llenarle el buzón a un tercero.
+  const yaPedidos = await base(c)
+    .prepare(
+      "SELECT COUNT(*) AS n FROM camila_codigos WHERE correo = ? AND vence_en > datetime('now', '-1 day') AND persona_id <> ?",
+    )
+    .bind(d.correo, p.id)
+    .first<{ n: number }>();
+  const mio = await base(c)
+    .prepare(
+      "SELECT intentos, vence_en > datetime('now', '+13 minutes') AS reciente FROM camila_codigos WHERE persona_id = ?",
+    )
+    .bind(p.id)
+    .first<{ reciente: number }>();
+  // Responde igual (sin decir si se mandó): no más de 3 fichas por dirección al día ni un código cada 2 minutos.
+  if (Number(yaPedidos?.n ?? 0) >= 3 || Number(mio?.reciente ?? 0) === 1)
+    return c.json({ ok: true });
   const codigo = String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(
     6,
     '0',

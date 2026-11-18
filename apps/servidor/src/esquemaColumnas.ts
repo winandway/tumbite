@@ -2886,7 +2886,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "microdolares",
     "llamadas",
     "regalos",
-    "avisado"
+    "avisado",
+    "anonimos",
+    "casos",
+    "error_en",
+    "error"
   ],
   "camila_avisos_lider": [
     "conductor_id",
