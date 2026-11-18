@@ -38,4 +38,11 @@ describe('C-CAMILA-CHAT en Driver', () => {
     // El botón va en fila y no parte su palabra.
     expect(chat).toMatch(/<Boton[\s\S]*?enFila\s*\/>/);
   });
+
+  it('C-CAMILA-SONDEO: con la sesión vencida el sondeo del chat se detiene', () => {
+    const chat = leer('soporte', 'ChatSoporteApp.tsx');
+    expect(chat).toMatch(/x\.estado === 401 \|\| x\.estado === 403\)\) vencida\.current = true/);
+    expect(chat).toMatch(/if \(vencida\.current\) return;/);
+    expect(chat).toMatch(/if \(vencida\.current\) clearInterval\(reloj\);/);
+  });
 });

@@ -47,18 +47,26 @@ export function ChatSoporteApp() {
     alSalir: alSalirTelefono,
   });
 
+  const vencida = useRef(false);
   const cargar = useCallback(async () => {
+    if (vencida.current) return;
     try {
       setHilo(await api.pedir<HiloCamila>('GET', '/datos/camila/hilo'));
       setError('');
     } catch (x) {
+      // C-CAMILA-SONDEO: con la sesión vencida (401 o 403) el sondeo se DETIENE; no sigue pidiendo
+      // cada pocos segundos. El mensaje queda en pantalla y la persona vuelve a entrar.
+      if (x instanceof ErrorApi && (x.estado === 401 || x.estado === 403)) vencida.current = true;
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
     }
   }, [api, t.sinRed]);
 
   useEffect(() => {
     const primero = setTimeout(() => void cargar(), 0);
-    const reloj = setInterval(() => void cargar(), ESPERA_RECARGA_MS);
+    const reloj = setInterval(() => {
+      if (vencida.current) clearInterval(reloj);
+      else void cargar();
+    }, ESPERA_RECARGA_MS);
     return () => {
       clearTimeout(primero);
       clearInterval(reloj);
