@@ -28,7 +28,9 @@ import { accesoDe, filtroAlcance } from '../accesoInterno';
 import { alcanceEsTotal, correoCanonico } from '@tumbite/compartido';
 import {
   CODIGOS_POR_CORREO_DIA,
+  LARGO_MENSAJE_ANONIMO,
   MENSAJES_POR_ANONIMO,
+  MENSAJES_POR_MINUTO_ANONIMO,
   MODELOS_CAMILA,
   TOPE_ANONIMOS_DIA,
   TOPE_MAXIMO_CENTAVOS,
@@ -139,7 +141,25 @@ camila.post('/camila/mensaje', async (c) => {
       'verificar',
       429,
     );
-  const r = await recibirMensaje(c.env, db, p, d.canal, d.texto);
+  const anonima = !p.usuario_id && !p.correo;
+  if (anonima) {
+    // C-CAMILA-VISITANTE: un visitante sin cuenta no manda más de unos pocos mensajes por minuto.
+    const reciente = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM camila_mensajes WHERE persona_id = ? AND autor = 'persona' AND creado_en > datetime('now', '-60 seconds')",
+      )
+      .bind(p.id)
+      .first<{ n: number }>();
+    if (Number(reciente?.n ?? 0) >= MENSAJES_POR_MINUTO_ANONIMO)
+      throw new ErrorDatos('Vas muy rápido. Espera un momento y vuelve a escribir.', 'limite', 429);
+  }
+  const r = await recibirMensaje(
+    c.env,
+    db,
+    p,
+    d.canal,
+    anonima ? d.texto.slice(0, LARGO_MENSAJE_ANONIMO) : d.texto,
+  );
   const fresca = (await personaPorId(db, p.id)) ?? p;
   return c.json({ respuesta: r.respuesta, ...(await hiloPublico(db, fresca)) });
 });

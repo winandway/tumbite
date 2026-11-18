@@ -23,10 +23,13 @@ export const VERDAD = {
   en: 'To be honest with you: I am the Divoox virtual assistant, not a person. I will help with everything I can, and if you would rather talk to someone on the team, write «talk to a person» and I will pass you to them.',
 } as const;
 
-/** No entendió (primer intento): pide que se lo digan de otra forma, sin pasar a nadie todavía. */
+/**
+ * No supo (primer intento, sin IA o con el tope alcanzado): nunca «no te entendí» (C-CAMILA-VISITANTE,
+ * 18 nov 2026). Dice en una línea qué es Divoox y ofrece tres temas para elegir.
+ */
 export const NO_ENTENDI = {
-  es: 'No estoy segura de haberte entendido. ¿Me lo cuentas con otras palabras?',
-  en: 'I am not sure I understood. Could you tell me in other words?',
+  es: 'Divoox es una app para pedir moto, carro, comida y envíos. Te puedo ayudar con esto: pedir un viaje o comida, trabajar como conductor, o los pagos. ¿Cuál necesitas?',
+  en: 'Divoox is an app to request moto and car rides, food and deliveries. I can help you with this: requesting a ride or food, working as a driver, or payments. Which one do you need?',
 } as const;
 
 /** Segundo intento sin poder resolver: ahí sí lo ve una persona del equipo. */

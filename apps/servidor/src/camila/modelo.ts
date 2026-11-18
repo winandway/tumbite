@@ -188,6 +188,18 @@ export const MENSAJES_POR_ANONIMO = 40;
 export const CODIGOS_POR_CORREO_DIA = 3;
 /** Mensajes de una misma persona que se contestan con IA en un día; después, sin IA. */
 export const MENSAJES_IA_POR_PERSONA_DIA = 50;
+/**
+ * C-CAMILA-VISITANTE (18 nov 2026): el chat de la web sin cuenta también se contesta con IA, porque
+ * es la puerta de entrada de todo visitante. Sus frenos, para que nadie se gaste el tope del día:
+ * - cada visitante, como mucho estos mensajes con IA al día (después, sin IA);
+ * - los visitantes solo usan IA mientras lo gastado hoy no pase de esta parte del tope: el resto queda
+ *   reservado para los conductores y clientes con cuenta;
+ * - su mensaje se recorta a este largo, y hay un máximo de mensajes por minuto.
+ */
+export const MENSAJES_IA_POR_ANONIMO_DIA = 20;
+export const PARTE_DEL_TOPE_PARA_ANONIMOS = 0.6;
+export const LARGO_MENSAJE_ANONIMO = 600;
+export const MENSAJES_POR_MINUTO_ANONIMO = 8;
 
 /** Suma uno al contador del día si todavía no llegó a su tope. Falso = tope alcanzado. */
 export async function contarDelDia(db: D1Database, cual: 'anonimos' | 'casos', tope: number) {

@@ -21,6 +21,20 @@ export type EntradaDocs = {
 
 export const CONOCIMIENTO_DOCS: readonly EntradaDocs[] = [
   {
+    // C-CAMILA-VISITANTE: lo primero que pregunta un visitante. También se contesta sin IA.
+    id: 'que-es-divoox',
+    guia: 'ordering/where-divoox-works',
+    palabras: [
+      ...['que es divoox', 'a que se dedica', 'a que se dedican', 'que hace esta empresa'],
+      ...['que hacen', 'de que trata', 'de que se trata', 'que es esto', 'que ofrecen'],
+      ...['que servicios', 'donde funciona', 'donde funcionan', 'donde operan', 'en que ciudades'],
+      ...['what is divoox', 'what do you do', 'what does this company do', 'what is this'],
+      ...['what services', 'where do you operate', 'where does divoox work', 'which cities'],
+    ],
+    es: 'Divoox es una app para pedir un viaje en moto o en carro, pedir comida, comprar en tiendas y mandar paquetes. También da trabajo a conductores y repartidores. Estamos arrancando en El Vigía y Tucaní (Mérida, Venezuela) y abrimos ciudad por ciudad: puedes crear tu cuenta desde cualquier lugar y, si tu ciudad todavía no tiene servicio, la app te avisa cuando llegue.',
+    en: 'Divoox is an app to request a moto or car ride, order food, shop at stores and send packages. It also gives work to drivers and couriers. We are starting in El Vigía and Tucaní (Mérida, Venezuela) and opening city by city: you can create your account from anywhere and, if your city does not have service yet, the app lets you know when it arrives.',
+  },
+  {
     id: 'saldo-y-comision',
     guia: 'drivers/driver-balance',
     palabras: [
