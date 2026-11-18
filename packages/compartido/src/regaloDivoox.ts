@@ -35,9 +35,13 @@ export type RegaloDelViaje = {
  */
 export function precioConRegalo(
   total: number | null | undefined,
-  regalo: { monto: number } | null | undefined,
+  regalo: { monto: number; devuelto?: boolean } | null | undefined,
 ) {
   if (total == null) return null;
+  // Un viaje que no se hizo (cancelado, sin conductor) con el regalo devuelto a la cuenta: nadie
+  // viajó, así que el precio va normal, sin tachar ni «Gratis» (y la pantalla dice que volvió).
+  if (regalo?.devuelto)
+    return { total, tachado: false, regalo: 0, aPagar: total, gratis: false, devuelto: true };
   const cubre = Math.max(0, Math.min(total, regalo?.monto ?? 0));
   const aPagar = pagaEnMano(total, regalo);
   // El regalo que se muestra es lo que cubre de verdad (nunca más que el precio).

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import * as Location from 'expo-location';
 import MapView, {
   Marker,
   type MapPressEvent,
@@ -8,7 +7,8 @@ import MapView, {
 } from 'react-native-maps';
 import { C, usePropsMapaDivoox, useSesion, Text } from '@tumbite/movil';
 import { TEXTOS_SIN_CENTRO, useCentroParaElegir } from './centroMapa';
-import type { Punto } from './ubicacion';
+import { calleDelPunto, permisoUbicacion, type Punto } from './ubicacion';
+import { BotonAjustes } from './BotonAjustes';
 
 /**
  * Marcar la dirección de entrega en el mapa: se toca o se arrastra el pin y la dirección
@@ -39,6 +39,7 @@ export function ElegirEnMapa({
   const { idioma } = useSesion();
   const { vista, buscando: buscandoCentro, pedirUbicacion } = useCentroParaElegir(punto, cerca);
   const [sinPermiso, setSinPermiso] = useState(false);
+  const [bloqueado, setBloqueado] = useState(false);
   const mapa = useRef<MapView>(null);
   // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
   const { coloresMapa } = usePropsMapaDivoox(punto ?? vista?.centro);
@@ -60,20 +61,10 @@ export function ElegirEnMapa({
 
   async function leerCalle(p: Punto) {
     setBuscando(true);
-    try {
-      const [sitio] = await Location.reverseGeocodeAsync({ latitude: p.lat, longitude: p.lng });
-      const partes = [
-        [sitio?.streetNumber, sitio?.street].filter(Boolean).join(' '),
-        sitio?.city,
-        sitio?.region,
-        sitio?.postalCode,
-      ].filter(Boolean);
-      if (partes.length) cambiarDireccion(partes.join(', '));
-    } catch (e) {
-      console.warn('mapa: no se pudo leer la dirección del pin', e);
-    } finally {
-      setBuscando(false);
-    }
+    // C-CALLE-CON-LIMITE: con tope de tiempo; sin calle, la casilla queda como estaba.
+    const calle = await calleDelPunto(p);
+    if (calle) cambiarDireccion(calle);
+    setBuscando(false);
   }
 
   // El mapa sigue al punto elegido fuera de él (dirección guardada o sugerencia).
@@ -113,7 +104,13 @@ export function ElegirEnMapa({
           <Pressable
             accessibilityRole="button"
             testID="mapa-usar-mi-ubicacion"
-            onPress={() => void pedirUbicacion().then((p) => setSinPermiso(!p))}
+            onPress={() =>
+              void pedirUbicacion().then(async (p) => {
+                setSinPermiso(!p);
+                // C-ABRIR-AJUSTES: negado para siempre, se ofrece abrir los ajustes.
+                setBloqueado(!p && (await permisoUbicacion()) === 'bloqueado');
+              })
+            }
             style={{
               borderWidth: 1,
               borderColor: '#2a2a2a',
@@ -127,6 +124,7 @@ export function ElegirEnMapa({
             <Text style={{ fontWeight: '700', color: C.secundario }}>{ts.usar}</Text>
           </Pressable>
         ) : null}
+        {sinPermiso && bloqueado ? <BotonAjustes idioma={idioma} /> : null}
       </View>
     );
   const centro = vista.centro;

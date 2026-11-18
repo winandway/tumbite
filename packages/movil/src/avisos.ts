@@ -66,6 +66,8 @@ export function useAvisosCelular(
   useEffect(() => {
     if (!usuario || Platform.OS === 'web') return;
     let vivo = true;
+    // C-PERMISOS-PRIMER-PLANO: la espera del primer plano se suelta al desmontar.
+    let espera: ReturnType<typeof cuandoEsteActiva> | null = null;
     (async () => {
       try {
         const Notifications = await import('expo-notifications');
@@ -79,7 +81,10 @@ export function useAvisosCelular(
         const permiso = await Notifications.getPermissionsAsync();
         if (!permiso.granted && !preguntar) return;
         // C-PERMISOS-PRIMER-PLANO: la pantalla del permiso solo con la app a la vista.
-        if (!permiso.granted) await cuandoEsteActiva();
+        if (!permiso.granted) {
+          espera = cuandoEsteActiva();
+          if (!(await espera.lista)) return;
+        }
         if (!vivo) return;
         const estado = permiso.granted ? permiso : await Notifications.requestPermissionsAsync();
         if (!estado.granted) return;
@@ -101,6 +106,7 @@ export function useAvisosCelular(
     })();
     return () => {
       vivo = false;
+      espera?.cancelar();
     };
   }, [api, usuario, preguntar, idioma]);
 }

@@ -70,6 +70,35 @@ describe('la ubicación no se pide en bucle', () => {
     expect(s).toContain('t.sinMapa');
     expect(s).toContain('testID="punto-exacto-escribir"');
   });
+  // C-CALLE-CON-LIMITE (revisor, 18 nov): un geocodificador colgado (Android sin red) dejaba
+  // «leyendo la calle» para siempre y el pedido no cotizaba. Una sola pieza con tope de tiempo.
+  it('la calle de un punto se lee solo por la pieza con tope de tiempo', () => {
+    const u = readFileSync(join(__dirname, 'ubicacion.ts'), 'utf8');
+    expect(u).toMatch(/export (async )?function calleDelPunto/);
+    expect(u).toMatch(/conLimite[<(][\s\S]{0,200}reverseGeocodeAsync/);
+    expect(u).toContain('ESPERA_CALLE_MS');
+    for (const f of [
+      'viajes/PedirMoto.tsx',
+      'PuntoExacto.tsx',
+      'ElegirEnMapa.tsx',
+      'app/order/[id].tsx',
+    ]) {
+      const s = readFileSync(join(__dirname, f), 'utf8');
+      expect(s, f).not.toContain('reverseGeocodeAsync');
+      expect(s, f).toContain('calleDelPunto(');
+    }
+  });
+  // C-ABRIR-AJUSTES (revisor): con el permiso negado para siempre, la app ofrece abrir los ajustes.
+  it('sin permiso para siempre se ofrece «Abrir ajustes»', () => {
+    const u = readFileSync(join(__dirname, 'ubicacion.ts'), 'utf8');
+    expect(u).toMatch(/export async function permisoUbicacion/);
+    for (const f of ['PuntoExacto.tsx', 'ElegirEnMapa.tsx']) {
+      const s = readFileSync(join(__dirname, f), 'utf8');
+      expect(s, f).toContain('<BotonAjustes');
+    }
+    const b = readFileSync(join(__dirname, 'BotonAjustes.tsx'), 'utf8');
+    expect(b).toContain('Linking.openSettings()');
+  });
   it('al volver a la app no se abre la pantalla del permiso', () => {
     const s = readFileSync(join(__dirname, 'comida', 'useRestaurantes.ts'), 'utf8');
     const oyente = s.slice(s.indexOf("AppState.addEventListener('change'"));

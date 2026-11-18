@@ -41,6 +41,16 @@ export function PrecioCompacto({
   if (!p) return null;
   const t = enIdioma(TEXTOS_REGALO, idioma);
   const monto = (n: number) => formatearMonto(n, moneda, idioma);
+  if (p.devuelto)
+    // No hubo viaje: el precio normal y que el regalo volvió a la cuenta (nunca «Gratis»).
+    return (
+      <View testID="precio-viaje" style={{ alignItems: 'flex-end' }}>
+        <Text style={estilo}>{monto(p.total)}</Text>
+        <Text testID="regalo-devuelto" style={{ color: GRIS, fontSize: 12 }}>
+          {t.devueltoCorto}
+        </Text>
+      </View>
+    );
   if (!p.tachado)
     return (
       <Text testID="precio-viaje" style={estilo}>
@@ -107,7 +117,7 @@ export function PrecioDelViaje({
           idioma={idioma}
         />
       ) : null}
-      {p.tachado && regalo?.devuelto ? (
+      {p.devuelto ? (
         <Text testID="regalo-devuelto" style={{ color: GRIS, fontSize: 13 }}>
           {t.devuelto}
         </Text>

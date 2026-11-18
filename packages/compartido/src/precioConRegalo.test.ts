@@ -35,6 +35,17 @@ describe('el precio de un viaje con regalo', () => {
   it('un regalo mayor que el precio no deja un saldo negativo', () => {
     expect(precioConRegalo(100, { monto: 500 })).toMatchObject({ aPagar: 0, gratis: true });
   });
+  // Revisor (18 nov): un viaje cancelado con el regalo devuelto no es «Gratis»: nadie viajó.
+  it('con el regalo devuelto (no hubo viaje) el precio va normal, sin tachar ni «Gratis»', () => {
+    expect(precioConRegalo(142, { monto: 142, devuelto: true })).toEqual({
+      total: 142,
+      tachado: false,
+      regalo: 0,
+      aPagar: 142,
+      gratis: false,
+      devuelto: true,
+    });
+  });
   it('un regalo de cero o un precio desconocido no tacha nada', () => {
     expect(precioConRegalo(142, { monto: 0 })?.tachado).toBe(false);
     expect(precioConRegalo(null, { monto: 100 })).toBeNull();

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as Location from 'expo-location';
+import { calleDelPunto, miUbicacion } from '../../ubicacion';
 import {
   ErrorApi,
   enIdioma,
@@ -692,19 +692,13 @@ function SeguirPedido() {
 
   async function usarUbicacion() {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const pos = await Location.getCurrentPositionAsync({});
-      setNuevoPunto({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      const [dir] = await Location.reverseGeocodeAsync({
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-      }).catch(() => []);
-      if (dir)
-        setNuevaDireccion(
-          [dir.streetNumber, dir.street, dir.city].filter(Boolean).join(' ').trim() ||
-            nuevaDireccion,
-        );
+      // C-UBICACION-SIN-BUCLE: la pieza única (mira el permiso antes de pedirlo, con tope de tiempo).
+      const pos = await miUbicacion({ aMano: true });
+      if (!pos) return;
+      setNuevoPunto(pos);
+      // C-CALLE-CON-LIMITE: con tope de tiempo y sin plus codes; sin calle queda lo escrito.
+      const calle = await calleDelPunto(pos);
+      if (calle) setNuevaDireccion(calle);
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : String(x));
     }

@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CALLE-CON-LIMITE y C-ABRIR-AJUSTES · Lo que pidió el revisor sobre ee39dd5696 (18 nov 2026) — todos los países
+
+- **Qué podía romperse:** si el geocodificador del teléfono no contestaba (Android sin red, pasa en Venezuela), «leyendo la calle» quedaba para siempre y el pedido de Moto, Carro o Envíos no cotizaba, sin mensaje. Un viaje cancelado con el regalo devuelto salía en «Mis viajes» como «Gratis» aunque nadie viajó. Con el permiso negado para siempre la app solo lo decía en texto. La espera del primer plano dejaba su oyente colgado si la app no volvía.
+- **Qué se hizo:** una sola pieza `calleDelPunto` en `apps/cliente/src/ubicacion.ts`, con tope de 4 s (`ESPERA_CALLE_MS`); si tarda o falla devuelve '' y cada pantalla usa su texto de siempre (en el pedido viaja «Tu ubicación actual»). La usan el pedido de viaje, el punto exacto, el mapa de elegir y el cambio de dirección de un pedido de comida; ninguna pantalla llama a `reverseGeocodeAsync` directo. `precioConRegalo` con el regalo `devuelto`: precio normal, sin tachar ni «Gratis», y la nota «Regalo devuelto». `permisoUbicacion()` y `BotonAjustes` («Abrir ajustes» con `Linking.openSettings()`) en el punto exacto y en el mapa de elegir. `cuandoEsteActiva()` devuelve `{ lista, cancelar }` y los avisos la sueltan al desmontar.
+- **Cómo se comprueba:** `apps/cliente/src/ubicacionReintento.test.ts`, `packages/compartido/src/precioConRegalo.test.ts` y `packages/movil/src/permisosPrimerPlano.test.ts` (vistas en rojo).
+- **Qué NO tocar:** no leer una calle sin `calleDelPunto`; no bloquear una cotización esperando algo que no tiene tope de tiempo.
+
 ## C-UBICACION-SIN-BUCLE, C-PERMISOS-PRIMER-PLANO, C-REGISTRO-ERRORES, C-PUNTO-SIN-MAPA, C-SIN-PLUS-CODE y C-AVISO-BORRADOR-JUSTO · Lo que encontró el robot de Android (18 nov 2026) — todos los países
 
 - **Qué se rompió y cómo se veía:** (1) con el viaje en «Buscando tu moto», «Cancelar el viaje» canceló pero la app salió al lanzador; los botones del punto en el mapa no respondían; 774 avisos de «ubicación no disponible»; Android bloqueó «Background activity launch» de la pantalla del permiso. (2) Con el código de invitación ZZZZ9999, «Crear cuenta» no decía nada. (3) «Populares cerca de ti» mostraba plus codes («J86Q+CHP, …»). (4) Con solo la recogida recuperada, elegir el destino hacía salir «Recuperamos lo que estabas escribiendo».

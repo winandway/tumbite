@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
-import * as Location from 'expo-location';
 import MapView, { type Region } from 'react-native-maps';
 import {
   type PuntoConfirmado,
   type TipoPunto,
-  direccionDelSitio,
   limpiarDetalles,
   seMovio,
   textosPuntoExacto,
@@ -13,7 +11,8 @@ import {
 } from '@tumbite/compartido';
 import { Boton, C, Campo, Icono, Text, usePropsMapaDivoox, useSesion } from '@tumbite/movil';
 import { useCentroParaElegir } from './centroMapa';
-import { miUbicacion, type Punto } from './ubicacion';
+import { calleDelPunto, miUbicacion, permisoUbicacion, type Punto } from './ubicacion';
+import { BotonAjustes } from './BotonAjustes';
 
 /**
  * C-PUNTO-EXACTO (16 nov 2026) — todos los países. La pieza ÚNICA para marcar el punto exacto
@@ -55,6 +54,7 @@ export function PuntoExacto({
   const [apto, setApto] = useState(inicial.apto ?? '');
   const [aviso, setAviso] = useState('');
   const [buscandome, setBuscandome] = useState(false);
+  const [bloqueado, setBloqueado] = useState(false);
   const leido = useRef<Punto | null>(inicial.punto);
   const pedido = useRef(0);
   const { coloresMapa } = usePropsMapaDivoox(centro ?? vista?.centro);
@@ -62,16 +62,11 @@ export function PuntoExacto({
   async function leerCalle(p: Punto) {
     const n = ++pedido.current;
     setLeyendo(true);
-    try {
-      const [sitio] = await Location.reverseGeocodeAsync({ latitude: p.lat, longitude: p.lng });
-      if (n !== pedido.current) return;
-      setDireccion(direccionDelSitio(sitio) || t.sinCalle);
-    } catch (e) {
-      console.warn('punto exacto: no se pudo leer la calle del punto', e);
-      if (n === pedido.current) setDireccion((d) => d || t.sinCalle);
-    } finally {
-      if (n === pedido.current) setLeyendo(false);
-    }
+    // C-CALLE-CON-LIMITE: con tope de tiempo; sin calle queda «Punto marcado en el mapa».
+    const calle = await calleDelPunto(p);
+    if (n !== pedido.current) return;
+    setDireccion(calle || t.sinCalle);
+    setLeyendo(false);
   }
 
   // Se abre sobre un punto sin su calle («Estoy aquí» de la hoja, un punto guardado sin texto): se
@@ -94,12 +89,19 @@ export function PuntoExacto({
 
   async function estoyAqui() {
     setAviso('');
+    setBloqueado(false);
     setBuscandome(true);
     try {
       // C-UBICACION-SIN-BUCLE: la persona tocó «Estoy aquí»: se mira el permiso y se pide solo si falta.
       const p = await miUbicacion({ aMano: true });
-      if (!p && (await Location.getForegroundPermissionsAsync()).status !== 'granted')
-        return setAviso(t.sinPermiso);
+      if (!p) {
+        const permiso = await permisoUbicacion();
+        if (permiso !== 'concedido') {
+          // C-ABRIR-AJUSTES: negado para siempre, se ofrece abrir los ajustes del teléfono.
+          setBloqueado(permiso === 'bloqueado');
+          return setAviso(t.sinPermiso);
+        }
+      }
       if (!p) return setAviso(t.sinSenal);
       mapa.current?.animateToRegion(
         { latitude: p.lat, longitude: p.lng, latitudeDelta: 0.002, longitudeDelta: 0.002 },
@@ -297,6 +299,7 @@ export function PuntoExacto({
             {aviso}
           </Text>
         ) : null}
+        {aviso && bloqueado ? <BotonAjustes idioma={idioma} /> : null}
         {conDetalles ? (
           <>
             <Campo

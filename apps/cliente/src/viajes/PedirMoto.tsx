@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
-import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   type CategoriaViaje,
@@ -12,7 +11,6 @@ import {
   TAMANOS_PAQUETE,
   type TamanoPaquete,
   type Idioma,
-  direccionDelSitio,
   enIdioma,
   formatearMonto,
   pagaEnMano,
@@ -39,7 +37,7 @@ import { PuntoExacto } from '../PuntoExacto';
 import { Pildora, Tarjeta } from '../comida/piezas';
 import { PagoTarjeta } from '../PagoTarjeta';
 import type { Cobro } from '../pagoTipos';
-import { type Punto, miUbicacion } from '../ubicacion';
+import { type Punto, calleDelPunto, miUbicacion } from '../ubicacion';
 import { TEXTOS_MOTO } from './textos';
 import { AgregarCodigoRegalo, LineaRegalo, TEXTOS_REGALO } from '../RegaloDivoox';
 import { PedirPrimeroA } from './ConductoresConfianza';
@@ -194,14 +192,10 @@ export function PedirMoto({
   useEffect(() => {
     if (!claveRecogida || !recogida) return;
     let vigente = true;
-    Location.reverseGeocodeAsync({ latitude: recogida.lat, longitude: recogida.lng })
-      .then(([sitio]) => {
-        if (vigente) setCalleActual({ clave: claveRecogida, calle: direccionDelSitio(sitio) });
-      })
-      .catch((e: unknown) => {
-        console.warn('pedir viaje: no se pudo leer la calle de la recogida', e);
-        if (vigente) setCalleActual({ clave: claveRecogida, calle: '' });
-      });
+    // C-CALLE-CON-LIMITE: con tope de tiempo; si no llega, viaja «Tu ubicación actual».
+    void calleDelPunto(recogida).then((calle) => {
+      if (vigente) setCalleActual({ clave: claveRecogida, calle });
+    });
     return () => {
       vigente = false;
     };

@@ -1,6 +1,6 @@
 import { AppState } from 'react-native';
 import * as Location from 'expo-location';
-import { conLimite } from '@tumbite/compartido';
+import { conLimite, direccionDelSitio } from '@tumbite/compartido';
 import {
   type EstadoReintento,
   SIN_FALLOS,
@@ -89,4 +89,44 @@ export function miUbicacion(opciones: { aMano?: boolean } = {}): Promise<Punto |
     ESPERA_UBICACION_MS,
     null,
   );
+}
+
+/**
+ * C-CALLE-CON-LIMITE (18 nov 2026, revisor): la calle legible de un punto (calle, sector, ciudad),
+ * con el geocodificador del teléfono y un TOPE de tiempo. En Android sin red el geocodificador puede
+ * no contestar nunca: sin tope, «leyendo la calle» quedaba para siempre y el pedido no cotizaba.
+ * Si tarda, falla o no hay calle, devuelve '' y cada pantalla usa su texto de siempre. Es la ÚNICA
+ * forma de leer una calle en la app (ninguna pantalla llama a reverseGeocodeAsync directo).
+ */
+export const ESPERA_CALLE_MS = 4000;
+export async function calleDelPunto(p: Punto): Promise<string> {
+  const leida = await conLimite<string | null>(
+    Location.reverseGeocodeAsync({ latitude: p.lat, longitude: p.lng }).then(
+      ([sitio]) => direccionDelSitio(sitio),
+      (e: unknown) => {
+        console.warn('ubicación: no se pudo leer la calle del punto', e);
+        return '';
+      },
+    ),
+    ESPERA_CALLE_MS,
+    null,
+  );
+  if (leida === null) console.warn(`ubicación: la calle no llegó en ${ESPERA_CALLE_MS} ms`);
+  return leida ?? '';
+}
+
+/**
+ * C-ABRIR-AJUSTES (18 nov 2026, revisor): en qué quedó el permiso de ubicación. «bloqueado» es
+ * cuando la persona lo negó y el teléfono ya no deja volver a preguntar (Android, dos «No»): la
+ * pantalla ofrece «Abrir ajustes» en vez de solo decirlo.
+ */
+export async function permisoUbicacion(): Promise<'concedido' | 'preguntar' | 'bloqueado'> {
+  try {
+    const p = await Location.getForegroundPermissionsAsync();
+    if (p.status === 'granted') return 'concedido';
+    return p.canAskAgain === false ? 'bloqueado' : 'preguntar';
+  } catch (e) {
+    console.warn('ubicación: no se pudo mirar el permiso', e);
+    return 'preguntar';
+  }
 }

@@ -37,7 +37,7 @@ describe('la recogida viaja con su calle real', () => {
     const s = leer('PedirMoto.tsx');
     expect(s).not.toMatch(/\|\| t\.recogida\b/);
     expect(s).toContain('calleActual');
-    expect(s).toContain('reverseGeocodeAsync');
+    expect(s).toContain('calleDelPunto(');
   });
   // C-AVISO-BORRADOR-JUSTO (robot de Android): con solo la recogida recuperada, elegir el destino
   // AHORA hacía aparecer «Recuperamos lo que estabas escribiendo». El aviso mira lo recuperado al
