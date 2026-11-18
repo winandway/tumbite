@@ -21,15 +21,17 @@ describe('revisión del inicio nuevo', () => {
     expect(f).toMatch(/if \(!servicios\) return;[\s\S]{0,400}rutaBanners\('cabecera'/);
   });
 
-  it('el «Cerrar» de la hoja va en el idioma de la persona', () => {
+  it('el fondo de la hoja no es otro botón «Cerrar» (ni fijo en español)', () => {
     const f = leer('inicio', 'HojaAbajo.tsx');
     expect(f).not.toContain('accessibilityLabel="Cerrar"');
-    expect(f).toMatch(/idioma === 'en' \? 'Close' : 'Cerrar'/);
+    expect(f).toMatch(/accessible=\{false\}/);
   });
 
   it('volver al viaje se reintenta si no hubo red al abrir', () => {
     const f = leer('viajes', 'useVolverAlViaje.ts');
     expect(f).toMatch(/yaRevisado = false/);
     expect(f).toContain('setTimeout');
+    // Segunda revisión: si el inicio se desmonta antes de la primera respuesta, se vuelve a revisar.
+    expect(f).toMatch(/if \(!terminado\) yaRevisado = false/);
   });
 });

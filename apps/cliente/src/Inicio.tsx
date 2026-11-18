@@ -14,6 +14,7 @@ import {
   ordenarPorUso,
   portadaRespaldo,
   rutaBanners,
+  recomendarRestaurantes,
   rutaDeServicio,
   serviciosDelInicio,
 } from '@tumbite/compartido';
@@ -31,6 +32,10 @@ import { ElegirDireccion } from './inicio/ElegirDireccion';
 import type { PromoReal } from './inicio/Ofertas';
 import { useServicios } from './inicio/useServicios';
 import { useAvisos } from './inicio/useAvisos';
+import { useFavoritos } from './inicio/useFavoritos';
+import { EstadoCatalogo } from './comida/EstadoCatalogo';
+import { FilaRestaurantes, ListaRestaurantes } from './inicio/Restaurantes';
+import { textosInicio } from './inicio/textos';
 import {
   CarruselPromos,
   CuadriculaServicios,
@@ -43,6 +48,8 @@ import { textosInicioNuevo } from './inicio/textosNuevo';
 import { useVolverAlViaje } from './viajes/useVolverAlViaje';
 
 const ANCHO_PORTADA = 640;
+/** Cuántos restaurantes salen por tanda en «Todos los restaurantes». */
+const TANDA = 25;
 const LLAVE_USOS = 'inicio-usos-servicios';
 const LLAVE_PORTADA = 'inicio-ultima-portada';
 
@@ -177,6 +184,33 @@ export function Inicio() {
     );
   }, [api, cerca]);
 
+  // Debajo de lo del borrador, como los grandes al bajar: «Te puede gustar» (C-TE-PUEDE-GUSTAR, por lo
+  // que ya pidió) y «Todos los restaurantes» por tandas.
+  const favoritos = useFavoritos(api, Boolean(usuario));
+  const [cuantos, setCuantos] = useState(TANDA);
+  const [yaPedidos, setYaPedidos] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!usuario) return;
+    let vivo = true;
+    api
+      .pedir<{ pedidos: { estado: string; restauranteId: string }[] }>('GET', '/datos/mis-pedidos')
+      .then(
+        (r) =>
+          vivo &&
+          setYaPedidos(
+            new Set(r.pedidos.filter((p) => p.estado === 'entregado').map((p) => p.restauranteId)),
+          ),
+      )
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api, usuario]);
+  const recomendados = useMemo(
+    () => recomendarRestaurantes(catalogo.restaurantes, yaPedidos),
+    [catalogo.restaurantes, yaPedidos],
+  );
+
   const carritoCentavos = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
 
   const abrirServicio = (s: ServicioCatalogo) => {
@@ -264,6 +298,29 @@ export function Inicio() {
               alTocar={abrirRestaurante}
               verTodos={() => router.push('/restaurants')}
             />
+          ) : null}
+          {disponible('comida') ? (
+            <>
+              <FilaRestaurantes
+                idioma={idioma}
+                lista={recomendados}
+                titulo={idioma === 'en' ? 'You might like' : 'Te puede gustar'}
+                testID="te-puede-gustar"
+                favoritos={favoritos}
+                alTocar={abrirRestaurante}
+              />
+              <EstadoCatalogo idioma={idioma} catalogo={catalogo} />
+              <ListaRestaurantes
+                idioma={idioma}
+                lista={catalogo.restaurantes}
+                cuantos={cuantos}
+                verMas={() => setCuantos((n) => n + TANDA)}
+                cargando={catalogo.estado === 'cargando' && !catalogo.restaurantes.length}
+                favoritos={favoritos}
+                alTocar={abrirRestaurante}
+                vacio={catalogo.restaurantes.length ? textosInicio(idioma).sinFiltro : undefined}
+              />
+            </>
           ) : null}
         </View>
       </ScrollView>

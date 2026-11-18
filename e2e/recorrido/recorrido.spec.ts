@@ -630,7 +630,7 @@ for (const idioma of ['en', 'es'] as const) {
     // La hoja sube deslizándose: la foto, cuando ya terminó de subir.
     await cli.waitForTimeout(CAPTURAS ? 800 : 0);
     await foto(cli, 'cliente-inicio-direccion');
-    await cli.getByRole('button', { name: idioma === 'en' ? 'Close' : 'Cerrar' }).click();
+    await cli.getByRole('button', { name: idioma === 'en' ? 'Close' : 'Cerrar', exact: true }).click();
     await expect(cli.getByTestId('inicio-direccion-casilla')).toBeHidden({ timeout: 10_000 });
     if (CAPTURAS) {
       await cli.getByTestId('lista-restaurantes').scrollIntoViewIfNeeded();
@@ -653,11 +653,12 @@ for (const idioma of ['en', 'es'] as const) {
     for (const s of porVenir) await expect(cli.getByTestId(`servicio-${s.id}`)).toHaveCount(0);
     await expect(cli.getByText(/^(Pronto|Soon)$/)).toHaveCount(0);
     if (await cli.getByTestId('servicio-mas').count()) {
+      // C-INICIO-NUEVO (17 nov 2026, borrador aprobado): «Más servicios» es una hoja con lo
+      // secundario (regalos, paquetes…); no repite los servicios de la cuadrícula ni dice «Pronto».
       await cli.getByTestId('servicio-mas').click();
-      await expect(cli.getByTestId('pantalla-mas')).toBeVisible({ timeout: 20_000 });
-      await expect(cli.getByText(/Bienvenido a Divoox|Welcome to Divoox/)).toBeVisible();
-      await expect(cli.getByTestId('explorar-comida')).toBeVisible();
-      for (const s of porVenir) await expect(cli.getByTestId(`explorar-${s.id}`)).toHaveCount(0);
+      await expect(cli.getByTestId('mas-regalos')).toBeVisible({ timeout: 20_000 });
+      await expect(cli.getByTestId('mas-paquetes')).toBeVisible();
+      await expect(cli.getByTestId('mas-comida')).toHaveCount(0);
       await expect(cli.getByText(/^(Pronto|Soon)$/)).toHaveCount(0);
       await expect(cli.getByTestId('franja-estado')).toHaveCount(0);
       await foto(cli, 'cliente-mas');

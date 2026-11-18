@@ -19,6 +19,8 @@ export function useVolverAlViaje(api: Api, conCuenta: boolean) {
     if (!conCuenta || yaRevisado) return;
     yaRevisado = true;
     let vivo = true;
+    /** Ya hubo una respuesta definitiva (viaje encontrado, o ninguno con red). */
+    let terminado = false;
     let reloj: ReturnType<typeof setTimeout> | null = null;
     const leer = (ruta: string) =>
       api
@@ -32,10 +34,15 @@ export function useVolverAlViaje(api: Api, conCuenta: boolean) {
       ]);
       if (!vivo) return;
       const ruta = rutaAlAbrir(r.map((x) => x.viaje));
-      if (ruta) return router.push(ruta);
-      if (r.some((x) => !x.ok)) {
+      if (ruta) {
+        terminado = true;
+        return router.push(ruta);
+      }
+      if (r.every((x) => x.ok)) terminado = true;
+      else {
         if (intento + 1 >= MAX_INTENTOS) {
           // Sin red todavía: la próxima vez que se abra el inicio se vuelve a preguntar.
+          terminado = true;
           yaRevisado = false;
           return;
         }
@@ -46,8 +53,8 @@ export function useVolverAlViaje(api: Api, conCuenta: boolean) {
     return () => {
       vivo = false;
       if (reloj) clearTimeout(reloj);
-      // Si el inicio se desmontó antes de terminar, otra apertura puede volver a revisar.
-      if (reloj) yaRevisado = false;
+      // Si el inicio se desmontó antes de la respuesta, otra apertura vuelve a revisar.
+      if (!terminado) yaRevisado = false;
     };
   }, [api, conCuenta]);
 }

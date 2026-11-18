@@ -18,7 +18,7 @@ const DATOS = STAGING
 test.skip(STAGING, 'solo en esta computadora');
 
 for (const idioma of ['en', 'es'] as const)
-  test(`«Más» muestra los servicios listos en una cuadrícula (${idioma})`, async ({
+  test(`el inicio muestra los servicios listos y «Más servicios» lo secundario (${idioma})`, async ({
     browser,
     request,
   }) => {
@@ -69,26 +69,22 @@ for (const idioma of ['en', 'es'] as const)
         },
       }),
     );
-    await p.goto('/app/service/mas');
+    // C-INICIO-NUEVO (17 nov 2026, borrador aprobado): en el inicio, los servicios que funcionan en
+    // cuatro columnas; «Más servicios» abre una hoja con lo secundario, sin repetir servicios.
+    await p.goto('/app/');
     const en = idioma === 'en';
-    await expect(p.getByTestId('pantalla-mas')).toBeVisible({ timeout: 30_000 });
     for (const s of ['moto', 'carro', 'comida', 'envios'])
-      await expect(p.getByTestId(`explorar-${s}`)).toBeVisible();
-    // C-SOLO-LO-TERMINADO (3 nov): bienvenida con el logo arriba, sin franja ni «Pronto».
-    await expect(p.getByText(en ? 'Welcome to Divoox' : 'Bienvenido a Divoox')).toBeVisible();
+      await expect(p.getByTestId(`servicio-${s}`)).toBeVisible({ timeout: 30_000 });
+    await expect(p.getByTestId('servicio-farmacia')).toHaveCount(0);
     await expect(p.getByText(/^(Pronto|Soon)$/)).toHaveCount(0);
-    await expect(p.getByTestId('franja-estado')).toHaveCount(0);
-    await expect(p.getByTestId('explorar-farmacia')).toHaveCount(0);
+    await p.getByTestId('servicio-mas').click();
+    await expect(p.getByTestId('mas-regalos')).toBeVisible({ timeout: 30_000 });
+    await expect(p.getByText(en ? 'More services' : 'Más servicios').last()).toBeVisible();
+    await expect(p.getByTestId('mas-moto')).toHaveCount(0);
     await p.screenshot({ path: join(RAIZ, 'docs', 'capturas', `mas-servicios-${idioma}.png`) });
-    // Un servicio que todavía no abre no muestra listas de «Ejemplo» (C-SOLO-LO-TERMINADO).
-    await p.goto('/app/service/farmacia');
-    await expect(p.getByTestId('franja-estado')).toBeVisible({ timeout: 30_000 });
-    await expect(p.getByText(/^(Ejemplo|Sample)$/)).toHaveCount(0);
-    await p.goto('/app/service/mas');
-    await expect(p.getByTestId('pantalla-mas')).toBeVisible({ timeout: 30_000 });
-    // Cada servicio lleva a su pantalla.
-    await p.getByTestId('explorar-carro').click();
-    await expect(p).toHaveURL(/service\/carro/);
+    // C-SIN-PANTALLAS-INTERMEDIAS: los enlaces viejos de /service/<id> llevan directo a su pantalla.
+    await p.goto('/app/service/carro');
+    await expect(p).toHaveURL(/ride\?servicio=carro/, { timeout: 30_000 });
     await ctx.close();
   });
 
@@ -122,10 +118,13 @@ test('cada servicio de viajes dice lo suyo en el formulario (es)', async ({ brow
   await p.goto('/app/ride?servicio=carro');
   // C-CARRO-CATEGORIAS: las categorías se eligen al ver el precio; el formulario dice lo de Carro.
   await expect(p.getByText(/Para 6, elige Carro XL/)).toBeVisible({ timeout: 30_000 });
-  await expect(p.getByTestId('parada-agregar')).toBeVisible();
+  // C-INICIO-NUEVO: las paradas se agregan después de elegir el destino (borrador aprobado).
+  await expect(p.getByText('Tipo de carro')).toBeVisible();
   await expect(p.getByText(casco)).toHaveCount(0);
   await p.goto('/app/ride?servicio=envios');
-  await expect(p.getByText('¿A dónde lo llevamos?').first()).toBeVisible({ timeout: 30_000 });
+  // Envíos: «Recoger en» y «Entregar en» (borrador aprobado), nunca «¿A dónde vas?».
+  await expect(p.getByText('Entregar en').first()).toBeVisible({ timeout: 30_000 });
+  await expect(p.getByText('¿A dónde vas?')).toHaveCount(0);
   await expect(p.getByText(casco)).toHaveCount(0);
   await expect(p.getByText(/Un pasajero/)).toHaveCount(0);
   await ctx.close();

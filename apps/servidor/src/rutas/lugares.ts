@@ -212,6 +212,31 @@ export function nombreSinNumero(direccion: string): { titulo: string; detalle: s
   const marca = new Set(['#', 'no', 'no.', 'nro', 'nro.', 'n°']);
   const p = titulo.split(/\s+/).filter(Boolean);
   if (p.length > 1 && esNumero(p[0] ?? '')) p.shift();
+  // Apartamento, unidad, oficina o piso con su número («Apt 4B», «Suite 300», «Apto 5-2», «Piso 8»):
+  // desde esa palabra hasta el final.
+  const unidad = new Set([
+    'apt',
+    'apt.',
+    'unit',
+    'suite',
+    'ste',
+    'ste.',
+    'apto',
+    'apto.',
+    'piso',
+    'ofic',
+    'ofic.',
+    'oficina',
+    'local',
+    'depto',
+    'depto.',
+    'dpto',
+    'dpto.',
+  ]);
+  const corte = p.findIndex(
+    (x, i) => i > 0 && unidad.has(x.toLowerCase()) && esNumero(p[i + 1] ?? ''),
+  );
+  if (corte > 0) p.splice(corte);
   const ultimo = p.at(-1) ?? '';
   if (p.length > 1 && /^#\d/.test(ultimo)) p.pop();
   else if (p.length > 2 && esNumero(ultimo) && marca.has((p.at(-2) ?? '').toLowerCase()))
