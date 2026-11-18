@@ -5393,3 +5393,23 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Candados (vistos en rojo el 18 nov quitando `conEnlacesDeGuia`):** `tono.test.ts`, bloque C-CAMILA-ENLACE-GUIA (las treinta preguntas terminan con su enlace, solo guías que existen, dos guías, el chat y el correo) y el recorrido `e2e/recorrido/camila.spec.ts` (cada enlace que Camila puede dar abre su guía de verdad).
 - **Ojo:** el sitio contesta 200 a cualquier dirección de Docs (es una sola página), así que el 200 solo no prueba nada: la garantía es que Camila solo arma enlaces con rutas de `DOCS_PUBLICOS`, que se genera de las guías reales, y el recorrido abre las páginas y comprueba el título.
 - **Qué NO tocar:** no escribir un enlace de Docs a mano en una respuesta; siempre `enlaceDeGuia`. No cambiar la etiqueta en un solo lado (la leen el servidor, la web, Driver y el correo).
+
+## C-DOCS-MENU-PLEGADO y C-DOCS-SEO — en el celular el menú de Docs va plegado en su botón; migas, guías relacionadas y preguntas para buscadores (18 nov 2026, Richard) — todos los países
+
+Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya dejaron el contenido antes del menú en la página, los pasos primero y la descripción propia de cada página.
+
+- **Qué faltaba:** con el menú después del contenido, en el celular quedaba al fondo de la página, desplegado y larguísimo, y no había forma de llegar a él sin bajar toda la guía. La regla de Docs es que la barra nunca se pierde y que en el celular va plegada. Medido a 375 de ancho antes de los dos arreglos: el título de una guía a más de 3.000 píxeles del borde de arriba y el de la portada de Docs a casi 9.000.
+- **Cómo quedó, en `apps/panel/src/sitio/docs/Docs.tsx` y `estilos.css`:**
+  - Por debajo de 900 de ancho la barra es un solo botón de una línea, «Menú de Docs» (`.docs-menu-boton`, `aria-expanded`), arriba de la página; su cuerpo (`.docs-barra-cuerpo`) solo se muestra con la clase `abierta`. Se guarda EN QUÉ página se abrió (`menuEn`), así al elegir una guía se pliega solo. De 900 para arriba la hoja de estilos esconde el botón y muestra la barra siempre, con el ítem activo resaltado, como antes. En el HTML la barra sigue DESPUÉS del contenido (`order: -1` la sube en pantalla) y sus enlaces siguen ahí para los buscadores.
+  - Migas en todas las páginas de Docs (`.docs-migas`: «← Docs › sección»), también en escritorio.
+  - «Guías relacionadas» al pie de cada guía: hasta cuatro, de cualquier sección, con el mismo motor del buscador (`guiasRelacionadas`).
+  - Cada paso tiene su ancla (`#paso-1`…) y el título de la explicación larga lleva la clase `docs-explicacion`.
+- **C-DOCS-SEO, en `apps/panel/scripts/prerender.mjs` y `App.tsx`:**
+  - Cada guía suma `FAQPage` con las preguntas que responde (la respuesta es su resumen y sus pasos) y va con `og:type` `article`.
+  - El panel (`PanelApp`) se baja solo al entrar a `/panel` (`lazy`). Antes venía entero en cada página pública, con el guion de cobros de Stripe y su cookie de terceros: el código principal bajó de 2,68 a 1,59 megas sin comprimir.
+- **Candados:**
+  - `e2e/docs-al-grano.spec.ts` (corre en `verify.yml` con `npx playwright test`): abre once páginas de Docs a 375 de ancho, en los dos idiomas (portada, «¿Cómo hago…?», secciones, guías y cursos), y falla si el título no está entero en la primera pantalla, si el menú sale desplegado o si algo se sale por el costado; además el orden de la guía, abrir y plegar el menú, y la barra en escritorio. **Visto en rojo el 18 nov con el código de antes de los dos arreglos: las 14 pruebas fallaron** (título a 3.166 píxeles en la guía de Moto y a 8.827 en la portada).
+  - `apps/panel/src/sitio/docs/docsAlGrano.test.tsx`: el menú llega plegado, la hoja de estilos lo esconde en celular y lo muestra en escritorio, TODAS las guías en los dos idiomas llevan migas, título, resumen y pasos antes que capturas y explicación, y las relacionadas. Visto en rojo el 18 nov dejando el menú abierto por defecto.
+- **Cómo se comprueba:** abrir en el celular `https://divoox.com/es/docs/ordering/ride-moto`: arriba «Menú de Docs» plegado, el buscador, «← Docs › Para pedir», el título y los pasos. En la computadora, la barra a la izquierda con «Pedir un viaje en moto» resaltado.
+- **Qué NO tocar:** no mostrar `.docs-barra-cuerpo` por defecto en celular; no quitar `order: -1` de `.docs-barra`; no importar `PanelApp` directo en `App.tsx`.
+- **Capturas del antes y el después:** `docs/capturas/docs-al-grano/`.

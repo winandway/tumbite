@@ -23,6 +23,7 @@ import {
   Headset,
   LocateFixed,
   MapPin,
+  Menu,
   Music,
   Navigation,
   Pizza,
@@ -37,6 +38,7 @@ import {
 
 /** Íconos de línea de la marca. Nada de emojis en el producto: se ven poco serios. */
 const ICONOS = {
+  menu: Menu,
   comision: BadgePercent,
   propina: HandCoins,
   factura: Receipt,

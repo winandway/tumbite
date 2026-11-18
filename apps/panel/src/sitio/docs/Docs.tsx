@@ -1,4 +1,4 @@
-import { createElement, useEffect, useId, useRef, useState } from 'react';
+import { createElement, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { type Idioma, almacenNavegador, enIdioma, useBorrador } from '@tumbite/compartido';
 import { Enlace } from '../../Enlace';
 import { ir } from '../../ruta';
@@ -52,7 +52,11 @@ function SimbolosIconosGuia() {
 /**
  * Docs estilo Wikipedia: barra lateral con secciones e íconos que NUNCA se pierde, buscador
  * (⌘K) que filtra mientras se escribe, y cada guía en su propia dirección /docs/<seccion>/<guia>.
- * En celular el contenido va primero (C-DOCS-AL-GRANO), arriba va «← Docs» y el menú queda debajo.
+ * En celular el contenido va primero (C-DOCS-AL-GRANO) y arriba va «← Docs».
+ *
+ * El menú va DESPUÉS del contenido en la página y, por debajo de 900 de ancho, PLEGADO en el botón
+ * «Menú de Docs» (arriba, una sola línea): solo se despliega al tocarlo. En escritorio la barra
+ * lateral queda a la vista con el ítem activo resaltado (lo decide la hoja de estilos).
  */
 export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const t = enIdioma(TEXTOS_DOCS, idioma);
@@ -100,6 +104,11 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
     void empezarDeNuevo();
   }, [recuperado, empezarDeNuevo]);
   const campo = useRef<HTMLInputElement>(null);
+  // El menú plegado del celular: se guarda EN QUÉ página se abrió, así al elegir una guía (cambia
+  // la dirección) vuelve a quedar plegado solo y la guía nueva abre en su título.
+  const [menuEn, setMenuEn] = useState<string | null>(null);
+  const menuAbierto = menuEn === ruta;
+  const idMenu = useId();
 
   // ⌘K o Ctrl+K enfoca el buscador desde cualquier página de Docs.
   useEffect(() => {
@@ -243,12 +252,14 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
         ) : comoHago ? (
           <ComoHago secciones={secciones} t={t} />
         ) : guia && seccion ? (
-          <PaginaGuia seccion={seccion} guia={guia} t={t} idioma={idioma} />
+          <PaginaGuia secciones={secciones} seccion={seccion} guia={guia} t={t} idioma={idioma} />
         ) : seccion ? (
           <>
-            <Enlace a="/docs" className="docs-volver">
-              {t.volver}
-            </Enlace>
+            <nav className="docs-migas" aria-label={t.migas}>
+              <Enlace a="/docs" className="docs-volver">
+                {t.volver}
+              </Enlace>
+            </nav>
             <h1>
               <Icono nombre={seccion.icono} tamano={28} /> {seccion.titulo}
             </h1>
@@ -309,35 +320,46 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
       </main>
       {/* C-DOCS-AL-GRANO: el menú va DESPUÉS del contenido en la página (el celular y Google llegan
           directo a la guía); en pantallas anchas se ve a la izquierda, como siempre. */}
-      <aside className="docs-barra">
-        <Enlace a="/docs" className={`docs-inicio${!seccion && !comoHago ? ' activo' : ''}`}>
-          <Icono nombre="libro" tamano={18} /> {t.titulo}
-        </Enlace>
-        <Enlace a="/docs/how-to" className={`docs-inicio${comoHago ? ' activo' : ''}`}>
-          <Icono nombre="soporte" tamano={18} /> {t.comoHago}
-        </Enlace>
-        <nav aria-label={t.menu}>
-          {secciones.map((s) => (
-            <details key={s.id} open={(!seccion && !comoHago) || s.id === seccion?.id}>
-              <summary className={s.id === seccion?.id ? 'activo' : undefined}>
-                <Icono nombre={s.icono} tamano={18} /> {s.titulo}
-              </summary>
-              <ul>
-                {s.guias.map((g) => (
-                  <li key={g.id}>
-                    <Enlace
-                      a={`/docs/${s.id}/${g.id}`}
-                      className={g.id === guia?.id && s.id === seccion?.id ? 'activo' : undefined}
-                    >
-                      <IconoGuia id={g.id} tamano={15} />
-                      <span>{g.titulo}</span>
-                    </Enlace>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ))}
-        </nav>
+      <aside className={`docs-barra${menuAbierto ? ' abierta' : ''}`}>
+        <button
+          type="button"
+          className="docs-menu-boton"
+          aria-expanded={menuAbierto}
+          aria-controls={idMenu}
+          onClick={() => setMenuEn(menuAbierto ? null : ruta)}
+        >
+          <Icono nombre="menu" tamano={18} /> {t.menuBoton}
+        </button>
+        <div id={idMenu} className="docs-barra-cuerpo">
+          <Enlace a="/docs" className={`docs-inicio${!seccion && !comoHago ? ' activo' : ''}`}>
+            <Icono nombre="libro" tamano={18} /> {t.titulo}
+          </Enlace>
+          <Enlace a="/docs/how-to" className={`docs-inicio${comoHago ? ' activo' : ''}`}>
+            <Icono nombre="soporte" tamano={18} /> {t.comoHago}
+          </Enlace>
+          <nav aria-label={t.menu}>
+            {secciones.map((s) => (
+              <details key={s.id} open={(!seccion && !comoHago) || s.id === seccion?.id}>
+                <summary className={s.id === seccion?.id ? 'activo' : undefined}>
+                  <Icono nombre={s.icono} tamano={18} /> {s.titulo}
+                </summary>
+                <ul>
+                  {s.guias.map((g) => (
+                    <li key={g.id}>
+                      <Enlace
+                        a={`/docs/${s.id}/${g.id}`}
+                        className={g.id === guia?.id && s.id === seccion?.id ? 'activo' : undefined}
+                      >
+                        <IconoGuia id={g.id} tamano={15} />
+                        <span>{g.titulo}</span>
+                      </Enlace>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ))}
+          </nav>
+        </div>
       </aside>
     </div>
   );
@@ -347,9 +369,11 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
 function ComoHago({ secciones, t }: { secciones: SeccionDocs[]; t: (typeof TEXTOS_DOCS)['es'] }) {
   return (
     <article className="docs-guia">
-      <Enlace a="/docs" className="docs-volver">
-        {t.volver}
-      </Enlace>
+      <nav className="docs-migas" aria-label={t.migas}>
+        <Enlace a="/docs" className="docs-volver">
+          {t.volver}
+        </Enlace>
+      </nav>
       <h1>{t.comoHago}</h1>
       <p className="docs-resumen">{t.comoHagoResumen}</p>
       {secciones.map((s) => (
@@ -382,12 +406,27 @@ function TarjetaGuia({ seccion, guia }: { seccion: SeccionDocs; guia: Guia }) {
   );
 }
 
+/** Cuántas guías relacionadas se enlazan al pie de cada guía. */
+const RELACIONADAS = 4;
+
+/**
+ * Las guías que más se parecen a esta (por título y resumen, con el mismo motor del buscador),
+ * de cualquier sección. Como los «Véase también» de Wikipedia: enlazan las guías entre sí.
+ */
+export function guiasRelacionadas(secciones: readonly SeccionDocs[], guia: Guia) {
+  return buscarGuias(secciones, guia.titulo)
+    .filter((r) => r.guia.id !== guia.id)
+    .slice(0, RELACIONADAS);
+}
+
 function PaginaGuia({
+  secciones,
   seccion,
   guia,
   t,
   idioma,
 }: {
+  secciones: readonly SeccionDocs[];
   seccion: SeccionDocs;
   guia: Guia;
   t: (typeof TEXTOS_DOCS)['es'];
@@ -396,32 +435,22 @@ function PaginaGuia({
   const i = seccion.guias.indexOf(guia);
   const anterior = seccion.guias.at(i - 1 < 0 ? seccion.guias.length : i - 1);
   const siguiente = seccion.guias.at(i + 1 >= seccion.guias.length ? -seccion.guias.length : i + 1);
+  const relacionadas = useMemo(() => guiasRelacionadas(secciones, guia), [secciones, guia]);
+  // C-DOCS-AL-GRANO: título, resumen y los pasos numerados primero; después las capturas, y recién
+  // al final la explicación larga («Cómo funciona»), que antes enterraba los pasos.
   return (
     <article className="docs-guia">
-      <Enlace a="/docs" className="docs-volver">
-        {t.volver}
-      </Enlace>
-      <p className="docs-miga">
+      <nav className="docs-migas" aria-label={t.migas}>
+        <Enlace a="/docs" className="docs-volver">
+          {t.volver}
+        </Enlace>
+        <span aria-hidden="true">›</span>
         <Enlace a={`/docs/${seccion.id}`}>{seccion.titulo}</Enlace>
-      </p>
+      </nav>
       <h1>
         <IconoGuia id={guia.id} tamano={30} /> {guia.titulo}
       </h1>
       <p className="docs-resumen">{guia.resumen}</p>
-      {/* C-DOCS-AL-GRANO: primero el paso a paso; después las capturas y la explicación larga. */}
-      {guia.pasos.length > 0 && (
-        <>
-          <h2>{t.pasos}</h2>
-          <ol>
-            {guia.pasos.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ol>
-        </>
-      )}
-      {guia.capturas && guia.capturas.length > 0 && (
-        <CapturasConLupa capturas={guia.capturas} idioma={idioma} />
-      )}
       {guia.descargas && guia.descargas.length > 0 && (
         <ul className="docs-descargas">
           {guia.descargas.map((d) => (
@@ -433,9 +462,24 @@ function PaginaGuia({
           ))}
         </ul>
       )}
+      {guia.pasos.length > 0 && (
+        <>
+          <h2>{t.pasos}</h2>
+          <ol>
+            {guia.pasos.map((p, n) => (
+              <li key={p} id={`paso-${n + 1}`}>
+                {p}
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+      {guia.capturas && guia.capturas.length > 0 && (
+        <CapturasConLupa capturas={guia.capturas} idioma={idioma} />
+      )}
       {guia.explicacion && (
         <>
-          <h2>{t.comoFunciona}</h2>
+          <h2 className="docs-explicacion">{t.comoFunciona}</h2>
           {guia.explicacion.map((p) => (
             <p key={p}>{p}</p>
           ))}
@@ -448,6 +492,24 @@ function PaginaGuia({
           <ul>
             {guia.preguntas.map((x) => (
               <li key={x}>{x}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {relacionadas.length > 0 && (
+        <section className="docs-relacionadas" aria-labelledby="docs-relacionadas-titulo">
+          <h2 id="docs-relacionadas-titulo">{t.relacionadas}</h2>
+          <ul>
+            {relacionadas.map((r) => (
+              <li key={`${r.seccion.id}/${r.guia.id}`}>
+                <Enlace a={`/docs/${r.seccion.id}/${r.guia.id}`}>
+                  <IconoGuia id={r.guia.id} tamano={18} />
+                  <span>
+                    <strong>{r.guia.titulo}</strong>
+                    <small>{r.seccion.titulo}</small>
+                  </span>
+                </Enlace>
+              </li>
             ))}
           </ul>
         </section>

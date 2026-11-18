@@ -10703,6 +10703,9 @@ export const TEXTOS_DOCS = {
     siguiente: 'Siguiente',
     enEstaSeccion: 'En esta sección',
     menu: 'Secciones de Docs',
+    menuBoton: 'Menú de Docs',
+    migas: 'Dónde estás',
+    relacionadas: 'Guías relacionadas',
     comoHago: '¿Cómo hago…?',
     comoHagoInvita: '¿Tienes una pregunta? Mira «¿Cómo hago…?»',
     comoHagoResumen:
@@ -10725,6 +10728,9 @@ export const TEXTOS_DOCS = {
     siguiente: 'Next',
     enEstaSeccion: 'In this section',
     menu: 'Docs sections',
+    menuBoton: 'Docs menu',
+    migas: 'Breadcrumb',
+    relacionadas: 'Related guides',
     comoHago: 'How do I…?',
     comoHagoInvita: 'Have a question? See “How do I…?”',
     comoHagoResumen:
