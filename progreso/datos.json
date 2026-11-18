@@ -459,6 +459,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-18",
+      "titulo": "Docs al grano: cada guía abre directo en su contenido, también desde el enlace de Camila",
+      "texto": "En el celular, el menú de Docs va plegado en el botón «Menú de Docs» y la página abre en el título de la guía, con los pasos numerados primero y después las capturas. Antes había que bajar más de tres pantallas de menú para llegar a la guía. Además: migas («← Docs › sección»), «Guías relacionadas» al pie, y para los buscadores cada guía lleva su descripción propia, su paso a paso y las preguntas que responde. Las páginas públicas ya no cargan el código del panel ni el guion de cobros. Comprobado en vivo abriendo la guía de Moto desde el enlace de Camila."
+    },
+    {
+      "fecha": "2026-11-18",
       "titulo": "Versión nueva enviada a Google Play: inicio nuevo y Driver que se conecta deslizando",
       "texto": "Divoox (46) y Divoox Driver (42) enviadas a producción en Google Play, al 100 %, con fichas y capturas nuevas. Cliente: inicio nuevo, «¿A dónde vas?», lugares guardados, cupones. Driver: conectarse, desconectarse y terminar un viaje deslizando; la oferta suena en bucle con vibración; elegir el vehículo en uso; ganancias con entregas y carreras; «Mi equipo»; chat de soporte. En vivo en el servidor: reoferta del viaje al conductor que dejó vencer la oferta (tope de tres) con aviso al celular, direcciones sin códigos de mapa, servicios sin tarifa que no se ofrecen, conductor nuevo en su ciudad, y «Cambiar ciudad» en el panel del equipo. Las apps ahora se compilan en la computadora de la empresa, sin costo de nube."
     },
