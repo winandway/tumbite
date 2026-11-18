@@ -400,9 +400,12 @@ function OpcionesLugar({
   const t = textosLugares(idioma);
   const [menu, setMenu] = useState(false);
   const [confirmar, setConfirmar] = useState(false);
+  const [borrando, setBorrando] = useState(false);
+  const [fallo, setFallo] = useState(false);
   const salir = () => {
     setMenu(false);
     setConfirmar(false);
+    setFallo(false);
     cerrar();
   };
   return (
@@ -414,9 +417,25 @@ function OpcionesLugar({
               {t.confirmarBorrar(fila.nombre)}
             </Text>
             <Text style={{ color: COLOR.textoSuave }}>{t.confirmarTexto}</Text>
+            {fallo ? (
+              <Text accessibilityRole="alert" style={{ color: C.acento, fontWeight: '700' }}>
+                {t.noSeBorro}
+              </Text>
+            ) : null}
             <BotonGrande
               texto={t.borrar}
-              alTocar={() => void borrar().then(salir)}
+              cargando={borrando}
+              alTocar={() => {
+                setBorrando(true);
+                setFallo(false);
+                borrar()
+                  .then(salir)
+                  .catch((e: unknown) => {
+                    console.warn('lugares: no se pudo borrar', e);
+                    setFallo(true);
+                  })
+                  .finally(() => setBorrando(false));
+              }}
               testID="borrar-lugar-si"
             />
             <Boton texto={t.cancelar} alTocar={() => setConfirmar(false)} secundario />

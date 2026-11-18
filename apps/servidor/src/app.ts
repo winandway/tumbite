@@ -471,7 +471,8 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.banners = await saludBanners(c.env, c.env.DB).catch((e: unknown) => {
       console.error('salud: banners', e);
-      return 'error' as const;
+      // Los banners del inicio no tumban el sitio: si no se pudo leer, «atrasado» (sin 503).
+      return 'atrasado' as const;
     });
   const rutas = await saludRutas(c.env, c.env.DB).catch((e: unknown) => {
     console.error('salud: rutas', e);

@@ -13,13 +13,16 @@ todos los países por igual (Detroit, Cúcuta, Caracas, El Vigía): nada fijo de
    reciente. Se muestran como mucho cinco.
 3. **Populares cerca de ti**: según la ciudad donde está la persona en ese momento.
    - Con datos: los destinos más pedidos en esa ciudad, con nuestros propios datos agregados.
-     **Solo lugares pedidos por varias personas distintas** (mínimo cinco clientes distintos en los
-     últimos 90 días). Nunca la dirección de una persona: se guarda el lugar redondeado (el nombre del
-     sitio del buscador de mapas o la coordenada redondeada a unos 100 metros), nunca la casa de nadie.
+     **Solo lugares pedidos por varias personas distintas** (mínimo **diez** clientes distintos en los
+     últimos 90 días; subido de cinco el 18 nov por la revisión de calidad: con cinco en un mismo
+     edificio, la calle exacta ya era la dirección de personas). Nunca la dirección de una persona: se guarda el lugar redondeado (el nombre del
+     sitio del buscador de mapas o la coordenada redondeada a unos 100 metros) y la calle **sin el número
+     de ninguna casa**, nunca la casa de nadie.
    - Ciudad nueva sin datos (por ejemplo, Tucaní): lugares conocidos cercanos del buscador de mapas, por
      tipo: terminal de pasajeros, hospital, plaza, centro comercial, universidad.
    - La lista de populares se calcula una vez al día por ciudad y se guarda; no se calcula por cada
-     visita (regla de la nube: mirar no escribe).
+     visita (regla de la nube: mirar no escribe). Si no hay nada (ni datos ni buscador de mapas), ese
+     «nada» también se guarda una hora.
 
 ## 2. Casilla con texto: «Resultados»
 

@@ -110,19 +110,19 @@ describe('Recientes y Populares de «¿A dónde vas?»', () => {
     expect((await m.llamar('GET', '/datos/lugares/recientes')).estado).toBe(401);
   });
 
-  it('populares: solo lugares pedidos por cinco clientes distintos o más, redondeados, nunca una casa', async () => {
+  it('populares: solo lugares pedidos por diez clientes distintos o más, redondeados, nunca una casa', async () => {
     const m = mundo();
     const hace = new Date(Date.now() - 5 * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);
     const clientes = [];
-    for (let i = 0; i < 6; i++) clientes.push(await m.cuenta('cliente', `Cliente ${i}`));
-    // La terminal: seis personas distintas (cada una con el pin un poco movido).
+    for (let i = 0; i < 10; i++) clientes.push(await m.cuenta('cliente', `Cliente ${i}`));
+    // La terminal: diez personas distintas (cada una con el pin un poco movido).
     for (const [i, c] of clientes.entries())
       await viaje(
         m,
         c.id,
         `t${i}`,
         {
-          lat: 25.7801 + i * 0.00005,
+          lat: 25.7801 + i * 0.00002,
           lng: -80.2101,
           direccion: 'Terminal de pasajeros, Av. Bolívar',
         },
@@ -159,6 +159,52 @@ describe('Recientes y Populares de «¿A dónde vas?»', () => {
     expect(await filas()).toBe(1);
     await m.llamar('GET', `/datos/lugares/populares?lat=${MIAMI.lat}&lng=${MIAMI.lng}`);
     expect(await filas()).toBe(1);
+  });
+
+  // Revisión de calidad del 18 nov: con pocos clientes en una celda de 100 m (un edificio), la calle
+  // exacta de un viaje es la dirección de personas. Mínimo diez clientes y nunca el número de la casa.
+  it('populares: con nueve clientes no sale; con diez, la calle sale sin el número de la casa', async () => {
+    const m = mundo();
+    const hace = new Date(Date.now() - 5 * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);
+    const clientes = [];
+    for (let i = 0; i < 10; i++) clientes.push(await m.cuenta('cliente', `Vecino ${i}`));
+    for (const [i, c] of clientes.slice(0, 9).entries())
+      await viaje(
+        m,
+        c.id,
+        `e${i}`,
+        { lat: 25.7811, lng: -80.2111, direccion: '43381 Grand River Ave, Novi, MI' },
+        hace,
+      );
+    const nueve = await m.llamar(
+      'GET',
+      `/datos/lugares/populares?lat=${MIAMI.lat}&lng=${MIAMI.lng}`,
+    );
+    expect(nueve.datos.lugares).toEqual([]);
+    await m.DB.prepare("DELETE FROM config WHERE clave LIKE 'populares:%'").run();
+    await viaje(
+      m,
+      clientes[9]!.id,
+      'e9',
+      { lat: 25.7811, lng: -80.2111, direccion: '43381 Grand River Ave, Novi, MI' },
+      hace,
+    );
+    const diez = await m.llamar(
+      'GET',
+      `/datos/lugares/populares?lat=${MIAMI.lat}&lng=${MIAMI.lng}`,
+    );
+    expect(diez.datos.lugares).toHaveLength(1);
+    expect(diez.datos.lugares[0].titulo).toBe('Grand River Ave');
+    expect(JSON.stringify(diez.datos)).not.toContain('43381');
+  });
+
+  it('sin datos ni buscador, «ninguno» también se guarda una hora (no repite la consulta en cada apertura)', async () => {
+    const m = mundo();
+    await m.llamar('GET', `/datos/lugares/populares?lat=${MIAMI.lat}&lng=${MIAMI.lng}`);
+    const fila = await m.DB.prepare(
+      "SELECT valor FROM config WHERE clave LIKE 'populares:%'",
+    ).first<{ valor: string }>();
+    expect(fila && JSON.parse(fila.valor).origen).toBe('ninguno');
   });
 
   it('ciudad sin datos y sin buscador de mapas: lista vacía, sin error', async () => {

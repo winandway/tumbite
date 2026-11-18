@@ -52,7 +52,12 @@ export function BuscarDestino({
   const { api, idioma } = useSesion();
   const t = textosLugares(idioma);
   const [texto, setTexto] = useState('');
-  const sug = useSugerenciasDireccion({ pedir: api.pedir.bind(api), cerca, minimo: 2 });
+  const sug = useSugerenciasDireccion({
+    pedir: api.pedir.bind(api),
+    cerca,
+    minimo: 2,
+    tope: true,
+  });
   const [recientes, setRecientes] = useState<DestinoReciente[]>([]);
   const [populares, setPopulares] = useState<{ origen: string; lugares: Popular[] }>({
     origen: 'ninguno',

@@ -68,6 +68,8 @@ export function useSugerenciasDireccion(op: {
   cerca?: { lat: number; lng: number } | null;
   /** Desde cuántas letras se busca (3 por defecto; «¿A dónde vas?» desde la segunda). */
   minimo?: number;
+  /** Con tope diario de búsquedas (solo «¿A dónde vas?»; las demás casillas no lo usan). */
+  tope?: boolean;
 }) {
   const [sugerencias, setSugerencias] = useState<SugerenciaDireccion[]>([]);
   const [agotado, setAgotado] = useState(false);
@@ -97,12 +99,14 @@ export function useSugerenciasDireccion(op: {
     }
     setBuscando(true);
     reloj.current = setTimeout(() => {
-      if (!quedanBusquedas()) {
+      if (opRef.current.tope && !quedanBusquedas()) {
         setAgotado(true);
         setSugerencias([]);
         setBuscando(false);
         return;
       }
+      // Día nuevo (o casilla sin tope): se puede volver a buscar.
+      setAgotado(false);
       const { pedir, pais, cerca } = opRef.current;
       pedir<{ sugerencias: SugerenciaDireccion[] }>(
         'GET',
