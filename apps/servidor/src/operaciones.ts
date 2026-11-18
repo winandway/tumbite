@@ -8,6 +8,7 @@ import {
   type TamanoPaquete,
   acercaAlDestino,
   distanciaKm,
+  formatearMonto,
   vehiculoLlevaPaquete,
 } from '@tumbite/compartido';
 import { destinosActivos } from './modoDestino';
@@ -35,6 +36,21 @@ export type ResultadoAceptar =
 
 /** Segundos que dura una oferta de operación antes de pasar al siguiente conductor. */
 export const SEGUNDOS_OFERTA_OPERACION = 30;
+/**
+ * C-REOFERTA-VENCIDA (18 nov 2026, todos los países): quien dejó VENCER la oferta de un viaje (no la
+ * vio: app en segundo plano, sin señal) vuelve a recibirla pasado este respiro, después de los que
+ * todavía no la vieron. Quien la RECHAZÓ no la recibe otra vez. Antes, una oferta perdida dejaba al
+ * pasajero «buscando» hasta el cierre sin conductor si no había otro conductor en la ciudad.
+ */
+export const SEGUNDOS_RESPIRO_REOFERTA = 30;
+/**
+ * SQL: «este conductor puede recibir (otra vez) la oferta de esta operación». Una «ofrecida» ya
+ * vencida cuenta como vencida: sin reloj, nadie la marcó todavía.
+ */
+export function puedeRecibirOferta(op: string, conductor: string): string {
+  return `NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ${op} AND v.conductor_id = ${conductor}
+     AND NOT (v.estado IN ('vencida', 'ofrecida') AND v.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')))`;
+}
 /** El servicio del catálogo en la capa financiera (C-FIN-POLITICAS). */
 const SERVICIO_FINANCIERO = new Map<string, 'ride' | 'car'>([
   ['moto', 'ride'],
@@ -186,6 +202,8 @@ type Candidato = {
   /** Última ubicación guardada (para el modo destino). */
   lat: number;
   lng: number;
+  /** C-REOFERTA-VENCIDA: ya tuvo (y dejó vencer) esta oferta; va después de los que no la vieron. */
+  visto?: boolean;
 };
 
 /**
@@ -203,13 +221,16 @@ export async function candidatosParaOperacion(
 ): Promise<{ candidatos: Candidato[]; fuente: 'tiempo_real' | 'base' }> {
   const { results } = await db
     .prepare(
-      `SELECT e.conductor_id, e.vehiculo_id, e.lat, e.lng, e.puntos FROM conductores_elegibles e
+      `SELECT e.conductor_id, e.vehiculo_id, e.lat, e.lng, e.puntos,
+              EXISTS (SELECT 1 FROM ofertas_operacion w WHERE w.operacion_id = ? AND w.conductor_id = e.conductor_id) AS visto
+         FROM conductores_elegibles e
         WHERE e.servicio_id = ? AND e.zona_id = ? AND e.lat IS NOT NULL
           AND e.ubicacion_en > datetime('now', ?)
           AND NOT EXISTS (SELECT 1 FROM conductor_ocupacion c WHERE c.conductor_id = e.conductor_id)
           AND NOT EXISTS (SELECT 1 FROM ofertas_operacion o WHERE o.conductor_id = e.conductor_id AND o.estado = 'ofrecida')
           AND NOT EXISTS (SELECT 1 FROM ofertas f WHERE f.repartidor_id = e.conductor_id AND f.estado = 'ofrecida')
-          AND NOT EXISTS (SELECT 1 FROM ofertas_operacion v WHERE v.operacion_id = ? AND v.conductor_id = e.conductor_id)
+          -- C-REOFERTA-VENCIDA: fuera quien la rechazó o la tiene; vuelve quien la dejó vencer.
+          AND ${puedeRecibirOferta('?', 'e.conductor_id')}
           -- C-CARRO-XL: un viaje XL solo va a un carro de 6 plazas o más.
           AND (COALESCE((SELECT x.categoria FROM viajes x WHERE x.operacion_id = ?), 'estandar') <> 'xl'
                OR (SELECT h.plazas FROM vehiculos h WHERE h.id = e.vehiculo_id) >= ?)
@@ -224,6 +245,7 @@ export async function candidatosParaOperacion(
                          AND h.acepta_menores = 1))))`,
     )
     .bind(
+      op.id,
       op.servicioId,
       op.zonaId,
       `-${MINUTOS_UBICACION_VIGENTE} minutes`,
@@ -232,7 +254,14 @@ export async function candidatosParaOperacion(
       PLAZAS_XL,
       op.id,
     )
-    .all<{ conductor_id: string; vehiculo_id: string; lat: number; lng: number; puntos: number }>();
+    .all<{
+      conductor_id: string;
+      vehiculo_id: string;
+      lat: number;
+      lng: number;
+      puntos: number;
+      visto: number;
+    }>();
   const porId = new Map(results.map((r) => [r.conductor_id, r]));
   if (!porId.size) return { candidatos: [], fuente: 'base' };
 
@@ -249,8 +278,11 @@ export async function candidatosParaOperacion(
           puntos: f.puntos,
           lat: Number(f.lat),
           lng: Number(f.lng),
+          visto: f.visto === 1,
         };
-      });
+      })
+      // C-REOFERTA-VENCIDA: primero quien no la vio (el orden por cercanía se mantiene dentro).
+      .sort((a, b) => Number(a.visto) - Number(b.visto));
     // El tiempo real solo ve a quien tiene la app abierta; si no ve a nadie elegible, respaldo.
     if (lista.length) return { candidatos: lista, fuente: 'tiempo_real' };
   }
@@ -262,9 +294,10 @@ export async function candidatosParaOperacion(
       puntos: r.puntos,
       lat: Number(r.lat),
       lng: Number(r.lng),
+      visto: r.visto === 1,
     }))
     .filter((c) => c.km <= KM_MAXIMO_OFERTA)
-    .sort((a, b) => a.km - b.km || b.puntos - a.puntos);
+    .sort((a, b) => Number(a.visto) - Number(b.visto) || a.km - b.km || b.puntos - a.puntos);
   return { candidatos: lista, fuente: 'base' };
 }
 
@@ -504,6 +537,30 @@ export async function turnoDeConfianza(
     })).catch((x: unknown) => console.error('confianza: aviso al conductor', x));
   }
   return 'ofrecida';
+}
+
+/** C-OFERTA-AVISO: el aviso al celular de una oferta de viaje o envío, en el idioma del conductor. */
+export function avisoOfertaOperacion(
+  idioma: string,
+  servicio: string,
+  ganancia: number,
+  moneda: string,
+  km: number,
+) {
+  const en = idioma === 'en';
+  const pago = formatearMonto(Math.round(ganancia), moneda, en ? 'en' : 'es');
+  const distancia = Number.isFinite(km) ? km.toFixed(1) : null;
+  const envio = servicio === 'envios';
+  return {
+    titulo: en
+      ? `${envio ? 'New delivery' : 'New ride'}: ${pago}`
+      : `${envio ? 'Envío nuevo' : 'Viaje nuevo'}: ${pago}`,
+    cuerpo: en
+      ? `${distancia ? `${distancia} km from you. ` : ''}You have ${SEGUNDOS_OFERTA_OPERACION} seconds to accept it in the app.`
+      : `${distancia ? `A ${distancia} km de ti. ` : ''}Tienes ${SEGUNDOS_OFERTA_OPERACION} segundos para aceptarlo en la app.`,
+    sonido: 'oferta.wav',
+    datos: { tipo: 'oferta_operacion' },
+  };
 }
 
 export async function repartirOperaciones(
@@ -750,7 +807,13 @@ export async function repartirOperaciones(
           WHERE NOT EXISTS (SELECT 1 FROM conductor_ocupacion WHERE conductor_id = ?2)
             AND NOT EXISTS (SELECT 1 FROM ofertas_operacion WHERE conductor_id = ?2 AND estado = 'ofrecida')
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1 AND estado_general = 'buscando')
-         ON CONFLICT(operacion_id, conductor_id) DO NOTHING`,
+         -- C-REOFERTA-VENCIDA: la oferta que dejó vencer vuelve como NUEVA (cuenta atrás desde ahora).
+         ON CONFLICT(operacion_id, conductor_id) DO UPDATE SET
+           estado = 'ofrecida', vehiculo_id = excluded.vehiculo_id, expira_en = excluded.expira_en,
+           ganancia_centavos = excluded.ganancia_centavos, km = excluded.km,
+           creada_en = datetime('now'), respondida_en = NULL
+         WHERE ofertas_operacion.estado = 'vencida'
+           AND ofertas_operacion.expira_en <= datetime('now', '-${SEGUNDOS_RESPIRO_REOFERTA} seconds')`,
       )
       .bind(
         op.id,
@@ -778,6 +841,19 @@ export async function repartirOperaciones(
         ],
         hacer,
       );
+    // C-OFERTA-AVISO (18 nov 2026, todos los países): la oferta también llega al celular, como la
+    // de comida (y como DoorDash y Uber): con la app en segundo plano el sondeo no corre y el tiempo
+    // real puede no estar. Sin esto el conductor no se enteraba y la oferta vencía en silencio.
+    if (env)
+      await notificar(env, db, elegido.conductorId, (i) =>
+        avisoOfertaOperacion(
+          i,
+          op.servicio_id,
+          Math.max(0, ganancia),
+          op.moneda ?? 'USD',
+          elegido.km,
+        ),
+      ).catch((x: unknown) => console.error('operaciones: aviso de la oferta', x));
   }
   return { ofrecidas, liberados };
 }

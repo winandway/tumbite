@@ -547,7 +547,7 @@ describe('M3 (C-OFERTA-COMPLETA): la oferta del conductor y el despacho sin espe
     )
       .bind(id, a.id)
       .run();
-    expect((await ofertas(e, b.token)).datos.ofertas).toHaveLength(0);
+    // C-REOFERTA-VENCIDA: desde el 18 nov también la mueve el sondeo del propio conductor.
     await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
     expect((await ofertas(e, b.token)).datos.ofertas).toHaveLength(1);
   });
