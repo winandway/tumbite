@@ -16,6 +16,13 @@ const DESTINO = join(RAIZ, 'capturas-tiendas-con-titulo');
 // Frase de cada pantalla, por el prefijo del archivo. [inglés, español]; *palabra* va en rojo.
 const FRASES = {
   'Divoox (cliente)': {
+    // 18 nov 2026: el inicio nuevo y los viajes (C-INICIO-NUEVO).
+    '00-': ['Food, rides and delivery in *one app*', 'Comida, viajes y envíos en *una sola app*'],
+    '00b-': ['Your moto ride in *3 taps*', 'Tu moto en *3 toques*'],
+    '00c-': ['Your usual places, *first*', 'Tus lugares de siempre, *primero*'],
+    '00d-': ['A driver nearby, *in seconds*', 'Un conductor cerca, *en segundos*'],
+    '00e-': ['Follow your ride *live*', 'Sigue tu viaje *en vivo*'],
+    '00f-': ['Home, work and *your places*', 'Casa, trabajo y *tus lugares*'],
     '01-': ['Your favorite *local* restaurants', 'Tus restaurantes *favoritos*, cerca'],
     '02-': ['Order in a *few taps*', 'Pide en *pocos toques*'],
     '03-': ['See the *full price* before you pay', 'Ves el *precio completo* antes de pagar'],
@@ -28,6 +35,10 @@ const FRASES = {
     '04-': ['Directions in *one tap*', 'Cómo llegar, con *un toque*'],
     '06-': ['Keep *100%* of your tips', 'El *100 %* de la propina es tuyo'],
     '07-': ['Cash out to your *bank*', 'Retira a tu *banco*'],
+    // 18 nov 2026: saldo, equipo y soporte.
+    '08-': ['Your balance and *gifts*', 'Tu saldo y tus *regalos*'],
+    '09-': ['Grow *your team*', 'Haz crecer *tu equipo*'],
+    '10-': ['Support, *right in the app*', 'Soporte, *dentro de la app*'],
   },
   'Divoox Restaurants (restaurante)': {
     '01-': ['Never miss an *order*', 'No se te pasa ningún *pedido*'],
