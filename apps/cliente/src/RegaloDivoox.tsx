@@ -28,6 +28,7 @@ export const TEXTOS_REGALO = {
     agregar: 'Agregar',
     agregado: 'Listo: tu regalo quedó en tu cuenta y se aplica solo cuando cumple.',
     ocultar: 'Ahora no',
+    devuelto: 'El viaje no se hizo: tu regalo volvió a tu cuenta para tu próximo viaje.',
   },
   en: {
     regalo: 'Divoox gift',
@@ -39,6 +40,7 @@ export const TEXTOS_REGALO = {
     agregar: 'Add',
     agregado: 'Done: your gift is saved to your account and applies on its own when it qualifies.',
     ocultar: 'Not now',
+    devuelto: 'The ride didn’t happen: your gift went back to your account for your next ride.',
   },
 } satisfies Record<Idioma, Record<string, string>>;
 

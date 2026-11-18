@@ -129,7 +129,7 @@ export function ElegirDireccion({
 
   async function estoyAqui() {
     setBuscandome(true);
-    const p = await miUbicacion().catch(() => null);
+    const p = await miUbicacion({ aMano: true }).catch(() => null);
     setBuscandome(false);
     // Sin permiso o sin señal, el mapa abre igual (en la zona) y lo dice en palabras.
     setPaso({ tipo: 'punto', inicial: { punto: p, direccion: '' } });

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
+import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   type CategoriaViaje,
@@ -11,6 +12,7 @@ import {
   TAMANOS_PAQUETE,
   type TamanoPaquete,
   type Idioma,
+  direccionDelSitio,
   enIdioma,
   formatearMonto,
   pagaEnMano,
@@ -174,6 +176,43 @@ export function PedirMoto({
     () => (v.destinoLat ? { lat: Number(v.destinoLat), lng: Number(v.destinoLng) } : null),
     [v.destinoLat, v.destinoLng],
   );
+  // C-AVISO-BORRADOR-JUSTO (18 nov 2026): el aviso «Recuperamos lo que estabas escribiendo» mira
+  // si AL ABRIR había un destino guardado; un destino elegido ahora no lo hace aparecer.
+  const [destinoRecuperado, setDestinoRecuperado] = useState<boolean | null>(null);
+  const [recuperadoAntes, setRecuperadoAntes] = useState(b.recuperado);
+  if (b.recuperado !== recuperadoAntes) {
+    // Se ajusta al cambiar «recuperado» (al abrir o al empezar de nuevo), no con cada letra.
+    setRecuperadoAntes(b.recuperado);
+    setDestinoRecuperado(b.recuperado ? v.destino.trim().length > 0 : null);
+  }
+
+  // C-RECOGIDA-REAL (18 nov 2026): la recogida con el GPS no tiene texto; se lee su calle para que el
+  // viaje la lleve (el conductor, «Buscando tu moto» y «Mis viajes» ven la calle, no «Punto de
+  // recogida»). Mientras se lee, no se cotiza; si no se puede leer, viaja «Tu ubicación actual».
+  const claveRecogida = recogida && !v.recogida.trim() ? `${recogida.lat},${recogida.lng}` : '';
+  const [calleActual, setCalleActual] = useState<{ clave: string; calle: string } | null>(null);
+  useEffect(() => {
+    if (!claveRecogida || !recogida) return;
+    let vigente = true;
+    Location.reverseGeocodeAsync({ latitude: recogida.lat, longitude: recogida.lng })
+      .then(([sitio]) => {
+        if (vigente) setCalleActual({ clave: claveRecogida, calle: direccionDelSitio(sitio) });
+      })
+      .catch((e: unknown) => {
+        console.warn('pedir viaje: no se pudo leer la calle de la recogida', e);
+        if (vigente) setCalleActual({ clave: claveRecogida, calle: '' });
+      });
+    return () => {
+      vigente = false;
+    };
+    // Solo cuando cambia el punto de la recogida.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claveRecogida]);
+  const calleRecogida = calleActual && calleActual.clave === claveRecogida ? calleActual.calle : '';
+  const leyendoCalle = Boolean(claveRecogida) && calleActual?.clave !== claveRecogida;
+  const textoRecogida =
+    v.recogida.trim() || calleRecogida || textosPedirNuevo(idioma, servicio).ubicacionActual;
+
   // C-FIJAR-EN-MAPA: la casilla ya tiene su punto en el mapa y su dirección.
   const recogidaFijada = recogida != null && v.recogida.trim().length > 0;
   const destinoFijado = destino != null && v.destino.trim().length > 0;
@@ -195,7 +234,7 @@ export function PedirMoto({
             categoria: servicio === 'carro' ? (otraCategoria ?? categoria) : 'estandar',
             origen: {
               ...recogida,
-              direccion: v.recogida.trim() || t.recogida,
+              direccion: textoRecogida,
               referencia: v.recogidaRef,
             },
             ...(intermedias.length ? { paradas: intermedias } : {}),
@@ -220,7 +259,7 @@ export function PedirMoto({
       api,
       recogida,
       destino,
-      v.recogida,
+      textoRecogida,
       v.recogidaRef,
       v.destino,
       v.destinoApto,
@@ -339,11 +378,11 @@ export function PedirMoto({
   const intentado = useRef('');
   const claveRuta = `${v.recogidaLat},${v.recogidaLng}>${v.destinoLat},${v.destinoLng}|${v.paradas}|${categoria}`;
   useEffect(() => {
-    if (!recogida || !destino || cotizacion || trabajando || cobro) return;
+    if (!recogida || !destino || cotizacion || trabajando || cobro || leyendoCalle) return;
     if (intentado.current === claveRuta) return;
     intentado.current = claveRuta;
     void cotizar();
-  }, [recogida, destino, cotizacion, trabajando, cobro, cotizar, claveRuta]);
+  }, [recogida, destino, cotizacion, trabajando, cobro, cotizar, claveRuta, leyendoCalle]);
   const imagenServicio =
     servicio === 'envios'
       ? (IMG_NUEVO.servicios.envios ?? 0)
@@ -387,7 +426,7 @@ export function PedirMoto({
         <AvisoBorrador
           // Solo si lo recuperado es algo que la persona escribió (un destino); la recogida sola es
           // la ubicación de siempre y no se avisa.
-          visible={b.recuperado && !rellenado && v.destino.trim().length > 0}
+          visible={b.recuperado && !rellenado && destinoRecuperado === true}
           idioma={idioma}
           empezar={() => {
             // «Empezar de nuevo»: sin el aviso viejo y con la recogida otra vez en la ubicación de ahora.
@@ -488,19 +527,23 @@ export function PedirMoto({
               accessibilityRole="button"
               testID="moto-recogida"
             >
+              {/* C-RECOGIDA-REAL: «Tu ubicación actual» con la calle debajo, como en el borrador. */}
               <Text style={{ fontSize: 13, color: COLOR.textoSuave, fontWeight: '600' }}>
-                {tn.recogerEn}
+                {!v.recogida.trim() && calleRecogida ? tn.ubicacionActual : tn.recogerEn}
               </Text>
               <Text
                 numberOfLines={1}
+                testID={!v.recogida.trim() && calleRecogida ? 'moto-recogida-calle' : undefined}
                 style={{ fontSize: 16, fontWeight: '700', color: C.secundario }}
               >
-                {v.recogida.trim() || (recogida ? tn.ubicacionActual : tn.eligeRecogida)}
+                {v.recogida.trim() ||
+                  calleRecogida ||
+                  (recogida ? tn.ubicacionActual : tn.eligeRecogida)}
               </Text>
             </Pressable>
             <Pressable
               onPress={() =>
-                void miUbicacion().then((p) => {
+                void miUbicacion({ aMano: true }).then((p) => {
                   if (p) ponerPunto('recogida', p, '');
                 })
               }

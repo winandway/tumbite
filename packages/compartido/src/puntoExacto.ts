@@ -41,6 +41,14 @@ const PLUS_CODE = /^[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,3}\b/i
 
 export const esPlusCode = (x: string | null | undefined) => PLUS_CODE.test((x ?? '').trim());
 
+/** C-SIN-PLUS-CODE: una dirección para mostrar, sin sus partes que son plus codes. */
+export const sinPlusCode = (x: string) =>
+  x
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p && !esPlusCode(p))
+    .join(', ');
+
 /**
  * La dirección legible de un punto: calle y número, sector, ciudad y estado. Nunca un plus code
  * (en El Vigía el teléfono devolvía «CQPG+7F2» como nombre del sitio). Sin calle conocida queda la
@@ -102,6 +110,8 @@ const T = {
     sinPermiso:
       'No tenemos permiso para saber dónde estás. Mueve el mapa con el dedo hasta tu puerta, o actívalo en los ajustes del teléfono.',
     sinSenal: 'No pudimos saber dónde estás. Mueve el mapa con el dedo hasta tu puerta.',
+    sinMapa: 'No pudimos ubicarte en el mapa. Vuelve y escribe la dirección: el mapa abrirá ahí.',
+    escribir: 'Escribir la dirección',
     referencia: 'Punto de referencia (opcional)',
     referenciaEjemplo: 'Frente a la panadería, portón negro',
     apto: 'Casa o apartamento (opcional)',
@@ -144,6 +154,9 @@ const T = {
     sinPermiso:
       'We don’t have permission to know where you are. Drag the map to your door, or turn it on in your phone’s settings.',
     sinSenal: 'We couldn’t tell where you are. Drag the map to your door.',
+    sinMapa:
+      'We couldn’t place you on the map. Go back and type the address, and the map will open there.',
+    escribir: 'Type the address',
     referencia: 'Landmark (optional)',
     referenciaEjemplo: 'Across from the bakery, black gate',
     apto: 'House or apartment (optional)',

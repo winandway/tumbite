@@ -34,6 +34,7 @@ import {
 } from './mismaRuta';
 import { TEXTOS_MIS_VIAJES } from './textos';
 import { TEXTOS_FIJOS } from './textosFijos';
+import { PrecioCompacto, PrecioDelViaje, type RegaloDelViaje } from './PrecioDelViaje';
 
 /**
  * C-VIAJES-HISTORIAL (13 nov 2026) — todos los países. «Mis viajes» del pasajero, como Uber: la lista
@@ -57,6 +58,8 @@ type Recibo = {
   fecha: string;
   total: number | null;
   moneda: string | null;
+  /** C-PRECIO-CON-REGALO: lo que pagó Divoox (o el regalo que volvió a la cuenta si no hubo viaje). */
+  regalo?: RegaloDelViaje | null;
   desglose: Record<string, number>;
   propina: number;
   distanciaM: number | null;
@@ -172,14 +175,14 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
                 <Text style={{ color: C.secundario }}>{monto(r.propina)}</Text>
               </View>
             ) : null}
-            {r.total != null ? (
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontWeight: '700', color: C.secundario }}>{t.total}</Text>
-                <Text style={{ fontWeight: '700', color: C.secundario }}>
-                  {monto(r.total + r.propina)}
-                </Text>
-              </View>
-            ) : null}
+            {/* C-PRECIO-CON-REGALO: el total tachado, el regalo y lo que se pagó de verdad. */}
+            <PrecioDelViaje
+              etiqueta={t.total}
+              total={r.total == null ? null : r.total + r.propina}
+              regalo={r.regalo}
+              moneda={r.moneda ?? 'USD'}
+              idioma={idioma}
+            />
           </View>
           <Text style={{ color: '#666B73', marginTop: 8 }}>
             {t.pago}: {de(t.pagos, r.metodoPago)}
@@ -339,11 +342,13 @@ export function TarjetaViaje({
           <Text style={[LETRA.tarjeta, { flex: 1, color: col.texto }]} numberOfLines={2}>
             {v.origen} → {v.destino}
           </Text>
-          {v.total != null ? (
-            <Text style={[LETRA.cifra, { fontSize: 16, lineHeight: 20, color: col.texto }]}>
-              {formatearMonto(v.total, v.moneda ?? 'USD', idioma)}
-            </Text>
-          ) : null}
+          <PrecioCompacto
+            total={v.total}
+            regalo={v.regalo}
+            moneda={v.moneda ?? 'USD'}
+            idioma={idioma}
+            estilo={[LETRA.cifra, { fontSize: 16, lineHeight: 20, color: col.texto }]}
+          />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
           <Text style={[LETRA.secundario, { color: col.textoSuave }]}>

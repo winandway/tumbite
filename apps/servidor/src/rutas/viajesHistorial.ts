@@ -2,6 +2,12 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { notificar } from '../notificaciones';
+import {
+  COLUMNAS_REGALO_PASAJERO,
+  type FilaRegaloPasajero,
+  JOIN_REGALO_PASAJERO,
+  regaloPasajero,
+} from '../regalosDivoox';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { crearTicket } from './tickets';
@@ -91,16 +97,17 @@ function pagina<F extends FilaLista>(filas: F[]) {
  * viaje (recogida, paradas en orden y destino) para dibujar el mapita de la ruta y pedir la misma ruta
  * otra vez. Solo lectura: dos consultas por página (la lista y sus paradas), nada se escribe.
  */
-type FilaListaPasajero = FilaLista & {
-  origenLat: number | null;
-  origenLng: number | null;
-  destinoLat: number | null;
-  destinoLng: number | null;
-  conductorNombre: string | null;
-  deConfianza: number;
-  rutinaId: string | null;
-  menor: string | null;
-};
+type FilaListaPasajero = FilaLista &
+  FilaRegaloPasajero & {
+    origenLat: number | null;
+    origenLng: number | null;
+    destinoLat: number | null;
+    destinoLng: number | null;
+    conductorNombre: string | null;
+    deConfianza: number;
+    rutinaId: string | null;
+    menor: string | null;
+  };
 
 viajesHistorial.get('/viajes/historial', async (c) => {
   const u = exigir(c, 'cliente');
@@ -114,9 +121,12 @@ viajesHistorial.get('/viajes/historial', async (c) => {
               (SELECT nombre FROM usuarios cu WHERE cu.id = o.conductor_id AND v.estado = 'terminado') AS conductorNombre,
               EXISTS (SELECT 1 FROM conductores_confianza k WHERE k.cliente_id = o.cliente_id
                         AND k.conductor_id = o.conductor_id) AS deConfianza,
-              v.rutina_id AS rutinaId, v.menor_nombre AS menor
+              v.rutina_id AS rutinaId, v.menor_nombre AS menor,
+              -- C-PRECIO-CON-REGALO: el regalo del viaje, para mostrar el precio como en la tarjeta.
+              ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         ${JOIN_REGALO_PASAJERO}
         WHERE o.cliente_id = ?1 AND o.tipo_operacion = 'viaje_pasajero' AND (?2 IS NULL OR o.creado_en < ?2)
         ORDER BY o.creado_en DESC LIMIT ?3`,
     )
@@ -142,8 +152,28 @@ viajesHistorial.get('/viajes/historial', async (c) => {
   return c.json({
     ...p,
     viajes: p.viajes.map(
-      ({ origenLat, origenLng, destinoLat, destinoLng, conductorNombre, deConfianza, ...v }) => ({
+      ({
+        origenLat,
+        origenLng,
+        destinoLat,
+        destinoLng,
+        conductorNombre,
+        deConfianza,
+        regalo_monto,
+        regalo_codigo,
+        regalo_estado,
+        regalo_nombre_es,
+        regalo_nombre_en,
+        ...v
+      }) => ({
         ...v,
+        regalo: regaloPasajero({
+          regalo_monto,
+          regalo_codigo,
+          regalo_estado,
+          regalo_nombre_es,
+          regalo_nombre_en,
+        }),
         // Solo el nombre de pila del conductor de un viaje terminado: es lo que se marca de confianza.
         conductor: conductorNombre ? (conductorNombre.split(' ')[0] ?? '') : null,
         deConfianza: deConfianza === 1,
@@ -188,7 +218,7 @@ viajesHistorial.get('/conductor/viajes/historial', async (c) => {
   return c.json({ ...pagina(results), objetosOlvidados: perdidos });
 });
 
-type FilaRecibo = {
+type FilaRecibo = FilaRegaloPasajero & {
   id: string;
   servicio: string;
   categoria: string | null;
@@ -222,9 +252,11 @@ async function filaRecibo(db: D1Database, id: string, quien: 'cliente' | 'conduc
               v.destino_direccion AS destino, o.creado_en, v.iniciado_en, v.terminado_en,
               CAST((julianday(v.terminado_en) - julianday(v.iniciado_en)) * 86400 AS INTEGER) AS segundos,
               q.total, q.moneda, q.distancia_m, q.duracion_s, q.desglose_json, cv.propina,
-              u.nombre AS conductor, h.marca, h.modelo, h.color, h.placa, h.plazas, h.tipo AS vehiculo_tipo
+              u.nombre AS conductor, h.marca, h.modelo, h.color, h.placa, h.plazas, h.tipo AS vehiculo_tipo,
+              ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         ${JOIN_REGALO_PASAJERO}
          LEFT JOIN cobros_viaje cv ON cv.operacion_id = o.id
          LEFT JOIN usuarios u ON u.id = o.conductor_id
          LEFT JOIN vehiculos h ON h.id = o.vehiculo_id
@@ -258,6 +290,8 @@ function recibo(f: FilaRecibo) {
     fecha: f.creado_en,
     total: f.total,
     moneda: f.moneda,
+    // C-PRECIO-CON-REGALO: lo que pagó Divoox (el recibo dice lo que se pagó de verdad).
+    regalo: regaloPasajero(f),
     desglose: desgloseDe(f.desglose_json),
     propina: f.propina ?? 0,
     distanciaM: f.distancia_m,

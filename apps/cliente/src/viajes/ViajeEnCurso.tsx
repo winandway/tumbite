@@ -1,4 +1,3 @@
-import { LineaRegalo } from '../RegaloDivoox';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Animated, Easing, Image, Linking, Platform, Pressable, Share, View } from 'react-native';
 import {
@@ -9,7 +8,6 @@ import {
   textoHoraLlegada,
   enIdioma,
   formatearMonto,
-  pagaEnMano,
   textoReferencia,
 } from '@tumbite/compartido';
 import {
@@ -33,6 +31,7 @@ import { type ParadaDelViaje, ParadasDelViaje } from './Paradas';
 import { BuscandoConductor, useReducirMovimiento } from './BuscandoConductor';
 import { TIEMPOS, vehiculoDeEspera } from './escenaBuscando';
 import { TEXTOS_ESPERA } from './textosEspera';
+import { PrecioCompacto, PrecioDelViaje, type RegaloDelViaje } from './PrecioDelViaje';
 
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
 export type ViajePasajero = {
@@ -48,7 +47,7 @@ export type ViajePasajero = {
   total: number | null;
   moneda: string | null;
   /** C-CUPON-DIVOOX: lo que paga Divoox con el regalo (el pasajero paga en mano el resto). */
-  regalo?: { codigo: string; monto: number } | null;
+  regalo?: RegaloDelViaje | null;
   conductor: {
     nombre: string;
     ubicacion: { lat: number; lng: number } | null;
@@ -343,7 +342,7 @@ export function ViajeEnCurso({
 
   /** Emergencia: primero la llamada (aunque falle el aviso), después el aviso al equipo. */
   async function emergencia() {
-    const p = await miUbicacion().catch(() => null);
+    const p = await miUbicacion({ aMano: true }).catch(() => null);
     const r = await api
       .pedir<{ numero: string }>('POST', `/datos/viajes/${viaje.id}/emergencia`, p ?? {})
       .catch(() => ({ numero: '911' }));
@@ -394,11 +393,14 @@ export function ViajeEnCurso({
                     }`
                   : nombreVehiculo}
               </Text>
-              {viaje.total != null ? (
-                <Text style={[LETRA.tarjeta, { fontFamily: 'Poppins_700Bold' }]}>
-                  {monto(viaje.regalo ? pagaEnMano(viaje.total, viaje.regalo) : viaje.total)}
-                </Text>
-              ) : null}
+              {/* C-PRECIO-CON-REGALO: con regalo, el precio tachado y lo que se paga («Gratis»). */}
+              <PrecioCompacto
+                total={viaje.total}
+                regalo={viaje.regalo}
+                moneda={viaje.moneda ?? 'USD'}
+                idioma={idioma}
+                estilo={[LETRA.tarjeta, { fontFamily: 'Poppins_700Bold' }]}
+              />
             </View>
           </View>
           {viaje.total != null && !esEnvio ? (
@@ -626,26 +628,22 @@ export function ViajeEnCurso({
           <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.origen.direccion}</Text>
           <Text style={{ color: '#666B73', fontSize: 12, marginTop: 8 }}>{t.etiquetaDestino}</Text>
           <Text style={{ fontWeight: '700', color: C.secundario }}>{viaje.destino.direccion}</Text>
-          {viaje.total != null ? (
-            <Text style={{ marginTop: 8, fontWeight: '700', color: C.secundario }}>
-              {viaje.estado === 'terminado'
+          {/* C-PRECIO-CON-REGALO: el precio tachado, el regalo en verde y lo que se paga de verdad. */}
+          <PrecioDelViaje
+            etiqueta={
+              viaje.estado === 'terminado'
                 ? viaje.metodoPago === 'tarjeta'
                   ? t.pagadoTarjeta
                   : viaje.metodoPago === 'pago_movil'
                     ? t.pagoMovil
                     : t.pagaEfectivo
-                : t.precioFijo}
-              : {monto(viaje.total)}
-            </Text>
-          ) : null}
-          {viaje.total != null && viaje.regalo ? (
-            <LineaRegalo
-              regalo={{ ...viaje.regalo, nombreEs: '', nombreEn: '' }}
-              total={viaje.total}
-              moneda={viaje.moneda ?? 'USD'}
-              idioma={idioma}
-            />
-          ) : null}
+                : t.precioFijo
+            }
+            total={viaje.total}
+            regalo={viaje.regalo}
+            moneda={viaje.moneda ?? 'USD'}
+            idioma={idioma}
+          />
           {viaje.referencia ? (
             <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>
               {textoReferencia(viaje.referencia, idioma)}

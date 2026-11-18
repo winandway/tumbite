@@ -18,6 +18,32 @@ export type RegaloDivoox = {
 export const pagaEnMano = (total: number, regalo: { monto: number } | null | undefined) =>
   Math.max(0, total - (regalo?.monto ?? 0));
 
+/** C-PRECIO-CON-REGALO: el regalo de un viaje como lo manda el servidor al pasajero. */
+export type RegaloDelViaje = {
+  codigo: string;
+  monto: number;
+  nombreEs?: string;
+  nombreEn?: string;
+  /** El viaje no se hizo y el regalo volvió a la cuenta del pasajero. */
+  devuelto?: boolean;
+};
+
+/**
+ * C-PRECIO-CON-REGALO (18 nov 2026): cómo se muestra el precio de un viaje en TODAS sus pantallas
+ * (buscando, en camino, terminado, cancelado, «Mis viajes», recibo), igual que la tarjeta del precio:
+ * con regalo, el precio de siempre tachado y lo que se paga de verdad. `null` si no hay precio.
+ */
+export function precioConRegalo(
+  total: number | null | undefined,
+  regalo: { monto: number } | null | undefined,
+) {
+  if (total == null) return null;
+  const cubre = Math.max(0, Math.min(total, regalo?.monto ?? 0));
+  const aPagar = pagaEnMano(total, regalo);
+  // El regalo que se muestra es lo que cubre de verdad (nunca más que el precio).
+  return { total, tachado: cubre > 0, regalo: cubre, aPagar, gratis: cubre > 0 && aPagar === 0 };
+}
+
 /** El nombre del regalo en el idioma de la persona (con el código si no tiene nombre). */
 export const nombreRegalo = (
   r: Pick<RegaloDivoox, 'codigo' | 'nombreEs' | 'nombreEn'>,

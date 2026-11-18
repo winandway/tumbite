@@ -44,7 +44,7 @@ export function PuntoExacto({
 
   async function estoyAqui() {
     setAviso('');
-    const p = await miUbicacion().catch(() => null);
+    const p = await miUbicacion({ aMano: true }).catch(() => null);
     if (p) setPunto(p);
     else setAviso(t.sinPermiso);
   }

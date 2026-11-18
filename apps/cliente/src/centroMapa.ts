@@ -38,7 +38,7 @@ export function useCentroParaElegir(
   }, [hayPunto]);
 
   const pedirUbicacion = useCallback(async () => {
-    const p = await miUbicacion();
+    const p = await miUbicacion({ aMano: true });
     if (p) setGps(p);
     return p;
   }, []);

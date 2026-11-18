@@ -237,6 +237,36 @@ export async function apartarRegalo(
   return null;
 }
 
+/**
+ * C-PRECIO-CON-REGALO (18 nov 2026): el regalo de un viaje como lo ve el PASAJERO en todas sus
+ * pantallas (en curso, cancelado, «Mis viajes», recibo). El que sigue apartado o cobrado y, en un
+ * viaje que no se hizo (cancelado o sin conductor), el que tenía: ese volvió a su cuenta (`devuelto`).
+ * Uso: `LEFT JOIN … ${JOIN_REGALO_PASAJERO}` con `o` = operaciones y `v` = viajes; columnas
+ * `COLUMNAS_REGALO_PASAJERO`; y `regaloPasajero(fila)` para la respuesta. Un uso por operación (UNIQUE).
+ */
+export const JOIN_REGALO_PASAJERO = `LEFT JOIN usos_cupon_divoox rgp ON rgp.operacion_id = o.id
+           AND (rgp.estado <> 'liberado' OR v.estado IN ('cancelado', 'sin_conductor'))
+         LEFT JOIN cupones_divoox rgc ON rgc.codigo = rgp.codigo`;
+export const COLUMNAS_REGALO_PASAJERO = `rgp.monto AS regalo_monto, rgp.codigo AS regalo_codigo,
+              rgp.estado AS regalo_estado, rgc.nombre_es AS regalo_nombre_es, rgc.nombre_en AS regalo_nombre_en`;
+export type FilaRegaloPasajero = {
+  regalo_monto: number | null;
+  regalo_codigo: string | null;
+  regalo_estado: string | null;
+  regalo_nombre_es: string | null;
+  regalo_nombre_en: string | null;
+};
+export function regaloPasajero(f: FilaRegaloPasajero) {
+  if (f.regalo_monto == null) return null;
+  return {
+    codigo: f.regalo_codigo ?? '',
+    monto: Number(f.regalo_monto),
+    nombreEs: f.regalo_nombre_es ?? '',
+    nombreEn: f.regalo_nombre_en ?? '',
+    ...(f.regalo_estado === 'liberado' ? { devuelto: true } : {}),
+  };
+}
+
 /** El regalo apartado o cobrado de una operación (lo que paga Divoox), o 0. */
 export async function regaloDeOperacion(db: D1Database, operacionId: string) {
   const f = await db

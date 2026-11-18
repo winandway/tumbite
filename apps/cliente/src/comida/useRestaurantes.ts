@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { AppState } from 'react-native';
 import { type Api, type RespuestaRestaurantes, crearListaRestaurantes } from '@tumbite/compartido';
 import { almacenTelefono } from '@tumbite/movil';
-import { type Punto, miUbicacion } from '../ubicacion';
+import { type Punto, miUbicacion, ubicacionSiHayPermiso } from '../ubicacion';
 
 /**
  * Hito 1 · C-CATALOGO-ESTABLE: el inicio y «Comida» comparten UNA lista de restaurantes
@@ -134,9 +134,11 @@ export function useRestaurantes(api: Api, deUrl: Punto | null) {
     if (deUrl) return;
     const sub = AppState.addEventListener('change', (e) => {
       if (e !== 'active' || aMano.current) return;
-      ultimoGps = null;
-      void gpsReciente().then(async (gps) => {
+      // C-UBICACION-SIN-BUCLE: al volver solo se LEE (si ya hay permiso). Pedirlo aquí abría la
+      // pantalla del permiso, la app salía de primer plano, volvía «active» y lo pedía otra vez.
+      void ubicacionSiHayPermiso().then(async (gps) => {
         if (!gps || !vivo.current) return;
+        ultimoGps = { p: gps, en: Date.now() };
         setElegido(gps);
         await guardarUbicacion(gps);
         await lista.cargar(gps);

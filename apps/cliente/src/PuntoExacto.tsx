@@ -96,9 +96,10 @@ export function PuntoExacto({
     setAviso('');
     setBuscandome(true);
     try {
-      const permiso = await Location.requestForegroundPermissionsAsync();
-      if (permiso.status !== 'granted') return setAviso(t.sinPermiso);
-      const p = await miUbicacion();
+      // C-UBICACION-SIN-BUCLE: la persona tocó «Estoy aquí»: se mira el permiso y se pide solo si falta.
+      const p = await miUbicacion({ aMano: true });
+      if (!p && (await Location.getForegroundPermissionsAsync()).status !== 'granted')
+        return setAviso(t.sinPermiso);
       if (!p) return setAviso(t.sinSenal);
       mapa.current?.animateToRegion(
         { latitude: p.lat, longitude: p.lng, latitudeDelta: 0.002, longitudeDelta: 0.002 },
@@ -180,7 +181,23 @@ export function PuntoExacto({
             {...coloresMapa}
           />
         ) : (
-          <View style={{ flex: 1, backgroundColor: '#F2F3F5' }} />
+          // C-PUNTO-SIN-MAPA: sin ubicación ni punto no hay mapa que mover: se dice qué hacer.
+          <View
+            testID="punto-exacto-sin-mapa"
+            style={{
+              flex: 1,
+              backgroundColor: '#F2F3F5',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 24,
+              gap: 12,
+            }}
+          >
+            <Text style={{ textAlign: 'center', color: C.secundario, fontSize: 15 }}>
+              {t.sinMapa}
+            </Text>
+            <Boton texto={t.escribir} alTocar={volver} secundario testID="punto-exacto-escribir" />
+          </View>
         )}
         {/* El pin fijo: su punta queda justo en el centro del mapa. */}
         <View
@@ -193,6 +210,8 @@ export function PuntoExacto({
             bottom: 0,
             alignItems: 'center',
             justifyContent: 'center',
+            // Sin mapa no hay pin que mover (el recuadro dice qué hacer).
+            display: abre ? 'flex' : 'none',
           }}
         >
           <View style={{ alignItems: 'center', marginBottom: 46 }} testID="punto-exacto-pin">
@@ -221,6 +240,7 @@ export function PuntoExacto({
             left: 16,
             right: 16,
             alignItems: 'center',
+            display: abre ? 'flex' : 'none',
           }}
         >
           <Text
@@ -304,7 +324,7 @@ export function PuntoExacto({
           testID="punto-exacto-confirmar"
           alTocar={() => {
             const p = centro ?? abre;
-            if (!p) return setAviso(t.sinSenal);
+            if (!p) return setAviso(t.sinMapa);
             confirmar({
               punto: p,
               direccion:

@@ -57,7 +57,16 @@ import { paradasDe } from './paradasViaje';
 import { accesoDe, filtroAlcance, servicioOperacionSql, tienePermiso } from '../accesoInterno';
 import { conductorDeConfianzaParaPedir } from './viajesFijos';
 import { aparatoDe } from './regalosDivoox';
-import { apartarRegalo, conRegalo, liberarRegalo, regaloParaCliente } from '../regalosDivoox';
+import {
+  COLUMNAS_REGALO_PASAJERO,
+  type FilaRegaloPasajero,
+  JOIN_REGALO_PASAJERO,
+  apartarRegalo,
+  conRegalo,
+  liberarRegalo,
+  regaloParaCliente,
+  regaloPasajero,
+} from '../regalosDivoox';
 
 /**
  * Divoox Moto · Fase M1 (docs/PLAN-MOTO-PASAJEROS.md): la tarifa por ciudad que guarda el
@@ -912,7 +921,7 @@ export async function avisarDestinatario(
   });
 }
 
-type FilaViajeCliente = {
+type FilaViajeCliente = FilaRegaloPasajero & {
   id: string;
   servicio_id: string;
   estado: string;
@@ -940,8 +949,6 @@ type FilaViajeCliente = {
   pm_titular: string | null;
   pm_identificador: string | null;
   pm_estado: string | null;
-  regalo_monto: number | null;
-  regalo_codigo: string | null;
   pais: string | null;
   categoria: string | null;
   multiplicador_pb: number | null;
@@ -969,9 +976,9 @@ async function viajeDelCliente(
                  AND ky.selfie_miniatura IS NOT NULL) AS conductor_foto,
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
               pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
-              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto,
-              (SELECT rg.codigo FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_codigo
+              ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         ${JOIN_REGALO_PASAJERO}
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
          LEFT JOIN usuarios u ON u.id = o.conductor_id
          LEFT JOIN repartidores d ON d.usuario_id = o.conductor_id
@@ -1049,10 +1056,8 @@ function viajePublico(f: FilaViajeCliente) {
     total: f.total,
     moneda: f.moneda,
     // C-CUPON-DIVOOX: lo que paga Divoox y lo que el pasajero paga en mano.
-    regalo:
-      f.regalo_monto != null
-        ? { codigo: f.regalo_codigo ?? '', monto: Number(f.regalo_monto) }
-        : null,
+    // C-PRECIO-CON-REGALO: con su nombre, y también el de un viaje cancelado (volvió a su cuenta).
+    regalo: regaloPasajero(f),
     conductor:
       conConductor && f.conductor_nombre
         ? {

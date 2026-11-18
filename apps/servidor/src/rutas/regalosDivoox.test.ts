@@ -202,7 +202,7 @@ describe('C-CUPON-DIVOOX: el pasajero agrega el código y paga en mano solo la d
     const { cot, id } = await pedirViaje(e, p);
     expect(cot.regalo).toMatchObject({ codigo: 'VIGIA', monto: 300 });
     const vista = (await p.llamar('GET', '/datos/viajes/actual')).datos.viaje;
-    expect(vista.regalo).toEqual({ codigo: 'VIGIA', monto: 300 });
+    expect(vista.regalo).toMatchObject({ codigo: 'VIGIA', monto: 300 });
     const ofertas = await e.m.llamar(
       'GET',
       '/datos/conductor/operaciones/ofertas',
@@ -301,6 +301,45 @@ describe('C-CUPON-DIVOOX: el pasajero agrega el código y paga en mano solo la d
     // Y puede usarlo en su próximo viaje.
     const otra = await pedirViaje(e, p);
     expect(otra.cot.regalo?.codigo).toBe('VIGIA');
+  });
+});
+
+describe('C-PRECIO-CON-REGALO: el pasajero ve el regalo en todas las pantallas del viaje', () => {
+  it('el viaje en curso, cancelado, «Mis viajes» y el recibo traen el regalo con su nombre', async () => {
+    const e = await escenario();
+    await crear(e, { nombreEs: 'Tu primer viaje', nombreEn: 'Your first ride' });
+    await encender(e);
+    const p = await pasajero(e);
+    await p.llamar('POST', '/datos/regalos-divoox/guardar', { codigo: 'VIGIA' });
+    const { id } = await pedirViaje(e, p);
+    const esperado = {
+      codigo: 'VIGIA',
+      monto: 300,
+      nombreEs: 'Tu primer viaje',
+      nombreEn: 'Your first ride',
+    };
+    expect((await p.llamar('GET', '/datos/viajes/actual')).datos.viaje.regalo).toEqual(esperado);
+    expect(
+      (
+        await p.llamar(
+          'POST',
+          `/datos/viajes/${id}/cancelar`,
+          {},
+          { 'idempotency-key': 'cancelar-precio-1' },
+        )
+      ).estado,
+    ).toBe(200);
+    // Cancelado: el regalo volvió a la cuenta, pero el viaje sigue mostrando el precio con su regalo.
+    const cancelado = (await p.llamar('GET', `/datos/viajes/${id}`)).datos.viaje;
+    expect(cancelado.estado).toBe('cancelado');
+    expect(cancelado.regalo).toEqual({ ...esperado, devuelto: true });
+    const historial = (await p.llamar('GET', '/datos/viajes/historial')).datos.viajes;
+    expect(historial.find((v: { id: string }) => v.id === id)?.regalo).toEqual({
+      ...esperado,
+      devuelto: true,
+    });
+    const recibo = await p.llamar('GET', `/datos/viajes/${id}/recibo`);
+    expect(recibo.datos.recibo.regalo).toEqual({ ...esperado, devuelto: true });
   });
 });
 

@@ -23,6 +23,7 @@ import { Boton, C, Campo, CampoClave, Pantalla, e, useAcentoApp } from './ui';
 import { COLOR } from './tokens';
 import { SelectorIdioma } from './SelectorIdioma';
 import { Turnstile, olvidarPaseTurnstile, useTurnstileSitio } from './Turnstile';
+import { mensajeSinCasilla } from './accesoErrores';
 
 const INICIAL = {
   nombre: '',
@@ -146,6 +147,13 @@ export function Acceso({
   }
 
   const registro = modo === 'registro' && rolRegistro;
+  const casillasVisibles = [
+    'correo',
+    'clave',
+    ...(registro ? ['nombre', 'telefono', 'invitacion'] : []),
+    ...(registro && pideCumple ? ['fechaNacimiento'] : []),
+  ];
+  const mensajeGeneral = mensajeSinCasilla(error, casillasVisibles);
   // Inglés sin prefijo, español bajo /es: la misma página legal en el idioma de la app.
   const abrir = (ruta: string) => abrirPagina(`${URL_SERVIDOR}${enIdiomaDireccion(ruta, idioma)}`);
   // Cada app con su color en la píldora del idioma: Driver azul, Restaurants (la única sin registro)
@@ -245,6 +253,7 @@ export function Acceso({
           autoCorrect={false}
           placeholder={t.invitacionAyuda}
           testID="registro-invitacion"
+          error={errorDe('invitacion')}
         />
       )}
       {registro && pideCumple && (
@@ -265,9 +274,14 @@ export function Acceso({
         error={errorDe('clave')}
       />
       <Turnstile sitio={turnstileSitio} idioma={idioma} />
-      {error && !error.campo ? (
-        <Text style={[e.error, { marginBottom: 8 }]} accessibilityRole="alert">
-          {error.mensaje}
+      {/* C-REGISTRO-ERRORES: un error sin casilla en pantalla sale aquí; nunca queda escondido. */}
+      {mensajeGeneral ? (
+        <Text
+          style={[e.error, { marginBottom: 8 }]}
+          accessibilityRole="alert"
+          testID="acceso-error"
+        >
+          {mensajeGeneral}
         </Text>
       ) : null}
       {registro ? (

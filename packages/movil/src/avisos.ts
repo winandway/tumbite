@@ -8,6 +8,7 @@ import {
   estadoAvisosWeb,
   suscribirAvisosWeb,
 } from '@tumbite/compartido/src/avisosWeb';
+import { cuandoEsteActiva } from './primerPlano';
 
 /**
  * C-AVISOS-WEB (13 nov 2026) — todos los países: la llave pública VAPID de la versión web, como
@@ -77,6 +78,9 @@ export function useAvisosCelular(
         }
         const permiso = await Notifications.getPermissionsAsync();
         if (!permiso.granted && !preguntar) return;
+        // C-PERMISOS-PRIMER-PLANO: la pantalla del permiso solo con la app a la vista.
+        if (!permiso.granted) await cuandoEsteActiva();
+        if (!vivo) return;
         const estado = permiso.granted ? permiso : await Notifications.requestPermissionsAsync();
         if (!estado.granted) return;
         if (Platform.OS === 'android')

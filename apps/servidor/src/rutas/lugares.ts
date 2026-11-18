@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
-import { partirDireccion } from '@tumbite/compartido';
+import { partirDireccion, sinPlusCode } from '@tumbite/compartido';
 import { zonaPara } from './zonas';
 import { ErrorDatos } from '../validar';
 
@@ -111,7 +111,8 @@ lugares.get('/lugares/sugerencias', async (c) => {
         ...(x.structuredFormat?.mainText?.text
           ? {
               principal: x.structuredFormat.mainText.text,
-              secundario: x.structuredFormat.secondaryText?.text ?? '',
+              // C-SIN-PLUS-CODE: «J86Q+CHP, Avenida…» se muestra sin el plus code.
+              secundario: sinPlusCode(x.structuredFormat.secondaryText?.text ?? ''),
             }
           : {}),
         ...(typeof x.distanceMeters === 'number' ? { distanciaM: x.distanceMeters } : {}),
@@ -371,7 +372,7 @@ async function conocidosDelMapa(
     .filter((p) => p.displayName?.text && p.location)
     .map((p) => ({
       titulo: p.displayName!.text,
-      detalle: p.shortFormattedAddress ?? '',
+      detalle: sinPlusCode(p.shortFormattedAddress ?? ''),
       lat: Math.round(p.location!.latitude * 1000) / 1000,
       lng: Math.round(p.location!.longitude * 1000) / 1000,
     }));

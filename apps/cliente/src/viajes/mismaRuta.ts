@@ -9,7 +9,7 @@
  * - la proyección de las coordenadas reales al recuadro del mapita;
  * - la agrupación por mes.
  */
-import type { CategoriaViaje, CotizacionViaje } from '@tumbite/compartido';
+import type { CategoriaViaje, CotizacionViaje, RegaloDelViaje } from '@tumbite/compartido';
 
 export type PuntoMapa = { lat: number; lng: number };
 export type ParadaHistorial = PuntoMapa & { direccion: string };
@@ -34,6 +34,8 @@ export type ViajeHistorial = {
   /** C-VIAJES-FIJOS: de qué viaje fijo nació y el menor que llevó. */
   rutinaId?: string | null;
   menor?: string | null;
+  /** C-PRECIO-CON-REGALO: el regalo del viaje (el precio se muestra tachado con lo que se pagó). */
+  regalo?: RegaloDelViaje | null;
 };
 
 export type MetodoPagoViaje = 'efectivo' | 'tarjeta' | 'pago_movil';

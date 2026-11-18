@@ -193,7 +193,7 @@ export function PreguntaTodoBien({
   const { api, idioma } = useSesion();
   const t = enIdioma(T, idioma);
   async function responder(respuesta: 'bien' | 'ayuda') {
-    const p = respuesta === 'ayuda' ? await miUbicacion().catch(() => null) : null;
+    const p = respuesta === 'ayuda' ? await miUbicacion({ aMano: true }).catch(() => null) : null;
     const r = await api
       .pedir<{ numero?: string }>('POST', `/datos/viajes/${viajeId}/alerta`, {
         respuesta,
