@@ -329,6 +329,8 @@ try {
     }),
     'habilitar Moto',
   );
+  // El vehículo se cambia desconectado (revisor, 18 nov 2026).
+  await yo('POST', '/datos/repartidor/conectar', { conectado: false });
   ok(await yo('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: moto }), 'usar la moto');
   const servicios = ok(await yo('GET', '/datos/conductor/servicios'), 'servicios del conductor');
   const sMoto = servicios.servicios.find((s) => s.servicioId === 'moto');

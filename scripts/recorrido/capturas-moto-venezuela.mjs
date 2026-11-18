@@ -19,6 +19,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
 import { deslizar } from './deslizar.mjs';
+import { abrirAlta, abrirDocumentos } from './altaDriver.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -330,9 +331,7 @@ async function correr(M, idiomas) {
     const ctxD = await telefono(tokens.conductor, IDS.conductor, idioma);
     const d = await ctxD.newPage();
     await d.goto('/driver/');
-    await d.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
-    await d.getByText('Divoox Moto', { exact: true }).first().click();
-    await d.getByTestId('alta-moto').waitFor({ timeout: 30_000 });
+    await abrirAlta(d, 'moto', en);
     await espera(1_200);
     await d.getByTestId('alta-moto').evaluate((x) => x.scrollIntoView({ block: 'start' }));
     await espera(800);
@@ -352,11 +351,7 @@ async function correr(M, idiomas) {
     await espera(600);
     await foto(d, 'driver-moto-papeles', idioma);
     // La identidad verificada, en «Documentos» del mismo perfil.
-    await d.getByText('Divoox Moto', { exact: true }).first().click();
-    await d
-      .getByText(en ? 'Documents' : 'Documentos', { exact: true })
-      .first()
-      .click();
+    await abrirDocumentos(d, en);
     await espera(1_500);
     await d
       .getByText(en ? 'Documents' : 'Documentos', { exact: true })
@@ -442,7 +437,7 @@ async function correr(M, idiomas) {
     await foto(c, 'cliente-contactos', idioma);
     await c.getByTestId('moto-precio').scrollIntoViewIfNeeded();
     await c
-      .getByRole('button', { name: en ? /Request/ : /Pedir/ })
+      .getByRole('button', { name: en ? /Request/ : /Pedir|Solicitar/ })
       .last()
       .click();
     await espera(2_500);

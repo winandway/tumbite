@@ -20,6 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deslizar } from './deslizar.mjs';
+import { abrirAlta } from './altaDriver.mjs';
 import { chromium, devices } from '@playwright/test';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
@@ -281,12 +282,7 @@ async function correr(M, idiomas) {
     const ctx = await telefono(tokens.conductor, IDS.conductor, idioma);
     const d = await ctx.newPage();
     await d.goto('/driver/');
-    await d.getByRole('tab', { name: en ? 'Profile' : 'Perfil' }).click({ timeout: 60_000 });
-    await d
-      .getByText(en ? 'Divoox Car' : 'Divoox Carro', { exact: true })
-      .first()
-      .click();
-    await d.getByTestId('alta-carro').waitFor({ timeout: 30_000 });
+    await abrirAlta(d, 'carro', en);
     await espera(1_200);
     await que(d, en);
     await espera(600);
@@ -388,6 +384,8 @@ async function correr(M, idiomas) {
     await intentar(
       equipo('PUT', `/datos/admin/papeles-conductor/${licencia.id}`, { estado: 'aprobado' }),
     );
+  // El vehículo se cambia desconectado (revisor, 18 nov 2026).
+  await conductor('POST', '/datos/repartidor/conectar', { conectado: false });
   await conductor('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: carro });
   const faltan = (await conductor('GET', '/datos/conductor/servicios')).servicios.find(
     (s) => s.servicioId === 'carro',
