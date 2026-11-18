@@ -19,6 +19,7 @@
     "retiros": "pendiente",
     "connect": "pendiente",
     "servicios": "ok",
+    "tarifas": "ok",
     "viajes": "ok",
     "comidaPaises": "ok",
     "tiempoReal": "pendiente",
@@ -27,6 +28,7 @@
     "transiciones": "ok",
     "libro": "ok",
     "regalos": "ok",
+    "camila": "ok",
     "disputas": "ok",
     "errores": "ok",
     "bandeja": "ok",
@@ -38,5 +40,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-18T04:52:39.058668+00:00"
+  "medido": "2026-11-18T22:23:03.555942+00:00"
 }
