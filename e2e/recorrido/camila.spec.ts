@@ -261,8 +261,11 @@ for (const idioma of ['es', 'en'] as const) {
       });
     };
     await escribir(C.preguntaWeb, 1);
+    // Algo que Camila no sabe, dos veces: la primera pide que se lo cuenten de otra forma; a la
+    // segunda seguida lo anota para la lista de aprendizaje (C-CAMILA-TONO).
     await escribir(C.rara, 2);
-    await escribir(C.persona, 3);
+    await escribir(C.rara, 3);
+    await escribir(C.persona, 4);
     const visita = String(
       sql(
         `SELECT persona_id FROM camila_casos WHERE estado = 'abierto' ORDER BY creado_en DESC LIMIT 1`,
