@@ -1,5 +1,5 @@
 import { Image, Pressable, ScrollView, View } from 'react-native';
-import type { Idioma, Restaurante } from '@tumbite/compartido';
+import { type Idioma, type Restaurante, categoriaRestaurante } from '@tumbite/compartido';
 import { C, urlFoto, Text } from '@tumbite/movil';
 import { fotoDeRelleno } from './recursos';
 import { textosInicio } from './textos';
@@ -42,7 +42,7 @@ export function Categorias({
             key={c}
             onPress={() => alTocar(c)}
             accessibilityRole="button"
-            accessibilityLabel={`${t.categorias}: ${c}`}
+            accessibilityLabel={`${t.categorias}: ${categoriaRestaurante(c, idioma)}`}
             style={({ pressed }) => ({
               width: 68,
               alignItems: 'center',
@@ -70,7 +70,7 @@ export function Categorias({
               numberOfLines={1}
               style={{ marginTop: 6, fontSize: 13, fontWeight: '600', color: C.secundario }}
             >
-              {c}
+              {categoriaRestaurante(c, idioma)}
             </Text>
           </Pressable>
         ))}

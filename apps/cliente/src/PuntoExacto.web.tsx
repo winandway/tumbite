@@ -64,7 +64,12 @@ export function PuntoExacto({
         >
           <Icono nombre="arrow-back" tamano={24} color={C.secundario} />
         </Pressable>
-        <Text accessibilityRole="header" style={{ fontSize: 18, fontWeight: '700' }}>
+        {/* C-TITULO-PUNTO-ENTERO: hasta dos renglones, nunca cortado. */}
+        <Text
+          accessibilityRole="header"
+          numberOfLines={2}
+          style={{ flex: 1, flexShrink: 1, fontSize: 18, fontWeight: '700' }}
+        >
           {tituloPuntoExacto(idioma, tipo)}
         </Text>
       </View>

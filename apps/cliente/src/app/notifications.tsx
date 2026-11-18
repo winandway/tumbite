@@ -18,7 +18,7 @@ import { conCuenta } from '../ConCuenta';
  * próximas aperturas en la ciudad. Nada inventado: si no hay nada, se dice.
  */
 function Avisos() {
-  const { api, idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = textosInicio(idioma);
   const tc = textosComida(idioma);
   const { tab } = useLocalSearchParams<{ tab?: string }>();
@@ -26,7 +26,7 @@ function Avisos() {
     tab === 'regalos' ? 'regalos' : 'todos',
   );
   const catalogo = useRestaurantes(api, null);
-  const { datos } = useAvisos(api, catalogo.punto);
+  const { datos } = useAvisos(api, catalogo.punto, Boolean(usuario));
   const lista = (datos?.avisos ?? []).filter((a) => pestana === 'todos' || a.tipo === 'regalo');
   const llenar = (s: string, v: Record<string, string | number>) =>
     Object.entries(v).reduce((acc, [k, x]) => acc.replaceAll(`{${k}}`, String(x)), s);

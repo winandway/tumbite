@@ -23,8 +23,16 @@ export type Aviso =
   | { tipo: 'apertura'; area: string; ciudad: string; apertura: string | null };
 export type RespuestaAvisos = { avisos: Aviso[]; pendientes: number };
 
-/** Avisos reales del cliente: se piden al entrar y cada vez que la pantalla lo pida. */
-export function useAvisos(api: Api, punto: { lat: number; lng: number } | null, activo = true) {
+/**
+ * Avisos reales del cliente: se piden al entrar y cada vez que la pantalla lo pida. C-SIN-SESION-
+ * SIN-401 (robot, 18 nov 2026): sin sesión no se piden (daban 401); `conSesion` es obligatorio.
+ */
+export function useAvisos(
+  api: Api,
+  punto: { lat: number; lng: number } | null,
+  conSesion: boolean,
+) {
+  const activo = conSesion;
   const [datos, setDatos] = useState<RespuestaAvisos | null>(null);
   const [error, setError] = useState(false);
   const lat = punto?.lat;
@@ -38,6 +46,7 @@ export function useAvisos(api: Api, punto: { lat: number; lng: number } | null, 
     [api, lat, lng],
   );
   const recargar = useCallback(async () => {
+    if (!activo) return;
     try {
       setDatos(await pedir());
       setError(false);
@@ -45,7 +54,7 @@ export function useAvisos(api: Api, punto: { lat: number; lng: number } | null, 
       console.warn('avisos: no se pudieron cargar', e);
       setError(true);
     }
-  }, [pedir]);
+  }, [pedir, activo]);
   useEffect(() => {
     if (!activo) return;
     let vivo = true;

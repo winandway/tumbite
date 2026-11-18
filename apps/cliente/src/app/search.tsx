@@ -13,6 +13,7 @@ import {
   llaveBusquedas,
   quitarBusqueda,
   sumarBusqueda,
+  categoriaRestaurante,
 } from '@tumbite/compartido';
 import { C, almacenTelefono, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { ANCHO_MAX, Estado, Flecha, Pildora, sombra } from '../comida/piezas';
@@ -327,7 +328,7 @@ export default function Buscar() {
                   {r.nombre}
                 </Text>
                 <Text style={{ color: '#666B73', fontSize: 13 }} numberOfLines={1}>
-                  {r.categoria}
+                  {categoriaRestaurante(r.categoria, idioma)}
                 </Text>
                 <Estado abierto={abierto(r)} texto={abierto(r) ? tc.abierto : tc.cerrado} />
               </View>

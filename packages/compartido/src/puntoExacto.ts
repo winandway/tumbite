@@ -41,11 +41,25 @@ const PLUS_CODE = /^[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,3}\b/i
 
 export const esPlusCode = (x: string | null | undefined) => PLUS_CODE.test((x ?? '').trim());
 
-/** C-SIN-PLUS-CODE: una dirección para mostrar, sin sus partes que son plus codes. */
+/** Una palabra que es un plus code («J85P+QQ2», «CQPG+7F»). */
+const PALABRA_PLUS_CODE = /^[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{0,3}$/i;
+
+/**
+ * C-SIN-PLUS-CODE: una dirección para mostrar, sin plus codes: se quita la PALABRA que es un plus
+ * code (sola en su parte o pegada al nombre del lugar: «J85P+QQ2 Terminal de Pasajeros» →
+ * «Terminal de Pasajeros») y las partes que quedan vacías. Por palabras, sin expresiones que se
+ * puedan atascar. Una sola pieza para el servidor y las apps.
+ */
 export const sinPlusCode = (x: string) =>
   x
     .split(',')
-    .map((p) => p.trim())
+    .map((p) =>
+      p
+        .trim()
+        .split(/\s+/)
+        .filter((w) => w && !PALABRA_PLUS_CODE.test(w))
+        .join(' '),
+    )
     .filter((p) => p && !esPlusCode(p))
     .join(', ');
 
@@ -237,7 +251,8 @@ export function lineaReferencia(d: { referencia?: string | null; apto?: string |
  */
 export function direccionConReferencia(direccion: string, referencia?: string | null) {
   const ref = (referencia ?? '').replace(/\s+/g, ' ').trim().slice(0, 160);
-  const base = direccion.trim();
+  // C-SIN-PLUS-CODE: lo que se guarda (y luego ve el conductor y sale en Recientes), sin plus codes.
+  const base = sinPlusCode(direccion.trim()) || direccion.trim();
   if (!ref || base.toLowerCase().includes(`ref.: ${ref}`.toLowerCase())) return base;
   return `${base} · Ref.: ${ref}`;
 }

@@ -74,7 +74,7 @@ import { CAPTURA_INTERNA, fotos, media } from './rutas/fotos';
 import { diagnostico } from './rutas/diagnostico';
 import { ciudadPruebas } from './rutas/ciudadPruebas';
 import { fijarAppCiudad } from './ciudadJuego';
-import { saludServicios, servicios } from './rutas/servicios';
+import { saludServicios, saludTarifas, servicios } from './rutas/servicios';
 import { conductorPapeles } from './rutas/conductorPapeles';
 import { serviciosConectados } from './rutas/serviciosConectados';
 import { tasasReferencia } from './rutas/tasasReferencia';
@@ -375,6 +375,12 @@ app.get('/datos/salud', async (c) => {
         return 'error' as const;
       },
     );
+  // C-SERVICIO-SIN-TARIFA: nada encendido sin su tarifa en la ciudad.
+  if (c.env.DB)
+    piezas.tarifas = await saludTarifas(c.env.DB, entornoDe(c.req.url)).catch((e: unknown) => {
+      console.error('salud: tarifas', e);
+      return 'error' as const;
+    });
   // Divoox Moto · M7: ningún viaje cerrado con comisión apartada ni deudas sin su viaje.
   if (c.env.DB)
     piezas.viajes = await saludViajes(c.env.DB).catch((e: unknown) => {

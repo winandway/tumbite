@@ -32,6 +32,14 @@ function PantallaMoto() {
   const [paquete, setPaquete] = useState<PaqueteCliente | null>(null);
   const [viaje, setViaje] = useState<ViajePasajero | null>(null);
   const [viajeId, setViajeId] = useState<string | null>(null);
+  // C-PEDIR-OTRA-VEZ-UN-TOQUE (robot de Android, 18 nov 2026): `cargar` lee el viaje por esta
+  // referencia, no por el valor de su cierre. Antes, «Pedir otra vez» limpiaba el viaje y llamaba a
+  // `cargar` del render anterior, que todavía tenía el id viejo: volvía a traer el viaje cancelado y
+  // la pantalla no cambiaba; hacía falta un segundo toque.
+  const viajeIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    viajeIdRef.current = viajeId;
+  }, [viajeId]);
   const [deuda, setDeuda] = useState<{ monto: number; moneda: string | null } | null>(null);
   // C-VIAJE-SEGURIDAD-2: el «¿Todo bien?» si el viaje se sale de la ruta.
   const [alerta, setAlerta] = useState<{ id: string } | null>(null);
@@ -40,6 +48,7 @@ function PantallaMoto() {
   const lista = useRef<ScrollView>(null);
 
   const cargar = useCallback(async () => {
+    const viajeId = viajeIdRef.current;
     try {
       if (viajeId) {
         const r = await api.pedir<{
@@ -70,7 +79,7 @@ function PantallaMoto() {
       console.warn('moto: no se pudo cargar el viaje', e);
       return false;
     }
-  }, [api, viajeId, servicio]);
+  }, [api, servicio]);
 
   // Al abrir, una vez. Mientras el viaje no termina, cada 4 segundos (también mueve el despacho);
   // si falla, cada vez más espaciado.
@@ -150,6 +159,7 @@ function PantallaMoto() {
               }
               setViaje(null);
               setViajeId(null);
+              viajeIdRef.current = null;
               void cargar();
             }}
           />

@@ -22,6 +22,7 @@ import {
   type GustoPlato,
   type PromocionRestaurante,
   insigniaPromocion,
+  categoriaRestaurante,
 } from '@tumbite/compartido';
 import { C, e, urlFoto, useSesion, Text, Modal } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -258,7 +259,7 @@ export default function MenuRestaurante() {
             </Text>
             <Text style={{ color: '#666B73', fontSize: 14, marginTop: 2 }}>
               {[
-                r.categoria,
+                categoriaRestaurante(r.categoria, idioma),
                 r.distanciaKm != null ? distanciaTexto(r.distanciaKm, idioma, r.pais) : '',
               ]
                 .filter(Boolean)

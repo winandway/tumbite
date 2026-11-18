@@ -110,6 +110,47 @@ describe('Recientes y Populares de «¿A dónde vas?»', () => {
     expect((await m.llamar('GET', '/datos/lugares/recientes')).estado).toBe(401);
   });
 
+  it('C-SIN-PLUS-CODE y C-RECIENTES-CIUDAD: sin plus codes y solo de la ciudad donde está la persona', async () => {
+    const m = mundo();
+    const yo = await m.cuenta('cliente');
+    await m.DB.prepare(
+      "INSERT OR IGNORE INTO zonas (id, nombre, pais, lat, lng, activa) VALUES ('VE-MER-ELVIGIA', 'El Vigía', 'VE', 8.62, -71.65, 1)",
+    ).run();
+    await viaje(m, yo.id, 'm1', {
+      lat: 25.77,
+      lng: -80.19,
+      direccion: 'CQPG+7F Torre Norte, Calle 3',
+    });
+    await viaje(m, yo.id, 'v1', {
+      lat: 8.63,
+      lng: -71.65,
+      direccion: 'J85P+QQ2 Terminal de Pasajeros, El Vigía',
+    });
+    await m.DB.prepare("UPDATE operaciones SET zona_id = 'VE-MER-ELVIGIA' WHERE id = 'v1'").run();
+    const todos = await m.llamar('GET', '/datos/lugares/recientes', undefined, yo.token);
+    expect(todos.datos.destinos.map((d: { direccion: string }) => d.direccion).sort()).toEqual([
+      'Terminal de Pasajeros, El Vigía',
+      'Torre Norte, Calle 3',
+    ]);
+    const enMiami = await m.llamar(
+      'GET',
+      `/datos/lugares/recientes?lat=${MIAMI.lat}&lng=${MIAMI.lng}`,
+      undefined,
+      yo.token,
+    );
+    expect(enMiami.datos.destinos.map((d: { direccion: string }) => d.direccion)).toEqual([
+      'Torre Norte, Calle 3',
+    ]);
+    // Fuera de toda ciudad con servicio: nada de otra ciudad.
+    const lejos = await m.llamar(
+      'GET',
+      '/datos/lugares/recientes?lat=0&lng=0',
+      undefined,
+      yo.token,
+    );
+    expect(lejos.datos.destinos).toEqual([]);
+  });
+
   it('populares: solo lugares pedidos por diez clientes distintos o más, redondeados, nunca una casa', async () => {
     const m = mundo();
     const hace = new Date(Date.now() - 5 * 86_400_000).toISOString().replace('T', ' ').slice(0, 19);

@@ -8,6 +8,7 @@
  *   hora y ese día (código, sin IA). Con texto: Resultados del mapa por cercanía.
  */
 import type { Idioma } from './idiomas';
+import { sinPlusCode } from './puntoExacto';
 
 export const ICONOS_LUGAR = [
   'casa',
@@ -179,7 +180,9 @@ export function ordenarRecientes(
         l.lng != null &&
         cerca(g.v, { lat: l.lat, lng: l.lng }),
     );
-    const partes = partirDireccion(g.v.direccion);
+    // C-SIN-PLUS-CODE: también al LEER lo ya guardado (viajes de antes del arreglo).
+    const direccion = sinPlusCode(g.v.direccion) || g.v.direccion;
+    const partes = partirDireccion(direccion);
     const motivo =
       g.franja > 0
         ? `${(idioma === 'en' ? DIAS.en : DIAS.es).at(dia) ?? ''} ${idioma === 'en' ? 'at this time' : 'a esta hora'}`
@@ -196,7 +199,7 @@ export function ordenarRecientes(
       clave,
       titulo: guardado ? guardado.etiqueta.trim() : partes.titulo,
       detalle: guardado ? partes.titulo : partes.detalle,
-      direccion: g.v.direccion,
+      direccion,
       lat: g.v.lat,
       lng: g.v.lng,
       motivo,

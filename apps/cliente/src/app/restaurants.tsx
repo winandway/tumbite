@@ -8,6 +8,7 @@ import {
   filtrarRestaurantes,
   insigniaPromocion,
   textoNoDisponible,
+  categoriaRestaurante,
 } from '@tumbite/compartido';
 import { C, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { distanciaTexto } from '../textos';
@@ -220,7 +221,7 @@ export default function Restaurantes() {
         contentContainerStyle={{ gap: 8, paddingVertical: 14 }}
         renderItem={({ item }) => (
           <Pildora
-            texto={item ?? t.todos}
+            texto={item ? categoriaRestaurante(item, idioma) : t.todos}
             activa={categoria === item}
             alTocar={() => setCategoria(item)}
           />
@@ -353,7 +354,7 @@ export default function Restaurantes() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Calificacion c={r.calificacion} idioma={idioma} />
                   <Text style={{ color: '#666B73', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>
-                    · {r.categoria}
+                    · {categoriaRestaurante(r.categoria, idioma)}
                   </Text>
                 </View>
                 <View

@@ -124,20 +124,31 @@ export type Servicio = {
   activo_hasta: string | null;
   implementado: number;
   piloto: number;
+  /** C-SERVICIO-SIN-TARIFA: hay tarifa activa de este servicio en la zona. */
+  con_tarifa: number;
 };
+
+/**
+ * C-SERVICIO-SIN-TARIFA (18 nov 2026, todos los países): los servicios que se cobran con la tarifa
+ * por ciudad (tarifas_viaje). Sin tarifa activa en la zona no se ofrecen («no disponible en tu
+ * zona»), aunque estén encendidos: antes el cliente veía Envíos y al pedir le salía «todavía no
+ * tiene precio en tu ciudad», con el botón de solicitar activo.
+ */
+export const SERVICIOS_CON_TARIFA = new Set(['moto', 'carro', 'envios']);
 
 export async function catalogo(db: Db, zonaId: string | null): Promise<Servicio[]> {
   const { results } = await db
     .prepare(
       `SELECT s.*, sz.estado AS zona_estado, sz.activo_desde, sz.activo_hasta,
               EXISTS (SELECT 1 FROM servicios_implementados si WHERE si.servicio_id = s.id) AS implementado,
-              EXISTS (SELECT 1 FROM servicios_piloto sp WHERE sp.servicio_id = s.id AND sp.zona_id = ?) AS piloto
+              EXISTS (SELECT 1 FROM servicios_piloto sp WHERE sp.servicio_id = s.id AND sp.zona_id = ?) AS piloto,
+              EXISTS (SELECT 1 FROM tarifas_viaje t WHERE t.servicio_id = s.id AND t.zona_id = ? AND t.activa = 1) AS con_tarifa
          FROM servicios s
          LEFT JOIN servicios_zona sz ON sz.servicio_id = s.id AND sz.zona_id = ?
         WHERE s.estado != 'oculto'
         ORDER BY s.orden, s.id`,
     )
-    .bind(zonaId ?? '', zonaId ?? '')
+    .bind(zonaId ?? '', zonaId ?? '', zonaId ?? '')
     .all<Servicio>();
   return results;
 }
@@ -147,6 +158,17 @@ function estadoEfectivo(
   s: Servicio,
   ahora: string,
   participante = false,
+): 'disponible' | 'proximamente' | 'suspendido' | 'no_disponible_zona' {
+  const e = estadoSinTarifa(s, ahora, participante);
+  // C-SERVICIO-SIN-TARIFA: encendido pero sin precio en la ciudad = no se ofrece.
+  if (e === 'disponible' && SERVICIOS_CON_TARIFA.has(s.id) && !s.con_tarifa)
+    return 'no_disponible_zona';
+  return e;
+}
+function estadoSinTarifa(
+  s: Servicio,
+  ahora: string,
+  participante: boolean,
 ): 'disponible' | 'proximamente' | 'suspendido' | 'no_disponible_zona' {
   if (s.estado === 'suspendido') return 'suspendido';
   // C-PILOTO-SERVICIOS: encendido «solo piloto» en esta ciudad, para los participantes.
@@ -172,7 +194,8 @@ export async function estadoServicioEnZona(
 ) {
   const s = (await catalogo(db, zonaId)).find((x) => x.id === servicioId);
   const participante = usuarioId ? await esParticipante(db, usuarioId) : false;
-  return s ? estadoEfectivo(s, ahoraSql(), participante) : 'no_disponible_zona';
+  // La cotización mira la tarifa aparte, con su propio mensaje («todavía no tiene precio»).
+  return s ? estadoSinTarifa(s, ahoraSql(), participante) : 'no_disponible_zona';
 }
 const ACCION = new Map([
   ['disponible', 'abrir'],
@@ -267,7 +290,9 @@ export function evaluarServicio(e: {
   ingles: boolean;
 }): EstadoConductor {
   const { s, ahora, vehiculo, requisitosFaltantes } = e;
-  const estadoServicio = estadoEfectivo(s, ahora);
+  // El conductor puede conectarse aunque la ciudad aún no tenga tarifa (no le llegará nada hasta
+  // que la tenga): C-SERVICIO-SIN-TARIFA solo cambia lo que se le ofrece al cliente.
+  const estadoServicio = estadoSinTarifa(s, ahora, false);
   const h = e.habilitacion;
   // Comida, compatibilidad: quien ya reparte hoy no tiene fila y sigue habilitado («legado»).
   let habilitacion = h?.estado ?? (s.id === 'comida' ? 'aprobada' : 'sin_solicitar');
@@ -1731,6 +1756,35 @@ export async function saludServicios(
   if (Number(f?.sin_codigo) > 0) return 'error';
   if (encendidos.some((e) => !abiertoEn(e.servicio, e.pais))) return 'error';
   return 'ok';
+}
+
+/**
+ * C-SERVICIO-SIN-TARIFA: pieza «tarifas» de /datos/salud. Un servicio con tarifa por ciudad
+ * encendido (o en piloto) en una zona sin tarifa activa: el cliente no lo ve (el catálogo lo oculta)
+ * pero alguien lo encendió a medias. En producción, «error» (correo al equipo); en pruebas,
+ * «pendiente» (avisa sin frenar la publicación). Una sola lectura.
+ */
+export async function saludTarifas(
+  db: D1Database,
+  entorno: Entorno | null = null,
+): Promise<'ok' | 'error' | 'pendiente'> {
+  const lista = [...SERVICIOS_CON_TARIFA];
+  const marcas = lista.map(() => '?').join(',');
+  const f = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM (
+         SELECT z.servicio_id, z.zona_id FROM servicios_zona z JOIN servicios s ON s.id = z.servicio_id
+          WHERE z.estado = 'disponible' AND s.estado = 'disponible' AND z.servicio_id IN (${marcas})
+         UNION
+         SELECT p.servicio_id, p.zona_id FROM servicios_piloto p WHERE p.servicio_id IN (${marcas})
+       ) e
+       WHERE NOT EXISTS (SELECT 1 FROM tarifas_viaje t
+                          WHERE t.servicio_id = e.servicio_id AND t.zona_id = e.zona_id AND t.activa = 1)`,
+    )
+    .bind(...lista, ...lista)
+    .first<{ n: number }>();
+  if (!Number(f?.n)) return 'ok';
+  return entorno === 'produccion' ? 'error' : 'pendiente';
 }
 
 // ---------------------------------------------------------------- C-SERVICIOS-CONECTADOS

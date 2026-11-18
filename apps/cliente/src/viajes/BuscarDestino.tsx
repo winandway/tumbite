@@ -68,7 +68,13 @@ export function BuscarDestino({
   useEffect(() => {
     let vivo = true;
     void api
-      .pedir<{ destinos: ViajeHecho[] }>('GET', '/datos/lugares/recientes')
+      // C-RECIENTES-CIUDAD: con la ubicación, solo los destinos de la ciudad donde está la persona.
+      .pedir<{ destinos: ViajeHecho[] }>(
+        'GET',
+        cerca
+          ? `/datos/lugares/recientes?lat=${cerca.lat}&lng=${cerca.lng}`
+          : '/datos/lugares/recientes',
+      )
       .then(
         (r) => vivo && setRecientes(ordenarRecientes(r.destinos, new Date(), { idioma, lugares })),
       )

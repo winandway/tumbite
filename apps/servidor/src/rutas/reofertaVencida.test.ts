@@ -172,3 +172,44 @@ describe('C-OFERTA-AVISO: la oferta de viaje llega al celular del conductor', ()
     expect(alConductor()).toHaveLength(2);
   });
 });
+
+describe('C-SIN-PLUS-CODE: lo que ve el conductor no lleva plus codes', () => {
+  it('ni lo que se guarda al pedir, ni lo guardado antes del arreglo', async () => {
+    const e = await listo();
+    const a = await conductorDeMoto(e.m, ORIGEN);
+    const c = (
+      await e.m.llamar(
+        'POST',
+        '/datos/viajes/cotizar',
+        {
+          servicio: 'moto',
+          origen: ORIGEN,
+          destino: { ...DESTINO, direccion: 'J85P+QQ2 Terminal de Pasajeros, El Vigía' },
+        },
+        e.cliente.token,
+      )
+    ).datos.cotizacion;
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: c.id, metodoPago: 'efectivo' },
+      e.cliente.token,
+    );
+    const op = r.datos.viaje.id as string;
+    const primera = async () =>
+      (
+        (await e.m.llamar('GET', '/datos/conductor/operaciones/ofertas', undefined, a.token)).datos
+          .ofertas as { destino: string; origen: string }[]
+      )[0];
+    expect((await primera())?.destino).toBe('Terminal de Pasajeros, El Vigía');
+    await e.m.DB.prepare(
+      "UPDATE viajes SET destino_direccion = 'CQPG+7F Plaza Bolívar, Centro', origen_direccion = 'J9JJ+FWM, La Blanca' WHERE operacion_id = ?",
+    )
+      .bind(op)
+      .run();
+    expect(await primera()).toMatchObject({
+      destino: 'Plaza Bolívar, Centro',
+      origen: 'La Blanca',
+    });
+  });
+});

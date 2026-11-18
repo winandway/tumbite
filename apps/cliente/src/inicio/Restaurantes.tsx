@@ -7,6 +7,7 @@ import {
   formatearMonto,
   textoNoDisponible,
   insigniaPromocion,
+  categoriaRestaurante,
 } from '@tumbite/compartido';
 import { router } from 'expo-router';
 import { C, urlFoto, Text } from '@tumbite/movil';
@@ -55,7 +56,7 @@ function TarjetaRestaurante({
   const fav = favoritos.ids.has(r.id);
   const envio = envioDe(r, idioma);
   const detalle = [
-    r.categoria,
+    categoriaRestaurante(r.categoria, idioma),
     r.distanciaKm != null ? distanciaTexto(r.distanciaKm, idioma, r.pais) : null,
     `${r.tiempoPrepMin + 10}-${r.tiempoPrepMin + 20} ${t.min}`,
   ].filter(Boolean);

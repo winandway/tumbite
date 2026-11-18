@@ -8,6 +8,7 @@ import {
   nombreServicio,
   ordenarServicios,
   textoLlevando,
+  textoTrasDesconectar,
   tituloLlevando,
   unirLista,
   type ServicioPanel,
@@ -130,5 +131,24 @@ describe('la tarjeta según el servidor', () => {
     expect(destinoDePaso('moto', 'antecedentes_pasajeros', 'perfil')).toBe('alta-moto');
     expect(destinoDePaso('envios', 'seguro_vehiculo', 'vehiculo')).toBe('datos-reparto');
     expect(destinoDePaso('envios', 'antecedentes', 'perfil')).toBe('identidad');
+  });
+});
+
+describe('C-ULTIMO-SERVICIO: el aviso al desconectar dice la verdad', () => {
+  it('si quedan otros conectados, «Lo demás sigue conectado»', () => {
+    const lista = [s('comida', 'desconectado'), s('moto', 'conectado')];
+    expect(textoTrasDesconectar(lista, 'comida', 'es')).toBe('Lo demás sigue conectado.');
+  });
+  it('al desconectar el ÚLTIMO, no dice que lo demás sigue conectado', () => {
+    const lista = [
+      s('comida', 'desconectado'),
+      s('moto', 'conectado'),
+      s('envios', 'no_disponible' as never),
+    ];
+    for (const idioma of ['es', 'en'] as const) {
+      const t = textoTrasDesconectar(lista, 'moto', idioma);
+      expect(t).not.toMatch(/sigue conectado|still on/);
+    }
+    expect(textoTrasDesconectar(lista, 'moto', 'es')).toBe('Ya no te llegan ofertas.');
   });
 });

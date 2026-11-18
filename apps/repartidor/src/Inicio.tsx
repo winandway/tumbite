@@ -1,3 +1,4 @@
+import { ubicacionParaConectar } from './ubicacionParaConectar';
 import { comoLlegar } from './comoLlegar';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -269,7 +270,12 @@ async function ubicacionConLimite(): Promise<Location.LocationObject | null> {
     .catch(() => Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }))
     .catch(() => null);
   const p = await Promise.race([actual, tope]);
-  return p ?? (await Location.getLastKnownPositionAsync().catch(() => null));
+  if (p) return p;
+  // C-UBICACION-AL-CONECTAR: la última conocida también con tope (en Android puede colgarse).
+  return Promise.race([
+    Location.getLastKnownPositionAsync().catch(() => null),
+    new Promise<null>((r) => setTimeout(() => r(null), 3000)),
+  ]);
 }
 
 const T = {
@@ -611,7 +617,11 @@ export function Inicio() {
   const servicios = usePanelServicios(api, 0);
   const ts = textosServicios(idioma);
   const [cambiandoServicio, setCambiandoServicio] = useState<string | null>(null);
-  const [desconectado, setDesconectado] = useState<{ id: string; nombre: string } | null>(null);
+  const [desconectado, setDesconectado] = useState<{
+    id: string;
+    nombre: string;
+    texto: string;
+  } | null>(null);
   const [servicioAgregar, setServicioAgregar] = useState<ServicioPanel | null>(null);
   const [cuentaArriba, setCuentaArriba] = useState(false);
   // Flex · Fase 3: tocar un aviso de ruta abre «Mi ruta» directamente en esa ruta.
@@ -1109,6 +1119,28 @@ export function Inicio() {
   }
 
   // Nunca en silencio: mientras busca la ubicación lo dice, y si algo falla se ve en pantalla.
+  // C-UBICACION-AL-CONECTAR: conectar usa la lectura reciente si la hay y nunca espera al GPS más de
+  // unos segundos (después, la última conocida). El permiso se mira antes de pedirlo.
+  async function ubicacionAlConectar() {
+    const p = await ubicacionParaConectar({
+      reciente: ultimaLectura.current,
+      ahora: Date.now(),
+      leer: () =>
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }).catch(() =>
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        ),
+      ultimaConocida: () => Location.getLastKnownPositionAsync(),
+    });
+    if (p) setAqui(p);
+    return p;
+  }
+  async function permisoUbicacion() {
+    const ya = await Location.getForegroundPermissionsAsync().catch(() => null);
+    if (ya?.granted) return true;
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    return status === 'granted';
+  }
+
   async function alternar() {
     if (cambiando) return;
     setError('');
@@ -1119,14 +1151,13 @@ export function Inicio() {
         await api.pedir('POST', '/datos/repartidor/conectar', { conectado: false });
         return await cargar();
       }
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return setError(t.sinUbicacion);
-      const p = await ubicacionConLimite();
+      if (!(await permisoUbicacion())) return setError(t.sinUbicacion);
+      const p = await ubicacionAlConectar();
       if (!p) return setError(t.ubicacionTarda);
       const r = await api.pedir<{ conectado: boolean; cobertura?: string; avisoComida?: string }>(
         'POST',
         '/datos/repartidor/conectar',
-        { conectado: true, lat: p.coords.latitude, lng: p.coords.longitude },
+        { conectado: true, lat: p.lat, lng: p.lng },
       );
       if (r.cobertura && r.cobertura !== 'dentro') setAviso(tg.pausa.fueraZona);
       // C-DESPACHO-CATALOGO (NXT-6y): conectado para otros servicios, pero sin Comida: el porqué.
@@ -1147,12 +1178,11 @@ export function Inicio() {
     setAviso('');
     setCambiandoServicio(id);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
+      if (!(await permisoUbicacion())) {
         setError(t.sinUbicacion);
         return false;
       }
-      const p = await ubicacionConLimite();
+      const p = await ubicacionAlConectar();
       if (!p) {
         setError(t.ubicacionTarda);
         return false;
@@ -1160,7 +1190,7 @@ export function Inicio() {
       const r = await api.pedir<{ cobertura?: string; avisoComida?: string }>(
         'POST',
         `/datos/conductor/servicios/${id}/conexion`,
-        { conectado: true, lat: p.coords.latitude, lng: p.coords.longitude },
+        { conectado: true, lat: p.lat, lng: p.lng },
       );
       if (r.cobertura && r.cobertura !== 'dentro') setAviso(tg.pausa.fueraZona);
       return true;
@@ -1556,9 +1586,6 @@ export function Inicio() {
           alCambiar={() => void cargar()}
         />
       ) : null}
-      {/* C-MODO-DESTINO (BRE-6): solo pedidos que lo acercan a su destino, dos veces al día.
-          Con un pedido en curso no se muestra (C-DESLIZAR-ENTREGA): como Uber, se elige entre pedidos. */}
-      {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}
       {/* C-FLOTA-PROPIA: el restaurante que lo invitó a su equipo, y para quién reparte. */}
       <InvitacionesFlota
         alAceptar={(texto) => {
@@ -1733,7 +1760,7 @@ export function Inicio() {
         <AvisoDeshacer
           visible={Boolean(desconectado)}
           titulo={desconectado ? ts.avisoTitulo(desconectado.nombre, desconectado.id) : ''}
-          texto={ts.avisoTexto}
+          texto={desconectado?.texto ?? ts.avisoTexto}
           deshacer={ts.deshacer}
           alDeshacer={() => {
             const d = desconectado;
@@ -3067,6 +3094,16 @@ export function Inicio() {
 
   // C-SERVICIOS-CONECTADOS (pantallas 01 y 04 de DRIVER.md): arriba la tarjeta tinta con el radar,
   // el resumen de hoy y la lista de servicios al momento; debajo, Divoox Flex y el mapa de demanda.
+  // C-MODO-DESTINO (BRE-6): solo pedidos que lo acercan a su destino, dos veces al día. Va SOLO en
+  // el inicio, como el «destino» de Uber Driver y DoorDash (robot, 18 nov: salía también en Perfil y
+  // en Ganancias, porque iba dentro de `mensajes`). Con un pedido en curso no se muestra
+  // (C-DESLIZAR-ENTREGA): como Uber, se elige entre pedidos.
+  const mensajesInicio = (
+    <>
+      {mensajes}
+      {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}
+    </>
+  );
   const panelInicio = servicios.panel ? (
     <PanelServiciosInicio
       panel={servicios.panel}
@@ -3096,8 +3133,8 @@ export function Inicio() {
         setVista('agregar');
       }}
       alAbrirFlex={() => setVista('miRuta')}
-      alDesconectado={(id, nombre) => setDesconectado({ id, nombre })}
-      debajo={mensajes}
+      alDesconectado={(id, nombre, texto) => setDesconectado({ id, nombre, texto })}
+      debajo={mensajesInicio}
     />
   ) : (
     <>
@@ -3108,7 +3145,7 @@ export function Inicio() {
         entregas={entregasHoy}
         segundosConectado={segundosConectado}
       />
-      {mensajes}
+      {mensajesInicio}
     </>
   );
 

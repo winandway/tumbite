@@ -21,6 +21,7 @@ import {
   nombreServicio,
   ordenarServicios,
   textoLlevando,
+  textoTrasDesconectar,
   tituloLlevando,
   type PanelServicios as Panel,
   type ServicioPanel,
@@ -209,7 +210,8 @@ export function PanelServiciosInicio({
   alVerServicio: (s: ServicioPanel) => void;
   alAbrirFlex: () => void;
   /** Al desconectar uno: la pantalla muestra abajo «Comida desconectada… Deshacer». */
-  alDesconectado: (id: string, nombre: string) => void;
+  /** `texto`: C-ULTIMO-SERVICIO, «Lo demás sigue conectado» solo si queda otro conectado. */
+  alDesconectado: (id: string, nombre: string, texto: string) => void;
   /** Lo que va debajo de la lista (errores y avisos del inicio), dentro del mismo bloque. */
   debajo?: ReactNode;
 }) {
@@ -294,8 +296,10 @@ export function PanelServiciosInicio({
                   alVer={() => alVerServicio(s)}
                   alAgregar={() => alVerServicio(s)}
                   alDesconectar={async () => {
+                    // Con la lista de ANTES de desconectar (la de después ya cambió).
+                    const texto = textoTrasDesconectar(servicios, s.servicioId, idioma);
                     if (await alDesconectarServicio(s.servicioId))
-                      alDesconectado(s.servicioId, nombre);
+                      alDesconectado(s.servicioId, nombre, texto);
                   }}
                 />
               );

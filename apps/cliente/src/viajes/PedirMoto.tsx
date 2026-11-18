@@ -1,3 +1,4 @@
+import { estadoBotonPedir } from './botonPedir';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type ReactNode } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
@@ -144,6 +145,8 @@ export function PedirMoto({
   };
   const [cotizacion, setCotizacion] = useState<CotizacionViaje | null>(null);
   const [error, setError] = useState('');
+  // C-SERVICIO-SIN-TARIFA: la ruta para la que el servidor dijo «no está / no tiene precio aquí».
+  const [sinServicioEn, setSinServicioEn] = useState('');
   const [trabajando, setTrabajando] = useState(false);
   // C-VIAJE-TARJETA: con tarjeta, el cobro abierto y la hoja de pago de siempre (la de Comida).
   const [cobro, setCobro] = useState<(Cobro & { viajeId: string }) | null>(null);
@@ -219,6 +222,7 @@ export function PedirMoto({
   const recogidaFijada = recogida != null && v.recogida.trim().length > 0;
   const destinoFijado = destino != null && v.destino.trim().length > 0;
 
+  const claveRutaRef = useRef('');
   const cotizar = useCallback(
     async (otraCategoria?: CategoriaViaje) => {
       setError('');
@@ -252,6 +256,7 @@ export function PedirMoto({
         setCotizacion(null);
         // Una categoría recuperada del borrador que esta ciudad no ofrece vuelve al carro de siempre.
         if (x instanceof ErrorApi && x.campo === 'categoria') cambiar('categoria', 'estandar');
+        if (x instanceof ErrorApi && x.campo === 'servicio') setSinServicioEn(claveRutaRef.current);
         setError(x instanceof ErrorApi ? x.message : String(x));
       } finally {
         setTrabajando(false);
@@ -380,6 +385,9 @@ export function PedirMoto({
   const intentado = useRef('');
   const claveRuta = `${v.recogidaLat},${v.recogidaLng}>${v.destinoLat},${v.destinoLng}|${v.paradas}|${categoria}`;
   useEffect(() => {
+    claveRutaRef.current = claveRuta;
+  }, [claveRuta]);
+  useEffect(() => {
     if (!recogida || !destino || cotizacion || trabajando || cobro || leyendoCalle) return;
     if (intentado.current === claveRuta) return;
     intentado.current = claveRuta;
@@ -394,6 +402,11 @@ export function PedirMoto({
           0)
         : (IMG_NUEVO.servicios.moto ?? 0);
   const sinDestino = !destinoFijado;
+  const estadoBoton = estadoBotonPedir({
+    sinDestino,
+    conCotizacion: Boolean(cotizacion),
+    sinServicio: sinServicioEn !== '' && sinServicioEn === claveRuta,
+  });
   const textoBoton = sinDestino
     ? tn.eligeDestino
     : cuando
@@ -404,8 +417,9 @@ export function PedirMoto({
           ? textoPedirViaje
           : tn.solicitar(categoria);
   const alBoton = () => {
-    if (sinDestino) return setBuscando('destino');
-    if (!cotizacion) return void cotizar();
+    if (estadoBoton === 'elegir_destino') return setBuscando('destino');
+    if (estadoBoton === 'apagado') return;
+    if (estadoBoton === 'cotizar') return void cotizar();
     void pedir();
   };
 
@@ -1014,6 +1028,7 @@ export function PedirMoto({
             <BotonGrande
               texto={textoBoton}
               alTocar={alBoton}
+              apagado={estadoBoton === 'apagado'}
               cargando={trabajando}
               testID="pedir-boton"
             />

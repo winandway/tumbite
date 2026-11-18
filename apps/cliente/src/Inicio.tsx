@@ -101,7 +101,7 @@ export function Inicio() {
   const punto = catalogo.punto;
   const servicios = useServicios(api, punto);
   const zona = servicios?.zona?.id ?? null;
-  const avisos = useAvisos(api, punto).datos;
+  const avisos = useAvisos(api, punto, Boolean(usuario)).datos;
 
   // «Ordenado por lo que más usas» (pantalla 2 del borrador): cuántas veces tocó cada servicio.
   const [usos, setUsos] = useState<Record<string, number>>({});

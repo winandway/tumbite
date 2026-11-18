@@ -22,7 +22,7 @@ import {
   devolverReservaViaje,
   reservarComisionViaje,
 } from '../finanzas/conductor';
-import { cargoEspera, esquemaTarifaViaje } from '@tumbite/compartido';
+import { cargoEspera, esquemaTarifaViaje, sinPlusCode } from '@tumbite/compartido';
 import {
   aceptarOperacion,
   cambiarEstadoViaje,
@@ -110,6 +110,9 @@ async function miOperacion(c: Ctx, id: string, conductorId: string) {
   return f;
 }
 
+/** C-SIN-PLUS-CODE: una dirección guardada, para mostrar al conductor. */
+const paraMostrar = (x: unknown) => sinPlusCode(String(x ?? '')) || String(x ?? '');
+
 async function moverDespachoSiToca(c: Ctx, conductorId: string) {
   const db = base(c);
   const hay = await db
@@ -178,8 +181,9 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         expiraEn: String(f.expira_en),
         // C-OFERTA-TIEMPO-REAL: lo que le queda, contado por el servidor (no por el reloj del teléfono).
         segundosRestantes: Math.max(0, Number(f.segundos_restantes ?? 0)),
-        origen: String(f.origen_direccion),
-        destino: String(f.destino_direccion),
+        // C-SIN-PLUS-CODE: también lo guardado antes del arreglo.
+        origen: paraMostrar(f.origen_direccion),
+        destino: paraMostrar(f.destino_direccion),
         origenPunto: origen,
         destinoPunto: { lat: Number(f.destino_lat), lng: Number(f.destino_lng) },
         recogidaM: yo ? metrosEntre(yo, origen) : null,
@@ -247,6 +251,8 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
   return c.json({
     operacion: {
       ...f,
+      origen_direccion: paraMostrar(f.origen_direccion),
+      destino_direccion: paraMostrar(f.destino_direccion),
       regalo_divoox: regaloDivoox,
       cobrar_en_mano: cobrarEnMano,
       // C-BS-REFERENCIA: lo que cobra en mano, con su equivalente en bolívares (informativo).

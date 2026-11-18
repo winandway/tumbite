@@ -39,4 +39,41 @@ describe('C-DIRECCION-SUGERENCIAS: toda casilla de dirección sugiere direccione
     });
     expect(result.current.sugerencias).toEqual([]);
   });
+
+  it('C-SIN-PLUS-CODE: resultados y destino elegido sin plus codes (también con un servidor viejo)', async () => {
+    const pedir = vi.fn(async (_m: string, ruta: string) =>
+      ruta.includes('/sugerencias')
+        ? {
+            sugerencias: [
+              {
+                id: 'ChIJ2',
+                texto: 'Terminal de Pasajeros de El Vigía, J85P+QQ2, El Vigía',
+                principal: 'Terminal de Pasajeros de El Vigía',
+                secundario: 'J85P+QQ2, El Vigía',
+              },
+            ],
+          }
+        : {
+            punto: { lat: 8.62, lng: -71.65 },
+            direccion: 'J85P+QQ2 Terminal de Pasajeros, El Vigía 5145, Mérida',
+          },
+    );
+    const { result } = renderHook(() =>
+      useSugerenciasDireccion({ pedir: pedir as never, pais: null }),
+    );
+    act(() => result.current.buscar('Terminal'));
+    await waitFor(() => expect(result.current.sugerencias).toHaveLength(1));
+    expect(result.current.sugerencias[0]).toMatchObject({
+      texto: 'Terminal de Pasajeros de El Vigía, El Vigía',
+      secundario: 'El Vigía',
+    });
+    let elegida: Awaited<ReturnType<typeof result.current.elegir>> = null;
+    await act(async () => {
+      elegida = await result.current.elegir('ChIJ2');
+    });
+    expect(elegida).toEqual({
+      punto: { lat: 8.62, lng: -71.65 },
+      direccion: 'Terminal de Pasajeros, El Vigía 5145, Mérida',
+    });
+  });
 });

@@ -206,3 +206,30 @@ export function destinoDePaso(
   if (grupo === 'perfil' && requisito.startsWith('antecedentes')) return 'identidad';
   return 'datos-reparto';
 }
+
+/**
+ * C-ULTIMO-SERVICIO (robot de Android, 18 nov 2026): el aviso tras desconectar `id`. Si no queda
+ * ningún otro servicio conectado (o en pausa, o en curso), no dice «Lo demás sigue conectado».
+ */
+export function textoTrasDesconectar(
+  servicios: ServicioPanel[],
+  id: string,
+  idioma: Idioma,
+): string {
+  const t = textosServicios(idioma);
+  const quedan = servicios.some(
+    (x) =>
+      x.servicioId !== id &&
+      (x.estado === 'conectado' || x.estado === 'en_pausa' || x.estado === 'haciendo'),
+  );
+  return quedan ? t.avisoTexto : t.avisoTextoUltimo;
+}
+
+/**
+ * C-AVATAR-SIN-LINEA (robot de Android, 18 nov 2026): en Perfil, el avatar salía como un círculo
+ * gris con una línea suelta (una foto diminuta estirada). Una foto de menos de 32 px por lado, o sin
+ * medidas, no sirve de avatar: se muestran las iniciales.
+ */
+export function fotoSirveDeAvatar(ancho?: number, alto?: number): boolean {
+  return (ancho ?? 0) >= 32 && (alto ?? 0) >= 32;
+}

@@ -1,3 +1,4 @@
+import { sinPlusCode } from '@tumbite/compartido';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -86,9 +87,14 @@ type FilaLista = {
 const COLUMNAS_LISTA = `o.id, o.servicio_id AS servicio, v.categoria, v.estado, v.origen_direccion AS origen,
   v.destino_direccion AS destino, q.total, q.moneda, v.metodo_pago AS metodoPago, o.creado_en AS creadoEn`;
 
+const sinCodigo = (x: string) => sinPlusCode(String(x ?? '')) || String(x ?? '');
+
 function pagina<F extends FilaLista>(filas: F[]) {
   const mas = filas.length > TAMANO_PAGINA;
-  const viajes = filas.slice(0, TAMANO_PAGINA);
+  // C-SIN-PLUS-CODE: también los viajes guardados antes del arreglo.
+  const viajes = filas
+    .slice(0, TAMANO_PAGINA)
+    .map((f) => ({ ...f, origen: sinCodigo(f.origen), destino: sinCodigo(f.destino) }));
   return { viajes, siguiente: mas ? (viajes.at(-1)?.creadoEn ?? null) : null };
 }
 
@@ -285,8 +291,8 @@ function recibo(f: FilaRecibo) {
     categoria: f.categoria ?? 'estandar',
     estado: f.estado,
     metodoPago: f.metodo_pago,
-    origen: f.origen,
-    destino: f.destino,
+    origen: sinCodigo(f.origen),
+    destino: sinCodigo(f.destino),
     fecha: f.creado_en,
     total: f.total,
     moneda: f.moneda,

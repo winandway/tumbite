@@ -107,7 +107,7 @@ lugares.get('/lugares/sugerencias', async (c) => {
       .slice(0, 6)
       .map((x) => ({
         id: x.placeId,
-        texto: x.text?.text ?? '',
+        texto: sinPlusCode(x.text?.text ?? '') || (x.text?.text ?? ''),
         ...(x.structuredFormat?.mainText?.text
           ? {
               principal: x.structuredFormat.mainText.text,
@@ -149,7 +149,8 @@ lugares.get('/lugares/punto/:id', async (c) => {
   if (!d.location) throw new ErrorDatos('Esa dirección no existe.', undefined, 404);
   return c.json({
     punto: { lat: d.location.latitude, lng: d.location.longitude },
-    direccion: d.formattedAddress ?? '',
+    // C-SIN-PLUS-CODE: «J85P+QQ2 Terminal de Pasajeros, …» llega sin el plus code.
+    direccion: sinPlusCode(d.formattedAddress ?? '') || (d.formattedAddress ?? ''),
   });
 });
 
@@ -174,19 +175,33 @@ export function puntoDeLaConexion(req: Request): { lat: number; lng: number } | 
  */
 lugares.get('/lugares/recientes', async (c) => {
   const u = exigir(c, 'cliente');
-  const { results } = await base(c)
+  const db = base(c);
+  // C-RECIENTES-CIUDAD (18 nov 2026): con la ubicación de la persona, solo los destinos de la ciudad
+  // donde está (en Novi no salen lugares de El Vigía). Fuera de toda ciudad con servicio, ninguno.
+  // Sin ubicación (apps anteriores), como antes.
+  const q = z
+    .object({
+      lat: z.coerce.number().min(-90).max(90),
+      lng: z.coerce.number().min(-180).max(180),
+    })
+    .safeParse(c.req.query());
+  c.header('cache-control', 'private, no-store');
+  const zona = q.success ? await zonaPara(db, q.data.lat, q.data.lng) : null;
+  if (q.success && !zona) return c.json({ destinos: [] });
+  const { results } = await db
     .prepare(
       `SELECT v.destino_direccion AS direccion, v.destino_lat AS lat, v.destino_lng AS lng, o.creado_en AS en
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
-        WHERE o.cliente_id = ? AND o.creado_en >= datetime('now', '-90 days') AND v.estado <> 'pago_pendiente'
+        WHERE o.cliente_id = ?1 AND o.creado_en >= datetime('now', '-90 days') AND v.estado <> 'pago_pendiente'
+          AND (?2 IS NULL OR o.zona_id = ?2)
         ORDER BY o.creado_en DESC LIMIT 60`,
     )
-    .bind(u.id)
+    .bind(u.id, zona?.id ?? null)
     .all<{ direccion: string; lat: number; lng: number; en: string }>();
-  c.header('cache-control', 'private, no-store');
   return c.json({
     destinos: results.map((x) => ({
-      direccion: x.direccion,
+      // C-SIN-PLUS-CODE: también lo guardado antes del arreglo.
+      direccion: sinPlusCode(x.direccion) || x.direccion,
       lat: Number(x.lat),
       lng: Number(x.lng),
       en: `${String(x.en).replace(' ', 'T')}Z`,

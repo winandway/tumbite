@@ -122,6 +122,17 @@ describe('Recientes por hora y día (C-DESTINO-RECIENTES)', () => {
     expect(r[0]?.motivo).toBe('Saturdays at this time');
   });
 
+  it('C-SIN-PLUS-CODE: un reciente guardado con plus code se muestra sin él', () => {
+    const r = ordenarRecientes(
+      [v('J85P+QQ2 Terminal de Pasajeros, El Vigía 5145', new Date(2026, 10, 15, 9), 8.65)],
+      new Date(2026, 10, 16, 7),
+    );
+    expect(r[0]).toMatchObject({
+      titulo: 'Terminal de Pasajeros',
+      direccion: 'Terminal de Pasajeros, El Vigía 5145',
+    });
+  });
+
   it('el mismo lugar no se repite y salen cinco como mucho', () => {
     const muchos = Array.from({ length: 9 }, (_, i) =>
       v(`Lugar ${i}`, new Date(2026, 10, 10, i), 8 + i / 100),

@@ -1,3 +1,4 @@
+import { textoPedidoSinCobrar } from '../../pedidoAlRecibir';
 import * as ImagePicker from 'expo-image-picker';
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -782,6 +783,8 @@ function SeguirPedido() {
       // C-CLIENTE-AUSENTE: cerrado sin entregar porque no estabas; no se dice «entregado».
       (p.estado === 'entregado' && p.entregadoComo === 'ausente' ? t.noEntregadoAusente : null) ??
       (recoge ? t.estadosRecoger[p.estado] : undefined) ??
+      // C-PAGO-AL-RECIBIR-TEXTO: con pago al recibir, «pagado» no es «Pago recibido».
+      textoPedidoSinCobrar(p.estado, p.metodoPago, esTienda, idioma === 'en' ? 'en' : 'es') ??
       (esTienda ? t.estadosTienda[p.estado] : undefined) ??
       t.estados[p.estado] ??
       p.estado)

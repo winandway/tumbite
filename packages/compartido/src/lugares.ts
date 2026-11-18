@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { sinPlusCode } from './puntoExacto';
 
 /**
  * C-DIRECCION-SUGERENCIAS (regla de Richard, 28 oct 2026): TODA casilla de dirección sugiere
@@ -15,6 +16,16 @@ export type SugerenciaDireccion = {
   secundario?: string;
   distanciaM?: number;
 };
+/** C-SIN-PLUS-CODE: una sugerencia para mostrar, sin plus codes en ninguna de sus partes. */
+export function limpiarSugerencia(x: SugerenciaDireccion): SugerenciaDireccion {
+  const limpio = (t: string) => sinPlusCode(t) || t;
+  return {
+    ...x,
+    texto: limpio(x.texto),
+    ...(x.principal !== undefined ? { principal: limpio(x.principal) } : {}),
+    ...(x.secundario !== undefined ? { secundario: sinPlusCode(x.secundario) } : {}),
+  };
+}
 export type DireccionElegida = { punto: { lat: number; lng: number }; direccion: string };
 export type PedirLugares = <R>(metodo: 'GET', ruta: string) => Promise<R>;
 
@@ -114,7 +125,7 @@ export function useSugerenciasDireccion(op: {
       )
         .then((r) => {
           // Solo si sigue siendo lo último escrito (una respuesta vieja no pisa la nueva).
-          if (ultima.current === texto) setSugerencias(r.sugerencias);
+          if (ultima.current === texto) setSugerencias(r.sugerencias.map(limpiarSugerencia));
         })
         .catch(() => setSugerencias([]))
         .finally(() => {
@@ -131,7 +142,8 @@ export function useSugerenciasDireccion(op: {
         'GET',
         `/datos/lugares/punto/${encodeURIComponent(id)}?sesion=${sesion.current}`,
       );
-      return r;
+      // C-SIN-PLUS-CODE: el destino elegido nunca lleva plus code (aunque el servidor sea viejo).
+      return { ...r, direccion: sinPlusCode(r.direccion) || r.direccion };
     } catch {
       return null;
     } finally {

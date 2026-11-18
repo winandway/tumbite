@@ -26,7 +26,7 @@ import { POR_SERVICIO } from '../viajes/AltaPasajeros';
 import { MiCarro } from '../viajes/MiCarro';
 import { MiMoto } from '../viajes/MiMoto';
 import { IMG } from '../piezas/recursos';
-import { nombreServicio, ordenarServicios, type ServicioPanel } from './logica';
+import { fotoSirveDeAvatar, nombreServicio, ordenarServicios, type ServicioPanel } from './logica';
 import { textosServicios } from './textos';
 
 /**
@@ -380,6 +380,8 @@ export function PerfilAcordeon({
   const [kyc, setKyc] = useState<{ estado: string; motivo: string } | null>(null);
   const [requisitos, setRequisitos] = useState<Record<string, PapelReq[]>>({});
   const [foto, setFoto] = useState<string | null>(null);
+  // C-AVATAR-SIN-LINEA: una foto que no carga o es diminuta no se estira: van las iniciales.
+  const [fotoMala, setFotoMala] = useState(false);
   const [subiendo, setSubiendo] = useState('');
   const [error, setError] = useState('');
   const ids = servicios.map((s) => s.servicioId).join(',');
@@ -614,10 +616,16 @@ export function PerfilAcordeon({
       {/* Cabecera (pantallas 06 y 07): foto con el ✓ verde, «Mi perfil» e identidad. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingBottom: 16 }}>
         <View>
-          {foto ? (
+          {foto && !fotoMala ? (
             <Image
               source={{ uri: foto }}
+              resizeMode="cover"
               style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: COLOR.superficie }}
+              onError={() => setFotoMala(true)}
+              onLoad={(ev) => {
+                const f = ev.nativeEvent.source;
+                if (!fotoSirveDeAvatar(f?.width, f?.height)) setFotoMala(true);
+              }}
               accessibilityIgnoresInvertColors
             />
           ) : (

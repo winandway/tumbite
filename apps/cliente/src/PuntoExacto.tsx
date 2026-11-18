@@ -144,9 +144,16 @@ export function PuntoExacto({
         >
           <Icono nombre="arrow-back" tamano={24} color={C.secundario} />
         </Pressable>
+        {/* C-TITULO-PUNTO-ENTERO (robot de Android, 18 nov 2026): «Confirma el punto de encuentro»
+            no cabía en un renglón a 360 de ancho y Android lo cortaba por los dos lados. Hasta dos
+            renglones, la letra se ajusta si hace falta y la medición simple de Android. */}
         <Text
           accessibilityRole="header"
-          style={{ flex: 1, fontSize: 18, fontWeight: '700', color: C.secundario }}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+          textBreakStrategy="simple"
+          style={{ flex: 1, flexShrink: 1, fontSize: 18, fontWeight: '700', color: C.secundario }}
         >
           {tituloPuntoExacto(idioma, tipo)}
         </Text>

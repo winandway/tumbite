@@ -29,6 +29,7 @@ import {
   estimarRuta,
   faseDeViaje,
   rangoPrefijo,
+  sinPlusCode,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import { avisarResponsableZona } from '../panicoZona';
@@ -150,6 +151,9 @@ function tarifaPublica(f: FilaTarifa) {
 }
 
 /** La tarifa activa de un servicio en una zona, o null. */
+/** C-SIN-PLUS-CODE: una dirección guardada, para mostrar. */
+const sinCodigo = (x: string) => sinPlusCode(x) || x;
+
 export async function tarifaActiva(
   db: D1Database,
   servicio: string,
@@ -1051,8 +1055,9 @@ function viajePublico(f: FilaViajeCliente) {
         ? f.pin_recogida
         : null,
     metodoPago: f.metodo_pago,
-    origen: { direccion: f.origen_direccion, lat: f.origen_lat, lng: f.origen_lng },
-    destino: { direccion: f.destino_direccion, lat: f.destino_lat, lng: f.destino_lng },
+    // C-SIN-PLUS-CODE: también los viajes guardados antes del arreglo.
+    origen: { direccion: sinCodigo(f.origen_direccion), lat: f.origen_lat, lng: f.origen_lng },
+    destino: { direccion: sinCodigo(f.destino_direccion), lat: f.destino_lat, lng: f.destino_lng },
     total: f.total,
     moneda: f.moneda,
     // C-CUPON-DIVOOX: lo que paga Divoox y lo que el pasajero paga en mano.
@@ -1397,13 +1402,13 @@ viajesPasajero.get('/publico/viaje/:codigo', async (c) => {
       estado,
       servicio,
       terminado: false,
-      origen: String(f.origen_direccion),
+      origen: sinCodigo(String(f.origen_direccion)),
       // C-VIAJE-PARADAS: quien acompaña el viaje ve por dónde para (solo la dirección y si ya se hizo).
       paradas: (await paradasDe(base(c), String(f.id))).map((p) => ({
         direccion: p.direccion,
         hecha: p.estado === 'visitada',
       })),
-      destino: String(f.destino_direccion),
+      destino: sinCodigo(String(f.destino_direccion)),
       conductor: f.conductor ? String(f.conductor).split(' ')[0] : null,
       vehiculo: f.conductor
         ? { marca: f.marca, modelo: f.modelo, color: f.color, placa: f.placa }

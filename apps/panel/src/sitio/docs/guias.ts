@@ -1459,7 +1459,7 @@ const es: SeccionDocs[] = [
         ],
         preguntas: ['¿Cómo cancelo un pedido?', '¿Me devuelven el dinero si cancelo?'],
         pasos: [
-          'Abre tu pedido en la app. Mientras diga «Pago recibido. Esperando que el restaurante lo acepte», verás «Cancelar el pedido».',
+          'Abre tu pedido en la app. Mientras diga «Pago recibido. Esperando que el restaurante lo acepte» (o «Pedido enviado…» si pagas al recibir), verás «Cancelar el pedido».',
           'Tócalo. La app te pregunta si estás seguro y te recuerda que te devolvemos todo.',
           'Toca «Sí, cancelar». El pedido queda cancelado al instante.',
           'La devolución sale de inmediato a la misma tarjeta. Según tu banco, puede tardar de 5 a 10 días hábiles en verse en tu estado de cuenta.',
@@ -6754,7 +6754,7 @@ const en: SeccionDocs[] = [
         ],
         preguntas: ['How do I cancel an order?', 'Do I get my money back if I cancel?'],
         pasos: [
-          'Open your order in the app. While it says “Payment received. Waiting for the restaurant to accept,” you’ll see “Cancel order.”',
+          'Open your order in the app. While it says “Payment received. Waiting for the restaurant to accept” (or “Order sent…” if you pay on delivery), you’ll see “Cancel order.”',
           'Tap it. The app asks if you’re sure and reminds you that you get everything back.',
           'Tap “Yes, cancel.” The order is canceled right away.',
           'The refund goes out immediately to the same card. Depending on your bank, it can take 5 to 10 business days to show on your statement.',

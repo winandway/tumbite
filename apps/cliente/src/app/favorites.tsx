@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { type Restaurante, enIdioma } from '@tumbite/compartido';
+import { type Restaurante, categoriaRestaurante, enIdioma } from '@tumbite/compartido';
 import { C, urlFoto, useSesion, Text } from '@tumbite/movil';
 import { useRestaurantes } from '../comida/useRestaurantes';
 import { ANCHO_MAX, Encabezado, sombra } from '../comida/piezas';
@@ -31,11 +31,14 @@ const T = {
 
 /** Pestaña Favoritos (auditoría final, punto 13): los restaurantes guardados con el corazón. */
 function Favoritos() {
-  const { api, idioma } = useSesion();
+  const { api, idioma, usuario } = useSesion();
   const t = enIdioma(T, idioma);
   const catalogo = useRestaurantes(api, null);
   const [ids, setIds] = useState<string[] | null>(null);
+  // C-SIN-SESION-SIN-401: sin sesión no se piden los favoritos (daban 401): la lista queda vacía.
+  const conSesion = Boolean(usuario);
   useEffect(() => {
+    if (!conSesion) return;
     let vivo = true;
     api
       .pedir<{ ids: string[] }>('GET', '/datos/favoritos')
@@ -48,12 +51,13 @@ function Favoritos() {
     return () => {
       vivo = false;
     };
-  }, [api]);
+  }, [api, conSesion]);
   const lista = useMemo(() => {
-    if (!ids) return null;
+    const visibles = conSesion ? ids : [];
+    if (!visibles) return null;
     const porId = new Map(catalogo.restaurantes.map((r) => [r.id, r]));
-    return ids.map((id) => porId.get(id)).filter((r): r is Restaurante => Boolean(r));
-  }, [ids, catalogo.restaurantes]);
+    return visibles.map((id) => porId.get(id)).filter((r): r is Restaurante => Boolean(r));
+  }, [ids, catalogo.restaurantes, conSesion]);
 
   async function quitar(id: string) {
     setIds((x) => (x ?? []).filter((y) => y !== id));
@@ -118,7 +122,7 @@ function Favoritos() {
                 {r.nombre}
               </Text>
               <Text style={{ color: '#666B73', marginTop: 2 }}>
-                {r.categoria ? `${r.categoria} · ` : ''}
+                {r.categoria ? `${categoriaRestaurante(r.categoria, idioma)} · ` : ''}
                 <Text
                   style={
                     (r.abiertoAhora ?? r.abierto) ? { color: C.exito, fontWeight: '700' } : null

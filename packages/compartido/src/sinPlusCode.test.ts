@@ -13,6 +13,15 @@ describe('sin plus codes en las direcciones que se muestran', () => {
   it('quita un plus code en medio', () => {
     expect(sinPlusCode('El Vigía, CQPG+7F2, Mérida')).toBe('El Vigía, Mérida');
   });
+  it('quita el plus code pegado al nombre del lugar, sin borrar el nombre (robot, 18 nov)', () => {
+    expect(sinPlusCode('J85P+QQ2 Terminal de Pasajeros, El Vigía 5145, Mérida')).toBe(
+      'Terminal de Pasajeros, El Vigía 5145, Mérida',
+    );
+    expect(sinPlusCode('Terminal de Pasajeros J85P+QQ2, El Vigía')).toBe(
+      'Terminal de Pasajeros, El Vigía',
+    );
+    expect(sinPlusCode('CQPG+7F, El Vigía')).toBe('El Vigía');
+  });
   it('no toca una dirección normal', () => {
     expect(sinPlusCode('5145 Av. Don Pepe Rojas, El Vigía')).toBe(
       '5145 Av. Don Pepe Rojas, El Vigía',
