@@ -86,6 +86,8 @@ const ORDEN_PIEZAS = [
   'dinamico',
   'cargoFijo',
   'redondeo',
+  // C-SUBIR-TARIFA: lo que subió el pasajero (así el recibo suma el total).
+  'subidaPasajero',
 ];
 
 function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {

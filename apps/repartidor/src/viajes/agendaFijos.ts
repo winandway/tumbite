@@ -65,22 +65,26 @@ const TEXTOS = {
   es: {
     confianza: 'Cliente de confianza · solo para ti',
     fijo: 'Viaje fijo',
+    // C-SUBIR-TARIFA: el pasajero subió la tarifa (la ganancia ya es con el precio nuevo).
+    subida: 'Tarifa subida por el pasajero',
     menor: (n: string) => `Recoges a un menor: ${n}. Pide su PIN`,
   },
   en: {
     confianza: 'Trusted rider · just for you',
     fijo: 'Regular ride',
+    subida: 'Fare raised by the rider',
     menor: (n: string) => `You’re picking up a minor: ${n}. Ask for their PIN`,
   },
 };
 
 /** Las líneas que la oferta y el viaje en curso muestran arriba, en este orden. */
 export function textoOfertaConfianza(
-  o: { deConfianza?: boolean; viajeFijo?: boolean; menor?: string | null },
+  o: { deConfianza?: boolean; viajeFijo?: boolean; menor?: string | null; tarifaSubida?: boolean },
   idioma: 'es' | 'en',
 ): string[] {
   const t = idioma === 'en' ? TEXTOS.en : TEXTOS.es;
   return [
+    o.tarifaSubida ? t.subida : '',
     o.deConfianza ? t.confianza : '',
     o.viajeFijo ? t.fijo : '',
     o.menor ? t.menor(o.menor) : '',

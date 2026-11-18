@@ -62,3 +62,15 @@ describe('agenda de clientes fijos', () => {
     expect(textoOfertaConfianza({}, 'es')).toEqual([]);
   });
 });
+
+describe('C-SUBIR-TARIFA: la oferta dice que el pasajero subió la tarifa', () => {
+  it('«Tarifa subida por el pasajero» / «Fare raised by the rider»', () => {
+    expect(textoOfertaConfianza({ tarifaSubida: true }, 'es')).toContain(
+      'Tarifa subida por el pasajero',
+    );
+    expect(textoOfertaConfianza({ tarifaSubida: true }, 'en')).toContain(
+      'Fare raised by the rider',
+    );
+    expect(textoOfertaConfianza({}, 'es')).toEqual([]);
+  });
+});

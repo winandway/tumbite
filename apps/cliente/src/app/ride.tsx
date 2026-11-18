@@ -1,3 +1,4 @@
+import type { SubidaDisponible } from '../viajes/subirTarifa';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,6 +41,11 @@ function PantallaMoto() {
   useEffect(() => {
     viajeIdRef.current = viajeId;
   }, [viajeId]);
+  // C-SUBIR-TARIFA: los botones de «Subir la tarifa» que manda el servidor mientras busca.
+  const [subida, setSubida] = useState<{ datos: SubidaDisponible | null; en: number }>({
+    datos: null,
+    en: 0,
+  });
   const [deuda, setDeuda] = useState<{ monto: number; moneda: string | null } | null>(null);
   // C-VIAJE-SEGURIDAD-2: el «¿Todo bien?» si el viaje se sale de la ruta.
   const [alerta, setAlerta] = useState<{ id: string } | null>(null);
@@ -55,8 +61,10 @@ function PantallaMoto() {
           viaje: ViajePasajero;
           alerta?: { id: string } | null;
           paquete?: PaqueteCliente | null;
+          subida?: SubidaDisponible | null;
         }>('GET', `/datos/viajes/${viajeId}`);
         setViaje(r.viaje);
+        setSubida({ datos: r.subida ?? null, en: Date.now() });
         setPaquete(r.paquete ?? null);
         setAlerta(r.alerta ?? null);
         return;
@@ -66,6 +74,7 @@ function PantallaMoto() {
         deudaPendiente: { monto: number; moneda: string | null } | null;
         alerta?: { id: string } | null;
         paquete?: PaqueteCliente | null;
+        subida?: SubidaDisponible | null;
       }>(
         'GET',
         servicio === 'envios' ? '/datos/viajes/actual?servicio=envios' : '/datos/viajes/actual',
@@ -74,6 +83,7 @@ function PantallaMoto() {
       setPaquete(r.paquete ?? null);
       setAlerta(r.alerta ?? null);
       setDeuda(r.deudaPendiente);
+      setSubida({ datos: r.subida ?? null, en: Date.now() });
       if (r.viaje) setViajeId(r.viaje.id);
     } catch (e) {
       console.warn('moto: no se pudo cargar el viaje', e);
@@ -138,6 +148,8 @@ function PantallaMoto() {
             viaje={viaje}
             paquete={paquete}
             alCambiar={() => void cargar()}
+            subida={subida.datos}
+            subidaEn={subida.en}
             alTerminar={async () => {
               // C-PEDIR-OTRA-VEZ: el formulario abre con ESTE viaje escrito (recogida, destino,
               // paradas, categoría y pago), como «Cambiar algo» de Mis viajes.

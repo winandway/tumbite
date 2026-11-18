@@ -31,6 +31,8 @@ import { type ParadaDelViaje, ParadasDelViaje } from './Paradas';
 import { BuscandoConductor, useReducirMovimiento } from './BuscandoConductor';
 import { TIEMPOS, vehiculoDeEspera } from './escenaBuscando';
 import { TEXTOS_ESPERA } from './textosEspera';
+import { SubirTarifaBotones } from './SubirTarifaBotones';
+import type { SubidaDisponible } from './subirTarifa';
 import { PrecioCompacto, PrecioDelViaje, type RegaloDelViaje } from './PrecioDelViaje';
 
 /** Lo que manda GET /datos/viajes/actual y /datos/viajes/:id. */
@@ -231,11 +233,16 @@ export function ViajeEnCurso({
   paquete = null,
   alCambiar,
   alTerminar,
+  subida = null,
+  subidaEn = 0,
 }: {
   viaje: ViajePasajero;
   paquete?: PaqueteCliente | null;
   alCambiar: () => void;
   alTerminar: () => void;
+  /** C-SUBIR-TARIFA: los botones que manda el servidor mientras busca (null si no aplica). */
+  subida?: SubidaDisponible | null;
+  subidaEn?: number;
 }) {
   const { api, idioma } = useSesion();
   const base = enIdioma(TEXTOS_MOTO, idioma);
@@ -412,6 +419,12 @@ export function ViajeEnCurso({
               <Text style={{ color: C.exito, fontWeight: '700' }}>{te.precioFijo}</Text>
             </View>
           ) : null}
+          <SubirTarifaBotones
+            viajeId={viaje.id}
+            subida={subida}
+            recibidoEn={subidaEn}
+            alSubir={alCambiar}
+          />
         </View>
       ) : (
         <Text

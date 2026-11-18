@@ -38,6 +38,8 @@ export type OfertaViaje = {
   deConfianza?: boolean;
   /** C-VIAJES-FIJOS: sale de un viaje fijo, y el nombre del menor si lleva a uno. */
   viajeFijo?: boolean;
+  /** C-SUBIR-TARIFA: el pasajero subió la tarifa («Tarifa subida por el pasajero»). */
+  tarifaSubida?: boolean;
   menor?: string | null;
 };
 
