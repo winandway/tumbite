@@ -1130,6 +1130,98 @@ const es: Guia[] = [
   },
 ];
 
+// ───────────────────────── Cambiar la ciudad de un conductor (C-CAMBIAR-CIUDAD-ADMIN, 18 nov 2026) ─────────────────────────
+
+const capCiudad = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({ archivo: `ciudad-${nombre}-${idioma}.webp`, alt, pie });
+
+const cambiarCiudad: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'change-driver-city',
+    titulo: 'Cambiar la ciudad de un conductor',
+    resumen:
+      'Desde la ficha del conductor, en sus tres puntos, «Cambiar ciudad» lo pasa a otra ciudad activa con un motivo. Si cambia de país, se confirma aparte. Todo queda en el registro.',
+    explicacion: [
+      'Úsalo cuando un conductor quedó en la ciudad equivocada (por ejemplo, se registró sin ubicación y quedó en Miami) o se mudó. Divoox lo cambia en todos los lugares a la vez: su cuenta, su ficha de conductor y su código, que pasa al de la ciudad nueva (por ejemplo, de US-MIA-000015 a VE-ELV-000003). El código viejo queda en el registro.',
+      'No se puede con el conductor conectado ni con un viaje o una entrega en curso: el panel lo dice y no cambia nada. Pídele que se desconecte o espera a que termine.',
+      'Si la ciudad nueva es de otro país, el panel pide una segunda confirmación: su moneda, su forma de cobro y los papeles que se le piden pasan a ser los del país nuevo. Sus papeles y aprobaciones se quedan. Si tiene saldo o una cuenta de cobro en el país viejo, el cambio no se permite hasta cerrarlos.',
+      'Después del cambio, la app ya no le mueve la ciudad por su ubicación: la eligió el equipo. Solo ven la opción las personas con permiso sobre conductores, y solo hacia ciudades de su zona de trabajo.',
+    ],
+    capturas: [
+      capCiudad(
+        'formulario',
+        'es',
+        'La ficha de un conductor con el formulario Cambiar ciudad abierto: Ciudad nueva El Vigía (VE), el motivo escrito y los botones Cambiar ciudad y Cancelar.',
+        'Elige la ciudad, escribe el motivo y confirma.',
+      ),
+      capCiudad(
+        'listo',
+        'es',
+        'La ficha del conductor después del cambio: su código nuevo VE-ELV, el aviso «Listo. Su código nuevo es…» y la línea Desconectado · El Vigía.',
+        'El cambio se ve al momento, con su código nuevo.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo paso a un conductor a otra ciudad?',
+      '¿Por qué un conductor de El Vigía aparece en Miami?',
+      '¿Qué pasa con su código y su saldo si cambia de país?',
+    ],
+    pasos: [
+      'Busca al conductor en el buscador o en Repartidores y abre su ficha.',
+      'Comprueba que esté desconectado y sin trabajo en curso.',
+      'Abre los tres puntos junto a su nombre y elige «Cambiar ciudad».',
+      'Elige la ciudad nueva, escribe el motivo (quién lo autorizó) y toca «Cambiar ciudad».',
+      'Confirma. Si es otro país, confirma también el cambio de país.',
+      'Revisa la ficha: la ciudad y el código nuevos ya se ven.',
+    ],
+    nota: 'Un cambio de país es una decisión de la empresa: escribe en el motivo quién lo autorizó.',
+  },
+  en: {
+    id: 'change-driver-city',
+    titulo: 'Change a driver’s city',
+    resumen:
+      'From the driver’s page, in the three-dot menu, “Change city” moves them to another active city with a reason. A country change needs a second confirmation. Everything is logged.',
+    explicacion: [
+      'Use it when a driver ended up in the wrong city (for example, they signed up without a location and landed in Miami) or moved. Divoox changes it everywhere at once: their account, their driver record and their code, which becomes the new city’s (for example, from US-MIA-000015 to VE-ELV-000003). The old code stays in the log.',
+      'It can’t be done while the driver is online or has a ride or delivery in progress: the dashboard says so and nothing changes. Ask them to go offline or wait until they finish.',
+      'If the new city is in another country, the dashboard asks for a second confirmation: their currency, payout method and required documents become the new country’s. Their documents and approvals stay. If they have a balance or a payout account in the old country, the change isn’t allowed until those are closed.',
+      'After the change, the app no longer moves their city by location: the team chose it. Only people with permission over drivers see the option, and only for cities in their work area.',
+    ],
+    capturas: [
+      capCiudad(
+        'formulario',
+        'en',
+        'A driver’s page with the Change city form open: New city El Vigía (VE), the reason filled in, and the Change city and Cancel buttons.',
+        'Choose the city, write the reason and confirm.',
+      ),
+      capCiudad(
+        'listo',
+        'en',
+        'The driver’s page after the change: their new VE-ELV code, the “Done. Their new code is…” notice and the Offline · El Vigía line.',
+        'The change shows right away, with their new code.',
+      ),
+    ],
+    preguntas: [
+      'How do I move a driver to another city?',
+      'Why does a driver from El Vigía show up in Miami?',
+      'What happens to their code and balance if they change country?',
+    ],
+    pasos: [
+      'Find the driver with the search bar or in Drivers and open their page.',
+      'Check they’re offline with no job in progress.',
+      'Open the three dots next to their name and choose “Change city.”',
+      'Choose the new city, write the reason (who approved it) and tap “Change city.”',
+      'Confirm. If it’s another country, confirm the country change too.',
+      'Check the page: the new city and code show right away.',
+    ],
+    nota: 'A country change is a company decision: write in the reason who approved it.',
+  },
+};
+
 // ───────────────────────── Regalos Divoox (C-CUPON-DIVOOX, 17 nov 2026) ─────────────────────────
 
 const capRegalo = (
@@ -1661,6 +1753,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(camilaBuzon),
         ...tomar(['link-support-ticket', 'flagged-content', 'resolve-expired-card-authorization']),
         de(dobleFirma),
+        de(cambiarCiudad),
       ],
     },
     {

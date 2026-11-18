@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-CAMBIAR-CIUDAD-ADMIN · El equipo cambia la ciudad de un conductor desde su ficha (piloto, 18 nov 2026) — todos los países
+
+- **Qué faltaba:** en el superadmin, la ficha del repartidor solo traía «Borrar la cuenta» en los tres puntos. Un conductor real del piloto quedó en Miami (zona por defecto) y no había cómo pasarlo a El Vigía (la única forma estaba escondida en la ficha de Moto y sin lista de ciudades).
+- **Qué se hizo:** «Cambiar ciudad» en los tres puntos de la ficha del repartidor (`CambiarCiudadConductor.tsx`, también lo usa la ficha de Moto): ciudades activas, motivo obligatorio, confirmación y una segunda si cambia de país; lo escrito no se pierde (borrador). El servidor (`PUT /datos/admin/conductores/:id/ciudad`) no lo permite conectado (antes lo desconectaba solo) ni con trabajo en curso; deja coherentes la cuenta, la fila de repartidor (`ciudad_elegida_en`, para que la ciudad por ubicación no la vuelva a mover, y el área en blanco); un cambio de país pide `cambioPais: true` y se niega con saldo de billetera, saldo del libro del país viejo o cuenta de cobro; el código (US-MIA-000015) pasa al de la ciudad nueva con `asegurarCodigoRepartidor` y el viejo queda en `auditoria_admin` con quién, cuándo, de dónde a dónde y el motivo.
+- **Cómo se comprueba:** `apps/servidor/src/cambiarCiudadAdmin.test.ts` (conectado, cambio de país sin confirmar, con saldo, y la auditoría; vistas en rojo), `apps/panel/src/panel/CambiarCiudadConductor.test.tsx`, y el recorrido `e2e/recorrido/cambiarCiudadAdmin.spec.ts` (es/en; con CAPTURAS=1 guarda las capturas de la ayuda interna «?», que se suben con `scripts/docs/subir-ayuda-interna.mjs`).
+- **Qué NO tocar:** no volver a desconectar en silencio al cambiar de ciudad; no cambiar de país con dinero del país viejo; no publicar esta guía en Docs (es interna).
+
 ## C-ZONA-CONDUCTOR-NUEVO · El conductor nuevo de El Vigía quedaba en Miami (robot, 18 nov 2026) — todos los países
 
 - **Qué pasaba:** `repartidores.zona_id` nace con `DEFAULT 'US-FL-MIAMI'`. Un conductor registrado en El Vigía (con el código de un equipo de El Vigía, o sin código) quedaba en Miami hasta su primera conexión con GPS: veía los servicios de Miami, no los de su ciudad. En producción, una cuenta del piloto creada el 18 nov (teléfono venezolano) está así.

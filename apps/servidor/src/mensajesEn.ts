@@ -2056,6 +2056,10 @@ export const MENSAJES_EN = new Map<string, string>([
   ['Desconéctate antes de cambiar de ciudad.', 'Go offline before changing your city.'],
   ['Desconéctate antes de cambiar de vehículo.', 'Go offline before changing your vehicle.'],
   [
+    'Está conectado: tiene que desconectarse antes de cambiar de ciudad.',
+    'They’re online: they have to go offline before changing city.',
+  ],
+  [
     'En este país los viajes no necesitan tasa de referencia.',
     'Rides in this country don’t need a reference rate.',
   ],
@@ -2206,6 +2210,16 @@ const PARTES = new Map([
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
   [/^Un viaje puede llevar hasta (\d+) paradas\.$/, (m) => `A ride can have up to ${m[1]} stops.`],
+  // C-CAMBIAR-CIUDAD-ADMIN (18 nov 2026)
+  [
+    /^Es un cambio de país \(de ([A-Z]{2}) a ([A-Z]{2})\): confírmalo para seguir\.$/,
+    (m) => `This is a country change (from ${m[1]} to ${m[2]}): confirm it to continue.`,
+  ],
+  [
+    /^Tiene saldo o una cuenta de cobro en ([A-Z]{2}): ciérralos antes de cambiarlo de país\.$/,
+    (m) =>
+      `They have a balance or a payout account in ${m[1]}: close them before changing their country.`,
+  ],
   [
     /^Este carro no cumple lo que pide esa categoría: (\d+) años como máximo y (\d+) plazas o más\.$/,
     (m) =>

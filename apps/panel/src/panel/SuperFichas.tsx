@@ -13,6 +13,7 @@ import { VerDato } from './DatoProtegido';
 import { ir } from '../ruta';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import { CambiarCiudadConductor } from './CambiarCiudadConductor';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { usePreferencias } from './usePreferencias';
 
@@ -234,6 +235,7 @@ const T_SUSPENDER = {
       'Motivo de la mala conducta. Su correo y su teléfono no podrán volver a registrarse, de ninguna forma:',
     mas: 'Más acciones de la cuenta',
     borrarCuenta: 'Borrar la cuenta',
+    cambiarCiudad: 'Cambiar ciudad',
     confirmarBorrar:
       'Se borran sus datos personales (igual que cuando la persona la borra desde la app) y no se puede deshacer. Escribe BORRAR para confirmar:',
     motivoBorrar: 'Motivo del borrado (queda en el registro, con tu nombre y la hora):',
@@ -251,6 +253,7 @@ const T_SUSPENDER = {
       'Reason for the misconduct. Their email and phone number won’t be able to sign up again, in any form:',
     mas: 'More account actions',
     borrarCuenta: 'Delete the account',
+    cambiarCiudad: 'Change city',
     confirmarBorrar:
       'Their personal data is deleted (the same as when the person deletes it from the app) and this can’t be undone. Type DELETE to confirm:',
     motivoBorrar: 'Reason for the deletion (kept in the log, with your name and the time):',
@@ -265,14 +268,19 @@ function BotonSuspender({
   activo,
   idioma,
   recargar,
+  ciudad,
 }: {
   id: string;
   activo: boolean;
   idioma: Idioma;
   recargar: () => void;
+  /** C-CAMBIAR-CIUDAD-ADMIN: solo en la ficha del repartidor (su ciudad de hoy). */
+  ciudad?: string;
 }) {
   const t = enIdioma(T_SUSPENDER, idioma);
   const [error, setError] = useState('');
+  const [cambiandoCiudad, setCambiandoCiudad] = useState(false);
+  const [aviso, setAviso] = useState('');
   const [borrada, setBorrada] = useState(false);
   // C-BORRAR-DESDE-SUPERADMIN: el mismo borrado de la app, escondido en los tres puntos.
   async function borrar() {
@@ -309,7 +317,7 @@ function BotonSuspender({
     }
   }
   return (
-    <p className="super-suspender">
+    <div className="super-suspender">
       {!activo ? <strong className="error-general">{t.suspendida}</strong> : null}{' '}
       <button type="button" className="enlace" onClick={() => void cambiar()}>
         {activo ? t.suspender : t.reactivar}
@@ -326,7 +334,12 @@ function BotonSuspender({
       {activo && !borrada ? (
         <MenuTresPuntos
           etiqueta={t.mas}
-          opciones={[{ texto: t.borrarCuenta, peligro: true, alTocar: () => void borrar() }]}
+          opciones={[
+            ...(ciudad !== undefined
+              ? [{ texto: t.cambiarCiudad, alTocar: () => setCambiandoCiudad(true) }]
+              : []),
+            { texto: t.borrarCuenta, peligro: true, alTocar: () => void borrar() },
+          ]}
         />
       ) : null}
       {error ? (
@@ -335,7 +348,21 @@ function BotonSuspender({
           {error}
         </span>
       ) : null}
-    </p>
+      {aviso ? <strong role="status"> {aviso}</strong> : null}
+      {cambiandoCiudad && ciudad !== undefined ? (
+        <CambiarCiudadConductor
+          id={id}
+          zonaActual={ciudad}
+          idioma={idioma}
+          alCerrar={() => setCambiandoCiudad(false)}
+          alCambiar={(texto) => {
+            setCambiandoCiudad(false);
+            setAviso(texto);
+            recargar();
+          }}
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -756,7 +783,13 @@ export function SuperRepartidor({
       <h1>
         {r.nombre} <small className="super-id">{r.codigo}</small>
       </h1>
-      <BotonSuspender id={r.id} activo={r.activo !== false} idioma={idioma} recargar={recargar} />
+      <BotonSuspender
+        id={r.id}
+        activo={r.activo !== false}
+        idioma={idioma}
+        recargar={recargar}
+        ciudad={r.ciudad}
+      />
       <p>
         <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
         {r.conectado ? t.enLinea : t.fueraLinea} · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}

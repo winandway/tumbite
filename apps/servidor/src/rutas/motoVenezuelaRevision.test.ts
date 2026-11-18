@@ -212,10 +212,18 @@ describe('C-CIUDAD-CONDUCTOR: cambiar de ciudad como en el mercado', () => {
       e.admin.token,
     );
     expect(sinMotivo.estado).toBe(400);
-    const equipo = await e.m.llamar(
+    // C-CAMBIAR-CIUDAD-ADMIN: de Venezuela a Estados Unidos es un cambio de país: pide confirmarlo.
+    const sinConfirmar = await e.m.llamar(
       'PUT',
       `/datos/admin/conductores/${rep.id}/ciudad`,
       { zonaId: 'US-FL-MIAMI', motivo: 'Se mudó a Miami' },
+      e.admin.token,
+    );
+    expect(sinConfirmar.estado).toBe(409);
+    const equipo = await e.m.llamar(
+      'PUT',
+      `/datos/admin/conductores/${rep.id}/ciudad`,
+      { zonaId: 'US-FL-MIAMI', motivo: 'Se mudó a Miami', cambioPais: true },
       e.admin.token,
     );
     expect(equipo.estado).toBe(200);

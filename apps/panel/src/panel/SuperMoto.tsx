@@ -1508,10 +1508,26 @@ function CambiarCiudad({
     setError('');
     setEnviando(true);
     try {
-      await pedir('PUT', `/datos/admin/conductores/${id}/ciudad`, {
+      const cuerpo = {
         zonaId: b.valores.zonaId.trim().toUpperCase(),
         motivo: b.valores.motivo.trim(),
-      });
+      };
+      try {
+        await pedir('PUT', `/datos/admin/conductores/${id}/ciudad`, cuerpo);
+      } catch (x) {
+        // C-CAMBIAR-CIUDAD-ADMIN: un cambio de país se confirma aparte (con dinero no se permite).
+        if (
+          !(x instanceof ErrorApi) ||
+          x.campo !== 'cambioPais' ||
+          /saldo|balance/i.test(x.message)
+        )
+          throw x;
+        if (!window.confirm(x.message)) return;
+        await pedir('PUT', `/datos/admin/conductores/${id}/ciudad`, {
+          ...cuerpo,
+          cambioPais: true,
+        });
+      }
       await b.limpiar();
       alCambiar(t.ciudadCambiada);
     } catch (x) {
