@@ -198,6 +198,17 @@ export async function unirConCorreo(db: D1Database, anonima: Persona, correoCrud
     db
       .prepare('UPDATE camila_sin_respuesta SET persona_id = ? WHERE persona_id = ?')
       .bind(destino.id, anonima.id),
+    // C-CAMILA-FALLOS: sus reportes de fallo (y sus capturas) pasan con ella; si las dos fichas tenían
+    // uno abierto, el de la ficha anónima se cancela (como mucho uno abierto por persona).
+    db
+      .prepare(
+        `UPDATE camila_reportes_fallo SET estado = 'cancelado' WHERE persona_id = ?2 AND estado IN ('preguntando', 'captura')
+           AND EXISTS (SELECT 1 FROM camila_reportes_fallo x WHERE x.persona_id = ?1 AND x.estado IN ('preguntando', 'captura'))`,
+      )
+      .bind(destino.id, anonima.id),
+    db
+      .prepare('UPDATE camila_reportes_fallo SET persona_id = ? WHERE persona_id = ?')
+      .bind(destino.id, anonima.id),
     db.prepare('DELETE FROM camila_personas WHERE id = ?').bind(anonima.id),
     // El navegador queda unido a la persona del correo: la próxima vez entra directo a su hilo.
     db

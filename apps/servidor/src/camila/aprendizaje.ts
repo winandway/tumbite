@@ -3,6 +3,7 @@ import { ErrorDatos } from '../validar';
 import { normalizar } from './conocimiento';
 import type { Env } from '../env';
 import { depurarCapturas } from './fallos';
+import { contarDelDia } from './modelo';
 import { resumenDiarioDeFallos } from '../rutas/camilaFallos';
 
 /**
@@ -156,7 +157,7 @@ export async function limpiarCamila(
     db.prepare("DELETE FROM camila_codigos WHERE vence_en < datetime('now', '-1 day')"),
     // Un reporte de fallo que la persona dejó a medias hace más de un día se cierra solo.
     db.prepare(
-      "UPDATE camila_reportes_fallo SET estado = 'cancelado' WHERE estado IN ('preguntando', 'captura') AND creado_en < datetime('now', '-1 day')",
+      "UPDATE camila_reportes_fallo SET estado = 'cancelado' WHERE estado IN ('preguntando', 'captura') AND actualizado_en < datetime('now', '-1 hour')",
     ),
   ]);
   // C-CAMILA-FALLOS: las capturas de pantalla viven 90 días.
@@ -181,5 +182,8 @@ export const TAREA_CAMILA_RESUMEN_FALLOS = {
   // Solo lee y manda un correo; se declara una por si el envío deja su marca.
   escriturasEsperadas: 1,
   correr: async (env: Env, db: D1Database) =>
-    new Date().getUTCHours() === 12 ? resumenDiarioDeFallos(env, db) : 0,
+    // Una sola vez al día, aunque el reloj repita la vuelta de esa hora.
+    new Date().getUTCHours() === 12 && (await contarDelDia(db, 'resumen_fallos', 1))
+      ? resumenDiarioDeFallos(env, db)
+      : 0,
 };

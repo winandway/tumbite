@@ -189,14 +189,23 @@ export const CODIGOS_POR_CORREO_DIA = 3;
 /** Mensajes de una misma persona que se contestan con IA en un día; después, sin IA. */
 export const MENSAJES_IA_POR_PERSONA_DIA = 50;
 
+/** Capturas de reportes de fallo que se guardan en un día, como mucho (el almacén no se llena). */
+export const TOPE_CAPTURAS_DIA = 300;
+
+const SQL_CONTADOR = {
+  anonimos: `INSERT INTO camila_gasto (dia, anonimos) VALUES (?1, 1)
+     ON CONFLICT(dia) DO UPDATE SET anonimos = anonimos + 1 WHERE camila_gasto.anonimos < ?2`,
+  casos: `INSERT INTO camila_gasto (dia, casos) VALUES (?1, 1)
+     ON CONFLICT(dia) DO UPDATE SET casos = casos + 1 WHERE camila_gasto.casos < ?2`,
+  capturas: `INSERT INTO camila_gasto (dia, capturas) VALUES (?1, 1)
+     ON CONFLICT(dia) DO UPDATE SET capturas = capturas + 1 WHERE camila_gasto.capturas < ?2`,
+  resumen_fallos: `INSERT INTO camila_gasto (dia, resumen_fallos) VALUES (?1, 1)
+     ON CONFLICT(dia) DO UPDATE SET resumen_fallos = resumen_fallos + 1 WHERE camila_gasto.resumen_fallos < ?2`,
+} as const;
+
 /** Suma uno al contador del día si todavía no llegó a su tope. Falso = tope alcanzado. */
-export async function contarDelDia(db: D1Database, cual: 'anonimos' | 'casos', tope: number) {
-  const sql =
-    cual === 'anonimos'
-      ? `INSERT INTO camila_gasto (dia, anonimos) VALUES (?1, 1)
-         ON CONFLICT(dia) DO UPDATE SET anonimos = anonimos + 1 WHERE camila_gasto.anonimos < ?2`
-      : `INSERT INTO camila_gasto (dia, casos) VALUES (?1, 1)
-         ON CONFLICT(dia) DO UPDATE SET casos = casos + 1 WHERE camila_gasto.casos < ?2`;
+export async function contarDelDia(db: D1Database, cual: keyof typeof SQL_CONTADOR, tope: number) {
+  const sql = new Map(Object.entries(SQL_CONTADOR)).get(cual) ?? SQL_CONTADOR.casos;
   const r = await db.prepare(sql).bind(hoy(), tope).run();
   return (r.meta.changes ?? 0) > 0;
 }

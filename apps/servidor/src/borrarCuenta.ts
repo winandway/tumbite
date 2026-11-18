@@ -110,6 +110,9 @@ export async function borrarCuenta(
     u.correo,
     canon?.telefono_canonico ?? null,
   );
+  // Primero los archivos y después las filas: si el almacén falla, el borrado se corta aquí y las
+  // claves siguen en la base para reintentar (nunca queda una captura sin fila que la apunte).
+  if (env.BUCKET && capturasCamila.length) await env.BUCKET.delete(capturasCamila);
   await db.batch([
     // C-CAMILA-BORRADO: sus conversaciones con soporte (Camila) se borran enteras.
     ...sentenciasBorrarDeCamila(db, u.id, u.correo, canon?.telefono_canonico ?? null),
@@ -335,7 +338,6 @@ export async function borrarCuenta(
       )
       .bind(u.id),
   ]);
-  if (env.BUCKET && capturasCamila.length) await env.BUCKET.delete(capturasCamila);
   // Y las fotos del documento, la cara y el local, del almacén privado.
   if (env.BUCKET) {
     for (const prefix of [

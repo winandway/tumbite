@@ -339,7 +339,7 @@ export async function recibirMensaje(
   const fallo =
     preguntaSiEsHumana(texto) || pideHumano(texto) || molesta
       ? null
-      : await pasoDeFallo(db, persona, texto, opciones.peticion ?? {});
+      : await pasoDeFallo(db, persona, texto, opciones.peticion ?? {}, canal);
   if (preguntaSiEsHumana(texto)) respuesta = segun(VERDAD, idioma);
   else if (pideHumano(texto)) {
     await abrirCaso(c, texto, 'pide_persona');
@@ -347,7 +347,7 @@ export async function recibirMensaje(
   } else if (molesta) {
     await abrirCaso(c, texto, 'molesta');
     respuesta = segun(ENTIENDO_TU_MOLESTIA, idioma);
-  } else if (fallo) {
+  } else if (fallo && !fallo.dejaPasar) {
     respuesta = fallo.respuesta;
     pideCaptura = fallo.pideCaptura;
   } else {
@@ -405,6 +405,8 @@ export async function recibirMensaje(
       }
     }
   }
+  // El reporte de fallo se cerró y este mensaje era otra cosa: va el aviso del reporte y la respuesta.
+  if (fallo?.dejaPasar) respuesta = `${fallo.respuesta}\n\n${respuesta}`;
   // Aviso de asistente virtual desde el primer mensaje, solo en los países que lo exigen.
   if (!persona.aviso_ia_dado && persona.pais && ajustes.avisoIaPaises.includes(persona.pais)) {
     respuesta = `${segun(AVISO_PRIMER_MENSAJE, idioma)}\n\n${respuesta}`;

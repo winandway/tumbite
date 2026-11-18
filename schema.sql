@@ -4394,6 +4394,9 @@ CREATE TABLE IF NOT EXISTS camila_gasto (
   llamadas INTEGER NOT NULL DEFAULT 0,
   regalos INTEGER NOT NULL DEFAULT 0,
   avisado INTEGER NOT NULL DEFAULT 0,
+  -- Capturas de reportes de fallo guardadas hoy (tope por día) y si ya salió el resumen diario de fallos.
+  capturas INTEGER NOT NULL DEFAULT 0,
+  resumen_fallos INTEGER NOT NULL DEFAULT 0,
   -- Fichas anónimas nuevas del chat de la web y correos de «caso nuevo» al equipo, con tope por día.
   anonimos INTEGER NOT NULL DEFAULT 0,
   casos INTEGER NOT NULL DEFAULT 0,
@@ -4462,9 +4465,13 @@ CREATE TABLE IF NOT EXISTS camila_reportes_fallo (
   captura_tipo TEXT,
   avisado_arreglo INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- El último movimiento: un reporte abierto sin movimiento en 30 minutos se cierra solo.
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
   completo_en TEXT
 ) WITHOUT ROWID;
 CREATE INDEX IF NOT EXISTS camila_reportes_persona ON camila_reportes_fallo(persona_id, estado);
+-- Como mucho UN reporte abierto por persona.
+CREATE UNIQUE INDEX IF NOT EXISTS camila_reportes_abierto ON camila_reportes_fallo(persona_id) WHERE estado IN ('preguntando', 'captura');
 CREATE INDEX IF NOT EXISTS camila_reportes_fallo_id ON camila_reportes_fallo(fallo_id);
 -- Preguntas de diagnóstico que el equipo agrega por tipo de fallo. Camila usa solo las aprobadas.
 CREATE TABLE IF NOT EXISTS camila_preguntas (

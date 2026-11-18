@@ -34,69 +34,39 @@ export const NOMBRE_TIPO: Record<TipoFallo, { es: string; en: string }> = {
 
 /** Frases que dicen «algo falla» (ya sin acentos ni mayúsculas). */
 const FRASES_FALLO = [
-  'no carga',
-  'no cargan',
-  'no abre',
-  'no abren',
-  'se cerro',
-  'se cierra',
-  'se cierran',
-  'se cayo',
-  'se cae',
-  'no me deja',
-  'no deja',
-  'no funciona',
-  'no funcionan',
-  'no sirve',
-  'no sirven',
-  'sale un error',
-  'me sale error',
-  'da error',
-  'un error',
-  'me da un error',
-  'falla',
-  'fallo',
-  'se traba',
-  'se trabo',
-  'se pega',
-  'se quedo pegad',
-  'pantalla blanca',
-  'pantalla en blanco',
-  'en blanco',
-  'se congela',
-  'se congelo',
-  'se queda cargando',
-  'no aparece',
-  'no me aparece',
-  'no me llega el codigo',
-  'no llega el codigo',
-  'no responde',
-  'se reinicia',
-  'not working',
-  'does not work',
-  'doesn t work',
-  'doesnt work',
-  'won t let me',
-  'wont let me',
-  'will not let me',
-  'froze',
-  'freezes',
-  'frozen',
-  'blank screen',
-  'white screen',
-  'keeps closing',
-  'crashes',
-  'crashed',
-  'crash',
-  'not loading',
-  'won t load',
-  'wont load',
-  'does not load',
-  'an error',
-  'error message',
-  'a bug',
-  'is broken',
-  'stuck on',
+  ...[
+    'no carga',
+    'no cargan',
+    'no me carga',
+    'la app no abre',
+    'no abre la app',
+    'no me abre la app',
+  ],
+  ...[
+    'se cerro',
+    'se cierra',
+    'se cierran',
+    'se cayo la app',
+    'se cae la app',
+    'no me deja',
+    'no deja',
+  ],
+  ...['no funciona', 'no funcionan', 'no sirve', 'no sirven', 'sale un error', 'me sale error'],
+  ...['me sale un error', 'da error', 'me da un error', 'se traba', 'se trabo', 'se quedo pegada'],
+  ...['se quedo pegado', 'pantalla blanca', 'pantalla en blanco', 'se congela', 'se congelo'],
+  ...['se queda cargando', 'no me aparece', 'no me llega el codigo', 'no llega el codigo'],
+  ...['no responde', 'se reinicia', 'not working', 'does not work', 'doesn t work', 'doesnt work'],
+  ...[
+    'won t let me',
+    'wont let me',
+    'will not let me',
+    'froze',
+    'freezes',
+    'frozen',
+    'blank screen',
+  ],
+  ...['white screen', 'keeps closing', 'crashes', 'crashed', 'crash', 'not loading', 'won t load'],
+  ...['wont load', 'does not load', 'error message', 'a bug', 'is broken', 'stuck on'],
 ] as const;
 
 const PISTAS_TIPO: [TipoFallo, readonly string[]][] = [
@@ -174,7 +144,8 @@ const PISTAS_TIPO: [TipoFallo, readonly string[]][] = [
 
 export function detectarFallo(texto: string): TipoFallo | null {
   const t = ` ${normalizar(texto)} `;
-  if (!FRASES_FALLO.some((f) => t.includes(` ${f}`))) return null;
+  // La frase entera, con límite de palabra a los dos lados («no abre la app», no «no abre hasta las 9»).
+  if (!FRASES_FALLO.some((f) => t.includes(` ${f} `))) return null;
   for (const [tipo, pistas] of PISTAS_TIPO) if (pistas.some((p) => t.includes(p))) return tipo;
   return 'otro';
 }
@@ -228,20 +199,53 @@ export const TEXTOS_FALLO = {
       : `Buenas noticias: ya arreglamos el fallo que reportaste (${codigo}). Actualiza la app de Divoox a la última versión y prueba otra vez.${nota ? ` ${nota}` : ''} Si te sigue pasando, cuéntame por aquí.`,
 } as const;
 
-const dice = (texto: string, frases: readonly string[]) => {
-  const t = ` ${normalizar(texto)} `;
-  return frases.some((f) => t.includes(` ${f} `));
-};
-const CANCELA = ['cancelar', 'cancela', 'cancel', 'olvidalo', 'never mind', 'dejalo asi'];
+/** El mensaje ENTERO es una de estas frases (no «toqué cancelar el viaje», que es una respuesta). */
+const esFrase = (texto: string, frases: readonly string[]) => frases.includes(normalizar(texto));
+const CANCELA = [
+  'cancelar',
+  'cancela',
+  'cancelalo',
+  'cancel',
+  'cancelar el reporte',
+  'no reportar',
+  'olvidalo',
+  'never mind',
+  'dejalo asi',
+];
 const SIN_CAPTURA = [
   'sin captura',
   'no tengo captura',
   'no tengo',
-  'no screenshot',
   'no tengo foto',
+  'no',
+  'no screenshot',
+  'i don t have one',
   'omitir',
   'skip',
 ];
+
+/**
+ * Quita de un texto lo que identifica a una persona o sirve para engañar: correos, teléfonos, enlaces,
+ * identificadores y llaves largas. Se usa en el título del fallo (que sobrevive al borrado de la
+ * cuenta y viaja en el correo del resumen) y en todo lo que sale por la puerta de desarrollo.
+ */
+export function limpiarDato(texto: string, max = 300) {
+  return texto
+    .slice(0, 4000)
+    .replace(/https?:\/\/\S+/gi, '[enlace]')
+    .replace(/\bwww\.\S+/gi, '[enlace]')
+    .replace(/[^\s@]+@[^\s@]+/g, '[correo]')
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[id]')
+    .replace(/\b[A-Za-z0-9_-]{24,}\b/g, '[clave]')
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, '[número]')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+/** La app y el aparato los escribe el teléfono en sus cabeceras: solo letras, números y signos simples. */
+const cabeceraSegura = (t: string | undefined, max: number) =>
+  (t ?? '').replace(/[^\w ./;:(),-]/g, '').slice(0, max);
 
 /** Las preguntas de un reporte: las cuatro de base y las aprobadas por el equipo para ese tipo. */
 export async function preguntasDe(db: D1Database, tipo: TipoFallo): Promise<PreguntaDiagnostico[]> {
@@ -263,8 +267,8 @@ export type ContextoPeticion = { app?: string; aparato?: string };
 export async function contextoAutomatico(db: D1Database, p: Persona, pet: ContextoPeticion) {
   const base: Record<string, unknown> = {
     hora: new Date().toISOString(),
-    app: (pet.app ?? '').slice(0, 60) || 'web',
-    aparato: (pet.aparato ?? '').slice(0, 200),
+    app: cabeceraSegura(pet.app, 60) || 'web',
+    aparato: cabeceraSegura(pet.aparato, 160),
     idioma: p.idioma,
     pais: p.pais,
     canal: p.canal_ultimo,
@@ -320,48 +324,47 @@ type Reporte = {
   respuestas_json: string;
 };
 
+/** Un reporte sin movimiento en este rato se cierra solo: nunca secuestra el chat normal. */
+export const MINUTOS_REPORTE_ABIERTO = 30;
+
+/**
+ * El reporte que la persona tiene abierto AHORA (como mucho uno: índice único). Si lleva más de
+ * MINUTOS_REPORTE_ABIERTO sin movimiento, se cancela aquí mismo y no cuenta.
+ */
 export async function reporteEnCurso(db: D1Database, personaId: string) {
-  return db
+  const r = await db
     .prepare(
-      `SELECT id, tipo, estado, paso, inicial, preguntas_json, respuestas_json FROM camila_reportes_fallo
-        WHERE persona_id = ? AND estado IN ('preguntando', 'captura') ORDER BY creado_en DESC LIMIT 1`,
+      `SELECT id, tipo, estado, paso, inicial, preguntas_json, respuestas_json,
+         actualizado_en > datetime('now', '-${MINUTOS_REPORTE_ABIERTO} minutes') AS vivo
+         FROM camila_reportes_fallo WHERE persona_id = ? AND estado IN ('preguntando', 'captura')`,
     )
     .bind(personaId)
-    .first<Reporte>();
+    .first<Reporte & { vivo: number }>();
+  if (!r) return null;
+  if (Number(r.vivo) === 1) return r;
+  await db
+    .prepare(
+      "UPDATE camila_reportes_fallo SET estado = 'cancelado' WHERE id = ? AND estado IN ('preguntando', 'captura')",
+    )
+    .bind(r.id)
+    .run();
+  return null;
 }
 
 const texto = (q: PreguntaDiagnostico, i: IdiomaCamila) => (i === 'en' ? q.en : q.es);
 
 /** Las palabras que identifican un fallo: sin las de relleno, ordenadas, las seis más largas. */
 const RELLENO = new Set([
-  'para',
-  'pero',
-  'cuando',
-  'porque',
-  'esta',
-  'este',
-  'esto',
-  'estaba',
-  'como',
-  'solo',
-  'siempre',
-  'nada',
-  'algo',
-  'pantalla',
-  'divoox',
-  'driver',
-  'that',
-  'this',
-  'when',
-  'with',
-  'from',
-  'just',
-  'always',
-  'screen',
-  'have',
-  'does',
+  ...['para', 'pero', 'cuando', 'porque', 'esta', 'este', 'esto', 'estaba', 'como', 'solo'],
+  ...['siempre', 'nada', 'algo', 'pantalla', 'divoox', 'driver', 'that', 'this', 'when', 'with'],
+  ...['from', 'just', 'always', 'screen', 'have', 'does'],
 ]);
-export function huellaDeFallo(tipo: TipoFallo, textos: string[]) {
+/**
+ * La huella que agrupa reportes parecidos. Con menos de dos palabras propias («nada», «no sé») no hay
+ * con qué comparar: devuelve null y ese reporte queda como un fallo aparte, en vez de juntarse con
+ * otros distintos del mismo tipo.
+ */
+export function huellaDeFallo(tipo: TipoFallo, textos: string[]): string | null {
   const palabras = [
     ...new Set(
       normalizar(textos.join(' '))
@@ -372,17 +375,23 @@ export function huellaDeFallo(tipo: TipoFallo, textos: string[]) {
     .sort((a, b) => b.length - a.length || a.localeCompare(b))
     .slice(0, 6)
     .sort();
-  return `${tipo}:${palabras.join(' ')}`;
+  return palabras.length >= 2 ? `${tipo}:${palabras.join(' ')}` : null;
 }
 
 const codigoFallo = () =>
   `F-${[...crypto.getRandomValues(new Uint8Array(5))].map((b) => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'.charAt(b % 32)).join('')}`;
 
-/** Cierra el reporte: lo une a su fallo (o lo crea), suma el contador y devuelve el código. */
-async function completar(db: D1Database, r: Reporte, respuestas: string[]) {
-  // La huella sale de lo primero que dijo y de «qué vio»: es lo que más distingue un fallo de otro.
-  const huella = huellaDeFallo(r.tipo, [r.inicial, respuestas[2] ?? '']);
-  const titulo = (respuestas[2] || r.inicial).replace(/\s+/g, ' ').trim().slice(0, 140);
+/**
+ * Cierra el reporte: lo une a su fallo (o lo crea) y devuelve el código. Solo UNA llamada lo cierra
+ * (dos envíos a la vez no cuentan dos veces) y el contador son PERSONAS distintas, no reportes: nadie
+ * lo infla repitiendo el suyo. Un fallo arreglado se reabre cuando lo reporta alguien a quien no se
+ * le había avisado del arreglo; si lo repite alguien ya avisado, queda un caso para el equipo.
+ */
+async function completar(db: D1Database, r: Reporte, personaId: string, respuestas: string[]) {
+  const huella =
+    huellaDeFallo(r.tipo, [r.inicial, respuestas[2] ?? '']) ?? `${r.tipo}:sin-detalle:${r.id}`;
+  // El título sobrevive al borrado de la cuenta y viaja en el correo del resumen: va limpio.
+  const titulo = limpiarDato(respuestas[2] || r.inicial, 140) || segun(NOMBRE_TIPO[r.tipo], 'es');
   await db
     .prepare(
       `INSERT INTO camila_fallos (id, huella, codigo, tipo, titulo, reportes) VALUES (?, ?, ?, ?, ?, 0)
@@ -391,38 +400,72 @@ async function completar(db: D1Database, r: Reporte, respuestas: string[]) {
     .bind(nuevoId(), huella, codigoFallo(), r.tipo, titulo)
     .run();
   const fallo = await db
-    .prepare('SELECT id, codigo FROM camila_fallos WHERE huella = ?')
+    .prepare('SELECT id, codigo, estado FROM camila_fallos WHERE huella = ?')
     .bind(huella)
-    .first<{ id: string; codigo: string }>();
+    .first<{ id: string; codigo: string; estado: string }>();
   if (!fallo) throw new Error('camila: el fallo no quedó guardado');
+  const cerrado = await db
+    .prepare(
+      `UPDATE camila_reportes_fallo SET estado = 'completo', fallo_id = ?, respuestas_json = ?, completo_en = datetime('now')
+        WHERE id = ? AND estado IN ('preguntando', 'captura') RETURNING id`,
+    )
+    .bind(fallo.id, JSON.stringify(respuestas), r.id)
+    .first<{ id: string }>();
+  if (!cerrado) return fallo.codigo; // ya lo cerró otra llamada: no se cuenta otra vez
+  const yaAvisada =
+    fallo.estado === 'arreglado'
+      ? await db
+          .prepare(
+            'SELECT 1 FROM camila_reportes_fallo WHERE fallo_id = ? AND persona_id = ? AND avisado_arreglo = 1 LIMIT 1',
+          )
+          .bind(fallo.id, personaId)
+          .first()
+      : null;
   await db.batch([
     db
       .prepare(
-        "UPDATE camila_reportes_fallo SET estado = 'completo', fallo_id = ?, respuestas_json = ?, completo_en = datetime('now') WHERE id = ? AND estado <> 'completo'",
+        `UPDATE camila_fallos SET ultima_vez = datetime('now'), estado = ?2,
+           reportes = (SELECT COUNT(DISTINCT persona_id) FROM camila_reportes_fallo WHERE fallo_id = ?1 AND estado = 'completo')
+         WHERE id = ?1`,
       )
-      .bind(fallo.id, JSON.stringify(respuestas), r.id),
-    // Un fallo que vuelve a reportarse después de «arreglado» se reabre solo.
-    db
-      .prepare(
-        "UPDATE camila_fallos SET reportes = reportes + 1, ultima_vez = datetime('now'), estado = 'nuevo' WHERE id = ?",
-      )
-      .bind(fallo.id),
+      .bind(fallo.id, yaAvisada ? 'arreglado' : 'nuevo'),
+    ...(yaAvisada
+      ? [
+          db
+            .prepare(
+              "INSERT INTO camila_casos (id, persona_id, resumen, motivo) VALUES (?, ?, ?, 'fallo_sigue')",
+            )
+            .bind(
+              nuevoId(),
+              personaId,
+              `Dice que el fallo ${fallo.codigo} sigue después del arreglo.`,
+            ),
+        ]
+      : []),
   ]);
   return fallo.codigo;
 }
 
-export type PasoFallo = { respuesta: string; pideCaptura: boolean } | null;
+export type PasoFallo = {
+  respuesta: string;
+  pideCaptura: boolean;
+  /** El reporte se cerró y este mensaje NO era del reporte: sigue al cerebro normal (con este aviso delante). */
+  dejaPasar?: boolean;
+} | null;
 
 /**
  * Un mensaje de la persona pasa por aquí ANTES que por la IA. Devuelve la respuesta de Camila si el
  * mensaje abre o continúa un reporte de fallo, o null si no tiene que ver (sigue el cerebro normal).
+ * Solo en el chat (web y app): un correo automático con la palabra «error» no abre reportes.
  */
 export async function pasoDeFallo(
   db: D1Database,
   p: Persona,
   mensaje: string,
   pet: ContextoPeticion,
+  canal: string = 'app',
 ): Promise<PasoFallo> {
+  if (canal !== 'web' && canal !== 'app') return null;
   const i: IdiomaCamila = p.idioma === 'en' ? 'en' : 'es';
   const r = await reporteEnCurso(db, p.id);
   if (!r) {
@@ -430,9 +473,10 @@ export async function pasoDeFallo(
     if (!tipo) return null;
     const preguntas = await preguntasDe(db, tipo);
     const contexto = await contextoAutomatico(db, p, pet);
+    // Como mucho un reporte abierto por persona (índice único): dos primeros mensajes a la vez abren uno.
     await db
       .prepare(
-        'INSERT INTO camila_reportes_fallo (id, persona_id, tipo, inicial, preguntas_json, contexto_json) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT OR IGNORE INTO camila_reportes_fallo (id, persona_id, tipo, inicial, preguntas_json, contexto_json) VALUES (?, ?, ?, ?, ?, ?)',
       )
       .bind(
         nuevoId(),
@@ -449,7 +493,7 @@ export async function pasoDeFallo(
       pideCaptura: false,
     };
   }
-  if (dice(mensaje, CANCELA)) {
+  if (esFrase(mensaje, CANCELA)) {
     await db
       .prepare("UPDATE camila_reportes_fallo SET estado = 'cancelado' WHERE id = ?")
       .bind(r.id)
@@ -459,18 +503,18 @@ export async function pasoDeFallo(
   const preguntas = JSON.parse(r.preguntas_json) as PreguntaDiagnostico[];
   const respuestas = JSON.parse(r.respuestas_json) as string[];
   if (r.estado === 'captura') {
-    // Escribió en vez de mandar la captura: se cierra sin ella (si dijo algo más, queda como nota).
-    if (!dice(mensaje, SIN_CAPTURA)) respuestas.push(mensaje.slice(0, 1000));
-    return {
-      respuesta: TEXTOS_FALLO.listo(await completar(db, r, respuestas), i),
-      pideCaptura: false,
-    };
+    // Escribió en vez de mandar la captura: el reporte se cierra sin ella. Si no era «sin captura»,
+    // ese mensaje es otra cosa (una pregunta, un «gracias») y sigue al cerebro normal.
+    const listo = TEXTOS_FALLO.listo(await completar(db, r, p.id, respuestas), i);
+    return esFrase(mensaje, SIN_CAPTURA)
+      ? { respuesta: listo, pideCaptura: false }
+      : { respuesta: listo, pideCaptura: false, dejaPasar: true };
   }
   respuestas[r.paso] = mensaje.slice(0, 1000);
   const siguiente = preguntas[r.paso + 1];
   await db
     .prepare(
-      'UPDATE camila_reportes_fallo SET paso = ?, respuestas_json = ?, estado = ? WHERE id = ?',
+      "UPDATE camila_reportes_fallo SET paso = ?, respuestas_json = ?, estado = ?, actualizado_en = datetime('now') WHERE id = ? AND estado = 'preguntando'",
     )
     .bind(r.paso + 1, JSON.stringify(respuestas), siguiente ? 'preguntando' : 'captura', r.id)
     .run();
@@ -479,22 +523,35 @@ export async function pasoDeFallo(
     : { respuesta: segun(TEXTOS_FALLO.captura, i), pideCaptura: true };
 }
 
-/** La persona mandó la captura: se guarda su clave y se cierra el reporte. Devuelve el código. */
-export async function completarConCaptura(db: D1Database, p: Persona, clave: string, tipo: string) {
+/** La persona mandó la captura: se guarda su clave y se cierra el reporte. Devuelve el código, o null. */
+export async function completarConCaptura(
+  db: D1Database,
+  p: Persona,
+  reporteId: string,
+  clave: string,
+  tipo: string,
+) {
   const r = await reporteEnCurso(db, p.id);
-  if (!r || r.estado !== 'captura') return null;
-  await db
-    .prepare('UPDATE camila_reportes_fallo SET captura_clave = ?, captura_tipo = ? WHERE id = ?')
+  if (!r || r.id !== reporteId || r.estado !== 'captura') return null;
+  const puesta = await db
+    .prepare(
+      "UPDATE camila_reportes_fallo SET captura_clave = ?, captura_tipo = ? WHERE id = ? AND estado = 'captura' AND captura_clave IS NULL RETURNING id",
+    )
     .bind(clave, tipo, r.id)
-    .run();
-  return completar(db, r, JSON.parse(r.respuestas_json) as string[]);
+    .first();
+  if (!puesta) return null;
+  return completar(db, r, p.id, JSON.parse(r.respuestas_json) as string[]);
 }
 
 export const claveDeCaptura = (reporteId: string) => `camila-fallos/${reporteId}`;
 export const DIAS_CAPTURA = 90;
 
-/** Borra del almacén las capturas de más de 90 días (y suelta su clave). La corre la limpieza diaria. */
+/**
+ * Borra del almacén las capturas de más de 90 días (y suelta su clave). La corre la limpieza diaria.
+ * Sin almacén no hace nada: nunca suelta una clave sin haber borrado su archivo.
+ */
 export async function depurarCapturas(env: Pick<Env, 'BUCKET'>, db: D1Database) {
+  if (!env.BUCKET) return 0;
   const { results } = await db
     .prepare(
       `SELECT id, captura_clave FROM camila_reportes_fallo
@@ -502,7 +559,7 @@ export async function depurarCapturas(env: Pick<Env, 'BUCKET'>, db: D1Database) 
     )
     .all<{ id: string; captura_clave: string }>();
   if (!results.length) return 0;
-  if (env.BUCKET) await env.BUCKET.delete(results.map((r) => r.captura_clave));
+  await env.BUCKET.delete(results.map((r) => r.captura_clave));
   await db
     .prepare(
       'UPDATE camila_reportes_fallo SET captura_clave = NULL, captura_tipo = NULL WHERE id IN (SELECT value FROM json_each(?))',

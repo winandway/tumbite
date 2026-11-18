@@ -2888,6 +2888,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "llamadas",
     "regalos",
     "avisado",
+    "capturas",
+    "resumen_fallos",
     "anonimos",
     "casos",
     "error_en",
@@ -2939,6 +2941,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "captura_tipo",
     "avisado_arreglo",
     "creado_en",
+    "actualizado_en",
     "completo_en"
   ],
   "camila_preguntas": [

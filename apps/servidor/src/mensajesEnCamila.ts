@@ -38,4 +38,8 @@ export const MENSAJES_EN_CAMILA: [string, string][] = [
   ['No hay un reporte esperando una captura.', 'There’s no report waiting for a screenshot.'],
   ['No encontramos ese fallo.', 'We couldn’t find that issue.'],
   ['Esa captura ya no está disponible.', 'That screenshot is no longer available.'],
+  [
+    'Hoy no podemos recibir más capturas. Escribe «sin captura» y el reporte queda igual.',
+    'We can’t take more screenshots today. Write “no screenshot” and the report still goes through.',
+  ],
 ];
