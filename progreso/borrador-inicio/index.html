@@ -949,6 +949,150 @@
         font-size: 12.5px;
         color: var(--gris);
       }
+      .solo-mas {
+        width: 38px;
+        height: 36px;
+        padding: 0 !important;
+        justify-content: center;
+        border-style: dashed !important;
+      }
+      .ic-l {
+        width: 42px;
+        height: 42px;
+        border-radius: 21px;
+        background: var(--fondo);
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .kebab {
+        width: 40px;
+        height: 40px;
+        border-radius: 20px;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+      .menu-mas {
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+      .menu-mas button {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 12px 14px;
+        width: 100%;
+        color: var(--rojo-osc);
+        font-weight: 700;
+      }
+      .confirmar {
+        position: absolute;
+        inset: 0;
+        background: rgba(16, 16, 16, 0.45);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        z-index: 5;
+      }
+      .confirmar .caja {
+        background: #fff;
+        border-radius: 18px;
+        padding: 18px;
+        width: 100%;
+      }
+      .confirmar h3 {
+        font-size: 17px;
+      }
+      .confirmar p {
+        font-size: 13.5px;
+        color: var(--gris);
+        line-height: 1.4;
+        margin: 6px 0 14px;
+      }
+      .confirmar .dos {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .velo .h.alta {
+        max-height: 92%;
+        overflow-y: auto;
+        position: relative;
+      }
+      .et-campo {
+        font-size: 13px;
+        font-weight: 700;
+        margin: 14px 0 6px;
+      }
+      .valor-campo {
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .campo-in {
+        width: 100%;
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font: inherit;
+        font-weight: 600;
+      }
+      .campo-in:focus {
+        outline: 2px solid var(--negro);
+        border-color: var(--negro);
+      }
+      .iconos {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+      }
+      .ico-op {
+        aspect-ratio: 1;
+        border-radius: 12px;
+        border: 1px solid var(--borde);
+        display: grid;
+        place-items: center;
+      }
+      .ico-op.on {
+        background: var(--negro);
+        border-color: var(--negro);
+      }
+      .fila-dir {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        border: 1px solid var(--borde);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .fila-dir.ok {
+        border-color: var(--verde);
+        background: var(--verde-suave);
+      }
+      .fila-dir b {
+        display: block;
+        font-size: 14px;
+      }
+      .aviso-ok {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        top: 52px;
+        z-index: 30;
+        background: var(--verde-suave);
+        color: var(--verde);
+        border: 1px solid #bfddc9;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 700;
+        font-size: 13.5px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
       .nota-bloque {
         margin: 2px 0 2px;
         font-size: 12px;
@@ -1410,6 +1554,8 @@
           <section class="pantalla" data-p="buscando"></section>
           <section class="pantalla" data-p="seguimiento"></section>
           <div class="velo" id="velo"></div>
+          <div class="velo" id="hojaL"></div>
+          <section class="pantalla" data-p="lugares"></section>
         </div>
       </div>
     </div>
@@ -1431,6 +1577,14 @@
         centrar: '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
         pin: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
         flecha: '<path d="m9 6 6 6-6 6"/>',
+        escuela: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+        pesa: '<path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/>',
+        tienda:
+          '<path d="M4 8h16l-1.5 4a3 3 0 0 1-5 .5 3 3 0 0 1-3 0 3 3 0 0 1-5-.5z"/><path d="M5 12v8h14v-8"/><path d="M5 8l1.5-4h11L19 8"/>',
+        hospital: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/>',
+        kebab:
+          '<circle cx="12" cy="5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="19" r="1.3"/>',
+        basura: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
         reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
         estrellaL:
           '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
@@ -1475,6 +1629,11 @@
             moto: 'Moto',
             destino: '¿A dónde vas? (vacía)',
             escribiendo: '¿A dónde vas? (escribiendo)',
+            agregar: 'Agregar un lugar (+)',
+            trabajoSin: 'Trabajo sin dirección',
+            guardado: 'Lugar guardado',
+            editar: 'Editar o borrar un lugar',
+            lugares: 'Tus lugares guardados',
             carro: 'Carro',
             comida: 'Comida',
             envios: 'Envíos (Express y Flex)',
@@ -1528,6 +1687,40 @@
           casa: 'Casa',
           trabajo: 'Trabajo',
           agregar: 'Agregar',
+          agregarLugar: 'Agregar lugar',
+          lugaresGuardados: 'Tus lugares guardados',
+          nuevoLugar: 'Nuevo lugar',
+          editarLugar: 'Editar lugar',
+          nombreL: 'Nombre',
+          nombreEj: 'Ej.: Escuela, Gimnasio',
+          iconoL: 'Ícono',
+          direccionL: 'Dirección',
+          buscarDirL: 'Buscar la dirección y marcar la puerta',
+          guardar: 'Guardar',
+          editar: 'Editar',
+          masOpciones: 'Más opciones',
+          borrarLugar: 'Borrar lugar',
+          confirmarBorrar: '¿Borrar «{n}»?',
+          confirmarTx:
+            'Se quita de tus lugares en todos los servicios. Tus viajes y pedidos anteriores no cambian.',
+          cancelarB: 'Cancelar',
+          borrarSi: 'Borrar',
+          guardado: 'Guardado en tus lugares',
+          unaLista:
+            'Una sola lista para todos los servicios: Moto, Carro, Envíos y Comida («Tus direcciones»).',
+          sinDir: 'Sin dirección todavía',
+          mantener: 'Mantén presionado un lugar para editarlo o borrarlo.',
+          puntoTit: 'Confirma el punto exacto',
+          estoyAqui: 'Estoy aquí',
+          ayudaPin: 'Mueve el mapa hasta la puerta. El pin marca el punto exacto.',
+          referencia: 'Punto de referencia (opcional)',
+          refEj: 'Frente a la panadería, portón negro',
+          confirmarPunto: 'Confirmar este punto',
+          puntoDir: 'Calle 10, Centro',
+          refGuardada: 'Portón negro',
+          gym: 'Gimnasio',
+          gymDir: 'Av. Los Próceres',
+          nuevoEj: 'Escuela',
           casaDir: 'Calle 5, Urb. Las Flores',
           trabajoDir: 'Edificio Torre Norte',
           tipoViaje: 'Tipo de viaje',
@@ -1647,6 +1840,11 @@
             moto: 'Moto',
             destino: 'Where to? (empty)',
             escribiendo: 'Where to? (typing)',
+            agregar: 'Add a place (+)',
+            trabajoSin: 'Work with no address',
+            guardado: 'Place saved',
+            editar: 'Edit or delete a place',
+            lugares: 'Your saved places',
             carro: 'Car',
             comida: 'Food',
             envios: 'Delivery (Express and Flex)',
@@ -1695,6 +1893,39 @@
           casa: 'Home',
           trabajo: 'Work',
           agregar: 'Add',
+          agregarLugar: 'Add place',
+          lugaresGuardados: 'Your saved places',
+          nuevoLugar: 'New place',
+          editarLugar: 'Edit place',
+          nombreL: 'Name',
+          nombreEj: 'E.g. School, Gym',
+          iconoL: 'Icon',
+          direccionL: 'Address',
+          buscarDirL: 'Search the address and mark the door',
+          guardar: 'Save',
+          editar: 'Edit',
+          masOpciones: 'More options',
+          borrarLugar: 'Delete place',
+          confirmarBorrar: 'Delete “{n}”?',
+          confirmarTx:
+            'It’s removed from your places in every service. Your past trips and orders don’t change.',
+          cancelarB: 'Cancel',
+          borrarSi: 'Delete',
+          guardado: 'Saved to your places',
+          unaLista: 'One list for every service: Moto, Car, Delivery and Food (“Your addresses”).',
+          sinDir: 'No address yet',
+          mantener: 'Press and hold a place to edit or delete it.',
+          puntoTit: 'Confirm the exact spot',
+          estoyAqui: 'I’m here',
+          ayudaPin: 'Move the map to the door. The pin marks the exact spot.',
+          referencia: 'Landmark (optional)',
+          refEj: 'Across from the bakery, black gate',
+          confirmarPunto: 'Confirm this spot',
+          puntoDir: '10th St, Downtown',
+          refGuardada: 'Black gate',
+          gym: 'Gym',
+          gymDir: 'Park Ave',
+          nuevoEj: 'School',
           casaDir: 'Oak Ave, Maple Park',
           trabajoDir: 'North Tower Building',
           tipoViaje: 'Ride type',
@@ -1812,6 +2043,7 @@
         'envios',
         'buscando',
         'seguimiento',
+        'lugares',
       ];
       const E = {
         L: 'es',
@@ -1823,6 +2055,14 @@
         cat: 0,
         filtro: -1,
         q: '',
+        // C-LUGARES-GUARDADOS (borrador): UNA sola lista para Moto, Carro, Envíos y Comida.
+        lugares: [
+          { id: 'casa', base: 'casa', ico: 'casa', dir: true },
+          { id: 'trabajo', base: 'trabajo', ico: 'maleta', dir: true },
+          { id: 'gym', base: 'gym', ico: 'pesa', dir: true },
+        ],
+        h: null,
+        aviso: '',
       };
       window.__toques = 0;
 
@@ -1841,6 +2081,41 @@
         if (h.get('d')) E.destino = h.get('d');
         if (h.get('e') === 'flex') E.envio = 'flex';
         E.q = h.get('q') || '';
+        if (h.get('g') === '1' && !E.lugares.some((x) => x.id === 'nuevo'))
+          E.lugares.push({ id: 'nuevo', base: 'nuevoEj', ico: 'escuela', dir: true, ref: true });
+        if (h.get('g') === '1') E.aviso = 'guardado';
+        if (h.get('sinTrabajo') === '1') E.lugares.find((x) => x.id === 'trabajo').dir = false;
+        const hh = h.get('h');
+        if (hh === 'nuevo')
+          E.h = { modo: 'nuevo', nombre: '', ico: 'escuela', paso: 'form', dir: false };
+        if (hh === 'punto')
+          E.h = {
+            modo: 'nuevo',
+            nombre: T[E.L].nuevoEj,
+            ico: 'escuela',
+            paso: 'punto',
+            dir: false,
+          };
+        if (hh === 'listo')
+          E.h = {
+            modo: 'nuevo',
+            nombre: T[E.L].nuevoEj,
+            ico: 'escuela',
+            paso: 'form',
+            dir: true,
+            ref: true,
+          };
+        if (hh === 'trabajo')
+          E.h = {
+            modo: 'editar',
+            id: 'trabajo',
+            nombre: T[E.L].trabajo,
+            ico: 'maleta',
+            paso: 'form',
+            dir: false,
+          };
+        if (hh === 'menu')
+          E.h = { menu: 'gym', mas: h.get('mas') === '1', confirmar: h.get('c') === '1' };
         if (h.get('captura') === '1') document.body.classList.add('captura');
       }
       function hash() {
@@ -1950,6 +2225,8 @@
       }
       function textoDestino() {
         const t = T[E.L];
+        const l = E.lugares.find((x) => x.id === E.destino);
+        if (l) return dirLugar(l);
         return E.destino === 'casa'
           ? t.casaDir
           : E.destino === 'trabajo'
@@ -1958,16 +2235,168 @@
               ? t.sug[0][0]
               : null;
       }
+      // C-LUGARES-GUARDADOS (borrador). Fila deslizable: Casa, Trabajo, los lugares de la persona y «+».
+      const ICONOS = [
+        'casa',
+        'maleta',
+        'escuela',
+        'pesa',
+        'cor',
+        'estrellaL',
+        'tienda',
+        'hospital',
+      ];
+      function nombreLugar(l) {
+        return l.nombre || T[E.L][l.base];
+      }
+      function dirLugar(l) {
+        const t = T[E.L];
+        if (!l.dir) return null;
+        return l.base === 'casa'
+          ? t.casaDir
+          : l.base === 'trabajo'
+            ? t.trabajoDir
+            : l.base === 'gym'
+              ? t.gymDir
+              : t.puntoDir;
+      }
+      function filaLugares(ir) {
+        const t = T[E.L];
+        return `<div class="atajos lugares-fila" role="list">${E.lugares
+          .map(
+            (l) =>
+              `<button class="atajo ${E.destino === l.id ? 'on' : ''}" data-lugar="${l.id}" ${ir ? `data-ir-lugar="${ir}"` : ''}>${I(P[l.ico], 16)}${nombreLugar(l)}</button>`,
+          )
+          .join(
+            '',
+          )}<button class="atajo solo-mas" data-nuevo="1" aria-label="${t.agregarLugar}">${I(P.mas, 18)}</button></div>`;
+      }
+      function pintarHoja() {
+        const t = T[E.L];
+        const v = document.getElementById('hojaL');
+        const h = E.h;
+        if (!h) {
+          v.classList.remove('on');
+          v.innerHTML = '';
+          return;
+        }
+        let html = '';
+        if (h.menu) {
+          const l = E.lugares.find((x) => x.id === h.menu);
+          html = `<div class="h"><div class="agarre"></div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span class="ic-l">${I(P[l.ico], 20)}</span>
+              <span style="flex:1;min-width:0"><b style="display:block;font-size:16px">${nombreLugar(l)}</b><span class="nota-bloque">${dirLugar(l) || t.sinDir}</span></span>
+              <button class="kebab" data-mas="1" aria-label="${t.masOpciones}">${I(P.kebab, 22)}</button>
+            </div>
+            ${h.mas ? `<div class="menu-mas"><button data-borrar="1">${I(P.basura, 18, '#C20A1A')}<span>${t.borrarLugar}</span></button></div>` : ''}
+            <button class="boton claro" style="margin-top:16px" data-editar="1">${t.editar}</button>
+            ${h.confirmar ? `<div class="confirmar"><div class="caja"><h3>${t.confirmarBorrar.replace('{n}', nombreLugar(l))}</h3><p>${t.confirmarTx}</p><div class="dos"><button class="boton claro" data-cancelar="1">${t.cancelarB}</button><button class="boton" data-borrar-si="1">${t.borrarSi}</button></div></div></div>` : ''}
+          </div>`;
+        } else if (h.paso === 'punto') {
+          html = `<div class="h alta"><div class="tope" style="padding:0 0 8px"><button class="atras" data-volver-form="1" aria-label="Volver">${I(P.atras, 22)}</button><h1 style="font-size:17px">${t.puntoTit}</h1></div>
+            ${mapa(250, pinNegro)}
+            <p class="nota-bloque" style="margin:10px 0">${t.ayudaPin}</p>
+            <button class="boton claro" style="display:flex;gap:8px;justify-content:center;align-items:center">${I(P.centrar, 18)}${t.estoyAqui}</button>
+            <div class="et-campo">${t.direccionL}</div><div class="valor-campo">${t.puntoDir}</div>
+            <div class="et-campo">${t.referencia}</div><div class="campo">${t.refEj}</div>
+            <button class="boton" style="margin-top:14px" data-punto-ok="1">${t.confirmarPunto}</button></div>`;
+        } else {
+          const listo = h.nombre.trim() && h.dir;
+          html = `<div class="h alta"><div class="agarre"></div><h2>${h.modo === 'nuevo' ? t.nuevoLugar : t.editarLugar}</h2>
+            <div class="et-campo">${t.nombreL}</div>
+            <input class="campo-in" id="nombreL" value="${h.nombre.replace(/"/g, '&quot;')}" placeholder="${t.nombreEj}">
+            <div class="et-campo">${t.iconoL}</div>
+            <div class="iconos" role="radiogroup">${ICONOS.map((ic) => `<button class="ico-op ${h.ico === ic ? 'on' : ''}" data-ico="${ic}" role="radio" aria-checked="${h.ico === ic}">${I(P[ic], 22, h.ico === ic ? '#fff' : '#101010')}</button>`).join('')}</div>
+            <div class="et-campo">${t.direccionL}</div>
+            <button class="fila-dir ${h.dir ? 'ok' : ''}" data-punto="1">
+              ${h.dir ? I(P.check, 20, '#0D7A3A', 2.6) : I(P.pin, 20, '#C20A1A')}
+              <span style="flex:1;min-width:0">${h.dir ? `<b>${h.id === 'trabajo' ? t.trabajoDir : t.puntoDir}</b><span class="nota-bloque">${t.referencia.replace(/ \(.*\)/, '')}: ${t.refGuardada}</span>` : `<b style="color:#C20A1A">${t.buscarDirL}</b>`}</span>
+              ${I(P.flecha, 16, '#666B73')}
+            </button>
+            <button class="boton" style="margin-top:16px;${listo ? '' : 'opacity:.4'}" ${listo ? '' : 'disabled'} data-guardar="1">${t.guardar}</button>
+            <p class="nota-bloque" style="margin-top:10px;text-align:center">${t.unaLista}</p></div>`;
+        }
+        v.innerHTML = html;
+        v.classList.add('on');
+        v.onclick = () => {
+          E.h = null;
+          pintarHoja();
+        };
+        v.querySelector('.h').onclick = (e) => e.stopPropagation();
+        const n = v.querySelector('#nombreL');
+        if (n)
+          n.oninput = () => {
+            E.h.nombre = n.value;
+            const b = v.querySelector('[data-guardar]');
+            const ok = n.value.trim() && E.h.dir;
+            b.disabled = !ok;
+            b.style.opacity = ok ? '' : '.4';
+          };
+        v.querySelectorAll('button').forEach((b) => {
+          const d = b.dataset;
+          b.onclick = (e) => {
+            e.stopPropagation();
+            if (d.ico) E.h.ico = d.ico;
+            if (d.punto) E.h.paso = 'punto';
+            if (d.volverForm) E.h.paso = 'form';
+            if (d.puntoOk) {
+              E.h.paso = 'form';
+              E.h.dir = true;
+            }
+            if (d.mas) E.h.mas = !E.h.mas;
+            if (d.borrar) E.h.confirmar = true;
+            if (d.cancelar) E.h.confirmar = false;
+            if (d.borrarSi) {
+              const id = E.h.menu;
+              E.lugares = E.lugares.filter((x) => x.id !== id);
+              if (E.destino === id) E.destino = null;
+              E.h = null;
+              return pintar();
+            }
+            if (d.editar) {
+              const l = E.lugares.find((x) => x.id === E.h.menu);
+              E.h = {
+                modo: 'editar',
+                id: l.id,
+                nombre: nombreLugar(l),
+                ico: l.ico,
+                paso: 'form',
+                dir: l.dir,
+              };
+            }
+            if (d.guardar) {
+              const h2 = E.h;
+              if (h2.modo === 'editar') {
+                const l = E.lugares.find((x) => x.id === h2.id);
+                l.ico = h2.ico;
+                l.dir = true;
+                if (h2.nombre.trim() && h2.nombre !== T[E.L][l.base]) l.nombre = h2.nombre.trim();
+              } else if (!E.lugares.some((x) => x.id === 'nuevo')) {
+                E.lugares.push({
+                  id: 'nuevo',
+                  base: 'nuevoEj',
+                  nombre: h2.nombre.trim(),
+                  ico: h2.ico,
+                  dir: true,
+                  ref: true,
+                });
+              }
+              E.h = null;
+              E.aviso = 'guardado';
+              return pintar();
+            }
+            pintarHoja();
+          };
+        });
+      }
       function rutaViaje() {
         const t = T[E.L];
         const d = textoDestino();
         return `<div class="ruta"><span class="hilo"></span>
     <div class="linea"><span class="ico-o"></span><span><span class="et">${t.ubic}</span><span class="vl">${t.direccion}</span></span><button class="centrar" aria-label="Centrar">${I(P.centrar, 18)}</button></div>
     <button class="linea" data-ir="destino"><span class="ico-d"></span><span><span class="et">${t.adonde}</span><span class="vl ${d ? '' : 'vacio'}">${d || t.buscarDir}</span></span></button></div>
-   <div class="atajos">
-    <button class="atajo ${E.destino === 'casa' ? 'on' : ''}" data-dest="casa">${I(P.casa, 16)}${t.casa}</button>
-    <button class="atajo ${E.destino === 'trabajo' ? 'on' : ''}" data-dest="trabajo">${I(P.maleta, 16)}${t.trabajo}</button>
-    <button class="atajo">${I(P.mas, 16)}${t.agregar}</button></div>`;
+   ${filaLugares()}`;
       }
       function segmentoCuando() {
         const t = T[E.L];
@@ -1992,6 +2421,11 @@
           'envios',
           'buscando',
           'seguimiento',
+          'agregar',
+          'trabajoSin',
+          'guardado',
+          'editar',
+          'lugares',
         ];
         const actual = E.P === 'destino' && E.q ? 'escribiendo' : E.P;
         document.getElementById('lista').innerHTML =
@@ -2080,7 +2514,7 @@
           : `<div class="linea"><span class="ico-d"></span><span><span class="et">${t.entregar}</span><span class="vl vacio">${t.dirDestino}</span></span></div>`
       }
      </div>
-     ${flex ? `<div class="atajos"><button class="atajo">${I(P.mas, 16)}${t.agregarParada}</button></div>` : ''}
+     ${flex ? `<div class="atajos"><button class="atajo">${I(P.mas, 16)}${t.agregarParada}</button></div>` : filaLugares()}
      <div class="sub">${t.tipoEnvio}</div>
      <button class="fila-tipo"><img src="img/envios.webp" alt=""><span class="tx"><b>${t.pequeno}</b><span>${t.pequenoTx}</span></span>${I(P.flecha, 18, '#666B73')}</button>
      <div class="sub">${t.detalles}</div>
@@ -2112,9 +2546,24 @@
     <button class="boton claro" style="display:flex;gap:8px;justify-content:center;align-items:center">${I(P.escudo, 18)}${t.seguridad}</button>
    </div>`;
 
+        document.querySelector('[data-p=lugares]').innerHTML = `
+   <div class="tope"><button class="atras" data-ir="moto" aria-label="Volver">${I(P.atras, 22)}</button><h1 style="font-size:17px">${t.lugaresGuardados}</h1></div>
+   <div class="desliza" style="padding:4px 16px 16px">
+    <p class="nota-bloque">${t.unaLista}</p>
+    <div class="lista-sug">${E.lugares.map((l) => `<div class="fila"><span class="ic">${I(P[l.ico], 18)}</span><span style="flex:1;min-width:0"><b>${nombreLugar(l)}</b><span>${dirLugar(l) || t.sinDir}</span></span><button class="kebab" data-menu-lugar="${l.id}" aria-label="${t.masOpciones}">${I(P.kebab, 22)}</button></div>`).join('')}</div>
+    <button class="boton claro" style="margin-top:14px;display:flex;gap:8px;justify-content:center;align-items:center" data-nuevo="1">${I(P.mas, 18)}${t.agregarLugar}</button>
+   </div>`;
         document
           .querySelectorAll('.pantalla')
           .forEach((s) => s.classList.toggle('activa', s.dataset.p === E.P));
+        document.querySelectorAll('.aviso-ok').forEach((x) => x.remove());
+        if (E.aviso === 'guardado' && E.P !== 'lugares') {
+          const a = document.createElement('div');
+          a.className = 'aviso-ok';
+          a.innerHTML = `${I(P.check, 18, '#0D7A3A', 2.6)}${t.guardado}`;
+          document.getElementById('telefono').appendChild(a);
+        }
+        pintarHoja();
         document.querySelectorAll('.pantalla.activa .idioma-app').forEach(selector);
         conectar();
       }
@@ -2142,10 +2591,7 @@
         const t = T[E.L];
         const q = norm(E.q.trim());
         if (!q) {
-          return `<div class="atajos" style="margin-top:12px">
-            <button class="atajo" data-dest="casa" data-ir="moto">${I(P.casa, 16)}${t.casa}</button>
-            <button class="atajo" data-dest="trabajo" data-ir="moto">${I(P.maleta, 16)}${t.trabajo}</button>
-            <button class="atajo">${I(P.mas, 16)}${t.agregar}</button></div>
+          return `${filaLugares('moto')}
            <div class="sug-tit">${t.recientes}</div><p class="nota-bloque">${t.recientesNota}</p>
            <div class="lista-sug">${t.recientesEj.map((r, i) => filaLugar(P.reloj, r[0], `${r[1]} · ${r[2]}`, '', i === 0 ? 'trabajo' : 'sug')).join('')}</div>
            <div class="sug-tit">${t.populares}</div><p class="nota-bloque">${t.popularesNota}</p>
@@ -2176,6 +2622,19 @@
           <div class="lista-sug">${filas.length ? filas.join('') : `<p class="nota-bloque" style="padding:12px 0">${t.sinResultados}</p>`}</div>`;
       }
       function conectar() {
+        document.querySelectorAll('#telefono [data-lugar]').forEach((b) => {
+          let reloj = null;
+          b.onpointerdown = () => {
+            b.__largo = false;
+            reloj = setTimeout(() => {
+              b.__largo = true;
+              E.h = { menu: b.dataset.lugar, mas: false, confirmar: false };
+              pintarHoja();
+            }, 550);
+          };
+          b.onpointerup = b.onpointerleave = () => clearTimeout(reloj);
+          b.oncontextmenu = (e) => e.preventDefault();
+        });
         document.querySelectorAll('#telefono .pantalla.activa button').forEach((b) => {
           if (b.closest('.idioma')) return;
           b.onclick = (e) => {
@@ -2183,6 +2642,32 @@
             window.__toques++;
             const d = b.dataset;
             if (d.velo) return abrirVelo();
+            if (d.nuevo) {
+              E.h = { modo: 'nuevo', nombre: '', ico: 'escuela', paso: 'form', dir: false };
+              return pintarHoja();
+            }
+            if (d.menuLugar) {
+              E.h = { menu: d.menuLugar, mas: false, confirmar: false };
+              return pintarHoja();
+            }
+            if (d.lugar) {
+              if (b.__largo) return;
+              const l = E.lugares.find((x) => x.id === d.lugar);
+              if (!l.dir) {
+                E.h = {
+                  modo: 'editar',
+                  id: l.id,
+                  nombre: nombreLugar(l),
+                  ico: l.ico,
+                  paso: 'form',
+                  dir: false,
+                };
+                return pintarHoja();
+              }
+              E.destino = l.id;
+              E.aviso = '';
+              return ir(d.irLugar || E.P);
+            }
             if (d.dest) E.destino = d.dest;
             if (d.cuando) E.ahora = d.cuando === '1';
             if (d.carro) E.carro = +d.carro;
@@ -2195,6 +2680,7 @@
             }
             if (d.ir === 'envios') E.envio = 'express';
             if (d.ir === 'inicio') E.destino = null;
+            if (d.ir) E.aviso = '';
             if (d.ir) return ir(d.ir);
             if (d.dest || d.cuando || d.carro || d.envio || d.cat || d.filtro) ir(E.P);
           };
@@ -2205,7 +2691,43 @@
               const p = b.dataset.lista;
               if (p === 'inicio' || p === 'usados' || p === 'moto') E.destino = null;
               E.q = p === 'escribiendo' ? T[E.L].escrito : '';
-              ir(p === 'escribiendo' ? 'destino' : p);
+              E.h = null;
+              E.aviso = '';
+              E.lugares = E.lugares.filter((x) => x.id !== 'nuevo');
+              E.lugares.forEach((x) => (x.dir = true));
+              const tt = T[E.L];
+              if (p === 'agregar')
+                E.h = { modo: 'nuevo', nombre: '', ico: 'escuela', paso: 'form', dir: false };
+              if (p === 'trabajoSin') {
+                E.lugares.find((x) => x.id === 'trabajo').dir = false;
+                E.h = {
+                  modo: 'editar',
+                  id: 'trabajo',
+                  nombre: tt.trabajo,
+                  ico: 'maleta',
+                  paso: 'form',
+                  dir: false,
+                };
+              }
+              if (p === 'guardado') {
+                E.lugares.push({
+                  id: 'nuevo',
+                  base: 'nuevoEj',
+                  ico: 'escuela',
+                  dir: true,
+                  ref: true,
+                });
+                E.aviso = 'guardado';
+              }
+              if (p === 'editar') E.h = { menu: 'gym', mas: false, confirmar: false };
+              const destinoP = {
+                escribiendo: 'destino',
+                agregar: 'moto',
+                trabajoSin: 'moto',
+                guardado: 'moto',
+                editar: 'moto',
+              };
+              ir(destinoP[p] || p);
             }),
         );
       }
