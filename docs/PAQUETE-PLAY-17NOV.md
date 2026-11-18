@@ -51,3 +51,15 @@ La salida va completa y sin errores: Camila entra sí o sí y el corte se mueve 
 - Arreglos de inicio, lugares y banners: hechos, en `main` (4c9d4d3a8f), con pruebas vistas en rojo.
 - Arreglos de referidos y saldo: pedidos a la sesión de cupones; pendientes.
 - Segunda pasada: cuando estén los de cupones y Camila en `main`.
+
+- **Segunda pasada: NO APTO** (Camila: el chat no se borraba con la cuenta). **Tercera: NO APTO** (guarda de dinero del regalo heredado y accesibilidad de las hojas en iPhone). Todo corregido con pruebas vistas en rojo.
+- **Cuarta pasada (18 nov, 01:55): APTO** en la punta 926fd13c24, sin bloqueantes.
+
+## Punto abierto con hora
+
+- **Tres menores de Camila (servidor, no cambian la app).** Entran HOY por decisión de Gerencia (regla de Richard: nada «para después»), en una sola subida con pruebas en rojo y una revisión corta, **justo después de que la nube publique la punta y se compilen las apps de producción**: (1) devolver el cupo diario de códigos si falla el envío del correo; (2) limpiar los días anteriores de `camila_codigos_dia`; (3) el reporte de una respuesta y su caso en un solo lote. La sesión de Camila los deja listos en su rama.
+
+## Auditor de tiendas
+
+- **Primera auditoría (18 nov): NO APTO.** Google Play no exige avisar desde el primer mensaje que se habla con una IA; sí exige poder reportar dentro de la app (hecho: «Reportar respuesta»). Pendientes: capturas de la tienda con el diseño nuevo (cliente y Driver), seguridad de los datos en la consola (mensajes en la app, historial de búsquedas, lugares guardados, referidos). Hechos: ficha de Driver («te responde nuestra asistente virtual o una persona del equipo») y política de privacidad en los dos idiomas (d5cc41c9f3; falta comprobarla en vivo).
+- Decisión de Gerencia: el chat de Camila se borra con la cuenta; solo se conservan los casos con dinero o reclamos el tiempo que exija la ley.
