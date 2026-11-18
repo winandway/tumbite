@@ -4,7 +4,10 @@ import {
   type FilaLugar,
   ICONOS_LUGAR,
   type LugarGuardado,
+  esCasa,
+  esTrabajo,
   filaLugares,
+  iconoDeLugar,
   puedeGuardarLugar,
   useBorrador,
 } from '@tumbite/compartido';
@@ -147,9 +150,9 @@ export function LugaresFila({
             setAviso(t.guardado);
             setTimeout(() => setAviso(''), 3_000);
             alElegir(l, {
-              clave: l.id,
+              clave: esCasa(l) ? 'casa' : esTrabajo(l) ? 'trabajo' : l.id,
               nombre: l.etiqueta,
-              icono: 'estrella',
+              icono: iconoDeLugar(l),
               lugar: l,
               conDireccion: true,
             });

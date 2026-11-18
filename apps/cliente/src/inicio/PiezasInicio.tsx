@@ -103,10 +103,12 @@ export function PortadaRotativa({
         >
           {banner.titulo}
         </Text>
+        {/* La foto del administrador de banners va recortada con esquinas redondas; el dibujo del
+            respaldo, recortado sobre el fondo oscuro. */}
         <Image
           source={fuente}
-          style={p.heroe}
-          resizeMode="contain"
+          style={banner.imagen ? p.heroeFoto : p.heroe}
+          resizeMode={banner.imagen ? 'cover' : 'contain'}
           accessibilityIgnoresInvertColors
         />
       </Pressable>
@@ -464,6 +466,7 @@ const p = StyleSheet.create({
     fontFamily: 'Poppins_700Bold',
   },
   heroe: { width: 160, height: 124 },
+  heroeFoto: { width: 150, height: 116, borderRadius: 16 },
   entregar: {
     marginTop: -28,
     marginHorizontal: 16,
@@ -509,7 +512,13 @@ const p = StyleSheet.create({
     backgroundColor: 'rgba(242,13,32,0.55)',
   },
   promoEtiqueta: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
-  promoTitulo: { color: '#FFFFFF', fontWeight: '700', fontSize: 20, lineHeight: 24, maxWidth: '56%' },
+  promoTitulo: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 24,
+    maxWidth: '56%',
+  },
   promoCodigo: {
     marginTop: 6,
     alignSelf: 'flex-start',

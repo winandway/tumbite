@@ -385,7 +385,9 @@ export function PedirMoto({
         testID="pedir-viaje"
       >
         <AvisoBorrador
-          visible={b.recuperado && !rellenado}
+          // Solo si lo recuperado es algo que la persona escribió (un destino); la recogida sola es
+          // la ubicación de siempre y no se avisa.
+          visible={b.recuperado && !rellenado && v.destino.trim().length > 0}
           idioma={idioma}
           empezar={() => {
             // «Empezar de nuevo»: sin el aviso viejo y con la recogida otra vez en la ubicación de ahora.
