@@ -36,4 +36,11 @@ describe('los textos del inicio no se cortan', () => {
     expect(s).not.toMatch(/indice % 3/);
     expect(leer('inicio/PiezasInicio.tsx')).not.toContain('IMG_NUEVO.fotoPizza}');
   });
+  it('C-CERRADO-LEGIBLE: un restaurante cerrado atenúa la foto, no el texto (contraste mínimo)', () => {
+    for (const r of ['app/restaurants.tsx', 'app/search.tsx', 'inicio/Restaurantes.tsx']) {
+      const s = leer(r);
+      expect(s, r).not.toMatch(/abierto\(r\) \? 1 : 0\.6|!abierto\(r\) \? 0\.6|apagado \? 0\.65/);
+      expect(s, r).toMatch(/opacity: (abierto\(r\)|p\.abiertoAhora) \? 1 : 0\.55/);
+    }
+  });
 });

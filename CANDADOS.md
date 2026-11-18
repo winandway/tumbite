@@ -6,6 +6,7 @@ Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria
 
 - **Qué se veía:** «Bella I…» y «15–25 m…» en las tarjetas de restaurantes cercanos, «Pollo I…» en las categorías, «Top rat…» y el «+» de «4,5+» cortados en las píldoras de filtro, y restaurantes sin foto propia con una pizza, hamburguesa o sushi que no les correspondía.
 - **Qué se hizo:** nombre y tiempo de las tarjetas cercanas (`PiezasInicio.tsx`) y nombre de las categorías (`Categorias.tsx`, 76 de ancho) hasta en dos renglones con `textBreakStrategy="simple"`; `Pildora` (`comida/piezas.tsx`) con `flexShrink: 0` y medición simple, y las filas de filtros con aire al final (`paddingRight: 16`). `fotoDeRelleno`: pizza, sushi y hamburguesa solo para esas cocinas; cualquier otra lleva la ilustración neutra de comida (antes rotaba por índice), y la tarjeta cercana sin foto usa `fotoDeRelleno` (antes, siempre pizza).
+- **C-CERRADO-LEGIBLE (accesibilidad):** la tarjeta de un restaurante cerrado ponía opacidad 0,6–0,65 a TODA la tarjeta y el texto gris quedaba bajo el contraste mínimo (salió en el recorrido de accesibilidad con los restaurantes cerrados). Ahora se atenúa solo la foto (0,55) en la lista, la búsqueda y el carrusel del inicio.
 - **Cómo se comprueba:** `apps/cliente/src/textoEntero.test.ts` (vista en rojo).
 - **Datos de muestra:** los restaurantes de muestra con foto que no corresponde son datos del guion de capturas (otra sesión); con una foto subida que no corresponde la app no puede saberlo.
 

@@ -272,7 +272,7 @@ export default function Buscar() {
       </Text>
     ) : null;
 
-  const tarjeta = (pressed: boolean, apagado: boolean) => [
+  const tarjeta = (pressed: boolean) => [
     {
       flexDirection: 'row' as const,
       backgroundColor: '#fff',
@@ -280,7 +280,8 @@ export default function Buscar() {
       padding: 10,
       gap: 12,
       marginBottom: 12,
-      opacity: pressed ? 0.85 : apagado ? 0.65 : 1,
+      // C-CERRADO-LEGIBLE: cerrado se atenúa la foto, no el texto.
+      opacity: pressed ? 0.85 : 1,
     },
     sombra,
   ];
@@ -309,7 +310,7 @@ export default function Buscar() {
               }}
               accessibilityRole="button"
               accessibilityLabel={r.nombre}
-              style={({ pressed }) => tarjeta(pressed, !abierto(r))}
+              style={({ pressed }) => tarjeta(pressed)}
             >
               <Image
                 source={
@@ -317,7 +318,13 @@ export default function Buscar() {
                     ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
                     : fotoDeRelleno(r.categoria)
                 }
-                style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 14,
+                  backgroundColor: '#EEEFF1',
+                  opacity: abierto(r) ? 1 : 0.55,
+                }}
                 accessibilityIgnoresInvertColors
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>
@@ -357,7 +364,7 @@ export default function Buscar() {
               }}
               accessibilityRole="button"
               accessibilityLabel={`${p.nombre} · ${p.restauranteNombre}`}
-              style={({ pressed }) => tarjeta(pressed, !p.abiertoAhora)}
+              style={({ pressed }) => tarjeta(pressed)}
             >
               <Image
                 source={
@@ -365,7 +372,13 @@ export default function Buscar() {
                     ? { uri: urlFoto(p.imagen, 'miniatura') ?? undefined }
                     : fotoDeRelleno('')
                 }
-                style={{ width: 72, height: 72, borderRadius: 14, backgroundColor: '#EEEFF1' }}
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 14,
+                  backgroundColor: '#EEEFF1',
+                  opacity: p.abiertoAhora ? 1 : 0.55,
+                }}
                 accessibilityIgnoresInvertColors
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>

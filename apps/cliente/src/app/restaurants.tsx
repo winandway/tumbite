@@ -312,7 +312,9 @@ export default function Restaurantes() {
                   padding: 10,
                   gap: 12,
                   marginBottom: 12,
-                  opacity: pressed ? 0.85 : abierto(r) ? 1 : 0.65,
+                  // C-CERRADO-LEGIBLE (accesibilidad, 18 nov 2026): cerrado se atenúa la FOTO, no el
+                  // texto (con la tarjeta entera al 65 % el gris quedaba bajo el contraste mínimo).
+                  opacity: pressed ? 0.85 : 1,
                 },
                 sombra,
               ]}
@@ -323,7 +325,13 @@ export default function Restaurantes() {
                     ? { uri: urlFoto(r.imagen, 'tarjeta') ?? undefined }
                     : fotoDeRelleno(r.categoria)
                 }
-                style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: '#EEEFF1' }}
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 14,
+                  backgroundColor: '#EEEFF1',
+                  opacity: abierto(r) ? 1 : 0.55,
+                }}
                 accessibilityIgnoresInvertColors
               />
               <View style={{ flex: 1, justifyContent: 'space-between' }}>

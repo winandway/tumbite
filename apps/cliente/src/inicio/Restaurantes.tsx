@@ -65,7 +65,8 @@ function TarjetaRestaurante({
       accessibilityLabel={r.nombre}
       style={({ pressed }) => ({
         width: ancho,
-        opacity: !abierto(r) ? 0.6 : pressed ? 0.85 : 1,
+        // C-CERRADO-LEGIBLE: cerrado se atenúa la foto, no el texto.
+        opacity: pressed ? 0.85 : 1,
       })}
     >
       <View>
@@ -80,6 +81,7 @@ function TarjetaRestaurante({
             height: Math.round(ancho * 0.5),
             borderRadius: 14,
             backgroundColor: '#F6F6F6',
+            opacity: abierto(r) ? 1 : 0.55,
           }}
           resizeMode="cover"
           accessibilityIgnoresInvertColors
