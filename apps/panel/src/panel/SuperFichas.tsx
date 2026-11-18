@@ -352,7 +352,6 @@ function BotonSuspender({
       {cambiandoCiudad && ciudad !== undefined ? (
         <CambiarCiudadConductor
           id={id}
-          zonaActual={ciudad}
           idioma={idioma}
           alCerrar={() => setCambiandoCiudad(false)}
           alCambiar={(texto) => {

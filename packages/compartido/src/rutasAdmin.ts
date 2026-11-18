@@ -56,6 +56,7 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'POST /admin/viajes/emergencias/:id/atender': 'viajes.emergencias',
   'GET /admin/conductores/:id/pasajeros': 'repartidores.ver',
   'PUT /admin/conductores/:id/ciudad': 'repartidores.gestionar',
+  'GET /admin/conductores/:id/ciudades-destino': 'repartidores.ver',
   // ─── Clientes
   'GET /admin/clientes': 'clientes.ver',
   'GET /admin/clientes/:id': 'clientes.ver',
@@ -425,6 +426,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/viajes/emergencias/:id/atender': ficha('emergencia'),
   'GET /admin/conductores/:id/pasajeros': ficha('repartidor'),
   'PUT /admin/conductores/:id/ciudad': ficha('repartidor'),
+  'GET /admin/conductores/:id/ciudades-destino': ficha('repartidor'),
   'GET /admin/clientes': CONSULTA,
   'GET /admin/clientes/:id': ficha('cliente'),
   'PATCH /admin/usuarios/:id': ficha('persona'),

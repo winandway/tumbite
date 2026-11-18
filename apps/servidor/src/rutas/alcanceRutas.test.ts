@@ -752,4 +752,31 @@ describe('C-PERMISOS-FINOS: mover a un conductor de ciudad', () => {
     expect(r.estado).toBe(403);
     expect(r.datos.campo).toBe('zonaId');
   });
+
+  // C-CAMBIAR-CIUDAD-ADMIN (revisor, 18 nov 2026): tampoco lo TRAE de fuera de su territorio, ni ve
+  // ciudades de destino fuera de su zona de trabajo.
+  it('nadie trae a su ciudad a un conductor de otra zona, ni ve destinos fuera de la suya', async () => {
+    const m = mundo();
+    const total = await m.cuenta('admin', 'Soporte Total');
+    const { ids, zona, otraZona } = await ciudadA(m, total.token);
+    const gerente = await empleado(m, total.token, ['total'], { alcance: { zonas: [otraZona] } });
+    const traer = await m.llamar(
+      'PUT',
+      `/datos/admin/conductores/${ids.repartidor}/ciudad`,
+      { zonaId: otraZona, motivo: 'Traerlo a mi ciudad', cambioPais: true },
+      gerente.token,
+    );
+    expect([403, 404]).toContain(traer.estado);
+    const fila = await m.DB.prepare('SELECT zona_id FROM repartidores WHERE usuario_id = ?')
+      .bind(ids.repartidor)
+      .first<{ zona_id: string }>();
+    expect(fila?.zona_id).toBe(zona);
+    const lista = await m.llamar(
+      'GET',
+      `/datos/admin/conductores/${ids.repartidor}/ciudades-destino`,
+      undefined,
+      gerente.token,
+    );
+    expect([403, 404]).toContain(lista.estado);
+  });
 });

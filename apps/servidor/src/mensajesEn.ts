@@ -2055,6 +2055,15 @@ export const MENSAJES_EN = new Map<string, string>([
   ],
   ['Desconéctate antes de cambiar de ciudad.', 'Go offline before changing your city.'],
   ['Desconéctate antes de cambiar de vehículo.', 'Go offline before changing your vehicle.'],
+  ['Ya está en esa ciudad.', 'They’re already in that city.'],
+  [
+    'No se pudo preparar su código nuevo. Intenta otra vez.',
+    'We couldn’t prepare their new code. Try again.',
+  ],
+  [
+    'Se conectó o empezó un trabajo mientras tanto: no se cambió nada. Intenta otra vez cuando esté desconectado.',
+    'They went online or started a job in the meantime: nothing changed. Try again when they’re offline.',
+  ],
   [
     'Está conectado: tiene que desconectarse antes de cambiar de ciudad.',
     'They’re online: they have to go offline before changing city.',
@@ -2211,6 +2220,11 @@ const PARTES = new Map([
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
   [/^Un viaje puede llevar hasta (\d+) paradas\.$/, (m) => `A ride can have up to ${m[1]} stops.`],
   // C-CAMBIAR-CIUDAD-ADMIN (18 nov 2026)
+  [
+    /^Tiene papeles, vehículo o servicios de ([A-Z]{2}), que no valen en ([A-Z]{2}): el equipo tiene que revisarlos antes de cambiarlo de país\.$/,
+    (m) =>
+      `They have documents, a vehicle or services from ${m[1]} that aren’t valid in ${m[2]}: the team has to review them before changing their country.`,
+  ],
   [
     /^Es un cambio de país \(de ([A-Z]{2}) a ([A-Z]{2})\): confírmalo para seguir\.$/,
     (m) => `This is a country change (from ${m[1]} to ${m[2]}): confirm it to continue.`,

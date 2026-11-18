@@ -43,6 +43,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capBanners\(\s*'([a-z0-9-]+)',\
 // C-CAMILA-BUZON: las del buzón de Camila (capCamila).
 for (const [, nombre, idioma] of guias.matchAll(/capCamila\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`camila-${nombre}-${idioma}.webp`);
+// C-CAMBIAR-CIUDAD-ADMIN: las de «Cambiar la ciudad de un conductor» (capCiudad).
+for (const [, nombre, idioma] of guias.matchAll(/capCiudad\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`ciudad-${nombre}-${idioma}.webp`);
 for (const [, archivo] of guias.matchAll(/archivo: '([a-z0-9-]+\.webp)'/g)) archivos.add(archivo);
 const faltan = [...archivos].filter((a) => !existsSync(join(CAPTURAS_PRIVADAS, a)));
 if (faltan.length) {

@@ -12,9 +12,10 @@ import { pedir } from './api';
 
 /**
  * C-CAMBIAR-CIUDAD-ADMIN (piloto, 18 nov 2026; todos los países): desde los tres puntos de la ficha
- * del repartidor, el equipo cambia su ciudad: lista de ciudades activas, motivo obligatorio y
- * confirmación (otra más si es un cambio de país). El servidor no lo permite con el conductor
- * conectado o con un trabajo en curso, y lo deja en la auditoría. Lo escrito no se pierde.
+ * del repartidor (y de la de Moto), el equipo cambia su ciudad. Las ciudades salen del servidor
+ * (activas, de su zona de trabajo, sin zonas internas de prueba en producción). Motivo obligatorio y
+ * un paso de confirmación dentro del mismo formulario (sin ventanas del navegador); si cambia de
+ * país, además una casilla. Lo escrito no se pierde.
  */
 const T = {
   es: {
@@ -25,12 +26,17 @@ const T = {
     elegir: 'Elige una ciudad',
     motivo: 'Motivo (queda en el registro)',
     motivoEjemplo: 'Por qué se cambia y quién lo autorizó',
-    guardar: 'Cambiar ciudad',
+    seguir: 'Revisar el cambio',
     cancelar: 'Cancelar',
-    confirmar: (ciudad: string) => `¿Pasar a este conductor a ${ciudad}?`,
-    confirmarPais: (texto: string) =>
-      `${texto}\n\nAl cambiar de país, su moneda, su forma de cobro y los papeles que se le piden pasan a ser los del país nuevo. Sus papeles y aprobaciones se quedan. ¿Seguir?`,
+    confirmar: (ciudad: string) => `Vas a pasar a este conductor a ${ciudad}.`,
+    pais: (de: string, a: string) =>
+      `Es un cambio de país (de ${de} a ${a}). Su moneda, su forma de cobro y los papeles que se le piden pasan a ser los del país nuevo. Si tiene dinero, papeles, vehículo o servicios del país viejo, no se permite hasta que el equipo los revise.`,
+    confirmoPais: 'Confirmo el cambio de país',
+    si: 'Sí, cambiar la ciudad',
+    volver: 'Volver',
+    sinCambio: 'No se cambió nada.',
     listo: (codigo: string) => `Listo. Su código nuevo es ${codigo}.`,
+    sinCiudades: 'No hay otras ciudades activas en tu zona de trabajo.',
   },
   en: {
     titulo: 'Change city',
@@ -40,27 +46,32 @@ const T = {
     elegir: 'Choose a city',
     motivo: 'Reason (kept in the log)',
     motivoEjemplo: 'Why it changes and who approved it',
-    guardar: 'Change city',
+    seguir: 'Review the change',
     cancelar: 'Cancel',
-    confirmar: (ciudad: string) => `Move this driver to ${ciudad}?`,
-    confirmarPais: (texto: string) =>
-      `${texto}\n\nWhen the country changes, their currency, payout method and required documents become the new country’s. Their documents and approvals stay. Continue?`,
+    confirmar: (ciudad: string) => `You’re about to move this driver to ${ciudad}.`,
+    pais: (de: string, a: string) =>
+      `This is a country change (from ${de} to ${a}). Their currency, payout method and required documents become the new country’s. If they have money, documents, a vehicle or services from the old country, it isn’t allowed until the team reviews them.`,
+    confirmoPais: 'I confirm the country change',
+    si: 'Yes, change the city',
+    volver: 'Back',
+    sinCambio: 'Nothing was changed.',
     listo: (codigo: string) => `Done. Their new code is ${codigo}.`,
+    sinCiudades: 'There are no other active cities in your work area.',
   },
 };
 
-type Ciudad = { id: string; nombre: string; pais: string; activa: boolean };
+type Destinos = {
+  actual: { zonaId: string; pais: string };
+  ciudades: { id: string; nombre: string; pais: string }[];
+};
 
 export function CambiarCiudadConductor({
   id,
-  zonaActual,
   idioma,
   alCerrar,
   alCambiar,
 }: {
   id: string;
-  /** El nombre de su ciudad de hoy (no se ofrece). */
-  zonaActual: string;
   idioma: Idioma;
   alCerrar: () => void;
   alCambiar: (aviso: string) => void;
@@ -72,41 +83,30 @@ export function CambiarCiudadConductor({
     inicial: { zonaId: '', motivo: '' },
     almacen: almacenNavegador,
   });
-  const [ciudades, setCiudades] = useState<Ciudad[]>([]);
+  const [destinos, setDestinos] = useState<Destinos | null>(null);
+  const [paso, setPaso] = useState<'llenar' | 'confirmar'>('llenar');
+  const [confirmoPais, setConfirmoPais] = useState(false);
+  const [estado, setEstado] = useState('');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   useEffect(() => {
-    pedir<{ ciudades: Ciudad[] }>('GET', '/datos/admin/ciudades')
-      .then((r) => setCiudades(r.ciudades.filter((c) => c.activa)))
+    pedir<Destinos>('GET', `/datos/admin/conductores/${id}/ciudades-destino`)
+      .then(setDestinos)
       .catch((e: unknown) => setError(e instanceof ErrorApi ? e.message : String(e)));
-  }, []);
+  }, [id]);
+  const destino = destinos?.ciudades?.find((c) => c.id === b.valores.zonaId) ?? null;
+  const otroPais = Boolean(destino && destinos?.actual && destino.pais !== destinos.actual.pais);
 
-  async function enviar(e: React.FormEvent) {
-    e.preventDefault();
-    const destino = ciudades.find((c) => c.id === b.valores.zonaId);
-    if (!destino || b.valores.motivo.trim().length < 3) return;
-    if (!window.confirm(t.confirmar(destino.nombre))) return;
+  async function cambiar() {
+    if (!destino) return;
     setError('');
     setEnviando(true);
-    const cuerpo = { zonaId: destino.id, motivo: b.valores.motivo.trim() };
     try {
-      let r: { codigo?: string | null };
-      try {
-        r = await pedir('PUT', `/datos/admin/conductores/${id}/ciudad`, cuerpo);
-      } catch (x) {
-        // Cambio de país: el servidor pide confirmarlo aparte.
-        if (
-          !(x instanceof ErrorApi) ||
-          x.campo !== 'cambioPais' ||
-          /saldo|balance/i.test(x.message)
-        )
-          throw x;
-        if (!window.confirm(t.confirmarPais(x.message))) return;
-        r = await pedir('PUT', `/datos/admin/conductores/${id}/ciudad`, {
-          ...cuerpo,
-          cambioPais: true,
-        });
-      }
+      const r = await pedir<{ codigo: string }>('PUT', `/datos/admin/conductores/${id}/ciudad`, {
+        zonaId: destino.id,
+        motivo: b.valores.motivo.trim(),
+        ...(otroPais ? { cambioPais: true } : {}),
+      });
       await b.limpiar();
       alCambiar(t.listo(r.codigo ?? ''));
     } catch (x) {
@@ -119,7 +119,16 @@ export function CambiarCiudadConductor({
   return (
     <form
       className="tarjeta-form"
-      onSubmit={(e) => void enviar(e)}
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (paso === 'llenar') {
+          if (!destino || b.valores.motivo.trim().length < 3) return;
+          setEstado('');
+          setError('');
+          setConfirmoPais(false);
+          setPaso('confirmar');
+        } else void cambiar();
+      }}
       data-testid="cambiar-ciudad-repartidor"
     >
       <h2>
@@ -131,46 +140,93 @@ export function CambiarCiudadConductor({
         idioma={idioma}
         empezar={() => void b.empezarDeNuevo()}
       />
-      <label>
-        {t.ciudad}
-        <select
-          value={b.valores.zonaId}
-          onChange={(e) => b.cambiar('zonaId', e.target.value)}
-          required
-        >
-          <option value="">{t.elegir}</option>
-          {ciudades
-            .filter((c) => c.nombre !== zonaActual)
-            .map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre} ({c.pais})
-              </option>
-            ))}
-        </select>
-      </label>
-      <label>
-        {t.motivo}
-        <input
-          value={b.valores.motivo}
-          onChange={(e) => b.cambiar('motivo', e.target.value)}
-          placeholder={t.motivoEjemplo}
-          required
-          minLength={3}
-          maxLength={200}
-        />
-      </label>
+      {paso === 'llenar' ? (
+        <>
+          {destinos && (destinos.ciudades ?? []).length === 0 ? <p>{t.sinCiudades}</p> : null}
+          <label>
+            {t.ciudad}
+            <select
+              value={b.valores.zonaId}
+              onChange={(e) => b.cambiar('zonaId', e.target.value)}
+              required
+            >
+              <option value="">{t.elegir}</option>
+              {(destinos?.ciudades ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre} ({c.pais})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t.motivo}
+            <input
+              value={b.valores.motivo}
+              onChange={(e) => b.cambiar('motivo', e.target.value)}
+              placeholder={t.motivoEjemplo}
+              required
+              minLength={3}
+              maxLength={200}
+            />
+          </label>
+        </>
+      ) : (
+        <div data-testid="cambiar-ciudad-confirmar">
+          <p>
+            <strong>{t.confirmar(destino?.nombre ?? '')}</strong>
+          </p>
+          {otroPais && destinos && destino ? (
+            <>
+              <p className="pista">{t.pais(destinos.actual.pais, destino.pais)}</p>
+              <label className="casilla">
+                <input
+                  type="checkbox"
+                  checked={confirmoPais}
+                  onChange={(e) => setConfirmoPais(e.target.checked)}
+                />{' '}
+                {t.confirmoPais}
+              </label>
+            </>
+          ) : null}
+        </div>
+      )}
       {error ? (
         <p className="error" role="alert">
           {error}
         </p>
       ) : null}
+      {estado ? <p role="status">{estado}</p> : null}
       <p>
-        <button type="submit" className="boton" disabled={enviando}>
-          {t.guardar}
-        </button>{' '}
-        <button type="button" className="enlace" onClick={alCerrar}>
-          {t.cancelar}
-        </button>
+        {paso === 'llenar' ? (
+          <>
+            <button type="submit" className="boton" disabled={!destinos}>
+              {t.seguir}
+            </button>{' '}
+            <button type="button" className="enlace" onClick={alCerrar}>
+              {t.cancelar}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="submit"
+              className="boton"
+              disabled={enviando || (otroPais && !confirmoPais)}
+            >
+              {t.si}
+            </button>{' '}
+            <button
+              type="button"
+              className="enlace"
+              onClick={() => {
+                setPaso('llenar');
+                setEstado(t.sinCambio);
+              }}
+            >
+              {t.volver}
+            </button>
+          </>
+        )}
       </p>
     </form>
   );

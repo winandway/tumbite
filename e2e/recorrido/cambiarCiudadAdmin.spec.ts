@@ -68,7 +68,10 @@ for (const idioma of ['es', 'en'] as const)
     ]);
     await ctx.addInitScript((i) => localStorage.setItem('tumbite.idioma', i), idioma);
     const p = await ctx.newPage();
-    p.on('dialog', (d) => void d.accept());
+    // Revisor: nada de ventanas del navegador (si apareciera una, la prueba falla).
+    p.on('dialog', (d) => {
+      throw new Error(`ventana del navegador inesperada: ${d.message()}`);
+    });
     await p.goto(`/panel/${ruta ? `${ruta}/` : ''}drivers/${c.id}`);
     await expect(p.getByRole('heading', { level: 1 })).toContainText(
       idioma === 'en' ? 'Alex Turner' : 'Carlos Rivera',
@@ -95,7 +98,16 @@ for (const idioma of ['es', 'en'] as const)
       );
     if (CAPTURAS) await form.screenshot({ path: join(PRIVADA, `formulario-${idioma}.png`) });
     await form
-      .getByRole('button', { name: idioma === 'en' ? 'Change city' : 'Cambiar ciudad' })
+      .getByRole('button', { name: idioma === 'en' ? 'Review the change' : 'Revisar el cambio' })
+      .click();
+    await form
+      .getByLabel(idioma === 'en' ? 'I confirm the country change' : 'Confirmo el cambio de país')
+      .check();
+    if (CAPTURAS) await form.screenshot({ path: join(PRIVADA, `confirmar-${idioma}.png`) });
+    await form
+      .getByRole('button', {
+        name: idioma === 'en' ? 'Yes, change the city' : 'Sí, cambiar la ciudad',
+      })
       .click();
     await expect(p.getByRole('status').filter({ hasText: /VE-/ })).toBeVisible({ timeout: 30_000 });
     if (CAPTURAS) {
