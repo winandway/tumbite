@@ -1798,7 +1798,7 @@ describe('bandeja de soporte del cobro en mano y recuperación tras interrupcion
       .first<{ n: number }>();
     expect(Number(n?.n)).toBe(1);
     await e.m.DB.prepare(
-      "INSERT INTO sesiones (id, usuario_id, expira_en) VALUES ('vieja', ?, datetime('now', '-3 days'))",
+      "INSERT INTO sesiones (id, usuario_id, expira_en) VALUES ('vieja', ?, datetime('now', '-9 days'))",
     )
       .bind(staff.id)
       .run();

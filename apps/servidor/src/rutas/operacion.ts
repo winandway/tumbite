@@ -3256,7 +3256,8 @@ export const TAREAS_RELOJ: readonly TareaReloj[] = [
     correr: async (_env, db) => {
       const r = await db
         .prepare(
-          "DELETE FROM sesiones WHERE rowid IN (SELECT rowid FROM sesiones WHERE expira_en < datetime('now', '-1 day') LIMIT 500)",
+          // C-SESION-SE-RENUEVA: se guardan 8 días después de vencer (las de menos de 7 se rescatan).
+          "DELETE FROM sesiones WHERE rowid IN (SELECT rowid FROM sesiones WHERE expira_en < datetime('now', '-8 days') LIMIT 500)",
         )
         .run();
       return Number(r.meta.changes ?? 0);

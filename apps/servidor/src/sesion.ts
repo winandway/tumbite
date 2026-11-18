@@ -7,6 +7,20 @@ import { type AccesoEnSesion, accesoGuardado, esDueno, leerAccesoInterno } from 
 
 export const COOKIE_SESION = 'tumbite_sesion';
 export const DIAS_SESION = 30;
+/**
+ * C-SESION-SE-RENUEVA (18 nov 2026): la sesión de clientes, conductores y restaurantes no vence
+ * mientras se usa (como Uber o DiDi): cada uso la deja en `DIAS_SESION` días desde ese momento,
+ * pero se escribe como mucho una vez al día por sesión (solo si le quedan menos de
+ * `DIAS_RENUEVA_SI_QUEDAN` días). Tope absoluto de vida: `DIAS_TOPE_SESION` desde que se abrió;
+ * después hay que volver a entrar. Una sesión vencida hace menos de `DIAS_RESCATE_SESION` días se
+ * acepta y se renueva: ningún camino cierra una sesión dejándola vencida (salir, cambio de clave,
+ * suspensión, borrar la cuenta y la sesión única del conductor la BORRAN, y la cuenta inactiva no
+ * entra), así que una fila vencida solo puede ser una sesión que nadie cerró. El equipo interno
+ * (rol admin: superadmin, soporte, managers) NO se renueva: conserva sus 30 días fijos.
+ */
+export const DIAS_RENUEVA_SI_QUEDAN = 29;
+export const DIAS_TOPE_SESION = 180;
+export const DIAS_RESCATE_SESION = 7;
 
 /**
  * C-PERMISOS-FINOS: una cuenta del equipo lleva sus permisos efectivos (calculados una vez por
@@ -55,14 +69,51 @@ export const cargarSesion: MiddlewareHandler<{ Bindings: Env; Variables: Variabl
   if (token && c.env.DB) {
     const sesionId = await sha256(token);
     const fila = await c.env.DB.prepare(
-      `SELECT u.id, u.nombre, u.correo, u.rol, u.idioma, s.permisos_json, s.segundo_factor_en
+      `SELECT u.id, u.nombre, u.correo, u.rol, u.idioma, s.permisos_json, s.segundo_factor_en,
+              (s.expira_en < datetime('now', ?2)
+                AND s.expira_en < datetime(s.creada_en, ?3)) AS renovar
          FROM sesiones s JOIN usuarios u ON u.id = s.usuario_id
-       WHERE s.id = ? AND s.expira_en > datetime('now') AND u.activo = 1`,
+       WHERE s.id = ?1 AND u.activo = 1
+         AND (s.expira_en > datetime('now')
+              OR (u.rol != 'admin' AND s.expira_en > datetime('now', ?4)
+                  AND datetime(s.creada_en, ?3) > datetime('now')))`,
     )
-      .bind(sesionId)
-      .first<Usuario & { permisos_json: string | null; segundo_factor_en: string | null }>();
+      .bind(
+        sesionId,
+        `+${DIAS_RENUEVA_SI_QUEDAN} days`,
+        `+${DIAS_TOPE_SESION} days`,
+        `-${DIAS_RESCATE_SESION} days`,
+      )
+      .first<
+        Usuario & {
+          permisos_json: string | null;
+          segundo_factor_en: string | null;
+          renovar: number | null;
+        }
+      >();
     if (fila) {
-      const { permisos_json, segundo_factor_en, ...usuario } = fila;
+      const { permisos_json, segundo_factor_en, renovar, ...usuario } = fila;
+      // C-SESION-SE-RENUEVA: una escritura al día como mucho (la condición se repite en el UPDATE
+      // para que dos peticiones a la vez no escriban dos veces). El equipo interno no se renueva.
+      if (renovar && usuario.rol !== 'admin') {
+        const r = await c.env.DB.prepare(
+          `UPDATE sesiones SET expira_en = MIN(datetime('now', ?2), datetime(creada_en, ?3))
+            WHERE id = ?1 AND expira_en < datetime('now', ?4) AND expira_en < datetime(creada_en, ?3)`,
+        )
+          .bind(
+            sesionId,
+            `+${DIAS_SESION} days`,
+            `+${DIAS_TOPE_SESION} days`,
+            `+${DIAS_RENUEVA_SI_QUEDAN} days`,
+          )
+          .run();
+        // En la web la cookie también se alarga (en las apps el token va en la cabecera).
+        if (r.meta.changes && !c.req.header('authorization'))
+          c.header(
+            'Set-Cookie',
+            `${COOKIE_SESION}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${DIAS_SESION * 86400}`,
+          );
+      }
       if (usuario.rol !== 'admin') c.set('usuario', usuario);
       else {
         // C-PERMISOS-FINOS: el cálculo vive en la sesión; solo se rehace si falta o cambió algo.
