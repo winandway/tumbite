@@ -199,6 +199,15 @@ describe('C-CAMILA-TONO: la conversación que leyó Richard, arreglada', () => {
     expect(primero).not.toMatch(/Soy Camila|del equipo de soporte/);
     const segundo = (await e.decir('¿cómo pido una moto?')).datos.respuesta as string;
     expect(segundo).toBe('Para pedir una moto, abre Moto y escribe tu destino.');
+    // Una lista numerada sale como la escribió: el número y su paso en el mismo renglón.
+    expect(
+      cuidarTono(
+        'Para pedir una moto, sigue estos pasos:\n\n1. Abre la app y toca «Moto».\n2. Confirma tu ubicación. Escribe tu destino.\n3. Soy Camila y te ayudo.',
+        { yaEmpezo: true, puedePasar: false },
+      ),
+    ).toBe(
+      'Para pedir una moto, sigue estos pasos:\n\n1. Abre la app y toca «Moto».\n2. Confirma tu ubicación. Escribe tu destino.',
+    );
     expect(cuidarTono('Hola. Soy Camila. Toca Moto.', { yaEmpezo: true, puedePasar: false })).toBe(
       'Toca Moto.',
     );

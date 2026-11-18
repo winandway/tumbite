@@ -109,15 +109,19 @@ const OFRECE_PERSONA =
   /\b(hablar con una persona|persona del equipo|alguien del equipo|un agente|con un humano|pasarte con|talk to a person|person on (the|our) team|someone on (the|our) team|a human|an agent)\b/i;
 const SALUDO = /^\s*(¡?hola|buen(os|as) (d[ií]as|tardes|noches)|hi|hello|hey)\b[^.!?\n]*[.!?]?\s*/i;
 export function cuidarTono(texto: string, op: { yaEmpezo: boolean; puedePasar: boolean }) {
-  const frases = texto.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])|\n/);
-  const limpias = frases.filter(
-    (f) =>
-      !SE_PRESENTA.test(f) && !DICE_ASISTENTE.test(f) && (op.puedePasar || !OFRECE_PERSONA.test(f)),
-  );
-  let salida = (limpias.length ? limpias : frases)
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  const sobra = (f: string) =>
+    SE_PRESENTA.test(f) || DICE_ASISTENTE.test(f) || (!op.puedePasar && OFRECE_PERSONA.test(f));
+  // Renglón por renglón, para no romper las listas: «1. Abre la app» es un solo paso (el punto del
+  // número no parte la frase) y cada paso sigue en su renglón.
+  const renglones = texto.split('\n').flatMap((renglon) => {
+    if (!renglon.trim()) return [''];
+    const quedan = renglon
+      .split(/(?<=[.!?])(?<!^\s*\d{1,2}\.)\s+(?=[A-ZÁÉÍÓÚÑ¿¡])/)
+      .filter((f) => !sobra(f));
+    return quedan.length ? [quedan.join(' ')] : [];
+  });
+  const limpio = renglones.join('\n').trim();
+  let salida = (limpio || texto).replace(/\n{3,}/g, '\n\n').trim();
   if (op.yaEmpezo) {
     const sinSaludo = salida.replace(SALUDO, '').trim();
     // Quitado el saludo, la frase que queda empieza con mayúscula.

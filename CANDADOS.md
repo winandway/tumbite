@@ -5361,6 +5361,14 @@ Orden directa de Richard del 14 nov («paradas múltiples, categorías y tarifa 
 - **Cómo se comprueba:** en el chat, «Hola Camila, ¿cómo pido una moto?» responde con la guía de Moto y su enlace, sin presentarse y sin ofrecer una persona.
 - **Qué NO tocar:** no editar `docsPublicos.ts` a mano; no volver a poner la presentación ni la oferta de persona en el saludo; no quitar el freno de `abrir_caso`.
 
+## C-DOCS-AL-GRANO y C-SEO-DESCRIPCION — la guía abre directo en su contenido y cada página lleva su propia descripción (18 nov 2026, Richard) — todos los países
+
+- **Qué pasó:** Richard tocó «Ver la guía con capturas» en Divoox Driver y grabó un video: en el celular la página abría con el menú entero de Docs (decenas de guías) y había que bajar hasta el final para encontrar la guía. Además, al revisar, TODAS las páginas públicas (534) salían con la misma descripción genérica en inglés para Google: el guion `apps/panel/scripts/prerender.mjs` buscaba la etiqueta de la descripción en un solo renglón, la plantilla la trae en varios, y el reemplazo fallaba en silencio. La de `og:description` nunca se reemplazaba.
+- **Cómo quedó:** (1) en `Docs.tsx` el contenido (`<main>`) va ANTES que el menú (`<aside class="docs-barra">`) en la página; en pantallas de 900 px o más la hoja de estilos lo muestra a la izquierda con `order: -1`. En el celular se llega directo al título. (2) En cada guía, el paso a paso va justo después del resumen; después las capturas y la explicación larga. (3) El guion de páginas estáticas pone la descripción y `og:description` de cada página en su idioma con un ayudante que LANZA un error si un reemplazo de la cabecera no se aplica (la compilación falla, ya no es silencioso). (4) Cada guía lleva datos estructurados: `HowTo` con sus pasos (o `Article`) y `BreadcrumbList`.
+- **Candados:** `Docs.test.tsx` («la guía va al grano»), el recorrido `e2e/recorrido/camila.spec.ts` (en un celular, el título y el primer paso se ven sin bajar) y el propio guion, que se niega a compilar si no puede poner una etiqueta.
+- **Cómo se comprueba:** abrir una guía en el celular: se ve el título y los pasos. En el código de la página, `<meta name="description">` trae el resumen de esa guía.
+- **Qué NO tocar:** no volver a poner el menú antes del contenido; no cambiar los reemplazos de la cabecera por `.replace` sueltos.
+
 ## C-CAMILA-CORTESIA — un saludo se contesta con un saludo (18 nov 2026, Richard) — todos los países
 
 - **Qué pasó:** Richard escribió «Hola» en el chat de divoox.com y Camila contestó «No estoy segura de haberte entendido». Sin IA, un saludo no coincidía con ninguna guía y caía en «no supo».

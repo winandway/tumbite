@@ -332,6 +332,19 @@ for (const idioma of ['es', 'en'] as const) {
         timeout: 30_000,
       });
     }
+    // C-DOCS-AL-GRANO (Richard, 18 nov: en el celular había que bajar por todo el menú para llegar a
+    // la guía): al abrir el enlace en un celular, el título y el primer paso se ven sin bajar.
+    const movil = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
+    await movil.addInitScript((idi) => localStorage.setItem('tumbite.idioma', idi), idioma);
+    const pm = await movil.newPage();
+    await pm.goto(`${pre}/docs/ordering/ride-moto`);
+    const alto = pm.viewportSize()!.height;
+    const cajaTitulo = await pm.getByRole('heading', { level: 1 }).boundingBox();
+    const cajaPaso = await pm.locator('.docs-guia ol li').first().boundingBox();
+    expect(cajaTitulo!.y).toBeLessThan(alto / 2);
+    expect(cajaPaso!.y).toBeLessThan(alto);
+    if (CAPTURAS) await pm.screenshot({ path: join(CARPETA, `docs-guia-celular-${idioma}.png`) });
+    await movil.close();
     // En el chat de la web: saludo corto, la respuesta de la moto y su enlace tocable.
     await p.goto(`${pre}/how-it-works`);
     const T =

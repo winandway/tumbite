@@ -48,6 +48,29 @@ describe('Docs', { timeout: 30_000 }, () => {
     expect(activo).toHaveAttribute('href', '/docs/ordering/first-order');
   });
 
+  it('C-DOCS-AL-GRANO: la guía va al grano — el título y el paso a paso antes que el menú y que la explicación larga', () => {
+    window.history.pushState(null, '', '/docs/ordering/ride-moto');
+    const { container } = render(<App />);
+    const html = container.innerHTML;
+    const titulo = html.indexOf('<h1');
+    const pasos = html.indexOf('<ol');
+    const menu = html.indexOf('docs-barra');
+    expect(titulo).toBeGreaterThan(-1);
+    expect(pasos).toBeGreaterThan(titulo);
+    // El menú de todas las guías va DESPUÉS del contenido en la página (en pantallas anchas la hoja
+    // de estilos lo muestra a la izquierda): el celular y Google llegan directo a la guía.
+    expect(menu).toBeGreaterThan(pasos);
+    // Y el paso a paso va antes que la explicación larga y que las capturas.
+    const guia = container.querySelector('.docs-guia')!;
+    const orden = [...guia.children].map((e) => e.tagName);
+    expect(orden.indexOf('OL')).toBeLessThan(
+      orden.findIndex((t, i) => t === 'H2' && i > orden.indexOf('OL')),
+    );
+    expect(orden.slice(0, orden.indexOf('OL')).filter((t) => t === 'P').length).toBeLessThanOrEqual(
+      2,
+    );
+  });
+
   it('el buscador filtra mientras se escribe', async () => {
     window.history.pushState(null, '', '/docs');
     render(<App />);

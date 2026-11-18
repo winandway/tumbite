@@ -87,6 +87,51 @@ try {
             },
           ]
         : [];
+  /**
+   * C-DOCS-AL-GRANO: cada guía de Docs lleva sus datos estructurados, para que Google y los
+   * buscadores de IA la lean como un tutorial: el paso a paso (HowTo) o el artículo, y su ruta.
+   */
+  const datosDeGuia = (ruta, lengua, canonica) => {
+    const m = /^\/docs\/([a-z-]+)\/([a-z0-9-]+)$/.exec(ruta);
+    if (!m) return [];
+    const seccion = DOCS[lengua === 'es' ? 'es' : 'en'].find((s) => s.id === m[1]);
+    const guia = seccion?.guias.find((g) => g.id === m[2]);
+    if (!seccion || !guia) return [];
+    const pre = lengua === 'es' ? '/es' : '';
+    const imagenes = (guia.capturas ?? []).map((c) => `${DOMINIO}${c.src}`);
+    const comun = {
+      '@context': 'https://schema.org',
+      name: guia.titulo,
+      description: guia.resumen,
+      inLanguage: lengua,
+      url: canonica,
+      ...(imagenes.length ? { image: imagenes } : {}),
+      publisher: { '@type': 'Organization', name: 'Divoox', url: `${DOMINIO}/` },
+    };
+    return [
+      guia.pasos.length
+        ? {
+            ...comun,
+            '@type': 'HowTo',
+            step: guia.pasos.map((p, i) => ({ '@type': 'HowToStep', position: i + 1, text: p })),
+          }
+        : { ...comun, '@type': 'Article', headline: guia.titulo },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Docs', item: `${DOMINIO}${pre}/docs` },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: seccion.titulo,
+            item: `${DOMINIO}${pre}/docs/${seccion.id}`,
+          },
+          { '@type': 'ListItem', position: 3, name: guia.titulo, item: canonica },
+        ],
+      },
+    ];
+  };
   const paginas = [];
 
   const rutas = [
@@ -157,37 +202,59 @@ try {
           : 'Divoox: comida rica, hasta tu puerta.')
       ).slice(0, 155);
       const esc = (t) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-      const pagina = plantilla
-        .replace(/<title>[^<]*<\/title>/, `<title>${esc(titulo)}</title>`)
-        .replace(
-          /<meta name="description" content="[^"]*" \/>/,
+      // C-SEO-DESCRIPCION (18 nov 2026): cada reemplazo de la cabecera TIENE que aplicarse. Durante
+      // semanas la descripción no se cambiaba (la plantilla la trae en varias líneas) y todas las
+      // páginas salían con la misma descripción genérica en inglés, sin que nada avisara.
+      const cabecera = (texto, patron, valor, nombre) => {
+        if (!patron.test(texto))
+          throw new Error(`prerender: no se pudo poner «${nombre}» en la cabecera de ${url}`);
+        return texto.replace(patron, () => valor);
+      };
+      const canonica = `${DOMINIO}${url === '/' ? '/' : url}`;
+      let pagina = plantilla;
+      for (const [patron, valor, nombre] of [
+        [/<title>[^<]*<\/title>/, `<title>${esc(titulo)}</title>`, 'title'],
+        [
+          /<meta\s+name="description"\s+content="[^"]*"\s*\/>/,
           `<meta name="description" content="${esc(descripcion)}" />`,
-        )
-        .replace(
-          /<meta property="og:title" content="[^"]*" \/>/,
+          'description',
+        ],
+        [
+          /<meta\s+property="og:title"\s+content="[^"]*"\s*\/>/,
           `<meta property="og:title" content="${esc(titulo)}" />`,
-        )
-        .replace(
-          /<meta property="og:url" content="[^"]*" \/>/,
-          `<meta property="og:url" content="${DOMINIO}${url === '/' ? '/' : url}" />`,
-        )
+          'og:title',
+        ],
+        [
+          /<meta\s+property="og:description"\s+content="[^"]*"\s*\/>/,
+          `<meta property="og:description" content="${esc(descripcion)}" />`,
+          'og:description',
+        ],
+        [
+          /<meta\s+property="og:url"\s+content="[^"]*"\s*\/>/,
+          `<meta property="og:url" content="${canonica}" />`,
+          'og:url',
+        ],
+        [
+          /<link\s+rel="canonical"\s+href="[^"]*"\s*\/>/,
+          `<link rel="canonical" href="${canonica}" />`,
+          'canonical',
+        ],
+        [/<html lang="[a-z]+">/, `<html lang="${lengua}">`, 'lang'],
+      ])
+        pagina = cabecera(pagina, patron, valor, nombre);
+      pagina = pagina
         // Aunque la plantilla ya traiga contenido (corrida repetida), se reemplaza entero.
         .replace(
           /<div id="raiz">[\s\S]*?<\/div>(?=\s*<\/body>)/,
           () => `<div id="raiz">${html}</div>`,
         )
         .replace(
-          /<link rel="canonical" href="[^"]*" \/>/,
-          `<link rel="canonical" href="${DOMINIO}${url === '/' ? '/' : url}" />`,
-        )
-        .replace(/<html lang="[a-z]+">/, `<html lang="${lengua}">`)
-        .replace(
           '</head>',
           () =>
             `<link rel="alternate" hreflang="en" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
             `<link rel="alternate" hreflang="es" href="${DOMINIO}${enEspanol(ruta)}" />` +
             `<link rel="alternate" hreflang="x-default" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
-            datosDe(ruta, lengua)
+            [...datosDe(ruta, lengua), ...datosDeGuia(ruta, lengua, canonica)]
               .map(
                 (d) =>
                   `<script type="application/ld+json">${JSON.stringify(d).replace(/</g, '\\u003c')}</script>`,

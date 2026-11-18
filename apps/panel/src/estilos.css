@@ -2377,6 +2377,8 @@ button {
   .docs-barra {
     position: sticky;
     top: 84px;
+    /* En la página el menú va después del contenido (C-DOCS-AL-GRANO); aquí se ve a la izquierda. */
+    order: -1;
   }
   .docs-volver {
     display: none;
