@@ -1754,16 +1754,19 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cómo hablo con soporte de Divoox?",
    "¿Camila es una persona?",
    "¿Cómo hablo con una persona del equipo?",
-   "¿Cómo registro a mi equipo de conductores?"
+   "¿Cómo registro a mi equipo de conductores?",
+   "¿Cómo reporto un fallo de la app?",
+   "¿Qué pasa con la captura que mando?"
   ],
   "pasos": [
    "En la app Divoox Driver, abre el menú y toca «Ayuda», «Habla con soporte». En la web, toca «Habla con nuestro equipo de soporte» abajo a la derecha.",
    "Escribe tu pregunta como se la dirías a una persona.",
    "Si quieres hablar con alguien del equipo, escribe «hablar con una persona».",
    "Por correo, responde cualquier correo de Camila: sigue la misma conversación.",
-   "Si una respuesta de Camila no te parece correcta, toca «Reportar respuesta» debajo de ella: el equipo la revisa."
+   "Si una respuesta de Camila no te parece correcta, toca «Reportar respuesta» debajo de ella: el equipo la revisa.",
+   "Si algo falla, cuéntaselo a Camila, responde sus cuatro preguntas y manda la captura (o toca «No tengo captura»)."
   ],
-  "cuerpo": "Camila Campos es la asistente virtual del equipo de soporte de Divoox. Te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse. Si le preguntas si es una persona, siempre te dice la verdad: es la asistente virtual de Divoox. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación. Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números. Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña. Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó. Si eres líder de un equipo de conductores, tu enlace y tu código QR están en Divoox Driver, «Mi equipo». Camila te manda el plan para registrar a tu gente y te avisa cada vez que alguien se registra y cada vez que alguien queda aprobado, con cuántos llevas."
+  "cuerpo": "Camila Campos es la asistente virtual del equipo de soporte de Divoox. Te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse. Si le preguntas si es una persona, siempre te dice la verdad: es la asistente virtual de Divoox. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación. Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números. Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña. Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó. Si eres líder de un equipo de conductores, tu enlace y tu código QR están en Divoox Driver, «Mi equipo». Camila te manda el plan para registrar a tu gente y te avisa cada vez que alguien se registra y cada vez que alguien queda aprobado, con cuántos llevas. Si algo de la app falla (no carga, se cierra, no te deja pagar o recargar), cuéntaselo a Camila. Ella lo reporta al equipo técnico y te hace cuatro preguntas cortas: qué estabas haciendo, qué esperabas que pasara, qué viste en la pantalla y si…"
  },
  {
   "idioma": "es",
@@ -4083,16 +4086,19 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How do I contact Divoox support?",
    "Is Camila a person?",
    "How do I talk to a person on the team?",
-   "How do I sign up my team of drivers?"
+   "How do I sign up my team of drivers?",
+   "How do I report a problem with the app?",
+   "What happens to the screenshot I send?"
   ],
   "pasos": [
    "In the Divoox Driver app, open the menu and tap “Help,” “Talk to support.” On the web, tap “Talk to our support team” at the bottom right.",
    "Write your question the way you would ask a person.",
    "If you want to talk to someone on the team, write “talk to a person.”",
    "By email, reply to any email from Camila: it continues the same conversation.",
-   "If a reply from Camila doesn’t seem right, tap “Report reply” under it: our team reviews it."
+   "If a reply from Camila doesn’t seem right, tap “Report reply” under it: our team reviews it.",
+   "If something is broken, tell Camila, answer her four questions and send the screenshot (or tap “I don’t have a screenshot”)."
   ],
-  "cuerpo": "Camila Campos is the virtual assistant of the Divoox support team. She helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated. If you ask whether she is a person, she always tells you the truth: she is the Divoox virtual assistant. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation. There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code. To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password. Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved. If you lead a team of drivers, your link and QR code are in Divoox Driver, “My team.” Camila sends you the plan to sign up your people and tells you every time someone signs up and every time someone is approved, with how many you have."
+  "cuerpo": "Camila Campos is the virtual assistant of the Divoox support team. She helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated. If you ask whether she is a person, she always tells you the truth: she is the Divoox virtual assistant. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation. There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code. To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password. Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved. If you lead a team of drivers, your link and QR code are in Divoox Driver, “My team.” Camila sends you the plan to sign up your people and tells you every time someone signs up and every time someone is approved, with how many you have. If something in the app is broken (it won’t load, it closes, it won’t let you pay or top up), tell Camila. She reports it to the technical team and asks you four short questions: what you were doing, what you expected to happen, what you saw on the scree…"
  },
  {
   "idioma": "en",

@@ -391,11 +391,12 @@ describe('C-CAMILA-HERRAMIENTAS: atadas a la persona, el dinero solo dentro de s
           'x-idioma': idioma,
         })
       ).datos.respuesta as string;
-    expect(await preguntar('how do I start driving with Divoox?', 'en', 'en1')).toMatch(
-      /download Divoox Driver and create your account/,
+    // Va a una guía del conductor (no a una del cliente), con su enlace.
+    expect(await preguntar('how do I start driving with Divoox?', 'en', 'en1')).toContain(
+      'https://divoox.com/docs/drivers/',
     );
-    expect(await preguntar('¿cómo empiezo a manejar con Divoox?', 'es', 'es1')).toMatch(
-      /descarga Divoox Driver y crea tu cuenta/,
+    expect(await preguntar('¿cómo empiezo a manejar con Divoox?', 'es', 'es1')).toContain(
+      'https://divoox.com/es/docs/drivers/',
     );
     expect(
       (await e.m.DB.prepare('SELECT COUNT(*) AS n FROM camila_casos').first<{ n: number }>())?.n,

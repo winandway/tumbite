@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { usarEsperaDeEscritura } from '@tumbite/compartido';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChatSoporte } from './ChatSoporte';
@@ -65,8 +66,12 @@ describe('C-CAMILA-FALLOS: el bloque de la captura en la web', () => {
   beforeEach(() => {
     localStorage.clear();
     localStorage.setItem('divoox.camila.converso', '1');
+    usarEsperaDeEscritura(() => 0);
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    usarEsperaDeEscritura(null);
+  });
 
   it('muestra los dos botones, el aviso y «No tengo captura»', async () => {
     servidor(() => json({ ok: true }, 201));

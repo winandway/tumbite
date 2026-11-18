@@ -402,6 +402,12 @@ export function buscarGuias(
 ): GuiaEncontrada[] {
   const consulta = [...new Set(raices(texto))];
   if (!consulta.length) return [];
+  // «¿Cómo empiezo a manejar con Divoox?»: quien pregunta por registrarse o conectarse como conductor
+  // busca las guías del conductor, aunque escriba sin cuenta.
+  const paraConductor =
+    consulta.includes('conductor') &&
+    ['registrar', 'conectar', 'ganancia'].some((r) => consulta.includes(r));
+  const seccion = paraConductor ? 'drivers' : prefiere;
   const { fichas, rareza } = indiceDe(idioma);
   // Con una sola palabra solo se contesta si es de las del oficio (moto, cupón, saldo…): «oficina»
   // sola no alcanza para elegir una guía.
@@ -432,7 +438,7 @@ export function buscarGuias(
     if (fuertes >= minimo && puntos > 0)
       encontradas.push({
         guia: f.guia,
-        puntos: f.guia.ruta.startsWith(`${prefiere}/`) ? puntos * 1.25 : puntos,
+        puntos: f.guia.ruta.startsWith(`${seccion}/`) ? puntos * 1.25 : puntos,
       });
   }
   encontradas.sort((a, b) => b.puntos - a.puntos);
