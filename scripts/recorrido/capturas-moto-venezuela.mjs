@@ -397,9 +397,7 @@ async function correr(M, idiomas) {
     // El mapa web arranca en la ciudad por defecto y aquí no hay buscador de direcciones (sin llave de
     // Google en local): el destino se deja escrito como lo guarda la app (su borrador) y se recorta el
     // aviso «Recuperamos lo que estabas escribiendo» de la imagen (lo de abajo es la pantalla real).
-    await c
-      .getByRole('button', { name: en ? 'See price' : 'Ver precio' })
-      .click({ timeout: 60_000 });
+    // C-INICIO-NUEVO (borrador aprobado): ya no hay «Ver precio»; el precio sale solo con el destino.
     await c
       .getByTestId('moto-precio')
       .waitFor({ timeout: 30_000 })
@@ -426,7 +424,7 @@ async function correr(M, idiomas) {
         const r = x.getBoundingClientRect();
         return { y: r.top + globalThis.scrollY, fin: r.bottom + globalThis.scrollY };
       });
-    const arriba = await caja(c.getByText(en ? 'Pickup point' : 'Punto de recogida').first());
+    const arriba = await caja(c.getByText(en ? 'Pick up at' : 'Recoger en').first());
     const precio = await caja(c.getByTestId('moto-precio'));
     const desde = arriba.y - 16;
     await c.screenshot({

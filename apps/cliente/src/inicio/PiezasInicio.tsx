@@ -79,10 +79,13 @@ export function PortadaRotativa({
           <Defs>
             <LinearGradient id="fundido" x1="0" y1="0" x2="1" y2="0">
               <Stop offset="0" stopColor="#1C0708" stopOpacity={1} />
-              <Stop offset="0.45" stopColor="#1C0708" stopOpacity={banner.imagen ? 0.35 : 0} />
+              <Stop offset="0.3" stopColor="#1C0708" stopOpacity={banner.imagen ? 0.85 : 0} />
+              <Stop offset="0.65" stopColor="#1C0708" stopOpacity={banner.imagen ? 0.35 : 0} />
               <Stop offset="1" stopColor="#1C0708" stopOpacity={0} />
             </LinearGradient>
             <LinearGradient id="fundidoAbajo" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#120506" stopOpacity={banner.imagen ? 0.7 : 0} />
+              <Stop offset="0.3" stopColor="#120506" stopOpacity={0} />
               <Stop offset="0.7" stopColor="#120506" stopOpacity={0} />
               <Stop offset="1" stopColor="#120506" stopOpacity={banner.imagen ? 0.85 : 0} />
             </LinearGradient>

@@ -24,6 +24,44 @@ const PERSONA = {
 const MIAMI = { lat: 25.7617, lng: -80.1918 };
 const ZONA = 'US-FL-MIAMI';
 
+/**
+ * Lo que esta prueba enciende (Envíos, Moto y Carro en Miami) se devuelve como estaba al final,
+ * pase lo que pase, para no ensuciar las pruebas siguientes (revisión del 18 nov).
+ */
+let antes: {
+  servicios: Record<string, unknown>[];
+  zona: Record<string, unknown>[];
+  implementados: Record<string, unknown>[];
+} | null = null;
+test.beforeAll(() => {
+  if (process.env.RECORRIDO_URL) return;
+  const lista = "('envios', 'moto', 'carro')";
+  antes = {
+    servicios: sqlLocal(`SELECT id, estado FROM servicios WHERE id IN ${lista}`),
+    zona: sqlLocal(
+      `SELECT servicio_id, estado FROM servicios_zona WHERE zona_id = '${ZONA}' AND servicio_id IN ${lista}`,
+    ),
+    implementados: sqlLocal(
+      `SELECT servicio_id FROM servicios_implementados WHERE servicio_id IN ${lista}`,
+    ),
+  };
+});
+test.afterAll(() => {
+  if (!antes) return;
+  for (const s of antes.servicios)
+    sqlLocalTexto(
+      `UPDATE servicios SET estado = '${String(s.estado)}' WHERE id = '${String(s.id)}'`,
+    );
+  for (const z of antes.zona)
+    sqlLocalTexto(
+      `UPDATE servicios_zona SET estado = '${String(z.estado)}' WHERE servicio_id = '${String(z.servicio_id)}' AND zona_id = '${ZONA}'`,
+    );
+  const tenia = new Set(antes.implementados.map((x) => String(x.servicio_id)));
+  for (const s of ['envios', 'moto', 'carro'])
+    if (!tenia.has(s))
+      sqlLocalTexto(`DELETE FROM servicios_implementados WHERE servicio_id = '${s}'`);
+});
+
 for (const idioma of ['es', 'en'] as const)
   test(`varios servicios conectados a la vez, deslizar para desconectar y perfil compartido (${idioma})`, async ({
     browser,

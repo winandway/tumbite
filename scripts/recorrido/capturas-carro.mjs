@@ -453,9 +453,7 @@ async function correr(M, idiomas) {
     );
     const c = await ctxC.newPage();
     await c.goto('/app/ride?servicio=carro');
-    await c
-      .getByRole('button', { name: en ? 'See price' : 'Ver precio' })
-      .click({ timeout: 60_000 });
+    // C-INICIO-NUEVO (borrador aprobado): ya no hay «Ver precio»; el precio sale solo con el destino.
     await c.getByTestId('moto-precio').waitFor({ timeout: 30_000 });
     // La forma de pago de cada país: pago móvil en Venezuela, tarjeta en Estados Unidos.
     await c
@@ -655,7 +653,7 @@ async function correr(M, idiomas) {
     await q.evaluate(() => globalThis.scrollBy(0, -110));
     await espera(1_000);
     await foto(q, 'pasajero-paradas', idioma);
-    await q.getByRole('button', { name: en ? 'See price' : 'Ver precio' }).click();
+    // C-INICIO-NUEVO (borrador aprobado): ya no hay «Ver precio»; el precio sale solo con el destino.
     await q.getByTestId('moto-precio').waitFor({ timeout: 30_000 });
     await arribaDe(q.getByTestId('moto-precio'));
     await q.evaluate(() => globalThis.scrollBy(0, -140));
@@ -675,9 +673,7 @@ async function correr(M, idiomas) {
       tokens.equipo,
     );
     await q.reload();
-    await q
-      .getByRole('button', { name: en ? 'See price' : 'Ver precio' })
-      .click({ timeout: 60_000 });
+    // C-INICIO-NUEVO (borrador aprobado): ya no hay «Ver precio»; el precio sale solo con el destino.
     await q.getByTestId('moto-dinamica').waitFor({ timeout: 30_000 });
     await arribaDe(q.getByTestId('moto-precio'));
     await q.evaluate(() => globalThis.scrollBy(0, -140));

@@ -273,13 +273,11 @@ async function correr(M, idiomas) {
     await c.goto('/app/ride?servicio=envios');
     // Sin llave de mapas en local no hay buscador: la recogida y el destino van como los guarda la
     // app (su borrador) y se recorta el aviso «Recuperamos lo que estabas escribiendo».
-    await c
-      .getByRole('button', { name: en ? 'See price' : 'Ver precio' })
-      .click({ timeout: 60_000 });
+    // C-INICIO-NUEVO (borrador aprobado): ya no hay «Ver precio»; el precio sale solo con el destino.
     await c.getByTestId('moto-precio').waitFor({ timeout: 30_000 });
     await c.getByTestId('moto-precio').scrollIntoViewIfNeeded();
     await espera(700);
-    const arriba = await caja(c.getByText(en ? 'Pickup point' : 'Punto de recogida').first());
+    const arriba = await caja(c.getByText(en ? 'Pick up at' : 'Recoger en').first());
     const precio = await caja(c.getByTestId('moto-precio'));
     await c.screenshot({
       path: join(SALIDA, `envios-cliente-precio-${idioma}.png`),
@@ -299,8 +297,7 @@ async function correr(M, idiomas) {
     await espera(600);
     await foto(c, 'cliente-paquete', idioma);
     await c
-      .getByText(en ? 'Send' : 'Enviar', { exact: true })
-      .last()
+      .getByRole('button', { name: en ? 'Request delivery' : 'Solicitar envío', exact: true })
       .click();
     await c.getByTestId('envio-pin').waitFor({ timeout: 60_000 });
     const pin = (await c.getByTestId('envio-pin').textContent())?.trim() ?? '';
