@@ -101,6 +101,7 @@ export * from './smsConsentimiento';
 export * from './perfilPasajeros';
 export * from './tasaReferencia';
 export * from './regaloDivoox';
+export * from './sondeo';
 export * from './comidaVenezuela';
 export * from './viajesProgramados';
 export * from './formaDePago';

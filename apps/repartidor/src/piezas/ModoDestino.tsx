@@ -9,6 +9,7 @@ import {
   e,
   useSesion,
   Text,
+  useSondeo,
 } from '@tumbite/movil';
 
 /**
@@ -68,19 +69,26 @@ export function ModoDestino({ cerca }: { cerca?: { lat: number; lng: number } | 
     almacen: almacenTelefono,
     alSalir: alSalirTelefono,
   });
-  const cargar = useCallback(() => {
-    api
-      .pedir<Destino>('GET', '/datos/repartidor/destino')
-      .then(setEstado)
-      .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
-  }, [api]);
-  useEffect(cargar, [cargar]);
-  // Mientras está encendido se vuelve a mirar cada minuto (se apaga solo al llegar).
+  const cargar = useCallback(
+    () =>
+      api
+        .pedir<Destino>('GET', '/datos/repartidor/destino')
+        .then((d) => {
+          setEstado(d);
+          return true;
+        })
+        .catch((x: unknown) => {
+          setError(x instanceof ErrorApi ? x.message : String(x));
+          return false;
+        }),
+    [api],
+  );
   useEffect(() => {
-    if (!estado?.activo) return;
-    const id = setInterval(cargar, 60_000);
-    return () => clearInterval(id);
-  }, [estado?.activo, cargar]);
+    void cargar();
+  }, [cargar]);
+  // Mientras está encendido se vuelve a mirar cada minuto (se apaga solo al llegar); si falla, más
+  // espaciado (C-SESION-TERMINADA).
+  useSondeo(cargar, 60_000, Boolean(estado?.activo), false);
 
   async function encender() {
     setError('');

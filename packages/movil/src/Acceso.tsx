@@ -59,7 +59,7 @@ export function Acceso({
   /** C-MIRAR-SIN-CUENTA: en la app del cliente, volver a mirar sin cuenta. */
   seguirMirando?: () => void;
 }) {
-  const { api, idioma, alEntrar, rolesPermitidos, cambiarIdioma } = useSesion();
+  const { api, idioma, alEntrar, rolesPermitidos, cambiarIdioma, sesionTerminada } = useSesion();
   const acento = useAcentoApp();
   const t = enIdioma(TEXTOS_MOVIL, idioma);
   const [modo, setModo] = useState<'entrar' | 'registro'>(modoInicial);
@@ -210,6 +210,14 @@ export function Acceso({
       ) : null}
       {/* C-APP-DE-PRUEBAS-VISIBLE: la app de pruebas lo dice antes de pedir la cuenta. */}
       <FranjaPruebas visible={APP_DE_PRUEBAS} />
+      {/* C-SESION-TERMINADA: si se llegó aquí porque la sesión venció, se dice una vez, sin ventana. */}
+      {sesionTerminada && modo === 'entrar' ? (
+        <Text testID="sesion-terminada" style={{ color: '#666B73', marginBottom: 12 }}>
+          {idioma === 'en'
+            ? 'Your session ended. Sign in again to continue.'
+            : 'Tu sesión terminó. Vuelve a entrar para seguir.'}
+        </Text>
+      ) : null}
       <AvisoBorrador visible={b.recuperado} idioma={idioma} empezar={b.empezarDeNuevo} />
       {/* C-DISPONIBLE-MUNDO: al crear la cuenta se dice dónde ya funciona; nadie queda fuera. */}
       {registro ? <DondeFunciona idioma={idioma} conInvitacion /> : null}

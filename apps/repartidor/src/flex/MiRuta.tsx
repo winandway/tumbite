@@ -2,7 +2,16 @@
 import { comoLlegar } from '../comoLlegar';
 import { enlaceRutaGoogle, medidasReducidas, posicionFrescaWeb } from '@tumbite/compartido';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Linking, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Linking,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -31,7 +40,7 @@ import {
   validarCobro,
   cumpleFiltro,
 } from '@tumbite/compartido';
-import { Boton as BotonBase, C, FOTO_EVIDENCIA, Icono, e, Modal } from '@tumbite/movil';
+import { Boton as BotonBase, C, FOTO_EVIDENCIA, Icono, e, Modal, useSondeo } from '@tumbite/movil';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 
 /** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
@@ -440,10 +449,8 @@ function MiRutaContenido({
     void cargarRuta();
   }, [cargarRuta]);
   // La cola se reintenta sola cada 10 s; la ubicación se manda cada 30 s mientras la ruta está activa.
-  useEffect(() => {
-    const reloj = setInterval(() => void sincronizar(), 10_000);
-    return () => clearInterval(reloj);
-  }, [sincronizar]);
+  // C-SESION-TERMINADA: si falla, la cola espera cada vez más.
+  useSondeo(sincronizar, 10_000, true, false);
   useEffect(() => {
     if (!ruta || !['aceptada', 'en_carga', 'en_curso'].includes(ruta.estado)) return;
     const reloj = setInterval(() => {
@@ -2761,9 +2768,9 @@ export function BandaBloque({
   // La hora de ahora se lee en el reloj (cada 30 s), nunca al dibujar.
   const [ahora, setAhora] = useState<number | null>(null);
   useEffect(() => {
-    const leer = () => setAhora(Date.now());
-    const primero = setTimeout(leer, 0);
-    const reloj = setInterval(leer, 30_000);
+    const marcar = () => setAhora(Date.now());
+    const primero = setTimeout(marcar, 0);
+    const reloj = setInterval(marcar, 30_000);
     return () => {
       clearTimeout(primero);
       clearInterval(reloj);

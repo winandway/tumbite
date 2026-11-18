@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, Platform, ScrollView, Share, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -10,7 +10,7 @@ import {
   formatearMonto,
   textoLinea,
 } from '@tumbite/compartido';
-import { C, e, useSesion, Text } from '@tumbite/movil';
+import { C, e, useSesion, useSondeo, Text } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { ANCHO_MAX, BotonAncho, Encabezado, Tarjeta } from '../../comida/piezas';
 import { conCuenta } from '../../ConCuenta';
@@ -113,18 +113,23 @@ function PedidoEnGrupo() {
   const { llenar } = useCarrito();
   const [g, setG] = useState<Grupo | null>(null);
   const [error, setError] = useState('');
-  const cargar = useCallback(() => {
-    api
-      .pedir<{ grupo: Grupo }>('GET', `/datos/grupos/${String(codigo)}`)
-      .then((r) => setG(r.grupo))
-      .catch((x: unknown) => setError(x instanceof ErrorApi ? x.message : String(x)));
-  }, [api, codigo]);
-  useEffect(() => {
-    cargar();
-    // Mientras está abierto, se refresca solo para ver lo que agregan los demás.
-    const reloj = setInterval(cargar, 8000);
-    return () => clearInterval(reloj);
-  }, [cargar]);
+  const cargar = useCallback(
+    () =>
+      api
+        .pedir<{ grupo: Grupo }>('GET', `/datos/grupos/${String(codigo)}`)
+        .then((r) => {
+          setG(r.grupo);
+          return true;
+        })
+        .catch((x: unknown) => {
+          setError(x instanceof ErrorApi ? x.message : String(x));
+          return false;
+        }),
+    [api, codigo],
+  );
+  // Mientras está abierto, se refresca solo para ver lo que agregan los demás; si falla, más
+  // espaciado (C-SESION-TERMINADA).
+  useSondeo(cargar, 8000);
 
   const url = `https://divoox.com/app/group/${String(codigo)}`;
   async function compartir() {

@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
   Platform,
@@ -53,6 +53,7 @@ import {
   useSesion,
   fotoConCamara,
   Text,
+  useSondeo,
 } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
 import { usePedirOtraVez } from '../../pedirOtraVez';
@@ -736,13 +737,13 @@ function SeguirPedido() {
   // cada 5 segundos y vaciaba el carrito en CADA vuelta; con esta pantalla abierta detrás, «Pedir otra
   // vez» o un carrito nuevo se borraban solos. Se vacía UNA vez, y solo al llegar recién pagado.
   const carritoVaciado = useRef(false);
-  useEffect(() => {
-    let vivo = true;
-    const cargar = () =>
+  // Seguimiento: se pregunta cada 5 segundos mientras la pantalla está abierta; si falla, cada vez
+  // más espaciado (C-SESION-TERMINADA).
+  const cargarSeguimiento = useCallback(
+    () =>
       api
         .pedir<{ pedido: Pedido }>('GET', `/datos/pedidos/${id}/seguimiento`)
         .then((r) => {
-          if (!vivo) return;
           setP(r.pedido);
           setRecibido(Date.now());
           setError('');
@@ -750,16 +751,15 @@ function SeguirPedido() {
             carritoVaciado.current = true;
             vaciar();
           }
+          return true;
         })
-        .catch((x: unknown) => vivo && setError(x instanceof ErrorApi ? x.message : String(x)));
-    void cargar();
-    // Seguimiento: se pregunta cada 5 segundos mientras la pantalla está abierta.
-    const reloj = setInterval(() => void cargar(), 5000);
-    return () => {
-      vivo = false;
-      clearInterval(reloj);
-    };
-  }, [api, id, nuevo, vaciar]);
+        .catch((x: unknown) => {
+          setError(x instanceof ErrorApi ? x.message : String(x));
+          return false;
+        }),
+    [api, id, nuevo, vaciar],
+  );
+  useSondeo(cargarSeguimiento, 5000);
 
   // Cuatro pasos como en el diseño: Confirmado, En preparación, En camino, Entregado.
   const recoge = p?.entrega === 'recoger';

@@ -6,6 +6,7 @@ import { URL_SERVIDOR, leerTokenGuardado } from '@tumbite/movil';
 import {
   colaUbicacion,
   cuerpoUbicacion,
+  esperaSondeo,
   marcarRecibida,
   modoGuardadoAlArrancar,
   paraEnviarUbicacion,
@@ -38,6 +39,12 @@ let ultimoEnvio: { lat: number; lng: number; en: number } | null = null;
 let modoActual: ModoRastreo | null = null;
 const LLAVE_MODO = 'divoox.modo-rastreo';
 const cola = colaUbicacion();
+/**
+ * C-SESION-TERMINADA (18 nov 2026): si el servidor falla, la lectura queda en la cola pero el
+ * reintento espera cada vez más (15 s, 30 s, 1 min… hasta 2 min), no en cada lectura de 15 s.
+ */
+let fallosEnvio = 0;
+let proximoIntento = 0;
 
 export function fijarModoRastreo(modo: ModoRastreo) {
   modoActual = modo;
@@ -69,6 +76,10 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
   // toca según el modo (activo cada 25 m, libre cada 250 m) o pasaron 2 minutos. Si quedó una
   // lectura sin mandar por falta de señal, la nueva la reemplaza y se intenta en seguida.
   if (!pendiente && !tocaMandarSegunModo(modo, ultimoEnvio, cuerpo)) return;
+  if (pendiente && Date.now() < proximoIntento) {
+    cola.guardar(cuerpo);
+    return;
+  }
   const token = await leerTokenGuardado();
   // Sin sesión (cerró sesión o venció): el servicio se apaga solo; no sigue gastando batería ni
   // queda la notificación fija.
@@ -80,14 +91,26 @@ TaskManager.defineTask(TAREA_UBICACION, async ({ data, error }) => {
       // C-LATIDO-UBICACION: con la hora de la lectura; una lectura de la cola ya vieja no cuenta.
       body: JSON.stringify(paraEnviarUbicacion(cuerpo)),
     });
-    if (r.status === 401) await detenerUbicacionFondo();
-    else if (r.ok) ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };
-    else if (r.status >= 500) cola.guardar(cuerpo);
+    if (r.status === 401) {
+      // Sesión vencida: se apaga y queda apagada (si el sistema relanza la tarea, no se rearma).
+      fijarModoRastreo('apagado');
+      await detenerUbicacionFondo();
+    } else if (r.ok) {
+      ultimoEnvio = { lat: cuerpo.lat, lng: cuerpo.lng, en: Date.now() };
+      fallosEnvio = 0;
+      proximoIntento = 0;
+    } else if (r.status >= 500) fallo(cuerpo);
   } catch {
-    // Sin señal: se guarda la última lectura (cola corta) y la próxima la intenta otra vez.
-    cola.guardar(cuerpo);
+    // Sin señal: se guarda la última lectura (cola corta) y se reintenta más tarde.
+    fallo(cuerpo);
   }
 });
+
+function fallo(cuerpo: ReturnType<typeof cuerpoUbicacion>) {
+  cola.guardar(cuerpo);
+  fallosEnvio += 1;
+  proximoIntento = Date.now() + esperaSondeo(15_000, fallosEnvio);
+}
 
 /** Como Dasher: antes del cuadro del sistema, una explicación de para qué se usa la ubicación. */
 function explicar(t: { titulo: string; cuerpo: string; seguir: string; ahoraNo: string }) {

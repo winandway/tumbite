@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { enIdioma } from '@tumbite/compartido';
-import { useSesion } from '@tumbite/movil';
+import { useSesion, useSondeo } from '@tumbite/movil';
 import { ANCHO_MAX, Encabezado } from '../comida/piezas';
 import { textosComida } from '../comida/textos';
 import { PedirMoto } from '../viajes/PedirMoto';
@@ -66,20 +66,25 @@ function PantallaMoto() {
       if (r.viaje) setViajeId(r.viaje.id);
     } catch (e) {
       console.warn('moto: no se pudo cargar el viaje', e);
+      return false;
     }
   }, [api, viajeId, servicio]);
 
-  useEffect(() => {
-    const primero = setTimeout(() => void cargar(), 0);
-    // Mientras el viaje no termina, se consulta cada 4 segundos (también mueve el despacho).
-    const r = setInterval(() => {
-      if (viajeId && !(viaje && FINALES.has(viaje.estado))) void cargar();
-    }, 4_000);
-    return () => {
-      clearTimeout(primero);
-      clearInterval(r);
-    };
-  }, [cargar, viajeId, viaje]);
+  // Al abrir, una vez. Mientras el viaje no termina, cada 4 segundos (también mueve el despacho);
+  // si falla, cada vez más espaciado.
+  // C-SESION-TERMINADA (18 nov 2026): antes el efecto dependía de `viaje`; cada respuesta creaba un
+  // viaje nuevo, el efecto se rearmaba y volvía a preguntar AL INSTANTE: un bucle de peticiones sin
+  // pausa mientras la pantalla estaba abierta.
+  const primeraVez = useRef(true);
+  const terminado = Boolean(viaje && FINALES.has(viaje.estado));
+  const vuelta = useCallback(() => {
+    if (primeraVez.current) {
+      primeraVez.current = false;
+      return cargar();
+    }
+    return viajeId && !terminado ? cargar() : true;
+  }, [cargar, viajeId, terminado]);
+  useSondeo(vuelta, 4_000);
 
   return (
     <SafeAreaView

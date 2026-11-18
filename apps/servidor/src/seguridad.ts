@@ -108,3 +108,43 @@ export function limiteIntentosPersistente(
     await next();
   };
 }
+
+/**
+ * C-SESION-TERMINADA (18 nov 2026), defensa para los teléfonos con la versión vieja: un Driver con
+ * la sesión vencida preguntaba sin pausa. Tras `maximo` respuestas 401 SEGUIDAS desde una IP con una
+ * llave que no sirve, las rutas del conductor responden 429 sin correr la ruta, durante `ventanaMs`.
+ * Una petición con sesión buena desde esa IP pone la cuenta en cero y nunca se frena (varios
+ * conductores pueden compartir IP). En memoria del aislado: no escribe en la base.
+ */
+export function frenoLlaveVencida(maximo = 20, ventanaMs = 10 * 60_000): MiddlewareHandler {
+  const registro = new Map<string, { cuenta: number; desde: number }>();
+  return async (c, next) => {
+    const conLlave = (c.req.header('authorization') ?? '').startsWith('Bearer ');
+    const conSesion = Boolean(c.get('usuario'));
+    const ip = c.req.header('cf-connecting-ip') ?? 'desconocida';
+    if (conSesion) {
+      registro.delete(ip);
+      return next();
+    }
+    const ahora = Date.now();
+    const r = registro.get(ip);
+    if (conLlave && r && r.cuenta >= maximo && ahora - r.desde < ventanaMs) {
+      c.header('retry-after', String(Math.ceil((r.desde + ventanaMs - ahora) / 1000)));
+      return c.json(
+        {
+          error: enIdiomaDePeticion(
+            'Tu sesión terminó. Vuelve a entrar.',
+            idiomaDeLaPeticion((n) => c.req.header(n)),
+          ),
+        },
+        429,
+      );
+    }
+    await next();
+    if (!conLlave || c.res.status !== 401) return;
+    if (!r || ahora - r.desde >= ventanaMs) registro.set(ip, { cuenta: 1, desde: ahora });
+    else r.cuenta += 1;
+    // Que el registro no crezca sin límite en un aislado de larga vida.
+    if (registro.size > 5000) registro.clear();
+  };
+}

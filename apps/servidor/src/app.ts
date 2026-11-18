@@ -22,7 +22,12 @@ import {
 import { type Env, revisarEnv } from './env';
 import { usarStripeLocal } from './stripe';
 import { enIdiomaDePeticion, idiomaDeLaPeticion } from './mensajesEn';
-import { cabecerasSeguridad, limiteIntentos, limiteIntentosPersistente } from './seguridad';
+import {
+  cabecerasSeguridad,
+  frenoLlaveVencida,
+  limiteIntentos,
+  limiteIntentosPersistente,
+} from './seguridad';
 import { type Variables, cargarSesion } from './sesion';
 import { ErrorDatos } from './validar';
 import {
@@ -280,6 +285,10 @@ app.use('/datos/*', async (c, next) => {
   await next();
 });
 app.use('/datos/*', cargarSesion);
+// C-SESION-TERMINADA: las llaves vencidas no martillan las rutas del conductor (versión vieja de Driver).
+const frenoConductor = frenoLlaveVencida();
+app.use('/datos/repartidor/*', frenoConductor);
+app.use('/datos/conductor/*', frenoConductor);
 // C-ROLES-INTERNOS: el perfil del equipo frena lo que no le toca y queda anotado quién cambió qué.
 app.use('/datos/admin/*', permisosInternos);
 

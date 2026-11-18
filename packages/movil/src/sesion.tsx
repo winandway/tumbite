@@ -68,6 +68,8 @@ type Sesion = {
   rolesPermitidos: Rol[];
   /** C-PERMISOS-EXPLICADOS: la app todavía no explicó para qué pide los permisos a esta cuenta. */
   permisosPorExplicar: boolean;
+  /** C-SESION-TERMINADA: la sesión venció o la cerraron en otro lado; la pantalla de entrar lo dice. */
+  sesionTerminada: boolean;
   aceptarPermisos: () => void;
 };
 
@@ -103,6 +105,27 @@ export function SesionProvider({
   const [cargando, setCargando] = useState(true);
   const [sinConfirmar, setSinConfirmar] = useState<Sesion['sinConfirmar']>(null);
   const [idioma, setIdioma] = useState<Idioma>(idiomaDelTelefono);
+  // C-SESION-TERMINADA: un 401 con sesión la cierra UNA vez, sin volver a llamar al servidor con la
+  // llave vencida. Al quedar sin usuario, las pantallas con sondeos y la ubicación de fondo se
+  // desmontan (Driver apaga su tarea al desmontar el inicio) y se ve la pantalla de entrar.
+  const [sesionTerminada, setSesionTerminada] = useState(false);
+  // La API anota con qué llave le dijeron 401; si es la llave de ahora, se sale una sola vez (una
+  // respuesta vieja, de antes de volver a entrar, no cierra la sesión nueva).
+  const [llaveVencida, setLlaveVencida] = useState<string | null>(null);
+  const terminarSesion = useCallback((tokenUsado: string) => {
+    setLlaveVencida(tokenUsado);
+    // La llave guardada se borra solo si es la que venció.
+    void Promise.resolve(llavero.leer(LLAVE_TOKEN))
+      .then((g) => (g === tokenUsado ? llavero.borrar(LLAVE_TOKEN) : undefined))
+      .catch(() => undefined);
+  }, []);
+  if (llaveVencida && llaveVencida === token) {
+    console.warn('sesión: el servidor dijo que terminó; se pide entrar otra vez');
+    setLlaveVencida(null);
+    setSesionTerminada(true);
+    setToken(null);
+    setUsuario(null);
+  }
 
   const api = useMemo(
     () =>
@@ -113,8 +136,9 @@ export function SesionProvider({
         pase: paseTurnstile,
         app: () => `${roles[0] ?? 'cliente'}/${versionApp()}`,
         aparato: idAparato,
+        alSesionTerminada: terminarSesion,
       }),
-    [token, idioma, roles],
+    [token, idioma, roles, terminarSesion],
   );
 
   // Confirma con el servidor la sesión guardada, con tiempo máximo (C-SESION-CON-LIMITE). Antes no
@@ -186,6 +210,7 @@ export function SesionProvider({
   const usarOtraCuenta = useCallback(() => setSinConfirmar(null), []);
 
   const alEntrar = useCallback(async (t: string, u: Usuario) => {
+    setSesionTerminada(false);
     // C-AVISOS-WEB: sesión nueva = la suscripción del navegador se vuelve a mandar con ella.
     if (Platform.OS === 'web') guardarLocal(LLAVE_MARCA, null);
     setToken(t);
@@ -263,6 +288,7 @@ export function SesionProvider({
     rolesPermitidos: roles,
     permisosPorExplicar,
     aceptarPermisos,
+    sesionTerminada,
   };
   return (
     <Contexto.Provider value={valor}>

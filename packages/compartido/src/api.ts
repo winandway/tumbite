@@ -29,6 +29,12 @@ export type OpcionesApi = {
   fetch?: typeof fetch;
   /** Cuánto se espera una respuesta antes de darla por perdida (C-PEDIDO-CON-LIMITE). */
   tiempoMs?: number;
+  /**
+   * C-SESION-TERMINADA: el servidor respondió 401 a una petición CON sesión (venció o la cerraron
+   * en otro lado). La app corta sus sondeos y lleva a entrar. Se llama en cada 401; quien la recibe
+   * se encarga de actuar una sola vez.
+   */
+  alSesionTerminada?: (tokenUsado: string) => void;
 };
 
 /** Una respuesta que tarda más que esto se corta y se cuenta como «sin conexión». */
@@ -115,6 +121,7 @@ export function crearApi(op: OpcionesApi) {
     const datos: unknown = await res.json().catch(() => null);
     if (reloj) clearTimeout(reloj);
     if (!res.ok) {
+      if (res.status === 401 && token) op.alSesionTerminada?.(token);
       const d = (datos ?? {}) as { error?: string; campo?: string };
       throw new ErrorApi(
         d.error ??
@@ -165,6 +172,7 @@ export function crearApi(op: OpcionesApi) {
     }
     const datos = (await res.json().catch(() => null)) as
       (T & { error?: string; campo?: string }) | null;
+    if (!res.ok && res.status === 401 && token) op.alSesionTerminada?.(token);
     if (!res.ok)
       throw new ErrorApi(
         datos?.error ??
@@ -215,6 +223,7 @@ export function crearApi(op: OpcionesApi) {
     } | null;
     // C-FOTO-ENTREGA-IPHONE: si el servidor dijo que sí, la foto subió (algunas rutas no devuelven
     // su dirección); antes eso salía como «No se pudo subir la foto.» con la foto ya guardada.
+    if (!res.ok && res.status === 401 && token) op.alSesionTerminada?.(token);
     if (!res.ok)
       throw new ErrorApi(
         datos?.error ??
@@ -239,6 +248,7 @@ export function crearApi(op: OpcionesApi) {
       headers,
       credentials: credenciales,
     } as Parameters<typeof fetch>[1]);
+    if (res.status === 401 && token) op.alSesionTerminada?.(token);
     if (!res.ok) throw new ErrorApi('', res.status);
     const blob = await res.blob();
     // FileReader existe en el celular y en el navegador (no en el servidor, que nunca lo usa).

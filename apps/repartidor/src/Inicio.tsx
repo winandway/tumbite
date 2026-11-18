@@ -129,6 +129,7 @@ import {
   TarjetaAvisosWeb,
   e,
   useSesion,
+  useSondeo,
   useToqueAviso,
   URL_SERVIDOR,
   capturasConCamara,
@@ -671,10 +672,14 @@ export function Inicio() {
   const [pinEntrega, setPinEntrega] = useState('');
   const [mayorEdad, setMayorEdad] = useState(false);
   const [tic, setTic] = useState(() => Date.now());
+  // C-SESION-TERMINADA (18 nov 2026): este reloj vuelve a pintar TODO el inicio. Cada segundo solo
+  // cuando hay una cuenta atrás en segundos («el cliente no aparece»); si no, cada 30 s (el tiempo
+  // conectado se muestra en horas y minutos). Antes pintaba la pantalla entera cada segundo siempre.
+  const relojSegundos = Boolean(estado?.activo?.noApareceEn);
   useEffect(() => {
-    const reloj = setInterval(() => setTic(Date.now()), 1000);
+    const reloj = setInterval(() => setTic(Date.now()), relojSegundos ? 1000 : 30_000);
     return () => clearInterval(reloj);
-  }, []);
+  }, [relojSegundos]);
   // C-AUDITIVA-REPARTIDOR: la oferta vibra más fuerte si lo marcó en Seguridad.
   useEffect(() => {
     cargarAccesibilidad(api).catch((x: unknown) => console.warn('accesibilidad', x));
@@ -721,17 +726,13 @@ export function Inicio() {
       setErrorCarga('');
     } catch (x) {
       setErrorCarga(x instanceof ErrorApi ? x.message : String(x));
+      return false;
     }
   }, [api, recargarPanel]);
 
-  useEffect(() => {
-    const primero = setTimeout(() => void cargar(), 0);
-    const reloj = setInterval(() => void cargar(), 5000);
-    return () => {
-      clearTimeout(primero);
-      clearInterval(reloj);
-    };
-  }, [cargar]);
+  // C-SESION-TERMINADA: el estado cada 5 s; si falla, cada vez más espaciado (antes cada 5 s pasara
+  // lo que pasara, también con la sesión vencida).
+  useSondeo(cargar, 5000);
 
   // C-FLEX-EXCLUSIVO (Richard, 16 nov 2026): con un bloque de Flex, el inicio cambia entero al modo
   // bloque (la ruta, con la banda «todo lo demás está desconectado»). Comida, envíos y viajes no se
@@ -743,31 +744,21 @@ export function Inicio() {
   const [monedaDemanda, setMonedaDemanda] = useState('USD');
   const latAqui = aqui ? Math.round(aqui.lat * 100) / 100 : null;
   const lngAqui = aqui ? Math.round(aqui.lng * 100) / 100 : null;
-  useEffect(() => {
+  const leerDemanda = useCallback(async () => {
     if (latAqui == null || lngAqui == null) return;
-    const leerDemanda = () =>
-      void api
-        .pedir<{ zonas: ZonaDemanda[]; moneda?: string }>(
-          'GET',
-          `/datos/repartidor/demanda?lat=${latAqui}&lng=${lngAqui}`,
-        )
-        .then((r) => {
-          setZonasDemanda(r.zonas);
-          if (r.moneda) setMonedaDemanda(r.moneda);
-        })
-        .catch((x: unknown) => console.warn('demanda: falló', x));
-    const primero = setTimeout(leerDemanda, 0);
-    const reloj = setInterval(leerDemanda, 60_000);
-    return () => {
-      clearTimeout(primero);
-      clearInterval(reloj);
-    };
+    const r = await api.pedir<{ zonas: ZonaDemanda[]; moneda?: string }>(
+      'GET',
+      `/datos/repartidor/demanda?lat=${latAqui}&lng=${lngAqui}`,
+    );
+    setZonasDemanda(r.zonas);
+    if (r.moneda) setMonedaDemanda(r.moneda);
   }, [api, latAqui, lngAqui]);
+  useSondeo(leerDemanda, 60_000, latAqui != null && lngAqui != null);
 
   // Lo pendiente se reintenta cada 10 segundos; lo que el servidor rechaza se muestra y se descarta.
   const textoEnviado = t.pendienteEnviado;
-  useEffect(() => {
-    const reintentar = async () => {
+  const reintentarCola = useCallback(async () => {
+    {
       const r = await cola.reintentar(async (p) => {
         if (p.tipo === 'foto') {
           const blob = await (await fetch(p.cuerpo)).blob();
@@ -780,11 +771,14 @@ export function Inicio() {
         await cargar();
       }
       if (r.rechazados.length) setError(r.rechazados.map((x) => x.error).join(' '));
-    };
-    void cola.listar().then(setPendientes);
-    const reloj = setInterval(() => void reintentar(), 10_000);
-    return () => clearInterval(reloj);
+      // Quedan pendientes sin poder mandarse: la próxima vuelta espera más.
+      return r.enviados.length > 0 || (await cola.listar()).length === 0;
+    }
   }, [api, cargar, cola, textoEnviado]);
+  useEffect(() => {
+    void cola.listar().then(setPendientes);
+  }, [cola]);
+  useSondeo(reintentarCola, 10_000, true, false);
 
   /** La foto como «data:» para guardarla en el celular si no hay señal. */
   const comoDataUrl = (blob: Blob) =>
@@ -813,7 +807,15 @@ export function Inicio() {
   }
 
   // Al salir de la pantalla (cerrar sesión, cambiar de cuenta) el GPS de fondo se apaga.
-  useEffect(() => () => void detenerUbicacionFondo(), []);
+  // C-SESION-TERMINADA: también cuando la sesión vence (la app vuelve a entrar y el inicio se
+  // desmonta): el modo queda «apagado» para que la tarea no se vuelva a armar sola.
+  useEffect(
+    () => () => {
+      fijarModoRastreo('apagado');
+      void detenerUbicacionFondo();
+    },
+    [],
+  );
 
   // C-GPS-PANTALLA-APAGADA: se rastrea conectado o con un pedido, viaje o ruta en curso; nunca
   // desconectado sin trabajo. Activo manda cada 25 m; libre cada 250 m; quieto, el latido de 2 min.
@@ -908,31 +910,24 @@ export function Inicio() {
 
   // En camino: la ubicación se revisa cada 5 segundos para saber si ya llegó a la puerta.
   const enCamino = estado?.activo?.estado === 'en_camino';
-  useEffect(() => {
-    if (!enCamino) return;
-    let vivo = true;
-    const leer = async () => {
-      const p = await ubicacionConLimite();
-      if (!vivo || !p) return;
-      setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
-      setPrecision(p.coords.accuracy ?? null);
-      setGpsSimulado(p.mocked === true);
-      await api
-        .pedir('POST', '/datos/repartidor/ubicacion', {
-          lat: p.coords.latitude,
-          lng: p.coords.longitude,
-          precision: p.coords.accuracy ?? null,
-          simulada: p.mocked === true,
-        })
-        .catch(() => undefined);
-    };
-    void leer();
-    const reloj = setInterval(() => void leer(), 5000);
-    return () => {
-      vivo = false;
-      clearInterval(reloj);
-    };
-  }, [enCamino, api]);
+  const leerEnCamino = useCallback(async () => {
+    const p = await ubicacionConLimite();
+    if (!p) return;
+    setAqui({ lat: p.coords.latitude, lng: p.coords.longitude });
+    setPrecision(p.coords.accuracy ?? null);
+    setGpsSimulado(p.mocked === true);
+    // C-SESION-TERMINADA: si el envío falla, la próxima lectura espera más.
+    return api
+      .pedir('POST', '/datos/repartidor/ubicacion', {
+        lat: p.coords.latitude,
+        lng: p.coords.longitude,
+        precision: p.coords.accuracy ?? null,
+        simulada: p.mocked === true,
+      })
+      .then(() => true)
+      .catch(() => false);
+  }, [api]);
+  useSondeo(leerEnCamino, 5000, enCamino);
 
   /** C-CHAT-FOTOS: foto para el chat del pedido (mostrar un reemplazo o dónde dejar el pedido). */
   async function fotoParaChat(): Promise<Blob | null> {

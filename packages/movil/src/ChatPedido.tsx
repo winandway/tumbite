@@ -5,6 +5,7 @@ import { ErrorApi, enIdioma, unirMensajes } from '@tumbite/compartido';
 import { Boton, C, CASILLA_EN_FILA, FilaConBoton, e } from './ui';
 import { useSesion } from './sesion';
 import { BotonReportar, MenuBloquear } from './Moderacion';
+import { useSondeo } from './useSondeo';
 
 type Mensaje = {
   id: number;
@@ -122,18 +123,13 @@ export function ChatPedido({
         setMensajes((m) => unirMensajes(m, r.mensajes));
       }
     } catch {
-      /* la siguiente consulta lo intenta otra vez */
+      /* la siguiente consulta lo intenta otra vez (cada vez más espaciada) */
+      return false;
     }
   }, [api, raiz]);
 
-  useEffect(() => {
-    const primero = setTimeout(() => void cargar(), 0);
-    const reloj = setInterval(() => void cargar(), 4000);
-    return () => {
-      clearTimeout(primero);
-      clearInterval(reloj);
-    };
-  }, [cargar]);
+  // C-SESION-TERMINADA: cada 4 s; si falla, espera cada vez más.
+  useSondeo(cargar, 4000);
 
   async function enviar() {
     const limpio = texto.trim();

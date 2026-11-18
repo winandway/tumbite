@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { type Api, ErrorApi, type Idioma } from '@tumbite/compartido';
 import {
@@ -12,6 +12,7 @@ import {
   TarjetaServicio,
   Text,
   type EstadoServicio,
+  useSondeo,
 } from '@tumbite/movil';
 import {
   detalleServicio,
@@ -46,17 +47,11 @@ export function usePanelServicios(api: Api, cadaMs = 10_000) {
       setPanel(await api.pedir<Panel>('GET', '/datos/conductor/panel-servicios'));
     } catch {
       // Sin señal: se queda lo último que se vio y se reintenta en la próxima vuelta.
+      return false;
     }
   }, [api]);
-  useEffect(() => {
-    if (!cadaMs) return;
-    const primero = setTimeout(() => void cargar(), 0);
-    const reloj = setInterval(() => void cargar(), cadaMs);
-    return () => {
-      clearTimeout(primero);
-      clearInterval(reloj);
-    };
-  }, [cargar, cadaMs]);
+  // C-SESION-TERMINADA: si falla, espera cada vez más (nunca pregunta sin pausa).
+  useSondeo(cargar, cadaMs, cadaMs > 0);
   return { panel, setPanel, cargar };
 }
 

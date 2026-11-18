@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import {
   ErrorApi,
@@ -21,6 +21,7 @@ import {
   almacenTelefono,
   e,
   useSesion,
+  useSondeo,
 } from '@tumbite/movil';
 
 /**
@@ -53,17 +54,12 @@ export function ChatSoporteApp() {
       setError('');
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
+      return false;
     }
   }, [api, t.sinRed]);
 
-  useEffect(() => {
-    const primero = setTimeout(() => void cargar(), 0);
-    const reloj = setInterval(() => void cargar(), ESPERA_RECARGA_MS);
-    return () => {
-      clearTimeout(primero);
-      clearInterval(reloj);
-    };
-  }, [cargar]);
+  // C-SESION-TERMINADA: cada 8 s; si falla, espera cada vez más.
+  useSondeo(cargar, ESPERA_RECARGA_MS);
 
   async function enviar() {
     const texto = b.valores.texto.trim();
