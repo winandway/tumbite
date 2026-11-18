@@ -153,6 +153,15 @@ async function ciudadA(m: Mundo, adminToken: string) {
          destino_lat, destino_lng, destino_direccion, dias, hora_ida)
        VALUES (?, ?, 'Zeta escuela', 'carro', ?, 25.78, -80.2, 'Origen Zeta', 25.79, -80.21, 'Destino Zeta', '1,2,3,4,5', '07:00')`,
     ).bind(rutina, cliente.id, zona),
+    // C-CAMILA: una conversación de soporte del conductor de la ciudad A, con su caso.
+    // (Su ficha nace al registrarse, con la bienvenida de Camila.)
+    m.DB.prepare('UPDATE camila_personas SET zona_id = ?, mensajes = 1 WHERE usuario_id = ?').bind(
+      zona,
+      rep.id,
+    ),
+    m.DB.prepare(
+      "INSERT INTO camila_casos (id, persona_id, resumen) SELECT ?, id, 'Zeta caso ajeno' FROM camila_personas WHERE usuario_id = ?",
+    ).bind(crypto.randomUUID(), rep.id),
   ]);
   const ids = {
     pedido,
@@ -225,6 +234,9 @@ const LISTAS_CON_FILAS = [
   'GET /admin/lista-espera',
   'GET /admin/restaurantes',
   'GET /admin/tablero',
+  // C-CAMILA: la bandeja y las conversaciones, por la ciudad de la persona.
+  'GET /admin/camila/bandeja',
+  'GET /admin/camila/hilos',
 ];
 /** Las que solo dan números o comprueban por dentro: se revisan aparte (números en cero). */
 const LISTAS_DE_NUMEROS = [
@@ -236,6 +248,18 @@ const LISTAS_DE_NUMEROS = [
   // C-MODERACION: la consulta lleva el alcance (la prueba propia está en moderacion.test.ts).
   'GET /admin/reportes',
   'POST /admin/reportes/:id/accion',
+  // C-CAMILA: la ficha y las acciones comprueban la ciudad de la persona por dentro; lo de toda la
+  // empresa (ajustes, aprendizaje) exige alcance total (prueba propia en camila.test.ts).
+  'GET /admin/camila/hilos/:persona',
+  'POST /admin/camila/hilos/:persona/responder',
+  'POST /admin/camila/hilos/:persona/devolver',
+  'POST /admin/camila/casos/:id/cerrar',
+  'GET /admin/camila/aprendizaje',
+  'POST /admin/camila/aprendizaje/armar',
+  'POST /admin/camila/aprendizaje/:id/aprobar',
+  'POST /admin/camila/aprendizaje/:id/rechazar',
+  'GET /admin/camila/ajustes',
+  'PUT /admin/camila/ajustes',
 ];
 
 const conIds = (patron: string, valor: (param: string) => string) =>

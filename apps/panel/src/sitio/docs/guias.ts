@@ -3614,6 +3614,54 @@ const es: SeccionDocs[] = [
     icono: 'listo',
     guias: [
       {
+        id: 'talk-to-support',
+        titulo: 'Habla con nuestro equipo de soporte',
+        resumen:
+          'Escríbenos por el chat de divoox.com, por el chat de Divoox Driver o por correo. Es la misma conversación por cualquier camino, te responde Camila Montes, del equipo de soporte, y una persona del equipo cuando lo pidas.',
+        explicacion: [
+          'Camila Montes es la asistente virtual del equipo de soporte de Divoox. Te ayuda a registrarte, a mandar tus papeles, a entender tu saldo y la comisión, a recibir tu regalo de arranque cuando te toca y a revisar qué le falta a tu cuenta para activarse.',
+          'Si le preguntas si es una persona, siempre te dice la verdad: es la asistente virtual de Divoox. Y si prefieres hablar con alguien del equipo, escribe «hablar con una persona»: abre un caso y una persona del equipo te responde en la misma conversación.',
+          'Es una sola conversación por persona. Si empiezas por correo y sigues por el chat de la app, Camila ya sabe lo que hablaron. En la web, sin entrar a tu cuenta, puedes unir el chat con tu correo con un código de seis números.',
+          'Para mirar tu cuenta, Camila necesita saber que es la tuya: entra al chat desde Divoox Driver con tu cuenta o escríbele desde el correo con el que te registraste. Nunca te pide tu contraseña.',
+          'Lo que no sepa responder lo anota y se lo pasa al equipo. Cada semana el equipo revisa esas preguntas y aprueba las respuestas nuevas: Camila solo usa lo que el equipo aprobó.',
+          'Si eres líder de un equipo de conductores, tu enlace y tu código QR están en Divoox Driver, «Mi equipo». Camila te manda el plan para registrar a tu gente y te avisa cada vez que alguien se registra y cada vez que alguien queda aprobado, con cuántos llevas.',
+        ],
+        capturas: [
+          {
+            src: '/docs/camila-web-chat-es.webp',
+            alt: 'La web de Divoox con el chat de soporte abierto abajo a la derecha: la respuesta de Camila, el mensaje del equipo de soporte y el aviso «Una persona del equipo te va a responder aquí».',
+            pie: 'En divoox.com, el chat se abre abajo a la derecha y sigue la misma conversación.',
+          },
+          {
+            src: '/docs/camila-web-chat-movil-es.webp',
+            alt: 'El chat de soporte de la web en un celular, a pantalla completa, con el mensaje del equipo de soporte de Divoox.',
+            pie: 'En el celular, el chat ocupa toda la pantalla.',
+          },
+          {
+            src: '/docs/camila-driver-ayuda-es.webp',
+            alt: 'Pantalla Ayuda de Divoox Driver con «Habla con soporte», «Mis casos y reportes» y «Guías de Docs».',
+            pie: 'En Divoox Driver, abre el menú y toca «Ayuda».',
+          },
+          {
+            src: '/docs/camila-driver-chat-es.webp',
+            alt: 'Chat «Habla con soporte» en Divoox Driver con una pregunta sobre el saldo y la respuesta de Camila Montes, del equipo de soporte.',
+            pie: 'Escribe tu pregunta y Camila te responde en la misma pantalla.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo hablo con soporte de Divoox?',
+          '¿Camila es una persona?',
+          '¿Cómo hablo con una persona del equipo?',
+          '¿Cómo registro a mi equipo de conductores?',
+        ],
+        pasos: [
+          'En la app Divoox Driver, abre el menú y toca «Ayuda», «Habla con soporte». En la web, toca «Habla con nuestro equipo de soporte» abajo a la derecha.',
+          'Escribe tu pregunta como se la dirías a una persona.',
+          'Si quieres hablar con alguien del equipo, escribe «hablar con una persona».',
+          'Por correo, responde cualquier correo de Camila: sigue la misma conversación.',
+        ],
+      },
+      {
         id: 'no-signal-delivery',
         titulo: 'Si te quedas sin señal al entregar',
         resumen:
@@ -8845,6 +8893,54 @@ const en: SeccionDocs[] = [
     titulo: 'How we look after every order',
     icono: 'listo',
     guias: [
+      {
+        id: 'talk-to-support',
+        titulo: 'Talk to our support team',
+        resumen:
+          'Write to us through the chat on divoox.com, the chat in Divoox Driver or by email. It is the same conversation on every channel, Camila Montes from the support team replies, and a person on the team does whenever you ask.',
+        explicacion: [
+          'Camila Montes is the virtual assistant of the Divoox support team. She helps you sign up, send your documents, understand your balance and the commission, get your starter gift when it applies, and check what your account still needs to be activated.',
+          'If you ask whether she is a person, she always tells you the truth: she is the Divoox virtual assistant. And if you would rather talk to someone on the team, write “talk to a person”: she opens a case and a person on the team replies in the same conversation.',
+          'There is one conversation per person. If you start by email and continue in the app chat, Camila already knows what you talked about. On the web, without signing in, you can link the chat to your email with a six-digit code.',
+          'To look at your account, Camila needs to know it is yours: open the chat from Divoox Driver with your account, or write from the email you signed up with. She never asks for your password.',
+          'Whatever she cannot answer, she writes down and passes to the team. Every week the team reviews those questions and approves the new answers: Camila only uses what the team approved.',
+          'If you lead a team of drivers, your link and QR code are in Divoox Driver, “My team.” Camila sends you the plan to sign up your people and tells you every time someone signs up and every time someone is approved, with how many you have.',
+        ],
+        capturas: [
+          {
+            src: '/docs/camila-web-chat-en.webp',
+            alt: 'The Divoox website with the support chat open at the bottom right: Camila’s answer, a message from the Support Team and the notice “A person on our team will reply to you here.”',
+            pie: 'On divoox.com, the chat opens at the bottom right and keeps the same conversation.',
+          },
+          {
+            src: '/docs/camila-web-chat-movil-en.webp',
+            alt: 'The website support chat on a phone, full screen, with a message from the Divoox Support Team.',
+            pie: 'On your phone, the chat fills the whole screen.',
+          },
+          {
+            src: '/docs/camila-driver-ayuda-en.webp',
+            alt: 'The Help screen in Divoox Driver with “Talk to support,” “My cases and reports” and “Docs guides.”',
+            pie: 'In Divoox Driver, open the menu and tap “Help.”',
+          },
+          {
+            src: '/docs/camila-driver-chat-en.webp',
+            alt: 'The “Talk to support” chat in Divoox Driver with a question about the balance and the answer from Camila Montes of the Support Team.',
+            pie: 'Write your question and Camila answers on the same screen.',
+          },
+        ],
+        preguntas: [
+          'How do I contact Divoox support?',
+          'Is Camila a person?',
+          'How do I talk to a person on the team?',
+          'How do I sign up my team of drivers?',
+        ],
+        pasos: [
+          'In the Divoox Driver app, open the menu and tap “Help,” “Talk to support.” On the web, tap “Talk to our support team” at the bottom right.',
+          'Write your question the way you would ask a person.',
+          'If you want to talk to someone on the team, write “talk to a person.”',
+          'By email, reply to any email from Camila: it continues the same conversation.',
+        ],
+      },
       {
         id: 'no-signal-delivery',
         titulo: 'If you lose signal when delivering',

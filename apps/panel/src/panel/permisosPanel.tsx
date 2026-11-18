@@ -95,6 +95,8 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   inicio: 'monitoreo.ver',
   orders: 'pedidos.ver',
   tickets: 'tickets.ver',
+  // C-CAMILA-BUZON: el buzón de Camila es parte del soporte.
+  camila: 'tickets.ver',
   // C-MODERACION: la bandeja de reportes de mensajes y reseñas.
   moderation: 'tickets.ver',
   approvals: ['dinero.solicitar', 'dinero.ver', 'dinero.aprobar'],

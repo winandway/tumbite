@@ -1,0 +1,423 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ErrorApi,
+  type HiloCamila,
+  type Idioma,
+  type MensajeCamila,
+  type RespuestaCamila,
+  TEXTOS_CHAT_SOPORTE,
+  almacenNavegador,
+  enIdioma,
+  enIdiomaDireccion,
+  nombreAutorCamila,
+  useBorrador,
+  visitaCamila,
+} from '@tumbite/compartido';
+import { api, pedir } from '../panel/api';
+import { Icono } from './Icono';
+
+/**
+ * C-CAMILA-CHAT (17 nov 2026) — todos los países. La burbuja «Habla con nuestro equipo de soporte»
+ * de las páginas públicas (reemplaza al viejo «¿Preguntas?»). Abre el chat con Camila Montes, del
+ * equipo de soporte: una sola conversación por persona, la misma que sigue por la app y por correo.
+ *
+ * - Sin cuenta, el navegador lleva su ficha anónima (cabecera x-camila-visita). Mirar no escribe: el
+ *   hilo solo se pide si este navegador ya conversó (o si hay sesión y la persona abre el chat).
+ * - Lo escrito se guarda solo y vuelve al recargar; se borra al enviarse bien. Si falla, se queda.
+ * - Si una persona del equipo tomó la conversación, Camila no contesta y se dice en pantalla.
+ * - Sin cuenta, se ofrece discreto unir el chat al correo con un código de seis números.
+ */
+const LLAVE_CONVERSO = 'divoox.camila.converso';
+
+function guardarConverso() {
+  try {
+    localStorage.setItem(LLAVE_CONVERSO, '1');
+  } catch {
+    /* sin almacenamiento: se vuelve a pedir el hilo solo en esta visita */
+  }
+}
+function yaConverso(): boolean {
+  try {
+    return localStorage.getItem(LLAVE_CONVERSO) === '1';
+  } catch {
+    return false;
+  }
+}
+function almacenLocal() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+const ESPERA_RECARGA_MS = 8_000;
+
+export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?: boolean }) {
+  const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
+  const [abierto, setAbierto] = useState(false);
+  const [visita] = useState(() => visitaCamila(almacenLocal()));
+  const [hilo, setHilo] = useState<HiloCamila | null>(null);
+  const [cargando, setCargando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [pendiente, setPendiente] = useState<MensajeCamila | null>(null);
+  const [error, setError] = useState('');
+  const [unir, setUnir] = useState(false);
+  const [unido, setUnido] = useState(false);
+  const [conCuenta, setConCuenta] = useState(Boolean(conSesion));
+  const lista = useRef<HTMLOListElement>(null);
+  const casilla = useRef<HTMLTextAreaElement>(null);
+  const b = useBorrador({
+    formulario: 'chat-soporte',
+    cuenta: visita.slice(0, 12),
+    inicial: { texto: '' },
+    almacen: almacenNavegador,
+  });
+  const cabeceras = { 'x-camila-visita': visita };
+
+  const cargar = useCallback(
+    async (callado = false) => {
+      if (!callado) setCargando(true);
+      try {
+        const h = await pedir<HiloCamila>('GET', '/datos/camila/hilo', undefined, {
+          cabeceras: { 'x-camila-visita': visita },
+        });
+        setHilo(h);
+        setError('');
+      } catch (x) {
+        if (!callado) setError(x instanceof ErrorApi ? x.message : t.sinRed);
+      } finally {
+        if (!callado) setCargando(false);
+      }
+    },
+    [visita, t.sinRed],
+  );
+
+  // Al abrir: el hilo, si este navegador ya conversó o si hay una cuenta (mirar no escribe).
+  useEffect(() => {
+    if (!abierto) return;
+    let vivo = true;
+    // El hilo se pide fuera del efecto (después de pintar), nunca dentro de él.
+    const pedirHilo = () => void cargar();
+    let primero: number | undefined;
+    if (conSesion || yaConverso()) primero = window.setTimeout(pedirHilo, 0);
+    else
+      // Con una cuenta abierta en este navegador, su conversación de siempre (la de la app y el
+      // correo) aparece aquí; sin cuenta, nada se pide hasta que escriba.
+      void api
+        .yo()
+        .then((r) => {
+          if (vivo && r.usuario) {
+            setConCuenta(true);
+            void cargar();
+          }
+        })
+        .catch(() => undefined);
+    const tecla = (e: KeyboardEvent) => e.key === 'Escape' && setAbierto(false);
+    window.addEventListener('keydown', tecla);
+    const foco = window.setTimeout(() => casilla.current?.focus(), 50);
+    return () => {
+      vivo = false;
+      window.clearTimeout(primero);
+      window.removeEventListener('keydown', tecla);
+      window.clearTimeout(foco);
+    };
+  }, [abierto, conSesion, cargar]);
+
+  // Mientras está abierto y ya hay conversación, se mira si respondió alguien del equipo.
+  useEffect(() => {
+    if (!abierto || !hilo?.mensajes.length) return;
+    const reloj = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void cargar(true);
+    }, ESPERA_RECARGA_MS);
+    return () => window.clearInterval(reloj);
+  }, [abierto, hilo?.mensajes.length, cargar]);
+
+  const cuantos = (hilo?.mensajes.length ?? 0) + (pendiente ? 1 : 0);
+  useEffect(() => {
+    const el = lista.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [cuantos, abierto, enviando]);
+
+  async function enviar() {
+    const texto = b.valores.texto.trim();
+    if (!texto || enviando) return;
+    setError('');
+    setEnviando(true);
+    setPendiente({
+      id: 'pendiente',
+      autor: 'persona',
+      texto,
+      creado_en: new Date().toISOString(),
+    });
+    try {
+      const r = await pedir<RespuestaCamila>(
+        'POST',
+        '/datos/camila/mensaje',
+        { texto, canal: 'web' },
+        { cabeceras },
+      );
+      guardarConverso();
+      setHilo({
+        verificada: r.verificada,
+        equipoAtendiendo: r.equipoAtendiendo,
+        mensajes: r.mensajes,
+      });
+      await b.limpiar();
+    } catch (x) {
+      // Lo escrito se queda en la casilla para reintentar (regla de los formularios).
+      setError(x instanceof ErrorApi ? x.message : t.sinRed);
+    } finally {
+      setPendiente(null);
+      setEnviando(false);
+    }
+  }
+
+  const mensajes = [...(hilo?.mensajes ?? []), ...(pendiente ? [pendiente] : [])];
+  return (
+    <>
+      {abierto ? null : (
+        <button
+          type="button"
+          className="chat-soporte-burbuja"
+          onClick={() => setAbierto(true)}
+          aria-haspopup="dialog"
+          aria-label={t.burbuja}
+          data-testid="chat-soporte-burbuja"
+        >
+          <Icono nombre="soporte" tamano={22} />
+          <span className="chat-soporte-burbuja-texto">{t.burbuja}</span>
+        </button>
+      )}
+      {abierto ? (
+        <section
+          className="chat-soporte"
+          role="dialog"
+          aria-label={t.titulo}
+          data-testid="chat-soporte"
+        >
+          <header className="chat-soporte-cabeza">
+            <div>
+              <h2>{t.titulo}</h2>
+              <p>{t.camila}</p>
+            </div>
+            <button type="button" className="enlace-boton" onClick={() => setAbierto(false)}>
+              {t.cerrar}
+            </button>
+          </header>
+          <ol
+            className="chat-soporte-mensajes"
+            ref={lista}
+            aria-live="polite"
+            aria-label={t.titulo}
+          >
+            <li className="chat-soporte-mensaje de-camila">
+              <span className="chat-soporte-autor">{t.camila}</span>
+              <span className="chat-soporte-texto">{t.saludo}</span>
+            </li>
+            {mensajes.map((m) => (
+              <li
+                key={m.id}
+                className={`chat-soporte-mensaje ${m.autor === 'persona' ? 'mio' : m.autor === 'equipo' ? 'de-equipo' : 'de-camila'}`}
+                data-testid={`chat-mensaje-${m.autor}`}
+              >
+                <span className="chat-soporte-autor">{nombreAutorCamila(m.autor, idioma)}</span>
+                <span className="chat-soporte-texto">{m.texto}</span>
+              </li>
+            ))}
+            {enviando && !hilo?.equipoAtendiendo ? (
+              <li className="chat-soporte-escribiendo" role="status">
+                {t.escribiendo}
+              </li>
+            ) : null}
+            {cargando ? (
+              <li className="chat-soporte-escribiendo" role="status">
+                {t.cargando}
+              </li>
+            ) : null}
+          </ol>
+          {hilo?.equipoAtendiendo ? (
+            <p className="chat-soporte-aviso" role="status" data-testid="chat-equipo-atiende">
+              {t.equipoAtiende}
+            </p>
+          ) : null}
+          {error ? (
+            <p className="chat-soporte-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {b.recuperado ? (
+            <p className="aviso-borrador chat-soporte-borrador">
+              {idioma === 'en'
+                ? 'We restored what you were typing.'
+                : 'Recuperamos lo que estabas escribiendo.'}{' '}
+              <button type="button" className="enlace" onClick={() => void b.empezarDeNuevo()}>
+                {idioma === 'en' ? 'Start over' : 'Empezar de nuevo'}
+              </button>
+            </p>
+          ) : null}
+          <form
+            className="chat-soporte-casilla"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void enviar();
+            }}
+          >
+            <textarea
+              ref={casilla}
+              rows={2}
+              value={b.valores.texto}
+              placeholder={t.escribe}
+              aria-label={t.escribe}
+              maxLength={2000}
+              onChange={(e) => b.cambiar('texto', e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void enviar();
+                }
+              }}
+            />
+            <button type="submit" className="boton" disabled={enviando || !b.valores.texto.trim()}>
+              {enviando ? t.enviando : t.enviar}
+            </button>
+          </form>
+          {hilo?.verificada || conCuenta ? (
+            unido ? (
+              <p className="chat-soporte-aviso exito chat-soporte-unir" role="status">
+                {t.unido}
+              </p>
+            ) : null
+          ) : unir ? (
+            <UnirCorreo
+              idioma={idioma}
+              cabeceras={cabeceras}
+              visita={visita}
+              alUnir={(h) => {
+                guardarConverso();
+                setUnido(true);
+                setHilo(h);
+              }}
+              alCerrar={() => setUnir(false)}
+            />
+          ) : (
+            <button
+              type="button"
+              className="enlace chat-soporte-unir"
+              onClick={() => setUnir(true)}
+              data-testid="chat-unir"
+            >
+              {t.unir}
+            </button>
+          )}
+          <p className="chat-soporte-pie">
+            {t.prefieresCorreo} <a href={enIdiomaDireccion('/contact', idioma)}>{t.formulario}</a>
+          </p>
+        </section>
+      ) : null}
+    </>
+  );
+}
+
+function UnirCorreo({
+  idioma,
+  cabeceras,
+  visita,
+  alUnir,
+  alCerrar,
+}: {
+  idioma: Idioma;
+  cabeceras: Record<string, string>;
+  visita: string;
+  alUnir: (h: HiloCamila) => void;
+  alCerrar: () => void;
+}) {
+  const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
+  // El correo se guarda como borrador; el código de un solo uso no (es sensible).
+  const b = useBorrador({
+    formulario: 'chat-soporte-unir',
+    cuenta: visita.slice(0, 12),
+    inicial: { correo: '', codigo: '' },
+    almacen: almacenNavegador,
+    sensibles: ['codigo'],
+  });
+  const [enviado, setEnviado] = useState(false);
+  const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  async function paso(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setEnviando(true);
+    try {
+      if (!enviado) {
+        await pedir(
+          'POST',
+          '/datos/camila/verificar',
+          { correo: b.valores.correo.trim() },
+          { cabeceras },
+        );
+        setEnviado(true);
+      } else {
+        const h = await pedir<HiloCamila>(
+          'POST',
+          '/datos/camila/verificar/confirmar',
+          { codigo: b.valores.codigo.trim() },
+          { cabeceras },
+        );
+        await b.limpiar();
+        alUnir(h);
+      }
+    } catch (x) {
+      setError(x instanceof ErrorApi ? x.message : t.sinRed);
+    } finally {
+      setEnviando(false);
+    }
+  }
+  return (
+    <form className="chat-soporte-unir-form" noValidate onSubmit={(e) => void paso(e)}>
+      <p className="pista">{enviado ? t.codigoEnviado(b.valores.correo.trim()) : t.unirAyuda}</p>
+      {enviado ? (
+        <label className="campo">
+          {t.codigo}
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={b.valores.codigo}
+            onChange={(e) => b.cambiar('codigo', e.target.value.replace(/\D/g, ''))}
+          />
+        </label>
+      ) : (
+        <label className="campo">
+          {t.correo}
+          <input
+            type="email"
+            autoComplete="email"
+            value={b.valores.correo}
+            onChange={(e) => b.cambiar('correo', e.target.value)}
+          />
+        </label>
+      )}
+      {error ? (
+        <p className="chat-soporte-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <div className="chat-soporte-unir-botones">
+        <button type="submit" className="boton secundario" disabled={enviando}>
+          {enviado ? t.confirmar : t.mandarCodigo}
+        </button>
+        <button
+          type="button"
+          className="enlace"
+          onClick={() => {
+            if (enviado) setEnviado(false);
+            else alCerrar();
+          }}
+        >
+          {enviado ? t.otroCorreo : t.ahoraNo}
+        </button>
+      </div>
+    </form>
+  );
+}

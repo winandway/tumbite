@@ -10,6 +10,7 @@ import { limiteIntentos } from '../seguridad';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { numeroDeTicket } from './tickets';
+import { correoEntrante } from './camila';
 
 /**
  * C-GERENTE-TICKETS (1 nov 2026, pedido de Richard por la sesión de su correo): la puerta con la
@@ -207,3 +208,9 @@ gerente.post('/gerente/tickets/:id/responder', async (c) => {
     correo: correo.ok ? 'ok' : 'error',
   });
 });
+
+/**
+ * C-CAMILA-CORREO: el gerente de correo le pasa a Camila los correos que llegan a
+ * soporte+divoox.camila@windoce.com (las respuestas a sus correos). Camila contesta por correo.
+ */
+gerente.post('/gerente/camila/correo', correoEntrante);

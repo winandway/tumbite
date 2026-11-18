@@ -7,4 +7,6 @@ export const CORREOS_SOPORTE = {
   divoox: 'soporte+divoox@windoce.com',
   driver: 'soporte+divoox.driver@windoce.com',
   restaurantes: 'soporte+divoox.restaurantes@windoce.com',
+  /** C-CAMILA: las respuestas a los correos de Camila (el gerente de correo se los pasa a ella). */
+  camila: 'soporte+divoox.camila@windoce.com',
 } as const;

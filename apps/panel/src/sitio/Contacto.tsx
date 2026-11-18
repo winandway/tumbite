@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
 import { type Idioma, MARCA, enIdioma } from '@tumbite/compartido';
 import { FormContacto } from './FormContacto';
 
 /**
- * C-CONTACTO (2 nov 2026, pedido de Richard): la página /contact y el botón flotante «¿Preguntas?»
- * de las páginas públicas. Los dos abren el mismo formulario (un caso real con enlace privado).
+ * C-CONTACTO (2 nov 2026, pedido de Richard): la página /contact con el formulario (un caso real con
+ * enlace privado). Desde el 17 nov 2026 la burbuja flotante de las páginas públicas es el chat de
+ * soporte (C-CAMILA-CHAT, ChatSoporte.tsx), que enlaza aquí para quien prefiere escribir un correo.
  */
 const T = {
   es: {
@@ -18,8 +18,6 @@ const T = {
     escribenos: 'Escríbenos',
     ayuda:
       'Te responde una persona de nuestro equipo, en español o en inglés. La conversación queda en un enlace privado que te llega al correo.',
-    preguntas: '¿Preguntas?',
-    cerrar: 'Cerrar',
   },
   en: {
     titulo: 'Contact',
@@ -32,8 +30,6 @@ const T = {
     escribenos: 'Write to us',
     ayuda:
       'A person on our team replies, in English or Spanish. Your conversation lives at a private link we email you.',
-    preguntas: 'Questions?',
-    cerrar: 'Close',
   },
 };
 
@@ -59,52 +55,5 @@ export function PaginaContacto({ idioma }: { idioma: Idioma }) {
         <FormContacto idioma={idioma} />
       </section>
     </main>
-  );
-}
-
-/** El botón flotante «¿Preguntas?» abajo a la derecha (no en /contact ni en /support). */
-export function BotonPreguntas({ idioma }: { idioma: Idioma }) {
-  const t = enIdioma(T, idioma);
-  const [abierto, setAbierto] = useState(false);
-  const ruta =
-    typeof window === 'undefined' ? '' : window.location.pathname.replace(/^\/es(?=\/|$)/, '');
-  useEffect(() => {
-    if (!abierto) return;
-    const tecla = (e: KeyboardEvent) => e.key === 'Escape' && setAbierto(false);
-    window.addEventListener('keydown', tecla);
-    return () => window.removeEventListener('keydown', tecla);
-  }, [abierto]);
-  if (ruta === '/contact' || ruta === '/support') return null;
-  return (
-    <>
-      <button
-        type="button"
-        className="boton-preguntas"
-        onClick={() => setAbierto(true)}
-        aria-haspopup="dialog"
-      >
-        {t.preguntas}
-      </button>
-      {abierto ? (
-        <div className="preguntas-capa" onClick={() => setAbierto(false)} role="presentation">
-          <div
-            className="preguntas-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-label={t.escribenos}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="preguntas-cabecera">
-              <h2>{t.escribenos}</h2>
-              <button type="button" className="enlace-boton" onClick={() => setAbierto(false)}>
-                {t.cerrar}
-              </button>
-            </div>
-            <p className="pista">{t.ayuda}</p>
-            <FormContacto idioma={idioma} />
-          </div>
-        </div>
-      ) : null}
-    </>
   );
 }

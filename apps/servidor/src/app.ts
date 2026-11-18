@@ -90,6 +90,8 @@ import { regalosDivoox } from './rutas/regalosDivoox';
 import { saldoConductores } from './rutas/saldoConductores';
 import { programaReferidos } from './rutas/programaReferidos';
 import { saludRegalos } from './regalosDivoox';
+import { camila } from './rutas/camila';
+import { saludCamila } from './camila/salud';
 import { direcciones } from './rutas/direcciones';
 import { fotoPuerta } from './rutas/fotoPuerta';
 import { restauranteMas } from './rutas/restauranteMas';
@@ -420,6 +422,12 @@ app.get('/datos/salud', async (c) => {
       console.error('salud: regalos', e);
       return 'error' as const;
     });
+  // C-CAMILA-TOPE: Camila no gasta más IA que su tope ni da más regalos que los permitidos.
+  if (c.env.DB)
+    piezas.camila = await saludCamila(c.env.DB).catch((e: unknown) => {
+      console.error('salud: camila', e);
+      return 'error' as const;
+    });
   // Disputas (contracargos) sin responder que vencen pronto: rojo para que alguien las atienda.
   if (c.env.DB)
     piezas.disputas = await saludDisputas(c.env.DB).catch((e: unknown) => {
@@ -647,6 +655,7 @@ app.route('/datos/avisos-web', rutasAvisosWeb);
 // C-ENTREGA-PRACTICA: antes que las de verdad; solo atiende los pedidos «prueba-…».
 app.route('/datos', rutasPractica(esRevisor));
 app.route('/datos', gerente);
+app.route('/datos', camila);
 app.route('/datos', catalogo);
 app.route('/datos', dinero);
 app.route('/datos', diagnostico);

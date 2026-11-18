@@ -67,6 +67,7 @@ const es = {
   menuAdmin: {
     inicio: 'Resumen',
     tickets: 'Tickets',
+    camila: 'Camila · Soporte',
     moderation: 'Reportes',
     orders: 'Pedidos en curso',
     franchises: 'Franquicias',
@@ -171,6 +172,7 @@ const en: T = {
   menuAdmin: {
     inicio: 'Overview',
     tickets: 'Tickets',
+    camila: 'Camila · Support',
     moderation: 'Flagged content',
     orders: 'Live orders',
     franchises: 'Franchises',

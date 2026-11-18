@@ -4309,3 +4309,99 @@ CREATE TABLE IF NOT EXISTS banners (
 -- Sin índice extra: la tabla es chica y la ruta pública la lee una vez por minuto (caché en memoria).
 -- El tope diario de imágenes con IA vive en `config` (claves ia_banners:<día>), sin tabla propia.
 
+-- C-CAMILA (17 nov 2026, piloto de El Vigía y Tucaní, después el mundo): «Camila Montes», la
+-- asistente de soporte de Divoox para conductores y líderes de equipo. UN cerebro y UNA memoria por
+-- persona (tablas WITHOUT ROWID: sin índice aparte de su llave, para que el canario lea poco): la persona se une por su cuenta, su correo verificado o su teléfono verificado, venga por
+-- el chat de la web, el de la app Driver o el correo (SMS y WhatsApp quedan listos y apagados).
+CREATE TABLE IF NOT EXISTS camila_personas (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT,
+  correo TEXT COLLATE NOCASE,
+  telefono TEXT,
+  visitante_hash TEXT,
+  nombre TEXT NOT NULL DEFAULT '',
+  idioma TEXT NOT NULL DEFAULT 'es',
+  pais TEXT NOT NULL DEFAULT '',
+  -- La ciudad (de su cuenta de conductor): el equipo de una ciudad solo ve las conversaciones de la suya.
+  zona_id TEXT,
+  resumen TEXT NOT NULL DEFAULT '',
+  canal_ultimo TEXT NOT NULL DEFAULT 'web',
+  mensajes INTEGER NOT NULL DEFAULT 0,
+  -- Una persona del equipo tomó el hilo: Camila no contesta hasta esta hora (o hasta que se lo devuelvan).
+  humano_hasta TEXT,
+  humano_id TEXT,
+  aviso_ia_dado INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+CREATE UNIQUE INDEX IF NOT EXISTS camila_personas_usuario ON camila_personas(usuario_id) WHERE usuario_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS camila_personas_correo ON camila_personas(correo) WHERE correo IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS camila_personas_telefono ON camila_personas(telefono) WHERE telefono IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS camila_personas_visitante ON camila_personas(visitante_hash) WHERE visitante_hash IS NOT NULL;
+CREATE TABLE IF NOT EXISTS camila_mensajes (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  canal TEXT NOT NULL CHECK (canal IN ('web', 'app', 'correo', 'sms', 'whatsapp')),
+  autor TEXT NOT NULL CHECK (autor IN ('persona', 'camila', 'equipo')),
+  autor_id TEXT,
+  texto TEXT NOT NULL,
+  herramienta TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS camila_mensajes_hilo ON camila_mensajes(persona_id, creado_en);
+CREATE TABLE IF NOT EXISTS camila_casos (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  resumen TEXT NOT NULL,
+  motivo TEXT NOT NULL DEFAULT 'ayuda',
+  estado TEXT NOT NULL DEFAULT 'abierto' CHECK (estado IN ('abierto', 'cerrado')),
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrado_en TEXT,
+  cerrado_por TEXT
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS camila_casos_abiertos ON camila_casos(estado, creado_en);
+CREATE TABLE IF NOT EXISTS camila_sin_respuesta (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  pregunta TEXT NOT NULL,
+  idioma TEXT NOT NULL DEFAULT 'es',
+  propuesta_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS camila_sin_respuesta_pendientes ON camila_sin_respuesta(propuesta_id, creado_en);
+-- Lo que Camila sabe además de Docs: SOLO lo aprobado por el equipo (estado «aprobada»).
+CREATE TABLE IF NOT EXISTS camila_conocimiento (
+  id TEXT PRIMARY KEY,
+  pregunta_es TEXT NOT NULL DEFAULT '',
+  pregunta_en TEXT NOT NULL DEFAULT '',
+  respuesta_es TEXT NOT NULL DEFAULT '',
+  respuesta_en TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'propuesta' CHECK (estado IN ('propuesta', 'aprobada', 'rechazada')),
+  veces INTEGER NOT NULL DEFAULT 1,
+  semana TEXT NOT NULL DEFAULT '',
+  decidido_por TEXT,
+  decidido_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+-- El gasto de IA de cada día, en millonésimas de dólar: el tope diario se mira aquí antes de cada llamada.
+CREATE TABLE IF NOT EXISTS camila_gasto (
+  dia TEXT PRIMARY KEY,
+  microdolares INTEGER NOT NULL DEFAULT 0,
+  llamadas INTEGER NOT NULL DEFAULT 0,
+  regalos INTEGER NOT NULL DEFAULT 0,
+  avisado INTEGER NOT NULL DEFAULT 0
+) WITHOUT ROWID;
+-- A qué conductores aprobados ya se les contó a su líder (una sola vez). El equipo y su código viven
+-- en `equipos` y `miembros_equipo` (C-REFERIDOS-EQUIPOS): aquí no se duplica nada.
+CREATE TABLE IF NOT EXISTS camila_avisos_lider (
+  conductor_id TEXT PRIMARY KEY,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+-- El código de 6 dígitos para unir el chat de la web con un correo (verificar que es suyo).
+CREATE TABLE IF NOT EXISTS camila_codigos (
+  persona_id TEXT PRIMARY KEY,
+  correo TEXT NOT NULL COLLATE NOCASE,
+  codigo_hash TEXT NOT NULL,
+  intentos INTEGER NOT NULL DEFAULT 0,
+  vence_en TEXT NOT NULL
+) WITHOUT ROWID;

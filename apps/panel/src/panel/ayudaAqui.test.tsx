@@ -30,6 +30,7 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperSaldoConductores.tsx', 'driver-balance-top-up'],
   ['SuperReferidosEquipos.tsx', 'referrals-and-teams'],
   ['SuperBanners.tsx', 'app-banners'],
+  ['SuperCamila.tsx', 'camila-support-inbox'],
 ];
 const fuente = (archivo: string) => readFileSync(join(AQUI, archivo), 'utf8');
 

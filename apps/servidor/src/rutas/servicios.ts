@@ -1,5 +1,6 @@
 import { cuantosHay } from '../canarioLecturas';
 import { darRegaloConductorNuevo } from '../saldoConductores';
+import { alActivarseConductor } from '../camila/bienvenida';
 import { guardarFoto } from '../fotoLimpia';
 import { Hono } from 'hono';
 import { esConductorOcupado } from '../operaciones';
@@ -1453,6 +1454,8 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
     await darRegaloConductorNuevo(db, conductor).catch((e: unknown) =>
       console.error('saldo: regalo de arranque', e),
     );
+  // C-CAMILA-LIDER: el líder de su equipo recibe el contador (una sola vez).
+  if (d.estado === 'aprobada') await alActivarseConductor(c.env, db, conductor);
   await auditar(
     db,
     admin.id,

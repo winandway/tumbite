@@ -21,7 +21,15 @@ import { type Lectura, medidorDeLecturas, sembrarVolumen } from './pruebas/lectu
  */
 afterEach(() => vi.unstubAllGlobals());
 
-const TOPE_CANARIO = 2000;
+/**
+ * C-LECTURAS-SALUD-2 (18 nov 2026): el tope se parte en dos, porque la lista de disparadores recorre
+ * `sqlite_master` entera y eso crece con CADA tabla o índice nuevo del esquema (el 17 nov el total
+ * estaba exactamente en 2.000: cualquier tabla nueva lo rompía sin que el canario leyera peor).
+ * - `sqlite_master` se recorre UNA sola vez por llamada (lo que fija C-LECTURAS-SALUD);
+ * - todo lo demás (los datos de verdad) no pasa de 1.150 filas. Antes eran 1.126 de 2.000.
+ */
+const TOPE_CANARIO = 1150;
+const esEsquema = (l: Lectura) => l.escaneos.some((e) => e.startsWith('sqlite_master'));
 
 const culpables = (l: Lectura[]) =>
   l
@@ -58,15 +66,18 @@ async function escenario() {
 }
 
 describe('C-LECTURAS-SALUD · el canario lee poco y no escribe', () => {
-  it('con el volumen del sitio de pruebas y el reloj andando: menos de 2.000 filas y 0 escrituras', async () => {
+  it('con el volumen del sitio de pruebas y el reloj andando: una sola pasada por el esquema, menos de 1.150 filas de datos y 0 escrituras', async () => {
     const { salud, medir, env, m } = await escenario();
     await salud(); // la migración y el primer estado de cada pieza, fuera de la cuenta
     await conciliarFinanzas(env, m.DB); // el reloj deja la suma del libro
     await salud(); // «billeteras» pasa de pendiente a ok: ese cambio sí se anota, una vez
     const r = await medir();
+    const delEsquema = r.lecturas.filter(esEsquema);
+    expect(delEsquema, 'sqlite_master se recorre una sola vez').toHaveLength(1);
+    const datos = r.total - delEsquema.reduce((n, l) => n + l.filas, 0);
     expect(
-      r.total,
-      `el canario leyó ${r.total} filas (tope ${TOPE_CANARIO}):\n${culpables(r.lecturas)}`,
+      datos,
+      `el canario leyó ${datos} filas de datos (tope ${TOPE_CANARIO}):\n${culpables(r.lecturas.filter((l) => !esEsquema(l)))}`,
     ).toBeLessThanOrEqual(TOPE_CANARIO);
     expect(r.escritas, 'el canario sin cambios de color no escribe').toBe(0);
     expect(r.resultado.piezas.libro).toBe('ok');

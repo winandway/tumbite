@@ -26,8 +26,8 @@ for (const [idioma, p] of Object.entries(PASADAS)) {
     hasTouch: true,
   });
   const foto = async (nombre) => {
-    // El botón flotante «¿Preguntas?» no tapa lo que se explica.
-    await pagina.addStyleTag({ content: '.boton-preguntas{display:none!important}' });
+    // La burbuja del chat de soporte no tapa lo que se explica.
+    await pagina.addStyleTag({ content: '.chat-soporte-burbuja{display:none!important}' });
     const png = join(originales, `docs-${nombre}-${idioma}.png`);
     await pagina.screenshot({ path: png });
     execFileSync('cwebp', [

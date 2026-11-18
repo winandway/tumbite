@@ -118,3 +118,4 @@ export * from './rutinas';
 export * from './puntoExacto';
 export * from './inicioNuevo';
 export * from './lugaresGuardados';
+export * from './camilaChat';

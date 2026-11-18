@@ -18,6 +18,7 @@ import {
   Landmark,
   LayoutDashboard,
   LifeBuoy,
+  MessagesSquare,
   Map as IconoMapa,
   MapPinned,
   Megaphone,
@@ -81,6 +82,8 @@ export const ICONOS_MENU = {
   'driver-balance': PiggyBank,
   // C-REFERIDOS-EQUIPOS: referidos y equipos.
   referrals: UserPlus,
+  // C-CAMILA-BUZON: el buzón de Camila, la asistente de soporte.
+  camila: MessagesSquare,
   approvals: ClipboardCheck,
   rides: Navigation,
   moto: Bike,
@@ -232,7 +235,10 @@ export function gruposAdmin(
   return [
     ...armar(
       [
-        [g.operacion, ['inicio', 'orders', 'tickets', 'moderation', 'approvals', 'verifications']],
+        [
+          g.operacion,
+          ['inicio', 'orders', 'tickets', 'camila', 'moderation', 'approvals', 'verifications'],
+        ],
         [g.personas, ['customers', 'restaurants', 'drivers']],
         [
           g.dinero,

@@ -1,3 +1,4 @@
+import { alRegistrarseConductor } from '../camila/bienvenida';
 import {
   CANALES_CONSENTIMIENTO_SMS,
   VERSION_CONSENTIMIENTO_SMS,
@@ -268,6 +269,10 @@ cuentas.post('/registro', async (c) => {
       if (!(e instanceof ErrorDatos)) console.error('registro: invitación', e);
     });
   await mandarConfirmacion(c.env, db, { id, nombre: d.nombre, correo: d.correo, idioma: d.idioma });
+  // C-CAMILA-BIENVENIDA: Camila le da la bienvenida al conductor y, si vino con el código de un
+  // líder, le avisa al líder con el contador. Nunca frena el registro.
+  if (rol === 'repartidor')
+    await alRegistrarseConductor(c.env, db, { id, nombre: d.nombre, idioma: d.idioma });
   const usuario: Usuario = { id, nombre: d.nombre, correo: d.correo, rol, idioma: d.idioma };
   c.header('Set-Cookie', cookie(token));
   return c.json({ token, usuario }, 201);

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
+import { alCrearEquipo, alUnirseAlEquipo } from '../camila/bienvenida';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { limiteIntentos } from '../seguridad';
@@ -127,6 +128,8 @@ programaReferidos.post('/admin/equipos', async (c) => {
   );
   const db = base(c);
   const r = await crearEquipo(db, { ...d, autorId: u.id });
+  // C-CAMILA-LIDER: Camila le manda al líder su plan para registrar a su gente (correo y chat).
+  await alCrearEquipo(c.env, db, r.liderId, r.codigo);
   return c.json({ equipo: (await listarEquipos(db, { equipoId: r.id }))[0] }, 201);
 });
 
@@ -161,5 +164,7 @@ programaReferidos.post('/repartidor/invitacion', limiteIntentos(10, 60_000), asy
   const u = exigir(c, 'repartidor');
   const d = await leerCuerpo(c, z.object({ codigo: z.string().trim().min(4).max(20) }));
   const r = await vincularConductor(base(c), u.id, d.codigo);
+  // C-CAMILA-LIDER: el líder recibe el contador de su equipo.
+  if (r.equipo) await alUnirseAlEquipo(c.env, base(c), u.id);
   return c.json({ ok: true, nombre: r.nombre, equipo: r.equipo }, 201);
 });

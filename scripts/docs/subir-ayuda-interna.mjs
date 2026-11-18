@@ -40,6 +40,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capRef\(\s*'([a-z0-9-]+)',\s*'(
 // C-BANNERS: las de «Banners de la app» (capBanners).
 for (const [, nombre, idioma] of guias.matchAll(/capBanners\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`banners-${nombre}-${idioma}.webp`);
+// C-CAMILA-BUZON: las del buzón de Camila (capCamila).
+for (const [, nombre, idioma] of guias.matchAll(/capCamila\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`camila-${nombre}-${idioma}.webp`);
 for (const [, archivo] of guias.matchAll(/archivo: '([a-z0-9-]+\.webp)'/g)) archivos.add(archivo);
 const faltan = [...archivos].filter((a) => !existsSync(join(CAPTURAS_PRIVADAS, a)));
 if (faltan.length) {

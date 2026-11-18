@@ -10,6 +10,8 @@ export type PerfilInterno = (typeof PERFILES_INTERNOS)[number];
 const SOPORTE = [
   'pedidos',
   'tickets',
+  // C-CAMILA: la bandeja de la asistente de soporte (responder, devolver, aprender, líderes).
+  'camila',
   'clientes',
   'restaurantes',
   'repartidores',

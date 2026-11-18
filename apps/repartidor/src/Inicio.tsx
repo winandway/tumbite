@@ -78,6 +78,8 @@ import { MiEquipo } from './grandes/MiEquipo';
 import { Ganancias } from './grandes/Ganancias';
 import { Avisos } from './grandes/Avisos';
 import { AyudaPedido } from './grandes/Ayuda';
+import { AyudaDriver } from './soporte/AyudaDriver';
+import { textosSoporte } from './soporte/textos';
 import { PagoEnLocal } from './grandes/PagoEnLocal';
 import { Alta } from './grandes/Alta';
 import { textosGrandes } from './grandes/textos';
@@ -599,6 +601,7 @@ export function Inicio() {
     | 'agregar'
     | 'clientesFijos'
     | 'miEquipo'
+    | 'ayuda'
   >('inicio');
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
   const servicios = usePanelServicios(api, 0);
@@ -617,6 +620,8 @@ export function Inicio() {
   }, []);
   useToqueAviso(alTocarAviso);
   const [ayudaAbierta, setAyudaAbierta] = useState(false);
+  // C-CAMILA-CHAT: «Habla con soporte» del perfil abre Ayuda directo en el chat.
+  const [ayudaEnChat, setAyudaEnChat] = useState(false);
   const tg = textosGrandes(idioma);
   const [periodo, setPeriodo] = useState<'hoy' | 'semana' | 'mes'>('hoy');
   const [seccionPerfil, setSeccionPerfil] = useState<
@@ -1691,6 +1696,8 @@ export function Inicio() {
               // C-VIAJES-FIJOS: la agenda de sus clientes fijos.
               ['clientesFijos', idioma === 'en' ? 'Regular riders' : 'Clientes fijos'],
               ['seguridad', idioma === 'en' ? 'Safety' : 'Seguridad'],
+              // C-CAMILA-CHAT: Ayuda (Habla con soporte, Mi equipo para los líderes, casos y guías).
+              ['ayuda', textosSoporte(idioma).ayuda],
               ['billetera', t.vistaBilletera],
               ['datos', t.vistaDatos],
             ] as const
@@ -1699,6 +1706,7 @@ export function Inicio() {
               key={v}
               style={{ paddingVertical: 10, fontWeight: vista === v ? '800' : '600' }}
               onPress={() => {
+                setAyudaEnChat(false);
                 setVista(v);
                 setMenuAbierto(false);
               }}
@@ -2021,6 +2029,18 @@ export function Inicio() {
     return lienzo('inicio', <ClientesFijos api={api} idioma={idioma} />);
   // C-SEGURIDAD-REPARTIDOR: emergencia, recorrido compartido e incidentes.
   if (vista === 'seguridad') return lienzo('inicio', <Seguridad api={api} idioma={idioma} />);
+  if (vista === 'ayuda')
+    return lienzo(
+      'inicio',
+      <AyudaDriver
+        key={ayudaEnChat ? 'chat' : 'menu'}
+        inicial={ayudaEnChat ? 'chat' : 'menu'}
+        alCasos={() => {
+          setSeccionPerfil('soporte');
+          setVista('datos');
+        }}
+      />,
+    );
   // Divoox Flex: las rutas de paquetes de las empresas (una ruta = un solo trabajo activo).
   // C-FLEX-PANTALLA-COMPLETA (como Amazon Flex): dentro de la ruta no va la cabecera con el logo; la
   // pantalla entera es para el trabajo, en fondo oscuro, con la franja de Divoox Flex arriba.
@@ -2219,7 +2239,16 @@ export function Inicio() {
             seccionPerfil === 'soporte',
           )}
           {seccionPerfil === 'soporte' ? (
-            <View style={{ paddingVertical: 8 }}>
+            <View style={{ paddingVertical: 8, gap: 8 }}>
+              {/* C-CAMILA-CHAT: el chat con soporte también desde aquí. */}
+              <Boton
+                texto={textosSoporte(idioma).hablar}
+                alTocar={() => {
+                  setAyudaEnChat(true);
+                  setVista('ayuda');
+                }}
+                secundario
+              />
               <ReportarProblema pedidoId={estado?.activo?.id} />
               <MisCasos
                 elegirCapturas={capturasConCamara(

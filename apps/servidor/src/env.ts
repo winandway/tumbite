@@ -25,6 +25,8 @@ export const esquemaEnv = z.object({
   YAD_TOKEN: z.string().min(32).optional(),
   /** C-GERENTE-TICKETS: el secreto del gerente de correo (variable del panel, nunca en el código). */
   GERENTE_SECRETO: z.string().min(40).optional(),
+  /** C-CAMILA-TOPE: llave de Gemini (prepago) de Camila. Sin ella, Camila contesta sin IA (Docs y lo aprobado). */
+  GEMINI_API_KEY: z.string().min(20).optional(),
   /** C-CASOS-CAPTURAS: llave para firmar los enlaces de las capturas de los casos de ayuda. */
   ARCHIVOS_FIRMA: z.string().min(40).optional(),
   /** Llave publicable de Stripe (pk_…): la usa la app para el pago dentro de la pantalla. */

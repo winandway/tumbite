@@ -2819,5 +2819,83 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "aprobado_en",
     "creado_en",
     "actualizado_en"
+  ],
+  "camila_personas": [
+    "id",
+    "usuario_id",
+    "correo",
+    "telefono",
+    "visitante_hash",
+    "nombre",
+    "idioma",
+    "pais",
+    "zona_id",
+    "resumen",
+    "canal_ultimo",
+    "mensajes",
+    "humano_hasta",
+    "humano_id",
+    "aviso_ia_dado",
+    "creado_en",
+    "actualizado_en"
+  ],
+  "camila_mensajes": [
+    "id",
+    "persona_id",
+    "canal",
+    "autor",
+    "autor_id",
+    "texto",
+    "herramienta",
+    "creado_en"
+  ],
+  "camila_casos": [
+    "id",
+    "persona_id",
+    "resumen",
+    "motivo",
+    "estado",
+    "creado_en",
+    "cerrado_en",
+    "cerrado_por"
+  ],
+  "camila_sin_respuesta": [
+    "id",
+    "persona_id",
+    "pregunta",
+    "idioma",
+    "propuesta_id",
+    "creado_en"
+  ],
+  "camila_conocimiento": [
+    "id",
+    "pregunta_es",
+    "pregunta_en",
+    "respuesta_es",
+    "respuesta_en",
+    "estado",
+    "veces",
+    "semana",
+    "decidido_por",
+    "decidido_en",
+    "creado_en"
+  ],
+  "camila_gasto": [
+    "dia",
+    "microdolares",
+    "llamadas",
+    "regalos",
+    "avisado"
+  ],
+  "camila_avisos_lider": [
+    "conductor_id",
+    "creado_en"
+  ],
+  "camila_codigos": [
+    "persona_id",
+    "correo",
+    "codigo_hash",
+    "intentos",
+    "vence_en"
   ]
 };

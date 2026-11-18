@@ -15,7 +15,7 @@ import { Turnstile, reiniciarTurnstile } from '../panel/Turnstile';
 /**
  * C-CONTACTO (2 nov 2026, pedido de Richard): el formulario público de contacto. Abre un caso real
  * con enlace privado que llega al correo. Lo usan la página /contact, el botón flotante
- * «¿Preguntas?» y la página de soporte. Guarda lo escrito (borrador) y lleva Turnstile.
+ * la página de contacto y la de soporte. Guarda lo escrito (borrador) y lleva Turnstile.
  */
 const T = {
   es: {

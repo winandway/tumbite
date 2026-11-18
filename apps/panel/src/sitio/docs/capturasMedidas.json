@@ -1,4 +1,12 @@
 {
+  "camila-driver-ayuda-en": [540, 1099, 1082, 2202, "3b902c78"],
+  "camila-driver-ayuda-es": [540, 1099, 1082, 2202, "cb0709e4"],
+  "camila-driver-chat-en": [540, 1099, 1082, 2202, "f9e1b049"],
+  "camila-driver-chat-es": [540, 1099, 1082, 2202, "b03016af"],
+  "camila-web-chat-en": [1280, 860],
+  "camila-web-chat-es": [1280, 860],
+  "camila-web-chat-movil-en": [540, 1099, 1082, 2202, "cda22809"],
+  "camila-web-chat-movil-es": [540, 1099, 1082, 2202, "42d3b157"],
   "cliente-avisame-en": [540, 1099, 1082, 2202, "b4f2ec39"],
   "cliente-avisame-es": [540, 1099, 1082, 2202, "b74de276"],
   "cliente-avisame-listo-en": [540, 1099, 1082, 2202, "d364635e"],
