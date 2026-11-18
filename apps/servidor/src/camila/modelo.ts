@@ -184,6 +184,10 @@ export async function anotarErrorModelo(db: D1Database, e: unknown) {
 export const TOPE_ANONIMOS_DIA = 1500;
 export const TOPE_CORREOS_CASO_DIA = 40;
 export const MENSAJES_POR_ANONIMO = 40;
+/** Códigos de «unir el chat» que se mandan a una misma dirección en un día, como mucho. */
+export const CODIGOS_POR_CORREO_DIA = 3;
+/** Mensajes de una misma persona que se contestan con IA en un día; después, sin IA. */
+export const MENSAJES_IA_POR_PERSONA_DIA = 50;
 
 /** Suma uno al contador del día si todavía no llegó a su tope. Falso = tope alcanzado. */
 export async function contarDelDia(db: D1Database, cual: 'anonimos' | 'casos', tope: number) {

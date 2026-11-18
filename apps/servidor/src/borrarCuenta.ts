@@ -105,7 +105,7 @@ export async function borrarCuenta(
   ).results.map((f) => f.foto_clave);
   await db.batch([
     // C-CAMILA-BORRADO: sus conversaciones con soporte (Camila) se borran enteras.
-    ...sentenciasBorrarDeCamila(db, u.id, u.correo),
+    ...sentenciasBorrarDeCamila(db, u.id, u.correo, canon?.telefono_canonico ?? null),
     db
       .prepare(
         "UPDATE usuarios SET correo = ?, nombre = 'Cuenta borrada', telefono = NULL, fecha_nacimiento = NULL, clave_hash = 'borrada', activo = 0, correo_canonico = NULL, telefono_canonico = NULL WHERE id = ?",

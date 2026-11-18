@@ -4401,6 +4401,14 @@ CREATE TABLE IF NOT EXISTS camila_gasto (
   error_en TEXT,
   error TEXT
 ) WITHOUT ROWID;
+-- Cuántos códigos se mandaron HOY a cada dirección de destino (tope por dirección y por día: nadie usa
+-- «unir el chat a tu correo» para llenarle el buzón a un tercero). Se depura sola (filas de otros días).
+CREATE TABLE IF NOT EXISTS camila_codigos_dia (
+  correo TEXT NOT NULL COLLATE NOCASE,
+  dia TEXT NOT NULL,
+  enviados INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (correo, dia)
+) WITHOUT ROWID;
 -- A qué conductores aprobados ya se les contó a su líder (una sola vez). El equipo y su código viven
 -- en `equipos` y `miembros_equipo` (C-REFERIDOS-EQUIPOS): aquí no se duplica nada.
 CREATE TABLE IF NOT EXISTS camila_avisos_lider (

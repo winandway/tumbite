@@ -589,24 +589,58 @@ describe('Revisión de calidad del 18 nov: borrado, fallo del modelo y chat anó
 
   it('el código para unir el chat no sirve para llenarle el buzón a un tercero', async () => {
     const e = await escenario({ GEMINI_API_KEY: undefined });
-    const pedir = (n: number) =>
-      e.m.llamar(
-        'POST',
-        '/datos/camila/verificar',
-        { correo: 'victima@conductores.test' },
-        undefined,
-        {
-          'x-camila-visita': `otra-${n}`.padEnd(40, 'y'),
-        },
-      );
+    const cab = (n: number) => ({ 'x-camila-visita': `otra-${n}`.padEnd(40, 'y') });
+    const pedir = (n: number, correo = 'victima@conductores.test') =>
+      e.m.llamar('POST', '/datos/camila/verificar', { correo }, undefined, cab(n));
+    const aLaVictima = () => e.enviados.filter((x) => x.para === 'victima@conductores.test').length;
     for (let i = 0; i < 6; i++) {
-      await e.m.llamar('POST', '/datos/camila/mensaje', { texto: 'hola' }, undefined, {
-        'x-camila-visita': `otra-${i}`.padEnd(40, 'y'),
-      });
+      await e.m.llamar('POST', '/datos/camila/mensaje', { texto: 'hola' }, undefined, cab(i));
       expect((await pedir(i)).estado).toBe(200);
     }
-    await pedir(0); // la misma ficha, enseguida: tampoco
-    expect(e.enviados.filter((x) => x.para === 'victima@conductores.test')).toHaveLength(3);
+    expect(aLaVictima()).toBe(3);
+    // Cambiar de correo en la misma ficha no libera el cupo de la víctima (la cuenta es por dirección).
+    await e.m.DB.prepare("UPDATE camila_codigos SET vence_en = datetime('now', '+1 minute')").run();
+    await pedir(0, 'otro@conductores.test');
+    await e.m.DB.prepare("UPDATE camila_codigos SET vence_en = datetime('now', '+1 minute')").run();
+    await pedir(0);
+    await pedir(7);
+    expect(aLaVictima()).toBe(3);
+  });
+
+  it('una ficha que solo tiene el teléfono de la persona también se borra con su cuenta', async () => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    const a = await e.conductor('Ana Telefono');
+    await e.m.DB.batch([
+      e.m.DB.prepare("UPDATE usuarios SET telefono_canonico = '+584145550100' WHERE id = ?").bind(
+        a.id,
+      ),
+      e.m.DB.prepare(
+        "INSERT INTO camila_personas (id, telefono, nombre) VALUES ('solo-tel', '+584145550100', 'Ana')",
+      ),
+      e.m.DB.prepare(
+        "INSERT INTO camila_mensajes (id, persona_id, canal, autor, texto) VALUES ('mt', 'solo-tel', 'sms', 'persona', 'hola por sms')",
+      ),
+    ]);
+    expect((await e.m.llamar('DELETE', '/datos/cuentas/yo', undefined, a.token)).estado).toBe(200);
+    const n = await e.m.DB.prepare(
+      "SELECT (SELECT COUNT(*) FROM camila_personas WHERE id = 'solo-tel') + (SELECT COUNT(*) FROM camila_mensajes WHERE id = 'mt') AS n",
+    ).first<{ n: number }>();
+    expect(n?.n).toBe(0);
+  });
+
+  it('una misma persona no gasta IA sin fin: pasado su tope del día se le contesta sin IA', async () => {
+    const e = await escenario();
+    const llamadas = modelo(texto('con IA'));
+    const a = await e.conductor();
+    await e.m.DB.prepare(
+      `INSERT INTO camila_mensajes (id, persona_id, canal, autor, texto)
+       SELECT 'viejo-' || value, (SELECT id FROM camila_personas WHERE usuario_id = ?), 'correo', 'persona', 'x' FROM json_each(?)`,
+    )
+      .bind(a.id, JSON.stringify(Array.from({ length: 51 }, (_, i) => i)))
+      .run();
+    const r = await e.decir(a.token, '¿cómo recargo mi saldo?');
+    expect(llamadas).toHaveLength(0);
+    expect(r.datos.respuesta).toMatch(/punto de venta autorizado/);
   });
 
   it('los datos de la persona van como dato en el primer turno, no en la instrucción del sistema', async () => {

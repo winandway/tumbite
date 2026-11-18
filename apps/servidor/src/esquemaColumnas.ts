@@ -2893,6 +2893,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "error_en",
     "error"
   ],
+  "camila_codigos_dia": [
+    "correo",
+    "dia",
+    "enviados"
+  ],
   "camila_avisos_lider": [
     "conductor_id",
     "creado_en"

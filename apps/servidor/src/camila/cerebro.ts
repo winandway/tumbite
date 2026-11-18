@@ -35,6 +35,7 @@ import {
 } from './memoria';
 import {
   LLAMADAS_POR_MENSAJE,
+  MENSAJES_IA_POR_PERSONA_DIA,
   type NivelModelo,
   type Parte,
   type Turno,
@@ -265,9 +266,20 @@ export async function recibirMensaje(
     // anónimo de la web se contesta con Docs y lo aprobado: así nadie gasta el tope del día con
     // identificadores de visita inventados y los conductores reales nunca se quedan sin IA.
     const verificada = Boolean(persona.usuario_id || persona.correo);
-    const ia = verificada
-      ? await iaDisponible(env, db, ajustes.topeDiarioCentavos, ajustes.ia)
-      : { ok: false as const, motivo: 'sin_ia' as const };
+    // Tope de IA por persona y por día: un remitente de correo falsificado o una cuenta que escribe
+    // sin parar no se come el tope de todos; pasado el tope se le contesta sin IA.
+    const deHoy = verificada
+      ? await db
+          .prepare(
+            "SELECT COUNT(*) AS n FROM camila_mensajes WHERE persona_id = ? AND creado_en >= date('now') AND autor = 'persona'",
+          )
+          .bind(persona.id)
+          .first<{ n: number }>()
+      : null;
+    const ia =
+      verificada && Number(deHoy?.n ?? 0) <= MENSAJES_IA_POR_PERSONA_DIA
+        ? await iaDisponible(env, db, ajustes.topeDiarioCentavos, ajustes.ia)
+        : { ok: false as const, motivo: 'sin_ia' as const };
     if (!ia.ok && ia.motivo === 'tope') await avisarTope(env, db);
     let delModelo: string | null = null;
     if (ia.ok) {

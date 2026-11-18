@@ -322,13 +322,21 @@ export const humanoActivo = (p: Persona, ahora = new Date()) =>
  * por su correo): mensajes, casos, preguntas anotadas, códigos, el aviso a su líder y su ficha con
  * nombre, correo y resumen. Van dentro del lote de `borrarCuenta`.
  */
-export function sentenciasBorrarDeCamila(db: D1Database, usuarioId: string, correo: string) {
+export function sentenciasBorrarDeCamila(
+  db: D1Database,
+  usuarioId: string,
+  correo: string,
+  telefono: string | null = null,
+) {
   const canonico = correoCanonico(correo);
-  const mias = 'SELECT id FROM camila_personas WHERE usuario_id = ?1 OR correo = ?2 OR correo = ?3';
+  // También la ficha que solo tenga su teléfono (SMS y WhatsApp, cuando se enciendan).
+  const tel = telefono ?? '-';
+  const mias =
+    'SELECT id FROM camila_personas WHERE usuario_id = ?1 OR correo = ?2 OR correo = ?3 OR telefono = ?4';
   const de = (tabla: string, columna = 'persona_id') =>
     db
       .prepare(`DELETE FROM ${tabla} WHERE ${columna} IN (${mias})`)
-      .bind(usuarioId, correo, canonico);
+      .bind(usuarioId, correo, canonico, tel);
   return [
     de('camila_mensajes'),
     de('camila_casos'),
@@ -336,6 +344,9 @@ export function sentenciasBorrarDeCamila(db: D1Database, usuarioId: string, corr
     de('camila_codigos'),
     db
       .prepare('DELETE FROM camila_codigos WHERE correo = ?1 OR correo = ?2')
+      .bind(correo, canonico),
+    db
+      .prepare('DELETE FROM camila_codigos_dia WHERE correo = ?1 OR correo = ?2')
       .bind(correo, canonico),
     db.prepare('DELETE FROM camila_avisos_lider WHERE conductor_id = ?').bind(usuarioId),
     de('camila_personas', 'id'),

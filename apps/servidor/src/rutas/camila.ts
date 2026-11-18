@@ -24,14 +24,16 @@ import {
   unirConCorreo,
 } from '../camila/memoria';
 import { accesoDe, filtroAlcance } from '../accesoInterno';
-import { alcanceEsTotal } from '@tumbite/compartido';
+import { alcanceEsTotal, correoCanonico } from '@tumbite/compartido';
 import {
+  CODIGOS_POR_CORREO_DIA,
   MENSAJES_POR_ANONIMO,
   MODELOS_CAMILA,
   TOPE_ANONIMOS_DIA,
   TOPE_MAXIMO_CENTAVOS,
   contarDelDia,
   gastoDeHoy,
+  hoy,
   topeEnMicro,
 } from '../camila/modelo';
 
@@ -182,22 +184,25 @@ camila.post('/camila/verificar', async (c) => {
   );
   const p = await personaQueEscribe(c);
   if (p.usuario_id) return c.json({ ok: true, yaVerificada: true });
-  // Límite por dirección de destino: nadie usa esta puerta para llenarle el buzón a un tercero.
-  const yaPedidos = await base(c)
-    .prepare(
-      "SELECT COUNT(*) AS n FROM camila_codigos WHERE correo = ? AND vence_en > datetime('now', '-1 day') AND persona_id <> ?",
-    )
-    .bind(d.correo, p.id)
-    .first<{ n: number }>();
+  // Límite por dirección de destino y por día, en su propia cuenta (no depende de la ficha que lo
+  // pide ni de que después cambie de correo): como mucho CODIGOS_POR_CORREO_DIA al día por dirección,
+  // y un código cada 2 minutos por ficha. Responde igual, sin decir si se mandó.
+  const destino = correoCanonico(d.correo);
   const mio = await base(c)
     .prepare(
-      "SELECT intentos, vence_en > datetime('now', '+13 minutes') AS reciente FROM camila_codigos WHERE persona_id = ?",
+      "SELECT vence_en > datetime('now', '+13 minutes') AS reciente FROM camila_codigos WHERE persona_id = ?",
     )
     .bind(p.id)
     .first<{ reciente: number }>();
-  // Responde igual (sin decir si se mandó): no más de 3 fichas por dirección al día ni un código cada 2 minutos.
-  if (Number(yaPedidos?.n ?? 0) >= 3 || Number(mio?.reciente ?? 0) === 1)
-    return c.json({ ok: true });
+  if (Number(mio?.reciente ?? 0) === 1) return c.json({ ok: true });
+  const cupo = await base(c)
+    .prepare(
+      `INSERT INTO camila_codigos_dia (correo, dia, enviados) VALUES (?1, ?2, 1)
+       ON CONFLICT(correo, dia) DO UPDATE SET enviados = enviados + 1 WHERE camila_codigos_dia.enviados < ?3`,
+    )
+    .bind(destino, hoy(), CODIGOS_POR_CORREO_DIA)
+    .run();
+  if (!cupo.meta.changes) return c.json({ ok: true });
   const codigo = String(crypto.getRandomValues(new Uint32Array(1))[0]! % 1_000_000).padStart(
     6,
     '0',
