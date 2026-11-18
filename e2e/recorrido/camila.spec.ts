@@ -155,11 +155,12 @@ for (const idioma of ['es', 'en'] as const) {
     };
     const h = (t: string) => ({ authorization: `Bearer ${t}`, 'x-idioma': idioma });
 
+    // Primero una petición al servidor: al arrancar agrega las columnas nuevas (zonas.idioma) a una base recién creada.
+    const admin = await cuenta('admin', C.nombreEquipo);
     // La ciudad y el equipo.
     const z = C.zona;
     sql(`INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa, idioma)
          VALUES ('${z.id}', '${z.nombre}', '${z.pais}', 'USD', '${z.tz}', ${z.lat}, ${z.lng}, 15, 1, '${idioma}')`);
-    const admin = await cuenta('admin', C.nombreEquipo);
     sql(`UPDATE usuarios SET rol = 'admin' WHERE id = '${admin.usuario.id}'`);
 
     // Un conductor de la ciudad.

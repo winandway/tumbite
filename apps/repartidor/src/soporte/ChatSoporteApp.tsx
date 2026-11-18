@@ -226,7 +226,9 @@ export function ChatSoporteApp() {
       {hilo?.pideCaptura ? (
         <BloqueCapturaApp
           ocupado={enviando}
-          alSubir={cargar}
+          alSubir={async () => {
+            await cargar();
+          }}
           alNoTener={() => void enviar(t.mensajeSinCaptura)}
         />
       ) : null}
