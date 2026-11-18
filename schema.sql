@@ -4204,3 +4204,75 @@ CREATE TABLE IF NOT EXISTS regalo_conductor_nuevo (
   actualizado_por TEXT,
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- C-REFERIDOS-EQUIPOS (17 nov 2026, piloto de El Vigía y Tucaní, como los programas de referidos de
+-- Uber, DiDi e inDrive): programas de referidos de conductores y de clientes por país o ciudad, con
+-- presupuesto; equipos con un líder y su enlace; y cada premio dado (uno por invitado y por papel).
+CREATE TABLE IF NOT EXISTS programas_referido (
+  tipo TEXT NOT NULL CHECK (tipo IN ('conductor', 'cliente')),
+  ambito TEXT NOT NULL,
+  activo INTEGER NOT NULL DEFAULT 0,
+  reglas TEXT NOT NULL,
+  presupuesto INTEGER NOT NULL CHECK (presupuesto > 0),
+  actualizado_por TEXT,
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (tipo, ambito)
+) WITHOUT ROWID;
+CREATE TABLE IF NOT EXISTS premios_referido (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL CHECK (tipo IN ('conductor', 'cliente')),
+  ambito TEXT NOT NULL,
+  rol TEXT NOT NULL CHECK (rol IN ('invitado', 'invitador')),
+  beneficiario_id TEXT NOT NULL,
+  invitado_id TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL,
+  pais TEXT NOT NULL,
+  forma TEXT NOT NULL CHECK (forma IN ('saldo', 'cupon', 'credito')),
+  referencia TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Un premio por invitado y por papel, para siempre.
+CREATE UNIQUE INDEX IF NOT EXISTS premios_referido_unico ON premios_referido(tipo, rol, invitado_id);
+CREATE INDEX IF NOT EXISTS premios_referido_programa ON premios_referido(tipo, ambito);
+CREATE INDEX IF NOT EXISTS premios_referido_beneficiario ON premios_referido(beneficiario_id, creado_en);
+CREATE TABLE IF NOT EXISTS referidos_conductor (
+  invitado_id TEXT PRIMARY KEY,
+  invitador_id TEXT NOT NULL,
+  equipo_id TEXT,
+  zona_id TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'premiado', 'vencido', 'rechazado')),
+  motivo TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  cerrado_en TEXT,
+  CHECK (invitado_id <> invitador_id)
+);
+CREATE INDEX IF NOT EXISTS referidos_conductor_invitador ON referidos_conductor(invitador_id);
+CREATE INDEX IF NOT EXISTS referidos_conductor_pendientes ON referidos_conductor(creado_en) WHERE estado = 'pendiente';
+CREATE TABLE IF NOT EXISTS equipos (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  lider_id TEXT NOT NULL,
+  codigo TEXT NOT NULL UNIQUE,
+  activo INTEGER NOT NULL DEFAULT 1,
+  creado_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS equipos_zona ON equipos(zona_id);
+CREATE INDEX IF NOT EXISTS equipos_lider ON equipos(lider_id);
+-- Quien se registra con el enlace del líder queda en su equipo para siempre, con fecha.
+CREATE TABLE IF NOT EXISTS miembros_equipo (
+  usuario_id TEXT PRIMARY KEY,
+  equipo_id TEXT NOT NULL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS miembros_equipo_equipo ON miembros_equipo(equipo_id, creado_en);
+-- Huella del aparato con el que entra cada persona (antifraude de referidos y regalos; solo sha-256).
+CREATE TABLE IF NOT EXISTS aparatos_usuario (
+  usuario_id TEXT NOT NULL,
+  huella TEXT NOT NULL,
+  visto_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (usuario_id, huella)
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS aparatos_usuario_huella ON aparatos_usuario(huella);
