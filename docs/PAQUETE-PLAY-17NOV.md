@@ -107,3 +107,19 @@ Pregunta del piloto: «¿qué pasa si nadie toma la oferta porque el precio es m
 ## Compilar en esta Mac (18 nov)
 
 Expo marcó 317 dólares en compilaciones en el período. Regla de Richard: desde ya, todas las compilaciones del paquete y las siguientes se hacen en esta Mac (`eas build --local`, gratis), con C-COMPILA-EN-ESTA-MAC: `scripts/tiendas/guardia-nube.mjs` niega la nube de Expo sin la bandera `--nube` y cuenta las compilaciones de cada día. Las apps de pruebas cliente 41 y Driver 37 fueron las últimas hechas en la nube.
+
+## Entra en este paquete: conectarse en Driver deslizando (18 nov)
+
+Pedido de Richard, que ya había hecho antes: conectarse en Driver es DESLIZANTE de izquierda a derecha, nunca un botón que se toca (un toque en el bolsillo o un niño conectan sin querer, llega un viaje y el conductor se lleva una mala nota).
+
+- «Desliza para conectarte»: riel con un círculo; si se suelta antes, vuelve sin conectar; al completar, vibración corta y estado conectado en verde.
+- La misma pieza que «desliza para desconectar» y «desliza para entregar». Todo lo que conecta (conexión general, cada servicio y volver de la pausa) pasa a deslizante.
+- Accesible: con lector de pantalla, acción «Conectarme» que pide confirmar. Prueba en rojo: un toque simple no conecta. Bilingüe. Guía de Docs al día.
+- Orden: dos capturas (es/en) para Richard, construir, revisor corto, robot del flujo de conexión, compilar en esta Mac, subir con lo demás.
+
+## Estado al 18 nov, 12:00 (hora del este)
+
+- **Punta en vivo:** e02dd12ead en producción y pruebas, salud en verde. Lleva el arreglo de ofertas (reoferta con tope de 3 y aviso al celular), servicios sin tarifa que no se ofrecen, direcciones sin códigos de mapa, ganancias con entregas y carreras, y el contraste de restaurantes cerrados.
+- **Revisor:** cliente APTO; lo pedido para Driver, corregido. **Auditor de tiendas (cuarta):** solo faltaba decir en la ficha de Driver el uso de la ubicación con la pantalla apagada; corregido.
+- **Robot de Android, cuarta vuelta:** corriendo con cliente 42 y Driver 38 de pruebas, compilados en esta Mac.
+- **«Subir la tarifa»:** servidor listo y blindado en la rama `subir-tarifa-servidor`; no entra a la rama principal hasta que este paquete esté en Play. Versión siguiente.
