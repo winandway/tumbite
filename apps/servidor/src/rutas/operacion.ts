@@ -1,4 +1,5 @@
 import { TAREA_CAMILA_LIMPIEZA, TAREA_CAMILA_SEMANAL } from '../camila/aprendizaje';
+import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { actualizarLlegadas, leerLlegada, listoMsDe, llegadaParaMostrar } from '../llegadaEstimada';
 import { avisarAutorizacionesPorVencer } from '../autorizacionVencida';
 import { flotasActivas } from './flota';
@@ -1208,7 +1209,7 @@ operacion.get('/restaurante/tablero', async (c) => {
 export async function miFicha(c: Ctx) {
   const u = exigir(c, 'repartidor');
   const db = base(c);
-  await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
+  await db.prepare(ALTA_REPARTIDOR).bind(u.id).run();
   // Cada repartidor nace con su ID (US-MIA-000123).
   await asegurarCodigoRepartidor(db, u.id);
   const f = await db

@@ -13,6 +13,8 @@ import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { MAX_DOC_BYTES, estadoDelConductor } from './servicios';
 import { paisDelConductor } from '../paisConductor';
+import { cobertura } from '../territorio';
+import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { accesoDe, alcanceObjetoSql, dentroDelAlcance } from '../accesoInterno';
 
 /**
@@ -111,6 +113,43 @@ async function eleccionCiudad(db: D1Database, conductorId: string): Promise<Elec
     .bind(conductorId)
     .first<Eleccion>();
 }
+
+/**
+ * C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026; todos los países): el conductor nuevo que todavía no
+ * se conectó ni eligió ciudad (y no vino invitado) quedaba en Miami y veía los servicios de Miami.
+ * Al abrir Driver, su ubicación (la del mapa del inicio) fija su ciudad UNA vez: solo si está dentro
+ * de una zona de Divoox y su ciudad todavía no salió de una ubicación real ni de su elección.
+ */
+conductorPapeles.post('/conductor/zona-por-ubicacion', async (c) => {
+  const u = exigir(c, 'repartidor');
+  const db = base(c);
+  const { lat, lng } = await leerCuerpo(
+    c,
+    z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }),
+  );
+  const ficha = await db
+    .prepare(
+      'SELECT zona_id, ubicacion_en, ciudad_elegida_en FROM repartidores WHERE usuario_id = ?',
+    )
+    .bind(u.id)
+    .first<{ zona_id: string; ubicacion_en: string | null; ciudad_elegida_en: string | null }>();
+  if (ficha?.ubicacion_en || ficha?.ciudad_elegida_en)
+    return c.json({ zonaId: ficha.zona_id, cambio: false });
+  const aqui = await cobertura(db, lat, lng);
+  const zona = aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null;
+  if (!zona || zona === ficha?.zona_id)
+    return c.json({ zonaId: ficha?.zona_id ?? null, cambio: false });
+  await db.batch([
+    db.prepare(ALTA_REPARTIDOR).bind(u.id),
+    db
+      .prepare(
+        'UPDATE repartidores SET zona_id = ? WHERE usuario_id = ? AND ubicacion_en IS NULL AND ciudad_elegida_en IS NULL',
+      )
+      .bind(zona, u.id),
+    db.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ? AND zona_id IS NULL').bind(zona, u.id),
+  ]);
+  return c.json({ zonaId: zona, cambio: true });
+});
 
 conductorPapeles.put('/conductor/ciudad', async (c) => {
   const u = exigir(c, 'repartidor');

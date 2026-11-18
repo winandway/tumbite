@@ -759,6 +759,22 @@ export function Inicio() {
   }, [cargar]);
   // Las ofertas que este teléfono vio llegar a 0 s: la tarjeta se cierra sola y no vuelve a salir
   // (la reoferta del mismo viaje trae otro vencimiento: es otra tarjeta).
+  // C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026): el conductor nuevo que todavía no se conectó ni
+  // eligió ciudad quedaba en Miami; su primera ubicación del mapa fija su ciudad (una vez por sesión).
+  const zonaPedida = useRef(false);
+  useEffect(() => {
+    if (!aqui || zonaPedida.current) return;
+    zonaPedida.current = true;
+    void api
+      .pedir<{ cambio: boolean }>('POST', '/datos/conductor/zona-por-ubicacion', aqui)
+      .then((r) => {
+        if (r.cambio) {
+          void recargarPanel();
+          void cargar();
+        }
+      })
+      .catch((e: unknown) => console.warn('zona por ubicación', e));
+  }, [aqui, api, cargar, recargarPanel]);
   const [vencidasAqui, setVencidasAqui] = useState<ReadonlySet<string>>(() => new Set());
   const vencer = (clave: string) =>
     setVencidasAqui((v) => (v.has(clave) ? v : new Set([...v, clave].slice(-50))));

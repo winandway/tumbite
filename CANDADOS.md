@@ -2,6 +2,13 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-ZONA-CONDUCTOR-NUEVO · El conductor nuevo de El Vigía quedaba en Miami (robot, 18 nov 2026) — todos los países
+
+- **Qué pasaba:** `repartidores.zona_id` nace con `DEFAULT 'US-FL-MIAMI'`. Un conductor registrado en El Vigía (con el código de un equipo de El Vigía, o sin código) quedaba en Miami hasta su primera conexión con GPS: veía los servicios de Miami, no los de su ciudad. En producción, una cuenta del piloto creada el 18 nov (teléfono venezolano) está así.
+- **Qué se hizo:** (1) quien entra con un código de invitación queda en la ciudad de esa invitación (`vincularConductor`, si no tiene ubicación real ni ciudad elegida); (2) toda fila nueva de repartidor nace con la ciudad de la cuenta (`ALTA_REPARTIDOR`, `zonaConductor.ts`); (3) al abrir Driver, la ubicación del mapa fija la ciudad una vez (`POST /datos/conductor/zona-por-ubicacion`, solo dentro de una zona y solo si la ciudad no salió de una ubicación real ni de su elección). Conectarse con GPS la sigue corrigiendo como antes.
+- **Cómo se comprueba:** `zonaConductor.test.ts`, `rutas/programaReferidos.test.ts` («queda en la ciudad del equipo»), `apps/repartidor/src/zonaPorUbicacion.test.ts` (vistas en rojo).
+- **Qué NO tocar:** no volver a `INSERT OR IGNORE INTO repartidores (usuario_id)` sin la zona de la cuenta; no cambiar la ciudad por ubicación a quien ya la eligió o ya se ubicó.
+
 ## C-OFERTA-VENCIDA-SE-CIERRA, C-GANANCIAS-CARRERAS (regalo), «Enviado», Mi equipo, C-CAMBIAR-VEHICULO y C-CERRAR-DESLIZANDO · Cuarta vuelta del robot de Android (18 nov 2026) — todos los países
 
 - **Reoferta «no vista» (lo más importante):** en la base de pruebas cada viaje se ofreció 3 veces al conductor demo (30 s de oferta, 30 s de respiro, tope `OFERTAS_POR_CONDUCTOR`), y el monitor del robot muestra la pantalla cambiando justo en cada ventana: el servidor reofreció bien; el detector del robot miraba un píxel fijo. Fallo real de la app: la tarjeta se quedaba en «0 s» hasta el siguiente sondeo y llevaba la llave del viaje (una reoferta del mismo viaje habría heredado la cuenta vieja). Ahora: en 0 s se cierra sola (viajes y comida), la llave es viaje + vencimiento (`claveOferta`), la de comida lleva su id, y al volver la app al frente el inicio pregunta ya. Prueba: `apps/repartidor/src/viajes/ofertaVencida.test.ts`.

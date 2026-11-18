@@ -1,4 +1,5 @@
 import { guardarFoto } from '../fotoLimpia';
+import { ALTA_REPARTIDOR } from '../zonaConductor';
 import { correosEquipo } from '../avisosEquipo';
 import { Hono } from 'hono';
 import { z } from 'zod';
@@ -279,7 +280,7 @@ kyc.post('/kyc/foto/:pieza', async (c) => {
   await db.prepare('INSERT OR IGNORE INTO kyc (usuario_id) VALUES (?)').bind(u.id).run();
   if (u.rol === 'repartidor') {
     // El repartidor ya tiene su ID antes de que el equipo lo revise.
-    await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
+    await db.prepare(ALTA_REPARTIDOR).bind(u.id).run();
     await asegurarCodigoRepartidor(db, u.id);
   }
   await db

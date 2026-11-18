@@ -93,7 +93,9 @@ async function escenario(extra: Record<string, unknown> = {}) {
     const id = r.datos.usuario.id as string;
     await m.DB.batch([
       m.DB.prepare('UPDATE usuarios SET zona_id = ? WHERE id = ?').bind(ZONA, id),
-      m.DB.prepare('INSERT INTO repartidores (usuario_id, zona_id) VALUES (?, ?)').bind(id, ZONA),
+      m.DB.prepare(
+        'INSERT INTO repartidores (usuario_id, zona_id) VALUES (?, ?) ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id',
+      ).bind(id, ZONA),
       m.DB.prepare('UPDATE camila_personas SET pais = ?, zona_id = ? WHERE usuario_id = ?').bind(
         'VE',
         ZONA,

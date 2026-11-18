@@ -40,7 +40,8 @@ async function mundo() {
     const id = r.datos.usuario.id as string;
     if (rol === 'repartidor')
       await e.m.DB.prepare(
-        'INSERT INTO repartidores (usuario_id, conectado, lat, lng, zona_id) VALUES (?, 0, ?, ?, ?)',
+        `INSERT INTO repartidores (usuario_id, conectado, lat, lng, zona_id) VALUES (?, 0, ?, ?, ?)
+         ON CONFLICT(usuario_id) DO UPDATE SET lat = excluded.lat, lng = excluded.lng, zona_id = excluded.zona_id`,
       )
         .bind(id, EL_VIGIA.lat, EL_VIGIA.lng, EL_VIGIA.id)
         .run();
@@ -188,6 +189,53 @@ describe('C-REFERIDOS-EQUIPOS: equipos con su líder', () => {
     const nada = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, solo.token);
     expect(nada.datos.miEquipo).toBeNull();
     expect(nada.datos.yaInvitado).toBe(false);
+  });
+
+  // C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026): el conductor nuevo con el código de un equipo de
+  // El Vigía quedaba en Miami (valor por defecto) hasta conectarse con GPS.
+  it('quien se registra con el código de un equipo queda en la ciudad del equipo', async () => {
+    const { e, registrar } = await mundo();
+    const lider = await registrar('repartidor', 'Líder Zona');
+    const correo = (await e.m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+      .bind(lider.id)
+      .first<{ correo: string }>())!.correo;
+    const r = await e.m.llamar(
+      'POST',
+      '/datos/admin/equipos',
+      { nombre: 'Equipo Zona', zonaId: EL_VIGIA.id, lider: correo },
+      e.admin.token,
+    );
+    const correoNuevo = `nuevo-zona-${Math.random().toString(36).slice(2, 8)}@ejemplo.com`;
+    const alta = await e.m.llamar(
+      'POST',
+      '/datos/cuentas/registro',
+      {
+        nombre: 'Conductor Zona',
+        correo: correoNuevo,
+        clave: 'clave-segura-1',
+        rol: 'repartidor',
+        telefono: '+584145559988',
+        invitacion: r.datos.equipo.codigo,
+      },
+      undefined,
+      { 'x-aparato': 'aparato-zona-nuevo' },
+    );
+    expect(alta.estado).toBe(201);
+    const id = alta.datos.usuario.id as string;
+    const f = await e.m.DB.prepare(
+      'SELECT u.zona_id AS uz, r.zona_id AS rz FROM usuarios u LEFT JOIN repartidores r ON r.usuario_id = u.id WHERE u.id = ?',
+    )
+      .bind(id)
+      .first<{ uz: string | null; rz: string | null }>();
+    expect(f).toEqual({ uz: EL_VIGIA.id, rz: EL_VIGIA.id });
+    // Y el panel de servicios es el de su ciudad (no el de Miami).
+    const panel = await e.m.llamar(
+      'GET',
+      '/datos/conductor/servicios',
+      undefined,
+      alta.datos.token as string,
+    );
+    expect(panel.estado).toBe(200);
   });
 
   // Robot (18 nov 2026): con el MISMO aparato que el líder el referido se rechaza (antifraude), pero

@@ -562,6 +562,24 @@ export async function vincularConductor(db: D1Database, invitadoId: string, escr
             .bind(invitadoId, c.equipoId),
         ]
       : []),
+    // C-ZONA-CONDUCTOR-NUEVO (robot, 18 nov 2026): el conductor nuevo invitado en El Vigía quedaba
+    // en Miami (el valor por defecto de la tabla) hasta conectarse con GPS: veía los servicios de
+    // Miami y no los de su ciudad. La ciudad de la invitación es la suya mientras no tenga una
+    // ubicación real ni haya elegido ciudad.
+    ...(c.zonaId
+      ? [
+          db
+            .prepare('UPDATE usuarios SET zona_id = ? WHERE id = ? AND zona_id IS NULL')
+            .bind(c.zonaId, invitadoId),
+          db
+            .prepare(
+              `INSERT INTO repartidores (usuario_id, zona_id) VALUES (?, ?)
+               ON CONFLICT(usuario_id) DO UPDATE SET zona_id = excluded.zona_id
+                WHERE repartidores.ubicacion_en IS NULL AND repartidores.ciudad_elegida_en IS NULL`,
+            )
+            .bind(invitadoId, c.zonaId),
+        ]
+      : []),
     db
       .prepare(
         'INSERT OR IGNORE INTO referidos_conductor (invitado_id, invitador_id, equipo_id, zona_id, estado, motivo) VALUES (?, ?, ?, ?, ?, ?)',

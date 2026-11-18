@@ -1,4 +1,5 @@
 import { cuantosHay } from '../canarioLecturas';
+import { ALTA_REPARTIDOR } from '../zonaConductor';
 import {
   type RequisitoServicio,
   type VehiculoConductor,
@@ -983,7 +984,7 @@ servicios.put('/conductor/vehiculo-activo', async (c) => {
     if (v.estado !== 'aprobado')
       throw new ErrorDatos('Ese vehículo todavía no está aprobado.', 'vehiculoId', 409);
   }
-  await db.prepare('INSERT OR IGNORE INTO repartidores (usuario_id) VALUES (?)').bind(u.id).run();
+  await db.prepare(ALTA_REPARTIDOR).bind(u.id).run();
   // Una sola sentencia: solo cambia si el vehículo sigue aprobado y es suyo en ese instante.
   // Fase 3: la base además lo impide con un pedido u operación en curso (aunque llegue a la vez).
   let r: D1Result;
