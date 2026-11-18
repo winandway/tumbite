@@ -1,6 +1,13 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import { CANAL_AVISOS, canalPedidos, type Api, type Usuario } from '@tumbite/compartido';
+import {
+  CANAL_AVISOS,
+  CANAL_OFERTAS,
+  canalOfertas,
+  canalPedidos,
+  type Api,
+  type Usuario,
+} from '@tumbite/compartido';
 import {
   darDeBajaAvisosWeb,
   entornoActual,
@@ -93,12 +100,21 @@ export function useAvisosCelular(
             CANAL_AVISOS,
             canalPedidos(Constants.expoConfig?.extra, Notifications.AndroidImportance.MAX),
           );
+        // C-OFERTA-SUENA-EN-BUCLE: la app que trae el tono largo de ofertas (Driver) crea su canal
+        // propio y se lo dice al servidor; las que no lo traen siguen recibiendo por «pedidos».
+        const ofertas = canalOfertas(
+          Constants.expoConfig?.extra,
+          Notifications.AndroidImportance.MAX,
+        );
+        if (ofertas && Platform.OS === 'android')
+          await Notifications.setNotificationChannelAsync(CANAL_OFERTAS, ofertas);
         const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId: proyecto });
         if (!vivo) return;
         await api.pedir('POST', '/datos/cuentas/dispositivo', {
           token,
           plataforma: Platform.OS,
           ...(idioma ? { idioma } : {}),
+          ...(ofertas ? { capacidades: ['ofertas-bucle'] } : {}),
         });
       } catch (e) {
         console.warn('avisos: no se pudo registrar el teléfono', e);

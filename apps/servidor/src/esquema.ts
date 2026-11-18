@@ -50,6 +50,9 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // C-AVISOS-IDIOMA (16 nov 2026): cada teléfono y cada navegador guarda el idioma de su app (el
   // elegido en el selector o, si no eligió, el del teléfono). El aviso sale en ESE idioma.
   ['dispositivos', 'idioma', 'TEXT'],
+  // C-OFERTA-SUENA-EN-BUCLE (18 nov 2026): lo que el teléfono dijo que trae (p. ej. «ofertas-bucle»:
+  // el canal de ofertas con el tono largo). Sin esto, el aviso sigue por el canal de siempre.
+  ['dispositivos', 'capacidades', 'TEXT'],
   ['suscripciones_web', 'idioma', 'TEXT'],
   // C-RUTA-POR-CALLES (13 nov 2026): de dónde salió la distancia cobrada en la cotización.
   ['cotizaciones_viaje', 'fuente_distancia', "TEXT NOT NULL DEFAULT 'estimada'"],

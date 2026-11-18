@@ -542,6 +542,8 @@ export async function turnoDeConfianza(
             titulo: 'Tu cliente de confianza te pidió un viaje',
             cuerpo: 'Tienes 1 minuto para aceptarlo antes de que pase a otros conductores.',
           }),
+      sonido: 'oferta.wav',
+      oferta: true,
       datos: { tipo: 'oferta_operacion', operacionId: op.id },
     })).catch((x: unknown) => console.error('confianza: aviso al conductor', x));
   }
@@ -568,6 +570,7 @@ export function avisoOfertaOperacion(
       ? `${distancia ? `${distancia} km from you. ` : ''}You have ${SEGUNDOS_OFERTA_OPERACION} seconds to accept it in the app.`
       : `${distancia ? `A ${distancia} km de ti. ` : ''}Tienes ${SEGUNDOS_OFERTA_OPERACION} segundos para aceptarlo en la app.`,
     sonido: 'oferta.wav',
+    oferta: true,
     datos: { tipo: 'oferta_operacion' },
   };
 }

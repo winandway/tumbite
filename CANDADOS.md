@@ -2,6 +2,16 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-OFERTA-SUENA-EN-BUCLE · La oferta suena fuerte y en bucle hasta responder (Richard, 18 nov 2026) — todos los países
+
+- **Qué pasaba:** la oferta de Divoox Driver vibraba una vez y, en el celular, no sonaba con la app abierta; el aviso del celular era un tono de menos de un segundo. Se perdía si el teléfono estaba en el bolsillo.
+- **Qué se hizo:** con la app abierta, `useAlarmaOferta` (`apps/repartidor/src/sonidoOferta.ts`) toca `assets/sonidos/oferta_bucle.wav` (tono propio de 2 s, hecho con ffmpeg) en bucle con expo-audio, y la vibración se repite. La lógica de cuándo se calla vive en `alarmaOferta.ts`: aceptar, rechazar, vencer, retirarse la oferta, salir de la pantalla, cerrar sesión (Inicio se desmonta) o mandar la app al fondo; además un tope propio (vencimiento + 2 s, como mucho 75 s). Una sola alarma en toda la app. En la web, el mismo tono (`apps/panel/public/oferta_bucle.wav`) con Audio en bucle.
+- **Con la app cerrada:** Android usa el canal NUEVO `ofertas` (importancia máxima, `oferta_larga.wav` de 29 s; Android no deja cambiar el sonido de un canal ya creado). iPhone toca el mismo archivo (29 s, el máximo de Apple). El servidor solo usa el canal nuevo si el teléfono lo declaró (`dispositivos.capacidades` = `ofertas-bucle`, por `COLUMNAS`): Driver 25 y anteriores no tienen ese canal y Android no muestra un aviso de un canal inexistente, así que a ellas les sigue llegando por `pedidos` con `oferta.wav`. Al abrir una oferta o callarse la alarma se quitan de la bandeja los avisos `oferta_*`.
+- **Sin permisos nuevos:** expo-audio entra con micrófono apagado y `MODIFY_AUDIO_SETTINGS` en `blockedPermissions` (reproducir no lo necesita; en Android no se llama a `setAudioModeAsync`).
+- **Cómo se comprueba:** `apps/repartidor/src/alarmaOferta.test.ts` (13 casos, vistos en rojo) y `apps/servidor/src/ofertaCanal.test.ts` (canal nuevo solo donde existe; vista en rojo). Ficha: `docs/investigaciones-rea/2026-11-18-oferta-suena-en-bucle.md`.
+- **Qué NO tocar:** no reutilizar el id `ofertas` con otro sonido (haría falta otro id); no mandar ofertas por `ofertas` a un teléfono que no lo declaró; no quitar el tope de la alarma; no llamar a `setAudioModeAsync` en Android.
+- **Para otra versión (investigado, no hecho):** pantalla completa en Android (Play solo lo da a llamadas y alarmas), alertas críticas de Apple (no se piden), bucle desde un servicio en primer plano, elegir el tono, y «time-sensitive» en iPhone (capacidad nueva en el perfil de firma).
+
 ## C-CONECTAR-DESLIZANDO, C-ICONOS-SERVICIO y la invitación entera · En Driver conectarse es deslizar (Richard, 18 nov 2026) — todos los países
 
 - **Qué pidió Richard:** en Divoox Driver uno se conectaba con un toque («Conectarme», el botón de cada servicio, «Reanudar ofertas») y el celular en el bolsillo podía conectarlo sin querer. Ahora conectarse es deslizar de izquierda a derecha hasta el final, como «Desliza para completar» de la entrega.

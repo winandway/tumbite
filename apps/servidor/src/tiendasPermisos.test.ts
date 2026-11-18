@@ -83,6 +83,25 @@ describe('permisos de las apps para las tiendas', () => {
     expect(e.android.blockedPermissions).toContain('android.permission.RECORD_AUDIO');
   });
 
+  // C-OFERTA-SUENA-EN-BUCLE (18 nov 2026): Driver toca el tono de la oferta con expo-audio sin
+  // sumar permisos: ni micrófono, ni audio en segundo plano, ni cambiar los ajustes de audio.
+  it('el repartidor suena la oferta sin permisos nuevos', () => {
+    const e = leer('repartidor', 'app.json').expo;
+    expect(plugin(e, 'expo-audio')?.[1]).toMatchObject({
+      microphonePermission: false,
+      recordAudioAndroid: false,
+      enableBackgroundPlayback: false,
+    });
+    expect(e.android.blockedPermissions).toEqual(
+      expect.arrayContaining([
+        'android.permission.RECORD_AUDIO',
+        'android.permission.MODIFY_AUDIO_SETTINGS',
+      ]),
+    );
+    expect(e.android.permissions).not.toContain('MODIFY_AUDIO_SETTINGS');
+    expect(e.ios?.infoPlist?.UIBackgroundModes ?? []).not.toContain('audio');
+  });
+
   // C-CAMARA-EN-TODA-SUBIDA (regla global del 9 nov 2026): desde el 10 nov el restaurante sí usa la
   // cámara, solo para tomar la foto de un plato, y lo explica en los dos idiomas. Sigue sin micrófono.
   it('el restaurante explica las fotos y la cámara (para el menú) en los dos idiomas, sin micrófono', () => {

@@ -1,5 +1,6 @@
 import { alRegistrarseConductor } from '../camila/bienvenida';
 import {
+  CAPACIDAD_OFERTAS_BUCLE,
   CANALES_CONSENTIMIENTO_SMS,
   VERSION_CONSENTIMIENTO_SMS,
   VERSION_TERMINOS,
@@ -93,6 +94,11 @@ const esquemaDispositivo = z.object({
   plataforma: z.enum(['ios', 'android', 'web', 'desconocida']).default('desconocida'),
   // C-AVISOS-IDIOMA: el idioma de la app en ese teléfono (si no viene, el de la cabecera x-idioma).
   idioma: z.enum(['es', 'en']).optional(),
+  // C-OFERTA-SUENA-EN-BUCLE: lo que trae la app (Driver nuevo: el canal de ofertas con tono largo).
+  capacidades: z
+    .array(z.enum([CAPACIDAD_OFERTAS_BUCLE]))
+    .max(5)
+    .optional(),
 });
 
 const TEXTOS_RECUPERAR = {
@@ -373,12 +379,19 @@ cuentas.post('/dispositivo', async (c) => {
   const idioma = idiomaDeLaApp(d.idioma, c.req.header('x-idioma'));
   const r = await db
     .prepare(
-      `INSERT INTO dispositivos (token, usuario_id, plataforma, idioma) VALUES (?, ?, ?, ?)
+      `INSERT INTO dispositivos (token, usuario_id, plataforma, idioma, capacidades) VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(token) DO UPDATE SET usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, activo = 1, visto_en = datetime('now'),
-         idioma = COALESCE(excluded.idioma, dispositivos.idioma)
+         idioma = COALESCE(excluded.idioma, dispositivos.idioma),
+         capacidades = COALESCE(excluded.capacidades, dispositivos.capacidades)
        WHERE dispositivos.usuario_id = excluded.usuario_id OR dispositivos.activo = 0`,
     )
-    .bind(d.token, u.id, d.plataforma, idioma)
+    .bind(
+      d.token,
+      u.id,
+      d.plataforma,
+      idioma,
+      d.capacidades?.length ? d.capacidades.join(',') : null,
+    )
     .run();
   if (!r.meta.changes)
     throw new ErrorDatos(

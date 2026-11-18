@@ -1,4 +1,9 @@
-import { formatearMonto } from '@tumbite/compartido';
+import {
+  CANAL_OFERTAS,
+  CAPACIDAD_OFERTAS_BUCLE,
+  SONIDO_OFERTAS,
+  formatearMonto,
+} from '@tumbite/compartido';
 import type { Env } from './env';
 import { notificarWeb } from './avisosWeb';
 
@@ -28,6 +33,11 @@ export type Aviso = {
   cuerpo: string;
   datos?: Record<string, string>;
   sonido?: string;
+  /**
+   * C-OFERTA-SUENA-EN-BUCLE: es una oferta al conductor. Al teléfono que trae el canal de ofertas
+   * le llega por ese canal con el tono largo (29 s); a los demás, como siempre.
+   */
+  oferta?: boolean;
 };
 
 /**
@@ -87,24 +97,31 @@ async function notificarExpo(
 ) {
   const { results } = await db
     .prepare(
-      `SELECT d.token, d.idioma, u.idioma AS idioma_cuenta FROM dispositivos d
+      `SELECT d.token, d.idioma, d.capacidades, u.idioma AS idioma_cuenta FROM dispositivos d
          LEFT JOIN usuarios u ON u.id = d.usuario_id WHERE d.usuario_id = ? AND d.activo = 1`,
     )
     .bind(usuarioId)
-    .all<{ token: string; idioma: string | null; idioma_cuenta: string | null }>();
+    .all<{
+      token: string;
+      idioma: string | null;
+      capacidades: string | null;
+      idioma_cuenta: string | null;
+    }>();
   if (!results.length) return { enviados: 0 };
   const mensajes = results.map((d) => {
     const aviso = enIdioma(idiomaAviso(d.idioma, d.idioma_cuenta));
+    const bucle =
+      aviso.oferta === true && (d.capacidades ?? '').split(',').includes(CAPACIDAD_OFERTAS_BUCLE);
     return {
       to: d.token,
       title: aviso.titulo,
       body: aviso.cuerpo,
       data: aviso.datos ?? {},
-      sound: aviso.sonido ?? 'default',
+      sound: bucle ? SONIDO_OFERTAS : (aviso.sonido ?? 'default'),
       priority: 'high',
       // Android: el canal que crea la app (importancia máxima). Sin él, el aviso cae en el canal
       // genérico de Expo y puede llegar sin sonar ni aparecer arriba (C-AVISOS-CANAL).
-      channelId: 'pedidos',
+      channelId: bucle ? CANAL_OFERTAS : 'pedidos',
     };
   });
   try {
@@ -376,11 +393,15 @@ export const AVISOS = {
           titulo: `New delivery: ${pago}`,
           cuerpo: `${km} km from you. Accept it in the app.`,
           sonido: 'oferta.wav',
+          oferta: true,
+          datos: { tipo: 'oferta_pedido' },
         }
       : {
           titulo: `Entrega nueva: ${pago}`,
           cuerpo: `A ${km} km de ti. Acéptala en la app.`,
           sonido: 'oferta.wav',
+          oferta: true,
+          datos: { tipo: 'oferta_pedido' },
         },
   pedidoNuevo: (i: string, corto: string): Aviso =>
     i === 'en'

@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Vibration, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { type Idioma, enIdioma, formatearMonto, textoMultiplicador } from '@tumbite/compartido';
-import { vibracionOferta } from '../grandes/accesibilidad';
 import { Boton, C, Text, Modal } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 import { textoOfertaConfianza } from './agendaFijos';
-import { sonarOferta } from '../sonidoOferta';
+import { useAlarmaOferta } from '../sonidoOferta';
 import { venceOferta } from './ofertaTiempo';
 
 /** Lo que manda GET /datos/conductor/operaciones/ofertas (C-OFERTA-COMPLETA). */
@@ -66,24 +65,28 @@ export function OfertaViajeModal({
     oferta.servicioId === 'envios' ? { ...textos.oferta, ...textos.ofertaEnvio } : textos.oferta;
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
-    // C-AUDITIVA-REPARTIDOR: más larga y repetida si el repartidor marcó dificultad auditiva.
-    Vibration.vibrate(vibracionOferta());
-    sonarOferta();
     const reloj = setInterval(() => setAhora(Date.now()), 500);
-    return () => {
-      clearInterval(reloj);
-      Vibration.cancel();
-    };
+    return () => clearInterval(reloj);
   }, [oferta.operacionId]);
   // C-OFERTA-TIEMPO-REAL: el vencimiento se cuenta desde que llegó la oferta con los segundos que
   // dio el servidor; el reloj del teléfono (a veces corrido) no la da por vencida antes de tiempo.
   const [vence] = useState(() => venceOferta(oferta, Date.now()));
+  // C-OFERTA-SUENA-EN-BUCLE: tono en bucle y vibración repetida hasta responder o vencer.
+  const callar = useAlarmaOferta(oferta.operacionId, vence);
+  const aceptar = () => {
+    callar('aceptada');
+    alAceptar();
+  };
+  const rechazar = () => {
+    callar('rechazada');
+    alRechazar();
+  };
   const quedan = Math.max(0, Math.ceil((vence - ahora) / 1000));
   // C-CONDUCTOR-CONFIANZA: la oferta exclusiva al conductor de confianza dura un minuto.
   const total = oferta.deConfianza ? 60 : 30;
   const lineas = textoOfertaConfianza(oferta, idioma === 'en' ? 'en' : 'es');
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={alRechazar}>
+    <Modal visible transparent animationType="slide" onRequestClose={rechazar}>
       <View style={{ flex: 1, backgroundColor: 'rgba(25,25,25,0.55)', justifyContent: 'flex-end' }}>
         <View
           testID="oferta-viaje"
@@ -240,12 +243,8 @@ export function OfertaViajeModal({
               {oferta.destino}
             </Text>
           </View>
-          <Boton texto={t.aceptar} alTocar={alAceptar} exito />
-          <Pressable
-            onPress={alRechazar}
-            accessibilityRole="button"
-            accessibilityLabel={t.rechazar}
-          >
+          <Boton texto={t.aceptar} alTocar={aceptar} exito />
+          <Pressable onPress={rechazar} accessibilityRole="button" accessibilityLabel={t.rechazar}>
             <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
               {t.rechazar}
             </Text>

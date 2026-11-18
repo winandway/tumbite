@@ -48,6 +48,7 @@
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
@@ -80,7 +81,15 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#F20D20",
           "defaultChannel": "pedidos",
-          "sounds": ["./assets/sonidos/oferta.wav"]
+          "sounds": ["./assets/sonidos/oferta.wav", "./assets/sonidos/oferta_larga.wav"]
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
         }
       ],
       [
@@ -111,6 +120,7 @@
     },
     "extra": {
       "sonidoAvisos": "oferta.wav",
+      "sonidoOfertas": "oferta_larga.wav",
       "eas": {
         "projectId": "f73487b3-0624-48fd-a2f1-6939df58d736"
       }

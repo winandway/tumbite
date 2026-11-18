@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -22,14 +22,20 @@ describe('app del repartidor en la web', () => {
     expect(inicio).toMatch(/setErrorCarga\(''\)/);
   });
 
+  // C-OFERTA-SUENA-EN-BUCLE (18 nov 2026): desde el bucle, la web toca el tono propio en bucle
+  // (/oferta_bucle.wav, servido por el panel) y las dos pantallas usan la misma alarma.
   it('C-OFERTA-SUENA: las dos pantallas de oferta suenan en la web (Safari no vibra)', () => {
     const sonido = leer('repartidor', 'src', 'sonidoOferta.ts');
-    expect(sonido).toMatch(/Platform\.OS !== 'web'/);
-    expect(sonido).toMatch(/\/alarma\.wav/);
+    expect(sonido).toMatch(/Platform\.OS === 'web'/);
+    expect(sonido).toMatch(/new Audio\('\/oferta_bucle\.wav'\)/);
+    expect(sonido).toMatch(/audioWeb\.loop = true/);
+    expect(existsSync(join(__dirname, '..', '..', 'panel', 'public', 'oferta_bucle.wav'))).toBe(
+      true,
+    );
     for (const r of [
       ['grandes', 'Oferta.tsx'],
       ['viajes', 'OfertaViaje.tsx'],
     ])
-      expect(leer('repartidor', 'src', ...r)).toMatch(/^\s+sonarOferta\(\);/m);
+      expect(leer('repartidor', 'src', ...r)).toMatch(/^\s+const callar = useAlarmaOferta\(/m);
   });
 });

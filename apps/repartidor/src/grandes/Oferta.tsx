@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Vibration, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { type Idioma, formatearMonto, textoDistancia } from '@tumbite/compartido';
-import { vibracionOferta } from './accesibilidad';
 import { Boton, C, Text, Modal } from '@tumbite/movil';
 import { textosGrandes } from './textos';
-import { sonarOferta } from '../sonidoOferta';
+import { useAlarmaOferta } from '../sonidoOferta';
 
 export type OfertaCompleta = {
   id: string;
@@ -50,23 +49,28 @@ export function Oferta({
   const t = textosGrandes(idioma).oferta;
   const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
-    // C-AUDITIVA-REPARTIDOR: más larga y repetida si el repartidor marcó dificultad auditiva.
-    Vibration.vibrate(vibracionOferta());
-    sonarOferta();
     const reloj = setInterval(() => setAhora(Date.now()), 500);
-    return () => {
-      clearInterval(reloj);
-      Vibration.cancel();
-    };
+    return () => clearInterval(reloj);
   }, [oferta.id]);
   const desde = oferta.ofertaEn
     ? new Date(`${oferta.ofertaEn.replace(' ', 'T')}Z`).getTime()
     : null;
   const total = oferta.segundos ?? 45;
+  // C-OFERTA-SUENA-EN-BUCLE: tono en bucle y vibración repetida hasta responder o vencer.
+  const [vence] = useState(() => (desde ?? Date.now()) + total * 1000);
+  const callar = useAlarmaOferta(oferta.id, vence);
+  const aceptar = () => {
+    callar('aceptada');
+    alAceptar();
+  };
+  const rechazar = () => {
+    callar('rechazada');
+    alRechazar();
+  };
   const quedan = desde != null ? Math.max(0, total - Math.floor((ahora - desde) / 1000)) : total;
   const n = oferta.articulos ?? 0;
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={alRechazar}>
+    <Modal visible transparent animationType="slide" onRequestClose={rechazar}>
       <View style={{ flex: 1, backgroundColor: 'rgba(25,25,25,0.55)', justifyContent: 'flex-end' }}>
         <View
           testID="oferta-completa"
@@ -184,12 +188,8 @@ export function Oferta({
               {oferta.direccion}
             </Text>
           </View>
-          <Boton texto={t.aceptar} alTocar={alAceptar} exito />
-          <Pressable
-            onPress={alRechazar}
-            accessibilityRole="button"
-            accessibilityLabel={t.rechazar}
-          >
+          <Boton texto={t.aceptar} alTocar={aceptar} exito />
+          <Pressable onPress={rechazar} accessibilityRole="button" accessibilityLabel={t.rechazar}>
             <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
               {t.rechazar}
             </Text>

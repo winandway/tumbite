@@ -3426,13 +3426,13 @@ const es: SeccionDocs[] = [
         ],
         explicacion: [
           'La oferta ocupa toda la pantalla, como en las grandes apps de reparto: arriba la ganancia garantizada en grande (con la propina incluida y el bono si lo hay), y debajo cuatro datos para decidir de un vistazo: la distancia hasta el restaurante, el viaje total, los minutos aproximados y cuántos artículos lleva.',
-          'Tienes 45 segundos y los ves correr en la pantalla; el celular vibra cuando llega la oferta. Si no respondes, la oferta pasa al siguiente repartidor y cuenta como rechazo en tu tasa de aceptación, pero no te baja de nivel.',
+          'Tienes 45 segundos y los ves correr en la pantalla. Mientras la oferta está abierta, el celular suena fuerte y vibra sin parar, hasta que la aceptes, la rechaces o se acabe el tiempo; con la app cerrada, el aviso del celular suena casi 30 segundos. Si no respondes, la oferta pasa al siguiente repartidor y cuenta como rechazo en tu tasa de aceptación, pero no te baja de nivel.',
           'Si rechazas una oferta o la dejas vencer y no hay otro repartidor libre cerca, la misma oferta puede volver a aparecerte poco después (alrededor de un minuto), para que el cliente no se quede esperando. Si hay otro repartidor disponible, la oferta pasa a él y no vuelve contigo.',
           'Si tocas «Aceptar» dos veces seguidas no pasa nada: el pedido ya es tuyo y no ves ningún error.',
           'La ganancia que ves es la mínima garantizada: si el cliente agrega propina después de entregar, la ves sumada en Ganancias y te llega un aviso.',
         ],
         pasos: [
-          'Cuando hay un pedido cerca, la app vibra y te muestra la oferta en pantalla completa: ganancia, distancia al local, viaje total, minutos y artículos.',
+          'Cuando hay un pedido cerca, la app suena y vibra hasta que respondas, y te muestra la oferta en pantalla completa: ganancia, distancia al local, viaje total, minutos y artículos.',
           'Tienes 45 segundos para aceptar. Si no te conviene, recházala o déjala pasar: no te baja de nivel.',
           'Al aceptar, ve al restaurante. Toma la foto del pedido cerrado y espera que el restaurante la confirme en su pantalla. En la puerta del cliente, toma la foto de la entrega.',
           'Toca «Cómo llegar» y elige tu app de mapas: Google Maps, Waze o, en el iPhone, Apple Maps. Se abre con la dirección ya puesta.',
@@ -8715,13 +8715,13 @@ const en: SeccionDocs[] = [
         ],
         explicacion: [
           'The offer takes the whole screen, like in the big delivery apps: the guaranteed earnings big at the top (tip included, and the bonus if there is one), and below it four facts to decide at a glance: the distance to the restaurant, the total trip, the approximate minutes, and how many items it carries.',
-          'You have 45 seconds and you see them counting down; the phone vibrates when the offer arrives. If you don’t answer, the offer goes to the next driver and counts as a decline in your acceptance rate, but it doesn’t lower your level.',
+          'You have 45 seconds and you see them counting down. While the offer is open, the phone rings loud and keeps vibrating until you accept it, decline it, or time runs out; with the app closed, the phone alert rings for almost 30 seconds. If you don’t answer, the offer goes to the next driver and counts as a decline in your acceptance rate, but it doesn’t lower your level.',
           'If you decline an offer or let it expire and no other driver is free nearby, the same offer may come back to you shortly after (about a minute), so the customer isn’t left waiting. If another driver is available, the offer goes to them and doesn’t come back to you.',
           'If you tap “Accept” twice in a row nothing bad happens: the order is already yours and you see no error.',
           'The earnings you see are the guaranteed minimum: if the customer adds a tip after delivery, you see it added under Earnings and you get a notification.',
         ],
         pasos: [
-          'When there’s an order nearby, the app vibrates and shows you the offer full screen: earnings, distance to the store, total trip, minutes, and items.',
+          'When there’s an order nearby, the app rings and vibrates until you answer, and shows you the offer full screen: earnings, distance to the store, total trip, minutes, and items.',
           'You have 45 seconds to accept. If it doesn’t work for you, decline or let it pass: it doesn’t lower your level.',
           'After accepting, head to the restaurant. Take a photo of the closed order and wait for the restaurant to confirm it on their screen. At the customer’s door, take the delivery photo.',
           'Tap “Directions” and pick your maps app: Google Maps, Waze or, on iPhone, Apple Maps. It opens with the address already set.',
