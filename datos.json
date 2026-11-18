@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-17",
+  "actualizado": "2026-11-18",
   "version": "fe71f3f",
-  "ahora": "17 nov: regalos de Divoox listos para el piloto de El Vigía y Tucaní. El cupón VIGIA (100 dólares de presupuesto, viaje gratis hasta 1,50 dólares por persona en moto, envíos y comida) está creado y APAGADO: lo enciende Richard desde Superadmin, Regalos Divoox. El cliente paga en mano solo la diferencia y el conductor recibe el regalo en su saldo.",
+  "ahora": "18 nov: la versión nueva de Divoox (cliente 46) y de Divoox Driver (42) quedó enviada a Google Play para producción, al 100 %. Trae el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Google hace sus verificaciones y la revisa; mientras tanto no se sube otra versión. En el servidor ya está en vivo: el viaje vuelve al conductor que dejó pasar la oferta (hasta tres veces) con aviso al celular, y el conductor nuevo queda en su ciudad.",
   "proximo": [
     {
       "quien": "ia",
@@ -457,6 +457,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Versión nueva enviada a Google Play: inicio nuevo y Driver que se conecta deslizando",
+      "texto": "Divoox (46) y Divoox Driver (42) enviadas a producción en Google Play, al 100 %, con fichas y capturas nuevas. Cliente: inicio nuevo, «¿A dónde vas?», lugares guardados, cupones. Driver: conectarse, desconectarse y terminar un viaje deslizando; la oferta suena en bucle con vibración; elegir el vehículo en uso; ganancias con entregas y carreras; «Mi equipo»; chat de soporte. En vivo en el servidor: reoferta del viaje al conductor que dejó vencer la oferta (tope de tres) con aviso al celular, direcciones sin códigos de mapa, servicios sin tarifa que no se ofrecen, conductor nuevo en su ciudad, y «Cambiar ciudad» en el panel del equipo. Las apps ahora se compilan en la computadora de la empresa, sin costo de nube."
+    },
     {
       "fecha": "2026-11-17",
       "titulo": "Referidos y equipos: invita y gana, y el equipo de cada línea",
