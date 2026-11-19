@@ -4423,3 +4423,18 @@ CREATE TABLE IF NOT EXISTS camila_codigos (
   intentos INTEGER NOT NULL DEFAULT 0,
   vence_en TEXT NOT NULL
 ) WITHOUT ROWID;
+-- C-OCHO-ICONOS-SIEMPRE (18 nov 2026): «Avísame cuando llegue» de un servicio que todavía no abre en
+-- la zona. Se escribe SOLO al tocar el botón; una fila por dueño (cuenta, o huella del aparato sin
+-- cuenta), servicio y zona (o coordenadas redondeadas si la zona no se conoce). Sin índices de más.
+CREATE TABLE IF NOT EXISTS avisos_servicio (
+  dueno TEXT NOT NULL,
+  servicio TEXT NOT NULL,
+  zona_clave TEXT NOT NULL DEFAULT '',
+  usuario_id TEXT,
+  aparato TEXT,
+  zona_id TEXT,
+  lat REAL,
+  lng REAL,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (dueno, servicio, zona_clave)
+) WITHOUT ROWID;

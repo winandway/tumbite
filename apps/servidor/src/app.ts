@@ -75,6 +75,7 @@ import { diagnostico } from './rutas/diagnostico';
 import { ciudadPruebas } from './rutas/ciudadPruebas';
 import { fijarAppCiudad } from './ciudadJuego';
 import { saludServicios, saludTarifas, servicios } from './rutas/servicios';
+import { avisameServicio } from './rutas/avisameServicio';
 import { conductorPapeles } from './rutas/conductorPapeles';
 import { serviciosConectados } from './rutas/serviciosConectados';
 import { tasasReferencia } from './rutas/tasasReferencia';
@@ -270,6 +271,8 @@ app.use('/datos/publico/viaje/*', limiteIntentos(60, 60_000));
 app.use('/datos/lugares/*', limiteIntentos(40, 60_000));
 // C-TIENDAS-CODIGO: Open Food Facts pide no abusar de su servicio gratuito.
 app.use('/datos/mi-restaurante/productos/codigo/*', limiteIntentos(30, 60_000));
+// C-OCHO-ICONOS-SIEMPRE: «Avísame cuando llegue» (en memoria: el límite no escribe en la base).
+app.use('/datos/servicios/avisame', limiteIntentos(10, 60_000));
 // F16: una app vieja recibe 426 «actualiza» en toda la API (lo público y la web no se tocan).
 app.use('/datos/*', (c, next) =>
   ['/datos/publico', '/datos/version', '/datos/salud'].includes(c.req.path)
@@ -679,6 +682,7 @@ app.route('/datos', ciudadPruebas);
 // C-CIUDAD-JUEGO: los robots de la ciudad de pruebas le hablan a esta misma app por dentro.
 fijarAppCiudad(app);
 app.route('/datos', servicios);
+app.route('/datos', avisameServicio);
 app.route('/datos', conductorPapeles);
 app.route('/datos', serviciosConectados);
 app.route('/datos', tasasReferencia);

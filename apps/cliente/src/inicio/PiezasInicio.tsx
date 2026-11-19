@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -220,13 +221,27 @@ export function CuadriculaServicios({
                   accessibilityIgnoresInvertColors
                 />
               )}
-              {/* Ningún nombre se corta: hasta dos renglones centrados (también en la web y en un
-                  teléfono de 360 con letra grande), nunca puntos suspensivos. */}
-              <Text numberOfLines={2} maxFontSizeMultiplier={1.15} style={p.servNombre}>
+              {/* C-OCHO-ICONOS-SIEMPRE: los ocho nombres en UN renglón, como el borrador, también con
+                  la letra grande del sistema en un teléfono de 360: el teléfono achica la letra para
+                  que quepa (nunca puntos suspensivos). La web no sabe achicarla: ahí, antes que
+                  cortar, deja un segundo renglón. */}
+              <Text
+                numberOfLines={Platform.OS === 'web' ? 2 : 1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.7}
+                maxFontSizeMultiplier={1.15}
+                style={p.servNombre}
+              >
                 {nombre}
               </Text>
               {sub ? (
-                <Text maxFontSizeMultiplier={1.15} style={p.servSub}>
+                <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                  maxFontSizeMultiplier={1.15}
+                  style={p.servSub}
+                >
                   {sub}
                 </Text>
               ) : null}
@@ -402,6 +417,104 @@ export function RestaurantesCerca({
   );
 }
 
+/**
+ * C-OCHO-ICONOS-SIEMPRE (18 nov 2026): tocar un servicio que todavía no abre en la zona no lleva a
+ * una pantalla vacía ni a un error: abre esta hoja amable con «Avísame cuando llegue» y «Volver». El
+ * interés se guarda SOLO al tocar el botón; después la hoja confirma en verde.
+ */
+export function HojaAunNoHay({
+  idioma,
+  servicio,
+  cerrar,
+  avisar,
+}: {
+  idioma: Idioma;
+  servicio: string | null;
+  cerrar: () => void;
+  avisar: (servicio: string) => Promise<unknown>;
+}) {
+  const t = textosInicioNuevo(idioma);
+  const [paso, setPaso] = useState<'listo' | 'enviando' | 'hecho' | 'error'>('listo');
+  // El paso vuelve a empezar con cada servicio: Inicio monta la hoja con `key` del servicio.
+  const nombre = servicio
+    ? (new Map(Object.entries(t.aunNoHay.nombres)).get(servicio) ?? servicio)
+    : '';
+  const tocar = () => {
+    if (!servicio || paso === 'enviando') return;
+    setPaso('enviando');
+    avisar(servicio).then(
+      () => setPaso('hecho'),
+      (e: unknown) => {
+        console.warn('avísame: no se pudo guardar', e);
+        setPaso('error');
+      },
+    );
+  };
+  return (
+    <HojaAbajo
+      visible={Boolean(servicio)}
+      alCerrar={cerrar}
+      titulo={nombre}
+      testID="hoja-aun-no-hay"
+    >
+      <View style={{ paddingHorizontal: 20, paddingBottom: 8, gap: 14 }}>
+        <Text
+          style={{ fontSize: 16, lineHeight: 22, color: C.secundario }}
+          testID="aun-no-hay-texto"
+        >
+          {t.aunNoHay.frase(nombre)}
+        </Text>
+        {paso === 'hecho' ? (
+          <View
+            testID="aun-no-hay-listo"
+            accessibilityLiveRegion="polite"
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              backgroundColor: COLOR.exitoSuave,
+              borderRadius: 12,
+              padding: 12,
+            }}
+          >
+            <Icono nombre="checkmark-circle" tamano={20} color={COLOR.exito} />
+            <Text style={{ flex: 1, color: COLOR.exito, fontWeight: '700', fontSize: 15 }}>
+              {t.aunNoHay.listo}
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            onPress={tocar}
+            accessibilityRole="button"
+            accessibilityState={{ busy: paso === 'enviando' }}
+            testID="aun-no-hay-avisame"
+            style={({ pressed }) => [p.botonAviso, pressed && { opacity: 0.85 }]}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>
+              {paso === 'enviando' ? t.aunNoHay.enviando : t.aunNoHay.avisame}
+            </Text>
+          </Pressable>
+        )}
+        {paso === 'error' ? (
+          <Text style={{ color: COLOR.error, fontSize: 14 }} testID="aun-no-hay-error">
+            {t.aunNoHay.error}
+          </Text>
+        ) : null}
+        <Pressable
+          onPress={cerrar}
+          accessibilityRole="button"
+          testID="aun-no-hay-volver"
+          style={({ pressed }) => [p.botonVolver, pressed && { opacity: 0.7 }]}
+        >
+          <Text style={{ color: C.secundario, fontWeight: '700', fontSize: 16 }}>
+            {t.aunNoHay.volver}
+          </Text>
+        </Pressable>
+      </View>
+    </HojaAbajo>
+  );
+}
+
 export type ItemMas = { clave: string; texto: string; icono: NombreIcono; alTocar: () => void };
 
 /** «Más servicios»: solo lo secundario (no repite los servicios de la cuadrícula). */
@@ -444,6 +557,23 @@ export function HojaMasServicios({
 }
 
 const p = StyleSheet.create({
+  botonAviso: {
+    minHeight: 52,
+    borderRadius: 12,
+    backgroundColor: C.primario,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  botonVolver: {
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLOR.bordeFuerte,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
   portada: { paddingBottom: 40, overflow: 'hidden' },
   cabeza: {
     flexDirection: 'row',

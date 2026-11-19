@@ -1,8 +1,8 @@
 /**
  * C-INICIO-NUEVO (17 nov 2026, borrador aprobado por Richard) — todos los países. La lógica sin
- * pantalla del inicio del cliente: los ocho servicios en cuatro columnas (lo que no funciona en la
- * ciudad no se muestra, C-SOLO-LO-TERMINADO), cada uno abre su pantalla directa (sin pantallas
- * intermedias con «Abrir»), y la portada y las promociones vienen del administrador de banners
+ * pantalla del inicio del cliente: los ocho servicios en cuatro columnas, SIEMPRE los ocho
+ * (C-OCHO-ICONOS-SIEMPRE, 18 nov 2026: lo cerrado en la ciudad abre la hoja «aún no hay»), cada uno
+ * abierto va a su pantalla directa (sin pantallas intermedias con «Abrir»), y la portada y las promociones vienen del administrador de banners
  * (GET /datos/banners), con un respaldo local que no promete descuentos.
  * Borrador: progreso/borrador-inicio/index.html; capturas en docs/disenos/borrador-inicio/.
  */
@@ -33,18 +33,41 @@ const sinEstado = (id: ServicioInicio, orden: number): ServicioCatalogo => ({
 });
 
 /**
- * Lo que se pinta: Comida siempre (es la puerta de entrada), los demás solo si abren en la ciudad,
- * y «Más servicios» siempre al final (lleva lo secundario: regalos, viajes fijos, paquetes…).
+ * C-OCHO-ICONOS-SIEMPRE (18 nov 2026, orden de Richard sobre el borrador aprobado): se pintan SIEMPRE
+ * los ocho, en el orden del borrador, en cualquier ciudad y país, con o sin cuenta y aunque el
+ * catálogo no haya llegado. Lo que está cerrado en la zona no se esconde: al tocarlo abre la hoja
+ * «En esta zona aún no hay…» (`accionDeServicio`). «Más servicios» lleva lo secundario.
  */
 export function serviciosDelInicio(catalogo: ServicioCatalogo[] | null): ServicioCatalogo[] {
-  const lista = catalogo ?? [];
-  const porId = new Map(lista.map((s) => [s.id, s]));
-  return SERVICIOS_INICIO.flatMap((id, i) => {
-    if (id === 'mas') return [porId.get('mas') ?? sinEstado('mas', i)];
-    if (id === 'comida') return [porId.get('comida') ?? sinEstado('comida', i)];
-    const s = porId.get(id);
-    return s && s.accion === 'abrir' ? [s] : [];
-  });
+  const porId = new Map((catalogo ?? []).map((s) => [s.id, s]));
+  return SERVICIOS_INICIO.map((id, i) => porId.get(id) ?? sinEstado(id, i));
+}
+
+/**
+ * C-PORTADA-SOLO-ABIERTOS: los servicios que de verdad se pueden abrir en la ciudad, leídos del
+ * catálogo (nunca del relleno de la cuadrícula). Sin catálogo todavía: ninguno.
+ */
+export function serviciosAbiertos(catalogo: ServicioCatalogo[] | null): Set<string> {
+  return new Set((catalogo ?? []).filter((s) => s.accion === 'abrir').map((s) => s.id));
+}
+
+/** Qué pasa al tocar un servicio de la cuadrícula. */
+export type AccionInicio =
+  | { tipo: 'navegar'; ruta: RutaApp }
+  | { tipo: 'mas' }
+  | { tipo: 'aun_no_hay'; servicio: ServicioInicio };
+
+/**
+ * C-OCHO-ICONOS-SIEMPRE: abierto en la zona → su pantalla, como antes; cerrado → la hoja «aún no hay»
+ * (nunca una pantalla en blanco ni un error). Sin catálogo (sin red) no se afirma que no hay: se
+ * navega y esa pantalla vuelve a preguntar.
+ */
+export function accionDeServicio(id: string, catalogo: ServicioCatalogo[] | null): AccionInicio {
+  const ruta = rutaDeServicio(id);
+  if (!ruta) return { tipo: 'mas' };
+  if (catalogo && !serviciosAbiertos(catalogo).has(id))
+    return { tipo: 'aun_no_hay', servicio: id as ServicioInicio };
+  return { tipo: 'navegar', ruta };
 }
 
 /** A dónde va cada servicio: su pantalla directa (expo-router). «Más» abre su hoja (null). */

@@ -54,15 +54,18 @@ describe('revisión del inicio nuevo', () => {
     expect(f).not.toMatch(/heroeFoto/);
   });
 
-  // Ningún texto se corta: «Más servicios» salía «Más servic…» (web y teléfono angosto).
-  it('el nombre del servicio cabe en dos renglones, sin puntos suspensivos ni alto fijo', () => {
+  // Ningún texto se corta: «Más servicios» salía «Más servic…» (web y teléfono angosto). Desde
+  // C-OCHO-ICONOS-SIEMPRE (18 nov) va en UN renglón como el borrador: el teléfono achica la letra
+  // para que quepa; la web, que no sabe achicarla, deja un segundo renglón antes que cortar.
+  it('el nombre del servicio no se corta: sin puntos suspensivos ni alto fijo', () => {
     const f = leer('inicio', 'PiezasInicio.tsx');
     const mosaico = f.slice(
       f.indexOf('style={p.servNombre}') - 260,
       f.indexOf('style={p.servNombre}'),
     );
     expect(mosaico).not.toMatch(/numberOfLines=\{1\}/);
-    expect(mosaico).toMatch(/numberOfLines=\{2\}/);
+    expect(mosaico).toMatch(/adjustsFontSizeToFit/);
+    expect(mosaico).toMatch(/Platform\.OS === 'web' \? 2 : 1/);
     expect(f).toMatch(/serv: \{[^}]*minHeight: 88/);
     expect(f).not.toMatch(/serv: \{[^}]*\n {4}height: 88/);
   });

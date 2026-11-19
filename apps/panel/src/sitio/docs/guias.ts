@@ -942,7 +942,7 @@ const es: SeccionDocs[] = [
         explicacion: [
           'La portada: arriba, sobre fondo oscuro, el logo de Divoox, la campana de avisos y el idioma (español o inglés). Debajo, una imagen con un titular de lo que hay en tu ciudad. Cambia cada vez que abres la app; tócala y te lleva a ese servicio o a esa promoción.',
           '«Entregar en»: la tarjeta blanca encima de la portada dice a dónde te llevamos el pedido (tu ubicación actual o la dirección que elegiste). Tócala para cambiarla. Debajo está el buscador de comida, tiendas y productos.',
-          'Los servicios: hasta ocho, en cuatro columnas: Comida, Mercado, Farmacia, Licores, Viajes (Carro), Moto, Envíos (Express) y Más servicios. Solo ves los que ya funcionan en tu ciudad. Cuando los usas varias veces, se ordenan solos por lo que más usas y lo ves escrito arriba.',
+          'Los servicios: siempre los ocho, en cuatro columnas: Comida, Mercado, Farmacia, Licores, Viajes (Carro), Moto, Envíos (Express) y Más servicios. Si uno todavía no llega a tu zona, al tocarlo te lo decimos y puedes pedir que te avisemos. Cuando los usas varias veces, se ordenan solos por lo que más usas y lo ves escrito arriba.',
           'Cada servicio abre directo su pantalla, sin pasos de más: Comida abre los restaurantes; Moto y Viajes, el formulario del viaje; Envíos, el envío de A a B; Mercado, Farmacia y Licores, las tiendas cercanas.',
           'Promociones: tarjetas rojas que pasan solas, con la oferta y su código. Solo salen promociones reales de tu ciudad; si hoy no hay ninguna, no ocupan espacio.',
           'Restaurantes cerca de ti: los abiertos más cercanos, con su nota y el tiempo de entrega. «Ver todos» abre la lista completa.',
@@ -1077,10 +1077,11 @@ const es: SeccionDocs[] = [
         id: 'services',
         titulo: 'Los servicios de Divoox: cómo elegir qué necesitas',
         resumen:
-          'En el inicio ves los servicios que ya funcionan en tu ciudad, en cuatro columnas. Cada uno abre directo su pantalla. «Más servicios» guarda lo demás: regalos, viajes fijos, conductores de confianza y paquetes para ti.',
+          'En el inicio ves siempre los ocho servicios de Divoox, en cuatro columnas. Los que ya funcionan en tu zona abren directo su pantalla; los que todavía no, te dejan pedir un aviso. «Más servicios» guarda lo demás: regalos, viajes fijos, conductores de confianza y paquetes para ti.',
         explicacion: [
           'Divoox nace como una app de reparto de comida y crece hacia una app de todo, como las grandes del mercado. Elegir el servicio es lo primero que haces, justo debajo del buscador.',
-          'Solo ves lo que ya puedes usar. Un servicio aparece en tu inicio el día que abre en tu ciudad; antes de eso no ocupa espacio ni te hace perder un toque.',
+          'Siempre ves los ocho, estés donde estés: Comida, Mercado, Farmacia, Licores, Viajes (Carro), Moto, Envíos (Express) y Más servicios. Así sabes todo lo que Divoox hace, aunque en tu zona todavía no esté todo.',
+          'Si tocas uno que aún no llega a tu zona, se abre una hoja abajo que te lo dice claro, por ejemplo «En esta zona aún no hay Farmacia. Estamos llegando.». Toca «Avísame cuando llegue» y verás en verde «Listo, te avisamos cuando llegue»; o toca «Volver» para seguir donde estabas. Nunca te deja en una pantalla vacía.',
           'Sin pantallas de más: Comida abre los restaurantes, Moto y Viajes (Carro) abren el viaje con «¿A dónde vas?», Envíos abre el envío de A a B y Mercado, Farmacia y Licores muestran las tiendas cercanas.',
           'Pedir una moto lleva tres toques: «Moto», tu lugar guardado (por ejemplo, «Casa») y «Solicitar moto». El precio fijo aparece solo apenas eliges el destino.',
           'Envíos tiene dos caminos: «A → B (Express)», para mandar algo hoy, y «Multipaquete (Flex)», para empresas que reparten muchos paquetes con Divoox Flex.',
@@ -5342,7 +5343,7 @@ const es: SeccionDocs[] = [
           'Cuando respondamos, te avisamos al celular y por correo con «Te respondimos tu caso» y su número.',
           'En la app, entra a «Mis casos de ayuda» (en tu cuenta; repartidores: en Soporte; restaurantes: en Configuración) para leer la respuesta y contestar sin salir de la app.',
           'También puedes escribir a soporte+divoox@windoce.com (repartidores: soporte+divoox.driver@windoce.com; restaurantes: soporte+divoox.restaurantes@windoce.com).',
-          'Si te preguntamos qué versión tienes: está al final de tu cuenta, en gris, por ejemplo «Versión 1.0.1 (compilación 10)» (repartidores: al final de Perfil; restaurantes: al final de Más). En la web, en el pie de la página.',
+          'Si te preguntamos qué versión tienes: está al final de tu cuenta, en gris, por ejemplo «Versión 0.1.47 (47)»: el último número cambia con cada actualización de la tienda (repartidores: al final de Perfil; restaurantes: al final de Más). En la web, en el pie de la página.',
         ],
       },
     ],
@@ -6249,7 +6250,7 @@ const en: SeccionDocs[] = [
         explicacion: [
           'The banner: on a dark background, the Divoox logo, the notifications bell and the language (English or Spanish). Below them, an image with a headline about your city. It changes every time you open the app; tap it to go to that service or deal.',
           '“Deliver to”: the white card on top of the banner shows where we deliver (your current location or the address you chose). Tap it to change it. Below it is the search bar for food, stores and products.',
-          'Services: up to eight, in four columns: Food, Grocery, Pharmacy, Liquor, Rides (Car), Moto, Delivery (Express) and More services. You only see the ones that already work in your city. After you use them a few times, they sort themselves by what you use most, and it says so above them.',
+          'Services: always all eight, in four columns: Food, Grocery, Pharmacy, Liquor, Rides (Car), Moto, Delivery (Express) and More services. If one hasn’t reached your area yet, tapping it tells you so and lets you ask us to let you know. After you use them a few times, they sort themselves by what you use most, and it says so above them.',
           'Each service opens its own screen right away, with no extra steps: Food opens restaurants; Moto and Rides open the trip form; Delivery opens A-to-B delivery; Grocery, Pharmacy and Liquor show nearby stores.',
           'Deals: red cards that rotate on their own, with the offer and its code. Only real deals in your city show up; if there are none today, they take no space.',
           'Restaurants near you: the closest open restaurants, with their rating and delivery time. “See all” opens the full list.',
@@ -6384,10 +6385,11 @@ const en: SeccionDocs[] = [
         id: 'services',
         titulo: 'Divoox services: how to choose what you need',
         resumen:
-          'On the home screen you see the services that already work in your city, in four columns. Each one opens its own screen right away. “More services” holds the rest: gifts, regular rides, trusted drivers and packages for you.',
+          'On the home screen you always see all eight Divoox services, in four columns. The ones that already work in your area open their own screen right away; the others let you ask for a heads-up. “More services” holds the rest: gifts, regular rides, trusted drivers and packages for you.',
         explicacion: [
           'Divoox started as a food delivery app and is growing into an everything app, like the big players. Choosing a service is the first thing you do, right below the search bar.',
-          'You only see what you can already use. A service shows up on your home screen the day it opens in your city; until then it takes no space and costs you no taps.',
+          'You always see all eight, wherever you are: Food, Grocery, Pharmacy, Liquor, Rides (Car), Moto, Delivery (Express) and More services. That way you know everything Divoox does, even if your area doesn’t have it all yet.',
+          'If you tap one that hasn’t reached your area yet, a sheet slides up and says so plainly, for example “Pharmacy isn’t available in this area yet. We’re on our way.” Tap “Notify me when it arrives” and you’ll see “Done, we’ll let you know when it arrives” in green; or tap “Go back” to pick up where you were. It never leaves you on an empty screen.',
           'No extra screens: Food opens restaurants, Moto and Rides (Car) open the trip with “Where to?”, Delivery opens A-to-B delivery, and Grocery, Pharmacy and Liquor show nearby stores.',
           'Ordering a moto takes three taps: “Moto”, your saved place (for example, “Home”) and “Request moto”. The upfront price shows up as soon as you pick the destination.',
           'Delivery has two paths: “A → B (Express)”, to send something today, and “Multi-package (Flex)”, for businesses that ship many packages with Divoox Flex.',
@@ -10623,7 +10625,7 @@ const en: SeccionDocs[] = [
           'When we reply, we notify your phone and email you “We replied to your case” with its number.',
           'In the app, open “My help cases” (in your account; drivers: in Support; restaurants: in Settings) to read the reply and answer without leaving the app.',
           'You can also write to soporte+divoox@windoce.com (drivers: soporte+divoox.driver@windoce.com; restaurants: soporte+divoox.restaurantes@windoce.com).',
-          'If we ask which version you have: it’s at the bottom of your account, in gray, for example “Version 1.0.1 (build 10)” (drivers: at the bottom of Profile; restaurants: at the bottom of More). On the web, in the page footer.',
+          'If we ask which version you have: it’s at the bottom of your account, in gray, for example “Version 0.1.47 (47)”: the last number changes with every app store update (drivers: at the bottom of Profile; restaurants: at the bottom of More). On the web, in the page footer.',
         ],
       },
     ],

@@ -139,6 +139,8 @@ export async function borrarCuenta(
       .bind(u.id),
     db.prepare('DELETE FROM direcciones_cliente WHERE usuario_id = ?').bind(u.id),
     db.prepare('DELETE FROM dispositivos WHERE usuario_id = ?').bind(u.id),
+    // C-OCHO-ICONOS-SIEMPRE: sus «Avísame cuando llegue» (llevan su zona y su punto aproximado).
+    db.prepare('DELETE FROM avisos_servicio WHERE usuario_id = ?').bind(u.id),
     // C-CUPON-DIVOOX: los códigos de regalo que agregó. Los usos quedan (son contabilidad) y solo
     // guardan huellas del teléfono y del aparato, nunca el número.
     db.prepare('DELETE FROM cupones_divoox_guardados WHERE cliente_id = ?').bind(u.id),

@@ -10,6 +10,12 @@ import { MENSAJES_EN_CAMILA } from './mensajesEnCamila';
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-OCHO-ICONOS-SIEMPRE (18 nov 2026): «Avísame cuando llegue».
+  [
+    'No pudimos reconocer este teléfono. Actualiza la app y vuelve a intentarlo.',
+    'We couldn’t recognize this phone. Update the app and try again.',
+  ],
+  ['Servicio desconocido.', 'Unknown service.'],
   // C-MODERACION (16 nov 2026): reportar, bloquear y la bandeja del equipo.
   ['Eso ya no está disponible.', 'That’s no longer available.'],
   [
