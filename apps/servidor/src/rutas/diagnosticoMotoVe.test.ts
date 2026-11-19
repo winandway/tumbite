@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { CIUDAD_PRUEBAS_VENEZUELA as CCS } from '@tumbite/compartido';
+import { CIUDAD_ICA as ICA, CIUDAD_PRUEBAS_VENEZUELA as CCS } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
-import { MOTO_VE } from './diagnosticoMotoVe';
+import { MOTO_PE, MOTO_VE } from './diagnosticoMotoVe';
 
 /**
  * C-MOTO-VE-PUNTA-A-PUNTA (13 nov 2026) — Venezuela. La herramienta del sitio de pruebas que usa el
@@ -172,5 +172,78 @@ describe('C-MOTO-VE-PUNTA-A-PUNTA: la herramienta del guion de Moto en Venezuela
     expect(elOtro?.conectado).toBe(0);
     const l = await interno('limpiar');
     expect(l.datos.ok).toBe(true);
+  });
+});
+
+/**
+ * C-PERFIL-PERU (19 nov 2026) — Perú. La misma herramienta para el guion
+ * scripts/staging/probar-moto-peru.mjs: cuentas propias (zz-mtpe-…) y la comisión en soles aprobada
+ * SOLO en la base de pruebas; en producción la ruta no existe y la comisión sigue sin aprobar.
+ */
+describe('C-PERFIL-PERU: la herramienta del guion de Ica', () => {
+  const pe = async (m: ReturnType<typeof mundo>, ruta: string, cuerpo: unknown = {}) => {
+    const r = await m.crudo(`/datos/interno/diagnostico/moto-pe/${ruta}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-reloj-secreto': SEC },
+      body: JSON.stringify(cuerpo),
+    });
+    return { estado: r.status, datos: (await r.json()) as any };
+  };
+  const aprobadas = async (m: ReturnType<typeof mundo>) =>
+    (
+      await m.DB.prepare(
+        "SELECT COUNT(*) AS n FROM politicas_financieras WHERE pais = 'PE' AND revision_legal_aprobada = 1",
+      ).first<{ n: number }>()
+    )?.n;
+
+  it('en producción no existe y la comisión de Perú sigue sin aprobar', async () => {
+    const prod = mundo({ RELOJ_SECRETO: SEC }, { host: 'divoox.com' });
+    expect((await pe(prod, 'armar')).estado).toBe(404);
+    expect(await aprobadas(prod)).toBe(0);
+  });
+
+  it('en pruebas arma sus propias cuentas, aprueba la comisión en soles y deja al conductor sin saldo en Ica', async () => {
+    const m = mundo({ RELOJ_SECRETO: SEC }, { host: 'staging.tumbite.com' });
+    expect(await aprobadas(m)).toBe(0);
+    const a = await pe(m, 'armar');
+    expect(a.estado).toBe(200);
+    expect(a.datos.ids).toEqual(MOTO_PE);
+    expect(await aprobadas(m)).toBe(3);
+    // No toca la comisión de ningún otro país ni las cuentas de Venezuela.
+    const ve = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM usuarios WHERE id LIKE 'zz-mtve-%'",
+    ).first<{
+      n: number;
+    }>();
+    expect(ve?.n).toBe(0);
+    expect((await pe(m, 'reiniciar')).estado).toBe(200);
+    // Sin Ica abierta no hay dónde dejarlo; una ciudad de Venezuela no se acepta para Perú.
+    expect((await pe(m, 'sin-saldo')).estado).toBe(409);
+    const abrir = await m.llamar(
+      'POST',
+      '/datos/admin/viajes/ciudades',
+      {
+        servicio: 'moto',
+        zona: {
+          id: ICA.id,
+          nombre: ICA.nombre,
+          lat: ICA.lat,
+          lng: ICA.lng,
+          radioKm: ICA.radioKm,
+          zonaHoraria: ICA.zonaHoraria,
+        },
+        motivo: 'Ciudad de pruebas de Perú',
+      },
+      a.datos.tokens.equipo,
+    );
+    expect(abrir.estado, JSON.stringify(abrir.datos)).toBe(201);
+    expect((await pe(m, 'sin-saldo', { zonaId: 'VE-MER-ELVIGIA' })).estado).toBe(200);
+    const fila = await m.DB.prepare(
+      'SELECT zona_id, conectado FROM repartidores WHERE usuario_id = ?',
+    )
+      .bind(MOTO_PE.sinSaldo)
+      .first<{ zona_id: string; conectado: number }>();
+    expect(fila).toEqual({ zona_id: ICA.id, conectado: 1 });
+    expect((await pe(m, 'limpiar')).datos.ok).toBe(true);
   });
 });

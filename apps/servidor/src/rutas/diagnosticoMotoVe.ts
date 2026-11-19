@@ -1,5 +1,5 @@
 import type { Hono } from 'hono';
-import { CIUDAD_PRUEBAS_VENEZUELA, VERSION_TERMINOS } from '@tumbite/compartido';
+import { CIUDAD_ICA, CIUDAD_PRUEBAS_VENEZUELA, VERSION_TERMINOS } from '@tumbite/compartido';
 import { hashClave, nuevoToken, sha256 } from '../cripto';
 import type { Env } from '../env';
 import { type Variables, base } from '../sesion';
@@ -26,13 +26,59 @@ export const MOTO_VE = {
   vehiculoSinSaldo: 'zz-mtve-vs',
 } as const;
 
+/**
+ * Divoox en Ica, Perú (19 nov 2026): las mismas cuatro rutas para el guion
+ * scripts/staging/probar-moto-peru.mjs, con sus propias cuentas fijas. Su «armar» además deja
+ * aprobada la comisión en soles SOLO en esta base (pruebas o local): en producción estas rutas no
+ * existen y la comisión de Perú la aprueba Richard.
+ */
+export const MOTO_PE = {
+  cliente: 'zz-mtpe-c',
+  conductor: 'zz-mtpe-k',
+  sinSaldo: 'zz-mtpe-s',
+  equipo: 'zz-mtpe-a',
+  vehiculoSinSaldo: 'zz-mtpe-vs',
+} as const;
+
 type App = Hono<{ Bindings: Env; Variables: Variables }>;
+type Cuentas = { [K in keyof typeof MOTO_VE]: string };
+type PaisDePruebas = {
+  /** El tramo de la ruta: «moto-ve», «moto-pe». */
+  ruta: string;
+  pais: 'VE' | 'PE';
+  cuentas: Cuentas;
+  /** La ciudad del conductor sin saldo cuando el guion no manda una. */
+  zonaPorDefecto: string;
+  placaSinSaldo: string;
+  /** La comisión del país nace sin aprobar: el guion la necesita aprobada en la base de pruebas. */
+  aprobarComision?: boolean;
+};
 
 export function rutasMotoVenezuela(diagnostico: App) {
-  diagnostico.post('/interno/diagnostico/moto-ve/armar', async (c) => {
+  rutasMotoDePais(diagnostico, {
+    ruta: 'moto-ve',
+    pais: 'VE',
+    cuentas: MOTO_VE,
+    zonaPorDefecto: CIUDAD_PRUEBAS_VENEZUELA.id,
+    placaSinSaldo: 'ZZVE0001',
+  });
+  rutasMotoDePais(diagnostico, {
+    ruta: 'moto-pe',
+    pais: 'PE',
+    cuentas: MOTO_PE,
+    zonaPorDefecto: CIUDAD_ICA.id,
+    placaSinSaldo: 'ZZPE01',
+    aprobarComision: true,
+  });
+}
+
+function rutasMotoDePais(diagnostico: App, p: PaisDePruebas) {
+  const CUENTAS = p.cuentas;
+  const marca = CUENTAS.conductor.slice(0, 7);
+  diagnostico.post(`/interno/diagnostico/${p.ruta}/armar`, async (c) => {
     const db = base(c);
-    const { cliente, conductor, sinSaldo, equipo } = MOTO_VE;
-    const clave = `Ve-${nuevoToken().slice(0, 16)}-9`;
+    const { cliente, conductor, sinSaldo, equipo } = CUENTAS;
+    const clave = `${p.pais === 'VE' ? 'Ve' : 'Pe'}-${nuevoToken().slice(0, 16)}-9`;
     const hash = await hashClave(clave);
     const ids = [cliente, conductor, sinSaldo, equipo];
     const tokens = ids.map(() => nuevoToken());
@@ -58,9 +104,18 @@ export function rutasMotoVenezuela(diagnostico: App) {
           )
           .bind(huellas.at(i) ?? '', id),
       ),
+      ...(p.aprobarComision
+        ? [
+            db
+              .prepare(
+                'UPDATE politicas_financieras SET revision_legal_aprobada = 1 WHERE pais = ? AND revision_legal_aprobada = 0',
+              )
+              .bind(p.pais),
+          ]
+        : []),
     ]);
     return c.json({
-      ids: MOTO_VE,
+      ids: CUENTAS,
       clave,
       versionTerminos: VERSION_TERMINOS,
       tokens: {
@@ -76,9 +131,9 @@ export function rutasMotoVenezuela(diagnostico: App) {
    * El alta del conductor vuelve a empezar (su saldo y su libro se quedan). Se llama DESPUÉS de cerrar
    * por la API lo que una vuelta anterior haya dejado colgado: con un viaje abierto no se toca nada.
    */
-  diagnostico.post('/interno/diagnostico/moto-ve/reiniciar', async (c) => {
+  diagnostico.post(`/interno/diagnostico/${p.ruta}/reiniciar`, async (c) => {
     const db = base(c);
-    const { conductor } = MOTO_VE;
+    const { conductor } = CUENTAS;
     const abierto = await db
       .prepare(
         "SELECT 1 FROM operaciones WHERE conductor_id = ? AND estado_general IN ('asignada', 'en_curso') LIMIT 1",
@@ -124,7 +179,7 @@ export function rutasMotoVenezuela(diagnostico: App) {
         .prepare(
           "INSERT OR REPLACE INTO selfies_control (id, usuario_id, tomada_en, resultado) VALUES (?, ?, datetime('now'), 'ok')",
         )
-        .bind(`zz-mtve-sc-${conductor}`, conductor),
+        .bind(`${marca}-sc-${conductor}`, conductor),
       db
         .prepare(
           `INSERT INTO repartidor_datos (usuario_id, vehiculo_tipo, licencia_numero, licencia_vence, seguro_aseguradora, seguro_poliza, seguro_vence)
@@ -142,18 +197,20 @@ export function rutasMotoVenezuela(diagnostico: App) {
    * guion (`zonaId`; si no, Caracas de pruebas), que el guion abrió antes con el panel. Desconecta además a cualquier otro conductor de esa ciudad, para que nadie más se
    * lleve la oferta.
    */
-  diagnostico.post('/interno/diagnostico/moto-ve/sin-saldo', async (c) => {
+  diagnostico.post(`/interno/diagnostico/${p.ruta}/sin-saldo`, async (c) => {
     const db = base(c);
-    const { conductor, sinSaldo, equipo, vehiculoSinSaldo: veh } = MOTO_VE;
+    const { conductor, sinSaldo, equipo, vehiculoSinSaldo: veh } = CUENTAS;
     // La ciudad de pruebas la elige el guion (El Vigía desde el 13 nov 2026); solo de Venezuela.
     const cuerpo = (await c.req.json().catch(() => ({}))) as { zonaId?: unknown };
     const zonaId =
-      typeof cuerpo.zonaId === 'string' && /^VE-[A-Z0-9-]{2,30}$/.test(cuerpo.zonaId)
+      typeof cuerpo.zonaId === 'string' &&
+      cuerpo.zonaId.startsWith(`${p.pais}-`) &&
+      /^[A-Z]{2}-[A-Z0-9-]{2,30}$/.test(cuerpo.zonaId)
         ? cuerpo.zonaId
-        : CIUDAD_PRUEBAS_VENEZUELA.id;
+        : p.zonaPorDefecto;
     const z = await db
-      .prepare("SELECT id, lat, lng FROM zonas WHERE id = ? AND pais = 'VE'")
-      .bind(zonaId)
+      .prepare('SELECT id, lat, lng FROM zonas WHERE id = ? AND pais = ?')
+      .bind(zonaId, p.pais)
       .first<{ id: string; lat: number; lng: number }>();
     if (!z) throw new ErrorDatos('Primero hay que abrir la ciudad de pruebas.', undefined, 409);
     await db.batch([
@@ -165,9 +222,9 @@ export function rutasMotoVenezuela(diagnostico: App) {
       db
         .prepare(
           `INSERT OR IGNORE INTO vehiculos (id, conductor_id, tipo, marca, modelo, color, placa, placa_estado, anio, estado)
-           VALUES (?, ?, 'moto', 'Prueba', 'Moto', 'Negro', 'ZZVE0001', 'VE', 2023, 'aprobado')`,
+           VALUES (?, ?, 'moto', 'Prueba', 'Moto', 'Negro', ?, ?, 2023, 'aprobado')`,
         )
-        .bind(veh, sinSaldo),
+        .bind(veh, sinSaldo, p.placaSinSaldo, p.pais),
       ...['registro', 'seguro', 'seguro_pasajeros'].map((t) =>
         db
           .prepare(
@@ -175,7 +232,7 @@ export function rutasMotoVenezuela(diagnostico: App) {
              VALUES (?, ?, ?, 'zz', 'aprobado', datetime('now', '+1 day'))
              ON CONFLICT(id) DO UPDATE SET vence_en = excluded.vence_en`,
           )
-          .bind(`zz-mtve-o-${t}`, veh, t),
+          .bind(`${marca}-o-${t}`, veh, t),
       ),
       db
         .prepare(
@@ -227,13 +284,13 @@ export function rutasMotoVenezuela(diagnostico: App) {
   });
 
   /** Fin de la vuelta: nadie queda conectado ni con sesión. El saldo, el libro y los viajes se quedan. */
-  diagnostico.post('/interno/diagnostico/moto-ve/limpiar', async (c) => {
+  diagnostico.post(`/interno/diagnostico/${p.ruta}/limpiar`, async (c) => {
     const db = base(c);
-    const ids = [MOTO_VE.cliente, MOTO_VE.conductor, MOTO_VE.sinSaldo, MOTO_VE.equipo];
+    const ids = [CUENTAS.cliente, CUENTAS.conductor, CUENTAS.sinSaldo, CUENTAS.equipo];
     await db.batch([
       db
         .prepare('UPDATE repartidores SET conectado = 0 WHERE usuario_id IN (?, ?)')
-        .bind(MOTO_VE.conductor, MOTO_VE.sinSaldo),
+        .bind(CUENTAS.conductor, CUENTAS.sinSaldo),
       db.prepare('DELETE FROM sesiones WHERE usuario_id IN (?, ?, ?, ?)').bind(...ids),
     ]);
     const quedan = await db
