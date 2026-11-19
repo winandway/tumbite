@@ -2258,9 +2258,19 @@ operacion.get('/repartidor/ofertas', async (c) => {
       : null;
   // C-ENTREGA-PRACTICA: a una cuenta de revisión sin ofertas reales le llega la de práctica.
   const practica = results.length ? [] : await ofertasPractica(c, esRevisor, SEGUNDOS_OFERTA);
+  // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: si el cliente paga en mano, cuánto cobra (sin propina), en
+  // dólares y, donde aplica, en bolívares con la tasa del pedido; el mismo número del pedido activo.
+  // Solo lee (nada se escribe por mirar la oferta).
+  const cobros = await Promise.all(
+    results.map((f) =>
+      esDirecto(String(f.metodo_pago ?? 'tarjeta'))
+        ? enManoDePedido(db, f, Number(f.total) - Number(f.propina ?? 0))
+        : null,
+    ),
+  );
   return c.json({
     ofertas: [
-      ...results.map((f) => {
+      ...results.map((f, i) => {
         const base = conDatosRestaurante(f);
         const rest =
           base.restaurante.lat != null && base.restaurante.lng != null
@@ -2288,6 +2298,7 @@ operacion.get('/repartidor/ofertas', async (c) => {
           adelantoLocal: esDirecto(String(f.metodo_pago ?? 'tarjeta'))
             ? Number(f.pago_restaurante)
             : 0,
+          enManoCobro: cobros.at(i) ?? null,
         };
       }),
       ...practica,

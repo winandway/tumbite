@@ -98,7 +98,7 @@ async function mundoVe() {
   }
   const ofertas = async (rep: { token: string }) =>
     ((await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token)).datos.ofertas ??
-      []) as { id: string; metodoPago: string; moneda: string }[];
+      []) as { id: string; metodoPago: string; moneda: string; enManoCobro?: unknown }[];
   const saldo = async (rep: { token: string }) =>
     (await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, rep.token)).datos;
   async function pagarLocal(id: string, rep: { token: string }) {
@@ -128,7 +128,8 @@ async function mundoVe() {
           )
         ).estado,
       ).toBe(200);
-    expect((await ofertas(rep)).map((o) => o.id)).toContain(id);
+    const oferta = (await ofertas(rep)).find((o) => o.id === id);
+    expect(oferta).toBeTruthy();
     expect(
       (await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token)).estado,
     ).toBe(200);
@@ -138,6 +139,7 @@ async function mundoVe() {
     ).toBe(200);
     expect((await pagarLocal(id, rep)).estado).toBe(201);
     expect((await e.m.recoger(id, rep.token, r.dueno.token)).estado).toBe(200);
+    return oferta;
   }
   const fila = (id: string) =>
     e.m.DB.prepare(
@@ -201,7 +203,7 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
     // conserva la suya (cliente y repartidor ven el mismo número).
     expect(f0).toMatchObject({ ref_tasa: 250 });
     await w.e.m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 300 }, w.e.admin.token);
-    await w.hastaEnCamino(id, rep);
+    const oferta = await w.hastaEnCamino(id, rep);
     const comision = Number((await w.fila(id))?.ganancia);
     expect(comision).toBeGreaterThan(0);
     expect(await w.saldo(rep)).toMatchObject({ disponible: 1000 - comision, reservado: comision });
@@ -216,6 +218,8 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
       local: { monto: aCobrar * 250, tasa: 250 },
       sinTasa: false,
     });
+    // C-PRECIO-PROTAGONISTA: la oferta ya decía cuánto cobra en mano, el mismo número del pedido activo.
+    expect(oferta?.enManoCobro).toEqual(estado.datos.activo.enManoCobro);
     const visto2 = await w.e.m.llamar('GET', `/datos/pedidos/${id}`, undefined, w.e.cliente.token);
     expect(visto2.datos.pedido.enMano).toEqual(estado.datos.activo.enManoCobro);
 

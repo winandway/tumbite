@@ -40,7 +40,16 @@ import {
   validarCobro,
   cumpleFiltro,
 } from '@tumbite/compartido';
-import { Boton as BotonBase, C, FOTO_EVIDENCIA, Icono, e, Modal, useSondeo } from '@tumbite/movil';
+import {
+  Boton as BotonBase,
+  C,
+  FOTO_EVIDENCIA,
+  Icono,
+  MontoEnMano,
+  e,
+  Modal,
+  useSondeo,
+} from '@tumbite/movil';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
 
 /** Botón de «Mi ruta»: los secundarios van en la versión para fondo oscuro (C-FLEX-OSCURO). */
@@ -2525,9 +2534,22 @@ function DetalleParada({
             />
             {cobroPendiente ? (
               <View style={{ gap: 8 }} testID="cobro-entrega">
-                <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>
-                  {t.cobrar}: {formatearMonto(cobroPendiente.monto, cobroPendiente.moneda, idioma)}
-                </Text>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: TEXTO }}>{t.cobrar}</Text>
+                {/* C-PRECIO-PROTAGONISTA: cuánto cobra en la entrega, grande, en negrita y en el
+                    verde de «hecho» que se lee sobre el fondo oscuro de logística. */}
+                <MontoEnMano
+                  testID="cobro-entrega-monto"
+                  monto={{
+                    monto: cobroPendiente.monto,
+                    moneda: cobroPendiente.moneda,
+                    local: null,
+                    sinTasa: false,
+                  }}
+                  idioma={idioma === 'en' ? 'en' : 'es'}
+                  quien="conductor"
+                  color={VERDE}
+                  tamano="grande"
+                />
                 <Text style={{ color: GRIS, fontSize: 13 }}>{t.cobrarAyuda}</Text>
                 <Text style={{ fontWeight: '800' }}>{t.metodoCobro}</Text>
                 {METODOS_COBRO.map((m) => (
