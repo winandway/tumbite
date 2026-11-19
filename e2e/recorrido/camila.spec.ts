@@ -63,13 +63,11 @@ const CIUDADES = {
     preguntaDriver: '¿Cómo recargo mi saldo para recibir carreras?',
     fallo: {
       inicial: 'La app no me deja recargar el saldo',
-      respuestas: [
-        'Abrí la app, toqué Ganancias y toqué Recargar',
-        'Que se abriera la pantalla para poner el código',
-        'Sale un mensaje que dice «Intenta otra vez» y no pasa nada',
-        'Me pasa siempre desde ayer',
-      ],
-      aviso: 'Antes de mandarla, tapa cualquier contraseña o número de tarjeta.',
+      donde: 'En Ganancias, cuando toco Recargar. Sale «Intenta otra vez» y no pasa nada',
+      pideDonde: '¿En qué parte te pasó?',
+      lista: 'Captura lista. Se envía con tu mensaje.',
+      cierre: 'Quedó reportado al equipo técnico con el número de caso',
+      aviso: 'Antes de adjuntarla, tapa cualquier contraseña o número de tarjeta.',
       tipo: 'Pagos y cobros',
       aUno: /Camila le va a escribir a \d+ persona/,
       avisada: /Camila avisó a \d+ persona/,
@@ -111,13 +109,11 @@ const CIUDADES = {
     preguntaDriver: 'How do I top up my balance to get trips?',
     fallo: {
       inicial: 'The app won’t let me top up my balance',
-      respuestas: [
-        'I opened the app, tapped Earnings and tapped Top up',
-        'That the screen to enter the code would open',
-        'A message says “Try again” and nothing happens',
-        'It happens every time since yesterday',
-      ],
-      aviso: 'Before sending it, cover any password or card number.',
+      donde: 'In Earnings, when I tap Top up. It says “Try again” and nothing happens',
+      pideDonde: 'Where did it happen?',
+      lista: 'Screenshot ready. It’s sent with your message.',
+      cierre: 'It is reported to the technical team with case number',
+      aviso: 'Before attaching it, cover any password or card number.',
       tipo: 'Payments',
       aUno: /Camila will write to \d+ (person|people)/,
       avisada: /Camila notified \d+ (person|people)/,
@@ -215,8 +211,9 @@ for (const idioma of ['es', 'en'] as const) {
       ),
     ).toBe('app');
 
-    // C-CAMILA-FALLOS: el conductor cuenta un fallo; Camila hace las cuatro preguntas de técnico,
-    // pide la captura (el bloque con sus dos botones) y, sin captura, le da el número F-….
+    // C-CAMILA-REPORTE-CONVERSADO: el conductor cuenta un fallo y Camila pregunta SOLO lo que falta
+    // (dónde: su nombre y su contacto salen de la cuenta). La captura se adjunta al borrador
+    // (miniatura con su equis), no se envía sola, y viaja con lo que escribe. Cierra con el caso F-….
     const responder = async (texto: string) => {
       const camilas = await pr.getByTestId('chat-mensaje-camila').count();
       await pr.getByTestId('chat-soporte-casilla').fill(texto);
@@ -226,23 +223,38 @@ for (const idioma of ['es', 'en'] as const) {
       });
     };
     await responder(C.fallo.inicial);
-    for (const r of C.fallo.respuestas) await responder(r);
+    await expect(pr.getByTestId('chat-mensaje-camila').last()).toContainText(C.fallo.pideDonde);
+    await pr.getByTestId('chat-adjuntar').click();
     const bloque = pr.getByTestId('chat-captura');
     await expect(bloque).toBeVisible({ timeout: 30_000 });
     await expect(bloque.getByTestId('captura-archivos')).toBeVisible();
     await expect(bloque.getByTestId('captura-camara')).toBeVisible();
     await expect(bloque).toContainText(C.fallo.aviso);
+    const elegirArchivo = pr.waitForEvent('filechooser');
+    await bloque.getByTestId('captura-archivos').click();
+    await (await elegirArchivo).setFiles(join(CARPETA, `camila-driver-chat-${idioma}.png`));
+    // Queda en el borrador: nada se envió todavía.
+    const enBorrador = pr.getByTestId('chat-captura-lista');
+    await expect(enBorrador).toBeVisible({ timeout: 30_000 });
+    await expect(enBorrador).toContainText(C.fallo.lista);
+    await expect(pr.getByTestId('chat-captura-quitar')).toBeVisible();
+    await pr.getByTestId('chat-soporte-casilla').fill(C.fallo.donde);
     if (CAPTURAS) {
-      await bloque.scrollIntoViewIfNeeded();
+      await enBorrador.scrollIntoViewIfNeeded();
       await pr.screenshot({ path: join(CARPETA, `camila-driver-captura-${idioma}.png`) });
     }
     const camilasAntes = await pr.getByTestId('chat-mensaje-camila').count();
-    await bloque.getByTestId('captura-no-tengo').click();
+    await pr.getByText(C.textos.enviar, { exact: true }).click();
     await expect(pr.getByTestId('chat-mensaje-camila')).toHaveCount(camilasAntes + 1, {
       timeout: 30_000,
     });
+    await expect(pr.getByTestId('chat-mensaje-camila').last()).toContainText(C.fallo.cierre);
     await expect(pr.getByTestId('chat-mensaje-camila').last()).toContainText(/F-[A-Z0-9]{3,}/);
-    await expect(pr.getByTestId('chat-captura')).toHaveCount(0);
+    // El mensaje del hilo muestra su miniatura, y el borrador quedó limpio.
+    await expect(pr.getByTestId('chat-captura-lista')).toHaveCount(0);
+    await expect(pr.getByTestId('chat-miniatura')).toHaveCount(1);
+    if (CAPTURAS)
+      await pr.screenshot({ path: join(CARPETA, `camila-driver-reporte-${idioma}.png`) });
     const codigoFallo = String(
       /F-[A-Z0-9]{3,}/.exec(
         (await pr.getByTestId('chat-mensaje-camila').last().textContent()) ?? '',
@@ -370,7 +382,18 @@ for (const idioma of ['es', 'en'] as const) {
         .screenshot({ path: join(PRIVADA, `fallos-${idioma}.png`) });
     await listaFallos.getByText(codigoFallo).click();
     const ficha = sp.getByTestId('camila-ficha-fallo');
-    await expect(ficha).toContainText(C.fallo.respuestas[0]!, { timeout: 30_000 });
+    await expect(ficha).toContainText(C.fallo.donde, { timeout: 30_000 });
+    // La ficha del caso: el resumen, a quién avisarle y la conversación completa con su captura.
+    await expect(ficha.getByTestId('camila-resumen').first()).toBeVisible();
+    await expect(ficha.getByTestId('camila-contacto').first()).toBeVisible();
+    await ficha.getByTestId('camila-ver-conversacion').first().click();
+    await expect(ficha.getByTestId('camila-conversacion')).toContainText(C.fallo.inicial, {
+      timeout: 30_000,
+    });
+    if (CAPTURAS) {
+      await ficha.getByTestId('camila-resumen').first().scrollIntoViewIfNeeded();
+      await sp.screenshot({ path: join(PRIVADA, `fallo-caso-${idioma}.png`) });
+    }
     await ficha.getByRole('button', { name: C.textos.marcar }).click();
     await expect(sp.getByTestId('camila-confirmar-arreglo')).toContainText(C.fallo.aUno);
     if (CAPTURAS) {
@@ -487,8 +510,30 @@ for (const idioma of ['es', 'en'] as const) {
     // La dirección larga no se ve en el chat.
     await expect(chat).not.toContainText('divoox.com');
     if (CAPTURAS) await p.screenshot({ path: join(CARPETA, `camila-web-guia-${idioma}.png`) });
-    // C-CAMILA-ADJUNTAR (Richard, 18 nov): la captura se manda desde el mismo chat, con su botón fijo,
-    // sin que Camila la pida. Camila la recibe y sigue con sus preguntas.
+    // C-CAMILA-REPORTE-CONVERSADO (Richard, 19 nov): la captura queda en el borrador del mensaje
+    // (miniatura con su equis) y se envía junto con el texto. Camila anota el problema y el correo
+    // que la persona dio en el mismo mensaje, y pregunta solo lo que falta, una cosa a la vez.
+    const R =
+      idioma === 'es'
+        ? {
+            mensaje: 'No veo el precio del viaje antes de confirmar. Avísame a laura@ejemplo.com',
+            anoto: 'Anoté tu correo, laura@ejemplo.com.',
+            donde: 'En la página de pedir un viaje',
+            nombre: 'Laura',
+            pideNombre: '¿Cómo te llamas?',
+            cierre: 'te aviso al correo laura@ejemplo.com',
+            guion: /esperabas que pasara|justo antes|correo o teléfono/,
+          }
+        : {
+            mensaje:
+              'I can’t see the trip price before I confirm. Let me know at emily@example.com',
+            anoto: 'I noted your email, emily@example.com.',
+            donde: 'On the page to request a ride',
+            nombre: 'Emily',
+            pideNombre: 'What is your name?',
+            cierre: 'I will let you know at emily@example.com',
+            guion: /did you expect|right before|email or phone/,
+          };
     await chat.getByTestId('chat-adjuntar').click();
     const bloque = chat.getByTestId('chat-captura');
     await expect(bloque).toBeVisible();
@@ -496,12 +541,31 @@ for (const idioma of ['es', 'en'] as const) {
     await bloque
       .locator('input[type="file"]:not([capture])')
       .setInputFiles(join(CARPETA, `camila-web-chat-${idioma}.png`));
-    await expect(chat.getByTestId('chat-mensaje-camila').last()).toContainText(
-      idioma === 'es' ? 'Recibí tu captura, gracias.' : 'I got your screenshot, thank you.',
-      { timeout: 30_000 },
-    );
-    await expect(chat.getByTestId('chat-captura')).toHaveCount(0);
+    // No se envió sola: está en el borrador, con su equis.
+    const camilasAntes = await chat.getByTestId('chat-mensaje-camila').count();
+    await expect(chat.getByTestId('chat-captura-lista')).toBeVisible({ timeout: 30_000 });
+    await expect(chat.getByTestId('chat-captura-quitar')).toBeVisible();
+    await expect(chat.getByTestId('chat-mensaje-camila')).toHaveCount(camilasAntes);
+    await chat.getByLabel(T.escribe).fill(R.mensaje);
     if (CAPTURAS) await p.screenshot({ path: join(CARPETA, `camila-web-adjuntada-${idioma}.png`) });
+    const decir = async (texto?: string) => {
+      const antes = await chat.getByTestId('chat-mensaje-camila').count();
+      if (texto) await chat.getByLabel(T.escribe).fill(texto);
+      await chat.getByRole('button', { name: T.enviar, exact: true }).click();
+      await expect(chat.getByTestId('chat-mensaje-camila')).toHaveCount(antes + 1, {
+        timeout: 30_000,
+      });
+      return chat.getByTestId('chat-mensaje-camila').last();
+    };
+    const primera = await decir();
+    await expect(primera).toContainText(R.anoto);
+    await expect(primera).not.toContainText(R.guion);
+    await expect(chat.getByTestId('chat-miniatura')).toHaveCount(1);
+    await expect(await decir(R.donde)).toContainText(R.pideNombre);
+    const cierre = await decir(R.nombre);
+    await expect(cierre).toContainText(/F-[A-Z0-9]{3,}/);
+    await expect(cierre).toContainText(R.cierre);
+    if (CAPTURAS) await p.screenshot({ path: join(CARPETA, `camila-web-reporte-${idioma}.png`) });
     await ctx.close();
   });
 }

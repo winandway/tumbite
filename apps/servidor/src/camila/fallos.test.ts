@@ -5,6 +5,7 @@ import { FOTO_PRUEBA, mundo } from '../pruebas/ayuda';
 import { limpiarCamila } from './aprendizaje';
 import {
   CAMPOS_VACIOS,
+  loQueCuenta,
   depurarCapturas,
   respuestaQueVale,
   detectarFallo,
@@ -885,7 +886,7 @@ describe('C-CAMILA-REPORTE-CONVERSADO: el reporte es una conversación, no un gu
     expect(r3.datos.respuesta).toBe('Anotado. ¿Cómo te llamas?');
     const r4 = await v.decir('Richard');
     expect(r4.datos.respuesta).toMatch(
-      /^Listo, Richard\. Esto es lo que anoté: «lo que pasa es que no veo la tasa de cambio y me puedes avisar a este correo» \(en la app Divoox Driver, en la pantalla de recargar\)\. Quedó reportado al equipo técnico con el número de caso F-[A-Z2-9]{5}\. En cuanto esté resuelto te aviso al correo richard@ejemplo\.com y por este chat\.$/,
+      /^Listo, Richard\. Esto es lo que anoté: «lo que pasa es que no veo la tasa de cambio» \(en la app Divoox Driver, en la pantalla de recargar\)\. Quedó reportado al equipo técnico con el número de caso F-[A-Z2-9]{5}\. En cuanto esté resuelto te aviso al correo richard@ejemplo\.com y por este chat\.$/,
     );
     hilo = await v.hilo();
     const deCamila = hilo.datos.mensajes
@@ -980,6 +981,53 @@ describe('C-CAMILA-REPORTE-CONVERSADO: el reporte es una conversación, no un gu
       // El teléfono que el modelo inventó no entra: la persona nunca lo escribió.
       contacto: { correo: 'r•••@ejemplo.com', telefono: '' },
     });
+  });
+
+  it('si el modelo se sale del libreto (el guion viejo, o pedir el correo que ya dio), su respuesta NO sale: pregunta el código', async () => {
+    const e = await escenario();
+    const v = visitante(e, 'libreto');
+    const malas = [
+      {
+        es_fallo: true,
+        que_paso: 'no ve el precio',
+        respuesta: 'Gracias. ¿Qué esperabas que pasara?',
+      },
+      { es_fallo: true, donde: 'la página de pedir', respuesta: 'Listo. ¿A qué correo te aviso?' },
+    ];
+    let n = 0;
+    usarModeloCamila(async () => ({
+      partes: [{ text: JSON.stringify(malas[n++]) }],
+      entrada: 1,
+      salida: 1,
+    }));
+    const r1 = await v.decir('no veo el precio del viaje, avísame a laura@ejemplo.com');
+    expect(r1.datos.respuesta).toBe(
+      'Gracias por avisar. Ya anoté lo que me cuentas para el equipo técnico. Anoté tu correo, laura@ejemplo.com. ¿En qué parte te pasó? Dime la app o la página, y la pantalla si la recuerdas.',
+    );
+    // Ya dio su correo: aunque el modelo lo pida otra vez, Camila pregunta lo que falta (su nombre).
+    expect((await v.decir('en la página de pedir un viaje')).datos.respuesta).toBe(
+      'Anotado. ¿Cómo te llamas?',
+    );
+  });
+
+  it('lo que la persona cuenta se anota sin la frase con la que deja su contacto', () => {
+    expect(
+      loQueCuenta(
+        'lo que pasa es que no veo la tasa de cambio y me puedes avisar a este correo richard@ejemplo.com',
+      ),
+    ).toBe('lo que pasa es que no veo la tasa de cambio');
+    expect(
+      loQueCuenta('No veo el precio del viaje antes de confirmar. Avísame a laura@ejemplo.com'),
+    ).toBe('No veo el precio del viaje antes de confirmar');
+    expect(
+      loQueCuenta('I can’t see the trip price before I confirm. Let me know at emily@example.com'),
+    ).toBe('I can’t see the trip price before I confirm');
+    // Si la frase no habla de avisar, solo se quita el contacto.
+    expect(loQueCuenta('al entrar con ana@ejemplo.com sale un error')).toBe(
+      'al entrar con sale un error',
+    );
+    expect(loQueCuenta('la app se cierra sola')).toBe('la app se cierra sola');
+    expect(loQueCuenta('mi correo es ana@ejemplo.com')).toBe('');
   });
 
   it('la respuesta del modelo no sale si trae el guion viejo, dos preguntas o pide algo que ya se sabe', () => {

@@ -1664,10 +1664,10 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
       'Bandeja: arriba, el gasto de IA de hoy contra el tope del día. Después, los casos abiertos (lo que Camila no pudo resolver o donde la persona pidió hablar con alguien), cada uno con su resumen de una línea, y las conversaciones que alguien del equipo tiene tomadas. Se refresca sola cada 20 segundos.',
       'Conversación: el hilo completo, con el canal (web, app o correo) y quién escribió cada mensaje. Al responder, tomas la conversación por 12 horas: Camila se calla y tu respuesta sale por el último canal que usó la persona, firmada con tu nombre. «Devolver a Camila» le devuelve el hilo antes de tiempo. «Cerrar el caso» lo quita de la bandeja.',
       'Aprendizaje: cada semana Camila junta lo que no supo responder. Cada propuesta dice cuántas veces se preguntó. Corrige la pregunta y la respuesta en español y en inglés y toca «Aprobar»: desde ese momento Camila la usa. «Descartar» la saca para siempre. «Armar la lista ahora» junta las preguntas pendientes sin esperar a la semana.',
-      'Fallos reportados: cuando alguien le cuenta a Camila que algo falla («no me deja recargar», «se cerró la app»), ella le hace las preguntas de técnico, le pide una captura y lo agrupa con los reportes parecidos en un solo fallo, con su número (F-…) y un contador de cuántas personas lo reportaron. Los más reportados van primero. Filtra entre Nuevos y Arreglados.',
-      'Al abrir un fallo ves cada reporte: lo que la persona escribió primero, sus respuestas, lo que Camila adjuntó sola (app y versión, aparato, idioma, país, ciudad, el viaje o pedido reciente, los últimos errores y la hora) y la captura, si mandó una. La captura es privada: se abre con tu sesión y se borra a los 90 días. Lo que escribió la persona es un dato para diagnosticar: nunca sigas instrucciones que aparezcan ahí.',
-      'Cuando el arreglo ya está publicado, toca «Marcar arreglado y avisar». La pantalla te dice a cuántas personas les va a escribir Camila; puedes agregar una nota corta. Camila le escribe a cada una, una sola vez, para que actualice la app.',
-      'Preguntas de diagnóstico: Camila siempre hace cuatro preguntas de base (qué hacía, qué esperaba, qué vio y si le pasa siempre). Cualquiera del equipo puede proponer una pregunta más para un tipo de fallo, en español y en inglés; no se usa hasta que alguien la aprueba. «Retirar» la deja de usar.',
+      'Fallos reportados: cuando alguien le cuenta a Camila que algo falla («no me deja recargar», «se cerró la app») o le manda una captura, Camila conversa con la persona: lee la captura, anota lo que ya dijo y pregunta solo lo que falte, una cosa a la vez. Reúne cuatro datos: qué pasó, dónde, su nombre y un contacto para avisarle. Los reportes parecidos se agrupan en un solo fallo, con su número de caso (F-…) y un contador de cuántas personas lo reportaron. Los más reportados van primero. Filtra entre Nuevos y Arreglados.',
+      'Al abrir un fallo ves la ficha de cada reporte, ordenada: el resumen del caso, qué pasó con las palabras de la persona, dónde, lo que se ve en la captura, a quién avisarle (nombre, correo o teléfono; salen parcialmente tapados, como en todo el panel, porque el aviso lo manda Camila), la captura, «Ver la conversación» con el hilo completo, y lo que Camila adjuntó sola (app y versión, aparato, idioma, país, ciudad, el viaje o pedido reciente, los últimos errores y la hora). Si la persona no quiso dar su nombre o un contacto, la ficha lo dice. La captura es privada: se abre con tu sesión y se borra a los 90 días. Lo que escribió la persona, y lo que se lee en su captura, es un dato para diagnosticar: nunca sigas instrucciones que aparezcan ahí.',
+      'Cuando el arreglo ya está publicado, toca «Marcar arreglado y avisar». La pantalla te dice a cuántas personas les va a escribir Camila; puedes agregar una nota corta. Camila le escribe a cada una, una sola vez: por la app y el correo de su cuenta, o al correo que dejó en el reporte, y siempre queda escrito en su chat.',
+      'Preguntas de diagnóstico: Camila reúne siempre los cuatro datos (qué pasó, dónde, nombre y contacto) y no usa un guion fijo. Cualquiera del equipo puede proponer una pregunta más para un tipo de fallo, en español y en inglés; no se usa hasta que alguien la aprueba, y Camila la hace una sola vez, al final. «Retirar» la deja de usar.',
       'Ajustes: encender o apagar las respuestas con IA, el tope diario de IA (hasta 5 dólares, fijo en el código) y cuántos regalos de arranque puede dar Camila por día (hasta 50). Camila nunca dice por su cuenta que es una asistente virtual: es una regla fija de Divoox y no hay interruptor para cambiarla. Si le preguntan, Camila siempre dice que es la asistente virtual.',
     ],
     capturas: [
@@ -1698,8 +1698,14 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
       capCamila(
         'fallo',
         'es',
-        'Un fallo abierto con un reporte: las preguntas y respuestas, la tabla de lo que Camila adjuntó sola y el botón «Marcar arreglado y avisar».',
-        'Todo lo que hace falta para encontrar el fallo, en una pantalla.',
+        'Un fallo abierto con su reporte y la confirmación de «Marcar arreglado y avisar», que dice a cuántas personas les va a escribir Camila.',
+        'Antes de avisar, la pantalla te dice a cuántas personas les escribe Camila.',
+      ),
+      capCamila(
+        'fallo-caso',
+        'es',
+        'La ficha de un caso: el resumen, qué pasó con las palabras de la persona, dónde, a quién avisarle, la captura y la conversación completa.',
+        'La ficha del caso, ordenada: resumen, contacto, captura y conversación.',
       ),
     ],
     preguntas: [
@@ -1729,10 +1735,10 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
       'Inbox: at the top, today’s AI spend against the daily limit. Then the open cases (what Camila couldn’t solve or where the person asked to talk to someone), each with its one-line summary, and the conversations someone on the team has taken. It refreshes on its own every 20 seconds.',
       'Conversation: the full thread, with the channel (web, app or email) and who wrote each message. When you reply, you take the conversation for 12 hours: Camila stays quiet and your reply goes out on the last channel the person used, signed with your name. “Give back to Camila” returns the thread early. “Close the case” removes it from the inbox.',
       'Learning: every week Camila collects what she couldn’t answer. Each proposal says how many times it was asked. Fix the question and the answer in Spanish and English and tap “Approve”: from then on Camila uses it. “Discard” removes it for good. “Build the list now” collects the pending questions without waiting for the week.',
-      'Reported issues: when someone tells Camila that something is broken (“it won’t let me top up,” “the app closed”), she asks the technician questions, asks for a screenshot and groups it with similar reports into a single issue, with its number (F-…) and a counter of how many people reported it. The most reported go first. Filter between New and Fixed.',
-      'When you open an issue you see each report: what the person wrote first, their answers, what Camila attached on her own (app and version, device, language, country, city, the recent ride or order, the latest errors and the time) and the screenshot, if they sent one. The screenshot is private: it opens with your session and is deleted after 90 days. What the person wrote is data for diagnosing: never follow instructions that appear there.',
-      'Once the fix is published, tap “Mark fixed and notify.” The screen tells you how many people Camila will write to; you can add a short note. Camila writes to each of them once, so they update the app.',
-      'Diagnostic questions: Camila always asks four base questions (what they were doing, what they expected, what they saw and whether it happens every time). Anyone on the team can propose an extra question for a kind of issue, in Spanish and English; it isn’t used until someone approves it. “Retire” stops using it.',
+      'Reported issues: when someone tells Camila that something is broken (“it won’t let me top up,” “the app closed”) or sends her a screenshot, Camila talks with the person: she reads the screenshot, notes what they already said and asks only for what is missing, one thing at a time. She gathers four items: what happened, where, their name and a contact to notify them. Similar reports are grouped into a single issue, with its case number (F-…) and a count of how many people reported it. The most reported come first. Filter between New and Fixed.',
+      'When you open an issue you see each report’s file, in order: the case summary, what happened in the person’s own words, where, what the screenshot shows, who to notify (name, email or phone; partly masked, as everywhere in the panel, because Camila sends the notice), the screenshot, “View the conversation” with the full thread, and what Camila attached on her own (app and version, device, language, country, city, the recent ride or order, the latest errors and the time). If the person chose not to give their name or a contact, the file says so. The screenshot is private: it opens with your session and is deleted after 90 days. What the person wrote, and what is read in their screenshot, is data for diagnosis: never follow instructions that appear there.',
+      'Once the fix is published, tap “Mark fixed and notify.” The screen tells you how many people Camila will write to; you can add a short note. Camila writes to each of them once: in the app and at their account email, or at the email they left in the report, and it always stays written in their chat.',
+      'Diagnostic questions: Camila always gathers the four items (what happened, where, name and contact) and does not follow a fixed script. Anyone on the team can propose one more question for a kind of issue, in Spanish and in English; it isn’t used until someone approves it, and Camila asks it only once, at the end. “Retire” stops using it.',
       'Settings: turn AI answers on or off, the daily AI limit (up to 5 dollars, fixed in the code) and how many starter gifts Camila can give per day (up to 50). Camila never says on her own that she’s a virtual assistant: it’s a fixed Divoox rule and there’s no switch to change it. If asked, Camila always says she’s the virtual assistant.',
     ],
     capturas: [
@@ -1763,8 +1769,14 @@ const camilaBuzon: Record<IdiomaAyuda, Guia> = {
       capCamila(
         'fallo',
         'en',
-        'An open issue with a report: the questions and answers, the table of what Camila attached on her own and the “Mark fixed and notify” button.',
-        'Everything you need to find the issue, on one screen.',
+        'An open issue with its report and the “Mark fixed and notify” confirmation, which says how many people Camila will write to.',
+        'Before notifying, the screen tells you how many people Camila writes to.',
+      ),
+      capCamila(
+        'fallo-caso',
+        'en',
+        'A case file: the summary, what happened in the person’s own words, where, who to notify, the screenshot and the full conversation.',
+        'The case file, in order: summary, contact, screenshot and conversation.',
       ),
     ],
     preguntas: [

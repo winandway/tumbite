@@ -409,6 +409,33 @@ const sinContacto = (mensaje: string) =>
   mensaje.replace(CORREO, ' ').replace(TELEFONO, ' ').replace(/\s+/g, ' ').trim();
 
 /**
+ * Lo que la persona CUENTA, sin la frase con la que deja su contacto: de «no veo el precio. Avísame a
+ * ana@ejemplo.com» queda «no veo el precio». Solo se corta la frase si de verdad habla de avisar o
+ * de su correo o teléfono; si no, se quita nada más el contacto.
+ */
+const HABLA_DE_CONTACTO =
+  /av[ií]s|correo|e-?mail|escr[ií]b|tel[eé]fono|celular|whatsapp|ll[aá]m|n[uú]mero|contact|reach|let me know|phone/i;
+export function loQueCuenta(mensaje: string) {
+  const marcado = mensaje.replace(CORREO, '§').replace(TELEFONO, '§');
+  const donde = marcado.indexOf('§');
+  if (donde < 0) return mensaje.replace(/\s+/g, ' ').trim();
+  const antes = marcado.slice(0, donde);
+  const corte = Math.max(
+    antes.lastIndexOf('.'),
+    antes.lastIndexOf(','),
+    antes.lastIndexOf(';'),
+    antes.toLowerCase().lastIndexOf(' y '),
+    antes.toLowerCase().lastIndexOf(' and '),
+  );
+  const frase = antes.slice(corte + 1);
+  const queda = HABLA_DE_CONTACTO.test(frase) ? antes.slice(0, Math.max(corte, 0)) : antes;
+  return `${queda} ${marcado.slice(donde + 1).replace(/§/g, ' ')}`
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s,.;]+|[\s,;]+$/g, '')
+    .trim();
+}
+
+/**
  * Lo que se saca de un mensaje CON CÓDIGO, sin IA: el correo siempre; el teléfono si el mensaje habla
  * de uno o si se le acaba de pedir un contacto; el nombre si lo dice («me llamo…») o si contesta a
  * «¿cómo te llamas?»; y el «prefiero no» a lo último que se pidió.
@@ -919,12 +946,13 @@ export async function turnoDeReporte(
 
   // Lo que se le pidió y contestó sin que nadie lo reconociera: vale su mensaje, tal como lo escribió.
   const cuenta = sinContacto(texto);
-  if (c.ultimo === 'que_paso' && !c.que_paso && cuenta.length >= 4)
-    c.que_paso = cuenta.slice(0, 500);
+  const relato = loQueCuenta(texto);
+  if (c.ultimo === 'que_paso' && !c.que_paso && relato.length >= 4)
+    c.que_paso = relato.slice(0, 500);
   if (c.ultimo === 'donde' && !c.donde && cuenta) c.donde = cuenta.slice(0, 200);
   if (c.ultimo === 'extra' && !c.extra_respuesta && texto) c.extra_respuesta = texto.slice(0, 500);
   // Sin IA, el primer mensaje que cuenta algo ES lo que pasó.
-  if (primera && !c.que_paso && cuenta.length >= 12) c.que_paso = cuenta.slice(0, 500);
+  if (primera && !c.que_paso && relato.length >= 12) c.que_paso = relato.slice(0, 500);
 
   const faltan = faltantes(c, tieneCuenta);
   const falta = faltan[0];
