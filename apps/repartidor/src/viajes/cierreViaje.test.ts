@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   type CierreViaje,
   cierreConRespuesta,
+  cierreVigente,
   empezarCierre,
   ofertasEncimaDelCierre,
   pantallaViaje,
@@ -85,12 +86,30 @@ describe('C-CIERRE-VIAJE-QUEDA: el inicio y la pantalla del viaje la usan', () =
     expect(i).toMatch(/<ViajeActivo\s+key=\{viajeMostrado\.id\}/);
     expect(i).toMatch(/cierre=\{/);
     expect(i).toMatch(/scrollLienzo\.current\?\.scrollTo\(\{ y: 0, animated: false \}\)/);
-    // Sobre el cierre, la hoja de la oferta (con su sonido); aceptar suelta el cierre.
+    // Sobre el cierre, la hoja de la oferta (con su sonido).
     const ramaViaje = i.slice(i.indexOf("if (viajeMostrado && vista === 'inicio')"));
     expect(ramaViaje.slice(0, 4000)).toMatch(/ofertasSobreCierre \? hojasDeOferta : null/);
-    expect(i).toMatch(
-      /setCierreViaje\(null\);\s*void accionViaje\(`\/datos\/conductor\/operaciones\/\$\{ofertaViaje\.operacionId\}\/aceptar`\)/,
+  });
+
+  // Segunda devolución del revisor (19 nov 2026): al tocar Aceptar NO se suelta el cierre. Soltarlo
+  // ahí mudaba la hoja de sitio mientras la aceptación iba de camino: la oferta reaparecía, la
+  // alarma volvía a sonar y un segundo toque mandaba otra aceptación. Lo suelta el trabajo nuevo
+  // cuando el sondeo lo trae (otro viaje, o un pedido de comida activo). En ROJO antes del cambio:
+  // `alAceptar` llevaba `setCierreViaje(null)` y `cierreVigente` no miraba el pedido de comida.
+  it('aceptar una oferta sobre el cierre no lo suelta al tocar; lo suelta el trabajo nuevo', () => {
+    const i = leer('Inicio.tsx');
+    const hojas = i.slice(
+      i.indexOf('const hojasDeOferta = ('),
+      i.indexOf('// ───────── Divoox Moto (M4)'),
     );
+    expect(hojas).toContain('alAceptar');
+    expect(hojas).not.toMatch(/setCierreViaje/);
+    expect(i).toMatch(/cierreVigente\(c, v\.operacion, Boolean\(s\.activo\)\)/);
+    const cierre = cierreConRespuesta(empezarCierre(viaje, 'terminado'), null);
+    expect(cierreVigente(cierre, null)).toBe(cierre);
+    expect(cierreVigente(cierre, null, false)).toBe(cierre);
+    expect(cierreVigente(cierre, null, true)).toBeNull();
+    expect(cierreVigente(cierre, { ...viaje, id: 'otro' })).toBeNull();
   });
 
   it('ViajeActivo guarda el cierre ANTES de mandar el paso final, lo suelta si falla, y arranca en el cierre si lo hay', () => {

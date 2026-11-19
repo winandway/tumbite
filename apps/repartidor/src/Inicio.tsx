@@ -760,8 +760,9 @@ export function Inicio() {
         .pedir<{ operacion: ViajeConductor | null }>('GET', '/datos/conductor/operaciones/actual')
         .catch(() => ({ operacion: null }));
       setViajeActivo(v.operacion);
-      // C-CIERRE-VIAJE-QUEDA: un viaje NUEVO en curso suelta el cierre del anterior.
-      setCierreViaje((c) => cierreVigente(c, v.operacion));
+      // C-CIERRE-VIAJE-QUEDA: un viaje NUEVO en curso, o un pedido de comida aceptado, suelta el
+      // cierre del anterior.
+      setCierreViaje((c) => cierreVigente(c, v.operacion, Boolean(s.activo)));
       setOfertasViaje(
         s.conectado && !s.activo && !v.operacion
           ? (
@@ -2403,7 +2404,8 @@ export function Inicio() {
   }
 
   // Las hojas de oferta (viaje y comida): en el inicio y, encima de «Viaje terminado», también ahí.
-  // Aceptar una suelta el cierre del viaje anterior.
+  // Aceptar NO suelta el cierre al tocar (la hoja se mudaría de sitio y la alarma volvería a sonar):
+  // lo suelta el trabajo nuevo cuando el sondeo lo trae (`cierreVigente`).
   const hojasDeOferta = (
     <>
       {ofertaViaje && !ofertaComida ? (
@@ -2414,10 +2416,9 @@ export function Inicio() {
           oferta={ofertaViaje}
           idioma={idioma}
           yo={aqui}
-          alAceptar={() => {
-            setCierreViaje(null);
-            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`);
-          }}
+          alAceptar={() =>
+            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`)
+          }
           alRechazar={() =>
             void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/rechazar`)
           }
@@ -2429,10 +2430,7 @@ export function Inicio() {
           key={ofertaComida.id}
           oferta={ofertaComida}
           idioma={idioma}
-          alAceptar={() => {
-            setCierreViaje(null);
-            void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/aceptar`);
-          }}
+          alAceptar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/aceptar`)}
           alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/rechazar`)}
           alVencer={() => vencer(`comida@${ofertaComida.id}`)}
         />

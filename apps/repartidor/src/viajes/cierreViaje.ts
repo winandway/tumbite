@@ -41,12 +41,15 @@ export function viajeEnPantalla<V extends { id: string }>(
   return enCierre ?? enCurso;
 }
 
-/** El cierre que sigue vigente con el viaje en curso de ahora (otro viaje lo suelta). */
+/** El cierre que sigue vigente con el trabajo de ahora (otro viaje, o un pedido de comida, lo suelta). */
 export function cierreVigente<V extends { id: string }, R>(
   cierre: CierreViaje<V, R> | null,
   enCurso: V | null,
+  /** Hay un pedido de comida activo (aceptado desde la oferta sobre el cierre). */
+  conOtroTrabajo = false,
 ): CierreViaje<V, R> | null {
   if (!cierre) return null;
+  if (conOtroTrabajo) return null;
   if (enCurso && enCurso.id !== cierre.viaje.id) return null;
   return cierre;
 }

@@ -33,6 +33,8 @@ Visto en el emulador de Android con la Driver de pruebas 0.1.45 (commit 073d0696
 
 ### 4. C-CIERRE-VIAJE-QUEDA · «Viaje terminado» se cerraba sola
 
+- **Tercera vuelta (revisor, 19 nov 2026):** al aceptar una oferta encima del cierre NO se suelta el cierre al tocar. Soltarlo ahí mudaba la hoja de la oferta de sitio mientras la aceptación iba de camino: la oferta reaparecía, la alarma volvía a sonar y un segundo toque mandaba otra aceptación. Ahora lo suelta el trabajo nuevo cuando el sondeo lo trae: otro viaje en curso o un pedido de comida activo (`cierreVigente(c, v.operacion, Boolean(s.activo))`). Si la aceptación falla, el cierre sigue ahí. Qué NO tocar: no volver a poner `setCierreViaje(null)` en `alAceptar`.
+
 - **Qué se veía:** la pantalla de cierre (cobro en efectivo y calificación del pasajero, `viaje-cerrado`) duraba unos tres segundos y volvía sola al inicio; si el conductor estaba abajo, aparecía fuera de la vista. Igual con «Envío entregado».
 - **Causa real:** el sondeo del inicio (`cargar` en `apps/repartidor/src/Inicio.tsx`, cada 5 s) pregunta por el viaje en curso; al terminarlo el servidor contesta `null`, el inicio deja de pintar `ViajeActivo` y su estado local (el cierre) se desmonta.
 - **Segunda vuelta (revisor):** el primer arreglo guardaba el viaje al LLEGAR la respuesta del paso final. Si el sondeo traía `null` antes, `ViajeActivo` se desmontaba, la respuesta tardía guardaba el viaje y el inicio montaba otro `ViajeActivo` sin cierre sobre un viaje terminado («llegué / iniciar» con errores, sin salida). Además, mientras se veía el cierre las ofertas nuevas no se pintaban y vencían.
