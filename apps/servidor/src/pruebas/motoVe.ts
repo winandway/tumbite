@@ -47,12 +47,25 @@ export async function subirA(e: EscenarioVe, ruta: string, token: string) {
 }
 
 /** Conductor de Caracas aprobado, con saldo, conectado en la recogida. */
-export async function conductorListoVe(
+export const conductorListoVe = (e: EscenarioVe, saldo: number, nombre = 'Conductor Caracas') =>
+  conductorListoEn(e, { zonaId: CCS.id, origen: ORIGEN_CCS, saldo, nombre });
+
+/**
+ * El mismo conductor aprobado en cualquier ciudad de pruebas (Caracas, Ica…). `saldo` se carga por
+ * el punto de venta en dólares (Venezuela); otro país pasa 0 y recarga por su camino.
+ */
+export async function conductorListoEn(
   e: EscenarioVe,
-  saldo: number,
-  nombre = 'Conductor Caracas',
+  p: {
+    zonaId: string;
+    origen: { lat: number; lng: number; direccion: string };
+    saldo: number;
+    nombre: string;
+  },
 ) {
   const { m, admin } = e;
+  const { saldo, nombre } = p;
+  const ORIGEN = p.origen;
   const rep = await m.cuenta('repartidor', nombre);
   const yo = (metodo: string, ruta: string, cuerpo?: unknown) =>
     m.llamar(metodo, ruta, cuerpo, rep.token);
@@ -61,7 +74,7 @@ export async function conductorListoVe(
   await m.DB.prepare("UPDATE usuarios SET fecha_nacimiento = '1994-05-10' WHERE id = ?")
     .bind(rep.id)
     .run();
-  expect((await yo('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id })).estado).toBe(200);
+  expect((await yo('PUT', '/datos/conductor/ciudad', { zonaId: p.zonaId })).estado).toBe(200);
   const v = await yo('POST', '/datos/conductor/vehiculos', {
     tipo: 'moto',
     marca: 'Bera',
@@ -129,9 +142,9 @@ export async function conductorListoVe(
   }
   await yo('PUT', '/datos/conductor/preferencias', { servicioId: 'moto', activa: true });
   expect(
-    (await yo('POST', '/datos/repartidor/conectar', { conectado: true, ...ORIGEN_CCS })).estado,
+    (await yo('POST', '/datos/repartidor/conectar', { conectado: true, ...ORIGEN })).estado,
   ).toBe(200);
-  await yo('POST', '/datos/repartidor/ubicacion', { lat: ORIGEN_CCS.lat, lng: ORIGEN_CCS.lng });
+  await yo('POST', '/datos/repartidor/ubicacion', { lat: ORIGEN.lat, lng: ORIGEN.lng });
   let n = 0;
   const paso = async (op: string, nombre: string, cuerpo: unknown = {}) => {
     n++;

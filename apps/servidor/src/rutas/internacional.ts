@@ -55,6 +55,7 @@ import {
   anularCodigo,
   canjearCodigo,
   crearRecargaStripe,
+  minimoRecargaTarjeta,
   emitirCodigo,
 } from '../internacional/recargas';
 
@@ -342,6 +343,9 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     transferenciaActiva: cfg.transferenciaRepartidorActiva,
     recargasPuntoVenta: cfg.recargasPuntoVentaActivas,
     recargasStripe: cfg.recargasStripeActivas,
+    // C-RECARGA-TARJETA-MINIMO: lo que la app ofrece y exige al recargar con tarjeta.
+    recargaTarjetaMin: minimoRecargaTarjeta(cfg),
+    recargaTarjetaMax: cfg.recargaMax,
     recargas: results.map((r) => ({
       monto: Number(r.monto),
       canal: String(r.canal),
@@ -368,21 +372,54 @@ internacional.post('/repartidor/recargar', async (c) => {
 
 internacional.post('/repartidor/recargas/stripe', async (c) => {
   const u = exigir(c, 'repartidor');
-  const { monto } = await leerCuerpo(c, z.object({ monto: z.number().int().min(1) }));
+  // `alojada`: la app de conductores no lleva el formulario de tarjeta; abre la página de pago de
+  // Stripe en el navegador y vuelve sola (C-RECARGA-TARJETA-ALOJADA, 19 nov 2026).
+  const { monto, alojada } = await leerCuerpo(
+    c,
+    z.object({ monto: z.number().int().min(1), alojada: z.boolean().default(false) }),
+  );
   exigirPositivo(monto, 'monto');
   const db = base(c);
   const { pais, moneda } = await paisDelRepartidor(db, u.id);
   const stripe = crearStripe(c.env.STRIPE_SECRET_KEY);
   if (!stripe) throw new ErrorDatos('Stripe no está configurado.', undefined, 409);
   const recargaId = await crearRecargaStripe(db, { repartidorId: u.id, pais, moneda, monto });
+  const descripcion = 'Divoox · recarga de saldo para comisiones';
+  const metadata = { recarga_id: recargaId, usuario_id: u.id };
+  if (alojada) {
+    const origen = new URL(c.req.url).origin;
+    const sesion = await stripe.post<{ id: string; url: string }>(
+      '/checkout/sessions',
+      {
+        mode: 'payment',
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: moneda.toLowerCase(),
+              unit_amount: monto,
+              product_data: { name: descripcion },
+            },
+          },
+        ],
+        // El aviso `payment_intent.succeeded` trae estos datos y acredita la recarga una sola vez.
+        // (La sesión no lleva metadata: su aviso `checkout.session.completed` es de pedidos.)
+        payment_intent_data: { description: descripcion, metadata },
+        success_url: `${origen}/driver/top-up?result=paid`,
+        cancel_url: `${origen}/driver/top-up?result=cancelled`,
+      },
+      `recarga-alojada-${recargaId}`,
+    );
+    return c.json({ recargaId, url: sesion.url }, 201);
+  }
   const intento = await stripe.post<{ id: string; client_secret: string }>(
     '/payment_intents',
     {
       amount: monto,
       currency: moneda.toLowerCase(),
       automatic_payment_methods: { enabled: true },
-      description: 'Divoox · recarga de saldo para comisiones',
-      metadata: { recarga_id: recargaId, usuario_id: u.id },
+      description: descripcion,
+      metadata,
     },
     `recarga-${recargaId}`,
   );

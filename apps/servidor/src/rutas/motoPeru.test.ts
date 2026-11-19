@@ -2,6 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { CIUDAD_ICA as ICA, TARIFA_MOTO_PERU } from '@tumbite/compartido';
 import { mundo } from '../pruebas/ayuda';
 import { cuentasCobroViejas, rehacerCuentasCobro } from '../esquemaCuentasCobro';
+import { esPaisConnect } from '../connectPaises';
+import {
+  RECARGA_TARJETA_MIN_PE,
+  abrirIca as abrirIcaPe,
+  aprobarComisionPe,
+  cargarCuentaCelularPe,
+  conductorListoPe,
+  encenderRecargaTarjetaPe,
+  escenarioPe,
+  pedirEnIca,
+  recargarConTarjetaPe,
+} from '../pruebas/motoPe';
 
 /**
  * C-PERFIL-PERU y C-PAGO-A-CELULAR (19 nov 2026) — Perú. Ica se abre con el mismo paso del panel que
@@ -172,5 +184,150 @@ describe('C-PAGO-A-CELULAR: las cuentas de cobro aceptan Yape y Plin', () => {
     )
       .bind(rep.id)
       .run();
+  });
+});
+
+const saldoDe = async (c: { yo: (m: string, r: string) => Promise<{ datos: any }> }) =>
+  (await c.yo('GET', '/datos/repartidor/saldo-prepago')).datos;
+
+describe('C-PAGO-A-CELULAR de punta a punta: viaje con Yape en Ica y comisión del saldo en soles', () => {
+  it('el pasajero ve el Yape del conductor, el conductor confirma y el 8 % sale de su saldo en soles', async () => {
+    const e = await escenarioPe();
+    await aprobarComisionPe(e);
+    expect((await abrirIcaPe(e)).estado).toBe(201);
+    const c = await conductorListoPe(e, 5000);
+    const antes = await saldoDe(c);
+    expect(antes.moneda).toBe('PEN');
+    expect(antes.disponible).toBe(5000);
+    expect(antes.carrerasAlcanzan).toBe(Math.floor(5000 / antes.comisionTipica));
+    await cargarCuentaCelularPe(c, 'yape');
+    const v = await pedirEnIca(e, 'yape');
+    const comision = Math.round((v.total * 8) / 100);
+    expect((await c.paso(v.id, 'aceptar')).estado).toBe(200);
+    expect((await saldoDe(c)).reservado).toBe(comision);
+    const vista = await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token);
+    expect(vista.datos.viaje.metodoPago).toBe('yape');
+    expect(vista.datos.viaje.pagoMovil.datos).toEqual({
+      banco: '',
+      titular: 'Titular de ejemplo',
+      identificador: '900 000 000',
+    });
+    // Antes de que el pasajero suba, no se confirma nada.
+    expect((await c.paso(v.id, 'pago-movil', { recibido: true })).estado).toBe(409);
+    expect((await c.paso(v.id, 'llegue')).estado).toBe(200);
+    expect((await c.paso(v.id, 'iniciar', { pin: vista.datos.viaje.pin })).estado).toBe(200);
+    const ok = await c.paso(v.id, 'pago-movil', { recibido: true, referencia: '123456' });
+    expect(ok.estado, JSON.stringify(ok.datos)).toBe(200);
+    expect(ok.datos.estado).toBe('recibido');
+    expect((await c.paso(v.id, 'terminar')).estado).toBe(200);
+    const despues = await saldoDe(c);
+    expect(despues.disponible).toBe(5000 - comision);
+    expect(despues.reservado).toBe(0);
+    const divoox = await e.m.DB.prepare(
+      "SELECT COALESCE(SUM(monto), 0) AS s FROM libro WHERE bolsillo = 'comisiones' AND pais = 'PE' AND moneda = 'PEN'",
+    ).first<{ s: number }>();
+    expect(divoox?.s).toBe(comision);
+    // Nada de Perú quedó anotado en dólares.
+    const enDolares = await e.m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM libro WHERE pais = 'PE' AND moneda <> 'PEN'",
+    ).first<{ n: number }>();
+    expect(enDolares?.n).toBe(0);
+  });
+
+  it('un viaje con Plin solo va al conductor que cargó su Plin; y «no me llegó» abre un caso en soles', async () => {
+    const e = await escenarioPe();
+    await aprobarComisionPe(e);
+    await abrirIcaPe(e);
+    // Este conductor solo tiene Yape: un viaje con Plin no le llega.
+    const soloYape = await conductorListoPe(e, 5000, 'Conductor con Yape');
+    await cargarCuentaCelularPe(soloYape, 'yape');
+    const v = await pedirEnIca(e, 'plin');
+    const ofertas = await soloYape.yo('GET', '/datos/conductor/operaciones/ofertas');
+    expect(ofertas.datos.ofertas.some((o: { operacionId: string }) => o.operacionId === v.id)).toBe(
+      false,
+    );
+    const conPlin = await conductorListoPe(e, 5000, 'Conductor con Plin');
+    await cargarCuentaCelularPe(conPlin, 'plin');
+    await e.m.DB.prepare("UPDATE ofertas_operacion SET estado = 'vencida' WHERE operacion_id = ?")
+      .bind(v.id)
+      .run();
+    await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
+    expect((await conPlin.paso(v.id, 'aceptar')).estado).toBe(200);
+    expect((await conPlin.paso(v.id, 'llegue')).estado).toBe(200);
+    const pin = (await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token)).datos
+      .viaje.pin;
+    expect((await conPlin.paso(v.id, 'iniciar', { pin })).estado).toBe(200);
+    const no = await conPlin.paso(v.id, 'pago-movil', { recibido: false });
+    expect(no.estado, JSON.stringify(no.datos)).toBe(200);
+    const caso = await e.m.DB.prepare(
+      "SELECT tipo, monto_esperado, moneda, pais FROM incidencias_dinero WHERE referencia = 'pago-movil-viaje:' || ?",
+    )
+      .bind(v.id)
+      .first<{ tipo: string; monto_esperado: number; moneda: string; pais: string }>();
+    expect(caso).toEqual({
+      tipo: 'pago_movil_viaje',
+      monto_esperado: v.total,
+      moneda: 'PEN',
+      pais: 'PE',
+    });
+  });
+});
+
+describe('C-RECARGA-TARJETA-MINIMO y C-RECARGA-TARJETA-ALOJADA: el conductor de Ica recarga con tarjeta en soles', () => {
+  it('nace apagada; encendida cobra en soles por la página de pago y se acredita una sola vez', async () => {
+    const e = await escenarioPe();
+    await aprobarComisionPe(e);
+    await abrirIcaPe(e);
+    const c = await conductorListoPe(e, 0);
+    // Apagada de fábrica.
+    const apagada = await c.yo('POST', '/datos/repartidor/recargas/stripe', {
+      monto: 3000,
+      alojada: true,
+    });
+    expect(apagada.estado).toBe(409);
+    expect((await encenderRecargaTarjetaPe(e)).estado).toBe(200);
+    const s = await saldoDe(c);
+    expect(s.recargasStripe).toBe(true);
+    expect(s.recargaTarjetaMin).toBe(RECARGA_TARJETA_MIN_PE);
+    // Por debajo del mínimo con tarjeta no se abre ningún cobro (la cuota fija se la comería).
+    const chica = await c.yo('POST', '/datos/repartidor/recargas/stripe', {
+      monto: 1000,
+      alojada: true,
+    });
+    expect(chica.estado).toBe(409);
+    e.aStripe.length = 0;
+    const r = await recargarConTarjetaPe(e, c, 3000);
+    expect(r.estado, JSON.stringify(r.datos)).toBe(201);
+    expect(r.datos.url).toMatch(/^https:\/\/checkout\.stripe\.com\//);
+    const enviado = e.aStripe.find((x) => x.url.endsWith('/v1/checkout/sessions'));
+    expect(enviado?.cuerpo).toContain('line_items[0][price_data][currency]=pen');
+    expect(enviado?.cuerpo).toContain('line_items[0][price_data][unit_amount]=3000');
+    expect(enviado?.cuerpo).toContain(
+      `payment_intent_data[metadata][recarga_id]=${r.datos.recargaId}`,
+    );
+    expect((await saldoDe(c)).disponible).toBe(3000);
+    // El mismo aviso otra vez no acredita dos veces.
+    const { acreditarRecargaStripe } = await import('../internacional/recargas');
+    await acreditarRecargaStripe(e.m.DB, {
+      id: 'pi_repetido',
+      amount_received: 3000,
+      currency: 'pen',
+      metadata: { recarga_id: r.datos.recargaId },
+    });
+    expect((await saldoDe(c)).disponible).toBe(3000);
+  });
+
+  it('sin la comisión aprobada, la recarga con tarjeta de Perú no se puede encender', async () => {
+    const e = await escenarioPe();
+    const r = await encenderRecargaTarjetaPe(e);
+    expect(r.estado).toBe(409);
+  });
+});
+
+describe('C-CONNECT-PAIS: Perú no usa Stripe Connect', () => {
+  it('Stripe no paga a bancos de Perú por Connect: el país no está y nunca se llama a Stripe', () => {
+    // Leído el 19 nov 2026 en docs.stripe.com/connect/cross-border-payouts (ficha de Ica, sección 3.3).
+    expect(esPaisConnect('PE')).toBe(false);
+    expect(esPaisConnect('US')).toBe(true);
   });
 });

@@ -37,6 +37,12 @@ export const esquemaConfigPais = z.object({
   /** Deuda del cliente a partir de la cual no puede pedir (0 = cualquier deuda bloquea). */
   umbralDeudaCliente: z.number().int().min(0),
   recargaMin: z.number().int().min(0),
+  /**
+   * C-RECARGA-TARJETA-MINIMO (19 nov 2026): mínimo propio de la recarga con tarjeta, en la unidad
+   * menor de la moneda del país. Stripe cobra una cuota fija por cobro (30 centavos de dólar), que
+   * se come una recarga chica. null = el mínimo general (`recargaMin`).
+   */
+  recargaStripeMin: z.number().int().min(1).nullable().optional(),
   recargaMax: z.number().int().min(1),
   recargasSemanaMax: z.number().int().min(1).max(200),
   /** Lo que gana el punto de venta por cada recarga vendida, en puntos base. */
@@ -104,6 +110,7 @@ export function configPaisDeFabrica(pais: string): ConfigPais {
     topeEfectivoDiario: null,
     umbralDeudaCliente: 0,
     recargaMin: 1,
+    recargaStripeMin: null,
     recargaMax: 1_000_000_000,
     recargasSemanaMax: 20,
     comisionPuntoPb: 0,
@@ -144,11 +151,11 @@ export async function guardarConfigPais(
   const falta = paisIncompleto(pais, nueva);
   // C-RECARGAS-PREPAGO (13 nov 2026): las recargas en puntos de venta solo pagan comisiones de
   // conductores; donde rige el prepago aprobado se pueden encender sin las tarifas de comida.
+  // C-RECARGA-TARJETA-MINIMO (19 nov 2026, Perú): lo mismo vale para la recarga con tarjeta.
   const soloRecargas =
-    nueva.recargasPuntoVentaActivas &&
+    (nueva.recargasPuntoVentaActivas || nueva.recargasStripeActivas) &&
     !nueva.efectivoActivo &&
-    !nueva.transferenciaRepartidorActiva &&
-    !nueva.recargasStripeActivas;
+    !nueva.transferenciaRepartidorActiva;
   const conPrepago =
     soloRecargas &&
     Boolean(

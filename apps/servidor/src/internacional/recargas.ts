@@ -243,7 +243,13 @@ export async function canjearCodigo(
   return { recargaId, monto: c.monto };
 }
 
-/** Recarga digital (Stripe, EE.UU.): queda pendiente hasta que Stripe confirme el cobro por webhook. */
+/** El mínimo de la recarga con tarjeta de un país: el propio si está escrito, o el general. */
+export const minimoRecargaTarjeta = (cfg: {
+  recargaMin: number;
+  recargaStripeMin?: number | null;
+}) => Math.max(cfg.recargaMin, cfg.recargaStripeMin ?? 0);
+
+/** Recarga digital (Stripe): queda pendiente hasta que Stripe confirme el cobro por webhook. */
 export async function crearRecargaStripe(
   db: D1Database,
   p: { repartidorId: string; pais: string; moneda: string; monto: number },
@@ -251,7 +257,7 @@ export async function crearRecargaStripe(
   const cfg = await leerConfigPais(db, p.pais);
   if (!cfg.recargasStripeActivas)
     throw new ErrorDatos('Las recargas con tarjeta no están activas en este país.', undefined, 409);
-  if (p.monto < cfg.recargaMin || p.monto > cfg.recargaMax)
+  if (p.monto < minimoRecargaTarjeta(cfg) || p.monto > cfg.recargaMax)
     throw new ErrorDatos('La recarga está fuera de los límites permitidos.', 'monto', 409);
   // El mismo tope semanal que los códigos (también cuenta las pendientes: no se abren cobros sin fin).
   if ((await recargasDeLaSemana(db, p.repartidorId)) >= cfg.recargasSemanaMax)
