@@ -5521,7 +5521,6 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 
 - El chat de Driver saluda aunque el hilo no haya cargado por falta de señal (el aviso de conexión va abajo). Durante la espera de «Camila está escribiendo», el botón de enviar dice «Un momento…» en la web y en Driver en vez de quedar bloqueado sin explicación. Candados: `apps/repartidor/src/soporte/soporte.test.ts` y `apps/panel/src/sitio/ChatSoporte.test.tsx`.
 
-
 ## C-FRANJA-SOLO-EN-PRUEBAS (18 nov 2026) — todos los países
 
 - **Qué se rompió y cómo se veía:** Divoox 46 y Divoox Driver 42, publicadas en Google Play, pintaban la franja «PRUEBAS · App de pruebas: no es la de la tienda» en la pantalla de entrar de todo el mundo. La app hablaba con producción; solo la franja estaba mal. Richard lo vio en dos teléfonos.
@@ -5529,3 +5528,11 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Qué se hizo:** `packages/movil/src/servidor.ts` guarda la dirección y no importa nada más de la app; la franja se decide al pintar (`esEstaAppDePruebas()`); `esAppDePruebas` sin dirección devuelve «no».
 - **Cómo se comprueba:** `candadoFranjaSoloEnPruebas.test.ts`, y sobre todo `bash scripts/tiendas/comprobar-franja.sh <cliente|repartidor> <paquete.aab>`: instala el paquete de producción en el emulador, abre la pantalla de entrar y falla si aparece la franja (visto en rojo con la 46). **Es obligatorio antes de cada subida a Play.**
 - **Qué NO tocar:** no agregar importaciones a `servidor.ts`; no volver a calcular nada con la dirección del servidor a nivel de archivo.
+
+## C-CAMILA-FALLOS · las dos columnas nuevas de `camila_gasto` van en la lista de migraciones (18 nov 2026) — todos los países
+
+- **Qué pasó:** al subir los reportes de fallo, el semáforo frenó la publicación: en el sitio de pruebas la salud daba 503 con `esquema: error`. Producción no llegó a cambiar.
+- **Causa real:** `camila_gasto` ya existía y la rama le agregó `capturas` y `resumen_fallos` solo en `schema.sql`, que no agrega columnas a tablas existentes. Las pruebas locales nacen con la base nueva y no lo vieron.
+- **Arreglo:** las dos columnas están en `COLUMNAS` de `apps/servidor/src/esquema.ts`.
+- **Candado:** `apps/servidor/src/esquemaCompleto.test.ts`, prueba C-CAMILA-FALLOS (vista en rojo el 18 nov quitando las dos líneas).
+- **Regla de siempre:** columna nueva en tabla que ya existe = una línea en `COLUMNAS`, en el mismo commit.

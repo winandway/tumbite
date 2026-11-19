@@ -35,6 +35,21 @@ describe('el esquema completo existe en la base', () => {
     expect(cols.results.map((c) => c.name)).toEqual(expect.arrayContaining(['modo', 'nota']));
   });
 
+  it('C-CAMILA-FALLOS: la tabla de gasto de Camila que ya existía recibe sola las columnas de capturas y del resumen de fallos', async () => {
+    const m = mundo();
+    await m.DB.prepare('ALTER TABLE camila_gasto DROP COLUMN capturas').run();
+    await m.DB.prepare('ALTER TABLE camila_gasto DROP COLUMN resumen_fallos').run();
+    reiniciarEsquema();
+    const salud = await m.llamar('GET', '/datos/salud');
+    expect(salud.datos.piezas.esquema).toBe('ok');
+    const cols = await m.DB.prepare("SELECT name FROM pragma_table_info('camila_gasto')").all<{
+      name: string;
+    }>();
+    expect(cols.results.map((c) => c.name)).toEqual(
+      expect.arrayContaining(['capturas', 'resumen_fallos']),
+    );
+  });
+
   it('si falta una columna del esquema que nadie agrega, la salud lo dice en rojo', async () => {
     const m = mundo();
     await m.DB.prepare('DROP TABLE avisos_pedido').run();
