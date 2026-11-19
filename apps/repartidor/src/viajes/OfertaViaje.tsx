@@ -78,6 +78,8 @@ export function OfertaViajeModal({
   alVencer: () => void;
 }) {
   const textos = enIdioma(TEXTOS_VIAJE, idioma);
+  // C-OFERTA-SIN-COBRO: el regalo cubre todo el viaje (nada que cobrar en mano).
+  const sinCobro = oferta.metodoPago !== 'tarjeta' && oferta.enMano?.monto === 0;
   // C-ENVIO-TEXTOS: la oferta de un envío dice «envío de paquete», no «viaje».
   const t =
     oferta.servicioId === 'envios' ? { ...textos.oferta, ...textos.ofertaEnvio } : textos.oferta;
@@ -258,7 +260,7 @@ export function OfertaViajeModal({
           style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
         >
           <Text style={{ fontWeight: '800', color: C.exito }}>
-            {t.regaloOferta.replace(
+            {(sinCobro ? t.regaloOfertaTodo : t.regaloOferta).replace(
               '{monto}',
               formatearMonto(oferta.regaloDivoox ?? 0, oferta.moneda ?? 'USD', idioma),
             )}

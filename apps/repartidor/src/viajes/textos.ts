@@ -22,6 +22,7 @@ export const TEXTOS_VIAJE = {
       enEfectivo: 'Cobras en efectivo al terminar',
       // C-OFERTA-SIN-COBRO: el regalo de Divoox cubre todo el viaje.
       noCobrasEnMano: 'No cobras nada en mano: este viaje lo paga Divoox.',
+      regaloOfertaTodo: 'Regalo de Divoox para el pasajero: Divoox te paga {monto}.',
       // C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares.
       cobraEnMano: 'Cobras en mano',
       // C-CUPON-DIVOOX: el pasajero trae un regalo que paga Divoox.
@@ -169,6 +170,7 @@ export const TEXTOS_VIAJE = {
       minutos: 'min',
       enEfectivo: 'You collect cash at the end',
       noCobrasEnMano: 'Nothing to collect in hand: Divoox pays for this ride.',
+      regaloOfertaTodo: 'Divoox gift for the rider: Divoox pays you {monto}.',
       cobraEnMano: 'You collect in hand',
       regaloOferta:
         'With a Divoox gift: the rider pays less in person and Divoox pays you {monto}.',

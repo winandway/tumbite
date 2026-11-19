@@ -349,16 +349,26 @@ export function ViajeActivo({
             testID="viaje-cobra-efectivo"
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
           >
-            <MontoEnMano
-              testID="viaje-cobra-monto"
-              monto={cobroEnMano(true)}
-              idioma={idiomaCorto}
-              quien="conductor"
-              etiqueta={etiquetaCobro}
-              color={C.exito}
-              tamano="grande"
-              copiable={viaje.metodo_pago === 'pago_movil'}
-            />
+            {(cobroEnMano(true)?.monto ?? 0) > 0 ? (
+              <MontoEnMano
+                testID="viaje-cobra-monto"
+                monto={cobroEnMano(true)}
+                idioma={idiomaCorto}
+                quien="conductor"
+                etiqueta={etiquetaCobro}
+                color={C.exito}
+                tamano="grande"
+                copiable={viaje.metodo_pago === 'pago_movil'}
+              />
+            ) : (
+              // C-OFERTA-SIN-COBRO: el regalo cubrió todo; se dice en palabras, sin un cero grande.
+              <Text
+                testID="viaje-cobra-sin-cobro"
+                style={{ fontSize: 16, fontWeight: '800', color: C.exito }}
+              >
+                {t.sinCobroEnMano}
+              </Text>
+            )}
             {lineaRegalo}
           </View>
         ) : null}

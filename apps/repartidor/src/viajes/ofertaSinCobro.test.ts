@@ -21,6 +21,20 @@ describe('C-OFERTA-SIN-COBRO · con el viaje cubierto por el regalo no se pinta 
     expect(v).toMatch(/\(cobroEnMano\(false\)\?\.monto \?\? 0\) > 0 \?/);
     expect(v).toMatch(/testID="viaje-sin-cobro"/);
   });
+  // Tercera mirada (19 nov 2026): el cierre «Viaje terminado» seguía pintando «Cobra al pasajero
+  // $0.00 / Bs. 0,00», y la oferta decía a la vez «no cobras nada» y «el pasajero paga menos en
+  // mano». En ROJO antes del cambio.
+  it('el cierre del viaje tampoco pinta un cero grande', () => {
+    const v = readFileSync(join(import.meta.dirname, 'ViajeActivo.tsx'), 'utf8');
+    expect(v).toMatch(/\(cobroEnMano\(true\)\?\.monto \?\? 0\) > 0 \?/);
+    expect(v).toMatch(/testID="viaje-cobra-sin-cobro"/);
+  });
+  it('con todo cubierto, la línea del regalo de la oferta no habla de pagar menos en mano', () => {
+    expect(s).toMatch(/sinCobro \? t\.regaloOfertaTodo : t\.regaloOferta/);
+    expect(TEXTOS_VIAJE.es.oferta.regaloOfertaTodo).toMatch(/Divoox te paga \{monto\}/);
+    expect(TEXTOS_VIAJE.es.oferta.regaloOfertaTodo).not.toMatch(/menos en mano/);
+    expect(TEXTOS_VIAJE.en.oferta.regaloOfertaTodo).toMatch(/Divoox pays you \{monto\}/);
+  });
   it('el texto existe en español y en inglés', () => {
     expect(TEXTOS_VIAJE.es.oferta.noCobrasEnMano).toMatch(/No cobras nada en mano/);
     expect(TEXTOS_VIAJE.en.oferta.noCobrasEnMano).toMatch(/Nothing to collect/);
