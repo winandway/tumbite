@@ -167,10 +167,11 @@ const YOUTUBE = /^[A-Za-z0-9_-]{11}$/;
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 /**
  * C-DOCS-SIN-DATOS-REALES: lo que se escribe de un video (título, descripción y lo que dice) es
- * neutro de lugar y sin nombres de equipos reales, igual que las capturas.
+ * neutro de lugar, igual que las capturas. Los nombres de equipos reales los veta, en todo el
+ * repositorio, la lista de `sinDatosReales.test.ts` (este archivo incluido).
  */
 const CON_LUGAR =
-  /\b(el vigia|tucani|novi|miami|tampa|orlando|ocala|caracas|merida|bogota|detroit|michigan|florida|jehova|jireh)\b/;
+  /\b(el vigia|tucani|novi|miami|tampa|orlando|ocala|caracas|merida|bogota|detroit|michigan|florida)\b/;
 const llano = (t: string) =>
   t
     .normalize('NFD')
@@ -202,7 +203,7 @@ export function fallasDeVideos(videos: readonly VideoDocs[], guias: ReadonlySet<
         mal(`${idioma}: la portada va en /docs/video-${v.id}-${idioma}.webp`);
       if (x.texto.join(' ').trim().length < 40) mal(`${idioma}: falta el texto de lo que dice`);
       if (CON_LUGAR.test(llano([x.titulo, x.descripcion, ...x.texto].join(' '))))
-        mal(`${idioma}: nombra una ciudad o un equipo real (los videos de Docs son neutros)`);
+        mal(`${idioma}: nombra una ciudad (los videos de Docs son neutros de lugar)`);
       if (x.youtube !== undefined && !YOUTUBE.test(x.youtube))
         mal(`${idioma}: el identificador de YouTube tiene 11 caracteres`);
       if (x.subtitulos !== undefined && x.subtitulos !== `/docs/video-${v.id}-${idioma}.vtt`)

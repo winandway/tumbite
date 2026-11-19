@@ -98,14 +98,15 @@ describe('C-DOCS-VIDEO · el validador atrapa un video mal puesto', () => {
     );
   });
 
-  it('un video que nombra una ciudad o un equipo real no entra (C-DOCS-SIN-DATOS-REALES)', () => {
-    for (const texto of [
-      'Ya estamos en El Vigía con las motos.',
-      'El equipo Jehová Jireh te lleva.',
-    ])
-      expect(con({ es: { ...MUESTRA.es, texto: [texto, ...MUESTRA.es.texto] } }).join()).toContain(
-        'neutros',
-      );
+  it('un video que nombra una ciudad no entra (C-DOCS-SIN-DATOS-REALES)', () => {
+    expect(
+      con({
+        es: {
+          ...MUESTRA.es,
+          texto: ['Ya estamos en El Vigía con las motos.', ...MUESTRA.es.texto],
+        },
+      }).join(),
+    ).toContain('neutros');
     expect(
       con({ en: { ...MUESTRA.en, descripcion: 'Rides in Novi, Michigan.' } }).join(),
     ).toContain('neutros');
