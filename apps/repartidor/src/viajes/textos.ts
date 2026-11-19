@@ -68,6 +68,10 @@ export const TEXTOS_VIAJE = {
       llevandoPaquete: 'Llevando el paquete a',
       pasajero: 'tu pasajero',
       navegar: 'Abrir navegación',
+      // C-MAPA-VIAJE-DRIVER: los puntos del mapa del viaje y de la oferta.
+      mapaYo: 'Tú',
+      mapaRecogida: 'Recogida',
+      mapaDestino: 'Destino',
       llegue: 'Llegué',
       // C-VIAJE-PARADAS (14 nov 2026).
       irAParada: (n: number, de: number) => `Ve a la parada ${n} de ${de}`,
@@ -193,6 +197,9 @@ export const TEXTOS_VIAJE = {
       llevandoPaquete: 'Taking the package to',
       pasajero: 'your rider',
       navegar: 'Open navigation',
+      mapaYo: 'You',
+      mapaRecogida: 'Pickup',
+      mapaDestino: 'Drop-off',
       llegue: 'I’ve arrived',
       // C-VIAJE-PARADAS (Nov 14, 2026).
       irAParada: (n: number, de: number) => `Go to stop ${n} of ${de}`,

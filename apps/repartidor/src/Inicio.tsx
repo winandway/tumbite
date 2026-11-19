@@ -2395,6 +2395,7 @@ export function Inicio() {
           idioma={idioma}
           viaje={viajeActivo}
           alCambiar={() => void cargar()}
+          yo={aqui}
         />
       </View>,
     );
@@ -3330,6 +3331,7 @@ export function Inicio() {
             key={claveOferta(ofertaViaje)}
             oferta={ofertaViaje}
             idioma={idioma}
+            yo={aqui}
             alAceptar={() =>
               void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`)
             }

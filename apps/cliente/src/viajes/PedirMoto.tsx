@@ -22,6 +22,7 @@ import {
   textosPuntoExacto,
   useBorrador,
 } from '@tumbite/compartido';
+import { MapaEntrega } from '../MapaEntrega';
 import {
   AvisoBorrador,
   C,
@@ -801,6 +802,24 @@ export function PedirMoto({
           />
         )}
 
+        {cotizacion && recogida && destino ? (
+          // C-MAPA-PRECIO-PEDIR: como Uber, DiDi e inDrive, el recorrido en un mapa pequeño junto al
+          // precio. El precio no lo espera: el mapa se dibuja solo, aparte.
+          <View testID="moto-precio-mapa">
+            <MapaEntrega
+              restaurante={recogida}
+              casa={destino}
+              repartidor={null}
+              etiquetas={{
+                restaurante: t.etiquetaRecogida,
+                casa: t.etiquetaDestino,
+                repartidor: t.etiquetaRecogida,
+              }}
+              alto={160}
+              bajoDemanda
+            />
+          </View>
+        ) : null}
         {cotizacion ? (
           <View
             testID="moto-precio"

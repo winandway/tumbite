@@ -4062,6 +4062,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `GET /datos/kyc` trae `antecedentesPorProveedor` según el perfil del país; Driver (`Verificacion.tsx`) esconde el bloque si es `false` (una app vieja sin el campo lo sigue mostrando).
 - **Prueba:** `motoVenezuelaRevision.test.ts` (C-ANTECEDENTES-POR-PAIS), vista en rojo.
 
+## C-MAPA-VIAJE-DRIVER y C-MAPA-PRECIO-PEDIR · Mapa en la oferta, el viaje de Driver y el precio antes de pedir (18 nov 2026) — todos los países
+
+- **Qué pidió el dueño:** como las apps de conductores, la oferta y la pantalla del viaje de Driver (moto, carro y envíos; comida ya lo tenía) llevan mapa con la recogida, el destino y la posición del conductor, sin perder «Abrir navegación».
+- **Cómo:** la pieza única `apps/repartidor/src/piezas/Mapa.tsx` (y su `.web`). `ViajeActivo` la pone debajo de la tarjeta del precio (C-PRECIO-PROTAGONISTA: el precio sigue primero), alto 200; `OfertaViajeModal`, alto 150, con `origenPunto`/`destinoPunto` que ya mandaba el servidor. `Inicio` les pasa `yo={aqui}`. La cámara se mueve solo cuando cambia un punto o al llegar (C-MAPA-ENCUADRE, C-MAPA-LLEGADA); los marcadores se congelan (C-MARCADOR-ANDROID): nada repinta cada segundo.
+- **Cliente, precio antes de pedir (Uber, DiDi e inDrive lo muestran):** `MapaEntrega` pequeño (alto 160) con la recogida, el destino y la ruta, encima de la tarjeta del precio. El precio no lo espera. En la web el mapa de Google se carga al tocar «Ver en el mapa» (`bajoDemanda`, C-MAPA-GOOGLE-WEB: mirar no gasta cargas).
+- **Prueba:** `packages/movil/src/candadoMapaViajeDriver.test.ts` (4). En pantalla: las capturas del robot pasan `scripts/robot/mapa-con-mosaicos.mjs`.
+
 ## C-ROBOT-MAPA-CON-MOSAICOS · Ningún robot da por buena una pantalla con el mapa liso (18 nov 2026) — todos los países
 
 - **Qué pasaba:** capturas del robot con el mapa gris o beige sin calles (mosaicos sin cargar) pasaban como buenas.

@@ -38,6 +38,7 @@ const deArchivosEntrega = async () => {
   return r.canceled ? null : (r.assets[0] ?? null);
 };
 import { TEXTOS_VIAJE } from './textos';
+import { Mapa } from '../piezas/Mapa';
 import { textoOfertaConfianza } from './agendaFijos';
 
 type Api = {
@@ -118,11 +119,14 @@ export function ViajeActivo({
   idioma,
   viaje,
   alCambiar,
+  yo = null,
 }: {
   api: Api;
   idioma: Idioma;
   viaje: ViajeConductor;
   alCambiar: () => void;
+  /** C-MAPA-VIAJE-DRIVER: dónde está el conductor (para dibujarlo en el mapa del viaje). */
+  yo?: { lat: number; lng: number } | null;
 }) {
   const textos = enIdioma(TEXTOS_VIAJE, idioma);
   // C-ENVIO-TEXTOS: en un envío cada botón habla del paquete y de quien envía.
@@ -456,6 +460,21 @@ export function ViajeActivo({
           </View>
         ) : null}
         {lineaRegalo}
+      </View>
+      {/* C-MAPA-VIAJE-DRIVER: el mapa con la recogida, el destino y el conductor, debajo del precio
+          (el precio sigue siendo lo primero). La cámara se mueve solo cuando cambia un punto. */}
+      <View
+        testID="viaje-mapa"
+        style={{ borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#2a2a2a' }}
+      >
+        <Mapa
+          yo={yo}
+          restaurante={{ lat: viaje.origen_lat, lng: viaje.origen_lng }}
+          casa={{ lat: viaje.destino_lat, lng: viaje.destino_lng }}
+          direccionDestino={direccion}
+          alto={200}
+          etiquetas={{ yo: t.mapaYo, restaurante: t.mapaRecogida, casa: t.mapaDestino }}
+        />
       </View>
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>

@@ -1,5 +1,14 @@
 import { type ReactNode, type RefObject, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, PanResponder, Platform, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  PanResponder,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   type Idioma,
