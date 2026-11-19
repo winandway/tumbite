@@ -34,10 +34,13 @@ export type Persona = {
   humano_hasta: string | null;
   humano_id: string | null;
   aviso_ia_dado: number;
+  /** El contacto que la persona DIJO en el chat para que le avisen (sin verificar). */
+  contacto_correo: string | null;
+  contacto_telefono: string | null;
 };
 
 const COLUMNAS =
-  'id, usuario_id, correo, telefono, nombre, idioma, pais, zona_id, resumen, canal_ultimo, mensajes, humano_hasta, humano_id, aviso_ia_dado';
+  'id, usuario_id, correo, telefono, nombre, idioma, pais, zona_id, resumen, canal_ultimo, mensajes, humano_hasta, humano_id, aviso_ia_dado, contacto_correo, contacto_telefono';
 
 export async function personaPorId(db: D1Database, id: string) {
   return db
@@ -209,6 +212,9 @@ export async function unirConCorreo(db: D1Database, anonima: Persona, correoCrud
     db
       .prepare('UPDATE camila_reportes_fallo SET persona_id = ? WHERE persona_id = ?')
       .bind(destino.id, anonima.id),
+    db
+      .prepare('UPDATE camila_adjuntos SET persona_id = ? WHERE persona_id = ?')
+      .bind(destino.id, anonima.id),
     db.prepare('DELETE FROM camila_personas WHERE id = ?').bind(anonima.id),
     // El navegador queda unido a la persona del correo: la próxima vez entra directo a su hilo.
     db
@@ -248,6 +254,8 @@ export function sentenciaMensaje(
     texto: string;
     autorId?: string | null;
     herramienta?: string | null;
+    /** El id del mensaje, si quien lo guarda lo necesita (para unirle su imagen adjunta). */
+    id?: string;
   },
 ) {
   return db
@@ -255,7 +263,7 @@ export function sentenciaMensaje(
       'INSERT INTO camila_mensajes (id, persona_id, canal, autor, autor_id, texto, herramienta) VALUES (?, ?, ?, ?, ?, ?, ?)',
     )
     .bind(
-      nuevoId(),
+      m.id ?? nuevoId(),
       m.personaId,
       m.canal,
       m.autor,
@@ -357,6 +365,7 @@ export function sentenciasBorrarDeCamila(
     de('camila_sin_respuesta'),
     // C-CAMILA-FALLOS: sus reportes de fallo (las capturas se borran del almacén aparte).
     de('camila_reportes_fallo'),
+    de('camila_adjuntos'),
     de('camila_codigos'),
     db
       .prepare('DELETE FROM camila_codigos WHERE correo = ?1 OR correo = ?2')
@@ -390,6 +399,8 @@ export async function capturasDeCamila(
   const { results } = await db
     .prepare(
       `SELECT captura_clave FROM camila_reportes_fallo WHERE captura_clave IS NOT NULL AND persona_id IN (
+         SELECT id FROM camila_personas WHERE usuario_id = ?1 OR correo = ?2 OR correo = ?3 OR telefono = ?4)
+       UNION SELECT clave FROM camila_adjuntos WHERE persona_id IN (
          SELECT id FROM camila_personas WHERE usuario_id = ?1 OR correo = ?2 OR correo = ?3 OR telefono = ?4)`,
     )
     .bind(usuarioId, correo, correoCanonico(correo), telefono ?? '-')

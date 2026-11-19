@@ -7,7 +7,6 @@ import { limiteIntentos } from '../seguridad';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { recibirMensaje } from '../camila/cerebro';
-import { reporteEnCurso } from '../camila/fallos';
 import { usarPersonaDelChat } from './camilaFallos';
 import { enviarPorCanal } from '../camila/canales';
 import { armarListaSemanal, decidirPropuesta } from '../camila/aprendizaje';
@@ -102,17 +101,32 @@ usarPersonaDelChat(personaDelChat);
 async function hiloPublico(db: D1Database, p: Persona) {
   const { results } = await db
     .prepare(
-      `SELECT id, autor, texto, creado_en, reportado_en IS NOT NULL AS reportado FROM camila_mensajes WHERE persona_id = ?
-        ORDER BY creado_en DESC, rowid DESC LIMIT 60`,
+      `SELECT m.id, m.autor, m.texto, m.creado_en, m.reportado_en IS NOT NULL AS reportado,
+         (SELECT a.id FROM camila_adjuntos a WHERE a.mensaje_id = m.id LIMIT 1) AS adjunto
+         FROM camila_mensajes m WHERE m.persona_id = ?
+        ORDER BY m.creado_en DESC, m.rowid DESC LIMIT 60`,
     )
     .bind(p.id)
-    .all<{ id: string; autor: string; texto: string; creado_en: string; reportado: number }>();
-  const reporte = await reporteEnCurso(db, p.id);
+    .all<{
+      id: string;
+      autor: string;
+      texto: string;
+      creado_en: string;
+      reportado: number;
+      adjunto: string | null;
+    }>();
+  // C-CAMILA-REPORTE-CONVERSADO: la captura que quedó en el borrador sin enviarse (vuelve al abrir).
+  const pendiente = await db
+    .prepare(
+      'SELECT id FROM camila_adjuntos WHERE persona_id = ? AND mensaje_id IS NULL ORDER BY creado_en DESC LIMIT 1',
+    )
+    .bind(p.id)
+    .first<{ id: string }>();
   return {
-    // C-CAMILA-FALLOS: Camila está esperando la captura de pantalla de un reporte de fallo.
-    pideCaptura: reporte?.estado === 'captura',
-    // C-CAMILA-ADJUNTAR: el reporte en curso ya tiene su captura (el botón de adjuntar se guarda).
-    capturaPuesta: Boolean(reporte?.captura_clave),
+    // Quedaron de la versión anterior del chat (la captura ya no se pide aparte): siempre falsos.
+    pideCaptura: false,
+    capturaPuesta: false,
+    adjuntoPendiente: pendiente?.id ?? null,
     verificada: Boolean(p.usuario_id || p.correo),
     equipoAtendiendo: humanoActivo(p),
     mensajes: results.reverse().map((m) => ({ ...m, reportado: Number(m.reportado) === 1 })),
@@ -123,17 +137,31 @@ camila.get('/camila/hilo', async (c) => {
   const p = await personaDelChat(c, false);
   c.header('cache-control', 'private, no-store');
   if (!p)
-    return c.json({ pideCaptura: false, verificada: false, equipoAtendiendo: false, mensajes: [] });
+    return c.json({
+      pideCaptura: false,
+      capturaPuesta: false,
+      adjuntoPendiente: null,
+      verificada: false,
+      equipoAtendiendo: false,
+      mensajes: [],
+    });
   return c.json(await hiloPublico(base(c), p));
 });
 
 camila.post('/camila/mensaje', async (c) => {
   const d = await leerCuerpo(
     c,
-    z.object({
-      texto: z.string().trim().min(1, { error: 'Escribe tu mensaje.' }).max(2000),
-      canal: z.enum(['web', 'app']).default('web'),
-    }),
+    z
+      .object({
+        texto: z.string().trim().max(2000).default(''),
+        canal: z.enum(['web', 'app']).default('web'),
+        // C-CAMILA-REPORTE-CONVERSADO: la captura del borrador viaja con el mensaje.
+        adjunto: z
+          .string()
+          .regex(/^[A-Za-z0-9_-]{8,64}$/)
+          .optional(),
+      })
+      .refine((d) => d.texto.length > 0 || Boolean(d.adjunto), { error: 'Escribe tu mensaje.' }),
   );
   const db = base(c);
   // C-CAMILA-AVISO: una ficha sin país toma el de la petición (para saber si la ley pide el aviso).
@@ -163,6 +191,18 @@ camila.post('/camila/mensaje', async (c) => {
     if (Number(reciente?.n ?? 0) >= MENSAJES_POR_MINUTO_ANONIMO)
       throw new ErrorDatos('Vas muy rápido. Espera un momento y vuelve a escribir.', 'limite', 429);
   }
+  // La captura tiene que ser de esta persona y estar todavía en su borrador (sin enviar).
+  const adjunto = d.adjunto
+    ? await db
+        .prepare(
+          'SELECT id, clave, tipo FROM camila_adjuntos WHERE id = ? AND persona_id = ? AND mensaje_id IS NULL',
+        )
+        .bind(d.adjunto, p.id)
+        .first<{ id: string; clave: string; tipo: string }>()
+    : null;
+  if (d.adjunto && !adjunto)
+    throw new ErrorDatos('Esa captura ya no está disponible. Adjúntala otra vez.', 'adjunto', 409);
+  if (!d.texto && !adjunto) throw new ErrorDatos('Escribe tu mensaje.', undefined, 400);
   const r = await recibirMensaje(
     c.env,
     db,
@@ -172,6 +212,7 @@ camila.post('/camila/mensaje', async (c) => {
     {
       // Lo que Camila adjunta sola a un reporte de fallo: la app y su versión, y el aparato.
       peticion: { app: c.req.header('x-tumbite-app'), aparato: c.req.header('user-agent') },
+      ...(adjunto ? { adjunto } : {}),
     },
   );
   const fresca = (await personaPorId(db, p.id)) ?? p;
@@ -414,7 +455,8 @@ camila.get('/admin/camila/hilos/:persona', async (c) => {
   const [mensajes, casos] = await Promise.all([
     db
       .prepare(
-        `SELECT m.id, m.canal, m.autor, m.texto, m.creado_en, u.nombre AS autor_nombre FROM camila_mensajes m
+        `SELECT m.id, m.canal, m.autor, m.texto, m.creado_en, u.nombre AS autor_nombre,
+           (SELECT a.id FROM camila_adjuntos a WHERE a.mensaje_id = m.id LIMIT 1) AS adjunto FROM camila_mensajes m
            LEFT JOIN usuarios u ON u.id = m.autor_id WHERE m.persona_id = ? ORDER BY m.creado_en, m.rowid LIMIT 300`,
       )
       .bind(p.id)

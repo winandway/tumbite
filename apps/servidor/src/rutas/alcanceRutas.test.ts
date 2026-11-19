@@ -255,6 +255,8 @@ const LISTAS_DE_NUMEROS = [
   'GET /admin/camila/fallos',
   'GET /admin/camila/fallos/:id',
   'GET /admin/camila/fallos/:id/captura/:reporte',
+  'GET /admin/camila/fallos/:id/conversacion/:reporte',
+  'GET /admin/camila/adjuntos/:id',
   'POST /admin/camila/fallos/:id/arreglado',
   'GET /admin/camila/preguntas',
   'POST /admin/camila/preguntas',
@@ -430,6 +432,8 @@ describe('C-CAMILA: lo de toda la empresa exige alcance total', () => {
     for (const [metodo, ruta] of [
       ['GET', '/datos/admin/camila/fallos'],
       ['GET', '/datos/admin/camila/preguntas'],
+      ['GET', '/datos/admin/camila/fallos/x/conversacion/y'],
+      ['GET', '/datos/admin/camila/adjuntos/x'],
       ['POST', '/datos/admin/camila/fallos/x/arreglado'],
       ['POST', '/datos/admin/camila/aprendizaje/armar'],
       ['PUT', '/datos/admin/camila/ajustes'],

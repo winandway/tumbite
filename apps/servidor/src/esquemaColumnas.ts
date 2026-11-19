@@ -2837,6 +2837,8 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "humano_hasta",
     "humano_id",
     "aviso_ia_dado",
+    "contacto_correo",
+    "contacto_telefono",
     "creado_en",
     "actualizado_en"
   ],
@@ -2940,9 +2942,22 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "captura_clave",
     "captura_tipo",
     "avisado_arreglo",
+    "campos_json",
+    "resumen",
+    "captura_lectura",
+    "turnos",
     "creado_en",
     "actualizado_en",
     "completo_en"
+  ],
+  "camila_adjuntos": [
+    "id",
+    "persona_id",
+    "clave",
+    "tipo",
+    "mensaje_id",
+    "reporte_id",
+    "creado_en"
   ],
   "camila_preguntas": [
     "id",

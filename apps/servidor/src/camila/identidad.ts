@@ -150,8 +150,8 @@ const QUIERE_ADJUNTAR = [
 ];
 export const quiereAdjuntar = (t: string) => contiene(t, QUIERE_ADJUNTAR);
 export const COMO_ADJUNTAR = {
-  es: 'Claro. Mándamela por aquí mismo: toca «Adjuntar captura», aquí abajo, y elige la imagen o toma la foto.',
-  en: 'Sure. Send it right here: tap “Attach screenshot,” just below, and choose the image or take the photo.',
+  es: 'Claro. Mándamela por aquí mismo: toca «Adjuntar captura», aquí abajo, elige la imagen o toma la foto, escribe qué te pasó y envíalo todo junto.',
+  en: 'Sure. Send it right here: tap “Attach screenshot,” just below, choose the image or take the photo, write what happened and send it all together.',
 } as const;
 
 /** ¿Pregunta si habla con una persona o con una máquina? */

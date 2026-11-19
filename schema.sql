@@ -4333,6 +4333,10 @@ CREATE TABLE IF NOT EXISTS camila_personas (
   humano_hasta TEXT,
   humano_id TEXT,
   aviso_ia_dado INTEGER NOT NULL DEFAULT 0,
+  -- C-CAMILA-REPORTE-CONVERSADO: el contacto que la persona DIJO en el chat para que le avisen (sin
+  -- verificar; nunca sirve para entrar ni para unir fichas). Con él Camila la recuerda al volver.
+  contacto_correo TEXT,
+  contacto_telefono TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now'))
 ) WITHOUT ROWID;
@@ -4464,6 +4468,12 @@ CREATE TABLE IF NOT EXISTS camila_reportes_fallo (
   captura_clave TEXT,
   captura_tipo TEXT,
   avisado_arreglo INTEGER NOT NULL DEFAULT 0,
+  -- C-CAMILA-REPORTE-CONVERSADO (19 nov 2026): lo que el reporte reunió conversando (qué pasó, dónde,
+  -- nombre y contacto, y qué se pidió ya), el resumen del caso, lo que se leyó en la captura y las vueltas.
+  campos_json TEXT NOT NULL DEFAULT '{}',
+  resumen TEXT NOT NULL DEFAULT '',
+  captura_lectura TEXT NOT NULL DEFAULT '',
+  turnos INTEGER NOT NULL DEFAULT 0,
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   -- El último movimiento: un reporte abierto sin movimiento en 30 minutos se cierra solo.
   actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
@@ -4473,6 +4483,20 @@ CREATE INDEX IF NOT EXISTS camila_reportes_persona ON camila_reportes_fallo(pers
 -- Como mucho UN reporte abierto por persona.
 CREATE UNIQUE INDEX IF NOT EXISTS camila_reportes_abierto ON camila_reportes_fallo(persona_id) WHERE estado IN ('preguntando', 'captura');
 CREATE INDEX IF NOT EXISTS camila_reportes_fallo_id ON camila_reportes_fallo(fallo_id);
+-- C-CAMILA-REPORTE-CONVERSADO: las imágenes que la persona adjunta en el chat. Nacen PENDIENTES (en el
+-- borrador del mensaje, sin mensaje_id) y se unen a su mensaje al enviarlo. Privadas: solo las ve su
+-- dueña y el equipo. Se borran a los 90 días, con la cuenta, o al día si nunca se enviaron.
+CREATE TABLE IF NOT EXISTS camila_adjuntos (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  clave TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  mensaje_id TEXT,
+  reporte_id TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS camila_adjuntos_persona ON camila_adjuntos(persona_id, mensaje_id);
+CREATE INDEX IF NOT EXISTS camila_adjuntos_mensaje ON camila_adjuntos(mensaje_id) WHERE mensaje_id IS NOT NULL;
 -- Preguntas de diagnóstico que el equipo agrega por tipo de fallo. Camila usa solo las aprobadas.
 CREATE TABLE IF NOT EXISTS camila_preguntas (
   id TEXT PRIMARY KEY,

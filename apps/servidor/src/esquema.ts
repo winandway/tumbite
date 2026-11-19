@@ -73,6 +73,13 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   // nuevas no estaban aquí y el sitio de pruebas quedó con «esquema: error», frenando toda publicación.
   ['camila_gasto', 'capturas', 'INTEGER NOT NULL DEFAULT 0'],
   ['camila_gasto', 'resumen_fallos', 'INTEGER NOT NULL DEFAULT 0'],
+  // C-CAMILA-REPORTE-CONVERSADO (19 nov 2026): el reporte de fallo conversado y el contacto dicho.
+  ['camila_reportes_fallo', 'campos_json', "TEXT NOT NULL DEFAULT '{}'"],
+  ['camila_reportes_fallo', 'resumen', "TEXT NOT NULL DEFAULT ''"],
+  ['camila_reportes_fallo', 'captura_lectura', "TEXT NOT NULL DEFAULT ''"],
+  ['camila_reportes_fallo', 'turnos', 'INTEGER NOT NULL DEFAULT 0'],
+  ['camila_personas', 'contacto_correo', 'TEXT'],
+  ['camila_personas', 'contacto_telefono', 'TEXT'],
   // C-PENDIENTE-ABANDONADO (13 nov 2026): huella de los datos con que se creó el pedido sin pagar.
   ['pedidos', 'huella_cuerpo', 'TEXT'],
   // C-FLOTA-PROPIA (10 nov 2026): el restaurante reparte con los suyos; respaldo con la red.

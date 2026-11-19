@@ -2,7 +2,8 @@
 
 > Esta es LA lista de trabajo de la IA. Una sola, en orden, solo con lo que la IA puede hacer sola.
 > El gancho de la fábrica (`scripts/fabrica/seguir.sh`) no deja que la sesión se quede parada
-> mientras quede un `- [ ]` aquí: le devuelve el siguiente punto.
+> mientras quede un `- [ ] [para: desarrollador] Rehacer el reporte de fallo de Camila como conversación conducida por el modelo (esquema JSON plano por turno, el código elige la casilla que falta, guion fijo como respaldo, captura como borrador con miniatura, memoria de quien vuelve, ficha del caso en el superadmin). Decisión y pruebas de aceptación en `docs/investigaciones-rea/2026-11-19-reporte-de-fallo-conversado.md`. No adoptar Chatwoot. Todos los países.
+- [ ]` aquí: le devuelve el siguiente punto.
 >
 > - `[ ]` por hacer · `[x]` hecho (con commit) · `[!]` trabado por Richard (la razón al lado).
 > - Lo que depende de Richard vive en `PENDIENTES.md` (los 👤), no aquí.

@@ -38,6 +38,8 @@ export function costoMicro(nivel: NivelModelo, entrada: number, salida: number) 
 
 export type Parte =
   | { text: string }
+  // Una imagen (la captura de un reporte de fallo), en base64. Solo la lee el modelo; no se guarda aquí.
+  | { inlineData: { mimeType: string; data: string } }
   | { functionCall: { name: string; args?: Record<string, unknown>; id?: string } }
   | { functionResponse: { name: string; response: Record<string, unknown>; id?: string } };
 export type Turno = { role: 'user' | 'model'; parts: Parte[] };
@@ -51,6 +53,8 @@ export type PedidoModelo = {
   sistema: string;
   turnos: Turno[];
   herramientas: Herramienta[];
+  /** Salida obligada en JSON con esta forma (el reporte de fallo conversado). Sin herramientas. */
+  json?: Record<string, unknown>;
 };
 export type RespuestaModelo = { partes: Parte[]; entrada: number; salida: number };
 export type LlamadaModelo = (env: Env, p: PedidoModelo) => Promise<RespuestaModelo>;
@@ -71,6 +75,7 @@ async function llamarGemini(env: Env, p: PedidoModelo): Promise<RespuestaModelo>
         generationConfig: {
           temperature: 0.3,
           maxOutputTokens: 700,
+          ...(p.json ? { responseMimeType: 'application/json', responseSchema: p.json } : {}),
         },
       }),
     },

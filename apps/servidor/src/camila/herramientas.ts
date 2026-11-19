@@ -41,6 +41,10 @@ export type Contexto = {
   noSupo?: boolean;
   /** C-CAMILA-ENLACE-GUIA: las guías de Docs que las herramientas le dieron al modelo. */
   guias?: string[];
+  /** El mensaje llegó por el chat (web o app): ahí se toman los reportes de fallo. */
+  enChat?: boolean;
+  /** C-CAMILA-REPORTE-CONVERSADO: el modelo vio que la persona cuenta un fallo y pidió reportarlo. */
+  quiereReporte?: boolean;
 };
 
 export type ResultadoHerramienta = { ok: boolean; texto: string; datos?: Record<string, unknown> };
@@ -405,6 +409,11 @@ export const HERRAMIENTAS_MODELO: Herramienta[] = [
     description:
       'Para líderes de equipo: cuántos registró la persona que escribe, cuántos están activos y su enlace.',
   },
+  {
+    name: 'reportar_fallo',
+    description:
+      'La persona cuenta que algo de la app o de la página le falla (no carga, se cierra, da un error, no le deja hacer algo o no ve algo que debería ver) y ninguna guía lo explica. Abre el reporte para el equipo técnico; después de llamarla no escribas nada más.',
+  },
 ];
 
 export async function ejecutar(c: Contexto, nombre: string, args: Record<string, unknown> = {}) {
@@ -436,6 +445,10 @@ export async function ejecutar(c: Contexto, nombre: string, args: Record<string,
       return anotarSinRespuesta(c, texto('pregunta'));
     case 'mi_equipo':
       return miEquipo(c);
+    case 'reportar_fallo':
+      // No hace nada aquí: el reporte lo abre el cerebro y lo lleva su propia conversación.
+      c.quiereReporte = true;
+      return { ok: true, texto: 'Reporte abierto.' };
     default:
       return { ok: false, texto: 'Herramienta desconocida.' };
   }
