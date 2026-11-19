@@ -175,10 +175,16 @@ try {
     'pagar',
   ).recibo;
   exigir(pago.fondo === f.fondo - 1_000, `el fondo no bajó lo pagado (${pago.fondo})`);
+  // Doble uso: repetir «Pagado» devuelve el mismo recibo y el fondo no vuelve a bajar.
+  const repetido = ok(
+    await agente('POST', `payouts/${visto.id}/pay`, { codigo: c1.codigo }),
+    'repetir el pago',
+  ).recibo;
   exigir(
-    (await agente('POST', `payouts/${visto.id}/pay`, { codigo: c1.codigo })).estado === 409,
+    repetido.numero === pago.numero && repetido.fondo === pago.fondo,
     'DOBLE USO: pagó dos veces',
   );
+  exigir((await ficha()).fondo === f.fondo - 1_000, 'DOBLE USO: el fondo bajó dos veces');
   exigir((await ganancias()) === antes - 1_000, 'las ganancias cambiaron al pagar');
   casos.push('cobro de 10 dólares: apartado al pedir, pagado una sola vez, el fondo bajó 10');
 

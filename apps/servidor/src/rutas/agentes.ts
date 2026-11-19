@@ -199,21 +199,23 @@ agentes.post('/agent/verify', async (c) => {
   const db = base(c);
   const token = tokenAgente(c);
   const sesionId = token ? await sha256(token) : '';
+  // El intento se cuenta en la MISMA sentencia que lo lee (dos peticiones a la vez no pasan de 5).
   const s = await db
     .prepare(
-      `SELECT s.agente_id, s.codigo_hash, s.codigo_intentos, s.codigo_expira_en > datetime('now') AS vigente
-         FROM agentes_sesiones s JOIN agentes a ON a.id = s.agente_id
-        WHERE s.id = ? AND s.verificada = 0 AND a.estado = 'activo'`,
+      `UPDATE agentes_sesiones SET codigo_intentos = codigo_intentos + 1
+        WHERE id = ? AND verificada = 0 AND codigo_hash IS NOT NULL AND codigo_intentos < 5
+          AND codigo_expira_en > datetime('now')
+          AND EXISTS (SELECT 1 FROM agentes a WHERE a.id = agentes_sesiones.agente_id AND a.estado = 'activo')
+        RETURNING agente_id, codigo_hash`,
     )
     .bind(sesionId)
-    .first<{
-      agente_id: string;
-      codigo_hash: string | null;
-      codigo_intentos: number;
-      vigente: number;
-    }>();
-  if (!s || !s.vigente || !s.codigo_hash || s.codigo_intentos >= 5) {
-    if (s) await db.prepare('DELETE FROM agentes_sesiones WHERE id = ?').bind(sesionId).run();
+    .first<{ agente_id: string; codigo_hash: string }>();
+  if (!s) {
+    // Vencido, gastado (5 intentos) o inexistente: la sesión a medias se borra.
+    await db
+      .prepare('DELETE FROM agentes_sesiones WHERE id = ? AND verificada = 0')
+      .bind(sesionId)
+      .run();
     throw new ErrorDatos(
       'Ese código ya no sirve. Vuelve a entrar para recibir uno nuevo.',
       'codigo',
@@ -221,10 +223,6 @@ agentes.post('/agent/verify', async (c) => {
     );
   }
   if (s.codigo_hash !== (await sha256(codigo))) {
-    await db
-      .prepare('UPDATE agentes_sesiones SET codigo_intentos = codigo_intentos + 1 WHERE id = ?')
-      .bind(sesionId)
-      .run();
     await anotarAccion(db, s.agente_id, 'codigo_entrada_fallido', '', '', ipDe(c));
     throw new ErrorDatos('El código no coincide.', 'codigo', 403);
   }

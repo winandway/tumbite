@@ -33,6 +33,8 @@ export const HORAS_COBRO = 24;
 export const MAX_CODIGOS_FALLIDOS = 5;
 /** Tiempo que vale haber buscado a un conductor para venderle saldo o ver su foto. */
 export const MINUTOS_BUSQUEDA = 15;
+/** Búsquedas de conductor sin resultado, por agente y por hora, antes de frenarlo. */
+export const MAX_BUSQUEDAS_FALLIDAS = 10;
 /** Lo menos que vende un agente de una vez (1 dólar), aunque el país permita menos. */
 export const VENTA_MINIMA = 100;
 
@@ -506,10 +508,24 @@ export async function pagarCobro(
     // Nada cambió: se dice por qué, sin mover dinero.
     const c = await db
       .prepare(
-        `SELECT estado, monto, agente_id, expira_en > ${ahoraSql} AS vigente FROM cobros_efectivo WHERE id = ? AND codigo = ? AND zona_id = ?`,
+        `SELECT estado, monto, agente_id, expira_en > ${ahoraSql} AS vigente,
+                COALESCE(pagado_en > datetime('now', '-10 minutes'), 0) AS reciente
+           FROM cobros_efectivo WHERE id = ? AND codigo = ? AND zona_id = ?`,
       )
       .bind(p.cobroId, codigo, a.zona_id)
-      .first<{ estado: string; monto: number; agente_id: string | null; vigente: number }>();
+      .first<{
+        estado: string;
+        monto: number;
+        agente_id: string | null;
+        vigente: number;
+        reciente: number;
+      }>();
+    // El mismo agente repite «Pagado» porque se le perdió la respuesta (hace menos de 10 minutos):
+    // recibe su recibo otra vez. No se mueve nada: el pago ya quedó hecho la primera vez.
+    if (c?.estado === 'pagado' && c.agente_id === a.id && c.reciente) {
+      const mismo = await reciboPago(db, a.id, p.cobroId);
+      if (mismo) return mismo;
+    }
     await anotarAccion(db, a.id, 'pago_rechazado', p.cobroId, c?.estado ?? 'no existe', p.ip);
     if (!c) throw new ErrorDatos('Ese código no sirve.', 'codigo', 404);
     if (c.estado === 'pagado')
@@ -531,7 +547,10 @@ export async function pagarCobro(
     throw new ErrorDatos('Ese pago pasa tu tope del día.', 'tope', 409);
   }
   const recibo = await reciboPago(db, a.id, p.cobroId);
-  await anotarAccion(db, a.id, 'pago', p.cobroId, `${recibo?.monto ?? ''}`, p.ip);
+  // El dinero ya se movió: si el registro falla, el agente igual recibe su recibo (y queda el error).
+  await anotarAccion(db, a.id, 'pago', p.cobroId, `${recibo?.monto ?? ''}`, p.ip).catch(
+    (e: unknown) => console.error('agente: registro del pago', e),
+  );
   const conductor = await db
     .prepare('SELECT conductor_id FROM cobros_efectivo WHERE id = ?')
     .bind(p.cobroId)
@@ -604,14 +623,28 @@ export async function avisarFondoBajo(env: Env, db: D1Database, agenteId: string
     .first<{ nombre: string; fondo: number }>();
   if (!marca) return false;
   const usd = (Number(marca.fondo) / 100).toFixed(2);
-  for (const para of await correosEquipo(env, 'dinero'))
-    await enviarCorreo(env, {
+  let enviados = 0;
+  for (const para of await correosEquipo(env, 'dinero')) {
+    const r = await enviarCorreo(env, {
       de: 'avisos',
       para,
       idioma: 'es',
       asunto: `Fondo bajo del agente ${marca.nombre}: $${usd}`,
       texto: `Al agente ${marca.nombre} le quedan $${usd} de fondo para pagar a los conductores.\n\nSin fondo su panel no deja pagar. Cuando le transfieras, anótalo en el panel: Dinero, Agentes.`,
+    }).catch((e: unknown) => {
+      console.error('agente: correo de fondo bajo', e);
+      return { ok: false as const };
     });
+    if (r.ok) enviados++;
+  }
+  // Si no salió ninguno, la marca se deshace: el próximo pago vuelve a intentar el aviso.
+  if (!enviados) {
+    await db
+      .prepare('UPDATE agentes SET avisado_fondo_en = NULL WHERE id = ?')
+      .bind(agenteId)
+      .run();
+    return false;
+  }
   return true;
 }
 
@@ -638,6 +671,19 @@ export async function buscarConductor(
   p: { telefono?: string; codigo?: string; ip?: string },
 ) {
   exigirOperando(a);
+  // Muchas búsquedas sin resultado en una hora: alguien está probando números. Se frena.
+  const fallidas = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM agente_acciones WHERE agente_id = ? AND accion = 'conductor_no_encontrado' AND creado_en > datetime('now', '-1 hour')",
+    )
+    .bind(a.id)
+    .first<{ n: number }>();
+  if (Number(fallidas?.n ?? 0) >= MAX_BUSQUEDAS_FALLIDAS)
+    throw new ErrorDatos(
+      'Demasiadas búsquedas sin resultado. Espera una hora o habla con Divoox.',
+      'conductor',
+      429,
+    );
   const ciudad = await ciudadAgentes(db, a.zona_id);
   let id: string | null = null;
   if (p.codigo?.trim()) {
@@ -722,7 +768,12 @@ export async function venderSaldo(
     throw new ErrorDatos('La recarga está fuera de los límites permitidos.', 'monto', 409);
   const id = `va-${a.id.slice(0, 8)}-${p.idem}`;
   const ya = await reciboVenta(db, a.id, id);
-  if (ya) return ya;
+  if (ya) {
+    // La misma llave solo vale para la misma venta (mismo conductor y mismo monto).
+    if (ya.conductorId !== p.conductorId || ya.monto !== p.monto)
+      throw new ErrorDatos('Esa venta ya quedó hecha. Empieza una venta nueva.', undefined, 409);
+    return sinConductor(ya);
+  }
   if (!(await loTieneDelante(db, a.id, p.conductorId)))
     throw new ErrorDatos('Busca de nuevo al conductor antes de venderle saldo.', 'conductor', 409);
   const mano = await enMano(db, ciudad.pais, ciudad.pagaEn, p.monto);
@@ -752,7 +803,7 @@ export async function venderSaldo(
     .run();
   if (!r.meta.changes) {
     const repetido = await reciboVenta(db, a.id, id);
-    if (repetido) return repetido;
+    if (repetido) return sinConductor(repetido);
     await anotarAccion(db, a.id, 'venta_rechazada', p.conductorId, String(p.monto), p.ip);
     if ((await saldoAgente(db, a.id, 'deuda')) + p.monto > Number(a.tope_deuda))
       throw new ErrorDatos(
@@ -762,8 +813,10 @@ export async function venderSaldo(
       );
     throw new ErrorDatos('No encontramos a ese conductor en tu ciudad.', 'conductor', 404);
   }
-  await anotarAccion(db, a.id, 'venta', p.conductorId, String(p.monto), p.ip);
-  const recibo = (await reciboVenta(db, a.id, id))!;
+  await anotarAccion(db, a.id, 'venta', p.conductorId, String(p.monto), p.ip).catch((e: unknown) =>
+    console.error('agente: registro de la venta', e),
+  );
+  const recibo = sinConductor((await reciboVenta(db, a.id, id))!);
   const usd = (p.monto / 100).toFixed(2);
   await notificar(env, db, p.conductorId, (i) =>
     i === 'es'
@@ -777,6 +830,13 @@ export async function venderSaldo(
         },
   ).catch((e: unknown) => console.error('agente: aviso de venta', e));
   return recibo;
+}
+
+/** El recibo que ve el agente no lleva el id del conductor. */
+function sinConductor<T extends { conductorId: string }>(r: T): Omit<T, 'conductorId'> {
+  const copia: Partial<T> = { ...r };
+  delete copia.conductorId;
+  return copia as Omit<T, 'conductorId'>;
 }
 
 async function reciboVenta(db: D1Database, agenteId: string, ventaId: string) {
@@ -809,6 +869,7 @@ async function reciboVenta(db: D1Database, agenteId: string, ventaId: string) {
     refMonto: f.ref_monto == null ? null : Number(f.ref_monto),
     cuando: f.creado_en,
     conductor: f.nombre,
+    conductorId: f.conductor_id,
     saldoConductor: await saldoLibro(db, f.conductor_id, 'prepago', f.pais, f.moneda),
     deuda: await saldoAgente(db, agenteId, 'deuda'),
   };
@@ -894,7 +955,8 @@ export async function anotarEnAgente(
       'monto',
       422,
     );
-  const comprobante = p.comprobante.trim();
+  // «abc 1» y «ABC1» son el mismo comprobante: el mismo pago no se anota dos veces.
+  const comprobante = p.comprobante.toUpperCase().replace(/\s+/g, '');
   if (comprobante.length < 3)
     throw new ErrorDatos('Escribe el número del comprobante.', 'comprobante', 422);
   const agente = await db.prepare('SELECT id FROM agentes WHERE id = ?').bind(p.agenteId).first();
@@ -1085,7 +1147,11 @@ export async function saludAgentes(
          (SELECT COALESCE(SUM(monto), 0) FROM cobros_efectivo WHERE estado = 'pagado') AS pagado,
          (SELECT COALESCE(-SUM(monto), 0) FROM agente_libro WHERE concepto = 'pago_conductor') AS bajado,
          (SELECT COALESCE(SUM(monto), 0) FROM ventas_saldo_agente) AS vendido,
-         (SELECT COALESCE(SUM(monto), 0) FROM agente_libro WHERE concepto = 'venta_saldo') AS debido`,
+         (SELECT COALESCE(SUM(monto), 0) FROM agente_libro WHERE concepto = 'venta_saldo') AS debido,
+         (SELECT COUNT(*) FROM cobros_efectivo c WHERE c.creado_en > datetime('now', '-3 days')
+            AND (NOT EXISTS (SELECT 1 FROM movimientos m WHERE m.id = 'mov-cobro-' || c.id)
+              OR (c.estado IN ('vencido', 'cancelado')
+                  AND NOT EXISTS (SELECT 1 FROM movimientos m WHERE m.id = 'mov-cobro-dev-' || c.id)))) AS sin_apartar`,
     )
     .first<Record<string, number>>();
   // Sin sus disparadores el dinero no se mueve (apartar, devolver, bajar el fondo, acreditar).
@@ -1094,6 +1160,7 @@ export async function saludAgentes(
   if (!f || Number(f.agentes) === 0) return 'pendiente';
   if (
     Number(f.negativos) > 0 ||
+    Number(f.sin_apartar) > 0 ||
     Number(f.pagado) !== Number(f.bajado) ||
     Number(f.vendido) !== Number(f.debido)
   ) {

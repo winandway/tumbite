@@ -5533,7 +5533,8 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
   - Código de otra ciudad → rojo «un agente solo ve los códigos de su ciudad».
   - Sin el disparador que devuelve → rojo «cancelado o vencido, el monto vuelve».
   - Vender sin tope ni búsqueda → rojo «no vende sin haber buscado al conductor».
-- **Salud:** pieza `agentes` (disparadores presentes, nada en negativo, lo pagado y lo vendido cuadran con el libro).
+- **Salud:** pieza `agentes` (disparadores presentes, nada en negativo, lo pagado y lo vendido cuadran con el libro, y cada cobro de los últimos tres días tiene su apartado y, si se cerró sin pagar, su devolución).
+- **Revisión de calidad (19 nov):** visto bueno. De ahí salieron: repetir «Pagado» por una respuesta perdida devuelve el mismo recibo durante diez minutos (no cobra dos veces ni asusta al agente); el registro después de mover el dinero no tumba la respuesta; el aviso de fondo bajo se reintenta si no salió ningún correo; diez búsquedas de conductor sin resultado en una hora frenan al agente; el comprobante no distingue mayúsculas ni espacios; los intentos del código de entrada se cuentan en la misma sentencia; la llave de una venta solo vale para el mismo conductor y monto.
 - **Presupuesto de escrituras (medido en las pruebas):** mirar no escribe (la sesión del agente toca `vista_en` una vez cada 5 minutos). Pedir el código: 2 filas. Pagar: 2 filas del dinero más 2 del registro. Vender: 3 filas del dinero más 1 del registro. El vencimiento no usa reloj: una sentencia que no escribe nada si no hay vencidos.
 - **Qué NO tocar:**
   - No mover dinero del agente fuera de esas sentencias (ni «arreglar» un fondo con SQL: la salud se pone en rojo).

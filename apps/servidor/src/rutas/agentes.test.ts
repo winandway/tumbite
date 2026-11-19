@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_CODIGOS_FALLIDOS, saludAgentes } from '../agentes';
+import { MAX_BUSQUEDAS_FALLIDAS, MAX_CODIGOS_FALLIDOS, saludAgentes } from '../agentes';
 import { saldoLibro } from '../internacional/libro';
 import { EL_VIGIA, abrirComida, escenarioVe } from '../pruebas/comidaVe';
 import { saldoRetirable } from '../retiros';
@@ -234,18 +234,37 @@ describe('C-AGENTE-DIVOOX: el agente paga', () => {
     expect(sinFondo.datos.campo ?? sinFondo.datos.error).toBeTruthy();
     expect(await saldoRetirable(m.DB, c.id)).toBe(550);
     expect((await m.fondo(a.id, 5_000, 'TRF-1')).estado).toBe(200);
-    // El mismo comprobante no suma dos veces.
+    // El mismo comprobante no suma dos veces, aunque lo escriban con minúsculas o espacios.
     expect((await m.fondo(a.id, 5_000, 'TRF-1')).estado).toBe(409);
+    expect((await m.fondo(a.id, 5_000, ' trf -1 ')).estado).toBe(409);
     const pago = await m.como(a.cookie, 'POST', `payouts/${cobro.id}/pay`, {
       codigo: cobro.codigo,
     });
     expect(pago.estado, JSON.stringify(pago.datos)).toBe(200);
     expect(pago.datos.recibo).toMatchObject({ tipo: 'pago', monto: 2_000, fondo: 3_000 });
-    // Doble uso: el segundo toque no paga otra vez ni baja el fondo.
+    // Doble uso: si al agente se le perdió la respuesta y repite, recibe el MISMO recibo y el fondo
+    // no vuelve a bajar.
     const otra = await m.como(a.cookie, 'POST', `payouts/${cobro.id}/pay`, {
       codigo: cobro.codigo,
     });
-    expect(otra.estado).toBe(409);
+    expect(otra.estado).toBe(200);
+    expect(otra.datos.recibo).toMatchObject({ numero: pago.datos.recibo.numero, fondo: 3_000 });
+    // Otro agente de la misma ciudad no puede «pagarlo» otra vez.
+    const b = await m.agente('Otro Agente Ejemplo');
+    await m.fondo(b.id, 5_000);
+    expect(
+      (await m.como(b.cookie, 'POST', `payouts/${cobro.id}/pay`, { codigo: cobro.codigo })).estado,
+    ).toBe(409);
+    expect((await m.como(b.cookie, 'GET', 'me')).datos.agente.fondo).toBe(5_000);
+    // Pasados diez minutos, ni el mismo agente: ese código ya se pagó.
+    await m.DB.prepare(
+      "UPDATE cobros_efectivo SET pagado_en = datetime('now', '-11 minutes') WHERE id = ?",
+    )
+      .bind(cobro.id)
+      .run();
+    expect(
+      (await m.como(a.cookie, 'POST', `payouts/${cobro.id}/pay`, { codigo: cobro.codigo })).estado,
+    ).toBe(409);
     expect((await m.como(a.cookie, 'GET', 'me')).datos.agente).toMatchObject({
       fondo: 3_000,
       pagadoHoy: 2_000,
@@ -269,7 +288,13 @@ describe('C-AGENTE-DIVOOX: el agente paga', () => {
     const pagar = () =>
       m.como(a.cookie, 'POST', `payouts/${cobro.id}/pay`, { codigo: cobro.codigo });
     const r = await Promise.all([pagar(), pagar()]);
-    expect(r.map((x) => x.estado).sort()).toEqual([200, 409]);
+    // Los dos reciben el mismo recibo; el dinero se movió una sola vez.
+    expect(r.map((x) => x.estado)).toEqual([200, 200]);
+    expect(r[0]?.datos.recibo.numero).toBe(r[1]?.datos.recibo.numero);
+    const pagos = await m.DB.prepare(
+      "SELECT COUNT(*) AS n FROM agente_libro WHERE concepto = 'pago_conductor'",
+    ).first<{ n: number }>();
+    expect(pagos?.n).toBe(1);
     expect((await m.como(a.cookie, 'GET', 'me')).datos.agente.fondo).toBe(3_000);
   });
 
@@ -434,6 +459,59 @@ describe('C-AGENTE-DIVOOX: el agente vende saldo', () => {
     expect(
       (await m.como(cookie, 'POST', 'drivers/find', { telefono: lejos.telefono })).estado,
     ).toBe(404);
+  });
+});
+
+describe('C-AGENTE-DIVOOX: frenos del panel del agente', () => {
+  it('muchas búsquedas sin resultado frenan al agente una hora', async () => {
+    const m = await mundo();
+    await m.ciudad();
+    const a = await m.agente();
+    const c = await m.conductor('Ana Mora');
+    for (let i = 0; i < MAX_BUSQUEDAS_FALLIDAS; i++)
+      expect(
+        (await m.como(a.cookie, 'POST', 'drivers/find', { telefono: `0414-00000${10 + i}` }))
+          .estado,
+      ).toBe(404);
+    // Frenado: ni con el teléfono bueno.
+    expect((await m.como(a.cookie, 'POST', 'drivers/find', { telefono: c.telefono })).estado).toBe(
+      429,
+    );
+    await m.DB.prepare(
+      "UPDATE agente_acciones SET creado_en = datetime('now', '-61 minutes') WHERE accion = 'conductor_no_encontrado'",
+    ).run();
+    expect((await m.como(a.cookie, 'POST', 'drivers/find', { telefono: c.telefono })).estado).toBe(
+      200,
+    );
+  });
+
+  it('la misma llave de venta con otro monto no devuelve el recibo de otra venta', async () => {
+    const m = await mundo();
+    await m.ciudad();
+    const a = await m.agente();
+    const c = await m.conductor('Ana Mora');
+    await m.como(a.cookie, 'POST', 'drivers/find', { telefono: c.telefono });
+    const venta = (monto: number) =>
+      m.como(a.cookie, 'POST', 'sales', { conductorId: c.id, monto, idem: 'misma-llave-0001' });
+    const v = await venta(1_000);
+    expect(v.estado).toBe(201);
+    // El recibo del agente no trae el id del conductor.
+    expect(v.datos.recibo.conductorId).toBeUndefined();
+    expect((await venta(2_000)).estado).toBe(409);
+    expect(await saldoLibro(m.DB, c.id, 'prepago', 'VE', 'USD')).toBe(1_000);
+  });
+
+  it('la salud se pone en rojo si un cobro quedó sin su apartado', async () => {
+    const m = await mundo();
+    const { cobro } = await listoParaPagar(m);
+    expect(await saludAgentes(m.DB)).toBe('ok');
+    const otra = await mundo();
+    const o = await listoParaPagar(otra);
+    await otra.DB.prepare('DELETE FROM movimientos WHERE id = ?')
+      .bind(`mov-cobro-${o.cobro.id}`)
+      .run();
+    expect(await saludAgentes(otra.DB)).toBe('error');
+    expect(cobro.id).not.toBe(o.cobro.id);
   });
 });
 

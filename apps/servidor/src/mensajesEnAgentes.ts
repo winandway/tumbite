@@ -109,5 +109,13 @@ export const MENSAJES_EN_AGENTES: [string, string][] = [
     'La contraseña debe tener al menos 10 caracteres.',
     'Your password must be at least 10 characters long.',
   ],
+  [
+    'Demasiadas búsquedas sin resultado. Espera una hora o habla con Divoox.',
+    'Too many lookups with no result. Wait an hour or contact Divoox.',
+  ],
+  [
+    'Esa venta ya quedó hecha. Empieza una venta nueva.',
+    'That sale was already completed. Start a new sale.',
+  ],
   ['Escribe el teléfono o el código del conductor.', 'Enter the driver’s phone number or code.'],
 ];
