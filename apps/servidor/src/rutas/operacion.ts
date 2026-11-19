@@ -165,6 +165,7 @@ import {
   faltaPapel,
   faseDePedido,
   formatearMonto,
+  montoEnMano,
   platosDelPedido,
   etiquetasValidas,
   nombreCorto,
@@ -2260,13 +2261,17 @@ operacion.get('/repartidor/ofertas', async (c) => {
   const practica = results.length ? [] : await ofertasPractica(c, esRevisor, SEGUNDOS_OFERTA);
   // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: si el cliente paga en mano, cuánto cobra (sin propina), en
   // dólares y, donde aplica, en bolívares con la tasa del pedido; el mismo número del pedido activo.
-  // Solo lee (nada se escribe por mirar la oferta).
+  // Solo lee (nada se escribe por mirar la oferta). Con tarjeta no hay nada en mano (null). En otra
+  // moneda (pesos de Colombia, por ejemplo) va el monto en su moneda, sin bolívares ni aviso de tasa.
   const cobros = await Promise.all(
-    results.map((f) =>
-      esDirecto(String(f.metodo_pago ?? 'tarjeta'))
-        ? enManoDePedido(db, f, Number(f.total) - Number(f.propina ?? 0))
-        : null,
-    ),
+    results.map(async (f) => {
+      if (!esDirecto(String(f.metodo_pago ?? 'tarjeta'))) return null;
+      const centavos = Number(f.total) - Number(f.propina ?? 0);
+      return (
+        (await enManoDePedido(db, f, centavos)) ??
+        montoEnMano(centavos, String(f.moneda ?? 'USD'), null, null)
+      );
+    }),
   );
   return c.json({
     ofertas: [

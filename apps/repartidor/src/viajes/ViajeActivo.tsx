@@ -431,20 +431,29 @@ export function ViajeActivo({
             tamano="grande"
           />
         ) : viaje.total != null ? (
-          <MontoEnMano
-            testID="viaje-tarjeta"
-            monto={{
-              monto: viaje.total,
-              moneda: viaje.moneda ?? 'USD',
-              local: null,
-              sinTasa: false,
-            }}
-            idioma={idiomaCorto}
-            quien="conductor"
-            etiqueta={t.pagaConTarjeta}
-            color={C.exito}
-            tamano="grande"
-          />
+          // Con tarjeta no se cobra nada en mano: el precio va grande pero en el color de texto (el
+          // verde es solo para lo que el conductor cobra en mano o gana), con el aviso bien visible.
+          <View testID="viaje-tarjeta-bloque" style={{ gap: 2 }}>
+            <Text
+              testID="viaje-tarjeta-aviso"
+              style={{ fontSize: 16, fontWeight: '800', color: C.secundario }}
+            >
+              {t.pagaConTarjeta}
+            </Text>
+            <MontoEnMano
+              testID="viaje-tarjeta"
+              monto={{
+                monto: viaje.total,
+                moneda: viaje.moneda ?? 'USD',
+                local: null,
+                sinTasa: false,
+              }}
+              idioma={idiomaCorto}
+              quien="conductor"
+              color={COLOR.texto}
+              tamano="grande"
+            />
+          </View>
         ) : null}
         {lineaRegalo}
       </View>

@@ -119,6 +119,12 @@ for (const idioma of ['es', 'en'] as const) {
     const z = C.zona;
     sql(`INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa, idioma)
          VALUES ('${z.id}', '${z.nombre}', '${z.pais}', 'USD', '${z.tz}', ${z.lat}, ${z.lng}, 15, 1, '${idioma}')`);
+    // C-PRECIO-PROTAGONISTA: en Venezuela, la tasa del día del equipo, como en el sitio real: el
+    // conductor ve los bolívares debajo de lo que cobra (sin ella saldría «Hoy no hay tasa»).
+    if (z.pais === 'VE')
+      sql(
+        `INSERT OR REPLACE INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', date('now'), 'equipo', 240)`,
+      );
     // El sitio local no es el de pruebas: Moto se declara construido y se enciende en su base (como
     // en las pruebas del servidor). En el sitio de pruebas lo hace el equipo desde el panel.
     sql(`INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('moto', 1)`);

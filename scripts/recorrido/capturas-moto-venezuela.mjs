@@ -524,8 +524,12 @@ async function correr(M, idiomas) {
     }
     await deslizar(d, 'viaje-terminar');
     await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
-    await espera(800);
+    await espera(300);
     await foto(d, M.pagoMovil ? 'driver-cobro-pago-movil' : 'driver-cobro-efectivo', idioma);
+    // C-PRECIO-PROTAGONISTA (revisión del 19 nov): la foto tiene que mostrar el cobro, no el inicio
+    // (en una vuelta el sondeo del inicio cerró la pantalla antes de la foto y nadie lo vio).
+    if (!(await d.getByTestId('viaje-cobra-efectivo').isVisible()))
+      throw new Error('la captura del cobro salió sin el cobro en pantalla');
 
     let ultimo = viaje.id;
     if (M.pagoMovil) {
@@ -539,8 +543,10 @@ async function correr(M, idiomas) {
       await d.reload();
       await deslizar(d, 'viaje-terminar');
       await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
-      await espera(800);
+      await espera(300);
       await foto(d, 'driver-cobro-efectivo', idioma);
+      if (!(await d.getByTestId('viaje-cobra-efectivo').isVisible()))
+        throw new Error('la captura del cobro salió sin el cobro en pantalla');
       ultimo = v2.id;
     } else {
       // ───────── Pasajero (Estados Unidos): llegó, califica y ve cómo dejar propina

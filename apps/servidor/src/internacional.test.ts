@@ -244,6 +244,34 @@ describe('cobro directo: pedido en efectivo de punta a punta (C-COBRO-DIRECTO)',
       moneda: 'USD',
       adelantoLocal: pagoRest?.v,
     });
+    // C-PRECIO-PROTAGONISTA: cuánto cobra en mano (sin la propina), en dólares y nada más: en
+    // Estados Unidos no van bolívares ni aviso de tasa.
+    const sinPropina = total - 200;
+    expect((oferta as { enManoCobro?: unknown }).enManoCobro).toEqual({
+      monto: sinPropina,
+      moneda: 'USD',
+      local: null,
+      sinTasa: false,
+    });
+    const otraVez = async () =>
+      (
+        (await e.m.llamar('GET', '/datos/repartidor/ofertas', undefined, rep.token)).datos
+          .ofertas as { id: string; enManoCobro?: unknown }[]
+      ).find((o) => o.id === id)?.enManoCobro;
+    // En pesos (Colombia): el monto en su moneda, sin bolívares ni aviso de tasa.
+    await e.m.DB.prepare("UPDATE pedidos SET moneda = 'COP' WHERE id = ?").bind(id).run();
+    expect(await otraVez()).toEqual({
+      monto: sinPropina,
+      moneda: 'COP',
+      local: null,
+      sinTasa: false,
+    });
+    // Con tarjeta no hay nada que cobrar en mano.
+    await e.m.DB.prepare("UPDATE pedidos SET moneda = 'USD', metodo_pago = 'tarjeta' WHERE id = ?")
+      .bind(id)
+      .run();
+    expect(await otraVez()).toBeNull();
+    await e.m.DB.prepare("UPDATE pedidos SET metodo_pago = 'efectivo' WHERE id = ?").bind(id).run();
     await e.m.llamar('POST', `/datos/repartidor/ofertas/${id}/aceptar`, {}, rep.token);
     await e.m.llamar('POST', `/datos/restaurante/pedidos/${id}/listo`, {}, e.dueno.token);
     await e.pagarLocal(id, rep);
