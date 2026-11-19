@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-19T22:10:51Z",
+  "actualizado": "2026-11-19T23:22:22Z",
   "version": "fe71f3f",
-  "ahora": "19 nov: la app de restaurantes de la tienda mostraba por error el aviso de pruebas en la pantalla de entrar. Ya está corregida y subida a prueba interna de Google Play (versión 19) y a TestFlight (25); falta llevarla a producción de Play. Las apps de cliente y conductor tienen lista su versión candidata con las líneas de taxi y mototaxi, el regalo con viaje real y el paquete nuevo del conductor, en prueba interna (cliente 54, conductor 58) y en TestFlight (cliente 60, conductor 47).",
+  "ahora": "19 nov: la app de restaurantes sin el aviso de pruebas ya está enviada a producción de Google Play (versión 19) y espera la aprobación de Google; en TestFlight es la 25. La política de privacidad ya explica en vivo la comprobación de los viajes con regalo y las líneas de taxi y mototaxi. Las apps de cliente (54) y conductor (58) tienen el visto bueno condicionado del auditor: solo falta marcar una casilla de ubicación en la consola de Google Play de cada una para subirlas a producción.",
   "proximo": [
     {
       "quien": "ia",
@@ -38,9 +38,9 @@
     {
       "id": "play-datos-ubicacion-fraude",
       "prioridad": "alta",
-      "titulo": "Google Play: sumar «prevención de fraude» a la ubicación en Seguridad de los datos",
-      "para": "En la consola de Google Play, en Seguridad de los datos: en la app de clientes, a la ubicación se le suma la finalidad de prevención de fraude (la app comprueba que el pasajero viaja con su conductor cuando hay un regalo); en la de conductores se confirma que nombre, teléfono y ubicación están declarados; en la de restaurantes, que están los mensajes de chat y los reportes. Destraba la subida a producción de las tres apps.",
-      "destraba": "La subida a producción de Google Play de las apps de cliente, conductor y restaurantes.",
+      "titulo": "Google Play: marcar «Prevención de fraudes, seguridad y cumplimiento» en la ubicación de las apps de clientes y de conductores",
+      "para": "En la consola de Google Play, Seguridad de los datos. App de clientes: en Ubicación precisa (y, recomendado, también en Ubicación aproximada) se suma la finalidad «Prevención de fraudes, seguridad y cumplimiento»; sigue opcional y no compartida. App de conductores: en Ubicación precisa se suma esa misma finalidad; lo demás ya está bien. Se guarda y se envía. De paso, mirar en Resumen de publicación que no haya «Cambios en revisión». La app de restaurantes ya está enviada y no necesita nada.",
+      "destraba": "La subida a producción de la versión 54 de clientes y la 58 de conductores, que ya tienen el visto bueno condicionado del auditor de tiendas.",
       "numero": 34
     },
     {
@@ -521,6 +521,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Tiendas: restaurantes enviada a Google y candidatas de cliente y conductor con visto bueno condicionado",
+      "texto": "La app de restaurantes corregida (sin el aviso de pruebas) se envió a producción de Google Play. Ningún guion puede subir ya una app a ninguna pista de Google Play sin abrir antes su pantalla de entrar y comprobar que no trae el aviso. La política de privacidad se actualizó en vivo, en español e inglés. El auditor de tiendas revisó la versión 54 de clientes y la 58 de conductores: se pueden enviar en cuanto se marque la finalidad de prevención de fraudes en la ubicación, en la consola de Google Play."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Perú: Ica funciona de punta a punta en el sitio de pruebas",
