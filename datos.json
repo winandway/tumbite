@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-19T16:08:31Z",
+  "actualizado": "2026-11-19T19:43:58Z",
   "version": "fe71f3f",
   "ahora": "19 nov: quedó publicado el paquete nuevo del conductor: lo que cobra va en cifra grande y verde con los bolívares debajo, el mapa aparece en la oferta y en el viaje, los pasos del viaje se deslizan (llegué, iniciar, terminar) y el saldo se ve en el inicio. Las apps con todo esto ya están para el equipo en la prueba interna de Play (Divoox 49 y Driver 44) y en TestFlight (Divoox 57 y Driver 44). En Play Store para el público siguen Divoox 0.1.48 y Driver 0.1.43, aprobadas hoy. A la tienda pública esta versión va después de la revisión del auditor.",
   "proximo": [
@@ -489,6 +489,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Docs: los videos ya pueden vivir al lado de su guía",
+      "texto": "Quedó lista y publicada la pieza de video de Docs. Muestra una portada fija y pide el video solo cuando la persona la toca, así la guía carga igual con internet lento. Debajo va el texto de lo que dice el video, para buscadores y para quien no puede oírlo. El video sale de nuestro propio sitio y pasa al reproductor de YouTube sin cookies con solo poner el identificador. La página «Videos» aparece sola con el primer video; no se publica vacía. Camila comparte «Ver el video» cuando responde con una guía que lo tiene. Los dos videos para líneas de mototaxi y taxi ya están subidos y revisados, solo en español; entran el día que las líneas estén publicadas y haya una línea creada."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Soporte: reportar un fallo ahora es una conversación, y la captura va junto al mensaje",
