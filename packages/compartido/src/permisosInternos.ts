@@ -136,8 +136,8 @@ export const CONFIG_PERMISOS = {
   diasRegistroAccesos: 90,
   diasInvitacion: 7,
   topes: {
-    soporte_2: { USD: 5_000, MXN: 100_000, COP: 200_000, VES: 2_000_000 },
-    supervisor: { USD: 20_000, MXN: 400_000, COP: 800_000, VES: 8_000_000 },
+    soporte_2: { USD: 5_000, MXN: 100_000, COP: 200_000, VES: 2_000_000, PEN: 18_000 },
+    supervisor: { USD: 20_000, MXN: 400_000, COP: 800_000, VES: 8_000_000, PEN: 72_000 },
   } as Readonly<Record<string, Topes>>,
 } as const;
 

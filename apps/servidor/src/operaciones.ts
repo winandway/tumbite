@@ -8,6 +8,7 @@ import {
   type TamanoPaquete,
   acercaAlDestino,
   distanciaKm,
+  esPagoACelular,
   formatearMonto,
   vehiculoLlevaPaquete,
 } from '@tumbite/compartido';
@@ -336,14 +337,16 @@ export async function conductoresConPagoMovil(
   db: D1Database,
   ids: string[],
   pais: string,
+  /** C-PAGO-A-CELULAR: el tipo de la cuenta es el método del viaje (pago móvil, Yape o Plin). */
+  tipo: string = 'pago_movil',
 ): Promise<Set<string>> {
   if (!ids.length) return new Set();
   const { results } = await db
     .prepare(
-      `SELECT DISTINCT usuario_id FROM cuentas_cobro WHERE tipo = 'pago_movil' AND pais = ? AND activa = 1
+      `SELECT DISTINCT usuario_id FROM cuentas_cobro WHERE tipo = ? AND pais = ? AND activa = 1
           AND activa_desde <= datetime('now') AND usuario_id IN (${ids.map(() => '?').join(',')})`,
     )
-    .bind(pais, ...ids)
+    .bind(tipo, pais, ...ids)
     .all<{ usuario_id: string }>();
   return new Set(results.map((r) => r.usuario_id));
 }
@@ -493,8 +496,8 @@ export async function turnoDeConfianza(
     const sin = await sinSaldoPara(db, [pref], op.pais, op.moneda, comision);
     if (sin.has(pref)) return noEsta;
   }
-  if (op.metodo_pago === 'pago_movil' && op.pais) {
-    const con = await conductoresConPagoMovil(db, [pref], op.pais);
+  if (esPagoACelular(op.metodo_pago) && op.pais) {
+    const con = await conductoresConPagoMovil(db, [pref], op.pais, op.metodo_pago);
     if (!con.has(pref)) return 'libre';
   }
   const r = await db
@@ -769,11 +772,12 @@ export async function repartirOperaciones(
         : new Set<string>();
     // C-PAGO-MOVIL-VIAJE: un viaje con pago móvil va a quien tiene su pago móvil cargado.
     const conPagoMovil =
-      op.metodo_pago === 'pago_movil' && op.pais
+      esPagoACelular(op.metodo_pago) && op.pais
         ? await conductoresConPagoMovil(
             db,
             candidatos.map((c) => c.conductorId),
             op.pais,
+            op.metodo_pago,
           )
         : null;
     // C-ENVIO-TAMANO: un paquete mediano o grande solo va a quien lo puede llevar en su vehículo.

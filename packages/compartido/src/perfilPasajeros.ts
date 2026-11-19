@@ -11,8 +11,20 @@ import { CIUDAD_PRUEBAS_EL_VIGIA } from './comidaVenezuela';
  * Etiquetas de la fuente: docs/investigaciones-rea/2026-11-13-moto-venezuela-tarifas.md.
  */
 
-export const METODOS_PAGO_VIAJE = ['efectivo', 'tarjeta', 'pago_movil'] as const;
+export const METODOS_PAGO_VIAJE = ['efectivo', 'tarjeta', 'pago_movil', 'yape', 'plin'] as const;
 export type MetodoPagoViaje = (typeof METODOS_PAGO_VIAJE)[number];
+
+/**
+ * C-PAGO-A-CELULAR (19 nov 2026): los métodos en que el pasajero le manda el dinero al celular del
+ * conductor y el conductor confirma a mano que le llegó: el pago móvil de Venezuela, y Yape y Plin de
+ * Perú. Comparten un solo recorrido (cuenta de cobro del mismo tipo, datos a la vista del pasajero,
+ * «sí me llegó» / «no me llegó» con una corrección). El tipo de la cuenta de cobro ES el método.
+ */
+export const METODOS_A_CELULAR = ['pago_movil', 'yape', 'plin'] as const;
+export type MetodoACelular = (typeof METODOS_A_CELULAR)[number];
+export function esPagoACelular(metodo: string | null | undefined): metodo is MetodoACelular {
+  return (METODOS_A_CELULAR as readonly string[]).includes(metodo ?? '');
+}
 
 /** Papeles del CONDUCTOR (no del vehículo) que se suben a mano y revisa el equipo. */
 export const DOCUMENTOS_CONDUCTOR = [
@@ -178,9 +190,47 @@ const VENEZUELA: PerfilPasajeros = {
   },
 };
 
+/**
+ * C-PERFIL-PERU (19 nov 2026): Perú cobra en soles y se paga en mano: efectivo, Yape o Plin (los
+ * medios reales de la calle [DOC]; inDrive cobra igual). Sin tarjeta hasta tener procesador local.
+ * No hay proveedor automático de antecedentes: el conductor sube su licencia y su certificado de
+ * antecedentes (o el Certificado Único Laboral, que también acepta Uber [DOC]) y el equipo los revisa.
+ * Edad mínima 21, como el resto, hasta que un abogado peruano diga otra cosa.
+ * Ficha: docs/investigaciones-rea/2026-11-19-ica-peru.md.
+ */
+const PERU: PerfilPasajeros = {
+  pais: 'PE',
+  antecedentes: 'documentos',
+  edadMinima: 21,
+  metodosPago: ['efectivo', 'yape', 'plin'],
+  monedaViajes: 'PEN',
+  placaNacional: true,
+  // Mototaxi y moto: licencia de la clase B; carro: licencia de la clase A (A-I o A-IIa) [OBS].
+  documentosConductor: ['licencia_moto', 'antecedentes_penales'],
+  documentosCarro: ['licencia_conducir', 'antecedentes_penales'],
+  requisitosDeDocumento: {
+    licencia_moto: ['licencia_moto', 'historial_manejo'],
+    licencia_conducir: ['licencia', 'historial_manejo'],
+    antecedentes_penales: ['antecedentes_pasajeros'],
+  },
+  // Igual que en Venezuela: el certificado que revisa el equipo vale también para Envíos.
+  requisitosOtrosServicios: { antecedentes_penales: ['antecedentes'] },
+  carro: {
+    categorias: {
+      // Uber Perú admite carros de hasta 15 años [DOC]; Comfort y Premium, más nuevos [INF].
+      comfort: { antiguedadMaxima: 10, plazasMinimas: 4, revisionManual: false },
+      premium: { antiguedadMaxima: 6, plazasMinimas: 4, revisionManual: true },
+    },
+    paradasMaximas: 2,
+    // Tope prudente para empezar: 1,5 [INF]; el proyecto de ley de plataformas no fija uno.
+    dinamica: { topePb: 15_000, demandaMinima: 3, escalones: ESCALONES_DINAMICA },
+  },
+};
+
 const PERFILES = new Map<string, PerfilPasajeros>([
   ['US', EEUU],
   ['VE', VENEZUELA],
+  ['PE', PERU],
 ]);
 
 /** Los papeles del conductor que pide su país para un servicio de pasajeros. */
@@ -247,11 +297,67 @@ export const TARIFA_CARRO_VENEZUELA: TarifaViaje = {
   velocidadKmh: 24,
 };
 
+/**
+ * C-PERFIL-PERU: tarifa de Moto de mercado para Ica, en céntimos de sol. En Ica el servicio de Moto es
+ * el MOTOTAXI (el vehículo que domina la ciudad [OBS]); calibrada con la calle: carrera corta de
+ * mototaxi entre 1,50 y 3 soles [OBS, poco fiable]. Redondea a 10 céntimos, como se paga en la calle.
+ * Es la PROPUESTA de la ficha (sección 5.2): el precio final lo aprueba Richard antes de encender.
+ */
+export const TARIFA_MOTO_PERU: TarifaViaje = {
+  base: 150,
+  porKm: 90,
+  porMinuto: 8,
+  minimo: 300,
+  esperaGratisS: 180,
+  porMinutoEspera: 10,
+  cancelacionGratisS: 120,
+  cargoCancelacion: 100,
+  cargoNoSePresento: 100,
+  topeDinamicoPb: 10_000,
+  redondeo: 10,
+  cargoFijo: 0,
+  esperaParadaGratisS: 120,
+  factorCallePb: 13_000,
+  velocidadKmh: 22,
+};
+
+/**
+ * C-PERFIL-PERU: tarifa de Carro de mercado para Ica, en céntimos de sol. Calibrada con la calle: taxi
+ * del centro a Huacachina (5 km) entre 10 y 15 soles y carrera corta entre 3 y 8 [OBS, poco fiable];
+ * 5 km y 12 minutos dan unos 11,30. Propuesta de la ficha: el precio final lo aprueba Richard.
+ */
+export const TARIFA_CARRO_PERU: TarifaViaje = {
+  base: 300,
+  porKm: 130,
+  porMinuto: 15,
+  minimo: 500,
+  esperaGratisS: 180,
+  porMinutoEspera: 20,
+  cancelacionGratisS: 120,
+  cargoCancelacion: 200,
+  cargoNoSePresento: 200,
+  topeDinamicoPb: 10_000,
+  redondeo: 10,
+  cargoFijo: 0,
+  xlPb: 15_000,
+  comfortPb: 13_000,
+  premiumPb: 18_000,
+  esperaParadaGratisS: 120,
+  factorCallePb: 13_000,
+  velocidadKmh: 24,
+};
+
+const TARIFAS_DE_MERCADO = new Map<string, Readonly<Record<'moto' | 'carro', TarifaViaje>>>([
+  ['VE', { moto: TARIFA_MOTO_VENEZUELA, carro: TARIFA_CARRO_VENEZUELA }],
+  ['PE', { moto: TARIFA_MOTO_PERU, carro: TARIFA_CARRO_PERU }],
+]);
+
 /** La tarifa de mercado sembrada para un servicio de viajes en un país (null = hay que escribirla). */
 export function tarifaDeMercado(pais: string, servicio: string): TarifaViaje | null {
-  if (pais.toUpperCase() !== 'VE') return null;
-  if (servicio === 'moto') return TARIFA_MOTO_VENEZUELA;
-  if (servicio === 'carro') return TARIFA_CARRO_VENEZUELA;
+  const delPais = TARIFAS_DE_MERCADO.get(pais.toUpperCase());
+  if (!delPais) return null;
+  if (servicio === 'moto') return delPais.moto;
+  if (servicio === 'carro') return delPais.carro;
   return null;
 }
 

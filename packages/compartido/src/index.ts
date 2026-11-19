@@ -46,6 +46,7 @@ export * from './finanzas';
 export * from './viajes';
 export * from './flexPaises';
 export * from './perfilChile';
+export * from './perfilPeru';
 export * from './motivosCancelacion';
 export * from './mapas';
 export * from './flexCobro';

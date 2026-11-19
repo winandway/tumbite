@@ -441,7 +441,7 @@ export type CotizacionViaje = {
   /** La tarifa es de prueba (sitio de pruebas): no es un precio comercial aprobado. */
   dePrueba: boolean;
   /** C-PAGO-MOVIL-VIAJE: con qué se puede pagar en esa ciudad (perfil del país). */
-  metodosPago?: ('efectivo' | 'tarjeta' | 'pago_movil')[];
+  metodosPago?: import('./perfilPasajeros').MetodoPagoViaje[];
   /** C-BS-REFERENCIA: el equivalente en la moneda local (solo informativo; null sin tasa vigente). */
   referencia?: import('./tasaReferencia').Referencia | null;
   /** C-BS-EN-MANO: la tasa fijada con la cotización (null si no aplica o no hay tasa vigente). */
@@ -483,6 +483,8 @@ const NUMEROS_EMERGENCIA = new Map<string, string>([
   ['CO', '123'],
   ['VE', '911'],
   ['MX', '911'],
+  // C-PERFIL-PERU: la central de la Policía Nacional del Perú.
+  ['PE', '105'],
 ]);
 export function numeroEmergencia(pais: string | null | undefined): string {
   return NUMEROS_EMERGENCIA.get((pais ?? '').toUpperCase()) ?? '911';

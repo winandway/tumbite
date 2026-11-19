@@ -55,6 +55,8 @@ export const UMBRALES_INICIALES: Readonly<Record<string, number>> = {
   MXN: 200_000,
   COP: 400_000,
   VES: 4_000_000,
+  // C-PERFIL-PERU: unos 100 dólares en soles.
+  PEN: 36_000,
 };
 const CLAVE_CONFIG = 'control_dual_umbrales';
 /** C-PERMISOS-FINOS: las plantillas de fábrica que aprueban dinero (con segunda firma). */

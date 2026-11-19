@@ -651,7 +651,7 @@ export async function avisarFondoBajo(env: Env, db: D1Database, agenteId: string
 /** Variantes de un teléfono como lo escribiría la gente de ese país (con o sin prefijo). */
 function variantesTelefono(escrito: string, pais: string): string[] {
   const d = escrito.replace(/\D/g, '');
-  const prefijo = pais === 'VE' ? '58' : pais === 'CO' ? '57' : '1';
+  const prefijo = pais === 'VE' ? '58' : pais === 'CO' ? '57' : pais === 'PE' ? '51' : '1';
   const v = new Set<string>();
   const c = telefonoCanonico(d);
   if (c) v.add(c);

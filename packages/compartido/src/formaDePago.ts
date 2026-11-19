@@ -14,6 +14,9 @@ const NOMBRES = {
   nequi: { es: 'Nequi', en: 'Nequi' },
   daviplata: { es: 'Daviplata', en: 'Daviplata' },
   zelle: { es: 'Zelle', en: 'Zelle' },
+  // C-PERFIL-PERU: las billeteras de celular de Perú.
+  yape: { es: 'Yape', en: 'Yape' },
+  plin: { es: 'Plin', en: 'Plin' },
   saldo: { es: 'Saldo de la app', en: 'App balance' },
   otro: { es: 'Otro medio', en: 'Other method' },
 } as const satisfies Record<string, { es: string; en: string }>;

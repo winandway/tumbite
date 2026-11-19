@@ -16,6 +16,8 @@ export const MONEDA_POR_PAIS: Record<string, string> = {
   MX: 'MXN',
   // C-PERFIL-CHILE: la moneda queda declarada; el país sigue apagado (sin tarifas ni topes).
   CL: 'CLP',
+  // C-PERFIL-PERU (19 nov 2026): Perú cobra en soles.
+  PE: 'PEN',
 };
 
 export const esquemaConfigPais = z.object({

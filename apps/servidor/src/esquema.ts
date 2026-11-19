@@ -13,6 +13,7 @@ import {
   asegurarResumenCatalogo,
 } from './resumenCatalogo';
 import { rehacerConductorDocumentos } from './esquemaPapeles';
+import { rehacerCuentasCobro } from './esquemaCuentasCobro';
 import { INDICES_BUSCADOR } from './buscadorSql';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
@@ -663,6 +664,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerFlex),
         String(rehacerAprobacionesDinero),
         String(rehacerConductorDocumentos),
+        String(rehacerCuentasCobro),
         String(sincronizarServicios),
         String(preciosDeFabrica),
         DISPARADORES_RESUMEN_CATALOGO,
@@ -736,6 +738,8 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await rehacerAprobacionesDinero(db);
   // C-CARRO-PAPELES-PAIS: la licencia de conducir del taxista en los papeles del conductor.
   await rehacerConductorDocumentos(db);
+  // C-PAGO-A-CELULAR: Yape y Plin en los tipos de cuenta de cobro (Perú).
+  await rehacerCuentasCobro(db);
   await asegurarFase3(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);

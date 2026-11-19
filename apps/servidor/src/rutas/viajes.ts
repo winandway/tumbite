@@ -28,7 +28,7 @@ import {
   devolverReservaViaje,
   reservarComisionViaje,
 } from '../finanzas/conductor';
-import { cargoEspera, esquemaTarifaViaje, sinPlusCode } from '@tumbite/compartido';
+import { cargoEspera, esPagoACelular, esquemaTarifaViaje, sinPlusCode } from '@tumbite/compartido';
 import {
   aceptarOperacion,
   cambiarEstadoViaje,
@@ -699,7 +699,7 @@ viajes.post('/conductor/operaciones/:id/pago-movil', async (c) => {
       pais: string;
     }>();
   if (!f) throw new ErrorDatos('Este viaje no es tuyo.', undefined, 404);
-  if (f.metodo_pago !== 'pago_movil')
+  if (!esPagoACelular(f.metodo_pago))
     throw new ErrorDatos('Este viaje no se paga por pago móvil.', undefined, 409);
   if (!['en_curso', 'terminado'].includes(f.estado))
     throw new ErrorDatos('Confirma el pago cuando el pasajero ya esté a bordo.', undefined, 409);

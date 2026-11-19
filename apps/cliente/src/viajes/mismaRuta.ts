@@ -38,8 +38,8 @@ export type ViajeHistorial = {
   regalo?: RegaloDelViaje | null;
 };
 
-export type MetodoPagoViaje = 'efectivo' | 'tarjeta' | 'pago_movil';
-const METODOS: readonly MetodoPagoViaje[] = ['efectivo', 'tarjeta', 'pago_movil'];
+export type MetodoPagoViaje = 'efectivo' | 'tarjeta' | 'pago_movil' | 'yape' | 'plin';
+const METODOS: readonly MetodoPagoViaje[] = ['efectivo', 'tarjeta', 'pago_movil', 'yape', 'plin'];
 const CATEGORIAS: readonly CategoriaViaje[] = ['estandar', 'comfort', 'premium', 'xl'];
 
 /** Solo los viajes de pasajero (Moto y Carro) con sus puntos exactos se pueden repetir. */

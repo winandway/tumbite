@@ -26,6 +26,8 @@ export const DECIMALES_MONEDA = new Map<string, number>([
   ['CLP', 0],
   ['VES', 2],
   ['MXN', 2],
+  // C-PERFIL-PERU (19 nov 2026): el sol lleva dos decimales (céntimos).
+  ['PEN', 2],
 ]);
 const REGION_MONEDA = new Map<string, string>([
   ['USD', 'US'],
@@ -33,6 +35,7 @@ const REGION_MONEDA = new Map<string, string>([
   ['CLP', 'CL'],
   ['VES', 'VE'],
   ['MXN', 'MX'],
+  ['PEN', 'PE'],
 ]);
 
 /**

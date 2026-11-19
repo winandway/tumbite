@@ -3,7 +3,17 @@ import type { Env } from '../env';
 import { enviarCorreo } from '../correo';
 import { ErrorDatos } from '../validar';
 
-export const TIPOS_CUENTA = ['banco', 'nequi', 'daviplata', 'pago_movil', 'zelle', 'otro'] as const;
+// C-PAGO-A-CELULAR: Yape y Plin (Perú). La lista vive también en el CHECK de la tabla (esquemaCuentasCobro.ts).
+export const TIPOS_CUENTA = [
+  'banco',
+  'nequi',
+  'daviplata',
+  'pago_movil',
+  'zelle',
+  'yape',
+  'plin',
+  'otro',
+] as const;
 export type TipoCuenta = (typeof TIPOS_CUENTA)[number];
 /** Una cuenta nueva o cambiada entra en vigor a las 24 h (protección contra el robo de la cuenta). */
 export const HORAS_ESPERA_CUENTA = 24;

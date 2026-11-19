@@ -1,7 +1,7 @@
 import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
 import { UMBRALES_VIAJE_REAL } from '../viajeReal';
-import { metrosEntre as metrosEntrePuntos } from '@tumbite/compartido';
+import { esPagoACelular, metrosEntre as metrosEntrePuntos } from '@tumbite/compartido';
 import { z } from 'zod';
 import {
   type CotizacionViaje,
@@ -1013,9 +1013,9 @@ async function viajeDelCliente(
          LEFT JOIN repartidores d ON d.usuario_id = o.conductor_id
          LEFT JOIN vehiculos h ON h.id = o.vehiculo_id
          -- C-PAGO-MOVIL-VIAJE: los datos de pago móvil del conductor (solo si el viaje se paga así).
-         LEFT JOIN cuentas_cobro k ON v.metodo_pago = 'pago_movil' AND k.id = (
+         LEFT JOIN cuentas_cobro k ON v.metodo_pago IN ('pago_movil', 'yape', 'plin') AND k.id = (
            SELECT c2.id FROM cuentas_cobro c2 JOIN zonas z2 ON z2.id = o.zona_id
-            WHERE c2.usuario_id = o.conductor_id AND c2.tipo = 'pago_movil' AND c2.pais = z2.pais
+            WHERE c2.usuario_id = o.conductor_id AND c2.tipo = v.metodo_pago AND c2.pais = z2.pais
               AND c2.activa = 1 ORDER BY c2.creado_en DESC LIMIT 1)
          LEFT JOIN viajes_pago_movil pm ON pm.operacion_id = o.id
         WHERE o.cliente_id = ?1
@@ -1109,16 +1109,15 @@ function viajePublico(f: FilaViajeCliente) {
           }
         : null,
     // C-PAGO-MOVIL-VIAJE: a quién se le paga y si el conductor ya confirmó que le llegó.
-    pagoMovil:
-      f.metodo_pago === 'pago_movil'
-        ? {
-            datos:
-              (conConductor || f.estado === 'terminado') && f.pm_identificador
-                ? { banco: f.pm_banco, titular: f.pm_titular, identificador: f.pm_identificador }
-                : null,
-            confirmado: f.pm_estado,
-          }
-        : null,
+    pagoMovil: esPagoACelular(f.metodo_pago)
+      ? {
+          datos:
+            (conConductor || f.estado === 'terminado') && f.pm_identificador
+              ? { banco: f.pm_banco, titular: f.pm_titular, identificador: f.pm_identificador }
+              : null,
+          confirmado: f.pm_estado,
+        }
+      : null,
     cancelacion:
       cargo === null
         ? null

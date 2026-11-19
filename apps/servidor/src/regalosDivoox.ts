@@ -46,7 +46,13 @@ export const TOPES_REGALO = {
 export const SERVICIOS_REGALO = ['moto', 'carro', 'envios', 'comida'] as const;
 export type ServicioRegalo = (typeof SERVICIOS_REGALO)[number];
 /** Formas de pago en mano: el regalo baja lo que se cobra en la puerta. */
-const METODOS_EN_MANO = new Set(['efectivo', 'pago_movil', 'transferencia_repartidor']);
+const METODOS_EN_MANO = new Set([
+  'efectivo',
+  'pago_movil',
+  'yape',
+  'plin',
+  'transferencia_repartidor',
+]);
 export const conRegalo = (metodo: string | null | undefined) => METODOS_EN_MANO.has(metodo ?? '');
 
 export type RegaloAplicado = RegaloDivoox;

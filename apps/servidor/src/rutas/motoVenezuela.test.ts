@@ -551,9 +551,13 @@ describe('C-MOTO-POR-PAIS: la compuerta de producción por país (hoy cerrada)',
     // C-CARRO-POR-PAIS: Carro en Venezuela también se puede abrir, y también nace cerrado.
     expect(lista.datos.paises).toEqual([
       { servicio: 'moto', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
+      // C-PERFIL-PERU: Perú entra por la misma compuerta y también nace cerrado.
+      { servicio: 'moto', pais: 'PE', abierto: false, solicitudMarca: null, abiertoEn: null },
       { servicio: 'carro', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
+      { servicio: 'carro', pais: 'PE', abierto: false, solicitudMarca: null, abiertoEn: null },
       // C-ENVIOS-POR-PAIS: Envíos de A a B en Venezuela, por la misma compuerta (nace cerrado).
       { servicio: 'envios', pais: 'VE', abierto: false, solicitudMarca: null, abiertoEn: null },
+      { servicio: 'envios', pais: 'PE', abierto: false, solicitudMarca: null, abiertoEn: null },
     ]);
     expect((await abrirCaracas(e)).estado).toBe(409);
     const { saludServicios } = await import('./servicios');
