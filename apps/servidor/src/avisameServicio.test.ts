@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { contarFilas, type CuentaFilas } from './presupuestoFilas';
 import { mundo } from './pruebas/ayuda';
+import { TOPE_AVISAME_DIA } from './rutas/avisameServicio';
 
 /**
  * C-OCHO-ICONOS-SIEMPRE (18 nov 2026, orden de Richard) — todos los países. «Avísame cuando llegue»
@@ -155,6 +156,29 @@ describe('C-OCHO-ICONOS-SIEMPRE · «Avísame cuando llegue»', () => {
     );
     await m.llamar('GET', '/datos/servicios', undefined, undefined, APARATO);
     expect(escritas() - antes).toBe(0);
+  });
+
+  // Reserva del revisor (18 nov 2026): sin cuenta, el aparato es una cabecera que se puede inventar.
+  it('tope diario: pasado el tope del día no se escribe más y se dice en palabras', async () => {
+    const m = mundo();
+    const sql = m.DB.prepare(
+      "INSERT INTO avisos_servicio (dueno, servicio, zona_clave) VALUES (?, 'moto', '')",
+    );
+    const lote = Array.from({ length: TOPE_AVISAME_DIA }, (_, i) => sql.bind(`a:relleno-${i}`));
+    for (let i = 0; i < lote.length; i += 100) await m.DB.batch(lote.slice(i, i + 100));
+    const r = await m.llamar(
+      'POST',
+      '/datos/servicios/avisame',
+      { servicio: 'moto', ...MIAMI },
+      undefined,
+      APARATO,
+    );
+    expect(r.estado).toBe(429);
+    expect(await filas(m)).toHaveLength(TOPE_AVISAME_DIA);
+    const esquema = readFileSync(join(__dirname, '..', '..', '..', 'schema.sql'), 'utf8');
+    expect(esquema).toMatch(
+      /CREATE INDEX IF NOT EXISTS avisos_servicio_dia ON avisos_servicio\(creado_en\)/,
+    );
   });
 
   it('tiene límite de intentos y la tabla nace con CREATE TABLE IF NOT EXISTS (nunca ALTER)', () => {

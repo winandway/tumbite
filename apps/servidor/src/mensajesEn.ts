@@ -16,6 +16,10 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t recognize this phone. Update the app and try again.',
   ],
   ['Servicio desconocido.', 'Unknown service.'],
+  [
+    'Ahora mismo no podemos guardarlo. Vuelve a intentarlo más tarde.',
+    'We can’t save it right now. Please try again later.',
+  ],
   // C-MODERACION (16 nov 2026): reportar, bloquear y la bandeja del equipo.
   ['Eso ya no está disponible.', 'That’s no longer available.'],
   [

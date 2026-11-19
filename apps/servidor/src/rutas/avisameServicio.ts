@@ -33,6 +33,12 @@ const Cuerpo = z
   })
   .strict();
 
+/**
+ * Tope de filas nuevas por día, en todo el sistema. Sin cuenta, el aparato es una cabecera que se
+ * puede inventar: sin tope, un robot llenaría la tabla (regla del presupuesto de escrituras).
+ */
+export const TOPE_AVISAME_DIA = 2000;
+
 const redondear = (x: number) => Math.round(x * 100) / 100;
 
 export const avisameServicio = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -52,6 +58,18 @@ avisameServicio.post('/servicios/avisame', async (c) => {
   const lat = punto ? redondear(punto.lat) : null;
   const lng = punto ? redondear(punto.lng) : null;
   const zonaClave = zona ? zona.id : punto ? `~${lat},${lng}` : '';
+  const hoy = await db
+    .prepare("SELECT COUNT(*) AS n FROM avisos_servicio WHERE creado_en >= date('now')")
+    .first<{ n: number }>();
+  if ((hoy?.n ?? 0) >= TOPE_AVISAME_DIA) {
+    // Visible en los registros de error: es señal de abuso o de que hay que subir el tope.
+    console.error('[avisame] tope diario alcanzado: no se guardan más avisos hoy');
+    throw new ErrorDatos(
+      'Ahora mismo no podemos guardarlo. Vuelve a intentarlo más tarde.',
+      undefined,
+      429,
+    );
+  }
   await db
     .prepare(
       `INSERT INTO avisos_servicio (dueno, servicio, zona_clave, usuario_id, aparato, zona_id, lat, lng)

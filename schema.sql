@@ -4499,3 +4499,5 @@ CREATE TABLE IF NOT EXISTS avisos_servicio (
   creado_en TEXT NOT NULL DEFAULT (datetime('now')),
   PRIMARY KEY (dueno, servicio, zona_clave)
 ) WITHOUT ROWID;
+-- Para el tope diario de filas nuevas (una lectura corta por toque, no un recorrido de la tabla).
+CREATE INDEX IF NOT EXISTS avisos_servicio_dia ON avisos_servicio(creado_en);
