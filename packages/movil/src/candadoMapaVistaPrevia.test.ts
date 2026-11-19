@@ -84,7 +84,10 @@ describe('C-MAPA-VISTA-PREVIA: el mapa pequeño no se toca', () => {
     expect(cuerpo).not.toMatch(/PixelRatio/);
     const m = /top: (\d+), right: \d+, bottom: (\d+)/.exec(cuerpo);
     expect(m).not.toBeNull();
-    expect(Number(m?.[1]) + Number(m?.[2])).toBeLessThanOrEqual(60);
+    // Cabe en el mapa de 150 (la mitad o menos) y arriba deja sitio al alfiler de la recogida, que
+    // sube unos 40 puntos sobre su punto (en el emulador salía cortado con 30).
+    expect(Number(m?.[1]) + Number(m?.[2])).toBeLessThanOrEqual(80);
+    expect(Number(m?.[1])).toBeGreaterThanOrEqual(48);
     for (const a of ['apps/repartidor/src/piezas/Mapa.tsx', 'apps/cliente/src/MapaEntrega.tsx'])
       expect(leer(a)).toMatch(/edgePadding: margenEncuadre\(vistaPrevia,/);
   });

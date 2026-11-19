@@ -145,7 +145,7 @@ type Margen = { top: number; right: number; bottom: number; left: number };
  */
 export function margenEncuadre(vistaPrevia: boolean, normal: Margen): Margen {
   if (!vistaPrevia) return normal;
-  return { top: 30, right: 36, bottom: 22, left: 36 };
+  return { top: 52, right: 44, bottom: 26, left: 44 };
 }
 
 /** Lado, en puntos, del disco de la marca (el mismo de la web). */
