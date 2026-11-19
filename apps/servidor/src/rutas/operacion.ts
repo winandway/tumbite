@@ -44,7 +44,7 @@ import { pagoPicoPara } from '../pagoPico';
 import { sentenciasCobroAnuncio } from '../anuncios';
 import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorTiempo';
 import { paisDeZona } from '../internacional/paises';
-import { referenciaDePedido } from './tasasReferencia';
+import { enManoDePedido, referenciaDePedido } from './tasasReferencia';
 import { sinFotoConPin, verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import {
@@ -1398,6 +1398,11 @@ operacion.get('/repartidor/estado', async (c) => {
                   activo,
                   Number(activo.total) - Number(activo.propina ?? 0),
                 )
+              : null,
+          // C-BS-EN-MANO: lo mismo con «sinTasa» (la pantalla lo dice), igual al que ve el cliente.
+          enManoCobro:
+            activo.metodo_pago === 'efectivo' || activo.metodo_pago === 'transferencia_repartidor'
+              ? await enManoDePedido(db, activo, Number(activo.total) - Number(activo.propina ?? 0))
               : null,
         }
       : await practicaActiva(db, u.id),
