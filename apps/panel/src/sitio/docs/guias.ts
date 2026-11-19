@@ -3,6 +3,7 @@ import type { NombreIcono } from '../Icono';
 import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
 import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
+import { GUIAS_LINEAS, LINEAS_PUBLICADA } from './lineas';
 import { GUIAS_VIAJES_FIJOS, VIAJES_FIJOS_PUBLICADA } from './viajesFijos';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
@@ -10902,6 +10903,9 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   const vf = idioma === 'es' ? GUIAS_VIAJES_FIJOS.es : GUIAS_VIAJES_FIJOS.en;
   const fijosPasajero = VIAJES_FIJOS_PUBLICADA ? [vf.confianza, vf.fijos] : [];
   const fijosConductor = VIAJES_FIJOS_PUBLICADA ? [vf.conductor] : [];
+  // C-LINEAS-TAXI: «Registra tu línea» y «Tu línea en Divoox Driver», con capturas reales (ver lineas.ts).
+  const lin = idioma === 'es' ? GUIAS_LINEAS.es : GUIAS_LINEAS.en;
+  const lineasDocs = LINEAS_PUBLICADA ? [lin.registro, lin.conductor] : [];
   // C-ESPERA-VEHICULO: la espera de cada servicio, con sus capturas reales.
   const espera = idioma === 'es' ? GUIA_ESPERA.es : GUIA_ESPERA.en;
   const base = secciones.map((s) => {
@@ -10921,7 +10925,14 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
     if (s.id === 'drivers')
       return {
         ...s,
-        guias: [...s.guias, ...moto.conductor, ...carro.conductor, ...fijosConductor, ...de(s.id)],
+        guias: [
+          ...s.guias,
+          ...moto.conductor,
+          ...carro.conductor,
+          ...fijosConductor,
+          ...lineasDocs,
+          ...de(s.id),
+        ],
       };
     // C-DOCS-LUPA (15 nov 2026): cómo buscar en Docs y ampliar una captura, al final de «Tu cuenta».
     if (s.id === 'account')
