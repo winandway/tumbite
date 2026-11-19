@@ -390,6 +390,39 @@ for (const idioma of ['es', 'en'] as const) {
       // auditoría de tiendas, 18 nov 2026); el total de hoy ya no cuenta el regalo como una entrega
       // (C-GANANCIAS-COHERENTES).
       await expect(pr.getByTestId('ganancias-incluye-regalos')).toBeVisible();
+      // C-GANANCIAS-EN-MANO: lo que el pasajero pagó en mano entra en el total del conductor, con sus
+      // bolívares, y la carrera sale en «Carreras cobradas en mano».
+      await expect(pr.getByTestId('ganancias-incluye-en-mano')).toBeVisible({ timeout: 30_000 });
+      await expect(pr.getByTestId('ganancias-total')).not.toHaveText(/^\$0[.,]00$/);
+      await expect(pr.getByTestId('ganancias-viajes-en-mano')).toBeVisible({ timeout: 30_000 });
+      // C-CUENTA-COBRO-VENEZUELA: la tarjeta habla de pago móvil y pide banco, teléfono y cédula.
+      // En inglés el ejemplo es de Estados Unidos, donde no hay billeteras de celular: sin tarjeta.
+      const cuentaCobro = pr.getByTestId('cuenta-cobro');
+      if (idioma === 'es') {
+        await expect(cuentaCobro).toBeVisible();
+        await expect(cuentaCobro).toContainText('pago móvil');
+        await expect(cuentaCobro).not.toContainText('tu número');
+      } else await expect(cuentaCobro).toHaveCount(0);
+      if (process.env.CARPETA_REVISION && idioma === 'es') {
+        const carpetaRev = process.env.CARPETA_REVISION;
+        await pr.screenshot({ path: join(carpetaRev, `ganancias-${idioma}.png`), fullPage: true });
+        await pr.getByTestId('ganancias-total').scrollIntoViewIfNeeded();
+        await pr.screenshot({ path: join(carpetaRev, `ganancias-total-${idioma}.png`) });
+        const abrir = cuentaCobro.getByRole('button').last();
+        await abrir.scrollIntoViewIfNeeded();
+        await abrir.click();
+        await expect(pr.getByTestId('cuenta-cobro-formulario')).toBeVisible();
+        await cuentaCobro.screenshot({ path: join(carpetaRev, `cuenta-cobro-${idioma}.png`) });
+        await pr.goto('/driver');
+        await expect(pr.getByTestId('resumen-dia')).toBeVisible({ timeout: 30_000 });
+        await expect(pr.getByTestId('resumen-dia')).not.toContainText('$0.00', { timeout: 30_000 });
+        await pr.screenshot({ path: join(carpetaRev, `inicio-${idioma}.png`) });
+        await pr
+          .getByText(idioma === 'es' ? 'Ganancias' : 'Earnings', { exact: true })
+          .last()
+          .click();
+        await expect(pr.getByTestId('saldo-prepago')).toBeVisible({ timeout: 30_000 });
+      }
       if (TIENDA && idioma === 'es') {
         // Auditor de tiendas (18 nov 2026): en la ficha nada que parezca una promesa de ingresos
         // («te alcanza para unas 124 carreras»); el saldo, los regalos y las cargas, arriba.

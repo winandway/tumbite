@@ -30,6 +30,7 @@ import {
   type Nivel,
   enIdioma,
   formatearMonto,
+  textoLocal,
   paisDelCodigoZona,
   textoAMonto,
   PRECISION_MAXIMA_M,
@@ -1396,17 +1397,13 @@ export function Inicio() {
   } | null>(null);
   const [regalosMensaje, setRegalosMensaje] = useState('');
   // C-GANANCIAS-EN-MANO: pedidos y viajes cobrados en mano del mes (y de la semana en curso). No pasan
-  // por la billetera, así que «Hoy» y el total de Ganancias los suman desde aquí. Solo donde el país
-  // tiene el cobro en mano encendido.
+  // por la billetera, así que «Hoy» y el total de Ganancias los suman desde aquí. Se pide siempre:
+  // un viaje en efectivo existe también donde el saldo prepago no rige (una lectura, ninguna escritura).
   const [cobrosEnMano, setCobrosEnMano] = useState<CobroEnMano[]>([]);
-  const cobroEnManoActivo = Boolean(
-    prepago?.efectivoActivo || prepago?.transferenciaActiva || prepago?.cuentasACelular?.length,
-  );
   const movimientosVistos = billetera?.movimientos?.length ?? 0;
   const entregaActiva = estado?.activo?.id ?? null;
   const viajeActivoId = viajeActivo?.id ?? null;
   useEffect(() => {
-    if (!cobroEnManoActivo) return;
     let vivo = true;
     const ahora = new Date();
     const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
@@ -1457,7 +1454,7 @@ export function Inicio() {
     return () => {
       vivo = false;
     };
-  }, [api, cobroEnManoActivo, movimientosVistos, entregaActiva, viajeActivoId]);
+  }, [api, movimientosVistos, entregaActiva, viajeActivoId]);
   const cargarPrepago = useCallback(async () => {
     try {
       setPrepago(await api.pedir('GET', '/datos/repartidor/saldo-prepago'));
@@ -2190,7 +2187,7 @@ export function Inicio() {
                 enMano.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + '),
               )}
               {bolivares > 0
-                ? ` ${td.enBolivares.replace('{monto}', formatearMonto(bolivares, 'VES', idioma))}`
+                ? ` ${td.enBolivares.replace('{monto}', textoLocal({ moneda: 'VES', monto: bolivares, tasa: 0, fecha: '' }, idioma))}`
                 : ''}
             </Text>
           ) : null}

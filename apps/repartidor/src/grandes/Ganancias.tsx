@@ -5,6 +5,7 @@ import {
   type Idioma,
   formatearMonto,
   planillaGanancias,
+  textoLocal,
   contar,
 } from '@tumbite/compartido';
 import { C, e, Text } from '@tumbite/movil';
@@ -91,22 +92,21 @@ export function Ganancias({
   );
   return (
     <View style={{ gap: 12 }} testID="ganancias-desglose">
-      {(d.totalesPorMoneda?.length ? d.totalesPorMoneda : [{ moneda: 'USD', ...d.totales }]).map(
-        (x) => (
-          <View style={e.tarjeta} key={x.moneda}>
-            {linea(t.base, x.base, x.moneda)}
-            {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
-            {linea(t.propinas, x.propinas, x.moneda)}
-            {linea(
-              `${t.total} · ${contar(x.entregas, 'entrega', idioma)}`,
-              x.total,
-              x.moneda,
-              true,
-            )}
-            <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
-          </View>
-        ),
-      )}
+      {/* Sin entregas pero con carreras en mano (Venezuela, Perú) no se dibuja un desglose en cero. */}
+      {(d.totalesPorMoneda?.length
+        ? d.totalesPorMoneda
+        : d.viajesEnMano?.length
+          ? []
+          : [{ moneda: 'USD', ...d.totales }]
+      ).map((x) => (
+        <View style={e.tarjeta} key={x.moneda}>
+          {linea(t.base, x.base, x.moneda)}
+          {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
+          {linea(t.propinas, x.propinas, x.moneda)}
+          {linea(`${t.total} · ${contar(x.entregas, 'entrega', idioma)}`, x.total, x.moneda, true)}
+          <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
+        </View>
+      ))}
       {d.pedidos.length ? (
         // C-PLANILLA-GANANCIAS: como el estado de cuenta de Uber Driver, una fila por entrega.
         <Pressable
@@ -153,7 +153,7 @@ export function Ganancias({
                 </Text>
                 {v.montoLocal ? (
                   <Text style={{ color: '#666B73', fontSize: 12 }}>
-                    {formatearMonto(v.montoLocal, 'VES', idioma)}
+                    {textoLocal({ moneda: 'VES', monto: v.montoLocal, tasa: 0, fecha: '' }, idioma)}
                   </Text>
                 ) : null}
               </View>
