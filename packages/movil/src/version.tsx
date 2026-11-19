@@ -24,7 +24,10 @@ export const VERSION_APP: InfoVersion = crearInfoVersion(
  */
 export const COMPILACION_APP: string | null = Application.nativeBuildVersion ?? null;
 
-/** «Versión 1.0.1 (compilación 10) · a74309f», discreta y en gris, para soporte. */
+/**
+ * «Versión 0.1.47 (47) · a74309f», discreta y en gris, para soporte (C-VERSION-VISIBLE, 18 nov 2026:
+ * la versión cambia con cada compilación y sale del mismo número nativo, también en la tienda).
+ */
 export function VersionInstalada() {
   const { idioma } = useSesion();
   return (

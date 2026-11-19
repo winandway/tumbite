@@ -2953,5 +2953,16 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "propuesta_por",
     "decidido_por",
     "creado_en"
+  ],
+  "avisos_servicio": [
+    "dueno",
+    "servicio",
+    "zona_clave",
+    "usuario_id",
+    "aparato",
+    "zona_id",
+    "lat",
+    "lng",
+    "creado_en"
   ]
 };

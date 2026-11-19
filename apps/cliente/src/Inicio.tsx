@@ -7,6 +7,7 @@ import {
   type BannerInicio,
   type Restaurante,
   type ServicioCatalogo,
+  accionDeServicio,
   destinoDeBanner,
   enIdioma,
   formatearMonto,
@@ -15,7 +16,7 @@ import {
   portadaRespaldo,
   rutaBanners,
   recomendarRestaurantes,
-  rutaDeServicio,
+  serviciosAbiertos,
   serviciosDelInicio,
 } from '@tumbite/compartido';
 import { AvisoCorreo, C, almacenTelefono, useSesion, Text } from '@tumbite/movil';
@@ -39,6 +40,7 @@ import { textosInicio } from './inicio/textos';
 import {
   CarruselPromos,
   CuadriculaServicios,
+  HojaAunNoHay,
   HojaMasServicios,
   PortadaRotativa,
   RestaurantesCerca,
@@ -74,8 +76,9 @@ function promoDeCupon(p: PromoReal, idioma: 'es' | 'en'): BannerInicio {
 
 /**
  * C-INICIO-NUEVO (17 nov 2026, borrador aprobado por Richard): el inicio en cuatro cuerpos. Portada
- * rotativa (administrador de banners) con «Entregar en» montada encima y el buscador; ocho servicios
- * en cuatro columnas (solo los que funcionan en la ciudad, C-SOLO-LO-TERMINADO); el carrusel de
+ * rotativa (administrador de banners) con «Entregar en» montada encima y el buscador; SIEMPRE los
+ * ocho servicios en cuatro columnas (C-OCHO-ICONOS-SIEMPRE: el que no abre en la zona abre la hoja
+ * «aún no hay» con «Avísame cuando llegue»; la portada y las promociones, solo lo abierto); el carrusel de
  * promociones reales; y los restaurantes cerca. Abajo: Inicio, Pedidos, Favoritos, Wallet y Mi
  * cuenta. Cada servicio abre su pantalla directa (sin pantallas intermedias con «Abrir»).
  */
@@ -86,6 +89,7 @@ export function Inicio() {
   const { carrito, cantidadTotal } = useCarrito();
   const [cambiandoDireccion, setCambiandoDireccion] = useState(false);
   const [mas, setMas] = useState(false);
+  const [aunNoHay, setAunNoHay] = useState<string | null>(null);
   // C-VOLVER-AL-VIAJE: con un viaje en curso, al abrir la app se vuelve a ese viaje.
   useVolverAlViaje(api, Boolean(usuario));
 
@@ -115,7 +119,10 @@ export function Inicio() {
     () => ordenarPorUso(visibles, usos),
     [visibles, usos],
   );
-  const disponible = (id: string) => visibles.some((s) => s.id === id);
+  // Lo que de verdad abre en la zona (la cuadrícula pinta los ocho igual). Comida sigue siendo la
+  // puerta de entrada de la portada y de las listas de restaurantes, como antes.
+  const abiertos = useMemo(() => serviciosAbiertos(servicios?.servicios ?? null), [servicios]);
+  const disponible = (id: string) => id === 'comida' || abiertos.has(id);
 
   // La portada: la del administrador de banners; si no hay, la de respaldo (una distinta cada vez).
   const [vez, setVez] = useState(0);
@@ -218,17 +225,23 @@ export function Inicio() {
   const carritoCentavos = carrito.lineas.reduce((s, l) => s + l.precioCentavos * l.cantidad, 0);
 
   const abrirServicio = (s: ServicioCatalogo) => {
+    const accion = accionDeServicio(s.id, servicios?.servicios ?? null);
+    if (accion.tipo === 'mas') return setMas(true);
+    // C-OCHO-ICONOS-SIEMPRE: cerrado en la zona → la hoja amable, sin navegar ni contar el uso.
+    if (accion.tipo === 'aun_no_hay') return setAunNoHay(accion.servicio);
     const nuevos = { ...usos, [s.id]: (usos[s.id] ?? 0) + 1 };
-    if (s.id !== 'mas') {
-      setUsos(nuevos);
-      void Promise.resolve(almacenTelefono.guardar(LLAVE_USOS, JSON.stringify(nuevos))).catch(
-        () => undefined,
-      );
-    }
-    const ruta = rutaDeServicio(s.id);
-    if (!ruta) return setMas(true);
-    router.push(ruta as never);
+    setUsos(nuevos);
+    void Promise.resolve(almacenTelefono.guardar(LLAVE_USOS, JSON.stringify(nuevos))).catch(
+      () => undefined,
+    );
+    router.push(accion.ruta as never);
   };
+  // «Avísame cuando llegue»: se escribe SOLO al tocar el botón, con la zona del punto elegido.
+  const avisarCuandoLlegue = (servicio: string) =>
+    api.pedir('POST', '/datos/servicios/avisame', {
+      servicio,
+      ...(punto ? { lat: punto.lat, lng: punto.lng } : {}),
+    });
   const abrirBanner = (b: BannerInicio) => {
     const ruta = destinoDeBanner(b);
     if (ruta) router.push(ruta as never);
@@ -366,6 +379,13 @@ export function Inicio() {
         cerca={punto}
         cerrar={() => setCambiandoDireccion(false)}
         elegir={(d) => void catalogo.elegirDireccion(d)}
+      />
+      <HojaAunNoHay
+        key={aunNoHay ?? 'ninguno'}
+        idioma={idioma}
+        servicio={aunNoHay}
+        cerrar={() => setAunNoHay(null)}
+        avisar={avisarCuandoLlegue}
       />
       <HojaMasServicios
         idioma={idioma}

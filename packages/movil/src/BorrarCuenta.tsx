@@ -7,7 +7,7 @@ import { URL_SERVIDOR, useSesion } from './sesion';
 import { C } from './ui';
 import { useSoporte } from './soporte';
 import { TEXTOS_MOVIL } from './textos';
-import { VERSION_APP } from './version';
+import { COMPILACION_APP, VERSION_APP } from './version';
 import { ConfirmarBorrado } from './OpcionesCuenta';
 
 const T = {
@@ -106,7 +106,7 @@ export function MenuCuenta() {
       {abierto && (
         // La versión instalada, discreta, para saber en el teléfono qué se está probando.
         <Text testID="version-app" style={{ padding: 10, fontSize: 11, color: '#9a9a9a' }}>
-          {textoVersion(VERSION_APP, idioma)}
+          {textoVersion(VERSION_APP, idioma, COMPILACION_APP)}
         </Text>
       )}
       <ConfirmarBorrado visible={borrando} alCerrar={() => setBorrando(false)} />

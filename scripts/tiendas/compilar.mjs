@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import { autorizarCompilacion, entornoLocal, llevaRelleno, pidioNube } from './guardia-nube.mjs';
+import { entornoNumeroCompilacion } from './numero-compilacion.mjs';
 
 const APPS = ['cliente', 'repartidor', 'restaurante'];
 const [app, plataforma, perfil] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
@@ -37,9 +38,20 @@ mkdirSync(join(raiz, 'apks-pruebas'), { recursive: true });
 const nube = pidioNube();
 autorizarCompilacion({ donde: nube ? 'nube' : 'local', app, plataforma, perfil });
 // iPhone para teléfonos reales, aquí: el complemento firma-ios-local fija el certificado por huella.
-const env = {
+const base = {
   ...entornoLocal(),
   ...(plataforma === 'ios' && !nube && extension === 'ipa' ? { DIVOOX_FIRMA_IOS_LOCAL: '1' } : {}),
+};
+// C-VERSION-VISIBLE: versión 0.1.<compilación> en Android (en la nube de Expo la variable no llega).
+const env = {
+  ...base,
+  ...entornoNumeroCompilacion({
+    cwd: join(raiz, 'apps', app),
+    plataforma,
+    perfil,
+    datosPerfil: datos,
+    env: base,
+  }),
 };
 execFileSync(
   'npx',

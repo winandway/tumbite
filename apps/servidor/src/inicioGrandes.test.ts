@@ -18,10 +18,11 @@ describe('inicio del cliente como los grandes', () => {
       expect(schema).toContain(`('${id}',`);
   });
   // C-SIN-PANTALLAS-INTERMEDIAS (17 nov 2026, borrador aprobado): cada servicio abre directo su
-  // pantalla; ya no hay pantalla con «Abrir» ni modal «Muy pronto» (lo que no funciona no se muestra).
+  // pantalla; ya no hay pantalla con «Abrir» ni modal «Muy pronto». Desde C-OCHO-ICONOS-SIEMPRE
+  // (18 nov) el que no abre en la zona abre la hoja «aún no hay» (accionDeServicio decide).
   it('cada servicio abre directo su pantalla, sin pantallas intermedias ni «Muy pronto»', () => {
     const inicio = leer(...CLIENTE, 'Inicio.tsx');
-    expect(inicio).toContain('rutaDeServicio(s.id)');
+    expect(inicio).toContain('accionDeServicio(s.id');
     expect(inicio).toContain('serviciosDelInicio(');
     expect(inicio).not.toContain('ModalMuyPronto');
     const pantalla = leer(...CLIENTE, 'app', 'service', '[id].tsx');

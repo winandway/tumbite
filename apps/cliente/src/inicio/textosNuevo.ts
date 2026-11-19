@@ -32,6 +32,24 @@ const ES = {
   },
   campana: 'Avisos',
   portada: 'Portada',
+  // C-OCHO-ICONOS-SIEMPRE: la hoja de un servicio que todavía no abre en la zona.
+  aunNoHay: {
+    nombres: {
+      comida: 'Comida',
+      mercado: 'Mercado',
+      farmacia: 'Farmacia',
+      licores: 'Licores',
+      carro: 'Viajes en carro',
+      moto: 'Moto',
+      envios: 'Envíos Express',
+    } as Record<string, string>,
+    frase: (nombre: string) => `En esta zona aún no hay ${nombre}. Estamos llegando.`,
+    avisame: 'Avísame cuando llegue',
+    enviando: 'Guardando…',
+    listo: 'Listo, te avisamos cuando llegue',
+    error: 'No pudimos guardar tu aviso. Revisa tu conexión e inténtalo de nuevo.',
+    volver: 'Volver',
+  },
 };
 const EN: typeof ES = {
   entregarEn: 'Deliver to',
@@ -64,5 +82,22 @@ const EN: typeof ES = {
   },
   campana: 'Notifications',
   portada: 'Banner',
+  aunNoHay: {
+    nombres: {
+      comida: 'Food',
+      mercado: 'Grocery',
+      farmacia: 'Pharmacy',
+      licores: 'Liquor',
+      carro: 'Car rides',
+      moto: 'Moto rides',
+      envios: 'Express delivery',
+    },
+    frase: (nombre: string) => `${nombre} isn't available in this area yet. We're on our way.`,
+    avisame: 'Notify me when it arrives',
+    enviando: 'Saving…',
+    listo: "Done, we'll let you know when it arrives",
+    error: "We couldn't save your request. Check your connection and try again.",
+    volver: 'Go back',
+  },
 };
 export const textosInicioNuevo = (i: Idioma) => (i === 'en' ? EN : ES);
