@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-18",
+  "actualizado": "2026-11-19",
   "version": "fe71f3f",
   "ahora": "18 nov: Google aprobó y publicó la versión nueva. Divoox (46) y Divoox Driver (42) ya se bajan de Play Store normal. Traen el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Ya se está construyendo la versión siguiente: precios en dólares y en bolívares, el precio grande en la pantalla del conductor, más acciones deslizantes, el saldo a la vista en el inicio del conductor y «Subir la tarifa».",
   "proximo": [
@@ -457,6 +457,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Soporte: ya puedes adjuntar una captura en el chat y los fallos quedan registrados",
+      "texto": "En el chat de soporte de la web hay un botón fijo «Adjuntar captura», con «Subir desde archivos» y «Tomar foto». Cuando alguien cuenta un fallo, Camila pide los datos que faltan y el reporte le llega ordenado al equipo. El chat saluda aunque no haya señal y el botón de enviar dice «Un momento…» mientras llega la respuesta. En Divoox Driver lo mismo llega con la próxima versión de la app. Durante la subida, el sitio de pruebas quedó un rato en rojo por dos datos sin declarar; se corrigió y quedó una prueba que lo atrapa. El sitio real nunca se vio afectado."
+    },
     {
       "fecha": "2026-11-18",
       "titulo": "Docs sin ciudad: 129 capturas rehechas con el mapa sin nombres",
