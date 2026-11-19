@@ -73,8 +73,10 @@ jobs:
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
           VUELTA_PRUEBAS: rama-carro-${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/staging/probar-carro.mjs
+      # Corre aunque un guion anterior falle (tiene sus propias cuentas y su propia zona de pruebas):
+      # el 19 nov el de Moto se paró por el tope semanal de recargas de su conductor y este se saltó.
       - name: Agente Divoox de punta a punta (cobro en efectivo, doble uso, vencimiento, fondo agotado, venta de saldo, conciliación, permisos)
-        if: ${{ vars.URL_PRUEBAS != '' }}
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
         env:
           URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
