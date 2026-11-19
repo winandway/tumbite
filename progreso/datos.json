@@ -1,7 +1,7 @@
 {
   "actualizado": "2026-11-18",
   "version": "fe71f3f",
-  "ahora": "18 nov: la versión nueva de Divoox (cliente 46) y de Divoox Driver (42) quedó enviada a Google Play para producción, al 100 %. Trae el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Google hace sus verificaciones y la revisa; mientras tanto no se sube otra versión. En el servidor ya está en vivo: el viaje vuelve al conductor que dejó pasar la oferta (hasta tres veces) con aviso al celular, y el conductor nuevo queda en su ciudad.",
+  "ahora": "18 nov: Google aprobó y publicó la versión nueva. Divoox (46) y Divoox Driver (42) ya se bajan de Play Store normal. Traen el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Ya se está construyendo la versión siguiente: precios en dólares y en bolívares, el precio grande en la pantalla del conductor, más acciones deslizantes, el saldo a la vista en el inicio del conductor y «Subir la tarifa».",
   "proximo": [
     {
       "quien": "ia",
@@ -457,6 +457,16 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-18",
+      "titulo": "La página de apps manda a Play Store y guarda las de prueba para el equipo",
+      "texto": "La versión real de Divoox y de Divoox Driver ahora se baja de Play Store desde la página de apps. Los códigos y enlaces de las apps de prueba solo se ven con la clave del equipo. Quien tenga una app de Divoox instalada por enlace debe desinstalarla antes de bajar la de la tienda."
+    },
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Google aprobó y publicó la versión nueva",
+      "texto": "Divoox (46) y Divoox Driver (42) quedaron aprobadas y publicadas en Google Play unas tres horas después de enviarlas. Ya se bajan de la tienda normal. La prueba interna de iPhone quedó al día con la misma versión."
+    },
     {
       "fecha": "2026-11-18",
       "titulo": "Docs sin datos reales: la guía de invitar conductores ya muestra un equipo de ejemplo",
