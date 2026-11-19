@@ -3047,7 +3047,7 @@ const es: SeccionDocs[] = [
           'Cuando el pasajero trae un regalo de Divoox, cobras en mano solo la diferencia. Lo que cubre el regalo te lo paga Divoox: entra a tus ganancias al terminar el viaje.',
         explicacion: [
           'En la oferta verás «Con regalo de Divoox» y cuánto te paga Divoox. Lo que ganas es lo mismo que en cualquier viaje.',
-          'Durante el viaje, la app te dice «Cobra en efectivo» con el monto que te paga el pasajero, y debajo, en verde, «Divoox te paga» con lo que cubre el regalo.',
+          'Durante el viaje, arriba de la tarjeta verás «Cobra al pasajero» con el monto que te paga en mano, en cifra grande y en verde (en Venezuela, con los bolívares debajo). Justo debajo, aparte, «Divoox te paga» con lo que cubre el regalo.',
           'Al terminar, lo que pagó Divoox entra a tus ganancias. Divoox te lo paga por pago móvil, o lo pasas a tu saldo con un toque en Ganancias, «Pasar a mi saldo», para tus próximas comisiones.',
           'En los pedidos de comida es igual: el monto a cobrar ya descuenta el regalo y la app te dice cuánto te paga Divoox. Se acredita al cerrar el cobro.',
           'Para cuidar los regalos: no puedes tomar un viaje con regalo pedido desde tu propia cuenta o tu propio teléfono, y hay un máximo de viajes con regalo por día. Si llegas al máximo, el viaje pasa a otro conductor.',
@@ -3055,7 +3055,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/regalos-divoox-conductor-viaje-es.webp',
-            alt: 'Pantalla de Divoox Driver con «Ve a recoger a María», «Cobra en efectivo» y, en verde, «Divoox te paga» por el regalo del pasajero.',
+            alt: 'Pantalla de Divoox Driver con «Cobra al pasajero» en cifra grande y en verde y, aparte, «Divoox te paga» por el regalo del pasajero.',
             pie: 'Cobras en mano la diferencia; Divoox te paga el regalo.',
           },
         ],
@@ -8438,7 +8438,7 @@ const en: SeccionDocs[] = [
           'When the rider has a Divoox gift, you collect in person only the difference. Divoox pays you what the gift covers: it goes to your earnings when the trip ends.',
         explicacion: [
           'The offer shows “With a Divoox gift” and how much Divoox pays you. What you earn is the same as on any trip.',
-          'During the trip, the app shows “Collect in cash” with the amount the rider pays you and, in green below it, “Divoox pays you” with what the gift covers.',
+          'During the trip, the top of the card shows “Collect from the rider” with the amount they pay you in person, in large green numbers. Right under it, separately, “Divoox pays you” shows what the gift covers.',
           'When you finish, what Divoox paid goes into your earnings. Divoox pays it out to you, or you move it to your balance with one tap in Earnings, “Move to my balance,” for your next commissions.',
           'Food orders work the same: the amount to collect already takes off the gift and the app tells you how much Divoox pays you. It’s credited once the payment is closed.',
           'To protect gifts: you can’t take a gift trip requested from your own account or phone, and there’s a daily limit of gift trips. If you reach it, the trip goes to another driver.',
@@ -8446,7 +8446,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/regalos-divoox-conductor-viaje-en.webp',
-            alt: 'Divoox Driver screen with the pickup, “Collect in cash” and, in green, “Divoox pays you” for the rider’s gift.',
+            alt: 'Divoox Driver screen with “Collect from the rider” in large green numbers and, separately, “Divoox pays you” for the rider’s gift.',
             pie: 'You collect the difference in person; Divoox pays you the gift.',
           },
         ],

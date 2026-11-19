@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { type Idioma, formatearMonto, textoDistancia } from '@tumbite/compartido';
-import { Boton, C, Text, Modal } from '@tumbite/movil';
+import {
+  type Idioma,
+  type MontoEnMano as Monto,
+  formatearMonto,
+  textoDistancia,
+} from '@tumbite/compartido';
+import { Boton, C, MontoEnMano, Text, Modal } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 import { useAlarmaOferta } from '../sonidoOferta';
 
@@ -26,6 +31,9 @@ export type OfertaCompleta = {
   metodoPago?: string;
   moneda?: string;
   adelantoLocal?: number;
+  /** C-PRECIO-PROTAGONISTA: lo que cobra en mano (sin propina), con los bolívares donde aplica. */
+  enManoCobro?: Monto | null;
+  total?: number;
   /** C-DISTANCIA-POR-PAIS: país del pedido (millas en EE. UU.). */
   pais?: string | null;
 };
@@ -77,6 +85,18 @@ export function Oferta({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quedan]);
   const n = oferta.articulos ?? 0;
+  // C-PRECIO-PROTAGONISTA: lo que cobra en mano lo manda el servidor (con la tasa del pedido); un
+  // servidor viejo sin ese dato deja el total sin la propina, solo en su moneda.
+  const cobro: Monto | null =
+    oferta.enManoCobro ??
+    (oferta.total != null
+      ? {
+          monto: oferta.total - oferta.propina,
+          moneda: oferta.moneda ?? 'USD',
+          local: null,
+          sinTasa: false,
+        }
+      : null);
   return (
     <Modal visible transparent animationType="slide" onRequestClose={rechazar}>
       <View style={{ flex: 1, backgroundColor: 'rgba(25,25,25,0.55)', justifyContent: 'flex-end' }}>
@@ -121,20 +141,44 @@ export function Oferta({
               }}
             />
           </View>
-          {oferta.metodoPago && oferta.metodoPago !== 'tarjeta' ? (
+          {/* C-PRECIO-PROTAGONISTA: lo que gana, grande, en negrita y en verde, arriba de todo. */}
+          <MontoEnMano
+            testID="oferta-ganancia"
+            monto={{
+              monto: oferta.pagoRepartidor,
+              moneda: oferta.moneda ?? 'USD',
+              local: null,
+              sinTasa: false,
+            }}
+            idioma={idioma === 'en' ? 'en' : 'es'}
+            quien="conductor"
+            etiqueta={t.garantizado}
+            color={C.exito}
+            tamano="grande"
+          />
+          {oferta.metodoPago && oferta.metodoPago !== 'tarjeta' && cobro ? (
+            // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: cuánto cobra en mano, tan grande como lo que gana,
+            // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
             <View
               testID="oferta-cobro-en-mano"
               style={{
                 borderWidth: 1,
                 borderColor: '#2a2a2a',
-                borderRadius: 10,
-                padding: 10,
-                gap: 2,
+                borderRadius: 12,
+                padding: 12,
+                gap: 4,
               }}
             >
-              <Text style={{ fontWeight: '800', color: C.secundario }}>
-                {oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
-              </Text>
+              <MontoEnMano
+                testID="oferta-cobro-monto"
+                monto={cobro}
+                idioma={idioma === 'en' ? 'en' : 'es'}
+                quien="conductor"
+                etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
+                color={C.exito}
+                tamano="grande"
+              />
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{t.propinaAparte}</Text>
               {oferta.adelantoLocal ? (
                 <Text style={{ color: '#666B73' }}>
                   {t.adelantas.replace(
@@ -145,10 +189,6 @@ export function Oferta({
               ) : null}
             </View>
           ) : null}
-          <Text style={{ color: '#666B73', fontWeight: '600' }}>{t.garantizado}</Text>
-          <Text style={{ fontSize: 40, fontWeight: '800', color: C.secundario, lineHeight: 44 }}>
-            {formatearMonto(oferta.pagoRepartidor, oferta.moneda, idioma)}
-          </Text>
           {oferta.propina > 0 ? (
             <Text style={{ color: '#666B73' }}>
               {t.conPropina} {formatearMonto(oferta.propina, oferta.moneda, idioma)}

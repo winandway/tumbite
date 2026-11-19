@@ -17,8 +17,9 @@ import { COLOR } from './tokens';
  * bolívares con la tasa fijada del viaje o del pedido, y la tasa usada con su fecha (para pagar por
  * pago móvil el monto exacto). Sin tasa vigente lo dice en palabras: nunca un número inventado.
  *
- * `tamano="grande"`: la cifra protagonista de la tarjeta del viaje de Driver (cabe en 360 de ancho y
- * con letra grande del sistema: se achica sola en una línea antes de partirse).
+ * `tamano="grande"`: la cifra protagonista de Driver (C-PRECIO-PROTAGONISTA: negrita, al menos del
+ * tamaño del PIN; cabe en 360 de ancho y con letra grande del sistema: se achica sola en una línea
+ * antes de partirse). En Driver va siempre con `color` verde de éxito.
  *
  * `copiable`: un botón «Copiar monto» copia los bolívares exactos (sin «Bs.»), para pegarlos en el
  * pago móvil del banco (revisión del 18 nov 2026).
@@ -75,7 +76,8 @@ export function MontoEnMano({
           style={{
             fontSize: grande ? 44 : 22,
             lineHeight: grande ? 52 : 28,
-            fontWeight: '700',
+            // C-PRECIO-PROTAGONISTA: en grande, negrita (la cifra que el conductor busca de un vistazo).
+            fontWeight: grande ? '800' : '700',
             color: color ?? COLOR.texto,
           }}
         >

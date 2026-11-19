@@ -45,8 +45,8 @@ import {
   paraEnviarUbicacion,
   modoRastreo,
   tocaMandarSegunModo,
+  type MontoEnMano as MontoEnManoTipo,
   type Referencia,
-  textoReferencia,
   ESPERA_MAXIMA_CRITICA_MS,
 } from '@tumbite/compartido';
 import { BilleteraRepartidor, type DatosBilletera } from './Billetera';
@@ -144,6 +144,7 @@ import {
   Text,
   Modal,
   Deslizador,
+  MontoEnMano,
 } from '@tumbite/movil';
 
 /** C-CAMARA-EN-TODA-SUBIDA: la cámara del teléfono, para la pieza común «Tomar foto». */
@@ -213,6 +214,8 @@ type Pedido = {
   total?: number;
   /** C-COMIDA-VENEZUELA: lo que cobra en mano, en bolívares de referencia (tasa del día). */
   referenciaCobro?: Referencia | null;
+  /** C-BS-EN-MANO: lo que cobra en mano (sin propina), con «sinTasa»; igual al que ve el cliente. */
+  enManoCobro?: MontoEnManoTipo | null;
   /** C-CUPON-DIVOOX: lo que paga Divoox por el regalo del cliente (0 sin regalo). */
   regaloDivoox?: number;
   lineas: {
@@ -2799,26 +2802,29 @@ export function Inicio() {
                               </Text>
                             ) : (
                               <>
-                                <Text style={{ color: '#666B73' }}>
-                                  {activo.metodoPago === 'efectivo'
-                                    ? tg.pedido.cobrarEfectivo
-                                    : tg.pedido.cobrarTransfer}{' '}
-                                  <Text style={{ fontWeight: '800', color: C.secundario }}>
-                                    {formatearMonto(
-                                      (activo.total ?? 0) - activo.propina,
-                                      activo.moneda,
-                                      idioma,
-                                    )}
-                                  </Text>
-                                </Text>
-                                {activo.referenciaCobro ? (
-                                  <Text
-                                    testID="cobro-directo-bs"
-                                    style={{ color: '#666B73', fontWeight: '700' }}
-                                  >
-                                    {textoReferencia(activo.referenciaCobro, idioma)}
-                                  </Text>
-                                ) : null}
+                                {/* C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: lo que cobra en mano,
+                                    grande, en negrita y en verde, con los bolívares (donde aplica)
+                                    con la tasa fijada con el pedido. */}
+                                <MontoEnMano
+                                  testID="cobro-directo-bs"
+                                  monto={
+                                    activo.enManoCobro ?? {
+                                      monto: (activo.total ?? 0) - activo.propina,
+                                      moneda: activo.moneda ?? 'USD',
+                                      local: activo.referenciaCobro ?? null,
+                                      sinTasa: false,
+                                    }
+                                  }
+                                  idioma={idioma === 'en' ? 'en' : 'es'}
+                                  quien="conductor"
+                                  etiqueta={
+                                    activo.metodoPago === 'efectivo'
+                                      ? tg.pedido.cobrarEfectivo
+                                      : tg.pedido.cobrarTransfer
+                                  }
+                                  color={C.exito}
+                                  tamano="grande"
+                                />
                                 {(activo.regaloDivoox ?? 0) > 0 ? (
                                   <Text
                                     testID="cobro-divoox-paga"

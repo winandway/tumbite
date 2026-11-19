@@ -15,6 +15,7 @@ import {
   Boton,
   C,
   ChatPedido,
+  COLOR,
   Deslizador,
   MontoEnMano,
   achicarFotoEvidencia,
@@ -198,15 +199,31 @@ export function ViajeActivo({
   // C-CUPON-DIVOOX: «Cobra X · Divoox te paga Y». Sin regalo, X es el precio de siempre.
   const enMano = viaje.cobrar_en_mano ?? viaje.total;
   const regaloDivoox = regaloFinal ?? viaje.regalo_divoox ?? 0;
+  // C-PRECIO-PROTAGONISTA: lo que paga Divoox por el regalo, aparte y en verde (nunca mezclado con
+  // lo que cobra en mano).
   const lineaRegalo =
     regaloDivoox > 0 ? (
-      <Text testID="viaje-divoox-paga" style={{ color: C.exito, fontWeight: '700' }}>
-        {t.divooxTePaga.replace(
-          '{monto}',
-          formatearMonto(regaloDivoox, viaje.moneda ?? 'USD', idioma),
-        )}
-      </Text>
+      <View
+        testID="viaje-divoox-paga"
+        accessible
+        style={{ backgroundColor: COLOR.exitoSuave, borderRadius: 10, padding: 10, gap: 2 }}
+      >
+        <Text style={{ color: C.exito, fontWeight: '800', fontSize: 17 }}>
+          {t.divooxPagaCorto.replace(
+            '{monto}',
+            formatearMonto(regaloDivoox, viaje.moneda ?? 'USD', idioma),
+          )}
+        </Text>
+        <Text style={{ color: C.exito, fontSize: 13 }}>{t.divooxPagaAyuda}</Text>
+      </View>
     ) : null;
+  /** La etiqueta de lo que cobra en mano: con regalo, «Cobra al pasajero» (la diferencia). */
+  const etiquetaCobro =
+    regaloDivoox > 0
+      ? t.cobraAlPasajero
+      : viaje.metodo_pago === 'pago_movil'
+        ? t.cobraPagoMovil
+        : t.cobra;
   const [referenciaFinal, setReferenciaFinal] = useState<Referencia | null>(null);
   const [enManoFinal, setEnManoFinal] = useState<Monto | null>(null);
   // C-BS-EN-MANO: lo que cobra en mano (con regalo, la diferencia) en dólares y en bolívares. Una app
@@ -307,9 +324,9 @@ export function ViajeActivo({
               monto={cobroEnMano(true)}
               idioma={idiomaCorto}
               quien="conductor"
-              etiqueta={viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
-              tamano="grande"
+              etiqueta={etiquetaCobro}
               color={C.exito}
+              tamano="grande"
               copiable={viaje.metodo_pago === 'pago_movil'}
             />
             {lineaRegalo}
@@ -396,21 +413,52 @@ export function ViajeActivo({
           ))}
         </View>
       ) : null}
-      <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
-        <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
+      {/* C-PRECIO-PROTAGONISTA: el precio, grande, en negrita y en verde, arriba en todos los pasos
+          del viaje y del envío (ir a recoger, esperando, en curso y en cada parada). */}
+      <View
+        testID="viaje-precio"
+        style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 16, padding: 16, gap: 10 }}
+      >
         {(viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
         enMano != null ? (
-          <View style={{ marginTop: 8 }}>
+          <MontoEnMano
+            testID="viaje-bs"
+            monto={cobroEnMano(false)}
+            idioma={idiomaCorto}
+            quien="conductor"
+            etiqueta={etiquetaCobro}
+            color={C.exito}
+            tamano="grande"
+          />
+        ) : viaje.total != null ? (
+          // Con tarjeta no se cobra nada en mano: el precio va grande pero en el color de texto (el
+          // verde es solo para lo que el conductor cobra en mano o gana), con el aviso bien visible.
+          <View testID="viaje-tarjeta-bloque" style={{ gap: 2 }}>
+            <Text
+              testID="viaje-tarjeta-aviso"
+              style={{ fontSize: 16, fontWeight: '800', color: C.secundario }}
+            >
+              {t.pagaConTarjeta}
+            </Text>
             <MontoEnMano
-              testID="viaje-bs"
-              monto={cobroEnMano(false)}
+              testID="viaje-tarjeta"
+              monto={{
+                monto: viaje.total,
+                moneda: viaje.moneda ?? 'USD',
+                local: null,
+                sinTasa: false,
+              }}
               idioma={idiomaCorto}
               quien="conductor"
-              etiqueta={viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
+              color={COLOR.texto}
+              tamano="grande"
             />
           </View>
         ) : null}
         {lineaRegalo}
+      </View>
+      <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
+        <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
       </View>
       {parada ? (
         // C-VIAJE-PARADAS: qué sigue después de esta parada (las demás paradas y el destino).
@@ -608,6 +656,7 @@ export function ViajeActivo({
                 monto={cobroEnMano(true)}
                 idioma={idiomaCorto}
                 quien="conductor"
+                color={C.exito}
                 tamano="grande"
                 copiable
               />

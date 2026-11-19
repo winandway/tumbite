@@ -56,6 +56,10 @@ export const TEXTOS_VIAJE = {
       terminado: 'Envío entregado',
       noShow: 'Envío cerrado: quien envía no se presentó',
       califica: 'Califica a quien envía',
+      // C-PRECIO-PROTAGONISTA: con regalo, el envío cobra la diferencia a quien envía.
+      cobraAlPasajero: 'Cobra a quien envía',
+      divooxPagaAyuda: 'Por el regalo de quien envía. Va a tus ganancias al terminar.',
+      pagaConTarjeta: 'Precio del envío · lo paga con tarjeta, no cobras en mano',
     },
     activo: {
       irARecoger: 'Ve a recoger a',
@@ -105,8 +109,11 @@ export const TEXTOS_VIAJE = {
       entregar: 'Desliza para entregar el paquete',
       permisoCamara: 'Necesitamos permiso para usar la cámara.',
       cobra: 'Cobra en efectivo',
-      divooxTePaga:
-        'Divoox te paga {monto} por el regalo del pasajero. Va a tus ganancias al terminar.',
+      // C-PRECIO-PROTAGONISTA: la tarjeta del precio del viaje (cifra grande, regalo aparte en verde).
+      cobraAlPasajero: 'Cobra al pasajero',
+      divooxPagaCorto: 'Divoox te paga {monto}',
+      divooxPagaAyuda: 'Por el regalo del pasajero. Va a tus ganancias al terminar.',
+      pagaConTarjeta: 'Precio del viaje · lo paga con tarjeta, no cobras en mano',
       pagoMovilPregunta: '¿Te llegó el pago móvil del pasajero? Monto del viaje:',
       pagoMovilSi: 'Sí, me llegó',
       pagoMovilNo: 'No me llegó',
@@ -175,6 +182,9 @@ export const TEXTOS_VIAJE = {
       terminado: 'Delivery completed',
       noShow: 'Delivery closed: the sender didn’t show up',
       califica: 'Rate the sender',
+      cobraAlPasajero: 'Collect from the sender',
+      divooxPagaAyuda: 'For the sender’s gift. It goes to your earnings when you finish.',
+      pagaConTarjeta: 'Delivery fare · paid by card, nothing to collect',
     },
     activo: {
       irARecoger: 'Go pick up',
@@ -222,8 +232,10 @@ export const TEXTOS_VIAJE = {
       entregar: 'Slide to deliver the package',
       permisoCamara: 'We need permission to use the camera.',
       cobra: 'Collect in cash',
-      divooxTePaga:
-        'Divoox pays you {monto} for the rider’s gift. It goes to your earnings when you finish.',
+      cobraAlPasajero: 'Collect from the rider',
+      divooxPagaCorto: 'Divoox pays you {monto}',
+      divooxPagaAyuda: 'For the rider’s gift. It goes to your earnings when you finish.',
+      pagaConTarjeta: 'Ride fare · paid by card, nothing to collect',
       pagoMovilPregunta: 'Did the rider’s mobile payment arrive? Ride amount:',
       pagoMovilSi: 'Yes, it arrived',
       pagoMovilNo: 'It didn’t arrive',
