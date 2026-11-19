@@ -459,6 +459,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-18",
+      "titulo": "Docs sin ciudad: 129 capturas rehechas con el mapa sin nombres",
+      "texto": "Las capturas públicas de Moto, Carro, Envíos, Comida, el cobro de Flex y el punto exacto ya no muestran ninguna ciudad ni calle reconocible: el mapa se pinta sin nombres, la ciudad dice «Ciudad de ejemplo» o «Sample City», las direcciones son genéricas («Plaza Central», «Avenida Principal 12») y los nombres van con inicial. Se rehicieron 129 capturas en español e inglés, con nombre de archivo nuevo para que ninguna caché sirva las anteriores, y el candado ahora falla si una guía vuelve a nombrar una ciudad en una captura. Queda abierta la de «Zonas con más pedidos»: el inicio del conductor en la web ya no pinta el mapa y hay que tomarla en la app nativa."
+    },
+    {
+      "fecha": "2026-11-18",
       "titulo": "Versión corregida en Google Play: sin el aviso «PRUEBAS» y con los ocho servicios en el inicio",
       "texto": "La versión publicada por la mañana mostraba por error un aviso «PRUEBAS» en la pantalla de entrar, aunque trabajaba con el servidor real. Se corrigió la causa y se subieron Divoox 0.1.48 y Divoox Driver 0.1.43, que Google está revisando. El inicio del cliente ahora muestra siempre los ocho servicios; al tocar uno que todavía no llega a tu zona, lo dice claro. Desde ahora ninguna versión se sube sin abrir antes su pantalla de entrar. El número de versión cambia con cada compilación, para que soporte pueda pedirlo."
     },
