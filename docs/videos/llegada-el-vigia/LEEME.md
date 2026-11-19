@@ -1,6 +1,6 @@
 # Capturas actuales de las apps de Divoox (para el comercial)
 
-Fecha: 19 nov 2026 (última pasada: la quinta, al final; las anteriores quedan como historia). Todas a resolución original, tomadas ahora de las apps reales contra el sitio de pruebas, barra de estado limpia (9:41, batería llena). Textos genéricos: sin ciudad, calles reconocibles ni datos de personas.
+Fecha: 19 nov 2026 (última pasada: la sexta, corta, al final; las anteriores quedan como historia). Todas a resolución original, tomadas ahora de las apps reales contra el sitio de pruebas, barra de estado limpia (9:41, batería llena). Textos genéricos: sin ciudad, calles reconocibles ni datos de personas.
 
 - **pantallas/cliente/**: app Divoox (cliente), versión del paquete enviado a las tiendas hoy, en el simulador de iPhone 18 Pro (iOS 27), 1206 x 2622.
 - **pantallas/driver/**: app Divoox Driver de pruebas, en el emulador de Android, 1080 x 2400. Desde la quinta pasada, todo lo que muestra mapa, oferta o cierre es de la versión 0.1.53; 01, 01b, 02, 03 y 10 son de la 0.1.45, y 13, 13a y 14 de la versión 41.
@@ -164,3 +164,14 @@ No se rehicieron (esas pantallas no cambiaron): 01-inicio-desconectado, 01b-inic
 - El teclado del código a veces necesita dos «atrás» para cerrarse; conviene mirar la captura antes del siguiente toque (un toque a ciegas abrió «Elige la app de mapas»).
 - El regalo temporal BIENVENIDA ya estaba usado por María; se creó BIENVENIDA2 con el mismo texto. Los dos quedaron apagados.
 - Datos neutros temporales en la base de pruebas (nombre del conductor, placa, tarifas sin la etiqueta «de prueba»), devueltos a su valor al terminar.
+
+## Sexta pasada (corta): el viaje con regalo ya no pinta el cero (19 nov 2026)
+
+App Divoox Driver de pruebas, versión 0.1.57. Cuando el regalo cubre todo el viaje, la oferta y la pantalla del viaje dicen «No cobras nada en mano: este viaje lo paga Divoox» en vez de «$0.00 / Bs. 0,00» en grande. Mismo método, misma zona y mismas reglas que la quinta pasada.
+
+Se rehicieron, con el mismo nombre, las del viaje con regalo: 04-oferta-entrante, 05-aceptada-ir-a-recoger, 06-llegue-esperando-pasajero, 07-viaje-en-curso, 08-desliza-terminar-medio y 09-viaje-terminado. 07c no se tocó: es del viaje en efectivo.
+
+- 04: con el texto nuevo la oferta cabe entera; «Plaza Central» ya no sale cortada.
+- 09: el cierre «Viaje terminado» de este viaje TODAVÍA muestra «Cobra al pasajero $0.00 / Bs. 0,00» en grande, con «Divoox te paga $1.00» debajo. El cambio no llegó a esa pantalla; cuando llegue hay que repetir solo la 09.
+- En 05 y 07 la franja de pausa dice «En pausa: Comida y Envíos en moto» (el conductor estaba conectado a tres servicios); en las del viaje en efectivo dice solo «Envíos en moto».
+- Regalo temporal BIENVENIDA3 (los dos anteriores ya estaban usados por María); los tres quedaron apagados.
