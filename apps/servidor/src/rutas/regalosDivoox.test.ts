@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
 import { cambiarEstadoViaje } from '../operaciones';
-import { TOPES_REGALO, apartarRegalo, barrerRegalos, saludRegalos } from '../regalosDivoox';
+import {
+  DIAS_REVISION_OLVIDADA,
+  MINUTOS_RELOJ_ESPERA,
+  TOPES_REGALO,
+  apartarRegalo,
+  barrerRegalos,
+  cerrarRegalo,
+  saludRegalos,
+} from '../regalosDivoox';
 import { UMBRALES_VIAJE_REAL, evaluarViajeReal } from '../viajeReal';
 
 /**
@@ -661,6 +669,36 @@ describe('C-REGALO-VIAJE-REAL: el regalo solo se acredita si el viaje fue real',
     const r = await reporte(e);
     expect(r.cupones[0]).toMatchObject({ gastado: 0, apartado: 0, restante: 10_000 });
     expect(r.revisiones[0]).toMatchObject({ estado: 'rechazado', nota: 'No hubo recorrido' });
+    // Por defecto el pasajero no queda castigado (el tramposo puede ser solo el conductor): el
+    // regalo le sigue valiendo para un viaje de verdad.
+    const cotLibre = await p.llamar('POST', '/datos/viajes/cotizar', {
+      servicio: 'moto',
+      origen: ORIGEN,
+      destino: DESTINO,
+    });
+    expect(cotLibre.datos.cotizacion.regalo).toMatchObject({ codigo: 'VIGIA' });
+    // Lo vuelve a usar con el mismo conductor, otra vez sin moverse; esta vez el equipo lo rechaza
+    // marcando que esa cuenta no repite el cupón.
+    await e.m.DB.prepare(
+      "UPDATE repartidores SET lat = ?, lng = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+    )
+      .bind(ORIGEN.lat, ORIGEN.lng, cond.id)
+      .run();
+    const otra = await pedirViaje(e, p);
+    await hacerViaje(e, cond, p, otra.id, async () => undefined);
+    const rev2 = (await reporte(e)).revisiones.find(
+      (x: { estado: string }) => x.estado === 'pendiente',
+    );
+    expect(
+      (
+        await resolver(e, rev2.id, {
+          aprobar: false,
+          nota: 'Segunda vez sin recorrido',
+          bloquearPasajero: true,
+        })
+      ).estado,
+    ).toBe(200);
+    expect((await reporte(e)).cupones[0]).toMatchObject({ gastado: 0, apartado: 0 });
     // El uso quedó libre, pero esa cuenta, ese teléfono y ese aparato ya no tienen el regalo.
     const cot = await p.llamar('POST', '/datos/viajes/cotizar', {
       servicio: 'moto',
@@ -677,6 +715,54 @@ describe('C-REGALO-VIAJE-REAL: el regalo solo se acredita si el viaje fue real',
     });
     expect(cot2.datos.cotizacion.regalo ?? null).toBeNull();
     expect(await saludRegalos(e.m.DB)).toBe('ok');
+  });
+
+  it('el reloj no se adelanta al cierre del viaje ni paga lo que «terminar» mandó a revisión', async () => {
+    const { e, cond, p, id } = await conRegalo();
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    const pin = (await p.llamar('GET', '/datos/viajes/actual')).datos.viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    // El viaje queda «terminado» con su total, pero el cierre del regalo todavía no corrió (la
+    // petición sigue cobrando la tarjeta, por ejemplo) y el reloj pasa justo ahí.
+    expect(
+      await cambiarEstadoViaje(e.m.DB, {
+        operacionId: id,
+        desde: 'en_curso',
+        hacia: 'terminado',
+        actor: 'conductor',
+        actorId: cond.id,
+        clave: 'terminar-cortado-1',
+      }),
+    ).toBe(true);
+    await e.m.DB.prepare('UPDATE viajes SET total_final_centavos = 900 WHERE operacion_id = ?')
+      .bind(id)
+      .run();
+    await barrerRegalos(e.m.DB);
+    expect(await ganancias(e, cond.id)).toBe(0);
+    expect((await reporte(e)).revisiones).toHaveLength(0);
+    // Pasada la espera, el reloj lo recoge: como no hubo recorrido, va a revisión, no a ganancias.
+    await e.m.DB.prepare(
+      `UPDATE viajes SET terminado_en = datetime('now', '-${MINUTOS_RELOJ_ESPERA + 1} minutes') WHERE operacion_id = ?`,
+    )
+      .bind(id)
+      .run();
+    await barrerRegalos(e.m.DB);
+    expect(await ganancias(e, cond.id)).toBe(0);
+    const rev = (await reporte(e)).revisiones;
+    expect(rev).toHaveLength(1);
+    expect(rev[0].motivos).toEqual(['sin_moverse']);
+    // Ni llamando directo a la pieza que cobra se paga un uso con la revisión abierta.
+    expect(await cerrarRegalo(e.m.DB, { operacionId: id, conductorId: cond.id, maximo: 900 })).toBe(
+      0,
+    );
+    expect(await ganancias(e, cond.id)).toBe(0);
+    // Una revisión que nadie mira en una semana pone la salud en rojo.
+    expect(await saludRegalos(e.m.DB)).toBe('ok');
+    await e.m.DB.prepare(
+      `UPDATE regalos_en_revision SET creado_en = datetime('now', '-${DIAS_REVISION_OLVIDADA + 1} days')`,
+    ).run();
+    expect(await saludRegalos(e.m.DB)).toBe('error');
   });
 
   it('se movió pero muy poco y en un suspiro: demasiado corto frente a lo cotizado', async () => {

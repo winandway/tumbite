@@ -3136,6 +3136,7 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "detalle",
     "estado",
     "nota",
+    "bloquea_pasajero",
     "resuelto_por",
     "resuelto_en",
     "creado_en"

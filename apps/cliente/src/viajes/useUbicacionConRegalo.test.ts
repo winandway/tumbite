@@ -14,7 +14,9 @@ describe('la ubicación del pasajero en un viaje con regalo', () => {
     expect(s).toMatch(/if \(!id \|\| !activo\) return;/);
   });
   it('nunca abre la pregunta del permiso ni muestra un error', () => {
-    expect(s).toMatch(/ubicacionSiHayPermiso\(\)/);
+    expect(s).toMatch(/lecturaSiHayPermiso\(\)/);
+    // Con su precisión: el servidor descarta las lecturas malas.
+    expect(s).toMatch(/precision: p\.precision/);
     expect(s).not.toMatch(/miUbicacion\(/);
     expect(s).toMatch(/\.catch\(/);
   });
