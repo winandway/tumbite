@@ -1091,12 +1091,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cómo recargo mi saldo?"
   ],
   "pasos": [
-   "Abre Ganancias y mira «Saldo para comisiones».",
+   "Mira tu saldo en el inicio de la app; tócalo para ver el detalle en Ganancias, «Saldo para comisiones».",
    "Si te queda poco, recarga con un código o pídele al equipo de tu ciudad que te cargue el saldo.",
    "Acepta la carrera: la comisión se aparta. Al terminar, se descuenta.",
    "Si tienes regalos por cobrar, toca «Pasar a mi saldo»."
   ],
-  "cuerpo": "Tienes dos billeteras. Tu «saldo» es el dinero que recargas para pagar la comisión de Divoox. Tus «ganancias» son lo que Divoox te debe, por ejemplo lo que cubren los regalos de tus pasajeros. El pasajero te paga la carrera completa en mano, en efectivo o por pago móvil. Divoox no toca ese dinero. Al aceptar una carrera, la comisión de Divoox se aparta de tu saldo. Al terminar, se descuenta. Si la carrera se cancela, no se hace o la sueltas, lo apartado vuelve a tu saldo entero. Nunca se cobra dos veces. La comisión es un porcentaje del precio de la carrera. Por ejemplo, con una comisión del 10 %, en una carrera de 2,00 dólares se descuentan 0,20. En Ganancias, «Saldo para comisiones», ves cuánto tienes y para cuántas carreras te alcanza. Sin saldo para la comisión no te llegan carreras. Cuando te queda poco, la app te avisa. Para recargar: compra un código en un punto de venta autorizado y canjéalo en Ganancias, «Saldo para comisiones». También puedes pagarle al equipo de Divoox de tu ciudad por pago móvil: el equipo te carga el saldo y lo ves en «Cargas y regalos de saldo». Al empezar, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez. Si tu pasajero usó un regalo de Divoox, te paga menos en mano y Divoox te paga la diferencia en tus ganancias. Desde Ganancias puedes pasarlo a tu saldo con «Pasar a mi saldo», o Divoox te lo paga por pago móvil."
+  "cuerpo": "Tienes dos billeteras. Tu «saldo» es el dinero que recargas para pagar la comisión de Divoox. Tus «ganancias» son lo que Divoox te debe, por ejemplo lo que cubren los regalos de tus pasajeros. El pasajero te paga la carrera completa en mano, en efectivo o por pago móvil. Divoox no toca ese dinero. Al aceptar una carrera, la comisión de Divoox se aparta de tu saldo. Al terminar, se descuenta. Si la carrera se cancela, no se hace o la sueltas, lo apartado vuelve a tu saldo entero. Nunca se cobra dos veces. La comisión es un porcentaje del precio de la carrera. Por ejemplo, con una comisión del 10 %, en una carrera de 2,00 dólares se descuentan 0,20. En Ganancias, «Saldo para comisiones», ves cuánto tienes y para cuántas carreras te alcanza. Sin saldo para la comisión no te llegan carreras. Cuando te queda poco, la app te avisa. Tu saldo para comisiones está a la vista en el inicio de Divoox Driver: en verde cuando te alcanza y en rojo, con el aviso, cuando se está acabando. Tócalo para ir a Ganancias y recargar. Para recargar: compra un código en un punto de venta autorizado y canjéalo en Ganancias, «Saldo para comisiones». También puedes pagarle al equipo de Divoox de tu ciudad por pago móvil: el equipo te carga el saldo y lo ves en «Cargas y regalos de saldo». Al empezar, Divoox puede darte un regalo de arranque: saldo para tus primeras carreras. Se da una sola vez. Si tu pasajero usó un regalo de Divoox, te paga menos en mano y Divoox te paga la diferencia en tus ganancias. Desde Ganancias puedes pasarlo a tu saldo con «Pasar a mi saldo», o Divoox te lo paga por pago móvi…"
  },
  {
   "idioma": "es",
@@ -1182,11 +1182,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Abre el menú y entra a «Mi ruta (paquetes)»; acepta la ruta.",
-   "En el centro, escanea cada paquete y toca «Salir a la ruta».",
+   "En el centro, escanea cada paquete y desliza la barra «Desliza para salir a la ruta».",
    "En cada parada, entrega con las pruebas que pide la empresa o registra la incidencia.",
    "Vuelve al centro, escanea lo que devuelves y cierra la ruta."
   ],
-  "cuerpo": "Todo Divoox Flex va en azul, el color de logística, para que nunca se confunda con un pedido de comida. Durante la ruta tienes cuatro vistas: Mapa (con filtros Todos, Apartamentos y Prioridad), Lista (cada parada entregada dice a qué hora), Línea de ruta y Resumen (lo que te falta, y cuántas paradas van pendientes, correctas o con problemas). Para ir a una parada toca «Cómo llegar» (está a la vista en cada parada) y elige tu app de mapas: Apple Maps, Google Maps o Waze. Al llegar, toca «Ya estacioné» y sigue con la entrega. Para entregar tienes que estar a menos de 200 metros de la dirección. Si estás más lejos, la app te avisa a cuántos metros estás y no deja terminar. Si la dirección está mal puesta, escríbele a soporte desde la misma parada. Al entregar eliges dónde dejaste el paquete: a la persona o alguien del hogar, recepcionista o portero, puerta principal o porche, buzón seguro u otra ubicación segura. Revisa la foto (que se vea el lugar y sin personas) y desliza «Desliza para finalizar»: se termina deslizando, no con un toque, para no cerrarla por error. Si ya se entregó antes en esa misma dirección, la parada te muestra la foto de esa entrega («Entrega anterior en esta puerta») para que reconozcas el lugar. Si trabajas para una empresa de reparto, ella te invita: te llega un SMS o un correo (o te mandan el enlace por WhatsApp). Instala Divoox Driver, entra con ese mismo celular o correo y, en el inicio, toca «Aceptar» en la invitación de tu empresa. Si ese celular o correo ya lo usas en otra cuenta de Divoox, crea tu cuenta de Driver con otros y toca «¿Una empres…"
+  "cuerpo": "Todo Divoox Flex va en azul, el color de logística, para que nunca se confunda con un pedido de comida. Durante la ruta tienes cuatro vistas: Mapa (con filtros Todos, Apartamentos y Prioridad), Lista (cada parada entregada dice a qué hora), Línea de ruta y Resumen (lo que te falta, y cuántas paradas van pendientes, correctas o con problemas). Para ir a una parada toca «Cómo llegar» (está a la vista en cada parada) y elige tu app de mapas: Apple Maps, Google Maps o Waze. Al llegar, desliza la barra «Desliza al estacionar» y sigue con la entrega. Para entregar tienes que estar a menos de 200 metros de la dirección. Si estás más lejos, la app te avisa a cuántos metros estás y no deja terminar. Si la dirección está mal puesta, escríbele a soporte desde la misma parada. Al entregar eliges dónde dejaste el paquete: a la persona o alguien del hogar, recepcionista o portero, puerta principal o porche, buzón seguro u otra ubicación segura. Revisa la foto (que se vea el lugar y sin personas) y desliza «Desliza para finalizar»: se termina deslizando, no con un toque, para no cerrarla por error. Si ya se entregó antes en esa misma dirección, la parada te muestra la foto de esa entrega («Entrega anterior en esta puerta») para que reconozcas el lugar. Si trabajas para una empresa de reparto, ella te invita: te llega un SMS o un correo (o te mandan el enlace por WhatsApp). Instala Divoox Driver, entra con ese mismo celular o correo y, en el inicio, toca «Aceptar» en la invitación de tu empresa. Si ese celular o correo ya lo usas en otra cuenta de Divoox, crea tu cuenta de Driver con otro…"
  },
  {
   "idioma": "es",
@@ -1215,7 +1215,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Entrega en mano y pide el documento.",
    "Marca el tipo, los últimos cuatro dígitos y el nombre.",
-   "Toca «Entregado en mano»."
+   "Desliza la barra «Desliza: entregado en mano»."
   ],
   "cuerpo": "La app te avisa cuando un pedido tiene productos para mayores. No se puede dejar en la puerta ni en un lugar seguro: solo en mano. Pide el documento, enciende «Revisé el documento», elige el tipo (licencia, pasaporte, otro), escribe sus últimos cuatro dígitos y el nombre de la persona como aparece en el documento. Eso queda en la evidencia de la entrega. Si la persona es menor, no muestra documento o parece alterado, no entregues: usa «Ayuda con este pedido»."
  },
@@ -1271,7 +1271,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Revisa la miniatura. Si no sirve, toca «Tomar otra foto».",
    "Desliza la barra verde «Desliza para completar» hasta el final."
   ],
-  "cuerpo": "Cuando llegas a la dirección y el GPS confirma que estás en la puerta, aparece «Tomar foto de la entrega». Deja la comida y toma la foto de lado: que se vean la comida y la entrada de la casa, nunca la cara de nadie. La foto se sube sola y en uno o dos segundos: la app la achica en tu celular antes de enviarla, así gasta pocos datos aunque la señal sea mala. Verás una miniatura con «Foto de la entrega lista». Si no te gustó, toca «Tomar otra foto» y reemplaza la anterior. Con la foto lista, la barra de abajo se pone verde: desliza la bola de izquierda a derecha hasta el final. El pedido queda entregado y el cliente recibe la foto. Deslizar, en vez de tocar, evita cerrar un pedido sin querer con el celular en el bolsillo. Si usas el lector de pantalla del celular, basta con activar la barra. Si no tienes señal en la puerta, la foto y el cierre se guardan en tu celular y se mandan solos cuando vuelve la señal. Mientras tanto ves «Pendiente de confirmar». Si el cliente pidió «en mano» y lo recibe, toca «Entregado en mano»: no hace falta foto. Con PIN o con productos para mayores de 21, siempre se entrega en mano. Mientras tienes un pedido en curso no aparece «Modo destino»: lo eliges entre pedidos."
+  "cuerpo": "Cuando llegas a la dirección y el GPS confirma que estás en la puerta, aparece «Tomar foto de la entrega». Deja la comida y toma la foto de lado: que se vean la comida y la entrada de la casa, nunca la cara de nadie. La foto se sube sola y en uno o dos segundos: la app la achica en tu celular antes de enviarla, así gasta pocos datos aunque la señal sea mala. Verás una miniatura con «Foto de la entrega lista». Si no te gustó, toca «Tomar otra foto» y reemplaza la anterior. Con la foto lista, la barra de abajo se pone verde: desliza la bola de izquierda a derecha hasta el final. El pedido queda entregado y el cliente recibe la foto. Deslizar, en vez de tocar, evita cerrar un pedido sin querer con el celular en el bolsillo. Si usas el lector de pantalla del celular, basta con activar la barra. Si no tienes señal en la puerta, la foto y el cierre se guardan en tu celular y se mandan solos cuando vuelve la señal. Mientras tanto ves «Pendiente de confirmar». Si el cliente pidió «en mano» y lo recibe, desliza la barra «Desliza: entregado en mano»: no hace falta foto. Con PIN o con productos para mayores de 21, siempre se entrega en mano. Mientras tienes un pedido en curso no aparece «Modo destino»: lo eliges entre pedidos."
  },
  {
   "idioma": "es",
@@ -1290,7 +1290,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Luego: nota de dónde lo dejas, foto y «Dejar en lugar seguro» (solo si el pedido no lleva PIN).",
    "Con PIN: al terminar la espera, «Cliente no apareció: cerrar con foto» y la foto del lugar."
   ],
-  "cuerpo": "Se te pinchó la llanta, te llamaron de urgencia: antes de recoger, escribe el motivo y toca «Soltar el pedido». Se le ofrece a otro repartidor y tu nivel no cambia. Ya recogido no se puede soltar: la comida es del cliente. Si hay un problema, repórtalo desde «Tengo un problema». Si tu celular se queda 10 minutos sin mandar ubicación antes de llegar al restaurante, el pedido se reasigna solo. En la puerta, si nadie sale: toca «El cliente no aparece». Le llega un aviso y puedes escribirle por el chat. Pasados 5 minutos, escribe dónde lo dejas, toma la foto y toca «Dejar en lugar seguro». Cobras igual. Si el cliente pidió «en mano» y te lo recibe, toca «Entregado en mano». Solo funciona estando en la puerta. Si el pedido en mano lleva PIN, pídele el PIN de 4 dígitos a quien recibe y escríbelo: con PIN no se entrega con foto ni se deja en un lugar seguro, y la app te lo explica en esa pantalla. Si el pedido lleva PIN y el cliente no aparece: toca «El cliente no aparece», llámalo o escríbele por el chat y espera los 5 minutos que marca la app. Al terminar la espera aparece «Cliente no apareció: cerrar con foto». Toma una foto de la puerta o del lugar como constancia: la comida no se deja, el pedido se cierra, cobras lo tuyo como en cualquier entrega y soporte queda avisado. Lo mismo vale para un pedido con productos para mayores de 21."
+  "cuerpo": "Se te pinchó la llanta, te llamaron de urgencia: antes de recoger, escribe el motivo y toca «Soltar el pedido». Se le ofrece a otro repartidor y tu nivel no cambia. Ya recogido no se puede soltar: la comida es del cliente. Si hay un problema, repórtalo desde «Tengo un problema». Si tu celular se queda 10 minutos sin mandar ubicación antes de llegar al restaurante, el pedido se reasigna solo. En la puerta, si nadie sale: toca «El cliente no aparece». Le llega un aviso y puedes escribirle por el chat. Pasados 5 minutos, escribe dónde lo dejas, toma la foto y toca «Dejar en lugar seguro». Cobras igual. Si el cliente pidió «en mano» y te lo recibe, desliza la barra «Desliza: entregado en mano». Solo funciona estando en la puerta. Si el pedido en mano lleva PIN, pídele el PIN de 4 dígitos a quien recibe y escríbelo: con PIN no se entrega con foto ni se deja en un lugar seguro, y la app te lo explica en esa pantalla. Si el pedido lleva PIN y el cliente no aparece: toca «El cliente no aparece», llámalo o escríbele por el chat y espera los 5 minutos que marca la app. Al terminar la espera aparece «Cliente no apareció: cerrar con foto». Toma una foto de la puerta o del lugar como constancia: la comida no se deja, el pedido se cierra, cobras lo tuyo como en cualquier entrega y soporte queda avisado. Lo mismo vale para un pedido con productos para mayores de 21."
  },
  {
   "idioma": "es",
@@ -1418,7 +1418,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "es",
   "ruta": "drivers/arrived-not-ready-and-help",
-  "titulo": "«Llegué al restaurante», «el pedido no está listo» y ayuda con el pedido",
+  "titulo": "«Desliza al llegar al restaurante», «el pedido no está listo» y ayuda con el pedido",
   "resumen": "En el pedido activo tienes tres botones nuevos: para avisar que llegaste al restaurante, para registrar que el pedido no está listo, y para pedir ayuda con motivos claros o llamar a emergencias.",
   "preguntas": [
    "¿Cómo aviso que llegué al restaurante?",
@@ -1426,11 +1426,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "¿Cómo pido ayuda durante una entrega?"
   ],
   "pasos": [
-   "Al llegar al restaurante, toca «Llegué al restaurante».",
+   "Al llegar al restaurante, desliza la barra «Desliza al llegar al restaurante».",
    "Si no está listo, toca «El pedido no está listo».",
    "Ante cualquier problema, toca «Ayuda con este pedido» y elige el motivo."
   ],
-  "cuerpo": "«Llegué al restaurante»: confirma tu llegada con tu posición. Funciona a menos de 200 metros del local; si estás más lejos, la app te dice a cuántos metros. El GPS también marca la llegada solo, pero con el botón queda registrada en el momento y el restaurante sabe que estás ahí. «El pedido no está listo»: si llegaste y el restaurante todavía no termina, tócalo. Le llega un aviso al restaurante y queda en la bitácora del pedido: esa espera no cuenta en tu contra. «Ayuda con este pedido»: elige el motivo (el restaurante está cerrado, el pedido está incorrecto o incompleto, no encuentro la dirección, tuve un accidente o un problema con el vehículo, otro), cuenta más si quieres y se abre tu conversación con soporte con el pedido ya adjunto. Emergencia: llama al 911 desde la app y Divoox queda avisado."
+  "cuerpo": "«Desliza al llegar al restaurante»: confirma tu llegada con tu posición. Funciona a menos de 200 metros del local; si estás más lejos, la app te dice a cuántos metros. El GPS también marca la llegada solo, pero con la barra queda registrada en el momento y el restaurante sabe que estás ahí. «El pedido no está listo»: si llegaste y el restaurante todavía no termina, tócalo. Le llega un aviso al restaurante y queda en la bitácora del pedido: esa espera no cuenta en tu contra. «Ayuda con este pedido»: elige el motivo (el restaurante está cerrado, el pedido está incorrecto o incompleto, no encuentro la dirección, tuve un accidente o un problema con el vehículo, otro), cuenta más si quieres y se abre tu conversación con soporte con el pedido ya adjunto. Emergencia: llama al 911 desde la app y Divoox queda avisado."
  },
  {
   "idioma": "es",
@@ -1478,12 +1478,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Conéctate y espera una oferta. Revisa la ganancia y la ruta, y toca «Aceptar».",
-   "Ve al punto de recogida y toca «Llegué» cuando estés ahí.",
+   "Ve al punto de recogida y desliza la barra «Desliza al llegar» cuando estés ahí.",
    "Ofrece el casco al pasajero, confírmalo en la app y escribe su código si la app lo pide.",
    "Llévalo a su destino y toca «Terminar». En efectivo, cobra el total que muestra la app.",
    "Si el pasajero cancela tarde o no aparece, el cargo es para ti."
   ],
-  "cuerpo": "Cada oferta te muestra antes de aceptar lo que ganas, dónde recoges, a dónde vas, cuánto dura y cómo paga el pasajero. Al llegar, toca «Llegué». El pasajero tiene unos minutos de espera incluidos; si no aparece, puedes cerrar el viaje como «no se presentó» y recibes el cargo. Para empezar, confirma que el pasajero lleva casco y, si la ciudad lo usa, escribe el código que te dice. Al llegar al destino, toca «Terminar»."
+  "cuerpo": "Cada oferta te muestra antes de aceptar lo que ganas, dónde recoges, a dónde vas, cuánto dura y cómo paga el pasajero. Al llegar, desliza la barra «Desliza al llegar». El pasajero tiene unos minutos de espera incluidos; si no aparece, puedes cerrar el viaje como «no se presentó» y recibes el cargo. Para empezar, confirma que el pasajero lleva casco y, si la ciudad lo usa, escribe el código que te dice. Al llegar al destino, toca «Terminar»."
  },
  {
   "idioma": "es",
@@ -1571,11 +1571,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Conéctate en la pantalla de Inicio.",
    "Cuando llegue la oferta, revisa la ganancia y la ruta, y toca «Aceptar viaje».",
-   "Ve a la recogida y toca «Llegué».",
-   "Pídele al pasajero su código, escríbelo y toca «Iniciar viaje».",
+   "Ve a la recogida y desliza la barra «Desliza al llegar».",
+   "Pídele al pasajero su código, escríbelo y desliza la barra «Desliza para iniciar el viaje».",
    "Si paga por pago móvil, confirma si te llegó. Al llegar al destino, desliza «Desliza para terminar el viaje» y, si es en efectivo, cobra lo que te dice la app."
   ],
-  "cuerpo": "Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino. Al llegar a la recogida tocas «Llegué». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero. Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar. En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias."
+  "cuerpo": "Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino. Al llegar a la recogida deslizas la barra «Desliza al llegar». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero. Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar. En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias."
  },
  {
   "idioma": "es",
@@ -1608,11 +1608,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Revisa la oferta: la ganancia, las paradas y si hay tarifa dinámica. Toca «Aceptar viaje».",
-   "Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, toca «Llegué a la parada».",
-   "Cuando tu pasajero vuelva, toca «Seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.",
+   "Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, desliza la barra «Desliza al llegar a la parada».",
+   "Cuando tu pasajero vuelva, desliza la barra «Desliza para seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.",
    "Con todas las paradas hechas, lleva a tu pasajero al destino y desliza «Desliza para terminar el viaje»."
   ],
-  "cuerpo": "Un pasajero puede agregar paradas al pedir o con el viaje en marcha. La oferta te dice cuántas son y dónde quedan, y lo que ganas ya cuenta todo el recorrido. Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar tocas «Llegué a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, tocas «Seguir el viaje». Si tu pasajero ya no quiere parar, toca «Saltar parada» dos veces. El precio se recalcula y nunca sube por saltarla. Mientras quede una parada por hacer, la app no te deja terminar el viaje. Si el pasajero agrega o quita una parada en el camino, te llega un aviso y la pantalla te muestra la ruta nueva. La comisión se ajusta sola al precio nuevo. Cuando hay tarifa dinámica en tu ciudad, la oferta lo dice con su multiplicador. Ya está incluida en lo que ganas."
+  "cuerpo": "Un pasajero puede agregar paradas al pedir o con el viaje en marcha. La oferta te dice cuántas son y dónde quedan, y lo que ganas ya cuenta todo el recorrido. Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar deslizas la barra «Desliza al llegar a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, deslizas la barra «Desliza para seguir el viaje». Si tu pasajero ya no quiere parar, toca «Saltar parada» dos veces. El precio se recalcula y nunca sube por saltarla. Mientras quede una parada por hacer, la app no te deja terminar el viaje. Si el pasajero agrega o quita una parada en el camino, te llega un aviso y la pantalla te muestra la ruta nueva. La comisión se ajusta sola al precio nuevo. Cuando hay tarifa dinámica en tu ciudad, la oferta lo dice con su multiplicador. Ya está incluida en lo que ganas."
  },
  {
   "idioma": "es",
@@ -1719,12 +1719,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Acepta la oferta y ve a la recogida.",
-   "Toca «Llegué», recibe el paquete y toma su foto.",
-   "Toca «Iniciar viaje» y llévalo a la dirección de entrega.",
+   "Desliza la barra «Desliza al llegar», recibe el paquete y toma su foto.",
+   "Desliza la barra «Desliza para iniciar el viaje» y llévalo a la dirección de entrega.",
    "Pide el PIN de entrega, escríbelo y desliza «Desliza para entregar el paquete».",
    "Si quien recibe no tiene el PIN, llama a soporte desde la app."
   ],
-  "cuerpo": "La oferta te muestra lo que ganas, cómo cobras, la distancia hasta la recogida y del recorrido, el tiempo estimado, dónde recoges y a dónde llevas el paquete. Si no respondes a tiempo, pasa al siguiente conductor. Al llegar a la recogida, toca «Llegué», recibe el paquete y toma su foto: sin la foto no puedes empezar. Luego toca «Iniciar viaje» y llévalo a la dirección de entrega. Al llegar, pídele el PIN de entrega a quien recibe, escríbelo y desliza «Desliza para entregar el paquete». Si el envío es en efectivo, la app te dice cuánto cobrar."
+  "cuerpo": "La oferta te muestra lo que ganas, cómo cobras, la distancia hasta la recogida y del recorrido, el tiempo estimado, dónde recoges y a dónde llevas el paquete. Si no respondes a tiempo, pasa al siguiente conductor. Al llegar a la recogida, desliza la barra «Desliza al llegar», recibe el paquete y toma su foto: sin la foto no puedes empezar. Luego desliza la barra «Desliza para iniciar el viaje» y llévalo a la dirección de entrega. Al llegar, pídele el PIN de entrega a quien recibe, escríbelo y desliza «Desliza para entregar el paquete». Si el envío es en efectivo, la app te dice cuánto cobrar."
  },
  {
   "idioma": "es",
@@ -1774,12 +1774,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Revisa el bloque (horario, duración y pago) y toca «Aceptar la ruta».",
-   "En el centro toca «Llegué al centro», carga cada paquete y toca «Salir a la ruta».",
+   "En el centro desliza la barra «Desliza al llegar al centro», carga cada paquete y desliza la barra «Desliza para salir a la ruta».",
    "En cada parada usa «Cómo llegar», escanea, toma la foto y desliza para finalizar.",
    "Si no puedes entregar, toca «Registrar incidencia» y elige qué sigue.",
-   "Vuelve al centro, entrega lo que devuelves y toca «Cerrar la ruta» para ver tu pago."
+   "Vuelve al centro, entrega lo que devuelves y desliza la barra «Desliza para cerrar la ruta» para ver tu pago."
   ],
-  "cuerpo": "Una empresa de reparto te asigna u ofrece un bloque. Antes de aceptarlo ves todo: el horario, cuánto dura, el pago del bloque y quién lo paga, el centro donde recoges y cada parada con sus paquetes. Un bloque es exclusivo. En cuanto lo tomas, la app te desconecta de todo lo demás (pedidos de comida, envíos y viajes con pasajero) y no te deja volver a conectarte hasta que termines o lo rechaces. Así ninguna oferta de comida te interrumpe en mitad de la ruta. El inicio de la app cambia entero al modo bloque, en azul: arriba dice «Modo bloque · Flex» con el horario del bloque, y una tarjeta con candado te recuerda «Estás haciendo un bloque de Flex. Todo lo demás está desconectado». Abajo, tus otros servicios aparecen con candado hasta que termines. La misma banda te dice cuánto te queda de bloque y a qué hora termina. Si se pasa la hora, te recuerda terminar las entregas y volver al centro. Al llegar al centro toca «Llegué al centro» y carga cada paquete: escanea su etiqueta o escribe su código. Con todo cargado, toca «Salir a la ruta». Las paradas van en orden, en el mapa y en la lista. En cada parada tienes «Cómo llegar» a la vista: abre tu app de mapas (Google Maps, Apple Maps o Waze) con la dirección. En la puerta, escanea el paquete, toca «Ya estacioné», toma la foto de la entrega, elige dónde lo dejaste y desliza «Desliza para finalizar». Si la empresa lo pide, también hay PIN o firma. Para entregar tienes que estar a menos de 200 metros de la dirección. Si no se puede entregar (no había nadie, dirección mal, lo rechazaron), toca «Registrar incidencia», elige el motivo…"
+  "cuerpo": "Una empresa de reparto te asigna u ofrece un bloque. Antes de aceptarlo ves todo: el horario, cuánto dura, el pago del bloque y quién lo paga, el centro donde recoges y cada parada con sus paquetes. Un bloque es exclusivo. En cuanto lo tomas, la app te desconecta de todo lo demás (pedidos de comida, envíos y viajes con pasajero) y no te deja volver a conectarte hasta que termines o lo rechaces. Así ninguna oferta de comida te interrumpe en mitad de la ruta. El inicio de la app cambia entero al modo bloque, en azul: arriba dice «Modo bloque · Flex» con el horario del bloque, y una tarjeta con candado te recuerda «Estás haciendo un bloque de Flex. Todo lo demás está desconectado». Abajo, tus otros servicios aparecen con candado hasta que termines. La misma banda te dice cuánto te queda de bloque y a qué hora termina. Si se pasa la hora, te recuerda terminar las entregas y volver al centro. Al llegar al centro desliza la barra «Desliza al llegar al centro» y carga cada paquete: escanea su etiqueta o escribe su código. Con todo cargado, desliza la barra «Desliza para salir a la ruta». Las paradas van en orden, en el mapa y en la lista. En cada parada tienes «Cómo llegar» a la vista: abre tu app de mapas (Google Maps, Apple Maps o Waze) con la dirección. En la puerta, escanea el paquete, desliza la barra «Desliza al estacionar», toma la foto de la entrega, elige dónde lo dejaste y desliza «Desliza para finalizar». Si la empresa lo pide, también hay PIN o firma. Para entregar tienes que estar a menos de 200 metros de la dirección. Si no se puede entregar (no había nadie, direcci…"
  },
  {
   "idioma": "es",
@@ -1809,7 +1809,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "es",
   "ruta": "trust/no-signal-delivery",
   "titulo": "Si te quedas sin señal al entregar",
-  "resumen": "La foto de la entrega (o «Entregado en mano») se guarda en tu celular y se envía sola cuando vuelve la señal. No la repitas.",
+  "resumen": "La foto de la entrega (o «Desliza: entregado en mano») se guarda en tu celular y se envía sola cuando vuelve la señal. No la repitas.",
   "preguntas": [
    "¿Qué pasa si no tengo señal cuando entrego?",
    "¿Tengo que repetir la foto si falló por la conexión?"
@@ -1819,7 +1819,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Si no hay señal, verás «Pendiente de confirmar». Sigue con tu día.",
    "Al volver la señal, la app la envía sola y te avisa."
   ],
-  "cuerpo": "En un sótano, un ascensor o una zona sin cobertura, la foto de la entrega puede no llegar. La app no la pierde: la guarda en tu celular y te muestra «Pendiente de confirmar». Cuando vuelve la señal, la app la envía sola, en segundo plano, y te avisa «Entrega enviada: ya quedó confirmada». No hace falta volver a tomar la foto ni tocar nada. Si el servidor la rechaza (por ejemplo, porque todavía no se confirmó tu llegada), la app te muestra el motivo para que lo resuelvas. Lo mismo pasa con «Entregado en mano»: queda guardado y se confirma al volver la señal."
+  "cuerpo": "En un sótano, un ascensor o una zona sin cobertura, la foto de la entrega puede no llegar. La app no la pierde: la guarda en tu celular y te muestra «Pendiente de confirmar». Cuando vuelve la señal, la app la envía sola, en segundo plano, y te avisa «Entrega enviada: ya quedó confirmada». No hace falta volver a tomar la foto ni tocar nada. Si el servidor la rechaza (por ejemplo, porque todavía no se confirmó tu llegada), la app te muestra el motivo para que lo resuelvas. Lo mismo pasa con «Desliza: entregado en mano»: queda guardado y se confirma al volver la señal."
  },
  {
   "idioma": "es",
@@ -2031,7 +2031,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Recoge los dos y entrega cada uno en su dirección.",
    "En pedidos para mayores de 21: revisa el documento, confirma en la app y entrega en mano."
   ],
-  "cuerpo": "Pedidos agrupados: cuando todavía no recogiste tu pedido y el mismo restaurante tiene otro listo para una dirección a menos de 5 minutos de desvío, te llega la oferta. Si la aceptas, los dos salen juntos al confirmar la recogida del principal y en tu pantalla ves cada uno con su dirección, su «Cómo llegar» y su foto de entrega. Cobras los dos. Mayoría de edad: si un pedido tiene productos para mayores de 21, lo ves marcado. Solo se entrega en mano: pide el documento, confirma en la app «Revisé el documento: mayor de 21» y recién ahí toca «Entregado en mano». Sin esa confirmación la app no deja entregar."
+  "cuerpo": "Pedidos agrupados: cuando todavía no recogiste tu pedido y el mismo restaurante tiene otro listo para una dirección a menos de 5 minutos de desvío, te llega la oferta. Si la aceptas, los dos salen juntos al confirmar la recogida del principal y en tu pantalla ves cada uno con su dirección, su «Cómo llegar» y su foto de entrega. Cobras los dos. Mayoría de edad: si un pedido tiene productos para mayores de 21, lo ves marcado. Solo se entrega en mano: pide el documento, confirma en la app «Revisé el documento: mayor de 21» y recién ahí desliza la barra «Desliza: entregado en mano». Sin esa confirmación la app no deja entregar."
  },
  {
   "idioma": "es",
@@ -2086,7 +2086,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Repartidor: desliza «Desliza para completar» hasta el final.",
    "Cliente: ve la foto de su pedido cerrado al salir y la de la entrega al llegar."
   ],
-  "cuerpo": "Así nadie se lleva una bolsa sin dejar rastro y nadie marca «entregado» desde otro lugar. En el restaurante, el repartidor toma la foto de la bolsa cerrada, con el sello o el ticket a la vista. La app solo la acepta si está en el restaurante. El repartidor también escanea el código QR de la pantalla del restaurante, que confirma que es el pedido correcto; con el código y la foto, el pedido sale solo. Si no escaneó, el restaurante ve la foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada. En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a unos 80 metros de la dirección, confirmado por el GPS con dos lecturas precisas), ese botón se quita y aparece «Tomar foto de la entrega». Con la foto lista, el repartidor desliza «Desliza para completar». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor toca «Entregado en mano» y no hace falta foto. La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa. Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo. El restaurante las tiene juntas en el detalle del pedido: «Al recoger» y «Al entregar». Al entregar, al cliente también le llega un correo con la foto de la entrega y el enlace para calificar. Ese enlace de…"
+  "cuerpo": "Así nadie se lleva una bolsa sin dejar rastro y nadie marca «entregado» desde otro lugar. En el restaurante, el repartidor toma la foto de la bolsa cerrada, con el sello o el ticket a la vista. La app solo la acepta si está en el restaurante. El repartidor también escanea el código QR de la pantalla del restaurante, que confirma que es el pedido correcto; con el código y la foto, el pedido sale solo. Si no escaneó, el restaurante ve la foto en su pantalla, revisa que sea su pedido y toca «Confirmar: se lo entregué al repartidor». Recién ahí el pedido sale en camino: ya se sabe quién lo tiene, el repartidor ve la ruta y el cliente ve la foto de su pedido cerrado con la hora estimada. En camino, el botón verde «Cómo llegar» lo guía. Al llegar a la puerta (a unos 80 metros de la dirección, confirmado por el GPS con dos lecturas precisas), ese botón se quita y aparece «Tomar foto de la entrega». Con la foto lista, el repartidor desliza «Desliza para completar». Desde lejos no se puede entregar. Si pediste «en mano», el repartidor desliza la barra «Desliza: entregado en mano» y no hace falta foto. La foto de la entrega no muestra caras: la comida se deja en la puerta o en las manos del cliente, y la foto se toma de lado, con las manos, la comida y la entrada de la casa. Las fotos solo las ven el cliente, el restaurante y el repartidor de ese pedido, y nuestro equipo de soporte si hay un reclamo. El restaurante las tiene juntas en el detalle del pedido: «Al recoger» y «Al entregar». Al entregar, al cliente también le llega un correo con la foto de la entrega y el enlace para cal…"
  },
  {
   "idioma": "es",
@@ -3461,12 +3461,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How do I top up my balance?"
   ],
   "pasos": [
-   "Open Earnings and check “Balance for fees.”",
+   "Check your balance on the app’s home screen; tap it to see the details under Earnings, “Balance for fees.”",
    "If you’re running low, top up with a code or ask your city team to add balance.",
    "Accept the trip: the commission is set aside. When you finish, it’s charged.",
    "If you have gifts to collect, tap “Move to my balance.”"
   ],
-  "cuerpo": "You have two wallets. Your “balance” is the money you top up to pay the Divoox commission. Your “earnings” are what Divoox owes you, for example what your riders’ gifts cover. The rider pays you the full trip in person. Divoox never touches that money. When you accept a trip, the Divoox commission is set aside from your balance. When you finish, it’s charged. If the trip is canceled, doesn’t happen or you drop it, what was set aside goes back to your balance in full. It’s never charged twice. The commission is a percentage of the trip price. For example, with a 10% commission, a 2.00-dollar trip takes off 0.20. Under Earnings, “Balance for fees,” you see how much you have and how many trips it covers. Without balance for the commission you don’t get trips. When you’re running low, the app tells you. To top up: buy a code at an authorized sales point and redeem it under Earnings, “Balance for fees.” The Divoox team in your city can also add balance for you, and you see it under “Balance top-ups and gifts.” When you start, Divoox may give you a starter gift: balance for your first trips. It’s given only once. If your rider used a Divoox gift, they pay you less in person and Divoox pays you the difference in your earnings. From Earnings you can move it to your balance with “Move to my balance,” or Divoox pays it out to you."
+  "cuerpo": "You have two wallets. Your “balance” is the money you top up to pay the Divoox commission. Your “earnings” are what Divoox owes you, for example what your riders’ gifts cover. The rider pays you the full trip in person. Divoox never touches that money. When you accept a trip, the Divoox commission is set aside from your balance. When you finish, it’s charged. If the trip is canceled, doesn’t happen or you drop it, what was set aside goes back to your balance in full. It’s never charged twice. The commission is a percentage of the trip price. For example, with a 10% commission, a 2.00-dollar trip takes off 0.20. Under Earnings, “Balance for fees,” you see how much you have and how many trips it covers. Without balance for the commission you don’t get trips. When you’re running low, the app tells you. Your balance for fees is always on the Divoox Driver home screen: green when you have enough, and red with a notice when it’s running low. Tap it to go to Earnings and top up. To top up: buy a code at an authorized sales point and redeem it under Earnings, “Balance for fees.” The Divoox team in your city can also add balance for you, and you see it under “Balance top-ups and gifts.” When you start, Divoox may give you a starter gift: balance for your first trips. It’s given only once. If your rider used a Divoox gift, they pay you less in person and Divoox pays you the difference in your earnings. From Earnings you can move it to your balance with “Move to my balance,” or Divoox pays it out to you."
  },
  {
   "idioma": "en",
@@ -3552,11 +3552,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Open the menu, go to “My route (packages)” and accept the route.",
-   "At the hub, scan every package and tap “Start the route”.",
+   "At the hub, scan every package and slide the bar “Slide to start the route”.",
    "At each stop, deliver with the proof the company requires or report the exception.",
    "Go back to the hub, scan what you return and close the route."
   ],
-  "cuerpo": "All of Divoox Flex is blue, the logistics color, so it never gets confused with a food order. During the route you have four views: Map (with All, Apartments and Priority filters), List (each delivered stop shows the time), Timeline and Summary (what you have left, and how many stops are pending, done or with problems). To get to a stop, tap “Get directions” (it’s right there at every stop) and pick your maps app: Apple Maps, Google Maps or Waze. When you arrive, tap “I’ve parked” and go on with the delivery. To deliver you must be within 200 meters of the address. If you’re farther away, the app tells you how many meters and won’t let you finish. If the address is wrong, message support from the same stop. When you deliver, choose where you left the package: with the person or someone at home, receptionist or doorman, front door or porch, secure mailbox, or another safe place. Check the photo (the spot is clear and no people show) and use “Slide to finish”: you finish by sliding, not with a tap, so you don’t close it by mistake. If there was an earlier delivery at the same address, the stop shows that delivery’s photo (“Earlier delivery at this door”) so you recognize the place. If you work for a delivery company, it invites you: you get a text or email (or they send you the link by WhatsApp). Install Divoox Driver, sign in with that same phone or email and, on the home screen, tap “Accept” on your company’s invitation. If you already use that phone or email in another Divoox account, create your Driver account with different ones and tap “Did a company invite you? Paste…"
+  "cuerpo": "All of Divoox Flex is blue, the logistics color, so it never gets confused with a food order. During the route you have four views: Map (with All, Apartments and Priority filters), List (each delivered stop shows the time), Timeline and Summary (what you have left, and how many stops are pending, done or with problems). To get to a stop, tap “Get directions” (it’s right there at every stop) and pick your maps app: Apple Maps, Google Maps or Waze. When you arrive, slide the bar “Slide when you’ve parked” and go on with the delivery. To deliver you must be within 200 meters of the address. If you’re farther away, the app tells you how many meters and won’t let you finish. If the address is wrong, message support from the same stop. When you deliver, choose where you left the package: with the person or someone at home, receptionist or doorman, front door or porch, secure mailbox, or another safe place. Check the photo (the spot is clear and no people show) and use “Slide to finish”: you finish by sliding, not with a tap, so you don’t close it by mistake. If there was an earlier delivery at the same address, the stop shows that delivery’s photo (“Earlier delivery at this door”) so you recognize the place. If you work for a delivery company, it invites you: you get a text or email (or they send you the link by WhatsApp). Install Divoox Driver, sign in with that same phone or email and, on the home screen, tap “Accept” on your company’s invitation. If you already use that phone or email in another Divoox account, create your Driver account with different ones and tap “Did a com…"
  },
  {
   "idioma": "en",
@@ -3585,7 +3585,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Hand it over in person and ask for the ID.",
    "Mark the type, the last four digits and the name.",
-   "Tap “Handed to the customer”."
+   "Slide the bar “Slide: handed to the customer”."
   ],
   "cuerpo": "The app tells you when an order has age-restricted items. It can’t be left at the door or in a safe spot: hand delivery only. Ask for the ID, turn on “I checked the ID”, choose the type (driver’s license, passport, other), enter its last four digits and the person’s name as on the ID. That stays in the delivery evidence. If the person is underage, shows no ID or it looks altered, don’t deliver: use “Help with this order”."
  },
@@ -3641,7 +3641,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Check the thumbnail. If it’s not good, tap “Retake photo.”",
    "Slide the green “Slide to complete delivery” bar all the way."
   ],
-  "cuerpo": "When you reach the address and GPS confirms you’re at the door, “Take the delivery photo” appears. Leave the food and take the photo from the side: show the food and the entrance, never anyone’s face. The photo uploads on its own in a second or two: the app shrinks it on your phone before sending, so it uses little data even with a weak signal. You’ll see a thumbnail with “Delivery photo ready.” If you don’t like it, tap “Retake photo” to replace it. With the photo ready, the bar below turns green: slide the ball all the way from left to right. The order is delivered and the customer gets the photo. Sliding instead of tapping keeps you from closing an order by accident with the phone in your pocket. If you use your phone’s screen reader, just activate the bar. If you have no signal at the door, the photo and the completion are saved on your phone and sent on their own when the signal comes back. Meanwhile you see “Pending confirmation.” If the customer chose “hand it to me” and takes it, tap “Handed to the customer”: no photo needed. Orders with a PIN or with 21+ items are always handed over in person. While you have an order in progress, “Destination mode” is hidden: you set it between orders."
+  "cuerpo": "When you reach the address and GPS confirms you’re at the door, “Take the delivery photo” appears. Leave the food and take the photo from the side: show the food and the entrance, never anyone’s face. The photo uploads on its own in a second or two: the app shrinks it on your phone before sending, so it uses little data even with a weak signal. You’ll see a thumbnail with “Delivery photo ready.” If you don’t like it, tap “Retake photo” to replace it. With the photo ready, the bar below turns green: slide the ball all the way from left to right. The order is delivered and the customer gets the photo. Sliding instead of tapping keeps you from closing an order by accident with the phone in your pocket. If you use your phone’s screen reader, just activate the bar. If you have no signal at the door, the photo and the completion are saved on your phone and sent on their own when the signal comes back. Meanwhile you see “Pending confirmation.” If the customer chose “hand it to me” and takes it, slide the bar “Slide: handed to the customer”: no photo needed. Orders with a PIN or with 21+ items are always handed over in person. While you have an order in progress, “Destination mode” is hidden: you set it between orders."
  },
  {
   "idioma": "en",
@@ -3660,7 +3660,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Then: note where you leave it, photo and “Leave in a safe spot” (only if the order has no PIN).",
    "With a PIN: when the wait is over, “Customer didn’t show: close with photo” and the photo of the spot."
   ],
-  "cuerpo": "Flat tire, an emergency call: before pickup, write the reason and tap “Release the order.” It’s offered to another driver and your level doesn’t change. Once picked up it can’t be released: the food belongs to the customer. If there’s a problem, report it from “I have a problem.” If your phone goes 10 minutes without sending its location before you reach the restaurant, the order is reassigned automatically. At the door, if nobody comes out: tap “Customer isn’t here.” They get a notice and you can message them in the chat. After 5 minutes, write where you’re leaving it, take the photo and tap “Leave in a safe spot.” You get paid the same. If the customer chose “hand it to me” and takes it from you, tap “Handed to the customer”. It only works at the door. If the in-hand order has a PIN, ask whoever receives it for the 4-digit PIN and type it in: with a PIN the order isn’t delivered with a photo or left in a safe spot, and the app explains it on that screen. If the order has a PIN and the customer doesn’t show up: tap “Customer isn’t here,” call them or message them in the chat and wait the 5 minutes the app shows. When the wait is over, “Customer didn’t show: close with photo” appears. Take a photo of the door or the spot as proof: the food isn’t left behind, the order is closed, you get paid like any delivery and support is notified. The same applies to an order with items for people over 21."
+  "cuerpo": "Flat tire, an emergency call: before pickup, write the reason and tap “Release the order.” It’s offered to another driver and your level doesn’t change. Once picked up it can’t be released: the food belongs to the customer. If there’s a problem, report it from “I have a problem.” If your phone goes 10 minutes without sending its location before you reach the restaurant, the order is reassigned automatically. At the door, if nobody comes out: tap “Customer isn’t here.” They get a notice and you can message them in the chat. After 5 minutes, write where you’re leaving it, take the photo and tap “Leave in a safe spot.” You get paid the same. If the customer chose “hand it to me” and takes it from you, slide the bar “Slide: handed to the customer”. It only works at the door. If the in-hand order has a PIN, ask whoever receives it for the 4-digit PIN and type it in: with a PIN the order isn’t delivered with a photo or left in a safe spot, and the app explains it on that screen. If the order has a PIN and the customer doesn’t show up: tap “Customer isn’t here,” call them or message them in the chat and wait the 5 minutes the app shows. When the wait is over, “Customer didn’t show: close with photo” appears. Take a photo of the door or the spot as proof: the food isn’t left behind, the order is closed, you get paid like any delivery and support is notified. The same applies to an order with items for people over 21."
  },
  {
   "idioma": "en",
@@ -3787,7 +3787,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {
   "idioma": "en",
   "ruta": "drivers/arrived-not-ready-and-help",
-  "titulo": "“I’m at the restaurant”, “order isn’t ready”, and help with the order",
+  "titulo": "“Slide when you reach the restaurant”, “order isn’t ready”, and help with the order",
   "resumen": "The active order has three new buttons: to say you arrived at the restaurant, to record that the order isn’t ready, and to get help with clear reasons or call emergency services.",
   "preguntas": [
    "How do I say I arrived at the restaurant?",
@@ -3795,11 +3795,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "How do I get help during a delivery?"
   ],
   "pasos": [
-   "When you get to the restaurant, tap “I’m at the restaurant”.",
+   "When you get to the restaurant, slide the bar “Slide when you reach the restaurant”.",
    "If it isn’t ready, tap “Order isn’t ready”.",
    "For any problem, tap “Help with this order” and pick the reason."
   ],
-  "cuerpo": "“I’m at the restaurant”: confirms your arrival with your position. It works within 200 meters of the store; if you’re farther, the app tells you how many meters. GPS also marks the arrival on its own, but with the button it’s recorded right away and the restaurant knows you’re there. “Order isn’t ready”: if you arrived and the restaurant hasn’t finished, tap it. The restaurant gets a notification and it goes on the order’s record: that wait doesn’t count against you. “Help with this order”: pick the reason (the restaurant is closed, the order is wrong or incomplete, I can’t find the address, I had an accident or a vehicle problem, something else), add details if you want, and your conversation with support opens with the order attached. Emergency: calls 911 from the app and Divoox is notified."
+  "cuerpo": "“Slide when you reach the restaurant”: confirms your arrival with your position. It works within 200 meters of the store; if you’re farther, the app tells you how many meters. GPS also marks the arrival on its own, but with the bar it’s recorded right away and the restaurant knows you’re there. “Order isn’t ready”: if you arrived and the restaurant hasn’t finished, tap it. The restaurant gets a notification and it goes on the order’s record: that wait doesn’t count against you. “Help with this order”: pick the reason (the restaurant is closed, the order is wrong or incomplete, I can’t find the address, I had an accident or a vehicle problem, something else), add details if you want, and your conversation with support opens with the order attached. Emergency: calls 911 from the app and Divoox is notified."
  },
  {
   "idioma": "en",
@@ -3847,12 +3847,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Go online and wait for an offer. Check the earnings and route, and tap “Accept”.",
-   "Go to the pickup point and tap “I’ve arrived” when you’re there.",
+   "Go to the pickup point and slide the bar “Slide when you arrive” when you’re there.",
    "Offer the rider a helmet, confirm it in the app and enter their code if the app asks for it.",
    "Take them to their destination and tap “End”. For cash rides, collect the total the app shows.",
    "If the rider cancels late or doesn’t show up, the fee is yours."
   ],
-  "cuerpo": "Each offer shows you, before you accept, what you earn, where you pick up, where you’re going, how long it takes and how the rider pays. When you arrive, tap “I’ve arrived”. The rider has a few minutes of included wait time; if they don’t show up, you can close the ride as a no-show and you get the fee. To start, confirm the rider is wearing a helmet and, if the city uses it, enter the code they tell you. When you reach the destination, tap “End”."
+  "cuerpo": "Each offer shows you, before you accept, what you earn, where you pick up, where you’re going, how long it takes and how the rider pays. When you arrive, slide the bar “Slide when you arrive”. The rider has a few minutes of included wait time; if they don’t show up, you can close the ride as a no-show and you get the fee. To start, confirm the rider is wearing a helmet and, if the city uses it, enter the code they tell you. When you reach the destination, tap “End”."
  },
  {
   "idioma": "en",
@@ -3940,11 +3940,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "pasos": [
    "Go online on the Home screen.",
    "When an offer arrives, check the earnings and route, and tap “Accept ride.”",
-   "Go to the pickup and tap “I’ve arrived.”",
-   "Ask the rider for their code, enter it, and tap “Start ride.”",
+   "Go to the pickup and slide the bar “Slide when you arrive.”",
+   "Ask the rider for their code, enter it, and slide the bar “Slide to start the ride.”",
    "At the destination, slide “Slide to end the ride” and, if it’s cash, collect what the app tells you."
   ],
-  "cuerpo": "Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination. When you reach the pickup, tap “I’ve arrived.” The ride starts only when you enter the four-digit code the rider gives you. During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived. In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings."
+  "cuerpo": "Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination. When you reach the pickup, slide the bar “Slide when you arrive.” The ride starts only when you enter the four-digit code the rider gives you. During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived. In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings."
  },
  {
   "idioma": "en",
@@ -3977,11 +3977,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Check the offer: the earnings, the stops, and whether there’s dynamic pricing. Tap “Accept ride.”",
-   "Start the ride as usual. The app takes you to the first stop: when you get there, tap “I’m at the stop.”",
-   "When your rider is back, tap “Continue the ride.” If they no longer want to stop, tap “Skip stop” twice.",
+   "Start the ride as usual. The app takes you to the first stop: when you get there, slide the bar “Slide when you reach the stop.”",
+   "When your rider is back, slide the bar “Slide to continue the ride.” If they no longer want to stop, tap “Skip stop” twice.",
    "With every stop done, take your rider to the destination and slide “Slide to end the ride.”"
   ],
-  "cuerpo": "A rider can add stops when requesting or with the ride underway. The offer tells you how many there are and where, and what you earn already counts the whole trip. With the ride in progress, the app takes you to the next stop. When you get there, tap “I’m at the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, tap “Continue the ride.” If your rider no longer wants to stop, tap “Skip stop” twice. The price is recalculated and never goes up for skipping it. While there’s a stop left to make, the app won’t let you end the ride. If the rider adds or removes a stop along the way, you get a notification and the screen shows the new route. The commission adjusts on its own to the new price. When there’s dynamic pricing in your city, the offer says so with its multiplier. It’s already included in what you earn."
+  "cuerpo": "A rider can add stops when requesting or with the ride underway. The offer tells you how many there are and where, and what you earn already counts the whole trip. With the ride in progress, the app takes you to the next stop. When you get there, slide the bar “Slide when you reach the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, slide the bar “Slide to continue the ride.” If your rider no longer wants to stop, tap “Skip stop” twice. The price is recalculated and never goes up for skipping it. While there’s a stop left to make, the app won’t let you end the ride. If the rider adds or removes a stop along the way, you get a notification and the screen shows the new route. The commission adjusts on its own to the new price. When there’s dynamic pricing in your city, the offer says so with its multiplier. It’s already included in what you earn."
  },
  {
   "idioma": "en",
@@ -4054,11 +4054,11 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "At the door, check how the customer chose to receive the order.",
-   "For “hand it to them,” ask for the PIN, enter it and tap “Handed to the customer.”",
+   "For “hand it to them,” ask for the PIN, enter it and slide the bar “Slide: handed to the customer.”",
    "If the customer isn’t there, tap “Customer isn’t here,” then message or call them while you wait.",
    "When the wait is over, tap “Customer didn’t show: close with photo” and take the photo."
   ],
-  "cuerpo": "In the United States, customers pay by card in the app. At the door your app shows the address and how the customer chose to receive the order; you don’t collect any money. If the customer chose “Hand it to me,” ask for their 4-digit PIN, enter it and tap “Handed to the customer.” An order with a PIN can’t be left with a photo. If the customer isn’t there, tap “Customer isn’t here”: we notify them and you wait a few minutes while you message or call them. After the wait, on an order with a PIN, tap “Customer didn’t show: close with photo” and take a photo of the door or the spot: the order is closed, you get paid and support is notified. Collecting cash or a bank transfer at the door applies only in countries where Divoox collects in person. It isn’t used in the United States."
+  "cuerpo": "In the United States, customers pay by card in the app. At the door your app shows the address and how the customer chose to receive the order; you don’t collect any money. If the customer chose “Hand it to me,” ask for their 4-digit PIN, enter it and slide the bar “Slide: handed to the customer.” An order with a PIN can’t be left with a photo. If the customer isn’t there, tap “Customer isn’t here”: we notify them and you wait a few minutes while you message or call them. After the wait, on an order with a PIN, tap “Customer didn’t show: close with photo” and take a photo of the door or the spot: the order is closed, you get paid and support is notified. Collecting cash or a bank transfer at the door applies only in countries where Divoox collects in person. It isn’t used in the United States."
  },
  {
   "idioma": "en",
@@ -4088,12 +4088,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Accept the offer and go to the pickup.",
-   "Tap “I’ve arrived”, get the package and take its photo.",
-   "Tap “Start ride” and take it to the drop-off address.",
+   "Slide the bar “Slide when you arrive”, get the package and take its photo.",
+   "Slide the bar “Slide to start the ride” and take it to the drop-off address.",
    "Ask for the delivery PIN, enter it and slide “Slide to deliver the package”.",
    "If the recipient doesn’t have the PIN, call support from the app."
   ],
-  "cuerpo": "The offer shows what you earn, how you get paid, the distance to the pickup and of the trip, the estimated time, where you pick up and where you take the package. If you don’t respond in time, it goes to the next driver. At pickup, tap “I’ve arrived”, get the package and take its photo: you can’t start without it. Then tap “Start ride” and take it to the drop-off address. When you get there, ask the recipient for the delivery PIN, enter it and slide “Slide to deliver the package”. If the delivery is paid in cash, the app tells you how much to collect."
+  "cuerpo": "The offer shows what you earn, how you get paid, the distance to the pickup and of the trip, the estimated time, where you pick up and where you take the package. If you don’t respond in time, it goes to the next driver. At pickup, slide the bar “Slide when you arrive”, get the package and take its photo: you can’t start without it. Then slide the bar “Slide to start the ride” and take it to the drop-off address. When you get there, ask the recipient for the delivery PIN, enter it and slide “Slide to deliver the package”. If the delivery is paid in cash, the app tells you how much to collect."
  },
  {
   "idioma": "en",
@@ -4143,12 +4143,12 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   ],
   "pasos": [
    "Review the block (time, length and pay) and tap “Accept route.”",
-   "At the station, tap “I’m at the hub,” load each package and tap “Start the route.”",
+   "At the station, slide the bar “Slide when you reach the hub,” load each package and slide the bar “Slide to start the route.”",
    "At each stop use “Get directions,” scan, take the photo and slide to finish.",
    "If you can’t deliver, tap “Report an exception” and choose what happens next.",
-   "Go back to the station, hand in your returns and tap “Close the route” to see your pay."
+   "Go back to the station, hand in your returns and slide the bar “Slide to close the route” to see your pay."
   ],
-  "cuerpo": "A delivery company assigns or offers you a block. Before you accept, you see everything: the time, how long it lasts, the block pay and who pays it, the station where you pick up, and every stop with its packages. A block is exclusive. As soon as you take it, the app takes you offline for everything else (food orders, deliveries and rides) and won’t let you go back online until you finish or decline it. That way no food offer interrupts you in the middle of your route. The app’s home switches entirely to block mode, in blue: the top says “Block mode · Flex” with the block’s hours, and a card with a lock reminds you: “You’re on a Flex block. Everything else is offline.” At the bottom, your other services show a lock until you finish. The same band tells you how much time is left in the block and when it ends. If the time runs out, it reminds you to finish your deliveries and head back to the station. At the station, tap “I’m at the hub” and load each package: scan its label or type its code. Once everything is loaded, tap “Start the route.” Stops are in order, on the map and in the list. Every stop has “Get directions” right there: it opens your maps app (Google Maps, Apple Maps or Waze) with the address. At the door, scan the package, tap “I’ve parked,” take the delivery photo, choose where you left it and slide “Slide to finish.” If the company asks for it, there’s also a PIN or signature. You need to be within 200 meters (about 650 feet) of the address to deliver. If you can’t deliver (nobody was there, wrong address, refused), tap “Report an exception,” choose the reaso…"
+  "cuerpo": "A delivery company assigns or offers you a block. Before you accept, you see everything: the time, how long it lasts, the block pay and who pays it, the station where you pick up, and every stop with its packages. A block is exclusive. As soon as you take it, the app takes you offline for everything else (food orders, deliveries and rides) and won’t let you go back online until you finish or decline it. That way no food offer interrupts you in the middle of your route. The app’s home switches entirely to block mode, in blue: the top says “Block mode · Flex” with the block’s hours, and a card with a lock reminds you: “You’re on a Flex block. Everything else is offline.” At the bottom, your other services show a lock until you finish. The same band tells you how much time is left in the block and when it ends. If the time runs out, it reminds you to finish your deliveries and head back to the station. At the station, slide the bar “Slide when you reach the hub” and load each package: scan its label or type its code. Once everything is loaded, slide the bar “Slide to start the route.” Stops are in order, on the map and in the list. Every stop has “Get directions” right there: it opens your maps app (Google Maps, Apple Maps or Waze) with the address. At the door, scan the package, slide the bar “Slide when you’ve parked,” take the delivery photo, choose where you left it and slide “Slide to finish.” If the company asks for it, there’s also a PIN or signature. You need to be within 200 meters (about 650 feet) of the address to deliver. If you can’t deliver (nobody was there, wr…"
  },
  {
   "idioma": "en",
@@ -4178,7 +4178,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
   "idioma": "en",
   "ruta": "trust/no-signal-delivery",
   "titulo": "If you lose signal when delivering",
-  "resumen": "The delivery photo (or “Handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.",
+  "resumen": "The delivery photo (or “Slide: handed to the customer”) is saved on your phone and sent on its own when the signal is back. Don’t redo it.",
   "preguntas": [
    "What happens if I have no signal when I deliver?",
    "Do I have to retake the photo if it failed because of the connection?"
@@ -4188,7 +4188,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "If there’s no signal, you’ll see “Pending confirmation.” Carry on with your day.",
    "When the signal is back, the app sends it on its own and lets you know."
   ],
-  "cuerpo": "In a basement, an elevator, or an area with no coverage, the delivery photo may not go through. The app doesn’t lose it: it saves it on your phone and shows “Pending confirmation.” When the signal is back, the app sends it on its own, in the background, and tells you “Delivery sent: it’s now confirmed.” No need to retake the photo or tap anything. If the server rejects it (for example, because your arrival wasn’t confirmed yet), the app shows you the reason so you can sort it out. The same goes for “Handed to the customer”: it’s saved and confirmed once the signal is back."
+  "cuerpo": "In a basement, an elevator, or an area with no coverage, the delivery photo may not go through. The app doesn’t lose it: it saves it on your phone and shows “Pending confirmation.” When the signal is back, the app sends it on its own, in the background, and tells you “Delivery sent: it’s now confirmed.” No need to retake the photo or tap anything. If the server rejects it (for example, because your arrival wasn’t confirmed yet), the app shows you the reason so you can sort it out. The same goes for “Slide: handed to the customer”: it’s saved and confirmed once the signal is back."
  },
  {
   "idioma": "en",
@@ -4399,7 +4399,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Pick up both and deliver each to its own address.",
    "For 21+ orders: check the ID, confirm in the app and hand it over in person."
   ],
-  "cuerpo": "Grouped orders: when you haven’t picked up your order yet and the same restaurant has another one ready for an address less than 5 minutes out of the way, you get the offer. If you accept, both leave together when the main pickup is confirmed, and your screen shows each one with its address, its “Directions” and its delivery photo. You get paid for both. Age check: if an order has 21+ items, you’ll see it flagged. Hand delivery only: ask for the ID, confirm in the app “I checked the ID: the recipient is 21 or older,” and only then tap “Handed to the customer.” Without that confirmation the app won’t let you deliver."
+  "cuerpo": "Grouped orders: when you haven’t picked up your order yet and the same restaurant has another one ready for an address less than 5 minutes out of the way, you get the offer. If you accept, both leave together when the main pickup is confirmed, and your screen shows each one with its address, its “Directions” and its delivery photo. You get paid for both. Age check: if an order has 21+ items, you’ll see it flagged. Hand delivery only: ask for the ID, confirm in the app “I checked the ID: the recipient is 21 or older,” and only then slide the bar “Slide: handed to the customer.” Without that confirmation the app won’t let you deliver."
  },
  {
   "idioma": "en",
@@ -4454,7 +4454,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Driver: slide “Slide to complete delivery” all the way.",
    "Customer: sees the photo of the closed order when it leaves and the delivery photo when it arrives."
   ],
-  "cuerpo": "That way no one walks off with a bag without a trace, and no one marks an order “delivered” from somewhere else. At the restaurant, the driver takes a photo of the closed bag with the seal or receipt showing. The app only accepts it at the restaurant. The driver also scans the QR code on the restaurant’s screen, which confirms it’s the right order; with the code and the photo, the order goes out on its own. If they didn’t scan, the restaurant sees the photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time. On the way, the green “Directions” button guides the driver. At the door (about 80 meters from the address, confirmed by GPS with two precise readings), that button goes away and “Take the delivery photo” appears. With the photo ready, the driver slides “Slide to complete delivery.” It can’t be delivered from far away. If you chose “hand it to me,” the driver taps “Handed to the customer” and no photo is needed. The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance. Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim. The restaurant has both together in the order details: “At pickup” and “At drop-off.” When the order is delivered, the customer also gets an email with t…"
+  "cuerpo": "That way no one walks off with a bag without a trace, and no one marks an order “delivered” from somewhere else. At the restaurant, the driver takes a photo of the closed bag with the seal or receipt showing. The app only accepts it at the restaurant. The driver also scans the QR code on the restaurant’s screen, which confirms it’s the right order; with the code and the photo, the order goes out on its own. If they didn’t scan, the restaurant sees the photo on its screen, checks that it’s their order, and taps “Confirm: I handed it to the driver.” Only then does the order go out: everyone knows who has it, the driver sees the route, and the customer sees the photo of their closed order with the estimated time. On the way, the green “Directions” button guides the driver. At the door (about 80 meters from the address, confirmed by GPS with two precise readings), that button goes away and “Take the delivery photo” appears. With the photo ready, the driver slides “Slide to complete delivery.” It can’t be delivered from far away. If you chose “hand it to me,” the driver slides the bar “Slide: handed to the customer” and no photo is needed. The delivery photo shows no faces: the food is left at the door or in the customer’s hands, and the photo is taken from the side, showing the hands, the food, and the home’s entrance. Only the customer, the restaurant, and the driver of that order can see the photos, plus our support team if there’s a claim. The restaurant has both together in the order details: “At pickup” and “At drop-off.” When the order is delivered, the customer also get…"
  },
  {
   "idioma": "en",

@@ -89,6 +89,7 @@ const es = {
     llegue: 'Llegué al restaurante',
     // C-PASOS-DESLIZANDO: llegar al restaurante se desliza (como DoorDash Dasher).
     deslizarLlegue: 'Desliza al llegar al restaurante',
+    confirmarLlegue: { pregunta: '¿Llegaste al restaurante?', si: 'Llegué', no: 'Cancelar' },
     llegueOk: 'Llegada registrada. El restaurante ya sabe que estás aquí.',
     llegueLejos: 'Todavía estás a {m} m del local. El botón funciona a menos de 200 m.',
     noListo: 'El pedido no está listo',
@@ -327,6 +328,7 @@ const en: T = {
   pedido: {
     llegue: 'I’m at the restaurant',
     deslizarLlegue: 'Slide when you reach the restaurant',
+    confirmarLlegue: { pregunta: 'Are you at the restaurant?', si: 'I’m here', no: 'Cancel' },
     llegueOk: 'Arrival recorded. The restaurant knows you’re here.',
     llegueLejos: 'You’re still {m} m from the store. The button works within 200 m.',
     noListo: 'Order isn’t ready',

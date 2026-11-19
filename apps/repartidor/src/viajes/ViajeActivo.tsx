@@ -511,6 +511,7 @@ export function ViajeActivo({
             texto={t.deslizarLlegue}
             accionLector={t.llegue}
             ocupado={enviando}
+            confirmar={t.confirmarLlegue}
             alConfirmar={() => paso('llegue')}
           />
           <Pressable
@@ -585,6 +586,7 @@ export function ViajeActivo({
               texto={t.deslizarIniciar}
               accionLector={t.iniciar}
               ocupado={enviando}
+              confirmar={t.confirmarIniciar}
               alConfirmar={() => paso('iniciar', conCodigo ? { pin } : {})}
             />
           ) : null}
@@ -717,6 +719,7 @@ export function ViajeActivo({
             texto={t.deslizarLlegueParada}
             accionLector={t.llegueParada}
             ocupado={enviando}
+            confirmar={t.confirmarLlegueParada}
             alConfirmar={() => paso(`paradas/${parada.orden}/llegue`)}
           />
           <Pressable
@@ -755,6 +758,7 @@ export function ViajeActivo({
             texto={t.deslizarSeguir}
             accionLector={t.seguir}
             ocupado={enviando}
+            confirmar={t.confirmarSeguir}
             alConfirmar={() => paso(`paradas/${parada.orden}/seguir`)}
           />
         </>

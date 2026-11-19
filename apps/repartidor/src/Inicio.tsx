@@ -2570,6 +2570,7 @@ export function Inicio() {
                   testID="pedido-llegue"
                   texto={tg.pedido.deslizarLlegue}
                   accionLector={tg.pedido.llegue}
+                  confirmar={tg.pedido.confirmarLlegue}
                   alConfirmar={() => llegue(activo.id)}
                 />
               ) : null}

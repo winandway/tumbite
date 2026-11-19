@@ -377,7 +377,7 @@ export function Deslizar({
   texto: string;
   alTerminar: () => unknown;
   /** Revisor (18 nov 2026): con lector de pantalla, terminar pregunta antes. */
-  confirmar?: { pregunta: string; si: string; no: string };
+  confirmar: { pregunta: string; si: string; no: string };
   /** C-PASOS-DESLIZANDO: mientras se manda el paso no se vuelve a deslizar. */
   ocupado?: boolean;
   testID?: string;
@@ -390,7 +390,7 @@ export function Deslizar({
       accionLector={texto}
       ocupado={ocupado}
       testID={testID}
-      {...(confirmar ? { confirmar } : {})}
+      confirmar={confirmar}
       alConfirmar={alTerminar}
     />
   );

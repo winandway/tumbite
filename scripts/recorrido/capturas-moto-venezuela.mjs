@@ -15,7 +15,7 @@
 // Uso: node scripts/recorrido/capturas-moto-venezuela.mjs
 import { createHash, randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
 import { deslizar } from './deslizar.mjs';
@@ -313,6 +313,24 @@ async function correr(M, idiomas) {
   };
   const archivo = (nombre, idioma) => join(SALIDA, `moto-${M.prefijo}-${nombre}-v2-${idioma}.png`);
   const foto = (p, nombre, idioma) => p.screenshot({ path: archivo(nombre, idioma) });
+  // Paquete 12 (19 nov 2026): con ENTREGA=<carpeta>, además guarda la pantalla a 375 y a 360 de
+  // ancho para la revisión de Gerencia (esas no van a Docs).
+  const ENTREGA = process.env.ENTREGA;
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- carpeta que da quien lo corre
+  if (ENTREGA) mkdirSync(ENTREGA, { recursive: true });
+  const fotoEntrega = async (p, nombre, idioma, alPreparar = async () => {}) => {
+    if (!ENTREGA) return;
+    const antes = p.viewportSize();
+    for (const ancho of [375, 360]) {
+      await p.setViewportSize({ width: ancho, height: 812 });
+      await espera(900);
+      await alPreparar();
+      await espera(400);
+      await p.screenshot({ path: join(ENTREGA, `${nombre}-${ancho}-${idioma}.png`) });
+    }
+    if (antes) await p.setViewportSize(antes);
+    await espera(600);
+  };
   const viajeEnEfectivo = async () => {
     const cot = (
       await pasajero('POST', '/datos/viajes/cotizar', {
@@ -369,6 +387,29 @@ async function correr(M, idiomas) {
       await d.getByTestId('saldo-prepago').scrollIntoViewIfNeeded();
       await espera(800);
       await foto(d, 'driver-saldo', idioma);
+      // C-SALDO-EN-INICIO (paquete 12): el saldo para comisiones también se ve en el inicio.
+      await d.getByRole('tab', { name: en ? 'Home' : 'Inicio' }).click();
+      const saldoInicio = d.getByTestId('saldo-inicio');
+      await saldoInicio.waitFor({ timeout: 30_000 });
+      await saldoInicio.scrollIntoViewIfNeeded();
+      await espera(800);
+      await foto(d, 'driver-inicio-saldo', idioma);
+      await fotoEntrega(d, 'inicio-saldo', idioma, () => saldoInicio.scrollIntoViewIfNeeded());
+      {
+        // La misma tarjeta en inglés: en EE. UU. no hay saldo prepago, así que la guía en inglés de
+        // «driver-balance» la toma de este conductor (solo se ve el monto en dólares, sin ciudad).
+        const ctxEn = await telefono(tokens.conductor, IDS.conductor, 'en');
+        const dEn = await ctxEn.newPage();
+        await dEn.goto('/driver/');
+        const sEn = dEn.getByTestId('saldo-inicio');
+        await sEn.waitFor({ timeout: 30_000 });
+        await sEn.scrollIntoViewIfNeeded();
+        await espera(800);
+        // Docs en inglés de «driver-balance» (la tarjeta solo dice el monto en dólares).
+        await dEn.screenshot({ path: join(SALIDA, 'saldo-inicio-driver-en.png') });
+        await fotoEntrega(dEn, 'inicio-saldo', 'en', () => sEn.scrollIntoViewIfNeeded());
+        await ctxEn.close();
+      }
     }
 
     // ───────── Cliente: pedir moto con el precio fijo y la forma de pago de su país
@@ -468,6 +509,7 @@ async function correr(M, idiomas) {
     await d.getByTestId('oferta-viaje').waitFor({ timeout: 60_000 });
     await espera(800);
     await foto(d, 'driver-oferta', idioma);
+    await fotoEntrega(d, 'oferta-mapa', idioma);
     await paso(viaje.id, 'aceptar');
     await paso(viaje.id, 'llegue');
     const pin = (await pasajero('GET', `/datos/viajes/${viaje.id}`)).viaje.pin;
@@ -506,6 +548,12 @@ async function correr(M, idiomas) {
 
     // ───────── Driver: viaje activo (en Venezuela, con «sí me llegó» el pago móvil) y el cobro
     await d.reload();
+    // C-MAPA-VIAJE-DRIVER (paquete 12): el precio arriba y el mapa debajo.
+    await d.getByTestId('viaje-mapa').waitFor({ timeout: 60_000 });
+    await fotoEntrega(d, 'viaje-mapa', idioma, async () => {
+      await d.evaluate(() => globalThis.scrollTo(0, 0));
+      await espera(2_000);
+    });
     if (M.pagoMovil) {
       await d.getByTestId('viaje-pago-movil').waitFor({ timeout: 60_000 });
       await d.getByTestId('viaje-pago-movil').scrollIntoViewIfNeeded();
@@ -522,6 +570,10 @@ async function correr(M, idiomas) {
       await d.getByTestId('viaje-pago-movil').scrollIntoViewIfNeeded();
       await d.getByText(en ? 'Yes, it arrived' : 'Sí, me llegó', { exact: true }).click();
     }
+    // C-DESLIZAR-TEXTO-ENTERO: a 360 de ancho «Desliza para terminar el viaje» se lee entero.
+    await fotoEntrega(d, 'desliza-terminar', idioma, () =>
+      d.getByTestId('viaje-terminar').evaluate((x) => x.scrollIntoView({ block: 'center' })),
+    );
     await deslizar(d, 'viaje-terminar');
     await d.getByTestId('viaje-cobra-efectivo').waitFor({ timeout: 30_000 });
     await espera(300);

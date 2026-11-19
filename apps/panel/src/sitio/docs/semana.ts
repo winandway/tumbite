@@ -285,7 +285,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           'In the United States orders are already paid in the app, so there is nothing to collect at the door: you hand over the order with the customer’s PIN, and the app tells you what to do if they aren’t there.',
         explicacion: [
           'In the United States, customers pay by card in the app. At the door your app shows the address and how the customer chose to receive the order; you don’t collect any money.',
-          'If the customer chose “Hand it to me,” ask for their 4-digit PIN, enter it and tap “Handed to the customer.” An order with a PIN can’t be left with a photo.',
+          'If the customer chose “Hand it to me,” ask for their 4-digit PIN, enter it and slide the bar “Slide: handed to the customer.” An order with a PIN can’t be left with a photo.',
           'If the customer isn’t there, tap “Customer isn’t here”: we notify them and you wait a few minutes while you message or call them. After the wait, on an order with a PIN, tap “Customer didn’t show: close with photo” and take a photo of the door or the spot: the order is closed, you get paid and support is notified.',
           'Collecting cash or a bank transfer at the door applies only in countries where Divoox collects in person. It isn’t used in the United States.',
         ],
@@ -293,7 +293,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           foto(
             'driver-puerta',
             'en',
-            'The order at the customer’s door: the address, “Customer chose: hand it to them,” the PIN box and the “Handed to the customer” button.',
+            'The order at the customer’s door: the address, “Customer chose: hand it to them,” the PIN box and the “Slide: handed to the customer” bar.',
             'At the door you hand over the order with the customer’s PIN.',
           ),
           foto(
@@ -316,7 +316,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
         ],
         pasos: [
           'At the door, check how the customer chose to receive the order.',
-          'For “hand it to them,” ask for the PIN, enter it and tap “Handed to the customer.”',
+          'For “hand it to them,” ask for the PIN, enter it and slide the bar “Slide: handed to the customer.”',
           'If the customer isn’t there, tap “Customer isn’t here,” then message or call them while you wait.',
           'When the wait is over, tap “Customer didn’t show: close with photo” and take the photo.',
         ],

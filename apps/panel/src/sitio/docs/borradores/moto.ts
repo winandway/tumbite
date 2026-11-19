@@ -96,7 +96,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Recibe ofertas de viaje con la ganancia a la vista, recoge al pasajero con su código y termina el viaje en la app.',
         explicacion: [
           'Cada oferta te muestra antes de aceptar lo que ganas, dónde recoges, a dónde vas, cuánto dura y cómo paga el pasajero.',
-          'Al llegar, toca «Llegué». El pasajero tiene unos minutos de espera incluidos; si no aparece, puedes cerrar el viaje como «no se presentó» y recibes el cargo.',
+          'Al llegar, desliza la barra «Desliza al llegar». El pasajero tiene unos minutos de espera incluidos; si no aparece, puedes cerrar el viaje como «no se presentó» y recibes el cargo.',
           'Para empezar, confirma que el pasajero lleva casco y, si la ciudad lo usa, escribe el código que te dice. Al llegar al destino, toca «Terminar».',
         ],
         preguntas: [
@@ -106,7 +106,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         ],
         pasos: [
           'Conéctate y espera una oferta. Revisa la ganancia y la ruta, y toca «Aceptar».',
-          'Ve al punto de recogida y toca «Llegué» cuando estés ahí.',
+          'Ve al punto de recogida y desliza la barra «Desliza al llegar» cuando estés ahí.',
           'Ofrece el casco al pasajero, confírmalo en la app y escribe su código si la app lo pide.',
           'Llévalo a su destino y toca «Terminar». En efectivo, cobra el total que muestra la app.',
           'Si el pasajero cancela tarde o no aparece, el cargo es para ti.',
@@ -260,7 +260,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'Get ride offers with your earnings upfront, pick up the rider with their code and end the ride in the app.',
         explicacion: [
           'Each offer shows you, before you accept, what you earn, where you pick up, where you’re going, how long it takes and how the rider pays.',
-          'When you arrive, tap “I’ve arrived”. The rider has a few minutes of included wait time; if they don’t show up, you can close the ride as a no-show and you get the fee.',
+          'When you arrive, slide the bar “Slide when you arrive”. The rider has a few minutes of included wait time; if they don’t show up, you can close the ride as a no-show and you get the fee.',
           'To start, confirm the rider is wearing a helmet and, if the city uses it, enter the code they tell you. When you reach the destination, tap “End”.',
         ],
         preguntas: [
@@ -270,7 +270,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         ],
         pasos: [
           'Go online and wait for an offer. Check the earnings and route, and tap “Accept”.',
-          'Go to the pickup point and tap “I’ve arrived” when you’re there.',
+          'Go to the pickup point and slide the bar “Slide when you arrive” when you’re there.',
           'Offer the rider a helmet, confirm it in the app and enter their code if the app asks for it.',
           'Take them to their destination and tap “End”. For cash rides, collect the total the app shows.',
           'If the rider cancels late or doesn’t show up, the fee is yours.',

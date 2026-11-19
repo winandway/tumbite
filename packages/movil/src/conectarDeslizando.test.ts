@@ -128,6 +128,8 @@ describe('con lector de pantalla, todo deslizador que hace algo pregunta antes',
     'apps/repartidor/src/viajes/ViajeActivo.tsx',
     'apps/repartidor/src/flex/piezas.tsx',
     'apps/repartidor/src/piezas/DeslizarParaCompletar.tsx',
+    // C-PASOS-DESLIZANDO (19 nov 2026): llegar al restaurante y entregar en mano.
+    'apps/repartidor/src/Inicio.tsx',
   ];
   it('cada <Deslizador variante="accion"> lleva confirmar', () => {
     for (const f of archivos) {

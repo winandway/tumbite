@@ -21,7 +21,8 @@ const servidor = leer('servidor', 'src', 'flex', 'rutasComun.ts');
 describe('Mi ruta: repaso en el simulador', () => {
   it('con la carga completa el botón principal es «Salir a la ruta» (C-FLEX-CARGA-LISTA)', () => {
     expect(miRuta).toMatch(/const cargaLista =/);
-    expect(miRuta).toMatch(/cargaLista \? \(\s*<Boton\s+texto=\{t\.salir\}/);
+    // C-PASOS-DESLIZANDO (19 nov 2026): salir a la ruta ahora se desliza.
+    expect(miRuta).toMatch(/cargaLista \? \(\s*<Deslizar\s+texto=\{t\.deslizarSalir\}/);
     // En la pantalla de «Paquete cargado» tampoco se ofrece escanear otro si ya no queda ninguno.
     expect(miRuta).toMatch(/escaneo\.modo === 'carga' && cargaLista/);
   });

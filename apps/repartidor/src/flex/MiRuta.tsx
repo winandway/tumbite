@@ -928,6 +928,7 @@ function MiRutaContenido({
           <Deslizar
             texto={t.deslizarLlegueCentro}
             ocupado={trabajando}
+            confirmar={t.confirmarLlegueCentro}
             testID="flex-llegue-centro"
             alTerminar={() => ubicacion().then((p) => accion('llegada-centro', p ?? {}))}
           />
@@ -2411,6 +2412,7 @@ function DetalleParada({
             // C-PASOS-DESLIZANDO: «Ya estacioné» se desliza (un toque no lo marca).
             <Deslizar
               texto={t.deslizarLlegue}
+              confirmar={t.confirmarLlegue}
               testID="flex-llegue-parada"
               alTerminar={() =>
                 ubicacion().then((q) =>

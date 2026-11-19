@@ -317,7 +317,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'Acepta la oferta, busca al pasajero, empieza con su código y cobra al terminar según la forma de pago.',
       explicacion: [
         'Con Carro aprobado y conectado, te llegan ofertas de viaje con lo que ganas, la distancia, la recogida y el destino.',
-        'Al llegar a la recogida tocas «Llegué». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero.',
+        'Al llegar a la recogida deslizas la barra «Desliza al llegar». El viaje empieza solo cuando escribes el código de cuatro números que te dice el pasajero.',
         'Si el pasajero paga por pago móvil, en el viaje confirmas si te llegó el pago: «Sí, me llegó» o «No me llegó». Si paga en efectivo, al terminar la app te dice cuánto cobrar.',
         'En los países con saldo para comisiones, la comisión de cada viaje sale de tu saldo; con tarjeta, lo tuyo se suma a tus ganancias.',
       ],
@@ -355,8 +355,8 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       pasos: [
         'Conéctate en la pantalla de Inicio.',
         'Cuando llegue la oferta, revisa la ganancia y la ruta, y toca «Aceptar viaje».',
-        'Ve a la recogida y toca «Llegué».',
-        'Pídele al pasajero su código, escríbelo y toca «Iniciar viaje».',
+        'Ve a la recogida y desliza la barra «Desliza al llegar».',
+        'Pídele al pasajero su código, escríbelo y desliza la barra «Desliza para iniciar el viaje».',
         'Si paga por pago móvil, confirma si te llegó. Al llegar al destino, desliza «Desliza para terminar el viaje» y, si es en efectivo, cobra lo que te dice la app.',
       ],
     },
@@ -412,7 +412,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         'La oferta te dice si el viaje lleva paradas o tarifa dinámica. En cada parada marcas que llegaste y sigues cuando tu pasajero vuelve.',
       explicacion: [
         'Un pasajero puede agregar paradas al pedir o con el viaje en marcha. La oferta te dice cuántas son y dónde quedan, y lo que ganas ya cuenta todo el recorrido.',
-        'Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar tocas «Llegué a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, tocas «Seguir el viaje».',
+        'Con el viaje en curso, la app te lleva a la parada que sigue. Al llegar deslizas la barra «Desliza al llegar a la parada» (tienes que estar ahí) y corre la espera gratis. Si tu pasajero se tarda más, la espera se cobra por minuto y se suma a lo que cobras al terminar. Cuando vuelve, deslizas la barra «Desliza para seguir el viaje».',
         'Si tu pasajero ya no quiere parar, toca «Saltar parada» dos veces. El precio se recalcula y nunca sube por saltarla. Mientras quede una parada por hacer, la app no te deja terminar el viaje.',
         'Si el pasajero agrega o quita una parada en el camino, te llega un aviso y la pantalla te muestra la ruta nueva. La comisión se ajusta sola al precio nuevo.',
         'Cuando hay tarifa dinámica en tu ciudad, la oferta lo dice con su multiplicador. Ya está incluida en lo que ganas.',
@@ -427,13 +427,13 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-parada',
           'es',
-          'El viaje en curso llevando al conductor a la parada 1, con lo que sigue después y los botones «Llegué a la parada» y «Saltar parada».',
+          'El viaje en curso llevando al conductor a la parada 1, con lo que sigue después y la barra «Desliza al llegar a la parada» y el botón «Saltar parada».',
           'La app te lleva a la parada que sigue.',
         ),
         foto(
           'driver-parada-espera',
           'es',
-          'El conductor esperando en la parada con la cuenta de la espera gratis y el botón «Seguir el viaje».',
+          'El conductor esperando en la parada con la cuenta de la espera gratis y la barra «Desliza para seguir el viaje».',
           'En la parada corre la espera gratis; después sigues el viaje.',
         ),
       ],
@@ -445,8 +445,8 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
       ],
       pasos: [
         'Revisa la oferta: la ganancia, las paradas y si hay tarifa dinámica. Toca «Aceptar viaje».',
-        'Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, toca «Llegué a la parada».',
-        'Cuando tu pasajero vuelva, toca «Seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.',
+        'Empieza el viaje como siempre. La app te lleva a la primera parada: al llegar, desliza la barra «Desliza al llegar a la parada».',
+        'Cuando tu pasajero vuelva, desliza la barra «Desliza para seguir el viaje». Si ya no quiere parar, toca «Saltar parada» dos veces.',
         'Con todas las paradas hechas, lleva a tu pasajero al destino y desliza «Desliza para terminar el viaje».',
       ],
     },
@@ -755,7 +755,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'Accept the offer, pick up the rider, start with their code, and collect at the end based on the payment method.',
       explicacion: [
         'Once approved for Car and online, you receive ride offers with your earnings, the distance, the pickup, and the destination.',
-        'When you reach the pickup, tap “I’ve arrived.” The ride starts only when you enter the four-digit code the rider gives you.',
+        'When you reach the pickup, slide the bar “Slide when you arrive.” The ride starts only when you enter the four-digit code the rider gives you.',
         'During the ride the screen shows where you’re going and, if the rider pays cash, how much to collect. When the ride ends, the app shows the final amount. In countries with local payment methods, the app also asks you to confirm that the payment arrived.',
         'In countries with a commission balance, each ride’s commission comes out of your balance; with card payments, your share is added to your earnings.',
       ],
@@ -793,8 +793,8 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       pasos: [
         'Go online on the Home screen.',
         'When an offer arrives, check the earnings and route, and tap “Accept ride.”',
-        'Go to the pickup and tap “I’ve arrived.”',
-        'Ask the rider for their code, enter it, and tap “Start ride.”',
+        'Go to the pickup and slide the bar “Slide when you arrive.”',
+        'Ask the rider for their code, enter it, and slide the bar “Slide to start the ride.”',
         'At the destination, slide “Slide to end the ride” and, if it’s cash, collect what the app tells you.',
       ],
     },
@@ -850,7 +850,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         'The offer tells you if the ride has stops or dynamic pricing. At each stop you mark that you arrived and continue when your rider is back.',
       explicacion: [
         'A rider can add stops when requesting or with the ride underway. The offer tells you how many there are and where, and what you earn already counts the whole trip.',
-        'With the ride in progress, the app takes you to the next stop. When you get there, tap “I’m at the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, tap “Continue the ride.”',
+        'With the ride in progress, the app takes you to the next stop. When you get there, slide the bar “Slide when you reach the stop” (you have to be there) and the free wait starts. If your rider takes longer, wait time is charged per minute and added to what you collect at the end. When they’re back, slide the bar “Slide to continue the ride.”',
         'If your rider no longer wants to stop, tap “Skip stop” twice. The price is recalculated and never goes up for skipping it. While there’s a stop left to make, the app won’t let you end the ride.',
         'If the rider adds or removes a stop along the way, you get a notification and the screen shows the new route. The commission adjusts on its own to the new price.',
         'When there’s dynamic pricing in your city, the offer says so with its multiplier. It’s already included in what you earn.',
@@ -865,13 +865,13 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-parada',
           'en',
-          'The ride in progress taking the driver to stop 1, with what comes next and the “I’m at the stop” and “Skip stop” buttons.',
+          'The ride in progress taking the driver to stop 1, with what comes next and the “Slide when you reach the stop” bar and the “Skip stop” button.',
           'The app takes you to the next stop.',
         ),
         foto(
           'driver-parada-espera',
           'en',
-          'The driver waiting at the stop with the free wait countdown and the “Continue the ride” button.',
+          'The driver waiting at the stop with the free wait countdown and the “Slide to continue the ride” bar.',
           'At the stop the free wait runs; then you continue the ride.',
         ),
       ],
@@ -883,8 +883,8 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
       ],
       pasos: [
         'Check the offer: the earnings, the stops, and whether there’s dynamic pricing. Tap “Accept ride.”',
-        'Start the ride as usual. The app takes you to the first stop: when you get there, tap “I’m at the stop.”',
-        'When your rider is back, tap “Continue the ride.” If they no longer want to stop, tap “Skip stop” twice.',
+        'Start the ride as usual. The app takes you to the first stop: when you get there, slide the bar “Slide when you reach the stop.”',
+        'When your rider is back, slide the bar “Slide to continue the ride.” If they no longer want to stop, tap “Skip stop” twice.',
         'With every stop done, take your rider to the destination and slide “Slide to end the ride.”',
       ],
     },

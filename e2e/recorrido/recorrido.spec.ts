@@ -948,7 +948,22 @@ for (const idioma of ['en', 'es'] as const) {
     await expect(rep.getByTestId('pedido-llegue')).toContainText(L.deslizarLlegue, {
       timeout: 20_000,
     });
-    await foto(rep, 'repartidor-llegue');
+    // La barra entera en la foto (va al final de la tarjeta del pedido).
+    // La barra va dentro de una lista con su propio desplazamiento: se baja esa lista, no la página.
+    await rep.getByTestId('pedido-llegue').evaluate((x) => {
+      let p = x.parentElement;
+      while (
+        p &&
+        !(p.scrollHeight > p.clientHeight + 4 && getComputedStyle(p).overflowY !== 'visible')
+      )
+        p = p.parentElement;
+      const falta = x.getBoundingClientRect().bottom - globalThis.innerHeight + 180;
+      if (p && falta > 0) p.scrollTop += falta;
+      else if (falta > 0) globalThis.scrollBy(0, falta);
+    });
+    await rep.waitForTimeout(400);
+    // `foto` sube la pantalla al principio en el Driver; aquí la barra tiene que verse entera.
+    await fotoAqui(rep, 'repartidor-llegue');
     await deslizar(rep, 'pedido-llegue');
     await expect(rep.getByText(L.llegueOk, { exact: false })).toBeVisible({ timeout: 20_000 });
     const tomarFoto = async (boton: string, archivo: string) => {
