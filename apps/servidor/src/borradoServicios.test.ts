@@ -428,7 +428,7 @@ describe('borrar la cuenta borra los datos de viajes, envíos y fotos de entrega
     }
   });
 
-  // C-LEGALES-COHERENTES (18 nov 2026): el código de invitación lleva parte del nombre («JEHOVALV2»)
+  // C-LEGALES-COHERENTES (18 nov 2026): el código de invitación lleva parte del nombre («EQUIPOLV2»)
   // y la página de borrar la cuenta dice que se borra.
   it('el código de invitación de la cuenta se borra con ella', async () => {
     const { m, sql, filas } = await preparar();

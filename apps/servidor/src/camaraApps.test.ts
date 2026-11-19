@@ -60,6 +60,33 @@ describe('pieza de cámara de las apps', () => {
     ).rejects.toThrow(/sube la foto desde tus archivos/);
   });
 
+  it('C-CAMARA-SIN-CAMARA: en un aparato sin cámara lo dice en palabras y no deja escapar el error crudo', async () => {
+    const archivos = vi.fn(async () => ({ uri: 'file://galeria.jpg' }));
+    const sinLente = {
+      pedirPermiso: vi.fn(async () => ({ granted: true })),
+      tomar: vi.fn(async () => {
+        throw new Error('Camera not available on simulator');
+      }),
+    };
+    await expect(fotoConCamara('es', sinLente, archivos, async () => 'camara')).rejects.toThrow(
+      'Este aparato no tiene una cámara disponible. Sube la foto desde tus archivos.',
+    );
+    const sinPermisos = {
+      pedirPermiso: vi.fn(async () => {
+        throw new Error('ERR_MISSING_CAMERA');
+      }),
+      tomar: vi.fn(async () => ({ canceled: true, assets: null })),
+    };
+    await expect(fotoConCamara('en', sinPermisos, archivos, async () => 'camara')).rejects.toThrow(
+      'This device has no camera available. Upload the photo from your files.',
+    );
+    expect(sinPermisos.tomar).not.toHaveBeenCalled();
+    // Los archivos siguen sirviendo en ese mismo aparato.
+    expect(await fotoConCamara('es', sinLente, archivos, async () => 'archivos')).toEqual({
+      uri: 'file://galeria.jpg',
+    });
+  });
+
   it('en los casos de ayuda, la foto de la cámara entra como una captura más', async () => {
     const elegir = capturasConCamara(
       async () => [{ uri: 'file://a.jpg', nombre: 'captura-1.jpg' }],

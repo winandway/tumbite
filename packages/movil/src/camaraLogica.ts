@@ -15,6 +15,7 @@ const T = {
     cancelar: 'Cancelar',
     sinPermiso:
       'No tenemos permiso para usar la cámara. Actívalo en los ajustes del teléfono o sube la foto desde tus archivos.',
+    sinCamara: 'Este aparato no tiene una cámara disponible. Sube la foto desde tus archivos.',
   },
   en: {
     titulo: 'Add a photo',
@@ -23,6 +24,7 @@ const T = {
     cancelar: 'Cancel',
     sinPermiso:
       'We don’t have permission to use the camera. Turn it on in your phone settings or upload the photo from your files.',
+    sinCamara: 'This device has no camera available. Upload the photo from your files.',
   },
 };
 
@@ -99,9 +101,23 @@ export async function tomarConCamara<F extends FotoTomada>(
 ): Promise<F | null> {
   // La foto de la cámara web trae lo mismo que la del teléfono (uri, ancho, alto y nombre).
   if (computadora.disponible()) return (await computadora.tomar(idioma)) as F | null;
-  const permiso = await camara.pedirPermiso();
-  if (!permiso.granted) throw new Error(textosCamara(idioma).sinPermiso);
-  const r = await camara.tomar();
+  const t = textosCamara(idioma);
+  // C-CAMARA-SIN-CAMARA: en un aparato sin cámara (un iPhone de pruebas, una tableta sin lente)
+  // pedir el permiso o abrir la cámara falla. Se dice en palabras y quedan los archivos; nunca se
+  // deja escapar el error crudo ni se cierra la pantalla.
+  let permiso: { granted: boolean };
+  try {
+    permiso = await camara.pedirPermiso();
+  } catch {
+    throw new Error(t.sinCamara);
+  }
+  if (!permiso.granted) throw new Error(t.sinPermiso);
+  let r: Awaited<ReturnType<CamaraApp<F>['tomar']>>;
+  try {
+    r = await camara.tomar();
+  } catch {
+    throw new Error(t.sinCamara);
+  }
   return r.canceled ? null : (r.assets?.[0] ?? null);
 }
 

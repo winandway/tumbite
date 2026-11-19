@@ -8,7 +8,7 @@ import { buscarGuias, conEnlacesDeGuia } from './buscadorDocs';
 import { buscarEnDocs } from './conocimiento';
 import { cuidarTono } from './cerebro';
 import { DOCS_PUBLICOS } from './docsPublicos';
-import { cortesiaDe } from './identidad';
+import { NO_ENTENDI, cortesiaDe } from './identidad';
 import { type LlamadaModelo, usarModeloCamila } from './modelo';
 
 /**
@@ -261,7 +261,9 @@ describe('C-CAMILA-TONO: la conversación que leyó Richard, arreglada', () => {
     usarModeloCamila(null);
     const sinIa = await escenario({ GEMINI_API_KEY: undefined });
     const uno = (await sinIa.decir('¿dónde queda la oficina de Divoox?')).datos.respuesta as string;
-    expect(uno).toBe('No estoy segura de haberte entendido. ¿Me lo cuentas con otras palabras?');
+    // Nunca «no te entendí»: dice qué es Divoox y ofrece tres temas.
+    expect(uno).toBe(NO_ENTENDI.es);
+    expect(uno).toMatch(/pedir un viaje o comida, trabajar como conductor, o los pagos/);
     expect(await sinIa.casos()).toBe(0);
     expect((await sinIa.decir('la oficina, ¿dónde está?')).datos.respuesta).toMatch(
       /lo vea alguien del equipo/,
@@ -453,5 +455,32 @@ describe('C-CAMILA-CORTESIA: un saludo se contesta con un saludo, nunca con «no
     expect((await e.decir('Hola, ¿cómo pido una moto?')).datos.respuesta).toMatch(/Solicitar moto/);
     expect(cortesiaDe('hola necesito ayuda con mi cuenta')).toBeNull();
     expect(cortesiaDe('¡¡Hola!!')).toBe('saludo');
+  });
+});
+
+describe('C-CAMILA-VISITANTE: sin IA también se contesta la primera pregunta de un visitante', () => {
+  it.each([
+    [
+      'Hola a qué se dedica esta empresa ?',
+      'es',
+      /^Divoox es una app para pedir un viaje en moto o en carro/,
+    ],
+    ['¿qué es Divoox?', 'es', /^Divoox es una app/],
+    ['¿dónde funcionan?', 'es', /El Vigía y Tucaní/],
+    ['what is Divoox?', 'en', /^Divoox is an app to request a moto or car ride/],
+    ['where do you operate?', 'en', /El Vigía and Tucaní/],
+  ] as const)('«%s» (%s)', async (pregunta, idioma, espera) => {
+    const e = await escenario({ GEMINI_API_KEY: undefined });
+    const r = await e.m.llamar('POST', '/datos/camila/mensaje', { texto: pregunta }, undefined, {
+      'x-camila-visita': 'visitante-del-telefono'.padEnd(40, 'v'),
+      'x-idioma': idioma,
+      'cf-ipcountry': 'VE',
+    });
+    const texto = r.datos.respuesta as string;
+    expect(texto).toMatch(espera);
+    expect(texto).not.toMatch(
+      /No estoy segura|not sure I understood|asistente virtual|virtual assistant/i,
+    );
+    expect(texto.split('\n').at(-1)).toMatch(/docs\/ordering\/where-divoox-works$/);
   });
 });

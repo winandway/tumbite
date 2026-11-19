@@ -256,4 +256,14 @@ describe('C-CAMILA-CHAT: la burbuja de soporte de la web', () => {
     });
     expect(await screen.findByText('Por pago móvil, desde Ganancias.')).toBeTruthy();
   });
+
+  it('durante la espera de «Camila está escribiendo» el botón dice «Un momento…»', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const fuente = readFileSync(join(__dirname, 'ChatSoporte.tsx'), 'utf8');
+    expect(fuente).toContain('{respondiendo ? t.unMomento : enviando ? t.enviando : t.enviar}');
+    expect(fuente.indexOf('setRespondiendo(true);')).toBeLessThan(
+      fuente.indexOf('await esperar(r.respuesta);'),
+    );
+  });
 });

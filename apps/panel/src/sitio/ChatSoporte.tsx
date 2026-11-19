@@ -66,6 +66,8 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
   const [hilo, setHilo] = useState<HiloCamila | null>(null);
   const [cargando, setCargando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  // El mensaje ya llegó y corre la espera de «Camila está escribiendo»: el botón dice «Un momento…».
+  const [respondiendo, setRespondiendo] = useState(false);
   // C-CAMILA-ADJUNTAR: la persona abrió el bloque de la captura con el botón fijo del chat.
   const [adjuntar, setAdjuntar] = useState(false);
   const [pendiente, setPendiente] = useState<MensajeCamila | null>(null);
@@ -171,6 +173,7 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
       // El mensaje ya llegó: la casilla se vacía AHORA, antes de la espera. Lo que la persona escriba
       // mientras Camila «escribe» es su siguiente mensaje y no se borra.
       if (fijo === undefined) await b.limpiar();
+      setRespondiendo(true);
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
       setHilo({
@@ -186,6 +189,7 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
     } finally {
       setPendiente(null);
       setEnviando(false);
+      setRespondiendo(false);
     }
   }
 
@@ -374,7 +378,7 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               }}
             />
             <button type="submit" className="boton" disabled={enviando || !b.valores.texto.trim()}>
-              {enviando ? t.enviando : t.enviar}
+              {respondiendo ? t.unMomento : enviando ? t.enviando : t.enviar}
             </button>
           </form>
           {hilo?.verificada || conCuenta ? (

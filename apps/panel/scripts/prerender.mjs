@@ -130,6 +130,24 @@ try {
           { '@type': 'ListItem', position: 3, name: guia.titulo, item: canonica },
         ],
       },
+      // C-DOCS-SEO: las preguntas que la guía responde, con su respuesta (el resumen y los pasos).
+      ...(guia.preguntas?.length
+        ? [
+            {
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: guia.preguntas.map((q) => ({
+                '@type': 'Question',
+                name: q,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: [guia.resumen, ...guia.pasos.map((x, i) => `${i + 1}. ${x}`)].join(' '),
+                  url: canonica,
+                },
+              })),
+            },
+          ]
+        : []),
     ];
   };
   const paginas = [];
@@ -238,6 +256,11 @@ try {
           /<link\s+rel="canonical"\s+href="[^"]*"\s*\/>/,
           `<link rel="canonical" href="${canonica}" />`,
           'canonical',
+        ],
+        [
+          /<meta\s+property="og:type"\s+content="[^"]*"\s*\/>/,
+          `<meta property="og:type" content="${/^\/docs\/[a-z-]+\/[a-z0-9-]+$/.test(ruta) ? 'article' : 'website'}" />`,
+          'og:type',
         ],
         [/<html lang="[a-z]+">/, `<html lang="${lengua}">`, 'lang'],
       ])

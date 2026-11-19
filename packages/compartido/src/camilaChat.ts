@@ -73,6 +73,8 @@ const CHAT_ES = {
   escribe: 'Escribe tu mensaje…',
   enviar: 'Enviar',
   enviando: 'Enviando…',
+  /** El mensaje ya llegó y Camila «escribe»: el botón lo dice en vez de quedarse mudo. */
+  unMomento: 'Un momento…',
   escribiendo: 'Camila está escribiendo',
   equipoAtiende: 'Una persona del equipo te va a responder aquí.',
   cerrar: 'Cerrar',
@@ -122,6 +124,7 @@ const CHAT_EN: typeof CHAT_ES = {
   escribe: 'Write your message…',
   enviar: 'Send',
   enviando: 'Sending…',
+  unMomento: 'One moment…',
   escribiendo: 'Camila is typing',
   equipoAtiende: 'A person on our team will reply to you here.',
   cerrar: 'Close',

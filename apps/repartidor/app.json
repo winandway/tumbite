@@ -108,7 +108,8 @@
           "microphonePermission": false
         }
       ],
-      "../../plugins/escenas-ios"
+      "../../plugins/escenas-ios",
+      "../../plugins/firma-ios-local"
     ],
     "description": "Deliver with Divoox and earn. Keep 100% of your tips.",
     "owner": "windoce-llc",

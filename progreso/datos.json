@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-17",
+  "actualizado": "2026-11-18",
   "version": "fe71f3f",
-  "ahora": "17 nov: regalos de Divoox listos para el piloto de El Vigía y Tucaní. El cupón VIGIA (100 dólares de presupuesto, viaje gratis hasta 1,50 dólares por persona en moto, envíos y comida) está creado y APAGADO: lo enciende Richard desde Superadmin, Regalos Divoox. El cliente paga en mano solo la diferencia y el conductor recibe el regalo en su saldo.",
+  "ahora": "18 nov: la versión nueva de Divoox (cliente 46) y de Divoox Driver (42) quedó enviada a Google Play para producción, al 100 %. Trae el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Google hace sus verificaciones y la revisa; mientras tanto no se sube otra versión. En el servidor ya está en vivo: el viaje vuelve al conductor que dejó pasar la oferta (hasta tres veces) con aviso al celular, y el conductor nuevo queda en su ciudad.",
   "proximo": [
     {
       "quien": "ia",
@@ -46,7 +46,7 @@
     {
       "id": "equipo-jehova-jireh",
       "prioridad": "alta",
-      "titulo": "Crear el equipo «Jehová Jireh» y encender los referidos",
+      "titulo": "Crear el primer equipo de conductores de El Vigía y encender los referidos",
       "para": "Hace falta que el presidente de la línea se registre en Divoox Driver y nos diga su correo o celular. Con eso se crea el equipo en Superadmin, Dinero, «Referidos y equipos», y se le pasa su enlace y su QR. Los programas de referidos se encienden ahí mismo.",
       "destraba": "Saber quiénes son de su equipo y premiarlo por cada conductor que complete sus carreras.",
       "numero": 2
@@ -457,6 +457,21 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Docs sin datos reales: la guía de invitar conductores ya muestra un equipo de ejemplo",
+      "texto": "La guía «Invita conductores y arma tu equipo» mostraba el nombre, el código y el QR de un equipo de verdad. Se rehicieron las capturas en español y en inglés con un equipo de ejemplo y un código que el sistema nunca puede generar; el QR lleva a ese código inexistente. También se cambiaron las capturas de los regalos, que mostraban el código real del cupón. Quedó un candado que falla si un nombre o código real vuelve a aparecer en lo público."
+    },
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Docs al grano: cada guía abre directo en su contenido, también desde el enlace de Camila",
+      "texto": "En el celular, el menú de Docs va plegado en el botón «Menú de Docs» y la página abre en el título de la guía, con los pasos numerados primero y después las capturas. Antes había que bajar más de tres pantallas de menú para llegar a la guía. Además: migas («← Docs › sección»), «Guías relacionadas» al pie, y para los buscadores cada guía lleva su descripción propia, su paso a paso y las preguntas que responde. Las páginas públicas ya no cargan el código del panel ni el guion de cobros. Comprobado en vivo abriendo la guía de Moto desde el enlace de Camila."
+    },
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Versión nueva enviada a Google Play: inicio nuevo y Driver que se conecta deslizando",
+      "texto": "Divoox (46) y Divoox Driver (42) enviadas a producción en Google Play, al 100 %, con fichas y capturas nuevas. Cliente: inicio nuevo, «¿A dónde vas?», lugares guardados, cupones. Driver: conectarse, desconectarse y terminar un viaje deslizando; la oferta suena en bucle con vibración; elegir el vehículo en uso; ganancias con entregas y carreras; «Mi equipo»; chat de soporte. En vivo en el servidor: reoferta del viaje al conductor que dejó vencer la oferta (tope de tres) con aviso al celular, direcciones sin códigos de mapa, servicios sin tarifa que no se ofrecen, conductor nuevo en su ciudad, y «Cambiar ciudad» en el panel del equipo. Las apps ahora se compilan en la computadora de la empresa, sin costo de nube."
+    },
     {
       "fecha": "2026-11-17",
       "titulo": "Referidos y equipos: invita y gana, y el equipo de cada línea",

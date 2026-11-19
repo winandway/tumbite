@@ -47,6 +47,8 @@ const env = {
   EXPO_APPLE_TEAM_TYPE: 'COMPANY_OR_ORGANIZATION',
   // Las capacidades (notificaciones, Apple Pay) ya se configuraron en el portal de Apple.
   EXPO_NO_CAPABILITY_SYNC: '1',
+  // Compilando aquí, el complemento firma-ios-local fija el certificado de firma por su huella.
+  ...(local ? { DIVOOX_FIRMA_IOS_LOCAL: '1' } : {}),
 };
 for (const app of apps) {
   if (!APPS.includes(app)) {

@@ -47,6 +47,21 @@ describe('C-CAMILA-CHAT en Driver', () => {
     );
   });
 
+  it('sin señal también saluda, y durante la espera el botón dice «Un momento…» en vez de quedarse mudo', () => {
+    const chat = leer('soporte', 'ChatSoporteApp.tsx');
+    // El saludo no depende de que el hilo haya cargado: con el aviso de error también sale.
+    expect(chat).toContain('(hilo !== null || error) && mensajes.length === 0');
+    // Al llegar el mensaje empieza la espera: el botón deja la ruedita y dice lo que pasa.
+    expect(chat.indexOf('setRespondiendo(true);')).toBeGreaterThan(
+      chat.indexOf('await b.limpiar();'),
+    );
+    expect(chat.indexOf('setRespondiendo(true);')).toBeLessThan(
+      chat.indexOf('await esperar(r.respuesta);'),
+    );
+    expect(chat).toContain('texto={respondiendo ? t.unMomento : t.enviar}');
+    expect(chat).toContain('cargando={enviando && !respondiendo}');
+  });
+
   it('C-CAMILA-FALLOS: el bloque de la captura con los dos botones, el aviso y «No tengo captura»', () => {
     const chat = leer('soporte', 'ChatSoporteApp.tsx');
     expect(chat).toContain('hilo?.pideCaptura || adjuntar ? (');

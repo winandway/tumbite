@@ -123,3 +123,38 @@ Pedido de Richard, que ya había hecho antes: conectarse en Driver es DESLIZANTE
 - **Revisor:** cliente APTO; lo pedido para Driver, corregido. **Auditor de tiendas (cuarta):** solo faltaba decir en la ficha de Driver el uso de la ubicación con la pantalla apagada; corregido.
 - **Robot de Android, cuarta vuelta:** corriendo con cliente 42 y Driver 38 de pruebas, compilados en esta Mac.
 - **«Subir la tarifa»:** servidor listo y blindado en la rama `subir-tarifa-servidor`; no entra a la rama principal hasta que este paquete esté en Play. Versión siguiente.
+
+## PARTE DE SUBIDA — 18 nov 2026, 17:17 (hora del este)
+
+**Subido a producción en Google Play, al 100 %, reemplazando la revisión anterior:**
+
+| App           | Paquete                    | Versión nueva | Reemplaza a | Estado en la consola                                                                                          |
+| ------------- | -------------------------- | ------------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| Divoox        | com.windoce.tumbite        | 0.1.0 (46)    | 0.1.0 (27)  | «Cambios en la etapa de revisión»: verificaciones rápidas de Google y envío automático a revisión al terminar |
+| Divoox Driver | com.windoce.tumbite.driver | 0.1.0 (42)    | 0.1.0 (25)  | Igual                                                                                                         |
+
+- **Punta del código:** 1810ace04c (el código de las apps no cambió después; lo posterior es servidor, panel y Docs). En vivo: 3627242.
+- **Compiladas en esta Mac** (cero nube de Expo), con la llave del mapa y el archivo de avisos comprobados en el archivo y en la versión firmada por Google.
+- **En el mismo envío de cada app:** «Iniciar lanzamiento completo» de la versión, fichas en-US, es-419, es-ES y es-US (descripción breve y completa), ícono, gráfico y capturas de teléfono (cliente 7 en inglés y 8 en español; Driver 4 y 4), notas de la versión en los cuatro idiomas, y «Seguridad de los datos» (salud opcional en las dos; fecha de nacimiento opcional en el cliente).
+- **Prueba interna:** las mismas versiones 46 y 42 publicadas ahí antes.
+- **Comprobaciones previas:** revisor de calidad APTO (cliente y Driver) en 1810ace; robot de Android, quinta vuelta, limpio (apps de pruebas 45 y 41 de la misma punta); auditor de tiendas, quinta: lo único pendiente era una frase de la ficha del cliente (corregida: «cupones al pagar») y que Seguridad de los datos saliera en el mismo envío (salió); mapa visto en el cliente 46 firmado por Google.
+- **No comprobado en pantalla:** el mapa de Driver 42 con la firma de Google (exige entrar con una cuenta de producción); lleva la misma llave y su huella está autorizada. Pendiente de que alguien del equipo lo mire en la prueba interna.
+- **Países:** no se tocó la lista de países de la pista de producción (178).
+- **Candados** `~/.config/tumbite/play-en-revision/`: actualizados a 46 y 42. Mientras Google revisa, NO se sube otra versión.
+- **Falta:** robot de iPhone y TestFlight interno con la misma punta (no va a revisión de Apple); versión siguiente: «Subir la tarifa», tarjeta de saldo en el inicio de Driver, «sensible al tiempo» en iPhone, elegir tono, y la autorreparación de Camila.
+
+## Después de la subida (18 nov, noche)
+
+- **Google Play:** las dos apps pasaron las verificaciones rápidas y están «en proceso de revisión» (cliente 46, Driver 42).
+- **Robot de iPhone** (simulador iPhone 18 Pro, iOS 27, apps compiladas aquí con Xcode 27): limpio en dos partes. Hallazgo para el paquete siguiente: Driver se cierra al tocar «Tomar foto del paquete» cuando el aparato no tiene cámara (simulador); debe comprobar la cámara y avisar. Probar en un iPhone real.
+- **TestFlight interno:** NO actualizado. La compilación local de iPhone para teléfonos reales falla: el llavero de esta Mac tiene un certificado «Apple Distribution: Windoce LLC» distinto del que Expo usa en el perfil de firma, y Xcode elige el del llavero. Salidas: apartar ese certificado del llavero, rehacer el perfil en Apple para incluirlo, o compilar iPhone en la nube con `--nube`. Decide Gerencia.
+
+## Paquete siguiente (se arma ahora; nada de esto se sube a las tiendas mientras Google revisa)
+
+1. «Subir la tarifa»: servidor listo y blindado en `subir-tarifa-servidor`; app en `subir-tarifa-app`; Docs y ayuda.
+2. Tarjeta de saldo en el inicio de Driver («Tu saldo: $X · alcanza para N carreras», «Recargar»): primero en el borrador para Richard.
+3. iPhone: aviso «sensible al tiempo» para las ofertas (activar la capacidad en la firma); elegir el tono de la oferta si sale barato.
+4. Driver iPhone: no cerrarse cuando no hay cámara al tomar la foto del paquete.
+5. Camila: reportes de fallo, «Adjuntar captura» y los dos menores del chat (rama `camila-etapa-1`).
+6. Menores que dejó el revisor: prueba del caso central de «no mover de ciudad», ignorar ubicaciones muy imprecisas al fijar la ciudad, deshabilitar «Usar este vehículo» estando conectado, la etiqueta «Entregas» del inicio de Driver que ahora cuenta carreras.
+7. Tienda: fotos de restaurantes de muestra que no corresponden en las capturas 02, quitar «fast/rápido» del gráfico destacado, «Rápido, seguro y económico» de la captura de moto.

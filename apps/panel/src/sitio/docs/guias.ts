@@ -2895,12 +2895,12 @@ const es: SeccionDocs[] = [
           {
             src: '/docs/referidos-driver-equipo-es.webp',
             alt: 'Mi equipo e invitaciones en Divoox Driver: el equipo con registrados, aprobados, activos y carreras, el QR, el código y el botón Compartir mi enlace.',
-            pie: 'Tu equipo, tu QR y tu código para invitar.',
+            pie: 'Tu equipo, tu QR y tu código para invitar. El equipo y el código de la imagen son de ejemplo.',
           },
           {
             src: '/docs/referidos-enlace-es.webp',
             alt: 'Página del enlace de invitación: quién te invitó, a qué equipo, el código y los botones para bajar las apps.',
-            pie: 'Lo que ve tu invitado al abrir tu enlace.',
+            pie: 'Lo que ve tu invitado al abrir tu enlace. Los datos de la imagen son de ejemplo.',
           },
         ],
         preguntas: [
@@ -8201,12 +8201,12 @@ const en: SeccionDocs[] = [
           {
             src: '/docs/referidos-driver-equipo-en.webp',
             alt: 'My team and invitations in Divoox Driver: the team with signed up, approved, active and trips, the QR, the code and the Share my link button.',
-            pie: 'Your team, your QR and your code to invite.',
+            pie: 'Your team, your QR and your code to invite. The team and code in the image are examples.',
           },
           {
             src: '/docs/referidos-enlace-en.webp',
             alt: 'Invitation link page: who invited you, which team, the code and the buttons to get the apps.',
-            pie: 'What your invitee sees when they open your link.',
+            pie: 'What your invitee sees when they open your link. The details in the image are examples.',
           },
         ],
         preguntas: [
@@ -10729,6 +10729,9 @@ export const TEXTOS_DOCS = {
     siguiente: 'Siguiente',
     enEstaSeccion: 'En esta sección',
     menu: 'Secciones de Docs',
+    menuBoton: 'Menú de Docs',
+    migas: 'Dónde estás',
+    relacionadas: 'Guías relacionadas',
     comoHago: '¿Cómo hago…?',
     comoHagoInvita: '¿Tienes una pregunta? Mira «¿Cómo hago…?»',
     comoHagoResumen:
@@ -10751,6 +10754,9 @@ export const TEXTOS_DOCS = {
     siguiente: 'Next',
     enEstaSeccion: 'In this section',
     menu: 'Docs sections',
+    menuBoton: 'Docs menu',
+    migas: 'Breadcrumb',
+    relacionadas: 'Related guides',
     comoHago: 'How do I…?',
     comoHagoInvita: 'Have a question? See “How do I…?”',
     comoHagoResumen:

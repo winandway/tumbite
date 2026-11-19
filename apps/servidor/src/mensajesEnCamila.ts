@@ -32,6 +32,10 @@ export const MENSAJES_EN_CAMILA: [string, string][] = [
     'The chat is very busy right now. Email us or sign in with your account.',
   ],
   [
+    'Vas muy rápido. Espera un momento y vuelve a escribir.',
+    'You’re going too fast. Wait a moment and write again.',
+  ],
+  [
     'Para seguir la conversación, une este chat a tu correo o entra con tu cuenta.',
     'To continue the conversation, link this chat to your email or sign in with your account.',
   ],

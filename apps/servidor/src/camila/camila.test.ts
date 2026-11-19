@@ -6,13 +6,17 @@ import { mundo } from '../pruebas/ayuda';
 import { CANALES_ENCENDIDOS } from './canales';
 import { CONOCIMIENTO_DOCS } from './conocimiento';
 import { HERRAMIENTAS_MODELO } from './herramientas';
-import { VERDAD, diceSerHumana, pideHumano, preguntaSiEsHumana } from './identidad';
+import { NO_ENTENDI, VERDAD, diceSerHumana, pideHumano, preguntaSiEsHumana } from './identidad';
 import { PRESUPUESTO_MENSAJE } from './memoria';
 import {
   MODELOS_CAMILA,
   TOPE_MAXIMO_CENTAVOS,
   type LlamadaModelo,
   assertModelo,
+  LARGO_MENSAJE_ANONIMO,
+  MENSAJES_IA_POR_ANONIMO_DIA,
+  MENSAJES_POR_MINUTO_ANONIMO,
+  PARTE_DEL_TOPE_PARA_ANONIMOS,
   hoy,
   usarModeloCamila,
 } from './modelo';
@@ -509,9 +513,9 @@ describe('C-CAMILA-APRENDE: solo lo aprobado', () => {
     const pregunta = '¿Dónde queda la oficina de Divoox en El Vigía?';
     // Primer intento: pide que se lo cuenten de otra forma (no pasa a nadie todavía).
     const r = await e.decir(a.token, pregunta);
-    expect(r.datos.respuesta).toBe(
-      'No estoy segura de haberte entendido. ¿Me lo cuentas con otras palabras?',
-    );
+    // Nunca «no te entendí»: dice qué es Divoox y ofrece tres temas.
+    expect(r.datos.respuesta).toBe(NO_ENTENDI.es);
+    expect(r.datos.respuesta).not.toMatch(/No estoy segura|haberte entendido/);
     // Segundo intento seguido: lo anota y se lo pasa al equipo.
     expect((await e.decir(a.token, pregunta)).datos.respuesta).toMatch(/Ya les pasé tu pregunta/);
     expect(
@@ -706,31 +710,80 @@ describe('Revisión de calidad del 18 nov: borrado, fallo del modelo y chat anó
     expect(f?.error).toMatch(/404/);
   });
 
-  it('C-CAMILA-ANONIMOS: el chat anónimo nunca gasta IA y tiene topes de mensajes y de fichas', async () => {
+  it('C-CAMILA-VISITANTE: el chat sin cuenta se contesta CON IA, con sus frenos: mensajes con IA al día, parte del tope, mensajes por minuto, largo, y topes de fichas', async () => {
     const e = await escenario();
-    const llamadas = modelo(texto('respuesta con IA'));
+    const llamadas = modelo(texto('Divoox es una app para pedir moto, carro, comida y envíos.'));
     const visita = (n: number) => ({ 'x-camila-visita': `visita-${n}`.padEnd(40, 'x') });
     const decir = (n: number, t: string) =>
       e.m.llamar('POST', '/datos/camila/mensaje', { texto: t }, undefined, visita(n));
-    expect((await decir(1, 'cuéntame de Divoox, ¿cómo empiezo?')).estado).toBe(200);
-    expect(llamadas).toHaveLength(0);
+    // La pregunta de Richard: se contesta con el modelo, que recibe quién es Divoox.
+    const r = await decir(1, 'Hola a qué se dedica esta empresa ?');
+    expect(r.estado).toBe(200);
+    expect(r.datos.respuesta).toMatch(/^Divoox es una app/);
+    expect(r.datos.respuesta).not.toMatch(/No estoy segura|haberte entendido/);
+    expect(llamadas).toHaveLength(1);
+    const sistema = (llamadas[0] as { sistema: string }).sistema;
+    expect(sistema).toMatch(/Qué es Divoox/);
+    expect(sistema).toMatch(/El Vigía y Tucaní/);
+    expect(sistema).toMatch(/NUNCA respondas que no entendiste/);
+    // Un visitante sin cuenta no recibe las herramientas de cuenta ni la del regalo.
+    const nombres = (llamadas[0] as { herramientas: { name: string }[] }).herramientas.map(
+      (h) => h.name,
+    );
+    expect(nombres).toEqual(expect.arrayContaining(['buscar_respuesta', 'no_se']));
+    expect(nombres).not.toContain('dar_regalo_arranque');
+    expect(nombres).not.toContain('estado_cuenta');
+    // El mensaje de un visitante se recorta.
+    await decir(1, 'a'.repeat(1900));
+    const largo = await e.m.DB.prepare(
+      "SELECT MAX(LENGTH(texto)) AS n FROM camila_mensajes WHERE autor = 'persona'",
+    ).first<{ n: number }>();
+    expect(largo?.n).toBe(LARGO_MENSAJE_ANONIMO);
+    // Mensajes por minuto: pasado el máximo, se le pide esperar.
+    for (let i = 2; i < MENSAJES_POR_MINUTO_ANONIMO; i++)
+      expect((await decir(1, 'otra pregunta de la app')).estado).toBe(200);
+    expect((await decir(1, 'una más')).estado).toBe(429);
+    // Mensajes con IA al día por visitante: pasados, se le contesta SIN IA (y nunca «no entendí»).
+    await e.m.DB.prepare(
+      "UPDATE camila_mensajes SET creado_en = datetime('now', '-10 minutes') WHERE autor = 'persona'",
+    ).run();
+    const persona = await e.m.DB.prepare(
+      'SELECT id FROM camila_personas WHERE usuario_id IS NULL AND correo IS NULL',
+    ).first<{ id: string }>();
+    for (let i = 0; i < MENSAJES_IA_POR_ANONIMO_DIA; i++)
+      await e.m.DB.prepare(
+        "INSERT INTO camila_mensajes (id, persona_id, canal, autor, texto, creado_en) VALUES (?, ?, 'web', 'persona', 'x', datetime('now', '-10 minutes'))",
+      )
+        .bind(`relleno-${i}`, persona!.id)
+        .run();
+    const antes = llamadas.length;
+    const sinIa = await decir(1, 'a qué se dedica esta empresa');
+    expect(llamadas).toHaveLength(antes);
+    expect(sinIa.datos.respuesta).toMatch(/^Divoox es una app para pedir un viaje en moto/);
+    // Parte del tope: con el 60 % del tope del día gastado, los visitantes ya no usan IA…
+    await e.m.DB.prepare(
+      'INSERT INTO camila_gasto (dia, microdolares) VALUES (?, ?) ON CONFLICT(dia) DO UPDATE SET microdolares = excluded.microdolares',
+    )
+      .bind(hoy(), 100 * 10_000 * PARTE_DEL_TOPE_PARA_ANONIMOS)
+      .run();
+    expect((await decir(3, '¿cuánto cobran por un viaje?')).estado).toBe(200);
+    expect(llamadas).toHaveLength(antes);
+    // …y quien tiene cuenta sigue con IA.
+    const a = await e.conductor();
+    await e.decir(a.token, 'necesito ayuda con la app');
+    expect(llamadas).toHaveLength(antes + 1);
     // Tope de mensajes de una ficha anónima.
     await e.m.DB.prepare(
       'UPDATE camila_personas SET mensajes = 40 WHERE usuario_id IS NULL AND correo IS NULL',
     ).run();
-    expect((await decir(1, 'otro más')).estado).toBe(429);
+    expect((await decir(3, 'otro más')).estado).toBe(429);
     // Tope diario de fichas anónimas nuevas.
     await e.m.DB.prepare(
       'INSERT INTO camila_gasto (dia, anonimos) VALUES (?, 1500) ON CONFLICT(dia) DO UPDATE SET anonimos = 1500',
     )
       .bind(hoy())
       .run();
-    expect((await decir(2, 'hola')).estado).toBe(429);
-    // Una cuenta verificada sigue con IA.
-    const a = await e.conductor();
-    expect((await e.decir(a.token, 'necesito ayuda con la app')).datos.respuesta).toBe(
-      'respuesta con IA',
-    );
+    expect((await decir(4, 'hola')).estado).toBe(429);
   });
 
   it('el código para unir el chat no sirve para llenarle el buzón a un tercero', async () => {

@@ -62,6 +62,8 @@ export function ChatSoporteApp() {
   const [hilo, setHilo] = useState<HiloCamila | null>(null);
   const [pendiente, setPendiente] = useState<MensajeCamila | null>(null);
   const [enviando, setEnviando] = useState(false);
+  // El mensaje ya llegó y corre la espera de «Camila está escribiendo»: el botón dice «Un momento…».
+  const [respondiendo, setRespondiendo] = useState(false);
   // C-CAMILA-ADJUNTAR: la persona abrió el bloque de la captura con el botón fijo del chat.
   const [adjuntar, setAdjuntar] = useState(false);
   const [error, setError] = useState('');
@@ -110,6 +112,7 @@ export function ChatSoporteApp() {
       // El mensaje ya llegó: la casilla se vacía AHORA, antes de la espera. Lo que la persona escriba
       // mientras Camila «escribe» es su siguiente mensaje y no se borra.
       if (fijo === undefined) await b.limpiar();
+      setRespondiendo(true);
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
       setHilo({
@@ -125,6 +128,7 @@ export function ChatSoporteApp() {
     } finally {
       setPendiente(null);
       setEnviando(false);
+      setRespondiendo(false);
     }
   }
 
@@ -236,7 +240,8 @@ export function ChatSoporteApp() {
         nestedScrollEnabled
       >
         {/* Un solo saludo, corto, y solo si la conversación está vacía. */}
-        {hilo !== null && mensajes.length === 0
+        {/* Sin señal también saluda: el aviso de «sin conexión» va abajo, no en vez del saludo. */}
+        {(hilo !== null || error) && mensajes.length === 0
           ? burbuja({ id: 'saludo', autor: 'camila', texto: t.saludo })
           : null}
         {mensajes.map(burbuja)}
@@ -305,7 +310,13 @@ export function ChatSoporteApp() {
           style={[e.input, CASILLA_EN_FILA, { minHeight: 48, maxHeight: 120 }]}
           testID="chat-soporte-casilla"
         />
-        <Boton texto={t.enviar} alTocar={() => void enviar()} cargando={enviando} enFila />
+        <Boton
+          texto={respondiendo ? t.unMomento : t.enviar}
+          alTocar={() => void enviar()}
+          cargando={enviando && !respondiendo}
+          testID="chat-soporte-enviar"
+          enFila
+        />
       </FilaConBoton>
     </View>
   );

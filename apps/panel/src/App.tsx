@@ -1,5 +1,4 @@
 import { enIdioma } from '@tumbite/compartido';
-import { PanelApp } from './panel/PanelApp';
 import { Olvide, Restablecer } from './panel/Restablecer';
 import { AceptarInvitacion } from './panel/AceptarInvitacion';
 import { Confirmar } from './panel/Confirmar';
@@ -21,7 +20,7 @@ import { Invitacion } from './sitio/Invitacion';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { useIdioma } from './usarIdioma';
 import { idiomaElegido } from './idioma';
 import { Landing } from './sitio/Landing';
@@ -41,6 +40,13 @@ import { Sitio } from './sitio/Sitio';
 import { RUTAS_VUELTA, Vuelta } from './sitio/Vuelta';
 import { TEXTOS_SITIO } from './sitio/textos';
 import { tituloPagina } from './tituloPagina';
+
+/**
+ * C-DOCS-SEO (18 nov 2026): el panel (restaurantes, administración, cobros) se baja solo al entrar a
+ * /panel. Antes venía entero, con el guion de cobros de Stripe, en CADA página pública: una guía de
+ * Docs cargaba en el celular más de dos megas de código que no usaba.
+ */
+const PanelApp = lazy(() => import('./panel/PanelApp').then((m) => ({ default: m.PanelApp })));
 
 /** Páginas legales públicas (las tiendas de Apple y Google piden que existan y sean públicas). */
 const LEGALES = new Map([
@@ -105,7 +111,12 @@ export function App() {
     if (destino !== rutaReal) ir(destino);
   };
 
-  if (ruta.startsWith('/panel')) return <PanelApp ruta={ruta} />;
+  if (ruta.startsWith('/panel'))
+    return (
+      <Suspense fallback={<div className="cargando" role="status" aria-busy="true" />}>
+        <PanelApp ruta={ruta} />
+      </Suspense>
+    );
   if (/^\/(country|city|food)\/[a-z-]+$/.test(ruta))
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
