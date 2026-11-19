@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-19T08:43:26Z",
+  "actualizado": "2026-11-19T11:33:40Z",
   "version": "fe71f3f",
-  "ahora": "19 nov: Google aprobó la versión corregida: Divoox 0.1.48 y Divoox Driver 0.1.43 ya se bajan de Play Store, sin el aviso «PRUEBAS» y con los ocho servicios en el inicio. Además quedó publicado el precio grande del conductor: lo que cobra va en cifra grande, negrita y verde, con los bolívares debajo, en la oferta, el viaje, el envío y la comida. Ya se ve en la versión web del conductor; a las apps de las tiendas llega con la próxima versión.",
+  "ahora": "19 nov: quedó publicado el paquete nuevo del conductor: lo que cobra va en cifra grande y verde con los bolívares debajo, el mapa aparece en la oferta y en el viaje, los pasos del viaje se deslizan (llegué, iniciar, terminar) y el saldo se ve en el inicio. Las apps con todo esto ya están para el equipo en la prueba interna de Play (Divoox 49 y Driver 44) y en TestFlight (Divoox 57 y Driver 44). En Play Store para el público siguen Divoox 0.1.48 y Driver 0.1.43, aprobadas hoy. A la tienda pública esta versión va después de la revisión del auditor.",
   "proximo": [
     {
       "quien": "ia",
@@ -489,6 +489,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Paquete nuevo del conductor: mapa, pasos deslizando y saldo en el inicio",
+      "texto": "En Divoox Driver la oferta y el viaje ahora llevan mapa debajo del precio. Los pasos que no se deshacen (llegué, iniciar viaje, recogí, entregado en mano, salir a la ruta) se deslizan y vibran, para que no se marquen por accidente. Donde el conductor trabaja con saldo, el inicio muestra cuánto tiene y para cuántas carreras le alcanza. Publicado en la web del conductor y compilado para el equipo en prueba interna de Play y TestFlight. Falta la prueba en teléfonos reales."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "El conductor ve en grande lo que cobra",
