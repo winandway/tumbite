@@ -412,7 +412,9 @@ internacional.post('/repartidor/recargas/stripe', async (c) => {
           },
         ],
         // El aviso `payment_intent.succeeded` trae estos datos y acredita la recarga una sola vez.
-        // (La sesión no lleva metadata: su aviso `checkout.session.completed` es de pedidos.)
+        // La sesión solo dice que es una recarga, para que su aviso `checkout.session.completed`
+        // (que es de pedidos) la deje pasar sin anotar un error.
+        metadata: { tipo: 'recarga' },
         payment_intent_data: { description: descripcion, metadata },
         success_url: `${origen}/top-up/done`,
         cancel_url: `${origen}/top-up/canceled`,

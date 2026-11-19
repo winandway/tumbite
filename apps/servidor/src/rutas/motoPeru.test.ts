@@ -331,6 +331,8 @@ describe('C-RECARGA-TARJETA-MINIMO y C-RECARGA-TARJETA-ALOJADA: el conductor de 
     expect(enviado?.cuerpo).toContain(
       `payment_intent_data[metadata][recarga_id]=${r.datos.recargaId}`,
     );
+    // La sesión dice que es una recarga: su aviso de «sesión completada» no es un pedido perdido.
+    expect(enviado?.cuerpo).toContain('metadata[tipo]=recarga');
     expect((await saldoDe(c)).disponible).toBe(3000);
     // El mismo aviso otra vez no acredita dos veces.
     const { acreditarRecargaStripe } = await import('../internacional/recargas');

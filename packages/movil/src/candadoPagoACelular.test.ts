@@ -42,3 +42,19 @@ describe('C-PAPELES-POR-PAIS: la identidad en el registro del conductor', () => 
     }
   });
 });
+
+describe('C-CUENTA-COBRO-CONDUCTOR: si la lista no carga, se dice', () => {
+  it('no se pinta «todavía no cargaste tu número» cuando lo que falló fue la carga', () => {
+    const c = leer('apps/repartidor/src/cobros/CuentaCobro.tsx');
+    expect(c).toMatch(/\.catch\(\(\) => setFalloCarga\(true\)\)/);
+    expect(c).not.toMatch(/\.catch\(\(\) => setCuentas/);
+    expect(c).toMatch(/testID="cuenta-cobro-fallo"[\s\S]{0,600}t\.reintentar/);
+  });
+
+  it('el aviso de «sesión completada» de una recarga no se anota como un pedido perdido', () => {
+    expect(leer('apps/servidor/src/rutas/internacional.ts')).toMatch(
+      /metadata: \{ tipo: 'recarga' \}/,
+    );
+    expect(leer('apps/servidor/src/rutas/pedidos.ts')).toMatch(/if \(!pedido && esRecarga\)/);
+  });
+});

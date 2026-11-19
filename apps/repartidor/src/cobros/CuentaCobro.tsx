@@ -39,6 +39,7 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
   const [error, setError] = useState<{ mensaje: string; campo?: string } | null>(null);
   const [aviso, setAviso] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [falloCarga, setFalloCarga] = useState(false);
   const b = useBorrador({
     formulario: 'cuenta-cobro-conductor',
     cuenta: usuario?.id,
@@ -49,13 +50,37 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
   const cargar = useCallback(() => {
     api
       .pedir<{ cuentas: CuentaCobroApp[] }>('GET', '/datos/repartidor/cuentas-cobro')
-      .then((r) => setCuentas(r.cuentas))
-      .catch(() => setCuentas((c) => c ?? []));
+      .then((r) => {
+        setCuentas(r.cuentas);
+        setFalloCarga(false);
+      })
+      // Sin lista no se dice «todavía no cargaste tu número» (puede tenerlo): se dice que falló.
+      .catch(() => setFalloCarga(true));
   }, [api]);
   useEffect(() => {
     if (tipos.length) cargar();
   }, [cargar, tipos.length]);
-  if (!tipos.length || cuentas == null) return null;
+  if (!tipos.length) return null;
+  if (cuentas == null)
+    return falloCarga ? (
+      <View
+        testID="cuenta-cobro-fallo"
+        style={{
+          borderWidth: 1,
+          borderColor: '#2a2a2a',
+          borderRadius: 12,
+          padding: 12,
+          gap: 8,
+          backgroundColor: '#fff',
+        }}
+      >
+        <Text style={{ fontWeight: '800', color: C.secundario }}>{t.cuentaTitulo}</Text>
+        <Text accessibilityRole="alert" style={{ color: C.primario }}>
+          {t.noCarga}
+        </Text>
+        <Boton texto={t.reintentar} secundario alTocar={cargar} />
+      </View>
+    ) : null;
   // Un borrador recuperado abre el formulario solo: lo escrito vuelve a su sitio.
   const abierto = abiertoAMano || (b.recuperado && !cerrado);
   const v = b.valores;

@@ -8,6 +8,8 @@ export const T_COBROS = {
     cuentaAyuda: (medios: string) =>
       `Cuando un pasajero paga por ${medios}, ve este número para enviarte el dinero. Sin él no recibes esos viajes.`,
     sinCuenta: 'Todavía no cargaste tu número.',
+    noCarga: 'No pudimos cargar dónde te pagan. Revisa tu conexión e inténtalo otra vez.',
+    reintentar: 'Intentar otra vez',
     enVigor: 'En uso: los pasajeros ya lo ven.',
     enEspera:
       'Entra en uso 24 horas después de guardarlo, o antes si nuestro equipo lo confirma. Es para proteger tu dinero.',
@@ -49,6 +51,8 @@ export const T_COBROS = {
     cuentaAyuda: (medios: string) =>
       `When a rider pays with ${medios}, they see this number to send you the money. Without it you don’t get those rides.`,
     sinCuenta: 'You haven’t added your number yet.',
+    noCarga: 'We couldn’t load where riders pay you. Check your connection and try again.',
+    reintentar: 'Try again',
     enVigor: 'In use: riders can already see it.',
     enEspera:
       'It goes live 24 hours after you save it, or sooner if our team confirms it. This protects your money.',

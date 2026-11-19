@@ -1440,7 +1440,12 @@ pedidos.post('/stripe/aviso', async (c) => {
             .bind(pedidoId)
             .first<{ total: number; stripe_sesion: string; estado: string }>()
         : null;
-      if (!pedido) {
+      // C-RECARGA-TARJETA-ALOJADA: la página de pago de una recarga también manda este aviso; su
+      // saldo se acredita con `payment_intent.succeeded`. No es un pedido ni un error.
+      const esRecarga = (obj.metadata as Record<string, string> | undefined)?.tipo === 'recarga';
+      if (!pedido && esRecarga) {
+        // nada que hacer aquí
+      } else if (!pedido) {
         console.error('aviso de pago sin pedido conocido', pedidoId);
       } else if (
         pedido.stripe_sesion !== obj.id ||
