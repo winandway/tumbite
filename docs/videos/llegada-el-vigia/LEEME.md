@@ -175,3 +175,19 @@ Se rehicieron, con el mismo nombre, las del viaje con regalo: 04-oferta-entrante
 - 09: el cierre «Viaje terminado» de este viaje TODAVÍA muestra «Cobra al pasajero $0.00 / Bs. 0,00» en grande, con «Divoox te paga $1.00» debajo. El cambio no llegó a esa pantalla; cuando llegue hay que repetir solo la 09.
 - En 05 y 07 la franja de pausa dice «En pausa: Comida y Envíos en moto» (el conductor estaba conectado a tres servicios); en las del viaje en efectivo dice solo «Envíos en moto».
 - Regalo temporal BIENVENIDA3 (los dos anteriores ya estaban usados por María); los tres quedaron apagados.
+
+## Séptima pasada (corta): oferta y cierre del viaje con regalo (19 nov 2026)
+
+App Divoox Driver de pruebas, versión 0.1.59 (la del paquete 13, compilada desde b37ffb2). Mismo teléfono virtual, misma zona y mismas reglas que la quinta pasada. Se rehicieron solo dos, con el mismo nombre:
+
+- 04-oferta-entrante: «No cobras nada en mano: este viaje lo paga Divoox.» y debajo la frase nueva «Regalo de Divoox para el pasajero: Divoox te paga $1.00.» (ya no dice «el pasajero paga menos en mano»). Tomada con la cuenta atrás en 11 s, todavía en gris.
+- 09-viaje-terminado: ya no pinta «Cobra al pasajero $0.00 / Bs. 0,00»; dice «No cobras nada en mano: este viaje lo paga Divoox.» y la línea verde «Divoox te paga $1.00». Esto cierra el aviso de la sexta pasada.
+
+### Cómo se hizo lo del recorrido real (C-REGALO-VIAJE-REAL)
+
+- Desde hoy el regalo solo se acredita si el viaje fue real; si no, el cierre sale en ámbar «Divoox está revisando este regalo». Para que saliera verde, el conductor hizo el trayecto de verdad: después de «Iniciar», la ubicación del emulador se movió en catorce pasos de unos 50 m, uno cada 10 s (`adb emu geo fix`), de la recogida a un punto al norte y de ahí al destino, y se terminó en el destino con la ubicación recién mandada. Duró unos dos minutos y medio, más que los 141 s cotizados.
+- El servidor midió 1,4 km de recorrido contra 759 m cotizados; el regalo se acreditó al terminar, sin revisión (gastado, nada apartado).
+- La pasajera no mandó su ubicación (con menos de dos lecturas no cuenta).
+- Para guardar el código, la cuenta de la pasajera necesita un celular en su perfil y el aparato en la petición: se le puso un número ficticio y, al terminar, se le quitó y se le devolvió el permiso de SMS.
+- Regalo temporal BIENVENIDA4 (los tres anteriores ya estaban usados); los cuatro quedaron apagados.
+- Queda de la sexta pasada: el regalo de BIENVENIDA3 está «en revisión» (aquel viaje se hizo sin moverse) y conserva su dólar apartado hasta que el equipo lo apruebe o lo rechace. La salud del sitio de pruebas sigue en verde.
