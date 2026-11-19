@@ -41,4 +41,18 @@ describe('la franja «PRUEBAS» solo sale en la app de pruebas', () => {
     for (const a of readdirSync(movil).filter((x) => /\.tsx?$/.test(x) && !x.includes('.test.')))
       expect(leer(a), a).not.toMatch(/^(export )?const \w+ = [^\n]*esAppDePruebas\(/m);
   });
+
+  it('nada se sube a Google Play sin abrir la pantalla de entrar del archivo', () => {
+    const raiz = join(__dirname, '..', '..', '..');
+    const publicar = readFileSync(
+      join(raiz, 'scripts', 'tiendas', 'publicar-google-play.mjs'),
+      'utf8',
+    );
+    const comprobar = publicar.indexOf("'scripts/tiendas/comprobar-franja.sh'");
+    expect(comprobar).toBeGreaterThan(-1);
+    expect(comprobar).toBeLessThan(publicar.indexOf('/bundles'));
+    const guion = readFileSync(join(raiz, 'scripts', 'tiendas', 'comprobar-franja.sh'), 'utf8');
+    expect(guion).toContain('text="PRUEBAS"');
+    expect(guion).toContain('no se llegó a la pantalla de entrar');
+  });
 });
