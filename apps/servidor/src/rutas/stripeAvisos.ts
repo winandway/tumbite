@@ -279,7 +279,16 @@ stripeAvisos.post('/interno-stripe/connect/alta', async (c) => {
       creada = true;
     } catch (e) {
       if (e instanceof ErrorStripe)
-        return c.json({ rechazada: true, estadoStripe: e.estado, mensajeStripe: e.message }, 422);
+        return c.json(
+          {
+            rechazada: true,
+            estadoStripe: e.estado,
+            mensajeStripe: e.message,
+            codigoStripe: e.codigo ?? null,
+            solicitudStripe: e.solicitud ?? null,
+          },
+          422,
+        );
       throw e;
     }
   }

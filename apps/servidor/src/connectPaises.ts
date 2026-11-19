@@ -102,6 +102,8 @@ export async function crearCuentaConnect(
         cuando: new Date().toISOString(),
         estado: e.estado,
         mensaje: e.message,
+        codigo: e.codigo ?? null,
+        solicitud: e.solicitud ?? null,
         usuario: u.id,
         pais,
       });

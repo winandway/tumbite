@@ -8,7 +8,7 @@
     "variables": "ok",
     "stripe": "ok",
     "webhookStripe": "ok",
-    "webhookStripeConectadas": "pendiente",
+    "webhookStripeConectadas": "ok",
     "turnstile": "pendiente",
     "correo": "ok",
     "avisosCelular": "ok",
@@ -16,8 +16,8 @@
     "tasaBcv": "ok",
     "sms": "ok",
     "dinero": "ok",
-    "retiros": "pendiente",
-    "connect": "pendiente",
+    "retiros": "ok",
+    "connect": "ok",
     "servicios": "ok",
     "tarifas": "ok",
     "viajes": "ok",
@@ -40,5 +40,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-19T04:13:00.473439+00:00"
+  "medido": "2026-11-19T06:33:55.382905+00:00"
 }
