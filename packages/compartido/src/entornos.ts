@@ -66,6 +66,9 @@ export function entornoDeServidor(url: string): Entorno | null {
 
 /** La app habla con un servidor que no es el real (sitio de pruebas, local o desconocido). */
 export function esAppDePruebas(url: string): boolean {
+  // C-FRANJA-SOLO-EN-PRUEBAS: sin dirección no hay prueba de nada. Antes, una dirección vacía o
+  // sin valor contaba como «de pruebas», y la app de la tienda pintó la franja.
+  if (typeof url !== 'string' || !url.trim()) return false;
   return entornoDeServidor(url) !== 'produccion';
 }
 

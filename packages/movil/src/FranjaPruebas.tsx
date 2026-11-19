@@ -1,7 +1,8 @@
 import { Platform, View } from 'react-native';
 import { Text } from './diseno';
 import { enIdioma, esAppDePruebas } from '@tumbite/compartido';
-import { URL_SERVIDOR, useSesion } from './sesion';
+import { useSesion } from './sesion';
+import { URL_SERVIDOR } from './servidor';
 import { TEXTOS_MOVIL } from './textos';
 
 /**
@@ -9,15 +10,18 @@ import { TEXTOS_MOVIL } from './textos';
  * servidor que no es el real? Solo en el teléfono: en la web, la dirección del navegador ya lo
  * dice, y las capturas de las guías se toman ahí.
  */
-export const APP_DE_PRUEBAS = Platform.OS !== 'web' && esAppDePruebas(URL_SERVIDOR);
+export function esEstaAppDePruebas(): boolean {
+  return Platform.OS !== 'web' && esAppDePruebas(URL_SERVIDOR);
+}
 
 /**
  * La franja «PRUEBAS»: discreta, una línea, sin botón y sin tapar nada. Va en la pantalla de
  * entrar y en el menú de las tres apps. En la app de la tienda no pinta nada.
  */
-export function FranjaPruebas({ visible = APP_DE_PRUEBAS }: { visible?: boolean }) {
+export function FranjaPruebas({ visible }: { visible?: boolean }) {
   const { idioma } = useSesion();
-  if (!visible) return null;
+  // Se decide al pintar, nunca al cargar el archivo (C-FRANJA-SOLO-EN-PRUEBAS).
+  if (!(visible ?? esEstaAppDePruebas())) return null;
   const t = enIdioma(TEXTOS_MOVIL, idioma);
   return (
     <View

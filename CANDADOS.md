@@ -5495,3 +5495,11 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 ## Chat de Camila: saludo sin señal y botón «Un momento…» (18 nov 2026) — todos los países
 
 - El chat de Driver saluda aunque el hilo no haya cargado por falta de señal (el aviso de conexión va abajo). Durante la espera de «Camila está escribiendo», el botón de enviar dice «Un momento…» en la web y en Driver en vez de quedar bloqueado sin explicación. Candados: `apps/repartidor/src/soporte/soporte.test.ts` y `apps/panel/src/sitio/ChatSoporte.test.tsx`.
+
+## C-FRANJA-SOLO-EN-PRUEBAS (18 nov 2026) — todos los países
+
+- **Qué se rompió y cómo se veía:** Divoox 46 y Divoox Driver 42, publicadas en Google Play, pintaban la franja «PRUEBAS · App de pruebas: no es la de la tienda» en la pantalla de entrar de todo el mundo. La app hablaba con producción; solo la franja estaba mal. Richard lo vio en dos teléfonos.
+- **Causa real:** la franja se calculaba al cargar el archivo (`export const APP_DE_PRUEBAS = …`), y la dirección del servidor (`URL_SERVIDOR`) vivía en `sesion.tsx`, que forma un círculo de importaciones con `PaginaEnApp`, `PantallaConFallo` y `Hoja` (entró con el inicio nuevo). En el paquete de la tienda el archivo de la franja se cargaba antes de que la dirección tuviera valor, y `esAppDePruebas(sin valor)` devolvía «sí». Las pruebas en Node no lo ven: ahí el orden de carga es otro.
+- **Qué se hizo:** `packages/movil/src/servidor.ts` guarda la dirección y no importa nada más de la app; la franja se decide al pintar (`esEstaAppDePruebas()`); `esAppDePruebas` sin dirección devuelve «no».
+- **Cómo se comprueba:** `candadoFranjaSoloEnPruebas.test.ts`, y sobre todo `bash scripts/tiendas/comprobar-franja.sh <cliente|repartidor> <paquete.aab>`: instala el paquete de producción en el emulador, abre la pantalla de entrar y falla si aparece la franja (visto en rojo con la 46). **Es obligatorio antes de cada subida a Play.**
+- **Qué NO tocar:** no agregar importaciones a `servidor.ts`; no volver a calcular nada con la dirección del servidor a nivel de archivo.

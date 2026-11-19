@@ -16,7 +16,7 @@ import { alSalirTelefono, almacenTelefono } from './almacen';
 import { URL_SERVIDOR, useSesion } from './sesion';
 import { TEXTOS_MOVIL } from './textos';
 import { AvisoBorrador } from './AvisoBorrador';
-import { APP_DE_PRUEBAS, FranjaPruebas } from './FranjaPruebas';
+import { FranjaPruebas } from './FranjaPruebas';
 import { DondeFunciona } from './Disponibilidad';
 import { CasillaSms } from './CasillaSms';
 import { Boton, C, Campo, CampoClave, Pantalla, e, useAcentoApp } from './ui';
@@ -209,7 +209,7 @@ export function Acceso({
         </Text>
       ) : null}
       {/* C-APP-DE-PRUEBAS-VISIBLE: la app de pruebas lo dice antes de pedir la cuenta. */}
-      <FranjaPruebas visible={APP_DE_PRUEBAS} />
+      <FranjaPruebas />
       {/* C-SESION-TERMINADA: si se llegó aquí porque la sesión venció, se dice una vez, sin ventana. */}
       {sesionTerminada && modo === 'entrar' ? (
         <Text testID="sesion-terminada" style={{ color: '#666B73', marginBottom: 12 }}>

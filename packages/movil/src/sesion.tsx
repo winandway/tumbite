@@ -25,6 +25,7 @@ import {
   rutaFotoTamano,
   type TamanoFoto,
 } from '@tumbite/compartido';
+import { URL_SERVIDOR } from './servidor';
 import { almacenTelefono } from './almacen';
 import { llavero } from './llavero';
 import { idAparato, prepararAparato } from './aparato';
@@ -44,10 +45,9 @@ export async function leerTokenGuardado(): Promise<string | null> {
 const LLAVE_IDIOMA = 'tumbite.idioma';
 // En la web, la app habla con el sitio que la sirvió (pruebas con pruebas, producción con
 // producción); en el celular, con la dirección fijada al construir (C-ENTORNOS-SEPARADOS).
-export const URL_SERVIDOR = elegirServidor(
-  typeof window !== 'undefined' && window.location?.origin ? window.location.origin : null,
-  process.env.EXPO_PUBLIC_API_URL,
-);
+// Vive en su propio archivo sin dependencias (C-FRANJA-SOLO-EN-PRUEBAS): aquí, dentro de un
+// círculo de importaciones, otros archivos la leían antes de que tuviera valor.
+export { URL_SERVIDOR };
 
 type Sesion = {
   cargando: boolean;
