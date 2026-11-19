@@ -4062,6 +4062,23 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `GET /datos/kyc` trae `antecedentesPorProveedor` según el perfil del país; Driver (`Verificacion.tsx`) esconde el bloque si es `false` (una app vieja sin el campo lo sigue mostrando).
 - **Prueba:** `motoVenezuelaRevision.test.ts` (C-ANTECEDENTES-POR-PAIS), vista en rojo.
 
+## C-MAPA-SIEMPRE-CLARO · El mapa sigue el tema de la app, nunca el modo oscuro del teléfono (18 nov 2026) — todos los países
+
+- **Qué se rompió y cómo se veía:** en un Android real con el teléfono en modo oscuro, el mapa del punto exacto salía OSCURO dentro de una app clara.
+- **Causa real:** `temaMapa` (pieza única de `packages/compartido/src/temaMapa.ts`, la usan todos los mapas de las apps y de la web) en «automático» oscurecía el mapa con el modo oscuro del sistema y al ponerse el sol (C-MAPA-DIA-NOCHE del 14 nov).
+- **Arreglo:** en «automático» el mapa va SIEMPRE claro («Divoox día»), como la app (las tres apps son `userInterfaceStyle: light`). Solo el interruptor propio de la app («Colores del mapa» → «Oscuro») lo oscurece. Sin reloj que revise la hora cada minuto (menos consumo). Texto de ayuda del ajuste cambiado (es/en). Vale para punto exacto, pedir viaje, seguimiento, oferta y viaje de Driver, direcciones y la web.
+- **Pruebas (en rojo antes):** `packages/compartido/src/temaMapa.test.ts` (sistema oscuro y de noche → «dia») y `apps/panel/src/sitio/temaMapaVivo.test.tsx` (sigue claro al ponerse el sol, «Oscuro» lo cambia al momento, sin relojes).
+- **Robots:** toda vuelta de capturas con mapa se toma también con el emulador en modo oscuro y pasa `scripts/robot/mapa-con-mosaicos.mjs` (C-ROBOT-MAPA-CON-MOSAICOS).
+- **Qué NO tocar:** no volver a leer `useColorScheme` ni `prefers-color-scheme` para el tema del mapa mientras la app no tenga tema oscuro propio.
+
+## C-MARCADOR-ANDROID · Marcadores con vista propia que no se pintaban en Android (18 nov 2026) — todos los países
+
+- **Qué se vio:** en el seguimiento del viaje en Android, el conductor salía como un círculo blanco y encima una píldora NEGRA vacía; en el inicio de Driver, el marcador propio también era un círculo blanco. En iPhone se veía bien.
+- **Causa real:** en Android (mapa de Google) un marcador con vista propia se pinta como una foto de esa vista. Con `tracksViewChanges={false}` desde el primer cuadro la foto se tomaba antes de que se dibujaran el texto (píldora vacía) o el isotipo (círculo blanco). El mapa de Apple dibuja la vista en vivo, por eso iPhone no fallaba.
+- **Arreglo:** pieza única `useCapturaMarcador` en `packages/movil/src/mapaDivoox.tsx`: deja la foto viva 1,2 s al aparecer o cuando cambia su clave, y otra vez 400 ms cuando el isotipo avisa que su imagen cargó (`MarcaIsotipo alCargar`); después la congela (no repinta cada segundo). Usada en `apps/cliente/src/MapaEntrega.tsx`, `apps/repartidor/src/piezas/Mapa.tsx` y `apps/repartidor/src/flex/MapaRuta.tsx`.
+- **Prueba (en rojo antes):** `packages/movil/src/candadoMarcadoresAndroid.test.ts`: ningún marcador con vista propia lleva `tracksViewChanges={false}`; todos usan `vista.seguir`, y el isotipo avisa al cargar.
+- **Solo en un teléfono Android real o el emulador:** que se vean el isotipo y el número del rótulo (lo comprueba el robot de capturas).
+
 ## C-BS-EN-MANO · Lo que se cobra en mano, en dólares y en bolívares con la tasa fijada (18 nov 2026) — Venezuela (en Estados Unidos no aplica)
 
 - **Qué pedía el dueño:** en Venezuela casi nadie tiene monedas de dólar. Si el viaje cuesta 2,00 y el regalo cubre 1,13, el pasajero debe 0,87 y no tiene cómo darlos. Todo lo que se cobra o se paga EN MANO se ve en dólares Y en bolívares, con la tasa usada y su fecha, para pagar por pago móvil el monto exacto.
