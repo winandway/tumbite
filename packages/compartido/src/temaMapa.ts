@@ -28,7 +28,7 @@ export const TEXTOS_TEMA_MAPA = {
   es: {
     titulo: 'Colores del mapa',
     ayuda:
-      'En automático, el mapa se oscurece solo cuando anochece o cuando tu dispositivo está en modo oscuro.',
+      'En automático, el mapa va claro como la app, aunque tu dispositivo esté en modo oscuro. Elige «Oscuro» si lo prefieres de noche.',
     auto: 'Automático',
     claro: 'Claro',
     oscuro: 'Oscuro',
@@ -36,7 +36,7 @@ export const TEXTOS_TEMA_MAPA = {
   en: {
     titulo: 'Map colors',
     ayuda:
-      'On automatic, the map turns dark on its own after sunset or when your device is in dark mode.',
+      'On automatic, the map stays light like the app, even if your device is in dark mode. Choose “Dark” if you prefer it at night.',
     auto: 'Automatic',
     claro: 'Light',
     oscuro: 'Dark',
@@ -104,10 +104,11 @@ export function temaMapa(d: {
   /** El teléfono o el navegador están en modo oscuro (si se sabe). */
   sistemaOscuro?: boolean | null;
 }): TemaMapa {
-  if (d.ajuste === 'claro') return 'dia';
+  // C-MAPA-SIEMPRE-CLARO (18 nov 2026, orden de Gerencia): el mapa sigue el tema de la APP, que es
+  // clara. Ni el modo oscuro del teléfono ni la hora lo oscurecen: un mapa oscuro dentro de una app
+  // clara se ve roto. Solo el interruptor propio de la app («Oscuro» en «Colores del mapa»).
   if (d.ajuste === 'oscuro') return 'noche';
-  if (d.sistemaOscuro) return 'noche';
-  return esDeNoche(d.ahora, d.punto) ? 'noche' : 'dia';
+  return 'dia';
 }
 
 const esAjuste = (v: unknown): v is AjusteTemaMapa =>
@@ -195,17 +196,12 @@ function sistemaOscuroNavegador(): boolean | null {
   }
 }
 
-/** Cada cuánto se vuelve a mirar si ya anocheció (o amaneció) con el mapa abierto. */
-const REVISAR_CADA_MS = 60_000;
-
-/** Avisa cuando puede haber cambiado el tema: la persona tocó el ajuste o pasó un minuto. */
+/**
+ * Avisa cuando puede haber cambiado el tema: solo cuando la persona toca el ajuste (C-MAPA-SIEMPRE-
+ * CLARO: la hora ya no cambia el mapa, así que no hay reloj que lo revise cada minuto).
+ */
 function alPoderCambiarTema(f: () => void): () => void {
-  const dejar = alCambiarAjusteTemaMapa(f);
-  const reloj = setInterval(f, REVISAR_CADA_MS);
-  return () => {
-    dejar();
-    clearInterval(reloj);
-  };
+  return alCambiarAjusteTemaMapa(f);
 }
 
 /** El ajuste de ahora, vivo: cambia cuando la persona lo cambia en cualquier pantalla. */

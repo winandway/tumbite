@@ -24,14 +24,18 @@ describe('el tema del mapa, vivo', () => {
     vi.useRealTimers();
   });
 
-  it('con la pantalla abierta, pasa de día a noche cuando se pone el sol, y al cerrarla no queda ningún reloj', () => {
-    // Novi, 14 de noviembre, 4:50 p. m. (21:50 UTC): el sol se pone hacia las 5:11.
+  // C-MAPA-SIEMPRE-CLARO (18 nov 2026): el mapa sigue a la app (clara): ni el sol ni el modo oscuro
+  // del teléfono lo oscurecen; solo el interruptor «Oscuro» de la app. Y no deja relojes corriendo.
+  it('con la pantalla abierta sigue claro al ponerse el sol y con el teléfono oscuro; «Oscuro» lo cambia al momento', async () => {
     vi.setSystemTime(new Date('2026-11-14T21:50:00Z'));
-    const { result, unmount } = renderHook(() => useTemaMapa(NOVI, false));
+    const { result, unmount } = renderHook(() => useTemaMapa(NOVI, true));
     expect(result.current).toBe('dia');
     act(() => {
       vi.advanceTimersByTime(40 * 60_000);
     });
+    expect(result.current).toBe('dia');
+    expect(vi.getTimerCount()).toBe(0);
+    await act(() => cambiarAjusteTemaMapa('oscuro'));
     expect(result.current).toBe('noche');
     unmount();
     expect(vi.getTimerCount()).toBe(0);
@@ -46,10 +50,11 @@ describe('el tema del mapa, vivo', () => {
     expect(capa.style.filter).toBe(FILTRO_LEAFLET_NOCHE);
     await act(() => cambiarAjusteTemaMapa('auto'));
     expect(capa.style.filter).toBe('');
-    // Cae la noche con el mapa abierto.
+    // Cae la noche con el mapa abierto: sigue claro.
     vi.setSystemTime(new Date('2026-11-15T01:00:00Z'));
     vi.advanceTimersByTime(60_000);
-    expect(capa.style.filter).toBe(FILTRO_LEAFLET_NOCHE);
+    expect(capa.style.filter).toBe('');
+    await act(() => cambiarAjusteTemaMapa('oscuro'));
     dejar(); // lo que Leaflet llama en «unload»
     expect(vi.getTimerCount()).toBe(0);
     await act(() => cambiarAjusteTemaMapa('claro'));

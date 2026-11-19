@@ -66,15 +66,16 @@ describe('temaMapa (la regla de las tres posiciones)', () => {
       'noche',
     );
   });
-  it('automático: de día claro y de noche oscuro, según el sol del lugar', () => {
-    expect(temaMapa({ ajuste: 'auto', ahora: dia, punto: NOVI })).toBe('dia');
-    expect(temaMapa({ ajuste: 'auto', ahora: noche, punto: NOVI })).toBe('noche');
+  // C-MAPA-SIEMPRE-CLARO (18 nov 2026): el mapa sigue el tema de la APP (clara), nunca el modo
+  // oscuro del teléfono ni la hora. Solo el interruptor propio de la app («Oscuro») lo oscurece.
+  it('automático: con el teléfono en modo oscuro, el mapa va CLARO («Divoox día»)', () => {
+    expect(temaMapa({ ajuste: 'auto', ahora: dia, punto: NOVI, sistemaOscuro: true })).toBe('dia');
   });
-  it('automático: si el teléfono está en modo oscuro, el mapa va oscuro también de día', () => {
-    expect(temaMapa({ ajuste: 'auto', ahora: dia, punto: NOVI, sistemaOscuro: true })).toBe(
-      'noche',
+  it('automático: de noche también va claro (la app es clara)', () => {
+    expect(temaMapa({ ajuste: 'auto', ahora: noche, punto: NOVI })).toBe('dia');
+    expect(temaMapa({ ajuste: 'auto', ahora: noche, punto: NOVI, sistemaOscuro: true })).toBe(
+      'dia',
     );
-    expect(temaMapa({ ajuste: 'auto', ahora: dia, punto: NOVI, sistemaOscuro: false })).toBe('dia');
   });
 });
 
