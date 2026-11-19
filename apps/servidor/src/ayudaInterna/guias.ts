@@ -1899,6 +1899,112 @@ const referidosEquipos: Record<IdiomaAyuda, Guia> = {
   },
 };
 
+// ───────────────────────── Líneas de taxi y mototaxi (C-LINEAS-TAXI, 19 nov 2026) ─────────────────────────
+
+const capLineas = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({
+  archivo: `lineas-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const lineasTaxi: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'driver-lines',
+    titulo: 'Líneas de taxi y mototaxi: aprobar una línea, ver sus conductores y mover a uno',
+    resumen:
+      'Cómo aprobar las solicitudes del formulario «Registra tu línea», crear una línea directo, buscarla y mover conductores entre líneas. La línea es de su líder: él acepta a sus conductores y recibe las emergencias.',
+    explicacion: [
+      'Una línea es un grupo de taxis o mototaxis con su líder. Tiene un código, un enlace y un QR. El código solo vale en la ciudad de la línea. Es aparte de los referidos: entrar a una línea no da premios.',
+      'La línea nace de dos formas. La primera: alguien llena «Registra tu línea» en la web (nombre, ciudad, taxi o mototaxi, cuántos conductores, líder y segundo contacto) y la solicitud aparece arriba en esta pantalla. La segunda: tú la creas en «Crear una línea». Nadie crea una línea sin que el equipo la apruebe.',
+      'Antes de aprobar, llama al líder y verifica que el celular es suyo. El líder tiene que estar registrado en Divoox Driver con ese celular; si no lo está, la pantalla te lo dice y la solicitud sigue pendiente. Los conductores que ya se habían registrado con el código personal del líder pasan a la línea como aceptados.',
+      'El conductor pide entrar con el código de la línea o eligiéndola de la lista de su ciudad, en el registro o desde su perfil. El líder acepta o rechaza con un toque en su app. Un conductor está en una sola línea.',
+      'Para mover a un conductor: arrástralo a otra línea, o abre la línea con «Ver» y usa «Mover a…». También puedes dejarlo sin línea. El líder puede sacar a un conductor desde su app.',
+      'Emergencias: si un conductor de la línea toca el botón de emergencia, el líder y el segundo contacto reciben un mensaje con el nombre, el celular y la ubicación. Hay un tope diario por conductor. Un conductor sin línea avisa al equipo de su ciudad.',
+    ],
+    capturas: [
+      capLineas(
+        'super-solicitudes',
+        'es',
+        'Solicitudes del formulario Registra tu línea con los datos del líder y los botones Aprobar y Rechazar.',
+        'Las solicitudes pendientes: aprueba o rechaza con un toque.',
+      ),
+      capLineas(
+        'super-crear',
+        'es',
+        'Formulario Crear una línea con nombre, ciudad, tipo, líder y segundo contacto de emergencia.',
+        'Para crear una línea directo.',
+      ),
+      capLineas(
+        'super-lista',
+        'es',
+        'Lista de líneas con buscador, ciudad, líder, miembros, código y el selector Mover a para cada conductor.',
+        'La lista con el buscador y el selector para mover conductores.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo apruebo una línea nueva?',
+      '¿Cómo muevo a un conductor de línea?',
+      '¿Quién recibe la emergencia de un conductor?',
+    ],
+    pasos: [
+      'Abre «Líneas de taxi y mototaxi» en el menú de Personas.',
+      'En las solicitudes: llama al líder, verifica su celular y toca «Aprobar y crear la línea».',
+      'Para crear una línea tú: llena «Crear una línea» y toca «Crear la línea».',
+      'Para mover a un conductor: arrástralo a otra línea o usa «Mover a…».',
+    ],
+  },
+  en: {
+    id: 'driver-lines',
+    titulo: 'Taxi and mototaxi lines: approve a line, see its drivers and move one',
+    resumen:
+      'How to approve the “Register your line” requests, create a line directly, search for it and move drivers between lines. A line belongs to its leader: they accept their drivers and receive the emergencies.',
+    explicacion: [
+      'A line is a group of taxis or mototaxis with its leader. It has a code, a link and a QR. The code only works in the line’s city. It is separate from referrals: joining a line earns no rewards.',
+      'A line starts in two ways. First: someone fills in “Register your line” on the website (name, city, taxi or mototaxi, how many drivers, leader and second contact) and the request shows up at the top of this screen. Second: you create it under “Create a line.” Nobody creates a line without the team’s approval.',
+      'Before approving, call the leader and check the cell phone is theirs. The leader must be registered in Divoox Driver with that phone; if not, the screen tells you and the request stays pending. Drivers who had already signed up with the leader’s personal code move into the line as accepted.',
+      'A driver asks to join with the line’s code or by choosing it from the list for their city, at sign-up or from their profile. The leader accepts or declines with one tap in their app. A driver belongs to one line only.',
+      'To move a driver: drag them to another line, or open the line with “View” and use “Move to…”. You can also leave them without a line. The leader can remove a driver from their app.',
+      'Emergencies: if a driver in the line taps the emergency button, the leader and the second contact get a message with the name, cell phone and location. There is a daily limit per driver. A driver without a line alerts the team in their city.',
+    ],
+    capturas: [
+      capLineas(
+        'super-solicitudes',
+        'en',
+        'Requests from the Register your line form with the leader’s details and the Approve and Decline buttons.',
+        'Pending requests: approve or decline with one tap.',
+      ),
+      capLineas(
+        'super-crear',
+        'en',
+        'The Create a line form with name, city, type, leader and second emergency contact.',
+        'To create a line directly.',
+      ),
+      capLineas(
+        'super-lista',
+        'en',
+        'List of lines with search, city, leader, members, code and the Move to selector for each driver.',
+        'The list with search and the selector to move drivers.',
+      ),
+    ],
+    preguntas: [
+      'How do I approve a new line?',
+      'How do I move a driver to another line?',
+      'Who receives a driver’s emergency?',
+    ],
+    pasos: [
+      'Open “Taxi and mototaxi lines” in the People menu.',
+      'In the requests: call the leader, verify their cell phone and tap “Approve and create the line.”',
+      'To create a line yourself: fill in “Create a line” and tap “Create the line.”',
+      'To move a driver: drag them to another line or use “Move to…”.',
+    ],
+  },
+};
+
 // ───────────────────────── Banners de la app (C-BANNERS, 17 nov 2026) ─────────────────────────
 
 const capBanners = (
@@ -2031,6 +2137,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
         de(saldoConductores),
         de(agentesDivoox),
         de(referidosEquipos),
+        de(lineasTaxi),
         de(tasaBolivar),
       ],
     },

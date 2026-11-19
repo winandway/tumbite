@@ -113,6 +113,7 @@ const PERMISO_DE_SECCION: Readonly<Record<string, PermisoRuta | PermisoRuta[]>> 
   'driver-balance': 'dinero.ver',
   agents: 'dinero.ver',
   referrals: 'dinero.ver',
+  lines: 'dinero.ver',
   reports: 'monitoreo.exportar',
   rides: 'viajes.ver',
   moto: 'viajes.ver',

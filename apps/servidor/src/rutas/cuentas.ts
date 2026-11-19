@@ -8,12 +8,8 @@ import {
   entornoDeHost,
   telefonoCanonico,
 } from '@tumbite/compartido';
-import {
-  anotarAparato,
-  codigoPara,
-  vincularCliente,
-  vincularConductor,
-} from '../programaReferidos';
+import { anotarAparato, codigoPara, vincularCliente } from '../programaReferidos';
+import { usarCodigoDeConductor } from '../lineas';
 import { huellaAparato } from '../regalosDivoox';
 import { Hono } from 'hono';
 import {
@@ -276,7 +272,7 @@ cuentas.post('/registro', async (c) => {
   if (d.invitacion)
     await (
       rol === 'repartidor'
-        ? vincularConductor(db, id, d.invitacion)
+        ? usarCodigoDeConductor(c.env, db, id, d.invitacion)
         : rol === 'cliente'
           ? vincularCliente(db, id, d.invitacion, null)
           : Promise.resolve(null)

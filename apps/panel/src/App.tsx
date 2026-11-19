@@ -17,6 +17,7 @@ import { ConfirmarUbicacion } from './sitio/ConfirmarUbicacion';
 import { Flex } from './sitio/Flex';
 import { Descargas } from './sitio/Descargas';
 import { Invitacion } from './sitio/Invitacion';
+import { RegistraLinea } from './sitio/RegistraLinea';
 import { PaginaLugar } from './sitio/Lugar';
 import { ir, useRuta } from './ruta';
 import { conIdioma, enEspanol, sinIdioma } from './rutaIdioma';
@@ -220,6 +221,13 @@ export function App() {
     return (
       <Sitio idioma={idioma} cambiar={cambiar}>
         <Invitacion idioma={idioma} codigo={ruta.slice('/join/'.length)} />
+      </Sitio>
+    );
+  // C-LINEAS-TAXI: el formulario público de las líneas de taxi y mototaxi.
+  if (ruta === '/register-line')
+    return (
+      <Sitio idioma={idioma} cambiar={cambiar}>
+        <RegistraLinea idioma={idioma} />
       </Sitio>
     );
   if (ruta === '/franchise')

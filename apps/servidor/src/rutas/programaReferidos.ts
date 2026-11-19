@@ -14,8 +14,8 @@ import {
   miembrosDeEquipo,
   misInvitaciones,
   resolverCodigo,
-  vincularConductor,
 } from '../programaReferidos';
+import { esLinea, usarCodigoDeConductor } from '../lineas';
 
 /**
  * C-REFERIDOS-EQUIPOS: las rutas del superadmin (programas y equipos), la página pública de una
@@ -149,7 +149,14 @@ programaReferidos.get('/publico/invitacion/:codigo', limiteIntentos(30, 60_000),
   const r = await resolverCodigo(base(c), c.req.param('codigo'));
   if (!r) return c.json({ invitacion: null }, 404);
   return c.json({
-    invitacion: { codigo: r.codigo, nombre: r.nombre, equipo: r.equipo, ciudad: r.ciudad },
+    invitacion: {
+      codigo: r.codigo,
+      nombre: r.nombre,
+      equipo: r.equipo,
+      ciudad: r.ciudad,
+      // C-LINEAS-TAXI: el código de una línea pide entrar; el líder acepta.
+      linea: r.equipoId ? await esLinea(base(c), r.equipoId) : false,
+    },
   });
 });
 
@@ -163,8 +170,11 @@ programaReferidos.get('/repartidor/invitaciones', async (c) => {
 programaReferidos.post('/repartidor/invitacion', limiteIntentos(10, 60_000), async (c) => {
   const u = exigir(c, 'repartidor');
   const d = await leerCuerpo(c, z.object({ codigo: z.string().trim().min(4).max(20) }));
-  const r = await vincularConductor(base(c), u.id, d.codigo);
-  // C-CAMILA-LIDER: el líder recibe el contador de su equipo.
-  if (r.equipo) await alUnirseAlEquipo(c.env, base(c), u.id);
-  return c.json({ ok: true, nombre: r.nombre, equipo: r.equipo }, 201);
+  const r = await usarCodigoDeConductor(c.env, base(c), u.id, d.codigo);
+  // C-CAMILA-LIDER: el líder recibe el contador de su equipo (a una línea solo le llega la solicitud).
+  if (r.equipo && !r.linea) await alUnirseAlEquipo(c.env, base(c), u.id);
+  return c.json(
+    { ok: true, nombre: r.nombre, equipo: r.linea ?? r.equipo, pendiente: Boolean(r.linea) },
+    201,
+  );
 });

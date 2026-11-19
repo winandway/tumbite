@@ -4270,6 +4270,54 @@ CREATE TABLE IF NOT EXISTS miembros_equipo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS miembros_equipo_equipo ON miembros_equipo(equipo_id, creado_en);
+-- C-LINEAS-TAXI (19 nov 2026): una LÍNEA de taxi o mototaxi es un equipo con líder (equipos) más estos datos.
+-- Separada de los referidos: entrar a una línea no da premios. Un conductor, una sola línea (miembros_equipo).
+CREATE TABLE IF NOT EXISTS lineas (
+  equipo_id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL DEFAULT 'taxi',
+  contacto2_nombre TEXT NOT NULL DEFAULT '',
+  contacto2_telefono TEXT NOT NULL DEFAULT '',
+  conductores_estimados INTEGER,
+  telefono_verificado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Las solicitudes del formulario público «Registra tu línea»: nadie crea una línea sin aprobación del equipo.
+CREATE TABLE IF NOT EXISTS solicitudes_linea (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  conductores INTEGER NOT NULL DEFAULT 0,
+  lider_nombre TEXT NOT NULL,
+  lider_telefono TEXT NOT NULL,
+  contacto2_nombre TEXT NOT NULL DEFAULT '',
+  contacto2_telefono TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'pendiente',
+  motivo TEXT,
+  equipo_id TEXT,
+  resuelta_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT
+);
+CREATE INDEX IF NOT EXISTS solicitudes_linea_estado ON solicitudes_linea(estado, creado_en);
+-- El conductor que pide entrar a una línea (con su código o eligiéndola); el líder acepta o rechaza con un toque.
+CREATE TABLE IF NOT EXISTS pedidos_linea (
+  usuario_id TEXT PRIMARY KEY,
+  equipo_id TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelto_en TEXT
+);
+CREATE INDEX IF NOT EXISTS pedidos_linea_equipo ON pedidos_linea(equipo_id, estado);
+-- Cada emergencia avisada a una línea (tope por conductor y por día; ver lineas.ts).
+CREATE TABLE IF NOT EXISTS emergencias_linea (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  equipo_id TEXT NOT NULL,
+  avisos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS emergencias_linea_usuario ON emergencias_linea(usuario_id, creado_en);
 -- Huella del aparato con el que entra cada persona (antifraude de referidos y regalos; solo sha-256).
 CREATE TABLE IF NOT EXISTS aparatos_usuario (
   usuario_id TEXT NOT NULL,

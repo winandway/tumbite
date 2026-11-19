@@ -2791,6 +2791,46 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "equipo_id",
     "creado_en"
   ],
+  "lineas": [
+    "equipo_id",
+    "tipo",
+    "contacto2_nombre",
+    "contacto2_telefono",
+    "conductores_estimados",
+    "telefono_verificado_en",
+    "creado_en"
+  ],
+  "solicitudes_linea": [
+    "id",
+    "nombre",
+    "zona_id",
+    "tipo",
+    "conductores",
+    "lider_nombre",
+    "lider_telefono",
+    "contacto2_nombre",
+    "contacto2_telefono",
+    "estado",
+    "motivo",
+    "equipo_id",
+    "resuelta_por",
+    "creado_en",
+    "resuelta_en"
+  ],
+  "pedidos_linea": [
+    "usuario_id",
+    "equipo_id",
+    "estado",
+    "creado_en",
+    "resuelto_en"
+  ],
+  "emergencias_linea": [
+    "id",
+    "usuario_id",
+    "equipo_id",
+    "avisos",
+    "creado_en"
+  ],
   "aparatos_usuario": [
     "usuario_id",
     "huella",

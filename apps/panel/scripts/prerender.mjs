@@ -168,6 +168,7 @@ try {
     '/support',
     '/sms-consent',
     '/contact',
+    '/register-line',
     '/docs',
     '/docs/how-to',
     ...DOCS.es.flatMap((s) => [`/docs/${s.id}`, ...s.guias.map((g) => `/docs/${s.id}/${g.id}`)]),

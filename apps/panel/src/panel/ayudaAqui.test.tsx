@@ -31,6 +31,7 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperAgentes.tsx', 'divoox-agents'],
   ['SuperMoto.tsx', 'bolivar-reference-rate'],
   ['SuperReferidosEquipos.tsx', 'referrals-and-teams'],
+  ['SuperLineas.tsx', 'driver-lines'],
   ['SuperBanners.tsx', 'app-banners'],
   ['SuperCamila.tsx', 'camila-support-inbox'],
   ['CambiarCiudadConductor.tsx', 'change-driver-city'],

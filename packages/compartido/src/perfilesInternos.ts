@@ -53,6 +53,9 @@ const FINANZAS = [
   // C-REFERIDOS-EQUIPOS: los programas de referidos y los equipos.
   'referidos-programas',
   'equipos',
+  // C-LINEAS-TAXI: las líneas de taxi y mototaxi y sus solicitudes, como los equipos.
+  'lineas',
+  'lineas-solicitudes',
   'regalo-conductor-nuevo',
   // C-AGENTE-DIVOOX: los agentes (fondo, topes y conciliación) son de finanzas.
   'agentes',

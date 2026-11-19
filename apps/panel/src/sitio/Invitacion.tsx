@@ -12,6 +12,8 @@ const T = {
     titulo: 'Te invitaron a Divoox',
     de: (n: string) => `${n} te invitó a Divoox.`,
     equipo: (e: string, c: string | null) => `Vas a entrar al equipo «${e}»${c ? ` de ${c}` : ''}.`,
+    linea: (e: string, c: string | null) =>
+      `Vas a pedir entrar a la línea «${e}»${c ? ` de ${c}` : ''}. Su líder te acepta con un toque.`,
     pasos: 'Cómo entrar',
     paso1: 'Baja la app. Si vas a manejar, baja Divoox Driver; si vas a pedir, baja Divoox.',
     paso2: 'Al crear tu cuenta, escribe este código en «Código de invitación»:',
@@ -26,6 +28,8 @@ const T = {
     titulo: 'You’re invited to Divoox',
     de: (n: string) => `${n} invited you to Divoox.`,
     equipo: (e: string, c: string | null) => `You’ll join the “${e}” team${c ? ` in ${c}` : ''}.`,
+    linea: (e: string, c: string | null) =>
+      `You’ll ask to join the “${e}” line${c ? ` in ${c}` : ''}. Its leader accepts you with one tap.`,
     pasos: 'How to join',
     paso1: 'Get the app. If you’ll drive, get Divoox Driver; if you’ll order, get Divoox.',
     paso2: 'When you create your account, enter this code in “Invitation code”:',
@@ -38,7 +42,13 @@ const T = {
   },
 };
 
-type Invitacion = { codigo: string; nombre: string; equipo: string | null; ciudad: string | null };
+type Invitacion = {
+  codigo: string;
+  nombre: string;
+  equipo: string | null;
+  ciudad: string | null;
+  linea?: boolean;
+};
 
 export function Invitacion({ idioma, codigo }: { idioma: Idioma; codigo: string }) {
   const t = enIdioma(T, idioma);
@@ -67,7 +77,11 @@ export function Invitacion({ idioma, codigo }: { idioma: Idioma; codigo: string 
       {inv ? (
         <>
           <p style={{ fontSize: 20 }}>{t.de(inv.nombre)}</p>
-          {inv.equipo ? <p style={{ fontSize: 18 }}>{t.equipo(inv.equipo, inv.ciudad)}</p> : null}
+          {inv.equipo ? (
+            <p style={{ fontSize: 18 }}>
+              {(inv.linea ? t.linea : t.equipo)(inv.equipo, inv.ciudad)}
+            </p>
+          ) : null}
           <h2>{t.pasos}</h2>
           <ol>
             <li>{t.paso1}</li>

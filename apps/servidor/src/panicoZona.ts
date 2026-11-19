@@ -1,6 +1,7 @@
 import type { Env } from './env';
 import { notificar } from './notificaciones';
 import { zonaPara } from './rutas/zonas';
+import { avisarLinea } from './lineas';
 import { enviarSms, telefonoE164 } from './sms';
 
 /**
@@ -56,13 +57,28 @@ export function textoPanico(p: Panico, zona: string): string {
 
 /** Avisa al responsable de la zona. Devuelve cuántos avisos salieron (SMS + celular). */
 export async function avisarResponsableZona(env: Env, db: D1Database, p: Panico): Promise<number> {
+  // C-LINEAS-TAXI: si el conductor está en una línea, el líder y el segundo contacto reciben el aviso además
+  // del responsable de la zona (más avisos, nunca menos). Si falla, la emergencia sigue su camino.
+  let deLinea = 0;
+  if (p.rol !== 'pasajero')
+    deLinea = await avisarLinea(env, db, {
+      usuarioId: p.usuarioId,
+      nombre: p.nombre,
+      telefono: p.telefono,
+      lat: p.lat,
+      lng: p.lng,
+      referencia: p.referencia,
+    }).catch((e: unknown) => {
+      console.error('pánico: no se pudo avisar a la línea', String(e));
+      return 0;
+    });
   // Sin zona guardada (cuenta sin ficha completa), se usa la zona del lugar donde está.
   const zonaId =
     p.zonaId ??
     (p.lat != null && p.lng != null
       ? ((await zonaPara(db, p.lat, p.lng, false))?.id ?? null)
       : null);
-  if (!zonaId) return 0;
+  if (!zonaId) return deLinea;
   const z = await db
     .prepare('SELECT nombre, responsable_nombre, responsable_telefono FROM zonas WHERE id = ?')
     .bind(zonaId)
@@ -74,7 +90,7 @@ export async function avisarResponsableZona(env: Env, db: D1Database, p: Panico)
   const para = telefonoE164(z?.responsable_telefono);
   if (!z || !para) {
     console.error(`pánico: la zona ${zonaId} no tiene responsable con teléfono`);
-    return 0;
+    return deLinea;
   }
   const texto = textoPanico(p, z.nombre);
   let enviados = 0;
@@ -106,5 +122,5 @@ export async function avisarResponsableZona(env: Env, db: D1Database, p: Panico)
       })).catch(() => ({ enviados: 0 }));
       enviados += r.enviados;
     }
-  return enviados;
+  return enviados + deLinea;
 }

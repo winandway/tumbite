@@ -80,6 +80,7 @@ import { textosDriver } from './piezas/textos';
 import { Oferta } from './grandes/Oferta';
 import { Calificaciones } from './grandes/Calificaciones';
 import { MiEquipo } from './grandes/MiEquipo';
+import { MiLinea } from './grandes/MiLinea';
 import { CobrarEfectivo } from './grandes/CobrarEfectivo';
 import { Ganancias } from './grandes/Ganancias';
 import { resumenPeriodo, textoTrabajos } from './grandes/resumenPeriodo';
@@ -645,6 +646,7 @@ export function Inicio() {
     | 'agregar'
     | 'clientesFijos'
     | 'miEquipo'
+    | 'miLinea'
     | 'ayuda'
   >('inicio');
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
@@ -2140,6 +2142,8 @@ export function Inicio() {
       'perfil',
       <MiEquipo api={api} idioma={idioma} moneda={prepago?.moneda ?? 'USD'} />,
     );
+  // C-LINEAS-TAXI: su línea de taxi o mototaxi, las solicitudes y su equipo.
+  if (vista === 'miLinea') return lienzo('perfil', <MiLinea api={api} idioma={idioma} />);
   // C-TURNOS-REPARTIDOR: reservar horas, como el «Schedule» de DoorDash.
   if (vista === 'turnos') return lienzo('inicio', <Turnos api={api} idioma={idioma} />);
   // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: la agenda de sus clientes fijos y «No puedo».
@@ -2343,6 +2347,14 @@ export function Inicio() {
             idioma === 'en'
               ? 'Invite drivers with your code and earn balance'
               : 'Invita conductores con tu código y gana saldo',
+          )}
+          {fila(
+            idioma === 'en' ? 'My line' : 'Mi línea',
+            () => setVista('miLinea'),
+            false,
+            idioma === 'en'
+              ? 'Your taxi or mototaxi line, its requests and your team'
+              : 'Tu línea de taxi o mototaxi, sus solicitudes y tu equipo',
           )}
           {fila(tg.calif.titulo, () => setVista('calificaciones'))}
           {fila(tg.alta.titulo, () => setVista('alta'))}

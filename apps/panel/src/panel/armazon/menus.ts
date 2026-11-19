@@ -85,6 +85,8 @@ export const ICONOS_MENU = {
   agents: Handshake,
   // C-REFERIDOS-EQUIPOS: referidos y equipos.
   referrals: UserPlus,
+  // C-LINEAS-TAXI: las líneas de taxi y mototaxi.
+  lines: Route,
   // C-CAMILA-BUZON: el buzón de Camila, la asistente de soporte.
   camila: MessagesSquare,
   approvals: ClipboardCheck,
@@ -242,7 +244,7 @@ export function gruposAdmin(
           g.operacion,
           ['inicio', 'orders', 'tickets', 'camila', 'moderation', 'approvals', 'verifications'],
         ],
-        [g.personas, ['customers', 'restaurants', 'drivers']],
+        [g.personas, ['customers', 'restaurants', 'drivers', 'lines']],
         [
           g.dinero,
           [

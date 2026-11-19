@@ -61,6 +61,7 @@ import { gerente } from './rutas/gerente';
 import { tickets } from './rutas/tickets';
 import { erroresApp } from './rutas/erroresApp';
 import { referidos } from './referidos';
+import { lineas } from './rutas/lineas';
 import { franquicias } from './rutas/franquicias';
 import { superadmin } from './rutas/superadmin';
 import { equipoInterno } from './rutas/equipoInterno';
@@ -575,6 +576,7 @@ const RUTAS_PUBLICAS = new Set([
   '/support',
   '/sms-consent',
   '/contact',
+  '/register-line',
   '/docs',
   '/flex',
   '/track',
@@ -775,6 +777,7 @@ app.route('/datos', modoDestino);
 app.route('/datos', plus);
 app.route('/datos', tarjetasRegalo);
 app.route('/datos', referidos);
+app.route('/datos', lineas);
 app.route('/datos', stripeAvisos);
 app.route('/datos', kyc);
 app.route('/datos', fotos);

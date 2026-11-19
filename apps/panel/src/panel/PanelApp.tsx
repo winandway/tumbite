@@ -71,6 +71,7 @@ import { SuperRegalosDivoox } from './SuperRegalosDivoox';
 import { SuperSaldoConductores } from './SuperSaldoConductores';
 import { SuperAgentes } from './SuperAgentes';
 import { SuperReferidosEquipos } from './SuperReferidosEquipos';
+import { SuperLineas } from './SuperLineas';
 import { SuperCamila } from './SuperCamila';
 import { SuperInformes } from './SuperInformes';
 import { SuperViajes } from './SuperViajes';
@@ -186,6 +187,7 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/agents') return <SuperAgentes idioma={idioma} />;
   // C-REFERIDOS-EQUIPOS: programas de referidos y equipos con su líder.
   if (sub === '/referrals') return <SuperReferidosEquipos idioma={idioma} />;
+  if (sub === '/lines') return <SuperLineas idioma={idioma} />;
   // C-CAMILA-BUZON: el buzón de Camila (casos, conversaciones, aprendizaje, líderes y ajustes).
   if (sub === '/camila') return <SuperCamila idioma={idioma} />;
   if (sub === '/reports') return <SuperInformes idioma={idioma} />;

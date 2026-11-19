@@ -151,6 +151,11 @@ export const remitente = (env: Env, para: string) =>
     ? env.TWILIO_FROM_INTERNACIONAL
     : env.TWILIO_FROM!;
 
+/** Los SMS de pánico salen a cualquier país (zona y líneas); los demás SMS a Venezuela siguen apagados por costo. */
+const SMS_DE_PANICO: ReadonlySet<string> = new Set(['equipo_panico', 'equipo_panico_linea']);
+/** C-LINEAS-TAXI: como mucho tantos SMS de emergencia de líneas en 24 horas (todos los conductores juntos). */
+export const TOPE_SMS_LINEAS_DIA = 60;
+
 /** C-PANICO-ZONA: como mucho tantos SMS de pánico en 24 horas (todos los países juntos). */
 export const TOPE_PANICO_DIA = 40;
 
@@ -188,7 +193,7 @@ export async function enviarSms(
   if (!smsConfigurado(env)) return false;
   const para = telefonoE164(a.telefono);
   // C-PANICO-ZONA: el SMS de pánico al responsable de la zona sale a cualquier país (también +58).
-  if (!para || (a.tipo !== 'equipo_panico' && !destinoPermitido(env, para))) return false;
+  if (!para || (!SMS_DE_PANICO.has(a.tipo) && !destinoPermitido(env, para))) return false;
   // C-SMS-CONSENTIMIENTO: sin la casilla marcada, al titular no se le manda nada que no pidió.
   if (!smsSinConsentimientoDelTitular(a.tipo) && !(await aceptoSms(db, a.usuarioId))) return false;
   // C-PANICO-ZONA: tope diario del SMS de pánico (cada envío queda en sms_enviados).
@@ -201,6 +206,18 @@ export async function enviarSms(
       .catch(() => ({ n: 0 }));
     if (Number(hoy?.n ?? 0) >= TOPE_PANICO_DIA) {
       console.error(`sms: tope diario de pánico alcanzado (${TOPE_PANICO_DIA})`);
+      return false;
+    }
+  }
+  if (a.tipo === 'equipo_panico_linea') {
+    const hoy = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM sms_enviados WHERE tipo = 'equipo_panico_linea' AND creado_en >= datetime('now', '-1 day')",
+      )
+      .first<{ n: number }>()
+      .catch(() => ({ n: 0 }));
+    if (Number(hoy?.n ?? 0) >= TOPE_SMS_LINEAS_DIA) {
+      console.error(`sms: tope diario de emergencias de líneas alcanzado (${TOPE_SMS_LINEAS_DIA})`);
       return false;
     }
   }
