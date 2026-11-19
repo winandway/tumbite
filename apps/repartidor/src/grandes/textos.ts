@@ -180,6 +180,9 @@ const es = {
     // C-SALDO-CONDUCTOR: lo que Divoox le debe por los regalos de sus pasajeros, y su historial.
     regalosPorCobrar: 'Regalos de pasajeros por cobrar',
     regalosAyuda: 'Divoox te los paga por pago móvil, o pásalos a tu saldo ahora.',
+    regalosEnRevision: 'Divoox está revisando este regalo',
+    regalosEnRevisionAyuda:
+      'No pudimos comprobar el recorrido de un viaje con regalo. Nuestro equipo lo revisa y te avisamos; no tienes que hacer nada.',
     regalosASaldo: 'Pasar a mi saldo',
     regalosPasados: (m: string) => `Listo: ${m} pasaron a tu saldo.`,
     cargasTitulo: 'Cargas y regalos de saldo',
@@ -415,6 +418,9 @@ const en: T = {
     canjear: 'Top up with the code',
     regalosPorCobrar: 'Rider gifts to collect',
     regalosAyuda: 'Divoox pays them by mobile payment, or move them to your balance now.',
+    regalosEnRevision: 'Divoox is reviewing this gift',
+    regalosEnRevisionAyuda:
+      'We couldn’t confirm the route of a trip with a gift. Our team is reviewing it and will let you know; there’s nothing you need to do.',
     regalosASaldo: 'Move to my balance',
     regalosPasados: (m: string) => `Done: ${m} moved to your balance.`,
     cargasTitulo: 'Balance top-ups and gifts',

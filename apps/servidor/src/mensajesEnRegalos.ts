@@ -129,4 +129,10 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
     'Esa tasa se aleja demasiado de la oficial del Banco Central. Revisa el número.',
     'That rate is too far from the Central Bank’s official rate. Check the number.',
   ],
+  // C-REGALO-VIAJE-REAL
+  [
+    'Este regalo ya fue revisado. Actualiza la pantalla.',
+    'This gift was already reviewed. Refresh the screen.',
+  ],
+  ['Escribe por qué se rechaza este regalo.', 'Write why this gift is being rejected.'],
 ];

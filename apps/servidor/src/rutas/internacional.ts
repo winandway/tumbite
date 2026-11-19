@@ -1,6 +1,6 @@
 import { anotarCambioDinero } from './dinero';
 import { cargasDeConductor } from '../saldoConductores';
-import { porCobrarRegalos } from '../regalosDivoox';
+import { porCobrarRegalos, regalosEnRevision } from '../regalosDivoox';
 import { efectivoDeJuego } from '../ciudadJuego';
 import {
   TIPOS_CASO,
@@ -352,6 +352,8 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     // los regalos de sus pasajeros (en ganancias), que puede pasar a su saldo con un toque.
     cargas: await cargasDeConductor(db, u.id),
     regalosPorCobrar: (await porCobrarRegalos(db, u.id))?.monto ?? 0,
+    // C-REGALO-VIAJE-REAL: lo que Divoox todavía está revisando (no se puede cobrar ni pasar al saldo).
+    regalosEnRevision: await regalosEnRevision(db, u.id),
   });
 });
 

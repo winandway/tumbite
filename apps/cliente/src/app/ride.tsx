@@ -14,6 +14,7 @@ import { ContactosConfianza, PreguntaTodoBien } from '../viajes/Seguridad';
 import { MisViajes } from '../viajes/MisViajes';
 import { TEXTOS_MOTO } from '../viajes/textos';
 import { conCuenta } from '../ConCuenta';
+import { useUbicacionConRegalo } from '../viajes/useUbicacionConRegalo';
 
 const FINALES = new Set(['terminado', 'cancelado', 'sin_conductor', 'no_show']);
 
@@ -103,6 +104,8 @@ function PantallaMoto() {
   }, [cargar, viajeId]);
   // El viaje no puede llegar tarde (el conductor llegó): con fallos, como mucho cada 20 s.
   useSondeo(vuelta, 4_000, true, true, { topeMs: ESPERA_MAXIMA_CRITICA_MS });
+  // C-REGALO-VIAJE-REAL: en un viaje con regalo en curso, la app manda dónde está el pasajero.
+  useUbicacionConRegalo(api, viaje);
 
   return (
     <SafeAreaView

@@ -2,6 +2,14 @@ import { sha256, nuevoId } from './cripto';
 import { type RegaloDivoox, normalizarCodigoRegalo, telefonoCanonico } from '@tumbite/compartido';
 import { ErrorDatos } from './validar';
 import { CUENTA_TUMBITE } from './internacional/libro';
+import { metrosEntre } from '@tumbite/compartido';
+import {
+  type MedidasViaje,
+  type MotivoRevision,
+  UMBRALES_VIAJE_REAL,
+  detalleRevision,
+  evaluarViajeReal,
+} from './viajeReal';
 
 /**
  * C-CUPON-DIVOOX (17 nov 2026, piloto de El Vigía y Tucaní) — Venezuela primero, sirve en todos los
@@ -133,6 +141,8 @@ async function candidatos(db: D1Database, p: Contexto, soloCodigo?: string) {
           AND (c.bienvenida = 1 OR ?7 <> '' OR EXISTS (SELECT 1 FROM cupones_divoox_guardados g WHERE g.codigo = c.codigo AND g.cliente_id = ?4))
           AND NOT EXISTS (SELECT 1 FROM usos_cupon_divoox x WHERE x.codigo = c.codigo AND x.estado <> 'liberado'
                            AND (x.cliente_id = ?4 OR x.telefono = ?5 OR x.aparato = ?6))
+          AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rr WHERE rr.codigo = c.codigo AND rr.estado = 'rechazado'
+                           AND (rr.cliente_id = ?4 OR rr.telefono = ?5 OR rr.aparato = ?6))
           AND (?7 = '' OR c.codigo = ?7)`,
     )
     .bind(
@@ -411,6 +421,12 @@ export async function tomarRegaloConductor(
 }
 
 /**
+ * C-REGALO-VIAJE-REAL: un uso con la revisión abierta (pendiente) o rechazada no se paga por ningún
+ * camino. Solo lo destraba una persona del equipo al aprobarlo.
+ */
+const SIN_REVISION_ABIERTA = `AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rv WHERE rv.uso_id = usos_cupon_divoox.id AND rv.estado <> 'aprobado')`;
+
+/**
  * La operación se cobró: el regalo se cierra por lo que de verdad cubrió (nunca más de lo apartado ni
  * de `maximo`) y se le acredita al conductor en su saldo prepago, una sola vez. La contrapartida queda
  * en la cuenta de Divoox (el gasto en regalos). Todo en un lote.
@@ -421,7 +437,8 @@ export async function cerrarRegalo(
 ) {
   const u = await db
     .prepare(
-      "SELECT id, codigo, monto, moneda, pais, cliente_id FROM usos_cupon_divoox WHERE operacion_id = ? AND estado = 'apartado'",
+      `SELECT id, codigo, monto, moneda, pais, cliente_id FROM usos_cupon_divoox
+        WHERE operacion_id = ? AND estado = 'apartado' ${SIN_REVISION_ABIERTA}`,
     )
     .bind(p.operacionId)
     .first<{
@@ -500,7 +517,290 @@ export async function cerrarRegalo(
       conductorId: p.conductorId,
       detalle: `El mismo cliente y el mismo conductor: ${Number(juntos?.n ?? 0)} viajes en 7 días y ${Number(regalosJuntos?.n ?? 0)} con regalo.`,
     });
+  await alertaCuentasMismoDia(db, { ...u, operacionId: p.operacionId }, p.conductorId);
   return monto;
+}
+
+/**
+ * C-REGALO-VIAJE-REAL: varios regalos del mismo conductor con pasajeros cuyas cuentas nacieron el
+ * mismo día. Es solo una alerta (el día que abre una ciudad, todas las cuentas son del mismo día):
+ * la mira una persona. Una por conductor y por día de alta.
+ */
+async function alertaCuentasMismoDia(
+  db: D1Database,
+  u: { codigo: string; cliente_id: string; operacionId: string },
+  conductorId: string,
+) {
+  const f = await db
+    .prepare(
+      `SELECT COUNT(*) AS n, MAX(date(c.creado_en)) AS dia FROM usos_cupon_divoox x JOIN usuarios c ON c.id = x.cliente_id
+        WHERE x.conductor_id = ?1 AND x.estado <> 'liberado' AND x.tomado_en > datetime('now', '-7 days')
+          AND date(c.creado_en) = (SELECT date(creado_en) FROM usuarios WHERE id = ?2)`,
+    )
+    .bind(conductorId, u.cliente_id)
+    .first<{ n: number; dia: string | null }>();
+  const n = Number(f?.n ?? 0);
+  if (n < UMBRALES_VIAJE_REAL.cuentasMismoDia) return;
+  const detalle = `${n} regalos de este conductor con pasajeros que crearon su cuenta el mismo día (${f?.dia ?? ''}).`;
+  const ya = await db
+    .prepare(
+      "SELECT 1 FROM alertas_regalo WHERE tipo = 'cuentas_mismo_dia' AND conductor_id = ? AND detalle LIKE ? AND creado_en > datetime('now', '-7 days') LIMIT 1",
+    )
+    .bind(conductorId, `%(${f?.dia ?? ''}).`)
+    .first();
+  if (ya) {
+    await db
+      .prepare(
+        "UPDATE alertas_regalo SET detalle = ?, creado_en = datetime('now') WHERE tipo = 'cuentas_mismo_dia' AND conductor_id = ? AND detalle LIKE ?",
+      )
+      .bind(detalle, conductorId, `%(${f?.dia ?? ''}).`)
+      .run();
+    return;
+  }
+  await alerta(db, {
+    tipo: 'cuentas_mismo_dia',
+    codigo: u.codigo,
+    operacionId: u.operacionId,
+    clienteId: u.cliente_id,
+    conductorId,
+    detalle,
+  });
+}
+
+export type CierreRegaloViaje = { monto: number; enRevision: boolean };
+
+/**
+ * C-REGALO-VIAJE-REAL: el cierre del regalo de un VIAJE (moto, carro, envío). Antes de acreditarlo
+ * se comprueba que el viaje fue real (viajeReal.ts). Si no cumple, el regalo queda «en revisión»: el
+ * uso sigue apartado (el presupuesto no se libera ni se gasta), no entra a las ganancias del
+ * conductor y sale en el reporte del equipo con el motivo. El viaje se termina igual.
+ *
+ * `alTerminar`: el conductor acaba de tocar «terminar» (se mira dónde está). El reloj, que cierra
+ * después lo que se cortó, pasa false: ya no se puede saber dónde estaba y eso no cuenta en contra.
+ */
+export async function cerrarRegaloDeViaje(
+  db: D1Database,
+  p: { operacionId: string; conductorId: string; maximo: number; alTerminar: boolean },
+): Promise<CierreRegaloViaje> {
+  const u = await db
+    .prepare(
+      `SELECT u.id, u.codigo, u.monto, u.moneda, u.cliente_id, u.telefono, u.aparato,
+              (SELECT rv.estado FROM regalos_en_revision rv WHERE rv.uso_id = u.id) AS revision
+         FROM usos_cupon_divoox u WHERE u.operacion_id = ? AND u.estado = 'apartado'`,
+    )
+    .bind(p.operacionId)
+    .first<{
+      id: string;
+      codigo: string;
+      monto: number;
+      moneda: string;
+      cliente_id: string;
+      telefono: string;
+      aparato: string;
+      revision: string | null;
+    }>();
+  if (!u) return { monto: 0, enRevision: false };
+  const monto = Math.max(0, Math.min(Number(u.monto), p.maximo));
+  if (u.revision === 'pendiente') return { monto, enRevision: true };
+  const pagar = async () => ({ monto: await cerrarRegalo(db, p), enRevision: false });
+  if (u.revision === 'aprobado' || monto === 0) return pagar();
+  if (u.revision === 'rechazado') {
+    // El rechazo se cortó antes de devolver el dinero al presupuesto: se termina aquí.
+    await liberarRegalo(db, p.operacionId, 'revision_rechazada');
+    return { monto: 0, enRevision: false };
+  }
+  const v = await db
+    .prepare(
+      `SELECT v.destino_lat, v.destino_lng, COALESCE(v.distancia_m_real, 0) AS recorrido,
+              v.pasajero_cerca, v.pasajero_lejos,
+              CAST((julianday(COALESCE(v.terminado_en, 'now')) - julianday(v.iniciado_en)) * 86400 AS INTEGER) AS duracion,
+              q.distancia_m, q.duracion_s, r.lat, r.lng,
+              r.ubicacion_en > datetime('now', ?2) AS fresca
+         FROM viajes v LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+         LEFT JOIN repartidores r ON r.usuario_id = ?3
+        WHERE v.operacion_id = ?1`,
+    )
+    .bind(p.operacionId, `-${UMBRALES_VIAJE_REAL.minutosUbicacion} minutes`, p.conductorId)
+    .first<{
+      destino_lat: number;
+      destino_lng: number;
+      recorrido: number;
+      pasajero_cerca: number;
+      pasajero_lejos: number;
+      duracion: number | null;
+      distancia_m: number | null;
+      duracion_s: number | null;
+      lat: number | null;
+      lng: number | null;
+      fresca: number | null;
+    }>();
+  // Sin viaje o sin cotización no hay con qué medir: se paga como siempre (no pasa en un viaje normal).
+  if (!v || v.distancia_m == null || v.duracion_s == null) return pagar();
+  const aqui = v.lat != null && v.lng != null && Number(v.fresca) === 1;
+  const medidas: MedidasViaje = {
+    cotizadaM: Number(v.distancia_m),
+    cotizadaS: Number(v.duracion_s),
+    recorridoM: Number(v.recorrido),
+    duracionS: Number(v.duracion ?? 0),
+    pasajeroCerca: Number(v.pasajero_cerca ?? 0),
+    pasajeroLejos: Number(v.pasajero_lejos ?? 0),
+    ...(p.alTerminar
+      ? {
+          alDestinoM: aqui
+            ? Math.round(
+                metrosEntre(
+                  { lat: Number(v.lat), lng: Number(v.lng) },
+                  { lat: Number(v.destino_lat), lng: Number(v.destino_lng) },
+                ),
+              )
+            : null,
+        }
+      : {}),
+  };
+  const motivos = evaluarViajeReal(medidas);
+  if (motivos.length === 0) return pagar();
+  const detalle = detalleRevision(motivos, medidas);
+  const [abierta] = await db.batch([
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO regalos_en_revision (uso_id, operacion_id, codigo, cliente_id, telefono, aparato, conductor_id, monto, moneda, motivos, datos, detalle)
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          WHERE EXISTS (SELECT 1 FROM usos_cupon_divoox WHERE id = ? AND estado = 'apartado')`,
+      )
+      .bind(
+        u.id,
+        p.operacionId,
+        u.codigo,
+        u.cliente_id,
+        u.telefono,
+        u.aparato,
+        p.conductorId,
+        monto,
+        u.moneda,
+        JSON.stringify(motivos),
+        JSON.stringify(medidas),
+        detalle,
+        u.id,
+      ),
+    // El uso queda a nombre del conductor (para su tope diario y para el reporte), todavía apartado.
+    db
+      .prepare(
+        "UPDATE usos_cupon_divoox SET conductor_id = ?, tomado_en = COALESCE(tomado_en, datetime('now')) WHERE id = ? AND estado = 'apartado'",
+      )
+      .bind(p.conductorId, u.id),
+  ]);
+  if (abierta?.meta.changes) {
+    await alerta(db, {
+      tipo: motivos[0] as MotivoRevision,
+      codigo: u.codigo,
+      operacionId: p.operacionId,
+      clienteId: u.cliente_id,
+      conductorId: p.conductorId,
+      detalle,
+    });
+    await alertaCuentasMismoDia(db, { ...u, operacionId: p.operacionId }, p.conductorId);
+  }
+  return { monto, enRevision: true };
+}
+
+/** ¿Esta operación lleva un regalo apartado? (el viaje con regalo siempre pide el código de inicio). */
+export async function tieneRegaloApartado(db: D1Database, operacionId: string) {
+  return Boolean(
+    await db
+      .prepare("SELECT 1 FROM usos_cupon_divoox WHERE operacion_id = ? AND estado = 'apartado'")
+      .bind(operacionId)
+      .first(),
+  );
+}
+
+type FilaRevision = {
+  uso_id: string;
+  operacion_id: string;
+  codigo: string;
+  conductor_id: string;
+  monto: number;
+  moneda: string;
+  motivos: string;
+  detalle: string;
+  estado: string;
+  nota: string;
+  creado_en: string;
+  resuelto_en: string | null;
+  cliente: string | null;
+  conductor: string | null;
+  resolvio: string | null;
+};
+
+/** Los regalos en revisión (lo pendiente primero) y lo resuelto en los últimos 30 días. */
+export async function revisionesRegalo(db: D1Database) {
+  const { results } = await db
+    .prepare(
+      `SELECT r.uso_id, r.operacion_id, r.codigo, r.conductor_id, r.monto, r.moneda, r.motivos, r.detalle, r.estado, r.nota,
+              r.creado_en, r.resuelto_en, cli.nombre AS cliente, con.nombre AS conductor, eq.nombre AS resolvio
+         FROM regalos_en_revision r
+         LEFT JOIN usuarios cli ON cli.id = r.cliente_id LEFT JOIN usuarios con ON con.id = r.conductor_id
+         LEFT JOIN usuarios eq ON eq.id = r.resuelto_por
+        WHERE r.estado = 'pendiente' OR r.creado_en > datetime('now', '-30 days')
+        ORDER BY (r.estado = 'pendiente') DESC, r.creado_en DESC LIMIT 100`,
+    )
+    .all<FilaRevision>();
+  return results.map((r) => ({
+    id: r.uso_id,
+    operacionId: r.operacion_id,
+    codigo: r.codigo,
+    conductorId: r.conductor_id,
+    conductor: r.conductor ?? '',
+    cliente: (r.cliente ?? '').split(' ')[0] ?? '',
+    monto: Number(r.monto),
+    moneda: r.moneda,
+    motivos: JSON.parse(r.motivos) as MotivoRevision[],
+    detalle: r.detalle,
+    estado: r.estado as 'pendiente' | 'aprobado' | 'rechazado',
+    nota: r.nota,
+    creadoEn: r.creado_en,
+    resueltoEn: r.resuelto_en,
+    resolvio: r.resolvio,
+  }));
+}
+
+/**
+ * Una persona del equipo aprueba o rechaza un regalo en revisión. Aprobado: se acredita a las
+ * ganancias del conductor por el camino de siempre. Rechazado: el dinero vuelve al presupuesto del
+ * cupón y esa cuenta, teléfono y aparato no vuelven a usarlo. Una sola vez (el segundo toque: 409).
+ */
+export async function resolverRevisionRegalo(
+  db: D1Database,
+  p: { usoId: string; aprobar: boolean; autorId: string; nota: string },
+) {
+  const r = await db
+    .prepare(
+      `UPDATE regalos_en_revision SET estado = ?, nota = ?, resuelto_por = ?, resuelto_en = datetime('now')
+        WHERE uso_id = ? AND estado = 'pendiente' RETURNING operacion_id, conductor_id, monto, moneda`,
+    )
+    .bind(p.aprobar ? 'aprobado' : 'rechazado', p.nota.slice(0, 200), p.autorId, p.usoId)
+    .first<{ operacion_id: string; conductor_id: string; monto: number; moneda: string }>();
+  if (!r)
+    throw new ErrorDatos('Este regalo ya fue revisado. Actualiza la pantalla.', undefined, 409);
+  const pagado = p.aprobar
+    ? await cerrarRegalo(db, {
+        operacionId: r.operacion_id,
+        conductorId: r.conductor_id,
+        maximo: Number(r.monto),
+      })
+    : 0;
+  if (!p.aprobar) await liberarRegalo(db, r.operacion_id, 'revision_rechazada');
+  return { conductorId: r.conductor_id, monto: Number(r.monto), moneda: r.moneda, pagado };
+}
+
+/** Lo que el conductor tiene en revisión (para su pantalla de ganancias). */
+export async function regalosEnRevision(db: D1Database, conductorId: string) {
+  const f = await db
+    .prepare(
+      "SELECT COALESCE(SUM(monto), 0) AS monto, COUNT(*) AS viajes FROM regalos_en_revision WHERE conductor_id = ? AND estado = 'pendiente'",
+    )
+    .bind(conductorId)
+    .first<{ monto: number; viajes: number }>();
+  return { monto: Number(f?.monto ?? 0), viajes: Number(f?.viajes ?? 0) };
 }
 
 /**
@@ -517,7 +817,9 @@ export async function barrerRegalos(db: D1Database) {
          LEFT JOIN operaciones o ON o.id = u.operacion_id
          LEFT JOIN pedidos p ON p.id = u.operacion_id
          LEFT JOIN viajes_programados vp ON vp.id = u.operacion_id
-        WHERE u.estado = 'apartado' LIMIT 100`,
+        WHERE u.estado = 'apartado'
+          AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rv WHERE rv.uso_id = u.id AND rv.estado = 'pendiente')
+        LIMIT 100`,
     )
     .all<{
       operacion_id: string;
@@ -539,14 +841,13 @@ export async function barrerRegalos(db: D1Database) {
         .bind(r.operacion_id)
         .first<{ total_final_centavos: number | null }>();
       if (t?.total_final_centavos != null) {
-        if (
-          await cerrarRegalo(db, {
-            operacionId: r.operacion_id,
-            conductorId: r.conductor_id,
-            maximo: Number(t.total_final_centavos),
-          })
-        )
-          n++;
+        const c = await cerrarRegaloDeViaje(db, {
+          operacionId: r.operacion_id,
+          conductorId: r.conductor_id,
+          maximo: Number(t.total_final_centavos),
+          alTerminar: false,
+        });
+        if (c.monto) n++;
       }
     } else if (r.estado_general === 'cancelada' || r.estado_general === 'sin_conductor') {
       if (await liberarRegalo(db, r.operacion_id, r.estado_general)) n++;
@@ -601,7 +902,9 @@ export async function saludRegalos(db: D1Database): Promise<'ok' | 'error'> {
             AND NOT EXISTS (SELECT 1 FROM movimientos m WHERE m.usuario_id = u.conductor_id AND m.referencia = 'regalo-divoox:' || u.id)) AS sin_credito,
          (SELECT COUNT(*) FROM usos_cupon_divoox u
             LEFT JOIN operaciones o ON o.id = u.operacion_id LEFT JOIN pedidos p ON p.id = u.operacion_id
-           WHERE u.estado = 'apartado' AND (
+           WHERE u.estado = 'apartado'
+             AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rv WHERE rv.uso_id = u.id AND rv.estado = 'pendiente')
+             AND (
              (o.estado_general IN ('terminada', 'cancelada', 'sin_conductor') AND o.actualizado_en < datetime('now', '-1 hour'))
              OR (p.estado = 'cancelado' AND COALESCE(p.cancelado_en, p.creado_en) < datetime('now', '-1 hour')))) AS colgados`,
     )

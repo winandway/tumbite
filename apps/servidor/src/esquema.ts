@@ -99,6 +99,11 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['tarifas_viaje', 'valor_maximo', 'INTEGER'],
   // C-MOTO-CIUDAD (30 oct 2026): si este viaje pide el código para empezar (según la ciudad y la hora).
   ['viajes', 'pin_requerido', 'INTEGER NOT NULL DEFAULT 1'],
+  // C-REGALO-VIAJE-REAL (19 nov 2026): lecturas del teléfono del pasajero durante un viaje con regalo
+  // (junto al conductor o lejos de él). El recorrido se suma en distancia_m_real, que ya existía.
+  ['viajes', 'pasajero_cerca', 'INTEGER NOT NULL DEFAULT 0'],
+  ['viajes', 'pasajero_lejos', 'INTEGER NOT NULL DEFAULT 0'],
+  ['viajes', 'pasajero_ubicacion_en', 'TEXT'],
   // C-CARGO-AL-AFECTADO (30 oct 2026): el conductor al que le cancelaron (el cargo es suyo).
   ['deudas_pasajero', 'conductor_id', 'TEXT'],
   // C-KYC-AUTO (29 oct 2026): las dos tomas girando la cabeza y el consentimiento antes de la selfie.

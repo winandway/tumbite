@@ -1689,6 +1689,29 @@ export function hayQueReescribirPosicion(
   return metrosEntre({ lat: Number(ficha.lat), lng: Number(ficha.lng) }, d) >= MOVIDO_MIN_M;
 }
 
+/**
+ * C-REGALO-VIAJE-REAL: los metros entre la posición guardada y la nueva, para sumarlos al recorrido
+ * del viaje en curso. Un movimiento menor que el mínimo (el temblor del GPS con el vehículo quieto)
+ * no cuenta; los saltos imposibles ya se descartaron antes.
+ */
+export function tramoRecorrido(
+  ficha: { lat?: unknown; lng?: unknown },
+  d: { lat: number; lng: number },
+): number {
+  if (ficha.lat == null || ficha.lng == null) return 0;
+  const m = metrosEntre({ lat: Number(ficha.lat), lng: Number(ficha.lng) }, d);
+  return m >= MOVIDO_MIN_M ? Math.round(m) : 0;
+}
+
+const sumarRecorrido = (db: D1Database, conductorId: string, metros: number) =>
+  db
+    .prepare(
+      `UPDATE viajes SET distancia_m_real = COALESCE(distancia_m_real, 0) + ?1
+        WHERE estado = 'en_curso' AND operacion_id =
+          (SELECT id FROM operaciones WHERE conductor_id = ?2 AND estado_general = 'en_curso')`,
+    )
+    .bind(metros, conductorId);
+
 operacion.post('/repartidor/ubicacion', async (c) => {
   const { u, db, ficha } = await miFicha(c);
   const d = await leerCuerpo(c, puntoConPrecision);
@@ -1723,19 +1746,24 @@ operacion.post('/repartidor/ubicacion', async (c) => {
   }
   if (hayQueReescribirPosicion(ficha, d)) {
     const aqui = await cobertura(db, d.lat, d.lng);
-    await db
-      .prepare(
-        "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), area_id = COALESCE(?, area_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
-      )
-      .bind(
-        d.lat,
-        d.lng,
-        aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null,
-        aqui.area?.id ?? null,
-        geohash(d.lat, d.lng),
-        u.id,
-      )
-      .run();
+    const tramo = tramoRecorrido(ficha, d);
+    await db.batch([
+      db
+        .prepare(
+          "UPDATE repartidores SET lat = ?, lng = ?, zona_id = COALESCE(?, zona_id), area_id = COALESCE(?, area_id), geohash = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+        )
+        .bind(
+          d.lat,
+          d.lng,
+          aqui.estado === 'dentro' ? (aqui.zona?.id ?? null) : null,
+          aqui.area?.id ?? null,
+          geohash(d.lat, d.lng),
+          u.id,
+        ),
+      // C-REGALO-VIAJE-REAL: si tiene un viaje en curso, el tramo se suma a su recorrido real. Sin
+      // viaje en curso no escribe nada (cero filas).
+      ...(tramo > 0 ? [sumarRecorrido(db, u.id, tramo)] : []),
+    ]);
   }
   await registrarHitos(c.env, db, u.id, d, muestras).catch((e: unknown) =>
     console.error('hitos', e),

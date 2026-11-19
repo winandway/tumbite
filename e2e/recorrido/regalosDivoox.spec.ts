@@ -288,22 +288,85 @@ for (const idioma of ['es', 'en'] as const) {
         sql(`SELECT pin_recogida FROM viajes WHERE operacion_id = '${op}'`)[0]?.pin_recogida,
       );
       expect((await paso('iniciar', { pin })).status()).toBe(200);
+      // C-REGALO-VIAJE-REAL: el conductor termina sin haberse movido. El viaje se cierra y el
+      // pasajero paga solo su parte, pero el regalo queda en revisión: nada entra a sus ganancias.
       const fin = await paso('terminar');
       expect(fin.status()).toBe(200);
       const cuenta_ = (await fin.json()) as {
         regaloDivoox: number;
+        regaloEnRevision: boolean;
         cobrarEnMano: number;
         totalFinal: number;
       };
       expect(cuenta_.regaloDivoox).toBe(100);
+      expect(cuenta_.regaloEnRevision).toBe(true);
       expect(cuenta_.cobrarEnMano).toBe(cuenta_.totalFinal - 100);
-      expect(
+      const regalosPagados = () =>
         Number(
           sql(
             `SELECT COUNT(*) AS n FROM movimientos WHERE usuario_id = '${c}' AND concepto = 'regalo'`,
           )[0]?.n,
-        ),
-      ).toBe(1);
+        );
+      expect(regalosPagados()).toBe(0);
+      // El conductor lo ve en Ganancias como «Divoox está revisando este regalo».
+      await pr.goto('/driver');
+      await pr
+        .getByText(idioma === 'es' ? 'Ganancias' : 'Earnings', { exact: true })
+        .last()
+        .click();
+      const enRevision = pr.getByTestId('regalos-en-revision');
+      await expect(enRevision).toBeVisible({ timeout: 30_000 });
+      await expect(pr.getByTestId('regalos-por-cobrar')).toHaveCount(0);
+      if (CAPTURAS) {
+        await enRevision.scrollIntoViewIfNeeded();
+        await pr
+          .getByTestId('saldo-prepago')
+          .screenshot({ path: join(CARPETA, `conductor-revision-${idioma}.png`) });
+      }
+      // El equipo lo ve en «Regalos en revisión» con el motivo, y lo aprueba.
+      {
+        const { ruta: rutaPanel } = (await (
+          await request.get('/datos/admin/ruta', { headers: h(admin.token) })
+        ).json()) as { ruta: string | null };
+        const ctxRev = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+        await ctxRev.addCookies([
+          { name: 'tumbite_sesion', value: admin.token, domain: 'localhost', path: '/' },
+        ]);
+        await ctxRev.addInitScript((idi) => localStorage.setItem('tumbite.idioma', idi), idioma);
+        const rv = await ctxRev.newPage();
+        await rv.goto(`/panel${rutaPanel ? `/${rutaPanel}` : ''}/gift-codes`);
+        const tarjetaRev = rv.getByTestId('regalo-revision');
+        await expect(tarjetaRev).toBeVisible({ timeout: 30_000 });
+        await expect(tarjetaRev).toContainText(
+          idioma === 'es' ? 'terminado sin moverse' : 'ended without moving',
+        );
+        if (CAPTURAS) {
+          await tarjetaRev.scrollIntoViewIfNeeded();
+          await rv
+            .getByTestId('regalos-revisiones')
+            .screenshot({ path: join(CARPETA, `super-revision-${idioma}.png`) });
+        }
+        // Rechazar sin motivo no pasa: lo dice en pantalla y no pierde nada.
+        await tarjetaRev
+          .getByRole('button', { name: idioma === 'es' ? 'Rechazar' : 'Reject' })
+          .click();
+        await expect(tarjetaRev.getByRole('alert')).toBeVisible();
+        await expect(tarjetaRev).toBeVisible();
+        await tarjetaRev
+          .getByRole('textbox')
+          .fill(
+            idioma === 'es' ? 'Viaje confirmado con el pasajero' : 'Trip confirmed with the rider',
+          );
+        await tarjetaRev
+          .getByRole('button', {
+            name: idioma === 'es' ? 'Aprobar y acreditar' : 'Approve and credit',
+          })
+          .click();
+        await expect(rv.getByTestId('regalo-revision')).toHaveCount(0, { timeout: 30_000 });
+        await ctxRev.close();
+      }
+      // Aprobado: ahora sí, una sola vez, en sus ganancias.
+      expect(regalosPagados()).toBe(1);
 
       // C-SALDO-CONDUCTOR: el equipo le carga saldo (regalo de arranque) y el conductor ve en
       // Ganancias su saldo, sus regalos por cobrar y sus cargas.
