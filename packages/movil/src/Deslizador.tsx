@@ -11,6 +11,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import { Icono, Text } from './diseno';
+import { letraQueCabe } from './letraQueCabe';
 import { faseDe, useReducirMovimiento, useRelojBucle } from './movimiento';
 import { MOVIMIENTO, altoTarjetaServicio, cruzaUmbral, debeConfirmar } from './serviciosLogica';
 import { COLOR, FUENTE, RADIO } from './tokens';
@@ -365,7 +366,7 @@ export function Deslizador(
           right: 16,
           textAlign: 'center',
           fontFamily: FUENTE.tituloMedio,
-          fontSize: 17,
+          fontSize: letraQueCabe(props.texto, ancho - pulgar - 32, 17),
           lineHeight: 22,
           color: colorTexto,
         }}

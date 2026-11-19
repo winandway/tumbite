@@ -5576,3 +5576,11 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Qué NO tocar:** no volver a pintar un monto a cobrar con `formatearMonto` suelto en Driver; no bajar la letra grande de la pieza por debajo del PIN; no usar rojo para el cobro (el rojo es solo para problemas).
 - **Capturas rehechas con el precio nuevo (19 nov):** Docs de Moto (`docs/capturas/recorrido/moto-{ve,us}-driver-{oferta,viaje,viaje-pago-movil,cobro-efectivo,cobro-pago-movil}-v2-*.png` y sus WebP), Docs de regalos (`docs/capturas/regalos-divoox/conductor-viaje-*.png`, con `CAPTURAS=1` en `e2e/recorrido/regalosDivoox.spec.ts`) y el comercial (`docs/videos/llegada-el-vigia/pantallas/driver/04b` a `09b`, desde la web; las que no se pudieron rehacer quedaron en `anteriores-sin-precio-grande/`, ver su LEEME).
 - **Capturas con datos de verdad del cobro (revisión del 19 nov):** `capturas-moto-venezuela.mjs` ahora falla si la foto del cobro sale sin el cobro en pantalla (una vuelta sacó el inicio de Driver con ese nombre). `regalosDivoox.spec.ts` carga la tasa del día en Venezuela, así la captura del regalo muestra los bolívares y no «Hoy no hay tasa».
+
+## C-DESLIZAR-TEXTO-ENTERO (19 nov 2026) — todos los países
+
+- **Qué se rompió y cómo se veía:** en la versión web de Driver, en pantallas de 360 de ancho, el botón de deslizar decía «Desliza para terminar el vi…», cortado con puntos suspensivos.
+- **Causa real:** el texto del deslizador confiaba en `adjustsFontSizeToFit`, que en la web no hace nada; con `numberOfLines={1}` el navegador cortaba el texto.
+- **Qué se hizo:** la pieza `packages/movil/src/letraQueCabe.ts` calcula la letra más grande (hasta 17, mínimo 12) con la que el texto cabe en el ancho medido del deslizador, y `Deslizador.tsx` la usa para su texto. En las apps nativas sigue además el ajuste propio del sistema.
+- **Cómo se comprueba:** `npx vitest run packages/movil/src/letraQueCabe.test.ts`. A mano: Driver web a 360 de ancho, viaje en curso; el botón se lee entero.
+- **Qué NO tocar:** no volver a un `fontSize` fijo en el texto del deslizador.
