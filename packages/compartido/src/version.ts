@@ -29,16 +29,30 @@ export function crearInfoVersion(
   return { version: versionLimpia(version), commit: commitCorto(sha) };
 }
 
-/** «Versión 0.1.0 (compilación 12) · a74309f» / «Version 0.1.0 (build 12) · a74309f». */
+const esCompilacion = (c: string | null | undefined): c is string =>
+  typeof c === 'string' && /^\d{1,9}$/.test(c);
+
+/**
+ * C-VERSION-VISIBLE (18 nov 2026): la versión de una compilación de la tienda es
+ * «<mayor>.<menor>.<compilación>» (0.1.47 para la compilación 47), con el MISMO número que
+ * versionCode de Android y buildNumber de iPhone, que pone EAS al compilar. Así cada compilación se
+ * distingue aunque app.json diga 0.1.0. Sin compilación (la web), la versión de app.json.
+ */
+export function versionDeCompilacion(
+  version: string | undefined | null,
+  compilacion: string | undefined | null,
+): string {
+  const v = versionLimpia(version);
+  return esCompilacion(compilacion) ? v.replace(/\.\d+$/, `.${compilacion}`) : v;
+}
+
+/** «Versión 0.1.47 (47) · a74309f» / «Version 0.1.47 (47) · a74309f»; en la web, sin compilación. */
 export function textoVersion(
   info: InfoVersion,
   idioma: Idioma,
   compilacion?: string | null,
 ): string {
-  const en = idioma === 'en';
-  const extra =
-    compilacion && /^\d{1,9}$/.test(compilacion)
-      ? ` (${en ? 'build' : 'compilación'} ${compilacion})`
-      : '';
-  return `${en ? 'Version' : 'Versión'} ${info.version}${extra} · ${info.commit}`;
+  const palabra = idioma === 'en' ? 'Version' : 'Versión';
+  if (!esCompilacion(compilacion)) return `${palabra} ${info.version} · ${info.commit}`;
+  return `${palabra} ${versionDeCompilacion(info.version, compilacion)} (${compilacion}) · ${info.commit}`;
 }

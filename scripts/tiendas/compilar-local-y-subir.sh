@@ -23,7 +23,9 @@ APPS="${*:-cliente repartidor restaurante}"
 for a in $APPS; do
   {
     node --input-type=module -e "import('./scripts/tiendas/guardia-nube.mjs').then((g) => g.autorizarCompilacion({ donde: 'local', app: '$a', plataforma: 'android', perfil: 'production' }))"
-    (cd "apps/$a" && npx eas-cli build --local --platform android --profile production --non-interactive --output "$SALIDA/$a.aab")
+    # C-VERSION-VISIBLE: la versión nativa 0.1.<compilación> (vacía si la consulta falla: queda app.json).
+    NUMERO="$(node scripts/tiendas/numero-compilacion.mjs "$a" production)"
+    (cd "apps/$a" && DIVOOX_NUMERO_COMPILACION="$NUMERO" npx eas-cli build --local --platform android --profile production --non-interactive --output "$SALIDA/$a.aab")
     if unzip -p "$SALIDA/$a.aab" base/manifest/AndroidManifest.xml | grep -a -q "PON_AQUI_LA_LLAVE"; then echo "$a: salió SIN la llave del mapa; no se sube."; exit 1; fi
     node scripts/tiendas/publicar-google-play.mjs "$(paquete "$a")" "$SALIDA/$a.aab" "local $(date +%Y-%m-%d)"
   }
