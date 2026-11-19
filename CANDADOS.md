@@ -4062,6 +4062,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `GET /datos/kyc` trae `antecedentesPorProveedor` según el perfil del país; Driver (`Verificacion.tsx`) esconde el bloque si es `false` (una app vieja sin el campo lo sigue mostrando).
 - **Prueba:** `motoVenezuelaRevision.test.ts` (C-ANTECEDENTES-POR-PAIS), vista en rojo.
 
+## C-ROBOT-MAPA-CON-MOSAICOS · Ningún robot da por buena una pantalla con el mapa liso (18 nov 2026) — todos los países
+
+- **Qué pasaba:** capturas del robot con el mapa gris o beige sin calles (mosaicos sin cargar) pasaban como buenas.
+- **La herramienta:** `node scripts/robot/mapa-con-mosaicos.mjs <captura.png> <x>,<y>,<ancho>,<alto>` parte la zona del mapa en 8 × 8 casillas y cuenta cuántas tienen detalle (desviación de luminosidad ≥ 6). Con menos del 70 % sale con 1 y dice en palabras «El mapa está liso o gris…»; con mosaicos sale con 0. Sin zona o con la zona mal escrita sale con 2 (nunca un «bien» a ciegas). Medido: el punto exacto liso da 44-47 % (solo el aviso, el pin y el botón tienen detalle); con calles, 86-94 %.
+- **REGLA para todo robot de capturas (cliente, Driver, restaurante, web; Android, iPhone y emulador en modo oscuro):** en CADA pantalla con mapa se corre esta herramienta con la zona del mapa, y si sale distinto de cero la vuelta del robot falla y no se entregan esas capturas. Si un botón o aviso tapa mucho mapa, la zona se elige donde se vea el mapa.
+- **Prueba:** `packages/compartido/src/candadoRobotMapa.test.ts` con dos muestras reales recortadas sin nombres de ciudad (`scripts/robot/muestras/mapa-liso.png` y `mapa-con-mosaicos.png`).
+
 ## C-MAPA-SIEMPRE-CLARO · El mapa sigue el tema de la app, nunca el modo oscuro del teléfono (18 nov 2026) — todos los países
 
 - **Qué se rompió y cómo se veía:** en un Android real con el teléfono en modo oscuro, el mapa del punto exacto salía OSCURO dentro de una app clara.
