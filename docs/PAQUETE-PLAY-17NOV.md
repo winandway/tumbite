@@ -168,3 +168,13 @@ Van en el MISMO borrador HTML que la tarjeta de saldo de Driver (un solo borrado
 3. **Botones deslizantes con vibración** en casi todas las acciones del viaje de Driver («Llegué», iniciar viaje, recogí, entregué…), con la misma pieza única de conectarse y terminar, en Android y en iPhone, con su prueba. Emergencia sigue siendo inmediata; «Soltar el viaje» va con confirmación.
 
 Lleva guía de Docs en los dos idiomas. Reglas que aplican: dinero en centavos enteros y la conversión con redondeo definido y probado; el éxito en verde; un perfil por país.
+
+## APROBADO Y PUBLICADO POR GOOGLE — 18 nov 2026, noche
+
+Google aprobó y publicó las dos apps unas tres horas después de la subida. La consola dice «Se publicó la actualización de la app» y «Descripción general de la publicación» quedó vacía; la página pública de Play (pedida como desde Venezuela y desde Estados Unidos) muestra «Actualización: 18 nov 2026», la ficha nueva y las novedades de la versión.
+
+- **Divoox 0.1.0 (46)** y **Divoox Driver 0.1.0 (42)** son la versión pública de producción: se bajan de Play Store normal, sin enlaces de prueba.
+- Candados de «en revisión» quitados; el registro quedó en `~/.config/tumbite/play-aprobadas/`.
+- **TestFlight interno** al día con la misma punta: cliente 55 y Driver 42 (compilados en esta Mac; no van a revisión de Apple).
+
+**Órdenes de Richard para lo que sigue (18 nov, noche):** el paquete siguiente se construye desde ya con calidad final, sin esperar borrador, y se sube en cuanto pase revisor, robot y auditor; todo lo que ve el público va NEUTRO, sin ciudad ni persona (capturas, ejemplos, ayuda, fichas); la gente del piloto baja la app normal de Play Store.
