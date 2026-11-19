@@ -52,6 +52,30 @@
       "numero": 2
     },
     {
+      "id": "agente-divoox-datos",
+      "prioridad": "alta",
+      "titulo": "Dame los datos del primer Agente Divoox para crear su cuenta",
+      "para": "Su correo (con ese entra a su panel), el nombre del negocio, su teléfono, la dirección y el horario del local. Con eso se crea su cuenta en Superadmin, menú Dinero, Agentes, y le llega un correo para crear su contraseña.",
+      "destraba": "Que el agente entre a su panel y pueda pagar ganancias en efectivo y vender saldo.",
+      "numero": 31
+    },
+    {
+      "id": "agente-divoox-moneda",
+      "prioridad": "alta",
+      "titulo": "Decide en qué paga el agente: dólares enteros o bolívares a la tasa del día",
+      "para": "En dólares solo se entregan billetes enteros y los centavos se quedan en la billetera del conductor. En bolívares se entrega el monto exacto a la tasa del día, que queda fija al pedir el código. Se elige al encender la ciudad en Superadmin, Dinero, Agentes, Ciudades. Los topes de arranque quedaron así: mínimo 5 dólares por cobro, hasta 200 por conductor al día, y para el agente hasta 100 por pago y 500 al día. Se cambian ahí mismo.",
+      "destraba": "Encender «Cobrar en efectivo» para los conductores de la ciudad del piloto.",
+      "numero": 32
+    },
+    {
+      "id": "agente-divoox-fondo",
+      "prioridad": "alta",
+      "titulo": "Transfiérele el fondo al agente y anótalo en su ficha",
+      "para": "Cuando le transfieras, entra a Superadmin, Dinero, Agentes, abre su ficha y en «Anotar un movimiento» elige «Le transferí fondo», con el monto y la referencia de la transferencia. Sin fondo su panel no deja pagar. Te llega un correo cuando le quede poco.",
+      "destraba": "Que el agente pueda pagarles a los conductores.",
+      "numero": 33
+    },
+    {
       "id": "equipo-jehova-jireh",
       "prioridad": "alta",
       "titulo": "Crear el primer equipo de conductores de El Vigía y encender los referidos",
@@ -465,6 +489,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Agente Divoox: cobrar las ganancias en efectivo y recargar saldo con un negocio de la ciudad",
+      "texto": "El conductor pide en Ganancias un código de 6 números que vale 24 horas y lo cobra en efectivo con el Agente Divoox de su ciudad; el dinero queda apartado y vuelve solo si no lo usa. El agente tiene su propio panel con dos trabajos, Pagar y Vender saldo, entra con correo, contraseña y un código que le llega al correo, y solo ve lo suyo. Paga con un fondo que tú le transfieres y anotas en Superadmin, Dinero, Agentes; sin fondo no puede pagar y te avisa cuando le queda poco. Ahí mismo se ve la conciliación: lo pagado, lo vendido y lo que debe cada parte. Ya está publicado y apagado en todas las ciudades. Falta de tu lado: los datos del agente, en qué paga la ciudad y su fondo."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Cobros a restaurantes y repartidores: Stripe Connect encendido (sin probar con dinero real)",
