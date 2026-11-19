@@ -451,15 +451,25 @@ export function ViajeActivo({
       >
         {(viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
         enMano != null ? (
-          <MontoEnMano
-            testID="viaje-bs"
-            monto={cobroEnMano(false)}
-            idioma={idiomaCorto}
-            quien="conductor"
-            etiqueta={etiquetaCobro}
-            color={C.exito}
-            tamano="grande"
-          />
+          (cobroEnMano(false)?.monto ?? 0) > 0 ? (
+            <MontoEnMano
+              testID="viaje-bs"
+              monto={cobroEnMano(false)}
+              idioma={idiomaCorto}
+              quien="conductor"
+              etiqueta={etiquetaCobro}
+              color={C.exito}
+              tamano="grande"
+            />
+          ) : (
+            // C-OFERTA-SIN-COBRO: el regalo cubre todo; se dice en palabras, sin un cero grande.
+            <Text
+              testID="viaje-sin-cobro"
+              style={{ fontSize: 16, fontWeight: '800', color: C.exito }}
+            >
+              {t.sinCobroEnMano}
+            </Text>
+          )
         ) : viaje.total != null ? (
           // Con tarjeta no se cobra nada en mano: el precio va grande pero en el color de texto (el
           // verde es solo para lo que el conductor cobra en mano o gana), con el aviso bien visible.

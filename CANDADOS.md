@@ -5696,3 +5696,11 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Qué se hizo:** la pieza `packages/movil/src/letraQueCabe.ts` calcula la letra más grande (hasta 17, mínimo 12) con la que el texto cabe en el ancho medido del deslizador, y `Deslizador.tsx` la usa para su texto. En las apps nativas sigue además el ajuste propio del sistema.
 - **Cómo se comprueba:** `npx vitest run packages/movil/src/letraQueCabe.test.ts`. A mano: Driver web a 360 de ancho, viaje en curso; el botón se lee entero.
 - **Qué NO tocar:** no volver a un `fontSize` fijo en el texto del deslizador.
+
+## C-OFERTA-SIN-COBRO (19 nov 2026) — todos los países
+
+- **Qué se veía:** cuando el regalo de Divoox cubría todo el viaje, la oferta y la pantalla del viaje de Driver mostraban «Cobras en efectivo al terminar $0.00 / Bs. 0,00» en cifra grande y verde.
+- **Causa real:** el precio grande (C-PRECIO-PROTAGONISTA) pintaba cualquier monto en mano, también el cero.
+- **Qué se hizo:** con monto en mano cero, `OfertaViaje.tsx` y `ViajeActivo.tsx` dicen en palabras «No cobras nada en mano: este viaje lo paga Divoox» (es/en, y su versión de envío). Lo que paga Divoox sigue en su línea aparte.
+- **Cómo se comprueba:** `npx vitest run apps/repartidor/src/viajes/ofertaSinCobro.test.ts`; a mano, viaje con un regalo que cubra el total.
+- **Qué NO tocar:** no volver a pintar `MontoEnMano` grande con monto cero.

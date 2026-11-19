@@ -20,6 +20,8 @@ export const TEXTOS_VIAJE = {
       viaje: 'de viaje',
       minutos: 'min',
       enEfectivo: 'Cobras en efectivo al terminar',
+      // C-OFERTA-SIN-COBRO: el regalo de Divoox cubre todo el viaje.
+      noCobrasEnMano: 'No cobras nada en mano: este viaje lo paga Divoox.',
       // C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares.
       cobraEnMano: 'Cobras en mano',
       // C-CUPON-DIVOOX: el pasajero trae un regalo que paga Divoox.
@@ -60,6 +62,7 @@ export const TEXTOS_VIAJE = {
       califica: 'Califica a quien envía',
       // C-PRECIO-PROTAGONISTA: con regalo, el envío cobra la diferencia a quien envía.
       cobraAlPasajero: 'Cobra a quien envía',
+      sinCobroEnMano: 'No cobras nada en mano: este envío lo paga Divoox.',
       divooxPagaAyuda: 'Por el regalo de quien envía. Va a tus ganancias al terminar.',
       pagaConTarjeta: 'Precio del envío · lo paga con tarjeta, no cobras en mano',
     },
@@ -126,6 +129,7 @@ export const TEXTOS_VIAJE = {
       cobra: 'Cobra en efectivo',
       // C-PRECIO-PROTAGONISTA: la tarjeta del precio del viaje (cifra grande, regalo aparte en verde).
       cobraAlPasajero: 'Cobra al pasajero',
+      sinCobroEnMano: 'No cobras nada en mano: este viaje lo paga Divoox.',
       divooxPagaCorto: 'Divoox te paga {monto}',
       divooxPagaAyuda: 'Por el regalo del pasajero. Va a tus ganancias al terminar.',
       pagaConTarjeta: 'Precio del viaje · lo paga con tarjeta, no cobras en mano',
@@ -164,6 +168,7 @@ export const TEXTOS_VIAJE = {
       viaje: 'trip',
       minutos: 'min',
       enEfectivo: 'You collect cash at the end',
+      noCobrasEnMano: 'Nothing to collect in hand: Divoox pays for this ride.',
       cobraEnMano: 'You collect in hand',
       regaloOferta:
         'With a Divoox gift: the rider pays less in person and Divoox pays you {monto}.',
@@ -204,6 +209,7 @@ export const TEXTOS_VIAJE = {
       noShow: 'Delivery closed: the sender didn’t show up',
       califica: 'Rate the sender',
       cobraAlPasajero: 'Collect from the sender',
+      sinCobroEnMano: 'Nothing to collect in hand: Divoox pays for this delivery.',
       divooxPagaAyuda: 'For the sender’s gift. It goes to your earnings when you finish.',
       pagaConTarjeta: 'Delivery fare · paid by card, nothing to collect',
     },
@@ -265,6 +271,7 @@ export const TEXTOS_VIAJE = {
       permisoCamara: 'We need permission to use the camera.',
       cobra: 'Collect in cash',
       cobraAlPasajero: 'Collect from the rider',
+      sinCobroEnMano: 'Nothing to collect in hand: Divoox pays for this ride.',
       divooxPagaCorto: 'Divoox pays you {monto}',
       divooxPagaAyuda: 'For the rider’s gift. It goes to your earnings when you finish.',
       pagaConTarjeta: 'Ride fare · paid by card, nothing to collect',
