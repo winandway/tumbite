@@ -7,6 +7,8 @@ export type GuiaPublica = {
   preguntas: string[];
   pasos: string[];
   cuerpo: string;
+  /** C-DOCS-VIDEO: la guía tiene video (va arriba de la guía, con el ancla #video). */
+  video?: true;
 };
 export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  {

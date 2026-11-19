@@ -7,14 +7,23 @@ import { BotonGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
+import { CANAL_YOUTUBE, TEXTOS_VIDEO, VIDEOS, type VideoDocs, canalConVideos } from './docs/videos';
 
 /**
  * Pie de página: fondo oscuro con muchos enlaces reales (estilo DoorDash, bueno para el SEO)
  * y arriba el bloque de cobertura de Uber Eats: ciudades, países y tipos de comida, cada uno
  * con su propia página. Lo activo va en verde; lo que viene, «muy pronto».
  */
-export function Pie({ idioma }: { idioma: Idioma }) {
+export function Pie({
+  idioma,
+  videos = VIDEOS,
+}: {
+  idioma: Idioma;
+  /** C-DOCS-VIDEO: los videos de Docs (por defecto, los publicados). */
+  videos?: readonly VideoDocs[];
+}) {
   const t = enIdioma(TEXTOS_SITIO, idioma).pie;
+  const tv = enIdioma(TEXTOS_VIDEO, idioma);
   const [pestana, setPestana] = useState<'ciudades' | 'paises' | 'cocinas'>('ciudades');
   const pronto = (
     <span className="pie-pronto">
@@ -124,6 +133,13 @@ export function Pie({ idioma }: { idioma: Idioma }) {
           <h3>{idioma === 'en' ? 'Company' : 'Empresa'}</h3>
           <Enlace a="/contact">{t.contacto}</Enlace>
           <Enlace a="/docs">{t.docs}</Enlace>
+          {/* C-DOCS-VIDEO: «Videos» aparece con el primer video; el canal, cuando ya tiene videos. */}
+          {videos.length > 0 ? <Enlace a="/docs/videos">{tv.titulo}</Enlace> : null}
+          {canalConVideos(videos) ? (
+            <a href={CANAL_YOUTUBE} target="_blank" rel="noopener noreferrer">
+              {tv.canalCorto}
+            </a>
+          ) : null}
           <Enlace a="/support">{t.soporte}</Enlace>
           <Enlace a="/how-it-works">{t.sobre}</Enlace>
           <Enlace a="/country/united-states">{t.ciudadesTodas}</Enlace>

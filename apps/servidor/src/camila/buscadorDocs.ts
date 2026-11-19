@@ -1,4 +1,4 @@
-import { ETIQUETA_GUIA } from '@tumbite/compartido';
+import { ETIQUETA_GUIA, ETIQUETA_VIDEO } from '@tumbite/compartido';
 import { DOCS_PUBLICOS, type GuiaPublica } from './docsPublicos';
 import type { IdiomaCamila } from './identidad';
 
@@ -457,7 +457,20 @@ export const guiaPorRuta = (ruta: string, idioma: IdiomaCamila) =>
  * forma en que Camila escribe un enlace de Docs (el chat la pinta tocable y el correo como botón).
  */
 export const enlaceDeGuia = (ruta: string, idioma: IdiomaCamila) =>
-  `${ETIQUETA_GUIA[idioma === 'en' ? 'en' : 'es']} https://divoox.com${idioma === 'es' ? '/es' : ''}/docs/${ruta}`;
+  lineasDeGuia(ruta, idioma, Boolean(guiaPorRuta(ruta, idioma)?.video));
+
+/**
+ * C-DOCS-VIDEO: las líneas de una guía. Si la guía tiene video, Camila lo comparte en su propia
+ * línea, debajo: abre la guía en el video (ancla #video).
+ */
+export function lineasDeGuia(ruta: string, idioma: IdiomaCamila, conVideo: boolean) {
+  const lengua = idioma === 'en' ? 'en' : 'es';
+  const url = `https://divoox.com${idioma === 'es' ? '/es' : ''}/docs/${ruta}`;
+  /* eslint-disable security/detect-object-injection -- los dos idiomas fijos */
+  const guia = `${ETIQUETA_GUIA[lengua]} ${url}`;
+  return conVideo ? `${guia}\n${ETIQUETA_VIDEO[lengua]} ${url}#video` : guia;
+  /* eslint-enable security/detect-object-injection */
+}
 
 const URL_DOCS = /divoox\.com(?:\/es)?\/docs\/([a-z0-9/-]+)/gi;
 /**

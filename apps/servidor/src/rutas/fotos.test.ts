@@ -249,4 +249,84 @@ describe('NXT-7 · C-FOTOS-LIVIANAS: tres tamaños en WebP', () => {
     expect((await ver('/media/docs-grande/..%2Fsecreto-0a1b2c3d.webp')).status).toBe(404);
     expect((await ver('/media/docs-grande/sin-huella.webp')).status).toBe(404);
   });
+
+  // C-DOCS-VIDEO (19 nov 2026): el video de Docs se sirve por partes desde el almacén.
+  describe('el video de Docs', () => {
+    const VIDEO = Uint8Array.from({ length: 1000 }, (_, i) => i % 251);
+    const preparar = async () => {
+      const r2 = crearAlmacenPruebas();
+      const m = mundo({ BUCKET: r2.bucket });
+      await r2.bucket.put('docs-video/lineas-es-0a1b2c3d.mp4', VIDEO);
+      // Una base que anota todo lo que no sea leer.
+      const escritas: string[] = [];
+      const DB = new Proxy(m.DB, {
+        get(base, llave) {
+          const valor = Reflect.get(base, llave) as unknown;
+          if (llave !== 'prepare' || typeof valor !== 'function') return valor;
+          return (sql: string) => {
+            if (!/^\s*(select|pragma)/i.test(sql)) escritas.push(sql);
+            return (valor as (sql: string) => unknown).call(base, sql);
+          };
+        },
+      });
+      return {
+        escrituras: () => escritas.length,
+        ver: (url: string, range?: string, method = 'GET') =>
+          app.request(url, { method, headers: range ? { range } : {} }, { DB, BUCKET: r2.bucket }),
+      };
+    };
+    const bytes = async (r: Response) => [...new Uint8Array(await r.arrayBuffer())];
+
+    it('entero: 200, como video, con caché larga y avisando que entiende partes', async () => {
+      const { ver } = await preparar();
+      const r = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4');
+      expect(r.status).toBe(200);
+      expect(r.headers.get('content-type')).toBe('video/mp4');
+      expect(r.headers.get('accept-ranges')).toBe('bytes');
+      expect(r.headers.get('content-length')).toBe('1000');
+      expect(r.headers.get('cache-control')).toContain('immutable');
+      expect(await bytes(r)).toEqual([...VIDEO]);
+    });
+
+    it('por partes (lo que pide el iPhone): 206 con la parte exacta', async () => {
+      const { ver } = await preparar();
+      const primera = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=0-1');
+      expect(primera.status).toBe(206);
+      expect(primera.headers.get('content-range')).toBe('bytes 0-1/1000');
+      expect(primera.headers.get('content-length')).toBe('2');
+      expect(await bytes(primera)).toEqual([0, 1]);
+      const medio = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=100-199');
+      expect(medio.headers.get('content-range')).toBe('bytes 100-199/1000');
+      expect(await bytes(medio)).toEqual([...VIDEO.slice(100, 200)]);
+      const resto = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=990-');
+      expect(resto.headers.get('content-range')).toBe('bytes 990-999/1000');
+      const cola = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=-10');
+      expect(cola.headers.get('content-range')).toBe('bytes 990-999/1000');
+      // Pedir más allá del final se recorta al final.
+      const largo = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=500-99999');
+      expect(largo.headers.get('content-range')).toBe('bytes 500-999/1000');
+    });
+
+    it('una parte imposible responde 416, y HEAD da el tamaño sin cuerpo', async () => {
+      const { ver } = await preparar();
+      const fuera = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=1000-');
+      expect(fuera.status).toBe(416);
+      expect(fuera.headers.get('content-range')).toBe('bytes */1000');
+      expect((await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=abc')).status).toBe(416);
+      const cabeza = await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', undefined, 'HEAD');
+      expect(cabeza.status).toBe(200);
+      expect(cabeza.headers.get('content-length')).toBe('1000');
+      expect((await cabeza.arrayBuffer()).byteLength).toBe(0);
+    });
+
+    it('nada con nombres raros, y mirar un video no escribe en la base', async () => {
+      const { ver, escrituras } = await preparar();
+      expect((await ver('/media/docs-video/no-existe-0a1b2c3d.mp4')).status).toBe(404);
+      expect((await ver('/media/docs-video/..%2Fsecreto-0a1b2c3d.mp4')).status).toBe(404);
+      expect((await ver('/media/docs-video/sin-huella.mp4')).status).toBe(404);
+      expect((await ver('/media/docs-video/lineas-es-0a1b2c3d.webp')).status).toBe(404);
+      await ver('/media/docs-video/lineas-es-0a1b2c3d.mp4', 'bytes=0-99');
+      expect(escrituras()).toBe(0);
+    });
+  });
 });

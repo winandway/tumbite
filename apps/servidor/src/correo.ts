@@ -188,6 +188,8 @@ function etiquetaBoton(url: string, en: boolean): string {
   if (ruta.includes('/confirm-email')) return en ? 'Confirm my email' : 'Confirmar mi correo';
   if (ruta.includes('/reset-password'))
     return en ? 'Reset my password' : 'Restablecer mi contraseña';
+  // C-DOCS-VIDEO: el enlace al video de una guía.
+  if (/^\/(es\/)?docs\/[^#]+#video$/.test(ruta)) return en ? 'Watch the video' : 'Ver el video';
   // C-CAMILA-ENLACE-GUIA: el enlace a una guía de Docs lleva el mismo texto que en el chat.
   if (/^\/(es\/)?docs\//.test(ruta))
     return en ? 'See the guide with screenshots' : 'Ver la guía con capturas';
@@ -256,7 +258,10 @@ export function aHtml(
       const resto = linea
         .replace(/https?:\/\/\S+/g, '')
         // La etiqueta del enlace a una guía ya va en su botón: no se repite encima.
-        .replace(/(Ver la guía con capturas|See the guide with screenshots) →/g, '')
+        .replace(
+          /(Ver la guía con capturas|See the guide with screenshots|Ver el video|Watch the video) →/g,
+          '',
+        )
         .trim();
       if (resto) texto.push(resto);
       html += parrafo(texto);

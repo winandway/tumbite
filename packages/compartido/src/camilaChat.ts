@@ -40,8 +40,18 @@ export const ETIQUETA_GUIA = {
   es: 'Ver la guía con capturas →',
   en: 'See the guide with screenshots →',
 } as const;
+/**
+ * C-DOCS-VIDEO (19 nov 2026) — todos los países. Cuando la guía tiene video, debajo de su enlace va
+ * otra línea igual de tocable: «Ver el video → https://…#video», que abre la guía en el video.
+ */
+export const ETIQUETA_VIDEO = {
+  es: 'Ver el video →',
+  en: 'Watch the video →',
+} as const;
 const LINEA_GUIA =
   /^(Ver la guía con capturas →|See the guide with screenshots →) (https:\/\/divoox\.com\/(?:es\/)?docs\/[a-z0-9/-]+)$/;
+const LINEA_VIDEO =
+  /^(Ver el video →|Watch the video →) (https:\/\/divoox\.com\/(?:es\/)?docs\/[a-z0-9/-]+#video)$/;
 export type TrozoMensaje = { texto: string } | { etiqueta: string; url: string };
 /** Parte el texto de un mensaje en párrafos de texto y enlaces a guías, en su orden. */
 export function trozosDeMensaje(texto: string): TrozoMensaje[] {
@@ -53,7 +63,7 @@ export function trozosDeMensaje(texto: string): TrozoMensaje[] {
     parrafo = [];
   };
   for (const linea of texto.split('\n')) {
-    const m = LINEA_GUIA.exec(linea.trim());
+    const m = LINEA_GUIA.exec(linea.trim()) ?? LINEA_VIDEO.exec(linea.trim());
     if (m?.[1] && m[2]) {
       cerrar();
       trozos.push({ etiqueta: m[1], url: m[2] });

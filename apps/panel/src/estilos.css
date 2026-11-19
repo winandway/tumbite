@@ -2344,6 +2344,119 @@ button {
 .docs-guia ol li {
   margin: 8px 0;
 }
+/* C-DOCS-VIDEO: el video de una guía. Vertical, con su portada fija; el video se pide al tocarla. */
+.docs-video {
+  /* Al llegar por el ancla, el título del video no queda debajo de la cabecera fija. */
+  scroll-margin-top: 84px;
+  margin: 20px 0;
+  display: grid;
+  gap: 12px;
+}
+.docs-video-titulo {
+  margin: 0;
+}
+.docs-guia h3.docs-video-titulo {
+  font-size: 1.05rem;
+  color: var(--secundario);
+}
+.docs-video-marco {
+  width: min(300px, 100%);
+  aspect-ratio: 9 / 16;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #101010;
+  box-shadow: 0 6px 18px rgba(16, 16, 16, 0.12);
+}
+.docs-video-marco video,
+.docs-video-marco iframe,
+.docs-video-portada img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+}
+.docs-video-marco video {
+  object-fit: contain;
+}
+.docs-video-portada {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.docs-video-portada:focus-visible {
+  outline: 3px solid var(--vivo);
+  outline-offset: -3px;
+}
+.docs-video-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: rgba(16, 16, 16, 0.78);
+  transition: background 0.15s ease;
+}
+.docs-video-portada:hover .docs-video-play {
+  background: var(--vivo);
+}
+.docs-video-duracion {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  color: #ffffff;
+  background: rgba(16, 16, 16, 0.78);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.docs-video figcaption p {
+  margin: 0 0 8px;
+}
+.docs-video-descripcion {
+  color: #3a3a3a;
+}
+.docs-video-guia {
+  color: var(--primario);
+  font-weight: 700;
+  text-decoration: none;
+}
+.docs-video-texto summary {
+  cursor: pointer;
+  min-height: 32px;
+  font-weight: 700;
+  color: var(--secundario);
+}
+.docs-video-texto p {
+  color: #3a3a3a;
+}
+.docs-videos-lista {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  align-items: start;
+}
+@media (min-width: 700px) {
+  .docs-guia > .docs-video {
+    grid-template-columns: 300px 1fr;
+    column-gap: 24px;
+    align-items: start;
+  }
+  .docs-guia > .docs-video .docs-video-titulo {
+    grid-column: 1 / -1;
+  }
+}
 .docs-nota {
   background: #fff1ee;
   border-radius: 12px;

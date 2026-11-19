@@ -8,6 +8,8 @@ import { DOCS, type Guia, type SeccionDocs, TEXTOS_DOCS } from './guias';
 import { ICONOS_GUIA, nombreIconoGuia } from './iconosGuia';
 import { buscarGuias, resaltar } from './buscar';
 import { CapturasConLupa } from './Lupa';
+import { PaginaVideos, VideoDeDocs } from './VideoDocs';
+import { TEXTOS_VIDEO, VIDEOS, type VideoDocs, videosDeGuia } from './videos';
 
 /** Cuántas sugerencias muestra la lista que se abre mientras se escribe. */
 const SUGERENCIAS = 20;
@@ -58,12 +60,24 @@ function SimbolosIconosGuia() {
  * «Menú de Docs» (arriba, una sola línea): solo se despliega al tocarlo. En escritorio la barra
  * lateral queda a la vista con el ítem activo resaltado (lo decide la hoja de estilos).
  */
-export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
+export function Docs({
+  ruta,
+  idioma,
+  videos = VIDEOS,
+}: {
+  ruta: string;
+  idioma: Idioma;
+  /** C-DOCS-VIDEO: los videos de Docs (por defecto, los publicados). */
+  videos?: readonly VideoDocs[];
+}) {
   const t = enIdioma(TEXTOS_DOCS, idioma);
+  const tv = enIdioma(TEXTOS_VIDEO, idioma);
   const secciones = enIdioma(DOCS, idioma);
   const [seccionId, guiaId] = ruta.replace(/^\/docs\/?/, '').split('/');
   // «¿Cómo hago…?»: todas las preguntas de la gente, cada una con el enlace a su guía.
   const comoHago = seccionId === 'how-to';
+  // C-DOCS-VIDEO: la página «Videos» existe solo cuando hay al menos un video publicado.
+  const paginaVideos = seccionId === 'videos' && !guiaId && videos.length > 0;
   // La guía se encuentra aunque la dirección traiga otra sección o ninguna (/docs/<guia>, o una
   // guía que cambió de sección): antes caía en el inicio de Docs sin decir nada.
   const directa = secciones.find((s) => s.id === seccionId) ?? null;
@@ -76,7 +90,7 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   const seccion = otra ?? directa;
   const guia = enDirecta ?? otra?.guias.find((g) => g.id === buscada) ?? null;
   // Una dirección que no existe lo dice, en vez de mostrar el inicio como si nada.
-  const noExiste = Boolean(buscada) && !guia && !comoHago;
+  const noExiste = Boolean(buscada) && !guia && !comoHago && !paginaVideos;
   // Lo escrito en el buscador se guarda, como en todo formulario de la casa.
   const b = useBorrador({
     formulario: 'docs-buscador',
@@ -97,7 +111,7 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
   // Al llegar por el enlace de una guía, una búsqueda vieja guardada no la tapa (15 nov 2026: se
   // abría /docs/ordering/ride-moto y se veían los resultados de «tracking»). El borrador llega un
   // instante después de dibujar, por eso se mira cuando llega.
-  const llegoAUnaGuia = useRef(Boolean(guia) || comoHago);
+  const llegoAUnaGuia = useRef(Boolean(guia) || comoHago || paginaVideos);
   useEffect(() => {
     if (!recuperado || !llegoAUnaGuia.current) return;
     llegoAUnaGuia.current = false;
@@ -229,7 +243,9 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
       <SimbolosIconosGuia />
       <main className="docs-contenido">
         {/* El buscador vive siempre en el mismo sitio: si se moviera, perdería el foco al escribir. */}
-        <div className={!seccion && !resultados ? 'docs-buscador-grande' : undefined}>
+        <div
+          className={!seccion && !resultados && !paginaVideos ? 'docs-buscador-grande' : undefined}
+        >
           {buscador}
         </div>
         {noExiste && !resultados ? (
@@ -251,8 +267,23 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
           </>
         ) : comoHago ? (
           <ComoHago secciones={secciones} t={t} />
+        ) : paginaVideos ? (
+          <PaginaVideos
+            videos={videos}
+            secciones={secciones}
+            idioma={idioma}
+            volver={t.volver}
+            migas={t.migas}
+          />
         ) : guia && seccion ? (
-          <PaginaGuia secciones={secciones} seccion={seccion} guia={guia} t={t} idioma={idioma} />
+          <PaginaGuia
+            secciones={secciones}
+            seccion={seccion}
+            guia={guia}
+            t={t}
+            idioma={idioma}
+            videos={videosDeGuia(videos, `${seccion.id}/${guia.id}`)}
+          />
         ) : seccion ? (
           <>
             <nav className="docs-migas" aria-label={t.migas}>
@@ -278,6 +309,13 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
                 {t.comoHagoInvita} →
               </Enlace>
             </p>
+            {videos.length > 0 ? (
+              <p>
+                <Enlace a="/docs/videos" className="docs-comohago">
+                  {tv.titulo}: {tv.resumen} →
+                </Enlace>
+              </p>
+            ) : null}
             {/* Cursos y presentaciones, a la vista apenas se entra (antes nadie los encontraba). */}
             {secciones
               .filter((s) => s.id === 'courses')
@@ -331,15 +369,26 @@ export function Docs({ ruta, idioma }: { ruta: string; idioma: Idioma }) {
           <Icono nombre="menu" tamano={18} /> {t.menuBoton}
         </button>
         <div id={idMenu} className="docs-barra-cuerpo">
-          <Enlace a="/docs" className={`docs-inicio${!seccion && !comoHago ? ' activo' : ''}`}>
+          <Enlace
+            a="/docs"
+            className={`docs-inicio${!seccion && !comoHago && !paginaVideos ? ' activo' : ''}`}
+          >
             <Icono nombre="libro" tamano={18} /> {t.titulo}
           </Enlace>
           <Enlace a="/docs/how-to" className={`docs-inicio${comoHago ? ' activo' : ''}`}>
             <Icono nombre="soporte" tamano={18} /> {t.comoHago}
           </Enlace>
+          {videos.length > 0 ? (
+            <Enlace a="/docs/videos" className={`docs-inicio${paginaVideos ? ' activo' : ''}`}>
+              <Icono nombre="presentacion" tamano={18} /> {tv.titulo}
+            </Enlace>
+          ) : null}
           <nav aria-label={t.menu}>
             {secciones.map((s) => (
-              <details key={s.id} open={(!seccion && !comoHago) || s.id === seccion?.id}>
+              <details
+                key={s.id}
+                open={(!seccion && !comoHago && !paginaVideos) || s.id === seccion?.id}
+              >
                 <summary className={s.id === seccion?.id ? 'activo' : undefined}>
                   <Icono nombre={s.icono} tamano={18} /> {s.titulo}
                 </summary>
@@ -425,14 +474,25 @@ function PaginaGuia({
   guia,
   t,
   idioma,
+  videos,
 }: {
   secciones: readonly SeccionDocs[];
   seccion: SeccionDocs;
   guia: Guia;
   t: (typeof TEXTOS_DOCS)['es'];
   idioma: Idioma;
+  videos: readonly VideoDocs[];
 }) {
   const i = seccion.guias.indexOf(guia);
+  // C-DOCS-VIDEO: el primer video de la guía lleva el ancla #video (es la que comparte Camila).
+  const video = (v: VideoDocs) => (
+    <VideoDeDocs
+      key={v.id}
+      video={v}
+      idioma={idioma}
+      ancla={v === videos[0] ? 'video' : `video-${v.id}`}
+    />
+  );
   const anterior = seccion.guias.at(i - 1 < 0 ? seccion.guias.length : i - 1);
   const siguiente = seccion.guias.at(i + 1 >= seccion.guias.length ? -seccion.guias.length : i + 1);
   const relacionadas = useMemo(() => guiasRelacionadas(secciones, guia), [secciones, guia]);
@@ -462,6 +522,7 @@ function PaginaGuia({
           ))}
         </ul>
       )}
+      {videos.filter((v) => v.lugar === 'arriba').map(video)}
       {guia.pasos.length > 0 && (
         <>
           <h2>{t.pasos}</h2>
@@ -474,6 +535,7 @@ function PaginaGuia({
           </ol>
         </>
       )}
+      {videos.filter((v) => v.lugar === 'pasos').map(video)}
       {guia.capturas && guia.capturas.length > 0 && (
         <CapturasConLupa capturas={guia.capturas} idioma={idioma} />
       )}

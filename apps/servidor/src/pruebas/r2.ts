@@ -14,11 +14,15 @@ export function crearAlmacenPruebas() {
       });
       return {};
     },
-    async get(clave: string) {
+    // Como el R2 real: con `range` entrega solo esa parte del archivo.
+    async get(clave: string, op?: { range?: { offset: number; length: number } }) {
       const d = datos.get(clave);
       if (!d) return null;
+      const parte = op?.range
+        ? d.bytes.slice(op.range.offset, op.range.offset + op.range.length)
+        : d.bytes;
       return {
-        body: new Blob([d.bytes]).stream(),
+        body: new Blob([parte]).stream(),
         // Como el R2 real: la foto entera de una vez (la usa el motor de verificación).
         arrayBuffer: async () => new Blob([d.bytes]).arrayBuffer(),
         httpEtag: `"${clave.length}"`,
@@ -30,7 +34,8 @@ export function crearAlmacenPruebas() {
     },
     // Como el R2 real: los datos de un archivo sin bajarlo (null si no existe).
     async head(clave: string) {
-      return datos.has(clave) ? { key: clave } : null;
+      const d = datos.get(clave);
+      return d ? { key: clave, size: d.bytes.length, httpEtag: `"${clave.length}"` } : null;
     },
     async list(op?: { prefix?: string }) {
       const objects = [...datos.keys()]

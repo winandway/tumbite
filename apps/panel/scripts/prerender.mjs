@@ -37,6 +37,9 @@ const vite = await createServer({
 try {
   const { App } = await vite.ssrLoadModule('/src/App.tsx');
   const { DOCS } = await vite.ssrLoadModule('/src/sitio/docs/guias.ts');
+  const { VIDEOS, datosDeVideo, videosDeGuia } = await vite.ssrLoadModule(
+    '/src/sitio/docs/videos.ts',
+  );
   const { PAISES, CIUDADES, COCINAS } = await vite.ssrLoadModule('/src/sitio/cobertura.ts');
   const { PREGUNTAS_COMO_FUNCIONA } = await vite.ssrLoadModule('/src/sitio/ComoFunciona.tsx');
 
@@ -92,6 +95,10 @@ try {
    * buscadores de IA la lean como un tutorial: el paso a paso (HowTo) o el artículo, y su ruta.
    */
   const datosDeGuia = (ruta, lengua, canonica) => {
+    const idioma = lengua === 'es' ? 'es' : 'en';
+    // C-DOCS-VIDEO: la página «Videos» lleva los datos de todos sus videos.
+    if (ruta === '/docs/videos')
+      return VIDEOS.map((v) => datosDeVideo(v, idioma, DOMINIO, `${canonica}#${v.id}`));
     const m = /^\/docs\/([a-z-]+)\/([a-z0-9-]+)$/.exec(ruta);
     if (!m) return [];
     const seccion = DOCS[lengua === 'es' ? 'es' : 'en'].find((s) => s.id === m[1]);
@@ -130,6 +137,10 @@ try {
           { '@type': 'ListItem', position: 3, name: guia.titulo, item: canonica },
         ],
       },
+      // C-DOCS-VIDEO: los videos de la guía, para que Google los muestre con su portada.
+      ...videosDeGuia(VIDEOS, `${seccion.id}/${guia.id}`).map((v) =>
+        datosDeVideo(v, idioma, DOMINIO, canonica),
+      ),
       // C-DOCS-SEO: las preguntas que la guía responde, con su respuesta (el resumen y los pasos).
       ...(guia.preguntas?.length
         ? [
@@ -171,6 +182,8 @@ try {
     '/register-line',
     '/docs',
     '/docs/how-to',
+    // C-DOCS-VIDEO: la página «Videos» solo existe (y solo entra al mapa del sitio) si hay videos.
+    ...(VIDEOS.length ? ['/docs/videos'] : []),
     ...DOCS.es.flatMap((s) => [`/docs/${s.id}`, ...s.guias.map((g) => `/docs/${s.id}/${g.id}`)]),
     ...PAISES.map((p) => `/country/${p.slug}`),
     ...CIUDADES.map((c) => `/city/${c.slug}`),

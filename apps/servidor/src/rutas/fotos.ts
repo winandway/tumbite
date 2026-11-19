@@ -160,3 +160,64 @@ media.get('/media/docs-grande/:archivo', async (c) => {
   headers.set('cache-control', 'public, max-age=31536000, immutable');
   return new Response(obj.body, { headers });
 });
+
+/**
+ * C-DOCS-VIDEO (19 nov 2026): los videos de Docs. Viven en el almacén del sitio
+ * (`docs-video/<nombre>-<huella>.mp4`), nunca en el paquete; los sube `scripts/docs/subir-video.mjs`.
+ * Se sirven por PARTES (cabecera Range): el iPhone no reproduce un video si el servidor no las
+ * entiende, y con internet lento se baja solo lo que se va viendo. Solo lee: no escribe en la base.
+ */
+const VIDEO_DOCS = /^[a-z0-9-]{1,100}-[0-9a-f]{8}\.mp4$/;
+
+/** Lee «bytes=a-b», «bytes=a-» o «bytes=-n» contra el tamaño del archivo. `null` = no se entiende. */
+export function rangoPedido(cabecera: string, tamano: number) {
+  const m = /^bytes=(\d*)-(\d*)$/.exec(cabecera.trim());
+  if (!m || (m[1] === '' && m[2] === '')) return null;
+  let desde: number;
+  let hasta: number;
+  if (m[1] === '') {
+    // Los últimos n bytes.
+    const n = Number(m[2]);
+    if (!n) return null;
+    desde = Math.max(0, tamano - n);
+    hasta = tamano - 1;
+  } else {
+    desde = Number(m[1]);
+    hasta = m[2] === '' ? tamano - 1 : Math.min(Number(m[2]), tamano - 1);
+  }
+  if (desde >= tamano || desde > hasta) return null;
+  return { desde, hasta };
+}
+
+media.on(['GET', 'HEAD'], '/media/docs-video/:archivo', async (c) => {
+  const { archivo } = c.req.param();
+  if (!VIDEO_DOCS.test(archivo)) return c.text('No encontrado', 404);
+  const clave = `docs-video/${archivo}`;
+  const dato = await almacen(c.env).head(clave);
+  if (!dato) return c.text('No encontrado', 404);
+  const tamano = dato.size;
+  const headers = new Headers({
+    'content-type': 'video/mp4',
+    'accept-ranges': 'bytes',
+    etag: dato.httpEtag,
+    'x-content-type-options': 'nosniff',
+    // La huella va en el nombre: si el video cambia, cambia la dirección.
+    'cache-control': 'public, max-age=31536000, immutable',
+  });
+  const pedido = c.req.header('range');
+  const rango = pedido ? rangoPedido(pedido, tamano) : null;
+  if (pedido && !rango) {
+    headers.set('content-range', `bytes */${tamano}`);
+    return new Response(null, { status: 416, headers });
+  }
+  const largo = rango ? rango.hasta - rango.desde + 1 : tamano;
+  headers.set('content-length', String(largo));
+  if (rango) headers.set('content-range', `bytes ${rango.desde}-${rango.hasta}/${tamano}`);
+  if (c.req.method === 'HEAD') return new Response(null, { status: rango ? 206 : 200, headers });
+  const obj = await almacen(c.env).get(
+    clave,
+    rango ? { range: { offset: rango.desde, length: largo } } : undefined,
+  );
+  if (!obj) return c.text('No encontrado', 404);
+  return new Response(obj.body, { status: rango ? 206 : 200, headers });
+});

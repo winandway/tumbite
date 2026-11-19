@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { aHtml, usarTransporteCorreo } from '../correo';
 import { mundo } from '../pruebas/ayuda';
 import { trozosDeMensaje } from '@tumbite/compartido';
-import { buscarGuias, conEnlacesDeGuia } from './buscadorDocs';
+import { buscarGuias, conEnlacesDeGuia, lineasDeGuia } from './buscadorDocs';
 import { buscarEnDocs } from './conocimiento';
 import { cuidarTono } from './cerebro';
 import { DOCS_PUBLICOS } from './docsPublicos';
@@ -387,6 +387,46 @@ describe('C-CAMILA-ENLACE-GUIA: toda respuesta que sale de una guía termina con
     expect(
       aHtml(texto.replace('Ver la guía con capturas', 'See the guide with screenshots'), 'en'),
     ).toContain('>See the guide with screenshots</a>');
+  });
+
+  // C-DOCS-VIDEO (19 nov 2026): si la guía tiene video, Camila lo comparte debajo del enlace.
+  it('una guía con video suma su línea «Ver el video», tocable en el chat y botón en el correo', () => {
+    expect(lineasDeGuia('ordering/ride-moto', 'es', false)).toBe(
+      'Ver la guía con capturas → https://divoox.com/es/docs/ordering/ride-moto',
+    );
+    const es = lineasDeGuia('ordering/ride-moto', 'es', true);
+    expect(es).toBe(
+      'Ver la guía con capturas → https://divoox.com/es/docs/ordering/ride-moto\n' +
+        'Ver el video → https://divoox.com/es/docs/ordering/ride-moto#video',
+    );
+    const en = lineasDeGuia('ordering/ride-moto', 'en', true);
+    expect(en).toContain('\nWatch the video → https://divoox.com/docs/ordering/ride-moto#video');
+    expect(trozosDeMensaje(`Abre Moto.\n\n${es}`)).toEqual([
+      { texto: 'Abre Moto.' },
+      {
+        etiqueta: 'Ver la guía con capturas →',
+        url: 'https://divoox.com/es/docs/ordering/ride-moto',
+      },
+      { etiqueta: 'Ver el video →', url: 'https://divoox.com/es/docs/ordering/ride-moto#video' },
+    ]);
+    // Solo el ancla del video: otra ancla, u otro sitio, no se vuelve enlace.
+    expect(
+      trozosDeMensaje('Ver el video → https://divoox.com/es/docs/ordering/ride-moto#otra'),
+    ).toEqual([{ texto: 'Ver el video → https://divoox.com/es/docs/ordering/ride-moto#otra' }]);
+    const html = aHtml(`Abre Moto.\n\n${es}`, 'es');
+    expect(html).toContain('>Ver el video</a>');
+    expect(html).toContain('href="https://divoox.com/es/docs/ordering/ride-moto#video"');
+    expect(html).not.toContain('Ver el video →');
+    expect(aHtml(en, 'en')).toContain('>Watch the video</a>');
+    // Al ordenar los enlaces de una respuesta, la línea del video no se duplica ni queda suelta:
+    // sale solo si la guía de verdad tiene video.
+    const ordenada = conEnlacesDeGuia(`Abre Moto.\n\n${es}`, 'es');
+    const guia = DOCS_PUBLICOS.find((g) => g.idioma === 'es' && g.ruta === 'ordering/ride-moto');
+    expect(ordenada).toBe(
+      `Abre Moto.\n\n${lineasDeGuia('ordering/ride-moto', 'es', Boolean(guia?.video))}`,
+    );
+    // Toda guía que Camila marca con video existe y su marca es verdadera.
+    for (const g of DOCS_PUBLICOS) if ('video' in g) expect(g.video).toBe(true);
   });
 
   it('las respuestas curadas y la del saldo solo apuntan a guías que existen', () => {

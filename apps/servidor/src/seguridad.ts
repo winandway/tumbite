@@ -23,9 +23,10 @@ export const cabecerasSeguridad: MiddlewareHandler = async (c, next) => {
     // elige antes de subirlo). C-MAPA-GOOGLE-WEB (14 nov 2026): Google Maps en script y connect; el
     // mapa vectorial dibuja con WebGL en trabajadores creados desde `blob:` y pide teselas y datos a
     // *.googleapis.com, *.gstatic.com y *.google.com (política recomendada en la documentación
-    // oficial de CSP de Maps JavaScript API). Sin 'unsafe-eval'.
+    // oficial de CSP de Maps JavaScript API). Sin 'unsafe-eval'. C-DOCS-VIDEO (19 nov 2026): el
+    // reproductor de YouTube sin cookies, para los videos de Docs que tengan su identificador.
     "default-src 'self'; script-src 'self' https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com https://static.cloudflareinsights.com https://maps.googleapis.com https://maps.gstatic.com 'wasm-unsafe-eval'; " +
-      "frame-src https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com; img-src 'self' data: blob: https:; " +
+      "frame-src https://js.stripe.com https://connect-js.stripe.com https://challenges.cloudflare.com https://www.youtube-nocookie.com; img-src 'self' data: blob: https:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.google.com data: blob:; worker-src 'self' blob:; frame-ancestors 'none'",
   );
 };

@@ -13,6 +13,20 @@ const destino = join(raiz, 'apps', 'servidor', 'src', 'camila', 'docsPublicos.ts
 // Las secciones que le sirven a un cliente o a un conductor.
 const SECCIONES = ['ordering', 'drivers', 'trust', 'account'];
 
+// C-DOCS-VIDEO: las guías que tienen video (Camila lo comparte debajo del enlace de la guía).
+const rv = await build({
+  entryPoints: [join(raiz, 'apps', 'panel', 'src', 'sitio', 'docs', 'videos.ts')],
+  bundle: true,
+  format: 'esm',
+  platform: 'node',
+  write: false,
+  logLevel: 'silent',
+});
+const { VIDEOS } = await import(
+  `data:text/javascript;base64,${Buffer.from(rv.outputFiles[0].text).toString('base64')}`
+);
+const conVideo = new Set(VIDEOS.map((v) => v.guia));
+
 const r = await build({
   entryPoints: [join(raiz, 'apps', 'panel', 'src', 'sitio', 'docs', 'guias.ts')],
   bundle: true,
@@ -40,6 +54,7 @@ for (const idioma of ['es', 'en']) {
         pasos: (g.pasos ?? []).map((p) => corto(p, 320)),
         // Lo que explica la guía, para buscar por palabras (no se muestra entero).
         cuerpo: corto((g.explicacion ?? []).join(' '), 1600),
+        ...(conVideo.has(`${s.id}/${g.id}`) ? { video: true } : {}),
       });
     }
   }
@@ -53,6 +68,8 @@ export type GuiaPublica = {
   preguntas: string[];
   pasos: string[];
   cuerpo: string;
+  /** C-DOCS-VIDEO: la guía tiene video (va arriba de la guía, con el ancla #video). */
+  video?: true;
 };
 export const DOCS_PUBLICOS: readonly GuiaPublica[] = ${JSON.stringify(guias, null, 1)};
 `;
