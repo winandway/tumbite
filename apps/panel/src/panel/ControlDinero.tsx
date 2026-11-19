@@ -65,6 +65,8 @@ const T = {
     transferencia: 'Transferencia al repartidor',
     recargasPunto: 'Recargas en puntos de venta',
     recargasStripe: 'Recargas con tarjeta',
+    recargaTarjetaMin:
+      'Recarga mínima con tarjeta (vacío = sin mínimo propio; la cuota fija del procesador se come una recarga chica)',
     comisionPais: 'Comisión por pedido (%; vacío = la del plan)',
     cargoFijo: 'Cargo fijo por pedido',
     topeEfectivo: 'Tope de efectivo sin conciliar (vacío = sin tope)',
@@ -183,6 +185,8 @@ const T = {
     transferencia: 'Transfer to the driver',
     recargasPunto: 'Sales-point top-ups',
     recargasStripe: 'Card top-ups',
+    recargaTarjetaMin:
+      'Minimum card top-up (empty = no minimum of its own; the processor’s fixed fee eats a small top-up)',
     comisionPais: 'Fee per order (%; empty = the plan’s)',
     cargoFijo: 'Fixed charge per order',
     topeEfectivo: 'Unsettled cash cap (empty = no cap)',
@@ -311,6 +315,8 @@ type ConfigPais = {
   transferenciaRepartidorActiva: boolean;
   recargasPuntoVentaActivas: boolean;
   recargasStripeActivas: boolean;
+  /** C-RECARGA-TARJETA-MINIMO: mínimo propio de la recarga con tarjeta (null = el general). */
+  recargaStripeMin?: number | null;
   comisionPb: number | null;
   cargoFijo: number;
   topeEfectivoDiario: number | null;
@@ -410,7 +416,8 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
     null,
   );
   // Modelo internacional: interruptores por país y puntos de venta (solo API hasta hoy).
-  const PAISES = ['US', 'CO', 'VE', 'MX'] as const;
+  // C-PERFIL-PERU: Perú (soles) entra a la lista de países con su propia configuración.
+  const PAISES = ['US', 'CO', 'VE', 'MX', 'PE'] as const;
   const [paisElegido, setPaisElegido] = useState<(typeof PAISES)[number]>('US');
   const [pais, setPais] = useState<ConfigPais | null>(null);
   const [comisionesPais, setComisionesPais] = useState<number | null>(null);
@@ -766,6 +773,30 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
                 })
               }
               aria-label={t.cargoFijo}
+            />
+          </label>
+          <label className="campo campo-num">
+            <span>{t.recargaTarjetaMin}</span>
+            <input
+              inputMode="decimal"
+              data-testid="recarga-tarjeta-min"
+              value={pais.recargaStripeMin == null ? '' : dinero(pais.recargaStripeMin)}
+              onChange={(ev) =>
+                setPais({
+                  ...pais,
+                  recargaStripeMin:
+                    ev.target.value === ''
+                      ? null
+                      : Math.max(
+                          1,
+                          Math.round(
+                            Number(ev.target.value.replace(',', '.')) *
+                              (pais.decimales === 0 ? 1 : 100),
+                          ),
+                        ),
+                })
+              }
+              aria-label={t.recargaTarjetaMin}
             />
           </label>
           <label className="campo campo-num">

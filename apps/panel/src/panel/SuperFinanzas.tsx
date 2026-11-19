@@ -855,7 +855,13 @@ function LimitesRecarga({ t, idioma }: { t: TT; idioma: 'es' | 'en' }) {
   const [ok, setOk] = useState('');
   const v = b.valores;
   const moneda =
-    v.pais.toUpperCase() === 'CO' ? 'COP' : v.pais.toUpperCase() === 'VE' ? 'VES' : 'USD';
+    v.pais.toUpperCase() === 'CO'
+      ? 'COP'
+      : v.pais.toUpperCase() === 'VE'
+        ? 'VES'
+        : v.pais.toUpperCase() === 'PE'
+          ? 'PEN'
+          : 'USD';
   async function cargar() {
     setError('');
     try {

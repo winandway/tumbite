@@ -2,10 +2,11 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
-import { leerCuerpo } from '../validar';
+import { ErrorDatos, leerCuerpo } from '../validar';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import {
-  TOPES_SALDO,
+  cuentaDeConductor,
+  topesSaldoDe,
   cargasDeConductor,
   conductoresDeCiudad,
   guardarRegaloConductorNuevo,
@@ -37,7 +38,8 @@ saldoConductores.get('/admin/conductores-ciudad', async (c) => {
     zonas,
     ciudad: zona ? await conductoresDeCiudad(db, zona.id) : null,
     regalosNuevos: await leerRegalosConductorNuevo(db),
-    topes: TOPES_SALDO,
+    // C-TOPES-SALDO-MONEDA: los topes de la moneda de la ciudad elegida.
+    topes: topesSaldoDe(zona?.moneda),
   });
 });
 
@@ -52,12 +54,16 @@ saldoConductores.post('/admin/conductores-ciudad/:id/saldo', async (c) => {
   const d = await leerCuerpo(
     c,
     z.object({
-      monto: z.number().int().min(1).max(TOPES_SALDO.cargaMaxima),
+      // El tope depende de la moneda del conductor: se comprueba abajo, antes de pedir la firma.
+      monto: z.number().int().min(1),
       motivo: z.string().trim().min(3).max(120),
       comprobante: z.string().trim().max(80).default(''),
     }),
   );
   const conductorId = c.req.param('id');
+  const cuenta = await cuentaDeConductor(base(c), conductorId);
+  if (d.monto > topesSaldoDe(cuenta.moneda).cargaMaxima)
+    throw new ErrorDatos('Esa carga pasa el máximo permitido de Divoox por carga.', 'monto', 400);
   return hacerOPedirAprobacion(c, {
     tipo: 'saldo_conductor',
     objeto: conductorId,
@@ -72,11 +78,25 @@ saldoConductores.put('/admin/regalo-conductor-nuevo/:zona', async (c) => {
   const d = await leerCuerpo(
     c,
     z.object({
-      monto: z.number().int().min(1).max(TOPES_SALDO.regaloNuevoMaximo),
-      presupuesto: z.number().int().min(1).max(TOPES_SALDO.presupuestoRegaloNuevoMaximo),
+      // Los topes dependen de la moneda de la ciudad: los comprueba `guardarRegaloConductorNuevo`.
+      monto: z.number().int().min(1),
+      presupuesto: z.number().int().min(1),
       activo: z.boolean(),
     }),
   );
+  const ciudad = await base(c)
+    .prepare('SELECT moneda FROM zonas WHERE id = ?')
+    .bind(c.req.param('zona'))
+    .first<{ moneda: string }>();
+  const topes = topesSaldoDe(ciudad?.moneda);
+  if (d.monto > topes.regaloNuevoMaximo)
+    throw new ErrorDatos(
+      'Ese regalo pasa el máximo permitido de Divoox por conductor.',
+      'monto',
+      400,
+    );
+  if (d.presupuesto > topes.presupuestoRegaloNuevoMaximo)
+    throw new ErrorDatos('Ese presupuesto pasa el máximo permitido de Divoox.', 'presupuesto', 400);
   return c.json({
     regalo: await guardarRegaloConductorNuevo(base(c), {
       zonaId: c.req.param('zona'),

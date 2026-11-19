@@ -14,7 +14,7 @@ import { MenuTresPuntos } from '../MenuTresPuntos';
 import { usePermisos } from '../permisosPanel';
 import { type Plantilla, nombreArea, nombrePermiso, porArea, textosEquipo } from './textos';
 
-const MONEDAS = ['USD', 'MXN', 'COP', 'VES'];
+const MONEDAS = ['USD', 'MXN', 'COP', 'VES', 'PEN'];
 const CERRADA = {
   abierta: false,
   id: null,

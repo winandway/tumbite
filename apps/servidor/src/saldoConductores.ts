@@ -22,6 +22,22 @@ export const TOPES_SALDO = {
   presupuestoRegaloNuevoMaximo: 30_000,
 } as const;
 
+/**
+ * C-TOPES-SALDO-MONEDA (19 nov 2026 — Perú). Los topes son un freno contra errores, y un freno
+ * escrito en centavos de dólar no vale igual en otra moneda: 5.000 céntimos son solo 50 soles. Cada
+ * moneda con conductores de prepago lleva los suyos, en SU unidad menor; una moneda sin escribir usa
+ * los de dólares (que se quedan cortos, nunca largos).
+ */
+const TOPES_SALDO_POR_MONEDA = new Map<
+  string,
+  typeof TOPES_SALDO extends infer T ? { [K in keyof T]: number } : never
+>([
+  // Soles: carga de hasta 200, regalo de arranque de hasta 40 y presupuesto por ciudad de hasta 1.200.
+  ['PEN', { cargaMaxima: 20_000, regaloNuevoMaximo: 4_000, presupuestoRegaloNuevoMaximo: 120_000 }],
+]);
+export const topesSaldoDe = (moneda: string | null | undefined) =>
+  TOPES_SALDO_POR_MONEDA.get((moneda ?? '').toUpperCase()) ?? TOPES_SALDO;
+
 /** País y moneda del saldo de un conductor (los de su ciudad). */
 export async function cuentaDeConductor(db: D1Database, conductorId: string) {
   const f = await db
@@ -101,11 +117,11 @@ export async function cargarSaldoConductor(
 ) {
   if (!Number.isSafeInteger(p.monto) || p.monto <= 0)
     throw new ErrorDatos('El monto no es válido.', 'monto', 400);
-  if (p.monto > TOPES_SALDO.cargaMaxima)
-    throw new ErrorDatos('Esa carga pasa el máximo permitido de Divoox por carga.', 'monto', 422);
   if (p.motivo.trim().length < 3)
     throw new ErrorDatos('Escribe el motivo de la carga.', 'motivo', 422);
   const cuenta = await cuentaDeConductor(db, p.conductorId);
+  if (p.monto > topesSaldoDe(cuenta.moneda).cargaMaxima)
+    throw new ErrorDatos('Esa carga pasa el máximo permitido de Divoox por carga.', 'monto', 422);
   const id = nuevoId();
   await db.batch(
     sentenciasCarga(db, {
@@ -154,7 +170,7 @@ export async function darRegaloConductorNuevo(db: D1Database, conductorId: strin
   if (!g) return 0;
   const monto = Math.min(
     Number(g.monto),
-    TOPES_SALDO.regaloNuevoMaximo,
+    topesSaldoDe(cuenta.moneda).regaloNuevoMaximo,
     Number(g.presupuesto) - Number(g.dado),
   );
   if (monto <= 0) return 0;
@@ -224,16 +240,20 @@ export async function guardarRegaloConductorNuevo(
   db: D1Database,
   p: { zonaId: string; monto: number; presupuesto: number; activo: boolean; autorId: string },
 ) {
-  if (p.monto > TOPES_SALDO.regaloNuevoMaximo)
+  const zona = await db
+    .prepare('SELECT id, moneda FROM zonas WHERE id = ?')
+    .bind(p.zonaId)
+    .first<{ id: string; moneda: string }>();
+  if (!zona) throw new ErrorDatos('Una de las ciudades no existe.', 'zonaId', 422);
+  const topes = topesSaldoDe(zona.moneda);
+  if (p.monto > topes.regaloNuevoMaximo)
     throw new ErrorDatos(
       'Ese regalo pasa el máximo permitido de Divoox por conductor.',
       'monto',
       422,
     );
-  if (p.presupuesto > TOPES_SALDO.presupuestoRegaloNuevoMaximo)
+  if (p.presupuesto > topes.presupuestoRegaloNuevoMaximo)
     throw new ErrorDatos('Ese presupuesto pasa el máximo permitido de Divoox.', 'presupuesto', 422);
-  const zona = await db.prepare('SELECT id FROM zonas WHERE id = ?').bind(p.zonaId).first();
-  if (!zona) throw new ErrorDatos('Una de las ciudades no existe.', 'zonaId', 422);
   const dado = Number(
     (
       await db

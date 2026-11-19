@@ -391,3 +391,29 @@ describe('C-ZONA-POR-PAIS: el formulario «Zonas» ya no deja una ciudad de Per�
     expect(us).toEqual({ moneda: 'USD', hora: 'America/New_York' });
   });
 });
+
+describe('C-TOPES-SALDO-MONEDA: los topes de carga de saldo van en la moneda de la ciudad', () => {
+  it('en Ica el equipo puede cargar hasta 200 soles de una vez (no 50), y ni un céntimo más', async () => {
+    const e = await escenarioPe();
+    await aprobarComisionPe(e);
+    await abrirIcaPe(e);
+    const c = await conductorListoPe(e, 0);
+    const lista = await e.m.llamar(
+      'GET',
+      `/datos/admin/conductores-ciudad?zona=${ICA.id}`,
+      undefined,
+      e.admin.token,
+    );
+    expect(lista.datos.topes.cargaMaxima).toBe(20_000);
+    const cargar = (monto: number) =>
+      e.m.llamar(
+        'POST',
+        `/datos/admin/conductores-ciudad/${c.rep.id}/saldo`,
+        { monto, motivo: 'Carga de prueba' },
+        e.admin.token,
+      );
+    expect((await cargar(20_001)).estado).toBe(400);
+    // Por encima del tope en dólares (5.000) y dentro del de soles: ya no se rechaza por el tope.
+    expect((await cargar(6_000)).estado).not.toBe(400);
+  });
+});
