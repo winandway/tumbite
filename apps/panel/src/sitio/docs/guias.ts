@@ -2893,12 +2893,12 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/referidos-driver-equipo-es.webp',
+            src: '/docs/invitar-mi-equipo-es.webp',
             alt: 'Mi equipo e invitaciones en Divoox Driver: el equipo con registrados, aprobados, activos y carreras, el QR, el código y el botón Compartir mi enlace.',
             pie: 'Tu equipo, tu QR y tu código para invitar. El equipo y el código de la imagen son de ejemplo.',
           },
           {
-            src: '/docs/referidos-enlace-es.webp',
+            src: '/docs/invitar-enlace-es.webp',
             alt: 'Página del enlace de invitación: quién te invitó, a qué equipo, el código y los botones para bajar las apps.',
             pie: 'Lo que ve tu invitado al abrir tu enlace. Los datos de la imagen son de ejemplo.',
           },
@@ -8199,12 +8199,12 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/referidos-driver-equipo-en.webp',
+            src: '/docs/invitar-mi-equipo-en.webp',
             alt: 'My team and invitations in Divoox Driver: the team with signed up, approved, active and trips, the QR, the code and the Share my link button.',
             pie: 'Your team, your QR and your code to invite. The team and code in the image are examples.',
           },
           {
-            src: '/docs/referidos-enlace-en.webp',
+            src: '/docs/invitar-enlace-en.webp',
             alt: 'Invitation link page: who invited you, which team, the code and the buttons to get the apps.',
             pie: 'What your invitee sees when they open your link. The details in the image are examples.',
           },

@@ -41,7 +41,7 @@ const CIUDADES = {
       lng: -71.6506,
       tz: 'America/Caracas',
     },
-    equipo: 'Equipo Los Andes',
+    equipo: 'Equipo Ejemplo',
     lider: 'Andrés Ejemplo',
     codigo: 'EJEMPLO01',
     enlace: 'https://divoox.com/es/join/EJEMPLO01',
@@ -57,7 +57,7 @@ const CIUDADES = {
       lng: -83.4755,
       tz: 'America/Detroit',
     },
-    equipo: 'Downtown Team',
+    equipo: 'Sample Team',
     lider: 'Alex Sample',
     codigo: 'SAMPLE001',
     enlace: 'https://divoox.com/join/SAMPLE001',
@@ -123,9 +123,25 @@ for (const idioma of ['es', 'en'] as const) {
     // El enlace público del líder.
     const web = await browser.newContext({ ...devices['Pixel 7'], baseURL: DATOS!.url });
     const pw = await web.newPage();
+    // C-DOCS-SIN-DATOS-REALES: la captura pública no nombra ninguna ciudad (quien vive en otra
+    // creería que ahí no sirve). La página ya sabe mostrarse sin ciudad.
+    await pw.route('**/datos/publico/invitacion/*', async (ruta) => {
+      const r = await ruta.fetch();
+      const d = (await r.json()) as { invitacion: { ciudad: string | null } | null };
+      if (d.invitacion) d.invitacion.ciudad = null;
+      await ruta.fulfill({ response: r, json: d });
+    });
     await pw.goto(`${idioma === 'es' ? '/es' : ''}/join/${codigo}`);
     await expect(pw.getByTestId('invitacion-codigo')).toHaveText(codigo, { timeout: 30_000 });
-    if (CAPTURAS) await pw.screenshot({ path: join(CARPETA, `enlace-${idioma}.png`) });
+    if (CAPTURAS) {
+      // Hasta donde termina la invitación: el pie del sitio (con su lista de ciudades) no va.
+      const pie = await pw.locator('footer').first().boundingBox();
+      const ancho = pw.viewportSize()?.width ?? 412;
+      await pw.screenshot({
+        path: join(CARPETA, `enlace-${idioma}.png`),
+        ...(pie && pie.y > 200 ? { clip: { x: 0, y: 0, width: ancho, height: pie.y } } : {}),
+      });
+    }
 
     // Tres conductores se registran con el código del equipo.
     for (const nombre of C.miembros) {
