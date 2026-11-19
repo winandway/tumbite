@@ -21,7 +21,7 @@ function stripeFalso(rechazar = false) {
             JSON.stringify({
               error: { message: 'Your account is temporarily restricted from creating accounts.' },
             }),
-            { status: 400 },
+            { status: 400, headers: { 'request-id': 'req_prueba123' } },
           )
         : new Response(JSON.stringify({ id: 'acct_nueva' }), { status: 200 });
     if (url.includes('/v1/account_links'))
@@ -99,6 +99,8 @@ describe('C-CONNECT-PAIS: la cuenta nace con el país de la zona', () => {
     expect(alta?.cuerpo).toContain('country=CO');
     expect(alta?.cuerpo).toContain('tos_acceptance[service_agreement]=recipient');
     expect(alta?.cuerpo).toContain('capabilities[transfers][requested]=true');
+    // Solo lo que el modelo necesita (pedido de Stripe, 18 nov): nada de pagos con tarjeta ni otras.
+    expect(alta?.cuerpo.match(/capabilities\[[a-z_]+\]/g)).toEqual(['capabilities[transfers]']);
   });
 
   it('EE. UU.: sin acuerdo «recipient»', async () => {
@@ -110,6 +112,8 @@ describe('C-CONNECT-PAIS: la cuenta nace con el país de la zona', () => {
     const [alta] = creaciones(ll);
     expect(alta?.cuerpo).toContain('country=US');
     expect(alta?.cuerpo).not.toContain('service_agreement');
+    expect(alta?.cuerpo).toContain('type=express');
+    expect(alta?.cuerpo.match(/capabilities\[[a-z_]+\]/g)).toEqual(['capabilities[transfers]']);
   });
 
   it('Venezuela (sin perfil): 409 y ni una llamada a Stripe', async () => {
@@ -225,7 +229,14 @@ describe('rutas internas de Connect (solo con el secreto del reloj)', () => {
     expect(await r.json()).toMatchObject({
       rechazada: true,
       mensajeStripe: 'Your account is temporarily restricted from creating accounts.',
+      solicitudStripe: 'req_prueba123',
     });
+    const freno = await m.DB.prepare(
+      "SELECT valor FROM config WHERE clave = 'connect_frenado'",
+    ).first<{
+      valor: string;
+    }>();
+    expect(JSON.parse(freno?.valor ?? '{}')).toMatchObject({ solicitud: 'req_prueba123' });
     const r2 = await interno('POST', '/datos/interno-stripe/connect/alta', { usuarioId: rita.id });
     expect(r2.status).toBe(409);
     expect(creaciones(ll)).toHaveLength(1);

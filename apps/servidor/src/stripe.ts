@@ -8,6 +8,8 @@ export class ErrorStripe extends Error {
     public readonly estado: number,
     /** El código de Stripe (por ejemplo `idempotency_key_in_use`), si vino. */
     public readonly codigo?: string,
+    /** El «Request-Id» de Stripe: lo que su soporte pide para analizar un intento fallido. */
+    public readonly solicitud?: string,
   ) {
     super(message);
   }
@@ -91,11 +93,13 @@ export function crearStripe(secreta: string | undefined) {
       error?: { message?: string; code?: string };
     } & T;
     if (!res.ok) {
-      console.error('stripe: error', res.status, json.error?.message);
+      const solicitud = res.headers.get('request-id') ?? undefined;
+      console.error('stripe: error', res.status, json.error?.message, solicitud);
       throw new ErrorStripe(
         json.error?.message ?? 'Stripe no respondió',
         res.status,
         json.error?.code,
+        solicitud,
       );
     }
     return json;
