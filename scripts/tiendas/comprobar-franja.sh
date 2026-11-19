@@ -36,8 +36,9 @@ tocar() {
 VISTA=""
 for _ in $(seq 1 20); do
   X="$(pantalla)"
-  if echo "$X" | grep -q 'text="Contraseña"'; then VISTA="$X"; break; fi
-  tocar "Mientras se usa la aplicación" || tocar "Permitir" || tocar "Mi cuenta" || true
+  # El emulador puede estar en español o en inglés (19 nov 2026: en inglés no se reconocía la pantalla).
+  if echo "$X" | grep -q 'text="Contraseña"\|text="Password"'; then VISTA="$X"; break; fi
+  tocar "Mientras se usa la aplicación" || tocar "While using the app" || tocar "Permitir" || tocar "Allow" || tocar "Mi cuenta" || tocar "Account" || true
   esperar 3
 done
 [ -z "$VISTA" ] && { echo "NO: no se llegó a la pantalla de entrar; no se puede dar por buena"; exit 1; }

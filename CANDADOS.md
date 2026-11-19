@@ -5780,6 +5780,14 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Prueba:** `apps/panel/src/sitio/legales.test.tsx`, bloque C-PRIVACIDAD-REGALO-LINEAS, comprobado en rojo sin los párrafos.
 - **No tocar:** si cambia lo que hace el código con la ubicación del pasajero o con los datos de una línea, cambia este texto en el mismo trabajo. Falta fuera del código: en la consola de Play, en Seguridad de los datos, sumar a la ubicación la finalidad de prevención de fraude (lo hace Richard).
 
+## C-FRANJA-SOLO-EN-PRUEBAS, segunda parte: Restaurants y la puerta única de subida (19 nov 2026) — todos los países
+
+- **Qué pasó:** Richard vio en su teléfono que Divoox Restaurants (Android y TestFlight) decía «PRUEBAS». La compilación 18 de Android, en producción de Play en 178 países, y la 24 de iPhone se habían compilado entre el 15 y el 17 nov, antes del arreglo del 18 nov (`d5743e1a1f`); el 18 nov solo se recompilaron cliente y Driver.
+- **Cómo se confirmó:** se bajó de Play el paquete de la 18 (API `generatedApks`) y dentro están los textos de la franja; su configuración apunta a producción. El fallo era solo la franja pintada.
+- **Arreglo:** Restaurants recompilada en la Mac desde la punta de main y comprobada en el emulador antes de subir.
+- **Candado nuevo:** `scripts/tiendas/sin-franja.mjs` (`exigirSinFranja`) es la única puerta; la usan `publicar-google-play.mjs` (producción) y `subir-google-play.mjs` (cualquier otra pista, ahora también como versión completa con nombre). La prueba `candadoFranjaSoloEnPruebas.test.ts` falla si aparece un guion en `scripts/tiendas` que suba un paquete (`/bundles`) sin pasar antes por esa puerta.
+- **No tocar / recordar:** cuando se arregla algo de `packages/movil` que afecta a las tres apps, se recompilan LAS TRES, no solo las dos más usadas. En iPhone no hay comprobación automática del archivo antes de TestFlight: la cubren las pruebas de la causa (la franja se decide al pintar) y la comprobación de Android sobre el mismo código.
+
 ## C-PERFIL-PERU — Perú es su propio sistema: soles, Ica, Yape y Plin, comisión sin aprobar (19 nov 2026, Richard) — Perú
 
 - **Qué es:** el país Perú en una sola pieza. Moneda `PEN` (`paises.ts`, `dinero.ts`); perfil `PERU` en `packages/compartido/src/perfilPasajeros.ts` (efectivo, Yape y Plin; papeles revisados por el equipo; `TARIFA_MOTO_PERU` y `TARIFA_CARRO_PERU`, que redondean a 10 céntimos); `packages/compartido/src/perfilPeru.ts` (`CIUDAD_ICA` = `PE-ICA-ICA`, hora de Lima, puntos de interés, DNI, celular +51 y placa). Ficha: `docs/investigaciones-rea/2026-11-19-ica-peru.md`.
