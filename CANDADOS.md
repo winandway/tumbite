@@ -5763,3 +5763,11 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Presupuesto de escrituras:** una fila por solicitud, por pedido y por emergencia; nada se escribe por mirar. Las listas leen una vez por pantalla.
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/lineas.test.ts apps/repartidor/src/grandes/miLinea.test.ts apps/panel/src/sitio/RegistraLinea.test.tsx`. Comprobado en rojo: con la comprobación de ciudad y el tope diario apagados, fallan «el código solo vale en la ciudad de la línea» y «tope por conductor y por día».
 - **Qué NO tocar:** no crear una línea sin pasar por `crearLinea`/aprobación; no meter a un conductor a una línea sin que el líder acepte (salvo mover desde el superadmin o adoptar a los invitados del líder al crearla); no mezclar las líneas con los premios de referidos; no quitar el aviso a la línea de `avisarResponsableZona`; no subir los topes sin autorización escrita de Richard; ningún dato real (celulares, nombres, códigos) en capturas ni en Docs.
+
+## C-REGALO-VIAJE-REAL en el cierre de Driver (19 nov 2026) — todos los países
+
+- **Qué pasaba:** cuando el servidor dejaba el regalo de un viaje en revisión del equipo, el cierre «Viaje terminado» de Driver seguía diciendo en verde «Divoox te paga X · va a tus ganancias al terminar». En ese momento no era cierto: el regalo todavía no se acredita.
+- **Causa:** el servidor ya respondía `regaloEnRevision` al terminar, pero la pantalla del cierre no lo miraba.
+- **Arreglo:** `apps/repartidor/src/viajes/ViajeActivo.tsx` lee `regaloEnRevision` de la respuesta del cierre y, cuando viene en verdadero, pinta en color de aviso «Divoox está revisando este regalo» con su línea de ayuda (textos en español e inglés en `textos.ts`), en vez de la línea verde.
+- **Prueba:** `apps/repartidor/src/viajes/regaloEnRevisionCierre.test.ts`, comprobada en rojo antes del cambio.
+- **No tocar:** el verde es solo para un regalo que sí se acredita; lo que está en revisión nunca promete dinero.
