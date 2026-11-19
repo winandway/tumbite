@@ -25,7 +25,10 @@ const rv = await build({
 const { VIDEOS } = await import(
   `data:text/javascript;base64,${Buffer.from(rv.outputFiles[0].text).toString('base64')}`
 );
-const conVideo = new Set(VIDEOS.map((v) => v.guia));
+// Por idioma: un video solo en español no se ofrece en inglés.
+const conVideo = new Set(
+  VIDEOS.flatMap((v) => [`es:${v.guia}`, ...(v.en ? [`en:${v.guia}`] : [])]),
+);
 
 const r = await build({
   entryPoints: [join(raiz, 'apps', 'panel', 'src', 'sitio', 'docs', 'guias.ts')],
@@ -54,7 +57,7 @@ for (const idioma of ['es', 'en']) {
         pasos: (g.pasos ?? []).map((p) => corto(p, 320)),
         // Lo que explica la guía, para buscar por palabras (no se muestra entero).
         cuerpo: corto((g.explicacion ?? []).join(' '), 1600),
-        ...(conVideo.has(`${s.id}/${g.id}`) ? { video: true } : {}),
+        ...(conVideo.has(`${idioma}:${s.id}/${g.id}`) ? { video: true } : {}),
       });
     }
   }

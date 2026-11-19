@@ -7,7 +7,14 @@ import { BotonGooglePlay } from './Tiendas';
 import { CIUDADES, COCINAS, PAISES, REGIONES } from './cobertura';
 import { TEXTOS_SITIO } from './textos';
 import { useCiudadesEnVivo } from './ciudadesEnVivo';
-import { CANAL_YOUTUBE, TEXTOS_VIDEO, VIDEOS, type VideoDocs, canalConVideos } from './docs/videos';
+import {
+  CANAL_YOUTUBE,
+  TEXTOS_VIDEO,
+  VIDEOS,
+  type VideoDocs,
+  canalConVideos,
+  videosEnIdioma,
+} from './docs/videos';
 
 /**
  * Pie de página: fondo oscuro con muchos enlaces reales (estilo DoorDash, bueno para el SEO)
@@ -16,7 +23,7 @@ import { CANAL_YOUTUBE, TEXTOS_VIDEO, VIDEOS, type VideoDocs, canalConVideos } f
  */
 export function Pie({
   idioma,
-  videos = VIDEOS,
+  videos: todosLosVideos = VIDEOS,
 }: {
   idioma: Idioma;
   /** C-DOCS-VIDEO: los videos de Docs (por defecto, los publicados). */
@@ -24,6 +31,7 @@ export function Pie({
 }) {
   const t = enIdioma(TEXTOS_SITIO, idioma).pie;
   const tv = enIdioma(TEXTOS_VIDEO, idioma);
+  const videos = videosEnIdioma(todosLosVideos, idioma);
   const [pestana, setPestana] = useState<'ciudades' | 'paises' | 'cocinas'>('ciudades');
   const pronto = (
     <span className="pie-pronto">

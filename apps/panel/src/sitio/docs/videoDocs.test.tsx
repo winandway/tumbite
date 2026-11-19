@@ -26,7 +26,14 @@ import {
  * ciudades ni nombres reales.
  */
 const RAIZ = join(__dirname, '..', '..', '..', '..', '..');
-const MUESTRA: VideoDocs = {
+const MUESTRA_EN = {
+  titulo: 'Request a moto ride in one minute',
+  descripcion: 'How to request your first moto ride, step by step.',
+  archivo: 'ride-moto-in-a-minute-en-9f8e7d6c.mp4',
+  portada: '/docs/video-ride-moto-in-a-minute-en.webp',
+  texto: ['Open Divoox and tap Moto.', 'Choose where you’re going and confirm the price first.'],
+};
+const MUESTRA: VideoDocs & { en: typeof MUESTRA_EN } = {
   id: 'ride-moto-in-a-minute',
   tema: 'customers',
   guia: 'ordering/ride-moto',
@@ -40,13 +47,7 @@ const MUESTRA: VideoDocs = {
     portada: '/docs/video-ride-moto-in-a-minute-es.webp',
     texto: ['Abre Divoox y toca Moto.', 'Elige a dónde vas y confirma el precio antes de pedir.'],
   },
-  en: {
-    titulo: 'Request a moto ride in one minute',
-    descripcion: 'How to request your first moto ride, step by step.',
-    archivo: 'ride-moto-in-a-minute-en-9f8e7d6c.mp4',
-    portada: '/docs/video-ride-moto-in-a-minute-en.webp',
-    texto: ['Open Divoox and tap Moto.', 'Choose where you’re going and confirm the price first.'],
-  },
+  en: MUESTRA_EN,
 };
 const GUIAS = new Set(DOCS.es.flatMap((s) => s.guias.map((g) => `${s.id}/${g.id}`)));
 const html = (ruta: string, videos: readonly VideoDocs[], idioma: 'es' | 'en' = 'es') =>
@@ -59,7 +60,7 @@ describe('C-DOCS-VIDEO · la lista real de videos', () => {
 
   it('cada portada (y cada archivo de subtítulos) está en el sitio', () => {
     for (const v of VIDEOS)
-      for (const x of [v.es, v.en])
+      for (const x of [v.es, ...(v.en ? [v.en] : [])])
         for (const archivo of [x.portada, ...(x.subtitulos ? [x.subtitulos] : [])])
           expect(
             existsSync(join(RAIZ, 'apps', 'panel', 'public', archivo)),
@@ -69,7 +70,7 @@ describe('C-DOCS-VIDEO · la lista real de videos', () => {
 
   it('las guías existen igual en inglés', () => {
     const en = new Set(DOCS.en.flatMap((s) => s.guias.map((g) => `${s.id}/${g.id}`)));
-    for (const v of VIDEOS) expect(en.has(v.guia), v.id).toBe(true);
+    for (const v of VIDEOS) if (v.en) expect(en.has(v.guia), v.id).toBe(true);
   });
 });
 
@@ -223,6 +224,37 @@ describe('C-DOCS-VIDEO · la página «Videos»', () => {
   });
 });
 
+describe('C-DOCS-VIDEO · un video solo en español (Richard, 19 nov 2026)', () => {
+  const soloEs: VideoDocs = { ...MUESTRA, en: undefined };
+
+  it('es válido sin la versión en inglés', () => {
+    expect(fallasDeVideos([soloEs], GUIAS)).toEqual([]);
+  });
+
+  it('en español se ve; en la guía en inglés NO (sería un video en el idioma equivocado)', () => {
+    expect(html('/docs/ordering/ride-moto', [soloEs])).toContain('docs-video');
+    const ingles = html('/docs/ordering/ride-moto', [soloEs], 'en');
+    expect(ingles).not.toContain('docs-video');
+    expect(ingles).not.toContain('Pide una moto');
+  });
+
+  it('la página «Videos» y su enlace existen en español y no en inglés', () => {
+    expect(html('/docs/videos', [soloEs])).toContain('<h1>Videos</h1>');
+    expect(html('/docs/videos', [soloEs], 'en')).toContain('role="alert"');
+    expect(html('/docs', [soloEs], 'en')).not.toContain('/docs/videos');
+    expect(renderToString(<Pie idioma="en" videos={[soloEs]} />)).not.toContain('/docs/videos');
+    expect(renderToString(<Pie idioma="es" videos={[soloEs]} />)).toContain('/docs/videos');
+  });
+
+  it('el prerender no crea la página en inglés ni anuncia una versión que no existe', () => {
+    const guion = readFileSync(join(RAIZ, 'apps', 'panel', 'scripts', 'prerender.mjs'), 'utf8');
+    expect(guion).toContain(
+      "if (ruta === '/docs/videos' && !videosEnIdioma(VIDEOS, lengua).length) continue;",
+    );
+    expect(guion).toContain("ruta === '/docs/videos' && !videosEnIdioma(VIDEOS, 'en').length");
+  });
+});
+
 describe('C-DOCS-VIDEO · el canal de YouTube', () => {
   const CANAL = 'href="https://www.youtube.com/@divoox-com"';
   const subido = { ...MUESTRA, es: { ...MUESTRA.es, youtube: 'abcDEF_1234' } };
@@ -285,7 +317,9 @@ describe('C-DOCS-VIDEO · los datos para Google', () => {
   it('el prerender escribe esos datos en la guía y en la página «Videos», y solo si hay videos', () => {
     const guion = readFileSync(join(RAIZ, 'apps', 'panel', 'scripts', 'prerender.mjs'), 'utf8');
     expect(guion).toContain("...(VIDEOS.length ? ['/docs/videos'] : [])");
-    expect(guion).toMatch(/videosDeGuia\(VIDEOS, `\$\{seccion\.id\}\/\$\{guia\.id\}`\)\.map/);
+    expect(guion).toContain(
+      'videosDeGuia(videosEnIdioma(VIDEOS, idioma), `${seccion.id}/${guia.id}`)',
+    );
     expect(guion).toContain("if (ruta === '/docs/videos')");
   });
 });

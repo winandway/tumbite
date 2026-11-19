@@ -9,7 +9,7 @@ import { ICONOS_GUIA, nombreIconoGuia } from './iconosGuia';
 import { buscarGuias, resaltar } from './buscar';
 import { CapturasConLupa } from './Lupa';
 import { PaginaVideos, VideoDeDocs } from './VideoDocs';
-import { TEXTOS_VIDEO, VIDEOS, type VideoDocs, videosDeGuia } from './videos';
+import { TEXTOS_VIDEO, VIDEOS, type VideoDocs, videosDeGuia, videosEnIdioma } from './videos';
 
 /** Cuántas sugerencias muestra la lista que se abre mientras se escribe. */
 const SUGERENCIAS = 20;
@@ -63,7 +63,7 @@ function SimbolosIconosGuia() {
 export function Docs({
   ruta,
   idioma,
-  videos = VIDEOS,
+  videos: todosLosVideos = VIDEOS,
 }: {
   ruta: string;
   idioma: Idioma;
@@ -72,6 +72,8 @@ export function Docs({
 }) {
   const t = enIdioma(TEXTOS_DOCS, idioma);
   const tv = enIdioma(TEXTOS_VIDEO, idioma);
+  // C-DOCS-VIDEO: en cada idioma, solo los videos que existen en ese idioma.
+  const videos = videosEnIdioma(todosLosVideos, idioma);
   const secciones = enIdioma(DOCS, idioma);
   const [seccionId, guiaId] = ruta.replace(/^\/docs\/?/, '').split('/');
   // «¿Cómo hago…?»: todas las preguntas de la gente, cada una con el enlace a su guía.

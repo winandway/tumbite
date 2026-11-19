@@ -50,7 +50,12 @@ export type VideoDocs = {
   /** El día en que se publicó, AAAA-MM-DD (lo pide Google). */
   publicado: string;
   es: VideoEnIdioma;
-  en: VideoEnIdioma;
+  /**
+   * Opcional (Richard, 19 nov 2026): un video para un público que solo habla español (las líneas de
+   * mototaxi) va solo en español. Sin `en`, la guía y la página «Videos» en inglés van sin él: un
+   * video en español en una página en inglés es el idioma equivocado (C-CAPTURAS-POR-IDIOMA).
+   */
+  en?: VideoEnIdioma;
 };
 
 /** Los videos publicados. Vacía hasta que entre el primero: la página «Videos» no se publica vacía. */
@@ -101,9 +106,13 @@ export const CANAL_YOUTUBE = 'https://www.youtube.com/@divoox-com';
  * subido ahí: no se manda a nadie a un canal vacío (C-SOLO-LO-TERMINADO).
  */
 export const canalConVideos = (videos: readonly VideoDocs[]) =>
-  videos.some((v) => Boolean(v.es.youtube ?? v.en.youtube));
+  videos.some((v) => Boolean(v.es.youtube ?? v.en?.youtube));
 
 /** Los videos de una guía («seccion/guia»), en el orden de la lista. */
+/** Los videos que tienen versión en ese idioma (los únicos que se muestran en esa lengua). */
+export const videosEnIdioma = (videos: readonly VideoDocs[], idioma: Idioma) =>
+  idioma === 'en' ? videos.filter((v) => v.en) : videos;
+
 export const videosDeGuia = (videos: readonly VideoDocs[], guia: string) =>
   videos.filter((v) => v.guia === guia);
 
@@ -132,7 +141,7 @@ export function duracionIso(segundos: number) {
  * `dominio` sin barra final; `pagina` es la dirección completa de la página donde se ve.
  */
 export function datosDeVideo(v: VideoDocs, idioma: Idioma, dominio: string, pagina: string) {
-  const x = idioma === 'en' ? v.en : v.es;
+  const x = (idioma === 'en' ? v.en : undefined) ?? v.es;
   const youtube = direccionYoutube(x);
   return {
     '@context': 'https://schema.org',
@@ -184,8 +193,8 @@ export function fallasDeVideos(videos: readonly VideoDocs[], guias: ReadonlySet<
     if (!(v.segundos > 0)) mal('falta la duración');
     if (!FECHA.test(v.publicado)) mal('la fecha va como AAAA-MM-DD');
     for (const idioma of ['es', 'en'] as const) {
-      // eslint-disable-next-line security/detect-object-injection -- los dos idiomas fijos
-      const x = v[idioma];
+      const x = idioma === 'en' ? v.en : v.es;
+      if (!x) continue;
       if (!x.titulo.trim() || !x.descripcion.trim())
         mal(`${idioma}: falta el título o la descripción`);
       if (!ARCHIVO.test(x.archivo)) mal(`${idioma}: el archivo va como <nombre>-<huella>.mp4`);
@@ -199,7 +208,8 @@ export function fallasDeVideos(videos: readonly VideoDocs[], guias: ReadonlySet<
       if (x.subtitulos !== undefined && x.subtitulos !== `/docs/video-${v.id}-${idioma}.vtt`)
         mal(`${idioma}: los subtítulos van en /docs/video-${v.id}-${idioma}.vtt`);
     }
-    if (v.es.archivo === v.en.archivo) mal('el video en inglés es el mismo archivo que en español');
+    if (v.es.archivo === v.en?.archivo)
+      mal('el video en inglés es el mismo archivo que en español');
   }
   return fallas;
 }

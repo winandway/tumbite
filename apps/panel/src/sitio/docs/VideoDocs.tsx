@@ -38,7 +38,8 @@ export function VideoDeDocs({
   guia?: { titulo: string; a: string };
 }) {
   const t = enIdioma(TEXTOS_VIDEO, idioma);
-  const x = enIdioma(video, idioma);
+  // En inglés solo se llega aquí si el video tiene su versión en inglés (videosEnIdioma).
+  const x = (idioma === 'en' ? video.en : undefined) ?? video.es;
   const [viendo, setViendo] = useState(false);
   // Quien llega con el ancla del video (el enlace «Ver el video» de Camila) cae en el video: la
   // página se arma después de cargar, así que el navegador solo no lo encuentra a tiempo.

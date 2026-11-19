@@ -37,7 +37,7 @@ const vite = await createServer({
 try {
   const { App } = await vite.ssrLoadModule('/src/App.tsx');
   const { DOCS } = await vite.ssrLoadModule('/src/sitio/docs/guias.ts');
-  const { VIDEOS, datosDeVideo, videosDeGuia } = await vite.ssrLoadModule(
+  const { VIDEOS, datosDeVideo, videosDeGuia, videosEnIdioma } = await vite.ssrLoadModule(
     '/src/sitio/docs/videos.ts',
   );
   const { PAISES, CIUDADES, COCINAS } = await vite.ssrLoadModule('/src/sitio/cobertura.ts');
@@ -98,7 +98,9 @@ try {
     const idioma = lengua === 'es' ? 'es' : 'en';
     // C-DOCS-VIDEO: la página «Videos» lleva los datos de todos sus videos.
     if (ruta === '/docs/videos')
-      return VIDEOS.map((v) => datosDeVideo(v, idioma, DOMINIO, `${canonica}#${v.id}`));
+      return videosEnIdioma(VIDEOS, idioma).map((v) =>
+        datosDeVideo(v, idioma, DOMINIO, `${canonica}#${v.id}`),
+      );
     const m = /^\/docs\/([a-z-]+)\/([a-z0-9-]+)$/.exec(ruta);
     if (!m) return [];
     const seccion = DOCS[lengua === 'es' ? 'es' : 'en'].find((s) => s.id === m[1]);
@@ -138,7 +140,7 @@ try {
         ],
       },
       // C-DOCS-VIDEO: los videos de la guía, para que Google los muestre con su portada.
-      ...videosDeGuia(VIDEOS, `${seccion.id}/${guia.id}`).map((v) =>
+      ...videosDeGuia(videosEnIdioma(VIDEOS, idioma), `${seccion.id}/${guia.id}`).map((v) =>
         datosDeVideo(v, idioma, DOMINIO, canonica),
       ),
       // C-DOCS-SEO: las preguntas que la guía responde, con su respuesta (el resumen y los pasos).
@@ -197,6 +199,8 @@ try {
   const enEspanol = (ruta) => (ruta === '/' ? '/es' : `/es${ruta}`);
   for (const lengua of ['en', 'es'])
     for (const ruta of rutas) {
+      // C-DOCS-VIDEO: la página «Videos» de un idioma existe solo si hay videos en ese idioma.
+      if (ruta === '/docs/videos' && !videosEnIdioma(VIDEOS, lengua).length) continue;
       const url = lengua === 'es' ? enEspanol(ruta) : ruta;
       dom.reconfigure({ url: `${DOMINIO}${url}` });
       dom.window.localStorage.clear();
@@ -288,9 +292,12 @@ try {
         .replace(
           '</head>',
           () =>
-            `<link rel="alternate" hreflang="en" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
-            `<link rel="alternate" hreflang="es" href="${DOMINIO}${enEspanol(ruta)}" />` +
-            `<link rel="alternate" hreflang="x-default" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
+            // La página «Videos» solo en español no anuncia una versión en inglés que no existe.
+            (ruta === '/docs/videos' && !videosEnIdioma(VIDEOS, 'en').length
+              ? `<link rel="alternate" hreflang="es" href="${DOMINIO}${enEspanol(ruta)}" />`
+              : `<link rel="alternate" hreflang="en" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />` +
+                `<link rel="alternate" hreflang="es" href="${DOMINIO}${enEspanol(ruta)}" />` +
+                `<link rel="alternate" hreflang="x-default" href="${DOMINIO}${ruta === '/' ? '/' : ruta}" />`) +
             [...datosDe(ruta, lengua), ...datosDeGuia(ruta, lengua, canonica)]
               .map(
                 (d) =>
