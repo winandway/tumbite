@@ -4044,6 +4044,19 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `GET /datos/kyc` trae `antecedentesPorProveedor` según el perfil del país; Driver (`Verificacion.tsx`) esconde el bloque si es `false` (una app vieja sin el campo lo sigue mostrando).
 - **Prueba:** `motoVenezuelaRevision.test.ts` (C-ANTECEDENTES-POR-PAIS), vista en rojo.
 
+## C-PRUEBAS-OTRO-PAQUETE · La app de pruebas de Android es otra app; Google Play nunca recibe una de pruebas (18 nov 2026, aprobado por Gerencia) — todos los países
+
+- **Qué pasó:** Richard instaló por enlace la app de pruebas de Android y después Google Play no pudo poner encima la de la tienda (mismo paquete, otra firma): seguía abriendo la de pruebas, con la franja «PRUEBAS».
+- **Arreglo (a):** el perfil «pruebas» de Android compila con OTRO paquete y otro nombre, por configuración dinámica (`scripts/tiendas/perfil-pruebas.cjs`, la usan los tres `app.config.js`; se activa solo con `EAS_BUILD_PROFILE=pruebas` y `EAS_BUILD_PLATFORM=android`, en la nube y en esta Mac):
+  - `com.windoce.tumbite.pruebas` → «Divoox Pruebas»
+  - `com.windoce.tumbite.driver.pruebas` → «Driver Pruebas»
+  - `com.windoce.tumbite.restaurants.pruebas` → «Restaurants Pruebas»
+  - Ícono con la banda «PRUEBAS» (`apps/<app>/assets/pruebas/icon.png` y `android-icon-foreground.png`, banda dentro de la zona segura del ícono adaptable), generado desde los vectores de identidad-divoox con `node scripts/marca/generar-iconos-pruebas.mjs` (nunca a mano).
+  - Producción e iPhone NO cambian (en iPhone el perfil de pruebas sigue con «… PRUEBAS» en el nombre, como antes).
+  - El archivo de avisos (`GOOGLE_SERVICES_JSON`, en esta Mac `~/.config/tumbite/google-services.json`) TIENE que traer el paquete de pruebas: si no, la compilación se detiene con «El archivo de avisos de Android (…) no trae el paquete … Hay que darlo de alta en Firebase…». Hoy (18 nov) el archivo trae solo los tres de la tienda: hay que dar de alta los tres `.pruebas` en Firebase (proyecto divoox-apps) y agregar los tres a las restricciones de la llave del mapa de Android con sus huellas de la firma de Expo.
+- **Arreglo (b):** `scripts/tiendas/candado-play.mjs`, llamado por la pieza única `google-play.mjs` antes de mandar cualquier `.aab` o `.apk` (todos los guiones de subida pasan por ahí): se niega a subir a CUALQUIER pista si el paquete termina en `.pruebas` o si el contenido (descomprimido, sin librerías) dice `staging.tumbite.com` o el paquete de pruebas.
+- **Pruebas (c):** `packages/compartido/src/candadoPruebasOtroPaquete.test.ts` (8): staging comprimido dentro del archivo, paquete de pruebas por nombre y dentro del archivo (UTF-16), producción pasa, el candado está en la pieza única; el perfil da otro paquete, nombre e ícono, no compila sin el paquete en el archivo de avisos, producción e iPhone no cambian, las tres apps lo usan.
+
 ## C-PORTADA-SOLO-ABIERTOS y C-BANNERS-SOLO-ABIERTOS · La portada y los banners solo anuncian servicios abiertos en la ciudad (18 nov 2026) — todos los países
 
 - **Qué se vio:** en el sitio de pruebas el banner de demostración de mercado («Tu súper sin salir de casa») se servía en una ciudad sin mercado. Y la portada de fábrica del inicio (`portadaRespaldo`) tenía tres fallos: contaba Comida siempre como abierta (`serviciosDelInicio` la rellena para la grilla aunque la ciudad no la tenga), sin ningún servicio caía en la de comida, y mientras cargaba el catálogo se veía un instante la de comida.

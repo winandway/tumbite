@@ -4,6 +4,7 @@ import { createSign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { revisarArchivoParaPlay } from './candado-play.mjs';
 
 const BASE = 'https://androidpublisher.googleapis.com';
 
@@ -33,6 +34,10 @@ export async function googlePlay(paquete) {
 
   /** Llama a la API; `ruta` va después de applications/<paquete>. Falla con el mensaje de Google. */
   const pedir = async (ruta, { metodo = 'POST', json, binario, subir = false, tipo } = {}) => {
+    // C-PRUEBAS-OTRO-PAQUETE: ninguna pista recibe un archivo de pruebas (paquete «.pruebas» o
+    // contenido que apunta a staging). Aquí pasa toda subida de .aab o .apk de todos los guiones.
+    if (subir && binario && /\/(bundles|apks)$/.test(ruta))
+      revisarArchivoParaPlay(paquete, binario);
     const url = `${BASE}${subir ? '/upload' : ''}/androidpublisher/v3/applications/${paquete}${ruta}${subir ? '?uploadType=media' : ''}`;
     const r = await fetch(url, {
       method: metodo,

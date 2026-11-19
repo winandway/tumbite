@@ -58,7 +58,8 @@ export default tseslint.config(
   },
   {
     // Complementos de configuración de Expo: Node con módulos clásicos (los lee «expo prebuild»).
-    files: ['plugins/**/*.js'],
+    // C-PRUEBAS-OTRO-PAQUETE: la pieza del perfil de pruebas que leen los app.config.js de Expo.
+    files: ['plugins/**/*.js', 'scripts/tiendas/*.cjs'],
     languageOptions: { sourceType: 'commonjs', globals: { ...globals.node } },
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
