@@ -4394,6 +4394,9 @@ CREATE TABLE IF NOT EXISTS camila_gasto (
   llamadas INTEGER NOT NULL DEFAULT 0,
   regalos INTEGER NOT NULL DEFAULT 0,
   avisado INTEGER NOT NULL DEFAULT 0,
+  -- Capturas de reportes de fallo guardadas hoy (tope por día) y si ya salió el resumen diario de fallos.
+  capturas INTEGER NOT NULL DEFAULT 0,
+  resumen_fallos INTEGER NOT NULL DEFAULT 0,
   -- Fichas anónimas nuevas del chat de la web y correos de «caso nuevo» al equipo, con tope por día.
   anonimos INTEGER NOT NULL DEFAULT 0,
   casos INTEGER NOT NULL DEFAULT 0,
@@ -4422,4 +4425,62 @@ CREATE TABLE IF NOT EXISTS camila_codigos (
   codigo_hash TEXT NOT NULL,
   intentos INTEGER NOT NULL DEFAULT 0,
   vence_en TEXT NOT NULL
+) WITHOUT ROWID;
+
+-- C-CAMILA-FALLOS (18 nov 2026, Richard): Camila es la fuente para autorrepararnos. Cuando alguien
+-- describe algo que falla, abre un REPORTE DE FALLO: pregunta como un técnico, pide una captura y adjunta
+-- sola el contexto. Los reportes parecidos se agrupan en UN fallo con contador (camila_fallos).
+CREATE TABLE IF NOT EXISTS camila_fallos (
+  id TEXT PRIMARY KEY,
+  huella TEXT NOT NULL UNIQUE,
+  codigo TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  titulo TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'nuevo' CHECK (estado IN ('nuevo', 'arreglado')),
+  reportes INTEGER NOT NULL DEFAULT 0,
+  primera_vez TEXT NOT NULL DEFAULT (datetime('now')),
+  ultima_vez TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Cuántos reportes de este fallo ya leyó una sesión de desarrollo por la puerta con token.
+  entregados INTEGER NOT NULL DEFAULT 0,
+  arreglado_en TEXT,
+  arreglado_por TEXT,
+  nota_arreglo TEXT NOT NULL DEFAULT ''
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS camila_fallos_recientes ON camila_fallos(estado, ultima_vez);
+CREATE TABLE IF NOT EXISTS camila_reportes_fallo (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  fallo_id TEXT,
+  tipo TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'preguntando' CHECK (estado IN ('preguntando', 'captura', 'completo', 'cancelado')),
+  paso INTEGER NOT NULL DEFAULT 0,
+  inicial TEXT NOT NULL,
+  -- Las preguntas que se le hicieron (fijadas al abrir el reporte) y lo que contestó, como DATO.
+  preguntas_json TEXT NOT NULL DEFAULT '[]',
+  respuestas_json TEXT NOT NULL DEFAULT '[]',
+  -- Lo que Camila adjunta sola: versión de la app, aparato, idioma, ciudad, viaje o pedido, errores, hora.
+  contexto_json TEXT NOT NULL DEFAULT '{}',
+  -- La captura vive en el almacén privado (camila-fallos/<reporte>): se borra a los 90 días o con la cuenta.
+  captura_clave TEXT,
+  captura_tipo TEXT,
+  avisado_arreglo INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  -- El último movimiento: un reporte abierto sin movimiento en 30 minutos se cierra solo.
+  actualizado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  completo_en TEXT
+) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS camila_reportes_persona ON camila_reportes_fallo(persona_id, estado);
+-- Como mucho UN reporte abierto por persona.
+CREATE UNIQUE INDEX IF NOT EXISTS camila_reportes_abierto ON camila_reportes_fallo(persona_id) WHERE estado IN ('preguntando', 'captura');
+CREATE INDEX IF NOT EXISTS camila_reportes_fallo_id ON camila_reportes_fallo(fallo_id);
+-- Preguntas de diagnóstico que el equipo agrega por tipo de fallo. Camila usa solo las aprobadas.
+CREATE TABLE IF NOT EXISTS camila_preguntas (
+  id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  pregunta_es TEXT NOT NULL,
+  pregunta_en TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'propuesta' CHECK (estado IN ('propuesta', 'aprobada', 'retirada')),
+  propuesta_por TEXT,
+  decidido_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 ) WITHOUT ROWID;
