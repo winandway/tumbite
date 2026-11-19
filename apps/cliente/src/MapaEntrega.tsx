@@ -68,8 +68,8 @@ export function MapaEntrega({
   const mapa = useRef<MapView>(null);
   const puntos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
 
-  const vistaLlegada = useVistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
-  const llegada = vistaPrevia ? null : vistaLlegada;
+  // También en el mapa pequeño de vista previa (sin gestos, pero se acerca solo al llegar).
+  const llegada = useVistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
   // El encuadre corre también cuando el mapa termina de cargar (antes, en Android, a veces se
   // perdía porque corría con el mapa todavía sin cargar).
   const [listo, setListo] = useState(false);

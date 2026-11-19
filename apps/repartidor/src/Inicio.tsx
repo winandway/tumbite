@@ -57,7 +57,7 @@ import { Seguridad } from './grandes/Seguridad';
 import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisViajesConductor } from './viajes/MisViajesConductor';
-import { viajeEnPantalla } from './viajes/cierreViaje';
+import { type CierreViaje, cierreVigente, pantallaViaje } from './viajes/cierreViaje';
 import { ClientesFijos } from './viajes/ClientesFijos';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
@@ -117,7 +117,7 @@ const RUTA_FLEX_ACTIVA = ['ofrecida', 'asignada', 'aceptada', 'en_carga', 'en_cu
 import { type OfertaViaje, OfertaViajeModal } from './viajes/OfertaViaje';
 import { claveOferta, ofertaParaMostrar } from './viajes/ofertaTiempo';
 import { pararAlarmaOferta } from './sonidoOferta';
-import { type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
+import { type RespuestaCierre, type ViajeConductor, ViajeActivo } from './viajes/ViajeActivo';
 import {
   abrirPagina,
   abrirPanel,
@@ -606,12 +606,23 @@ export function Inicio() {
   // Divoox Moto (M4): la oferta de un viaje y el viaje en curso (otra operación, no un pedido).
   const [ofertasViaje, setOfertasViaje] = useState<OfertaViaje[]>([]);
   const [viajeActivo, setViajeActivo] = useState<ViajeConductor | null>(null);
-  // C-CIERRE-VIAJE-QUEDA: el viaje cuya pantalla de cierre está abierta (cobro y calificación). Se
-  // sigue pintando hasta «Listo» aunque el sondeo ya no lo vea; vive solo en memoria (si la app se
-  // reinicia, el conductor no queda atrapado en el cierre).
-  const [viajeEnCierre, setViajeEnCierre] = useState<ViajeConductor | null>(null);
-  const viajeMostrado = viajeEnPantalla(viajeActivo, viajeEnCierre);
+  // C-CIERRE-VIAJE-QUEDA: el cierre del viaje («Viaje terminado» / «Envío entregado»: cobro y
+  // calificación). Se guarda ANTES de mandar el paso final y se sigue pintando hasta «Listo» aunque el
+  // sondeo ya no vea el viaje; vive solo en memoria (si la app se reinicia, nadie queda atrapado).
+  const [cierreViaje, setCierreViaje] = useState<CierreViaje<
+    ViajeConductor,
+    RespuestaCierre
+  > | null>(null);
+  const pantallaDelViaje = pantallaViaje(viajeActivo, cierreViaje);
+  const viajeMostrado = pantallaDelViaje?.viaje ?? null;
+  // Mientras se ve el cierre (el servidor ya no lo cuenta ocupado), las ofertas nuevas van encima.
+  const ofertasSobreCierre = pantallaDelViaje?.modo === 'cierre';
   const scrollLienzo = useRef<ScrollView>(null);
+  // El cierre (cobro en efectivo y calificación) aparece desde arriba, no donde quedó el deslizador.
+  const cierreRespondido = Boolean(cierreViaje?.respondido);
+  useEffect(() => {
+    if (cierreRespondido) scrollLienzo.current?.scrollTo({ y: 0, animated: false });
+  }, [cierreRespondido]);
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
   // C-MOTO-CIUDAD: la ciudad pide la selfie con casco antes de aceptar viajes en moto.
@@ -749,6 +760,8 @@ export function Inicio() {
         .pedir<{ operacion: ViajeConductor | null }>('GET', '/datos/conductor/operaciones/actual')
         .catch(() => ({ operacion: null }));
       setViajeActivo(v.operacion);
+      // C-CIERRE-VIAJE-QUEDA: un viaje NUEVO en curso suelta el cierre del anterior.
+      setCierreViaje((c) => cierreVigente(c, v.operacion));
       setOfertasViaje(
         s.conectado && !s.activo && !v.operacion
           ? (
@@ -2389,6 +2402,44 @@ export function Inicio() {
     );
   }
 
+  // Las hojas de oferta (viaje y comida): en el inicio y, encima de «Viaje terminado», también ahí.
+  // Aceptar una suelta el cierre del viaje anterior.
+  const hojasDeOferta = (
+    <>
+      {ofertaViaje && !ofertaComida ? (
+        <OfertaViajeModal
+          // Una oferta nueva (o la reoferta del mismo viaje, con otro vencimiento) arranca su
+          // cuenta atrás y su sonido desde cero (C-OFERTA-TIEMPO-REAL, C-OFERTA-VENCIDA-SE-CIERRA).
+          key={claveOferta(ofertaViaje)}
+          oferta={ofertaViaje}
+          idioma={idioma}
+          yo={aqui}
+          alAceptar={() => {
+            setCierreViaje(null);
+            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`);
+          }}
+          alRechazar={() =>
+            void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/rechazar`)
+          }
+          alVencer={() => vencer(claveOferta(ofertaViaje))}
+        />
+      ) : null}
+      {ofertaComida ? (
+        <Oferta
+          key={ofertaComida.id}
+          oferta={ofertaComida}
+          idioma={idioma}
+          alAceptar={() => {
+            setCierreViaje(null);
+            void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/aceptar`);
+          }}
+          alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/rechazar`)}
+          alVencer={() => vencer(`comida@${ofertaComida.id}`)}
+        />
+      ) : null}
+    </>
+  );
+
   // ───────── Divoox Moto (M4): el viaje en curso ocupa el inicio, como Uber Driver ─────────
   if (viajeMostrado && vista === 'inicio')
     return lienzo(
@@ -2431,13 +2482,11 @@ export function Inicio() {
           viaje={viajeMostrado}
           yo={aqui}
           alCambiar={() => void cargar()}
-          alCerrar={(abierto) => {
-            setViajeEnCierre(abierto ? viajeMostrado : null);
-            // El cierre (cobro en efectivo y calificación) aparece desde arriba, no donde quedó el
-            // deslizador.
-            if (abierto) scrollLienzo.current?.scrollTo({ y: 0, animated: false });
-          }}
+          cierre={cierreViaje}
+          alCierre={setCierreViaje}
         />
+        {/* C-CIERRE-VIAJE-QUEDA: sobre «Viaje terminado», la oferta nueva con su sonido (como Uber). */}
+        {ofertasSobreCierre ? hojasDeOferta : null}
       </View>,
     );
 
@@ -3382,33 +3431,7 @@ export function Inicio() {
             <Text style={{ color: '#666B73', marginTop: 4 }}>{t.bienvenidaNivel}</Text>
           </View>
         ) : null}
-        {ofertaViaje && !ofertaComida ? (
-          <OfertaViajeModal
-            // Una oferta nueva (o la reoferta del mismo viaje, con otro vencimiento) arranca su
-            // cuenta atrás y su sonido desde cero (C-OFERTA-TIEMPO-REAL, C-OFERTA-VENCIDA-SE-CIERRA).
-            key={claveOferta(ofertaViaje)}
-            oferta={ofertaViaje}
-            idioma={idioma}
-            yo={aqui}
-            alAceptar={() =>
-              void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/aceptar`)
-            }
-            alRechazar={() =>
-              void accionViaje(`/datos/conductor/operaciones/${ofertaViaje.operacionId}/rechazar`)
-            }
-            alVencer={() => vencer(claveOferta(ofertaViaje))}
-          />
-        ) : null}
-        {ofertaComida ? (
-          <Oferta
-            key={ofertaComida.id}
-            oferta={ofertaComida}
-            idioma={idioma}
-            alAceptar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/aceptar`)}
-            alRechazar={() => void accion(`/datos/repartidor/ofertas/${ofertaComida.id}/rechazar`)}
-            alVencer={() => vencer(`comida@${ofertaComida.id}`)}
-          />
-        ) : null}
+        {hojasDeOferta}
         {/* C-CONECTAR-DESLIZANDO: volver de la pausa trae ofertas: se desliza, nunca se toca.
             Pausar (dejar de recibir) sigue siendo un botón. */}
         {estado?.conectado && !activo && estado.pausado ? (

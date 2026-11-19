@@ -167,6 +167,31 @@ export function OfertaViajeModal({
             color={C.exito}
             tamano="grande"
           />
+          {oferta.metodoPago !== 'tarjeta' && oferta.enMano ? (
+            // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: lo que cobra en mano, tan grande como lo que gana,
+            // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
+            <View
+              testID="oferta-viaje-en-mano"
+              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}
+            >
+              <MontoEnMano
+                testID="oferta-en-mano"
+                monto={oferta.enMano}
+                idioma={idioma === 'en' ? 'en' : 'es'}
+                quien="conductor"
+                etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.cobraEnMano}
+                color={C.exito}
+                tamano="grande"
+              />
+            </View>
+          ) : oferta.metodoPago === 'efectivo' ? (
+            <View
+              testID="oferta-viaje-efectivo"
+              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+            >
+              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
+            </View>
+          ) : null}
         </>
       }
       abajo={
@@ -183,31 +208,6 @@ export function OfertaViajeModal({
         </>
       }
     >
-      {oferta.metodoPago !== 'tarjeta' && oferta.enMano ? (
-        // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: lo que cobra en mano, tan grande como lo que gana,
-        // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
-        <View
-          testID="oferta-viaje-en-mano"
-          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}
-        >
-          <MontoEnMano
-            testID="oferta-en-mano"
-            monto={oferta.enMano}
-            idioma={idioma === 'en' ? 'en' : 'es'}
-            quien="conductor"
-            etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.cobraEnMano}
-            color={C.exito}
-            tamano="grande"
-          />
-        </View>
-      ) : oferta.metodoPago === 'efectivo' ? (
-        <View
-          testID="oferta-viaje-efectivo"
-          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
-        >
-          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
-        </View>
-      ) : null}
       {lineas.length ? (
         // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: confianza, viaje fijo y menor, arriba de todo.
         <View

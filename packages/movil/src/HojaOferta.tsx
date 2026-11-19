@@ -7,8 +7,9 @@ import { Modal } from './Hoja';
  * C-HOJA-OFERTA (paquete 13, 19 nov 2026) — todos los países. La hoja de una oferta para el
  * conductor (viaje en moto o carro, envío, pedido de comida), como en Uber Driver y DoorDash Dasher:
  *
- * - `arriba`, siempre a la vista: el título, la cuenta atrás y lo que gana (C-PRECIO-PROTAGONISTA);
- * - `children`, en el medio: lo demás (cobro en mano, regalo, mapa, distancias, direcciones). Si no
+ * - `arriba`, siempre a la vista: el título, la cuenta atrás, lo que gana y lo que cobra en mano
+ *   (C-PRECIO-PROTAGONISTA);
+ * - `children`, en el medio: lo demás (regalo, mapa, distancias, direcciones). Si no
  *   cabe (pantalla baja, letra grande del sistema), se desplaza POR DENTRO;
  * - `abajo`, siempre a la vista: Aceptar y Rechazar.
  *
@@ -16,6 +17,12 @@ import { Modal } from './Hoja';
  * de estado y el de los botones del teléfono. La ventana del Modal mide aparte, por eso lleva su propio
  * `SafeAreaProvider` (así lo indica react-native-safe-area-context para los Modal de Android).
  */
+/**
+ * El medio (mapa, distancias, direcciones, regalo) nunca se aplasta del todo: con pantalla baja y letra
+ * grande del sistema conserva este alto y se desplaza por dentro.
+ */
+const ALTO_MINIMO_MEDIO = 120;
+
 export function HojaOferta({
   testID,
   alCerrar,
@@ -85,7 +92,7 @@ function Contenido({
         <View style={{ gap: 10, paddingBottom: 10 }}>{arriba}</View>
         <ScrollView
           testID={`${testID}-medio`}
-          style={{ flexGrow: 0, flexShrink: 1 }}
+          style={{ flexGrow: 0, flexShrink: 1, minHeight: ALTO_MINIMO_MEDIO }}
           contentContainerStyle={{ gap: 10, paddingBottom: 4 }}
           showsVerticalScrollIndicator
         >

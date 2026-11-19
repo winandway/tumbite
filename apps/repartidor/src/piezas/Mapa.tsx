@@ -62,8 +62,8 @@ export function Mapa({
   // C-MAPA-LLEGADA: a menos de 200 m del destino (el local o la casa) el mapa se acerca solo y el
   // punto muestra el número de la dirección (igual que en la web).
   const destino = casa ?? restaurante ?? null;
-  const vistaLlegada = useVistaDeLlegada(yo, destino);
-  const llegada = vistaPrevia ? null : vistaLlegada;
+  // También en el mapa pequeño de vista previa (sin gestos, pero se acerca solo al llegar).
+  const llegada = useVistaDeLlegada(yo, destino);
   const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
   const cerca = llegada != null;
   // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.

@@ -151,6 +151,39 @@ export function Oferta({
             color={C.exito}
             tamano="grande"
           />
+          {oferta.metodoPago && oferta.metodoPago !== 'tarjeta' && cobro ? (
+            // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: cuánto cobra en mano, tan grande como lo que gana,
+            // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
+            <View
+              testID="oferta-cobro-en-mano"
+              style={{
+                borderWidth: 1,
+                borderColor: '#2a2a2a',
+                borderRadius: 12,
+                padding: 12,
+                gap: 4,
+              }}
+            >
+              <MontoEnMano
+                testID="oferta-cobro-monto"
+                monto={cobro}
+                idioma={idioma === 'en' ? 'en' : 'es'}
+                quien="conductor"
+                etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
+                color={C.exito}
+                tamano="grande"
+              />
+              <Text style={{ color: '#666B73', fontSize: 13 }}>{t.propinaAparte}</Text>
+              {oferta.adelantoLocal ? (
+                <Text style={{ color: '#666B73' }}>
+                  {t.adelantas.replace(
+                    '{monto}',
+                    formatearMonto(oferta.adelantoLocal, oferta.moneda, idioma),
+                  )}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
         </>
       }
       abajo={
@@ -167,39 +200,6 @@ export function Oferta({
         </>
       }
     >
-      {oferta.metodoPago && oferta.metodoPago !== 'tarjeta' && cobro ? (
-        // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: cuánto cobra en mano, tan grande como lo que gana,
-        // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
-        <View
-          testID="oferta-cobro-en-mano"
-          style={{
-            borderWidth: 1,
-            borderColor: '#2a2a2a',
-            borderRadius: 12,
-            padding: 12,
-            gap: 4,
-          }}
-        >
-          <MontoEnMano
-            testID="oferta-cobro-monto"
-            monto={cobro}
-            idioma={idioma === 'en' ? 'en' : 'es'}
-            quien="conductor"
-            etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
-            color={C.exito}
-            tamano="grande"
-          />
-          <Text style={{ color: '#666B73', fontSize: 13 }}>{t.propinaAparte}</Text>
-          {oferta.adelantoLocal ? (
-            <Text style={{ color: '#666B73' }}>
-              {t.adelantas.replace(
-                '{monto}',
-                formatearMonto(oferta.adelantoLocal, oferta.moneda, idioma),
-              )}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
       {oferta.propina > 0 ? (
         <Text style={{ color: '#666B73' }}>
           {t.conPropina} {formatearMonto(oferta.propina, oferta.moneda, idioma)}

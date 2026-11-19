@@ -43,7 +43,7 @@ describe('C-MAPA-SIEMPRE-CLARO: sin edificios en 3D', () => {
 
 describe('C-MAPA-VISTA-PREVIA: el mapa pequeño no se toca', () => {
   for (const archivo of ['apps/repartidor/src/piezas/Mapa.tsx', 'apps/cliente/src/MapaEntrega.tsx'])
-    it(`${archivo}: con vistaPrevia, sin gestos, sin robar el toque y sin el acercamiento de llegada`, () => {
+    it(`${archivo}: con vistaPrevia, sin gestos, sin robar el toque y con el acercamiento de llegada`, () => {
       const s = leer(archivo);
       expect(s).toMatch(/vistaPrevia\?: boolean/);
       expect(s).toMatch(/pointerEvents=\{vistaPrevia \? 'none' : 'auto'\}/);
@@ -55,8 +55,8 @@ describe('C-MAPA-VISTA-PREVIA: el mapa pequeño no se toca', () => {
         'zoomTapEnabled',
       ])
         expect(s).toContain(`${gesto}={!vistaPrevia}`);
-      // Siempre encuadrado en todos los puntos: la vista de llegada no aplica en la vista previa.
-      expect(s).toMatch(/vistaPrevia \? null : /);
+      // C-MAPA-LLEGADA sigue: a menos de 200 m se acerca solo y muestra el número (revisor).
+      expect(s).not.toMatch(/vistaPrevia \? null/);
     });
 
   it('la oferta y el viaje de Driver usan la vista previa; el viaje abre la navegación al tocar', () => {

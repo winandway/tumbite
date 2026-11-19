@@ -36,16 +36,24 @@ describe('C-HOJA-OFERTA: la hoja de la oferta nunca se monta sobre la barra de e
     expect(s).toMatch(/flexShrink: 1/);
   });
 
-  for (const [archivo, ganancia] of [
-    ['apps/repartidor/src/viajes/OfertaViaje.tsx', 'oferta-viaje-ganancia'],
-    ['apps/repartidor/src/grandes/Oferta.tsx', 'oferta-ganancia'],
+  // Revisor (paquete 13): lo que cobra en mano es parte del precio protagonista: va arriba, fijo,
+  // junto a lo que gana; y el medio que se desplaza conserva un alto mínimo útil. En rojo antes: el
+  // cobro en mano estaba en el medio y el medio no tenía alto mínimo.
+  it('el medio conserva un alto mínimo útil aunque la pantalla sea baja y la letra grande', () => {
+    expect(leer('packages/movil/src/HojaOferta.tsx')).toMatch(/minHeight: ALTO_MINIMO_MEDIO/);
+  });
+
+  for (const [archivo, ganancia, enMano] of [
+    ['apps/repartidor/src/viajes/OfertaViaje.tsx', 'oferta-viaje-ganancia', 'oferta-viaje-en-mano'],
+    ['apps/repartidor/src/grandes/Oferta.tsx', 'oferta-ganancia', 'oferta-cobro-en-mano'],
   ] as const)
-    it(`${archivo}: lo que gana arriba y Aceptar/Rechazar abajo, fuera del desplazamiento`, () => {
+    it(`${archivo}: lo que gana y lo que cobra en mano arriba, Aceptar/Rechazar abajo, fuera del desplazamiento`, () => {
       const s = leer(archivo);
       expect(s).toMatch(/<HojaOferta/);
       expect(s).not.toMatch(/<Modal\b/);
       const arriba = s.slice(s.indexOf('arriba={'), s.indexOf('abajo={'));
       expect(arriba).toContain(`testID="${ganancia}"`);
+      expect(arriba).toContain(`testID="${enMano}"`);
       const abajo = s.slice(s.indexOf('abajo={'));
       expect(abajo).toMatch(/<Boton texto=\{t\.aceptar\}/);
       expect(abajo).toMatch(/accessibilityLabel=\{t\.rechazar\}/);

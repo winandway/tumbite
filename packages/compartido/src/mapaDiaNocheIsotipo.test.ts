@@ -142,6 +142,10 @@ describe('al llegar se ven la casa y el repartidor juntos', () => {
     ]) {
       expect(leer(r), r).toContain('useVistaDeLlegada(');
       expect(leer(r), r).toContain('altitudDeZoom(llegada.zoom)');
+      // Paquete 13 (revisor): también en el mapa pequeño de vista previa (oferta, viaje, precio): sin
+      // gestos, pero a menos de 200 m se acerca y muestra el número de la dirección.
+      expect(leer(r), r).toMatch(/const llegada = useVistaDeLlegada\(/);
+      expect(leer(r), r).not.toMatch(/vistaPrevia \? null/);
     }
     for (const r of [
       'apps/cliente/src/MapaEntrega.web.tsx',

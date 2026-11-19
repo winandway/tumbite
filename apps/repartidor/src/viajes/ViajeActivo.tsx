@@ -1,5 +1,6 @@
 import { comoLlegar } from '../comoLlegar';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type CierreViaje, cierreConRespuesta, empezarCierre } from './cierreViaje';
+import { useCallback, useEffect, useState } from 'react';
 import { Linking, Pressable, Switch, TextInput, View } from 'react-native';
 import {
   ErrorApi,
@@ -102,6 +103,15 @@ export type ViajeConductor = {
   viaje_fijo?: number | boolean | null;
 };
 
+/** Lo que devuelve el servidor al cerrar un viaje (el cobro final). */
+export type RespuestaCierre = {
+  totalFinal?: number | null;
+  cobrarEnMano?: number | null;
+  regaloDivoox?: number;
+  referencia?: Referencia | null;
+  enMano?: Monto | null;
+};
+
 /** Una clave nueva por acción: el servidor no repite nada si la app reintenta. */
 const clave = () => `v${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
 
@@ -119,7 +129,8 @@ export function ViajeActivo({
   idioma,
   viaje,
   alCambiar,
-  alCerrar,
+  cierre = null,
+  alCierre = () => undefined,
   yo = null,
 }: {
   api: Api;
@@ -127,10 +138,12 @@ export function ViajeActivo({
   viaje: ViajeConductor;
   alCambiar: () => void;
   /**
-   * C-CIERRE-VIAJE-QUEDA: `true` al entrar a «Viaje terminado» o «Envío entregado» (el inicio lo
-   * sigue pintando aunque el sondeo ya no vea el viaje) y `false` al tocar «Listo».
+   * C-CIERRE-VIAJE-QUEDA: el cierre de este viaje («Viaje terminado» / «Envío entregado»). Vive en
+   * el inicio para sobrevivir a que el sondeo deje de ver el viaje o a que esta pantalla se vuelva a
+   * montar (ver `cierreViaje.ts`). `alCierre` lo guarda, lo completa o lo suelta (`null`).
    */
-  alCerrar?: (abierto: boolean) => void;
+  cierre?: CierreViaje<ViajeConductor, RespuestaCierre> | null;
+  alCierre?: (c: CierreViaje<ViajeConductor, RespuestaCierre> | null) => void;
   /** C-MAPA-VIAJE-DRIVER: dónde está el conductor (para dibujarlo en el mapa del viaje). */
   yo?: { lat: number; lng: number } | null;
 }) {
@@ -202,24 +215,12 @@ export function ViajeActivo({
   // C-VIAJE-PARADAS: «Saltar parada» pide un segundo toque.
   const [saltar, setSaltar] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
-  // C-CIERRE-VIAJE-QUEDA: si el conductor sale de esta pantalla (otra pestaña) con el cierre abierto,
-  // el inicio lo suelta: al volver no queda un viaje ya terminado como si siguiera en curso.
-  const enCierre = useRef(false);
-  const alCerrarRef = useRef(alCerrar);
-  useEffect(() => {
-    enCierre.current = cierre != null;
-    alCerrarRef.current = alCerrar;
-  });
-  useEffect(
-    () => () => {
-      if (enCierre.current) alCerrarRef.current?.(false);
-    },
-    [],
-  );
-  // M7: lo que cobra al terminar (precio fijo + espera + lo que el pasajero debía), del servidor.
-  const [totalFinal, setTotalFinal] = useState<number | null>(null);
-  const [regaloFinal, setRegaloFinal] = useState<number | null>(null);
+  // M7 y C-CIERRE-VIAJE-QUEDA: lo que cobra al terminar (precio fijo + espera + lo que el pasajero
+  // debía), tal como lo devolvió el servidor al cerrar; vive en el cierre del inicio.
+  const respuesta = cierre?.viaje.id === viaje.id ? cierre.respuesta : null;
+  const totalFinal =
+    respuesta?.totalFinal != null ? (respuesta.cobrarEnMano ?? respuesta.totalFinal) : null;
+  const regaloFinal = respuesta?.regaloDivoox ?? null;
   // C-CUPON-DIVOOX: «Cobra X · Divoox te paga Y». Sin regalo, X es el precio de siempre.
   const enMano = viaje.cobrar_en_mano ?? viaje.total;
   const regaloDivoox = regaloFinal ?? viaje.regalo_divoox ?? 0;
@@ -248,8 +249,8 @@ export function ViajeActivo({
       : viaje.metodo_pago === 'pago_movil'
         ? t.cobraPagoMovil
         : t.cobra;
-  const [referenciaFinal, setReferenciaFinal] = useState<Referencia | null>(null);
-  const [enManoFinal, setEnManoFinal] = useState<Monto | null>(null);
+  const referenciaFinal = respuesta?.referencia ?? null;
+  const enManoFinal = respuesta?.enMano ?? null;
   // C-BS-EN-MANO: lo que cobra en mano (con regalo, la diferencia) en dólares y en bolívares. Una app
   // con un servidor viejo (sin `en_mano`) arma el monto en dólares con el equivalente de siempre.
   const idiomaCorto = idioma === 'en' ? 'en' : 'es';
@@ -261,14 +262,17 @@ export function ViajeActivo({
     const local = final ? (referenciaFinal ?? viaje.referencia) : viaje.referencia;
     return { monto, moneda: viaje.moneda ?? 'USD', local: local ?? null, sinTasa: false };
   };
-  const [estrellas, setEstrellas] = useState(0);
+  const estrellas = cierre?.estrellas ?? 0;
+  const setEstrellas = (n: number) => {
+    if (cierre) alCierre({ ...cierre, estrellas: n });
+  };
   /** M8: el conductor califica al pasajero (una vez); después vuelve al inicio. */
   async function calificarYSalir() {
     if (estrellas)
       await api
         .pedir('POST', `/datos/conductor/operaciones/${viaje.id}/calificar`, { estrellas })
         .catch(() => undefined);
-    alCerrar?.(false);
+    alCierre(null);
     alCambiar();
   }
   // La espera corre en la pantalla desde la hora de llegada que guardó el servidor.
@@ -289,32 +293,29 @@ export function ViajeActivo({
     async (nombrePaso: string, cuerpo: unknown = {}, final?: 'terminado' | 'no_show') => {
       setEnviando(true);
       setError('');
+      // C-CIERRE-VIAJE-QUEDA: el cierre se guarda en el inicio ANTES de mandar el paso final; si el
+      // sondeo deja de ver el viaje antes de la respuesta, el inicio no lo suelta.
+      const enCierre = final ? empezarCierre<ViajeConductor, RespuestaCierre>(viaje, final) : null;
+      if (enCierre) alCierre(enCierre);
       try {
-        const r = await api.pedir<{
-          totalFinal?: number | null;
-          cobrarEnMano?: number | null;
-          regaloDivoox?: number;
-          referencia?: Referencia | null;
-          enMano?: Monto | null;
-        }>('POST', `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`, cuerpo, {
-          cabeceras: { 'idempotency-key': clave() },
-        });
+        const r = await api.pedir<RespuestaCierre>(
+          'POST',
+          `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`,
+          cuerpo,
+          { cabeceras: { 'idempotency-key': clave() } },
+        );
         // C-CUPON-DIVOOX: lo que cobra en mano ya descuenta el regalo que paga Divoox.
-        if (r?.totalFinal != null) setTotalFinal(r.cobrarEnMano ?? r.totalFinal);
-        if (r?.regaloDivoox != null) setRegaloFinal(r.regaloDivoox);
-        if (r?.referencia) setReferenciaFinal(r.referencia);
-        if (r?.enMano) setEnManoFinal(r.enMano);
-        if (final) {
-          setCierre(final);
-          alCerrar?.(true);
-        } else alCambiar();
+        if (enCierre) alCierre(cierreConRespuesta(enCierre, r ?? {}));
+        else alCambiar();
       } catch (x) {
+        // El paso no se hizo: el cierre se suelta y vuelve el viaje en curso (o el inicio).
+        if (final) alCierre(null);
         setError(x instanceof ErrorApi ? x.message : String(x));
       } finally {
         setEnviando(false);
       }
     },
-    [api, viaje.id, alCambiar, alCerrar],
+    [api, viaje, alCambiar, alCierre],
   );
 
   // C-PAGO-MOVIL-VIAJE: lo que el conductor ya confirmó del pago móvil (en esta pantalla).
@@ -333,13 +334,15 @@ export function ViajeActivo({
     }
   }
 
-  if (cierre)
+  // C-CIERRE-VIAJE-QUEDA: con el cierre de este viaje ya respondido, la pantalla arranca en él (aunque
+  // se haya vuelto a montar).
+  if (cierre?.respondido && cierre.viaje.id === viaje.id)
     return (
       <View testID="viaje-cerrado" style={{ padding: 20, gap: 14 }}>
         <Text style={{ fontSize: 24, fontWeight: '800', color: C.secundario }}>
-          {cierre === 'terminado' ? t.terminado : t.noShow}
+          {cierre.final === 'terminado' ? t.terminado : t.noShow}
         </Text>
-        {cierre === 'terminado' &&
+        {cierre.final === 'terminado' &&
         (viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
         (totalFinal ?? enMano) != null ? (
           <View
@@ -359,7 +362,7 @@ export function ViajeActivo({
             {lineaRegalo}
           </View>
         ) : null}
-        {cierre === 'terminado' ? (
+        {cierre.final === 'terminado' ? (
           <View testID="viaje-calificar-pasajero" style={{ gap: 6 }}>
             <Text style={{ fontWeight: '800', color: C.secundario }}>{t.califica}</Text>
             <View style={{ flexDirection: 'row', gap: 6 }}>
