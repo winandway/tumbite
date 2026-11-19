@@ -75,7 +75,7 @@ import { tarifasDeZona, tarifasDelPedido, topesDeZona } from '../internacional/t
 import { paisDeZona } from '../internacional/paises';
 import { aparatoDe } from './regalosDivoox';
 import { apartarRegalo, esCodigoRegalo, regaloDeCodigo } from '../regalosDivoox';
-import { referenciaDePedido, tasaParaFijar } from './tasasReferencia';
+import { enManoDePedido, referenciaDePedido, tasaParaFijar } from './tasasReferencia';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { exigirCobertura } from '../territorio';
@@ -1126,11 +1126,8 @@ pedidos.post('/pedidos', async (c) => {
   const id = nuevoId();
   // C-BS-EN-MANO (Venezuela): la tasa del día queda FIJADA con el pedido (cliente y repartidor ven el
   // mismo monto en bolívares aunque la tasa cambie después). Solo lee; va en el mismo INSERT.
-  const tasaLocal = await tasaParaFijar(
-    db,
-    (await paisDeZona(db, String(rest.zona_id ?? ZONA_INICIAL))).pais,
-    moneda,
-  );
+  // El país ya se leyó con las tarifas: sin lecturas de más (y ninguna fuera de Venezuela).
+  const tasaLocal = await tasaParaFijar(db, pais, moneda);
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
@@ -1845,7 +1842,12 @@ pedidos.get('/pedidos/:id', async (c) => {
   // C-BS-EN-MANO: con la tasa FIJADA al crear el pedido (la misma que ve el repartidor).
   const referencia =
     f.moneda === 'USD' && f.zona_id ? await referenciaDePedido(db, f, Number(f.total)) : null;
-  return c.json({ pedido: { ...aPedido(f), referencia } });
+  // Con pago al recibir: lo que se paga en mano (sin la propina), lo mismo que cobra el repartidor.
+  const enMano =
+    f.metodo_pago === 'efectivo' || f.metodo_pago === 'transferencia_repartidor'
+      ? await enManoDePedido(db, f, Number(f.total) - Number(f.propina ?? 0))
+      : null;
+  return c.json({ pedido: { ...aPedido(f), referencia, enMano } });
 });
 
 /**

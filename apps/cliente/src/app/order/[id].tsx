@@ -37,6 +37,7 @@ import {
   tipoEtiquetas,
   tituloEtiquetas,
   textoPesoReal,
+  type MontoEnMano as MontoEnManoTipo,
   type Referencia,
   textoReferencia,
   nombreFormaPago,
@@ -55,6 +56,7 @@ import {
   useSesion,
   fotoConCamara,
   Text,
+  MontoEnMano,
   useSondeo,
 } from '@tumbite/movil';
 import { useCarrito } from '../../carrito';
@@ -76,6 +78,8 @@ type Pedido = {
   moneda?: string;
   /** C-COMIDA-VENEZUELA: equivalente en bolívares con la tasa del día (solo informativo). */
   referencia?: Referencia | null;
+  /** C-BS-EN-MANO: lo que se paga en mano (sin la propina), en dólares y en bolívares. */
+  enMano?: MontoEnManoTipo | null;
   direccion: string;
   lat: number | null;
   lng: number | null;
@@ -202,6 +206,7 @@ const T = {
     comentario: 'Cuéntanos más (opcional): qué estuvo bien o qué mejorar',
     pagoAlRecibir: 'Pagas al recibir',
     enEfectivo: 'En efectivo, al repartidor: {monto} (sin contar la propina).',
+    aPagarEnMano: 'A pagar en mano al repartidor',
     transfiereA: 'Transfiere al repartidor {monto} (sin contar la propina) a:',
     cuentaPendiente:
       'El repartidor todavía no tiene una cuenta publicada. Paga en efectivo o espera a que la vea aquí.',
@@ -352,6 +357,7 @@ const T = {
     comentario: 'Tell us more (optional): what was good or what to improve',
     pagoAlRecibir: 'You pay on delivery',
     enEfectivo: 'In cash, to the driver: {monto} (tip not included).',
+    aPagarEnMano: 'To pay the driver in hand',
     transfiereA: 'Transfer {monto} (tip not included) to the driver at:',
     cuentaPendiente:
       'The driver hasn’t published an account yet. Pay in cash or wait until it shows here.',
@@ -1040,12 +1046,23 @@ function SeguirPedido() {
                     {t.cobroConfirmado}
                   </Text>
                 ) : p.metodoPago === 'efectivo' ? (
-                  <Text style={{ color: '#666B73', marginTop: 4 }}>
-                    {t.enEfectivo.replace(
-                      '{monto}',
-                      formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
-                    )}
-                  </Text>
+                  <>
+                    <Text style={{ color: '#666B73', marginTop: 4 }}>
+                      {t.enEfectivo.replace(
+                        '{monto}',
+                        formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
+                      )}
+                    </Text>
+                    {/* C-BS-EN-MANO: lo mismo que cobra el repartidor, en dólares y en bolívares. */}
+                    <MontoEnMano
+                      testID="pedido-en-mano"
+                      monto={p.enMano}
+                      idioma={idioma === 'en' ? 'en' : 'es'}
+                      quien="pasajero"
+                      etiqueta={t.aPagarEnMano}
+                      tamano="grande"
+                    />
+                  </>
                 ) : p.cuentaCobro ? (
                   <>
                     <Text style={{ color: '#666B73', marginTop: 4 }}>
@@ -1054,6 +1071,15 @@ function SeguirPedido() {
                         formatearMonto(p.total - (p.propina ?? 0), moneda, idioma),
                       )}
                     </Text>
+                    <MontoEnMano
+                      testID="pedido-en-mano"
+                      monto={p.enMano}
+                      idioma={idioma === 'en' ? 'en' : 'es'}
+                      quien="pasajero"
+                      etiqueta={t.aPagarEnMano}
+                      tamano="grande"
+                      copiable
+                    />
                     <Text
                       style={{ fontWeight: '700', marginTop: 4, color: C.secundario }}
                       selectable

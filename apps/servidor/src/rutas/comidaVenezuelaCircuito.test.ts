@@ -209,6 +209,15 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
     const estado = await w.e.m.llamar('GET', '/datos/repartidor/estado', undefined, rep.token);
     const aCobrar = Number(f0?.total) - Number(f0?.propina);
     expect(estado.datos.activo.referenciaCobro).toMatchObject({ monto: aCobrar * 250 });
+    // C-BS-EN-MANO: el cliente ve lo MISMO que cobra el repartidor (sin la propina), con la tasa
+    // fijada al crear el pedido aunque el equipo ya la cambió a 300.
+    expect(estado.datos.activo.enManoCobro).toMatchObject({
+      monto: aCobrar,
+      local: { monto: aCobrar * 250, tasa: 250 },
+      sinTasa: false,
+    });
+    const visto2 = await w.e.m.llamar('GET', `/datos/pedidos/${id}`, undefined, w.e.cliente.token);
+    expect(visto2.datos.pedido.enMano).toEqual(estado.datos.activo.enManoCobro);
 
     expect((await w.e.m.entregar(id, rep.token)).estado).toBe(200);
     const cobre = await w.e.m.llamar(

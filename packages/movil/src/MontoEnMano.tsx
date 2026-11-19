@@ -1,4 +1,6 @@
-import { View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, View } from 'react-native';
+import * as Portapapeles from 'expo-clipboard';
 import {
   type MontoEnMano as Monto,
   formatearMonto,
@@ -17,7 +19,20 @@ import { COLOR } from './tokens';
  *
  * `tamano="grande"`: la cifra protagonista de la tarjeta del viaje de Driver (cabe en 360 de ancho y
  * con letra grande del sistema: se achica sola en una línea antes de partirse).
+ *
+ * `copiable`: un botón «Copiar monto» copia los bolívares exactos (sin «Bs.»), para pegarlos en el
+ * pago móvil del banco (revisión del 18 nov 2026).
  */
+const TEXTOS_COPIAR = {
+  es: { copiar: 'Copiar monto en bolívares', copiado: 'Monto copiado' },
+  en: { copiar: 'Copy amount in bolívares', copiado: 'Amount copied' },
+} as const;
+
+/** Los bolívares tal como se escriben en el pago móvil: «205,72» (español) o «205.72» (inglés). */
+export function montoParaCopiar(monto: Monto, idioma: 'es' | 'en'): string {
+  return monto.local ? textoLocal(monto.local, idioma).replace(/^Bs\.\s*/, '') : '';
+}
+
 export function MontoEnMano({
   monto,
   idioma,
@@ -26,6 +41,7 @@ export function MontoEnMano({
   tamano = 'normal',
   color,
   soloLocal = false,
+  copiable = false,
   testID,
 }: {
   monto: Monto | null | undefined;
@@ -36,12 +52,17 @@ export function MontoEnMano({
   color?: string;
   /** Donde el monto en dólares ya se ve al lado: solo los bolívares, la tasa o el aviso sin tasa. */
   soloLocal?: boolean;
+  /** Con un botón para copiar los bolívares exactos (pago móvil). */
+  copiable?: boolean;
   testID?: string;
 }) {
+  const [copiado, setCopiado] = useState(false);
   if (!monto || (soloLocal && !monto.local && !monto.sinTasa)) return null;
   const grande = tamano === 'grande';
+  const t = idioma === 'en' ? TEXTOS_COPIAR.en : TEXTOS_COPIAR.es;
+  const conBoton = copiable && Boolean(monto.local);
   return (
-    <View testID={testID} accessible accessibilityRole="text" style={{ gap: 2 }}>
+    <View testID={testID} accessible={!conBoton} accessibilityRole="text" style={{ gap: 2 }}>
       {etiqueta ? (
         <Text style={{ color: COLOR.textoSuave, fontWeight: '700' }}>{etiqueta}</Text>
       ) : null}
@@ -83,6 +104,33 @@ export function MontoEnMano({
           >
             {textoTasaUsada(monto.local, idioma)}
           </Text>
+          {conBoton ? (
+            <Pressable
+              testID={testID ? `${testID}-copiar` : undefined}
+              accessibilityRole="button"
+              accessibilityLabel={copiado ? t.copiado : t.copiar}
+              hitSlop={8}
+              onPress={() => {
+                void Portapapeles.setStringAsync(montoParaCopiar(monto, idioma))
+                  .then(() => setCopiado(true))
+                  .catch(() => setCopiado(false));
+              }}
+              style={{
+                alignSelf: 'flex-start',
+                marginTop: 6,
+                minHeight: 44,
+                justifyContent: 'center',
+                paddingHorizontal: 14,
+                borderRadius: 999,
+                borderWidth: 1,
+                borderColor: COLOR.bordeFuerte,
+              }}
+            >
+              <Text style={{ fontWeight: '700', color: copiado ? COLOR.exito : COLOR.texto }}>
+                {copiado ? t.copiado : t.copiar}
+              </Text>
+            </Pressable>
+          ) : null}
         </>
       ) : null}
       {monto.sinTasa ? (

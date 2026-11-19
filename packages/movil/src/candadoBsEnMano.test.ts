@@ -34,6 +34,22 @@ describe('C-BS-EN-MANO: la pieza única en cada pantalla donde se cobra o se pag
     );
   });
 
+  it('comida con pago al recibir: el cliente ve lo mismo que cobra el repartidor', () => {
+    const s = leer('apps/cliente/src/app/order/[id].tsx');
+    expect(s).toMatch(/<MontoEnMano\s+testID="pedido-en-mano"[\s\S]{0,120}p\.enMano/);
+  });
+
+  it('pago móvil: los bolívares exactos, grandes y con botón de copiar (conductor y cliente)', () => {
+    const v = leer('apps/repartidor/src/viajes/ViajeActivo.tsx');
+    expect(v).toMatch(/testID="viaje-pago-movil-monto"[\s\S]{0,200}tamano="grande"\s+copiable/);
+    expect(v).not.toMatch(/` \(\$\{textoLocal/);
+    expect(leer('apps/cliente/src/viajes/ViajeEnCurso.tsx')).toMatch(
+      /copiable=\{viaje\.metodoPago === 'pago_movil'/,
+    );
+    const m = leer('packages/movil/src/MontoEnMano.tsx');
+    expect(m).toMatch(/Portapapeles\.setStringAsync\(montoParaCopiar/);
+  });
+
   it('la pieza dice la tasa usada y, sin tasa, lo dice en palabras', () => {
     const s = leer('packages/movil/src/MontoEnMano.tsx');
     expect(s).toMatch(/textoTasaUsada\(monto\.local/);

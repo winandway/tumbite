@@ -4,9 +4,11 @@ import {
   HORAS_VIGENCIA_TASA,
   MONEDA_REFERENCIA,
   type Referencia,
+  type MontoEnMano,
   type TasaFijada,
   aplicaReferencia,
   equivalenteLocal,
+  montoEnMano,
   leerTasaBcv,
   tasaGuardada,
 } from '@tumbite/compartido';
@@ -454,6 +456,19 @@ export async function referenciaDePedido(
   p: { zona_id?: unknown; moneda?: unknown; ref_tasa?: unknown; ref_fecha?: unknown },
   centavos: number,
 ): Promise<Referencia | null> {
+  return (await enManoDePedido(db, p, centavos))?.local ?? null;
+}
+
+/**
+ * C-BS-EN-MANO (revisión del 18 nov 2026): lo que se paga en mano de un pedido de comida (el total sin
+ * la propina), en dólares y en bolívares con la tasa fijada al crearlo, con `sinTasa` si el país la
+ * usa y no hay. Lo ven igual el cliente y el repartidor. Null si el pedido no está en dólares.
+ */
+export async function enManoDePedido(
+  db: D1Database,
+  p: { zona_id?: unknown; moneda?: unknown; ref_tasa?: unknown; ref_fecha?: unknown },
+  centavos: number,
+): Promise<MontoEnMano | null> {
   if (p.moneda !== 'USD' || p.zona_id == null || !Number.isSafeInteger(centavos) || centavos < 0)
     return null;
   const { pais } = await paisDeZona(db, String(p.zona_id));
@@ -461,7 +476,94 @@ export async function referenciaDePedido(
     tasa: p.ref_tasa == null ? null : Number(p.ref_tasa),
     fecha: p.ref_fecha == null ? null : String(p.ref_fecha),
   });
-  return tasa ? { ...tasa, monto: equivalenteLocal(centavos, tasa.tasa) } : null;
+  return montoEnMano(centavos, 'USD', pais, tasa);
+}
+
+/**
+ * C-BS-EN-MANO (revisión del 18 nov 2026): fija la tasa del viaje si todavía no tiene (cotizado sin
+ * tasa, o pedido antes del candado) o, con `refijar`, si se cotizó hace más de 48 horas (un viaje
+ * programado o tomado mucho después): conductor y pasajero pasan a ver el mismo número nuevo. La
+ * llaman los pasos del viaje (aceptar, llegar, iniciar con `refijar`, terminar): mirar no escribe.
+ * Una lectura; escribe solo si fija o cambia.
+ */
+export async function fijarTasaViaje(
+  db: D1Database,
+  operacionId: string,
+  refijar = false,
+): Promise<void> {
+  const v = await db
+    .prepare(
+      `SELECT v.ref_tasa, z.pais, q.moneda,
+              q.creado_en < datetime('now', '-${HORAS_VIGENCIA_TASA} hours') AS vieja
+         FROM viajes v JOIN operaciones o ON o.id = v.operacion_id JOIN zonas z ON z.id = o.zona_id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+        WHERE v.operacion_id = ?`,
+    )
+    .bind(operacionId)
+    .first<{
+      ref_tasa: number | null;
+      pais: string;
+      moneda: string | null;
+      vieja: number | null;
+    }>();
+  if (!v || !aplicaReferencia(v.pais, v.moneda)) return;
+  if (v.ref_tasa != null && !(refijar && v.vieja === 1)) return;
+  const t = await tasaParaFijar(db, v.pais, v.moneda);
+  if (!t || t.tasa === v.ref_tasa) return;
+  await db
+    .prepare('UPDATE viajes SET ref_tasa = ?, ref_fecha = ? WHERE operacion_id = ?')
+    .bind(t.tasa, t.fecha, operacionId)
+    .run();
+}
+
+/**
+ * C-BS-EN-MANO: lo cobrado en mano al cerrar el viaje (el total final menos lo que cubrió el regalo),
+ * en dólares y en bolívares con la tasa del viaje; deja guardado `ref_monto`. Lee todo de la base, así
+ * sirve igual en el cierre y en el reintento de «terminar» (si la respuesta se perdió, se rellena ahí).
+ * Con tarjeta no hay nada en mano: null y no se guarda nada.
+ */
+export async function cobroEnManoDeViaje(
+  db: D1Database,
+  operacionId: string,
+): Promise<{ cobrarEnMano: number; enMano: MontoEnMano | null } | null> {
+  await fijarTasaViaje(db, operacionId);
+  const f = await db
+    .prepare(
+      `SELECT v.total_final_centavos AS total, v.metodo_pago, v.ref_tasa, v.ref_fecha, v.ref_monto,
+              z.pais, q.moneda,
+              (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id
+                 AND rg.estado <> 'liberado') AS regalo
+         FROM viajes v JOIN operaciones o ON o.id = v.operacion_id JOIN zonas z ON z.id = o.zona_id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+        WHERE v.operacion_id = ?`,
+    )
+    .bind(operacionId)
+    .first<{
+      total: number | null;
+      metodo_pago: string;
+      ref_tasa: number | null;
+      ref_fecha: string | null;
+      ref_monto: number | null;
+      pais: string;
+      moneda: string | null;
+      regalo: number | null;
+    }>();
+  if (!f || f.total == null) return null;
+  const total = Number(f.total);
+  const cobrarEnMano = Math.max(0, total - Math.min(Number(f.regalo ?? 0), total));
+  if (f.metodo_pago === 'tarjeta') return { cobrarEnMano, enMano: null };
+  const enMano = montoEnMano(
+    cobrarEnMano,
+    f.moneda ?? 'USD',
+    f.pais,
+    tasaGuardada(f.pais, f.ref_tasa, f.ref_fecha),
+  );
+  if (enMano.local && f.ref_monto !== enMano.local.monto)
+    await db
+      .prepare('UPDATE viajes SET ref_monto = ? WHERE operacion_id = ?')
+      .bind(enMano.local.monto, operacionId)
+      .run();
+  return { cobrarEnMano, enMano };
 }
 
 tasasReferencia.get('/admin/tasas-referencia', async (c) => {

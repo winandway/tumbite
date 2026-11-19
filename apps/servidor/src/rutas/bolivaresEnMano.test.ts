@@ -218,3 +218,167 @@ describe('C-BS-EN-MANO: dólares y bolívares con la tasa fijada del viaje', () 
     expect(fila).toEqual({ ref_tasa: 40, ref_fecha: puesta.datos.fecha, ref_monto: monto });
   });
 });
+
+/** Un viaje de moto de punta a punta con el conductor `c` (hasta antes de terminar). */
+async function hastaTerminar(
+  e: Awaited<ReturnType<typeof escenarioVe>>,
+  c: Awaited<ReturnType<typeof conductorListoVe>>,
+  pasajero: (
+    m: string,
+    r: string,
+    b?: unknown,
+    x?: Record<string, string>,
+  ) => ReturnType<typeof e.m.llamar>,
+  metodoPago: 'efectivo' | 'pago_movil',
+  antesDeIniciar?: (id: string) => Promise<void>,
+) {
+  const cot = await pasajero('POST', '/datos/viajes/cotizar', {
+    servicio: 'moto',
+    origen: ORIGEN_CCS,
+    destino: { lat: 10.4806, lng: -66.8406, direccion: 'Destino' },
+  });
+  const q = cot.datos.cotizacion;
+  const v = await pasajero(
+    'POST',
+    '/datos/viajes',
+    { cotizacionId: q.id, metodoPago, ...(q.regalo ? { regalo: q.regalo.codigo } : {}) },
+    { 'idempotency-key': `pedir-bs-${q.id.slice(0, 10)}` },
+  );
+  expect(v.estado).toBe(201);
+  const id = v.datos.viaje.id as string;
+  expect((await c.paso(id, 'aceptar')).estado).toBe(200);
+  await c.paso(id, 'llegue');
+  if (antesDeIniciar) await antesDeIniciar(id);
+  const pin = (await pasajero('GET', `/datos/viajes/${id}`)).datos.viaje.pin;
+  expect((await c.paso(id, 'iniciar', { pin })).estado).toBe(200);
+  return { id, q };
+}
+
+const filaViaje = (e: Awaited<ReturnType<typeof escenarioVe>>, id: string) =>
+  e.m.DB.prepare(
+    'SELECT ref_tasa, ref_fecha, ref_monto, metodo_pago FROM viajes WHERE operacion_id = ?',
+  )
+    .bind(id)
+    .first<{ ref_tasa: number | null; ref_fecha: string | null; ref_monto: number | null }>();
+
+describe('C-BS-EN-MANO, revisión del 18 nov: los casos de borde', () => {
+  it('efectivo con regalo: cobra solo la diferencia, en las dos monedas', async () => {
+    const { e, pasajero } = await preparar();
+    await conRegalo(e, 113);
+    const c = await conductorListoVe(e, 2000);
+    const { id, q } = await hastaTerminar(e, c, pasajero, 'efectivo');
+    const fin = await c.paso(id, 'terminar');
+    const cobrado = fin.datos.cobrarEnMano as number;
+    expect(cobrado).toBe(q.total - 113);
+    expect(fin.datos.enMano).toMatchObject({
+      monto: cobrado,
+      local: { monto: equivalenteLocal(cobrado, 236.4567) },
+    });
+  });
+
+  it('regalo mayor que el precio: 0 en mano (Bs. 0,00), nunca negativo', async () => {
+    const { e, pasajero } = await preparar();
+    await conRegalo(e, 2000);
+    const c = await conductorListoVe(e, 2000);
+    const { id } = await hastaTerminar(e, c, pasajero, 'efectivo');
+    const fin = await c.paso(id, 'terminar');
+    expect(fin.datos.cobrarEnMano).toBe(0);
+    expect(fin.datos.enMano).toMatchObject({ monto: 0, local: { monto: 0 } });
+    expect((await filaViaje(e, id))?.ref_monto).toBe(0);
+  });
+
+  it('con tarjeta no hay nada en mano: ni bolívares ni monto guardado ni «pagado en mano»', async () => {
+    const { e, pasajero } = await preparar();
+    const c = await conductorListoVe(e, 2000);
+    const { id } = await hastaTerminar(e, c, pasajero, 'efectivo', async (op) => {
+      await e.m.DB.prepare("UPDATE viajes SET metodo_pago = 'tarjeta' WHERE operacion_id = ?")
+        .bind(op)
+        .run();
+    });
+    const fin = await c.paso(id, 'terminar');
+    expect(fin.datos.enMano).toBeNull();
+    expect(fin.datos.referencia).toBeNull();
+    expect((await filaViaje(e, id))?.ref_monto).toBeNull();
+    const historial = await pasajero('GET', '/datos/viajes/historial');
+    expect(historial.datos.viajes[0].enManoLocal).toBeNull();
+    expect((await pasajero('GET', `/datos/viajes/${id}`)).datos.viaje.enMano).toBeNull();
+  });
+
+  it('cotizado sin tasa: la fija al aceptar y los dos ven ese número aunque la tasa cambie', async () => {
+    const e = await escenarioVe();
+    await abrirCaracas(e);
+    const c = await conductorListoVe(e, 2000);
+    const cot = await e.m.llamar(
+      'POST',
+      '/datos/viajes/cotizar',
+      {
+        servicio: 'moto',
+        origen: ORIGEN_CCS,
+        destino: { lat: 10.4806, lng: -66.8406, direccion: 'Destino' },
+      },
+      e.cliente.token,
+    );
+    expect(cot.datos.cotizacion.tasaLocal).toBeNull();
+    const v = await e.m.llamar(
+      'POST',
+      '/datos/viajes',
+      { cotizacionId: cot.datos.cotizacion.id, metodoPago: 'efectivo' },
+      e.cliente.token,
+    );
+    const id = v.datos.viaje.id as string;
+    await e.m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 40 }, e.admin.token);
+    expect((await c.paso(id, 'aceptar')).estado).toBe(200);
+    expect((await filaViaje(e, id))?.ref_tasa).toBe(40);
+    await e.m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 55 }, e.admin.token);
+    const suyo = (await c.yo('GET', '/datos/conductor/operaciones/actual')).datos.operacion;
+    const delPasajero = (await e.m.llamar('GET', `/datos/viajes/${id}`, undefined, e.cliente.token))
+      .datos.viaje;
+    expect(suyo.en_mano.local.tasa).toBe(40);
+    expect(delPasajero.enMano).toEqual(suyo.en_mano);
+  });
+
+  it('cotizado hace más de 48 horas (programado): al iniciar se refija con la tasa nueva', async () => {
+    const { e, pasajero } = await preparar();
+    const c = await conductorListoVe(e, 2000);
+    const { id } = await hastaTerminar(e, c, pasajero, 'efectivo', async (op) => {
+      await e.m.DB.prepare(
+        `UPDATE cotizaciones_viaje SET creado_en = datetime('now', '-49 hours')
+          WHERE id = (SELECT cotizacion_id FROM viajes WHERE operacion_id = ?)`,
+      )
+        .bind(op)
+        .run();
+      await e.m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 300 }, e.admin.token);
+    });
+    expect((await filaViaje(e, id))?.ref_tasa).toBe(300);
+    const suyo = (await c.yo('GET', '/datos/conductor/operaciones/actual')).datos.operacion;
+    const delPasajero = (await pasajero('GET', `/datos/viajes/${id}`)).datos.viaje;
+    expect(suyo.en_mano.local.tasa).toBe(300);
+    expect(delPasajero.enMano).toEqual(suyo.en_mano);
+  });
+
+  it('un viaje reciente NO se refija al iniciar aunque la tasa cambie', async () => {
+    const { e, pasajero } = await preparar();
+    const c = await conductorListoVe(e, 2000);
+    const { id } = await hastaTerminar(e, c, pasajero, 'efectivo', async () => {
+      await e.m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 300 }, e.admin.token);
+    });
+    expect((await filaViaje(e, id))?.ref_tasa).toBe(236.4567);
+  });
+
+  it('terminar cortado antes de responder: el reintento rellena y devuelve lo cobrado', async () => {
+    const { e, pasajero } = await preparar();
+    const c = await conductorListoVe(e, 2000);
+    const { id } = await hastaTerminar(e, c, pasajero, 'efectivo');
+    const fin = await c.paso(id, 'terminar');
+    // Como si el servidor se hubiera cortado entre el cambio de estado y guardar el monto.
+    await e.m.DB.prepare('UPDATE viajes SET ref_monto = NULL WHERE operacion_id = ?')
+      .bind(id)
+      .run();
+    const otra = await c.paso(id, 'terminar');
+    expect(otra.estado).toBe(200);
+    expect(otra.datos.enMano).toEqual(fin.datos.enMano);
+    expect((await filaViaje(e, id))?.ref_monto).toBe(
+      (fin.datos.enMano as { local: { monto: number } }).local.monto,
+    );
+  });
+});
