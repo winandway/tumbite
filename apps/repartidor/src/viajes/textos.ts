@@ -107,6 +107,11 @@ export const TEXTOS_VIAJE = {
       cobra: 'Cobra en efectivo',
       divooxTePaga:
         'Divoox te paga {monto} por el regalo del pasajero. Va a tus ganancias al terminar.',
+      // C-PRECIO-PROTAGONISTA: la tarjeta del precio del viaje (cifra grande, regalo aparte en verde).
+      cobraAlPasajero: 'Cobra al pasajero',
+      divooxPagaCorto: 'Divoox te paga {monto}',
+      divooxPagaAyuda: 'Por el regalo del pasajero. Va a tus ganancias al terminar.',
+      pagaConTarjeta: 'Precio del viaje · lo paga con tarjeta, no cobras en mano',
       pagoMovilPregunta: '¿Te llegó el pago móvil del pasajero? Monto del viaje:',
       pagoMovilSi: 'Sí, me llegó',
       pagoMovilNo: 'No me llegó',
@@ -224,6 +229,10 @@ export const TEXTOS_VIAJE = {
       cobra: 'Collect in cash',
       divooxTePaga:
         'Divoox pays you {monto} for the rider’s gift. It goes to your earnings when you finish.',
+      cobraAlPasajero: 'Collect from the rider',
+      divooxPagaCorto: 'Divoox pays you {monto}',
+      divooxPagaAyuda: 'For the rider’s gift. It goes to your earnings when you finish.',
+      pagaConTarjeta: 'Ride fare · paid by card, nothing to collect',
       pagoMovilPregunta: 'Did the rider’s mobile payment arrive? Ride amount:',
       pagoMovilSi: 'Yes, it arrived',
       pagoMovilNo: 'It didn’t arrive',
