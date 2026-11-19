@@ -2,12 +2,13 @@
 # C-FRANJA-SOLO-EN-PRUEBAS (18 nov 2026): antes de subir a una tienda, el paquete de producción se
 # instala en el emulador, se abre la pantalla de entrar y se NIEGA la subida si aparece la franja
 # «PRUEBAS». Leer el código no basta: la 46 y la 42 pasaron todas las pruebas y la pintaban.
-#   bash scripts/tiendas/comprobar-franja.sh <cliente|repartidor> <ruta.aab>
+#   bash scripts/tiendas/comprobar-franja.sh <cliente|repartidor|restaurante> <ruta.aab>
 set -euo pipefail
 APP="$1"; AAB="$2"
 case "$APP" in
   cliente) PAQ=com.windoce.tumbite ;;
   repartidor) PAQ=com.windoce.tumbite.driver ;;
+  restaurante) PAQ=com.windoce.tumbite.restaurants ;;
   *) echo "App desconocida: $APP"; exit 2 ;;
 esac
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"
