@@ -236,7 +236,9 @@ for (const idioma of ['es', 'en'] as const) {
     await foto(tarjeta, 'conductor-monto');
     await tarjeta.getByText(idioma === 'es' ? 'Pedir mi código' : 'Get my code').click();
     await expect(pr.getByTestId('cobro-vivo')).toBeVisible({ timeout: 30_000 });
-    if (C.pagaEn === 'VES') await expect(pr.getByTestId('cobro-en-mano')).toHaveText(C.entrega);
+    if (C.pagaEn === 'VES') await expect(pr.getByTestId('cobro-en-mano-bs')).toHaveText(C.entrega);
+    // El monto va grande, en dólares, con los bolívares debajo (pieza única de Driver).
+    await expect(pr.getByTestId('cobro-en-mano-usd')).toBeVisible();
     await expect(pr.getByTestId('cobro-agentes')).toContainText(C.agente);
     // C-DOCS-SIN-DATOS-REALES: en la captura se ve un código de ejemplo que el servidor nunca
     // genera (empieza por cero); el de verdad se usa abajo para pagar.

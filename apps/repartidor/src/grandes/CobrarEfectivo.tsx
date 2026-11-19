@@ -5,8 +5,8 @@ import {
   ErrorApi,
   type Idioma,
   enIdioma,
+  equivalenteLocal,
   formatearMonto,
-  textoLocal,
   useBorrador,
 } from '@tumbite/compartido';
 import {
@@ -15,6 +15,7 @@ import {
   C,
   Campo,
   CodigoQR,
+  MontoEnMano,
   Text,
   alSalirTelefono,
   almacenTelefono,
@@ -45,7 +46,6 @@ const T = {
     pocas: (m: string) => `Necesitas al menos ${m} en ganancias para cobrar en efectivo.`,
     tuCodigo: 'Tu código de cobro',
     muestra: 'Muéstrale este código al agente. No lo compartas con nadie más.',
-    apartado: 'Apartado de tus ganancias',
     vence: (h: string) => `Vale hasta ${h}. Si no lo usas, el dinero vuelve a tus ganancias.`,
     cancelarCodigo: 'Cancelar el código',
     seguro: 'Al cancelarlo, el dinero vuelve a tus ganancias y el código deja de servir.',
@@ -76,7 +76,6 @@ const T = {
     pocas: (m: string) => `You need at least ${m} in earnings to cash out.`,
     tuCodigo: 'Your cash-out code',
     muestra: 'Show this code to the agent. Don’t share it with anyone else.',
-    apartado: 'Set aside from your earnings',
     vence: (h: string) =>
       `Valid until ${h}. If you don’t use it, the money goes back to your earnings.`,
     cancelarCodigo: 'Cancel the code',
@@ -99,6 +98,7 @@ type Cobro = {
   moneda: string;
   pagaEn: string;
   refTasa: number | null;
+  refFecha?: string | null;
   refMonto: number | null;
   codigo?: string;
   estado: string;
@@ -189,8 +189,21 @@ export function CobrarEfectivo({
   // Sin el servicio en su ciudad y sin cobros anteriores no se muestra nada.
   if (!e || (!e.disponible && !e.vivo && e.historial.length === 0)) return null;
   const dinero = (c: number) => formatearMonto(c, e.moneda, idioma);
-  const bolivares = (monto: number | null, tasa: number | null) =>
-    monto == null ? '' : textoLocal({ moneda: 'VES', monto, tasa: tasa ?? 0, fecha: '' }, idioma);
+  // El monto como lo pinta la pieza única: dólares y, si la ciudad paga en bolívares, su equivalente.
+  const enMano = (
+    centavos: number,
+    refMonto: number | null,
+    tasa: number | null,
+    fecha: string | null | undefined,
+  ) => ({
+    monto: centavos,
+    moneda: e.moneda,
+    local:
+      e.pagaEn === 'VES' && refMonto != null && tasa
+        ? { moneda: 'VES', monto: refMonto, tasa, fecha: fecha ?? '' }
+        : null,
+    sinTasa: false,
+  });
   const monto = aCentavos(b.valores.monto);
   const montoOk =
     Number.isSafeInteger(monto) &&
@@ -236,18 +249,16 @@ export function CobrarEfectivo({
               tamano={180}
             />
           </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-            <Text style={{ color: C.secundario }}>{t.apartado}</Text>
-            <Text style={{ fontWeight: '800', color: C.secundario }}>{dinero(vivo.monto)}</Text>
-          </View>
-          {vivo.pagaEn === 'VES' && vivo.refMonto != null ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <Text style={{ color: C.secundario }}>{t.recibes}</Text>
-              <Text style={{ fontWeight: '800', color: C.secundario }} testID="cobro-en-mano">
-                {bolivares(vivo.refMonto, vivo.refTasa)}
-              </Text>
-            </View>
-          ) : null}
+          {/* C-BS-EN-MANO: lo que recibe va grande, con los bolívares y la tasa fijada debajo. */}
+          <MontoEnMano
+            testID="cobro-en-mano"
+            monto={enMano(vivo.monto, vivo.refMonto, vivo.refTasa, vivo.refFecha)}
+            idioma={idioma}
+            quien="conductor"
+            etiqueta={t.recibes}
+            tamano="grande"
+            color={C.exito}
+          />
           <Text style={{ color: '#666B73', fontSize: 12 }}>
             {t.vence(cuando(vivo.expiraEn, idioma))}
           </Text>
@@ -320,12 +331,17 @@ export function CobrarEfectivo({
                     )}
                   </Text>
                   {montoOk ? (
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                      <Text style={{ color: C.secundario }}>{t.recibes}</Text>
-                      <Text style={{ fontWeight: '800', color: C.secundario }}>
-                        {bolivares(Math.round(monto * e.tasa.tasa), e.tasa.tasa)}
-                      </Text>
-                    </View>
+                    <MontoEnMano
+                      monto={enMano(
+                        monto,
+                        equivalenteLocal(monto, e.tasa.tasa),
+                        e.tasa.tasa,
+                        e.tasa.fecha,
+                      )}
+                      idioma={idioma}
+                      quien="conductor"
+                      etiqueta={t.recibes}
+                    />
                   ) : null}
                 </>
               ) : null}
