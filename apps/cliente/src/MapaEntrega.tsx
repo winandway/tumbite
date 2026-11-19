@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { C, MarcaIsotipo, usePropsMapaDivoox, Text } from '@tumbite/movil';
+import { C, MarcaIsotipo, usePropsMapaDivoox, useCapturaMarcador, Text } from '@tumbite/movil';
 import {
   altitudDeZoom,
   rotuloDestino,
@@ -53,6 +53,8 @@ export function MapaEntrega({
   const rotulo = llegada ? rotuloDestino(direccion) : '';
   const cerca = llegada != null;
   const { coloresMapa } = usePropsMapaDivoox(casa ?? restaurante ?? repartidor);
+  // C-MARCADOR-ANDROID: la foto de los marcadores con vista propia se toma cuando ya se dibujaron.
+  const vista = useCapturaMarcador(`${rotulo}|${sinSenal ? 1 : 0}|${paradas.length}`);
 
   // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom
   // (`llegada.clave`), no en cada lectura de GPS (se puede mover el mapa con el dedo).
@@ -128,7 +130,7 @@ export function MapaEntrega({
           <Marker
             coordinate={{ latitude: restaurante.lat, longitude: restaurante.lng }}
             anchor={{ x: 0.5, y: 1.6 }}
-            tracksViewChanges={false}
+            tracksViewChanges={vista.seguir}
           >
             <View
               style={{
@@ -149,7 +151,7 @@ export function MapaEntrega({
             coordinate={{ latitude: casa.lat, longitude: casa.lng }}
             title={etiquetas.casa}
             anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
+            tracksViewChanges={vista.seguir}
           >
             <View
               testID="mapa-rotulo-casa"
@@ -174,7 +176,7 @@ export function MapaEntrega({
             coordinate={{ latitude: p.lat, longitude: p.lng }}
             title={p.etiqueta}
             anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
+            tracksViewChanges={vista.seguir}
           >
             <View
               style={{
@@ -198,8 +200,9 @@ export function MapaEntrega({
             title={nombreRepartidor ?? etiquetas.repartidor}
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={10}
+            tracksViewChanges={vista.seguir}
           >
-            <MarcaIsotipo fuente={IMG_COMIDA.mascota} apagado={sinSenal} />
+            <MarcaIsotipo fuente={IMG_COMIDA.mascota} apagado={sinSenal} alCargar={vista.listo} />
           </Marker>
         )}
         {ruta && ruta[0] && ruta[1] && (

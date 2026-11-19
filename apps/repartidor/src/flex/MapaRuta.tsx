@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
-import { C, MarcaIsotipo, usePropsMapaDivoox, Text } from '@tumbite/movil';
+import { C, MarcaIsotipo, usePropsMapaDivoox, useCapturaMarcador, Text } from '@tumbite/movil';
 import {
   altitudDeZoom,
   rotuloDestino,
@@ -65,6 +65,8 @@ export function MapaRuta({
     : todos.map((p) => `${p.lat},${p.lng}`).join('|');
   // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
   const { coloresMapa } = usePropsMapaDivoox(todos[0]);
+  // C-MARCADOR-ANDROID: la foto de los marcadores con vista propia se toma cuando ya se dibujaron.
+  const vista = useCapturaMarcador(todos.length);
   useEffect(() => {
     if (!listo) return;
     if (llegada) {
@@ -122,7 +124,7 @@ export function MapaRuta({
             // La marca no se vuelve a pintar en cada lectura de GPS; cambia de llave cuando cambia lo
             // que muestra (su estado o el rótulo de llegada).
             key={`${p.id}:${p.tono}:${p === parada ? rotulo : ''}`}
-            tracksViewChanges={false}
+            tracksViewChanges={vista.seguir}
             coordinate={{ latitude: p.punto.lat, longitude: p.punto.lng }}
             title={p.nombre}
             anchor={{ x: 0.5, y: 0.5 }}
@@ -151,9 +153,10 @@ export function MapaRuta({
             coordinate={{ latitude: yo.lat, longitude: yo.lng }}
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={10}
+            tracksViewChanges={vista.seguir}
           >
             {/* C-MAPA-ISOTIPO: el conductor es el isotipo de Divoox. */}
-            <MarcaIsotipo fuente={IMG.mascota} />
+            <MarcaIsotipo fuente={IMG.mascota} alCargar={vista.listo} />
           </Marker>
         ) : null}
       </MapView>

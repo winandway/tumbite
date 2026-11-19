@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text } from './diseno';
 import { Image, type ImageSourcePropType, Pressable, View, useColorScheme } from 'react-native';
 import { estiloMapaDe } from '@tumbite/compartido/src/estiloMapaDivoox';
@@ -57,6 +57,35 @@ export function usePropsMapaDivoox(punto?: Punto | null): {
   );
 }
 
+/**
+ * C-MARCADOR-ANDROID (18 nov 2026): en Android cada marcador con vista propia se pinta como una FOTO
+ * de esa vista. Si la foto se congela (`tracksViewChanges={false}`) antes de que el texto se acomode o
+ * la imagen cargue, sale una píldora vacía o un círculo blanco. Esta pieza deja la foto viva un
+ * momento al aparecer o al cambiar `clave`, y otra vez cuando la imagen avisa que cargó (`listo`);
+ * después la congela, así el mapa no repinta los marcadores todo el tiempo. En iPhone no cambia nada
+ * (el mapa de Apple dibuja la vista en vivo).
+ */
+export const MS_CAPTURA_MARCADOR = 1200;
+export function useCapturaMarcador(clave: unknown): { seguir: boolean; listo: () => void } {
+  // Cada vez que la vista se vuelve a tomar: `vuelta` sube y la foto queda viva `ms` milisegundos.
+  const [estado, setEstado] = useState({ clave, vuelta: 0, ms: MS_CAPTURA_MARCADOR, viva: true });
+  if (!Object.is(estado.clave, clave))
+    setEstado({ clave, vuelta: estado.vuelta + 1, ms: MS_CAPTURA_MARCADOR, viva: true });
+  const reloj = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!estado.viva) return;
+    reloj.current = setTimeout(() => setEstado((e) => ({ ...e, viva: false })), estado.ms);
+    return () => {
+      if (reloj.current) clearTimeout(reloj.current);
+    };
+  }, [estado.vuelta, estado.ms, estado.viva]);
+  const listo = useCallback(
+    () => setEstado((e) => ({ ...e, vuelta: e.vuelta + 1, ms: 400, viva: true })),
+    [],
+  );
+  return { seguir: estado.viva, listo };
+}
+
 /** Lado, en puntos, del disco de la marca (el mismo de la web). */
 const LADO = 44;
 
@@ -69,9 +98,12 @@ const LADO = 44;
 export function MarcaIsotipo({
   fuente,
   apagado = false,
+  alCargar,
 }: {
   fuente: ImageSourcePropType;
   apagado?: boolean;
+  /** C-MARCADOR-ANDROID: la imagen ya cargó (el mapa vuelve a tomar la foto del marcador). */
+  alCargar?: () => void;
 }) {
   return (
     <View
@@ -98,6 +130,7 @@ export function MarcaIsotipo({
         source={fuente}
         style={{ width: 50, height: 33 }}
         resizeMode="contain"
+        onLoad={alCargar}
         accessibilityIgnoresInvertColors
       />
     </View>

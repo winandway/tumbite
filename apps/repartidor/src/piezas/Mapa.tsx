@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import MapView, { Circle, Marker, Polyline } from 'react-native-maps';
-import { C, MarcaIsotipo, usePropsMapaDivoox, Text } from '@tumbite/movil';
+import { C, MarcaIsotipo, usePropsMapaDivoox, useCapturaMarcador, Text } from '@tumbite/movil';
 import {
   altitudDeZoom,
   rotuloDestino,
@@ -53,6 +53,8 @@ export function Mapa({
   const cerca = llegada != null;
   // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
   const { coloresMapa } = usePropsMapaDivoox(yo ?? restaurante ?? casa);
+  // C-MARCADOR-ANDROID: la foto de los marcadores con vista propia se toma cuando ya se dibujaron.
+  const vista = useCapturaMarcador(`${rotulo}|${zonasDemanda.length}`);
   // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom
   // (`llegada.clave`), no en cada lectura de GPS (se puede mover el mapa con el dedo).
   const latMovil = cerca ? 0 : yo?.lat;
@@ -138,7 +140,7 @@ export function Mapa({
             <Marker
               key={`pico-${z.lat},${z.lng}`}
               coordinate={{ latitude: z.lat, longitude: z.lng }}
-              tracksViewChanges={false}
+              tracksViewChanges={vista.seguir}
               anchor={{ x: 0.5, y: 0.5 }}
             >
               <View
@@ -181,7 +183,7 @@ export function Mapa({
           <Marker
             coordinate={{ latitude: destino.lat, longitude: destino.lng }}
             anchor={{ x: 0.5, y: 1.6 }}
-            tracksViewChanges={false}
+            tracksViewChanges={vista.seguir}
           >
             <View
               testID="mapa-rotulo-destino"
@@ -204,8 +206,9 @@ export function Mapa({
             title={etiquetas.yo}
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={10}
+            tracksViewChanges={vista.seguir}
           >
-            <MarcaIsotipo fuente={IMG.mascota} />
+            <MarcaIsotipo fuente={IMG.mascota} alCargar={vista.listo} />
           </Marker>
         )}
         {ruta && (
