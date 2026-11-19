@@ -32,6 +32,7 @@ export function MapaEntrega({
   direccion,
   meta = 'casa',
   paradas = [],
+  alto = 260,
 }: {
   restaurante: Punto | null;
   casa: Punto | null;
@@ -45,6 +46,10 @@ export function MapaEntrega({
   meta?: 'casa' | 'restaurante';
   /** C-VIAJE-PARADAS: las paradas intermedias de un viaje (se pintan numeradas, en gris). */
   paradas?: readonly (Punto & { etiqueta: string })[];
+  /** C-MAPA-PRECIO-PEDIR: el alto del mapa (260 de siempre; 160 en el precio antes de pedir). */
+  alto?: number;
+  /** Solo en la web (C-MAPA-GOOGLE-WEB): el mapa de Google se carga al tocarlo. En el teléfono, nada. */
+  bajoDemanda?: boolean;
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
@@ -97,7 +102,7 @@ export function MapaEntrega({
     !sinSenal && (repartidor ?? restaurante) && casa ? [repartidor ?? restaurante, casa] : null;
 
   return (
-    <View style={{ height: 260, borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
+    <View style={{ height: alto, borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
       <MapView
         ref={mapa}
         style={{ flex: 1 }}

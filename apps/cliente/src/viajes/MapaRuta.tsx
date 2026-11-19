@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import Svg, { Circle, Polyline, Rect } from 'react-native-svg';
-import { useModoColor } from '@tumbite/movil';
 import { type PuntoMapa, proyectarRuta } from './mismaRuta';
 
 /**
@@ -12,7 +11,7 @@ import { type PuntoMapa, proyectarRuta } from './mismaRuta';
  * fondo es un cuadriculado neutro de manzanas, solo de adorno.
  */
 const DIA = { suelo: '#EEF0F3', manzana: '#E3E6EA', ruta: '#101010', blanco: '#FFFFFF' };
-const NOCHE = { suelo: '#141416', manzana: '#1B1B1E', ruta: '#FFFFFF', blanco: '#0F0F10' };
+
 const ROJO = '#F20D20';
 const MANZANA = 34;
 const CALLE = 6;
@@ -33,7 +32,8 @@ export function MapaRuta({
   children?: React.ReactNode;
 }) {
   const [ancho, setAncho] = useState(0);
-  const c = useModoColor() === 'oscuro' ? NOCHE : DIA;
+  // C-MAPA-SIEMPRE-CLARO: el mapita va claro como la app, aunque el teléfono esté en modo oscuro.
+  const c = DIA;
   const xy = ancho > 0 ? proyectarRuta(puntos, ancho, alto, 18) : [];
   const origen = xy.at(0);
   const destino = xy.length > 1 ? xy.at(-1) : undefined;

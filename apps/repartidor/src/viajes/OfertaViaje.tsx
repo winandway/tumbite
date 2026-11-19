@@ -9,6 +9,7 @@ import {
 } from '@tumbite/compartido';
 import { Boton, C, MontoEnMano, Text, Modal } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
+import { Mapa } from '../piezas/Mapa';
 import { textoOfertaConfianza } from './agendaFijos';
 import { useAlarmaOferta } from '../sonidoOferta';
 import { venceOferta } from './ofertaTiempo';
@@ -27,6 +28,9 @@ export type OfertaViaje = {
   viajeM: number | null;
   viajeS: number | null;
   metodoPago: string;
+  /** C-MAPA-VIAJE-DRIVER: los puntos de recogida y destino (los manda el servidor). */
+  origenPunto?: { lat: number; lng: number };
+  destinoPunto?: { lat: number; lng: number };
   /** C-CUPON-DIVOOX: lo que paga Divoox por el regalo del pasajero (0 sin regalo). */
   regaloDivoox?: number;
   /** C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares con la tasa fijada del viaje. */
@@ -62,9 +66,12 @@ export function OfertaViajeModal({
   alAceptar,
   alRechazar,
   alVencer,
+  yo = null,
 }: {
   oferta: OfertaViaje;
   idioma: Idioma;
+  /** C-MAPA-VIAJE-DRIVER: dónde está el conductor, para el mapa de la oferta. */
+  yo?: { lat: number; lng: number } | null;
   alAceptar: () => void;
   alRechazar: () => void;
   /** C-OFERTA-VENCIDA-SE-CIERRA: en 0 s la tarjeta se cierra sola. */
@@ -236,6 +243,26 @@ export function OfertaViajeModal({
           <Text style={{ fontSize: 40, fontWeight: '800', color: C.secundario, lineHeight: 44 }}>
             {formatearMonto(oferta.gananciaCentavos, oferta.moneda ?? 'USD', idioma)}
           </Text>
+          {oferta.origenPunto && oferta.destinoPunto ? (
+            // C-MAPA-VIAJE-DRIVER: como las apps de conductores, el recorrido a la vista antes de
+            // aceptar (pequeño: lo que gana sigue siendo lo primero).
+            <View
+              testID="oferta-viaje-mapa"
+              style={{ borderRadius: 12, overflow: 'hidden', marginTop: 6 }}
+            >
+              <Mapa
+                yo={yo}
+                restaurante={oferta.origenPunto}
+                casa={oferta.destinoPunto}
+                alto={150}
+                etiquetas={{
+                  yo: textos.activo.mapaYo,
+                  restaurante: textos.activo.mapaRecogida,
+                  casa: textos.activo.mapaDestino,
+                }}
+              />
+            </View>
+          ) : null}
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
             {oferta.recogidaM != null ? (
               <Dato valor={distancia(oferta.recogidaM, idioma)} nombre={t.recogida} />

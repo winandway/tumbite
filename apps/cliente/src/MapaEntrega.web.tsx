@@ -29,6 +29,13 @@ type Props = {
   sinSenal?: boolean;
   /** C-VIAJE-PARADAS: las paradas intermedias de un viaje (se pintan numeradas, en gris). */
   paradas?: readonly (Punto & { etiqueta: string })[];
+  /** C-MAPA-PRECIO-PEDIR: el alto del mapa (260 de siempre; 160 en el precio antes de pedir). */
+  alto?: number;
+  /**
+   * C-MAPA-GOOGLE-WEB: fuera de un viaje o una entrega en curso, el mapa de Google de la web se carga
+   * solo al tocar «Ver en el mapa» (mirar no gasta cargas de mapa).
+   */
+  bajoDemanda?: boolean;
 };
 
 /**
@@ -60,6 +67,8 @@ function MapaEntregaGoogle({
   meta = 'casa',
   sinSenal = false,
   paradas = [],
+  alto = 260,
+  bajoDemanda = false,
 }: Props) {
   const { idioma } = useSesion();
   const hacia = meta === 'restaurante' ? restaurante : casa;
@@ -113,7 +122,8 @@ function MapaEntregaGoogle({
       centro={centro}
       puntos={puntos}
       etiqueta={etiquetas.repartidor}
-      abierto
+      abierto={!bajoDemanda}
+      alto={alto}
       inclinado
       rumbo={desde && hacia ? rumboEntre(desde, hacia) : 0}
       llegada={llegada}
@@ -131,6 +141,7 @@ function MapaEntregaLeaflet({
   meta = 'casa',
   sinSenal = false,
   paradas = [],
+  alto = 260,
 }: Props) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);
@@ -212,7 +223,7 @@ function MapaEntregaLeaflet({
       ref={caja}
       role="img"
       aria-label={etiquetas.repartidor}
-      style={{ height: 260, borderRadius: 16, overflow: 'hidden', marginBottom: 12, zIndex: 0 }}
+      style={{ height: alto, borderRadius: 16, overflow: 'hidden', marginBottom: 12, zIndex: 0 }}
     />
   );
 }
