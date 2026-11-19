@@ -240,6 +240,11 @@ describe('C-FLEX-COBRO · Venezuela: cobro contra entrega', () => {
   it('C-FLEX-TASA: la caja muestra todo en dólares con la tasa oficial del día', async () => {
     const m = mundo();
     const r = await rutaConCobro(m);
+    // C-TASA-CORDURA: la oficial sale de la pieza única (la que guarda el reloj), no de una lectura
+    // propia de Flex.
+    await m.DB.prepare(
+      "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', date('now', '-4 hours'), 'bcv', 888.1183)",
+    ).run();
     expect(
       (
         await r.entregar({
@@ -287,11 +292,27 @@ describe('C-FLEX-COBRO · Venezuela: cobro contra entrega', () => {
     ).toBe(422);
   });
 
-  it('C-FLEX-TASA: si el Banco Central falla, la misma tasa oficial sale del respaldo', async () => {
+  it('C-TASA-CORDURA: Flex no lee la tasa por su cuenta y la de la empresa tiene que ser creíble', async () => {
     const m = mundo();
     const r = await rutaConCobro(m);
-    bcv = 'solo-respaldo';
-    const t = await llamar(m, 'GET', `${B}/empresas/${r.e.id}/tasa`, undefined, r.e.dueno.token);
-    expect(t.datos.tasa).toMatchObject({ tasa: 888.1183, fuente: 'bcv', deHoy: true });
+    const ver = async () =>
+      (await llamar(m, 'GET', `${B}/empresas/${r.e.id}/tasa`, undefined, r.e.dueno.token)).datos
+        .tasa;
+    // Sin oficial guardada no hay tasa (y Flex no sale a buscarla ni escribe la suya).
+    expect(await ver()).toBeNull();
+    expect(
+      (await m.DB.prepare('SELECT COUNT(*) AS n FROM tasas_cambio').first<{ n: number }>())?.n,
+    ).toBe(0);
+    await m.DB.prepare(
+      "INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', date('now', '-4 hours'), 'bcv', 917.7751)",
+    ).run();
+    expect(await ver()).toMatchObject({ tasa: 917.7751, fuente: 'bcv', deHoy: true });
+    const poner = (tasa: number) =>
+      llamar(m, 'POST', `${B}/empresas/${r.e.id}/tasa`, { tasa }, r.e.dueno.token);
+    // 240 (un valor de prueba) o 91 777 (un cero de más) no pasan; el paralelo, sí.
+    expect((await poner(240)).estado).toBe(422);
+    expect((await poner(91_777)).estado).toBe(422);
+    expect((await poner(1_072)).estado).toBe(200);
+    expect(await ver()).toMatchObject({ tasa: 1_072, fuente: 'empresa' });
   });
 });

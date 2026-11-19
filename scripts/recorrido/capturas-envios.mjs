@@ -18,6 +18,7 @@ import { join } from 'node:path';
 import { deslizar } from './deslizar.mjs';
 import { ciudadNeutra, mapaSinRotulos } from './neutro.mjs';
 import { chromium, devices } from '@playwright/test';
+import { SQL_TASA_EJEMPLO } from './tasaEjemplo.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -147,8 +148,7 @@ async function abrirCiudad(M) {
   await sql(
     `UPDATE tarifas_viaje SET de_prueba = 0 WHERE zona_id = '${M.ciudad.id}' AND activa = 1`,
   );
-  if (M.pais === 'VE')
-    await pedir('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 240 }, admin.token);
+  if (M.pais === 'VE') await sql(SQL_TASA_EJEMPLO);
 }
 
 const limpiarColgados = async (zona) => {

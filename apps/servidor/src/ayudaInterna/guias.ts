@@ -1365,6 +1365,84 @@ const capAgente = (
   pie,
 });
 
+const capTasa = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `tasa-bolivar-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+/** C-TASA-CORDURA (19 nov 2026, Venezuela): la tasa del bolívar. Interno: nunca en Docs públicos. */
+const tasaBolivar: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'bolivar-reference-rate',
+    titulo: 'La tasa del bolívar: oficial, flotante o fija',
+    resumen:
+      'De dónde sale la tasa que ven clientes, conductores y agentes en Venezuela, cómo elegir entre la oficial, la flotante y la fija, y qué pasa si alguien escribe un número que no es creíble.',
+    explicacion: [
+      'En Venezuela todo se cobra en dólares y al lado se muestra el equivalente en bolívares. Ese equivalente sale de una sola tasa, la de esta pantalla. Todas las apps, la web y el panel del Agente Divoox la leen de aquí: nadie más guarda una tasa.',
+      'Oficial (recomendada): Divoox lee sola, una vez al día, la tasa del Banco Central de Venezuela con su fecha valor. Si un día el Banco Central no responde, lo intenta otra vez a la hora siguiente y usa su respaldo. No hay que escribir nada. Al abrir esta pantalla también se pone al día.',
+      'Flotante: la oficial más un ajuste en porcentaje, entre menos 30 y más 30. Sirve para acercarse a la tasa de la calle sin escribirla cada día: sube y baja sola con la oficial. La pantalla muestra cuánto quedaría antes de guardar.',
+      'Fija: un número que pones tú y no cambia hasta que lo cambies. Úsala solo por poco tiempo: si el bolívar se mueve, la fija se queda vieja.',
+      'Cordura: un número escrito a mano tiene que parecerse a la oficial. La tasa del día del equipo se acepta hasta 20 % por encima o por debajo de la oficial; la fija, hasta 30 %. Si te equivocas (un cero de más, un valor de prueba), el panel no lo guarda y te dice cuál es la oficial. Y si un número malo llegara por otro camino, las apps no lo muestran: muestran la oficial y la salud del sistema se pone en rojo.',
+      'La tasa de cada viaje y de cada cobro en efectivo queda fijada cuando se cotiza o se pide el código: cambiar la tasa aquí no cambia lo que ya estaba en curso.',
+      'Solo se muestra como referencia. Los precios, las comisiones y los saldos siguen en dólares.',
+    ],
+    capturas: [
+      capTasa(
+        'super-pantalla',
+        'es',
+        'Pantalla «Tasa de referencia en bolívares» con la tasa en uso, su fuente y su fecha, y las tres opciones: oficial automática, flotante y fija.',
+        'La tasa en uso y las tres formas de elegirla.',
+      ),
+    ],
+    preguntas: [
+      '¿De dónde sale la tasa del bolívar que ven los conductores?',
+      '¿Cómo pongo la tasa de la calle?',
+      '¿Por qué el panel no me dejó guardar la tasa?',
+    ],
+    pasos: [
+      'Abre «Moto» en el menú del superadmin y baja hasta «Tasa de referencia en bolívares».',
+      'Arriba ves la tasa que se usa hoy, de dónde sale y su fecha.',
+      'Elige «Oficial», «Flotante» (escribe el ajuste en porcentaje) o «Fija» (escribe la tasa).',
+      'Toca «Guardar». El cambio vale desde ese momento para lo nuevo.',
+    ],
+  },
+  en: {
+    id: 'bolivar-reference-rate',
+    titulo: 'The bolívar rate: official, floating or fixed',
+    resumen:
+      'Where the rate that customers, drivers and agents see in Venezuela comes from, how to choose between official, floating and fixed, and what happens if someone enters a number that isn’t credible.',
+    explicacion: [
+      'In Venezuela everything is charged in dollars and the bolívar equivalent is shown next to it. That equivalent comes from a single rate, the one on this screen. Every app, the website and the Divoox Agent panel read it from here: nothing else stores a rate.',
+      'Official (recommended): once a day Divoox reads the Central Bank of Venezuela’s rate with its value date on its own. If the Central Bank doesn’t respond one day, it tries again the next hour and uses its backup. Nothing needs to be typed. Opening this screen also brings it up to date.',
+      'Floating: the official rate plus a percentage adjustment, between minus 30 and plus 30. It’s for getting close to the street rate without typing it every day: it moves with the official rate. The screen shows what it would be before you save.',
+      'Fixed: a number you set that doesn’t change until you change it. Use it only briefly: if the bolívar moves, the fixed rate goes stale.',
+      'Sanity check: a number typed by hand has to look like the official rate. The team’s rate of the day is accepted up to 20% above or below the official rate; the fixed rate, up to 30%. If you make a mistake (an extra zero, a test value), the panel doesn’t save it and tells you the official rate. And if a bad number arrived some other way, the apps don’t show it: they show the official rate and the system health turns red.',
+      'The rate of each trip and each cash payout is locked when it’s quoted or when the code is requested: changing the rate here doesn’t change what was already in progress.',
+      'It’s shown only as a reference. Prices, commissions and balances stay in dollars.',
+    ],
+    capturas: [
+      capTasa(
+        'super-pantalla',
+        'en',
+        'The “Bolívar reference rate” screen with the rate in use, its source and date, and the three options: automatic official, floating and fixed.',
+        'The rate in use and the three ways to set it.',
+      ),
+    ],
+    preguntas: [
+      'Where does the bolívar rate drivers see come from?',
+      'How do I set the street rate?',
+      'Why didn’t the panel let me save the rate?',
+    ],
+    pasos: [
+      'Open “Moto” in the superadmin menu and scroll down to “Bolívar reference rate.”',
+      'At the top you see the rate used today, where it comes from and its date.',
+      'Choose “Official,” “Floating” (enter the percentage adjustment) or “Fixed” (enter the rate).',
+      'Tap “Save.” The change applies from that moment to anything new.',
+    ],
+  },
+};
+
 /** C-AGENTE-DIVOOX (18 nov 2026): Dinero → Agentes. Interno: nunca en Docs públicos. */
 const agentesDivoox: Record<IdiomaAyuda, Guia> = {
   es: {
@@ -1936,7 +2014,13 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     {
       id: 'money',
       titulo: esp ? 'Dinero' : 'Money',
-      guias: [de(regalosDivoox), de(saldoConductores), de(agentesDivoox), de(referidosEquipos)],
+      guias: [
+        de(regalosDivoox),
+        de(saldoConductores),
+        de(agentesDivoox),
+        de(referidosEquipos),
+        de(tasaBolivar),
+      ],
     },
     {
       id: 'settings',

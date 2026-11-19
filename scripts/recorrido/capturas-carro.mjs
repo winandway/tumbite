@@ -23,6 +23,7 @@ import { deslizar } from './deslizar.mjs';
 import { abrirAlta } from './altaDriver.mjs';
 import { ciudadNeutra, mapaSinRotulos } from './neutro.mjs';
 import { chromium, devices } from '@playwright/test';
+import { SQL_TASA_EJEMPLO } from './tasaEjemplo.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -232,8 +233,7 @@ async function correr(M, idiomas) {
   await sql(
     `UPDATE tarifas_viaje SET tope_dinamico_pb = 15000 WHERE zona_id = '${CIUDAD.id}' AND servicio_id = 'carro' AND activa = 1`,
   );
-  if (M.pais === 'VE')
-    await pedir('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 240 }, tokens.equipo);
+  if (M.pais === 'VE') await sql(SQL_TASA_EJEMPLO);
   // En Estados Unidos el conductor de prueba queda en la ciudad (su ficha y su zona) antes del alta.
   if (M.pais === 'US') {
     await interno('carro/conductor', { quien: 'us', zonaId: CIUDAD.id, ...ORIGEN });

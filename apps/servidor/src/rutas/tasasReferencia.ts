@@ -106,6 +106,57 @@ export type ModoTasa = {
   cambiado_por: string | null;
 };
 
+/**
+ * C-TASA-CORDURA (19 nov 2026, Venezuela): la referencia contra la que se mide cualquier tasa que
+ * escriba una persona. La última oficial del Banco Central guardada y, si la más nueva quedó retenida
+ * por un salto (posible devaluación), también esa. Una consulta.
+ */
+export async function referenciaOficial(
+  db: D1Database,
+  pais: string,
+): Promise<{ oficial: FilaTasa | null; retenida: number | null }> {
+  const f = await db
+    .prepare(
+      `SELECT
+         (SELECT tasa FROM tasas_cambio WHERE pais = ?1 AND fuente = 'bcv' ORDER BY fecha DESC LIMIT 1) AS tasa,
+         (SELECT fecha FROM tasas_cambio WHERE pais = ?1 AND fuente = 'bcv' ORDER BY fecha DESC LIMIT 1) AS fecha,
+         (SELECT creado_en FROM tasas_cambio WHERE pais = ?1 AND fuente = 'bcv' ORDER BY fecha DESC LIMIT 1) AS creado_en,
+         (SELECT tasa FROM tasas_cambio WHERE pais = ?1 AND fuente = 'bcv-retenida' ORDER BY fecha DESC LIMIT 1) AS retenida`,
+    )
+    .bind(pais)
+    .first<{
+      tasa: number | null;
+      fecha: string | null;
+      creado_en: string | null;
+      retenida: number | null;
+    }>();
+  return {
+    oficial:
+      f?.tasa != null && f.fecha && f.creado_en
+        ? { tasa: f.tasa, fecha: f.fecha, creado_en: f.creado_en, creado_por: null, fuente: 'bcv' }
+        : null,
+    retenida: f?.retenida ?? null,
+  };
+}
+
+const aparte = (a: number, b: number) => Math.abs(a / b - 1) * 100;
+
+/**
+ * ¿Esta tasa está dentro de lo creíble? Sí, si no hay ninguna oficial con qué comparar (primer día),
+ * o si se aparta `pct` o menos de la última oficial (o de la última lectura retenida).
+ */
+export function tasaCreible(
+  tasa: number,
+  ref: { oficial: { tasa: number } | null; retenida: number | null },
+  pct: number,
+): boolean {
+  if (!ref.oficial && ref.retenida == null) return true;
+  return (
+    (ref.oficial != null && aparte(tasa, ref.oficial.tasa) <= pct) ||
+    (ref.retenida != null && aparte(tasa, ref.retenida) <= pct)
+  );
+}
+
 /** El modo del país (C-TASA-MODOS). Sin fila: «oficial». */
 export async function modoTasa(db: D1Database, pais: string): Promise<ModoTasa> {
   const m = await db
@@ -140,13 +191,26 @@ export async function tasaVigente(
 ): Promise<TasaEnUso | null> {
   if (!MONEDA_REFERENCIA.has(pais)) return null;
   const m = await modoTasa(db, pais);
-  if (m.modo === 'fija' && m.tasa_fija && m.tasa_fija > 0)
-    return {
-      tasa: m.tasa_fija,
-      fecha: (m.cambiado_en ?? sqlUtc(ahora)).slice(0, 10),
-      fuente: 'fija',
-    };
-  const o = await tasaOficial(db, pais, ahora);
+  // C-TASA-CORDURA: lo que escribió una persona (la fija o la del equipo) solo se muestra si es
+  // creíble frente a la oficial. Si no (un valor de prueba, un cero de más, una fija olvidada tras una
+  // devaluación), se muestra la oficial y el canario se pone en rojo. Una consulta más, solo entonces.
+  if (m.modo === 'fija' && m.tasa_fija && m.tasa_fija > 0) {
+    if (tasaCreible(m.tasa_fija, await referenciaOficial(db, pais), AJUSTE_MAXIMO_PCT))
+      return {
+        tasa: m.tasa_fija,
+        fecha: (m.cambiado_en ?? sqlUtc(ahora)).slice(0, 10),
+        fuente: 'fija',
+      };
+    console.error(`tasa: la fija de ${pais} (${m.tasa_fija}) no es creíble; se usa la oficial`);
+  }
+  let o = await tasaOficial(db, pais, ahora);
+  if (o?.fuente === 'equipo') {
+    const ref = await referenciaOficial(db, pais);
+    if (!tasaCreible(o.tasa, ref, SALTO_MAXIMO_PCT)) {
+      console.error(`tasa: la del equipo de ${pais} (${o.tasa}) no es creíble; se usa la oficial`);
+      o = ref.oficial;
+    }
+  }
   if (!o) return null;
   const base = { tasa: o.tasa, fecha: o.fecha, fuente: o.fuente };
   if (m.modo === 'flotante' && m.ajuste_pct != null && Math.abs(m.ajuste_pct) <= AJUSTE_MAXIMO_PCT)
@@ -166,6 +230,10 @@ const sqlUtc = (ms: number) => new Date(ms).toISOString().slice(0, 19).replace('
 const URL_BCV = 'https://www.bcv.org.ve/';
 /** Más de esto de diferencia con la última oficial guardada: no se usa (queda retenida). */
 export const SALTO_MAXIMO_PCT = 20;
+/** C-TASA-CORDURA: horas entre una lectura buena del Banco Central y la siguiente. */
+export const HORAS_ENTRE_LECTURAS = 20;
+/** C-TASA-CORDURA: horas sin ninguna lectura buena para que el canario diga «atrasado». */
+export const HORAS_SIN_LECTURA = 48;
 /** Dos lecturas seguidas de una tasa nueva que no se apartan más que esto la confirman. */
 export const MARGEN_CONFIRMA_PCT = 2;
 
@@ -240,9 +308,18 @@ async function guardarOficial(
       equipo: number | null;
       misma: number | null;
     }>();
-  if (ref?.misma === leida.tasa)
+  if (ref?.misma === leida.tasa) {
+    // C-TASA-CORDURA: la misma tasa (fin de semana, feriado). Se deja la marca de que HOY se leyó
+    // (una fila, y solo si la marca es vieja): el reloj no vuelve a leer y el canario sabe que vive.
+    await db
+      .prepare(
+        `UPDATE tasas_cambio SET creado_en = datetime('now') WHERE pais = 'VE' AND fuente = 'bcv' AND fecha = ?
+            AND creado_en < datetime('now', '-${HORAS_ENTRE_LECTURAS} hours')`,
+      )
+      .bind(leida.fecha)
+      .run();
     return { estado: 'guardada', tasa: leida.tasa, fecha: leida.fecha };
-  const aparte = (a: number, b: number) => Math.abs(a / b - 1) * 100;
+  }
   // Contra qué se compara: la última oficial; el primer día, la última del equipo (si hay).
   const contra = ref?.oficial ?? ref?.equipo ?? null;
   let retenida = contra !== null && contra > 0 && aparte(leida.tasa, contra) > pct;
@@ -336,9 +413,11 @@ export async function tomarTasaBcv(
 }
 
 /**
- * Canario de la tasa oficial: «pendiente» si nunca se tomó; «error» si la última lectura quedó
- * retenida (salto anormal) y no hay una buena posterior; «atrasado» si la última buena es más vieja
- * que la vigencia; «ok» si no. Lee dos filas.
+ * Canario de la tasa (C-TASA-BCV-AUTO y C-TASA-CORDURA): «pendiente» si nunca se tomó la oficial;
+ * «error» si la última lectura quedó retenida (salto anormal) sin una buena posterior, o si lo que
+ * una persona escribió para mostrar HOY (la del equipo vigente o la fija del modo) no es creíble frente
+ * a la oficial; «atrasado» si hace más de HORAS_SIN_LECTURA que no hay una lectura buena o si la
+ * última oficial es más vieja que su vigencia; «ok» si no. Una consulta.
  */
 export async function saludTasaBcv(
   db: D1Database,
@@ -349,25 +428,50 @@ export async function saludTasaBcv(
       `SELECT
          (SELECT max(creado_en) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv') AS buena,
          (SELECT max(fecha) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv') AS fecha,
-         (SELECT max(fecha) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv-retenida') AS retenida`,
+         (SELECT max(fecha) FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv-retenida') AS retenida,
+         (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv' ORDER BY fecha DESC LIMIT 1) AS oficial,
+         (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'bcv-retenida' ORDER BY fecha DESC LIMIT 1) AS tasa_retenida,
+         (SELECT tasa FROM tasas_cambio WHERE pais = 'VE' AND fuente = 'equipo'
+             AND creado_en > datetime(?1, '-${HORAS_VIGENCIA_TASA} hours') ORDER BY creado_en DESC LIMIT 1) AS equipo,
+         (SELECT tasa_fija FROM tasas_modo WHERE pais = 'VE' AND modo = 'fija') AS fija`,
     )
-    .first<{ buena: string | null; fecha: string | null; retenida: string | null }>();
+    .bind(sqlUtc(ahora))
+    .first<{
+      buena: string | null;
+      fecha: string | null;
+      retenida: string | null;
+      oficial: number | null;
+      tasa_retenida: number | null;
+      equipo: number | null;
+      fija: number | null;
+    }>();
   if (r?.retenida && (!r.fecha || r.retenida > r.fecha)) return 'error';
+  const ref = {
+    oficial: r?.oficial != null ? { tasa: r.oficial } : null,
+    retenida: r?.tasa_retenida ?? null,
+  };
+  if (r?.equipo != null && !tasaCreible(r.equipo, ref, SALTO_MAXIMO_PCT)) return 'error';
+  if (r?.fija != null && !tasaCreible(r.fija, ref, AJUSTE_MAXIMO_PCT)) return 'error';
   if (!r?.buena || !r.fecha) return 'pendiente';
   const limite = new Date(ahora - 4 * 3600_000 - DIAS_VIGENCIA_BCV * 86_400_000)
     .toISOString()
     .slice(0, 10);
-  return r.fecha < limite ? 'atrasado' : 'ok';
+  if (r.fecha < limite) return 'atrasado';
+  return r.buena < sqlUtc(ahora - HORAS_SIN_LECTURA * 3600_000) ? 'atrasado' : 'ok';
 }
 
 /**
- * La tarea del reloj (C-TASA-BCV-AUTO): a las 14:00 UTC (10:00 de Caracas) lee una vez; a las 20:00
- * UTC solo si ese día no hubo ninguna lectura guardada. Cada vuelta, como mucho la portada y una del
- * respaldo (C-TASA-MODOS); nunca en bucle. No es crítica: sin tasa automática, el equipo la escribe a mano como siempre.
+ * La tarea del reloj (C-TASA-BCV-AUTO). C-TASA-CORDURA (19 nov 2026): antes leía SOLO en el minuto
+ * exacto de las 14:00 y las 20:00 UTC; si el reloj no pasaba justo en ese minuto, ese día no había
+ * lectura (pasó el 18 y el 19 de noviembre). Ahora corre en la primera vuelta de cada hora y lee si
+ * la última lectura buena tiene más de HORAS_ENTRE_LECTURAS: una lectura al día y, si falla, otro
+ * intento a la hora siguiente. Cada vuelta, como mucho la portada y una del respaldo; nunca en bucle.
+ * No es crítica: sin tasa automática, el equipo la escribe a mano como siempre.
  */
 export const TAREA_TASA_BCV: TareaReloj = {
   nombre: 'tasa_bcv',
   critica: false,
+  cada: 'hora',
   correr: async (env, db) => {
     const prueba = env as unknown as {
       __lectorTasaBcv?: () => Promise<string>;
@@ -375,21 +479,17 @@ export const TAREA_TASA_BCV: TareaReloj = {
       __ahora?: number;
     };
     const ahora = prueba.__ahora ?? Date.now();
-    const d = new Date(ahora);
-    const hhmm = d.toISOString().slice(11, 16);
-    if (hhmm !== '14:00' && hhmm !== '20:00') return null;
     // Ninguna prueba sale a internet: sin lector de prueba, dentro de vitest no se lee nada.
     const enPruebas = enVitest();
     if (enPruebas && !prueba.__lectorTasaBcv) return null;
-    if (hhmm === '20:00') {
-      // La de las 14:00 de hoy quedó hace 6 horas: con algo guardado en las últimas 12, no se lee.
-      const hubo = await db
-        .prepare(
-          "SELECT 1 FROM tasas_cambio WHERE pais = 'VE' AND fuente IN ('bcv', 'bcv-retenida') AND creado_en >= datetime('now', '-12 hours') LIMIT 1",
-        )
-        .first();
-      if (hubo) return null;
-    }
+    const hubo = await db
+      .prepare(
+        `SELECT 1 FROM tasas_cambio WHERE pais = 'VE' AND fuente IN ('bcv', 'bcv-retenida')
+            AND creado_en >= datetime(?, '-${HORAS_ENTRE_LECTURAS} hours') LIMIT 1`,
+      )
+      .bind(sqlUtc(ahora))
+      .first();
+    if (hubo) return null;
     // Rango de cordura configurable por variable del sitio (por defecto, 20 %).
     const pct = Number(env.TASA_BCV_SALTO_PCT);
     return tomarTasaBcv(db, {
@@ -566,9 +666,27 @@ export async function cobroEnManoDeViaje(
   return { cobrarEnMano, enMano };
 }
 
+/**
+ * C-TASA-CORDURA: si hace más de HORAS_ENTRE_LECTURAS que no hay una lectura buena del Banco Central
+ * (el reloj no pasó, o el sitio no tiene reloj, como el de pruebas), se lee ahora. Una lectura como
+ * mucho; nunca lanza. Ninguna prueba sale a internet.
+ */
+async function refrescarOficialSiVieja(db: D1Database) {
+  if (enVitest()) return;
+  const hubo = await db
+    .prepare(
+      `SELECT 1 FROM tasas_cambio WHERE pais = 'VE' AND fuente IN ('bcv', 'bcv-retenida')
+          AND creado_en >= datetime('now', '-${HORAS_ENTRE_LECTURAS} hours') LIMIT 1`,
+    )
+    .first();
+  if (!hubo) await tomarTasaBcv(db).catch((e: unknown) => console.error('tasa: refresco', e));
+}
+
 tasasReferencia.get('/admin/tasas-referencia', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
+  // Al abrir la pantalla de la tasa, el equipo siempre ve la oficial al día.
+  await refrescarOficialSiVieja(db);
   const paises = [...MONEDA_REFERENCIA.keys()];
   const filas = await Promise.all(
     paises.map((pais) =>
@@ -638,6 +756,29 @@ tasasReferencia.get('/admin/tasas-referencia', async (c) => {
   });
 });
 
+/**
+ * C-TASA-CORDURA: una tasa escrita a mano tiene que parecerse a la oficial. Si todavía no hay ninguna
+ * oficial guardada (sitio nuevo), primero se intenta leerla (una lectura). Con oficial, una tasa que
+ * se aparta más de `pct` se rechaza con el número oficial en el mensaje.
+ */
+async function exigirCreible(
+  db: D1Database,
+  pais: string,
+  tasa: number,
+  pct: number,
+  campo: string,
+) {
+  if (pais === 'VE') await refrescarOficialSiVieja(db);
+  const ref = await referenciaOficial(db, pais);
+  if (tasaCreible(tasa, ref, pct)) return;
+  const oficial = (ref.oficial?.tasa ?? ref.retenida ?? 0).toFixed(2);
+  throw new ErrorDatos(
+    `Esa tasa se aleja más de ${pct} % de la oficial del Banco Central (${oficial} por dólar). Revisa el número.`,
+    campo,
+    422,
+  );
+}
+
 const CUERPO_MODO = z.discriminatedUnion('modo', [
   z.object({ modo: z.literal('oficial') }),
   z.object({
@@ -658,6 +799,7 @@ tasasReferencia.put('/admin/tasas-referencia/:pais/modo', async (c) => {
     throw new ErrorDatos('En este país los viajes no necesitan tasa de referencia.', 'pais', 422);
   const d = await leerCuerpo(c, CUERPO_MODO);
   const db = base(c);
+  if (d.modo === 'fija') await exigirCreible(db, pais, d.tasaFija, AJUSTE_MAXIMO_PCT, 'tasaFija');
   const antes = await modoTasa(db, pais);
   const ajuste = d.modo === 'flotante' ? d.ajustePct : null;
   const fija = d.modo === 'fija' ? d.tasaFija : null;
@@ -701,6 +843,7 @@ tasasReferencia.put('/admin/tasas-referencia/:pais', async (c) => {
     throw new ErrorDatos('En este país los viajes no necesitan tasa de referencia.', 'pais', 422);
   const { tasa } = await leerCuerpo(c, z.object({ tasa: z.number().positive().max(10_000_000) }));
   const db = base(c);
+  await exigirCreible(db, pais, tasa, SALTO_MAXIMO_PCT, 'tasa');
   const fecha = hoyEn(pais);
   // Una por día: si se corrige el mismo día, la nueva reemplaza a la anterior (y su hora cuenta
   // de nuevo para las 48 horas). La auditoría guarda las dos.

@@ -124,4 +124,9 @@ export const MENSAJES_EN_REGALOS: [string, string][] = [
     'El código es solo para conductores que todavía no hicieron carreras.',
     'The code is only for drivers who haven’t done any trips yet.',
   ],
+  // C-TASA-CORDURA
+  [
+    'Esa tasa se aleja demasiado de la oficial del Banco Central. Revisa el número.',
+    'That rate is too far from the Central Bank’s official rate. Check the number.',
+  ],
 ];

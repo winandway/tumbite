@@ -40,6 +40,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capRef\(\s*'([a-z0-9-]+)',\s*'(
 // C-AGENTE-DIVOOX: las de «Agentes» (capAgente).
 for (const [, nombre, idioma] of guias.matchAll(/capAgente\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`agentes-${nombre}-${idioma}.webp`);
+// C-TASA-CORDURA: la de la tasa del bolívar (capTasa).
+for (const [, nombre, idioma] of guias.matchAll(/capTasa\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`tasa-bolivar-${nombre}-${idioma}.webp`);
 // C-BANNERS: las de «Banners de la app» (capBanners).
 for (const [, nombre, idioma] of guias.matchAll(/capBanners\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`banners-${nombre}-${idioma}.webp`);

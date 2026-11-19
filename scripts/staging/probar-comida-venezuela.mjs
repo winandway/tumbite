@@ -49,7 +49,6 @@ const CIUDAD = {
 const LOCAL_REST = { lat: 8.6225, lng: -71.651 };
 const CASA = { lat: 8.6229, lng: -71.6512 }; // a unos 50 m: sin saltos de GPS imposibles
 const RECARGA = 500; // centavos de dólar
-const TASA = 250; // bolívares por dólar, solo si el equipo no escribió la del día
 
 const casos = [];
 async function pedir(metodo, ruta, cuerpo, token, cabeceras = {}) {
@@ -130,9 +129,13 @@ try {
   );
   exigir(abierta.zona.moneda === 'USD', 'El Vigía debería cobrar la comida en dólares');
   casos.push(`Comida abierta en El Vigía (${abierta.estado}), en dólares`);
+  // C-TASA-CORDURA: el guion ya no escribe ninguna tasa (antes dejaba 250 por dólar en el sitio de
+  // pruebas). Usa la oficial que lee el servidor; sin ella, falla y lo dice.
   const tasas = ok(await equipo('GET', '/datos/admin/tasas-referencia'), 'tasas').tasas;
-  if (!tasas.find((t) => t.pais === 'VE')?.vigente)
-    ok(await equipo('PUT', '/datos/admin/tasas-referencia/VE', { tasa: TASA }), 'tasa del día');
+  exigir(
+    tasas.find((t) => t.pais === 'VE')?.enUso?.tasa > 0,
+    'el sitio de pruebas no tiene la tasa oficial de Venezuela (revisa el canario tasaBcv)',
+  );
 
   // 2. El restaurante venezolano se registra con su ubicación y el equipo lo aprueba.
   const r = ok(

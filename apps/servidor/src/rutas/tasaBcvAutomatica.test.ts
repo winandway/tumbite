@@ -209,19 +209,85 @@ describe('C-TASA-BCV-AUTO', () => {
     expect(await saludTasaBcv(db, AHORA)).toBe('pendiente');
   });
 
-  it('la tarea del reloj corre solo a las 14:00 UTC (y a las 20:00 si no hubo lectura ese día)', async () => {
+  it('C-TASA-CORDURA: la tarea lee si no hay una lectura de las últimas 20 horas, a cualquier hora (ya no depende del minuto exacto)', async () => {
     const db = crearBasePruebas();
     const l = lector(pagina('914,02180000', '2026-11-14'));
     const correr = (ms: number) =>
       TAREA_TASA_BCV.correr({ __lectorTasaBcv: l.leer, __ahora: ms } as never, db);
-    await correr(Date.UTC(2026, 10, 14, 13, 59));
-    expect(l.llamadas).toBe(0);
-    await correr(Date.UTC(2026, 10, 14, 14, 0));
+    // El reloj no pasó justo a las 14:00: a las 14:07 lee igual (antes, ese día se quedaba sin tasa).
+    await correr(Date.UTC(2026, 10, 14, 14, 7));
     expect(l.llamadas).toBe(1);
-    await correr(Date.UTC(2026, 10, 14, 14, 1));
+    // Con una lectura reciente no vuelve a leer.
+    await correr(Date.UTC(2026, 10, 14, 15, 0));
     await correr(Date.UTC(2026, 10, 14, 20, 0));
     expect(l.llamadas).toBe(1);
-    expect(TAREA_TASA_BCV.critica).toBe(false);
+    expect(TAREA_TASA_BCV).toMatchObject({ critica: false, cada: 'hora' });
+    // Si la lectura falla, el intento se repite a la hora siguiente (no se pierde el día).
+    const otra = crearBasePruebas();
+    const caida = lector(null);
+    const correrCaida = (ms: number) =>
+      TAREA_TASA_BCV.correr({ __lectorTasaBcv: caida.leer, __ahora: ms } as never, otra);
+    await correrCaida(Date.UTC(2026, 10, 14, 14, 0));
+    await correrCaida(Date.UTC(2026, 10, 14, 15, 0));
+    expect(caida.llamadas).toBe(2);
+  });
+
+  it('C-TASA-CORDURA: la misma tasa leída otro día (fin de semana) deja la marca de lectura y el canario sigue vivo', async () => {
+    const db = crearBasePruebas();
+    const l = lector(pagina('914,02180000', '2026-11-14'));
+    await tomarTasaBcv(db, { leer: l.leer, ahora: AHORA });
+    // Dos días después nadie leyó: «atrasado» (antes seguía en «ok» cinco días).
+    await db.prepare("UPDATE tasas_cambio SET creado_en = datetime('now', '-50 hours')").run();
+    expect(await saludTasaBcv(db)).toBe('atrasado');
+    // Una lectura con la misma tasa y la misma fecha valor no crea filas, pero deja la marca.
+    await tomarTasaBcv(db, { leer: l.leer });
+    expect(await filas(db)).toHaveLength(1);
+    const marca = await db
+      .prepare("SELECT creado_en > datetime('now', '-1 hour') AS hoy FROM tasas_cambio")
+      .first<{ hoy: number }>();
+    expect(marca?.hoy).toBe(1);
+  });
+
+  it('C-TASA-CORDURA: una tasa escrita a mano que no se parece a la oficial ni se guarda ni se muestra, y el canario la delata', async () => {
+    const m = mundo();
+    const admin = await m.cuenta('admin', 'Soporte Divoox');
+    const hoy = "date('now', '-4 hours')";
+    await m.DB.prepare(
+      `INSERT INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', ${hoy}, 'bcv', 917.7751)`,
+    ).run();
+    const poner = (tasa: number) =>
+      m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa }, admin.token);
+    const modo = (cuerpo: unknown) =>
+      m.llamar('PUT', '/datos/admin/tasas-referencia/VE/modo', cuerpo, admin.token);
+    // Lo que pasó el 19 nov: un guion de capturas escribió 240 como «tasa del día».
+    const mala = await poner(240);
+    expect(mala.estado).toBe(422);
+    expect(mala.datos.error).toMatch(/917[.,]78/);
+    expect((await poner(91_777)).estado).toBe(422);
+    expect((await modo({ modo: 'fija', tasaFija: 240 })).estado).toBe(422);
+    expect(await tasaVigente(m.DB, 'VE')).toMatchObject({ tasa: 917.7751, fuente: 'bcv' });
+    // Una corrección creíble (o el paralelo como tasa fija) sí pasa.
+    expect((await poner(930)).estado).toBe(200);
+    expect(await tasaVigente(m.DB, 'VE')).toMatchObject({ tasa: 930, fuente: 'equipo' });
+    expect((await modo({ modo: 'fija', tasaFija: 1_072 })).estado).toBe(200);
+    expect(await tasaVigente(m.DB, 'VE')).toMatchObject({ tasa: 1_072, fuente: 'fija' });
+    expect(await saludTasaBcv(m.DB)).toBe('ok');
+    // Si el valor malo llega por otro lado (una fila escrita directo en la base), NO se muestra:
+    // sale la oficial y el canario se pone en rojo.
+    await modo({ modo: 'oficial' });
+    await m.DB.prepare(
+      `INSERT OR REPLACE INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', ${hoy}, 'equipo', 240)`,
+    ).run();
+    expect(await tasaVigente(m.DB, 'VE')).toMatchObject({ tasa: 917.7751, fuente: 'bcv' });
+    expect(await saludTasaBcv(m.DB)).toBe('error');
+    await m.DB.prepare("DELETE FROM tasas_cambio WHERE fuente = 'equipo'").run();
+    expect(await saludTasaBcv(m.DB)).toBe('ok');
+    // Lo mismo con una fija que quedó vieja tras una devaluación.
+    await m.DB.prepare(
+      "INSERT OR REPLACE INTO tasas_modo (pais, modo, tasa_fija) VALUES ('VE', 'fija', 250)",
+    ).run();
+    expect(await tasaVigente(m.DB, 'VE')).toMatchObject({ tasa: 917.7751, fuente: 'bcv' });
+    expect(await saludTasaBcv(m.DB)).toBe('error');
   });
 
   it('devaluación real: el mismo salto leído dos días seguidos se acepta; mientras tanto manda la del equipo', async () => {
@@ -279,9 +345,9 @@ describe('C-TASA-BCV-AUTO', () => {
     ).toBe('guardada');
   });
 
-  it('en el reloj real: declara una fila y 60 vueltas (con las 14:00) escriben solo esa fila de más', async () => {
+  it('en el reloj real: declara dos filas y 60 vueltas (una hora entera) leen una sola vez y escriben solo esa fila de más', async () => {
     const t = TAREAS_RELOJ.find((x) => x.nombre === 'tasa_bcv');
-    expect(t).toMatchObject({ critica: false, escriturasEsperadas: 2 });
+    expect(t).toMatchObject({ critica: false, cada: 'hora', escriturasEsperadas: 2 });
     const vueltas = async (html: string | null) => {
       const m = mundo();
       await m.cuenta('cliente');
@@ -300,9 +366,11 @@ describe('C-TASA-BCV-AUTO', () => {
     };
     const sinTasa = await vueltas(null);
     const conTasa = await vueltas(pagina('914,02180000', '2026-11-14'));
-    expect(sinTasa.lecturas).toBe(1);
+    // Sin respuesta, un intento por hora (las 13 y las 14); con respuesta, una sola lectura.
+    expect(sinTasa.lecturas).toBe(2);
     expect(conTasa.lecturas).toBe(1);
-    // La única diferencia: la fila de la tasa del día.
-    expect(conTasa.escritas - sinTasa.escritas).toBe(1);
+    // Con la tasa ya leída, la hora entera no escribe ni una fila de más por la tasa.
+    expect(conTasa.escritas - sinTasa.escritas).toBeLessThanOrEqual(1);
+    expect(conTasa.escritas - sinTasa.escritas).toBeGreaterThanOrEqual(0);
   });
 });

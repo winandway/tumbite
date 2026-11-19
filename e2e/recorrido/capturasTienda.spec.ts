@@ -4,6 +4,7 @@ import type { APIRequestContext, Browser, Page } from '@playwright/test';
 import { VERSION_TERMINOS, geohash } from '@tumbite/compartido';
 import { expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
+import { SQL_TASA_EJEMPLO } from './tasaEjemplo';
 
 /**
  * Capturas de las fichas de Google Play del cliente y del Driver (tercera auditoría de tiendas,
@@ -291,11 +292,7 @@ for (const idioma of ['es', 'en'] as const)
         },
       });
       expect(abrir.ok(), await abrir.text()).toBe(true);
-      const tasa = await request.put(`/datos/admin/tasas-referencia/${z.pais}`, {
-        headers: h(admin.token),
-        data: { tasa: 250 },
-      });
-      expect(tasa.ok(), await tasa.text()).toBe(true);
+      sql(SQL_TASA_EJEMPLO);
     }
 
     // El carrusel del inicio: una promoción de COMIDA sin precio ni código (Google Play no admite

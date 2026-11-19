@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { devices, expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
+import { SQL_TASA_EJEMPLO } from './tasaEjemplo';
 
 /**
  * C-CUPON-DIVOOX (17 nov 2026): el regalo que paga Divoox en las apps web de verdad. El equipo crea el
@@ -121,10 +122,7 @@ for (const idioma of ['es', 'en'] as const) {
          VALUES ('${z.id}', '${z.nombre}', '${z.pais}', 'USD', '${z.tz}', ${z.lat}, ${z.lng}, 15, 1, '${idioma}')`);
     // C-PRECIO-PROTAGONISTA: en Venezuela, la tasa del día del equipo, como en el sitio real: el
     // conductor ve los bolívares debajo de lo que cobra (sin ella saldría «Hoy no hay tasa»).
-    if (z.pais === 'VE')
-      sql(
-        `INSERT OR REPLACE INTO tasas_cambio (pais, fecha, fuente, tasa) VALUES ('VE', date('now'), 'equipo', 240)`,
-      );
+    if (z.pais === 'VE') sql(SQL_TASA_EJEMPLO);
     // El sitio local no es el de pruebas: Moto se declara construido y se enciende en su base (como
     // en las pruebas del servidor). En el sitio de pruebas lo hace el equipo desde el panel.
     sql(`INSERT OR IGNORE INTO servicios_implementados (servicio_id, contrato) VALUES ('moto', 1)`);

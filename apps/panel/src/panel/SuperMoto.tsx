@@ -20,6 +20,7 @@ import { MenuTresPuntos } from './MenuTresPuntos';
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
 import { Pastilla } from './armazon/Piezas';
 import { pedir } from './api';
+import { AyudaAqui } from './AyudaAqui';
 
 /**
  * C-MOTO-PANEL (13 nov 2026): lo que el equipo necesita para preparar y operar Divoox Moto por país,
@@ -161,6 +162,9 @@ const T = {
     tasaQuedaria: 'Quedaría en',
     tasaSinOficial: 'Sin tasa oficial disponible, la flotante no se muestra hasta que llegue.',
     tasaFija: 'Tasa fija (bolívares por dólar)',
+    tasaOficialHoy: 'Oficial del Banco Central',
+    tasaFijaAyuda:
+      'Tiene que estar a 30 % o menos de la oficial. Si el número se aleja más, no se guarda.',
     tasaAjusteFuera: (max: number) => `El ajuste va entre -${max} % y ${max} %.`,
     tasaFijaInvalida: 'Escribe la tasa fija en números, mayor que cero.',
     tasaCambiadoPor: 'Último cambio:',
@@ -396,6 +400,8 @@ const T = {
     tasaSinOficial:
       'With no official rate available, the floating rate isn’t shown until one arrives.',
     tasaFija: 'Fixed rate (bolívars per dollar)',
+    tasaOficialHoy: 'Central Bank official rate',
+    tasaFijaAyuda: 'It must be within 30% of the official rate. A number further away isn’t saved.',
     tasaAjusteFuera: (max: number) => `The adjustment must be between -${max}% and ${max}%.`,
     tasaFijaInvalida: 'Enter the fixed rate as a number greater than zero.',
     tasaCambiadoPor: 'Last change:',
@@ -1355,7 +1361,10 @@ function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
 
   return (
     <div className="tarjeta-form" data-testid="tasa-referencia">
-      <h2>{t.tasaTitulo}</h2>
+      <h2>
+        {t.tasaTitulo}
+        <AyudaAqui guia="bolivar-reference-rate" idioma={idioma} />
+      </h2>
       <p className="pista">{t.tasaAyuda}</p>
       <AvisoBorrador
         visible={b.recuperado}
@@ -1393,6 +1402,13 @@ function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
             ) : (
               <p className="pista">{t.tasaSinCargar}</p>
             )}
+            {/* Con la flotante, la fija o una escrita por el equipo: la oficial al lado, para comparar. */}
+            {f.oficial && f.oficial.fuente === 'bcv' && f.enUso?.fuente !== 'bcv' ? (
+              <p className="pista" data-testid={`tasa-oficial-${f.pais}`}>
+                {t.tasaOficialHoy}: {numeroTasa(f.oficial.tasa, idioma)} {t.tasaPorDolar} ·{' '}
+                {t.tasaDel} {fechaTasa(f.oficial.fecha, idioma)}
+              </p>
+            ) : null}
             {f.modo.cambiadoEn ? (
               <p className="pista">
                 {t.tasaCambiadoPor} {fechaTasa(f.modo.cambiadoEn, idioma)}
@@ -1414,7 +1430,11 @@ function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
                     name={`modo-tasa-${f.pais}`}
                     value={valor}
                     checked={modo === valor}
-                    onChange={() => b.cambiar('modo', valor)}
+                    onChange={() => {
+                      // El aviso de un intento anterior no se queda al elegir otra opción.
+                      setError('');
+                      b.cambiar('modo', valor);
+                    }}
                   />
                   {texto}
                 </label>
@@ -1452,6 +1472,7 @@ function TasaReferencia({ idioma, t }: { idioma: Idioma; t: Textos }) {
                 />
               </label>
             ) : null}
+            {modo === 'fija' ? <p className="pista">{t.tasaFijaAyuda}</p> : null}
             <button type="submit" className="boton">
               {t.tasaGuardar}
             </button>

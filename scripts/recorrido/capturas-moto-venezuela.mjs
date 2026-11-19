@@ -21,6 +21,7 @@ import { chromium, devices } from '@playwright/test';
 import { deslizar } from './deslizar.mjs';
 import { abrirAlta, abrirDocumentos } from './altaDriver.mjs';
 import { ciudadNeutra, mapaSinRotulos } from './neutro.mjs';
+import { SQL_TASA_EJEMPLO } from './tasaEjemplo.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -123,7 +124,7 @@ async function cuentasVe(M) {
     conductor: await sesion(IDS.conductor),
     equipo: await sesion(IDS.equipo),
   };
-  await pedir('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 240 }, tokens.equipo);
+  await sql(SQL_TASA_EJEMPLO);
   // Solo en este servidor local: la tarifa de la ciudad pasa a «no de prueba» para que la captura
   // pública no diga «Precio de prueba (sitio de pruebas)». En el sitio de pruebas sigue siendo de prueba.
   await sql(`UPDATE tarifas_viaje SET de_prueba = 0 WHERE zona_id = '${M.zona}' AND activa = 1`);

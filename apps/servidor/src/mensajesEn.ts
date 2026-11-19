@@ -2232,6 +2232,12 @@ const PARTES = new Map([
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
   [/^Un viaje puede llevar hasta (\d+) paradas\.$/, (m) => `A ride can have up to ${m[1]} stops.`],
+  // C-TASA-CORDURA
+  [
+    /^Esa tasa se aleja más de (\d+) % de la oficial del Banco Central \(([\d.]+) por dólar\)\. Revisa el número\.$/,
+    (m) =>
+      `That rate is more than ${m[1]}% away from the Central Bank’s official rate (${m[2]} per dollar). Check the number.`,
+  ],
   // C-CAMBIAR-CIUDAD-ADMIN (18 nov 2026)
   [
     /^Tiene papeles, vehículo o servicios de ([A-Z]{2}), que no valen en ([A-Z]{2}): el equipo tiene que revisarlos antes de cambiarlo de país\.$/,
