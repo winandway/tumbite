@@ -110,6 +110,11 @@ export const TEXTOS_MOTO = {
     celularAyuda: (medio: string) =>
       `Cuando te asignen conductor verás su número de ${medio}. Le pagas el precio del viaje desde tu celular y él confirma que le llegó.`,
     celularDatos: (medio: string) => `Paga por ${medio} a`,
+    // Con el número ya en pantalla, la ayuda dice qué hacer ahora (no «cuando te asignen…»).
+    celularEnviar:
+      'Envía el precio del viaje a este número desde tu celular. Tu conductor confirma que le llegó.',
+    pagoMovilEnviar:
+      'Paga a estos datos el equivalente en bolívares a la tasa oficial del día. Tu conductor confirma que le llegó.',
     celularPagado: (medio: string) => `Pagado por ${medio}`,
     celularOtraBilletera: (suya: string, tuya: string) =>
       `Este número es de ${suya}. Desde ${tuya} le envías igual, con su número de celular y sin costo.`,
@@ -322,6 +327,10 @@ export const TEXTOS_MOTO = {
     celularAyuda: (medio: string) =>
       `Once you get a driver, you’ll see their ${medio} number. Pay the ride price from your phone, and they confirm it arrived.`,
     celularDatos: (medio: string) => `Pay with ${medio} to`,
+    celularEnviar:
+      'Send the ride price to this number from your phone. Your driver confirms it arrived.',
+    pagoMovilEnviar:
+      'Pay the equivalent in bolívars at the official rate of the day to these details. Your driver confirms it arrived.',
     celularPagado: (medio: string) => `Paid with ${medio}`,
     celularOtraBilletera: (suya: string, tuya: string) =>
       `This is a ${suya} number. You can send from ${tuya} to their phone number just the same, at no cost.`,

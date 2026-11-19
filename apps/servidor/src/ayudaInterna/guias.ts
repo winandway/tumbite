@@ -2123,6 +2123,115 @@ const banners: Record<IdiomaAyuda, Guia> = {
 
 const porId = (lista: Guia[]) => new Map(lista.map((g) => [g.id, g]));
 
+// ─────────────── Abrir una ciudad de Perú (C-PERFIL-PERU, 19 nov 2026) ───────────────
+
+const capPeru = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string): CapturaAyuda => ({
+  archivo: `peru-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+const abrirPeru: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'open-peru-city',
+    titulo: 'Perú: abrir una ciudad, soles, Yape y Plin, comisión y recarga con tarjeta',
+    resumen:
+      'Qué es distinto en Perú y en qué orden se enciende: la ciudad en soles, el pago en mano con Yape o Plin, la comisión del saldo, la recarga con tarjeta y el punto de venta del líder.',
+    explicacion: [
+      'Perú es su propio sistema. Todo va en soles. El pasajero paga en mano: efectivo, Yape o Plin. No hay tarjeta para el pasajero ni doble moneda.',
+      'En producción Perú nace cerrado. Hay tres llaves y las tres hacen falta: la compuerta del país en «Moto · Abrir y aprobar» (pide la solicitud de marca del país y tu contraseña), la comisión del saldo aprobada en Flex · Dinero, Políticas, y la ciudad abierta. Ninguna se enciende sin la orden de Richard.',
+      'La comisión de Perú está sembrada al 8 % y sin aprobar. Mientras no esté aprobada, ningún viaje de Perú descuenta saldo y la recarga con tarjeta no se puede encender.',
+      'La ciudad se abre en «Moto · Abrir y aprobar», «Abrir un servicio de viajes en una ciudad». Una ciudad de Perú nace sola en soles, con hora de Lima y la tarifa de mercado. Se abre una vez para Moto y otra para Carro.',
+      'El conductor carga su número de Yape o de Plin en su app. Entra en uso a las 24 horas, o antes si lo confirmas tú. Yape y Plin se reciben entre sí: con uno de los dos le llegan los viajes de ambos. Sin número solo recibe viajes en efectivo.',
+      'Si el conductor toca «No me llegó», el caso cae en la bandeja de soporte del dinero, en soles, con el viaje y el monto.',
+      'Recarga con tarjeta: en Dinero, país PE, se enciende «Recargas con tarjeta» y se escribe la «Recarga mínima con tarjeta». El procesador cobra una parte fija por cada cobro, así que una recarga chica pierde mucho: por eso el mínimo propio (propuesto: 30 soles).',
+      'En esa misma pantalla verás en rojo «Incompleto… Falta: las tarifas, los topes». Ese aviso es de Comida, que en Perú todavía no se abre: los viajes y las recargas no lo necesitan.',
+      'El conductor paga la recarga en la página segura del procesador, dentro de su app. El saldo entra solo cuando llega la confirmación. Divoox no le paga al conductor por el procesador en Perú: él ya cobró en mano.',
+      'El líder de la ciudad vende saldo como punto de venta: en Dinero, país PE, enciende «Recargas en puntos de venta», crea el punto con su cuenta y cárgale fondo. Él cobra en efectivo, Yape o Plin y le da un código al conductor.',
+      'Cargar saldo a mano en «Saldo de conductores» tiene topes en soles: hasta 200 por carga, 40 de regalo de arranque y 1.200 de presupuesto por ciudad.',
+      'Los papeles del conductor se llaman como en Perú: tarjeta de identificación vehicular, SOAT o CAT, licencia de la clase B (mototaxi y moto) o de la clase A (carro), y antecedentes penales o Certificado Único Laboral. Los revisas igual que siempre.',
+    ],
+    capturas: [
+      capPeru(
+        'super-dinero',
+        'es',
+        'La pantalla Dinero con el país PE elegido: los interruptores de efectivo, recargas en puntos de venta y recargas con tarjeta, y la casilla Recarga mínima con tarjeta.',
+        'Perú en Dinero: los interruptores y la recarga mínima con tarjeta.',
+      ),
+      capPeru(
+        'super-compuerta',
+        'es',
+        'La pantalla Moto · Abrir y aprobar con la tarjeta de Perú y su estado en producción.',
+        'La compuerta de producción de Perú.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo abro una ciudad de Perú?',
+      '¿Por qué un conductor de Perú no recibe viajes con Yape?',
+      '¿Cómo enciendo la recarga con tarjeta en Perú?',
+      '¿Cómo vende saldo el líder de la ciudad?',
+    ],
+    pasos: [
+      'Confirma con Richard la orden de abrir y la comisión aprobada.',
+      'En «Moto · Abrir y aprobar», abre la compuerta de Perú con la solicitud de marca y tu contraseña.',
+      'En la misma pantalla, abre el servicio en la ciudad (Moto y después Carro).',
+      'En Dinero, país PE, enciende las recargas y escribe la recarga mínima con tarjeta.',
+      'Crea el punto de venta del líder y cárgale fondo.',
+      'Aprueba los papeles de los conductores y confirma sus números de Yape o Plin.',
+    ],
+    nota: 'En el sitio de pruebas Perú ya está abierto para probar. En producción sigue cerrado hasta la orden de Richard.',
+  },
+  en: {
+    id: 'open-peru-city',
+    titulo: 'Peru: opening a city, soles, Yape and Plin, commission and card top-ups',
+    resumen:
+      'What is different in Peru and the order to turn it on: the city in soles, in-hand payment with Yape or Plin, the balance commission, card top-ups and the city lead’s point of sale.',
+    explicacion: [
+      'Peru is its own system. Everything is in soles. Riders pay in hand: cash, Yape or Plin. There is no rider card payment and no dual currency.',
+      'In production Peru starts closed. There are three keys and all three are needed: the country gate in “Moto · Open and approve” (it asks for the country’s trademark filing and your password), the balance commission approved in Flex · Money, Policies, and the city opened. None is turned on without Richard’s order.',
+      'Peru’s commission is seeded at 8% and not approved. Until it is approved, no ride in Peru deducts balance and card top-ups cannot be turned on.',
+      'The city is opened in “Moto · Open and approve,” “Open a ride service in a city.” A city in Peru is created in soles, on Lima time, with the market fare. Open it once for Moto and once for Car.',
+      'Drivers add their Yape or Plin number in their app. It goes live after 24 hours, or sooner if you confirm it. Yape and Plin receive from each other: with either one they get rides paid with both. With no number they only get cash rides.',
+      'If a driver taps “It didn’t arrive,” the case lands in the money support inbox, in soles, with the ride and the amount.',
+      'Card top-ups: in Money, country PE, turn on “Card top-ups” and enter the “Minimum card top-up.” The processor charges a fixed part per charge, so a small top-up loses a lot: that is why it has its own minimum (proposed: 30 soles).',
+      'On that same screen you’ll see in red “Incomplete… Missing: the fares, the limits.” That notice is about Food, which isn’t opening in Peru yet: rides and top-ups don’t need it.',
+      'Drivers pay the top-up on the processor’s secure page inside their app. The balance is credited only when the confirmation arrives. Divoox does not pay drivers out through the processor in Peru: they already collected in hand.',
+      'The city lead sells balance as a point of sale: in Money, country PE, turn on “Point-of-sale top-ups,” create the point with their account and fund it. They collect cash, Yape or Plin and give the driver a code.',
+      'Topping up by hand in “Driver balances” has limits in soles: up to 200 per top-up, 40 for the starter gift and 1,200 of budget per city.',
+      'Driver documents use Peru’s names: vehicle identification card, SOAT or CAT, Class B license (mototaxi and motorcycle) or Class A (car), and criminal record certificate or Certificado Único Laboral. You review them as usual.',
+    ],
+    capturas: [
+      capPeru(
+        'super-dinero',
+        'en',
+        'The Money screen with country PE selected: the switches for cash, point-of-sale top-ups and card top-ups, and the Minimum card top-up field.',
+        'Peru in Money: the switches and the minimum card top-up.',
+      ),
+      capPeru(
+        'super-compuerta',
+        'en',
+        'The Moto · Open and approve screen with the Peru card and its production status.',
+        'Peru’s production gate.',
+      ),
+    ],
+    preguntas: [
+      'How do I open a city in Peru?',
+      'Why isn’t a driver in Peru getting rides paid with Yape?',
+      'How do I turn on card top-ups in Peru?',
+      'How does the city lead sell balance?',
+    ],
+    pasos: [
+      'Confirm with Richard the order to open and the approved commission.',
+      'In “Moto · Open and approve,” open Peru’s gate with the trademark filing and your password.',
+      'On the same screen, open the service in the city (Moto, then Car).',
+      'In Money, country PE, turn on top-ups and enter the minimum card top-up.',
+      'Create the lead’s point of sale and fund it.',
+      'Approve the drivers’ documents and confirm their Yape or Plin numbers.',
+    ],
+    nota: 'On the test site Peru is already open for testing. In production it stays closed until Richard’s order.',
+  },
+};
+
 /** Las secciones de la ayuda, en el orden del menú lateral. */
 function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
   const g = porId(idioma === 'es' ? es : en);
@@ -2161,6 +2270,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
       guias: [
         de(regalosDivoox),
         de(saldoConductores),
+        de(abrirPeru),
         de(agentesDivoox),
         de(referidosEquipos),
         de(lineasTaxi),

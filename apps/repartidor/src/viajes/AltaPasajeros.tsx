@@ -103,6 +103,7 @@ const COMUN = {
     subir: 'Subir',
     subirOtra: 'Subir otro',
     identidad: 'Tu identidad se verifica en «Documentos» (foto de tu cédula y de tu cara).',
+    identidadPeru: 'Tu identidad se verifica en «Documentos» (foto de tu DNI y de tu cara).',
     falta: 'Te falta',
     rechazo: 'Motivo',
     estados: {
@@ -133,6 +134,8 @@ const COMUN = {
     subir: 'Upload',
     subirOtra: 'Upload another',
     identidad: 'Your identity is verified under “Documents” (a photo of your ID and of your face).',
+    identidadPeru:
+      'Your identity is verified under “Documents” (a photo of your DNI and of your face).',
     falta: 'Still needed',
     rechazo: 'Reason',
     estados: {
@@ -889,7 +892,9 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               />
             );
           })}
-          <Text style={{ color: '#666B73', fontSize: 12, marginTop: 6 }}>{tc.identidad}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12, marginTop: 6 }}>
+            {paisCiudad === 'PE' ? tc.identidadPeru : tc.identidad}
+          </Text>
         </View>
       ) : null}
 

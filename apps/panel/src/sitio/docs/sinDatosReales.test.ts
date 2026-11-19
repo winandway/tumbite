@@ -42,6 +42,7 @@ const GUIONES_SIN_LUGAR = [
 const GUIONES_NEUTROS = [
   'scripts/recorrido/capturas-moto-venezuela.mjs',
   'scripts/recorrido/capturas-carro.mjs',
+  'scripts/recorrido/capturas-peru.mjs',
   'scripts/recorrido/capturas-envios.mjs',
   'scripts/recorrido/capturas-comida-venezuela.mjs',
   'scripts/flex/capturas-cobro.mjs',

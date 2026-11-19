@@ -50,6 +50,19 @@ Guion del piloto: el mismo de EE. UU., en pesos sin decimales, con el franquicia
 
 Ficha de respaldo: `docs/investigaciones-rea/2026-10-18-stripe-por-producto-y-bcv.md`.
 
+## 4 bis. Perú (Ica primero; 19 nov 2026)
+
+| Método                                          | Estado del código                                                                  | Bloqueo real                                                                                                            | Quién lo destraba             |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Efectivo, Yape y Plin al conductor (en soles)   | Construido y probado en el sitio de pruebas; confirmación **manual** del conductor | Decisión de abrir; abogado peruano (RUC, IGV, mototaxi); marca presentada en Perú                                       | Richard                       |
+| Comisión del saldo prepago (8 % sembrado)       | Construido; la política nace **sin aprobar**                                       | Elegir 10, 8 o 6 % y aprobarla                                                                                          | Richard                       |
+| Recarga del saldo con tarjeta, en soles         | Construido; probado con el procesador en modo prueba                               | Respuesta escrita del procesador sobre saldo prepago; fijar el mínimo (propuesto: 30 soles); una recarga real de prueba | Richard y el equipo           |
+| Recarga en el punto de venta del líder          | Construido y probado en el sitio de pruebas                                        | El correo o el celular del líder de Ica                                                                                 | Richard                       |
+| Yape automático (sin confirmación a mano)       | **No construido**                                                                  | Pide un procesador local (Culqi, dLocal) y RUC                                                                          | Richard, después del arranque |
+| Pagarle a conductores de Perú por el procesador | **No disponible** por autoservicio                                                 | —                                                                                                                       | —                             |
+
+En Perú el conductor ya cobró en mano: Divoox no le paga nada. Comida y los viajes entre ciudades son la etapa siguiente (no mueven el arranque). Ficha: `docs/investigaciones-rea/2026-11-19-ica-peru.md`. Estado del dinero: `VERIFICAR-PAGOS.md`, sección de Perú.
+
 ## 5. Qué se registra en cada operación real
 
 - Fecha y hora, país, método, monto, moneda.

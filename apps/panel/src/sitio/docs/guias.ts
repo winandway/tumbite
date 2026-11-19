@@ -4,6 +4,7 @@ import { GUIAS_MOTO } from './borradores/moto';
 import { GUIAS_CARRO } from './carro';
 import { GUIA_MISMA_RUTA, MISMA_RUTA_PUBLICADA } from './mismaRuta';
 import { GUIAS_LINEAS, LINEAS_PUBLICADA } from './lineas';
+import { GUIAS_PERU, PERU_PUBLICADA } from './peru';
 import { GUIAS_VIAJES_FIJOS, VIAJES_FIJOS_PUBLICADA } from './viajesFijos';
 import { GUIA_ESPERA } from './esperaViaje';
 import { GUIAS_SEMANA } from './semana';
@@ -10924,6 +10925,10 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
   // C-LINEAS-TAXI: «Registra tu línea» y «Tu línea en Divoox Driver», con capturas reales (ver lineas.ts).
   const lin = idioma === 'es' ? GUIAS_LINEAS.es : GUIAS_LINEAS.en;
   const lineasDocs = LINEAS_PUBLICADA ? [lin.registro, lin.conductor] : [];
+  // C-PERFIL-PERU: pagar y cobrar con Yape o Plin, recargar con tarjeta y los papeles de Perú (ver peru.ts).
+  const pe = idioma === 'es' ? GUIAS_PERU.es : GUIAS_PERU.en;
+  const peruPasajero = PERU_PUBLICADA ? [pe.pagar] : [];
+  const peruConductor = PERU_PUBLICADA ? [pe.cobrar, pe.recargar, pe.papeles] : [];
   // C-ESPERA-VEHICULO: la espera de cada servicio, con sus capturas reales.
   const espera = idioma === 'es' ? GUIA_ESPERA.es : GUIA_ESPERA.en;
   const base = secciones.map((s) => {
@@ -10937,6 +10942,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           espera,
           ...mismaRuta,
           ...fijosPasajero,
+          ...peruPasajero,
           ...de(s.id),
         ],
       };
@@ -10949,6 +10955,7 @@ function conExtras(secciones: SeccionDocs[], idioma: Idioma): SeccionDocs[] {
           ...carro.conductor,
           ...fijosConductor,
           ...lineasDocs,
+          ...peruConductor,
           ...de(s.id),
         ],
       };

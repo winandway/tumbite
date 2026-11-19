@@ -2,6 +2,19 @@
 
 > **Estado vigente:** el registro único es `docs/RECONCILIACION-FASE-2.md` (fallos F5–F20, puntos 1–67, compuerta del MVP y estado por país y método). Si este documento dice otra cosa, manda el registro.
 
+## 🔴 Perú, Ica (C-PERFIL-PERU, 19 nov 2026): efectivo, Yape y Plin en mano, comisión del saldo en soles y recarga con tarjeta · probado SOLO con pruebas automáticas, en local y en el sitio de pruebas con el procesador en MODO PRUEBA · 🔴 NADA con dinero real · APAGADO en producción
+
+**🔴 No lo anuncies ni mandes conductores ni pasajeros todavía.** Ningún sol real se ha movido por Divoox.
+
+- **Cómo cobra:** el viaje se cotiza en soles (céntimos), redondeado a 10 céntimos. El pasajero le paga TODO al conductor en mano: efectivo, Yape o Plin (confirmación MANUAL del conductor, «sí me llegó / no me llegó»; nunca «del banco»). Divoox no toca ese dinero. La comisión (sembrada al 8 %, SIN aprobar) se aparta del saldo prepago del conductor al aceptar y se cobra al terminar.
+- **Cómo recarga el conductor:** (1) con tarjeta, en soles, en la página de pago del procesador dentro de su app; el saldo entra solo con el aviso firmado. (2) En el punto de venta del líder de la ciudad, que cobra en efectivo, Yape o Plin y entrega un código. (3) Carga a mano del equipo, con topes en soles.
+- **Probado (automático):** `motoPeru.test.ts` (12 pruebas), `diagnosticoMotoVe.test.ts`, `perfilPeru.test.ts`, `apps/repartidor/src/cobros/logica.test.ts`; el guion `scripts/staging/probar-moto-peru.mjs` en local (19 nov, en verde: tres viajes de 7,90 soles con comisión de 0,63 cada uno) y en el sitio de pruebas en cada rama `fase-*`.
+- **Probado en el sitio de pruebas con el procesador en MODO PRUEBA:** recarga de 30 soles con la tarjeta de prueba (cobro en PEN confirmado, aviso firmado, saldo acreditado una vez) y la página de pago alojada (abre, y sin pagar no acredita).
+- **🔴 Sin probar:** ninguna recarga con una tarjeta real ni peruana; ningún Yape ni Plin real; ninguna venta real en un punto de venta; ningún teléfono en la calle; ningún conductor ni pasajero de verdad. No se sabe todavía cuánto llega neto a la cuenta de Windoce por una recarga real en soles (el cálculo dice que el procesador se queda cerca del 9 % de una recarga de 30 soles).
+- **🔴 Falta antes de cobrar un sol:** que Richard apruebe la comisión y el mínimo de la recarga; la respuesta escrita del procesador sobre recargar un saldo prepago (su lista de negocios restringidos nombra el «valor almacenado»); abogado peruano (RUC, IGV, mototaxi); marca presentada en Perú; y UNA recarga real de 30 soles hecha por el equipo, mirada hasta el final en el procesador y en el saldo.
+- **Estado en producción:** compuerta de Perú cerrada, comisión sin aprobar, recargas de Perú apagadas, ninguna ciudad de Perú creada.
+- **Canario:** las piezas «servicios» y «viajes» de `/datos/salud`; el guion las exige en verde al terminar.
+
 ## 🟡 Agente Divoox (C-AGENTE-DIVOOX, 18 nov 2026): cobrar ganancias en efectivo y vender saldo · PROBADO de punta a punta en el sitio de pruebas el 19 nov 2026 · 🔴 NUNCA con dinero real ni con un agente de verdad · APAGADO en todas las ciudades
 
 - **Qué es:** un Agente Divoox (negocio de confianza de la ciudad) paga en efectivo las ganancias de los conductores contra un código de un solo uso, y les vende saldo prepago. Paga con un fondo que Divoox le transfiere por fuera y se anota en el panel (Dinero → Agentes). Su ganancia NO vive en el sistema.

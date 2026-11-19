@@ -44,6 +44,16 @@ Comida se abre con el mismo formulario: en «Servicio» se elige Comida. Para la
 - En producción este paso no abre Comida en un país nuevo: es una decisión de Richard.
 - En Estados Unidos no se usa: Comida sigue con la configuración de siempre.
 
+## Una ciudad de Perú (Ica es la primera)
+
+Una ciudad de Perú se abre con el mismo paso de «Moto · Abrir y aprobar». Nace sola en soles, con hora de Lima y la tarifa de mercado de Perú; se abre una vez para Moto y otra para Carro. No se usa el formulario «Zonas» para crearla.
+
+- Antes, en producción, hacen falta tres cosas y las tres son decisión de Richard: la compuerta de Perú abierta, la comisión del saldo aprobada en Flex · Dinero, Políticas, y la marca presentada en Perú.
+- Después, en Dinero, país PE: encender «Recargas en puntos de venta» y «Recargas con tarjeta», y escribir la «Recarga mínima con tarjeta». El aviso rojo de «faltan las tarifas, los topes» es de Comida, que en Perú todavía no se abre.
+- El líder de la ciudad vende saldo como punto de venta en soles: se crea el punto con su cuenta y se le carga fondo.
+- Cada conductor carga su Yape o su Plin en Ganancias; el equipo lo confirma (si no, entra en uso a las 24 horas). Sin número solo recibe viajes en efectivo.
+- En el sitio de pruebas todo esto ya está armado: lo hace el guion `scripts/staging/probar-moto-peru.mjs` en cada rama `fase-*`.
+
 ## Cómo se comprueba
 
 Con una cuenta de cliente de pruebas, cotizar un viaje dentro de la ciudad. La cotización tiene que salir con precio, kilómetros y minutos. En el canario de salud, la pieza «rutas» debe decir «ok» y el contador de consultas del día tiene que subir en uno; si dice «estimada», la llave de Google no tiene Routes habilitada.

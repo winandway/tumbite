@@ -179,7 +179,7 @@ export const PAISES: Lugar[] = [
     estado: 'pronto',
     codigo: 'PE',
     region: 'sudamerica',
-    primerasCiudades: ['Lima', 'Arequipa', 'Trujillo'],
+    primerasCiudades: ['Ica', 'Lima', 'Arequipa'],
     idioma: { es: 'español', en: 'Spanish' },
     moneda: { es: 'sol', en: 'sol' },
   },

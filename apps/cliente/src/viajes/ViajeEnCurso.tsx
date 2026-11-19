@@ -612,7 +612,7 @@ export function ViajeEnCurso({
               <Text style={{ color: C.primario }}>{t.pagoMovilNoLlego}</Text>
             ) : (
               <Text style={{ color: '#666B73', fontSize: 12 }}>
-                {medioCelular ? t.celularAyuda(medioCelular) : t.pagoMovilAyuda}
+                {medioCelular ? t.celularEnviar : t.pagoMovilEnviar}
               </Text>
             )}
           </View>

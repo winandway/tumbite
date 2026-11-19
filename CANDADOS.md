@@ -5779,3 +5779,61 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Arreglo:** `apps/panel/src/sitio/legales.ts`, sección «4. Ubicación» de Privacidad, en español e inglés, con fecha propia (`FECHA_PRIVACIDAD`, 19 nov 2026).
 - **Prueba:** `apps/panel/src/sitio/legales.test.tsx`, bloque C-PRIVACIDAD-REGALO-LINEAS, comprobado en rojo sin los párrafos.
 - **No tocar:** si cambia lo que hace el código con la ubicación del pasajero o con los datos de una línea, cambia este texto en el mismo trabajo. Falta fuera del código: en la consola de Play, en Seguridad de los datos, sumar a la ubicación la finalidad de prevención de fraude (lo hace Richard).
+
+## C-PERFIL-PERU — Perú es su propio sistema: soles, Ica, Yape y Plin, comisión sin aprobar (19 nov 2026, Richard) — Perú
+
+- **Qué es:** el país Perú en una sola pieza. Moneda `PEN` (`paises.ts`, `dinero.ts`); perfil `PERU` en `packages/compartido/src/perfilPasajeros.ts` (efectivo, Yape y Plin; papeles revisados por el equipo; `TARIFA_MOTO_PERU` y `TARIFA_CARRO_PERU`, que redondean a 10 céntimos); `packages/compartido/src/perfilPeru.ts` (`CIUDAD_ICA` = `PE-ICA-ICA`, hora de Lima, puntos de interés, DNI, celular +51 y placa). Ficha: `docs/investigaciones-rea/2026-11-19-ica-peru.md`.
+- **Las tres llaves de producción (las tres cerradas):** la compuerta del país (`PAISES_PASAJEROS_ABRIBLES` incluye PE para moto, carro y envíos, y nace cerrada); la comisión del saldo (`prepago-pe-ride`, `-car` y `-express`, 8 % en PEN, sembradas con `revision_legal_aprobada = 0`: no rigen hasta que Richard apruebe); y la ciudad abierta con el paso del panel. Sin las tres, Ica no cotiza en producción.
+- **En el sitio de pruebas:** Ica está abierta para Moto y Carro. La herramienta `POST /datos/interno/diagnostico/moto-pe/*` (`rutas/diagnosticoMotoVe.ts`, solo pruebas o local, con el secreto del reloj) arma las cuentas fijas `zz-mtpe-…` y aprueba la comisión SOLO en esa base.
+- **Cómo se comprueba:** `npx vitest run apps/servidor/src/rutas/motoPeru.test.ts apps/servidor/src/rutas/diagnosticoMotoVe.test.ts packages/compartido/src/perfilPeru.test.ts` y el guion `scripts/staging/probar-moto-peru.mjs` (corre en cada rama `fase-*`). Comprobado en rojo: sin aprobar la comisión en «armar», falla «aprueba la comisión en soles»; con host de producción, Ica no cotiza.
+- **Qué NO tocar:** no aprobar la comisión de Perú por SQL ni desde un guion en producción; no abrir la compuerta de PE sin la orden de Richard; no meter a Perú en la doble moneda de Venezuela (`MONEDA_REFERENCIA`); no repartir condiciones de Perú fuera del perfil.
+
+## C-PAGO-A-CELULAR — Yape y Plin: del celular del pasajero al del conductor, con confirmación a mano (19 nov 2026) — Perú; el mismo recorrido que el pago móvil de Venezuela
+
+- **Qué es:** `METODOS_A_CELULAR` y `esPagoACelular()` (compartido) juntan pago móvil (Venezuela), Yape y Plin (Perú). El servidor usa el recorrido que ya tenía el pago móvil (`operaciones.ts`, `rutas/viajes.ts`, `rutas/viajesPasajero.ts`): el pasajero ve el número del conductor cuando lo asignan, el conductor confirma «Sí, me llegó» o «No me llegó», y «No me llegó» abre un caso `pago_movil_viaje` en la bandeja de soporte del dinero, en la moneda del viaje.
+- **Yape y Plin se reciben entre sí:** `cuentasQueReciben`. Un conductor con Yape recibe viajes pagados con Plin y al revés; el pasajero ve de qué billetera es el número. Sin cuenta cargada, el conductor solo recibe viajes en efectivo.
+- **La tabla:** `cuentas_cobro` acepta `yape` y `plin` (`esquemaCuentasCobro.ts`). Rehacer una tabla con «crear nueva, copiar, borrar vieja, renombrar» FALLA al cerrar el lote si otra tabla la referencia y tiene filas: el orden correcto (guardar filas aparte, borrar, crear con el mismo nombre, devolver filas) está en ese archivo.
+- **Lo que destaparon las capturas reales (19 nov):** con el número del conductor ya en pantalla, el pasajero seguía leyendo «Cuando te asignen conductor verás su número…». Ahora esa tarjeta dice «Envía el precio del viaje a este número…» (`celularEnviar` y `pagoMovilEnviar` en `apps/cliente/src/viajes/textos.ts`; también corrige el pago móvil de Venezuela).
+- **Cómo se comprueba:** `motoPeru.test.ts` (bloques C-PAGO-A-CELULAR), `packages/movil/src/candadoPagoACelular.test.ts`, `packages/movil/src/candadoBsEnMano.test.ts` y el guion de Ica (viaje con Yape «sí me llegó» y viaje con Plin a un conductor con Yape «no me llegó»).
+- **Qué NO tocar:** la confirmación es SIEMPRE manual del conductor: nunca se dice «confirmado por el banco». No comparar el método del viaje con el tipo de la cuenta por igualdad (rompe Yape con Plin).
+
+## C-CUENTA-COBRO-CONDUCTOR — el conductor carga en su app dónde le pagan (19 nov 2026) — Perú y Venezuela
+
+- **Qué pasaba:** `POST /datos/repartidor/cuentas-cobro` existía, pero ninguna pantalla de Driver lo usaba: solo pruebas y guiones. Un conductor no tenía cómo cargar su pago móvil, su Yape ni su Plin.
+- **Arreglo:** `apps/repartidor/src/cobros/CuentaCobro.tsx` (tarjeta «Dónde te pagan los pasajeros» en Ganancias): billetera según el país, titular, celular, contraseña de Divoox para guardar, borrador que no se pierde, y el estado «En uso» o «entra en uso a las 24 horas». El servidor valida un celular peruano para Yape y Plin.
+- **Cómo se comprueba:** `apps/repartidor/src/cobros/logica.test.ts`, `motoPeru.test.ts` (C-CUENTA-COBRO-CONDUCTOR) y las capturas `recorrido-peru-driver-cuenta-cobro*-es.webp`.
+- **Qué NO tocar:** la contraseña al guardar y las 24 horas de espera (protegen contra el robo de la cuenta); la contraseña nunca se guarda en el borrador.
+
+## C-RECARGA-TARJETA-MINIMO y C-RECARGA-TARJETA-ALOJADA — recargar el saldo con tarjeta, con mínimo propio y en la página del procesador (19 nov 2026) — Perú; el mínimo sirve a cualquier país
+
+- **Qué es:** `recargaStripeMin` por país (`internacional/paises.ts`, casilla «Recarga mínima con tarjeta» en Dinero): el procesador cobra una cuota fija por cobro que se come una recarga chica (10 soles pierden cerca del 16 %; 30 soles, cerca del 9 %). Propuesto para Perú: 30 soles; la cifra la fija Richard.
+- **Alojada:** `POST /datos/repartidor/recargas/stripe` con `alojada: true` crea una página de pago del procesador y devuelve su dirección; Driver la abre DENTRO de la app (`abrirPagina`, C-PAGINA-EN-APP) y vuelve a `/top-up/done` o `/top-up/canceled`. El saldo se acredita SOLO con el aviso firmado `payment_intent.succeeded`, una vez (referencia única). Pedir la página no acredita nada.
+- **Perú no está en Connect:** el procesador no paga a bancos de Perú por autoservicio. En Perú el conductor cobra en mano; Divoox no le paga por el procesador.
+- **Se enciende** con `recargasStripeActivas` del país, y solo si la comisión del prepago está aprobada. En producción está APAGADA.
+- **Cómo se comprueba:** `motoPeru.test.ts` (bloque de la recarga), `apps/repartidor/src/cobros/logica.test.ts`, y el guion de Ica: en el sitio de pruebas cobra 30 soles con la tarjeta de prueba, espera el aviso y ve el saldo; pide la página alojada y comprueba que es del procesador y que no acredita.
+- **Qué NO tocar:** no acreditar al volver de la página (solo con el aviso); no bajar el mínimo sin mirar cuánto se queda el procesador; no agregar Perú a `connectPaises`.
+
+## C-PAPELES-POR-PAIS — los papeles se llaman como en el país del conductor (19 nov 2026) — Perú
+
+- **Qué es:** los TIPOS de papel no cambian; cambian los NOMBRES. `packages/compartido/src/papelesPorPais.ts` (una sola pieza para Driver y el panel): en Perú, tarjeta de identificación vehicular, SOAT o CAT, revisión técnica (CITV), licencia de la clase B (mototaxi y moto) o de la clase A (carro), y antecedentes penales o Certificado Único Laboral. La identidad en Perú habla del DNI, no de la cédula.
+- **Cómo se comprueba:** `packages/compartido/src/papelesPorPais.test.ts`, `packages/movil/src/candadoPagoACelular.test.ts` (DNI) y la captura `recorrido-peru-driver-papeles-es.webp`.
+- **Qué NO tocar:** no crear tipos de papel nuevos por país; un país sin nombre propio usa el de siempre.
+
+## C-ZONA-POR-PAIS — una ciudad nueva nace con la moneda y la hora de su país (19 nov 2026) — todos los países
+
+- **Qué pasaba:** el formulario «Zonas» creaba cualquier ciudad en dólares y con hora de Nueva York: una ciudad de Perú habría cobrado en dólares.
+- **Arreglo:** `apps/servidor/src/zonaPorPais.ts`: la moneda y la zona horaria salen del país; editar una ciudad no le cambia la moneda. `AdminZonas.tsx` manda el país.
+- **Cómo se comprueba:** `motoPeru.test.ts` («una ciudad nueva de Perú nace en soles con hora de Lima»).
+
+## C-TOPES-SALDO-MONEDA — los topes de la carga de saldo a mano van en la moneda del país (19 nov 2026) — Perú
+
+- **Qué pasaba:** los topes de «Saldo de conductores» eran «centavos de dólar» aplicados a cualquier moneda: 5.000 habrían sido 50 soles.
+- **Arreglo:** `topesSaldoDe` en `apps/servidor/src/saldoConductores.ts`: en PEN, 200 soles por carga, 40 de regalo de arranque y 1.200 de presupuesto por ciudad.
+- **Cómo se comprueba:** `motoPeru.test.ts` («en Ica el equipo puede cargar hasta 200 soles de una vez»).
+- **Deuda anotada:** el Agente Divoox (paga ganancias en efectivo) sigue solo en USD y VES, con CHECK en tres tablas. En Ica el líder vende saldo como PUNTO DE VENTA en soles, que ya sirve a cualquier moneda (probado en el guion).
+
+## C-DOCS-PERU — guías públicas y ayuda interna de Perú (19 nov 2026) — Perú
+
+- **Público:** `apps/panel/src/sitio/docs/peru.ts`: pagar con Yape o Plin, cobrar con Yape o Plin, recargar con tarjeta y los papeles de Perú, en español e inglés. Capturas REALES solo en español (`scripts/recorrido/capturas-peru.mjs`, servidor local, mapa sin rótulos, ciudad «de ejemplo», celular 900 000 000); el inglés enseña las pantallas de Estados Unidos (C-CAPTURAS-POR-IDIOMA). `peru.test.ts` las publica si y solo si las capturas existen.
+- **Interno:** la guía «Perú: abrir una ciudad…» en `apps/servidor/src/ayudaInterna/guias.ts`, con capturas privadas (`scripts/recorrido/capturas-peru-interno.mjs`, compuerta cerrada como en producción).
+- **Web:** en la cobertura, Perú lista a Ica como primera ciudad y sigue sin fecha.
