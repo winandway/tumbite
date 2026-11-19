@@ -27,7 +27,8 @@ describe('Mi ruta: repaso en el simulador', () => {
     expect(miRuta).toMatch(/escaneo\.modo === 'carga' && cargaLista/);
   });
   it('el mapa de la ruta encuadra cuando termina de cargar (C-FLEX-MAPA-ENCUADRE)', () => {
-    expect(mapa).toContain('onMapReady={() => setListo(true)}');
+    // C-MARCADOR-ANDROID (paquete 13): al cargar también repinta los marcadores (`vista.listo()`).
+    expect(mapa).toMatch(/onMapReady=\{\(\) => \{\s*setListo\(true\);/);
     // 14 nov 2026 (C-MAPA-LLEGADA): la misma condición, en dos líneas (entre medias va el
     // acercamiento a la parada actual): nada se mueve antes de que el mapa cargue.
     expect(mapa).toMatch(/if \(!listo\) return;/);

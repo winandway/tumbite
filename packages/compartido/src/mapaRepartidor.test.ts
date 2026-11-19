@@ -13,7 +13,8 @@ const fuente = readFileSync(
 
 describe('mapa del repartidor', () => {
   it('encuadra cuando el mapa termina de cargar (C-MAPA-ENCUADRE)', () => {
-    expect(fuente).toContain('onMapReady={() => setListo(true)}');
+    // C-MARCADOR-ANDROID (paquete 13): al cargar también repinta los marcadores (`vista.listo()`).
+    expect(fuente).toMatch(/onMapReady=\{\(\) => \{\s*setListo\(true\);/);
     expect(fuente).toMatch(/if \(!listo\) return;/);
   });
   it('con un solo punto va a ese punto', () => {
