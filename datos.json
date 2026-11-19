@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-19",
+  "actualizado": "2026-11-19T06:10:00Z",
   "version": "fe71f3f",
   "ahora": "18 nov: Google aprobó y publicó la versión nueva. Divoox (46) y Divoox Driver (42) ya se bajan de Play Store normal. Traen el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Ya se está construyendo la versión siguiente: precios en dólares y en bolívares, el precio grande en la pantalla del conductor, más acciones deslizantes, el saldo a la vista en el inicio del conductor y «Subir la tarifa».",
   "proximo": [
@@ -36,12 +36,20 @@
   ],
   "esperando": [
     {
+      "id": "alta-stripe-pizzeria-novi",
+      "prioridad": "alta",
+      "titulo": "Completar el alta de cobros de Pizzería Novi en Stripe y pagar un pedido de 1 dólar",
+      "para": "Stripe Connect ya está encendido. La cuenta de cobros del restaurante de prueba espera sus datos: tipo de negocio, cuenta bancaria y aceptar los términos. Eso solo lo puedes escribir tú, en el enlace que te pasamos. Después, un pedido de 1 dólar en Pizzería Novi con tu tarjeta.",
+      "destraba": "La primera prueba real de punta a punta: cobro, transferencia al restaurante y retiro a su banco. Hasta entonces los retiros no se anuncian.",
+      "numero": 1
+    },
+    {
       "id": "encender-cupon-vigia",
       "prioridad": "alta",
       "titulo": "Encender el cupón VIGIA cuando quieras arrancar los regalos",
       "para": "El cupón de regalos de El Vigía y Tucaní está creado con 100 dólares de presupuesto y apagado. Se enciende en Superadmin, menú Dinero, Regalos Divoox, botón Encender. Al agotarse el presupuesto se apaga solo.",
       "destraba": "Que los primeros usuarios viajen gratis (hasta 1,50 dólares) y prueben la app.",
-      "numero": 1
+      "numero": 2
     },
     {
       "id": "equipo-jehova-jireh",
@@ -49,7 +57,7 @@
       "titulo": "Crear el primer equipo de conductores de El Vigía y encender los referidos",
       "para": "Hace falta que el presidente de la línea se registre en Divoox Driver y nos diga su correo o celular. Con eso se crea el equipo en Superadmin, Dinero, «Referidos y equipos», y se le pasa su enlace y su QR. Los programas de referidos se encienden ahí mismo.",
       "destraba": "Saber quiénes son de su equipo y premiarlo por cada conductor que complete sus carreras.",
-      "numero": 2
+      "numero": 3
     },
     {
       "id": "arranque-conductores-monto",
@@ -57,7 +65,7 @@
       "titulo": "Decidir el regalo de arranque para conductores nuevos de El Vigía y Tucaní",
       "para": "Ya se puede dar saldo de regalo a cada conductor nuevo de una ciudad, con presupuesto. Hace falta el monto por conductor y el presupuesto total. Se pone en Superadmin, Dinero, «Saldo de conductores».",
       "destraba": "Que los primeros conductores arranquen con saldo para sus primeras carreras.",
-      "numero": 3
+      "numero": 4
     },
     {
       "id": "piloto-telefonos-responsables",
@@ -65,7 +73,7 @@
       "titulo": "Teléfonos de los responsables de El Vigía y Tucaní",
       "para": "Cuando un conductor o un pasajero toca el botón de pánico, le llega un aviso al responsable de su zona con quién es, dónde está y la carrera. Hace falta el nombre y el celular (con +58) de la persona de El Vigía y la de Tucaní.",
       "destraba": "El aviso de pánico al responsable de cada zona.",
-      "numero": 4
+      "numero": 5
     },
     {
       "id": "piloto-huella-mapa",
@@ -73,10 +81,10 @@
       "titulo": "Sumar la firma de las apps del piloto a la llave del mapa de Google",
       "para": "En las apps que se bajan directo el mapa sale gris: la llave «Divoox Maps Android» solo acepta la firma de Google Play. Hay que agregar dos líneas (paquete y huella) en Google Cloud → Credenciales. Pide la contraseña de la cuenta de Google, por eso es tuyo. El croquis exacto está en el informe del piloto.",
       "destraba": "El mapa dentro de Divoox Driver y Divoox en los teléfonos del piloto.",
-      "numero": 5
+      "numero": 6
     },
     {
-      "numero": 6,
+      "numero": 7,
       "id": "play-datos-fotos-cliente",
       "prioridad": "alta",
       "titulo": "Autorizar que declaremos las fotos de la puerta en Google Play",
@@ -84,7 +92,7 @@
       "destraba": "Subir la versión de Android del cliente con el diseño nuevo y la foto de la puerta."
     },
     {
-      "numero": 7,
+      "numero": 8,
       "id": "apple-privacidad-fotos-cliente",
       "prioridad": "media",
       "titulo": "Revisar en App Store Connect la privacidad del cliente",
@@ -92,7 +100,7 @@
       "destraba": "Que la revisión de Apple del cliente no se frene por la foto de la puerta."
     },
     {
-      "numero": 8,
+      "numero": 9,
       "id": "flota-propia-dinero",
       "prioridad": "alta",
       "titulo": "Decidir el dinero de la flota propia del restaurante",
@@ -100,7 +108,7 @@
       "destraba": "Encender «Mis repartidores» en producción, empezando por el restaurante de Chile con 14 repartidores."
     },
     {
-      "numero": 9,
+      "numero": 10,
       "id": "chile-cuenta-de-cobro",
       "prioridad": "media",
       "titulo": "Abrir la cuenta de cobro de Chile",
@@ -108,7 +116,7 @@
       "destraba": "Encender Chile: el perfil del país ya está en el código, apagado."
     },
     {
-      "numero": 10,
+      "numero": 11,
       "id": "cancelar-listo-dinero",
       "prioridad": "media",
       "titulo": "Decidir quién paga la comida de un pedido listo que se cancela",
@@ -116,7 +124,7 @@
       "destraba": "Pagarle la comida al restaurante cuando la causa no fue suya, como DoorDash."
     },
     {
-      "numero": 11,
+      "numero": 12,
       "id": "aprobar-portada-p2",
       "prioridad": "alta",
       "titulo": "Mirar la maqueta nueva de la portada (servicios arriba, como Rappi y Grab) y decir si se construye así",
@@ -124,7 +132,7 @@
       "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
     },
     {
-      "numero": 12,
+      "numero": 13,
       "id": "stripe-connect-y-retiros",
       "prioridad": "alta",
       "titulo": "Stripe: activar Connect, crear el aviso de cuentas conectadas y decir cuándo se encienden los retiros",
@@ -132,7 +140,7 @@
       "destraba": "Probar el alta de cobros y un retiro en modo prueba, que es lo único del circuito de pagos que quedó sin probar en el sitio de pruebas."
     },
     {
-      "numero": 13,
+      "numero": 14,
       "id": "compra-real-1-dolar",
       "prioridad": "alta",
       "titulo": "Compra real de 1 dólar con tu tarjeta",
@@ -140,7 +148,7 @@
       "destraba": "Encender Comida en Miami y poder decir que los pagos están probados."
     },
     {
-      "numero": 14,
+      "numero": 15,
       "id": "prueba-en-la-calle",
       "prioridad": "alta",
       "titulo": "Prueba en la calle con cliente, restaurante y repartidor",
@@ -148,7 +156,7 @@
       "destraba": "El lanzamiento de Comida."
     },
     {
-      "numero": 15,
+      "numero": 16,
       "id": "sesion-admin-google-play",
       "prioridad": "alta",
       "titulo": "Abrir tu sesión de administrador en el panel de Divoox",
@@ -156,7 +164,7 @@
       "destraba": "Que Google pueda entrar a revisar las apps sin trabas."
     },
     {
-      "numero": 16,
+      "numero": 17,
       "id": "contrasena-expo",
       "prioridad": "alta",
       "titulo": "Cambiar la contraseña de Expo",
@@ -164,7 +172,7 @@
       "destraba": "Cerrar ese riesgo de seguridad."
     },
     {
-      "numero": 17,
+      "numero": 18,
       "id": "montos-para-encender",
       "prioridad": "media",
       "titulo": "Montos para encender las funciones de crecimiento",
@@ -173,7 +181,7 @@
       "docs": ["earn-by-time", "sponsored-listings", "divoox-plus", "gift-cards"]
     },
     {
-      "numero": 18,
+      "numero": 19,
       "id": "prueba-ruta-logistica",
       "prioridad": "media",
       "titulo": "Probar la ruta de logística con las etiquetas impresas",
@@ -182,7 +190,7 @@
       "docs": ["flex-getting-started"]
     },
     {
-      "numero": 19,
+      "numero": 20,
       "id": "tiendas-pais",
       "prioridad": "media",
       "titulo": "Elegir el país donde se encienden Mercado, Farmacia y Licores",
@@ -191,7 +199,7 @@
       "docs": ["shop-stores"]
     },
     {
-      "numero": 20,
+      "numero": 21,
       "id": "moto-carro-legal",
       "prioridad": "media",
       "titulo": "Moto y Carro: país, permiso legal, seguro del pasajero y tarifas",
@@ -199,7 +207,7 @@
       "destraba": "Encender Moto y Carro en el primer país."
     },
     {
-      "numero": 21,
+      "numero": 22,
       "id": "envios-precio",
       "prioridad": "media",
       "titulo": "Envíos de persona a persona: valor máximo, seguro y precio",
@@ -207,7 +215,7 @@
       "destraba": "Abrir Envíos a todo el público."
     },
     {
-      "numero": 22,
+      "numero": 23,
       "id": "caras-proveedor",
       "prioridad": "baja",
       "titulo": "Comparación de caras con IA: proveedor y costo",
@@ -216,7 +224,7 @@
       "docs": ["background-check-and-identity"]
     },
     {
-      "numero": 23,
+      "numero": 24,
       "id": "checkr",
       "prioridad": "baja",
       "titulo": "Cuenta de Checkr para antecedentes de repartidores",
@@ -224,7 +232,7 @@
       "destraba": "El botón de antecedentes en la app del repartidor."
     },
     {
-      "numero": 24,
+      "numero": 25,
       "id": "ley-aplicable-terminos",
       "prioridad": "media",
       "titulo": "Abogado: ley aplicable de los términos",
@@ -232,7 +240,7 @@
       "destraba": "Corregir esa cláusula con el texto que diga el abogado."
     },
     {
-      "numero": 25,
+      "numero": 26,
       "id": "contador-impuesto-promo",
       "prioridad": "media",
       "titulo": "Preguntarle al contador por el impuesto con promoción",
@@ -240,7 +248,7 @@
       "destraba": "Ajustar la cuenta del impuesto en los pedidos con promoción."
     },
     {
-      "numero": 26,
+      "numero": 27,
       "id": "comida-efectivo-eeuu",
       "prioridad": "baja",
       "titulo": "Decidir si en Estados Unidos la comida se podrá pagar en efectivo al recibir",
@@ -248,7 +256,7 @@
       "destraba": "Si dices que sí, se enciende el pago al recibir allá y se actualizan las guías en inglés."
     },
     {
-      "numero": 27,
+      "numero": 28,
       "id": "comision-efectivo-eeuu",
       "prioridad": "media",
       "titulo": "Decidir cómo cobra Divoox su comisión en los viajes en efectivo de Estados Unidos",
@@ -256,7 +264,7 @@
       "destraba": "Abrir Moto o Carro en Estados Unidos con la comisión clara desde el primer viaje."
     },
     {
-      "numero": 28,
+      "numero": 29,
       "id": "flex-recargas-tarjeta-eeuu",
       "prioridad": "baja",
       "titulo": "Confirmar que las empresas de Flex en Estados Unidos recargan con tarjeta",
@@ -264,7 +272,7 @@
       "destraba": "Encender las recargas con tarjeta de Flex para Estados Unidos cuando llegue la primera empresa."
     },
     {
-      "numero": 29,
+      "numero": 30,
       "id": "decisiones-equipo-interno",
       "prioridad": "media",
       "titulo": "Decidir quién ve fotos, teléfonos y si se pide segundo factor al equipo",
@@ -272,7 +280,7 @@
       "destraba": "Dejar fijas las reglas de privacidad del equipo de operaciones y encender el segundo factor si lo quieres."
     },
     {
-      "numero": 30,
+      "numero": 31,
       "id": "texto-legal-volver-a-cobrar",
       "prioridad": "alta",
       "titulo": "Confirmar el texto legal para volver a cobrar una tarjeta cuya retención venció",
@@ -457,6 +465,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Cobros a restaurantes y repartidores: Stripe Connect encendido (sin probar con dinero real)",
+      "texto": "Stripe aceptó las cuentas de cobro nuevas: la del restaurante de prueba y la del repartidor de prueba en Estados Unidos, y la cuenta de prueba de Colombia, que recibe en pesos. El aviso de Stripe para esas cuentas ya funciona, y los tres indicadores de salud están en verde. Cada cuenta pide solo lo necesario para recibir transferencias. Falta la prueba con dinero real: completar el alta en Stripe y pagar un pedido de 1 dólar. Hasta entonces no se anuncian los retiros."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Soporte: ya puedes adjuntar una captura en el chat y los fallos quedan registrados",
