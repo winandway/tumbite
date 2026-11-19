@@ -4739,10 +4739,11 @@ CREATE TABLE IF NOT EXISTS regalos_en_revision (
   detalle TEXT NOT NULL DEFAULT '',
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado')),
   nota TEXT NOT NULL DEFAULT '',
+  bloquea_pasajero INTEGER NOT NULL DEFAULT 0,
   resuelto_por TEXT,
   resuelto_en TEXT,
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS regalos_en_revision_pendientes ON regalos_en_revision(creado_en) WHERE estado = 'pendiente';
 CREATE INDEX IF NOT EXISTS regalos_en_revision_conductor ON regalos_en_revision(conductor_id) WHERE estado = 'pendiente';
-CREATE INDEX IF NOT EXISTS regalos_en_revision_rechazados ON regalos_en_revision(codigo, cliente_id) WHERE estado = 'rechazado';
+CREATE INDEX IF NOT EXISTS regalos_en_revision_rechazados ON regalos_en_revision(codigo, cliente_id) WHERE estado = 'rechazado' AND bloquea_pasajero = 1;

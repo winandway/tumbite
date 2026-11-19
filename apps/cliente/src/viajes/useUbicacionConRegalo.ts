@@ -1,10 +1,16 @@
 import { useEffect } from 'react';
-import { ubicacionSiHayPermiso } from '../ubicacion';
+import { lecturaSiHayPermiso } from '../ubicacion';
 
 /** Cada cuánto manda su ubicación el teléfono del pasajero durante un viaje con regalo. */
 export const CADA_UBICACION_REGALO_MS = 60_000;
 
-type Api = { pedir: <T>(metodo: string, ruta: string, cuerpo?: unknown) => Promise<T> };
+type Api = {
+  pedir: <T>(
+    metodo: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+    ruta: string,
+    cuerpo?: unknown,
+  ) => Promise<T>;
+};
 
 /**
  * C-REGALO-VIAJE-REAL (19 nov 2026): durante un viaje con regalo de Divoox EN CURSO, la app manda al
@@ -22,10 +28,14 @@ export function useUbicacionConRegalo(
     if (!id || !activo) return;
     let vivo = true;
     const mandar = async () => {
-      const p = await ubicacionSiHayPermiso();
+      const p = await lecturaSiHayPermiso();
       if (!p || !vivo) return;
       await api
-        .pedir('POST', `/datos/viajes/${id}/mi-ubicacion`, { lat: p.lat, lng: p.lng })
+        .pedir('POST', `/datos/viajes/${id}/mi-ubicacion`, {
+          lat: p.lat,
+          lng: p.lng,
+          precision: p.precision,
+        })
         .catch((e: unknown) => console.warn('viaje: no se pudo mandar la ubicación', e));
     };
     void mandar();

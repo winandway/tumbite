@@ -109,6 +109,7 @@ const T = {
     pendientes: (n: number) => (n === 1 ? '1 por revisar' : `${n} por revisar`),
     nota: 'Nota de la revisión',
     notaPista: 'Qué comprobaste (obligatoria para rechazar)',
+    bloquear: 'Si rechazo, esta cuenta no vuelve a usar este cupón',
     aprobar: 'Aprobar y acreditar',
     rechazar: 'Rechazar',
     estadosRevision: {
@@ -212,6 +213,7 @@ const T = {
     pendientes: (n: number) => `${n} to review`,
     nota: 'Review note',
     notaPista: 'What you checked (required to reject)',
+    bloquear: 'If I reject, this account can’t use this code again',
     aprobar: 'Approve and credit',
     rechazar: 'Reject',
     estadosRevision: {
@@ -706,7 +708,7 @@ function TarjetaRevision({
   const f = useBorrador({
     formulario: `regalo-revision-${r.id}`,
     cuenta: 'superadmin',
-    inicial: { nota: '' },
+    inicial: { nota: '', bloquear: false },
     almacen: almacenNavegador,
   });
   const [enviando, setEnviando] = useState(false);
@@ -721,6 +723,7 @@ function TarjetaRevision({
       await pedir('POST', `/datos/admin/regalos-divoox/revisiones/${r.id}`, {
         aprobar,
         nota: f.valores.nota,
+        bloquearPasajero: f.valores.bloquear,
       });
       await f.limpiar();
       setOk(t.guardado);
@@ -748,6 +751,14 @@ function TarjetaRevision({
           onChange={(e) => f.cambiar('nota', e.target.value)}
           placeholder={t.notaPista}
         />
+      </label>
+      <label className="casilla-fila">
+        <input
+          type="checkbox"
+          checked={f.valores.bloquear}
+          onChange={(e) => f.cambiar('bloquear', e.target.checked)}
+        />
+        {t.bloquear}
       </label>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
         <button

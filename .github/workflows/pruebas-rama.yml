@@ -82,6 +82,13 @@ jobs:
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
           VUELTA_PRUEBAS: rama-agente-${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/staging/probar-agente.mjs
+      # C-REGALO-VIAJE-REAL: usa las cuentas temporales de Moto en Miami y sus propios cupones.
+      - name: Regalo con viaje real de punta a punta (sin moverse queda en revisión, el equipo aprueba, viaje real acredita)
+        if: ${{ !cancelled() && vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+        run: node scripts/staging/probar-regalo-viaje-real.mjs
       - name: Comida en Venezuela de punta a punta (El Vigía, efectivo, pago móvil, sin saldo, cancelación)
         if: ${{ vars.URL_PRUEBAS != '' }}
         env:

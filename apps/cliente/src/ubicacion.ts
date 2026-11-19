@@ -21,11 +21,18 @@ export const ESPERA_UBICACION_MS = 8000;
  */
 let reintento: EstadoReintento = SIN_FALLOS;
 
-async function leerPosicion(): Promise<Punto | null> {
+/** Una lectura con su precisión en metros (cuando el teléfono la da). */
+export type Lectura = Punto & { precision: number | null };
+
+async function leerLectura(): Promise<Lectura | null> {
   try {
     const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     reintento = despuesDeIntentar(reintento, true, Date.now());
-    return { lat: p.coords.latitude, lng: p.coords.longitude };
+    return {
+      lat: p.coords.latitude,
+      lng: p.coords.longitude,
+      precision: p.coords.accuracy ?? null,
+    };
   } catch (e) {
     reintento = despuesDeIntentar(reintento, false, Date.now());
     console.warn(
@@ -36,6 +43,32 @@ async function leerPosicion(): Promise<Punto | null> {
     );
     return null;
   }
+}
+
+async function leerPosicion(): Promise<Punto | null> {
+  const l = await leerLectura();
+  return l ? { lat: l.lat, lng: l.lng } : null;
+}
+
+/**
+ * C-REGALO-VIAJE-REAL: la lectura con su precisión, SOLO si la persona ya dio permiso (nunca abre la
+ * pregunta). El servidor descarta las lecturas imprecisas: sin la precisión, una lectura mala del
+ * teléfono contaría como «lejos del conductor».
+ */
+export function lecturaSiHayPermiso(): Promise<Lectura | null> {
+  if (!puedeIntentar(reintento, Date.now())) return Promise.resolve(null);
+  return conLimite(
+    (async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') return null;
+      return leerLectura();
+    })().catch((e: unknown) => {
+      console.warn('ubicación: no se pudo mirar el permiso', e);
+      return null;
+    }),
+    ESPERA_UBICACION_MS,
+    null,
+  );
 }
 
 /**

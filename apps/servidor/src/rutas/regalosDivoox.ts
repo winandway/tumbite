@@ -403,7 +403,11 @@ regalosDivoox.post('/admin/regalos-divoox/revisiones/:id', async (c) => {
   const db = base(c);
   const d = await leerCuerpo(
     c,
-    z.object({ aprobar: z.boolean(), nota: z.string().trim().max(200).default('') }),
+    z.object({
+      aprobar: z.boolean(),
+      nota: z.string().trim().max(200).default(''),
+      bloquearPasajero: z.boolean().default(false),
+    }),
   );
   if (!d.aprobar && d.nota.length < 5)
     throw new ErrorDatos('Escribe por qué se rechaza este regalo.', 'nota', 422);
@@ -413,6 +417,7 @@ regalosDivoox.post('/admin/regalos-divoox/revisiones/:id', async (c) => {
     aprobar: d.aprobar,
     autorId: u.id,
     nota: d.nota,
+    bloquearPasajero: d.bloquearPasajero,
   });
   await db
     .prepare(
@@ -422,7 +427,12 @@ regalosDivoox.post('/admin/regalos-divoox/revisiones/:id', async (c) => {
       u.id,
       d.aprobar ? 'regalo.revision.aprobar' : 'regalo.revision.rechazar',
       `regalo:${usoId}`,
-      JSON.stringify({ monto: r.monto, moneda: r.moneda, nota: d.nota }),
+      JSON.stringify({
+        monto: r.monto,
+        moneda: r.moneda,
+        nota: d.nota,
+        bloquearPasajero: !d.aprobar && d.bloquearPasajero,
+      }),
     )
     .run();
   const monto = `${(r.monto / 100).toFixed(2)} ${r.moneda}`;

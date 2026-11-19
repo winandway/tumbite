@@ -141,7 +141,7 @@ async function candidatos(db: D1Database, p: Contexto, soloCodigo?: string) {
           AND (c.bienvenida = 1 OR ?7 <> '' OR EXISTS (SELECT 1 FROM cupones_divoox_guardados g WHERE g.codigo = c.codigo AND g.cliente_id = ?4))
           AND NOT EXISTS (SELECT 1 FROM usos_cupon_divoox x WHERE x.codigo = c.codigo AND x.estado <> 'liberado'
                            AND (x.cliente_id = ?4 OR x.telefono = ?5 OR x.aparato = ?6))
-          AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rr WHERE rr.codigo = c.codigo AND rr.estado = 'rechazado'
+          AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rr WHERE rr.codigo = c.codigo AND rr.estado = 'rechazado' AND rr.bloquea_pasajero = 1
                            AND (rr.cliente_id = ?4 OR rr.telefono = ?5 OR rr.aparato = ?6))
           AND (?7 = '' OR c.codigo = ?7)`,
     )
@@ -303,7 +303,8 @@ async function reencenderRecuperados(db: D1Database) {
 export async function liberarRegalo(db: D1Database, operacionId: string, motivo: string) {
   const r = await db
     .prepare(
-      "UPDATE usos_cupon_divoox SET estado = 'liberado', cerrado_en = datetime('now'), motivo = ? WHERE operacion_id = ? AND estado = 'apartado'",
+      `UPDATE usos_cupon_divoox SET estado = 'liberado', cerrado_en = datetime('now'), motivo = ? WHERE operacion_id = ? AND estado = 'apartado'
+          AND NOT EXISTS (SELECT 1 FROM regalos_en_revision rv WHERE rv.uso_id = usos_cupon_divoox.id AND rv.estado = 'pendiente')`,
     )
     .bind(motivo.slice(0, 80), operacionId)
     .run();
@@ -479,7 +480,9 @@ export async function cerrarRegalo(
   const [cierre] = await db.batch([
     db
       .prepare(
-        "UPDATE usos_cupon_divoox SET estado = 'cobrado', monto = ?, conductor_id = ?, tomado_en = COALESCE(tomado_en, datetime('now')), cerrado_en = datetime('now') WHERE id = ? AND estado = 'apartado'",
+        // La revisión se vuelve a mirar AQUÍ, en la sentencia que cobra: si «terminar» la abrió
+        // entre la lectura de arriba y este paso (el reloj corriendo a la vez), no se paga.
+        `UPDATE usos_cupon_divoox SET estado = 'cobrado', monto = ?, conductor_id = ?, tomado_en = COALESCE(tomado_en, datetime('now')), cerrado_en = datetime('now') WHERE id = ? AND estado = 'apartado' ${SIN_REVISION_ABIERTA}`,
       )
       .bind(monto, p.conductorId, u.id),
     // C-SALDO-CONDUCTOR: el conductor recibió menos efectivo; lo del regalo va a sus GANANCIAS.
@@ -517,7 +520,9 @@ export async function cerrarRegalo(
       conductorId: p.conductorId,
       detalle: `El mismo cliente y el mismo conductor: ${Number(juntos?.n ?? 0)} viajes en 7 días y ${Number(regalosJuntos?.n ?? 0)} con regalo.`,
     });
-  await alertaCuentasMismoDia(db, { ...u, operacionId: p.operacionId }, p.conductorId);
+  await alertaCuentasMismoDia(db, { ...u, operacionId: p.operacionId }, p.conductorId).catch(
+    (e: unknown) => console.error('regalos: alerta de cuentas del mismo día', e),
+  );
   return monto;
 }
 
@@ -689,6 +694,7 @@ export async function cerrarRegaloDeViaje(
       )
       .bind(p.conductorId, u.id),
   ]);
+  // La revisión ya quedó guardada: si una alerta falla, el viaje no se cae por eso.
   if (abierta?.meta.changes) {
     await alerta(db, {
       tipo: motivos[0] as MotivoRevision,
@@ -697,8 +703,10 @@ export async function cerrarRegaloDeViaje(
       clienteId: u.cliente_id,
       conductorId: p.conductorId,
       detalle,
-    });
-    await alertaCuentasMismoDia(db, { ...u, operacionId: p.operacionId }, p.conductorId);
+    }).catch((e: unknown) => console.error('regalos: alerta de la revisión', e));
+    await alertaCuentasMismoDia(db, { ...u, operacionId: p.operacionId }, p.conductorId).catch(
+      (e: unknown) => console.error('regalos: alerta de cuentas del mismo día', e),
+    );
   }
   return { monto, enRevision: true };
 }
@@ -766,18 +774,34 @@ export async function revisionesRegalo(db: D1Database) {
 /**
  * Una persona del equipo aprueba o rechaza un regalo en revisión. Aprobado: se acredita a las
  * ganancias del conductor por el camino de siempre. Rechazado: el dinero vuelve al presupuesto del
- * cupón y esa cuenta, teléfono y aparato no vuelven a usarlo. Una sola vez (el segundo toque: 409).
+ * cupón; si quien rechaza lo marca, esa cuenta, teléfono y aparato no vuelven a usarlo (por defecto
+ * no: el tramposo puede ser solo el conductor). Una sola vez (el segundo toque: 409).
  */
 export async function resolverRevisionRegalo(
   db: D1Database,
-  p: { usoId: string; aprobar: boolean; autorId: string; nota: string },
+  p: {
+    usoId: string;
+    aprobar: boolean;
+    autorId: string;
+    nota: string;
+    /** Al rechazar: esa cuenta, teléfono y aparato no vuelven a usar este cupón. */
+    bloquearPasajero?: boolean;
+  },
 ) {
   const r = await db
     .prepare(
-      `UPDATE regalos_en_revision SET estado = ?, nota = ?, resuelto_por = ?, resuelto_en = datetime('now')
-        WHERE uso_id = ? AND estado = 'pendiente' RETURNING operacion_id, conductor_id, monto, moneda`,
+      `UPDATE regalos_en_revision SET estado = ?, nota = ?, bloquea_pasajero = ?, resuelto_por = ?, resuelto_en = datetime('now')
+        WHERE uso_id = ? AND estado = 'pendiente'
+          AND EXISTS (SELECT 1 FROM usos_cupon_divoox u WHERE u.id = regalos_en_revision.uso_id AND u.estado = 'apartado')
+        RETURNING operacion_id, conductor_id, monto, moneda`,
     )
-    .bind(p.aprobar ? 'aprobado' : 'rechazado', p.nota.slice(0, 200), p.autorId, p.usoId)
+    .bind(
+      p.aprobar ? 'aprobado' : 'rechazado',
+      p.nota.slice(0, 200),
+      !p.aprobar && p.bloquearPasajero ? 1 : 0,
+      p.autorId,
+      p.usoId,
+    )
     .first<{ operacion_id: string; conductor_id: string; monto: number; moneda: string }>();
   if (!r)
     throw new ErrorDatos('Este regalo ya fue revisado. Actualiza la pantalla.', undefined, 409);
@@ -802,6 +826,12 @@ export async function regalosEnRevision(db: D1Database, conductorId: string) {
     .first<{ monto: number; viajes: number }>();
   return { monto: Number(f?.monto ?? 0), viajes: Number(f?.viajes ?? 0) };
 }
+
+/** Días que un regalo puede esperar la revisión del equipo antes de poner la salud en rojo. */
+export const DIAS_REVISION_OLVIDADA = 7;
+
+/** Minutos que el reloj espera antes de cerrar el regalo de un viaje recién terminado. */
+export const MINUTOS_RELOJ_ESPERA = 10;
 
 /**
  * El reloj: libera los usos de operaciones que no se hicieron y cierra los de operaciones terminadas
@@ -837,10 +867,15 @@ export async function barrerRegalos(db: D1Database) {
   for (const r of results) {
     if (r.estado_general === 'terminada' && r.conductor_id) {
       const t = await db
-        .prepare('SELECT total_final_centavos FROM viajes WHERE operacion_id = ?')
+        .prepare(
+          `SELECT total_final_centavos, terminado_en > datetime('now', '-${MINUTOS_RELOJ_ESPERA} minutes') AS reciente
+             FROM viajes WHERE operacion_id = ?`,
+        )
         .bind(r.operacion_id)
-        .first<{ total_final_centavos: number | null }>();
-      if (t?.total_final_centavos != null) {
+        .first<{ total_final_centavos: number | null; reciente: number | null }>();
+      // El viaje acaba de terminar: su propio cierre (que sí mira dónde está el conductor) va
+      // primero. El reloj solo recoge lo que se cortó.
+      if (t?.total_final_centavos != null && Number(t.reciente) !== 1) {
         const c = await cerrarRegaloDeViaje(db, {
           operacionId: r.operacion_id,
           conductorId: r.conductor_id,
@@ -909,9 +944,16 @@ export async function saludRegalos(db: D1Database): Promise<'ok' | 'error'> {
              OR (p.estado = 'cancelado' AND COALESCE(p.cancelado_en, p.creado_en) < datetime('now', '-1 hour')))) AS colgados`,
     )
     .first<{ pasados: number; sin_credito: number; colgados: number }>();
-  return Number(f?.pasados ?? 0) + Number(f?.sin_credito ?? 0) + Number(f?.colgados ?? 0) > 0
-    ? 'error'
-    : 'ok';
+  if (Number(f?.pasados ?? 0) + Number(f?.sin_credito ?? 0) + Number(f?.colgados ?? 0) > 0)
+    return 'error';
+  // C-REGALO-VIAJE-REAL: un regalo esperando revisión deja dinero del cupón reservado y a un
+  // conductor sin respuesta. Pasados DIAS_REVISION_OLVIDADA sin que nadie lo mire, es un fallo.
+  const viejas = await db
+    .prepare(
+      `SELECT 1 FROM regalos_en_revision WHERE estado = 'pendiente' AND creado_en < datetime('now', '-${DIAS_REVISION_OLVIDADA} days') LIMIT 1`,
+    )
+    .first();
+  return viejas ? 'error' : 'ok';
 }
 
 // ───────────────────────── Superadmin ─────────────────────────
