@@ -13,6 +13,7 @@ import {
 import {
   ErrorApi,
   type Idioma,
+  MARCA,
   almacenNavegador,
   correoEjemplo,
   enIdioma,
@@ -189,6 +190,12 @@ export function Agente({
       ) : yo ? (
         <Dentro t={t} idioma={idioma} yo={yo} recargar={cargar} />
       ) : null}
+      <footer className="agente-pie sin-imprimir">
+        © {new Date().getFullYear()} divoox.com | {t.derechos} {t.desarrollo}{' '}
+        <a href={MARCA.sitioEmpresa} target="_blank" rel="noopener noreferrer">
+          {MARCA.empresa}
+        </a>
+      </footer>
     </div>
   );
 }

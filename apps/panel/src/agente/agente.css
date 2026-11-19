@@ -398,6 +398,18 @@
 .agente-recibo .agente-botones {
   justify-content: center;
 }
+.agente-pie {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #666b73;
+  padding: 16px;
+}
+.agente-pie a {
+  color: inherit;
+}
+.agente-pie a:hover {
+  color: #101010;
+}
 @media print {
   .agente-cabecera,
   .agente-pestanas,

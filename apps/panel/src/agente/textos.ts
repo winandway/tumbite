@@ -5,6 +5,8 @@
 export const TEXTOS_AGENTE = {
   es: {
     marca: 'Agente Divoox',
+    derechos: 'Todos los derechos reservados.',
+    desarrollo: 'Desarrollado por',
     cargando: 'Cargando…',
     // Entrar
     tituloEntrar: 'Entra a tu panel de agente',
@@ -163,6 +165,8 @@ export const TEXTOS_AGENTE = {
   },
   en: {
     marca: 'Divoox Agent',
+    derechos: 'All rights reserved.',
+    desarrollo: 'Developed by',
     cargando: 'Loading…',
     tituloEntrar: 'Sign in to your agent panel',
     ayudaEntrar: 'Only for agents authorized by Divoox.',
