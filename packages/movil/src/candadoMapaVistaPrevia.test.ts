@@ -74,6 +74,21 @@ describe('C-MAPA-VISTA-PREVIA: el mapa pequeño no se toca', () => {
     expect(leer('apps/cliente/src/app/order/[id].tsx')).not.toMatch(/vistaPrevia/);
   });
 
+  // Visto en el emulador: con el margen de siempre (60 + 60 en un mapa de 150, y Android lo multiplica
+  // por la densidad) el recorrido salía diminuto; y convertirlo a píxeles lo duplicaba. En rojo antes
+  // (no existía `margenEncuadre`; después, con `PixelRatio`).
+  it('el mapa pequeño encuadra con un margen chico, en puntos (sin convertir a píxeles)', () => {
+    const s = leer('packages/movil/src/mapaDivoox.tsx');
+    const f = s.slice(s.indexOf('export function margenEncuadre'));
+    const cuerpo = f.slice(0, f.indexOf('\n}\n'));
+    expect(cuerpo).not.toMatch(/PixelRatio/);
+    const m = /top: (\d+), right: \d+, bottom: (\d+)/.exec(cuerpo);
+    expect(m).not.toBeNull();
+    expect(Number(m?.[1]) + Number(m?.[2])).toBeLessThanOrEqual(60);
+    for (const a of ['apps/repartidor/src/piezas/Mapa.tsx', 'apps/cliente/src/MapaEntrega.tsx'])
+      expect(leer(a)).toMatch(/edgePadding: margenEncuadre\(vistaPrevia,/);
+  });
+
   it('en la web la vista previa del conductor tampoco roba el toque', () => {
     const w = leer('apps/repartidor/src/piezas/Mapa.web.tsx');
     expect(w).toMatch(/vistaPrevia/);

@@ -3,7 +3,6 @@ import { Text } from './diseno';
 import {
   Image,
   type ImageSourcePropType,
-  PixelRatio,
   Platform,
   Pressable,
   View,
@@ -139,13 +138,14 @@ export function useCapturaMarcador(clave: unknown): {
 type Margen = { top: number; right: number; bottom: number; left: number };
 /**
  * C-MAPA-VISTA-PREVIA: el margen del encuadre. En el mapa pequeño (150 a 200 de alto) el margen de
- * siempre se comía casi todo el alto y el recorrido salía diminuto: ahí va un margen chico, en puntos
- * de pantalla (en Android `fitToCoordinates` lo pide en píxeles). Los mapas grandes no cambian.
+ * siempre (60 arriba y 60 abajo en un mapa de 150) se comía casi todo el alto y el recorrido salía
+ * diminuto en medio de la ciudad: ahí va un margen chico. Va en puntos de pantalla en las dos
+ * plataformas (react-native-maps 1.27.2 lo multiplica por la densidad en Android, `appendMapPadding`).
+ * Los mapas grandes no cambian.
  */
 export function margenEncuadre(vistaPrevia: boolean, normal: Margen): Margen {
   if (!vistaPrevia) return normal;
-  const u = Platform.OS === 'android' ? PixelRatio.get() : 1;
-  return { top: 30 * u, right: 36 * u, bottom: 22 * u, left: 36 * u };
+  return { top: 30, right: 36, bottom: 22, left: 36 };
 }
 
 /** Lado, en puntos, del disco de la marca (el mismo de la web). */
