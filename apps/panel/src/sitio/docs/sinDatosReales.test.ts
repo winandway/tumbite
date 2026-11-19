@@ -22,6 +22,21 @@ export const VETADOS = ['jehova', 'jireh', 'jehovaucs'];
 /** Códigos de regalo reales: se revisan tal cual, en mayúsculas, solo en lo que ve el público. */
 const CUPONES_REALES = [/\bVIGIA\b/];
 
+/**
+ * Añadido de Richard (18 nov 2026): los ejemplos y las capturas públicas son NEUTROS DE LUGAR. Nada
+ * de una ciudad o una calle reconocible: quien vive en otra ciudad cree que ahí no sirve. Las páginas
+ * que de verdad dicen dónde opera Divoox sí pueden nombrar ciudades; esto es para ejemplos y capturas.
+ */
+const LUGARES =
+  /\b(el vigia|tucani|novi|miami|tampa|orlando|ocala|caracas|merida|bogota|detroit|michigan|florida)\b/;
+/** Los guiones cuyas capturas ya se rehicieron sin lugar: en ellos es candado, no aviso. */
+const GUIONES_SIN_LUGAR = [
+  'e2e/recorrido/referidosEquipos.spec.ts',
+  'e2e/recorrido/regalosDivoox.spec.ts',
+];
+/** Lo que un guion escribe en pantalla: nombres, equipos, regalos y direcciones. */
+const SE_VE = /^\s*(equipo|lider|miembros|pasajero|conductor|nombreEs|nombreEn|recogida|destino):/;
+
 const ESTE = 'apps/panel/src/sitio/docs/sinDatosReales.test.ts';
 const archivos = execFileSync(
   'git',
@@ -54,6 +69,36 @@ describe('C-DOCS-SIN-DATOS-REALES', () => {
       .filter((a) => a.startsWith('apps/panel/src/sitio/') || a.startsWith('e2e/recorrido/'))
       .filter((a) => CUPONES_REALES.some((c) => c.test(leer(a))));
     expect(malos).toEqual([]);
+  });
+
+  it('los guiones de las capturas rehechas no escriben en pantalla una ciudad ni una calle real', () => {
+    const malas = GUIONES_SIN_LUGAR.flatMap((g) =>
+      leer(g)
+        .split('\n')
+        .filter((l) => SE_VE.test(l) && LUGARES.test(llano(l)))
+        .map((l) => `${g}: ${l.trim()}`),
+    );
+    expect(malas).toEqual([]);
+    // La página de la invitación se captura sin ciudad y sin el pie del sitio (lista de ciudades).
+    const guion = leer('e2e/recorrido/referidosEquipos.spec.ts');
+    expect(guion).toContain('d.invitacion.ciudad = null');
+    expect(guion).toContain("locator('footer')");
+  });
+
+  it('aviso: guías públicas cuyas capturas o ejemplos nombran una ciudad', () => {
+    const conLugar: string[] = [];
+    for (const [idioma, secciones] of Object.entries(DOCS))
+      for (const seccion of secciones)
+        for (const guia of seccion.guias) {
+          const textos = (guia.capturas ?? []).flatMap((c) => [c.alt, c.pie]);
+          if (textos.some((t) => LUGARES.test(llano(t)))) conLugar.push(`${idioma}/${guia.id}`);
+        }
+    // No falla: es la lista de trabajo para ir rehaciendo esas capturas sin lugar.
+    if (conLugar.length)
+      console.warn(
+        `C-DOCS-SIN-DATOS-REALES (aviso): ${conLugar.length} guías describen capturas con una ciudad: ${conLugar.join(', ')}`,
+      );
+    expect(Array.isArray(conLugar)).toBe(true);
   });
 
   it('las capturas de referidos usan un código que el servidor nunca genera', () => {
