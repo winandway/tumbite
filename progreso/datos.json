@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-19T06:10:00Z",
+  "actualizado": "2026-11-19T07:01:15Z",
   "version": "fe71f3f",
-  "ahora": "18 nov: Google aprobó y publicó la versión nueva. Divoox (46) y Divoox Driver (42) ya se bajan de Play Store normal. Traen el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Ya se está construyendo la versión siguiente: precios en dólares y en bolívares, el precio grande en la pantalla del conductor, más acciones deslizantes, el saldo a la vista en el inicio del conductor y «Subir la tarifa».",
+  "ahora": "19 nov: Google aprobó y publicó la versión corregida. Divoox 0.1.48 y Divoox Driver 0.1.43 ya se bajan de Play Store normal: ya no sale el aviso «PRUEBAS» en la pantalla de entrar y el inicio del cliente muestra siempre los ocho servicios. En «Mi cuenta» ahora se lee la versión instalada. Se está construyendo el paquete siguiente: el precio a cobrar, grande y en verde como el PIN, en todas las pantallas del conductor.",
   "proximo": [
     {
       "quien": "ia",
@@ -489,6 +489,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Google aprobó Divoox 0.1.48 y Divoox Driver 0.1.43",
+      "texto": "La versión corregida ya está en Play Store para todos. Quien tenga la app solo tiene que actualizarla desde la tienda; quien la instaló por un enlace de pruebas debe desinstalarla y bajarla de Play Store. Ya no aparece el aviso «PRUEBAS» y el inicio muestra los ocho servicios, con el mensaje «En esta zona aún no hay…» en los que todavía no llegan."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Agente Divoox: cobrar las ganancias en efectivo y recargar saldo con un negocio de la ciudad",
