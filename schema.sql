@@ -4270,6 +4270,54 @@ CREATE TABLE IF NOT EXISTS miembros_equipo (
   creado_en TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS miembros_equipo_equipo ON miembros_equipo(equipo_id, creado_en);
+-- C-LINEAS-TAXI (19 nov 2026): una LÍNEA de taxi o mototaxi es un equipo con líder (equipos) más estos datos.
+-- Separada de los referidos: entrar a una línea no da premios. Un conductor, una sola línea (miembros_equipo).
+CREATE TABLE IF NOT EXISTS lineas (
+  equipo_id TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL DEFAULT 'taxi',
+  contacto2_nombre TEXT NOT NULL DEFAULT '',
+  contacto2_telefono TEXT NOT NULL DEFAULT '',
+  conductores_estimados INTEGER,
+  telefono_verificado_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+-- Las solicitudes del formulario público «Registra tu línea»: nadie crea una línea sin aprobación del equipo.
+CREATE TABLE IF NOT EXISTS solicitudes_linea (
+  id TEXT PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  zona_id TEXT NOT NULL,
+  tipo TEXT NOT NULL,
+  conductores INTEGER NOT NULL DEFAULT 0,
+  lider_nombre TEXT NOT NULL,
+  lider_telefono TEXT NOT NULL,
+  contacto2_nombre TEXT NOT NULL DEFAULT '',
+  contacto2_telefono TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'pendiente',
+  motivo TEXT,
+  equipo_id TEXT,
+  resuelta_por TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelta_en TEXT
+);
+CREATE INDEX IF NOT EXISTS solicitudes_linea_estado ON solicitudes_linea(estado, creado_en);
+-- El conductor que pide entrar a una línea (con su código o eligiéndola); el líder acepta o rechaza con un toque.
+CREATE TABLE IF NOT EXISTS pedidos_linea (
+  usuario_id TEXT PRIMARY KEY,
+  equipo_id TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente',
+  creado_en TEXT NOT NULL DEFAULT (datetime('now')),
+  resuelto_en TEXT
+);
+CREATE INDEX IF NOT EXISTS pedidos_linea_equipo ON pedidos_linea(equipo_id, estado);
+-- Cada emergencia avisada a una línea (tope por conductor y por día; ver lineas.ts).
+CREATE TABLE IF NOT EXISTS emergencias_linea (
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL,
+  equipo_id TEXT NOT NULL,
+  avisos INTEGER NOT NULL DEFAULT 0,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS emergencias_linea_usuario ON emergencias_linea(usuario_id, creado_en);
 -- Huella del aparato con el que entra cada persona (antifraude de referidos y regalos; solo sha-256).
 CREATE TABLE IF NOT EXISTS aparatos_usuario (
   usuario_id TEXT NOT NULL,
@@ -4670,3 +4718,32 @@ CREATE TABLE IF NOT EXISTS ventas_saldo_agente (
 );
 CREATE INDEX IF NOT EXISTS ventas_saldo_agente_agente ON ventas_saldo_agente(agente_id, creado_en);
 CREATE INDEX IF NOT EXISTS ventas_saldo_agente_conductor ON ventas_saldo_agente(conductor_id, creado_en);
+
+-- C-REGALO-VIAJE-REAL (19 nov 2026, todos los países): un viaje con regalo de Divoox que no se pudo
+-- comprobar como real (sin moverse, demasiado corto, lejos del destino) deja el regalo en revisión.
+-- El uso sigue apartado: no entra a las ganancias del conductor hasta que una persona del equipo lo
+-- aprueba; si lo rechaza, vuelve al presupuesto. Guarda la cuenta, el teléfono y el aparato del
+-- pasajero para que un rechazado no vuelva a usar el mismo cupón.
+CREATE TABLE IF NOT EXISTS regalos_en_revision (
+  uso_id TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL,
+  codigo TEXT NOT NULL,
+  cliente_id TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  aparato TEXT NOT NULL,
+  conductor_id TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL,
+  motivos TEXT NOT NULL DEFAULT '[]',
+  datos TEXT NOT NULL DEFAULT '{}',
+  detalle TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado')),
+  nota TEXT NOT NULL DEFAULT '',
+  bloquea_pasajero INTEGER NOT NULL DEFAULT 0,
+  resuelto_por TEXT,
+  resuelto_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS regalos_en_revision_pendientes ON regalos_en_revision(creado_en) WHERE estado = 'pendiente';
+CREATE INDEX IF NOT EXISTS regalos_en_revision_conductor ON regalos_en_revision(conductor_id) WHERE estado = 'pendiente';
+CREATE INDEX IF NOT EXISTS regalos_en_revision_rechazados ON regalos_en_revision(codigo, cliente_id) WHERE estado = 'rechazado' AND bloquea_pasajero = 1;
