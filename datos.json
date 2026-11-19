@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-19T19:43:58Z",
+  "actualizado": "2026-11-19T21:51:53Z",
   "version": "fe71f3f",
   "ahora": "19 nov: quedó publicado el paquete nuevo del conductor: lo que cobra va en cifra grande y verde con los bolívares debajo, el mapa aparece en la oferta y en el viaje, los pasos del viaje se deslizan (llegué, iniciar, terminar) y el saldo se ve en el inicio. Las apps con todo esto ya están para el equipo en la prueba interna de Play (Divoox 49 y Driver 44) y en TestFlight (Divoox 57 y Driver 44). En Play Store para el público siguen Divoox 0.1.48 y Driver 0.1.43, aprobadas hoy. A la tienda pública esta versión va después de la revisión del auditor.",
   "proximo": [
@@ -310,6 +310,30 @@
       "titulo": "Confirmar el texto legal para volver a cobrar una tarjeta cuya retención venció",
       "para": "Los términos dicen hoy que el cobro se hace al confirmar el pedido, pero en realidad se cobra al entregar, y no dicen que podamos cobrar la tarjeta guardada si la retención vence. Con tu sí ajustamos el texto de los términos y de la pantalla de pago y encendemos «Volver a cobrar».",
       "destraba": "Encender «Volver a cobrar» en el sitio real después de probarlo en el sitio de pruebas."
+    },
+    {
+      "numero": 34,
+      "id": "peru-comision-tarifa-recarga",
+      "prioridad": "alta",
+      "titulo": "Perú: elegir la comisión, aprobar la tarifa y el mínimo de la recarga con tarjeta",
+      "para": "Ica ya funciona de punta a punta en el sitio de pruebas, en soles, con Yape y Plin. Falta tu decisión: comisión del 10, 8 o 6 % (está sembrada al 8 %, sin aprobar), la tarifa (propuesta: mototaxi desde 3 soles; carro desde 5) y el mínimo de la recarga con tarjeta (propuesto: 30 soles, porque el procesador se queda cerca del 9 % de esa recarga).",
+      "destraba": "Aprobar la comisión de Perú, que es una de las tres llaves para abrir Ica."
+    },
+    {
+      "numero": 35,
+      "id": "peru-legal-marca-procesador",
+      "prioridad": "alta",
+      "titulo": "Perú: abogado peruano, marca en Perú y la pregunta al procesador de pagos",
+      "para": "Antes de cobrar un sol hace falta: un abogado peruano (RUC, IGV, mototaxi y moto con pasajero), presentar la marca Divoox en Perú, y preguntarle por escrito al procesador si acepta la recarga de un saldo prepago (su lista de negocios restringidos nombra el valor almacenado).",
+      "destraba": "Abrir la compuerta de Perú en producción y hacer la primera recarga real de 30 soles."
+    },
+    {
+      "numero": 36,
+      "id": "peru-lider-ica-y-vehiculo",
+      "prioridad": "media",
+      "titulo": "Perú: el contacto del líder de Ica y si entra la moto lineal o solo el mototaxi",
+      "para": "El líder de Ica vende saldo como punto de venta (cobra en efectivo, Yape o Plin): necesitamos su correo o su celular para crearle la cuenta. Y decidir si en Ica se ofrece solo mototaxi o también moto lineal: hoy la app lo llama «Moto», con un pasajero y casco.",
+      "destraba": "Crear el punto de venta de Ica y dejar el nombre y el dibujo del servicio como es en la calle."
     }
   ],
   "terceros": [
@@ -489,6 +513,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Perú: Ica funciona de punta a punta en el sitio de pruebas",
+      "texto": "Quedó construido y probado Divoox para Ica, Perú. Todo va en soles. El pasajero paga en mano: efectivo, Yape o Plin, y ve el número del conductor en su viaje. El conductor carga su número en Ganancias, confirma cada pago y recarga su saldo con tarjeta o con un código del punto de venta del líder. En el sitio de pruebas se cobró una recarga de 30 soles con la tarjeta de prueba y se hicieron tres viajes con su comisión. Hay guías nuevas en Docs en español e inglés y una guía interna para el equipo. Nada se probó con dinero real. En el sitio real Perú queda apagado: no se abre sin tu orden."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Docs: los videos ya pueden vivir al lado de su guía",
@@ -1234,5 +1263,5 @@
       ]
     }
   ],
-  "siguienteProgreso": 20
+  "siguienteProgreso": 37
 }
