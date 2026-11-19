@@ -17,6 +17,7 @@
     "sms": "ok",
     "dinero": "ok",
     "retiros": "ok",
+    "agentes": "pendiente",
     "connect": "ok",
     "servicios": "ok",
     "tarifas": "ok",
@@ -40,5 +41,5 @@
     "llegada": "ok",
     "respaldo": "ok"
   },
-  "medido": "2026-11-19T07:08:03.127381+00:00"
+  "medido": "2026-11-19T08:22:33.172935+00:00"
 }
