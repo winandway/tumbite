@@ -5845,3 +5845,17 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Público:** `apps/panel/src/sitio/docs/peru.ts`: pagar con Yape o Plin, cobrar con Yape o Plin, recargar con tarjeta y los papeles de Perú, en español e inglés. Capturas REALES solo en español (`scripts/recorrido/capturas-peru.mjs`, servidor local, mapa sin rótulos, ciudad «de ejemplo», celular 900 000 000); el inglés enseña las pantallas de Estados Unidos (C-CAPTURAS-POR-IDIOMA). `peru.test.ts` las publica si y solo si las capturas existen.
 - **Interno:** la guía «Perú: abrir una ciudad…» en `apps/servidor/src/ayudaInterna/guias.ts`, con capturas privadas (`scripts/recorrido/capturas-peru-interno.mjs`, compuerta cerrada como en producción).
 - **Web:** en la cobertura, Perú lista a Ica como primera ciudad y sigue sin fecha.
+
+## C-GANANCIAS-EN-MANO — el total del conductor suma lo cobrado en mano (19 nov 2026) — Venezuela y Perú
+
+- **Qué se rompía:** en Divoox Driver, «Hoy» del inicio y «Total de hoy / semana / mes» de Ganancias salían solo de la billetera (dólares de tarjeta y regalos). Los viajes de Moto y Carro cobrados en mano (efectivo, pago móvil, Yape, Plin) no aparecían en ningún lado: en el piloto de Venezuela, donde todo se cobra en mano, el conductor veía cero después de trabajar el día. Solo los pedidos de comida en mano sumaban a «Hoy».
+- **Causa:** la ruta de ganancias del conductor solo leía `pedidos`; los viajes cobrados en mano viven en `viajes` y nunca escriben en `movimientos`.
+- **Arreglo:** `GET /datos/repartidor/ganancias` devuelve además `viajesEnMano` (viajes terminados con método distinto de tarjeta: total final menos el regalo, moneda de la cotización y los bolívares fijados, `ref_monto`). La app junta billetera y cobrado en mano con `resumenConEnMano` (`apps/repartidor/src/grandes/resumenPeriodo.ts`): un total por moneda, los dólares primero, nunca sumando monedas distintas; la línea «Incluye … que cobraste en mano» y, en Venezuela, «En bolívares: …». Ganancias lista «Carreras cobradas en mano». Un viaje con regalo cuenta UNA carrera.
+- **No tocar:** no sumar soles o bolívares con dólares; no restar aquí la comisión (vive en el saldo prepago, con su propia tarjeta); el filtro por periodo se hace con la fecha local del conductor (`cobrosDelPeriodo`).
+- **Pruebas (vistas en rojo):** `apps/servidor/src/rutas/bolivaresEnMano.test.ts` (la ruta sin `viajesEnMano` falla) y `apps/repartidor/src/grandes/resumenPeriodo.test.ts`.
+
+## C-CUENTA-COBRO-VENEZUELA — la tarjeta «Dónde te pagan los pasajeros» habla de pago móvil en Venezuela (19 nov 2026) — Venezuela
+
+- **Qué se veía:** la tarjeta se hizo para Yape y Plin y a los conductores de Venezuela les decía «Todavía no cargaste tu número» y «Cargar mi número», con una sola casilla «Teléfono y cédula del pago móvil».
+- **Arreglo:** con solo pago móvil en el país, los textos son de pago móvil («Cargar mi pago móvil», «ve estos datos») y las casillas son banco, titular, teléfono (once cifras, empieza por 04) y cédula o RIF, por separado. Se guardan juntos como los ve el pasajero («0412-0000000 · V-00000000», `identificadorPagoMovil`). De la cuenta guardada se muestra el final del teléfono, nunca la cédula. Perú no cambia.
+- **Pruebas:** `apps/repartidor/src/cobros/logica.test.ts`.

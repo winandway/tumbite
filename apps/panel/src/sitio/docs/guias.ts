@@ -2927,6 +2927,8 @@ const es: SeccionDocs[] = [
         explicacion: [
           'Tienes dos billeteras. Tu «saldo» es el dinero que recargas para pagar la comisión de Divoox. Tus «ganancias» son lo que Divoox te debe, por ejemplo lo que cubren los regalos de tus pasajeros.',
           'El pasajero te paga la carrera completa en mano, en efectivo o por pago móvil. Divoox no toca ese dinero.',
+          'Lo que cobras en mano se suma a tu total de hoy, de la semana y del mes en Ganancias, en dólares y con lo que recibiste en bolívares. Debajo ves cada carrera cobrada en mano.',
+          'Para recibir pagos móviles, carga tus datos en Ganancias, «Dónde te pagan los pasajeros»: banco, titular, teléfono y cédula. El pasajero los ve cuando elige pago móvil.',
           'Al aceptar una carrera, la comisión de Divoox se aparta de tu saldo. Al terminar, se descuenta. Si la carrera se cancela, no se hace o la sueltas, lo apartado vuelve a tu saldo entero. Nunca se cobra dos veces.',
           'La comisión es un porcentaje del precio de la carrera. Por ejemplo, con una comisión del 10 %, en una carrera de 2,00 dólares se descuentan 0,20. En Ganancias, «Saldo para comisiones», ves cuánto tienes y para cuántas carreras te alcanza.',
           'Sin saldo para la comisión no te llegan carreras. Cuando te queda poco, la app te avisa.',
@@ -8356,6 +8358,8 @@ const en: SeccionDocs[] = [
         explicacion: [
           'You have two wallets. Your “balance” is the money you top up to pay the Divoox commission. Your “earnings” are what Divoox owes you, for example what your riders’ gifts cover.',
           'The rider pays you the full trip in person. Divoox never touches that money.',
+          'What you collect in hand is added to your total for today, the week and the month under Earnings, in dollars and, where it applies, with what you received in local currency. Below it you see each trip collected in hand.',
+          'Where riders can pay you by transfer from their phone, add your details under Earnings, “Where riders pay you”. The rider sees them when they choose that way to pay.',
           'When you accept a trip, the Divoox commission is set aside from your balance. When you finish, it’s charged. If the trip is canceled, doesn’t happen or you drop it, what was set aside goes back to your balance in full. It’s never charged twice.',
           'The commission is a percentage of the trip price. For example, with a 10% commission, a 2.00-dollar trip takes off 0.20. Under Earnings, “Balance for fees,” you see how much you have and how many trips it covers.',
           'Without balance for the commission you don’t get trips. When you’re running low, the app tells you.',

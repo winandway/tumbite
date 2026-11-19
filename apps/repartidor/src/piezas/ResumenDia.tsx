@@ -6,15 +6,13 @@ import { textosDriver } from './textos';
 /** Tarjeta «Hoy»: ganancias y entregas reales de hoy, y el tiempo conectado en esta sesión. */
 export function ResumenDia({
   idioma,
-  ganancias,
-  enMano,
+  partes,
   entregas,
   segundosConectado,
 }: {
   idioma: Idioma;
-  ganancias: number;
-  /** Lo ganado hoy en pedidos cobrados en mano, en la moneda del país (no pasa por Stripe). */
-  enMano?: { total: number; moneda: string };
+  /** Lo ganado hoy: billetera (dólares) más lo cobrado en mano, un total por moneda. */
+  partes: { monto: number; moneda: string }[];
   entregas: number;
   segundosConectado: number;
 }) {
@@ -45,15 +43,8 @@ export function ResumenDia({
         flexDirection: 'row',
       }}
     >
-      {/* Tarjeta (billetera de Stripe, USD) y cobro en mano (su moneda), nunca sumados entre monedas. */}
-      {celda(
-        enMano?.total && enMano.moneda !== 'USD'
-          ? ganancias
-            ? `${formatearMonto(ganancias, 'USD', idioma)} + ${formatearMonto(enMano.total, enMano.moneda, idioma)}`
-            : formatearMonto(enMano.total, enMano.moneda, idioma)
-          : formatearMonto(ganancias + (enMano?.total ?? 0), 'USD', idioma),
-        t.hoy,
-      )}
+      {/* C-GANANCIAS-EN-MANO: un total por moneda, nunca sumados entre monedas. */}
+      {celda(partes.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + '), t.hoy)}
       <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />
       {celda(String(entregas), t.entregas)}
       <View style={{ width: 1, backgroundColor: '#E6E7EA' }} />

@@ -5,7 +5,11 @@ import {
   cuentaActiva,
   enmascarado,
   estadoCuenta,
+  cedulaValida,
   falloCuenta,
+  identificadorPagoMovil,
+  identificadorVisible,
+  telefonoPagoMovilValido,
   falloRecarga,
   montosRapidos,
   tipoElegido,
@@ -26,11 +30,37 @@ describe('la cuenta donde le pagan los pasajeros', () => {
     expect(falloCuenta(v, '', PERU)).toBe('clave');
     expect(falloCuenta(v, 'x', PERU)).toBeNull();
   });
-  it('en Venezuela no pregunta el tipo (solo hay pago móvil) y pide el banco', () => {
-    const v = { ...BORRADOR_CUENTA, titular: 'Titular de ejemplo', identificador: '0412-0000000' };
-    expect(tipoElegido(v, ['pago_movil'])).toBe('pago_movil');
-    expect(falloCuenta(v, 'x', ['pago_movil'])).toBe('banco');
-    expect(falloCuenta({ ...v, banco: 'Banco de ejemplo' }, 'x', ['pago_movil'])).toBeNull();
+  it('en Venezuela no pregunta el tipo (solo hay pago móvil) y pide banco, teléfono y cédula', () => {
+    const VE = ['pago_movil'];
+    const v = { ...BORRADOR_CUENTA, titular: 'Nombre del titular', identificador: '0412-0000000' };
+    expect(tipoElegido(v, VE)).toBe('pago_movil');
+    expect(falloCuenta(v, 'x', VE)).toBe('banco');
+    const conBanco = { ...v, banco: 'Banco de ejemplo' };
+    // C-CUENTA-COBRO-VENEZUELA: sin la cédula el pasajero no puede hacer el pago móvil.
+    expect(falloCuenta(conBanco, 'x', VE)).toBe('cedula');
+    expect(falloCuenta({ ...conBanco, cedula: 'V-00000000' }, 'x', VE)).toBeNull();
+    // Un celular peruano (nueve cifras) no es un teléfono de pago móvil.
+    expect(
+      falloCuenta({ ...conBanco, cedula: 'V-00000000', identificador: '900000000' }, 'x', VE),
+    ).toBe('identificador');
+  });
+  it('C-CUENTA-COBRO-VENEZUELA: teléfono y cédula se guardan juntos como los ve el pasajero', () => {
+    expect(telefonoPagoMovilValido('0412 000 00 00')).toBe(true);
+    expect(telefonoPagoMovilValido('+58 412-0000000')).toBe(true);
+    expect(telefonoPagoMovilValido('412000000')).toBe(false);
+    expect(cedulaValida('v-00.000.000')).toBe(true);
+    expect(cedulaValida('00000000')).toBe(true);
+    expect(cedulaValida('J-000000000')).toBe(true);
+    expect(cedulaValida('abc')).toBe(false);
+    expect(identificadorPagoMovil('+58 412-0000000', '00.000.000')).toBe(
+      '0412-0000000 · V-00000000',
+    );
+    expect(identificadorPagoMovil('04120000000', 'e-00000000')).toBe('0412-0000000 · E-00000000');
+    // De la cuenta guardada se muestra el final del teléfono, nunca la cédula.
+    expect(
+      identificadorVisible({ tipo: 'pago_movil', identificador: '0412-0001234 · V-00009999' }),
+    ).toMatch(/1234$/);
+    expect(identificadorVisible({ tipo: 'yape', identificador: '900001234' })).toMatch(/1234$/);
   });
   it('muestra solo el final del número y dice si ya está en vigor', () => {
     expect(enmascarado('900000000')).toBe('•••••0000');

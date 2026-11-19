@@ -126,6 +126,18 @@ describe('C-BS-EN-MANO: dólares y bolívares con la tasa fijada del viaje', () 
     expect(suyo.datos.viajes[0].enManoLocal).toEqual(final);
     const reciboSuyo = await c.yo('GET', `/datos/conductor/viajes/${id}/recibo`);
     expect(reciboSuyo.datos.recibo.enManoLocal).toEqual(final);
+    // C-GANANCIAS-EN-MANO: lo cobrado en mano entra en Ganancias del conductor (antes no existía).
+    const gan = await c.yo('GET', '/datos/repartidor/ganancias');
+    expect(gan.datos.viajesEnMano).toEqual([
+      expect.objectContaining({
+        viajeId: id,
+        servicio: 'moto',
+        metodoPago: 'pago_movil',
+        moneda: 'USD',
+        monto: cobrado,
+        montoLocal: final.monto,
+      }),
+    ]);
   });
 
   it('sin tasa vigente lo dice (sinTasa) y no inventa un número; nada se guarda en bolívares', async () => {

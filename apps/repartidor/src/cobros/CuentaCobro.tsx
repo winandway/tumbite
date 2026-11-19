@@ -16,9 +16,10 @@ import {
   BORRADOR_CUENTA,
   type CuentaCobroApp,
   cuentaActiva,
-  enmascarado,
   estadoCuenta,
   falloCuenta,
+  identificadorPagoMovil,
+  identificadorVisible,
   tipoElegido,
 } from './logica';
 import { T_COBROS } from './textos';
@@ -91,12 +92,18 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
     .join(idioma === 'en' ? ' or ' : ' o ');
   const errorDe = (c: string) => (error?.campo === c ? error.mensaje : undefined);
   const aCelularPeru = tipo === 'yape' || tipo === 'plin';
+  // C-CUENTA-COBRO-VENEZUELA: con solo pago móvil en el país, la tarjeta habla de pago móvil.
+  const soloPagoMovil = tipos.length === 1 && tipos.at(0) === 'pago_movil';
 
   async function guardar() {
     setAviso('');
     const fallo = falloCuenta(v, clave, tipos);
     if (fallo) {
-      setError({ mensaje: new Map(Object.entries(t.fallos)).get(fallo) ?? '', campo: fallo });
+      const mensaje =
+        tipo === 'pago_movil' && fallo === 'identificador'
+          ? t.pagoMovil.falloTelefono
+          : (new Map(Object.entries(t.fallos)).get(fallo) ?? '');
+      setError({ mensaje, campo: fallo });
       return;
     }
     setError(null);
@@ -107,7 +114,10 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
         tipo,
         banco: tipo === 'pago_movil' ? v.banco.trim() : '',
         titular: v.titular.trim(),
-        identificador: v.identificador.trim(),
+        identificador:
+          tipo === 'pago_movil'
+            ? identificadorPagoMovil(v.identificador, v.cedula)
+            : v.identificador.trim(),
       });
       // Solo después de la confirmación del servidor se limpia lo escrito.
       await b.limpiar();
@@ -140,11 +150,13 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
       }}
     >
       <Text style={{ fontWeight: '800', color: C.secundario }}>{t.cuentaTitulo}</Text>
-      <Text style={{ color: '#666B73', fontSize: 13 }}>{t.cuentaAyuda(medios)}</Text>
+      <Text style={{ color: '#666B73', fontSize: 13 }}>
+        {soloPagoMovil ? t.pagoMovil.ayuda : t.cuentaAyuda(medios)}
+      </Text>
       {actual ? (
         <View testID="cuenta-cobro-actual" style={{ gap: 2 }}>
           <Text style={{ fontWeight: '700', color: C.secundario }}>
-            {nombreFormaPago(actual.tipo, idioma)} · {enmascarado(actual.identificador)}
+            {nombreFormaPago(actual.tipo, idioma)} · {identificadorVisible(actual)}
           </Text>
           <Text style={{ color: '#666B73' }}>
             {[actual.banco, actual.titular].filter(Boolean).join(' · ')}
@@ -161,7 +173,7 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
         </View>
       ) : (
         <Text testID="cuenta-cobro-vacia" style={{ color: C.primario, fontWeight: '700' }}>
-          {t.sinCuenta}
+          {soloPagoMovil ? t.pagoMovil.sinCuenta : t.sinCuenta}
         </Text>
       )}
       {aviso ? (
@@ -238,13 +250,35 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
             error={errorDe('titular')}
           />
           <Campo
-            etiqueta={aCelularPeru ? t.celular : t.identificador}
+            etiqueta={
+              aCelularPeru
+                ? t.celular
+                : tipo === 'pago_movil'
+                  ? t.pagoMovil.telefono
+                  : t.identificador
+            }
             value={v.identificador}
             onChangeText={(x) => b.cambiar('identificador', x)}
-            placeholder={aCelularPeru ? t.celularAyuda : t.identificador}
-            keyboardType={aCelularPeru ? 'phone-pad' : 'default'}
+            placeholder={
+              aCelularPeru
+                ? t.celularAyuda
+                : tipo === 'pago_movil'
+                  ? t.pagoMovil.telefonoAyuda
+                  : t.identificador
+            }
+            keyboardType={aCelularPeru || tipo === 'pago_movil' ? 'phone-pad' : 'default'}
             error={errorDe('identificador')}
           />
+          {tipo === 'pago_movil' ? (
+            <Campo
+              etiqueta={t.pagoMovil.cedula}
+              value={v.cedula}
+              onChangeText={(x) => b.cambiar('cedula', x)}
+              placeholder={t.pagoMovil.cedulaAyuda}
+              autoCapitalize="characters"
+              error={errorDe('cedula')}
+            />
+          ) : null}
           <CampoClave
             etiqueta={t.clave}
             valor={clave}
@@ -272,7 +306,15 @@ export function CuentaCobro({ tipos, idioma }: { tipos: readonly string[]; idiom
         </View>
       ) : (
         <Boton
-          texto={actual ? t.cambiar : t.cargar}
+          texto={
+            soloPagoMovil
+              ? actual
+                ? t.pagoMovil.cambiar
+                : t.pagoMovil.cargar
+              : actual
+                ? t.cambiar
+                : t.cargar
+          }
           secundario={Boolean(actual)}
           alTocar={() => {
             setAviso('');

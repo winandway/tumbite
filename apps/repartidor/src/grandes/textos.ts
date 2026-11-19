@@ -61,6 +61,8 @@ const es = {
     sin: 'Todavía no hay entregas en este periodo.',
     garantia: 'El pago base nunca cambia por la propina.',
     planilla: 'Exportar en planilla (CSV)',
+    enMano: 'Carreras cobradas en mano',
+    enManoAyuda: 'Lo que te pagó el pasajero directamente. No pasa por tu billetera.',
   },
   avisos: {
     titulo: 'Tus avisos',
@@ -306,6 +308,8 @@ const en: T = {
     sin: 'No deliveries in this period yet.',
     garantia: 'Base pay never changes because of the tip.',
     planilla: 'Export as a spreadsheet (CSV)',
+    enMano: 'Trips collected in hand',
+    enManoAyuda: 'What the passenger paid you directly. It does not go through your wallet.',
   },
   avisos: {
     titulo: 'Your notifications',
