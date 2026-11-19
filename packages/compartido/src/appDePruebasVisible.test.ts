@@ -107,4 +107,19 @@ describe('la página de descargas del equipo', () => {
     expect(pagina).toMatch(/lado\('Android', a\.android, 'Descargar', AVISO_ANDROID\)/);
     expect(pagina).toMatch(/lado\('iPhone', a\.iphone, 'Abrir TestFlight', AVISO_IPHONE\)/);
   });
+
+  // C-PRUEBAS-SOLO-EQUIPO (18 nov 2026): Richard bajó «de la tienda» y le abrió la de pruebas.
+  it('manda a Play Store para la versión real y no pinta las de prueba sin la clave del equipo', () => {
+    const pagina = leer('progreso', 'apps.html');
+    expect(pagina).toContain('https://play.google.com/store/apps/details?id=com.windoce.tumbite');
+    expect(pagina).toContain(
+      'https://play.google.com/store/apps/details?id=com.windoce.tumbite.driver',
+    );
+    expect(pagina).toContain(
+      'Solo para el equipo de Divoox. El público baja la app de Play Store.',
+    );
+    // Los códigos de prueba solo se pintan desde pintarPruebas, que mira la clave aceptada.
+    expect(pagina).not.toMatch(/el\('apps'\)\.innerHTML = d\.apps/);
+    expect(pagina).toMatch(/equipoDentro\s*\?\s*appsDePrueba/);
+  });
 });
