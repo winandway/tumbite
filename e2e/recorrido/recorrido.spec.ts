@@ -1,4 +1,4 @@
-import { deslizar } from './deslizar';
+import { dejarConectado, deslizar } from './deslizar';
 import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -1760,7 +1760,7 @@ for (const idioma of ['en', 'es'] as const) {
       `SELECT repartidor_id AS r FROM pedidos WHERE id = '${otro.pedidoId}'`,
     )[0]?.r;
     expect(sinRepartidor ?? null, 'el pedido rechazado no se le asigna').toBeNull();
-    await deslizar(rep, 'desconectarme');
+    await dejarConectado(rep, false);
     // Nadie más lo toma: el restaurante lo rechaza y el cliente recibe su dinero. Así no queda
     // ningún pedido colgado para la corrida siguiente.
     await rechazarEnPanel(otro.pedidoId);
@@ -1865,7 +1865,7 @@ for (const idioma of ['en', 'es'] as const) {
           `UPDATE pedidos SET aceptado_en = datetime('now','-9 minutes') WHERE id = '${directo.pedidoId}'`,
         );
         await rep.goto('/driver/');
-        await deslizar(rep, 'conectarme');
+        await dejarConectado(rep, true);
         await expect(rep.getByRole('button', { name: L.aceptarOferta, exact: true })).toBeVisible({
           timeout: 30_000,
         });
