@@ -1,9 +1,9 @@
 # Capturas actuales de las apps de Divoox (para el comercial)
 
-Fecha: 18 nov 2026. Todas a resolución original, tomadas ahora de las apps reales contra el sitio de pruebas, barra de estado limpia (9:41, batería llena). Textos genéricos: sin ciudad, calles reconocibles ni datos de personas.
+Fecha: 19 nov 2026 (última pasada: la cuarta, al final; las anteriores quedan como historia). Todas a resolución original, tomadas ahora de las apps reales contra el sitio de pruebas, barra de estado limpia (9:41, batería llena). Textos genéricos: sin ciudad, calles reconocibles ni datos de personas.
 
 - **pantallas/cliente/**: app Divoox (cliente), versión del paquete enviado a las tiendas hoy, en el simulador de iPhone 18 Pro (iOS 27), 1206 x 2622.
-- **pantallas/driver/**: app Divoox Driver, versión 41 de pruebas, en el emulador de Android, 1080 x 2400.
+- **pantallas/driver/**: app Divoox Driver de pruebas, versión 0.1.45 (compilación 45) desde la cuarta pasada, en el emulador de Android, 1080 x 2400. Solo 13, 13a y 14 siguen siendo de la versión 41.
 
 ## Cliente (iPhone)
 
@@ -82,10 +82,48 @@ El monto a cobrar ahora va arriba, en cifra grande, en negrita y en verde, con l
 - 04b-oferta-entrante, 05b-aceptada-ir-a-recoger, 06b-llegue-esperando-pasajero, 07b-viaje-en-curso y 09b-viaje-terminado: viaje en efectivo sin regalo, «Cobra en efectivo $1.36 · Bs. 326,40», pasajera María, Plaza Central a Avenida Principal 12, mapa sin rótulos y ciudad «Ciudad de ejemplo».
 - **Ojo, cambia el origen:** estas cinco se tomaron de la versión WEB del Driver (mismo código de pantallas) a 1080 x 2400, no del emulador de Android, porque la versión con el precio grande todavía no está compilada para Android. Por eso no llevan la barra de estado de arriba (9:41) ni la rayita de abajo. Cuando exista la compilación de Android con este cambio, se pueden repetir en el emulador con el mismo guion.
 
-## No se pudo rehacer (apartadas en `pantallas/driver/anteriores-sin-precio-grande/`)
+## No se pudo rehacer en la tercera pasada (resuelto en la cuarta; la carpeta `anteriores-sin-precio-grande` ya no existe)
 
 Muestran el cobro con el diseño viejo (pequeño y en gris), así que ya no son válidas para el comercial. Se movieron a esa carpeta para que ninguna vieja pase por nueva:
 
 - 04, 05, 06, 07 y 09 (viaje con regalo de Divoox): rehacerlas pide un cupón de regalo armado de punta a punta en el servidor local; no se repitieron en esta pasada.
 - 08-desliza-terminar-medio: el gesto a medio deslizar no se reprodujo en la versión web.
 - 12a, 12b y 12c (envío con foto del paquete y PIN): el envío necesita la cámara virtual del emulador para la foto del paquete; no se repitieron.
+
+## Cuarta pasada: Driver de Android con deslizadores, mapa y saldo (19 nov 2026)
+
+App Divoox Driver de pruebas, versión 0.1.45 (compilación 45, la del paquete con los pasos que se deslizan, el mapa en la oferta y en el viaje y el saldo en el inicio). Todas tomadas de la app real de Android, 1080 x 2400, barra de estado limpia (9:41), contra el sitio de pruebas. Pasajera María, conductor Carlos, «Plaza Central», «Avenida Principal 12», «Mercado»; ningún nombre de ciudad, calle ni comercio. La pantalla de entrar (la única con la franja «PRUEBAS») no se captura.
+
+Se rehicieron, con el mismo nombre:
+
+- 01-inicio-desconectado, 02-medio-deslizar, 03-conectado.
+- Viaje con regalo de Divoox: 04-oferta-entrante, 05-aceptada-ir-a-recoger, 06-llegue-esperando-pasajero, 07-viaje-en-curso, 08-desliza-terminar-medio y 09-viaje-terminado («Cobra al pasajero $0.00» y «Divoox te paga $1.00»).
+- Viaje en efectivo sin regalo: 04b, 05b, 06b, 07b y 09b («Cobra en efectivo $1.00 · Bs. 240,00»). Ya son del emulador de Android, no de la versión web.
+- 10-ganancias-saldo-y-regalos.
+- Envío con foto del paquete (cámara virtual del emulador): 12a-envio-recoger-tomar-foto-paquete, 12b-envio-foto-del-paquete-lista y 12c-envio-entrega-pin-foto-desliza.
+
+Nuevas:
+
+- 01b-inicio-con-saldo: la tarjeta «Tu saldo para comisiones» en el inicio.
+- 04c-oferta-con-mapa: la oferta con el mapa debajo del precio.
+- 07c-viaje-con-mapa: el viaje en curso con el mapa, el destino y «Desliza para terminar el viaje».
+- 12d-envio-entregado: «Envío entregado» con el cobro y la calificación.
+
+No se rehicieron (siguen las de la versión 41, sin cambios en esas pantallas): 13-camila-responde-como-conectarse, 13a-ayuda-habla-con-soporte y 14-perfil-mi-vehiculo.
+
+Se retiraron del repositorio: las nueve de `anteriores-sin-precio-grande/` (reemplazadas por las de arriba) y 03c-conectado-servicios (igual a 03 en esta versión).
+
+### Avisos sobre estas capturas
+
+- **04-oferta-entrante (con regalo):** con la línea del regalo la hoja de la oferta sube hasta el borde y el título «Nuevo viaje en Moto» queda pegado al reloj de la barra de estado. Es como lo dibuja esta versión; conviene corregirlo antes de usar esa toma en primer plano. 04b y 04c no tienen ese problema.
+- **12a y 12b:** el mapa salió en gris medio con edificios, no en el tono claro de las demás. La app lo dibujó así en esa corrida; no hay rótulos.
+- **Mapas sin rótulos:** para que no se lea ningún nombre real, los viajes se pidieron en una zona con pocas calles. Por eso el robot `scripts/robot/mapa-con-mosaicos.mjs` marca varios mapas con menos del 70 % de detalle (entre 38 % y 66 %), aunque los mosaicos sí cargaron (se ven las calles). Solo 12a pasa el robot.
+- **09, 09b y 12d:** la pantalla de cierre dura pocos segundos en esta versión y se va sola al inicio; las tres se tomaron en ese momento.
+- **07c:** es del viaje con regalo (se ve la última línea del aviso del regalo arriba).
+
+### Cómo se hicieron
+
+- El emulador de siempre (`telefono_pruebas`) dibuja por software y se cuelga con las pantallas nuevas de mapa. Se usó un teléfono virtual nuevo, `divoox_capturas_gpu` (misma imagen de Android 36, Pixel 7, 1080 x 2400, con gráficos acelerados y cámara de escena virtual): `emulator -avd divoox_capturas_gpu -gpu host -port 5556 -no-window`.
+- Los pasos de la pasajera van por la interfaz de datos del sitio de pruebas (cotizar y pedir con la cuenta de María; el regalo con un código temporal). Los del conductor, en la app con `adb shell input tap/swipe`; los deslizadores con un `swipe` de 700 ms, y el gesto a medias con uno de 4 s capturado a la mitad.
+- Nunca se pone el dedo sobre el mapa: el mapa se mueve y pierde los puntos (no desplaza la pantalla).
+- Datos neutros temporales en la base de pruebas (nombre del conductor, placa, tarifa sin la etiqueta «de prueba», tasa de referencia de 240), devueltos a su valor al terminar.
