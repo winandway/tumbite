@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
-import { referenciaLocal } from './tasasReferencia';
+import { tasaDeOperacion } from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { type MomentoMenor, avisarResponsableMenor } from './viajesFijos';
 import { revisarSelfieCasco } from './ajustesViaje';
@@ -32,7 +32,10 @@ import {
 } from '../operaciones';
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
 import { capturarCobroViaje, soltarCobroViaje } from '../viajesCobro';
-import { pagaEnMano } from '@tumbite/compartido';
+import { montoEnMano, pagaEnMano, referenciaConTasa } from '@tumbite/compartido';
+
+/** Un texto de la base o null (columnas que pueden venir vacías). */
+const str = (x: unknown): string | null => (x == null ? null : String(x));
 import { revisarReferidos } from '../programaReferidos';
 import { aparatoDe } from './regalosDivoox';
 import {
@@ -155,7 +158,8 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
               v.origen_direccion, v.destino_direccion, v.origen_lat, v.origen_lng, v.destino_lat,
               v.destino_lng, v.pasajeros, v.metodo_pago, v.programado_para, q.distancia_m, q.duracion_s, q.moneda,
               v.categoria, q.multiplicador_pb, q.paradas_json, v.conductor_preferido_id, v.menor_nombre,
-              v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng,
+              v.rutina_id, d.lat AS yo_lat, d.lng AS yo_lng, q.total, v.ref_tasa, v.ref_fecha,
+              (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM ofertas_operacion f JOIN operaciones o ON o.id = f.operacion_id
          JOIN viajes v ON v.operacion_id = o.id
@@ -166,8 +170,17 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
     )
     .bind(u.id)
     .all<Record<string, unknown>>();
+  // C-BS-EN-MANO: la tasa fijada de cada viaje ofrecido (sin lecturas de más si ya está guardada).
+  const tasas = await Promise.all(
+    results.map((f) =>
+      tasaDeOperacion(base(c), str(f.pais), str(f.moneda), {
+        tasa: f.ref_tasa == null ? null : Number(f.ref_tasa),
+        fecha: str(f.ref_fecha),
+      }),
+    ),
+  );
   return c.json({
-    ofertas: results.map((f) => {
+    ofertas: results.map((f, i) => {
       const origen = { lat: Number(f.origen_lat), lng: Number(f.origen_lng) };
       const yo =
         f.yo_lat != null && f.yo_lng != null
@@ -194,6 +207,18 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
         pasajeros: Number(f.pasajeros),
         // C-CUPON-DIVOOX: parte del viaje la paga Divoox (el conductor cobra en mano solo el resto).
         regaloDivoox: f.regalo_monto == null ? 0 : Number(f.regalo_monto),
+        // C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares con la tasa fijada del viaje.
+        enMano:
+          f.total == null || f.metodo_pago === 'tarjeta'
+            ? null
+            : montoEnMano(
+                pagaEnMano(Number(f.total), {
+                  monto: f.regalo_monto == null ? 0 : Number(f.regalo_monto),
+                }),
+                String(f.moneda ?? 'USD'),
+                str(f.pais),
+                tasas.at(i) ?? null,
+              ),
         // C-CARRO-CATEGORIAS, C-CARRO-DINAMICA y C-VIAJE-PARADAS: la oferta dice la categoría del
         // viaje, si lleva tarifa dinámica (ya incluida en lo que gana) y por dónde para.
         categoria: String(f.categoria ?? 'estandar'),
@@ -235,6 +260,7 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
               e.descripcion AS paquete_descripcion, e.destinatario_nombre AS paquete_destinatario,
               e.foto_recogida IS NOT NULL AS paquete_foto, e.foto_entrega IS NOT NULL AS paquete_foto_entrega,
               e.tamano AS paquete_tamano, v.menor_nombre, v.rutina_id IS NOT NULL AS viaje_fijo,
+              v.ref_tasa, v.ref_fecha,
               (SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id AND rg.estado <> 'liberado') AS regalo_monto
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN envios_persona e ON e.operacion_id = o.id
@@ -249,6 +275,12 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
   const regaloDivoox = f.regalo_monto == null ? 0 : Number(f.regalo_monto);
   const cobrarEnMano =
     f.total == null ? null : pagaEnMano(Number(f.total), { monto: regaloDivoox });
+  // C-BS-EN-MANO: la tasa FIJADA del viaje (la misma que ve el pasajero), no la de este momento.
+  const tasa = await tasaDeOperacion(base(c), str(f.pais), str(f.moneda), {
+    tasa: f.ref_tasa == null ? null : Number(f.ref_tasa),
+    fecha: str(f.ref_fecha),
+  });
+
   return c.json({
     operacion: {
       ...f,
@@ -257,12 +289,13 @@ viajes.get('/conductor/operaciones/actual', async (c) => {
       regalo_divoox: regaloDivoox,
       cobrar_en_mano: cobrarEnMano,
       // C-BS-REFERENCIA: lo que cobra en mano, con su equivalente en bolívares (informativo).
-      referencia: await referenciaLocal(
-        base(c),
-        f.pais == null ? null : String(f.pais),
-        cobrarEnMano,
-        f.moneda == null ? null : String(f.moneda),
-      ),
+      referencia: cobrarEnMano == null ? null : referenciaConTasa(cobrarEnMano, tasa),
+      // C-BS-EN-MANO: lo mismo con «sinTasa» (la pantalla lo dice) y el total en las dos monedas.
+      en_mano:
+        cobrarEnMano == null
+          ? null
+          : montoEnMano(cobrarEnMano, String(f.moneda ?? 'USD'), str(f.pais), tasa),
+      total_local: f.total == null ? null : referenciaConTasa(Number(f.total), tasa),
       pasajero: String(f.pasajero ?? '').split(' ')[0] ?? '',
       // C-VIAJE-PARADAS: las paradas del viaje, en orden, con su estado y su espera.
       paradas: await paradasDe(base(c), String(f.id)),
@@ -518,23 +551,45 @@ viajes.post(
           await revisarReferidos(db, quien).catch((e: unknown) =>
             console.error('viajes: premio de referidos', e),
           );
-      // C-BS-REFERENCIA: en la pantalla de cobro, el equivalente en bolívares (solo informativo).
+      // C-BS-REFERENCIA y C-BS-EN-MANO: en la pantalla de cobro, lo cobrado en mano en bolívares con
+      // la tasa FIJADA del viaje (si no se fijó al cotizar, se fija ahora) y queda guardado con él.
       const donde = await db
         .prepare(
-          `SELECT z.pais, q.moneda FROM operaciones o JOIN zonas z ON z.id = o.zona_id
+          `SELECT z.pais, q.moneda, v.ref_tasa, v.ref_fecha FROM operaciones o JOIN zonas z ON z.id = o.zona_id
              JOIN viajes v ON v.operacion_id = o.id LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
             WHERE o.id = ?`,
         )
         .bind(id)
-        .first<{ pais: string; moneda: string | null }>();
-      const referencia = await referenciaLocal(db, donde?.pais, cobrarEnMano, donde?.moneda);
+        .first<{
+          pais: string;
+          moneda: string | null;
+          ref_tasa: number | null;
+          ref_fecha: string | null;
+        }>();
+      const tasa = await tasaDeOperacion(db, donde?.pais, donde?.moneda, {
+        tasa: donde?.ref_tasa,
+        fecha: donde?.ref_fecha,
+      });
+      const enMano =
+        cobrarEnMano == null
+          ? null
+          : montoEnMano(cobrarEnMano, donde?.moneda ?? 'USD', donde?.pais, tasa);
+      if (tasa && enMano?.local)
+        await db
+          .prepare(
+            `UPDATE viajes SET ref_tasa = COALESCE(ref_tasa, ?), ref_fecha = COALESCE(ref_fecha, ?),
+                    ref_monto = ? WHERE operacion_id = ?`,
+          )
+          .bind(tasa.tasa, tasa.fecha, enMano.local.monto, id)
+          .run();
       return c.json({
         ok: true,
         estado: paso.hacia,
         totalFinal,
         regaloDivoox,
         cobrarEnMano,
-        referencia,
+        referencia: enMano?.local ?? null,
+        enMano,
       });
     }
     if (nombre === 'no-se-presento') {

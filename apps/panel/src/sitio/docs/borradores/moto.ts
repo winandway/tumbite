@@ -49,6 +49,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
         explicacion: [
           'Con tarjeta, apartamos el precio al pedir y lo cobramos al terminar. En efectivo, le pagas al conductor al llegar.',
           'Donde existe el pago móvil (por ejemplo, en Venezuela), cuando te asignan conductor ves sus datos de pago móvil en la app. Pagas el equivalente en bolívares a la tasa oficial del día y el conductor confirma en su app que le llegó.',
+          'En Venezuela todo lo que pagas en mano se ve en dólares y en bolívares: antes de confirmar, durante el viaje, al terminar y en tu recibo. La tasa queda fijada al pedir el viaje, así tú y tu conductor ven exactamente el mismo monto aunque la tasa cambie después; la app te dice qué tasa se usó y de qué día. Si tienes un regalo de Divoox, ves la diferencia que te toca pagar en las dos monedas. Si ese día no hay tasa disponible, la app lo dice y pagas en dólares.',
           'Cancelar es gratis mientras buscamos conductor y durante los primeros minutos después de que acepta. Después, la app te dice antes cuánto cuesta cancelar; ese cargo es para el conductor que fue a buscarte.',
           'Si el conductor espera más de lo incluido en el punto de recogida, se suma un pequeño cargo por minuto, como en los demás servicios de transporte.',
         ],
@@ -145,6 +146,7 @@ const TODAS_MOTO: Record<Idioma, { pasajero: Guia[]; conductor: Guia[] }> = {
           'El pasajero te paga el viaje completo; la comisión de Divoox sale de tu saldo. Mira para cuántas carreras te alcanza y recarga en un punto autorizado.',
         explicacion: [
           'En los países donde trabajas con saldo, el pasajero te paga todo el viaje a ti, en efectivo o por pago móvil. Al terminar el viaje, la comisión de Divoox se descuenta de tu saldo.',
+          'En Venezuela, lo que cobras en mano se ve en dólares y en bolívares, con la tasa fijada al pedir el viaje: en la oferta, en la tarjeta del viaje y al terminar. Tu pasajero ve el mismo monto. Si el pasajero trae un regalo de Divoox, cobras solo la diferencia y Divoox te paga el resto en tu saldo.',
           'Al aceptar un viaje apartamos su comisión; si el viaje no se hace, vuelve a tu saldo. Nunca se descuenta dos veces.',
           'La app te dice para cuántas carreras te alcanza tu saldo, calculado con la comisión de un viaje típico. Es un aproximado. Cuando se está acabando, te avisamos; sin saldo no recibes carreras hasta que recargues.',
         ],

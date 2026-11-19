@@ -20,6 +20,16 @@ import { INDICES_BUSCADOR } from './buscadorSql';
  * Corre una vez por arranque del servidor. Si algo falla, lo dice la salud.
  */
 const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
+  // C-BS-EN-MANO (18 nov 2026, Venezuela): la tasa del día FIJADA con la operación (al cotizar el
+  // viaje o al crear el pedido) y, al cerrar el viaje, lo cobrado en mano en céntimos de bolívar.
+  // Conductor y pasajero ven el mismo número aunque la tasa cambie después.
+  ['cotizaciones_viaje', 'ref_tasa', 'REAL'],
+  ['cotizaciones_viaje', 'ref_fecha', 'TEXT'],
+  ['viajes', 'ref_tasa', 'REAL'],
+  ['viajes', 'ref_fecha', 'TEXT'],
+  ['viajes', 'ref_monto', 'INTEGER'],
+  ['pedidos', 'ref_tasa', 'REAL'],
+  ['pedidos', 'ref_fecha', 'TEXT'],
   // C-REOFERTA-TOPE (18 nov 2026): cuántas veces se le ofreció el viaje a ese conductor (tope 3).
   ['ofertas_operacion', 'intentos', 'INTEGER NOT NULL DEFAULT 1'],
   // C-REFERIDOS-SIN-TRAMPA (18 nov 2026): por qué un referido de cliente pendiente ya no da premio.

@@ -44,7 +44,7 @@ import { pagoPicoPara } from '../pagoPico';
 import { sentenciasCobroAnuncio } from '../anuncios';
 import { anotarPorTiempo, completarPorTiempo, leerPorTiempo } from '../ganarPorTiempo';
 import { paisDeZona } from '../internacional/paises';
-import { referenciaLocal } from './tasasReferencia';
+import { referenciaDePedido } from './tasasReferencia';
 import { sinFotoConPin, verificarPinEntrega } from '../pin';
 import { conciliarRetirosSiToca, procesarRetirosPendientes } from '../retiros';
 import {
@@ -1393,11 +1393,10 @@ operacion.get('/repartidor/estado', async (c) => {
           referenciaCobro:
             activo.moneda === 'USD' &&
             (activo.metodo_pago === 'efectivo' || activo.metodo_pago === 'transferencia_repartidor')
-              ? await referenciaLocal(
+              ? await referenciaDePedido(
                   db,
-                  (await paisDeZona(db, String(activo.zona_id))).pais,
+                  activo,
                   Number(activo.total) - Number(activo.propina ?? 0),
-                  'USD',
                 )
               : null,
         }

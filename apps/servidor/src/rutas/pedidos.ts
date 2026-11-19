@@ -75,7 +75,7 @@ import { tarifasDeZona, tarifasDelPedido, topesDeZona } from '../internacional/t
 import { paisDeZona } from '../internacional/paises';
 import { aparatoDe } from './regalosDivoox';
 import { apartarRegalo, esCodigoRegalo, regaloDeCodigo } from '../regalosDivoox';
-import { referenciaLocal } from './tasasReferencia';
+import { referenciaDePedido, tasaParaFijar } from './tasasReferencia';
 import { regalosDisponibles } from './regalos';
 import { ZONA_INICIAL } from './zonas';
 import { exigirCobertura } from '../territorio';
@@ -1124,11 +1124,18 @@ pedidos.post('/pedidos', async (c) => {
       422,
     );
   const id = nuevoId();
+  // C-BS-EN-MANO (Venezuela): la tasa del día queda FIJADA con el pedido (cliente y repartidor ven el
+  // mismo monto en bolívares aunque la tasa cambie después). Solo lee; va en el mismo INSERT.
+  const tasaLocal = await tasaParaFijar(
+    db,
+    (await paisDeZona(db, String(rest.zona_id ?? ZONA_INICIAL))).pais,
+    moneda,
+  );
   await db
     .prepare(
       `INSERT INTO pedidos (id, cliente_id, restaurante_id, estado, lineas_json, subtotal, envio, servicio, cargo_pequeno, propina, total, comision,
-        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, referencia, alergias, para_nombre, para_telefono, para_mensaje, direccion_id)
-       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        pago_restaurante, pago_repartidor, complemento, ganancia, plan, direccion, notas, lat, lng, distancia_km, tiempo_prep_min, regalo, regalo_tipo, zona_id, area_id, impuesto, cupon, descuento, moneda, tarifas_json, apto, referencia, alergias, para_nombre, para_telefono, para_mensaje, direccion_id, ref_tasa, ref_fecha)
+       VALUES (?, ?, ?, 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -1169,6 +1176,8 @@ pedidos.post('/pedidos', async (c) => {
       d.paraOtro?.telefono ?? '',
       d.paraOtro?.mensaje ?? '',
       puerta?.direccionId ?? null,
+      tasaLocal?.tasa ?? null,
+      tasaLocal?.fecha ?? null,
     )
     .run();
   await anotarPedidoDeAnuncio(db, id, String(rest.id), d.anuncioId);
@@ -1833,15 +1842,9 @@ pedidos.get('/pedidos/:id', async (c) => {
   // C-COMIDA-VENEZUELA: un pedido en dólares fuera de EE. UU. lleva su equivalente en bolívares con
   // la tasa del día (solo informativo: el cobro y la comisión siguen en dólares).
   const db = base(c);
+  // C-BS-EN-MANO: con la tasa FIJADA al crear el pedido (la misma que ve el repartidor).
   const referencia =
-    f.moneda === 'USD' && f.zona_id
-      ? await referenciaLocal(
-          db,
-          (await paisDeZona(db, String(f.zona_id))).pais,
-          Number(f.total),
-          'USD',
-        )
-      : null;
+    f.moneda === 'USD' && f.zona_id ? await referenciaDePedido(db, f, Number(f.total)) : null;
   return c.json({ pedido: { ...aPedido(f), referencia } });
 });
 

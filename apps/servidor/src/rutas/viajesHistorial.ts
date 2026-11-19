@@ -1,4 +1,4 @@
-import { sinPlusCode } from '@tumbite/compartido';
+import { type Referencia, sinPlusCode, tasaGuardada } from '@tumbite/compartido';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -82,10 +82,30 @@ type FilaLista = {
   moneda: string | null;
   metodoPago: string;
   creadoEn: string;
+  refTasa: number | null;
+  refFecha: string | null;
+  refMonto: number | null;
+  pais: string | null;
 };
 
 const COLUMNAS_LISTA = `o.id, o.servicio_id AS servicio, v.categoria, v.estado, v.origen_direccion AS origen,
-  v.destino_direccion AS destino, q.total, q.moneda, v.metodo_pago AS metodoPago, o.creado_en AS creadoEn`;
+  v.destino_direccion AS destino, q.total, q.moneda, v.metodo_pago AS metodoPago, o.creado_en AS creadoEn,
+  v.ref_tasa AS refTasa, v.ref_fecha AS refFecha, v.ref_monto AS refMonto,
+  (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais`;
+
+/**
+ * C-BS-EN-MANO (Venezuela): lo que se pagó en mano en bolívares, guardado al cerrar el viaje con su
+ * tasa y su fecha (el mismo número que vieron el conductor y el pasajero). Null si no aplica.
+ */
+export function enManoLocalDe(f: {
+  pais: string | null;
+  refTasa: number | null;
+  refFecha: string | null;
+  refMonto: number | null;
+}): Referencia | null {
+  const t = tasaGuardada(f.pais, f.refTasa, f.refFecha);
+  return t && f.refMonto != null ? { ...t, monto: Number(f.refMonto) } : null;
+}
 
 const sinCodigo = (x: string) => sinPlusCode(String(x ?? '')) || String(x ?? '');
 
@@ -94,7 +114,12 @@ function pagina<F extends FilaLista>(filas: F[]) {
   // C-SIN-PLUS-CODE: también los viajes guardados antes del arreglo.
   const viajes = filas
     .slice(0, TAMANO_PAGINA)
-    .map((f) => ({ ...f, origen: sinCodigo(f.origen), destino: sinCodigo(f.destino) }));
+    .map(({ refTasa, refFecha, refMonto, pais, ...f }) => ({
+      ...f,
+      origen: sinCodigo(f.origen),
+      destino: sinCodigo(f.destino),
+      enManoLocal: enManoLocalDe({ pais, refTasa, refFecha, refMonto }),
+    }));
   return { viajes, siguiente: mas ? (viajes.at(-1)?.creadoEn ?? null) : null };
 }
 
@@ -249,6 +274,10 @@ type FilaRecibo = FilaRegaloPasajero & {
   placa: string | null;
   plazas: number | null;
   vehiculo_tipo: string | null;
+  refTasa: number | null;
+  refFecha: string | null;
+  refMonto: number | null;
+  pais: string | null;
 };
 
 async function filaRecibo(db: D1Database, id: string, quien: 'cliente' | 'conductor', uid: string) {
@@ -259,6 +288,8 @@ async function filaRecibo(db: D1Database, id: string, quien: 'cliente' | 'conduc
               CAST((julianday(v.terminado_en) - julianday(v.iniciado_en)) * 86400 AS INTEGER) AS segundos,
               q.total, q.moneda, q.distancia_m, q.duracion_s, q.desglose_json, cv.propina,
               u.nombre AS conductor, h.marca, h.modelo, h.color, h.placa, h.plazas, h.tipo AS vehiculo_tipo,
+              v.ref_tasa AS refTasa, v.ref_fecha AS refFecha, v.ref_monto AS refMonto,
+              (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -299,6 +330,8 @@ function recibo(f: FilaRecibo) {
     // C-PRECIO-CON-REGALO: lo que pagó Divoox (el recibo dice lo que se pagó de verdad).
     regalo: regaloPasajero(f),
     desglose: desgloseDe(f.desglose_json),
+    // C-BS-EN-MANO: lo pagado en mano en bolívares, con la tasa y la fecha usadas.
+    enManoLocal: enManoLocalDe(f),
     propina: f.propina ?? 0,
     distanciaM: f.distancia_m,
     // Tiempo real del viaje si empezó y terminó; si no, el estimado de la cotización.
