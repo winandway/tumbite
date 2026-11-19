@@ -31,7 +31,8 @@ describe('C-MAPA-VIAJE-DRIVER: mapa en la oferta y en el viaje', () => {
 
   it('el inicio le pasa la ubicación del conductor a los dos', () => {
     const i = leer('apps/repartidor/src/Inicio.tsx');
-    expect(i).toMatch(/viaje=\{viajeActivo\}[\s\S]{0,80}yo=\{aqui\}/);
+    // C-CIERRE-VIAJE-QUEDA: el inicio pinta `viajeMostrado` (el viaje en curso o el que se cierra).
+    expect(i).toMatch(/viaje=\{viajeMostrado\}[\s\S]{0,80}yo=\{aqui\}/);
     expect(i).toMatch(/oferta=\{ofertaViaje\}[\s\S]{0,60}yo=\{aqui\}/);
   });
 

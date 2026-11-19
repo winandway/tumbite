@@ -67,6 +67,8 @@ export function MapaRuta({
   const { coloresMapa } = usePropsMapaDivoox(todos[0]);
   // C-MARCADOR-ANDROID: la foto de los marcadores con vista propia se toma cuando ya se dibujaron.
   const vista = useCapturaMarcador(todos.length);
+  // Cada marcador con vista propia se registra para repintarse (`redraw()`, segunda vuelta).
+  const { marcador } = vista;
   useEffect(() => {
     if (!listo) return;
     if (llegada) {
@@ -96,7 +98,10 @@ export function MapaRuta({
         ref={mapa}
         style={{ flex: 1 }}
         initialRegion={inicial}
-        onMapReady={() => setListo(true)}
+        onMapReady={() => {
+          setListo(true);
+          vista.listo();
+        }}
         showsUserLocation={false}
         toolbarEnabled={false}
         accessibilityLabel={etiqueta}
@@ -125,6 +130,7 @@ export function MapaRuta({
             // que muestra (su estado o el rótulo de llegada).
             key={`${p.id}:${p.tono}:${p === parada ? rotulo : ''}`}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
             coordinate={{ latitude: p.punto.lat, longitude: p.punto.lng }}
             title={p.nombre}
             anchor={{ x: 0.5, y: 0.5 }}
@@ -154,6 +160,7 @@ export function MapaRuta({
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={10}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
           >
             {/* C-MAPA-ISOTIPO: el conductor es el isotipo de Divoox. */}
             <MarcaIsotipo fuente={IMG.mascota} alCargar={vista.listo} />

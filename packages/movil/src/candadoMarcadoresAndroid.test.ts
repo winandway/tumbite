@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { MOMENTOS_REDIBUJO, crearRedibujador } from './redibujarMarcadores';
 
 /**
  * C-MARCADOR-ANDROID (18 nov 2026, todos los países). En Android (mapa de Google) un marcador con
@@ -45,5 +46,55 @@ describe('C-MARCADOR-ANDROID: ningún marcador con vista propia se congela antes
       'apps/repartidor/src/piezas/Mapa.tsx',
     ])
       expect(leer(archivo)).toMatch(/<MarcaIsotipo[^>]*alCargar=\{vista\.listo\}/);
+  });
+});
+
+/**
+ * Segunda vuelta (19 nov 2026, paquete 13, emulador de Android con la Driver 0.1.45): en la oferta y
+ * en el viaje el conductor seguía saliendo como un círculo blanco vacío. Causa (react-native-maps
+ * 1.27.2): el seguidor de `tracksViewChanges` toma una sola foto tras la primera medida y se apaga;
+ * la imagen del isotipo carga después y nadie repinta. Solo `redraw()` vuelve a pintar. Prueba vista
+ * en ROJO antes del arreglo: fallaban «cada marcador con vista propia se registra…» (ningún
+ * `ref={marcador}`), «el mapa avisa al terminar de cargar» y «la imagen no se funde».
+ */
+describe('C-MARCADOR-ANDROID (segunda vuelta): se repinta con redraw()', () => {
+  for (const archivo of MAPAS)
+    it(`${archivo}: cada marcador con vista propia se registra para repintarse`, () => {
+      const s = leer(archivo);
+      for (const m of marcadoresConVista(s)) expect(m).toMatch(/ref=\{marcador\}/);
+    });
+
+  for (const archivo of MAPAS)
+    it(`${archivo}: el mapa avisa al terminar de cargar (y se repinta)`, () => {
+      expect(leer(archivo)).toMatch(/onMapReady=\{\(\) => \{[^}]*vista\.listo\(\)/);
+    });
+
+  it('la pieza llama a redraw() y la imagen no se funde (Android funde 300 ms por defecto)', () => {
+    const s = leer('packages/movil/src/mapaDivoox.tsx');
+    expect(s).toMatch(/crearRedibujador\(/);
+    expect(s).toMatch(/marcador: /);
+    expect(s).toMatch(/fadeDuration=\{0\}/);
+  });
+
+  it('el redibujador pinta todos los marcadores en cada momento y suelta los que se van', () => {
+    const relojes: { f: () => void; ms: number }[] = [];
+    const r = crearRedibujador({
+      poner: (f, ms) => relojes.push({ f, ms }),
+      quitar: () => undefined,
+    });
+    let a = 0;
+    let b = 0;
+    const soltarA = r.registrar({ redraw: () => (a += 1) });
+    r.registrar({ redraw: () => (b += 1) });
+    r.programar();
+    expect(relojes.map((x) => x.ms)).toEqual([...MOMENTOS_REDIBUJO]);
+    for (const x of relojes) x.f();
+    expect([a, b]).toEqual([MOMENTOS_REDIBUJO.length, MOMENTOS_REDIBUJO.length]);
+    soltarA?.();
+    relojes.length = 0;
+    r.programar();
+    for (const x of relojes) x.f();
+    expect([a, b]).toEqual([MOMENTOS_REDIBUJO.length, MOMENTOS_REDIBUJO.length * 2]);
+    expect(r.cuantos()).toBe(1);
   });
 });

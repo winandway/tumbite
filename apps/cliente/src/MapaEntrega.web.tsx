@@ -36,6 +36,11 @@ type Props = {
    * solo al tocar «Ver en el mapa» (mirar no gasta cargas de mapa).
    */
   bajoDemanda?: boolean;
+  /**
+   * C-MAPA-VISTA-PREVIA: en el teléfono el mapa pequeño del precio no se toca. En la web ya se carga
+   * al tocarlo (`bajoDemanda`), así que aquí no cambia nada.
+   */
+  vistaPrevia?: boolean;
 };
 
 /**

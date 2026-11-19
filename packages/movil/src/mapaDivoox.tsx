@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text } from './diseno';
-import { Image, type ImageSourcePropType, Pressable, View, useColorScheme } from 'react-native';
+import {
+  Image,
+  type ImageSourcePropType,
+  Platform,
+  Pressable,
+  View,
+  useColorScheme,
+} from 'react-native';
+import { type Redibujable, crearRedibujador } from './redibujarMarcadores';
 import { estiloMapaDe } from '@tumbite/compartido/src/estiloMapaDivoox';
 import {
   AJUSTES_TEMA_MAPA,
@@ -36,6 +44,8 @@ export function usePropsMapaDivoox(punto?: Punto | null): {
     customMapStyle: ReturnType<typeof estiloMapaDe>;
     userInterfaceStyle: 'light' | 'dark';
     showsPointsOfInterests: false;
+    showsBuildings: false;
+    showsIndoors: false;
   };
 } {
   const sistema = useColorScheme();
@@ -51,6 +61,10 @@ export function usePropsMapaDivoox(punto?: Punto | null): {
         customMapStyle: estiloMapaDe(tema),
         userInterfaceStyle: tema === 'noche' ? 'dark' : 'light',
         showsPointsOfInterests: false,
+        // C-MAPA-SIEMPRE-CLARO (paquete 13): de cerca, Google levantaba los edificios en 3D y
+        // oscurecía las manzanas a un gris medio que no es de la paleta. Ni relieve ni interiores.
+        showsBuildings: false,
+        showsIndoors: false,
       },
     }),
     [tema],
@@ -66,7 +80,18 @@ export function usePropsMapaDivoox(punto?: Punto | null): {
  * (el mapa de Apple dibuja la vista en vivo).
  */
 export const MS_CAPTURA_MARCADOR = 1200;
-export function useCapturaMarcador(clave: unknown): { seguir: boolean; listo: () => void } {
+/**
+ * Segunda vuelta (19 nov 2026, paquete 13): `tracksViewChanges` solo no basta en Android (ver
+ * `redibujarMarcadores.ts`: el seguidor toma una sola foto y se apaga antes de que cargue la imagen).
+ * Cada `<Marker>` con vista propia lleva `ref={vista.marcador}` y la pieza le pide `redraw()` al
+ * aparecer, al cambiar `clave`, cuando el mapa termina de cargar y cuando la imagen carga
+ * (`vista.listo()` en `onMapReady` y en `alCargar`).
+ */
+export function useCapturaMarcador(clave: unknown): {
+  seguir: boolean;
+  listo: () => void;
+  marcador: (m: Redibujable | null) => (() => void) | undefined;
+} {
   // Cada vez que la vista se vuelve a tomar: `vuelta` sube y la foto queda viva `ms` milisegundos.
   const [estado, setEstado] = useState({ clave, vuelta: 0, ms: MS_CAPTURA_MARCADOR, viva: true });
   if (!Object.is(estado.clave, clave))
@@ -79,11 +104,25 @@ export function useCapturaMarcador(clave: unknown): { seguir: boolean; listo: ()
       if (reloj.current) clearTimeout(reloj.current);
     };
   }, [estado.vuelta, estado.ms, estado.viva]);
+  // El redibujador vive lo que vive el mapa (en iPhone el mapa de Apple dibuja en vivo: no hace falta).
+  const [redibujador] = useState(() => crearRedibujador());
+  useEffect(() => () => redibujador.limpiar(), [redibujador]);
+  useEffect(() => {
+    if (Platform.OS === 'android') redibujador.programar();
+  }, [estado.vuelta, redibujador]);
   const listo = useCallback(
     () => setEstado((e) => ({ ...e, vuelta: e.vuelta + 1, ms: 400, viva: true })),
     [],
   );
-  return { seguir: estado.viva, listo };
+  const marcador = useCallback(
+    (m: Redibujable | null) => {
+      const soltar = redibujador.registrar(m);
+      if (m && Platform.OS === 'android') redibujador.programar();
+      return soltar;
+    },
+    [redibujador],
+  );
+  return { seguir: estado.viva, listo, marcador };
 }
 
 /** Lado, en puntos, del disco de la marca (el mismo de la web). */
@@ -130,6 +169,8 @@ export function MarcaIsotipo({
         source={fuente}
         style={{ width: 50, height: 33 }}
         resizeMode="contain"
+        // C-MARCADOR-ANDROID: sin el fundido de 300 ms de Android, la foto nunca sale a medio pintar.
+        fadeDuration={0}
         onLoad={alCargar}
         accessibilityIgnoresInvertColors
       />

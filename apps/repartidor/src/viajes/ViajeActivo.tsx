@@ -1,5 +1,5 @@
 import { comoLlegar } from '../comoLlegar';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, Switch, TextInput, View } from 'react-native';
 import {
   ErrorApi,
@@ -119,12 +119,18 @@ export function ViajeActivo({
   idioma,
   viaje,
   alCambiar,
+  alCerrar,
   yo = null,
 }: {
   api: Api;
   idioma: Idioma;
   viaje: ViajeConductor;
   alCambiar: () => void;
+  /**
+   * C-CIERRE-VIAJE-QUEDA: `true` al entrar a «Viaje terminado» o «Envío entregado» (el inicio lo
+   * sigue pintando aunque el sondeo ya no vea el viaje) y `false` al tocar «Listo».
+   */
+  alCerrar?: (abierto: boolean) => void;
   /** C-MAPA-VIAJE-DRIVER: dónde está el conductor (para dibujarlo en el mapa del viaje). */
   yo?: { lat: number; lng: number } | null;
 }) {
@@ -197,6 +203,20 @@ export function ViajeActivo({
   const [saltar, setSaltar] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [cierre, setCierre] = useState<'terminado' | 'no_show' | null>(null);
+  // C-CIERRE-VIAJE-QUEDA: si el conductor sale de esta pantalla (otra pestaña) con el cierre abierto,
+  // el inicio lo suelta: al volver no queda un viaje ya terminado como si siguiera en curso.
+  const enCierre = useRef(false);
+  const alCerrarRef = useRef(alCerrar);
+  useEffect(() => {
+    enCierre.current = cierre != null;
+    alCerrarRef.current = alCerrar;
+  });
+  useEffect(
+    () => () => {
+      if (enCierre.current) alCerrarRef.current?.(false);
+    },
+    [],
+  );
   // M7: lo que cobra al terminar (precio fijo + espera + lo que el pasajero debía), del servidor.
   const [totalFinal, setTotalFinal] = useState<number | null>(null);
   const [regaloFinal, setRegaloFinal] = useState<number | null>(null);
@@ -248,6 +268,7 @@ export function ViajeActivo({
       await api
         .pedir('POST', `/datos/conductor/operaciones/${viaje.id}/calificar`, { estrellas })
         .catch(() => undefined);
+    alCerrar?.(false);
     alCambiar();
   }
   // La espera corre en la pantalla desde la hora de llegada que guardó el servidor.
@@ -283,15 +304,17 @@ export function ViajeActivo({
         if (r?.regaloDivoox != null) setRegaloFinal(r.regaloDivoox);
         if (r?.referencia) setReferenciaFinal(r.referencia);
         if (r?.enMano) setEnManoFinal(r.enMano);
-        if (final) setCierre(final);
-        else alCambiar();
+        if (final) {
+          setCierre(final);
+          alCerrar?.(true);
+        } else alCambiar();
       } catch (x) {
         setError(x instanceof ErrorApi ? x.message : String(x));
       } finally {
         setEnviando(false);
       }
     },
-    [api, viaje.id, alCambiar],
+    [api, viaje.id, alCambiar, alCerrar],
   );
 
   // C-PAGO-MOVIL-VIAJE: lo que el conductor ya confirmó del pago móvil (en esta pantalla).
@@ -463,8 +486,13 @@ export function ViajeActivo({
       </View>
       {/* C-MAPA-VIAJE-DRIVER: el mapa con la recogida, el destino y el conductor, debajo del precio
           (el precio sigue siendo lo primero). La cámara se mueve solo cuando cambia un punto. */}
-      <View
+      {/* C-MAPA-VISTA-PREVIA: como Uber Driver, el mapa pequeño no se arrastra (el dedo desplaza la
+          pantalla hasta el deslizador) y tocarlo abre la navegación. */}
+      <Pressable
         testID="viaje-mapa"
+        onPress={() => comoLlegar({ lat: punto.lat, lng: punto.lng }, idioma)}
+        accessibilityRole="button"
+        accessibilityLabel={t.navegar}
         style={{ borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#2a2a2a' }}
       >
         <Mapa
@@ -474,8 +502,9 @@ export function ViajeActivo({
           direccionDestino={direccion}
           alto={200}
           etiquetas={{ yo: t.mapaYo, restaurante: t.mapaRecogida, casa: t.mapaDestino }}
+          vistaPrevia
         />
-      </View>
+      </Pressable>
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
       </View>

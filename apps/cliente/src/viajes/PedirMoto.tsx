@@ -817,6 +817,7 @@ export function PedirMoto({
               }}
               alto={160}
               bajoDemanda
+              vistaPrevia
             />
           </View>
         ) : null}

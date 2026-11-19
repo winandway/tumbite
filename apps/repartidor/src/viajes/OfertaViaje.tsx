@@ -7,7 +7,7 @@ import {
   formatearMonto,
   textoMultiplicador,
 } from '@tumbite/compartido';
-import { Boton, C, MontoEnMano, Text, Modal } from '@tumbite/movil';
+import { Boton, C, HojaOferta, MontoEnMano, Text } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 import { Mapa } from '../piezas/Mapa';
 import { textoOfertaConfianza } from './agendaFijos';
@@ -108,18 +108,13 @@ export function OfertaViajeModal({
   const total = oferta.deConfianza ? 60 : 30;
   const lineas = textoOfertaConfianza(oferta, idioma === 'en' ? 'en' : 'es');
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={rechazar}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(25,25,25,0.55)', justifyContent: 'flex-end' }}>
-        <View
-          testID="oferta-viaje"
-          style={{
-            backgroundColor: '#fff',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: 20,
-            gap: 10,
-          }}
-        >
+    // C-HOJA-OFERTA: arriba (título, cuenta atrás y lo que gana) y abajo (Aceptar y Rechazar) siempre
+    // a la vista; el medio se desplaza si no cabe. Nunca encima de la barra de estado.
+    <HojaOferta
+      testID="oferta-viaje"
+      alCerrar={rechazar}
+      arriba={
+        <>
           <View
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
@@ -172,147 +167,10 @@ export function OfertaViajeModal({
             color={C.exito}
             tamano="grande"
           />
-          {oferta.metodoPago !== 'tarjeta' && oferta.enMano ? (
-            // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: lo que cobra en mano, tan grande como lo que gana,
-            // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
-            <View
-              testID="oferta-viaje-en-mano"
-              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}
-            >
-              <MontoEnMano
-                testID="oferta-en-mano"
-                monto={oferta.enMano}
-                idioma={idioma === 'en' ? 'en' : 'es'}
-                quien="conductor"
-                etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.cobraEnMano}
-                color={C.exito}
-                tamano="grande"
-              />
-            </View>
-          ) : oferta.metodoPago === 'efectivo' ? (
-            <View
-              testID="oferta-viaje-efectivo"
-              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
-            >
-              <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
-            </View>
-          ) : null}
-          {lineas.length ? (
-            // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: confianza, viaje fijo y menor, arriba de todo.
-            <View
-              testID="oferta-viaje-confianza"
-              style={{
-                borderWidth: 1,
-                borderColor: '#2a2a2a',
-                borderRadius: 10,
-                padding: 10,
-                gap: 4,
-              }}
-            >
-              {lineas.map((l) => (
-                <Text key={l} style={{ fontWeight: '800', color: C.secundario }}>
-                  {l}
-                </Text>
-              ))}
-            </View>
-          ) : null}
-          {oferta.programadoPara ? (
-            <View
-              testID="oferta-viaje-programado"
-              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
-            >
-              <Text style={{ fontWeight: '800', color: C.secundario }}>
-                {t.programado}{' '}
-                {new Date(oferta.programadoPara).toLocaleString(idioma === 'en' ? 'en-US' : 'es', {
-                  weekday: 'short',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </Text>
-            </View>
-          ) : null}
-          {(oferta.regaloDivoox ?? 0) > 0 ? (
-            <View
-              testID="oferta-viaje-regalo"
-              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
-            >
-              <Text style={{ fontWeight: '800', color: C.exito }}>
-                {t.regaloOferta.replace(
-                  '{monto}',
-                  formatearMonto(oferta.regaloDivoox ?? 0, oferta.moneda ?? 'USD', idioma),
-                )}
-              </Text>
-            </View>
-          ) : null}
-          {(oferta.multiplicadorPb ?? 10_000) > 10_000 ? (
-            // C-CARRO-DINAMICA: el conductor ve que el viaje lleva tarifa dinámica y de cuánto.
-            <View
-              testID="oferta-viaje-dinamica"
-              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
-            >
-              <Text style={{ fontWeight: '800', color: C.secundario }}>
-                {textos.oferta.dinamica}{' '}
-                {textoMultiplicador(oferta.multiplicadorPb ?? 10_000, idioma)}
-              </Text>
-              <Text style={{ color: '#666B73', fontSize: 12 }}>{textos.oferta.dinamicaAyuda}</Text>
-            </View>
-          ) : null}
-          {oferta.origenPunto && oferta.destinoPunto ? (
-            // C-MAPA-VIAJE-DRIVER: como las apps de conductores, el recorrido a la vista antes de
-            // aceptar (pequeño: lo que gana sigue siendo lo primero).
-            <View
-              testID="oferta-viaje-mapa"
-              style={{ borderRadius: 12, overflow: 'hidden', marginTop: 6 }}
-            >
-              <Mapa
-                yo={yo}
-                restaurante={oferta.origenPunto}
-                casa={oferta.destinoPunto}
-                alto={150}
-                etiquetas={{
-                  yo: textos.activo.mapaYo,
-                  restaurante: textos.activo.mapaRecogida,
-                  casa: textos.activo.mapaDestino,
-                }}
-              />
-            </View>
-          ) : null}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-            {oferta.recogidaM != null ? (
-              <Dato valor={distancia(oferta.recogidaM, idioma)} nombre={t.recogida} />
-            ) : null}
-            {oferta.viajeM != null ? (
-              <Dato valor={distancia(oferta.viajeM, idioma)} nombre={t.viaje} />
-            ) : null}
-            {oferta.viajeS != null ? (
-              <Dato valor={`${Math.max(1, Math.round(oferta.viajeS / 60))}`} nombre={t.minutos} />
-            ) : null}
-          </View>
-          <View style={{ marginTop: 6 }}>
-            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.recoger}</Text>
-            <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
-              {oferta.origen}
-            </Text>
-          </View>
-          {oferta.paradas?.length ? (
-            // C-VIAJE-PARADAS: por dónde para el viaje antes del destino.
-            <View testID="oferta-viaje-paradas">
-              <Text style={{ color: '#666B73', fontSize: 12 }}>
-                {textos.oferta.conParadas(oferta.paradas.length)}
-              </Text>
-              {oferta.paradas.map((d, i) => (
-                <Text key={i} style={{ fontWeight: '700', color: C.secundario }} numberOfLines={1}>
-                  {i + 1}. {d}
-                </Text>
-              ))}
-            </View>
-          ) : null}
-          <View>
-            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.llevar}</Text>
-            <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
-              {oferta.destino}
-            </Text>
-          </View>
+        </>
+      }
+      abajo={
+        <>
           <Boton texto={t.aceptar} alTocar={aceptar} exito />
           <Pressable onPress={rechazar} accessibilityRole="button" accessibilityLabel={t.rechazar}>
             <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
@@ -322,9 +180,151 @@ export function OfertaViajeModal({
           <Text style={{ color: '#6B7078', fontSize: 12, textAlign: 'center' }}>
             {t.sinCastigo}
           </Text>
+        </>
+      }
+    >
+      {oferta.metodoPago !== 'tarjeta' && oferta.enMano ? (
+        // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: lo que cobra en mano, tan grande como lo que gana,
+        // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
+        <View
+          testID="oferta-viaje-en-mano"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}
+        >
+          <MontoEnMano
+            testID="oferta-en-mano"
+            monto={oferta.enMano}
+            idioma={idioma === 'en' ? 'en' : 'es'}
+            quien="conductor"
+            etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.cobraEnMano}
+            color={C.exito}
+            tamano="grande"
+          />
         </View>
+      ) : oferta.metodoPago === 'efectivo' ? (
+        <View
+          testID="oferta-viaje-efectivo"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+        >
+          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
+        </View>
+      ) : null}
+      {lineas.length ? (
+        // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: confianza, viaje fijo y menor, arriba de todo.
+        <View
+          testID="oferta-viaje-confianza"
+          style={{
+            borderWidth: 1,
+            borderColor: '#2a2a2a',
+            borderRadius: 10,
+            padding: 10,
+            gap: 4,
+          }}
+        >
+          {lineas.map((l) => (
+            <Text key={l} style={{ fontWeight: '800', color: C.secundario }}>
+              {l}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+      {oferta.programadoPara ? (
+        <View
+          testID="oferta-viaje-programado"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+        >
+          <Text style={{ fontWeight: '800', color: C.secundario }}>
+            {t.programado}{' '}
+            {new Date(oferta.programadoPara).toLocaleString(idioma === 'en' ? 'en-US' : 'es', {
+              weekday: 'short',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
+          </Text>
+        </View>
+      ) : null}
+      {(oferta.regaloDivoox ?? 0) > 0 ? (
+        <View
+          testID="oferta-viaje-regalo"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+        >
+          <Text style={{ fontWeight: '800', color: C.exito }}>
+            {t.regaloOferta.replace(
+              '{monto}',
+              formatearMonto(oferta.regaloDivoox ?? 0, oferta.moneda ?? 'USD', idioma),
+            )}
+          </Text>
+        </View>
+      ) : null}
+      {(oferta.multiplicadorPb ?? 10_000) > 10_000 ? (
+        // C-CARRO-DINAMICA: el conductor ve que el viaje lleva tarifa dinámica y de cuánto.
+        <View
+          testID="oferta-viaje-dinamica"
+          style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+        >
+          <Text style={{ fontWeight: '800', color: C.secundario }}>
+            {textos.oferta.dinamica} {textoMultiplicador(oferta.multiplicadorPb ?? 10_000, idioma)}
+          </Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>{textos.oferta.dinamicaAyuda}</Text>
+        </View>
+      ) : null}
+      {oferta.origenPunto && oferta.destinoPunto ? (
+        // C-MAPA-VIAJE-DRIVER: como las apps de conductores, el recorrido a la vista antes de
+        // aceptar (pequeño: lo que gana sigue siendo lo primero).
+        <View
+          testID="oferta-viaje-mapa"
+          style={{ borderRadius: 12, overflow: 'hidden', marginTop: 6 }}
+        >
+          <Mapa
+            yo={yo}
+            restaurante={oferta.origenPunto}
+            casa={oferta.destinoPunto}
+            vistaPrevia
+            alto={150}
+            etiquetas={{
+              yo: textos.activo.mapaYo,
+              restaurante: textos.activo.mapaRecogida,
+              casa: textos.activo.mapaDestino,
+            }}
+          />
+        </View>
+      ) : null}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+        {oferta.recogidaM != null ? (
+          <Dato valor={distancia(oferta.recogidaM, idioma)} nombre={t.recogida} />
+        ) : null}
+        {oferta.viajeM != null ? (
+          <Dato valor={distancia(oferta.viajeM, idioma)} nombre={t.viaje} />
+        ) : null}
+        {oferta.viajeS != null ? (
+          <Dato valor={`${Math.max(1, Math.round(oferta.viajeS / 60))}`} nombre={t.minutos} />
+        ) : null}
       </View>
-    </Modal>
+      <View style={{ marginTop: 6 }}>
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.recoger}</Text>
+        <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
+          {oferta.origen}
+        </Text>
+      </View>
+      {oferta.paradas?.length ? (
+        // C-VIAJE-PARADAS: por dónde para el viaje antes del destino.
+        <View testID="oferta-viaje-paradas">
+          <Text style={{ color: '#666B73', fontSize: 12 }}>
+            {textos.oferta.conParadas(oferta.paradas.length)}
+          </Text>
+          {oferta.paradas.map((d, i) => (
+            <Text key={i} style={{ fontWeight: '700', color: C.secundario }} numberOfLines={1}>
+              {i + 1}. {d}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+      <View>
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.llevar}</Text>
+        <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
+          {oferta.destino}
+        </Text>
+      </View>
+    </HojaOferta>
   );
 }
 

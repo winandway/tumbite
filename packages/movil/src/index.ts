@@ -42,4 +42,5 @@ export * from './Deslizador';
 export * from './TarjetaServicio';
 export * from './AvisoDeshacer';
 export * from './Hoja';
+export * from './HojaOferta';
 export * from './MontoEnMano';

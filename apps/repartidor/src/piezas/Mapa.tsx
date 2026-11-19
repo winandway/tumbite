@@ -26,6 +26,7 @@ export function Mapa({
   alto = 300,
   etiquetas,
   direccionDestino,
+  vistaPrevia = false,
 }: {
   yo: Punto | null;
   restaurante?: Punto | null;
@@ -38,6 +39,12 @@ export function Mapa({
   etiquetas: { yo: string; restaurante: string; casa: string };
   /** La dirección del destino de ahora (el local o la casa): su número se lee al llegar. */
   direccionDestino?: string | null;
+  /**
+   * C-MAPA-VISTA-PREVIA (paquete 13): el mapa pequeño de la oferta y del viaje. Como Uber Driver y
+   * DoorDash Dasher no se toca (sin gestos y sin robar el toque a la hoja que se desplaza) y queda
+   * siempre encuadrado en la recogida, el destino y el conductor.
+   */
+  vistaPrevia?: boolean;
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [yo, restaurante ?? null, casa ?? null].filter((p): p is Punto => p != null);
@@ -48,13 +55,16 @@ export function Mapa({
   // C-MAPA-LLEGADA: a menos de 200 m del destino (el local o la casa) el mapa se acerca solo y el
   // punto muestra el número de la dirección (igual que en la web).
   const destino = casa ?? restaurante ?? null;
-  const llegada = useVistaDeLlegada(yo, destino);
+  const vistaLlegada = useVistaDeLlegada(yo, destino);
+  const llegada = vistaPrevia ? null : vistaLlegada;
   const rotulo = llegada ? rotuloDestino(direccionDestino) : '';
   const cerca = llegada != null;
   // C-MAPA-DIA-NOCHE: colores de día o de noche, como todos los mapas.
   const { coloresMapa } = usePropsMapaDivoox(yo ?? restaurante ?? casa);
   // C-MARCADOR-ANDROID: la foto de los marcadores con vista propia se toma cuando ya se dibujaron.
   const vista = useCapturaMarcador(`${rotulo}|${zonasDemanda.length}`);
+  // Cada marcador con vista propia se registra para repintarse (`redraw()`, segunda vuelta).
+  const { marcador } = vista;
   // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom
   // (`llegada.clave`), no en cada lectura de GPS (se puede mover el mapa con el dedo).
   const latMovil = cerca ? 0 : yo?.lat;
@@ -108,7 +118,10 @@ export function Mapa({
       <View testID="mapa-sin-ubicacion" style={{ height: alto, backgroundColor: '#E9EEF5' }} />
     );
   return (
-    <View style={{ height: alto, overflow: 'hidden' }}>
+    <View
+      style={{ height: alto, overflow: 'hidden' }}
+      pointerEvents={vistaPrevia ? 'none' : 'auto'}
+    >
       <MapView
         ref={mapa}
         style={{ flex: 1 }}
@@ -118,9 +131,18 @@ export function Mapa({
           latitudeDelta: 0.03,
           longitudeDelta: 0.03,
         }}
-        onMapReady={() => setListo(true)}
+        onMapReady={() => {
+          setListo(true);
+          vista.listo();
+        }}
         showsUserLocation={false}
         toolbarEnabled={false}
+        scrollEnabled={!vistaPrevia}
+        zoomEnabled={!vistaPrevia}
+        rotateEnabled={!vistaPrevia}
+        pitchEnabled={!vistaPrevia}
+        zoomTapEnabled={!vistaPrevia}
+        moveOnMarkerPress={!vistaPrevia}
         accessibilityLabel={etiquetas.yo}
         {...coloresMapa}
       >
@@ -141,6 +163,7 @@ export function Mapa({
               key={`pico-${z.lat},${z.lng}`}
               coordinate={{ latitude: z.lat, longitude: z.lng }}
               tracksViewChanges={vista.seguir}
+              ref={marcador}
               anchor={{ x: 0.5, y: 0.5 }}
             >
               <View
@@ -184,6 +207,7 @@ export function Mapa({
             coordinate={{ latitude: destino.lat, longitude: destino.lng }}
             anchor={{ x: 0.5, y: 1.6 }}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
           >
             <View
               testID="mapa-rotulo-destino"
@@ -207,6 +231,7 @@ export function Mapa({
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={10}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
           >
             <MarcaIsotipo fuente={IMG.mascota} alCargar={vista.listo} />
           </Marker>

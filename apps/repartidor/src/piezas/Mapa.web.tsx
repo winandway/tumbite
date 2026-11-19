@@ -29,12 +29,15 @@ type PropsMapa = Parameters<typeof MapaLeaflet>[0];
  * destino; sin pedido, plano y con el botón «Ver en el mapa». Las zonas con más pedidos se dibujan
  * como áreas rojas translúcidas, y la del pago extra lleva el monto a la vista. Sin llave, Leaflet.
  */
-export function Mapa(props: PropsMapa) {
-  return proveedorMapaWeb(origenesMapaDriver(props)) === 'google' ? (
-    <MapaGoogle {...props} />
-  ) : (
-    <MapaLeaflet {...props} />
-  );
+export function Mapa({ vistaPrevia = false, ...props }: PropsMapa) {
+  const mapa =
+    proveedorMapaWeb(origenesMapaDriver(props)) === 'google' ? (
+      <MapaGoogle {...props} />
+    ) : (
+      <MapaLeaflet {...props} />
+    );
+  // C-MAPA-VISTA-PREVIA: el mapa pequeño de la oferta y del viaje no le roba el toque a la página.
+  return vistaPrevia ? <div style={{ pointerEvents: 'none' }}>{mapa}</div> : mapa;
 }
 
 function MapaGoogle({
@@ -161,6 +164,8 @@ function MapaLeaflet({
   etiquetas: { yo: string; restaurante: string; casa: string };
   /** La dirección del destino de ahora (el local o la casa): su número se lee al llegar. */
   direccionDestino?: string | null;
+  /** C-MAPA-VISTA-PREVIA: el mapa pequeño, que no se toca (lo aplica `Mapa`). */
+  vistaPrevia?: boolean;
 }) {
   const caja = useRef<HTMLDivElement>(null);
   const mapa = useRef<L.Map | null>(null);

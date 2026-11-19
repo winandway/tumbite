@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { C, MarcaIsotipo, usePropsMapaDivoox, useCapturaMarcador, Text } from '@tumbite/movil';
@@ -33,6 +33,7 @@ export function MapaEntrega({
   meta = 'casa',
   paradas = [],
   alto = 260,
+  vistaPrevia = false,
 }: {
   restaurante: Punto | null;
   casa: Punto | null;
@@ -50,16 +51,28 @@ export function MapaEntrega({
   alto?: number;
   /** Solo en la web (C-MAPA-GOOGLE-WEB): el mapa de Google se carga al tocarlo. En el teléfono, nada. */
   bajoDemanda?: boolean;
+  /**
+   * C-MAPA-VISTA-PREVIA (paquete 13): el mapa pequeño del precio antes de pedir. Como Uber, no se
+   * toca (sin gestos y sin robarle el toque a la pantalla que se desplaza) y queda siempre encuadrado
+   * en la recogida y el destino. Los mapas grandes de seguimiento no lo llevan.
+   */
+  vistaPrevia?: boolean;
 }) {
   const mapa = useRef<MapView>(null);
   const puntos = [restaurante, casa, repartidor].filter((p): p is Punto => p != null);
 
-  const llegada = useVistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
+  const vistaLlegada = useVistaDeLlegada(repartidor, meta === 'restaurante' ? restaurante : casa);
+  const llegada = vistaPrevia ? null : vistaLlegada;
+  // El encuadre corre también cuando el mapa termina de cargar (antes, en Android, a veces se
+  // perdía porque corría con el mapa todavía sin cargar).
+  const [listo, setListo] = useState(false);
   const rotulo = llegada ? rotuloDestino(direccion) : '';
   const cerca = llegada != null;
   const { coloresMapa } = usePropsMapaDivoox(casa ?? restaurante ?? repartidor);
   // C-MARCADOR-ANDROID: la foto de los marcadores con vista propia se toma cuando ya se dibujaron.
   const vista = useCapturaMarcador(`${rotulo}|${sinSenal ? 1 : 0}|${paradas.length}`);
+  // Cada marcador con vista propia se registra para repintarse (`redraw()`, segunda vuelta).
+  const { marcador } = vista;
 
   // Estando cerca, la cámara se mueve solo al entrar al radio y en cada escalón de zoom
   // (`llegada.clave`), no en cada lectura de GPS (se puede mover el mapa con el dedo).
@@ -67,7 +80,7 @@ export function MapaEntrega({
   const lngMovil = cerca ? 0 : repartidor?.lng;
 
   useEffect(() => {
-    if (puntos.length < 1) return;
+    if (!listo || puntos.length < 1) return;
     if (llegada) {
       // Cerca de la casa no se encuadra todo el recorrido: la casa y el repartidor juntos, de cerca.
       mapa.current?.animateCamera(
@@ -87,6 +100,7 @@ export function MapaEntrega({
     // Se reencuadra cuando cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    listo,
     restaurante?.lat,
     restaurante?.lng,
     casa?.lat,
@@ -102,7 +116,10 @@ export function MapaEntrega({
     !sinSenal && (repartidor ?? restaurante) && casa ? [repartidor ?? restaurante, casa] : null;
 
   return (
-    <View style={{ height: alto, borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
+    <View
+      style={{ height: alto, borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}
+      pointerEvents={vistaPrevia ? 'none' : 'auto'}
+    >
       <MapView
         ref={mapa}
         style={{ flex: 1 }}
@@ -112,8 +129,18 @@ export function MapaEntrega({
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
+        onMapReady={() => {
+          setListo(true);
+          vista.listo();
+        }}
         showsUserLocation={false}
         toolbarEnabled={false}
+        scrollEnabled={!vistaPrevia}
+        zoomEnabled={!vistaPrevia}
+        rotateEnabled={!vistaPrevia}
+        pitchEnabled={!vistaPrevia}
+        zoomTapEnabled={!vistaPrevia}
+        moveOnMarkerPress={!vistaPrevia}
         accessibilityLabel={etiquetas.repartidor}
         {...coloresMapa}
       >
@@ -136,6 +163,7 @@ export function MapaEntrega({
             coordinate={{ latitude: restaurante.lat, longitude: restaurante.lng }}
             anchor={{ x: 0.5, y: 1.6 }}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
           >
             <View
               style={{
@@ -157,6 +185,7 @@ export function MapaEntrega({
             title={etiquetas.casa}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
           >
             <View
               testID="mapa-rotulo-casa"
@@ -182,6 +211,7 @@ export function MapaEntrega({
             title={p.etiqueta}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
           >
             <View
               style={{
@@ -206,6 +236,7 @@ export function MapaEntrega({
             anchor={{ x: 0.5, y: 0.5 }}
             zIndex={10}
             tracksViewChanges={vista.seguir}
+            ref={marcador}
           >
             <MarcaIsotipo fuente={IMG_COMIDA.mascota} apagado={sinSenal} alCargar={vista.listo} />
           </Marker>

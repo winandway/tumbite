@@ -57,6 +57,7 @@ import { Seguridad } from './grandes/Seguridad';
 import { cargarAccesibilidad } from './grandes/accesibilidad';
 import { CalificarCliente } from './grandes/CalificarCliente';
 import { MisViajesConductor } from './viajes/MisViajesConductor';
+import { viajeEnPantalla } from './viajes/cierreViaje';
 import { ClientesFijos } from './viajes/ClientesFijos';
 import { ConfirmarTelefono } from './ConfirmarTelefono';
 import { InvitacionesEmpresa } from './flex/InvitacionesEmpresa';
@@ -605,6 +606,12 @@ export function Inicio() {
   // Divoox Moto (M4): la oferta de un viaje y el viaje en curso (otra operación, no un pedido).
   const [ofertasViaje, setOfertasViaje] = useState<OfertaViaje[]>([]);
   const [viajeActivo, setViajeActivo] = useState<ViajeConductor | null>(null);
+  // C-CIERRE-VIAJE-QUEDA: el viaje cuya pantalla de cierre está abierta (cobro y calificación). Se
+  // sigue pintando hasta «Listo» aunque el sondeo ya no lo vea; vive solo en memoria (si la app se
+  // reinicia, el conductor no queda atrapado en el cierre).
+  const [viajeEnCierre, setViajeEnCierre] = useState<ViajeConductor | null>(null);
+  const viajeMostrado = viajeEnPantalla(viajeActivo, viajeEnCierre);
+  const scrollLienzo = useRef<ScrollView>(null);
   const [billetera, setBilletera] = useState<Billetera | null>(null);
   const [error, setError] = useState('');
   // C-MOTO-CIUDAD: la ciudad pide la selfie con casco antes de aceptar viajes en moto.
@@ -1815,6 +1822,7 @@ export function Inicio() {
           <View style={{ flex: 1 }}>{cuerpo}</View>
         ) : (
           <ScrollView
+            ref={scrollLienzo}
             keyboardDismissMode="interactive"
             automaticallyAdjustKeyboardInsets
             contentContainerStyle={{ paddingBottom: 16 }}
@@ -2382,7 +2390,7 @@ export function Inicio() {
   }
 
   // ───────── Divoox Moto (M4): el viaje en curso ocupa el inicio, como Uber Driver ─────────
-  if (viajeActivo && vista === 'inicio')
+  if (viajeMostrado && vista === 'inicio')
     return lienzo(
       'inicio',
       <View>
@@ -2398,6 +2406,7 @@ export function Inicio() {
           </View>
         ) : null}
         <ViajeActivo
+          key={viajeMostrado.id}
           api={{
             // C-ENVIOS: la foto del paquete al recogerlo.
             subirFoto: (foto, ruta) => api.subirFoto(foto, ruta),
@@ -2419,9 +2428,15 @@ export function Inicio() {
             },
           }}
           idioma={idioma}
-          viaje={viajeActivo}
-          alCambiar={() => void cargar()}
+          viaje={viajeMostrado}
           yo={aqui}
+          alCambiar={() => void cargar()}
+          alCerrar={(abierto) => {
+            setViajeEnCierre(abierto ? viajeMostrado : null);
+            // El cierre (cobro en efectivo y calificación) aparece desde arriba, no donde quedó el
+            // deslizador.
+            if (abierto) scrollLienzo.current?.scrollTo({ y: 0, animated: false });
+          }}
         />
       </View>,
     );

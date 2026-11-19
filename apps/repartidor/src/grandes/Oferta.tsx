@@ -6,7 +6,7 @@ import {
   formatearMonto,
   textoDistancia,
 } from '@tumbite/compartido';
-import { Boton, C, MontoEnMano, Text, Modal } from '@tumbite/movil';
+import { Boton, C, HojaOferta, MontoEnMano, Text } from '@tumbite/movil';
 import { textosGrandes } from './textos';
 import { useAlarmaOferta } from '../sonidoOferta';
 
@@ -98,18 +98,13 @@ export function Oferta({
         }
       : null);
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={rechazar}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(25,25,25,0.55)', justifyContent: 'flex-end' }}>
-        <View
-          testID="oferta-completa"
-          style={{
-            backgroundColor: '#fff',
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: 20,
-            gap: 10,
-          }}
-        >
+    // C-HOJA-OFERTA: arriba (título, cuenta atrás y lo que gana) y abajo (Aceptar y Rechazar) siempre
+    // a la vista; el medio se desplaza si no cabe. Nunca encima de la barra de estado.
+    <HojaOferta
+      testID="oferta-completa"
+      alCerrar={rechazar}
+      arriba={
+        <>
           <View
             style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
           >
@@ -156,86 +151,10 @@ export function Oferta({
             color={C.exito}
             tamano="grande"
           />
-          {oferta.metodoPago && oferta.metodoPago !== 'tarjeta' && cobro ? (
-            // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: cuánto cobra en mano, tan grande como lo que gana,
-            // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
-            <View
-              testID="oferta-cobro-en-mano"
-              style={{
-                borderWidth: 1,
-                borderColor: '#2a2a2a',
-                borderRadius: 12,
-                padding: 12,
-                gap: 4,
-              }}
-            >
-              <MontoEnMano
-                testID="oferta-cobro-monto"
-                monto={cobro}
-                idioma={idioma === 'en' ? 'en' : 'es'}
-                quien="conductor"
-                etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
-                color={C.exito}
-                tamano="grande"
-              />
-              <Text style={{ color: '#666B73', fontSize: 13 }}>{t.propinaAparte}</Text>
-              {oferta.adelantoLocal ? (
-                <Text style={{ color: '#666B73' }}>
-                  {t.adelantas.replace(
-                    '{monto}',
-                    formatearMonto(oferta.adelantoLocal, oferta.moneda, idioma),
-                  )}
-                </Text>
-              ) : null}
-            </View>
-          ) : null}
-          {oferta.propina > 0 ? (
-            <Text style={{ color: '#666B73' }}>
-              {t.conPropina} {formatearMonto(oferta.propina, oferta.moneda, idioma)}
-            </Text>
-          ) : null}
-          {oferta.bono ? (
-            <Text style={{ color: C.exito, fontWeight: '700' }}>
-              {oferta.bonoMotivo === 'hora_pico' ? t.bonoPico : t.bono}{' '}
-              {formatearMonto(oferta.bono, oferta.moneda, idioma)}
-            </Text>
-          ) : null}
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-            {oferta.distanciaAlLocalKm != null ? (
-              <Dato
-                valor={textoDistancia(oferta.distanciaAlLocalKm, idioma, oferta.pais)}
-                nombre={t.alLocal}
-              />
-            ) : null}
-            {oferta.distanciaTotalKm != null ? (
-              <Dato
-                valor={textoDistancia(oferta.distanciaTotalKm, idioma, oferta.pais)}
-                nombre={t.total}
-              />
-            ) : null}
-            {oferta.minutosEstimados != null ? (
-              <Dato valor={`${oferta.minutosEstimados}`} nombre={t.minutos} />
-            ) : null}
-            {n ? <Dato valor={`${n}`} nombre={n === 1 ? t.articulo : t.articulos} /> : null}
-          </View>
-          <View style={{ marginTop: 6 }}>
-            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.recoger}</Text>
-            <Text style={{ fontWeight: '800', color: C.secundario }}>
-              {oferta.restaurante.nombre}
-              {oferta.minutosParaListo
-                ? ` · ${t.listoEn} ${oferta.minutosParaListo} min`
-                : ` · ${t.listoYa}`}
-            </Text>
-            <Text style={{ color: '#666B73' }} numberOfLines={1}>
-              {oferta.restaurante.direccion}
-            </Text>
-          </View>
-          <View>
-            <Text style={{ color: '#666B73', fontSize: 12 }}>{t.entregar}</Text>
-            <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
-              {oferta.direccion}
-            </Text>
-          </View>
+        </>
+      }
+      abajo={
+        <>
           <Boton texto={t.aceptar} alTocar={aceptar} exito />
           <Pressable onPress={rechazar} accessibilityRole="button" accessibilityLabel={t.rechazar}>
             <Text style={{ textAlign: 'center', color: '#666B73', fontWeight: '700', padding: 8 }}>
@@ -245,9 +164,90 @@ export function Oferta({
           <Text style={{ color: '#6B7078', fontSize: 12, textAlign: 'center' }}>
             {t.vence} {t.sinCastigo}
           </Text>
+        </>
+      }
+    >
+      {oferta.metodoPago && oferta.metodoPago !== 'tarjeta' && cobro ? (
+        // C-PRECIO-PROTAGONISTA y C-BS-EN-MANO: cuánto cobra en mano, tan grande como lo que gana,
+        // con los bolívares debajo donde el país los usa (en EE. UU., solo dólares).
+        <View
+          testID="oferta-cobro-en-mano"
+          style={{
+            borderWidth: 1,
+            borderColor: '#2a2a2a',
+            borderRadius: 12,
+            padding: 12,
+            gap: 4,
+          }}
+        >
+          <MontoEnMano
+            testID="oferta-cobro-monto"
+            monto={cobro}
+            idioma={idioma === 'en' ? 'en' : 'es'}
+            quien="conductor"
+            etiqueta={oferta.metodoPago === 'efectivo' ? t.enEfectivo : t.porTransferencia}
+            color={C.exito}
+            tamano="grande"
+          />
+          <Text style={{ color: '#666B73', fontSize: 13 }}>{t.propinaAparte}</Text>
+          {oferta.adelantoLocal ? (
+            <Text style={{ color: '#666B73' }}>
+              {t.adelantas.replace(
+                '{monto}',
+                formatearMonto(oferta.adelantoLocal, oferta.moneda, idioma),
+              )}
+            </Text>
+          ) : null}
         </View>
+      ) : null}
+      {oferta.propina > 0 ? (
+        <Text style={{ color: '#666B73' }}>
+          {t.conPropina} {formatearMonto(oferta.propina, oferta.moneda, idioma)}
+        </Text>
+      ) : null}
+      {oferta.bono ? (
+        <Text style={{ color: C.exito, fontWeight: '700' }}>
+          {oferta.bonoMotivo === 'hora_pico' ? t.bonoPico : t.bono}{' '}
+          {formatearMonto(oferta.bono, oferta.moneda, idioma)}
+        </Text>
+      ) : null}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+        {oferta.distanciaAlLocalKm != null ? (
+          <Dato
+            valor={textoDistancia(oferta.distanciaAlLocalKm, idioma, oferta.pais)}
+            nombre={t.alLocal}
+          />
+        ) : null}
+        {oferta.distanciaTotalKm != null ? (
+          <Dato
+            valor={textoDistancia(oferta.distanciaTotalKm, idioma, oferta.pais)}
+            nombre={t.total}
+          />
+        ) : null}
+        {oferta.minutosEstimados != null ? (
+          <Dato valor={`${oferta.minutosEstimados}`} nombre={t.minutos} />
+        ) : null}
+        {n ? <Dato valor={`${n}`} nombre={n === 1 ? t.articulo : t.articulos} /> : null}
       </View>
-    </Modal>
+      <View style={{ marginTop: 6 }}>
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.recoger}</Text>
+        <Text style={{ fontWeight: '800', color: C.secundario }}>
+          {oferta.restaurante.nombre}
+          {oferta.minutosParaListo
+            ? ` · ${t.listoEn} ${oferta.minutosParaListo} min`
+            : ` · ${t.listoYa}`}
+        </Text>
+        <Text style={{ color: '#666B73' }} numberOfLines={1}>
+          {oferta.restaurante.direccion}
+        </Text>
+      </View>
+      <View>
+        <Text style={{ color: '#666B73', fontSize: 12 }}>{t.entregar}</Text>
+        <Text style={{ fontWeight: '800', color: C.secundario }} numberOfLines={2}>
+          {oferta.direccion}
+        </Text>
+      </View>
+    </HojaOferta>
   );
 }
 
