@@ -1046,6 +1046,10 @@ describe('C-CAMILA-REPORTE-CONVERSADO: el reporte es una conversación, no un gu
     expect(
       respuestaQueVale('Entiendo, Ana. ¿En qué pantalla te pasó?', conCorreo, 'donde', false),
     ).toBe('Entiendo, Ana. ¿En qué pantalla te pasó?');
+    // La pregunta es por el dato que toca: si ya se preguntó dónde y ahora toca el nombre, no sale.
+    expect(
+      respuestaQueVale('Gracias. ¿En qué app y pantalla te sucede esto?', c, 'nombre', false),
+    ).toBe('');
   });
 
   it('si no quiere dar su nombre ni un contacto, se respeta, se anota y el reporte se cierra igual', async () => {

@@ -723,20 +723,21 @@ function instruccionesDeReporte(i: IdiomaCamila) {
 En cada mensaje haces tres cosas:
 1. Lees TODO lo que la persona ya dijo, y la captura si viene, y entiendes el problema.
 2. Anotas en la salida los datos que ya dio, aunque vengan en desorden o todos juntos en un mensaje.
-3. Escribes «respuesta»: una o dos frases cortas. Primero muestras que entendiste lo que le pasa, con sus palabras y sin repetirlo entero; si te dio su nombre, su correo o su teléfono, dile que ya lo anotaste. Después haces UNA sola pregunta: la del primer dato que todavía falte, en este orden: qué pasó, dónde pasó, su nombre, un contacto para avisarle.
+3. Escribes «respuesta»: una o dos frases cortas, con mayúscula inicial como cualquier mensaje. Primero muestras que entendiste lo que le pasa, con sus palabras y sin repetirlo entero; si te dio su nombre, su correo o su teléfono, dile que ya lo anotaste. Después haces UNA sola pregunta: la del primer dato que todavía falte, en este orden: qué pasó, dónde pasó, su nombre, un contacto para avisarle.
 
 Los datos:
 - que_paso: qué falla, con las palabras de la persona, en una frase.
 - donde: en qué app o página y en qué pantalla o botón. Si se ve en la captura o se entiende por lo que dijo, anótalo y NO lo preguntes.
 - nombre, correo, telefono: SOLO si la persona los escribió. Nunca los inventes ni los tomes de la captura.
 - lectura_captura: si viene una imagen, una o dos frases para el equipo técnico: qué pantalla es y qué mensaje de error o cosa rara se ve. No copies contraseñas, números de tarjeta ni datos de otras personas. Sin imagen, vacío.
-- entendido: lo que entendiste, dicho a la persona en una frase que empieza en minúscula y sin punto final, por ejemplo: «no ves la tasa de cambio en la pantalla de recarga de la app».
+- entendido: SOLO el problema, dicho a la persona, para completar la frase «Esto es lo que entendí: …». Empieza con el verbo, sin «entiendo que» y sin punto final, por ejemplo: «no ves la tasa de cambio en la pantalla de recarga de la app». Nunca menciones ahí su nombre, su correo ni su contacto. Si en este mensaje no contó nada nuevo del problema, déjalo vacío.
 - resumen: una o dos frases para el equipo técnico, en tercera persona: qué pasa y dónde.
 
 Reglas que nunca cambian:
 - NUNCA preguntes algo que la persona ya contestó o que ya está en «ya_se_sabe». NUNCA hagas dos preguntas en un mensaje.
 - NO hagas preguntas de formulario como «¿qué esperabas que pasara?» o «¿qué estabas haciendo justo antes?». Pregunta solo lo que falta para entender y avisar.
 - Si en «datos_de_su_cuenta» dice true, su nombre y su contacto ya los tenemos: no los pidas.
+- «falta_ahora» es el dato por el que toca preguntar si este mensaje no lo trae: tu pregunta es sobre ESE dato y ningún otro. Lo que está en «ya_no_preguntes_por» no se vuelve a pedir aunque no lo sepas.
 - Si después de este mensaje ya no falta ningún dato, deja «respuesta» vacía: el cierre lo escribe el sistema.
 - Si dice que no quiere dar su nombre o un contacto, respétalo sin insistir: marca no_da_nombre o no_da_contacto.
 - Si quiere dejarlo o cancelar el reporte, marca quiere_cancelar.
@@ -784,7 +785,9 @@ export function leerSalida(texto: string): SalidaModelo | null {
     no_da_contacto: o.no_da_contacto === true,
     quiere_cancelar: o.quiere_cancelar === true,
     lectura_captura: una(o.lectura_captura, 400),
-    entendido: una(o.entendido, 240).replace(/[.。]+$/, ''),
+    entendido: una(o.entendido, 240)
+      .replace(/^(entiendo|entendí|comprendo|i understand|understood)[, ]+(que |that )?/i, '')
+      .replace(/[.。]+$/, ''),
     resumen: una(o.resumen, 400),
     respuesta: typeof o.respuesta === 'string' ? o.respuesta.trim().slice(0, 600) : '',
   };
@@ -796,7 +799,11 @@ const DE_GUION =
 const PIDE_NOMBRE = /c[oó]mo te llamas|tu nombre|your name|what should i call you/i;
 const PIDE_CONTACTO =
   /correo|e-?mail|tel[eé]fono|celular|whatsapp|phone|n[uú]mero para|contact(o|arte)?\b/i;
-const PIDE_DONDE = /en qu[eé] (app|parte|pantalla|p[aá]gina)|which (app|screen|page)|where did/i;
+const PIDE_DONDE =
+  /\b(app|aplicaci[oó]n|pantalla|p[aá]gina|secci[oó]n|en qu[eé] parte|d[oó]nde|screen|page|section|where)\b/i;
+/** «Entendido» que habla del nombre o del contacto en vez del problema: no sirve para el cierre. */
+const NO_ES_EL_PROBLEMA =
+  /correo|e-?mail|tel[eé]fono|celular|contact|phone|\bnombre\b|\bname\b|datos|anot|noted/i;
 
 /**
  * La respuesta del modelo solo sale si cumple: trae UNA pregunta (se corta en la primera), no es del
@@ -813,7 +820,8 @@ export function respuestaQueVale(texto: string, c: Campos, falta: Falta, tieneCu
   if (PIDE_CONTACTO.test(pregunta) && (tieneContacto || falta !== 'contacto')) return '';
   if (PIDE_NOMBRE.test(pregunta) && (Boolean(c.nombre) || c.sin_nombre || falta !== 'nombre'))
     return '';
-  if (PIDE_DONDE.test(pregunta) && c.donde) return '';
+  // La pregunta es por el dato que toca: ni por «dónde» cuando ya se sabe o ya se preguntó.
+  if (PIDE_DONDE.test(pregunta) && (Boolean(c.donde) || falta !== 'donde')) return '';
   return una_pregunta;
 }
 
@@ -893,6 +901,11 @@ export async function turnoDeReporte(
       tiene_contacto: tieneCuenta || Boolean(c.correo || c.telefono),
       no_quiso_dar_nombre: c.sin_nombre,
       no_quiso_dar_contacto: c.sin_contacto,
+      // Lo que toca preguntar si este mensaje no lo trae, y lo que ya no se vuelve a pedir.
+      falta_ahora: faltantes(c, tieneCuenta)[0] ?? 'nada',
+      ya_no_preguntes_por: (['que_paso', 'donde', 'nombre', 'contacto'] as const).filter(
+        (k) => vecesPedido(c, k) >= (VECES_QUE_SE_PIDE.get(k) ?? 1),
+      ),
     };
     const partes: Parte[] = [
       {
@@ -927,7 +940,9 @@ export async function turnoDeReporte(
         return cancelar('no_es_fallo', '', s.lectura_captura);
       if (s.que_paso) c.que_paso = s.que_paso;
       if (s.donde) c.donde = s.donde;
-      if (s.entendido) c.entendido = s.entendido;
+      // Lo que Camila entendió es del PROBLEMA: se toma cuando la persona lo cuenta, no después.
+      if (s.entendido && s.que_paso && !NO_ES_EL_PROBLEMA.test(s.entendido))
+        c.entendido = s.entendido;
       if (s.lectura_captura && op.imagen) lectura = s.lectura_captura;
       resumen = s.resumen;
       // El nombre y el contacto del modelo solo valen si la persona los escribió de verdad.
@@ -975,13 +990,17 @@ export async function turnoDeReporte(
   }
 
   const anotado = acuse(antes, c, i, primera, Boolean(op.conCaptura));
+  // Una captura sola, sin texto: la pregunta la hace el código («¿qué fue lo que te pasó?»).
   const vale =
-    falta !== 'extra' && delModelo ? respuestaQueVale(delModelo, c, falta, tieneCuenta) : '';
+    falta !== 'extra' && delModelo && texto
+      ? respuestaQueVale(delModelo, c, falta, tieneCuenta)
+      : '';
+  const conMayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
   const respuesta =
     falta === 'extra'
       ? `${anotado} ${i === 'en' ? 'One last thing for the technical team:' : 'Una última cosa para el equipo técnico:'} ${c.extra_pregunta}`
       : vale
-        ? (op.pulir?.(vale) ?? vale)
+        ? conMayuscula(op.pulir?.(vale) ?? vale)
         : `${anotado} ${preguntaDe(falta, i)}`;
   c.pedidos = { ...c.pedidos, [falta]: vecesPedido(c, falta) + 1 };
   c.ultimo = falta;
