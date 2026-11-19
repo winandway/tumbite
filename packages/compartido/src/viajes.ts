@@ -444,6 +444,10 @@ export type CotizacionViaje = {
   metodosPago?: ('efectivo' | 'tarjeta' | 'pago_movil')[];
   /** C-BS-REFERENCIA: el equivalente en la moneda local (solo informativo; null sin tasa vigente). */
   referencia?: import('./tasaReferencia').Referencia | null;
+  /** C-BS-EN-MANO: la tasa fijada con la cotización (null si no aplica o no hay tasa vigente). */
+  tasaLocal?: import('./tasaReferencia').TasaFijada | null;
+  /** C-BS-EN-MANO: lo que se pagaría en mano (precio menos regalo), en dólares y en bolívares. */
+  enMano?: import('./tasaReferencia').MontoEnMano | null;
   /**
    * C-RUTA-POR-CALLES: el pasajero ya veía otro precio para este mismo trayecto (unos 50 m, últimos
    * minutos) y cambió. La app lo dice en una línea discreta antes de pedir.

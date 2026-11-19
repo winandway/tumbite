@@ -150,6 +150,9 @@ export const TEXTOS_MOTO = {
     enCurso: 'Vas en camino a tu destino',
     terminado: 'Llegaste a tu destino',
     pagaEfectivo: 'Paga en efectivo',
+    // C-BS-EN-MANO: lo que se paga al conductor, en dólares y en bolívares.
+    pagasEnMano: 'Le pagas al conductor',
+    pagasteEnMano: 'Le pagaste al conductor',
     cancelado: 'Cancelaste el viaje',
     sinConductor: 'No encontramos un conductor esta vez',
     noShow: 'El viaje se cerró porque no te encontramos en el punto de recogida',
@@ -350,6 +353,8 @@ export const TEXTOS_MOTO = {
     enCurso: 'You’re on your way',
     terminado: 'You’ve arrived',
     pagaEfectivo: 'Pay in cash',
+    pagasEnMano: 'You pay the driver',
+    pagasteEnMano: 'You paid the driver',
     cancelado: 'You canceled the ride',
     sinConductor: 'We couldn’t find a driver this time',
     noShow: 'The ride was closed because we couldn’t find you at the pickup point',
@@ -420,6 +425,7 @@ export const TEXTOS_MIS_VIAJES = {
     verMas: 'Ver más viajes',
     volver: 'Volver a mis viajes',
     recibo: 'Recibo del viaje',
+    pagadoEnMano: 'Pagado en mano, en bolívares',
     servicios: { moto: 'Moto', carro: 'Carro', carro_xl: 'Carro XL', envios: 'Envío' } as Record<
       string,
       string
@@ -515,6 +521,7 @@ export const TEXTOS_MIS_VIAJES = {
     verMas: 'See more rides',
     volver: 'Back to my rides',
     recibo: 'Ride receipt',
+    pagadoEnMano: 'Paid in hand, in bolívares',
     servicios: { moto: 'Moto', carro: 'Car', carro_xl: 'Car XL', envios: 'Delivery' } as Record<
       string,
       string

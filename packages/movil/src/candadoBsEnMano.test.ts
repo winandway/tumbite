@@ -1,0 +1,42 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+/**
+ * C-BS-EN-MANO (18 nov 2026, Venezuela): todo lo que se cobra o se paga en mano se ve en dólares y en
+ * bolívares con la tasa fijada, con UNA sola pieza (`MontoEnMano`), en Driver y en el cliente. Si una
+ * pantalla vuelve a mostrar solo el «≈ Bs.» suelto (o nada) donde se cobra en mano, esto se pone en rojo.
+ */
+const raiz = join(import.meta.dirname, '..', '..', '..');
+const leer = (r: string) => readFileSync(join(raiz, r), 'utf8');
+
+describe('C-BS-EN-MANO: la pieza única en cada pantalla donde se cobra o se paga en mano', () => {
+  it('Driver: la oferta, la tarjeta del viaje y el cobro al terminar', () => {
+    expect(leer('apps/repartidor/src/viajes/OfertaViaje.tsx')).toMatch(
+      /<MontoEnMano[\s\S]{0,200}oferta\.enMano/,
+    );
+    const v = leer('apps/repartidor/src/viajes/ViajeActivo.tsx');
+    expect(v).toMatch(/testID="viaje-bs"[\s\S]{0,80}monto=\{cobroEnMano\(false\)\}/);
+    expect(v).toMatch(/testID="viaje-cobra-monto"[\s\S]{0,80}monto=\{cobroEnMano\(true\)\}/);
+    // El cobro en mano también se ve con pago móvil (no solo en efectivo).
+    expect(v).toMatch(/metodo_pago === 'pago_movil'\) &&\s*enMano != null/);
+  });
+
+  it('cliente: el precio antes de pedir, el viaje en curso y el recibo', () => {
+    expect(leer('apps/cliente/src/viajes/PedirMoto.tsx')).toMatch(
+      /<MontoEnMano[\s\S]{0,120}cotizacion\.enMano/,
+    );
+    expect(leer('apps/cliente/src/viajes/ViajeEnCurso.tsx')).toMatch(
+      /<MontoEnMano[\s\S]{0,120}viaje\.enMano/,
+    );
+    expect(leer('apps/cliente/src/viajes/MisViajes.tsx')).toMatch(
+      /<MontoEnMano[\s\S]{0,200}r\.enManoLocal/,
+    );
+  });
+
+  it('la pieza dice la tasa usada y, sin tasa, lo dice en palabras', () => {
+    const s = leer('packages/movil/src/MontoEnMano.tsx');
+    expect(s).toMatch(/textoTasaUsada\(monto\.local/);
+    expect(s).toMatch(/monto\.sinTasa \?[\s\S]{0,200}textoSinTasa/);
+  });
+});

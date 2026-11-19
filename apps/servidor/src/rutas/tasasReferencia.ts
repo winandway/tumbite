@@ -4,10 +4,14 @@ import {
   HORAS_VIGENCIA_TASA,
   MONEDA_REFERENCIA,
   type Referencia,
+  type TasaFijada,
+  aplicaReferencia,
   equivalenteLocal,
   leerTasaBcv,
+  tasaGuardada,
 } from '@tumbite/compartido';
 import type { TareaReloj } from '../reloj';
+import { paisDeZona } from '../internacional/paises';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
@@ -409,6 +413,55 @@ export async function referenciaLocal(
   const t = await tasaVigente(db, pais ?? '');
   if (!t) return null;
   return { moneda: local, monto: equivalenteLocal(centavos, t.tasa), tasa: t.tasa, fecha: t.fecha };
+}
+
+/**
+ * C-BS-EN-MANO (18 nov 2026, Venezuela): la tasa que se FIJA con una operación nueva (al cotizar el
+ * viaje o al crear el pedido). Null si el país no usa moneda de referencia o no hay tasa vigente.
+ * Solo lee (la escritura va en el mismo INSERT de la operación).
+ */
+export async function tasaParaFijar(
+  db: D1Database,
+  pais: string | null | undefined,
+  moneda: string | null | undefined,
+): Promise<TasaFijada | null> {
+  if (!aplicaReferencia(pais, moneda)) return null;
+  const t = await tasaVigente(db, String(pais));
+  const local = MONEDA_REFERENCIA.get(String(pais));
+  return t && local ? { moneda: local, tasa: t.tasa, fecha: t.fecha } : null;
+}
+
+/**
+ * La tasa de una operación: la guardada con ella o, solo si no se guardó (operación de antes del
+ * candado, o sin tasa vigente al cotizar), la del día. Mientras haya una guardada, nunca cambia.
+ */
+export async function tasaDeOperacion(
+  db: D1Database,
+  pais: string | null | undefined,
+  moneda: string | null | undefined,
+  guardada: { tasa: number | null | undefined; fecha: string | null | undefined },
+): Promise<TasaFijada | null> {
+  if (!aplicaReferencia(pais, moneda)) return null;
+  return tasaGuardada(pais, guardada.tasa, guardada.fecha) ?? tasaParaFijar(db, pais, moneda);
+}
+
+/**
+ * C-BS-EN-MANO (Comida con pago al recibir, Venezuela): el equivalente de un monto del pedido con la
+ * tasa FIJADA al crearlo (`pedidos.ref_tasa`); un pedido de antes del candado usa la del día.
+ */
+export async function referenciaDePedido(
+  db: D1Database,
+  p: { zona_id?: unknown; moneda?: unknown; ref_tasa?: unknown; ref_fecha?: unknown },
+  centavos: number,
+): Promise<Referencia | null> {
+  if (p.moneda !== 'USD' || p.zona_id == null || !Number.isSafeInteger(centavos) || centavos < 0)
+    return null;
+  const { pais } = await paisDeZona(db, String(p.zona_id));
+  const tasa = await tasaDeOperacion(db, pais, 'USD', {
+    tasa: p.ref_tasa == null ? null : Number(p.ref_tasa),
+    fecha: p.ref_fecha == null ? null : String(p.ref_fecha),
+  });
+  return tasa ? { ...tasa, monto: equivalenteLocal(centavos, tasa.tasa) } : null;
 }
 
 tasasReferencia.get('/admin/tasas-referencia', async (c) => {

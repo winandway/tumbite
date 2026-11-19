@@ -12,6 +12,7 @@ import {
   esquemaTarifaViaje,
   llego,
   perfilPasajeros,
+  referenciaConTasa,
 } from '@tumbite/compartido';
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
@@ -20,7 +21,7 @@ import { notificar } from '../notificaciones';
 import { rutaParaCotizar } from '../rutaPorCalles';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
-import { referenciaLocal } from './tasasReferencia';
+import { tasaDeOperacion } from './tasasReferencia';
 import { exigirParadasValidas } from './viajesPasajero';
 
 /**
@@ -124,6 +125,8 @@ type ViajeParaCambiar = {
   moneda: string;
   tarifa_json: string;
   multiplicador_pb: number;
+  ref_tasa: number | null;
+  ref_fecha: string | null;
   autorizado: number | null;
 };
 
@@ -132,7 +135,7 @@ async function viajeParaCambiar(db: D1Database, id: string) {
     .prepare(
       `SELECT o.id, o.cliente_id, o.conductor_id, o.servicio_id, o.zona_id, z.pais, v.estado, v.metodo_pago,
               v.origen_lat, v.origen_lng, v.destino_lat, v.destino_lng,
-              q.id AS cot_id, q.total, q.moneda, q.tarifa_json, q.multiplicador_pb,
+              q.id AS cot_id, q.total, q.moneda, q.tarifa_json, q.multiplicador_pb, v.ref_tasa, v.ref_fecha,
               (SELECT k.autorizado FROM cobros_viaje k WHERE k.operacion_id = o.id) AS autorizado
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
@@ -379,7 +382,11 @@ paradasViaje.post('/viajes/:id/paradas', async (c) => {
   return c.json({
     cambio,
     paradas: await paradasDe(db, v.id),
-    referencia: await referenciaLocal(db, v.pais, cambio.totalNuevo, v.moneda),
+    // C-BS-EN-MANO: el precio nuevo en bolívares con la tasa FIJADA del viaje.
+    referencia: referenciaConTasa(
+      cambio.totalNuevo,
+      await tasaDeOperacion(db, v.pais, v.moneda, { tasa: v.ref_tasa, fecha: v.ref_fecha }),
+    ),
   });
 });
 

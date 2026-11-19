@@ -96,9 +96,11 @@ export async function crearViajeDeCotizacion(db: D1Database, v: NuevoViaje): Pro
         `INSERT INTO viajes (operacion_id, estado, ultimo_actor, ultimo_actor_id, ultima_clave,
            origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
            pasajeros, pin_recogida, metodo_pago, cotizacion_id, categoria, programado_para,
-           conductor_preferido_id, rutina_id, menor_nombre)
+           conductor_preferido_id, rutina_id, menor_nombre, ref_tasa, ref_fecha)
          SELECT ?1, ?6, 'cliente', cliente_id, ?3, origen_lat, origen_lng, origen_direccion,
-                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria, ?7, ?8, ?9, ?10
+                destino_lat, destino_lng, destino_direccion, 1, ?4, ?5, id, categoria, ?7, ?8, ?9, ?10,
+                -- C-BS-EN-MANO: la tasa fijada al cotizar viaja con el viaje.
+                ref_tasa, ref_fecha
            FROM cotizaciones_viaje WHERE id = ?2 AND operacion_id = ?1
             AND NOT EXISTS (SELECT 1 FROM viajes WHERE operacion_id = ?1)
             AND EXISTS (SELECT 1 FROM operaciones WHERE id = ?1)${conReserva}`,

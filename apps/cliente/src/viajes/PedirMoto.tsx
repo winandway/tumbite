@@ -27,6 +27,7 @@ import {
   C,
   Campo,
   Modal,
+  MontoEnMano,
   alSalirTelefono,
   almacenTelefono,
   useSesion,
@@ -857,7 +858,16 @@ export function PedirMoto({
                 {formatearMonto(cotizacion.totalAnterior, cotizacion.moneda, idioma)}
               </Text>
             ) : null}
-            {cotizacion.referencia ? (
+            {/* C-BS-EN-MANO: lo que paga en mano en bolívares con la tasa fijada (y la tasa usada). */}
+            {cotizacion.enMano && !tarjeta ? (
+              <MontoEnMano
+                testID="moto-precio-bs"
+                monto={cotizacion.enMano}
+                idioma={idioma === 'en' ? 'en' : 'es'}
+                quien="pasajero"
+                soloLocal
+              />
+            ) : cotizacion.referencia ? (
               <Text testID="moto-precio-bs" style={{ color: '#666B73', fontWeight: '700' }}>
                 {textoReferencia(cotizacion.referencia, idioma)}
               </Text>

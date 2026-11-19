@@ -4,10 +4,11 @@ import { Linking, Pressable, Switch, TextInput, View } from 'react-native';
 import {
   ErrorApi,
   type Idioma,
+  type MontoEnMano as Monto,
   type Referencia,
   enIdioma,
   formatearMonto,
-  textoReferencia,
+  textoLocal,
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
@@ -16,6 +17,7 @@ import {
   C,
   ChatPedido,
   Deslizador,
+  MontoEnMano,
   achicarFotoEvidencia,
   fotoConCamara,
   Text,
@@ -80,6 +82,8 @@ export type ViajeConductor = {
   regalo_divoox?: number;
   /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
   referencia?: Referencia | null;
+  /** C-BS-EN-MANO: lo que cobra en mano en dólares y en bolívares con la tasa fijada del viaje. */
+  en_mano?: Monto | null;
   /** C-VIAJE-PARADAS: las paradas del viaje, en orden, con su estado y su espera. */
   paradas?: {
     orden: number;
@@ -205,6 +209,18 @@ export function ViajeActivo({
       </Text>
     ) : null;
   const [referenciaFinal, setReferenciaFinal] = useState<Referencia | null>(null);
+  const [enManoFinal, setEnManoFinal] = useState<Monto | null>(null);
+  // C-BS-EN-MANO: lo que cobra en mano (con regalo, la diferencia) en dólares y en bolívares. Una app
+  // con un servidor viejo (sin `en_mano`) arma el monto en dólares con el equivalente de siempre.
+  const idiomaCorto = idioma === 'en' ? 'en' : 'es';
+  const cobroEnMano = (final: boolean): Monto | null => {
+    const deServidor = final ? (enManoFinal ?? viaje.en_mano) : viaje.en_mano;
+    if (deServidor) return deServidor;
+    const monto = final ? (totalFinal ?? enMano) : enMano;
+    if (monto == null) return null;
+    const local = final ? (referenciaFinal ?? viaje.referencia) : viaje.referencia;
+    return { monto, moneda: viaje.moneda ?? 'USD', local: local ?? null, sinTasa: false };
+  };
   const [estrellas, setEstrellas] = useState(0);
   /** M8: el conductor califica al pasajero (una vez); después vuelve al inicio. */
   async function calificarYSalir() {
@@ -238,6 +254,7 @@ export function ViajeActivo({
           cobrarEnMano?: number | null;
           regaloDivoox?: number;
           referencia?: Referencia | null;
+          enMano?: Monto | null;
         }>('POST', `/datos/conductor/operaciones/${viaje.id}/${nombrePaso}`, cuerpo, {
           cabeceras: { 'idempotency-key': clave() },
         });
@@ -245,6 +262,7 @@ export function ViajeActivo({
         if (r?.totalFinal != null) setTotalFinal(r.cobrarEnMano ?? r.totalFinal);
         if (r?.regaloDivoox != null) setRegaloFinal(r.regaloDivoox);
         if (r?.referencia) setReferenciaFinal(r.referencia);
+        if (r?.enMano) setEnManoFinal(r.enMano);
         if (final) setCierre(final);
         else alCambiar();
       } catch (x) {
@@ -285,18 +303,16 @@ export function ViajeActivo({
             testID="viaje-cobra-efectivo"
             style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 14 }}
           >
-            <Text style={{ color: '#666B73' }}>
-              {viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
-            </Text>
-            <Text style={{ fontSize: 34, fontWeight: '800', color: C.exito }}>
-              {formatearMonto(totalFinal ?? enMano ?? 0, viaje.moneda ?? 'USD', idioma)}
-            </Text>
+            <MontoEnMano
+              testID="viaje-cobra-monto"
+              monto={cobroEnMano(true)}
+              idioma={idiomaCorto}
+              quien="conductor"
+              etiqueta={viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
+              tamano="grande"
+              color={C.exito}
+            />
             {lineaRegalo}
-            {(referenciaFinal ?? viaje.referencia) ? (
-              <Text testID="viaje-cobra-bs" style={{ color: '#666B73', fontWeight: '700' }}>
-                {textoReferencia(referenciaFinal ?? viaje.referencia, idioma)}
-              </Text>
-            ) : null}
           </View>
         ) : null}
         {cierre === 'terminado' ? (
@@ -382,17 +398,19 @@ export function ViajeActivo({
       ) : null}
       <View style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12 }}>
         <Text style={{ fontWeight: '800', color: C.secundario }}>{direccion}</Text>
-        {viaje.metodo_pago === 'efectivo' && enMano != null ? (
-          <Text style={{ color: '#666B73', marginTop: 4 }}>
-            {t.cobra}: {formatearMonto(enMano, viaje.moneda ?? 'USD', idioma)}
-          </Text>
+        {(viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
+        enMano != null ? (
+          <View style={{ marginTop: 8 }}>
+            <MontoEnMano
+              testID="viaje-bs"
+              monto={cobroEnMano(false)}
+              idioma={idiomaCorto}
+              quien="conductor"
+              etiqueta={viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
+            />
+          </View>
         ) : null}
         {lineaRegalo}
-        {viaje.referencia ? (
-          <Text testID="viaje-bs" style={{ color: '#666B73' }}>
-            {textoReferencia(viaje.referencia, idioma)}
-          </Text>
-        ) : null}
       </View>
       {parada ? (
         // C-VIAJE-PARADAS: qué sigue después de esta parada (las demás paradas y el destino).
@@ -586,7 +604,10 @@ export function ViajeActivo({
               <Text style={{ color: C.secundario }}>
                 {t.pagoMovilPregunta}{' '}
                 {enMano != null ? formatearMonto(enMano, viaje.moneda ?? 'USD', idioma) : ''}
-                {viaje.referencia ? ` ${textoReferencia(viaje.referencia, idioma)}` : ''}
+                {/* C-BS-EN-MANO: el monto exacto en bolívares del pago móvil (tasa fijada). */}
+                {cobroEnMano(true)?.local
+                  ? ` (${textoLocal(cobroEnMano(true)?.local, idiomaCorto)})`
+                  : ''}
               </Text>
               <Boton
                 texto={t.pagoMovilSi}

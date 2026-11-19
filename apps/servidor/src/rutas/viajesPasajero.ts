@@ -30,6 +30,8 @@ import {
   faseDeViaje,
   rangoPrefijo,
   sinPlusCode,
+  montoEnMano,
+  referenciaConTasa,
 } from '@tumbite/compartido';
 import { avisoEmergenciaViaje } from '../avisos';
 import { avisarResponsableZona } from '../panicoZona';
@@ -42,7 +44,7 @@ import {
   exigirComisionEnMoneda,
 } from '../finanzas/conductor';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
-import { referenciaLocal } from './tasasReferencia';
+import { tasaDeOperacion, tasaParaFijar } from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { abrirCobroViaje, propinaViaje, soltarCobroViaje } from '../viajesCobro';
 import { pinParaViajeNuevo } from './ajustesViaje';
@@ -580,13 +582,15 @@ export async function cotizarParaCliente(
   );
   const id = nuevoId();
   const venceEn = sqlFecha(new Date(Date.now() + VIGENCIA_COTIZACION_S * 1000));
+  // C-BS-EN-MANO: la tasa del día queda FIJADA con la cotización (y pasa al viaje al pedirlo).
+  const tasaLocal = await tasaParaFijar(db, zona.pais, fila.moneda);
   await db
     .prepare(
       `INSERT INTO cotizaciones_viaje (id, cliente_id, servicio_id, zona_id, tarifa_id,
          origen_lat, origen_lng, origen_direccion, destino_lat, destino_lng, destino_direccion,
          distancia_m, duracion_s, multiplicador_pb, desglose_json, tarifa_json, total, moneda, vence_en, categoria,
-         fuente_distancia, paradas_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         fuente_distancia, paradas_json, ref_tasa, ref_fecha)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -612,6 +616,8 @@ export async function cotizarParaCliente(
       d.categoria,
       ruta.fuente,
       JSON.stringify(d.paradas),
+      tasaLocal?.tasa ?? null,
+      tasaLocal?.fecha ?? null,
     )
     .run();
   const cotizacion: CotizacionViaje = {
@@ -637,7 +643,7 @@ export async function cotizarParaCliente(
       : {}),
   };
   // C-BS-REFERENCIA: el equivalente en bolívares, solo informativo (null sin tasa vigente).
-  const referencia = await referenciaLocal(db, zona.pais, desglose.total, fila.moneda);
+  const referencia = referenciaConTasa(desglose.total, tasaLocal);
   // C-CUPON-DIVOOX: el regalo que pagaría Divoox si el viaje se paga en mano (se aparta al pedir).
   const regalo = aparato
     ? await regaloParaCliente(db, {
@@ -649,7 +655,15 @@ export async function cotizarParaCliente(
         aparato,
       })
     : null;
-  return { ...cotizacion, referencia, opciones, regalo };
+  // C-BS-EN-MANO: lo que pagaría en mano (el precio menos el regalo), en dólares y en bolívares con
+  // la tasa fijada; la tasa va aparte para las categorías y la subida de tarifa (la app la usa).
+  const enMano = montoEnMano(
+    Math.max(0, desglose.total - (regalo?.monto ?? 0)),
+    fila.moneda,
+    zona.pais,
+    tasaLocal,
+  );
+  return { ...cotizacion, referencia, opciones, regalo, tasaLocal, enMano };
 }
 
 // ---------------------------------------------------------------- M2: pedir, ver y cancelar
@@ -926,6 +940,10 @@ export async function avisarDestinatario(
 }
 
 type FilaViajeCliente = FilaRegaloPasajero & {
+  ref_tasa: number | null;
+  ref_fecha: string | null;
+  ref_monto: number | null;
+  total_final_centavos: number | null;
   id: string;
   servicio_id: string;
   estado: string;
@@ -980,6 +998,7 @@ async function viajeDelCliente(
                  AND ky.selfie_miniatura IS NOT NULL) AS conductor_foto,
               k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
               pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
+              v.ref_tasa, v.ref_fecha, v.ref_monto, v.total_final_centavos,
               ${COLUMNAS_REGALO_PASAJERO}
          FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
          ${JOIN_REGALO_PASAJERO}
@@ -1107,6 +1126,43 @@ function viajePublico(f: FilaViajeCliente) {
   };
 }
 
+/**
+ * C-BS-EN-MANO (Venezuela): el precio del viaje y lo que el pasajero paga EN MANO al conductor (el
+ * precio menos el regalo), en dólares y en bolívares con la tasa FIJADA del viaje. Terminado, el monto
+ * en bolívares es el guardado al cerrar: el mismo que vio el conductor.
+ */
+async function enDosMonedas(
+  db: D1Database,
+  f: {
+    pais: string | null;
+    moneda: string | null;
+    total: number | null;
+    estado: string;
+    metodo_pago: string;
+    ref_tasa: number | null;
+    ref_fecha: string | null;
+    ref_monto: number | null;
+    total_final_centavos: number | null;
+    regalo_monto: number | null;
+    regalo_estado: string | null;
+  },
+) {
+  const tasa = await tasaDeOperacion(db, f.pais, f.moneda, {
+    tasa: f.ref_tasa,
+    fecha: f.ref_fecha,
+  });
+  const referencia = f.total == null ? null : referenciaConTasa(f.total, tasa);
+  if (f.metodo_pago === 'tarjeta' || f.total == null || !f.moneda)
+    return { referencia, enMano: null };
+  const total =
+    f.estado === 'terminado' && f.total_final_centavos != null ? f.total_final_centavos : f.total;
+  const regalo = f.regalo_estado === 'liberado' ? 0 : Number(f.regalo_monto ?? 0);
+  const enMano = montoEnMano(Math.max(0, total - regalo), f.moneda, f.pais, tasa);
+  if (f.estado === 'terminado' && f.ref_monto != null && enMano.local)
+    enMano.local = { ...enMano.local, monto: f.ref_monto };
+  return { referencia, enMano };
+}
+
 viajesPasajero.get('/viajes/actual', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
@@ -1141,7 +1197,7 @@ viajesPasajero.get('/viajes/actual', async (c) => {
         // C-VIAJE-PARADAS: las paradas del viaje y cuántas admite su ciudad.
         paradas: await paradasDe(db, f.id),
         paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
-        referencia: await referenciaLocal(db, f.pais, f.total, f.moneda),
+        ...(await enDosMonedas(db, f)),
         llegadaEnVivo: await llegadaDelViaje(db, f.id, f.estado),
       }
     : null;
@@ -1174,7 +1230,7 @@ viajesPasajero.get('/viajes/:id', async (c) => {
     ...viajePublico(f),
     paradas,
     paradasMaximas: perfilPasajeros(f.pais).carro.paradasMaximas,
-    referencia: await referenciaLocal(db, f.pais, f.total, f.moneda),
+    ...(await enDosMonedas(db, f)),
     llegadaEnVivo: await llegadaDelViaje(db, f.id, f.estado),
   };
   return c.json({

@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { ErrorApi, enIdioma, formatearMonto, useBorrador } from '@tumbite/compartido';
 import {
+  ErrorApi,
+  type Referencia,
+  enIdioma,
+  formatearMonto,
+  useBorrador,
+} from '@tumbite/compartido';
+import {
+  MontoEnMano,
   AvisoBorrador,
   Boton,
   C,
@@ -61,6 +68,8 @@ type Recibo = {
   /** C-PRECIO-CON-REGALO: lo que pagó Divoox (o el regalo que volvió a la cuenta si no hubo viaje). */
   regalo?: RegaloDelViaje | null;
   desglose: Record<string, number>;
+  /** C-BS-EN-MANO: lo pagado en mano en bolívares, con la tasa y la fecha usadas. */
+  enManoLocal?: Referencia | null;
   propina: number;
   distanciaM: number | null;
   duracionS: number | null;
@@ -183,6 +192,16 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
               moneda={r.moneda ?? 'USD'}
               idioma={idioma}
             />
+            {r.enManoLocal ? (
+              <MontoEnMano
+                testID="recibo-en-mano-bs"
+                monto={{ monto: 0, moneda: 'USD', local: r.enManoLocal, sinTasa: false }}
+                idioma={idioma === 'en' ? 'en' : 'es'}
+                quien="pasajero"
+                etiqueta={t.pagadoEnMano}
+                soloLocal
+              />
+            ) : null}
           </View>
           <Text style={{ color: '#666B73', marginTop: 8 }}>
             {t.pago}: {de(t.pagos, r.metodoPago)}
