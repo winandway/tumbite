@@ -4646,3 +4646,32 @@ CREATE TABLE IF NOT EXISTS ventas_saldo_agente (
 );
 CREATE INDEX IF NOT EXISTS ventas_saldo_agente_agente ON ventas_saldo_agente(agente_id, creado_en);
 CREATE INDEX IF NOT EXISTS ventas_saldo_agente_conductor ON ventas_saldo_agente(conductor_id, creado_en);
+
+-- C-REGALO-VIAJE-REAL (19 nov 2026, todos los países): un viaje con regalo de Divoox que no se pudo
+-- comprobar como real (sin moverse, demasiado corto, lejos del destino) deja el regalo en revisión.
+-- El uso sigue apartado: no entra a las ganancias del conductor hasta que una persona del equipo lo
+-- aprueba; si lo rechaza, vuelve al presupuesto. Guarda la cuenta, el teléfono y el aparato del
+-- pasajero para que un rechazado no vuelva a usar el mismo cupón.
+CREATE TABLE IF NOT EXISTS regalos_en_revision (
+  uso_id TEXT PRIMARY KEY,
+  operacion_id TEXT NOT NULL,
+  codigo TEXT NOT NULL,
+  cliente_id TEXT NOT NULL,
+  telefono TEXT NOT NULL,
+  aparato TEXT NOT NULL,
+  conductor_id TEXT NOT NULL,
+  monto INTEGER NOT NULL CHECK (monto > 0),
+  moneda TEXT NOT NULL,
+  motivos TEXT NOT NULL DEFAULT '[]',
+  datos TEXT NOT NULL DEFAULT '{}',
+  detalle TEXT NOT NULL DEFAULT '',
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'aprobado', 'rechazado')),
+  nota TEXT NOT NULL DEFAULT '',
+  bloquea_pasajero INTEGER NOT NULL DEFAULT 0,
+  resuelto_por TEXT,
+  resuelto_en TEXT,
+  creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS regalos_en_revision_pendientes ON regalos_en_revision(creado_en) WHERE estado = 'pendiente';
+CREATE INDEX IF NOT EXISTS regalos_en_revision_conductor ON regalos_en_revision(conductor_id) WHERE estado = 'pendiente';
+CREATE INDEX IF NOT EXISTS regalos_en_revision_rechazados ON regalos_en_revision(codigo, cliente_id) WHERE estado = 'rechazado' AND bloquea_pasajero = 1;
