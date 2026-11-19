@@ -36,8 +36,15 @@ const notas = [
   .map(([language, text]) => ({ language, text }));
 const { pedir, editar } = await googlePlay(paquete);
 await editar(async (id) => {
-  const subido = await pedir(`/edits/${id}/bundles`, { subir: true, binario: readFileSync(aab) });
-  console.log(`subido: versión ${subido.versionCode}`);
+  // YA_SUBIDA=<compilación>: el mismo archivo ya está en Play (por ejemplo en prueba interna) y solo
+  // se promueve a producción; Play rechaza subir dos veces la misma compilación. La comprobación de
+  // la franja de arriba corre igual sobre el archivo.
+  const subido = process.env.YA_SUBIDA
+    ? { versionCode: Number(process.env.YA_SUBIDA) }
+    : await pedir(`/edits/${id}/bundles`, { subir: true, binario: readFileSync(aab) });
+  console.log(
+    `${process.env.YA_SUBIDA ? 'ya estaba subida' : 'subido'}: versión ${subido.versionCode}`,
+  );
   await pedir(`/edits/${id}/tracks/production`, {
     metodo: 'PUT',
     json: {
