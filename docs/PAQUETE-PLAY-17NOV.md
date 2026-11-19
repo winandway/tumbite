@@ -178,3 +178,11 @@ Google aprobó y publicó las dos apps unas tres horas después de la subida. La
 - **TestFlight interno** al día con la misma punta: cliente 55 y Driver 42 (compilados en esta Mac; no van a revisión de Apple).
 
 **Órdenes de Richard para lo que sigue (18 nov, noche):** el paquete siguiente se construye desde ya con calidad final, sin esperar borrador, y se sube en cuanto pase revisor, robot y auditor; todo lo que ve el público va NEUTRO, sin ciudad ni persona (capturas, ejemplos, ayuda, fichas); la gente del piloto baja la app normal de Play Store.
+
+## Versión corregida del 18 nov por la noche (cliente 48 y Driver 43)
+
+- **Por qué:** la 46 y la 42 publicadas pintaban la franja «PRUEBAS» en la pantalla de entrar (C-FRANJA-SOLO-EN-PRUEBAS). Hablaban con producción; solo la franja estaba mal.
+- **Qué se subió a producción de Play, al 100 %:** Divoox 0.1.48 (48) y Divoox Driver 0.1.43 (43), compiladas en esta Mac, con notas en español e inglés. La 47 del cliente se compiló y no se subió (el auditor pidió quitar la huella del aparato en «Avísame»).
+- **Qué traen:** franja corregida; ocho íconos siempre con la hoja «aún no hay» (C-OCHO-ICONOS-SIEMPRE; «Avísame» solo con cuenta); versión visible que cambia con cada compilación (C-VERSION-VISIBLE); bolívares en mano (C-BS-EN-MANO); en Driver, «Adjuntar captura» en el chat de soporte.
+- **Comprobado antes de subir:** `scripts/tiendas/comprobar-franja.sh` con el archivo exacto (ahora obligatorio dentro de `publicar-google-play.mjs`); revisor de calidad apto; auditor de tiendas apto para las dos.
+- **No entró:** precio grande de Driver, mapa en la oferta de Driver, mapa siempre claro, apps de prueba con otro paquete (ramas `paquete-11-pruebas`), iPhone corregido.

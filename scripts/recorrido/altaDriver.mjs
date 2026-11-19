@@ -10,7 +10,13 @@ export async function abrirAlta(d, servicio, en) {
   await seccion.waitFor({ timeout: 30_000 });
   const tarjeta = d.getByTestId(`vehiculo-${servicio}`).first();
   if (!(await tarjeta.isVisible().catch(() => false))) await seccion.click();
-  if (await tarjeta.isVisible({ timeout: 5_000 }).catch(() => false)) {
+  // `isVisible` no espera: con la máquina cargada la tarjeta tardaba en pintarse y el guion se iba
+  // por el camino de «sin vehículo» aunque el vehículo existiera.
+  const conVehiculo = await tarjeta
+    .waitFor({ timeout: 6_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (conVehiculo) {
     await tarjeta.getByRole('button').first().click();
     await d
       .getByText(en ? 'Complete or edit' : 'Completar o editar', { exact: true })

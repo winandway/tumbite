@@ -366,7 +366,7 @@ const PUBLICADAS = new Set([
 // C-CAPTURAS-POR-IDIOMA (15 nov 2026): el español se enseña con El Vigía (`moto-ve`); el inglés, con
 // Novi, Michigan (`moto-us`). Las toma `scripts/recorrido/capturas-moto-venezuela.mjs` en dos pasadas.
 const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
-  src: `/docs/recorrido-moto-${idioma === 'en' ? 'us' : 've'}-${nombre}-${idioma}.webp`,
+  src: `/docs/recorrido-moto-${idioma === 'en' ? 'us' : 've'}-${nombre}-v2-${idioma}.webp`,
   alt,
   pie,
 });
@@ -377,7 +377,7 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'cliente-pedir',
         'es',
-        'La pantalla Moto con el punto de recogida, el destino, el mapa y el precio fijo en dólares con su equivalente en bolívares.',
+        'La pantalla Moto con el punto de recogida, el destino, el tipo de viaje y el precio fijo en dólares con su equivalente en bolívares.',
         'Antes de pedir ves el precio fijo y cómo puedes pagar.',
       ),
       foto(
@@ -519,13 +519,13 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'cliente-pedir',
         'en',
-        'The Moto screen in Novi, Michigan, with the map, the upfront price in US dollars, the distance and time, and the Cash and Card options.',
+        'The Moto screen with the pickup point, the destination, the ride type, the upfront price in US dollars, the distance and time, and the Cash and Card options.',
         'Before you request, you see the upfront price and how you can pay.',
       ),
       foto(
         'cliente-viaje',
         'en',
-        'The ride in progress with the map, the driver’s name, motorcycle and plate, the pickup at Twelve Oaks Mall and the upfront price.',
+        'The ride in progress with the map, the driver’s name, motorcycle and plate, the pickup at Central Plaza and the upfront price.',
         'During the ride you see your driver, their motorcycle and plate.',
       ),
       foto(
@@ -579,7 +579,7 @@ const CAPTURAS: Record<Idioma, Record<string, Captura[]>> = {
       foto(
         'driver-moto',
         'en',
-        'The Divoox Moto section with your city, Novi, your approved motorcycle and its documents with their status.',
+        'The Divoox Moto section with your city, your approved motorcycle and its documents with their status.',
         'Your city, your motorcycle and each document with its status.',
       ),
       foto(

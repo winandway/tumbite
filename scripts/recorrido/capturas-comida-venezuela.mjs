@@ -18,6 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
+import { ciudadNeutra, mapaSinRotulos } from './neutro.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -57,7 +58,9 @@ const foto = async (ruta, token, donde) => {
   if (!r.ok) throw new Error(`foto ${ruta}: ${r.status} ${await r.text()}`);
 };
 
-const navegador = await chromium.launch();
+// C-DOCS-SIN-DATOS-REALES: el mapa sin rótulos y la ciudad con nombre de ejemplo.
+const navegador = mapaSinRotulos(await chromium.launch());
+let restaurarCiudad = async () => {};
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Venezuela (El Vigía): pagar al recibir, pago móvil, el saldo para comisiones y el cliente que no aparece. */
@@ -116,6 +119,9 @@ async function correrVe(idiomas) {
   const rest = mio.restaurante;
   const plato = (mio.platos ?? []).find((p) => p.nombreEs === 'Arepa reina pepiada');
   if (!rest || !plato) throw new Error('no está el restaurante de El Vigía con su plato');
+  // C-DOCS-SIN-DATOS-REALES: la ciudad y la dirección del local, con datos de ejemplo en las fotos.
+  restaurarCiudad = await ciudadNeutra(sql, 'VE-MER-ELVIGIA', idiomas[0]);
+  await sql(`UPDATE restaurantes SET direccion = 'Calle Principal 123' WHERE id = '${rest.id}'`);
   const ubicar = async (donde) => {
     for (let i = 0; i < 2; i++)
       await yo('POST', '/datos/repartidor/ubicacion', { ...donde, precision: 8 });
@@ -141,7 +147,7 @@ async function correrVe(idiomas) {
     return ctx;
   };
   const captura = (p, nombre, idioma) =>
-    p.screenshot({ path: join(SALIDA, `comida-ve-${nombre}-${idioma}.png`) });
+    p.screenshot({ path: join(SALIDA, `comida-ve-${nombre}-v2-${idioma}.png`) });
   const arriba = (l, extra = 0) =>
     l.evaluate((x, e) => {
       x.scrollIntoView({ block: 'start' });
@@ -201,7 +207,7 @@ async function correrVe(idiomas) {
       restauranteId: rest.id,
       lineas: [{ platoId: plato.id, cantidad: 2 }],
       propinaCentavos: 50,
-      direccion: 'Calle 5 con avenida 3, El Vigía',
+      direccion: 'Avenida Principal 12, casa 4',
       ...CASA,
       metodoPago: 'transferencia_repartidor',
     });
@@ -275,7 +281,7 @@ async function correrVe(idiomas) {
     restauranteId: rest.id,
     lineas: [{ platoId: plato.id, cantidad: 1 }],
     propinaCentavos: 0,
-    direccion: 'Calle 5 con avenida 3, El Vigía',
+    direccion: 'Avenida Principal 12, casa 4',
     ...CASA,
     metodoPago: 'efectivo',
   });
@@ -346,8 +352,8 @@ async function correrVe(idiomas) {
  */
 async function correrUs(idiomas) {
   const NOVI = { id: 'US-MI-NOVI', nombre: 'Novi', lat: 42.4806, lng: -83.4755, radioKm: 15 };
-  const LOCAL = { lat: 42.481, lng: -83.4735, direccion: '43259 Crescent Blvd, Novi, MI 48375' };
-  const CASA_US = { lat: 42.4722, lng: -83.478, direccion: '45255 W 10 Mile Rd, Novi, MI 48375' };
+  const LOCAL = { lat: 42.481, lng: -83.4735, direccion: '123 Main Street' };
+  const CASA_US = { lat: 42.4722, lng: -83.478, direccion: '12 Main Avenue, Apt 4' };
   const interno = (ruta, cuerpo = {}) =>
     pedir('POST', `/datos/interno/diagnostico/${ruta}`, cuerpo, undefined, {
       'x-reloj-secreto': SECRETO,
@@ -381,7 +387,7 @@ async function correrUs(idiomas) {
   );
   const a = await interno('carro/armar');
   const rep = { id: a.ids.conductorUs, token: await sesion(a.ids.conductorUs) };
-  await sql(`UPDATE usuarios SET nombre = 'Sam Carter' WHERE id = '${rep.id}'`);
+  await sql(`UPDATE usuarios SET nombre = 'Sam C.' WHERE id = '${rep.id}'`);
   const yo = (m, r, c) => pedir(m, r, c, rep.token);
   // El repartidor queda en la ciudad con su ficha, sus términos aceptados y su foto de control al día.
   await interno('carro/conductor', { quien: 'us', zonaId: NOVI.id, ...LOCAL }).catch(() => null);
@@ -419,6 +425,8 @@ async function correrUs(idiomas) {
   });
   await sql(`UPDATE restaurantes SET estado = 'aprobado' WHERE id = '${rest.id}'`);
   await resto('PATCH', '/datos/mi-restaurante/abierto', { abierto: true });
+  // C-DOCS-SIN-DATOS-REALES: mientras se toman las fotos la ciudad lleva un nombre de ejemplo.
+  restaurarCiudad = await ciudadNeutra(sql, NOVI.id, idiomas[0]);
 
   const telefono = async (token, id, idioma, donde, carrito) => {
     const ctx = await navegador.newContext({
@@ -441,7 +449,7 @@ async function correrUs(idiomas) {
     return ctx;
   };
   const captura = (p, nombre, idioma) =>
-    p.screenshot({ path: join(SALIDA, `comida-us-${nombre}-${idioma}.png`) });
+    p.screenshot({ path: join(SALIDA, `comida-us-${nombre}-v2-${idioma}.png`) });
   const ubicar = async (donde) => {
     await yo('POST', '/datos/repartidor/ubicacion', {
       lat: donde.lat,
@@ -497,7 +505,7 @@ async function correrUs(idiomas) {
 
   for (const idioma of idiomas) {
     const en = idioma === 'en';
-    const cli = await cuenta('cliente', 'Jamie Lee');
+    const cli = await cuenta('cliente', 'Jamie L.');
     const carrito = JSON.stringify({
       restauranteId: rest.id,
       restauranteNombre: rest.nombre,
@@ -623,8 +631,8 @@ const apagarPasajerosUs = async () => {
 // Español en El Vigía; inglés en Novi, Michigan (C-CAPTURAS-POR-IDIOMA).
 const SOLO = process.env.SOLO_IDIOMA;
 try {
-  if (SOLO !== 'en') await correrVe(['es']);
-  if (SOLO !== 'es') await correrUs(['en']);
+  if (SOLO !== 'en') await correrVe(['es']).finally(() => restaurarCiudad());
+  if (SOLO !== 'es') await correrUs(['en']).finally(() => restaurarCiudad());
 } finally {
   await apagarPasajerosUs();
   await navegador.close();

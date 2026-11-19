@@ -20,6 +20,7 @@ import { join } from 'node:path';
 import { chromium, devices } from '@playwright/test';
 import { deslizar } from './deslizar.mjs';
 import { abrirAlta, abrirDocumentos } from './altaDriver.mjs';
+import { ciudadNeutra, mapaSinRotulos } from './neutro.mjs';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(RAIZ, '.recorrido', 'datos.json'), 'utf8'));
@@ -32,8 +33,8 @@ const LUGARES = {
     prefijo: 've',
     pagoMovil: true,
     zona: 'VE-MER-ELVIGIA',
-    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' },
-    destino: { lat: 8.624, lng: -71.672, direccion: 'Aeropuerto de El Vigía' },
+    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Central' },
+    destino: { lat: 8.6105, lng: -71.6672, direccion: 'Avenida Principal 12' },
     contacto: { nombre: 'Contacto de confianza', telefono: '+58 414 000 0000' },
   },
   us: {
@@ -49,9 +50,9 @@ const LUGARES = {
       radioKm: 15,
       zonaHoraria: 'America/Detroit',
     },
-    origen: { lat: 42.4915, lng: -83.4706, direccion: 'Twelve Oaks Mall, Novi, MI' },
-    destino: { lat: 42.4712, lng: -83.4745, direccion: 'Novi Civic Center, 45175 W 10 Mile Rd' },
-    contacto: { nombre: 'Alex Morgan', telefono: '+1 248 555 0134' },
+    origen: { lat: 42.4915, lng: -83.4706, direccion: 'Central Plaza' },
+    destino: { lat: 42.4712, lng: -83.4745, direccion: '12 Main Avenue' },
+    contacto: { nombre: 'Alex M.', telefono: '+1 555 010 0134' },
     // Tarifa de este servidor local para las fotos (centavos de dólar).
     tarifa: {
       base: 200,
@@ -142,8 +143,8 @@ async function cuentasUs(M) {
     conductor: await sesion(IDS.conductor),
     equipo: await sesion(IDS.equipo),
   };
-  await sql(`UPDATE usuarios SET nombre = 'Sam Carter' WHERE id = '${IDS.conductor}'`);
-  await sql(`UPDATE usuarios SET nombre = 'Jamie Lee' WHERE id = '${IDS.cliente}'`);
+  await sql(`UPDATE usuarios SET nombre = 'Sam C.' WHERE id = '${IDS.conductor}'`);
+  await sql(`UPDATE usuarios SET nombre = 'Jamie L.' WHERE id = '${IDS.cliente}'`);
   await sql(
     `UPDATE viajes SET asignado_en = datetime('now', '-15 minutes') WHERE asignado_en < datetime('now', '-12 hours') AND operacion_id IN (SELECT id FROM operaciones WHERE conductor_id = '${IDS.conductor}')`,
   ).catch(() => null);
@@ -257,8 +258,10 @@ async function cuentasUs(M) {
   return { IDS, tokens };
 }
 
-const navegador = await chromium.launch();
+// C-DOCS-SIN-DATOS-REALES: el mapa sin rótulos y la ciudad con nombre de ejemplo.
+const navegador = mapaSinRotulos(await chromium.launch());
 let n = 0;
+let restaurarCiudad = async () => {};
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Todas las capturas de Moto de un país, en los idiomas que le tocan. */
@@ -266,6 +269,7 @@ async function correr(M, idiomas) {
   const { IDS, tokens } = await (M.pais === 'VE' ? cuentasVe(M) : cuentasUs(M));
   const ORIGEN = M.origen;
   const DESTINO = M.destino;
+  restaurarCiudad = await ciudadNeutra(sql, M.zona, idiomas[0]);
   const conductor = (m, r, c) => pedir(m, r, c, tokens.conductor);
   const pasajero = (m, r, c) => pedir(m, r, c, tokens.cliente);
   const paso = (op, nombre, cuerpo = {}) =>
@@ -307,7 +311,7 @@ async function correr(M, idiomas) {
     );
     return ctx;
   };
-  const archivo = (nombre, idioma) => join(SALIDA, `moto-${M.prefijo}-${nombre}-${idioma}.png`);
+  const archivo = (nombre, idioma) => join(SALIDA, `moto-${M.prefijo}-${nombre}-v2-${idioma}.png`);
   const foto = (p, nombre, idioma) => p.screenshot({ path: archivo(nombre, idioma) });
   const viajeEnEfectivo = async () => {
     const cot = (
@@ -428,6 +432,20 @@ async function correr(M, idiomas) {
       fullPage: true,
       clip: { x: 0, y: desde, width: c.viewportSize().width, height: precio.fin + 90 - desde },
     });
+    // C-PUNTO-EXACTO: el punto en el mapa con el pin fijo, para la guía «El punto exacto» (antes se
+    // tomaba a mano en el simulador, con una dirección de verdad; C-DOCS-SIN-DATOS-REALES).
+    await c.getByTestId('moto-fijar-recogida').click();
+    await c.getByTestId('punto-exacto').waitFor({ timeout: 20_000 });
+    await c
+      .getByTestId('punto-exacto-referencia')
+      .fill(en ? 'Black gate' : 'Portón negro')
+      .catch(() => null);
+    await espera(3_000);
+    await c.screenshot({
+      path: join(RAIZ, 'docs', 'capturas', 'punto-exacto', `punto-exacto-pin-v2-${idioma}.png`),
+    });
+    await c.getByTestId('punto-exacto-volver').click();
+    await c.getByTestId('moto-precio').waitFor({ timeout: 30_000 });
     // Seguridad del pasajero: los contactos de confianza, debajo de la pantalla de Moto.
     await c
       .getByText(en ? 'Trusted contacts' : 'Contactos de confianza', { exact: true })
@@ -601,8 +619,8 @@ const apagarPasajerosUs = async () => {
 // Español en El Vigía; inglés en Novi, Michigan (C-CAPTURAS-POR-IDIOMA).
 const SOLO = process.env.SOLO_IDIOMA;
 try {
-  if (SOLO !== 'en') await correr(LUGARES.ve, ['es']);
-  if (SOLO !== 'es') await correr(LUGARES.us, ['en']);
+  if (SOLO !== 'en') await correr(LUGARES.ve, ['es']).finally(() => restaurarCiudad());
+  if (SOLO !== 'es') await correr(LUGARES.us, ['en']).finally(() => restaurarCiudad());
 } finally {
   await apagarPasajerosUs();
   await navegador.close();

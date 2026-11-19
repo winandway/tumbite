@@ -103,7 +103,8 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     // en inglés no hablan de lo que solo se ve en las capturas de Venezuela…
     const ingles = JSON.stringify(GUIAS_CARRO.en).toLowerCase();
     for (const ajeno of AJENO_EN_INGLES) expect(ingles, ajeno).not.toContain(ajeno);
-    expect(ingles).toContain('novi');
+    // C-DOCS-SIN-DATOS-REALES (18 nov 2026): los ejemplos son del país del idioma, pero sin ciudad.
+    expect(ingles).not.toMatch(/novi|michigan/);
     // …y el guion toma cada idioma en su ciudad: español en El Vigía, inglés en Novi, Michigan.
     const guion = readFileSync(
       join(__dirname, '..', '..', '..', '..', '..', 'scripts', 'recorrido', 'capturas-carro.mjs'),
@@ -130,8 +131,9 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
       for (const g of guias)
         for (const c of g.capturas ?? []) expect(c.src, g.id).not.toMatch(/-ve-/);
     }
-    expect(JSON.stringify(moto)).toContain('Novi');
-    expect(JSON.stringify(semana)).toContain('Novi');
+    // C-DOCS-SIN-DATOS-REALES (18 nov 2026): con ejemplos de Estados Unidos, pero sin nombrar la ciudad.
+    expect(JSON.stringify(moto)).not.toMatch(/Novi|Michigan/);
+    expect(JSON.stringify(semana)).not.toMatch(/Novi|Michigan/);
     // Las guías cuyo tema es propio de los países donde se cobra en mano dicen en inglés, con
     // honestidad, que eso no se usa en Estados Unidos (no enseñan una pantalla de otro país).
     const porId = new Map([...moto, ...semana].map((g) => [g.id, JSON.stringify(g)]));
@@ -177,7 +179,8 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
     expect(flexGuion('capturas.mjs')).toMatch(/correr\(LUGARES\.us, \['en'\]\)/);
     expect(flexGuion('capturas.mjs')).toContain('Novi, MI 48375');
     expect(flexGuion('capturas-cobro.mjs')).toMatch(/correrUs\(\['en'\]\)/);
-    expect(flexGuion('capturas-cobro.mjs')).toContain('Novi, MI 48375');
+    // C-DOCS-SIN-DATOS-REALES (18 nov 2026): el guion del cobro ya no escribe direcciones de una ciudad.
+    expect(flexGuion('capturas-cobro.mjs')).toContain("'123 Main Street'");
     const enviosGuion = guion('capturas-envios.mjs');
     expect(enviosGuion).toContain("id: 'US-MI-NOVI'");
     expect(enviosGuion).not.toMatch(/'Test (Driver|Sender|recipient)'/);
@@ -196,7 +199,8 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
       /In the United States .* doesn’t use cash on delivery/,
     );
     expect(TEXTOS_FLEX.en.cobro.texto).toMatch(/by card/);
-    expect(JSON.stringify(TEXTOS_FLEX.en.cobro)).toContain('Novi');
+    // C-DOCS-SIN-DATOS-REALES (18 nov 2026): con ejemplos de Estados Unidos, sin nombrar la ciudad.
+    expect(JSON.stringify(TEXTOS_FLEX.en.cobro)).not.toMatch(/Novi|Michigan/);
     // La tarjeta del país sí nombra a Venezuela (es dónde funciona el producto, no un ejemplo), sin
     // sus monedas ni sus formas de pago.
     const tarjetas = JSON.stringify(paises).toLowerCase();
@@ -269,11 +273,11 @@ describe('C-DOCS-SEMANA: guías nuevas publicadas con capturas reales', () => {
       JSON.stringify(es.find((g) => g.id === id)),
     );
     for (const g of envios) expect(g).not.toMatch(/Novi|Michigan|Walled Lake/);
-    expect(envios.at(0)).toContain('El Vigía');
+    // C-DOCS-SIN-DATOS-REALES (18 nov 2026): lo propio del país se queda; la ciudad ya no se nombra.
+    for (const g of envios) expect(g).not.toMatch(/El Vigía|Plaza Bolívar/);
     expect(envios.at(0)).toContain('pago móvil');
     expect(envios.at(0)).toContain('bolívares');
     expect(envios.at(0)).not.toMatch(/18,27|con tarjeta/);
-    expect(envios.at(2)).toContain('El Vigía');
   });
 
   it('Carro dice que se abre por ciudad', () => {

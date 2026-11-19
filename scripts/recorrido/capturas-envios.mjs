@@ -16,6 +16,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deslizar } from './deslizar.mjs';
+import { ciudadNeutra, mapaSinRotulos } from './neutro.mjs';
 import { chromium, devices } from '@playwright/test';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
@@ -35,8 +36,8 @@ const LUGARES = {
       radioKm: 15,
       zonaHoraria: 'America/Caracas',
     },
-    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' },
-    destino: { lat: 8.6195, lng: -71.6585, direccion: 'Terminal de pasajeros de El Vigía' },
+    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Central' },
+    destino: { lat: 8.6195, lng: -71.6585, direccion: 'Avenida Principal 12' },
     enCamino: { lat: 8.6208, lng: -71.6545 },
     tarifa: { base: 100, porKm: 50, porMinuto: 10, minimo: 200, valorMaximo: 20_000 },
     telefono: '0414-5550134',
@@ -63,19 +64,19 @@ const LUGARES = {
       radioKm: 25,
       zonaHoraria: 'America/Detroit',
     },
-    origen: { lat: 42.4725, lng: -83.4757, direccion: '45175 W Ten Mile Rd, Novi, MI 48375' },
+    origen: { lat: 42.4725, lng: -83.4757, direccion: 'Central Plaza' },
     destino: {
       lat: 42.5373,
       lng: -83.4583,
-      direccion: '1499 E West Maple Rd, Walled Lake, MI 48390',
+      direccion: '12 Main Avenue',
     },
     enCamino: { lat: 42.505, lng: -83.468 },
     tarifa: { base: 300, porKm: 110, porMinuto: 20, minimo: 800, valorMaximo: 50_000 },
     telefono: '(248) 555-0134',
     moto: { marca: 'Honda', modelo: 'PCX', color: 'Gray', placa: 'MI4821B', placaEstado: 'MI' },
-    conductor: 'Sam Carter',
-    cliente: 'Jamie Lee',
-    destinatario: 'Alex Morgan',
+    conductor: 'Sam C.',
+    cliente: 'Jamie L.',
+    destinatario: 'Alex M.',
     paquete: 'House keys',
     valor: '40',
   },
@@ -205,7 +206,9 @@ async function nuevoConductor(M, sufijo) {
 }
 const conductores = [];
 
-const navegador = await chromium.launch();
+// C-DOCS-SIN-DATOS-REALES: el mapa sin rótulos y la ciudad con nombre de ejemplo.
+const navegador = mapaSinRotulos(await chromium.launch());
+let restaurarCiudad = async () => {};
 const telefono = async (M, token, id, idioma) => {
   const ctx = await navegador.newContext({
     ...devices['Pixel 7'],
@@ -226,7 +229,7 @@ const telefono = async (M, token, id, idioma) => {
   return ctx;
 };
 const foto = (p, nombre, idioma) =>
-  p.screenshot({ path: join(SALIDA, `envios-${nombre}-${idioma}.png`) });
+  p.screenshot({ path: join(SALIDA, `envios-${nombre}-v2-${idioma}.png`) });
 const caja = (l) =>
   l.evaluate((n) => {
     const r = n.getBoundingClientRect();
@@ -240,6 +243,8 @@ async function correr(M, idiomas) {
   const DESTINO = M.destino;
   await abrirCiudad(M);
   await limpiarColgados(CIUDAD.id);
+  // C-DOCS-SIN-DATOS-REALES: mientras se toman las fotos la ciudad lleva un nombre de ejemplo.
+  restaurarCiudad = await ciudadNeutra(sql, CIUDAD.id, idiomas[0]);
   for (const idioma of idiomas) {
     const en = idioma === 'en';
     const cond = await nuevoConductor(M, `${M.pais}${idioma}`);
@@ -281,7 +286,7 @@ async function correr(M, idiomas) {
     const arriba = await caja(c.getByText(en ? 'Pick up at' : 'Recoger en').first());
     const precio = await caja(c.getByTestId('moto-precio'));
     await c.screenshot({
-      path: join(SALIDA, `envios-cliente-precio-${idioma}.png`),
+      path: join(SALIDA, `envios-cliente-precio-v2-${idioma}.png`),
       fullPage: true,
       clip: {
         x: 0,
@@ -331,7 +336,7 @@ async function correr(M, idiomas) {
       // Moto» también para un envío (anotado como fallo de producto), y aquí no se muestra.
       const o = await caja(d.getByTestId('oferta-viaje'));
       await d.screenshot({
-        path: join(SALIDA, `envios-driver-oferta-${idioma}.png`),
+        path: join(SALIDA, `envios-driver-oferta-v2-${idioma}.png`),
         fullPage: true,
         clip: { x: 0, y: o.y + 56, width: d.viewportSize().width, height: o.fin - o.y - 56 },
       });
@@ -374,7 +379,7 @@ async function correr(M, idiomas) {
       .evaluate((n) => n.getBoundingClientRect().top + globalThis.scrollY)
       .catch(() => 760);
     await r.screenshot({
-      path: join(SALIDA, `envios-destinatario-seguir-${idioma}.png`),
+      path: join(SALIDA, `envios-destinatario-seguir-v2-${idioma}.png`),
       fullPage: true,
       clip: { x: 0, y: 0, width: r.viewportSize().width, height: Math.min(pie, 900) },
     });
@@ -414,8 +419,8 @@ async function correr(M, idiomas) {
 // corre una sola pasada.
 const SOLO = process.env.SOLO_IDIOMA;
 try {
-  if (SOLO !== 'en') await correr(LUGARES.ve, ['es']);
-  if (SOLO !== 'es') await correr(LUGARES.us, ['en']);
+  if (SOLO !== 'en') await correr(LUGARES.ve, ['es']).finally(() => restaurarCiudad());
+  if (SOLO !== 'es') await correr(LUGARES.us, ['en']).finally(() => restaurarCiudad());
 } finally {
   // Envíos vuelve a quedar apagado y el conductor de prueba, desconectado.
   for (const c of conductores)

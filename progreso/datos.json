@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-18",
+  "actualizado": "2026-11-19",
   "version": "fe71f3f",
   "ahora": "18 nov: Google aprobó y publicó la versión nueva. Divoox (46) y Divoox Driver (42) ya se bajan de Play Store normal. Traen el inicio nuevo del cliente con lugares guardados, y en Driver conectarse deslizando, la oferta que suena y vibra hasta que respondes, el saldo y los regalos, y el chat de soporte. Ya se está construyendo la versión siguiente: precios en dólares y en bolívares, el precio grande en la pantalla del conductor, más acciones deslizantes, el saldo a la vista en el inicio del conductor y «Subir la tarifa».",
   "proximo": [
@@ -457,6 +457,21 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Soporte: ya puedes adjuntar una captura en el chat y los fallos quedan registrados",
+      "texto": "En el chat de soporte de la web hay un botón fijo «Adjuntar captura», con «Subir desde archivos» y «Tomar foto». Cuando alguien cuenta un fallo, Camila pide los datos que faltan y el reporte le llega ordenado al equipo. El chat saluda aunque no haya señal y el botón de enviar dice «Un momento…» mientras llega la respuesta. En Divoox Driver lo mismo llega con la próxima versión de la app. Durante la subida, el sitio de pruebas quedó un rato en rojo por dos datos sin declarar; se corrigió y quedó una prueba que lo atrapa. El sitio real nunca se vio afectado."
+    },
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Docs sin ciudad: 129 capturas rehechas con el mapa sin nombres",
+      "texto": "Las capturas públicas de Moto, Carro, Envíos, Comida, el cobro de Flex y el punto exacto ya no muestran ninguna ciudad ni calle reconocible: el mapa se pinta sin nombres, la ciudad dice «Ciudad de ejemplo» o «Sample City», las direcciones son genéricas («Plaza Central», «Avenida Principal 12») y los nombres van con inicial. Se rehicieron 129 capturas en español e inglés, con nombre de archivo nuevo para que ninguna caché sirva las anteriores, y el candado ahora falla si una guía vuelve a nombrar una ciudad en una captura. Queda abierta la de «Zonas con más pedidos»: el inicio del conductor en la web ya no pinta el mapa y hay que tomarla en la app nativa."
+    },
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Versión corregida en Google Play: sin el aviso «PRUEBAS» y con los ocho servicios en el inicio",
+      "texto": "La versión publicada por la mañana mostraba por error un aviso «PRUEBAS» en la pantalla de entrar, aunque trabajaba con el servidor real. Se corrigió la causa y se subieron Divoox 0.1.48 y Divoox Driver 0.1.43, que Google está revisando. El inicio del cliente ahora muestra siempre los ocho servicios; al tocar uno que todavía no llega a tu zona, lo dice claro. Desde ahora ninguna versión se sube sin abrir antes su pantalla de entrar. El número de versión cambia con cada compilación, para que soporte pueda pedirlo."
+    },
     {
       "fecha": "2026-11-18",
       "titulo": "La página de apps manda a Play Store y guarda las de prueba para el equipo",

@@ -619,8 +619,8 @@ const es: SeccionDocs[] = [
             pie: 'Escribe tu dirección o toca «Estoy aquí».',
           },
           {
-            src: '/docs/punto-exacto-pin-es.webp',
-            alt: 'Pantalla «Confirma el punto de entrega»: arriba la dirección del punto, el mapa con el pin fijo en la avenida, el botón «Estoy aquí», el punto de referencia y «Confirmar este punto».',
+            src: '/docs/punto-exacto-pin-v2-es.webp',
+            alt: 'Pantalla «Confirma el punto de encuentro»: arriba la dirección del punto, el botón «Estoy aquí», el mapa con el pin fijo, el punto de referencia y «Confirmar este punto».',
             pie: 'Mueve el mapa hasta tu puerta y agrega un punto de referencia.',
           },
           {
@@ -741,7 +741,7 @@ const es: SeccionDocs[] = [
           'Cuando las invitaciones están disponibles, aparecen en Mi cuenta → Invita a un amigo. Ahí ves tu código, cuánto recibe tu amigo y cuánto recibes tú.',
           'Toca «Compartir mi código» y mándalo por WhatsApp, mensaje o correo, como prefieras.',
           'Tu amigo escribe tu código en «Código de invitación» al crear su cuenta, o después en Mi cuenta → Invita a un amigo, antes de su primer pedido o viaje. Su regalo le llega al momento: en las ciudades donde se paga en mano, su primer viaje gratis hasta el monto del programa; con tarjeta, saldo de regalo.',
-          'Tú recibes tu premio cuando tu amigo completa los pedidos o viajes pagados que pide el programa de tu ciudad (por ejemplo, 3 en El Vigía) y, si aplica, el gasto mínimo. La pantalla te dice exactamente qué hace falta. En la misma pantalla ves cuántos amigos usaron tu código y cuántos ya cumplieron.',
+          'Tú recibes tu premio cuando tu amigo completa los pedidos o viajes pagados que pide el programa de tu ciudad (por ejemplo, 3) y, si aplica, el gasto mínimo. La pantalla te dice exactamente qué hace falta. En la misma pantalla ves cuántos amigos usaron tu código y cuántos ya cumplieron.',
           'Los viajes o pedidos que tu amigo hace contigo como conductor no cuentan, y cada persona tiene un máximo de premios al mes.',
           'Cada amigo usa un solo código, una sola vez, y antes de su primer pedido. No puedes usar tu propio código.',
           'El saldo de regalo paga la comida, el envío, el servicio y el impuesto; la propina se paga con tu tarjeta.',
@@ -3139,7 +3139,7 @@ const es: SeccionDocs[] = [
             pie: 'Cada parada en orden.',
           },
           {
-            src: '/docs/flex-driver-cobrar-es.webp',
+            src: '/docs/flex-driver-cobrar-v2-es.webp',
             alt: 'Cobrar al entregar en Divoox Driver.',
             pie: 'En Venezuela, el cobro al entregar.',
           },
@@ -3902,7 +3902,7 @@ const es: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/driver-zonas-mapa-es.webp',
-            alt: 'El inicio de la app Divoox Driver con el mapa de Miami y una zona con más pedidos marcada con un círculo rojo.',
+            alt: 'El inicio de la app Divoox Driver con el mapa de tu ciudad y una zona con más pedidos marcada con un círculo rojo.',
             pie: 'El círculo rojo marca la zona con más pedidos de la última hora.',
           },
           {
@@ -4493,7 +4493,7 @@ const es: SeccionDocs[] = [
           'Si el destinatario ya usa la app de Divoox con el mismo teléfono o el mismo correo, el envío le aparece en «Mis paquetes». Si marcó su casa en la app, el paquete llega ya ubicado sin que tengas que pedir nada.',
           'También puedes marcar tú el punto con el pin en el mapa desde el detalle del envío.',
           'Cada país funciona a su manera. En Venezuela la ruta no sale hasta que cada parada tenga su ubicación confirmada, se pide el punto de referencia y puedes guardar la cédula o el RIF del destinatario. En Estados Unidos la dirección escrita basta y el pin es opcional.',
-          'Para buscar una dirección en Venezuela, escribe la calle o el lugar y la ciudad o el sector, sin el número de casa al principio: «Calle 3, El Vigía» o «Av. Francisco de Miranda, Chacao». Elige la sugerencia y después marca la puerta con el pin y un punto de referencia, porque muchas casas no tienen número en el mapa.',
+          'Para buscar una dirección en Venezuela, escribe la calle o el lugar y la ciudad o el sector, sin el número de casa al principio: por ejemplo, «Calle 3» y el nombre de tu ciudad, o «Avenida Principal» y el de tu sector. Elige la sugerencia y después marca la puerta con el pin y un punto de referencia, porque muchas casas no tienen número en el mapa.',
           'La etiqueta del paquete lleva el punto de referencia y el código plus del punto exacto: un código corto que Google Maps entiende aunque no haya internet.',
           'Por privacidad, el enlace solo muestra quién envía el paquete y la dirección; nunca el teléfono ni otros datos. Una vez que el paquete sale en la ruta, la ubicación ya no se puede cambiar.',
         ],
@@ -4547,17 +4547,17 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/flex-driver-cobrar-es.webp',
+            src: '/docs/flex-driver-cobrar-v2-es.webp',
             alt: 'App del conductor de Divoox con el formulario para registrar el cobro antes de entregar.',
             pie: 'El conductor registra el cobro antes de marcar entregado.',
           },
           {
-            src: '/docs/flex-panel-caja-es.webp',
+            src: '/docs/flex-panel-caja-v2-es.webp',
             alt: 'Caja de la ruta en el panel de Divoox Flex con lo cobrado y el botón «Recibí el efectivo».',
             pie: 'La caja de la ruta: lo cobrado y el efectivo por recibir.',
           },
           {
-            src: '/docs/flex-panel-cobro-envio-es.webp',
+            src: '/docs/flex-panel-cobro-envio-v2-es.webp',
             alt: 'Detalle de un envío entregado en el panel de Divoox Flex: cobro contra entrega cobrado por el conductor, con el medio de pago y su referencia.',
             pie: 'Cada envío muestra cuánto se cobró, cómo se pagó y su referencia.',
           },
@@ -4589,7 +4589,7 @@ const es: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/flex-panel-retiro-es.webp',
+            src: '/docs/flex-panel-retiro-v2-es.webp',
             alt: 'Retiro en el centro en el panel de Divoox Flex: aviso al destinatario y entrega en el mostrador con cédula y cobro.',
             pie: 'Avisas al destinatario y lo entregas en el mostrador.',
           },
@@ -6024,8 +6024,8 @@ const en: SeccionDocs[] = [
             pie: 'Type your address or tap “I’m here.”',
           },
           {
-            src: '/docs/punto-exacto-pin-en.webp',
-            alt: '“Confirm the drop-off spot” screen in Novi, Michigan: the spot’s address at the top, the map with the fixed pin, the “I’m here” button, the landmark field and “Confirm this spot.”',
+            src: '/docs/punto-exacto-pin-v2-en.webp',
+            alt: 'The screen where you confirm the meeting spot: the spot’s address at the top, the “I’m here” button, the map with the fixed pin, the landmark field and “Confirm this spot.”',
             pie: 'Drag the map to your door and add a landmark.',
           },
           {
@@ -8531,7 +8531,7 @@ const en: SeccionDocs[] = [
             pie: 'Every stop in order.',
           },
           {
-            src: '/docs/flex-driver-cobrar-en.webp',
+            src: '/docs/flex-driver-cobrar-v2-en.webp',
             alt: 'A stop in Divoox Driver: scan the packages and confirm the delivery.',
             pie: 'At each stop, scan the packages and confirm the delivery.',
           },
@@ -9286,7 +9286,7 @@ const en: SeccionDocs[] = [
         capturas: [
           {
             src: '/docs/driver-zonas-mapa-en.webp',
-            alt: 'The Divoox Driver home screen with the Miami map and a busy area highlighted with a red circle.',
+            alt: 'The Divoox Driver home screen with your city’s map and a busy area highlighted with a red circle.',
             pie: 'The red circle marks the area with the most orders in the last hour.',
           },
           {
@@ -9882,7 +9882,7 @@ const en: SeccionDocs[] = [
           'If the recipient already uses the Divoox app with the same phone or email, the shipment shows up in “My packages”. If they marked their home in the app, the package arrives already located without you asking.',
           'You can also mark the spot yourself with the pin on the map from the shipment detail.',
           'Each country works its own way. In the United States the written address is enough and the pin is optional: the route can leave without it. In countries where many addresses are informal, the route can’t leave until every stop has a confirmed location, and a landmark is required.',
-          'To search for an address, type the number and the street, then the city: “45175 W 10 Mile Rd, Novi”. Pick the suggestion. If the door is hard to find (a back entrance, a suite or a large building), mark it with the pin and add a landmark.',
+          'To search for an address, type the number and the street, then the city: for example, “123 Main Street” followed by your city. Pick the suggestion. If the door is hard to find (a back entrance, a suite or a large building), mark it with the pin and add a landmark.',
           'The package label carries the landmark and the plus code of the exact spot: a short code Google Maps understands even offline.',
           'For privacy, the link only shows who is sending the package and the address; never the phone or other details. Once the package leaves on the route, the location can no longer change.',
         ],
@@ -9936,17 +9936,17 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/flex-driver-cobrar-en.webp',
-            alt: 'A stop in Divoox Driver: the recipient, the address in Novi, the package to scan and Confirm delivery, with nothing to collect.',
+            src: '/docs/flex-driver-cobrar-v2-en.webp',
+            alt: 'A stop in Divoox Driver: the recipient, the address, the package to scan and Get directions, with nothing to collect.',
             pie: 'At the stop, the driver scans the package and confirms the delivery: there’s nothing to collect.',
           },
           {
-            src: '/docs/flex-panel-caja-en.webp',
+            src: '/docs/flex-panel-caja-v2-en.webp',
             alt: 'A route in the Divoox Flex dashboard with 2 of 2 packages delivered, the route by road and both stops marked Delivered.',
             pie: 'The route with every stop delivered and no cash to receive.',
           },
           {
-            src: '/docs/flex-panel-cobro-envio-en.webp',
+            src: '/docs/flex-panel-cobro-envio-v2-en.webp',
             alt: 'Details of a delivered shipment in the Divoox Flex dashboard: the confirmed delivery location and the chain of custody up to Delivered.',
             pie: 'Each shipment shows its delivery, step by step.',
           },
@@ -9978,7 +9978,7 @@ const en: SeccionDocs[] = [
         ],
         capturas: [
           {
-            src: '/docs/flex-panel-retiro-en.webp',
+            src: '/docs/flex-panel-retiro-v2-en.webp',
             alt: 'Hub pickup in the Divoox Flex dashboard: ready for pickup until its date, the button to notify the recipient and the counter handover with the tracking number.',
             pie: 'Notify the recipient and hand it over at the counter.',
           },

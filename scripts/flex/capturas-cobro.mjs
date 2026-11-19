@@ -16,6 +16,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
+import { mapaSinRotulos } from '../recorrido/neutro.mjs';
 
 const raiz = join(import.meta.dirname, '..', '..');
 const DATOS = JSON.parse(readFileSync(join(raiz, '.recorrido', 'datos.json'), 'utf8'));
@@ -73,12 +74,16 @@ async function cuenta(nombre, rol) {
 }
 const aWebp = (png, webp) => execFileSync('cwebp', ['-quiet', '-q', '82', png, '-o', webp]);
 
-const navegador = await chromium.launch();
+// C-DOCS-SIN-DATOS-REALES: el mapa sin rótulos; direcciones y nombres de ejemplo.
+const navegador = mapaSinRotulos(await chromium.launch());
 async function foto(pagina, nombre, testId) {
   await pagina.waitForTimeout(1200);
   if (testId) await pagina.getByTestId(testId).first().scrollIntoViewIfNeeded();
   await pagina.waitForTimeout(400);
-  await pagina.screenshot({ path: join(salida, `fase6-${nombre}.png`), fullPage: false });
+  await pagina.screenshot({
+    path: join(salida, `fase6-${nombre.replace(/-(es|en)$/, '-v2-$1')}.png`),
+    fullPage: false,
+  });
   console.log('captura', nombre);
 }
 const movil = (idioma, geo) =>
@@ -94,20 +99,29 @@ async function abrirParada(drv, idioma, direccion) {
   const es = idioma === 'es';
   await drv.goto(`${URL}/driver/`);
   await drv.waitForTimeout(3500);
-  await drv
-    .getByRole('button', { name: es ? /menú/i : /menu/i })
+  // C-FLEX-MODO-BLOQUE: con una ruta en curso la app abre directo en la ruta (sin menú). Si no, se
+  // llega por el menú, como antes.
+  const enRuta = await drv
+    .getByText(es ? 'Lista' : 'List', { exact: true })
     .first()
-    .click({ timeout: 30_000 });
-  await drv
-    .getByText(es ? 'Mi ruta (paquetes)' : 'My route (packages)', { exact: true })
-    .first()
-    .click({ timeout: 30_000 });
-  await drv.waitForTimeout(1500);
-  await drv
-    .getByText(es ? /Continuar ruta/ : /Continue route/)
-    .first()
-    .click();
-  await drv.waitForTimeout(1200);
+    .isVisible({ timeout: 6_000 })
+    .catch(() => false);
+  if (!enRuta) {
+    await drv
+      .getByRole('button', { name: es ? /menú/i : /menu/i })
+      .first()
+      .click({ timeout: 30_000 });
+    await drv
+      .getByText(es ? 'Mi ruta (paquetes)' : 'My route (packages)', { exact: true })
+      .first()
+      .click({ timeout: 30_000 });
+    await drv.waitForTimeout(1500);
+    await drv
+      .getByText(es ? /Continuar ruta/ : /Continue route/)
+      .first()
+      .click();
+    await drv.waitForTimeout(1200);
+  }
   await drv
     .getByText(es ? 'Lista' : 'List', { exact: true })
     .first()
@@ -161,10 +175,10 @@ async function correrVe(idiomas) {
       'POST',
       `${E}/centros`,
       {
-        nombre: 'Centro de acopio Chacao',
-        direccion: 'Av. Principal, Chacao',
+        nombre: 'Centro de acopio principal',
+        direccion: 'Avenida Principal 12',
         pais: 'VE',
-        ciudad: 'Caracas',
+        ciudad: 'Ciudad de ejemplo',
         lat: 10.4961,
         lng: -66.8533,
       },
@@ -175,10 +189,10 @@ async function correrVe(idiomas) {
   for (const e of [
     {
       referenciaExterna: 'PED-2001',
-      destinatarioNombre: 'María Pérez',
+      destinatarioNombre: 'María P.',
       destinatarioTelefono: '0414-000.00.01',
       destinatarioDocumento: 'V-10000001',
-      direccion: 'Calle 3, Los Palos Grandes, Caracas',
+      direccion: 'Calle Principal 123',
       referencias: 'Edificio rojo, piso 3',
       lat: 10.4983,
       lng: -66.8445,
@@ -186,10 +200,10 @@ async function correrVe(idiomas) {
     },
     {
       referenciaExterna: 'PED-2002',
-      destinatarioNombre: 'Luis Rodríguez',
+      destinatarioNombre: 'Luis R.',
       destinatarioTelefono: '0412-000.00.02',
       destinatarioDocumento: 'V-10000002',
-      direccion: 'Av. Libertador, Chacao',
+      direccion: 'Avenida Central 456',
       referencias: 'Frente a la farmacia',
       lat: 10.4955,
       lng: -66.8531,
@@ -239,7 +253,7 @@ async function correrVe(idiomas) {
     await api(
       'POST',
       `${E}/rutas`,
-      { nombre: 'Ruta Chacao tarde', centroId: centro.id, envioIds: envios.map((x) => x.id) },
+      { nombre: 'Ruta de la tarde', centroId: centro.id, envioIds: envios.map((x) => x.id) },
       dueno.token,
     )
   ).ruta;
@@ -258,7 +272,7 @@ async function correrVe(idiomas) {
     const m = await movil(idioma, { lat: 10.4983, lng: -66.8445 });
     const drv = await m.newPage();
     await conductorEnLaApp(drv, conductor, idioma);
-    await abrirParada(drv, idioma, 'Calle 3, Los Palos Grandes, Caracas');
+    await abrirParada(drv, idioma, 'Calle Principal 123');
     await foto(drv, `driver-cobrar-${idioma}`, 'cobro-entrega');
     await m.close();
   }
@@ -268,7 +282,7 @@ async function correrVe(idiomas) {
     'POST',
     `${C}/paradas/${paradas[0].id}/entregar`,
     {
-      recibio: 'María Pérez',
+      recibio: 'María P.',
       recibioDocumento: 'V-10000001',
       recibioRelacion: 'titular',
       cobro: { metodo: 'efectivo_usd', monto: 2500, moneda: 'USD' },
@@ -279,7 +293,7 @@ async function correrVe(idiomas) {
     'POST',
     `${C}/paradas/${paradas[1].id}/entregar`,
     {
-      recibio: 'Luis Rodríguez',
+      recibio: 'Luis R.',
       recibioDocumento: 'V-10000002',
       recibioRelacion: 'titular',
       cobro: { metodo: 'pago_movil', monto: 92_000, moneda: 'VES', referencia: '000123' },
@@ -332,10 +346,10 @@ async function correrUs(idiomas) {
       'POST',
       `${E}/centros`,
       {
-        nombre: 'Novi Town Center Store',
-        direccion: '43100 Crescent Blvd, Novi, MI 48375',
+        nombre: 'Main Street Store',
+        direccion: '12 Main Avenue',
         pais: 'US',
-        ciudad: 'Novi',
+        ciudad: 'Sample City',
         ...NOVI,
       },
       dueno.token,
@@ -345,18 +359,18 @@ async function correrUs(idiomas) {
   for (const e of [
     {
       referenciaExterna: 'ORD-2001',
-      destinatarioNombre: 'Chris Miller',
+      destinatarioNombre: 'Chris M.',
       destinatarioTelefono: '(248) 555-0112',
-      direccion: '24600 Taft Rd, Novi, MI 48375',
+      direccion: '123 Main Street',
       referencias: 'Gray house with a red door',
       lat: 42.4705,
       lng: -83.488,
     },
     {
       referenciaExterna: 'ORD-2002',
-      destinatarioNombre: 'Taylor Brooks',
+      destinatarioNombre: 'Taylor B.',
       destinatarioTelefono: '(248) 555-0113',
-      direccion: '45255 W 10 Mile Rd, Novi, MI 48375',
+      direccion: '456 Central Avenue',
       referencias: 'Staff entrance on the east side',
       lat: 42.4722,
       lng: -83.478,
@@ -403,7 +417,7 @@ async function correrUs(idiomas) {
       'POST',
       `${E}/rutas`,
       {
-        nombre: 'Novi afternoon route',
+        nombre: 'Afternoon route',
         centroId: centro.id,
         envioIds: envios.map((x) => x.id),
       },
@@ -429,13 +443,13 @@ async function correrUs(idiomas) {
     const m = await movil(idioma, { lat: 42.4705, lng: -83.488 });
     const drv = await m.newPage();
     await conductorEnLaApp(drv, conductor, idioma);
-    await abrirParada(drv, idioma, '24600 Taft Rd, Novi, MI 48375');
+    await abrirParada(drv, idioma, '123 Main Street');
     await foto(drv, `driver-cobrar-${idioma}`);
     await m.close();
   }
 
   // ── 2. Las dos entregas, sin cobro ──
-  for (const [i, nombre] of ['Chris Miller', 'Taylor Brooks'].entries())
+  for (const [i, nombre] of ['Chris M.', 'Taylor B.'].entries())
     await api(
       'POST',
       `${C}/paradas/${paradas.at(i).id}/entregar`,
@@ -472,11 +486,11 @@ for (const l of idiomas) {
       ? ['driver-cobrar', 'panel-caja', 'panel-cobro-envio', 'panel-etiqueta-cobro', 'panel-retiro']
       : ['driver-cobrar', 'panel-caja', 'panel-cobro-envio', 'panel-retiro'];
   for (const n of nombres) {
-    const png = join(salida, `fase6-${n}-${l}.png`);
+    const png = join(salida, `fase6-${n}-v2-${l}.png`);
     if (l === 'es') aWebp(png, join(web, `${n}-${l}.webp`));
     // La página /flex en inglés enseña la parada sin nada que cobrar (allá no hay cobro contra entrega).
     if (l === 'en' && n === 'driver-cobrar') aWebp(png, join(web, 'driver-entrega-en.webp'));
-    if (n !== 'panel-etiqueta-cobro') aWebp(png, join(docs, `flex-${n}-${l}.webp`));
+    if (n !== 'panel-etiqueta-cobro') aWebp(png, join(docs, `flex-${n}-v2-${l}.webp`));
   }
 }
 console.log(JSON.stringify({ ok: true, idiomas }));
