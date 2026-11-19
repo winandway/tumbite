@@ -7,7 +7,11 @@ import { sqlLocal } from './sqlLocal';
  * C-REFERIDOS-EQUIPOS (17 nov 2026): equipos y referidos en las pantallas de verdad. El equipo crea el
  * equipo con su líder; el enlace público dice quién invita; los conductores se registran con el
  * código; el líder ve «Mi equipo» en Divoox Driver; el superadmin ve los programas y los equipos.
- * Español con El Vigía, inglés con Novi. Con CAPTURAS=1 guarda las capturas (docs/capturas/referidos/).
+ * Español con El Vigía, inglés con Novi.
+ * C-DOCS-SIN-DATOS-REALES (18 nov 2026): estas capturas van a Docs públicos, así que el equipo, el
+ * líder y los miembros son de ejemplo, y el código que se ve es uno que el servidor NUNCA puede
+ * generar (termina en «O01» / «001»: las letras O, I y los números 0 y 1 no están en su alfabeto).
+ * El QR de la captura lleva a ese código inexistente en divoox.com, no a un equipo de verdad. Con CAPTURAS=1 guarda las capturas (docs/capturas/referidos/).
  */
 const RAIZ = join(__dirname, '..', '..');
 const STAGING = Boolean(process.env.RECORRIDO_URL);
@@ -37,8 +41,10 @@ const CIUDADES = {
       lng: -71.6506,
       tz: 'America/Caracas',
     },
-    equipo: 'Equipo Centro',
-    lider: 'Jorge Líder',
+    equipo: 'Equipo Los Andes',
+    lider: 'Andrés Ejemplo',
+    codigo: 'EJEMPLO01',
+    enlace: 'https://divoox.com/es/join/EJEMPLO01',
     miembros: ['Carlos R.', 'Ana M.', 'Luis P.'],
     tel: '+58414777',
   },
@@ -52,7 +58,9 @@ const CIUDADES = {
       tz: 'America/Detroit',
     },
     equipo: 'Downtown Team',
-    lider: 'John Leader',
+    lider: 'Alex Sample',
+    codigo: 'SAMPLE001',
+    enlace: 'https://divoox.com/join/SAMPLE001',
     miembros: ['Michael B.', 'Sarah K.', 'David L.'],
     tel: '+1248777',
   },
@@ -96,7 +104,11 @@ for (const idioma of ['es', 'en'] as const) {
       data: { nombre: C.equipo, zonaId: z.id, lider: lider.usuario.correo },
     });
     expect(equipo.ok(), await equipo.text()).toBe(true);
-    const { codigo } = ((await equipo.json()) as { equipo: { codigo: string } }).equipo;
+    const generado = ((await equipo.json()) as { equipo: { codigo: string } }).equipo.codigo;
+    // El código real se cambia por el de ejemplo, que el servidor nunca genera.
+    const codigo = C.codigo;
+    sql(`UPDATE equipos SET codigo = 'VIEJO' || substr(id, 1, 8) WHERE codigo = '${codigo}'`);
+    sql(`UPDATE equipos SET codigo = '${codigo}' WHERE codigo = '${generado}'`);
     // El programa de conductores de Venezuela queda encendido con sus valores por defecto (prueba).
     const p = await request.put(`/datos/admin/referidos-programas/conductor/VE`, {
       headers: h(admin.token),
@@ -141,6 +153,13 @@ for (const idioma of ['es', 'en'] as const) {
       [lider.token, idioma, lider.usuario.id] as const,
     );
     const pr = await ctxRep.newPage();
+    // El QR y el enlace de la captura apuntan al sitio público con el código de ejemplo.
+    await pr.route('**/datos/repartidor/invitaciones', async (ruta) => {
+      const r = await ruta.fetch();
+      const d = (await r.json()) as { equipo: { enlace: string } | null };
+      if (d.equipo) d.equipo.enlace = C.enlace;
+      await ruta.fulfill({ response: r, json: d });
+    });
     await pr.goto('/driver');
     await pr
       .getByText(idioma === 'es' ? 'Perfil' : 'Profile', { exact: true })

@@ -46,7 +46,7 @@
     {
       "id": "equipo-jehova-jireh",
       "prioridad": "alta",
-      "titulo": "Crear el equipo «Jehová Jireh» y encender los referidos",
+      "titulo": "Crear el primer equipo de conductores de El Vigía y encender los referidos",
       "para": "Hace falta que el presidente de la línea se registre en Divoox Driver y nos diga su correo o celular. Con eso se crea el equipo en Superadmin, Dinero, «Referidos y equipos», y se le pasa su enlace y su QR. Los programas de referidos se encienden ahí mismo.",
       "destraba": "Saber quiénes son de su equipo y premiarlo por cada conductor que complete sus carreras.",
       "numero": 2
@@ -457,6 +457,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-18",
+      "titulo": "Docs sin datos reales: la guía de invitar conductores ya muestra un equipo de ejemplo",
+      "texto": "La guía «Invita conductores y arma tu equipo» mostraba el nombre, el código y el QR de un equipo de verdad. Se rehicieron las capturas en español y en inglés con un equipo de ejemplo y un código que el sistema nunca puede generar; el QR lleva a ese código inexistente. También se cambiaron las capturas de los regalos, que mostraban el código real del cupón. Quedó un candado que falla si un nombre o código real vuelve a aparecer en lo público."
+    },
     {
       "fecha": "2026-11-18",
       "titulo": "Docs al grano: cada guía abre directo en su contenido, también desde el enlace de Camila",

@@ -120,26 +120,26 @@ describe('C-REFERIDOS-EQUIPOS: programas, nacen apagados con los montos por defe
 });
 
 describe('C-REFERIDOS-EQUIPOS: equipos con su líder', () => {
-  it('el equipo «Jehová Jireh»: quien se registra con su código queda en el equipo, con fecha', async () => {
+  it('el equipo «Equipo Los Andes»: quien se registra con su código queda en el equipo, con fecha', async () => {
     const { e, registrar, carrera } = await mundo();
-    const lider = await registrar('repartidor', 'Presidente Jireh');
+    const lider = await registrar('repartidor', 'Andrés Ejemplo');
     const correo = (await e.m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
       .bind(lider.id)
       .first<{ correo: string }>())!.correo;
     const r = await e.m.llamar(
       'POST',
       '/datos/admin/equipos',
-      { nombre: 'Jehová Jireh', zonaId: EL_VIGIA.id, lider: correo },
+      { nombre: 'Equipo Los Andes', zonaId: EL_VIGIA.id, lider: correo },
       e.admin.token,
     );
     expect(r.estado).toBe(201);
     const codigo = r.datos.equipo.codigo as string;
-    expect(codigo).toMatch(/^JEHOVA[A-Z2-9]{3}$/);
+    expect(codigo).toMatch(/^EQUIPO[A-Z2-9]{3}$/);
     // La página pública dice quién invita y a qué equipo.
     const pub = await e.m.llamar('GET', `/datos/publico/invitacion/${codigo.toLowerCase()}`);
     expect(pub.datos.invitacion).toMatchObject({
-      nombre: 'Presidente',
-      equipo: 'Jehová Jireh',
+      nombre: 'Andrés',
+      equipo: 'Equipo Los Andes',
       ciudad: 'El Vigía',
     });
     const a = await registrar('repartidor', 'Mototaxista Uno', { invitacion: codigo });
@@ -160,7 +160,7 @@ describe('C-REFERIDOS-EQUIPOS: equipos con su líder', () => {
       e.admin.token,
     );
     expect(lista.datos.equipos[0]).toMatchObject({
-      nombre: 'Jehová Jireh',
+      nombre: 'Equipo Los Andes',
       registrados: 2,
       aprobados: 1,
       activos: 1,
@@ -178,12 +178,16 @@ describe('C-REFERIDOS-EQUIPOS: equipos con su líder', () => {
     expect(ficha.datos.equipo.enlace).toContain(`/join/${codigo}`);
     // El líder ve «Mi equipo» con el mismo conteo.
     const mio = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, lider.token);
-    expect(mio.datos.equipo).toMatchObject({ nombre: 'Jehová Jireh', registrados: 2, carreras: 1 });
+    expect(mio.datos.equipo).toMatchObject({
+      nombre: 'Equipo Los Andes',
+      registrados: 2,
+      carreras: 1,
+    });
     expect(mio.datos.invitados).toHaveLength(2);
     // Robot (18 nov 2026): el miembro ve a qué equipo pertenece y quién lo invitó; no le vuelve a
     // pedir el código.
     const suyo = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, a.token);
-    expect(suyo.datos.miEquipo).toMatchObject({ nombre: 'Jehová Jireh', lider: 'Presidente' });
+    expect(suyo.datos.miEquipo).toMatchObject({ nombre: 'Equipo Los Andes', lider: 'Andrés' });
     expect(suyo.datos.yaInvitado).toBe(true);
     const solo = await registrar('repartidor', 'Sin Equipo Dos');
     const nada = await e.m.llamar('GET', '/datos/repartidor/invitaciones', undefined, solo.token);
