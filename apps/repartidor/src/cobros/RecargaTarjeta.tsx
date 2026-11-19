@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { AppState, Linking, Pressable, View } from 'react-native';
+import { AppState, Pressable, View } from 'react-native';
 import { ErrorApi, type Idioma, enIdioma, formatearMonto } from '@tumbite/compartido';
-import { Boton, C, Campo, Text, useSesion } from '@tumbite/movil';
+import { Boton, C, Campo, Text, abrirPagina, useSesion } from '@tumbite/movil';
 import { aUnidadMenor, falloRecarga, montosRapidos } from './logica';
 import { T_COBROS } from './textos';
 
 /**
  * C-RECARGA-TARJETA-ALOJADA (19 nov 2026 — Perú; sirve a cualquier país con la recarga con tarjeta
- * encendida): el conductor elige un monto y paga en la página segura del procesador, en el navegador
- * del teléfono. Al volver a la app el saldo se refresca. La app nunca ve la tarjeta. El mínimo con
+ * encendida): el conductor elige un monto y paga en la página segura del procesador, que se abre dentro
+ * de la app. El saldo se refresca solo mientras tanto. La app nunca ve la tarjeta. El mínimo con
  * tarjeta lo manda el servidor (C-RECARGA-TARJETA-MINIMO): por debajo no se abre ningún cobro.
  */
 export function RecargaTarjeta({
@@ -35,21 +35,26 @@ export function RecargaTarjeta({
   const fuera = useRef(false);
   const dinero = (n: number) => formatearMonto(n, moneda, idioma);
 
-  // Al volver del navegador se refresca el saldo (el aviso del procesador puede tardar unos segundos).
+  // La página de pago se abre DENTRO de la app (C-PAGINA-EN-APP). Mientras está abierta y un rato
+  // después, el saldo se vuelve a leer cada pocos segundos: el aviso del procesador tarda un poco.
+  // Solo lee; al volver a la app (en la web, al volver a la pestaña) se refresca de una vez.
+  const [esperando, setEsperando] = useState(0);
   useEffect(() => {
-    let otraVez: ReturnType<typeof setTimeout> | null = null;
+    if (esperando <= 0) return;
+    const r = setTimeout(() => {
+      alVolver();
+      setEsperando((n) => n - 1);
+    }, 6000);
+    return () => clearTimeout(r);
+  }, [esperando, alVolver]);
+  useEffect(() => {
     const s = AppState.addEventListener('change', (estado) => {
       if (estado !== 'active' || !fuera.current) return;
       fuera.current = false;
-      setAviso(t.volviste);
       alVolver();
-      otraVez = setTimeout(alVolver, 6000);
     });
-    return () => {
-      s.remove();
-      if (otraVez) clearTimeout(otraVez);
-    };
-  }, [alVolver, t.volviste]);
+    return () => s.remove();
+  }, [alVolver]);
 
   const monto = otro.trim() ? aUnidadMenor(otro) : elegido;
 
@@ -74,7 +79,9 @@ export function RecargaTarjeta({
         alojada: true,
       });
       fuera.current = true;
-      await Linking.openURL(r.url);
+      abrirPagina(r.url);
+      setAviso(t.volviste);
+      setEsperando(20);
     } catch (x) {
       fuera.current = false;
       setError(x instanceof ErrorApi ? x.message : t.noAbre);

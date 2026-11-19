@@ -19,7 +19,9 @@ describe('C-BS-EN-MANO: la pieza única en cada pantalla donde se cobra o se pag
     expect(v).toMatch(/testID="viaje-bs"[\s\S]{0,80}monto=\{cobroEnMano\(false\)\}/);
     expect(v).toMatch(/testID="viaje-cobra-monto"[\s\S]{0,80}monto=\{cobroEnMano\(true\)\}/);
     // El cobro en mano también se ve con pago móvil (no solo en efectivo).
-    expect(v).toMatch(/metodo_pago === 'pago_movil'\) &&\s*enMano != null/);
+    // C-PAGO-A-CELULAR: «aCelular» es pago móvil (Venezuela), Yape o Plin (Perú).
+    expect(v).toMatch(/const aCelular = esPagoACelular\(viaje\.metodo_pago\)/);
+    expect(v).toMatch(/metodo_pago === 'efectivo' \|\| aCelular\) &&\s*enMano != null/);
   });
 
   it('cliente: el precio antes de pedir, el viaje en curso y el recibo', () => {
@@ -44,7 +46,7 @@ describe('C-BS-EN-MANO: la pieza única en cada pantalla donde se cobra o se pag
     expect(v).toMatch(/testID="viaje-pago-movil-monto"[\s\S]{0,200}tamano="grande"\s+copiable/);
     expect(v).not.toMatch(/` \(\$\{textoLocal/);
     expect(leer('apps/cliente/src/viajes/ViajeEnCurso.tsx')).toMatch(
-      /copiable=\{viaje\.metodoPago === 'pago_movil'/,
+      /copiable=\{esPagoACelular\(viaje\.metodoPago\)/,
     );
     const m = leer('packages/movil/src/MontoEnMano.tsx');
     expect(m).toMatch(/Portapapeles\.setStringAsync\(montoParaCopiar/);

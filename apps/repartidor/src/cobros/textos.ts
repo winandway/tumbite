@@ -34,14 +34,14 @@ export const T_COBROS = {
     yapePlin: 'Yape y Plin se envían entre sí: con uno de los dos recibes los viajes de ambos.',
     recargaTitulo: 'Recargar con tarjeta',
     recargaAyuda:
-      'Pagas en la página segura de nuestro procesador de pagos y vuelves a la app. El saldo aparece en cuanto se confirma el pago.',
+      'Pagas en la página segura de nuestro procesador de pagos, sin salir de la app. El saldo aparece en cuanto se confirma el pago.',
     otroMonto: 'Otro monto',
     minimo: (monto: string) => `La recarga mínima con tarjeta es ${monto}.`,
     maximo: (monto: string) => `La recarga máxima es ${monto}.`,
     montoMalo: 'Escribe un monto.',
     pagar: (monto: string) => `Pagar ${monto}`,
     abriendo: 'Abriendo la página de pago…',
-    volviste: 'Si ya pagaste, tu saldo se actualiza en unos segundos.',
+    volviste: 'Cuando termines de pagar, tu saldo se actualiza aquí en unos segundos.',
     noAbre: 'No pudimos abrir la página de pago. Inténtalo otra vez.',
   },
   en: {
@@ -75,14 +75,14 @@ export const T_COBROS = {
     yapePlin: 'Yape and Plin send to each other: with either one you get rides paid with both.',
     recargaTitulo: 'Top up with a card',
     recargaAyuda:
-      'You pay on our payment processor’s secure page and come back to the app. Your balance shows up as soon as the payment is confirmed.',
+      'You pay on our payment processor’s secure page without leaving the app. Your balance shows up as soon as the payment is confirmed.',
     otroMonto: 'Other amount',
     minimo: (monto: string) => `The minimum card top-up is ${monto}.`,
     maximo: (monto: string) => `The maximum top-up is ${monto}.`,
     montoMalo: 'Enter an amount.',
     pagar: (monto: string) => `Pay ${monto}`,
     abriendo: 'Opening the payment page…',
-    volviste: 'If you already paid, your balance updates in a few seconds.',
+    volviste: 'Once you finish paying, your balance updates here in a few seconds.',
     noAbre: 'We couldn’t open the payment page. Please try again.',
   },
 };
