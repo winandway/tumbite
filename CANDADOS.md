@@ -2,6 +2,50 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-MARCADOR-ANDROID (segunda vuelta), C-MAPA-SIEMPRE-CLARO (sin 3D), C-MAPA-VISTA-PREVIA, C-CIERRE-VIAJE-QUEDA y C-HOJA-OFERTA · Cinco defectos de Driver vistos en el emulador de Android (paquete 13, 19 nov 2026) — todos los países
+
+Visto en el emulador de Android con la Driver de pruebas 0.1.45 (commit 073d0696d6 de main). Rama `paquete-13-defectos`.
+
+### 1. C-MARCADOR-ANDROID (segunda vuelta) · el conductor salía como un círculo blanco vacío
+
+- **Qué se veía:** en la oferta y en el viaje, el marcador del conductor era un círculo blanco con borde negro, sin el isotipo. En la web sí salía.
+- **Causa real** (leída en `node_modules/react-native-maps/android/.../MapMarker.java` y `ViewChangesTracker.java`, versión 1.27.2): con `tracksViewChanges` encendido el mapa NO sigue la vista mientras dure; toma UNA foto tras la primera medida y el seguidor se apaga solo (`updateCustomForTracking` devuelve `false` cuando `updated` llega a 0). El isotipo es una imagen nieta del marcador: al cargar no cambia ninguna medida y nadie repinta. Volver a encender la propiedad tampoco repinta (el seguidor ve `updated == 0` y se apaga sin dibujar; al apagarla, la propiedad ya coincide y tampoco). La primera vuelta del candado (18 nov) confiaba en eso, por eso no alcanzaba.
+- **Lo que de verdad lo arregló (comprobado en el emulador):** en Android la IMAGEN del isotipo es el hijo DIRECTO del `<Marker>` y ella misma pinta el disco (fondo blanco, borde negro, redonda, 48 de lado, `resizeMode="contain"`). react-native-maps solo engancha la carga de una imagen que cuelga directo del marcador (`hackToHandleDraweeLifecycle`: la da por puesta en pantalla y, cuando llega la imagen final, vuelve a tomar la foto). Dentro de otra vista (como antes) la imagen nunca llegaba a la foto. Con solo `redraw()` el emulador seguía mostrando el círculo vacío. En iPhone `MarcaIsotipo` sigue siendo la vista de siempre.
+- **Refuerzo (pieza única, cliente, conductor y Flex):** `useCapturaMarcador` (`packages/movil/src/mapaDivoox.tsx`) devuelve además `marcador`, el ref de cada `<Marker>` con vista propia (`ref={marcador}`), y en Android le pide `redraw()` (el único camino que llama a `updateMarkerIcon`) al aparecer, al cambiar la clave, con el mapa listo (`onMapReady` llama a `vista.listo()`) y con la imagen cargada; en los momentos 0, 250, 700 y 1500 ms (`packages/movil/src/redibujarMarcadores.ts`): así los rótulos con texto también salen enteros. La imagen va con `fadeDuration={0}`.
+- **Prueba (en rojo antes, 7 fallos):** `packages/movil/src/candadoMarcadoresAndroid.test.ts`, bloque «segunda vuelta» (incluye que en Android la imagen sea el hijo directo).
+- **Cómo se comprueba:** solo en Android (emulador `divoox_capturas_gpu` o teléfono): oferta y viaje con el isotipo dentro del disco. Captura: `~/Documents/Entregas/Divoox/paquete-13-defectos/`.
+- **Qué NO tocar:** no volver a meter la imagen del isotipo dentro de otra vista en Android; no quitar `ref={marcador}` ni volver a confiar solo en `tracksViewChanges`; no dejar `tracksViewChanges` siempre encendido (repinta 25 veces por segundo).
+
+### 2. C-MAPA-SIEMPRE-CLARO (segunda vuelta) · gris medio con edificios en 3D
+
+- **Qué se veía:** el mapa salía gris medio con edificios en relieve (captura 12a) o con media ciudad en gris medio (visto en el viaje en el emulador). El estilo sí estaba aplicado desde el primer dibujo (la tierra medía #EEF0F3). Dos causas: los edificios 3D de Google y las manzanas (`landscape.man_made`, gris «edificio» #E3E6EA de la paleta) que Google para Android oscurece un 18 % (medían 186,189,192), no siempre.
+- **Arreglo:** `usePropsMapaDivoox` pone `showsBuildings: false` y `showsIndoors: false`, y añade al estilo solo en el teléfono (`SOLO_EN_EL_TELEFONO`) `landscape.man_made` apagado: el suelo queda en el gris claro de la paleta y las calles en blanco. El estilo de la web y los archivos de `identidad-divoox/` no cambian. La 04c no era un fallo de estilo: la zona elegida tiene pocas calles.
+- **Prueba (en rojo antes):** `packages/movil/src/candadoMapaVistaPrevia.test.ts` («sin edificios en 3D» y «las manzanas no se pintan»).
+- **Qué NO tocar:** no volver a encender los edificios ni pintar `landscape.man_made` en el teléfono.
+
+### 3. C-MAPA-VISTA-PREVIA · el dedo sobre el mapa movía el mapa y no la pantalla
+
+- **Qué se veía:** con el dedo sobre el mapa pequeño de la oferta (150) o del viaje (200) la pantalla no bajaba hasta el deslizador, y los puntos se salían del cuadro.
+- **Estándar del mercado (Uber Driver, DoorDash Dasher):** el mapa pequeño de vista previa no es interactivo; se toca para abrir la navegación.
+- **Arreglo:** prop `vistaPrevia` en `apps/repartidor/src/piezas/Mapa.tsx` y `apps/cliente/src/MapaEntrega.tsx`: `pointerEvents="none"` en el contenedor, `scrollEnabled/zoomEnabled/rotateEnabled/pitchEnabled/zoomTapEnabled/moveOnMarkerPress` en falso, sin la vista de llegada (siempre encuadrado en recogida, destino y conductor), el encuadre corre cuando el mapa termina de cargar y con un margen chico (`margenEncuadre`: 52 arriba, para que quepa el alfiler de la recogida, 26 abajo y 44 a los lados, en puntos; antes 60 + 60 en un mapa de 150 dejaba el recorrido diminuto; en puntos, porque react-native-maps ya lo multiplica por la densidad en Android). La usan la oferta de viaje, el viaje (envuelto en un `Pressable` que abre `comoLlegar`) y el mapa del precio del cliente (`PedirMoto`). En la web del Driver, `pointer-events: none`. Los mapas grandes de seguimiento del cliente y del inicio NO la llevan.
+- **Prueba (en rojo antes):** `packages/movil/src/candadoMapaVistaPrevia.test.ts`.
+- **Cómo se comprueba:** en el emulador, arrastrar sobre el mapa del viaje baja la pantalla y el mapa queda igual.
+
+### 4. C-CIERRE-VIAJE-QUEDA · «Viaje terminado» se cerraba sola
+
+- **Qué se veía:** la pantalla de cierre (cobro en efectivo y calificación del pasajero, `viaje-cerrado`) duraba unos tres segundos y volvía sola al inicio; si el conductor estaba abajo, aparecía fuera de la vista. Igual con «Envío entregado».
+- **Causa real:** el sondeo del inicio (`cargar` en `apps/repartidor/src/Inicio.tsx`) pregunta por el viaje en curso; al terminarlo el servidor contesta `null`, el inicio deja de pintar `ViajeActivo` y su estado local (el cierre) se desmonta.
+- **Arreglo:** `ViajeActivo` avisa `alCerrar(true)` al entrar al cierre y `alCerrar(false)` al tocar «Listo» (o si el conductor sale de la pantalla). El inicio guarda ese viaje en `viajeEnCierre` y pinta `viajeEnPantalla(viajeActivo, viajeEnCierre)` (`apps/repartidor/src/viajes/cierreViaje.ts`): el cierre sobrevive al sondeo; un viaje NUEVO manda (y `key={viajeMostrado.id}` le da su propia pantalla). Al abrirse, la pantalla sube al principio (`scrollLienzo.current?.scrollTo`). Vive solo en memoria: si la app se reinicia, el conductor no queda atrapado.
+- **Prueba (en rojo antes):** `apps/repartidor/src/viajes/cierreViaje.test.ts`.
+- **Cómo se comprueba:** terminar un viaje en el emulador y esperar 15 segundos: «Viaje terminado» sigue ahí.
+
+### 5. C-HOJA-OFERTA · el título de la oferta con regalo encima del reloj
+
+- **Qué se veía:** con la línea del regalo, la hoja de la oferta subía hasta el borde y «Nuevo viaje en Moto» quedaba sobre la barra de estado (la ventana del Modal de Android es de borde a borde).
+- **Arreglo:** pieza única `packages/movil/src/HojaOferta.tsx` para la oferta de viajes (moto, carro, envíos) y la de comida: su propio `SafeAreaProvider` (la ventana del Modal mide aparte), deja libre la barra de estado y los botones del teléfono; arriba fijo (título, cuenta atrás y lo que gana, C-PRECIO-PROTAGONISTA), el medio se desplaza si no cabe, abajo fijo (Aceptar y Rechazar).
+- **Prueba (en rojo antes):** `packages/movil/src/candadoHojaOferta.test.ts`.
+- **Qué NO tocar:** no volver a un `<Modal>` suelto en las ofertas; lo que gana no baja al medio.
+
 ## C-SALDO-EN-INICIO · El saldo prepago del conductor a la vista en el inicio de Driver (paquete 12, 19 nov 2026) — Venezuela (países con prepago); en EE. UU. no aplica
 
 - **Qué faltaba:** el saldo para comisiones solo se veía entrando a Ganancias. Un conductor se quedaba sin saldo, dejaban de llegarle carreras y no sabía por qué.
