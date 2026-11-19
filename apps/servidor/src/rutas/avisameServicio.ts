@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
-import { huellaAparato } from '../regalosDivoox';
 import { type Variables, base } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { zonaPara } from './zonas';
@@ -47,12 +46,10 @@ avisameServicio.post('/servicios/avisame', async (c) => {
   const db = base(c);
   const d = await leerCuerpo(c, Cuerpo);
   const u = c.get('usuario');
-  const aparato = await huellaAparato(c.req.header('x-aparato'));
-  const dueno = u?.id ?? aparato;
-  if (!dueno)
-    throw new ErrorDatos(
-      'No pudimos reconocer este teléfono. Actualiza la app y vuelve a intentarlo.',
-    );
+  // Solo con la cuenta iniciada (decisión de Gerencia, 18 nov 2026): de quien no tiene cuenta no
+  // se guarda nada, ni una huella del aparato. La app le ofrece crear la cuenta.
+  if (!u) throw new ErrorDatos('Entra a tu cuenta para que te avisemos.', undefined, 401);
+  const dueno = u.id;
   const punto = d.lat != null && d.lng != null ? { lat: d.lat, lng: d.lng } : null;
   const zona = punto ? await zonaPara(db, punto.lat, punto.lng) : null;
   const lat = punto ? redondear(punto.lat) : null;
@@ -76,7 +73,7 @@ avisameServicio.post('/servicios/avisame', async (c) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT (dueno, servicio, zona_clave) DO NOTHING`,
     )
-    .bind(dueno, d.servicio, zonaClave, u?.id ?? null, aparato, zona?.id ?? null, lat, lng)
+    .bind(dueno, d.servicio, zonaClave, u.id, null, zona?.id ?? null, lat, lng)
     .run();
   return c.json({ ok: true });
 });

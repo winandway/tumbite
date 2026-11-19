@@ -16,6 +16,7 @@ export const MENSAJES_EN = new Map<string, string>([
     'We couldn’t recognize this phone. Update the app and try again.',
   ],
   ['Servicio desconocido.', 'Unknown service.'],
+  ['Entra a tu cuenta para que te avisemos.', 'Sign in so we can notify you.'],
   [
     'Ahora mismo no podemos guardarlo. Vuelve a intentarlo más tarde.',
     'We can’t save it right now. Please try again later.',

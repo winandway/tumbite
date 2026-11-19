@@ -47,6 +47,12 @@ try {
   console.error(`NO SE SUBE ${paquete}: no pasó la comprobación de la pantalla de entrar.`);
   process.exit(4);
 }
+const notas = [
+  ['es-419', process.env.NOTAS_ES],
+  ['en-US', process.env.NOTAS_EN],
+]
+  .filter(([, texto]) => texto)
+  .map(([language, text]) => ({ language, text }));
 const { pedir, editar } = await googlePlay(paquete);
 await editar(async (id) => {
   const subido = await pedir(`/edits/${id}/bundles`, { subir: true, binario: readFileSync(aab) });
@@ -55,7 +61,15 @@ await editar(async (id) => {
     metodo: 'PUT',
     json: {
       track: 'production',
-      releases: [{ name: nombre, status: 'completed', versionCodes: [String(subido.versionCode)] }],
+      releases: [
+        {
+          name: nombre,
+          status: 'completed',
+          versionCodes: [String(subido.versionCode)],
+          // Notas de la versión (aprobadas por el auditor), si se pasan: NOTAS_ES y NOTAS_EN.
+          ...(notas.length ? { releaseNotes: notas } : {}),
+        },
+      ],
     },
   });
 });

@@ -75,4 +75,24 @@ describe('C-OCHO-ICONOS-SIEMPRE · el inicio del cliente', () => {
     );
     expect(c).not.toMatch(/[Pp]ronto|[Ss]oon/);
   });
+
+  // Decisión de Gerencia (18 nov 2026): la 47 no puede depender del servidor ni guardar nada de
+  // quien no tiene cuenta.
+  it('«Avísame» solo con cuenta; sin cuenta ofrece crearla; con 404 el botón se retira sin error', () => {
+    const p = leer('inicio', 'PiezasInicio.tsx');
+    const i = p.indexOf('export function HojaAunNoHay');
+    const hoja = p.slice(i, p.indexOf('export type ItemMas', i));
+    expect(hoja).toMatch(/!conCuenta \? \([\s\S]{0,200}onPress=\{crearCuenta\}/);
+    expect(hoja).toContain('testID="aun-no-hay-crear-cuenta"');
+    expect(hoja).toMatch(/e\.estado === 404 \? 'sin_boton' : 'error'/);
+    expect(hoja).toMatch(/paso === 'sin_boton' \? null/);
+    expect(leer('Inicio.tsx')).toMatch(/conCuenta=\{Boolean\(usuario\)\}/);
+    for (const idioma of ['es', 'en'] as const)
+      expect(textosInicioNuevo(idioma).aunNoHay.crearCuenta.length).toBeGreaterThan(10);
+    const ruta = readFileSync(
+      join(__dirname, '..', '..', '..', 'servidor', 'src', 'rutas', 'avisameServicio.ts'),
+      'utf8',
+    );
+    expect(ruta).not.toContain('huellaAparato');
+  });
 });

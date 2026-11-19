@@ -13,6 +13,7 @@ import {
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import {
   type BannerInicio,
+  ErrorApi,
   type Idioma,
   type Restaurante,
   type ServicioCatalogo,
@@ -427,14 +428,19 @@ export function HojaAunNoHay({
   servicio,
   cerrar,
   avisar,
+  conCuenta,
+  crearCuenta,
 }: {
   idioma: Idioma;
   servicio: string | null;
   cerrar: () => void;
   avisar: (servicio: string) => Promise<unknown>;
+  /** «Avísame» solo existe con la cuenta iniciada; sin cuenta se ofrece crearla. */
+  conCuenta: boolean;
+  crearCuenta: () => void;
 }) {
   const t = textosInicioNuevo(idioma);
-  const [paso, setPaso] = useState<'listo' | 'enviando' | 'hecho' | 'error'>('listo');
+  const [paso, setPaso] = useState<'listo' | 'enviando' | 'hecho' | 'error' | 'sin_boton'>('listo');
   // El paso vuelve a empezar con cada servicio: Inicio monta la hoja con `key` del servicio.
   const nombre = servicio
     ? (new Map(Object.entries(t.aunNoHay.nombres)).get(servicio) ?? servicio)
@@ -446,7 +452,9 @@ export function HojaAunNoHay({
       () => setPaso('hecho'),
       (e: unknown) => {
         console.warn('avísame: no se pudo guardar', e);
-        setPaso('error');
+        // El servidor todavía no trae esta pieza (404): el botón se retira sin mostrar un error;
+        // la hoja y el aviso «aún no hay» siguen igual.
+        setPaso(e instanceof ErrorApi && e.estado === 404 ? 'sin_boton' : 'error');
       },
     );
   };
@@ -482,6 +490,17 @@ export function HojaAunNoHay({
               {t.aunNoHay.listo}
             </Text>
           </View>
+        ) : paso === 'sin_boton' ? null : !conCuenta ? (
+          <Pressable
+            onPress={crearCuenta}
+            accessibilityRole="button"
+            testID="aun-no-hay-crear-cuenta"
+            style={({ pressed }) => [p.botonAviso, pressed && { opacity: 0.85 }]}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>
+              {t.aunNoHay.crearCuenta}
+            </Text>
+          </Pressable>
         ) : (
           <Pressable
             onPress={tocar}

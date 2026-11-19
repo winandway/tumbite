@@ -386,6 +386,11 @@ export function Inicio() {
         servicio={aunNoHay}
         cerrar={() => setAunNoHay(null)}
         avisar={avisarCuandoLlegue}
+        conCuenta={Boolean(usuario)}
+        crearCuenta={() => {
+          setAunNoHay(null);
+          router.push('/account');
+        }}
       />
       <HojaMasServicios
         idioma={idioma}

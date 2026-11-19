@@ -37,30 +37,20 @@ const filas = async (m: ReturnType<typeof mundo>) =>
   ).results;
 
 describe('C-OCHO-ICONOS-SIEMPRE · «Avísame cuando llegue»', () => {
-  it('sin cuenta se guarda con la huella del aparato y la zona; dos toques escriben una sola fila', async () => {
+  // Decisión de Gerencia (18 nov 2026): de quien no tiene cuenta no se guarda nada, ni la huella.
+  it('sin cuenta no se guarda nada (401), con o sin identificador de aparato', async () => {
     const m = mundo();
-    const a = await m.llamar(
-      'POST',
-      '/datos/servicios/avisame',
-      { servicio: 'moto', ...MIAMI },
-      undefined,
-      APARATO,
-    );
-    expect(a.estado).toBe(200);
-    expect(a.datos).toEqual({ ok: true });
-    const b = await m.llamar(
-      'POST',
-      '/datos/servicios/avisame',
-      { servicio: 'moto', ...MIAMI },
-      undefined,
-      APARATO,
-    );
-    expect(b.estado).toBe(200);
-    const l = await filas(m);
-    expect(l).toHaveLength(1);
-    expect(l[0]).toMatchObject({ usuario_id: null, servicio: 'moto', zona_id: 'US-FL-MIAMI' });
-    // Nunca el identificador en claro: solo su huella.
-    expect(String(l[0]!.aparato)).toMatch(/^a:[0-9a-f]{64}$/);
+    for (const cabeceras of [APARATO, undefined]) {
+      const a = await m.llamar(
+        'POST',
+        '/datos/servicios/avisame',
+        { servicio: 'moto', ...MIAMI },
+        undefined,
+        cabeceras,
+      );
+      expect(a.estado).toBe(401);
+    }
+    expect(await filas(m)).toHaveLength(0);
   });
 
   it('con cuenta se guarda a nombre de la persona (una fila por servicio y zona)', async () => {
@@ -74,39 +64,29 @@ describe('C-OCHO-ICONOS-SIEMPRE · «Avísame cuando llegue»', () => {
     const l = await filas(m);
     expect(l.map((x) => x.servicio).sort()).toEqual(['farmacia', 'mercado']);
     expect(l.every((x) => x.usuario_id === c.id)).toBe(true);
+    expect(l.every((x) => x.aparato === null)).toBe(true);
   });
 
   it('el segundo toque no escribe nada (idempotente) y el primero escribe una sola fila', async () => {
     const { m, escritas } = conConteo();
+    const c = await m.cuenta('cliente');
     await m.llamar('GET', '/datos/servicios'); // la primera petición prepara la base
     const antes = escritas();
-    await m.llamar(
-      'POST',
-      '/datos/servicios/avisame',
-      { servicio: 'licores', ...MIAMI },
-      undefined,
-      APARATO,
-    );
+    await m.llamar('POST', '/datos/servicios/avisame', { servicio: 'licores', ...MIAMI }, c.token);
     const primero = escritas() - antes;
     expect(primero).toBe(1);
-    await m.llamar(
-      'POST',
-      '/datos/servicios/avisame',
-      { servicio: 'licores', ...MIAMI },
-      undefined,
-      APARATO,
-    );
+    await m.llamar('POST', '/datos/servicios/avisame', { servicio: 'licores', ...MIAMI }, c.token);
     expect(escritas() - antes - primero).toBe(0);
   });
 
   it('zona desconocida: no falla, se guarda sin zona y con las coordenadas redondeadas', async () => {
     const m = mundo();
+    const c = await m.cuenta('cliente');
     const r = await m.llamar(
       'POST',
       '/datos/servicios/avisame',
       { servicio: 'carro', lat: -33.456789, lng: -70.654321 },
-      undefined,
-      APARATO,
+      c.token,
     );
     expect(r.estado).toBe(200);
     const l = await filas(m);
@@ -118,28 +98,17 @@ describe('C-OCHO-ICONOS-SIEMPRE · «Avísame cuando llegue»', () => {
     });
     // Sin ubicación tampoco falla.
     expect(
-      (
-        await m.llamar(
-          'POST',
-          '/datos/servicios/avisame',
-          { servicio: 'envios' },
-          undefined,
-          APARATO,
-        )
-      ).estado,
+      (await m.llamar('POST', '/datos/servicios/avisame', { servicio: 'envios' }, c.token)).estado,
     ).toBe(200);
   });
 
-  it('valida lo que entra: servicio desconocido o «Más» no se guardan; sin cuenta ni aparato, 400', async () => {
+  it('valida lo que entra: servicio desconocido o «Más» no se guardan', async () => {
     const m = mundo();
+    const c = await m.cuenta('cliente');
     for (const servicio of ['mas', 'pizza', ''])
       expect(
-        (await m.llamar('POST', '/datos/servicios/avisame', { servicio }, undefined, APARATO))
-          .estado,
+        (await m.llamar('POST', '/datos/servicios/avisame', { servicio }, c.token)).estado,
       ).toBe(400);
-    expect((await m.llamar('POST', '/datos/servicios/avisame', { servicio: 'moto' })).estado).toBe(
-      400,
-    );
     expect(await filas(m)).toHaveLength(0);
   });
 
@@ -161,6 +130,7 @@ describe('C-OCHO-ICONOS-SIEMPRE · «Avísame cuando llegue»', () => {
   // Reserva del revisor (18 nov 2026): sin cuenta, el aparato es una cabecera que se puede inventar.
   it('tope diario: pasado el tope del día no se escribe más y se dice en palabras', async () => {
     const m = mundo();
+    const c = await m.cuenta('cliente');
     const sql = m.DB.prepare(
       "INSERT INTO avisos_servicio (dueno, servicio, zona_clave) VALUES (?, 'moto', '')",
     );
@@ -170,8 +140,7 @@ describe('C-OCHO-ICONOS-SIEMPRE · «Avísame cuando llegue»', () => {
       'POST',
       '/datos/servicios/avisame',
       { servicio: 'moto', ...MIAMI },
-      undefined,
-      APARATO,
+      c.token,
     );
     expect(r.estado).toBe(429);
     expect(await filas(m)).toHaveLength(TOPE_AVISAME_DIA);
