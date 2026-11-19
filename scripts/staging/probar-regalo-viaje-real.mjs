@@ -92,7 +92,19 @@ async function hastaEnCurso(cupon) {
   );
   exigir(v.estado === 201, `pedir: ${v.estado} ${v.d.error ?? ''}`);
   const id = v.d.viaje.id;
-  exigir((await paso(id, 'aceptar')).estado === 200, 'aceptar');
+  // La oferta llega al consultar (el sitio de pruebas no tiene reloj propio): se espera a verla.
+  let ofrecida = false;
+  for (let i = 0; i < 6 && !ofrecida; i++) {
+    const o = await pedir('GET', '/datos/conductor/operaciones/ofertas', undefined, comoConductor);
+    ofrecida = Boolean(o.d.ofertas?.some((x) => x.operacionId === id));
+    if (!ofrecida) {
+      await pedir('GET', '/datos/viajes/actual', undefined, comoCliente);
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  }
+  exigir(ofrecida, `el conductor no recibió la oferta del viaje con ${cupon}`);
+  const acepto = await paso(id, 'aceptar');
+  exigir(acepto.estado === 200, `aceptar (${cupon}): ${acepto.estado} ${acepto.d.error ?? ''}`);
   exigir((await paso(id, 'llegue')).estado === 200, 'llegué');
   const pin = (await pedir('GET', '/datos/viajes/actual', undefined, comoCliente)).d.viaje?.pin;
   exigir(/^\d{4}$/.test(pin ?? ''), 'el viaje con regalo no muestra su código de inicio');
