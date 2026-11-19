@@ -309,13 +309,14 @@ export type Campos = {
 };
 
 /** Cuántas veces se pide un dato como mucho: después se deja y se sigue (nunca un bucle). */
-const VECES_QUE_SE_PIDE: Record<Falta, number> = {
-  que_paso: 2,
-  donde: 1,
-  nombre: 2,
-  contacto: 2,
-  extra: 1,
-};
+const VECES_QUE_SE_PIDE = new Map<Falta, number>([
+  ['que_paso', 2],
+  ['donde', 1],
+  ['nombre', 2],
+  ['contacto', 2],
+  ['extra', 1],
+]);
+const vecesPedido = (c: Campos, k: Falta) => new Map(Object.entries(c.pedidos)).get(k) ?? 0;
 /** Un reporte no pasa de estas vueltas: a la última se cierra con lo que haya. */
 export const TURNOS_MAXIMOS = 8;
 
@@ -337,7 +338,7 @@ export const CAMPOS_VACIOS: Campos = {
 const una = (v: unknown, max: number) =>
   typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, max) : '';
 
-const CORREO = /[A-Z0-9._%+-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/i;
+const CORREO = /[A-Z0-9._%+-]{1,64}@[A-Z0-9.-]{1,120}\.[A-Z]{2,24}/i;
 const TELEFONO = /\+?\d[\d\s().-]{6,}\d/;
 const HABLA_DE_TELEFONO =
   /\b(tel[eé]fono|celular|cel|whatsapp|ll[aá]m|n[uú]mero|phone|call me|text me|mobile)\b/i;
@@ -370,8 +371,23 @@ export function nombreLimpio(t: string) {
     .join(' ')
     .slice(0, 60);
 }
-const NOMBRE_DICHO =
-  /\b(?:me llamo|mi nombre es|my name is)\s+([\p{L}][\p{L}'-]+(?:\s+[\p{Lu}][\p{L}'-]+){0,3})|\b(?:soy|i am|i'm|this is)\s+([\p{Lu}][\p{L}'-]+(?:\s+[\p{Lu}][\p{L}'-]+){0,3})/iu;
+/** «Me llamo…», «mi nombre es…» (vale en minúsculas) o «soy Laura» (con mayúscula). */
+const SE_NOMBRA = /\b(?:me llamo|mi nombre es|my name is)\s+([\p{L}' -]{2,60})/iu;
+const SOY = /\b(?:[Ss]oy|I am|I'm|i am|i'm|[Tt]his is)\s+(\p{Lu}[\p{L}' -]{1,59})/u;
+const CORTA_EL_NOMBRE = new Set(['y', 'e', 'and', 'pero', 'but', 'que', 'de', 'del', 'con']);
+function nombreDicho(mensaje: string) {
+  const dicho = SE_NOMBRA.exec(mensaje)?.[1];
+  const soy = dicho ? undefined : SOY.exec(mensaje)?.[1];
+  const palabras: string[] = [];
+  for (const w of (dicho ?? soy ?? '').trim().split(/\s+/)) {
+    // El nombre termina donde sigue la frase («me llamo Laura y no veo…»); con «soy», además,
+    // donde deja de haber mayúscula inicial («soy Laura de Novi»).
+    if (!w || CORTA_EL_NOMBRE.has(w.toLowerCase()) || palabras.length >= 4) break;
+    if (soy && !/^\p{Lu}/u.test(w)) break;
+    palabras.push(w);
+  }
+  return nombreLimpio(palabras.join(' '));
+}
 
 /** «No quiero darlo», dicho con el mensaje ENTERO o al empezarlo. */
 const NO_QUIERE = [
@@ -412,10 +428,9 @@ export function sacarConCodigo(c: Campos, mensaje: string) {
       c.sin_contacto = false;
     }
   }
-  const dicho = NOMBRE_DICHO.exec(mensaje);
-  const nombreDicho = nombreLimpio(dicho?.[1] ?? dicho?.[2] ?? '');
-  if (nombreDicho) {
-    c.nombre = nombreDicho;
+  const dicho = nombreDicho(mensaje);
+  if (dicho) {
+    c.nombre = dicho;
     c.sin_nombre = false;
   }
   if (c.ultimo === 'nombre' && !c.nombre) {
@@ -431,7 +446,7 @@ export function sacarConCodigo(c: Campos, mensaje: string) {
 
 /** Lo que todavía falta, en el orden en que se pregunta. Con cuenta, el contacto es la cuenta. */
 export function faltantes(c: Campos, tieneCuenta: boolean): Falta[] {
-  const queda = (k: Falta) => (c.pedidos[k] ?? 0) < VECES_QUE_SE_PIDE[k];
+  const queda = (k: Falta) => vecesPedido(c, k) < (VECES_QUE_SE_PIDE.get(k) ?? 1);
   const f: Falta[] = [];
   if (!c.que_paso && queda('que_paso')) f.push('que_paso');
   if (!c.donde && queda('donde')) f.push('donde');
@@ -487,12 +502,14 @@ const esMarcaDeCaptura = (t: string) => t === MARCA_CAPTURA.es || t === MARCA_CA
  * cuenta o de una visita anterior) y el contacto que dejó la otra vez.
  */
 export function camposDe(r: Reporte, p: Persona): Campos {
-  let guardado: Partial<Campos> = {};
-  try {
-    guardado = JSON.parse(r.campos_json) as Partial<Campos>;
-  } catch {
-    guardado = {};
-  }
+  const leer = (): Partial<Campos> => {
+    try {
+      return JSON.parse(r.campos_json) as Partial<Campos>;
+    } catch {
+      return {};
+    }
+  };
+  const guardado = leer();
   const c: Campos = { ...CAMPOS_VACIOS, ...guardado, pedidos: { ...(guardado.pedidos ?? {}) } };
   if (!c.nombre && !c.sin_nombre) c.nombre = nombreLimpio(p.nombre) || '';
   if (!c.correo && !c.telefono && !c.sin_contacto && !p.usuario_id) {
@@ -541,7 +558,7 @@ export async function abrirReporte(
 
 // ------------------------------------------------------------------ lo que dice Camila sin el modelo
 
-const PREGUNTA: Record<Exclude<Falta, 'extra'>, { es: string; en: string }> = {
+const PREGUNTAS = {
   que_paso: {
     es: '¿Qué fue lo que te pasó? Cuéntamelo con tus palabras.',
     en: 'What happened? Tell me in your own words.',
@@ -555,6 +572,11 @@ const PREGUNTA: Record<Exclude<Falta, 'extra'>, { es: string; en: string }> = {
     es: '¿A qué correo o teléfono te aviso cuando esté resuelto? Si prefieres no dejar ninguno, dímelo y te aviso por este chat.',
     en: 'What email or phone number should I use to let you know when it is fixed? If you would rather not leave one, tell me and I will let you know in this chat.',
   },
+} as const;
+/** La pregunta del código para un dato que falta (la del equipo técnico va aparte). */
+const preguntaDe = (falta: Falta, i: IdiomaCamila) => {
+  const p = new Map<string, { es: string; en: string }>(Object.entries(PREGUNTAS)).get(falta);
+  return p ? segun(p, i) : '';
 };
 
 export const TEXTOS_FALLO = {
@@ -826,7 +848,7 @@ export async function turnoDeReporte(
     texto &&
     normalizar(texto) === normalizar(r.inicial)
   )
-    return { respuesta: segun(PREGUNTA[c.ultimo], i), estado: 'sigue' };
+    return { respuesta: preguntaDe(c.ultimo, i), estado: 'sigue' };
   sacarConCodigo(c, texto);
 
   // Lo que la persona escribió en este reporte: un dato del modelo solo vale si sale de aquí.
@@ -924,16 +946,16 @@ export async function turnoDeReporte(
     return { respuesta: textoDeCierre(codigo, c, p, i), estado: 'cerrado' };
   }
 
-  let respuesta = '';
-  if (falta === 'extra')
-    respuesta = `${acuse(antes, c, i, primera, Boolean(op.conCaptura))} ${i === 'en' ? 'One last thing for the technical team:' : 'Una última cosa para el equipo técnico:'} ${c.extra_pregunta}`;
-  else {
-    const vale = delModelo ? respuestaQueVale(delModelo, c, falta, tieneCuenta) : '';
-    respuesta = vale
-      ? (op.pulir?.(vale) ?? vale)
-      : `${acuse(antes, c, i, primera, Boolean(op.conCaptura))} ${segun(PREGUNTA[falta], i)}`;
-  }
-  c.pedidos[falta] = (c.pedidos[falta] ?? 0) + 1;
+  const anotado = acuse(antes, c, i, primera, Boolean(op.conCaptura));
+  const vale =
+    falta !== 'extra' && delModelo ? respuestaQueVale(delModelo, c, falta, tieneCuenta) : '';
+  const respuesta =
+    falta === 'extra'
+      ? `${anotado} ${i === 'en' ? 'One last thing for the technical team:' : 'Una última cosa para el equipo técnico:'} ${c.extra_pregunta}`
+      : vale
+        ? (op.pulir?.(vale) ?? vale)
+        : `${anotado} ${preguntaDe(falta, i)}`;
+  c.pedidos = { ...c.pedidos, [falta]: vecesPedido(c, falta) + 1 };
   c.ultimo = falta;
   await guardar().run();
   await recordarPersona(db, p, c);
@@ -970,7 +992,8 @@ async function completar(db: D1Database, r: Reporte, p: Persona, c: Campos, resu
   const tipo = r.tipo === 'otro' ? tipoDeFallo(quePaso) : r.tipo;
   const huella = huellaDeFallo(tipo, [quePaso]) ?? `${tipo}:sin-detalle:${r.id}`;
   // El título sobrevive al borrado de la cuenta y viaja en el correo del resumen: va limpio.
-  const titulo = limpiarDato(quePaso, 140) || segun(NOMBRE_TIPO[tipo], 'es');
+  const titulo =
+    limpiarDato(quePaso, 140) || (new Map(Object.entries(NOMBRE_TIPO)).get(tipo)?.es ?? tipo);
   await db
     .prepare(
       `INSERT INTO camila_fallos (id, huella, codigo, tipo, titulo, reportes) VALUES (?, ?, ?, ?, ?, 0)

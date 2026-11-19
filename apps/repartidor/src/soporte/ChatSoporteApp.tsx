@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import {
   ErrorApi,
@@ -8,6 +8,7 @@ import {
   type RespuestaCamila,
   TEXTOS_CHAT_SOPORTE,
   enIdioma,
+  esMarcaDeCaptura,
   nombreAutorCamila,
   trozosDeMensaje,
   cronometroDeEscritura,
@@ -36,8 +37,10 @@ import {
  * Lo escrito se guarda solo y vuelve si la app se cierra; se borra al enviarse bien. Si una persona
  * del equipo tomó la conversación, se dice en pantalla y Camila no contesta.
  *
- * C-CAMILA-FALLOS: cuando Camila pide la captura de un reporte de fallo, aparece su bloque con
- * «Subir desde archivos» y «Tomar foto» (la pieza única de la cámara) y «No tengo captura».
+ * C-CAMILA-REPORTE-CONVERSADO (19 nov 2026): «Adjuntar captura» abre «Subir desde archivos» y «Tomar
+ * foto» (la pieza única de la cámara). La captura NO se envía sola: queda en el borrador del mensaje,
+ * como una miniatura con su equis, y viaja con lo que la persona escriba al tocar Enviar. Si la app se
+ * cierra, la captura del borrador vuelve al abrir el chat (la guarda el servidor). Igual que la web.
  */
 const ESPERA_RECARGA_MS = 8_000;
 
@@ -64,8 +67,14 @@ export function ChatSoporteApp() {
   const [enviando, setEnviando] = useState(false);
   // El mensaje ya llegó y corre la espera de «Camila está escribiendo»: el botón dice «Un momento…».
   const [respondiendo, setRespondiendo] = useState(false);
-  // C-CAMILA-ADJUNTAR: la persona abrió el bloque de la captura con el botón fijo del chat.
+  // La persona abrió el bloque para elegir la captura con el botón fijo del chat.
   const [adjuntar, setAdjuntar] = useState(false);
+  // La captura del borrador: su id en el servidor y, si se acaba de elegir, su imagen local.
+  const [adjunto, setAdjunto] = useState<{ id: string; local?: string } | null>(null);
+  // Las que la persona quitó con la equis: aunque el servidor todavía las nombre, no vuelven.
+  const quitadas = useRef(new Set<string>());
+  // La imagen local de cada captura elegida aquí: el hilo la muestra sin volver a bajarla.
+  const [locales, setLocales] = useState<ReadonlyMap<string, string>>(() => new Map());
   const [error, setError] = useState('');
   const lista = useRef<ScrollView>(null);
   // Los tres puntitos de «Camila está escribiendo», uno tras otro.
@@ -85,7 +94,12 @@ export function ChatSoporteApp() {
 
   const cargar = useCallback(async () => {
     try {
-      setHilo(await api.pedir<HiloCamila>('GET', '/datos/camila/hilo'));
+      const h = await api.pedir<HiloCamila>('GET', '/datos/camila/hilo');
+      setHilo(h);
+      // La captura que quedó en el borrador vuelve con el hilo (si no se quitó aquí).
+      const pendienteDelHilo = h.adjuntoPendiente;
+      if (pendienteDelHilo && !quitadas.current.has(pendienteDelHilo))
+        setAdjunto((a) => (a?.id === pendienteDelHilo ? a : { id: pendienteDelHilo }));
       setError('');
     } catch (x) {
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
@@ -96,40 +110,58 @@ export function ChatSoporteApp() {
   // C-SESION-TERMINADA: cada 8 s; si falla, espera cada vez más.
   useSondeo(cargar, ESPERA_RECARGA_MS);
 
-  /** Manda lo escrito, o un texto fijo (por ejemplo «sin captura») sin tocar lo escrito. */
-  async function enviar(fijo?: string) {
-    const texto = (fijo ?? b.valores.texto).trim();
-    if (!texto || enviando) return;
+  /** Manda lo escrito y la captura del borrador, juntos. */
+  async function enviar() {
+    const texto = b.valores.texto.trim();
+    const conAdjunto = adjunto;
+    if ((!texto && !conAdjunto) || enviando) return;
     setError('');
     setEnviando(true);
-    setPendiente({ id: 'pendiente', autor: 'persona', texto, creado_en: new Date().toISOString() });
+    setPendiente({
+      id: 'pendiente',
+      autor: 'persona',
+      texto,
+      creado_en: new Date().toISOString(),
+      adjunto: conAdjunto?.id ?? null,
+    });
     const esperar = cronometroDeEscritura();
     try {
       const r = await api.pedir<RespuestaCamila>('POST', '/datos/camila/mensaje', {
         texto,
         canal: 'app',
+        ...(conAdjunto ? { adjunto: conAdjunto.id } : {}),
       });
-      // El mensaje ya llegó: la casilla se vacía AHORA, antes de la espera. Lo que la persona escriba
-      // mientras Camila «escribe» es su siguiente mensaje y no se borra.
-      if (fijo === undefined) await b.limpiar();
+      // El mensaje ya llegó: la casilla y la captura se vacían AHORA, antes de la espera. Lo que la
+      // persona escriba mientras Camila «escribe» es su siguiente mensaje y no se borra.
+      await b.limpiar();
+      if (conAdjunto) quitadas.current.add(conAdjunto.id);
+      setAdjunto(null);
       setRespondiendo(true);
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
       setHilo({
-        pideCaptura: r.pideCaptura,
-        capturaPuesta: r.capturaPuesta,
+        adjuntoPendiente: r.adjuntoPendiente,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
         mensajes: r.mensajes,
       });
     } catch (x) {
-      // Lo escrito se queda en la casilla para reintentar.
+      // Lo escrito y la captura se quedan en el borrador para reintentar.
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
     } finally {
       setPendiente(null);
       setEnviando(false);
       setRespondiendo(false);
     }
+  }
+
+  /** La equis de la miniatura: la captura sale del borrador (aquí y en el servidor). */
+  async function quitarAdjunto() {
+    const a = adjunto;
+    if (!a) return;
+    quitadas.current.add(a.id);
+    setAdjunto(null);
+    await api.pedir('DELETE', `/datos/camila/adjunto/${a.id}`).catch(() => undefined);
   }
 
   const mensajes = [...(hilo?.mensajes ?? []), ...(pendiente ? [pendiente] : [])];
@@ -147,7 +179,7 @@ export function ChatSoporteApp() {
     }
   }
 
-  const burbuja = (m: Pick<MensajeCamila, 'id' | 'autor' | 'texto' | 'reportado'>) => {
+  const burbuja = (m: Pick<MensajeCamila, 'id' | 'autor' | 'texto' | 'reportado' | 'adjunto'>) => {
     const mio = m.autor === 'persona';
     return (
       <View
@@ -168,7 +200,10 @@ export function ChatSoporteApp() {
         <Text style={{ fontSize: 12, fontWeight: '700', color: mio ? '#D0D2D6' : '#666B73' }}>
           {nombreAutorCamila(m.autor, idioma)}
         </Text>
-        {trozosDeMensaje(m.texto).map((trozo, i) =>
+        {m.adjunto ? (
+          <MiniaturaApp id={m.adjunto} local={locales.get(m.adjunto)} lado={150} />
+        ) : null}
+        {(m.adjunto && esMarcaDeCaptura(m.texto) ? [] : trozosDeMensaje(m.texto)).map((trozo, i) =>
           'url' in trozo ? (
             <Pressable
               key={i}
@@ -259,19 +294,44 @@ export function ChatSoporteApp() {
           <Text style={{ color: '#666B73', marginTop: 4 }}>{t.cargando}</Text>
         ) : null}
       </ScrollView>
-      {hilo?.pideCaptura || adjuntar ? (
+      {adjuntar ? (
         <BloqueCapturaApp
           ocupado={enviando}
-          voluntaria={!hilo?.pideCaptura}
-          alSubir={async () => {
+          alSubir={(id, local) => {
             setAdjuntar(false);
-            await cargar();
+            setLocales((m) => new Map(m).set(id, local));
+            setAdjunto({ id, local });
           }}
-          alNoTener={() =>
-            hilo?.pideCaptura ? void enviar(t.mensajeSinCaptura) : setAdjuntar(false)
-          }
+          alCerrar={() => setAdjuntar(false)}
         />
-      ) : hilo?.equipoAtendiendo || hilo?.capturaPuesta ? null : (
+      ) : adjunto ? (
+        <View
+          testID="chat-captura-lista"
+          style={[e.tarjeta, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+        >
+          <MiniaturaApp id={adjunto.id} local={adjunto.local} lado={56} />
+          <Text style={{ flex: 1, color: C.secundario, fontSize: 13 }}>{t.capturaLista}</Text>
+          <Pressable
+            onPress={() => void quitarAdjunto()}
+            disabled={enviando}
+            accessibilityRole="button"
+            accessibilityLabel={t.quitarCaptura}
+            testID="chat-captura-quitar"
+            hitSlop={10}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 17,
+              borderWidth: 1,
+              borderColor: C.secundario,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: C.secundario, fontSize: 18, fontWeight: '700' }}>×</Text>
+          </Pressable>
+        </View>
+      ) : hilo?.equipoAtendiendo ? null : (
         <Pressable
           onPress={() => setAdjuntar(true)}
           accessibilityRole="button"
@@ -303,7 +363,7 @@ export function ChatSoporteApp() {
         <TextInput
           value={b.valores.texto}
           onChangeText={(x) => b.cambiar('texto', x)}
-          placeholder={t.escribe}
+          placeholder={adjunto ? t.escribeConCaptura : t.escribe}
           accessibilityLabel={t.escribe}
           multiline
           maxLength={2000}
@@ -324,22 +384,59 @@ export function ChatSoporteApp() {
 
 type FotoElegida = { uri: string; mimeType?: string | null; fileSize?: number | null };
 
+/** La captura, pedida con la sesión de la persona (nunca una dirección pública). */
+function MiniaturaApp({ id, local, lado }: { id: string; local?: string; lado: number }) {
+  const { api, idioma } = useSesion();
+  const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
+  const [bajada, setBajada] = useState('');
+  useEffect(() => {
+    if (local) return;
+    let vivo = true;
+    api
+      .verFoto(`/datos/camila/adjunto/${encodeURIComponent(id)}`)
+      .then((u) => vivo && setBajada(u))
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [api, id, local]);
+  const uri = local ?? bajada;
+  const forma = {
+    width: lado,
+    height: lado,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#D5D9E0',
+    backgroundColor: '#F1F3F6',
+  };
+  return uri ? (
+    <Image
+      source={{ uri }}
+      style={forma}
+      resizeMode="cover"
+      accessibilityLabel={t.capturaAlt}
+      testID="chat-miniatura"
+    />
+  ) : (
+    <View style={forma} accessibilityLabel={t.capturaAlt} />
+  );
+}
+
 /**
- * C-CAMILA-FALLOS: el bloque de la captura en Driver. Los dos botones a la vista (regla de la
- * cámara), el aviso de tapar contraseñas y tarjetas, y «No tengo captura». Sin cámara o sin permiso,
- * se dice en palabras y queda «Subir desde archivos». Si la subida falla, se puede volver a intentar.
+ * C-CAMILA-REPORTE-CONVERSADO: elegir la captura en Driver. Los dos botones a la vista (regla de la
+ * cámara) y el aviso de tapar contraseñas y tarjetas. La imagen se sube y queda en el BORRADOR del
+ * mensaje: no se envía sola. Sin cámara o sin permiso, se dice en palabras y queda «Subir desde
+ * archivos». Si la subida falla, se puede volver a intentar.
  */
 function BloqueCapturaApp({
   ocupado,
-  voluntaria = false,
   alSubir,
-  alNoTener,
+  alCerrar,
 }: {
   ocupado: boolean;
-  /** La persona la abrió con «Adjuntar captura»: el botón de abajo solo cierra. */
-  voluntaria?: boolean;
-  alSubir: () => Promise<void>;
-  alNoTener: () => void;
+  /** La captura ya está guardada: su id y su imagen local para la miniatura. */
+  alSubir: (id: string, local: string) => void;
+  alCerrar: () => void;
 }) {
   const { api, idioma } = useSesion();
   const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
@@ -359,9 +456,10 @@ function BloqueCapturaApp({
         setError(problema);
         return;
       }
-      await api.subirFoto(blob, '/datos/camila/fallos/captura');
+      const r = await api.subirFoto(blob, '/datos/camila/adjunto');
+      if (!r.adjunto) throw new ErrorApi(t.sinRed, 0);
       setFallida(null);
-      await alSubir();
+      alSubir(r.adjunto, foto.uri);
     } catch (x) {
       setFallida(foto);
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
@@ -413,15 +511,15 @@ function BloqueCapturaApp({
         <Boton texto={t.reintentarCaptura} alTocar={() => void subir(fallida)} secundario />
       ) : null}
       <Pressable
-        onPress={alNoTener}
+        onPress={alCerrar}
         disabled={quieto}
         accessibilityRole="button"
-        testID="captura-no-tengo"
+        testID="captura-cancelar"
         hitSlop={8}
         style={{ alignSelf: 'flex-start', paddingVertical: 6 }}
       >
         <Text style={{ color: C.secundario, fontWeight: '700', textDecorationLine: 'underline' }}>
-          {voluntaria ? t.cancelarCaptura : t.sinCaptura}
+          {t.cancelarCaptura}
         </Text>
       </Pressable>
       <Text style={{ color: '#666B73', fontSize: 12 }}>{t.capturaPrivada}</Text>

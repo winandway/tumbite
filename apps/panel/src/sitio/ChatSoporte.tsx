@@ -9,6 +9,7 @@ import {
   almacenNavegador,
   enIdioma,
   enIdiomaDireccion,
+  esMarcaDeCaptura,
   nombreAutorCamila,
   trozosDeMensaje,
   cronometroDeEscritura,
@@ -30,8 +31,10 @@ import { Icono } from './Icono';
  * - Lo escrito se guarda solo y vuelve al recargar; se borra al enviarse bien. Si falla, se queda.
  * - Si una persona del equipo tomó la conversación, Camila no contesta y se dice en pantalla.
  * - Sin cuenta, se ofrece discreto unir el chat al correo con un código de seis números.
- * - C-CAMILA-FALLOS: cuando Camila pide la captura de un reporte de fallo, aparece su bloque con
- *   «Subir desde archivos», «Tomar foto» (la pieza única de la cámara) y «No tengo captura».
+ * - C-CAMILA-REPORTE-CONVERSADO (19 nov 2026): «Adjuntar captura» abre «Subir desde archivos» y
+ *   «Tomar foto» (la pieza única de la cámara). La captura NO se envía sola: queda en el borrador del
+ *   mensaje, como una miniatura con su equis, y viaja con lo que la persona escriba al tocar Enviar.
+ *   Si se cierra el chat, la captura del borrador vuelve al abrirlo (la guarda el servidor).
  */
 const LLAVE_CONVERSO = 'divoox.camila.converso';
 
@@ -68,8 +71,14 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
   const [enviando, setEnviando] = useState(false);
   // El mensaje ya llegó y corre la espera de «Camila está escribiendo»: el botón dice «Un momento…».
   const [respondiendo, setRespondiendo] = useState(false);
-  // C-CAMILA-ADJUNTAR: la persona abrió el bloque de la captura con el botón fijo del chat.
+  // La persona abrió el bloque para elegir la captura con el botón fijo del chat.
   const [adjuntar, setAdjuntar] = useState(false);
+  // La captura del borrador: su id en el servidor y, si se acaba de elegir, su imagen local.
+  const [adjunto, setAdjunto] = useState<{ id: string; local?: string } | null>(null);
+  // Las que la persona quitó con la equis: aunque el servidor todavía las nombre, no vuelven.
+  const quitadas = useRef(new Set<string>());
+  // La imagen local de cada captura elegida aquí: el hilo la muestra sin volver a bajarla.
+  const [locales, setLocales] = useState<ReadonlyMap<string, string>>(() => new Map());
   const [pendiente, setPendiente] = useState<MensajeCamila | null>(null);
   const [error, setError] = useState('');
   const [unir, setUnir] = useState(false);
@@ -93,6 +102,10 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
           cabeceras: { 'x-camila-visita': visita },
         });
         setHilo(h);
+        // La captura que quedó en el borrador vuelve con el hilo (si no se quitó aquí).
+        const pendienteDelHilo = h.adjuntoPendiente;
+        if (pendienteDelHilo && !quitadas.current.has(pendienteDelHilo))
+          setAdjunto((a) => (a?.id === pendienteDelHilo ? a : { id: pendienteDelHilo }));
         setError('');
       } catch (x) {
         if (!callado) setError(x instanceof ErrorApi ? x.message : t.sinRed);
@@ -149,10 +162,11 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
     if (el) el.scrollTop = el.scrollHeight;
   }, [cuantos, abierto, enviando]);
 
-  /** Manda lo escrito, o un texto fijo (por ejemplo «sin captura») sin tocar lo escrito. */
-  async function enviar(fijo?: string) {
-    const texto = (fijo ?? b.valores.texto).trim();
-    if (!texto || enviando) return;
+  /** Manda lo escrito y la captura del borrador, juntos. */
+  async function enviar() {
+    const texto = b.valores.texto.trim();
+    const conAdjunto = adjunto;
+    if ((!texto && !conAdjunto) || enviando) return;
     setError('');
     setEnviando(true);
     setPendiente({
@@ -160,37 +174,50 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
       autor: 'persona',
       texto,
       creado_en: new Date().toISOString(),
+      adjunto: conAdjunto?.id ?? null,
     });
     const esperar = cronometroDeEscritura();
     try {
       const r = await pedir<RespuestaCamila>(
         'POST',
         '/datos/camila/mensaje',
-        { texto, canal: 'web' },
+        { texto, canal: 'web', ...(conAdjunto ? { adjunto: conAdjunto.id } : {}) },
         { cabeceras },
       );
       guardarConverso();
-      // El mensaje ya llegó: la casilla se vacía AHORA, antes de la espera. Lo que la persona escriba
-      // mientras Camila «escribe» es su siguiente mensaje y no se borra.
-      if (fijo === undefined) await b.limpiar();
+      // El mensaje ya llegó: la casilla y la captura se vacían AHORA, antes de la espera. Lo que la
+      // persona escriba mientras Camila «escribe» es su siguiente mensaje y no se borra.
+      await b.limpiar();
+      if (conAdjunto) quitadas.current.add(conAdjunto.id);
+      setAdjunto(null);
       setRespondiendo(true);
       // C-CAMILA-TONO: «Camila está escribiendo…» de 2 a 4 segundos según el largo de la respuesta.
       await esperar(r.respuesta);
       setHilo({
-        pideCaptura: r.pideCaptura,
-        capturaPuesta: r.capturaPuesta,
+        adjuntoPendiente: r.adjuntoPendiente,
         verificada: r.verificada,
         equipoAtendiendo: r.equipoAtendiendo,
         mensajes: r.mensajes,
       });
     } catch (x) {
-      // Lo escrito se queda en la casilla para reintentar (regla de los formularios).
+      // Lo escrito y la captura se quedan en el borrador para reintentar (regla de los formularios).
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
     } finally {
       setPendiente(null);
       setEnviando(false);
       setRespondiendo(false);
     }
+  }
+
+  /** La equis de la miniatura: la captura sale del borrador (aquí y en el servidor). */
+  async function quitarAdjunto() {
+    const a = adjunto;
+    if (!a) return;
+    quitadas.current.add(a.id);
+    setAdjunto(null);
+    await pedir('DELETE', `/datos/camila/adjunto/${a.id}`, undefined, { cabeceras }).catch(
+      () => undefined,
+    );
   }
 
   /** C-CAMILA-REPORTAR: reportar una respuesta de Camila sin salir del chat. */
@@ -259,23 +286,32 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
                 data-testid={`chat-mensaje-${m.autor}`}
               >
                 <span className="chat-soporte-autor">{nombreAutorCamila(m.autor, idioma)}</span>
-                {trozosDeMensaje(m.texto).map((trozo, i) =>
-                  'url' in trozo ? (
-                    <a
-                      key={i}
-                      className="chat-soporte-guia"
-                      href={trozo.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      data-testid="chat-enlace-guia"
-                    >
-                      {trozo.etiqueta}
-                    </a>
-                  ) : (
-                    <span key={i} className="chat-soporte-texto">
-                      {trozo.texto}
-                    </span>
-                  ),
+                {m.adjunto ? (
+                  <Miniatura
+                    id={m.adjunto}
+                    local={locales.get(m.adjunto)}
+                    cabeceras={cabeceras}
+                    alt={t.capturaAlt}
+                  />
+                ) : null}
+                {(m.adjunto && esMarcaDeCaptura(m.texto) ? [] : trozosDeMensaje(m.texto)).map(
+                  (trozo, i) =>
+                    'url' in trozo ? (
+                      <a
+                        key={i}
+                        className="chat-soporte-guia"
+                        href={trozo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid="chat-enlace-guia"
+                      >
+                        {trozo.etiqueta}
+                      </a>
+                    ) : (
+                      <span key={i} className="chat-soporte-texto">
+                        {trozo.texto}
+                      </span>
+                    ),
                 )}
                 {m.autor === 'camila' ? (
                   m.reportado ? (
@@ -310,22 +346,42 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               </li>
             ) : null}
           </ol>
-          {hilo?.pideCaptura || adjuntar ? (
+          {adjuntar ? (
             <BloqueCaptura
               idioma={idioma}
               cabeceras={cabeceras}
               ocupado={enviando}
-              voluntaria={!hilo?.pideCaptura}
-              alSubir={async () => {
+              alSubir={(id, local) => {
                 setAdjuntar(false);
                 guardarConverso();
-                await cargar(true);
+                setLocales((m) => new Map(m).set(id, local));
+                setAdjunto({ id, local });
+                casilla.current?.focus();
               }}
-              alNoTener={() =>
-                hilo?.pideCaptura ? void enviar(t.mensajeSinCaptura) : setAdjuntar(false)
-              }
+              alCerrar={() => setAdjuntar(false)}
             />
-          ) : hilo?.equipoAtendiendo || hilo?.capturaPuesta ? null : (
+          ) : adjunto ? (
+            <div className="chat-soporte-borrador-captura" data-testid="chat-captura-lista">
+              <Miniatura
+                id={adjunto.id}
+                local={adjunto.local}
+                cabeceras={cabeceras}
+                alt={t.capturaAlt}
+              />
+              <span>{t.capturaLista}</span>
+              <button
+                type="button"
+                className="chat-soporte-quitar"
+                aria-label={t.quitarCaptura}
+                title={t.quitarCaptura}
+                disabled={enviando}
+                onClick={() => void quitarAdjunto()}
+                data-testid="chat-captura-quitar"
+              >
+                ×
+              </button>
+            </div>
+          ) : hilo?.equipoAtendiendo ? null : (
             <button
               type="button"
               className="enlace chat-soporte-adjuntar"
@@ -366,7 +422,7 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
               ref={casilla}
               rows={2}
               value={b.valores.texto}
-              placeholder={t.escribe}
+              placeholder={adjunto ? t.escribeConCaptura : t.escribe}
               aria-label={t.escribe}
               maxLength={2000}
               onChange={(e) => b.cambiar('texto', e.target.value)}
@@ -377,7 +433,11 @@ export function ChatSoporte({ idioma, conSesion }: { idioma: Idioma; conSesion?:
                 }
               }}
             />
-            <button type="submit" className="boton" disabled={enviando || !b.valores.texto.trim()}>
+            <button
+              type="submit"
+              className="boton"
+              disabled={enviando || (!b.valores.texto.trim() && !adjunto)}
+            >
               {respondiendo ? t.unMomento : enviando ? t.enviando : t.enviar}
             </button>
           </form>
@@ -521,26 +581,58 @@ function UnirCorreo({
   );
 }
 
+/** La captura, pedida con la ficha de la persona (nunca una dirección pública). */
+function Miniatura({
+  id,
+  local,
+  cabeceras,
+  alt,
+}: {
+  id: string;
+  /** La imagen recién elegida, para no volver a bajarla. */
+  local?: string;
+  cabeceras: Record<string, string>;
+  alt: string;
+}) {
+  const [bajada, setBajada] = useState('');
+  const visita = cabeceras['x-camila-visita'] ?? '';
+  useEffect(() => {
+    if (local) return;
+    let vivo = true;
+    api
+      .verFoto(`/datos/camila/adjunto/${encodeURIComponent(id)}`, { 'x-camila-visita': visita })
+      .then((u) => vivo && setBajada(u))
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [id, local, visita]);
+  const src = local ?? bajada;
+  return src ? (
+    <img className="chat-soporte-miniatura" src={src} alt={alt} data-testid="chat-miniatura" />
+  ) : (
+    <span className="chat-soporte-miniatura vacia" role="img" aria-label={alt} />
+  );
+}
+
 /**
- * C-CAMILA-FALLOS: el bloque de la captura de un reporte de fallo. Dos botones a la vista (regla de la
- * cámara: «Subir desde archivos» y «Tomar foto»), el aviso de tapar contraseñas y tarjetas, y «No
- * tengo captura». Mientras sube, se ve; si falla, se dice por qué y se puede volver a intentar.
+ * C-CAMILA-REPORTE-CONVERSADO: elegir la captura. Dos botones a la vista (regla de la cámara: «Subir
+ * desde archivos» y «Tomar foto») y el aviso de tapar contraseñas y tarjetas. La imagen se sube y
+ * queda en el BORRADOR del mensaje: no se envía sola. Si falla, se dice por qué y se reintenta.
  */
 function BloqueCaptura({
   idioma,
   cabeceras,
   ocupado,
-  voluntaria = false,
   alSubir,
-  alNoTener,
+  alCerrar,
 }: {
   idioma: Idioma;
   cabeceras: Record<string, string>;
   ocupado: boolean;
-  /** La persona la abrió con «Adjuntar captura» (Camila no la pidió): el botón de abajo solo cierra. */
-  voluntaria?: boolean;
-  alSubir: () => Promise<void>;
-  alNoTener: () => void;
+  /** La captura ya está guardada: su id y su imagen local para la miniatura. */
+  alSubir: (id: string, local: string) => void;
+  alCerrar: () => void;
 }) {
   const t = enIdioma(TEXTOS_CHAT_SOPORTE, idioma);
   const entrada = useRef<HTMLInputElement>(null);
@@ -553,9 +645,10 @@ function BloqueCaptura({
     if (problema) return setError(problema);
     setSubiendo(true);
     try {
-      await api.subirFoto(archivo, '/datos/camila/fallos/captura', cabeceras);
+      const r = await api.subirFoto(archivo, '/datos/camila/adjunto', cabeceras);
+      if (!r.adjunto) throw new ErrorApi(t.sinRed, 0);
       setFallida(null);
-      await alSubir();
+      alSubir(r.adjunto, URL.createObjectURL(archivo));
     } catch (x) {
       setFallida(archivo);
       setError(x instanceof ErrorApi ? x.message : t.sinRed);
@@ -616,9 +709,9 @@ function BloqueCaptura({
         type="button"
         className="enlace chat-soporte-captura-no"
         disabled={quieto}
-        onClick={alNoTener}
+        onClick={alCerrar}
       >
-        {voluntaria ? t.cancelarCaptura : t.sinCaptura}
+        {t.cancelarCaptura}
       </button>
       <small className="pista">{t.capturaPrivada}</small>
     </div>

@@ -5,6 +5,7 @@ import {
   nuevaVisitaCamila,
   visitaCamila,
   LLAVE_VISITA_CAMILA,
+  esMarcaDeCaptura,
 } from './camilaChat';
 
 /**
@@ -70,7 +71,10 @@ describe('C-CAMILA-FALLOS: la captura antes de subirla', () => {
     expect(Object.keys(TEXTOS_CHAT_SOPORTE.en).sort()).toEqual(
       Object.keys(TEXTOS_CHAT_SOPORTE.es).sort(),
     );
-    expect(TEXTOS_CHAT_SOPORTE.es.mensajeSinCaptura).toBe('sin captura');
-    expect(TEXTOS_CHAT_SOPORTE.en.mensajeSinCaptura).toBe('no screenshot');
+    // C-CAMILA-REPORTE-CONVERSADO: la captura queda en el borrador y se envía con el mensaje.
+    expect(TEXTOS_CHAT_SOPORTE.es.capturaLista).toBe('Captura lista. Se envía con tu mensaje.');
+    expect(esMarcaDeCaptura('[Captura enviada]')).toBe(true);
+    expect(esMarcaDeCaptura('[Screenshot sent]')).toBe(true);
+    expect(esMarcaDeCaptura('una captura enviada')).toBe(false);
   });
 });

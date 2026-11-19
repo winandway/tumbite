@@ -15,12 +15,15 @@ export type MensajeCamila = {
   creado_en: string;
   /** C-CAMILA-REPORTAR: la persona ya reportó esta respuesta de Camila. */
   reportado?: boolean;
+  /** C-CAMILA-REPORTE-CONVERSADO: la captura que viajó con este mensaje (su id), si la trae. */
+  adjunto?: string | null;
 };
 export type HiloCamila = {
-  /** C-CAMILA-FALLOS: Camila está esperando la captura de pantalla de un reporte de fallo. */
+  /** Quedaron de la versión anterior del chat (la captura ya no se pide aparte): siempre falsos. */
   pideCaptura?: boolean;
-  /** C-CAMILA-ADJUNTAR: el reporte en curso ya tiene su captura. */
   capturaPuesta?: boolean;
+  /** C-CAMILA-REPORTE-CONVERSADO: la captura que quedó en el borrador sin enviarse (su id). */
+  adjuntoPendiente?: string | null;
   verificada: boolean;
   equipoAtendiendo: boolean;
   mensajes: MensajeCamila[];
@@ -96,18 +99,19 @@ const CHAT_ES = {
   cargando: 'Cargando la conversación…',
   reportar: 'Reportar respuesta',
   reportada: 'Respuesta reportada. El equipo la va a revisar.',
-  // C-CAMILA-FALLOS: el bloque de la captura de pantalla de un reporte de fallo.
-  capturaTitulo: 'Manda tu captura de pantalla',
-  capturaAviso: 'Antes de mandarla, tapa cualquier contraseña o número de tarjeta.',
+  // C-CAMILA-REPORTE-CONVERSADO: adjuntar una captura la deja en el borrador del mensaje (miniatura
+  // con su equis) y se envía junto con lo que la persona escriba.
+  capturaTitulo: 'Adjunta tu captura de pantalla',
+  capturaAviso: 'Antes de adjuntarla, tapa cualquier contraseña o número de tarjeta.',
   capturaPrivada: 'Solo la ve el equipo de Divoox. Se borra a los 90 días.',
   subirArchivos: 'Subir desde archivos',
   tomarFoto: 'Tomar foto',
-  sinCaptura: 'No tengo captura',
-  // C-CAMILA-ADJUNTAR: el botón fijo del chat para mandar una captura sin que Camila la pida.
   adjuntar: 'Adjuntar captura',
   cancelarCaptura: 'Cancelar',
-  /** Lo que se manda por el chat cuando la persona no tiene captura (Camila lo entiende así). */
-  mensajeSinCaptura: 'sin captura',
+  capturaLista: 'Captura lista. Se envía con tu mensaje.',
+  quitarCaptura: 'Quitar la captura',
+  capturaAlt: 'Captura de pantalla',
+  escribeConCaptura: 'Escribe qué pasó y toca Enviar',
   subiendo: 'Subiendo la captura…',
   capturaGrande: 'La captura pesa demasiado. El máximo es 10 MB.',
   capturaTipo: 'Manda una imagen JPG, PNG, WebP o HEIC.',
@@ -146,15 +150,17 @@ const CHAT_EN: typeof CHAT_ES = {
   cargando: 'Loading the conversation…',
   reportar: 'Report reply',
   reportada: 'Reply reported. Our team will review it.',
-  capturaTitulo: 'Send your screenshot',
-  capturaAviso: 'Before sending it, cover any password or card number.',
+  capturaTitulo: 'Attach your screenshot',
+  capturaAviso: 'Before attaching it, cover any password or card number.',
   capturaPrivada: 'Only the Divoox team sees it. It’s deleted after 90 days.',
   subirArchivos: 'Upload from files',
   tomarFoto: 'Take photo',
-  sinCaptura: 'I don’t have a screenshot',
   adjuntar: 'Attach screenshot',
   cancelarCaptura: 'Cancel',
-  mensajeSinCaptura: 'no screenshot',
+  capturaLista: 'Screenshot ready. It’s sent with your message.',
+  quitarCaptura: 'Remove the screenshot',
+  capturaAlt: 'Screenshot',
+  escribeConCaptura: 'Write what happened and tap Send',
   subiendo: 'Uploading the screenshot…',
   capturaGrande: 'The screenshot is too large. The maximum is 10 MB.',
   capturaTipo: 'Send a JPG, PNG, WebP or HEIC image.',
@@ -236,6 +242,10 @@ export function visitaCamila(
 
 /** C-CAMILA-FALLOS: la captura de un reporte de fallo, como la recibe el servidor. */
 export const CAPTURA_MAX_BYTES = 10 * 1024 * 1024;
+/** Un mensaje que es solo una captura (sin texto) lleva esta marca: el chat muestra la imagen. */
+export const esMarcaDeCaptura = (texto: string) =>
+  texto === '[Captura enviada]' || texto === '[Screenshot sent]';
+
 export const TIPOS_CAPTURA = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 /** Revisa la captura antes de subirla. Devuelve el motivo para no subirla, o null si sirve. */

@@ -233,6 +233,18 @@ export const MENSAJES_EN = new Map<string, string>([
     'The screenshot is too large. The limit is 10 MB.',
   ],
   ['Adjunta una imagen JPG, PNG o WebP.', 'Attach a JPG, PNG or WebP image.'],
+  // C-CAMILA-REPORTE-CONVERSADO: la captura en el borrador del chat.
+  [
+    'Esa captura ya no está disponible. Adjúntala otra vez.',
+    'That screenshot is no longer available. Attach it again.',
+  ],
+  [
+    'Hoy no podemos recibir más capturas. Cuéntanos qué pasó con palabras y el reporte queda igual.',
+    'We can’t take more screenshots today. Tell us what happened in words and the report still goes through.',
+  ],
+  ['Esa imagen ya no está disponible.', 'That image is no longer available.'],
+  ['Esa imagen ya se envió.', 'That image was already sent.'],
+  ['No encontramos ese reporte.', 'We couldn’t find that report.'],
   ['Ese tamaño de foto no existe.', 'That photo size doesn’t exist.'],
   [
     'Esa foto no es de tu negocio. Súbela otra vez.',

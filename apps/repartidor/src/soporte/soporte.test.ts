@@ -62,10 +62,9 @@ describe('C-CAMILA-CHAT en Driver', () => {
     expect(chat).toContain('cargando={enviando && !respondiendo}');
   });
 
-  it('C-CAMILA-FALLOS: el bloque de la captura con los dos botones, el aviso y «No tengo captura»', () => {
+  it('C-CAMILA-REPORTE-CONVERSADO: la captura queda en el borrador (miniatura con su equis) y viaja con el mensaje; nunca se envía sola', () => {
     const chat = leer('soporte', 'ChatSoporteApp.tsx');
-    expect(chat).toContain('hilo?.pideCaptura || adjuntar ? (');
-    // C-CAMILA-ADJUNTAR: el botón fijo «Adjuntar captura» abre el mismo bloque sin esperar a Camila.
+    // El botón fijo «Adjuntar captura» abre el bloque para elegirla.
     expect(chat).toContain('testID="chat-adjuntar"');
     expect(chat).toContain('{t.adjuntar}');
     // Regla de la cámara: «Subir desde archivos» y «Tomar foto», con la pieza única.
@@ -73,12 +72,24 @@ describe('C-CAMILA-CHAT en Driver', () => {
     expect(chat).toContain("elegir('camara')");
     expect(chat).toContain('fotoConOrigen(idioma, CAMARA, deArchivos, origen)');
     expect(chat).toContain('t.capturaAviso');
-    expect(chat).toContain("'/datos/camila/fallos/captura'");
     expect(chat).toContain('problemaDeCaptura(');
-    // «No tengo captura» manda el texto que Camila entiende, sin borrar lo escrito.
-    expect(chat).toContain('enviar(t.mensajeSinCaptura)');
-    expect(chat).toContain('if (fijo === undefined) await b.limpiar();');
+    // Se sube al borrador (no a la puerta vieja, que la enviaba sola) y vuelve con su id.
+    expect(chat).toContain("api.subirFoto(blob, '/datos/camila/adjunto')");
+    expect(chat).not.toContain('/datos/camila/fallos/captura');
+    // En el borrador: miniatura, «Captura lista» y la equis que la quita aquí y en el servidor.
+    expect(chat).toContain('testID="chat-captura-lista"');
+    expect(chat).toContain('testID="chat-captura-quitar"');
+    expect(chat).toContain('`/datos/camila/adjunto/${a.id}`');
+    // Viaja con el texto al tocar Enviar, y se puede enviar la captura sola.
+    expect(chat).toContain('...(conAdjunto ? { adjunto: conAdjunto.id } : {})');
+    expect(chat).toContain('if ((!texto && !conAdjunto) || enviando) return;');
+    // Si la app se cierra, la captura del borrador vuelve con el hilo.
+    expect(chat).toContain('h.adjuntoPendiente');
+    // En el hilo, el mensaje muestra la imagen (no la marca de texto).
+    expect(chat).toContain('esMarcaDeCaptura(m.texto)');
     // Si falla, se ve el motivo y se puede volver a intentar.
     expect(chat).toContain('t.reintentarCaptura');
+    // El guion viejo ya no existe: nada de «sin captura» ni de esperar a que Camila la pida.
+    expect(chat).not.toMatch(/pideCaptura|mensajeSinCaptura|sinCaptura/);
   });
 });

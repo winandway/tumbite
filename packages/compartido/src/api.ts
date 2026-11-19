@@ -219,7 +219,7 @@ export function crearApi(op: OpcionesApi) {
     ruta = '/datos/mi-restaurante/fotos',
     /** Cabeceras de más (C-CAMILA-FALLOS: la ficha del chat de la web, x-camila-visita). */
     cabeceras: Record<string, string> = {},
-  ): Promise<{ url: string }> {
+  ): Promise<{ url: string; adjunto?: string }> {
     const headers: Record<string, string> = {
       ...cabeceras,
       accept: 'application/json',
@@ -249,6 +249,7 @@ export function crearApi(op: OpcionesApi) {
     }
     const datos = (await res.json().catch(() => null)) as {
       url?: string;
+      adjunto?: string;
       error?: string;
       campo?: string;
     } | null;
@@ -264,15 +265,20 @@ export function crearApi(op: OpcionesApi) {
         res.status,
         datos?.campo,
       );
-    return { url: datos?.url ?? '' };
+    // C-CAMILA-REPORTE-CONVERSADO: la captura del chat vuelve con su id («adjunto»), no con una dirección.
+    return { url: datos?.url ?? '', ...(datos?.adjunto ? { adjunto: String(datos.adjunto) } : {}) };
   }
 
   /**
    * Una foto privada (con la sesión) lista para mostrar: la recogida o la entrega de un pedido.
    * Vuelve como «data:» para que sirva igual en el celular y en la web.
    */
-  async function verFoto(ruta: string): Promise<string> {
-    const headers: Record<string, string> = {};
+  async function verFoto(
+    ruta: string,
+    /** Cabeceras de más (la ficha del chat de la web sin cuenta, x-camila-visita). */
+    cabeceras: Record<string, string> = {},
+  ): Promise<string> {
+    const headers: Record<string, string> = { ...cabeceras };
     const token = op.token?.();
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await hacer(`${op.base}${ruta}`, {

@@ -25,7 +25,7 @@ const T = {
     nuevos: 'Nuevos',
     arreglados: 'Arreglados',
     ayudaFallos:
-      'Cuando alguien le cuenta a Camila que algo falla, ella le hace preguntas de técnico, le pide una captura y lo agrupa con los reportes parecidos. Aquí ves cada fallo con cuántas personas lo reportaron.',
+      'Cuando alguien le cuenta a Camila que algo falla, ella conversa con la persona, lee su captura y reúne qué pasó, dónde, su nombre y un contacto para avisarle. Los reportes parecidos se agrupan. Aquí ves cada fallo con cuántas personas lo reportaron.',
     sinFallos: 'No hay fallos nuevos reportados.',
     sinArreglados: 'Todavía no hay fallos marcados como arreglados.',
     reportes: (n: number) => (n === 1 ? '1 reporte' : `${n} reportes`),
@@ -36,6 +36,24 @@ const T = {
     reporteDe: (n: string) => `Reporte de ${n}`,
     sinNombre: 'Persona sin cuenta',
     loQueDijo: 'Lo que escribió primero',
+    resumen: 'Resumen del caso',
+    quePaso: 'Qué pasó, con sus palabras',
+    donde: 'Dónde',
+    enLaCaptura: 'Lo que se ve en la captura',
+    contacto: 'A quién avisarle',
+    nombre: 'Nombre',
+    correo: 'Correo',
+    telefono: 'Teléfono',
+    deLaCuenta: 'Tiene cuenta: se le avisa por la app y al correo de su cuenta.',
+    porElChat: 'Además, el aviso le queda escrito en su chat.',
+    noQuisoContacto: 'No quiso dejar un contacto. Se le avisa por su chat.',
+    noQuisoNombre: 'No quiso dar su nombre.',
+    noDijo: 'No lo dijo',
+    preguntaEquipo: 'Pregunta del equipo técnico',
+    conversacion: 'Conversación completa',
+    verConversacion: 'Ver la conversación',
+    cargandoConversacion: 'Cargando la conversación…',
+    autor: { persona: 'La persona', camila: 'Camila', equipo: 'Equipo' } as Record<string, string>,
     preguntasRespuestas: 'Preguntas y respuestas',
     sinRespuesta: 'Sin respuesta',
     adjunto: 'Lo que Camila adjuntó sola',
@@ -75,8 +93,14 @@ const T = {
     notaArreglo: 'Nota del arreglo',
     // Preguntas de diagnóstico
     ayudaPreguntas:
-      'Camila hace siempre las cuatro preguntas de base. Además puede hacer preguntas propias de cada tipo de fallo: cualquiera del equipo las propone y no se usan hasta que alguien las aprueba.',
-    base: 'Preguntas de base (siempre van)',
+      'Camila conversa con la persona y reúne siempre los cuatro datos de abajo, preguntando solo lo que falte. Además puede hacer UNA pregunta propia de cada tipo de fallo, al final: cualquiera del equipo la propone y no se usa hasta que alguien la aprueba.',
+    base: 'Lo que Camila reúne siempre',
+    baseLista: [
+      'Qué pasó, con las palabras de la persona.',
+      'Dónde: la app o la página, y la pantalla.',
+      'Su nombre (con cuenta, sale de la cuenta).',
+      'Un contacto para avisarle: correo o teléfono (con cuenta, el de la cuenta).',
+    ],
     proponer: 'Proponer una pregunta',
     tipo: 'Tipo de fallo',
     todos: 'Todos los tipos',
@@ -98,7 +122,7 @@ const T = {
     nuevos: 'New',
     arreglados: 'Fixed',
     ayudaFallos:
-      'When someone tells Camila that something is broken, she asks technician questions, asks for a screenshot and groups it with similar reports. Here you see each issue with how many people reported it.',
+      'When someone tells Camila that something is broken, she talks with the person, reads their screenshot and gathers what happened, where, their name and a contact to notify them. Similar reports are grouped. Here you see each issue with how many people reported it.',
     sinFallos: 'No new issues reported.',
     sinArreglados: 'No issues marked as fixed yet.',
     reportes: (n: number) => (n === 1 ? '1 report' : `${n} reports`),
@@ -109,6 +133,24 @@ const T = {
     reporteDe: (n: string) => `Report from ${n}`,
     sinNombre: 'Person without an account',
     loQueDijo: 'What they wrote first',
+    resumen: 'Case summary',
+    quePaso: 'What happened, in their words',
+    donde: 'Where',
+    enLaCaptura: 'What the screenshot shows',
+    contacto: 'Who to notify',
+    nombre: 'Name',
+    correo: 'Email',
+    telefono: 'Phone',
+    deLaCuenta: 'They have an account: they’re notified in the app and at their account email.',
+    porElChat: 'The notice is also written in their chat.',
+    noQuisoContacto: 'They chose not to leave a contact. They’re notified in their chat.',
+    noQuisoNombre: 'They chose not to give their name.',
+    noDijo: 'Not given',
+    preguntaEquipo: 'Question from the technical team',
+    conversacion: 'Full conversation',
+    verConversacion: 'View the conversation',
+    cargandoConversacion: 'Loading the conversation…',
+    autor: { persona: 'The person', camila: 'Camila', equipo: 'Team' } as Record<string, string>,
     preguntasRespuestas: 'Questions and answers',
     sinRespuesta: 'No answer',
     adjunto: 'What Camila attached on her own',
@@ -147,8 +189,14 @@ const T = {
         : `Marked as fixed. Camila notified ${n} people.`,
     notaArreglo: 'Fix note',
     ayudaPreguntas:
-      'Camila always asks the four base questions. She can also ask questions for each kind of issue: anyone on the team proposes them and they aren’t used until someone approves them.',
-    base: 'Base questions (always asked)',
+      'Camila talks with the person and always gathers the four items below, asking only for what is missing. She can also ask ONE question for each kind of issue, at the end: anyone on the team proposes it and it isn’t used until someone approves it.',
+    base: 'What Camila always gathers',
+    baseLista: [
+      'What happened, in the person’s own words.',
+      'Where: the app or the page, and the screen.',
+      'Their name (with an account, it comes from the account).',
+      'A contact to notify them: email or phone (with an account, the account’s).',
+    ],
     proponer: 'Propose a question',
     tipo: 'Kind of issue',
     todos: 'All kinds',
@@ -187,6 +235,19 @@ type Reporte = {
   personaId: string;
   nombre: string;
   inicial: string;
+  // C-CAMILA-REPORTE-CONVERSADO: lo que el reporte reunió conversando.
+  resumen?: string;
+  quePaso?: string;
+  donde?: string;
+  lecturaCaptura?: string;
+  contacto?: {
+    correo: string;
+    telefono: string;
+    deLaCuenta: boolean;
+    noQuiso: boolean;
+    sinNombre: boolean;
+  };
+  extra?: { pregunta: string; respuesta: string } | null;
   preguntas: { clave: string; es: string; en: string }[];
   respuestas: string[];
   contexto: Record<string, unknown>;
@@ -555,18 +616,97 @@ function ReporteFallo({
         <small className="pista">· {fecha(r.completoEn, idioma)}</small>
       </h4>
       {r.avisado ? <p className="texto-exito">{t.avisado}</p> : null}
-      <p className="camila-dato">
-        <strong>{t.loQueDijo}:</strong> {r.inicial}
-      </p>
-      <h5>{t.preguntasRespuestas}</h5>
-      <dl className="camila-respuestas">
-        {r.preguntas.map((q, i) => (
-          <div key={`${q.clave}-${i}`}>
-            <dt>{idioma === 'en' ? q.en : q.es}</dt>
-            <dd className="camila-dato">{r.respuestas.at(i) || t.sinRespuesta}</dd>
+      {r.resumen ? (
+        <>
+          <h5>{t.resumen}</h5>
+          <p className="camila-dato camila-resumen" data-testid="camila-resumen">
+            {r.resumen}
+          </p>
+        </>
+      ) : null}
+      {r.quePaso || r.donde || r.lecturaCaptura ? (
+        <dl className="camila-respuestas" data-testid="camila-campos">
+          <div>
+            <dt>{t.quePaso}</dt>
+            <dd className="camila-dato">{r.quePaso || t.noDijo}</dd>
           </div>
-        ))}
-      </dl>
+          <div>
+            <dt>{t.donde}</dt>
+            <dd className="camila-dato">{r.donde || t.noDijo}</dd>
+          </div>
+          {r.lecturaCaptura ? (
+            <div>
+              <dt>{t.enLaCaptura}</dt>
+              <dd className="camila-dato">{r.lecturaCaptura}</dd>
+            </div>
+          ) : null}
+          {r.extra ? (
+            <div>
+              <dt>
+                {t.preguntaEquipo}: {r.extra.pregunta}
+              </dt>
+              <dd className="camila-dato">{r.extra.respuesta}</dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : (
+        <p className="camila-dato">
+          <strong>{t.loQueDijo}:</strong> {r.inicial}
+        </p>
+      )}
+      {r.contacto ? (
+        <>
+          <h5>{t.contacto}</h5>
+          <dl className="camila-respuestas" data-testid="camila-contacto">
+            <div>
+              <dt>{t.nombre}</dt>
+              <dd className="camila-dato">
+                {r.nombre || (r.contacto.sinNombre ? t.noQuisoNombre : t.noDijo)}
+              </dd>
+            </div>
+            {r.contacto.correo ? (
+              <div>
+                <dt>{t.correo}</dt>
+                <dd className="camila-dato">{r.contacto.correo}</dd>
+              </div>
+            ) : null}
+            {r.contacto.telefono ? (
+              <div>
+                <dt>{t.telefono}</dt>
+                <dd className="camila-dato">{r.contacto.telefono}</dd>
+              </div>
+            ) : null}
+          </dl>
+          <p className="pista">
+            {r.contacto.deLaCuenta
+              ? t.deLaCuenta
+              : r.contacto.noQuiso || (!r.contacto.correo && !r.contacto.telefono)
+                ? t.noQuisoContacto
+                : t.porElChat}
+          </p>
+        </>
+      ) : null}
+      {r.preguntas.length ? (
+        <>
+          <h5>{t.preguntasRespuestas}</h5>
+          <dl className="camila-respuestas">
+            {r.preguntas.map((q, i) => (
+              <div key={`${q.clave}-${i}`}>
+                <dt>{idioma === 'en' ? q.en : q.es}</dt>
+                <dd className="camila-dato">{r.respuestas.at(i) || t.sinRespuesta}</dd>
+              </div>
+            ))}
+          </dl>
+        </>
+      ) : null}
+      <h5>{t.captura}</h5>
+      {r.captura ? (
+        <CapturaPrivada falloId={falloId} reporteId={r.id} t={t} />
+      ) : (
+        <p className="pista">{t.sinCaptura}</p>
+      )}
+      <h5>{t.conversacion}</h5>
+      <ConversacionDelReporte falloId={falloId} reporteId={r.id} t={t} idioma={idioma} />
       <h5>{t.adjunto}</h5>
       <div className="tabla-ancha">
         <table className="tabla camila-contexto" aria-label={t.adjunto}>
@@ -580,14 +720,92 @@ function ReporteFallo({
           </tbody>
         </table>
       </div>
-      <h5>{t.captura}</h5>
-      {r.captura ? (
-        <CapturaPrivada falloId={falloId} reporteId={r.id} t={t} />
-      ) : (
-        <p className="pista">{t.sinCaptura}</p>
-      )}
     </article>
   );
+}
+
+type MensajeDeReporte = {
+  id: string;
+  autor: string;
+  texto: string;
+  creado_en: string;
+  adjunto: string | null;
+};
+
+/** La conversación completa del reporte: se pide al tocar, con la sesión del equipo. */
+function ConversacionDelReporte({
+  falloId,
+  reporteId,
+  t,
+  idioma,
+}: {
+  falloId: string;
+  reporteId: string;
+  t: Textos;
+  idioma: Idioma;
+}) {
+  const [pedida, setPedida] = useState(false);
+  const [mensajes, setMensajes] = useState<MensajeDeReporte[] | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!pedida) return;
+    let vivo = true;
+    pedir<{ mensajes: MensajeDeReporte[] }>(
+      'GET',
+      `/datos/admin/camila/fallos/${encodeURIComponent(falloId)}/conversacion/${encodeURIComponent(reporteId)}`,
+    )
+      .then((r) => vivo && setMensajes(r.mensajes))
+      .catch((x: unknown) => vivo && setError(mensajeDe(x)));
+    return () => {
+      vivo = false;
+    };
+  }, [pedida, falloId, reporteId]);
+  if (!pedida)
+    return (
+      <button
+        type="button"
+        className="boton secundario"
+        onClick={() => setPedida(true)}
+        data-testid="camila-ver-conversacion"
+      >
+        {t.verConversacion}
+      </button>
+    );
+  if (error)
+    return (
+      <p className="error-general" role="alert">
+        {error}
+      </p>
+    );
+  if (!mensajes) return <p className="pista">{t.cargandoConversacion}</p>;
+  return (
+    <ol className="camila-conversacion" data-testid="camila-conversacion">
+      {mensajes.map((m) => (
+        <li key={m.id} className={m.autor === 'persona' ? 'de-persona' : 'de-camila'}>
+          <strong>{t.autor[m.autor] ?? m.autor}</strong>{' '}
+          <small className="pista">{fecha(m.creado_en, idioma)}</small>
+          {m.adjunto ? <AdjuntoPrivado id={m.adjunto} t={t} /> : null}
+          <p className="camila-dato">{m.texto}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** Una imagen de la conversación, pedida con la sesión del equipo. */
+function AdjuntoPrivado({ id, t }: { id: string; t: Textos }) {
+  const [src, setSrc] = useState('');
+  useEffect(() => {
+    let vivo = true;
+    api
+      .verFoto(`/datos/admin/camila/adjuntos/${encodeURIComponent(id)}`)
+      .then((u) => vivo && setSrc(u))
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [id]);
+  return src ? <img className="camila-captura chica" src={src} alt={t.captura} /> : null;
 }
 
 /** La captura se pide con la sesión del equipo y se muestra en la página (nunca un enlace público). */
@@ -711,8 +929,8 @@ export function PreguntasDiagnostico({ idioma }: { idioma: Idioma }) {
       <div className="flex-tarjeta">
         <h3>{t.base}</h3>
         <ol className="camila-base">
-          {datos.base.map((q) => (
-            <li key={q.clave}>{idioma === 'en' ? q.en : q.es}</li>
+          {t.baseLista.map((q) => (
+            <li key={q}>{q}</li>
           ))}
         </ol>
       </div>
