@@ -98,7 +98,7 @@ async function hastaEnCurso(cupon) {
   exigir(/^\d{4}$/.test(pin ?? ''), 'el viaje con regalo no muestra su código de inicio');
   exigir((await paso(id, 'iniciar')).estado !== 200, 'un viaje con regalo empezó sin código');
   exigir((await paso(id, 'iniciar', { pin })).estado === 200, 'iniciar con el código');
-  return { id, total: c.total, regalo: c.regalo.monto };
+  return { id, total: c.total, regalo: c.regalo.monto, distanciaM: c.distanciaM };
 }
 
 try {
@@ -164,7 +164,29 @@ try {
     `UPDATE repartidores SET lat = ${punto.lat}, lng = ${punto.lng}, ubicacion_en = datetime('now') WHERE usuario_id = '${ids.conductor}'`,
   );
   const b = await hastaEnCurso(CUPONES[1]);
-  for (const parte of [0.25, 0.5, 0.75, 1]) {
+  // El recorrido de verdad sigue las calles; aquí se arma un camino con un desvío (por un punto
+  // intermedio) cuyo largo es el 80 % de la distancia cotizada, en ocho lecturas.
+  const M_POR_GRADO = 111_320;
+  const dx = (DESTINO.lng - punto.lng) * M_POR_GRADO * Math.cos((punto.lat * Math.PI) / 180);
+  const dy = (DESTINO.lat - punto.lat) * M_POR_GRADO;
+  const recta = Math.hypot(dx, dy);
+  const largo = Math.max(recta, b.distanciaM * 0.8);
+  const desvio = Math.sqrt(Math.max(0, (largo / 2) ** 2 - (recta / 2) ** 2));
+  const medio = {
+    lat: (punto.lat + DESTINO.lat) / 2 + ((dx / recta) * desvio) / M_POR_GRADO,
+    lng:
+      (punto.lng + DESTINO.lng) / 2 -
+      ((dy / recta) * desvio) / (M_POR_GRADO * Math.cos((punto.lat * Math.PI) / 180)),
+  };
+  const entre = (a, z, t) => ({
+    lat: a.lat + (z.lat - a.lat) * t,
+    lng: a.lng + (z.lng - a.lng) * t,
+  });
+  const camino = [
+    ...[0.25, 0.5, 0.75, 1].map((t) => entre(punto, medio, t)),
+    ...[0.25, 0.5, 0.75, 1].map((t) => entre(medio, DESTINO, t)),
+  ];
+  for (const lugar of camino) {
     // Cada lectura llega tres minutos después de la anterior (no es un salto imposible).
     await sql(
       `UPDATE ubicaciones_recientes SET creado_en = datetime(creado_en, '-180 seconds') WHERE usuario_id = '${ids.conductor}'`,
@@ -175,11 +197,7 @@ try {
     const u = await pedir(
       'POST',
       '/datos/repartidor/ubicacion',
-      {
-        lat: punto.lat + (DESTINO.lat - punto.lat) * parte,
-        lng: punto.lng + (DESTINO.lng - punto.lng) * parte,
-        precision: 10,
-      },
+      { lat: lugar.lat, lng: lugar.lng, precision: 10 },
       comoConductor,
     );
     exigir(u.estado === 200, `ubicación del conductor: ${u.estado} ${u.d.error ?? ''}`);
@@ -199,7 +217,10 @@ try {
       `SELECT distancia_m_real AS m, pasajero_cerca AS cerca, pasajero_lejos AS lejos FROM viajes WHERE operacion_id = '${b.id}'`,
     )
   )[0];
-  exigir(Number(medido?.m) > 5_000, `el servidor no sumó el recorrido: ${JSON.stringify(medido)}`);
+  exigir(
+    Number(medido?.m) > b.distanciaM * 0.7,
+    `el servidor no sumó el recorrido (${b.distanciaM} m cotizados): ${JSON.stringify(medido)}`,
+  );
   exigir(
     Number(medido?.cerca) === 1 && Number(medido?.lejos) === 0,
     `la lectura del pasajero no quedó «cerca»: ${JSON.stringify(medido)}`,
@@ -209,7 +230,7 @@ try {
   exigir(finB.estado === 200, `terminar el viaje real: ${finB.estado} ${JSON.stringify(finB.d)}`);
   exigir(
     finB.d.regaloEnRevision === false && finB.d.regaloDivoox === b.regalo,
-    `el viaje real quedó en revisión: ${JSON.stringify(finB.d)}`,
+    `el viaje real quedó en revisión: ${JSON.stringify(finB.d)} · ${JSON.stringify((await sql(`SELECT detalle FROM regalos_en_revision WHERE operacion_id = '${b.id}'`))[0] ?? {})}`,
   );
   exigir((await regalosEnGanancias()) === 2, 'el regalo del viaje real no entró a ganancias');
   casos.push('un viaje hecho de verdad acredita el regalo al terminar, sin revisión');
