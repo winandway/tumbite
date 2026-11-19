@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { ordenarPorUso, serviciosDelInicio } from '@tumbite/compartido';
 import { textosInicioNuevo } from './textosNuevo';
 
 /**
@@ -94,5 +95,30 @@ describe('C-OCHO-ICONOS-SIEMPRE · el inicio del cliente', () => {
       'utf8',
     );
     expect(ruta).not.toContain('huellaAparato');
+  });
+
+  // Gerencia (18 nov 2026): el orden no depende del idioma. Sin historial propio en ese teléfono,
+  // es el del diseño; «por lo que más usas» solo reordena con los toques de esa persona.
+  it('el orden de los ocho no depende del idioma: sin historial es el del diseño', () => {
+    const lista = serviciosDelInicio(null);
+    expect(lista.map((x) => x.id)).toEqual([
+      'comida',
+      'mercado',
+      'farmacia',
+      'licores',
+      'carro',
+      'moto',
+      'envios',
+      'mas',
+    ]);
+    expect(ordenarPorUso(lista, {})).toEqual({ lista, ordenado: false });
+    const f = leer('Inicio.tsx');
+    // Ni el orden ni la lista reciben el idioma; el historial vive en el teléfono, no en la cuenta.
+    expect(f).toMatch(/serviciosDelInicio\(servicios\?\.servicios \?\? null\)/);
+    expect(f).toMatch(/ordenarPorUso\(visibles, usos\)/);
+    expect(f).toMatch(/almacenTelefono\.leer\(LLAVE_USOS\)/);
+    // Tocar uno cerrado no cuenta como uso.
+    const i = f.indexOf("accion.tipo === 'aun_no_hay'");
+    expect(i).toBeLessThan(f.indexOf('setUsos(nuevos)'));
   });
 });

@@ -645,7 +645,19 @@ for (const idioma of ['en', 'es'] as const) {
     const porVenir = servicios.servicios.filter(
       (s) => s.id !== 'comida' && s.id !== 'mas' && s.accion !== 'abrir',
     );
-    for (const s of porVenir) await expect(cli.getByTestId(`servicio-${s.id}`)).toHaveCount(0);
+    // C-OCHO-ICONOS-SIEMPRE (18 nov 2026, Richard): los ocho se ven SIEMPRE; el que todavía no
+    // abre en la zona no navega: abre la hoja «aún no hay» y se vuelve con «Volver».
+    for (const id of ['comida', 'mercado', 'farmacia', 'licores', 'carro', 'moto', 'envios', 'mas'])
+      await expect(cli.getByTestId(`servicio-${id}`)).toHaveCount(1);
+    const cerrado = porVenir.find((s) =>
+      ['mercado', 'farmacia', 'licores', 'carro', 'moto', 'envios'].includes(s.id),
+    );
+    if (cerrado) {
+      await cli.getByTestId(`servicio-${cerrado.id}`).click();
+      await expect(cli.getByTestId('aun-no-hay-texto')).toBeVisible({ timeout: 20_000 });
+      await cli.getByTestId('aun-no-hay-volver').click();
+      await expect(cli.getByTestId('aun-no-hay-texto')).toHaveCount(0);
+    }
     await expect(cli.getByText(/^(Pronto|Soon)$/)).toHaveCount(0);
     if (await cli.getByTestId('servicio-mas').count()) {
       // C-INICIO-NUEVO (17 nov 2026, borrador aprobado): «Más servicios» es una hoja con lo

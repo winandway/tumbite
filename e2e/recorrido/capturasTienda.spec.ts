@@ -378,7 +378,10 @@ for (const idioma of ['es', 'en'] as const)
     for (const s of [...SERVICIOS, 'mas'])
       await expect(p.getByTestId(`servicio-${s}`)).toBeVisible({ timeout: 30_000 });
     for (const s of TODOS.filter((x) => !SERVICIOS.includes(x)))
-      await expect(p.getByTestId(`servicio-${s}`)).toHaveCount(0);
+      // C-OCHO-ICONOS-SIEMPRE: los de la cuadrícula de ocho se ven siempre, abran o no en la zona.
+      await expect(p.getByTestId(`servicio-${s}`)).toHaveCount(
+        ['mercado', 'farmacia', 'licores', 'carro', 'moto', 'envios'].includes(s) ? 1 : 0,
+      );
     await expect(p.getByTestId(`portada-respaldo-${C.portada}`)).toBeVisible();
     await expect(p.getByText(C.banner[en ? 1 : 0]!.split(',')[0]!).first()).toBeVisible({
       timeout: 30_000,

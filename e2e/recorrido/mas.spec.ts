@@ -113,11 +113,34 @@ for (const idioma of ['en', 'es'] as const)
     const en = idioma === 'en';
     for (const s of ['moto', 'carro', 'comida', 'envios'])
       await expect(p.getByTestId(`servicio-${s}`)).toBeVisible({ timeout: 30_000 });
-    await expect(p.getByTestId('servicio-farmacia')).toHaveCount(0);
+    // C-OCHO-ICONOS-SIEMPRE (18 nov 2026, Richard): los ocho SIEMPRE, también los que no abren
+    // aquí (Farmacia por venir; Mercado y Licores ni vienen en el catálogo). El cerrado abre la
+    // hoja «aún no hay» y no navega.
+    for (const s of ['mercado', 'farmacia', 'licores', 'mas'])
+      await expect(p.getByTestId(`servicio-${s}`)).toBeVisible();
+    await p.getByTestId('servicio-farmacia').click();
+    await expect(p.getByTestId('aun-no-hay-texto')).toContainText(
+      en ? 'not available in this area yet' : 'En esta zona aún no hay Farmacia',
+    );
+    // Con la cuenta iniciada se ofrece «Avísame»; nunca el de crear cuenta.
+    await expect(p.getByTestId('aun-no-hay-avisame')).toBeVisible();
+    await expect(p.getByTestId('aun-no-hay-crear-cuenta')).toHaveCount(0);
+    await p.getByTestId('aun-no-hay-volver').click();
+    await expect(p.getByTestId('aun-no-hay-texto')).toHaveCount(0);
+    expect(new URL(p.url()).pathname).toMatch(/^\/app\/?$/);
     // Ningún nombre de servicio se corta, tampoco en un teléfono angosto de 360 con letra grande.
     await p.setViewportSize({ width: 360, height: 780 });
     await p.addStyleTag({ content: 'html { font-size: 120% }' });
-    for (const s of ['moto', 'carro', 'comida', 'envios', 'mas']) {
+    for (const s of [
+      'moto',
+      'carro',
+      'comida',
+      'envios',
+      'mercado',
+      'farmacia',
+      'licores',
+      'mas',
+    ]) {
       const cortado = await p
         .getByTestId(`servicio-${s}`)
         .evaluate((el) =>
