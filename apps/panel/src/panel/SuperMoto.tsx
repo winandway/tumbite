@@ -946,7 +946,7 @@ function FilaPais({ p, t, alCambiar }: { p: PaisPasajeros; t: Textos; alCambiar:
   );
 }
 
-function CompuertaPais({ t }: { t: Textos }) {
+function CompuertaPais({ t, idioma }: { t: Textos; idioma: Idioma }) {
   const [paises, setPaises] = useState<PaisPasajeros[] | null>(null);
   const [error, setError] = useState('');
   const cargar = useCallback(() => {
@@ -957,7 +957,9 @@ function CompuertaPais({ t }: { t: Textos }) {
   useEffect(cargar, [cargar]);
   return (
     <>
-      <h2>{t.compuerta}</h2>
+      <h2>
+        {t.compuerta} <AyudaAqui guia="open-peru-city" idioma={idioma} />
+      </h2>
       <p className="pista">{t.compuertaAyuda}</p>
       {error ? (
         <p className="error-general" role="alert">
@@ -2110,7 +2112,7 @@ export function SuperMoto({ base, idioma }: { base: string; idioma: Idioma }) {
       <h1>{t.titulo}</h1>
       <p className="pista">{t.intro}</p>
       <AbrirCiudad idioma={idioma} t={t} />
-      <CompuertaPais t={t} />
+      <CompuertaPais t={t} idioma={idioma} />
       <TasaReferencia idioma={idioma} t={t} />
       {conductor ? (
         <Conductor

@@ -30,6 +30,7 @@ const MAPA: [archivo: string, guia: string][] = [
   ['SuperSaldoConductores.tsx', 'driver-balance-top-up'],
   ['SuperAgentes.tsx', 'divoox-agents'],
   ['SuperMoto.tsx', 'bolivar-reference-rate'],
+  ['SuperMoto.tsx', 'open-peru-city'],
   ['SuperReferidosEquipos.tsx', 'referrals-and-teams'],
   ['SuperLineas.tsx', 'driver-lines'],
   ['SuperBanners.tsx', 'app-banners'],
