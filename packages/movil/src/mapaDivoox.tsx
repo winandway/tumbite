@@ -3,6 +3,7 @@ import { Text } from './diseno';
 import {
   Image,
   type ImageSourcePropType,
+  PixelRatio,
   Platform,
   Pressable,
   View,
@@ -125,8 +126,22 @@ export function useCapturaMarcador(clave: unknown): {
   return { seguir: estado.viva, listo, marcador };
 }
 
+type Margen = { top: number; right: number; bottom: number; left: number };
+/**
+ * C-MAPA-VISTA-PREVIA: el margen del encuadre. En el mapa pequeño (150 a 200 de alto) el margen de
+ * siempre se comía casi todo el alto y el recorrido salía diminuto: ahí va un margen chico, en puntos
+ * de pantalla (en Android `fitToCoordinates` lo pide en píxeles). Los mapas grandes no cambian.
+ */
+export function margenEncuadre(vistaPrevia: boolean, normal: Margen): Margen {
+  if (!vistaPrevia) return normal;
+  const u = Platform.OS === 'android' ? PixelRatio.get() : 1;
+  return { top: 30 * u, right: 36 * u, bottom: 22 * u, left: 36 * u };
+}
+
 /** Lado, en puntos, del disco de la marca (el mismo de la web). */
 const LADO = 44;
+/** En Android la imagen es el disco (ver abajo): un poco mayor para que el isotipo se lea igual. */
+const LADO_ANDROID = 48;
 
 /**
  * La marca del repartidor o conductor: el isotipo de Divoox sobre un disco blanco con borde negro,
@@ -144,6 +159,32 @@ export function MarcaIsotipo({
   /** C-MARCADOR-ANDROID: la imagen ya cargó (el mapa vuelve a tomar la foto del marcador). */
   alCargar?: () => void;
 }) {
+  if (Platform.OS === 'android')
+    // C-MARCADOR-ANDROID (paquete 13): en Android la IMAGEN es el hijo directo del marcador y ella
+    // misma pinta el disco (fondo blanco, borde negro, redonda). react-native-maps 1.27.2 solo engancha
+    // la carga de una imagen que cuelga DIRECTO del marcador (`hackToHandleDraweeLifecycle`: la da por
+    // puesta en pantalla y, al cargar, vuelve a tomar la foto). Dentro de otra vista (como antes) la
+    // imagen nunca llegaba a la foto y el marcador salía como un círculo blanco vacío. Un poco más
+    // grande (48) para que el isotipo encajado entero se vea del mismo tamaño que en iPhone.
+    return (
+      <Image
+        testID="mapa-marca-isotipo"
+        source={fuente}
+        style={{
+          width: LADO_ANDROID,
+          height: LADO_ANDROID,
+          borderRadius: LADO_ANDROID / 2,
+          backgroundColor: '#FFFFFF',
+          borderWidth: 2,
+          borderColor: '#101010',
+          opacity: apagado ? 0.55 : 1,
+        }}
+        resizeMode="contain"
+        fadeDuration={0}
+        onLoad={alCargar}
+        accessibilityIgnoresInvertColors
+      />
+    );
   return (
     <View
       testID="mapa-marca-isotipo"

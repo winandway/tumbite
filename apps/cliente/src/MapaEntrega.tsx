@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { C, MarcaIsotipo, usePropsMapaDivoox, useCapturaMarcador, Text } from '@tumbite/movil';
+import {
+  C,
+  MarcaIsotipo,
+  margenEncuadre,
+  usePropsMapaDivoox,
+  useCapturaMarcador,
+  Text,
+} from '@tumbite/movil';
 import {
   altitudDeZoom,
   rotuloDestino,
@@ -95,7 +102,10 @@ export function MapaEntrega({
     }
     mapa.current?.fitToCoordinates(
       puntos.map((p) => ({ latitude: p.lat, longitude: p.lng })),
-      { edgePadding: { top: 60, right: 60, bottom: 60, left: 60 }, animated: true },
+      {
+        edgePadding: margenEncuadre(vistaPrevia, { top: 60, right: 60, bottom: 60, left: 60 }),
+        animated: true,
+      },
     );
     // Se reencuadra cuando cambia algún punto.
     // eslint-disable-next-line react-hooks/exhaustive-deps

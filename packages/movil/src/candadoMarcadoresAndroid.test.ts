@@ -76,6 +76,17 @@ describe('C-MARCADOR-ANDROID (segunda vuelta): se repinta con redraw()', () => {
     expect(s).toMatch(/fadeDuration=\{0\}/);
   });
 
+  it('en Android la imagen del isotipo es el hijo DIRECTO del marcador (la única que la librería engancha)', () => {
+    const s = leer('packages/movil/src/mapaDivoox.tsx');
+    const pieza = s.slice(s.indexOf('export function MarcaIsotipo'));
+    expect(pieza).toMatch(
+      /if \(Platform\.OS === 'android'\)[\s\S]{0,900}return \(\s*<Image\s+testID="mapa-marca-isotipo"/,
+    );
+    const android = pieza.slice(0, pieza.indexOf('return (\n    <View'));
+    expect(android).toMatch(/onLoad=\{alCargar\}/);
+    expect(android).toMatch(/borderRadius: LADO_ANDROID \/ 2/);
+  });
+
   it('el redibujador pinta todos los marcadores en cada momento y suelta los que se van', () => {
     const relojes: { f: () => void; ms: number }[] = [];
     const r = crearRedibujador({
