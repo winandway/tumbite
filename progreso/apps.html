@@ -209,17 +209,24 @@
     <header>Divoox · Apps</header>
     <main>
       <section class="real" id="seccion-real">
-        <h2>Versión real — para el piloto de El Vigía y Tucaní</h2>
+        <h2>Versión real — se baja de Play Store</h2>
         <p>
           Estas son las apps de verdad: trabajan con divoox.com, con cuentas reales y dinero real.
-          Son las que se instalan los conductores, los pasajeros y los restaurantes del piloto. Se
-          instalan directo en Android, sin Google Play. Si el teléfono tenía una app que dice
-          «PRUEBAS», bórrala primero.
+          Los pasajeros y los conductores las bajan de Play Store, como cualquier app.
+          <b
+            >Si el teléfono tiene una app de Divoox instalada por enlace o por código (la que dice
+            «PRUEBAS», o la versión real que se instalaba sin la tienda), hay que desinstalarla
+            primero</b
+          >: Play Store no puede poner la suya encima y seguiría abriéndose la vieja.
         </p>
         <div class="rejilla" id="real"></div>
       </section>
 
       <h2>Apps de prueba — solo para el equipo</h2>
+      <p class="ojo">
+        <b>Solo para el equipo de Divoox. El público baja la app de Play Store.</b> Los códigos y
+        los enlaces de las apps de prueba se ven con la clave del equipo, más abajo.
+      </p>
       <p>
         Las tres apps de prueba, para Android y para iPhone. Con esta página abierta en la
         computadora, apunta la cámara del teléfono al código de la app que quieres instalar. Si la
@@ -230,10 +237,11 @@
       <div class="rejilla" id="apps"></div>
       <div id="apps-msg"></div>
 
-      <h2>Cuentas para entrar</h2>
+      <h2>Clave del equipo y cuentas para entrar</h2>
       <p>
-        Los usuarios y la contraseña de prueba de cada app. Se ven con la clave del equipo, que se
-        pide una sola vez en este navegador.
+        Con la clave del equipo se ven los códigos de las apps de prueba, de arriba, y los usuarios
+        y la contraseña de prueba de cada app. Se ven con la clave del equipo, que se pide una sola
+        vez en este navegador.
       </p>
       <div id="clave-caja" style="display: none">
         <div class="ojo">
@@ -314,23 +322,41 @@
       const AVISO_IPHONE =
         'TestFlight reemplaza la app de la tienda; las dos no pueden estar juntas.';
 
+      // C-PRUEBAS-SOLO-EQUIPO: lo que está en Play Store se baja de Play Store, y los códigos de las
+      // apps de prueba no se pintan hasta que el servidor acepta la clave del equipo.
+      const PLAY = {
+        cliente: 'https://play.google.com/store/apps/details?id=com.windoce.tumbite',
+        repartidor: 'https://play.google.com/store/apps/details?id=com.windoce.tumbite.driver',
+      };
+      const AVISO_PLAY =
+        'Si tienes una app de Divoox instalada por enlace, desinstálala antes de bajar esta.';
+      let appsDePrueba = '';
+      let equipoDentro = false;
+      function pintarPruebas() {
+        el('apps').innerHTML = equipoDentro
+          ? appsDePrueba
+          : '<div class="aviso">Solo para el equipo: escribe la clave del equipo, más abajo, para ver los códigos y los enlaces de las apps de prueba. El público baja la app de Play Store.</div>';
+      }
+
       async function cargarApps() {
         try {
           const d = await (await fetch('/apps.json', { cache: 'no-store' })).json();
           const lado = (titulo, x, texto, aviso) =>
             `<div class="lado"><strong>${titulo}</strong><span class="qr">${x.qr}</span><small>Número ${esc(x.numero)}${x.codigo ? ` · código ${esc(x.codigo)}` : ''} · ${esc(dia(x.fecha))}</small><a class="boton" href="${esc(x.url)}">${texto}</a><small class="ojo-corto">${aviso}</small></div>`;
-          el('apps').innerHTML = d.apps
+          appsDePrueba = d.apps
             .map(
               (a) =>
                 `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><div class="par">${lado('Android', a.android, 'Descargar', AVISO_ANDROID)}${lado('iPhone', a.iphone, 'Abrir TestFlight', AVISO_IPHONE)}</div></div>`,
             )
             .join('');
+          pintarPruebas();
           const reales = d.real ?? [];
           el('real').innerHTML = reales.length
             ? reales
-                .map(
-                  (a) =>
-                    `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><div class="par">${lado('Android · versión real', a.android, 'Descargar', AVISO_ANDROID)}</div></div>`,
+                .map((a) =>
+                  PLAY[a.id]
+                    ? `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><a class="boton" href="${PLAY[a.id]}" target="_blank" rel="noopener noreferrer">Abrir en Play Store</a><small class="ojo-corto">${AVISO_PLAY}</small></div>`
+                    : `<div class="tarjeta"><b>${esc(a.nombre)}</b><span class="sub">${esc(a.para)}</span><div class="par">${lado('Android · versión real', a.android, 'Descargar', AVISO_ANDROID)}</div></div>`,
                 )
                 .join('')
             : '<div class="aviso">La versión real se está compilando.</div>';
@@ -362,6 +388,8 @@
             return;
           }
           el('clave-caja').style.display = 'none';
+          equipoDentro = true;
+          pintarPruebas();
           const copiable = (etiqueta, valor) =>
             valor
               ? `<p class="sub" style="margin:10px 0 2px">${esc(etiqueta)}</p><div class="fila"><code>${esc(valor)}</code><button class="boton sec" data-copiar="${esc(valor)}">Copiar</button></div>`
