@@ -3,6 +3,7 @@ import { Animated, Easing, Image, Linking, Platform, Pressable, Share, View } fr
 import {
   ErrorApi,
   type LlegadaEnVivo,
+  type MontoEnMano as MontoEnManoTipo,
   type Referencia,
   minutosDeLlegada,
   textoHoraLlegada,
@@ -15,6 +16,7 @@ import {
   C,
   Campo,
   ChatPedido,
+  MontoEnMano,
   URL_SERVIDOR,
   leerTokenGuardado,
   useSesion,
@@ -72,6 +74,8 @@ export type ViajePasajero = {
   } | null;
   /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
   referencia?: Referencia | null;
+  /** C-BS-EN-MANO: lo que paga en mano al conductor, en dólares y en bolívares (tasa fijada). */
+  enMano?: MontoEnManoTipo | null;
   /** C-VIAJE-PARADAS: las paradas del viaje, en orden, y cuántas admite la ciudad. */
   paradas?: ParadaDelViaje[];
   /** C-HORA-LLEGADA: la hora calculada con tráfico en el servidor (recogida o destino). */
@@ -644,7 +648,15 @@ export function ViajeEnCurso({
             moneda={viaje.moneda ?? 'USD'}
             idioma={idioma}
           />
-          {viaje.referencia ? (
+          {viaje.enMano ? (
+            <MontoEnMano
+              testID="viaje-precio-bs"
+              monto={viaje.enMano}
+              idioma={idioma === 'en' ? 'en' : 'es'}
+              quien="pasajero"
+              etiqueta={viaje.estado === 'terminado' ? t.pagasteEnMano : t.pagasEnMano}
+            />
+          ) : viaje.referencia ? (
             <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>
               {textoReferencia(viaje.referencia, idioma)}
             </Text>

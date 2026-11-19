@@ -20,6 +20,8 @@ export const TEXTOS_VIAJE = {
       viaje: 'de viaje',
       minutos: 'min',
       enEfectivo: 'Cobras en efectivo al terminar',
+      // C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares.
+      cobraEnMano: 'Cobras en mano',
       // C-CUPON-DIVOOX: el pasajero trae un regalo que paga Divoox.
       regaloOferta:
         'Con regalo de Divoox: el pasajero paga menos en mano y Divoox te paga {monto}.',
@@ -140,6 +142,7 @@ export const TEXTOS_VIAJE = {
       viaje: 'trip',
       minutos: 'min',
       enEfectivo: 'You collect cash at the end',
+      cobraEnMano: 'You collect in hand',
       regaloOferta:
         'With a Divoox gift: the rider pays less in person and Divoox pays you {monto}.',
       recoger: 'Pick up at',

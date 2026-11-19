@@ -141,7 +141,7 @@ async function mundoVe() {
   }
   const fila = (id: string) =>
     e.m.DB.prepare(
-      'SELECT estado, moneda, metodo_pago, cobro_estado, conciliacion_estado, total, propina, ganancia, subtotal FROM pedidos WHERE id = ?',
+      'SELECT estado, moneda, metodo_pago, cobro_estado, conciliacion_estado, total, propina, ganancia, subtotal, ref_tasa FROM pedidos WHERE id = ?',
     )
       .bind(id)
       .first<Record<string, string | number>>();
@@ -197,6 +197,10 @@ describe('C-COMIDA-VE-CIRCUITO: comida en El Vigía de punta a punta', () => {
       monto: Number(f0?.total) * 250,
     });
 
+    // C-BS-EN-MANO: la tasa queda fijada con el pedido; si el equipo la cambia después, el pedido
+    // conserva la suya (cliente y repartidor ven el mismo número).
+    expect(f0).toMatchObject({ ref_tasa: 250 });
+    await w.e.m.llamar('PUT', '/datos/admin/tasas-referencia/VE', { tasa: 300 }, w.e.admin.token);
     await w.hastaEnCamino(id, rep);
     const comision = Number((await w.fila(id))?.ganancia);
     expect(comision).toBeGreaterThan(0);

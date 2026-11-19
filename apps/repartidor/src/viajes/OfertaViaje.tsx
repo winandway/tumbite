@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { type Idioma, enIdioma, formatearMonto, textoMultiplicador } from '@tumbite/compartido';
-import { Boton, C, Text, Modal } from '@tumbite/movil';
+import {
+  type Idioma,
+  type MontoEnMano as Monto,
+  enIdioma,
+  formatearMonto,
+  textoMultiplicador,
+} from '@tumbite/compartido';
+import { Boton, C, MontoEnMano, Text, Modal } from '@tumbite/movil';
 import { TEXTOS_VIAJE } from './textos';
 import { textoOfertaConfianza } from './agendaFijos';
 import { useAlarmaOferta } from '../sonidoOferta';
@@ -23,6 +29,8 @@ export type OfertaViaje = {
   metodoPago: string;
   /** C-CUPON-DIVOOX: lo que paga Divoox por el regalo del pasajero (0 sin regalo). */
   regaloDivoox?: number;
+  /** C-BS-EN-MANO: lo que cobra en mano, en dólares y en bolívares con la tasa fijada del viaje. */
+  enMano?: Monto | null;
   /** C-CARRO-PRUEBAS: «moto» o «carro». */
   servicioId?: string;
   /** C-VIAJE-PROGRAMADO: si es una reserva, para cuándo (ISO). */
@@ -182,6 +190,20 @@ export function OfertaViajeModal({
               style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
             >
               <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enEfectivo}</Text>
+            </View>
+          ) : null}
+          {oferta.enMano?.local || oferta.enMano?.sinTasa ? (
+            <View
+              testID="oferta-viaje-en-mano"
+              style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 10 }}
+            >
+              <MontoEnMano
+                testID="oferta-en-mano"
+                monto={oferta.enMano}
+                idioma={idioma === 'en' ? 'en' : 'es'}
+                quien="conductor"
+                etiqueta={textos.oferta.cobraEnMano}
+              />
             </View>
           ) : null}
           {(oferta.regaloDivoox ?? 0) > 0 ? (
