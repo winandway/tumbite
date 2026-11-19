@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-19T11:33:40Z",
+  "actualizado": "2026-11-19T16:08:31Z",
   "version": "fe71f3f",
   "ahora": "19 nov: quedó publicado el paquete nuevo del conductor: lo que cobra va en cifra grande y verde con los bolívares debajo, el mapa aparece en la oferta y en el viaje, los pasos del viaje se deslizan (llegué, iniciar, terminar) y el saldo se ve en el inicio. Las apps con todo esto ya están para el equipo en la prueba interna de Play (Divoox 49 y Driver 44) y en TestFlight (Divoox 57 y Driver 44). En Play Store para el público siguen Divoox 0.1.48 y Driver 0.1.43, aprobadas hoy. A la tienda pública esta versión va después de la revisión del auditor.",
   "proximo": [
@@ -489,6 +489,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Soporte: reportar un fallo ahora es una conversación, y la captura va junto al mensaje",
+      "texto": "Camila ya no hace un cuestionario fijo. Lee la captura y lo que la persona escribe, anota lo que ya dijo (el problema, su nombre, su correo o teléfono, aunque lleguen juntos) y pregunta solo lo que falta, una cosa a la vez. Al terminar dice lo que entendió, da el número de caso y dice cómo va a avisar. La captura ya no se envía sola: queda junto al mensaje, como una imagen pequeña con su equis, y se envía al tocar Enviar. Quien vuelve no repite sus datos. En la web ya está; en Divoox Driver llega con la próxima versión de la app."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Paquete nuevo del conductor: mapa, pasos deslizando y saldo en el inicio",
