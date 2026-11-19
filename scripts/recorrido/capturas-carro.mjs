@@ -743,9 +743,13 @@ async function correr(M, idiomas) {
 
     // ───────── Driver: la parada que sigue y la espera en la parada
     await d.reload();
-    await d.getByText(en ? 'I’m at the stop' : 'Llegué a la parada', { exact: true }).waitFor({
-      timeout: 60_000,
-    });
+    await d
+      .getByText(en ? 'Slide when you reach the stop' : 'Desliza al llegar a la parada', {
+        exact: true,
+      })
+      .waitFor({
+        timeout: 60_000,
+      });
     await espera(800);
     await foto(d, 'driver-parada', idioma);
     // El conductor llega a la parada (su posición se pone directo: el servidor no reescribe la ficha

@@ -87,6 +87,8 @@ const es = {
   },
   pedido: {
     llegue: 'Llegué al restaurante',
+    // C-PASOS-DESLIZANDO: llegar al restaurante se desliza (como DoorDash Dasher).
+    deslizarLlegue: 'Desliza al llegar al restaurante',
     llegueOk: 'Llegada registrada. El restaurante ya sabe que estás aquí.',
     llegueLejos: 'Todavía estás a {m} m del local. El botón funciona a menos de 200 m.',
     noListo: 'El pedido no está listo',
@@ -161,6 +163,13 @@ const es = {
   },
   prepago: {
     titulo: 'Saldo para comisiones',
+    // C-SALDO-EN-INICIO (19 nov 2026): la tarjeta del saldo en el inicio de Driver.
+    inicioTitulo: 'Tu saldo para comisiones',
+    inicioRecargar: 'Recargar saldo',
+    inicioVer: 'Ver mi saldo',
+    inicioBajo: 'Tu saldo se está acabando. Recarga para seguir recibiendo trabajo.',
+    inicioSin:
+      'Sin saldo no te llegan carreras ni pedidos que se cobran en mano. Recarga para volver a recibirlos.',
     ayuda:
       'La comisión de Divoox de las carreras y los pedidos que cobras en mano sale de este saldo. Se aparta al aceptar y se cobra al terminar; sin saldo no te llegan. Recarga con un código de un punto de venta o con el equipo de Divoox de tu ciudad.',
     disponible: 'Disponible',
@@ -317,6 +326,7 @@ const en: T = {
   },
   pedido: {
     llegue: 'I’m at the restaurant',
+    deslizarLlegue: 'Slide when you reach the restaurant',
     llegueOk: 'Arrival recorded. The restaurant knows you’re here.',
     llegueLejos: 'You’re still {m} m from the store. The button works within 200 m.',
     noListo: 'Order isn’t ready',
@@ -389,6 +399,12 @@ const en: T = {
   },
   prepago: {
     titulo: 'Balance for fees',
+    inicioTitulo: 'Your balance for fees',
+    inicioRecargar: 'Top up balance',
+    inicioVer: 'View my balance',
+    inicioBajo: 'Your balance is running low. Top up to keep getting work.',
+    inicioSin:
+      'Without balance you won’t get trips or orders paid in person. Top up to start receiving them again.',
     ayuda:
       'The Divoox fee for the trips and orders you collect in person comes out of this balance. It’s set aside when you accept and charged when you finish; without balance you don’t get them. Top up with a sales point code or through the Divoox team in your city.',
     disponible: 'Available',

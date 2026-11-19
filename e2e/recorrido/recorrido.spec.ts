@@ -944,9 +944,12 @@ for (const idioma of ['en', 'es'] as const) {
     await foto(rep, 'repartidor-oferta-bono');
     await rep.getByRole('button', { name: L.aceptarOferta, exact: true }).click();
     // Como los grandes (18 oct): «Llegué al restaurante» confirma la llegada con la posición.
-    await expect(rep.getByRole('button', { name: L.llegue })).toBeVisible({ timeout: 20_000 });
+    // C-PASOS-DESLIZANDO (19 nov 2026): «Llegué al restaurante» se desliza, nunca se toca.
+    await expect(rep.getByTestId('pedido-llegue')).toContainText(L.deslizarLlegue, {
+      timeout: 20_000,
+    });
     await foto(rep, 'repartidor-llegue');
-    await rep.getByRole('button', { name: L.llegue }).click();
+    await deslizar(rep, 'pedido-llegue');
     await expect(rep.getByText(L.llegueOk, { exact: false })).toBeVisible({ timeout: 20_000 });
     const tomarFoto = async (boton: string, archivo: string) => {
       const [selector] = await Promise.all([

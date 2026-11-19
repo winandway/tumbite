@@ -371,11 +371,16 @@ export function Deslizar({
   texto,
   alTerminar,
   confirmar,
+  ocupado = false,
+  testID,
 }: {
   texto: string;
-  alTerminar: () => void;
+  alTerminar: () => unknown;
   /** Revisor (18 nov 2026): con lector de pantalla, terminar pregunta antes. */
-  confirmar: { pregunta: string; si: string; no: string };
+  confirmar?: { pregunta: string; si: string; no: string };
+  /** C-PASOS-DESLIZANDO: mientras se manda el paso no se vuelve a deslizar. */
+  ocupado?: boolean;
+  testID?: string;
 }) {
   return (
     <Deslizador
@@ -383,7 +388,9 @@ export function Deslizar({
       tono="logistica"
       texto={texto}
       accionLector={texto}
-      confirmar={confirmar}
+      ocupado={ocupado}
+      testID={testID}
+      {...(confirmar ? { confirmar } : {})}
       alConfirmar={alTerminar}
     />
   );

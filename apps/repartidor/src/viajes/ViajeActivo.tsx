@@ -503,7 +503,16 @@ export function ViajeActivo({
 
       {viaje.estado === 'asignado' ? (
         <>
-          <Boton texto={t.llegue} alTocar={() => void paso('llegue')} cargando={enviando} exito />
+          {/* C-PASOS-DESLIZANDO: «Llegué» se desliza (como Uber Driver): un toque no lo marca. */}
+          <Deslizador
+            variante="accion"
+            tono="exito"
+            testID="viaje-llegue"
+            texto={t.deslizarLlegue}
+            accionLector={t.llegue}
+            ocupado={enviando}
+            alConfirmar={() => paso('llegue')}
+          />
           <Pressable
             onPress={() => void paso('liberar', { motivo: 'conductor_suelta' })}
             accessibilityRole="button"
@@ -568,11 +577,15 @@ export function ViajeActivo({
             </>
           ) : null}
           {casco && (!conCodigo || pin.length === 4) ? (
-            <Boton
-              texto={t.iniciar}
-              alTocar={() => void paso('iniciar', conCodigo ? { pin } : {})}
-              cargando={enviando}
-              exito
+            // C-PASOS-DESLIZANDO: iniciar el viaje (o «recogí el paquete») se desliza.
+            <Deslizador
+              variante="accion"
+              tono="exito"
+              testID="viaje-iniciar"
+              texto={t.deslizarIniciar}
+              accionLector={t.iniciar}
+              ocupado={enviando}
+              alConfirmar={() => paso('iniciar', conCodigo ? { pin } : {})}
             />
           ) : null}
           {quedaGratis <= 0 ? (
@@ -696,11 +709,15 @@ export function ViajeActivo({
       ) : null}
       {parada && !enParada ? (
         <>
-          <Boton
-            texto={t.llegueParada}
-            alTocar={() => void paso(`paradas/${parada.orden}/llegue`)}
-            cargando={enviando}
-            exito
+          {/* C-PASOS-DESLIZANDO: llegar a la parada se desliza. */}
+          <Deslizador
+            variante="accion"
+            tono="exito"
+            testID="viaje-parada-llegue"
+            texto={t.deslizarLlegueParada}
+            accionLector={t.llegueParada}
+            ocupado={enviando}
+            alConfirmar={() => paso(`paradas/${parada.orden}/llegue`)}
           />
           <Pressable
             onPress={() => {
@@ -730,11 +747,15 @@ export function ViajeActivo({
               {reloj(quedaParada > 0 ? quedaParada : esperaParada)}
             </Text>
           </View>
-          <Boton
-            texto={t.seguir}
-            alTocar={() => void paso(`paradas/${parada.orden}/seguir`)}
-            cargando={enviando}
-            exito
+          {/* C-PASOS-DESLIZANDO: seguir después de la parada se desliza. */}
+          <Deslizador
+            variante="accion"
+            tono="exito"
+            testID="viaje-parada-seguir"
+            texto={t.deslizarSeguir}
+            accionLector={t.seguir}
+            ocupado={enviando}
+            alConfirmar={() => paso(`paradas/${parada.orden}/seguir`)}
           />
         </>
       ) : null}

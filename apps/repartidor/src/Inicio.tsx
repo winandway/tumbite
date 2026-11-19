@@ -73,6 +73,7 @@ import type { ZonaDemanda } from './piezas/mapaWeb';
 import { Progreso } from './piezas/Progreso';
 import { MiniaturaPuerta } from './piezas/FotosPuerta';
 import { ResumenDia } from './piezas/ResumenDia';
+import { SaldoInicio } from './piezas/SaldoInicio';
 import { IMG } from './piezas/recursos';
 import { textosDriver } from './piezas/textos';
 import { Oferta } from './grandes/Oferta';
@@ -393,6 +394,12 @@ const T = {
       mano: 'El cliente pidió: entregar en mano',
     } as Record<string, string>,
     enMano: 'Entregado en mano',
+    deslizarEnMano: 'Desliza: entregado en mano',
+    confirmarEnMano: {
+      pregunta: '¿Entregaste el pedido en mano?',
+      si: 'Entregado',
+      no: 'Cancelar',
+    },
     pinPedir: 'PIN de 4 dígitos (lo tiene quien recibe, en su app)',
     noAparece: 'El cliente no aparece',
     esperando5: 'Avisamos al cliente. Escríbele por el chat y espera',
@@ -534,6 +541,8 @@ const T = {
       mano: 'Customer chose: hand it to them',
     } as Record<string, string>,
     enMano: 'Handed to the customer',
+    deslizarEnMano: 'Slide: handed to the customer',
+    confirmarEnMano: { pregunta: 'Did you hand the order over?', si: 'Delivered', no: 'Cancel' },
     pinPedir: '4-digit PIN (the person receiving has it in their app)',
     noAparece: 'Customer isn’t here',
     esperando5: 'We told the customer. Message them in the chat and wait',
@@ -1391,6 +1400,23 @@ export function Inicio() {
       setPrepago(null);
     }
   }, [api]);
+  // C-SALDO-EN-INICIO: el saldo a la vista en el inicio (solo LEE: mirar el inicio no escribe en la
+  // base). Se vuelve a leer al volver al inicio y cuando termina o empieza un trabajo.
+  useEffect(() => {
+    if (vista !== 'inicio') return;
+    let vivo = true;
+    void (async () => {
+      try {
+        const s = await api.pedir<typeof prepago>('GET', '/datos/repartidor/saldo-prepago');
+        if (vivo) setPrepago(s);
+      } catch {
+        if (vivo) setPrepago(null);
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [api, vista, entregaActiva]);
   useEffect(() => {
     if (vista !== 'billetera') return;
     let vivo = true;
@@ -2537,7 +2563,15 @@ export function Inicio() {
                 </Text>
               ))}
               {activo.estado !== 'en_camino' && !activo.llegoRestaurante ? (
-                <Boton texto={tg.pedido.llegue} alTocar={() => void llegue(activo.id)} exito />
+                // C-PASOS-DESLIZANDO: llegar al restaurante se desliza (como DoorDash Dasher).
+                <Deslizador
+                  variante="accion"
+                  tono="exito"
+                  testID="pedido-llegue"
+                  texto={tg.pedido.deslizarLlegue}
+                  accionLector={tg.pedido.llegue}
+                  alConfirmar={() => llegue(activo.id)}
+                />
               ) : null}
               {activo.estado === 'aceptado' && activo.llegoRestaurante ? (
                 <Boton
@@ -3003,12 +3037,16 @@ export function Inicio() {
                             <Text style={{ color: '#666B73', fontSize: 12 }}>{tg.edad.ayuda}</Text>
                           </View>
                         ) : null}
-                        <Boton
-                          texto={t.enMano}
-                          alTocar={() => void entregarEnMano()}
-                          cargando={subiendo}
-                          exito={enMano}
-                          secundario={!enMano}
+                        {/* C-PASOS-DESLIZANDO: entregar en mano cierra el pedido: se desliza. */}
+                        <Deslizador
+                          variante="accion"
+                          tono="exito"
+                          testID="entregar-en-mano"
+                          texto={t.deslizarEnMano}
+                          accionLector={t.enMano}
+                          ocupado={subiendo}
+                          confirmar={t.confirmarEnMano}
+                          alConfirmar={() => entregarEnMano()}
                         />
                         {faltanSeg == null ? (
                           <Boton
@@ -3148,6 +3186,10 @@ export function Inicio() {
   // (C-DESLIZAR-ENTREGA): como Uber, se elige entre pedidos.
   const mensajesInicio = (
     <>
+      {/* C-SALDO-EN-INICIO: el saldo prepago (donde el país lo usa), con aviso si se acaba. */}
+      {!estado?.activo ? (
+        <SaldoInicio saldo={prepago} idioma={idioma} alRecargar={() => setVista('billetera')} />
+      ) : null}
       {mensajes}
       {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}
     </>

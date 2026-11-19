@@ -254,7 +254,7 @@ for (const idioma of ['es', 'en'] as const)
     await boton(T.aceptar).click();
     await expect(banda).toContainText(T.modoBloqueTitulo, { timeout: 20_000 });
     await expect(banda).toContainText(/\d h \d+ min/);
-    await boton(T.llegueCentro).click();
+    await deslizar(p, T.deslizarLlegueCentro);
     const codigos = sqlLocal(
       `SELECT p.codigo_seguimiento AS c FROM ruta_paquetes rq JOIN paquetes p ON p.id = rq.paquete_id
       JOIN ruta_paradas rp ON rp.ruta_id = rq.ruta_id AND rp.envio_id = p.envio_id
@@ -268,7 +268,7 @@ for (const idioma of ['es', 'en'] as const)
       await boton(T.volverRuta).click();
     }
     await foto('carga');
-    await boton(T.salir).click();
+    await deslizar(p, T.deslizarSalir);
     await expect(visible(T.paradasCompletadas(0, 2))).toBeVisible({ timeout: 20_000 });
     await foto('ruta');
 
@@ -280,7 +280,7 @@ for (const idioma of ['es', 'en'] as const)
     await p.getByPlaceholder(T.escribirCodigo).fill(codigos[0]!);
     await boton(T.agregar).click();
     await expect(visible(T.escaneadosDe(1, 1))).toBeVisible({ timeout: 20_000 });
-    await boton(T.llegue).click();
+    await deslizar(p, T.deslizarLlegue);
     const [selector] = await Promise.all([
       p.waitForEvent('filechooser'),
       boton(T.tomarFoto).click(),
@@ -298,7 +298,7 @@ for (const idioma of ['es', 'en'] as const)
     await p.getByPlaceholder(T.escribirCodigo).fill(codigos[1]!);
     await boton(T.agregar).click();
     await expect(visible(T.escaneadosDe(1, 1))).toBeVisible({ timeout: 20_000 });
-    await boton(T.llegue).click();
+    await deslizar(p, T.deslizarLlegue);
     await boton(T.registrarIncidenciaBoton).click();
     await visible(T.motivos.ausente!).click();
     await visible(T.acciones.devolver!).click();
@@ -321,7 +321,7 @@ for (const idioma of ['es', 'en'] as const)
     await boton(T.volverRuta).click();
     await expect(visible(T.entregadoCentro)).toBeVisible({ timeout: 30_000 });
     await foto('devolucion');
-    await boton(T.cerrar).click();
+    await deslizar(p, T.deslizarCerrar);
 
     // El cierre: resumen, el pago del bloque y todo lo demás disponible otra vez.
     const cierre = p.getByTestId('bloque-terminado');

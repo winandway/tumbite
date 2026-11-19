@@ -707,7 +707,7 @@ function MiRutaContenido({
   // C-FLEX-CARGA-LISTA: todo lo que va en la ruta ya está escaneado (los faltantes no cuentan).
   const cargaLista = todos.some((p) => !p.excluido) && todos.every((p) => p.excluido || p.cargado);
   const todasHechas = ruta.paradas.length > 0 && resueltas(ruta) === ruta.paradas.length;
-  const salirARuta = () => void ubicacion().then((p) => accion('iniciar', p ?? {}));
+  const salirARuta = () => ubicacion().then((p) => accion('iniciar', p ?? {}));
 
   const escaner = (
     <Modal
@@ -794,13 +794,15 @@ function MiRutaContenido({
           verPaquete={setPaqueteVer}
         />
         {escaneo.modo === 'carga' && cargaLista ? (
-          <Boton
-            texto={t.salir}
-            exito
-            cargando={trabajando}
-            alTocar={() => {
+          // C-PASOS-DESLIZANDO: salir a la ruta se desliza.
+          <Deslizar
+            texto={t.deslizarSalir}
+            confirmar={t.confirmarSalir}
+            ocupado={trabajando}
+            testID="flex-salir-ruta"
+            alTerminar={() => {
               setEscaneo(null);
-              salirARuta();
+              return salirARuta();
             }}
           />
         ) : (
@@ -922,10 +924,12 @@ function MiRutaContenido({
       {ruta.estado === 'aceptada' ? (
         <>
           {tarjetaCentro(true)}
-          <Boton
-            texto={t.llegueCentro}
-            cargando={trabajando}
-            alTocar={() => void ubicacion().then((p) => accion('llegada-centro', p ?? {}))}
+          {/* C-PASOS-DESLIZANDO: llegar al centro se desliza. */}
+          <Deslizar
+            texto={t.deslizarLlegueCentro}
+            ocupado={trabajando}
+            testID="flex-llegue-centro"
+            alTerminar={() => ubicacion().then((p) => accion('llegada-centro', p ?? {}))}
           />
           <Boton texto={t.rechazar} secundario alTocar={() => void accion('rechazar')} />
         </>
@@ -942,7 +946,13 @@ function MiRutaContenido({
             />
           </View>
           {cargaLista ? (
-            <Boton texto={t.salir} exito cargando={trabajando} alTocar={salirARuta} />
+            <Deslizar
+              texto={t.deslizarSalir}
+              confirmar={t.confirmarSalir}
+              ocupado={trabajando}
+              testID="flex-salir-ruta"
+              alTerminar={salirARuta}
+            />
           ) : (
             <>
               <Boton texto={t.escanear} alTocar={() => void abrirEscaner('carga')} />
@@ -998,7 +1008,13 @@ function MiRutaContenido({
           {cargaLista ? null : (
             <>
               <Text style={{ color: GRIS }}>{t.cargaCompleta}</Text>
-              <Boton texto={t.salir} exito cargando={trabajando} alTocar={salirARuta} />
+              <Deslizar
+                texto={t.deslizarSalir}
+                confirmar={t.confirmarSalir}
+                ocupado={trabajando}
+                testID="flex-salir-ruta"
+                alTerminar={salirARuta}
+              />
             </>
           )}
         </>
@@ -1199,11 +1215,13 @@ function MiRutaContenido({
               {entradaManual((c) => void escaneado(c))}
             </>
           ) : null}
-          <Boton
-            texto={t.cerrar}
-            exito
-            cargando={trabajando}
-            alTocar={() => void accion('cerrar')}
+          {/* C-PASOS-DESLIZANDO: cerrar la ruta se desliza. */}
+          <Deslizar
+            texto={t.deslizarCerrar}
+            confirmar={t.confirmarCerrar}
+            ocupado={trabajando}
+            testID="flex-cerrar-ruta"
+            alTerminar={() => accion('cerrar')}
           />
           <Atras texto={t.listaParadas} alTocar={() => setDevoluciones(null)} />
         </>
@@ -2390,11 +2408,12 @@ function DetalleParada({
             />
           ) : null}
           {parada.estado === 'pendiente' ? (
-            <Boton
-              texto={t.llegue}
-              secundario
-              alTocar={() =>
-                void ubicacion().then((q) =>
+            // C-PASOS-DESLIZANDO: «Ya estacioné» se desliza (un toque no lo marca).
+            <Deslizar
+              texto={t.deslizarLlegue}
+              testID="flex-llegue-parada"
+              alTerminar={() =>
+                ubicacion().then((q) =>
                   encolar({
                     tipo: 'llegada',
                     rutaId: ruta.id,

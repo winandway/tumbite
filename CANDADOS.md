@@ -2,6 +2,23 @@
 
 Cada cosa que funciona y no debe romperse. Escrito para que otra IA, sin memoria, lo repare sola.
 
+## C-SALDO-EN-INICIO · El saldo prepago del conductor a la vista en el inicio de Driver (paquete 12, 19 nov 2026) — Venezuela (países con prepago); en EE. UU. no aplica
+
+- **Qué faltaba:** el saldo para comisiones solo se veía entrando a Ganancias. Un conductor se quedaba sin saldo, dejaban de llegarle carreras y no sabía por qué.
+- **Qué se hizo:** tarjeta `SaldoInicio` (`apps/repartidor/src/piezas/SaldoInicio.tsx`, lógica pura en `saldoInicioLogica.ts`) arriba de los mensajes del inicio, sin trabajo en curso. Solo sale donde el país cobra del saldo prepago (comisión típica de viajes o de comida > 0, o efectivo, pago móvil o recargas en punto de venta encendidos); en EE. UU. (Stripe Connect) no dibuja nada. Con saldo de sobra la cifra va en verde con «Te alcanza para unas N carreras»; con poco saldo (`saldoBajo`, menos de 3 pedidos, o sin lo que cuesta una comisión de un servicio) va en rojo con «Tu saldo se está acabando»; sin saldo para nada, «Sin saldo no te llegan carreras ni pedidos que se cobran en mano». Tocarla lleva a Ganancias (recargar con código, Agente Divoox, regalos a saldo). Textos es/en en `grandes/textos.ts` (`prepago.inicio*`).
+- **Sin escrituras por mirar:** el inicio solo hace `GET /datos/repartidor/saldo-prepago` (ya existía, lee) al entrar al inicio y cuando empieza o termina un trabajo.
+- **Cómo se comprueba:** `apps/repartidor/src/piezas/saldoInicioLogica.test.ts` (vista en ROJO antes de construir: EE. UU. nada, ok/bajo/sin, el inicio la lee con GET). En pantalla: inicio de Driver con un conductor de Venezuela (captura `inicio-saldo-*.png` del paquete 12).
+- **Qué NO tocar:** no escribir en la base al abrir el inicio; no mostrar la tarjeta en EE. UU.; el rojo solo cuando hay que recargar.
+
+## C-PASOS-DESLIZANDO · Los pasos del trabajo en Driver se deslizan, no se tocan (paquete 12, 19 nov 2026) — todos los países
+
+- **Qué pasaba:** «Llegué», «Iniciar viaje» (o «Recogí el paquete»), «Llegué a la parada», «Seguir el viaje», «Llegué al restaurante», «Entregado en mano», y en Flex «Llegué al centro», «Salir a la ruta», «Ya estacioné» y «Cerrar la ruta» eran botones de un toque: un roce en el bolsillo marcaba el paso.
+- **Qué se hizo:** como Uber Driver y DoorDash Dasher, van con la pieza única `Deslizador` (`packages/movil/src/Deslizador.tsx`, variante `accion`, vibra al cruzar el 85 %; con lector de pantalla la acción «activar», con confirmación en entregar en mano, salir a la ruta y cerrar la ruta). Textos «Desliza…» / «Slide…» en `viajes/textos.ts` (`deslizar*`), `flex/textos.ts` (`deslizar*`, `confirmarSalir`, `confirmarCerrar`), `grandes/textos.ts` (`pedido.deslizarLlegue`) y `Inicio.tsx` (`deslizarEnMano`). `Deslizar` de Flex acepta `ocupado`, `testID` y confirmación opcional. testID: `viaje-llegue`, `viaje-iniciar`, `viaje-parada-llegue`, `viaje-parada-seguir`, `pedido-llegue`, `entregar-en-mano`, `flex-llegue-centro`, `flex-salir-ruta`, `flex-llegue-parada`, `flex-cerrar-ruta`.
+- **Ya deslizaban antes:** conectarse y desconectarse (C-CONECTAR-DESLIZANDO), volver de la pausa, completar la entrega de comida en la puerta (C-ENTREGA-DESLIZAR), terminar el viaje y entregar el envío (C-CERRAR-DESLIZANDO), finalizar una parada de Flex (C-FLEX-DESLIZAR).
+- **Siguen siendo botón, a propósito:** abrir navegación, «Cómo llegar», chat, llamar, ayuda, fotos, escanear, pausar, soltar el trabajo, «no se presentó» / «no aparece» (excepciones con su propio aviso), «Cobré» y la confirmación del pago móvil (van con el monto escrito y tienen corrección), «Terminar entregas y volver al centro» (se puede volver a la lista).
+- **Cómo se comprueba:** `packages/movil/src/candadoPasosDeslizando.test.ts` (vista en ROJO antes del cambio). Recorridos: `e2e/recorrido/recorrido.spec.ts` (desliza «Llegué al restaurante» con `deslizar(rep, 'pedido-llegue')`) y `e2e/recorrido/flexBloque.spec.ts` (desliza centro, salida, estacionar y cierre).
+- **Qué NO tocar:** no volver a poner un `<Boton>` en esos pasos; no convertir en deslizante lo que es navegación o se deshace.
+
 ## C-OCHO-ICONOS-SIEMPRE · El inicio del cliente pinta siempre los ocho servicios (Richard, 18 nov 2026) — todos los países
 
 - **Qué se rompía y cómo se veía:** en una ciudad con solo comida (El Vigía, Novi), el inicio pintaba solo «Comida» y «Más servicios», contra el borrador aprobado (`docs/disenos/borrador-inicio/`, `progreso/borrador-inicio/`), que tiene SIEMPRE dos filas de cuatro.
