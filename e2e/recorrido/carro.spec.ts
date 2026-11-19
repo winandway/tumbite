@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { deslizar } from './deslizar';
 import { devices, expect, test } from './fixtures';
 import { sqlLocal } from './sqlLocal';
 
@@ -140,10 +141,8 @@ test('un viaje en Carro de punta a punta: código sin casco (es)', async ({ brow
   await expect(pr.getByTestId('viaje-casco')).toHaveCount(0);
   await codigo.fill(pin);
   await pr.screenshot({ path: join(RAIZ, 'docs', 'capturas', 'carro-driver-codigo-es.png') });
-  await pr
-    .getByRole('button', { name: /Empezar|Iniciar/ })
-    .first()
-    .click();
+  // C-PASOS-DESLIZANDO: iniciar el viaje se desliza, ya no es un botón de un toque.
+  await deslizar(pr, 'viaje-iniciar');
   await expect
     .poll(() => sql(`SELECT estado FROM viajes WHERE operacion_id = '${op}'`)[0]?.estado, {
       timeout: 30_000,
