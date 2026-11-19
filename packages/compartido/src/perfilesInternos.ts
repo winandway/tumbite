@@ -54,6 +54,9 @@ const FINANZAS = [
   'referidos-programas',
   'equipos',
   'regalo-conductor-nuevo',
+  // C-AGENTE-DIVOOX: los agentes (fondo, topes y conciliación) son de finanzas.
+  'agentes',
+  'agentes-ciudad',
   'stripe',
   'bandeja-dinero',
   'aprobaciones-dinero',

@@ -4,6 +4,7 @@ import { aperturasVigentes } from './pasajerosPais';
 import { rehacerFranquicias } from './esquemaTerritorio';
 import { ESQUEMA_FASE3 } from './esquemaFase3';
 import { ESQUEMA_PEDIDOS } from './esquemaPedidos';
+import { ESQUEMA_AGENTES } from './esquemaAgentes';
 import { ESQUEMA_FLEX, rehacerFlex } from './esquemaFlex';
 import { rehacerAprobacionesDinero } from './esquemaDinero';
 import {
@@ -586,7 +587,8 @@ async function revisarColumnas(db: D1Database): Promise<void> {
 async function asegurarFase3(db: D1Database): Promise<void> {
   // Una sola consulta para los disparadores de la Fase 3 y los de los pedidos
   // (C-TRANSICIONES-PEDIDO): el arranque sigue barato.
-  const todo = [...ESQUEMA_FASE3, ...ESQUEMA_PEDIDOS, ...ESQUEMA_FLEX];
+  // C-AGENTE-DIVOOX: los disparadores del dinero del Agente Divoox van en la misma comprobación.
+  const todo = [...ESQUEMA_FASE3, ...ESQUEMA_PEDIDOS, ...ESQUEMA_FLEX, ...ESQUEMA_AGENTES];
   const nombres = todo
     .map((sql) => /CREATE (?:TRIGGER|VIEW) IF NOT EXISTS (\w+)/.exec(sql)?.[1])
     .filter((n): n is string => Boolean(n));
@@ -640,6 +642,7 @@ export function huellaEsquema(entorno: Entorno | null): string {
         ESQUEMA_FASE3,
         ESQUEMA_PEDIDOS,
         ESQUEMA_FLEX,
+        ESQUEMA_AGENTES,
         COLUMNAS_DEL_ESQUEMA,
         CONFIG_DINERO_INICIAL,
         [...serviciosImplementados(entorno)],

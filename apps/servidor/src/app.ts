@@ -95,6 +95,8 @@ import { cupones } from './rutas/cupones';
 import { regalosDivoox } from './rutas/regalosDivoox';
 import { saldoConductores } from './rutas/saldoConductores';
 import { programaReferidos } from './rutas/programaReferidos';
+import { agentes } from './rutas/agentes';
+import { saludAgentes } from './agentes';
 import { saludRegalos } from './regalosDivoox';
 import { camila } from './rutas/camila';
 import { camilaFallos } from './rutas/camilaFallos';
@@ -362,6 +364,12 @@ app.get('/datos/salud', async (c) => {
   if (c.env.DB)
     piezas.retiros = await saludRetiros(c.env, c.env.DB, presentes).catch((e: unknown) => {
       console.error('salud: retiros', e);
+      return 'error' as const;
+    });
+  // C-AGENTE-DIVOOX: ningún fondo de agente en negativo y lo pagado cuadra con lo que bajó de los fondos.
+  if (c.env.DB)
+    piezas.agentes = await saludAgentes(c.env.DB, presentes).catch((e: unknown) => {
+      console.error('salud: agentes', e);
       return 'error' as const;
     });
   // C-CONNECT-UN-INTENTO: si Stripe rechazó una cuenta conectada, el freno queda a la vista.
@@ -753,6 +761,8 @@ app.route('/datos', cupones);
 app.route('/datos', regalosDivoox);
 app.route('/datos', saldoConductores);
 app.route('/datos', programaReferidos);
+// C-AGENTE-DIVOOX: el panel del agente, «Cobrar en efectivo» del conductor y Dinero → Agentes.
+app.route('/datos', agentes);
 app.route('/datos', direcciones);
 app.route('/datos', fotoPuerta);
 app.route('/datos', restauranteMas);
