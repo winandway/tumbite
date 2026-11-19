@@ -12,7 +12,7 @@ import type { Captura, Guia } from './guias';
  * entran en Docs SOLO cuando `LINEAS_PUBLICADA` es true; `lineas.test.ts` se pone en rojo si las capturas
  * existen y la guía no está publicada, o al revés.
  */
-export const LINEAS_PUBLICADA = false;
+export const LINEAS_PUBLICADA = true;
 
 export const CAPTURAS_LINEAS = [
   'registro',
