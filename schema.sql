@@ -2483,6 +2483,14 @@ INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, 
   ('prepago-ve-ride-usd', 'Moto · conductores · VE · USD', 'ride', 'conductor', 'VE', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-11-13 00:00:00', 1, 'El mismo 10 % aprobado por Richard el 2 nov 2026 (C-PREPAGO-MERCADOS), en dólares porque el mercado venezolano cobra la moto en dólares.', 'C-MOTO-VENEZUELA'),
   ('prepago-ve-car-usd', 'Carro · conductores · VE · USD', 'car', 'conductor', 'VE', 'prepago', 'USD', '{"tipo":"porcentaje","pb":1000}', '2026-11-13 00:00:00', 1, 'El mismo 10 % aprobado por Richard el 2 nov 2026 (C-PREPAGO-MERCADOS), en dólares porque el mercado venezolano cobra en dólares.', 'C-MOTO-VENEZUELA');
 
+-- C-PERFIL-PERU (19 nov 2026): Perú cobra en soles. La comisión propuesta para Ica es del 8 % (para que al
+-- conductor le rinda más que en inDrive). Nacen SIN la revisión aprobada: no rigen hasta que Richard dé
+-- el permiso comercial y legal y confirme el porcentaje en el panel (Finanzas → Políticas).
+INSERT OR IGNORE INTO politicas_financieras (id, nombre, servicio, tipo_cuenta, pais, modalidad, moneda, regla_json, vigente_desde, revision_legal_aprobada, revision_legal_nota, motivo) VALUES
+  ('prepago-pe-ride', 'Moto · conductores · PE', 'ride', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Propuesta del 8 % para Ica (inDrive ronda el 10 %): con una recarga de 10 soles rinde unos 125 soles de carreras. SIN aprobar: la comisión y el permiso comercial y legal del prepago en Perú los da Richard; hasta entonces no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU'),
+  ('prepago-pe-car', 'Carro · conductores · PE', 'car', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Propuesta del 8 % para Ica (inDrive ronda el 10 %): con una recarga de 10 soles rinde unos 125 soles de carreras. SIN aprobar: la comisión y el permiso comercial y legal del prepago en Perú los da Richard; hasta entonces no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU'),
+  ('prepago-pe-express', 'Envíos · conductores · PE', 'express', 'conductor', 'PE', 'prepago', 'PEN', '{"tipo":"porcentaje","pb":800}', '2026-11-19 00:00:00', 0, 'Propuesta del 8 % para Ica (inDrive ronda el 10 %): con una recarga de 10 soles rinde unos 125 soles de carreras. SIN aprobar: la comisión y el permiso comercial y legal del prepago en Perú los da Richard; hasta entonces no rige. Fuentes en docs/investigaciones-rea/2026-11-19-ica-peru.md.', 'C-PERFIL-PERU');
+
 -- Interruptor público de lanzamiento por ciudad (F17): la web dice «Ya estamos» o «Muy pronto»
 -- según esta tabla. Sin fila, manda la lista de la web (todas «muy pronto»).
 CREATE TABLE IF NOT EXISTS ciudades_web (
@@ -2845,7 +2853,7 @@ CREATE TABLE IF NOT EXISTS cuentas_cobro (
   usuario_id TEXT NOT NULL REFERENCES usuarios(id),
   pais TEXT NOT NULL,
   moneda TEXT NOT NULL,
-  tipo TEXT NOT NULL CHECK (tipo IN ('banco', 'nequi', 'daviplata', 'pago_movil', 'zelle', 'otro')),
+  tipo TEXT NOT NULL CHECK (tipo IN ('banco', 'nequi', 'daviplata', 'pago_movil', 'zelle', 'yape', 'plin', 'otro')),
   banco TEXT NOT NULL DEFAULT '',
   titular TEXT NOT NULL,
   identificador TEXT NOT NULL,
