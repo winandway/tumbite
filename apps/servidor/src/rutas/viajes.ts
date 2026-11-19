@@ -3,7 +3,12 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
-import { tasaDeOperacion } from './tasasReferencia';
+import {
+  cobroEnManoDeViaje,
+  fijarTasaViaje,
+  tasaDeOperacion,
+  tasaParaFijar,
+} from './tasasReferencia';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { type MomentoMenor, avisarResponsableMenor } from './viajesFijos';
 import { revisarSelfieCasco } from './ajustesViaje';
@@ -32,7 +37,14 @@ import {
 } from '../operaciones';
 import { RADIO_LLEGADA_M, llego, metrosEntre } from '@tumbite/compartido';
 import { capturarCobroViaje, soltarCobroViaje } from '../viajesCobro';
-import { montoEnMano, pagaEnMano, referenciaConTasa } from '@tumbite/compartido';
+import {
+  type TasaFijada,
+  aplicaReferencia,
+  montoEnMano,
+  pagaEnMano,
+  referenciaConTasa,
+  tasaGuardada,
+} from '@tumbite/compartido';
 
 /** Un texto de la base o null (columnas que pueden venir vacías). */
 const str = (x: unknown): string | null => (x == null ? null : String(x));
@@ -170,14 +182,21 @@ viajes.get('/conductor/operaciones/ofertas', async (c) => {
     )
     .bind(u.id)
     .all<Record<string, unknown>>();
-  // C-BS-EN-MANO: la tasa fijada de cada viaje ofrecido (sin lecturas de más si ya está guardada).
+  // C-BS-EN-MANO: la tasa fijada de cada viaje ofrecido; la del día se lee UNA vez por país y por
+  // petición, solo para los que todavía no tienen la suya.
+  const delDia = new Map<string, Promise<TasaFijada | null>>();
   const tasas = await Promise.all(
-    results.map((f) =>
-      tasaDeOperacion(base(c), str(f.pais), str(f.moneda), {
-        tasa: f.ref_tasa == null ? null : Number(f.ref_tasa),
-        fecha: str(f.ref_fecha),
-      }),
-    ),
+    results.map((f) => {
+      const guardada = tasaGuardada(
+        str(f.pais),
+        f.ref_tasa == null ? null : Number(f.ref_tasa),
+        str(f.ref_fecha),
+      );
+      if (guardada || !aplicaReferencia(str(f.pais), str(f.moneda))) return guardada;
+      const pais = String(f.pais);
+      if (!delDia.has(pais)) delDia.set(pais, tasaParaFijar(base(c), pais, str(f.moneda)));
+      return delDia.get(pais) ?? null;
+    }),
   );
   return c.json({
     ofertas: results.map((f, i) => {
@@ -369,6 +388,8 @@ viajes.post('/conductor/operaciones/:id/aceptar', async (c) => {
   if (r.resultado === 'tomada' || r.resultado === 'ya_es_tuya') {
     // C-VIAJES-FIJOS: el responsable del menor sabe quién va por él.
     if (r.resultado === 'tomada') await avisarResponsableMenor(c.env, base(c), id, 'aceptado');
+    // C-BS-EN-MANO: un viaje cotizado sin tasa la fija al tener conductor (los dos ven la misma).
+    if (r.resultado === 'tomada') await fijarTasaViaje(base(c), id);
     return c.json({ ok: true, operacionId: r.operacionId, version: r.version });
   }
   // No se lo quedó: lo apartado vuelve al prepago.
@@ -519,9 +540,28 @@ viajes.post(
       ...(nombre === 'terminar' ? { sinParadasPendientes: true } : {}),
     });
     if (!ok) {
+      // Reintento. C-BS-EN-MANO: si «terminar» se cortó antes de responder, aquí se rellena lo
+      // cobrado en mano y se devuelve lo mismo que en el cierre.
+      if (op.estado === paso.hacia && nombre === 'terminar') {
+        const cobro = await cobroEnManoDeViaje(db, id);
+        return c.json({
+          ok: true,
+          estado: op.estado,
+          ...(cobro
+            ? {
+                cobrarEnMano: cobro.cobrarEnMano,
+                enMano: cobro.enMano,
+                referencia: cobro.enMano?.local ?? null,
+              }
+            : {}),
+        });
+      }
       if (op.estado === paso.hacia) return c.json({ ok: true, estado: op.estado }); // reintento
       throw new ErrorDatos('Este paso ya no corresponde. Actualiza la pantalla.', undefined, 409);
     }
+    // C-BS-EN-MANO: el viaje sin tasa la fija en el primer paso que la encuentre; al iniciar, uno
+    // cotizado hace más de 48 horas (programado) la refija. Conductor y pasajero ven la misma.
+    if (nombre !== 'terminar') await fijarTasaViaje(db, id, nombre === 'iniciar');
     // C-VIAJES-FIJOS: cada paso del viaje de un menor le llega a su responsable (nunca frena).
     const momento = MOMENTO_MENOR.get(nombre);
     if (momento) await avisarResponsableMenor(c.env, db, id, momento);
@@ -552,36 +592,9 @@ viajes.post(
             console.error('viajes: premio de referidos', e),
           );
       // C-BS-REFERENCIA y C-BS-EN-MANO: en la pantalla de cobro, lo cobrado en mano en bolívares con
-      // la tasa FIJADA del viaje (si no se fijó al cotizar, se fija ahora) y queda guardado con él.
-      const donde = await db
-        .prepare(
-          `SELECT z.pais, q.moneda, v.ref_tasa, v.ref_fecha FROM operaciones o JOIN zonas z ON z.id = o.zona_id
-             JOIN viajes v ON v.operacion_id = o.id LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
-            WHERE o.id = ?`,
-        )
-        .bind(id)
-        .first<{
-          pais: string;
-          moneda: string | null;
-          ref_tasa: number | null;
-          ref_fecha: string | null;
-        }>();
-      const tasa = await tasaDeOperacion(db, donde?.pais, donde?.moneda, {
-        tasa: donde?.ref_tasa,
-        fecha: donde?.ref_fecha,
-      });
-      const enMano =
-        cobrarEnMano == null
-          ? null
-          : montoEnMano(cobrarEnMano, donde?.moneda ?? 'USD', donde?.pais, tasa);
-      if (tasa && enMano?.local)
-        await db
-          .prepare(
-            `UPDATE viajes SET ref_tasa = COALESCE(ref_tasa, ?), ref_fecha = COALESCE(ref_fecha, ?),
-                    ref_monto = ? WHERE operacion_id = ?`,
-          )
-          .bind(tasa.tasa, tasa.fecha, enMano.local.monto, id)
-          .run();
+      // la tasa del viaje (si no se fijó al cotizar, se fija ahora); queda guardado con él. Con
+      // tarjeta no hay nada en mano: ni bolívares ni monto guardado.
+      const enMano = (await cobroEnManoDeViaje(db, id))?.enMano ?? null;
       return c.json({
         ok: true,
         estado: paso.hacia,

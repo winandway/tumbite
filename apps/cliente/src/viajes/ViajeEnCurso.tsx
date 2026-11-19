@@ -655,6 +655,7 @@ export function ViajeEnCurso({
               idioma={idioma === 'en' ? 'en' : 'es'}
               quien="pasajero"
               etiqueta={viaje.estado === 'terminado' ? t.pagasteEnMano : t.pagasEnMano}
+              copiable={viaje.metodoPago === 'pago_movil' && viaje.estado !== 'terminado'}
             />
           ) : viaje.referencia ? (
             <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>

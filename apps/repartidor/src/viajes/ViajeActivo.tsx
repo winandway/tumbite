@@ -8,7 +8,6 @@ import {
   type Referencia,
   enIdioma,
   formatearMonto,
-  textoLocal,
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
@@ -311,6 +310,7 @@ export function ViajeActivo({
               etiqueta={viaje.metodo_pago === 'pago_movil' ? t.cobraPagoMovil : t.cobra}
               tamano="grande"
               color={C.exito}
+              copiable={viaje.metodo_pago === 'pago_movil'}
             />
             {lineaRegalo}
           </View>
@@ -601,14 +601,16 @@ export function ViajeActivo({
             </>
           ) : (
             <>
-              <Text style={{ color: C.secundario }}>
-                {t.pagoMovilPregunta}{' '}
-                {enMano != null ? formatearMonto(enMano, viaje.moneda ?? 'USD', idioma) : ''}
-                {/* C-BS-EN-MANO: el monto exacto en bolívares del pago móvil (tasa fijada). */}
-                {cobroEnMano(true)?.local
-                  ? ` (${textoLocal(cobroEnMano(true)?.local, idiomaCorto)})`
-                  : ''}
-              </Text>
+              <Text style={{ color: C.secundario }}>{t.pagoMovilPregunta}</Text>
+              {/* C-BS-EN-MANO: el monto exacto del pago móvil, grande, en dólares y en bolívares. */}
+              <MontoEnMano
+                testID="viaje-pago-movil-monto"
+                monto={cobroEnMano(true)}
+                idioma={idiomaCorto}
+                quien="conductor"
+                tamano="grande"
+                copiable
+              />
               <Boton
                 texto={t.pagoMovilSi}
                 exito
