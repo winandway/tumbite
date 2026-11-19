@@ -262,7 +262,8 @@ export async function estadoCobroEfectivo(db: D1Database, conductorId: string) {
 
 function codigoNuevo(): string {
   const n = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
-  return String(n % 1_000_000).padStart(6, '0');
+  // Nunca empieza por cero: los códigos de ejemplo de las guías (012 345) no existen de verdad.
+  return String(100_000 + (n % 900_000));
 }
 
 /** El conductor pide su código: el monto queda apartado de sus ganancias en la misma sentencia. */

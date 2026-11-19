@@ -69,6 +69,7 @@ import { SuperRewards } from './SuperRewards';
 import { SuperBanners } from './SuperBanners';
 import { SuperRegalosDivoox } from './SuperRegalosDivoox';
 import { SuperSaldoConductores } from './SuperSaldoConductores';
+import { SuperAgentes } from './SuperAgentes';
 import { SuperReferidosEquipos } from './SuperReferidosEquipos';
 import { SuperCamila } from './SuperCamila';
 import { SuperInformes } from './SuperInformes';
@@ -181,6 +182,8 @@ export function seccionAdmin(sub: string, base: string, usuario: Usuario, idioma
   if (sub === '/gift-codes') return <SuperRegalosDivoox idioma={idioma} />;
   // C-SALDO-CONDUCTOR: conductores por ciudad, carga de saldo y regalo de arranque.
   if (sub === '/driver-balance') return <SuperSaldoConductores idioma={idioma} />;
+  // C-AGENTE-DIVOOX: agentes que pagan ganancias en efectivo y venden saldo.
+  if (sub === '/agents') return <SuperAgentes idioma={idioma} />;
   // C-REFERIDOS-EQUIPOS: programas de referidos y equipos con su líder.
   if (sub === '/referrals') return <SuperReferidosEquipos idioma={idioma} />;
   // C-CAMILA-BUZON: el buzón de Camila (casos, conversaciones, aprendizaje, líderes y ajustes).

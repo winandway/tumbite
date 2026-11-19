@@ -430,7 +430,9 @@ agentes.get('/repartidor/cobro-efectivo', async (c) => {
   return c.json(await estadoCobroEfectivo(base(c), u.id));
 });
 
-agentes.post('/repartidor/cobro-efectivo', limiteIntentos(10, 60_000), async (c) => {
+// Muchos conductores pueden compartir la misma red (la del operador): el límite es holgado; lo
+// que protege el dinero son las condiciones de la sentencia, no este freno.
+agentes.post('/repartidor/cobro-efectivo', limiteIntentos(30, 60_000), async (c) => {
   const u = exigir(c, 'repartidor');
   const { monto } = await leerCuerpo(
     c,

@@ -47,6 +47,8 @@ import { tituloPagina } from './tituloPagina';
  * Docs cargaba en el celular más de dos megas de código que no usaba.
  */
 const PanelApp = lazy(() => import('./panel/PanelApp').then((m) => ({ default: m.PanelApp })));
+/** C-AGENTE-DIVOOX: el panel del agente también se baja solo al entrar a /agent. */
+const Agente = lazy(() => import('./agente/Agente').then((m) => ({ default: m.Agente })));
 
 /** Páginas legales públicas (las tiendas de Apple y Google piden que existan y sean públicas). */
 const LEGALES = new Map([
@@ -115,6 +117,13 @@ export function App() {
     return (
       <Suspense fallback={<div className="cargando" role="status" aria-busy="true" />}>
         <PanelApp ruta={ruta} />
+      </Suspense>
+    );
+  // C-AGENTE-DIVOOX: el panel del Agente Divoox (inglés en /agent, español en /es/agent).
+  if (ruta === '/agent' || ruta === '/agent/password')
+    return (
+      <Suspense fallback={<div className="cargando" role="status" aria-busy="true" />}>
+        <Agente ruta={ruta} idioma={idioma} />
       </Suspense>
     );
   if (/^\/(country|city|food)\/[a-z-]+$/.test(ruta))

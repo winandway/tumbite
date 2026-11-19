@@ -253,7 +253,8 @@ app.use(
 );
 /** Páginas privadas por enlace (tickets, viaje compartido, entrega): ningún buscador las guarda. */
 // C-AYUDA-INTERNA: el panel (y la ayuda del equipo que vive en el superadmin) tampoco se indexa.
-export const RUTAS_PRIVADAS = ['/t/', '/ride/', '/deliver/', '/panel'];
+// C-AGENTE-DIVOOX: el panel del agente tampoco se indexa.
+export const RUTAS_PRIVADAS = ['/t/', '/ride/', '/deliver/', '/panel', '/agent'];
 const limiteGeneral = limiteIntentos(120, 60_000);
 // Los avisos de Stripe llegan de sus servidores y ya vienen firmados: no se frenan por IP.
 app.use('/datos/*', (c, next) =>

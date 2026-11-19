@@ -1354,6 +1354,131 @@ const capSaldo = (nombre: string, idioma: IdiomaAyuda, alt: string, pie: string)
   pie,
 });
 
+const capAgente = (
+  nombre: string,
+  idioma: IdiomaAyuda,
+  alt: string,
+  pie: string,
+): CapturaAyuda => ({
+  archivo: `agentes-${nombre}-${idioma}.webp`,
+  alt,
+  pie,
+});
+
+/** C-AGENTE-DIVOOX (18 nov 2026): Dinero → Agentes. Interno: nunca en Docs públicos. */
+const agentesDivoox: Record<IdiomaAyuda, Guia> = {
+  es: {
+    id: 'divoox-agents',
+    titulo: 'Agentes: encender una ciudad, crear un agente, anotar su fondo y conciliar',
+    resumen:
+      'Un Agente Divoox paga en efectivo las ganancias de los conductores y les vende saldo. Aquí se enciende el servicio por ciudad, se crean y suspenden agentes, se anota su fondo y se concilia.',
+    explicacion: [
+      'El agente paga con un fondo prepago: tú le transfieres por fuera y lo anotas en su ficha con el comprobante. Cada pago a un conductor baja ese fondo. Sin fondo su panel no deja pagar. Cuando el fondo baja del aviso que le pusiste, llega un correo al equipo de dinero (uno cada 12 horas como mucho).',
+      'Lo que el agente vende de saldo queda como dinero que le debe a Divoox. Se cierra de dos maneras: «Me entregó el efectivo del saldo vendido» (te lo dio) o «Lo que debe por saldo vendido pasa a su fondo» (no viaja dinero: lo que cobró se queda con él como fondo para pagar).',
+      'La ganancia del agente no vive en el sistema: se la pagas aparte cuando le transfieres. Aquí no hay comisiones.',
+      'El servicio está apagado en cada ciudad hasta que lo enciendas en «Ciudades». Ahí eliges en qué se paga (dólares enteros, o bolívares a la tasa del día en Venezuela), el mínimo del cobro y el tope diario por conductor. Un conductor ve «Cobrar en efectivo» solo si su ciudad está encendida y tiene un agente activo con contraseña.',
+      'Al crear un agente le llega un correo con un enlace de un solo uso (48 horas) para crear su contraseña. Entra a su panel con correo y contraseña y siempre confirma con un código que le llega al correo. Su sesión dura 12 horas como mucho y se cierra a los 30 minutos sin uso. Su cuenta no es una cuenta del sistema: no puede abrir nada fuera de su panel.',
+      'Topes por agente: por pago, pagos por día, por venta y saldo vendido sin entregar. Cada uno tiene un máximo fijo en el código que el panel te dice al lado de la casilla.',
+      'Si el agente escribe cinco códigos de cobro equivocados seguidos, sus pagos quedan bloqueados. Se reactivan en su ficha, en los tres puntos, «Reactivar sus pagos». Antes mira «Lo que hizo en su panel» para entender qué pasó.',
+      'Suspender (en los tres puntos de su ficha) cierra su sesión al instante. Su fondo y su libro se conservan. La conciliación de la ficha dice cuánto dinero de Divoox tiene en la mano: su fondo sin usar más lo que cobró por saldo vendido.',
+      'Todo queda escrito: cada anotación tuya en la auditoría del equipo y cada acción del agente (entradas, códigos vistos, pagos, ventas, fallos) en su ficha, con la hora y la dirección de red.',
+    ],
+    capturas: [
+      capAgente(
+        'super-ciudad',
+        'es',
+        'Formulario de una ciudad con «Encendido», en qué se paga, el mínimo del cobro y el tope diario por conductor.',
+        'El servicio se enciende por ciudad.',
+      ),
+      capAgente(
+        'super-crear',
+        'es',
+        'Formulario «Crear un agente» con sus datos, su ciudad y sus topes.',
+        'Crear un agente: le llega el enlace para su contraseña.',
+      ),
+      capAgente(
+        'super-fondo',
+        'es',
+        'Paso de confirmación de una anotación de fondo con el resumen y el botón «Confirmar».',
+        'Anotar el fondo que le transferiste.',
+      ),
+      capAgente(
+        'super-conciliacion',
+        'es',
+        'Conciliación de un agente: fondo, lo que debe, lo que tiene en la mano, fondo recibido, pagado y vendido.',
+        'La conciliación de un agente.',
+      ),
+    ],
+    preguntas: [
+      '¿Cómo enciendo el cobro en efectivo en una ciudad?',
+      '¿Cómo le anoto el fondo a un agente?',
+      '¿Qué hago si los pagos de un agente quedaron bloqueados?',
+    ],
+    pasos: [
+      'Abre «Agentes» en el menú de Dinero.',
+      'En «Ciudades», toca «Editar» en la ciudad, marca «Encendido», elige en qué se paga y guarda.',
+      'En «Crear un agente», llena sus datos y sus topes y toca «Crear y mandarle el enlace».',
+      'Cuando le transfieras, abre su ficha, «Anotar un movimiento», «Le transferí fondo», el monto y el comprobante; revisa y confirma.',
+      'Para conciliar, mira en su ficha el fondo, lo que debe y sus movimientos.',
+    ],
+  },
+  en: {
+    id: 'divoox-agents',
+    titulo: 'Agents: turn on a city, create an agent, record their float and reconcile',
+    resumen:
+      'A Divoox Agent pays drivers’ earnings in cash and sells them balance. Here you turn the service on by city, create and suspend agents, record their float and reconcile.',
+    explicacion: [
+      'The agent pays out of a prepaid float: you transfer it outside the system and record it in their file with the receipt. Each driver payout lowers that float. Without float their panel won’t pay. When the float drops below the alert you set, the money team gets an email (at most one every 12 hours).',
+      'What the agent sells in balance becomes money they owe Divoox. It’s settled two ways: “They handed over the cash from balance sold” (they gave it to you) or “What they owe for balance sold moves to their float” (no money travels: what they collected stays with them as float).',
+      'The agent’s earnings don’t live in the system: you pay them separately when you transfer. There are no commissions here.',
+      'The service is off in every city until you turn it on under “Cities.” There you choose the payout currency (whole dollars, or bolívares at the day’s rate in Venezuela), the minimum cash-out and the daily limit per driver. A driver sees “Cash out” only if their city is on and has an active agent with a password.',
+      'When you create an agent they get an email with a single-use link (48 hours) to set their password. They sign in to their panel with email and password and always confirm with a code sent to their email. Their session lasts 12 hours at most and closes after 30 minutes without use. Their account isn’t a system account: it can’t open anything outside their panel.',
+      'Limits per agent: per payout, payouts per day, per sale, and balance sold but not handed over. Each has a fixed maximum in the code that the panel shows next to the field.',
+      'If the agent enters five wrong cash-out codes in a row, their payouts are locked. Turn them back on in their file, under the three dots, “Turn their payouts back on.” First check “What they did in their panel” to understand what happened.',
+      'Suspending (under the three dots in their file) closes their session right away. Their float and ledger are kept. The reconciliation in the file shows how much Divoox money they’re holding: their unused float plus what they collected for balance sold.',
+      'Everything is recorded: each entry of yours in the team audit log, and each agent action (sign-ins, codes viewed, payouts, sales, failures) in their file, with the time and network address.',
+    ],
+    capturas: [
+      capAgente(
+        'super-ciudad',
+        'en',
+        'A city form with “On,” the payout currency, the minimum cash-out and the daily limit per driver.',
+        'The service is turned on by city.',
+      ),
+      capAgente(
+        'super-crear',
+        'en',
+        'The “Create an agent” form with their details, city and limits.',
+        'Create an agent: they get the link to set their password.',
+      ),
+      capAgente(
+        'super-fondo',
+        'en',
+        'Confirmation step of a float entry with the summary and the “Confirm” button.',
+        'Record the float you transferred.',
+      ),
+      capAgente(
+        'super-conciliacion',
+        'en',
+        'An agent’s reconciliation: float, what they owe, what they’re holding, float received, paid out and sold.',
+        'An agent’s reconciliation.',
+      ),
+    ],
+    preguntas: [
+      'How do I turn on cash-out in a city?',
+      'How do I record an agent’s float?',
+      'What do I do if an agent’s payouts are locked?',
+    ],
+    pasos: [
+      'Open “Agents” in the Money menu.',
+      'Under “Cities,” tap “Edit” on the city, check “On,” choose the payout currency and save.',
+      'Under “Create an agent,” fill in their details and limits and tap “Create and send the link.”',
+      'When you transfer, open their file, “Record an entry,” “I transferred float to them,” the amount and the receipt; review and confirm.',
+      'To reconcile, check the float, what they owe and their activity in their file.',
+    ],
+  },
+};
+
 const saldoConductores: Record<IdiomaAyuda, Guia> = {
   es: {
     id: 'driver-balance-top-up',
@@ -1811,7 +1936,7 @@ function secciones(idioma: IdiomaAyuda): SeccionAyuda[] {
     {
       id: 'money',
       titulo: esp ? 'Dinero' : 'Money',
-      guias: [de(regalosDivoox), de(saldoConductores), de(referidosEquipos)],
+      guias: [de(regalosDivoox), de(saldoConductores), de(agentesDivoox), de(referidosEquipos)],
     },
     {
       id: 'settings',

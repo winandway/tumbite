@@ -73,6 +73,13 @@ jobs:
           RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
           VUELTA_PRUEBAS: rama-carro-${{ github.run_id }}-${{ github.run_attempt }}
         run: node scripts/staging/probar-carro.mjs
+      - name: Agente Divoox de punta a punta (cobro en efectivo, doble uso, vencimiento, fondo agotado, venta de saldo, conciliación, permisos)
+        if: ${{ vars.URL_PRUEBAS != '' }}
+        env:
+          URL_PRUEBAS: ${{ vars.URL_PRUEBAS }}
+          RELOJ_SECRETO: ${{ secrets.RELOJ_SECRETO }}
+          VUELTA_PRUEBAS: rama-agente-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/staging/probar-agente.mjs
       - name: Comida en Venezuela de punta a punta (El Vigía, efectivo, pago móvil, sin saldo, cancelación)
         if: ${{ vars.URL_PRUEBAS != '' }}
         env:

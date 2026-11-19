@@ -5514,7 +5514,6 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 
 - El chat de Driver saluda aunque el hilo no haya cargado por falta de señal (el aviso de conexión va abajo). Durante la espera de «Camila está escribiendo», el botón de enviar dice «Un momento…» en la web y en Driver en vez de quedar bloqueado sin explicación. Candados: `apps/repartidor/src/soporte/soporte.test.ts` y `apps/panel/src/sitio/ChatSoporte.test.tsx`.
 
-
 ## C-FRANJA-SOLO-EN-PRUEBAS (18 nov 2026) — todos los países
 
 - **Qué se rompió y cómo se veía:** Divoox 46 y Divoox Driver 42, publicadas en Google Play, pintaban la franja «PRUEBAS · App de pruebas: no es la de la tienda» en la pantalla de entrar de todo el mundo. La app hablaba con producción; solo la franja estaba mal. Richard lo vio en dos teléfonos.
@@ -5522,3 +5521,23 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Qué se hizo:** `packages/movil/src/servidor.ts` guarda la dirección y no importa nada más de la app; la franja se decide al pintar (`esEstaAppDePruebas()`); `esAppDePruebas` sin dirección devuelve «no».
 - **Cómo se comprueba:** `candadoFranjaSoloEnPruebas.test.ts`, y sobre todo `bash scripts/tiendas/comprobar-franja.sh <cliente|repartidor> <paquete.aab>`: instala el paquete de producción en el emulador, abre la pantalla de entrar y falla si aparece la franja (visto en rojo con la 46). **Es obligatorio antes de cada subida a Play.**
 - **Qué NO tocar:** no agregar importaciones a `servidor.ts`; no volver a calcular nada con la dirección del servidor a nivel de archivo.
+
+## C-AGENTE-DIVOOX — el Agente Divoox paga ganancias en efectivo y vende saldo (18 nov 2026) — todos los países con prepago, apagado por ciudad
+
+- **Qué es:** un negocio de confianza de la ciudad paga en efectivo las ganancias de los conductores (código de 6 números de un solo uso, 24 horas, monto apartado) y les vende saldo. Estudio: `docs/investigaciones-rea/2026-11-18-agente-divoox-redes-de-agentes.md`. Estado del circuito: `VERIFICAR-PAGOS.md`.
+- **Por qué su cuenta NO está en `usuarios`:** el agente es un tercero que maneja dinero. Su cuenta y sus sesiones viven en tablas propias (`agentes`, `agentes_sesiones`) y su cookie (`divoox_agente`, solo en `/datos/agent`) no existe para `cargarSesion`. Así su sesión no puede abrir ninguna otra ruta, por construcción. Entra con correo y contraseña y SIEMPRE confirma con un código por correo; 12 horas como mucho, 30 minutos sin uso, una sola sesión.
+- **El dinero se mueve con disparadores** (`apps/servidor/src/esquemaAgentes.ts`, creados al arrancar; NO van en `schema.sql`: el divisor de la plataforma los corta mal, candado de la Fase 3): `cobros_efectivo_aparta`, `cobros_efectivo_transicion`, `cobros_efectivo_devuelve`, `cobros_efectivo_paga`, `ventas_saldo_agente_acredita`.
+- **Candados (vistos en rojo el 18 nov, uno por uno, metiendo el fallo a propósito):** `apps/servidor/src/rutas/agentes.test.ts`.
+  - Pagar sin exigir fondo → rojo «sin fondo el panel no deja pagar».
+  - Sesión sin el segundo paso → rojo «sin el segundo paso la sesión no sirve».
+  - Código de otra ciudad → rojo «un agente solo ve los códigos de su ciudad».
+  - Sin el disparador que devuelve → rojo «cancelado o vencido, el monto vuelve».
+  - Vender sin tope ni búsqueda → rojo «no vende sin haber buscado al conductor».
+- **Salud:** pieza `agentes` (disparadores presentes, nada en negativo, lo pagado y lo vendido cuadran con el libro).
+- **Presupuesto de escrituras (medido en las pruebas):** mirar no escribe (la sesión del agente toca `vista_en` una vez cada 5 minutos). Pedir el código: 2 filas. Pagar: 2 filas del dinero más 2 del registro. Vender: 3 filas del dinero más 1 del registro. El vencimiento no usa reloj: una sentencia que no escribe nada si no hay vencidos.
+- **Qué NO tocar:**
+  - No mover dinero del agente fuera de esas sentencias (ni «arreglar» un fondo con SQL: la salud se pone en rojo).
+  - No pasar la cuenta del agente a `usuarios` ni aceptar su cookie en otras rutas.
+  - No agregar claves foráneas hacia `usuarios` o `zonas` en estas tablas (suben las lecturas de cada borrado de cuenta y de cada cambio de ciudad; ver C-LECTURAS-VUELTA-RUTAS).
+  - Los códigos de cobro nunca empiezan por cero: los de las guías (012 345) son de ejemplo y no existen.
+  - No construir comisiones del agente: Richard se la paga aparte.

@@ -325,9 +325,17 @@ export async function conductoresDeCiudad(db: D1Database, zonaId: string) {
 export async function cargasDeConductor(db: D1Database, conductorId: string) {
   const { results } = await db
     .prepare(
-      `SELECT c.id, c.monto, c.moneda, c.tipo, c.motivo, c.comprobante, c.creado_en, a.nombre AS autor
-         FROM cargas_saldo_conductor c LEFT JOIN usuarios a ON a.id = c.autor_id
-        WHERE c.conductor_id = ? ORDER BY c.creado_en DESC LIMIT 30`,
+      // C-AGENTE-DIVOOX: el saldo comprado a un Agente Divoox sale en la misma lista (tipo «agente»).
+      // Una app anterior, que no conoce ese tipo, muestra el motivo tal cual.
+      `SELECT * FROM (
+         SELECT c.id, c.monto, c.moneda, c.tipo, c.motivo, c.comprobante, c.creado_en, a.nombre AS autor
+           FROM cargas_saldo_conductor c LEFT JOIN usuarios a ON a.id = c.autor_id
+          WHERE c.conductor_id = ?1
+         UNION ALL
+         SELECT v.id, v.monto, v.moneda, 'agente', 'Agente Divoox · ' || g.nombre, '', v.creado_en, g.nombre
+           FROM ventas_saldo_agente v JOIN agentes g ON g.id = v.agente_id
+          WHERE v.conductor_id = ?1
+       ) ORDER BY creado_en DESC LIMIT 30`,
     )
     .bind(conductorId)
     .all<Record<string, unknown>>();

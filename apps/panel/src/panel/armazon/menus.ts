@@ -12,6 +12,7 @@ import {
   Gift,
   GalleryHorizontal,
   HandCoins,
+  Handshake,
   Hourglass,
   IdCard,
   KeyRound,
@@ -80,6 +81,8 @@ export const ICONOS_MENU = {
   'gift-codes': Gift,
   // C-SALDO-CONDUCTOR: el saldo de los conductores por ciudad.
   'driver-balance': PiggyBank,
+  // C-AGENTE-DIVOOX: los agentes que pagan en efectivo y venden saldo.
+  agents: Handshake,
   // C-REFERIDOS-EQUIPOS: referidos y equipos.
   referrals: UserPlus,
   // C-CAMILA-BUZON: el buzón de Camila, la asistente de soporte.
@@ -242,7 +245,16 @@ export function gruposAdmin(
         [g.personas, ['customers', 'restaurants', 'drivers']],
         [
           g.dinero,
-          ['money', 'cash', 'driver-balance', 'referrals', 'gift-codes', 'flexfinance', 'reports'],
+          [
+            'money',
+            'cash',
+            'driver-balance',
+            'agents',
+            'referrals',
+            'gift-codes',
+            'flexfinance',
+            'reports',
+          ],
         ],
         [g.servicios, ['rides', 'moto', 'rewards', 'pilot', 'test-city']],
         [g.crecer, ['banners']],

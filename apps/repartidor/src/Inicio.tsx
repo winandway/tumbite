@@ -78,6 +78,7 @@ import { textosDriver } from './piezas/textos';
 import { Oferta } from './grandes/Oferta';
 import { Calificaciones } from './grandes/Calificaciones';
 import { MiEquipo } from './grandes/MiEquipo';
+import { CobrarEfectivo } from './grandes/CobrarEfectivo';
 import { Ganancias } from './grandes/Ganancias';
 import { resumenPeriodo, textoTrabajos } from './grandes/resumenPeriodo';
 import { Avisos } from './grandes/Avisos';
@@ -1858,6 +1859,13 @@ export function Inicio() {
       <View style={{ padding: 16, gap: 12 }}>
         {mensajes}
         <Text style={{ fontSize: 22, fontWeight: '800', color: C.secundario }}>{td.ganancias}</Text>
+        {/* C-AGENTE-DIVOOX: cobrar las ganancias en efectivo con un Agente Divoox (si la ciudad lo tiene). */}
+        <CobrarEfectivo
+          api={api}
+          idioma={idioma}
+          cuenta={usuario?.id}
+          alCambiar={() => void cargarPrepago()}
+        />
         {prepago &&
         (prepago.efectivoActivo ||
           prepago.transferenciaActiva ||

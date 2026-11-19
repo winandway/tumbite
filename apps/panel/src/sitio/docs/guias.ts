@@ -2957,6 +2957,90 @@ const es: SeccionDocs[] = [
         ],
       },
       {
+        id: 'cash-out-with-a-divoox-agent',
+        titulo: 'Cobrar tus ganancias en efectivo con un Agente Divoox',
+        resumen:
+          'En las ciudades con Agente Divoox puedes cobrar tus ganancias en efectivo. Pides un código en tu app, vas al agente, se lo muestras y te entrega el dinero.',
+        explicacion: [
+          'Un Agente Divoox es un negocio de confianza de tu ciudad, autorizado por Divoox para pagarte tus ganancias en efectivo. Si tu ciudad ya tiene agente, en Ganancias ves la tarjeta «Cobrar en efectivo».',
+          'Tú eliges cuánto cobrar. Hay un monto mínimo y un máximo por día, y la app te los dice. Si en tu ciudad se paga en dólares, se entregan dólares enteros y los centavos se quedan en tu billetera. Si se paga en bolívares, recibes el monto exacto a la tasa del día, que queda fija en el momento en que pides el código.',
+          'Al pedir el código, ese dinero queda apartado de tus ganancias. El código tiene 6 números y también sale como QR. Vale por 24 horas y sirve una sola vez. Solo puedes tener un código vivo a la vez.',
+          'En el local, muéstrale el código al agente y lleva tu documento de identidad. El agente ve tu nombre y tu foto, te entrega el efectivo y marca el pago. Te llega un aviso con el número de recibo.',
+          'Si no vas, no pasa nada: cuando el código se vence, el dinero vuelve solo a tus ganancias. También puedes cancelarlo tú con «Cancelar el código».',
+          'No le des tu código a nadie más ni lo mandes por mensaje. Quien tenga el código y se presente como tú podría cobrarlo. El agente nunca te pide tu contraseña.',
+          '«Pasar a mi saldo» sigue ahí: si prefieres usar tus ganancias para tus comisiones, no necesitas ir al agente.',
+        ],
+        capturas: [
+          {
+            src: '/docs/agente-cobrar-tarjeta-es.webp',
+            alt: 'Tarjeta «Cobrar en efectivo» en Ganancias de Divoox Driver, con las ganancias que se pueden cobrar y el botón «Cobrar en efectivo».',
+            pie: 'En Ganancias ves cuánto puedes cobrar en efectivo.',
+          },
+          {
+            src: '/docs/agente-cobrar-monto-es.webp',
+            alt: 'Formulario para elegir el monto, con el mínimo y el máximo, la tasa del día y lo que se recibe en la mano.',
+            pie: 'Eliges el monto y ves cuánto recibes en la mano.',
+          },
+          {
+            src: '/docs/agente-cobrar-codigo-es.webp',
+            alt: 'Código de cobro de ejemplo con su QR, el monto apartado, lo que se recibe en la mano, hasta cuándo vale y dónde cobrar.',
+            pie: 'Tu código y su QR. El código de la imagen es de ejemplo.',
+          },
+          {
+            src: '/docs/agente-cobrar-historial-es.webp',
+            alt: 'La tarjeta «Cobrar en efectivo» con el cobro ya hecho en «Tus cobros en efectivo».',
+            pie: 'Cada cobro queda en tu historial.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo cobro mis ganancias en efectivo?',
+          '¿Qué pasa si mi código se vence?',
+          '¿Por qué no veo «Cobrar en efectivo»?',
+        ],
+        pasos: [
+          'Abre Ganancias y toca «Cobrar en efectivo».',
+          'Escribe el monto y toca «Pedir mi código».',
+          'Ve al Agente Divoox con tu documento de identidad y muéstrale el código.',
+          'Recibe el efectivo. Te llega el aviso con el número de recibo.',
+        ],
+      },
+      {
+        id: 'top-up-with-a-divoox-agent',
+        titulo: 'Recargar tu saldo en efectivo con un Agente Divoox',
+        resumen:
+          'Si tu ciudad tiene Agente Divoox, puedes recargar tu saldo para comisiones pagando en efectivo en su local. El saldo te llega en el momento.',
+        explicacion: [
+          'Tu saldo es el dinero con el que pagas la comisión de Divoox en cada carrera. Sin saldo no recibes carreras. Con un Agente Divoox lo recargas en efectivo, sin transferencias ni códigos.',
+          'Ve al local del agente y dile cuánto quieres recargar. El agente te busca por tu número de teléfono completo o por tu código de invitación (está en Perfil, «Mi equipo e invitaciones»).',
+          'El agente comprueba tu nombre, tú le pagas en efectivo y él confirma. Si en tu ciudad se paga en bolívares, el agente te dice cuánto es a la tasa del día.',
+          'El saldo entra a tu cuenta en el momento. Te llega un aviso con el número de recibo y la recarga aparece en Ganancias, en «Saldo para comisiones».',
+          'Paga solo el monto que vas a recargar. El agente no te cobra nada extra por la recarga. Si alguien te pide más, escríbenos por Ayuda.',
+        ],
+        capturas: [
+          {
+            src: '/docs/agente-recarga-recibo-es.webp',
+            alt: 'Recibo «Saldo acreditado» en el panel del agente, con el monto, el número de recibo, el conductor de ejemplo y su saldo nuevo.',
+            pie: 'El agente confirma y tu saldo se acredita en el momento.',
+          },
+          {
+            src: '/docs/agente-recarga-saldo-es.webp',
+            alt: '«Saldo para comisiones» en Ganancias de Divoox Driver, con la recarga hecha con un Agente Divoox.',
+            pie: 'La recarga aparece en tu saldo para comisiones.',
+          },
+        ],
+        preguntas: [
+          '¿Cómo recargo mi saldo en efectivo?',
+          '¿Cuánto tarda en llegar el saldo?',
+          '¿El agente cobra algo por recargar?',
+        ],
+        pasos: [
+          'Ve al local del Agente Divoox de tu ciudad.',
+          'Dale tu número de teléfono o tu código de invitación y dile cuánto recargas.',
+          'Paga en efectivo. El agente confirma.',
+          'Revisa el aviso en tu app: el saldo ya está.',
+        ],
+      },
+      {
         id: 'divoox-gift-trips',
         titulo: 'Viajes con regalo de Divoox: cobras la diferencia y Divoox te paga el resto',
         resumen:
@@ -8261,6 +8345,90 @@ const en: SeccionDocs[] = [
           'If you’re running low, top up with a code or ask your city team to add balance.',
           'Accept the trip: the commission is set aside. When you finish, it’s charged.',
           'If you have gifts to collect, tap “Move to my balance.”',
+        ],
+      },
+      {
+        id: 'cash-out-with-a-divoox-agent',
+        titulo: 'Cash out your earnings with a Divoox Agent',
+        resumen:
+          'In cities with a Divoox Agent, you can collect your earnings in cash. Get a code in your app, go to the agent, show it, and they hand you the money.',
+        explicacion: [
+          'A Divoox Agent is a trusted local business authorized by Divoox to pay out your earnings in cash. If your city has an agent, you’ll see the “Cash out” card under Earnings.',
+          'You choose how much to collect. There’s a minimum amount and a daily maximum, and the app shows both. If your city pays in dollars, you get whole dollars and the cents stay in your wallet. If it pays in local currency, you get the exact amount at the day’s rate, which is locked in the moment you get the code.',
+          'When you get the code, that money is set aside from your earnings. The code has 6 digits and also comes as a QR. It’s valid for 24 hours and works only once. You can have only one active code at a time.',
+          'At the location, show the code to the agent and bring your ID. The agent sees your name and photo, hands you the cash, and marks the payout. You get a notification with the receipt number.',
+          'If you don’t go, nothing is lost: when the code expires, the money goes back to your earnings automatically. You can also cancel it yourself with “Cancel the code.”',
+          'Don’t give your code to anyone else or send it in a message. Anyone who has the code and shows up as you could collect it. The agent will never ask for your password.',
+          '“Move to my balance” is still there: if you’d rather use your earnings for your commissions, you don’t need to visit the agent.',
+        ],
+        capturas: [
+          {
+            src: '/docs/agente-cobrar-tarjeta-en.webp',
+            alt: 'The “Cash out” card under Earnings in Divoox Driver, showing the earnings you can collect and the “Cash out” button.',
+            pie: 'Under Earnings, you see how much you can cash out.',
+          },
+          {
+            src: '/docs/agente-cobrar-monto-en.webp',
+            alt: 'The form to choose the amount, with the minimum, the maximum, and the note about whole dollars.',
+            pie: 'Choose the amount you want to collect.',
+          },
+          {
+            src: '/docs/agente-cobrar-codigo-en.webp',
+            alt: 'A sample cash-out code with its QR, the amount set aside, how long it’s valid, and where to collect.',
+            pie: 'Your code and its QR. The code in the image is a sample.',
+          },
+          {
+            src: '/docs/agente-cobrar-historial-en.webp',
+            alt: 'The “Cash out” card with the completed payout under “Your cash-outs.”',
+            pie: 'Every cash-out stays in your history.',
+          },
+        ],
+        preguntas: [
+          'How do I collect my earnings in cash?',
+          'What happens if my code expires?',
+          'Why don’t I see “Cash out”?',
+        ],
+        pasos: [
+          'Open Earnings and tap “Cash out.”',
+          'Enter the amount and tap “Get my code.”',
+          'Go to the Divoox Agent with your ID and show the code.',
+          'Collect your cash. You’ll get a notification with the receipt number.',
+        ],
+      },
+      {
+        id: 'top-up-with-a-divoox-agent',
+        titulo: 'Top up your balance in cash with a Divoox Agent',
+        resumen:
+          'If your city has a Divoox Agent, you can top up your commission balance by paying cash at their location. The balance arrives right away.',
+        explicacion: [
+          'Your balance is the money that covers the Divoox commission on each trip. Without balance, you don’t get trips. With a Divoox Agent you top it up in cash, with no transfers or codes.',
+          'Go to the agent’s location and tell them how much you want to add. The agent looks you up by your full phone number or your invite code (it’s under Profile, “My team and invitations”).',
+          'The agent checks your name, you pay in cash, and they confirm. If your city pays in local currency, the agent tells you the amount at the day’s rate.',
+          'The balance reaches your account right away. You get a notification with the receipt number, and the top-up shows under Earnings, in “Balance for fees.”',
+          'Pay only the amount you’re adding. The agent doesn’t charge you anything extra for the top-up. If someone asks for more, message us through Help.',
+        ],
+        capturas: [
+          {
+            src: '/docs/agente-recarga-recibo-en.webp',
+            alt: 'The “Balance credited” receipt in the agent’s panel, with the amount, receipt number, sample driver, and their new balance.',
+            pie: 'The agent confirms and your balance is credited right away.',
+          },
+          {
+            src: '/docs/agente-recarga-saldo-en.webp',
+            alt: '“Balance for fees” under Earnings in Divoox Driver, showing the top-up made with a Divoox Agent.',
+            pie: 'The top-up shows in your balance for commissions.',
+          },
+        ],
+        preguntas: [
+          'How do I top up my balance in cash?',
+          'How long does the balance take to arrive?',
+          'Does the agent charge a fee for topping up?',
+        ],
+        pasos: [
+          'Go to the Divoox Agent’s location in your city.',
+          'Give them your phone number or invite code and tell them how much you’re adding.',
+          'Pay in cash. The agent confirms.',
+          'Check the notification in your app: the balance is already there.',
         ],
       },
       {

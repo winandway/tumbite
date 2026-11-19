@@ -175,6 +175,8 @@ const es = {
       manual: 'Carga del equipo de Divoox',
       regalo_nuevo: 'Regalo de arranque',
       regalo_a_saldo: 'Regalos pasados a tu saldo',
+      // C-AGENTE-DIVOOX: saldo comprado en efectivo a un Agente Divoox.
+      agente: 'Recarga con un Agente Divoox',
     } as Record<string, string>,
     canjeado: 'Recarga acreditada.',
     sinSaldo: 'Sin saldo no recibes pedidos en efectivo.',
@@ -399,6 +401,7 @@ const en: T = {
       manual: 'Top-up from the Divoox team',
       regalo_nuevo: 'Starter gift',
       regalo_a_saldo: 'Gifts moved to your balance',
+      agente: 'Top-up with a Divoox Agent',
     } as Record<string, string>,
     canjeado: 'Top-up credited.',
     sinSaldo: 'Without balance you won’t get cash orders.',

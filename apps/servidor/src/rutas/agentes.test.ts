@@ -123,7 +123,8 @@ describe('C-AGENTE-DIVOOX: cobrar en efectivo', () => {
     const p = await m.pedir(c.token, 2_000);
     expect(p.estado).toBe(201);
     expect(p.datos.cobro).toMatchObject({ monto: 2_000, estado: 'activo', pagaEn: 'USD' });
-    expect(p.datos.cobro.codigo).toMatch(/^\d{6}$/);
+    // Seis números y nunca empieza por cero (los códigos de ejemplo de las guías no existen).
+    expect(p.datos.cobro.codigo).toMatch(/^[1-9]\d{5}$/);
     expect(await saldoRetirable(m.DB, c.id)).toBe(550);
     // Uno vivo a la vez.
     expect((await m.pedir(c.token, 500)).estado).toBe(409);
@@ -374,6 +375,13 @@ describe('C-AGENTE-DIVOOX: el agente vende saldo', () => {
       deuda: 1_000,
     });
     expect(await saldoLibro(m.DB, c.id, 'prepago', 'VE', 'USD')).toBe(1_000);
+    // El conductor ve la recarga en su saldo para comisiones (tipo «agente», con el nombre del agente).
+    const mio = await m.e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, c.token);
+    expect(mio.datos.cargas[0]).toMatchObject({
+      tipo: 'agente',
+      monto: 1_000,
+      motivo: 'Agente Divoox · Casa de Cambio Ejemplo',
+    });
     // El mismo toque repetido no vende dos veces.
     const otra = await m.como(a.cookie, 'POST', 'sales', cuerpo);
     expect(otra.datos.recibo.numero).toBe(v.datos.recibo.numero);

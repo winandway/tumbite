@@ -889,5 +889,17 @@
   "web-comparar-restaurante-en": [960, 675],
   "web-comparar-restaurante-es": [960, 675],
   "web-flota-enlace-en": [540, 1099, 1082, 2202, "a736a275"],
-  "web-flota-enlace-es": [540, 1099, 1082, 2202, "dd5bcbca"]
+  "web-flota-enlace-es": [540, 1099, 1082, 2202, "dd5bcbca"],
+  "agente-cobrar-codigo-en": [540, 834],
+  "agente-cobrar-codigo-es": [540, 871],
+  "agente-cobrar-historial-en": [540, 371],
+  "agente-cobrar-historial-es": [540, 371],
+  "agente-cobrar-monto-en": [540, 667],
+  "agente-cobrar-monto-es": [540, 730],
+  "agente-cobrar-tarjeta-en": [540, 278],
+  "agente-cobrar-tarjeta-es": [540, 278],
+  "agente-recarga-recibo-en": [540, 420],
+  "agente-recarga-recibo-es": [540, 444],
+  "agente-recarga-saldo-en": [540, 323],
+  "agente-recarga-saldo-es": [540, 323]
 }

@@ -37,6 +37,9 @@ for (const [, nombre, idioma] of guias.matchAll(/capSaldo\(\s*'([a-z0-9-]+)',\s*
   archivos.add(`saldo-conductores-${nombre}-${idioma}.webp`);
 for (const [, nombre, idioma] of guias.matchAll(/capRef\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`referidos-${nombre}-${idioma}.webp`);
+// C-AGENTE-DIVOOX: las de «Agentes» (capAgente).
+for (const [, nombre, idioma] of guias.matchAll(/capAgente\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
+  archivos.add(`agentes-${nombre}-${idioma}.webp`);
 // C-BANNERS: las de «Banners de la app» (capBanners).
 for (const [, nombre, idioma] of guias.matchAll(/capBanners\(\s*'([a-z0-9-]+)',\s*'(es|en)'/g))
   archivos.add(`banners-${nombre}-${idioma}.webp`);

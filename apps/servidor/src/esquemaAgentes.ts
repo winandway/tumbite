@@ -23,12 +23,14 @@ BEGIN
   SELECT RAISE(ABORT, 'cobro en efectivo: ya está cerrado');
 END`,
   // Vencido o cancelado: el monto vuelve a las ganancias, una sola vez (id fijo).
+  // Con el mismo concepto «retiro» (en positivo): así lo «retirado» del día en la conciliación es
+  // lo que de verdad salió, sin contar lo que volvió.
   `CREATE TRIGGER IF NOT EXISTS cobros_efectivo_devuelve
 AFTER UPDATE OF estado ON cobros_efectivo
 WHEN OLD.estado = 'activo' AND NEW.estado IN ('vencido', 'cancelado')
 BEGIN
   INSERT INTO movimientos (id, usuario_id, monto, concepto, referencia)
-  VALUES ('mov-cobro-dev-' || NEW.id, NEW.conductor_id, NEW.monto, 'ajuste', 'cobro-efectivo-devuelto:' || NEW.id);
+  VALUES ('mov-cobro-dev-' || NEW.id, NEW.conductor_id, NEW.monto, 'retiro', 'cobro-efectivo-devuelto:' || NEW.id);
 END`,
   // Pagado: baja el fondo del agente en la misma sentencia (queda en su libro).
   `CREATE TRIGGER IF NOT EXISTS cobros_efectivo_paga
