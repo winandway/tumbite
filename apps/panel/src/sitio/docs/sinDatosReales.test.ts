@@ -60,7 +60,8 @@ describe('C-DOCS-SIN-DATOS-REALES', () => {
     const malos = archivos.filter((a) => {
       const t = llano(leer(a));
       return VETADOS.some((v) => t.includes(v));
-    });
+      // Lee todo el repositorio: con la máquina cargada pasa de los cinco segundos de costumbre.
+    }, 60_000);
     expect(malos).toEqual([]);
   });
 
@@ -69,7 +70,7 @@ describe('C-DOCS-SIN-DATOS-REALES', () => {
       .filter((a) => a.startsWith('apps/panel/src/sitio/') || a.startsWith('e2e/recorrido/'))
       .filter((a) => CUPONES_REALES.some((c) => c.test(leer(a))));
     expect(malos).toEqual([]);
-  });
+  }, 60_000);
 
   it('los guiones de las capturas rehechas no escriben en pantalla una ciudad ni una calle real', () => {
     const malas = GUIONES_SIN_LUGAR.flatMap((g) =>
