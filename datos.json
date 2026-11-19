@@ -1,7 +1,7 @@
 {
-  "actualizado": "2026-11-19T21:51:53Z",
+  "actualizado": "2026-11-19T22:10:51Z",
   "version": "fe71f3f",
-  "ahora": "19 nov: quedó publicado el paquete nuevo del conductor: lo que cobra va en cifra grande y verde con los bolívares debajo, el mapa aparece en la oferta y en el viaje, los pasos del viaje se deslizan (llegué, iniciar, terminar) y el saldo se ve en el inicio. Las apps con todo esto ya están para el equipo en la prueba interna de Play (Divoox 49 y Driver 44) y en TestFlight (Divoox 57 y Driver 44). En Play Store para el público siguen Divoox 0.1.48 y Driver 0.1.43, aprobadas hoy. A la tienda pública esta versión va después de la revisión del auditor.",
+  "ahora": "19 nov: la app de restaurantes de la tienda mostraba por error el aviso de pruebas en la pantalla de entrar. Ya está corregida y subida a prueba interna de Google Play (versión 19) y a TestFlight (25); falta llevarla a producción de Play. Las apps de cliente y conductor tienen lista su versión candidata con las líneas de taxi y mototaxi, el regalo con viaje real y el paquete nuevo del conductor, en prueba interna (cliente 54, conductor 58) y en TestFlight (cliente 60, conductor 47).",
   "proximo": [
     {
       "quien": "ia",
@@ -35,6 +35,14 @@
     }
   ],
   "esperando": [
+    {
+      "id": "play-datos-ubicacion-fraude",
+      "prioridad": "alta",
+      "titulo": "Google Play: sumar «prevención de fraude» a la ubicación en Seguridad de los datos",
+      "para": "En la consola de Google Play, en Seguridad de los datos: en la app de clientes, a la ubicación se le suma la finalidad de prevención de fraude (la app comprueba que el pasajero viaja con su conductor cuando hay un regalo); en la de conductores se confirma que nombre, teléfono y ubicación están declarados; en la de restaurantes, que están los mensajes de chat y los reportes. Destraba la subida a producción de las tres apps.",
+      "destraba": "La subida a producción de Google Play de las apps de cliente, conductor y restaurantes.",
+      "numero": 34
+    },
     {
       "id": "alta-stripe-pizzeria-novi",
       "prioridad": "alta",
@@ -312,7 +320,7 @@
       "destraba": "Encender «Volver a cobrar» en el sitio real después de probarlo en el sitio de pruebas."
     },
     {
-      "numero": 34,
+      "numero": 35,
       "id": "peru-comision-tarifa-recarga",
       "prioridad": "alta",
       "titulo": "Perú: elegir la comisión, aprobar la tarifa y el mínimo de la recarga con tarjeta",
@@ -320,7 +328,7 @@
       "destraba": "Aprobar la comisión de Perú, que es una de las tres llaves para abrir Ica."
     },
     {
-      "numero": 35,
+      "numero": 36,
       "id": "peru-legal-marca-procesador",
       "prioridad": "alta",
       "titulo": "Perú: abogado peruano, marca en Perú y la pregunta al procesador de pagos",
@@ -328,7 +336,7 @@
       "destraba": "Abrir la compuerta de Perú en producción y hacer la primera recarga real de 30 soles."
     },
     {
-      "numero": 36,
+      "numero": 37,
       "id": "peru-lider-ica-y-vehiculo",
       "prioridad": "media",
       "titulo": "Perú: el contacto del líder de Ica y si entra la moto lineal o solo el mototaxi",
@@ -517,6 +525,11 @@
       "fecha": "2026-11-19",
       "titulo": "Perú: Ica funciona de punta a punta en el sitio de pruebas",
       "texto": "Quedó construido y probado Divoox para Ica, Perú. Todo va en soles. El pasajero paga en mano: efectivo, Yape o Plin, y ve el número del conductor en su viaje. El conductor carga su número en Ganancias, confirma cada pago y recarga su saldo con tarjeta o con un código del punto de venta del líder. En el sitio de pruebas se cobró una recarga de 30 soles con la tarjeta de prueba y se hicieron tres viajes con su comisión. Hay guías nuevas en Docs en español e inglés y una guía interna para el equipo. Nada se probó con dinero real. En el sitio real Perú queda apagado: no se abre sin tu orden."
+    },
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Restaurantes sin el aviso de pruebas, y candidata nueva de cliente y conductor",
+      "texto": "La app de restaurantes publicada mostraba el aviso «PRUEBAS» en la pantalla de entrar: se había compilado antes del arreglo y no se recompiló con las otras dos. Se compiló de nuevo, se comprobó en el teléfono de pruebas que ya no lo muestra y se subió a prueba interna de Google Play y a TestFlight. Quedó un candado: ningún paquete sube a ninguna pista de Google Play sin abrir antes su pantalla de entrar. Además, cliente y conductor tienen su versión candidata con las líneas de taxi y mototaxi y el regalo con viaje real; el cierre del viaje ya no muestra un cero grande cuando el regalo cubre todo, y avisa cuando un regalo queda en revisión. La política de privacidad cuenta ahora la comprobación de ubicación en viajes con regalo y lo que comparten las líneas."
     },
     {
       "fecha": "2026-11-19",
@@ -1263,5 +1276,5 @@
       ]
     }
   ],
-  "siguienteProgreso": 37
+  "siguienteProgreso": 38
 }
