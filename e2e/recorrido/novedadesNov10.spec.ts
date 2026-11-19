@@ -139,7 +139,11 @@ for (const idioma of ['es', 'en'] as const)
     await d.goto('/driver/');
     const invitacion = d.getByTestId('invitaciones-flota');
     await expect(invitacion).toBeVisible({ timeout: 60_000 });
-    await invitacion.scrollIntoViewIfNeeded();
+    // La pantalla de inicio se vuelve a pintar cuando llegan sus datos: si la tarjeta se suelta
+    // justo al desplazarla, se reintenta (falló así en la nube el 19 nov, dos veces seguidas).
+    await expect(async () => {
+      await invitacion.scrollIntoViewIfNeeded({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
     await foto(d, 'driver-flota-invitacion');
     await invitacion.getByRole('button', { name: en ? 'Accept' : 'Aceptar' }).click();
     await expect(d.getByTestId('mi-flota')).toBeVisible({ timeout: 20_000 });

@@ -95,6 +95,12 @@ for (const idioma of ['es', 'en'] as const) {
     sql(`INSERT OR IGNORE INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa, idioma)
          VALUES ('${z.id}', '${z.nombre}', '${z.pais}', 'USD', '${z.tz}', 10, -70, 15, 1, '${idioma}')`);
     // La tasa del día fija para la prueba (Venezuela): 250 bolívares por dólar.
+    sql(`UPDATE zonas SET activa = 1 WHERE id = '${z.id}'`);
+    // Lo que había antes se guarda y se devuelve al terminar (otras pruebas usan la tasa de Venezuela).
+    const modoAntes =
+      C.pagaEn === 'VES'
+        ? (sql("SELECT modo, ajuste_pct, tasa_fija FROM tasas_modo WHERE pais = 'VE'")[0] ?? null)
+        : null;
     if (C.pagaEn === 'VES')
       sql(
         "INSERT OR REPLACE INTO tasas_modo (pais, modo, ajuste_pct, tasa_fija) VALUES ('VE', 'fija', NULL, 250)",
@@ -361,8 +367,18 @@ for (const idioma of ['es', 'en'] as const) {
     await expect(pa.getByTestId('agente-entrar')).toBeVisible({ timeout: 30_000 });
     expect((await pa.request.get('/datos/agent/me')).status()).toBe(401);
 
-    // Se deja como estaba: la ciudad apagada.
+    // Se deja como estaba: la ciudad apagada, el agente suspendido y la tasa de antes.
     sql(`DELETE FROM agentes_ciudad WHERE zona_id = '${z.id}'`);
+    sql(`UPDATE agentes SET estado = 'suspendido' WHERE zona_id = '${z.id}'`);
+    // La zona de ejemplo queda apagada: ninguna otra prueba la ve en las listas de ciudades.
+    sql(`UPDATE zonas SET activa = 0 WHERE id = '${z.id}'`);
+    if (C.pagaEn === 'VES') {
+      if (modoAntes)
+        sql(
+          `INSERT OR REPLACE INTO tasas_modo (pais, modo, ajuste_pct, tasa_fija) VALUES ('VE', '${String(modoAntes.modo)}', ${modoAntes.ajuste_pct == null ? 'NULL' : Number(modoAntes.ajuste_pct)}, ${modoAntes.tasa_fija == null ? 'NULL' : Number(modoAntes.tasa_fija)})`,
+        );
+      else sql("DELETE FROM tasas_modo WHERE pais = 'VE'");
+    }
     await ctxAgente.close();
     await ctxRep.close();
     await panel.close();
