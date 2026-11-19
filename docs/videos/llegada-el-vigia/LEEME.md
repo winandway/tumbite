@@ -1,9 +1,9 @@
 # Capturas actuales de las apps de Divoox (para el comercial)
 
-Fecha: 19 nov 2026 (última pasada: la cuarta, al final; las anteriores quedan como historia). Todas a resolución original, tomadas ahora de las apps reales contra el sitio de pruebas, barra de estado limpia (9:41, batería llena). Textos genéricos: sin ciudad, calles reconocibles ni datos de personas.
+Fecha: 19 nov 2026 (última pasada: la quinta, al final; las anteriores quedan como historia). Todas a resolución original, tomadas ahora de las apps reales contra el sitio de pruebas, barra de estado limpia (9:41, batería llena). Textos genéricos: sin ciudad, calles reconocibles ni datos de personas.
 
 - **pantallas/cliente/**: app Divoox (cliente), versión del paquete enviado a las tiendas hoy, en el simulador de iPhone 18 Pro (iOS 27), 1206 x 2622.
-- **pantallas/driver/**: app Divoox Driver de pruebas, versión 0.1.45 (compilación 45) desde la cuarta pasada, en el emulador de Android, 1080 x 2400. Solo 13, 13a y 14 siguen siendo de la versión 41.
+- **pantallas/driver/**: app Divoox Driver de pruebas, en el emulador de Android, 1080 x 2400. Desde la quinta pasada, todo lo que muestra mapa, oferta o cierre es de la versión 0.1.53; 01, 01b, 02, 03 y 10 son de la 0.1.45, y 13, 13a y 14 de la versión 41.
 
 ## Cliente (iPhone)
 
@@ -127,3 +127,40 @@ Se retiraron del repositorio: las nueve de `anteriores-sin-precio-grande/` (reem
 - Los pasos de la pasajera van por la interfaz de datos del sitio de pruebas (cotizar y pedir con la cuenta de María; el regalo con un código temporal). Los del conductor, en la app con `adb shell input tap/swipe`; los deslizadores con un `swipe` de 700 ms, y el gesto a medias con uno de 4 s capturado a la mitad.
 - Nunca se pone el dedo sobre el mapa: el mapa se mueve y pierde los puntos (no desplaza la pantalla).
 - Datos neutros temporales en la base de pruebas (nombre del conductor, placa, tarifa sin la etiqueta «de prueba», tasa de referencia de 240), devueltos a su valor al terminar.
+
+## Quinta pasada: Driver 0.1.53 con los cinco defectos arreglados (19 nov 2026)
+
+App Divoox Driver de pruebas, versión 0.1.53 (la del paquete 13: marcador con el isotipo, mapa siempre claro, el dedo sobre el mapa pequeño desplaza la pantalla, el cierre se queda hasta tocar «Listo» y la hoja nueva de la oferta). Mismas reglas de siempre: app real de Android contra el sitio de pruebas, 1080 x 2400, barra de estado limpia (9:41), pasajera María, conductor Carlos, «Plaza Central», «Avenida Principal 12», «Mercado», sin ciudad ni nombres reales, sin la franja «PRUEBAS».
+
+Se rehicieron, con el mismo nombre (todas las que muestran mapa, la oferta o el cierre):
+
+- Viaje con regalo de Divoox: 04-oferta-entrante, 05-aceptada-ir-a-recoger, 06-llegue-esperando-pasajero, 07-viaje-en-curso, 08-desliza-terminar-medio y 09-viaje-terminado («Cobra al pasajero $0.00» y «Divoox te paga $1.00»).
+- Viaje en efectivo: 04b-oferta-entrante, 04c-oferta-con-mapa (la misma oferta cinco segundos después), 05b, 06b, 07b, 07c-viaje-con-mapa y 09b («Cobra en efectivo $1.00 · Bs. 917,78»).
+- Envío: 12a-envio-recoger-tomar-foto-paquete, 12b-envio-foto-del-paquete-lista, 12c-envio-entrega-pin-foto-desliza y 12d-envio-entregado.
+
+Nuevas:
+
+- 07d-viaje-llegando-al-destino: cerca del destino el mapa pequeño se acerca y marca «Avenida Principal 12».
+- 12-envio-oferta: la oferta de un envío («Nuevo envío de paquete»), con su mapa.
+
+No se rehicieron (esas pantallas no cambiaron): 01-inicio-desconectado, 01b-inicio-con-saldo, 02-medio-deslizar, 03-conectado y 10-ganancias-saldo-y-regalos (versión 0.1.45); 13, 13a y 14 (versión 41).
+
+### Qué cambió frente a la cuarta pasada
+
+- El marcador del conductor lleva el isotipo de Divoox en todas (antes era un círculo blanco vacío).
+- El mapa del envío sale claro (12a y 12b ya no están en gris con edificios).
+- 04 (oferta con regalo): el título ya no toca el reloj. Queda un detalle de la app: con la línea del regalo la parte del medio de la hoja se desplaza y «Plaza Central» se ve cortada justo encima del botón. Para un primer plano de la oferta conviene 04b o 04c.
+- 09, 09b y 12d: la pantalla de cierre ya no se va sola; se tomaron con calma, pasados veinte segundos.
+- Los bolívares van a la tasa oficial del día en el sitio de pruebas (Bs. 917,78 por dólar), no a la tasa de referencia de 240 de la cuarta pasada. Las que no se rehicieron no muestran bolívares, así que no chocan.
+- 06 y 06b son casi iguales (solo cambia el código): en esa pantalla ya no se ve el cobro.
+
+### Cómo se hicieron (lo que cambia)
+
+- Mismo teléfono virtual `divoox_capturas_gpu` (`-gpu host -port 5556 -no-window`) y mismos pasos: la pasajera por la interfaz de datos del sitio de pruebas y el conductor en la app con `adb shell input`.
+- Zona de los viajes: de 8.6068, -71.6429 a 8.6080, -71.6396. Ahí el mapa tiene calles y Google no pinta ningún nombre. Una zona más al sur (8.5995, -71.6485) sale en blanco, sin calles, y el centro pinta avenidas y barrios reales.
+- Ojo con el conductor a mitad de camino: el mapa del viaje abre el encuadre para que entren el conductor, el origen y el destino, y ahí Google sí escribe nombres reales de avenidas. Solo sirven las tomas con el conductor en el origen o pegado al destino (a menos de doscientos metros, que es cuando se acerca).
+- Ya se puede arrastrar sobre el mapa pequeño: desplaza la pantalla y el mapa no se mueve.
+- La oferta tarda unos once segundos en aparecer después de pedir.
+- El teclado del código a veces necesita dos «atrás» para cerrarse; conviene mirar la captura antes del siguiente toque (un toque a ciegas abrió «Elige la app de mapas»).
+- El regalo temporal BIENVENIDA ya estaba usado por María; se creó BIENVENIDA2 con el mismo texto. Los dos quedaron apagados.
+- Datos neutros temporales en la base de pruebas (nombre del conductor, placa, tarifas sin la etiqueta «de prueba»), devueltos a su valor al terminar.
