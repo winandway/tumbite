@@ -1,4 +1,5 @@
 import type { Env } from './env';
+import { serviciosAbiertosEnZona } from './rutas/servicios';
 import { nuevoId } from './cripto';
 import { guardarFoto } from './fotoLimpia';
 import { MODELO_BANNERS, asegurarModeloBarato } from './modeloGuard';
@@ -172,6 +173,7 @@ const cacheZonas = new Map<string, { hasta: number; pais: string | null }>();
 /** Al aprobar, pausar o borrar se olvida lo guardado en ESTE aislado (los demás esperan su minuto). */
 export function olvidarCacheBanners() {
   cachePublicos.clear();
+  cacheAbiertos.clear();
 }
 
 /** Los publicados de un lugar, con una lectura por minuto como mucho. */
@@ -189,6 +191,29 @@ export async function publicadosDe(db: D1Database, lugar: Lugar, ahoraMs: number
   const banners = results.map(filaABanner);
   cachePublicos.set(lugar, { hasta: ahoraMs + CACHE_BANNERS_MS, banners });
   return banners;
+}
+
+/**
+ * C-BANNERS-SOLO-ABIERTOS: los servicios abiertos de una ciudad, recordados un minuto (la portada se
+ * pide en cada apertura; abrir o cerrar un servicio tarda como mucho un minuto en notarse).
+ */
+const cacheAbiertos = new Map<string, { hasta: number; abiertos: Set<string> }>();
+export async function abiertosDeZona(
+  db: D1Database,
+  zona: string,
+  ahoraMs: number,
+): Promise<Set<string>> {
+  const g = cacheAbiertos.get(zona);
+  if (g && g.hasta > ahoraMs) return g.abiertos;
+  const abiertos = await serviciosAbiertosEnZona(db, zona);
+  if (cacheAbiertos.size > 500) cacheAbiertos.clear();
+  cacheAbiertos.set(zona, { hasta: ahoraMs + CACHE_BANNERS_MS, abiertos });
+  return abiertos;
+}
+
+/** Un banner que lleva a un servicio solo sale donde ese servicio está abierto. */
+export function conDestinoAbierto(b: Banner, abiertos: Set<string> | null): boolean {
+  return b.destinoTipo !== 'servicio' || (abiertos?.has(b.destinoValor) ?? false);
 }
 
 /** El país de una ciudad (zona), recordado 10 minutos: las zonas casi nunca cambian. */

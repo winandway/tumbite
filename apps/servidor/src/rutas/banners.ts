@@ -25,8 +25,11 @@ import {
   reservarImagenes,
   topeImagenes,
   visiblesPara,
+  abiertosDeZona,
+  conDestinoAbierto,
 } from '../banners';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
+import { serviciosAbiertosEnZona } from './servicios';
 
 /**
  * C-BANNERS (17 nov 2026) — todos los países. La ruta pública que lee la app y el administrador del
@@ -61,11 +64,18 @@ banners.get('/banners', async (c) => {
   // El inglés es el idioma principal (EE. UU.); el español, cuando la app lo pide.
   const idioma = c.req.query('idioma') === 'es' ? 'es' : 'en';
   const origen = new URL(c.req.url).origin;
-  const visibles = visiblesPara(
+  const vigentes = visiblesPara(
     await publicadosDe(db, lugar as Lugar, ahora),
     { zona, pais },
     ahora,
   );
+  // C-BANNERS-SOLO-ABIERTOS: el que lleva a un servicio solo sale donde ese servicio está abierto
+  // (si dejó de estarlo, deja de salir solo). Sin ciudad, ningún servicio está abierto.
+  const abiertos =
+    zona && vigentes.some((b) => b.destinoTipo === 'servicio')
+      ? await abiertosDeZona(db, zona, ahora)
+      : null;
+  const visibles = vigentes.filter((b) => conDestinoAbierto(b, abiertos));
   if (lugar === 'cabecera') {
     const elegido = elegirPorPeso(visibles, Math.random(), c.req.query('excluir'));
     const res = c.json({
@@ -271,6 +281,37 @@ async function revisarParaPublicar(db: D1Database, b: Banner) {
     !(SERVICIOS_DESTINO as readonly string[]).includes(b.destinoValor)
   )
     throw new ErrorDatos('Ese servicio no existe.', 'destinoValor', 422);
+  // C-BANNERS-SOLO-ABIERTOS: no se publica un banner que lleva a un servicio cerrado en su ciudad
+  // (con ciudades elegidas: abierto en TODAS; sin ciudades: abierto al menos en una de su alcance).
+  if (b.destinoTipo === 'servicio') {
+    const consulta = b.zonas.length
+      ? db
+          .prepare(
+            'SELECT id, nombre FROM zonas WHERE id IN (SELECT value FROM json_each(?)) LIMIT 50',
+          )
+          .bind(JSON.stringify(b.zonas))
+      : db
+          .prepare(
+            `SELECT id, nombre FROM zonas WHERE activa = 1
+               AND (?1 = '[]' OR pais IN (SELECT value FROM json_each(?1))) LIMIT 50`,
+          )
+          .bind(JSON.stringify(b.paises));
+    const { results } = await consulta.all<{ id: string; nombre: string }>();
+    const abiertas: string[] = [];
+    const cerradas: string[] = [];
+    for (const z of results)
+      ((await serviciosAbiertosEnZona(db, z.id)).has(b.destinoValor) ? abiertas : cerradas).push(
+        z.nombre,
+      );
+    if (b.zonas.length ? cerradas.length > 0 : abiertas.length === 0)
+      throw new ErrorDatos(
+        b.zonas.length
+          ? `Ese servicio todavía no está abierto en ${cerradas.join(', ')}. Ábrelo ahí o elige otro destino.`
+          : 'Ese servicio todavía no está abierto en ninguna ciudad. Ábrelo o elige otro destino.',
+        'destinoValor',
+        422,
+      );
+  }
   if (b.destinoTipo === 'restaurante' || b.destinoTipo === 'tienda') {
     const r = await db
       .prepare("SELECT tipo_comercio FROM restaurantes WHERE id = ? AND estado = 'aprobado'")

@@ -2218,6 +2218,11 @@ const PARTES = new Map([
   ['la firma', 'the signature'],
 ]);
 export const MENSAJES_EN_PATRONES: [RegExp, (m: RegExpExecArray) => string][] = [
+  // C-BANNERS-SOLO-ABIERTOS (18 nov 2026)
+  [
+    /^Ese servicio todavía no está abierto en (.+)\. Ábrelo ahí o elige otro destino\.$/,
+    (m) => `That service isn’t open in ${m[1]} yet. Open it there or choose another destination.`,
+  ],
   [/^Un viaje puede llevar hasta (\d+) paradas\.$/, (m) => `A ride can have up to ${m[1]} stops.`],
   // C-CAMBIAR-CIUDAD-ADMIN (18 nov 2026)
   [

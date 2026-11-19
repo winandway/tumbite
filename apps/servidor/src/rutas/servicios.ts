@@ -192,6 +192,19 @@ function estadoSinTarifa(
 }
 const ahoraSql = () => new Date().toISOString().replace('T', ' ').slice(0, 19);
 
+/**
+ * C-BANNERS-SOLO-ABIERTOS (18 nov 2026): los servicios que el público puede ABRIR hoy en una ciudad
+ * (los mismos que el catálogo del cliente marca «abrir», sin el piloto). Una consulta.
+ */
+export async function serviciosAbiertosEnZona(db: Db, zonaId: string): Promise<Set<string>> {
+  const ahora = ahoraSql();
+  return new Set(
+    (await catalogo(db, zonaId))
+      .filter((s) => estadoEfectivo(s, ahora) === 'disponible')
+      .map((s) => s.id),
+  );
+}
+
 /** El estado efectivo de UN servicio en una zona (lo usan las cotizaciones de viaje). */
 export async function estadoServicioEnZona(
   db: Db,

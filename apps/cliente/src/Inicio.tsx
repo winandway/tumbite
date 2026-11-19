@@ -13,6 +13,7 @@ import {
   leerBanner,
   ordenarPorUso,
   portadaRespaldo,
+  serviciosAbiertos,
   rutaBanners,
   recomendarRestaurantes,
   rutaDeServicio,
@@ -116,6 +117,9 @@ export function Inicio() {
     [visibles, usos],
   );
   const disponible = (id: string) => visibles.some((s) => s.id === id);
+  // C-PORTADA-SOLO-ABIERTOS: la portada de fábrica mira lo que de verdad abre en la ciudad (no el
+  // relleno de la grilla) y, mientras carga el catálogo, va la de marca (sin destello de comida).
+  const abiertos = useMemo(() => serviciosAbiertos(servicios?.servicios ?? null), [servicios]);
 
   // La portada: la del administrador de banners; si no hay, la de respaldo (una distinta cada vez).
   const [vez, setVez] = useState(0);
@@ -151,7 +155,7 @@ export function Inicio() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo hace falta saber que ya cargó
   }, [api, zona, idioma, Boolean(servicios)]);
-  const cabecera = portada ?? portadaRespaldo(idioma, vez, disponible);
+  const cabecera = portada ?? portadaRespaldo(idioma, vez, (id) => abiertos.has(id));
 
   // Las promociones: las del administrador de banners; si no hay, los cupones destacados reales.
   const [promos, setPromos] = useState<BannerInicio[]>([]);

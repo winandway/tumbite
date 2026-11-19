@@ -8,6 +8,8 @@ import {
   rutaBanners,
   rutaDeServicio,
   serviciosDelInicio,
+  portadaRespaldo,
+  serviciosAbiertos,
 } from './inicioNuevo';
 
 /**
@@ -127,5 +129,48 @@ describe('banners del inicio (C-INICIO-BANNERS)', () => {
         expect(x.titulo).not.toMatch(/\$|%|gratis|free|descuento|off/i);
       }
     }
+  });
+});
+
+describe('C-PORTADA-SOLO-ABIERTOS: la portada de fábrica anuncia solo servicios abiertos en la ciudad', () => {
+  const vueltas = (abiertos: Set<string>) =>
+    new Set([0, 1, 2, 3, 4, 5].map((v) => portadaRespaldo('es', v, (id) => abiertos.has(id)).id));
+
+  it('ciudad solo con comida: solo la portada de comida, nunca moto ni mercado', () => {
+    const abiertos = serviciosAbiertos([
+      s('comida'),
+      s('moto', 'muy_pronto'),
+      s('mercado', 'no_disponible_zona'),
+    ]);
+    expect([...abiertos]).toEqual(['comida']);
+    expect(vueltas(abiertos)).toEqual(new Set(['respaldo-comida']));
+  });
+
+  it('comida NO cuenta como abierta si la ciudad no la tiene (aunque la grilla la muestre)', () => {
+    expect(serviciosAbiertos([s('comida', 'no_disponible_zona'), s('moto')]).has('comida')).toBe(
+      false,
+    );
+  });
+
+  it('sin ningún servicio abierto (o con el catálogo todavía cargando): la portada neutra de marca', () => {
+    expect(vueltas(serviciosAbiertos([s('comida', 'muy_pronto')]))).toEqual(
+      new Set(['respaldo-marca']),
+    );
+    expect(vueltas(serviciosAbiertos(null))).toEqual(new Set(['respaldo-marca']));
+    const marca = portadaRespaldo('en', 0, () => false);
+    expect(marca.destino).toBeNull();
+    expect(marca.titulo).toBe('Welcome to Divoox');
+    expect(portadaRespaldo('es', 0, () => false).titulo).toBe('Bienvenido a Divoox');
+  });
+
+  it('el inicio del cliente arma la portada de fábrica con los servicios abiertos (no con la grilla)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const i = readFileSync(
+      join(__dirname, '..', '..', '..', 'apps/cliente/src/Inicio.tsx'),
+      'utf8',
+    );
+    expect(i).toMatch(/serviciosAbiertos\(servicios\?\.servicios \?\? null\)/);
+    expect(i).toMatch(/portadaRespaldo\(idioma, vez, \(id\) => abiertos\.has\(id\)\)/);
   });
 });

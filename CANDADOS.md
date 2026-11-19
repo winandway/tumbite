@@ -4044,6 +4044,13 @@ La anulación de códigos ya iba en un lote (C-RIESGOS-19OCT). Las llamadas a St
 - **Arreglo:** `GET /datos/kyc` trae `antecedentesPorProveedor` según el perfil del país; Driver (`Verificacion.tsx`) esconde el bloque si es `false` (una app vieja sin el campo lo sigue mostrando).
 - **Prueba:** `motoVenezuelaRevision.test.ts` (C-ANTECEDENTES-POR-PAIS), vista en rojo.
 
+## C-PORTADA-SOLO-ABIERTOS y C-BANNERS-SOLO-ABIERTOS · La portada y los banners solo anuncian servicios abiertos en la ciudad (18 nov 2026) — todos los países
+
+- **Qué se vio:** en el sitio de pruebas el banner de demostración de mercado («Tu súper sin salir de casa») se servía en una ciudad sin mercado. Y la portada de fábrica del inicio (`portadaRespaldo`) tenía tres fallos: contaba Comida siempre como abierta (`serviciosDelInicio` la rellena para la grilla aunque la ciudad no la tenga), sin ningún servicio caía en la de comida, y mientras cargaba el catálogo se veía un instante la de comida.
+- **Arreglo en la app:** `serviciosAbiertos(catalogo)` (`packages/compartido/src/inicioNuevo.ts`) lee solo lo que el catálogo marca «abrir» (sin relleno; sin catálogo, ninguno). `Inicio.tsx` arma la portada con eso. Sin ningún servicio abierto (o cargando): `PORTADA_MARCA` («Bienvenido a Divoox» / «Welcome to Divoox», el isotipo, sin destino; la portada no es botón).
+- **Arreglo en el servidor:** `serviciosAbiertosEnZona` (`rutas/servicios.ts`, el mismo estado efectivo que el catálogo del cliente, con tarifa) decide. Publicar un banner que lleva a un servicio exige que esté abierto en TODAS sus ciudades (o, sin ciudades, en al menos una de su alcance); si no, 422 en palabras: «Ese servicio todavía no está abierto en …». Al servir (`GET /datos/banners`), los que llevan a un servicio cerrado en la ciudad no salen (si se cierra después, dejan de salir solos); sin ciudad no sale ninguno de servicio. Lo abierto de cada ciudad se recuerda un minuto en memoria (mirar no escribe; una lectura por minuto).
+- **Pruebas (en rojo antes):** `packages/compartido/src/inicioNuevo.test.ts` (solo comida → solo la de comida; comida cerrada no cuenta; sin servicios o cargando → marca; el inicio usa los abiertos) y `apps/servidor/src/banners.test.ts` (no publica a un servicio cerrado; deja de salir al cerrarse).
+
 ## C-MAPA-VIAJE-DRIVER y C-MAPA-PRECIO-PEDIR · Mapa en la oferta, el viaje de Driver y el precio antes de pedir (18 nov 2026) — todos los países
 
 - **Qué pidió el dueño:** como las apps de conductores, la oferta y la pantalla del viaje de Driver (moto, carro y envíos; comida ya lo tenía) llevan mapa con la recogida, el destino y la posición del conductor, sin perder «Abrir navegación».

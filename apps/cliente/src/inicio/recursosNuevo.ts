@@ -18,6 +18,8 @@ import heroeComida from '../../assets/inicio-nuevo/heroe-comida.webp';
 import heroeMercado from '../../assets/inicio-nuevo/heroe-mercado.webp';
 import ofertaPizza from '../../assets/inicio-nuevo/oferta-pizza.webp';
 import fotoPizza from '../../assets/inicio-nuevo/foto-pizza.webp';
+// C-PORTADA-SOLO-ABIERTOS: la portada de marca usa el isotipo (generado desde identidad-divoox).
+import isotipo from '../../assets/comida/mascota.webp';
 
 export const IMG_NUEVO = {
   logoOscuro,
@@ -30,6 +32,7 @@ export const IMG_NUEVO = {
     'heroe-moto': heroeMoto,
     'heroe-comida': heroeComida,
     'heroe-mercado': heroeMercado,
+    'heroe-marca': isotipo,
   } as Record<string, number>,
   ofertaPizza,
   fotoPizza,

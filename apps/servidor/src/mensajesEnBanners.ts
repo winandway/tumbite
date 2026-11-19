@@ -4,6 +4,11 @@
  */
 export const MENSAJES_EN_BANNERS: [string, string][] = [
   ['Ese lugar de banners no existe.', 'That banner placement doesn’t exist.'],
+  // C-BANNERS-SOLO-ABIERTOS (18 nov 2026)
+  [
+    'Ese servicio todavía no está abierto en ninguna ciudad. Ábrelo o elige otro destino.',
+    'That service isn’t open in any city yet. Open it or choose another destination.',
+  ],
   [
     'La fecha de fin tiene que ser después de la de inicio.',
     'The end date has to be after the start date.',

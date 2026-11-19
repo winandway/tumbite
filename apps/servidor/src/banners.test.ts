@@ -175,7 +175,9 @@ function falDeMentira() {
 
 async function preparar(extra: Record<string, unknown> = {}) {
   let conteo!: ReturnType<typeof contarFilas>;
-  const m = mundo(extra, {
+  const { sinServicios, ...env } = extra;
+  const m = mundo(env, {
+    host: 'staging.tumbite.com',
     envolver: (db) => {
       conteo = contarFilas(db);
       return conteo.db;
@@ -186,6 +188,39 @@ async function preparar(extra: Record<string, unknown> = {}) {
   ).run();
   const admin = await m.cuenta('admin');
   const cliente = await m.cuenta('cliente');
+  // C-BANNERS-SOLO-ABIERTOS: un banner de un servicio solo se publica y sale donde está abierto.
+  const abrirServicio = async (servicio: string, zona: string) => {
+    await m.llamar(
+      'PUT',
+      `/datos/admin/servicios/${servicio}`,
+      { estado: 'disponible' },
+      admin.token,
+    );
+    if (servicio === 'moto')
+      await m.llamar(
+        'POST',
+        '/datos/admin/viajes/tarifas',
+        {
+          servicio,
+          zona,
+          tarifa: { base: 150, porKm: 60, porMinuto: 12, minimo: 400 },
+          motivo: 'Tarifa de prueba',
+        },
+        admin.token,
+      );
+    const r = await m.llamar(
+      'PUT',
+      `/datos/admin/servicios/${servicio}/zonas/${zona}`,
+      { estado: 'disponible' },
+      admin.token,
+    );
+    expect(r.estado, JSON.stringify(r.datos)).toBe(200);
+    olvidarCacheBanners();
+  };
+  if (sinServicios !== true) {
+    await abrirServicio('moto', 'VE-MER-ELVIGIA');
+    await abrirServicio('moto', 'US-FL-MIAMI');
+  }
   const subida = await m.foto('/datos/admin/banners/imagen', admin.token);
   expect(subida.estado).toBe(201);
   const imagen = subida.datos.url as string;
@@ -215,7 +250,18 @@ async function preparar(extra: Record<string, unknown> = {}) {
   const publicar = (id: string) =>
     m.llamar('POST', `/datos/admin/banners/${id}/publicar`, {}, admin.token);
   const ver = (q: string) => m.llamar('GET', `/datos/banners?${q}`);
-  return { m, admin, cliente, imagen, nuevo, crear, publicar, ver, conteo: () => conteo };
+  return {
+    m,
+    admin,
+    cliente,
+    imagen,
+    nuevo,
+    crear,
+    publicar,
+    ver,
+    abrirServicio,
+    conteo: () => conteo,
+  };
 }
 
 describe('C-BANNERS · la ruta pública', () => {
@@ -394,5 +440,38 @@ describe('C-BANNER-SIN-CORTES · título demasiado largo', () => {
     );
     expect(r.estado).toBe(400);
     expect(r.datos.error).toMatch(/45 caracteres/);
+  });
+});
+
+describe('C-BANNERS-SOLO-ABIERTOS: un banner nunca anuncia un servicio cerrado en la ciudad', () => {
+  it('no deja publicar uno que lleva a un servicio cerrado en su ciudad (y lo dice)', async () => {
+    const { crear, publicar } = await preparar({ sinServicios: true });
+    const r = await publicar(await crear({ destinoValor: 'mercado' }));
+    expect(r.estado).toBe(422);
+    expect(r.datos.error).toMatch(/isn’t open in El Vigía yet/);
+    // Sin ciudades (todas): hace falta que esté abierto en al menos una.
+    expect((await publicar(await crear({ destinoValor: 'mercado', zonas: [] }))).estado).toBe(422);
+  });
+
+  it('se publica donde está abierto y deja de salir solo si el servicio se cierra después', async () => {
+    const { m, admin, crear, publicar, ver } = await preparar();
+    const id = await crear();
+    expect((await publicar(id)).estado).toBe(200);
+    expect((await ver('lugar=cabecera&ciudad=VE-MER-ELVIGIA')).datos.banner.id).toBe(id);
+    await m.llamar(
+      'PUT',
+      '/datos/admin/servicios/moto/zonas/VE-MER-ELVIGIA',
+      { estado: 'suspendido', motivo: 'Pausa de prueba' },
+      admin.token,
+    );
+    olvidarCacheBanners();
+    expect((await ver('lugar=cabecera&ciudad=VE-MER-ELVIGIA')).datos.banner).toBeNull();
+  });
+
+  it('el de un comercio o un cupón no depende del catálogo de servicios', async () => {
+    const { crear, publicar } = await preparar({ sinServicios: true });
+    expect(
+      (await publicar(await crear({ destinoTipo: 'cupon', destinoValor: 'NOEXISTE' }))).estado,
+    ).toBe(422);
   });
 });

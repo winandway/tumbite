@@ -87,7 +87,7 @@ export type BannerInicio = {
   /** Dirección de la imagen del servidor, o vacía (el respaldo usa su imagen local por `local`). */
   imagen: string;
   /** Imagen local del respaldo (heroe-moto, heroe-comida, heroe-mercado). */
-  local?: 'heroe-moto' | 'heroe-comida' | 'heroe-mercado';
+  local?: 'heroe-moto' | 'heroe-comida' | 'heroe-mercado' | 'heroe-marca';
   destino: DestinoBanner | null;
   codigo: string | null;
 };
@@ -218,7 +218,40 @@ export function portadaRespaldo(
   disponibles: (id: string) => boolean,
 ): BannerInicio {
   const todos = idioma === 'en' ? BANNERS_RESPALDO.en : BANNERS_RESPALDO.es;
-  const l = todos.filter((b) => !b.destino || disponibles(b.destino.valor));
-  const lista = l.length ? l : todos.slice(1, 2);
-  return lista.at(((vez % lista.length) + lista.length) % lista.length) ?? todos[0]!;
+  const lista = todos.filter((b) => !b.destino || disponibles(b.destino.valor));
+  // C-PORTADA-SOLO-ABIERTOS: sin ningún servicio abierto (o mientras carga el catálogo), la portada
+  // neutra de marca: nunca la de un servicio que la ciudad no tiene.
+  if (!lista.length) return PORTADA_MARCA[idioma === 'en' ? 'en' : 'es'];
+  return lista.at(((vez % lista.length) + lista.length) % lista.length) ?? lista[0]!;
+}
+
+/** C-PORTADA-SOLO-ABIERTOS: la portada de marca, sin destino (no promete ningún servicio). */
+export const PORTADA_MARCA: Record<Idioma, BannerInicio> = {
+  es: {
+    id: 'respaldo-marca',
+    titulo: 'Bienvenido a Divoox',
+    texto: '',
+    imagen: '',
+    local: 'heroe-marca',
+    destino: null,
+    codigo: null,
+  },
+  en: {
+    id: 'respaldo-marca',
+    titulo: 'Welcome to Divoox',
+    texto: '',
+    imagen: '',
+    local: 'heroe-marca',
+    destino: null,
+    codigo: null,
+  },
+};
+
+/**
+ * C-PORTADA-SOLO-ABIERTOS (18 nov 2026): los servicios que de verdad se pueden abrir en la ciudad,
+ * leídos del catálogo (sin el relleno de la grilla, que pone Comida aunque la ciudad no la tenga).
+ * Sin catálogo todavía: ninguno.
+ */
+export function serviciosAbiertos(catalogo: ServicioCatalogo[] | null): Set<string> {
+  return new Set((catalogo ?? []).filter((s) => s.accion === 'abrir').map((s) => s.id));
 }

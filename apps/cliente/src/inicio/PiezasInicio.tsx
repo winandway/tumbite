@@ -119,7 +119,9 @@ export function PortadaRotativa({
       </View>
       <Pressable
         onPress={() => alTocar(banner)}
-        accessibilityRole="button"
+        // C-PORTADA-SOLO-ABIERTOS: la portada de marca no lleva a ningún lado: no es un botón.
+        disabled={!banner.destino}
+        accessibilityRole={banner.destino ? 'button' : 'text'}
         accessibilityLabel={banner.titulo}
         testID={`portada-${banner.id}`}
         style={p.cuerpo}
