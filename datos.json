@@ -459,6 +459,11 @@
   "bitacora": [
     {
       "fecha": "2026-11-18",
+      "titulo": "Versión corregida en Google Play: sin el aviso «PRUEBAS» y con los ocho servicios en el inicio",
+      "texto": "La versión publicada por la mañana mostraba por error un aviso «PRUEBAS» en la pantalla de entrar, aunque trabajaba con el servidor real. Se corrigió la causa y se subieron Divoox 0.1.48 y Divoox Driver 0.1.43, que Google está revisando. El inicio del cliente ahora muestra siempre los ocho servicios; al tocar uno que todavía no llega a tu zona, lo dice claro. Desde ahora ninguna versión se sube sin abrir antes su pantalla de entrar. El número de versión cambia con cada compilación, para que soporte pueda pedirlo."
+    },
+    {
+      "fecha": "2026-11-18",
       "titulo": "La página de apps manda a Play Store y guarda las de prueba para el equipo",
       "texto": "La versión real de Divoox y de Divoox Driver ahora se baja de Play Store desde la página de apps. Los códigos y enlaces de las apps de prueba solo se ven con la clave del equipo. Quien tenga una app de Divoox instalada por enlace debe desinstalarla antes de bajar la de la tienda."
     },
