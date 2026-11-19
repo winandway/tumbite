@@ -10,7 +10,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { type Redibujable, crearRedibujador } from './redibujarMarcadores';
-import { estiloMapaDe } from '@tumbite/compartido/src/estiloMapaDivoox';
+import { type ReglaEstiloMapa, estiloMapaDe } from '@tumbite/compartido/src/estiloMapaDivoox';
 import {
   AJUSTES_TEMA_MAPA,
   TEXTOS_TEMA_MAPA,
@@ -38,11 +38,21 @@ import { C, e } from './ui';
  */
 type Punto = { lat: number; lng: number };
 
+/**
+ * C-MAPA-SIEMPRE-CLARO (paquete 13): lo que el estilo de la web no necesita y el teléfono sí. El mapa de
+ * Google para Android oscurece un 18 % las manzanas (`landscape.man_made`): el gris «edificio» de la
+ * paleta (#E3E6EA) salía como un gris medio (186,189,192) que tapaba media ciudad. En el teléfono las
+ * manzanas no se pintan y el suelo queda en el gris claro de la paleta, con las calles en blanco.
+ */
+const SOLO_EN_EL_TELEFONO: ReglaEstiloMapa[] = [
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+];
+
 /** Las propiedades de color que se le ponen a cada `<MapView>`: `{...coloresMapa}`. */
 export function usePropsMapaDivoox(punto?: Punto | null): {
   tema: TemaMapa;
   coloresMapa: {
-    customMapStyle: ReturnType<typeof estiloMapaDe>;
+    customMapStyle: ReglaEstiloMapa[];
     userInterfaceStyle: 'light' | 'dark';
     showsPointsOfInterests: false;
     showsBuildings: false;
@@ -59,7 +69,7 @@ export function usePropsMapaDivoox(punto?: Punto | null): {
     () => ({
       tema,
       coloresMapa: {
-        customMapStyle: estiloMapaDe(tema),
+        customMapStyle: [...estiloMapaDe(tema), ...SOLO_EN_EL_TELEFONO],
         userInterfaceStyle: tema === 'noche' ? 'dark' : 'light',
         showsPointsOfInterests: false,
         // C-MAPA-SIEMPRE-CLARO (paquete 13): de cerca, Google levantaba los edificios en 3D y

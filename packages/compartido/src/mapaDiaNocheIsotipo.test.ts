@@ -50,7 +50,8 @@ describe('día y noche en todos los mapas', () => {
 
   it('la pieza nativa pone el estilo propio en Android y el modo claro u oscuro en iPhone, sin puntos de interés', () => {
     const t = leer('packages/movil/src/mapaDivoox.tsx');
-    expect(t).toContain('customMapStyle: estiloMapaDe(tema)');
+    // Paquete 13: más las reglas que solo necesita el teléfono (las manzanas sin pintar).
+    expect(t).toContain('customMapStyle: [...estiloMapaDe(tema), ...SOLO_EN_EL_TELEFONO]');
     expect(t).toMatch(/userInterfaceStyle: tema === 'noche' \? 'dark' : 'light'/);
     expect(t).toContain('showsPointsOfInterests: false');
     expect(t).toContain('useTemaMapa(');

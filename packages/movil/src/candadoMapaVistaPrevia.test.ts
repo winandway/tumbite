@@ -28,6 +28,17 @@ describe('C-MAPA-SIEMPRE-CLARO: sin edificios en 3D', () => {
     expect(s).toMatch(/showsBuildings: false/);
     expect(s).toMatch(/showsIndoors: false/);
   });
+
+  // Visto en el emulador (paquete 13) con los edificios ya apagados: el mapa de Google para Android
+  // oscurece un 18 % las manzanas de `landscape.man_made` (#E3E6EA salía 186,189,192, la mancha gris
+  // medio de las capturas 12a y del viaje). En rojo antes: el estilo nativo no las apagaba.
+  it('en el teléfono las manzanas no se pintan (el suelo queda en el gris claro de la paleta)', () => {
+    const s = leer('packages/movil/src/mapaDivoox.tsx');
+    expect(s).toMatch(
+      /featureType: 'landscape\.man_made',\s*elementType: 'geometry',\s*stylers: \[\{ visibility: 'off' \}\]/,
+    );
+    expect(s).toMatch(/customMapStyle: \[\.\.\.estiloMapaDe\(tema\), \.\.\.SOLO_EN_EL_TELEFONO\]/);
+  });
 });
 
 describe('C-MAPA-VISTA-PREVIA: el mapa pequeño no se toca', () => {
