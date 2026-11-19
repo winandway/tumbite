@@ -191,6 +191,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   'PATCH /admin/regalos-divoox/:codigo': 'dinero.configurar',
   'GET /admin/regalos-divoox/:codigo/usos': 'dinero.ver',
   'POST /admin/regalos-divoox/conductores/:id/pago-movil': 'dinero.conciliar',
+  // C-REGALO-VIAJE-REAL: aprobar o rechazar el regalo de un viaje que no se pudo comprobar.
+  'POST /admin/regalos-divoox/revisiones/:id': 'dinero.conciliar',
   'POST /admin/codigos-recarga/:id/anular': 'dinero.reembolsar',
   'GET /admin/fiscal/1099': 'dinero.ver',
   'GET /admin/libro/comisiones/:pais': 'dinero.ver',
@@ -572,6 +574,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'PATCH /admin/regalos-divoox/:codigo': DINERO,
   'GET /admin/regalos-divoox/:codigo/usos': DINERO,
   'POST /admin/regalos-divoox/conductores/:id/pago-movil': DINERO,
+  'POST /admin/regalos-divoox/revisiones/:id': DINERO,
   'POST /admin/codigos-recarga/:id/anular': DINERO,
   'GET /admin/fiscal/1099': DINERO,
   'GET /admin/libro/comisiones/:pais': DINERO,

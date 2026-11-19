@@ -8,6 +8,7 @@ import {
 import type { Env } from '../env';
 import { nuevoId } from '../cripto';
 import { notificar } from '../notificaciones';
+import { tieneRegaloApartado } from '../regalosDivoox';
 import { cambiarEstadoViaje, repartirOperaciones } from '../operaciones';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos } from '../validar';
@@ -280,7 +281,13 @@ async function activarUna(env: Env, db: D1Database, f: FilaProgramado): Promise<
   });
   if (!tomada) return false;
   // C-VIAJES-FIJOS: el viaje de un menor SIEMPRE lleva PIN, aunque la ciudad no lo pida.
-  if (envio || (!f.menor_nombre && !(await pinParaViajeNuevo(db, f.servicio_id, f.zona_id))))
+  // C-REGALO-VIAJE-REAL: y el viaje con regalo de Divoox también.
+  if (
+    envio ||
+    (!f.menor_nombre &&
+      !(await tieneRegaloApartado(db, f.id)) &&
+      !(await pinParaViajeNuevo(db, f.servicio_id, f.zona_id)))
+  )
     await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(f.id).run();
   if (tarjeta) {
     const cliente = await db

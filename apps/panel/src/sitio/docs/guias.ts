@@ -3058,6 +3058,8 @@ const es: SeccionDocs[] = [
           'Al terminar, lo que pagó Divoox entra a tus ganancias. Divoox te lo paga por pago móvil, o lo pasas a tu saldo con un toque en Ganancias, «Pasar a mi saldo», para tus próximas comisiones.',
           'En los pedidos de comida es igual: el monto a cobrar ya descuenta el regalo y la app te dice cuánto te paga Divoox. Se acredita al cerrar el cobro.',
           'Para cuidar los regalos: no puedes tomar un viaje con regalo pedido desde tu propia cuenta o tu propio teléfono, y hay un máximo de viajes con regalo por día. Si llegas al máximo, el viaje pasa a otro conductor.',
+          'Un viaje con regalo siempre empieza con el código que te dicta tu pasajero, también en las ciudades donde los demás viajes no lo piden.',
+          'El regalo se acredita cuando el viaje se hace completo: recoges a tu pasajero, lo llevas y terminas en el destino, con la ubicación de tu teléfono encendida. Si Divoox no puede comprobar el recorrido, el viaje se termina igual y cobras en mano lo mismo, pero el regalo queda en revisión: en Ganancias verás «Divoox está revisando este regalo». Nuestro equipo lo revisa y te avisa. Mientras tanto ese monto no se puede cobrar ni pasar a tu saldo. No tienes que hacer nada.',
         ],
         capturas: [
           {
@@ -3065,16 +3067,23 @@ const es: SeccionDocs[] = [
             alt: 'Pantalla de Divoox Driver con «Cobra al pasajero» en cifra grande y en verde y, aparte, «Divoox te paga» por el regalo del pasajero.',
             pie: 'Cobras en mano la diferencia; Divoox te paga el regalo.',
           },
+          {
+            src: '/docs/regalos-divoox-conductor-revision-es.webp',
+            alt: 'Ganancias de Divoox Driver con la línea «Divoox está revisando este regalo», su monto y el texto que dice que el equipo lo revisa y avisa.',
+            pie: 'Un regalo en revisión: lo ves en Ganancias y te avisamos el resultado.',
+          },
         ],
         preguntas: [
           '¿Cuánto cobro si el pasajero tiene un regalo?',
           '¿Cuándo me paga Divoox el regalo?',
           '¿Por qué no pude tomar un viaje con regalo?',
+          '¿Por qué dice «Divoox está revisando este regalo»?',
         ],
         pasos: [
           'Acepta la oferta: dice si trae regalo de Divoox.',
+          'Al recoger, pídele el código a tu pasajero y escríbelo para empezar.',
           'Cobra en mano el monto que dice «Cobra en efectivo».',
-          'Termina el viaje: lo que cubrió el regalo entra a tus ganancias.',
+          'Lleva a tu pasajero y termina el viaje en el destino: lo que cubrió el regalo entra a tus ganancias.',
         ],
       },
       {
@@ -8478,6 +8487,8 @@ const en: SeccionDocs[] = [
           'When you finish, what Divoox paid goes into your earnings. Divoox pays it out to you, or you move it to your balance with one tap in Earnings, “Move to my balance,” for your next commissions.',
           'Food orders work the same: the amount to collect already takes off the gift and the app tells you how much Divoox pays you. It’s credited once the payment is closed.',
           'To protect gifts: you can’t take a gift trip requested from your own account or phone, and there’s a daily limit of gift trips. If you reach it, the trip goes to another driver.',
+          'A gift trip always starts with the code your rider reads to you, even in cities where other trips don’t ask for one.',
+          'The gift is credited when the trip is completed in full: you pick up your rider, drive them and finish at the drop-off, with your phone’s location on. If Divoox can’t confirm the route, the trip still ends and you collect the same amount in person, but the gift stays under review: in Earnings you’ll see “Divoox is reviewing this gift.” Our team reviews it and lets you know. Until then, that amount can’t be cashed out or moved to your balance. There’s nothing you need to do.',
         ],
         capturas: [
           {
@@ -8485,16 +8496,23 @@ const en: SeccionDocs[] = [
             alt: 'Divoox Driver screen with “Collect from the rider” in large green numbers and, separately, “Divoox pays you” for the rider’s gift.',
             pie: 'You collect the difference in person; Divoox pays you the gift.',
           },
+          {
+            src: '/docs/regalos-divoox-conductor-revision-en.webp',
+            alt: 'Divoox Driver Earnings with the line “Divoox is reviewing this gift,” its amount and the text saying the team reviews it and lets you know.',
+            pie: 'A gift under review: you see it in Earnings and we let you know the result.',
+          },
         ],
         preguntas: [
           'How much do I collect if the rider has a gift?',
           'When does Divoox pay me the gift?',
           'Why couldn’t I take a gift trip?',
+          'Why does it say “Divoox is reviewing this gift”?',
         ],
         pasos: [
           'Accept the offer: it says if it has a Divoox gift.',
+          'At pickup, ask your rider for the code and enter it to start.',
           'Collect in person the amount shown in “Collect in cash.”',
-          'Finish the trip: what the gift covered goes to your earnings.',
+          'Drive your rider and finish the trip at the drop-off: what the gift covered goes to your earnings.',
         ],
       },
       {

@@ -3120,5 +3120,24 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "ref_fecha",
     "ref_monto",
     "creado_en"
+  ],
+  "regalos_en_revision": [
+    "uso_id",
+    "operacion_id",
+    "codigo",
+    "cliente_id",
+    "telefono",
+    "aparato",
+    "conductor_id",
+    "monto",
+    "moneda",
+    "motivos",
+    "datos",
+    "detalle",
+    "estado",
+    "nota",
+    "resuelto_por",
+    "resuelto_en",
+    "creado_en"
   ]
 };

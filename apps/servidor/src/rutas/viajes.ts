@@ -15,6 +15,7 @@ import { revisarSelfieCasco } from './ajustesViaje';
 import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { avisarContactos, revisarHorasAlVolante } from './seguridadViaje';
 import { nuevoId } from '../cripto';
+import { notificar } from '../notificaciones';
 import { abrirIncidencia } from '../internacional/bandeja';
 import {
   calificarViaje,
@@ -51,7 +52,7 @@ const str = (x: unknown): string | null => (x == null ? null : String(x));
 import { revisarReferidos } from '../programaReferidos';
 import { aparatoDe } from './regalosDivoox';
 import {
-  cerrarRegalo,
+  cerrarRegaloDeViaje,
   liberarRegalo,
   regaloDeOperacion,
   soltarRegaloConductor,
@@ -576,11 +577,33 @@ viajes.post(
       if (totalFinal != null) await capturarCobroViaje(c.env, db, id, u.id, totalFinal);
       // C-CUPON-DIVOOX: lo que cubre el regalo se cierra y se le acredita al conductor; él cobra en
       // mano solo el resto.
-      const regaloDivoox =
+      // C-REGALO-VIAJE-REAL: solo se acredita si el viaje fue real; si no, queda en revisión (el
+      // pasajero paga igual solo su parte y el viaje se termina).
+      const cierre =
         totalFinal != null
-          ? await cerrarRegalo(db, { operacionId: id, conductorId: u.id, maximo: totalFinal })
-          : 0;
+          ? await cerrarRegaloDeViaje(db, {
+              operacionId: id,
+              conductorId: u.id,
+              maximo: totalFinal,
+              alTerminar: true,
+            })
+          : { monto: 0, enRevision: false };
+      const regaloDivoox = cierre.monto;
       const cobrarEnMano = totalFinal == null ? null : totalFinal - regaloDivoox;
+      if (cierre.enRevision)
+        await notificar(c.env, db, u.id, (i) =>
+          i === 'es'
+            ? {
+                titulo: 'Divoox está revisando este regalo',
+                cuerpo:
+                  'No pudimos comprobar el recorrido de este viaje. Nuestro equipo lo revisa y te avisamos; no tienes que hacer nada.',
+              }
+            : {
+                titulo: 'Divoox is reviewing this gift',
+                cuerpo:
+                  'We couldn’t confirm the route of this trip. Our team is reviewing it and will let you know; there’s nothing you need to do.',
+              },
+        ).catch((e: unknown) => console.error('viajes: aviso del regalo en revisión', e));
       // C-REFERIDOS-EQUIPOS: si el conductor o el pasajero son invitados, se revisa su premio (nunca frena).
       const cliente = await db
         .prepare('SELECT cliente_id FROM operaciones WHERE id = ?')
@@ -600,6 +623,7 @@ viajes.post(
         estado: paso.hacia,
         totalFinal,
         regaloDivoox,
+        regaloEnRevision: cierre.enRevision,
         cobrarEnMano,
         referencia: enMano?.local ?? null,
         enMano,

@@ -3,6 +3,7 @@ import { mundo } from '../pruebas/ayuda';
 import { conductorDeMoto } from '../pruebas/conductorMoto';
 import { cambiarEstadoViaje } from '../operaciones';
 import { TOPES_REGALO, apartarRegalo, barrerRegalos, saludRegalos } from '../regalosDivoox';
+import { UMBRALES_VIAJE_REAL, evaluarViajeReal } from '../viajeReal';
 
 /**
  * C-CUPON-DIVOOX (17 nov 2026): regalos que paga Divoox, con presupuesto, antifraude y liquidación
@@ -124,16 +125,43 @@ async function pedirViaje(e: E, p: Awaited<ReturnType<typeof pasajero>>, metodoP
   return { cot: c, r, id: r.datos?.viaje?.id as string };
 }
 
+/**
+ * C-REGALO-VIAJE-REAL: lo que deja un viaje de verdad. Empezó hace 25 minutos, el servidor sumó el
+ * recorrido cotizado y el conductor está en el destino con ubicación reciente.
+ */
+async function recorrer(e: E, condId: string, id: string, destino = DESTINO) {
+  await e.m.DB.batch([
+    e.m.DB.prepare(
+      `UPDATE viajes SET iniciado_en = datetime('now', '-25 minutes'),
+              distancia_m_real = (SELECT distancia_m FROM cotizaciones_viaje WHERE operacion_id = ?1)
+        WHERE operacion_id = ?1`,
+    ).bind(id),
+    e.m.DB.prepare(
+      "UPDATE repartidores SET lat = ?, lng = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+    ).bind(destino.lat, destino.lng, condId),
+  ]);
+}
+
+type Fin = {
+  totalFinal: number;
+  regaloDivoox: number;
+  regaloEnRevision: boolean;
+  cobrarEnMano: number;
+};
+
 async function hacerViaje(
   e: E,
   cond: Awaited<ReturnType<typeof conductorDeMoto>>,
   p: Awaited<ReturnType<typeof pasajero>>,
   id: string,
+  /** Qué pasa entre «iniciar» y «terminar». Por defecto, un viaje de verdad. */
+  enCurso: () => Promise<unknown> = () => recorrer(e, cond.id, id),
 ) {
   expect(await cond.paso(id, 'aceptar')).toBe(200);
   expect(await cond.paso(id, 'llegue')).toBe(200);
   const pin = (await p.llamar('GET', '/datos/viajes/actual')).datos.viaje.pin;
   expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+  await enCurso();
   const r = await e.m.crudo(`/datos/conductor/operaciones/${id}/terminar`, {
     method: 'POST',
     headers: {
@@ -144,7 +172,7 @@ async function hacerViaje(
     body: '{}',
   });
   expect(r.status).toBe(200);
-  return (await r.json()) as { totalFinal: number; regaloDivoox: number; cobrarEnMano: number };
+  return (await r.json()) as Fin;
 }
 
 describe('C-CUPON-DIVOOX: el superadmin crea el cupón y nace apagado', () => {
@@ -523,5 +551,362 @@ describe('C-CUPON-DIVOOX: liquidación al conductor y el reloj', () => {
     lista = await e.m.llamar('GET', '/datos/admin/regalos-divoox', undefined, e.admin.token);
     // El presupuesto volvió y el cupón se encendió solo otra vez.
     expect(lista.datos.cupones[0]).toMatchObject({ apartado: 0, restante: 300, activo: true });
+  });
+});
+
+/**
+ * C-REGALO-VIAJE-REAL (19 nov 2026): el regalo de un viaje solo se acredita si el viaje fue real. El
+ * hueco: un conductor y un conocido, parados juntos, pedían, iniciaban y terminaban sin moverse, y
+ * el regalo se acreditaba igual.
+ */
+const reporte = async (e: E) =>
+  (await e.m.llamar('GET', '/datos/admin/regalos-divoox', undefined, e.admin.token)).datos;
+const resolver = (e: E, id: string, cuerpo: Record<string, unknown>) =>
+  e.m.llamar('POST', `/datos/admin/regalos-divoox/revisiones/${id}`, cuerpo, e.admin.token);
+
+async function conRegalo(opciones: Record<string, unknown> = {}) {
+  const e = await escenario();
+  await crear(e, opciones);
+  await encender(e);
+  const cond = await conductorDeMoto(e.m, ORIGEN);
+  await recargar(e, cond.id, 10_000);
+  const p = await pasajero(e);
+  await p.llamar('POST', '/datos/regalos-divoox/guardar', { codigo: 'VIGIA' });
+  const { id, cot } = await pedirViaje(e, p);
+  return { e, cond, p, id, cot };
+}
+
+describe('C-REGALO-VIAJE-REAL: el regalo solo se acredita si el viaje fue real', () => {
+  it('terminar sin moverse deja el regalo en revisión: el viaje se termina y nada entra a ganancias', async () => {
+    const { e, cond, p, id } = await conRegalo();
+    const fin = await hacerViaje(e, cond, p, id, async () => undefined);
+    // El viaje se termina igual y el pasajero paga solo su parte.
+    expect(fin.regaloEnRevision).toBe(true);
+    expect(fin.regaloDivoox).toBe(300);
+    expect(fin.cobrarEnMano).toBe(fin.totalFinal - 300);
+    expect((await p.llamar('GET', `/datos/viajes/${id}`)).datos.viaje.estado).toBe('terminado');
+    // Nada a ganancias; el presupuesto sigue apartado (ni gastado ni libre).
+    expect(await ganancias(e, cond.id)).toBe(0);
+    const r = await reporte(e);
+    expect(r.cupones[0]).toMatchObject({ gastado: 0, apartado: 300, restante: 9_700 });
+    expect(r.conductores).toHaveLength(0);
+    expect(r.revisiones).toHaveLength(1);
+    expect(r.revisiones[0]).toMatchObject({
+      estado: 'pendiente',
+      monto: 300,
+      conductorId: cond.id,
+    });
+    expect(r.revisiones[0].motivos).toContain('sin_moverse');
+    expect(r.revisiones[0].detalle).toMatch(/sin moverse/);
+    expect(r.alertas.map((a: { tipo: string }) => a.tipo)).toContain('sin_moverse');
+    // El conductor lo ve como «en revisión», no como dinero por cobrar.
+    const saldo = await e.m.llamar('GET', '/datos/repartidor/saldo-prepago', undefined, cond.token);
+    expect(saldo.datos.regalosPorCobrar).toBe(0);
+    expect(saldo.datos.regalosEnRevision).toEqual({ monto: 300, viajes: 1 });
+    // Ni repetir «terminar» ni el reloj lo pagan; y la salud no lo cuenta como colgado.
+    await cond.paso(id, 'terminar');
+    await e.m.DB.prepare(
+      "UPDATE operaciones SET actualizado_en = datetime('now', '-2 hours') WHERE id = ?",
+    )
+      .bind(id)
+      .run();
+    await barrerRegalos(e.m.DB);
+    expect(await ganancias(e, cond.id)).toBe(0);
+    expect(await saludRegalos(e.m.DB)).toBe('ok');
+  });
+
+  it('el equipo lo aprueba una sola vez y entonces sí entra a ganancias', async () => {
+    const { e, cond, p, id } = await conRegalo();
+    await hacerViaje(e, cond, p, id, async () => undefined);
+    const rev = (await reporte(e)).revisiones[0];
+    // Solo el equipo.
+    expect(
+      (
+        await e.m.llamar(
+          'POST',
+          `/datos/admin/regalos-divoox/revisiones/${rev.id}`,
+          { aprobar: true },
+          cond.token,
+        )
+      ).estado,
+    ).toBe(403);
+    const ok = await resolver(e, rev.id, { aprobar: true, nota: 'GPS malo, viaje confirmado' });
+    expect(ok.estado).toBe(200);
+    expect(ok.datos.pagado).toBe(300);
+    expect(await ganancias(e, cond.id)).toBe(300);
+    expect((await resolver(e, rev.id, { aprobar: true })).estado).toBe(409);
+    expect((await resolver(e, rev.id, { aprobar: false, nota: 'cambio de idea' })).estado).toBe(
+      409,
+    );
+    expect(await ganancias(e, cond.id)).toBe(300);
+    const r = await reporte(e);
+    expect(r.cupones[0]).toMatchObject({ gastado: 300, apartado: 0 });
+    expect(r.revisiones[0]).toMatchObject({ estado: 'aprobado' });
+    const auditoria = await e.m.DB.prepare(
+      "SELECT actor_id FROM auditoria_admin WHERE accion = 'regalo.revision.aprobar'",
+    ).first<{ actor_id: string }>();
+    expect(auditoria?.actor_id).toBe(e.admin.id);
+    expect(await saludRegalos(e.m.DB)).toBe('ok');
+  });
+
+  it('rechazado: pide el motivo, el dinero vuelve al presupuesto y esa cuenta no repite el cupón', async () => {
+    const { e, cond, p, id } = await conRegalo();
+    await hacerViaje(e, cond, p, id, async () => undefined);
+    const rev = (await reporte(e)).revisiones[0];
+    expect((await resolver(e, rev.id, { aprobar: false })).estado).toBe(422);
+    expect((await resolver(e, rev.id, { aprobar: false, nota: 'No hubo recorrido' })).estado).toBe(
+      200,
+    );
+    expect(await ganancias(e, cond.id)).toBe(0);
+    const r = await reporte(e);
+    expect(r.cupones[0]).toMatchObject({ gastado: 0, apartado: 0, restante: 10_000 });
+    expect(r.revisiones[0]).toMatchObject({ estado: 'rechazado', nota: 'No hubo recorrido' });
+    // El uso quedó libre, pero esa cuenta, ese teléfono y ese aparato ya no tienen el regalo.
+    const cot = await p.llamar('POST', '/datos/viajes/cotizar', {
+      servicio: 'moto',
+      origen: ORIGEN,
+      destino: DESTINO,
+    });
+    expect(cot.datos.cotizacion.regalo ?? null).toBeNull();
+    const otro = await pasajero(e, { aparato: p.aparato });
+    await otro.llamar('POST', '/datos/regalos-divoox/guardar', { codigo: 'VIGIA' });
+    const cot2 = await otro.llamar('POST', '/datos/viajes/cotizar', {
+      servicio: 'moto',
+      origen: ORIGEN,
+      destino: DESTINO,
+    });
+    expect(cot2.datos.cotizacion.regalo ?? null).toBeNull();
+    expect(await saludRegalos(e.m.DB)).toBe('ok');
+  });
+
+  it('se movió pero muy poco y en un suspiro: demasiado corto frente a lo cotizado', async () => {
+    const { e, cond, p, id } = await conRegalo();
+    const fin = await hacerViaje(e, cond, p, id, async () => {
+      await recorrer(e, cond.id, id);
+      await e.m.DB.prepare(
+        "UPDATE viajes SET distancia_m_real = distancia_m_real / 4, iniciado_en = datetime('now', '-40 seconds') WHERE operacion_id = ?",
+      )
+        .bind(id)
+        .run();
+    });
+    expect(fin.regaloEnRevision).toBe(true);
+    const r = await reporte(e);
+    expect(r.revisiones[0].motivos).toEqual(['muy_corto']);
+    expect(r.alertas.map((a: { tipo: string }) => a.tipo)).toContain('muy_corto');
+  });
+
+  it('recorrió lo cotizado pero terminó lejos del destino, o sin ubicación reciente', async () => {
+    const lejos = await conRegalo();
+    const fin = await hacerViaje(lejos.e, lejos.cond, lejos.p, lejos.id, () =>
+      recorrer(lejos.e, lejos.cond.id, lejos.id, { ...DESTINO, lat: DESTINO.lat + 0.01 }),
+    );
+    expect(fin.regaloEnRevision).toBe(true);
+    expect((await reporte(lejos.e)).revisiones[0].motivos).toEqual(['lejos_destino']);
+
+    const sin = await conRegalo();
+    await hacerViaje(sin.e, sin.cond, sin.p, sin.id, async () => {
+      await recorrer(sin.e, sin.cond.id, sin.id);
+      await sin.e.m.DB.prepare(
+        "UPDATE repartidores SET ubicacion_en = datetime('now', '-10 minutes') WHERE usuario_id = ?",
+      )
+        .bind(sin.cond.id)
+        .run();
+    });
+    expect((await reporte(sin.e)).revisiones[0].motivos).toEqual(['sin_ubicacion']);
+    expect(await ganancias(sin.e, sin.cond.id)).toBe(0);
+  });
+
+  it('el servidor suma el recorrido con las ubicaciones del conductor, solo con el viaje en curso', async () => {
+    const { e, cond, p, id } = await conRegalo();
+    const ubicar = async (parte: number) => {
+      // Cada lectura llega tres minutos después de la anterior (no es un salto imposible).
+      await e.m.DB.batch([
+        e.m.DB.prepare(
+          "UPDATE ubicaciones_recientes SET creado_en = datetime(creado_en, '-180 seconds') WHERE usuario_id = ?",
+        ).bind(cond.id),
+        e.m.DB.prepare(
+          "UPDATE repartidores SET ubicacion_en = datetime(ubicacion_en, '-180 seconds') WHERE usuario_id = ?",
+        ).bind(cond.id),
+      ]);
+      const r = await e.m.llamar(
+        'POST',
+        '/datos/repartidor/ubicacion',
+        {
+          lat: ORIGEN.lat + (DESTINO.lat - ORIGEN.lat) * parte,
+          lng: ORIGEN.lng + (DESTINO.lng - ORIGEN.lng) * parte,
+          precision: 10,
+        },
+        cond.token,
+      );
+      expect(r.estado).toBe(200);
+    };
+    const recorrido = async () =>
+      Number(
+        (
+          await e.m.DB.prepare('SELECT distancia_m_real AS m FROM viajes WHERE operacion_id = ?')
+            .bind(id)
+            .first<{ m: number | null }>()
+        )?.m ?? 0,
+      );
+    expect(await cond.paso(id, 'aceptar')).toBe(200);
+    // Antes de empezar el viaje, moverse no suma nada.
+    await ubicar(0.0005);
+    expect(await recorrido()).toBe(0);
+    expect(await cond.paso(id, 'llegue')).toBe(200);
+    const pin = (await p.llamar('GET', '/datos/viajes/actual')).datos.viaje.pin;
+    expect(await cond.paso(id, 'iniciar', { pin })).toBe(200);
+    for (const parte of [0.25, 0.5, 0.75, 1]) await ubicar(parte);
+    const linea = 6_900; // metros en línea recta entre los dos puntos de la prueba (aprox.)
+    expect(await recorrido()).toBeGreaterThan(linea * 0.9);
+    expect(await recorrido()).toBeLessThan(linea * 1.15);
+    // Un temblor del GPS con el vehículo quieto no suma.
+    const antes = await recorrido();
+    await ubicar(1.0001);
+    expect(await recorrido()).toBe(antes);
+    await e.m.DB.prepare(
+      "UPDATE viajes SET iniciado_en = datetime('now', '-25 minutes') WHERE operacion_id = ?",
+    )
+      .bind(id)
+      .run();
+    await e.m.DB.prepare(
+      "UPDATE repartidores SET ubicacion_en = datetime('now') WHERE usuario_id = ?",
+    )
+      .bind(cond.id)
+      .run();
+    expect(await cond.paso(id, 'terminar')).toBe(200);
+    // Viaje real, medido por el servidor: el regalo se acredita sin revisión.
+    expect(await ganancias(e, cond.id)).toBe(300);
+    expect((await reporte(e)).revisiones).toHaveLength(0);
+  });
+
+  it('el teléfono del pasajero lejos del conductor durante el viaje manda el regalo a revisión', async () => {
+    const { e, cond, p, id } = await conRegalo();
+    const leer = async () =>
+      e.m.DB.prepare(
+        'SELECT pasajero_cerca AS cerca, pasajero_lejos AS lejos FROM viajes WHERE operacion_id = ?',
+      )
+        .bind(id)
+        .first<{ cerca: number; lejos: number }>();
+    const mandar = async (punto: { lat: number; lng: number }, precision = 15) => {
+      await e.m.DB.prepare(
+        "UPDATE viajes SET pasajero_ubicacion_en = datetime(pasajero_ubicacion_en, '-60 seconds') WHERE operacion_id = ?",
+      )
+        .bind(id)
+        .run();
+      return (await p.llamar('POST', `/datos/viajes/${id}/mi-ubicacion`, { ...punto, precision }))
+        .estado;
+    };
+    const fin = await hacerViaje(e, cond, p, id, async () => {
+      // Junto al conductor una vez; después, tres lecturas a kilómetros de él.
+      expect(await mandar(ORIGEN)).toBe(200);
+      expect(await leer()).toEqual({ cerca: 1, lejos: 0 });
+      // Dos seguidas sin esperar: la segunda no cuenta. Y una imprecisa tampoco.
+      await p.llamar('POST', `/datos/viajes/${id}/mi-ubicacion`, { ...DESTINO, precision: 15 });
+      expect(await mandar(DESTINO, 900)).toBe(200);
+      expect(await leer()).toEqual({ cerca: 1, lejos: 0 });
+      for (let i = 0; i < 3; i++) expect(await mandar(DESTINO)).toBe(200);
+      expect(await leer()).toEqual({ cerca: 1, lejos: 3 });
+      // Otra persona no puede escribir en este viaje.
+      const ajeno = await pasajero(e);
+      await ajeno.llamar('POST', `/datos/viajes/${id}/mi-ubicacion`, { ...ORIGEN, precision: 15 });
+      expect(await leer()).toEqual({ cerca: 1, lejos: 3 });
+      await recorrer(e, cond.id, id);
+    });
+    expect(fin.regaloEnRevision).toBe(true);
+    expect((await reporte(e)).revisiones[0].motivos).toEqual(['pasajero_lejos']);
+  });
+
+  it('un viaje con regalo SIEMPRE pide el código de inicio, aunque la ciudad lo tenga apagado', async () => {
+    const e = await escenario();
+    const ajuste = await e.m.llamar(
+      'PUT',
+      '/datos/admin/viajes/ajustes',
+      { servicio: 'moto', zona: ZONA, pin: 'nunca', selfieCasco: false },
+      e.admin.token,
+    );
+    expect(ajuste.estado).toBe(200);
+    // Sin regalo (todavía no hay cupón), en esta ciudad el viaje empieza sin código.
+    const sin = await pasajero(e);
+    const v0 = await pedirViaje(e, sin);
+    expect(v0.cot.regalo ?? null).toBeNull();
+    expect((await sin.llamar('GET', '/datos/viajes/actual')).datos.viaje.pin ?? null).toBeNull();
+    const cancelado = await sin.llamar(
+      'POST',
+      `/datos/viajes/${v0.id}/cancelar`,
+      { motivo: 'cambio_de_planes' },
+      { 'idempotency-key': 'cancelar-sin-regalo-1' },
+    );
+    expect(cancelado.estado).toBe(200);
+    await crear(e);
+    await encender(e);
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    await recargar(e, cond.id, 10_000);
+    const con = await pasajero(e);
+    await con.llamar('POST', '/datos/regalos-divoox/guardar', { codigo: 'VIGIA' });
+    const v = await pedirViaje(e, con);
+    expect(v.cot.regalo).toMatchObject({ codigo: 'VIGIA' });
+    const vista = (await con.llamar('GET', '/datos/viajes/actual')).datos.viaje;
+    expect(vista.pin).toMatch(/^\d{4}$/);
+    expect(await cond.paso(v.id, 'aceptar')).toBe(200);
+    expect(await cond.paso(v.id, 'llegue')).toBe(200);
+    expect(await cond.paso(v.id, 'iniciar')).not.toBe(200);
+    expect(await cond.paso(v.id, 'iniciar', { pin: vista.pin })).toBe(200);
+  });
+
+  it('alerta: varios regalos del mismo conductor con cuentas creadas el mismo día', async () => {
+    const e = await escenario();
+    await crear(e);
+    await encender(e);
+    const cond = await conductorDeMoto(e.m, ORIGEN);
+    await recargar(e, cond.id, 10_000);
+    for (let i = 0; i < UMBRALES_VIAJE_REAL.cuentasMismoDia; i++) {
+      const p = await pasajero(e);
+      await p.llamar('POST', '/datos/regalos-divoox/guardar', { codigo: 'VIGIA' });
+      const v = await pedirViaje(e, p);
+      await hacerViaje(e, cond, p, v.id);
+      await e.m.DB.prepare(
+        "UPDATE repartidores SET lat = ?, lng = ?, ubicacion_en = datetime('now') WHERE usuario_id = ?",
+      )
+        .bind(ORIGEN.lat, ORIGEN.lng, cond.id)
+        .run();
+      const tipos = (await reporte(e)).alertas.map((a: { tipo: string }) => a.tipo);
+      if (i < UMBRALES_VIAJE_REAL.cuentasMismoDia - 1)
+        expect(tipos).not.toContain('cuentas_mismo_dia');
+      else expect(tipos.filter((t: string) => t === 'cuentas_mismo_dia')).toHaveLength(1);
+    }
+    // Es solo una alerta: los viajes fueron reales y se acreditaron.
+    expect(await ganancias(e, cond.id)).toBe(300 * UMBRALES_VIAJE_REAL.cuentasMismoDia);
+  });
+
+  it('la regla, sin base de datos: qué cumple y qué no', () => {
+    const real = {
+      cotizadaM: 5_000,
+      cotizadaS: 900,
+      recorridoM: 4_200,
+      duracionS: 800,
+      alDestinoM: 80,
+      pasajeroCerca: 0,
+      pasajeroLejos: 0,
+    };
+    expect(evaluarViajeReal(real)).toEqual([]);
+    // El mal GPS que se queda corto pero no tanto, pasa.
+    expect(evaluarViajeReal({ ...real, recorridoM: 2_600, duracionS: 400 })).toEqual([]);
+    expect(evaluarViajeReal({ ...real, recorridoM: 40 })).toEqual(['sin_moverse']);
+    expect(evaluarViajeReal({ ...real, recorridoM: 2_400 })).toEqual(['muy_corto']);
+    expect(evaluarViajeReal({ ...real, duracionS: 300 })).toEqual(['muy_corto']);
+    expect(evaluarViajeReal({ ...real, alDestinoM: 301 })).toEqual(['lejos_destino']);
+    expect(evaluarViajeReal({ ...real, alDestinoM: null })).toEqual(['sin_ubicacion']);
+    // El reloj, que cierra después, no sabe dónde estaba: eso no cuenta en contra.
+    expect(evaluarViajeReal({ ...real, alDestinoM: undefined })).toEqual([]);
+    // Una sola lectura del pasajero no opina; la mayoría lejos, sí.
+    expect(evaluarViajeReal({ ...real, pasajeroLejos: 1 })).toEqual([]);
+    expect(evaluarViajeReal({ ...real, pasajeroCerca: 1, pasajeroLejos: 2 })).toEqual([
+      'pasajero_lejos',
+    ]);
+    expect(evaluarViajeReal({ ...real, pasajeroCerca: 3, pasajeroLejos: 1 })).toEqual([]);
+    // Un viaje cotizado cortísimo no exige más de lo que mide.
+    expect(
+      evaluarViajeReal({ ...real, cotizadaM: 300, cotizadaS: 90, recorridoM: 160, duracionS: 95 }),
+    ).toEqual([]);
   });
 });

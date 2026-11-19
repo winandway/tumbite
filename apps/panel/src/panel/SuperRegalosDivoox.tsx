@@ -95,7 +95,29 @@ const T = {
       propio: 'Conductor con su propio regalo',
       tope_diario: 'Tope diario del conductor',
       misma_pareja: 'El mismo cliente y el mismo conductor',
+      sin_moverse: 'Viaje con regalo terminado sin moverse',
+      muy_corto: 'Viaje con regalo demasiado corto',
+      lejos_destino: 'Viaje con regalo terminado lejos del destino',
+      sin_ubicacion: 'Viaje con regalo terminado sin ubicación',
+      pasajero_lejos: 'El pasajero no iba con el conductor',
+      cuentas_mismo_dia: 'Regalos con cuentas creadas el mismo día',
     } as Record<string, string>,
+    revisiones: 'Regalos en revisión',
+    revisionesAyuda:
+      'Viajes con regalo que no se pudieron comprobar como reales. El viaje se terminó, pero el regalo no entra a las ganancias del conductor hasta que lo apruebes. Si lo rechazas, el dinero vuelve al presupuesto del cupón.',
+    sinRevisiones: 'No hay regalos por revisar.',
+    pendientes: (n: number) => (n === 1 ? '1 por revisar' : `${n} por revisar`),
+    nota: 'Nota de la revisión',
+    notaPista: 'Qué comprobaste (obligatoria para rechazar)',
+    aprobar: 'Aprobar y acreditar',
+    rechazar: 'Rechazar',
+    estadosRevision: {
+      pendiente: 'Por revisar',
+      aprobado: 'Aprobado',
+      rechazado: 'Rechazado',
+    } as Record<string, string>,
+    resueltas: 'Revisados en los últimos 30 días',
+    porQuien: (quien: string) => `Lo revisó ${quien}`,
     cargando: 'Cargando…',
   },
   en: {
@@ -176,7 +198,29 @@ const T = {
       propio: 'Driver with their own gift',
       tope_diario: 'Driver daily limit',
       misma_pareja: 'Same customer and same driver',
+      sin_moverse: 'Gift trip ended without moving',
+      muy_corto: 'Gift trip too short',
+      lejos_destino: 'Gift trip ended far from the drop-off',
+      sin_ubicacion: 'Gift trip ended with no location',
+      pasajero_lejos: 'The rider wasn’t with the driver',
+      cuentas_mismo_dia: 'Gifts with accounts created the same day',
     } as Record<string, string>,
+    revisiones: 'Gifts under review',
+    revisionesAyuda:
+      'Gift trips we couldn’t confirm as real. The trip was completed, but the gift doesn’t reach the driver’s earnings until you approve it. If you reject it, the money goes back to the coupon budget.',
+    sinRevisiones: 'No gifts to review.',
+    pendientes: (n: number) => `${n} to review`,
+    nota: 'Review note',
+    notaPista: 'What you checked (required to reject)',
+    aprobar: 'Approve and credit',
+    rechazar: 'Reject',
+    estadosRevision: {
+      pendiente: 'To review',
+      aprobado: 'Approved',
+      rechazado: 'Rejected',
+    } as Record<string, string>,
+    resueltas: 'Reviewed in the last 30 days',
+    porQuien: (quien: string) => `Reviewed by ${quien}`,
     cargando: 'Loading…',
   },
 };
@@ -220,10 +264,26 @@ type Alerta = {
   detalle: string;
   creadoEn: string;
 };
+type Revision = {
+  id: string;
+  codigo: string;
+  conductor: string;
+  cliente: string;
+  monto: number;
+  moneda: string;
+  motivos: string[];
+  detalle: string;
+  estado: 'pendiente' | 'aprobado' | 'rechazado';
+  nota: string;
+  creadoEn: string;
+  resolvio: string | null;
+};
 type Datos = {
   cupones: Cupon[];
   conductores: Conductor[];
   alertas: Alerta[];
+  /** C-REGALO-VIAJE-REAL: regalos de viajes que no se pudieron comprobar como reales. */
+  revisiones?: Revision[];
   zonas: { id: string; nombre: string; pais: string; moneda: string }[];
   servicios: string[];
   topes: { valorMaximo: number; presupuestoMaximo: number; presupuestoGlobalMaximo: number };
@@ -346,6 +406,8 @@ export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
         )}
       </div>
     );
+  const pendientes = (datos.revisiones ?? []).filter((r) => r.estado === 'pendiente');
+  const resueltas = (datos.revisiones ?? []).filter((r) => r.estado !== 'pendiente');
 
   const nombreZona = new Map(datos.zonas.map((z) => [z.id, z.nombre]));
   return (
@@ -519,6 +581,55 @@ export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
         </button>
       </form>
 
+      <h3 id="regalos-en-revision">
+        {t.revisiones}
+        {pendientes.length > 0 ? (
+          <span className="pista" data-testid="regalos-revision-cuenta">
+            {' '}
+            · {t.pendientes(pendientes.length)}
+          </span>
+        ) : null}
+      </h3>
+      <p className="pista">{t.revisionesAyuda}</p>
+      {pendientes.length === 0 ? (
+        <p className="pista">{t.sinRevisiones}</p>
+      ) : (
+        <ul className="flex-lista-tarjetas" data-testid="regalos-revisiones">
+          {pendientes.map((r) => (
+            <TarjetaRevision
+              key={r.id}
+              r={r}
+              t={t}
+              dinero={dinero}
+              alResolver={cargar}
+              setError={setError}
+              setOk={setOk}
+            />
+          ))}
+        </ul>
+      )}
+      {resueltas.length > 0 ? (
+        <details>
+          <summary>{t.resueltas}</summary>
+          <ul className="flex-lista-tarjetas" data-testid="regalos-revisiones-resueltas">
+            {resueltas.map((r) => (
+              <li key={r.id} className="flex-tarjeta">
+                <strong className={r.estado === 'aprobado' ? 'texto-exito' : undefined}>
+                  {de(t.estadosRevision, r.estado)}
+                </strong>
+                {` · ${r.codigo} · ${dinero(r.monto, r.moneda)}`}
+                <p>{r.detalle}</p>
+                {r.nota ? <p>{r.nota}</p> : null}
+                <p className="pista">
+                  {[r.cliente, r.conductor].filter(Boolean).join(' → ')}
+                  {r.resolvio ? ` · ${t.porQuien(r.resolvio)}` : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
       <h3>{t.conductores}</h3>
       <p className="pista">{t.conductoresAyuda}</p>
       {datos.conductores.length === 0 ? (
@@ -572,6 +683,96 @@ export function SuperRegalosDivoox({ idioma }: { idioma: Idioma }) {
         </ul>
       )}
     </div>
+  );
+}
+
+/** C-REGALO-VIAJE-REAL: un regalo por revisar, con lo medido y los dos botones. */
+function TarjetaRevision({
+  r,
+  t,
+  dinero,
+  alResolver,
+  setError,
+  setOk,
+}: {
+  r: Revision;
+  t: (typeof T)['es'];
+  dinero: (c: number, moneda?: string) => string;
+  alResolver: () => void;
+  setError: (s: string) => void;
+  setOk: (s: string) => void;
+}) {
+  // Lo escrito no se pierde si se cierra la ventana (regla de los formularios).
+  const f = useBorrador({
+    formulario: `regalo-revision-${r.id}`,
+    cuenta: 'superadmin',
+    inicial: { nota: '' },
+    almacen: almacenNavegador,
+  });
+  const [enviando, setEnviando] = useState(false);
+  // El error sale junto a los botones de ESTE regalo, no arriba de la página.
+  const [fallo, setFallo] = useState('');
+  async function resolver(aprobar: boolean) {
+    setError('');
+    setFallo('');
+    setOk('');
+    setEnviando(true);
+    try {
+      await pedir('POST', `/datos/admin/regalos-divoox/revisiones/${r.id}`, {
+        aprobar,
+        nota: f.valores.nota,
+      });
+      await f.limpiar();
+      setOk(t.guardado);
+      alResolver();
+    } catch (er) {
+      // Lo escrito se queda en pantalla para reintentar.
+      setFallo(er instanceof ErrorApi ? er.message : String(er));
+    } finally {
+      setEnviando(false);
+    }
+  }
+  return (
+    <li className="flex-tarjeta" data-testid="regalo-revision">
+      <strong>{r.motivos.map((m) => de(t.tiposAlerta, m)).join(' · ')}</strong>
+      {` · ${r.codigo} · ${dinero(r.monto, r.moneda)}`}
+      <p>{r.detalle}</p>
+      <p className="pista">
+        {[r.cliente, r.conductor].filter(Boolean).join(' → ')} · {r.creadoEn}
+      </p>
+      <label className="campo">
+        {t.nota}
+        <input
+          value={f.valores.nota}
+          maxLength={200}
+          onChange={(e) => f.cambiar('nota', e.target.value)}
+          placeholder={t.notaPista}
+        />
+      </label>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+        <button
+          type="button"
+          className="boton exito"
+          disabled={enviando}
+          onClick={() => void resolver(true)}
+        >
+          {t.aprobar}
+        </button>
+        <button
+          type="button"
+          className="boton secundario"
+          disabled={enviando}
+          onClick={() => void resolver(false)}
+        >
+          {t.rechazar}
+        </button>
+      </div>
+      {fallo ? (
+        <p className="error-general" role="alert">
+          {fallo}
+        </p>
+      ) : null}
+    </li>
   );
 }
 

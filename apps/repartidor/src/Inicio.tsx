@@ -1377,6 +1377,8 @@ export function Inicio() {
     sinSaldoComida?: boolean;
     /** C-SALDO-CONDUCTOR: lo que Divoox le debe por regalos y las cargas de saldo. */
     regalosPorCobrar?: number;
+    /** C-REGALO-VIAJE-REAL: regalos de viajes que Divoox todavía está revisando. */
+    regalosEnRevision?: { monto: number; viajes: number };
     cargas?: { id: string; monto: number; tipo: string; motivo: string; creadoEn: string }[];
   } | null>(null);
   const [regalosMensaje, setRegalosMensaje] = useState('');
@@ -1926,6 +1928,7 @@ export function Inicio() {
           (prepago.comisionTipica ?? 0) > 0 ||
           // C-SALDO-CONDUCTOR: con regalos por cobrar o cargas de saldo, también se ve.
           (prepago.regalosPorCobrar ?? 0) > 0 ||
+          (prepago.regalosEnRevision?.monto ?? 0) > 0 ||
           (prepago.cargas?.length ?? 0) > 0) ? (
           <View
             style={{
@@ -2033,6 +2036,21 @@ export function Inicio() {
                     })()
                   }
                 />
+              </View>
+            ) : null}
+            {(prepago.regalosEnRevision?.monto ?? 0) > 0 ? (
+              <View testID="regalos-en-revision" style={{ gap: 4 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                  <Text style={{ color: C.secundario, flex: 1 }}>
+                    {tg.prepago.regalosEnRevision}
+                  </Text>
+                  <Text style={{ fontWeight: '800', color: '#666B73' }}>
+                    {formatearMonto(prepago.regalosEnRevision?.monto ?? 0, prepago.moneda, idioma)}
+                  </Text>
+                </View>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>
+                  {tg.prepago.regalosEnRevisionAyuda}
+                </Text>
               </View>
             ) : null}
             {regalosMensaje ? (

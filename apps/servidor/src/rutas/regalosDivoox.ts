@@ -4,10 +4,13 @@ import type { Env } from '../env';
 import { type Ctx, type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { paisDeZona } from '../internacional/paises';
+import { notificar } from '../notificaciones';
 import {
   SERVICIOS_REGALO,
   TOPES_REGALO,
   alertasRegalo,
+  resolverRevisionRegalo,
+  revisionesRegalo,
   huellaAparato,
   liquidacionConductores,
   listarCupones,
@@ -243,6 +246,8 @@ regalosDivoox.get('/admin/regalos-divoox', async (c) => {
     cupones: await listarCupones(db),
     conductores: await liquidacionConductores(db),
     alertas: await alertasRegalo(db),
+    // C-REGALO-VIAJE-REAL: los regalos de viajes que no se pudieron comprobar como reales.
+    revisiones: await revisionesRegalo(db),
     zonas,
     servicios: SERVICIOS_REGALO,
     topes: TOPES_REGALO,
@@ -387,6 +392,64 @@ regalosDivoox.get('/admin/regalos-divoox/:codigo/usos', async (c) => {
       cerradoEn: r.cerrado_en == null ? null : String(r.cerrado_en),
     })),
   });
+});
+
+/**
+ * C-REGALO-VIAJE-REAL: una persona del equipo aprueba o rechaza un regalo en revisión. Rechazar pide
+ * el motivo por escrito. Queda en la auditoría con quién lo hizo, y el conductor recibe el aviso.
+ */
+regalosDivoox.post('/admin/regalos-divoox/revisiones/:id', async (c) => {
+  const u = exigir(c, 'admin');
+  const db = base(c);
+  const d = await leerCuerpo(
+    c,
+    z.object({ aprobar: z.boolean(), nota: z.string().trim().max(200).default('') }),
+  );
+  if (!d.aprobar && d.nota.length < 5)
+    throw new ErrorDatos('Escribe por qué se rechaza este regalo.', 'nota', 422);
+  const usoId = c.req.param('id');
+  const r = await resolverRevisionRegalo(db, {
+    usoId,
+    aprobar: d.aprobar,
+    autorId: u.id,
+    nota: d.nota,
+  });
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, despues_json) VALUES (?, ?, ?, ?)',
+    )
+    .bind(
+      u.id,
+      d.aprobar ? 'regalo.revision.aprobar' : 'regalo.revision.rechazar',
+      `regalo:${usoId}`,
+      JSON.stringify({ monto: r.monto, moneda: r.moneda, nota: d.nota }),
+    )
+    .run();
+  const monto = `${(r.monto / 100).toFixed(2)} ${r.moneda}`;
+  await notificar(c.env, db, r.conductorId, (i) =>
+    d.aprobar
+      ? i === 'es'
+        ? {
+            titulo: 'Regalo aprobado',
+            cuerpo: `Revisamos tu viaje y ya tienes ${monto} en tus ganancias.`,
+          }
+        : {
+            titulo: 'Gift approved',
+            cuerpo: `We reviewed your trip and ${monto} is now in your earnings.`,
+          }
+      : i === 'es'
+        ? {
+            titulo: 'Regalo no aprobado',
+            cuerpo:
+              'Revisamos tu viaje y no pudimos comprobar el recorrido, así que este regalo no se acredita. Si crees que es un error, escríbenos desde Ayuda.',
+          }
+        : {
+            titulo: 'Gift not approved',
+            cuerpo:
+              'We reviewed your trip and couldn’t confirm the route, so this gift won’t be credited. If you think this is a mistake, contact us from Help.',
+          },
+  ).catch((e: unknown) => console.error('regalos: aviso de la revisión', e));
+  return c.json({ ok: true, pagado: r.pagado });
 });
 
 regalosDivoox.post('/admin/regalos-divoox/conductores/:id/pago-movil', async (c) => {

@@ -1,5 +1,7 @@
 import { leerLlegada, llegadaParaMostrar } from '../llegadaEstimada';
 import { Hono } from 'hono';
+import { UMBRALES_VIAJE_REAL } from '../viajeReal';
+import { metrosEntre as metrosEntrePuntos } from '@tumbite/compartido';
 import { z } from 'zod';
 import {
   type CotizacionViaje,
@@ -812,7 +814,11 @@ viajesPasajero.post('/viajes', async (c) => {
   });
   // C-MOTO-CIUDAD: el código para empezar según la ciudad y la hora (se decide al pedir).
   // C-ENVIOS: un envío no lleva código al recoger (lleva foto); el PIN es de quien recibe.
-  if (creado && (esEnvio || !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id))))
+  // C-REGALO-VIAJE-REAL: un viaje con regalo de Divoox SIEMPRE pide el código, aunque la ciudad no.
+  if (
+    creado &&
+    (esEnvio || (!regalo && !(await pinParaViajeNuevo(db, cot.servicio_id, cot.zona_id))))
+  )
     await db.prepare('UPDATE viajes SET pin_requerido = 0 WHERE operacion_id = ?').bind(op).run();
   if (!creado) {
     if (regalo) await liberarRegalo(db, op, 'no_creado');
@@ -1280,6 +1286,55 @@ viajesPasajero.get('/viajes/:id/conductor/foto', async (c) => {
  * después, el cargo de la tarifa copiada en la cotización. En efectivo, el cargo queda como deuda
  * para su próximo viaje (no se cobra en el momento).
  */
+/**
+ * C-REGALO-VIAJE-REAL: durante un viaje con regalo de Divoox, la app del pasajero manda dónde está
+ * (como mucho una lectura cada 45 segundos). El servidor solo anota si estaba junto al conductor o
+ * lejos de él: no guarda el punto. Sin regalo, sin viaje en curso o con una lectura imprecisa no
+ * escribe nada. Nunca frena el viaje ni le muestra nada al pasajero.
+ */
+/** Una lectura del pasajero con peor precisión que esta (metros) no dice nada. */
+const PRECISION_PASAJERO_M = 200;
+
+viajesPasajero.post('/viajes/:id/mi-ubicacion', async (c) => {
+  const u = exigir(c, 'cliente');
+  const d = await leerCuerpo(
+    c,
+    z.object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
+      precision: z.number().min(0).max(100_000).nullable().optional(),
+    }),
+  );
+  if ((d.precision ?? 0) > PRECISION_PASAJERO_M) return c.json({ ok: true });
+  const db = base(c);
+  const id = c.req.param('id');
+  const r = await db
+    .prepare(
+      `SELECT r.lat, r.lng FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         JOIN repartidores r ON r.usuario_id = o.conductor_id
+        WHERE o.id = ?1 AND o.cliente_id = ?2 AND v.estado = 'en_curso' AND r.lat IS NOT NULL
+          AND r.ubicacion_en > datetime('now', '-2 minutes')
+          AND (v.pasajero_ubicacion_en IS NULL OR v.pasajero_ubicacion_en < datetime('now', '-45 seconds'))
+          AND EXISTS (SELECT 1 FROM usos_cupon_divoox x WHERE x.operacion_id = o.id AND x.estado = 'apartado')`,
+    )
+    .bind(id, u.id)
+    .first<{ lat: number; lng: number }>();
+  if (!r) return c.json({ ok: true });
+  const cerca =
+    metrosEntrePuntos({ lat: Number(r.lat), lng: Number(r.lng) }, d) <=
+    UMBRALES_VIAJE_REAL.radioPasajeroM;
+  await db
+    .prepare(
+      `UPDATE viajes SET pasajero_cerca = pasajero_cerca + ?1, pasajero_lejos = pasajero_lejos + ?2,
+              pasajero_ubicacion_en = datetime('now')
+        WHERE operacion_id = ?3 AND estado = 'en_curso'
+          AND (pasajero_ubicacion_en IS NULL OR pasajero_ubicacion_en < datetime('now', '-45 seconds'))`,
+    )
+    .bind(cerca ? 1 : 0, cerca ? 0 : 1, id)
+    .run();
+  return c.json({ ok: true });
+});
+
 viajesPasajero.post('/viajes/:id/cancelar', async (c) => {
   const u = exigir(c, 'cliente');
   const db = base(c);
