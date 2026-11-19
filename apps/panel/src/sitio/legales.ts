@@ -29,6 +29,12 @@ const SITIO = 'https://divoox.com';
 // bloqueos, ubicación compartida durante el pedido y avisos en el idioma del teléfono). Antes,
 // C-SMS-CONSENTIMIENTO los había cambiado el 15 nov (sección de SMS). C-CAMILA (18 nov): el chat de
 // soporte con la asistente virtual, Google Gemini como proveedor y su borrado con la cuenta.
+// C-PRIVACIDAD-REGALO-LINEAS (19 nov 2026): Privacidad cuenta la ubicación del pasajero en un viaje
+// con regalo (antifraude, sin guardar el punto) y lo que comparten las líneas de taxi y mototaxi.
+const FECHA_PRIVACIDAD = {
+  es: 'Actualizado: 19 de noviembre de 2026',
+  en: 'Last updated: November 19, 2026',
+};
 const FECHA_CHAT = {
   es: 'Actualizado: 18 de noviembre de 2026',
   en: 'Last updated: November 18, 2026',
@@ -39,7 +45,7 @@ const FECHA_CHAT = {
 export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   es: {
     titulo: 'Política de privacidad',
-    actualizado: FECHA_CHAT.es,
+    actualizado: FECHA_PRIVACIDAD.es,
     intro: `Esta política explica qué datos personales recoge Divoox, cómo los usa, con quién los comparte, cuánto tiempo los guarda y cómo puedes borrarlos. Aplica a la app Divoox (clientes), Divoox Driver (repartidores), Divoox para restaurantes, el panel web y ${SITIO}.`,
     secciones: [
       {
@@ -86,8 +92,9 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '4. Ubicación',
         parrafos: [
-          'App de clientes: con tu permiso, usamos tu ubicación mientras usas la app para mostrarte los restaurantes cercanos y marcar el punto de entrega. Si no das el permiso, puedes escribir tu dirección a mano y la app funciona igual. El punto de entrega de tu pedido se comparte con el repartidor asignado, solo mientras lo lleva. En un viaje usamos tus puntos de recogida y de destino; mientras el viaje está en curso, tu conductor ve tu punto de recogida y tú ves su posición en el mapa. Si compartes el viaje, tus contactos de confianza lo siguen con el enlace hasta que termina.',
+          'App de clientes: con tu permiso, usamos tu ubicación mientras usas la app para mostrarte los restaurantes cercanos y marcar el punto de entrega. Si no das el permiso, puedes escribir tu dirección a mano y la app funciona igual. El punto de entrega de tu pedido se comparte con el repartidor asignado, solo mientras lo lleva. En un viaje usamos tus puntos de recogida y de destino; mientras el viaje está en curso, tu conductor ve tu punto de recogida y tú ves su posición en el mapa. Si compartes el viaje, tus contactos de confianza lo siguen con el enlace hasta que termina. Si tu viaje lleva un regalo de Divoox, mientras el viaje está en curso y con la app abierta, la app nos envía tu ubicación una vez por minuto para comprobar que vas con tu conductor y evitar fraudes con los regalos. No guardamos ese punto: solo anotamos si estabas cerca o lejos del conductor. Solo ocurre si ya diste el permiso de ubicación; si no lo diste, el viaje funciona igual.',
           'App de repartidores y conductores: la ubicación es necesaria para recibir y hacer entregas y viajes. Se comparte solo mientras estás conectado o tienes una entrega o un viaje activo, para ofrecerte solicitudes cercanas y para que el cliente o el pasajero te siga en el mapa. Durante ese tiempo la app sigue enviando tu ubicación también con la pantalla apagada o la app en segundo plano (Android lo muestra con un aviso fijo); al desconectarte y sin un trabajo en curso, deja de enviarla. Guardamos solo tu última posición, no tu recorrido, y se borra al desconectarte o al borrar la cuenta. Además guardamos el lugar donde se tomó cada foto de recogida o de entrega (ver la sección 2).',
+          'Líneas de taxi y mototaxi (conductores): si pides entrar a una línea, el líder de esa línea ve tu nombre y tu teléfono para aceptarte o no. Mientras eres parte de una línea, si tocas el botón de emergencia, el líder y el segundo contacto de la línea reciben un aviso y un mensaje de texto con tu nombre, tu teléfono y el lugar donde estás, para que puedan ayudarte. El líder puede sacarte de la línea, y tú puedes pedirnos salir en cualquier momento escribiendo a soporte.',
           'Puedes quitar el permiso de ubicación cuando quieras en los ajustes de tu teléfono.',
         ],
       },
@@ -169,7 +176,7 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
   },
   en: {
     titulo: 'Privacy Policy',
-    actualizado: FECHA_CHAT.en,
+    actualizado: FECHA_PRIVACIDAD.en,
     intro: `This policy explains what personal data Divoox collects, how we use it, who we share it with, how long we keep it, and how you can delete it. It applies to the Divoox app (customers), Divoox Driver, Divoox for Restaurants, the web dashboard, and ${SITIO}.`,
     secciones: [
       {
@@ -216,8 +223,9 @@ export const PRIVACIDAD: Record<Idioma, DocumentoLegal> = {
       {
         titulo: '4. Location',
         parrafos: [
-          'Customer app: with your permission, we use your location while you use the app to show nearby restaurants and set your delivery spot. If you don’t allow it, you can type your address and the app works the same. Your order’s delivery spot is shared with the assigned courier, only while they are delivering it. For a ride, we use your pickup and drop-off points; while the ride is in progress, your driver sees your pickup point and you see their position on the map. If you share your ride, your trusted contacts can follow it with the link until it ends.',
+          'Customer app: with your permission, we use your location while you use the app to show nearby restaurants and set your delivery spot. If you don’t allow it, you can type your address and the app works the same. Your order’s delivery spot is shared with the assigned courier, only while they are delivering it. For a ride, we use your pickup and drop-off points; while the ride is in progress, your driver sees your pickup point and you see their position on the map. If you share your ride, your trusted contacts can follow it with the link until it ends. If your ride includes a Divoox gift, while the ride is in progress and the app is open, the app sends us your location once a minute to confirm you are riding with your driver and to prevent gift fraud. We do not store that point: we only record whether you were near or far from the driver. It only happens if you have already allowed location access; if you have not, the ride works the same.',
           'Driver app: location is required to receive and complete deliveries and rides. It’s shared only while you’re online or on an active delivery or ride, to offer you nearby requests and let the customer or passenger follow you on a map. During that time the app keeps sending your location even with the screen off or the app in the background (Android shows an ongoing notification); once you go offline with no job in progress, it stops. We keep only your latest position, not your route, and it’s cleared when you go offline or delete your account. We also record where each pickup or delivery photo was taken (see section 2).',
+          'Taxi and moto-taxi lines (drivers): if you ask to join a line, that line’s leader sees your name and phone number to accept you or not. While you are part of a line, if you tap the emergency button, the leader and the line’s second contact receive an alert and a text message with your name, your phone number, and where you are, so they can help you. The leader can remove you from the line, and you can ask us to leave at any time by contacting support.',
           'You can turn off location access at any time in your phone’s settings.',
         ],
       },

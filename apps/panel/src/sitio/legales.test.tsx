@@ -153,3 +153,35 @@ describe('borrar la cuenta lista todo lo que se borra', () => {
     expect(que('en')).toContain('your invite codes');
   });
 });
+
+/**
+ * C-PRIVACIDAD-REGALO-LINEAS (19 nov 2026) — todos los países. El auditor de tiendas dio NO APTO a
+ * la candidata porque la política no contaba dos usos nuevos de datos: la ubicación del pasajero en
+ * un viaje con regalo (antifraude, sin guardar el punto) y lo que comparten las líneas de taxi y
+ * mototaxi (el líder ve nombre y teléfono; la emergencia avisa al líder y al segundo contacto con
+ * nombre, teléfono y lugar). En ROJO antes de escribir los párrafos.
+ */
+describe('C-PRIVACIDAD-REGALO-LINEAS · la política cuenta el regalo y las líneas', () => {
+  it('(es) ubicación del pasajero en un viaje con regalo, sin guardar el punto', () => {
+    const p = texto(PRIVACIDAD.es);
+    expect(p).toMatch(/regalo de Divoox.*una vez por minuto.*evitar fraudes/);
+    expect(p).toMatch(/No guardamos ese punto/);
+  });
+  it('(en) rider location on a ride with a gift, without storing the point', () => {
+    const p = texto(PRIVACIDAD.en);
+    expect(p).toMatch(/Divoox gift.*once a minute.*prevent gift fraud/);
+    expect(p).toMatch(/We do not store that point/);
+  });
+  it('(es y en) las líneas: qué ve el líder y a quién avisa la emergencia', () => {
+    expect(texto(PRIVACIDAD.es)).toMatch(
+      /Líneas de taxi y mototaxi.*líder.*nombre y tu teléfono.*segundo contacto.*mensaje de texto/,
+    );
+    expect(texto(PRIVACIDAD.en)).toMatch(
+      /Taxi and moto-taxi lines.*leader.*name and phone number.*second contact.*text message/,
+    );
+  });
+  it('la fecha de la política es la del cambio', () => {
+    expect(PRIVACIDAD.es.actualizado).toContain('19 de noviembre de 2026');
+    expect(PRIVACIDAD.en.actualizado).toContain('November 19, 2026');
+  });
+});
