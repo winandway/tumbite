@@ -158,3 +158,13 @@ Pedido de Richard, que ya había hecho antes: conectarse en Driver es DESLIZANTE
 5. Camila: reportes de fallo, «Adjuntar captura» y los dos menores del chat (rama `camila-etapa-1`).
 6. Menores que dejó el revisor: prueba del caso central de «no mover de ciudad», ignorar ubicaciones muy imprecisas al fijar la ciudad, deshabilitar «Usar este vehículo» estando conectado, la etiqueta «Entregas» del inicio de Driver que ahora cuenta carreras.
 7. Tienda: fotos de restaurantes de muestra que no corresponden en las capturas 02, quitar «fast/rápido» del gráfico destacado, «Rápido, seguro y económico» de la captura de moto.
+
+## Paquete siguiente: tres piezas más de Driver y del cliente (orden de Richard, 18 nov, noche)
+
+Van en el MISMO borrador HTML que la tarjeta de saldo de Driver (un solo borrador para Richard); se construyen tras su visto bueno. Venezuela primero; en EE. UU. no aplica lo de los bolívares.
+
+1. **Precio en dólares y en bolívares.** En Venezuela casi nadie tiene monedas de dólar: si el viaje cuesta 2,00 y el regalo cubre 1,13, el pasajero debe 0,87 y no tiene cómo darlos. Todo monto que se cobra o se paga en mano se ve en dólares Y en bolívares a la tasa del día (la tasa BCV ya está en el servidor). En Driver: «Cobra en efectivo», la diferencia cuando hay regalo y el total al terminar. En el cliente: precio antes de confirmar, lo que paga al conductor y el recibo, para pagar por pago móvil el monto exacto. Se muestra la tasa usada y su fecha; el monto en bolívares queda FIJADO al momento del viaje, para que conductor y pasajero vean el mismo número. Por país y ciudad.
+2. **El precio, grande y protagonista** en la tarjeta del viaje de Driver («Ve a recoger» y siguientes): cifra grande en dólares, debajo los bolívares, y aparte, en verde, lo que paga Divoox por el regalo. Cuando el pasajero pone la diferencia: «Cobra al pasajero: X dólares (Y bolívares)».
+3. **Botones deslizantes con vibración** en casi todas las acciones del viaje de Driver («Llegué», iniciar viaje, recogí, entregué…), con la misma pieza única de conectarse y terminar, en Android y en iPhone, con su prueba. Emergencia sigue siendo inmediata; «Soltar el viaje» va con confirmación.
+
+Lleva guía de Docs en los dos idiomas. Reglas que aplican: dinero en centavos enteros y la conversión con redondeo definido y probado; el éxito en verde; un perfil por país.
