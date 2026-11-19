@@ -1639,6 +1639,45 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
  },
  {
   "idioma": "es",
+  "ruta": "drivers/register-your-line",
+  "titulo": "Registra tu línea de taxis o mototaxis",
+  "resumen": "Si diriges una línea de taxis o mototaxis, regístrala en Divoox: tú eres el líder, tus conductores piden entrar contigo y, si alguno pide ayuda, tú te enteras primero.",
+  "preguntas": [
+   "¿Cómo registro mi línea de mototaxis?",
+   "¿Quién recibe el aviso si un conductor de mi línea pide ayuda?",
+   "¿Cuánto tarda en aprobarse mi línea?",
+   "¿Puedo tener taxis y mototaxis en la misma línea?"
+  ],
+  "pasos": [
+   "Crea tu cuenta de Divoox Driver con tu celular.",
+   "Abre «Registra tu línea» en la página de Divoox y llena los seis datos.",
+   "Espera nuestro mensaje: verificamos tu celular y aprobamos tu línea.",
+   "Abre «Mi línea» en Divoox Driver: ahí están tu código y tu QR.",
+   "Comparte tu código con tus conductores y acepta sus solicitudes."
+  ],
+  "cuerpo": "Una línea es tu grupo de conductores. En Divoox la línea tiene su líder (tú), su código, su enlace y su QR. Tus conductores se unen con ese código y tú aceptas a cada uno con un toque. Para registrarla llena el formulario «Registra tu línea» con seis datos: el nombre de la línea, la ciudad, si son taxis, mototaxis o los dos, cuántos conductores tiene, tu nombre y celular como líder y un segundo contacto de emergencia con su celular. Nuestro equipo verifica tu celular y aprueba la línea. Nadie crea una línea sin esa verificación. Para ser líder necesitas tu cuenta de Divoox Driver creada con ese mismo celular. Cuando tu línea está lista te llega tu código. El código solo vale en la ciudad de tu línea. Compártelo por mensaje o muestra el QR: tus conductores lo escriben al crear su cuenta o desde su perfil. Seguridad: si un conductor de tu línea toca el botón de emergencia en la app, tú y tu segundo contacto reciben un mensaje con su nombre, su celular y su ubicación en el mapa."
+ },
+ {
+  "idioma": "es",
+  "ruta": "drivers/your-line",
+  "titulo": "Tu línea en Divoox Driver",
+  "resumen": "Entra a la línea de tu grupo con su código, o elígela de la lista de tu ciudad. Tu líder te acepta y, si pides ayuda, le llega tu ubicación.",
+  "preguntas": [
+   "¿Cómo entro a una línea?",
+   "¿Puedo estar en dos líneas?",
+   "¿Qué pasa cuando toco el botón de emergencia?",
+   "¿Cómo saco a un conductor de mi línea?"
+  ],
+  "pasos": [
+   "En Divoox Driver abre tu perfil y toca «Mi línea».",
+   "Escribe el código de tu línea o elígela de la lista y toca «Pedir entrada».",
+   "Espera a que tu líder te acepte con un toque.",
+   "Si eres líder: acepta o rechaza las solicitudes y comparte tu código o tu QR."
+  ],
+  "cuerpo": "Si trabajas en una línea de taxis o mototaxis, en Divoox Driver ve a tu perfil y abre «Mi línea». También puedes escribir el código de la línea cuando creas tu cuenta. Para entrar: escribe el código de tu línea o elígela de la lista de las líneas de tu ciudad (usa el buscador). El código solo vale en la ciudad de la línea. Tu líder recibe tu solicitud y la acepta o la rechaza con un toque. Mientras tanto verás «Esperando que el líder te acepte». Estás en una sola línea a la vez. Si quieres cambiar, pídele a tu líder que te saque de la suya. Si eres el líder: en «Mi línea» ves tu código, el QR para compartir, las solicitudes de conductores y tu equipo. Para sacar a un conductor, toca los tres puntos de su fila. Si tocas el botón de emergencia durante un servicio, tu líder y su segundo contacto reciben un mensaje con tu ubicación. Si no tienes línea, el aviso le llega al equipo de Divoox de tu ciudad."
+ },
+ {
+  "idioma": "es",
   "ruta": "drivers/online-for-several-services",
   "titulo": "Conéctate a varios servicios a la vez",
   "resumen": "En Divoox Driver te conectas a la vez a todos los servicios que tienes aprobados: comida, envíos y viajes con pasajero. Te llegan ofertas de todos y, al aceptar una, los demás se pausan solos hasta que la termines.",
@@ -4007,6 +4046,45 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "If you can’t make it one day, tap “Can’t make it” on that ride."
   ],
   "cuerpo": "When a rider chooses you as their trusted driver, you get a notification. From then on, when they request and you’re online and nearby, their ride reaches you first, and only you, for 1 minute. The request says “Trusted rider · just for you.” If the rider sets up a regular ride with you (for example, school Monday to Friday), you see it in “Regular riders”: your schedule for the next 7 days with the time, where from and where to, and the payment method. 30 minutes before each ride you get a reminder: go online to receive it first. If you can’t make it one day, tap “Can’t make it” on that ride: the rider gets a notification and the ride goes to another driver. If you’ll no longer do that regular ride, use “Leave this regular ride.” Rides for minors: the request says “You’re picking up a minor” with their name. Ask for their 4-digit PIN to start the ride. To receive them, turn on “I accept minors” for your vehicle. Every ride is paid and recorded in the app as usual. That keeps your history, your ratings, and Divoox protection."
+ },
+ {
+  "idioma": "en",
+  "ruta": "drivers/register-your-line",
+  "titulo": "Register your taxi or mototaxi line",
+  "resumen": "If you run a line of taxis or mototaxis, register it on Divoox: you are the leader, your drivers ask to join through you and, if one of them asks for help, you hear about it first.",
+  "preguntas": [
+   "How do I register my mototaxi line?",
+   "Who gets the alert if a driver in my line asks for help?",
+   "How long does it take for my line to be approved?",
+   "Can I have taxis and mototaxis in the same line?"
+  ],
+  "pasos": [
+   "Create your Divoox Driver account with your cell phone.",
+   "Open “Register your line” on the Divoox website and fill in the six details.",
+   "Wait for our message: we verify your cell phone and approve your line.",
+   "Open “My line” in Divoox Driver: your code and your QR are there.",
+   "Share your code with your drivers and accept their requests."
+  ],
+  "cuerpo": "A line is your group of drivers. On Divoox the line has its leader (you), its code, its link and its QR. Your drivers join with that code and you accept each one with a tap. To register it, fill in the “Register your line” form with six details: the line’s name, the city, whether it’s taxis, mototaxis or both, how many drivers it has, your name and cell phone as the leader, and a second emergency contact with their cell phone. Our team verifies your cell phone and approves the line. Nobody creates a line without that check. To be a leader you need your Divoox Driver account created with that same cell phone. When your line is ready you get your code. The code only works in your line’s city. Share it by message or show the QR: your drivers enter it when they create their account or from their profile. Safety: if a driver in your line taps the emergency button in the app, you and your second contact get a message with the driver’s name, cell phone and map location."
+ },
+ {
+  "idioma": "en",
+  "ruta": "drivers/your-line",
+  "titulo": "Your line in Divoox Driver",
+  "resumen": "Join your group’s line with its code, or choose it from the list for your city. Your leader accepts you and, if you ask for help, gets your location.",
+  "preguntas": [
+   "How do I join a line?",
+   "Can I be in two lines?",
+   "What happens when I tap the emergency button?",
+   "How do I remove a driver from my line?"
+  ],
+  "pasos": [
+   "In Divoox Driver, open your profile and tap “My line.”",
+   "Enter your line’s code or choose it from the list and tap “Ask to join.”",
+   "Wait for your leader to accept you with one tap.",
+   "If you’re the leader: accept or decline requests and share your code or QR."
+  ],
+  "cuerpo": "If you work in a taxi or mototaxi line, open your profile in Divoox Driver and tap “My line.” You can also enter the line’s code when you create your account. To join: enter your line’s code or choose it from the list of lines in your city (use the search). The code only works in the line’s city. Your leader gets your request and accepts or declines it with a tap. Meanwhile you’ll see “Waiting for the leader to accept you.” You are in one line at a time. If you want to switch, ask your leader to remove you from theirs. If you’re the leader: in “My line” you see your code, the QR to share, driver requests and your team. To remove a driver, tap the three dots on their row. If you tap the emergency button during a service, your leader and their second contact get a message with your location. If you have no line, the alert goes to the Divoox team in your city."
  },
  {
   "idioma": "en",
