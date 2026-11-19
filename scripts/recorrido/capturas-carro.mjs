@@ -21,6 +21,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deslizar } from './deslizar.mjs';
 import { abrirAlta } from './altaDriver.mjs';
+import { ciudadNeutra, mapaSinRotulos } from './neutro.mjs';
 import { chromium, devices } from '@playwright/test';
 
 const RAIZ = join(import.meta.dirname, '..', '..');
@@ -44,10 +45,10 @@ const LUGARES = {
       radioKm: 15,
       zonaHoraria: 'America/Caracas',
     },
-    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Bolívar de El Vigía' },
-    destino: { lat: 8.624, lng: -71.672, direccion: 'Aeropuerto de El Vigía' },
-    parada: { lat: 8.6195, lng: -71.6585, direccion: 'Terminal de pasajeros de El Vigía' },
-    parada2: { lat: 8.6262, lng: -71.6612, direccion: 'Farmacia del centro, El Vigía' },
+    origen: { lat: 8.6219, lng: -71.6506, direccion: 'Plaza Central' },
+    destino: { lat: 8.6105, lng: -71.6672, direccion: 'Avenida Principal 12' },
+    parada: { lat: 8.6195, lng: -71.6585, direccion: 'Calle Principal 123' },
+    parada2: { lat: 8.6262, lng: -71.6612, direccion: 'Avenida Central 456' },
     carro: { color: 'Gris' },
   },
   us: {
@@ -61,10 +62,10 @@ const LUGARES = {
       radioKm: 15,
       zonaHoraria: 'America/Detroit',
     },
-    origen: { lat: 42.4915, lng: -83.4706, direccion: 'Twelve Oaks Mall, Novi, MI' },
-    destino: { lat: 42.4712, lng: -83.4745, direccion: 'Novi Civic Center, 45175 W 10 Mile Rd' },
-    parada: { lat: 42.481, lng: -83.4735, direccion: 'Novi Town Center, Novi, MI' },
-    parada2: { lat: 42.4722, lng: -83.478, direccion: 'Novi Public Library, Novi, MI' },
+    origen: { lat: 42.4915, lng: -83.4706, direccion: 'Central Plaza' },
+    destino: { lat: 42.4712, lng: -83.4745, direccion: '12 Main Avenue' },
+    parada: { lat: 42.481, lng: -83.4735, direccion: '123 Main Street' },
+    parada2: { lat: 42.4722, lng: -83.478, direccion: '456 Central Avenue' },
     carro: { color: 'Gray', placaEstado: 'MI' },
     // Tarifa de este servidor local para las fotos (centavos de dólar).
     tarifa: {
@@ -140,8 +141,8 @@ async function cuentasVe() {
 /** Las cuentas de prueba de Estados Unidos (las del guion de Carro), con nombres en inglés. */
 async function cuentasUs() {
   const a = await interno('carro/armar');
-  await sql(`UPDATE usuarios SET nombre = 'Sam Carter' WHERE id = '${a.ids.conductorUs}'`);
-  await sql(`UPDATE usuarios SET nombre = 'Jamie Lee' WHERE id = '${a.ids.cliente}'`);
+  await sql(`UPDATE usuarios SET nombre = 'Sam C.' WHERE id = '${a.ids.conductorUs}'`);
+  await sql(`UPDATE usuarios SET nombre = 'Jamie L.' WHERE id = '${a.ids.cliente}'`);
   return {
     tokens: { equipo: a.tokens.equipo, conductor: a.tokens.conductorUs, cliente: a.tokens.cliente },
     ids: { conductor: a.ids.conductorUs, cliente: a.ids.cliente },
@@ -150,8 +151,10 @@ async function cuentasUs() {
   };
 }
 
-const navegador = await chromium.launch();
+// C-DOCS-SIN-DATOS-REALES: el mapa sin rótulos y la ciudad con nombre de ejemplo.
+const navegador = mapaSinRotulos(await chromium.launch());
 let n = 0;
+let restaurarCiudad = async () => {};
 
 /** Todas las capturas de Carro de un país, en los idiomas que le tocan. */
 async function correr(M, idiomas) {
@@ -246,6 +249,9 @@ async function correr(M, idiomas) {
     `DELETE FROM habilitaciones WHERE conductor_id = '${IDS.conductor}' AND servicio_id = 'carro'`,
   );
 
+  // C-DOCS-SIN-DATOS-REALES: mientras se toman las fotos la ciudad lleva un nombre de ejemplo.
+  restaurarCiudad = await ciudadNeutra(sql, CIUDAD.id, idiomas[0]);
+
   const telefono = async (token, id, idioma) => {
     const ctx = await navegador.newContext({
       ...devices['Pixel 7'],
@@ -266,7 +272,7 @@ async function correr(M, idiomas) {
     return ctx;
   };
   const foto = (p, nombre, idioma) =>
-    p.screenshot({ path: join(SALIDA, `carro-${nombre}-${idioma}.png`) });
+    p.screenshot({ path: join(SALIDA, `carro-${nombre}-v2-${idioma}.png`) });
   const espera = (ms) => new Promise((r) => setTimeout(r, ms));
   const arribaDe = (l) => l.evaluate((x) => x.scrollIntoView({ block: 'start' }));
   // El estado va al final del alta: se deja abajo de la pantalla para que se vea el carro encima.
@@ -791,8 +797,8 @@ const apagarPasajerosUs = async () => {
   ).catch(() => null);
 };
 try {
-  if (SOLO !== 'en') await correr(LUGARES.ve, ['es']);
-  if (SOLO !== 'es') await correr(LUGARES.us, ['en']);
+  if (SOLO !== 'en') await correr(LUGARES.ve, ['es']).finally(() => restaurarCiudad());
+  if (SOLO !== 'es') await correr(LUGARES.us, ['en']).finally(() => restaurarCiudad());
 } finally {
   await apagarPasajerosUs();
   await navegador.close();

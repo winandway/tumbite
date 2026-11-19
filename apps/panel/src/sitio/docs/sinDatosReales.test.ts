@@ -34,6 +34,19 @@ const GUIONES_SIN_LUGAR = [
   'e2e/recorrido/referidosEquipos.spec.ts',
   'e2e/recorrido/regalosDivoox.spec.ts',
 ];
+/**
+ * Los guiones de capturas rehechos el 18 nov 2026 con la pieza `scripts/recorrido/neutro.mjs` (mapa
+ * sin rótulos, ciudad «de ejemplo» y direcciones genéricas): ninguna dirección que escriben en
+ * pantalla nombra un lugar.
+ */
+const GUIONES_NEUTROS = [
+  'scripts/recorrido/capturas-moto-venezuela.mjs',
+  'scripts/recorrido/capturas-carro.mjs',
+  'scripts/recorrido/capturas-envios.mjs',
+  'scripts/recorrido/capturas-comida-venezuela.mjs',
+  'scripts/flex/capturas-cobro.mjs',
+  'scripts/docs/capturas-zonas.mjs',
+];
 /** Lo que un guion escribe en pantalla: nombres, equipos, regalos y direcciones. */
 const SE_VE = /^\s*(equipo|lider|miembros|pasajero|conductor|nombreEs|nombreEn|recogida|destino):/;
 
@@ -86,7 +99,24 @@ describe('C-DOCS-SIN-DATOS-REALES', () => {
     expect(guion).toContain("locator('footer')");
   });
 
-  it('aviso: guías públicas cuyas capturas o ejemplos nombran una ciudad', () => {
+  it('los guiones de capturas neutras pintan el mapa sin rótulos y no escriben direcciones de una ciudad', () => {
+    for (const g of GUIONES_NEUTROS) {
+      const guion = leer(g);
+      expect(guion, g).toContain('mapaSinRotulos(await chromium.launch())');
+      const direcciones = [...guion.matchAll(/direccion: '([^']+)'/g)].map((m) => m[1] ?? '');
+      expect(
+        direcciones.filter((d) => LUGARES.test(llano(d)) || /\b[A-Z]{2} \d{5}\b/.test(d)),
+        g,
+      ).toEqual([]);
+    }
+    // El mapa neutro se pinta sin ninguna capa de texto y siempre de día.
+    const neutro = leer('scripts/recorrido/neutro.mjs');
+    expect(neutro).toContain("capa.type !== 'symbol'");
+    expect(neutro).toContain("localStorage.setItem('divoox.mapa.tema', 'claro')");
+  });
+
+  it('ninguna guía pública describe una captura con una ciudad', () => {
+    // Fue un aviso mientras se rehacían las capturas; desde el 18 nov 2026 es candado.
     const conLugar: string[] = [];
     for (const [idioma, secciones] of Object.entries(DOCS))
       for (const seccion of secciones)
@@ -94,12 +124,7 @@ describe('C-DOCS-SIN-DATOS-REALES', () => {
           const textos = (guia.capturas ?? []).flatMap((c) => [c.alt, c.pie]);
           if (textos.some((t) => LUGARES.test(llano(t)))) conLugar.push(`${idioma}/${guia.id}`);
         }
-    // No falla: es la lista de trabajo para ir rehaciendo esas capturas sin lugar.
-    if (conLugar.length)
-      console.warn(
-        `C-DOCS-SIN-DATOS-REALES (aviso): ${conLugar.length} guías describen capturas con una ciudad: ${conLugar.join(', ')}`,
-      );
-    expect(Array.isArray(conLugar)).toBe(true);
+    expect(conLugar).toEqual([]);
   });
 
   it('las capturas de referidos usan un código que el servidor nunca genera', () => {

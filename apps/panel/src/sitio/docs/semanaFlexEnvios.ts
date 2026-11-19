@@ -12,7 +12,8 @@ import type { Guia, SeccionDocs } from './guias';
 import { BORRADORES_VIAJES_2 } from './borradores/viajesProgramadosYEnvios';
 
 const c = (nombre: string, idioma: Idioma, alt: string, pie: string) => ({
-  src: `/docs/recorrido-${nombre}-${idioma}.webp`,
+  // Las de Envíos se rehicieron sin lugar el 18 nov 2026 (C-DOCS-SIN-DATOS-REALES): nombre nuevo.
+  src: `/docs/recorrido-${nombre}${nombre.startsWith('envios-') ? '-v2' : ''}-${idioma}.webp`,
   alt,
   pie,
 });
@@ -278,7 +279,7 @@ export const GUIAS_FLEX_ENVIOS: Record<Idioma, Partial<Record<SeccionDocs['id'],
           c(
             'envios-cliente-precio',
             'es',
-            'Divoox Envíos en El Vigía, de la Plaza Bolívar al terminal de pasajeros: el precio fijo de 2 dólares con su equivalente en bolívares y la opción de pagar en efectivo o con pago móvil.',
+            'Divoox Envíos, de la Plaza Central a la Avenida Principal 12: el precio fijo de 2 dólares con su equivalente en bolívares y la opción de pagar en efectivo o con pago móvil.',
             'Escribe las dos direcciones y mira el precio.',
           ),
           c(
@@ -371,7 +372,7 @@ export const GUIAS_FLEX_ENVIOS: Record<Idioma, Partial<Record<SeccionDocs['id'],
           c(
             'envios-driver-oferta',
             'es',
-            'La oferta de un envío en Divoox Driver en El Vigía: cobras en efectivo a quien envía, la ganancia, la distancia, el tiempo, la dirección de recogida y la de entrega, y el botón Aceptar envío.',
+            'La oferta de un envío en Divoox Driver: cobras en efectivo a quien envía, la ganancia, la distancia, el tiempo, la dirección de recogida y la de entrega, y el botón Aceptar envío.',
             'La oferta: lo que ganas y el recorrido.',
           ),
           c(

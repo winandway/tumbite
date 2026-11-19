@@ -208,7 +208,7 @@ export const TEXTOS_FLEX = {
       img1: 'panel-recarga',
       alt1: 'The wallet’s Top up tab in the Divoox Flex dashboard, with suggested amounts in dollars and Continue to payment',
       img2: 'driver-entrega',
-      alt2: 'A stop in Divoox Driver in Novi, Michigan: the package to scan and Confirm delivery, with nothing to collect',
+      alt2: 'A stop in Divoox Driver: the package to scan and Confirm delivery, with nothing to collect',
       app: 'At the door, the driver scans the package and confirms the delivery. There’s nothing to collect.',
     },
     sinTecnologia: {

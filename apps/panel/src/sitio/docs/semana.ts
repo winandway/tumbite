@@ -18,7 +18,7 @@ type PorSeccion = Partial<Record<SeccionDocs['id'], Guia[]>>;
 // C-CAPTURAS-POR-IDIOMA (15 nov 2026): el español se enseña con El Vigía (`comida-ve`); el inglés, con
 // Novi, Michigan (`comida-us`), como funciona Comida en Estados Unidos: se paga con tarjeta en la app.
 const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
-  src: `/docs/recorrido-comida-${idioma === 'en' ? 'us' : 've'}-${nombre}-${idioma}.webp`,
+  src: `/docs/recorrido-comida-${idioma === 'en' ? 'us' : 've'}-${nombre}-v2-${idioma}.webp`,
   alt,
   pie,
 });
@@ -41,7 +41,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           foto(
             'carrito-pago',
             'es',
-            'El carrito con «¿Cómo pagas?»: Efectivo al recibir y Transferencia al repartidor, y la dirección de entrega en El Vigía.',
+            'El carrito con «¿Cómo pagas?»: Efectivo al recibir y Transferencia al repartidor, y la dirección de entrega.',
             'Eliges cómo pagas al recibir.',
           ),
           foto(
@@ -206,7 +206,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           foto(
             'carrito',
             'en',
-            'The cart for an order from a restaurant in Novi, Michigan: the item in US dollars, when you want it and how you want to receive it.',
+            'The cart for an order from a restaurant: the item in US dollars, when you want it and how you want to receive it.',
             'Your cart, in US dollars.',
           ),
           foto(
@@ -293,7 +293,7 @@ const COMIDA_VE: Record<Idioma, PorSeccion> = {
           foto(
             'driver-puerta',
             'en',
-            'The order at the customer’s door in Novi, Michigan: the address, “Customer chose: hand it to them,” the PIN box and the “Handed to the customer” button.',
+            'The order at the customer’s door: the address, “Customer chose: hand it to them,” the PIN box and the “Handed to the customer” button.',
             'At the door you hand over the order with the customer’s PIN.',
           ),
           foto(

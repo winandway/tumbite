@@ -15,6 +15,7 @@ import fs from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
+import { mapaSinRotulos } from '../recorrido/neutro.mjs';
 
 const SITIO = 'https://staging.tumbite.com';
 const RAIZ = process.cwd();
@@ -64,6 +65,8 @@ const picoAntes = await api('GET', '/datos/admin/pago-pico', undefined, admin.to
 const hechos = [];
 
 const pedir = async () => {
+  // C-PAUSA-SIN-SENAL: el restaurante de demostración «escucha» (pregunta por sus pedidos, como su app).
+  await api('GET', '/datos/restaurante/pedidos', undefined, rest.token);
   const p = await api(
     'POST',
     '/datos/pedidos',
@@ -85,7 +88,8 @@ const pedir = async () => {
 const aWebp = (png, webp) =>
   execFileSync('cwebp', ['-quiet', '-q', '82', '-resize', '540', '0', png, '-o', webp]);
 
-const navegador = await chromium.launch();
+// C-DOCS-SIN-DATOS-REALES: el mapa sin rótulos (ni la ciudad ni sus calles se leen).
+const navegador = mapaSinRotulos(await chromium.launch());
 try {
   await api('PUT', '/datos/admin/paises/US', { efectivoActivo: true }, admin.token);
   await api(
@@ -120,16 +124,27 @@ try {
   };
   const foto = async (p, nombre, idioma) => {
     await p.waitForTimeout(1200);
-    const png = join(ORIGINALES, `${nombre}-${idioma}.png`);
+    const png = join(ORIGINALES, `${nombre}-v2-${idioma}.png`);
     await p.screenshot({ path: png });
-    aWebp(png, join(WEB, `${nombre}-${idioma}.webp`));
+    aWebp(png, join(WEB, `${nombre}-v2-${idioma}.webp`));
     console.log('foto', nombre, idioma);
   };
   const circulo = (p) => p.locator('path.leaflet-interactive[fill="#F20D20"]').first();
 
   for (const idioma of ['es', 'en']) {
     const { ctx, p } = await sesion(idioma);
-    if (!(await circulo(p).count())) throw new Error('El mapa no marcó ninguna zona.');
+    if (!(await circulo(p).count())) {
+      await p.screenshot({
+        path: join(RAIZ, 'test-results', `zonas-sin-zona-${idioma}.png`),
+        fullPage: true,
+      });
+      console.log(
+        'mapas',
+        await p.locator('.leaflet-container').count(),
+        await p.locator('.gm-style').count(),
+      );
+      throw new Error('El mapa no marcó ninguna zona.');
+    }
     await foto(p, 'driver-zonas-mapa', idioma);
     await circulo(p).hover({ force: true });
     await foto(p, 'driver-zonas-detalle', idioma);

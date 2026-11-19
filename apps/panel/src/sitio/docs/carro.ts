@@ -10,7 +10,7 @@ import type { Captura, Guia } from './guias';
  * Michigan, en dólares y con efectivo o tarjeta. El texto de cada idioma describe SU captura.
  */
 const foto = (nombre: string, idioma: Idioma, alt: string, pie: string): Captura => ({
-  src: `/docs/recorrido-carro-${nombre}-${idioma}.webp`,
+  src: `/docs/recorrido-carro-${nombre}-v2-${idioma}.webp`,
   alt,
   pie,
 });
@@ -280,7 +280,7 @@ const ES: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-alta',
           'es',
-          'La pantalla Divoox Carro del Driver con la ciudad, El Vigía, y el formulario del carro: marca, modelo, año, color, placa y plazas.',
+          'La pantalla Divoox Carro del Driver con tu ciudad y el formulario del carro: marca, modelo, año, color, placa y plazas.',
           'Registras tu carro con sus plazas: 4 o 6.',
         ),
         foto(
@@ -718,7 +718,7 @@ const EN: { pasajero: Guia[]; conductor: Guia[] } = {
         foto(
           'driver-alta',
           'en',
-          'The Divoox Car screen in Driver with the city, Novi, and the car form: make, model, year, color, license plate, and seats.',
+          'The Divoox Car screen in Driver with your city and the car form: make, model, year, color, license plate, and seats.',
           'Register your car with its seats: 4 or 6.',
         ),
         foto(
