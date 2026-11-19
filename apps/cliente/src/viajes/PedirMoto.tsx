@@ -13,7 +13,9 @@ import {
   type TamanoPaquete,
   type Idioma,
   enIdioma,
+  esPagoACelular,
   formatearMonto,
+  nombreFormaPago,
   pagaEnMano,
   textoReferencia,
   textoAMonto,
@@ -909,7 +911,9 @@ export function PedirMoto({
                       ? t.pagoTarjeta
                       : m === 'pago_movil'
                         ? t.pagoMovil
-                        : t.pagoEfectivo
+                        : esPagoACelular(m)
+                          ? nombreFormaPago(m, idioma)
+                          : t.pagoEfectivo
                   }
                   activa={v.metodo === m}
                   alTocar={() => cambiar('metodo', m)}
@@ -918,7 +922,13 @@ export function PedirMoto({
               ))}
             </View>
             <Text style={{ color: C.secundario, fontWeight: '700' }}>
-              {tarjeta ? t.tarjetaAyuda : v.metodo === 'pago_movil' ? t.pagoMovilAyuda : t.efectivo}
+              {tarjeta
+                ? t.tarjetaAyuda
+                : v.metodo === 'pago_movil'
+                  ? t.pagoMovilAyuda
+                  : esPagoACelular(v.metodo)
+                    ? t.celularAyuda(nombreFormaPago(v.metodo, idioma))
+                    : t.efectivo}
             </Text>
             {deudaPendiente ? (
               <Text style={{ color: '#666B73' }}>

@@ -4,7 +4,10 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   DOCUMENTOS_VEHICULO_PASAJEROS,
   ErrorApi,
+  ayudaSeguroPais,
   enIdioma,
+  nombrePapelPais,
+  nombreRequisitoPais,
   useBorrador,
   type Idioma,
   type ServicioPasajeros,
@@ -576,6 +579,10 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
   const docsMios =
     delServicio(papeles?.perfil.documentosPorServicio) ??
     (servicio === 'moto' ? (papeles?.perfil.documentos ?? []) : []);
+  // C-PAPELES-POR-PAIS: en Perú los papeles se llaman SOAT, tarjeta de identificación vehicular, CITV…
+  const paisCiudad = papeles?.ciudad.pais;
+  const nombreDoc = (tipo: string) =>
+    nombrePapelPais(paisCiudad, servicio, tipo, idioma) ?? de(t.docs, tipo) ?? tipo;
   const docVehiculo = (tipo: string) => vehiculo?.documentos.find((d) => d.tipo === tipo);
   const docMio = (tipo: string) => papeles?.documentos.find((d) => d.tipo === tipo);
   const casilla = (
@@ -830,13 +837,15 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
       {vehiculo ? (
         <View style={e.tarjeta}>
           <Text style={{ fontWeight: '800', color: C.secundario }}>{t.papelesVehiculo}</Text>
-          <Text style={{ color: '#666B73', fontSize: 12 }}>{t.ayudaPasajero}</Text>
+          <Text style={{ color: '#666B73', fontSize: 12 }}>
+            {ayudaSeguroPais(paisCiudad, servicio, idioma) ?? t.ayudaPasajero}
+          </Text>
           {docsVehiculo.map((tipo) => {
             const d = docVehiculo(tipo);
             return (
               <Fila
                 key={tipo}
-                nombre={de(t.docs, tipo) ?? tipo}
+                nombre={nombreDoc(tipo)}
                 estado={d?.estado ?? 'sin_subir'}
                 motivo={d?.motivo}
                 idioma={idioma}
@@ -871,7 +880,7 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
             return (
               <Fila
                 key={tipo}
-                nombre={de(t.docs, tipo) ?? tipo}
+                nombre={nombreDoc(tipo)}
                 estado={d?.estado ?? 'sin_subir'}
                 motivo={d?.motivo}
                 idioma={idioma}
@@ -899,7 +908,8 @@ export function AltaPasajeros({ servicio }: { servicio: ServicioPasajeros }) {
               <Text style={{ color: '#666B73', fontSize: 12 }}>{tc.falta}</Text>
               {estado.requisitosFaltantes.map((r) => (
                 <Text key={r} style={{ color: C.secundario }}>
-                  · {de(t.requisitos, r) ?? r}
+                  ·{' '}
+                  {nombreRequisitoPais(paisCiudad, servicio, r, idioma) ?? de(t.requisitos, r) ?? r}
                 </Text>
               ))}
             </View>

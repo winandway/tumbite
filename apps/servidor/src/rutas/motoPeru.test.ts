@@ -208,6 +208,7 @@ describe('C-PAGO-A-CELULAR de punta a punta: viaje con Yape en Ica y comisión d
     const vista = await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token);
     expect(vista.datos.viaje.metodoPago).toBe('yape');
     expect(vista.datos.viaje.pagoMovil.datos).toEqual({
+      tipo: 'yape',
       banco: '',
       titular: 'Titular de ejemplo',
       identificador: '900 000 000',
@@ -234,28 +235,32 @@ describe('C-PAGO-A-CELULAR de punta a punta: viaje con Yape en Ica y comisión d
     expect(enDolares?.n).toBe(0);
   });
 
-  it('un viaje con Plin solo va al conductor que cargó su Plin; y «no me llegó» abre un caso en soles', async () => {
+  it('sin billetera cargada no recibe viajes con Yape o Plin; con Yape recibe también los de Plin; y «no me llegó» abre un caso en soles', async () => {
     const e = await escenarioPe();
     await aprobarComisionPe(e);
     await abrirIcaPe(e);
-    // Este conductor solo tiene Yape: un viaje con Plin no le llega.
-    const soloYape = await conductorListoPe(e, 5000, 'Conductor con Yape');
-    await cargarCuentaCelularPe(soloYape, 'yape');
+    // Este conductor no cargó ninguna billetera: un viaje con Plin no le llega.
+    const sinCuenta = await conductorListoPe(e, 5000, 'Conductor sin billetera');
     const v = await pedirEnIca(e, 'plin');
-    const ofertas = await soloYape.yo('GET', '/datos/conductor/operaciones/ofertas');
+    const ofertas = await sinCuenta.yo('GET', '/datos/conductor/operaciones/ofertas');
     expect(ofertas.datos.ofertas.some((o: { operacionId: string }) => o.operacionId === v.id)).toBe(
       false,
     );
-    const conPlin = await conductorListoPe(e, 5000, 'Conductor con Plin');
-    await cargarCuentaCelularPe(conPlin, 'plin');
+    // Yape y Plin se envían entre sí con el número: quien tiene Yape recibe el viaje con Plin.
+    const conPlin = await conductorListoPe(e, 5000, 'Conductor con Yape');
+    await cargarCuentaCelularPe(conPlin, 'yape');
     await e.m.DB.prepare("UPDATE ofertas_operacion SET estado = 'vencida' WHERE operacion_id = ?")
       .bind(v.id)
       .run();
     await e.m.llamar('GET', '/datos/viajes/actual', undefined, e.cliente.token);
     expect((await conPlin.paso(v.id, 'aceptar')).estado).toBe(200);
     expect((await conPlin.paso(v.id, 'llegue')).estado).toBe(200);
-    const pin = (await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token)).datos
-      .viaje.pin;
+    const vista = (await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token))
+      .datos.viaje;
+    // El pasajero ve que el número es de Yape, aunque él pague desde Plin.
+    expect(vista.metodoPago).toBe('plin');
+    expect(vista.pagoMovil.datos.tipo).toBe('yape');
+    const pin = vista.pin;
     expect((await conPlin.paso(v.id, 'iniciar', { pin })).estado).toBe(200);
     const no = await conPlin.paso(v.id, 'pago-movil', { recibido: false });
     expect(no.estado, JSON.stringify(no.datos)).toBe(200);
@@ -270,6 +275,27 @@ describe('C-PAGO-A-CELULAR de punta a punta: viaje con Yape en Ica y comisión d
       moneda: 'PEN',
       pais: 'PE',
     });
+  });
+});
+
+describe('C-CUENTA-COBRO-CONDUCTOR: el conductor carga su Yape o su Plin', () => {
+  it('su app sabe que en Perú se cobra por Yape y Plin, y la billetera pide un celular peruano', async () => {
+    const e = await escenarioPe();
+    await aprobarComisionPe(e);
+    await abrirIcaPe(e);
+    const c = await conductorListoPe(e, 0);
+    expect((await saldoDe(c)).cuentasACelular).toEqual(['yape', 'plin']);
+    const mala = await c.yo('POST', '/datos/repartidor/cuentas-cobro', {
+      clave: 'clave-segura-1',
+      tipo: 'yape',
+      titular: 'Titular de ejemplo',
+      identificador: '0412-0000000',
+    });
+    expect(mala.estado).toBe(422);
+    expect(mala.datos.campo).toBe('identificador');
+    await cargarCuentaCelularPe(c, 'plin');
+    const lista = await c.yo('GET', '/datos/repartidor/cuentas-cobro');
+    expect(lista.datos.cuentas[0]).toMatchObject({ tipo: 'plin', activa: true, vigente: true });
   });
 });
 
@@ -329,5 +355,39 @@ describe('C-CONNECT-PAIS: Perú no usa Stripe Connect', () => {
     // Leído el 19 nov 2026 en docs.stripe.com/connect/cross-border-payouts (ficha de Ica, sección 3.3).
     expect(esPaisConnect('PE')).toBe(false);
     expect(esPaisConnect('US')).toBe(true);
+  });
+});
+
+describe('C-ZONA-POR-PAIS: el formulario «Zonas» ya no deja una ciudad de Perú en dólares', () => {
+  it('una ciudad nueva de Perú nace en soles con hora de Lima, y editarla no le cambia la moneda', async () => {
+    const e = await escenarioPe();
+    const zona = { id: 'PE-ICA-PISCO', nombre: 'Pisco', pais: 'PE', lat: -13.71, lng: -76.203 };
+    const r = await e.m.llamar('PUT', '/datos/admin/zonas', zona, e.admin.token);
+    expect(r.estado, JSON.stringify(r.datos)).toBe(200);
+    const leer = () =>
+      e.m.DB.prepare('SELECT moneda, zona_horaria AS hora FROM zonas WHERE id = ?')
+        .bind(zona.id)
+        .first<{ moneda: string; hora: string }>();
+    expect(await leer()).toEqual({ moneda: 'PEN', hora: 'America/Lima' });
+    // Una zona guardada a mano en otra moneda no se pisa al editar el nombre.
+    await e.m.DB.prepare("UPDATE zonas SET moneda = 'USD' WHERE id = ?").bind(zona.id).run();
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/zonas',
+      { ...zona, nombre: 'Pisco centro' },
+      e.admin.token,
+    );
+    expect((await leer())?.moneda).toBe('USD');
+    // Y Estados Unidos sigue naciendo en dólares con su hora de siempre.
+    await e.m.llamar(
+      'PUT',
+      '/datos/admin/zonas',
+      { id: 'US-MI-NOVI2', nombre: 'Novi', pais: 'US', lat: 42.48, lng: -83.47 },
+      e.admin.token,
+    );
+    const us = await e.m.DB.prepare(
+      "SELECT moneda, zona_horaria AS hora FROM zonas WHERE id = 'US-MI-NOVI2'",
+    ).first();
+    expect(us).toEqual({ moneda: 'USD', hora: 'America/New_York' });
   });
 });

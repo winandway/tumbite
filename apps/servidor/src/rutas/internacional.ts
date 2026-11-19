@@ -21,7 +21,13 @@ import {
 import { verificarClave } from '../cripto';
 import { crearTicket } from './tickets';
 import { Hono } from 'hono';
-import { CARRERAS_SALDO_BAJO, carrerasQueAlcanzan } from '@tumbite/compartido';
+import {
+  CARRERAS_SALDO_BAJO,
+  carrerasQueAlcanzan,
+  esPagoACelular,
+  perfilPasajeros,
+  telefonoPeruValido,
+} from '@tumbite/compartido';
 import { comisionTipicaMoto } from './viajesPasajero';
 import { z } from 'zod';
 import type { Env } from '../env';
@@ -346,6 +352,9 @@ internacional.get('/repartidor/saldo-prepago', async (c) => {
     // C-RECARGA-TARJETA-MINIMO: lo que la app ofrece y exige al recargar con tarjeta.
     recargaTarjetaMin: minimoRecargaTarjeta(cfg),
     recargaTarjetaMax: cfg.recargaMax,
+    // C-CUENTA-COBRO-CONDUCTOR: las billeteras a celular del país (Venezuela: pago móvil; Perú: Yape y
+    // Plin). Con alguna, la app le deja cargar al conductor el número donde le pagan los pasajeros.
+    cuentasACelular: perfilPasajeros(pais).metodosPago.filter((m) => esPagoACelular(m)),
     recargas: results.map((r) => ({
       monto: Number(r.monto),
       canal: String(r.canal),
@@ -387,7 +396,7 @@ internacional.post('/repartidor/recargas/stripe', async (c) => {
   const descripcion = 'Divoox · recarga de saldo para comisiones';
   const metadata = { recarga_id: recargaId, usuario_id: u.id };
   if (alojada) {
-    const origen = new URL(c.req.url).origin;
+    const origen = c.env.SITIO_URL ?? new URL(c.req.url).origin;
     const sesion = await stripe.post<{ id: string; url: string }>(
       '/checkout/sessions',
       {
@@ -405,8 +414,8 @@ internacional.post('/repartidor/recargas/stripe', async (c) => {
         // El aviso `payment_intent.succeeded` trae estos datos y acredita la recarga una sola vez.
         // (La sesión no lleva metadata: su aviso `checkout.session.completed` es de pedidos.)
         payment_intent_data: { description: descripcion, metadata },
-        success_url: `${origen}/driver/top-up?result=paid`,
-        cancel_url: `${origen}/driver/top-up?result=cancelled`,
+        success_url: `${origen}/top-up/done`,
+        cancel_url: `${origen}/top-up/canceled`,
       },
       `recarga-alojada-${recargaId}`,
     );
@@ -717,6 +726,17 @@ internacional.post('/repartidor/cuentas-cobro', async (c) => {
   const db = base(c);
   await exigirClave(db, u.id, d.clave);
   const { pais, moneda } = await paisDelRepartidor(db, u.id);
+  // C-PAGO-A-CELULAR (Perú): Yape y Plin son de Perú y van a un celular peruano (9 cifras, empieza por 9).
+  if (d.tipo === 'yape' || d.tipo === 'plin') {
+    if (pais !== 'PE')
+      throw new ErrorDatos('Esa billetera no está disponible en tu país.', 'tipo', 422);
+    if (!telefonoPeruValido(d.identificador))
+      throw new ErrorDatos(
+        'Escribe el celular de tu billetera: nueve cifras que empiezan por 9.',
+        'identificador',
+        422,
+      );
+  }
   const cuenta = await crearCuentaCobro(c.env, db, {
     usuarioId: u.id,
     pais,

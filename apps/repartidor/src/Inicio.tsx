@@ -1,3 +1,5 @@
+import { CuentaCobro } from './cobros/CuentaCobro';
+import { RecargaTarjeta } from './cobros/RecargaTarjeta';
 import { ubicacionParaConectar } from './ubicacionParaConectar';
 import { comoLlegar } from './comoLlegar';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -1366,6 +1368,12 @@ export function Inicio() {
     efectivoActivo: boolean;
     transferenciaActiva: boolean;
     recargasPuntoVenta: boolean;
+    /** C-RECARGA-TARJETA-ALOJADA: la recarga con tarjeta del país, con su mínimo y su máximo. */
+    recargasStripe?: boolean;
+    recargaTarjetaMin?: number;
+    recargaTarjetaMax?: number;
+    /** C-CUENTA-COBRO-CONDUCTOR: billeteras a celular del país (pago móvil; Yape y Plin). */
+    cuentasACelular?: string[];
     /** C-SALDO-CARRERAS: comisión de un viaje típico y carreras que alcanzan (aproximado). */
     comisionTipica?: number;
     carrerasAlcanzan?: number | null;
@@ -1925,6 +1933,7 @@ export function Inicio() {
         (prepago.efectivoActivo ||
           prepago.transferenciaActiva ||
           prepago.recargasPuntoVenta ||
+          prepago.recargasStripe ||
           (prepago.comisionTipica ?? 0) > 0 ||
           // C-SALDO-CONDUCTOR: con regalos por cobrar o cargas de saldo, también se ve.
           (prepago.regalosPorCobrar ?? 0) > 0 ||
@@ -2091,7 +2100,19 @@ export function Inicio() {
                 <Boton texto={tg.prepago.canjear} alTocar={() => void canjear()} />
               </>
             ) : null}
+            {prepago.recargasStripe && (prepago.recargaTarjetaMin ?? 0) > 0 ? (
+              <RecargaTarjeta
+                moneda={prepago.moneda ?? 'USD'}
+                min={prepago.recargaTarjetaMin ?? 0}
+                max={prepago.recargaTarjetaMax ?? 0}
+                idioma={idioma}
+                alVolver={cargarPrepago}
+              />
+            ) : null}
           </View>
+        ) : null}
+        {prepago?.cuentasACelular?.length ? (
+          <CuentaCobro tipos={prepago.cuentasACelular} idioma={idioma} />
         ) : null}
         <View style={{ flexDirection: 'row', gap: 8 }}>
           {(['hoy', 'semana', 'mes'] as const).map((pz) => (

@@ -11,6 +11,8 @@ import {
   enIdioma,
   formatearFechaHora,
   formatearMonto,
+  nombrePapelPais,
+  nombreRequisitoPais,
   textoAMonto,
   useBorrador,
 } from '@tumbite/compartido';
@@ -1083,7 +1085,8 @@ function FilaPapel({
     <li className="tarjeta-form" data-testid={`papel-${d.id}`}>
       <div className="lista-texto">
         <strong>
-          {enPalabras(t.tiposPapel, d.tipo)}{' '}
+          {nombrePapelPais(d.pais, servicioDelPapel(d.tipo), d.tipo, idioma) ??
+            enPalabras(t.tiposPapel, d.tipo)}{' '}
           <span
             className={`insignia ${
               d.estado === 'aprobado'
@@ -1232,6 +1235,12 @@ function Papeles({
     </>
   );
 }
+
+/**
+ * C-PAPELES-POR-PAIS: el servicio al que pertenece un papel del conductor (la licencia de carro es
+ * de Carro; lo demás se nombra como en Moto, que en Perú es el mototaxi).
+ */
+const servicioDelPapel = (tipo: string) => (tipo === 'licencia_conducir' ? 'carro' : 'moto');
 
 // ---------------------------------------------------------------- 4. conductor en detalle
 
@@ -1628,7 +1637,9 @@ function Conductor({
     }
   }
 
-  const requisito = (r: string) => enPalabras(t.requisitos, r);
+  const requisitoDe = (servicio: string) => (r: string) =>
+    nombreRequisitoPais(d?.ciudad.pais, servicio, r, idioma) ?? enPalabras(t.requisitos, r);
+  const requisito = requisitoDe('moto');
   // C-CARRO-PANEL: la habilitación de cada servicio de pasajeros que el conductor tenga a la vista.
   const deServicio = (s: string) => d?.servicios.find((x) => x.servicioId === s);
   const moto = deServicio('moto');
@@ -1718,7 +1729,10 @@ function Conductor({
             {d.documentos.map((doc) => (
               <li key={doc.id}>
                 <div className="lista-texto">
-                  <strong>{enPalabras(t.tiposPapel, doc.tipo)}</strong>
+                  <strong>
+                    {nombrePapelPais(d.ciudad.pais, servicioDelPapel(doc.tipo), doc.tipo, idioma) ??
+                      enPalabras(t.tiposPapel, doc.tipo)}
+                  </strong>
                   <span>
                     {enPalabras(t.estadosPapel, doc.estado)}
                     {doc.venceEn ? ` · ${doc.venceEn}` : ''}
@@ -1844,6 +1858,8 @@ type Moto = {
   placa_estado: string;
   plazas?: number | null;
   estado: string;
+  /** C-PAPELES-POR-PAIS: el país de la ciudad del conductor. */
+  pais?: string | null;
   documentos: { id: string; tipo: string; estado: string; venceEn: string | null }[];
 };
 
@@ -1915,7 +1931,8 @@ function FilaMoto({
           <li key={d.id}>
             <div className="lista-texto">
               <strong>
-                {enPalabras(nombresDoc, d.tipo)}{' '}
+                {nombrePapelPais(m.pais, esCarro ? 'carro' : 'moto', d.tipo, idioma) ??
+                  enPalabras(nombresDoc, d.tipo)}{' '}
                 <span
                   className={`insignia ${
                     d.estado === 'aprobado'

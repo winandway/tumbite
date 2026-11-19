@@ -26,6 +26,17 @@ export function esPagoACelular(metodo: string | null | undefined): metodo is Met
   return (METODOS_A_CELULAR as readonly string[]).includes(metodo ?? '');
 }
 
+/**
+ * Los tipos de cuenta de cobro que reciben un método a celular. Yape y Plin se envían entre sí con
+ * el número de celular, gratis, desde 2023 (ficha de Ica, sección 3.1 [OBS]): un conductor con
+ * cualquiera de las dos recibe los viajes de las dos. El pago móvil de Venezuela solo con su cuenta.
+ */
+export function cuentasQueReciben(metodo: string | null | undefined): readonly string[] {
+  if (metodo === 'yape') return ['yape', 'plin'];
+  if (metodo === 'plin') return ['plin', 'yape'];
+  return esPagoACelular(metodo) ? [metodo] : [];
+}
+
 /** Papeles del CONDUCTOR (no del vehículo) que se suben a mano y revisa el equipo. */
 export const DOCUMENTOS_CONDUCTOR = [
   'licencia_moto',

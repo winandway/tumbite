@@ -106,6 +106,13 @@ export const TEXTOS_MOTO = {
     pagoMovilAyuda:
       'Cuando te asignen conductor verás sus datos de pago móvil. Pagas el equivalente en bolívares a la tasa oficial del día y él confirma que le llegó.',
     pagoMovilDatos: 'Paga por pago móvil a',
+    // C-PAGO-A-CELULAR (Perú): Yape y Plin, del celular del pasajero al del conductor, en soles.
+    celularAyuda: (medio: string) =>
+      `Cuando te asignen conductor verás su número de ${medio}. Le pagas el precio del viaje desde tu celular y él confirma que le llegó.`,
+    celularDatos: (medio: string) => `Paga por ${medio} a`,
+    celularPagado: (medio: string) => `Pagado por ${medio}`,
+    celularOtraBilletera: (suya: string, tuya: string) =>
+      `Este número es de ${suya}. Desde ${tuya} le envías igual, con su número de celular y sin costo.`,
     pagoMovilConfirmado: 'El conductor confirmó que recibió tu pago.',
     pagoMovilNoLlego:
       'El conductor dice que no le llegó el pago. Nuestro equipo lo revisa contigo.',
@@ -312,6 +319,12 @@ export const TEXTOS_MOTO = {
     pagoMovilAyuda:
       'Once you get a driver, you’ll see their mobile payment details. Pay the equivalent in bolívars at the official rate of the day, and they confirm it arrived.',
     pagoMovilDatos: 'Pay by mobile payment to',
+    celularAyuda: (medio: string) =>
+      `Once you get a driver, you’ll see their ${medio} number. Pay the ride price from your phone, and they confirm it arrived.`,
+    celularDatos: (medio: string) => `Pay with ${medio} to`,
+    celularPagado: (medio: string) => `Paid with ${medio}`,
+    celularOtraBilletera: (suya: string, tuya: string) =>
+      `This is a ${suya} number. You can send from ${tuya} to their phone number just the same, at no cost.`,
     pagoMovilConfirmado: 'Your driver confirmed they received your payment.',
     pagoMovilNoLlego:
       'Your driver says the payment didn’t arrive. Our team will sort it out with you.',

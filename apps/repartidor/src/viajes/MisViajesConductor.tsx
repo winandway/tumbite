@@ -51,10 +51,13 @@ const T = {
       asignado: 'Aceptado',
       conductor_llego: 'Llegaste',
     } as Record<string, string>,
-    pagos: { efectivo: 'Efectivo', tarjeta: 'Tarjeta', pago_movil: 'Pago móvil' } as Record<
-      string,
-      string
-    >,
+    pagos: {
+      efectivo: 'Efectivo',
+      tarjeta: 'Tarjeta',
+      pago_movil: 'Pago móvil',
+      yape: 'Yape',
+      plin: 'Plin',
+    } as Record<string, string>,
     propina: 'Propina',
     km: (m: number) => `${(m / 1000).toFixed(1)} km`,
     min: (s: number) => `${Math.max(1, Math.round(s / 60))} min`,
@@ -78,10 +81,13 @@ const T = {
       asignado: 'Accepted',
       conductor_llego: 'Arrived',
     } as Record<string, string>,
-    pagos: { efectivo: 'Cash', tarjeta: 'Card', pago_movil: 'Mobile payment' } as Record<
-      string,
-      string
-    >,
+    pagos: {
+      efectivo: 'Cash',
+      tarjeta: 'Card',
+      pago_movil: 'Mobile payment',
+      yape: 'Yape',
+      plin: 'Plin',
+    } as Record<string, string>,
     propina: 'Tip',
     km: (m: number) => `${(m / 1609.34).toFixed(1)} mi`,
     min: (s: number) => `${Math.max(1, Math.round(s / 60))} min`,

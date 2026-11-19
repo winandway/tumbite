@@ -1330,7 +1330,11 @@ servicios.get('/admin/vehiculos', async (c) => {
   const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'v.conductor_id');
   const { results } = await db
     .prepare(
-      `SELECT v.*, u.nombre AS conductor FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
+      // C-PAPELES-POR-PAIS: el país del conductor, para nombrar sus papeles como se llaman allá.
+      `SELECT v.*, u.nombre AS conductor,
+              (SELECT z.pais FROM repartidores r JOIN zonas z ON z.id = r.zona_id
+                WHERE r.usuario_id = v.conductor_id) AS pais
+         FROM vehiculos v JOIN usuarios u ON u.id = v.conductor_id
         WHERE v.estado = ?${alc.sql} ORDER BY v.actualizado_en LIMIT 100`,
     )
     .bind(estado, ...alc.valores)

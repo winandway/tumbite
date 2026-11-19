@@ -1,0 +1,88 @@
+/**
+ * Textos de las piezas de cobro del conductor (C-CUENTA-COBRO-CONDUCTOR y C-RECARGA-TARJETA-ALOJADA).
+ * Español e inglés completos; el nombre de la billetera sale de `nombreFormaPago`.
+ */
+export const T_COBROS = {
+  es: {
+    cuentaTitulo: 'Dónde te pagan los pasajeros',
+    cuentaAyuda: (medios: string) =>
+      `Cuando un pasajero paga por ${medios}, ve este número para enviarte el dinero. Sin él no recibes esos viajes.`,
+    sinCuenta: 'Todavía no cargaste tu número.',
+    enVigor: 'En uso: los pasajeros ya lo ven.',
+    enEspera:
+      'Entra en uso 24 horas después de guardarlo, o antes si nuestro equipo lo confirma. Es para proteger tu dinero.',
+    cargar: 'Cargar mi número',
+    cambiar: 'Cambiar mi número',
+    tipo: 'Tu billetera',
+    banco: 'Banco',
+    titular: 'Nombre del titular',
+    celular: 'Número de celular',
+    celularAyuda: 'Nueve cifras, empieza por 9',
+    identificador: 'Teléfono y cédula del pago móvil',
+    clave: 'Tu contraseña de Divoox',
+    claveAyuda: 'Te la pedimos para que nadie más cambie dónde te pagan.',
+    guardar: 'Guardar',
+    cancelar: 'Cancelar',
+    guardada: 'Listo. Te avisamos por correo del cambio.',
+    fallos: {
+      tipo: 'Elige tu billetera.',
+      banco: 'Escribe el banco.',
+      titular: 'Escribe el nombre del titular.',
+      identificador: 'Revisa el número.',
+      clave: 'Escribe tu contraseña.',
+    },
+    yapePlin: 'Yape y Plin se envían entre sí: con uno de los dos recibes los viajes de ambos.',
+    recargaTitulo: 'Recargar con tarjeta',
+    recargaAyuda:
+      'Pagas en la página segura de nuestro procesador de pagos y vuelves a la app. El saldo aparece en cuanto se confirma el pago.',
+    otroMonto: 'Otro monto',
+    minimo: (monto: string) => `La recarga mínima con tarjeta es ${monto}.`,
+    maximo: (monto: string) => `La recarga máxima es ${monto}.`,
+    montoMalo: 'Escribe un monto.',
+    pagar: (monto: string) => `Pagar ${monto}`,
+    abriendo: 'Abriendo la página de pago…',
+    volviste: 'Si ya pagaste, tu saldo se actualiza en unos segundos.',
+    noAbre: 'No pudimos abrir la página de pago. Inténtalo otra vez.',
+  },
+  en: {
+    cuentaTitulo: 'Where riders pay you',
+    cuentaAyuda: (medios: string) =>
+      `When a rider pays with ${medios}, they see this number to send you the money. Without it you don’t get those rides.`,
+    sinCuenta: 'You haven’t added your number yet.',
+    enVigor: 'In use: riders can already see it.',
+    enEspera:
+      'It goes live 24 hours after you save it, or sooner if our team confirms it. This protects your money.',
+    cargar: 'Add my number',
+    cambiar: 'Change my number',
+    tipo: 'Your wallet',
+    banco: 'Bank',
+    titular: 'Account holder name',
+    celular: 'Mobile number',
+    celularAyuda: 'Nine digits, starts with 9',
+    identificador: 'Phone and ID for mobile payment',
+    clave: 'Your Divoox password',
+    claveAyuda: 'We ask for it so nobody else can change where you get paid.',
+    guardar: 'Save',
+    cancelar: 'Cancel',
+    guardada: 'Done. We emailed you about the change.',
+    fallos: {
+      tipo: 'Choose your wallet.',
+      banco: 'Enter the bank.',
+      titular: 'Enter the account holder name.',
+      identificador: 'Check the number.',
+      clave: 'Enter your password.',
+    },
+    yapePlin: 'Yape and Plin send to each other: with either one you get rides paid with both.',
+    recargaTitulo: 'Top up with a card',
+    recargaAyuda:
+      'You pay on our payment processor’s secure page and come back to the app. Your balance shows up as soon as the payment is confirmed.',
+    otroMonto: 'Other amount',
+    minimo: (monto: string) => `The minimum card top-up is ${monto}.`,
+    maximo: (monto: string) => `The maximum top-up is ${monto}.`,
+    montoMalo: 'Enter an amount.',
+    pagar: (monto: string) => `Pay ${monto}`,
+    abriendo: 'Opening the payment page…',
+    volviste: 'If you already paid, your balance updates in a few seconds.',
+    noAbre: 'We couldn’t open the payment page. Please try again.',
+  },
+};

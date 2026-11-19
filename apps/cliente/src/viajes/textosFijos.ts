@@ -106,10 +106,13 @@ export const TEXTOS_FIJOS = {
     horaAyuda: 'HH:MM, en 24 horas (por ejemplo 07:00)',
     eligeHora: 'Elige la hora',
     pago: 'Forma de pago',
-    pagos: { efectivo: 'Efectivo', tarjeta: 'Tarjeta', pago_movil: 'Pago móvil' } as Record<
-      string,
-      string
-    >,
+    pagos: {
+      efectivo: 'Efectivo',
+      tarjeta: 'Tarjeta',
+      pago_movil: 'Pago móvil',
+      yape: 'Yape',
+      plin: 'Plin',
+    } as Record<string, string>,
     pagoSinRuta: 'Elige de dónde sale y a dónde va para ver las formas de pago de tu ciudad.',
     precioHoy: 'Precio de hoy',
     precioAyuda: 'Cada salida se reserva con el precio de ese día.',
@@ -256,10 +259,13 @@ export const TEXTOS_FIJOS = {
     horaAyuda: 'HH:MM, 24-hour clock (for example 07:00)',
     eligeHora: 'Choose the time',
     pago: 'Payment method',
-    pagos: { efectivo: 'Cash', tarjeta: 'Card', pago_movil: 'Mobile payment' } as Record<
-      string,
-      string
-    >,
+    pagos: {
+      efectivo: 'Cash',
+      tarjeta: 'Card',
+      pago_movil: 'Mobile payment',
+      yape: 'Yape',
+      plin: 'Plin',
+    } as Record<string, string>,
     pagoSinRuta: 'Choose the pickup and drop-off to see the payment methods in your city.',
     precioHoy: 'Today’s price',
     precioAyuda: 'Each trip is booked at that day’s price.',

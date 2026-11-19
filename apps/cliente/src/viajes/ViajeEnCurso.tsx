@@ -8,7 +8,9 @@ import {
   minutosDeLlegada,
   textoHoraLlegada,
   enIdioma,
+  esPagoACelular,
   formatearMonto,
+  nombreFormaPago,
   textoReferencia,
 } from '@tumbite/compartido';
 import {
@@ -69,7 +71,13 @@ export type ViajePasajero = {
   cancelacion: { cargo: number; gratisPorS: number | null } | null;
   /** C-PAGO-MOVIL-VIAJE: a quién pagar y si el conductor ya confirmó que le llegó. */
   pagoMovil?: {
-    datos: { banco: string | null; titular: string | null; identificador: string } | null;
+    datos: {
+      /** La billetera o cuenta del conductor (yape, plin, pago_movil). */
+      tipo?: string | null;
+      banco: string | null;
+      titular: string | null;
+      identificador: string;
+    } | null;
     confirmado: 'recibido' | 'no_recibido' | null;
   } | null;
   /** C-BS-REFERENCIA: el equivalente en bolívares (solo informativo). */
@@ -245,6 +253,11 @@ export function ViajeEnCurso({
   const base = enIdioma(TEXTOS_MOTO, idioma);
   // C-ENVIO-TEXTOS: un envío no es un viaje de pasajero; cada pantalla habla del paquete.
   const t = viaje.servicio === 'envios' ? { ...base, ...base.envio } : base;
+  // C-PAGO-A-CELULAR (Perú): «Yape» o «Plin»; con pago móvil (Venezuela) siguen sus textos de siempre.
+  const medioCelular =
+    esPagoACelular(viaje.metodoPago) && viaje.metodoPago !== 'pago_movil'
+      ? nombreFormaPago(viaje.metodoPago, idioma)
+      : null;
   const [error, setError] = useState('');
   const [cancelando, setCancelando] = useState(false);
   const [cargoCobrado, setCargoCobrado] = useState<number | null>(null);
@@ -571,7 +584,9 @@ export function ViajeEnCurso({
       {viaje.pagoMovil?.datos ? (
         <Tarjeta>
           <View testID="viaje-pago-movil" style={{ gap: 2 }}>
-            <Text style={{ color: '#666B73', fontWeight: '700' }}>{t.pagoMovilDatos}</Text>
+            <Text style={{ color: '#666B73', fontWeight: '700' }}>
+              {medioCelular ? t.celularDatos(medioCelular) : t.pagoMovilDatos}
+            </Text>
             {viaje.pagoMovil.datos.banco ? (
               <Text style={{ color: C.secundario }}>{viaje.pagoMovil.datos.banco}</Text>
             ) : null}
@@ -581,12 +596,24 @@ export function ViajeEnCurso({
             <Text selectable style={{ fontWeight: '700', color: C.secundario }}>
               {viaje.pagoMovil.datos.identificador}
             </Text>
+            {medioCelular &&
+            viaje.pagoMovil.datos.tipo &&
+            viaje.pagoMovil.datos.tipo !== viaje.metodoPago ? (
+              <Text testID="viaje-otra-billetera" style={{ color: '#666B73', fontSize: 12 }}>
+                {t.celularOtraBilletera(
+                  nombreFormaPago(viaje.pagoMovil.datos.tipo, idioma),
+                  medioCelular,
+                )}
+              </Text>
+            ) : null}
             {viaje.pagoMovil.confirmado === 'recibido' ? (
               <Text style={{ color: '#0D7A3A', fontWeight: '700' }}>{t.pagoMovilConfirmado}</Text>
             ) : viaje.pagoMovil.confirmado === 'no_recibido' ? (
               <Text style={{ color: C.primario }}>{t.pagoMovilNoLlego}</Text>
             ) : (
-              <Text style={{ color: '#666B73', fontSize: 12 }}>{t.pagoMovilAyuda}</Text>
+              <Text style={{ color: '#666B73', fontSize: 12 }}>
+                {medioCelular ? t.celularAyuda(medioCelular) : t.pagoMovilAyuda}
+              </Text>
             )}
           </View>
         </Tarjeta>
@@ -640,7 +667,9 @@ export function ViajeEnCurso({
                   ? t.pagadoTarjeta
                   : viaje.metodoPago === 'pago_movil'
                     ? t.pagoMovil
-                    : t.pagaEfectivo
+                    : medioCelular
+                      ? t.celularPagado(medioCelular)
+                      : t.pagaEfectivo
                 : t.precioFijo
             }
             total={viaje.total}
@@ -655,7 +684,7 @@ export function ViajeEnCurso({
               idioma={idioma === 'en' ? 'en' : 'es'}
               quien="pasajero"
               etiqueta={viaje.estado === 'terminado' ? t.pagasteEnMano : t.pagasEnMano}
-              copiable={viaje.metodoPago === 'pago_movil' && viaje.estado !== 'terminado'}
+              copiable={esPagoACelular(viaje.metodoPago) && viaje.estado !== 'terminado'}
             />
           ) : viaje.referencia ? (
             <Text testID="viaje-precio-bs" style={{ color: '#666B73' }}>

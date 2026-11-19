@@ -8,7 +8,9 @@ import {
   type MontoEnMano as Monto,
   type Referencia,
   enIdioma,
+  esPagoACelular,
   formatearMonto,
+  nombreFormaPago,
 } from '@tumbite/compartido';
 import * as ImagePicker from 'expo-image-picker';
 import { SaveFormat, manipulateAsync } from 'expo-image-manipulator';
@@ -242,13 +244,22 @@ export function ViajeActivo({
         <Text style={{ color: C.exito, fontSize: 13 }}>{t.divooxPagaAyuda}</Text>
       </View>
     ) : null;
+  // C-PAGO-A-CELULAR: pago móvil (Venezuela), Yape y Plin (Perú) llegan al celular del conductor y
+  // él confirma a mano. `medioCelular` es el nombre que se pinta cuando no es pago móvil.
+  const aCelular = esPagoACelular(viaje.metodo_pago);
+  const medioCelular =
+    aCelular && viaje.metodo_pago !== 'pago_movil'
+      ? nombreFormaPago(viaje.metodo_pago, idioma)
+      : null;
   /** La etiqueta de lo que cobra en mano: con regalo, «Cobra al pasajero» (la diferencia). */
   const etiquetaCobro =
     regaloDivoox > 0
       ? t.cobraAlPasajero
-      : viaje.metodo_pago === 'pago_movil'
-        ? t.cobraPagoMovil
-        : t.cobra;
+      : medioCelular
+        ? t.cobraCelular(medioCelular)
+        : viaje.metodo_pago === 'pago_movil'
+          ? t.cobraPagoMovil
+          : t.cobra;
   const referenciaFinal = respuesta?.referencia ?? null;
   const enManoFinal = respuesta?.enMano ?? null;
   // C-BS-EN-MANO: lo que cobra en mano (con regalo, la diferencia) en dólares y en bolívares. Una app
@@ -343,7 +354,7 @@ export function ViajeActivo({
           {cierre.final === 'terminado' ? t.terminado : t.noShow}
         </Text>
         {cierre.final === 'terminado' &&
-        (viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
+        (viaje.metodo_pago === 'efectivo' || aCelular) &&
         (totalFinal ?? enMano) != null ? (
           <View
             testID="viaje-cobra-efectivo"
@@ -358,7 +369,7 @@ export function ViajeActivo({
                 etiqueta={etiquetaCobro}
                 color={C.exito}
                 tamano="grande"
-                copiable={viaje.metodo_pago === 'pago_movil'}
+                copiable={aCelular}
               />
             ) : (
               // C-OFERTA-SIN-COBRO: el regalo cubrió todo; se dice en palabras, sin un cero grande.
@@ -459,8 +470,7 @@ export function ViajeActivo({
         testID="viaje-precio"
         style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 16, padding: 16, gap: 10 }}
       >
-        {(viaje.metodo_pago === 'efectivo' || viaje.metodo_pago === 'pago_movil') &&
-        enMano != null ? (
+        {(viaje.metodo_pago === 'efectivo' || aCelular) && enMano != null ? (
           (cobroEnMano(false)?.monto ?? 0) > 0 ? (
             <MontoEnMano
               testID="viaje-bs"
@@ -709,7 +719,7 @@ export function ViajeActivo({
         </>
       ) : null}
       {/* C-PAGO-MOVIL-VIAJE: confirmación MANUAL de que el pago móvil llegó (nunca «del banco»). */}
-      {viaje.estado === 'en_curso' && viaje.metodo_pago === 'pago_movil' ? (
+      {viaje.estado === 'en_curso' && aCelular ? (
         <View
           testID="viaje-pago-movil"
           style={{ borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 12, padding: 12, gap: 8 }}
@@ -722,7 +732,11 @@ export function ViajeActivo({
                   color: pagoMovil === 'recibido' ? C.exito : C.primario,
                 }}
               >
-                {pagoMovil === 'recibido' ? t.pagoMovilRecibido : t.pagoMovilAviso}
+                {pagoMovil === 'recibido'
+                  ? medioCelular
+                    ? t.celularRecibido(medioCelular)
+                    : t.pagoMovilRecibido
+                  : t.pagoMovilAviso}
               </Text>
               {/* C-PAGO-MOVIL-CORREGIR: si marcó «no me llegó» por error, lo corrige una vez. */}
               {pagoMovil === 'no_recibido' ? (
@@ -735,7 +749,9 @@ export function ViajeActivo({
             </>
           ) : (
             <>
-              <Text style={{ color: C.secundario }}>{t.pagoMovilPregunta}</Text>
+              <Text style={{ color: C.secundario }}>
+                {medioCelular ? t.celularPregunta(medioCelular) : t.pagoMovilPregunta}
+              </Text>
               {/* C-BS-EN-MANO: el monto exacto del pago móvil, grande, en dólares y en bolívares. */}
               <MontoEnMano
                 testID="viaje-pago-movil-monto"

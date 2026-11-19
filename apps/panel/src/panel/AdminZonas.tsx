@@ -7,6 +7,7 @@ import {
   enIdioma,
   useBorrador,
   nombrePais,
+  zonaDeFabrica,
 } from '@tumbite/compartido';
 import { AreasCiudad } from './AreasCiudad';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -163,6 +164,8 @@ export function AdminZonas({ usuario, idioma }: { usuario: Usuario; idioma: Idio
         id: nueva.id.toUpperCase(),
         nombre: nueva.nombre,
         pais: nueva.id.slice(0, 2).toUpperCase(),
+        // C-ZONA-POR-PAIS: la moneda y la hora de la ciudad salen de su país (nunca dólares fijos).
+        ...zonaDeFabrica(nueva.id.slice(0, 2)),
         lat: Number(nueva.lat),
         lng: Number(nueva.lng),
         radioKm: Number(nueva.radio),

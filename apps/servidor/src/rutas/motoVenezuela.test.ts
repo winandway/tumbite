@@ -470,6 +470,7 @@ describe('C-PAGO-MOVIL-VIAJE: el pasajero paga por pago móvil y el conductor co
     const vista = await e.m.llamar('GET', `/datos/viajes/${v.id}`, undefined, e.cliente.token);
     expect(vista.datos.viaje.metodoPago).toBe('pago_movil');
     expect(vista.datos.viaje.pagoMovil.datos).toEqual({
+      tipo: 'pago_movil',
       banco: 'Banco de pruebas',
       titular: 'Conductor Caracas',
       identificador: '0412-0000000 · V-00000000',

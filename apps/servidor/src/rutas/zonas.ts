@@ -8,7 +8,7 @@ import {
   poligonosSeSolapan,
   validarPoligono,
 } from '@tumbite/compartido';
-import { type Disponibilidad, nombrePais } from '@tumbite/compartido';
+import { type Disponibilidad, nombrePais, zonaDeFabrica } from '@tumbite/compartido';
 import { nuevoId } from '../cripto';
 import { cobertura, leerPoligono, recalcularAreasCiudad } from '../territorio';
 import { telefonoE164 } from '../sms';
@@ -81,8 +81,9 @@ const esquemaZona = z.object({
     }),
   nombre: z.string().trim().min(2).max(60),
   pais: z.string().trim().length(2),
-  moneda: z.string().trim().length(3).default('USD'),
-  zonaHoraria: z.string().trim().min(3).max(60).default('America/New_York'),
+  // C-ZONA-POR-PAIS: sin escribir, salen del país de la ciudad (Perú: soles y hora de Lima).
+  moneda: z.string().trim().length(3).optional(),
+  zonaHoraria: z.string().trim().min(3).max(60).optional(),
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   radioKm: z.number().min(1).max(200).default(40),
@@ -132,22 +133,27 @@ zonas.put('/admin/zonas', async (c) => {
   }
   await base(c)
     .prepare(
-      `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa, region, idioma) VALUES (?,?,?,?,?,?,?,?,?,?,?)
-      ON CONFLICT(id) DO UPDATE SET nombre=excluded.nombre, pais=excluded.pais, moneda=excluded.moneda, zona_horaria=excluded.zona_horaria,
+      `INSERT INTO zonas (id, nombre, pais, moneda, zona_horaria, lat, lng, radio_km, activa, region, idioma) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)
+      ON CONFLICT(id) DO UPDATE SET nombre=excluded.nombre, pais=excluded.pais,
+        -- C-ZONA-POR-PAIS: editar una ciudad sin mandar moneda u hora NO se las cambia.
+        moneda = CASE WHEN ?12 = 1 THEN excluded.moneda ELSE zonas.moneda END,
+        zona_horaria = CASE WHEN ?13 = 1 THEN excluded.zona_horaria ELSE zonas.zona_horaria END,
       lat=excluded.lat, lng=excluded.lng, radio_km=excluded.radio_km, activa=excluded.activa, region=excluded.region, idioma=excluded.idioma`,
     )
     .bind(
       d.id,
       d.nombre,
       d.pais.toUpperCase(),
-      d.moneda.toUpperCase(),
-      d.zonaHoraria,
+      (d.moneda ?? zonaDeFabrica(d.pais).moneda).toUpperCase(),
+      d.zonaHoraria ?? zonaDeFabrica(d.pais).zonaHoraria,
       d.lat,
       d.lng,
       d.radioKm,
       d.activa ? 1 : 0,
       d.region.toUpperCase(),
       d.idioma,
+      d.moneda ? 1 : 0,
+      d.zonaHoraria ? 1 : 0,
     )
     .run();
   return c.json({ ok: true });

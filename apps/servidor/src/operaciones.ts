@@ -8,6 +8,7 @@ import {
   type TamanoPaquete,
   acercaAlDestino,
   distanciaKm,
+  cuentasQueReciben,
   esPagoACelular,
   formatearMonto,
   vehiculoLlevaPaquete,
@@ -337,16 +338,18 @@ export async function conductoresConPagoMovil(
   db: D1Database,
   ids: string[],
   pais: string,
-  /** C-PAGO-A-CELULAR: el tipo de la cuenta es el método del viaje (pago móvil, Yape o Plin). */
-  tipo: string = 'pago_movil',
+  /** C-PAGO-A-CELULAR: el método del viaje (pago móvil, Yape o Plin; Yape y Plin se reciben entre sí). */
+  metodo: string = 'pago_movil',
 ): Promise<Set<string>> {
-  if (!ids.length) return new Set();
+  const tipos = cuentasQueReciben(metodo);
+  if (!ids.length || !tipos.length) return new Set();
   const { results } = await db
     .prepare(
-      `SELECT DISTINCT usuario_id FROM cuentas_cobro WHERE tipo = ? AND pais = ? AND activa = 1
+      `SELECT DISTINCT usuario_id FROM cuentas_cobro WHERE tipo IN (${tipos.map(() => '?').join(',')})
+          AND pais = ? AND activa = 1
           AND activa_desde <= datetime('now') AND usuario_id IN (${ids.map(() => '?').join(',')})`,
     )
-    .bind(tipo, pais, ...ids)
+    .bind(...tipos, pais, ...ids)
     .all<{ usuario_id: string }>();
   return new Set(results.map((r) => r.usuario_id));
 }

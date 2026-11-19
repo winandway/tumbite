@@ -976,6 +976,8 @@ type FilaViajeCliente = FilaRegaloPasajero & {
   pm_banco: string | null;
   pm_titular: string | null;
   pm_identificador: string | null;
+  /** C-PAGO-A-CELULAR: la billetera del conductor (un viaje con Plin lo recibe también un Yape). */
+  pm_tipo: string | null;
   pm_estado: string | null;
   pais: string | null;
   categoria: string | null;
@@ -1002,7 +1004,7 @@ async function viajeDelCliente(
               -- C-CARRO-VIAJE-PASAJERO: la foto es la selfie verificada (como Uber), solo si está aprobada.
               (SELECT 1 FROM kyc ky WHERE ky.usuario_id = o.conductor_id AND ky.estado = 'aprobado'
                  AND ky.selfie_miniatura IS NOT NULL) AS conductor_foto,
-              k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador,
+              k.banco AS pm_banco, k.titular AS pm_titular, k.identificador AS pm_identificador, k.tipo AS pm_tipo,
               pm.estado AS pm_estado, (SELECT z.pais FROM zonas z WHERE z.id = o.zona_id) AS pais,
               v.ref_tasa, v.ref_fecha, v.ref_monto, v.total_final_centavos,
               ${COLUMNAS_REGALO_PASAJERO}
@@ -1015,7 +1017,8 @@ async function viajeDelCliente(
          -- C-PAGO-MOVIL-VIAJE: los datos de pago móvil del conductor (solo si el viaje se paga así).
          LEFT JOIN cuentas_cobro k ON v.metodo_pago IN ('pago_movil', 'yape', 'plin') AND k.id = (
            SELECT c2.id FROM cuentas_cobro c2 JOIN zonas z2 ON z2.id = o.zona_id
-            WHERE c2.usuario_id = o.conductor_id AND c2.tipo = v.metodo_pago AND c2.pais = z2.pais
+            WHERE c2.usuario_id = o.conductor_id AND c2.pais = z2.pais
+              AND (c2.tipo = v.metodo_pago OR (v.metodo_pago IN ('yape', 'plin') AND c2.tipo IN ('yape', 'plin')))
               AND c2.activa = 1 ORDER BY c2.creado_en DESC LIMIT 1)
          LEFT JOIN viajes_pago_movil pm ON pm.operacion_id = o.id
         WHERE o.cliente_id = ?1
@@ -1113,7 +1116,12 @@ function viajePublico(f: FilaViajeCliente) {
       ? {
           datos:
             (conConductor || f.estado === 'terminado') && f.pm_identificador
-              ? { banco: f.pm_banco, titular: f.pm_titular, identificador: f.pm_identificador }
+              ? {
+                  tipo: f.pm_tipo,
+                  banco: f.pm_banco,
+                  titular: f.pm_titular,
+                  identificador: f.pm_identificador,
+                }
               : null,
           confirmado: f.pm_estado,
         }

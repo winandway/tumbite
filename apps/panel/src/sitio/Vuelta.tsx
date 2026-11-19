@@ -20,6 +20,15 @@ const T = {
       'Falta un paso',
       'Vuelve a «Beneficios» y toca «Terminar de conectar mi cuenta».',
     ],
+    // C-RECARGA-TARJETA-ALOJADA: el conductor vuelve de pagar su recarga de saldo con tarjeta.
+    '/top-up/done': [
+      '¡Recarga recibida!',
+      'Vuelve a la app de Divoox Driver: tu saldo aparece en unos segundos, en cuanto se confirma el pago.',
+    ],
+    '/top-up/canceled': [
+      'Recarga no completada',
+      'No se te cobró nada. Vuelve a la app de Divoox Driver para intentarlo de nuevo.',
+    ],
     volver: 'Ir a mi panel',
     verPedido: 'Ver mi pedido',
     volverCarrito: 'Volver al carrito',
@@ -41,6 +50,14 @@ const T = {
       'One more step',
       'Go back to “Earnings” and tap “Finish connecting my account”.',
     ],
+    '/top-up/done': [
+      'Top-up received!',
+      'Go back to the Divoox Driver app: your balance shows up in a few seconds, as soon as the payment is confirmed.',
+    ],
+    '/top-up/canceled': [
+      'Top-up not completed',
+      'You were not charged. Go back to the Divoox Driver app to try again.',
+    ],
     volver: 'Go to my dashboard',
     verPedido: 'See my order',
     volverCarrito: 'Back to the cart',
@@ -52,6 +69,8 @@ export const RUTAS_VUELTA = [
   '/payment/cancelled',
   '/wallet/ready',
   '/wallet/connect',
+  '/top-up/done',
+  '/top-up/canceled',
 ] as const;
 
 export function Vuelta({ ruta, idioma }: { ruta: (typeof RUTAS_VUELTA)[number]; idioma: Idioma }) {
@@ -63,7 +82,11 @@ export function Vuelta({ ruta, idioma }: { ruta: (typeof RUTAS_VUELTA)[number]; 
         ? t['/payment/cancelled']
         : ruta === '/wallet/ready'
           ? t['/wallet/ready']
-          : t['/wallet/connect'];
+          : ruta === '/top-up/done'
+            ? t['/top-up/done']
+            : ruta === '/top-up/canceled'
+              ? t['/top-up/canceled']
+              : t['/wallet/connect'];
   // Stripe vuelve con ?pedido=<id>: desde la versión web se sigue el pedido ahí mismo.
   const pedido = new URLSearchParams(window.location.search).get('pedido') ?? '';
   return (

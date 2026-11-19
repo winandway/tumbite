@@ -37,10 +37,13 @@ const T = {
     ida: 'Ida',
     vuelta: 'Vuelta',
     menor: (n: string) => `Menor: ${n}`,
-    pagos: { efectivo: 'Efectivo', tarjeta: 'Tarjeta', pago_movil: 'Pago móvil' } as Record<
-      string,
-      string
-    >,
+    pagos: {
+      efectivo: 'Efectivo',
+      tarjeta: 'Tarjeta',
+      pago_movil: 'Pago móvil',
+      yape: 'Yape',
+      plin: 'Plin',
+    } as Record<string, string>,
     servicios: { moto: 'Moto', carro: 'Carro', envios: 'Envío' } as Record<string, string>,
     noPuedo: 'No puedo',
     noPuedoMarcado: 'Avisaste que no puedes: va a otro conductor',
@@ -77,10 +80,13 @@ const T = {
     ida: 'There',
     vuelta: 'Back',
     menor: (n: string) => `Minor: ${n}`,
-    pagos: { efectivo: 'Cash', tarjeta: 'Card', pago_movil: 'Mobile payment' } as Record<
-      string,
-      string
-    >,
+    pagos: {
+      efectivo: 'Cash',
+      tarjeta: 'Card',
+      pago_movil: 'Mobile payment',
+      yape: 'Yape',
+      plin: 'Plin',
+    } as Record<string, string>,
     servicios: { moto: 'Moto', carro: 'Car', envios: 'Delivery' } as Record<string, string>,
     noPuedo: 'Can’t make it',
     noPuedoMarcado: 'You said you can’t make it: it goes to another driver',

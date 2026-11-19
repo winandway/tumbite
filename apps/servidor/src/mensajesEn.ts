@@ -611,6 +611,12 @@ export const MENSAJES_EN = new Map<string, string>([
     'Las recargas con tarjeta no están activas en este país.',
     'Card top-ups aren’t active in this country.',
   ],
+  // C-PAGO-A-CELULAR (Perú): la billetera del conductor.
+  ['Esa billetera no está disponible en tu país.', 'That wallet isn’t available in your country.'],
+  [
+    'Escribe el celular de tu billetera: nueve cifras que empiezan por 9.',
+    'Enter your wallet’s mobile number: nine digits starting with 9.',
+  ],
   ['Tu cuenta no es de un punto de venta.', 'Your account isn’t a sales point.'],
   ['La contraseña no es correcta.', 'The password isn’t correct.'],
   ['Escribe tu contraseña.', 'Enter your password.'],
