@@ -5763,3 +5763,19 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 - **Presupuesto de escrituras:** una fila por solicitud, por pedido y por emergencia; nada se escribe por mirar. Las listas leen una vez por pantalla.
 - **Cómo se comprueba:** `npx vitest run apps/servidor/src/lineas.test.ts apps/repartidor/src/grandes/miLinea.test.ts apps/panel/src/sitio/RegistraLinea.test.tsx`. Comprobado en rojo: con la comprobación de ciudad y el tope diario apagados, fallan «el código solo vale en la ciudad de la línea» y «tope por conductor y por día».
 - **Qué NO tocar:** no crear una línea sin pasar por `crearLinea`/aprobación; no meter a un conductor a una línea sin que el líder acepte (salvo mover desde el superadmin o adoptar a los invitados del líder al crearla); no mezclar las líneas con los premios de referidos; no quitar el aviso a la línea de `avisarResponsableZona`; no subir los topes sin autorización escrita de Richard; ningún dato real (celulares, nombres, códigos) en capturas ni en Docs.
+
+## C-REGALO-VIAJE-REAL en el cierre de Driver (19 nov 2026) — todos los países
+
+- **Qué pasaba:** cuando el servidor dejaba el regalo de un viaje en revisión del equipo, el cierre «Viaje terminado» de Driver seguía diciendo en verde «Divoox te paga X · va a tus ganancias al terminar». En ese momento no era cierto: el regalo todavía no se acredita.
+- **Causa:** el servidor ya respondía `regaloEnRevision` al terminar, pero la pantalla del cierre no lo miraba.
+- **Arreglo:** `apps/repartidor/src/viajes/ViajeActivo.tsx` lee `regaloEnRevision` de la respuesta del cierre y, cuando viene en verdadero, pinta en color de aviso «Divoox está revisando este regalo» con su línea de ayuda (textos en español e inglés en `textos.ts`), en vez de la línea verde.
+- **Prueba:** `apps/repartidor/src/viajes/regaloEnRevisionCierre.test.ts`, comprobada en rojo antes del cambio.
+- **No tocar:** el verde es solo para un regalo que sí se acredita; lo que está en revisión nunca promete dinero.
+
+## C-PRIVACIDAD-REGALO-LINEAS (19 nov 2026) — todos los países
+
+- **Qué pasaba:** el auditor de tiendas dio NO APTO a la candidata de Android (cliente 54 y Driver 58) porque la política de privacidad pública no contaba dos usos nuevos de datos personales.
+- **Cuáles:** (1) en un viaje con regalo de Divoox, la app del cliente envía la ubicación del pasajero una vez por minuto para comprobar que viaja con su conductor (antifraude); el servidor no guarda el punto, solo si estaba cerca o lejos. (2) Las líneas de taxi y mototaxi: el líder ve nombre y teléfono de quien pide entrar, y la emergencia de un conductor de la línea avisa al líder y al segundo contacto con nombre, teléfono y lugar.
+- **Arreglo:** `apps/panel/src/sitio/legales.ts`, sección «4. Ubicación» de Privacidad, en español e inglés, con fecha propia (`FECHA_PRIVACIDAD`, 19 nov 2026).
+- **Prueba:** `apps/panel/src/sitio/legales.test.tsx`, bloque C-PRIVACIDAD-REGALO-LINEAS, comprobado en rojo sin los párrafos.
+- **No tocar:** si cambia lo que hace el código con la ubicación del pasajero o con los datos de una línea, cambia este texto en el mismo trabajo. Falta fuera del código: en la consola de Play, en Seguridad de los datos, sumar a la ubicación la finalidad de prevención de fraude (lo hace Richard).

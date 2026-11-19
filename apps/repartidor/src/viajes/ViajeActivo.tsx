@@ -110,6 +110,8 @@ export type RespuestaCierre = {
   totalFinal?: number | null;
   cobrarEnMano?: number | null;
   regaloDivoox?: number;
+  /** C-REGALO-VIAJE-REAL: el regalo quedó en revisión del equipo; todavía no se acredita. */
+  regaloEnRevision?: boolean;
   referencia?: Referencia | null;
   enMano?: Monto | null;
 };
@@ -228,22 +230,34 @@ export function ViajeActivo({
   const regaloDivoox = regaloFinal ?? viaje.regalo_divoox ?? 0;
   // C-PRECIO-PROTAGONISTA: lo que paga Divoox por el regalo, aparte y en verde (nunca mezclado con
   // lo que cobra en mano).
-  const lineaRegalo =
-    regaloDivoox > 0 ? (
-      <View
-        testID="viaje-divoox-paga"
-        accessible
-        style={{ backgroundColor: COLOR.exitoSuave, borderRadius: 10, padding: 10, gap: 2 }}
-      >
-        <Text style={{ color: C.exito, fontWeight: '800', fontSize: 17 }}>
-          {t.divooxPagaCorto.replace(
-            '{monto}',
-            formatearMonto(regaloDivoox, viaje.moneda ?? 'USD', idioma),
-          )}
-        </Text>
-        <Text style={{ color: C.exito, fontSize: 13 }}>{t.divooxPagaAyuda}</Text>
-      </View>
-    ) : null;
+  // C-REGALO-VIAJE-REAL: si el regalo quedó en revisión, no se promete en verde: se dice que se revisa.
+  const enRevision = respuesta?.regaloEnRevision === true;
+  const lineaRegalo = enRevision ? (
+    <View
+      testID="viaje-regalo-en-revision"
+      accessible
+      style={{ backgroundColor: COLOR.avisoSuave, borderRadius: 10, padding: 10, gap: 2 }}
+    >
+      <Text style={{ color: COLOR.aviso, fontWeight: '800', fontSize: 17 }}>
+        {t.regaloEnRevision}
+      </Text>
+      <Text style={{ color: COLOR.aviso, fontSize: 13 }}>{t.regaloEnRevisionAyuda}</Text>
+    </View>
+  ) : regaloDivoox > 0 ? (
+    <View
+      testID="viaje-divoox-paga"
+      accessible
+      style={{ backgroundColor: COLOR.exitoSuave, borderRadius: 10, padding: 10, gap: 2 }}
+    >
+      <Text style={{ color: C.exito, fontWeight: '800', fontSize: 17 }}>
+        {t.divooxPagaCorto.replace(
+          '{monto}',
+          formatearMonto(regaloDivoox, viaje.moneda ?? 'USD', idioma),
+        )}
+      </Text>
+      <Text style={{ color: C.exito, fontSize: 13 }}>{t.divooxPagaAyuda}</Text>
+    </View>
+  ) : null;
   // C-PAGO-A-CELULAR: pago móvil (Venezuela), Yape y Plin (Perú) llegan al celular del conductor y
   // él confirma a mano. `medioCelular` es el nombre que se pinta cuando no es pago móvil.
   const aCelular = esPagoACelular(viaje.metodo_pago);
