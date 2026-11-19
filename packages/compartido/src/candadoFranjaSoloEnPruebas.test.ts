@@ -48,11 +48,31 @@ describe('la franja «PRUEBAS» solo sale en la app de pruebas', () => {
       join(raiz, 'scripts', 'tiendas', 'publicar-google-play.mjs'),
       'utf8',
     );
-    const comprobar = publicar.indexOf("'scripts/tiendas/comprobar-franja.sh'");
+    const comprobar = publicar.indexOf('exigirSinFranja(paquete, aab)');
     expect(comprobar).toBeGreaterThan(-1);
     expect(comprobar).toBeLessThan(publicar.indexOf('/bundles'));
+    expect(readFileSync(join(raiz, 'scripts', 'tiendas', 'sin-franja.mjs'), 'utf8')).toContain(
+      "'scripts/tiendas/comprobar-franja.sh'",
+    );
     const guion = readFileSync(join(raiz, 'scripts', 'tiendas', 'comprobar-franja.sh'), 'utf8');
     expect(guion).toContain('text="PRUEBAS"');
     expect(guion).toContain('no se llegó a la pantalla de entrar');
+  });
+
+  // 19 nov 2026: Restaurants 18 estaba en producción con la franja, y la prueba interna se subía
+  // con un guion sin comprobación. Ahora TODO guion que sube un paquete a Play pasa por la misma
+  // puerta, sea cual sea la pista. En ROJO antes: subir-google-play.mjs subía sin comprobar.
+  it('ningún guion sube un paquete a ninguna pista de Play sin la comprobación', () => {
+    const carpeta = join(__dirname, '..', '..', '..', 'scripts', 'tiendas');
+    const suben = readdirSync(carpeta)
+      .filter((a) => /\.(mjs|sh)$/.test(a))
+      .filter((a) => readFileSync(join(carpeta, a), 'utf8').includes('/bundles'));
+    expect(suben.sort()).toEqual(['publicar-google-play.mjs', 'subir-google-play.mjs']);
+    for (const a of suben) {
+      const s = readFileSync(join(carpeta, a), 'utf8');
+      const puerta = s.indexOf('exigirSinFranja(paquete, aab)');
+      expect(puerta, a).toBeGreaterThan(-1);
+      expect(puerta, a).toBeLessThan(s.indexOf('/bundles'));
+    }
   });
 });
