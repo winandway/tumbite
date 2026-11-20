@@ -16,7 +16,8 @@ export type CuentaCobroApp = {
   vigente: boolean;
 };
 
-export const BORRADOR_CUENTA = { tipo: '', banco: '', titular: '', identificador: '' };
+// `cedula` solo se usa en el pago móvil de Venezuela (teléfono y cédula van en casillas separadas).
+export const BORRADOR_CUENTA = { tipo: '', banco: '', titular: '', identificador: '', cedula: '' };
 export type BorradorCuenta = typeof BORRADOR_CUENTA;
 
 /** La cuenta activa del conductor (la que ven los pasajeros), o null. */
@@ -35,7 +36,7 @@ export function enmascarado(identificador: string): string {
     : `${'•'.repeat(Math.max(2, limpio.length - 4))}${limpio.slice(-4)}`;
 }
 
-export type FalloCuenta = 'tipo' | 'banco' | 'titular' | 'identificador' | 'clave';
+export type FalloCuenta = 'tipo' | 'banco' | 'titular' | 'identificador' | 'cedula' | 'clave';
 
 /** Qué le falta al formulario antes de mandarlo (el servidor valida igual). null = listo. */
 export function falloCuenta(
@@ -50,6 +51,10 @@ export function falloCuenta(
   // Yape y Plin van al celular peruano: nueve dígitos que empiezan por 9.
   if (tipo === 'yape' || tipo === 'plin') {
     if (!telefonoPeruValido(v.identificador)) return 'identificador';
+  } else if (tipo === 'pago_movil') {
+    // Pago móvil de Venezuela: el teléfono (once cifras, «04…») y la cédula o el RIF del titular.
+    if (!telefonoPagoMovilValido(v.identificador)) return 'identificador';
+    if (!cedulaValida(v.cedula)) return 'cedula';
   } else if (v.identificador.trim().length < 4) return 'identificador';
   if (!clave) return 'clave';
   return null;
@@ -86,3 +91,36 @@ export function falloRecarga(monto: number | null, min: number, max: number): Fa
   if (monto > max) return 'maximo';
   return null;
 }
+
+/**
+ * C-CUENTA-COBRO-VENEZUELA (19 nov 2026, Gerencia): la tarjeta nació para Yape y Plin («tu número»);
+ * en Venezuela el pasajero necesita los TRES datos del pago móvil: banco, teléfono y cédula. Van en
+ * casillas separadas y se guardan juntos, como los ve el pasajero: «0412-0000000 · V-00000000».
+ */
+const soloCifras = (x: string) => x.replace(/\D/g, '');
+
+/** Teléfono venezolano de pago móvil: once cifras que empiezan por 04 (acepta +58 delante). */
+export function telefonoPagoMovilValido(texto: string): boolean {
+  const c = soloCifras(texto).replace(/^58(?=4\d{9}$)/, '0');
+  return /^04\d{9}$/.test(c);
+}
+
+/** Cédula o RIF: una letra (V, E, J, G o P; sin letra es V) y de seis a nueve cifras. */
+export function cedulaValida(texto: string): boolean {
+  return /^[VEJGP]?-?\d{6,9}$/i.test(texto.trim().replace(/[.\s]/g, ''));
+}
+
+/** Lo que se guarda y ve el pasajero: «0412-0000000 · V-00000000». */
+export function identificadorPagoMovil(telefono: string, cedula: string): string {
+  const c = soloCifras(telefono).replace(/^58(?=4\d{9}$)/, '0');
+  const limpia = cedula
+    .trim()
+    .replace(/[.\s-]/g, '')
+    .toUpperCase();
+  const letra = /^[VEJGP]/.test(limpia) ? limpia.slice(0, 1) : 'V';
+  return `${c.slice(0, 4)}-${c.slice(4)} · ${letra}-${soloCifras(limpia)}`;
+}
+
+/** Lo que se muestra de la cuenta guardada: del pago móvil, el teléfono (no la cédula) enmascarado. */
+export const identificadorVisible = (c: Pick<CuentaCobroApp, 'tipo' | 'identificador'>) =>
+  enmascarado(c.tipo === 'pago_movil' ? (c.identificador.split('·').at(0) ?? '') : c.identificador);

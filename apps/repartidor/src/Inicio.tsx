@@ -30,6 +30,7 @@ import {
   type Nivel,
   enIdioma,
   formatearMonto,
+  textoLocal,
   paisDelCodigoZona,
   textoAMonto,
   PRECISION_MAXIMA_M,
@@ -85,7 +86,12 @@ import { MiEquipo } from './grandes/MiEquipo';
 import { MiLinea } from './grandes/MiLinea';
 import { CobrarEfectivo } from './grandes/CobrarEfectivo';
 import { Ganancias } from './grandes/Ganancias';
-import { resumenPeriodo, textoTrabajos } from './grandes/resumenPeriodo';
+import {
+  type CobroEnMano,
+  cobrosDelPeriodo,
+  resumenConEnMano,
+  textoTrabajos,
+} from './grandes/resumenPeriodo';
 import { Avisos } from './grandes/Avisos';
 import { AyudaPedido } from './grandes/Ayuda';
 import { AyudaDriver } from './soporte/AyudaDriver';
@@ -1390,42 +1396,65 @@ export function Inicio() {
     cargas?: { id: string; monto: number; tipo: string; motivo: string; creadoEn: string }[];
   } | null>(null);
   const [regalosMensaje, setRegalosMensaje] = useState('');
-  // Pedidos cobrados en mano de hoy: no pasan por la billetera de Stripe, así que «Hoy» los suma
-  // desde Ganancias (C-MONEDA-RECORRIDO). Solo donde el país tiene el cobro en mano encendido.
-  const [enManoHoy, setEnManoHoy] = useState<{ total: number; entregas: number; moneda: string }>({
-    total: 0,
-    entregas: 0,
-    moneda: 'USD',
-  });
-  const cobroEnManoActivo = Boolean(prepago?.efectivoActivo || prepago?.transferenciaActiva);
+  // C-GANANCIAS-EN-MANO: pedidos y viajes cobrados en mano del mes (y de la semana en curso). No pasan
+  // por la billetera, así que «Hoy» y el total de Ganancias los suman desde aquí. Se pide siempre:
+  // un viaje en efectivo existe también donde el saldo prepago no rige (una lectura, ninguna escritura).
+  const [cobrosEnMano, setCobrosEnMano] = useState<CobroEnMano[]>([]);
   const movimientosVistos = billetera?.movimientos?.length ?? 0;
   const entregaActiva = estado?.activo?.id ?? null;
+  const viajeActivoId = viajeActivo?.id ?? null;
   useEffect(() => {
-    if (!cobroEnManoActivo) return;
     let vivo = true;
+    const ahora = new Date();
+    const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    const inicioSemana = new Date(ahora);
+    inicioSemana.setDate(ahora.getDate() - ((ahora.getDay() + 6) % 7));
+    // Un día de margen: el servidor filtra en UTC y aquí se filtra con la fecha local.
+    const desde = new Date(Math.min(inicioMes.getTime(), inicioSemana.getTime()) - 86_400_000);
     api
       .pedir<{
-        pedidos: { entregadoEn: string; total: number; moneda: string; cobradoEnMano?: boolean }[];
-      }>('GET', '/datos/repartidor/ganancias')
+        pedidos: {
+          pedidoId: string;
+          entregadoEn: string;
+          total: number;
+          moneda: string;
+          cobradoEnMano?: boolean;
+        }[];
+        viajesEnMano?: {
+          viajeId: string;
+          terminadoEn: string;
+          monto: number;
+          moneda: string;
+          montoLocal: number | null;
+        }[];
+      }>('GET', `/datos/repartidor/ganancias?desde=${desde.toISOString().slice(0, 10)}`)
       .then((g) => {
         if (!vivo) return;
-        const hoy = new Date().toLocaleDateString('en-CA');
-        const de = g.pedidos.filter(
-          (p) =>
-            p.cobradoEnMano &&
-            new Date(`${p.entregadoEn.replace(' ', 'T')}Z`).toLocaleDateString('en-CA') === hoy,
-        );
-        setEnManoHoy({
-          total: de.reduce((x, p) => x + p.total, 0),
-          entregas: de.length,
-          moneda: de[0]?.moneda ?? prepago?.moneda ?? 'USD',
-        });
+        setCobrosEnMano([
+          ...g.pedidos
+            .filter((p) => p.cobradoEnMano)
+            .map((p) => ({
+              id: `p:${p.pedidoId}`,
+              tipo: 'entrega' as const,
+              fecha: p.entregadoEn,
+              monto: p.total,
+              moneda: p.moneda,
+            })),
+          ...(g.viajesEnMano ?? []).map((v) => ({
+            id: `v:${v.viajeId}`,
+            tipo: 'carrera' as const,
+            fecha: v.terminadoEn,
+            monto: v.monto,
+            moneda: v.moneda,
+            montoLocal: v.montoLocal,
+          })),
+        ]);
       })
-      .catch(() => undefined);
+      .catch((x: unknown) => console.warn('cobros en mano', x));
     return () => {
       vivo = false;
     };
-  }, [api, cobroEnManoActivo, movimientosVistos, entregaActiva, prepago?.moneda]);
+  }, [api, movimientosVistos, entregaActiva, viajeActivoId]);
   const cargarPrepago = useCallback(async () => {
     try {
       setPrepago(await api.pedir('GET', '/datos/repartidor/saldo-prepago'));
@@ -1762,12 +1791,9 @@ export function Inicio() {
   const deHoy = (billetera?.movimientos ?? []).filter(
     (m) => new Date(`${m.fecha.replace(' ', 'T')}Z`).toLocaleDateString('en-CA') === hoyLocal,
   );
-  const gananciasHoy = deHoy
-    .filter((m) => m.concepto !== 'retiro' && m.monto > 0)
-    .reduce((x, m) => x + m.monto, 0);
-  // C-GANANCIAS-CARRERAS: un viaje con tarjeta no tiene pedido; antes todos se juntaban en uno.
-  const trabajosHoy = resumenPeriodo(deHoy);
-  const entregasHoy = trabajosHoy.entregas + trabajosHoy.carreras + enManoHoy.entregas;
+  // C-GANANCIAS-CARRERAS y C-GANANCIAS-EN-MANO: billetera y cobrado en mano, cada moneda aparte.
+  const hoyConEnMano = resumenConEnMano(deHoy, cobrosDelPeriodo(cobrosEnMano, 'hoy', new Date()));
+  const entregasHoy = hoyConEnMano.entregas + hoyConEnMano.carreras;
   const segundosConectado =
     estado?.conectado && conectadoDesde
       ? Math.max(0, Math.floor((tic - conectadoDesde) / 1000))
@@ -1916,7 +1942,10 @@ export function Inicio() {
           : fechaDe(m) >= inicioMes,
     );
     // C-GANANCIAS-COHERENTES: un regalo de Divoox suma al total, no es una entrega.
-    const { total, entregas, carreras, regalos } = resumenPeriodo(enPeriodo);
+    const { partes, enMano, bolivares, entregas, carreras, regalos } = resumenConEnMano(
+      enPeriodo,
+      cobrosDelPeriodo(cobrosEnMano, periodo, ahora),
+    );
     return lienzo(
       'ganancias',
       <View style={{ padding: 16, gap: 12 }}>
@@ -2142,10 +2171,26 @@ export function Inicio() {
                 ? td.totalDe.semana
                 : td.totalDe.mes}
           </Text>
-          <Text style={{ fontSize: 34, fontWeight: '800', color: C.secundario }}>
-            {/* Billetera de Stripe: solo pedidos con tarjeta, hoy siempre en USD. */}
-            {formatearMonto(total, 'USD', idioma)}
+          <Text
+            testID="ganancias-total"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={{ fontSize: 34, fontWeight: '800', color: C.secundario }}
+          >
+            {/* C-GANANCIAS-EN-MANO: billetera (dólares) y cobrado en mano, cada moneda aparte. */}
+            {partes.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + ')}
           </Text>
+          {enMano.length ? (
+            <Text style={{ color: '#666B73' }} testID="ganancias-incluye-en-mano">
+              {td.incluyeEnMano.replace(
+                '{monto}',
+                enMano.map((x) => formatearMonto(x.monto, x.moneda, idioma)).join(' + '),
+              )}
+              {bolivares > 0
+                ? ` ${td.enBolivares.replace('{monto}', textoLocal({ moneda: 'VES', monto: bolivares, tasa: 0, fecha: '' }, idioma))}`
+                : ''}
+            </Text>
+          ) : null}
           <Text style={{ color: '#666B73' }}>
             {/* C-PLURAL y C-GANANCIAS-CARRERAS: «1 entrega», «2 carreras» o las dos. */}
             {textoTrabajos(entregas, carreras, idioma)}
@@ -3315,8 +3360,7 @@ export function Inicio() {
       resumen={
         <ResumenDia
           idioma={idioma}
-          ganancias={gananciasHoy}
-          enMano={enManoHoy}
+          partes={hoyConEnMano.partes}
           entregas={entregasHoy}
           segundosConectado={segundosConectado}
         />
@@ -3344,8 +3388,7 @@ export function Inicio() {
     <>
       <ResumenDia
         idioma={idioma}
-        ganancias={gananciasHoy}
-        enMano={enManoHoy}
+        partes={hoyConEnMano.partes}
         entregas={entregasHoy}
         segundosConectado={segundosConectado}
       />

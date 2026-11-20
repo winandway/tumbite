@@ -285,7 +285,47 @@ repartidorGrandes.get('/repartidor/ganancias', async (c) => {
   // «totales» queda en la primera moneda (en EE. UU., los dólares de siempre); sin pedidos, ceros.
   const primera = monedas[0];
   const totales = sumar(primera ? pedidos.filter((p) => p.moneda === primera) : []);
-  return c.json({ pedidos, totales, totalesPorMoneda });
+  // C-GANANCIAS-EN-MANO (19 nov 2026, Venezuela y Perú): los viajes cobrados en mano (efectivo, pago
+  // móvil, Yape, Plin) no pasan por la billetera; sin esto el total del día del conductor no los veía.
+  const { results: enMano } = await db
+    .prepare(
+      `SELECT o.id, o.servicio_id AS servicio, v.terminado_en, v.metodo_pago,
+              COALESCE(v.total_final_centavos, q.total, 0) AS total, COALESCE(q.moneda, 'USD') AS moneda,
+              v.ref_monto,
+              COALESCE((SELECT rg.monto FROM usos_cupon_divoox rg WHERE rg.operacion_id = o.id
+                          AND rg.estado <> 'liberado'), 0) AS regalo
+         FROM operaciones o JOIN viajes v ON v.operacion_id = o.id
+         LEFT JOIN cotizaciones_viaje q ON q.id = v.cotizacion_id
+        WHERE o.conductor_id = ? AND v.estado = 'terminado' AND v.metodo_pago <> 'tarjeta'
+          AND (? IS NULL OR v.terminado_en >= ?) AND (? IS NULL OR v.terminado_en <= ?)
+        ORDER BY v.terminado_en DESC LIMIT 500`,
+    )
+    .bind(u.id, desde, desde, hasta, hasta)
+    .all<{
+      id: string;
+      servicio: string;
+      terminado_en: string;
+      metodo_pago: string;
+      total: number;
+      moneda: string;
+      ref_monto: number | null;
+      regalo: number;
+    }>();
+  const viajesEnMano = enMano
+    .map((v) => ({
+      viajeId: v.id,
+      codigo: v.id.slice(0, 4).toUpperCase(),
+      servicio: v.servicio,
+      metodoPago: v.metodo_pago,
+      terminadoEn: v.terminado_en,
+      moneda: v.moneda,
+      // Lo que el pasajero le dio en mano: el total final menos lo que cubrió el regalo de Divoox.
+      monto: Math.max(0, Number(v.total) - Math.min(Number(v.regalo), Number(v.total))),
+      // En Venezuela, los bolívares cobrados con la tasa fijada del viaje (C-BS-EN-MANO).
+      montoLocal: v.ref_monto == null ? null : Number(v.ref_monto),
+    }))
+    .filter((v) => v.monto > 0);
+  return c.json({ pedidos, totales, totalesPorMoneda, viajesEnMano });
 });
 
 /**

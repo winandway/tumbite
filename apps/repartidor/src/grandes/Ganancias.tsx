@@ -5,6 +5,7 @@ import {
   type Idioma,
   formatearMonto,
   planillaGanancias,
+  textoLocal,
   contar,
 } from '@tumbite/compartido';
 import { C, e, Text } from '@tumbite/movil';
@@ -29,6 +30,15 @@ type Datos = {
   totales: Totales;
   /** Un total por moneda (nunca se suman monedas distintas). */
   totalesPorMoneda?: (Totales & { moneda: string })[];
+  /** C-GANANCIAS-EN-MANO: viajes cobrados en mano (no pasan por la billetera). */
+  viajesEnMano?: {
+    viajeId: string;
+    codigo: string;
+    terminadoEn: string;
+    monto: number;
+    moneda: string;
+    montoLocal: number | null;
+  }[];
 };
 
 const fechaIso = (d: Date) => d.toLocaleDateString('en-CA');
@@ -82,22 +92,21 @@ export function Ganancias({
   );
   return (
     <View style={{ gap: 12 }} testID="ganancias-desglose">
-      {(d.totalesPorMoneda?.length ? d.totalesPorMoneda : [{ moneda: 'USD', ...d.totales }]).map(
-        (x) => (
-          <View style={e.tarjeta} key={x.moneda}>
-            {linea(t.base, x.base, x.moneda)}
-            {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
-            {linea(t.propinas, x.propinas, x.moneda)}
-            {linea(
-              `${t.total} · ${contar(x.entregas, 'entrega', idioma)}`,
-              x.total,
-              x.moneda,
-              true,
-            )}
-            <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
-          </View>
-        ),
-      )}
+      {/* Sin entregas pero con carreras en mano (Venezuela, Perú) no se dibuja un desglose en cero. */}
+      {(d.totalesPorMoneda?.length
+        ? d.totalesPorMoneda
+        : d.viajesEnMano?.length
+          ? []
+          : [{ moneda: 'USD', ...d.totales }]
+      ).map((x) => (
+        <View style={e.tarjeta} key={x.moneda}>
+          {linea(t.base, x.base, x.moneda)}
+          {x.bonos ? linea(t.bonos, x.bonos, x.moneda) : null}
+          {linea(t.propinas, x.propinas, x.moneda)}
+          {linea(`${t.total} · ${contar(x.entregas, 'entrega', idioma)}`, x.total, x.moneda, true)}
+          <Text style={{ color: '#6B7078', fontSize: 12, marginTop: 6 }}>{t.garantia}</Text>
+        </View>
+      ))}
       {d.pedidos.length ? (
         // C-PLANILLA-GANANCIAS: como el estado de cuenta de Uber Driver, una fila por entrega.
         <Pressable
@@ -113,8 +122,49 @@ export function Ganancias({
           <Text style={{ color: C.primario, fontWeight: '800' }}>{t.planilla}</Text>
         </Pressable>
       ) : null}
+      {d.viajesEnMano?.length ? (
+        <View style={e.tarjeta} testID="ganancias-viajes-en-mano">
+          <Text style={{ fontWeight: '800', color: C.secundario }}>{t.enMano}</Text>
+          <Text style={{ color: '#6B7078', fontSize: 12, marginBottom: 4 }}>{t.enManoAyuda}</Text>
+          {d.viajesEnMano.map((v) => (
+            <View
+              key={v.viajeId}
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingVertical: 8,
+                borderTopWidth: 1,
+                borderTopColor: '#E6E7EA',
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '700', color: C.secundario }}>#{v.codigo}</Text>
+                <Text style={{ color: '#666B73', fontSize: 12 }}>
+                  {new Date(`${v.terminadoEn.replace(' ', 'T')}Z`).toLocaleString(
+                    idioma === 'en' ? 'en-US' : 'es-US',
+                    { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
+                  )}
+                </Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontWeight: '800', color: C.secundario }}>
+                  {formatearMonto(v.monto, v.moneda, idioma)}
+                </Text>
+                {v.montoLocal ? (
+                  <Text style={{ color: '#666B73', fontSize: 12 }}>
+                    {textoLocal({ moneda: 'VES', monto: v.montoLocal, tasa: 0, fecha: '' }, idioma)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : null}
       {d.pedidos.length === 0 ? (
-        <Text style={{ color: '#666B73' }}>{t.sin}</Text>
+        d.viajesEnMano?.length ? null : (
+          <Text style={{ color: '#666B73' }}>{t.sin}</Text>
+        )
       ) : (
         d.pedidos.map((p) => (
           <Pressable
