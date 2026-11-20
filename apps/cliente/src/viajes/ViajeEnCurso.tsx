@@ -6,6 +6,8 @@ import {
   type MontoEnMano as MontoEnManoTipo,
   type Referencia,
   minutosDeLlegada,
+  type PerfilConductorPublico,
+  TEXTOS_PERFIL_CONDUCTOR,
   textoHoraLlegada,
   enIdioma,
   esPagoACelular,
@@ -25,7 +27,9 @@ import {
   Text,
   COLOR,
   Icono,
+  InicialConductor,
   LETRA,
+  PerfilConductor,
 } from '@tumbite/movil';
 import { MapaEntrega } from '../MapaEntrega';
 import { Tarjeta } from '../comida/piezas';
@@ -192,10 +196,13 @@ function FotoConductor({
   viajeId,
   nombre,
   hay,
+  enPerfil,
 }: {
   viajeId: string;
   nombre: string;
   hay: boolean;
+  /** C-PERFIL-CONDUCTOR: dentro del perfil oscuro, la foto llena su círculo (lado = alto del aro). */
+  enPerfil?: number;
 }) {
   const [token, setToken] = useState<string | null>(null);
   const [fallo, setFallo] = useState(false);
@@ -203,6 +210,8 @@ function FotoConductor({
     if (hay) void leerTokenGuardado().then(setToken);
   }, [hay]);
   const lado = 56;
+  if (enPerfil && (!hay || fallo || !token))
+    return <InicialConductor nombre={nombre} tamano={enPerfil - 16} />;
   if (!hay || fallo || !token)
     return (
       <View
@@ -228,9 +237,43 @@ function FotoConductor({
         uri: `${URL_SERVIDOR}/datos/viajes/${viajeId}/conductor/foto`,
         headers: { authorization: `Bearer ${token}` },
       }}
-      style={{ width: lado, height: lado, borderRadius: lado / 2 }}
+      style={
+        enPerfil
+          ? { width: '100%', height: '100%' }
+          : { width: lado, height: lado, borderRadius: lado / 2 }
+      }
     />
   );
+}
+
+/** C-PERFIL-CONDUCTOR: alto del aro de la foto en la tarjeta del conductor del viaje. */
+const FOTO_PERFIL_VIAJE = 104;
+
+/**
+ * C-PERFIL-CONDUCTOR: el perfil del conductor de ESTE viaje (cifras, sellos, línea, idiomas y su
+ * dato). Se pide una vez al aparecer el conductor (no en cada refresco del viaje); si no llega, la
+ * tarjeta sigue con lo básico del viaje.
+ */
+function usePerfilConductor(viajeId: string, conConductor: boolean) {
+  const { api } = useSesion();
+  // El perfil queda atado a su viaje: el de un viaje anterior nunca se muestra en otro.
+  const [leido, setLeido] = useState<{ viajeId: string; perfil: PerfilConductorPublico } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!conConductor) return;
+    let vivo = true;
+    api
+      .pedir<{ perfil: PerfilConductorPublico }>('GET', `/datos/viajes/${viajeId}/conductor/perfil`)
+      .then((r) => {
+        if (vivo) setLeido({ viajeId, perfil: r.perfil });
+      })
+      .catch((e: unknown) => console.warn('perfil del conductor: no se pudo leer', e));
+    return () => {
+      vivo = false;
+    };
+  }, [api, viajeId, conConductor]);
+  return conConductor && leido?.viajeId === viajeId ? leido.perfil : null;
 }
 
 /**
@@ -366,6 +409,28 @@ export function ViajeEnCurso({
     void Linking.openURL(`tel:${r.numero}`);
   }
   const conConductor = ['asignado', 'conductor_llego', 'en_curso'].includes(viaje.estado);
+  const perfilConductor = usePerfilConductor(viaje.id, conConductor && Boolean(viaje.conductor));
+  const tp = enIdioma(TEXTOS_PERFIL_CONDUCTOR, idioma);
+  // La hora de llegada, la misma en la tarjeta básica y en el perfil.
+  const lineaLlegada = (enOscuro: boolean) =>
+    viaje.llegadaEnVivo && (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
+      <Text
+        testID="viaje-llegada"
+        style={{ fontWeight: '700', color: enOscuro ? COLOR.enLinea : C.exito }}
+      >
+        {(viaje.estado === 'asignado' ? t.llegaALas : t.destinoALas)(
+          textoHoraLlegada(viaje.llegadaEnVivo.llegaEn, idioma),
+          minutosDeLlegada(viaje.llegadaEnVivo.faltanS),
+        )}
+      </Text>
+    ) : llegada && (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
+      <Text
+        testID="viaje-llegada"
+        style={{ fontWeight: '700', color: enOscuro ? COLOR.enLinea : C.exito }}
+      >
+        {viaje.estado === 'asignado' ? t.llegaEn(llegada) : t.destinoEn(llegada)}
+      </Text>
+    ) : null;
 
   return (
     <View testID="viaje-pasajero" style={{ gap: 12 }}>
@@ -491,7 +556,47 @@ export function ViajeEnCurso({
         />
       ) : null}
 
-      {viaje.conductor ? (
+      {/* C-PERFIL-CONDUCTOR: la tarjeta del conductor ampliada con su perfil (variante oscura del
+          borrador aprobado): foto, nombre de pila, vehículo y placa, cifras o «Nuevo en Divoox»,
+          sellos solo si está verificado, línea, idiomas y su dato. Mientras llega, lo básico. */}
+      {viaje.conductor && perfilConductor ? (
+        <View
+          testID="viaje-conductor"
+          style={{
+            borderRadius: 16,
+            overflow: 'hidden',
+            borderWidth: 1,
+            borderColor: COLOR.borde,
+          }}
+        >
+          <PerfilConductor
+            testID="viaje-perfil-conductor"
+            perfil={perfilConductor}
+            idioma={idioma}
+            propio={false}
+            cabecera={tp.tuConductor}
+            tamanoFoto={FOTO_PERFIL_VIAJE}
+            foto={
+              <FotoConductor
+                viajeId={viaje.id}
+                nombre={perfilConductor.nombre || viaje.conductor.nombre}
+                hay={Boolean(viaje.conductor.foto)}
+                enPerfil={FOTO_PERFIL_VIAJE}
+              />
+            }
+            debajoDelNombre={
+              <View style={{ alignItems: 'center', marginTop: 2 }}>
+                {lineaLlegada(true)}
+                {viaje.servicio === 'carro' && moto?.plazas ? (
+                  <Text style={{ color: '#FFFFFF', opacity: 0.78, fontSize: 13 }}>
+                    {nombreVehiculo} · {t.plazas(moto.plazas)}
+                  </Text>
+                ) : null}
+              </View>
+            }
+          />
+        </View>
+      ) : viaje.conductor ? (
         <Tarjeta>
           <View testID="viaje-conductor" style={{ gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -504,19 +609,7 @@ export function ViajeEnCurso({
                 <Text style={{ fontWeight: '700', fontSize: 18, color: C.secundario }}>
                   {viaje.conductor.nombre}
                 </Text>
-                {viaje.llegadaEnVivo &&
-                (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
-                  <Text testID="viaje-llegada" style={{ fontWeight: '700', color: C.exito }}>
-                    {(viaje.estado === 'asignado' ? t.llegaALas : t.destinoALas)(
-                      textoHoraLlegada(viaje.llegadaEnVivo.llegaEn, idioma),
-                      minutosDeLlegada(viaje.llegadaEnVivo.faltanS),
-                    )}
-                  </Text>
-                ) : llegada && (viaje.estado === 'asignado' || viaje.estado === 'en_curso') ? (
-                  <Text testID="viaje-llegada" style={{ fontWeight: '700', color: C.exito }}>
-                    {viaje.estado === 'asignado' ? t.llegaEn(llegada) : t.destinoEn(llegada)}
-                  </Text>
-                ) : null}
+                {lineaLlegada(false)}
               </View>
             </View>
             <Text style={{ color: '#666B73' }}>

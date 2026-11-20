@@ -13,6 +13,13 @@ import { MENSAJES_EN_PAPELES } from './mensajesEnPapeles';
  * mensaje nuevo sin su traducción. Candado C-INGLES-PRINCIPAL.
  */
 export const MENSAJES_EN = new Map<string, string>([
+  // C-PERFIL-CONDUCTOR (20 nov 2026): «Así te ven los pasajeros».
+  ['No encontramos tu cuenta.', 'We couldn’t find your account.'],
+  ['Escribe algo más corto: hasta 120 letras.', 'Keep it shorter: up to 120 characters.'],
+  [
+    'Tu dato tiene palabras que no se permiten. Escríbelo de otra forma.',
+    'Your note has words that aren’t allowed. Please write it another way.',
+  ],
   // C-OCHO-ICONOS-SIEMPRE (18 nov 2026): «Avísame cuando llegue».
   [
     'No pudimos reconocer este teléfono. Actualiza la app y vuelve a intentarlo.',

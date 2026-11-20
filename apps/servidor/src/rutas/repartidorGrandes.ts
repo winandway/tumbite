@@ -33,9 +33,11 @@ const MARGEN_MIN = 10;
 
 const pct = (parte: number, de: number) => (de ? Math.round((parte / de) * 100) : null);
 
-/** Las métricas del repartidor (las mismas que ve en Calificaciones). */
-export async function metricasRepartidor(db: D1Database, repartidorId: string) {
-  const u = { id: repartidorId };
+/**
+ * Las últimas 100 estrellas que cuentan (clientes de Comida sin culpa del restaurante y pasajeros).
+ * La usan Calificaciones y el perfil público del conductor (C-PERFIL-CONDUCTOR): una sola fórmula.
+ */
+export async function estrellasQueCuentan(db: D1Database, repartidorId: string) {
   const estrellas = await db
     .prepare(
       `SELECT e, creado_en FROM (
@@ -50,12 +52,22 @@ export async function metricasRepartidor(db: D1Database, repartidorId: string) {
           WHERE o.conductor_id = ?1 AND k.de = 'pasajero')
         ORDER BY creado_en DESC LIMIT ${ULTIMAS}`,
     )
-    .bind(u.id)
+    .bind(repartidorId)
     .all<{ e: number; creado_en: string }>();
+  const cuentan = estrellas.results;
+  const promedio = cuentan.length
+    ? Math.round((cuentan.reduce((s, x) => s + x.e, 0) / cuentan.length) * 10) / 10
+    : null;
+  return { cuentan, promedio };
+}
+
+/** Las métricas del repartidor (las mismas que ve en Calificaciones). */
+export async function metricasRepartidor(db: D1Database, repartidorId: string) {
+  const u = { id: repartidorId };
+  const { cuentan, promedio } = await estrellasQueCuentan(db, repartidorId);
   // F18 + C-METRICAS-VENTANA: las notas que fueron culpa del restaurante se quitan ANTES de tomar
   // las últimas 100 (si no, la ventana quedaba corta). «Excluidas» son las quitadas en ese mismo
   // período, para mostrárselo al repartidor.
-  const cuentan = estrellas.results;
   const desde = cuentan.at(-1)?.creado_en ?? null;
   const fuera = await db
     .prepare(
@@ -67,9 +79,6 @@ export async function metricasRepartidor(db: D1Database, repartidorId: string) {
     .first<{ n: number }>();
   const excluidas = Number(fuera?.n ?? 0);
   const cuantas = cuentan.length;
-  const promedio = cuantas
-    ? Math.round((cuentan.reduce((s, x) => s + x.e, 0) / cuantas) * 10) / 10
-    : null;
 
   // Aceptación: las últimas 100 ofertas respondidas (vencer cuenta como rechazo, como en Dasher).
   const ofertas = await db

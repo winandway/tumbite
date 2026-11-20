@@ -86,6 +86,7 @@ import { buscar } from './rutas/buscar';
 import { demanda } from './rutas/demanda';
 import { avisos } from './rutas/avisos';
 import { repartidorGrandes } from './rutas/repartidorGrandes';
+import { perfilConductor } from './rutas/perfilConductor';
 import { interno, saludTiempoReal } from './rutas/interno';
 import { relojEnPausa, saludReloj } from './reloj';
 import { alertarCanario } from './canario';
@@ -741,6 +742,8 @@ app.route('/datos', buscar);
 app.route('/datos', demanda);
 app.route('/datos', avisos);
 app.route('/datos', repartidorGrandes);
+// C-PERFIL-CONDUCTOR: «Así te ven los pasajeros» (el conductor) y el perfil del conductor del viaje (el pasajero).
+app.route('/datos', perfilConductor);
 app.route('/datos', viajes);
 // C-VIAJES-HISTORIAL: antes que viajesPasajero, para que /viajes/historial no caiga en /viajes/:id.
 app.route('/datos', viajesHistorial);

@@ -70,6 +70,7 @@ export * from './masRestaurante';
 export * from './flexTextos';
 export * from './flexNavegacion';
 export * from './calificacionPublica';
+export * from './perfilConductor';
 export * from './menuPlanilla';
 export * from './opcionesFormulario';
 export * from './reputacion';

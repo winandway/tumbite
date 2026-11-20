@@ -86,6 +86,7 @@ import { Oferta } from './grandes/Oferta';
 import { Calificaciones } from './grandes/Calificaciones';
 import { MiEquipo } from './grandes/MiEquipo';
 import { MiLinea } from './grandes/MiLinea';
+import { AsiTeVen } from './grandes/AsiTeVen';
 import { CobrarEfectivo } from './grandes/CobrarEfectivo';
 import { Ganancias } from './grandes/Ganancias';
 import {
@@ -657,6 +658,7 @@ export function Inicio() {
     | 'clientesFijos'
     | 'miEquipo'
     | 'miLinea'
+    | 'asiTeVen'
     | 'ayuda'
     | 'papeles'
   >('inicio');
@@ -2239,6 +2241,9 @@ export function Inicio() {
     );
   // C-LINEAS-TAXI: su línea de taxi o mototaxi, las solicitudes y su equipo.
   if (vista === 'miLinea') return lienzo('perfil', <MiLinea api={api} idioma={idioma} />);
+  // C-PERFIL-CONDUCTOR: «Así te ven los pasajeros» y «Completar mi perfil».
+  if (vista === 'asiTeVen')
+    return lienzo('perfil', <AsiTeVen api={api} idioma={idioma} />, false, true);
   // C-TURNOS-REPARTIDOR: reservar horas, como el «Schedule» de DoorDash.
   if (vista === 'turnos') return lienzo('inicio', <Turnos api={api} idioma={idioma} />);
   // C-CONDUCTOR-CONFIANZA y C-VIAJES-FIJOS: la agenda de sus clientes fijos y «No puedo».
@@ -2436,6 +2441,15 @@ export function Inicio() {
           }
         />
         <View style={[e.tarjeta, { paddingVertical: 2 }]}>
+          {/* C-PERFIL-CONDUCTOR: su perfil tal como lo ven los pasajeros. */}
+          {fila(
+            idioma === 'en' ? 'How riders see you' : 'Así te ven los pasajeros',
+            () => setVista('asiTeVen'),
+            false,
+            idioma === 'en'
+              ? 'Your profile, languages and something about you'
+              : 'Tu perfil, los idiomas que hablas y un dato tuyo',
+          )}
           {fila(
             td.misViajes,
             () => setSeccionPerfil((x) => (x === 'viajes' ? null : 'viajes')),

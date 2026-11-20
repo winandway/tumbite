@@ -303,6 +303,10 @@ const COLUMNAS: [tabla: string, columna: string, definicion: string][] = [
   ['usuarios', 'sms_consentido_en', 'TEXT'],
   ['usuarios', 'sms_consentimiento_version', 'TEXT'],
   ['usuarios', 'sms_consentimiento_canal', 'TEXT'],
+  // C-PERFIL-CONDUCTOR (20 nov 2026, todos los países): lo que el conductor cuenta a sus pasajeros:
+  // los idiomas que habla («es,en,pt») y un dato corto (filtrado por C-MODERACION).
+  ['repartidores', 'idiomas_perfil', "TEXT NOT NULL DEFAULT ''"],
+  ['repartidores', 'dato_perfil', "TEXT NOT NULL DEFAULT ''"],
   // C-GANAR-POR-TIEMPO: «oferta» (lo de siempre) o «tiempo».
   ['repartidores', 'modo_pago', "TEXT NOT NULL DEFAULT 'oferta'"],
   // C-CIUDAD-CONDUCTOR (13 nov 2026): cuándo eligió el conductor su ciudad por última vez (una vez
