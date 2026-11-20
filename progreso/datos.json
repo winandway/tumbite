@@ -1,5 +1,5 @@
 {
-  "actualizado": "2026-11-20T02:01:48Z",
+  "actualizado": "2026-11-20T02:31:00Z",
   "version": "fe71f3f",
   "ahora": "19 nov: la app de restaurantes sin el aviso de pruebas ya está enviada a producción de Google Play (versión 19) y espera la aprobación de Google; en TestFlight es la 25. La política de privacidad ya explica en vivo la comprobación de los viajes con regalo y las líneas de taxi y mototaxi. Las apps de cliente (54) y conductor (58) tienen el visto bueno condicionado del auditor: solo falta marcar una casilla de ubicación en la consola de Google Play de cada una para subirlas a producción.",
   "proximo": [
@@ -529,6 +529,11 @@
     }
   ],
   "bitacora": [
+    {
+      "fecha": "2026-11-19",
+      "titulo": "Borrador del registro: la última pantalla muestra el correo en grande para revisarlo",
+      "texto": "Ajuste pedido por Richard después de que dos personas escribieran mal su correo y no recibieran la confirmación. En el borrador de las tres apps, la última pantalla ahora es «Revisa tus datos»: el correo arriba y en grande, con la pregunta «¿Está bien escrito? Aquí te mandamos el enlace para activar tu cuenta» y su botón «Editar», que vuelve a esa casilla y regresa sin perder lo demás; debajo, los otros datos con su «Editar», y al final «Crear mi cuenta» y «Editar datos». Al escribir el correo se valida en serio y, si el dominio parece mal escrito, se sugiere el correcto. Cada casilla acepta solo lo suyo: el nombre no admite números y el celular solo números. En Driver de Venezuela, al crear la cuenta sale «Ya puedes trabajar» y la lista «Tus papeles» con 30 días de plazo. Sigue siendo solo un borrador."
+    },
     {
       "fecha": "2026-11-19",
       "titulo": "Borrador navegable del registro nuevo y corto de las tres apps",

@@ -13,6 +13,12 @@ import { VerDato } from './DatoProtegido';
 import { ir } from '../ruta';
 import { pedir } from './api';
 import { MenuTresPuntos } from './MenuTresPuntos';
+import {
+  AccionesCorreo,
+  type CambioCorreo,
+  type EstadoCorreo,
+  HistorialCorreo,
+} from './CorregirCorreo';
 import { CambiarCiudadConductor } from './CambiarCiudadConductor';
 import { AvisoFiltrosGuardados } from './AvisoFiltrosGuardados';
 import { usePreferencias } from './usePreferencias';
@@ -657,6 +663,8 @@ function KycFicha({ base, kyc, idioma }: { base: string; kyc: Kyc; idioma: Idiom
 
 type Repartidor = {
   activo?: boolean;
+  correoEstado?: EstadoCorreo;
+  historialCorreo?: CambioCorreo[];
   kyc: Kyc;
   id: string;
   codigo: string;
@@ -789,6 +797,7 @@ export function SuperRepartidor({
         recargar={recargar}
         ciudad={r.ciudad}
       />
+      <HistorialCorreo lista={r.historialCorreo} idioma={idioma} />
       <p>
         <span className={`punto ${r.conectado ? 'en-linea' : ''}`} aria-hidden="true" />{' '}
         {r.conectado ? t.enLinea : t.fueraLinea} · {r.ciudad} · {t.tipos[r.tipo] ?? r.tipo}
@@ -840,6 +849,12 @@ export function SuperRepartidor({
                 campo="correo"
                 mascara={r.correo}
                 idioma={idioma}
+              />
+              <AccionesCorreo
+                usuarioId={id}
+                estado={r.correoEstado}
+                idioma={idioma}
+                recargar={recargar}
               />
             </dd>
             <dt>{t.telefono}</dt>
@@ -1025,6 +1040,8 @@ export function SuperClientes({ base, idioma }: { base: string; idioma: Idioma }
 
 type Cliente = {
   activo?: boolean;
+  correoEstado?: EstadoCorreo;
+  historialCorreo?: CambioCorreo[];
   id: string;
   nombre: string;
   correo: string;
@@ -1092,6 +1109,12 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
             <dt>{t.correo}</dt>
             <dd>
               <VerDato tipo="cliente" id={id} campo="correo" mascara={c.correo} idioma={idioma} />
+              <AccionesCorreo
+                usuarioId={id}
+                estado={c.correoEstado}
+                idioma={idioma}
+                recargar={recargar}
+              />
             </dd>
             <dt>{t.telefono}</dt>
             <dd>
@@ -1113,6 +1136,7 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
         </div>
         <Quejas base={base} quejas={c.quejas} idioma={idioma} />
       </div>
+      <HistorialCorreo lista={c.historialCorreo} idioma={idioma} />
       <div className="tarjeta-form">
         <h2>{t.historial}</h2>
         <ul className="super-lista">
@@ -1139,6 +1163,9 @@ export function SuperCliente({ base, id, idioma }: { base: string; id: string; i
 type Restaurante = {
   kyc: Kyc;
   id: string;
+  duenoId?: string;
+  correoEstado?: EstadoCorreo;
+  historialCorreo?: CambioCorreo[];
   nombre: string;
   categoria: string;
   direccion: string;
@@ -1180,7 +1207,9 @@ export function SuperRestaurante({
   idioma: Idioma;
 }) {
   const t = enIdioma(T, idioma);
-  const { x, error } = useCargar<{ restaurante: Restaurante }>(`/datos/admin/restaurantes/${id}`);
+  const { x, error, recargar } = useCargar<{ restaurante: Restaurante }>(
+    `/datos/admin/restaurantes/${id}`,
+  );
   if (!x) return <p role={error ? 'alert' : 'status'}>{error || '…'}</p>;
   const r = x.restaurante;
   const e = new Map(Object.entries(r.empresa));
@@ -1201,6 +1230,7 @@ export function SuperRestaurante({
         {r.abierto ? t.enLinea : t.fueraLinea}
       </p>
       <KycFicha base={base} kyc={r.kyc} idioma={idioma} />
+      <HistorialCorreo lista={r.historialCorreo} idioma={idioma} />
       <ul className="super-tarjetas">
         <li className="super-tarjeta">
           <span>{t.pedidos30}</span>
@@ -1281,6 +1311,14 @@ export function SuperRestaurante({
                 mascara={r.cuenta.correo}
                 idioma={idioma}
               />
+              {r.duenoId ? (
+                <AccionesCorreo
+                  usuarioId={r.duenoId}
+                  estado={r.correoEstado}
+                  idioma={idioma}
+                  recargar={recargar}
+                />
+              ) : null}
             </dd>
             <dt>{t.telefono}</dt>
             <dd>
