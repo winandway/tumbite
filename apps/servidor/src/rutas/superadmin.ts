@@ -18,7 +18,7 @@ import { pruebasDisputa } from '../disputas';
 import { type Variables, base, exigir } from '../sesion';
 import { hashClave, nuevoId, nuevoToken } from '../cripto';
 import { borrarCuenta } from '../borrarCuenta';
-import { correoRebotado } from '../correo';
+import { REBOTE_VIGENTE, correoRebotado, sinDirecciones } from '../correo';
 import { CORREO_NO_EXISTE, CORREO_NO_SALIO, exigirEnvio, mandarConfirmacion } from './cuentas';
 import { ErrorDatos, leerCuerpo } from '../validar';
 import { accesoDe, alcanceObjetoSql, alcancePedidos, alcanceViajes } from '../accesoInterno';
@@ -1092,13 +1092,15 @@ export async function estadoCorreoDe(
   const f = await db
     .prepare(
       `SELECT correo_confirmado_en AS conf,
-         EXISTS (SELECT 1 FROM correos_rebotados r WHERE r.correo = lower(usuarios.correo)) AS rebotado
+         EXISTS (SELECT 1 FROM correos_rebotados r
+           WHERE r.correo = lower(usuarios.correo) AND r.creado_en > ${REBOTE_VIGENTE}) AS rebotado
        FROM usuarios WHERE id = ?`,
     )
     .bind(usuarioId)
     .first<{ conf: string | null; rebotado: number }>();
-  if (f?.conf) return 'confirmado';
-  return Number(f?.rebotado ?? 0) === 1 ? 'rebotado' : 'sin_confirmar';
+  // Un rebote vigente manda aunque la cuenta haya confirmado antes: hoy su correo no recibe.
+  if (Number(f?.rebotado ?? 0) === 1) return 'rebotado';
+  return f?.conf ? 'confirmado' : 'sin_confirmar';
 }
 
 /** C-CORREGIR-CORREO: los cambios de correo de la cuenta, para la línea de tiempo de la ficha. */
@@ -1107,7 +1109,7 @@ export async function historialCorreoDe(db: D1Database, usuarioId: string) {
     .prepare(
       `SELECT a.accion, a.antes_json AS antes, a.despues_json AS despues, a.creado_en AS fecha, u.nombre AS quien
        FROM auditoria_admin a LEFT JOIN usuarios u ON u.id = a.actor_id
-       WHERE a.objeto = ? AND a.accion IN ('correo_corregido', 'confirmacion_reenviada')
+       WHERE a.objeto = ? AND a.accion IN ('correo_corregido', 'confirmacion_reenviada', 'rebote_quitado')
        ORDER BY a.id DESC LIMIT 20`,
     )
     .bind(`usuario:${usuarioId}`)
@@ -1145,12 +1147,42 @@ const esquemaCorregirCorreo = z.object({
   motivo: z.string().trim().max(300).default(''),
 });
 
+/** C-CORREGIR-CORREO: el mensaje para soporte cuando la cuenta ya confirmó (ver la ruta). */
+export const CORREO_YA_CONFIRMADO =
+  'Esta cuenta ya confirmó su correo; el cambio lo hace la persona desde su app.';
+/** C-CORREGIR-CORREO: como mucho estos correos por hora a una misma cuenta desde el superadmin. */
+export const TOPE_CORREOS_ADMIN_HORA = 3;
+const TOPE_CORREOS_ADMIN =
+  'Ya mandamos 3 correos a esta cuenta en la última hora. Espera un rato antes de volver a intentarlo.';
+
+/**
+ * C-CORREGIR-CORREO: tope por cuenta. Se cuenta en `auditoria_admin` (cada corrección y cada reenvío
+ * ya deja su fila), con el índice por objeto: cero escrituras de más.
+ */
+async function exigirTopeCorreosAdmin(db: D1Database, id: string) {
+  const f = await db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM auditoria_admin
+       WHERE objeto = ? AND accion IN ('correo_corregido', 'confirmacion_reenviada')
+         AND creado_en > datetime('now', '-1 hour')`,
+    )
+    .bind(`usuario:${id}`)
+    .first<{ n: number }>();
+  if (Number(f?.n ?? 0) >= TOPE_CORREOS_ADMIN_HORA)
+    throw new ErrorDatos(TOPE_CORREOS_ADMIN, undefined, 429);
+}
+
 /**
  * C-CORREGIR-CORREO (20 nov 2026, pedido de Richard): soporte corrige el correo de una cuenta
  * (cliente, conductor o dueño de restaurante) cuando la persona lo escribió mal y no puede
  * confirmarlo. La cuenta queda sin confirmar y se le manda sola la confirmación al correo nuevo, por
  * el mismo camino del producto. Queda en auditoria_admin quién, cuándo y el antes y el después
  * (enmascarados). No cambia la contraseña ni las sesiones.
+ *
+ * SEGURIDAD (devuelto por el revisor el 20 nov): solo si la cuenta NO confirmó su correo o si su
+ * correo rebotó. Cambiar el de una cuenta confirmada era una toma de cuenta: el empleado (o su
+ * cuenta robada) ponía un correo suyo, pedía «Olvidé mi contraseña» y se quedaba con las ganancias y
+ * los pagos. Una cuenta confirmada cambia su correo desde su app, con su contraseña.
  */
 superadmin.post('/admin/usuarios/:id/correo', async (c) => {
   const admin = exigir(c, 'admin');
@@ -1164,10 +1196,12 @@ superadmin.post('/admin/usuarios/:id/correo', async (c) => {
     .bind(id)
     .first<{ id: string; nombre: string; correo: string; idioma: string }>();
   if (!u) throw new ErrorDatos('Esa cuenta no existe o está suspendida.', undefined, 404);
+  if ((await estadoCorreoDe(db, id)) === 'confirmado')
+    throw new ErrorDatos(CORREO_YA_CONFIRMADO, undefined, 409);
   if (u.correo.toLowerCase() === d.correo)
     throw new ErrorDatos('Esa cuenta ya tiene ese correo.', 'correo', 409);
   const otra = await db
-    .prepare('SELECT 1 FROM usuarios WHERE correo = ? AND id <> ?')
+    .prepare('SELECT 1 FROM usuarios WHERE correo = ? COLLATE NOCASE AND id <> ?')
     .bind(d.correo, id)
     .first();
   if (otra) throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);
@@ -1178,10 +1212,25 @@ superadmin.post('/admin/usuarios/:id/correo', async (c) => {
   if (bloqueado)
     throw new ErrorDatos('Ese correo está bloqueado por mala conducta.', 'correo', 409);
   if (await correoRebotado(c.env, d.correo)) throw new ErrorDatos(CORREO_NO_EXISTE, 'correo', 422);
-  await db
-    .prepare('UPDATE usuarios SET correo = ?, correo_confirmado_en = NULL WHERE id = ?')
-    .bind(d.correo, id)
-    .run();
+  await exigirTopeCorreosAdmin(db, id);
+  try {
+    // La condición se repite en el UPDATE: si la persona confirmó entre la revisión y aquí, no se toca.
+    const r = await db
+      .prepare(
+        `UPDATE usuarios SET correo = ?, correo_confirmado_en = NULL
+         WHERE id = ? AND (correo_confirmado_en IS NULL OR EXISTS (
+           SELECT 1 FROM correos_rebotados x
+           WHERE x.correo = lower(usuarios.correo) AND x.creado_en > ${REBOTE_VIGENTE}))`,
+      )
+      .bind(d.correo, id)
+      .run();
+    if (!r.meta.changes) throw new ErrorDatos(CORREO_YA_CONFIRMADO, undefined, 409);
+  } catch (e) {
+    // Carrera: otra cuenta tomó ese correo entre la revisión y el cambio (índice único del correo).
+    if (e instanceof Error && /UNIQUE constraint failed: usuarios\.correo/.test(e.message))
+      throw new ErrorDatos('Ya existe una cuenta con ese correo.', 'correo', 409);
+    throw e;
+  }
   const envio = await mandarConfirmacion(c.env, db, {
     id,
     nombre: u.nombre,
@@ -1200,7 +1249,8 @@ superadmin.post('/admin/usuarios/:id/correo', async (c) => {
       JSON.stringify({
         correo: correoEnmascarado(d.correo),
         enviado: envio.ok,
-        motivo: d.motivo,
+        // El motivo lo escribe una persona: nunca guarda una dirección completa.
+        motivo: sinDirecciones(d.motivo),
       }),
     )
     .run();
@@ -1234,6 +1284,7 @@ superadmin.post('/admin/usuarios/:id/confirmacion', async (c) => {
   if (!u) throw new ErrorDatos('Esa cuenta no existe o está suspendida.', undefined, 404);
   if (u.correo_confirmado_en)
     throw new ErrorDatos('Esa cuenta ya confirmó su correo.', undefined, 409);
+  await exigirTopeCorreosAdmin(db, id);
   const envio = await mandarConfirmacion(
     c.env,
     db,
@@ -1262,6 +1313,44 @@ superadmin.post('/admin/usuarios/:id/confirmacion', async (c) => {
     )
     .run();
   exigirEnvio(envio);
+  return c.json({ ok: true, estado: await estadoCorreoDe(db, id) });
+});
+
+/**
+ * C-CORREO-HONESTO (20 nov 2026, devuelto por el revisor): soporte quita el rebote del correo de la
+ * cuenta cuando sabe que la dirección ya recibe (la persona creó o desbloqueó el buzón). Con permiso
+ * (`clientes.corregir_correo`), alcance de la ficha y su fila en el registro (correo enmascarado).
+ */
+superadmin.post('/admin/usuarios/:id/rebote/quitar', async (c) => {
+  const admin = exigir(c, 'admin');
+  const d = await leerCuerpo(c, z.object({ motivo: z.string().trim().max(300).default('') }));
+  const db = base(c);
+  const id = c.req.param('id');
+  const u = await db
+    .prepare(
+      "SELECT correo FROM usuarios WHERE id = ? AND activo = 1 AND rol IN ('cliente','repartidor','restaurante')",
+    )
+    .bind(id)
+    .first<{ correo: string }>();
+  if (!u) throw new ErrorDatos('Esa cuenta no existe o está suspendida.', undefined, 404);
+  const r = await db
+    .prepare('DELETE FROM correos_rebotados WHERE correo = ?')
+    .bind(u.correo.trim().toLowerCase())
+    .run();
+  if (!r.meta.changes)
+    throw new ErrorDatos('El correo de esa cuenta no tiene rebote.', undefined, 409);
+  await db
+    .prepare(
+      'INSERT INTO auditoria_admin (actor_id, accion, objeto, antes_json, despues_json) VALUES (?, ?, ?, ?, ?)',
+    )
+    .bind(
+      admin.id,
+      'rebote_quitado',
+      `usuario:${id}`,
+      null,
+      JSON.stringify({ correo: correoEnmascarado(u.correo), motivo: sinDirecciones(d.motivo) }),
+    )
+    .run();
   return c.json({ ok: true, estado: await estadoCorreoDe(db, id) });
 });
 

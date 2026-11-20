@@ -55,7 +55,6 @@ describe('C-CORREGIR-CORREO: corregir el correo de una cuenta desde el superadmi
     const m = mundo(ENV);
     const total = await m.cuenta('admin', 'Soporte Total');
     const cli = await m.cuenta('cliente', 'Jhon');
-    await m.confirmarCorreo(cli.id);
     const enviados = buzon();
     const correo = nuevo();
     const r = await m.llamar(
@@ -88,6 +87,22 @@ describe('C-CORREGIR-CORREO: corregir el correo de una cuenta desde el superadmi
       accion: 'correo_corregido',
       quien: 'Soporte Total',
     });
+    // Ya confirmada, soporte NO puede cambiarle el correo (sería una toma de cuenta): lo hace la
+    // persona desde su app (segunda vuelta, devuelta por el revisor el 20 nov).
+    const otraVez = await m.llamar(
+      'POST',
+      `/datos/admin/usuarios/${cli.id}/correo`,
+      { correo: nuevo() },
+      total.token,
+    );
+    expect(otraVez.estado).toBe(409);
+    expect(
+      (
+        await m.DB.prepare('SELECT correo FROM usuarios WHERE id = ?')
+          .bind(cli.id)
+          .first<{ correo: string }>()
+      )?.correo,
+    ).toBe(correo);
   });
 
   it('no deja usar un correo de otra cuenta ni uno mal escrito', async () => {

@@ -57,6 +57,11 @@ const T = {
     corregido: 'corrigió el correo',
     reenvio: 'reenvió la confirmación',
     noSalio: '(el enlace no salió)',
+    quitarRebote: 'Quitar el rebote (el buzón ya recibe)',
+    reboteQuitado: 'Quitamos el rebote. Ya puedes reenviar la confirmación.',
+    quitoRebote: 'quitó el rebote',
+    yaConfirmado:
+      'Esta cuenta ya confirmó su correo; el cambio lo hace la persona desde su app, con su contraseña.',
   },
   en: {
     confirmado: 'Confirmed',
@@ -80,6 +85,11 @@ const T = {
     corregido: 'fixed the email',
     reenvio: 'resent the confirmation',
     noSalio: '(the link didn’t go out)',
+    quitarRebote: 'Remove the bounce (the mailbox receives now)',
+    reboteQuitado: 'We removed the bounce. You can resend the confirmation now.',
+    quitoRebote: 'removed the bounce',
+    yaConfirmado:
+      'This account already confirmed its email; the person changes it from their app, with their password.',
   },
 };
 
@@ -101,24 +111,28 @@ export function EstadoDelCorreo({ estado, idioma }: { estado?: EstadoCorreo; idi
   );
 }
 
-/** Las opciones de los tres puntos (solo con el permiso). */
+/**
+ * Las opciones de los tres puntos (solo con el permiso). «Corregir correo» sale solo si la cuenta no
+ * confirmó o si su correo rebotó: cambiar el de una cuenta confirmada sería una toma de cuenta (el
+ * servidor lo rechaza igual) y lo hace la persona desde su app. Con rebote, «Quitar el rebote».
+ */
 export function opcionesCorreo(
   puede: boolean,
   idioma: Idioma,
   abrir: () => void,
   reenviar: (disculpa: boolean) => void,
   estado?: EstadoCorreo,
+  quitarRebote?: () => void,
 ) {
-  if (!puede) return [];
+  if (!puede || estado === 'confirmado') return [];
   const t = enIdioma(T, idioma);
   return [
     { texto: t.corregir, alTocar: abrir },
-    ...(estado === 'confirmado'
-      ? []
-      : [
-          { texto: t.reenviar, alTocar: () => reenviar(false) },
-          { texto: t.reenviarDisculpa, alTocar: () => reenviar(true) },
-        ]),
+    { texto: t.reenviar, alTocar: () => reenviar(false) },
+    { texto: t.reenviarDisculpa, alTocar: () => reenviar(true) },
+    ...(estado === 'rebotado' && quitarRebote
+      ? [{ texto: t.quitarRebote, alTocar: quitarRebote }]
+      : []),
   ];
 }
 
@@ -255,7 +269,11 @@ export function HistorialCorreo({ lista, idioma }: { lista?: CambioCorreo[]; idi
         {lista.map((h) => (
           <li key={`${h.fecha}-${h.accion}-${h.despues}`}>
             {fechaSuper(h.fecha, idioma)} · <strong>{h.quien}</strong>{' '}
-            {h.accion === 'correo_corregido' ? t.corregido : t.reenvio}
+            {h.accion === 'correo_corregido'
+              ? t.corregido
+              : h.accion === 'rebote_quitado'
+                ? t.quitoRebote
+                : t.reenvio}
             {h.antes ? ` · ${h.antes} → ${h.despues}` : h.despues ? ` · ${h.despues}` : ''}
             {h.enviado ? '' : ` ${t.noSalio}`}
           </li>
@@ -286,13 +304,33 @@ export function AccionesCorreo({
   const [aviso, setAviso] = useState<{ ok: boolean; texto: string } | null>(null);
   const [pideCodigo, setPideCodigo] = useState(false);
   const [conDisculpa, setConDisculpa] = useState(false);
+  // Qué repetir después del segundo factor: el reenvío o quitar el rebote.
+  const [repetir, setRepetir] = useState<'reenviar' | 'rebote'>('reenviar');
   async function reenviar(disculpa = conDisculpa) {
     setAviso(null);
     setConDisculpa(disculpa);
     const r = await reenviarConfirmacion(usuarioId, idioma, disculpa);
-    if (r.segundoFactor) return setPideCodigo(true);
+    if (r.segundoFactor) {
+      setRepetir('reenviar');
+      return setPideCodigo(true);
+    }
     setAviso(r);
     recargar();
+  }
+  async function quitarRebote() {
+    setAviso(null);
+    const t = enIdioma(T, idioma);
+    try {
+      await pedir('POST', `/datos/admin/usuarios/${usuarioId}/rebote/quitar`, {});
+      setAviso({ ok: true, texto: t.reboteQuitado });
+      recargar();
+    } catch (x) {
+      if (x instanceof ErrorApi && x.campo === 'segundo_factor') {
+        setRepetir('rebote');
+        return setPideCodigo(true);
+      }
+      setAviso({ ok: false, texto: x instanceof ErrorApi ? x.message : String(x) });
+    }
   }
   const opciones = opcionesCorreo(
     puede,
@@ -300,6 +338,7 @@ export function AccionesCorreo({
     () => setAbierto(true),
     (x) => void reenviar(x),
     estado,
+    () => void quitarRebote(),
   );
   return (
     <>
@@ -307,6 +346,12 @@ export function AccionesCorreo({
       <EstadoDelCorreo estado={estado} idioma={idioma} />
       {opciones.length ? (
         <MenuTresPuntos etiqueta={enIdioma(T, idioma).corregir} opciones={opciones} />
+      ) : null}
+      {puede && estado === 'confirmado' ? (
+        <span className="pista" data-testid="correo-ya-confirmado">
+          {' '}
+          {enIdioma(T, idioma).yaConfirmado}
+        </span>
       ) : null}
       {aviso ? (
         <span className={aviso.ok ? 'pista' : 'error-campo'} role={aviso.ok ? 'status' : 'alert'}>
@@ -320,7 +365,7 @@ export function AccionesCorreo({
           alConfirmar={() => {
             setPideCodigo(false);
             recargarPermisos();
-            void reenviar();
+            void (repetir === 'rebote' ? quitarRebote() : reenviar());
           }}
         />
       ) : null}

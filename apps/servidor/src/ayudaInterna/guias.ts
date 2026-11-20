@@ -2267,6 +2267,9 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
       '«Corregir correo» deja la cuenta sin confirmar y le manda sola, al correo nuevo, el mismo enlace de confirmación que manda la app. Mientras escribes, si el dominio parece mal escrito (gmial.com, gmail.con), el panel sugiere el bueno. No deja usar un correo que ya tiene otra cuenta ni uno bloqueado por mala conducta. No cambia su contraseña ni le cierra la sesión.',
       '«Reenviar confirmación» vuelve a mandar el enlace al correo que ya tiene la cuenta. Si el correo no sale (la dirección no existe o el servicio falló), el panel lo dice con el motivo: nunca dice «enviado» si no salió.',
       'Cada cambio queda en «Cambios del correo», en la misma ficha: quién lo hizo, cuándo, y el correo de antes y el de ahora con solo las dos primeras letras y el dominio. También queda en el registro de acciones del equipo.',
+      'Solo se corrige una cuenta que todavía no confirmó su correo o cuyo correo rebotó. Si la ficha dice «Confirmado», el panel no ofrece corregirlo y explica por qué: el cambio lo hace la persona desde su app, con su contraseña. Es por seguridad: con el correo de una cuenta confirmada se puede cambiar su contraseña y quedarse con sus ganancias y sus pagos.',
+      'Si la persona ya arregló su buzón (lo creó o lo desbloqueó) y la ficha sigue en «Rebotó», en los tres puntos está «Quitar el rebote (el buzón ya recibe)». Queda en el registro. Un rebote también se borra solo a los 30 días.',
+      'A una misma cuenta se le mandan como mucho 3 correos por hora desde el panel (correcciones y reenvíos juntos). Si se pasa, el panel pide esperar.',
       'Lo pueden usar Soporte nivel 2, Supervisor y Total, y solo en las cuentas de su zona de trabajo. Si el segundo factor está encendido, la primera vez pide el código.',
     ],
     capturas: [
@@ -2315,6 +2318,9 @@ const corregirCorreo: Record<IdiomaAyuda, Guia> = {
       '“Fix email” leaves the account unconfirmed and sends the new email the same confirmation link the app sends. While you type, if the domain looks mistyped (gmial.com, gmail.con), the panel suggests the right one. It won’t take an email another account already uses or one blocked for misconduct. It doesn’t change their password or sign them out.',
       '“Resend confirmation” sends the link again to the email the account already has. If the email doesn’t go out (the address doesn’t exist or the service failed), the panel says so with the reason: it never says “sent” when it wasn’t.',
       'Every change shows in “Email changes,” on the same page: who did it, when, and the old and new email showing only the first two letters and the domain. It’s also in the team’s action log.',
+      'You can only fix an account that hasn’t confirmed its email yet, or whose email bounced. If the page says “Confirmed,” the panel doesn’t offer the fix and explains why: the person changes it from their app, with their password. It’s a security rule: whoever controls a confirmed account’s email can reset its password and take its earnings and payouts.',
+      'If the person already fixed their mailbox (created or unblocked it) and the page still says “Bounced,” the three-dot menu has “Remove the bounce (the mailbox receives now).” It’s logged. A bounce also clears on its own after 30 days.',
+      'The panel sends at most 3 emails per hour to the same account (fixes and resends together). Past that, it asks you to wait.',
       'Support level 2, Supervisor and Full access can use it, and only on accounts in their work area. If two-step verification is on, it asks for the code the first time.',
     ],
     capturas: [

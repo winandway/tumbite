@@ -65,6 +65,8 @@ export const PERMISOS_RUTAS_ADMIN: Readonly<Record<string, PermisoRuta>> = {
   // C-CORREGIR-CORREO: corregir el correo de la cuenta y reenviar la confirmación.
   'POST /admin/usuarios/:id/correo': 'clientes.corregir_correo',
   'POST /admin/usuarios/:id/confirmacion': 'clientes.corregir_correo',
+  // C-CORREO-HONESTO: quitar el rebote del correo de la cuenta (con registro).
+  'POST /admin/usuarios/:id/rebote/quitar': 'clientes.corregir_correo',
   'GET /admin/datos-personales/:tipo/:id/:campo': 'clientes.datos_personales',
   // ─── Repartidores, vehículos y papeles
   'GET /admin/repartidores': 'repartidores.ver',
@@ -465,6 +467,7 @@ export const ALCANCE_RUTAS_ADMIN: Readonly<Record<string, AlcanceRuta>> = {
   'POST /admin/usuarios/:id/borrar': ficha('persona'),
   'POST /admin/usuarios/:id/correo': ficha('persona'),
   'POST /admin/usuarios/:id/confirmacion': ficha('persona'),
+  'POST /admin/usuarios/:id/rebote/quitar': ficha('persona'),
   'GET /admin/datos-personales/:tipo/:id/:campo': CONSULTA,
   'GET /admin/repartidores': CONSULTA,
   'GET /admin/repartidores/:id': ficha('repartidor'),

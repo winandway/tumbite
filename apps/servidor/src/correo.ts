@@ -118,7 +118,7 @@ export function esCorreoDePrueba(correo: string): boolean {
 }
 
 /** Las direcciones nunca quedan escritas en un motivo que se guarda o se muestra en el canario. */
-const sinDirecciones = (t: string) =>
+export const sinDirecciones = (t: string) =>
   t.replace(/[^\s@<>"',;:]+@[^\s@<>"',;:]+/g, '<correo>').slice(0, 300);
 
 /**
@@ -126,13 +126,29 @@ const sinDirecciones = (t: string) =>
  * Pasó en producción: Gmail respondió «550 5.1.1 The email account that you tried to reach does not
  * exist», Cloudflare puso la dirección en su lista de bloqueo y el segundo envío volvió con
  * `recipient_suppressed`. Eso es un problema de la dirección, no del sistema.
+ *
+ * Segunda vuelta (20 nov 2026, devuelto por el revisor): SOLO esas dos señales. Antes bastaba con
+ * «suppress», «no existe» o «does not exist» en cualquier parte, y un error del sistema («El sitio no
+ * existe», «token no existe») dejaba una dirección buena bloqueada y escondía la caída al canario.
+ * La lista `rebotados[]` de la respuesta se mira aparte, en `enviarCorreo`.
  */
+const SENAL_REBOTE = [
+  /\brecipient_suppressed\b/,
+  /\b5\.1\.1\b/,
+  /\bemail account\b[^.]*\bdoes not exist\b/,
+];
 export function esFalloDeDestinatario(motivo: string, codigo?: string): boolean {
   const t = `${codigo ?? ''} ${motivo}`.toLowerCase();
-  return /recipient_suppressed|suppress|rebote_permanente|rebote permanente|5\.1\.1|does not exist|no existe/.test(
-    t,
-  );
+  return SENAL_REBOTE.some((r) => r.test(t));
 }
+
+/**
+ * C-CORREO-HONESTO: un rebote vale 30 días; después se le puede volver a escribir (el buzón pudo
+ * crearse o desbloquearse). Se filtra al leer, sin escrituras de más; las filas vencidas se borran
+ * solo cuando ya se está escribiendo un rebote nuevo.
+ */
+export const DIAS_REBOTE = 30;
+export const REBOTE_VIGENTE = `datetime('now', '-${DIAS_REBOTE} days')`;
 
 /** Cuota del día a partir de la que el canario avisa, antes de quedarse sin correos. */
 export const CUPO_ALARMA = 0.8;
@@ -156,12 +172,14 @@ async function anotarFallo(env: Env, tipo: 'sistema' | 'cupo', motivo: string) {
 async function anotarRebote(env: Env, para: string, motivo: string) {
   if (!env.DB) return;
   try {
-    await env.DB.prepare(
-      `INSERT INTO correos_rebotados (correo, motivo) VALUES (?, ?)
-       ON CONFLICT(correo) DO UPDATE SET motivo = excluded.motivo, creado_en = datetime('now')`,
-    )
-      .bind(para.trim().toLowerCase(), sinDirecciones(motivo))
-      .run();
+    await env.DB.batch([
+      env.DB.prepare(
+        `INSERT INTO correos_rebotados (correo, motivo) VALUES (?, ?)
+         ON CONFLICT(correo) DO UPDATE SET motivo = excluded.motivo, creado_en = datetime('now')`,
+      ).bind(para.trim().toLowerCase(), sinDirecciones(motivo)),
+      // Las vencidas ya no cuentan: se van aquí, sin un reloj aparte (usa el índice por fecha).
+      env.DB.prepare(`DELETE FROM correos_rebotados WHERE creado_en <= ${REBOTE_VIGENTE}`),
+    ]);
   } catch (e) {
     console.error('correo: no se pudo anotar el rebote en la base', e);
   }
@@ -171,7 +189,9 @@ async function anotarRebote(env: Env, para: string, motivo: string) {
 export async function correoRebotado(env: Pick<Env, 'DB'>, para: string): Promise<boolean> {
   if (!env.DB) return false;
   try {
-    const f = await env.DB.prepare('SELECT 1 AS si FROM correos_rebotados WHERE correo = ?')
+    const f = await env.DB.prepare(
+      `SELECT 1 AS si FROM correos_rebotados WHERE correo = ? AND creado_en > ${REBOTE_VIGENTE}`,
+    )
       .bind(para.trim().toLowerCase())
       .first<{ si: number }>();
     return Boolean(f);

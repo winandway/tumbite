@@ -32,8 +32,15 @@ const CLIENTE = {
   },
 };
 
-function servidor() {
+function servidor(estado = 'rebotado') {
   const llamadas: { url: string; metodo: string; cuerpo: unknown }[] = [];
+  const datos = {
+    cliente: {
+      ...CLIENTE.cliente,
+      correoEstado: estado,
+      correoConfirmado: estado === 'confirmado',
+    },
+  };
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const cuerpo = typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined;
     llamadas.push({ url, metodo: init?.method ?? 'GET', cuerpo });
@@ -41,7 +48,9 @@ function servidor() {
       return new Response(
         JSON.stringify({ ok: true, correoEnviado: true, aviso: null, estado: 'sin_confirmar' }),
       );
-    return new Response(JSON.stringify(CLIENTE));
+    if (url.endsWith('/rebote/quitar'))
+      return new Response(JSON.stringify({ ok: true, estado: 'sin_confirmar' }));
+    return new Response(JSON.stringify(datos));
   });
   return llamadas;
 }
@@ -89,6 +98,41 @@ describe('C-CORREGIR-CORREO en la ficha', () => {
     expect(
       await screen.findByText('Correo corregido. Le mandamos el enlace de confirmación.'),
     ).toBeInTheDocument();
+  });
+
+  it('cuenta confirmada: no ofrece corregir y explica por qué (seguridad, 20 nov)', async () => {
+    servidor('confirmado');
+    render(
+      conPermisos(
+        ['clientes.ver', 'clientes.corregir_correo'],
+        <SuperCliente base="/panel/control-x" id={ID} idioma="es" />,
+      ),
+    );
+    expect(await screen.findByTestId('correo-ya-confirmado')).toHaveTextContent(
+      /ya confirmó su correo; el cambio lo hace la persona desde su app/,
+    );
+    expect(screen.queryByRole('button', { name: 'Corregir correo' })).toBeNull();
+  });
+
+  it('con rebote, «Quitar el rebote» llama al servidor y lo dice', async () => {
+    const llamadas = servidor('rebotado');
+    const u = userEvent.setup();
+    render(
+      conPermisos(
+        ['clientes.ver', 'clientes.corregir_correo'],
+        <SuperCliente base="/panel/control-x" id={ID} idioma="es" />,
+      ),
+    );
+    await u.click(await screen.findByRole('button', { name: 'Corregir correo' }));
+    await u.click(
+      await screen.findByRole('menuitem', { name: 'Quitar el rebote (el buzón ya recibe)' }),
+    );
+    await waitFor(() =>
+      expect(llamadas.some((l) => l.url === `/datos/admin/usuarios/${ID}/rebote/quitar`)).toBe(
+        true,
+      ),
+    );
+    expect(await screen.findByText(/Quitamos el rebote/)).toBeInTheDocument();
   });
 
   it('sin el permiso no salen las opciones', async () => {
