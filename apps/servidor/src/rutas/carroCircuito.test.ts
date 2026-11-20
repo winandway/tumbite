@@ -67,7 +67,7 @@ async function taxistaVenezolano(e: E, plazas: 4 | 6) {
   const papeles = await yo('GET', '/datos/conductor/papeles');
   const docsCarro = papeles.datos.perfil.documentosVehiculo.carro as string[];
   const docsMios = papeles.datos.perfil.documentosPorServicio.carro as string[];
-  expect(docsMios).toEqual(['licencia_conducir', 'antecedentes_penales']);
+  expect(docsMios).toEqual(['licencia_conducir']);
   const v = await yo('POST', '/datos/conductor/vehiculos', {
     tipo: 'carro',
     marca: 'Toyota',

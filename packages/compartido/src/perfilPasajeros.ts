@@ -163,8 +163,8 @@ const EEUU: PerfilPasajeros = {
 
 /**
  * Venezuela: los precios de moto se muestran en dólares (Ridery, Yummy, Yango [OBS]) y se pagan en
- * efectivo o por pago móvil. Los antecedentes no tienen proveedor automático: el conductor sube su
- * certificado de antecedentes penales y su licencia, y el equipo los revisa. La edad mínima queda
+ * efectivo o por pago móvil. Antecedentes: no se exigen (decisión de Richard del 19 nov 2026; la
+ * política del país los declara exentos). El conductor sube su licencia y el equipo la revisa. La edad mínima queda
  * en 21 hasta que el abogado diga otra cosa (no se baja el piso sin una fuente).
  */
 const VENEZUELA: PerfilPasajeros = {
@@ -174,11 +174,13 @@ const VENEZUELA: PerfilPasajeros = {
   metodosPago: ['efectivo', 'pago_movil'],
   monedaViajes: 'USD',
   placaNacional: true,
-  documentosConductor: ['licencia_moto', 'antecedentes_penales'],
-  // C-CARRO-PAPELES-PAIS: el taxista sube su licencia de conducir y el certificado de antecedentes;
+  // C-PLAZO-PAPELES (Richard, 19 nov 2026): en Venezuela NO se piden antecedentes penales ni se
+  // muestran como requisito. Quien ya subió su certificado lo conserva (el mapa de abajo sigue).
+  documentosConductor: ['licencia_moto'],
+  // C-CARRO-PAPELES-PAIS: el taxista sube su licencia de conducir;
   // los papeles del carro (título o carnet de circulación, RCV, revisión) van con el vehículo.
   // Ficha: docs/investigaciones-rea/2026-11-13-carro-venezuela.md.
-  documentosCarro: ['licencia_conducir', 'antecedentes_penales'],
+  documentosCarro: ['licencia_conducir'],
   requisitosDeDocumento: {
     licencia_moto: ['licencia_moto', 'historial_manejo'],
     licencia_conducir: ['licencia', 'historial_manejo'],

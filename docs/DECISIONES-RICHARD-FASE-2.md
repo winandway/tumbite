@@ -63,3 +63,10 @@ El Decreto de agosto de 2026 (Ley 2466) pone a cargo de la plataforma la ARL y e
 
 - **19 nov 2026 — DECIDIDO por Richard: la comisión de Divoox en Ica, Perú, es del 8 %** (saldo prepago de conductores; Moto, Carro y Envíos; en soles). Richard aprobó la CIFRA. No aprobó la revisión legal ni el encendido: la política sigue con la revisión legal pendiente del abogado peruano y Perú sigue apagado para el público.
 - Siguen pendientes de Richard para Perú: la tarifa final de mototaxi y de carro, el contacto del líder de Ica y el mínimo de la recarga con tarjeta (propuesto: 30 soles).
+
+## Plazo de papeles del conductor (decisión de Richard, 19 nov 2026) — Venezuela; Perú por configuración
+
+- **Decisión:** en Venezuela el conductor trabaja desde que crea la cuenta y tiene 30 días para subir sus papeles; si no los sube, la cuenta queda en pausa (no se borra) y vuelve sola cuando se aprueban. Recordatorios a 15, 10, 5 y 1 día. Venezuela no exige antecedentes penales. Perú, cuando se encienda: licencia y seguro para empezar, 30 días para el resto. Estados Unidos no cambia.
+- **Verificación:** con código propio y Gemini, sin proveedor externo; la IA adelanta y una persona decide. La aprobación automática queda apagada hasta que Richard la encienda.
+- **RIESGO (en rojo):** durante el plazo hay conductores llevando pasajeros sin licencia ni seguro verificados por el equipo.
+- **Para confirmar con Richard:** para empezar se pide la foto de la cara (seguridad del pasajero); el celular no se verifica por SMS en Venezuela porque no hay proveedor encendido ahí; el regalo de arranque de la ciudad, donde esté encendido, se da al conectarse por primera vez dentro del plazo.

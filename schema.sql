@@ -1461,11 +1461,27 @@ BEGIN
 END;
 -- Nadie aprueba una habilitación si a la persona le falta un requisito obligatorio de nivel
 -- «conductor» (los del vehículo se comprueban con el vehículo activo al ofrecer y al aceptar).
+-- C-PLAZO-PAPELES (19 nov 2026): lo que la política de cada país dice de cada requisito, en una forma
+-- que la base puede leer (la vista `conductores_elegibles` y los disparadores de abajo). `exento` = ese
+-- país no lo exige nunca; `para_empezar` = se exige aunque el conductor esté dentro de su plazo. La
+-- llena el servidor desde la configuración del país (apps/servidor/src/esquemaPlazo.ts); nunca a mano.
+CREATE TABLE IF NOT EXISTS politica_requisitos (
+  pais TEXT NOT NULL,
+  requisito TEXT NOT NULL,
+  regla TEXT NOT NULL CHECK (regla IN ('exento', 'para_empezar')),
+  PRIMARY KEY (pais, requisito, regla)
+);
+-- El requisito que el país del conductor declara exento no frena la habilitación (C-PLAZO-PAPELES).
+-- Las bases que ya tenían estos dos disparadores los cambian al arrancar (esquemaPlazo.ts).
 CREATE TRIGGER IF NOT EXISTS habilitaciones_exigen_requisitos
 BEFORE UPDATE OF estado ON habilitaciones
 WHEN NEW.estado = 'aprobada' AND EXISTS (
   SELECT 1 FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
    WHERE sr.servicio_id = NEW.servicio_id AND sr.obligatorio = 1 AND rd.nivel = 'conductor'
+     AND NOT EXISTS (SELECT 1 FROM politica_requisitos x
+                       JOIN repartidores r ON r.usuario_id = NEW.conductor_id
+                       JOIN zonas z ON z.id = r.zona_id
+                      WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'
@@ -1478,6 +1494,10 @@ BEFORE INSERT ON habilitaciones
 WHEN NEW.estado = 'aprobada' AND EXISTS (
   SELECT 1 FROM servicio_requisitos sr JOIN requisitos_def rd ON rd.requisito = sr.requisito
    WHERE sr.servicio_id = NEW.servicio_id AND sr.obligatorio = 1 AND rd.nivel = 'conductor'
+     AND NOT EXISTS (SELECT 1 FROM politica_requisitos x
+                       JOIN repartidores r ON r.usuario_id = NEW.conductor_id
+                       JOIN zonas z ON z.id = r.zona_id
+                      WHERE x.pais = z.pais AND x.requisito = sr.requisito AND x.regla = 'exento')
      AND NOT EXISTS (SELECT 1 FROM cumplimientos c
                       WHERE c.conductor_id = NEW.conductor_id AND c.vehiculo_id = ''
                         AND c.requisito = sr.requisito AND c.estado = 'aprobado'

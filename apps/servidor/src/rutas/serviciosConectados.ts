@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Env } from '../env';
 import { type Variables, base, exigir } from '../sesion';
 import { ErrorDatos, leerCuerpo } from '../validar';
+import { graciaDe } from '../plazoPapeles';
 import {
   SERVICIOS_AL_MOMENTO,
   UPSERT_PREFERENCIA,
@@ -265,7 +266,7 @@ serviciosConectados.get('/conductor/servicios/:id/requisitos', async (c) => {
         )
         .bind(u.id)
         .first<{ id: string; tipo: string }>();
-  const { results } = await db
+  const { results: todos } = await db
     .prepare(
       `SELECT sr.requisito, rd.nivel, rd.doc_tipo FROM servicio_requisitos sr
          JOIN requisitos_def rd ON rd.requisito = sr.requisito
@@ -277,7 +278,10 @@ serviciosConectados.get('/conductor/servicios/:id/requisitos', async (c) => {
     )
     .bind(servicioId, vehiculo?.tipo ?? '-')
     .all<{ requisito: string; nivel: 'conductor' | 'vehiculo'; doc_tipo: string | null }>();
-  if (!results.length && !['comida', 'envios', 'moto', 'carro'].includes(servicioId))
+  // C-PLAZO-PAPELES: lo que su país no exige nunca (Venezuela: antecedentes) ni se pide ni se muestra.
+  const { exentos } = await graciaDe(db, u.id);
+  const results = todos.filter((r) => !exentos.has(r.requisito));
+  if (!todos.length && !['comida', 'envios', 'moto', 'carro'].includes(servicioId))
     throw new ErrorDatos('Ese servicio no existe.', 'servicioId', 404);
   const [cumple, docsVeh, docsCond, kyc] = await Promise.all([
     db

@@ -1581,8 +1581,13 @@ servicios.put('/admin/habilitaciones/:conductor/:servicio', async (c) => {
         )
         .bind(servicio, conductor)
         .all<{ requisito: string }>();
+      // C-PLAZO-PAPELES: lo que el país del conductor declara exento no cuenta como faltante.
+      const { exentos } = await graciaDe(db, conductor);
       return c.json(
-        { error: e.message, requisitosFaltantes: results.map((r) => r.requisito) },
+        {
+          error: e.message,
+          requisitosFaltantes: results.map((r) => r.requisito).filter((r) => !exentos.has(r)),
+        },
         409,
       );
     }

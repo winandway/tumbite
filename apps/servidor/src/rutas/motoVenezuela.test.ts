@@ -134,7 +134,8 @@ async function conductorVenezolano(e: E) {
   expect((await yo('PUT', '/datos/conductor/ciudad', { zonaId: CCS.id })).estado).toBe(200);
   const papeles = await yo('GET', '/datos/conductor/papeles');
   expect(papeles.datos.ciudad.pais).toBe('VE');
-  expect(papeles.datos.perfil.documentos).toEqual(['licencia_moto', 'antecedentes_penales']);
+  // C-PLAZO-PAPELES: Venezuela no pide antecedentes (decisión de Richard del 19 nov 2026).
+  expect(papeles.datos.perfil.documentos).toEqual(['licencia_moto']);
   // La moto: en Venezuela la placa es nacional (no se pide el estado que la emitió).
   const v = await yo('POST', '/datos/conductor/vehiculos', {
     tipo: 'moto',
@@ -153,7 +154,7 @@ async function conductorVenezolano(e: E) {
   expect((await yo('POST', `/datos/conductor/vehiculos/${v.datos.id}/enviar`)).estado).toBe(200);
   // Sus papeles de conductor.
   const docs: string[] = [];
-  for (const t of ['licencia_moto', 'antecedentes_penales']) {
+  for (const t of ['licencia_moto']) {
     const r = await subirA(e, `/datos/conductor/papeles?tipo=${t}&vence=2030-01-01`, rep.token);
     expect(r.estado).toBe(201);
     docs.push(r.datos.id);
@@ -228,8 +229,10 @@ describe('C-PAPELES-CONDUCTOR: en Venezuela los antecedentes los aprueba el equi
     });
     expect(antes.estado).toBe(409);
     expect(antes.datos.requisitosFaltantes).toEqual(
-      expect.arrayContaining(['antecedentes_pasajeros', 'historial_manejo', 'identidad']),
+      expect.arrayContaining(['historial_manejo', 'identidad']),
     );
+    // C-PLAZO-PAPELES: Venezuela no pide antecedentes; no aparecen entre lo que falta.
+    expect(antes.datos.requisitosFaltantes.join(',')).not.toMatch(/antecedentes/);
     // Los antecedentes NO se aprueban a mano sin el papel.
     expect(
       (

@@ -113,6 +113,7 @@ import { MAX_FOTO_BYTES, tipoReal } from './fotos';
 import { asegurarCodigoRepartidor, papelesObligatorios } from './superadmin';
 import { kycAprobado } from './kyc';
 import { empezarPlazo, graciaDe } from '../plazoPapeles';
+import { darRegaloConductorNuevo } from '../saldoConductores';
 import { correrPlazoPapeles } from './verificacionConductor';
 import {
   type MotivoSinComida,
@@ -1531,6 +1532,13 @@ export async function conectarRepartidor(
       'Tómate la foto de tu cara antes de conectarte. Así te reconoce el pasajero.',
       'cara',
       403,
+    );
+  // Dentro del plazo nadie «aprueba» al conductor, así que el regalo de arranque de su ciudad (si
+  // está encendido y le queda presupuesto) se le da aquí, la primera vez que pasa esta puerta. Una
+  // vez en la vida (índice único); sin saldo prepago no recibiría ningún viaje.
+  if (gracia?.activa)
+    await darRegaloConductorNuevo(db, u.id).catch((e: unknown) =>
+      console.error('saldo: regalo de arranque en plazo', e),
     );
   const identidadEnPlazo = Boolean(gracia?.activa) && !gracia?.exigidos.has('identidad');
   // Con el KYC obligatorio encendido, sin verificación aprobada no se reciben pedidos.

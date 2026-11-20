@@ -7,6 +7,7 @@ import {
 } from '@tumbite/compartido';
 import { esquemaTarifasPais } from '../rutas/dinero';
 import { ErrorDatos } from '../validar';
+import { sincronizarPoliticaRequisitos } from '../esquemaPlazo';
 
 /**
  * Interruptores y cifras por país (Fase 2, modelo internacional). Todo nace APAGADO: en EE.UU. se
@@ -206,6 +207,8 @@ export async function guardarConfigPais(
     )
     .bind(`pais:${pais}`, JSON.stringify(nueva))
     .run();
+  // C-PLAZO-PAPELES: la base lee la política del país desde su propia tabla; solo escribe si cambió.
+  await sincronizarPoliticaRequisitos(db, pais);
   return nueva;
 }
 

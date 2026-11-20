@@ -866,6 +866,11 @@ export const COLUMNAS_DEL_ESQUEMA: Record<string, readonly string[]> = {
     "motivo",
     "creado_en"
   ],
+  "politica_requisitos": [
+    "pais",
+    "requisito",
+    "regla"
+  ],
   "preferencias_servicio": [
     "conductor_id",
     "servicio_id",

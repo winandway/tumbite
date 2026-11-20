@@ -19,13 +19,24 @@ BEGIN
 END`,
   // Quién puede recibir una operación de cada servicio (servicio, zona, vehículo aprobado con
   // documentos vigentes, habilitación, requisitos, preferencia, sin bloqueo y conectado).
+  // C-PLAZO-PAPELES (19 nov 2026): `pp` es el plazo de papeles del conductor mientras corre. Dentro
+  // del plazo no se le exige la habilitación aprobada (sí que no esté negada ni suspendida), sirve su
+  // vehículo declarado (salvo rechazado, suspendido o retirado) y de los requisitos solo los que su
+  // país pide «para empezar». Lo que su país declara exento no se exige nunca. Al vencer el plazo,
+  // `pp` deja de existir para la vista (es una fecha) y vuelve la regla entera, sin escribir nada.
+  // La misma regla, en TypeScript, es `evaluarServicio`; las bases que tenían la vista vieja la
+  // cambian al arrancar (esquemaPlazo.ts).
   `CREATE VIEW IF NOT EXISTS conductores_elegibles AS
 SELECT d.usuario_id AS conductor_id, s.id AS servicio_id, v.id AS vehiculo_id, d.zona_id,
        d.lat, d.lng, d.ubicacion_en, d.puntos
   FROM repartidores d
   JOIN usuarios u              ON u.id = d.usuario_id AND u.activo = 1 AND u.rol = 'repartidor'
+  JOIN zonas z                 ON z.id = d.zona_id
+  LEFT JOIN plazo_papeles pp   ON pp.conductor_id = d.usuario_id AND pp.estado = 'en_plazo'
+                              AND pp.vence_en > datetime('now')
   JOIN vehiculos v             ON v.id = d.vehiculo_activo_id AND v.conductor_id = d.usuario_id
-                              AND v.estado = 'aprobado'
+                              AND (v.estado = 'aprobado' OR (pp.conductor_id IS NOT NULL
+                                   AND v.estado NOT IN ('rechazado', 'suspendido', 'retirado')))
   JOIN servicios_zona sz       ON sz.zona_id = d.zona_id AND sz.estado = 'disponible'
                               AND (sz.activo_desde IS NULL OR sz.activo_desde <= datetime('now'))
                               AND (sz.activo_hasta IS NULL OR sz.activo_hasta > datetime('now'))
@@ -33,33 +44,42 @@ SELECT d.usuario_id AS conductor_id, s.id AS servicio_id, v.id AS vehiculo_id, d
   JOIN servicios_implementados si ON si.servicio_id = s.id
   JOIN servicio_vehiculos sv   ON sv.servicio_id = s.id AND sv.vehiculo_tipo = v.tipo
                               AND (sv.anio_minimo IS NULL OR v.anio >= sv.anio_minimo)
-  JOIN habilitaciones h        ON h.conductor_id = d.usuario_id AND h.servicio_id = s.id
-                              AND h.estado = 'aprobada'
-                              AND (h.vence_en IS NULL OR h.vence_en > datetime('now'))
+  LEFT JOIN habilitaciones h   ON h.conductor_id = d.usuario_id AND h.servicio_id = s.id
   JOIN preferencias_servicio p ON p.conductor_id = d.usuario_id AND p.servicio_id = s.id AND p.activa = 1
  WHERE d.conectado = 1
+   AND ((h.estado = 'aprobada' AND (h.vence_en IS NULL OR h.vence_en > datetime('now')))
+        OR (pp.conductor_id IS NOT NULL AND (h.estado IS NULL OR h.estado = 'pendiente')))
    AND NOT EXISTS (
          SELECT 1 FROM conductor_bloqueos b
           WHERE b.conductor_id = d.usuario_id AND b.levantado_en IS NULL
             AND (b.servicio_id IS NULL OR b.servicio_id = s.id)
             AND (b.hasta IS NULL OR b.hasta > datetime('now')))
-   AND (v.tipo NOT IN ('carro', 'moto', 'scooter') OR (
+   AND (pp.conductor_id IS NOT NULL OR v.tipo NOT IN ('carro', 'moto', 'scooter') OR (
          SELECT COUNT(DISTINCT tipo) FROM vehiculo_documentos
           WHERE vehiculo_id = v.id AND estado = 'aprobado' AND tipo IN ('registro', 'seguro')
             AND (vence_en IS NULL OR vence_en > datetime('now'))) = 2)
-   AND (s.transporta_personas = 0 OR EXISTS (
+   AND (pp.conductor_id IS NOT NULL OR s.transporta_personas = 0 OR EXISTS (
          SELECT 1 FROM vehiculo_documentos
           WHERE vehiculo_id = v.id AND estado = 'aprobado' AND tipo = 'seguro_pasajeros'
             AND (vence_en IS NULL OR vence_en > datetime('now'))))
    AND NOT EXISTS (
-         SELECT 1 FROM servicio_requisitos sr
-           JOIN requisitos_def rd ON rd.requisito = sr.requisito
-          WHERE sr.servicio_id = s.id AND sr.obligatorio = 1
+         SELECT 1 FROM (SELECT sr.requisito FROM servicio_requisitos sr
+                         WHERE sr.servicio_id = s.id AND sr.obligatorio = 1
+                        UNION
+                        SELECT svr.requisito FROM servicio_vehiculo_requisitos svr
+                         WHERE svr.servicio_id = s.id AND svr.vehiculo_tipo = v.tipo
+                           AND pp.conductor_id IS NOT NULL) q
+           JOIN requisitos_def rd ON rd.requisito = q.requisito
+          WHERE NOT EXISTS (SELECT 1 FROM politica_requisitos x
+                             WHERE x.pais = z.pais AND x.requisito = q.requisito AND x.regla = 'exento')
+            AND (pp.conductor_id IS NULL OR EXISTS (
+                  SELECT 1 FROM politica_requisitos x
+                   WHERE x.pais = z.pais AND x.requisito = q.requisito AND x.regla = 'para_empezar'))
             AND NOT EXISTS (
                   SELECT 1 FROM cumplimientos c
                    WHERE c.conductor_id = d.usuario_id
                      AND c.vehiculo_id = CASE rd.nivel WHEN 'vehiculo' THEN v.id ELSE '' END
-                     AND c.requisito = sr.requisito AND c.estado = 'aprobado'
+                     AND c.requisito = q.requisito AND c.estado = 'aprobado'
                      AND (c.vence_en IS NULL OR c.vence_en > datetime('now'))))`,
   `CREATE TRIGGER IF NOT EXISTS viajes_transicion_valida
 BEFORE UPDATE OF estado ON viajes

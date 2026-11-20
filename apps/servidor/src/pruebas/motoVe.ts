@@ -46,6 +46,55 @@ export async function subirA(e: EscenarioVe, ruta: string, token: string) {
   return { estado: r.status, datos: (await r.json()) as { id: string } };
 }
 
+/**
+ * Lo que el equipo revisa y aprueba de un conductor de moto (papeles de la moto, licencia, identidad,
+ * edad, casco y la habilitación de Moto). Sirve para el conductor que nace aprobado y para el que
+ * completa sus papeles después (C-PLAZO-PAPELES).
+ */
+export async function aprobarConductorMoto(
+  e: EscenarioVe,
+  rep: { id: string; token: string },
+  vehiculo: string,
+) {
+  const { m, admin } = e;
+  const yo = (metodo: string, ruta: string, cuerpo?: unknown) =>
+    m.llamar(metodo, ruta, cuerpo, rep.token);
+  const equipo = (metodo: string, ruta: string, cuerpo?: unknown) =>
+    m.llamar(metodo, ruta, cuerpo, admin.token);
+  for (const t of ['registro', 'seguro', 'seguro_pasajeros', 'foto_frente'])
+    await subirA(e, `/datos/conductor/vehiculos/${vehiculo}/documentos?tipo=${t}`, rep.token);
+  await yo('POST', `/datos/conductor/vehiculos/${vehiculo}/enviar`);
+  // Los papeles que pide SU país (Venezuela: solo la licencia; Perú también los antecedentes).
+  const pide = (await yo('GET', '/datos/conductor/papeles')).datos.perfil.documentos as string[];
+  for (const t of pide) {
+    const r = await subirA(e, `/datos/conductor/papeles?tipo=${t}&vence=2030-01-01`, rep.token);
+    await equipo('PUT', `/datos/admin/papeles-conductor/${r.datos.id}`, { estado: 'aprobado' });
+  }
+  for (const p of ['doc_frente', 'doc_reverso', 'selfie'])
+    await subirA(e, `/datos/kyc/foto/${p}`, rep.token);
+  await yo('POST', '/datos/kyc/enviar', { docTipo: 'identificacion' });
+  await equipo('PATCH', `/datos/admin/kyc/${rep.id}`, { estado: 'aprobado' });
+  await equipo('PUT', `/datos/admin/cumplimientos/${rep.id}/edad_minima_21`, {
+    estado: 'aprobado',
+  });
+  const veh = await equipo('GET', '/datos/admin/vehiculos?estado=en_revision');
+  const fila = veh.datos.vehiculos.find((x: { id: string }) => x.id === vehiculo);
+  for (const d of fila.documentos)
+    await equipo('PUT', `/datos/admin/vehiculos/${vehiculo}/documentos/${d.id}`, {
+      estado: 'aprobado',
+      venceEn: '2030-01-01',
+    });
+  await equipo('PUT', `/datos/admin/vehiculos/${vehiculo}`, { estado: 'aprobado' });
+  await equipo('PUT', `/datos/admin/cumplimientos/${rep.id}/casco_pasajero`, {
+    estado: 'aprobado',
+    vehiculoId: vehiculo,
+  });
+  expect(
+    (await equipo('PUT', `/datos/admin/habilitaciones/${rep.id}/moto`, { estado: 'aprobada' }))
+      .estado,
+  ).toBe(200);
+}
+
 /** Conductor de Caracas aprobado, con saldo, conectado en la recogida. */
 export const conductorListoVe = (e: EscenarioVe, saldo: number, nombre = 'Conductor Caracas') =>
   conductorListoEn(e, { zonaId: CCS.id, origen: ORIGEN_CCS, saldo, nombre });
@@ -85,36 +134,7 @@ export async function conductorListoEn(
   });
   expect(v.estado).toBe(201);
   const vehiculo = v.datos.id as string;
-  for (const t of ['registro', 'seguro', 'seguro_pasajeros', 'foto_frente'])
-    await subirA(e, `/datos/conductor/vehiculos/${vehiculo}/documentos?tipo=${t}`, rep.token);
-  await yo('POST', `/datos/conductor/vehiculos/${vehiculo}/enviar`);
-  for (const t of ['licencia_moto', 'antecedentes_penales']) {
-    const r = await subirA(e, `/datos/conductor/papeles?tipo=${t}&vence=2030-01-01`, rep.token);
-    await equipo('PUT', `/datos/admin/papeles-conductor/${r.datos.id}`, { estado: 'aprobado' });
-  }
-  for (const p of ['doc_frente', 'doc_reverso', 'selfie'])
-    await subirA(e, `/datos/kyc/foto/${p}`, rep.token);
-  await yo('POST', '/datos/kyc/enviar', { docTipo: 'identificacion' });
-  await equipo('PATCH', `/datos/admin/kyc/${rep.id}`, { estado: 'aprobado' });
-  await equipo('PUT', `/datos/admin/cumplimientos/${rep.id}/edad_minima_21`, {
-    estado: 'aprobado',
-  });
-  const veh = await equipo('GET', '/datos/admin/vehiculos?estado=en_revision');
-  const fila = veh.datos.vehiculos.find((x: { id: string }) => x.id === vehiculo);
-  for (const d of fila.documentos)
-    await equipo('PUT', `/datos/admin/vehiculos/${vehiculo}/documentos/${d.id}`, {
-      estado: 'aprobado',
-      venceEn: '2030-01-01',
-    });
-  await equipo('PUT', `/datos/admin/vehiculos/${vehiculo}`, { estado: 'aprobado' });
-  await equipo('PUT', `/datos/admin/cumplimientos/${rep.id}/casco_pasajero`, {
-    estado: 'aprobado',
-    vehiculoId: vehiculo,
-  });
-  expect(
-    (await equipo('PUT', `/datos/admin/habilitaciones/${rep.id}/moto`, { estado: 'aprobada' }))
-      .estado,
-  ).toBe(200);
+  await aprobarConductorMoto(e, rep, vehiculo);
   await yo('PUT', '/datos/conductor/vehiculo-activo', { vehiculoId: vehiculo });
   if (saldo > 0) {
     await equipo('PUT', '/datos/admin/paises/VE', { recargasPuntoVentaActivas: true });

@@ -405,9 +405,13 @@ describe('C-LECTURAS-VUELTA-RUTAS · las rutas de probar-staging.mjs con tope de
       // recorridos de `politicas_financieras`, una tabla de pocas filas).
       // +8 (19 nov 2026, C-PLAZO-PAPELES): cuatro tablas nuevas apuntan a usuarios y el borrado
       // de una cuenta comprueba cada una (dos lecturas por tabla).
-      ['f1', 505 + 2 * objetosEsquema],
+      // +3 (19 nov 2026, C-PLAZO-PAPELES en la base): al aprobar una habilitación, el disparador mira
+      // si el país del conductor declara exento algún requisito (su ciudad y la tabla de la política,
+      // que tiene un puñado de filas).
+      ['f1', 508 + 2 * objetosEsquema],
       ['migraciones', 6_000, { paso: 'verificar' }],
-      ['migraciones-prueba', 3_000],
+      // +20 (19 nov 2026, C-PLAZO-PAPELES): el disparador de las habilitaciones lee la política del país.
+      ['migraciones-prueba', 3_020],
       ['f2', 76_000],
       ['reloj', 25_500],
     ];

@@ -40,16 +40,15 @@ const SIN_PLAZO: PoliticaPlazoPapeles = {
 const DE_FABRICA = new Map<string, PoliticaPlazoPapeles>([
   // Venezuela: trabaja desde que crea la cuenta; 30 días para el resto. Para empezar, solo la foto
   // de la cara (no es un documento: es seguridad del pasajero).
-  // PENDIENTE (relevo del 19 nov): Richard decidió que en Venezuela NO se exigen antecedentes. Los
-  // `exentos` se llenan (['antecedentes', 'antecedentes_pasajeros']) en el mismo cambio en que la
-  // base los respete (vista `conductores_elegibles` y disparador `habilitaciones_exigen_requisitos`);
-  // antes de eso dejarían a la app diciendo una cosa y a la base otra.
+  // Richard (19 nov): en Venezuela NO se exigen antecedentes, ni se muestran como requisito. La base
+  // lo respeta igual que la app (tabla `politica_requisitos`, vista `conductores_elegibles` y los
+  // disparadores de `habilitaciones`: apps/servidor/src/esquemaPlazo.ts).
   [
     'VE',
     {
       dias: 30,
       paraEmpezar: ['cara'],
-      exentos: [],
+      exentos: ['antecedentes', 'antecedentes_pasajeros'],
       asistente: true,
       aprobacionAutomatica: false,
     },
@@ -67,6 +66,9 @@ const DE_FABRICA = new Map<string, PoliticaPlazoPapeles>([
   ],
 ]);
 
+/** Los países que traen política de fábrica (los demás, sin plazo y sin exentos). */
+export const PAISES_CON_PLAZO: readonly string[] = [...DE_FABRICA.keys()];
+
 export function politicaPlazoDeFabrica(pais: string | null | undefined): PoliticaPlazoPapeles {
   const p = DE_FABRICA.get((pais ?? '').toUpperCase()) ?? SIN_PLAZO;
   return { ...p, paraEmpezar: [...p.paraEmpezar], exentos: [...p.exentos] };
@@ -77,7 +79,8 @@ const REQUISITOS_DE_PAPEL = new Map<PapelParaEmpezar, readonly string[]>([
   ['cara', []],
   ['identidad', ['identidad']],
   ['licencia', ['licencia', 'licencia_moto']],
-  ['seguro', ['seguro_vehiculo']],
+  // El seguro del vehículo y, donde se llevan pasajeros, el que los cubre (en Perú, el SOAT).
+  ['seguro', ['seguro_vehiculo', 'seguro_pasajeros']],
 ]);
 
 /** Los requisitos que se exigen aunque el conductor esté dentro de su plazo. */

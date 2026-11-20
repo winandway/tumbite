@@ -249,8 +249,8 @@ try {
   const papeles = ok(await yo('GET', '/datos/conductor/papeles'), 'qué papeles pide');
   exigir(papeles.ciudad.pais === 'VE', 'la ciudad del conductor no es de Venezuela');
   exigir(
-    papeles.perfil.documentos.join(',') === 'licencia_moto,antecedentes_penales',
-    `Venezuela debería pedir licencia y antecedentes (${papeles.perfil.documentos})`,
+    papeles.perfil.documentos.join(',') === 'licencia_moto',
+    `Venezuela debería pedir solo la licencia, sin antecedentes (${papeles.perfil.documentos})`,
   );
   const moto = ok(
     await yo('POST', '/datos/conductor/vehiculos', {
@@ -270,7 +270,7 @@ try {
     );
   ok(await yo('POST', `/datos/conductor/vehiculos/${moto}/enviar`), 'enviar la moto a revisión');
   const docs = [];
-  for (const t of ['licencia_moto', 'antecedentes_penales'])
+  for (const t of ['licencia_moto'])
     docs.push(
       ok(await subir(`/datos/conductor/papeles?tipo=${t}&vence=2030-01-01`, tokens.conductor), t)
         .id,

@@ -58,10 +58,7 @@ describe('C-CARRO-PAPELES-PAIS: los papeles del taxista dependen de su país', (
       (await e.m.llamar('PUT', '/datos/conductor/ciudad', { zonaId: EVG.id }, rep.token)).estado,
     ).toBe(200);
     const p = await e.m.llamar('GET', '/datos/conductor/papeles', undefined, rep.token);
-    expect(p.datos.perfil.documentosPorServicio.carro).toEqual([
-      'licencia_conducir',
-      'antecedentes_penales',
-    ]);
+    expect(p.datos.perfil.documentosPorServicio.carro).toEqual(['licencia_conducir']);
     expect(p.datos.perfil.documentosVehiculo.carro).toContain('inspeccion');
     // C-CARRO-PAPELES-PAIS: un tipo que no existe («licencia» a secas) dice cuál es el correcto.
     const mal = await subirA(e, '/datos/conductor/papeles?tipo=licencia', rep.token);

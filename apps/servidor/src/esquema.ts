@@ -14,6 +14,12 @@ import {
 } from './resumenCatalogo';
 import { rehacerConductorDocumentos } from './esquemaPapeles';
 import { rehacerCuentasCobro } from './esquemaCuentasCobro';
+import {
+  DISPARADORES_HABILITACION,
+  rehacerElegibilidad,
+  sincronizarPoliticaRequisitos,
+} from './esquemaPlazo';
+import { PAISES_CON_PLAZO, politicaPlazoDeFabrica } from '@tumbite/compartido';
 import { INDICES_BUSCADOR } from './buscadorSql';
 /**
  * Migraciones seguras. schema.sql corre en cada publicación pero solo crea lo que no existe:
@@ -665,6 +671,10 @@ export function huellaEsquema(entorno: Entorno | null): string {
         String(rehacerAprobacionesDinero),
         String(rehacerConductorDocumentos),
         String(rehacerCuentasCobro),
+        DISPARADORES_HABILITACION,
+        String(rehacerElegibilidad),
+        String(sincronizarPoliticaRequisitos),
+        PAISES_CON_PLAZO.map((p) => [p, politicaPlazoDeFabrica(p)]),
         String(sincronizarServicios),
         String(preciosDeFabrica),
         DISPARADORES_RESUMEN_CATALOGO,
@@ -740,7 +750,11 @@ async function migrarCompleto(db: D1Database, entorno: Entorno | null): Promise<
   await rehacerConductorDocumentos(db);
   // C-PAGO-A-CELULAR: Yape y Plin en los tipos de cuenta de cobro (Perú).
   await rehacerCuentasCobro(db);
+  // C-PLAZO-PAPELES: la vista y los disparadores que conocen el plazo, y la política de cada país
+  // en la forma que la base lee.
+  await rehacerElegibilidad(db);
   await asegurarFase3(db);
+  await sincronizarPoliticaRequisitos(db);
   await preciosDeFabrica(db);
   await sincronizarServicios(db, entorno);
   await revisarColumnas(db);

@@ -4,7 +4,12 @@ import { guardarConfigQuejas, leerConfigQuejas } from '../devoluciones';
 import { hacerOPedirAprobacion } from '../finanzas/controlDual';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { correoCanonico, resumenEtiquetas, telefonoCanonico } from '@tumbite/compartido';
+import {
+  correoCanonico,
+  diasRestantes,
+  resumenEtiquetas,
+  telefonoCanonico,
+} from '@tumbite/compartido';
 import type { Env } from '../env';
 import { anotarEvento, cancelarConReembolso } from '../manager';
 import { soltarPedido } from './operacion';
@@ -378,6 +383,20 @@ superadmin.get('/admin/ciudades', async (c) => {
 
 // ───────────────────────── Superadmin: repartidores ─────────────────────────
 
+/** C-PLAZO-PAPELES: con cuántos días o menos un plazo cuenta como «por vencer» en la lista. */
+export const DIAS_PLAZO_POR_VENCER = 10;
+
+function plazoDeFila(estado: string | null, vence: string | null) {
+  if (!estado || !vence) return { papeles: 'sin_plazo', diasPlazo: null, plazoVence: null };
+  const dias = diasRestantes(vence);
+  const vencido = estado === 'vencido' || (estado === 'en_plazo' && dias <= 0);
+  return {
+    papeles: estado === 'completo' ? 'completo' : vencido ? 'vencido' : 'en_plazo',
+    diasPlazo: estado === 'en_plazo' && !vencido ? dias : null,
+    plazoVence: estado === 'completo' ? null : vence,
+  };
+}
+
 superadmin.get('/admin/repartidores', async (c) => {
   exigir(c, 'admin');
   const db = base(c);
@@ -408,6 +427,19 @@ superadmin.get('/admin/repartidores', async (c) => {
     filtros.push('d.codigo > ?');
     valores.push(despues);
   }
+  // C-PLAZO-PAPELES: «con plazo por vencer» = le quedan DIAS_PLAZO_POR_VENCER días o menos y todavía
+  // no completa sus papeles (por el índice de estado y fecha); «vencido» = ya está en pausa.
+  const plazo = c.req.query('plazo') ?? '';
+  if (plazo === 'por_vencer')
+    filtros.push(
+      `pp.estado = 'en_plazo' AND pp.vence_en > datetime('now') AND pp.vence_en <= datetime('now', '+${DIAS_PLAZO_POR_VENCER} days')`,
+    );
+  else if (plazo === 'vencido')
+    filtros.push(
+      "(pp.estado = 'vencido' OR (pp.estado = 'en_plazo' AND pp.vence_en <= datetime('now')))",
+    );
+  else if (plazo === 'en_plazo')
+    filtros.push("pp.estado = 'en_plazo' AND pp.vence_en > datetime('now')");
   // C-PERMISOS-FINOS: solo los de la zona (y los servicios) de trabajo de quien mira, en la consulta.
   const alc = alcanceObjetoSql(accesoDe(c), 'repartidor', 'u.id');
   if (alc.sql) {
@@ -418,8 +450,10 @@ superadmin.get('/admin/repartidores', async (c) => {
     .prepare(
       `SELECT u.id, u.nombre, u.correo, u.telefono, d.codigo, d.zona_id AS zonaId, d.conectado, d.puntos, d.ubicacion_en AS visto, d.tipo,
         (SELECT COUNT(*) FROM pedidos p WHERE p.repartidor_id = u.id AND p.estado = 'entregado') AS entregas,
-        x.vehiculo_tipo AS vehiculo, x.placa, x.seguro_vence, x.seguro_tumbite, x.licencia_vence, x.antecedentes
+        x.vehiculo_tipo AS vehiculo, x.placa, x.seguro_vence, x.seguro_tumbite, x.licencia_vence, x.antecedentes,
+        pp.estado AS plazo_estado, pp.vence_en AS plazo_vence
        FROM repartidores d JOIN usuarios u ON u.id = d.usuario_id LEFT JOIN repartidor_datos x ON x.usuario_id = d.usuario_id
+       LEFT JOIN plazo_papeles pp ON pp.conductor_id = d.usuario_id
        WHERE ${filtros.join(' AND ')} ORDER BY d.codigo LIMIT ?`,
     )
     .bind(...valores, POR_PAGINA + 1)
@@ -444,6 +478,8 @@ superadmin.get('/admin/repartidores', async (c) => {
       seguro: r.seguro_tumbite ? 'vigente' : estadoVencimiento(r.seguro_vence as string | null),
       licencia: estadoVencimiento(r.licencia_vence as string | null),
       antecedentes: String(r.antecedentes ?? 'pendiente'),
+      // C-PLAZO-PAPELES: el estado de sus papeles y los días que le quedan (null = sin plazo).
+      ...plazoDeFila(r.plazo_estado as string | null, r.plazo_vence as string | null),
     })),
     siguiente: hayMas ? String(pagina.at(-1)?.codigo ?? '') : null,
   });

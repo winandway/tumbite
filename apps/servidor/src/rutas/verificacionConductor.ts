@@ -550,11 +550,17 @@ export async function anotarDecisionHumana(
 // ───────────────────────── La tarea diaria del plazo ─────────────────────────
 
 /** ¿Ya puede trabajar con la regla completa, sin plazo? Entonces el plazo se cierra. */
-async function plazoCumplido(db: D1Database, conductorId: string) {
-  const { servicios } = await estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER, {
-    sinPlazo: true,
-  });
-  return servicios.some((s) => s.puedeActivar);
+export async function plazoCumplido(db: D1Database, conductorId: string) {
+  // El plazo ya no le hace falta cuando todo lo que puede activar gracias a él también lo puede
+  // activar con la regla entera. (No basta «algún servicio»: Comida no exige casi nada y cerraría
+  // el plazo de quien todavía depende de él para Moto o Carro.)
+  const [con, sin] = await Promise.all([
+    estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER),
+    estadoDelConductor(db, conductorId, false, Number.MAX_SAFE_INTEGER, { sinPlazo: true }),
+  ]);
+  const entera = new Set(sin.servicios.filter((s) => s.puedeActivar).map((s) => s.servicioId));
+  const conPlazo = con.servicios.filter((s) => s.puedeActivar);
+  return conPlazo.length > 0 && conPlazo.every((s) => entera.has(s.servicioId));
 }
 
 /** La vuelta diaria del plazo (la llama el reloj en su vuelta de cada hora; corre una vez al día). */
