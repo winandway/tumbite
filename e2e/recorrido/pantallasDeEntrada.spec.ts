@@ -143,16 +143,20 @@ for (const idioma of ['es', 'en'] as const) {
       .getByPlaceholder(en ? 'Full name' : 'Nombre y apellido')
       .fill(en ? 'Jordan Lee' : 'Marco Rossi');
     await p.getByPlaceholder(en ? 'email@example.com' : 'correo@ejemplo.com').fill(correo);
-    await p
-      .getByPlaceholder(en ? 'Mobile phone' : 'Celular', { exact: true })
-      .fill(en ? '3055550145' : '3055550144');
+    // El celular es único por cuenta y el sitio de pruebas guarda las corridas anteriores:
+    // cada corrida usa uno distinto (uno fijo choca con «Ese teléfono ya tiene una cuenta»).
+    const celular = `30555${String(Date.now() % 100000).padStart(5, '0')}`;
+    const casillaCelular = p.getByPlaceholder(en ? 'Mobile phone' : 'Celular', { exact: true });
+    await casillaCelular.fill(celular);
     await p.locator('input[type="password"]').fill('Recorrido-2026-entrada');
     // En la foto, un correo neutro (el de la corrida lleva letras al azar).
     if (CAPTURAS || REVISION) {
       const visible = p.getByPlaceholder(en ? 'email@example.com' : 'correo@ejemplo.com');
       await visible.fill(en ? 'email@example.com' : 'correo@ejemplo.com');
+      await casillaCelular.fill(en ? '3055550145' : '3055550144');
       await guardar(p, 'app-restaurante-app-crear-cuenta', true);
       await visible.fill(correo);
+      await casillaCelular.fill(celular);
     }
     await p.getByRole('checkbox').first().click();
     await p
