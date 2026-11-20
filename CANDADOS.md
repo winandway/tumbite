@@ -5937,7 +5937,7 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
 
 - **Qué pasaba:** la pantalla de entrar de Divoox Restaurants decía «Las cuentas de restaurante se crean en divoox.com/panel. Aquí solo entras», sin enlace, sin botón y sin soporte: exigía una computadora.
 - **Arreglo:** la app usa la misma pantalla de acceso con `rolRegistro="restaurante"`: «Crear cuenta de restaurante» crea la cuenta dentro de la app (mismo registro del panel). Ya dentro, «Completar mi restaurante» abre la ficha del panel dentro de la app con la sesión iniciada (C-PUENTE-PANEL) y «Ya lo completé» vuelve a comprobar. En entrar y en crear cuenta de las tres apps, y en el acceso del panel web, hay «¿Necesitas ayuda?» que abre Soporte sin iniciar sesión.
-- **Tiendas:** la cuenta creada en la app se borra desde la app («Más», «Borrar mi cuenta», `OpcionesCuenta`). La pantalla de entrar de Restaurants cambió: el auditor de tiendas lo revisa antes de cualquier envío.
+- **Tiendas:** la cuenta creada en la app se borra desde la app («Más», «Borrar mi cuenta», `OpcionesCuenta`). Desde el 20 nov 2026 (hallazgo del auditor de tiendas) también desde la pantalla «sin restaurante», que no tiene «Más»: ahí va `<OpcionesCuenta />` en lugar del botón «Salir» suelto; el candado lo exige y el recorrido borra la cuenta recién creada desde esa pantalla (visto en rojo). La pantalla de entrar de Restaurants cambió: el auditor de tiendas lo revisa antes de cualquier envío.
 - **Pruebas (vistas en rojo):** las mismas dos de arriba.
 
 ## C-FECHA-MODERNA — una sola casilla de fecha, con el orden del país (19 nov 2026, orden de Richard) — todos los países

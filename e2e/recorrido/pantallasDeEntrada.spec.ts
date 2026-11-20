@@ -166,6 +166,18 @@ for (const idioma of ['es', 'en'] as const) {
     expect(sqlLocal(`SELECT rol FROM usuarios WHERE correo = '${correo}'`)[0]).toMatchObject({
       rol: 'restaurante',
     });
+    // La cuenta recién creada se borra desde esa misma pantalla, sin completar el restaurante.
+    await p.getByTestId('cuenta-tres-puntos').click();
+    await p.getByTestId('borrar-cuenta').click();
+    await p
+      .getByPlaceholder(en ? 'Type DELETE to confirm' : 'Escribe BORRAR para confirmar')
+      .fill(en ? 'DELETE' : 'BORRAR');
+    await guardar(p, 'app-restaurante-app-borrar-cuenta');
+    await p.getByRole('button', { name: en ? 'Delete my account' : 'Borrar mi cuenta' }).click();
+    await expect(
+      p.getByText(en ? 'Your account was deleted' : 'Tu cuenta quedó borrada'),
+    ).toBeVisible();
+    expect(sqlLocal(`SELECT id FROM usuarios WHERE correo = '${correo}'`)).toHaveLength(0);
     await ctx.close();
   });
 

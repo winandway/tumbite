@@ -78,6 +78,11 @@ describe('C-RESTAURANTE-DESDE-EL-TELEFONO y C-AYUDA-A-LA-VISTA', () => {
   });
   it('quien crea su cuenta en la app la puede borrar desde la app (lo exige Apple)', () => {
     expect(leer('apps/restaurante/src/Mas.tsx')).toContain('OpcionesCuenta');
+    // También ANTES de completar el restaurante: la pantalla «sin restaurante» no tiene «Más»
+    // (hallazgo del auditor de tiendas, 20 nov 2026; visto en rojo con el botón «Salir» suelto).
+    const inicio = leer('apps/restaurante/src/Inicio.tsx');
+    const sinRest = inicio.slice(inicio.indexOf('if (rest === null) {'));
+    expect(sinRest.slice(0, sinRest.indexOf('</Pantalla>'))).toContain('<OpcionesCuenta />');
     expect(leer('packages/movil/src/OpcionesCuenta.tsx')).toContain('testID="borrar-cuenta"');
   });
 });
