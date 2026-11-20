@@ -2237,7 +2237,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "Para repartir: abre la app Divoox Driver, toca «¿Eres nuevo? Crea tu cuenta» y completa tus datos.",
    "Te llega un correo para confirmar que es tuyo. Mientras tanto ya puedes usar Divoox."
   ],
-  "cuerpo": "En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en el panel, desde la computadora. Quien reparte se registra en la app Divoox Driver. En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito."
+  "cuerpo": "En Divoox hay tres puertas de entrada, una por cada forma de usarlo. Quien pide comida se registra en la app de Divoox. El restaurante crea su cuenta en la app Divoox Restaurants o en el panel web. Quien reparte se registra en la app Divoox Driver. En las tres se pide lo mismo: tu nombre, tu correo, tu celular y una contraseña, que puedes ver con el ojito antes de guardarla. Si se te cierra la pantalla a mitad de camino, al volver está todo lo que habías escrito."
  },
  {
   "idioma": "es",
@@ -4647,7 +4647,7 @@ export const DOCS_PUBLICOS: readonly GuiaPublica[] = [
    "To deliver: open the Divoox Driver app, tap “New here? Create your account,” and fill in your details.",
    "We email you a link to confirm it’s yours. Meanwhile, you can already use Divoox."
   ],
-  "cuerpo": "Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the dashboard, from a computer. Drivers sign up in the Divoox Driver app. All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back."
+  "cuerpo": "Divoox has three front doors, one for each way to use it. People who order food sign up in the Divoox app. Restaurants create their account in the Divoox Restaurants app or in the web dashboard. Drivers sign up in the Divoox Driver app. All three ask for the same things: your name, your email, your phone, and a password, which you can check with the eye icon before saving. If the screen closes halfway, everything you typed is still there when you come back."
  },
  {
   "idioma": "en",

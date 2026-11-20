@@ -7,7 +7,7 @@ import {
   formatearMonto,
   useBorrador,
 } from '@tumbite/compartido';
-import { Campo } from './CampoClave';
+import { CampoFecha } from './CampoFecha';
 import { pedir } from './api';
 
 /**
@@ -18,8 +18,8 @@ const T = {
   es: {
     titulo: 'Informes',
     ayuda: 'Pedidos del rango por ciudad y moneda. «Plataforma» es lo que queda para Divoox.',
-    desde: 'Desde (AAAA-MM-DD)',
-    hasta: 'Hasta (AAAA-MM-DD)',
+    desde: 'Desde',
+    hasta: 'Hasta',
     ver: 'Ver informe',
     csv: 'Descargar CSV',
     vacio: 'No hay pedidos en ese rango.',
@@ -40,8 +40,8 @@ const T = {
   en: {
     titulo: 'Reports',
     ayuda: 'Orders in the range by city and currency. “Platform” is what Divoox keeps.',
-    desde: 'From (YYYY-MM-DD)',
-    hasta: 'To (YYYY-MM-DD)',
+    desde: 'From',
+    hasta: 'To',
     ver: 'See report',
     csv: 'Download CSV',
     vacio: 'No orders in that range.',
@@ -119,8 +119,18 @@ export function SuperInformes({ idioma }: { idioma: Idioma }) {
       <p className="pista">{t.ayuda}</p>
       <form className="flex-form" noValidate onSubmit={(e) => void ver(e)}>
         <div className="flex-inline">
-          <Campo etiqueta={t.desde} valor={v.desde} cambiar={(x) => b.cambiar('desde', x)} />
-          <Campo etiqueta={t.hasta} valor={v.hasta} cambiar={(x) => b.cambiar('hasta', x)} />
+          <CampoFecha
+            etiqueta={t.desde}
+            valor={v.desde}
+            cambiar={(x) => b.cambiar('desde', x)}
+            idioma={idioma}
+          />
+          <CampoFecha
+            etiqueta={t.hasta}
+            valor={v.hasta}
+            cambiar={(x) => b.cambiar('hasta', x)}
+            idioma={idioma}
+          />
         </div>
         {error ? (
           <p className="error-general" role="alert">

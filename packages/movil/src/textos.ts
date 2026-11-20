@@ -7,6 +7,7 @@ const es = {
   cuentaDe: {
     cliente: 'Cuenta de cliente: para pedir comida',
     repartidor: 'Cuenta de repartidor: para repartir con Divoox',
+    restaurante: 'Cuenta de restaurante: para recibir pedidos',
   },
   aceptas: 'Acepto los',
   faltaAceptar: 'Marca la casilla para aceptar los términos y la política de privacidad.',
@@ -16,7 +17,7 @@ const es = {
   privacidad: 'Política de privacidad',
   legales: 'Términos y privacidad',
   borrarCuenta: 'Borrar mi cuenta',
-  yaTengo: '¿Ya tienes cuenta? Entra',
+  yaTengo: '¿Ya tienes cuenta? Entrar',
   noTengo: '¿Eres nuevo? Crea tu cuenta',
   seguirMirando: 'Seguir mirando sin cuenta',
   volver: 'Volver',
@@ -30,7 +31,7 @@ const es = {
   telefono: 'Celular',
   invitacion: 'Código de invitación (opcional)',
   invitacionAyuda: 'Si alguien te invitó',
-  cumple: 'Fecha de cumpleaños (opcional, AAAA-MM-DD)',
+  cumple: 'Fecha de cumpleaños (opcional)',
   cumpleAyuda: 'Para tu regalo de cumpleaños',
   verClave: 'Ver la contraseña',
   ocultarClave: 'Ocultar la contraseña',
@@ -46,7 +47,10 @@ const es = {
   hola: 'Hola',
   rolEquivocado:
     'Esta cuenta no es de esta app. Descarga la app de Divoox que corresponde a tu cuenta.',
-  soloPanel: 'Las cuentas de restaurante se crean en divoox.com/panel. Aquí solo entras.',
+  crearCuentaRestaurante: 'Crear cuenta de restaurante',
+  volverAEntrar: 'Volver a entrar',
+  necesitasAyuda: '¿Necesitas ayuda?',
+  terminosRestaurantes: 'Términos para restaurantes',
   franjaPruebas: 'PRUEBAS',
   franjaPruebasDetalle: 'App de pruebas: no es la de la tienda',
   pistaAppDePruebas:
@@ -64,6 +68,7 @@ const en: T = {
   cuentaDe: {
     cliente: 'Customer account: to order food',
     repartidor: 'Driver account: to deliver with Divoox',
+    restaurante: 'Restaurant account: to receive orders',
   },
   aceptas: 'I agree to the',
   faltaAceptar: 'Check the box to accept the terms and the privacy policy.',
@@ -87,7 +92,7 @@ const en: T = {
   telefono: 'Mobile phone',
   invitacion: 'Invitation code (optional)',
   invitacionAyuda: 'If someone invited you',
-  cumple: 'Birthday (optional, YYYY-MM-DD)',
+  cumple: 'Birthday (optional)',
   cumpleAyuda: 'For your birthday gift',
   verClave: 'Show password',
   ocultarClave: 'Hide password',
@@ -104,7 +109,10 @@ const en: T = {
   hola: 'Hi',
   rolEquivocado:
     'This account doesn’t belong to this app. Please download the Divoox app for your account type.',
-  soloPanel: 'Restaurant accounts are created at divoox.com/panel. Sign in here.',
+  crearCuentaRestaurante: 'Create a restaurant account',
+  volverAEntrar: 'Back to sign in',
+  necesitasAyuda: 'Need help?',
+  terminosRestaurantes: 'Restaurant Terms',
   franjaPruebas: 'TEST',
   franjaPruebasDetalle: 'Test app (PRUEBAS): not the store version',
   pistaAppDePruebas:

@@ -5917,3 +5917,23 @@ Completa a C-DOCS-AL-GRANO y C-SEO-DESCRIPCION (más arriba, mismo día), que ya
   - Ayuda interna «?» (nunca Docs públicos): guía `fix-account-email` en Soporte, es/en, con capturas del recorrido local (`e2e/recorrido/corregirCorreoAdmin.spec.ts`, CAPTURAS=1 → ~/Divoox-privado/ayuda-interna) subidas con `scripts/docs/subir-ayuda-interna.mjs`.
 - **Pruebas:** `apps/servidor/src/rutas/corregirCorreoAdmin.test.ts` (6; las 5 primeras en rojo con el superadmin anterior: la ruta no existía) y `apps/panel/src/panel/corregirCorreo.test.tsx` (2). El recorrido local `corregirCorreoAdmin.spec.ts` lo comprueba en el navegador.
 - **Qué NO tocar:** no corregir correos con un UPDATE suelto (no queda registro ni sale la confirmación); no mostrar el correo completo en el registro.
+
+## C-SIN-CALLEJON — de «Crear cuenta» siempre se vuelve a «Entrar» (19 nov 2026, orden de Richard) — todos los países
+
+- **Qué pasaba:** en Driver, desde «¿Eres nuevo?» se llegaba a «Crear cuenta» y no había cómo volver a «Entrar»: el único enlace estaba al final del formulario, debajo del teclado.
+- **Arreglo:** una sola pieza (`packages/movil/src/VolverAEntrar.tsx`) para toda pantalla de antes de entrar de las tres apps: flecha «Volver a entrar» arriba, enlace «¿Ya tienes cuenta? Entrar» arriba y al final, botón atrás de Android y deslizar desde el borde en iPhone. Cada modo guarda su borrador (`app-entrar`, `app-registro`): ir y volver no pierde lo escrito.
+- **Pruebas (vistas en rojo):** `packages/compartido/src/candadoPantallasDeEntrada.test.ts` y `e2e/recorrido/pantallasDeEntrada.spec.ts`.
+
+## C-RESTAURANTE-DESDE-EL-TELEFONO y C-AYUDA-A-LA-VISTA — Restaurants crea su cuenta en la app (19 nov 2026, orden de Richard) — todos los países
+
+- **Qué pasaba:** la pantalla de entrar de Divoox Restaurants decía «Las cuentas de restaurante se crean en divoox.com/panel. Aquí solo entras», sin enlace, sin botón y sin soporte: exigía una computadora.
+- **Arreglo:** la app usa la misma pantalla de acceso con `rolRegistro="restaurante"`: «Crear cuenta de restaurante» crea la cuenta dentro de la app (mismo registro del panel). Ya dentro, «Completar mi restaurante» abre la ficha del panel dentro de la app con la sesión iniciada (C-PUENTE-PANEL) y «Ya lo completé» vuelve a comprobar. En entrar y en crear cuenta de las tres apps, y en el acceso del panel web, hay «¿Necesitas ayuda?» que abre Soporte sin iniciar sesión.
+- **Tiendas:** la cuenta creada en la app se borra desde la app («Más», «Borrar mi cuenta», `OpcionesCuenta`). La pantalla de entrar de Restaurants cambió: el auditor de tiendas lo revisa antes de cualquier envío.
+- **Pruebas (vistas en rojo):** las mismas dos de arriba.
+
+## C-FECHA-MODERNA — una sola casilla de fecha, con el orden del país (19 nov 2026, orden de Richard) — todos los países
+
+- **Qué pasaba:** las fechas se pedían a mano como «AAAA-MM-DD» (cumpleaños del registro, vencimientos del conductor, promociones y cierres del restaurante, cupones e informes del panel). Un guion mal puesto no dejaba crear la cuenta.
+- **Arreglo:** lógica única en `packages/compartido/src/fechaEscrita.ts` y dos piezas que la usan: `packages/movil/src/CampoFecha.tsx` (apps) y `apps/panel/src/panel/CampoFecha.tsx` (web y panel). Teclado numérico, las barras salen solas, un primer dígito imposible se completa solo, borrar se come la barra. El orden sale del PAÍS (región del teléfono o del navegador; si no, el país de la ciudad; si no, día/mes/año) con los formatos regionales del sistema: Estados Unidos mes/día/año; América Latina día/mes/año. Al servidor sigue yendo «AAAA-MM-DD». Una fecha opcional vacía o a medias nunca bloquea; lo imposible se dice en palabras sin borrar lo escrito.
+- **No tocar:** PROHIBIDO pedir una fecha en una casilla de texto libre o enseñar «AAAA-MM-DD» en una etiqueta. Sin `Intl.Locale` (motores viejos) rige el respaldo mínimo de territorios con mes primero.
+- **Pruebas (vistas en rojo):** `packages/compartido/src/fechaEscrita.test.ts` (Estados Unidos, Venezuela, Perú, Colombia, México y más), el candado de pantallas de entrada y el recorrido.

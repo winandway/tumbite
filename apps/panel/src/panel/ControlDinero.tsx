@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { CampoFecha } from './CampoFecha';
 import {
   type Idioma,
   almacenNavegador,
@@ -108,7 +109,7 @@ const T = {
     usosMax: 'Usos totales (vacío = sin tope)',
     primerPedido: 'Solo primer pedido',
     destacado: 'Destacado en el inicio',
-    venceCupon: 'Vence (AAAA-MM-DD, vacío = nunca)',
+    venceCupon: 'Vence (vacío = nunca)',
     crear: 'Crear cupón',
     creado: 'Cupón creado.',
     usos: 'Usos',
@@ -228,7 +229,7 @@ const T = {
     usosMax: 'Total uses (empty = no cap)',
     primerPedido: 'First order only',
     destacado: 'Featured on home',
-    venceCupon: 'Expires (YYYY-MM-DD, empty = never)',
+    venceCupon: 'Expires (empty = never)',
     crear: 'Create coupon',
     creado: 'Coupon created.',
     usos: 'Uses',
@@ -1122,15 +1123,12 @@ export function ControlDinero({ idioma }: { idioma: Idioma }) {
               inputMode="numeric"
             />
           </label>
-          <label className="campo">
-            <span>{t.venceCupon}</span>
-            <input
-              value={nuevo.venceEn}
-              onChange={(ev) => setNuevo({ venceEn: ev.target.value })}
-              aria-label={t.venceCupon}
-              placeholder="2026-12-31"
-            />
-          </label>
+          <CampoFecha
+            etiqueta={t.venceCupon}
+            valor={nuevo.venceEn}
+            cambiar={(x) => setNuevo({ venceEn: x })}
+            idioma={idioma}
+          />
           <label>
             <input
               type="checkbox"

@@ -12,7 +12,16 @@ import {
   diaDeHoyLocal,
   contar,
 } from '@tumbite/compartido';
-import { C, Campo, alSalirTelefono, almacenTelefono, e, useSesion, Text } from '@tumbite/movil';
+import {
+  C,
+  Campo,
+  CampoFecha,
+  alSalirTelefono,
+  almacenTelefono,
+  e,
+  useSesion,
+  Text,
+} from '@tumbite/movil';
 import { BotonGrande, Tarjeta } from './piezas/ui';
 
 /**
@@ -36,8 +45,8 @@ const T = {
     minimo: 'Pedido mínimo (opcional)',
     minimoGasta: 'Lo que tiene que gastar',
     usos: 'Máximo de pedidos (opcional)',
-    inicia: 'Empieza (AAAA-MM-DD)',
-    vence: 'Termina (AAAA-MM-DD)',
+    inicia: 'Empieza',
+    vence: 'Termina',
     crear: 'Crear promoción',
     creada: 'Promoción creada.',
     terminar: 'Terminar',
@@ -62,8 +71,8 @@ const T = {
     minimo: 'Minimum order (optional)',
     minimoGasta: 'What they need to spend',
     usos: 'Maximum orders (optional)',
-    inicia: 'Starts (YYYY-MM-DD)',
-    vence: 'Ends (YYYY-MM-DD)',
+    inicia: 'Starts',
+    vence: 'Ends',
     crear: 'Create promotion',
     creada: 'Promotion created.',
     terminar: 'End',
@@ -250,12 +259,18 @@ export function Promociones({ alVolver }: { alVolver: () => void }) {
               keyboardType="number-pad"
               onChangeText={(x) => b.cambiar('usos', x.replace(/\D/g, ''))}
             />
-            <Campo
+            <CampoFecha
               etiqueta={t.inicia}
-              value={v.inicia}
-              onChangeText={(x) => b.cambiar('inicia', x)}
+              valor={v.inicia}
+              cambiar={(x) => b.cambiar('inicia', x)}
+              idioma={idioma}
             />
-            <Campo etiqueta={t.vence} value={v.vence} onChangeText={(x) => b.cambiar('vence', x)} />
+            <CampoFecha
+              etiqueta={t.vence}
+              valor={v.vence}
+              cambiar={(x) => b.cambiar('vence', x)}
+              idioma={idioma}
+            />
             <BotonGrande texto={t.crear} alTocar={() => void crear()} />
           </Tarjeta>
           {datos.promociones.map((p) => (

@@ -607,8 +607,17 @@ for (const idioma of ['en', 'es'] as const) {
     await cli.getByLabel(L.correo).fill(correo('cliente'));
     await cli.getByLabel(L.celular).fill(tel(idioma === 'en' ? '3055550103' : '3055550113'));
     // Cumple hoy: así, después de su primer pedido, le toca el regalo de cumpleaños.
-    const hoy = new Date().toISOString().slice(5, 10);
-    await cli.getByLabel(L.cumple).fill(`1995-${hoy}`);
+    // C-FECHA-MODERNA: se teclean solo números, en el orden que enseña la casilla (el del país del
+    // navegador); las barras salen solas.
+    const [mesHoy = '', diaHoy = ''] = new Date().toISOString().slice(5, 10).split('-');
+    const cumple = cli.getByLabel(L.cumple);
+    const mesPrimero = ((await cumple.getAttribute('placeholder')) ?? '').startsWith('MM');
+    await cumple.pressSequentially(
+      mesPrimero ? `${mesHoy}${diaHoy}1995` : `${diaHoy}${mesHoy}1995`,
+    );
+    await expect(cumple).toHaveValue(
+      mesPrimero ? `${mesHoy}/${diaHoy}/1995` : `${diaHoy}/${mesHoy}/1995`,
+    );
     await cli.getByLabel(L.clave, { exact: true }).fill(DATOS.clave);
     await foto(cli, 'cliente-registro');
     await cli.getByRole('checkbox').first().click(); // acepta los términos
@@ -1291,7 +1300,7 @@ for (const idioma of ['en', 'es'] as const) {
       name: /^(Holidays and closures|Festivos y cierres)$/,
     });
     await expect(cierres).toBeVisible({ timeout: 20_000 });
-    await panel.getByLabel(/^(Date \(YYYY-MM-DD\)|Fecha \(AAAA-MM-DD\))$/).fill('2026-12-25');
+    await panel.getByLabel(/^(Date|Fecha)$/).fill('2026-12-25');
     await panel.getByLabel(/^(Reason|Motivo)/).fill(idioma === 'en' ? 'Christmas' : 'Navidad');
     await panel.getByRole('button', { name: /^(Add closure|Agregar cierre)$/ }).click();
     await expect(panel.getByText('2026-12-25')).toBeVisible({ timeout: 20_000 });

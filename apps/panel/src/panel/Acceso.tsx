@@ -8,6 +8,7 @@ import {
   almacenNavegador,
   enIdioma,
   useBorrador,
+  enIdiomaDireccion,
 } from '@tumbite/compartido';
 import { api } from './api';
 import { ir } from '../ruta';
@@ -216,6 +217,10 @@ export function Acceso({
           {t.olvide}
         </button>
       )}
+      {/* C-AYUDA-A-LA-VISTA: soporte sin tener que iniciar sesión. */}
+      <a className="enlace" href={enIdiomaDireccion('/support', idioma)} data-testid="acceso-ayuda">
+        {idioma === 'en' ? 'Need help?' : '¿Necesitas ayuda?'}
+      </a>
     </main>
   );
 }

@@ -44,3 +44,5 @@ export * from './AvisoDeshacer';
 export * from './Hoja';
 export * from './HojaOferta';
 export * from './MontoEnMano';
+export * from './CampoFecha';
+export * from './VolverAEntrar';

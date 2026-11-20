@@ -50,6 +50,8 @@ import {
   Pantalla,
   TarjetaAvisosWeb,
   TEXTOS_MOVIL,
+  URL_SERVIDOR,
+  abrirPanel,
   e,
   urlFoto,
   useSesion,
@@ -184,7 +186,10 @@ const T = {
     alergias: 'ALERGIA',
     pedido: 'Pedido',
     estados: { entregado: 'Entregado', cancelado: 'Cancelado' } as Record<string, string>,
-    sinRest: 'Completa tu restaurante en divoox.com/panel para empezar.',
+    sinRest:
+      'Tu cuenta ya está creada. Falta completar los datos de tu restaurante: nombre, dirección, horario y menú. Lo haces aquí mismo, desde el teléfono.',
+    completarRest: 'Completar mi restaurante',
+    yaLoComplete: 'Ya lo completé',
     tiempo: '¿En cuánto estará listo?',
     sugerido: 'sugerido',
     cocina: 'Cocina ocupada',
@@ -254,7 +259,10 @@ const T = {
     alergias: 'ALLERGY',
     pedido: 'Order',
     estados: { entregado: 'Delivered', cancelado: 'Canceled' } as Record<string, string>,
-    sinRest: 'Set up your restaurant at divoox.com/panel to get started.',
+    sinRest:
+      'Your account is created. Next, complete your restaurant’s details: name, address, hours and menu. You can do it right here, from your phone.',
+    completarRest: 'Complete my restaurant',
+    yaLoComplete: 'I’ve completed it',
     tiempo: 'Ready in how long?',
     sugerido: 'suggested',
     cocina: 'Busy kitchen',
@@ -501,7 +509,14 @@ export function Inicio() {
   if (rest === null) {
     return (
       <Pantalla titulo={t.titulo}>
+        {/* C-RESTAURANTE-DESDE-EL-TELEFONO: el alta del restaurante se completa aquí mismo, en el
+            panel abierto dentro de la app con la sesión ya iniciada; al volver se comprueba sola. */}
         <Text style={e.tarjeta}>{t.sinRest}</Text>
+        <Boton
+          texto={t.completarRest}
+          alTocar={() => void abrirPanel(api, URL_SERVIDOR, '/panel')}
+        />
+        <Boton texto={t.yaLoComplete} alTocar={() => void cargar()} secundario />
         <Boton texto={tm.salir} alTocar={() => void salir()} secundario />
       </Pantalla>
     );

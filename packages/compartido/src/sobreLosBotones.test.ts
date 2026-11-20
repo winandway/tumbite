@@ -34,7 +34,8 @@ describe('nada queda debajo de los botones del teléfono', () => {
 describe('la pantalla de entrar tiene salida', () => {
   it('flecha «Volver» arriba y botón de atrás del teléfono cuando se puede seguir sin cuenta', () => {
     const acceso = leer('packages/movil/src/Acceso.tsx');
-    expect(acceso).toMatch(/volver=\{seguirMirando\}/);
+    // C-SIN-CALLEJON: en «Crear cuenta» la flecha vuelve a «Entrar»; en «Entrar», a seguir mirando.
+    expect(acceso).toContain('volver={registro ? aEntrar : seguirMirando}');
     expect(acceso).toContain("BackHandler.addEventListener('hardwareBackPress'");
     const ui = leer('packages/movil/src/ui.tsx');
     expect(ui).toContain('testID="cabecera-volver"');
