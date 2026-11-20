@@ -662,6 +662,12 @@ export function Inicio() {
   >('inicio');
   // C-ASISTENTE-DRIVER: los papeles del conductor (asistente de verificación y «Tus papeles»).
   const papeles = usePapeles(api);
+  // A dónde vuelve el asistente al salir: al inicio o al perfil, según desde dónde se abrió.
+  const [vueltaPapeles, setVueltaPapeles] = useState<'inicio' | 'datos'>('inicio');
+  const abrirPapeles = (desde: 'inicio' | 'datos') => {
+    setVueltaPapeles(desde);
+    setVista('papeles');
+  };
   // C-SERVICIOS-CONECTADOS: el panel de servicios (varios conectados a la vez, pausa al llevar uno).
   const servicios = usePanelServicios(api, 0);
   const ts = textosServicios(idioma);
@@ -2298,7 +2304,7 @@ export function Inicio() {
         recargar={papeles.recargar}
         alSalir={() => {
           void papeles.recargar();
-          setVista('inicio');
+          setVista(vueltaPapeles);
         }}
         alAyuda={() => setVista('ayuda')}
       />
@@ -2415,10 +2421,13 @@ export function Inicio() {
       'perfil',
       <View style={{ padding: 16, gap: 12 }}>
         {mensajes}
+        {/* C-ASISTENTE-DRIVER: «Tus papeles» también en el perfil (donde el país usa el asistente). */}
+        <TusPapeles api={api} v={papeles.v} idioma={idioma} alAbrir={() => abrirPapeles('datos')} />
         {/* C-SERVICIOS-CONECTADOS (pantallas 06 y 07): el perfil en acordeón (Mi vehículo y
             Documentos); los tres puntos de la cabecera abren cerrar sesión y borrar la cuenta. */}
         <PerfilAcordeon
           servicios={servicios.panel?.servicios ?? []}
+          alAbrirAsistente={papeles.v?.asistente ? () => abrirPapeles('datos') : undefined}
           alCambiarVehiculo={() => void recargarPanel()}
           menuCuenta={cuentaArriba ? <OpcionesCuenta /> : null}
           alMenu={() => setCuentaArriba((x) => !x)}
@@ -3363,13 +3372,19 @@ export function Inicio() {
   // (C-DESLIZAR-ENTREGA): como Uber, se elige entre pedidos.
   const mensajesInicio = (
     <>
+      {/* C-ASISTENTE-DRIVER: «Tus papeles», con los días que le quedan. Va primero: sin la foto de
+          la cara no puede empezar. Con un pedido en curso no estorba. */}
+      {!estado?.activo ? (
+        <TusPapeles
+          api={api}
+          v={papeles.v}
+          idioma={idioma}
+          alAbrir={() => abrirPapeles('inicio')}
+        />
+      ) : null}
       {/* C-SALDO-EN-INICIO: el saldo prepago (donde el país lo usa), con aviso si se acaba. */}
       {!estado?.activo ? (
         <SaldoInicio saldo={prepago} idioma={idioma} alRecargar={() => setVista('billetera')} />
-      ) : null}
-      {/* C-ASISTENTE-DRIVER: «Tus papeles», con los días que le quedan. Con un pedido en curso no estorba. */}
-      {!estado?.activo ? (
-        <TusPapeles api={api} v={papeles.v} idioma={idioma} alAbrir={() => setVista('papeles')} />
       ) : null}
       {mensajes}
       {!estado?.activo ? <ModoDestino cerca={aqui} /> : null}

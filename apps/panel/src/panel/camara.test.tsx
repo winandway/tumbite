@@ -98,8 +98,15 @@ describe('candado: ninguna casilla de imagen sin cámara', () => {
       .filter((f) => {
         if (f.endsWith('elegirCapturas.ts')) return false;
         const s = readFileSync(f, 'utf8');
+        // C-ASISTENTE-DRIVER: el asistente de papeles ofrece la cámara con su propia pieza, la
+        // cámara con marco dentro de la app (CamaraConMarco, con CameraView), a la vista.
+        const conMarco =
+          /from '\.\/CamaraConMarco'/.test(s) &&
+          /<CamaraConMarco\b/.test(s) &&
+          /<CameraView\b/.test(readFileSync(join(f, '..', 'CamaraConMarco.tsx'), 'utf8'));
         return (
           /launchImageLibraryAsync/.test(s) &&
+          !conMarco &&
           !/fotoConCamara\(|fotoConOrigen\(|capturasConCamara\(/.test(s)
         );
       });

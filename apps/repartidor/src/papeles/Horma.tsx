@@ -12,7 +12,6 @@ import type { ClaseDibujo } from './logica';
  * foto, blanca como marco dentro de la cámara y en la tira de pasos.
  */
 const GRIS = '#B4B9C0';
-const CirculoAnimado = Animated.createAnimatedComponent(Circle);
 
 type Trazo = { linea: string; relleno: string; punteado: boolean };
 
@@ -260,7 +259,16 @@ export function AnilloPerfil({
 }) {
   const reducir = useReducirMovimiento();
   const pct = total > 0 ? Math.min(1, hechas / total) : 0;
+  const r = 34;
+  const largo = 2 * Math.PI * r;
+  // El anillo avanza con un Animated.Value que se escucha y se pinta en un círculo normal: un
+  // círculo de SVG animado directo deja atributos de React Native en la web («collapsable»).
   const [avance] = useState(() => new Animated.Value(pct));
+  const [hecho, setHecho] = useState(pct);
+  useEffect(() => {
+    const id = avance.addListener(({ value }) => setHecho(value));
+    return () => avance.removeListener(id);
+  }, [avance]);
   useEffect(() => {
     if (reducir) {
       avance.setValue(pct);
@@ -273,8 +281,6 @@ export function AnilloPerfil({
       useNativeDriver: false,
     }).start();
   }, [pct, reducir, avance]);
-  const r = 34;
-  const largo = 2 * Math.PI * r;
   return (
     <View style={{ width: lado, height: lado, alignItems: 'center', justifyContent: 'center' }}>
       <Svg
@@ -284,7 +290,7 @@ export function AnilloPerfil({
         style={{ position: 'absolute', transform: [{ rotate: '-90deg' }] }}
       >
         <Circle cx={39} cy={39} r={r} stroke="#E6E7EA" strokeWidth={5} fill="none" />
-        <CirculoAnimado
+        <Circle
           cx={39}
           cy={39}
           r={r}
@@ -293,7 +299,7 @@ export function AnilloPerfil({
           strokeLinecap="round"
           fill="none"
           strokeDasharray={`${largo}`}
-          strokeDashoffset={avance.interpolate({ inputRange: [0, 1], outputRange: [largo, 0] })}
+          strokeDashoffset={largo * (1 - hecho)}
         />
       </Svg>
       <Mini clase="cara" uri={uri} alto={lado - 18} lista={Boolean(uri)} conMarca={false} />

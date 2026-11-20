@@ -98,33 +98,36 @@ export function TusPapeles({
         </View>
       </View>
       <View style={{ gap: 6 }}>
-        {v.papeles.map((p) => {
-          const e = estadoDePapel(p.estado, idioma);
-          return (
-            <View
-              key={p.papel}
-              testID={`tus-papeles-${p.papel}`}
-              style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}
-            >
-              <Text style={{ fontSize: 14 }}>{nombreDePapel(p.papel, idioma)}</Text>
-              <Text
-                style={{
-                  fontFamily: FUENTE.textoFuerte,
-                  fontSize: 13,
-                  color:
-                    e.tono === 'exito'
-                      ? COLOR.exito
-                      : e.tono === 'aviso'
-                        ? COLOR.aviso
-                        : COLOR.textoSuave,
-                }}
+        {[...v.papeles]
+          // La cara primero, como en el asistente: es la que deja empezar.
+          .sort((a, b) => Number(b.papel === 'cara') - Number(a.papel === 'cara'))
+          .map((p) => {
+            const e = estadoDePapel(p.estado, idioma);
+            return (
+              <View
+                key={p.papel}
+                testID={`tus-papeles-${p.papel}`}
+                style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}
               >
-                {e.tono === 'exito' ? '✓ ' : ''}
-                {e.texto}
-              </Text>
-            </View>
-          );
-        })}
+                <Text style={{ fontSize: 14 }}>{nombreDePapel(p.papel, idioma)}</Text>
+                <Text
+                  style={{
+                    fontFamily: FUENTE.textoFuerte,
+                    fontSize: 13,
+                    color:
+                      e.tono === 'exito'
+                        ? COLOR.exito
+                        : e.tono === 'aviso'
+                          ? COLOR.aviso
+                          : COLOR.textoSuave,
+                  }}
+                >
+                  {e.tono === 'exito' ? '✓ ' : ''}
+                  {e.texto}
+                </Text>
+              </View>
+            );
+          })}
       </View>
       <View
         style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}

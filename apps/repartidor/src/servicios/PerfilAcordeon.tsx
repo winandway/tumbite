@@ -362,7 +362,14 @@ export function PerfilAcordeon({
   alMenu,
   inicial = null,
   alCambiarVehiculo,
+  alAbrirAsistente,
 }: {
+  /**
+   * C-ASISTENTE-DRIVER: donde el país usa el asistente de papeles, «Documento de identidad» y
+   * «Verificar mi identidad» lo abren a él en vez de la verificación de siempre. Sin esto (Estados
+   * Unidos), todo queda como antes.
+   */
+  alAbrirAsistente?: () => void;
   /** C-CAMBIAR-VEHICULO: al cambiar el vehículo activo, el inicio vuelve a leer sus servicios. */
   alCambiarVehiculo?: () => void;
   /** La sección que se abre al llegar (desde «Completar mi alta»). */
@@ -999,9 +1006,11 @@ export function PerfilAcordeon({
                         : undefined
                     }
                     alAbrir={
-                      f.clave === 'identidad' || f.requisito.startsWith('antecedentes')
-                        ? () => setAbierto('identidad')
-                        : undefined
+                      (f.clave === 'identidad' || f.clave === 'foto') && alAbrirAsistente
+                        ? alAbrirAsistente
+                        : f.clave === 'identidad' || f.requisito.startsWith('antecedentes')
+                          ? () => setAbierto('identidad')
+                          : undefined
                     }
                   />
                 ))}
@@ -1011,7 +1020,7 @@ export function PerfilAcordeon({
                   texto={t.verificarIdentidad}
                   icono="shield-checkmark-outline"
                   fuerte
-                  alTocar={() => setAbierto('identidad')}
+                  alTocar={alAbrirAsistente ?? (() => setAbierto('identidad'))}
                 />
               ) : (
                 <BotonSubir texto={t.verAntecedentes} alTocar={() => setAbierto('identidad')} />

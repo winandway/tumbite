@@ -76,8 +76,8 @@ const T = {
     yaPuedes: 'Ya puedes trabajar',
     yaPuedesTexto: (d: number) =>
       d > 0
-        ? `Tu cuenta está activa. Conéctate y empieza a recibir viajes. Tienes ${d} días para subir el resto de tus papeles.`
-        : 'Tu cuenta está activa. Conéctate y empieza a recibir viajes.',
+        ? `Tu cuenta está activa. Conéctate y empieza a recibir viajes y pedidos. Tienes ${d} días para subir el resto de tus papeles.`
+        : 'Tu cuenta está activa. Conéctate y empieza a recibir viajes y pedidos.',
     seguir: 'Seguir con mis papeles',
     listos: (a: number, b: number) => `${a} de ${b} fotos listas`,
     hola: (n: string) => (n ? `Hola, ${n}` : 'Hola'),
@@ -121,8 +121,8 @@ const T = {
     yaPuedes: 'You can start working',
     yaPuedesTexto: (d: number) =>
       d > 0
-        ? `Your account is active. Go online and start getting trips. You have ${d} days to upload the rest of your documents.`
-        : 'Your account is active. Go online and start getting trips.',
+        ? `Your account is active. Go online and start getting trips and orders. You have ${d} days to upload the rest of your documents.`
+        : 'Your account is active. Go online and start getting trips and orders.',
     seguir: 'Continue with my documents',
     listos: (a: number, b: number) => `${a} of ${b} photos ready`,
     hola: (n: string) => (n ? `Hi, ${n}` : 'Hi'),
@@ -201,6 +201,8 @@ export function AsistentePapeles({
   const [recien, setRecien] = useState<PasoVerificacion | null>(null);
   const [camara, setCamara] = useState(false);
   const [recambio, setRecambio] = useState(false);
+  // De dónde salió la última foto subida: «Repetir» tras un aviso vuelve por el mismo camino.
+  const [ultimoOrigen, setUltimoOrigen] = useState<'camara' | 'archivos'>('camara');
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
 
@@ -241,6 +243,7 @@ export function AsistentePapeles({
         { compress: 0.72, format: SaveFormat.JPEG },
       );
       setAviso('');
+      setRecambio(false);
       setNueva({ uri: chica.uri, origen: 'archivos' });
     } catch (x) {
       fallo(x);
@@ -259,7 +262,9 @@ export function AsistentePapeles({
         `/datos/conductor/verificacion/foto/${paso}?origen=${nueva.origen}`,
       );
       poner(paso, nueva.uri);
+      setUltimoOrigen(nueva.origen);
       setNueva(null);
+      setRecambio(false);
       setRecien(paso);
       const nuevo = await recargar();
       const dice = avisoDeLaIa(r.ia);
@@ -504,12 +509,7 @@ export function AsistentePapeles({
                     gap: 8,
                   }}
                 >
-                  <Mini
-                    clase={dibujoDePaso(p.paso)}
-                    uri={uriDe(p)}
-                    alto={esRedonda(p.paso) ? 64 : 58}
-                    lista={lista}
-                  />
+                  <Mini clase={dibujoDePaso(p.paso)} uri={uriDe(p)} alto={64} lista={lista} />
                   <Text
                     style={{ fontFamily: FUENTE.textoFuerte, fontSize: 13, textAlign: 'center' }}
                   >
@@ -637,8 +637,9 @@ export function AsistentePapeles({
               clase={dibujoDePaso(p.paso)}
               uri={uriDe(p)}
               alto={32}
-              lista={fotoLista(p)}
-              animada={recien === p.paso}
+              // Una foto con aviso de la IA todavía no lleva la marca verde (verde = salió bien).
+              lista={fotoLista(p) && !(p.paso === paso && momento === 'aviso')}
+              animada={recien === p.paso && momento !== 'aviso'}
             />
           </Pressable>
         ))}
@@ -769,8 +770,12 @@ export function AsistentePapeles({
               </View>
               <Boton
                 texto={t.repetir}
-                icono="camera-outline"
-                alTocar={() => setCamara(true)}
+                icono={ultimoOrigen === 'archivos' ? undefined : 'camera-outline'}
+                alTocar={() =>
+                  ultimoOrigen === 'archivos' && !dato.soloEnVivo
+                    ? void deArchivos()
+                    : setCamara(true)
+                }
                 testID="papeles-repetir"
               />
               <Pressable

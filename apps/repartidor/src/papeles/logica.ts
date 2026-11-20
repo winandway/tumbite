@@ -122,10 +122,13 @@ export const dibujoDePaso = (p: PasoVerificacion): ClaseDibujo => DIBUJOS.get(p)
 /** La cara va en círculo; lo demás, en tarjeta de esquinas redondeadas. */
 export const esRedonda = (p: PasoVerificacion) => hormaDePaso(p) === 'ovalo';
 
-/** Proporción ancho/alto de la horma: tarjeta de bolsillo, hoja de la póliza u óvalo de la cara. */
+/**
+ * Proporción ancho/alto de la horma: el óvalo de la cara o la tarjeta de bolsillo. La póliza del
+ * seguro usa la misma tarjeta, como el borrador aprobado (forma «carnet») y su dibujo (160×100):
+ * con 1,3 el dibujo quedaba con bandas y la vista previa (1,586) no coincidía con el marco.
+ */
 export function proporcionDeHorma(p: PasoVerificacion): number {
-  const h = hormaDePaso(p);
-  return h === 'ovalo' ? 0.78 : h === 'hoja' ? 1.3 : 1.586;
+  return hormaDePaso(p) === 'ovalo' ? 0.78 : 1.586;
 }
 
 const TITULOS = {

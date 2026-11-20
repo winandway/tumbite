@@ -181,7 +181,9 @@ export function CamaraConMarco({
                   bottom: -SOMBRA,
                   borderWidth: SOMBRA,
                   borderColor: 'rgba(0,0,0,0.6)',
-                  borderRadius: SOMBRA + (redonda ? 999 : 16),
+                  // El óvalo de la cara: «50%» da esquinas elípticas, y el hueco de adentro (este
+                  // radio menos el borde) queda justo del tamaño del marco. 999 lo volvía píldora.
+                  borderRadius: redonda ? '50%' : SOMBRA + 16,
                 }}
               />
               <View
@@ -189,13 +191,17 @@ export function CamaraConMarco({
                   flex: 1,
                   borderWidth: 3,
                   borderColor: '#FFFFFF',
-                  borderRadius: redonda ? 999 : 16,
+                  borderRadius: redonda ? '50%' : 16,
                   overflow: 'hidden',
                 }}
               >
-                <View style={{ flex: 1, opacity: permiso?.granted ? 0.5 : 0.8 }}>
-                  <DibujoHorma clase={dibujoDePaso(paso)} blanco />
-                </View>
+                {/* Con la cámara encendida, el dibujo no tapa lo que se fotografía: en la cara
+                    sobra (el óvalo ya guía) y en los papeles queda tenue. */}
+                {redonda && lista ? null : (
+                  <View style={{ flex: 1, opacity: lista ? 0.3 : 0.8 }}>
+                    <DibujoHorma clase={dibujoDePaso(paso)} blanco />
+                  </View>
+                )}
               </View>
             </View>
             <Text

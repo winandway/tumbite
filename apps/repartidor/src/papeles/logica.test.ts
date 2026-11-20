@@ -17,8 +17,9 @@ import {
  * cara primero, cada foto con su horma y su miniatura, y NADA se manda a revisión sin el toque en
  * «Enviar a revisión».
  *
- * Visto en ROJO el 20 nov 2026: sin `logica.ts` este archivo no compilaba, y con `usar()` llamando a
- * `/enviar` el candado de abajo falla.
+ * Visto en ROJO el 20 nov 2026 (a propósito, y restaurado): con `void enviar()` metido dentro de
+ * `usar()` falla «/enviar solo se llama desde el botón»; con «Verificar mi identidad» abriendo la
+ * verificación vieja aunque haya asistente, falla el de las entradas del perfil.
  */
 const foto = (estado: 'vigente' | 'repetir' = 'vigente') => ({
   id: 'f',
@@ -147,5 +148,26 @@ describe('C-ASISTENTE-DRIVER: nada se envía solo', () => {
   });
   it('la cara no ofrece «Subir desde archivos»', () => {
     expect(codigo).toContain('dato.soloEnVivo ? null');
+  });
+});
+
+describe('C-ASISTENTE-DRIVER: las entradas del perfil', () => {
+  const perfil = readFileSync(join(__dirname, '..', 'servicios', 'PerfilAcordeon.tsx'), 'utf8');
+  const inicio = readFileSync(join(__dirname, '..', 'Inicio.tsx'), 'utf8');
+  it('con asistente, «Documento de identidad» y «Verificar mi identidad» abren el asistente', () => {
+    expect(perfil).toContain("(f.clave === 'identidad' || f.clave === 'foto') && alAbrirAsistente");
+    expect(perfil).toContain("alTocar={alAbrirAsistente ?? (() => setAbierto('identidad'))}");
+  });
+  it('sin asistente (Estados Unidos) siguen abriendo la verificación de siempre', () => {
+    expect(inicio).toContain(
+      "alAbrirAsistente={papeles.v?.asistente ? () => abrirPapeles('datos') : undefined}",
+    );
+    expect(perfil).toContain("abierto === 'identidad' ? (");
+    expect(perfil).toContain('<Verificacion />');
+  });
+  it('«Tus papeles» está en el inicio y en el perfil, y el asistente vuelve a donde se abrió', () => {
+    expect(inicio).toContain("alAbrir={() => abrirPapeles('inicio')}");
+    expect(inicio).toContain("alAbrir={() => abrirPapeles('datos')}");
+    expect(inicio).toContain('setVista(vueltaPapeles)');
   });
 });
